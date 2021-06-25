@@ -1,857 +1,858 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * uartlite.c: Serial driver for Xilinx uartlite serial controller
+ * uartlite.c: Serial driver क्रम Xilinx uartlite serial controller
  *
  * Copyright (C) 2006 Peter Korsgaard <jacmet@sunsite.dk>
  * Copyright (C) 2007 Secret Lab Technologies Ltd.
  */
 
-#include <linux/platform_device.h>
-#include <linux/module.h>
-#include <linux/console.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/of_platform.h>
-#include <linux/clk.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/console.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/clk.h>
 
-#define ULITE_NAME		"ttyUL"
-#define ULITE_MAJOR		204
-#define ULITE_MINOR		187
-#define ULITE_NR_UARTS		CONFIG_SERIAL_UARTLITE_NR_UARTS
+#घोषणा ULITE_NAME		"ttyUL"
+#घोषणा ULITE_MAJOR		204
+#घोषणा ULITE_MINOR		187
+#घोषणा ULITE_NR_UARTS		CONFIG_SERIAL_UARTLITE_NR_UARTS
 
 /* ---------------------------------------------------------------------
  * Register definitions
  *
- * For register details see datasheet:
- * https://www.xilinx.com/support/documentation/ip_documentation/opb_uartlite.pdf
+ * For रेजिस्टर details see datasheet:
+ * https://www.xilinx.com/support/करोcumentation/ip_करोcumentation/opb_uartlite.pdf
  */
 
-#define ULITE_RX		0x00
-#define ULITE_TX		0x04
-#define ULITE_STATUS		0x08
-#define ULITE_CONTROL		0x0c
+#घोषणा ULITE_RX		0x00
+#घोषणा ULITE_TX		0x04
+#घोषणा ULITE_STATUS		0x08
+#घोषणा ULITE_CONTROL		0x0c
 
-#define ULITE_REGION		16
+#घोषणा ULITE_REGION		16
 
-#define ULITE_STATUS_RXVALID	0x01
-#define ULITE_STATUS_RXFULL	0x02
-#define ULITE_STATUS_TXEMPTY	0x04
-#define ULITE_STATUS_TXFULL	0x08
-#define ULITE_STATUS_IE		0x10
-#define ULITE_STATUS_OVERRUN	0x20
-#define ULITE_STATUS_FRAME	0x40
-#define ULITE_STATUS_PARITY	0x80
+#घोषणा ULITE_STATUS_RXVALID	0x01
+#घोषणा ULITE_STATUS_RXFULL	0x02
+#घोषणा ULITE_STATUS_TXEMPTY	0x04
+#घोषणा ULITE_STATUS_TXFULL	0x08
+#घोषणा ULITE_STATUS_IE		0x10
+#घोषणा ULITE_STATUS_OVERRUN	0x20
+#घोषणा ULITE_STATUS_FRAME	0x40
+#घोषणा ULITE_STATUS_PARITY	0x80
 
-#define ULITE_CONTROL_RST_TX	0x01
-#define ULITE_CONTROL_RST_RX	0x02
-#define ULITE_CONTROL_IE	0x10
+#घोषणा ULITE_CONTROL_RST_TX	0x01
+#घोषणा ULITE_CONTROL_RST_RX	0x02
+#घोषणा ULITE_CONTROL_IE	0x10
 
-/* Static pointer to console port */
-#ifdef CONFIG_SERIAL_UARTLITE_CONSOLE
-static struct uart_port *console_port;
-#endif
+/* Static poपूर्णांकer to console port */
+#अगर_घोषित CONFIG_SERIAL_UARTLITE_CONSOLE
+अटल काष्ठा uart_port *console_port;
+#पूर्ण_अगर
 
-struct uartlite_data {
-	const struct uartlite_reg_ops *reg_ops;
-	struct clk *clk;
-};
+काष्ठा uartlite_data अणु
+	स्थिर काष्ठा uartlite_reg_ops *reg_ops;
+	काष्ठा clk *clk;
+पूर्ण;
 
-struct uartlite_reg_ops {
-	u32 (*in)(void __iomem *addr);
-	void (*out)(u32 val, void __iomem *addr);
-};
+काष्ठा uartlite_reg_ops अणु
+	u32 (*in)(व्योम __iomem *addr);
+	व्योम (*out)(u32 val, व्योम __iomem *addr);
+पूर्ण;
 
-static u32 uartlite_inbe32(void __iomem *addr)
-{
-	return ioread32be(addr);
-}
+अटल u32 uartlite_inbe32(व्योम __iomem *addr)
+अणु
+	वापस ioपढ़ो32be(addr);
+पूर्ण
 
-static void uartlite_outbe32(u32 val, void __iomem *addr)
-{
-	iowrite32be(val, addr);
-}
+अटल व्योम uartlite_outbe32(u32 val, व्योम __iomem *addr)
+अणु
+	ioग_लिखो32be(val, addr);
+पूर्ण
 
-static const struct uartlite_reg_ops uartlite_be = {
+अटल स्थिर काष्ठा uartlite_reg_ops uartlite_be = अणु
 	.in = uartlite_inbe32,
 	.out = uartlite_outbe32,
-};
+पूर्ण;
 
-static u32 uartlite_inle32(void __iomem *addr)
-{
-	return ioread32(addr);
-}
+अटल u32 uartlite_inle32(व्योम __iomem *addr)
+अणु
+	वापस ioपढ़ो32(addr);
+पूर्ण
 
-static void uartlite_outle32(u32 val, void __iomem *addr)
-{
-	iowrite32(val, addr);
-}
+अटल व्योम uartlite_outle32(u32 val, व्योम __iomem *addr)
+अणु
+	ioग_लिखो32(val, addr);
+पूर्ण
 
-static const struct uartlite_reg_ops uartlite_le = {
+अटल स्थिर काष्ठा uartlite_reg_ops uartlite_le = अणु
 	.in = uartlite_inle32,
 	.out = uartlite_outle32,
-};
+पूर्ण;
 
-static inline u32 uart_in32(u32 offset, struct uart_port *port)
-{
-	struct uartlite_data *pdata = port->private_data;
+अटल अंतरभूत u32 uart_in32(u32 offset, काष्ठा uart_port *port)
+अणु
+	काष्ठा uartlite_data *pdata = port->निजी_data;
 
-	return pdata->reg_ops->in(port->membase + offset);
-}
+	वापस pdata->reg_ops->in(port->membase + offset);
+पूर्ण
 
-static inline void uart_out32(u32 val, u32 offset, struct uart_port *port)
-{
-	struct uartlite_data *pdata = port->private_data;
+अटल अंतरभूत व्योम uart_out32(u32 val, u32 offset, काष्ठा uart_port *port)
+अणु
+	काष्ठा uartlite_data *pdata = port->निजी_data;
 
 	pdata->reg_ops->out(val, port->membase + offset);
-}
+पूर्ण
 
-static struct uart_port ulite_ports[ULITE_NR_UARTS];
+अटल काष्ठा uart_port ulite_ports[ULITE_NR_UARTS];
 
 /* ---------------------------------------------------------------------
  * Core UART driver operations
  */
 
-static int ulite_receive(struct uart_port *port, int stat)
-{
-	struct tty_port *tport = &port->state->port;
-	unsigned char ch = 0;
-	char flag = TTY_NORMAL;
+अटल पूर्णांक ulite_receive(काष्ठा uart_port *port, पूर्णांक stat)
+अणु
+	काष्ठा tty_port *tport = &port->state->port;
+	अचिन्हित अक्षर ch = 0;
+	अक्षर flag = TTY_NORMAL;
 
-	if ((stat & (ULITE_STATUS_RXVALID | ULITE_STATUS_OVERRUN
+	अगर ((stat & (ULITE_STATUS_RXVALID | ULITE_STATUS_OVERRUN
 		     | ULITE_STATUS_FRAME)) == 0)
-		return 0;
+		वापस 0;
 
 	/* stats */
-	if (stat & ULITE_STATUS_RXVALID) {
+	अगर (stat & ULITE_STATUS_RXVALID) अणु
 		port->icount.rx++;
 		ch = uart_in32(ULITE_RX, port);
 
-		if (stat & ULITE_STATUS_PARITY)
+		अगर (stat & ULITE_STATUS_PARITY)
 			port->icount.parity++;
-	}
+	पूर्ण
 
-	if (stat & ULITE_STATUS_OVERRUN)
+	अगर (stat & ULITE_STATUS_OVERRUN)
 		port->icount.overrun++;
 
-	if (stat & ULITE_STATUS_FRAME)
+	अगर (stat & ULITE_STATUS_FRAME)
 		port->icount.frame++;
 
 
-	/* drop byte with parity error if IGNPAR specificed */
-	if (stat & port->ignore_status_mask & ULITE_STATUS_PARITY)
+	/* drop byte with parity error अगर IGNPAR specअगरiced */
+	अगर (stat & port->ignore_status_mask & ULITE_STATUS_PARITY)
 		stat &= ~ULITE_STATUS_RXVALID;
 
-	stat &= port->read_status_mask;
+	stat &= port->पढ़ो_status_mask;
 
-	if (stat & ULITE_STATUS_PARITY)
+	अगर (stat & ULITE_STATUS_PARITY)
 		flag = TTY_PARITY;
 
 
 	stat &= ~port->ignore_status_mask;
 
-	if (stat & ULITE_STATUS_RXVALID)
-		tty_insert_flip_char(tport, ch, flag);
+	अगर (stat & ULITE_STATUS_RXVALID)
+		tty_insert_flip_अक्षर(tport, ch, flag);
 
-	if (stat & ULITE_STATUS_FRAME)
-		tty_insert_flip_char(tport, 0, TTY_FRAME);
+	अगर (stat & ULITE_STATUS_FRAME)
+		tty_insert_flip_अक्षर(tport, 0, TTY_FRAME);
 
-	if (stat & ULITE_STATUS_OVERRUN)
-		tty_insert_flip_char(tport, 0, TTY_OVERRUN);
+	अगर (stat & ULITE_STATUS_OVERRUN)
+		tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int ulite_transmit(struct uart_port *port, int stat)
-{
-	struct circ_buf *xmit  = &port->state->xmit;
+अटल पूर्णांक ulite_transmit(काष्ठा uart_port *port, पूर्णांक stat)
+अणु
+	काष्ठा circ_buf *xmit  = &port->state->xmit;
 
-	if (stat & ULITE_STATUS_TXFULL)
-		return 0;
+	अगर (stat & ULITE_STATUS_TXFULL)
+		वापस 0;
 
-	if (port->x_char) {
-		uart_out32(port->x_char, ULITE_TX, port);
-		port->x_char = 0;
+	अगर (port->x_अक्षर) अणु
+		uart_out32(port->x_अक्षर, ULITE_TX, port);
+		port->x_अक्षर = 0;
 		port->icount.tx++;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (uart_circ_empty(xmit) || uart_tx_stopped(port))
-		return 0;
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port))
+		वापस 0;
 
 	uart_out32(xmit->buf[xmit->tail], ULITE_TX, port);
 	xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE-1);
 	port->icount.tx++;
 
 	/* wake up */
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static irqreturn_t ulite_isr(int irq, void *dev_id)
-{
-	struct uart_port *port = dev_id;
-	int stat, busy, n = 0;
-	unsigned long flags;
+अटल irqवापस_t ulite_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा uart_port *port = dev_id;
+	पूर्णांक stat, busy, n = 0;
+	अचिन्हित दीर्घ flags;
 
-	do {
+	करो अणु
 		spin_lock_irqsave(&port->lock, flags);
 		stat = uart_in32(ULITE_STATUS, port);
 		busy  = ulite_receive(port, stat);
 		busy |= ulite_transmit(port, stat);
 		spin_unlock_irqrestore(&port->lock, flags);
 		n++;
-	} while (busy);
+	पूर्ण जबतक (busy);
 
-	/* work done? */
-	if (n > 1) {
+	/* work करोne? */
+	अगर (n > 1) अणु
 		tty_flip_buffer_push(&port->state->port);
-		return IRQ_HANDLED;
-	} else {
-		return IRQ_NONE;
-	}
-}
+		वापस IRQ_HANDLED;
+	पूर्ण अन्यथा अणु
+		वापस IRQ_NONE;
+	पूर्ण
+पूर्ण
 
-static unsigned int ulite_tx_empty(struct uart_port *port)
-{
-	unsigned long flags;
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक ulite_tx_empty(काष्ठा uart_port *port)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ret;
 
 	spin_lock_irqsave(&port->lock, flags);
 	ret = uart_in32(ULITE_STATUS, port);
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	return ret & ULITE_STATUS_TXEMPTY ? TIOCSER_TEMT : 0;
-}
+	वापस ret & ULITE_STATUS_TXEMPTY ? TIOCSER_TEMT : 0;
+पूर्ण
 
-static unsigned int ulite_get_mctrl(struct uart_port *port)
-{
-	return TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
-}
+अटल अचिन्हित पूर्णांक ulite_get_mctrl(काष्ठा uart_port *port)
+अणु
+	वापस TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
+पूर्ण
 
-static void ulite_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
+अटल व्योम ulite_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
 	/* N/A */
-}
+पूर्ण
 
-static void ulite_stop_tx(struct uart_port *port)
-{
+अटल व्योम ulite_stop_tx(काष्ठा uart_port *port)
+अणु
 	/* N/A */
-}
+पूर्ण
 
-static void ulite_start_tx(struct uart_port *port)
-{
+अटल व्योम ulite_start_tx(काष्ठा uart_port *port)
+अणु
 	ulite_transmit(port, uart_in32(ULITE_STATUS, port));
-}
+पूर्ण
 
-static void ulite_stop_rx(struct uart_port *port)
-{
-	/* don't forward any more data (like !CREAD) */
+अटल व्योम ulite_stop_rx(काष्ठा uart_port *port)
+अणु
+	/* करोn't क्रमward any more data (like !CREAD) */
 	port->ignore_status_mask = ULITE_STATUS_RXVALID | ULITE_STATUS_PARITY
 		| ULITE_STATUS_FRAME | ULITE_STATUS_OVERRUN;
-}
+पूर्ण
 
-static void ulite_break_ctl(struct uart_port *port, int ctl)
-{
+अटल व्योम ulite_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक ctl)
+अणु
 	/* N/A */
-}
+पूर्ण
 
-static int ulite_startup(struct uart_port *port)
-{
-	struct uartlite_data *pdata = port->private_data;
-	int ret;
+अटल पूर्णांक ulite_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा uartlite_data *pdata = port->निजी_data;
+	पूर्णांक ret;
 
 	ret = clk_enable(pdata->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(port->dev, "Failed to enable clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = request_irq(port->irq, ulite_isr, IRQF_SHARED | IRQF_TRIGGER_RISING,
 			  "uartlite", port);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	uart_out32(ULITE_CONTROL_RST_RX | ULITE_CONTROL_RST_TX,
 		ULITE_CONTROL, port);
 	uart_out32(ULITE_CONTROL_IE, ULITE_CONTROL, port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ulite_shutdown(struct uart_port *port)
-{
-	struct uartlite_data *pdata = port->private_data;
+अटल व्योम ulite_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा uartlite_data *pdata = port->निजी_data;
 
 	uart_out32(0, ULITE_CONTROL, port);
 	uart_in32(ULITE_CONTROL, port); /* dummy */
-	free_irq(port->irq, port);
+	मुक्त_irq(port->irq, port);
 	clk_disable(pdata->clk);
-}
+पूर्ण
 
-static void ulite_set_termios(struct uart_port *port, struct ktermios *termios,
-			      struct ktermios *old)
-{
-	unsigned long flags;
-	unsigned int baud;
+अटल व्योम ulite_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+			      काष्ठा ktermios *old)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक baud;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	port->read_status_mask = ULITE_STATUS_RXVALID | ULITE_STATUS_OVERRUN
+	port->पढ़ो_status_mask = ULITE_STATUS_RXVALID | ULITE_STATUS_OVERRUN
 		| ULITE_STATUS_TXFULL;
 
-	if (termios->c_iflag & INPCK)
-		port->read_status_mask |=
+	अगर (termios->c_अगरlag & INPCK)
+		port->पढ़ो_status_mask |=
 			ULITE_STATUS_PARITY | ULITE_STATUS_FRAME;
 
 	port->ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		port->ignore_status_mask |= ULITE_STATUS_PARITY
 			| ULITE_STATUS_FRAME | ULITE_STATUS_OVERRUN;
 
-	/* ignore all characters if CREAD is not set */
-	if ((termios->c_cflag & CREAD) == 0)
+	/* ignore all अक्षरacters अगर CREAD is not set */
+	अगर ((termios->c_cflag & CREAD) == 0)
 		port->ignore_status_mask |=
 			ULITE_STATUS_RXVALID | ULITE_STATUS_PARITY
 			| ULITE_STATUS_FRAME | ULITE_STATUS_OVERRUN;
 
-	/* update timeout */
+	/* update समयout */
 	baud = uart_get_baud_rate(port, termios, old, 0, 460800);
-	uart_update_timeout(port, termios->c_cflag, baud);
+	uart_update_समयout(port, termios->c_cflag, baud);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static const char *ulite_type(struct uart_port *port)
-{
-	return port->type == PORT_UARTLITE ? "uartlite" : NULL;
-}
+अटल स्थिर अक्षर *ulite_type(काष्ठा uart_port *port)
+अणु
+	वापस port->type == PORT_UARTLITE ? "uartlite" : शून्य;
+पूर्ण
 
-static void ulite_release_port(struct uart_port *port)
-{
+अटल व्योम ulite_release_port(काष्ठा uart_port *port)
+अणु
 	release_mem_region(port->mapbase, ULITE_REGION);
 	iounmap(port->membase);
-	port->membase = NULL;
-}
+	port->membase = शून्य;
+पूर्ण
 
-static int ulite_request_port(struct uart_port *port)
-{
-	struct uartlite_data *pdata = port->private_data;
-	int ret;
+अटल पूर्णांक ulite_request_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा uartlite_data *pdata = port->निजी_data;
+	पूर्णांक ret;
 
 	pr_debug("ulite console: port=%p; port->mapbase=%llx\n",
-		 port, (unsigned long long) port->mapbase);
+		 port, (अचिन्हित दीर्घ दीर्घ) port->mapbase);
 
-	if (!request_mem_region(port->mapbase, ULITE_REGION, "uartlite")) {
+	अगर (!request_mem_region(port->mapbase, ULITE_REGION, "uartlite")) अणु
 		dev_err(port->dev, "Memory region busy\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	port->membase = ioremap(port->mapbase, ULITE_REGION);
-	if (!port->membase) {
+	अगर (!port->membase) अणु
 		dev_err(port->dev, "Unable to map registers\n");
 		release_mem_region(port->mapbase, ULITE_REGION);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	pdata->reg_ops = &uartlite_be;
 	ret = uart_in32(ULITE_CONTROL, port);
 	uart_out32(ULITE_CONTROL_RST_TX, ULITE_CONTROL, port);
 	ret = uart_in32(ULITE_STATUS, port);
 	/* Endianess detection */
-	if ((ret & ULITE_STATUS_TXEMPTY) != ULITE_STATUS_TXEMPTY)
+	अगर ((ret & ULITE_STATUS_TXEMPTY) != ULITE_STATUS_TXEMPTY)
 		pdata->reg_ops = &uartlite_le;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ulite_config_port(struct uart_port *port, int flags)
-{
-	if (!ulite_request_port(port))
+अटल व्योम ulite_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	अगर (!ulite_request_port(port))
 		port->type = PORT_UARTLITE;
-}
+पूर्ण
 
-static int ulite_verify_port(struct uart_port *port, struct serial_struct *ser)
-{
-	/* we don't want the core code to modify any port params */
-	return -EINVAL;
-}
+अटल पूर्णांक ulite_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
+अणु
+	/* we करोn't want the core code to modअगरy any port params */
+	वापस -EINVAL;
+पूर्ण
 
-static void ulite_pm(struct uart_port *port, unsigned int state,
-		     unsigned int oldstate)
-{
-	struct uartlite_data *pdata = port->private_data;
+अटल व्योम ulite_pm(काष्ठा uart_port *port, अचिन्हित पूर्णांक state,
+		     अचिन्हित पूर्णांक oldstate)
+अणु
+	काष्ठा uartlite_data *pdata = port->निजी_data;
 
-	if (!state)
+	अगर (!state)
 		clk_enable(pdata->clk);
-	else
+	अन्यथा
 		clk_disable(pdata->clk);
-}
+पूर्ण
 
-#ifdef CONFIG_CONSOLE_POLL
-static int ulite_get_poll_char(struct uart_port *port)
-{
-	if (!(uart_in32(ULITE_STATUS, port) & ULITE_STATUS_RXVALID))
-		return NO_POLL_CHAR;
+#अगर_घोषित CONFIG_CONSOLE_POLL
+अटल पूर्णांक ulite_get_poll_अक्षर(काष्ठा uart_port *port)
+अणु
+	अगर (!(uart_in32(ULITE_STATUS, port) & ULITE_STATUS_RXVALID))
+		वापस NO_POLL_CHAR;
 
-	return uart_in32(ULITE_RX, port);
-}
+	वापस uart_in32(ULITE_RX, port);
+पूर्ण
 
-static void ulite_put_poll_char(struct uart_port *port, unsigned char ch)
-{
-	while (uart_in32(ULITE_STATUS, port) & ULITE_STATUS_TXFULL)
+अटल व्योम ulite_put_poll_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर ch)
+अणु
+	जबतक (uart_in32(ULITE_STATUS, port) & ULITE_STATUS_TXFULL)
 		cpu_relax();
 
-	/* write char to device */
+	/* ग_लिखो अक्षर to device */
 	uart_out32(ch, ULITE_TX, port);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static const struct uart_ops ulite_ops = {
+अटल स्थिर काष्ठा uart_ops ulite_ops = अणु
 	.tx_empty	= ulite_tx_empty,
 	.set_mctrl	= ulite_set_mctrl,
 	.get_mctrl	= ulite_get_mctrl,
 	.stop_tx	= ulite_stop_tx,
 	.start_tx	= ulite_start_tx,
 	.stop_rx	= ulite_stop_rx,
-	.break_ctl	= ulite_break_ctl,
+	.अवरोध_ctl	= ulite_अवरोध_ctl,
 	.startup	= ulite_startup,
-	.shutdown	= ulite_shutdown,
+	.shutकरोwn	= ulite_shutकरोwn,
 	.set_termios	= ulite_set_termios,
 	.type		= ulite_type,
 	.release_port	= ulite_release_port,
 	.request_port	= ulite_request_port,
 	.config_port	= ulite_config_port,
-	.verify_port	= ulite_verify_port,
+	.verअगरy_port	= ulite_verअगरy_port,
 	.pm		= ulite_pm,
-#ifdef CONFIG_CONSOLE_POLL
-	.poll_get_char	= ulite_get_poll_char,
-	.poll_put_char	= ulite_put_poll_char,
-#endif
-};
+#अगर_घोषित CONFIG_CONSOLE_POLL
+	.poll_get_अक्षर	= ulite_get_poll_अक्षर,
+	.poll_put_अक्षर	= ulite_put_poll_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
 /* ---------------------------------------------------------------------
  * Console driver operations
  */
 
-#ifdef CONFIG_SERIAL_UARTLITE_CONSOLE
-static void ulite_console_wait_tx(struct uart_port *port)
-{
+#अगर_घोषित CONFIG_SERIAL_UARTLITE_CONSOLE
+अटल व्योम ulite_console_रुको_tx(काष्ठा uart_port *port)
+अणु
 	u8 val;
-	unsigned long timeout;
+	अचिन्हित दीर्घ समयout;
 
 	/*
-	 * Spin waiting for TX fifo to have space available.
+	 * Spin रुकोing क्रम TX fअगरo to have space available.
 	 * When using the Microblaze Debug Module this can take up to 1s
 	 */
-	timeout = jiffies + msecs_to_jiffies(1000);
-	while (1) {
+	समयout = jअगरfies + msecs_to_jअगरfies(1000);
+	जबतक (1) अणु
 		val = uart_in32(ULITE_STATUS, port);
-		if ((val & ULITE_STATUS_TXFULL) == 0)
-			break;
-		if (time_after(jiffies, timeout)) {
+		अगर ((val & ULITE_STATUS_TXFULL) == 0)
+			अवरोध;
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_warn(port->dev,
 				 "timeout waiting for TX buffer empty\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		cpu_relax();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ulite_console_putchar(struct uart_port *port, int ch)
-{
-	ulite_console_wait_tx(port);
+अटल व्योम ulite_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	ulite_console_रुको_tx(port);
 	uart_out32(ch, ULITE_TX, port);
-}
+पूर्ण
 
-static void ulite_console_write(struct console *co, const char *s,
-				unsigned int count)
-{
-	struct uart_port *port = console_port;
-	unsigned long flags;
-	unsigned int ier;
-	int locked = 1;
+अटल व्योम ulite_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+				अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा uart_port *port = console_port;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ier;
+	पूर्णांक locked = 1;
 
-	if (oops_in_progress) {
+	अगर (oops_in_progress) अणु
 		locked = spin_trylock_irqsave(&port->lock, flags);
-	} else
+	पूर्ण अन्यथा
 		spin_lock_irqsave(&port->lock, flags);
 
-	/* save and disable interrupt */
+	/* save and disable पूर्णांकerrupt */
 	ier = uart_in32(ULITE_STATUS, port) & ULITE_STATUS_IE;
 	uart_out32(0, ULITE_CONTROL, port);
 
-	uart_console_write(port, s, count, ulite_console_putchar);
+	uart_console_ग_लिखो(port, s, count, ulite_console_अक्षर_दो);
 
-	ulite_console_wait_tx(port);
+	ulite_console_रुको_tx(port);
 
-	/* restore interrupt state */
-	if (ier)
+	/* restore पूर्णांकerrupt state */
+	अगर (ier)
 		uart_out32(ULITE_CONTROL_IE, ULITE_CONTROL, port);
 
-	if (locked)
+	अगर (locked)
 		spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static int ulite_console_setup(struct console *co, char *options)
-{
-	struct uart_port *port;
-	int baud = 9600;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक ulite_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक baud = 9600;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
 
 	port = console_port;
 
 	/* Has the device been initialized yet? */
-	if (!port->mapbase) {
+	अगर (!port->mapbase) अणु
 		pr_debug("console on ttyUL%i not present\n", co->index);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* not initialized yet? */
-	if (!port->membase) {
-		if (ulite_request_port(port))
-			return -ENODEV;
-	}
+	अगर (!port->membase) अणु
+		अगर (ulite_request_port(port))
+			वापस -ENODEV;
+	पूर्ण
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver ulite_uart_driver;
+अटल काष्ठा uart_driver ulite_uart_driver;
 
-static struct console ulite_console = {
+अटल काष्ठा console ulite_console = अणु
 	.name	= ULITE_NAME,
-	.write	= ulite_console_write,
+	.ग_लिखो	= ulite_console_ग_लिखो,
 	.device	= uart_console_device,
 	.setup	= ulite_console_setup,
 	.flags	= CON_PRINTBUFFER,
-	.index	= -1, /* Specified on the cmdline (e.g. console=ttyUL0 ) */
+	.index	= -1, /* Specअगरied on the cmdline (e.g. console=ttyUL0 ) */
 	.data	= &ulite_uart_driver,
-};
+पूर्ण;
 
-static void early_uartlite_putc(struct uart_port *port, int c)
-{
+अटल व्योम early_uartlite_अ_दो(काष्ठा uart_port *port, पूर्णांक c)
+अणु
 	/*
-	 * Limit how many times we'll spin waiting for TX FIFO status.
-	 * This will prevent lockups if the base address is incorrectly
+	 * Limit how many बार we'll spin रुकोing क्रम TX FIFO status.
+	 * This will prevent lockups अगर the base address is incorrectly
 	 * set, or any other issue on the UARTLITE.
 	 * This limit is pretty arbitrary, unless we are at about 10 baud
-	 * we'll never timeout on a working UART.
+	 * we'll never समयout on a working UART.
 	 */
 
-	unsigned retries = 1000000;
-	/* read status bit - 0x8 offset */
-	while (--retries && (readl(port->membase + 8) & (1 << 3)))
+	अचिन्हित retries = 1000000;
+	/* पढ़ो status bit - 0x8 offset */
+	जबतक (--retries && (पढ़ोl(port->membase + 8) & (1 << 3)))
 		;
 
-	/* Only attempt the iowrite if we didn't timeout */
-	/* write to TX_FIFO - 0x4 offset */
-	if (retries)
-		writel(c & 0xff, port->membase + 4);
-}
+	/* Only attempt the ioग_लिखो अगर we didn't समयout */
+	/* ग_लिखो to TX_FIFO - 0x4 offset */
+	अगर (retries)
+		ग_लिखोl(c & 0xff, port->membase + 4);
+पूर्ण
 
-static void early_uartlite_write(struct console *console,
-				 const char *s, unsigned n)
-{
-	struct earlycon_device *device = console->data;
-	uart_console_write(&device->port, s, n, early_uartlite_putc);
-}
+अटल व्योम early_uartlite_ग_लिखो(काष्ठा console *console,
+				 स्थिर अक्षर *s, अचिन्हित n)
+अणु
+	काष्ठा earlycon_device *device = console->data;
+	uart_console_ग_लिखो(&device->port, s, n, early_uartlite_अ_दो);
+पूर्ण
 
-static int __init early_uartlite_setup(struct earlycon_device *device,
-				       const char *options)
-{
-	if (!device->port.membase)
-		return -ENODEV;
+अटल पूर्णांक __init early_uartlite_setup(काष्ठा earlycon_device *device,
+				       स्थिर अक्षर *options)
+अणु
+	अगर (!device->port.membase)
+		वापस -ENODEV;
 
-	device->con->write = early_uartlite_write;
-	return 0;
-}
+	device->con->ग_लिखो = early_uartlite_ग_लिखो;
+	वापस 0;
+पूर्ण
 EARLYCON_DECLARE(uartlite, early_uartlite_setup);
 OF_EARLYCON_DECLARE(uartlite_b, "xlnx,opb-uartlite-1.00.b", early_uartlite_setup);
 OF_EARLYCON_DECLARE(uartlite_a, "xlnx,xps-uartlite-1.00.a", early_uartlite_setup);
 
-#endif /* CONFIG_SERIAL_UARTLITE_CONSOLE */
+#पूर्ण_अगर /* CONFIG_SERIAL_UARTLITE_CONSOLE */
 
-static struct uart_driver ulite_uart_driver = {
+अटल काष्ठा uart_driver ulite_uart_driver = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= "uartlite",
 	.dev_name	= ULITE_NAME,
 	.major		= ULITE_MAJOR,
 	.minor		= ULITE_MINOR,
 	.nr		= ULITE_NR_UARTS,
-#ifdef CONFIG_SERIAL_UARTLITE_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_UARTLITE_CONSOLE
 	.cons		= &ulite_console,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /* ---------------------------------------------------------------------
- * Port assignment functions (mapping devices to uart_port structures)
+ * Port assignment functions (mapping devices to uart_port काष्ठाures)
  */
 
-/** ulite_assign: register a uartlite device with the driver
+/** ulite_assign: रेजिस्टर a uartlite device with the driver
  *
- * @dev: pointer to device structure
- * @id: requested id number.  Pass -1 for automatic port assignment
- * @base: base address of uartlite registers
- * @irq: irq number for uartlite
- * @pdata: private data for uartlite
+ * @dev: poपूर्णांकer to device काष्ठाure
+ * @id: requested id number.  Pass -1 क्रम स्वतःmatic port assignment
+ * @base: base address of uartlite रेजिस्टरs
+ * @irq: irq number क्रम uartlite
+ * @pdata: निजी data क्रम uartlite
  *
  * Returns: 0 on success, <0 otherwise
  */
-static int ulite_assign(struct device *dev, int id, u32 base, int irq,
-			struct uartlite_data *pdata)
-{
-	struct uart_port *port;
-	int rc;
+अटल पूर्णांक ulite_assign(काष्ठा device *dev, पूर्णांक id, u32 base, पूर्णांक irq,
+			काष्ठा uartlite_data *pdata)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक rc;
 
-	/* if id = -1; then scan for a free id and use that */
-	if (id < 0) {
-		for (id = 0; id < ULITE_NR_UARTS; id++)
-			if (ulite_ports[id].mapbase == 0)
-				break;
-	}
-	if (id < 0 || id >= ULITE_NR_UARTS) {
+	/* अगर id = -1; then scan क्रम a मुक्त id and use that */
+	अगर (id < 0) अणु
+		क्रम (id = 0; id < ULITE_NR_UARTS; id++)
+			अगर (ulite_ports[id].mapbase == 0)
+				अवरोध;
+	पूर्ण
+	अगर (id < 0 || id >= ULITE_NR_UARTS) अणु
 		dev_err(dev, "%s%i too large\n", ULITE_NAME, id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((ulite_ports[id].mapbase) && (ulite_ports[id].mapbase != base)) {
+	अगर ((ulite_ports[id].mapbase) && (ulite_ports[id].mapbase != base)) अणु
 		dev_err(dev, "cannot assign to %s%i; it is already in use\n",
 			ULITE_NAME, id);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	port = &ulite_ports[id];
 
 	spin_lock_init(&port->lock);
-	port->fifosize = 16;
-	port->regshift = 2;
+	port->fअगरosize = 16;
+	port->regshअगरt = 2;
 	port->iotype = UPIO_MEM;
 	port->iobase = 1; /* mark port in use */
 	port->mapbase = base;
-	port->membase = NULL;
+	port->membase = शून्य;
 	port->ops = &ulite_ops;
 	port->irq = irq;
 	port->flags = UPF_BOOT_AUTOCONF;
 	port->dev = dev;
 	port->type = PORT_UNKNOWN;
 	port->line = id;
-	port->private_data = pdata;
+	port->निजी_data = pdata;
 
 	dev_set_drvdata(dev, port);
 
-#ifdef CONFIG_SERIAL_UARTLITE_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_UARTLITE_CONSOLE
 	/*
 	 * If console hasn't been found yet try to assign this port
-	 * because it is required to be assigned for console setup function.
-	 * If register_console() don't assign value, then console_port pointer
+	 * because it is required to be asचिन्हित क्रम console setup function.
+	 * If रेजिस्टर_console() करोn't assign value, then console_port poपूर्णांकer
 	 * is cleanup.
 	 */
-	if (ulite_uart_driver.cons->index == -1)
+	अगर (ulite_uart_driver.cons->index == -1)
 		console_port = port;
-#endif
+#पूर्ण_अगर
 
 	/* Register the port */
 	rc = uart_add_one_port(&ulite_uart_driver, port);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(dev, "uart_add_one_port() failed; err=%i\n", rc);
 		port->mapbase = 0;
-		dev_set_drvdata(dev, NULL);
-		return rc;
-	}
+		dev_set_drvdata(dev, शून्य);
+		वापस rc;
+	पूर्ण
 
-#ifdef CONFIG_SERIAL_UARTLITE_CONSOLE
-	/* This is not port which is used for console that's why clean it up */
-	if (ulite_uart_driver.cons->index == -1)
-		console_port = NULL;
-#endif
+#अगर_घोषित CONFIG_SERIAL_UARTLITE_CONSOLE
+	/* This is not port which is used क्रम console that's why clean it up */
+	अगर (ulite_uart_driver.cons->index == -1)
+		console_port = शून्य;
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/** ulite_release: register a uartlite device with the driver
+/** ulite_release: रेजिस्टर a uartlite device with the driver
  *
- * @dev: pointer to device structure
+ * @dev: poपूर्णांकer to device काष्ठाure
  */
-static int ulite_release(struct device *dev)
-{
-	struct uart_port *port = dev_get_drvdata(dev);
-	int rc = 0;
+अटल पूर्णांक ulite_release(काष्ठा device *dev)
+अणु
+	काष्ठा uart_port *port = dev_get_drvdata(dev);
+	पूर्णांक rc = 0;
 
-	if (port) {
-		rc = uart_remove_one_port(&ulite_uart_driver, port);
-		dev_set_drvdata(dev, NULL);
+	अगर (port) अणु
+		rc = uart_हटाओ_one_port(&ulite_uart_driver, port);
+		dev_set_drvdata(dev, शून्य);
 		port->mapbase = 0;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * ulite_suspend - Stop the device.
  *
- * @dev: handle to the device structure.
+ * @dev: handle to the device काष्ठाure.
  * Return: 0 always.
  */
-static int __maybe_unused ulite_suspend(struct device *dev)
-{
-	struct uart_port *port = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused ulite_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा uart_port *port = dev_get_drvdata(dev);
 
-	if (port)
+	अगर (port)
 		uart_suspend_port(&ulite_uart_driver, port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ulite_resume - Resume the device.
  *
- * @dev: handle to the device structure.
- * Return: 0 on success, errno otherwise.
+ * @dev: handle to the device काष्ठाure.
+ * Return: 0 on success, त्रुटि_सं otherwise.
  */
-static int __maybe_unused ulite_resume(struct device *dev)
-{
-	struct uart_port *port = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused ulite_resume(काष्ठा device *dev)
+अणु
+	काष्ठा uart_port *port = dev_get_drvdata(dev);
 
-	if (port)
+	अगर (port)
 		uart_resume_port(&ulite_uart_driver, port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ---------------------------------------------------------------------
- * Platform bus binding
+ * Platक्रमm bus binding
  */
 
-static SIMPLE_DEV_PM_OPS(ulite_pm_ops, ulite_suspend, ulite_resume);
+अटल SIMPLE_DEV_PM_OPS(ulite_pm_ops, ulite_suspend, ulite_resume);
 
-#if defined(CONFIG_OF)
-/* Match table for of_platform binding */
-static const struct of_device_id ulite_of_match[] = {
-	{ .compatible = "xlnx,opb-uartlite-1.00.b", },
-	{ .compatible = "xlnx,xps-uartlite-1.00.a", },
-	{}
-};
+#अगर defined(CONFIG_OF)
+/* Match table क्रम of_platक्रमm binding */
+अटल स्थिर काष्ठा of_device_id ulite_of_match[] = अणु
+	अणु .compatible = "xlnx,opb-uartlite-1.00.b", पूर्ण,
+	अणु .compatible = "xlnx,xps-uartlite-1.00.a", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ulite_of_match);
-#endif /* CONFIG_OF */
+#पूर्ण_अगर /* CONFIG_OF */
 
-static int ulite_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	struct uartlite_data *pdata;
-	int irq, ret;
-	int id = pdev->id;
-#ifdef CONFIG_OF
-	const __be32 *prop;
+अटल पूर्णांक ulite_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा uartlite_data *pdata;
+	पूर्णांक irq, ret;
+	पूर्णांक id = pdev->id;
+#अगर_घोषित CONFIG_OF
+	स्थिर __be32 *prop;
 
-	prop = of_get_property(pdev->dev.of_node, "port-number", NULL);
-	if (prop)
+	prop = of_get_property(pdev->dev.of_node, "port-number", शून्य);
+	अगर (prop)
 		id = be32_to_cpup(prop);
-#endif
-	pdata = devm_kzalloc(&pdev->dev, sizeof(struct uartlite_data),
+#पूर्ण_अगर
+	pdata = devm_kzalloc(&pdev->dev, माप(काष्ठा uartlite_data),
 			     GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+	अगर (!pdata)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	pdata->clk = devm_clk_get(&pdev->dev, "s_axi_aclk");
-	if (IS_ERR(pdata->clk)) {
-		if (PTR_ERR(pdata->clk) != -ENOENT)
-			return PTR_ERR(pdata->clk);
+	अगर (IS_ERR(pdata->clk)) अणु
+		अगर (PTR_ERR(pdata->clk) != -ENOENT)
+			वापस PTR_ERR(pdata->clk);
 
 		/*
-		 * Clock framework support is optional, continue on
-		 * anyways if we don't find a matching clock.
+		 * Clock framework support is optional, जारी on
+		 * anyways अगर we करोn't find a matching घड़ी.
 		 */
-		pdata->clk = NULL;
-	}
+		pdata->clk = शून्य;
+	पूर्ण
 
 	ret = clk_prepare_enable(pdata->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to prepare clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!ulite_uart_driver.state) {
+	अगर (!ulite_uart_driver.state) अणु
 		dev_dbg(&pdev->dev, "uartlite: calling uart_register_driver()\n");
-		ret = uart_register_driver(&ulite_uart_driver);
-		if (ret < 0) {
+		ret = uart_रेजिस्टर_driver(&ulite_uart_driver);
+		अगर (ret < 0) अणु
 			dev_err(&pdev->dev, "Failed to register driver\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = ulite_assign(&pdev->dev, id, res->start, irq, pdata);
 
 	clk_disable(pdata->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ulite_remove(struct platform_device *pdev)
-{
-	struct uart_port *port = dev_get_drvdata(&pdev->dev);
-	struct uartlite_data *pdata = port->private_data;
+अटल पूर्णांक ulite_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_port *port = dev_get_drvdata(&pdev->dev);
+	काष्ठा uartlite_data *pdata = port->निजी_data;
 
 	clk_disable_unprepare(pdata->clk);
-	return ulite_release(&pdev->dev);
-}
+	वापस ulite_release(&pdev->dev);
+पूर्ण
 
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:uartlite");
 
-static struct platform_driver ulite_platform_driver = {
+अटल काष्ठा platक्रमm_driver ulite_platक्रमm_driver = अणु
 	.probe = ulite_probe,
-	.remove = ulite_remove,
-	.driver = {
+	.हटाओ = ulite_हटाओ,
+	.driver = अणु
 		.name  = "uartlite",
 		.of_match_table = of_match_ptr(ulite_of_match),
 		.pm = &ulite_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* ---------------------------------------------------------------------
- * Module setup/teardown
+ * Module setup/tearकरोwn
  */
 
-static int __init ulite_init(void)
-{
+अटल पूर्णांक __init ulite_init(व्योम)
+अणु
 
 	pr_debug("uartlite: calling platform_driver_register()\n");
-	return platform_driver_register(&ulite_platform_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&ulite_platक्रमm_driver);
+पूर्ण
 
-static void __exit ulite_exit(void)
-{
-	platform_driver_unregister(&ulite_platform_driver);
-	if (ulite_uart_driver.state)
-		uart_unregister_driver(&ulite_uart_driver);
-}
+अटल व्योम __निकास ulite_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&ulite_platक्रमm_driver);
+	अगर (ulite_uart_driver.state)
+		uart_unरेजिस्टर_driver(&ulite_uart_driver);
+पूर्ण
 
 module_init(ulite_init);
-module_exit(ulite_exit);
+module_निकास(ulite_निकास);
 
 MODULE_AUTHOR("Peter Korsgaard <jacmet@sunsite.dk>");
 MODULE_DESCRIPTION("Xilinx uartlite serial driver");

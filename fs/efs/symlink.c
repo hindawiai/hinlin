@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * symlink.c
  *
@@ -7,47 +8,47 @@
  * Portions derived from work (c) 1995,1996 Christian Vogelgsang.
  */
 
-#include <linux/string.h>
-#include <linux/pagemap.h>
-#include <linux/buffer_head.h>
-#include "efs.h"
+#समावेश <linux/माला.स>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/buffer_head.h>
+#समावेश "efs.h"
 
-static int efs_symlink_readpage(struct file *file, struct page *page)
-{
-	char *link = page_address(page);
-	struct buffer_head * bh;
-	struct inode * inode = page->mapping->host;
+अटल पूर्णांक efs_symlink_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	अक्षर *link = page_address(page);
+	काष्ठा buffer_head * bh;
+	काष्ठा inode * inode = page->mapping->host;
 	efs_block_t size = inode->i_size;
-	int err;
+	पूर्णांक err;
   
 	err = -ENAMETOOLONG;
-	if (size > 2 * EFS_BLOCKSIZE)
-		goto fail;
+	अगर (size > 2 * EFS_BLOCKSIZE)
+		जाओ fail;
   
-	/* read first 512 bytes of link target */
+	/* पढ़ो first 512 bytes of link target */
 	err = -EIO;
-	bh = sb_bread(inode->i_sb, efs_bmap(inode, 0));
-	if (!bh)
-		goto fail;
-	memcpy(link, bh->b_data, (size > EFS_BLOCKSIZE) ? EFS_BLOCKSIZE : size);
-	brelse(bh);
-	if (size > EFS_BLOCKSIZE) {
-		bh = sb_bread(inode->i_sb, efs_bmap(inode, 1));
-		if (!bh)
-			goto fail;
-		memcpy(link + EFS_BLOCKSIZE, bh->b_data, size - EFS_BLOCKSIZE);
-		brelse(bh);
-	}
+	bh = sb_bपढ़ो(inode->i_sb, efs_bmap(inode, 0));
+	अगर (!bh)
+		जाओ fail;
+	स_नकल(link, bh->b_data, (size > EFS_BLOCKSIZE) ? EFS_BLOCKSIZE : size);
+	brअन्यथा(bh);
+	अगर (size > EFS_BLOCKSIZE) अणु
+		bh = sb_bपढ़ो(inode->i_sb, efs_bmap(inode, 1));
+		अगर (!bh)
+			जाओ fail;
+		स_नकल(link + EFS_BLOCKSIZE, bh->b_data, size - EFS_BLOCKSIZE);
+		brअन्यथा(bh);
+	पूर्ण
 	link[size] = '\0';
 	SetPageUptodate(page);
 	unlock_page(page);
-	return 0;
+	वापस 0;
 fail:
 	SetPageError(page);
 	unlock_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct address_space_operations efs_symlink_aops = {
-	.readpage	= efs_symlink_readpage
-};
+स्थिर काष्ठा address_space_operations efs_symlink_aops = अणु
+	.पढ़ोpage	= efs_symlink_पढ़ोpage
+पूर्ण;

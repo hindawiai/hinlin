@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * GPIO driver for Fintek Super-I/O F71869, F71869A, F71882, F71889 and F81866
+ * GPIO driver क्रम Fपूर्णांकek Super-I/O F71869, F71869A, F71882, F71889 and F81866
  *
  * Copyright (C) 2010-2013 LaCie
  *
  * Author: Simon Guinot <simon.guinot@sequanux.org>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/gpio/driver.h>
-#include <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/bitops.h>
 
-#define DRVNAME "gpio-f7188x"
+#घोषणा DRVNAME "gpio-f7188x"
 
 /*
- * Super-I/O registers
+ * Super-I/O रेजिस्टरs
  */
-#define SIO_LDSEL		0x07	/* Logical device select */
-#define SIO_DEVID		0x20	/* Device ID (2 bytes) */
-#define SIO_DEVREV		0x22	/* Device revision */
-#define SIO_MANID		0x23	/* Fintek ID (2 bytes) */
+#घोषणा SIO_LDSEL		0x07	/* Logical device select */
+#घोषणा SIO_DEVID		0x20	/* Device ID (2 bytes) */
+#घोषणा SIO_DEVREV		0x22	/* Device revision */
+#घोषणा SIO_MANID		0x23	/* Fपूर्णांकek ID (2 bytes) */
 
-#define SIO_LD_GPIO		0x06	/* GPIO logical device */
-#define SIO_UNLOCK_KEY		0x87	/* Key to enable Super-I/O */
-#define SIO_LOCK_KEY		0xAA	/* Key to disable Super-I/O */
+#घोषणा SIO_LD_GPIO		0x06	/* GPIO logical device */
+#घोषणा SIO_UNLOCK_KEY		0x87	/* Key to enable Super-I/O */
+#घोषणा SIO_LOCK_KEY		0xAA	/* Key to disable Super-I/O */
 
-#define SIO_FINTEK_ID		0x1934	/* Manufacturer ID */
-#define SIO_F71869_ID		0x0814	/* F71869 chipset ID */
-#define SIO_F71869A_ID		0x1007	/* F71869A chipset ID */
-#define SIO_F71882_ID		0x0541	/* F71882 chipset ID */
-#define SIO_F71889_ID		0x0909	/* F71889 chipset ID */
-#define SIO_F71889A_ID		0x1005	/* F71889A chipset ID */
-#define SIO_F81866_ID		0x1010	/* F81866 chipset ID */
-#define SIO_F81804_ID		0x1502  /* F81804 chipset ID, same for f81966 */
-#define SIO_F81865_ID		0x0704	/* F81865 chipset ID */
+#घोषणा SIO_FINTEK_ID		0x1934	/* Manufacturer ID */
+#घोषणा SIO_F71869_ID		0x0814	/* F71869 chipset ID */
+#घोषणा SIO_F71869A_ID		0x1007	/* F71869A chipset ID */
+#घोषणा SIO_F71882_ID		0x0541	/* F71882 chipset ID */
+#घोषणा SIO_F71889_ID		0x0909	/* F71889 chipset ID */
+#घोषणा SIO_F71889A_ID		0x1005	/* F71889A chipset ID */
+#घोषणा SIO_F81866_ID		0x1010	/* F81866 chipset ID */
+#घोषणा SIO_F81804_ID		0x1502  /* F81804 chipset ID, same क्रम f81966 */
+#घोषणा SIO_F81865_ID		0x0704	/* F81865 chipset ID */
 
 
-enum chips {
+क्रमागत chips अणु
 	f71869,
 	f71869a,
 	f71882fg,
@@ -48,9 +49,9 @@ enum chips {
 	f81866,
 	f81804,
 	f81865,
-};
+पूर्ण;
 
-static const char * const f7188x_names[] = {
+अटल स्थिर अक्षर * स्थिर f7188x_names[] = अणु
 	"f71869",
 	"f71869a",
 	"f71882fg",
@@ -59,96 +60,96 @@ static const char * const f7188x_names[] = {
 	"f81866",
 	"f81804",
 	"f81865",
-};
+पूर्ण;
 
-struct f7188x_sio {
-	int addr;
-	enum chips type;
-};
+काष्ठा f7188x_sio अणु
+	पूर्णांक addr;
+	क्रमागत chips type;
+पूर्ण;
 
-struct f7188x_gpio_bank {
-	struct gpio_chip chip;
-	unsigned int regbase;
-	struct f7188x_gpio_data *data;
-};
+काष्ठा f7188x_gpio_bank अणु
+	काष्ठा gpio_chip chip;
+	अचिन्हित पूर्णांक regbase;
+	काष्ठा f7188x_gpio_data *data;
+पूर्ण;
 
-struct f7188x_gpio_data {
-	struct f7188x_sio *sio;
-	int nr_bank;
-	struct f7188x_gpio_bank *bank;
-};
+काष्ठा f7188x_gpio_data अणु
+	काष्ठा f7188x_sio *sio;
+	पूर्णांक nr_bank;
+	काष्ठा f7188x_gpio_bank *bank;
+पूर्ण;
 
 /*
  * Super-I/O functions.
  */
 
-static inline int superio_inb(int base, int reg)
-{
+अटल अंतरभूत पूर्णांक superio_inb(पूर्णांक base, पूर्णांक reg)
+अणु
 	outb(reg, base);
-	return inb(base + 1);
-}
+	वापस inb(base + 1);
+पूर्ण
 
-static int superio_inw(int base, int reg)
-{
-	int val;
+अटल पूर्णांक superio_inw(पूर्णांक base, पूर्णांक reg)
+अणु
+	पूर्णांक val;
 
 	outb(reg++, base);
 	val = inb(base + 1) << 8;
 	outb(reg, base);
 	val |= inb(base + 1);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void superio_outb(int base, int reg, int val)
-{
+अटल अंतरभूत व्योम superio_outb(पूर्णांक base, पूर्णांक reg, पूर्णांक val)
+अणु
 	outb(reg, base);
 	outb(val, base + 1);
-}
+पूर्ण
 
-static inline int superio_enter(int base)
-{
+अटल अंतरभूत पूर्णांक superio_enter(पूर्णांक base)
+अणु
 	/* Don't step on other drivers' I/O space by accident. */
-	if (!request_muxed_region(base, 2, DRVNAME)) {
+	अगर (!request_muxed_region(base, 2, DRVNAME)) अणु
 		pr_err(DRVNAME "I/O address 0x%04x already in use\n", base);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/* According to the datasheet the key must be send twice. */
 	outb(SIO_UNLOCK_KEY, base);
 	outb(SIO_UNLOCK_KEY, base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void superio_select(int base, int ld)
-{
+अटल अंतरभूत व्योम superio_select(पूर्णांक base, पूर्णांक ld)
+अणु
 	outb(SIO_LDSEL, base);
 	outb(ld, base + 1);
-}
+पूर्ण
 
-static inline void superio_exit(int base)
-{
+अटल अंतरभूत व्योम superio_निकास(पूर्णांक base)
+अणु
 	outb(SIO_LOCK_KEY, base);
 	release_region(base, 2);
-}
+पूर्ण
 
 /*
  * GPIO chip.
  */
 
-static int f7188x_gpio_get_direction(struct gpio_chip *chip, unsigned offset);
-static int f7188x_gpio_direction_in(struct gpio_chip *chip, unsigned offset);
-static int f7188x_gpio_get(struct gpio_chip *chip, unsigned offset);
-static int f7188x_gpio_direction_out(struct gpio_chip *chip,
-				     unsigned offset, int value);
-static void f7188x_gpio_set(struct gpio_chip *chip, unsigned offset, int value);
-static int f7188x_gpio_set_config(struct gpio_chip *chip, unsigned offset,
-				  unsigned long config);
+अटल पूर्णांक f7188x_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित offset);
+अटल पूर्णांक f7188x_gpio_direction_in(काष्ठा gpio_chip *chip, अचिन्हित offset);
+अटल पूर्णांक f7188x_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset);
+अटल पूर्णांक f7188x_gpio_direction_out(काष्ठा gpio_chip *chip,
+				     अचिन्हित offset, पूर्णांक value);
+अटल व्योम f7188x_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value);
+अटल पूर्णांक f7188x_gpio_set_config(काष्ठा gpio_chip *chip, अचिन्हित offset,
+				  अचिन्हित दीर्घ config);
 
-#define F7188X_GPIO_BANK(_base, _ngpio, _regbase)			\
-	{								\
-		.chip = {						\
+#घोषणा F7188X_GPIO_BANK(_base, _ngpio, _regbase)			\
+	अणु								\
+		.chip = अणु						\
 			.label            = DRVNAME,			\
 			.owner            = THIS_MODULE,		\
 			.get_direction    = f7188x_gpio_get_direction,	\
@@ -160,17 +161,17 @@ static int f7188x_gpio_set_config(struct gpio_chip *chip, unsigned offset,
 			.base             = _base,			\
 			.ngpio            = _ngpio,			\
 			.can_sleep        = true,			\
-		},							\
+		पूर्ण,							\
 		.regbase = _regbase,					\
-	}
+	पूर्ण
 
-#define gpio_dir(base) (base + 0)
-#define gpio_data_out(base) (base + 1)
-#define gpio_data_in(base) (base + 2)
-/* Output mode register (0:open drain 1:push-pull). */
-#define gpio_out_mode(base) (base + 3)
+#घोषणा gpio_dir(base) (base + 0)
+#घोषणा gpio_data_out(base) (base + 1)
+#घोषणा gpio_data_in(base) (base + 2)
+/* Output mode रेजिस्टर (0:खोलो drain 1:push-pull). */
+#घोषणा gpio_out_mode(base) (base + 3)
 
-static struct f7188x_gpio_bank f71869_gpio_bank[] = {
+अटल काष्ठा f7188x_gpio_bank f71869_gpio_bank[] = अणु
 	F7188X_GPIO_BANK(0, 6, 0xF0),
 	F7188X_GPIO_BANK(10, 8, 0xE0),
 	F7188X_GPIO_BANK(20, 8, 0xD0),
@@ -178,9 +179,9 @@ static struct f7188x_gpio_bank f71869_gpio_bank[] = {
 	F7188X_GPIO_BANK(40, 8, 0xB0),
 	F7188X_GPIO_BANK(50, 5, 0xA0),
 	F7188X_GPIO_BANK(60, 6, 0x90),
-};
+पूर्ण;
 
-static struct f7188x_gpio_bank f71869a_gpio_bank[] = {
+अटल काष्ठा f7188x_gpio_bank f71869a_gpio_bank[] = अणु
 	F7188X_GPIO_BANK(0, 6, 0xF0),
 	F7188X_GPIO_BANK(10, 8, 0xE0),
 	F7188X_GPIO_BANK(20, 8, 0xD0),
@@ -189,17 +190,17 @@ static struct f7188x_gpio_bank f71869a_gpio_bank[] = {
 	F7188X_GPIO_BANK(50, 5, 0xA0),
 	F7188X_GPIO_BANK(60, 8, 0x90),
 	F7188X_GPIO_BANK(70, 8, 0x80),
-};
+पूर्ण;
 
-static struct f7188x_gpio_bank f71882_gpio_bank[] = {
+अटल काष्ठा f7188x_gpio_bank f71882_gpio_bank[] = अणु
 	F7188X_GPIO_BANK(0, 8, 0xF0),
 	F7188X_GPIO_BANK(10, 8, 0xE0),
 	F7188X_GPIO_BANK(20, 8, 0xD0),
 	F7188X_GPIO_BANK(30, 4, 0xC0),
 	F7188X_GPIO_BANK(40, 4, 0xB0),
-};
+पूर्ण;
 
-static struct f7188x_gpio_bank f71889a_gpio_bank[] = {
+अटल काष्ठा f7188x_gpio_bank f71889a_gpio_bank[] = अणु
 	F7188X_GPIO_BANK(0, 7, 0xF0),
 	F7188X_GPIO_BANK(10, 7, 0xE0),
 	F7188X_GPIO_BANK(20, 8, 0xD0),
@@ -208,9 +209,9 @@ static struct f7188x_gpio_bank f71889a_gpio_bank[] = {
 	F7188X_GPIO_BANK(50, 5, 0xA0),
 	F7188X_GPIO_BANK(60, 8, 0x90),
 	F7188X_GPIO_BANK(70, 8, 0x80),
-};
+पूर्ण;
 
-static struct f7188x_gpio_bank f71889_gpio_bank[] = {
+अटल काष्ठा f7188x_gpio_bank f71889_gpio_bank[] = अणु
 	F7188X_GPIO_BANK(0, 7, 0xF0),
 	F7188X_GPIO_BANK(10, 7, 0xE0),
 	F7188X_GPIO_BANK(20, 8, 0xD0),
@@ -219,9 +220,9 @@ static struct f7188x_gpio_bank f71889_gpio_bank[] = {
 	F7188X_GPIO_BANK(50, 5, 0xA0),
 	F7188X_GPIO_BANK(60, 8, 0x90),
 	F7188X_GPIO_BANK(70, 8, 0x80),
-};
+पूर्ण;
 
-static struct f7188x_gpio_bank f81866_gpio_bank[] = {
+अटल काष्ठा f7188x_gpio_bank f81866_gpio_bank[] = अणु
 	F7188X_GPIO_BANK(0, 8, 0xF0),
 	F7188X_GPIO_BANK(10, 8, 0xE0),
 	F7188X_GPIO_BANK(20, 8, 0xD0),
@@ -231,10 +232,10 @@ static struct f7188x_gpio_bank f81866_gpio_bank[] = {
 	F7188X_GPIO_BANK(60, 8, 0x90),
 	F7188X_GPIO_BANK(70, 8, 0x80),
 	F7188X_GPIO_BANK(80, 8, 0x88),
-};
+पूर्ण;
 
 
-static struct f7188x_gpio_bank f81804_gpio_bank[] = {
+अटल काष्ठा f7188x_gpio_bank f81804_gpio_bank[] = अणु
 	F7188X_GPIO_BANK(0, 8, 0xF0),
 	F7188X_GPIO_BANK(10, 8, 0xE0),
 	F7188X_GPIO_BANK(20, 8, 0xD0),
@@ -242,9 +243,9 @@ static struct f7188x_gpio_bank f81804_gpio_bank[] = {
 	F7188X_GPIO_BANK(60, 8, 0x90),
 	F7188X_GPIO_BANK(70, 8, 0x80),
 	F7188X_GPIO_BANK(90, 8, 0x98),
-};
+पूर्ण;
 
-static struct f7188x_gpio_bank f81865_gpio_bank[] = {
+अटल काष्ठा f7188x_gpio_bank f81865_gpio_bank[] = अणु
 	F7188X_GPIO_BANK(0, 8, 0xF0),
 	F7188X_GPIO_BANK(10, 8, 0xE0),
 	F7188X_GPIO_BANK(20, 8, 0xD0),
@@ -252,92 +253,92 @@ static struct f7188x_gpio_bank f81865_gpio_bank[] = {
 	F7188X_GPIO_BANK(40, 8, 0xB0),
 	F7188X_GPIO_BANK(50, 8, 0xA0),
 	F7188X_GPIO_BANK(60, 5, 0x90),
-};
+पूर्ण;
 
-static int f7188x_gpio_get_direction(struct gpio_chip *chip, unsigned offset)
-{
-	int err;
-	struct f7188x_gpio_bank *bank = gpiochip_get_data(chip);
-	struct f7188x_sio *sio = bank->data->sio;
+अटल पूर्णांक f7188x_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	पूर्णांक err;
+	काष्ठा f7188x_gpio_bank *bank = gpiochip_get_data(chip);
+	काष्ठा f7188x_sio *sio = bank->data->sio;
 	u8 dir;
 
 	err = superio_enter(sio->addr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	superio_select(sio->addr, SIO_LD_GPIO);
 
 	dir = superio_inb(sio->addr, gpio_dir(bank->regbase));
 
-	superio_exit(sio->addr);
+	superio_निकास(sio->addr);
 
-	if (dir & 1 << offset)
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (dir & 1 << offset)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int f7188x_gpio_direction_in(struct gpio_chip *chip, unsigned offset)
-{
-	int err;
-	struct f7188x_gpio_bank *bank = gpiochip_get_data(chip);
-	struct f7188x_sio *sio = bank->data->sio;
+अटल पूर्णांक f7188x_gpio_direction_in(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	पूर्णांक err;
+	काष्ठा f7188x_gpio_bank *bank = gpiochip_get_data(chip);
+	काष्ठा f7188x_sio *sio = bank->data->sio;
 	u8 dir;
 
 	err = superio_enter(sio->addr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	superio_select(sio->addr, SIO_LD_GPIO);
 
 	dir = superio_inb(sio->addr, gpio_dir(bank->regbase));
 	dir &= ~BIT(offset);
 	superio_outb(sio->addr, gpio_dir(bank->regbase), dir);
 
-	superio_exit(sio->addr);
+	superio_निकास(sio->addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int f7188x_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	int err;
-	struct f7188x_gpio_bank *bank = gpiochip_get_data(chip);
-	struct f7188x_sio *sio = bank->data->sio;
+अटल पूर्णांक f7188x_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	पूर्णांक err;
+	काष्ठा f7188x_gpio_bank *bank = gpiochip_get_data(chip);
+	काष्ठा f7188x_sio *sio = bank->data->sio;
 	u8 dir, data;
 
 	err = superio_enter(sio->addr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	superio_select(sio->addr, SIO_LD_GPIO);
 
 	dir = superio_inb(sio->addr, gpio_dir(bank->regbase));
 	dir = !!(dir & BIT(offset));
-	if (dir)
+	अगर (dir)
 		data = superio_inb(sio->addr, gpio_data_out(bank->regbase));
-	else
+	अन्यथा
 		data = superio_inb(sio->addr, gpio_data_in(bank->regbase));
 
-	superio_exit(sio->addr);
+	superio_निकास(sio->addr);
 
-	return !!(data & BIT(offset));
-}
+	वापस !!(data & BIT(offset));
+पूर्ण
 
-static int f7188x_gpio_direction_out(struct gpio_chip *chip,
-				     unsigned offset, int value)
-{
-	int err;
-	struct f7188x_gpio_bank *bank = gpiochip_get_data(chip);
-	struct f7188x_sio *sio = bank->data->sio;
+अटल पूर्णांक f7188x_gpio_direction_out(काष्ठा gpio_chip *chip,
+				     अचिन्हित offset, पूर्णांक value)
+अणु
+	पूर्णांक err;
+	काष्ठा f7188x_gpio_bank *bank = gpiochip_get_data(chip);
+	काष्ठा f7188x_sio *sio = bank->data->sio;
 	u8 dir, data_out;
 
 	err = superio_enter(sio->addr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	superio_select(sio->addr, SIO_LD_GPIO);
 
 	data_out = superio_inb(sio->addr, gpio_data_out(bank->regbase));
-	if (value)
+	अगर (value)
 		data_out |= BIT(offset);
-	else
+	अन्यथा
 		data_out &= ~BIT(offset);
 	superio_outb(sio->addr, gpio_data_out(bank->regbase), data_out);
 
@@ -345,266 +346,266 @@ static int f7188x_gpio_direction_out(struct gpio_chip *chip,
 	dir |= BIT(offset);
 	superio_outb(sio->addr, gpio_dir(bank->regbase), dir);
 
-	superio_exit(sio->addr);
+	superio_निकास(sio->addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void f7188x_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	int err;
-	struct f7188x_gpio_bank *bank = gpiochip_get_data(chip);
-	struct f7188x_sio *sio = bank->data->sio;
+अटल व्योम f7188x_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	पूर्णांक err;
+	काष्ठा f7188x_gpio_bank *bank = gpiochip_get_data(chip);
+	काष्ठा f7188x_sio *sio = bank->data->sio;
 	u8 data_out;
 
 	err = superio_enter(sio->addr);
-	if (err)
-		return;
+	अगर (err)
+		वापस;
 	superio_select(sio->addr, SIO_LD_GPIO);
 
 	data_out = superio_inb(sio->addr, gpio_data_out(bank->regbase));
-	if (value)
+	अगर (value)
 		data_out |= BIT(offset);
-	else
+	अन्यथा
 		data_out &= ~BIT(offset);
 	superio_outb(sio->addr, gpio_data_out(bank->regbase), data_out);
 
-	superio_exit(sio->addr);
-}
+	superio_निकास(sio->addr);
+पूर्ण
 
-static int f7188x_gpio_set_config(struct gpio_chip *chip, unsigned offset,
-				  unsigned long config)
-{
-	int err;
-	enum pin_config_param param = pinconf_to_config_param(config);
-	struct f7188x_gpio_bank *bank = gpiochip_get_data(chip);
-	struct f7188x_sio *sio = bank->data->sio;
+अटल पूर्णांक f7188x_gpio_set_config(काष्ठा gpio_chip *chip, अचिन्हित offset,
+				  अचिन्हित दीर्घ config)
+अणु
+	पूर्णांक err;
+	क्रमागत pin_config_param param = pinconf_to_config_param(config);
+	काष्ठा f7188x_gpio_bank *bank = gpiochip_get_data(chip);
+	काष्ठा f7188x_sio *sio = bank->data->sio;
 	u8 data;
 
-	if (param != PIN_CONFIG_DRIVE_OPEN_DRAIN &&
+	अगर (param != PIN_CONFIG_DRIVE_OPEN_DRAIN &&
 	    param != PIN_CONFIG_DRIVE_PUSH_PULL)
-		return -ENOTSUPP;
+		वापस -ENOTSUPP;
 
 	err = superio_enter(sio->addr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	superio_select(sio->addr, SIO_LD_GPIO);
 
 	data = superio_inb(sio->addr, gpio_out_mode(bank->regbase));
-	if (param == PIN_CONFIG_DRIVE_OPEN_DRAIN)
+	अगर (param == PIN_CONFIG_DRIVE_OPEN_DRAIN)
 		data &= ~BIT(offset);
-	else
+	अन्यथा
 		data |= BIT(offset);
 	superio_outb(sio->addr, gpio_out_mode(bank->regbase), data);
 
-	superio_exit(sio->addr);
-	return 0;
-}
+	superio_निकास(sio->addr);
+	वापस 0;
+पूर्ण
 
 /*
- * Platform device and driver.
+ * Platक्रमm device and driver.
  */
 
-static int f7188x_gpio_probe(struct platform_device *pdev)
-{
-	int err;
-	int i;
-	struct f7188x_sio *sio = dev_get_platdata(&pdev->dev);
-	struct f7188x_gpio_data *data;
+अटल पूर्णांक f7188x_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक err;
+	पूर्णांक i;
+	काष्ठा f7188x_sio *sio = dev_get_platdata(&pdev->dev);
+	काष्ठा f7188x_gpio_data *data;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
-	switch (sio->type) {
-	case f71869:
+	चयन (sio->type) अणु
+	हाल f71869:
 		data->nr_bank = ARRAY_SIZE(f71869_gpio_bank);
 		data->bank = f71869_gpio_bank;
-		break;
-	case f71869a:
+		अवरोध;
+	हाल f71869a:
 		data->nr_bank = ARRAY_SIZE(f71869a_gpio_bank);
 		data->bank = f71869a_gpio_bank;
-		break;
-	case f71882fg:
+		अवरोध;
+	हाल f71882fg:
 		data->nr_bank = ARRAY_SIZE(f71882_gpio_bank);
 		data->bank = f71882_gpio_bank;
-		break;
-	case f71889a:
+		अवरोध;
+	हाल f71889a:
 		data->nr_bank = ARRAY_SIZE(f71889a_gpio_bank);
 		data->bank = f71889a_gpio_bank;
-		break;
-	case f71889f:
+		अवरोध;
+	हाल f71889f:
 		data->nr_bank = ARRAY_SIZE(f71889_gpio_bank);
 		data->bank = f71889_gpio_bank;
-		break;
-	case f81866:
+		अवरोध;
+	हाल f81866:
 		data->nr_bank = ARRAY_SIZE(f81866_gpio_bank);
 		data->bank = f81866_gpio_bank;
-		break;
-	case  f81804:
+		अवरोध;
+	हाल  f81804:
 		data->nr_bank = ARRAY_SIZE(f81804_gpio_bank);
 		data->bank = f81804_gpio_bank;
-		break;
-	case f81865:
+		अवरोध;
+	हाल f81865:
 		data->nr_bank = ARRAY_SIZE(f81865_gpio_bank);
 		data->bank = f81865_gpio_bank;
-		break;
-	default:
-		return -ENODEV;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 	data->sio = sio;
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
-	/* For each GPIO bank, register a GPIO chip. */
-	for (i = 0; i < data->nr_bank; i++) {
-		struct f7188x_gpio_bank *bank = &data->bank[i];
+	/* For each GPIO bank, रेजिस्टर a GPIO chip. */
+	क्रम (i = 0; i < data->nr_bank; i++) अणु
+		काष्ठा f7188x_gpio_bank *bank = &data->bank[i];
 
 		bank->chip.parent = &pdev->dev;
 		bank->data = data;
 
 		err = devm_gpiochip_add_data(&pdev->dev, &bank->chip, bank);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&pdev->dev,
 				"Failed to register gpiochip %d: %d\n",
 				i, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init f7188x_find(int addr, struct f7188x_sio *sio)
-{
-	int err;
+अटल पूर्णांक __init f7188x_find(पूर्णांक addr, काष्ठा f7188x_sio *sio)
+अणु
+	पूर्णांक err;
 	u16 devid;
 
 	err = superio_enter(addr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = -ENODEV;
 	devid = superio_inw(addr, SIO_MANID);
-	if (devid != SIO_FINTEK_ID) {
+	अगर (devid != SIO_FINTEK_ID) अणु
 		pr_debug(DRVNAME ": Not a Fintek device at 0x%08x\n", addr);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	devid = superio_inw(addr, SIO_DEVID);
-	switch (devid) {
-	case SIO_F71869_ID:
+	चयन (devid) अणु
+	हाल SIO_F71869_ID:
 		sio->type = f71869;
-		break;
-	case SIO_F71869A_ID:
+		अवरोध;
+	हाल SIO_F71869A_ID:
 		sio->type = f71869a;
-		break;
-	case SIO_F71882_ID:
+		अवरोध;
+	हाल SIO_F71882_ID:
 		sio->type = f71882fg;
-		break;
-	case SIO_F71889A_ID:
+		अवरोध;
+	हाल SIO_F71889A_ID:
 		sio->type = f71889a;
-		break;
-	case SIO_F71889_ID:
+		अवरोध;
+	हाल SIO_F71889_ID:
 		sio->type = f71889f;
-		break;
-	case SIO_F81866_ID:
+		अवरोध;
+	हाल SIO_F81866_ID:
 		sio->type = f81866;
-		break;
-	case SIO_F81804_ID:
+		अवरोध;
+	हाल SIO_F81804_ID:
 		sio->type = f81804;
-		break;
-	case SIO_F81865_ID:
+		अवरोध;
+	हाल SIO_F81865_ID:
 		sio->type = f81865;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_info(DRVNAME ": Unsupported Fintek device 0x%04x\n", devid);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	sio->addr = addr;
 	err = 0;
 
 	pr_info(DRVNAME ": Found %s at %#x, revision %d\n",
 		f7188x_names[sio->type],
-		(unsigned int) addr,
-		(int) superio_inb(addr, SIO_DEVREV));
+		(अचिन्हित पूर्णांक) addr,
+		(पूर्णांक) superio_inb(addr, SIO_DEVREV));
 
 err:
-	superio_exit(addr);
-	return err;
-}
+	superio_निकास(addr);
+	वापस err;
+पूर्ण
 
-static struct platform_device *f7188x_gpio_pdev;
+अटल काष्ठा platक्रमm_device *f7188x_gpio_pdev;
 
-static int __init
-f7188x_gpio_device_add(const struct f7188x_sio *sio)
-{
-	int err;
+अटल पूर्णांक __init
+f7188x_gpio_device_add(स्थिर काष्ठा f7188x_sio *sio)
+अणु
+	पूर्णांक err;
 
-	f7188x_gpio_pdev = platform_device_alloc(DRVNAME, -1);
-	if (!f7188x_gpio_pdev)
-		return -ENOMEM;
+	f7188x_gpio_pdev = platक्रमm_device_alloc(DRVNAME, -1);
+	अगर (!f7188x_gpio_pdev)
+		वापस -ENOMEM;
 
-	err = platform_device_add_data(f7188x_gpio_pdev,
-				       sio, sizeof(*sio));
-	if (err) {
+	err = platक्रमm_device_add_data(f7188x_gpio_pdev,
+				       sio, माप(*sio));
+	अगर (err) अणु
 		pr_err(DRVNAME "Platform data allocation failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	err = platform_device_add(f7188x_gpio_pdev);
-	if (err) {
+	err = platक्रमm_device_add(f7188x_gpio_pdev);
+	अगर (err) अणु
 		pr_err(DRVNAME "Device addition failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	platform_device_put(f7188x_gpio_pdev);
+	platक्रमm_device_put(f7188x_gpio_pdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Try to match a supported Fintek device by reading the (hard-wired)
- * configuration I/O ports. If available, then register both the platform
+ * Try to match a supported Fपूर्णांकek device by पढ़ोing the (hard-wired)
+ * configuration I/O ports. If available, then रेजिस्टर both the platक्रमm
  * device and driver to support the GPIOs.
  */
 
-static struct platform_driver f7188x_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver f7188x_gpio_driver = अणु
+	.driver = अणु
 		.name	= DRVNAME,
-	},
+	पूर्ण,
 	.probe		= f7188x_gpio_probe,
-};
+पूर्ण;
 
-static int __init f7188x_gpio_init(void)
-{
-	int err;
-	struct f7188x_sio sio;
+अटल पूर्णांक __init f7188x_gpio_init(व्योम)
+अणु
+	पूर्णांक err;
+	काष्ठा f7188x_sio sio;
 
-	if (f7188x_find(0x2e, &sio) &&
+	अगर (f7188x_find(0x2e, &sio) &&
 	    f7188x_find(0x4e, &sio))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	err = platform_driver_register(&f7188x_gpio_driver);
-	if (!err) {
+	err = platक्रमm_driver_रेजिस्टर(&f7188x_gpio_driver);
+	अगर (!err) अणु
 		err = f7188x_gpio_device_add(&sio);
-		if (err)
-			platform_driver_unregister(&f7188x_gpio_driver);
-	}
+		अगर (err)
+			platक्रमm_driver_unरेजिस्टर(&f7188x_gpio_driver);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 subsys_initcall(f7188x_gpio_init);
 
-static void __exit f7188x_gpio_exit(void)
-{
-	platform_device_unregister(f7188x_gpio_pdev);
-	platform_driver_unregister(&f7188x_gpio_driver);
-}
-module_exit(f7188x_gpio_exit);
+अटल व्योम __निकास f7188x_gpio_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(f7188x_gpio_pdev);
+	platक्रमm_driver_unरेजिस्टर(&f7188x_gpio_driver);
+पूर्ण
+module_निकास(f7188x_gpio_निकास);
 
 MODULE_DESCRIPTION("GPIO driver for Super-I/O chips F71869, F71869A, F71882FG, F71889A, F71889F and F81866");
 MODULE_AUTHOR("Simon Guinot <simon.guinot@sequanux.org>");

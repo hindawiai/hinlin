@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TI da8xx master peripheral priority driver
  *
@@ -8,29 +9,29 @@
  *   Bartosz Golaszewski <bgolaszewski@baylibre.com>
  */
 
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/regmap.h>
 
 /*
- * REVISIT: Linux doesn't have a good framework for the kind of performance
+ * REVISIT: Linux करोesn't have a good framework क्रम the kind of perक्रमmance
  * knobs this driver controls. We can't use device tree properties as it deals
- * with hardware configuration rather than description. We also don't want to
- * commit to maintaining some random sysfs attributes.
+ * with hardware configuration rather than description. We also करोn't want to
+ * commit to मुख्यtaining some अक्रमom sysfs attributes.
  *
- * For now we just hardcode the register values for the boards that need
- * some changes (as is the case for the LCD controller on da850-lcdk - the
- * first board we support here). When linux gets an appropriate framework,
+ * For now we just hardcode the रेजिस्टर values क्रम the boards that need
+ * some changes (as is the हाल क्रम the LCD controller on da850-lcdk - the
+ * first board we support here). When linux माला_लो an appropriate framework,
  * we'll easily convert the driver to it.
  */
 
-#define DA8XX_MSTPRI0_OFFSET		0
-#define DA8XX_MSTPRI1_OFFSET		4
-#define DA8XX_MSTPRI2_OFFSET		8
+#घोषणा DA8XX_MSTPRI0_OFFSET		0
+#घोषणा DA8XX_MSTPRI1_OFFSET		4
+#घोषणा DA8XX_MSTPRI2_OFFSET		8
 
-enum {
+क्रमागत अणु
 	DA8XX_MSTPRI_ARM_I = 0,
 	DA8XX_MSTPRI_ARM_D,
 	DA8XX_MSTPRI_UPP,
@@ -48,216 +49,216 @@ enum {
 	DA8XX_MSTPRI_UHPI,
 	DA8XX_MSTPRI_USB1,
 	DA8XX_MSTPRI_LCDC,
-};
+पूर्ण;
 
-struct da8xx_mstpri_descr {
-	int reg;
-	int shift;
-	int mask;
-};
+काष्ठा da8xx_mstpri_descr अणु
+	पूर्णांक reg;
+	पूर्णांक shअगरt;
+	पूर्णांक mask;
+पूर्ण;
 
-static const struct da8xx_mstpri_descr da8xx_mstpri_priority_list[] = {
-	[DA8XX_MSTPRI_ARM_I] = {
+अटल स्थिर काष्ठा da8xx_mstpri_descr da8xx_mstpri_priority_list[] = अणु
+	[DA8XX_MSTPRI_ARM_I] = अणु
 		.reg = DA8XX_MSTPRI0_OFFSET,
-		.shift = 0,
+		.shअगरt = 0,
 		.mask = 0x0000000f,
-	},
-	[DA8XX_MSTPRI_ARM_D] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_ARM_D] = अणु
 		.reg = DA8XX_MSTPRI0_OFFSET,
-		.shift = 4,
+		.shअगरt = 4,
 		.mask = 0x000000f0,
-	},
-	[DA8XX_MSTPRI_UPP] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_UPP] = अणु
 		.reg = DA8XX_MSTPRI0_OFFSET,
-		.shift = 16,
+		.shअगरt = 16,
 		.mask = 0x000f0000,
-	},
-	[DA8XX_MSTPRI_SATA] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_SATA] = अणु
 		.reg = DA8XX_MSTPRI0_OFFSET,
-		.shift = 20,
+		.shअगरt = 20,
 		.mask = 0x00f00000,
-	},
-	[DA8XX_MSTPRI_PRU0] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_PRU0] = अणु
 		.reg = DA8XX_MSTPRI1_OFFSET,
-		.shift = 0,
+		.shअगरt = 0,
 		.mask = 0x0000000f,
-	},
-	[DA8XX_MSTPRI_PRU1] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_PRU1] = अणु
 		.reg = DA8XX_MSTPRI1_OFFSET,
-		.shift = 4,
+		.shअगरt = 4,
 		.mask = 0x000000f0,
-	},
-	[DA8XX_MSTPRI_EDMA30TC0] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_EDMA30TC0] = अणु
 		.reg = DA8XX_MSTPRI1_OFFSET,
-		.shift = 8,
+		.shअगरt = 8,
 		.mask = 0x00000f00,
-	},
-	[DA8XX_MSTPRI_EDMA30TC1] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_EDMA30TC1] = अणु
 		.reg = DA8XX_MSTPRI1_OFFSET,
-		.shift = 12,
+		.shअगरt = 12,
 		.mask = 0x0000f000,
-	},
-	[DA8XX_MSTPRI_EDMA31TC0] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_EDMA31TC0] = अणु
 		.reg = DA8XX_MSTPRI1_OFFSET,
-		.shift = 16,
+		.shअगरt = 16,
 		.mask = 0x000f0000,
-	},
-	[DA8XX_MSTPRI_VPIF_DMA_0] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_VPIF_DMA_0] = अणु
 		.reg = DA8XX_MSTPRI1_OFFSET,
-		.shift = 24,
+		.shअगरt = 24,
 		.mask = 0x0f000000,
-	},
-	[DA8XX_MSTPRI_VPIF_DMA_1] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_VPIF_DMA_1] = अणु
 		.reg = DA8XX_MSTPRI1_OFFSET,
-		.shift = 28,
+		.shअगरt = 28,
 		.mask = 0xf0000000,
-	},
-	[DA8XX_MSTPRI_EMAC] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_EMAC] = अणु
 		.reg = DA8XX_MSTPRI2_OFFSET,
-		.shift = 0,
+		.shअगरt = 0,
 		.mask = 0x0000000f,
-	},
-	[DA8XX_MSTPRI_USB0CFG] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_USB0CFG] = अणु
 		.reg = DA8XX_MSTPRI2_OFFSET,
-		.shift = 8,
+		.shअगरt = 8,
 		.mask = 0x00000f00,
-	},
-	[DA8XX_MSTPRI_USB0CDMA] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_USB0CDMA] = अणु
 		.reg = DA8XX_MSTPRI2_OFFSET,
-		.shift = 12,
+		.shअगरt = 12,
 		.mask = 0x0000f000,
-	},
-	[DA8XX_MSTPRI_UHPI] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_UHPI] = अणु
 		.reg = DA8XX_MSTPRI2_OFFSET,
-		.shift = 20,
+		.shअगरt = 20,
 		.mask = 0x00f00000,
-	},
-	[DA8XX_MSTPRI_USB1] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_USB1] = अणु
 		.reg = DA8XX_MSTPRI2_OFFSET,
-		.shift = 24,
+		.shअगरt = 24,
 		.mask = 0x0f000000,
-	},
-	[DA8XX_MSTPRI_LCDC] = {
+	पूर्ण,
+	[DA8XX_MSTPRI_LCDC] = अणु
 		.reg = DA8XX_MSTPRI2_OFFSET,
-		.shift = 28,
+		.shअगरt = 28,
 		.mask = 0xf0000000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct da8xx_mstpri_priority {
-	int which;
+काष्ठा da8xx_mstpri_priority अणु
+	पूर्णांक which;
 	u32 val;
-};
+पूर्ण;
 
-struct da8xx_mstpri_board_priorities {
-	const char *board;
-	const struct da8xx_mstpri_priority *priorities;
-	size_t numprio;
-};
+काष्ठा da8xx_mstpri_board_priorities अणु
+	स्थिर अक्षर *board;
+	स्थिर काष्ठा da8xx_mstpri_priority *priorities;
+	माप_प्रकार numprio;
+पूर्ण;
 
 /*
- * Default memory settings of da850 do not meet the throughput/latency
+ * Default memory settings of da850 करो not meet the throughput/latency
  * requirements of tilcdc. This results in the image displayed being
  * incorrect and the following warning being displayed by the LCDC
  * drm driver:
  *
  *   tilcdc da8xx_lcdc.0: tilcdc_crtc_irq(0x00000020): FIFO underfow
  */
-static const struct da8xx_mstpri_priority da850_lcdk_priorities[] = {
-	{
+अटल स्थिर काष्ठा da8xx_mstpri_priority da850_lcdk_priorities[] = अणु
+	अणु
 		.which = DA8XX_MSTPRI_LCDC,
 		.val = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.which = DA8XX_MSTPRI_EDMA30TC1,
 		.val = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.which = DA8XX_MSTPRI_EDMA30TC0,
 		.val = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct da8xx_mstpri_board_priorities da8xx_mstpri_board_confs[] = {
-	{
+अटल स्थिर काष्ठा da8xx_mstpri_board_priorities da8xx_mstpri_board_confs[] = अणु
+	अणु
 		.board = "ti,da850-lcdk",
 		.priorities = da850_lcdk_priorities,
 		.numprio = ARRAY_SIZE(da850_lcdk_priorities),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct da8xx_mstpri_board_priorities *
-da8xx_mstpri_get_board_prio(void)
-{
-	const struct da8xx_mstpri_board_priorities *board_prio;
-	int i;
+अटल स्थिर काष्ठा da8xx_mstpri_board_priorities *
+da8xx_mstpri_get_board_prio(व्योम)
+अणु
+	स्थिर काष्ठा da8xx_mstpri_board_priorities *board_prio;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(da8xx_mstpri_board_confs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(da8xx_mstpri_board_confs); i++) अणु
 		board_prio = &da8xx_mstpri_board_confs[i];
 
-		if (of_machine_is_compatible(board_prio->board))
-			return board_prio;
-	}
+		अगर (of_machine_is_compatible(board_prio->board))
+			वापस board_prio;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int da8xx_mstpri_probe(struct platform_device *pdev)
-{
-	const struct da8xx_mstpri_board_priorities *prio_list;
-	const struct da8xx_mstpri_descr *prio_descr;
-	const struct da8xx_mstpri_priority *prio;
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	void __iomem *mstpri;
+अटल पूर्णांक da8xx_mstpri_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा da8xx_mstpri_board_priorities *prio_list;
+	स्थिर काष्ठा da8xx_mstpri_descr *prio_descr;
+	स्थिर काष्ठा da8xx_mstpri_priority *prio;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	व्योम __iomem *mstpri;
 	u32 reg;
-	int i;
+	पूर्णांक i;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	mstpri = devm_ioremap_resource(dev, res);
-	if (IS_ERR(mstpri)) {
+	अगर (IS_ERR(mstpri)) अणु
 		dev_err(dev, "unable to map MSTPRI registers\n");
-		return PTR_ERR(mstpri);
-	}
+		वापस PTR_ERR(mstpri);
+	पूर्ण
 
 	prio_list = da8xx_mstpri_get_board_prio();
-	if (!prio_list) {
+	अगर (!prio_list) अणु
 		dev_err(dev, "no master priorities defined for this board\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < prio_list->numprio; i++) {
+	क्रम (i = 0; i < prio_list->numprio; i++) अणु
 		prio = &prio_list->priorities[i];
 		prio_descr = &da8xx_mstpri_priority_list[prio->which];
 
-		if (prio_descr->reg + sizeof(u32) > resource_size(res)) {
+		अगर (prio_descr->reg + माप(u32) > resource_size(res)) अणु
 			dev_warn(dev, "register offset out of range\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		reg = readl(mstpri + prio_descr->reg);
+		reg = पढ़ोl(mstpri + prio_descr->reg);
 		reg &= ~prio_descr->mask;
-		reg |= prio->val << prio_descr->shift;
+		reg |= prio->val << prio_descr->shअगरt;
 
-		writel(reg, mstpri + prio_descr->reg);
-	}
+		ग_लिखोl(reg, mstpri + prio_descr->reg);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id da8xx_mstpri_of_match[] = {
-	{ .compatible = "ti,da850-mstpri", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id da8xx_mstpri_of_match[] = अणु
+	अणु .compatible = "ti,da850-mstpri", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver da8xx_mstpri_driver = {
+अटल काष्ठा platक्रमm_driver da8xx_mstpri_driver = अणु
 	.probe = da8xx_mstpri_probe,
-	.driver = {
+	.driver = अणु
 		.name = "da8xx-mstpri",
 		.of_match_table = da8xx_mstpri_of_match,
-	},
-};
-module_platform_driver(da8xx_mstpri_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(da8xx_mstpri_driver);
 
 MODULE_AUTHOR("Bartosz Golaszewski <bgolaszewski@baylibre.com>");
 MODULE_DESCRIPTION("TI da8xx master peripheral priority driver");

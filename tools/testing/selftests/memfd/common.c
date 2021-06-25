@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
-#define __EXPORTED_HEADERS__
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
+#घोषणा __EXPORTED_HEADERS__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <linux/fcntl.h>
-#include <linux/memfd.h>
-#include <unistd.h>
-#include <sys/syscall.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/memfd.h>
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-int hugetlbfs_test = 0;
+पूर्णांक hugetlbfs_test = 0;
 
 /*
  * Copied from mlock2-tests.c
  */
-unsigned long default_huge_page_size(void)
-{
-	unsigned long hps = 0;
-	char *line = NULL;
-	size_t linelen = 0;
-	FILE *f = fopen("/proc/meminfo", "r");
+अचिन्हित दीर्घ शेष_huge_page_size(व्योम)
+अणु
+	अचिन्हित दीर्घ hps = 0;
+	अक्षर *line = शून्य;
+	माप_प्रकार linelen = 0;
+	खाता *f = ख_खोलो("/proc/meminfo", "r");
 
-	if (!f)
-		return 0;
-	while (getline(&line, &linelen, f) > 0) {
-		if (sscanf(line, "Hugepagesize:       %lu kB", &hps) == 1) {
+	अगर (!f)
+		वापस 0;
+	जबतक (getline(&line, &linelen, f) > 0) अणु
+		अगर (माला_पूछो(line, "Hugepagesize:       %lu kB", &hps) == 1) अणु
 			hps <<= 10;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	free(line);
-	fclose(f);
-	return hps;
-}
+	मुक्त(line);
+	ख_बंद(f);
+	वापस hps;
+पूर्ण
 
-int sys_memfd_create(const char *name, unsigned int flags)
-{
-	if (hugetlbfs_test)
+पूर्णांक sys_memfd_create(स्थिर अक्षर *name, अचिन्हित पूर्णांक flags)
+अणु
+	अगर (hugetlbfs_test)
 		flags |= MFD_HUGETLB;
 
-	return syscall(__NR_memfd_create, name, flags);
-}
+	वापस syscall(__NR_memfd_create, name, flags);
+पूर्ण

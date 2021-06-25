@@ -1,59 +1,60 @@
-{
+<शैली गुरु>
+अणु
 	"check bpf_perf_event_data->sample_period byte load permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct bpf_perf_event_data, sample_period)),
-#else
+		    दुरत्व(काष्ठा bpf_perf_event_data, sample_period)),
+#अन्यथा
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct bpf_perf_event_data, sample_period) + 7),
-#endif
+		    दुरत्व(काष्ठा bpf_perf_event_data, sample_period) + 7),
+#पूर्ण_अगर
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_PERF_EVENT,
-},
-{
+पूर्ण,
+अणु
 	"check bpf_perf_event_data->sample_period half load permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct bpf_perf_event_data, sample_period)),
-#else
+		    दुरत्व(काष्ठा bpf_perf_event_data, sample_period)),
+#अन्यथा
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct bpf_perf_event_data, sample_period) + 6),
-#endif
+		    दुरत्व(काष्ठा bpf_perf_event_data, sample_period) + 6),
+#पूर्ण_अगर
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_PERF_EVENT,
-},
-{
+पूर्ण,
+अणु
 	"check bpf_perf_event_data->sample_period word load permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct bpf_perf_event_data, sample_period)),
-#else
+		    दुरत्व(काष्ठा bpf_perf_event_data, sample_period)),
+#अन्यथा
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct bpf_perf_event_data, sample_period) + 4),
-#endif
+		    दुरत्व(काष्ठा bpf_perf_event_data, sample_period) + 4),
+#पूर्ण_अगर
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_PERF_EVENT,
-},
-{
+पूर्ण,
+अणु
 	"check bpf_perf_event_data->sample_period dword load permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct bpf_perf_event_data, sample_period)),
+		    दुरत्व(काष्ठा bpf_perf_event_data, sample_period)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_PERF_EVENT,
-},
+पूर्ण,

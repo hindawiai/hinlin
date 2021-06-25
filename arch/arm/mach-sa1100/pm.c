@@ -1,64 +1,65 @@
+<शैली गुरु>
 /*
  * SA1100 Power Management Routines
  *
- * Copyright (c) 2001 Cliff Brake <cbrake@accelent.com>
+ * Copyright (c) 2001 Clअगरf Brake <cbrake@accelent.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License.
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License.
  *
  * History:
  *
- * 2001-02-06:	Cliff Brake         Initial code
+ * 2001-02-06:	Clअगरf Brake         Initial code
  *
  * 2001-02-25:	Sukjae Cho <sjcho@east.isi.edu> &
  * 		Chester Kuo <chester@linux.org.tw>
- * 			Save more value for the resume function! Support
+ * 			Save more value क्रम the resume function! Support
  * 			Bitsy/Assabet/Freebird board
  *
  * 2001-08-29:	Nicolas Pitre <nico@fluxnic.net>
- * 			Cleaned up, pushed platform dependent stuff
- * 			in the platform specific files.
+ * 			Cleaned up, pushed platक्रमm dependent stuff
+ * 			in the platक्रमm specअगरic files.
  *
- * 2002-05-27:	Nicolas Pitre	Killed sleep.h and the kmalloced save array.
+ * 2002-05-27:	Nicolas Pitre	Killed sleep.h and the kदो_स्मृतिed save array.
  * 				Storage is local on the stack now.
  */
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/suspend.h>
-#include <linux/errno.h>
-#include <linux/time.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/suspend.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/समय.स>
 
-#include <mach/hardware.h>
-#include <asm/memory.h>
-#include <asm/suspend.h>
-#include <asm/mach/time.h>
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/memory.h>
+#समावेश <यंत्र/suspend.h>
+#समावेश <यंत्र/mach/समय.स>
 
-extern int sa1100_finish_suspend(unsigned long);
+बाह्य पूर्णांक sa1100_finish_suspend(अचिन्हित दीर्घ);
 
-#define SAVE(x)		sleep_save[SLEEP_SAVE_##x] = x
-#define RESTORE(x)	x = sleep_save[SLEEP_SAVE_##x]
+#घोषणा SAVE(x)		sleep_save[SLEEP_SAVE_##x] = x
+#घोषणा RESTORE(x)	x = sleep_save[SLEEP_SAVE_##x]
 
 /*
- * List of global SA11x0 peripheral registers to preserve.
- * More ones like CP and general purpose register values are preserved
- * on the stack and then the stack pointer is stored last in sleep.S.
+ * List of global SA11x0 peripheral रेजिस्टरs to preserve.
+ * More ones like CP and general purpose रेजिस्टर values are preserved
+ * on the stack and then the stack poपूर्णांकer is stored last in sleep.S.
  */
-enum {	SLEEP_SAVE_GPDR, SLEEP_SAVE_GAFR,
+क्रमागत अणु	SLEEP_SAVE_GPDR, SLEEP_SAVE_GAFR,
 	SLEEP_SAVE_PPDR, SLEEP_SAVE_PPSR, SLEEP_SAVE_PPAR, SLEEP_SAVE_PSDR,
 
 	SLEEP_SAVE_Ser1SDCR0,
 
 	SLEEP_SAVE_COUNT
-};
+पूर्ण;
 
 
-static int sa11x0_pm_enter(suspend_state_t state)
-{
-	unsigned long gpio, sleep_save[SLEEP_SAVE_COUNT];
+अटल पूर्णांक sa11x0_pm_enter(suspend_state_t state)
+अणु
+	अचिन्हित दीर्घ gpio, sleep_save[SLEEP_SAVE_COUNT];
 
 	gpio = GPLR;
 
-	/* save vital registers */
+	/* save vital रेजिस्टरs */
 	SAVE(GPDR);
 	SAVE(GAFR);
 
@@ -72,27 +73,27 @@ static int sa11x0_pm_enter(suspend_state_t state)
 	/* Clear previous reset status */
 	RCSR = RCSR_HWR | RCSR_SWR | RCSR_WDR | RCSR_SMR;
 
-	/* set resume return address */
+	/* set resume वापस address */
 	PSPR = __pa_symbol(cpu_resume);
 
 	/* go zzz */
 	cpu_suspend(0, sa1100_finish_suspend);
 
 	/*
-	 * Ensure not to come back here if it wasn't intended
+	 * Ensure not to come back here अगर it wasn't पूर्णांकended
 	 */
 	RCSR = RCSR_SMR;
 	PSPR = 0;
 
 	/*
-	 * Ensure interrupt sources are disabled; we will re-init
-	 * the interrupt subsystem via the device manager.
+	 * Ensure पूर्णांकerrupt sources are disabled; we will re-init
+	 * the पूर्णांकerrupt subप्रणाली via the device manager.
 	 */
 	ICLR = 0;
 	ICCR = 1;
 	ICMR = 0;
 
-	/* restore registers */
+	/* restore रेजिस्टरs */
 	RESTORE(GPDR);
 	RESTORE(GAFR);
 
@@ -111,16 +112,16 @@ static int sa11x0_pm_enter(suspend_state_t state)
 	 */
 	PSSR = PSSR_PH;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_suspend_ops sa11x0_pm_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops sa11x0_pm_ops = अणु
 	.enter		= sa11x0_pm_enter,
 	.valid		= suspend_valid_only_mem,
-};
+पूर्ण;
 
-int __init sa11x0_pm_init(void)
-{
+पूर्णांक __init sa11x0_pm_init(व्योम)
+अणु
 	suspend_set_ops(&sa11x0_pm_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण

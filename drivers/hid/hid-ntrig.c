@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  HID driver for N-Trig touchscreens
+ *  HID driver क्रम N-Trig touchscreens
  *
  *  Copyright (c) 2008-2010 Rafi Rubin
  *  Copyright (c) 2009-2010 Stephane Chatty
@@ -9,55 +10,55 @@
 /*
  */
 
-#include <linux/device.h>
-#include <linux/hid.h>
-#include <linux/usb.h>
-#include "usbhid/usbhid.h"
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/usb.h>
+#समावेश "usbhid/usbhid.h"
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include "hid-ids.h"
+#समावेश "hid-ids.h"
 
-#define NTRIG_DUPLICATE_USAGES	0x001
+#घोषणा NTRIG_DUPLICATE_USAGES	0x001
 
-static unsigned int min_width;
-module_param(min_width, uint, 0644);
+अटल अचिन्हित पूर्णांक min_width;
+module_param(min_width, uपूर्णांक, 0644);
 MODULE_PARM_DESC(min_width, "Minimum touch contact width to accept.");
 
-static unsigned int min_height;
-module_param(min_height, uint, 0644);
+अटल अचिन्हित पूर्णांक min_height;
+module_param(min_height, uपूर्णांक, 0644);
 MODULE_PARM_DESC(min_height, "Minimum touch contact height to accept.");
 
-static unsigned int activate_slack = 1;
-module_param(activate_slack, uint, 0644);
+अटल अचिन्हित पूर्णांक activate_slack = 1;
+module_param(activate_slack, uपूर्णांक, 0644);
 MODULE_PARM_DESC(activate_slack, "Number of touch frames to ignore at "
 		 "the start of touch input.");
 
-static unsigned int deactivate_slack = 4;
-module_param(deactivate_slack, uint, 0644);
+अटल अचिन्हित पूर्णांक deactivate_slack = 4;
+module_param(deactivate_slack, uपूर्णांक, 0644);
 MODULE_PARM_DESC(deactivate_slack, "Number of empty frames to ignore before "
 		 "deactivating touch.");
 
-static unsigned int activation_width = 64;
-module_param(activation_width, uint, 0644);
+अटल अचिन्हित पूर्णांक activation_width = 64;
+module_param(activation_width, uपूर्णांक, 0644);
 MODULE_PARM_DESC(activation_width, "Width threshold to immediately start "
 		 "processing touch events.");
 
-static unsigned int activation_height = 32;
-module_param(activation_height, uint, 0644);
+अटल अचिन्हित पूर्णांक activation_height = 32;
+module_param(activation_height, uपूर्णांक, 0644);
 MODULE_PARM_DESC(activation_height, "Height threshold to immediately start "
 		 "processing touch events.");
 
-struct ntrig_data {
-	/* Incoming raw values for a single contact */
+काष्ठा ntrig_data अणु
+	/* Incoming raw values क्रम a single contact */
 	__u16 x, y, w, h;
 	__u16 id;
 
-	bool tipswitch;
+	bool tipचयन;
 	bool confidence;
 	bool first_contact_touch;
 
-	bool reading_mt;
+	bool पढ़ोing_mt;
 
 	__u8 mt_footer[4];
 	__u8 mt_foot_count;
@@ -65,10 +66,10 @@ struct ntrig_data {
 	/* The current activation state. */
 	__s8 act_state;
 
-	/* Empty frames to ignore before recognizing the end of activity */
+	/* Empty frames to ignore beक्रमe recognizing the end of activity */
 	__s8 deactivate_slack;
 
-	/* Frames to ignore before acknowledging the start of activity */
+	/* Frames to ignore beक्रमe acknowledging the start of activity */
 	__s8 activate_slack;
 
 	/* Minimum size contact to accept */
@@ -83,15 +84,15 @@ struct ntrig_data {
 	__u16 sensor_logical_height;
 	__u16 sensor_physical_width;
 	__u16 sensor_physical_height;
-};
+पूर्ण;
 
 
 /*
- * This function converts the 4 byte raw firmware code into
+ * This function converts the 4 byte raw firmware code पूर्णांकo
  * a string containing 5 comma separated numbers.
  */
-static int ntrig_version_string(unsigned char *raw, char *buf)
-{
+अटल पूर्णांक ntrig_version_string(अचिन्हित अक्षर *raw, अक्षर *buf)
+अणु
 	__u8 a =  (raw[1] & 0x0e) >> 1;
 	__u8 b =  (raw[0] & 0x3c) >> 2;
 	__u8 c = ((raw[0] & 0x03) << 3) | ((raw[3] & 0xe0) >> 5);
@@ -103,331 +104,331 @@ static int ntrig_version_string(unsigned char *raw, char *buf)
 	 * 0b11000000 0b11110001 0b00011000 0b00011000
 	 */
 
-	return sprintf(buf, "%u.%u.%u.%u.%u", a, b, c, d, e);
-}
+	वापस प्र_लिखो(buf, "%u.%u.%u.%u.%u", a, b, c, d, e);
+पूर्ण
 
-static inline int ntrig_get_mode(struct hid_device *hdev)
-{
-	struct hid_report *report = hdev->report_enum[HID_FEATURE_REPORT].
+अटल अंतरभूत पूर्णांक ntrig_get_mode(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा hid_report *report = hdev->report_क्रमागत[HID_FEATURE_REPORT].
 				    report_id_hash[0x0d];
 
-	if (!report || report->maxfield < 1 ||
+	अगर (!report || report->maxfield < 1 ||
 	    report->field[0]->report_count < 1)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	hid_hw_request(hdev, report, HID_REQ_GET_REPORT);
-	hid_hw_wait(hdev);
-	return (int)report->field[0]->value[0];
-}
+	hid_hw_रुको(hdev);
+	वापस (पूर्णांक)report->field[0]->value[0];
+पूर्ण
 
-static inline void ntrig_set_mode(struct hid_device *hdev, const int mode)
-{
-	struct hid_report *report;
-	__u8 mode_commands[4] = { 0xe, 0xf, 0x1b, 0x10 };
+अटल अंतरभूत व्योम ntrig_set_mode(काष्ठा hid_device *hdev, स्थिर पूर्णांक mode)
+अणु
+	काष्ठा hid_report *report;
+	__u8 mode_commands[4] = अणु 0xe, 0xf, 0x1b, 0x10 पूर्ण;
 
-	if (mode < 0 || mode > 3)
-		return;
+	अगर (mode < 0 || mode > 3)
+		वापस;
 
-	report = hdev->report_enum[HID_FEATURE_REPORT].
+	report = hdev->report_क्रमागत[HID_FEATURE_REPORT].
 		 report_id_hash[mode_commands[mode]];
 
-	if (!report)
-		return;
+	अगर (!report)
+		वापस;
 
 	hid_hw_request(hdev, report, HID_REQ_GET_REPORT);
-}
+पूर्ण
 
-static void ntrig_report_version(struct hid_device *hdev)
-{
-	int ret;
-	char buf[20];
-	struct usb_device *usb_dev = hid_to_usb_dev(hdev);
-	unsigned char *data = kmalloc(8, GFP_KERNEL);
+अटल व्योम ntrig_report_version(काष्ठा hid_device *hdev)
+अणु
+	पूर्णांक ret;
+	अक्षर buf[20];
+	काष्ठा usb_device *usb_dev = hid_to_usb_dev(hdev);
+	अचिन्हित अक्षर *data = kदो_स्मृति(8, GFP_KERNEL);
 
-	if (!data)
-		goto err_free;
+	अगर (!data)
+		जाओ err_मुक्त;
 
 	ret = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
 			      USB_REQ_CLEAR_FEATURE,
 			      USB_TYPE_CLASS | USB_RECIP_INTERFACE |
-			      USB_DIR_IN,
+			      USB_सूची_IN,
 			      0x30c, 1, data, 8,
 			      USB_CTRL_SET_TIMEOUT);
 
-	if (ret == 8) {
+	अगर (ret == 8) अणु
 		ret = ntrig_version_string(&data[2], buf);
 
 		hid_info(hdev, "Firmware version: %s (%02x%02x %02x%02x)\n",
 			 buf, data[2], data[3], data[4], data[5]);
-	}
+	पूर्ण
 
-err_free:
-	kfree(data);
-}
+err_मुक्त:
+	kमुक्त(data);
+पूर्ण
 
-static ssize_t show_phys_width(struct device *dev,
-			       struct device_attribute *attr,
-			       char *buf)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार show_phys_width(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	return sprintf(buf, "%d\n", nd->sensor_physical_width);
-}
+	वापस प्र_लिखो(buf, "%d\n", nd->sensor_physical_width);
+पूर्ण
 
-static DEVICE_ATTR(sensor_physical_width, S_IRUGO, show_phys_width, NULL);
+अटल DEVICE_ATTR(sensor_physical_width, S_IRUGO, show_phys_width, शून्य);
 
-static ssize_t show_phys_height(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार show_phys_height(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	return sprintf(buf, "%d\n", nd->sensor_physical_height);
-}
+	वापस प्र_लिखो(buf, "%d\n", nd->sensor_physical_height);
+पूर्ण
 
-static DEVICE_ATTR(sensor_physical_height, S_IRUGO, show_phys_height, NULL);
+अटल DEVICE_ATTR(sensor_physical_height, S_IRUGO, show_phys_height, शून्य);
 
-static ssize_t show_log_width(struct device *dev,
-			      struct device_attribute *attr,
-			      char *buf)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार show_log_width(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	return sprintf(buf, "%d\n", nd->sensor_logical_width);
-}
+	वापस प्र_लिखो(buf, "%d\n", nd->sensor_logical_width);
+पूर्ण
 
-static DEVICE_ATTR(sensor_logical_width, S_IRUGO, show_log_width, NULL);
+अटल DEVICE_ATTR(sensor_logical_width, S_IRUGO, show_log_width, शून्य);
 
-static ssize_t show_log_height(struct device *dev,
-			       struct device_attribute *attr,
-			       char *buf)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार show_log_height(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	return sprintf(buf, "%d\n", nd->sensor_logical_height);
-}
+	वापस प्र_लिखो(buf, "%d\n", nd->sensor_logical_height);
+पूर्ण
 
-static DEVICE_ATTR(sensor_logical_height, S_IRUGO, show_log_height, NULL);
+अटल DEVICE_ATTR(sensor_logical_height, S_IRUGO, show_log_height, शून्य);
 
-static ssize_t show_min_width(struct device *dev,
-			      struct device_attribute *attr,
-			      char *buf)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार show_min_width(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	return sprintf(buf, "%d\n", nd->min_width *
+	वापस प्र_लिखो(buf, "%d\n", nd->min_width *
 				    nd->sensor_physical_width /
 				    nd->sensor_logical_width);
-}
+पूर्ण
 
-static ssize_t set_min_width(struct device *dev,
-			     struct device_attribute *attr,
-			     const char *buf, size_t count)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार set_min_width(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	unsigned long val;
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
-	if (val > nd->sensor_physical_width)
-		return -EINVAL;
+	अगर (val > nd->sensor_physical_width)
+		वापस -EINVAL;
 
 	nd->min_width = val * nd->sensor_logical_width /
 			      nd->sensor_physical_width;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(min_width, S_IWUSR | S_IRUGO, show_min_width, set_min_width);
+अटल DEVICE_ATTR(min_width, S_IWUSR | S_IRUGO, show_min_width, set_min_width);
 
-static ssize_t show_min_height(struct device *dev,
-			       struct device_attribute *attr,
-			       char *buf)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार show_min_height(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	return sprintf(buf, "%d\n", nd->min_height *
+	वापस प्र_लिखो(buf, "%d\n", nd->min_height *
 				    nd->sensor_physical_height /
 				    nd->sensor_logical_height);
-}
+पूर्ण
 
-static ssize_t set_min_height(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार set_min_height(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	unsigned long val;
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
-	if (val > nd->sensor_physical_height)
-		return -EINVAL;
+	अगर (val > nd->sensor_physical_height)
+		वापस -EINVAL;
 
 	nd->min_height = val * nd->sensor_logical_height /
 			       nd->sensor_physical_height;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(min_height, S_IWUSR | S_IRUGO, show_min_height,
+अटल DEVICE_ATTR(min_height, S_IWUSR | S_IRUGO, show_min_height,
 		   set_min_height);
 
-static ssize_t show_activate_slack(struct device *dev,
-				   struct device_attribute *attr,
-				   char *buf)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार show_activate_slack(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   अक्षर *buf)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	return sprintf(buf, "%d\n", nd->activate_slack);
-}
+	वापस प्र_लिखो(buf, "%d\n", nd->activate_slack);
+पूर्ण
 
-static ssize_t set_activate_slack(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t count)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार set_activate_slack(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	unsigned long val;
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
-	if (val > 0x7f)
-		return -EINVAL;
+	अगर (val > 0x7f)
+		वापस -EINVAL;
 
 	nd->activate_slack = val;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(activate_slack, S_IWUSR | S_IRUGO, show_activate_slack,
+अटल DEVICE_ATTR(activate_slack, S_IWUSR | S_IRUGO, show_activate_slack,
 		   set_activate_slack);
 
-static ssize_t show_activation_width(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार show_activation_width(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	return sprintf(buf, "%d\n", nd->activation_width *
+	वापस प्र_लिखो(buf, "%d\n", nd->activation_width *
 				    nd->sensor_physical_width /
 				    nd->sensor_logical_width);
-}
+पूर्ण
 
-static ssize_t set_activation_width(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार set_activation_width(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	unsigned long val;
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
-	if (val > nd->sensor_physical_width)
-		return -EINVAL;
+	अगर (val > nd->sensor_physical_width)
+		वापस -EINVAL;
 
 	nd->activation_width = val * nd->sensor_logical_width /
 				     nd->sensor_physical_width;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(activation_width, S_IWUSR | S_IRUGO, show_activation_width,
+अटल DEVICE_ATTR(activation_width, S_IWUSR | S_IRUGO, show_activation_width,
 		   set_activation_width);
 
-static ssize_t show_activation_height(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार show_activation_height(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	return sprintf(buf, "%d\n", nd->activation_height *
+	वापस प्र_लिखो(buf, "%d\n", nd->activation_height *
 				    nd->sensor_physical_height /
 				    nd->sensor_logical_height);
-}
+पूर्ण
 
-static ssize_t set_activation_height(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार set_activation_height(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	unsigned long val;
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
-	if (val > nd->sensor_physical_height)
-		return -EINVAL;
+	अगर (val > nd->sensor_physical_height)
+		वापस -EINVAL;
 
 	nd->activation_height = val * nd->sensor_logical_height /
 				      nd->sensor_physical_height;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(activation_height, S_IWUSR | S_IRUGO,
+अटल DEVICE_ATTR(activation_height, S_IWUSR | S_IRUGO,
 		   show_activation_height, set_activation_height);
 
-static ssize_t show_deactivate_slack(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार show_deactivate_slack(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	return sprintf(buf, "%d\n", -nd->deactivate_slack);
-}
+	वापस प्र_लिखो(buf, "%d\n", -nd->deactivate_slack);
+पूर्ण
 
-static ssize_t set_deactivate_slack(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct hid_device *hdev = to_hid_device(dev);
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल sमाप_प्रकार set_deactivate_slack(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hid_device *hdev = to_hid_device(dev);
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	unsigned long val;
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
 	/*
 	 * No more than 8 terminal frames have been observed so far
 	 * and higher slack is highly likely to leave the single
-	 * touch emulation stuck down.
+	 * touch emulation stuck करोwn.
 	 */
-	if (val > 7)
-		return -EINVAL;
+	अगर (val > 7)
+		वापस -EINVAL;
 
 	nd->deactivate_slack = -val;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(deactivate_slack, S_IWUSR | S_IRUGO, show_deactivate_slack,
+अटल DEVICE_ATTR(deactivate_slack, S_IWUSR | S_IRUGO, show_deactivate_slack,
 		   set_deactivate_slack);
 
-static struct attribute *sysfs_attrs[] = {
+अटल काष्ठा attribute *sysfs_attrs[] = अणु
 	&dev_attr_sensor_physical_width.attr,
 	&dev_attr_sensor_physical_height.attr,
 	&dev_attr_sensor_logical_width.attr,
@@ -438,12 +439,12 @@ static struct attribute *sysfs_attrs[] = {
 	&dev_attr_activation_width.attr,
 	&dev_attr_activation_height.attr,
 	&dev_attr_deactivate_slack.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group ntrig_attribute_group = {
+अटल स्थिर काष्ठा attribute_group ntrig_attribute_group = अणु
 	.attrs = sysfs_attrs
-};
+पूर्ण;
 
 /*
  * this driver is aimed at two firmware versions in circulation:
@@ -451,27 +452,27 @@ static const struct attribute_group ntrig_attribute_group = {
  *  - finger multitouch, pen not working
  */
 
-static int ntrig_input_mapping(struct hid_device *hdev, struct hid_input *hi,
-			       struct hid_field *field, struct hid_usage *usage,
-			       unsigned long **bit, int *max)
-{
-	struct ntrig_data *nd = hid_get_drvdata(hdev);
+अटल पूर्णांक ntrig_input_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
+			       काष्ठा hid_field *field, काष्ठा hid_usage *usage,
+			       अचिन्हित दीर्घ **bit, पूर्णांक *max)
+अणु
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hdev);
 
-	/* No special mappings needed for the pen and single touch */
-	if (field->physical)
-		return 0;
+	/* No special mappings needed क्रम the pen and single touch */
+	अगर (field->physical)
+		वापस 0;
 
-	switch (usage->hid & HID_USAGE_PAGE) {
-	case HID_UP_GENDESK:
-		switch (usage->hid) {
-		case HID_GD_X:
+	चयन (usage->hid & HID_USAGE_PAGE) अणु
+	हाल HID_UP_GENDESK:
+		चयन (usage->hid) अणु
+		हाल HID_GD_X:
 			hid_map_usage(hi, usage, bit, max,
 					EV_ABS, ABS_MT_POSITION_X);
-			input_set_abs_params(hi->input, ABS_X,
+			input_set_असल_params(hi->input, ABS_X,
 					field->logical_minimum,
 					field->logical_maximum, 0, 0);
 
-			if (!nd->sensor_logical_width) {
+			अगर (!nd->sensor_logical_width) अणु
 				nd->sensor_logical_width =
 					field->logical_maximum -
 					field->logical_minimum;
@@ -484,16 +485,16 @@ static int ntrig_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 				nd->min_width = min_width *
 					nd->sensor_logical_width /
 					nd->sensor_physical_width;
-			}
-			return 1;
-		case HID_GD_Y:
+			पूर्ण
+			वापस 1;
+		हाल HID_GD_Y:
 			hid_map_usage(hi, usage, bit, max,
 					EV_ABS, ABS_MT_POSITION_Y);
-			input_set_abs_params(hi->input, ABS_Y,
+			input_set_असल_params(hi->input, ABS_Y,
 					field->logical_minimum,
 					field->logical_maximum, 0, 0);
 
-			if (!nd->sensor_logical_height) {
+			अगर (!nd->sensor_logical_height) अणु
 				nd->sensor_logical_height =
 					field->logical_maximum -
 					field->logical_minimum;
@@ -506,223 +507,223 @@ static int ntrig_input_mapping(struct hid_device *hdev, struct hid_input *hi,
 				nd->min_height = min_height *
 					nd->sensor_logical_height /
 					nd->sensor_physical_height;
-			}
-			return 1;
-		}
-		return 0;
+			पूर्ण
+			वापस 1;
+		पूर्ण
+		वापस 0;
 
-	case HID_UP_DIGITIZER:
-		switch (usage->hid) {
-		/* we do not want to map these for now */
-		case HID_DG_CONTACTID: /* Not trustworthy, squelch for now */
-		case HID_DG_INPUTMODE:
-		case HID_DG_DEVICEINDEX:
-		case HID_DG_CONTACTMAX:
-			return -1;
+	हाल HID_UP_DIGITIZER:
+		चयन (usage->hid) अणु
+		/* we करो not want to map these क्रम now */
+		हाल HID_DG_CONTACTID: /* Not trustworthy, squelch क्रम now */
+		हाल HID_DG_INPUTMODE:
+		हाल HID_DG_DEVICEINDEX:
+		हाल HID_DG_CONTACTMAX:
+			वापस -1;
 
 		/* width/height mapped on TouchMajor/TouchMinor/Orientation */
-		case HID_DG_WIDTH:
+		हाल HID_DG_WIDTH:
 			hid_map_usage(hi, usage, bit, max,
 				      EV_ABS, ABS_MT_TOUCH_MAJOR);
-			return 1;
-		case HID_DG_HEIGHT:
+			वापस 1;
+		हाल HID_DG_HEIGHT:
 			hid_map_usage(hi, usage, bit, max,
 				      EV_ABS, ABS_MT_TOUCH_MINOR);
-			input_set_abs_params(hi->input, ABS_MT_ORIENTATION,
+			input_set_असल_params(hi->input, ABS_MT_ORIENTATION,
 					     0, 1, 0, 0);
-			return 1;
-		}
-		return 0;
+			वापस 1;
+		पूर्ण
+		वापस 0;
 
-	case 0xff000000:
-		/* we do not want to map these: no input-oriented meaning */
-		return -1;
-	}
+	हाल 0xff000000:
+		/* we करो not want to map these: no input-oriented meaning */
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ntrig_input_mapped(struct hid_device *hdev, struct hid_input *hi,
-			      struct hid_field *field, struct hid_usage *usage,
-			      unsigned long **bit, int *max)
-{
-	/* No special mappings needed for the pen and single touch */
-	if (field->physical)
-		return 0;
+अटल पूर्णांक ntrig_input_mapped(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
+			      काष्ठा hid_field *field, काष्ठा hid_usage *usage,
+			      अचिन्हित दीर्घ **bit, पूर्णांक *max)
+अणु
+	/* No special mappings needed क्रम the pen and single touch */
+	अगर (field->physical)
+		वापस 0;
 
-	if (usage->type == EV_KEY || usage->type == EV_REL
+	अगर (usage->type == EV_KEY || usage->type == EV_REL
 			|| usage->type == EV_ABS)
 		clear_bit(usage->code, *bit);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * this function is called upon all reports
- * so that we can filter contact point information,
+ * so that we can filter contact poपूर्णांक inक्रमmation,
  * decide whether we are in multi or single touch mode
- * and call input_mt_sync after each point if necessary
+ * and call input_mt_sync after each poपूर्णांक अगर necessary
  */
-static int ntrig_event (struct hid_device *hid, struct hid_field *field,
-			struct hid_usage *usage, __s32 value)
-{
-	struct ntrig_data *nd = hid_get_drvdata(hid);
-	struct input_dev *input;
+अटल पूर्णांक ntrig_event (काष्ठा hid_device *hid, काष्ठा hid_field *field,
+			काष्ठा hid_usage *usage, __s32 value)
+अणु
+	काष्ठा ntrig_data *nd = hid_get_drvdata(hid);
+	काष्ठा input_dev *input;
 
-	/* Skip processing if not a claimed input */
-	if (!(hid->claimed & HID_CLAIMED_INPUT))
-		goto not_claimed_input;
+	/* Skip processing अगर not a claimed input */
+	अगर (!(hid->claimed & HID_CLAIMED_INPUT))
+		जाओ not_claimed_input;
 
-	/* This function is being called before the structures are fully
+	/* This function is being called beक्रमe the काष्ठाures are fully
 	 * initialized */
-	if(!(field->hidinput && field->hidinput->input))
-		return -EINVAL;
+	अगर(!(field->hidinput && field->hidinput->input))
+		वापस -EINVAL;
 
 	input = field->hidinput->input;
 
-	/* No special handling needed for the pen */
-	if (field->application == HID_DG_PEN)
-		return 0;
+	/* No special handling needed क्रम the pen */
+	अगर (field->application == HID_DG_PEN)
+		वापस 0;
 
-	switch (usage->hid) {
-	case 0xff000001:
+	चयन (usage->hid) अणु
+	हाल 0xff000001:
 		/* Tag indicating the start of a multitouch group */
-		nd->reading_mt = true;
+		nd->पढ़ोing_mt = true;
 		nd->first_contact_touch = false;
-		break;
-	case HID_DG_TIPSWITCH:
-		nd->tipswitch = value;
+		अवरोध;
+	हाल HID_DG_TIPSWITCH:
+		nd->tipचयन = value;
 		/* Prevent emission of touch until validated */
-		return 1;
-	case HID_DG_CONFIDENCE:
+		वापस 1;
+	हाल HID_DG_CONFIDENCE:
 		nd->confidence = value;
-		break;
-	case HID_GD_X:
+		अवरोध;
+	हाल HID_GD_X:
 		nd->x = value;
 		/* Clear the contact footer */
 		nd->mt_foot_count = 0;
-		break;
-	case HID_GD_Y:
+		अवरोध;
+	हाल HID_GD_Y:
 		nd->y = value;
-		break;
-	case HID_DG_CONTACTID:
+		अवरोध;
+	हाल HID_DG_CONTACTID:
 		nd->id = value;
-		break;
-	case HID_DG_WIDTH:
+		अवरोध;
+	हाल HID_DG_WIDTH:
 		nd->w = value;
-		break;
-	case HID_DG_HEIGHT:
+		अवरोध;
+	हाल HID_DG_HEIGHT:
 		nd->h = value;
 		/*
 		 * when in single touch mode, this is the last
 		 * report received in a finger event. We want
 		 * to emit a normal (X, Y) position
 		 */
-		if (!nd->reading_mt) {
+		अगर (!nd->पढ़ोing_mt) अणु
 			/*
 			 * TipSwitch indicates the presence of a
 			 * finger in single touch mode.
 			 */
 			input_report_key(input, BTN_TOUCH,
-					 nd->tipswitch);
+					 nd->tipचयन);
 			input_report_key(input, BTN_TOOL_DOUBLETAP,
-					 nd->tipswitch);
+					 nd->tipचयन);
 			input_event(input, EV_ABS, ABS_X, nd->x);
 			input_event(input, EV_ABS, ABS_Y, nd->y);
-		}
-		break;
-	case 0xff000002:
+		पूर्ण
+		अवरोध;
+	हाल 0xff000002:
 		/*
 		 * we receive this when the device is in multitouch
 		 * mode. The first of the three values tagged with
-		 * this usage tells if the contact point is real
+		 * this usage tells अगर the contact poपूर्णांक is real
 		 * or a placeholder
 		 */
 
 		/* Shouldn't get more than 4 footer packets, so skip */
-		if (nd->mt_foot_count >= 4)
-			break;
+		अगर (nd->mt_foot_count >= 4)
+			अवरोध;
 
 		nd->mt_footer[nd->mt_foot_count++] = value;
 
-		/* if the footer isn't complete break */
-		if (nd->mt_foot_count != 4)
-			break;
+		/* अगर the footer isn't complete अवरोध */
+		अगर (nd->mt_foot_count != 4)
+			अवरोध;
 
-		/* Pen activity signal. */
-		if (nd->mt_footer[2]) {
+		/* Pen activity संकेत. */
+		अगर (nd->mt_footer[2]) अणु
 			/*
 			 * When the pen deactivates touch, we see a
 			 * bogus frame with ContactCount > 0.
 			 * We can
 			 * save a bit of work by ensuring act_state < 0
-			 * even if deactivation slack is turned off.
+			 * even अगर deactivation slack is turned off.
 			 */
 			nd->act_state = deactivate_slack - 1;
 			nd->confidence = false;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * The first footer value indicates the presence of a
 		 * finger.
 		 */
-		if (nd->mt_footer[0]) {
+		अगर (nd->mt_footer[0]) अणु
 			/*
-			 * We do not want to process contacts under
-			 * the size threshold, but do not want to
-			 * ignore them for activation state
+			 * We करो not want to process contacts under
+			 * the size threshold, but करो not want to
+			 * ignore them क्रम activation state
 			 */
-			if (nd->w < nd->min_width ||
+			अगर (nd->w < nd->min_width ||
 			    nd->h < nd->min_height)
 				nd->confidence = false;
-		} else
-			break;
+		पूर्ण अन्यथा
+			अवरोध;
 
-		if (nd->act_state > 0) {
+		अगर (nd->act_state > 0) अणु
 			/*
 			 * Contact meets the activation size threshold
 			 */
-			if (nd->w >= nd->activation_width &&
-			    nd->h >= nd->activation_height) {
-				if (nd->id)
+			अगर (nd->w >= nd->activation_width &&
+			    nd->h >= nd->activation_height) अणु
+				अगर (nd->id)
 					/*
 					 * first contact, activate now
 					 */
 					nd->act_state = 0;
-				else {
+				अन्यथा अणु
 					/*
-					 * avoid corrupting this frame
+					 * aव्योम corrupting this frame
 					 * but ensure next frame will
 					 * be active
 					 */
 					nd->act_state = 1;
-					break;
-				}
-			} else
+					अवरोध;
+				पूर्ण
+			पूर्ण अन्यथा
 				/*
 				 * Defer adjusting the activation state
 				 * until the end of the frame.
 				 */
-				break;
-		}
+				अवरोध;
+		पूर्ण
 
 		/* Discarding this contact */
-		if (!nd->confidence)
-			break;
+		अगर (!nd->confidence)
+			अवरोध;
 
-		/* emit a normal (X, Y) for the first point only */
-		if (nd->id == 0) {
+		/* emit a normal (X, Y) क्रम the first poपूर्णांक only */
+		अगर (nd->id == 0) अणु
 			/*
 			 * TipSwitch is superfluous in multitouch
 			 * mode.  The footer events tell us
-			 * if there is a finger on the screen or
+			 * अगर there is a finger on the screen or
 			 * not.
 			 */
 			nd->first_contact_touch = nd->confidence;
 			input_event(input, EV_ABS, ABS_X, nd->x);
 			input_event(input, EV_ABS, ABS_Y, nd->y);
-		}
+		पूर्ण
 
 		/* Emit MT events */
 		input_event(input, EV_ABS, ABS_MT_POSITION_X, nd->x);
@@ -732,29 +733,29 @@ static int ntrig_event (struct hid_device *hid, struct hid_field *field,
 		 * Translate from height and width to size
 		 * and orientation.
 		 */
-		if (nd->w > nd->h) {
+		अगर (nd->w > nd->h) अणु
 			input_event(input, EV_ABS,
 					ABS_MT_ORIENTATION, 1);
 			input_event(input, EV_ABS,
 					ABS_MT_TOUCH_MAJOR, nd->w);
 			input_event(input, EV_ABS,
 					ABS_MT_TOUCH_MINOR, nd->h);
-		} else {
+		पूर्ण अन्यथा अणु
 			input_event(input, EV_ABS,
 					ABS_MT_ORIENTATION, 0);
 			input_event(input, EV_ABS,
 					ABS_MT_TOUCH_MAJOR, nd->h);
 			input_event(input, EV_ABS,
 					ABS_MT_TOUCH_MINOR, nd->w);
-		}
+		पूर्ण
 		input_mt_sync(field->hidinput->input);
-		break;
+		अवरोध;
 
-	case HID_DG_CONTACTCOUNT: /* End of a multitouch group */
-		if (!nd->reading_mt) /* Just to be sure */
-			break;
+	हाल HID_DG_CONTACTCOUNT: /* End of a multitouch group */
+		अगर (!nd->पढ़ोing_mt) /* Just to be sure */
+			अवरोध;
 
-		nd->reading_mt = false;
+		nd->पढ़ोing_mt = false;
 
 
 		/*
@@ -766,7 +767,7 @@ static int ntrig_event (struct hid_device *hid, struct hid_field *field,
 		 *	state <  -deactivate_slack:
 		 *		 Pen termination of touch
 		 *
-		 * Specific values of interest
+		 * Specअगरic values of पूर्णांकerest
 		 *	state == activate_slack
 		 *		 no valid input since the last reset
 		 *
@@ -774,22 +775,22 @@ static int ntrig_event (struct hid_device *hid, struct hid_field *field,
 		 *		 general operational state
 		 *
 		 *	state == -deactivate_slack
-		 *		 read sufficient empty frames to accept
+		 *		 पढ़ो sufficient empty frames to accept
 		 *		 the end of input and reset
 		 */
 
-		if (nd->act_state > 0) { /* Currently inactive */
-			if (value)
+		अगर (nd->act_state > 0) अणु /* Currently inactive */
+			अगर (value)
 				/*
 				 * Consider each live contact as
-				 * evidence of intentional activity.
+				 * evidence of पूर्णांकentional activity.
 				 */
 				nd->act_state = (nd->act_state > value)
 						? nd->act_state - value
 						: 0;
-			else
+			अन्यथा
 				/*
-				 * Empty frame before we hit the
+				 * Empty frame beक्रमe we hit the
 				 * activity threshold, reset.
 				 */
 				nd->act_state = nd->activate_slack;
@@ -799,114 +800,114 @@ static int ntrig_event (struct hid_device *hid, struct hid_field *field,
 			 * coordinates sent this frame, so hold off
 			 * on button state.
 			 */
-			break;
-		} else { /* Currently active */
-			if (value && nd->act_state >=
+			अवरोध;
+		पूर्ण अन्यथा अणु /* Currently active */
+			अगर (value && nd->act_state >=
 				     nd->deactivate_slack)
 				/*
-				 * Live point: clear accumulated
+				 * Live poपूर्णांक: clear accumulated
 				 * deactivation count.
 				 */
 				nd->act_state = 0;
-			else if (nd->act_state <= nd->deactivate_slack)
+			अन्यथा अगर (nd->act_state <= nd->deactivate_slack)
 				/*
 				 * We've consumed the deactivation
-				 * slack, time to deactivate and reset.
+				 * slack, समय to deactivate and reset.
 				 */
 				nd->act_state =
 					nd->activate_slack;
-			else { /* Move towards deactivation */
+			अन्यथा अणु /* Move towards deactivation */
 				nd->act_state--;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (nd->first_contact_touch && nd->act_state <= 0) {
+		अगर (nd->first_contact_touch && nd->act_state <= 0) अणु
 			/*
-			 * Check to see if we're ready to start
+			 * Check to see अगर we're पढ़ोy to start
 			 * emitting touch events.
 			 *
 			 * Note: activation slack will decrease over
 			 * the course of the frame, and it will be
 			 * inconsistent from the start to the end of
-			 * the frame.  However if the frame starts
+			 * the frame.  However अगर the frame starts
 			 * with slack, first_contact_touch will still
-			 * be 0 and we will not get to this point.
+			 * be 0 and we will not get to this poपूर्णांक.
 			 */
 			input_report_key(input, BTN_TOOL_DOUBLETAP, 1);
 			input_report_key(input, BTN_TOUCH, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			input_report_key(input, BTN_TOOL_DOUBLETAP, 0);
 			input_report_key(input, BTN_TOUCH, 0);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		/* fall-back to the generic hidinput handling */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 not_claimed_input:
 
-	/* we have handled the hidinput part, now remains hiddev */
-	if ((hid->claimed & HID_CLAIMED_HIDDEV) && hid->hiddev_hid_event)
+	/* we have handled the hidinput part, now reमुख्यs hiddev */
+	अगर ((hid->claimed & HID_CLAIMED_HIDDEV) && hid->hiddev_hid_event)
 		hid->hiddev_hid_event(hid, field, usage, value);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int ntrig_input_configured(struct hid_device *hid,
-		struct hid_input *hidinput)
+अटल पूर्णांक ntrig_input_configured(काष्ठा hid_device *hid,
+		काष्ठा hid_input *hidinput)
 
-{
-	struct input_dev *input = hidinput->input;
+अणु
+	काष्ठा input_dev *input = hidinput->input;
 
-	if (hidinput->report->maxfield < 1)
-		return 0;
+	अगर (hidinput->report->maxfield < 1)
+		वापस 0;
 
-	switch (hidinput->report->field[0]->application) {
-	case HID_DG_PEN:
+	चयन (hidinput->report->field[0]->application) अणु
+	हाल HID_DG_PEN:
 		input->name = "N-Trig Pen";
-		break;
-	case HID_DG_TOUCHSCREEN:
-		/* These keys are redundant for fingers, clear them
-		 * to prevent incorrect identification */
+		अवरोध;
+	हाल HID_DG_TOUCHSCREEN:
+		/* These keys are redundant क्रम fingers, clear them
+		 * to prevent incorrect identअगरication */
 		__clear_bit(BTN_TOOL_PEN, input->keybit);
 		__clear_bit(BTN_TOOL_FINGER, input->keybit);
 		__clear_bit(BTN_0, input->keybit);
 		__set_bit(BTN_TOOL_DOUBLETAP, input->keybit);
 		/*
 		 * The physical touchscreen (single touch)
-		 * input has a value for physical, whereas
+		 * input has a value क्रम physical, whereas
 		 * the multitouch only has logical input
 		 * fields.
 		 */
 		input->name = (hidinput->report->field[0]->physical) ?
 							"N-Trig Touchscreen" :
 							"N-Trig MultiTouch";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ntrig_probe(struct hid_device *hdev, const struct hid_device_id *id)
-{
-	int ret;
-	struct ntrig_data *nd;
-	struct hid_report *report;
+अटल पूर्णांक ntrig_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा ntrig_data *nd;
+	काष्ठा hid_report *report;
 
-	if (id->driver_data)
+	अगर (id->driver_data)
 		hdev->quirks |= HID_QUIRK_MULTI_INPUT
 				| HID_QUIRK_NO_INIT_REPORTS;
 
-	nd = kmalloc(sizeof(struct ntrig_data), GFP_KERNEL);
-	if (!nd) {
+	nd = kदो_स्मृति(माप(काष्ठा ntrig_data), GFP_KERNEL);
+	अगर (!nd) अणु
 		hid_err(hdev, "cannot allocate N-Trig data\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	nd->reading_mt = false;
+	nd->पढ़ोing_mt = false;
 	nd->min_width = 0;
 	nd->min_height = 0;
 	nd->activate_slack = activate_slack;
@@ -920,113 +921,113 @@ static int ntrig_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	hid_set_drvdata(hdev, nd);
 
 	ret = hid_parse(hdev);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "parse failed\n");
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "hw start failed\n");
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	/* This is needed for devices with more recent firmware versions */
-	report = hdev->report_enum[HID_FEATURE_REPORT].report_id_hash[0x0a];
-	if (report) {
-		/* Let the device settle to ensure the wakeup message gets
+	/* This is needed क्रम devices with more recent firmware versions */
+	report = hdev->report_क्रमागत[HID_FEATURE_REPORT].report_id_hash[0x0a];
+	अगर (report) अणु
+		/* Let the device settle to ensure the wakeup message माला_लो
 		 * through */
-		hid_hw_wait(hdev);
+		hid_hw_रुको(hdev);
 		hid_hw_request(hdev, report, HID_REQ_GET_REPORT);
 
 		/*
-		 * Sanity check: if the current mode is invalid reset it to
+		 * Sanity check: अगर the current mode is invalid reset it to
 		 * something reasonable.
 		 */
-		if (ntrig_get_mode(hdev) >= 4)
+		अगर (ntrig_get_mode(hdev) >= 4)
 			ntrig_set_mode(hdev, 3);
-	}
+	पूर्ण
 
 	ntrig_report_version(hdev);
 
 	ret = sysfs_create_group(&hdev->dev.kobj,
 			&ntrig_attribute_group);
-	if (ret)
+	अगर (ret)
 		hid_err(hdev, "cannot create sysfs group\n");
 
-	return 0;
-err_free:
-	kfree(nd);
-	return ret;
-}
+	वापस 0;
+err_मुक्त:
+	kमुक्त(nd);
+	वापस ret;
+पूर्ण
 
-static void ntrig_remove(struct hid_device *hdev)
-{
-	sysfs_remove_group(&hdev->dev.kobj,
+अटल व्योम ntrig_हटाओ(काष्ठा hid_device *hdev)
+अणु
+	sysfs_हटाओ_group(&hdev->dev.kobj,
 			   &ntrig_attribute_group);
 	hid_hw_stop(hdev);
-	kfree(hid_get_drvdata(hdev));
-}
+	kमुक्त(hid_get_drvdata(hdev));
+पूर्ण
 
-static const struct hid_device_id ntrig_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_1),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_2),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_3),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_4),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_5),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_6),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_7),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_8),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_9),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_10),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_11),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_12),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_13),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_14),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_15),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_16),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_17),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_18),
-		.driver_data = NTRIG_DUPLICATE_USAGES },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id ntrig_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_1),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_2),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_3),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_4),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_5),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_6),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_7),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_8),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_9),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_10),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_11),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_12),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_13),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_14),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_15),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_16),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_17),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_NTRIG, USB_DEVICE_ID_NTRIG_TOUCH_SCREEN_18),
+		.driver_data = NTRIG_DUPLICATE_USAGES पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, ntrig_devices);
 
-static const struct hid_usage_id ntrig_grabbed_usages[] = {
-	{ HID_ANY_ID, HID_ANY_ID, HID_ANY_ID },
-	{ HID_ANY_ID - 1, HID_ANY_ID - 1, HID_ANY_ID - 1 }
-};
+अटल स्थिर काष्ठा hid_usage_id ntrig_grabbed_usages[] = अणु
+	अणु HID_ANY_ID, HID_ANY_ID, HID_ANY_ID पूर्ण,
+	अणु HID_ANY_ID - 1, HID_ANY_ID - 1, HID_ANY_ID - 1 पूर्ण
+पूर्ण;
 
-static struct hid_driver ntrig_driver = {
+अटल काष्ठा hid_driver ntrig_driver = अणु
 	.name = "ntrig",
 	.id_table = ntrig_devices,
 	.probe = ntrig_probe,
-	.remove = ntrig_remove,
+	.हटाओ = ntrig_हटाओ,
 	.input_mapping = ntrig_input_mapping,
 	.input_mapped = ntrig_input_mapped,
 	.input_configured = ntrig_input_configured,
 	.usage_table = ntrig_grabbed_usages,
 	.event = ntrig_event,
-};
+पूर्ण;
 module_hid_driver(ntrig_driver);
 
 MODULE_LICENSE("GPL");

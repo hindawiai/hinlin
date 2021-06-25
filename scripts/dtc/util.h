@@ -1,247 +1,248 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef UTIL_H
-#define UTIL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित UTIL_H
+#घोषणा UTIL_H
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <getopt.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकतर्क.स>
+#समावेश <stdbool.h>
+#समावेश <getopt.h>
 
 /*
  * Copyright 2011 The Chromium Authors, All Rights Reserved.
  * Copyright 2008 Jon Loeliger, Freescale Semiconductor, Inc.
  */
 
-#ifdef __GNUC__
-#ifdef __clang__
-#define PRINTF(i, j)	__attribute__((format (printf, i, j)))
-#else
-#define PRINTF(i, j)	__attribute__((format (gnu_printf, i, j)))
-#endif
-#define NORETURN	__attribute__((noreturn))
-#else
-#define PRINTF(i, j)
-#define NORETURN
-#endif
+#अगर_घोषित __GNUC__
+#अगर_घोषित __clang__
+#घोषणा PRINTF(i, j)	__attribute__((क्रमmat (म_लिखो, i, j)))
+#अन्यथा
+#घोषणा PRINTF(i, j)	__attribute__((क्रमmat (gnu_म_लिखो, i, j)))
+#पूर्ण_अगर
+#घोषणा NORETURN	__attribute__((noवापस))
+#अन्यथा
+#घोषणा PRINTF(i, j)
+#घोषणा NORETURN
+#पूर्ण_अगर
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
 
-#define stringify(s)	stringify_(s)
-#define stringify_(s)	#s
+#घोषणा stringअगरy(s)	stringअगरy_(s)
+#घोषणा stringअगरy_(s)	#s
 
-static inline void NORETURN PRINTF(1, 2) die(const char *str, ...)
-{
-	va_list ap;
+अटल अंतरभूत व्योम NORETURN PRINTF(1, 2) die(स्थिर अक्षर *str, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, str);
-	fprintf(stderr, "FATAL ERROR: ");
-	vfprintf(stderr, str, ap);
-	va_end(ap);
-	exit(1);
-}
+	बहु_शुरू(ap, str);
+	ख_लिखो(मानक_त्रुटि, "FATAL ERROR: ");
+	भख_लिखो(मानक_त्रुटि, str, ap);
+	बहु_पूर्ण(ap);
+	निकास(1);
+पूर्ण
 
-static inline void *xmalloc(size_t len)
-{
-	void *new = malloc(len);
+अटल अंतरभूत व्योम *xदो_स्मृति(माप_प्रकार len)
+अणु
+	व्योम *new = दो_स्मृति(len);
 
-	if (!new)
+	अगर (!new)
 		die("malloc() failed\n");
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
-static inline void *xrealloc(void *p, size_t len)
-{
-	void *new = realloc(p, len);
+अटल अंतरभूत व्योम *xपुनः_स्मृति(व्योम *p, माप_प्रकार len)
+अणु
+	व्योम *new = पुनः_स्मृति(p, len);
 
-	if (!new)
+	अगर (!new)
 		die("realloc() failed (len=%zd)\n", len);
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
-extern char *xstrdup(const char *s);
+बाह्य अक्षर *xstrdup(स्थिर अक्षर *s);
 
-extern int PRINTF(2, 3) xasprintf(char **strp, const char *fmt, ...);
-extern int PRINTF(2, 3) xasprintf_append(char **strp, const char *fmt, ...);
-extern int xavsprintf_append(char **strp, const char *fmt, va_list ap);
-extern char *join_path(const char *path, const char *name);
+बाह्य पूर्णांक PRINTF(2, 3) xaप्र_लिखो(अक्षर **strp, स्थिर अक्षर *fmt, ...);
+बाह्य पूर्णांक PRINTF(2, 3) xaप्र_लिखो_append(अक्षर **strp, स्थिर अक्षर *fmt, ...);
+बाह्य पूर्णांक xaभम_लिखो_append(अक्षर **strp, स्थिर अक्षर *fmt, बहु_सूची ap);
+बाह्य अक्षर *join_path(स्थिर अक्षर *path, स्थिर अक्षर *name);
 
 /**
- * Check a property of a given length to see if it is all printable and
+ * Check a property of a given length to see अगर it is all prपूर्णांकable and
  * has a valid terminator. The property can contain either a single string,
  * or multiple strings each of non-zero length.
  *
  * @param data	The string to check
  * @param len	The string length including terminator
- * @return 1 if a valid printable string, 0 if not
+ * @वापस 1 अगर a valid prपूर्णांकable string, 0 अगर not
  */
-bool util_is_printable_string(const void *data, int len);
+bool util_is_prपूर्णांकable_string(स्थिर व्योम *data, पूर्णांक len);
 
 /*
- * Parse an escaped character starting at index i in string s.  The resulting
- * character will be returned and the index i will be updated to point at the
- * character directly after the end of the encoding, this may be the '\0'
+ * Parse an escaped अक्षरacter starting at index i in string s.  The resulting
+ * अक्षरacter will be वापसed and the index i will be updated to poपूर्णांक at the
+ * अक्षरacter directly after the end of the encoding, this may be the '\0'
  * terminator of the string.
  */
-char get_escape_char(const char *s, int *i);
+अक्षर get_escape_अक्षर(स्थिर अक्षर *s, पूर्णांक *i);
 
 /**
- * Read a device tree file into a buffer. This will report any errors on
- * stderr.
+ * Read a device tree file पूर्णांकo a buffer. This will report any errors on
+ * मानक_त्रुटि.
  *
- * @param filename	The filename to read, or - for stdin
- * @param len		If non-NULL, the amount of data we managed to read
- * @return Pointer to allocated buffer containing fdt, or NULL on error
+ * @param filename	The filename to पढ़ो, or - क्रम मानक_निवेश
+ * @param len		If non-शून्य, the amount of data we managed to पढ़ो
+ * @वापस Poपूर्णांकer to allocated buffer containing fdt, or शून्य on error
  */
-char *utilfdt_read(const char *filename, size_t *len);
+अक्षर *utilfdt_पढ़ो(स्थिर अक्षर *filename, माप_प्रकार *len);
 
 /**
- * Read a device tree file into a buffer. Does not report errors, but only
- * returns them. The value returned can be passed to strerror() to obtain
- * an error message for the user.
+ * Read a device tree file पूर्णांकo a buffer. Does not report errors, but only
+ * वापसs them. The value वापसed can be passed to म_त्रुटि() to obtain
+ * an error message क्रम the user.
  *
- * @param filename	The filename to read, or - for stdin
- * @param buffp		Returns pointer to buffer containing fdt
- * @param len		If non-NULL, the amount of data we managed to read
- * @return 0 if ok, else an errno value representing the error
+ * @param filename	The filename to पढ़ो, or - क्रम मानक_निवेश
+ * @param buffp		Returns poपूर्णांकer to buffer containing fdt
+ * @param len		If non-शून्य, the amount of data we managed to पढ़ो
+ * @वापस 0 अगर ok, अन्यथा an त्रुटि_सं value representing the error
  */
-int utilfdt_read_err(const char *filename, char **buffp, size_t *len);
+पूर्णांक utilfdt_पढ़ो_err(स्थिर अक्षर *filename, अक्षर **buffp, माप_प्रकार *len);
 
 /**
  * Write a device tree buffer to a file. This will report any errors on
- * stderr.
+ * मानक_त्रुटि.
  *
- * @param filename	The filename to write, or - for stdout
- * @param blob		Pointer to buffer containing fdt
- * @return 0 if ok, -1 on error
+ * @param filename	The filename to ग_लिखो, or - क्रम मानक_निकास
+ * @param blob		Poपूर्णांकer to buffer containing fdt
+ * @वापस 0 अगर ok, -1 on error
  */
-int utilfdt_write(const char *filename, const void *blob);
+पूर्णांक utilfdt_ग_लिखो(स्थिर अक्षर *filename, स्थिर व्योम *blob);
 
 /**
  * Write a device tree buffer to a file. Does not report errors, but only
- * returns them. The value returned can be passed to strerror() to obtain
- * an error message for the user.
+ * वापसs them. The value वापसed can be passed to म_त्रुटि() to obtain
+ * an error message क्रम the user.
  *
- * @param filename	The filename to write, or - for stdout
- * @param blob		Pointer to buffer containing fdt
- * @return 0 if ok, else an errno value representing the error
+ * @param filename	The filename to ग_लिखो, or - क्रम मानक_निकास
+ * @param blob		Poपूर्णांकer to buffer containing fdt
+ * @वापस 0 अगर ok, अन्यथा an त्रुटि_सं value representing the error
  */
-int utilfdt_write_err(const char *filename, const void *blob);
+पूर्णांक utilfdt_ग_लिखो_err(स्थिर अक्षर *filename, स्थिर व्योम *blob);
 
 /**
  * Decode a data type string. The purpose of this string
  *
- * The string consists of an optional character followed by the type:
- *	Modifier characters:
+ * The string consists of an optional अक्षरacter followed by the type:
+ *	Modअगरier अक्षरacters:
  *		hh or b	1 byte
  *		h	2 byte
- *		l	4 byte, default
+ *		l	4 byte, शेष
  *
- *	Type character:
+ *	Type अक्षरacter:
  *		s	string
- *		i	signed integer
- *		u	unsigned integer
+ *		i	चिन्हित पूर्णांकeger
+ *		u	अचिन्हित पूर्णांकeger
  *		x	hex
  *
- * TODO: Implement ll modifier (8 bytes)
+ * TODO: Implement ll modअगरier (8 bytes)
  * TODO: Implement o type (octal)
  *
  * @param fmt		Format string to process
- * @param type		Returns type found(s/d/u/x), or 0 if none
- * @param size		Returns size found(1,2,4,8) or 4 if none
- * @return 0 if ok, -1 on error (no type given, or other invalid format)
+ * @param type		Returns type found(s/d/u/x), or 0 अगर none
+ * @param size		Returns size found(1,2,4,8) or 4 अगर none
+ * @वापस 0 अगर ok, -1 on error (no type given, or other invalid क्रमmat)
  */
-int utilfdt_decode_type(const char *fmt, int *type, int *size);
+पूर्णांक utilfdt_decode_type(स्थिर अक्षर *fmt, पूर्णांक *type, पूर्णांक *size);
 
 /*
- * This is a usage message fragment for the -t option. It is the format
+ * This is a usage message fragment क्रम the -t option. It is the क्रमmat
  * supported by utilfdt_decode_type.
  */
 
-#define USAGE_TYPE_MSG \
+#घोषणा USAGE_TYPE_MSG \
 	"<type>\ts=string, i=int, u=unsigned, x=hex\n" \
 	"\tOptional modifier prefix:\n" \
 	"\t\thh or b=byte, h=2 byte, l=4 byte (default)";
 
 /**
- * Print property data in a readable format to stdout
+ * Prपूर्णांक property data in a पढ़ोable क्रमmat to मानक_निकास
  *
- * Properties that look like strings will be printed as strings. Otherwise
- * the data will be displayed either as cells (if len is a multiple of 4
+ * Properties that look like strings will be prपूर्णांकed as strings. Otherwise
+ * the data will be displayed either as cells (अगर len is a multiple of 4
  * bytes) or bytes.
  *
- * If len is 0 then this function does nothing.
+ * If len is 0 then this function करोes nothing.
  *
- * @param data	Pointers to property data
+ * @param data	Poपूर्णांकers to property data
  * @param len	Length of property data
  */
-void utilfdt_print_data(const char *data, int len);
+व्योम utilfdt_prपूर्णांक_data(स्थिर अक्षर *data, पूर्णांक len);
 
 /**
- * Show source version and exit
+ * Show source version and निकास
  */
-void NORETURN util_version(void);
+व्योम NORETURN util_version(व्योम);
 
 /**
- * Show usage and exit
+ * Show usage and निकास
  *
  * This helps standardize the output of various utils.  You most likely want
  * to use the usage() helper below rather than call this.
  *
- * @param errmsg	If non-NULL, an error message to display
+ * @param errmsg	If non-शून्य, an error message to display
  * @param synopsis	The initial example usage text (and possible examples)
- * @param short_opts	The string of short options
- * @param long_opts	The structure of long options
- * @param opts_help	An array of help strings (should align with long_opts)
+ * @param लघु_opts	The string of लघु options
+ * @param दीर्घ_opts	The काष्ठाure of दीर्घ options
+ * @param opts_help	An array of help strings (should align with दीर्घ_opts)
  */
-void NORETURN util_usage(const char *errmsg, const char *synopsis,
-			 const char *short_opts,
-			 struct option const long_opts[],
-			 const char * const opts_help[]);
+व्योम NORETURN util_usage(स्थिर अक्षर *errmsg, स्थिर अक्षर *synopsis,
+			 स्थिर अक्षर *लघु_opts,
+			 काष्ठा option स्थिर दीर्घ_opts[],
+			 स्थिर अक्षर * स्थिर opts_help[]);
 
 /**
- * Show usage and exit
+ * Show usage and निकास
  *
  * If you name all your usage variables with usage_xxx, then you can call this
  * help macro rather than expanding all arguments yourself.
  *
- * @param errmsg	If non-NULL, an error message to display
+ * @param errmsg	If non-शून्य, an error message to display
  */
-#define usage(errmsg) \
-	util_usage(errmsg, usage_synopsis, usage_short_opts, \
-		   usage_long_opts, usage_opts_help)
+#घोषणा usage(errmsg) \
+	util_usage(errmsg, usage_synopsis, usage_लघु_opts, \
+		   usage_दीर्घ_opts, usage_opts_help)
 
 /**
- * Call getopt_long() with standard options
+ * Call getopt_दीर्घ() with standard options
  *
  * Since all util code runs getopt in the same way, provide a helper.
  */
-#define util_getopt_long() getopt_long(argc, argv, usage_short_opts, \
-				       usage_long_opts, NULL)
+#घोषणा util_getopt_दीर्घ() getopt_दीर्घ(argc, argv, usage_लघु_opts, \
+				       usage_दीर्घ_opts, शून्य)
 
-/* Helper for aligning long_opts array */
-#define a_argument required_argument
+/* Helper क्रम aligning दीर्घ_opts array */
+#घोषणा a_argument required_argument
 
-/* Helper for usage_short_opts string constant */
-#define USAGE_COMMON_SHORT_OPTS "hV"
+/* Helper क्रम usage_लघु_opts string स्थिरant */
+#घोषणा USAGE_COMMON_SHORT_OPTS "hV"
 
-/* Helper for usage_long_opts option array */
-#define USAGE_COMMON_LONG_OPTS \
-	{"help",      no_argument, NULL, 'h'}, \
-	{"version",   no_argument, NULL, 'V'}, \
-	{NULL,        no_argument, NULL, 0x0}
+/* Helper क्रम usage_दीर्घ_opts option array */
+#घोषणा USAGE_COMMON_LONG_OPTS \
+	अणु"help",      no_argument, शून्य, 'h'पूर्ण, \
+	अणु"version",   no_argument, शून्य, 'V'पूर्ण, \
+	अणुशून्य,        no_argument, शून्य, 0x0पूर्ण
 
-/* Helper for usage_opts_help array */
-#define USAGE_COMMON_OPTS_HELP \
+/* Helper क्रम usage_opts_help array */
+#घोषणा USAGE_COMMON_OPTS_HELP \
 	"Print this help and exit", \
 	"Print version and exit", \
-	NULL
+	शून्य
 
-/* Helper for getopt case statements */
-#define case_USAGE_COMMON_FLAGS \
-	case 'h': usage(NULL); \
-	case 'V': util_version(); \
-	case '?': usage("unknown option");
+/* Helper क्रम getopt हाल statements */
+#घोषणा हाल_USAGE_COMMON_FLAGS \
+	हाल 'h': usage(शून्य); \
+	हाल 'V': util_version(); \
+	हाल '?': usage("unknown option");
 
-#endif /* UTIL_H */
+#पूर्ण_अगर /* UTIL_H */

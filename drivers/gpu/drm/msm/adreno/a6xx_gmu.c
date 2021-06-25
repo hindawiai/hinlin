@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2017-2019 The Linux Foundation. All rights reserved. */
 
-#include <linux/clk.h>
-#include <linux/interconnect.h>
-#include <linux/pm_domain.h>
-#include <linux/pm_opp.h>
-#include <soc/qcom/cmd-db.h>
-#include <drm/drm_gem.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पूर्णांकerconnect.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/pm_opp.h>
+#समावेश <soc/qcom/cmd-db.h>
+#समावेश <drm/drm_gem.h>
 
-#include "a6xx_gpu.h"
-#include "a6xx_gmu.xml.h"
-#include "msm_gem.h"
-#include "msm_gpu_trace.h"
-#include "msm_mmu.h"
+#समावेश "a6xx_gpu.h"
+#समावेश "a6xx_gmu.xml.h"
+#समावेश "msm_gem.h"
+#समावेश "msm_gpu_trace.h"
+#समावेश "msm_mmu.h"
 
-static void a6xx_gmu_fault(struct a6xx_gmu *gmu)
-{
-	struct a6xx_gpu *a6xx_gpu = container_of(gmu, struct a6xx_gpu, gmu);
-	struct adreno_gpu *adreno_gpu = &a6xx_gpu->base;
-	struct msm_gpu *gpu = &adreno_gpu->base;
+अटल व्योम a6xx_gmu_fault(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_gpu *a6xx_gpu = container_of(gmu, काष्ठा a6xx_gpu, gmu);
+	काष्ठा adreno_gpu *adreno_gpu = &a6xx_gpu->base;
+	काष्ठा msm_gpu *gpu = &adreno_gpu->base;
 
 	/* FIXME: add a banner here */
 	gmu->hung = true;
 
-	/* Turn off the hangcheck timer while we are resetting */
-	del_timer(&gpu->hangcheck_timer);
+	/* Turn off the hangcheck समयr जबतक we are resetting */
+	del_समयr(&gpu->hangcheck_समयr);
 
 	/* Queue the GPU handler because we need to treat this as a recovery */
-	kthread_queue_work(gpu->worker, &gpu->recover_work);
-}
+	kthपढ़ो_queue_work(gpu->worker, &gpu->recover_work);
+पूर्ण
 
-static irqreturn_t a6xx_gmu_irq(int irq, void *data)
-{
-	struct a6xx_gmu *gmu = data;
+अटल irqवापस_t a6xx_gmu_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा a6xx_gmu *gmu = data;
 	u32 status;
 
-	status = gmu_read(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_STATUS);
-	gmu_write(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_CLR, status);
+	status = gmu_पढ़ो(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_STATUS);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_CLR, status);
 
-	if (status & A6XX_GMU_AO_HOST_INTERRUPT_STATUS_WDOG_BITE) {
+	अगर (status & A6XX_GMU_AO_HOST_INTERRUPT_STATUS_WDOG_BITE) अणु
 		dev_err_ratelimited(gmu->dev, "GMU watchdog expired\n");
 
 		a6xx_gmu_fault(gmu);
-	}
+	पूर्ण
 
-	if (status &  A6XX_GMU_AO_HOST_INTERRUPT_STATUS_HOST_AHB_BUS_ERROR)
+	अगर (status &  A6XX_GMU_AO_HOST_INTERRUPT_STATUS_HOST_AHB_BUS_ERROR)
 		dev_err_ratelimited(gmu->dev, "GMU AHB bus error\n");
 
-	if (status & A6XX_GMU_AO_HOST_INTERRUPT_STATUS_FENCE_ERR)
+	अगर (status & A6XX_GMU_AO_HOST_INTERRUPT_STATUS_FENCE_ERR)
 		dev_err_ratelimited(gmu->dev, "GMU fence error: 0x%x\n",
-			gmu_read(gmu, REG_A6XX_GMU_AHB_FENCE_STATUS));
+			gmu_पढ़ो(gmu, REG_A6XX_GMU_AHB_FENCE_STATUS));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t a6xx_hfi_irq(int irq, void *data)
-{
-	struct a6xx_gmu *gmu = data;
+अटल irqवापस_t a6xx_hfi_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा a6xx_gmu *gmu = data;
 	u32 status;
 
-	status = gmu_read(gmu, REG_A6XX_GMU_GMU2HOST_INTR_INFO);
-	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR, status);
+	status = gmu_पढ़ो(gmu, REG_A6XX_GMU_GMU2HOST_INTR_INFO);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR, status);
 
-	if (status & A6XX_GMU_GMU2HOST_INTR_INFO_CM3_FAULT) {
+	अगर (status & A6XX_GMU_GMU2HOST_INTR_INFO_CM3_FAULT) अणु
 		dev_err_ratelimited(gmu->dev, "GMU firmware fault\n");
 
 		a6xx_gmu_fault(gmu);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-bool a6xx_gmu_sptprac_is_on(struct a6xx_gmu *gmu)
-{
+bool a6xx_gmu_sptprac_is_on(काष्ठा a6xx_gmu *gmu)
+अणु
 	u32 val;
 
 	/* This can be called from gpu state code so make sure GMU is valid */
-	if (!gmu->initialized)
-		return false;
+	अगर (!gmu->initialized)
+		वापस false;
 
-	val = gmu_read(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS);
+	val = gmu_पढ़ो(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS);
 
-	return !(val &
+	वापस !(val &
 		(A6XX_GMU_SPTPRAC_PWR_CLK_STATUS_SPTPRAC_GDSC_POWER_OFF |
 		A6XX_GMU_SPTPRAC_PWR_CLK_STATUS_SP_CLOCK_OFF));
-}
+पूर्ण
 
-/* Check to see if the GX rail is still powered */
-bool a6xx_gmu_gx_is_on(struct a6xx_gmu *gmu)
-{
+/* Check to see अगर the GX rail is still घातered */
+bool a6xx_gmu_gx_is_on(काष्ठा a6xx_gmu *gmu)
+अणु
 	u32 val;
 
 	/* This can be called from gpu state code so make sure GMU is valid */
-	if (!gmu->initialized)
-		return false;
+	अगर (!gmu->initialized)
+		वापस false;
 
-	val = gmu_read(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS);
+	val = gmu_पढ़ो(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS);
 
-	return !(val &
+	वापस !(val &
 		(A6XX_GMU_SPTPRAC_PWR_CLK_STATUS_GX_HM_GDSC_POWER_OFF |
 		A6XX_GMU_SPTPRAC_PWR_CLK_STATUS_GX_HM_CLK_OFF));
-}
+पूर्ण
 
-void a6xx_gmu_set_freq(struct msm_gpu *gpu, struct dev_pm_opp *opp)
-{
-	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	struct a6xx_gpu *a6xx_gpu = to_a6xx_gpu(adreno_gpu);
-	struct a6xx_gmu *gmu = &a6xx_gpu->gmu;
+व्योम a6xx_gmu_set_freq(काष्ठा msm_gpu *gpu, काष्ठा dev_pm_opp *opp)
+अणु
+	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+	काष्ठा a6xx_gpu *a6xx_gpu = to_a6xx_gpu(adreno_gpu);
+	काष्ठा a6xx_gmu *gmu = &a6xx_gpu->gmu;
 	u32 perf_index;
-	unsigned long gpu_freq;
-	int ret = 0;
+	अचिन्हित दीर्घ gpu_freq;
+	पूर्णांक ret = 0;
 
 	gpu_freq = dev_pm_opp_get_freq(opp);
 
-	if (gpu_freq == gmu->freq)
-		return;
+	अगर (gpu_freq == gmu->freq)
+		वापस;
 
-	for (perf_index = 0; perf_index < gmu->nr_gpu_freqs - 1; perf_index++)
-		if (gpu_freq == gmu->gpu_freqs[perf_index])
-			break;
+	क्रम (perf_index = 0; perf_index < gmu->nr_gpu_freqs - 1; perf_index++)
+		अगर (gpu_freq == gmu->gpu_freqs[perf_index])
+			अवरोध;
 
 	gmu->current_perf_index = perf_index;
 	gmu->freq = gmu->gpu_freqs[perf_index];
@@ -126,135 +127,135 @@ void a6xx_gmu_set_freq(struct msm_gpu *gpu, struct dev_pm_opp *opp)
 	trace_msm_gmu_freq_change(gmu->freq, perf_index);
 
 	/*
-	 * This can get called from devfreq while the hardware is idle. Don't
-	 * bring up the power if it isn't already active
+	 * This can get called from devfreq जबतक the hardware is idle. Don't
+	 * bring up the घातer अगर it isn't alपढ़ोy active
 	 */
-	if (pm_runtime_get_if_in_use(gmu->dev) == 0)
-		return;
+	अगर (pm_runसमय_get_अगर_in_use(gmu->dev) == 0)
+		वापस;
 
-	if (!gmu->legacy) {
+	अगर (!gmu->legacy) अणु
 		a6xx_hfi_set_freq(gmu, perf_index);
 		dev_pm_opp_set_opp(&gpu->pdev->dev, opp);
-		pm_runtime_put(gmu->dev);
-		return;
-	}
+		pm_runसमय_put(gmu->dev);
+		वापस;
+	पूर्ण
 
-	gmu_write(gmu, REG_A6XX_GMU_DCVS_ACK_OPTION, 0);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_DCVS_ACK_OPTION, 0);
 
-	gmu_write(gmu, REG_A6XX_GMU_DCVS_PERF_SETTING,
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_DCVS_PERF_SETTING,
 			((3 & 0xf) << 28) | perf_index);
 
 	/*
-	 * Send an invalid index as a vote for the bus bandwidth and let the
+	 * Send an invalid index as a vote क्रम the bus bandwidth and let the
 	 * firmware decide on the right vote
 	 */
-	gmu_write(gmu, REG_A6XX_GMU_DCVS_BW_SETTING, 0xff);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_DCVS_BW_SETTING, 0xff);
 
-	/* Set and clear the OOB for DCVS to trigger the GMU */
+	/* Set and clear the OOB क्रम DCVS to trigger the GMU */
 	a6xx_gmu_set_oob(gmu, GMU_OOB_DCVS_SET);
 	a6xx_gmu_clear_oob(gmu, GMU_OOB_DCVS_SET);
 
-	ret = gmu_read(gmu, REG_A6XX_GMU_DCVS_RETURN);
-	if (ret)
+	ret = gmu_पढ़ो(gmu, REG_A6XX_GMU_DCVS_RETURN);
+	अगर (ret)
 		dev_err(gmu->dev, "GMU set GPU frequency error: %d\n", ret);
 
 	dev_pm_opp_set_opp(&gpu->pdev->dev, opp);
-	pm_runtime_put(gmu->dev);
-}
+	pm_runसमय_put(gmu->dev);
+पूर्ण
 
-unsigned long a6xx_gmu_get_freq(struct msm_gpu *gpu)
-{
-	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	struct a6xx_gpu *a6xx_gpu = to_a6xx_gpu(adreno_gpu);
-	struct a6xx_gmu *gmu = &a6xx_gpu->gmu;
+अचिन्हित दीर्घ a6xx_gmu_get_freq(काष्ठा msm_gpu *gpu)
+अणु
+	काष्ठा adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
+	काष्ठा a6xx_gpu *a6xx_gpu = to_a6xx_gpu(adreno_gpu);
+	काष्ठा a6xx_gmu *gmu = &a6xx_gpu->gmu;
 
-	return  gmu->freq;
-}
+	वापस  gmu->freq;
+पूर्ण
 
-static bool a6xx_gmu_check_idle_level(struct a6xx_gmu *gmu)
-{
+अटल bool a6xx_gmu_check_idle_level(काष्ठा a6xx_gmu *gmu)
+अणु
 	u32 val;
-	int local = gmu->idle_level;
+	पूर्णांक local = gmu->idle_level;
 
 	/* SPTP and IFPC both report as IFPC */
-	if (gmu->idle_level == GMU_IDLE_STATE_SPTP)
+	अगर (gmu->idle_level == GMU_IDLE_STATE_SPTP)
 		local = GMU_IDLE_STATE_IFPC;
 
-	val = gmu_read(gmu, REG_A6XX_GPU_GMU_CX_GMU_RPMH_POWER_STATE);
+	val = gmu_पढ़ो(gmu, REG_A6XX_GPU_GMU_CX_GMU_RPMH_POWER_STATE);
 
-	if (val == local) {
-		if (gmu->idle_level != GMU_IDLE_STATE_IFPC ||
+	अगर (val == local) अणु
+		अगर (gmu->idle_level != GMU_IDLE_STATE_IFPC ||
 			!a6xx_gmu_gx_is_on(gmu))
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Wait for the GMU to get to its most idle state */
-int a6xx_gmu_wait_for_idle(struct a6xx_gmu *gmu)
-{
-	return spin_until(a6xx_gmu_check_idle_level(gmu));
-}
+/* Wait क्रम the GMU to get to its most idle state */
+पूर्णांक a6xx_gmu_रुको_क्रम_idle(काष्ठा a6xx_gmu *gmu)
+अणु
+	वापस spin_until(a6xx_gmu_check_idle_level(gmu));
+पूर्ण
 
-static int a6xx_gmu_start(struct a6xx_gmu *gmu)
-{
-	int ret;
+अटल पूर्णांक a6xx_gmu_start(काष्ठा a6xx_gmu *gmu)
+अणु
+	पूर्णांक ret;
 	u32 val;
 	u32 mask, reset_val;
 
-	val = gmu_read(gmu, REG_A6XX_GMU_CM3_DTCM_START + 0xff8);
-	if (val <= 0x20010004) {
+	val = gmu_पढ़ो(gmu, REG_A6XX_GMU_CM3_DTCM_START + 0xff8);
+	अगर (val <= 0x20010004) अणु
 		mask = 0xffffffff;
 		reset_val = 0xbabeface;
-	} else {
+	पूर्ण अन्यथा अणु
 		mask = 0x1ff;
 		reset_val = 0x100;
-	}
+	पूर्ण
 
-	gmu_write(gmu, REG_A6XX_GMU_CM3_SYSRESET, 1);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_CM3_SYSRESET, 1);
 
 	/* Set the log wptr index
-	 * note: downstream saves the value in poweroff and restores it here
+	 * note: करोwnstream saves the value in घातeroff and restores it here
 	 */
-	gmu_write(gmu, REG_A6XX_GPU_GMU_CX_GMU_PWR_COL_CP_RESP, 0);
+	gmu_ग_लिखो(gmu, REG_A6XX_GPU_GMU_CX_GMU_PWR_COL_CP_RESP, 0);
 
-	gmu_write(gmu, REG_A6XX_GMU_CM3_SYSRESET, 0);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_CM3_SYSRESET, 0);
 
-	ret = gmu_poll_timeout(gmu, REG_A6XX_GMU_CM3_FW_INIT_RESULT, val,
+	ret = gmu_poll_समयout(gmu, REG_A6XX_GMU_CM3_FW_INIT_RESULT, val,
 		(val & mask) == reset_val, 100, 10000);
 
-	if (ret)
+	अगर (ret)
 		DRM_DEV_ERROR(gmu->dev, "GMU firmware initialization timed out\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int a6xx_gmu_hfi_start(struct a6xx_gmu *gmu)
-{
+अटल पूर्णांक a6xx_gmu_hfi_start(काष्ठा a6xx_gmu *gmu)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	gmu_write(gmu, REG_A6XX_GMU_HFI_CTRL_INIT, 1);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_HFI_CTRL_INIT, 1);
 
-	ret = gmu_poll_timeout(gmu, REG_A6XX_GMU_HFI_CTRL_STATUS, val,
+	ret = gmu_poll_समयout(gmu, REG_A6XX_GMU_HFI_CTRL_STATUS, val,
 		val & 1, 100, 10000);
-	if (ret)
+	अगर (ret)
 		DRM_DEV_ERROR(gmu->dev, "Unable to start the HFI queues\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct a6xx_gmu_oob_bits {
-	int set, ack, set_new, ack_new, clear, clear_new;
-	const char *name;
-};
+काष्ठा a6xx_gmu_oob_bits अणु
+	पूर्णांक set, ack, set_new, ack_new, clear, clear_new;
+	स्थिर अक्षर *name;
+पूर्ण;
 
-/* These are the interrupt / ack bits for each OOB request that are set
+/* These are the पूर्णांकerrupt / ack bits क्रम each OOB request that are set
  * in a6xx_gmu_set_oob and a6xx_clear_oob
  */
-static const struct a6xx_gmu_oob_bits a6xx_gmu_oob_bits[] = {
-	[GMU_OOB_GPU_SET] = {
+अटल स्थिर काष्ठा a6xx_gmu_oob_bits a6xx_gmu_oob_bits[] = अणु
+	[GMU_OOB_GPU_SET] = अणु
 		.name = "GPU_SET",
 		.set = 16,
 		.ack = 24,
@@ -262,9 +263,9 @@ static const struct a6xx_gmu_oob_bits a6xx_gmu_oob_bits[] = {
 		.ack_new = 31,
 		.clear = 24,
 		.clear_new = 31,
-	},
+	पूर्ण,
 
-	[GMU_OOB_PERFCOUNTER_SET] = {
+	[GMU_OOB_PERFCOUNTER_SET] = अणु
 		.name = "PERFCOUNTER",
 		.set = 17,
 		.ack = 25,
@@ -272,376 +273,376 @@ static const struct a6xx_gmu_oob_bits a6xx_gmu_oob_bits[] = {
 		.ack_new = 30,
 		.clear = 25,
 		.clear_new = 29,
-	},
+	पूर्ण,
 
-	[GMU_OOB_BOOT_SLUMBER] = {
+	[GMU_OOB_BOOT_SLUMBER] = अणु
 		.name = "BOOT_SLUMBER",
 		.set = 22,
 		.ack = 30,
 		.clear = 30,
-	},
+	पूर्ण,
 
-	[GMU_OOB_DCVS_SET] = {
+	[GMU_OOB_DCVS_SET] = अणु
 		.name = "GPU_DCVS",
 		.set = 23,
 		.ack = 31,
 		.clear = 31,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* Trigger a OOB (out of band) request to the GMU */
-int a6xx_gmu_set_oob(struct a6xx_gmu *gmu, enum a6xx_gmu_oob_state state)
-{
-	int ret;
+पूर्णांक a6xx_gmu_set_oob(काष्ठा a6xx_gmu *gmu, क्रमागत a6xx_gmu_oob_state state)
+अणु
+	पूर्णांक ret;
 	u32 val;
-	int request, ack;
+	पूर्णांक request, ack;
 
-	if (state >= ARRAY_SIZE(a6xx_gmu_oob_bits))
-		return -EINVAL;
+	अगर (state >= ARRAY_SIZE(a6xx_gmu_oob_bits))
+		वापस -EINVAL;
 
-	if (gmu->legacy) {
+	अगर (gmu->legacy) अणु
 		request = a6xx_gmu_oob_bits[state].set;
 		ack = a6xx_gmu_oob_bits[state].ack;
-	} else {
+	पूर्ण अन्यथा अणु
 		request = a6xx_gmu_oob_bits[state].set_new;
 		ack = a6xx_gmu_oob_bits[state].ack_new;
-		if (!request || !ack) {
+		अगर (!request || !ack) अणु
 			DRM_DEV_ERROR(gmu->dev,
 				      "Invalid non-legacy GMU request %s\n",
 				      a6xx_gmu_oob_bits[state].name);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* Trigger the equested OOB operation */
-	gmu_write(gmu, REG_A6XX_GMU_HOST2GMU_INTR_SET, 1 << request);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_HOST2GMU_INTR_SET, 1 << request);
 
-	/* Wait for the acknowledge interrupt */
-	ret = gmu_poll_timeout(gmu, REG_A6XX_GMU_GMU2HOST_INTR_INFO, val,
+	/* Wait क्रम the acknowledge पूर्णांकerrupt */
+	ret = gmu_poll_समयout(gmu, REG_A6XX_GMU_GMU2HOST_INTR_INFO, val,
 		val & (1 << ack), 100, 10000);
 
-	if (ret)
+	अगर (ret)
 		DRM_DEV_ERROR(gmu->dev,
 			"Timeout waiting for GMU OOB set %s: 0x%x\n",
 				a6xx_gmu_oob_bits[state].name,
-				gmu_read(gmu, REG_A6XX_GMU_GMU2HOST_INTR_INFO));
+				gmu_पढ़ो(gmu, REG_A6XX_GMU_GMU2HOST_INTR_INFO));
 
-	/* Clear the acknowledge interrupt */
-	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR, 1 << ack);
+	/* Clear the acknowledge पूर्णांकerrupt */
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR, 1 << ack);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Clear a pending OOB state in the GMU */
-void a6xx_gmu_clear_oob(struct a6xx_gmu *gmu, enum a6xx_gmu_oob_state state)
-{
-	int bit;
+व्योम a6xx_gmu_clear_oob(काष्ठा a6xx_gmu *gmu, क्रमागत a6xx_gmu_oob_state state)
+अणु
+	पूर्णांक bit;
 
-	if (state >= ARRAY_SIZE(a6xx_gmu_oob_bits))
-		return;
+	अगर (state >= ARRAY_SIZE(a6xx_gmu_oob_bits))
+		वापस;
 
-	if (gmu->legacy)
+	अगर (gmu->legacy)
 		bit = a6xx_gmu_oob_bits[state].clear;
-	else
+	अन्यथा
 		bit = a6xx_gmu_oob_bits[state].clear_new;
 
-	gmu_write(gmu, REG_A6XX_GMU_HOST2GMU_INTR_SET, 1 << bit);
-}
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_HOST2GMU_INTR_SET, 1 << bit);
+पूर्ण
 
-/* Enable CPU control of SPTP power power collapse */
-static int a6xx_sptprac_enable(struct a6xx_gmu *gmu)
-{
-	int ret;
+/* Enable CPU control of SPTP घातer घातer collapse */
+अटल पूर्णांक a6xx_sptprac_enable(काष्ठा a6xx_gmu *gmu)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	if (!gmu->legacy)
-		return 0;
+	अगर (!gmu->legacy)
+		वापस 0;
 
-	gmu_write(gmu, REG_A6XX_GMU_GX_SPTPRAC_POWER_CONTROL, 0x778000);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_GX_SPTPRAC_POWER_CONTROL, 0x778000);
 
-	ret = gmu_poll_timeout(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS, val,
+	ret = gmu_poll_समयout(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS, val,
 		(val & 0x38) == 0x28, 1, 100);
 
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(gmu->dev, "Unable to power on SPTPRAC: 0x%x\n",
-			gmu_read(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS));
-	}
+			gmu_पढ़ो(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Disable CPU control of SPTP power power collapse */
-static void a6xx_sptprac_disable(struct a6xx_gmu *gmu)
-{
+/* Disable CPU control of SPTP घातer घातer collapse */
+अटल व्योम a6xx_sptprac_disable(काष्ठा a6xx_gmu *gmu)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (!gmu->legacy)
-		return;
+	अगर (!gmu->legacy)
+		वापस;
 
 	/* Make sure retention is on */
 	gmu_rmw(gmu, REG_A6XX_GPU_CC_GX_GDSCR, 0, (1 << 11));
 
-	gmu_write(gmu, REG_A6XX_GMU_GX_SPTPRAC_POWER_CONTROL, 0x778001);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_GX_SPTPRAC_POWER_CONTROL, 0x778001);
 
-	ret = gmu_poll_timeout(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS, val,
+	ret = gmu_poll_समयout(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS, val,
 		(val & 0x04), 100, 10000);
 
-	if (ret)
+	अगर (ret)
 		DRM_DEV_ERROR(gmu->dev, "failed to power off SPTPRAC: 0x%x\n",
-			gmu_read(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS));
-}
+			gmu_पढ़ो(gmu, REG_A6XX_GMU_SPTPRAC_PWR_CLK_STATUS));
+पूर्ण
 
 /* Let the GMU know we are starting a boot sequence */
-static int a6xx_gmu_gfx_rail_on(struct a6xx_gmu *gmu)
-{
+अटल पूर्णांक a6xx_gmu_gfx_rail_on(काष्ठा a6xx_gmu *gmu)
+अणु
 	u32 vote;
 
-	/* Let the GMU know we are getting ready for boot */
-	gmu_write(gmu, REG_A6XX_GMU_BOOT_SLUMBER_OPTION, 0);
+	/* Let the GMU know we are getting पढ़ोy क्रम boot */
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_BOOT_SLUMBER_OPTION, 0);
 
-	/* Choose the "default" power level as the highest available */
+	/* Choose the "default" घातer level as the highest available */
 	vote = gmu->gx_arc_votes[gmu->nr_gpu_freqs - 1];
 
-	gmu_write(gmu, REG_A6XX_GMU_GX_VOTE_IDX, vote & 0xff);
-	gmu_write(gmu, REG_A6XX_GMU_MX_VOTE_IDX, (vote >> 8) & 0xff);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_GX_VOTE_IDX, vote & 0xff);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_MX_VOTE_IDX, (vote >> 8) & 0xff);
 
 	/* Let the GMU know the boot sequence has started */
-	return a6xx_gmu_set_oob(gmu, GMU_OOB_BOOT_SLUMBER);
-}
+	वापस a6xx_gmu_set_oob(gmu, GMU_OOB_BOOT_SLUMBER);
+पूर्ण
 
-/* Let the GMU know that we are about to go into slumber */
-static int a6xx_gmu_notify_slumber(struct a6xx_gmu *gmu)
-{
-	int ret;
+/* Let the GMU know that we are about to go पूर्णांकo slumber */
+अटल पूर्णांक a6xx_gmu_notअगरy_slumber(काष्ठा a6xx_gmu *gmu)
+अणु
+	पूर्णांक ret;
 
-	/* Disable the power counter so the GMU isn't busy */
-	gmu_write(gmu, REG_A6XX_GMU_CX_GMU_POWER_COUNTER_ENABLE, 0);
+	/* Disable the घातer counter so the GMU isn't busy */
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_CX_GMU_POWER_COUNTER_ENABLE, 0);
 
-	/* Disable SPTP_PC if the CPU is responsible for it */
-	if (gmu->idle_level < GMU_IDLE_STATE_SPTP)
+	/* Disable SPTP_PC अगर the CPU is responsible क्रम it */
+	अगर (gmu->idle_level < GMU_IDLE_STATE_SPTP)
 		a6xx_sptprac_disable(gmu);
 
-	if (!gmu->legacy) {
+	अगर (!gmu->legacy) अणु
 		ret = a6xx_hfi_send_prep_slumber(gmu);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Tell the GMU to get ready to slumber */
-	gmu_write(gmu, REG_A6XX_GMU_BOOT_SLUMBER_OPTION, 1);
+	/* Tell the GMU to get पढ़ोy to slumber */
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_BOOT_SLUMBER_OPTION, 1);
 
 	ret = a6xx_gmu_set_oob(gmu, GMU_OOB_BOOT_SLUMBER);
 	a6xx_gmu_clear_oob(gmu, GMU_OOB_BOOT_SLUMBER);
 
-	if (!ret) {
-		/* Check to see if the GMU really did slumber */
-		if (gmu_read(gmu, REG_A6XX_GPU_GMU_CX_GMU_RPMH_POWER_STATE)
-			!= 0x0f) {
+	अगर (!ret) अणु
+		/* Check to see अगर the GMU really did slumber */
+		अगर (gmu_पढ़ो(gmu, REG_A6XX_GPU_GMU_CX_GMU_RPMH_POWER_STATE)
+			!= 0x0f) अणु
 			DRM_DEV_ERROR(gmu->dev, "The GMU did not go into slumber\n");
 			ret = -ETIMEDOUT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	/* Put fence into allow mode */
-	gmu_write(gmu, REG_A6XX_GMU_AO_AHB_FENCE_CTRL, 0);
-	return ret;
-}
+	/* Put fence पूर्णांकo allow mode */
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_AO_AHB_FENCE_CTRL, 0);
+	वापस ret;
+पूर्ण
 
-static int a6xx_rpmh_start(struct a6xx_gmu *gmu)
-{
-	int ret;
+अटल पूर्णांक a6xx_rpmh_start(काष्ठा a6xx_gmu *gmu)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	gmu_write(gmu, REG_A6XX_GMU_RSCC_CONTROL_REQ, 1 << 1);
-	/* Wait for the register to finish posting */
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_RSCC_CONTROL_REQ, 1 << 1);
+	/* Wait क्रम the रेजिस्टर to finish posting */
 	wmb();
 
-	ret = gmu_poll_timeout(gmu, REG_A6XX_GMU_RSCC_CONTROL_ACK, val,
+	ret = gmu_poll_समयout(gmu, REG_A6XX_GMU_RSCC_CONTROL_ACK, val,
 		val & (1 << 1), 100, 10000);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(gmu->dev, "Unable to power on the GPU RSC\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = gmu_poll_timeout_rscc(gmu, REG_A6XX_RSCC_SEQ_BUSY_DRV0, val,
+	ret = gmu_poll_समयout_rscc(gmu, REG_A6XX_RSCC_SEQ_BUSY_DRV0, val,
 		!val, 100, 10000);
 
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(gmu->dev, "GPU RSC sequence stuck while waking up the GPU\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	gmu_write(gmu, REG_A6XX_GMU_RSCC_CONTROL_REQ, 0);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_RSCC_CONTROL_REQ, 0);
 
 	/* Set up CX GMU counter 0 to count busy ticks */
-	gmu_write(gmu, REG_A6XX_GPU_GMU_AO_GPU_CX_BUSY_MASK, 0xff000000);
+	gmu_ग_लिखो(gmu, REG_A6XX_GPU_GMU_AO_GPU_CX_BUSY_MASK, 0xff000000);
 	gmu_rmw(gmu, REG_A6XX_GMU_CX_GMU_POWER_COUNTER_SELECT_0, 0xff, 0x20);
 
-	/* Enable the power counter */
-	gmu_write(gmu, REG_A6XX_GMU_CX_GMU_POWER_COUNTER_ENABLE, 1);
-	return 0;
-}
+	/* Enable the घातer counter */
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_CX_GMU_POWER_COUNTER_ENABLE, 1);
+	वापस 0;
+पूर्ण
 
-static void a6xx_rpmh_stop(struct a6xx_gmu *gmu)
-{
-	int ret;
+अटल व्योम a6xx_rpmh_stop(काष्ठा a6xx_gmu *gmu)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	gmu_write(gmu, REG_A6XX_GMU_RSCC_CONTROL_REQ, 1);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_RSCC_CONTROL_REQ, 1);
 
-	ret = gmu_poll_timeout_rscc(gmu, REG_A6XX_GPU_RSCC_RSC_STATUS0_DRV0,
+	ret = gmu_poll_समयout_rscc(gmu, REG_A6XX_GPU_RSCC_RSC_STATUS0_DRV0,
 		val, val & (1 << 16), 100, 10000);
-	if (ret)
+	अगर (ret)
 		DRM_DEV_ERROR(gmu->dev, "Unable to power off the GPU RSC\n");
 
-	gmu_write(gmu, REG_A6XX_GMU_RSCC_CONTROL_REQ, 0);
-}
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_RSCC_CONTROL_REQ, 0);
+पूर्ण
 
-static inline void pdc_write(void __iomem *ptr, u32 offset, u32 value)
-{
-	return msm_writel(value, ptr + (offset << 2));
-}
+अटल अंतरभूत व्योम pdc_ग_लिखो(व्योम __iomem *ptr, u32 offset, u32 value)
+अणु
+	वापस msm_ग_लिखोl(value, ptr + (offset << 2));
+पूर्ण
 
-static void __iomem *a6xx_gmu_get_mmio(struct platform_device *pdev,
-		const char *name);
+अटल व्योम __iomem *a6xx_gmu_get_mmio(काष्ठा platक्रमm_device *pdev,
+		स्थिर अक्षर *name);
 
-static void a6xx_gmu_rpmh_init(struct a6xx_gmu *gmu)
-{
-	struct a6xx_gpu *a6xx_gpu = container_of(gmu, struct a6xx_gpu, gmu);
-	struct adreno_gpu *adreno_gpu = &a6xx_gpu->base;
-	struct platform_device *pdev = to_platform_device(gmu->dev);
-	void __iomem *pdcptr = a6xx_gmu_get_mmio(pdev, "gmu_pdc");
-	void __iomem *seqptr = a6xx_gmu_get_mmio(pdev, "gmu_pdc_seq");
-	uint32_t pdc_address_offset;
+अटल व्योम a6xx_gmu_rpmh_init(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_gpu *a6xx_gpu = container_of(gmu, काष्ठा a6xx_gpu, gmu);
+	काष्ठा adreno_gpu *adreno_gpu = &a6xx_gpu->base;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(gmu->dev);
+	व्योम __iomem *pdcptr = a6xx_gmu_get_mmio(pdev, "gmu_pdc");
+	व्योम __iomem *seqptr = a6xx_gmu_get_mmio(pdev, "gmu_pdc_seq");
+	uपूर्णांक32_t pdc_address_offset;
 
-	if (!pdcptr || !seqptr)
-		goto err;
+	अगर (!pdcptr || !seqptr)
+		जाओ err;
 
-	if (adreno_is_a618(adreno_gpu) || adreno_is_a640(adreno_gpu))
+	अगर (adreno_is_a618(adreno_gpu) || adreno_is_a640(adreno_gpu))
 		pdc_address_offset = 0x30090;
-	else if (adreno_is_a650(adreno_gpu))
+	अन्यथा अगर (adreno_is_a650(adreno_gpu))
 		pdc_address_offset = 0x300a0;
-	else
+	अन्यथा
 		pdc_address_offset = 0x30080;
 
-	/* Disable SDE clock gating */
-	gmu_write_rscc(gmu, REG_A6XX_GPU_RSCC_RSC_STATUS0_DRV0, BIT(24));
+	/* Disable SDE घड़ी gating */
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_GPU_RSCC_RSC_STATUS0_DRV0, BIT(24));
 
-	/* Setup RSC PDC handshake for sleep and wakeup */
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_PDC_SLAVE_ID_DRV0, 1);
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_DATA, 0);
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_ADDR, 0);
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_DATA + 2, 0);
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_ADDR + 2, 0);
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_DATA + 4, 0x80000000);
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_ADDR + 4, 0);
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_OVERRIDE_START_ADDR, 0);
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_PDC_SEQ_START_ADDR, 0x4520);
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_PDC_MATCH_VALUE_LO, 0x4510);
-	gmu_write_rscc(gmu, REG_A6XX_RSCC_PDC_MATCH_VALUE_HI, 0x4514);
+	/* Setup RSC PDC handshake क्रम sleep and wakeup */
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_PDC_SLAVE_ID_DRV0, 1);
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_DATA, 0);
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_ADDR, 0);
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_DATA + 2, 0);
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_ADDR + 2, 0);
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_DATA + 4, 0x80000000);
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_HIDDEN_TCS_CMD0_ADDR + 4, 0);
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_OVERRIDE_START_ADDR, 0);
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_PDC_SEQ_START_ADDR, 0x4520);
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_PDC_MATCH_VALUE_LO, 0x4510);
+	gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_PDC_MATCH_VALUE_HI, 0x4514);
 
-	/* Load RSC sequencer uCode for sleep and wakeup */
-	if (adreno_is_a650(adreno_gpu)) {
-		gmu_write_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0, 0xeaaae5a0);
-		gmu_write_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 1, 0xe1a1ebab);
-		gmu_write_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 2, 0xa2e0a581);
-		gmu_write_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 3, 0xecac82e2);
-		gmu_write_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 4, 0x0020edad);
-	} else {
-		gmu_write_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0, 0xa7a506a0);
-		gmu_write_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 1, 0xa1e6a6e7);
-		gmu_write_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 2, 0xa2e081e1);
-		gmu_write_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 3, 0xe9a982e2);
-		gmu_write_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 4, 0x0020e8a8);
-	}
+	/* Load RSC sequencer uCode क्रम sleep and wakeup */
+	अगर (adreno_is_a650(adreno_gpu)) अणु
+		gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0, 0xeaaae5a0);
+		gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 1, 0xe1a1ebab);
+		gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 2, 0xa2e0a581);
+		gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 3, 0xecac82e2);
+		gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 4, 0x0020edad);
+	पूर्ण अन्यथा अणु
+		gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0, 0xa7a506a0);
+		gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 1, 0xa1e6a6e7);
+		gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 2, 0xa2e081e1);
+		gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 3, 0xe9a982e2);
+		gmu_ग_लिखो_rscc(gmu, REG_A6XX_RSCC_SEQ_MEM_0_DRV0 + 4, 0x0020e8a8);
+	पूर्ण
 
-	/* Load PDC sequencer uCode for power up and power down sequence */
-	pdc_write(seqptr, REG_A6XX_PDC_GPU_SEQ_MEM_0, 0xfebea1e1);
-	pdc_write(seqptr, REG_A6XX_PDC_GPU_SEQ_MEM_0 + 1, 0xa5a4a3a2);
-	pdc_write(seqptr, REG_A6XX_PDC_GPU_SEQ_MEM_0 + 2, 0x8382a6e0);
-	pdc_write(seqptr, REG_A6XX_PDC_GPU_SEQ_MEM_0 + 3, 0xbce3e284);
-	pdc_write(seqptr, REG_A6XX_PDC_GPU_SEQ_MEM_0 + 4, 0x002081fc);
+	/* Load PDC sequencer uCode क्रम घातer up and घातer करोwn sequence */
+	pdc_ग_लिखो(seqptr, REG_A6XX_PDC_GPU_SEQ_MEM_0, 0xfebea1e1);
+	pdc_ग_लिखो(seqptr, REG_A6XX_PDC_GPU_SEQ_MEM_0 + 1, 0xa5a4a3a2);
+	pdc_ग_लिखो(seqptr, REG_A6XX_PDC_GPU_SEQ_MEM_0 + 2, 0x8382a6e0);
+	pdc_ग_लिखो(seqptr, REG_A6XX_PDC_GPU_SEQ_MEM_0 + 3, 0xbce3e284);
+	pdc_ग_लिखो(seqptr, REG_A6XX_PDC_GPU_SEQ_MEM_0 + 4, 0x002081fc);
 
-	/* Set TCS commands used by PDC sequence for low power modes */
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD_ENABLE_BANK, 7);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD_WAIT_FOR_CMPL_BANK, 0);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CONTROL, 0);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_MSGID, 0x10108);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_ADDR, 0x30010);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_DATA, 1);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_MSGID + 4, 0x10108);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_ADDR + 4, 0x30000);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_DATA + 4, 0x0);
+	/* Set TCS commands used by PDC sequence क्रम low घातer modes */
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD_ENABLE_BANK, 7);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD_WAIT_FOR_CMPL_BANK, 0);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CONTROL, 0);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_MSGID, 0x10108);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_ADDR, 0x30010);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_DATA, 1);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_MSGID + 4, 0x10108);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_ADDR + 4, 0x30000);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_DATA + 4, 0x0);
 
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_MSGID + 8, 0x10108);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_ADDR + 8, pdc_address_offset);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_DATA + 8, 0x0);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_MSGID + 8, 0x10108);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_ADDR + 8, pdc_address_offset);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS1_CMD0_DATA + 8, 0x0);
 
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD_ENABLE_BANK, 7);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD_WAIT_FOR_CMPL_BANK, 0);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CONTROL, 0);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_MSGID, 0x10108);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_ADDR, 0x30010);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_DATA, 2);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD_ENABLE_BANK, 7);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD_WAIT_FOR_CMPL_BANK, 0);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CONTROL, 0);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_MSGID, 0x10108);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_ADDR, 0x30010);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_DATA, 2);
 
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_MSGID + 4, 0x10108);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_ADDR + 4, 0x30000);
-	if (adreno_is_a618(adreno_gpu) || adreno_is_a650(adreno_gpu))
-		pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_DATA + 4, 0x2);
-	else
-		pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_DATA + 4, 0x3);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_MSGID + 8, 0x10108);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_ADDR + 8, pdc_address_offset);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_DATA + 8, 0x3);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_MSGID + 4, 0x10108);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_ADDR + 4, 0x30000);
+	अगर (adreno_is_a618(adreno_gpu) || adreno_is_a650(adreno_gpu))
+		pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_DATA + 4, 0x2);
+	अन्यथा
+		pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_DATA + 4, 0x3);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_MSGID + 8, 0x10108);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_ADDR + 8, pdc_address_offset);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_TCS3_CMD0_DATA + 8, 0x3);
 
 	/* Setup GPU PDC */
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_SEQ_START_ADDR, 0);
-	pdc_write(pdcptr, REG_A6XX_PDC_GPU_ENABLE_PDC, 0x80000001);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_SEQ_START_ADDR, 0);
+	pdc_ग_लिखो(pdcptr, REG_A6XX_PDC_GPU_ENABLE_PDC, 0x80000001);
 
-	/* ensure no writes happen before the uCode is fully written */
+	/* ensure no ग_लिखोs happen beक्रमe the uCode is fully written */
 	wmb();
 
 err:
-	if (!IS_ERR_OR_NULL(pdcptr))
+	अगर (!IS_ERR_OR_शून्य(pdcptr))
 		iounmap(pdcptr);
-	if (!IS_ERR_OR_NULL(seqptr))
+	अगर (!IS_ERR_OR_शून्य(seqptr))
 		iounmap(seqptr);
-}
+पूर्ण
 
 /*
- * The lowest 16 bits of this value are the number of XO clock cycles for main
+ * The lowest 16 bits of this value are the number of XO घड़ी cycles क्रम मुख्य
  * hysteresis which is set at 0x1680 cycles (300 us).  The higher 16 bits are
- * for the shorter hysteresis that happens after main - this is 0xa (.5 us)
+ * क्रम the लघुer hysteresis that happens after मुख्य - this is 0xa (.5 us)
  */
 
-#define GMU_PWR_COL_HYST 0x000a1680
+#घोषणा GMU_PWR_COL_HYST 0x000a1680
 
-/* Set up the idle state for the GMU */
-static void a6xx_gmu_power_config(struct a6xx_gmu *gmu)
-{
+/* Set up the idle state क्रम the GMU */
+अटल व्योम a6xx_gmu_घातer_config(काष्ठा a6xx_gmu *gmu)
+अणु
 	/* Disable GMU WB/RB buffer */
-	gmu_write(gmu, REG_A6XX_GMU_SYS_BUS_CONFIG, 0x1);
-	gmu_write(gmu, REG_A6XX_GMU_ICACHE_CONFIG, 0x1);
-	gmu_write(gmu, REG_A6XX_GMU_DCACHE_CONFIG, 0x1);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_SYS_BUS_CONFIG, 0x1);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_ICACHE_CONFIG, 0x1);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_DCACHE_CONFIG, 0x1);
 
-	gmu_write(gmu, REG_A6XX_GMU_PWR_COL_INTER_FRAME_CTRL, 0x9c40400);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_PWR_COL_INTER_FRAME_CTRL, 0x9c40400);
 
-	switch (gmu->idle_level) {
-	case GMU_IDLE_STATE_IFPC:
-		gmu_write(gmu, REG_A6XX_GMU_PWR_COL_INTER_FRAME_HYST,
+	चयन (gmu->idle_level) अणु
+	हाल GMU_IDLE_STATE_IFPC:
+		gmu_ग_लिखो(gmu, REG_A6XX_GMU_PWR_COL_INTER_FRAME_HYST,
 			GMU_PWR_COL_HYST);
 		gmu_rmw(gmu, REG_A6XX_GMU_PWR_COL_INTER_FRAME_CTRL, 0,
 			A6XX_GMU_PWR_COL_INTER_FRAME_CTRL_IFPC_ENABLE |
 			A6XX_GMU_PWR_COL_INTER_FRAME_CTRL_HM_POWER_COLLAPSE_ENABLE);
 		fallthrough;
-	case GMU_IDLE_STATE_SPTP:
-		gmu_write(gmu, REG_A6XX_GMU_PWR_COL_SPTPRAC_HYST,
+	हाल GMU_IDLE_STATE_SPTP:
+		gmu_ग_लिखो(gmu, REG_A6XX_GMU_PWR_COL_SPTPRAC_HYST,
 			GMU_PWR_COL_HYST);
 		gmu_rmw(gmu, REG_A6XX_GMU_PWR_COL_INTER_FRAME_CTRL, 0,
 			A6XX_GMU_PWR_COL_INTER_FRAME_CTRL_IFPC_ENABLE |
 			A6XX_GMU_PWR_COL_INTER_FRAME_CTRL_SPTPRAC_POWER_CONTROL_ENABLE);
-	}
+	पूर्ण
 
 	/* Enable RPMh GPU client */
 	gmu_rmw(gmu, REG_A6XX_GMU_RPMH_CTRL, 0,
@@ -651,133 +652,133 @@ static void a6xx_gmu_power_config(struct a6xx_gmu *gmu)
 		A6XX_GMU_RPMH_CTRL_MX_VOTE_ENABLE |
 		A6XX_GMU_RPMH_CTRL_CX_VOTE_ENABLE |
 		A6XX_GMU_RPMH_CTRL_GFX_VOTE_ENABLE);
-}
+पूर्ण
 
-struct block_header {
+काष्ठा block_header अणु
 	u32 addr;
 	u32 size;
 	u32 type;
 	u32 value;
 	u32 data[];
-};
+पूर्ण;
 
 /* this should be a general kernel helper */
-static int in_range(u32 addr, u32 start, u32 size)
-{
-	return addr >= start && addr < start + size;
-}
+अटल पूर्णांक in_range(u32 addr, u32 start, u32 size)
+अणु
+	वापस addr >= start && addr < start + size;
+पूर्ण
 
-static bool fw_block_mem(struct a6xx_gmu_bo *bo, const struct block_header *blk)
-{
-	if (!in_range(blk->addr, bo->iova, bo->size))
-		return false;
+अटल bool fw_block_mem(काष्ठा a6xx_gmu_bo *bo, स्थिर काष्ठा block_header *blk)
+अणु
+	अगर (!in_range(blk->addr, bo->iova, bo->size))
+		वापस false;
 
-	memcpy(bo->virt + blk->addr - bo->iova, blk->data, blk->size);
-	return true;
-}
+	स_नकल(bo->virt + blk->addr - bo->iova, blk->data, blk->size);
+	वापस true;
+पूर्ण
 
-static int a6xx_gmu_fw_load(struct a6xx_gmu *gmu)
-{
-	struct a6xx_gpu *a6xx_gpu = container_of(gmu, struct a6xx_gpu, gmu);
-	struct adreno_gpu *adreno_gpu = &a6xx_gpu->base;
-	const struct firmware *fw_image = adreno_gpu->fw[ADRENO_FW_GMU];
-	const struct block_header *blk;
+अटल पूर्णांक a6xx_gmu_fw_load(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_gpu *a6xx_gpu = container_of(gmu, काष्ठा a6xx_gpu, gmu);
+	काष्ठा adreno_gpu *adreno_gpu = &a6xx_gpu->base;
+	स्थिर काष्ठा firmware *fw_image = adreno_gpu->fw[ADRENO_FW_GMU];
+	स्थिर काष्ठा block_header *blk;
 	u32 reg_offset;
 
 	u32 itcm_base = 0x00000000;
 	u32 dtcm_base = 0x00040000;
 
-	if (adreno_is_a650(adreno_gpu))
+	अगर (adreno_is_a650(adreno_gpu))
 		dtcm_base = 0x10004000;
 
-	if (gmu->legacy) {
+	अगर (gmu->legacy) अणु
 		/* Sanity check the size of the firmware that was loaded */
-		if (fw_image->size > 0x8000) {
+		अगर (fw_image->size > 0x8000) अणु
 			DRM_DEV_ERROR(gmu->dev,
 				"GMU firmware is bigger than the available region\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		gmu_write_bulk(gmu, REG_A6XX_GMU_CM3_ITCM_START,
+		gmu_ग_लिखो_bulk(gmu, REG_A6XX_GMU_CM3_ITCM_START,
 			       (u32*) fw_image->data, fw_image->size);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 
-	for (blk = (const struct block_header *) fw_image->data;
-	     (const u8*) blk < fw_image->data + fw_image->size;
-	     blk = (const struct block_header *) &blk->data[blk->size >> 2]) {
-		if (blk->size == 0)
-			continue;
+	क्रम (blk = (स्थिर काष्ठा block_header *) fw_image->data;
+	     (स्थिर u8*) blk < fw_image->data + fw_image->size;
+	     blk = (स्थिर काष्ठा block_header *) &blk->data[blk->size >> 2]) अणु
+		अगर (blk->size == 0)
+			जारी;
 
-		if (in_range(blk->addr, itcm_base, SZ_16K)) {
+		अगर (in_range(blk->addr, itcm_base, SZ_16K)) अणु
 			reg_offset = (blk->addr - itcm_base) >> 2;
-			gmu_write_bulk(gmu,
+			gmu_ग_लिखो_bulk(gmu,
 				REG_A6XX_GMU_CM3_ITCM_START + reg_offset,
 				blk->data, blk->size);
-		} else if (in_range(blk->addr, dtcm_base, SZ_16K)) {
+		पूर्ण अन्यथा अगर (in_range(blk->addr, dtcm_base, SZ_16K)) अणु
 			reg_offset = (blk->addr - dtcm_base) >> 2;
-			gmu_write_bulk(gmu,
+			gmu_ग_लिखो_bulk(gmu,
 				REG_A6XX_GMU_CM3_DTCM_START + reg_offset,
 				blk->data, blk->size);
-		} else if (!fw_block_mem(&gmu->icache, blk) &&
+		पूर्ण अन्यथा अगर (!fw_block_mem(&gmu->icache, blk) &&
 			   !fw_block_mem(&gmu->dcache, blk) &&
-			   !fw_block_mem(&gmu->dummy, blk)) {
+			   !fw_block_mem(&gmu->dummy, blk)) अणु
 			DRM_DEV_ERROR(gmu->dev,
 				"failed to match fw block (addr=%.8x size=%d data[0]=%.8x)\n",
 				blk->addr, blk->size, blk->data[0]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int a6xx_gmu_fw_start(struct a6xx_gmu *gmu, unsigned int state)
-{
-	static bool rpmh_init;
-	struct a6xx_gpu *a6xx_gpu = container_of(gmu, struct a6xx_gpu, gmu);
-	struct adreno_gpu *adreno_gpu = &a6xx_gpu->base;
-	int ret;
+अटल पूर्णांक a6xx_gmu_fw_start(काष्ठा a6xx_gmu *gmu, अचिन्हित पूर्णांक state)
+अणु
+	अटल bool rpmh_init;
+	काष्ठा a6xx_gpu *a6xx_gpu = container_of(gmu, काष्ठा a6xx_gpu, gmu);
+	काष्ठा adreno_gpu *adreno_gpu = &a6xx_gpu->base;
+	पूर्णांक ret;
 	u32 chipid;
 
-	if (adreno_is_a650(adreno_gpu))
-		gmu_write(gmu, REG_A6XX_GPU_GMU_CX_GMU_CX_FAL_INTF, 1);
+	अगर (adreno_is_a650(adreno_gpu))
+		gmu_ग_लिखो(gmu, REG_A6XX_GPU_GMU_CX_GMU_CX_FAL_INTF, 1);
 
-	if (state == GMU_WARM_BOOT) {
+	अगर (state == GMU_WARM_BOOT) अणु
 		ret = a6xx_rpmh_start(gmu);
-		if (ret)
-			return ret;
-	} else {
-		if (WARN(!adreno_gpu->fw[ADRENO_FW_GMU],
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		अगर (WARN(!adreno_gpu->fw[ADRENO_FW_GMU],
 			"GMU firmware is not loaded\n"))
-			return -ENOENT;
+			वापस -ENOENT;
 
-		/* Turn on register retention */
-		gmu_write(gmu, REG_A6XX_GMU_GENERAL_7, 1);
+		/* Turn on रेजिस्टर retention */
+		gmu_ग_लिखो(gmu, REG_A6XX_GMU_GENERAL_7, 1);
 
 		/* We only need to load the RPMh microcode once */
-		if (!rpmh_init) {
+		अगर (!rpmh_init) अणु
 			a6xx_gmu_rpmh_init(gmu);
 			rpmh_init = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = a6xx_rpmh_start(gmu);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
 		ret = a6xx_gmu_fw_load(gmu);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	gmu_write(gmu, REG_A6XX_GMU_CM3_FW_INIT_RESULT, 0);
-	gmu_write(gmu, REG_A6XX_GMU_CM3_BOOT_CONFIG, 0x02);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_CM3_FW_INIT_RESULT, 0);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_CM3_BOOT_CONFIG, 0x02);
 
 	/* Write the iova of the HFI table */
-	gmu_write(gmu, REG_A6XX_GMU_HFI_QTBL_ADDR, gmu->hfi.iova);
-	gmu_write(gmu, REG_A6XX_GMU_HFI_QTBL_INFO, 1);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_HFI_QTBL_ADDR, gmu->hfi.iova);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_HFI_QTBL_INFO, 1);
 
-	gmu_write(gmu, REG_A6XX_GMU_AHB_FENCE_RANGE_0,
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_AHB_FENCE_RANGE_0,
 		(1 << 31) | (0xa << 18) | (0xa0));
 
 	chipid = adreno_gpu->rev.core << 24;
@@ -785,337 +786,337 @@ static int a6xx_gmu_fw_start(struct a6xx_gmu *gmu, unsigned int state)
 	chipid |= adreno_gpu->rev.minor << 12;
 	chipid |= adreno_gpu->rev.patchid << 8;
 
-	gmu_write(gmu, REG_A6XX_GMU_HFI_SFR_ADDR, chipid);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_HFI_SFR_ADDR, chipid);
 
-	gmu_write(gmu, REG_A6XX_GPU_GMU_CX_GMU_PWR_COL_CP_MSG,
+	gmu_ग_लिखो(gmu, REG_A6XX_GPU_GMU_CX_GMU_PWR_COL_CP_MSG,
 		  gmu->log.iova | (gmu->log.size / SZ_4K - 1));
 
 	/* Set up the lowest idle level on the GMU */
-	a6xx_gmu_power_config(gmu);
+	a6xx_gmu_घातer_config(gmu);
 
 	ret = a6xx_gmu_start(gmu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (gmu->legacy) {
+	अगर (gmu->legacy) अणु
 		ret = a6xx_gmu_gfx_rail_on(gmu);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* Enable SPTP_PC if the CPU is responsible for it */
-	if (gmu->idle_level < GMU_IDLE_STATE_SPTP) {
+	/* Enable SPTP_PC अगर the CPU is responsible क्रम it */
+	अगर (gmu->idle_level < GMU_IDLE_STATE_SPTP) अणु
 		ret = a6xx_sptprac_enable(gmu);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = a6xx_gmu_hfi_start(gmu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* FIXME: Do we need this wmb() here? */
 	wmb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define A6XX_HFI_IRQ_MASK \
+#घोषणा A6XX_HFI_IRQ_MASK \
 	(A6XX_GMU_GMU2HOST_INTR_INFO_CM3_FAULT)
 
-#define A6XX_GMU_IRQ_MASK \
+#घोषणा A6XX_GMU_IRQ_MASK \
 	(A6XX_GMU_AO_HOST_INTERRUPT_STATUS_WDOG_BITE | \
 	 A6XX_GMU_AO_HOST_INTERRUPT_STATUS_HOST_AHB_BUS_ERROR | \
 	 A6XX_GMU_AO_HOST_INTERRUPT_STATUS_FENCE_ERR)
 
-static void a6xx_gmu_irq_disable(struct a6xx_gmu *gmu)
-{
+अटल व्योम a6xx_gmu_irq_disable(काष्ठा a6xx_gmu *gmu)
+अणु
 	disable_irq(gmu->gmu_irq);
 	disable_irq(gmu->hfi_irq);
 
-	gmu_write(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_MASK, ~0);
-	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_MASK, ~0);
-}
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_MASK, ~0);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_GMU2HOST_INTR_MASK, ~0);
+पूर्ण
 
-static void a6xx_gmu_rpmh_off(struct a6xx_gmu *gmu)
-{
+अटल व्योम a6xx_gmu_rpmh_off(काष्ठा a6xx_gmu *gmu)
+अणु
 	u32 val;
 
 	/* Make sure there are no outstanding RPMh votes */
-	gmu_poll_timeout_rscc(gmu, REG_A6XX_RSCC_TCS0_DRV0_STATUS, val,
+	gmu_poll_समयout_rscc(gmu, REG_A6XX_RSCC_TCS0_DRV0_STATUS, val,
 		(val & 1), 100, 10000);
-	gmu_poll_timeout_rscc(gmu, REG_A6XX_RSCC_TCS1_DRV0_STATUS, val,
+	gmu_poll_समयout_rscc(gmu, REG_A6XX_RSCC_TCS1_DRV0_STATUS, val,
 		(val & 1), 100, 10000);
-	gmu_poll_timeout_rscc(gmu, REG_A6XX_RSCC_TCS2_DRV0_STATUS, val,
+	gmu_poll_समयout_rscc(gmu, REG_A6XX_RSCC_TCS2_DRV0_STATUS, val,
 		(val & 1), 100, 10000);
-	gmu_poll_timeout_rscc(gmu, REG_A6XX_RSCC_TCS3_DRV0_STATUS, val,
+	gmu_poll_समयout_rscc(gmu, REG_A6XX_RSCC_TCS3_DRV0_STATUS, val,
 		(val & 1), 100, 1000);
-}
+पूर्ण
 
-/* Force the GMU off in case it isn't responsive */
-static void a6xx_gmu_force_off(struct a6xx_gmu *gmu)
-{
+/* Force the GMU off in हाल it isn't responsive */
+अटल व्योम a6xx_gmu_क्रमce_off(काष्ठा a6xx_gmu *gmu)
+अणु
 	/* Flush all the queues */
 	a6xx_hfi_stop(gmu);
 
-	/* Stop the interrupts */
+	/* Stop the पूर्णांकerrupts */
 	a6xx_gmu_irq_disable(gmu);
 
-	/* Force off SPTP in case the GMU is managing it */
+	/* Force off SPTP in हाल the GMU is managing it */
 	a6xx_sptprac_disable(gmu);
 
 	/* Make sure there are no outstanding RPMh votes */
 	a6xx_gmu_rpmh_off(gmu);
-}
+पूर्ण
 
-static void a6xx_gmu_set_initial_freq(struct msm_gpu *gpu, struct a6xx_gmu *gmu)
-{
-	struct dev_pm_opp *gpu_opp;
-	unsigned long gpu_freq = gmu->gpu_freqs[gmu->current_perf_index];
+अटल व्योम a6xx_gmu_set_initial_freq(काष्ठा msm_gpu *gpu, काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा dev_pm_opp *gpu_opp;
+	अचिन्हित दीर्घ gpu_freq = gmu->gpu_freqs[gmu->current_perf_index];
 
 	gpu_opp = dev_pm_opp_find_freq_exact(&gpu->pdev->dev, gpu_freq, true);
-	if (IS_ERR_OR_NULL(gpu_opp))
-		return;
+	अगर (IS_ERR_OR_शून्य(gpu_opp))
+		वापस;
 
-	gmu->freq = 0; /* so a6xx_gmu_set_freq() doesn't exit early */
+	gmu->freq = 0; /* so a6xx_gmu_set_freq() करोesn't निकास early */
 	a6xx_gmu_set_freq(gpu, gpu_opp);
 	dev_pm_opp_put(gpu_opp);
-}
+पूर्ण
 
-static void a6xx_gmu_set_initial_bw(struct msm_gpu *gpu, struct a6xx_gmu *gmu)
-{
-	struct dev_pm_opp *gpu_opp;
-	unsigned long gpu_freq = gmu->gpu_freqs[gmu->current_perf_index];
+अटल व्योम a6xx_gmu_set_initial_bw(काष्ठा msm_gpu *gpu, काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा dev_pm_opp *gpu_opp;
+	अचिन्हित दीर्घ gpu_freq = gmu->gpu_freqs[gmu->current_perf_index];
 
 	gpu_opp = dev_pm_opp_find_freq_exact(&gpu->pdev->dev, gpu_freq, true);
-	if (IS_ERR_OR_NULL(gpu_opp))
-		return;
+	अगर (IS_ERR_OR_शून्य(gpu_opp))
+		वापस;
 
 	dev_pm_opp_set_opp(&gpu->pdev->dev, gpu_opp);
 	dev_pm_opp_put(gpu_opp);
-}
+पूर्ण
 
-int a6xx_gmu_resume(struct a6xx_gpu *a6xx_gpu)
-{
-	struct adreno_gpu *adreno_gpu = &a6xx_gpu->base;
-	struct msm_gpu *gpu = &adreno_gpu->base;
-	struct a6xx_gmu *gmu = &a6xx_gpu->gmu;
-	int status, ret;
+पूर्णांक a6xx_gmu_resume(काष्ठा a6xx_gpu *a6xx_gpu)
+अणु
+	काष्ठा adreno_gpu *adreno_gpu = &a6xx_gpu->base;
+	काष्ठा msm_gpu *gpu = &adreno_gpu->base;
+	काष्ठा a6xx_gmu *gmu = &a6xx_gpu->gmu;
+	पूर्णांक status, ret;
 
-	if (WARN(!gmu->initialized, "The GMU is not set up yet\n"))
-		return 0;
+	अगर (WARN(!gmu->initialized, "The GMU is not set up yet\n"))
+		वापस 0;
 
 	gmu->hung = false;
 
 	/* Turn on the resources */
-	pm_runtime_get_sync(gmu->dev);
+	pm_runसमय_get_sync(gmu->dev);
 
 	/*
-	 * "enable" the GX power domain which won't actually do anything but it
-	 * will make sure that the refcounting is correct in case we need to
-	 * bring down the GX after a GMU failure
+	 * "enable" the GX घातer करोमुख्य which won't actually करो anything but it
+	 * will make sure that the refcounting is correct in हाल we need to
+	 * bring करोwn the GX after a GMU failure
 	 */
-	if (!IS_ERR_OR_NULL(gmu->gxpd))
-		pm_runtime_get_sync(gmu->gxpd);
+	अगर (!IS_ERR_OR_शून्य(gmu->gxpd))
+		pm_runसमय_get_sync(gmu->gxpd);
 
 	/* Use a known rate to bring up the GMU */
 	clk_set_rate(gmu->core_clk, 200000000);
-	ret = clk_bulk_prepare_enable(gmu->nr_clocks, gmu->clocks);
-	if (ret) {
-		pm_runtime_put(gmu->gxpd);
-		pm_runtime_put(gmu->dev);
-		return ret;
-	}
+	ret = clk_bulk_prepare_enable(gmu->nr_घड़ीs, gmu->घड़ीs);
+	अगर (ret) अणु
+		pm_runसमय_put(gmu->gxpd);
+		pm_runसमय_put(gmu->dev);
+		वापस ret;
+	पूर्ण
 
-	/* Set the bus quota to a reasonable value for boot */
+	/* Set the bus quota to a reasonable value क्रम boot */
 	a6xx_gmu_set_initial_bw(gpu, gmu);
 
-	/* Enable the GMU interrupt */
-	gmu_write(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_CLR, ~0);
-	gmu_write(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_MASK, ~A6XX_GMU_IRQ_MASK);
+	/* Enable the GMU पूर्णांकerrupt */
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_CLR, ~0);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_AO_HOST_INTERRUPT_MASK, ~A6XX_GMU_IRQ_MASK);
 	enable_irq(gmu->gmu_irq);
 
-	/* Check to see if we are doing a cold or warm boot */
-	status = gmu_read(gmu, REG_A6XX_GMU_GENERAL_7) == 1 ?
+	/* Check to see अगर we are करोing a cold or warm boot */
+	status = gmu_पढ़ो(gmu, REG_A6XX_GMU_GENERAL_7) == 1 ?
 		GMU_WARM_BOOT : GMU_COLD_BOOT;
 
 	/*
-	 * Warm boot path does not work on newer GPUs
+	 * Warm boot path करोes not work on newer GPUs
 	 * Presumably this is because icache/dcache regions must be restored
 	 */
-	if (!gmu->legacy)
+	अगर (!gmu->legacy)
 		status = GMU_COLD_BOOT;
 
 	ret = a6xx_gmu_fw_start(gmu, status);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = a6xx_hfi_start(gmu, status);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/*
-	 * Turn on the GMU firmware fault interrupt after we know the boot
+	 * Turn on the GMU firmware fault पूर्णांकerrupt after we know the boot
 	 * sequence is successful
 	 */
-	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR, ~0);
-	gmu_write(gmu, REG_A6XX_GMU_GMU2HOST_INTR_MASK, ~A6XX_HFI_IRQ_MASK);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_GMU2HOST_INTR_CLR, ~0);
+	gmu_ग_लिखो(gmu, REG_A6XX_GMU_GMU2HOST_INTR_MASK, ~A6XX_HFI_IRQ_MASK);
 	enable_irq(gmu->hfi_irq);
 
 	/* Set the GPU to the current freq */
 	a6xx_gmu_set_initial_freq(gpu, gmu);
 
 out:
-	/* On failure, shut down the GMU to leave it in a good state */
-	if (ret) {
+	/* On failure, shut करोwn the GMU to leave it in a good state */
+	अगर (ret) अणु
 		disable_irq(gmu->gmu_irq);
 		a6xx_rpmh_stop(gmu);
-		pm_runtime_put(gmu->gxpd);
-		pm_runtime_put(gmu->dev);
-	}
+		pm_runसमय_put(gmu->gxpd);
+		pm_runसमय_put(gmu->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool a6xx_gmu_isidle(struct a6xx_gmu *gmu)
-{
+bool a6xx_gmu_isidle(काष्ठा a6xx_gmu *gmu)
+अणु
 	u32 reg;
 
-	if (!gmu->initialized)
-		return true;
+	अगर (!gmu->initialized)
+		वापस true;
 
-	reg = gmu_read(gmu, REG_A6XX_GPU_GMU_AO_GPU_CX_BUSY_STATUS);
+	reg = gmu_पढ़ो(gmu, REG_A6XX_GPU_GMU_AO_GPU_CX_BUSY_STATUS);
 
-	if (reg &  A6XX_GPU_GMU_AO_GPU_CX_BUSY_STATUS_GPUBUSYIGNAHB)
-		return false;
+	अगर (reg &  A6XX_GPU_GMU_AO_GPU_CX_BUSY_STATUS_GPUBUSYIGNAHB)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#define GBIF_CLIENT_HALT_MASK             BIT(0)
-#define GBIF_ARB_HALT_MASK                BIT(1)
+#घोषणा GBIF_CLIENT_HALT_MASK             BIT(0)
+#घोषणा GBIF_ARB_HALT_MASK                BIT(1)
 
-static void a6xx_bus_clear_pending_transactions(struct adreno_gpu *adreno_gpu)
-{
-	struct msm_gpu *gpu = &adreno_gpu->base;
+अटल व्योम a6xx_bus_clear_pending_transactions(काष्ठा adreno_gpu *adreno_gpu)
+अणु
+	काष्ठा msm_gpu *gpu = &adreno_gpu->base;
 
-	if (!a6xx_has_gbif(adreno_gpu)) {
-		gpu_write(gpu, REG_A6XX_VBIF_XIN_HALT_CTRL0, 0xf);
-		spin_until((gpu_read(gpu, REG_A6XX_VBIF_XIN_HALT_CTRL1) &
+	अगर (!a6xx_has_gbअगर(adreno_gpu)) अणु
+		gpu_ग_लिखो(gpu, REG_A6XX_VBIF_XIN_HALT_CTRL0, 0xf);
+		spin_until((gpu_पढ़ो(gpu, REG_A6XX_VBIF_XIN_HALT_CTRL1) &
 								0xf) == 0xf);
-		gpu_write(gpu, REG_A6XX_VBIF_XIN_HALT_CTRL0, 0);
+		gpu_ग_लिखो(gpu, REG_A6XX_VBIF_XIN_HALT_CTRL0, 0);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Halt new client requests on GBIF */
-	gpu_write(gpu, REG_A6XX_GBIF_HALT, GBIF_CLIENT_HALT_MASK);
-	spin_until((gpu_read(gpu, REG_A6XX_GBIF_HALT_ACK) &
+	gpu_ग_लिखो(gpu, REG_A6XX_GBIF_HALT, GBIF_CLIENT_HALT_MASK);
+	spin_until((gpu_पढ़ो(gpu, REG_A6XX_GBIF_HALT_ACK) &
 			(GBIF_CLIENT_HALT_MASK)) == GBIF_CLIENT_HALT_MASK);
 
 	/* Halt all AXI requests on GBIF */
-	gpu_write(gpu, REG_A6XX_GBIF_HALT, GBIF_ARB_HALT_MASK);
-	spin_until((gpu_read(gpu,  REG_A6XX_GBIF_HALT_ACK) &
+	gpu_ग_लिखो(gpu, REG_A6XX_GBIF_HALT, GBIF_ARB_HALT_MASK);
+	spin_until((gpu_पढ़ो(gpu,  REG_A6XX_GBIF_HALT_ACK) &
 			(GBIF_ARB_HALT_MASK)) == GBIF_ARB_HALT_MASK);
 
 	/* The GBIF halt needs to be explicitly cleared */
-	gpu_write(gpu, REG_A6XX_GBIF_HALT, 0x0);
-}
+	gpu_ग_लिखो(gpu, REG_A6XX_GBIF_HALT, 0x0);
+पूर्ण
 
-/* Gracefully try to shut down the GMU and by extension the GPU */
-static void a6xx_gmu_shutdown(struct a6xx_gmu *gmu)
-{
-	struct a6xx_gpu *a6xx_gpu = container_of(gmu, struct a6xx_gpu, gmu);
-	struct adreno_gpu *adreno_gpu = &a6xx_gpu->base;
+/* Gracefully try to shut करोwn the GMU and by extension the GPU */
+अटल व्योम a6xx_gmu_shutकरोwn(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_gpu *a6xx_gpu = container_of(gmu, काष्ठा a6xx_gpu, gmu);
+	काष्ठा adreno_gpu *adreno_gpu = &a6xx_gpu->base;
 	u32 val;
 
 	/*
 	 * The GMU may still be in slumber unless the GPU started so check and
-	 * skip putting it back into slumber if so
+	 * skip putting it back पूर्णांकo slumber अगर so
 	 */
-	val = gmu_read(gmu, REG_A6XX_GPU_GMU_CX_GMU_RPMH_POWER_STATE);
+	val = gmu_पढ़ो(gmu, REG_A6XX_GPU_GMU_CX_GMU_RPMH_POWER_STATE);
 
-	if (val != 0xf) {
-		int ret = a6xx_gmu_wait_for_idle(gmu);
+	अगर (val != 0xf) अणु
+		पूर्णांक ret = a6xx_gmu_रुको_क्रम_idle(gmu);
 
 		/* If the GMU isn't responding assume it is hung */
-		if (ret) {
-			a6xx_gmu_force_off(gmu);
-			return;
-		}
+		अगर (ret) अणु
+			a6xx_gmu_क्रमce_off(gmu);
+			वापस;
+		पूर्ण
 
 		a6xx_bus_clear_pending_transactions(adreno_gpu);
 
 		/* tell the GMU we want to slumber */
-		a6xx_gmu_notify_slumber(gmu);
+		a6xx_gmu_notअगरy_slumber(gmu);
 
-		ret = gmu_poll_timeout(gmu,
+		ret = gmu_poll_समयout(gmu,
 			REG_A6XX_GPU_GMU_AO_GPU_CX_BUSY_STATUS, val,
 			!(val & A6XX_GPU_GMU_AO_GPU_CX_BUSY_STATUS_GPUBUSYIGNAHB),
 			100, 10000);
 
 		/*
-		 * Let the user know we failed to slumber but don't worry too
-		 * much because we are powering down anyway
+		 * Let the user know we failed to slumber but करोn't worry too
+		 * much because we are घातering करोwn anyway
 		 */
 
-		if (ret)
+		अगर (ret)
 			DRM_DEV_ERROR(gmu->dev,
 				"Unable to slumber GMU: status = 0%x/0%x\n",
-				gmu_read(gmu,
+				gmu_पढ़ो(gmu,
 					REG_A6XX_GPU_GMU_AO_GPU_CX_BUSY_STATUS),
-				gmu_read(gmu,
+				gmu_पढ़ो(gmu,
 					REG_A6XX_GPU_GMU_AO_GPU_CX_BUSY_STATUS2));
-	}
+	पूर्ण
 
 	/* Turn off HFI */
 	a6xx_hfi_stop(gmu);
 
-	/* Stop the interrupts and mask the hardware */
+	/* Stop the पूर्णांकerrupts and mask the hardware */
 	a6xx_gmu_irq_disable(gmu);
 
-	/* Tell RPMh to power off the GPU */
+	/* Tell RPMh to घातer off the GPU */
 	a6xx_rpmh_stop(gmu);
-}
+पूर्ण
 
 
-int a6xx_gmu_stop(struct a6xx_gpu *a6xx_gpu)
-{
-	struct a6xx_gmu *gmu = &a6xx_gpu->gmu;
-	struct msm_gpu *gpu = &a6xx_gpu->base.base;
+पूर्णांक a6xx_gmu_stop(काष्ठा a6xx_gpu *a6xx_gpu)
+अणु
+	काष्ठा a6xx_gmu *gmu = &a6xx_gpu->gmu;
+	काष्ठा msm_gpu *gpu = &a6xx_gpu->base.base;
 
-	if (!pm_runtime_active(gmu->dev))
-		return 0;
+	अगर (!pm_runसमय_active(gmu->dev))
+		वापस 0;
 
 	/*
-	 * Force the GMU off if we detected a hang, otherwise try to shut it
-	 * down gracefully
+	 * Force the GMU off अगर we detected a hang, otherwise try to shut it
+	 * करोwn gracefully
 	 */
-	if (gmu->hung)
-		a6xx_gmu_force_off(gmu);
-	else
-		a6xx_gmu_shutdown(gmu);
+	अगर (gmu->hung)
+		a6xx_gmu_क्रमce_off(gmu);
+	अन्यथा
+		a6xx_gmu_shutकरोwn(gmu);
 
 	/* Remove the bus vote */
-	dev_pm_opp_set_opp(&gpu->pdev->dev, NULL);
+	dev_pm_opp_set_opp(&gpu->pdev->dev, शून्य);
 
 	/*
-	 * Make sure the GX domain is off before turning off the GMU (CX)
-	 * domain. Usually the GMU does this but only if the shutdown sequence
+	 * Make sure the GX करोमुख्य is off beक्रमe turning off the GMU (CX)
+	 * करोमुख्य. Usually the GMU करोes this but only अगर the shutकरोwn sequence
 	 * was successful
 	 */
-	if (!IS_ERR_OR_NULL(gmu->gxpd))
-		pm_runtime_put_sync(gmu->gxpd);
+	अगर (!IS_ERR_OR_शून्य(gmu->gxpd))
+		pm_runसमय_put_sync(gmu->gxpd);
 
-	clk_bulk_disable_unprepare(gmu->nr_clocks, gmu->clocks);
+	clk_bulk_disable_unprepare(gmu->nr_घड़ीs, gmu->घड़ीs);
 
-	pm_runtime_put_sync(gmu->dev);
+	pm_runसमय_put_sync(gmu->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void a6xx_gmu_memory_free(struct a6xx_gmu *gmu)
-{
+अटल व्योम a6xx_gmu_memory_मुक्त(काष्ठा a6xx_gmu *gmu)
+अणु
 	msm_gem_kernel_put(gmu->hfi.obj, gmu->aspace, false);
 	msm_gem_kernel_put(gmu->debug.obj, gmu->aspace, false);
 	msm_gem_kernel_put(gmu->icache.obj, gmu->aspace, false);
@@ -1125,171 +1126,171 @@ static void a6xx_gmu_memory_free(struct a6xx_gmu *gmu)
 
 	gmu->aspace->mmu->funcs->detach(gmu->aspace->mmu);
 	msm_gem_address_space_put(gmu->aspace);
-}
+पूर्ण
 
-static int a6xx_gmu_memory_alloc(struct a6xx_gmu *gmu, struct a6xx_gmu_bo *bo,
-		size_t size, u64 iova)
-{
-	struct a6xx_gpu *a6xx_gpu = container_of(gmu, struct a6xx_gpu, gmu);
-	struct drm_device *dev = a6xx_gpu->base.base.dev;
-	uint32_t flags = MSM_BO_WC;
+अटल पूर्णांक a6xx_gmu_memory_alloc(काष्ठा a6xx_gmu *gmu, काष्ठा a6xx_gmu_bo *bo,
+		माप_प्रकार size, u64 iova)
+अणु
+	काष्ठा a6xx_gpu *a6xx_gpu = container_of(gmu, काष्ठा a6xx_gpu, gmu);
+	काष्ठा drm_device *dev = a6xx_gpu->base.base.dev;
+	uपूर्णांक32_t flags = MSM_BO_WC;
 	u64 range_start, range_end;
-	int ret;
+	पूर्णांक ret;
 
 	size = PAGE_ALIGN(size);
-	if (!iova) {
+	अगर (!iova) अणु
 		/* no fixed address - use GMU's uncached range */
 		range_start = 0x60000000 + PAGE_SIZE; /* skip dummy page */
 		range_end = 0x80000000;
-	} else {
-		/* range for fixed address */
+	पूर्ण अन्यथा अणु
+		/* range क्रम fixed address */
 		range_start = iova;
 		range_end = iova + size;
-		/* use IOMMU_PRIV for icache/dcache */
+		/* use IOMMU_PRIV क्रम icache/dcache */
 		flags |= MSM_BO_MAP_PRIV;
-	}
+	पूर्ण
 
 	bo->obj = msm_gem_new(dev, size, flags);
-	if (IS_ERR(bo->obj))
-		return PTR_ERR(bo->obj);
+	अगर (IS_ERR(bo->obj))
+		वापस PTR_ERR(bo->obj);
 
 	ret = msm_gem_get_and_pin_iova_range(bo->obj, gmu->aspace, &bo->iova,
 		range_start >> PAGE_SHIFT, range_end >> PAGE_SHIFT);
-	if (ret) {
+	अगर (ret) अणु
 		drm_gem_object_put(bo->obj);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	bo->virt = msm_gem_get_vaddr(bo->obj);
 	bo->size = size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int a6xx_gmu_memory_probe(struct a6xx_gmu *gmu)
-{
-	struct iommu_domain *domain;
-	struct msm_mmu *mmu;
+अटल पूर्णांक a6xx_gmu_memory_probe(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य;
+	काष्ठा msm_mmu *mmu;
 
-	domain = iommu_domain_alloc(&platform_bus_type);
-	if (!domain)
-		return -ENODEV;
+	करोमुख्य = iommu_करोमुख्य_alloc(&platक्रमm_bus_type);
+	अगर (!करोमुख्य)
+		वापस -ENODEV;
 
-	mmu = msm_iommu_new(gmu->dev, domain);
+	mmu = msm_iommu_new(gmu->dev, करोमुख्य);
 	gmu->aspace = msm_gem_address_space_create(mmu, "gmu", 0x0, 0x80000000);
-	if (IS_ERR(gmu->aspace)) {
-		iommu_domain_free(domain);
-		return PTR_ERR(gmu->aspace);
-	}
+	अगर (IS_ERR(gmu->aspace)) अणु
+		iommu_करोमुख्य_मुक्त(करोमुख्य);
+		वापस PTR_ERR(gmu->aspace);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Return the 'arc-level' for the given frequency */
-static unsigned int a6xx_gmu_get_arc_level(struct device *dev,
-					   unsigned long freq)
-{
-	struct dev_pm_opp *opp;
-	unsigned int val;
+/* Return the 'arc-level' क्रम the given frequency */
+अटल अचिन्हित पूर्णांक a6xx_gmu_get_arc_level(काष्ठा device *dev,
+					   अचिन्हित दीर्घ freq)
+अणु
+	काष्ठा dev_pm_opp *opp;
+	अचिन्हित पूर्णांक val;
 
-	if (!freq)
-		return 0;
+	अगर (!freq)
+		वापस 0;
 
 	opp = dev_pm_opp_find_freq_exact(dev, freq, true);
-	if (IS_ERR(opp))
-		return 0;
+	अगर (IS_ERR(opp))
+		वापस 0;
 
 	val = dev_pm_opp_get_level(opp);
 
 	dev_pm_opp_put(opp);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int a6xx_gmu_rpmh_arc_votes_init(struct device *dev, u32 *votes,
-		unsigned long *freqs, int freqs_count, const char *id)
-{
-	int i, j;
-	const u16 *pri, *sec;
-	size_t pri_count, sec_count;
+अटल पूर्णांक a6xx_gmu_rpmh_arc_votes_init(काष्ठा device *dev, u32 *votes,
+		अचिन्हित दीर्घ *freqs, पूर्णांक freqs_count, स्थिर अक्षर *id)
+अणु
+	पूर्णांक i, j;
+	स्थिर u16 *pri, *sec;
+	माप_प्रकार pri_count, sec_count;
 
-	pri = cmd_db_read_aux_data(id, &pri_count);
-	if (IS_ERR(pri))
-		return PTR_ERR(pri);
+	pri = cmd_db_पढ़ो_aux_data(id, &pri_count);
+	अगर (IS_ERR(pri))
+		वापस PTR_ERR(pri);
 	/*
-	 * The data comes back as an array of unsigned shorts so adjust the
+	 * The data comes back as an array of अचिन्हित लघुs so adjust the
 	 * count accordingly
 	 */
 	pri_count >>= 1;
-	if (!pri_count)
-		return -EINVAL;
+	अगर (!pri_count)
+		वापस -EINVAL;
 
-	sec = cmd_db_read_aux_data("mx.lvl", &sec_count);
-	if (IS_ERR(sec))
-		return PTR_ERR(sec);
+	sec = cmd_db_पढ़ो_aux_data("mx.lvl", &sec_count);
+	अगर (IS_ERR(sec))
+		वापस PTR_ERR(sec);
 
 	sec_count >>= 1;
-	if (!sec_count)
-		return -EINVAL;
+	अगर (!sec_count)
+		वापस -EINVAL;
 
-	/* Construct a vote for each frequency */
-	for (i = 0; i < freqs_count; i++) {
+	/* Conकाष्ठा a vote क्रम each frequency */
+	क्रम (i = 0; i < freqs_count; i++) अणु
 		u8 pindex = 0, sindex = 0;
-		unsigned int level = a6xx_gmu_get_arc_level(dev, freqs[i]);
+		अचिन्हित पूर्णांक level = a6xx_gmu_get_arc_level(dev, freqs[i]);
 
 		/* Get the primary index that matches the arc level */
-		for (j = 0; j < pri_count; j++) {
-			if (pri[j] >= level) {
+		क्रम (j = 0; j < pri_count; j++) अणु
+			अगर (pri[j] >= level) अणु
 				pindex = j;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (j == pri_count) {
+		अगर (j == pri_count) अणु
 			DRM_DEV_ERROR(dev,
 				      "Level %u not found in the RPMh list\n",
 				      level);
 			DRM_DEV_ERROR(dev, "Available levels:\n");
-			for (j = 0; j < pri_count; j++)
+			क्रम (j = 0; j < pri_count; j++)
 				DRM_DEV_ERROR(dev, "  %u\n", pri[j]);
 
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
-		 * Look for a level in in the secondary list that matches. If
+		 * Look क्रम a level in in the secondary list that matches. If
 		 * nothing fits, use the maximum non zero vote
 		 */
 
-		for (j = 0; j < sec_count; j++) {
-			if (sec[j] >= level) {
+		क्रम (j = 0; j < sec_count; j++) अणु
+			अगर (sec[j] >= level) अणु
 				sindex = j;
-				break;
-			} else if (sec[j]) {
+				अवरोध;
+			पूर्ण अन्यथा अगर (sec[j]) अणु
 				sindex = j;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* Construct the vote */
+		/* Conकाष्ठा the vote */
 		votes[i] = ((pri[pindex] & 0xffff) << 16) |
 			(sindex << 8) | pindex;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The GMU votes with the RPMh for itself and on behalf of the GPU but we need
- * to construct the list of votes on the CPU and send it over. Query the RPMh
+ * The GMU votes with the RPMh क्रम itself and on behalf of the GPU but we need
+ * to स्थिरruct the list of votes on the CPU and send it over. Query the RPMh
  * voltage levels and build the votes
  */
 
-static int a6xx_gmu_rpmh_votes_init(struct a6xx_gmu *gmu)
-{
-	struct a6xx_gpu *a6xx_gpu = container_of(gmu, struct a6xx_gpu, gmu);
-	struct adreno_gpu *adreno_gpu = &a6xx_gpu->base;
-	struct msm_gpu *gpu = &adreno_gpu->base;
-	int ret;
+अटल पूर्णांक a6xx_gmu_rpmh_votes_init(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_gpu *a6xx_gpu = container_of(gmu, काष्ठा a6xx_gpu, gmu);
+	काष्ठा adreno_gpu *adreno_gpu = &a6xx_gpu->base;
+	काष्ठा msm_gpu *gpu = &adreno_gpu->base;
+	पूर्णांक ret;
 
 	/* Build the GX votes */
 	ret = a6xx_gmu_rpmh_arc_votes_init(&gpu->pdev->dev, gmu->gx_arc_votes,
@@ -1299,64 +1300,64 @@ static int a6xx_gmu_rpmh_votes_init(struct a6xx_gmu *gmu)
 	ret |= a6xx_gmu_rpmh_arc_votes_init(gmu->dev, gmu->cx_arc_votes,
 		gmu->gmu_freqs, gmu->nr_gmu_freqs, "cx.lvl");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int a6xx_gmu_build_freq_table(struct device *dev, unsigned long *freqs,
+अटल पूर्णांक a6xx_gmu_build_freq_table(काष्ठा device *dev, अचिन्हित दीर्घ *freqs,
 		u32 size)
-{
-	int count = dev_pm_opp_get_opp_count(dev);
-	struct dev_pm_opp *opp;
-	int i, index = 0;
-	unsigned long freq = 1;
+अणु
+	पूर्णांक count = dev_pm_opp_get_opp_count(dev);
+	काष्ठा dev_pm_opp *opp;
+	पूर्णांक i, index = 0;
+	अचिन्हित दीर्घ freq = 1;
 
 	/*
-	 * The OPP table doesn't contain the "off" frequency level so we need to
-	 * add 1 to the table size to account for it
+	 * The OPP table करोesn't contain the "off" frequency level so we need to
+	 * add 1 to the table size to account क्रम it
 	 */
 
-	if (WARN(count + 1 > size,
+	अगर (WARN(count + 1 > size,
 		"The GMU frequency table is being truncated\n"))
 		count = size - 1;
 
 	/* Set the "off" frequency */
 	freqs[index++] = 0;
 
-	for (i = 0; i < count; i++) {
-		opp = dev_pm_opp_find_freq_ceil(dev, &freq);
-		if (IS_ERR(opp))
-			break;
+	क्रम (i = 0; i < count; i++) अणु
+		opp = dev_pm_opp_find_freq_उच्चमान(dev, &freq);
+		अगर (IS_ERR(opp))
+			अवरोध;
 
 		dev_pm_opp_put(opp);
 		freqs[index++] = freq++;
-	}
+	पूर्ण
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static int a6xx_gmu_pwrlevels_probe(struct a6xx_gmu *gmu)
-{
-	struct a6xx_gpu *a6xx_gpu = container_of(gmu, struct a6xx_gpu, gmu);
-	struct adreno_gpu *adreno_gpu = &a6xx_gpu->base;
-	struct msm_gpu *gpu = &adreno_gpu->base;
+अटल पूर्णांक a6xx_gmu_pwrlevels_probe(काष्ठा a6xx_gmu *gmu)
+अणु
+	काष्ठा a6xx_gpu *a6xx_gpu = container_of(gmu, काष्ठा a6xx_gpu, gmu);
+	काष्ठा adreno_gpu *adreno_gpu = &a6xx_gpu->base;
+	काष्ठा msm_gpu *gpu = &adreno_gpu->base;
 
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/*
-	 * The GMU handles its own frequency switching so build a list of
+	 * The GMU handles its own frequency चयनing so build a list of
 	 * available frequencies to send during initialization
 	 */
 	ret = dev_pm_opp_of_add_table(gmu->dev);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(gmu->dev, "Unable to set the OPP table for the GMU\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	gmu->nr_gmu_freqs = a6xx_gmu_build_freq_table(gmu->dev,
 		gmu->gmu_freqs, ARRAY_SIZE(gmu->gmu_freqs));
 
 	/*
-	 * The GMU also handles GPU frequency switching so build a list
+	 * The GMU also handles GPU frequency चयनing so build a list
 	 * from the GPU OPP table
 	 */
 	gmu->nr_gpu_freqs = a6xx_gmu_build_freq_table(&gpu->pdev->dev,
@@ -1365,193 +1366,193 @@ static int a6xx_gmu_pwrlevels_probe(struct a6xx_gmu *gmu)
 	gmu->current_perf_index = gmu->nr_gpu_freqs - 1;
 
 	/* Build the list of RPMh votes that we'll send to the GMU */
-	return a6xx_gmu_rpmh_votes_init(gmu);
-}
+	वापस a6xx_gmu_rpmh_votes_init(gmu);
+पूर्ण
 
-static int a6xx_gmu_clocks_probe(struct a6xx_gmu *gmu)
-{
-	int ret = devm_clk_bulk_get_all(gmu->dev, &gmu->clocks);
+अटल पूर्णांक a6xx_gmu_घड़ीs_probe(काष्ठा a6xx_gmu *gmu)
+अणु
+	पूर्णांक ret = devm_clk_bulk_get_all(gmu->dev, &gmu->घड़ीs);
 
-	if (ret < 1)
-		return ret;
+	अगर (ret < 1)
+		वापस ret;
 
-	gmu->nr_clocks = ret;
+	gmu->nr_घड़ीs = ret;
 
-	gmu->core_clk = msm_clk_bulk_get_clock(gmu->clocks,
-		gmu->nr_clocks, "gmu");
+	gmu->core_clk = msm_clk_bulk_get_घड़ी(gmu->घड़ीs,
+		gmu->nr_घड़ीs, "gmu");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __iomem *a6xx_gmu_get_mmio(struct platform_device *pdev,
-		const char *name)
-{
-	void __iomem *ret;
-	struct resource *res = platform_get_resource_byname(pdev,
+अटल व्योम __iomem *a6xx_gmu_get_mmio(काष्ठा platक्रमm_device *pdev,
+		स्थिर अक्षर *name)
+अणु
+	व्योम __iomem *ret;
+	काष्ठा resource *res = platक्रमm_get_resource_byname(pdev,
 			IORESOURCE_MEM, name);
 
-	if (!res) {
+	अगर (!res) अणु
 		DRM_DEV_ERROR(&pdev->dev, "Unable to find the %s registers\n", name);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	ret = ioremap(res->start, resource_size(res));
-	if (!ret) {
+	अगर (!ret) अणु
 		DRM_DEV_ERROR(&pdev->dev, "Unable to map the %s registers\n", name);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int a6xx_gmu_get_irq(struct a6xx_gmu *gmu, struct platform_device *pdev,
-		const char *name, irq_handler_t handler)
-{
-	int irq, ret;
+अटल पूर्णांक a6xx_gmu_get_irq(काष्ठा a6xx_gmu *gmu, काष्ठा platक्रमm_device *pdev,
+		स्थिर अक्षर *name, irq_handler_t handler)
+अणु
+	पूर्णांक irq, ret;
 
-	irq = platform_get_irq_byname(pdev, name);
+	irq = platक्रमm_get_irq_byname(pdev, name);
 
 	ret = request_irq(irq, handler, IRQF_TRIGGER_HIGH, name, gmu);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(&pdev->dev, "Unable to get interrupt %s %d\n",
 			      name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	disable_irq(irq);
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-void a6xx_gmu_remove(struct a6xx_gpu *a6xx_gpu)
-{
-	struct a6xx_gmu *gmu = &a6xx_gpu->gmu;
-	struct platform_device *pdev = to_platform_device(gmu->dev);
+व्योम a6xx_gmu_हटाओ(काष्ठा a6xx_gpu *a6xx_gpu)
+अणु
+	काष्ठा a6xx_gmu *gmu = &a6xx_gpu->gmu;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(gmu->dev);
 
-	if (!gmu->initialized)
-		return;
+	अगर (!gmu->initialized)
+		वापस;
 
-	pm_runtime_force_suspend(gmu->dev);
+	pm_runसमय_क्रमce_suspend(gmu->dev);
 
-	if (!IS_ERR_OR_NULL(gmu->gxpd)) {
-		pm_runtime_disable(gmu->gxpd);
-		dev_pm_domain_detach(gmu->gxpd, false);
-	}
+	अगर (!IS_ERR_OR_शून्य(gmu->gxpd)) अणु
+		pm_runसमय_disable(gmu->gxpd);
+		dev_pm_करोमुख्य_detach(gmu->gxpd, false);
+	पूर्ण
 
 	iounmap(gmu->mmio);
-	if (platform_get_resource_byname(pdev, IORESOURCE_MEM, "rscc"))
+	अगर (platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "rscc"))
 		iounmap(gmu->rscc);
-	gmu->mmio = NULL;
-	gmu->rscc = NULL;
+	gmu->mmio = शून्य;
+	gmu->rscc = शून्य;
 
-	a6xx_gmu_memory_free(gmu);
+	a6xx_gmu_memory_मुक्त(gmu);
 
-	free_irq(gmu->gmu_irq, gmu);
-	free_irq(gmu->hfi_irq, gmu);
+	मुक्त_irq(gmu->gmu_irq, gmu);
+	मुक्त_irq(gmu->hfi_irq, gmu);
 
 	/* Drop reference taken in of_find_device_by_node */
 	put_device(gmu->dev);
 
 	gmu->initialized = false;
-}
+पूर्ण
 
-int a6xx_gmu_init(struct a6xx_gpu *a6xx_gpu, struct device_node *node)
-{
-	struct adreno_gpu *adreno_gpu = &a6xx_gpu->base;
-	struct a6xx_gmu *gmu = &a6xx_gpu->gmu;
-	struct platform_device *pdev = of_find_device_by_node(node);
-	int ret;
+पूर्णांक a6xx_gmu_init(काष्ठा a6xx_gpu *a6xx_gpu, काष्ठा device_node *node)
+अणु
+	काष्ठा adreno_gpu *adreno_gpu = &a6xx_gpu->base;
+	काष्ठा a6xx_gmu *gmu = &a6xx_gpu->gmu;
+	काष्ठा platक्रमm_device *pdev = of_find_device_by_node(node);
+	पूर्णांक ret;
 
-	if (!pdev)
-		return -ENODEV;
+	अगर (!pdev)
+		वापस -ENODEV;
 
 	gmu->dev = &pdev->dev;
 
 	of_dma_configure(gmu->dev, node, true);
 
-	/* Fow now, don't do anything fancy until we get our feet under us */
+	/* Fow now, करोn't करो anything fancy until we get our feet under us */
 	gmu->idle_level = GMU_IDLE_STATE_ACTIVE;
 
-	pm_runtime_enable(gmu->dev);
+	pm_runसमय_enable(gmu->dev);
 
-	/* Get the list of clocks */
-	ret = a6xx_gmu_clocks_probe(gmu);
-	if (ret)
-		goto err_put_device;
+	/* Get the list of घड़ीs */
+	ret = a6xx_gmu_घड़ीs_probe(gmu);
+	अगर (ret)
+		जाओ err_put_device;
 
 	ret = a6xx_gmu_memory_probe(gmu);
-	if (ret)
-		goto err_put_device;
+	अगर (ret)
+		जाओ err_put_device;
 
-	/* Allocate memory for the GMU dummy page */
+	/* Allocate memory क्रम the GMU dummy page */
 	ret = a6xx_gmu_memory_alloc(gmu, &gmu->dummy, SZ_4K, 0x60000000);
-	if (ret)
-		goto err_memory;
+	अगर (ret)
+		जाओ err_memory;
 
-	if (adreno_is_a650(adreno_gpu)) {
+	अगर (adreno_is_a650(adreno_gpu)) अणु
 		ret = a6xx_gmu_memory_alloc(gmu, &gmu->icache,
 			SZ_16M - SZ_16K, 0x04000);
-		if (ret)
-			goto err_memory;
-	} else if (adreno_is_a640(adreno_gpu)) {
+		अगर (ret)
+			जाओ err_memory;
+	पूर्ण अन्यथा अगर (adreno_is_a640(adreno_gpu)) अणु
 		ret = a6xx_gmu_memory_alloc(gmu, &gmu->icache,
 			SZ_256K - SZ_16K, 0x04000);
-		if (ret)
-			goto err_memory;
+		अगर (ret)
+			जाओ err_memory;
 
 		ret = a6xx_gmu_memory_alloc(gmu, &gmu->dcache,
 			SZ_256K - SZ_16K, 0x44000);
-		if (ret)
-			goto err_memory;
-	} else {
+		अगर (ret)
+			जाओ err_memory;
+	पूर्ण अन्यथा अणु
 		/* HFI v1, has sptprac */
 		gmu->legacy = true;
 
-		/* Allocate memory for the GMU debug region */
+		/* Allocate memory क्रम the GMU debug region */
 		ret = a6xx_gmu_memory_alloc(gmu, &gmu->debug, SZ_16K, 0);
-		if (ret)
-			goto err_memory;
-	}
+		अगर (ret)
+			जाओ err_memory;
+	पूर्ण
 
-	/* Allocate memory for for the HFI queues */
+	/* Allocate memory क्रम क्रम the HFI queues */
 	ret = a6xx_gmu_memory_alloc(gmu, &gmu->hfi, SZ_16K, 0);
-	if (ret)
-		goto err_memory;
+	अगर (ret)
+		जाओ err_memory;
 
-	/* Allocate memory for the GMU log region */
+	/* Allocate memory क्रम the GMU log region */
 	ret = a6xx_gmu_memory_alloc(gmu, &gmu->log, SZ_4K, 0);
-	if (ret)
-		goto err_memory;
+	अगर (ret)
+		जाओ err_memory;
 
-	/* Map the GMU registers */
+	/* Map the GMU रेजिस्टरs */
 	gmu->mmio = a6xx_gmu_get_mmio(pdev, "gmu");
-	if (IS_ERR(gmu->mmio)) {
+	अगर (IS_ERR(gmu->mmio)) अणु
 		ret = PTR_ERR(gmu->mmio);
-		goto err_memory;
-	}
+		जाओ err_memory;
+	पूर्ण
 
-	if (adreno_is_a650(adreno_gpu)) {
+	अगर (adreno_is_a650(adreno_gpu)) अणु
 		gmu->rscc = a6xx_gmu_get_mmio(pdev, "rscc");
-		if (IS_ERR(gmu->rscc))
-			goto err_mmio;
-	} else {
+		अगर (IS_ERR(gmu->rscc))
+			जाओ err_mmio;
+	पूर्ण अन्यथा अणु
 		gmu->rscc = gmu->mmio + 0x23000;
-	}
+	पूर्ण
 
-	/* Get the HFI and GMU interrupts */
+	/* Get the HFI and GMU पूर्णांकerrupts */
 	gmu->hfi_irq = a6xx_gmu_get_irq(gmu, pdev, "hfi", a6xx_hfi_irq);
 	gmu->gmu_irq = a6xx_gmu_get_irq(gmu, pdev, "gmu", a6xx_gmu_irq);
 
-	if (gmu->hfi_irq < 0 || gmu->gmu_irq < 0)
-		goto err_mmio;
+	अगर (gmu->hfi_irq < 0 || gmu->gmu_irq < 0)
+		जाओ err_mmio;
 
 	/*
-	 * Get a link to the GX power domain to reset the GPU in case of GMU
+	 * Get a link to the GX घातer करोमुख्य to reset the GPU in हाल of GMU
 	 * crash
 	 */
-	gmu->gxpd = dev_pm_domain_attach_by_name(gmu->dev, "gx");
+	gmu->gxpd = dev_pm_करोमुख्य_attach_by_name(gmu->dev, "gx");
 
-	/* Get the power levels for the GMU and GPU */
+	/* Get the घातer levels क्रम the GMU and GPU */
 	a6xx_gmu_pwrlevels_probe(gmu);
 
 	/* Set up the HFI queues */
@@ -1559,22 +1560,22 @@ int a6xx_gmu_init(struct a6xx_gpu *a6xx_gpu, struct device_node *node)
 
 	gmu->initialized = true;
 
-	return 0;
+	वापस 0;
 
 err_mmio:
 	iounmap(gmu->mmio);
-	if (platform_get_resource_byname(pdev, IORESOURCE_MEM, "rscc"))
+	अगर (platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "rscc"))
 		iounmap(gmu->rscc);
-	free_irq(gmu->gmu_irq, gmu);
-	free_irq(gmu->hfi_irq, gmu);
+	मुक्त_irq(gmu->gmu_irq, gmu);
+	मुक्त_irq(gmu->hfi_irq, gmu);
 
 	ret = -ENODEV;
 
 err_memory:
-	a6xx_gmu_memory_free(gmu);
+	a6xx_gmu_memory_मुक्त(gmu);
 err_put_device:
 	/* Drop reference taken in of_find_device_by_node */
 	put_device(gmu->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

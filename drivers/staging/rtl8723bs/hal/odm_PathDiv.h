@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#ifndef	__ODMPATHDIV_H__
-#define    __ODMPATHDIV_H__
+#अगर_अघोषित	__ODMPATHDIV_H__
+#घोषणा    __ODMPATHDIV_H__
 
-void
+व्योम
 odm_PathDiversityInit(
-	void *pDM_VOID
+	व्योम *pDM_VOID
 	);
 
-void
+व्योम
 odm_PathDiversity(
-	void *pDM_VOID
+	व्योम *pDM_VOID
 	);
 
- #endif		 /* ifndef  __ODMPATHDIV_H__ */
+ #पूर्ण_अगर		 /* अगरndef  __ODMPATHDIV_H__ */

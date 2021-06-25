@@ -1,143 +1,144 @@
+<शैली गुरु>
 /* $Id: capiutil.c,v 1.13.6.4 2001/09/23 22:24:33 kai Exp $
  *
- * CAPI 2.0 convert capi message to capi message struct
+ * CAPI 2.0 convert capi message to capi message काष्ठा
  *
  * From CAPI 2.0 Development Kit AVM 1995 (msg.c)
- * Rewritten for Linux 1996 by Carsten Paeth <calle@calle.de>
+ * Rewritten क्रम Linux 1996 by Carsten Paeth <calle@calle.de>
  *
  * This software may be used and distributed according to the terms
  * of the GNU General Public License, incorporated herein by reference.
  *
  */
 
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/init.h>
-#include <linux/isdn/capiutil.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/isdn/capiutil.h>
+#समावेश <linux/slab.h>
 
-#include "kcapi.h"
+#समावेश "kcapi.h"
 
 /* from CAPI2.0 DDK AVM Berlin GmbH */
 
-typedef struct {
-	int typ;
-	size_t off;
-} _cdef;
+प्रकार काष्ठा अणु
+	पूर्णांक typ;
+	माप_प्रकार off;
+पूर्ण _cdef;
 
-#define _CBYTE	       1
-#define _CWORD	       2
-#define _CDWORD        3
-#define _CSTRUCT       4
-#define _CMSTRUCT      5
-#define _CEND	       6
+#घोषणा _CBYTE	       1
+#घोषणा _CWORD	       2
+#घोषणा _CDWORD        3
+#घोषणा _CSTRUCT       4
+#घोषणा _CMSTRUCT      5
+#घोषणा _CEND	       6
 
-static _cdef cdef[] =
-{
+अटल _cdef cdef[] =
+अणु
 	/*00 */
-	{_CEND},
+	अणु_CENDपूर्ण,
 	/*01 */
-	{_CEND},
+	अणु_CENDपूर्ण,
 	/*02 */
-	{_CEND},
+	अणु_CENDपूर्ण,
 	/*03 */
-	{_CDWORD, offsetof(_cmsg, adr.adrController)},
+	अणु_CDWORD, दुरत्व(_cmsg, adr.adrController)पूर्ण,
 	/*04 */
-	{_CMSTRUCT, offsetof(_cmsg, AdditionalInfo)},
+	अणु_CMSTRUCT, दुरत्व(_cmsg, AdditionalInfo)पूर्ण,
 	/*05 */
-	{_CSTRUCT, offsetof(_cmsg, B1configuration)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, B1configuration)पूर्ण,
 	/*06 */
-	{_CWORD, offsetof(_cmsg, B1protocol)},
+	अणु_CWORD, दुरत्व(_cmsg, B1protocol)पूर्ण,
 	/*07 */
-	{_CSTRUCT, offsetof(_cmsg, B2configuration)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, B2configuration)पूर्ण,
 	/*08 */
-	{_CWORD, offsetof(_cmsg, B2protocol)},
+	अणु_CWORD, दुरत्व(_cmsg, B2protocol)पूर्ण,
 	/*09 */
-	{_CSTRUCT, offsetof(_cmsg, B3configuration)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, B3configuration)पूर्ण,
 	/*0a */
-	{_CWORD, offsetof(_cmsg, B3protocol)},
+	अणु_CWORD, दुरत्व(_cmsg, B3protocol)पूर्ण,
 	/*0b */
-	{_CSTRUCT, offsetof(_cmsg, BC)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, BC)पूर्ण,
 	/*0c */
-	{_CSTRUCT, offsetof(_cmsg, BChannelinformation)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, BChannelinक्रमmation)पूर्ण,
 	/*0d */
-	{_CMSTRUCT, offsetof(_cmsg, BProtocol)},
+	अणु_CMSTRUCT, दुरत्व(_cmsg, BProtocol)पूर्ण,
 	/*0e */
-	{_CSTRUCT, offsetof(_cmsg, CalledPartyNumber)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, CalledPartyNumber)पूर्ण,
 	/*0f */
-	{_CSTRUCT, offsetof(_cmsg, CalledPartySubaddress)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, CalledPartySubaddress)पूर्ण,
 	/*10 */
-	{_CSTRUCT, offsetof(_cmsg, CallingPartyNumber)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, CallingPartyNumber)पूर्ण,
 	/*11 */
-	{_CSTRUCT, offsetof(_cmsg, CallingPartySubaddress)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, CallingPartySubaddress)पूर्ण,
 	/*12 */
-	{_CDWORD, offsetof(_cmsg, CIPmask)},
+	अणु_CDWORD, दुरत्व(_cmsg, CIPmask)पूर्ण,
 	/*13 */
-	{_CDWORD, offsetof(_cmsg, CIPmask2)},
+	अणु_CDWORD, दुरत्व(_cmsg, CIPmask2)पूर्ण,
 	/*14 */
-	{_CWORD, offsetof(_cmsg, CIPValue)},
+	अणु_CWORD, दुरत्व(_cmsg, CIPValue)पूर्ण,
 	/*15 */
-	{_CDWORD, offsetof(_cmsg, Class)},
+	अणु_CDWORD, दुरत्व(_cmsg, Class)पूर्ण,
 	/*16 */
-	{_CSTRUCT, offsetof(_cmsg, ConnectedNumber)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, ConnectedNumber)पूर्ण,
 	/*17 */
-	{_CSTRUCT, offsetof(_cmsg, ConnectedSubaddress)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, ConnectedSubaddress)पूर्ण,
 	/*18 */
-	{_CDWORD, offsetof(_cmsg, Data)},
+	अणु_CDWORD, दुरत्व(_cmsg, Data)पूर्ण,
 	/*19 */
-	{_CWORD, offsetof(_cmsg, DataHandle)},
+	अणु_CWORD, दुरत्व(_cmsg, DataHandle)पूर्ण,
 	/*1a */
-	{_CWORD, offsetof(_cmsg, DataLength)},
+	अणु_CWORD, दुरत्व(_cmsg, DataLength)पूर्ण,
 	/*1b */
-	{_CSTRUCT, offsetof(_cmsg, FacilityConfirmationParameter)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, FacilityConfirmationParameter)पूर्ण,
 	/*1c */
-	{_CSTRUCT, offsetof(_cmsg, Facilitydataarray)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, Facilitydataarray)पूर्ण,
 	/*1d */
-	{_CSTRUCT, offsetof(_cmsg, FacilityIndicationParameter)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, FacilityIndicationParameter)पूर्ण,
 	/*1e */
-	{_CSTRUCT, offsetof(_cmsg, FacilityRequestParameter)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, FacilityRequestParameter)पूर्ण,
 	/*1f */
-	{_CWORD, offsetof(_cmsg, FacilitySelector)},
+	अणु_CWORD, दुरत्व(_cmsg, FacilitySelector)पूर्ण,
 	/*20 */
-	{_CWORD, offsetof(_cmsg, Flags)},
+	अणु_CWORD, दुरत्व(_cmsg, Flags)पूर्ण,
 	/*21 */
-	{_CDWORD, offsetof(_cmsg, Function)},
+	अणु_CDWORD, दुरत्व(_cmsg, Function)पूर्ण,
 	/*22 */
-	{_CSTRUCT, offsetof(_cmsg, HLC)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, HLC)पूर्ण,
 	/*23 */
-	{_CWORD, offsetof(_cmsg, Info)},
+	अणु_CWORD, दुरत्व(_cmsg, Info)पूर्ण,
 	/*24 */
-	{_CSTRUCT, offsetof(_cmsg, InfoElement)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, InfoElement)पूर्ण,
 	/*25 */
-	{_CDWORD, offsetof(_cmsg, InfoMask)},
+	अणु_CDWORD, दुरत्व(_cmsg, InfoMask)पूर्ण,
 	/*26 */
-	{_CWORD, offsetof(_cmsg, InfoNumber)},
+	अणु_CWORD, दुरत्व(_cmsg, InfoNumber)पूर्ण,
 	/*27 */
-	{_CSTRUCT, offsetof(_cmsg, Keypadfacility)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, Keypadfacility)पूर्ण,
 	/*28 */
-	{_CSTRUCT, offsetof(_cmsg, LLC)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, LLC)पूर्ण,
 	/*29 */
-	{_CSTRUCT, offsetof(_cmsg, ManuData)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, ManuData)पूर्ण,
 	/*2a */
-	{_CDWORD, offsetof(_cmsg, ManuID)},
+	अणु_CDWORD, दुरत्व(_cmsg, ManuID)पूर्ण,
 	/*2b */
-	{_CSTRUCT, offsetof(_cmsg, NCPI)},
+	अणु_CSTRUCT, दुरत्व(_cmsg, NCPI)पूर्ण,
 	/*2c */
-	{_CWORD, offsetof(_cmsg, Reason)},
+	अणु_CWORD, दुरत्व(_cmsg, Reason)पूर्ण,
 	/*2d */
-	{_CWORD, offsetof(_cmsg, Reason_B3)},
+	अणु_CWORD, दुरत्व(_cmsg, Reason_B3)पूर्ण,
 	/*2e */
-	{_CWORD, offsetof(_cmsg, Reject)},
+	अणु_CWORD, दुरत्व(_cmsg, Reject)पूर्ण,
 	/*2f */
-	{_CSTRUCT, offsetof(_cmsg, Useruserdata)}
-};
+	अणु_CSTRUCT, दुरत्व(_cmsg, Useruserdata)पूर्ण
+पूर्ण;
 
-static unsigned char *cpars[] =
-{
+अटल अचिन्हित अक्षर *cpars[] =
+अणु
 	/* ALERT_REQ */ [0x01] = "\x03\x04\x0c\x27\x2f\x1c\x01\x01",
 	/* CONNECT_REQ */ [0x02] = "\x03\x14\x0e\x10\x0f\x11\x0d\x06\x08\x0a\x05\x07\x09\x01\x0b\x28\x22\x04\x0c\x27\x2f\x1c\x01\x01",
 	/* DISCONNECT_REQ */ [0x04] = "\x03\x04\x0c\x27\x2f\x1c\x01\x01",
@@ -186,72 +187,72 @@ static unsigned char *cpars[] =
 	/* RESET_B3_RESP */ [0x46] = "\x03\x01",
 	/* CONNECT_B3_T90_ACTIVE_RESP */ [0x47] = "\x03\x01",
 	/* MANUFACTURER_RESP */ [0x4e] = "\x03\x2a\x15\x21\x29\x01",
-};
+पूर्ण;
 
 /*-------------------------------------------------------*/
 
-#define byteTLcpy(x, y)         *(u8 *)(x) = *(u8 *)(y);
-#define wordTLcpy(x, y)         *(u16 *)(x) = *(u16 *)(y);
-#define dwordTLcpy(x, y)        memcpy(x, y, 4);
-#define structTLcpy(x, y, l)    memcpy(x, y, l)
-#define structTLcpyovl(x, y, l) memmove(x, y, l)
+#घोषणा byteTLcpy(x, y)         *(u8 *)(x) = *(u8 *)(y);
+#घोषणा wordTLcpy(x, y)         *(u16 *)(x) = *(u16 *)(y);
+#घोषणा dwordTLcpy(x, y)        स_नकल(x, y, 4);
+#घोषणा काष्ठाTLcpy(x, y, l)    स_नकल(x, y, l)
+#घोषणा काष्ठाTLcpyovl(x, y, l) स_हटाओ(x, y, l)
 
-#define byteTRcpy(x, y)         *(u8 *)(y) = *(u8 *)(x);
-#define wordTRcpy(x, y)         *(u16 *)(y) = *(u16 *)(x);
-#define dwordTRcpy(x, y)        memcpy(y, x, 4);
-#define structTRcpy(x, y, l)    memcpy(y, x, l)
-#define structTRcpyovl(x, y, l) memmove(y, x, l)
+#घोषणा byteTRcpy(x, y)         *(u8 *)(y) = *(u8 *)(x);
+#घोषणा wordTRcpy(x, y)         *(u16 *)(y) = *(u16 *)(x);
+#घोषणा dwordTRcpy(x, y)        स_नकल(y, x, 4);
+#घोषणा काष्ठाTRcpy(x, y, l)    स_नकल(y, x, l)
+#घोषणा काष्ठाTRcpyovl(x, y, l) स_हटाओ(y, x, l)
 
 /*-------------------------------------------------------*/
-static unsigned command_2_index(u8 c, u8 sc)
-{
-	if (c & 0x80)
+अटल अचिन्हित command_2_index(u8 c, u8 sc)
+अणु
+	अगर (c & 0x80)
 		c = 0x9 + (c & 0x0f);
-	else if (c == 0x41)
+	अन्यथा अगर (c == 0x41)
 		c = 0x9 + 0x1;
-	if (c > 0x18)
+	अगर (c > 0x18)
 		c = 0x00;
-	return (sc & 3) * (0x9 + 0x9) + c;
-}
+	वापस (sc & 3) * (0x9 + 0x9) + c;
+पूर्ण
 
 /**
- * capi_cmd2par() - find parameter string for CAPI 2.0 command/subcommand
+ * capi_cmd2par() - find parameter string क्रम CAPI 2.0 command/subcommand
  * @cmd:	command number
  * @subcmd:	subcommand number
  *
- * Return value: static string, NULL if command/subcommand unknown
+ * Return value: अटल string, शून्य अगर command/subcommand unknown
  */
 
-static unsigned char *capi_cmd2par(u8 cmd, u8 subcmd)
-{
-	return cpars[command_2_index(cmd, subcmd)];
-}
+अटल अचिन्हित अक्षर *capi_cmd2par(u8 cmd, u8 subcmd)
+अणु
+	वापस cpars[command_2_index(cmd, subcmd)];
+पूर्ण
 
 /*-------------------------------------------------------*/
-#define TYP (cdef[cmsg->par[cmsg->p]].typ)
-#define OFF (((u8 *)cmsg) + cdef[cmsg->par[cmsg->p]].off)
+#घोषणा TYP (cdef[cmsg->par[cmsg->p]].typ)
+#घोषणा OFF (((u8 *)cmsg) + cdef[cmsg->par[cmsg->p]].off)
 
-static void jumpcstruct(_cmsg *cmsg)
-{
-	unsigned layer;
-	for (cmsg->p++, layer = 1; layer;) {
-		/* $$$$$ assert (cmsg->p); */
+अटल व्योम jumpcकाष्ठा(_cmsg *cmsg)
+अणु
+	अचिन्हित layer;
+	क्रम (cmsg->p++, layer = 1; layer;) अणु
+		/* $$$$$ निश्चित (cmsg->p); */
 		cmsg->p++;
-		switch (TYP) {
-		case _CMSTRUCT:
+		चयन (TYP) अणु
+		हाल _CMSTRUCT:
 			layer++;
-			break;
-		case _CEND:
+			अवरोध;
+		हाल _CEND:
 			layer--;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*-------------------------------------------------------*/
 
-static char *mnames[] =
-{
+अटल अक्षर *mnames[] =
+अणु
 	[0x01] = "ALERT_REQ",
 	[0x02] = "CONNECT_REQ",
 	[0x04] = "DISCONNECT_REQ",
@@ -300,38 +301,38 @@ static char *mnames[] =
 	[0x46] = "RESET_B3_RESP",
 	[0x47] = "CONNECT_B3_T90_ACTIVE_RESP",
 	[0x4e] = "MANUFACTURER_RESP"
-};
+पूर्ण;
 
 /**
  * capi_cmd2str() - convert CAPI 2.0 command/subcommand number to name
  * @cmd:	command number
  * @subcmd:	subcommand number
  *
- * Return value: static string
+ * Return value: अटल string
  */
 
-char *capi_cmd2str(u8 cmd, u8 subcmd)
-{
-	char *result;
+अक्षर *capi_cmd2str(u8 cmd, u8 subcmd)
+अणु
+	अक्षर *result;
 
 	result = mnames[command_2_index(cmd, subcmd)];
-	if (result == NULL)
+	अगर (result == शून्य)
 		result = "INVALID_COMMAND";
-	return result;
-}
+	वापस result;
+पूर्ण
 
 
 /*-------------------------------------------------------*/
 
-#ifdef CONFIG_CAPI_TRACE
+#अगर_घोषित CONFIG_CAPI_TRACE
 
 /*-------------------------------------------------------*/
 
-static char *pnames[] =
-{
-	/*00 */ NULL,
-	/*01 */ NULL,
-	/*02 */ NULL,
+अटल अक्षर *pnames[] =
+अणु
+	/*00 */ शून्य,
+	/*01 */ शून्य,
+	/*02 */ शून्य,
 	/*03 */ "Controller/PLCI/NCCI",
 	/*04 */ "AdditionalInfo",
 	/*05 */ "B1configuration",
@@ -377,226 +378,226 @@ static char *pnames[] =
 	/*2d */ "Reason_B3",
 	/*2e */ "Reject",
 	/*2f */ "Useruserdata"
-};
+पूर्ण;
 
-#include <stdarg.h>
+#समावेश <मानकतर्क.स>
 
 /*-------------------------------------------------------*/
-static _cdebbuf *bufprint(_cdebbuf *cdb, char *fmt, ...)
-{
-	va_list f;
-	size_t n, r;
+अटल _cdebbuf *bufprपूर्णांक(_cdebbuf *cdb, अक्षर *fmt, ...)
+अणु
+	बहु_सूची f;
+	माप_प्रकार n, r;
 
-	if (!cdb)
-		return NULL;
-	va_start(f, fmt);
+	अगर (!cdb)
+		वापस शून्य;
+	बहु_शुरू(f, fmt);
 	r = cdb->size - cdb->pos;
-	n = vsnprintf(cdb->p, r, fmt, f);
-	va_end(f);
-	if (n >= r) {
+	n = vsnम_लिखो(cdb->p, r, fmt, f);
+	बहु_पूर्ण(f);
+	अगर (n >= r) अणु
 		/* truncated, need bigger buffer */
-		size_t ns = 2 * cdb->size;
-		u_char *nb;
+		माप_प्रकार ns = 2 * cdb->size;
+		u_अक्षर *nb;
 
-		while ((ns - cdb->pos) <= n)
+		जबतक ((ns - cdb->pos) <= n)
 			ns *= 2;
-		nb = kmalloc(ns, GFP_ATOMIC);
-		if (!nb) {
-			cdebbuf_free(cdb);
-			return NULL;
-		}
-		memcpy(nb, cdb->buf, cdb->pos);
-		kfree(cdb->buf);
+		nb = kदो_स्मृति(ns, GFP_ATOMIC);
+		अगर (!nb) अणु
+			cdebbuf_मुक्त(cdb);
+			वापस शून्य;
+		पूर्ण
+		स_नकल(nb, cdb->buf, cdb->pos);
+		kमुक्त(cdb->buf);
 		nb[cdb->pos] = 0;
 		cdb->buf = nb;
 		cdb->p = cdb->buf + cdb->pos;
 		cdb->size = ns;
-		va_start(f, fmt);
+		बहु_शुरू(f, fmt);
 		r = cdb->size - cdb->pos;
-		n = vsnprintf(cdb->p, r, fmt, f);
-		va_end(f);
-	}
+		n = vsnम_लिखो(cdb->p, r, fmt, f);
+		बहु_पूर्ण(f);
+	पूर्ण
 	cdb->p += n;
 	cdb->pos += n;
-	return cdb;
-}
+	वापस cdb;
+पूर्ण
 
-static _cdebbuf *printstructlen(_cdebbuf *cdb, u8 *m, unsigned len)
-{
-	unsigned hex = 0;
+अटल _cdebbuf *prपूर्णांककाष्ठाlen(_cdebbuf *cdb, u8 *m, अचिन्हित len)
+अणु
+	अचिन्हित hex = 0;
 
-	if (!cdb)
-		return NULL;
-	for (; len; len--, m++)
-		if (isalnum(*m) || *m == ' ') {
-			if (hex)
-				cdb = bufprint(cdb, ">");
-			cdb = bufprint(cdb, "%c", *m);
+	अगर (!cdb)
+		वापस शून्य;
+	क्रम (; len; len--, m++)
+		अगर (है_अक्षर_अंक(*m) || *m == ' ') अणु
+			अगर (hex)
+				cdb = bufprपूर्णांक(cdb, ">");
+			cdb = bufprपूर्णांक(cdb, "%c", *m);
 			hex = 0;
-		} else {
-			if (!hex)
-				cdb = bufprint(cdb, "<%02x", *m);
-			else
-				cdb = bufprint(cdb, " %02x", *m);
+		पूर्ण अन्यथा अणु
+			अगर (!hex)
+				cdb = bufprपूर्णांक(cdb, "<%02x", *m);
+			अन्यथा
+				cdb = bufprपूर्णांक(cdb, " %02x", *m);
 			hex = 1;
-		}
-	if (hex)
-		cdb = bufprint(cdb, ">");
-	return cdb;
-}
+		पूर्ण
+	अगर (hex)
+		cdb = bufprपूर्णांक(cdb, ">");
+	वापस cdb;
+पूर्ण
 
-static _cdebbuf *printstruct(_cdebbuf *cdb, u8 *m)
-{
-	unsigned len;
+अटल _cdebbuf *prपूर्णांककाष्ठा(_cdebbuf *cdb, u8 *m)
+अणु
+	अचिन्हित len;
 
-	if (m[0] != 0xff) {
+	अगर (m[0] != 0xff) अणु
 		len = m[0];
 		m += 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		len = ((u16 *) (m + 1))[0];
 		m += 3;
-	}
-	cdb = printstructlen(cdb, m, len);
-	return cdb;
-}
+	पूर्ण
+	cdb = prपूर्णांककाष्ठाlen(cdb, m, len);
+	वापस cdb;
+पूर्ण
 
 /*-------------------------------------------------------*/
-#define NAME (pnames[cmsg->par[cmsg->p]])
+#घोषणा NAME (pnames[cmsg->par[cmsg->p]])
 
-static _cdebbuf *protocol_message_2_pars(_cdebbuf *cdb, _cmsg *cmsg, int level)
-{
-	if (!cmsg->par)
-		return NULL;	/* invalid command/subcommand */
+अटल _cdebbuf *protocol_message_2_pars(_cdebbuf *cdb, _cmsg *cmsg, पूर्णांक level)
+अणु
+	अगर (!cmsg->par)
+		वापस शून्य;	/* invalid command/subcommand */
 
-	for (; TYP != _CEND; cmsg->p++) {
-		int slen = 29 + 3 - level;
-		int i;
+	क्रम (; TYP != _CEND; cmsg->p++) अणु
+		पूर्णांक slen = 29 + 3 - level;
+		पूर्णांक i;
 
-		if (!cdb)
-			return NULL;
-		cdb = bufprint(cdb, "  ");
-		for (i = 0; i < level - 1; i++)
-			cdb = bufprint(cdb, " ");
+		अगर (!cdb)
+			वापस शून्य;
+		cdb = bufprपूर्णांक(cdb, "  ");
+		क्रम (i = 0; i < level - 1; i++)
+			cdb = bufprपूर्णांक(cdb, " ");
 
-		switch (TYP) {
-		case _CBYTE:
-			cdb = bufprint(cdb, "%-*s = 0x%x\n", slen, NAME, *(u8 *) (cmsg->m + cmsg->l));
+		चयन (TYP) अणु
+		हाल _CBYTE:
+			cdb = bufprपूर्णांक(cdb, "%-*s = 0x%x\n", slen, NAME, *(u8 *) (cmsg->m + cmsg->l));
 			cmsg->l++;
-			break;
-		case _CWORD:
-			cdb = bufprint(cdb, "%-*s = 0x%x\n", slen, NAME, *(u16 *) (cmsg->m + cmsg->l));
+			अवरोध;
+		हाल _CWORD:
+			cdb = bufprपूर्णांक(cdb, "%-*s = 0x%x\n", slen, NAME, *(u16 *) (cmsg->m + cmsg->l));
 			cmsg->l += 2;
-			break;
-		case _CDWORD:
-			cdb = bufprint(cdb, "%-*s = 0x%lx\n", slen, NAME, *(u32 *) (cmsg->m + cmsg->l));
+			अवरोध;
+		हाल _CDWORD:
+			cdb = bufprपूर्णांक(cdb, "%-*s = 0x%lx\n", slen, NAME, *(u32 *) (cmsg->m + cmsg->l));
 			cmsg->l += 4;
-			break;
-		case _CSTRUCT:
-			cdb = bufprint(cdb, "%-*s = ", slen, NAME);
-			if (cmsg->m[cmsg->l] == '\0')
-				cdb = bufprint(cdb, "default");
-			else
-				cdb = printstruct(cdb, cmsg->m + cmsg->l);
-			cdb = bufprint(cdb, "\n");
-			if (cmsg->m[cmsg->l] != 0xff)
+			अवरोध;
+		हाल _CSTRUCT:
+			cdb = bufprपूर्णांक(cdb, "%-*s = ", slen, NAME);
+			अगर (cmsg->m[cmsg->l] == '\0')
+				cdb = bufprपूर्णांक(cdb, "default");
+			अन्यथा
+				cdb = prपूर्णांककाष्ठा(cdb, cmsg->m + cmsg->l);
+			cdb = bufprपूर्णांक(cdb, "\n");
+			अगर (cmsg->m[cmsg->l] != 0xff)
 				cmsg->l += 1 + cmsg->m[cmsg->l];
-			else
+			अन्यथा
 				cmsg->l += 3 + *(u16 *) (cmsg->m + cmsg->l + 1);
 
-			break;
+			अवरोध;
 
-		case _CMSTRUCT:
+		हाल _CMSTRUCT:
 /*----- Metastruktur 0 -----*/
-			if (cmsg->m[cmsg->l] == '\0') {
-				cdb = bufprint(cdb, "%-*s = default\n", slen, NAME);
+			अगर (cmsg->m[cmsg->l] == '\0') अणु
+				cdb = bufprपूर्णांक(cdb, "%-*s = default\n", slen, NAME);
 				cmsg->l++;
-				jumpcstruct(cmsg);
-			} else {
-				char *name = NAME;
-				unsigned _l = cmsg->l;
-				cdb = bufprint(cdb, "%-*s\n", slen, name);
+				jumpcकाष्ठा(cmsg);
+			पूर्ण अन्यथा अणु
+				अक्षर *name = NAME;
+				अचिन्हित _l = cmsg->l;
+				cdb = bufprपूर्णांक(cdb, "%-*s\n", slen, name);
 				cmsg->l = (cmsg->m + _l)[0] == 255 ? cmsg->l + 3 : cmsg->l + 1;
 				cmsg->p++;
 				cdb = protocol_message_2_pars(cdb, cmsg, level + 1);
-			}
-			break;
-		}
-	}
-	return cdb;
-}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस cdb;
+पूर्ण
 /*-------------------------------------------------------*/
 
-static _cdebbuf *g_debbuf;
-static u_long g_debbuf_lock;
-static _cmsg *g_cmsg;
+अटल _cdebbuf *g_debbuf;
+अटल u_दीर्घ g_debbuf_lock;
+अटल _cmsg *g_cmsg;
 
-static _cdebbuf *cdebbuf_alloc(void)
-{
+अटल _cdebbuf *cdebbuf_alloc(व्योम)
+अणु
 	_cdebbuf *cdb;
 
-	if (likely(!test_and_set_bit(1, &g_debbuf_lock))) {
+	अगर (likely(!test_and_set_bit(1, &g_debbuf_lock))) अणु
 		cdb = g_debbuf;
-		goto init;
-	} else
-		cdb = kmalloc(sizeof(_cdebbuf), GFP_ATOMIC);
-	if (!cdb)
-		return NULL;
-	cdb->buf = kmalloc(CDEBUG_SIZE, GFP_ATOMIC);
-	if (!cdb->buf) {
-		kfree(cdb);
-		return NULL;
-	}
+		जाओ init;
+	पूर्ण अन्यथा
+		cdb = kदो_स्मृति(माप(_cdebbuf), GFP_ATOMIC);
+	अगर (!cdb)
+		वापस शून्य;
+	cdb->buf = kदो_स्मृति(CDEBUG_SIZE, GFP_ATOMIC);
+	अगर (!cdb->buf) अणु
+		kमुक्त(cdb);
+		वापस शून्य;
+	पूर्ण
 	cdb->size = CDEBUG_SIZE;
 init:
 	cdb->buf[0] = 0;
 	cdb->p = cdb->buf;
 	cdb->pos = 0;
-	return cdb;
-}
+	वापस cdb;
+पूर्ण
 
 /**
- * cdebbuf_free() - free CAPI debug buffer
- * @cdb:	buffer to free
+ * cdebbuf_मुक्त() - मुक्त CAPI debug buffer
+ * @cdb:	buffer to मुक्त
  */
 
-void cdebbuf_free(_cdebbuf *cdb)
-{
-	if (likely(cdb == g_debbuf)) {
+व्योम cdebbuf_मुक्त(_cdebbuf *cdb)
+अणु
+	अगर (likely(cdb == g_debbuf)) अणु
 		test_and_clear_bit(1, &g_debbuf_lock);
-		return;
-	}
-	if (likely(cdb))
-		kfree(cdb->buf);
-	kfree(cdb);
-}
+		वापस;
+	पूर्ण
+	अगर (likely(cdb))
+		kमुक्त(cdb->buf);
+	kमुक्त(cdb);
+पूर्ण
 
 
 /**
- * capi_message2str() - format CAPI 2.0 message for printing
+ * capi_message2str() - क्रमmat CAPI 2.0 message क्रम prपूर्णांकing
  * @msg:	CAPI 2.0 message
  *
- * Allocates a CAPI debug buffer and fills it with a printable representation
+ * Allocates a CAPI debug buffer and fills it with a prपूर्णांकable representation
  * of the CAPI 2.0 message in @msg.
- * Return value: allocated debug buffer, NULL on error
- * The returned buffer should be freed by a call to cdebbuf_free() after use.
+ * Return value: allocated debug buffer, शून्य on error
+ * The वापसed buffer should be मुक्तd by a call to cdebbuf_मुक्त() after use.
  */
 
 _cdebbuf *capi_message2str(u8 *msg)
-{
+अणु
 	_cdebbuf *cdb;
 	_cmsg	*cmsg;
 
 	cdb = cdebbuf_alloc();
-	if (unlikely(!cdb))
-		return NULL;
-	if (likely(cdb == g_debbuf))
+	अगर (unlikely(!cdb))
+		वापस शून्य;
+	अगर (likely(cdb == g_debbuf))
 		cmsg = g_cmsg;
-	else
-		cmsg = kmalloc(sizeof(_cmsg), GFP_ATOMIC);
-	if (unlikely(!cmsg)) {
-		cdebbuf_free(cdb);
-		return NULL;
-	}
+	अन्यथा
+		cmsg = kदो_स्मृति(माप(_cmsg), GFP_ATOMIC);
+	अगर (unlikely(!cmsg)) अणु
+		cdebbuf_मुक्त(cdb);
+		वापस शून्य;
+	पूर्ण
 	cmsg->m = msg;
 	cmsg->l = 8;
 	cmsg->p = 0;
@@ -604,74 +605,74 @@ _cdebbuf *capi_message2str(u8 *msg)
 	byteTRcpy(cmsg->m + 5, &cmsg->Subcommand);
 	cmsg->par = capi_cmd2par(cmsg->Command, cmsg->Subcommand);
 
-	cdb = bufprint(cdb, "%-26s ID=%03d #0x%04x LEN=%04d\n",
+	cdb = bufprपूर्णांक(cdb, "%-26s ID=%03d #0x%04x LEN=%04d\n",
 		       capi_cmd2str(cmsg->Command, cmsg->Subcommand),
-		       ((unsigned short *) msg)[1],
-		       ((unsigned short *) msg)[3],
-		       ((unsigned short *) msg)[0]);
+		       ((अचिन्हित लघु *) msg)[1],
+		       ((अचिन्हित लघु *) msg)[3],
+		       ((अचिन्हित लघु *) msg)[0]);
 
 	cdb = protocol_message_2_pars(cdb, cmsg, 1);
-	if (unlikely(cmsg != g_cmsg))
-		kfree(cmsg);
-	return cdb;
-}
+	अगर (unlikely(cmsg != g_cmsg))
+		kमुक्त(cmsg);
+	वापस cdb;
+पूर्ण
 
-int __init cdebug_init(void)
-{
-	g_cmsg = kmalloc(sizeof(_cmsg), GFP_KERNEL);
-	if (!g_cmsg)
-		return -ENOMEM;
-	g_debbuf = kmalloc(sizeof(_cdebbuf), GFP_KERNEL);
-	if (!g_debbuf) {
-		kfree(g_cmsg);
-		return -ENOMEM;
-	}
-	g_debbuf->buf = kmalloc(CDEBUG_GSIZE, GFP_KERNEL);
-	if (!g_debbuf->buf) {
-		kfree(g_cmsg);
-		kfree(g_debbuf);
-		return -ENOMEM;
-	}
+पूर्णांक __init cdebug_init(व्योम)
+अणु
+	g_cmsg = kदो_स्मृति(माप(_cmsg), GFP_KERNEL);
+	अगर (!g_cmsg)
+		वापस -ENOMEM;
+	g_debbuf = kदो_स्मृति(माप(_cdebbuf), GFP_KERNEL);
+	अगर (!g_debbuf) अणु
+		kमुक्त(g_cmsg);
+		वापस -ENOMEM;
+	पूर्ण
+	g_debbuf->buf = kदो_स्मृति(CDEBUG_GSIZE, GFP_KERNEL);
+	अगर (!g_debbuf->buf) अणु
+		kमुक्त(g_cmsg);
+		kमुक्त(g_debbuf);
+		वापस -ENOMEM;
+	पूर्ण
 	g_debbuf->size = CDEBUG_GSIZE;
 	g_debbuf->buf[0] = 0;
 	g_debbuf->p = g_debbuf->buf;
 	g_debbuf->pos = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void cdebug_exit(void)
-{
-	if (g_debbuf)
-		kfree(g_debbuf->buf);
-	kfree(g_debbuf);
-	kfree(g_cmsg);
-}
+व्योम cdebug_निकास(व्योम)
+अणु
+	अगर (g_debbuf)
+		kमुक्त(g_debbuf->buf);
+	kमुक्त(g_debbuf);
+	kमुक्त(g_cmsg);
+पूर्ण
 
-#else /* !CONFIG_CAPI_TRACE */
+#अन्यथा /* !CONFIG_CAPI_TRACE */
 
-static _cdebbuf g_debbuf = {"CONFIG_CAPI_TRACE not enabled", NULL, 0, 0};
+अटल _cdebbuf g_debbuf = अणु"CONFIG_CAPI_TRACE not enabled", शून्य, 0, 0पूर्ण;
 
 _cdebbuf *capi_message2str(u8 *msg)
-{
-	return &g_debbuf;
-}
+अणु
+	वापस &g_debbuf;
+पूर्ण
 
 _cdebbuf *capi_cmsg2str(_cmsg *cmsg)
-{
-	return &g_debbuf;
-}
+अणु
+	वापस &g_debbuf;
+पूर्ण
 
-void cdebbuf_free(_cdebbuf *cdb)
-{
-}
+व्योम cdebbuf_मुक्त(_cdebbuf *cdb)
+अणु
+पूर्ण
 
-int __init cdebug_init(void)
-{
-	return 0;
-}
+पूर्णांक __init cdebug_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-void cdebug_exit(void)
-{
-}
+व्योम cdebug_निकास(व्योम)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर

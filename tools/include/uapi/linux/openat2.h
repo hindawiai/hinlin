@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_OPENAT2_H
-#define _UAPI_LINUX_OPENAT2_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_OPENAT2_H
+#घोषणा _UAPI_LINUX_OPENAT2_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
- * Arguments for how openat2(2) should open the target path. If only @flags and
- * @mode are non-zero, then openat2(2) operates very similarly to openat(2).
+ * Arguments क्रम how खोलोat2(2) should खोलो the target path. If only @flags and
+ * @mode are non-zero, then खोलोat2(2) operates very similarly to खोलोat(2).
  *
- * However, unlike openat(2), unknown or invalid bits in @flags result in
+ * However, unlike खोलोat(2), unknown or invalid bits in @flags result in
  * -EINVAL rather than being silently ignored. @mode must be zero unless one of
- * {O_CREAT, O_TMPFILE} are set.
+ * अणुO_CREAT, O_TMPखातापूर्ण are set.
  *
  * @flags: O_* flags.
- * @mode: O_CREAT/O_TMPFILE file mode.
+ * @mode: O_CREAT/O_TMPखाता file mode.
  * @resolve: RESOLVE_* flags.
  */
-struct open_how {
+काष्ठा खोलो_how अणु
 	__u64 flags;
 	__u64 mode;
 	__u64 resolve;
-};
+पूर्ण;
 
-/* how->resolve flags for openat2(2). */
-#define RESOLVE_NO_XDEV		0x01 /* Block mount-point crossings
+/* how->resolve flags क्रम खोलोat2(2). */
+#घोषणा RESOLVE_NO_XDEV		0x01 /* Block mount-poपूर्णांक crossings
 					(includes bind-mounts). */
-#define RESOLVE_NO_MAGICLINKS	0x02 /* Block traversal through procfs-style
+#घोषणा RESOLVE_NO_MAGICLINKS	0x02 /* Block traversal through procfs-style
 					"magic-links". */
-#define RESOLVE_NO_SYMLINKS	0x04 /* Block traversal through all symlinks
+#घोषणा RESOLVE_NO_SYMLINKS	0x04 /* Block traversal through all symlinks
 					(implies OEXT_NO_MAGICLINKS) */
-#define RESOLVE_BENEATH		0x08 /* Block "lexical" trickery like
-					"..", symlinks, and absolute
+#घोषणा RESOLVE_BENEATH		0x08 /* Block "lexical" trickery like
+					"..", symlinks, and असलolute
 					paths which escape the dirfd. */
-#define RESOLVE_IN_ROOT		0x10 /* Make all jumps to "/" and ".."
+#घोषणा RESOLVE_IN_ROOT		0x10 /* Make all jumps to "/" and ".."
 					be scoped inside the dirfd
 					(similar to chroot(2)). */
-#define RESOLVE_CACHED		0x20 /* Only complete if resolution can be
+#घोषणा RESOLVE_CACHED		0x20 /* Only complete अगर resolution can be
 					completed through cached lookup. May
-					return -EAGAIN if that's not
+					वापस -EAGAIN अगर that's not
 					possible. */
 
-#endif /* _UAPI_LINUX_OPENAT2_H */
+#पूर्ण_अगर /* _UAPI_LINUX_OPENAT2_H */

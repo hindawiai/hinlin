@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,17 +24,17 @@
  *
  */
 
-#ifndef __DC_VIRTUAL_STREAM_ENCODER_H__
-#define __DC_VIRTUAL_STREAM_ENCODER_H__
+#अगर_अघोषित __DC_VIRTUAL_STREAM_ENCODER_H__
+#घोषणा __DC_VIRTUAL_STREAM_ENCODER_H__
 
-#include "stream_encoder.h"
+#समावेश "stream_encoder.h"
 
-struct stream_encoder *virtual_stream_encoder_create(
-	struct dc_context *ctx, struct dc_bios *bp);
+काष्ठा stream_encoder *भव_stream_encoder_create(
+	काष्ठा dc_context *ctx, काष्ठा dc_bios *bp);
 
-bool virtual_stream_encoder_construct(
-	struct stream_encoder *enc,
-	struct dc_context *ctx,
-	struct dc_bios *bp);
+bool भव_stream_encoder_स्थिरruct(
+	काष्ठा stream_encoder *enc,
+	काष्ठा dc_context *ctx,
+	काष्ठा dc_bios *bp);
 
-#endif /* __DC_VIRTUAL_STREAM_ENCODER_H__ */
+#पूर्ण_अगर /* __DC_VIRTUAL_STREAM_ENCODER_H__ */

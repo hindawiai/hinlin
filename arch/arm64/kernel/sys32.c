@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * arch/arm64/kernel/sys32.c
  *
@@ -6,130 +7,130 @@
  */
 
 /*
- * Needed to avoid conflicting __NR_* macros between uapi/asm/unistd.h and
- * asm/unistd32.h.
+ * Needed to aव्योम conflicting __NR_* macros between uapi/यंत्र/unistd.h and
+ * यंत्र/unistd32.h.
  */
-#define __COMPAT_SYSCALL_NR
+#घोषणा __COMPAT_SYSCALL_NR
 
-#include <linux/compat.h>
-#include <linux/compiler.h>
-#include <linux/syscalls.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/syscalls.h>
 
-#include <asm/syscall.h>
+#समावेश <यंत्र/syscall.h>
 
-asmlinkage long compat_sys_sigreturn(void);
-asmlinkage long compat_sys_rt_sigreturn(void);
+यंत्रlinkage दीर्घ compat_sys_sigवापस(व्योम);
+यंत्रlinkage दीर्घ compat_sys_rt_sigवापस(व्योम);
 
-COMPAT_SYSCALL_DEFINE3(aarch32_statfs64, const char __user *, pathname,
-		       compat_size_t, sz, struct compat_statfs64 __user *, buf)
-{
+COMPAT_SYSCALL_DEFINE3(aarch32_statfs64, स्थिर अक्षर __user *, pathname,
+		       compat_माप_प्रकार, sz, काष्ठा compat_statfs64 __user *, buf)
+अणु
 	/*
 	 * 32-bit ARM applies an OABI compatibility fixup to statfs64 and
-	 * fstatfs64 regardless of whether OABI is in use, and therefore
-	 * arbitrary binaries may rely upon it, so we must do the same.
+	 * ख_स्थितिfs64 regardless of whether OABI is in use, and thereक्रमe
+	 * arbitrary binaries may rely upon it, so we must करो the same.
 	 * For more details, see commit:
 	 *
 	 * 713c481519f19df9 ("[ARM] 3108/2: old ABI compat: statfs64 and
-	 * fstatfs64")
+	 * ख_स्थितिfs64")
 	 */
-	if (sz == 88)
+	अगर (sz == 88)
 		sz = 84;
 
-	return kcompat_sys_statfs64(pathname, sz, buf);
-}
+	वापस kcompat_sys_statfs64(pathname, sz, buf);
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE3(aarch32_fstatfs64, unsigned int, fd, compat_size_t, sz,
-		       struct compat_statfs64 __user *, buf)
-{
+COMPAT_SYSCALL_DEFINE3(aarch32_ख_स्थितिfs64, अचिन्हित पूर्णांक, fd, compat_माप_प्रकार, sz,
+		       काष्ठा compat_statfs64 __user *, buf)
+अणु
 	/* see aarch32_statfs64 */
-	if (sz == 88)
+	अगर (sz == 88)
 		sz = 84;
 
-	return kcompat_sys_fstatfs64(fd, sz, buf);
-}
+	वापस kcompat_sys_ख_स्थितिfs64(fd, sz, buf);
+पूर्ण
 
 /*
- * Note: off_4k is always in units of 4K. If we can't do the
- * requested offset because it is not page-aligned, we return -EINVAL.
+ * Note: off_4k is always in units of 4K. If we can't करो the
+ * requested offset because it is not page-aligned, we वापस -EINVAL.
  */
-COMPAT_SYSCALL_DEFINE6(aarch32_mmap2, unsigned long, addr, unsigned long, len,
-		       unsigned long, prot, unsigned long, flags,
-		       unsigned long, fd, unsigned long, off_4k)
-{
-	if (off_4k & (~PAGE_MASK >> 12))
-		return -EINVAL;
+COMPAT_SYSCALL_DEFINE6(aarch32_mmap2, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, len,
+		       अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, flags,
+		       अचिन्हित दीर्घ, fd, अचिन्हित दीर्घ, off_4k)
+अणु
+	अगर (off_4k & (~PAGE_MASK >> 12))
+		वापस -EINVAL;
 
 	off_4k >>= (PAGE_SHIFT - 12);
 
-	return ksys_mmap_pgoff(addr, len, prot, flags, fd, off_4k);
-}
+	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd, off_4k);
+पूर्ण
 
-#ifdef CONFIG_CPU_BIG_ENDIAN
-#define arg_u32p(name)	u32, name##_hi, u32, name##_lo
-#else
-#define arg_u32p(name)	u32, name##_lo, u32, name##_hi
-#endif
+#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
+#घोषणा arg_u32p(name)	u32, name##_hi, u32, name##_lo
+#अन्यथा
+#घोषणा arg_u32p(name)	u32, name##_lo, u32, name##_hi
+#पूर्ण_अगर
 
-#define arg_u64(name)	(((u64)name##_hi << 32) | name##_lo)
+#घोषणा arg_u64(name)	(((u64)name##_hi << 32) | name##_lo)
 
-COMPAT_SYSCALL_DEFINE6(aarch32_pread64, unsigned int, fd, char __user *, buf,
-		       size_t, count, u32, __pad, arg_u32p(pos))
-{
-	return ksys_pread64(fd, buf, count, arg_u64(pos));
-}
+COMPAT_SYSCALL_DEFINE6(aarch32_pपढ़ो64, अचिन्हित पूर्णांक, fd, अक्षर __user *, buf,
+		       माप_प्रकार, count, u32, __pad, arg_u32p(pos))
+अणु
+	वापस ksys_pपढ़ो64(fd, buf, count, arg_u64(pos));
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE6(aarch32_pwrite64, unsigned int, fd,
-		       const char __user *, buf, size_t, count, u32, __pad,
+COMPAT_SYSCALL_DEFINE6(aarch32_pग_लिखो64, अचिन्हित पूर्णांक, fd,
+		       स्थिर अक्षर __user *, buf, माप_प्रकार, count, u32, __pad,
 		       arg_u32p(pos))
-{
-	return ksys_pwrite64(fd, buf, count, arg_u64(pos));
-}
+अणु
+	वापस ksys_pग_लिखो64(fd, buf, count, arg_u64(pos));
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE4(aarch32_truncate64, const char __user *, pathname,
+COMPAT_SYSCALL_DEFINE4(aarch32_truncate64, स्थिर अक्षर __user *, pathname,
 		       u32, __pad, arg_u32p(length))
-{
-	return ksys_truncate(pathname, arg_u64(length));
-}
+अणु
+	वापस ksys_truncate(pathname, arg_u64(length));
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE4(aarch32_ftruncate64, unsigned int, fd, u32, __pad,
+COMPAT_SYSCALL_DEFINE4(aarch32_ftruncate64, अचिन्हित पूर्णांक, fd, u32, __pad,
 		       arg_u32p(length))
-{
-	return ksys_ftruncate(fd, arg_u64(length));
-}
+अणु
+	वापस ksys_ftruncate(fd, arg_u64(length));
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE5(aarch32_readahead, int, fd, u32, __pad,
-		       arg_u32p(offset), size_t, count)
-{
-	return ksys_readahead(fd, arg_u64(offset), count);
-}
+COMPAT_SYSCALL_DEFINE5(aarch32_पढ़ोahead, पूर्णांक, fd, u32, __pad,
+		       arg_u32p(offset), माप_प्रकार, count)
+अणु
+	वापस ksys_पढ़ोahead(fd, arg_u64(offset), count);
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE6(aarch32_fadvise64_64, int, fd, int, advice,
+COMPAT_SYSCALL_DEFINE6(aarch32_fadvise64_64, पूर्णांक, fd, पूर्णांक, advice,
 		       arg_u32p(offset), arg_u32p(len))
-{
-	return ksys_fadvise64_64(fd, arg_u64(offset), arg_u64(len), advice);
-}
+अणु
+	वापस ksys_fadvise64_64(fd, arg_u64(offset), arg_u64(len), advice);
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE6(aarch32_sync_file_range2, int, fd, unsigned int, flags,
+COMPAT_SYSCALL_DEFINE6(aarch32_sync_file_range2, पूर्णांक, fd, अचिन्हित पूर्णांक, flags,
 		       arg_u32p(offset), arg_u32p(nbytes))
-{
-	return ksys_sync_file_range(fd, arg_u64(offset), arg_u64(nbytes),
+अणु
+	वापस ksys_sync_file_range(fd, arg_u64(offset), arg_u64(nbytes),
 				    flags);
-}
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE6(aarch32_fallocate, int, fd, int, mode,
+COMPAT_SYSCALL_DEFINE6(aarch32_fallocate, पूर्णांक, fd, पूर्णांक, mode,
 		       arg_u32p(offset), arg_u32p(len))
-{
-	return ksys_fallocate(fd, mode, arg_u64(offset), arg_u64(len));
-}
+अणु
+	वापस ksys_fallocate(fd, mode, arg_u64(offset), arg_u64(len));
+पूर्ण
 
-#undef __SYSCALL
-#define __SYSCALL(nr, sym)	asmlinkage long __arm64_##sym(const struct pt_regs *);
-#include <asm/unistd32.h>
+#अघोषित __SYSCALL
+#घोषणा __SYSCALL(nr, sym)	यंत्रlinkage दीर्घ __arm64_##sym(स्थिर काष्ठा pt_regs *);
+#समावेश <यंत्र/unistd32.h>
 
-#undef __SYSCALL
-#define __SYSCALL(nr, sym)	[nr] = __arm64_##sym,
+#अघोषित __SYSCALL
+#घोषणा __SYSCALL(nr, sym)	[nr] = __arm64_##sym,
 
-const syscall_fn_t compat_sys_call_table[__NR_compat_syscalls] = {
+स्थिर syscall_fn_t compat_sys_call_table[__NR_compat_syscalls] = अणु
 	[0 ... __NR_compat_syscalls - 1] = __arm64_sys_ni_syscall,
-#include <asm/unistd32.h>
-};
+#समावेश <यंत्र/unistd32.h>
+पूर्ण;

@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: Flora Fu, MediaTek
  */
-#include <linux/clk.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset.h>
 
-#define PWRAP_MT8135_BRIDGE_IORD_ARB_EN		0x4
-#define PWRAP_MT8135_BRIDGE_WACS3_EN		0x10
-#define PWRAP_MT8135_BRIDGE_INIT_DONE3		0x14
-#define PWRAP_MT8135_BRIDGE_WACS4_EN		0x24
-#define PWRAP_MT8135_BRIDGE_INIT_DONE4		0x28
-#define PWRAP_MT8135_BRIDGE_INT_EN		0x38
-#define PWRAP_MT8135_BRIDGE_TIMER_EN		0x48
-#define PWRAP_MT8135_BRIDGE_WDT_UNIT		0x50
-#define PWRAP_MT8135_BRIDGE_WDT_SRC_EN		0x54
+#घोषणा PWRAP_MT8135_BRIDGE_IORD_ARB_EN		0x4
+#घोषणा PWRAP_MT8135_BRIDGE_WACS3_EN		0x10
+#घोषणा PWRAP_MT8135_BRIDGE_INIT_DONE3		0x14
+#घोषणा PWRAP_MT8135_BRIDGE_WACS4_EN		0x24
+#घोषणा PWRAP_MT8135_BRIDGE_INIT_DONE4		0x28
+#घोषणा PWRAP_MT8135_BRIDGE_INT_EN		0x38
+#घोषणा PWRAP_MT8135_BRIDGE_TIMER_EN		0x48
+#घोषणा PWRAP_MT8135_BRIDGE_WDT_UNIT		0x50
+#घोषणा PWRAP_MT8135_BRIDGE_WDT_SRC_EN		0x54
 
-/* macro for wrapper status */
-#define PWRAP_GET_WACS_RDATA(x)		(((x) >> 0) & 0x0000ffff)
-#define PWRAP_GET_WACS_ARB_FSM(x)	(((x) >> 1) & 0x00000007)
-#define PWRAP_GET_WACS_FSM(x)		(((x) >> 16) & 0x00000007)
-#define PWRAP_GET_WACS_REQ(x)		(((x) >> 19) & 0x00000001)
-#define PWRAP_STATE_SYNC_IDLE0		BIT(20)
-#define PWRAP_STATE_INIT_DONE0		BIT(21)
-#define PWRAP_STATE_INIT_DONE1		BIT(15)
+/* macro क्रम wrapper status */
+#घोषणा PWRAP_GET_WACS_RDATA(x)		(((x) >> 0) & 0x0000ffff)
+#घोषणा PWRAP_GET_WACS_ARB_FSM(x)	(((x) >> 1) & 0x00000007)
+#घोषणा PWRAP_GET_WACS_FSM(x)		(((x) >> 16) & 0x00000007)
+#घोषणा PWRAP_GET_WACS_REQ(x)		(((x) >> 19) & 0x00000001)
+#घोषणा PWRAP_STATE_SYNC_IDLE0		BIT(20)
+#घोषणा PWRAP_STATE_INIT_DONE0		BIT(21)
+#घोषणा PWRAP_STATE_INIT_DONE1		BIT(15)
 
-/* macro for WACS FSM */
-#define PWRAP_WACS_FSM_IDLE		0x00
-#define PWRAP_WACS_FSM_REQ		0x02
-#define PWRAP_WACS_FSM_WFDLE		0x04
-#define PWRAP_WACS_FSM_WFVLDCLR		0x06
-#define PWRAP_WACS_INIT_DONE		0x01
-#define PWRAP_WACS_WACS_SYNC_IDLE	0x01
-#define PWRAP_WACS_SYNC_BUSY		0x00
+/* macro क्रम WACS FSM */
+#घोषणा PWRAP_WACS_FSM_IDLE		0x00
+#घोषणा PWRAP_WACS_FSM_REQ		0x02
+#घोषणा PWRAP_WACS_FSM_WFDLE		0x04
+#घोषणा PWRAP_WACS_FSM_WFVLDCLR		0x06
+#घोषणा PWRAP_WACS_INIT_DONE		0x01
+#घोषणा PWRAP_WACS_WACS_SYNC_IDLE	0x01
+#घोषणा PWRAP_WACS_SYNC_BUSY		0x00
 
-/* macro for device wrapper default value */
-#define PWRAP_DEW_READ_TEST_VAL		0x5aa5
-#define PWRAP_DEW_WRITE_TEST_VAL	0xa55a
+/* macro क्रम device wrapper शेष value */
+#घोषणा PWRAP_DEW_READ_TEST_VAL		0x5aa5
+#घोषणा PWRAP_DEW_WRITE_TEST_VAL	0xa55a
 
-/* macro for manual command */
-#define PWRAP_MAN_CMD_SPI_WRITE_NEW	(1 << 14)
-#define PWRAP_MAN_CMD_SPI_WRITE		(1 << 13)
-#define PWRAP_MAN_CMD_OP_CSH		(0x0 << 8)
-#define PWRAP_MAN_CMD_OP_CSL		(0x1 << 8)
-#define PWRAP_MAN_CMD_OP_CK		(0x2 << 8)
-#define PWRAP_MAN_CMD_OP_OUTS		(0x8 << 8)
-#define PWRAP_MAN_CMD_OP_OUTD		(0x9 << 8)
-#define PWRAP_MAN_CMD_OP_OUTQ		(0xa << 8)
+/* macro क्रम manual command */
+#घोषणा PWRAP_MAN_CMD_SPI_WRITE_NEW	(1 << 14)
+#घोषणा PWRAP_MAN_CMD_SPI_WRITE		(1 << 13)
+#घोषणा PWRAP_MAN_CMD_OP_CSH		(0x0 << 8)
+#घोषणा PWRAP_MAN_CMD_OP_CSL		(0x1 << 8)
+#घोषणा PWRAP_MAN_CMD_OP_CK		(0x2 << 8)
+#घोषणा PWRAP_MAN_CMD_OP_OUTS		(0x8 << 8)
+#घोषणा PWRAP_MAN_CMD_OP_OUTD		(0x9 << 8)
+#घोषणा PWRAP_MAN_CMD_OP_OUTQ		(0xa << 8)
 
-/* macro for Watch Dog Timer Source */
-#define PWRAP_WDT_SRC_EN_STAUPD_TRIG		(1 << 25)
-#define PWRAP_WDT_SRC_EN_HARB_STAUPD_DLE	(1 << 20)
-#define PWRAP_WDT_SRC_EN_HARB_STAUPD_ALE	(1 << 6)
-#define PWRAP_WDT_SRC_MASK_ALL			0xffffffff
-#define PWRAP_WDT_SRC_MASK_NO_STAUPD	~(PWRAP_WDT_SRC_EN_STAUPD_TRIG | \
+/* macro क्रम Watch Dog Timer Source */
+#घोषणा PWRAP_WDT_SRC_EN_STAUPD_TRIG		(1 << 25)
+#घोषणा PWRAP_WDT_SRC_EN_HARB_STAUPD_DLE	(1 << 20)
+#घोषणा PWRAP_WDT_SRC_EN_HARB_STAUPD_ALE	(1 << 6)
+#घोषणा PWRAP_WDT_SRC_MASK_ALL			0xffffffff
+#घोषणा PWRAP_WDT_SRC_MASK_NO_STAUPD	~(PWRAP_WDT_SRC_EN_STAUPD_TRIG | \
 					  PWRAP_WDT_SRC_EN_HARB_STAUPD_DLE | \
 					  PWRAP_WDT_SRC_EN_HARB_STAUPD_ALE)
 
-/* Group of bits used for shown slave capability */
-#define PWRAP_SLV_CAP_SPI	BIT(0)
-#define PWRAP_SLV_CAP_DUALIO	BIT(1)
-#define PWRAP_SLV_CAP_SECURITY	BIT(2)
-#define HAS_CAP(_c, _x)	(((_c) & (_x)) == (_x))
+/* Group of bits used क्रम shown slave capability */
+#घोषणा PWRAP_SLV_CAP_SPI	BIT(0)
+#घोषणा PWRAP_SLV_CAP_DUALIO	BIT(1)
+#घोषणा PWRAP_SLV_CAP_SECURITY	BIT(2)
+#घोषणा HAS_CAP(_c, _x)	(((_c) & (_x)) == (_x))
 
-/* Group of bits used for shown pwrap capability */
-#define PWRAP_CAP_BRIDGE	BIT(0)
-#define PWRAP_CAP_RESET		BIT(1)
-#define PWRAP_CAP_DCM		BIT(2)
-#define PWRAP_CAP_INT1_EN	BIT(3)
-#define PWRAP_CAP_WDT_SRC1	BIT(4)
-#define PWRAP_CAP_ARB		BIT(5)
+/* Group of bits used क्रम shown pwrap capability */
+#घोषणा PWRAP_CAP_BRIDGE	BIT(0)
+#घोषणा PWRAP_CAP_RESET		BIT(1)
+#घोषणा PWRAP_CAP_DCM		BIT(2)
+#घोषणा PWRAP_CAP_INT1_EN	BIT(3)
+#घोषणा PWRAP_CAP_WDT_SRC1	BIT(4)
+#घोषणा PWRAP_CAP_ARB		BIT(5)
 
-/* defines for slave device wrapper registers */
-enum dew_regs {
+/* defines क्रम slave device wrapper रेजिस्टरs */
+क्रमागत dew_regs अणु
 	PWRAP_DEW_BASE,
 	PWRAP_DEW_DIO_EN,
 	PWRAP_DEW_READ_TEST,
@@ -145,9 +146,9 @@ enum dew_regs {
 	PWRAP_DEW_EVENT_TEST,
 	PWRAP_DEW_CIPHER_LOAD,
 	PWRAP_DEW_CIPHER_START,
-};
+पूर्ण;
 
-static const u32 mt6323_regs[] = {
+अटल स्थिर u32 mt6323_regs[] = अणु
 	[PWRAP_DEW_BASE] =		0x0000,
 	[PWRAP_DEW_DIO_EN] =		0x018a,
 	[PWRAP_DEW_READ_TEST] =		0x018c,
@@ -162,9 +163,9 @@ static const u32 mt6323_regs[] = {
 	[PWRAP_DEW_CIPHER_MODE] =	0x01a0,
 	[PWRAP_DEW_CIPHER_SWRST] =	0x01a2,
 	[PWRAP_DEW_RDDMY_NO] =		0x01a4,
-};
+पूर्ण;
 
-static const u32 mt6351_regs[] = {
+अटल स्थिर u32 mt6351_regs[] = अणु
 	[PWRAP_DEW_DIO_EN] =		0x02F2,
 	[PWRAP_DEW_READ_TEST] =		0x02F4,
 	[PWRAP_DEW_WRITE_TEST] =	0x02F6,
@@ -177,9 +178,9 @@ static const u32 mt6351_regs[] = {
 	[PWRAP_DEW_CIPHER_MODE] =	0x0308,
 	[PWRAP_DEW_CIPHER_SWRST] =	0x030A,
 	[PWRAP_DEW_RDDMY_NO] =		0x030C,
-};
+पूर्ण;
 
-static const u32 mt6357_regs[] = {
+अटल स्थिर u32 mt6357_regs[] = अणु
 	[PWRAP_DEW_DIO_EN] =            0x040A,
 	[PWRAP_DEW_READ_TEST] =         0x040C,
 	[PWRAP_DEW_WRITE_TEST] =        0x040E,
@@ -192,9 +193,9 @@ static const u32 mt6357_regs[] = {
 	[PWRAP_DEW_CIPHER_MODE] =       0x0420,
 	[PWRAP_DEW_CIPHER_SWRST] =      0x0422,
 	[PWRAP_DEW_RDDMY_NO] =          0x0424,
-};
+पूर्ण;
 
-static const u32 mt6358_regs[] = {
+अटल स्थिर u32 mt6358_regs[] = अणु
 	[PWRAP_SMT_CON1] =		0x0030,
 	[PWRAP_DRV_CON1] =		0x0038,
 	[PWRAP_FILTER_CON0] =		0x0040,
@@ -220,9 +221,9 @@ static const u32 mt6358_regs[] = {
 	[PWRAP_RG_SPI_CON8] =		0x043e,
 	[PWRAP_RG_SPI_CON13] =		0x0448,
 	[PWRAP_SPISLV_KEY] =		0x044a,
-};
+पूर्ण;
 
-static const u32 mt6359_regs[] = {
+अटल स्थिर u32 mt6359_regs[] = अणु
 	[PWRAP_DEW_RG_EN_RECORD] =	0x040a,
 	[PWRAP_DEW_DIO_EN] =		0x040c,
 	[PWRAP_DEW_READ_TEST] =		0x040e,
@@ -256,9 +257,9 @@ static const u32 mt6359_regs[] = {
 	[PWRAP_DEW_RG_SPI_RECORD_CLR] =	0x0448,
 	[PWRAP_DEW_RG_CMD_ALERT_CLR] =	0x0448,
 	[PWRAP_SPISLV_KEY] =		0x044a,
-};
+पूर्ण;
 
-static const u32 mt6397_regs[] = {
+अटल स्थिर u32 mt6397_regs[] = अणु
 	[PWRAP_DEW_BASE] =		0xbc00,
 	[PWRAP_DEW_EVENT_OUT_EN] =	0xbc00,
 	[PWRAP_DEW_DIO_EN] =		0xbc02,
@@ -279,9 +280,9 @@ static const u32 mt6397_regs[] = {
 	[PWRAP_DEW_CIPHER_RDY] =	0xbc20,
 	[PWRAP_DEW_CIPHER_MODE] =	0xbc22,
 	[PWRAP_DEW_CIPHER_SWRST] =	0xbc24,
-};
+पूर्ण;
 
-enum pwrap_regs {
+क्रमागत pwrap_regs अणु
 	PWRAP_MUX_SEL,
 	PWRAP_WRAP_EN,
 	PWRAP_DIO_EN,
@@ -326,7 +327,7 @@ enum pwrap_regs {
 	PWRAP_SIG_ADR,
 	PWRAP_SIG_MODE,
 	PWRAP_SIG_VALUE,
-	PWRAP_SIG_ERRVAL,
+	PWRAP_संक_त्रुटिVAL,
 	PWRAP_CRC_EN,
 	PWRAP_TIMER_EN,
 	PWRAP_TIMER_STA,
@@ -440,9 +441,9 @@ enum pwrap_regs {
 	/* MT8516 only regs */
 	PWRAP_OP_TYPE,
 	PWRAP_MSB_FIRST,
-};
+पूर्ण;
 
-static int mt2701_regs[] = {
+अटल पूर्णांक mt2701_regs[] = अणु
 	[PWRAP_MUX_SEL] =		0x0,
 	[PWRAP_WRAP_EN] =		0x4,
 	[PWRAP_DIO_EN] =		0x8,
@@ -489,7 +490,7 @@ static int mt2701_regs[] = {
 	[PWRAP_SIG_ADR] =		0xb8,
 	[PWRAP_SIG_MODE] =		0xbc,
 	[PWRAP_SIG_VALUE] =		0xc0,
-	[PWRAP_SIG_ERRVAL] =		0xc4,
+	[PWRAP_संक_त्रुटिVAL] =		0xc4,
 	[PWRAP_CRC_EN] =		0xc8,
 	[PWRAP_TIMER_EN] =		0xcc,
 	[PWRAP_TIMER_STA] =		0xd0,
@@ -526,9 +527,9 @@ static int mt2701_regs[] = {
 	[PWRAP_ADC_RDY_ADDR] =		0x14c,
 	[PWRAP_ADC_RDATA_ADDR1] =	0x150,
 	[PWRAP_ADC_RDATA_ADDR2] =	0x154,
-};
+पूर्ण;
 
-static int mt6765_regs[] = {
+अटल पूर्णांक mt6765_regs[] = अणु
 	[PWRAP_MUX_SEL] =		0x0,
 	[PWRAP_WRAP_EN] =		0x4,
 	[PWRAP_DIO_EN] =		0x8,
@@ -558,9 +559,9 @@ static int mt6765_regs[] = {
 	[PWRAP_WDT_SRC_EN] =		0xF4,
 	[PWRAP_DCM_EN] =		0x1DC,
 	[PWRAP_DCM_DBC_PRD] =		0x1E0,
-};
+पूर्ण;
 
-static int mt6779_regs[] = {
+अटल पूर्णांक mt6779_regs[] = अणु
 	[PWRAP_MUX_SEL] =		0x0,
 	[PWRAP_WRAP_EN] =		0x4,
 	[PWRAP_DIO_EN] =		0x8,
@@ -597,9 +598,9 @@ static int mt6779_regs[] = {
 	[PWRAP_WACS2_CMD] =		0xC20,
 	[PWRAP_WACS2_RDATA] =		0xC24,
 	[PWRAP_WACS2_VLDCLR] =		0xC28,
-};
+पूर्ण;
 
-static int mt6797_regs[] = {
+अटल पूर्णांक mt6797_regs[] = अणु
 	[PWRAP_MUX_SEL] =		0x0,
 	[PWRAP_WRAP_EN] =		0x4,
 	[PWRAP_DIO_EN] =		0x8,
@@ -630,9 +631,9 @@ static int mt6797_regs[] = {
 	[PWRAP_WDT_SRC_EN] =		0x100,
 	[PWRAP_DCM_EN] =		0x1CC,
 	[PWRAP_DCM_DBC_PRD] =		0x1D4,
-};
+पूर्ण;
 
-static int mt6873_regs[] = {
+अटल पूर्णांक mt6873_regs[] = अणु
 	[PWRAP_INIT_DONE2] =		0x0,
 	[PWRAP_TIMER_EN] =		0x3E0,
 	[PWRAP_INT_EN] =		0x448,
@@ -641,9 +642,9 @@ static int mt6873_regs[] = {
 	[PWRAP_SWINF_2_RDATA_31_0] =	0xC94,
 	[PWRAP_WACS2_VLDCLR] =		0xCA4,
 	[PWRAP_WACS2_RDATA] =		0xCA8,
-};
+पूर्ण;
 
-static int mt7622_regs[] = {
+अटल पूर्णांक mt7622_regs[] = अणु
 	[PWRAP_MUX_SEL] =		0x0,
 	[PWRAP_WRAP_EN] =		0x4,
 	[PWRAP_DIO_EN] =		0x8,
@@ -694,7 +695,7 @@ static int mt7622_regs[] = {
 	[PWRAP_SIG_ADR] =		0xBC,
 	[PWRAP_SIG_MODE] =		0xC0,
 	[PWRAP_SIG_VALUE] =		0xC4,
-	[PWRAP_SIG_ERRVAL] =		0xC8,
+	[PWRAP_संक_त्रुटिVAL] =		0xC8,
 	[PWRAP_CRC_EN] =		0xCC,
 	[PWRAP_TIMER_EN] =		0xD0,
 	[PWRAP_TIMER_STA] =		0xD4,
@@ -753,9 +754,9 @@ static int mt7622_regs[] = {
 	[PWRAP_DVFS_STEP_CTRL1] =	0x23C,
 	[PWRAP_DVFS_STEP_CTRL2] =	0x240,
 	[PWRAP_SPI2_CTRL] =		0x244,
-};
+पूर्ण;
 
-static int mt8135_regs[] = {
+अटल पूर्णांक mt8135_regs[] = अणु
 	[PWRAP_MUX_SEL] =		0x0,
 	[PWRAP_WRAP_EN] =		0x4,
 	[PWRAP_DIO_EN] =		0x8,
@@ -807,7 +808,7 @@ static int mt8135_regs[] = {
 	[PWRAP_SIG_ADR] =		0xc0,
 	[PWRAP_SIG_MODE] =		0xc4,
 	[PWRAP_SIG_VALUE] =		0xc8,
-	[PWRAP_SIG_ERRVAL] =		0xcc,
+	[PWRAP_संक_त्रुटिVAL] =		0xcc,
 	[PWRAP_CRC_EN] =		0xd0,
 	[PWRAP_EVENT_STA] =		0xd4,
 	[PWRAP_EVENT_STACLR] =		0xd8,
@@ -826,9 +827,9 @@ static int mt8135_regs[] = {
 	[PWRAP_CIPHER_SWRST] =		0x14c,
 	[PWRAP_DCM_EN] =		0x15c,
 	[PWRAP_DCM_DBC_PRD] =		0x160,
-};
+पूर्ण;
 
-static int mt8173_regs[] = {
+अटल पूर्णांक mt8173_regs[] = अणु
 	[PWRAP_MUX_SEL] =		0x0,
 	[PWRAP_WRAP_EN] =		0x4,
 	[PWRAP_DIO_EN] =		0x8,
@@ -875,7 +876,7 @@ static int mt8173_regs[] = {
 	[PWRAP_SIG_ADR] =		0xbc,
 	[PWRAP_SIG_MODE] =		0xc0,
 	[PWRAP_SIG_VALUE] =		0xc4,
-	[PWRAP_SIG_ERRVAL] =		0xc8,
+	[PWRAP_संक_त्रुटिVAL] =		0xc8,
 	[PWRAP_CRC_EN] =		0xcc,
 	[PWRAP_TIMER_EN] =		0xd0,
 	[PWRAP_TIMER_STA] =		0xd4,
@@ -908,9 +909,9 @@ static int mt8173_regs[] = {
 	[PWRAP_CIPHER_SWRST] =		0x140,
 	[PWRAP_DCM_EN] =		0x144,
 	[PWRAP_DCM_DBC_PRD] =		0x148,
-};
+पूर्ण;
 
-static int mt8183_regs[] = {
+अटल पूर्णांक mt8183_regs[] = अणु
 	[PWRAP_MUX_SEL] =			0x0,
 	[PWRAP_WRAP_EN] =			0x4,
 	[PWRAP_DIO_EN] =			0x8,
@@ -959,9 +960,9 @@ static int mt8183_regs[] = {
 	[PWRAP_WACS2_CMD] =			0xC20,
 	[PWRAP_WACS2_RDATA] =			0xC24,
 	[PWRAP_WACS2_VLDCLR] =			0xC28,
-};
+पूर्ण;
 
-static int mt8516_regs[] = {
+अटल पूर्णांक mt8516_regs[] = अणु
 	[PWRAP_MUX_SEL] =		0x0,
 	[PWRAP_WRAP_EN] =		0x4,
 	[PWRAP_DIO_EN] =		0x8,
@@ -1008,7 +1009,7 @@ static int mt8516_regs[] = {
 	[PWRAP_SIG_ADR] =		0xbc,
 	[PWRAP_SIG_MODE] =		0xc0,
 	[PWRAP_SIG_VALUE] =		0xc4,
-	[PWRAP_SIG_ERRVAL] =		0xc8,
+	[PWRAP_संक_त्रुटिVAL] =		0xc8,
 	[PWRAP_CRC_EN] =		0xcc,
 	[PWRAP_TIMER_EN] =		0xd0,
 	[PWRAP_TIMER_STA] =		0xd4,
@@ -1044,9 +1045,9 @@ static int mt8516_regs[] = {
 	[PWRAP_SW_RST] =		0x168,
 	[PWRAP_OP_TYPE] =		0x16c,
 	[PWRAP_MSB_FIRST] =		0x170,
-};
+पूर्ण;
 
-enum pmic_type {
+क्रमागत pmic_type अणु
 	PMIC_MT6323,
 	PMIC_MT6351,
 	PMIC_MT6357,
@@ -1054,9 +1055,9 @@ enum pmic_type {
 	PMIC_MT6359,
 	PMIC_MT6380,
 	PMIC_MT6397,
-};
+पूर्ण;
 
-enum pwrap_type {
+क्रमागत pwrap_type अणु
 	PWRAP_MT2701,
 	PWRAP_MT6765,
 	PWRAP_MT6779,
@@ -1067,1186 +1068,1186 @@ enum pwrap_type {
 	PWRAP_MT8173,
 	PWRAP_MT8183,
 	PWRAP_MT8516,
-};
+पूर्ण;
 
-struct pmic_wrapper;
-struct pwrap_slv_type {
-	const u32 *dew_regs;
-	enum pmic_type type;
-	const struct regmap_config *regmap;
-	/* Flags indicating the capability for the target slave */
+काष्ठा pmic_wrapper;
+काष्ठा pwrap_slv_type अणु
+	स्थिर u32 *dew_regs;
+	क्रमागत pmic_type type;
+	स्थिर काष्ठा regmap_config *regmap;
+	/* Flags indicating the capability क्रम the target slave */
 	u32 caps;
 	/*
 	 * pwrap operations are highly associated with the PMIC types,
-	 * so the pointers added increases flexibility allowing determination
+	 * so the poपूर्णांकers added increases flexibility allowing determination
 	 * which type is used by the detection through device tree.
 	 */
-	int (*pwrap_read)(struct pmic_wrapper *wrp, u32 adr, u32 *rdata);
-	int (*pwrap_write)(struct pmic_wrapper *wrp, u32 adr, u32 wdata);
-};
+	पूर्णांक (*pwrap_पढ़ो)(काष्ठा pmic_wrapper *wrp, u32 adr, u32 *rdata);
+	पूर्णांक (*pwrap_ग_लिखो)(काष्ठा pmic_wrapper *wrp, u32 adr, u32 wdata);
+पूर्ण;
 
-struct pmic_wrapper {
-	struct device *dev;
-	void __iomem *base;
-	struct regmap *regmap;
-	const struct pmic_wrapper_type *master;
-	const struct pwrap_slv_type *slave;
-	struct clk *clk_spi;
-	struct clk *clk_wrap;
-	struct reset_control *rstc;
+काष्ठा pmic_wrapper अणु
+	काष्ठा device *dev;
+	व्योम __iomem *base;
+	काष्ठा regmap *regmap;
+	स्थिर काष्ठा pmic_wrapper_type *master;
+	स्थिर काष्ठा pwrap_slv_type *slave;
+	काष्ठा clk *clk_spi;
+	काष्ठा clk *clk_wrap;
+	काष्ठा reset_control *rstc;
 
-	struct reset_control *rstc_bridge;
-	void __iomem *bridge_base;
-};
+	काष्ठा reset_control *rstc_bridge;
+	व्योम __iomem *bridge_base;
+पूर्ण;
 
-struct pmic_wrapper_type {
-	int *regs;
-	enum pwrap_type type;
+काष्ठा pmic_wrapper_type अणु
+	पूर्णांक *regs;
+	क्रमागत pwrap_type type;
 	u32 arb_en_all;
-	u32 int_en_all;
-	u32 int1_en_all;
+	u32 पूर्णांक_en_all;
+	u32 पूर्णांक1_en_all;
 	u32 spi_w;
 	u32 wdt_src;
-	/* Flags indicating the capability for the target pwrap */
+	/* Flags indicating the capability क्रम the target pwrap */
 	u32 caps;
-	int (*init_reg_clock)(struct pmic_wrapper *wrp);
-	int (*init_soc_specific)(struct pmic_wrapper *wrp);
-};
+	पूर्णांक (*init_reg_घड़ी)(काष्ठा pmic_wrapper *wrp);
+	पूर्णांक (*init_soc_specअगरic)(काष्ठा pmic_wrapper *wrp);
+पूर्ण;
 
-static u32 pwrap_readl(struct pmic_wrapper *wrp, enum pwrap_regs reg)
-{
-	return readl(wrp->base + wrp->master->regs[reg]);
-}
+अटल u32 pwrap_पढ़ोl(काष्ठा pmic_wrapper *wrp, क्रमागत pwrap_regs reg)
+अणु
+	वापस पढ़ोl(wrp->base + wrp->master->regs[reg]);
+पूर्ण
 
-static void pwrap_writel(struct pmic_wrapper *wrp, u32 val, enum pwrap_regs reg)
-{
-	writel(val, wrp->base + wrp->master->regs[reg]);
-}
+अटल व्योम pwrap_ग_लिखोl(काष्ठा pmic_wrapper *wrp, u32 val, क्रमागत pwrap_regs reg)
+अणु
+	ग_लिखोl(val, wrp->base + wrp->master->regs[reg]);
+पूर्ण
 
-static u32 pwrap_get_fsm_state(struct pmic_wrapper *wrp)
-{
+अटल u32 pwrap_get_fsm_state(काष्ठा pmic_wrapper *wrp)
+अणु
 	u32 val;
 
-	val = pwrap_readl(wrp, PWRAP_WACS2_RDATA);
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
-		return PWRAP_GET_WACS_ARB_FSM(val);
-	else
-		return PWRAP_GET_WACS_FSM(val);
-}
+	val = pwrap_पढ़ोl(wrp, PWRAP_WACS2_RDATA);
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
+		वापस PWRAP_GET_WACS_ARB_FSM(val);
+	अन्यथा
+		वापस PWRAP_GET_WACS_FSM(val);
+पूर्ण
 
-static bool pwrap_is_fsm_idle(struct pmic_wrapper *wrp)
-{
-	return pwrap_get_fsm_state(wrp) == PWRAP_WACS_FSM_IDLE;
-}
+अटल bool pwrap_is_fsm_idle(काष्ठा pmic_wrapper *wrp)
+अणु
+	वापस pwrap_get_fsm_state(wrp) == PWRAP_WACS_FSM_IDLE;
+पूर्ण
 
-static bool pwrap_is_fsm_vldclr(struct pmic_wrapper *wrp)
-{
-	return pwrap_get_fsm_state(wrp) == PWRAP_WACS_FSM_WFVLDCLR;
-}
+अटल bool pwrap_is_fsm_vldclr(काष्ठा pmic_wrapper *wrp)
+अणु
+	वापस pwrap_get_fsm_state(wrp) == PWRAP_WACS_FSM_WFVLDCLR;
+पूर्ण
 
 /*
- * Timeout issue sometimes caused by the last read command
+ * Timeout issue someबार caused by the last पढ़ो command
  * failed because pmic wrap could not got the FSM_VLDCLR
- * in time after finishing WACS2_CMD. It made state machine
- * still on FSM_VLDCLR and timeout next time.
+ * in समय after finishing WACS2_CMD. It made state machine
+ * still on FSM_VLDCLR and समयout next समय.
  * Check the status of FSM and clear the vldclr to recovery the
  * error.
  */
-static inline void pwrap_leave_fsm_vldclr(struct pmic_wrapper *wrp)
-{
-	if (pwrap_is_fsm_vldclr(wrp))
-		pwrap_writel(wrp, 1, PWRAP_WACS2_VLDCLR);
-}
+अटल अंतरभूत व्योम pwrap_leave_fsm_vldclr(काष्ठा pmic_wrapper *wrp)
+अणु
+	अगर (pwrap_is_fsm_vldclr(wrp))
+		pwrap_ग_लिखोl(wrp, 1, PWRAP_WACS2_VLDCLR);
+पूर्ण
 
-static bool pwrap_is_sync_idle(struct pmic_wrapper *wrp)
-{
-	return pwrap_readl(wrp, PWRAP_WACS2_RDATA) & PWRAP_STATE_SYNC_IDLE0;
-}
+अटल bool pwrap_is_sync_idle(काष्ठा pmic_wrapper *wrp)
+अणु
+	वापस pwrap_पढ़ोl(wrp, PWRAP_WACS2_RDATA) & PWRAP_STATE_SYNC_IDLE0;
+पूर्ण
 
-static bool pwrap_is_fsm_idle_and_sync_idle(struct pmic_wrapper *wrp)
-{
-	u32 val = pwrap_readl(wrp, PWRAP_WACS2_RDATA);
+अटल bool pwrap_is_fsm_idle_and_sync_idle(काष्ठा pmic_wrapper *wrp)
+अणु
+	u32 val = pwrap_पढ़ोl(wrp, PWRAP_WACS2_RDATA);
 
-	return (PWRAP_GET_WACS_FSM(val) == PWRAP_WACS_FSM_IDLE) &&
+	वापस (PWRAP_GET_WACS_FSM(val) == PWRAP_WACS_FSM_IDLE) &&
 		(val & PWRAP_STATE_SYNC_IDLE0);
-}
+पूर्ण
 
-static int pwrap_wait_for_state(struct pmic_wrapper *wrp,
-		bool (*fp)(struct pmic_wrapper *))
-{
-	unsigned long timeout;
+अटल पूर्णांक pwrap_रुको_क्रम_state(काष्ठा pmic_wrapper *wrp,
+		bool (*fp)(काष्ठा pmic_wrapper *))
+अणु
+	अचिन्हित दीर्घ समयout;
 
-	timeout = jiffies + usecs_to_jiffies(10000);
+	समयout = jअगरfies + usecs_to_jअगरfies(10000);
 
-	do {
-		if (time_after(jiffies, timeout))
-			return fp(wrp) ? 0 : -ETIMEDOUT;
-		if (fp(wrp))
-			return 0;
-	} while (1);
-}
+	करो अणु
+		अगर (समय_after(jअगरfies, समयout))
+			वापस fp(wrp) ? 0 : -ETIMEDOUT;
+		अगर (fp(wrp))
+			वापस 0;
+	पूर्ण जबतक (1);
+पूर्ण
 
-static int pwrap_read16(struct pmic_wrapper *wrp, u32 adr, u32 *rdata)
-{
-	int ret;
+अटल पूर्णांक pwrap_पढ़ो16(काष्ठा pmic_wrapper *wrp, u32 adr, u32 *rdata)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	ret = pwrap_wait_for_state(wrp, pwrap_is_fsm_idle);
-	if (ret) {
+	ret = pwrap_रुको_क्रम_state(wrp, pwrap_is_fsm_idle);
+	अगर (ret) अणु
 		pwrap_leave_fsm_vldclr(wrp);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
 		val = adr;
-	else
+	अन्यथा
 		val = (adr >> 1) << 16;
-	pwrap_writel(wrp, val, PWRAP_WACS2_CMD);
+	pwrap_ग_लिखोl(wrp, val, PWRAP_WACS2_CMD);
 
-	ret = pwrap_wait_for_state(wrp, pwrap_is_fsm_vldclr);
-	if (ret)
-		return ret;
+	ret = pwrap_रुको_क्रम_state(wrp, pwrap_is_fsm_vldclr);
+	अगर (ret)
+		वापस ret;
 
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
-		val = pwrap_readl(wrp, PWRAP_SWINF_2_RDATA_31_0);
-	else
-		val = pwrap_readl(wrp, PWRAP_WACS2_RDATA);
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
+		val = pwrap_पढ़ोl(wrp, PWRAP_SWINF_2_RDATA_31_0);
+	अन्यथा
+		val = pwrap_पढ़ोl(wrp, PWRAP_WACS2_RDATA);
 	*rdata = PWRAP_GET_WACS_RDATA(val);
 
-	pwrap_writel(wrp, 1, PWRAP_WACS2_VLDCLR);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_WACS2_VLDCLR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_read32(struct pmic_wrapper *wrp, u32 adr, u32 *rdata)
-{
-	int ret, msb;
+अटल पूर्णांक pwrap_पढ़ो32(काष्ठा pmic_wrapper *wrp, u32 adr, u32 *rdata)
+अणु
+	पूर्णांक ret, msb;
 
 	*rdata = 0;
-	for (msb = 0; msb < 2; msb++) {
-		ret = pwrap_wait_for_state(wrp, pwrap_is_fsm_idle);
-		if (ret) {
+	क्रम (msb = 0; msb < 2; msb++) अणु
+		ret = pwrap_रुको_क्रम_state(wrp, pwrap_is_fsm_idle);
+		अगर (ret) अणु
 			pwrap_leave_fsm_vldclr(wrp);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		pwrap_writel(wrp, ((msb << 30) | (adr << 16)),
+		pwrap_ग_लिखोl(wrp, ((msb << 30) | (adr << 16)),
 			     PWRAP_WACS2_CMD);
 
-		ret = pwrap_wait_for_state(wrp, pwrap_is_fsm_vldclr);
-		if (ret)
-			return ret;
+		ret = pwrap_रुको_क्रम_state(wrp, pwrap_is_fsm_vldclr);
+		अगर (ret)
+			वापस ret;
 
-		*rdata += (PWRAP_GET_WACS_RDATA(pwrap_readl(wrp,
+		*rdata += (PWRAP_GET_WACS_RDATA(pwrap_पढ़ोl(wrp,
 			   PWRAP_WACS2_RDATA)) << (16 * msb));
 
-		pwrap_writel(wrp, 1, PWRAP_WACS2_VLDCLR);
-	}
+		pwrap_ग_लिखोl(wrp, 1, PWRAP_WACS2_VLDCLR);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_read(struct pmic_wrapper *wrp, u32 adr, u32 *rdata)
-{
-	return wrp->slave->pwrap_read(wrp, adr, rdata);
-}
+अटल पूर्णांक pwrap_पढ़ो(काष्ठा pmic_wrapper *wrp, u32 adr, u32 *rdata)
+अणु
+	वापस wrp->slave->pwrap_पढ़ो(wrp, adr, rdata);
+पूर्ण
 
-static int pwrap_write16(struct pmic_wrapper *wrp, u32 adr, u32 wdata)
-{
-	int ret;
+अटल पूर्णांक pwrap_ग_लिखो16(काष्ठा pmic_wrapper *wrp, u32 adr, u32 wdata)
+अणु
+	पूर्णांक ret;
 
-	ret = pwrap_wait_for_state(wrp, pwrap_is_fsm_idle);
-	if (ret) {
+	ret = pwrap_रुको_क्रम_state(wrp, pwrap_is_fsm_idle);
+	अगर (ret) अणु
 		pwrap_leave_fsm_vldclr(wrp);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB)) {
-		pwrap_writel(wrp, wdata, PWRAP_SWINF_2_WDATA_31_0);
-		pwrap_writel(wrp, BIT(29) | adr, PWRAP_WACS2_CMD);
-	} else {
-		pwrap_writel(wrp, BIT(31) | ((adr >> 1) << 16) | wdata,
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB)) अणु
+		pwrap_ग_लिखोl(wrp, wdata, PWRAP_SWINF_2_WDATA_31_0);
+		pwrap_ग_लिखोl(wrp, BIT(29) | adr, PWRAP_WACS2_CMD);
+	पूर्ण अन्यथा अणु
+		pwrap_ग_लिखोl(wrp, BIT(31) | ((adr >> 1) << 16) | wdata,
 			     PWRAP_WACS2_CMD);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_write32(struct pmic_wrapper *wrp, u32 adr, u32 wdata)
-{
-	int ret, msb, rdata;
+अटल पूर्णांक pwrap_ग_लिखो32(काष्ठा pmic_wrapper *wrp, u32 adr, u32 wdata)
+अणु
+	पूर्णांक ret, msb, rdata;
 
-	for (msb = 0; msb < 2; msb++) {
-		ret = pwrap_wait_for_state(wrp, pwrap_is_fsm_idle);
-		if (ret) {
+	क्रम (msb = 0; msb < 2; msb++) अणु
+		ret = pwrap_रुको_क्रम_state(wrp, pwrap_is_fsm_idle);
+		अगर (ret) अणु
 			pwrap_leave_fsm_vldclr(wrp);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		pwrap_writel(wrp, (1 << 31) | (msb << 30) | (adr << 16) |
+		pwrap_ग_लिखोl(wrp, (1 << 31) | (msb << 30) | (adr << 16) |
 			     ((wdata >> (msb * 16)) & 0xffff),
 			     PWRAP_WACS2_CMD);
 
 		/*
-		 * The pwrap_read operation is the requirement of hardware used
-		 * for the synchronization between two successive 16-bit
-		 * pwrap_writel operations composing one 32-bit bus writing.
+		 * The pwrap_पढ़ो operation is the requirement of hardware used
+		 * क्रम the synchronization between two successive 16-bit
+		 * pwrap_ग_लिखोl operations composing one 32-bit bus writing.
 		 * Otherwise, we'll find the result fails on the lower 16-bit
 		 * pwrap writing.
 		 */
-		if (!msb)
-			pwrap_read(wrp, adr, &rdata);
-	}
+		अगर (!msb)
+			pwrap_पढ़ो(wrp, adr, &rdata);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_write(struct pmic_wrapper *wrp, u32 adr, u32 wdata)
-{
-	return wrp->slave->pwrap_write(wrp, adr, wdata);
-}
+अटल पूर्णांक pwrap_ग_लिखो(काष्ठा pmic_wrapper *wrp, u32 adr, u32 wdata)
+अणु
+	वापस wrp->slave->pwrap_ग_लिखो(wrp, adr, wdata);
+पूर्ण
 
-static int pwrap_regmap_read(void *context, u32 adr, u32 *rdata)
-{
-	return pwrap_read(context, adr, rdata);
-}
+अटल पूर्णांक pwrap_regmap_पढ़ो(व्योम *context, u32 adr, u32 *rdata)
+अणु
+	वापस pwrap_पढ़ो(context, adr, rdata);
+पूर्ण
 
-static int pwrap_regmap_write(void *context, u32 adr, u32 wdata)
-{
-	return pwrap_write(context, adr, wdata);
-}
+अटल पूर्णांक pwrap_regmap_ग_लिखो(व्योम *context, u32 adr, u32 wdata)
+अणु
+	वापस pwrap_ग_लिखो(context, adr, wdata);
+पूर्ण
 
-static int pwrap_reset_spislave(struct pmic_wrapper *wrp)
-{
-	int ret, i;
+अटल पूर्णांक pwrap_reset_spislave(काष्ठा pmic_wrapper *wrp)
+अणु
+	पूर्णांक ret, i;
 
-	pwrap_writel(wrp, 0, PWRAP_HIPRIO_ARB_EN);
-	pwrap_writel(wrp, 0, PWRAP_WRAP_EN);
-	pwrap_writel(wrp, 1, PWRAP_MUX_SEL);
-	pwrap_writel(wrp, 1, PWRAP_MAN_EN);
-	pwrap_writel(wrp, 0, PWRAP_DIO_EN);
+	pwrap_ग_लिखोl(wrp, 0, PWRAP_HIPRIO_ARB_EN);
+	pwrap_ग_लिखोl(wrp, 0, PWRAP_WRAP_EN);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_MUX_SEL);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_MAN_EN);
+	pwrap_ग_लिखोl(wrp, 0, PWRAP_DIO_EN);
 
-	pwrap_writel(wrp, wrp->master->spi_w | PWRAP_MAN_CMD_OP_CSL,
+	pwrap_ग_लिखोl(wrp, wrp->master->spi_w | PWRAP_MAN_CMD_OP_CSL,
 			PWRAP_MAN_CMD);
-	pwrap_writel(wrp, wrp->master->spi_w | PWRAP_MAN_CMD_OP_OUTS,
+	pwrap_ग_लिखोl(wrp, wrp->master->spi_w | PWRAP_MAN_CMD_OP_OUTS,
 			PWRAP_MAN_CMD);
-	pwrap_writel(wrp, wrp->master->spi_w | PWRAP_MAN_CMD_OP_CSH,
+	pwrap_ग_लिखोl(wrp, wrp->master->spi_w | PWRAP_MAN_CMD_OP_CSH,
 			PWRAP_MAN_CMD);
 
-	for (i = 0; i < 4; i++)
-		pwrap_writel(wrp, wrp->master->spi_w | PWRAP_MAN_CMD_OP_OUTS,
+	क्रम (i = 0; i < 4; i++)
+		pwrap_ग_लिखोl(wrp, wrp->master->spi_w | PWRAP_MAN_CMD_OP_OUTS,
 				PWRAP_MAN_CMD);
 
-	ret = pwrap_wait_for_state(wrp, pwrap_is_sync_idle);
-	if (ret) {
+	ret = pwrap_रुको_क्रम_state(wrp, pwrap_is_sync_idle);
+	अगर (ret) अणु
 		dev_err(wrp->dev, "%s fail, ret=%d\n", __func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pwrap_writel(wrp, 0, PWRAP_MAN_EN);
-	pwrap_writel(wrp, 0, PWRAP_MUX_SEL);
+	pwrap_ग_लिखोl(wrp, 0, PWRAP_MAN_EN);
+	pwrap_ग_लिखोl(wrp, 0, PWRAP_MUX_SEL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * pwrap_init_sidly - configure serial input delay
  *
  * This configures the serial input delay. We can configure 0, 2, 4 or 6ns
- * delay. Do a read test with all possible values and chose the best delay.
+ * delay. Do a पढ़ो test with all possible values and chose the best delay.
  */
-static int pwrap_init_sidly(struct pmic_wrapper *wrp)
-{
+अटल पूर्णांक pwrap_init_sidly(काष्ठा pmic_wrapper *wrp)
+अणु
 	u32 rdata;
 	u32 i;
 	u32 pass = 0;
-	signed char dly[16] = {
+	चिन्हित अक्षर dly[16] = अणु
 		-1, 0, 1, 0, 2, -1, 1, 1, 3, -1, -1, -1, 3, -1, 2, 1
-	};
+	पूर्ण;
 
-	for (i = 0; i < 4; i++) {
-		pwrap_writel(wrp, i, PWRAP_SIDLY);
-		pwrap_read(wrp, wrp->slave->dew_regs[PWRAP_DEW_READ_TEST],
+	क्रम (i = 0; i < 4; i++) अणु
+		pwrap_ग_लिखोl(wrp, i, PWRAP_SIDLY);
+		pwrap_पढ़ो(wrp, wrp->slave->dew_regs[PWRAP_DEW_READ_TEST],
 			   &rdata);
-		if (rdata == PWRAP_DEW_READ_TEST_VAL) {
+		अगर (rdata == PWRAP_DEW_READ_TEST_VAL) अणु
 			dev_dbg(wrp->dev, "[Read Test] pass, SIDLY=%x\n", i);
 			pass |= 1 << i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (dly[pass] < 0) {
+	अगर (dly[pass] < 0) अणु
 		dev_err(wrp->dev, "sidly pass range 0x%x not continuous\n",
 				pass);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	pwrap_writel(wrp, dly[pass], PWRAP_SIDLY);
+	pwrap_ग_लिखोl(wrp, dly[pass], PWRAP_SIDLY);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_init_dual_io(struct pmic_wrapper *wrp)
-{
-	int ret;
+अटल पूर्णांक pwrap_init_dual_io(काष्ठा pmic_wrapper *wrp)
+अणु
+	पूर्णांक ret;
 	u32 rdata;
 
 	/* Enable dual IO mode */
-	pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_DIO_EN], 1);
+	pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_DIO_EN], 1);
 
 	/* Check IDLE & INIT_DONE in advance */
-	ret = pwrap_wait_for_state(wrp,
+	ret = pwrap_रुको_क्रम_state(wrp,
 				   pwrap_is_fsm_idle_and_sync_idle);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(wrp->dev, "%s fail, ret=%d\n", __func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pwrap_writel(wrp, 1, PWRAP_DIO_EN);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_DIO_EN);
 
 	/* Read Test */
-	pwrap_read(wrp,
+	pwrap_पढ़ो(wrp,
 		   wrp->slave->dew_regs[PWRAP_DEW_READ_TEST], &rdata);
-	if (rdata != PWRAP_DEW_READ_TEST_VAL) {
+	अगर (rdata != PWRAP_DEW_READ_TEST_VAL) अणु
 		dev_err(wrp->dev,
 			"Read failed on DIO mode: 0x%04x!=0x%04x\n",
 			PWRAP_DEW_READ_TEST_VAL, rdata);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * pwrap_init_chip_select_ext is used to configure CS extension time for each
+ * pwrap_init_chip_select_ext is used to configure CS extension समय क्रम each
  * phase during data transactions on the pwrap bus.
  */
-static void pwrap_init_chip_select_ext(struct pmic_wrapper *wrp, u8 hext_write,
-				       u8 hext_read, u8 lext_start,
+अटल व्योम pwrap_init_chip_select_ext(काष्ठा pmic_wrapper *wrp, u8 hext_ग_लिखो,
+				       u8 hext_पढ़ो, u8 lext_start,
 				       u8 lext_end)
-{
+अणु
 	/*
-	 * After finishing a write and read transaction, extends CS high time
-	 * to be at least xT of BUS CLK as hext_write and hext_read specifies
+	 * After finishing a ग_लिखो and पढ़ो transaction, extends CS high समय
+	 * to be at least xT of BUS CLK as hext_ग_लिखो and hext_पढ़ो specअगरies
 	 * respectively.
 	 */
-	pwrap_writel(wrp, hext_write, PWRAP_CSHEXT_WRITE);
-	pwrap_writel(wrp, hext_read, PWRAP_CSHEXT_READ);
+	pwrap_ग_लिखोl(wrp, hext_ग_लिखो, PWRAP_CSHEXT_WRITE);
+	pwrap_ग_लिखोl(wrp, hext_पढ़ो, PWRAP_CSHEXT_READ);
 
 	/*
-	 * Extends CS low time after CSL and before CSH command to be at
-	 * least xT of BUS CLK as lext_start and lext_end specifies
+	 * Extends CS low समय after CSL and beक्रमe CSH command to be at
+	 * least xT of BUS CLK as lext_start and lext_end specअगरies
 	 * respectively.
 	 */
-	pwrap_writel(wrp, lext_start, PWRAP_CSLEXT_START);
-	pwrap_writel(wrp, lext_end, PWRAP_CSLEXT_END);
-}
+	pwrap_ग_लिखोl(wrp, lext_start, PWRAP_CSLEXT_START);
+	pwrap_ग_लिखोl(wrp, lext_end, PWRAP_CSLEXT_END);
+पूर्ण
 
-static int pwrap_common_init_reg_clock(struct pmic_wrapper *wrp)
-{
-	switch (wrp->master->type) {
-	case PWRAP_MT8173:
+अटल पूर्णांक pwrap_common_init_reg_घड़ी(काष्ठा pmic_wrapper *wrp)
+अणु
+	चयन (wrp->master->type) अणु
+	हाल PWRAP_MT8173:
 		pwrap_init_chip_select_ext(wrp, 0, 4, 2, 2);
-		break;
-	case PWRAP_MT8135:
-		pwrap_writel(wrp, 0x4, PWRAP_CSHEXT);
+		अवरोध;
+	हाल PWRAP_MT8135:
+		pwrap_ग_लिखोl(wrp, 0x4, PWRAP_CSHEXT);
 		pwrap_init_chip_select_ext(wrp, 0, 4, 0, 0);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_mt2701_init_reg_clock(struct pmic_wrapper *wrp)
-{
-	switch (wrp->slave->type) {
-	case PMIC_MT6397:
-		pwrap_writel(wrp, 0xc, PWRAP_RDDMY);
+अटल पूर्णांक pwrap_mt2701_init_reg_घड़ी(काष्ठा pmic_wrapper *wrp)
+अणु
+	चयन (wrp->slave->type) अणु
+	हाल PMIC_MT6397:
+		pwrap_ग_लिखोl(wrp, 0xc, PWRAP_RDDMY);
 		pwrap_init_chip_select_ext(wrp, 4, 0, 2, 2);
-		break;
+		अवरोध;
 
-	case PMIC_MT6323:
-		pwrap_writel(wrp, 0x8, PWRAP_RDDMY);
-		pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_RDDMY_NO],
+	हाल PMIC_MT6323:
+		pwrap_ग_लिखोl(wrp, 0x8, PWRAP_RDDMY);
+		pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_RDDMY_NO],
 			    0x8);
 		pwrap_init_chip_select_ext(wrp, 5, 0, 2, 2);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool pwrap_is_cipher_ready(struct pmic_wrapper *wrp)
-{
-	return pwrap_readl(wrp, PWRAP_CIPHER_RDY) & 1;
-}
+अटल bool pwrap_is_cipher_पढ़ोy(काष्ठा pmic_wrapper *wrp)
+अणु
+	वापस pwrap_पढ़ोl(wrp, PWRAP_CIPHER_RDY) & 1;
+पूर्ण
 
-static bool pwrap_is_pmic_cipher_ready(struct pmic_wrapper *wrp)
-{
+अटल bool pwrap_is_pmic_cipher_पढ़ोy(काष्ठा pmic_wrapper *wrp)
+अणु
 	u32 rdata;
-	int ret;
+	पूर्णांक ret;
 
-	ret = pwrap_read(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_RDY],
+	ret = pwrap_पढ़ो(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_RDY],
 			 &rdata);
-	if (ret)
-		return false;
+	अगर (ret)
+		वापस false;
 
-	return rdata == 1;
-}
+	वापस rdata == 1;
+पूर्ण
 
-static int pwrap_init_cipher(struct pmic_wrapper *wrp)
-{
-	int ret;
+अटल पूर्णांक pwrap_init_cipher(काष्ठा pmic_wrapper *wrp)
+अणु
+	पूर्णांक ret;
 	u32 rdata = 0;
 
-	pwrap_writel(wrp, 0x1, PWRAP_CIPHER_SWRST);
-	pwrap_writel(wrp, 0x0, PWRAP_CIPHER_SWRST);
-	pwrap_writel(wrp, 0x1, PWRAP_CIPHER_KEY_SEL);
-	pwrap_writel(wrp, 0x2, PWRAP_CIPHER_IV_SEL);
+	pwrap_ग_लिखोl(wrp, 0x1, PWRAP_CIPHER_SWRST);
+	pwrap_ग_लिखोl(wrp, 0x0, PWRAP_CIPHER_SWRST);
+	pwrap_ग_लिखोl(wrp, 0x1, PWRAP_CIPHER_KEY_SEL);
+	pwrap_ग_लिखोl(wrp, 0x2, PWRAP_CIPHER_IV_SEL);
 
-	switch (wrp->master->type) {
-	case PWRAP_MT8135:
-		pwrap_writel(wrp, 1, PWRAP_CIPHER_LOAD);
-		pwrap_writel(wrp, 1, PWRAP_CIPHER_START);
-		break;
-	case PWRAP_MT2701:
-	case PWRAP_MT6765:
-	case PWRAP_MT6779:
-	case PWRAP_MT6797:
-	case PWRAP_MT8173:
-	case PWRAP_MT8516:
-		pwrap_writel(wrp, 1, PWRAP_CIPHER_EN);
-		break;
-	case PWRAP_MT7622:
-		pwrap_writel(wrp, 0, PWRAP_CIPHER_EN);
-		break;
-	case PWRAP_MT6873:
-	case PWRAP_MT8183:
-		break;
-	}
+	चयन (wrp->master->type) अणु
+	हाल PWRAP_MT8135:
+		pwrap_ग_लिखोl(wrp, 1, PWRAP_CIPHER_LOAD);
+		pwrap_ग_लिखोl(wrp, 1, PWRAP_CIPHER_START);
+		अवरोध;
+	हाल PWRAP_MT2701:
+	हाल PWRAP_MT6765:
+	हाल PWRAP_MT6779:
+	हाल PWRAP_MT6797:
+	हाल PWRAP_MT8173:
+	हाल PWRAP_MT8516:
+		pwrap_ग_लिखोl(wrp, 1, PWRAP_CIPHER_EN);
+		अवरोध;
+	हाल PWRAP_MT7622:
+		pwrap_ग_लिखोl(wrp, 0, PWRAP_CIPHER_EN);
+		अवरोध;
+	हाल PWRAP_MT6873:
+	हाल PWRAP_MT8183:
+		अवरोध;
+	पूर्ण
 
 	/* Config cipher mode @PMIC */
-	pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_SWRST], 0x1);
-	pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_SWRST], 0x0);
-	pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_KEY_SEL], 0x1);
-	pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_IV_SEL], 0x2);
+	pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_SWRST], 0x1);
+	pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_SWRST], 0x0);
+	pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_KEY_SEL], 0x1);
+	pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_IV_SEL], 0x2);
 
-	switch (wrp->slave->type) {
-	case PMIC_MT6397:
-		pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_LOAD],
+	चयन (wrp->slave->type) अणु
+	हाल PMIC_MT6397:
+		pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_LOAD],
 			    0x1);
-		pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_START],
+		pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_START],
 			    0x1);
-		break;
-	case PMIC_MT6323:
-	case PMIC_MT6351:
-	case PMIC_MT6357:
-		pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_EN],
+		अवरोध;
+	हाल PMIC_MT6323:
+	हाल PMIC_MT6351:
+	हाल PMIC_MT6357:
+		pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_EN],
 			    0x1);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	/* wait for cipher data ready@AP */
-	ret = pwrap_wait_for_state(wrp, pwrap_is_cipher_ready);
-	if (ret) {
+	/* रुको क्रम cipher data पढ़ोy@AP */
+	ret = pwrap_रुको_क्रम_state(wrp, pwrap_is_cipher_पढ़ोy);
+	अगर (ret) अणु
 		dev_err(wrp->dev, "cipher data ready@AP fail, ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* wait for cipher data ready@PMIC */
-	ret = pwrap_wait_for_state(wrp, pwrap_is_pmic_cipher_ready);
-	if (ret) {
+	/* रुको क्रम cipher data पढ़ोy@PMIC */
+	ret = pwrap_रुको_क्रम_state(wrp, pwrap_is_pmic_cipher_पढ़ोy);
+	अगर (ret) अणु
 		dev_err(wrp->dev,
 			"timeout waiting for cipher data ready@PMIC\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* wait for cipher mode idle */
-	pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_MODE], 0x1);
-	ret = pwrap_wait_for_state(wrp, pwrap_is_fsm_idle_and_sync_idle);
-	if (ret) {
+	/* रुको क्रम cipher mode idle */
+	pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_CIPHER_MODE], 0x1);
+	ret = pwrap_रुको_क्रम_state(wrp, pwrap_is_fsm_idle_and_sync_idle);
+	अगर (ret) अणु
 		dev_err(wrp->dev, "cipher mode idle fail, ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pwrap_writel(wrp, 1, PWRAP_CIPHER_MODE);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_CIPHER_MODE);
 
 	/* Write Test */
-	if (pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_WRITE_TEST],
+	अगर (pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_WRITE_TEST],
 			PWRAP_DEW_WRITE_TEST_VAL) ||
-	    pwrap_read(wrp, wrp->slave->dew_regs[PWRAP_DEW_WRITE_TEST],
+	    pwrap_पढ़ो(wrp, wrp->slave->dew_regs[PWRAP_DEW_WRITE_TEST],
 		       &rdata) ||
-	    (rdata != PWRAP_DEW_WRITE_TEST_VAL)) {
+	    (rdata != PWRAP_DEW_WRITE_TEST_VAL)) अणु
 		dev_err(wrp->dev, "rdata=0x%04X\n", rdata);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_init_security(struct pmic_wrapper *wrp)
-{
-	int ret;
+अटल पूर्णांक pwrap_init_security(काष्ठा pmic_wrapper *wrp)
+अणु
+	पूर्णांक ret;
 
 	/* Enable encryption */
 	ret = pwrap_init_cipher(wrp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Signature checking - using CRC */
-	if (pwrap_write(wrp,
+	अगर (pwrap_ग_लिखो(wrp,
 			wrp->slave->dew_regs[PWRAP_DEW_CRC_EN], 0x1))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	pwrap_writel(wrp, 0x1, PWRAP_CRC_EN);
-	pwrap_writel(wrp, 0x0, PWRAP_SIG_MODE);
-	pwrap_writel(wrp, wrp->slave->dew_regs[PWRAP_DEW_CRC_VAL],
+	pwrap_ग_लिखोl(wrp, 0x1, PWRAP_CRC_EN);
+	pwrap_ग_लिखोl(wrp, 0x0, PWRAP_SIG_MODE);
+	pwrap_ग_लिखोl(wrp, wrp->slave->dew_regs[PWRAP_DEW_CRC_VAL],
 		     PWRAP_SIG_ADR);
-	pwrap_writel(wrp,
+	pwrap_ग_लिखोl(wrp,
 		     wrp->master->arb_en_all, PWRAP_HIPRIO_ARB_EN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_mt8135_init_soc_specific(struct pmic_wrapper *wrp)
-{
+अटल पूर्णांक pwrap_mt8135_init_soc_specअगरic(काष्ठा pmic_wrapper *wrp)
+अणु
 	/* enable pwrap events and pwrap bridge in AP side */
-	pwrap_writel(wrp, 0x1, PWRAP_EVENT_IN_EN);
-	pwrap_writel(wrp, 0xffff, PWRAP_EVENT_DST_EN);
-	writel(0x7f, wrp->bridge_base + PWRAP_MT8135_BRIDGE_IORD_ARB_EN);
-	writel(0x1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_WACS3_EN);
-	writel(0x1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_WACS4_EN);
-	writel(0x1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_WDT_UNIT);
-	writel(0xffff, wrp->bridge_base + PWRAP_MT8135_BRIDGE_WDT_SRC_EN);
-	writel(0x1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_TIMER_EN);
-	writel(0x7ff, wrp->bridge_base + PWRAP_MT8135_BRIDGE_INT_EN);
+	pwrap_ग_लिखोl(wrp, 0x1, PWRAP_EVENT_IN_EN);
+	pwrap_ग_लिखोl(wrp, 0xffff, PWRAP_EVENT_DST_EN);
+	ग_लिखोl(0x7f, wrp->bridge_base + PWRAP_MT8135_BRIDGE_IORD_ARB_EN);
+	ग_लिखोl(0x1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_WACS3_EN);
+	ग_लिखोl(0x1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_WACS4_EN);
+	ग_लिखोl(0x1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_WDT_UNIT);
+	ग_लिखोl(0xffff, wrp->bridge_base + PWRAP_MT8135_BRIDGE_WDT_SRC_EN);
+	ग_लिखोl(0x1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_TIMER_EN);
+	ग_लिखोl(0x7ff, wrp->bridge_base + PWRAP_MT8135_BRIDGE_INT_EN);
 
 	/* enable PMIC event out and sources */
-	if (pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_EVENT_OUT_EN],
+	अगर (pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_EVENT_OUT_EN],
 			0x1) ||
-	    pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_EVENT_SRC_EN],
-			0xffff)) {
+	    pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_EVENT_SRC_EN],
+			0xffff)) अणु
 		dev_err(wrp->dev, "enable dewrap fail\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_mt8173_init_soc_specific(struct pmic_wrapper *wrp)
-{
+अटल पूर्णांक pwrap_mt8173_init_soc_specअगरic(काष्ठा pmic_wrapper *wrp)
+अणु
 	/* PMIC_DEWRAP enables */
-	if (pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_EVENT_OUT_EN],
+	अगर (pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_EVENT_OUT_EN],
 			0x1) ||
-	    pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_EVENT_SRC_EN],
-			0xffff)) {
+	    pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_EVENT_SRC_EN],
+			0xffff)) अणु
 		dev_err(wrp->dev, "enable dewrap fail\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_mt2701_init_soc_specific(struct pmic_wrapper *wrp)
-{
+अटल पूर्णांक pwrap_mt2701_init_soc_specअगरic(काष्ठा pmic_wrapper *wrp)
+अणु
 	/* GPS_INTF initialization */
-	switch (wrp->slave->type) {
-	case PMIC_MT6323:
-		pwrap_writel(wrp, 0x076c, PWRAP_ADC_CMD_ADDR);
-		pwrap_writel(wrp, 0x8000, PWRAP_PWRAP_ADC_CMD);
-		pwrap_writel(wrp, 0x072c, PWRAP_ADC_RDY_ADDR);
-		pwrap_writel(wrp, 0x072e, PWRAP_ADC_RDATA_ADDR1);
-		pwrap_writel(wrp, 0x0730, PWRAP_ADC_RDATA_ADDR2);
-		break;
-	default:
-		break;
-	}
+	चयन (wrp->slave->type) अणु
+	हाल PMIC_MT6323:
+		pwrap_ग_लिखोl(wrp, 0x076c, PWRAP_ADC_CMD_ADDR);
+		pwrap_ग_लिखोl(wrp, 0x8000, PWRAP_PWRAP_ADC_CMD);
+		pwrap_ग_लिखोl(wrp, 0x072c, PWRAP_ADC_RDY_ADDR);
+		pwrap_ग_लिखोl(wrp, 0x072e, PWRAP_ADC_RDATA_ADDR1);
+		pwrap_ग_लिखोl(wrp, 0x0730, PWRAP_ADC_RDATA_ADDR2);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_mt7622_init_soc_specific(struct pmic_wrapper *wrp)
-{
-	pwrap_writel(wrp, 0, PWRAP_STAUPD_PRD);
+अटल पूर्णांक pwrap_mt7622_init_soc_specअगरic(काष्ठा pmic_wrapper *wrp)
+अणु
+	pwrap_ग_लिखोl(wrp, 0, PWRAP_STAUPD_PRD);
 	/* enable 2wire SPI master */
-	pwrap_writel(wrp, 0x8000000, PWRAP_SPI2_CTRL);
+	pwrap_ग_लिखोl(wrp, 0x8000000, PWRAP_SPI2_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_mt8183_init_soc_specific(struct pmic_wrapper *wrp)
-{
-	pwrap_writel(wrp, 0xf5, PWRAP_STAUPD_GRPEN);
+अटल पूर्णांक pwrap_mt8183_init_soc_specअगरic(काष्ठा pmic_wrapper *wrp)
+अणु
+	pwrap_ग_लिखोl(wrp, 0xf5, PWRAP_STAUPD_GRPEN);
 
-	pwrap_write(wrp, wrp->slave->dew_regs[PWRAP_DEW_CRC_EN], 0x1);
-	pwrap_writel(wrp, 1, PWRAP_CRC_EN);
-	pwrap_writel(wrp, 0x416, PWRAP_SIG_ADR);
-	pwrap_writel(wrp, 0x42e, PWRAP_EINT_STA0_ADR);
+	pwrap_ग_लिखो(wrp, wrp->slave->dew_regs[PWRAP_DEW_CRC_EN], 0x1);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_CRC_EN);
+	pwrap_ग_लिखोl(wrp, 0x416, PWRAP_SIG_ADR);
+	pwrap_ग_लिखोl(wrp, 0x42e, PWRAP_EINT_STA0_ADR);
 
-	pwrap_writel(wrp, 1, PWRAP_WACS_P2P_EN);
-	pwrap_writel(wrp, 1, PWRAP_WACS_MD32_EN);
-	pwrap_writel(wrp, 1, PWRAP_INIT_DONE_P2P);
-	pwrap_writel(wrp, 1, PWRAP_INIT_DONE_MD32);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_WACS_P2P_EN);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_WACS_MD32_EN);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_INIT_DONE_P2P);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_INIT_DONE_MD32);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwrap_init(struct pmic_wrapper *wrp)
-{
-	int ret;
+अटल पूर्णांक pwrap_init(काष्ठा pmic_wrapper *wrp)
+अणु
+	पूर्णांक ret;
 
-	if (wrp->rstc)
+	अगर (wrp->rstc)
 		reset_control_reset(wrp->rstc);
-	if (wrp->rstc_bridge)
+	अगर (wrp->rstc_bridge)
 		reset_control_reset(wrp->rstc_bridge);
 
-	if (wrp->master->type == PWRAP_MT8173) {
+	अगर (wrp->master->type == PWRAP_MT8173) अणु
 		/* Enable DCM */
-		pwrap_writel(wrp, 3, PWRAP_DCM_EN);
-		pwrap_writel(wrp, 0, PWRAP_DCM_DBC_PRD);
-	}
+		pwrap_ग_लिखोl(wrp, 3, PWRAP_DCM_EN);
+		pwrap_ग_लिखोl(wrp, 0, PWRAP_DCM_DBC_PRD);
+	पूर्ण
 
-	if (HAS_CAP(wrp->slave->caps, PWRAP_SLV_CAP_SPI)) {
+	अगर (HAS_CAP(wrp->slave->caps, PWRAP_SLV_CAP_SPI)) अणु
 		/* Reset SPI slave */
 		ret = pwrap_reset_spislave(wrp);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	pwrap_writel(wrp, 1, PWRAP_WRAP_EN);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_WRAP_EN);
 
-	pwrap_writel(wrp, wrp->master->arb_en_all, PWRAP_HIPRIO_ARB_EN);
+	pwrap_ग_लिखोl(wrp, wrp->master->arb_en_all, PWRAP_HIPRIO_ARB_EN);
 
-	pwrap_writel(wrp, 1, PWRAP_WACS2_EN);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_WACS2_EN);
 
-	ret = wrp->master->init_reg_clock(wrp);
-	if (ret)
-		return ret;
+	ret = wrp->master->init_reg_घड़ी(wrp);
+	अगर (ret)
+		वापस ret;
 
-	if (HAS_CAP(wrp->slave->caps, PWRAP_SLV_CAP_SPI)) {
+	अगर (HAS_CAP(wrp->slave->caps, PWRAP_SLV_CAP_SPI)) अणु
 		/* Setup serial input delay */
 		ret = pwrap_init_sidly(wrp);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (HAS_CAP(wrp->slave->caps, PWRAP_SLV_CAP_DUALIO)) {
+	अगर (HAS_CAP(wrp->slave->caps, PWRAP_SLV_CAP_DUALIO)) अणु
 		/* Enable dual I/O mode */
 		ret = pwrap_init_dual_io(wrp);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (HAS_CAP(wrp->slave->caps, PWRAP_SLV_CAP_SECURITY)) {
+	अगर (HAS_CAP(wrp->slave->caps, PWRAP_SLV_CAP_SECURITY)) अणु
 		/* Enable security on bus */
 		ret = pwrap_init_security(wrp);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (wrp->master->type == PWRAP_MT8135)
-		pwrap_writel(wrp, 0x7, PWRAP_RRARB_EN);
+	अगर (wrp->master->type == PWRAP_MT8135)
+		pwrap_ग_लिखोl(wrp, 0x7, PWRAP_RRARB_EN);
 
-	pwrap_writel(wrp, 0x1, PWRAP_WACS0_EN);
-	pwrap_writel(wrp, 0x1, PWRAP_WACS1_EN);
-	pwrap_writel(wrp, 0x1, PWRAP_WACS2_EN);
-	pwrap_writel(wrp, 0x5, PWRAP_STAUPD_PRD);
-	pwrap_writel(wrp, 0xff, PWRAP_STAUPD_GRPEN);
+	pwrap_ग_लिखोl(wrp, 0x1, PWRAP_WACS0_EN);
+	pwrap_ग_लिखोl(wrp, 0x1, PWRAP_WACS1_EN);
+	pwrap_ग_लिखोl(wrp, 0x1, PWRAP_WACS2_EN);
+	pwrap_ग_लिखोl(wrp, 0x5, PWRAP_STAUPD_PRD);
+	pwrap_ग_लिखोl(wrp, 0xff, PWRAP_STAUPD_GRPEN);
 
-	if (wrp->master->init_soc_specific) {
-		ret = wrp->master->init_soc_specific(wrp);
-		if (ret)
-			return ret;
-	}
+	अगर (wrp->master->init_soc_specअगरic) अणु
+		ret = wrp->master->init_soc_specअगरic(wrp);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* Setup the init done registers */
-	pwrap_writel(wrp, 1, PWRAP_INIT_DONE2);
-	pwrap_writel(wrp, 1, PWRAP_INIT_DONE0);
-	pwrap_writel(wrp, 1, PWRAP_INIT_DONE1);
+	/* Setup the init करोne रेजिस्टरs */
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_INIT_DONE2);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_INIT_DONE0);
+	pwrap_ग_लिखोl(wrp, 1, PWRAP_INIT_DONE1);
 
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_BRIDGE)) {
-		writel(1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_INIT_DONE3);
-		writel(1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_INIT_DONE4);
-	}
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_BRIDGE)) अणु
+		ग_लिखोl(1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_INIT_DONE3);
+		ग_लिखोl(1, wrp->bridge_base + PWRAP_MT8135_BRIDGE_INIT_DONE4);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t pwrap_interrupt(int irqno, void *dev_id)
-{
+अटल irqवापस_t pwrap_पूर्णांकerrupt(पूर्णांक irqno, व्योम *dev_id)
+अणु
 	u32 rdata;
-	struct pmic_wrapper *wrp = dev_id;
+	काष्ठा pmic_wrapper *wrp = dev_id;
 
-	rdata = pwrap_readl(wrp, PWRAP_INT_FLG);
+	rdata = pwrap_पढ़ोl(wrp, PWRAP_INT_FLG);
 	dev_err(wrp->dev, "unexpected interrupt int=0x%x\n", rdata);
-	pwrap_writel(wrp, 0xffffffff, PWRAP_INT_CLR);
+	pwrap_ग_लिखोl(wrp, 0xffffffff, PWRAP_INT_CLR);
 
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_INT1_EN)) {
-		rdata = pwrap_readl(wrp, PWRAP_INT1_FLG);
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_INT1_EN)) अणु
+		rdata = pwrap_पढ़ोl(wrp, PWRAP_INT1_FLG);
 		dev_err(wrp->dev, "unexpected interrupt int1=0x%x\n", rdata);
-		pwrap_writel(wrp, 0xffffffff, PWRAP_INT1_CLR);
-	}
+		pwrap_ग_लिखोl(wrp, 0xffffffff, PWRAP_INT1_CLR);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct regmap_config pwrap_regmap_config16 = {
+अटल स्थिर काष्ठा regmap_config pwrap_regmap_config16 = अणु
 	.reg_bits = 16,
 	.val_bits = 16,
 	.reg_stride = 2,
-	.reg_read = pwrap_regmap_read,
-	.reg_write = pwrap_regmap_write,
-	.max_register = 0xffff,
-};
+	.reg_पढ़ो = pwrap_regmap_पढ़ो,
+	.reg_ग_लिखो = pwrap_regmap_ग_लिखो,
+	.max_रेजिस्टर = 0xffff,
+पूर्ण;
 
-static const struct regmap_config pwrap_regmap_config32 = {
+अटल स्थिर काष्ठा regmap_config pwrap_regmap_config32 = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.reg_read = pwrap_regmap_read,
-	.reg_write = pwrap_regmap_write,
-	.max_register = 0xffff,
-};
+	.reg_पढ़ो = pwrap_regmap_पढ़ो,
+	.reg_ग_लिखो = pwrap_regmap_ग_लिखो,
+	.max_रेजिस्टर = 0xffff,
+पूर्ण;
 
-static const struct pwrap_slv_type pmic_mt6323 = {
+अटल स्थिर काष्ठा pwrap_slv_type pmic_mt6323 = अणु
 	.dew_regs = mt6323_regs,
 	.type = PMIC_MT6323,
 	.regmap = &pwrap_regmap_config16,
 	.caps = PWRAP_SLV_CAP_SPI | PWRAP_SLV_CAP_DUALIO |
 		PWRAP_SLV_CAP_SECURITY,
-	.pwrap_read = pwrap_read16,
-	.pwrap_write = pwrap_write16,
-};
+	.pwrap_पढ़ो = pwrap_पढ़ो16,
+	.pwrap_ग_लिखो = pwrap_ग_लिखो16,
+पूर्ण;
 
-static const struct pwrap_slv_type pmic_mt6351 = {
+अटल स्थिर काष्ठा pwrap_slv_type pmic_mt6351 = अणु
 	.dew_regs = mt6351_regs,
 	.type = PMIC_MT6351,
 	.regmap = &pwrap_regmap_config16,
 	.caps = 0,
-	.pwrap_read = pwrap_read16,
-	.pwrap_write = pwrap_write16,
-};
+	.pwrap_पढ़ो = pwrap_पढ़ो16,
+	.pwrap_ग_लिखो = pwrap_ग_लिखो16,
+पूर्ण;
 
-static const struct pwrap_slv_type pmic_mt6357 = {
+अटल स्थिर काष्ठा pwrap_slv_type pmic_mt6357 = अणु
 	.dew_regs = mt6357_regs,
 	.type = PMIC_MT6357,
 	.regmap = &pwrap_regmap_config16,
 	.caps = 0,
-	.pwrap_read = pwrap_read16,
-	.pwrap_write = pwrap_write16,
-};
+	.pwrap_पढ़ो = pwrap_पढ़ो16,
+	.pwrap_ग_लिखो = pwrap_ग_लिखो16,
+पूर्ण;
 
-static const struct pwrap_slv_type pmic_mt6358 = {
+अटल स्थिर काष्ठा pwrap_slv_type pmic_mt6358 = अणु
 	.dew_regs = mt6358_regs,
 	.type = PMIC_MT6358,
 	.regmap = &pwrap_regmap_config16,
 	.caps = PWRAP_SLV_CAP_SPI | PWRAP_SLV_CAP_DUALIO,
-	.pwrap_read = pwrap_read16,
-	.pwrap_write = pwrap_write16,
-};
+	.pwrap_पढ़ो = pwrap_पढ़ो16,
+	.pwrap_ग_लिखो = pwrap_ग_लिखो16,
+पूर्ण;
 
-static const struct pwrap_slv_type pmic_mt6359 = {
+अटल स्थिर काष्ठा pwrap_slv_type pmic_mt6359 = अणु
 	.dew_regs = mt6359_regs,
 	.type = PMIC_MT6359,
 	.regmap = &pwrap_regmap_config16,
 	.caps = PWRAP_SLV_CAP_DUALIO,
-	.pwrap_read = pwrap_read16,
-	.pwrap_write = pwrap_write16,
-};
+	.pwrap_पढ़ो = pwrap_पढ़ो16,
+	.pwrap_ग_लिखो = pwrap_ग_लिखो16,
+पूर्ण;
 
-static const struct pwrap_slv_type pmic_mt6380 = {
-	.dew_regs = NULL,
+अटल स्थिर काष्ठा pwrap_slv_type pmic_mt6380 = अणु
+	.dew_regs = शून्य,
 	.type = PMIC_MT6380,
 	.regmap = &pwrap_regmap_config32,
 	.caps = 0,
-	.pwrap_read = pwrap_read32,
-	.pwrap_write = pwrap_write32,
-};
+	.pwrap_पढ़ो = pwrap_पढ़ो32,
+	.pwrap_ग_लिखो = pwrap_ग_लिखो32,
+पूर्ण;
 
-static const struct pwrap_slv_type pmic_mt6397 = {
+अटल स्थिर काष्ठा pwrap_slv_type pmic_mt6397 = अणु
 	.dew_regs = mt6397_regs,
 	.type = PMIC_MT6397,
 	.regmap = &pwrap_regmap_config16,
 	.caps = PWRAP_SLV_CAP_SPI | PWRAP_SLV_CAP_DUALIO |
 		PWRAP_SLV_CAP_SECURITY,
-	.pwrap_read = pwrap_read16,
-	.pwrap_write = pwrap_write16,
-};
+	.pwrap_पढ़ो = pwrap_पढ़ो16,
+	.pwrap_ग_लिखो = pwrap_ग_लिखो16,
+पूर्ण;
 
-static const struct of_device_id of_slave_match_tbl[] = {
-	{
+अटल स्थिर काष्ठा of_device_id of_slave_match_tbl[] = अणु
+	अणु
 		.compatible = "mediatek,mt6323",
 		.data = &pmic_mt6323,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6351",
 		.data = &pmic_mt6351,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6357",
 		.data = &pmic_mt6357,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6358",
 		.data = &pmic_mt6358,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6359",
 		.data = &pmic_mt6359,
-	}, {
+	पूर्ण, अणु
 		/* The MT6380 PMIC only implements a regulator, so we bind it
 		 * directly instead of using a MFD.
 		 */
 		.compatible = "mediatek,mt6380-regulator",
 		.data = &pmic_mt6380,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6397",
 		.data = &pmic_mt6397,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
+	पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_slave_match_tbl);
 
-static const struct pmic_wrapper_type pwrap_mt2701 = {
+अटल स्थिर काष्ठा pmic_wrapper_type pwrap_mt2701 = अणु
 	.regs = mt2701_regs,
 	.type = PWRAP_MT2701,
 	.arb_en_all = 0x3f,
-	.int_en_all = ~(u32)(BIT(31) | BIT(2)),
-	.int1_en_all = 0,
+	.पूर्णांक_en_all = ~(u32)(BIT(31) | BIT(2)),
+	.पूर्णांक1_en_all = 0,
 	.spi_w = PWRAP_MAN_CMD_SPI_WRITE_NEW,
 	.wdt_src = PWRAP_WDT_SRC_MASK_ALL,
 	.caps = PWRAP_CAP_RESET | PWRAP_CAP_DCM,
-	.init_reg_clock = pwrap_mt2701_init_reg_clock,
-	.init_soc_specific = pwrap_mt2701_init_soc_specific,
-};
+	.init_reg_घड़ी = pwrap_mt2701_init_reg_घड़ी,
+	.init_soc_specअगरic = pwrap_mt2701_init_soc_specअगरic,
+पूर्ण;
 
-static const struct pmic_wrapper_type pwrap_mt6765 = {
+अटल स्थिर काष्ठा pmic_wrapper_type pwrap_mt6765 = अणु
 	.regs = mt6765_regs,
 	.type = PWRAP_MT6765,
 	.arb_en_all = 0x3fd35,
-	.int_en_all = 0xffffffff,
+	.पूर्णांक_en_all = 0xffffffff,
 	.spi_w = PWRAP_MAN_CMD_SPI_WRITE,
 	.wdt_src = PWRAP_WDT_SRC_MASK_ALL,
 	.caps = PWRAP_CAP_RESET | PWRAP_CAP_DCM,
-	.init_reg_clock = pwrap_common_init_reg_clock,
-	.init_soc_specific = NULL,
-};
+	.init_reg_घड़ी = pwrap_common_init_reg_घड़ी,
+	.init_soc_specअगरic = शून्य,
+पूर्ण;
 
-static const struct pmic_wrapper_type pwrap_mt6779 = {
+अटल स्थिर काष्ठा pmic_wrapper_type pwrap_mt6779 = अणु
 	.regs = mt6779_regs,
 	.type = PWRAP_MT6779,
 	.arb_en_all = 0xfbb7f,
-	.int_en_all = 0xfffffffe,
-	.int1_en_all = 0,
+	.पूर्णांक_en_all = 0xfffffffe,
+	.पूर्णांक1_en_all = 0,
 	.spi_w = PWRAP_MAN_CMD_SPI_WRITE,
 	.wdt_src = PWRAP_WDT_SRC_MASK_ALL,
 	.caps = 0,
-	.init_reg_clock = pwrap_common_init_reg_clock,
-	.init_soc_specific = NULL,
-};
+	.init_reg_घड़ी = pwrap_common_init_reg_घड़ी,
+	.init_soc_specअगरic = शून्य,
+पूर्ण;
 
-static const struct pmic_wrapper_type pwrap_mt6797 = {
+अटल स्थिर काष्ठा pmic_wrapper_type pwrap_mt6797 = अणु
 	.regs = mt6797_regs,
 	.type = PWRAP_MT6797,
 	.arb_en_all = 0x01fff,
-	.int_en_all = 0xffffffc6,
-	.int1_en_all = 0,
+	.पूर्णांक_en_all = 0xffffffc6,
+	.पूर्णांक1_en_all = 0,
 	.spi_w = PWRAP_MAN_CMD_SPI_WRITE,
 	.wdt_src = PWRAP_WDT_SRC_MASK_ALL,
 	.caps = PWRAP_CAP_RESET | PWRAP_CAP_DCM,
-	.init_reg_clock = pwrap_common_init_reg_clock,
-	.init_soc_specific = NULL,
-};
+	.init_reg_घड़ी = pwrap_common_init_reg_घड़ी,
+	.init_soc_specअगरic = शून्य,
+पूर्ण;
 
-static const struct pmic_wrapper_type pwrap_mt6873 = {
+अटल स्थिर काष्ठा pmic_wrapper_type pwrap_mt6873 = अणु
 	.regs = mt6873_regs,
 	.type = PWRAP_MT6873,
 	.arb_en_all = 0x777f,
-	.int_en_all = BIT(4) | BIT(5),
-	.int1_en_all = 0,
+	.पूर्णांक_en_all = BIT(4) | BIT(5),
+	.पूर्णांक1_en_all = 0,
 	.spi_w = PWRAP_MAN_CMD_SPI_WRITE,
 	.wdt_src = PWRAP_WDT_SRC_MASK_ALL,
 	.caps = PWRAP_CAP_ARB,
-	.init_reg_clock = pwrap_common_init_reg_clock,
-	.init_soc_specific = NULL,
-};
+	.init_reg_घड़ी = pwrap_common_init_reg_घड़ी,
+	.init_soc_specअगरic = शून्य,
+पूर्ण;
 
-static const struct pmic_wrapper_type pwrap_mt7622 = {
+अटल स्थिर काष्ठा pmic_wrapper_type pwrap_mt7622 = अणु
 	.regs = mt7622_regs,
 	.type = PWRAP_MT7622,
 	.arb_en_all = 0xff,
-	.int_en_all = ~(u32)BIT(31),
-	.int1_en_all = 0,
+	.पूर्णांक_en_all = ~(u32)BIT(31),
+	.पूर्णांक1_en_all = 0,
 	.spi_w = PWRAP_MAN_CMD_SPI_WRITE,
 	.wdt_src = PWRAP_WDT_SRC_MASK_ALL,
 	.caps = PWRAP_CAP_RESET | PWRAP_CAP_DCM,
-	.init_reg_clock = pwrap_common_init_reg_clock,
-	.init_soc_specific = pwrap_mt7622_init_soc_specific,
-};
+	.init_reg_घड़ी = pwrap_common_init_reg_घड़ी,
+	.init_soc_specअगरic = pwrap_mt7622_init_soc_specअगरic,
+पूर्ण;
 
-static const struct pmic_wrapper_type pwrap_mt8135 = {
+अटल स्थिर काष्ठा pmic_wrapper_type pwrap_mt8135 = अणु
 	.regs = mt8135_regs,
 	.type = PWRAP_MT8135,
 	.arb_en_all = 0x1ff,
-	.int_en_all = ~(u32)(BIT(31) | BIT(1)),
-	.int1_en_all = 0,
+	.पूर्णांक_en_all = ~(u32)(BIT(31) | BIT(1)),
+	.पूर्णांक1_en_all = 0,
 	.spi_w = PWRAP_MAN_CMD_SPI_WRITE,
 	.wdt_src = PWRAP_WDT_SRC_MASK_ALL,
 	.caps = PWRAP_CAP_BRIDGE | PWRAP_CAP_RESET | PWRAP_CAP_DCM,
-	.init_reg_clock = pwrap_common_init_reg_clock,
-	.init_soc_specific = pwrap_mt8135_init_soc_specific,
-};
+	.init_reg_घड़ी = pwrap_common_init_reg_घड़ी,
+	.init_soc_specअगरic = pwrap_mt8135_init_soc_specअगरic,
+पूर्ण;
 
-static const struct pmic_wrapper_type pwrap_mt8173 = {
+अटल स्थिर काष्ठा pmic_wrapper_type pwrap_mt8173 = अणु
 	.regs = mt8173_regs,
 	.type = PWRAP_MT8173,
 	.arb_en_all = 0x3f,
-	.int_en_all = ~(u32)(BIT(31) | BIT(1)),
-	.int1_en_all = 0,
+	.पूर्णांक_en_all = ~(u32)(BIT(31) | BIT(1)),
+	.पूर्णांक1_en_all = 0,
 	.spi_w = PWRAP_MAN_CMD_SPI_WRITE,
 	.wdt_src = PWRAP_WDT_SRC_MASK_NO_STAUPD,
 	.caps = PWRAP_CAP_RESET | PWRAP_CAP_DCM,
-	.init_reg_clock = pwrap_common_init_reg_clock,
-	.init_soc_specific = pwrap_mt8173_init_soc_specific,
-};
+	.init_reg_घड़ी = pwrap_common_init_reg_घड़ी,
+	.init_soc_specअगरic = pwrap_mt8173_init_soc_specअगरic,
+पूर्ण;
 
-static const struct pmic_wrapper_type pwrap_mt8183 = {
+अटल स्थिर काष्ठा pmic_wrapper_type pwrap_mt8183 = अणु
 	.regs = mt8183_regs,
 	.type = PWRAP_MT8183,
 	.arb_en_all = 0x3fa75,
-	.int_en_all = 0xffffffff,
-	.int1_en_all = 0xeef7ffff,
+	.पूर्णांक_en_all = 0xffffffff,
+	.पूर्णांक1_en_all = 0xeef7ffff,
 	.spi_w = PWRAP_MAN_CMD_SPI_WRITE,
 	.wdt_src = PWRAP_WDT_SRC_MASK_ALL,
 	.caps = PWRAP_CAP_INT1_EN | PWRAP_CAP_WDT_SRC1,
-	.init_reg_clock = pwrap_common_init_reg_clock,
-	.init_soc_specific = pwrap_mt8183_init_soc_specific,
-};
+	.init_reg_घड़ी = pwrap_common_init_reg_घड़ी,
+	.init_soc_specअगरic = pwrap_mt8183_init_soc_specअगरic,
+पूर्ण;
 
-static struct pmic_wrapper_type pwrap_mt8516 = {
+अटल काष्ठा pmic_wrapper_type pwrap_mt8516 = अणु
 	.regs = mt8516_regs,
 	.type = PWRAP_MT8516,
 	.arb_en_all = 0xff,
-	.int_en_all = ~(u32)(BIT(31) | BIT(2)),
+	.पूर्णांक_en_all = ~(u32)(BIT(31) | BIT(2)),
 	.spi_w = PWRAP_MAN_CMD_SPI_WRITE,
 	.wdt_src = PWRAP_WDT_SRC_MASK_ALL,
 	.caps = PWRAP_CAP_DCM,
-	.init_reg_clock = pwrap_mt2701_init_reg_clock,
-	.init_soc_specific = NULL,
-};
+	.init_reg_घड़ी = pwrap_mt2701_init_reg_घड़ी,
+	.init_soc_specअगरic = शून्य,
+पूर्ण;
 
-static const struct of_device_id of_pwrap_match_tbl[] = {
-	{
+अटल स्थिर काष्ठा of_device_id of_pwrap_match_tbl[] = अणु
+	अणु
 		.compatible = "mediatek,mt2701-pwrap",
 		.data = &pwrap_mt2701,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6765-pwrap",
 		.data = &pwrap_mt6765,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6779-pwrap",
 		.data = &pwrap_mt6779,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6797-pwrap",
 		.data = &pwrap_mt6797,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6873-pwrap",
 		.data = &pwrap_mt6873,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt7622-pwrap",
 		.data = &pwrap_mt7622,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt8135-pwrap",
 		.data = &pwrap_mt8135,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt8173-pwrap",
 		.data = &pwrap_mt8173,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt8183-pwrap",
 		.data = &pwrap_mt8183,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt8516-pwrap",
 		.data = &pwrap_mt8516,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
+	पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_pwrap_match_tbl);
 
-static int pwrap_probe(struct platform_device *pdev)
-{
-	int ret, irq;
-	u32 mask_done;
-	struct pmic_wrapper *wrp;
-	struct device_node *np = pdev->dev.of_node;
-	const struct of_device_id *of_slave_id = NULL;
-	struct resource *res;
+अटल पूर्णांक pwrap_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret, irq;
+	u32 mask_करोne;
+	काष्ठा pmic_wrapper *wrp;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	स्थिर काष्ठा of_device_id *of_slave_id = शून्य;
+	काष्ठा resource *res;
 
-	if (np->child)
+	अगर (np->child)
 		of_slave_id = of_match_node(of_slave_match_tbl, np->child);
 
-	if (!of_slave_id) {
+	अगर (!of_slave_id) अणु
 		dev_dbg(&pdev->dev, "slave pmic should be defined in dts\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	wrp = devm_kzalloc(&pdev->dev, sizeof(*wrp), GFP_KERNEL);
-	if (!wrp)
-		return -ENOMEM;
+	wrp = devm_kzalloc(&pdev->dev, माप(*wrp), GFP_KERNEL);
+	अगर (!wrp)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, wrp);
+	platक्रमm_set_drvdata(pdev, wrp);
 
 	wrp->master = of_device_get_match_data(&pdev->dev);
 	wrp->slave = of_slave_id->data;
 	wrp->dev = &pdev->dev;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "pwrap");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "pwrap");
 	wrp->base = devm_ioremap_resource(wrp->dev, res);
-	if (IS_ERR(wrp->base))
-		return PTR_ERR(wrp->base);
+	अगर (IS_ERR(wrp->base))
+		वापस PTR_ERR(wrp->base);
 
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_RESET)) {
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_RESET)) अणु
 		wrp->rstc = devm_reset_control_get(wrp->dev, "pwrap");
-		if (IS_ERR(wrp->rstc)) {
+		अगर (IS_ERR(wrp->rstc)) अणु
 			ret = PTR_ERR(wrp->rstc);
 			dev_dbg(wrp->dev, "cannot get pwrap reset: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_BRIDGE)) {
-		res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_BRIDGE)) अणु
+		res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
 				"pwrap-bridge");
 		wrp->bridge_base = devm_ioremap_resource(wrp->dev, res);
-		if (IS_ERR(wrp->bridge_base))
-			return PTR_ERR(wrp->bridge_base);
+		अगर (IS_ERR(wrp->bridge_base))
+			वापस PTR_ERR(wrp->bridge_base);
 
 		wrp->rstc_bridge = devm_reset_control_get(wrp->dev,
 							  "pwrap-bridge");
-		if (IS_ERR(wrp->rstc_bridge)) {
+		अगर (IS_ERR(wrp->rstc_bridge)) अणु
 			ret = PTR_ERR(wrp->rstc_bridge);
 			dev_dbg(wrp->dev,
 				"cannot get pwrap-bridge reset: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	wrp->clk_spi = devm_clk_get(wrp->dev, "spi");
-	if (IS_ERR(wrp->clk_spi)) {
+	अगर (IS_ERR(wrp->clk_spi)) अणु
 		dev_dbg(wrp->dev, "failed to get clock: %ld\n",
 			PTR_ERR(wrp->clk_spi));
-		return PTR_ERR(wrp->clk_spi);
-	}
+		वापस PTR_ERR(wrp->clk_spi);
+	पूर्ण
 
 	wrp->clk_wrap = devm_clk_get(wrp->dev, "wrap");
-	if (IS_ERR(wrp->clk_wrap)) {
+	अगर (IS_ERR(wrp->clk_wrap)) अणु
 		dev_dbg(wrp->dev, "failed to get clock: %ld\n",
 			PTR_ERR(wrp->clk_wrap));
-		return PTR_ERR(wrp->clk_wrap);
-	}
+		वापस PTR_ERR(wrp->clk_wrap);
+	पूर्ण
 
 	ret = clk_prepare_enable(wrp->clk_spi);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(wrp->clk_wrap);
-	if (ret)
-		goto err_out1;
+	अगर (ret)
+		जाओ err_out1;
 
-	/* Enable internal dynamic clock */
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_DCM)) {
-		pwrap_writel(wrp, 1, PWRAP_DCM_EN);
-		pwrap_writel(wrp, 0, PWRAP_DCM_DBC_PRD);
-	}
+	/* Enable पूर्णांकernal dynamic घड़ी */
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_DCM)) अणु
+		pwrap_ग_लिखोl(wrp, 1, PWRAP_DCM_EN);
+		pwrap_ग_लिखोl(wrp, 0, PWRAP_DCM_DBC_PRD);
+	पूर्ण
 
 	/*
-	 * The PMIC could already be initialized by the bootloader.
-	 * Skip initialization here in this case.
+	 * The PMIC could alपढ़ोy be initialized by the bootloader.
+	 * Skip initialization here in this हाल.
 	 */
-	if (!pwrap_readl(wrp, PWRAP_INIT_DONE2)) {
+	अगर (!pwrap_पढ़ोl(wrp, PWRAP_INIT_DONE2)) अणु
 		ret = pwrap_init(wrp);
-		if (ret) {
+		अगर (ret) अणु
 			dev_dbg(wrp->dev, "init failed with %d\n", ret);
-			goto err_out2;
-		}
-	}
+			जाओ err_out2;
+		पूर्ण
+	पूर्ण
 
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
-		mask_done = PWRAP_STATE_INIT_DONE1;
-	else
-		mask_done = PWRAP_STATE_INIT_DONE0;
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
+		mask_करोne = PWRAP_STATE_INIT_DONE1;
+	अन्यथा
+		mask_करोne = PWRAP_STATE_INIT_DONE0;
 
-	if (!(pwrap_readl(wrp, PWRAP_WACS2_RDATA) & mask_done)) {
+	अगर (!(pwrap_पढ़ोl(wrp, PWRAP_WACS2_RDATA) & mask_करोne)) अणु
 		dev_dbg(wrp->dev, "initialization isn't finished\n");
 		ret = -ENODEV;
-		goto err_out2;
-	}
+		जाओ err_out2;
+	पूर्ण
 
-	/* Initialize watchdog, may not be done by the bootloader */
-	if (!HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
-		pwrap_writel(wrp, 0xf, PWRAP_WDT_UNIT);
+	/* Initialize watchकरोg, may not be करोne by the bootloader */
+	अगर (!HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
+		pwrap_ग_लिखोl(wrp, 0xf, PWRAP_WDT_UNIT);
 
 	/*
-	 * Since STAUPD was not used on mt8173 platform,
+	 * Since STAUPD was not used on mt8173 platक्रमm,
 	 * so STAUPD of WDT_SRC which should be turned off
 	 */
-	pwrap_writel(wrp, wrp->master->wdt_src, PWRAP_WDT_SRC_EN);
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_WDT_SRC1))
-		pwrap_writel(wrp, wrp->master->wdt_src, PWRAP_WDT_SRC_EN_1);
+	pwrap_ग_लिखोl(wrp, wrp->master->wdt_src, PWRAP_WDT_SRC_EN);
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_WDT_SRC1))
+		pwrap_ग_लिखोl(wrp, wrp->master->wdt_src, PWRAP_WDT_SRC_EN_1);
 
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
-		pwrap_writel(wrp, 0x3, PWRAP_TIMER_EN);
-	else
-		pwrap_writel(wrp, 0x1, PWRAP_TIMER_EN);
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_ARB))
+		pwrap_ग_लिखोl(wrp, 0x3, PWRAP_TIMER_EN);
+	अन्यथा
+		pwrap_ग_लिखोl(wrp, 0x1, PWRAP_TIMER_EN);
 
-	pwrap_writel(wrp, wrp->master->int_en_all, PWRAP_INT_EN);
+	pwrap_ग_लिखोl(wrp, wrp->master->पूर्णांक_en_all, PWRAP_INT_EN);
 	/*
-	 * We add INT1 interrupt to handle starvation and request exception
+	 * We add INT1 पूर्णांकerrupt to handle starvation and request exception
 	 * If we support it, we should enable it here.
 	 */
-	if (HAS_CAP(wrp->master->caps, PWRAP_CAP_INT1_EN))
-		pwrap_writel(wrp, wrp->master->int1_en_all, PWRAP_INT1_EN);
+	अगर (HAS_CAP(wrp->master->caps, PWRAP_CAP_INT1_EN))
+		pwrap_ग_लिखोl(wrp, wrp->master->पूर्णांक1_en_all, PWRAP_INT1_EN);
 
-	irq = platform_get_irq(pdev, 0);
-	ret = devm_request_irq(wrp->dev, irq, pwrap_interrupt,
+	irq = platक्रमm_get_irq(pdev, 0);
+	ret = devm_request_irq(wrp->dev, irq, pwrap_पूर्णांकerrupt,
 			       IRQF_TRIGGER_HIGH,
 			       "mt-pmic-pwrap", wrp);
-	if (ret)
-		goto err_out2;
+	अगर (ret)
+		जाओ err_out2;
 
-	wrp->regmap = devm_regmap_init(wrp->dev, NULL, wrp, wrp->slave->regmap);
-	if (IS_ERR(wrp->regmap)) {
+	wrp->regmap = devm_regmap_init(wrp->dev, शून्य, wrp, wrp->slave->regmap);
+	अगर (IS_ERR(wrp->regmap)) अणु
 		ret = PTR_ERR(wrp->regmap);
-		goto err_out2;
-	}
+		जाओ err_out2;
+	पूर्ण
 
-	ret = of_platform_populate(np, NULL, NULL, wrp->dev);
-	if (ret) {
+	ret = of_platक्रमm_populate(np, शून्य, शून्य, wrp->dev);
+	अगर (ret) अणु
 		dev_dbg(wrp->dev, "failed to create child devices at %pOF\n",
 				np);
-		goto err_out2;
-	}
+		जाओ err_out2;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out2:
 	clk_disable_unprepare(wrp->clk_wrap);
 err_out1:
 	clk_disable_unprepare(wrp->clk_spi);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver pwrap_drv = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver pwrap_drv = अणु
+	.driver = अणु
 		.name = "mt-pmic-pwrap",
 		.of_match_table = of_match_ptr(of_pwrap_match_tbl),
-	},
+	पूर्ण,
 	.probe = pwrap_probe,
-};
+पूर्ण;
 
-module_platform_driver(pwrap_drv);
+module_platक्रमm_driver(pwrap_drv);
 
 MODULE_AUTHOR("Flora Fu, MediaTek");
 MODULE_DESCRIPTION("MediaTek MT8135 PMIC Wrapper Driver");

@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * builtin-top.c
  *
  * Builtin top command: Display a continuously updated profile of
- * any workload, CPU or specific PID.
+ * any workload, CPU or specअगरic PID.
  *
  * Copyright (C) 2008, Red Hat Inc, Ingo Molnar <mingo@redhat.com>
- *		 2011, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
+ *		 2011, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
  *
  * Improvements and fixes by:
  *
- *   Arjan van de Ven <arjan@linux.intel.com>
- *   Yanmin Zhang <yanmin.zhang@intel.com>
- *   Wu Fengguang <fengguang.wu@intel.com>
+ *   Arjan van de Ven <arjan@linux.पूर्णांकel.com>
+ *   Yanmin Zhang <yanmin.zhang@पूर्णांकel.com>
+ *   Wu Fengguang <fengguang.wu@पूर्णांकel.com>
  *   Mike Galbraith <efault@gmx.de>
  *   Paul Mackerras <paulus@samba.org>
  */
-#include "builtin.h"
+#समावेश "builtin.h"
 
-#include "perf.h"
+#समावेश "perf.h"
 
-#include "util/annotate.h"
-#include "util/bpf-event.h"
-#include "util/config.h"
-#include "util/color.h"
-#include "util/dso.h"
-#include "util/evlist.h"
-#include "util/evsel.h"
-#include "util/evsel_config.h"
-#include "util/event.h"
-#include "util/machine.h"
-#include "util/map.h"
-#include "util/mmap.h"
-#include "util/session.h"
-#include "util/thread.h"
-#include "util/symbol.h"
-#include "util/synthetic-events.h"
-#include "util/top.h"
-#include "util/util.h"
-#include <linux/rbtree.h>
-#include <subcmd/parse-options.h>
-#include "util/parse-events.h"
-#include "util/callchain.h"
-#include "util/cpumap.h"
-#include "util/sort.h"
-#include "util/string2.h"
-#include "util/term.h"
-#include "util/intlist.h"
-#include "util/parse-branch-options.h"
-#include "arch/common.h"
-#include "ui/ui.h"
+#समावेश "util/annotate.h"
+#समावेश "util/bpf-event.h"
+#समावेश "util/config.h"
+#समावेश "util/color.h"
+#समावेश "util/dso.h"
+#समावेश "util/evlist.h"
+#समावेश "util/evsel.h"
+#समावेश "util/evsel_config.h"
+#समावेश "util/event.h"
+#समावेश "util/machine.h"
+#समावेश "util/map.h"
+#समावेश "util/mmap.h"
+#समावेश "util/session.h"
+#समावेश "util/thread.h"
+#समावेश "util/symbol.h"
+#समावेश "util/synthetic-events.h"
+#समावेश "util/top.h"
+#समावेश "util/util.h"
+#समावेश <linux/rbtree.h>
+#समावेश <subcmd/parse-options.h>
+#समावेश "util/parse-events.h"
+#समावेश "util/callchain.h"
+#समावेश "util/cpumap.h"
+#समावेश "util/sort.h"
+#समावेश "util/string2.h"
+#समावेश "util/term.h"
+#समावेश "util/intlist.h"
+#समावेश "util/parse-branch-options.h"
+#समावेश "arch/common.h"
+#समावेश "ui/ui.h"
 
-#include "util/debug.h"
-#include "util/ordered-events.h"
-#include "util/pfm.h"
+#समावेश "util/debug.h"
+#समावेश "util/ordered-events.h"
+#समावेश "util/pfm.h"
 
-#include <assert.h>
-#include <elf.h>
-#include <fcntl.h>
+#समावेश <निश्चित.स>
+#समावेश <elf.h>
+#समावेश <fcntl.h>
 
-#include <stdio.h>
-#include <termios.h>
-#include <unistd.h>
-#include <inttypes.h>
+#समावेश <मानकपन.स>
+#समावेश <termios.h>
+#समावेश <unistd.h>
+#समावेश <पूर्णांकtypes.h>
 
-#include <errno.h>
-#include <time.h>
-#include <sched.h>
-#include <signal.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <समय.स>
+#समावेश <sched.h>
+#समावेश <संकेत.स>
 
-#include <sys/syscall.h>
-#include <sys/ioctl.h>
-#include <poll.h>
-#include <sys/prctl.h>
-#include <sys/wait.h>
-#include <sys/uio.h>
-#include <sys/utsname.h>
-#include <sys/mman.h>
+#समावेश <sys/syscall.h>
+#समावेश <sys/ioctl.h>
+#समावेश <poll.h>
+#समावेश <sys/prctl.h>
+#समावेश <sys/रुको.h>
+#समावेश <sys/uपन.स>
+#समावेश <sys/utsname.h>
+#समावेश <sys/mman.h>
 
-#include <linux/stringify.h>
-#include <linux/time64.h>
-#include <linux/types.h>
-#include <linux/err.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/समय64.h>
+#समावेश <linux/types.h>
+#समावेश <linux/err.h>
 
-#include <linux/ctype.h>
-#include <perf/mmap.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <perf/mmap.h>
 
-static volatile int done;
-static volatile int resize;
+अटल अस्थिर पूर्णांक करोne;
+अटल अस्थिर पूर्णांक resize;
 
-#define HEADER_LINE_NR  5
+#घोषणा HEADER_LINE_NR  5
 
-static void perf_top__update_print_entries(struct perf_top *top)
-{
-	top->print_entries = top->winsize.ws_row - HEADER_LINE_NR;
-}
+अटल व्योम perf_top__update_prपूर्णांक_entries(काष्ठा perf_top *top)
+अणु
+	top->prपूर्णांक_entries = top->winsize.ws_row - HEADER_LINE_NR;
+पूर्ण
 
-static void winch_sig(int sig __maybe_unused)
-{
+अटल व्योम winch_sig(पूर्णांक sig __maybe_unused)
+अणु
 	resize = 1;
-}
+पूर्ण
 
-static void perf_top__resize(struct perf_top *top)
-{
+अटल व्योम perf_top__resize(काष्ठा perf_top *top)
+अणु
 	get_term_dimensions(&top->winsize);
-	perf_top__update_print_entries(top);
-}
+	perf_top__update_prपूर्णांक_entries(top);
+पूर्ण
 
-static int perf_top__parse_source(struct perf_top *top, struct hist_entry *he)
-{
-	struct evsel *evsel;
-	struct symbol *sym;
-	struct annotation *notes;
-	struct map *map;
-	int err = -1;
+अटल पूर्णांक perf_top__parse_source(काष्ठा perf_top *top, काष्ठा hist_entry *he)
+अणु
+	काष्ठा evsel *evsel;
+	काष्ठा symbol *sym;
+	काष्ठा annotation *notes;
+	काष्ठा map *map;
+	पूर्णांक err = -1;
 
-	if (!he || !he->ms.sym)
-		return -1;
+	अगर (!he || !he->ms.sym)
+		वापस -1;
 
 	evsel = hists_to_evsel(he->hists);
 
@@ -126,48 +127,48 @@ static int perf_top__parse_source(struct perf_top *top, struct hist_entry *he)
 	/*
 	 * We can't annotate with just /proc/kallsyms
 	 */
-	if (map->dso->symtab_type == DSO_BINARY_TYPE__KALLSYMS &&
-	    !dso__is_kcore(map->dso)) {
+	अगर (map->dso->symtab_type == DSO_BINARY_TYPE__KALLSYMS &&
+	    !dso__is_kcore(map->dso)) अणु
 		pr_err("Can't annotate %s: No vmlinux file was found in the "
 		       "path\n", sym->name);
 		sleep(1);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	notes = symbol__annotation(sym);
-	pthread_mutex_lock(&notes->lock);
+	pthपढ़ो_mutex_lock(&notes->lock);
 
-	if (!symbol__hists(sym, top->evlist->core.nr_entries)) {
-		pthread_mutex_unlock(&notes->lock);
+	अगर (!symbol__hists(sym, top->evlist->core.nr_entries)) अणु
+		pthपढ़ो_mutex_unlock(&notes->lock);
 		pr_err("Not enough memory for annotating '%s' symbol!\n",
 		       sym->name);
 		sleep(1);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = symbol__annotate(&he->ms, evsel, &top->annotation_opts, NULL);
-	if (err == 0) {
+	err = symbol__annotate(&he->ms, evsel, &top->annotation_opts, शून्य);
+	अगर (err == 0) अणु
 		top->sym_filter_entry = he;
-	} else {
-		char msg[BUFSIZ];
-		symbol__strerror_disassemble(&he->ms, err, msg, sizeof(msg));
+	पूर्ण अन्यथा अणु
+		अक्षर msg[बफ_मान];
+		symbol__म_त्रुटि_disassemble(&he->ms, err, msg, माप(msg));
 		pr_err("Couldn't annotate %s: %s\n", sym->name, msg);
-	}
+	पूर्ण
 
-	pthread_mutex_unlock(&notes->lock);
-	return err;
-}
+	pthपढ़ो_mutex_unlock(&notes->lock);
+	वापस err;
+पूर्ण
 
-static void __zero_source_counters(struct hist_entry *he)
-{
-	struct symbol *sym = he->ms.sym;
+अटल व्योम __zero_source_counters(काष्ठा hist_entry *he)
+अणु
+	काष्ठा symbol *sym = he->ms.sym;
 	symbol__annotate_zero_histograms(sym);
-}
+पूर्ण
 
-static void ui__warn_map_erange(struct map *map, struct symbol *sym, u64 ip)
-{
-	struct utsname uts;
-	int err = uname(&uts);
+अटल व्योम ui__warn_map_erange(काष्ठा map *map, काष्ठा symbol *sym, u64 ip)
+अणु
+	काष्ठा utsname uts;
+	पूर्णांक err = uname(&uts);
 
 	ui__warning("Out of bounds address found:\n\n"
 		    "Addr:   %" PRIx64 "\n"
@@ -179,107 +180,107 @@ static void ui__warn_map_erange(struct map *map, struct symbol *sym, u64 ip)
 		    "Tools:  %s\n\n"
 		    "Not all samples will be on the annotation output.\n\n"
 		    "Please report to linux-kernel@vger.kernel.org\n",
-		    ip, map->dso->long_name, dso__symtab_origin(map->dso),
+		    ip, map->dso->दीर्घ_name, dso__symtab_origin(map->dso),
 		    map->start, map->end, sym->start, sym->end,
 		    sym->binding == STB_GLOBAL ? 'g' :
 		    sym->binding == STB_LOCAL  ? 'l' : 'w', sym->name,
 		    err ? "[unknown]" : uts.machine,
 		    err ? "[unknown]" : uts.release, perf_version_string);
-	if (use_browser <= 0)
+	अगर (use_browser <= 0)
 		sleep(5);
 
 	map->erange_warned = true;
-}
+पूर्ण
 
-static void perf_top__record_precise_ip(struct perf_top *top,
-					struct hist_entry *he,
-					struct perf_sample *sample,
-					struct evsel *evsel, u64 ip)
-{
-	struct annotation *notes;
-	struct symbol *sym = he->ms.sym;
-	int err = 0;
+अटल व्योम perf_top__record_precise_ip(काष्ठा perf_top *top,
+					काष्ठा hist_entry *he,
+					काष्ठा perf_sample *sample,
+					काष्ठा evsel *evsel, u64 ip)
+अणु
+	काष्ठा annotation *notes;
+	काष्ठा symbol *sym = he->ms.sym;
+	पूर्णांक err = 0;
 
-	if (sym == NULL || (use_browser == 0 &&
-			    (top->sym_filter_entry == NULL ||
+	अगर (sym == शून्य || (use_browser == 0 &&
+			    (top->sym_filter_entry == शून्य ||
 			     top->sym_filter_entry->ms.sym != sym)))
-		return;
+		वापस;
 
 	notes = symbol__annotation(sym);
 
-	if (pthread_mutex_trylock(&notes->lock))
-		return;
+	अगर (pthपढ़ो_mutex_trylock(&notes->lock))
+		वापस;
 
 	err = hist_entry__inc_addr_samples(he, sample, evsel, ip);
 
-	pthread_mutex_unlock(&notes->lock);
+	pthपढ़ो_mutex_unlock(&notes->lock);
 
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		/*
 		 * This function is now called with he->hists->lock held.
-		 * Release it before going to sleep.
+		 * Release it beक्रमe going to sleep.
 		 */
-		pthread_mutex_unlock(&he->hists->lock);
+		pthपढ़ो_mutex_unlock(&he->hists->lock);
 
-		if (err == -ERANGE && !he->ms.map->erange_warned)
+		अगर (err == -दुस्फल && !he->ms.map->erange_warned)
 			ui__warn_map_erange(he->ms.map, sym, ip);
-		else if (err == -ENOMEM) {
+		अन्यथा अगर (err == -ENOMEM) अणु
 			pr_err("Not enough memory for annotating '%s' symbol!\n",
 			       sym->name);
 			sleep(1);
-		}
+		पूर्ण
 
-		pthread_mutex_lock(&he->hists->lock);
-	}
-}
+		pthपढ़ो_mutex_lock(&he->hists->lock);
+	पूर्ण
+पूर्ण
 
-static void perf_top__show_details(struct perf_top *top)
-{
-	struct hist_entry *he = top->sym_filter_entry;
-	struct evsel *evsel;
-	struct annotation *notes;
-	struct symbol *symbol;
-	int more;
+अटल व्योम perf_top__show_details(काष्ठा perf_top *top)
+अणु
+	काष्ठा hist_entry *he = top->sym_filter_entry;
+	काष्ठा evsel *evsel;
+	काष्ठा annotation *notes;
+	काष्ठा symbol *symbol;
+	पूर्णांक more;
 
-	if (!he)
-		return;
+	अगर (!he)
+		वापस;
 
 	evsel = hists_to_evsel(he->hists);
 
 	symbol = he->ms.sym;
 	notes = symbol__annotation(symbol);
 
-	pthread_mutex_lock(&notes->lock);
+	pthपढ़ो_mutex_lock(&notes->lock);
 
 	symbol__calc_percent(symbol, evsel);
 
-	if (notes->src == NULL)
-		goto out_unlock;
+	अगर (notes->src == शून्य)
+		जाओ out_unlock;
 
-	printf("Showing %s for %s\n", evsel__name(top->sym_evsel), symbol->name);
-	printf("  Events  Pcnt (>=%d%%)\n", top->annotation_opts.min_pcnt);
+	म_लिखो("Showing %s for %s\n", evsel__name(top->sym_evsel), symbol->name);
+	म_लिखो("  Events  Pcnt (>=%d%%)\n", top->annotation_opts.min_pcnt);
 
-	more = symbol__annotate_printf(&he->ms, top->sym_evsel, &top->annotation_opts);
+	more = symbol__annotate_म_लिखो(&he->ms, top->sym_evsel, &top->annotation_opts);
 
-	if (top->evlist->enabled) {
-		if (top->zero)
+	अगर (top->evlist->enabled) अणु
+		अगर (top->zero)
 			symbol__annotate_zero_histogram(symbol, top->sym_evsel->idx);
-		else
+		अन्यथा
 			symbol__annotate_decay_histogram(symbol, top->sym_evsel->idx);
-	}
-	if (more != 0)
-		printf("%d lines not displayed, maybe increase display entries [e]\n", more);
+	पूर्ण
+	अगर (more != 0)
+		म_लिखो("%d lines not displayed, maybe increase display entries [e]\n", more);
 out_unlock:
-	pthread_mutex_unlock(&notes->lock);
-}
+	pthपढ़ो_mutex_unlock(&notes->lock);
+पूर्ण
 
-static void perf_top__resort_hists(struct perf_top *t)
-{
-	struct evlist *evlist = t->evlist;
-	struct evsel *pos;
+अटल व्योम perf_top__resort_hists(काष्ठा perf_top *t)
+अणु
+	काष्ठा evlist *evlist = t->evlist;
+	काष्ठा evsel *pos;
 
-	evlist__for_each_entry(evlist, pos) {
-		struct hists *hists = evsel__hists(pos);
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		काष्ठा hists *hists = evsel__hists(pos);
 
 		/*
 		 * unlink existing entries so that they can be linked
@@ -287,341 +288,341 @@ static void perf_top__resort_hists(struct perf_top *t)
 		 */
 		hists__unlink(hists);
 
-		if (evlist->enabled) {
-			if (t->zero) {
+		अगर (evlist->enabled) अणु
+			अगर (t->zero) अणु
 				hists__delete_entries(hists);
-			} else {
+			पूर्ण अन्यथा अणु
 				hists__decay_entries(hists, t->hide_user_symbols,
 						     t->hide_kernel_symbols);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		hists__collapse_resort(hists, NULL);
+		hists__collapse_resort(hists, शून्य);
 
 		/* Non-group events are considered as leader */
-		if (symbol_conf.event_group && !evsel__is_group_leader(pos)) {
-			struct hists *leader_hists = evsel__hists(pos->leader);
+		अगर (symbol_conf.event_group && !evsel__is_group_leader(pos)) अणु
+			काष्ठा hists *leader_hists = evsel__hists(pos->leader);
 
 			hists__match(leader_hists, hists);
 			hists__link(leader_hists, hists);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	evlist__for_each_entry(evlist, pos) {
-		evsel__output_resort(pos, NULL);
-	}
-}
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		evsel__output_resort(pos, शून्य);
+	पूर्ण
+पूर्ण
 
-static void perf_top__print_sym_table(struct perf_top *top)
-{
-	char bf[160];
-	int printed = 0;
-	const int win_width = top->winsize.ws_col - 1;
-	struct evsel *evsel = top->sym_evsel;
-	struct hists *hists = evsel__hists(evsel);
+अटल व्योम perf_top__prपूर्णांक_sym_table(काष्ठा perf_top *top)
+अणु
+	अक्षर bf[160];
+	पूर्णांक prपूर्णांकed = 0;
+	स्थिर पूर्णांक win_width = top->winsize.ws_col - 1;
+	काष्ठा evsel *evsel = top->sym_evsel;
+	काष्ठा hists *hists = evsel__hists(evsel);
 
-	puts(CONSOLE_CLEAR);
+	माला_दो(CONSOLE_CLEAR);
 
-	perf_top__header_snprintf(top, bf, sizeof(bf));
-	printf("%s\n", bf);
+	perf_top__header_snम_लिखो(top, bf, माप(bf));
+	म_लिखो("%s\n", bf);
 
-	printf("%-*.*s\n", win_width, win_width, graph_dotted_line);
+	म_लिखो("%-*.*s\n", win_width, win_width, graph_करोtted_line);
 
-	if (!top->record_opts.overwrite &&
+	अगर (!top->record_opts.overग_लिखो &&
 	    (top->evlist->stats.nr_lost_warned !=
-	     top->evlist->stats.nr_events[PERF_RECORD_LOST])) {
+	     top->evlist->stats.nr_events[PERF_RECORD_LOST])) अणु
 		top->evlist->stats.nr_lost_warned =
 			      top->evlist->stats.nr_events[PERF_RECORD_LOST];
-		color_fprintf(stdout, PERF_COLOR_RED,
+		color_ख_लिखो(मानक_निकास, PERF_COLOR_RED,
 			      "WARNING: LOST %d chunks, Check IO/CPU overload",
 			      top->evlist->stats.nr_lost_warned);
-		++printed;
-	}
+		++prपूर्णांकed;
+	पूर्ण
 
-	if (top->sym_filter_entry) {
+	अगर (top->sym_filter_entry) अणु
 		perf_top__show_details(top);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	perf_top__resort_hists(top);
 
-	hists__output_recalc_col_len(hists, top->print_entries - printed);
-	putchar('\n');
-	hists__fprintf(hists, false, top->print_entries - printed, win_width,
-		       top->min_percent, stdout, !symbol_conf.use_callchain);
-}
+	hists__output_recalc_col_len(hists, top->prपूर्णांक_entries - prपूर्णांकed);
+	अक्षर_दो('\n');
+	hists__ख_लिखो(hists, false, top->prपूर्णांक_entries - prपूर्णांकed, win_width,
+		       top->min_percent, मानक_निकास, !symbol_conf.use_callchain);
+पूर्ण
 
-static void prompt_integer(int *target, const char *msg)
-{
-	char *buf = malloc(0), *p;
-	size_t dummy = 0;
-	int tmp;
+अटल व्योम prompt_पूर्णांकeger(पूर्णांक *target, स्थिर अक्षर *msg)
+अणु
+	अक्षर *buf = दो_स्मृति(0), *p;
+	माप_प्रकार dummy = 0;
+	पूर्णांक पंचांगp;
 
-	fprintf(stdout, "\n%s: ", msg);
-	if (getline(&buf, &dummy, stdin) < 0)
-		return;
+	ख_लिखो(मानक_निकास, "\n%s: ", msg);
+	अगर (getline(&buf, &dummy, मानक_निवेश) < 0)
+		वापस;
 
-	p = strchr(buf, '\n');
-	if (p)
+	p = म_अक्षर(buf, '\n');
+	अगर (p)
 		*p = 0;
 
 	p = buf;
-	while(*p) {
-		if (!isdigit(*p))
-			goto out_free;
+	जबतक(*p) अणु
+		अगर (!है_अंक(*p))
+			जाओ out_मुक्त;
 		p++;
-	}
-	tmp = strtoul(buf, NULL, 10);
-	*target = tmp;
-out_free:
-	free(buf);
-}
+	पूर्ण
+	पंचांगp = म_से_अदीर्घ(buf, शून्य, 10);
+	*target = पंचांगp;
+out_मुक्त:
+	मुक्त(buf);
+पूर्ण
 
-static void prompt_percent(int *target, const char *msg)
-{
-	int tmp = 0;
+अटल व्योम prompt_percent(पूर्णांक *target, स्थिर अक्षर *msg)
+अणु
+	पूर्णांक पंचांगp = 0;
 
-	prompt_integer(&tmp, msg);
-	if (tmp >= 0 && tmp <= 100)
-		*target = tmp;
-}
+	prompt_पूर्णांकeger(&पंचांगp, msg);
+	अगर (पंचांगp >= 0 && पंचांगp <= 100)
+		*target = पंचांगp;
+पूर्ण
 
-static void perf_top__prompt_symbol(struct perf_top *top, const char *msg)
-{
-	char *buf = malloc(0), *p;
-	struct hist_entry *syme = top->sym_filter_entry, *n, *found = NULL;
-	struct hists *hists = evsel__hists(top->sym_evsel);
-	struct rb_node *next;
-	size_t dummy = 0;
+अटल व्योम perf_top__prompt_symbol(काष्ठा perf_top *top, स्थिर अक्षर *msg)
+अणु
+	अक्षर *buf = दो_स्मृति(0), *p;
+	काष्ठा hist_entry *syme = top->sym_filter_entry, *n, *found = शून्य;
+	काष्ठा hists *hists = evsel__hists(top->sym_evsel);
+	काष्ठा rb_node *next;
+	माप_प्रकार dummy = 0;
 
 	/* zero counters of active symbol */
-	if (syme) {
+	अगर (syme) अणु
 		__zero_source_counters(syme);
-		top->sym_filter_entry = NULL;
-	}
+		top->sym_filter_entry = शून्य;
+	पूर्ण
 
-	fprintf(stdout, "\n%s: ", msg);
-	if (getline(&buf, &dummy, stdin) < 0)
-		goto out_free;
+	ख_लिखो(मानक_निकास, "\n%s: ", msg);
+	अगर (getline(&buf, &dummy, मानक_निवेश) < 0)
+		जाओ out_मुक्त;
 
-	p = strchr(buf, '\n');
-	if (p)
+	p = म_अक्षर(buf, '\n');
+	अगर (p)
 		*p = 0;
 
 	next = rb_first_cached(&hists->entries);
-	while (next) {
-		n = rb_entry(next, struct hist_entry, rb_node);
-		if (n->ms.sym && !strcmp(buf, n->ms.sym->name)) {
+	जबतक (next) अणु
+		n = rb_entry(next, काष्ठा hist_entry, rb_node);
+		अगर (n->ms.sym && !म_भेद(buf, n->ms.sym->name)) अणु
 			found = n;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		next = rb_next(&n->rb_node);
-	}
+	पूर्ण
 
-	if (!found) {
-		fprintf(stderr, "Sorry, %s is not active.\n", buf);
+	अगर (!found) अणु
+		ख_लिखो(मानक_त्रुटि, "Sorry, %s is not active.\n", buf);
 		sleep(1);
-	} else
+	पूर्ण अन्यथा
 		perf_top__parse_source(top, found);
 
-out_free:
-	free(buf);
-}
+out_मुक्त:
+	मुक्त(buf);
+पूर्ण
 
-static void perf_top__print_mapped_keys(struct perf_top *top)
-{
-	char *name = NULL;
+अटल व्योम perf_top__prपूर्णांक_mapped_keys(काष्ठा perf_top *top)
+अणु
+	अक्षर *name = शून्य;
 
-	if (top->sym_filter_entry) {
-		struct symbol *sym = top->sym_filter_entry->ms.sym;
+	अगर (top->sym_filter_entry) अणु
+		काष्ठा symbol *sym = top->sym_filter_entry->ms.sym;
 		name = sym->name;
-	}
+	पूर्ण
 
-	fprintf(stdout, "\nMapped keys:\n");
-	fprintf(stdout, "\t[d]     display refresh delay.             \t(%d)\n", top->delay_secs);
-	fprintf(stdout, "\t[e]     display entries (lines).           \t(%d)\n", top->print_entries);
+	ख_लिखो(मानक_निकास, "\nMapped keys:\n");
+	ख_लिखो(मानक_निकास, "\t[d]     display refresh delay.             \t(%d)\n", top->delay_secs);
+	ख_लिखो(मानक_निकास, "\t[e]     display entries (lines).           \t(%d)\n", top->prपूर्णांक_entries);
 
-	if (top->evlist->core.nr_entries > 1)
-		fprintf(stdout, "\t[E]     active event counter.              \t(%s)\n", evsel__name(top->sym_evsel));
+	अगर (top->evlist->core.nr_entries > 1)
+		ख_लिखो(मानक_निकास, "\t[E]     active event counter.              \t(%s)\n", evsel__name(top->sym_evsel));
 
-	fprintf(stdout, "\t[f]     profile display filter (count).    \t(%d)\n", top->count_filter);
+	ख_लिखो(मानक_निकास, "\t[f]     profile display filter (count).    \t(%d)\n", top->count_filter);
 
-	fprintf(stdout, "\t[F]     annotate display filter (percent). \t(%d%%)\n", top->annotation_opts.min_pcnt);
-	fprintf(stdout, "\t[s]     annotate symbol.                   \t(%s)\n", name?: "NULL");
-	fprintf(stdout, "\t[S]     stop annotation.\n");
+	ख_लिखो(मानक_निकास, "\t[F]     annotate display filter (percent). \t(%d%%)\n", top->annotation_opts.min_pcnt);
+	ख_लिखो(मानक_निकास, "\t[s]     annotate symbol.                   \t(%s)\n", name?: "NULL");
+	ख_लिखो(मानक_निकास, "\t[S]     stop annotation.\n");
 
-	fprintf(stdout,
+	ख_लिखो(मानक_निकास,
 		"\t[K]     hide kernel symbols.             \t(%s)\n",
 		top->hide_kernel_symbols ? "yes" : "no");
-	fprintf(stdout,
+	ख_लिखो(मानक_निकास,
 		"\t[U]     hide user symbols.               \t(%s)\n",
 		top->hide_user_symbols ? "yes" : "no");
-	fprintf(stdout, "\t[z]     toggle sample zeroing.             \t(%d)\n", top->zero ? 1 : 0);
-	fprintf(stdout, "\t[qQ]    quit.\n");
-}
+	ख_लिखो(मानक_निकास, "\t[z]     toggle sample zeroing.             \t(%d)\n", top->zero ? 1 : 0);
+	ख_लिखो(मानक_निकास, "\t[qQ]    quit.\n");
+पूर्ण
 
-static int perf_top__key_mapped(struct perf_top *top, int c)
-{
-	switch (c) {
-		case 'd':
-		case 'e':
-		case 'f':
-		case 'z':
-		case 'q':
-		case 'Q':
-		case 'K':
-		case 'U':
-		case 'F':
-		case 's':
-		case 'S':
-			return 1;
-		case 'E':
-			return top->evlist->core.nr_entries > 1 ? 1 : 0;
-		default:
-			break;
-	}
+अटल पूर्णांक perf_top__key_mapped(काष्ठा perf_top *top, पूर्णांक c)
+अणु
+	चयन (c) अणु
+		हाल 'd':
+		हाल 'e':
+		हाल 'f':
+		हाल 'z':
+		हाल 'q':
+		हाल 'Q':
+		हाल 'K':
+		हाल 'U':
+		हाल 'F':
+		हाल 's':
+		हाल 'S':
+			वापस 1;
+		हाल 'E':
+			वापस top->evlist->core.nr_entries > 1 ? 1 : 0;
+		शेष:
+			अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool perf_top__handle_keypress(struct perf_top *top, int c)
-{
+अटल bool perf_top__handle_keypress(काष्ठा perf_top *top, पूर्णांक c)
+अणु
 	bool ret = true;
 
-	if (!perf_top__key_mapped(top, c)) {
-		struct pollfd stdin_poll = { .fd = 0, .events = POLLIN };
-		struct termios save;
+	अगर (!perf_top__key_mapped(top, c)) अणु
+		काष्ठा pollfd मानक_निवेश_poll = अणु .fd = 0, .events = POLLIN पूर्ण;
+		काष्ठा termios save;
 
-		perf_top__print_mapped_keys(top);
-		fprintf(stdout, "\nEnter selection, or unmapped key to continue: ");
-		fflush(stdout);
+		perf_top__prपूर्णांक_mapped_keys(top);
+		ख_लिखो(मानक_निकास, "\nEnter selection, or unmapped key to continue: ");
+		ख_साफ(मानक_निकास);
 
 		set_term_quiet_input(&save);
 
-		poll(&stdin_poll, 1, -1);
-		c = getc(stdin);
+		poll(&मानक_निवेश_poll, 1, -1);
+		c = अ_लो(मानक_निवेश);
 
 		tcsetattr(0, TCSAFLUSH, &save);
-		if (!perf_top__key_mapped(top, c))
-			return ret;
-	}
+		अगर (!perf_top__key_mapped(top, c))
+			वापस ret;
+	पूर्ण
 
-	switch (c) {
-		case 'd':
-			prompt_integer(&top->delay_secs, "Enter display delay");
-			if (top->delay_secs < 1)
+	चयन (c) अणु
+		हाल 'd':
+			prompt_पूर्णांकeger(&top->delay_secs, "Enter display delay");
+			अगर (top->delay_secs < 1)
 				top->delay_secs = 1;
-			break;
-		case 'e':
-			prompt_integer(&top->print_entries, "Enter display entries (lines)");
-			if (top->print_entries == 0) {
+			अवरोध;
+		हाल 'e':
+			prompt_पूर्णांकeger(&top->prपूर्णांक_entries, "Enter display entries (lines)");
+			अगर (top->prपूर्णांक_entries == 0) अणु
 				perf_top__resize(top);
-				signal(SIGWINCH, winch_sig);
-			} else {
-				signal(SIGWINCH, SIG_DFL);
-			}
-			break;
-		case 'E':
-			if (top->evlist->core.nr_entries > 1) {
-				/* Select 0 as the default event: */
-				int counter = 0;
+				संकेत(SIGWINCH, winch_sig);
+			पूर्ण अन्यथा अणु
+				संकेत(SIGWINCH, संक_पूर्व);
+			पूर्ण
+			अवरोध;
+		हाल 'E':
+			अगर (top->evlist->core.nr_entries > 1) अणु
+				/* Select 0 as the शेष event: */
+				पूर्णांक counter = 0;
 
-				fprintf(stderr, "\nAvailable events:");
+				ख_लिखो(मानक_त्रुटि, "\nAvailable events:");
 
-				evlist__for_each_entry(top->evlist, top->sym_evsel)
-					fprintf(stderr, "\n\t%d %s", top->sym_evsel->idx, evsel__name(top->sym_evsel));
+				evlist__क्रम_each_entry(top->evlist, top->sym_evsel)
+					ख_लिखो(मानक_त्रुटि, "\n\t%d %s", top->sym_evsel->idx, evsel__name(top->sym_evsel));
 
-				prompt_integer(&counter, "Enter details event counter");
+				prompt_पूर्णांकeger(&counter, "Enter details event counter");
 
-				if (counter >= top->evlist->core.nr_entries) {
+				अगर (counter >= top->evlist->core.nr_entries) अणु
 					top->sym_evsel = evlist__first(top->evlist);
-					fprintf(stderr, "Sorry, no such event, using %s.\n", evsel__name(top->sym_evsel));
+					ख_लिखो(मानक_त्रुटि, "Sorry, no such event, using %s.\n", evsel__name(top->sym_evsel));
 					sleep(1);
-					break;
-				}
-				evlist__for_each_entry(top->evlist, top->sym_evsel)
-					if (top->sym_evsel->idx == counter)
-						break;
-			} else
+					अवरोध;
+				पूर्ण
+				evlist__क्रम_each_entry(top->evlist, top->sym_evsel)
+					अगर (top->sym_evsel->idx == counter)
+						अवरोध;
+			पूर्ण अन्यथा
 				top->sym_evsel = evlist__first(top->evlist);
-			break;
-		case 'f':
-			prompt_integer(&top->count_filter, "Enter display event count filter");
-			break;
-		case 'F':
+			अवरोध;
+		हाल 'f':
+			prompt_पूर्णांकeger(&top->count_filter, "Enter display event count filter");
+			अवरोध;
+		हाल 'F':
 			prompt_percent(&top->annotation_opts.min_pcnt,
 				       "Enter details display event filter (percent)");
-			break;
-		case 'K':
+			अवरोध;
+		हाल 'K':
 			top->hide_kernel_symbols = !top->hide_kernel_symbols;
-			break;
-		case 'q':
-		case 'Q':
-			printf("exiting.\n");
-			if (top->dump_symtab)
-				perf_session__fprintf_dsos(top->session, stderr);
+			अवरोध;
+		हाल 'q':
+		हाल 'Q':
+			म_लिखो("exiting.\n");
+			अगर (top->dump_symtab)
+				perf_session__ख_लिखो_dsos(top->session, मानक_त्रुटि);
 			ret = false;
-			break;
-		case 's':
+			अवरोध;
+		हाल 's':
 			perf_top__prompt_symbol(top, "Enter details symbol");
-			break;
-		case 'S':
-			if (!top->sym_filter_entry)
-				break;
-			else {
-				struct hist_entry *syme = top->sym_filter_entry;
+			अवरोध;
+		हाल 'S':
+			अगर (!top->sym_filter_entry)
+				अवरोध;
+			अन्यथा अणु
+				काष्ठा hist_entry *syme = top->sym_filter_entry;
 
-				top->sym_filter_entry = NULL;
+				top->sym_filter_entry = शून्य;
 				__zero_source_counters(syme);
-			}
-			break;
-		case 'U':
+			पूर्ण
+			अवरोध;
+		हाल 'U':
 			top->hide_user_symbols = !top->hide_user_symbols;
-			break;
-		case 'z':
+			अवरोध;
+		हाल 'z':
 			top->zero = !top->zero;
-			break;
-		default:
-			break;
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void perf_top__sort_new_samples(void *arg)
-{
-	struct perf_top *t = arg;
+अटल व्योम perf_top__sort_new_samples(व्योम *arg)
+अणु
+	काष्ठा perf_top *t = arg;
 
-	if (t->evlist->selected != NULL)
+	अगर (t->evlist->selected != शून्य)
 		t->sym_evsel = t->evlist->selected;
 
 	perf_top__resort_hists(t);
 
-	if (t->lost || t->drop)
+	अगर (t->lost || t->drop)
 		pr_warning("Too slow to read ring buffer (change period (-c/-F) or limit CPUs (-C)\n");
-}
+पूर्ण
 
-static void stop_top(void)
-{
-	session_done = 1;
-	done = 1;
-}
+अटल व्योम stop_top(व्योम)
+अणु
+	session_करोne = 1;
+	करोne = 1;
+पूर्ण
 
-static void *display_thread_tui(void *arg)
-{
-	struct evsel *pos;
-	struct perf_top *top = arg;
-	const char *help = "For a higher level overview, try: perf top --sort comm,dso";
-	struct hist_browser_timer hbt = {
-		.timer		= perf_top__sort_new_samples,
+अटल व्योम *display_thपढ़ो_tui(व्योम *arg)
+अणु
+	काष्ठा evsel *pos;
+	काष्ठा perf_top *top = arg;
+	स्थिर अक्षर *help = "For a higher level overview, try: perf top --sort comm,dso";
+	काष्ठा hist_browser_समयr hbt = अणु
+		.समयr		= perf_top__sort_new_samples,
 		.arg		= top,
 		.refresh	= top->delay_secs,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	/* In order to read symbols from other namespaces perf to  needs to call
-	 * setns(2).  This isn't permitted if the struct_fs has multiple users.
-	 * unshare(2) the fs so that we may continue to setns into namespaces
+	/* In order to पढ़ो symbols from other namespaces perf to  needs to call
+	 * setns(2).  This isn't permitted अगर the काष्ठा_fs has multiple users.
+	 * unshare(2) the fs so that we may जारी to setns पूर्णांकo namespaces
 	 * that we're observing.
 	 */
 	unshare(CLONE_FS);
@@ -636,47 +637,47 @@ repeat:
 	 * Zooming in/out UIDs. For now just use whatever the user passed
 	 * via --uid.
 	 */
-	evlist__for_each_entry(top->evlist, pos) {
-		struct hists *hists = evsel__hists(pos);
+	evlist__क्रम_each_entry(top->evlist, pos) अणु
+		काष्ठा hists *hists = evsel__hists(pos);
 		hists->uid_filter_str = top->record_opts.target.uid_str;
-	}
+	पूर्ण
 
 	ret = evlist__tui_browse_hists(top->evlist, help, &hbt, top->min_percent,
-				       &top->session->header.env, !top->record_opts.overwrite,
+				       &top->session->header.env, !top->record_opts.overग_लिखो,
 				       &top->annotation_opts);
-	if (ret == K_RELOAD) {
+	अगर (ret == K_RELOAD) अणु
 		top->zero = true;
-		goto repeat;
-	} else
+		जाओ repeat;
+	पूर्ण अन्यथा
 		stop_top();
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void display_sig(int sig __maybe_unused)
-{
+अटल व्योम display_sig(पूर्णांक sig __maybe_unused)
+अणु
 	stop_top();
-}
+पूर्ण
 
-static void display_setup_sig(void)
-{
-	signal(SIGSEGV, sighandler_dump_stack);
-	signal(SIGFPE, sighandler_dump_stack);
-	signal(SIGINT,  display_sig);
-	signal(SIGQUIT, display_sig);
-	signal(SIGTERM, display_sig);
-}
+अटल व्योम display_setup_sig(व्योम)
+अणु
+	संकेत(संक_अंश, sighandler_dump_stack);
+	संकेत(संक_भ_त्रुटि, sighandler_dump_stack);
+	संकेत(संक_विघ्न,  display_sig);
+	संकेत(SIGQUIT, display_sig);
+	संकेत(संक_इति, display_sig);
+पूर्ण
 
-static void *display_thread(void *arg)
-{
-	struct pollfd stdin_poll = { .fd = 0, .events = POLLIN };
-	struct termios save;
-	struct perf_top *top = arg;
-	int delay_msecs, c;
+अटल व्योम *display_thपढ़ो(व्योम *arg)
+अणु
+	काष्ठा pollfd मानक_निवेश_poll = अणु .fd = 0, .events = POLLIN पूर्ण;
+	काष्ठा termios save;
+	काष्ठा perf_top *top = arg;
+	पूर्णांक delay_msecs, c;
 
-	/* In order to read symbols from other namespaces perf to  needs to call
-	 * setns(2).  This isn't permitted if the struct_fs has multiple users.
-	 * unshare(2) the fs so that we may continue to setns into namespaces
+	/* In order to पढ़ो symbols from other namespaces perf to  needs to call
+	 * setns(2).  This isn't permitted अगर the काष्ठा_fs has multiple users.
+	 * unshare(2) the fs so that we may जारी to setns पूर्णांकo namespaces
 	 * that we're observing.
 	 */
 	unshare(CLONE_FS);
@@ -684,688 +685,688 @@ static void *display_thread(void *arg)
 	prctl(PR_SET_NAME, "perf-top-UI", 0, 0, 0);
 
 	display_setup_sig();
-	pthread__unblock_sigwinch();
+	pthपढ़ो__unblock_sigwinch();
 repeat:
 	delay_msecs = top->delay_secs * MSEC_PER_SEC;
 	set_term_quiet_input(&save);
-	/* trash return*/
-	clearerr(stdin);
-	if (poll(&stdin_poll, 1, 0) > 0)
-		getc(stdin);
+	/* trash वापस*/
+	साफ_त्रुटि(मानक_निवेश);
+	अगर (poll(&मानक_निवेश_poll, 1, 0) > 0)
+		अ_लो(मानक_निवेश);
 
-	while (!done) {
-		perf_top__print_sym_table(top);
+	जबतक (!करोne) अणु
+		perf_top__prपूर्णांक_sym_table(top);
 		/*
-		 * Either timeout expired or we got an EINTR due to SIGWINCH,
-		 * refresh screen in both cases.
+		 * Either समयout expired or we got an EINTR due to SIGWINCH,
+		 * refresh screen in both हालs.
 		 */
-		switch (poll(&stdin_poll, 1, delay_msecs)) {
-		case 0:
-			continue;
-		case -1:
-			if (errno == EINTR)
-				continue;
+		चयन (poll(&मानक_निवेश_poll, 1, delay_msecs)) अणु
+		हाल 0:
+			जारी;
+		हाल -1:
+			अगर (त्रुटि_सं == EINTR)
+				जारी;
 			__fallthrough;
-		default:
-			c = getc(stdin);
+		शेष:
+			c = अ_लो(मानक_निवेश);
 			tcsetattr(0, TCSAFLUSH, &save);
 
-			if (perf_top__handle_keypress(top, c))
-				goto repeat;
+			अगर (perf_top__handle_keypress(top, c))
+				जाओ repeat;
 			stop_top();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	tcsetattr(0, TCSAFLUSH, &save);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int hist_iter__top_callback(struct hist_entry_iter *iter,
-				   struct addr_location *al, bool single,
-				   void *arg)
-{
-	struct perf_top *top = arg;
-	struct hist_entry *he = iter->he;
-	struct evsel *evsel = iter->evsel;
+अटल पूर्णांक hist_iter__top_callback(काष्ठा hist_entry_iter *iter,
+				   काष्ठा addr_location *al, bool single,
+				   व्योम *arg)
+अणु
+	काष्ठा perf_top *top = arg;
+	काष्ठा hist_entry *he = iter->he;
+	काष्ठा evsel *evsel = iter->evsel;
 
-	if (perf_hpp_list.sym && single)
+	अगर (perf_hpp_list.sym && single)
 		perf_top__record_precise_ip(top, he, iter->sample, evsel, al->addr);
 
 	hist__account_cycles(iter->sample->branch_stack, al, iter->sample,
 		     !(top->record_opts.branch_stack & PERF_SAMPLE_BRANCH_ANY),
-		     NULL);
-	return 0;
-}
+		     शून्य);
+	वापस 0;
+पूर्ण
 
-static void perf_event__process_sample(struct perf_tool *tool,
-				       const union perf_event *event,
-				       struct evsel *evsel,
-				       struct perf_sample *sample,
-				       struct machine *machine)
-{
-	struct perf_top *top = container_of(tool, struct perf_top, tool);
-	struct addr_location al;
-	int err;
+अटल व्योम perf_event__process_sample(काष्ठा perf_tool *tool,
+				       स्थिर जोड़ perf_event *event,
+				       काष्ठा evsel *evsel,
+				       काष्ठा perf_sample *sample,
+				       काष्ठा machine *machine)
+अणु
+	काष्ठा perf_top *top = container_of(tool, काष्ठा perf_top, tool);
+	काष्ठा addr_location al;
+	पूर्णांक err;
 
-	if (!machine && perf_guest) {
-		static struct intlist *seen;
+	अगर (!machine && perf_guest) अणु
+		अटल काष्ठा पूर्णांकlist *seen;
 
-		if (!seen)
-			seen = intlist__new(NULL);
+		अगर (!seen)
+			seen = पूर्णांकlist__new(शून्य);
 
-		if (!intlist__has_entry(seen, sample->pid)) {
+		अगर (!पूर्णांकlist__has_entry(seen, sample->pid)) अणु
 			pr_err("Can't find guest [%d]'s kernel information\n",
 				sample->pid);
-			intlist__add(seen, sample->pid);
-		}
-		return;
-	}
+			पूर्णांकlist__add(seen, sample->pid);
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	if (!machine) {
+	अगर (!machine) अणु
 		pr_err("%u unprocessable samples recorded.\r",
 		       top->session->evlist->stats.nr_unprocessable_samples++);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (event->header.misc & PERF_RECORD_MISC_EXACT_IP)
+	अगर (event->header.misc & PERF_RECORD_MISC_EXACT_IP)
 		top->exact_samples++;
 
-	if (machine__resolve(machine, &al, sample) < 0)
-		return;
+	अगर (machine__resolve(machine, &al, sample) < 0)
+		वापस;
 
-	if (top->stitch_lbr)
-		al.thread->lbr_stitch_enable = true;
+	अगर (top->stitch_lbr)
+		al.thपढ़ो->lbr_stitch_enable = true;
 
-	if (!machine->kptr_restrict_warned &&
+	अगर (!machine->kptr_restrict_warned &&
 	    symbol_conf.kptr_restrict &&
-	    al.cpumode == PERF_RECORD_MISC_KERNEL) {
-		if (!evlist__exclude_kernel(top->session->evlist)) {
+	    al.cpumode == PERF_RECORD_MISC_KERNEL) अणु
+		अगर (!evlist__exclude_kernel(top->session->evlist)) अणु
 			ui__warning(
 "Kernel address maps (/proc/{kallsyms,modules}) are restricted.\n\n"
 "Check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.\n\n"
 "Kernel%s samples will not be resolved.\n",
 			  al.map && map__has_symbols(al.map) ?
 			  " modules" : "");
-			if (use_browser <= 0)
+			अगर (use_browser <= 0)
 				sleep(5);
-		}
+		पूर्ण
 		machine->kptr_restrict_warned = true;
-	}
+	पूर्ण
 
-	if (al.sym == NULL && al.map != NULL) {
-		const char *msg = "Kernel samples will not be resolved.\n";
+	अगर (al.sym == शून्य && al.map != शून्य) अणु
+		स्थिर अक्षर *msg = "Kernel samples will not be resolved.\n";
 		/*
-		 * As we do lazy loading of symtabs we only will know if the
-		 * specified vmlinux file is invalid when we actually have a
-		 * hit in kernel space and then try to load it. So if we get
+		 * As we करो lazy loading of symtअसल we only will know अगर the
+		 * specअगरied vmlinux file is invalid when we actually have a
+		 * hit in kernel space and then try to load it. So अगर we get
 		 * here and there are _no_ symbols in the DSO backing the
 		 * kernel map, bail out.
 		 *
-		 * We may never get here, for instance, if we use -K/
-		 * --hide-kernel-symbols, even if the user specifies an
+		 * We may never get here, क्रम instance, अगर we use -K/
+		 * --hide-kernel-symbols, even अगर the user specअगरies an
 		 * invalid --vmlinux ;-)
 		 */
-		if (!machine->kptr_restrict_warned && !top->vmlinux_warned &&
-		    __map__is_kernel(al.map) && map__has_symbols(al.map)) {
-			if (symbol_conf.vmlinux_name) {
-				char serr[256];
-				dso__strerror_load(al.map->dso, serr, sizeof(serr));
+		अगर (!machine->kptr_restrict_warned && !top->vmlinux_warned &&
+		    __map__is_kernel(al.map) && map__has_symbols(al.map)) अणु
+			अगर (symbol_conf.vmlinux_name) अणु
+				अक्षर serr[256];
+				dso__म_त्रुटि_load(al.map->dso, serr, माप(serr));
 				ui__warning("The %s file can't be used: %s\n%s",
 					    symbol_conf.vmlinux_name, serr, msg);
-			} else {
+			पूर्ण अन्यथा अणु
 				ui__warning("A vmlinux file was not found.\n%s",
 					    msg);
-			}
+			पूर्ण
 
-			if (use_browser <= 0)
+			अगर (use_browser <= 0)
 				sleep(5);
 			top->vmlinux_warned = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (al.sym == NULL || !al.sym->idle) {
-		struct hists *hists = evsel__hists(evsel);
-		struct hist_entry_iter iter = {
+	अगर (al.sym == शून्य || !al.sym->idle) अणु
+		काष्ठा hists *hists = evsel__hists(evsel);
+		काष्ठा hist_entry_iter iter = अणु
 			.evsel		= evsel,
 			.sample 	= sample,
 			.add_entry_cb 	= hist_iter__top_callback,
-		};
+		पूर्ण;
 
-		if (symbol_conf.cumulate_callchain)
+		अगर (symbol_conf.cumulate_callchain)
 			iter.ops = &hist_iter_cumulative;
-		else
+		अन्यथा
 			iter.ops = &hist_iter_normal;
 
-		pthread_mutex_lock(&hists->lock);
+		pthपढ़ो_mutex_lock(&hists->lock);
 
 		err = hist_entry_iter__add(&iter, &al, top->max_stack, top);
-		if (err < 0)
+		अगर (err < 0)
 			pr_err("Problem incrementing symbol period, skipping event\n");
 
-		pthread_mutex_unlock(&hists->lock);
-	}
+		pthपढ़ो_mutex_unlock(&hists->lock);
+	पूर्ण
 
 	addr_location__put(&al);
-}
+पूर्ण
 
-static void
-perf_top__process_lost(struct perf_top *top, union perf_event *event,
-		       struct evsel *evsel)
-{
+अटल व्योम
+perf_top__process_lost(काष्ठा perf_top *top, जोड़ perf_event *event,
+		       काष्ठा evsel *evsel)
+अणु
 	top->lost += event->lost.lost;
 	top->lost_total += event->lost.lost;
 	evsel->evlist->stats.total_lost += event->lost.lost;
-}
+पूर्ण
 
-static void
-perf_top__process_lost_samples(struct perf_top *top,
-			       union perf_event *event,
-			       struct evsel *evsel)
-{
+अटल व्योम
+perf_top__process_lost_samples(काष्ठा perf_top *top,
+			       जोड़ perf_event *event,
+			       काष्ठा evsel *evsel)
+अणु
 	top->lost += event->lost_samples.lost;
 	top->lost_total += event->lost_samples.lost;
 	evsel->evlist->stats.total_lost_samples += event->lost_samples.lost;
-}
+पूर्ण
 
-static u64 last_timestamp;
+अटल u64 last_बारtamp;
 
-static void perf_top__mmap_read_idx(struct perf_top *top, int idx)
-{
-	struct record_opts *opts = &top->record_opts;
-	struct evlist *evlist = top->evlist;
-	struct mmap *md;
-	union perf_event *event;
+अटल व्योम perf_top__mmap_पढ़ो_idx(काष्ठा perf_top *top, पूर्णांक idx)
+अणु
+	काष्ठा record_opts *opts = &top->record_opts;
+	काष्ठा evlist *evlist = top->evlist;
+	काष्ठा mmap *md;
+	जोड़ perf_event *event;
 
-	md = opts->overwrite ? &evlist->overwrite_mmap[idx] : &evlist->mmap[idx];
-	if (perf_mmap__read_init(&md->core) < 0)
-		return;
+	md = opts->overग_लिखो ? &evlist->overग_लिखो_mmap[idx] : &evlist->mmap[idx];
+	अगर (perf_mmap__पढ़ो_init(&md->core) < 0)
+		वापस;
 
-	while ((event = perf_mmap__read_event(&md->core)) != NULL) {
-		int ret;
+	जबतक ((event = perf_mmap__पढ़ो_event(&md->core)) != शून्य) अणु
+		पूर्णांक ret;
 
-		ret = evlist__parse_sample_timestamp(evlist, event, &last_timestamp);
-		if (ret && ret != -1)
-			break;
+		ret = evlist__parse_sample_बारtamp(evlist, event, &last_बारtamp);
+		अगर (ret && ret != -1)
+			अवरोध;
 
-		ret = ordered_events__queue(top->qe.in, event, last_timestamp, 0);
-		if (ret)
-			break;
+		ret = ordered_events__queue(top->qe.in, event, last_बारtamp, 0);
+		अगर (ret)
+			अवरोध;
 
 		perf_mmap__consume(&md->core);
 
-		if (top->qe.rotate) {
-			pthread_mutex_lock(&top->qe.mutex);
+		अगर (top->qe.rotate) अणु
+			pthपढ़ो_mutex_lock(&top->qe.mutex);
 			top->qe.rotate = false;
-			pthread_cond_signal(&top->qe.cond);
-			pthread_mutex_unlock(&top->qe.mutex);
-		}
-	}
+			pthपढ़ो_cond_संकेत(&top->qe.cond);
+			pthपढ़ो_mutex_unlock(&top->qe.mutex);
+		पूर्ण
+	पूर्ण
 
-	perf_mmap__read_done(&md->core);
-}
+	perf_mmap__पढ़ो_करोne(&md->core);
+पूर्ण
 
-static void perf_top__mmap_read(struct perf_top *top)
-{
-	bool overwrite = top->record_opts.overwrite;
-	struct evlist *evlist = top->evlist;
-	int i;
+अटल व्योम perf_top__mmap_पढ़ो(काष्ठा perf_top *top)
+अणु
+	bool overग_लिखो = top->record_opts.overग_लिखो;
+	काष्ठा evlist *evlist = top->evlist;
+	पूर्णांक i;
 
-	if (overwrite)
+	अगर (overग_लिखो)
 		evlist__toggle_bkw_mmap(evlist, BKW_MMAP_DATA_PENDING);
 
-	for (i = 0; i < top->evlist->core.nr_mmaps; i++)
-		perf_top__mmap_read_idx(top, i);
+	क्रम (i = 0; i < top->evlist->core.nr_mmaps; i++)
+		perf_top__mmap_पढ़ो_idx(top, i);
 
-	if (overwrite) {
+	अगर (overग_लिखो) अणु
 		evlist__toggle_bkw_mmap(evlist, BKW_MMAP_EMPTY);
 		evlist__toggle_bkw_mmap(evlist, BKW_MMAP_RUNNING);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Check per-event overwrite term.
- * perf top should support consistent term for all events.
- * - All events don't have per-event term
+ * Check per-event overग_लिखो term.
+ * perf top should support consistent term क्रम all events.
+ * - All events करोn't have per-event term
  *   E.g. "cpu/cpu-cycles/,cpu/instructions/"
- *   Nothing change, return 0.
+ *   Nothing change, वापस 0.
  * - All events have same per-event term
- *   E.g. "cpu/cpu-cycles,no-overwrite/,cpu/instructions,no-overwrite/
- *   Using the per-event setting to replace the opts->overwrite if
- *   they are different, then return 0.
- * - Events have different per-event term
+ *   E.g. "cpu/cpu-cycles,no-overग_लिखो/,cpu/inकाष्ठाions,no-overग_लिखो/
+ *   Using the per-event setting to replace the opts->overग_लिखो अगर
+ *   they are dअगरferent, then वापस 0.
+ * - Events have dअगरferent per-event term
  *   E.g. "cpu/cpu-cycles,overwrite/,cpu/instructions,no-overwrite/"
  *   Return -1
  * - Some of the event set per-event term, but some not.
  *   E.g. "cpu/cpu-cycles/,cpu/instructions,no-overwrite/"
  *   Return -1
  */
-static int perf_top__overwrite_check(struct perf_top *top)
-{
-	struct record_opts *opts = &top->record_opts;
-	struct evlist *evlist = top->evlist;
-	struct evsel_config_term *term;
-	struct list_head *config_terms;
-	struct evsel *evsel;
-	int set, overwrite = -1;
+अटल पूर्णांक perf_top__overग_लिखो_check(काष्ठा perf_top *top)
+अणु
+	काष्ठा record_opts *opts = &top->record_opts;
+	काष्ठा evlist *evlist = top->evlist;
+	काष्ठा evsel_config_term *term;
+	काष्ठा list_head *config_terms;
+	काष्ठा evsel *evsel;
+	पूर्णांक set, overग_लिखो = -1;
 
-	evlist__for_each_entry(evlist, evsel) {
+	evlist__क्रम_each_entry(evlist, evsel) अणु
 		set = -1;
 		config_terms = &evsel->config_terms;
-		list_for_each_entry(term, config_terms, list) {
-			if (term->type == EVSEL__CONFIG_TERM_OVERWRITE)
-				set = term->val.overwrite ? 1 : 0;
-		}
+		list_क्रम_each_entry(term, config_terms, list) अणु
+			अगर (term->type == EVSEL__CONFIG_TERM_OVERWRITE)
+				set = term->val.overग_लिखो ? 1 : 0;
+		पूर्ण
 
-		/* no term for current and previous event (likely) */
-		if ((overwrite < 0) && (set < 0))
-			continue;
+		/* no term क्रम current and previous event (likely) */
+		अगर ((overग_लिखो < 0) && (set < 0))
+			जारी;
 
-		/* has term for both current and previous event, compare */
-		if ((overwrite >= 0) && (set >= 0) && (overwrite != set))
-			return -1;
+		/* has term क्रम both current and previous event, compare */
+		अगर ((overग_लिखो >= 0) && (set >= 0) && (overग_लिखो != set))
+			वापस -1;
 
-		/* no term for current event but has term for previous one */
-		if ((overwrite >= 0) && (set < 0))
-			return -1;
+		/* no term क्रम current event but has term क्रम previous one */
+		अगर ((overग_लिखो >= 0) && (set < 0))
+			वापस -1;
 
-		/* has term for current event */
-		if ((overwrite < 0) && (set >= 0)) {
-			/* if it's first event, set overwrite */
-			if (evsel == evlist__first(evlist))
-				overwrite = set;
-			else
-				return -1;
-		}
-	}
+		/* has term क्रम current event */
+		अगर ((overग_लिखो < 0) && (set >= 0)) अणु
+			/* अगर it's first event, set overग_लिखो */
+			अगर (evsel == evlist__first(evlist))
+				overग_लिखो = set;
+			अन्यथा
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	if ((overwrite >= 0) && (opts->overwrite != overwrite))
-		opts->overwrite = overwrite;
+	अगर ((overग_लिखो >= 0) && (opts->overग_लिखो != overग_लिखो))
+		opts->overग_लिखो = overग_लिखो;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_top_overwrite_fallback(struct perf_top *top,
-				       struct evsel *evsel)
-{
-	struct record_opts *opts = &top->record_opts;
-	struct evlist *evlist = top->evlist;
-	struct evsel *counter;
+अटल पूर्णांक perf_top_overग_लिखो_fallback(काष्ठा perf_top *top,
+				       काष्ठा evsel *evsel)
+अणु
+	काष्ठा record_opts *opts = &top->record_opts;
+	काष्ठा evlist *evlist = top->evlist;
+	काष्ठा evsel *counter;
 
-	if (!opts->overwrite)
-		return 0;
+	अगर (!opts->overग_लिखो)
+		वापस 0;
 
 	/* only fall back when first event fails */
-	if (evsel != evlist__first(evlist))
-		return 0;
+	अगर (evsel != evlist__first(evlist))
+		वापस 0;
 
-	evlist__for_each_entry(evlist, counter)
-		counter->core.attr.write_backward = false;
-	opts->overwrite = false;
+	evlist__क्रम_each_entry(evlist, counter)
+		counter->core.attr.ग_लिखो_backward = false;
+	opts->overग_लिखो = false;
 	pr_debug2("fall back to non-overwrite mode\n");
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int perf_top__start_counters(struct perf_top *top)
-{
-	char msg[BUFSIZ];
-	struct evsel *counter;
-	struct evlist *evlist = top->evlist;
-	struct record_opts *opts = &top->record_opts;
+अटल पूर्णांक perf_top__start_counters(काष्ठा perf_top *top)
+अणु
+	अक्षर msg[बफ_मान];
+	काष्ठा evsel *counter;
+	काष्ठा evlist *evlist = top->evlist;
+	काष्ठा record_opts *opts = &top->record_opts;
 
-	if (perf_top__overwrite_check(top)) {
+	अगर (perf_top__overग_लिखो_check(top)) अणु
 		ui__error("perf top only support consistent per-event "
 			  "overwrite setting for all events\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	evlist__config(evlist, opts, &callchain_param);
 
-	evlist__for_each_entry(evlist, counter) {
+	evlist__क्रम_each_entry(evlist, counter) अणु
 try_again:
-		if (evsel__open(counter, top->evlist->core.cpus,
-				     top->evlist->core.threads) < 0) {
+		अगर (evsel__खोलो(counter, top->evlist->core.cpus,
+				     top->evlist->core.thपढ़ोs) < 0) अणु
 
 			/*
-			 * Specially handle overwrite fall back.
+			 * Specially handle overग_लिखो fall back.
 			 * Because perf top is the only tool which has
-			 * overwrite mode by default, support
-			 * both overwrite and non-overwrite mode, and
-			 * require consistent mode for all events.
+			 * overग_लिखो mode by शेष, support
+			 * both overग_लिखो and non-overग_लिखो mode, and
+			 * require consistent mode क्रम all events.
 			 *
 			 * May move it to generic code with more tools
 			 * have similar attribute.
 			 */
-			if (perf_missing_features.write_backward &&
-			    perf_top_overwrite_fallback(top, counter))
-				goto try_again;
+			अगर (perf_missing_features.ग_लिखो_backward &&
+			    perf_top_overग_लिखो_fallback(top, counter))
+				जाओ try_again;
 
-			if (evsel__fallback(counter, errno, msg, sizeof(msg))) {
-				if (verbose > 0)
+			अगर (evsel__fallback(counter, त्रुटि_सं, msg, माप(msg))) अणु
+				अगर (verbose > 0)
 					ui__warning("%s\n", msg);
-				goto try_again;
-			}
+				जाओ try_again;
+			पूर्ण
 
-			evsel__open_strerror(counter, &opts->target, errno, msg, sizeof(msg));
+			evsel__खोलो_म_त्रुटि(counter, &opts->target, त्रुटि_सं, msg, माप(msg));
 			ui__error("%s\n", msg);
-			goto out_err;
-		}
-	}
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	if (evlist__mmap(evlist, opts->mmap_pages) < 0) {
+	अगर (evlist__mmap(evlist, opts->mmap_pages) < 0) अणु
 		ui__error("Failed to mmap with %d (%s)\n",
-			    errno, str_error_r(errno, msg, sizeof(msg)));
-		goto out_err;
-	}
+			    त्रुटि_सं, str_error_r(त्रुटि_सं, msg, माप(msg)));
+		जाओ out_err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_err:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int callchain_param__setup_sample_type(struct callchain_param *callchain)
-{
-	if (callchain->mode != CHAIN_NONE) {
-		if (callchain_register_param(callchain) < 0) {
+अटल पूर्णांक callchain_param__setup_sample_type(काष्ठा callchain_param *callchain)
+अणु
+	अगर (callchain->mode != CHAIN_NONE) अणु
+		अगर (callchain_रेजिस्टर_param(callchain) < 0) अणु
 			ui__error("Can't register callchain params.\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct ordered_events *rotate_queues(struct perf_top *top)
-{
-	struct ordered_events *in = top->qe.in;
+अटल काष्ठा ordered_events *rotate_queues(काष्ठा perf_top *top)
+अणु
+	काष्ठा ordered_events *in = top->qe.in;
 
-	if (top->qe.in == &top->qe.data[1])
+	अगर (top->qe.in == &top->qe.data[1])
 		top->qe.in = &top->qe.data[0];
-	else
+	अन्यथा
 		top->qe.in = &top->qe.data[1];
 
-	return in;
-}
+	वापस in;
+पूर्ण
 
-static void *process_thread(void *arg)
-{
-	struct perf_top *top = arg;
+अटल व्योम *process_thपढ़ो(व्योम *arg)
+अणु
+	काष्ठा perf_top *top = arg;
 
-	while (!done) {
-		struct ordered_events *out, *in = top->qe.in;
+	जबतक (!करोne) अणु
+		काष्ठा ordered_events *out, *in = top->qe.in;
 
-		if (!in->nr_events) {
+		अगर (!in->nr_events) अणु
 			usleep(100);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		out = rotate_queues(top);
 
-		pthread_mutex_lock(&top->qe.mutex);
+		pthपढ़ो_mutex_lock(&top->qe.mutex);
 		top->qe.rotate = true;
-		pthread_cond_wait(&top->qe.cond, &top->qe.mutex);
-		pthread_mutex_unlock(&top->qe.mutex);
+		pthपढ़ो_cond_रुको(&top->qe.cond, &top->qe.mutex);
+		pthपढ़ो_mutex_unlock(&top->qe.mutex);
 
-		if (ordered_events__flush(out, OE_FLUSH__TOP))
+		अगर (ordered_events__flush(out, OE_FLUSH__TOP))
 			pr_err("failed to process events\n");
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Allow only 'top->delay_secs' seconds behind samples.
  */
-static int should_drop(struct ordered_event *qevent, struct perf_top *top)
-{
-	union perf_event *event = qevent->event;
-	u64 delay_timestamp;
+अटल पूर्णांक should_drop(काष्ठा ordered_event *qevent, काष्ठा perf_top *top)
+अणु
+	जोड़ perf_event *event = qevent->event;
+	u64 delay_बारtamp;
 
-	if (event->header.type != PERF_RECORD_SAMPLE)
-		return false;
+	अगर (event->header.type != PERF_RECORD_SAMPLE)
+		वापस false;
 
-	delay_timestamp = qevent->timestamp + top->delay_secs * NSEC_PER_SEC;
-	return delay_timestamp < last_timestamp;
-}
+	delay_बारtamp = qevent->बारtamp + top->delay_secs * NSEC_PER_SEC;
+	वापस delay_बारtamp < last_बारtamp;
+पूर्ण
 
-static int deliver_event(struct ordered_events *qe,
-			 struct ordered_event *qevent)
-{
-	struct perf_top *top = qe->data;
-	struct evlist *evlist = top->evlist;
-	struct perf_session *session = top->session;
-	union perf_event *event = qevent->event;
-	struct perf_sample sample;
-	struct evsel *evsel;
-	struct machine *machine;
-	int ret = -1;
+अटल पूर्णांक deliver_event(काष्ठा ordered_events *qe,
+			 काष्ठा ordered_event *qevent)
+अणु
+	काष्ठा perf_top *top = qe->data;
+	काष्ठा evlist *evlist = top->evlist;
+	काष्ठा perf_session *session = top->session;
+	जोड़ perf_event *event = qevent->event;
+	काष्ठा perf_sample sample;
+	काष्ठा evsel *evsel;
+	काष्ठा machine *machine;
+	पूर्णांक ret = -1;
 
-	if (should_drop(qevent, top)) {
+	अगर (should_drop(qevent, top)) अणु
 		top->drop++;
 		top->drop_total++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = evlist__parse_sample(evlist, event, &sample);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Can't parse sample, err = %d\n", ret);
-		goto next_event;
-	}
+		जाओ next_event;
+	पूर्ण
 
 	evsel = evlist__id2evsel(session->evlist, sample.id);
-	assert(evsel != NULL);
+	निश्चित(evsel != शून्य);
 
-	if (event->header.type == PERF_RECORD_SAMPLE) {
-		if (evswitch__discard(&top->evswitch, evsel))
-			return 0;
+	अगर (event->header.type == PERF_RECORD_SAMPLE) अणु
+		अगर (evचयन__discard(&top->evचयन, evsel))
+			वापस 0;
 		++top->samples;
-	}
+	पूर्ण
 
-	switch (sample.cpumode) {
-	case PERF_RECORD_MISC_USER:
+	चयन (sample.cpumode) अणु
+	हाल PERF_RECORD_MISC_USER:
 		++top->us_samples;
-		if (top->hide_user_symbols)
-			goto next_event;
+		अगर (top->hide_user_symbols)
+			जाओ next_event;
 		machine = &session->machines.host;
-		break;
-	case PERF_RECORD_MISC_KERNEL:
+		अवरोध;
+	हाल PERF_RECORD_MISC_KERNEL:
 		++top->kernel_samples;
-		if (top->hide_kernel_symbols)
-			goto next_event;
+		अगर (top->hide_kernel_symbols)
+			जाओ next_event;
 		machine = &session->machines.host;
-		break;
-	case PERF_RECORD_MISC_GUEST_KERNEL:
+		अवरोध;
+	हाल PERF_RECORD_MISC_GUEST_KERNEL:
 		++top->guest_kernel_samples;
 		machine = perf_session__find_machine(session,
 						     sample.pid);
-		break;
-	case PERF_RECORD_MISC_GUEST_USER:
+		अवरोध;
+	हाल PERF_RECORD_MISC_GUEST_USER:
 		++top->guest_us_samples;
 		/*
-		 * TODO: we don't process guest user from host side
+		 * TODO: we करोn't process guest user from host side
 		 * except simple counting.
 		 */
-		goto next_event;
-	default:
-		if (event->header.type == PERF_RECORD_SAMPLE)
-			goto next_event;
+		जाओ next_event;
+	शेष:
+		अगर (event->header.type == PERF_RECORD_SAMPLE)
+			जाओ next_event;
 		machine = &session->machines.host;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (event->header.type == PERF_RECORD_SAMPLE) {
+	अगर (event->header.type == PERF_RECORD_SAMPLE) अणु
 		perf_event__process_sample(&top->tool, event, evsel,
 					   &sample, machine);
-	} else if (event->header.type == PERF_RECORD_LOST) {
+	पूर्ण अन्यथा अगर (event->header.type == PERF_RECORD_LOST) अणु
 		perf_top__process_lost(top, event, evsel);
-	} else if (event->header.type == PERF_RECORD_LOST_SAMPLES) {
+	पूर्ण अन्यथा अगर (event->header.type == PERF_RECORD_LOST_SAMPLES) अणु
 		perf_top__process_lost_samples(top, event, evsel);
-	} else if (event->header.type < PERF_RECORD_MAX) {
+	पूर्ण अन्यथा अगर (event->header.type < PERF_RECORD_MAX) अणु
 		events_stats__inc(&session->evlist->stats, event->header.type);
 		machine__process_event(machine, event, &sample);
-	} else
+	पूर्ण अन्यथा
 		++session->evlist->stats.nr_unknown_events;
 
 	ret = 0;
 next_event:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void init_process_thread(struct perf_top *top)
-{
+अटल व्योम init_process_thपढ़ो(काष्ठा perf_top *top)
+अणु
 	ordered_events__init(&top->qe.data[0], deliver_event, top);
 	ordered_events__init(&top->qe.data[1], deliver_event, top);
 	ordered_events__set_copy_on_queue(&top->qe.data[0], true);
 	ordered_events__set_copy_on_queue(&top->qe.data[1], true);
 	top->qe.in = &top->qe.data[0];
-	pthread_mutex_init(&top->qe.mutex, NULL);
-	pthread_cond_init(&top->qe.cond, NULL);
-}
+	pthपढ़ो_mutex_init(&top->qe.mutex, शून्य);
+	pthपढ़ो_cond_init(&top->qe.cond, शून्य);
+पूर्ण
 
-static int __cmd_top(struct perf_top *top)
-{
-	struct record_opts *opts = &top->record_opts;
-	pthread_t thread, thread_process;
-	int ret;
+अटल पूर्णांक __cmd_top(काष्ठा perf_top *top)
+अणु
+	काष्ठा record_opts *opts = &top->record_opts;
+	pthपढ़ो_t thपढ़ो, thपढ़ो_process;
+	पूर्णांक ret;
 
-	if (!top->annotation_opts.objdump_path) {
+	अगर (!top->annotation_opts.objdump_path) अणु
 		ret = perf_env__lookup_objdump(&top->session->header.env,
 					       &top->annotation_opts.objdump_path);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = callchain_param__setup_sample_type(&callchain_param);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (perf_session__register_idle_thread(top->session) < 0)
-		return ret;
+	अगर (perf_session__रेजिस्टर_idle_thपढ़ो(top->session) < 0)
+		वापस ret;
 
-	if (top->nr_threads_synthesize > 1)
-		perf_set_multithreaded();
+	अगर (top->nr_thपढ़ोs_synthesize > 1)
+		perf_set_multithपढ़ोed();
 
-	init_process_thread(top);
+	init_process_thपढ़ो(top);
 
-	if (opts->record_namespaces)
+	अगर (opts->record_namespaces)
 		top->tool.namespace_events = true;
-	if (opts->record_cgroup) {
-#ifdef HAVE_FILE_HANDLE
+	अगर (opts->record_cgroup) अणु
+#अगर_घोषित HAVE_खाता_HANDLE
 		top->tool.cgroup_events = true;
-#else
+#अन्यथा
 		pr_err("cgroup tracking is not supported.\n");
-		return -1;
-#endif
-	}
+		वापस -1;
+#पूर्ण_अगर
+	पूर्ण
 
 	ret = perf_event__synthesize_bpf_events(top->session, perf_event__process,
 						&top->session->machines.host,
 						&top->record_opts);
-	if (ret < 0)
+	अगर (ret < 0)
 		pr_debug("Couldn't synthesize BPF events: Pre-existing BPF programs won't have symbols resolved.\n");
 
 	ret = perf_event__synthesize_cgroups(&top->tool, perf_event__process,
 					     &top->session->machines.host);
-	if (ret < 0)
+	अगर (ret < 0)
 		pr_debug("Couldn't synthesize cgroup events.\n");
 
-	machine__synthesize_threads(&top->session->machines.host, &opts->target,
-				    top->evlist->core.threads, false,
-				    top->nr_threads_synthesize);
+	machine__syntheमाप_प्रकारhपढ़ोs(&top->session->machines.host, &opts->target,
+				    top->evlist->core.thपढ़ोs, false,
+				    top->nr_thपढ़ोs_synthesize);
 
-	if (top->nr_threads_synthesize > 1)
-		perf_set_singlethreaded();
+	अगर (top->nr_thपढ़ोs_synthesize > 1)
+		perf_set_singlethपढ़ोed();
 
-	if (perf_hpp_list.socket) {
-		ret = perf_env__read_cpu_topology_map(&perf_env);
-		if (ret < 0) {
-			char errbuf[BUFSIZ];
-			const char *err = str_error_r(-ret, errbuf, sizeof(errbuf));
+	अगर (perf_hpp_list.socket) अणु
+		ret = perf_env__पढ़ो_cpu_topology_map(&perf_env);
+		अगर (ret < 0) अणु
+			अक्षर errbuf[बफ_मान];
+			स्थिर अक्षर *err = str_error_r(-ret, errbuf, माप(errbuf));
 
 			ui__error("Could not read the CPU topology map: %s\n", err);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = perf_top__start_counters(top);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	top->session->evlist = top->evlist;
 	perf_session__set_id_hdr_size(top->session);
 
 	/*
 	 * When perf is starting the traced process, all the events (apart from
-	 * group members) have enable_on_exec=1 set, so don't spoil it by
+	 * group members) have enable_on_exec=1 set, so करोn't spoil it by
 	 * prematurely enabling them.
 	 *
 	 * XXX 'top' still doesn't start workloads like record, trace, but should,
 	 * so leave the check here.
 	 */
-        if (!target__none(&opts->target))
+        अगर (!target__none(&opts->target))
 		evlist__enable(top->evlist);
 
 	ret = -1;
-	if (pthread_create(&thread_process, NULL, process_thread, top)) {
+	अगर (pthपढ़ो_create(&thपढ़ो_process, शून्य, process_thपढ़ो, top)) अणु
 		ui__error("Could not create process thread.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (pthread_create(&thread, NULL, (use_browser > 0 ? display_thread_tui :
-							    display_thread), top)) {
+	अगर (pthपढ़ो_create(&thपढ़ो, शून्य, (use_browser > 0 ? display_thपढ़ो_tui :
+							    display_thपढ़ो), top)) अणु
 		ui__error("Could not create display thread.\n");
-		goto out_join_thread;
-	}
+		जाओ out_join_thपढ़ो;
+	पूर्ण
 
-	if (top->realtime_prio) {
-		struct sched_param param;
+	अगर (top->realसमय_prio) अणु
+		काष्ठा sched_param param;
 
-		param.sched_priority = top->realtime_prio;
-		if (sched_setscheduler(0, SCHED_FIFO, &param)) {
+		param.sched_priority = top->realसमय_prio;
+		अगर (sched_setscheduler(0, SCHED_FIFO, &param)) अणु
 			ui__error("Could not set realtime priority.\n");
-			goto out_join;
-		}
-	}
+			जाओ out_join;
+		पूर्ण
+	पूर्ण
 
-	/* Wait for a minimal set of events before starting the snapshot */
+	/* Wait क्रम a minimal set of events beक्रमe starting the snapshot */
 	evlist__poll(top->evlist, 100);
 
-	perf_top__mmap_read(top);
+	perf_top__mmap_पढ़ो(top);
 
-	while (!done) {
+	जबतक (!करोne) अणु
 		u64 hits = top->samples;
 
-		perf_top__mmap_read(top);
+		perf_top__mmap_पढ़ो(top);
 
-		if (opts->overwrite || (hits == top->samples))
+		अगर (opts->overग_लिखो || (hits == top->samples))
 			ret = evlist__poll(top->evlist, 100);
 
-		if (resize) {
+		अगर (resize) अणु
 			perf_top__resize(top);
 			resize = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
 out_join:
-	pthread_join(thread, NULL);
-out_join_thread:
-	pthread_cond_signal(&top->qe.cond);
-	pthread_join(thread_process, NULL);
-	return ret;
-}
+	pthपढ़ो_join(thपढ़ो, शून्य);
+out_join_thपढ़ो:
+	pthपढ़ो_cond_संकेत(&top->qe.cond);
+	pthपढ़ो_join(thपढ़ो_process, शून्य);
+	वापस ret;
+पूर्ण
 
-static int
-callchain_opt(const struct option *opt, const char *arg, int unset)
-{
+अटल पूर्णांक
+callchain_opt(स्थिर काष्ठा option *opt, स्थिर अक्षर *arg, पूर्णांक unset)
+अणु
 	symbol_conf.use_callchain = true;
-	return record_callchain_opt(opt, arg, unset);
-}
+	वापस record_callchain_opt(opt, arg, unset);
+पूर्ण
 
-static int
-parse_callchain_opt(const struct option *opt, const char *arg, int unset)
-{
-	struct callchain_param *callchain = opt->value;
+अटल पूर्णांक
+parse_callchain_opt(स्थिर काष्ठा option *opt, स्थिर अक्षर *arg, पूर्णांक unset)
+अणु
+	काष्ठा callchain_param *callchain = opt->value;
 
 	callchain->enabled = !unset;
 	callchain->record_mode = CALLCHAIN_FP;
@@ -1373,83 +1374,83 @@ parse_callchain_opt(const struct option *opt, const char *arg, int unset)
 	/*
 	 * --no-call-graph
 	 */
-	if (unset) {
+	अगर (unset) अणु
 		symbol_conf.use_callchain = false;
 		callchain->record_mode = CALLCHAIN_NONE;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return parse_callchain_top_opt(arg);
-}
+	वापस parse_callchain_top_opt(arg);
+पूर्ण
 
-static int perf_top_config(const char *var, const char *value, void *cb __maybe_unused)
-{
-	if (!strcmp(var, "top.call-graph")) {
+अटल पूर्णांक perf_top_config(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *cb __maybe_unused)
+अणु
+	अगर (!म_भेद(var, "top.call-graph")) अणु
 		var = "call-graph.record-mode";
-		return perf_default_config(var, value, cb);
-	}
-	if (!strcmp(var, "top.children")) {
+		वापस perf_शेष_config(var, value, cb);
+	पूर्ण
+	अगर (!म_भेद(var, "top.children")) अणु
 		symbol_conf.cumulate_callchain = perf_config_bool(var, value);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-parse_percent_limit(const struct option *opt, const char *arg,
-		    int unset __maybe_unused)
-{
-	struct perf_top *top = opt->value;
+अटल पूर्णांक
+parse_percent_limit(स्थिर काष्ठा option *opt, स्थिर अक्षर *arg,
+		    पूर्णांक unset __maybe_unused)
+अणु
+	काष्ठा perf_top *top = opt->value;
 
-	top->min_percent = strtof(arg, NULL);
-	return 0;
-}
+	top->min_percent = strtof(arg, शून्य);
+	वापस 0;
+पूर्ण
 
-const char top_callchain_help[] = CALLCHAIN_RECORD_HELP CALLCHAIN_REPORT_HELP
+स्थिर अक्षर top_callchain_help[] = CALLCHAIN_RECORD_HELP CALLCHAIN_REPORT_HELP
 	"\n\t\t\t\tDefault: fp,graph,0.5,caller,function";
 
-int cmd_top(int argc, const char **argv)
-{
-	char errbuf[BUFSIZ];
-	struct perf_top top = {
+पूर्णांक cmd_top(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अक्षर errbuf[बफ_मान];
+	काष्ठा perf_top top = अणु
 		.count_filter	     = 5,
 		.delay_secs	     = 2,
-		.record_opts = {
-			.mmap_pages	= UINT_MAX,
-			.user_freq	= UINT_MAX,
-			.user_interval	= ULLONG_MAX,
+		.record_opts = अणु
+			.mmap_pages	= अच_पूर्णांक_उच्च,
+			.user_freq	= अच_पूर्णांक_उच्च,
+			.user_पूर्णांकerval	= ULदीर्घ_उच्च,
 			.freq		= 4000, /* 4 KHz */
-			.target		= {
+			.target		= अणु
 				.uses_mmap   = true,
-			},
+			पूर्ण,
 			/*
 			 * FIXME: This will lose PERF_RECORD_MMAP and other metadata
-			 * when we pause, fix that and reenable. Probably using a
-			 * separate evlist with a dummy event, i.e. a non-overwrite
-			 * ring buffer just for metadata events, while PERF_RECORD_SAMPLE
-			 * stays in overwrite mode. -acme
+			 * when we छोड़ो, fix that and reenable. Probably using a
+			 * separate evlist with a dummy event, i.e. a non-overग_लिखो
+			 * ring buffer just क्रम metadata events, जबतक PERF_RECORD_SAMPLE
+			 * stays in overग_लिखो mode. -acme
 			 * */
-			.overwrite	= 0,
-			.sample_time	= true,
-			.sample_time_set = true,
-		},
+			.overग_लिखो	= 0,
+			.sample_समय	= true,
+			.sample_समय_set = true,
+		पूर्ण,
 		.max_stack	     = sysctl__max_stack(),
-		.annotation_opts     = annotation__default_options,
-		.nr_threads_synthesize = UINT_MAX,
-	};
-	struct record_opts *opts = &top.record_opts;
-	struct target *target = &opts->target;
-	const struct option options[] = {
+		.annotation_opts     = annotation__शेष_options,
+		.nr_thपढ़ोs_synthesize = अच_पूर्णांक_उच्च,
+	पूर्ण;
+	काष्ठा record_opts *opts = &top.record_opts;
+	काष्ठा target *target = &opts->target;
+	स्थिर काष्ठा option options[] = अणु
 	OPT_CALLBACK('e', "event", &top.evlist, "event",
 		     "event selector. use 'perf list' to list available events",
 		     parse_events_option),
-	OPT_U64('c', "count", &opts->user_interval, "event period to sample"),
+	OPT_U64('c', "count", &opts->user_पूर्णांकerval, "event period to sample"),
 	OPT_STRING('p', "pid", &target->pid, "pid",
 		    "profile events on existing process id"),
 	OPT_STRING('t', "tid", &target->tid, "tid",
 		    "profile events on existing thread id"),
-	OPT_BOOLEAN('a', "all-cpus", &target->system_wide,
+	OPT_BOOLEAN('a', "all-cpus", &target->प्रणाली_wide,
 			    "system-wide collection from all CPUs"),
 	OPT_STRING('C', "cpu", &target->cpu_list, "cpu",
 		    "list of cpus to monitor"),
@@ -1463,7 +1464,7 @@ int cmd_top(int argc, const char **argv)
 		    "hide kernel symbols"),
 	OPT_CALLBACK('m', "mmap-pages", &opts->mmap_pages, "pages",
 		     "number of mmap data pages", evlist__parse_mmap_pages),
-	OPT_INTEGER('r', "realtime", &top.realtime_prio,
+	OPT_INTEGER('r', "realtime", &top.realसमय_prio,
 		    "collect data with this RT SCHED_FIFO priority"),
 	OPT_INTEGER('d', "delay", &top.delay_secs,
 		    "number of seconds to delay between refreshes"),
@@ -1481,7 +1482,7 @@ int cmd_top(int argc, const char **argv)
 	OPT_CALLBACK('F', "freq", &top.record_opts, "freq or 'max'",
 		     "profile at this frequency",
 		      record__parse_freq),
-	OPT_INTEGER('E', "entries", &top.print_entries,
+	OPT_INTEGER('E', "entries", &top.prपूर्णांक_entries,
 		    "display this many functions"),
 	OPT_BOOLEAN('U', "hide_user_symbols", &top.hide_user_symbols,
 		    "hide user symbols"),
@@ -1496,8 +1497,8 @@ int cmd_top(int argc, const char **argv)
 		   "output field(s): overhead, period, sample plus all of sort keys"),
 	OPT_BOOLEAN('n', "show-nr-samples", &symbol_conf.show_nr_samples,
 		    "Show a column with the number of samples"),
-	OPT_CALLBACK_NOOPT('g', NULL, &callchain_param,
-			   NULL, "enables call-graph recording and display",
+	OPT_CALLBACK_NOOPT('g', शून्य, &callchain_param,
+			   शून्य, "enables call-graph recording and display",
 			   &callchain_opt),
 	OPT_CALLBACK(0, "call-graph", &callchain_param,
 		     "record_mode[,record_size],print_type,threshold[,print_limit],order,sort_key[,branch]",
@@ -1506,8 +1507,8 @@ int cmd_top(int argc, const char **argv)
 		    "Accumulate callchains of children and show total overhead as well"),
 	OPT_INTEGER(0, "max-stack", &top.max_stack,
 		    "Set the maximum stack depth when parsing the callchain. "
-		    "Default: kernel.perf_event_max_stack or " __stringify(PERF_MAX_STACK_DEPTH)),
-	OPT_CALLBACK(0, "ignore-callees", NULL, "regex",
+		    "Default: kernel.perf_event_max_stack or " __stringअगरy(PERF_MAX_STACK_DEPTH)),
+	OPT_CALLBACK(0, "ignore-callees", शून्य, "regex",
 		   "ignore callees of these functions in call graphs",
 		   report_parse_ignore_callees_opt),
 	OPT_BOOLEAN(0, "show-total-period", &symbol_conf.show_total_period,
@@ -1520,7 +1521,7 @@ int cmd_top(int argc, const char **argv)
 		   "only consider these symbols"),
 	OPT_BOOLEAN(0, "source", &top.annotation_opts.annotate_src,
 		    "Interleave source code with assembly code (default)"),
-	OPT_BOOLEAN(0, "asm-raw", &top.annotation_opts.show_asm_raw,
+	OPT_BOOLEAN(0, "asm-raw", &top.annotation_opts.show_यंत्र_raw,
 		    "Display raw encoding of assembly instructions (default)"),
 	OPT_BOOLEAN(0, "demangle-kernel", &symbol_conf.demangle_kernel,
 		    "Enable kernel symbol demangling"),
@@ -1536,12 +1537,12 @@ int cmd_top(int argc, const char **argv)
 	OPT_STRING('u', "uid", &target->uid_str, "user", "user to profile"),
 	OPT_CALLBACK(0, "percent-limit", &top, "percent",
 		     "Don't show entries under that percent", parse_percent_limit),
-	OPT_CALLBACK(0, "percentage", NULL, "relative|absolute",
+	OPT_CALLBACK(0, "percentage", शून्य, "relative|absolute",
 		     "How to display percentage of filtered entries", parse_filter_percentage),
 	OPT_STRING('w', "column-widths", &symbol_conf.col_width_list_str,
 		   "width[,width...]",
 		   "don't try to adjust column width, use these fixed values"),
-	OPT_UINTEGER(0, "proc-map-timeout", &proc_map_timeout,
+	OPT_UINTEGER(0, "proc-map-timeout", &proc_map_समयout,
 			"per thread proc mmap processing timeout in ms"),
 	OPT_CALLBACK_NOOPT('b', "branch-any", &opts->branch_stack,
 		     "branch any", "sample any taken branches",
@@ -1553,10 +1554,10 @@ int cmd_top(int argc, const char **argv)
 		    "Show raw trace event output (do not use print fmt or plugins)"),
 	OPT_BOOLEAN(0, "hierarchy", &symbol_conf.report_hierarchy,
 		    "Show entries in a hierarchy"),
-	OPT_BOOLEAN(0, "overwrite", &top.record_opts.overwrite,
+	OPT_BOOLEAN(0, "overwrite", &top.record_opts.overग_लिखो,
 		    "Use a backward ring buffer, default: no"),
-	OPT_BOOLEAN(0, "force", &symbol_conf.force, "don't complain, do it"),
-	OPT_UINTEGER(0, "num-thread-synthesize", &top.nr_threads_synthesize,
+	OPT_BOOLEAN(0, "force", &symbol_conf.क्रमce, "don't complain, do it"),
+	OPT_UINTEGER(0, "num-thread-synthesize", &top.nr_thपढ़ोs_synthesize,
 			"number of thread to run event synthesize"),
 	OPT_BOOLEAN(0, "namespaces", &opts->record_namespaces,
 		    "Record namespaces events"),
@@ -1568,205 +1569,205 @@ int cmd_top(int argc, const char **argv)
 		    "WARNING: should be used on grouped events."),
 	OPT_BOOLEAN(0, "stitch-lbr", &top.stitch_lbr,
 		    "Enable LBR callgraph stitching approach"),
-#ifdef HAVE_LIBPFM
+#अगर_घोषित HAVE_LIBPFM
 	OPT_CALLBACK(0, "pfm-events", &top.evlist, "event",
 		"libpfm4 event selector. use 'perf list' to list available events",
 		parse_libpfm_events_option),
-#endif
-	OPTS_EVSWITCH(&top.evswitch),
+#पूर्ण_अगर
+	OPTS_EVSWITCH(&top.evचयन),
 	OPT_END()
-	};
-	const char * const top_usage[] = {
+	पूर्ण;
+	स्थिर अक्षर * स्थिर top_usage[] = अणु
 		"perf top [<options>]",
-		NULL
-	};
-	int status = hists__init();
+		शून्य
+	पूर्ण;
+	पूर्णांक status = hists__init();
 
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
 	top.annotation_opts.min_pcnt = 5;
 	top.annotation_opts.context  = 4;
 
 	top.evlist = evlist__new();
-	if (top.evlist == NULL)
-		return -ENOMEM;
+	अगर (top.evlist == शून्य)
+		वापस -ENOMEM;
 
 	status = perf_config(perf_top_config, &top);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 	/*
-	 * Since the per arch annotation init routine may need the cpuid, read
+	 * Since the per arch annotation init routine may need the cpuid, पढ़ो
 	 * it here, since we are not getting this from the perf.data header.
 	 */
-	status = perf_env__read_cpuid(&perf_env);
-	if (status) {
+	status = perf_env__पढ़ो_cpuid(&perf_env);
+	अगर (status) अणु
 		/*
-		 * Some arches do not provide a get_cpuid(), so just use pr_debug, otherwise
+		 * Some arches करो not provide a get_cpuid(), so just use pr_debug, otherwise
 		 * warn the user explicitly.
 		 */
-		eprintf(status == ENOSYS ? 1 : 0, verbose,
+		eम_लिखो(status == ENOSYS ? 1 : 0, verbose,
 			"Couldn't read the cpuid for this machine: %s\n",
-			str_error_r(errno, errbuf, sizeof(errbuf)));
-	}
+			str_error_r(त्रुटि_सं, errbuf, माप(errbuf)));
+	पूर्ण
 	top.evlist->env = &perf_env;
 
 	argc = parse_options(argc, argv, options, top_usage, 0);
-	if (argc)
+	अगर (argc)
 		usage_with_options(top_usage, options);
 
-	if (annotate_check_args(&top.annotation_opts) < 0)
-		goto out_delete_evlist;
+	अगर (annotate_check_args(&top.annotation_opts) < 0)
+		जाओ out_delete_evlist;
 
-	if (!top.evlist->core.nr_entries &&
-	    evlist__add_default(top.evlist) < 0) {
+	अगर (!top.evlist->core.nr_entries &&
+	    evlist__add_शेष(top.evlist) < 0) अणु
 		pr_err("Not enough memory for event selector list\n");
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
-	status = evswitch__init(&top.evswitch, top.evlist, stderr);
-	if (status)
-		goto out_delete_evlist;
+	status = evचयन__init(&top.evचयन, top.evlist, मानक_त्रुटि);
+	अगर (status)
+		जाओ out_delete_evlist;
 
-	if (symbol_conf.report_hierarchy) {
+	अगर (symbol_conf.report_hierarchy) अणु
 		/* disable incompatible options */
 		symbol_conf.event_group = false;
 		symbol_conf.cumulate_callchain = false;
 
-		if (field_order) {
+		अगर (field_order) अणु
 			pr_err("Error: --hierarchy and --fields options cannot be used together\n");
 			parse_options_usage(top_usage, options, "fields", 0);
-			parse_options_usage(NULL, options, "hierarchy", 0);
-			goto out_delete_evlist;
-		}
-	}
+			parse_options_usage(शून्य, options, "hierarchy", 0);
+			जाओ out_delete_evlist;
+		पूर्ण
+	पूर्ण
 
-	if (top.stitch_lbr && !(callchain_param.record_mode == CALLCHAIN_LBR)) {
+	अगर (top.stitch_lbr && !(callchain_param.record_mode == CALLCHAIN_LBR)) अणु
 		pr_err("Error: --stitch-lbr must be used with --call-graph lbr\n");
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
-	if (opts->branch_stack && callchain_param.enabled)
+	अगर (opts->branch_stack && callchain_param.enabled)
 		symbol_conf.show_branchflag_count = true;
 
 	sort__mode = SORT_MODE__TOP;
-	/* display thread wants entries to be collapsed in a different tree */
+	/* display thपढ़ो wants entries to be collapsed in a dअगरferent tree */
 	perf_hpp_list.need_collapse = 1;
 
-	if (top.use_stdio)
+	अगर (top.use_stdio)
 		use_browser = 0;
-	else if (top.use_tui)
+	अन्यथा अगर (top.use_tui)
 		use_browser = 1;
 
 	setup_browser(false);
 
-	if (setup_sorting(top.evlist) < 0) {
-		if (sort_order)
+	अगर (setup_sorting(top.evlist) < 0) अणु
+		अगर (sort_order)
 			parse_options_usage(top_usage, options, "s", 1);
-		if (field_order)
-			parse_options_usage(sort_order ? NULL : top_usage,
+		अगर (field_order)
+			parse_options_usage(sort_order ? शून्य : top_usage,
 					    options, "fields", 0);
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
 	status = target__validate(target);
-	if (status) {
-		target__strerror(target, status, errbuf, BUFSIZ);
+	अगर (status) अणु
+		target__म_त्रुटि(target, status, errbuf, बफ_मान);
 		ui__warning("%s\n", errbuf);
-	}
+	पूर्ण
 
 	status = target__parse_uid(target);
-	if (status) {
-		int saved_errno = errno;
+	अगर (status) अणु
+		पूर्णांक saved_त्रुटि_सं = त्रुटि_सं;
 
-		target__strerror(target, status, errbuf, BUFSIZ);
+		target__म_त्रुटि(target, status, errbuf, बफ_मान);
 		ui__error("%s\n", errbuf);
 
-		status = -saved_errno;
-		goto out_delete_evlist;
-	}
+		status = -saved_त्रुटि_सं;
+		जाओ out_delete_evlist;
+	पूर्ण
 
-	if (target__none(target))
-		target->system_wide = true;
+	अगर (target__none(target))
+		target->प्रणाली_wide = true;
 
-	if (evlist__create_maps(top.evlist, target) < 0) {
+	अगर (evlist__create_maps(top.evlist, target) < 0) अणु
 		ui__error("Couldn't create thread/CPU maps: %s\n",
-			  errno == ENOENT ? "No such process" : str_error_r(errno, errbuf, sizeof(errbuf)));
-		goto out_delete_evlist;
-	}
+			  त्रुटि_सं == ENOENT ? "No such process" : str_error_r(त्रुटि_सं, errbuf, माप(errbuf)));
+		जाओ out_delete_evlist;
+	पूर्ण
 
-	if (top.delay_secs < 1)
+	अगर (top.delay_secs < 1)
 		top.delay_secs = 1;
 
-	if (record_opts__config(opts)) {
+	अगर (record_opts__config(opts)) अणु
 		status = -EINVAL;
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
 	top.sym_evsel = evlist__first(top.evlist);
 
-	if (!callchain_param.enabled) {
+	अगर (!callchain_param.enabled) अणु
 		symbol_conf.cumulate_callchain = false;
 		perf_hpp__cancel_cumulate();
-	}
+	पूर्ण
 
-	if (symbol_conf.cumulate_callchain && !callchain_param.order_set)
+	अगर (symbol_conf.cumulate_callchain && !callchain_param.order_set)
 		callchain_param.order = ORDER_CALLER;
 
 	status = symbol__annotation_init();
-	if (status < 0)
-		goto out_delete_evlist;
+	अगर (status < 0)
+		जाओ out_delete_evlist;
 
 	annotation_config__init(&top.annotation_opts);
 
-	symbol_conf.try_vmlinux_path = (symbol_conf.vmlinux_name == NULL);
-	status = symbol__init(NULL);
-	if (status < 0)
-		goto out_delete_evlist;
+	symbol_conf.try_vmlinux_path = (symbol_conf.vmlinux_name == शून्य);
+	status = symbol__init(शून्य);
+	अगर (status < 0)
+		जाओ out_delete_evlist;
 
-	sort__setup_elide(stdout);
+	sort__setup_elide(मानक_निकास);
 
 	get_term_dimensions(&top.winsize);
-	if (top.print_entries == 0) {
-		perf_top__update_print_entries(&top);
-		signal(SIGWINCH, winch_sig);
-	}
+	अगर (top.prपूर्णांक_entries == 0) अणु
+		perf_top__update_prपूर्णांक_entries(&top);
+		संकेत(SIGWINCH, winch_sig);
+	पूर्ण
 
-	top.session = perf_session__new(NULL, false, NULL);
-	if (IS_ERR(top.session)) {
+	top.session = perf_session__new(शून्य, false, शून्य);
+	अगर (IS_ERR(top.session)) अणु
 		status = PTR_ERR(top.session);
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
-#ifdef HAVE_LIBBPF_SUPPORT
-	if (!top.record_opts.no_bpf_event) {
+#अगर_घोषित HAVE_LIBBPF_SUPPORT
+	अगर (!top.record_opts.no_bpf_event) अणु
 		top.sb_evlist = evlist__new();
 
-		if (top.sb_evlist == NULL) {
+		अगर (top.sb_evlist == शून्य) अणु
 			pr_err("Couldn't create side band evlist.\n.");
-			goto out_delete_evlist;
-		}
+			जाओ out_delete_evlist;
+		पूर्ण
 
-		if (evlist__add_bpf_sb_event(top.sb_evlist, &perf_env)) {
+		अगर (evlist__add_bpf_sb_event(top.sb_evlist, &perf_env)) अणु
 			pr_err("Couldn't ask for PERF_RECORD_BPF_EVENT side band events.\n.");
-			goto out_delete_evlist;
-		}
-	}
-#endif
+			जाओ out_delete_evlist;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	if (evlist__start_sb_thread(top.sb_evlist, target)) {
+	अगर (evlist__start_sb_thपढ़ो(top.sb_evlist, target)) अणु
 		pr_debug("Couldn't start the BPF side band thread:\nBPF programs starting from now on won't be annotatable\n");
 		opts->no_bpf_event = true;
-	}
+	पूर्ण
 
 	status = __cmd_top(&top);
 
-	if (!opts->no_bpf_event)
-		evlist__stop_sb_thread(top.sb_evlist);
+	अगर (!opts->no_bpf_event)
+		evlist__stop_sb_thपढ़ो(top.sb_evlist);
 
 out_delete_evlist:
 	evlist__delete(top.evlist);
 	perf_session__delete(top.session);
 
-	return status;
-}
+	वापस status;
+पूर्ण

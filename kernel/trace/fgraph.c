@@ -1,624 +1,625 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Infrastructure to took into function calls and returns.
+ * Infraकाष्ठाure to took पूर्णांकo function calls and वापसs.
  * Copyright (c) 2008-2009 Frederic Weisbecker <fweisbec@gmail.com>
  * Mostly borrowed from function tracer which
  * is Copyright (c) Steven Rostedt <srostedt@redhat.com>
  *
- * Highly modified by Steven Rostedt (VMware).
+ * Highly modअगरied by Steven Rostedt (VMware).
  */
-#include <linux/suspend.h>
-#include <linux/ftrace.h>
-#include <linux/slab.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/slab.h>
 
-#include <trace/events/sched.h>
+#समावेश <trace/events/sched.h>
 
-#include "ftrace_internal.h"
+#समावेश "ftrace_internal.h"
 
-#ifdef CONFIG_DYNAMIC_FTRACE
-#define ASSIGN_OPS_HASH(opsname, val) \
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+#घोषणा ASSIGN_OPS_HASH(opsname, val) \
 	.func_hash		= val, \
 	.local_hash.regex_lock	= __MUTEX_INITIALIZER(opsname.local_hash.regex_lock),
-#else
-#define ASSIGN_OPS_HASH(opsname, val)
-#endif
+#अन्यथा
+#घोषणा ASSIGN_OPS_HASH(opsname, val)
+#पूर्ण_अगर
 
-static bool kill_ftrace_graph;
-int ftrace_graph_active;
+अटल bool समाप्त_ftrace_graph;
+पूर्णांक ftrace_graph_active;
 
-/* Both enabled by default (can be cleared by function_graph tracer flags */
-static bool fgraph_sleep_time = true;
+/* Both enabled by शेष (can be cleared by function_graph tracer flags */
+अटल bool fgraph_sleep_समय = true;
 
 /**
- * ftrace_graph_is_dead - returns true if ftrace_graph_stop() was called
+ * ftrace_graph_is_dead - वापसs true अगर ftrace_graph_stop() was called
  *
  * ftrace_graph_stop() is called when a severe error is detected in
  * the function graph tracing. This function is called by the critical
- * paths of function graph to keep those paths from doing any more harm.
+ * paths of function graph to keep those paths from करोing any more harm.
  */
-bool ftrace_graph_is_dead(void)
-{
-	return kill_ftrace_graph;
-}
+bool ftrace_graph_is_dead(व्योम)
+अणु
+	वापस समाप्त_ftrace_graph;
+पूर्ण
 
 /**
  * ftrace_graph_stop - set to permanently disable function graph tracing
  *
- * In case of an error int function graph tracing, this is called
+ * In हाल of an error पूर्णांक function graph tracing, this is called
  * to try to keep function graph tracing from causing any more harm.
  * Usually this is pretty severe and this is called to try to at least
  * get a warning out to the user.
  */
-void ftrace_graph_stop(void)
-{
-	kill_ftrace_graph = true;
-}
+व्योम ftrace_graph_stop(व्योम)
+अणु
+	समाप्त_ftrace_graph = true;
+पूर्ण
 
-/* Add a function return address to the trace stack on thread info.*/
-static int
-ftrace_push_return_trace(unsigned long ret, unsigned long func,
-			 unsigned long frame_pointer, unsigned long *retp)
-{
-	unsigned long long calltime;
-	int index;
+/* Add a function वापस address to the trace stack on thपढ़ो info.*/
+अटल पूर्णांक
+ftrace_push_वापस_trace(अचिन्हित दीर्घ ret, अचिन्हित दीर्घ func,
+			 अचिन्हित दीर्घ frame_poपूर्णांकer, अचिन्हित दीर्घ *retp)
+अणु
+	अचिन्हित दीर्घ दीर्घ callसमय;
+	पूर्णांक index;
 
-	if (unlikely(ftrace_graph_is_dead()))
-		return -EBUSY;
+	अगर (unlikely(ftrace_graph_is_dead()))
+		वापस -EBUSY;
 
-	if (!current->ret_stack)
-		return -EBUSY;
+	अगर (!current->ret_stack)
+		वापस -EBUSY;
 
 	/*
-	 * We must make sure the ret_stack is tested before we read
-	 * anything else.
+	 * We must make sure the ret_stack is tested beक्रमe we पढ़ो
+	 * anything अन्यथा.
 	 */
 	smp_rmb();
 
-	/* The return trace stack is full */
-	if (current->curr_ret_stack == FTRACE_RETFUNC_DEPTH - 1) {
+	/* The वापस trace stack is full */
+	अगर (current->curr_ret_stack == FTRACE_RETFUNC_DEPTH - 1) अणु
 		atomic_inc(&current->trace_overrun);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	calltime = trace_clock_local();
+	callसमय = trace_घड़ी_local();
 
 	index = ++current->curr_ret_stack;
 	barrier();
 	current->ret_stack[index].ret = ret;
 	current->ret_stack[index].func = func;
-	current->ret_stack[index].calltime = calltime;
-#ifdef HAVE_FUNCTION_GRAPH_FP_TEST
-	current->ret_stack[index].fp = frame_pointer;
-#endif
-#ifdef HAVE_FUNCTION_GRAPH_RET_ADDR_PTR
+	current->ret_stack[index].callसमय = callसमय;
+#अगर_घोषित HAVE_FUNCTION_GRAPH_FP_TEST
+	current->ret_stack[index].fp = frame_poपूर्णांकer;
+#पूर्ण_अगर
+#अगर_घोषित HAVE_FUNCTION_GRAPH_RET_ADDR_PTR
 	current->ret_stack[index].retp = retp;
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
- * Not all archs define MCOUNT_INSN_SIZE which is used to look for direct
- * functions. But those archs currently don't support direct functions
- * anyway, and ftrace_find_rec_direct() is just a stub for them.
+ * Not all archs define MCOUNT_INSN_SIZE which is used to look क्रम direct
+ * functions. But those archs currently करोn't support direct functions
+ * anyway, and ftrace_find_rec_direct() is just a stub क्रम them.
  * Define MCOUNT_INSN_SIZE to keep those archs compiling.
  */
-#ifndef MCOUNT_INSN_SIZE
+#अगर_अघोषित MCOUNT_INSN_SIZE
 /* Make sure this only works without direct calls */
-# ifdef CONFIG_DYNAMIC_FTRACE_WITH_DIRECT_CALLS
+# अगरdef CONFIG_DYNAMIC_FTRACE_WITH_सूचीECT_CALLS
 #  error MCOUNT_INSN_SIZE not defined with direct calls enabled
-# endif
+# endअगर
 # define MCOUNT_INSN_SIZE 0
-#endif
+#पूर्ण_अगर
 
-int function_graph_enter(unsigned long ret, unsigned long func,
-			 unsigned long frame_pointer, unsigned long *retp)
-{
-	struct ftrace_graph_ent trace;
+पूर्णांक function_graph_enter(अचिन्हित दीर्घ ret, अचिन्हित दीर्घ func,
+			 अचिन्हित दीर्घ frame_poपूर्णांकer, अचिन्हित दीर्घ *retp)
+अणु
+	काष्ठा ftrace_graph_ent trace;
 
 	/*
-	 * Skip graph tracing if the return location is served by direct trampoline,
-	 * since call sequence and return addresses are unpredictable anyway.
+	 * Skip graph tracing अगर the वापस location is served by direct trampoline,
+	 * since call sequence and वापस addresses are unpredictable anyway.
 	 * Ex: BPF trampoline may call original function and may skip frame
 	 * depending on type of BPF programs attached.
 	 */
-	if (ftrace_direct_func_count &&
+	अगर (ftrace_direct_func_count &&
 	    ftrace_find_rec_direct(ret - MCOUNT_INSN_SIZE))
-		return -EBUSY;
+		वापस -EBUSY;
 	trace.func = func;
 	trace.depth = ++current->curr_ret_depth;
 
-	if (ftrace_push_return_trace(ret, func, frame_pointer, retp))
-		goto out;
+	अगर (ftrace_push_वापस_trace(ret, func, frame_poपूर्णांकer, retp))
+		जाओ out;
 
-	/* Only trace if the calling function expects to */
-	if (!ftrace_graph_entry(&trace))
-		goto out_ret;
+	/* Only trace अगर the calling function expects to */
+	अगर (!ftrace_graph_entry(&trace))
+		जाओ out_ret;
 
-	return 0;
+	वापस 0;
  out_ret:
 	current->curr_ret_stack--;
  out:
 	current->curr_ret_depth--;
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-/* Retrieve a function return address to the trace stack on thread info.*/
-static void
-ftrace_pop_return_trace(struct ftrace_graph_ret *trace, unsigned long *ret,
-			unsigned long frame_pointer)
-{
-	int index;
+/* Retrieve a function वापस address to the trace stack on thपढ़ो info.*/
+अटल व्योम
+ftrace_pop_वापस_trace(काष्ठा ftrace_graph_ret *trace, अचिन्हित दीर्घ *ret,
+			अचिन्हित दीर्घ frame_poपूर्णांकer)
+अणु
+	पूर्णांक index;
 
 	index = current->curr_ret_stack;
 
-	if (unlikely(index < 0 || index >= FTRACE_RETFUNC_DEPTH)) {
+	अगर (unlikely(index < 0 || index >= FTRACE_RETFUNC_DEPTH)) अणु
 		ftrace_graph_stop();
 		WARN_ON(1);
 		/* Might as well panic, otherwise we have no where to go */
-		*ret = (unsigned long)panic;
-		return;
-	}
+		*ret = (अचिन्हित दीर्घ)panic;
+		वापस;
+	पूर्ण
 
-#ifdef HAVE_FUNCTION_GRAPH_FP_TEST
+#अगर_घोषित HAVE_FUNCTION_GRAPH_FP_TEST
 	/*
-	 * The arch may choose to record the frame pointer used
+	 * The arch may choose to record the frame poपूर्णांकer used
 	 * and check it here to make sure that it is what we expect it
-	 * to be. If gcc does not set the place holder of the return
-	 * address in the frame pointer, and does a copy instead, then
+	 * to be. If gcc करोes not set the place holder of the वापस
+	 * address in the frame poपूर्णांकer, and करोes a copy instead, then
 	 * the function graph trace will fail. This test detects this
-	 * case.
+	 * हाल.
 	 *
-	 * Currently, x86_32 with optimize for size (-Os) makes the latest
-	 * gcc do the above.
+	 * Currently, x86_32 with optimize क्रम size (-Os) makes the latest
+	 * gcc करो the above.
 	 *
-	 * Note, -mfentry does not use frame pointers, and this test
-	 *  is not needed if CC_USING_FENTRY is set.
+	 * Note, -mfentry करोes not use frame poपूर्णांकers, and this test
+	 *  is not needed अगर CC_USING_FENTRY is set.
 	 */
-	if (unlikely(current->ret_stack[index].fp != frame_pointer)) {
+	अगर (unlikely(current->ret_stack[index].fp != frame_poपूर्णांकer)) अणु
 		ftrace_graph_stop();
 		WARN(1, "Bad frame pointer: expected %lx, received %lx\n"
 		     "  from func %ps return to %lx\n",
 		     current->ret_stack[index].fp,
-		     frame_pointer,
-		     (void *)current->ret_stack[index].func,
+		     frame_poपूर्णांकer,
+		     (व्योम *)current->ret_stack[index].func,
 		     current->ret_stack[index].ret);
-		*ret = (unsigned long)panic;
-		return;
-	}
-#endif
+		*ret = (अचिन्हित दीर्घ)panic;
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
 
 	*ret = current->ret_stack[index].ret;
 	trace->func = current->ret_stack[index].func;
-	trace->calltime = current->ret_stack[index].calltime;
-	trace->overrun = atomic_read(&current->trace_overrun);
+	trace->callसमय = current->ret_stack[index].callसमय;
+	trace->overrun = atomic_पढ़ो(&current->trace_overrun);
 	trace->depth = current->curr_ret_depth--;
 	/*
-	 * We still want to trace interrupts coming in if
+	 * We still want to trace पूर्णांकerrupts coming in अगर
 	 * max_depth is set to 1. Make sure the decrement is
-	 * seen before ftrace_graph_return.
+	 * seen beक्रमe ftrace_graph_वापस.
 	 */
 	barrier();
-}
+पूर्ण
 
 /*
  * Hibernation protection.
  * The state of the current task is too much unstable during
  * suspend/restore to disk. We want to protect against that.
  */
-static int
-ftrace_suspend_notifier_call(struct notifier_block *bl, unsigned long state,
-							void *unused)
-{
-	switch (state) {
-	case PM_HIBERNATION_PREPARE:
-		pause_graph_tracing();
-		break;
+अटल पूर्णांक
+ftrace_suspend_notअगरier_call(काष्ठा notअगरier_block *bl, अचिन्हित दीर्घ state,
+							व्योम *unused)
+अणु
+	चयन (state) अणु
+	हाल PM_HIBERNATION_PREPARE:
+		छोड़ो_graph_tracing();
+		अवरोध;
 
-	case PM_POST_HIBERNATION:
-		unpause_graph_tracing();
-		break;
-	}
-	return NOTIFY_DONE;
-}
+	हाल PM_POST_HIBERNATION:
+		unछोड़ो_graph_tracing();
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block ftrace_suspend_notifier = {
-	.notifier_call = ftrace_suspend_notifier_call,
-};
+अटल काष्ठा notअगरier_block ftrace_suspend_notअगरier = अणु
+	.notअगरier_call = ftrace_suspend_notअगरier_call,
+पूर्ण;
 
 /*
  * Send the trace to the ring-buffer.
- * @return the original return address.
+ * @वापस the original वापस address.
  */
-unsigned long ftrace_return_to_handler(unsigned long frame_pointer)
-{
-	struct ftrace_graph_ret trace;
-	unsigned long ret;
+अचिन्हित दीर्घ ftrace_वापस_to_handler(अचिन्हित दीर्घ frame_poपूर्णांकer)
+अणु
+	काष्ठा ftrace_graph_ret trace;
+	अचिन्हित दीर्घ ret;
 
-	ftrace_pop_return_trace(&trace, &ret, frame_pointer);
-	trace.rettime = trace_clock_local();
-	ftrace_graph_return(&trace);
+	ftrace_pop_वापस_trace(&trace, &ret, frame_poपूर्णांकer);
+	trace.retसमय = trace_घड़ी_local();
+	ftrace_graph_वापस(&trace);
 	/*
-	 * The ftrace_graph_return() may still access the current
-	 * ret_stack structure, we need to make sure the update of
+	 * The ftrace_graph_वापस() may still access the current
+	 * ret_stack काष्ठाure, we need to make sure the update of
 	 * curr_ret_stack is after that.
 	 */
 	barrier();
 	current->curr_ret_stack--;
 
-	if (unlikely(!ret)) {
+	अगर (unlikely(!ret)) अणु
 		ftrace_graph_stop();
 		WARN_ON(1);
-		/* Might as well panic. What else to do? */
-		ret = (unsigned long)panic;
-	}
+		/* Might as well panic. What अन्यथा to करो? */
+		ret = (अचिन्हित दीर्घ)panic;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ftrace_graph_get_ret_stack - return the entry of the shadow stack
- * @task: The task to read the shadow stack from
- * @idx: Index down the shadow stack
+ * ftrace_graph_get_ret_stack - वापस the entry of the shaकरोw stack
+ * @task: The task to पढ़ो the shaकरोw stack from
+ * @idx: Index करोwn the shaकरोw stack
  *
- * Return the ret_struct on the shadow stack of the @task at the
+ * Return the ret_काष्ठा on the shaकरोw stack of the @task at the
  * call graph at @idx starting with zero. If @idx is zero, it
- * will return the last saved ret_stack entry. If it is greater than
- * zero, it will return the corresponding ret_stack for the depth
- * of saved return addresses.
+ * will वापस the last saved ret_stack entry. If it is greater than
+ * zero, it will वापस the corresponding ret_stack क्रम the depth
+ * of saved वापस addresses.
  */
-struct ftrace_ret_stack *
-ftrace_graph_get_ret_stack(struct task_struct *task, int idx)
-{
+काष्ठा ftrace_ret_stack *
+ftrace_graph_get_ret_stack(काष्ठा task_काष्ठा *task, पूर्णांक idx)
+अणु
 	idx = task->curr_ret_stack - idx;
 
-	if (idx >= 0 && idx <= task->curr_ret_stack)
-		return &task->ret_stack[idx];
+	अगर (idx >= 0 && idx <= task->curr_ret_stack)
+		वापस &task->ret_stack[idx];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * ftrace_graph_ret_addr - convert a potentially modified stack return address
+ * ftrace_graph_ret_addr - convert a potentially modअगरied stack वापस address
  *			   to its original value
  *
  * This function can be called by stack unwinding code to convert a found stack
- * return address ('ret') to its original value, in case the function graph
- * tracer has modified it to be 'return_to_handler'.  If the address hasn't
- * been modified, the unchanged value of 'ret' is returned.
+ * वापस address ('ret') to its original value, in हाल the function graph
+ * tracer has modअगरied it to be 'return_to_handler'.  If the address hasn't
+ * been modअगरied, the unchanged value of 'ret' is वापसed.
  *
  * 'idx' is a state variable which should be initialized by the caller to zero
- * before the first call.
+ * beक्रमe the first call.
  *
- * 'retp' is a pointer to the return address on the stack.  It's ignored if
- * the arch doesn't have HAVE_FUNCTION_GRAPH_RET_ADDR_PTR defined.
+ * 'retp' is a pointer to the return address on the stack.  It's ignored अगर
+ * the arch करोesn't have HAVE_FUNCTION_GRAPH_RET_ADDR_PTR defined.
  */
-#ifdef HAVE_FUNCTION_GRAPH_RET_ADDR_PTR
-unsigned long ftrace_graph_ret_addr(struct task_struct *task, int *idx,
-				    unsigned long ret, unsigned long *retp)
-{
-	int index = task->curr_ret_stack;
-	int i;
+#अगर_घोषित HAVE_FUNCTION_GRAPH_RET_ADDR_PTR
+अचिन्हित दीर्घ ftrace_graph_ret_addr(काष्ठा task_काष्ठा *task, पूर्णांक *idx,
+				    अचिन्हित दीर्घ ret, अचिन्हित दीर्घ *retp)
+अणु
+	पूर्णांक index = task->curr_ret_stack;
+	पूर्णांक i;
 
-	if (ret != (unsigned long)dereference_kernel_function_descriptor(return_to_handler))
-		return ret;
+	अगर (ret != (अचिन्हित दीर्घ)dereference_kernel_function_descriptor(वापस_to_handler))
+		वापस ret;
 
-	if (index < 0)
-		return ret;
+	अगर (index < 0)
+		वापस ret;
 
-	for (i = 0; i <= index; i++)
-		if (task->ret_stack[i].retp == retp)
-			return task->ret_stack[i].ret;
+	क्रम (i = 0; i <= index; i++)
+		अगर (task->ret_stack[i].retp == retp)
+			वापस task->ret_stack[i].ret;
 
-	return ret;
-}
-#else /* !HAVE_FUNCTION_GRAPH_RET_ADDR_PTR */
-unsigned long ftrace_graph_ret_addr(struct task_struct *task, int *idx,
-				    unsigned long ret, unsigned long *retp)
-{
-	int task_idx;
+	वापस ret;
+पूर्ण
+#अन्यथा /* !HAVE_FUNCTION_GRAPH_RET_ADDR_PTR */
+अचिन्हित दीर्घ ftrace_graph_ret_addr(काष्ठा task_काष्ठा *task, पूर्णांक *idx,
+				    अचिन्हित दीर्घ ret, अचिन्हित दीर्घ *retp)
+अणु
+	पूर्णांक task_idx;
 
-	if (ret != (unsigned long)dereference_kernel_function_descriptor(return_to_handler))
-		return ret;
+	अगर (ret != (अचिन्हित दीर्घ)dereference_kernel_function_descriptor(वापस_to_handler))
+		वापस ret;
 
 	task_idx = task->curr_ret_stack;
 
-	if (!task->ret_stack || task_idx < *idx)
-		return ret;
+	अगर (!task->ret_stack || task_idx < *idx)
+		वापस ret;
 
 	task_idx -= *idx;
 	(*idx)++;
 
-	return task->ret_stack[task_idx].ret;
-}
-#endif /* HAVE_FUNCTION_GRAPH_RET_ADDR_PTR */
+	वापस task->ret_stack[task_idx].ret;
+पूर्ण
+#पूर्ण_अगर /* HAVE_FUNCTION_GRAPH_RET_ADDR_PTR */
 
-static struct ftrace_ops graph_ops = {
+अटल काष्ठा ftrace_ops graph_ops = अणु
 	.func			= ftrace_stub,
 	.flags			= FTRACE_OPS_FL_INITIALIZED |
 				   FTRACE_OPS_FL_PID |
 				   FTRACE_OPS_FL_STUB,
-#ifdef FTRACE_GRAPH_TRAMP_ADDR
+#अगर_घोषित FTRACE_GRAPH_TRAMP_ADDR
 	.trampoline		= FTRACE_GRAPH_TRAMP_ADDR,
-	/* trampoline_size is only needed for dynamically allocated tramps */
-#endif
+	/* trampoline_size is only needed क्रम dynamically allocated tramps */
+#पूर्ण_अगर
 	ASSIGN_OPS_HASH(graph_ops, &global_ops.local_hash)
-};
+पूर्ण;
 
-void ftrace_graph_sleep_time_control(bool enable)
-{
-	fgraph_sleep_time = enable;
-}
+व्योम ftrace_graph_sleep_समय_control(bool enable)
+अणु
+	fgraph_sleep_समय = enable;
+पूर्ण
 
-int ftrace_graph_entry_stub(struct ftrace_graph_ent *trace)
-{
-	return 0;
-}
+पूर्णांक ftrace_graph_entry_stub(काष्ठा ftrace_graph_ent *trace)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
- * Simply points to ftrace_stub, but with the proper protocol.
+ * Simply poपूर्णांकs to ftrace_stub, but with the proper protocol.
  * Defined by the linker script in linux/vmlinux.lds.h
  */
-extern void ftrace_stub_graph(struct ftrace_graph_ret *);
+बाह्य व्योम ftrace_stub_graph(काष्ठा ftrace_graph_ret *);
 
 /* The callbacks that hook a function */
-trace_func_graph_ret_t ftrace_graph_return = ftrace_stub_graph;
+trace_func_graph_ret_t ftrace_graph_वापस = ftrace_stub_graph;
 trace_func_graph_ent_t ftrace_graph_entry = ftrace_graph_entry_stub;
-static trace_func_graph_ent_t __ftrace_graph_entry = ftrace_graph_entry_stub;
+अटल trace_func_graph_ent_t __ftrace_graph_entry = ftrace_graph_entry_stub;
 
-/* Try to assign a return stack array on FTRACE_RETSTACK_ALLOC_SIZE tasks. */
-static int alloc_retstack_tasklist(struct ftrace_ret_stack **ret_stack_list)
-{
-	int i;
-	int ret = 0;
-	int start = 0, end = FTRACE_RETSTACK_ALLOC_SIZE;
-	struct task_struct *g, *t;
+/* Try to assign a वापस stack array on FTRACE_RETSTACK_ALLOC_SIZE tasks. */
+अटल पूर्णांक alloc_retstack_tasklist(काष्ठा ftrace_ret_stack **ret_stack_list)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret = 0;
+	पूर्णांक start = 0, end = FTRACE_RETSTACK_ALLOC_SIZE;
+	काष्ठा task_काष्ठा *g, *t;
 
-	for (i = 0; i < FTRACE_RETSTACK_ALLOC_SIZE; i++) {
+	क्रम (i = 0; i < FTRACE_RETSTACK_ALLOC_SIZE; i++) अणु
 		ret_stack_list[i] =
-			kmalloc_array(FTRACE_RETFUNC_DEPTH,
-				      sizeof(struct ftrace_ret_stack),
+			kदो_स्मृति_array(FTRACE_RETFUNC_DEPTH,
+				      माप(काष्ठा ftrace_ret_stack),
 				      GFP_KERNEL);
-		if (!ret_stack_list[i]) {
+		अगर (!ret_stack_list[i]) अणु
 			start = 0;
 			end = i;
 			ret = -ENOMEM;
-			goto free;
-		}
-	}
+			जाओ मुक्त;
+		पूर्ण
+	पूर्ण
 
-	rcu_read_lock();
-	for_each_process_thread(g, t) {
-		if (start == end) {
+	rcu_पढ़ो_lock();
+	क्रम_each_process_thपढ़ो(g, t) अणु
+		अगर (start == end) अणु
 			ret = -EAGAIN;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
-		if (t->ret_stack == NULL) {
+		अगर (t->ret_stack == शून्य) अणु
 			atomic_set(&t->trace_overrun, 0);
 			t->curr_ret_stack = -1;
 			t->curr_ret_depth = -1;
 			/* Make sure the tasks see the -1 first: */
 			smp_wmb();
 			t->ret_stack = ret_stack_list[start++];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 unlock:
-	rcu_read_unlock();
-free:
-	for (i = start; i < end; i++)
-		kfree(ret_stack_list[i]);
-	return ret;
-}
+	rcu_पढ़ो_unlock();
+मुक्त:
+	क्रम (i = start; i < end; i++)
+		kमुक्त(ret_stack_list[i]);
+	वापस ret;
+पूर्ण
 
-static void
-ftrace_graph_probe_sched_switch(void *ignore, bool preempt,
-			struct task_struct *prev, struct task_struct *next)
-{
-	unsigned long long timestamp;
-	int index;
-
-	/*
-	 * Does the user want to count the time a function was asleep.
-	 * If so, do not update the time stamps.
-	 */
-	if (fgraph_sleep_time)
-		return;
-
-	timestamp = trace_clock_local();
-
-	prev->ftrace_timestamp = timestamp;
-
-	/* only process tasks that we timestamped */
-	if (!next->ftrace_timestamp)
-		return;
+अटल व्योम
+ftrace_graph_probe_sched_चयन(व्योम *ignore, bool preempt,
+			काष्ठा task_काष्ठा *prev, काष्ठा task_काष्ठा *next)
+अणु
+	अचिन्हित दीर्घ दीर्घ बारtamp;
+	पूर्णांक index;
 
 	/*
-	 * Update all the counters in next to make up for the
-	 * time next was sleeping.
+	 * Does the user want to count the समय a function was asleep.
+	 * If so, करो not update the समय stamps.
 	 */
-	timestamp -= next->ftrace_timestamp;
+	अगर (fgraph_sleep_समय)
+		वापस;
 
-	for (index = next->curr_ret_stack; index >= 0; index--)
-		next->ret_stack[index].calltime += timestamp;
-}
+	बारtamp = trace_घड़ी_local();
 
-static int ftrace_graph_entry_test(struct ftrace_graph_ent *trace)
-{
-	if (!ftrace_ops_test(&global_ops, trace->func, NULL))
-		return 0;
-	return __ftrace_graph_entry(trace);
-}
+	prev->ftrace_बारtamp = बारtamp;
+
+	/* only process tasks that we बारtamped */
+	अगर (!next->ftrace_बारtamp)
+		वापस;
+
+	/*
+	 * Update all the counters in next to make up क्रम the
+	 * समय next was sleeping.
+	 */
+	बारtamp -= next->ftrace_बारtamp;
+
+	क्रम (index = next->curr_ret_stack; index >= 0; index--)
+		next->ret_stack[index].callसमय += बारtamp;
+पूर्ण
+
+अटल पूर्णांक ftrace_graph_entry_test(काष्ठा ftrace_graph_ent *trace)
+अणु
+	अगर (!ftrace_ops_test(&global_ops, trace->func, शून्य))
+		वापस 0;
+	वापस __ftrace_graph_entry(trace);
+पूर्ण
 
 /*
  * The function graph tracer should only trace the functions defined
  * by set_ftrace_filter and set_ftrace_notrace. If another function
- * tracer ops is registered, the graph tracer requires testing the
+ * tracer ops is रेजिस्टरed, the graph tracer requires testing the
  * function against the global ops, and not just trace any function
- * that any ftrace_ops registered.
+ * that any ftrace_ops रेजिस्टरed.
  */
-void update_function_graph_func(void)
-{
-	struct ftrace_ops *op;
-	bool do_test = false;
+व्योम update_function_graph_func(व्योम)
+अणु
+	काष्ठा ftrace_ops *op;
+	bool करो_test = false;
 
 	/*
 	 * The graph and global ops share the same set of functions
 	 * to test. If any other ops is on the list, then
-	 * the graph tracing needs to test if its the function
+	 * the graph tracing needs to test अगर its the function
 	 * it should call.
 	 */
-	do_for_each_ftrace_op(op, ftrace_ops_list) {
-		if (op != &global_ops && op != &graph_ops &&
-		    op != &ftrace_list_end) {
-			do_test = true;
-			/* in double loop, break out with goto */
-			goto out;
-		}
-	} while_for_each_ftrace_op(op);
+	करो_क्रम_each_ftrace_op(op, ftrace_ops_list) अणु
+		अगर (op != &global_ops && op != &graph_ops &&
+		    op != &ftrace_list_end) अणु
+			करो_test = true;
+			/* in द्विगुन loop, अवरोध out with जाओ */
+			जाओ out;
+		पूर्ण
+	पूर्ण जबतक_क्रम_each_ftrace_op(op);
  out:
-	if (do_test)
+	अगर (करो_test)
 		ftrace_graph_entry = ftrace_graph_entry_test;
-	else
+	अन्यथा
 		ftrace_graph_entry = __ftrace_graph_entry;
-}
+पूर्ण
 
-static DEFINE_PER_CPU(struct ftrace_ret_stack *, idle_ret_stack);
+अटल DEFINE_PER_CPU(काष्ठा ftrace_ret_stack *, idle_ret_stack);
 
-static void
-graph_init_task(struct task_struct *t, struct ftrace_ret_stack *ret_stack)
-{
+अटल व्योम
+graph_init_task(काष्ठा task_काष्ठा *t, काष्ठा ftrace_ret_stack *ret_stack)
+अणु
 	atomic_set(&t->trace_overrun, 0);
-	t->ftrace_timestamp = 0;
-	/* make curr_ret_stack visible before we add the ret_stack */
+	t->ftrace_बारtamp = 0;
+	/* make curr_ret_stack visible beक्रमe we add the ret_stack */
 	smp_wmb();
 	t->ret_stack = ret_stack;
-}
+पूर्ण
 
 /*
- * Allocate a return stack for the idle task. May be the first
- * time through, or it may be done by CPU hotplug online.
+ * Allocate a वापस stack क्रम the idle task. May be the first
+ * समय through, or it may be करोne by CPU hotplug online.
  */
-void ftrace_graph_init_idle_task(struct task_struct *t, int cpu)
-{
+व्योम ftrace_graph_init_idle_task(काष्ठा task_काष्ठा *t, पूर्णांक cpu)
+अणु
 	t->curr_ret_stack = -1;
 	t->curr_ret_depth = -1;
 	/*
 	 * The idle task has no parent, it either has its own
 	 * stack or no stack at all.
 	 */
-	if (t->ret_stack)
+	अगर (t->ret_stack)
 		WARN_ON(t->ret_stack != per_cpu(idle_ret_stack, cpu));
 
-	if (ftrace_graph_active) {
-		struct ftrace_ret_stack *ret_stack;
+	अगर (ftrace_graph_active) अणु
+		काष्ठा ftrace_ret_stack *ret_stack;
 
 		ret_stack = per_cpu(idle_ret_stack, cpu);
-		if (!ret_stack) {
+		अगर (!ret_stack) अणु
 			ret_stack =
-				kmalloc_array(FTRACE_RETFUNC_DEPTH,
-					      sizeof(struct ftrace_ret_stack),
+				kदो_स्मृति_array(FTRACE_RETFUNC_DEPTH,
+					      माप(काष्ठा ftrace_ret_stack),
 					      GFP_KERNEL);
-			if (!ret_stack)
-				return;
+			अगर (!ret_stack)
+				वापस;
 			per_cpu(idle_ret_stack, cpu) = ret_stack;
-		}
+		पूर्ण
 		graph_init_task(t, ret_stack);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Allocate a return stack for newly created task */
-void ftrace_graph_init_task(struct task_struct *t)
-{
-	/* Make sure we do not use the parent ret_stack */
-	t->ret_stack = NULL;
+/* Allocate a वापस stack क्रम newly created task */
+व्योम ftrace_graph_init_task(काष्ठा task_काष्ठा *t)
+अणु
+	/* Make sure we करो not use the parent ret_stack */
+	t->ret_stack = शून्य;
 	t->curr_ret_stack = -1;
 	t->curr_ret_depth = -1;
 
-	if (ftrace_graph_active) {
-		struct ftrace_ret_stack *ret_stack;
+	अगर (ftrace_graph_active) अणु
+		काष्ठा ftrace_ret_stack *ret_stack;
 
-		ret_stack = kmalloc_array(FTRACE_RETFUNC_DEPTH,
-					  sizeof(struct ftrace_ret_stack),
+		ret_stack = kदो_स्मृति_array(FTRACE_RETFUNC_DEPTH,
+					  माप(काष्ठा ftrace_ret_stack),
 					  GFP_KERNEL);
-		if (!ret_stack)
-			return;
+		अगर (!ret_stack)
+			वापस;
 		graph_init_task(t, ret_stack);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ftrace_graph_exit_task(struct task_struct *t)
-{
-	struct ftrace_ret_stack	*ret_stack = t->ret_stack;
+व्योम ftrace_graph_निकास_task(काष्ठा task_काष्ठा *t)
+अणु
+	काष्ठा ftrace_ret_stack	*ret_stack = t->ret_stack;
 
-	t->ret_stack = NULL;
-	/* NULL must become visible to IRQs before we free it: */
+	t->ret_stack = शून्य;
+	/* शून्य must become visible to IRQs beक्रमe we मुक्त it: */
 	barrier();
 
-	kfree(ret_stack);
-}
+	kमुक्त(ret_stack);
+पूर्ण
 
-/* Allocate a return stack for each task */
-static int start_graph_tracing(void)
-{
-	struct ftrace_ret_stack **ret_stack_list;
-	int ret, cpu;
+/* Allocate a वापस stack क्रम each task */
+अटल पूर्णांक start_graph_tracing(व्योम)
+अणु
+	काष्ठा ftrace_ret_stack **ret_stack_list;
+	पूर्णांक ret, cpu;
 
-	ret_stack_list = kmalloc_array(FTRACE_RETSTACK_ALLOC_SIZE,
-				       sizeof(struct ftrace_ret_stack *),
+	ret_stack_list = kदो_स्मृति_array(FTRACE_RETSTACK_ALLOC_SIZE,
+				       माप(काष्ठा ftrace_ret_stack *),
 				       GFP_KERNEL);
 
-	if (!ret_stack_list)
-		return -ENOMEM;
+	अगर (!ret_stack_list)
+		वापस -ENOMEM;
 
-	/* The cpu_boot init_task->ret_stack will never be freed */
-	for_each_online_cpu(cpu) {
-		if (!idle_task(cpu)->ret_stack)
+	/* The cpu_boot init_task->ret_stack will never be मुक्तd */
+	क्रम_each_online_cpu(cpu) अणु
+		अगर (!idle_task(cpu)->ret_stack)
 			ftrace_graph_init_idle_task(idle_task(cpu), cpu);
-	}
+	पूर्ण
 
-	do {
+	करो अणु
 		ret = alloc_retstack_tasklist(ret_stack_list);
-	} while (ret == -EAGAIN);
+	पूर्ण जबतक (ret == -EAGAIN);
 
-	if (!ret) {
-		ret = register_trace_sched_switch(ftrace_graph_probe_sched_switch, NULL);
-		if (ret)
+	अगर (!ret) अणु
+		ret = रेजिस्टर_trace_sched_चयन(ftrace_graph_probe_sched_चयन, शून्य);
+		अगर (ret)
 			pr_info("ftrace_graph: Couldn't activate tracepoint"
 				" probe to kernel_sched_switch\n");
-	}
+	पूर्ण
 
-	kfree(ret_stack_list);
-	return ret;
-}
+	kमुक्त(ret_stack_list);
+	वापस ret;
+पूर्ण
 
-int register_ftrace_graph(struct fgraph_ops *gops)
-{
-	int ret = 0;
+पूर्णांक रेजिस्टर_ftrace_graph(काष्ठा fgraph_ops *gops)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&ftrace_lock);
 
-	/* we currently allow only one tracer registered at a time */
-	if (ftrace_graph_active) {
+	/* we currently allow only one tracer रेजिस्टरed at a समय */
+	अगर (ftrace_graph_active) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	register_pm_notifier(&ftrace_suspend_notifier);
+	रेजिस्टर_pm_notअगरier(&ftrace_suspend_notअगरier);
 
 	ftrace_graph_active++;
 	ret = start_graph_tracing();
-	if (ret) {
+	अगर (ret) अणु
 		ftrace_graph_active--;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ftrace_graph_return = gops->retfunc;
+	ftrace_graph_वापस = gops->retfunc;
 
 	/*
 	 * Update the indirect function to the entryfunc, and the
-	 * function that gets called to the entry_test first. Then
-	 * call the update fgraph entry function to determine if
+	 * function that माला_लो called to the entry_test first. Then
+	 * call the update fgraph entry function to determine अगर
 	 * the entryfunc should be called directly or not.
 	 */
 	__ftrace_graph_entry = gops->entryfunc;
@@ -628,24 +629,24 @@ int register_ftrace_graph(struct fgraph_ops *gops)
 	ret = ftrace_startup(&graph_ops, FTRACE_START_FUNC_RET);
 out:
 	mutex_unlock(&ftrace_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void unregister_ftrace_graph(struct fgraph_ops *gops)
-{
+व्योम unरेजिस्टर_ftrace_graph(काष्ठा fgraph_ops *gops)
+अणु
 	mutex_lock(&ftrace_lock);
 
-	if (unlikely(!ftrace_graph_active))
-		goto out;
+	अगर (unlikely(!ftrace_graph_active))
+		जाओ out;
 
 	ftrace_graph_active--;
-	ftrace_graph_return = ftrace_stub_graph;
+	ftrace_graph_वापस = ftrace_stub_graph;
 	ftrace_graph_entry = ftrace_graph_entry_stub;
 	__ftrace_graph_entry = ftrace_graph_entry_stub;
-	ftrace_shutdown(&graph_ops, FTRACE_STOP_FUNC_RET);
-	unregister_pm_notifier(&ftrace_suspend_notifier);
-	unregister_trace_sched_switch(ftrace_graph_probe_sched_switch, NULL);
+	ftrace_shutकरोwn(&graph_ops, FTRACE_STOP_FUNC_RET);
+	unरेजिस्टर_pm_notअगरier(&ftrace_suspend_notअगरier);
+	unरेजिस्टर_trace_sched_चयन(ftrace_graph_probe_sched_चयन, शून्य);
 
  out:
 	mutex_unlock(&ftrace_lock);
-}
+पूर्ण

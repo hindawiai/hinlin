@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  net/dccp/options.c
  *
  *  An implementation of the DCCP protocol
- *  Copyright (c) 2005 Aristeu Sergio Rozanski Filho <aris@cathedrallabs.org>
- *  Copyright (c) 2005 Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
- *  Copyright (c) 2005 Ian McDonald <ian.mcdonald@jandi.co.nz>
+ *  Copyright (c) 2005 Aristeu Sergio Rozanski Filho <aris@cathedralद_असल.org>
+ *  Copyright (c) 2005 Arnalकरो Carvalho de Melo <acme@ghostprotocols.net>
+ *  Copyright (c) 2005 Ian McDonald <ian.mcकरोnald@jandi.co.nz>
  */
-#include <linux/dccp.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <asm/unaligned.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
+#समावेश <linux/dccp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
 
-#include "ackvec.h"
-#include "ccid.h"
-#include "dccp.h"
-#include "feat.h"
+#समावेश "ackvec.h"
+#समावेश "ccid.h"
+#समावेश "dccp.h"
+#समावेश "feat.h"
 
-u64 dccp_decode_value_var(const u8 *bf, const u8 len)
-{
+u64 dccp_decode_value_var(स्थिर u8 *bf, स्थिर u8 len)
+अणु
 	u64 value = 0;
 
-	if (len >= DCCP_OPTVAL_MAXLEN)
+	अगर (len >= DCCP_OPTVAL_MAXLEN)
 		value += ((u64)*bf++) << 40;
-	if (len > 4)
+	अगर (len > 4)
 		value += ((u64)*bf++) << 32;
-	if (len > 3)
+	अगर (len > 3)
 		value += ((u64)*bf++) << 24;
-	if (len > 2)
+	अगर (len > 2)
 		value += ((u64)*bf++) << 16;
-	if (len > 1)
+	अगर (len > 1)
 		value += ((u64)*bf++) << 8;
-	if (len > 0)
+	अगर (len > 0)
 		value += *bf;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
 /**
  * dccp_parse_options  -  Parse DCCP options present in @skb
- * @sk: client|server|listening dccp socket (when @dreq != NULL)
- * @dreq: request socket to use during connection setup, or NULL
+ * @sk: client|server|listening dccp socket (when @dreq != शून्य)
+ * @dreq: request socket to use during connection setup, or शून्य
  * @skb: frame to parse
  */
-int dccp_parse_options(struct sock *sk, struct dccp_request_sock *dreq,
-		       struct sk_buff *skb)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
-	const struct dccp_hdr *dh = dccp_hdr(skb);
-	const u8 pkt_type = DCCP_SKB_CB(skb)->dccpd_type;
-	unsigned char *options = (unsigned char *)dh + dccp_hdr_len(skb);
-	unsigned char *opt_ptr = options;
-	const unsigned char *opt_end = (unsigned char *)dh +
-					(dh->dccph_doff * 4);
-	struct dccp_options_received *opt_recv = &dp->dccps_options_received;
-	unsigned char opt, len;
-	unsigned char *value;
-	u32 elapsed_time;
+पूर्णांक dccp_parse_options(काष्ठा sock *sk, काष्ठा dccp_request_sock *dreq,
+		       काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
+	स्थिर काष्ठा dccp_hdr *dh = dccp_hdr(skb);
+	स्थिर u8 pkt_type = DCCP_SKB_CB(skb)->dccpd_type;
+	अचिन्हित अक्षर *options = (अचिन्हित अक्षर *)dh + dccp_hdr_len(skb);
+	अचिन्हित अक्षर *opt_ptr = options;
+	स्थिर अचिन्हित अक्षर *opt_end = (अचिन्हित अक्षर *)dh +
+					(dh->dccph_करोff * 4);
+	काष्ठा dccp_options_received *opt_recv = &dp->dccps_options_received;
+	अचिन्हित अक्षर opt, len;
+	अचिन्हित अक्षर *value;
+	u32 elapsed_समय;
 	__be32 opt_val;
-	int rc;
-	int mandatory = 0;
+	पूर्णांक rc;
+	पूर्णांक mandatory = 0;
 
-	memset(opt_recv, 0, sizeof(*opt_recv));
+	स_रखो(opt_recv, 0, माप(*opt_recv));
 
 	opt = len = 0;
-	while (opt_ptr != opt_end) {
+	जबतक (opt_ptr != opt_end) अणु
 		opt   = *opt_ptr++;
 		len   = 0;
-		value = NULL;
+		value = शून्य;
 
-		/* Check if this isn't a single byte option */
-		if (opt > DCCPO_MAX_RESERVED) {
-			if (opt_ptr == opt_end)
-				goto out_nonsensical_length;
+		/* Check अगर this isn't a single byte option */
+		अगर (opt > DCCPO_MAX_RESERVED) अणु
+			अगर (opt_ptr == opt_end)
+				जाओ out_nonsensical_length;
 
 			len = *opt_ptr++;
-			if (len < 2)
-				goto out_nonsensical_length;
+			अगर (len < 2)
+				जाओ out_nonsensical_length;
 			/*
 			 * Remove the type and len fields, leaving
 			 * just the value size
@@ -87,167 +88,167 @@ int dccp_parse_options(struct sock *sk, struct dccp_request_sock *dreq,
 			value	= opt_ptr;
 			opt_ptr += len;
 
-			if (opt_ptr > opt_end)
-				goto out_nonsensical_length;
-		}
+			अगर (opt_ptr > opt_end)
+				जाओ out_nonsensical_length;
+		पूर्ण
 
 		/*
-		 * CCID-specific options are ignored during connection setup, as
+		 * CCID-specअगरic options are ignored during connection setup, as
 		 * negotiation may still be in progress (see RFC 4340, 10.3).
 		 * The same applies to Ack Vectors, as these depend on the CCID.
 		 */
-		if (dreq != NULL && (opt >= DCCPO_MIN_RX_CCID_SPECIFIC ||
+		अगर (dreq != शून्य && (opt >= DCCPO_MIN_RX_CCID_SPECIFIC ||
 		    opt == DCCPO_ACK_VECTOR_0 || opt == DCCPO_ACK_VECTOR_1))
-			goto ignore_option;
+			जाओ ignore_option;
 
-		switch (opt) {
-		case DCCPO_PADDING:
-			break;
-		case DCCPO_MANDATORY:
-			if (mandatory)
-				goto out_invalid_option;
-			if (pkt_type != DCCP_PKT_DATA)
+		चयन (opt) अणु
+		हाल DCCPO_PADDING:
+			अवरोध;
+		हाल DCCPO_MANDATORY:
+			अगर (mandatory)
+				जाओ out_invalid_option;
+			अगर (pkt_type != DCCP_PKT_DATA)
 				mandatory = 1;
-			break;
-		case DCCPO_NDP_COUNT:
-			if (len > 6)
-				goto out_invalid_option;
+			अवरोध;
+		हाल DCCPO_NDP_COUNT:
+			अगर (len > 6)
+				जाओ out_invalid_option;
 
 			opt_recv->dccpor_ndp = dccp_decode_value_var(value, len);
 			dccp_pr_debug("%s opt: NDP count=%llu\n", dccp_role(sk),
-				      (unsigned long long)opt_recv->dccpor_ndp);
-			break;
-		case DCCPO_CHANGE_L ... DCCPO_CONFIRM_R:
-			if (pkt_type == DCCP_PKT_DATA)      /* RFC 4340, 6 */
-				break;
-			if (len == 0)
-				goto out_invalid_option;
+				      (अचिन्हित दीर्घ दीर्घ)opt_recv->dccpor_ndp);
+			अवरोध;
+		हाल DCCPO_CHANGE_L ... DCCPO_CONFIRM_R:
+			अगर (pkt_type == DCCP_PKT_DATA)      /* RFC 4340, 6 */
+				अवरोध;
+			अगर (len == 0)
+				जाओ out_invalid_option;
 			rc = dccp_feat_parse_options(sk, dreq, mandatory, opt,
 						    *value, value + 1, len - 1);
-			if (rc)
-				goto out_featneg_failed;
-			break;
-		case DCCPO_TIMESTAMP:
-			if (len != 4)
-				goto out_invalid_option;
+			अगर (rc)
+				जाओ out_featneg_failed;
+			अवरोध;
+		हाल DCCPO_TIMESTAMP:
+			अगर (len != 4)
+				जाओ out_invalid_option;
 			/*
-			 * RFC 4340 13.1: "The precise time corresponding to
-			 * Timestamp Value zero is not specified". We use
-			 * zero to indicate absence of a meaningful timestamp.
+			 * RFC 4340 13.1: "The precise समय corresponding to
+			 * Timestamp Value zero is not specअगरied". We use
+			 * zero to indicate असलence of a meaningful बारtamp.
 			 */
 			opt_val = get_unaligned((__be32 *)value);
-			if (unlikely(opt_val == 0)) {
+			अगर (unlikely(opt_val == 0)) अणु
 				DCCP_WARN("Timestamp with zero value\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (dreq != NULL) {
-				dreq->dreq_timestamp_echo = ntohl(opt_val);
-				dreq->dreq_timestamp_time = dccp_timestamp();
-			} else {
-				opt_recv->dccpor_timestamp =
-					dp->dccps_timestamp_echo = ntohl(opt_val);
-				dp->dccps_timestamp_time = dccp_timestamp();
-			}
+			अगर (dreq != शून्य) अणु
+				dreq->dreq_बारtamp_echo = ntohl(opt_val);
+				dreq->dreq_बारtamp_समय = dccp_बारtamp();
+			पूर्ण अन्यथा अणु
+				opt_recv->dccpor_बारtamp =
+					dp->dccps_बारtamp_echo = ntohl(opt_val);
+				dp->dccps_बारtamp_समय = dccp_बारtamp();
+			पूर्ण
 			dccp_pr_debug("%s rx opt: TIMESTAMP=%u, ackno=%llu\n",
 				      dccp_role(sk), ntohl(opt_val),
-				      (unsigned long long)
+				      (अचिन्हित दीर्घ दीर्घ)
 				      DCCP_SKB_CB(skb)->dccpd_ack_seq);
-			/* schedule an Ack in case this sender is quiescent */
+			/* schedule an Ack in हाल this sender is quiescent */
 			inet_csk_schedule_ack(sk);
-			break;
-		case DCCPO_TIMESTAMP_ECHO:
-			if (len != 4 && len != 6 && len != 8)
-				goto out_invalid_option;
+			अवरोध;
+		हाल DCCPO_TIMESTAMP_ECHO:
+			अगर (len != 4 && len != 6 && len != 8)
+				जाओ out_invalid_option;
 
 			opt_val = get_unaligned((__be32 *)value);
-			opt_recv->dccpor_timestamp_echo = ntohl(opt_val);
+			opt_recv->dccpor_बारtamp_echo = ntohl(opt_val);
 
 			dccp_pr_debug("%s rx opt: TIMESTAMP_ECHO=%u, len=%d, "
 				      "ackno=%llu", dccp_role(sk),
-				      opt_recv->dccpor_timestamp_echo,
+				      opt_recv->dccpor_बारtamp_echo,
 				      len + 2,
-				      (unsigned long long)
+				      (अचिन्हित दीर्घ दीर्घ)
 				      DCCP_SKB_CB(skb)->dccpd_ack_seq);
 
 			value += 4;
 
-			if (len == 4) {		/* no elapsed time included */
+			अगर (len == 4) अणु		/* no elapsed समय included */
 				dccp_pr_debug_cat("\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (len == 6) {		/* 2-byte elapsed time */
+			अगर (len == 6) अणु		/* 2-byte elapsed समय */
 				__be16 opt_val2 = get_unaligned((__be16 *)value);
-				elapsed_time = ntohs(opt_val2);
-			} else {		/* 4-byte elapsed time */
+				elapsed_समय = ntohs(opt_val2);
+			पूर्ण अन्यथा अणु		/* 4-byte elapsed समय */
 				opt_val = get_unaligned((__be32 *)value);
-				elapsed_time = ntohl(opt_val);
-			}
+				elapsed_समय = ntohl(opt_val);
+			पूर्ण
 
-			dccp_pr_debug_cat(", ELAPSED_TIME=%u\n", elapsed_time);
+			dccp_pr_debug_cat(", ELAPSED_TIME=%u\n", elapsed_समय);
 
 			/* Give precedence to the biggest ELAPSED_TIME */
-			if (elapsed_time > opt_recv->dccpor_elapsed_time)
-				opt_recv->dccpor_elapsed_time = elapsed_time;
-			break;
-		case DCCPO_ELAPSED_TIME:
-			if (dccp_packet_without_ack(skb))   /* RFC 4340, 13.2 */
-				break;
+			अगर (elapsed_समय > opt_recv->dccpor_elapsed_समय)
+				opt_recv->dccpor_elapsed_समय = elapsed_समय;
+			अवरोध;
+		हाल DCCPO_ELAPSED_TIME:
+			अगर (dccp_packet_without_ack(skb))   /* RFC 4340, 13.2 */
+				अवरोध;
 
-			if (len == 2) {
+			अगर (len == 2) अणु
 				__be16 opt_val2 = get_unaligned((__be16 *)value);
-				elapsed_time = ntohs(opt_val2);
-			} else if (len == 4) {
+				elapsed_समय = ntohs(opt_val2);
+			पूर्ण अन्यथा अगर (len == 4) अणु
 				opt_val = get_unaligned((__be32 *)value);
-				elapsed_time = ntohl(opt_val);
-			} else {
-				goto out_invalid_option;
-			}
+				elapsed_समय = ntohl(opt_val);
+			पूर्ण अन्यथा अणु
+				जाओ out_invalid_option;
+			पूर्ण
 
-			if (elapsed_time > opt_recv->dccpor_elapsed_time)
-				opt_recv->dccpor_elapsed_time = elapsed_time;
+			अगर (elapsed_समय > opt_recv->dccpor_elapsed_समय)
+				opt_recv->dccpor_elapsed_समय = elapsed_समय;
 
 			dccp_pr_debug("%s rx opt: ELAPSED_TIME=%d\n",
-				      dccp_role(sk), elapsed_time);
-			break;
-		case DCCPO_MIN_RX_CCID_SPECIFIC ... DCCPO_MAX_RX_CCID_SPECIFIC:
-			if (ccid_hc_rx_parse_options(dp->dccps_hc_rx_ccid, sk,
+				      dccp_role(sk), elapsed_समय);
+			अवरोध;
+		हाल DCCPO_MIN_RX_CCID_SPECIFIC ... DCCPO_MAX_RX_CCID_SPECIFIC:
+			अगर (ccid_hc_rx_parse_options(dp->dccps_hc_rx_ccid, sk,
 						     pkt_type, opt, value, len))
-				goto out_invalid_option;
-			break;
-		case DCCPO_ACK_VECTOR_0:
-		case DCCPO_ACK_VECTOR_1:
-			if (dccp_packet_without_ack(skb))   /* RFC 4340, 11.4 */
-				break;
+				जाओ out_invalid_option;
+			अवरोध;
+		हाल DCCPO_ACK_VECTOR_0:
+		हाल DCCPO_ACK_VECTOR_1:
+			अगर (dccp_packet_without_ack(skb))   /* RFC 4340, 11.4 */
+				अवरोध;
 			/*
-			 * Ack vectors are processed by the TX CCID if it is
-			 * interested. The RX CCID need not parse Ack Vectors,
-			 * since it is only interested in clearing old state.
+			 * Ack vectors are processed by the TX CCID अगर it is
+			 * पूर्णांकerested. The RX CCID need not parse Ack Vectors,
+			 * since it is only पूर्णांकerested in clearing old state.
 			 */
 			fallthrough;
-		case DCCPO_MIN_TX_CCID_SPECIFIC ... DCCPO_MAX_TX_CCID_SPECIFIC:
-			if (ccid_hc_tx_parse_options(dp->dccps_hc_tx_ccid, sk,
+		हाल DCCPO_MIN_TX_CCID_SPECIFIC ... DCCPO_MAX_TX_CCID_SPECIFIC:
+			अगर (ccid_hc_tx_parse_options(dp->dccps_hc_tx_ccid, sk,
 						     pkt_type, opt, value, len))
-				goto out_invalid_option;
-			break;
-		default:
+				जाओ out_invalid_option;
+			अवरोध;
+		शेष:
 			DCCP_CRIT("DCCP(%p): option %d(len=%d) not "
 				  "implemented, ignoring", sk, opt, len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 ignore_option:
-		if (opt != DCCPO_MANDATORY)
+		अगर (opt != DCCPO_MANDATORY)
 			mandatory = 0;
-	}
+	पूर्ण
 
 	/* mandatory was the last byte in option list -> reset connection */
-	if (mandatory)
-		goto out_invalid_option;
+	अगर (mandatory)
+		जाओ out_invalid_option;
 
 out_nonsensical_length:
-	/* RFC 4340, 5.8: ignore option and all remaining option space */
-	return 0;
+	/* RFC 4340, 5.8: ignore option and all reमुख्यing option space */
+	वापस 0;
 
 out_invalid_option:
 	DCCP_INC_STATS(DCCP_MIB_INVALIDOPT);
@@ -258,41 +259,41 @@ out_featneg_failed:
 	DCCP_SKB_CB(skb)->dccpd_reset_data[0] = opt;
 	DCCP_SKB_CB(skb)->dccpd_reset_data[1] = len > 0 ? value[0] : 0;
 	DCCP_SKB_CB(skb)->dccpd_reset_data[2] = len > 1 ? value[1] : 0;
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(dccp_parse_options);
 
-void dccp_encode_value_var(const u64 value, u8 *to, const u8 len)
-{
-	if (len >= DCCP_OPTVAL_MAXLEN)
+व्योम dccp_encode_value_var(स्थिर u64 value, u8 *to, स्थिर u8 len)
+अणु
+	अगर (len >= DCCP_OPTVAL_MAXLEN)
 		*to++ = (value & 0xFF0000000000ull) >> 40;
-	if (len > 4)
+	अगर (len > 4)
 		*to++ = (value & 0xFF00000000ull) >> 32;
-	if (len > 3)
+	अगर (len > 3)
 		*to++ = (value & 0xFF000000) >> 24;
-	if (len > 2)
+	अगर (len > 2)
 		*to++ = (value & 0xFF0000) >> 16;
-	if (len > 1)
+	अगर (len > 1)
 		*to++ = (value & 0xFF00) >> 8;
-	if (len > 0)
+	अगर (len > 0)
 		*to++ = (value & 0xFF);
-}
+पूर्ण
 
-static inline u8 dccp_ndp_len(const u64 ndp)
-{
-	if (likely(ndp <= 0xFF))
-		return 1;
-	return likely(ndp <= USHRT_MAX) ? 2 : (ndp <= UINT_MAX ? 4 : 6);
-}
+अटल अंतरभूत u8 dccp_ndp_len(स्थिर u64 ndp)
+अणु
+	अगर (likely(ndp <= 0xFF))
+		वापस 1;
+	वापस likely(ndp <= अच_लघु_उच्च) ? 2 : (ndp <= अच_पूर्णांक_उच्च ? 4 : 6);
+पूर्ण
 
-int dccp_insert_option(struct sk_buff *skb, const unsigned char option,
-		       const void *value, const unsigned char len)
-{
-	unsigned char *to;
+पूर्णांक dccp_insert_option(काष्ठा sk_buff *skb, स्थिर अचिन्हित अक्षर option,
+		       स्थिर व्योम *value, स्थिर अचिन्हित अक्षर len)
+अणु
+	अचिन्हित अक्षर *to;
 
-	if (DCCP_SKB_CB(skb)->dccpd_opt_len + len + 2 > DCCP_MAX_OPT_LEN)
-		return -1;
+	अगर (DCCP_SKB_CB(skb)->dccpd_opt_len + len + 2 > DCCP_MAX_OPT_LEN)
+		वापस -1;
 
 	DCCP_SKB_CB(skb)->dccpd_opt_len += len + 2;
 
@@ -300,29 +301,29 @@ int dccp_insert_option(struct sk_buff *skb, const unsigned char option,
 	*to++ = option;
 	*to++ = len + 2;
 
-	memcpy(to, value, len);
-	return 0;
-}
+	स_नकल(to, value, len);
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(dccp_insert_option);
 
-static int dccp_insert_option_ndp(struct sock *sk, struct sk_buff *skb)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
+अटल पूर्णांक dccp_insert_option_ndp(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
 	u64 ndp = dp->dccps_ndp_count;
 
-	if (dccp_non_data_packet(skb))
+	अगर (dccp_non_data_packet(skb))
 		++dp->dccps_ndp_count;
-	else
+	अन्यथा
 		dp->dccps_ndp_count = 0;
 
-	if (ndp > 0) {
-		unsigned char *ptr;
-		const int ndp_len = dccp_ndp_len(ndp);
-		const int len = ndp_len + 2;
+	अगर (ndp > 0) अणु
+		अचिन्हित अक्षर *ptr;
+		स्थिर पूर्णांक ndp_len = dccp_ndp_len(ndp);
+		स्थिर पूर्णांक len = ndp_len + 2;
 
-		if (DCCP_SKB_CB(skb)->dccpd_opt_len + len > DCCP_MAX_OPT_LEN)
-			return -1;
+		अगर (DCCP_SKB_CB(skb)->dccpd_opt_len + len > DCCP_MAX_OPT_LEN)
+			वापस -1;
 
 		DCCP_SKB_CB(skb)->dccpd_opt_len += len;
 
@@ -330,48 +331,48 @@ static int dccp_insert_option_ndp(struct sock *sk, struct sk_buff *skb)
 		*ptr++ = DCCPO_NDP_COUNT;
 		*ptr++ = len;
 		dccp_encode_value_var(ndp, ptr, ndp_len);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int dccp_elapsed_time_len(const u32 elapsed_time)
-{
-	return elapsed_time == 0 ? 0 : elapsed_time <= 0xFFFF ? 2 : 4;
-}
+अटल अंतरभूत पूर्णांक dccp_elapsed_समय_len(स्थिर u32 elapsed_समय)
+अणु
+	वापस elapsed_समय == 0 ? 0 : elapsed_समय <= 0xFFFF ? 2 : 4;
+पूर्ण
 
-static int dccp_insert_option_timestamp(struct sk_buff *skb)
-{
-	__be32 now = htonl(dccp_timestamp());
-	/* yes this will overflow but that is the point as we want a
-	 * 10 usec 32 bit timer which mean it wraps every 11.9 hours */
+अटल पूर्णांक dccp_insert_option_बारtamp(काष्ठा sk_buff *skb)
+अणु
+	__be32 now = htonl(dccp_बारtamp());
+	/* yes this will overflow but that is the poपूर्णांक as we want a
+	 * 10 usec 32 bit समयr which mean it wraps every 11.9 hours */
 
-	return dccp_insert_option(skb, DCCPO_TIMESTAMP, &now, sizeof(now));
-}
+	वापस dccp_insert_option(skb, DCCPO_TIMESTAMP, &now, माप(now));
+पूर्ण
 
-static int dccp_insert_option_timestamp_echo(struct dccp_sock *dp,
-					     struct dccp_request_sock *dreq,
-					     struct sk_buff *skb)
-{
+अटल पूर्णांक dccp_insert_option_बारtamp_echo(काष्ठा dccp_sock *dp,
+					     काष्ठा dccp_request_sock *dreq,
+					     काष्ठा sk_buff *skb)
+अणु
 	__be32 tstamp_echo;
-	unsigned char *to;
-	u32 elapsed_time, elapsed_time_len, len;
+	अचिन्हित अक्षर *to;
+	u32 elapsed_समय, elapsed_समय_len, len;
 
-	if (dreq != NULL) {
-		elapsed_time = dccp_timestamp() - dreq->dreq_timestamp_time;
-		tstamp_echo  = htonl(dreq->dreq_timestamp_echo);
-		dreq->dreq_timestamp_echo = 0;
-	} else {
-		elapsed_time = dccp_timestamp() - dp->dccps_timestamp_time;
-		tstamp_echo  = htonl(dp->dccps_timestamp_echo);
-		dp->dccps_timestamp_echo = 0;
-	}
+	अगर (dreq != शून्य) अणु
+		elapsed_समय = dccp_बारtamp() - dreq->dreq_बारtamp_समय;
+		tstamp_echo  = htonl(dreq->dreq_बारtamp_echo);
+		dreq->dreq_बारtamp_echo = 0;
+	पूर्ण अन्यथा अणु
+		elapsed_समय = dccp_बारtamp() - dp->dccps_बारtamp_समय;
+		tstamp_echo  = htonl(dp->dccps_बारtamp_echo);
+		dp->dccps_बारtamp_echo = 0;
+	पूर्ण
 
-	elapsed_time_len = dccp_elapsed_time_len(elapsed_time);
-	len = 6 + elapsed_time_len;
+	elapsed_समय_len = dccp_elapsed_समय_len(elapsed_समय);
+	len = 6 + elapsed_समय_len;
 
-	if (DCCP_SKB_CB(skb)->dccpd_opt_len + len > DCCP_MAX_OPT_LEN)
-		return -1;
+	अगर (DCCP_SKB_CB(skb)->dccpd_opt_len + len > DCCP_MAX_OPT_LEN)
+		वापस -1;
 
 	DCCP_SKB_CB(skb)->dccpd_opt_len += len;
 
@@ -379,51 +380,51 @@ static int dccp_insert_option_timestamp_echo(struct dccp_sock *dp,
 	*to++ = DCCPO_TIMESTAMP_ECHO;
 	*to++ = len;
 
-	memcpy(to, &tstamp_echo, 4);
+	स_नकल(to, &tstamp_echo, 4);
 	to += 4;
 
-	if (elapsed_time_len == 2) {
-		const __be16 var16 = htons((u16)elapsed_time);
-		memcpy(to, &var16, 2);
-	} else if (elapsed_time_len == 4) {
-		const __be32 var32 = htonl(elapsed_time);
-		memcpy(to, &var32, 4);
-	}
+	अगर (elapsed_समय_len == 2) अणु
+		स्थिर __be16 var16 = htons((u16)elapsed_समय);
+		स_नकल(to, &var16, 2);
+	पूर्ण अन्यथा अगर (elapsed_समय_len == 4) अणु
+		स्थिर __be32 var32 = htonl(elapsed_समय);
+		स_नकल(to, &var32, 4);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dccp_insert_option_ackvec(struct sock *sk, struct sk_buff *skb)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
-	struct dccp_ackvec *av = dp->dccps_hc_rx_ackvec;
-	struct dccp_skb_cb *dcb = DCCP_SKB_CB(skb);
-	const u16 buflen = dccp_ackvec_buflen(av);
-	/* Figure out how many options do we need to represent the ackvec */
-	const u8 nr_opts = DIV_ROUND_UP(buflen, DCCP_SINGLE_OPT_MAXLEN);
+अटल पूर्णांक dccp_insert_option_ackvec(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
+	काष्ठा dccp_ackvec *av = dp->dccps_hc_rx_ackvec;
+	काष्ठा dccp_skb_cb *dcb = DCCP_SKB_CB(skb);
+	स्थिर u16 buflen = dccp_ackvec_buflen(av);
+	/* Figure out how many options करो we need to represent the ackvec */
+	स्थिर u8 nr_opts = DIV_ROUND_UP(buflen, DCCP_SINGLE_OPT_MAXLEN);
 	u16 len = buflen + 2 * nr_opts;
 	u8 i, nonce = 0;
-	const unsigned char *tail, *from;
-	unsigned char *to;
+	स्थिर अचिन्हित अक्षर *tail, *from;
+	अचिन्हित अक्षर *to;
 
-	if (dcb->dccpd_opt_len + len > DCCP_MAX_OPT_LEN) {
+	अगर (dcb->dccpd_opt_len + len > DCCP_MAX_OPT_LEN) अणु
 		DCCP_WARN("Lacking space for %u bytes on %s packet\n", len,
 			  dccp_packet_name(dcb->dccpd_type));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	/*
 	 * Since Ack Vectors are variable-length, we can not always predict
-	 * their size. To catch exception cases where the space is running out
+	 * their size. To catch exception हालs where the space is running out
 	 * on the skb, a separate Sync is scheduled to carry the Ack Vector.
 	 */
-	if (len > DCCPAV_MIN_OPTLEN &&
-	    len + dcb->dccpd_opt_len + skb->len > dp->dccps_mss_cache) {
+	अगर (len > DCCPAV_MIN_OPTLEN &&
+	    len + dcb->dccpd_opt_len + skb->len > dp->dccps_mss_cache) अणु
 		DCCP_WARN("No space left for Ack Vector (%u) on skb (%u+%u), "
 			  "MPS=%u ==> reduce payload size?\n", len, skb->len,
 			  dcb->dccpd_opt_len, dp->dccps_mss_cache);
 		dp->dccps_sync_scheduled = 1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	dcb->dccpd_opt_len += len;
 
 	to   = skb_push(skb, len);
@@ -431,95 +432,95 @@ static int dccp_insert_option_ackvec(struct sock *sk, struct sk_buff *skb)
 	from = av->av_buf + av->av_buf_head;
 	tail = av->av_buf + DCCPAV_MAX_ACKVEC_LEN;
 
-	for (i = 0; i < nr_opts; ++i) {
-		int copylen = len;
+	क्रम (i = 0; i < nr_opts; ++i) अणु
+		पूर्णांक copylen = len;
 
-		if (len > DCCP_SINGLE_OPT_MAXLEN)
+		अगर (len > DCCP_SINGLE_OPT_MAXLEN)
 			copylen = DCCP_SINGLE_OPT_MAXLEN;
 
 		/*
-		 * RFC 4340, 12.2: Encode the Nonce Echo for this Ack Vector via
-		 * its type; ack_nonce is the sum of all individual buf_nonce's.
+		 * RFC 4340, 12.2: Encode the Nonce Echo क्रम this Ack Vector via
+		 * its type; ack_nonce is the sum of all inभागidual buf_nonce's.
 		 */
 		nonce ^= av->av_buf_nonce[i];
 
 		*to++ = DCCPO_ACK_VECTOR_0 + av->av_buf_nonce[i];
 		*to++ = copylen + 2;
 
-		/* Check if buf_head wraps */
-		if (from + copylen > tail) {
-			const u16 tailsize = tail - from;
+		/* Check अगर buf_head wraps */
+		अगर (from + copylen > tail) अणु
+			स्थिर u16 tailsize = tail - from;
 
-			memcpy(to, from, tailsize);
+			स_नकल(to, from, tailsize);
 			to	+= tailsize;
 			len	-= tailsize;
 			copylen	-= tailsize;
 			from	= av->av_buf;
-		}
+		पूर्ण
 
-		memcpy(to, from, copylen);
+		स_नकल(to, from, copylen);
 		from += copylen;
 		to   += copylen;
 		len  -= copylen;
-	}
+	पूर्ण
 	/*
 	 * Each sent Ack Vector is recorded in the list, as per A.2 of RFC 4340.
 	 */
-	if (dccp_ackvec_update_records(av, dcb->dccpd_seq, nonce))
-		return -ENOBUFS;
-	return 0;
-}
+	अगर (dccp_ackvec_update_records(av, dcb->dccpd_seq, nonce))
+		वापस -ENOBUFS;
+	वापस 0;
+पूर्ण
 
 /**
  * dccp_insert_option_mandatory  -  Mandatory option (5.8.2)
- * @skb: frame into which to insert option
+ * @skb: frame पूर्णांकo which to insert option
  *
  * Note that since we are using skb_push, this function needs to be called
  * _after_ inserting the option it is supposed to influence (stack order).
  */
-int dccp_insert_option_mandatory(struct sk_buff *skb)
-{
-	if (DCCP_SKB_CB(skb)->dccpd_opt_len >= DCCP_MAX_OPT_LEN)
-		return -1;
+पूर्णांक dccp_insert_option_mandatory(काष्ठा sk_buff *skb)
+अणु
+	अगर (DCCP_SKB_CB(skb)->dccpd_opt_len >= DCCP_MAX_OPT_LEN)
+		वापस -1;
 
 	DCCP_SKB_CB(skb)->dccpd_opt_len++;
 	*(u8 *)skb_push(skb, 1) = DCCPO_MANDATORY;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * dccp_insert_fn_opt  -  Insert single Feature-Negotiation option into @skb
- * @skb: frame to insert feature negotiation option into
+ * dccp_insert_fn_opt  -  Insert single Feature-Negotiation option पूर्णांकo @skb
+ * @skb: frame to insert feature negotiation option पूर्णांकo
  * @type: %DCCPO_CHANGE_L, %DCCPO_CHANGE_R, %DCCPO_CONFIRM_L, %DCCPO_CONFIRM_R
  * @feat: one out of %dccp_feature_numbers
  * @val: NN value or SP array (preferred element first) to copy
  * @len: true length of @val in bytes (excluding first element repetition)
  * @repeat_first: whether to copy the first element of @val twice
  *
- * The last argument is used to construct Confirm options, where the preferred
+ * The last argument is used to स्थिरruct Confirm options, where the preferred
  * value and the preference list appear separately (RFC 4340, 6.3.1). Preference
  * lists are kept such that the preferred entry is always first, so we only need
- * to copy twice, and avoid the overhead of cloning into a bigger array.
+ * to copy twice, and aव्योम the overhead of cloning पूर्णांकo a bigger array.
  */
-int dccp_insert_fn_opt(struct sk_buff *skb, u8 type, u8 feat,
+पूर्णांक dccp_insert_fn_opt(काष्ठा sk_buff *skb, u8 type, u8 feat,
 		       u8 *val, u8 len, bool repeat_first)
-{
+अणु
 	u8 tot_len, *to;
 
-	/* take the `Feature' field and possible repetition into account */
-	if (len > (DCCP_SINGLE_OPT_MAXLEN - 2)) {
+	/* take the `Feature' field and possible repetition पूर्णांकo account */
+	अगर (len > (DCCP_SINGLE_OPT_MAXLEN - 2)) अणु
 		DCCP_WARN("length %u for feature %u too large\n", len, feat);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (unlikely(val == NULL || len == 0))
+	अगर (unlikely(val == शून्य || len == 0))
 		len = repeat_first = false;
 	tot_len = 3 + repeat_first + len;
 
-	if (DCCP_SKB_CB(skb)->dccpd_opt_len + tot_len > DCCP_MAX_OPT_LEN) {
+	अगर (DCCP_SKB_CB(skb)->dccpd_opt_len + tot_len > DCCP_MAX_OPT_LEN) अणु
 		DCCP_WARN("packet too small for feature %d option!\n", feat);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	DCCP_SKB_CB(skb)->dccpd_opt_len += tot_len;
 
 	to    = skb_push(skb, tot_len);
@@ -527,83 +528,83 @@ int dccp_insert_fn_opt(struct sk_buff *skb, u8 type, u8 feat,
 	*to++ = tot_len;
 	*to++ = feat;
 
-	if (repeat_first)
+	अगर (repeat_first)
 		*to++ = *val;
-	if (len)
-		memcpy(to, val, len);
-	return 0;
-}
+	अगर (len)
+		स_नकल(to, val, len);
+	वापस 0;
+पूर्ण
 
 /* The length of all options needs to be a multiple of 4 (5.8) */
-static void dccp_insert_option_padding(struct sk_buff *skb)
-{
-	int padding = DCCP_SKB_CB(skb)->dccpd_opt_len % 4;
+अटल व्योम dccp_insert_option_padding(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक padding = DCCP_SKB_CB(skb)->dccpd_opt_len % 4;
 
-	if (padding != 0) {
+	अगर (padding != 0) अणु
 		padding = 4 - padding;
-		memset(skb_push(skb, padding), 0, padding);
+		स_रखो(skb_push(skb, padding), 0, padding);
 		DCCP_SKB_CB(skb)->dccpd_opt_len += padding;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int dccp_insert_options(struct sock *sk, struct sk_buff *skb)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
+पूर्णांक dccp_insert_options(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
 
 	DCCP_SKB_CB(skb)->dccpd_opt_len = 0;
 
-	if (dp->dccps_send_ndp_count && dccp_insert_option_ndp(sk, skb))
-		return -1;
+	अगर (dp->dccps_send_ndp_count && dccp_insert_option_ndp(sk, skb))
+		वापस -1;
 
-	if (DCCP_SKB_CB(skb)->dccpd_type != DCCP_PKT_DATA) {
+	अगर (DCCP_SKB_CB(skb)->dccpd_type != DCCP_PKT_DATA) अणु
 
 		/* Feature Negotiation */
-		if (dccp_feat_insert_opts(dp, NULL, skb))
-			return -1;
+		अगर (dccp_feat_insert_opts(dp, शून्य, skb))
+			वापस -1;
 
-		if (DCCP_SKB_CB(skb)->dccpd_type == DCCP_PKT_REQUEST) {
+		अगर (DCCP_SKB_CB(skb)->dccpd_type == DCCP_PKT_REQUEST) अणु
 			/*
 			 * Obtain RTT sample from Request/Response exchange.
-			 * This is currently used for TFRC initialisation.
+			 * This is currently used क्रम TFRC initialisation.
 			 */
-			if (dccp_insert_option_timestamp(skb))
-				return -1;
+			अगर (dccp_insert_option_बारtamp(skb))
+				वापस -1;
 
-		} else if (dccp_ackvec_pending(sk) &&
-			   dccp_insert_option_ackvec(sk, skb)) {
-				return -1;
-		}
-	}
+		पूर्ण अन्यथा अगर (dccp_ackvec_pending(sk) &&
+			   dccp_insert_option_ackvec(sk, skb)) अणु
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	if (dp->dccps_hc_rx_insert_options) {
-		if (ccid_hc_rx_insert_options(dp->dccps_hc_rx_ccid, sk, skb))
-			return -1;
+	अगर (dp->dccps_hc_rx_insert_options) अणु
+		अगर (ccid_hc_rx_insert_options(dp->dccps_hc_rx_ccid, sk, skb))
+			वापस -1;
 		dp->dccps_hc_rx_insert_options = 0;
-	}
+	पूर्ण
 
-	if (dp->dccps_timestamp_echo != 0 &&
-	    dccp_insert_option_timestamp_echo(dp, NULL, skb))
-		return -1;
+	अगर (dp->dccps_बारtamp_echo != 0 &&
+	    dccp_insert_option_बारtamp_echo(dp, शून्य, skb))
+		वापस -1;
 
 	dccp_insert_option_padding(skb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dccp_insert_options_rsk(struct dccp_request_sock *dreq, struct sk_buff *skb)
-{
+पूर्णांक dccp_insert_options_rsk(काष्ठा dccp_request_sock *dreq, काष्ठा sk_buff *skb)
+अणु
 	DCCP_SKB_CB(skb)->dccpd_opt_len = 0;
 
-	if (dccp_feat_insert_opts(NULL, dreq, skb))
-		return -1;
+	अगर (dccp_feat_insert_opts(शून्य, dreq, skb))
+		वापस -1;
 
 	/* Obtain RTT sample from Response/Ack exchange (used by TFRC). */
-	if (dccp_insert_option_timestamp(skb))
-		return -1;
+	अगर (dccp_insert_option_बारtamp(skb))
+		वापस -1;
 
-	if (dreq->dreq_timestamp_echo != 0 &&
-	    dccp_insert_option_timestamp_echo(NULL, dreq, skb))
-		return -1;
+	अगर (dreq->dreq_बारtamp_echo != 0 &&
+	    dccp_insert_option_बारtamp_echo(शून्य, dreq, skb))
+		वापस -1;
 
 	dccp_insert_option_padding(skb);
-	return 0;
-}
+	वापस 0;
+पूर्ण

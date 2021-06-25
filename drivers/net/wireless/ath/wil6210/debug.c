@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2013,2016 Qualcomm Atheros, Inc.
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
-#include "wil6210.h"
-#include "trace.h"
+#समावेश "wil6210.h"
+#समावेश "trace.h"
 
-void __wil_err(struct wil6210_priv *wil, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम __wil_err(काष्ठा wil6210_priv *wil, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
-	netdev_err(wil->main_ndev, "%pV", &vaf);
+	netdev_err(wil->मुख्य_ndev, "%pV", &vaf);
 	trace_wil6210_log_err(&vaf);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
-void __wil_err_ratelimited(struct wil6210_priv *wil, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम __wil_err_ratelimited(काष्ठा wil6210_priv *wil, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	if (!net_ratelimit())
-		return;
+	अगर (!net_ratelimit())
+		वापस;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
-	netdev_err(wil->main_ndev, "%pV", &vaf);
+	netdev_err(wil->मुख्य_ndev, "%pV", &vaf);
 	trace_wil6210_log_err(&vaf);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
-void wil_dbg_ratelimited(const struct wil6210_priv *wil, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम wil_dbg_ratelimited(स्थिर काष्ठा wil6210_priv *wil, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	if (!net_ratelimit())
-		return;
+	अगर (!net_ratelimit())
+		वापस;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
-	netdev_dbg(wil->main_ndev, "%pV", &vaf);
+	netdev_dbg(wil->मुख्य_ndev, "%pV", &vaf);
 	trace_wil6210_log_dbg(&vaf);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
-void __wil_info(struct wil6210_priv *wil, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम __wil_info(काष्ठा wil6210_priv *wil, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
-	netdev_info(wil->main_ndev, "%pV", &vaf);
+	netdev_info(wil->मुख्य_ndev, "%pV", &vaf);
 	trace_wil6210_log_info(&vaf);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
-void wil_dbg_trace(struct wil6210_priv *wil, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम wil_dbg_trace(काष्ठा wil6210_priv *wil, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
 	trace_wil6210_log_dbg(&vaf);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण

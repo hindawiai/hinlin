@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*---------------------------------------------------------------------------+
  |  fpu_trig.c                                                               |
  |                                                                           |
@@ -11,162 +12,162 @@
  |                                                                           |
  +---------------------------------------------------------------------------*/
 
-#include "fpu_system.h"
-#include "exception.h"
-#include "fpu_emu.h"
-#include "status_w.h"
-#include "control_w.h"
-#include "reg_constant.h"
+#समावेश "fpu_system.h"
+#समावेश "exception.h"
+#समावेश "fpu_emu.h"
+#समावेश "status_w.h"
+#समावेश "control_w.h"
+#समावेश "reg_constant.h"
 
-static void rem_kernel(unsigned long long st0, unsigned long long *y,
-		       unsigned long long st1, unsigned long long q, int n);
+अटल व्योम rem_kernel(अचिन्हित दीर्घ दीर्घ st0, अचिन्हित दीर्घ दीर्घ *y,
+		       अचिन्हित दीर्घ दीर्घ st1, अचिन्हित दीर्घ दीर्घ q, पूर्णांक n);
 
-#define BETTER_THAN_486
+#घोषणा BETTER_THAN_486
 
-#define FCOS  4
+#घोषणा FCOS  4
 
 /* Used only by fptan, fsin, fcos, and fsincos. */
 /* This routine produces very accurate results, similar to
    using a value of pi with more than 128 bits precision. */
 /* Limited measurements show no results worse than 64 bit precision
-   except for the results for arguments close to 2^63, where the
-   precision of the result sometimes degrades to about 63.9 bits */
-static int trig_arg(FPU_REG *st0_ptr, int even)
-{
-	FPU_REG tmp;
-	u_char tmptag;
-	unsigned long long q;
-	int old_cw = control_word, saved_status = partial_status;
-	int tag, st0_tag = TAG_Valid;
+   except क्रम the results क्रम arguments बंद to 2^63, where the
+   precision of the result someबार degrades to about 63.9 bits */
+अटल पूर्णांक trig_arg(FPU_REG *st0_ptr, पूर्णांक even)
+अणु
+	FPU_REG पंचांगp;
+	u_अक्षर पंचांगptag;
+	अचिन्हित दीर्घ दीर्घ q;
+	पूर्णांक old_cw = control_word, saved_status = partial_status;
+	पूर्णांक tag, st0_tag = TAG_Valid;
 
-	if (exponent(st0_ptr) >= 63) {
+	अगर (exponent(st0_ptr) >= 63) अणु
 		partial_status |= SW_C2;	/* Reduction incomplete. */
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	control_word &= ~CW_RC;
 	control_word |= RC_CHOP;
 
 	setpositive(st0_ptr);
-	tag = FPU_u_div(st0_ptr, &CONST_PI2, &tmp, PR_64_BITS | RC_CHOP | 0x3f,
+	tag = FPU_u_भाग(st0_ptr, &CONST_PI2, &पंचांगp, PR_64_BITS | RC_CHOP | 0x3f,
 			SIGN_POS);
 
-	FPU_round_to_int(&tmp, tag);	/* Fortunately, this can't overflow
+	FPU_round_to_पूर्णांक(&पंचांगp, tag);	/* Fortunately, this can't overflow
 					   to 2^64 */
-	q = significand(&tmp);
-	if (q) {
-		rem_kernel(significand(st0_ptr),
-			   &significand(&tmp),
-			   significand(&CONST_PI2),
+	q = signअगरicand(&पंचांगp);
+	अगर (q) अणु
+		rem_kernel(signअगरicand(st0_ptr),
+			   &signअगरicand(&पंचांगp),
+			   signअगरicand(&CONST_PI2),
 			   q, exponent(st0_ptr) - exponent(&CONST_PI2));
-		setexponent16(&tmp, exponent(&CONST_PI2));
-		st0_tag = FPU_normalize(&tmp);
-		FPU_copy_to_reg0(&tmp, st0_tag);
-	}
+		setexponent16(&पंचांगp, exponent(&CONST_PI2));
+		st0_tag = FPU_normalize(&पंचांगp);
+		FPU_copy_to_reg0(&पंचांगp, st0_tag);
+	पूर्ण
 
-	if ((even && !(q & 1)) || (!even && (q & 1))) {
+	अगर ((even && !(q & 1)) || (!even && (q & 1))) अणु
 		st0_tag =
-		    FPU_sub(REV | LOADED | TAG_Valid, (int)&CONST_PI2,
+		    FPU_sub(REV | LOADED | TAG_Valid, (पूर्णांक)&CONST_PI2,
 			    FULL_PRECISION);
 
-#ifdef BETTER_THAN_486
+#अगर_घोषित BETTER_THAN_486
 		/* So far, the results are exact but based upon a 64 bit
 		   precision approximation to pi/2. The technique used
 		   now is equivalent to using an approximation to pi/2 which
 		   is accurate to about 128 bits. */
-		if ((exponent(st0_ptr) <= exponent(&CONST_PI2extra) + 64)
-		    || (q > 1)) {
+		अगर ((exponent(st0_ptr) <= exponent(&CONST_PI2extra) + 64)
+		    || (q > 1)) अणु
 			/* This code gives the effect of having pi/2 to better than
 			   128 bits precision. */
 
-			significand(&tmp) = q + 1;
-			setexponent16(&tmp, 63);
-			FPU_normalize(&tmp);
-			tmptag =
-			    FPU_u_mul(&CONST_PI2extra, &tmp, &tmp,
+			signअगरicand(&पंचांगp) = q + 1;
+			setexponent16(&पंचांगp, 63);
+			FPU_normalize(&पंचांगp);
+			पंचांगptag =
+			    FPU_u_mul(&CONST_PI2extra, &पंचांगp, &पंचांगp,
 				      FULL_PRECISION, SIGN_POS,
 				      exponent(&CONST_PI2extra) +
-				      exponent(&tmp));
-			setsign(&tmp, getsign(&CONST_PI2extra));
-			st0_tag = FPU_add(&tmp, tmptag, 0, FULL_PRECISION);
-			if (signnegative(st0_ptr)) {
+				      exponent(&पंचांगp));
+			setsign(&पंचांगp, माला_लोign(&CONST_PI2extra));
+			st0_tag = FPU_add(&पंचांगp, पंचांगptag, 0, FULL_PRECISION);
+			अगर (signnegative(st0_ptr)) अणु
 				/* CONST_PI2extra is negative, so the result of the addition
 				   can be negative. This means that the argument is actually
-				   in a different quadrant. The correction is always < pi/2,
-				   so it can't overflow into yet another quadrant. */
+				   in a dअगरferent quadrant. The correction is always < pi/2,
+				   so it can't overflow पूर्णांकo yet another quadrant. */
 				setpositive(st0_ptr);
 				q++;
-			}
-		}
-#endif /* BETTER_THAN_486 */
-	}
-#ifdef BETTER_THAN_486
-	else {
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर /* BETTER_THAN_486 */
+	पूर्ण
+#अगर_घोषित BETTER_THAN_486
+	अन्यथा अणु
 		/* So far, the results are exact but based upon a 64 bit
 		   precision approximation to pi/2. The technique used
 		   now is equivalent to using an approximation to pi/2 which
 		   is accurate to about 128 bits. */
-		if (((q > 0)
+		अगर (((q > 0)
 		     && (exponent(st0_ptr) <= exponent(&CONST_PI2extra) + 64))
-		    || (q > 1)) {
+		    || (q > 1)) अणु
 			/* This code gives the effect of having p/2 to better than
 			   128 bits precision. */
 
-			significand(&tmp) = q;
-			setexponent16(&tmp, 63);
-			FPU_normalize(&tmp);	/* This must return TAG_Valid */
-			tmptag =
-			    FPU_u_mul(&CONST_PI2extra, &tmp, &tmp,
+			signअगरicand(&पंचांगp) = q;
+			setexponent16(&पंचांगp, 63);
+			FPU_normalize(&पंचांगp);	/* This must वापस TAG_Valid */
+			पंचांगptag =
+			    FPU_u_mul(&CONST_PI2extra, &पंचांगp, &पंचांगp,
 				      FULL_PRECISION, SIGN_POS,
 				      exponent(&CONST_PI2extra) +
-				      exponent(&tmp));
-			setsign(&tmp, getsign(&CONST_PI2extra));
-			st0_tag = FPU_sub(LOADED | (tmptag & 0x0f), (int)&tmp,
+				      exponent(&पंचांगp));
+			setsign(&पंचांगp, माला_लोign(&CONST_PI2extra));
+			st0_tag = FPU_sub(LOADED | (पंचांगptag & 0x0f), (पूर्णांक)&पंचांगp,
 					  FULL_PRECISION);
-			if ((exponent(st0_ptr) == exponent(&CONST_PI2)) &&
+			अगर ((exponent(st0_ptr) == exponent(&CONST_PI2)) &&
 			    ((st0_ptr->sigh > CONST_PI2.sigh)
 			     || ((st0_ptr->sigh == CONST_PI2.sigh)
-				 && (st0_ptr->sigl > CONST_PI2.sigl)))) {
+				 && (st0_ptr->sigl > CONST_PI2.sigl)))) अणु
 				/* CONST_PI2extra is negative, so the result of the
 				   subtraction can be larger than pi/2. This means
-				   that the argument is actually in a different quadrant.
+				   that the argument is actually in a dअगरferent quadrant.
 				   The correction is always < pi/2, so it can't overflow
-				   into yet another quadrant. */
+				   पूर्णांकo yet another quadrant. */
 				st0_tag =
 				    FPU_sub(REV | LOADED | TAG_Valid,
-					    (int)&CONST_PI2, FULL_PRECISION);
+					    (पूर्णांक)&CONST_PI2, FULL_PRECISION);
 				q++;
-			}
-		}
-	}
-#endif /* BETTER_THAN_486 */
+			पूर्ण
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* BETTER_THAN_486 */
 
 	FPU_settag0(st0_tag);
 	control_word = old_cw;
 	partial_status = saved_status & ~SW_C2;	/* Reduction complete. */
 
-	return (q & 3) | even;
-}
+	वापस (q & 3) | even;
+पूर्ण
 
-/* Convert a long to register */
-static void convert_l2reg(long const *arg, int deststnr)
-{
-	int tag;
-	long num = *arg;
-	u_char sign;
+/* Convert a दीर्घ to रेजिस्टर */
+अटल व्योम convert_l2reg(दीर्घ स्थिर *arg, पूर्णांक deststnr)
+अणु
+	पूर्णांक tag;
+	दीर्घ num = *arg;
+	u_अक्षर sign;
 	FPU_REG *dest = &st(deststnr);
 
-	if (num == 0) {
+	अगर (num == 0) अणु
 		FPU_copy_to_regi(&CONST_Z, TAG_Zero, deststnr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (num > 0) {
+	अगर (num > 0) अणु
 		sign = SIGN_POS;
-	} else {
+	पूर्ण अन्यथा अणु
 		num = -num;
 		sign = SIGN_NEG;
-	}
+	पूर्ण
 
 	dest->sigh = num;
 	dest->sigl = 0;
@@ -174,138 +175,138 @@ static void convert_l2reg(long const *arg, int deststnr)
 	tag = FPU_normalize(dest);
 	FPU_settagi(deststnr, tag);
 	setsign(dest, sign);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void single_arg_error(FPU_REG *st0_ptr, u_char st0_tag)
-{
-	if (st0_tag == TAG_Empty)
+अटल व्योम single_arg_error(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
+	अगर (st0_tag == TAG_Empty)
 		FPU_stack_underflow();	/* Puts a QNaN in st(0) */
-	else if (st0_tag == TW_NaN)
-		real_1op_NaN(st0_ptr);	/* return with a NaN in st(0) */
-#ifdef PARANOID
-	else
+	अन्यथा अगर (st0_tag == TW_NaN)
+		real_1op_NaN(st0_ptr);	/* वापस with a NaN in st(0) */
+#अगर_घोषित PARANOID
+	अन्यथा
 		EXCEPTION(EX_INTERNAL | 0x0112);
-#endif /* PARANOID */
-}
+#पूर्ण_अगर /* PARANOID */
+पूर्ण
 
-static void single_arg_2_error(FPU_REG *st0_ptr, u_char st0_tag)
-{
-	int isNaN;
+अटल व्योम single_arg_2_error(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
+	पूर्णांक isNaN;
 
-	switch (st0_tag) {
-	case TW_NaN:
+	चयन (st0_tag) अणु
+	हाल TW_NaN:
 		isNaN = (exponent(st0_ptr) == EXP_OVER)
 		    && (st0_ptr->sigh & 0x80000000);
-		if (isNaN && !(st0_ptr->sigh & 0x40000000)) {	/* Signaling ? */
+		अगर (isNaN && !(st0_ptr->sigh & 0x40000000)) अणु	/* Signaling ? */
 			EXCEPTION(EX_Invalid);
-			if (control_word & CW_Invalid) {
+			अगर (control_word & CW_Invalid) अणु
 				/* The masked response */
 				/* Convert to a QNaN */
 				st0_ptr->sigh |= 0x40000000;
 				push();
 				FPU_copy_to_reg0(st0_ptr, TAG_Special);
-			}
-		} else if (isNaN) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (isNaN) अणु
 			/* A QNaN */
 			push();
 			FPU_copy_to_reg0(st0_ptr, TAG_Special);
-		} else {
-			/* pseudoNaN or other unsupported */
+		पूर्ण अन्यथा अणु
+			/* pseuकरोNaN or other unsupported */
 			EXCEPTION(EX_Invalid);
-			if (control_word & CW_Invalid) {
+			अगर (control_word & CW_Invalid) अणु
 				/* The masked response */
 				FPU_copy_to_reg0(&CONST_QNaN, TAG_Special);
 				push();
 				FPU_copy_to_reg0(&CONST_QNaN, TAG_Special);
-			}
-		}
-		break;		/* return with a NaN in st(0) */
-#ifdef PARANOID
-	default:
+			पूर्ण
+		पूर्ण
+		अवरोध;		/* वापस with a NaN in st(0) */
+#अगर_घोषित PARANOID
+	शेष:
 		EXCEPTION(EX_INTERNAL | 0x0112);
-#endif /* PARANOID */
-	}
-}
+#पूर्ण_अगर /* PARANOID */
+	पूर्ण
+पूर्ण
 
 /*---------------------------------------------------------------------------*/
 
-static void f2xm1(FPU_REG *st0_ptr, u_char tag)
-{
+अटल व्योम f2xm1(FPU_REG *st0_ptr, u_अक्षर tag)
+अणु
 	FPU_REG a;
 
 	clear_C1();
 
-	if (tag == TAG_Valid) {
-		/* For an 80486 FPU, the result is undefined if the arg is >= 1.0 */
-		if (exponent(st0_ptr) < 0) {
+	अगर (tag == TAG_Valid) अणु
+		/* For an 80486 FPU, the result is undefined अगर the arg is >= 1.0 */
+		अगर (exponent(st0_ptr) < 0) अणु
 		      denormal_arg:
 
 			FPU_to_exp16(st0_ptr, &a);
 
 			/* poly_2xm1(x) requires 0 < st(0) < 1. */
-			poly_2xm1(getsign(st0_ptr), &a, st0_ptr);
-		}
-		set_precision_flag_up();	/* 80486 appears to always do this */
-		return;
-	}
+			poly_2xm1(माला_लोign(st0_ptr), &a, st0_ptr);
+		पूर्ण
+		set_precision_flag_up();	/* 80486 appears to always करो this */
+		वापस;
+	पूर्ण
 
-	if (tag == TAG_Zero)
-		return;
+	अगर (tag == TAG_Zero)
+		वापस;
 
-	if (tag == TAG_Special)
+	अगर (tag == TAG_Special)
 		tag = FPU_Special(st0_ptr);
 
-	switch (tag) {
-	case TW_Denormal:
-		if (denormal_operand() < 0)
-			return;
-		goto denormal_arg;
-	case TW_Infinity:
-		if (signnegative(st0_ptr)) {
+	चयन (tag) अणु
+	हाल TW_Denormal:
+		अगर (denormal_opeअक्रम() < 0)
+			वापस;
+		जाओ denormal_arg;
+	हाल TW_Infinity:
+		अगर (signnegative(st0_ptr)) अणु
 			/* -infinity gives -1 (p16-10) */
 			FPU_copy_to_reg0(&CONST_1, TAG_Valid);
 			setnegative(st0_ptr);
-		}
-		return;
-	default:
+		पूर्ण
+		वापस;
+	शेष:
 		single_arg_error(st0_ptr, tag);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fptan(FPU_REG *st0_ptr, u_char st0_tag)
-{
+अटल व्योम fptan(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
 	FPU_REG *st_new_ptr;
-	int q;
-	u_char arg_sign = getsign(st0_ptr);
+	पूर्णांक q;
+	u_अक्षर arg_sign = माला_लोign(st0_ptr);
 
 	/* Stack underflow has higher priority */
-	if (st0_tag == TAG_Empty) {
+	अगर (st0_tag == TAG_Empty) अणु
 		FPU_stack_underflow();	/* Puts a QNaN in st(0) */
-		if (control_word & CW_Invalid) {
+		अगर (control_word & CW_Invalid) अणु
 			st_new_ptr = &st(-1);
 			push();
 			FPU_stack_underflow();	/* Puts a QNaN in the new st(0) */
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	if (STACK_OVERFLOW) {
+	अगर (STACK_OVERFLOW) अणु
 		FPU_stack_overflow();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Valid) {
-		if (exponent(st0_ptr) > -40) {
-			if ((q = trig_arg(st0_ptr, 0)) == -1) {
-				/* Operand is out of range */
-				return;
-			}
+	अगर (st0_tag == TAG_Valid) अणु
+		अगर (exponent(st0_ptr) > -40) अणु
+			अगर ((q = trig_arg(st0_ptr, 0)) == -1) अणु
+				/* Opeअक्रम is out of range */
+				वापस;
+			पूर्ण
 
 			poly_tan(st0_ptr);
 			setsign(st0_ptr, (q & 1) ^ (arg_sign != 0));
-			set_precision_flag_up();	/* We do not really know if up or down */
-		} else {
+			set_precision_flag_up();	/* We करो not really know अगर up or करोwn */
+		पूर्ण अन्यथा अणु
 			/* For a small arg, the result == the argument */
 			/* Underflow may happen */
 
@@ -316,60 +317,60 @@ static void fptan(FPU_REG *st0_ptr, u_char st0_tag)
 			st0_tag =
 			    FPU_round(st0_ptr, 1, 0, FULL_PRECISION, arg_sign);
 			FPU_settag0(st0_tag);
-		}
+		पूर्ण
 		push();
 		FPU_copy_to_reg0(&CONST_1, TAG_Valid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Zero) {
+	अगर (st0_tag == TAG_Zero) अणु
 		push();
 		FPU_copy_to_reg0(&CONST_1, TAG_Valid);
 		setcc(0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		st0_tag = FPU_Special(st0_ptr);
 
-	if (st0_tag == TW_Denormal) {
-		if (denormal_operand() < 0)
-			return;
+	अगर (st0_tag == TW_Denormal) अणु
+		अगर (denormal_opeअक्रम() < 0)
+			वापस;
 
-		goto denormal_arg;
-	}
+		जाओ denormal_arg;
+	पूर्ण
 
-	if (st0_tag == TW_Infinity) {
-		/* The 80486 treats infinity as an invalid operand */
-		if (arith_invalid(0) >= 0) {
+	अगर (st0_tag == TW_Infinity) अणु
+		/* The 80486 treats infinity as an invalid opeअक्रम */
+		अगर (arith_invalid(0) >= 0) अणु
 			st_new_ptr = &st(-1);
 			push();
 			arith_invalid(0);
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	single_arg_2_error(st0_ptr, st0_tag);
-}
+पूर्ण
 
-static void fxtract(FPU_REG *st0_ptr, u_char st0_tag)
-{
+अटल व्योम fxtract(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
 	FPU_REG *st_new_ptr;
-	u_char sign;
-	register FPU_REG *st1_ptr = st0_ptr;	/* anticipate */
+	u_अक्षर sign;
+	रेजिस्टर FPU_REG *st1_ptr = st0_ptr;	/* anticipate */
 
-	if (STACK_OVERFLOW) {
+	अगर (STACK_OVERFLOW) अणु
 		FPU_stack_overflow();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	clear_C1();
 
-	if (st0_tag == TAG_Valid) {
-		long e;
+	अगर (st0_tag == TAG_Valid) अणु
+		दीर्घ e;
 
 		push();
-		sign = getsign(st1_ptr);
+		sign = माला_लोign(st1_ptr);
 		reg_copy(st1_ptr, st_new_ptr);
 		setexponent16(st_new_ptr, exponent(st_new_ptr));
 
@@ -379,85 +380,85 @@ static void fxtract(FPU_REG *st0_ptr, u_char st0_tag)
 		convert_l2reg(&e, 1);
 		setexponentpos(st_new_ptr, 0);
 		setsign(st_new_ptr, sign);
-		FPU_settag0(TAG_Valid);	/* Needed if arg was a denormal */
-		return;
-	} else if (st0_tag == TAG_Zero) {
-		sign = getsign(st0_ptr);
+		FPU_settag0(TAG_Valid);	/* Needed अगर arg was a denormal */
+		वापस;
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Zero) अणु
+		sign = माला_लोign(st0_ptr);
 
-		if (FPU_divide_by_zero(0, SIGN_NEG) < 0)
-			return;
+		अगर (FPU_भागide_by_zero(0, SIGN_NEG) < 0)
+			वापस;
 
 		push();
 		FPU_copy_to_reg0(&CONST_Z, TAG_Zero);
 		setsign(st_new_ptr, sign);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		st0_tag = FPU_Special(st0_ptr);
 
-	if (st0_tag == TW_Denormal) {
-		if (denormal_operand() < 0)
-			return;
+	अगर (st0_tag == TW_Denormal) अणु
+		अगर (denormal_opeअक्रम() < 0)
+			वापस;
 
 		push();
-		sign = getsign(st1_ptr);
+		sign = माला_लोign(st1_ptr);
 		FPU_to_exp16(st1_ptr, st_new_ptr);
-		goto denormal_arg;
-	} else if (st0_tag == TW_Infinity) {
-		sign = getsign(st0_ptr);
+		जाओ denormal_arg;
+	पूर्ण अन्यथा अगर (st0_tag == TW_Infinity) अणु
+		sign = माला_लोign(st0_ptr);
 		setpositive(st0_ptr);
 		push();
 		FPU_copy_to_reg0(&CONST_INF, TAG_Special);
 		setsign(st_new_ptr, sign);
-		return;
-	} else if (st0_tag == TW_NaN) {
-		if (real_1op_NaN(st0_ptr) < 0)
-			return;
+		वापस;
+	पूर्ण अन्यथा अगर (st0_tag == TW_NaN) अणु
+		अगर (real_1op_NaN(st0_ptr) < 0)
+			वापस;
 
 		push();
 		FPU_copy_to_reg0(st0_ptr, TAG_Special);
-		return;
-	} else if (st0_tag == TAG_Empty) {
+		वापस;
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Empty) अणु
 		/* Is this the correct behaviour? */
-		if (control_word & EX_Invalid) {
+		अगर (control_word & EX_Invalid) अणु
 			FPU_stack_underflow();
 			push();
 			FPU_stack_underflow();
-		} else
+		पूर्ण अन्यथा
 			EXCEPTION(EX_StackUnder);
-	}
-#ifdef PARANOID
-	else
+	पूर्ण
+#अगर_घोषित PARANOID
+	अन्यथा
 		EXCEPTION(EX_INTERNAL | 0x119);
-#endif /* PARANOID */
-}
+#पूर्ण_अगर /* PARANOID */
+पूर्ण
 
-static void fdecstp(void)
-{
+अटल व्योम fdecstp(व्योम)
+अणु
 	clear_C1();
 	top--;
-}
+पूर्ण
 
-static void fincstp(void)
-{
+अटल व्योम fincstp(व्योम)
+अणु
 	clear_C1();
 	top++;
-}
+पूर्ण
 
-static void fsqrt_(FPU_REG *st0_ptr, u_char st0_tag)
-{
-	int expon;
+अटल व्योम fवर्ग_मूल_(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
+	पूर्णांक expon;
 
 	clear_C1();
 
-	if (st0_tag == TAG_Valid) {
-		u_char tag;
+	अगर (st0_tag == TAG_Valid) अणु
+		u_अक्षर tag;
 
-		if (signnegative(st0_ptr)) {
-			arith_invalid(0);	/* sqrt(negative) is invalid */
-			return;
-		}
+		अगर (signnegative(st0_ptr)) अणु
+			arith_invalid(0);	/* वर्ग_मूल(negative) is invalid */
+			वापस;
+		पूर्ण
 
 		/* make st(0) in  [1.0 .. 4.0) */
 		expon = exponent(st0_ptr);
@@ -467,127 +468,127 @@ static void fsqrt_(FPU_REG *st0_ptr, u_char st0_tag)
 		setexponent16(st0_ptr, (expon & 1));
 
 		/* Do the computation, the sign of the result will be positive. */
-		tag = wm_sqrt(st0_ptr, 0, 0, control_word, SIGN_POS);
+		tag = wm_वर्ग_मूल(st0_ptr, 0, 0, control_word, SIGN_POS);
 		addexponent(st0_ptr, expon >> 1);
 		FPU_settag0(tag);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Zero)
-		return;
+	अगर (st0_tag == TAG_Zero)
+		वापस;
 
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		st0_tag = FPU_Special(st0_ptr);
 
-	if (st0_tag == TW_Infinity) {
-		if (signnegative(st0_ptr))
-			arith_invalid(0);	/* sqrt(-Infinity) is invalid */
-		return;
-	} else if (st0_tag == TW_Denormal) {
-		if (signnegative(st0_ptr)) {
-			arith_invalid(0);	/* sqrt(negative) is invalid */
-			return;
-		}
+	अगर (st0_tag == TW_Infinity) अणु
+		अगर (signnegative(st0_ptr))
+			arith_invalid(0);	/* वर्ग_मूल(-Infinity) is invalid */
+		वापस;
+	पूर्ण अन्यथा अगर (st0_tag == TW_Denormal) अणु
+		अगर (signnegative(st0_ptr)) अणु
+			arith_invalid(0);	/* वर्ग_मूल(negative) is invalid */
+			वापस;
+		पूर्ण
 
-		if (denormal_operand() < 0)
-			return;
+		अगर (denormal_opeअक्रम() < 0)
+			वापस;
 
 		FPU_to_exp16(st0_ptr, st0_ptr);
 
 		expon = exponent16(st0_ptr);
 
-		goto denormal_arg;
-	}
+		जाओ denormal_arg;
+	पूर्ण
 
 	single_arg_error(st0_ptr, st0_tag);
 
-}
+पूर्ण
 
-static void frndint_(FPU_REG *st0_ptr, u_char st0_tag)
-{
-	int flags, tag;
+अटल व्योम frndपूर्णांक_(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
+	पूर्णांक flags, tag;
 
-	if (st0_tag == TAG_Valid) {
-		u_char sign;
+	अगर (st0_tag == TAG_Valid) अणु
+		u_अक्षर sign;
 
 	      denormal_arg:
 
-		sign = getsign(st0_ptr);
+		sign = माला_लोign(st0_ptr);
 
-		if (exponent(st0_ptr) > 63)
-			return;
+		अगर (exponent(st0_ptr) > 63)
+			वापस;
 
-		if (st0_tag == TW_Denormal) {
-			if (denormal_operand() < 0)
-				return;
-		}
+		अगर (st0_tag == TW_Denormal) अणु
+			अगर (denormal_opeअक्रम() < 0)
+				वापस;
+		पूर्ण
 
 		/* Fortunately, this can't overflow to 2^64 */
-		if ((flags = FPU_round_to_int(st0_ptr, st0_tag)))
+		अगर ((flags = FPU_round_to_पूर्णांक(st0_ptr, st0_tag)))
 			set_precision_flag(flags);
 
 		setexponent16(st0_ptr, 63);
 		tag = FPU_normalize(st0_ptr);
 		setsign(st0_ptr, sign);
 		FPU_settag0(tag);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Zero)
-		return;
+	अगर (st0_tag == TAG_Zero)
+		वापस;
 
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		st0_tag = FPU_Special(st0_ptr);
 
-	if (st0_tag == TW_Denormal)
-		goto denormal_arg;
-	else if (st0_tag == TW_Infinity)
-		return;
-	else
+	अगर (st0_tag == TW_Denormal)
+		जाओ denormal_arg;
+	अन्यथा अगर (st0_tag == TW_Infinity)
+		वापस;
+	अन्यथा
 		single_arg_error(st0_ptr, st0_tag);
-}
+पूर्ण
 
-static int f_sin(FPU_REG *st0_ptr, u_char tag)
-{
-	u_char arg_sign = getsign(st0_ptr);
+अटल पूर्णांक f_sin(FPU_REG *st0_ptr, u_अक्षर tag)
+अणु
+	u_अक्षर arg_sign = माला_लोign(st0_ptr);
 
-	if (tag == TAG_Valid) {
-		int q;
+	अगर (tag == TAG_Valid) अणु
+		पूर्णांक q;
 
-		if (exponent(st0_ptr) > -40) {
-			if ((q = trig_arg(st0_ptr, 0)) == -1) {
-				/* Operand is out of range */
-				return 1;
-			}
+		अगर (exponent(st0_ptr) > -40) अणु
+			अगर ((q = trig_arg(st0_ptr, 0)) == -1) अणु
+				/* Opeअक्रम is out of range */
+				वापस 1;
+			पूर्ण
 
 			poly_sine(st0_ptr);
 
-			if (q & 2)
+			अगर (q & 2)
 				changesign(st0_ptr);
 
-			setsign(st0_ptr, getsign(st0_ptr) ^ arg_sign);
+			setsign(st0_ptr, माला_लोign(st0_ptr) ^ arg_sign);
 
-			/* We do not really know if up or down */
+			/* We करो not really know अगर up or करोwn */
 			set_precision_flag_up();
-			return 0;
-		} else {
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			/* For a small arg, the result == the argument */
 			set_precision_flag_up();	/* Must be up. */
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (tag == TAG_Zero) {
+	अगर (tag == TAG_Zero) अणु
 		setcc(0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (tag == TAG_Special)
+	अगर (tag == TAG_Special)
 		tag = FPU_Special(st0_ptr);
 
-	if (tag == TW_Denormal) {
-		if (denormal_operand() < 0)
-			return 1;
+	अगर (tag == TW_Denormal) अणु
+		अगर (denormal_opeअक्रम() < 0)
+			वापस 1;
 
 		/* For a small arg, the result == the argument */
 		/* Underflow may happen */
@@ -597,463 +598,463 @@ static int f_sin(FPU_REG *st0_ptr, u_char tag)
 
 		FPU_settag0(tag);
 
-		return 0;
-	} else if (tag == TW_Infinity) {
-		/* The 80486 treats infinity as an invalid operand */
+		वापस 0;
+	पूर्ण अन्यथा अगर (tag == TW_Infinity) अणु
+		/* The 80486 treats infinity as an invalid opeअक्रम */
 		arith_invalid(0);
-		return 1;
-	} else {
+		वापस 1;
+	पूर्ण अन्यथा अणु
 		single_arg_error(st0_ptr, tag);
-		return 1;
-	}
-}
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-static void fsin(FPU_REG *st0_ptr, u_char tag)
-{
+अटल व्योम fsin(FPU_REG *st0_ptr, u_अक्षर tag)
+अणु
 	f_sin(st0_ptr, tag);
-}
+पूर्ण
 
-static int f_cos(FPU_REG *st0_ptr, u_char tag)
-{
-	u_char st0_sign;
+अटल पूर्णांक f_cos(FPU_REG *st0_ptr, u_अक्षर tag)
+अणु
+	u_अक्षर st0_sign;
 
-	st0_sign = getsign(st0_ptr);
+	st0_sign = माला_लोign(st0_ptr);
 
-	if (tag == TAG_Valid) {
-		int q;
+	अगर (tag == TAG_Valid) अणु
+		पूर्णांक q;
 
-		if (exponent(st0_ptr) > -40) {
-			if ((exponent(st0_ptr) < 0)
+		अगर (exponent(st0_ptr) > -40) अणु
+			अगर ((exponent(st0_ptr) < 0)
 			    || ((exponent(st0_ptr) == 0)
-				&& (significand(st0_ptr) <=
-				    0xc90fdaa22168c234LL))) {
+				&& (signअगरicand(st0_ptr) <=
+				    0xc90fdaa22168c234LL))) अणु
 				poly_cos(st0_ptr);
 
-				/* We do not really know if up or down */
-				set_precision_flag_down();
+				/* We करो not really know अगर up or करोwn */
+				set_precision_flag_करोwn();
 
-				return 0;
-			} else if ((q = trig_arg(st0_ptr, FCOS)) != -1) {
+				वापस 0;
+			पूर्ण अन्यथा अगर ((q = trig_arg(st0_ptr, FCOS)) != -1) अणु
 				poly_sine(st0_ptr);
 
-				if ((q + 1) & 2)
+				अगर ((q + 1) & 2)
 					changesign(st0_ptr);
 
-				/* We do not really know if up or down */
-				set_precision_flag_down();
+				/* We करो not really know अगर up or करोwn */
+				set_precision_flag_करोwn();
 
-				return 0;
-			} else {
-				/* Operand is out of range */
-				return 1;
-			}
-		} else {
+				वापस 0;
+			पूर्ण अन्यथा अणु
+				/* Opeअक्रम is out of range */
+				वापस 1;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 		      denormal_arg:
 
 			setcc(0);
 			FPU_copy_to_reg0(&CONST_1, TAG_Valid);
-#ifdef PECULIAR_486
-			set_precision_flag_down();	/* 80486 appears to do this. */
-#else
+#अगर_घोषित PECULIAR_486
+			set_precision_flag_करोwn();	/* 80486 appears to करो this. */
+#अन्यथा
 			set_precision_flag_up();	/* Must be up. */
-#endif /* PECULIAR_486 */
-			return 0;
-		}
-	} else if (tag == TAG_Zero) {
+#पूर्ण_अगर /* PECULIAR_486 */
+			वापस 0;
+		पूर्ण
+	पूर्ण अन्यथा अगर (tag == TAG_Zero) अणु
 		FPU_copy_to_reg0(&CONST_1, TAG_Valid);
 		setcc(0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (tag == TAG_Special)
+	अगर (tag == TAG_Special)
 		tag = FPU_Special(st0_ptr);
 
-	if (tag == TW_Denormal) {
-		if (denormal_operand() < 0)
-			return 1;
+	अगर (tag == TW_Denormal) अणु
+		अगर (denormal_opeअक्रम() < 0)
+			वापस 1;
 
-		goto denormal_arg;
-	} else if (tag == TW_Infinity) {
-		/* The 80486 treats infinity as an invalid operand */
+		जाओ denormal_arg;
+	पूर्ण अन्यथा अगर (tag == TW_Infinity) अणु
+		/* The 80486 treats infinity as an invalid opeअक्रम */
 		arith_invalid(0);
-		return 1;
-	} else {
+		वापस 1;
+	पूर्ण अन्यथा अणु
 		single_arg_error(st0_ptr, tag);	/* requires st0_ptr == &st(0) */
-		return 1;
-	}
-}
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-static void fcos(FPU_REG *st0_ptr, u_char st0_tag)
-{
+अटल व्योम fcos(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
 	f_cos(st0_ptr, st0_tag);
-}
+पूर्ण
 
-static void fsincos(FPU_REG *st0_ptr, u_char st0_tag)
-{
+अटल व्योम fsincos(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
 	FPU_REG *st_new_ptr;
 	FPU_REG arg;
-	u_char tag;
+	u_अक्षर tag;
 
 	/* Stack underflow has higher priority */
-	if (st0_tag == TAG_Empty) {
+	अगर (st0_tag == TAG_Empty) अणु
 		FPU_stack_underflow();	/* Puts a QNaN in st(0) */
-		if (control_word & CW_Invalid) {
+		अगर (control_word & CW_Invalid) अणु
 			st_new_ptr = &st(-1);
 			push();
 			FPU_stack_underflow();	/* Puts a QNaN in the new st(0) */
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	if (STACK_OVERFLOW) {
+	अगर (STACK_OVERFLOW) अणु
 		FPU_stack_overflow();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		tag = FPU_Special(st0_ptr);
-	else
+	अन्यथा
 		tag = st0_tag;
 
-	if (tag == TW_NaN) {
+	अगर (tag == TW_NaN) अणु
 		single_arg_2_error(st0_ptr, TW_NaN);
-		return;
-	} else if (tag == TW_Infinity) {
-		/* The 80486 treats infinity as an invalid operand */
-		if (arith_invalid(0) >= 0) {
+		वापस;
+	पूर्ण अन्यथा अगर (tag == TW_Infinity) अणु
+		/* The 80486 treats infinity as an invalid opeअक्रम */
+		अगर (arith_invalid(0) >= 0) अणु
 			/* Masked response */
 			push();
 			arith_invalid(0);
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	reg_copy(st0_ptr, &arg);
-	if (!f_sin(st0_ptr, st0_tag)) {
+	अगर (!f_sin(st0_ptr, st0_tag)) अणु
 		push();
 		FPU_copy_to_reg0(&arg, st0_tag);
 		f_cos(&st(0), st0_tag);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* An error, so restore st(0) */
 		FPU_copy_to_reg0(&arg, st0_tag);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*---------------------------------------------------------------------------*/
 /* The following all require two arguments: st(0) and st(1) */
 
-/* A lean, mean kernel for the fprem instructions. This relies upon
-   the division and rounding to an integer in do_fprem giving an
+/* A lean, mean kernel क्रम the fprem inकाष्ठाions. This relies upon
+   the भागision and rounding to an पूर्णांकeger in करो_fprem giving an
    exact result. Because of this, rem_kernel() needs to deal only with
-   the least significant 64 bits, the more significant bits of the
+   the least signअगरicant 64 bits, the more signअगरicant bits of the
    result must be zero.
  */
-static void rem_kernel(unsigned long long st0, unsigned long long *y,
-		       unsigned long long st1, unsigned long long q, int n)
-{
-	int dummy;
-	unsigned long long x;
+अटल व्योम rem_kernel(अचिन्हित दीर्घ दीर्घ st0, अचिन्हित दीर्घ दीर्घ *y,
+		       अचिन्हित दीर्घ दीर्घ st1, अचिन्हित दीर्घ दीर्घ q, पूर्णांक n)
+अणु
+	पूर्णांक dummy;
+	अचिन्हित दीर्घ दीर्घ x;
 
 	x = st0 << n;
 
 	/* Do the required multiplication and subtraction in the one operation */
 
 	/* lsw x -= lsw st1 * lsw q */
-	asm volatile ("mull %4; subl %%eax,%0; sbbl %%edx,%1":"=m"
-		      (((unsigned *)&x)[0]), "=m"(((unsigned *)&x)[1]),
+	यंत्र अस्थिर ("mull %4; subl %%eax,%0; sbbl %%edx,%1":"=m"
+		      (((अचिन्हित *)&x)[0]), "=m"(((अचिन्हित *)&x)[1]),
 		      "=a"(dummy)
-		      :"2"(((unsigned *)&st1)[0]), "m"(((unsigned *)&q)[0])
+		      :"2"(((अचिन्हित *)&st1)[0]), "m"(((अचिन्हित *)&q)[0])
 		      :"%dx");
 	/* msw x -= msw st1 * lsw q */
-	asm volatile ("mull %3; subl %%eax,%0":"=m" (((unsigned *)&x)[1]),
+	यंत्र अस्थिर ("mull %3; subl %%eax,%0":"=m" (((अचिन्हित *)&x)[1]),
 		      "=a"(dummy)
-		      :"1"(((unsigned *)&st1)[1]), "m"(((unsigned *)&q)[0])
+		      :"1"(((अचिन्हित *)&st1)[1]), "m"(((अचिन्हित *)&q)[0])
 		      :"%dx");
 	/* msw x -= lsw st1 * msw q */
-	asm volatile ("mull %3; subl %%eax,%0":"=m" (((unsigned *)&x)[1]),
+	यंत्र अस्थिर ("mull %3; subl %%eax,%0":"=m" (((अचिन्हित *)&x)[1]),
 		      "=a"(dummy)
-		      :"1"(((unsigned *)&st1)[0]), "m"(((unsigned *)&q)[1])
+		      :"1"(((अचिन्हित *)&st1)[0]), "m"(((अचिन्हित *)&q)[1])
 		      :"%dx");
 
 	*y = x;
-}
+पूर्ण
 
-/* Remainder of st(0) / st(1) */
+/* Reमुख्यder of st(0) / st(1) */
 /* This routine produces exact results, i.e. there is never any
    rounding or truncation, etc of the result. */
-static void do_fprem(FPU_REG *st0_ptr, u_char st0_tag, int round)
-{
+अटल व्योम करो_fprem(FPU_REG *st0_ptr, u_अक्षर st0_tag, पूर्णांक round)
+अणु
 	FPU_REG *st1_ptr = &st(1);
-	u_char st1_tag = FPU_gettagi(1);
+	u_अक्षर st1_tag = FPU_gettagi(1);
 
-	if (!((st0_tag ^ TAG_Valid) | (st1_tag ^ TAG_Valid))) {
-		FPU_REG tmp, st0, st1;
-		u_char st0_sign, st1_sign;
-		u_char tmptag;
-		int tag;
-		int old_cw;
-		int expdif;
-		long long q;
-		unsigned short saved_status;
-		int cc;
+	अगर (!((st0_tag ^ TAG_Valid) | (st1_tag ^ TAG_Valid))) अणु
+		FPU_REG पंचांगp, st0, st1;
+		u_अक्षर st0_sign, st1_sign;
+		u_अक्षर पंचांगptag;
+		पूर्णांक tag;
+		पूर्णांक old_cw;
+		पूर्णांक expdअगर;
+		दीर्घ दीर्घ q;
+		अचिन्हित लघु saved_status;
+		पूर्णांक cc;
 
 	      fprem_valid:
-		/* Convert registers for internal use. */
+		/* Convert रेजिस्टरs क्रम पूर्णांकernal use. */
 		st0_sign = FPU_to_exp16(st0_ptr, &st0);
 		st1_sign = FPU_to_exp16(st1_ptr, &st1);
-		expdif = exponent16(&st0) - exponent16(&st1);
+		expdअगर = exponent16(&st0) - exponent16(&st1);
 
 		old_cw = control_word;
 		cc = 0;
 
-		/* We want the status following the denorm tests, but don't want
+		/* We want the status following the denorm tests, but करोn't want
 		   the status changed by the arithmetic operations. */
 		saved_status = partial_status;
 		control_word &= ~CW_RC;
 		control_word |= RC_CHOP;
 
-		if (expdif < 64) {
-			/* This should be the most common case */
+		अगर (expdअगर < 64) अणु
+			/* This should be the most common हाल */
 
-			if (expdif > -2) {
-				u_char sign = st0_sign ^ st1_sign;
-				tag = FPU_u_div(&st0, &st1, &tmp,
+			अगर (expdअगर > -2) अणु
+				u_अक्षर sign = st0_sign ^ st1_sign;
+				tag = FPU_u_भाग(&st0, &st1, &पंचांगp,
 						PR_64_BITS | RC_CHOP | 0x3f,
 						sign);
-				setsign(&tmp, sign);
+				setsign(&पंचांगp, sign);
 
-				if (exponent(&tmp) >= 0) {
-					FPU_round_to_int(&tmp, tag);	/* Fortunately, this can't
+				अगर (exponent(&पंचांगp) >= 0) अणु
+					FPU_round_to_पूर्णांक(&पंचांगp, tag);	/* Fortunately, this can't
 									   overflow to 2^64 */
-					q = significand(&tmp);
+					q = signअगरicand(&पंचांगp);
 
-					rem_kernel(significand(&st0),
-						   &significand(&tmp),
-						   significand(&st1),
-						   q, expdif);
+					rem_kernel(signअगरicand(&st0),
+						   &signअगरicand(&पंचांगp),
+						   signअगरicand(&st1),
+						   q, expdअगर);
 
-					setexponent16(&tmp, exponent16(&st1));
-				} else {
-					reg_copy(&st0, &tmp);
+					setexponent16(&पंचांगp, exponent16(&st1));
+				पूर्ण अन्यथा अणु
+					reg_copy(&st0, &पंचांगp);
 					q = 0;
-				}
+				पूर्ण
 
-				if ((round == RC_RND)
-				    && (tmp.sigh & 0xc0000000)) {
+				अगर ((round == RC_RND)
+				    && (पंचांगp.sigh & 0xc0000000)) अणु
 					/* We may need to subtract st(1) once more,
 					   to get a result <= 1/2 of st(1). */
-					unsigned long long x;
-					expdif =
-					    exponent16(&st1) - exponent16(&tmp);
-					if (expdif <= 1) {
-						if (expdif == 0)
-							x = significand(&st1) -
-							    significand(&tmp);
-						else	/* expdif is 1 */
-							x = (significand(&st1)
+					अचिन्हित दीर्घ दीर्घ x;
+					expdअगर =
+					    exponent16(&st1) - exponent16(&पंचांगp);
+					अगर (expdअगर <= 1) अणु
+						अगर (expdअगर == 0)
+							x = signअगरicand(&st1) -
+							    signअगरicand(&पंचांगp);
+						अन्यथा	/* expdअगर is 1 */
+							x = (signअगरicand(&st1)
 							     << 1) -
-							    significand(&tmp);
-						if ((x < significand(&tmp)) ||
+							    signअगरicand(&पंचांगp);
+						अगर ((x < signअगरicand(&पंचांगp)) ||
 						    /* or equi-distant (from 0 & st(1)) and q is odd */
-						    ((x == significand(&tmp))
-						     && (q & 1))) {
+						    ((x == signअगरicand(&पंचांगp))
+						     && (q & 1))) अणु
 							st0_sign = !st0_sign;
-							significand(&tmp) = x;
+							signअगरicand(&पंचांगp) = x;
 							q++;
-						}
-					}
-				}
+						पूर्ण
+					पूर्ण
+				पूर्ण
 
-				if (q & 4)
+				अगर (q & 4)
 					cc |= SW_C0;
-				if (q & 2)
+				अगर (q & 2)
 					cc |= SW_C3;
-				if (q & 1)
+				अगर (q & 1)
 					cc |= SW_C1;
-			} else {
+			पूर्ण अन्यथा अणु
 				control_word = old_cw;
 				setcc(0);
-				return;
-			}
-		} else {
-			/* There is a large exponent difference ( >= 64 ) */
+				वापस;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* There is a large exponent dअगरference ( >= 64 ) */
 			/* To make much sense, the code in this section should
-			   be done at high precision. */
-			int exp_1, N;
-			u_char sign;
+			   be करोne at high precision. */
+			पूर्णांक exp_1, N;
+			u_अक्षर sign;
 
 			/* prevent overflow here */
 			/* N is 'a number between 32 and 63' (p26-113) */
-			reg_copy(&st0, &tmp);
-			tmptag = st0_tag;
-			N = (expdif & 0x0000001f) + 32;	/* This choice gives results
+			reg_copy(&st0, &पंचांगp);
+			पंचांगptag = st0_tag;
+			N = (expdअगर & 0x0000001f) + 32;	/* This choice gives results
 							   identical to an AMD 486 */
-			setexponent16(&tmp, N);
+			setexponent16(&पंचांगp, N);
 			exp_1 = exponent16(&st1);
 			setexponent16(&st1, 0);
-			expdif -= N;
+			expdअगर -= N;
 
-			sign = getsign(&tmp) ^ st1_sign;
+			sign = माला_लोign(&पंचांगp) ^ st1_sign;
 			tag =
-			    FPU_u_div(&tmp, &st1, &tmp,
+			    FPU_u_भाग(&पंचांगp, &st1, &पंचांगp,
 				      PR_64_BITS | RC_CHOP | 0x3f, sign);
-			setsign(&tmp, sign);
+			setsign(&पंचांगp, sign);
 
-			FPU_round_to_int(&tmp, tag);	/* Fortunately, this can't
+			FPU_round_to_पूर्णांक(&पंचांगp, tag);	/* Fortunately, this can't
 							   overflow to 2^64 */
 
-			rem_kernel(significand(&st0),
-				   &significand(&tmp),
-				   significand(&st1),
-				   significand(&tmp), exponent(&tmp)
+			rem_kernel(signअगरicand(&st0),
+				   &signअगरicand(&पंचांगp),
+				   signअगरicand(&st1),
+				   signअगरicand(&पंचांगp), exponent(&पंचांगp)
 			    );
-			setexponent16(&tmp, exp_1 + expdif);
+			setexponent16(&पंचांगp, exp_1 + expdअगर);
 
-			/* It is possible for the operation to be complete here.
-			   What does the IEEE standard say? The Intel 80486 manual
+			/* It is possible क्रम the operation to be complete here.
+			   What करोes the IEEE standard say? The Intel 80486 manual
 			   implies that the operation will never be completed at this
-			   point, and the behaviour of a real 80486 confirms this.
+			   poपूर्णांक, and the behaviour of a real 80486 confirms this.
 			 */
-			if (!(tmp.sigh | tmp.sigl)) {
+			अगर (!(पंचांगp.sigh | पंचांगp.sigl)) अणु
 				/* The result is zero */
 				control_word = old_cw;
 				partial_status = saved_status;
 				FPU_copy_to_reg0(&CONST_Z, TAG_Zero);
 				setsign(&st0, st0_sign);
-#ifdef PECULIAR_486
+#अगर_घोषित PECULIAR_486
 				setcc(SW_C2);
-#else
+#अन्यथा
 				setcc(0);
-#endif /* PECULIAR_486 */
-				return;
-			}
+#पूर्ण_अगर /* PECULIAR_486 */
+				वापस;
+			पूर्ण
 			cc = SW_C2;
-		}
+		पूर्ण
 
 		control_word = old_cw;
 		partial_status = saved_status;
-		tag = FPU_normalize_nuo(&tmp);
-		reg_copy(&tmp, st0_ptr);
+		tag = FPU_normalize_nuo(&पंचांगp);
+		reg_copy(&पंचांगp, st0_ptr);
 
-		/* The only condition to be looked for is underflow,
-		   and it can occur here only if underflow is unmasked. */
-		if ((exponent16(&tmp) <= EXP_UNDER) && (tag != TAG_Zero)
-		    && !(control_word & CW_Underflow)) {
+		/* The only condition to be looked क्रम is underflow,
+		   and it can occur here only अगर underflow is unmasked. */
+		अगर ((exponent16(&पंचांगp) <= EXP_UNDER) && (tag != TAG_Zero)
+		    && !(control_word & CW_Underflow)) अणु
 			setcc(cc);
 			tag = arith_underflow(st0_ptr);
 			setsign(st0_ptr, st0_sign);
 			FPU_settag0(tag);
-			return;
-		} else if ((exponent16(&tmp) > EXP_UNDER) || (tag == TAG_Zero)) {
+			वापस;
+		पूर्ण अन्यथा अगर ((exponent16(&पंचांगp) > EXP_UNDER) || (tag == TAG_Zero)) अणु
 			stdexp(st0_ptr);
 			setsign(st0_ptr, st0_sign);
-		} else {
+		पूर्ण अन्यथा अणु
 			tag =
 			    FPU_round(st0_ptr, 0, 0, FULL_PRECISION, st0_sign);
-		}
+		पूर्ण
 		FPU_settag0(tag);
 		setcc(cc);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		st0_tag = FPU_Special(st0_ptr);
-	if (st1_tag == TAG_Special)
+	अगर (st1_tag == TAG_Special)
 		st1_tag = FPU_Special(st1_ptr);
 
-	if (((st0_tag == TAG_Valid) && (st1_tag == TW_Denormal))
+	अगर (((st0_tag == TAG_Valid) && (st1_tag == TW_Denormal))
 	    || ((st0_tag == TW_Denormal) && (st1_tag == TAG_Valid))
-	    || ((st0_tag == TW_Denormal) && (st1_tag == TW_Denormal))) {
-		if (denormal_operand() < 0)
-			return;
-		goto fprem_valid;
-	} else if ((st0_tag == TAG_Empty) || (st1_tag == TAG_Empty)) {
+	    || ((st0_tag == TW_Denormal) && (st1_tag == TW_Denormal))) अणु
+		अगर (denormal_opeअक्रम() < 0)
+			वापस;
+		जाओ fprem_valid;
+	पूर्ण अन्यथा अगर ((st0_tag == TAG_Empty) || (st1_tag == TAG_Empty)) अणु
 		FPU_stack_underflow();
-		return;
-	} else if (st0_tag == TAG_Zero) {
-		if (st1_tag == TAG_Valid) {
+		वापस;
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Zero) अणु
+		अगर (st1_tag == TAG_Valid) अणु
 			setcc(0);
-			return;
-		} else if (st1_tag == TW_Denormal) {
-			if (denormal_operand() < 0)
-				return;
+			वापस;
+		पूर्ण अन्यथा अगर (st1_tag == TW_Denormal) अणु
+			अगर (denormal_opeअक्रम() < 0)
+				वापस;
 			setcc(0);
-			return;
-		} else if (st1_tag == TAG_Zero) {
+			वापस;
+		पूर्ण अन्यथा अगर (st1_tag == TAG_Zero) अणु
 			arith_invalid(0);
-			return;
-		} /* fprem(?,0) always invalid */
-		else if (st1_tag == TW_Infinity) {
+			वापस;
+		पूर्ण /* fprem(?,0) always invalid */
+		अन्यथा अगर (st1_tag == TW_Infinity) अणु
 			setcc(0);
-			return;
-		}
-	} else if ((st0_tag == TAG_Valid) || (st0_tag == TW_Denormal)) {
-		if (st1_tag == TAG_Zero) {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अगर ((st0_tag == TAG_Valid) || (st0_tag == TW_Denormal)) अणु
+		अगर (st1_tag == TAG_Zero) अणु
 			arith_invalid(0);	/* fprem(Valid,Zero) is invalid */
-			return;
-		} else if (st1_tag != TW_NaN) {
-			if (((st0_tag == TW_Denormal)
+			वापस;
+		पूर्ण अन्यथा अगर (st1_tag != TW_NaN) अणु
+			अगर (((st0_tag == TW_Denormal)
 			     || (st1_tag == TW_Denormal))
-			    && (denormal_operand() < 0))
-				return;
+			    && (denormal_opeअक्रम() < 0))
+				वापस;
 
-			if (st1_tag == TW_Infinity) {
+			अगर (st1_tag == TW_Infinity) अणु
 				/* fprem(Valid,Infinity) is o.k. */
 				setcc(0);
-				return;
-			}
-		}
-	} else if (st0_tag == TW_Infinity) {
-		if (st1_tag != TW_NaN) {
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (st0_tag == TW_Infinity) अणु
+		अगर (st1_tag != TW_NaN) अणु
 			arith_invalid(0);	/* fprem(Infinity,?) is invalid */
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	/* One of the registers must contain a NaN if we got here. */
+	/* One of the रेजिस्टरs must contain a NaN अगर we got here. */
 
-#ifdef PARANOID
-	if ((st0_tag != TW_NaN) && (st1_tag != TW_NaN))
+#अगर_घोषित PARANOID
+	अगर ((st0_tag != TW_NaN) && (st1_tag != TW_NaN))
 		EXCEPTION(EX_INTERNAL | 0x118);
-#endif /* PARANOID */
+#पूर्ण_अगर /* PARANOID */
 
 	real_2op_NaN(st1_ptr, st1_tag, 0, st1_ptr);
 
-}
+पूर्ण
 
 /* ST(1) <- ST(1) * log ST;  pop ST */
-static void fyl2x(FPU_REG *st0_ptr, u_char st0_tag)
-{
+अटल व्योम fyl2x(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
 	FPU_REG *st1_ptr = &st(1), exponent;
-	u_char st1_tag = FPU_gettagi(1);
-	u_char sign;
-	int e, tag;
+	u_अक्षर st1_tag = FPU_gettagi(1);
+	u_अक्षर sign;
+	पूर्णांक e, tag;
 
 	clear_C1();
 
-	if ((st0_tag == TAG_Valid) && (st1_tag == TAG_Valid)) {
+	अगर ((st0_tag == TAG_Valid) && (st1_tag == TAG_Valid)) अणु
 	      both_valid:
 		/* Both regs are Valid or Denormal */
-		if (signpositive(st0_ptr)) {
-			if (st0_tag == TW_Denormal)
+		अगर (signpositive(st0_ptr)) अणु
+			अगर (st0_tag == TW_Denormal)
 				FPU_to_exp16(st0_ptr, st0_ptr);
-			else
-				/* Convert st(0) for internal use. */
+			अन्यथा
+				/* Convert st(0) क्रम पूर्णांकernal use. */
 				setexponent16(st0_ptr, exponent(st0_ptr));
 
-			if ((st0_ptr->sigh == 0x80000000)
-			    && (st0_ptr->sigl == 0)) {
-				/* Special case. The result can be precise. */
-				u_char esign;
+			अगर ((st0_ptr->sigh == 0x80000000)
+			    && (st0_ptr->sigl == 0)) अणु
+				/* Special हाल. The result can be precise. */
+				u_अक्षर esign;
 				e = exponent16(st0_ptr);
-				if (e >= 0) {
+				अगर (e >= 0) अणु
 					exponent.sigh = e;
 					esign = SIGN_POS;
-				} else {
+				पूर्ण अन्यथा अणु
 					exponent.sigh = -e;
 					esign = SIGN_NEG;
-				}
+				पूर्ण
 				exponent.sigl = 0;
 				setexponent16(&exponent, 31);
 				tag = FPU_normalize_nuo(&exponent);
@@ -1061,182 +1062,182 @@ static void fyl2x(FPU_REG *st0_ptr, u_char st0_tag)
 				setsign(&exponent, esign);
 				tag =
 				    FPU_mul(&exponent, tag, 1, FULL_PRECISION);
-				if (tag >= 0)
+				अगर (tag >= 0)
 					FPU_settagi(1, tag);
-			} else {
-				/* The usual case */
-				sign = getsign(st1_ptr);
-				if (st1_tag == TW_Denormal)
+			पूर्ण अन्यथा अणु
+				/* The usual हाल */
+				sign = माला_लोign(st1_ptr);
+				अगर (st1_tag == TW_Denormal)
 					FPU_to_exp16(st1_ptr, st1_ptr);
-				else
-					/* Convert st(1) for internal use. */
+				अन्यथा
+					/* Convert st(1) क्रम पूर्णांकernal use. */
 					setexponent16(st1_ptr,
 						      exponent(st1_ptr));
 				poly_l2(st0_ptr, st1_ptr, sign);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* negative */
-			if (arith_invalid(1) < 0)
-				return;
-		}
+			अगर (arith_invalid(1) < 0)
+				वापस;
+		पूर्ण
 
 		FPU_pop();
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		st0_tag = FPU_Special(st0_ptr);
-	if (st1_tag == TAG_Special)
+	अगर (st1_tag == TAG_Special)
 		st1_tag = FPU_Special(st1_ptr);
 
-	if ((st0_tag == TAG_Empty) || (st1_tag == TAG_Empty)) {
+	अगर ((st0_tag == TAG_Empty) || (st1_tag == TAG_Empty)) अणु
 		FPU_stack_underflow_pop(1);
-		return;
-	} else if ((st0_tag <= TW_Denormal) && (st1_tag <= TW_Denormal)) {
-		if (st0_tag == TAG_Zero) {
-			if (st1_tag == TAG_Zero) {
+		वापस;
+	पूर्ण अन्यथा अगर ((st0_tag <= TW_Denormal) && (st1_tag <= TW_Denormal)) अणु
+		अगर (st0_tag == TAG_Zero) अणु
+			अगर (st1_tag == TAG_Zero) अणु
 				/* Both args zero is invalid */
-				if (arith_invalid(1) < 0)
-					return;
-			} else {
-				u_char sign;
-				sign = getsign(st1_ptr) ^ SIGN_NEG;
-				if (FPU_divide_by_zero(1, sign) < 0)
-					return;
+				अगर (arith_invalid(1) < 0)
+					वापस;
+			पूर्ण अन्यथा अणु
+				u_अक्षर sign;
+				sign = माला_लोign(st1_ptr) ^ SIGN_NEG;
+				अगर (FPU_भागide_by_zero(1, sign) < 0)
+					वापस;
 
 				setsign(st1_ptr, sign);
-			}
-		} else if (st1_tag == TAG_Zero) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (st1_tag == TAG_Zero) अणु
 			/* st(1) contains zero, st(0) valid <> 0 */
 			/* Zero is the valid answer */
-			sign = getsign(st1_ptr);
+			sign = माला_लोign(st1_ptr);
 
-			if (signnegative(st0_ptr)) {
+			अगर (signnegative(st0_ptr)) अणु
 				/* log(negative) */
-				if (arith_invalid(1) < 0)
-					return;
-			} else if ((st0_tag == TW_Denormal)
-				   && (denormal_operand() < 0))
-				return;
-			else {
-				if (exponent(st0_ptr) < 0)
+				अगर (arith_invalid(1) < 0)
+					वापस;
+			पूर्ण अन्यथा अगर ((st0_tag == TW_Denormal)
+				   && (denormal_opeअक्रम() < 0))
+				वापस;
+			अन्यथा अणु
+				अगर (exponent(st0_ptr) < 0)
 					sign ^= SIGN_NEG;
 
 				FPU_copy_to_reg1(&CONST_Z, TAG_Zero);
 				setsign(st1_ptr, sign);
-			}
-		} else {
-			/* One or both operands are denormals. */
-			if (denormal_operand() < 0)
-				return;
-			goto both_valid;
-		}
-	} else if ((st0_tag == TW_NaN) || (st1_tag == TW_NaN)) {
-		if (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) < 0)
-			return;
-	}
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* One or both opeअक्रमs are denormals. */
+			अगर (denormal_opeअक्रम() < 0)
+				वापस;
+			जाओ both_valid;
+		पूर्ण
+	पूर्ण अन्यथा अगर ((st0_tag == TW_NaN) || (st1_tag == TW_NaN)) अणु
+		अगर (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) < 0)
+			वापस;
+	पूर्ण
 	/* One or both arg must be an infinity */
-	else if (st0_tag == TW_Infinity) {
-		if ((signnegative(st0_ptr)) || (st1_tag == TAG_Zero)) {
+	अन्यथा अगर (st0_tag == TW_Infinity) अणु
+		अगर ((signnegative(st0_ptr)) || (st1_tag == TAG_Zero)) अणु
 			/* log(-infinity) or 0*log(infinity) */
-			if (arith_invalid(1) < 0)
-				return;
-		} else {
-			u_char sign = getsign(st1_ptr);
+			अगर (arith_invalid(1) < 0)
+				वापस;
+		पूर्ण अन्यथा अणु
+			u_अक्षर sign = माला_लोign(st1_ptr);
 
-			if ((st1_tag == TW_Denormal)
-			    && (denormal_operand() < 0))
-				return;
+			अगर ((st1_tag == TW_Denormal)
+			    && (denormal_opeअक्रम() < 0))
+				वापस;
 
 			FPU_copy_to_reg1(&CONST_INF, TAG_Special);
 			setsign(st1_ptr, sign);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* st(1) must be infinity here */
-	else if (((st0_tag == TAG_Valid) || (st0_tag == TW_Denormal))
-		 && (signpositive(st0_ptr))) {
-		if (exponent(st0_ptr) >= 0) {
-			if ((exponent(st0_ptr) == 0) &&
+	अन्यथा अगर (((st0_tag == TAG_Valid) || (st0_tag == TW_Denormal))
+		 && (signpositive(st0_ptr))) अणु
+		अगर (exponent(st0_ptr) >= 0) अणु
+			अगर ((exponent(st0_ptr) == 0) &&
 			    (st0_ptr->sigh == 0x80000000) &&
-			    (st0_ptr->sigl == 0)) {
+			    (st0_ptr->sigl == 0)) अणु
 				/* st(0) holds 1.0 */
 				/* infinity*log(1) */
-				if (arith_invalid(1) < 0)
-					return;
-			}
-			/* else st(0) is positive and > 1.0 */
-		} else {
+				अगर (arith_invalid(1) < 0)
+					वापस;
+			पूर्ण
+			/* अन्यथा st(0) is positive and > 1.0 */
+		पूर्ण अन्यथा अणु
 			/* st(0) is positive and < 1.0 */
 
-			if ((st0_tag == TW_Denormal)
-			    && (denormal_operand() < 0))
-				return;
+			अगर ((st0_tag == TW_Denormal)
+			    && (denormal_opeअक्रम() < 0))
+				वापस;
 
 			changesign(st1_ptr);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* st(0) must be zero or negative */
-		if (st0_tag == TAG_Zero) {
+		अगर (st0_tag == TAG_Zero) अणु
 			/* This should be invalid, but a real 80486 is happy with it. */
 
-#ifndef PECULIAR_486
-			sign = getsign(st1_ptr);
-			if (FPU_divide_by_zero(1, sign) < 0)
-				return;
-#endif /* PECULIAR_486 */
+#अगर_अघोषित PECULIAR_486
+			sign = माला_लोign(st1_ptr);
+			अगर (FPU_भागide_by_zero(1, sign) < 0)
+				वापस;
+#पूर्ण_अगर /* PECULIAR_486 */
 
 			changesign(st1_ptr);
-		} else if (arith_invalid(1) < 0)	/* log(negative) */
-			return;
-	}
+		पूर्ण अन्यथा अगर (arith_invalid(1) < 0)	/* log(negative) */
+			वापस;
+	पूर्ण
 
 	FPU_pop();
-}
+पूर्ण
 
-static void fpatan(FPU_REG *st0_ptr, u_char st0_tag)
-{
+अटल व्योम fpatan(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
 	FPU_REG *st1_ptr = &st(1);
-	u_char st1_tag = FPU_gettagi(1);
-	int tag;
+	u_अक्षर st1_tag = FPU_gettagi(1);
+	पूर्णांक tag;
 
 	clear_C1();
-	if (!((st0_tag ^ TAG_Valid) | (st1_tag ^ TAG_Valid))) {
+	अगर (!((st0_tag ^ TAG_Valid) | (st1_tag ^ TAG_Valid))) अणु
 	      valid_atan:
 
 		poly_atan(st0_ptr, st0_tag, st1_ptr, st1_tag);
 
 		FPU_pop();
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		st0_tag = FPU_Special(st0_ptr);
-	if (st1_tag == TAG_Special)
+	अगर (st1_tag == TAG_Special)
 		st1_tag = FPU_Special(st1_ptr);
 
-	if (((st0_tag == TAG_Valid) && (st1_tag == TW_Denormal))
+	अगर (((st0_tag == TAG_Valid) && (st1_tag == TW_Denormal))
 	    || ((st0_tag == TW_Denormal) && (st1_tag == TAG_Valid))
-	    || ((st0_tag == TW_Denormal) && (st1_tag == TW_Denormal))) {
-		if (denormal_operand() < 0)
-			return;
+	    || ((st0_tag == TW_Denormal) && (st1_tag == TW_Denormal))) अणु
+		अगर (denormal_opeअक्रम() < 0)
+			वापस;
 
-		goto valid_atan;
-	} else if ((st0_tag == TAG_Empty) || (st1_tag == TAG_Empty)) {
+		जाओ valid_atan;
+	पूर्ण अन्यथा अगर ((st0_tag == TAG_Empty) || (st1_tag == TAG_Empty)) अणु
 		FPU_stack_underflow_pop(1);
-		return;
-	} else if ((st0_tag == TW_NaN) || (st1_tag == TW_NaN)) {
-		if (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) >= 0)
+		वापस;
+	पूर्ण अन्यथा अगर ((st0_tag == TW_NaN) || (st1_tag == TW_NaN)) अणु
+		अगर (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) >= 0)
 			FPU_pop();
-		return;
-	} else if ((st0_tag == TW_Infinity) || (st1_tag == TW_Infinity)) {
-		u_char sign = getsign(st1_ptr);
-		if (st0_tag == TW_Infinity) {
-			if (st1_tag == TW_Infinity) {
-				if (signpositive(st0_ptr)) {
+		वापस;
+	पूर्ण अन्यथा अगर ((st0_tag == TW_Infinity) || (st1_tag == TW_Infinity)) अणु
+		u_अक्षर sign = माला_लोign(st1_ptr);
+		अगर (st0_tag == TW_Infinity) अणु
+			अगर (st1_tag == TW_Infinity) अणु
+				अगर (signpositive(st0_ptr)) अणु
 					FPU_copy_to_reg1(&CONST_PI4, TAG_Valid);
-				} else {
+				पूर्ण अन्यथा अणु
 					setpositive(st1_ptr);
 					tag =
 					    FPU_u_add(&CONST_PI4, &CONST_PI2,
@@ -1244,282 +1245,282 @@ static void fpatan(FPU_REG *st0_ptr, u_char st0_tag)
 						      SIGN_POS,
 						      exponent(&CONST_PI4),
 						      exponent(&CONST_PI2));
-					if (tag >= 0)
+					अगर (tag >= 0)
 						FPU_settagi(1, tag);
-				}
-			} else {
-				if ((st1_tag == TW_Denormal)
-				    && (denormal_operand() < 0))
-					return;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर ((st1_tag == TW_Denormal)
+				    && (denormal_opeअक्रम() < 0))
+					वापस;
 
-				if (signpositive(st0_ptr)) {
+				अगर (signpositive(st0_ptr)) अणु
 					FPU_copy_to_reg1(&CONST_Z, TAG_Zero);
 					setsign(st1_ptr, sign);	/* An 80486 preserves the sign */
 					FPU_pop();
-					return;
-				} else {
+					वापस;
+				पूर्ण अन्यथा अणु
 					FPU_copy_to_reg1(&CONST_PI, TAG_Valid);
-				}
-			}
-		} else {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* st(1) is infinity, st(0) not infinity */
-			if ((st0_tag == TW_Denormal)
-			    && (denormal_operand() < 0))
-				return;
+			अगर ((st0_tag == TW_Denormal)
+			    && (denormal_opeअक्रम() < 0))
+				वापस;
 
 			FPU_copy_to_reg1(&CONST_PI2, TAG_Valid);
-		}
+		पूर्ण
 		setsign(st1_ptr, sign);
-	} else if (st1_tag == TAG_Zero) {
+	पूर्ण अन्यथा अगर (st1_tag == TAG_Zero) अणु
 		/* st(0) must be valid or zero */
-		u_char sign = getsign(st1_ptr);
+		u_अक्षर sign = माला_लोign(st1_ptr);
 
-		if ((st0_tag == TW_Denormal) && (denormal_operand() < 0))
-			return;
+		अगर ((st0_tag == TW_Denormal) && (denormal_opeअक्रम() < 0))
+			वापस;
 
-		if (signpositive(st0_ptr)) {
+		अगर (signpositive(st0_ptr)) अणु
 			/* An 80486 preserves the sign */
 			FPU_pop();
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		FPU_copy_to_reg1(&CONST_PI, TAG_Valid);
 		setsign(st1_ptr, sign);
-	} else if (st0_tag == TAG_Zero) {
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Zero) अणु
 		/* st(1) must be TAG_Valid here */
-		u_char sign = getsign(st1_ptr);
+		u_अक्षर sign = माला_लोign(st1_ptr);
 
-		if ((st1_tag == TW_Denormal) && (denormal_operand() < 0))
-			return;
+		अगर ((st1_tag == TW_Denormal) && (denormal_opeअक्रम() < 0))
+			वापस;
 
 		FPU_copy_to_reg1(&CONST_PI2, TAG_Valid);
 		setsign(st1_ptr, sign);
-	}
-#ifdef PARANOID
-	else
+	पूर्ण
+#अगर_घोषित PARANOID
+	अन्यथा
 		EXCEPTION(EX_INTERNAL | 0x125);
-#endif /* PARANOID */
+#पूर्ण_अगर /* PARANOID */
 
 	FPU_pop();
-	set_precision_flag_up();	/* We do not really know if up or down */
-}
+	set_precision_flag_up();	/* We करो not really know अगर up or करोwn */
+पूर्ण
 
-static void fprem(FPU_REG *st0_ptr, u_char st0_tag)
-{
-	do_fprem(st0_ptr, st0_tag, RC_CHOP);
-}
+अटल व्योम fprem(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
+	करो_fprem(st0_ptr, st0_tag, RC_CHOP);
+पूर्ण
 
-static void fprem1(FPU_REG *st0_ptr, u_char st0_tag)
-{
-	do_fprem(st0_ptr, st0_tag, RC_RND);
-}
+अटल व्योम fprem1(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
+	करो_fprem(st0_ptr, st0_tag, RC_RND);
+पूर्ण
 
-static void fyl2xp1(FPU_REG *st0_ptr, u_char st0_tag)
-{
-	u_char sign, sign1;
+अटल व्योम fyl2xp1(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
+	u_अक्षर sign, sign1;
 	FPU_REG *st1_ptr = &st(1), a, b;
-	u_char st1_tag = FPU_gettagi(1);
+	u_अक्षर st1_tag = FPU_gettagi(1);
 
 	clear_C1();
-	if (!((st0_tag ^ TAG_Valid) | (st1_tag ^ TAG_Valid))) {
+	अगर (!((st0_tag ^ TAG_Valid) | (st1_tag ^ TAG_Valid))) अणु
 	      valid_yl2xp1:
 
-		sign = getsign(st0_ptr);
-		sign1 = getsign(st1_ptr);
+		sign = माला_लोign(st0_ptr);
+		sign1 = माला_लोign(st1_ptr);
 
 		FPU_to_exp16(st0_ptr, &a);
 		FPU_to_exp16(st1_ptr, &b);
 
-		if (poly_l2p1(sign, sign1, &a, &b, st1_ptr))
-			return;
+		अगर (poly_l2p1(sign, sign1, &a, &b, st1_ptr))
+			वापस;
 
 		FPU_pop();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		st0_tag = FPU_Special(st0_ptr);
-	if (st1_tag == TAG_Special)
+	अगर (st1_tag == TAG_Special)
 		st1_tag = FPU_Special(st1_ptr);
 
-	if (((st0_tag == TAG_Valid) && (st1_tag == TW_Denormal))
+	अगर (((st0_tag == TAG_Valid) && (st1_tag == TW_Denormal))
 	    || ((st0_tag == TW_Denormal) && (st1_tag == TAG_Valid))
-	    || ((st0_tag == TW_Denormal) && (st1_tag == TW_Denormal))) {
-		if (denormal_operand() < 0)
-			return;
+	    || ((st0_tag == TW_Denormal) && (st1_tag == TW_Denormal))) अणु
+		अगर (denormal_opeअक्रम() < 0)
+			वापस;
 
-		goto valid_yl2xp1;
-	} else if ((st0_tag == TAG_Empty) | (st1_tag == TAG_Empty)) {
+		जाओ valid_yl2xp1;
+	पूर्ण अन्यथा अगर ((st0_tag == TAG_Empty) | (st1_tag == TAG_Empty)) अणु
 		FPU_stack_underflow_pop(1);
-		return;
-	} else if (st0_tag == TAG_Zero) {
-		switch (st1_tag) {
-		case TW_Denormal:
-			if (denormal_operand() < 0)
-				return;
+		वापस;
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Zero) अणु
+		चयन (st1_tag) अणु
+		हाल TW_Denormal:
+			अगर (denormal_opeअक्रम() < 0)
+				वापस;
 			fallthrough;
-		case TAG_Zero:
-		case TAG_Valid:
-			setsign(st0_ptr, getsign(st0_ptr) ^ getsign(st1_ptr));
+		हाल TAG_Zero:
+		हाल TAG_Valid:
+			setsign(st0_ptr, माला_लोign(st0_ptr) ^ माला_लोign(st1_ptr));
 			FPU_copy_to_reg1(st0_ptr, st0_tag);
-			break;
+			अवरोध;
 
-		case TW_Infinity:
+		हाल TW_Infinity:
 			/* Infinity*log(1) */
-			if (arith_invalid(1) < 0)
-				return;
-			break;
+			अगर (arith_invalid(1) < 0)
+				वापस;
+			अवरोध;
 
-		case TW_NaN:
-			if (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) < 0)
-				return;
-			break;
+		हाल TW_NaN:
+			अगर (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) < 0)
+				वापस;
+			अवरोध;
 
-		default:
-#ifdef PARANOID
+		शेष:
+#अगर_घोषित PARANOID
 			EXCEPTION(EX_INTERNAL | 0x116);
-			return;
-#endif /* PARANOID */
-			break;
-		}
-	} else if ((st0_tag == TAG_Valid) || (st0_tag == TW_Denormal)) {
-		switch (st1_tag) {
-		case TAG_Zero:
-			if (signnegative(st0_ptr)) {
-				if (exponent(st0_ptr) >= 0) {
+			वापस;
+#पूर्ण_अगर /* PARANOID */
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर ((st0_tag == TAG_Valid) || (st0_tag == TW_Denormal)) अणु
+		चयन (st1_tag) अणु
+		हाल TAG_Zero:
+			अगर (signnegative(st0_ptr)) अणु
+				अगर (exponent(st0_ptr) >= 0) अणु
 					/* st(0) holds <= -1.0 */
-#ifdef PECULIAR_486		/* Stupid 80486 doesn't worry about log(negative). */
+#अगर_घोषित PECULIAR_486		/* Stupid 80486 करोesn't worry about log(negative). */
 					changesign(st1_ptr);
-#else
-					if (arith_invalid(1) < 0)
-						return;
-#endif /* PECULIAR_486 */
-				} else if ((st0_tag == TW_Denormal)
-					   && (denormal_operand() < 0))
-					return;
-				else
+#अन्यथा
+					अगर (arith_invalid(1) < 0)
+						वापस;
+#पूर्ण_अगर /* PECULIAR_486 */
+				पूर्ण अन्यथा अगर ((st0_tag == TW_Denormal)
+					   && (denormal_opeअक्रम() < 0))
+					वापस;
+				अन्यथा
 					changesign(st1_ptr);
-			} else if ((st0_tag == TW_Denormal)
-				   && (denormal_operand() < 0))
-				return;
-			break;
+			पूर्ण अन्यथा अगर ((st0_tag == TW_Denormal)
+				   && (denormal_opeअक्रम() < 0))
+				वापस;
+			अवरोध;
 
-		case TW_Infinity:
-			if (signnegative(st0_ptr)) {
-				if ((exponent(st0_ptr) >= 0) &&
+		हाल TW_Infinity:
+			अगर (signnegative(st0_ptr)) अणु
+				अगर ((exponent(st0_ptr) >= 0) &&
 				    !((st0_ptr->sigh == 0x80000000) &&
-				      (st0_ptr->sigl == 0))) {
+				      (st0_ptr->sigl == 0))) अणु
 					/* st(0) holds < -1.0 */
-#ifdef PECULIAR_486		/* Stupid 80486 doesn't worry about log(negative). */
+#अगर_घोषित PECULIAR_486		/* Stupid 80486 करोesn't worry about log(negative). */
 					changesign(st1_ptr);
-#else
-					if (arith_invalid(1) < 0)
-						return;
-#endif /* PECULIAR_486 */
-				} else if ((st0_tag == TW_Denormal)
-					   && (denormal_operand() < 0))
-					return;
-				else
+#अन्यथा
+					अगर (arith_invalid(1) < 0)
+						वापस;
+#पूर्ण_अगर /* PECULIAR_486 */
+				पूर्ण अन्यथा अगर ((st0_tag == TW_Denormal)
+					   && (denormal_opeअक्रम() < 0))
+					वापस;
+				अन्यथा
 					changesign(st1_ptr);
-			} else if ((st0_tag == TW_Denormal)
-				   && (denormal_operand() < 0))
-				return;
-			break;
+			पूर्ण अन्यथा अगर ((st0_tag == TW_Denormal)
+				   && (denormal_opeअक्रम() < 0))
+				वापस;
+			अवरोध;
 
-		case TW_NaN:
-			if (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) < 0)
-				return;
-		}
+		हाल TW_NaN:
+			अगर (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) < 0)
+				वापस;
+		पूर्ण
 
-	} else if (st0_tag == TW_NaN) {
-		if (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) < 0)
-			return;
-	} else if (st0_tag == TW_Infinity) {
-		if (st1_tag == TW_NaN) {
-			if (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) < 0)
-				return;
-		} else if (signnegative(st0_ptr)) {
-#ifndef PECULIAR_486
+	पूर्ण अन्यथा अगर (st0_tag == TW_NaN) अणु
+		अगर (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) < 0)
+			वापस;
+	पूर्ण अन्यथा अगर (st0_tag == TW_Infinity) अणु
+		अगर (st1_tag == TW_NaN) अणु
+			अगर (real_2op_NaN(st0_ptr, st0_tag, 1, st0_ptr) < 0)
+				वापस;
+		पूर्ण अन्यथा अगर (signnegative(st0_ptr)) अणु
+#अगर_अघोषित PECULIAR_486
 			/* This should have higher priority than denormals, but... */
-			if (arith_invalid(1) < 0)	/* log(-infinity) */
-				return;
-#endif /* PECULIAR_486 */
-			if ((st1_tag == TW_Denormal)
-			    && (denormal_operand() < 0))
-				return;
-#ifdef PECULIAR_486
-			/* Denormal operands actually get higher priority */
-			if (arith_invalid(1) < 0)	/* log(-infinity) */
-				return;
-#endif /* PECULIAR_486 */
-		} else if (st1_tag == TAG_Zero) {
+			अगर (arith_invalid(1) < 0)	/* log(-infinity) */
+				वापस;
+#पूर्ण_अगर /* PECULIAR_486 */
+			अगर ((st1_tag == TW_Denormal)
+			    && (denormal_opeअक्रम() < 0))
+				वापस;
+#अगर_घोषित PECULIAR_486
+			/* Denormal opeअक्रमs actually get higher priority */
+			अगर (arith_invalid(1) < 0)	/* log(-infinity) */
+				वापस;
+#पूर्ण_अगर /* PECULIAR_486 */
+		पूर्ण अन्यथा अगर (st1_tag == TAG_Zero) अणु
 			/* log(infinity) */
-			if (arith_invalid(1) < 0)
-				return;
-		}
+			अगर (arith_invalid(1) < 0)
+				वापस;
+		पूर्ण
 
 		/* st(1) must be valid here. */
 
-		else if ((st1_tag == TW_Denormal) && (denormal_operand() < 0))
-			return;
+		अन्यथा अगर ((st1_tag == TW_Denormal) && (denormal_opeअक्रम() < 0))
+			वापस;
 
 		/* The Manual says that log(Infinity) is invalid, but a real
 		   80486 sensibly says that it is o.k. */
-		else {
-			u_char sign = getsign(st1_ptr);
+		अन्यथा अणु
+			u_अक्षर sign = माला_लोign(st1_ptr);
 			FPU_copy_to_reg1(&CONST_INF, TAG_Special);
 			setsign(st1_ptr, sign);
-		}
-	}
-#ifdef PARANOID
-	else {
+		पूर्ण
+	पूर्ण
+#अगर_घोषित PARANOID
+	अन्यथा अणु
 		EXCEPTION(EX_INTERNAL | 0x117);
-		return;
-	}
-#endif /* PARANOID */
+		वापस;
+	पूर्ण
+#पूर्ण_अगर /* PARANOID */
 
 	FPU_pop();
-	return;
+	वापस;
 
-}
+पूर्ण
 
-static void fscale(FPU_REG *st0_ptr, u_char st0_tag)
-{
+अटल व्योम fscale(FPU_REG *st0_ptr, u_अक्षर st0_tag)
+अणु
 	FPU_REG *st1_ptr = &st(1);
-	u_char st1_tag = FPU_gettagi(1);
-	int old_cw = control_word;
-	u_char sign = getsign(st0_ptr);
+	u_अक्षर st1_tag = FPU_gettagi(1);
+	पूर्णांक old_cw = control_word;
+	u_अक्षर sign = माला_लोign(st0_ptr);
 
 	clear_C1();
-	if (!((st0_tag ^ TAG_Valid) | (st1_tag ^ TAG_Valid))) {
-		long scale;
-		FPU_REG tmp;
+	अगर (!((st0_tag ^ TAG_Valid) | (st1_tag ^ TAG_Valid))) अणु
+		दीर्घ scale;
+		FPU_REG पंचांगp;
 
-		/* Convert register for internal use. */
+		/* Convert रेजिस्टर क्रम पूर्णांकernal use. */
 		setexponent16(st0_ptr, exponent(st0_ptr));
 
 	      valid_scale:
 
-		if (exponent(st1_ptr) > 30) {
+		अगर (exponent(st1_ptr) > 30) अणु
 			/* 2^31 is far too large, would require 2^(2^30) or 2^(-2^30) */
 
-			if (signpositive(st1_ptr)) {
+			अगर (signpositive(st1_ptr)) अणु
 				EXCEPTION(EX_Overflow);
 				FPU_copy_to_reg0(&CONST_INF, TAG_Special);
-			} else {
+			पूर्ण अन्यथा अणु
 				EXCEPTION(EX_Underflow);
 				FPU_copy_to_reg0(&CONST_Z, TAG_Zero);
-			}
+			पूर्ण
 			setsign(st0_ptr, sign);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		control_word &= ~CW_RC;
 		control_word |= RC_CHOP;
-		reg_copy(st1_ptr, &tmp);
-		FPU_round_to_int(&tmp, st1_tag);	/* This can never overflow here */
+		reg_copy(st1_ptr, &पंचांगp);
+		FPU_round_to_पूर्णांक(&पंचांगp, st1_tag);	/* This can never overflow here */
 		control_word = old_cw;
-		scale = signnegative(st1_ptr) ? -tmp.sigl : tmp.sigl;
+		scale = signnegative(st1_ptr) ? -पंचांगp.sigl : पंचांगp.sigl;
 		scale += exponent16(st0_ptr);
 
 		setexponent16(st0_ptr, scale);
@@ -1527,123 +1528,123 @@ static void fscale(FPU_REG *st0_ptr, u_char st0_tag)
 		/* Use FPU_round() to properly detect under/overflow etc */
 		FPU_round(st0_ptr, 0, 0, control_word, sign);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (st0_tag == TAG_Special)
+	अगर (st0_tag == TAG_Special)
 		st0_tag = FPU_Special(st0_ptr);
-	if (st1_tag == TAG_Special)
+	अगर (st1_tag == TAG_Special)
 		st1_tag = FPU_Special(st1_ptr);
 
-	if ((st0_tag == TAG_Valid) || (st0_tag == TW_Denormal)) {
-		switch (st1_tag) {
-		case TAG_Valid:
+	अगर ((st0_tag == TAG_Valid) || (st0_tag == TW_Denormal)) अणु
+		चयन (st1_tag) अणु
+		हाल TAG_Valid:
 			/* st(0) must be a denormal */
-			if ((st0_tag == TW_Denormal)
-			    && (denormal_operand() < 0))
-				return;
+			अगर ((st0_tag == TW_Denormal)
+			    && (denormal_opeअक्रम() < 0))
+				वापस;
 
 			FPU_to_exp16(st0_ptr, st0_ptr);	/* Will not be left on stack */
-			goto valid_scale;
+			जाओ valid_scale;
 
-		case TAG_Zero:
-			if (st0_tag == TW_Denormal)
-				denormal_operand();
-			return;
+		हाल TAG_Zero:
+			अगर (st0_tag == TW_Denormal)
+				denormal_opeअक्रम();
+			वापस;
 
-		case TW_Denormal:
-			denormal_operand();
-			return;
+		हाल TW_Denormal:
+			denormal_opeअक्रम();
+			वापस;
 
-		case TW_Infinity:
-			if ((st0_tag == TW_Denormal)
-			    && (denormal_operand() < 0))
-				return;
+		हाल TW_Infinity:
+			अगर ((st0_tag == TW_Denormal)
+			    && (denormal_opeअक्रम() < 0))
+				वापस;
 
-			if (signpositive(st1_ptr))
+			अगर (signpositive(st1_ptr))
 				FPU_copy_to_reg0(&CONST_INF, TAG_Special);
-			else
+			अन्यथा
 				FPU_copy_to_reg0(&CONST_Z, TAG_Zero);
 			setsign(st0_ptr, sign);
-			return;
+			वापस;
 
-		case TW_NaN:
+		हाल TW_NaN:
 			real_2op_NaN(st1_ptr, st1_tag, 0, st0_ptr);
-			return;
-		}
-	} else if (st0_tag == TAG_Zero) {
-		switch (st1_tag) {
-		case TAG_Valid:
-		case TAG_Zero:
-			return;
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Zero) अणु
+		चयन (st1_tag) अणु
+		हाल TAG_Valid:
+		हाल TAG_Zero:
+			वापस;
 
-		case TW_Denormal:
-			denormal_operand();
-			return;
+		हाल TW_Denormal:
+			denormal_opeअक्रम();
+			वापस;
 
-		case TW_Infinity:
-			if (signpositive(st1_ptr))
+		हाल TW_Infinity:
+			अगर (signpositive(st1_ptr))
 				arith_invalid(0);	/* Zero scaled by +Infinity */
-			return;
+			वापस;
 
-		case TW_NaN:
+		हाल TW_NaN:
 			real_2op_NaN(st1_ptr, st1_tag, 0, st0_ptr);
-			return;
-		}
-	} else if (st0_tag == TW_Infinity) {
-		switch (st1_tag) {
-		case TAG_Valid:
-		case TAG_Zero:
-			return;
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अगर (st0_tag == TW_Infinity) अणु
+		चयन (st1_tag) अणु
+		हाल TAG_Valid:
+		हाल TAG_Zero:
+			वापस;
 
-		case TW_Denormal:
-			denormal_operand();
-			return;
+		हाल TW_Denormal:
+			denormal_opeअक्रम();
+			वापस;
 
-		case TW_Infinity:
-			if (signnegative(st1_ptr))
+		हाल TW_Infinity:
+			अगर (signnegative(st1_ptr))
 				arith_invalid(0);	/* Infinity scaled by -Infinity */
-			return;
+			वापस;
 
-		case TW_NaN:
+		हाल TW_NaN:
 			real_2op_NaN(st1_ptr, st1_tag, 0, st0_ptr);
-			return;
-		}
-	} else if (st0_tag == TW_NaN) {
-		if (st1_tag != TAG_Empty) {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अगर (st0_tag == TW_NaN) अणु
+		अगर (st1_tag != TAG_Empty) अणु
 			real_2op_NaN(st1_ptr, st1_tag, 0, st0_ptr);
-			return;
-		}
-	}
-#ifdef PARANOID
-	if (!((st0_tag == TAG_Empty) || (st1_tag == TAG_Empty))) {
+			वापस;
+		पूर्ण
+	पूर्ण
+#अगर_घोषित PARANOID
+	अगर (!((st0_tag == TAG_Empty) || (st1_tag == TAG_Empty))) अणु
 		EXCEPTION(EX_INTERNAL | 0x115);
-		return;
-	}
-#endif
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
 
 	/* At least one of st(0), st(1) must be empty */
 	FPU_stack_underflow();
 
-}
+पूर्ण
 
 /*---------------------------------------------------------------------------*/
 
-static FUNC_ST0 const trig_table_a[] = {
+अटल FUNC_ST0 स्थिर trig_table_a[] = अणु
 	f2xm1, fyl2x, fptan, fpatan,
 	fxtract, fprem1, (FUNC_ST0) fdecstp, (FUNC_ST0) fincstp
-};
+पूर्ण;
 
-void FPU_triga(void)
-{
+व्योम FPU_triga(व्योम)
+अणु
 	(trig_table_a[FPU_rm]) (&st(0), FPU_gettag0());
-}
+पूर्ण
 
-static FUNC_ST0 const trig_table_b[] = {
-	fprem, fyl2xp1, fsqrt_, fsincos, frndint_, fscale, fsin, fcos
-};
+अटल FUNC_ST0 स्थिर trig_table_b[] = अणु
+	fprem, fyl2xp1, fवर्ग_मूल_, fsincos, frndपूर्णांक_, fscale, fsin, fcos
+पूर्ण;
 
-void FPU_trigb(void)
-{
+व्योम FPU_trigb(व्योम)
+अणु
 	(trig_table_b[FPU_rm]) (&st(0), FPU_gettag0());
-}
+पूर्ण

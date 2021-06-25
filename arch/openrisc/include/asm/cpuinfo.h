@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,11 +13,11 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_CPUINFO_H
-#define __ASM_OPENRISC_CPUINFO_H
+#अगर_अघोषित __ASM_OPENRISC_CPUINFO_H
+#घोषणा __ASM_OPENRISC_CPUINFO_H
 
-struct cpuinfo_or1k {
-	u32 clock_frequency;
+काष्ठा cpuinfo_or1k अणु
+	u32 घड़ी_frequency;
 
 	u32 icache_size;
 	u32 icache_block_size;
@@ -27,9 +28,9 @@ struct cpuinfo_or1k {
 	u32 dcache_ways;
 
 	u16 coreid;
-};
+पूर्ण;
 
-extern struct cpuinfo_or1k cpuinfo_or1k[NR_CPUS];
-extern void setup_cpuinfo(void);
+बाह्य काष्ठा cpuinfo_or1k cpuinfo_or1k[NR_CPUS];
+बाह्य व्योम setup_cpuinfo(व्योम);
 
-#endif /* __ASM_OPENRISC_CPUINFO_H */
+#पूर्ण_अगर /* __ASM_OPENRISC_CPUINFO_H */

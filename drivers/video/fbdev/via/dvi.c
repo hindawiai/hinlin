@@ -1,464 +1,465 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 1998-2008 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
 
  */
-#include <linux/via-core.h>
-#include <linux/via_i2c.h>
-#include "global.h"
+#समावेश <linux/via-core.h>
+#समावेश <linux/via_i2c.h>
+#समावेश "global.h"
 
-static void tmds_register_write(int index, u8 data);
-static int tmds_register_read(int index);
-static int tmds_register_read_bytes(int index, u8 *buff, int buff_len);
-static void dvi_get_panel_size_from_DDCv1(
-	struct tmds_chip_information *tmds_chip,
-	struct tmds_setting_information *tmds_setting);
-static int viafb_dvi_query_EDID(void);
+अटल व्योम पंचांगds_रेजिस्टर_ग_लिखो(पूर्णांक index, u8 data);
+अटल पूर्णांक पंचांगds_रेजिस्टर_पढ़ो(पूर्णांक index);
+अटल पूर्णांक पंचांगds_रेजिस्टर_पढ़ो_bytes(पूर्णांक index, u8 *buff, पूर्णांक buff_len);
+अटल व्योम dvi_get_panel_size_from_DDCv1(
+	काष्ठा पंचांगds_chip_inक्रमmation *पंचांगds_chip,
+	काष्ठा पंचांगds_setting_inक्रमmation *पंचांगds_setting);
+अटल पूर्णांक viafb_dvi_query_EDID(व्योम);
 
-static inline bool check_tmds_chip(int device_id_subaddr, int device_id)
-{
-	return tmds_register_read(device_id_subaddr) == device_id;
-}
+अटल अंतरभूत bool check_पंचांगds_chip(पूर्णांक device_id_subaddr, पूर्णांक device_id)
+अणु
+	वापस पंचांगds_रेजिस्टर_पढ़ो(device_id_subaddr) == device_id;
+पूर्ण
 
-void viafb_init_dvi_size(struct tmds_chip_information *tmds_chip,
-			 struct tmds_setting_information *tmds_setting)
-{
+व्योम viafb_init_dvi_size(काष्ठा पंचांगds_chip_inक्रमmation *पंचांगds_chip,
+			 काष्ठा पंचांगds_setting_inक्रमmation *पंचांगds_setting)
+अणु
 	DEBUG_MSG(KERN_INFO "viafb_init_dvi_size()\n");
 
 	viafb_dvi_sense();
-	if (viafb_dvi_query_EDID() == 1)
-		dvi_get_panel_size_from_DDCv1(tmds_chip, tmds_setting);
+	अगर (viafb_dvi_query_EDID() == 1)
+		dvi_get_panel_size_from_DDCv1(पंचांगds_chip, पंचांगds_setting);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-bool viafb_tmds_trasmitter_identify(void)
-{
-	unsigned char sr2a = 0, sr1e = 0, sr3e = 0;
+bool viafb_पंचांगds_trयंत्रitter_identअगरy(व्योम)
+अणु
+	अचिन्हित अक्षर sr2a = 0, sr1e = 0, sr3e = 0;
 
 	/* Turn on ouputting pad */
-	switch (viaparinfo->chip_info->gfx_chip_name) {
-	case UNICHROME_K8M890:
+	चयन (viaparinfo->chip_info->gfx_chip_name) अणु
+	हाल UNICHROME_K8M890:
 	    /*=* DFP Low Pad on *=*/
-		sr2a = viafb_read_reg(VIASR, SR2A);
-		viafb_write_reg_mask(SR2A, VIASR, 0x03, BIT0 + BIT1);
-		break;
+		sr2a = viafb_पढ़ो_reg(VIASR, SR2A);
+		viafb_ग_लिखो_reg_mask(SR2A, VIASR, 0x03, BIT0 + BIT1);
+		अवरोध;
 
-	case UNICHROME_P4M900:
-	case UNICHROME_P4M890:
+	हाल UNICHROME_P4M900:
+	हाल UNICHROME_P4M890:
 		/* DFP Low Pad on */
-		sr2a = viafb_read_reg(VIASR, SR2A);
-		viafb_write_reg_mask(SR2A, VIASR, 0x03, BIT0 + BIT1);
+		sr2a = viafb_पढ़ो_reg(VIASR, SR2A);
+		viafb_ग_लिखो_reg_mask(SR2A, VIASR, 0x03, BIT0 + BIT1);
 		/* DVP0 Pad on */
-		sr1e = viafb_read_reg(VIASR, SR1E);
-		viafb_write_reg_mask(SR1E, VIASR, 0xC0, BIT6 + BIT7);
-		break;
+		sr1e = viafb_पढ़ो_reg(VIASR, SR1E);
+		viafb_ग_लिखो_reg_mask(SR1E, VIASR, 0xC0, BIT6 + BIT7);
+		अवरोध;
 
-	default:
+	शेष:
 	    /* DVP0/DVP1 Pad on */
-		sr1e = viafb_read_reg(VIASR, SR1E);
-		viafb_write_reg_mask(SR1E, VIASR, 0xF0, BIT4 +
+		sr1e = viafb_पढ़ो_reg(VIASR, SR1E);
+		viafb_ग_लिखो_reg_mask(SR1E, VIASR, 0xF0, BIT4 +
 			BIT5 + BIT6 + BIT7);
 	    /* SR3E[1]Multi-function selection:
 	    0 = Emulate I2C and DDC bus by GPIO2/3/4. */
-		sr3e = viafb_read_reg(VIASR, SR3E);
-		viafb_write_reg_mask(SR3E, VIASR, 0x0, BIT5);
-		break;
-	}
+		sr3e = viafb_पढ़ो_reg(VIASR, SR3E);
+		viafb_ग_लिखो_reg_mask(SR3E, VIASR, 0x0, BIT5);
+		अवरोध;
+	पूर्ण
 
-	/* Check for VT1632: */
-	viaparinfo->chip_info->tmds_chip_info.tmds_chip_name = VT1632_TMDS;
+	/* Check क्रम VT1632: */
+	viaparinfo->chip_info->पंचांगds_chip_info.पंचांगds_chip_name = VT1632_TMDS;
 	viaparinfo->chip_info->
-		tmds_chip_info.tmds_chip_slave_addr = VT1632_TMDS_I2C_ADDR;
-	viaparinfo->chip_info->tmds_chip_info.i2c_port = VIA_PORT_31;
-	if (check_tmds_chip(VT1632_DEVICE_ID_REG, VT1632_DEVICE_ID)) {
+		पंचांगds_chip_info.पंचांगds_chip_slave_addr = VT1632_TMDS_I2C_ADDR;
+	viaparinfo->chip_info->पंचांगds_chip_info.i2c_port = VIA_PORT_31;
+	अगर (check_पंचांगds_chip(VT1632_DEVICE_ID_REG, VT1632_DEVICE_ID)) अणु
 		/*
 		 * Currently only support 12bits,dual edge,add 24bits mode later
 		 */
-		tmds_register_write(0x08, 0x3b);
+		पंचांगds_रेजिस्टर_ग_लिखो(0x08, 0x3b);
 
 		DEBUG_MSG(KERN_INFO "\n VT1632 TMDS ! \n");
 		DEBUG_MSG(KERN_INFO "\n %2d",
-			  viaparinfo->chip_info->tmds_chip_info.tmds_chip_name);
+			  viaparinfo->chip_info->पंचांगds_chip_info.पंचांगds_chip_name);
 		DEBUG_MSG(KERN_INFO "\n %2d",
-			  viaparinfo->chip_info->tmds_chip_info.i2c_port);
-		return true;
-	} else {
-		viaparinfo->chip_info->tmds_chip_info.i2c_port = VIA_PORT_2C;
-		if (check_tmds_chip(VT1632_DEVICE_ID_REG, VT1632_DEVICE_ID)) {
-			tmds_register_write(0x08, 0x3b);
+			  viaparinfo->chip_info->पंचांगds_chip_info.i2c_port);
+		वापस true;
+	पूर्ण अन्यथा अणु
+		viaparinfo->chip_info->पंचांगds_chip_info.i2c_port = VIA_PORT_2C;
+		अगर (check_पंचांगds_chip(VT1632_DEVICE_ID_REG, VT1632_DEVICE_ID)) अणु
+			पंचांगds_रेजिस्टर_ग_लिखो(0x08, 0x3b);
 			DEBUG_MSG(KERN_INFO "\n VT1632 TMDS ! \n");
 			DEBUG_MSG(KERN_INFO "\n %2d",
 				  viaparinfo->chip_info->
-				  tmds_chip_info.tmds_chip_name);
+				  पंचांगds_chip_info.पंचांगds_chip_name);
 			DEBUG_MSG(KERN_INFO "\n %2d",
 				  viaparinfo->chip_info->
-				  tmds_chip_info.i2c_port);
-			return true;
-		}
-	}
+				  पंचांगds_chip_info.i2c_port);
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	viaparinfo->chip_info->tmds_chip_info.tmds_chip_name = INTEGRATED_TMDS;
+	viaparinfo->chip_info->पंचांगds_chip_info.पंचांगds_chip_name = INTEGRATED_TMDS;
 
-	if ((viaparinfo->chip_info->gfx_chip_name == UNICHROME_CX700) &&
+	अगर ((viaparinfo->chip_info->gfx_chip_name == UNICHROME_CX700) &&
 	    ((viafb_display_hardware_layout == HW_LAYOUT_DVI_ONLY) ||
-	     (viafb_display_hardware_layout == HW_LAYOUT_LCD_DVI))) {
+	     (viafb_display_hardware_layout == HW_LAYOUT_LCD_DVI))) अणु
 		DEBUG_MSG(KERN_INFO "\n Integrated TMDS ! \n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	switch (viaparinfo->chip_info->gfx_chip_name) {
-	case UNICHROME_K8M890:
-		viafb_write_reg(SR2A, VIASR, sr2a);
-		break;
+	चयन (viaparinfo->chip_info->gfx_chip_name) अणु
+	हाल UNICHROME_K8M890:
+		viafb_ग_लिखो_reg(SR2A, VIASR, sr2a);
+		अवरोध;
 
-	case UNICHROME_P4M900:
-	case UNICHROME_P4M890:
-		viafb_write_reg(SR2A, VIASR, sr2a);
-		viafb_write_reg(SR1E, VIASR, sr1e);
-		break;
+	हाल UNICHROME_P4M900:
+	हाल UNICHROME_P4M890:
+		viafb_ग_लिखो_reg(SR2A, VIASR, sr2a);
+		viafb_ग_लिखो_reg(SR1E, VIASR, sr1e);
+		अवरोध;
 
-	default:
-		viafb_write_reg(SR1E, VIASR, sr1e);
-		viafb_write_reg(SR3E, VIASR, sr3e);
-		break;
-	}
+	शेष:
+		viafb_ग_लिखो_reg(SR1E, VIASR, sr1e);
+		viafb_ग_लिखो_reg(SR3E, VIASR, sr3e);
+		अवरोध;
+	पूर्ण
 
 	viaparinfo->chip_info->
-		tmds_chip_info.tmds_chip_name = NON_TMDS_TRANSMITTER;
-	viaparinfo->chip_info->tmds_chip_info.
-		tmds_chip_slave_addr = VT1632_TMDS_I2C_ADDR;
-	return false;
-}
+		पंचांगds_chip_info.पंचांगds_chip_name = NON_TMDS_TRANSMITTER;
+	viaparinfo->chip_info->पंचांगds_chip_info.
+		पंचांगds_chip_slave_addr = VT1632_TMDS_I2C_ADDR;
+	वापस false;
+पूर्ण
 
-static void tmds_register_write(int index, u8 data)
-{
-	viafb_i2c_writebyte(viaparinfo->chip_info->tmds_chip_info.i2c_port,
-			    viaparinfo->chip_info->tmds_chip_info.tmds_chip_slave_addr,
+अटल व्योम पंचांगds_रेजिस्टर_ग_लिखो(पूर्णांक index, u8 data)
+अणु
+	viafb_i2c_ग_लिखोbyte(viaparinfo->chip_info->पंचांगds_chip_info.i2c_port,
+			    viaparinfo->chip_info->पंचांगds_chip_info.पंचांगds_chip_slave_addr,
 			    index, data);
-}
+पूर्ण
 
-static int tmds_register_read(int index)
-{
+अटल पूर्णांक पंचांगds_रेजिस्टर_पढ़ो(पूर्णांक index)
+अणु
 	u8 data;
 
-	viafb_i2c_readbyte(viaparinfo->chip_info->tmds_chip_info.i2c_port,
-			   (u8) viaparinfo->chip_info->tmds_chip_info.tmds_chip_slave_addr,
+	viafb_i2c_पढ़ोbyte(viaparinfo->chip_info->पंचांगds_chip_info.i2c_port,
+			   (u8) viaparinfo->chip_info->पंचांगds_chip_info.पंचांगds_chip_slave_addr,
 			   (u8) index, &data);
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static int tmds_register_read_bytes(int index, u8 *buff, int buff_len)
-{
-	viafb_i2c_readbytes(viaparinfo->chip_info->tmds_chip_info.i2c_port,
-			    (u8) viaparinfo->chip_info->tmds_chip_info.tmds_chip_slave_addr,
+अटल पूर्णांक पंचांगds_रेजिस्टर_पढ़ो_bytes(पूर्णांक index, u8 *buff, पूर्णांक buff_len)
+अणु
+	viafb_i2c_पढ़ोbytes(viaparinfo->chip_info->पंचांगds_chip_info.i2c_port,
+			    (u8) viaparinfo->chip_info->पंचांगds_chip_info.पंचांगds_chip_slave_addr,
 			    (u8) index, buff, buff_len);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* DVI Set Mode */
-void viafb_dvi_set_mode(const struct fb_var_screeninfo *var,
-	u16 cxres, u16 cyres, int iga)
-{
-	struct fb_var_screeninfo dvi_var = *var;
-	const struct fb_videomode *rb_mode;
-	int maxPixelClock;
+व्योम viafb_dvi_set_mode(स्थिर काष्ठा fb_var_screeninfo *var,
+	u16 cxres, u16 cyres, पूर्णांक iga)
+अणु
+	काष्ठा fb_var_screeninfo dvi_var = *var;
+	स्थिर काष्ठा fb_videomode *rb_mode;
+	पूर्णांक maxPixelClock;
 
-	maxPixelClock = viaparinfo->shared->tmds_setting_info.max_pixel_clock;
-	if (maxPixelClock && PICOS2KHZ(var->pixclock) / 1000 > maxPixelClock) {
+	maxPixelClock = viaparinfo->shared->पंचांगds_setting_info.max_pixel_घड़ी;
+	अगर (maxPixelClock && PICOS2KHZ(var->pixघड़ी) / 1000 > maxPixelClock) अणु
 		rb_mode = viafb_get_best_rb_mode(var->xres, var->yres, 60);
-		if (rb_mode)
+		अगर (rb_mode)
 			viafb_fill_var_timing_info(&dvi_var, rb_mode);
-	}
+	पूर्ण
 
 	viafb_fill_crtc_timing(&dvi_var, cxres, cyres, iga);
-}
+पूर्ण
 
 /* Sense DVI Connector */
-int viafb_dvi_sense(void)
-{
+पूर्णांक viafb_dvi_sense(व्योम)
+अणु
 	u8 RegSR1E = 0, RegSR3E = 0, RegCR6B = 0, RegCR91 = 0,
 		RegCR93 = 0, RegCR9B = 0, data;
-	int ret = false;
+	पूर्णांक ret = false;
 
 	DEBUG_MSG(KERN_INFO "viafb_dvi_sense!!\n");
 
-	if (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266) {
+	अगर (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266) अणु
 		/* DI1 Pad on */
-		RegSR1E = viafb_read_reg(VIASR, SR1E);
-		viafb_write_reg(SR1E, VIASR, RegSR1E | 0x30);
+		RegSR1E = viafb_पढ़ो_reg(VIASR, SR1E);
+		viafb_ग_लिखो_reg(SR1E, VIASR, RegSR1E | 0x30);
 
-		/* CR6B[0]VCK Input Selection: 1 = External clock. */
-		RegCR6B = viafb_read_reg(VIACR, CR6B);
-		viafb_write_reg(CR6B, VIACR, RegCR6B | 0x08);
+		/* CR6B[0]VCK Input Selection: 1 = External घड़ी. */
+		RegCR6B = viafb_पढ़ो_reg(VIACR, CR6B);
+		viafb_ग_लिखो_reg(CR6B, VIACR, RegCR6B | 0x08);
 
 		/* CR91[4] VDD On [3] Data On [2] VEE On [1] Back Light Off
 		   [0] Software Control Power Sequence */
-		RegCR91 = viafb_read_reg(VIACR, CR91);
-		viafb_write_reg(CR91, VIACR, 0x1D);
+		RegCR91 = viafb_पढ़ो_reg(VIACR, CR91);
+		viafb_ग_लिखो_reg(CR91, VIACR, 0x1D);
 
 		/* CR93[7] DI1 Data Source Selection: 1 = DSP2.
-		   CR93[5] DI1 Clock Source: 1 = internal.
+		   CR93[5] DI1 Clock Source: 1 = पूर्णांकernal.
 		   CR93[4] DI1 Clock Polarity.
 		   CR93[3:1] DI1 Clock Adjust. CR93[0] DI1 enable */
-		RegCR93 = viafb_read_reg(VIACR, CR93);
-		viafb_write_reg(CR93, VIACR, 0x01);
-	} else {
+		RegCR93 = viafb_पढ़ो_reg(VIACR, CR93);
+		viafb_ग_लिखो_reg(CR93, VIACR, 0x01);
+	पूर्ण अन्यथा अणु
 		/* DVP0/DVP1 Pad on */
-		RegSR1E = viafb_read_reg(VIASR, SR1E);
-		viafb_write_reg(SR1E, VIASR, RegSR1E | 0xF0);
+		RegSR1E = viafb_पढ़ो_reg(VIASR, SR1E);
+		viafb_ग_लिखो_reg(SR1E, VIASR, RegSR1E | 0xF0);
 
 		/* SR3E[1]Multi-function selection:
 		   0 = Emulate I2C and DDC bus by GPIO2/3/4. */
-		RegSR3E = viafb_read_reg(VIASR, SR3E);
-		viafb_write_reg(SR3E, VIASR, RegSR3E & (~0x20));
+		RegSR3E = viafb_पढ़ो_reg(VIASR, SR3E);
+		viafb_ग_लिखो_reg(SR3E, VIASR, RegSR3E & (~0x20));
 
 		/* CR91[4] VDD On [3] Data On [2] VEE On [1] Back Light Off
 		   [0] Software Control Power Sequence */
-		RegCR91 = viafb_read_reg(VIACR, CR91);
-		viafb_write_reg(CR91, VIACR, 0x1D);
+		RegCR91 = viafb_पढ़ो_reg(VIACR, CR91);
+		viafb_ग_लिखो_reg(CR91, VIACR, 0x1D);
 
 		/*CR9B[4] DVP1 Data Source Selection: 1 = From secondary
 		display.CR9B[2:0] DVP1 Clock Adjust */
-		RegCR9B = viafb_read_reg(VIACR, CR9B);
-		viafb_write_reg(CR9B, VIACR, 0x01);
-	}
+		RegCR9B = viafb_पढ़ो_reg(VIACR, CR9B);
+		viafb_ग_लिखो_reg(CR9B, VIACR, 0x01);
+	पूर्ण
 
-	data = (u8) tmds_register_read(0x09);
-	if (data & 0x04)
+	data = (u8) पंचांगds_रेजिस्टर_पढ़ो(0x09);
+	अगर (data & 0x04)
 		ret = true;
 
-	if (ret == false) {
-		if (viafb_dvi_query_EDID())
+	अगर (ret == false) अणु
+		अगर (viafb_dvi_query_EDID())
 			ret = true;
-	}
+	पूर्ण
 
 	/* Restore status */
-	viafb_write_reg(SR1E, VIASR, RegSR1E);
-	viafb_write_reg(CR91, VIACR, RegCR91);
-	if (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266) {
-		viafb_write_reg(CR6B, VIACR, RegCR6B);
-		viafb_write_reg(CR93, VIACR, RegCR93);
-	} else {
-		viafb_write_reg(SR3E, VIASR, RegSR3E);
-		viafb_write_reg(CR9B, VIACR, RegCR9B);
-	}
+	viafb_ग_लिखो_reg(SR1E, VIASR, RegSR1E);
+	viafb_ग_लिखो_reg(CR91, VIACR, RegCR91);
+	अगर (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266) अणु
+		viafb_ग_लिखो_reg(CR6B, VIACR, RegCR6B);
+		viafb_ग_लिखो_reg(CR93, VIACR, RegCR93);
+	पूर्ण अन्यथा अणु
+		viafb_ग_लिखो_reg(SR3E, VIASR, RegSR3E);
+		viafb_ग_लिखो_reg(CR9B, VIACR, RegCR9B);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Query Flat Panel's EDID Table Version Through DVI Connector */
-static int viafb_dvi_query_EDID(void)
-{
+अटल पूर्णांक viafb_dvi_query_EDID(व्योम)
+अणु
 	u8 data0, data1;
-	int restore;
+	पूर्णांक restore;
 
 	DEBUG_MSG(KERN_INFO "viafb_dvi_query_EDID!!\n");
 
-	restore = viaparinfo->chip_info->tmds_chip_info.tmds_chip_slave_addr;
-	viaparinfo->chip_info->tmds_chip_info.tmds_chip_slave_addr = 0xA0;
+	restore = viaparinfo->chip_info->पंचांगds_chip_info.पंचांगds_chip_slave_addr;
+	viaparinfo->chip_info->पंचांगds_chip_info.पंचांगds_chip_slave_addr = 0xA0;
 
-	data0 = (u8) tmds_register_read(0x00);
-	data1 = (u8) tmds_register_read(0x01);
-	if ((data0 == 0) && (data1 == 0xFF)) {
+	data0 = (u8) पंचांगds_रेजिस्टर_पढ़ो(0x00);
+	data1 = (u8) पंचांगds_रेजिस्टर_पढ़ो(0x01);
+	अगर ((data0 == 0) && (data1 == 0xFF)) अणु
 		viaparinfo->chip_info->
-			tmds_chip_info.tmds_chip_slave_addr = restore;
-		return EDID_VERSION_1;	/* Found EDID1 Table */
-	}
+			पंचांगds_chip_info.पंचांगds_chip_slave_addr = restore;
+		वापस EDID_VERSION_1;	/* Found EDID1 Table */
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* Get Panel Size Using EDID1 Table */
-static void dvi_get_panel_size_from_DDCv1(
-	struct tmds_chip_information *tmds_chip,
-	struct tmds_setting_information *tmds_setting)
-{
-	int i, restore;
-	unsigned char EDID_DATA[18];
+अटल व्योम dvi_get_panel_size_from_DDCv1(
+	काष्ठा पंचांगds_chip_inक्रमmation *पंचांगds_chip,
+	काष्ठा पंचांगds_setting_inक्रमmation *पंचांगds_setting)
+अणु
+	पूर्णांक i, restore;
+	अचिन्हित अक्षर EDID_DATA[18];
 
 	DEBUG_MSG(KERN_INFO "\n dvi_get_panel_size_from_DDCv1 \n");
 
-	restore = tmds_chip->tmds_chip_slave_addr;
-	tmds_chip->tmds_chip_slave_addr = 0xA0;
-	for (i = 0x25; i < 0x6D; i++) {
-		switch (i) {
-		case 0x36:
-		case 0x48:
-		case 0x5A:
-		case 0x6C:
-			tmds_register_read_bytes(i, EDID_DATA, 10);
-			if (!(EDID_DATA[0] || EDID_DATA[1])) {
+	restore = पंचांगds_chip->पंचांगds_chip_slave_addr;
+	पंचांगds_chip->पंचांगds_chip_slave_addr = 0xA0;
+	क्रम (i = 0x25; i < 0x6D; i++) अणु
+		चयन (i) अणु
+		हाल 0x36:
+		हाल 0x48:
+		हाल 0x5A:
+		हाल 0x6C:
+			पंचांगds_रेजिस्टर_पढ़ो_bytes(i, EDID_DATA, 10);
+			अगर (!(EDID_DATA[0] || EDID_DATA[1])) अणु
 				/* The first two byte must be zero. */
-				if (EDID_DATA[3] == 0xFD) {
-					/* To get max pixel clock. */
-					tmds_setting->max_pixel_clock =
+				अगर (EDID_DATA[3] == 0xFD) अणु
+					/* To get max pixel घड़ी. */
+					पंचांगds_setting->max_pixel_घड़ी =
 						EDID_DATA[9] * 10;
-				}
-			}
-			break;
+				पूर्ण
+			पूर्ण
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	DEBUG_MSG(KERN_INFO "DVI max pixelclock = %d\n",
-		tmds_setting->max_pixel_clock);
-	tmds_chip->tmds_chip_slave_addr = restore;
-}
+		पंचांगds_setting->max_pixel_घड़ी);
+	पंचांगds_chip->पंचांगds_chip_slave_addr = restore;
+पूर्ण
 
 /* If Disable DVI, turn off pad */
-void viafb_dvi_disable(void)
-{
-	if (viaparinfo->chip_info->
-		tmds_chip_info.output_interface == INTERFACE_TMDS)
-		/* Turn off TMDS power. */
-		viafb_write_reg(CRD2, VIACR,
-		viafb_read_reg(VIACR, CRD2) | 0x08);
-}
+व्योम viafb_dvi_disable(व्योम)
+अणु
+	अगर (viaparinfo->chip_info->
+		पंचांगds_chip_info.output_पूर्णांकerface == INTERFACE_TMDS)
+		/* Turn off TMDS घातer. */
+		viafb_ग_लिखो_reg(CRD2, VIACR,
+		viafb_पढ़ो_reg(VIACR, CRD2) | 0x08);
+पूर्ण
 
-static void dvi_patch_skew_dvp0(void)
-{
+अटल व्योम dvi_patch_skew_dvp0(व्योम)
+अणु
 	/* Reset data driving first: */
-	viafb_write_reg_mask(SR1B, VIASR, 0, BIT1);
-	viafb_write_reg_mask(SR2A, VIASR, 0, BIT4);
+	viafb_ग_लिखो_reg_mask(SR1B, VIASR, 0, BIT1);
+	viafb_ग_लिखो_reg_mask(SR2A, VIASR, 0, BIT4);
 
-	switch (viaparinfo->chip_info->gfx_chip_name) {
-	case UNICHROME_P4M890:
-		{
-			if ((viaparinfo->tmds_setting_info->h_active == 1600) &&
-				(viaparinfo->tmds_setting_info->v_active ==
+	चयन (viaparinfo->chip_info->gfx_chip_name) अणु
+	हाल UNICHROME_P4M890:
+		अणु
+			अगर ((viaparinfo->पंचांगds_setting_info->h_active == 1600) &&
+				(viaparinfo->पंचांगds_setting_info->v_active ==
 				1200))
-				viafb_write_reg_mask(CR96, VIACR, 0x03,
+				viafb_ग_लिखो_reg_mask(CR96, VIACR, 0x03,
 					       BIT0 + BIT1 + BIT2);
-			else
-				viafb_write_reg_mask(CR96, VIACR, 0x07,
+			अन्यथा
+				viafb_ग_लिखो_reg_mask(CR96, VIACR, 0x07,
 					       BIT0 + BIT1 + BIT2);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	case UNICHROME_P4M900:
-		{
-			viafb_write_reg_mask(CR96, VIACR, 0x07,
+	हाल UNICHROME_P4M900:
+		अणु
+			viafb_ग_लिखो_reg_mask(CR96, VIACR, 0x07,
 				       BIT0 + BIT1 + BIT2 + BIT3);
-			viafb_write_reg_mask(SR1B, VIASR, 0x02, BIT1);
-			viafb_write_reg_mask(SR2A, VIASR, 0x10, BIT4);
-			break;
-		}
+			viafb_ग_लिखो_reg_mask(SR1B, VIASR, 0x02, BIT1);
+			viafb_ग_लिखो_reg_mask(SR2A, VIASR, 0x10, BIT4);
+			अवरोध;
+		पूर्ण
 
-	default:
-		{
-			break;
-		}
-	}
-}
+	शेष:
+		अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void dvi_patch_skew_dvp_low(void)
-{
-	switch (viaparinfo->chip_info->gfx_chip_name) {
-	case UNICHROME_K8M890:
-		{
-			viafb_write_reg_mask(CR99, VIACR, 0x03, BIT0 + BIT1);
-			break;
-		}
+अटल व्योम dvi_patch_skew_dvp_low(व्योम)
+अणु
+	चयन (viaparinfo->chip_info->gfx_chip_name) अणु
+	हाल UNICHROME_K8M890:
+		अणु
+			viafb_ग_लिखो_reg_mask(CR99, VIACR, 0x03, BIT0 + BIT1);
+			अवरोध;
+		पूर्ण
 
-	case UNICHROME_P4M900:
-		{
-			viafb_write_reg_mask(CR99, VIACR, 0x08,
+	हाल UNICHROME_P4M900:
+		अणु
+			viafb_ग_लिखो_reg_mask(CR99, VIACR, 0x08,
 				       BIT0 + BIT1 + BIT2 + BIT3);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	case UNICHROME_P4M890:
-		{
-			viafb_write_reg_mask(CR99, VIACR, 0x0F,
+	हाल UNICHROME_P4M890:
+		अणु
+			viafb_ग_लिखो_reg_mask(CR99, VIACR, 0x0F,
 				       BIT0 + BIT1 + BIT2 + BIT3);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	default:
-		{
-			break;
-		}
-	}
-}
+	शेष:
+		अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* If Enable DVI, turn off pad */
-void viafb_dvi_enable(void)
-{
+व्योम viafb_dvi_enable(व्योम)
+अणु
 	u8 data;
 
-	switch (viaparinfo->chip_info->tmds_chip_info.output_interface) {
-	case INTERFACE_DVP0:
-		viafb_write_reg_mask(CR6B, VIACR, 0x01, BIT0);
-		viafb_write_reg_mask(CR6C, VIACR, 0x21, BIT0 + BIT5);
+	चयन (viaparinfo->chip_info->पंचांगds_chip_info.output_पूर्णांकerface) अणु
+	हाल INTERFACE_DVP0:
+		viafb_ग_लिखो_reg_mask(CR6B, VIACR, 0x01, BIT0);
+		viafb_ग_लिखो_reg_mask(CR6C, VIACR, 0x21, BIT0 + BIT5);
 		dvi_patch_skew_dvp0();
-		if (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266)
-			tmds_register_write(0x88, 0x3b);
-		else
+		अगर (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266)
+			पंचांगds_रेजिस्टर_ग_लिखो(0x88, 0x3b);
+		अन्यथा
 			/*clear CR91[5] to direct on display period
 			   in the secondary diplay path */
-			via_write_reg_mask(VIACR, 0x91, 0x00, 0x20);
-		break;
+			via_ग_लिखो_reg_mask(VIACR, 0x91, 0x00, 0x20);
+		अवरोध;
 
-	case INTERFACE_DVP1:
-		if (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266)
-			viafb_write_reg_mask(CR93, VIACR, 0x21, BIT0 + BIT5);
+	हाल INTERFACE_DVP1:
+		अगर (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266)
+			viafb_ग_लिखो_reg_mask(CR93, VIACR, 0x21, BIT0 + BIT5);
 
 		/*fix dvi cann't be enabled with MB VT5718C4 - Al Zhang */
-		if (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266)
-			tmds_register_write(0x88, 0x3b);
-		else
+		अगर (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266)
+			पंचांगds_रेजिस्टर_ग_लिखो(0x88, 0x3b);
+		अन्यथा
 			/*clear CR91[5] to direct on display period
 			  in the secondary diplay path */
-			via_write_reg_mask(VIACR, 0x91, 0x00, 0x20);
+			via_ग_लिखो_reg_mask(VIACR, 0x91, 0x00, 0x20);
 
 		/*fix DVI cannot enable on EPIA-M board */
-		if (viafb_platform_epia_dvi == 1) {
-			viafb_write_reg_mask(CR91, VIACR, 0x1f, 0x1f);
-			viafb_write_reg_mask(CR88, VIACR, 0x00, BIT6 + BIT0);
-			if (viafb_bus_width == 24) {
-				if (viafb_device_lcd_dualedge == 1)
+		अगर (viafb_platक्रमm_epia_dvi == 1) अणु
+			viafb_ग_लिखो_reg_mask(CR91, VIACR, 0x1f, 0x1f);
+			viafb_ग_लिखो_reg_mask(CR88, VIACR, 0x00, BIT6 + BIT0);
+			अगर (viafb_bus_width == 24) अणु
+				अगर (viafb_device_lcd_dualedge == 1)
 					data = 0x3F;
-				else
+				अन्यथा
 					data = 0x37;
-				viafb_i2c_writebyte(viaparinfo->chip_info->
-					tmds_chip_info.i2c_port,
+				viafb_i2c_ग_लिखोbyte(viaparinfo->chip_info->
+					पंचांगds_chip_info.i2c_port,
 					viaparinfo->chip_info->
-					tmds_chip_info.tmds_chip_slave_addr,
+					पंचांगds_chip_info.पंचांगds_chip_slave_addr,
 					0x08, data);
-			}
-		}
-		break;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case INTERFACE_DFP_HIGH:
-		if (viaparinfo->chip_info->gfx_chip_name != UNICHROME_CLE266)
-			via_write_reg_mask(VIACR, CR97, 0x03, 0x03);
+	हाल INTERFACE_DFP_HIGH:
+		अगर (viaparinfo->chip_info->gfx_chip_name != UNICHROME_CLE266)
+			via_ग_लिखो_reg_mask(VIACR, CR97, 0x03, 0x03);
 
-		via_write_reg_mask(VIACR, 0x91, 0x00, 0x20);
-		break;
+		via_ग_लिखो_reg_mask(VIACR, 0x91, 0x00, 0x20);
+		अवरोध;
 
-	case INTERFACE_DFP_LOW:
-		if (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266)
-			break;
+	हाल INTERFACE_DFP_LOW:
+		अगर (viaparinfo->chip_info->gfx_chip_name == UNICHROME_CLE266)
+			अवरोध;
 
 		dvi_patch_skew_dvp_low();
-		via_write_reg_mask(VIACR, 0x91, 0x00, 0x20);
-		break;
+		via_ग_लिखो_reg_mask(VIACR, 0x91, 0x00, 0x20);
+		अवरोध;
 
-	case INTERFACE_TMDS:
+	हाल INTERFACE_TMDS:
 		/* Turn on Display period in the panel path. */
-		viafb_write_reg_mask(CR91, VIACR, 0, BIT7);
+		viafb_ग_लिखो_reg_mask(CR91, VIACR, 0, BIT7);
 
-		/* Turn on TMDS power. */
-		viafb_write_reg_mask(CRD2, VIACR, 0, BIT3);
-		break;
-	}
+		/* Turn on TMDS घातer. */
+		viafb_ग_लिखो_reg_mask(CRD2, VIACR, 0, BIT3);
+		अवरोध;
+	पूर्ण
 
-	if (viaparinfo->tmds_setting_info->iga_path == IGA2) {
+	अगर (viaparinfo->पंचांगds_setting_info->iga_path == IGA2) अणु
 		/* Disable LCD Scaling */
-		viafb_write_reg_mask(CR79, VIACR, 0x00, BIT0);
-	}
-}
+		viafb_ग_लिखो_reg_mask(CR79, VIACR, 0x00, BIT0);
+	पूर्ण
+पूर्ण

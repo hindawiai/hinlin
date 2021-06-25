@@ -1,223 +1,224 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_MMU_CONTEXT_H
-#define _ASM_X86_MMU_CONTEXT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_MMU_CONTEXT_H
+#घोषणा _ASM_X86_MMU_CONTEXT_H
 
-#include <asm/desc.h>
-#include <linux/atomic.h>
-#include <linux/mm_types.h>
-#include <linux/pkeys.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/pkeys.h>
 
-#include <trace/events/tlb.h>
+#समावेश <trace/events/tlb.h>
 
-#include <asm/tlbflush.h>
-#include <asm/paravirt.h>
-#include <asm/debugreg.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/paravirt.h>
+#समावेश <यंत्र/debugreg.h>
 
-extern atomic64_t last_mm_ctx_id;
+बाह्य atomic64_t last_mm_ctx_id;
 
-#ifndef CONFIG_PARAVIRT_XXL
-static inline void paravirt_activate_mm(struct mm_struct *prev,
-					struct mm_struct *next)
-{
-}
-#endif	/* !CONFIG_PARAVIRT_XXL */
+#अगर_अघोषित CONFIG_PARAVIRT_XXL
+अटल अंतरभूत व्योम paravirt_activate_mm(काष्ठा mm_काष्ठा *prev,
+					काष्ठा mm_काष्ठा *next)
+अणु
+पूर्ण
+#पूर्ण_अगर	/* !CONFIG_PARAVIRT_XXL */
 
-#ifdef CONFIG_PERF_EVENTS
+#अगर_घोषित CONFIG_PERF_EVENTS
 DECLARE_STATIC_KEY_FALSE(rdpmc_never_available_key);
 DECLARE_STATIC_KEY_FALSE(rdpmc_always_available_key);
-void cr4_update_pce(void *ignored);
-#endif
+व्योम cr4_update_pce(व्योम *ignored);
+#पूर्ण_अगर
 
-#ifdef CONFIG_MODIFY_LDT_SYSCALL
+#अगर_घोषित CONFIG_MODIFY_LDT_SYSCALL
 /*
- * ldt_structs can be allocated, used, and freed, but they are never
- * modified while live.
+ * ldt_काष्ठाs can be allocated, used, and मुक्तd, but they are never
+ * modअगरied जबतक live.
  */
-struct ldt_struct {
+काष्ठा ldt_काष्ठा अणु
 	/*
 	 * Xen requires page-aligned LDTs with special permissions.  This is
 	 * needed to prevent us from installing evil descriptors such as
-	 * call gates.  On native, we could merge the ldt_struct and LDT
+	 * call gates.  On native, we could merge the ldt_काष्ठा and LDT
 	 * allocations, but it's not worth trying to optimize.
 	 */
-	struct desc_struct	*entries;
-	unsigned int		nr_entries;
+	काष्ठा desc_काष्ठा	*entries;
+	अचिन्हित पूर्णांक		nr_entries;
 
 	/*
-	 * If PTI is in use, then the entries array is not mapped while we're
+	 * If PTI is in use, then the entries array is not mapped जबतक we're
 	 * in user mode.  The whole array will be aliased at the addressed
 	 * given by ldt_slot_va(slot).  We use two slots so that we can allocate
 	 * and map, and enable a new LDT without invalidating the mapping
 	 * of an older, still-in-use LDT.
 	 *
-	 * slot will be -1 if this LDT doesn't have an alias mapping.
+	 * slot will be -1 अगर this LDT करोesn't have an alias mapping.
 	 */
-	int			slot;
-};
+	पूर्णांक			slot;
+पूर्ण;
 
 /*
- * Used for LDT copy/destruction.
+ * Used क्रम LDT copy/deकाष्ठाion.
  */
-static inline void init_new_context_ldt(struct mm_struct *mm)
-{
-	mm->context.ldt = NULL;
+अटल अंतरभूत व्योम init_new_context_ldt(काष्ठा mm_काष्ठा *mm)
+अणु
+	mm->context.ldt = शून्य;
 	init_rwsem(&mm->context.ldt_usr_sem);
-}
-int ldt_dup_context(struct mm_struct *oldmm, struct mm_struct *mm);
-void destroy_context_ldt(struct mm_struct *mm);
-void ldt_arch_exit_mmap(struct mm_struct *mm);
-#else	/* CONFIG_MODIFY_LDT_SYSCALL */
-static inline void init_new_context_ldt(struct mm_struct *mm) { }
-static inline int ldt_dup_context(struct mm_struct *oldmm,
-				  struct mm_struct *mm)
-{
-	return 0;
-}
-static inline void destroy_context_ldt(struct mm_struct *mm) { }
-static inline void ldt_arch_exit_mmap(struct mm_struct *mm) { }
-#endif
+पूर्ण
+पूर्णांक ldt_dup_context(काष्ठा mm_काष्ठा *oldmm, काष्ठा mm_काष्ठा *mm);
+व्योम destroy_context_ldt(काष्ठा mm_काष्ठा *mm);
+व्योम ldt_arch_निकास_mmap(काष्ठा mm_काष्ठा *mm);
+#अन्यथा	/* CONFIG_MODIFY_LDT_SYSCALL */
+अटल अंतरभूत व्योम init_new_context_ldt(काष्ठा mm_काष्ठा *mm) अणु पूर्ण
+अटल अंतरभूत पूर्णांक ldt_dup_context(काष्ठा mm_काष्ठा *oldmm,
+				  काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम destroy_context_ldt(काष्ठा mm_काष्ठा *mm) अणु पूर्ण
+अटल अंतरभूत व्योम ldt_arch_निकास_mmap(काष्ठा mm_काष्ठा *mm) अणु पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_MODIFY_LDT_SYSCALL
-extern void load_mm_ldt(struct mm_struct *mm);
-extern void switch_ldt(struct mm_struct *prev, struct mm_struct *next);
-#else
-static inline void load_mm_ldt(struct mm_struct *mm)
-{
+#अगर_घोषित CONFIG_MODIFY_LDT_SYSCALL
+बाह्य व्योम load_mm_ldt(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम चयन_ldt(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next);
+#अन्यथा
+अटल अंतरभूत व्योम load_mm_ldt(काष्ठा mm_काष्ठा *mm)
+अणु
 	clear_LDT();
-}
-static inline void switch_ldt(struct mm_struct *prev, struct mm_struct *next)
-{
+पूर्ण
+अटल अंतरभूत व्योम चयन_ldt(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next)
+अणु
 	DEBUG_LOCKS_WARN_ON(preemptible());
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#define enter_lazy_tlb enter_lazy_tlb
-extern void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk);
+#घोषणा enter_lazy_tlb enter_lazy_tlb
+बाह्य व्योम enter_lazy_tlb(काष्ठा mm_काष्ठा *mm, काष्ठा task_काष्ठा *tsk);
 
 /*
- * Init a new mm.  Used on mm copies, like at fork()
- * and on mm's that are brand-new, like at execve().
+ * Init a new mm.  Used on mm copies, like at विभाजन()
+ * and on mm's that are bअक्रम-new, like at execve().
  */
-#define init_new_context init_new_context
-static inline int init_new_context(struct task_struct *tsk,
-				   struct mm_struct *mm)
-{
+#घोषणा init_new_context init_new_context
+अटल अंतरभूत पूर्णांक init_new_context(काष्ठा task_काष्ठा *tsk,
+				   काष्ठा mm_काष्ठा *mm)
+अणु
 	mutex_init(&mm->context.lock);
 
-	mm->context.ctx_id = atomic64_inc_return(&last_mm_ctx_id);
+	mm->context.ctx_id = atomic64_inc_वापस(&last_mm_ctx_id);
 	atomic64_set(&mm->context.tlb_gen, 0);
 
-#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
-	if (cpu_feature_enabled(X86_FEATURE_OSPKE)) {
-		/* pkey 0 is the default and allocated implicitly */
+#अगर_घोषित CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
+	अगर (cpu_feature_enabled(X86_FEATURE_OSPKE)) अणु
+		/* pkey 0 is the शेष and allocated implicitly */
 		mm->context.pkey_allocation_map = 0x1;
 		/* -1 means unallocated or invalid */
 		mm->context.execute_only_pkey = -1;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	init_new_context_ldt(mm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define destroy_context destroy_context
-static inline void destroy_context(struct mm_struct *mm)
-{
+#घोषणा destroy_context destroy_context
+अटल अंतरभूत व्योम destroy_context(काष्ठा mm_काष्ठा *mm)
+अणु
 	destroy_context_ldt(mm);
-}
+पूर्ण
 
-extern void switch_mm(struct mm_struct *prev, struct mm_struct *next,
-		      struct task_struct *tsk);
+बाह्य व्योम चयन_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
+		      काष्ठा task_काष्ठा *tsk);
 
-extern void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
-			       struct task_struct *tsk);
-#define switch_mm_irqs_off switch_mm_irqs_off
+बाह्य व्योम चयन_mm_irqs_off(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
+			       काष्ठा task_काष्ठा *tsk);
+#घोषणा चयन_mm_irqs_off चयन_mm_irqs_off
 
-#define activate_mm(prev, next)			\
-do {						\
+#घोषणा activate_mm(prev, next)			\
+करो अणु						\
 	paravirt_activate_mm((prev), (next));	\
-	switch_mm((prev), (next), NULL);	\
-} while (0);
+	चयन_mm((prev), (next), शून्य);	\
+पूर्ण जबतक (0);
 
-#ifdef CONFIG_X86_32
-#define deactivate_mm(tsk, mm)			\
-do {						\
+#अगर_घोषित CONFIG_X86_32
+#घोषणा deactivate_mm(tsk, mm)			\
+करो अणु						\
 	lazy_load_gs(0);			\
-} while (0)
-#else
-#define deactivate_mm(tsk, mm)			\
-do {						\
+पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा deactivate_mm(tsk, mm)			\
+करो अणु						\
 	load_gs_index(0);			\
 	loadsegment(fs, 0);			\
-} while (0)
-#endif
+पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-static inline void arch_dup_pkeys(struct mm_struct *oldmm,
-				  struct mm_struct *mm)
-{
-#ifdef CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
-	if (!cpu_feature_enabled(X86_FEATURE_OSPKE))
-		return;
+अटल अंतरभूत व्योम arch_dup_pkeys(काष्ठा mm_काष्ठा *oldmm,
+				  काष्ठा mm_काष्ठा *mm)
+अणु
+#अगर_घोषित CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS
+	अगर (!cpu_feature_enabled(X86_FEATURE_OSPKE))
+		वापस;
 
 	/* Duplicate the oldmm pkey state in mm: */
 	mm->context.pkey_allocation_map = oldmm->context.pkey_allocation_map;
 	mm->context.execute_only_pkey   = oldmm->context.execute_only_pkey;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline int arch_dup_mmap(struct mm_struct *oldmm, struct mm_struct *mm)
-{
+अटल अंतरभूत पूर्णांक arch_dup_mmap(काष्ठा mm_काष्ठा *oldmm, काष्ठा mm_काष्ठा *mm)
+अणु
 	arch_dup_pkeys(oldmm, mm);
 	paravirt_arch_dup_mmap(oldmm, mm);
-	return ldt_dup_context(oldmm, mm);
-}
+	वापस ldt_dup_context(oldmm, mm);
+पूर्ण
 
-static inline void arch_exit_mmap(struct mm_struct *mm)
-{
-	paravirt_arch_exit_mmap(mm);
-	ldt_arch_exit_mmap(mm);
-}
+अटल अंतरभूत व्योम arch_निकास_mmap(काष्ठा mm_काष्ठा *mm)
+अणु
+	paravirt_arch_निकास_mmap(mm);
+	ldt_arch_निकास_mmap(mm);
+पूर्ण
 
-#ifdef CONFIG_X86_64
-static inline bool is_64bit_mm(struct mm_struct *mm)
-{
-	return	!IS_ENABLED(CONFIG_IA32_EMULATION) ||
+#अगर_घोषित CONFIG_X86_64
+अटल अंतरभूत bool is_64bit_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस	!IS_ENABLED(CONFIG_IA32_EMULATION) ||
 		!(mm->context.flags & MM_CONTEXT_UPROBE_IA32);
-}
-#else
-static inline bool is_64bit_mm(struct mm_struct *mm)
-{
-	return false;
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool is_64bit_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static inline void arch_unmap(struct mm_struct *mm, unsigned long start,
-			      unsigned long end)
-{
-}
+अटल अंतरभूत व्योम arch_unmap(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start,
+			      अचिन्हित दीर्घ end)
+अणु
+पूर्ण
 
 /*
- * We only want to enforce protection keys on the current process
- * because we effectively have no access to PKRU for other
- * processes or any way to tell *which * PKRU in a threaded
+ * We only want to enक्रमce protection keys on the current process
+ * because we effectively have no access to PKRU क्रम other
+ * processes or any way to tell *which * PKRU in a thपढ़ोed
  * process we could use.
  *
- * So do not enforce things if the VMA is not from the current
- * mm, or if we are in a kernel thread.
+ * So करो not enक्रमce things अगर the VMA is not from the current
+ * mm, or अगर we are in a kernel thपढ़ो.
  */
-static inline bool arch_vma_access_permitted(struct vm_area_struct *vma,
-		bool write, bool execute, bool foreign)
-{
-	/* pkeys never affect instruction fetches */
-	if (execute)
-		return true;
-	/* allow access if the VMA is not one from this process */
-	if (foreign || vma_is_foreign(vma))
-		return true;
-	return __pkru_allows_pkey(vma_pkey(vma), write);
-}
+अटल अंतरभूत bool arch_vma_access_permitted(काष्ठा vm_area_काष्ठा *vma,
+		bool ग_लिखो, bool execute, bool क्रमeign)
+अणु
+	/* pkeys never affect inकाष्ठाion fetches */
+	अगर (execute)
+		वापस true;
+	/* allow access अगर the VMA is not one from this process */
+	अगर (क्रमeign || vma_is_क्रमeign(vma))
+		वापस true;
+	वापस __pkru_allows_pkey(vma_pkey(vma), ग_लिखो);
+पूर्ण
 
-unsigned long __get_current_cr3_fast(void);
+अचिन्हित दीर्घ __get_current_cr3_fast(व्योम);
 
-#include <asm-generic/mmu_context.h>
+#समावेश <यंत्र-generic/mmu_context.h>
 
-#endif /* _ASM_X86_MMU_CONTEXT_H */
+#पूर्ण_अगर /* _ASM_X86_MMU_CONTEXT_H */

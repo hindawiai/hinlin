@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -29,12 +30,12 @@
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -51,135 +52,135 @@
  *
  */
 
-#ifndef MOD_FREESYNC_H_
-#define MOD_FREESYNC_H_
+#अगर_अघोषित MOD_FREESYNC_H_
+#घोषणा MOD_FREESYNC_H_
 
-#include "mod_shared.h"
+#समावेश "mod_shared.h"
 
-// Access structures
-struct mod_freesync {
-	int dummy;
-};
+// Access काष्ठाures
+काष्ठा mod_मुक्तsync अणु
+	पूर्णांक dummy;
+पूर्ण;
 
-// TODO: References to this should be removed
-struct mod_freesync_caps {
+// TODO: References to this should be हटाओd
+काष्ठा mod_मुक्तsync_caps अणु
 	bool supported;
-	unsigned int min_refresh_in_micro_hz;
-	unsigned int max_refresh_in_micro_hz;
-};
+	अचिन्हित पूर्णांक min_refresh_in_micro_hz;
+	अचिन्हित पूर्णांक max_refresh_in_micro_hz;
+पूर्ण;
 
-enum mod_vrr_state {
+क्रमागत mod_vrr_state अणु
 	VRR_STATE_UNSUPPORTED = 0,
 	VRR_STATE_DISABLED,
 	VRR_STATE_INACTIVE,
 	VRR_STATE_ACTIVE_VARIABLE,
 	VRR_STATE_ACTIVE_FIXED
-};
+पूर्ण;
 
-struct mod_freesync_config {
-	enum mod_vrr_state state;
-	bool vsif_supported;
+काष्ठा mod_मुक्तsync_config अणु
+	क्रमागत mod_vrr_state state;
+	bool vsअगर_supported;
 	bool ramping;
 	bool btr;
-	unsigned int min_refresh_in_uhz;
-	unsigned int max_refresh_in_uhz;
-	unsigned int fixed_refresh_in_uhz;
+	अचिन्हित पूर्णांक min_refresh_in_uhz;
+	अचिन्हित पूर्णांक max_refresh_in_uhz;
+	अचिन्हित पूर्णांक fixed_refresh_in_uhz;
 
-};
+पूर्ण;
 
-struct mod_vrr_params_btr {
+काष्ठा mod_vrr_params_btr अणु
 	bool btr_enabled;
 	bool btr_active;
-	uint32_t mid_point_in_us;
-	uint32_t inserted_duration_in_us;
-	uint32_t frames_to_insert;
-	uint32_t frame_counter;
-	uint32_t margin_in_us;
-};
+	uपूर्णांक32_t mid_poपूर्णांक_in_us;
+	uपूर्णांक32_t inserted_duration_in_us;
+	uपूर्णांक32_t frames_to_insert;
+	uपूर्णांक32_t frame_counter;
+	uपूर्णांक32_t margin_in_us;
+पूर्ण;
 
-struct mod_vrr_params_fixed_refresh {
+काष्ठा mod_vrr_params_fixed_refresh अणु
 	bool fixed_active;
 	bool ramping_active;
-	bool ramping_done;
-	uint32_t target_refresh_in_uhz;
-	uint32_t frame_counter;
-};
+	bool ramping_करोne;
+	uपूर्णांक32_t target_refresh_in_uhz;
+	uपूर्णांक32_t frame_counter;
+पूर्ण;
 
-struct mod_vrr_params {
+काष्ठा mod_vrr_params अणु
 	bool supported;
 	bool send_info_frame;
-	enum mod_vrr_state state;
+	क्रमागत mod_vrr_state state;
 
-	uint32_t min_refresh_in_uhz;
-	uint32_t max_duration_in_us;
-	uint32_t max_refresh_in_uhz;
-	uint32_t min_duration_in_us;
-	uint32_t fixed_refresh_in_uhz;
+	uपूर्णांक32_t min_refresh_in_uhz;
+	uपूर्णांक32_t max_duration_in_us;
+	uपूर्णांक32_t max_refresh_in_uhz;
+	uपूर्णांक32_t min_duration_in_us;
+	uपूर्णांक32_t fixed_refresh_in_uhz;
 
-	struct dc_crtc_timing_adjust adjust;
+	काष्ठा dc_crtc_timing_adjust adjust;
 
-	struct mod_vrr_params_fixed_refresh fixed;
+	काष्ठा mod_vrr_params_fixed_refresh fixed;
 
-	struct mod_vrr_params_btr btr;
-};
+	काष्ठा mod_vrr_params_btr btr;
+पूर्ण;
 
-struct mod_freesync *mod_freesync_create(struct dc *dc);
-void mod_freesync_destroy(struct mod_freesync *mod_freesync);
+काष्ठा mod_मुक्तsync *mod_मुक्तsync_create(काष्ठा dc *dc);
+व्योम mod_मुक्तsync_destroy(काष्ठा mod_मुक्तsync *mod_मुक्तsync);
 
-bool mod_freesync_get_vmin_vmax(struct mod_freesync *mod_freesync,
-		const struct dc_stream_state *stream,
-		unsigned int *vmin,
-		unsigned int *vmax);
+bool mod_मुक्तsync_get_vmin_vmax(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		अचिन्हित पूर्णांक *vmin,
+		अचिन्हित पूर्णांक *vmax);
 
-bool mod_freesync_get_v_position(struct mod_freesync *mod_freesync,
-		struct dc_stream_state *stream,
-		unsigned int *nom_v_pos,
-		unsigned int *v_pos);
+bool mod_मुक्तsync_get_v_position(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		काष्ठा dc_stream_state *stream,
+		अचिन्हित पूर्णांक *nom_v_pos,
+		अचिन्हित पूर्णांक *v_pos);
 
-void mod_freesync_get_settings(struct mod_freesync *mod_freesync,
-		const struct mod_vrr_params *vrr,
-		unsigned int *v_total_min, unsigned int *v_total_max,
-		unsigned int *event_triggers,
-		unsigned int *window_min, unsigned int *window_max,
-		unsigned int *lfc_mid_point_in_us,
-		unsigned int *inserted_frames,
-		unsigned int *inserted_duration_in_us);
+व्योम mod_मुक्तsync_get_settings(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा mod_vrr_params *vrr,
+		अचिन्हित पूर्णांक *v_total_min, अचिन्हित पूर्णांक *v_total_max,
+		अचिन्हित पूर्णांक *event_triggers,
+		अचिन्हित पूर्णांक *winकरोw_min, अचिन्हित पूर्णांक *winकरोw_max,
+		अचिन्हित पूर्णांक *lfc_mid_poपूर्णांक_in_us,
+		अचिन्हित पूर्णांक *inserted_frames,
+		अचिन्हित पूर्णांक *inserted_duration_in_us);
 
-void mod_freesync_build_vrr_infopacket(struct mod_freesync *mod_freesync,
-		const struct dc_stream_state *stream,
-		const struct mod_vrr_params *vrr,
-		enum vrr_packet_type packet_type,
-		enum color_transfer_func app_tf,
-		struct dc_info_packet *infopacket,
+व्योम mod_मुक्तsync_build_vrr_infopacket(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		स्थिर काष्ठा mod_vrr_params *vrr,
+		क्रमागत vrr_packet_type packet_type,
+		क्रमागत color_transfer_func app_tf,
+		काष्ठा dc_info_packet *infopacket,
 		bool pack_sdp_v1_3);
 
-void mod_freesync_build_vrr_params(struct mod_freesync *mod_freesync,
-		const struct dc_stream_state *stream,
-		struct mod_freesync_config *in_config,
-		struct mod_vrr_params *in_out_vrr);
+व्योम mod_मुक्तsync_build_vrr_params(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		काष्ठा mod_मुक्तsync_config *in_config,
+		काष्ठा mod_vrr_params *in_out_vrr);
 
-void mod_freesync_handle_preflip(struct mod_freesync *mod_freesync,
-		const struct dc_plane_state *plane,
-		const struct dc_stream_state *stream,
-		unsigned int curr_time_stamp_in_us,
-		struct mod_vrr_params *in_out_vrr);
+व्योम mod_मुक्तsync_handle_preflip(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा dc_plane_state *plane,
+		स्थिर काष्ठा dc_stream_state *stream,
+		अचिन्हित पूर्णांक curr_समय_stamp_in_us,
+		काष्ठा mod_vrr_params *in_out_vrr);
 
-void mod_freesync_handle_v_update(struct mod_freesync *mod_freesync,
-		const struct dc_stream_state *stream,
-		struct mod_vrr_params *in_out_vrr);
+व्योम mod_मुक्तsync_handle_v_update(काष्ठा mod_मुक्तsync *mod_मुक्तsync,
+		स्थिर काष्ठा dc_stream_state *stream,
+		काष्ठा mod_vrr_params *in_out_vrr);
 
-unsigned long long mod_freesync_calc_nominal_field_rate(
-			const struct dc_stream_state *stream);
+अचिन्हित दीर्घ दीर्घ mod_मुक्तsync_calc_nominal_field_rate(
+			स्थिर काष्ठा dc_stream_state *stream);
 
-unsigned long long mod_freesync_calc_field_rate_from_timing(
-		unsigned int vtotal, unsigned int htotal, unsigned int pix_clk);
+अचिन्हित दीर्घ दीर्घ mod_मुक्तsync_calc_field_rate_from_timing(
+		अचिन्हित पूर्णांक vtotal, अचिन्हित पूर्णांक htotal, अचिन्हित पूर्णांक pix_clk);
 
-bool mod_freesync_is_valid_range(uint32_t min_refresh_cap_in_uhz,
-		uint32_t max_refresh_cap_in_uhz,
-		uint32_t nominal_field_rate_in_uhz);
+bool mod_मुक्तsync_is_valid_range(uपूर्णांक32_t min_refresh_cap_in_uhz,
+		uपूर्णांक32_t max_refresh_cap_in_uhz,
+		uपूर्णांक32_t nominal_field_rate_in_uhz);
 
-unsigned int mod_freesync_calc_v_total_from_refresh(
-		const struct dc_stream_state *stream,
-		unsigned int refresh_in_uhz);
+अचिन्हित पूर्णांक mod_मुक्तsync_calc_v_total_from_refresh(
+		स्थिर काष्ठा dc_stream_state *stream,
+		अचिन्हित पूर्णांक refresh_in_uhz);
 
-#endif
+#पूर्ण_अगर

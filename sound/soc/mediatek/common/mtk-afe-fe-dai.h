@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * mtk-afe-fe-dais.h  --  Mediatek afe fe dai operator definition
+ * mtk-afe-fe-dais.h  --  Mediatek afe fe dai चालक definition
  *
  * Copyright (c) 2016 MediaTek Inc.
  * Author: Garlic Tseng <garlic.tseng@mediatek.com>
  */
 
-#ifndef _MTK_AFE_FE_DAI_H_
-#define _MTK_AFE_FE_DAI_H_
+#अगर_अघोषित _MTK_AFE_FE_DAI_H_
+#घोषणा _MTK_AFE_FE_DAI_H_
 
-struct snd_soc_dai_ops;
-struct mtk_base_afe;
-struct mtk_base_afe_memif;
+काष्ठा snd_soc_dai_ops;
+काष्ठा mtk_base_afe;
+काष्ठा mtk_base_afe_memअगर;
 
-int mtk_afe_fe_startup(struct snd_pcm_substream *substream,
-		       struct snd_soc_dai *dai);
-void mtk_afe_fe_shutdown(struct snd_pcm_substream *substream,
-			 struct snd_soc_dai *dai);
-int mtk_afe_fe_hw_params(struct snd_pcm_substream *substream,
-			 struct snd_pcm_hw_params *params,
-			 struct snd_soc_dai *dai);
-int mtk_afe_fe_hw_free(struct snd_pcm_substream *substream,
-		       struct snd_soc_dai *dai);
-int mtk_afe_fe_prepare(struct snd_pcm_substream *substream,
-		       struct snd_soc_dai *dai);
-int mtk_afe_fe_trigger(struct snd_pcm_substream *substream, int cmd,
-		       struct snd_soc_dai *dai);
+पूर्णांक mtk_afe_fe_startup(काष्ठा snd_pcm_substream *substream,
+		       काष्ठा snd_soc_dai *dai);
+व्योम mtk_afe_fe_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+			 काष्ठा snd_soc_dai *dai);
+पूर्णांक mtk_afe_fe_hw_params(काष्ठा snd_pcm_substream *substream,
+			 काष्ठा snd_pcm_hw_params *params,
+			 काष्ठा snd_soc_dai *dai);
+पूर्णांक mtk_afe_fe_hw_मुक्त(काष्ठा snd_pcm_substream *substream,
+		       काष्ठा snd_soc_dai *dai);
+पूर्णांक mtk_afe_fe_prepare(काष्ठा snd_pcm_substream *substream,
+		       काष्ठा snd_soc_dai *dai);
+पूर्णांक mtk_afe_fe_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+		       काष्ठा snd_soc_dai *dai);
 
-extern const struct snd_soc_dai_ops mtk_afe_fe_ops;
+बाह्य स्थिर काष्ठा snd_soc_dai_ops mtk_afe_fe_ops;
 
-int mtk_dynamic_irq_acquire(struct mtk_base_afe *afe);
-int mtk_dynamic_irq_release(struct mtk_base_afe *afe, int irq_id);
-int mtk_afe_suspend(struct snd_soc_component *component);
-int mtk_afe_resume(struct snd_soc_component *component);
+पूर्णांक mtk_dynamic_irq_acquire(काष्ठा mtk_base_afe *afe);
+पूर्णांक mtk_dynamic_irq_release(काष्ठा mtk_base_afe *afe, पूर्णांक irq_id);
+पूर्णांक mtk_afe_suspend(काष्ठा snd_soc_component *component);
+पूर्णांक mtk_afe_resume(काष्ठा snd_soc_component *component);
 
-int mtk_memif_set_enable(struct mtk_base_afe *afe, int id);
-int mtk_memif_set_disable(struct mtk_base_afe *afe, int id);
-int mtk_memif_set_addr(struct mtk_base_afe *afe, int id,
-		       unsigned char *dma_area,
+पूर्णांक mtk_memअगर_set_enable(काष्ठा mtk_base_afe *afe, पूर्णांक id);
+पूर्णांक mtk_memअगर_set_disable(काष्ठा mtk_base_afe *afe, पूर्णांक id);
+पूर्णांक mtk_memअगर_set_addr(काष्ठा mtk_base_afe *afe, पूर्णांक id,
+		       अचिन्हित अक्षर *dma_area,
 		       dma_addr_t dma_addr,
-		       size_t dma_bytes);
-int mtk_memif_set_channel(struct mtk_base_afe *afe,
-			  int id, unsigned int channel);
-int mtk_memif_set_rate(struct mtk_base_afe *afe,
-		       int id, unsigned int rate);
-int mtk_memif_set_rate_substream(struct snd_pcm_substream *substream,
-				 int id, unsigned int rate);
-int mtk_memif_set_format(struct mtk_base_afe *afe,
-			 int id, snd_pcm_format_t format);
-int mtk_memif_set_pbuf_size(struct mtk_base_afe *afe,
-			    int id, int pbuf_size);
-#endif
+		       माप_प्रकार dma_bytes);
+पूर्णांक mtk_memअगर_set_channel(काष्ठा mtk_base_afe *afe,
+			  पूर्णांक id, अचिन्हित पूर्णांक channel);
+पूर्णांक mtk_memअगर_set_rate(काष्ठा mtk_base_afe *afe,
+		       पूर्णांक id, अचिन्हित पूर्णांक rate);
+पूर्णांक mtk_memअगर_set_rate_substream(काष्ठा snd_pcm_substream *substream,
+				 पूर्णांक id, अचिन्हित पूर्णांक rate);
+पूर्णांक mtk_memअगर_set_क्रमmat(काष्ठा mtk_base_afe *afe,
+			 पूर्णांक id, snd_pcm_क्रमmat_t क्रमmat);
+पूर्णांक mtk_memअगर_set_pbuf_size(काष्ठा mtk_base_afe *afe,
+			    पूर्णांक id, पूर्णांक pbuf_size);
+#पूर्ण_अगर

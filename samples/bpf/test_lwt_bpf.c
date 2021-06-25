@@ -1,253 +1,254 @@
+<शैली गुरु>
 /* Copyright (c) 2016 Thomas Graf <tgraf@tgraf.ch>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  */
 
-#include <stdint.h>
-#include <stddef.h>
-#include <linux/bpf.h>
-#include <linux/ip.h>
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/icmpv6.h>
-#include <linux/if_ether.h>
-#include <bpf/bpf_helpers.h>
-#include <string.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकघोष.स>
+#समावेश <linux/bpf.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <माला.स>
 
-# define printk(fmt, ...)						\
-		({							\
-			char ____fmt[] = fmt;				\
-			bpf_trace_printk(____fmt, sizeof(____fmt),	\
+# define prपूर्णांकk(fmt, ...)						\
+		(अणु							\
+			अक्षर ____fmt[] = fmt;				\
+			bpf_trace_prपूर्णांकk(____fmt, माप(____fmt),	\
 				     ##__VA_ARGS__);			\
-		})
+		पूर्ण)
 
-#define CB_MAGIC 1234
+#घोषणा CB_MAGIC 1234
 
 /* Test: Pass all packets through */
 SEC("nop")
-int do_nop(struct __sk_buff *skb)
-{
-	return BPF_OK;
-}
+पूर्णांक करो_nop(काष्ठा __sk_buff *skb)
+अणु
+	वापस BPF_OK;
+पूर्ण
 
-/* Test: Verify context information can be accessed */
+/* Test: Verअगरy context inक्रमmation can be accessed */
 SEC("test_ctx")
-int do_test_ctx(struct __sk_buff *skb)
-{
+पूर्णांक करो_test_ctx(काष्ठा __sk_buff *skb)
+अणु
 	skb->cb[0] = CB_MAGIC;
-	printk("len %d hash %d protocol %d\n", skb->len, skb->hash,
+	prपूर्णांकk("len %d hash %d protocol %d\n", skb->len, skb->hash,
 	       skb->protocol);
-	printk("cb %d ingress_ifindex %d ifindex %d\n", skb->cb[0],
-	       skb->ingress_ifindex, skb->ifindex);
+	prपूर्णांकk("cb %d ingress_ifindex %d ifindex %d\n", skb->cb[0],
+	       skb->ingress_अगरindex, skb->अगरindex);
 
-	return BPF_OK;
-}
+	वापस BPF_OK;
+पूर्ण
 
 /* Test: Ensure skb->cb[] buffer is cleared */
 SEC("test_cb")
-int do_test_cb(struct __sk_buff *skb)
-{
-	printk("cb0: %x cb1: %x cb2: %x\n", skb->cb[0], skb->cb[1],
+पूर्णांक करो_test_cb(काष्ठा __sk_buff *skb)
+अणु
+	prपूर्णांकk("cb0: %x cb1: %x cb2: %x\n", skb->cb[0], skb->cb[1],
 	       skb->cb[2]);
-	printk("cb3: %x cb4: %x\n", skb->cb[3], skb->cb[4]);
+	prपूर्णांकk("cb3: %x cb4: %x\n", skb->cb[3], skb->cb[4]);
 
-	return BPF_OK;
-}
+	वापस BPF_OK;
+पूर्ण
 
-/* Test: Verify skb data can be read */
+/* Test: Verअगरy skb data can be पढ़ो */
 SEC("test_data")
-int do_test_data(struct __sk_buff *skb)
-{
-	void *data = (void *)(long)skb->data;
-	void *data_end = (void *)(long)skb->data_end;
-	struct iphdr *iph = data;
+पूर्णांक करो_test_data(काष्ठा __sk_buff *skb)
+अणु
+	व्योम *data = (व्योम *)(दीर्घ)skb->data;
+	व्योम *data_end = (व्योम *)(दीर्घ)skb->data_end;
+	काष्ठा iphdr *iph = data;
 
-	if (data + sizeof(*iph) > data_end) {
-		printk("packet truncated\n");
-		return BPF_DROP;
-	}
+	अगर (data + माप(*iph) > data_end) अणु
+		prपूर्णांकk("packet truncated\n");
+		वापस BPF_DROP;
+	पूर्ण
 
-	printk("src: %x dst: %x\n", iph->saddr, iph->daddr);
+	prपूर्णांकk("src: %x dst: %x\n", iph->saddr, iph->daddr);
 
-	return BPF_OK;
-}
+	वापस BPF_OK;
+पूर्ण
 
-#define IP_CSUM_OFF offsetof(struct iphdr, check)
-#define IP_DST_OFF offsetof(struct iphdr, daddr)
-#define IP_SRC_OFF offsetof(struct iphdr, saddr)
-#define IP_PROTO_OFF offsetof(struct iphdr, protocol)
-#define TCP_CSUM_OFF offsetof(struct tcphdr, check)
-#define UDP_CSUM_OFF offsetof(struct udphdr, check)
-#define IS_PSEUDO 0x10
+#घोषणा IP_CSUM_OFF दुरत्व(काष्ठा iphdr, check)
+#घोषणा IP_DST_OFF दुरत्व(काष्ठा iphdr, daddr)
+#घोषणा IP_SRC_OFF दुरत्व(काष्ठा iphdr, saddr)
+#घोषणा IP_PROTO_OFF दुरत्व(काष्ठा iphdr, protocol)
+#घोषणा TCP_CSUM_OFF दुरत्व(काष्ठा tcphdr, check)
+#घोषणा UDP_CSUM_OFF दुरत्व(काष्ठा udphdr, check)
+#घोषणा IS_PSEUDO 0x10
 
-static inline int rewrite(struct __sk_buff *skb, uint32_t old_ip,
-			  uint32_t new_ip, int rw_daddr)
-{
-	int ret, off = 0, flags = IS_PSEUDO;
-	uint8_t proto;
+अटल अंतरभूत पूर्णांक reग_लिखो(काष्ठा __sk_buff *skb, uपूर्णांक32_t old_ip,
+			  uपूर्णांक32_t new_ip, पूर्णांक rw_daddr)
+अणु
+	पूर्णांक ret, off = 0, flags = IS_PSEUDO;
+	uपूर्णांक8_t proto;
 
 	ret = bpf_skb_load_bytes(skb, IP_PROTO_OFF, &proto, 1);
-	if (ret < 0) {
-		printk("bpf_l4_csum_replace failed: %d\n", ret);
-		return BPF_DROP;
-	}
+	अगर (ret < 0) अणु
+		prपूर्णांकk("bpf_l4_csum_replace failed: %d\n", ret);
+		वापस BPF_DROP;
+	पूर्ण
 
-	switch (proto) {
-	case IPPROTO_TCP:
+	चयन (proto) अणु
+	हाल IPPROTO_TCP:
 		off = TCP_CSUM_OFF;
-		break;
+		अवरोध;
 
-	case IPPROTO_UDP:
+	हाल IPPROTO_UDP:
 		off = UDP_CSUM_OFF;
 		flags |= BPF_F_MARK_MANGLED_0;
-		break;
+		अवरोध;
 
-	case IPPROTO_ICMPV6:
-		off = offsetof(struct icmp6hdr, icmp6_cksum);
-		break;
-	}
+	हाल IPPROTO_ICMPV6:
+		off = दुरत्व(काष्ठा icmp6hdr, icmp6_cksum);
+		अवरोध;
+	पूर्ण
 
-	if (off) {
+	अगर (off) अणु
 		ret = bpf_l4_csum_replace(skb, off, old_ip, new_ip,
-					  flags | sizeof(new_ip));
-		if (ret < 0) {
-			printk("bpf_l4_csum_replace failed: %d\n");
-			return BPF_DROP;
-		}
-	}
+					  flags | माप(new_ip));
+		अगर (ret < 0) अणु
+			prपूर्णांकk("bpf_l4_csum_replace failed: %d\n");
+			वापस BPF_DROP;
+		पूर्ण
+	पूर्ण
 
-	ret = bpf_l3_csum_replace(skb, IP_CSUM_OFF, old_ip, new_ip, sizeof(new_ip));
-	if (ret < 0) {
-		printk("bpf_l3_csum_replace failed: %d\n", ret);
-		return BPF_DROP;
-	}
+	ret = bpf_l3_csum_replace(skb, IP_CSUM_OFF, old_ip, new_ip, माप(new_ip));
+	अगर (ret < 0) अणु
+		prपूर्णांकk("bpf_l3_csum_replace failed: %d\n", ret);
+		वापस BPF_DROP;
+	पूर्ण
 
-	if (rw_daddr)
-		ret = bpf_skb_store_bytes(skb, IP_DST_OFF, &new_ip, sizeof(new_ip), 0);
-	else
-		ret = bpf_skb_store_bytes(skb, IP_SRC_OFF, &new_ip, sizeof(new_ip), 0);
+	अगर (rw_daddr)
+		ret = bpf_skb_store_bytes(skb, IP_DST_OFF, &new_ip, माप(new_ip), 0);
+	अन्यथा
+		ret = bpf_skb_store_bytes(skb, IP_SRC_OFF, &new_ip, माप(new_ip), 0);
 
-	if (ret < 0) {
-		printk("bpf_skb_store_bytes() failed: %d\n", ret);
-		return BPF_DROP;
-	}
+	अगर (ret < 0) अणु
+		prपूर्णांकk("bpf_skb_store_bytes() failed: %d\n", ret);
+		वापस BPF_DROP;
+	पूर्ण
 
-	return BPF_OK;
-}
+	वापस BPF_OK;
+पूर्ण
 
-/* Test: Verify skb data can be modified */
+/* Test: Verअगरy skb data can be modअगरied */
 SEC("test_rewrite")
-int do_test_rewrite(struct __sk_buff *skb)
-{
-	uint32_t old_ip, new_ip = 0x3fea8c0;
-	int ret;
+पूर्णांक करो_test_reग_लिखो(काष्ठा __sk_buff *skb)
+अणु
+	uपूर्णांक32_t old_ip, new_ip = 0x3fea8c0;
+	पूर्णांक ret;
 
 	ret = bpf_skb_load_bytes(skb, IP_DST_OFF, &old_ip, 4);
-	if (ret < 0) {
-		printk("bpf_skb_load_bytes failed: %d\n", ret);
-		return BPF_DROP;
-	}
+	अगर (ret < 0) अणु
+		prपूर्णांकk("bpf_skb_load_bytes failed: %d\n", ret);
+		वापस BPF_DROP;
+	पूर्ण
 
-	if (old_ip == 0x2fea8c0) {
-		printk("out: rewriting from %x to %x\n", old_ip, new_ip);
-		return rewrite(skb, old_ip, new_ip, 1);
-	}
+	अगर (old_ip == 0x2fea8c0) अणु
+		prपूर्णांकk("out: rewriting from %x to %x\n", old_ip, new_ip);
+		वापस reग_लिखो(skb, old_ip, new_ip, 1);
+	पूर्ण
 
-	return BPF_OK;
-}
+	वापस BPF_OK;
+पूर्ण
 
-static inline int __do_push_ll_and_redirect(struct __sk_buff *skb)
-{
-	uint64_t smac = SRC_MAC, dmac = DST_MAC;
-	int ret, ifindex = DST_IFINDEX;
-	struct ethhdr ehdr;
+अटल अंतरभूत पूर्णांक __करो_push_ll_and_redirect(काष्ठा __sk_buff *skb)
+अणु
+	uपूर्णांक64_t smac = SRC_MAC, dmac = DST_MAC;
+	पूर्णांक ret, अगरindex = DST_IFINDEX;
+	काष्ठा ethhdr ehdr;
 
 	ret = bpf_skb_change_head(skb, 14, 0);
-	if (ret < 0) {
-		printk("skb_change_head() failed: %d\n", ret);
-	}
+	अगर (ret < 0) अणु
+		prपूर्णांकk("skb_change_head() failed: %d\n", ret);
+	पूर्ण
 
-	ehdr.h_proto = __constant_htons(ETH_P_IP);
-	memcpy(&ehdr.h_source, &smac, 6);
-	memcpy(&ehdr.h_dest, &dmac, 6);
+	ehdr.h_proto = __स्थिरant_htons(ETH_P_IP);
+	स_नकल(&ehdr.h_source, &smac, 6);
+	स_नकल(&ehdr.h_dest, &dmac, 6);
 
-	ret = bpf_skb_store_bytes(skb, 0, &ehdr, sizeof(ehdr), 0);
-	if (ret < 0) {
-		printk("skb_store_bytes() failed: %d\n", ret);
-		return BPF_DROP;
-	}
+	ret = bpf_skb_store_bytes(skb, 0, &ehdr, माप(ehdr), 0);
+	अगर (ret < 0) अणु
+		prपूर्णांकk("skb_store_bytes() failed: %d\n", ret);
+		वापस BPF_DROP;
+	पूर्ण
 
-	return bpf_redirect(ifindex, 0);
-}
+	वापस bpf_redirect(अगरindex, 0);
+पूर्ण
 
 SEC("push_ll_and_redirect_silent")
-int do_push_ll_and_redirect_silent(struct __sk_buff *skb)
-{
-	return __do_push_ll_and_redirect(skb);
-}
+पूर्णांक करो_push_ll_and_redirect_silent(काष्ठा __sk_buff *skb)
+अणु
+	वापस __करो_push_ll_and_redirect(skb);
+पूर्ण
 
 SEC("push_ll_and_redirect")
-int do_push_ll_and_redirect(struct __sk_buff *skb)
-{
-	int ret, ifindex = DST_IFINDEX;
+पूर्णांक करो_push_ll_and_redirect(काष्ठा __sk_buff *skb)
+अणु
+	पूर्णांक ret, अगरindex = DST_IFINDEX;
 
-	ret = __do_push_ll_and_redirect(skb);
-	if (ret >= 0)
-		printk("redirected to %d\n", ifindex);
+	ret = __करो_push_ll_and_redirect(skb);
+	अगर (ret >= 0)
+		prपूर्णांकk("redirected to %d\n", अगरindex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void __fill_garbage(struct __sk_buff *skb)
-{
-	uint64_t f = 0xFFFFFFFFFFFFFFFF;
+अटल अंतरभूत व्योम __fill_garbage(काष्ठा __sk_buff *skb)
+अणु
+	uपूर्णांक64_t f = 0xFFFFFFFFFFFFFFFF;
 
-	bpf_skb_store_bytes(skb, 0, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 8, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 16, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 24, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 32, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 40, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 48, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 56, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 64, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 72, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 80, &f, sizeof(f), 0);
-	bpf_skb_store_bytes(skb, 88, &f, sizeof(f), 0);
-}
+	bpf_skb_store_bytes(skb, 0, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 8, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 16, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 24, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 32, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 40, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 48, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 56, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 64, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 72, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 80, &f, माप(f), 0);
+	bpf_skb_store_bytes(skb, 88, &f, माप(f), 0);
+पूर्ण
 
 SEC("fill_garbage")
-int do_fill_garbage(struct __sk_buff *skb)
-{
+पूर्णांक करो_fill_garbage(काष्ठा __sk_buff *skb)
+अणु
 	__fill_garbage(skb);
-	printk("Set initial 96 bytes of header to FF\n");
-	return BPF_OK;
-}
+	prपूर्णांकk("Set initial 96 bytes of header to FF\n");
+	वापस BPF_OK;
+पूर्ण
 
 SEC("fill_garbage_and_redirect")
-int do_fill_garbage_and_redirect(struct __sk_buff *skb)
-{
-	int ifindex = DST_IFINDEX;
+पूर्णांक करो_fill_garbage_and_redirect(काष्ठा __sk_buff *skb)
+अणु
+	पूर्णांक अगरindex = DST_IFINDEX;
 	__fill_garbage(skb);
-	printk("redirected to %d\n", ifindex);
-	return bpf_redirect(ifindex, 0);
-}
+	prपूर्णांकk("redirected to %d\n", अगरindex);
+	वापस bpf_redirect(अगरindex, 0);
+पूर्ण
 
 /* Drop all packets */
 SEC("drop_all")
-int do_drop_all(struct __sk_buff *skb)
-{
-	printk("dropping with: %d\n", BPF_DROP);
-	return BPF_DROP;
-}
+पूर्णांक करो_drop_all(काष्ठा __sk_buff *skb)
+अणु
+	prपूर्णांकk("dropping with: %d\n", BPF_DROP);
+	वापस BPF_DROP;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
- * include/asm-parisc/serial.h
+ * include/यंत्र-parisc/serial.h
  */
 
 /*
- * This is used for 16550-compatible UARTs
+ * This is used क्रम 16550-compatible UARTs
  */
-#define BASE_BAUD ( 1843200 / 16 )
+#घोषणा BASE_BAUD ( 1843200 / 16 )

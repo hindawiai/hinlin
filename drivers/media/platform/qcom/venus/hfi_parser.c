@@ -1,325 +1,326 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018 Linaro Ltd.
  *
  * Author: Stanimir Varbanov <stanimir.varbanov@linaro.org>
  */
-#include <linux/bitops.h>
-#include <linux/kernel.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/kernel.h>
 
-#include "core.h"
-#include "hfi_helper.h"
-#include "hfi_parser.h"
+#समावेश "core.h"
+#समावेश "hfi_helper.h"
+#समावेश "hfi_parser.h"
 
-typedef void (*func)(struct hfi_plat_caps *cap, const void *data,
-		     unsigned int size);
+प्रकार व्योम (*func)(काष्ठा hfi_plat_caps *cap, स्थिर व्योम *data,
+		     अचिन्हित पूर्णांक size);
 
-static void init_codecs(struct venus_core *core)
-{
-	struct hfi_plat_caps *caps = core->caps, *cap;
-	unsigned long bit;
+अटल व्योम init_codecs(काष्ठा venus_core *core)
+अणु
+	काष्ठा hfi_plat_caps *caps = core->caps, *cap;
+	अचिन्हित दीर्घ bit;
 
-	for_each_set_bit(bit, &core->dec_codecs, MAX_CODEC_NUM) {
+	क्रम_each_set_bit(bit, &core->dec_codecs, MAX_CODEC_NUM) अणु
 		cap = &caps[core->codecs_count++];
 		cap->codec = BIT(bit);
-		cap->domain = VIDC_SESSION_TYPE_DEC;
+		cap->करोमुख्य = VIDC_SESSION_TYPE_DEC;
 		cap->valid = false;
-	}
+	पूर्ण
 
-	for_each_set_bit(bit, &core->enc_codecs, MAX_CODEC_NUM) {
+	क्रम_each_set_bit(bit, &core->enc_codecs, MAX_CODEC_NUM) अणु
 		cap = &caps[core->codecs_count++];
 		cap->codec = BIT(bit);
-		cap->domain = VIDC_SESSION_TYPE_ENC;
+		cap->करोमुख्य = VIDC_SESSION_TYPE_ENC;
 		cap->valid = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void for_each_codec(struct hfi_plat_caps *caps, unsigned int caps_num,
-			   u32 codecs, u32 domain, func cb, void *data,
-			   unsigned int size)
-{
-	struct hfi_plat_caps *cap;
-	unsigned int i;
+अटल व्योम क्रम_each_codec(काष्ठा hfi_plat_caps *caps, अचिन्हित पूर्णांक caps_num,
+			   u32 codecs, u32 करोमुख्य, func cb, व्योम *data,
+			   अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा hfi_plat_caps *cap;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < caps_num; i++) {
+	क्रम (i = 0; i < caps_num; i++) अणु
 		cap = &caps[i];
-		if (cap->valid && cap->domain == domain)
-			continue;
-		if (cap->codec & codecs && cap->domain == domain)
+		अगर (cap->valid && cap->करोमुख्य == करोमुख्य)
+			जारी;
+		अगर (cap->codec & codecs && cap->करोमुख्य == करोमुख्य)
 			cb(cap, data, size);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-fill_buf_mode(struct hfi_plat_caps *cap, const void *data, unsigned int num)
-{
-	const u32 *type = data;
+अटल व्योम
+fill_buf_mode(काष्ठा hfi_plat_caps *cap, स्थिर व्योम *data, अचिन्हित पूर्णांक num)
+अणु
+	स्थिर u32 *type = data;
 
-	if (*type == HFI_BUFFER_MODE_DYNAMIC)
+	अगर (*type == HFI_BUFFER_MODE_DYNAMIC)
 		cap->cap_bufs_mode_dynamic = true;
-}
+पूर्ण
 
-static void
-parse_alloc_mode(struct venus_core *core, u32 codecs, u32 domain, void *data)
-{
-	struct hfi_buffer_alloc_mode_supported *mode = data;
+अटल व्योम
+parse_alloc_mode(काष्ठा venus_core *core, u32 codecs, u32 करोमुख्य, व्योम *data)
+अणु
+	काष्ठा hfi_buffer_alloc_mode_supported *mode = data;
 	u32 num_entries = mode->num_entries;
 	u32 *type;
 
-	if (num_entries > MAX_ALLOC_MODE_ENTRIES)
-		return;
+	अगर (num_entries > MAX_ALLOC_MODE_ENTRIES)
+		वापस;
 
 	type = mode->data;
 
-	while (num_entries--) {
-		if (mode->buffer_type == HFI_BUFFER_OUTPUT ||
+	जबतक (num_entries--) अणु
+		अगर (mode->buffer_type == HFI_BUFFER_OUTPUT ||
 		    mode->buffer_type == HFI_BUFFER_OUTPUT2)
-			for_each_codec(core->caps, ARRAY_SIZE(core->caps),
-				       codecs, domain, fill_buf_mode, type, 1);
+			क्रम_each_codec(core->caps, ARRAY_SIZE(core->caps),
+				       codecs, करोमुख्य, fill_buf_mode, type, 1);
 
 		type++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fill_profile_level(struct hfi_plat_caps *cap, const void *data,
-			       unsigned int num)
-{
-	const struct hfi_profile_level *pl = data;
+अटल व्योम fill_profile_level(काष्ठा hfi_plat_caps *cap, स्थिर व्योम *data,
+			       अचिन्हित पूर्णांक num)
+अणु
+	स्थिर काष्ठा hfi_profile_level *pl = data;
 
-	memcpy(&cap->pl[cap->num_pl], pl, num * sizeof(*pl));
+	स_नकल(&cap->pl[cap->num_pl], pl, num * माप(*pl));
 	cap->num_pl += num;
-}
+पूर्ण
 
-static void
-parse_profile_level(struct venus_core *core, u32 codecs, u32 domain, void *data)
-{
-	struct hfi_profile_level_supported *pl = data;
-	struct hfi_profile_level *proflevel = pl->profile_level;
-	struct hfi_profile_level pl_arr[HFI_MAX_PROFILE_COUNT] = {};
+अटल व्योम
+parse_profile_level(काष्ठा venus_core *core, u32 codecs, u32 करोमुख्य, व्योम *data)
+अणु
+	काष्ठा hfi_profile_level_supported *pl = data;
+	काष्ठा hfi_profile_level *proflevel = pl->profile_level;
+	काष्ठा hfi_profile_level pl_arr[HFI_MAX_PROखाता_COUNT] = अणुपूर्ण;
 
-	if (pl->profile_count > HFI_MAX_PROFILE_COUNT)
-		return;
+	अगर (pl->profile_count > HFI_MAX_PROखाता_COUNT)
+		वापस;
 
-	memcpy(pl_arr, proflevel, pl->profile_count * sizeof(*proflevel));
+	स_नकल(pl_arr, proflevel, pl->profile_count * माप(*proflevel));
 
-	for_each_codec(core->caps, ARRAY_SIZE(core->caps), codecs, domain,
+	क्रम_each_codec(core->caps, ARRAY_SIZE(core->caps), codecs, करोमुख्य,
 		       fill_profile_level, pl_arr, pl->profile_count);
-}
+पूर्ण
 
-static void
-fill_caps(struct hfi_plat_caps *cap, const void *data, unsigned int num)
-{
-	const struct hfi_capability *caps = data;
+अटल व्योम
+fill_caps(काष्ठा hfi_plat_caps *cap, स्थिर व्योम *data, अचिन्हित पूर्णांक num)
+अणु
+	स्थिर काष्ठा hfi_capability *caps = data;
 
-	memcpy(&cap->caps[cap->num_caps], caps, num * sizeof(*caps));
+	स_नकल(&cap->caps[cap->num_caps], caps, num * माप(*caps));
 	cap->num_caps += num;
-}
+पूर्ण
 
-static void
-parse_caps(struct venus_core *core, u32 codecs, u32 domain, void *data)
-{
-	struct hfi_capabilities *caps = data;
-	struct hfi_capability *cap = caps->data;
+अटल व्योम
+parse_caps(काष्ठा venus_core *core, u32 codecs, u32 करोमुख्य, व्योम *data)
+अणु
+	काष्ठा hfi_capabilities *caps = data;
+	काष्ठा hfi_capability *cap = caps->data;
 	u32 num_caps = caps->num_capabilities;
-	struct hfi_capability caps_arr[MAX_CAP_ENTRIES] = {};
+	काष्ठा hfi_capability caps_arr[MAX_CAP_ENTRIES] = अणुपूर्ण;
 
-	if (num_caps > MAX_CAP_ENTRIES)
-		return;
+	अगर (num_caps > MAX_CAP_ENTRIES)
+		वापस;
 
-	memcpy(caps_arr, cap, num_caps * sizeof(*cap));
+	स_नकल(caps_arr, cap, num_caps * माप(*cap));
 
-	for_each_codec(core->caps, ARRAY_SIZE(core->caps), codecs, domain,
+	क्रम_each_codec(core->caps, ARRAY_SIZE(core->caps), codecs, करोमुख्य,
 		       fill_caps, caps_arr, num_caps);
-}
+पूर्ण
 
-static void fill_raw_fmts(struct hfi_plat_caps *cap, const void *fmts,
-			  unsigned int num_fmts)
-{
-	const struct raw_formats *formats = fmts;
+अटल व्योम fill_raw_fmts(काष्ठा hfi_plat_caps *cap, स्थिर व्योम *fmts,
+			  अचिन्हित पूर्णांक num_fmts)
+अणु
+	स्थिर काष्ठा raw_क्रमmats *क्रमmats = fmts;
 
-	memcpy(&cap->fmts[cap->num_fmts], formats, num_fmts * sizeof(*formats));
+	स_नकल(&cap->fmts[cap->num_fmts], क्रमmats, num_fmts * माप(*क्रमmats));
 	cap->num_fmts += num_fmts;
-}
+पूर्ण
 
-static void
-parse_raw_formats(struct venus_core *core, u32 codecs, u32 domain, void *data)
-{
-	struct hfi_uncompressed_format_supported *fmt = data;
-	struct hfi_uncompressed_plane_info *pinfo = fmt->plane_info;
-	struct hfi_uncompressed_plane_constraints *constr;
-	struct raw_formats rawfmts[MAX_FMT_ENTRIES] = {};
-	u32 entries = fmt->format_entries;
-	unsigned int i = 0;
+अटल व्योम
+parse_raw_क्रमmats(काष्ठा venus_core *core, u32 codecs, u32 करोमुख्य, व्योम *data)
+अणु
+	काष्ठा hfi_uncompressed_क्रमmat_supported *fmt = data;
+	काष्ठा hfi_uncompressed_plane_info *pinfo = fmt->plane_info;
+	काष्ठा hfi_uncompressed_plane_स्थिरraपूर्णांकs *स्थिरr;
+	काष्ठा raw_क्रमmats rawfmts[MAX_FMT_ENTRIES] = अणुपूर्ण;
+	u32 entries = fmt->क्रमmat_entries;
+	अचिन्हित पूर्णांक i = 0;
 	u32 num_planes;
 
-	while (entries) {
+	जबतक (entries) अणु
 		num_planes = pinfo->num_planes;
 
-		rawfmts[i].fmt = pinfo->format;
+		rawfmts[i].fmt = pinfo->क्रमmat;
 		rawfmts[i].buftype = fmt->buffer_type;
 		i++;
 
-		if (pinfo->num_planes > MAX_PLANES)
-			break;
+		अगर (pinfo->num_planes > MAX_PLANES)
+			अवरोध;
 
-		pinfo = (void *)pinfo + sizeof(*constr) * num_planes +
-			2 * sizeof(u32);
+		pinfo = (व्योम *)pinfo + माप(*स्थिरr) * num_planes +
+			2 * माप(u32);
 		entries--;
-	}
+	पूर्ण
 
-	for_each_codec(core->caps, ARRAY_SIZE(core->caps), codecs, domain,
+	क्रम_each_codec(core->caps, ARRAY_SIZE(core->caps), codecs, करोमुख्य,
 		       fill_raw_fmts, rawfmts, i);
-}
+पूर्ण
 
-static void parse_codecs(struct venus_core *core, void *data)
-{
-	struct hfi_codec_supported *codecs = data;
+अटल व्योम parse_codecs(काष्ठा venus_core *core, व्योम *data)
+अणु
+	काष्ठा hfi_codec_supported *codecs = data;
 
 	core->dec_codecs = codecs->dec_codecs;
 	core->enc_codecs = codecs->enc_codecs;
 
-	if (IS_V1(core)) {
+	अगर (IS_V1(core)) अणु
 		core->dec_codecs &= ~HFI_VIDEO_CODEC_HEVC;
 		core->dec_codecs &= ~HFI_VIDEO_CODEC_SPARK;
 		core->enc_codecs &= ~HFI_VIDEO_CODEC_HEVC;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void parse_max_sessions(struct venus_core *core, const void *data)
-{
-	const struct hfi_max_sessions_supported *sessions = data;
+अटल व्योम parse_max_sessions(काष्ठा venus_core *core, स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा hfi_max_sessions_supported *sessions = data;
 
 	core->max_sessions_supported = sessions->max_sessions;
-}
+पूर्ण
 
-static void parse_codecs_mask(u32 *codecs, u32 *domain, void *data)
-{
-	struct hfi_codec_mask_supported *mask = data;
+अटल व्योम parse_codecs_mask(u32 *codecs, u32 *करोमुख्य, व्योम *data)
+अणु
+	काष्ठा hfi_codec_mask_supported *mask = data;
 
 	*codecs = mask->codecs;
-	*domain = mask->video_domains;
-}
+	*करोमुख्य = mask->video_करोमुख्यs;
+पूर्ण
 
-static void parser_init(struct venus_inst *inst, u32 *codecs, u32 *domain)
-{
-	if (!inst || !IS_V1(inst->core))
-		return;
+अटल व्योम parser_init(काष्ठा venus_inst *inst, u32 *codecs, u32 *करोमुख्य)
+अणु
+	अगर (!inst || !IS_V1(inst->core))
+		वापस;
 
 	*codecs = inst->hfi_codec;
-	*domain = inst->session_type;
-}
+	*करोमुख्य = inst->session_type;
+पूर्ण
 
-static void parser_fini(struct venus_inst *inst, u32 codecs, u32 domain)
-{
-	struct hfi_plat_caps *caps, *cap;
-	unsigned int i;
-	u32 dom;
+अटल व्योम parser_fini(काष्ठा venus_inst *inst, u32 codecs, u32 करोमुख्य)
+अणु
+	काष्ठा hfi_plat_caps *caps, *cap;
+	अचिन्हित पूर्णांक i;
+	u32 करोm;
 
-	if (!inst || !IS_V1(inst->core))
-		return;
+	अगर (!inst || !IS_V1(inst->core))
+		वापस;
 
 	caps = inst->core->caps;
-	dom = inst->session_type;
+	करोm = inst->session_type;
 
-	for (i = 0; i < MAX_CODEC_NUM; i++) {
+	क्रम (i = 0; i < MAX_CODEC_NUM; i++) अणु
 		cap = &caps[i];
-		if (cap->codec & codecs && cap->domain == dom)
+		अगर (cap->codec & codecs && cap->करोमुख्य == करोm)
 			cap->valid = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int hfi_platform_parser(struct venus_core *core, struct venus_inst *inst)
-{
-	const struct hfi_platform *plat;
-	const struct hfi_plat_caps *caps = NULL;
+अटल पूर्णांक hfi_platक्रमm_parser(काष्ठा venus_core *core, काष्ठा venus_inst *inst)
+अणु
+	स्थिर काष्ठा hfi_platक्रमm *plat;
+	स्थिर काष्ठा hfi_plat_caps *caps = शून्य;
 	u32 enc_codecs, dec_codecs, count = 0;
-	unsigned int entries;
+	अचिन्हित पूर्णांक entries;
 
-	plat = hfi_platform_get(core->res->hfi_version);
-	if (!plat)
-		return -EINVAL;
+	plat = hfi_platक्रमm_get(core->res->hfi_version);
+	अगर (!plat)
+		वापस -EINVAL;
 
-	if (inst)
-		return 0;
+	अगर (inst)
+		वापस 0;
 
-	if (plat->codecs)
+	अगर (plat->codecs)
 		plat->codecs(&enc_codecs, &dec_codecs, &count);
 
-	if (plat->capabilities)
+	अगर (plat->capabilities)
 		caps = plat->capabilities(&entries);
 
-	if (!caps || !entries || !count)
-		return -EINVAL;
+	अगर (!caps || !entries || !count)
+		वापस -EINVAL;
 
 	core->enc_codecs = enc_codecs;
 	core->dec_codecs = dec_codecs;
 	core->codecs_count = count;
 	core->max_sessions_supported = MAX_SESSIONS;
-	memset(core->caps, 0, sizeof(*caps) * MAX_CODEC_NUM);
-	memcpy(core->caps, caps, sizeof(*caps) * entries);
+	स_रखो(core->caps, 0, माप(*caps) * MAX_CODEC_NUM);
+	स_नकल(core->caps, caps, माप(*caps) * entries);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u32 hfi_parser(struct venus_core *core, struct venus_inst *inst, void *buf,
+u32 hfi_parser(काष्ठा venus_core *core, काष्ठा venus_inst *inst, व्योम *buf,
 	       u32 size)
-{
-	unsigned int words_count = size >> 2;
-	u32 *word = buf, *data, codecs = 0, domain = 0;
-	int ret;
+अणु
+	अचिन्हित पूर्णांक words_count = size >> 2;
+	u32 *word = buf, *data, codecs = 0, करोमुख्य = 0;
+	पूर्णांक ret;
 
-	ret = hfi_platform_parser(core, inst);
-	if (!ret)
-		return HFI_ERR_NONE;
+	ret = hfi_platक्रमm_parser(core, inst);
+	अगर (!ret)
+		वापस HFI_ERR_NONE;
 
-	if (size % 4)
-		return HFI_ERR_SYS_INSUFFICIENT_RESOURCES;
+	अगर (size % 4)
+		वापस HFI_ERR_SYS_INSUFFICIENT_RESOURCES;
 
-	parser_init(inst, &codecs, &domain);
+	parser_init(inst, &codecs, &करोमुख्य);
 
-	if (core->res->hfi_version > HFI_VERSION_1XX) {
+	अगर (core->res->hfi_version > HFI_VERSION_1XX) अणु
 		core->codecs_count = 0;
-		memset(core->caps, 0, sizeof(core->caps));
-	}
+		स_रखो(core->caps, 0, माप(core->caps));
+	पूर्ण
 
-	while (words_count) {
+	जबतक (words_count) अणु
 		data = word + 1;
 
-		switch (*word) {
-		case HFI_PROPERTY_PARAM_CODEC_SUPPORTED:
+		चयन (*word) अणु
+		हाल HFI_PROPERTY_PARAM_CODEC_SUPPORTED:
 			parse_codecs(core, data);
 			init_codecs(core);
-			break;
-		case HFI_PROPERTY_PARAM_MAX_SESSIONS_SUPPORTED:
+			अवरोध;
+		हाल HFI_PROPERTY_PARAM_MAX_SESSIONS_SUPPORTED:
 			parse_max_sessions(core, data);
-			break;
-		case HFI_PROPERTY_PARAM_CODEC_MASK_SUPPORTED:
-			parse_codecs_mask(&codecs, &domain, data);
-			break;
-		case HFI_PROPERTY_PARAM_UNCOMPRESSED_FORMAT_SUPPORTED:
-			parse_raw_formats(core, codecs, domain, data);
-			break;
-		case HFI_PROPERTY_PARAM_CAPABILITY_SUPPORTED:
-			parse_caps(core, codecs, domain, data);
-			break;
-		case HFI_PROPERTY_PARAM_PROFILE_LEVEL_SUPPORTED:
-			parse_profile_level(core, codecs, domain, data);
-			break;
-		case HFI_PROPERTY_PARAM_BUFFER_ALLOC_MODE_SUPPORTED:
-			parse_alloc_mode(core, codecs, domain, data);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		हाल HFI_PROPERTY_PARAM_CODEC_MASK_SUPPORTED:
+			parse_codecs_mask(&codecs, &करोमुख्य, data);
+			अवरोध;
+		हाल HFI_PROPERTY_PARAM_UNCOMPRESSED_FORMAT_SUPPORTED:
+			parse_raw_क्रमmats(core, codecs, करोमुख्य, data);
+			अवरोध;
+		हाल HFI_PROPERTY_PARAM_CAPABILITY_SUPPORTED:
+			parse_caps(core, codecs, करोमुख्य, data);
+			अवरोध;
+		हाल HFI_PROPERTY_PARAM_PROखाता_LEVEL_SUPPORTED:
+			parse_profile_level(core, codecs, करोमुख्य, data);
+			अवरोध;
+		हाल HFI_PROPERTY_PARAM_BUFFER_ALLOC_MODE_SUPPORTED:
+			parse_alloc_mode(core, codecs, करोमुख्य, data);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		word++;
 		words_count--;
-	}
+	पूर्ण
 
-	if (!core->max_sessions_supported)
+	अगर (!core->max_sessions_supported)
 		core->max_sessions_supported = MAX_SESSIONS;
 
-	parser_fini(inst, codecs, domain);
+	parser_fini(inst, codecs, करोमुख्य);
 
-	return HFI_ERR_NONE;
-}
+	वापस HFI_ERR_NONE;
+पूर्ण

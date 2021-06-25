@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  arch/arm/include/asm/pgtable-hwdef.h
+ *  arch/arm/include/यंत्र/pgtable-hwdef.h
  *
  *  Copyright (C) 1995-2002 Russell King
  */
-#ifndef _ASMARM_PGTABLE_HWDEF_H
-#define _ASMARM_PGTABLE_HWDEF_H
+#अगर_अघोषित _ASMARM_PGTABLE_HWDEF_H
+#घोषणा _ASMARM_PGTABLE_HWDEF_H
 
-#ifdef CONFIG_ARM_LPAE
-#include <asm/pgtable-3level-hwdef.h>
-#else
-#include <asm/pgtable-2level-hwdef.h>
-#endif
+#अगर_घोषित CONFIG_ARM_LPAE
+#समावेश <यंत्र/pgtable-3level-hwdef.h>
+#अन्यथा
+#समावेश <यंत्र/pgtable-2level-hwdef.h>
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

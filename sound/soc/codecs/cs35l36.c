@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // cs35l36.c -- CS35L36 ALSA SoC audio driver
 //
@@ -6,474 +7,474 @@
 //
 // Author: James Schulman <james.schulman@cirrus.com>
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/gpio/consumer.h>
-#include <linux/of_device.h>
-#include <linux/of_gpio.h>
-#include <linux/regmap.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-dapm.h>
-#include <linux/gpio.h>
-#include <sound/initval.h>
-#include <sound/tlv.h>
-#include <sound/cs35l36.h>
-#include <linux/of_irq.h>
-#include <linux/completion.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/regmap.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dapm.h>
+#समावेश <linux/gpपन.स>
+#समावेश <sound/initval.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/cs35l36.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/completion.h>
 
-#include "cs35l36.h"
+#समावेश "cs35l36.h"
 
 /*
  * Some fields take zero as a valid value so use a high bit flag that won't
  * get written to the device to mark those.
  */
-#define CS35L36_VALID_PDATA 0x80000000
+#घोषणा CS35L36_VALID_PDATA 0x80000000
 
-static const char * const cs35l36_supplies[] = {
+अटल स्थिर अक्षर * स्थिर cs35l36_supplies[] = अणु
 	"VA",
 	"VP",
-};
+पूर्ण;
 
-struct  cs35l36_private {
-	struct device *dev;
-	struct cs35l36_platform_data pdata;
-	struct regmap *regmap;
-	struct regulator_bulk_data supplies[2];
-	int num_supplies;
-	int clksrc;
-	int chip_version;
-	int rev_id;
-	int ldm_mode_sel;
-	struct gpio_desc *reset_gpio;
-};
+काष्ठा  cs35l36_निजी अणु
+	काष्ठा device *dev;
+	काष्ठा cs35l36_platक्रमm_data pdata;
+	काष्ठा regmap *regmap;
+	काष्ठा regulator_bulk_data supplies[2];
+	पूर्णांक num_supplies;
+	पूर्णांक clksrc;
+	पूर्णांक chip_version;
+	पूर्णांक rev_id;
+	पूर्णांक ldm_mode_sel;
+	काष्ठा gpio_desc *reset_gpio;
+पूर्ण;
 
-struct cs35l36_pll_config {
-	int freq;
-	int clk_cfg;
-	int fll_igain;
-};
+काष्ठा cs35l36_pll_config अणु
+	पूर्णांक freq;
+	पूर्णांक clk_cfg;
+	पूर्णांक fll_igain;
+पूर्ण;
 
-static const struct cs35l36_pll_config cs35l36_pll_sysclk[] = {
-	{32768,		0x00, 0x05},
-	{8000,		0x01, 0x03},
-	{11025,		0x02, 0x03},
-	{12000,		0x03, 0x03},
-	{16000,		0x04, 0x04},
-	{22050,		0x05, 0x04},
-	{24000,		0x06, 0x04},
-	{32000,		0x07, 0x05},
-	{44100,		0x08, 0x05},
-	{48000,		0x09, 0x05},
-	{88200,		0x0A, 0x06},
-	{96000,		0x0B, 0x06},
-	{128000,	0x0C, 0x07},
-	{176400,	0x0D, 0x07},
-	{192000,	0x0E, 0x07},
-	{256000,	0x0F, 0x08},
-	{352800,	0x10, 0x08},
-	{384000,	0x11, 0x08},
-	{512000,	0x12, 0x09},
-	{705600,	0x13, 0x09},
-	{750000,	0x14, 0x09},
-	{768000,	0x15, 0x09},
-	{1000000,	0x16, 0x0A},
-	{1024000,	0x17, 0x0A},
-	{1200000,	0x18, 0x0A},
-	{1411200,	0x19, 0x0A},
-	{1500000,	0x1A, 0x0A},
-	{1536000,	0x1B, 0x0A},
-	{2000000,	0x1C, 0x0A},
-	{2048000,	0x1D, 0x0A},
-	{2400000,	0x1E, 0x0A},
-	{2822400,	0x1F, 0x0A},
-	{3000000,	0x20, 0x0A},
-	{3072000,	0x21, 0x0A},
-	{3200000,	0x22, 0x0A},
-	{4000000,	0x23, 0x0A},
-	{4096000,	0x24, 0x0A},
-	{4800000,	0x25, 0x0A},
-	{5644800,	0x26, 0x0A},
-	{6000000,	0x27, 0x0A},
-	{6144000,	0x28, 0x0A},
-	{6250000,	0x29, 0x08},
-	{6400000,	0x2A, 0x0A},
-	{6500000,	0x2B, 0x08},
-	{6750000,	0x2C, 0x09},
-	{7526400,	0x2D, 0x0A},
-	{8000000,	0x2E, 0x0A},
-	{8192000,	0x2F, 0x0A},
-	{9600000,	0x30, 0x0A},
-	{11289600,	0x31, 0x0A},
-	{12000000,	0x32, 0x0A},
-	{12288000,	0x33, 0x0A},
-	{12500000,	0x34, 0x08},
-	{12800000,	0x35, 0x0A},
-	{13000000,	0x36, 0x0A},
-	{13500000,	0x37, 0x0A},
-	{19200000,	0x38, 0x0A},
-	{22579200,	0x39, 0x0A},
-	{24000000,	0x3A, 0x0A},
-	{24576000,	0x3B, 0x0A},
-	{25000000,	0x3C, 0x0A},
-	{25600000,	0x3D, 0x0A},
-	{26000000,	0x3E, 0x0A},
-	{27000000,	0x3F, 0x0A},
-};
+अटल स्थिर काष्ठा cs35l36_pll_config cs35l36_pll_sysclk[] = अणु
+	अणु32768,		0x00, 0x05पूर्ण,
+	अणु8000,		0x01, 0x03पूर्ण,
+	अणु11025,		0x02, 0x03पूर्ण,
+	अणु12000,		0x03, 0x03पूर्ण,
+	अणु16000,		0x04, 0x04पूर्ण,
+	अणु22050,		0x05, 0x04पूर्ण,
+	अणु24000,		0x06, 0x04पूर्ण,
+	अणु32000,		0x07, 0x05पूर्ण,
+	अणु44100,		0x08, 0x05पूर्ण,
+	अणु48000,		0x09, 0x05पूर्ण,
+	अणु88200,		0x0A, 0x06पूर्ण,
+	अणु96000,		0x0B, 0x06पूर्ण,
+	अणु128000,	0x0C, 0x07पूर्ण,
+	अणु176400,	0x0D, 0x07पूर्ण,
+	अणु192000,	0x0E, 0x07पूर्ण,
+	अणु256000,	0x0F, 0x08पूर्ण,
+	अणु352800,	0x10, 0x08पूर्ण,
+	अणु384000,	0x11, 0x08पूर्ण,
+	अणु512000,	0x12, 0x09पूर्ण,
+	अणु705600,	0x13, 0x09पूर्ण,
+	अणु750000,	0x14, 0x09पूर्ण,
+	अणु768000,	0x15, 0x09पूर्ण,
+	अणु1000000,	0x16, 0x0Aपूर्ण,
+	अणु1024000,	0x17, 0x0Aपूर्ण,
+	अणु1200000,	0x18, 0x0Aपूर्ण,
+	अणु1411200,	0x19, 0x0Aपूर्ण,
+	अणु1500000,	0x1A, 0x0Aपूर्ण,
+	अणु1536000,	0x1B, 0x0Aपूर्ण,
+	अणु2000000,	0x1C, 0x0Aपूर्ण,
+	अणु2048000,	0x1D, 0x0Aपूर्ण,
+	अणु2400000,	0x1E, 0x0Aपूर्ण,
+	अणु2822400,	0x1F, 0x0Aपूर्ण,
+	अणु3000000,	0x20, 0x0Aपूर्ण,
+	अणु3072000,	0x21, 0x0Aपूर्ण,
+	अणु3200000,	0x22, 0x0Aपूर्ण,
+	अणु4000000,	0x23, 0x0Aपूर्ण,
+	अणु4096000,	0x24, 0x0Aपूर्ण,
+	अणु4800000,	0x25, 0x0Aपूर्ण,
+	अणु5644800,	0x26, 0x0Aपूर्ण,
+	अणु6000000,	0x27, 0x0Aपूर्ण,
+	अणु6144000,	0x28, 0x0Aपूर्ण,
+	अणु6250000,	0x29, 0x08पूर्ण,
+	अणु6400000,	0x2A, 0x0Aपूर्ण,
+	अणु6500000,	0x2B, 0x08पूर्ण,
+	अणु6750000,	0x2C, 0x09पूर्ण,
+	अणु7526400,	0x2D, 0x0Aपूर्ण,
+	अणु8000000,	0x2E, 0x0Aपूर्ण,
+	अणु8192000,	0x2F, 0x0Aपूर्ण,
+	अणु9600000,	0x30, 0x0Aपूर्ण,
+	अणु11289600,	0x31, 0x0Aपूर्ण,
+	अणु12000000,	0x32, 0x0Aपूर्ण,
+	अणु12288000,	0x33, 0x0Aपूर्ण,
+	अणु12500000,	0x34, 0x08पूर्ण,
+	अणु12800000,	0x35, 0x0Aपूर्ण,
+	अणु13000000,	0x36, 0x0Aपूर्ण,
+	अणु13500000,	0x37, 0x0Aपूर्ण,
+	अणु19200000,	0x38, 0x0Aपूर्ण,
+	अणु22579200,	0x39, 0x0Aपूर्ण,
+	अणु24000000,	0x3A, 0x0Aपूर्ण,
+	अणु24576000,	0x3B, 0x0Aपूर्ण,
+	अणु25000000,	0x3C, 0x0Aपूर्ण,
+	अणु25600000,	0x3D, 0x0Aपूर्ण,
+	अणु26000000,	0x3E, 0x0Aपूर्ण,
+	अणु27000000,	0x3F, 0x0Aपूर्ण,
+पूर्ण;
 
-static struct reg_default cs35l36_reg[] = {
-	{CS35L36_TESTKEY_CTRL,			0x00000000},
-	{CS35L36_USERKEY_CTL,			0x00000000},
-	{CS35L36_OTP_CTRL1,			0x00002460},
-	{CS35L36_OTP_CTRL2,			0x00000000},
-	{CS35L36_OTP_CTRL3,			0x00000000},
-	{CS35L36_OTP_CTRL4,			0x00000000},
-	{CS35L36_OTP_CTRL5,			0x00000000},
-	{CS35L36_PAC_CTL1,			0x00000004},
-	{CS35L36_PAC_CTL2,			0x00000000},
-	{CS35L36_PAC_CTL3,			0x00000000},
-	{CS35L36_PWR_CTRL1,			0x00000000},
-	{CS35L36_PWR_CTRL2,			0x00003321},
-	{CS35L36_PWR_CTRL3,			0x01000010},
-	{CS35L36_CTRL_OVRRIDE,			0x00000002},
-	{CS35L36_AMP_OUT_MUTE,			0x00000000},
-	{CS35L36_OTP_TRIM_STATUS,		0x00000000},
-	{CS35L36_DISCH_FILT,			0x00000000},
-	{CS35L36_PROTECT_REL_ERR,		0x00000000},
-	{CS35L36_PAD_INTERFACE,			0x00000038},
-	{CS35L36_PLL_CLK_CTRL,			0x00000010},
-	{CS35L36_GLOBAL_CLK_CTRL,		0x00000003},
-	{CS35L36_ADC_CLK_CTRL,			0x00000000},
-	{CS35L36_SWIRE_CLK_CTRL,		0x00000000},
-	{CS35L36_SP_SCLK_CLK_CTRL,		0x00000000},
-	{CS35L36_MDSYNC_EN,			0x00000000},
-	{CS35L36_MDSYNC_TX_ID,			0x00000000},
-	{CS35L36_MDSYNC_PWR_CTRL,		0x00000000},
-	{CS35L36_MDSYNC_DATA_TX,		0x00000000},
-	{CS35L36_MDSYNC_TX_STATUS,		0x00000002},
-	{CS35L36_MDSYNC_RX_STATUS,		0x00000000},
-	{CS35L36_MDSYNC_ERR_STATUS,		0x00000000},
-	{CS35L36_BSTCVRT_VCTRL1,		0x00000000},
-	{CS35L36_BSTCVRT_VCTRL2,		0x00000001},
-	{CS35L36_BSTCVRT_PEAK_CUR,		0x0000004A},
-	{CS35L36_BSTCVRT_SFT_RAMP,		0x00000003},
-	{CS35L36_BSTCVRT_COEFF,			0x00002424},
-	{CS35L36_BSTCVRT_SLOPE_LBST,		0x00005800},
-	{CS35L36_BSTCVRT_SW_FREQ,		0x00010000},
-	{CS35L36_BSTCVRT_DCM_CTRL,		0x00002001},
-	{CS35L36_BSTCVRT_DCM_MODE_FORCE,	0x00000000},
-	{CS35L36_BSTCVRT_OVERVOLT_CTRL,		0x00000130},
-	{CS35L36_VPI_LIMIT_MODE,		0x00000000},
-	{CS35L36_VPI_LIMIT_MINMAX,		0x00003000},
-	{CS35L36_VPI_VP_THLD,			0x00101010},
-	{CS35L36_VPI_TRACK_CTRL,		0x00000000},
-	{CS35L36_VPI_TRIG_MODE_CTRL,		0x00000000},
-	{CS35L36_VPI_TRIG_STEPS,		0x00000000},
-	{CS35L36_VI_SPKMON_FILT,		0x00000003},
-	{CS35L36_VI_SPKMON_GAIN,		0x00000909},
-	{CS35L36_VI_SPKMON_IP_SEL,		0x00000000},
-	{CS35L36_DTEMP_WARN_THLD,		0x00000002},
-	{CS35L36_DTEMP_STATUS,			0x00000000},
-	{CS35L36_VPVBST_FS_SEL,			0x00000001},
-	{CS35L36_VPVBST_VP_CTRL,		0x000001C0},
-	{CS35L36_VPVBST_VBST_CTRL,		0x000001C0},
-	{CS35L36_ASP_TX_PIN_CTRL,		0x00000028},
-	{CS35L36_ASP_RATE_CTRL,			0x00090000},
-	{CS35L36_ASP_FORMAT,			0x00000002},
-	{CS35L36_ASP_FRAME_CTRL,		0x00180018},
-	{CS35L36_ASP_TX1_TX2_SLOT,		0x00010000},
-	{CS35L36_ASP_TX3_TX4_SLOT,		0x00030002},
-	{CS35L36_ASP_TX5_TX6_SLOT,		0x00050004},
-	{CS35L36_ASP_TX7_TX8_SLOT,		0x00070006},
-	{CS35L36_ASP_RX1_SLOT,			0x00000000},
-	{CS35L36_ASP_RX_TX_EN,			0x00000000},
-	{CS35L36_ASP_RX1_SEL,			0x00000008},
-	{CS35L36_ASP_TX1_SEL,			0x00000018},
-	{CS35L36_ASP_TX2_SEL,			0x00000019},
-	{CS35L36_ASP_TX3_SEL,			0x00000028},
-	{CS35L36_ASP_TX4_SEL,			0x00000029},
-	{CS35L36_ASP_TX5_SEL,			0x00000020},
-	{CS35L36_ASP_TX6_SEL,			0x00000000},
-	{CS35L36_SWIRE_P1_TX1_SEL,		0x00000018},
-	{CS35L36_SWIRE_P1_TX2_SEL,		0x00000019},
-	{CS35L36_SWIRE_P2_TX1_SEL,		0x00000028},
-	{CS35L36_SWIRE_P2_TX2_SEL,		0x00000029},
-	{CS35L36_SWIRE_P2_TX3_SEL,		0x00000020},
-	{CS35L36_SWIRE_DP1_FIFO_CFG,		0x0000001B},
-	{CS35L36_SWIRE_DP2_FIFO_CFG,		0x0000001B},
-	{CS35L36_SWIRE_DP3_FIFO_CFG,		0x0000001B},
-	{CS35L36_SWIRE_PCM_RX_DATA,		0x00000000},
-	{CS35L36_SWIRE_FS_SEL,			0x00000001},
-	{CS35L36_AMP_DIG_VOL_CTRL,		0x00008000},
-	{CS35L36_VPBR_CFG,			0x02AA1905},
-	{CS35L36_VBBR_CFG,			0x02AA1905},
-	{CS35L36_VPBR_STATUS,			0x00000000},
-	{CS35L36_VBBR_STATUS,			0x00000000},
-	{CS35L36_OVERTEMP_CFG,			0x00000001},
-	{CS35L36_AMP_ERR_VOL,			0x00000000},
-	{CS35L36_CLASSH_CFG,			0x000B0405},
-	{CS35L36_CLASSH_FET_DRV_CFG,		0x00000111},
-	{CS35L36_NG_CFG,			0x00000033},
-	{CS35L36_AMP_GAIN_CTRL,			0x00000273},
-	{CS35L36_PWM_MOD_IO_CTRL,		0x00000000},
-	{CS35L36_PWM_MOD_STATUS,		0x00000000},
-	{CS35L36_DAC_MSM_CFG,			0x00000000},
-	{CS35L36_AMP_SLOPE_CTRL,		0x00000B00},
-	{CS35L36_AMP_PDM_VOLUME,		0x00000000},
-	{CS35L36_AMP_PDM_RATE_CTRL,		0x00000000},
-	{CS35L36_PDM_CH_SEL,			0x00000000},
-	{CS35L36_AMP_NG_CTRL,			0x0000212F},
-	{CS35L36_PDM_HIGHFILT_CTRL,		0x00000000},
-	{CS35L36_PAC_INT0_CTRL,			0x00000001},
-	{CS35L36_PAC_INT1_CTRL,			0x00000001},
-	{CS35L36_PAC_INT2_CTRL,			0x00000001},
-	{CS35L36_PAC_INT3_CTRL,			0x00000001},
-	{CS35L36_PAC_INT4_CTRL,			0x00000001},
-	{CS35L36_PAC_INT5_CTRL,			0x00000001},
-	{CS35L36_PAC_INT6_CTRL,			0x00000001},
-	{CS35L36_PAC_INT7_CTRL,			0x00000001},
-};
+अटल काष्ठा reg_शेष cs35l36_reg[] = अणु
+	अणुCS35L36_TESTKEY_CTRL,			0x00000000पूर्ण,
+	अणुCS35L36_USERKEY_CTL,			0x00000000पूर्ण,
+	अणुCS35L36_OTP_CTRL1,			0x00002460पूर्ण,
+	अणुCS35L36_OTP_CTRL2,			0x00000000पूर्ण,
+	अणुCS35L36_OTP_CTRL3,			0x00000000पूर्ण,
+	अणुCS35L36_OTP_CTRL4,			0x00000000पूर्ण,
+	अणुCS35L36_OTP_CTRL5,			0x00000000पूर्ण,
+	अणुCS35L36_PAC_CTL1,			0x00000004पूर्ण,
+	अणुCS35L36_PAC_CTL2,			0x00000000पूर्ण,
+	अणुCS35L36_PAC_CTL3,			0x00000000पूर्ण,
+	अणुCS35L36_PWR_CTRL1,			0x00000000पूर्ण,
+	अणुCS35L36_PWR_CTRL2,			0x00003321पूर्ण,
+	अणुCS35L36_PWR_CTRL3,			0x01000010पूर्ण,
+	अणुCS35L36_CTRL_OVRRIDE,			0x00000002पूर्ण,
+	अणुCS35L36_AMP_OUT_MUTE,			0x00000000पूर्ण,
+	अणुCS35L36_OTP_TRIM_STATUS,		0x00000000पूर्ण,
+	अणुCS35L36_DISCH_FILT,			0x00000000पूर्ण,
+	अणुCS35L36_PROTECT_REL_ERR,		0x00000000पूर्ण,
+	अणुCS35L36_PAD_INTERFACE,			0x00000038पूर्ण,
+	अणुCS35L36_PLL_CLK_CTRL,			0x00000010पूर्ण,
+	अणुCS35L36_GLOBAL_CLK_CTRL,		0x00000003पूर्ण,
+	अणुCS35L36_ADC_CLK_CTRL,			0x00000000पूर्ण,
+	अणुCS35L36_SWIRE_CLK_CTRL,		0x00000000पूर्ण,
+	अणुCS35L36_SP_SCLK_CLK_CTRL,		0x00000000पूर्ण,
+	अणुCS35L36_MDSYNC_EN,			0x00000000पूर्ण,
+	अणुCS35L36_MDSYNC_TX_ID,			0x00000000पूर्ण,
+	अणुCS35L36_MDSYNC_PWR_CTRL,		0x00000000पूर्ण,
+	अणुCS35L36_MDSYNC_DATA_TX,		0x00000000पूर्ण,
+	अणुCS35L36_MDSYNC_TX_STATUS,		0x00000002पूर्ण,
+	अणुCS35L36_MDSYNC_RX_STATUS,		0x00000000पूर्ण,
+	अणुCS35L36_MDSYNC_ERR_STATUS,		0x00000000पूर्ण,
+	अणुCS35L36_BSTCVRT_VCTRL1,		0x00000000पूर्ण,
+	अणुCS35L36_BSTCVRT_VCTRL2,		0x00000001पूर्ण,
+	अणुCS35L36_BSTCVRT_PEAK_CUR,		0x0000004Aपूर्ण,
+	अणुCS35L36_BSTCVRT_SFT_RAMP,		0x00000003पूर्ण,
+	अणुCS35L36_BSTCVRT_COEFF,			0x00002424पूर्ण,
+	अणुCS35L36_BSTCVRT_SLOPE_LBST,		0x00005800पूर्ण,
+	अणुCS35L36_BSTCVRT_SW_FREQ,		0x00010000पूर्ण,
+	अणुCS35L36_BSTCVRT_DCM_CTRL,		0x00002001पूर्ण,
+	अणुCS35L36_BSTCVRT_DCM_MODE_FORCE,	0x00000000पूर्ण,
+	अणुCS35L36_BSTCVRT_OVERVOLT_CTRL,		0x00000130पूर्ण,
+	अणुCS35L36_VPI_LIMIT_MODE,		0x00000000पूर्ण,
+	अणुCS35L36_VPI_LIMIT_MINMAX,		0x00003000पूर्ण,
+	अणुCS35L36_VPI_VP_THLD,			0x00101010पूर्ण,
+	अणुCS35L36_VPI_TRACK_CTRL,		0x00000000पूर्ण,
+	अणुCS35L36_VPI_TRIG_MODE_CTRL,		0x00000000पूर्ण,
+	अणुCS35L36_VPI_TRIG_STEPS,		0x00000000पूर्ण,
+	अणुCS35L36_VI_SPKMON_FILT,		0x00000003पूर्ण,
+	अणुCS35L36_VI_SPKMON_GAIN,		0x00000909पूर्ण,
+	अणुCS35L36_VI_SPKMON_IP_SEL,		0x00000000पूर्ण,
+	अणुCS35L36_DTEMP_WARN_THLD,		0x00000002पूर्ण,
+	अणुCS35L36_DTEMP_STATUS,			0x00000000पूर्ण,
+	अणुCS35L36_VPVBST_FS_SEL,			0x00000001पूर्ण,
+	अणुCS35L36_VPVBST_VP_CTRL,		0x000001C0पूर्ण,
+	अणुCS35L36_VPVBST_VBST_CTRL,		0x000001C0पूर्ण,
+	अणुCS35L36_ASP_TX_PIN_CTRL,		0x00000028पूर्ण,
+	अणुCS35L36_ASP_RATE_CTRL,			0x00090000पूर्ण,
+	अणुCS35L36_ASP_FORMAT,			0x00000002पूर्ण,
+	अणुCS35L36_ASP_FRAME_CTRL,		0x00180018पूर्ण,
+	अणुCS35L36_ASP_TX1_TX2_SLOT,		0x00010000पूर्ण,
+	अणुCS35L36_ASP_TX3_TX4_SLOT,		0x00030002पूर्ण,
+	अणुCS35L36_ASP_TX5_TX6_SLOT,		0x00050004पूर्ण,
+	अणुCS35L36_ASP_TX7_TX8_SLOT,		0x00070006पूर्ण,
+	अणुCS35L36_ASP_RX1_SLOT,			0x00000000पूर्ण,
+	अणुCS35L36_ASP_RX_TX_EN,			0x00000000पूर्ण,
+	अणुCS35L36_ASP_RX1_SEL,			0x00000008पूर्ण,
+	अणुCS35L36_ASP_TX1_SEL,			0x00000018पूर्ण,
+	अणुCS35L36_ASP_TX2_SEL,			0x00000019पूर्ण,
+	अणुCS35L36_ASP_TX3_SEL,			0x00000028पूर्ण,
+	अणुCS35L36_ASP_TX4_SEL,			0x00000029पूर्ण,
+	अणुCS35L36_ASP_TX5_SEL,			0x00000020पूर्ण,
+	अणुCS35L36_ASP_TX6_SEL,			0x00000000पूर्ण,
+	अणुCS35L36_SWIRE_P1_TX1_SEL,		0x00000018पूर्ण,
+	अणुCS35L36_SWIRE_P1_TX2_SEL,		0x00000019पूर्ण,
+	अणुCS35L36_SWIRE_P2_TX1_SEL,		0x00000028पूर्ण,
+	अणुCS35L36_SWIRE_P2_TX2_SEL,		0x00000029पूर्ण,
+	अणुCS35L36_SWIRE_P2_TX3_SEL,		0x00000020पूर्ण,
+	अणुCS35L36_SWIRE_DP1_FIFO_CFG,		0x0000001Bपूर्ण,
+	अणुCS35L36_SWIRE_DP2_FIFO_CFG,		0x0000001Bपूर्ण,
+	अणुCS35L36_SWIRE_DP3_FIFO_CFG,		0x0000001Bपूर्ण,
+	अणुCS35L36_SWIRE_PCM_RX_DATA,		0x00000000पूर्ण,
+	अणुCS35L36_SWIRE_FS_SEL,			0x00000001पूर्ण,
+	अणुCS35L36_AMP_DIG_VOL_CTRL,		0x00008000पूर्ण,
+	अणुCS35L36_VPBR_CFG,			0x02AA1905पूर्ण,
+	अणुCS35L36_VBBR_CFG,			0x02AA1905पूर्ण,
+	अणुCS35L36_VPBR_STATUS,			0x00000000पूर्ण,
+	अणुCS35L36_VBBR_STATUS,			0x00000000पूर्ण,
+	अणुCS35L36_OVERTEMP_CFG,			0x00000001पूर्ण,
+	अणुCS35L36_AMP_ERR_VOL,			0x00000000पूर्ण,
+	अणुCS35L36_CLASSH_CFG,			0x000B0405पूर्ण,
+	अणुCS35L36_CLASSH_FET_DRV_CFG,		0x00000111पूर्ण,
+	अणुCS35L36_NG_CFG,			0x00000033पूर्ण,
+	अणुCS35L36_AMP_GAIN_CTRL,			0x00000273पूर्ण,
+	अणुCS35L36_PWM_MOD_IO_CTRL,		0x00000000पूर्ण,
+	अणुCS35L36_PWM_MOD_STATUS,		0x00000000पूर्ण,
+	अणुCS35L36_DAC_MSM_CFG,			0x00000000पूर्ण,
+	अणुCS35L36_AMP_SLOPE_CTRL,		0x00000B00पूर्ण,
+	अणुCS35L36_AMP_PDM_VOLUME,		0x00000000पूर्ण,
+	अणुCS35L36_AMP_PDM_RATE_CTRL,		0x00000000पूर्ण,
+	अणुCS35L36_PDM_CH_SEL,			0x00000000पूर्ण,
+	अणुCS35L36_AMP_NG_CTRL,			0x0000212Fपूर्ण,
+	अणुCS35L36_PDM_HIGHFILT_CTRL,		0x00000000पूर्ण,
+	अणुCS35L36_PAC_INT0_CTRL,			0x00000001पूर्ण,
+	अणुCS35L36_PAC_INT1_CTRL,			0x00000001पूर्ण,
+	अणुCS35L36_PAC_INT2_CTRL,			0x00000001पूर्ण,
+	अणुCS35L36_PAC_INT3_CTRL,			0x00000001पूर्ण,
+	अणुCS35L36_PAC_INT4_CTRL,			0x00000001पूर्ण,
+	अणुCS35L36_PAC_INT5_CTRL,			0x00000001पूर्ण,
+	अणुCS35L36_PAC_INT6_CTRL,			0x00000001पूर्ण,
+	अणुCS35L36_PAC_INT7_CTRL,			0x00000001पूर्ण,
+पूर्ण;
 
-static bool cs35l36_readable_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case CS35L36_SW_RESET:
-	case CS35L36_SW_REV:
-	case CS35L36_HW_REV:
-	case CS35L36_TESTKEY_CTRL:
-	case CS35L36_USERKEY_CTL:
-	case CS35L36_OTP_MEM30:
-	case CS35L36_OTP_CTRL1:
-	case CS35L36_OTP_CTRL2:
-	case CS35L36_OTP_CTRL3:
-	case CS35L36_OTP_CTRL4:
-	case CS35L36_OTP_CTRL5:
-	case CS35L36_PAC_CTL1:
-	case CS35L36_PAC_CTL2:
-	case CS35L36_PAC_CTL3:
-	case CS35L36_DEVICE_ID:
-	case CS35L36_FAB_ID:
-	case CS35L36_REV_ID:
-	case CS35L36_PWR_CTRL1:
-	case CS35L36_PWR_CTRL2:
-	case CS35L36_PWR_CTRL3:
-	case CS35L36_CTRL_OVRRIDE:
-	case CS35L36_AMP_OUT_MUTE:
-	case CS35L36_OTP_TRIM_STATUS:
-	case CS35L36_DISCH_FILT:
-	case CS35L36_PROTECT_REL_ERR:
-	case CS35L36_PAD_INTERFACE:
-	case CS35L36_PLL_CLK_CTRL:
-	case CS35L36_GLOBAL_CLK_CTRL:
-	case CS35L36_ADC_CLK_CTRL:
-	case CS35L36_SWIRE_CLK_CTRL:
-	case CS35L36_SP_SCLK_CLK_CTRL:
-	case CS35L36_TST_FS_MON0:
-	case CS35L36_MDSYNC_EN:
-	case CS35L36_MDSYNC_TX_ID:
-	case CS35L36_MDSYNC_PWR_CTRL:
-	case CS35L36_MDSYNC_DATA_TX:
-	case CS35L36_MDSYNC_TX_STATUS:
-	case CS35L36_MDSYNC_RX_STATUS:
-	case CS35L36_MDSYNC_ERR_STATUS:
-	case CS35L36_BSTCVRT_VCTRL1:
-	case CS35L36_BSTCVRT_VCTRL2:
-	case CS35L36_BSTCVRT_PEAK_CUR:
-	case CS35L36_BSTCVRT_SFT_RAMP:
-	case CS35L36_BSTCVRT_COEFF:
-	case CS35L36_BSTCVRT_SLOPE_LBST:
-	case CS35L36_BSTCVRT_SW_FREQ:
-	case CS35L36_BSTCVRT_DCM_CTRL:
-	case CS35L36_BSTCVRT_DCM_MODE_FORCE:
-	case CS35L36_BSTCVRT_OVERVOLT_CTRL:
-	case CS35L36_BST_TST_MANUAL:
-	case CS35L36_BST_ANA2_TEST:
-	case CS35L36_VPI_LIMIT_MODE:
-	case CS35L36_VPI_LIMIT_MINMAX:
-	case CS35L36_VPI_VP_THLD:
-	case CS35L36_VPI_TRACK_CTRL:
-	case CS35L36_VPI_TRIG_MODE_CTRL:
-	case CS35L36_VPI_TRIG_STEPS:
-	case CS35L36_VI_SPKMON_FILT:
-	case CS35L36_VI_SPKMON_GAIN:
-	case CS35L36_VI_SPKMON_IP_SEL:
-	case CS35L36_DTEMP_WARN_THLD:
-	case CS35L36_DTEMP_STATUS:
-	case CS35L36_VPVBST_FS_SEL:
-	case CS35L36_VPVBST_VP_CTRL:
-	case CS35L36_VPVBST_VBST_CTRL:
-	case CS35L36_ASP_TX_PIN_CTRL:
-	case CS35L36_ASP_RATE_CTRL:
-	case CS35L36_ASP_FORMAT:
-	case CS35L36_ASP_FRAME_CTRL:
-	case CS35L36_ASP_TX1_TX2_SLOT:
-	case CS35L36_ASP_TX3_TX4_SLOT:
-	case CS35L36_ASP_TX5_TX6_SLOT:
-	case CS35L36_ASP_TX7_TX8_SLOT:
-	case CS35L36_ASP_RX1_SLOT:
-	case CS35L36_ASP_RX_TX_EN:
-	case CS35L36_ASP_RX1_SEL:
-	case CS35L36_ASP_TX1_SEL:
-	case CS35L36_ASP_TX2_SEL:
-	case CS35L36_ASP_TX3_SEL:
-	case CS35L36_ASP_TX4_SEL:
-	case CS35L36_ASP_TX5_SEL:
-	case CS35L36_ASP_TX6_SEL:
-	case CS35L36_SWIRE_P1_TX1_SEL:
-	case CS35L36_SWIRE_P1_TX2_SEL:
-	case CS35L36_SWIRE_P2_TX1_SEL:
-	case CS35L36_SWIRE_P2_TX2_SEL:
-	case CS35L36_SWIRE_P2_TX3_SEL:
-	case CS35L36_SWIRE_DP1_FIFO_CFG:
-	case CS35L36_SWIRE_DP2_FIFO_CFG:
-	case CS35L36_SWIRE_DP3_FIFO_CFG:
-	case CS35L36_SWIRE_PCM_RX_DATA:
-	case CS35L36_SWIRE_FS_SEL:
-	case CS35L36_AMP_DIG_VOL_CTRL:
-	case CS35L36_VPBR_CFG:
-	case CS35L36_VBBR_CFG:
-	case CS35L36_VPBR_STATUS:
-	case CS35L36_VBBR_STATUS:
-	case CS35L36_OVERTEMP_CFG:
-	case CS35L36_AMP_ERR_VOL:
-	case CS35L36_CLASSH_CFG:
-	case CS35L36_CLASSH_FET_DRV_CFG:
-	case CS35L36_NG_CFG:
-	case CS35L36_AMP_GAIN_CTRL:
-	case CS35L36_PWM_MOD_IO_CTRL:
-	case CS35L36_PWM_MOD_STATUS:
-	case CS35L36_DAC_MSM_CFG:
-	case CS35L36_AMP_SLOPE_CTRL:
-	case CS35L36_AMP_PDM_VOLUME:
-	case CS35L36_AMP_PDM_RATE_CTRL:
-	case CS35L36_PDM_CH_SEL:
-	case CS35L36_AMP_NG_CTRL:
-	case CS35L36_PDM_HIGHFILT_CTRL:
-	case CS35L36_INT1_STATUS:
-	case CS35L36_INT2_STATUS:
-	case CS35L36_INT3_STATUS:
-	case CS35L36_INT4_STATUS:
-	case CS35L36_INT1_RAW_STATUS:
-	case CS35L36_INT2_RAW_STATUS:
-	case CS35L36_INT3_RAW_STATUS:
-	case CS35L36_INT4_RAW_STATUS:
-	case CS35L36_INT1_MASK:
-	case CS35L36_INT2_MASK:
-	case CS35L36_INT3_MASK:
-	case CS35L36_INT4_MASK:
-	case CS35L36_INT1_EDGE_LVL_CTRL:
-	case CS35L36_INT3_EDGE_LVL_CTRL:
-	case CS35L36_PAC_INT_STATUS:
-	case CS35L36_PAC_INT_RAW_STATUS:
-	case CS35L36_PAC_INT_FLUSH_CTRL:
-	case CS35L36_PAC_INT0_CTRL:
-	case CS35L36_PAC_INT1_CTRL:
-	case CS35L36_PAC_INT2_CTRL:
-	case CS35L36_PAC_INT3_CTRL:
-	case CS35L36_PAC_INT4_CTRL:
-	case CS35L36_PAC_INT5_CTRL:
-	case CS35L36_PAC_INT6_CTRL:
-	case CS35L36_PAC_INT7_CTRL:
-		return true;
-	default:
-		if (reg >= CS35L36_PAC_PMEM_WORD0 &&
+अटल bool cs35l36_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल CS35L36_SW_RESET:
+	हाल CS35L36_SW_REV:
+	हाल CS35L36_HW_REV:
+	हाल CS35L36_TESTKEY_CTRL:
+	हाल CS35L36_USERKEY_CTL:
+	हाल CS35L36_OTP_MEM30:
+	हाल CS35L36_OTP_CTRL1:
+	हाल CS35L36_OTP_CTRL2:
+	हाल CS35L36_OTP_CTRL3:
+	हाल CS35L36_OTP_CTRL4:
+	हाल CS35L36_OTP_CTRL5:
+	हाल CS35L36_PAC_CTL1:
+	हाल CS35L36_PAC_CTL2:
+	हाल CS35L36_PAC_CTL3:
+	हाल CS35L36_DEVICE_ID:
+	हाल CS35L36_FAB_ID:
+	हाल CS35L36_REV_ID:
+	हाल CS35L36_PWR_CTRL1:
+	हाल CS35L36_PWR_CTRL2:
+	हाल CS35L36_PWR_CTRL3:
+	हाल CS35L36_CTRL_OVRRIDE:
+	हाल CS35L36_AMP_OUT_MUTE:
+	हाल CS35L36_OTP_TRIM_STATUS:
+	हाल CS35L36_DISCH_FILT:
+	हाल CS35L36_PROTECT_REL_ERR:
+	हाल CS35L36_PAD_INTERFACE:
+	हाल CS35L36_PLL_CLK_CTRL:
+	हाल CS35L36_GLOBAL_CLK_CTRL:
+	हाल CS35L36_ADC_CLK_CTRL:
+	हाल CS35L36_SWIRE_CLK_CTRL:
+	हाल CS35L36_SP_SCLK_CLK_CTRL:
+	हाल CS35L36_TST_FS_MON0:
+	हाल CS35L36_MDSYNC_EN:
+	हाल CS35L36_MDSYNC_TX_ID:
+	हाल CS35L36_MDSYNC_PWR_CTRL:
+	हाल CS35L36_MDSYNC_DATA_TX:
+	हाल CS35L36_MDSYNC_TX_STATUS:
+	हाल CS35L36_MDSYNC_RX_STATUS:
+	हाल CS35L36_MDSYNC_ERR_STATUS:
+	हाल CS35L36_BSTCVRT_VCTRL1:
+	हाल CS35L36_BSTCVRT_VCTRL2:
+	हाल CS35L36_BSTCVRT_PEAK_CUR:
+	हाल CS35L36_BSTCVRT_SFT_RAMP:
+	हाल CS35L36_BSTCVRT_COEFF:
+	हाल CS35L36_BSTCVRT_SLOPE_LBST:
+	हाल CS35L36_BSTCVRT_SW_FREQ:
+	हाल CS35L36_BSTCVRT_DCM_CTRL:
+	हाल CS35L36_BSTCVRT_DCM_MODE_FORCE:
+	हाल CS35L36_BSTCVRT_OVERVOLT_CTRL:
+	हाल CS35L36_BST_TST_MANUAL:
+	हाल CS35L36_BST_ANA2_TEST:
+	हाल CS35L36_VPI_LIMIT_MODE:
+	हाल CS35L36_VPI_LIMIT_MINMAX:
+	हाल CS35L36_VPI_VP_THLD:
+	हाल CS35L36_VPI_TRACK_CTRL:
+	हाल CS35L36_VPI_TRIG_MODE_CTRL:
+	हाल CS35L36_VPI_TRIG_STEPS:
+	हाल CS35L36_VI_SPKMON_FILT:
+	हाल CS35L36_VI_SPKMON_GAIN:
+	हाल CS35L36_VI_SPKMON_IP_SEL:
+	हाल CS35L36_DTEMP_WARN_THLD:
+	हाल CS35L36_DTEMP_STATUS:
+	हाल CS35L36_VPVBST_FS_SEL:
+	हाल CS35L36_VPVBST_VP_CTRL:
+	हाल CS35L36_VPVBST_VBST_CTRL:
+	हाल CS35L36_ASP_TX_PIN_CTRL:
+	हाल CS35L36_ASP_RATE_CTRL:
+	हाल CS35L36_ASP_FORMAT:
+	हाल CS35L36_ASP_FRAME_CTRL:
+	हाल CS35L36_ASP_TX1_TX2_SLOT:
+	हाल CS35L36_ASP_TX3_TX4_SLOT:
+	हाल CS35L36_ASP_TX5_TX6_SLOT:
+	हाल CS35L36_ASP_TX7_TX8_SLOT:
+	हाल CS35L36_ASP_RX1_SLOT:
+	हाल CS35L36_ASP_RX_TX_EN:
+	हाल CS35L36_ASP_RX1_SEL:
+	हाल CS35L36_ASP_TX1_SEL:
+	हाल CS35L36_ASP_TX2_SEL:
+	हाल CS35L36_ASP_TX3_SEL:
+	हाल CS35L36_ASP_TX4_SEL:
+	हाल CS35L36_ASP_TX5_SEL:
+	हाल CS35L36_ASP_TX6_SEL:
+	हाल CS35L36_SWIRE_P1_TX1_SEL:
+	हाल CS35L36_SWIRE_P1_TX2_SEL:
+	हाल CS35L36_SWIRE_P2_TX1_SEL:
+	हाल CS35L36_SWIRE_P2_TX2_SEL:
+	हाल CS35L36_SWIRE_P2_TX3_SEL:
+	हाल CS35L36_SWIRE_DP1_FIFO_CFG:
+	हाल CS35L36_SWIRE_DP2_FIFO_CFG:
+	हाल CS35L36_SWIRE_DP3_FIFO_CFG:
+	हाल CS35L36_SWIRE_PCM_RX_DATA:
+	हाल CS35L36_SWIRE_FS_SEL:
+	हाल CS35L36_AMP_DIG_VOL_CTRL:
+	हाल CS35L36_VPBR_CFG:
+	हाल CS35L36_VBBR_CFG:
+	हाल CS35L36_VPBR_STATUS:
+	हाल CS35L36_VBBR_STATUS:
+	हाल CS35L36_OVERTEMP_CFG:
+	हाल CS35L36_AMP_ERR_VOL:
+	हाल CS35L36_CLASSH_CFG:
+	हाल CS35L36_CLASSH_FET_DRV_CFG:
+	हाल CS35L36_NG_CFG:
+	हाल CS35L36_AMP_GAIN_CTRL:
+	हाल CS35L36_PWM_MOD_IO_CTRL:
+	हाल CS35L36_PWM_MOD_STATUS:
+	हाल CS35L36_DAC_MSM_CFG:
+	हाल CS35L36_AMP_SLOPE_CTRL:
+	हाल CS35L36_AMP_PDM_VOLUME:
+	हाल CS35L36_AMP_PDM_RATE_CTRL:
+	हाल CS35L36_PDM_CH_SEL:
+	हाल CS35L36_AMP_NG_CTRL:
+	हाल CS35L36_PDM_HIGHFILT_CTRL:
+	हाल CS35L36_INT1_STATUS:
+	हाल CS35L36_INT2_STATUS:
+	हाल CS35L36_INT3_STATUS:
+	हाल CS35L36_INT4_STATUS:
+	हाल CS35L36_INT1_RAW_STATUS:
+	हाल CS35L36_INT2_RAW_STATUS:
+	हाल CS35L36_INT3_RAW_STATUS:
+	हाल CS35L36_INT4_RAW_STATUS:
+	हाल CS35L36_INT1_MASK:
+	हाल CS35L36_INT2_MASK:
+	हाल CS35L36_INT3_MASK:
+	हाल CS35L36_INT4_MASK:
+	हाल CS35L36_INT1_EDGE_LVL_CTRL:
+	हाल CS35L36_INT3_EDGE_LVL_CTRL:
+	हाल CS35L36_PAC_INT_STATUS:
+	हाल CS35L36_PAC_INT_RAW_STATUS:
+	हाल CS35L36_PAC_INT_FLUSH_CTRL:
+	हाल CS35L36_PAC_INT0_CTRL:
+	हाल CS35L36_PAC_INT1_CTRL:
+	हाल CS35L36_PAC_INT2_CTRL:
+	हाल CS35L36_PAC_INT3_CTRL:
+	हाल CS35L36_PAC_INT4_CTRL:
+	हाल CS35L36_PAC_INT5_CTRL:
+	हाल CS35L36_PAC_INT6_CTRL:
+	हाल CS35L36_PAC_INT7_CTRL:
+		वापस true;
+	शेष:
+		अगर (reg >= CS35L36_PAC_PMEM_WORD0 &&
 			reg <= CS35L36_PAC_PMEM_WORD1023)
-			return true;
-		else
-			return false;
-	}
-}
+			वापस true;
+		अन्यथा
+			वापस false;
+	पूर्ण
+पूर्ण
 
-static bool cs35l36_precious_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case CS35L36_TESTKEY_CTRL:
-	case CS35L36_USERKEY_CTL:
-	case CS35L36_TST_FS_MON0:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool cs35l36_precious_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल CS35L36_TESTKEY_CTRL:
+	हाल CS35L36_USERKEY_CTL:
+	हाल CS35L36_TST_FS_MON0:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool cs35l36_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case CS35L36_SW_RESET:
-	case CS35L36_SW_REV:
-	case CS35L36_HW_REV:
-	case CS35L36_TESTKEY_CTRL:
-	case CS35L36_USERKEY_CTL:
-	case CS35L36_DEVICE_ID:
-	case CS35L36_FAB_ID:
-	case CS35L36_REV_ID:
-	case CS35L36_INT1_STATUS:
-	case CS35L36_INT2_STATUS:
-	case CS35L36_INT3_STATUS:
-	case CS35L36_INT4_STATUS:
-	case CS35L36_INT1_RAW_STATUS:
-	case CS35L36_INT2_RAW_STATUS:
-	case CS35L36_INT3_RAW_STATUS:
-	case CS35L36_INT4_RAW_STATUS:
-	case CS35L36_INT1_MASK:
-	case CS35L36_INT2_MASK:
-	case CS35L36_INT3_MASK:
-	case CS35L36_INT4_MASK:
-	case CS35L36_INT1_EDGE_LVL_CTRL:
-	case CS35L36_INT3_EDGE_LVL_CTRL:
-	case CS35L36_PAC_INT_STATUS:
-	case CS35L36_PAC_INT_RAW_STATUS:
-	case CS35L36_PAC_INT_FLUSH_CTRL:
-		return true;
-	default:
-		if (reg >= CS35L36_PAC_PMEM_WORD0 &&
+अटल bool cs35l36_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल CS35L36_SW_RESET:
+	हाल CS35L36_SW_REV:
+	हाल CS35L36_HW_REV:
+	हाल CS35L36_TESTKEY_CTRL:
+	हाल CS35L36_USERKEY_CTL:
+	हाल CS35L36_DEVICE_ID:
+	हाल CS35L36_FAB_ID:
+	हाल CS35L36_REV_ID:
+	हाल CS35L36_INT1_STATUS:
+	हाल CS35L36_INT2_STATUS:
+	हाल CS35L36_INT3_STATUS:
+	हाल CS35L36_INT4_STATUS:
+	हाल CS35L36_INT1_RAW_STATUS:
+	हाल CS35L36_INT2_RAW_STATUS:
+	हाल CS35L36_INT3_RAW_STATUS:
+	हाल CS35L36_INT4_RAW_STATUS:
+	हाल CS35L36_INT1_MASK:
+	हाल CS35L36_INT2_MASK:
+	हाल CS35L36_INT3_MASK:
+	हाल CS35L36_INT4_MASK:
+	हाल CS35L36_INT1_EDGE_LVL_CTRL:
+	हाल CS35L36_INT3_EDGE_LVL_CTRL:
+	हाल CS35L36_PAC_INT_STATUS:
+	हाल CS35L36_PAC_INT_RAW_STATUS:
+	हाल CS35L36_PAC_INT_FLUSH_CTRL:
+		वापस true;
+	शेष:
+		अगर (reg >= CS35L36_PAC_PMEM_WORD0 &&
 			reg <= CS35L36_PAC_PMEM_WORD1023)
-			return true;
-		else
-			return false;
-	}
-}
+			वापस true;
+		अन्यथा
+			वापस false;
+	पूर्ण
+पूर्ण
 
-static DECLARE_TLV_DB_SCALE(dig_vol_tlv, -10200, 25, 0);
-static DECLARE_TLV_DB_SCALE(amp_gain_tlv, 0, 1, 1);
+अटल DECLARE_TLV_DB_SCALE(dig_vol_tlv, -10200, 25, 0);
+अटल DECLARE_TLV_DB_SCALE(amp_gain_tlv, 0, 1, 1);
 
-static const char * const cs35l36_pcm_sftramp_text[] =  {
-	"Off", ".5ms", "1ms", "2ms", "4ms", "8ms", "15ms", "30ms"};
+अटल स्थिर अक्षर * स्थिर cs35l36_pcm_sftramp_text[] =  अणु
+	"Off", ".5ms", "1ms", "2ms", "4ms", "8ms", "15ms", "30ms"पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(pcm_sft_ramp, CS35L36_AMP_DIG_VOL_CTRL, 0,
+अटल SOC_ENUM_SINGLE_DECL(pcm_sft_ramp, CS35L36_AMP_DIG_VOL_CTRL, 0,
 			    cs35l36_pcm_sftramp_text);
 
-static int cs35l36_ldm_sel_get(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
+अटल पूर्णांक cs35l36_ldm_sel_get(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component =
 			snd_soc_kcontrol_component(kcontrol);
-	struct cs35l36_private *cs35l36 =
+	काष्ठा cs35l36_निजी *cs35l36 =
 			snd_soc_component_get_drvdata(component);
 
-	ucontrol->value.integer.value[0] = cs35l36->ldm_mode_sel;
+	ucontrol->value.पूर्णांकeger.value[0] = cs35l36->ldm_mode_sel;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs35l36_ldm_sel_put(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
+अटल पूर्णांक cs35l36_ldm_sel_put(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component =
 			snd_soc_kcontrol_component(kcontrol);
-	struct cs35l36_private *cs35l36 =
+	काष्ठा cs35l36_निजी *cs35l36 =
 			snd_soc_component_get_drvdata(component);
-	int val = (ucontrol->value.integer.value[0]) ? CS35L36_NG_AMP_EN_MASK :
+	पूर्णांक val = (ucontrol->value.पूर्णांकeger.value[0]) ? CS35L36_NG_AMP_EN_MASK :
 						       0;
 
 	cs35l36->ldm_mode_sel = val;
@@ -481,10 +482,10 @@ static int cs35l36_ldm_sel_put(struct snd_kcontrol *kcontrol,
 	regmap_update_bits(cs35l36->regmap, CS35L36_NG_CFG,
 			   CS35L36_NG_AMP_EN_MASK, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_kcontrol_new cs35l36_aud_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new cs35l36_aud_controls[] = अणु
 	SOC_SINGLE_SX_TLV("Digital PCM Volume", CS35L36_AMP_DIG_VOL_CTRL,
 		3, 0x4D0, 0x390, dig_vol_tlv),
 	SOC_SINGLE_TLV("Analog PCM Volume", CS35L36_AMP_GAIN_CTRL, 5, 0x13, 0,
@@ -498,28 +499,28 @@ static const struct snd_kcontrol_new cs35l36_aud_controls[] = {
 		CS35L36_PDM_LDM_EXIT_SHIFT, 1, 0),
 	SOC_SINGLE_BOOL_EXT("LDM Select Switch", 0, cs35l36_ldm_sel_get,
 		cs35l36_ldm_sel_put),
-};
+पूर्ण;
 
-static int cs35l36_main_amp_event(struct snd_soc_dapm_widget *w,
-				  struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component =
+अटल पूर्णांक cs35l36_मुख्य_amp_event(काष्ठा snd_soc_dapm_widget *w,
+				  काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component =
 			snd_soc_dapm_to_component(w->dapm);
-	struct cs35l36_private *cs35l36 =
+	काष्ठा cs35l36_निजी *cs35l36 =
 			snd_soc_component_get_drvdata(component);
 	u32 reg;
 
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_POST_PMU:
 		regmap_update_bits(cs35l36->regmap, CS35L36_PWR_CTRL1,
 				   CS35L36_GLOBAL_EN_MASK,
 				   1 << CS35L36_GLOBAL_EN_SHIFT);
 
 		usleep_range(2000, 2100);
 
-		regmap_read(cs35l36->regmap, CS35L36_INT4_RAW_STATUS, &reg);
+		regmap_पढ़ो(cs35l36->regmap, CS35L36_INT4_RAW_STATUS, &reg);
 
-		if (WARN_ON_ONCE(reg & CS35L36_PLL_UNLOCK_MASK))
+		अगर (WARN_ON_ONCE(reg & CS35L36_PLL_UNLOCK_MASK))
 			dev_crit(cs35l36->dev, "PLL Unlocked\n");
 
 		regmap_update_bits(cs35l36->regmap, CS35L36_ASP_RX1_SEL,
@@ -528,150 +529,150 @@ static int cs35l36_main_amp_event(struct snd_soc_dapm_widget *w,
 		regmap_update_bits(cs35l36->regmap, CS35L36_AMP_OUT_MUTE,
 				   CS35L36_AMP_MUTE_MASK,
 				   0 << CS35L36_AMP_MUTE_SHIFT);
-		break;
-	case SND_SOC_DAPM_PRE_PMD:
+		अवरोध;
+	हाल SND_SOC_DAPM_PRE_PMD:
 		regmap_update_bits(cs35l36->regmap, CS35L36_ASP_RX1_SEL,
 				   CS35L36_PCM_RX_SEL_MASK,
 				   CS35L36_PCM_RX_SEL_ZERO);
 		regmap_update_bits(cs35l36->regmap, CS35L36_AMP_OUT_MUTE,
 				   CS35L36_AMP_MUTE_MASK,
 				   1 << CS35L36_AMP_MUTE_SHIFT);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
+		अवरोध;
+	हाल SND_SOC_DAPM_POST_PMD:
 		regmap_update_bits(cs35l36->regmap, CS35L36_PWR_CTRL1,
 				   CS35L36_GLOBAL_EN_MASK,
 				   0 << CS35L36_GLOBAL_EN_SHIFT);
 
 		usleep_range(2000, 2100);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(component->dev, "Invalid event = 0x%x\n", event);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs35l36_boost_event(struct snd_soc_dapm_widget *w,
-			       struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component =
+अटल पूर्णांक cs35l36_boost_event(काष्ठा snd_soc_dapm_widget *w,
+			       काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component =
 			snd_soc_dapm_to_component(w->dapm);
-	struct cs35l36_private *cs35l36 =
+	काष्ठा cs35l36_निजी *cs35l36 =
 			snd_soc_component_get_drvdata(component);
 
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
-		if (!cs35l36->pdata.extern_boost)
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_POST_PMU:
+		अगर (!cs35l36->pdata.बाह्य_boost)
 			regmap_update_bits(cs35l36->regmap, CS35L36_PWR_CTRL2,
 					   CS35L36_BST_EN_MASK,
 					   CS35L36_BST_EN <<
 					   CS35L36_BST_EN_SHIFT);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		if (!cs35l36->pdata.extern_boost)
+		अवरोध;
+	हाल SND_SOC_DAPM_POST_PMD:
+		अगर (!cs35l36->pdata.बाह्य_boost)
 			regmap_update_bits(cs35l36->regmap, CS35L36_PWR_CTRL2,
 					   CS35L36_BST_EN_MASK,
 					   CS35L36_BST_DIS_VP <<
 					   CS35L36_BST_EN_SHIFT);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(component->dev, "Invalid event = 0x%x\n", event);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char * const cs35l36_chan_text[] = {
+अटल स्थिर अक्षर * स्थिर cs35l36_chan_text[] = अणु
 	"RX1",
 	"RX2",
-};
+पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(chansel_enum, CS35L36_ASP_RX1_SLOT, 0,
+अटल SOC_ENUM_SINGLE_DECL(chansel_क्रमागत, CS35L36_ASP_RX1_SLOT, 0,
 			    cs35l36_chan_text);
 
-static const struct snd_kcontrol_new cs35l36_chan_mux =
-		SOC_DAPM_ENUM("Input Mux", chansel_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new cs35l36_chan_mux =
+		SOC_DAPM_ENUM("Input Mux", chansel_क्रमागत);
 
-static const struct snd_kcontrol_new amp_enable_ctrl =
+अटल स्थिर काष्ठा snd_kcontrol_new amp_enable_ctrl =
 		SOC_DAPM_SINGLE_AUTODISABLE("Switch", CS35L36_AMP_OUT_MUTE,
 					    CS35L36_AMP_MUTE_SHIFT, 1, 1);
 
-static const struct snd_kcontrol_new boost_ctrl =
+अटल स्थिर काष्ठा snd_kcontrol_new boost_ctrl =
 		SOC_DAPM_SINGLE_VIRT("Switch", 1);
 
-static const char * const asp_tx_src_text[] = {
+अटल स्थिर अक्षर * स्थिर asp_tx_src_text[] = अणु
 	"Zero Fill", "ASPRX1", "VMON", "IMON", "ERRVOL", "VPMON", "VBSTMON"
-};
+पूर्ण;
 
-static const unsigned int asp_tx_src_values[] = {
+अटल स्थिर अचिन्हित पूर्णांक asp_tx_src_values[] = अणु
 	0x00, 0x08, 0x18, 0x19, 0x20, 0x28, 0x29
-};
+पूर्ण;
 
-static SOC_VALUE_ENUM_SINGLE_DECL(asp_tx1_src_enum, CS35L36_ASP_TX1_SEL, 0,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(asp_tx1_src_क्रमागत, CS35L36_ASP_TX1_SEL, 0,
 				  CS35L36_APS_TX_SEL_MASK, asp_tx_src_text,
 				  asp_tx_src_values);
 
-static const struct snd_kcontrol_new asp_tx1_src =
-		SOC_DAPM_ENUM("ASPTX1SRC", asp_tx1_src_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new asp_tx1_src =
+		SOC_DAPM_ENUM("ASPTX1SRC", asp_tx1_src_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(asp_tx2_src_enum, CS35L36_ASP_TX2_SEL, 0,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(asp_tx2_src_क्रमागत, CS35L36_ASP_TX2_SEL, 0,
 				  CS35L36_APS_TX_SEL_MASK, asp_tx_src_text,
 				  asp_tx_src_values);
 
-static const struct snd_kcontrol_new asp_tx2_src =
-		SOC_DAPM_ENUM("ASPTX2SRC", asp_tx2_src_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new asp_tx2_src =
+		SOC_DAPM_ENUM("ASPTX2SRC", asp_tx2_src_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(asp_tx3_src_enum, CS35L36_ASP_TX3_SEL, 0,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(asp_tx3_src_क्रमागत, CS35L36_ASP_TX3_SEL, 0,
 				  CS35L36_APS_TX_SEL_MASK, asp_tx_src_text,
 				  asp_tx_src_values);
 
-static const struct snd_kcontrol_new asp_tx3_src =
-		SOC_DAPM_ENUM("ASPTX3SRC", asp_tx3_src_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new asp_tx3_src =
+		SOC_DAPM_ENUM("ASPTX3SRC", asp_tx3_src_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(asp_tx4_src_enum, CS35L36_ASP_TX4_SEL, 0,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(asp_tx4_src_क्रमागत, CS35L36_ASP_TX4_SEL, 0,
 				  CS35L36_APS_TX_SEL_MASK, asp_tx_src_text,
 				  asp_tx_src_values);
 
-static const struct snd_kcontrol_new asp_tx4_src =
-		SOC_DAPM_ENUM("ASPTX4SRC", asp_tx4_src_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new asp_tx4_src =
+		SOC_DAPM_ENUM("ASPTX4SRC", asp_tx4_src_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(asp_tx5_src_enum, CS35L36_ASP_TX5_SEL, 0,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(asp_tx5_src_क्रमागत, CS35L36_ASP_TX5_SEL, 0,
 				  CS35L36_APS_TX_SEL_MASK, asp_tx_src_text,
 				  asp_tx_src_values);
 
-static const struct snd_kcontrol_new asp_tx5_src =
-		SOC_DAPM_ENUM("ASPTX5SRC", asp_tx5_src_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new asp_tx5_src =
+		SOC_DAPM_ENUM("ASPTX5SRC", asp_tx5_src_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(asp_tx6_src_enum, CS35L36_ASP_TX6_SEL, 0,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(asp_tx6_src_क्रमागत, CS35L36_ASP_TX6_SEL, 0,
 				  CS35L36_APS_TX_SEL_MASK, asp_tx_src_text,
 				  asp_tx_src_values);
 
-static const struct snd_kcontrol_new asp_tx6_src =
-		SOC_DAPM_ENUM("ASPTX6SRC", asp_tx6_src_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new asp_tx6_src =
+		SOC_DAPM_ENUM("ASPTX6SRC", asp_tx6_src_क्रमागत);
 
-static const struct snd_soc_dapm_widget cs35l36_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget cs35l36_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_MUX("Channel Mux", SND_SOC_NOPM, 0, 0, &cs35l36_chan_mux),
-	SND_SOC_DAPM_AIF_IN("SDIN", NULL, 0, CS35L36_ASP_RX_TX_EN, 16, 0),
+	SND_SOC_DAPM_AIF_IN("SDIN", शून्य, 0, CS35L36_ASP_RX_TX_EN, 16, 0),
 
-	SND_SOC_DAPM_OUT_DRV_E("Main AMP", CS35L36_PWR_CTRL2, 0, 0, NULL, 0,
-			       cs35l36_main_amp_event, SND_SOC_DAPM_POST_PMD |
+	SND_SOC_DAPM_OUT_DRV_E("Main AMP", CS35L36_PWR_CTRL2, 0, 0, शून्य, 0,
+			       cs35l36_मुख्य_amp_event, SND_SOC_DAPM_POST_PMD |
 			       SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
 	SND_SOC_DAPM_OUTPUT("SPK"),
 	SND_SOC_DAPM_SWITCH("AMP Enable", SND_SOC_NOPM, 0, 1, &amp_enable_ctrl),
-	SND_SOC_DAPM_MIXER("CLASS H", CS35L36_PWR_CTRL3, 4, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("CLASS H", CS35L36_PWR_CTRL3, 4, 0, शून्य, 0),
 	SND_SOC_DAPM_SWITCH_E("BOOST Enable", SND_SOC_NOPM, 0, 0, &boost_ctrl,
 			      cs35l36_boost_event, SND_SOC_DAPM_POST_PMD |
 			      SND_SOC_DAPM_POST_PMU),
 
-	SND_SOC_DAPM_AIF_OUT("ASPTX1", NULL, 0, CS35L36_ASP_RX_TX_EN, 0, 0),
-	SND_SOC_DAPM_AIF_OUT("ASPTX2", NULL, 1, CS35L36_ASP_RX_TX_EN, 1, 0),
-	SND_SOC_DAPM_AIF_OUT("ASPTX3", NULL, 2, CS35L36_ASP_RX_TX_EN, 2, 0),
-	SND_SOC_DAPM_AIF_OUT("ASPTX4", NULL, 3, CS35L36_ASP_RX_TX_EN, 3, 0),
-	SND_SOC_DAPM_AIF_OUT("ASPTX5", NULL, 4, CS35L36_ASP_RX_TX_EN, 4, 0),
-	SND_SOC_DAPM_AIF_OUT("ASPTX6", NULL, 5, CS35L36_ASP_RX_TX_EN, 5, 0),
+	SND_SOC_DAPM_AIF_OUT("ASPTX1", शून्य, 0, CS35L36_ASP_RX_TX_EN, 0, 0),
+	SND_SOC_DAPM_AIF_OUT("ASPTX2", शून्य, 1, CS35L36_ASP_RX_TX_EN, 1, 0),
+	SND_SOC_DAPM_AIF_OUT("ASPTX3", शून्य, 2, CS35L36_ASP_RX_TX_EN, 2, 0),
+	SND_SOC_DAPM_AIF_OUT("ASPTX4", शून्य, 3, CS35L36_ASP_RX_TX_EN, 3, 0),
+	SND_SOC_DAPM_AIF_OUT("ASPTX5", शून्य, 4, CS35L36_ASP_RX_TX_EN, 4, 0),
+	SND_SOC_DAPM_AIF_OUT("ASPTX6", शून्य, 5, CS35L36_ASP_RX_TX_EN, 5, 0),
 
 	SND_SOC_DAPM_MUX("ASPTX1SRC", SND_SOC_NOPM, 0, 0, &asp_tx1_src),
 	SND_SOC_DAPM_MUX("ASPTX2SRC", SND_SOC_NOPM, 0, 0, &asp_tx2_src),
@@ -680,94 +681,94 @@ static const struct snd_soc_dapm_widget cs35l36_dapm_widgets[] = {
 	SND_SOC_DAPM_MUX("ASPTX5SRC", SND_SOC_NOPM, 0, 0, &asp_tx5_src),
 	SND_SOC_DAPM_MUX("ASPTX6SRC", SND_SOC_NOPM, 0, 0, &asp_tx6_src),
 
-	SND_SOC_DAPM_ADC("VMON ADC", NULL, CS35L36_PWR_CTRL2, 12, 0),
-	SND_SOC_DAPM_ADC("IMON ADC", NULL, CS35L36_PWR_CTRL2, 13, 0),
-	SND_SOC_DAPM_ADC("VPMON ADC", NULL, CS35L36_PWR_CTRL2, 8, 0),
-	SND_SOC_DAPM_ADC("VBSTMON ADC", NULL, CS35L36_PWR_CTRL2, 9, 0),
+	SND_SOC_DAPM_ADC("VMON ADC", शून्य, CS35L36_PWR_CTRL2, 12, 0),
+	SND_SOC_DAPM_ADC("IMON ADC", शून्य, CS35L36_PWR_CTRL2, 13, 0),
+	SND_SOC_DAPM_ADC("VPMON ADC", शून्य, CS35L36_PWR_CTRL2, 8, 0),
+	SND_SOC_DAPM_ADC("VBSTMON ADC", शून्य, CS35L36_PWR_CTRL2, 9, 0),
 
 	SND_SOC_DAPM_INPUT("VP"),
 	SND_SOC_DAPM_INPUT("VBST"),
 	SND_SOC_DAPM_INPUT("VSENSE"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route cs35l36_audio_map[] = {
-	{"VPMON ADC", NULL, "VP"},
-	{"VBSTMON ADC", NULL, "VBST"},
-	{"IMON ADC", NULL, "VSENSE"},
-	{"VMON ADC", NULL, "VSENSE"},
+अटल स्थिर काष्ठा snd_soc_dapm_route cs35l36_audio_map[] = अणु
+	अणु"VPMON ADC", शून्य, "VP"पूर्ण,
+	अणु"VBSTMON ADC", शून्य, "VBST"पूर्ण,
+	अणु"IMON ADC", शून्य, "VSENSE"पूर्ण,
+	अणु"VMON ADC", शून्य, "VSENSE"पूर्ण,
 
-	{"ASPTX1SRC", "IMON", "IMON ADC"},
-	{"ASPTX1SRC", "VMON", "VMON ADC"},
-	{"ASPTX1SRC", "VBSTMON", "VBSTMON ADC"},
-	{"ASPTX1SRC", "VPMON", "VPMON ADC"},
+	अणु"ASPTX1SRC", "IMON", "IMON ADC"पूर्ण,
+	अणु"ASPTX1SRC", "VMON", "VMON ADC"पूर्ण,
+	अणु"ASPTX1SRC", "VBSTMON", "VBSTMON ADC"पूर्ण,
+	अणु"ASPTX1SRC", "VPMON", "VPMON ADC"पूर्ण,
 
-	{"ASPTX2SRC", "IMON", "IMON ADC"},
-	{"ASPTX2SRC", "VMON", "VMON ADC"},
-	{"ASPTX2SRC", "VBSTMON", "VBSTMON ADC"},
-	{"ASPTX2SRC", "VPMON", "VPMON ADC"},
+	अणु"ASPTX2SRC", "IMON", "IMON ADC"पूर्ण,
+	अणु"ASPTX2SRC", "VMON", "VMON ADC"पूर्ण,
+	अणु"ASPTX2SRC", "VBSTMON", "VBSTMON ADC"पूर्ण,
+	अणु"ASPTX2SRC", "VPMON", "VPMON ADC"पूर्ण,
 
-	{"ASPTX3SRC", "IMON", "IMON ADC"},
-	{"ASPTX3SRC", "VMON", "VMON ADC"},
-	{"ASPTX3SRC", "VBSTMON", "VBSTMON ADC"},
-	{"ASPTX3SRC", "VPMON", "VPMON ADC"},
+	अणु"ASPTX3SRC", "IMON", "IMON ADC"पूर्ण,
+	अणु"ASPTX3SRC", "VMON", "VMON ADC"पूर्ण,
+	अणु"ASPTX3SRC", "VBSTMON", "VBSTMON ADC"पूर्ण,
+	अणु"ASPTX3SRC", "VPMON", "VPMON ADC"पूर्ण,
 
-	{"ASPTX4SRC", "IMON", "IMON ADC"},
-	{"ASPTX4SRC", "VMON", "VMON ADC"},
-	{"ASPTX4SRC", "VBSTMON", "VBSTMON ADC"},
-	{"ASPTX4SRC", "VPMON", "VPMON ADC"},
+	अणु"ASPTX4SRC", "IMON", "IMON ADC"पूर्ण,
+	अणु"ASPTX4SRC", "VMON", "VMON ADC"पूर्ण,
+	अणु"ASPTX4SRC", "VBSTMON", "VBSTMON ADC"पूर्ण,
+	अणु"ASPTX4SRC", "VPMON", "VPMON ADC"पूर्ण,
 
-	{"ASPTX5SRC", "IMON", "IMON ADC"},
-	{"ASPTX5SRC", "VMON", "VMON ADC"},
-	{"ASPTX5SRC", "VBSTMON", "VBSTMON ADC"},
-	{"ASPTX5SRC", "VPMON", "VPMON ADC"},
+	अणु"ASPTX5SRC", "IMON", "IMON ADC"पूर्ण,
+	अणु"ASPTX5SRC", "VMON", "VMON ADC"पूर्ण,
+	अणु"ASPTX5SRC", "VBSTMON", "VBSTMON ADC"पूर्ण,
+	अणु"ASPTX5SRC", "VPMON", "VPMON ADC"पूर्ण,
 
-	{"ASPTX6SRC", "IMON", "IMON ADC"},
-	{"ASPTX6SRC", "VMON", "VMON ADC"},
-	{"ASPTX6SRC", "VBSTMON", "VBSTMON ADC"},
-	{"ASPTX6SRC", "VPMON", "VPMON ADC"},
+	अणु"ASPTX6SRC", "IMON", "IMON ADC"पूर्ण,
+	अणु"ASPTX6SRC", "VMON", "VMON ADC"पूर्ण,
+	अणु"ASPTX6SRC", "VBSTMON", "VBSTMON ADC"पूर्ण,
+	अणु"ASPTX6SRC", "VPMON", "VPMON ADC"पूर्ण,
 
-	{"ASPTX1", NULL, "ASPTX1SRC"},
-	{"ASPTX2", NULL, "ASPTX2SRC"},
-	{"ASPTX3", NULL, "ASPTX3SRC"},
-	{"ASPTX4", NULL, "ASPTX4SRC"},
-	{"ASPTX5", NULL, "ASPTX5SRC"},
-	{"ASPTX6", NULL, "ASPTX6SRC"},
+	अणु"ASPTX1", शून्य, "ASPTX1SRC"पूर्ण,
+	अणु"ASPTX2", शून्य, "ASPTX2SRC"पूर्ण,
+	अणु"ASPTX3", शून्य, "ASPTX3SRC"पूर्ण,
+	अणु"ASPTX4", शून्य, "ASPTX4SRC"पूर्ण,
+	अणु"ASPTX5", शून्य, "ASPTX5SRC"पूर्ण,
+	अणु"ASPTX6", शून्य, "ASPTX6SRC"पूर्ण,
 
-	{"AMP Capture", NULL, "ASPTX1"},
-	{"AMP Capture", NULL, "ASPTX2"},
-	{"AMP Capture", NULL, "ASPTX3"},
-	{"AMP Capture", NULL, "ASPTX4"},
-	{"AMP Capture", NULL, "ASPTX5"},
-	{"AMP Capture", NULL, "ASPTX6"},
+	अणु"AMP Capture", शून्य, "ASPTX1"पूर्ण,
+	अणु"AMP Capture", शून्य, "ASPTX2"पूर्ण,
+	अणु"AMP Capture", शून्य, "ASPTX3"पूर्ण,
+	अणु"AMP Capture", शून्य, "ASPTX4"पूर्ण,
+	अणु"AMP Capture", शून्य, "ASPTX5"पूर्ण,
+	अणु"AMP Capture", शून्य, "ASPTX6"पूर्ण,
 
-	{"AMP Enable", "Switch", "AMP Playback"},
-	{"SDIN", NULL, "AMP Enable"},
-	{"Channel Mux", "RX1", "SDIN"},
-	{"Channel Mux", "RX2", "SDIN"},
-	{"BOOST Enable", "Switch", "Channel Mux"},
-	{"CLASS H", NULL, "BOOST Enable"},
-	{"Main AMP", NULL, "Channel Mux"},
-	{"Main AMP", NULL, "CLASS H"},
-	{"SPK", NULL, "Main AMP"},
-};
+	अणु"AMP Enable", "Switch", "AMP Playback"पूर्ण,
+	अणु"SDIN", शून्य, "AMP Enable"पूर्ण,
+	अणु"Channel Mux", "RX1", "SDIN"पूर्ण,
+	अणु"Channel Mux", "RX2", "SDIN"पूर्ण,
+	अणु"BOOST Enable", "Switch", "Channel Mux"पूर्ण,
+	अणु"CLASS H", शून्य, "BOOST Enable"पूर्ण,
+	अणु"Main AMP", शून्य, "Channel Mux"पूर्ण,
+	अणु"Main AMP", शून्य, "CLASS H"पूर्ण,
+	अणु"SPK", शून्य, "Main AMP"पूर्ण,
+पूर्ण;
 
-static int cs35l36_set_dai_fmt(struct snd_soc_dai *component_dai,
-			       unsigned int fmt)
-{
-	struct cs35l36_private *cs35l36 =
+अटल पूर्णांक cs35l36_set_dai_fmt(काष्ठा snd_soc_dai *component_dai,
+			       अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा cs35l36_निजी *cs35l36 =
 			snd_soc_component_get_drvdata(component_dai->component);
-	unsigned int asp_fmt, lrclk_fmt, sclk_fmt, slave_mode, clk_frc;
+	अचिन्हित पूर्णांक asp_fmt, lrclk_fmt, sclk_fmt, slave_mode, clk_frc;
 
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
 		slave_mode = 1;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
 		slave_mode = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_ASP_TX_PIN_CTRL,
 				CS35L36_SCLK_MSTR_MASK,
@@ -776,16 +777,16 @@ static int cs35l36_set_dai_fmt(struct snd_soc_dai *component_dai,
 				CS35L36_LRCLK_MSTR_MASK,
 				slave_mode << CS35L36_LRCLK_MSTR_SHIFT);
 
-	switch (fmt & SND_SOC_DAIFMT_CLOCK_MASK) {
-	case SND_SOC_DAIFMT_CONT:
+	चयन (fmt & SND_SOC_DAIFMT_CLOCK_MASK) अणु
+	हाल SND_SOC_DAIFMT_CONT:
 		clk_frc = 1;
-		break;
-	case SND_SOC_DAIFMT_GATED:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_GATED:
 		clk_frc = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_ASP_TX_PIN_CTRL,
 			   CS35L36_SCLK_FRC_MASK, clk_frc <<
@@ -794,37 +795,37 @@ static int cs35l36_set_dai_fmt(struct snd_soc_dai *component_dai,
 			   CS35L36_LRCLK_FRC_MASK, clk_frc <<
 			   CS35L36_LRCLK_FRC_SHIFT);
 
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_DSP_A:
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_DSP_A:
 		asp_fmt = 0;
-		break;
-	case SND_SOC_DAIFMT_I2S:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_I2S:
 		asp_fmt = 2;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_IF:
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_IF:
 		lrclk_fmt = 1;
 		sclk_fmt = 0;
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
 		lrclk_fmt = 0;
 		sclk_fmt = 1;
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
 		lrclk_fmt = 1;
 		sclk_fmt = 1;
-		break;
-	case SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_NF:
 		lrclk_fmt = 0;
 		sclk_fmt = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_ASP_RATE_CTRL,
 			   CS35L36_LRCLK_INV_MASK,
@@ -835,207 +836,207 @@ static int cs35l36_set_dai_fmt(struct snd_soc_dai *component_dai,
 	regmap_update_bits(cs35l36->regmap, CS35L36_ASP_FORMAT,
 			   CS35L36_ASP_FMT_MASK, asp_fmt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct cs35l36_global_fs_config {
-	int rate;
-	int fs_cfg;
-};
+काष्ठा cs35l36_global_fs_config अणु
+	पूर्णांक rate;
+	पूर्णांक fs_cfg;
+पूर्ण;
 
-static const struct cs35l36_global_fs_config cs35l36_fs_rates[] = {
-	{12000, 0x01},
-	{24000, 0x02},
-	{48000, 0x03},
-	{96000, 0x04},
-	{192000, 0x05},
-	{384000, 0x06},
-	{11025, 0x09},
-	{22050, 0x0A},
-	{44100, 0x0B},
-	{88200, 0x0C},
-	{176400, 0x0D},
-	{8000, 0x11},
-	{16000, 0x12},
-	{32000, 0x13},
-};
+अटल स्थिर काष्ठा cs35l36_global_fs_config cs35l36_fs_rates[] = अणु
+	अणु12000, 0x01पूर्ण,
+	अणु24000, 0x02पूर्ण,
+	अणु48000, 0x03पूर्ण,
+	अणु96000, 0x04पूर्ण,
+	अणु192000, 0x05पूर्ण,
+	अणु384000, 0x06पूर्ण,
+	अणु11025, 0x09पूर्ण,
+	अणु22050, 0x0Aपूर्ण,
+	अणु44100, 0x0Bपूर्ण,
+	अणु88200, 0x0Cपूर्ण,
+	अणु176400, 0x0Dपूर्ण,
+	अणु8000, 0x11पूर्ण,
+	अणु16000, 0x12पूर्ण,
+	अणु32000, 0x13पूर्ण,
+पूर्ण;
 
-static int cs35l36_pcm_hw_params(struct snd_pcm_substream *substream,
-				 struct snd_pcm_hw_params *params,
-				 struct snd_soc_dai *dai)
-{
-	struct cs35l36_private *cs35l36 =
+अटल पूर्णांक cs35l36_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_pcm_hw_params *params,
+				 काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा cs35l36_निजी *cs35l36 =
 			snd_soc_component_get_drvdata(dai->component);
-	unsigned int asp_width, global_fs = params_rate(params);
-	int i;
+	अचिन्हित पूर्णांक asp_width, global_fs = params_rate(params);
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(cs35l36_fs_rates); i++) {
-		if (global_fs == cs35l36_fs_rates[i].rate)
+	क्रम (i = 0; i < ARRAY_SIZE(cs35l36_fs_rates); i++) अणु
+		अगर (global_fs == cs35l36_fs_rates[i].rate)
 			regmap_update_bits(cs35l36->regmap,
 					   CS35L36_GLOBAL_CLK_CTRL,
 					   CS35L36_GLOBAL_FS_MASK,
 					   cs35l36_fs_rates[i].fs_cfg <<
 					   CS35L36_GLOBAL_FS_SHIFT);
-	}
+	पूर्ण
 
-	switch (params_width(params)) {
-	case 16:
+	चयन (params_width(params)) अणु
+	हाल 16:
 		asp_width = CS35L36_ASP_WIDTH_16;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		asp_width = CS35L36_ASP_WIDTH_24;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		asp_width = CS35L36_ASP_WIDTH_32;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 		regmap_update_bits(cs35l36->regmap, CS35L36_ASP_FRAME_CTRL,
 				   CS35L36_ASP_RX_WIDTH_MASK,
 				   asp_width << CS35L36_ASP_RX_WIDTH_SHIFT);
-	} else {
+	पूर्ण अन्यथा अणु
 		regmap_update_bits(cs35l36->regmap, CS35L36_ASP_FRAME_CTRL,
 				   CS35L36_ASP_TX_WIDTH_MASK,
 				   asp_width << CS35L36_ASP_TX_WIDTH_SHIFT);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs35l36_dai_set_sysclk(struct snd_soc_dai *dai, int clk_id,
-				  unsigned int freq, int dir)
-{
-	struct snd_soc_component *component = dai->component;
-	struct cs35l36_private *cs35l36 =
+अटल पूर्णांक cs35l36_dai_set_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
+				  अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा cs35l36_निजी *cs35l36 =
 			snd_soc_component_get_drvdata(component);
-	int fs1, fs2;
+	पूर्णांक fs1, fs2;
 
-	if (freq > CS35L36_FS_NOM_6MHZ) {
+	अगर (freq > CS35L36_FS_NOM_6MHZ) अणु
 		fs1 = CS35L36_FS1_DEFAULT_VAL;
 		fs2 = CS35L36_FS2_DEFAULT_VAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		fs1 = 3 * ((CS35L36_FS_NOM_6MHZ * 4 + freq - 1) / freq) + 4;
 		fs2 = 5 * ((CS35L36_FS_NOM_6MHZ * 4 + freq - 1) / freq) + 4;
-	}
+	पूर्ण
 
-	regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			CS35L36_TEST_UNLOCK1);
-	regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			CS35L36_TEST_UNLOCK2);
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_TST_FS_MON0,
 			   CS35L36_FS1_WINDOW_MASK | CS35L36_FS2_WINDOW_MASK,
 			   fs1 | (fs2 << CS35L36_FS2_WINDOW_SHIFT));
 
-	regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			CS35L36_TEST_LOCK1);
-	regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			CS35L36_TEST_LOCK2);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct cs35l36_pll_config *cs35l36_get_clk_config(
-		struct cs35l36_private *cs35l36, int freq)
-{
-	int i;
+अटल स्थिर काष्ठा cs35l36_pll_config *cs35l36_get_clk_config(
+		काष्ठा cs35l36_निजी *cs35l36, पूर्णांक freq)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(cs35l36_pll_sysclk); i++) {
-		if (cs35l36_pll_sysclk[i].freq == freq)
-			return &cs35l36_pll_sysclk[i];
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(cs35l36_pll_sysclk); i++) अणु
+		अगर (cs35l36_pll_sysclk[i].freq == freq)
+			वापस &cs35l36_pll_sysclk[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static const unsigned int cs35l36_src_rates[] = {
+अटल स्थिर अचिन्हित पूर्णांक cs35l36_src_rates[] = अणु
 	8000, 12000, 11025, 16000, 22050, 24000, 32000,
 	44100, 48000, 88200, 96000, 176400, 192000, 384000
-};
+पूर्ण;
 
-static const struct snd_pcm_hw_constraint_list cs35l36_constraints = {
+अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list cs35l36_स्थिरraपूर्णांकs = अणु
 	.count  = ARRAY_SIZE(cs35l36_src_rates),
 	.list   = cs35l36_src_rates,
-};
+पूर्ण;
 
-static int cs35l36_pcm_startup(struct snd_pcm_substream *substream,
-			       struct snd_soc_dai *dai)
-{
-	snd_pcm_hw_constraint_list(substream->runtime, 0,
-				SNDRV_PCM_HW_PARAM_RATE, &cs35l36_constraints);
+अटल पूर्णांक cs35l36_pcm_startup(काष्ठा snd_pcm_substream *substream,
+			       काष्ठा snd_soc_dai *dai)
+अणु
+	snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
+				SNDRV_PCM_HW_PARAM_RATE, &cs35l36_स्थिरraपूर्णांकs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops cs35l36_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops cs35l36_ops = अणु
 	.startup = cs35l36_pcm_startup,
 	.set_fmt = cs35l36_set_dai_fmt,
 	.hw_params = cs35l36_pcm_hw_params,
 	.set_sysclk = cs35l36_dai_set_sysclk,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver cs35l36_dai[] = {
-	{
+अटल काष्ठा snd_soc_dai_driver cs35l36_dai[] = अणु
+	अणु
 		.name = "cs35l36-pcm",
 		.id = 0,
-		.playback = {
+		.playback = अणु
 			.stream_name = "AMP Playback",
 			.channels_min = 1,
 			.channels_max = 8,
 			.rates = SNDRV_PCM_RATE_KNOT,
-			.formats = CS35L36_RX_FORMATS,
-		},
-		.capture = {
+			.क्रमmats = CS35L36_RX_FORMATS,
+		पूर्ण,
+		.capture = अणु
 			.stream_name = "AMP Capture",
 			.channels_min = 1,
 			.channels_max = 8,
 			.rates = SNDRV_PCM_RATE_KNOT,
-			.formats = CS35L36_TX_FORMATS,
-		},
+			.क्रमmats = CS35L36_TX_FORMATS,
+		पूर्ण,
 		.ops = &cs35l36_ops,
 		.symmetric_rate = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int cs35l36_component_set_sysclk(struct snd_soc_component *component,
-				int clk_id, int source, unsigned int freq,
-				int dir)
-{
-	struct cs35l36_private *cs35l36 =
+अटल पूर्णांक cs35l36_component_set_sysclk(काष्ठा snd_soc_component *component,
+				पूर्णांक clk_id, पूर्णांक source, अचिन्हित पूर्णांक freq,
+				पूर्णांक dir)
+अणु
+	काष्ठा cs35l36_निजी *cs35l36 =
 			snd_soc_component_get_drvdata(component);
-	const struct cs35l36_pll_config *clk_cfg;
-	int prev_clksrc;
-	bool pdm_switch;
+	स्थिर काष्ठा cs35l36_pll_config *clk_cfg;
+	पूर्णांक prev_clksrc;
+	bool pdm_चयन;
 
 	prev_clksrc = cs35l36->clksrc;
 
-	switch (clk_id) {
-	case 0:
+	चयन (clk_id) अणु
+	हाल 0:
 		cs35l36->clksrc = CS35L36_PLLSRC_SCLK;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		cs35l36->clksrc = CS35L36_PLLSRC_LRCLK;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		cs35l36->clksrc = CS35L36_PLLSRC_PDMCLK;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		cs35l36->clksrc = CS35L36_PLLSRC_SELF;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		cs35l36->clksrc = CS35L36_PLLSRC_MCLK;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	clk_cfg = cs35l36_get_clk_config(cs35l36, freq);
-	if (clk_cfg == NULL) {
+	अगर (clk_cfg == शून्य) अणु
 		dev_err(component->dev, "Invalid CLK Config Freq: %d\n", freq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_PLL_CLK_CTRL,
 			   CS35L36_PLL_OPENLOOP_MASK,
@@ -1056,14 +1057,14 @@ static int cs35l36_component_set_sysclk(struct snd_soc_component *component,
 			   CS35L36_PLL_REFCLK_EN_MASK,
 			   1 << CS35L36_PLL_REFCLK_EN_SHIFT);
 
-	if (cs35l36->rev_id == CS35L36_REV_A0) {
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+	अगर (cs35l36->rev_id == CS35L36_REV_A0) अणु
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			     CS35L36_TEST_UNLOCK1);
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			     CS35L36_TEST_UNLOCK2);
 
-		regmap_write(cs35l36->regmap, CS35L36_DCO_CTRL, 0x00036DA8);
-		regmap_write(cs35l36->regmap, CS35L36_MISC_CTRL, 0x0100EE0E);
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_DCO_CTRL, 0x00036DA8);
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_MISC_CTRL, 0x0100EE0E);
 
 		regmap_update_bits(cs35l36->regmap, CS35L36_PLL_LOOP_PARAMS,
 				   CS35L36_PLL_IGAIN_MASK,
@@ -1073,17 +1074,17 @@ static int cs35l36_component_set_sysclk(struct snd_soc_component *component,
 				   CS35L36_PLL_FFL_IGAIN_MASK,
 				   clk_cfg->fll_igain);
 
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			     CS35L36_TEST_LOCK1);
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			     CS35L36_TEST_LOCK2);
-	}
+	पूर्ण
 
-	if (cs35l36->clksrc == CS35L36_PLLSRC_PDMCLK) {
-		pdm_switch = cs35l36->ldm_mode_sel &&
+	अगर (cs35l36->clksrc == CS35L36_PLLSRC_PDMCLK) अणु
+		pdm_चयन = cs35l36->ldm_mode_sel &&
 			     (prev_clksrc != CS35L36_PLLSRC_PDMCLK);
 
-		if (pdm_switch)
+		अगर (pdm_चयन)
 			regmap_update_bits(cs35l36->regmap, CS35L36_NG_CFG,
 					   CS35L36_NG_DELAY_MASK,
 					   0 << CS35L36_NG_DELAY_SHIFT);
@@ -1092,15 +1093,15 @@ static int cs35l36_component_set_sysclk(struct snd_soc_component *component,
 				   CS35L36_PDM_MODE_MASK,
 				   1 << CS35L36_PDM_MODE_SHIFT);
 
-		if (pdm_switch)
+		अगर (pdm_चयन)
 			regmap_update_bits(cs35l36->regmap, CS35L36_NG_CFG,
 					   CS35L36_NG_DELAY_MASK,
 					   3 << CS35L36_NG_DELAY_SHIFT);
-	} else {
-		pdm_switch = cs35l36->ldm_mode_sel &&
+	पूर्ण अन्यथा अणु
+		pdm_चयन = cs35l36->ldm_mode_sel &&
 			     (prev_clksrc == CS35L36_PLLSRC_PDMCLK);
 
-		if (pdm_switch)
+		अगर (pdm_चयन)
 			regmap_update_bits(cs35l36->regmap, CS35L36_NG_CFG,
 					   CS35L36_NG_DELAY_MASK,
 					   0 << CS35L36_NG_DELAY_SHIFT);
@@ -1109,17 +1110,17 @@ static int cs35l36_component_set_sysclk(struct snd_soc_component *component,
 				   CS35L36_PDM_MODE_MASK,
 				   0 << CS35L36_PDM_MODE_SHIFT);
 
-		if (pdm_switch)
+		अगर (pdm_चयन)
 			regmap_update_bits(cs35l36->regmap, CS35L36_NG_CFG,
 					   CS35L36_NG_DELAY_MASK,
 					   3 << CS35L36_NG_DELAY_SHIFT);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs35l36_boost_inductor(struct cs35l36_private *cs35l36, int inductor)
-{
+अटल पूर्णांक cs35l36_boost_inductor(काष्ठा cs35l36_निजी *cs35l36, पूर्णांक inductor)
+अणु
 	regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_COEFF,
 			   CS35L36_BSTCVRT_K1_MASK, 0x3C);
 	regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_COEFF,
@@ -1128,44 +1129,44 @@ static int cs35l36_boost_inductor(struct cs35l36_private *cs35l36, int inductor)
 	regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_SW_FREQ,
 			   CS35L36_BSTCVRT_CCMFREQ_MASK, 0x00);
 
-	switch (inductor) {
-	case 1000: /* 1 uH */
+	चयन (inductor) अणु
+	हाल 1000: /* 1 uH */
 		regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_SLOPE_LBST,
 				   CS35L36_BSTCVRT_SLOPE_MASK,
 				   0x75 << CS35L36_BSTCVRT_SLOPE_SHIFT);
 		regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_SLOPE_LBST,
 				   CS35L36_BSTCVRT_LBSTVAL_MASK, 0x00);
-		break;
-	case 1200: /* 1.2 uH */
+		अवरोध;
+	हाल 1200: /* 1.2 uH */
 		regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_SLOPE_LBST,
 				   CS35L36_BSTCVRT_SLOPE_MASK,
 				   0x6B << CS35L36_BSTCVRT_SLOPE_SHIFT);
 		regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_SLOPE_LBST,
 				   CS35L36_BSTCVRT_LBSTVAL_MASK, 0x01);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(cs35l36->dev, "%s Invalid Inductor Value %d uH\n",
 			__func__, inductor);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs35l36_component_probe(struct snd_soc_component *component)
-{
-	struct cs35l36_private *cs35l36 =
+अटल पूर्णांक cs35l36_component_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा cs35l36_निजी *cs35l36 =
 			snd_soc_component_get_drvdata(component);
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if ((cs35l36->rev_id == CS35L36_REV_A0) && cs35l36->pdata.dcm_mode) {
+	अगर ((cs35l36->rev_id == CS35L36_REV_A0) && cs35l36->pdata.dcm_mode) अणु
 		regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_DCM_CTRL,
 				   CS35L36_DCM_AUTO_MASK,
 				   CS35L36_DCM_AUTO_MASK);
 
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			     CS35L36_TEST_UNLOCK1);
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			     CS35L36_TEST_UNLOCK2);
 
 		regmap_update_bits(cs35l36->regmap, CS35L36_BST_TST_MANUAL,
@@ -1175,66 +1176,66 @@ static int cs35l36_component_probe(struct snd_soc_component *component)
 				   CS35L36_BST_MAN_IPKCOMP_EN_MASK,
 				   CS35L36_BST_MAN_IPKCOMP_EN_MASK);
 
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 				CS35L36_TEST_LOCK1);
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 				CS35L36_TEST_LOCK2);
-	}
+	पूर्ण
 
-	if (cs35l36->pdata.amp_pcm_inv)
+	अगर (cs35l36->pdata.amp_pcm_inv)
 		regmap_update_bits(cs35l36->regmap, CS35L36_AMP_DIG_VOL_CTRL,
 				   CS35L36_AMP_PCM_INV_MASK,
 				   CS35L36_AMP_PCM_INV_MASK);
 
-	if (cs35l36->pdata.multi_amp_mode)
+	अगर (cs35l36->pdata.multi_amp_mode)
 		regmap_update_bits(cs35l36->regmap, CS35L36_ASP_TX_PIN_CTRL,
 				   CS35L36_ASP_TX_HIZ_MASK,
 				   CS35L36_ASP_TX_HIZ_MASK);
 
-	if (cs35l36->pdata.imon_pol_inv)
+	अगर (cs35l36->pdata.imon_pol_inv)
 		regmap_update_bits(cs35l36->regmap, CS35L36_VI_SPKMON_FILT,
 				   CS35L36_IMON_POL_MASK, 0);
 
-	if (cs35l36->pdata.vmon_pol_inv)
+	अगर (cs35l36->pdata.vmon_pol_inv)
 		regmap_update_bits(cs35l36->regmap, CS35L36_VI_SPKMON_FILT,
 				   CS35L36_VMON_POL_MASK, 0);
 
-	if (cs35l36->pdata.bst_vctl)
+	अगर (cs35l36->pdata.bst_vctl)
 		regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_VCTRL1,
 				   CS35L35_BSTCVRT_CTL_MASK,
 				   cs35l36->pdata.bst_vctl);
 
-	if (cs35l36->pdata.bst_vctl_sel)
+	अगर (cs35l36->pdata.bst_vctl_sel)
 		regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_VCTRL2,
 				   CS35L35_BSTCVRT_CTL_SEL_MASK,
 				   cs35l36->pdata.bst_vctl_sel);
 
-	if (cs35l36->pdata.bst_ipk)
+	अगर (cs35l36->pdata.bst_ipk)
 		regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_PEAK_CUR,
 				   CS35L36_BST_IPK_MASK,
 				   cs35l36->pdata.bst_ipk);
 
-	if (cs35l36->pdata.boost_ind) {
+	अगर (cs35l36->pdata.boost_ind) अणु
 		ret = cs35l36_boost_inductor(cs35l36, cs35l36->pdata.boost_ind);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(cs35l36->dev,
 				"Boost inductor config failed(%d)\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (cs35l36->pdata.temp_warn_thld)
+	अगर (cs35l36->pdata.temp_warn_thld)
 		regmap_update_bits(cs35l36->regmap, CS35L36_DTEMP_WARN_THLD,
 				   CS35L36_TEMP_THLD_MASK,
 				   cs35l36->pdata.temp_warn_thld);
 
-	if (cs35l36->pdata.irq_drv_sel)
+	अगर (cs35l36->pdata.irq_drv_sel)
 		regmap_update_bits(cs35l36->regmap, CS35L36_PAD_INTERFACE,
 				   CS35L36_INT_DRV_SEL_MASK,
 				   cs35l36->pdata.irq_drv_sel <<
 				   CS35L36_INT_DRV_SEL_SHIFT);
 
-	if (cs35l36->pdata.irq_gpio_sel)
+	अगर (cs35l36->pdata.irq_gpio_sel)
 		regmap_update_bits(cs35l36->regmap, CS35L36_PAD_INTERFACE,
 				   CS35L36_INT_GPIO_SEL_MASK,
 				   cs35l36->pdata.irq_gpio_sel <<
@@ -1244,19 +1245,19 @@ static int cs35l36_component_probe(struct snd_soc_component *component)
 	 * Rev B0 has 2 versions
 	 * L36 is 10V
 	 * L37 is 12V
-	 * If L36 we need to clamp some values for safety
+	 * If L36 we need to clamp some values क्रम safety
 	 * after probe has setup dt values. We want to make
-	 * sure we dont miss any values set in probe
+	 * sure we करोnt miss any values set in probe
 	 */
-	if (cs35l36->chip_version == CS35L36_10V_L36) {
+	अगर (cs35l36->chip_version == CS35L36_10V_L36) अणु
 		regmap_update_bits(cs35l36->regmap,
 				   CS35L36_BSTCVRT_OVERVOLT_CTRL,
 				   CS35L36_BST_OVP_THLD_MASK,
 				   CS35L36_BST_OVP_THLD_11V);
 
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			     CS35L36_TEST_UNLOCK1);
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			     CS35L36_TEST_UNLOCK2);
 
 		regmap_update_bits(cs35l36->regmap, CS35L36_BST_ANA2_TEST,
@@ -1269,78 +1270,78 @@ static int cs35l36_component_probe(struct snd_soc_component *component)
 		regmap_update_bits(cs35l36->regmap, CS35L36_BSTCVRT_VCTRL1,
 				   CS35L35_BSTCVRT_CTL_MASK,
 				   CS35L36_BST_CTRL_10V_CLAMP);
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			     CS35L36_TEST_LOCK1);
-		regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+		regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 			     CS35L36_TEST_LOCK2);
-	}
+	पूर्ण
 
 	/*
 	 * RevA and B require the disabling of
 	 * SYNC_GLOBAL_OVR when GLOBAL_EN = 0.
-	 * Just turn it off from default
+	 * Just turn it off from शेष
 	 */
 	regmap_update_bits(cs35l36->regmap, CS35L36_CTRL_OVRRIDE,
 			   CS35L36_SYNC_GLOBAL_OVR_MASK,
 			   0 << CS35L36_SYNC_GLOBAL_OVR_SHIFT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver soc_component_dev_cs35l36 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_cs35l36 = अणु
 	.probe			= &cs35l36_component_probe,
 	.set_sysclk		= cs35l36_component_set_sysclk,
-	.dapm_widgets		= cs35l36_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(cs35l36_dapm_widgets),
+	.dapm_widमाला_लो		= cs35l36_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(cs35l36_dapm_widमाला_लो),
 	.dapm_routes		= cs35l36_audio_map,
 	.num_dapm_routes	= ARRAY_SIZE(cs35l36_audio_map),
 	.controls		= cs35l36_aud_controls,
 	.num_controls		= ARRAY_SIZE(cs35l36_aud_controls),
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static struct regmap_config cs35l36_regmap = {
+अटल काष्ठा regmap_config cs35l36_regmap = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = CS35L36_PAC_PMEM_WORD1023,
-	.reg_defaults = cs35l36_reg,
-	.num_reg_defaults = ARRAY_SIZE(cs35l36_reg),
+	.max_रेजिस्टर = CS35L36_PAC_PMEM_WORD1023,
+	.reg_शेषs = cs35l36_reg,
+	.num_reg_शेषs = ARRAY_SIZE(cs35l36_reg),
 	.precious_reg = cs35l36_precious_reg,
-	.volatile_reg = cs35l36_volatile_reg,
-	.readable_reg = cs35l36_readable_reg,
+	.अस्थिर_reg = cs35l36_अस्थिर_reg,
+	.पढ़ोable_reg = cs35l36_पढ़ोable_reg,
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static irqreturn_t cs35l36_irq(int irq, void *data)
-{
-	struct cs35l36_private *cs35l36 = data;
-	unsigned int status[4];
-	unsigned int masks[4];
-	int ret = IRQ_NONE;
+अटल irqवापस_t cs35l36_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा cs35l36_निजी *cs35l36 = data;
+	अचिन्हित पूर्णांक status[4];
+	अचिन्हित पूर्णांक masks[4];
+	पूर्णांक ret = IRQ_NONE;
 
-	/* ack the irq by reading all status registers */
-	regmap_bulk_read(cs35l36->regmap, CS35L36_INT1_STATUS, status,
+	/* ack the irq by पढ़ोing all status रेजिस्टरs */
+	regmap_bulk_पढ़ो(cs35l36->regmap, CS35L36_INT1_STATUS, status,
 			 ARRAY_SIZE(status));
 
-	regmap_bulk_read(cs35l36->regmap, CS35L36_INT1_MASK, masks,
+	regmap_bulk_पढ़ो(cs35l36->regmap, CS35L36_INT1_MASK, masks,
 			 ARRAY_SIZE(masks));
 
-	/* Check to see if unmasked bits are active */
-	if (!(status[0] & ~masks[0]) && !(status[1] & ~masks[1]) &&
-		!(status[2] & ~masks[2]) && !(status[3] & ~masks[3])) {
-		return IRQ_NONE;
-	}
+	/* Check to see अगर unmasked bits are active */
+	अगर (!(status[0] & ~masks[0]) && !(status[1] & ~masks[1]) &&
+		!(status[2] & ~masks[2]) && !(status[3] & ~masks[3])) अणु
+		वापस IRQ_NONE;
+	पूर्ण
 
 	/*
-	 * The following interrupts require a
+	 * The following पूर्णांकerrupts require a
 	 * protection release cycle to get the
 	 * speaker out of Safe-Mode.
 	 */
-	if (status[2] & CS35L36_AMP_SHORT_ERR) {
+	अगर (status[2] & CS35L36_AMP_SHORT_ERR) अणु
 		dev_crit(cs35l36->dev, "Amp short error\n");
 		regmap_update_bits(cs35l36->regmap, CS35L36_PROTECT_REL_ERR,
 				   CS35L36_AMP_SHORT_ERR_RLS, 0);
@@ -1353,9 +1354,9 @@ static irqreturn_t cs35l36_irq(int irq, void *data)
 				   CS35L36_AMP_SHORT_ERR,
 				   CS35L36_AMP_SHORT_ERR);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (status[0] & CS35L36_TEMP_WARN) {
+	अगर (status[0] & CS35L36_TEMP_WARN) अणु
 		dev_crit(cs35l36->dev, "Over temperature warning\n");
 		regmap_update_bits(cs35l36->regmap, CS35L36_PROTECT_REL_ERR,
 				   CS35L36_TEMP_WARN_ERR_RLS, 0);
@@ -1367,9 +1368,9 @@ static irqreturn_t cs35l36_irq(int irq, void *data)
 		regmap_update_bits(cs35l36->regmap, CS35L36_INT1_STATUS,
 				   CS35L36_TEMP_WARN, CS35L36_TEMP_WARN);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (status[0] & CS35L36_TEMP_ERR) {
+	अगर (status[0] & CS35L36_TEMP_ERR) अणु
 		dev_crit(cs35l36->dev, "Over temperature error\n");
 		regmap_update_bits(cs35l36->regmap, CS35L36_PROTECT_REL_ERR,
 				   CS35L36_TEMP_ERR_RLS, 0);
@@ -1380,9 +1381,9 @@ static irqreturn_t cs35l36_irq(int irq, void *data)
 		regmap_update_bits(cs35l36->regmap, CS35L36_INT1_STATUS,
 				   CS35L36_TEMP_ERR, CS35L36_TEMP_ERR);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (status[0] & CS35L36_BST_OVP_ERR) {
+	अगर (status[0] & CS35L36_BST_OVP_ERR) अणु
 		dev_crit(cs35l36->dev, "VBST Over Voltage error\n");
 		regmap_update_bits(cs35l36->regmap, CS35L36_PROTECT_REL_ERR,
 				   CS35L36_TEMP_ERR_RLS, 0);
@@ -1393,9 +1394,9 @@ static irqreturn_t cs35l36_irq(int irq, void *data)
 		regmap_update_bits(cs35l36->regmap, CS35L36_INT1_STATUS,
 				   CS35L36_BST_OVP_ERR, CS35L36_BST_OVP_ERR);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (status[0] & CS35L36_BST_DCM_UVP_ERR) {
+	अगर (status[0] & CS35L36_BST_DCM_UVP_ERR) अणु
 		dev_crit(cs35l36->dev, "DCM VBST Under Voltage Error\n");
 		regmap_update_bits(cs35l36->regmap, CS35L36_PROTECT_REL_ERR,
 				   CS35L36_BST_UVP_ERR_RLS, 0);
@@ -1408,9 +1409,9 @@ static irqreturn_t cs35l36_irq(int irq, void *data)
 				   CS35L36_BST_DCM_UVP_ERR,
 				   CS35L36_BST_DCM_UVP_ERR);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (status[0] & CS35L36_BST_SHORT_ERR) {
+	अगर (status[0] & CS35L36_BST_SHORT_ERR) अणु
 		dev_crit(cs35l36->dev, "LBST SHORT error!\n");
 		regmap_update_bits(cs35l36->regmap, CS35L36_PROTECT_REL_ERR,
 				   CS35L36_BST_SHORT_ERR_RLS, 0);
@@ -1423,193 +1424,193 @@ static irqreturn_t cs35l36_irq(int irq, void *data)
 				   CS35L36_BST_SHORT_ERR,
 				   CS35L36_BST_SHORT_ERR);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cs35l36_handle_of_data(struct i2c_client *i2c_client,
-				struct cs35l36_platform_data *pdata)
-{
-	struct device_node *np = i2c_client->dev.of_node;
-	struct cs35l36_vpbr_cfg *vpbr_config = &pdata->vpbr_config;
-	struct device_node *vpbr_node;
-	unsigned int val;
-	int ret;
+अटल पूर्णांक cs35l36_handle_of_data(काष्ठा i2c_client *i2c_client,
+				काष्ठा cs35l36_platक्रमm_data *pdata)
+अणु
+	काष्ठा device_node *np = i2c_client->dev.of_node;
+	काष्ठा cs35l36_vpbr_cfg *vpbr_config = &pdata->vpbr_config;
+	काष्ठा device_node *vpbr_node;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	if (!np)
-		return 0;
+	अगर (!np)
+		वापस 0;
 
-	ret = of_property_read_u32(np, "cirrus,boost-ctl-millivolt", &val);
-	if (!ret) {
-		if (val < 2550 || val > 12000) {
+	ret = of_property_पढ़ो_u32(np, "cirrus,boost-ctl-millivolt", &val);
+	अगर (!ret) अणु
+		अगर (val < 2550 || val > 12000) अणु
 			dev_err(&i2c_client->dev,
 				"Invalid Boost Voltage %d mV\n", val);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		pdata->bst_vctl = (((val - 2550) / 100) + 1) << 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&i2c_client->dev,
 			"Unable to find required parameter 'cirrus,boost-ctl-millivolt'");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = of_property_read_u32(np, "cirrus,boost-ctl-select", &val);
-	if (!ret)
+	ret = of_property_पढ़ो_u32(np, "cirrus,boost-ctl-select", &val);
+	अगर (!ret)
 		pdata->bst_vctl_sel = val | CS35L36_VALID_PDATA;
 
-	ret = of_property_read_u32(np, "cirrus,boost-peak-milliamp", &val);
-	if (!ret) {
-		if (val < 1600 || val > 4500) {
+	ret = of_property_पढ़ो_u32(np, "cirrus,boost-peak-milliamp", &val);
+	अगर (!ret) अणु
+		अगर (val < 1600 || val > 4500) अणु
 			dev_err(&i2c_client->dev,
 				"Invalid Boost Peak Current %u mA\n", val);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		pdata->bst_ipk = (val - 1600) / 50;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&i2c_client->dev,
 			"Unable to find required parameter 'cirrus,boost-peak-milliamp'");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pdata->multi_amp_mode = of_property_read_bool(np,
+	pdata->multi_amp_mode = of_property_पढ़ो_bool(np,
 					"cirrus,multi-amp-mode");
 
-	pdata->dcm_mode = of_property_read_bool(np,
+	pdata->dcm_mode = of_property_पढ़ो_bool(np,
 					"cirrus,dcm-mode-enable");
 
-	pdata->amp_pcm_inv = of_property_read_bool(np,
+	pdata->amp_pcm_inv = of_property_पढ़ो_bool(np,
 					"cirrus,amp-pcm-inv");
 
-	pdata->imon_pol_inv = of_property_read_bool(np,
+	pdata->imon_pol_inv = of_property_पढ़ो_bool(np,
 					"cirrus,imon-pol-inv");
 
-	pdata->vmon_pol_inv = of_property_read_bool(np,
+	pdata->vmon_pol_inv = of_property_पढ़ो_bool(np,
 					"cirrus,vmon-pol-inv");
 
-	if (of_property_read_u32(np, "cirrus,temp-warn-threshold", &val) >= 0)
+	अगर (of_property_पढ़ो_u32(np, "cirrus,temp-warn-threshold", &val) >= 0)
 		pdata->temp_warn_thld = val | CS35L36_VALID_PDATA;
 
-	if (of_property_read_u32(np, "cirrus,boost-ind-nanohenry", &val) >= 0) {
+	अगर (of_property_पढ़ो_u32(np, "cirrus,boost-ind-nanohenry", &val) >= 0) अणु
 		pdata->boost_ind = val;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&i2c_client->dev, "Inductor not specified.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (of_property_read_u32(np, "cirrus,irq-drive-select", &val) >= 0)
+	अगर (of_property_पढ़ो_u32(np, "cirrus,irq-drive-select", &val) >= 0)
 		pdata->irq_drv_sel = val | CS35L36_VALID_PDATA;
 
-	if (of_property_read_u32(np, "cirrus,irq-gpio-select", &val) >= 0)
+	अगर (of_property_पढ़ो_u32(np, "cirrus,irq-gpio-select", &val) >= 0)
 		pdata->irq_gpio_sel = val | CS35L36_VALID_PDATA;
 
 	/* VPBR Config */
 	vpbr_node = of_get_child_by_name(np, "cirrus,vpbr-config");
 	vpbr_config->is_present = vpbr_node ? true : false;
-	if (vpbr_config->is_present) {
-		if (of_property_read_u32(vpbr_node, "cirrus,vpbr-en",
+	अगर (vpbr_config->is_present) अणु
+		अगर (of_property_पढ़ो_u32(vpbr_node, "cirrus,vpbr-en",
 					 &val) >= 0)
 			vpbr_config->vpbr_en = val;
-		if (of_property_read_u32(vpbr_node, "cirrus,vpbr-thld",
+		अगर (of_property_पढ़ो_u32(vpbr_node, "cirrus,vpbr-thld",
 					 &val) >= 0)
 			vpbr_config->vpbr_thld = val;
-		if (of_property_read_u32(vpbr_node, "cirrus,vpbr-atk-rate",
+		अगर (of_property_पढ़ो_u32(vpbr_node, "cirrus,vpbr-atk-rate",
 					 &val) >= 0)
 			vpbr_config->vpbr_atk_rate = val;
-		if (of_property_read_u32(vpbr_node, "cirrus,vpbr-atk-vol",
+		अगर (of_property_पढ़ो_u32(vpbr_node, "cirrus,vpbr-atk-vol",
 					 &val) >= 0)
 			vpbr_config->vpbr_atk_vol = val;
-		if (of_property_read_u32(vpbr_node, "cirrus,vpbr-max-attn",
+		अगर (of_property_पढ़ो_u32(vpbr_node, "cirrus,vpbr-max-attn",
 					 &val) >= 0)
 			vpbr_config->vpbr_max_attn = val;
-		if (of_property_read_u32(vpbr_node, "cirrus,vpbr-wait",
+		अगर (of_property_पढ़ो_u32(vpbr_node, "cirrus,vpbr-wait",
 					 &val) >= 0)
-			vpbr_config->vpbr_wait = val;
-		if (of_property_read_u32(vpbr_node, "cirrus,vpbr-rel-rate",
+			vpbr_config->vpbr_रुको = val;
+		अगर (of_property_पढ़ो_u32(vpbr_node, "cirrus,vpbr-rel-rate",
 					 &val) >= 0)
 			vpbr_config->vpbr_rel_rate = val;
-		if (of_property_read_u32(vpbr_node, "cirrus,vpbr-mute-en",
+		अगर (of_property_पढ़ो_u32(vpbr_node, "cirrus,vpbr-mute-en",
 					 &val) >= 0)
 			vpbr_config->vpbr_mute_en = val;
-	}
+	पूर्ण
 	of_node_put(vpbr_node);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs35l36_pac(struct cs35l36_private *cs35l36)
-{
-	int ret, count;
-	unsigned int val;
+अटल पूर्णांक cs35l36_pac(काष्ठा cs35l36_निजी *cs35l36)
+अणु
+	पूर्णांक ret, count;
+	अचिन्हित पूर्णांक val;
 
-	if (cs35l36->rev_id != CS35L36_REV_B0)
-		return 0;
+	अगर (cs35l36->rev_id != CS35L36_REV_B0)
+		वापस 0;
 
 	/*
-	 * Magic code for internal PAC
+	 * Magic code क्रम पूर्णांकernal PAC
 	 */
-	regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 		     CS35L36_TEST_UNLOCK1);
-	regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 		     CS35L36_TEST_UNLOCK2);
 
 	usleep_range(9500, 10500);
 
-	regmap_write(cs35l36->regmap, CS35L36_PAC_CTL1,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_PAC_CTL1,
 		     CS35L36_PAC_RESET);
-	regmap_write(cs35l36->regmap, CS35L36_PAC_CTL3,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_PAC_CTL3,
 		     CS35L36_PAC_MEM_ACCESS);
-	regmap_write(cs35l36->regmap, CS35L36_PAC_PMEM_WORD0,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_PAC_PMEM_WORD0,
 		     CS35L36_B0_PAC_PATCH);
 
-	regmap_write(cs35l36->regmap, CS35L36_PAC_CTL3,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_PAC_CTL3,
 		     CS35L36_PAC_MEM_ACCESS_CLR);
-	regmap_write(cs35l36->regmap, CS35L36_PAC_CTL1,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_PAC_CTL1,
 		     CS35L36_PAC_ENABLE_MASK);
 
 	usleep_range(9500, 10500);
 
-	ret = regmap_read(cs35l36->regmap, CS35L36_INT4_STATUS, &val);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(cs35l36->regmap, CS35L36_INT4_STATUS, &val);
+	अगर (ret < 0) अणु
 		dev_err(cs35l36->dev, "Failed to read int4_status %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	count = 0;
-	while (!(val & CS35L36_MCU_CONFIG_CLR)) {
+	जबतक (!(val & CS35L36_MCU_CONFIG_CLR)) अणु
 		usleep_range(100, 200);
 		count++;
 
-		ret = regmap_read(cs35l36->regmap, CS35L36_INT4_STATUS,
+		ret = regmap_पढ़ो(cs35l36->regmap, CS35L36_INT4_STATUS,
 				  &val);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(cs35l36->dev, "Failed to read int4_status %d\n",
 				ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (count >= 100)
-			return -EINVAL;
-	}
+		अगर (count >= 100)
+			वापस -EINVAL;
+	पूर्ण
 
-	regmap_write(cs35l36->regmap, CS35L36_INT4_STATUS,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_INT4_STATUS,
 		     CS35L36_MCU_CONFIG_CLR);
 	regmap_update_bits(cs35l36->regmap, CS35L36_PAC_CTL1,
 			   CS35L36_PAC_ENABLE_MASK, 0);
 
-	regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 		     CS35L36_TEST_LOCK1);
-	regmap_write(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_TESTKEY_CTRL,
 		     CS35L36_TEST_LOCK2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cs35l36_apply_vpbr_config(struct cs35l36_private *cs35l36)
-{
-	struct cs35l36_platform_data *pdata = &cs35l36->pdata;
-	struct cs35l36_vpbr_cfg *vpbr_config = &pdata->vpbr_config;
+अटल व्योम cs35l36_apply_vpbr_config(काष्ठा cs35l36_निजी *cs35l36)
+अणु
+	काष्ठा cs35l36_platक्रमm_data *pdata = &cs35l36->pdata;
+	काष्ठा cs35l36_vpbr_cfg *vpbr_config = &pdata->vpbr_config;
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_PWR_CTRL3,
 			   CS35L36_VPBR_EN_MASK,
@@ -1633,7 +1634,7 @@ static void cs35l36_apply_vpbr_config(struct cs35l36_private *cs35l36)
 			   CS35L36_VPBR_ATK_RATE_SHIFT);
 	regmap_update_bits(cs35l36->regmap, CS35L36_VPBR_CFG,
 			   CS35L36_VPBR_WAIT_MASK,
-			   vpbr_config->vpbr_wait <<
+			   vpbr_config->vpbr_रुको <<
 			   CS35L36_VPBR_WAIT_SHIFT);
 	regmap_update_bits(cs35l36->regmap, CS35L36_VPBR_CFG,
 			   CS35L36_VPBR_REL_RATE_MASK,
@@ -1643,313 +1644,313 @@ static void cs35l36_apply_vpbr_config(struct cs35l36_private *cs35l36)
 			   CS35L36_VPBR_MUTE_EN_MASK,
 			   vpbr_config->vpbr_mute_en <<
 			   CS35L36_VPBR_MUTE_EN_SHIFT);
-}
+पूर्ण
 
-static const struct reg_sequence cs35l36_reva0_errata_patch[] = {
-	{ CS35L36_TESTKEY_CTRL,		CS35L36_TEST_UNLOCK1 },
-	{ CS35L36_TESTKEY_CTRL,		CS35L36_TEST_UNLOCK2 },
+अटल स्थिर काष्ठा reg_sequence cs35l36_reva0_errata_patch[] = अणु
+	अणु CS35L36_TESTKEY_CTRL,		CS35L36_TEST_UNLOCK1 पूर्ण,
+	अणु CS35L36_TESTKEY_CTRL,		CS35L36_TEST_UNLOCK2 पूर्ण,
 	/* Errata Writes */
-	{ CS35L36_OTP_CTRL1,		0x00002060 },
-	{ CS35L36_OTP_CTRL2,		0x00000001 },
-	{ CS35L36_OTP_CTRL1,		0x00002460 },
-	{ CS35L36_OTP_CTRL2,		0x00000001 },
-	{ 0x00002088,			0x012A1838 },
-	{ 0x00003014,			0x0100EE0E },
-	{ 0x00003008,			0x0008184A },
-	{ 0x00007418,			0x509001C8 },
-	{ 0x00007064,			0x0929A800 },
-	{ 0x00002D10,			0x0002C01C },
-	{ 0x0000410C,			0x00000A11 },
-	{ 0x00006E08,			0x8B19140C },
-	{ 0x00006454,			0x0300000A },
-	{ CS35L36_AMP_NG_CTRL,		0x000020EF },
-	{ 0x00007E34,			0x0000000E },
-	{ 0x0000410C,			0x00000A11 },
-	{ 0x00007410,			0x20514B00 },
+	अणु CS35L36_OTP_CTRL1,		0x00002060 पूर्ण,
+	अणु CS35L36_OTP_CTRL2,		0x00000001 पूर्ण,
+	अणु CS35L36_OTP_CTRL1,		0x00002460 पूर्ण,
+	अणु CS35L36_OTP_CTRL2,		0x00000001 पूर्ण,
+	अणु 0x00002088,			0x012A1838 पूर्ण,
+	अणु 0x00003014,			0x0100EE0E पूर्ण,
+	अणु 0x00003008,			0x0008184A पूर्ण,
+	अणु 0x00007418,			0x509001C8 पूर्ण,
+	अणु 0x00007064,			0x0929A800 पूर्ण,
+	अणु 0x00002D10,			0x0002C01C पूर्ण,
+	अणु 0x0000410C,			0x00000A11 पूर्ण,
+	अणु 0x00006E08,			0x8B19140C पूर्ण,
+	अणु 0x00006454,			0x0300000A पूर्ण,
+	अणु CS35L36_AMP_NG_CTRL,		0x000020EF पूर्ण,
+	अणु 0x00007E34,			0x0000000E पूर्ण,
+	अणु 0x0000410C,			0x00000A11 पूर्ण,
+	अणु 0x00007410,			0x20514B00 पूर्ण,
 	/* PAC Config */
-	{ CS35L36_CTRL_OVRRIDE,		0x00000000 },
-	{ CS35L36_PAC_INT0_CTRL,	0x00860001 },
-	{ CS35L36_PAC_INT1_CTRL,	0x00860001 },
-	{ CS35L36_PAC_INT2_CTRL,	0x00860001 },
-	{ CS35L36_PAC_INT3_CTRL,	0x00860001 },
-	{ CS35L36_PAC_INT4_CTRL,	0x00860001 },
-	{ CS35L36_PAC_INT5_CTRL,	0x00860001 },
-	{ CS35L36_PAC_INT6_CTRL,	0x00860001 },
-	{ CS35L36_PAC_INT7_CTRL,	0x00860001 },
-	{ CS35L36_PAC_INT_FLUSH_CTRL,	0x000000FF },
-	{ CS35L36_TESTKEY_CTRL,		CS35L36_TEST_LOCK1 },
-	{ CS35L36_TESTKEY_CTRL,		CS35L36_TEST_LOCK2 },
-};
+	अणु CS35L36_CTRL_OVRRIDE,		0x00000000 पूर्ण,
+	अणु CS35L36_PAC_INT0_CTRL,	0x00860001 पूर्ण,
+	अणु CS35L36_PAC_INT1_CTRL,	0x00860001 पूर्ण,
+	अणु CS35L36_PAC_INT2_CTRL,	0x00860001 पूर्ण,
+	अणु CS35L36_PAC_INT3_CTRL,	0x00860001 पूर्ण,
+	अणु CS35L36_PAC_INT4_CTRL,	0x00860001 पूर्ण,
+	अणु CS35L36_PAC_INT5_CTRL,	0x00860001 पूर्ण,
+	अणु CS35L36_PAC_INT6_CTRL,	0x00860001 पूर्ण,
+	अणु CS35L36_PAC_INT7_CTRL,	0x00860001 पूर्ण,
+	अणु CS35L36_PAC_INT_FLUSH_CTRL,	0x000000FF पूर्ण,
+	अणु CS35L36_TESTKEY_CTRL,		CS35L36_TEST_LOCK1 पूर्ण,
+	अणु CS35L36_TESTKEY_CTRL,		CS35L36_TEST_LOCK2 पूर्ण,
+पूर्ण;
 
-static const struct reg_sequence cs35l36_revb0_errata_patch[] = {
-	{ CS35L36_TESTKEY_CTRL,	CS35L36_TEST_UNLOCK1 },
-	{ CS35L36_TESTKEY_CTRL, CS35L36_TEST_UNLOCK2 },
-	{ 0x00007064,		0x0929A800 },
-	{ 0x00007850,		0x00002FA9 },
-	{ 0x00007854,		0x0003F1D5 },
-	{ 0x00007858,		0x0003F5E3 },
-	{ 0x0000785C,		0x00001137 },
-	{ 0x00007860,		0x0001A7A5 },
-	{ 0x00007864,		0x0002F16A },
-	{ 0x00007868,		0x00003E21 },
-	{ 0x00007848,		0x00000001 },
-	{ 0x00003854,		0x05180240 },
-	{ 0x00007418,		0x509001C8 },
-	{ 0x0000394C,		0x028764BD },
-	{ CS35L36_TESTKEY_CTRL,	CS35L36_TEST_LOCK1 },
-	{ CS35L36_TESTKEY_CTRL, CS35L36_TEST_LOCK2 },
-};
+अटल स्थिर काष्ठा reg_sequence cs35l36_revb0_errata_patch[] = अणु
+	अणु CS35L36_TESTKEY_CTRL,	CS35L36_TEST_UNLOCK1 पूर्ण,
+	अणु CS35L36_TESTKEY_CTRL, CS35L36_TEST_UNLOCK2 पूर्ण,
+	अणु 0x00007064,		0x0929A800 पूर्ण,
+	अणु 0x00007850,		0x00002FA9 पूर्ण,
+	अणु 0x00007854,		0x0003F1D5 पूर्ण,
+	अणु 0x00007858,		0x0003F5E3 पूर्ण,
+	अणु 0x0000785C,		0x00001137 पूर्ण,
+	अणु 0x00007860,		0x0001A7A5 पूर्ण,
+	अणु 0x00007864,		0x0002F16A पूर्ण,
+	अणु 0x00007868,		0x00003E21 पूर्ण,
+	अणु 0x00007848,		0x00000001 पूर्ण,
+	अणु 0x00003854,		0x05180240 पूर्ण,
+	अणु 0x00007418,		0x509001C8 पूर्ण,
+	अणु 0x0000394C,		0x028764BD पूर्ण,
+	अणु CS35L36_TESTKEY_CTRL,	CS35L36_TEST_LOCK1 पूर्ण,
+	अणु CS35L36_TESTKEY_CTRL, CS35L36_TEST_LOCK2 पूर्ण,
+पूर्ण;
 
-static int cs35l36_i2c_probe(struct i2c_client *i2c_client,
-			      const struct i2c_device_id *id)
-{
-	struct cs35l36_private *cs35l36;
-	struct device *dev = &i2c_client->dev;
-	struct cs35l36_platform_data *pdata = dev_get_platdata(dev);
-	struct irq_data *irq_d;
-	int ret, irq_pol, chip_irq_pol, i;
+अटल पूर्णांक cs35l36_i2c_probe(काष्ठा i2c_client *i2c_client,
+			      स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा cs35l36_निजी *cs35l36;
+	काष्ठा device *dev = &i2c_client->dev;
+	काष्ठा cs35l36_platक्रमm_data *pdata = dev_get_platdata(dev);
+	काष्ठा irq_data *irq_d;
+	पूर्णांक ret, irq_pol, chip_irq_pol, i;
 	u32 reg_id, reg_revid, l37_id_reg;
 
-	cs35l36 = devm_kzalloc(dev, sizeof(struct cs35l36_private), GFP_KERNEL);
-	if (!cs35l36)
-		return -ENOMEM;
+	cs35l36 = devm_kzalloc(dev, माप(काष्ठा cs35l36_निजी), GFP_KERNEL);
+	अगर (!cs35l36)
+		वापस -ENOMEM;
 
 	cs35l36->dev = dev;
 
 	i2c_set_clientdata(i2c_client, cs35l36);
 	cs35l36->regmap = devm_regmap_init_i2c(i2c_client, &cs35l36_regmap);
-	if (IS_ERR(cs35l36->regmap)) {
+	अगर (IS_ERR(cs35l36->regmap)) अणु
 		ret = PTR_ERR(cs35l36->regmap);
 		dev_err(dev, "regmap_init() failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	cs35l36->num_supplies = ARRAY_SIZE(cs35l36_supplies);
-	for (i = 0; i < ARRAY_SIZE(cs35l36_supplies); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(cs35l36_supplies); i++)
 		cs35l36->supplies[i].supply = cs35l36_supplies[i];
 
 	ret = devm_regulator_bulk_get(dev, cs35l36->num_supplies,
 				      cs35l36->supplies);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(dev, "Failed to request core supplies: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (pdata) {
+	अगर (pdata) अणु
 		cs35l36->pdata = *pdata;
-	} else {
-		pdata = devm_kzalloc(dev, sizeof(struct cs35l36_platform_data),
+	पूर्ण अन्यथा अणु
+		pdata = devm_kzalloc(dev, माप(काष्ठा cs35l36_platक्रमm_data),
 				     GFP_KERNEL);
-		if (!pdata)
-			return -ENOMEM;
+		अगर (!pdata)
+			वापस -ENOMEM;
 
-		if (i2c_client->dev.of_node) {
+		अगर (i2c_client->dev.of_node) अणु
 			ret = cs35l36_handle_of_data(i2c_client, pdata);
-			if (ret != 0)
-				return ret;
+			अगर (ret != 0)
+				वापस ret;
 
-		}
+		पूर्ण
 
 		cs35l36->pdata = *pdata;
-	}
+	पूर्ण
 
 	ret = regulator_bulk_enable(cs35l36->num_supplies, cs35l36->supplies);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(dev, "Failed to enable core supplies: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* returning NULL can be an option if in stereo mode */
+	/* वापसing शून्य can be an option अगर in stereo mode */
 	cs35l36->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						      GPIOD_OUT_LOW);
-	if (IS_ERR(cs35l36->reset_gpio)) {
+	अगर (IS_ERR(cs35l36->reset_gpio)) अणु
 		ret = PTR_ERR(cs35l36->reset_gpio);
-		cs35l36->reset_gpio = NULL;
-		if (ret == -EBUSY) {
+		cs35l36->reset_gpio = शून्य;
+		अगर (ret == -EBUSY) अणु
 			dev_info(dev, "Reset line busy, assuming shared reset\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "Failed to get reset GPIO: %d\n", ret);
-			goto err_disable_regs;
-		}
-	}
+			जाओ err_disable_regs;
+		पूर्ण
+	पूर्ण
 
-	if (cs35l36->reset_gpio)
+	अगर (cs35l36->reset_gpio)
 		gpiod_set_value_cansleep(cs35l36->reset_gpio, 1);
 
 	usleep_range(2000, 2100);
 
-	/* initialize amplifier */
-	ret = regmap_read(cs35l36->regmap, CS35L36_SW_RESET, &reg_id);
-	if (ret < 0) {
+	/* initialize amplअगरier */
+	ret = regmap_पढ़ो(cs35l36->regmap, CS35L36_SW_RESET, &reg_id);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Get Device ID failed %d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (reg_id != CS35L36_CHIP_ID) {
+	अगर (reg_id != CS35L36_CHIP_ID) अणु
 		dev_err(dev, "Device ID (%X). Expected ID %X\n", reg_id,
 			CS35L36_CHIP_ID);
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = regmap_read(cs35l36->regmap, CS35L36_REV_ID, &reg_revid);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(cs35l36->regmap, CS35L36_REV_ID, &reg_revid);
+	अगर (ret < 0) अणु
 		dev_err(&i2c_client->dev, "Get Revision ID failed %d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	cs35l36->rev_id = reg_revid >> 8;
 
-	ret = regmap_read(cs35l36->regmap, CS35L36_OTP_MEM30, &l37_id_reg);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(cs35l36->regmap, CS35L36_OTP_MEM30, &l37_id_reg);
+	अगर (ret < 0) अणु
 		dev_err(&i2c_client->dev, "Failed to read otp_id Register %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if ((l37_id_reg & CS35L36_OTP_REV_MASK) == CS35L36_OTP_REV_L37)
+	अगर ((l37_id_reg & CS35L36_OTP_REV_MASK) == CS35L36_OTP_REV_L37)
 		cs35l36->chip_version = CS35L36_12V_L37;
-	else
+	अन्यथा
 		cs35l36->chip_version = CS35L36_10V_L36;
 
-	switch (cs35l36->rev_id) {
-	case CS35L36_REV_A0:
-		ret = regmap_register_patch(cs35l36->regmap,
+	चयन (cs35l36->rev_id) अणु
+	हाल CS35L36_REV_A0:
+		ret = regmap_रेजिस्टर_patch(cs35l36->regmap,
 				cs35l36_reva0_errata_patch,
 				ARRAY_SIZE(cs35l36_reva0_errata_patch));
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "Failed to apply A0 errata patch %d\n",
 				ret);
-			goto err;
-		}
-		break;
-	case CS35L36_REV_B0:
+			जाओ err;
+		पूर्ण
+		अवरोध;
+	हाल CS35L36_REV_B0:
 		ret = cs35l36_pac(cs35l36);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "Failed to Trim OTP %d\n", ret);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		ret = regmap_register_patch(cs35l36->regmap,
+		ret = regmap_रेजिस्टर_patch(cs35l36->regmap,
 				cs35l36_revb0_errata_patch,
 				ARRAY_SIZE(cs35l36_revb0_errata_patch));
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "Failed to apply B0 errata patch %d\n",
 				ret);
-			goto err;
-		}
-		break;
-	}
+			जाओ err;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (pdata->vpbr_config.is_present)
+	अगर (pdata->vpbr_config.is_present)
 		cs35l36_apply_vpbr_config(cs35l36);
 
 	irq_d = irq_get_irq_data(i2c_client->irq);
-	if (!irq_d) {
+	अगर (!irq_d) अणु
 		dev_err(&i2c_client->dev, "Invalid IRQ: %d\n", i2c_client->irq);
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	irq_pol = irqd_get_trigger_type(irq_d);
 
-	switch (irq_pol) {
-	case IRQF_TRIGGER_FALLING:
-	case IRQF_TRIGGER_LOW:
+	चयन (irq_pol) अणु
+	हाल IRQF_TRIGGER_FALLING:
+	हाल IRQF_TRIGGER_LOW:
 		chip_irq_pol = 0;
-		break;
-	case IRQF_TRIGGER_RISING:
-	case IRQF_TRIGGER_HIGH:
+		अवरोध;
+	हाल IRQF_TRIGGER_RISING:
+	हाल IRQF_TRIGGER_HIGH:
 		chip_irq_pol = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(cs35l36->dev, "Invalid IRQ polarity: %d\n", irq_pol);
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_PAD_INTERFACE,
 			   CS35L36_INT_POL_SEL_MASK,
 			   chip_irq_pol << CS35L36_INT_POL_SEL_SHIFT);
 
-	ret = devm_request_threaded_irq(dev, i2c_client->irq, NULL, cs35l36_irq,
+	ret = devm_request_thपढ़ोed_irq(dev, i2c_client->irq, शून्य, cs35l36_irq,
 					IRQF_ONESHOT | irq_pol, "cs35l36",
 					cs35l36);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(dev, "Failed to request IRQ: %d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_PAD_INTERFACE,
 			   CS35L36_INT_OUTPUT_EN_MASK, 1);
 
-	/* Set interrupt masks for critical errors */
-	regmap_write(cs35l36->regmap, CS35L36_INT1_MASK,
+	/* Set पूर्णांकerrupt masks क्रम critical errors */
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_INT1_MASK,
 		     CS35L36_INT1_MASK_DEFAULT);
-	regmap_write(cs35l36->regmap, CS35L36_INT3_MASK,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_INT3_MASK,
 		     CS35L36_INT3_MASK_DEFAULT);
 
 	dev_info(&i2c_client->dev, "Cirrus Logic CS35L%d, Revision: %02X\n",
 		 cs35l36->chip_version, reg_revid >> 8);
 
-	ret =  devm_snd_soc_register_component(dev, &soc_component_dev_cs35l36,
+	ret =  devm_snd_soc_रेजिस्टर_component(dev, &soc_component_dev_cs35l36,
 					       cs35l36_dai,
 					       ARRAY_SIZE(cs35l36_dai));
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: Register component failed %d\n", __func__,
 			ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
 	gpiod_set_value_cansleep(cs35l36->reset_gpio, 0);
 
 err_disable_regs:
 	regulator_bulk_disable(cs35l36->num_supplies, cs35l36->supplies);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cs35l36_i2c_remove(struct i2c_client *client)
-{
-	struct cs35l36_private *cs35l36 = i2c_get_clientdata(client);
+अटल पूर्णांक cs35l36_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा cs35l36_निजी *cs35l36 = i2c_get_clientdata(client);
 
-	/* Reset interrupt masks for device removal */
-	regmap_write(cs35l36->regmap, CS35L36_INT1_MASK,
+	/* Reset पूर्णांकerrupt masks क्रम device removal */
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_INT1_MASK,
 		     CS35L36_INT1_MASK_RESET);
-	regmap_write(cs35l36->regmap, CS35L36_INT3_MASK,
+	regmap_ग_लिखो(cs35l36->regmap, CS35L36_INT3_MASK,
 		     CS35L36_INT3_MASK_RESET);
 
-	if (cs35l36->reset_gpio)
+	अगर (cs35l36->reset_gpio)
 		gpiod_set_value_cansleep(cs35l36->reset_gpio, 0);
 
 	regulator_bulk_disable(cs35l36->num_supplies, cs35l36->supplies);
 
-	return 0;
-}
-static const struct of_device_id cs35l36_of_match[] = {
-	{.compatible = "cirrus,cs35l36"},
-	{},
-};
+	वापस 0;
+पूर्ण
+अटल स्थिर काष्ठा of_device_id cs35l36_of_match[] = अणु
+	अणु.compatible = "cirrus,cs35l36"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, cs35l36_of_match);
 
-static const struct i2c_device_id cs35l36_id[] = {
-	{"cs35l36", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id cs35l36_id[] = अणु
+	अणु"cs35l36", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, cs35l36_id);
 
-static struct i2c_driver cs35l36_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver cs35l36_i2c_driver = अणु
+	.driver = अणु
 		.name = "cs35l36",
 		.of_match_table = cs35l36_of_match,
-	},
+	पूर्ण,
 	.id_table = cs35l36_id,
 	.probe = cs35l36_i2c_probe,
-	.remove = cs35l36_i2c_remove,
-};
+	.हटाओ = cs35l36_i2c_हटाओ,
+पूर्ण;
 module_i2c_driver(cs35l36_i2c_driver);
 
 MODULE_DESCRIPTION("ASoC CS35L36 driver");

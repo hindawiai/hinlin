@@ -1,100 +1,101 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2014-2016 Intel Corporation
+ * Copyright तऊ 2014-2016 Intel Corporation
  */
 
-#include <linux/jiffies.h>
+#समावेश <linux/jअगरfies.h>
 
-#include <drm/drm_file.h>
+#समावेश <drm/drm_file.h>
 
-#include "i915_drv.h"
-#include "i915_gem_context.h"
-#include "i915_gem_ioctls.h"
-#include "i915_gem_object.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_gem_context.h"
+#समावेश "i915_gem_ioctls.h"
+#समावेश "i915_gem_object.h"
 
 /*
- * 20ms is a fairly arbitrary limit (greater than the average frame time)
+ * 20ms is a fairly arbitrary limit (greater than the average frame समय)
  * chosen to prevent the CPU getting more than a frame ahead of the GPU
- * (when using lax throttling for the frontbuffer). We also use it to
- * offer free GPU waitboosts for severely congested workloads.
+ * (when using lax throttling क्रम the frontbuffer). We also use it to
+ * offer मुक्त GPU रुकोboosts क्रम severely congested workloads.
  */
-#define DRM_I915_THROTTLE_JIFFIES msecs_to_jiffies(20)
+#घोषणा DRM_I915_THROTTLE_JIFFIES msecs_to_jअगरfies(20)
 
 /*
- * Throttle our rendering by waiting until the ring has completed our requests
+ * Throttle our rendering by रुकोing until the ring has completed our requests
  * emitted over 20 msec ago.
  *
- * Note that if we were to use the current jiffies each time around the loop,
- * we wouldn't escape the function with any frames outstanding if the time to
+ * Note that अगर we were to use the current jअगरfies each समय around the loop,
+ * we wouldn't escape the function with any frames outstanding अगर the समय to
  * render a frame was over 20ms.
  *
  * This should get us reasonable parallelism between CPU and GPU but also
  * relatively low latency when blocking on a particular request to finish.
  */
-int
-i915_gem_throttle_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *file)
-{
-	const unsigned long recent_enough = jiffies - DRM_I915_THROTTLE_JIFFIES;
-	struct drm_i915_file_private *file_priv = file->driver_priv;
-	struct i915_gem_context *ctx;
-	unsigned long idx;
-	long ret;
+पूर्णांक
+i915_gem_throttle_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file)
+अणु
+	स्थिर अचिन्हित दीर्घ recent_enough = jअगरfies - DRM_I915_THROTTLE_JIFFIES;
+	काष्ठा drm_i915_file_निजी *file_priv = file->driver_priv;
+	काष्ठा i915_gem_context *ctx;
+	अचिन्हित दीर्घ idx;
+	दीर्घ ret;
 
-	/* ABI: return -EIO if already wedged */
-	ret = intel_gt_terminally_wedged(&to_i915(dev)->gt);
-	if (ret)
-		return ret;
+	/* ABI: वापस -EIO अगर alपढ़ोy wedged */
+	ret = पूर्णांकel_gt_terminally_wedged(&to_i915(dev)->gt);
+	अगर (ret)
+		वापस ret;
 
-	rcu_read_lock();
-	xa_for_each(&file_priv->context_xa, idx, ctx) {
-		struct i915_gem_engines_iter it;
-		struct intel_context *ce;
+	rcu_पढ़ो_lock();
+	xa_क्रम_each(&file_priv->context_xa, idx, ctx) अणु
+		काष्ठा i915_gem_engines_iter it;
+		काष्ठा पूर्णांकel_context *ce;
 
-		if (!kref_get_unless_zero(&ctx->ref))
-			continue;
-		rcu_read_unlock();
+		अगर (!kref_get_unless_zero(&ctx->ref))
+			जारी;
+		rcu_पढ़ो_unlock();
 
-		for_each_gem_engine(ce,
+		क्रम_each_gem_engine(ce,
 				    i915_gem_context_lock_engines(ctx),
-				    it) {
-			struct i915_request *rq, *target = NULL;
+				    it) अणु
+			काष्ठा i915_request *rq, *target = शून्य;
 
-			if (!ce->timeline)
-				continue;
+			अगर (!ce->समयline)
+				जारी;
 
-			mutex_lock(&ce->timeline->mutex);
-			list_for_each_entry_reverse(rq,
-						    &ce->timeline->requests,
-						    link) {
-				if (i915_request_completed(rq))
-					break;
+			mutex_lock(&ce->समयline->mutex);
+			list_क्रम_each_entry_reverse(rq,
+						    &ce->समयline->requests,
+						    link) अणु
+				अगर (i915_request_completed(rq))
+					अवरोध;
 
-				if (time_after(rq->emitted_jiffies,
+				अगर (समय_after(rq->emitted_jअगरfies,
 					       recent_enough))
-					continue;
+					जारी;
 
 				target = i915_request_get(rq);
-				break;
-			}
-			mutex_unlock(&ce->timeline->mutex);
-			if (!target)
-				continue;
+				अवरोध;
+			पूर्ण
+			mutex_unlock(&ce->समयline->mutex);
+			अगर (!target)
+				जारी;
 
-			ret = i915_request_wait(target,
+			ret = i915_request_रुको(target,
 						I915_WAIT_INTERRUPTIBLE,
 						MAX_SCHEDULE_TIMEOUT);
 			i915_request_put(target);
-			if (ret < 0)
-				break;
-		}
+			अगर (ret < 0)
+				अवरोध;
+		पूर्ण
 		i915_gem_context_unlock_engines(ctx);
 		i915_gem_context_put(ctx);
 
-		rcu_read_lock();
-	}
-	rcu_read_unlock();
+		rcu_पढ़ो_lock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return ret < 0 ? ret : 0;
-}
+	वापस ret < 0 ? ret : 0;
+पूर्ण

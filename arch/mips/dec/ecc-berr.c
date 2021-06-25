@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	Bus error event handling code for systems equipped with ECC
- *	handling logic, i.e. DECstation/DECsystem 5000/200 (KN02),
- *	5000/240 (KN03), 5000/260 (KN05) and DECsystem 5900 (KN03),
- *	5900/260 (KN05) systems.
+ *	Bus error event handling code क्रम प्रणालीs equipped with ECC
+ *	handling logic, i.e. DECstation/DECप्रणाली 5000/200 (KN02),
+ *	5000/240 (KN03), 5000/260 (KN05) and DECप्रणाली 5900 (KN03),
+ *	5900/260 (KN05) प्रणालीs.
  *
  *	Copyright (c) 2003, 2005  Maciej W. Rozycki
  */
 
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
 
-#include <asm/addrspace.h>
-#include <asm/bootinfo.h>
-#include <asm/cpu.h>
-#include <asm/cpu-type.h>
-#include <asm/irq_regs.h>
-#include <asm/processor.h>
-#include <asm/ptrace.h>
-#include <asm/traps.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/cpu-type.h>
+#समावेश <यंत्र/irq_regs.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/traps.h>
 
-#include <asm/dec/ecc.h>
-#include <asm/dec/kn02.h>
-#include <asm/dec/kn03.h>
-#include <asm/dec/kn05.h>
+#समावेश <यंत्र/dec/ecc.h>
+#समावेश <यंत्र/dec/kn02.h>
+#समावेश <यंत्र/dec/kn03.h>
+#समावेश <यंत्र/dec/kn05.h>
 
-static volatile u32 *kn0x_erraddr;
-static volatile u32 *kn0x_chksyn;
+अटल अस्थिर u32 *kn0x_erraddr;
+अटल अस्थिर u32 *kn0x_chksyn;
 
-static inline void dec_ecc_be_ack(void)
-{
-	*kn0x_erraddr = 0;			/* any write clears the IRQ */
+अटल अंतरभूत व्योम dec_ecc_be_ack(व्योम)
+अणु
+	*kn0x_erraddr = 0;			/* any ग_लिखो clears the IRQ */
 	iob();
-}
+पूर्ण
 
-static int dec_ecc_be_backend(struct pt_regs *regs, int is_fixup, int invoker)
-{
-	static const char excstr[] = "exception";
-	static const char intstr[] = "interrupt";
-	static const char cpustr[] = "CPU";
-	static const char dmastr[] = "DMA";
-	static const char readstr[] = "read";
-	static const char mreadstr[] = "memory read";
-	static const char writestr[] = "write";
-	static const char mwritstr[] = "partial memory write";
-	static const char timestr[] = "timeout";
-	static const char overstr[] = "overrun";
-	static const char eccstr[] = "ECC error";
+अटल पूर्णांक dec_ecc_be_backend(काष्ठा pt_regs *regs, पूर्णांक is_fixup, पूर्णांक invoker)
+अणु
+	अटल स्थिर अक्षर excstr[] = "exception";
+	अटल स्थिर अक्षर पूर्णांकstr[] = "interrupt";
+	अटल स्थिर अक्षर cpustr[] = "CPU";
+	अटल स्थिर अक्षर dmastr[] = "DMA";
+	अटल स्थिर अक्षर पढ़ोstr[] = "read";
+	अटल स्थिर अक्षर mपढ़ोstr[] = "memory read";
+	अटल स्थिर अक्षर ग_लिखोstr[] = "write";
+	अटल स्थिर अक्षर mwritstr[] = "partial memory write";
+	अटल स्थिर अक्षर बारtr[] = "timeout";
+	अटल स्थिर अक्षर overstr[] = "overrun";
+	अटल स्थिर अक्षर eccstr[] = "ECC error";
 
-	const char *kind, *agent, *cycle, *event;
-	const char *status = "", *xbit = "", *fmt = "";
-	unsigned long address;
+	स्थिर अक्षर *kind, *agent, *cycle, *event;
+	स्थिर अक्षर *status = "", *xbit = "", *fmt = "";
+	अचिन्हित दीर्घ address;
 	u16 syn = 0, sngl;
 
-	int i = 0;
+	पूर्णांक i = 0;
 
 	u32 erraddr = *kn0x_erraddr;
 	u32 chksyn = *kn0x_chksyn;
-	int action = MIPS_BE_FATAL;
+	पूर्णांक action = MIPS_BE_FATAL;
 
 	/* For non-ECC ack ASAP, so that any subsequent errors get caught. */
-	if ((erraddr & (KN0X_EAR_VALID | KN0X_EAR_ECCERR)) == KN0X_EAR_VALID)
+	अगर ((erraddr & (KN0X_EAR_VALID | KN0X_EAR_ECCERR)) == KN0X_EAR_VALID)
 		dec_ecc_be_ack();
 
-	kind = invoker ? intstr : excstr;
+	kind = invoker ? पूर्णांकstr : excstr;
 
-	if (!(erraddr & KN0X_EAR_VALID)) {
+	अगर (!(erraddr & KN0X_EAR_VALID)) अणु
 		/* No idea what happened. */
-		printk(KERN_ALERT "Unidentified bus error %s\n", kind);
-		return action;
-	}
+		prपूर्णांकk(KERN_ALERT "Unidentified bus error %s\n", kind);
+		वापस action;
+	पूर्ण
 
 	agent = (erraddr & KN0X_EAR_CPU) ? cpustr : dmastr;
 
-	if (erraddr & KN0X_EAR_ECCERR) {
+	अगर (erraddr & KN0X_EAR_ECCERR) अणु
 		/* An ECC error on a CPU or DMA transaction. */
-		cycle = (erraddr & KN0X_EAR_WRITE) ? mwritstr : mreadstr;
+		cycle = (erraddr & KN0X_EAR_WRITE) ? mwritstr : mपढ़ोstr;
 		event = eccstr;
-	} else {
-		/* A CPU timeout or a DMA overrun. */
-		cycle = (erraddr & KN0X_EAR_WRITE) ? writestr : readstr;
-		event = (erraddr & KN0X_EAR_CPU) ? timestr : overstr;
-	}
+	पूर्ण अन्यथा अणु
+		/* A CPU समयout or a DMA overrun. */
+		cycle = (erraddr & KN0X_EAR_WRITE) ? ग_लिखोstr : पढ़ोstr;
+		event = (erraddr & KN0X_EAR_CPU) ? बारtr : overstr;
+	पूर्ण
 
 	address = erraddr & KN0X_EAR_ADDRESS;
-	/* For ECC errors on reads adjust for MT pipelining. */
-	if ((erraddr & (KN0X_EAR_WRITE | KN0X_EAR_ECCERR)) == KN0X_EAR_ECCERR)
+	/* For ECC errors on पढ़ोs adjust क्रम MT pipelining. */
+	अगर ((erraddr & (KN0X_EAR_WRITE | KN0X_EAR_ECCERR)) == KN0X_EAR_ECCERR)
 		address = (address & ~0xfffLL) | ((address - 5) & 0xfffLL);
 	address <<= 2;
 
 	/* Only CPU errors are fixable. */
-	if (erraddr & KN0X_EAR_CPU && is_fixup)
+	अगर (erraddr & KN0X_EAR_CPU && is_fixup)
 		action = MIPS_BE_FIXUP;
 
-	if (erraddr & KN0X_EAR_ECCERR) {
-		static const u8 data_sbit[32] = {
+	अगर (erraddr & KN0X_EAR_ECCERR) अणु
+		अटल स्थिर u8 data_sbit[32] = अणु
 			0x4f, 0x4a, 0x52, 0x54, 0x57, 0x58, 0x5b, 0x5d,
 			0x23, 0x25, 0x26, 0x29, 0x2a, 0x2c, 0x31, 0x34,
 			0x0e, 0x0b, 0x13, 0x15, 0x16, 0x19, 0x1a, 0x1c,
 			0x62, 0x64, 0x67, 0x68, 0x6b, 0x6d, 0x70, 0x75,
-		};
-		static const u8 data_mbit[25] = {
+		पूर्ण;
+		अटल स्थिर u8 data_mbit[25] = अणु
 			0x07, 0x0d, 0x1f,
 			0x2f, 0x32, 0x37, 0x38, 0x3b, 0x3d, 0x3e,
 			0x43, 0x45, 0x46, 0x49, 0x4c, 0x51, 0x5e,
 			0x61, 0x6e, 0x73, 0x76, 0x79, 0x7a, 0x7c, 0x7f,
-		};
-		static const char sbestr[] = "corrected single";
-		static const char dbestr[] = "uncorrectable double";
-		static const char mbestr[] = "uncorrectable multiple";
+		पूर्ण;
+		अटल स्थिर अक्षर sbestr[] = "corrected single";
+		अटल स्थिर अक्षर dbestr[] = "uncorrectable double";
+		अटल स्थिर अक्षर mbestr[] = "uncorrectable multiple";
 
-		if (!(address & 0x4))
+		अगर (!(address & 0x4))
 			syn = chksyn;			/* Low bank. */
-		else
+		अन्यथा
 			syn = chksyn >> 16;		/* High bank. */
 
-		if (!(syn & KN0X_ESR_VLDLO)) {
-			/* Ack now, no rewrite will happen. */
+		अगर (!(syn & KN0X_ESR_VLDLO)) अणु
+			/* Ack now, no reग_लिखो will happen. */
 			dec_ecc_be_ack();
 
 			fmt = KERN_ALERT "%s" "invalid\n";
-		} else {
+		पूर्ण अन्यथा अणु
 			sngl = syn & KN0X_ESR_SNGLO;
 			syn &= KN0X_ESR_SYNLO;
 
@@ -131,105 +132,105 @@ static int dec_ecc_be_backend(struct pt_regs *regs, int is_fixup, int invoker)
 			 * Multibit errors may be tagged incorrectly;
 			 * check the syndrome explicitly.
 			 */
-			for (i = 0; i < 25; i++)
-				if (syn == data_mbit[i])
-					break;
+			क्रम (i = 0; i < 25; i++)
+				अगर (syn == data_mbit[i])
+					अवरोध;
 
-			if (i < 25) {
+			अगर (i < 25) अणु
 				status = mbestr;
-			} else if (!sngl) {
+			पूर्ण अन्यथा अगर (!sngl) अणु
 				status = dbestr;
-			} else {
-				volatile u32 *ptr =
-					(void *)CKSEG1ADDR(address);
+			पूर्ण अन्यथा अणु
+				अस्थिर u32 *ptr =
+					(व्योम *)CKSEG1ADDR(address);
 
-				*ptr = *ptr;		/* Rewrite. */
+				*ptr = *ptr;		/* Reग_लिखो. */
 				iob();
 
 				status = sbestr;
 				action = MIPS_BE_DISCARD;
-			}
+			पूर्ण
 
 			/* Ack now, now we've rewritten (or not). */
 			dec_ecc_be_ack();
 
-			if (syn && syn == (syn & -syn)) {
-				if (syn == 0x01) {
+			अगर (syn && syn == (syn & -syn)) अणु
+				अगर (syn == 0x01) अणु
 					fmt = KERN_ALERT "%s"
 					      "%#04x -- %s bit error "
 					      "at check bit C%s\n";
 					xbit = "X";
-				} else {
+				पूर्ण अन्यथा अणु
 					fmt = KERN_ALERT "%s"
 					      "%#04x -- %s bit error "
 					      "at check bit C%s%u\n";
-				}
+				पूर्ण
 				i = syn >> 2;
-			} else {
-				for (i = 0; i < 32; i++)
-					if (syn == data_sbit[i])
-						break;
-				if (i < 32)
+			पूर्ण अन्यथा अणु
+				क्रम (i = 0; i < 32; i++)
+					अगर (syn == data_sbit[i])
+						अवरोध;
+				अगर (i < 32)
 					fmt = KERN_ALERT "%s"
 					      "%#04x -- %s bit error "
 					      "at data bit D%s%u\n";
-				else
+				अन्यथा
 					fmt = KERN_ALERT "%s"
 					      "%#04x -- %s bit error\n";
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (action != MIPS_BE_FIXUP)
-		printk(KERN_ALERT "Bus error %s: %s %s %s at %#010lx\n",
+	अगर (action != MIPS_BE_FIXUP)
+		prपूर्णांकk(KERN_ALERT "Bus error %s: %s %s %s at %#010lx\n",
 			kind, agent, cycle, event, address);
 
-	if (action != MIPS_BE_FIXUP && erraddr & KN0X_EAR_ECCERR)
-		printk(fmt, "  ECC syndrome ", syn, status, xbit, i);
+	अगर (action != MIPS_BE_FIXUP && erraddr & KN0X_EAR_ECCERR)
+		prपूर्णांकk(fmt, "  ECC syndrome ", syn, status, xbit, i);
 
-	return action;
-}
+	वापस action;
+पूर्ण
 
-int dec_ecc_be_handler(struct pt_regs *regs, int is_fixup)
-{
-	return dec_ecc_be_backend(regs, is_fixup, 0);
-}
+पूर्णांक dec_ecc_be_handler(काष्ठा pt_regs *regs, पूर्णांक is_fixup)
+अणु
+	वापस dec_ecc_be_backend(regs, is_fixup, 0);
+पूर्ण
 
-irqreturn_t dec_ecc_be_interrupt(int irq, void *dev_id)
-{
-	struct pt_regs *regs = get_irq_regs();
+irqवापस_t dec_ecc_be_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा pt_regs *regs = get_irq_regs();
 
-	int action = dec_ecc_be_backend(regs, 0, 1);
+	पूर्णांक action = dec_ecc_be_backend(regs, 0, 1);
 
-	if (action == MIPS_BE_DISCARD)
-		return IRQ_HANDLED;
+	अगर (action == MIPS_BE_DISCARD)
+		वापस IRQ_HANDLED;
 
 	/*
-	 * FIXME: Find the affected processes and kill them, otherwise
+	 * FIXME: Find the affected processes and समाप्त them, otherwise
 	 * we must die.
 	 *
-	 * The interrupt is asynchronously delivered thus EPC and RA
-	 * may be irrelevant, but are printed for a reference.
+	 * The पूर्णांकerrupt is asynchronously delivered thus EPC and RA
+	 * may be irrelevant, but are prपूर्णांकed क्रम a reference.
 	 */
-	printk(KERN_ALERT "Fatal bus interrupt, epc == %08lx, ra == %08lx\n",
+	prपूर्णांकk(KERN_ALERT "Fatal bus interrupt, epc == %08lx, ra == %08lx\n",
 	       regs->cp0_epc, regs->regs[31]);
 	die("Unrecoverable bus error", regs);
-}
+पूर्ण
 
 
 /*
- * Initialization differs a bit between KN02 and KN03/KN05, so we
- * need two variants.  Once set up, all systems can be handled the
+ * Initialization dअगरfers a bit between KN02 and KN03/KN05, so we
+ * need two variants.  Once set up, all प्रणालीs can be handled the
  * same way.
  */
-static inline void dec_kn02_be_init(void)
-{
-	volatile u32 *csr = (void *)CKSEG1ADDR(KN02_SLOT_BASE + KN02_CSR);
+अटल अंतरभूत व्योम dec_kn02_be_init(व्योम)
+अणु
+	अस्थिर u32 *csr = (व्योम *)CKSEG1ADDR(KN02_SLOT_BASE + KN02_CSR);
 
-	kn0x_erraddr = (void *)CKSEG1ADDR(KN02_SLOT_BASE + KN02_ERRADDR);
-	kn0x_chksyn = (void *)CKSEG1ADDR(KN02_SLOT_BASE + KN02_CHKSYN);
+	kn0x_erraddr = (व्योम *)CKSEG1ADDR(KN02_SLOT_BASE + KN02_ERRADDR);
+	kn0x_chksyn = (व्योम *)CKSEG1ADDR(KN02_SLOT_BASE + KN02_CHKSYN);
 
-	/* Preset write-only bits of the Control Register cache. */
+	/* Preset ग_लिखो-only bits of the Control Register cache. */
 	cached_kn02_csr = *csr | KN02_CSR_LEDS;
 
 	/* Set normal ECC detection and generation. */
@@ -238,37 +239,37 @@ static inline void dec_kn02_be_init(void)
 	cached_kn02_csr |= KN02_CSR_CORRECT;
 	*csr = cached_kn02_csr;
 	iob();
-}
+पूर्ण
 
-static inline void dec_kn03_be_init(void)
-{
-	volatile u32 *mcr = (void *)CKSEG1ADDR(KN03_SLOT_BASE + IOASIC_MCR);
-	volatile u32 *mbcs = (void *)CKSEG1ADDR(KN4K_SLOT_BASE + KN4K_MB_CSR);
+अटल अंतरभूत व्योम dec_kn03_be_init(व्योम)
+अणु
+	अस्थिर u32 *mcr = (व्योम *)CKSEG1ADDR(KN03_SLOT_BASE + IOASIC_MCR);
+	अस्थिर u32 *mbcs = (व्योम *)CKSEG1ADDR(KN4K_SLOT_BASE + KN4K_MB_CSR);
 
-	kn0x_erraddr = (void *)CKSEG1ADDR(KN03_SLOT_BASE + IOASIC_ERRADDR);
-	kn0x_chksyn = (void *)CKSEG1ADDR(KN03_SLOT_BASE + IOASIC_CHKSYN);
+	kn0x_erraddr = (व्योम *)CKSEG1ADDR(KN03_SLOT_BASE + IOASIC_ERRADDR);
+	kn0x_chksyn = (व्योम *)CKSEG1ADDR(KN03_SLOT_BASE + IOASIC_CHKSYN);
 
 	/*
 	 * Set normal ECC detection and generation, enable ECC correction.
 	 * For KN05 we also need to make sure EE (?) is enabled in the MB.
 	 * Otherwise DBE/IBE exceptions would be masked but bus error
-	 * interrupts would still arrive, resulting in an inevitable crash
-	 * if get_dbe() triggers one.
+	 * पूर्णांकerrupts would still arrive, resulting in an inevitable crash
+	 * अगर get_dbe() triggers one.
 	 */
 	*mcr = (*mcr & ~(KN03_MCR_DIAGCHK | KN03_MCR_DIAGGEN)) |
 	       KN03_MCR_CORRECT;
-	if (current_cpu_type() == CPU_R4400SC)
+	अगर (current_cpu_type() == CPU_R4400SC)
 		*mbcs |= KN4K_MB_CSR_EE;
 	fast_iob();
-}
+पूर्ण
 
-void __init dec_ecc_be_init(void)
-{
-	if (mips_machtype == MACH_DS5000_200)
+व्योम __init dec_ecc_be_init(व्योम)
+अणु
+	अगर (mips_machtype == MACH_DS5000_200)
 		dec_kn02_be_init();
-	else
+	अन्यथा
 		dec_kn03_be_init();
 
 	/* Clear any leftover errors from the firmware. */
 	dec_ecc_be_ack();
-}
+पूर्ण

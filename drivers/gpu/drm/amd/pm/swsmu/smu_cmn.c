@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,254 +21,254 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#define SWSMU_CODE_LAYER_L4
+#घोषणा SWSMU_CODE_LAYER_L4
 
-#include "amdgpu.h"
-#include "amdgpu_smu.h"
-#include "smu_cmn.h"
-#include "soc15_common.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_smu.h"
+#समावेश "smu_cmn.h"
+#समावेश "soc15_common.h"
 
 /*
- * DO NOT use these for err/warn/info/debug messages.
+ * DO NOT use these क्रम err/warn/info/debug messages.
  * Use dev_err, dev_warn, dev_info and dev_dbg instead.
- * They are more MGPU friendly.
+ * They are more MGPU मित्रly.
  */
-#undef pr_err
-#undef pr_warn
-#undef pr_info
-#undef pr_debug
+#अघोषित pr_err
+#अघोषित pr_warn
+#अघोषित pr_info
+#अघोषित pr_debug
 
 /*
- * Although these are defined in each ASIC's specific header file.
+ * Although these are defined in each ASIC's specअगरic header file.
  * They share the same definitions and values. That makes common
- * APIs for SMC messages issuing for all ASICs possible.
+ * APIs क्रम SMC messages issuing क्रम all ASICs possible.
  */
-#define mmMP1_SMN_C2PMSG_66                                                                            0x0282
-#define mmMP1_SMN_C2PMSG_66_BASE_IDX                                                                   0
+#घोषणा mmMP1_SMN_C2PMSG_66                                                                            0x0282
+#घोषणा mmMP1_SMN_C2PMSG_66_BASE_IDX                                                                   0
 
-#define mmMP1_SMN_C2PMSG_82                                                                            0x0292
-#define mmMP1_SMN_C2PMSG_82_BASE_IDX                                                                   0
+#घोषणा mmMP1_SMN_C2PMSG_82                                                                            0x0292
+#घोषणा mmMP1_SMN_C2PMSG_82_BASE_IDX                                                                   0
 
-#define mmMP1_SMN_C2PMSG_90                                                                            0x029a
-#define mmMP1_SMN_C2PMSG_90_BASE_IDX                                                                   0
+#घोषणा mmMP1_SMN_C2PMSG_90                                                                            0x029a
+#घोषणा mmMP1_SMN_C2PMSG_90_BASE_IDX                                                                   0
 
-#define MP1_C2PMSG_90__CONTENT_MASK                                                                    0xFFFFFFFFL
+#घोषणा MP1_C2PMSG_90__CONTENT_MASK                                                                    0xFFFFFFFFL
 
-#undef __SMU_DUMMY_MAP
-#define __SMU_DUMMY_MAP(type)	#type
-static const char* __smu_message_names[] = {
+#अघोषित __SMU_DUMMY_MAP
+#घोषणा __SMU_DUMMY_MAP(type)	#type
+अटल स्थिर अक्षर* __smu_message_names[] = अणु
 	SMU_MESSAGE_TYPES
-};
+पूर्ण;
 
-static const char *smu_get_message_name(struct smu_context *smu,
-					enum smu_message_type type)
-{
-	if (type < 0 || type >= SMU_MSG_MAX_COUNT)
-		return "unknown smu message";
+अटल स्थिर अक्षर *smu_get_message_name(काष्ठा smu_context *smu,
+					क्रमागत smu_message_type type)
+अणु
+	अगर (type < 0 || type >= SMU_MSG_MAX_COUNT)
+		वापस "unknown smu message";
 
-	return __smu_message_names[type];
-}
+	वापस __smu_message_names[type];
+पूर्ण
 
-static void smu_cmn_read_arg(struct smu_context *smu,
-			     uint32_t *arg)
-{
-	struct amdgpu_device *adev = smu->adev;
+अटल व्योम smu_cmn_पढ़ो_arg(काष्ठा smu_context *smu,
+			     uपूर्णांक32_t *arg)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
 
 	*arg = RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82);
-}
+पूर्ण
 
-int smu_cmn_wait_for_response(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t cur_value, i, timeout = adev->usec_timeout * 20;
+पूर्णांक smu_cmn_रुको_क्रम_response(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	uपूर्णांक32_t cur_value, i, समयout = adev->usec_समयout * 20;
 
-	for (i = 0; i < timeout; i++) {
+	क्रम (i = 0; i < समयout; i++) अणु
 		cur_value = RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
-		if ((cur_value & MP1_C2PMSG_90__CONTENT_MASK) != 0)
-			return cur_value;
+		अगर ((cur_value & MP1_C2PMSG_90__CONTENT_MASK) != 0)
+			वापस cur_value;
 
 		udelay(1);
-	}
+	पूर्ण
 
-	/* timeout means wrong logic */
-	if (i == timeout)
-		return -ETIME;
+	/* समयout means wrong logic */
+	अगर (i == समयout)
+		वापस -ETIME;
 
-	return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
-}
+	वापस RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
+पूर्ण
 
-int smu_cmn_send_msg_without_waiting(struct smu_context *smu,
-				     uint16_t msg, uint32_t param)
-{
-	struct amdgpu_device *adev = smu->adev;
-	int ret;
+पूर्णांक smu_cmn_send_msg_without_रुकोing(काष्ठा smu_context *smu,
+				     uपूर्णांक16_t msg, uपूर्णांक32_t param)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret;
 
-	ret = smu_cmn_wait_for_response(smu);
-	if (ret != 0x1) {
+	ret = smu_cmn_रुको_क्रम_response(smu);
+	अगर (ret != 0x1) अणु
 		dev_err(adev->dev, "Msg issuing pre-check failed and "
 		       "SMU may be not in the right state!\n");
-		if (ret != -ETIME)
+		अगर (ret != -ETIME)
 			ret = -EIO;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90, 0);
 	WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82, param);
 	WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_66, msg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smu_cmn_send_smc_msg_with_param(struct smu_context *smu,
-				    enum smu_message_type msg,
-				    uint32_t param,
-				    uint32_t *read_arg)
-{
-	struct amdgpu_device *adev = smu->adev;
-	int ret = 0, index = 0;
+पूर्णांक smu_cmn_send_smc_msg_with_param(काष्ठा smu_context *smu,
+				    क्रमागत smu_message_type msg,
+				    uपूर्णांक32_t param,
+				    uपूर्णांक32_t *पढ़ो_arg)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret = 0, index = 0;
 
-	if (smu->adev->in_pci_err_recovery)
-		return 0;
+	अगर (smu->adev->in_pci_err_recovery)
+		वापस 0;
 
-	index = smu_cmn_to_asic_specific_index(smu,
+	index = smu_cmn_to_asic_specअगरic_index(smu,
 					       CMN2ASIC_MAPPING_MSG,
 					       msg);
-	if (index < 0)
-		return index == -EACCES ? 0 : index;
+	अगर (index < 0)
+		वापस index == -EACCES ? 0 : index;
 
 	mutex_lock(&smu->message_lock);
-	ret = smu_cmn_send_msg_without_waiting(smu, (uint16_t)index, param);
-	if (ret)
-		goto out;
+	ret = smu_cmn_send_msg_without_रुकोing(smu, (uपूर्णांक16_t)index, param);
+	अगर (ret)
+		जाओ out;
 
-	ret = smu_cmn_wait_for_response(smu);
-	if (ret != 0x1) {
-		if (ret == -ETIME) {
+	ret = smu_cmn_रुको_क्रम_response(smu);
+	अगर (ret != 0x1) अणु
+		अगर (ret == -ETIME) अणु
 			dev_err(adev->dev, "message: %15s (%d) \tparam: 0x%08x is timeout (no response)\n",
 				smu_get_message_name(smu, msg), index, param);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(adev->dev, "failed send message: %15s (%d) \tparam: 0x%08x response %#x\n",
 				smu_get_message_name(smu, msg), index, param,
 				ret);
 			ret = -EIO;
-		}
-		goto out;
-	}
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
-	if (read_arg)
-		smu_cmn_read_arg(smu, read_arg);
+	अगर (पढ़ो_arg)
+		smu_cmn_पढ़ो_arg(smu, पढ़ो_arg);
 
-	ret = 0; /* 0 as driver return value */
+	ret = 0; /* 0 as driver वापस value */
 out:
 	mutex_unlock(&smu->message_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_cmn_send_smc_msg(struct smu_context *smu,
-			 enum smu_message_type msg,
-			 uint32_t *read_arg)
-{
-	return smu_cmn_send_smc_msg_with_param(smu,
+पूर्णांक smu_cmn_send_smc_msg(काष्ठा smu_context *smu,
+			 क्रमागत smu_message_type msg,
+			 uपूर्णांक32_t *पढ़ो_arg)
+अणु
+	वापस smu_cmn_send_smc_msg_with_param(smu,
 					       msg,
 					       0,
-					       read_arg);
-}
+					       पढ़ो_arg);
+पूर्ण
 
-int smu_cmn_to_asic_specific_index(struct smu_context *smu,
-				   enum smu_cmn2asic_mapping_type type,
-				   uint32_t index)
-{
-	struct cmn2asic_msg_mapping msg_mapping;
-	struct cmn2asic_mapping mapping;
+पूर्णांक smu_cmn_to_asic_specअगरic_index(काष्ठा smu_context *smu,
+				   क्रमागत smu_cmn2asic_mapping_type type,
+				   uपूर्णांक32_t index)
+अणु
+	काष्ठा cmn2asic_msg_mapping msg_mapping;
+	काष्ठा cmn2asic_mapping mapping;
 
-	switch (type) {
-	case CMN2ASIC_MAPPING_MSG:
-		if (index >= SMU_MSG_MAX_COUNT ||
+	चयन (type) अणु
+	हाल CMN2ASIC_MAPPING_MSG:
+		अगर (index >= SMU_MSG_MAX_COUNT ||
 		    !smu->message_map)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		msg_mapping = smu->message_map[index];
-		if (!msg_mapping.valid_mapping)
-			return -EINVAL;
+		अगर (!msg_mapping.valid_mapping)
+			वापस -EINVAL;
 
-		if (amdgpu_sriov_vf(smu->adev) &&
+		अगर (amdgpu_sriov_vf(smu->adev) &&
 		    !msg_mapping.valid_in_vf)
-			return -EACCES;
+			वापस -EACCES;
 
-		return msg_mapping.map_to;
+		वापस msg_mapping.map_to;
 
-	case CMN2ASIC_MAPPING_CLK:
-		if (index >= SMU_CLK_COUNT ||
-		    !smu->clock_map)
-			return -EINVAL;
+	हाल CMN2ASIC_MAPPING_CLK:
+		अगर (index >= SMU_CLK_COUNT ||
+		    !smu->घड़ी_map)
+			वापस -EINVAL;
 
-		mapping = smu->clock_map[index];
-		if (!mapping.valid_mapping)
-			return -EINVAL;
+		mapping = smu->घड़ी_map[index];
+		अगर (!mapping.valid_mapping)
+			वापस -EINVAL;
 
-		return mapping.map_to;
+		वापस mapping.map_to;
 
-	case CMN2ASIC_MAPPING_FEATURE:
-		if (index >= SMU_FEATURE_COUNT ||
+	हाल CMN2ASIC_MAPPING_FEATURE:
+		अगर (index >= SMU_FEATURE_COUNT ||
 		    !smu->feature_map)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		mapping = smu->feature_map[index];
-		if (!mapping.valid_mapping)
-			return -EINVAL;
+		अगर (!mapping.valid_mapping)
+			वापस -EINVAL;
 
-		return mapping.map_to;
+		वापस mapping.map_to;
 
-	case CMN2ASIC_MAPPING_TABLE:
-		if (index >= SMU_TABLE_COUNT ||
+	हाल CMN2ASIC_MAPPING_TABLE:
+		अगर (index >= SMU_TABLE_COUNT ||
 		    !smu->table_map)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		mapping = smu->table_map[index];
-		if (!mapping.valid_mapping)
-			return -EINVAL;
+		अगर (!mapping.valid_mapping)
+			वापस -EINVAL;
 
-		return mapping.map_to;
+		वापस mapping.map_to;
 
-	case CMN2ASIC_MAPPING_PWR:
-		if (index >= SMU_POWER_SOURCE_COUNT ||
+	हाल CMN2ASIC_MAPPING_PWR:
+		अगर (index >= SMU_POWER_SOURCE_COUNT ||
 		    !smu->pwr_src_map)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		mapping = smu->pwr_src_map[index];
-		if (!mapping.valid_mapping)
-			return -EINVAL;
+		अगर (!mapping.valid_mapping)
+			वापस -EINVAL;
 
-		return mapping.map_to;
+		वापस mapping.map_to;
 
-	case CMN2ASIC_MAPPING_WORKLOAD:
-		if (index > PP_SMC_POWER_PROFILE_CUSTOM ||
+	हाल CMN2ASIC_MAPPING_WORKLOAD:
+		अगर (index > PP_SMC_POWER_PROखाता_CUSTOM ||
 		    !smu->workload_map)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		mapping = smu->workload_map[index];
-		if (!mapping.valid_mapping)
-			return -EINVAL;
+		अगर (!mapping.valid_mapping)
+			वापस -EINVAL;
 
-		return mapping.map_to;
+		वापस mapping.map_to;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int smu_cmn_feature_is_supported(struct smu_context *smu,
-				 enum smu_feature_mask mask)
-{
-	struct smu_feature *feature = &smu->smu_feature;
-	int feature_id;
-	int ret = 0;
+पूर्णांक smu_cmn_feature_is_supported(काष्ठा smu_context *smu,
+				 क्रमागत smu_feature_mask mask)
+अणु
+	काष्ठा smu_feature *feature = &smu->smu_feature;
+	पूर्णांक feature_id;
+	पूर्णांक ret = 0;
 
-	feature_id = smu_cmn_to_asic_specific_index(smu,
+	feature_id = smu_cmn_to_asic_specअगरic_index(smu,
 						    CMN2ASIC_MAPPING_FEATURE,
 						    mask);
-	if (feature_id < 0)
-		return 0;
+	अगर (feature_id < 0)
+		वापस 0;
 
 	WARN_ON(feature_id > feature->feature_num);
 
@@ -275,25 +276,25 @@ int smu_cmn_feature_is_supported(struct smu_context *smu,
 	ret = test_bit(feature_id, feature->supported);
 	mutex_unlock(&feature->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_cmn_feature_is_enabled(struct smu_context *smu,
-			       enum smu_feature_mask mask)
-{
-	struct smu_feature *feature = &smu->smu_feature;
-	struct amdgpu_device *adev = smu->adev;
-	int feature_id;
-	int ret = 0;
+पूर्णांक smu_cmn_feature_is_enabled(काष्ठा smu_context *smu,
+			       क्रमागत smu_feature_mask mask)
+अणु
+	काष्ठा smu_feature *feature = &smu->smu_feature;
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक feature_id;
+	पूर्णांक ret = 0;
 
-	if (smu->is_apu && adev->family < AMDGPU_FAMILY_VGH)
-		return 1;
+	अगर (smu->is_apu && adev->family < AMDGPU_FAMILY_VGH)
+		वापस 1;
 
-	feature_id = smu_cmn_to_asic_specific_index(smu,
+	feature_id = smu_cmn_to_asic_specअगरic_index(smu,
 						    CMN2ASIC_MAPPING_FEATURE,
 						    mask);
-	if (feature_id < 0)
-		return 0;
+	अगर (feature_id < 0)
+		वापस 0;
 
 	WARN_ON(feature_id > feature->feature_num);
 
@@ -301,442 +302,442 @@ int smu_cmn_feature_is_enabled(struct smu_context *smu,
 	ret = test_bit(feature_id, feature->enabled);
 	mutex_unlock(&feature->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool smu_cmn_clk_dpm_is_enabled(struct smu_context *smu,
-				enum smu_clk_type clk_type)
-{
-	enum smu_feature_mask feature_id = 0;
+bool smu_cmn_clk_dpm_is_enabled(काष्ठा smu_context *smu,
+				क्रमागत smu_clk_type clk_type)
+अणु
+	क्रमागत smu_feature_mask feature_id = 0;
 
-	switch (clk_type) {
-	case SMU_MCLK:
-	case SMU_UCLK:
+	चयन (clk_type) अणु
+	हाल SMU_MCLK:
+	हाल SMU_UCLK:
 		feature_id = SMU_FEATURE_DPM_UCLK_BIT;
-		break;
-	case SMU_GFXCLK:
-	case SMU_SCLK:
+		अवरोध;
+	हाल SMU_GFXCLK:
+	हाल SMU_SCLK:
 		feature_id = SMU_FEATURE_DPM_GFXCLK_BIT;
-		break;
-	case SMU_SOCCLK:
+		अवरोध;
+	हाल SMU_SOCCLK:
 		feature_id = SMU_FEATURE_DPM_SOCCLK_BIT;
-		break;
-	default:
-		return true;
-	}
+		अवरोध;
+	शेष:
+		वापस true;
+	पूर्ण
 
-	if (!smu_cmn_feature_is_enabled(smu, feature_id))
-		return false;
+	अगर (!smu_cmn_feature_is_enabled(smu, feature_id))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int smu_cmn_get_enabled_mask(struct smu_context *smu,
-			     uint32_t *feature_mask,
-			     uint32_t num)
-{
-	uint32_t feature_mask_high = 0, feature_mask_low = 0;
-	struct smu_feature *feature = &smu->smu_feature;
-	int ret = 0;
+पूर्णांक smu_cmn_get_enabled_mask(काष्ठा smu_context *smu,
+			     uपूर्णांक32_t *feature_mask,
+			     uपूर्णांक32_t num)
+अणु
+	uपूर्णांक32_t feature_mask_high = 0, feature_mask_low = 0;
+	काष्ठा smu_feature *feature = &smu->smu_feature;
+	पूर्णांक ret = 0;
 
-	if (!feature_mask || num < 2)
-		return -EINVAL;
+	अगर (!feature_mask || num < 2)
+		वापस -EINVAL;
 
-	if (bitmap_empty(feature->enabled, feature->feature_num)) {
+	अगर (biपंचांगap_empty(feature->enabled, feature->feature_num)) अणु
 		ret = smu_cmn_send_smc_msg(smu, SMU_MSG_GetEnabledSmuFeaturesHigh, &feature_mask_high);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = smu_cmn_send_smc_msg(smu, SMU_MSG_GetEnabledSmuFeaturesLow, &feature_mask_low);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		feature_mask[0] = feature_mask_low;
 		feature_mask[1] = feature_mask_high;
-	} else {
-		bitmap_copy((unsigned long *)feature_mask, feature->enabled,
+	पूर्ण अन्यथा अणु
+		biपंचांगap_copy((अचिन्हित दीर्घ *)feature_mask, feature->enabled,
 			     feature->feature_num);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_cmn_get_enabled_32_bits_mask(struct smu_context *smu,
-					uint32_t *feature_mask,
-					uint32_t num)
-{
-	uint32_t feature_mask_en_low = 0;
-	uint32_t feature_mask_en_high = 0;
-	struct smu_feature *feature = &smu->smu_feature;
-	int ret = 0;
+पूर्णांक smu_cmn_get_enabled_32_bits_mask(काष्ठा smu_context *smu,
+					uपूर्णांक32_t *feature_mask,
+					uपूर्णांक32_t num)
+अणु
+	uपूर्णांक32_t feature_mask_en_low = 0;
+	uपूर्णांक32_t feature_mask_en_high = 0;
+	काष्ठा smu_feature *feature = &smu->smu_feature;
+	पूर्णांक ret = 0;
 
-	if (!feature_mask || num < 2)
-		return -EINVAL;
+	अगर (!feature_mask || num < 2)
+		वापस -EINVAL;
 
-	if (bitmap_empty(feature->enabled, feature->feature_num)) {
+	अगर (biपंचांगap_empty(feature->enabled, feature->feature_num)) अणु
 		ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_GetEnabledSmuFeatures, 0,
 										 &feature_mask_en_low);
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_GetEnabledSmuFeatures, 1,
 										 &feature_mask_en_high);
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		feature_mask[0] = feature_mask_en_low;
 		feature_mask[1] = feature_mask_en_high;
 
-	} else {
-		bitmap_copy((unsigned long *)feature_mask, feature->enabled,
+	पूर्ण अन्यथा अणु
+		biपंचांगap_copy((अचिन्हित दीर्घ *)feature_mask, feature->enabled,
 				 feature->feature_num);
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-int smu_cmn_feature_update_enable_state(struct smu_context *smu,
-					uint64_t feature_mask,
+पूर्णांक smu_cmn_feature_update_enable_state(काष्ठा smu_context *smu,
+					uपूर्णांक64_t feature_mask,
 					bool enabled)
-{
-	struct smu_feature *feature = &smu->smu_feature;
-	int ret = 0;
+अणु
+	काष्ठा smu_feature *feature = &smu->smu_feature;
+	पूर्णांक ret = 0;
 
-	if (enabled) {
+	अगर (enabled) अणु
 		ret = smu_cmn_send_smc_msg_with_param(smu,
 						  SMU_MSG_EnableSmuFeaturesLow,
 						  lower_32_bits(feature_mask),
-						  NULL);
-		if (ret)
-			return ret;
+						  शून्य);
+		अगर (ret)
+			वापस ret;
 		ret = smu_cmn_send_smc_msg_with_param(smu,
 						  SMU_MSG_EnableSmuFeaturesHigh,
 						  upper_32_bits(feature_mask),
-						  NULL);
-		if (ret)
-			return ret;
-	} else {
+						  शून्य);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		ret = smu_cmn_send_smc_msg_with_param(smu,
 						  SMU_MSG_DisableSmuFeaturesLow,
 						  lower_32_bits(feature_mask),
-						  NULL);
-		if (ret)
-			return ret;
+						  शून्य);
+		अगर (ret)
+			वापस ret;
 		ret = smu_cmn_send_smc_msg_with_param(smu,
 						  SMU_MSG_DisableSmuFeaturesHigh,
 						  upper_32_bits(feature_mask),
-						  NULL);
-		if (ret)
-			return ret;
-	}
+						  शून्य);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	mutex_lock(&feature->mutex);
-	if (enabled)
-		bitmap_or(feature->enabled, feature->enabled,
-				(unsigned long *)(&feature_mask), SMU_FEATURE_MAX);
-	else
-		bitmap_andnot(feature->enabled, feature->enabled,
-				(unsigned long *)(&feature_mask), SMU_FEATURE_MAX);
+	अगर (enabled)
+		biपंचांगap_or(feature->enabled, feature->enabled,
+				(अचिन्हित दीर्घ *)(&feature_mask), SMU_FEATURE_MAX);
+	अन्यथा
+		biपंचांगap_andnot(feature->enabled, feature->enabled,
+				(अचिन्हित दीर्घ *)(&feature_mask), SMU_FEATURE_MAX);
 	mutex_unlock(&feature->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_cmn_feature_set_enabled(struct smu_context *smu,
-				enum smu_feature_mask mask,
+पूर्णांक smu_cmn_feature_set_enabled(काष्ठा smu_context *smu,
+				क्रमागत smu_feature_mask mask,
 				bool enable)
-{
-	struct smu_feature *feature = &smu->smu_feature;
-	int feature_id;
+अणु
+	काष्ठा smu_feature *feature = &smu->smu_feature;
+	पूर्णांक feature_id;
 
-	feature_id = smu_cmn_to_asic_specific_index(smu,
+	feature_id = smu_cmn_to_asic_specअगरic_index(smu,
 						    CMN2ASIC_MAPPING_FEATURE,
 						    mask);
-	if (feature_id < 0)
-		return -EINVAL;
+	अगर (feature_id < 0)
+		वापस -EINVAL;
 
 	WARN_ON(feature_id > feature->feature_num);
 
-	return smu_cmn_feature_update_enable_state(smu,
+	वापस smu_cmn_feature_update_enable_state(smu,
 					       1ULL << feature_id,
 					       enable);
-}
+पूर्ण
 
-#undef __SMU_DUMMY_MAP
-#define __SMU_DUMMY_MAP(fea)	#fea
-static const char* __smu_feature_names[] = {
+#अघोषित __SMU_DUMMY_MAP
+#घोषणा __SMU_DUMMY_MAP(fea)	#fea
+अटल स्थिर अक्षर* __smu_feature_names[] = अणु
 	SMU_FEATURE_MASKS
-};
+पूर्ण;
 
-static const char *smu_get_feature_name(struct smu_context *smu,
-					enum smu_feature_mask feature)
-{
-	if (feature < 0 || feature >= SMU_FEATURE_COUNT)
-		return "unknown smu feature";
-	return __smu_feature_names[feature];
-}
+अटल स्थिर अक्षर *smu_get_feature_name(काष्ठा smu_context *smu,
+					क्रमागत smu_feature_mask feature)
+अणु
+	अगर (feature < 0 || feature >= SMU_FEATURE_COUNT)
+		वापस "unknown smu feature";
+	वापस __smu_feature_names[feature];
+पूर्ण
 
-size_t smu_cmn_get_pp_feature_mask(struct smu_context *smu,
-				   char *buf)
-{
-	uint32_t feature_mask[2] = { 0 };
-	int feature_index = 0;
-	uint32_t count = 0;
-	int8_t sort_feature[SMU_FEATURE_COUNT];
-	size_t size = 0;
-	int ret = 0, i;
+माप_प्रकार smu_cmn_get_pp_feature_mask(काष्ठा smu_context *smu,
+				   अक्षर *buf)
+अणु
+	uपूर्णांक32_t feature_mask[2] = अणु 0 पूर्ण;
+	पूर्णांक feature_index = 0;
+	uपूर्णांक32_t count = 0;
+	पूर्णांक8_t sort_feature[SMU_FEATURE_COUNT];
+	माप_प्रकार size = 0;
+	पूर्णांक ret = 0, i;
 
-	if (!smu->is_apu) {
+	अगर (!smu->is_apu) अणु
 		ret = smu_cmn_get_enabled_mask(smu,
 						feature_mask,
 						2);
-		if (ret)
-			return 0;
-	} else {
+		अगर (ret)
+			वापस 0;
+	पूर्ण अन्यथा अणु
 		ret = smu_cmn_get_enabled_32_bits_mask(smu,
 					feature_mask,
 					2);
-		if (ret)
-			return 0;
-	}
+		अगर (ret)
+			वापस 0;
+	पूर्ण
 
-	size =  sprintf(buf + size, "features high: 0x%08x low: 0x%08x\n",
+	size =  प्र_लिखो(buf + size, "features high: 0x%08x low: 0x%08x\n",
 			feature_mask[1], feature_mask[0]);
 
-	memset(sort_feature, -1, sizeof(sort_feature));
+	स_रखो(sort_feature, -1, माप(sort_feature));
 
-	for (i = 0; i < SMU_FEATURE_COUNT; i++) {
-		feature_index = smu_cmn_to_asic_specific_index(smu,
+	क्रम (i = 0; i < SMU_FEATURE_COUNT; i++) अणु
+		feature_index = smu_cmn_to_asic_specअगरic_index(smu,
 							       CMN2ASIC_MAPPING_FEATURE,
 							       i);
-		if (feature_index < 0)
-			continue;
+		अगर (feature_index < 0)
+			जारी;
 
 		sort_feature[feature_index] = i;
-	}
+	पूर्ण
 
-	size += sprintf(buf + size, "%-2s. %-20s  %-3s : %-s\n",
+	size += प्र_लिखो(buf + size, "%-2s. %-20s  %-3s : %-s\n",
 			"No", "Feature", "Bit", "State");
 
-	for (i = 0; i < SMU_FEATURE_COUNT; i++) {
-		if (sort_feature[i] < 0)
-			continue;
+	क्रम (i = 0; i < SMU_FEATURE_COUNT; i++) अणु
+		अगर (sort_feature[i] < 0)
+			जारी;
 
-		size += sprintf(buf + size, "%02d. %-20s (%2d) : %s\n",
+		size += प्र_लिखो(buf + size, "%02d. %-20s (%2d) : %s\n",
 				count++,
 				smu_get_feature_name(smu, sort_feature[i]),
 				i,
 				!!smu_cmn_feature_is_enabled(smu, sort_feature[i]) ?
 				"enabled" : "disabled");
-	}
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-int smu_cmn_set_pp_feature_mask(struct smu_context *smu,
-				uint64_t new_mask)
-{
-	int ret = 0;
-	uint32_t feature_mask[2] = { 0 };
-	uint64_t feature_2_enabled = 0;
-	uint64_t feature_2_disabled = 0;
-	uint64_t feature_enables = 0;
+पूर्णांक smu_cmn_set_pp_feature_mask(काष्ठा smu_context *smu,
+				uपूर्णांक64_t new_mask)
+अणु
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t feature_mask[2] = अणु 0 पूर्ण;
+	uपूर्णांक64_t feature_2_enabled = 0;
+	uपूर्णांक64_t feature_2_disabled = 0;
+	uपूर्णांक64_t feature_enables = 0;
 
 	ret = smu_cmn_get_enabled_mask(smu,
 				       feature_mask,
 				       2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	feature_enables = ((uint64_t)feature_mask[1] << 32 |
-			   (uint64_t)feature_mask[0]);
+	feature_enables = ((uपूर्णांक64_t)feature_mask[1] << 32 |
+			   (uपूर्णांक64_t)feature_mask[0]);
 
 	feature_2_enabled  = ~feature_enables & new_mask;
 	feature_2_disabled = feature_enables & ~new_mask;
 
-	if (feature_2_enabled) {
+	अगर (feature_2_enabled) अणु
 		ret = smu_cmn_feature_update_enable_state(smu,
 							  feature_2_enabled,
 							  true);
-		if (ret)
-			return ret;
-	}
-	if (feature_2_disabled) {
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	अगर (feature_2_disabled) अणु
 		ret = smu_cmn_feature_update_enable_state(smu,
 							  feature_2_disabled,
 							  false);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_cmn_disable_all_features_with_exception(struct smu_context *smu,
-						enum smu_feature_mask mask)
-{
-	uint64_t features_to_disable = U64_MAX;
-	int skipped_feature_id;
+पूर्णांक smu_cmn_disable_all_features_with_exception(काष्ठा smu_context *smu,
+						क्रमागत smu_feature_mask mask)
+अणु
+	uपूर्णांक64_t features_to_disable = U64_MAX;
+	पूर्णांक skipped_feature_id;
 
-	skipped_feature_id = smu_cmn_to_asic_specific_index(smu,
+	skipped_feature_id = smu_cmn_to_asic_specअगरic_index(smu,
 							    CMN2ASIC_MAPPING_FEATURE,
 							    mask);
-	if (skipped_feature_id < 0)
-		return -EINVAL;
+	अगर (skipped_feature_id < 0)
+		वापस -EINVAL;
 
 	features_to_disable &= ~(1ULL << skipped_feature_id);
 
-	return smu_cmn_feature_update_enable_state(smu,
+	वापस smu_cmn_feature_update_enable_state(smu,
 						   features_to_disable,
 						   0);
-}
+पूर्ण
 
-int smu_cmn_get_smc_version(struct smu_context *smu,
-			    uint32_t *if_version,
-			    uint32_t *smu_version)
-{
-	int ret = 0;
+पूर्णांक smu_cmn_get_smc_version(काष्ठा smu_context *smu,
+			    uपूर्णांक32_t *अगर_version,
+			    uपूर्णांक32_t *smu_version)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!if_version && !smu_version)
-		return -EINVAL;
+	अगर (!अगर_version && !smu_version)
+		वापस -EINVAL;
 
-	if (smu->smc_fw_if_version && smu->smc_fw_version)
-	{
-		if (if_version)
-			*if_version = smu->smc_fw_if_version;
+	अगर (smu->smc_fw_अगर_version && smu->smc_fw_version)
+	अणु
+		अगर (अगर_version)
+			*अगर_version = smu->smc_fw_अगर_version;
 
-		if (smu_version)
+		अगर (smu_version)
 			*smu_version = smu->smc_fw_version;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (if_version) {
-		ret = smu_cmn_send_smc_msg(smu, SMU_MSG_GetDriverIfVersion, if_version);
-		if (ret)
-			return ret;
+	अगर (अगर_version) अणु
+		ret = smu_cmn_send_smc_msg(smu, SMU_MSG_GetDriverIfVersion, अगर_version);
+		अगर (ret)
+			वापस ret;
 
-		smu->smc_fw_if_version = *if_version;
-	}
+		smu->smc_fw_अगर_version = *अगर_version;
+	पूर्ण
 
-	if (smu_version) {
+	अगर (smu_version) अणु
 		ret = smu_cmn_send_smc_msg(smu, SMU_MSG_GetSmuVersion, smu_version);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		smu->smc_fw_version = *smu_version;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_cmn_update_table(struct smu_context *smu,
-			 enum smu_table_id table_index,
-			 int argument,
-			 void *table_data,
+पूर्णांक smu_cmn_update_table(काष्ठा smu_context *smu,
+			 क्रमागत smu_table_id table_index,
+			 पूर्णांक argument,
+			 व्योम *table_data,
 			 bool drv2smu)
-{
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct amdgpu_device *adev = smu->adev;
-	struct smu_table *table = &smu_table->driver_table;
-	int table_id = smu_cmn_to_asic_specific_index(smu,
+अणु
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा amdgpu_device *adev = smu->adev;
+	काष्ठा smu_table *table = &smu_table->driver_table;
+	पूर्णांक table_id = smu_cmn_to_asic_specअगरic_index(smu,
 						      CMN2ASIC_MAPPING_TABLE,
 						      table_index);
-	uint32_t table_size;
-	int ret = 0;
-	if (!table_data || table_id >= SMU_TABLE_COUNT || table_id < 0)
-		return -EINVAL;
+	uपूर्णांक32_t table_size;
+	पूर्णांक ret = 0;
+	अगर (!table_data || table_id >= SMU_TABLE_COUNT || table_id < 0)
+		वापस -EINVAL;
 
 	table_size = smu_table->tables[table_index].size;
 
-	if (drv2smu) {
-		memcpy(table->cpu_addr, table_data, table_size);
+	अगर (drv2smu) अणु
+		स_नकल(table->cpu_addr, table_data, table_size);
 		/*
 		 * Flush hdp cache: to guard the content seen by
 		 * GPU is consitent with CPU.
 		 */
-		amdgpu_asic_flush_hdp(adev, NULL);
-	}
+		amdgpu_asic_flush_hdp(adev, शून्य);
+	पूर्ण
 
 	ret = smu_cmn_send_smc_msg_with_param(smu, drv2smu ?
 					  SMU_MSG_TransferTableDram2Smu :
 					  SMU_MSG_TransferTableSmu2Dram,
 					  table_id | ((argument & 0xFFFF) << 16),
-					  NULL);
-	if (ret)
-		return ret;
+					  शून्य);
+	अगर (ret)
+		वापस ret;
 
-	if (!drv2smu) {
-		amdgpu_asic_invalidate_hdp(adev, NULL);
-		memcpy(table_data, table->cpu_addr, table_size);
-	}
+	अगर (!drv2smu) अणु
+		amdgpu_asic_invalidate_hdp(adev, शून्य);
+		स_नकल(table_data, table->cpu_addr, table_size);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smu_cmn_write_watermarks_table(struct smu_context *smu)
-{
-	void *watermarks_table = smu->smu_table.watermarks_table;
+पूर्णांक smu_cmn_ग_लिखो_watermarks_table(काष्ठा smu_context *smu)
+अणु
+	व्योम *watermarks_table = smu->smu_table.watermarks_table;
 
-	if (!watermarks_table)
-		return -EINVAL;
+	अगर (!watermarks_table)
+		वापस -EINVAL;
 
-	return smu_cmn_update_table(smu,
+	वापस smu_cmn_update_table(smu,
 				    SMU_TABLE_WATERMARKS,
 				    0,
 				    watermarks_table,
 				    true);
-}
+पूर्ण
 
-int smu_cmn_write_pptable(struct smu_context *smu)
-{
-	void *pptable = smu->smu_table.driver_pptable;
+पूर्णांक smu_cmn_ग_लिखो_pptable(काष्ठा smu_context *smu)
+अणु
+	व्योम *pptable = smu->smu_table.driver_pptable;
 
-	return smu_cmn_update_table(smu,
+	वापस smu_cmn_update_table(smu,
 				    SMU_TABLE_PPTABLE,
 				    0,
 				    pptable,
 				    true);
-}
+पूर्ण
 
-int smu_cmn_get_metrics_table_locked(struct smu_context *smu,
-				     void *metrics_table,
+पूर्णांक smu_cmn_get_metrics_table_locked(काष्ठा smu_context *smu,
+				     व्योम *metrics_table,
 				     bool bypass_cache)
-{
-	struct smu_table_context *smu_table= &smu->smu_table;
-	uint32_t table_size =
+अणु
+	काष्ठा smu_table_context *smu_table= &smu->smu_table;
+	uपूर्णांक32_t table_size =
 		smu_table->tables[SMU_TABLE_SMU_METRICS].size;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (bypass_cache ||
-	    !smu_table->metrics_time ||
-	    time_after(jiffies, smu_table->metrics_time + msecs_to_jiffies(1))) {
+	अगर (bypass_cache ||
+	    !smu_table->metrics_समय ||
+	    समय_after(jअगरfies, smu_table->metrics_समय + msecs_to_jअगरfies(1))) अणु
 		ret = smu_cmn_update_table(smu,
 				       SMU_TABLE_SMU_METRICS,
 				       0,
 				       smu_table->metrics_table,
 				       false);
-		if (ret) {
+		अगर (ret) अणु
 			dev_info(smu->adev->dev, "Failed to export SMU metrics table!\n");
-			return ret;
-		}
-		smu_table->metrics_time = jiffies;
-	}
+			वापस ret;
+		पूर्ण
+		smu_table->metrics_समय = jअगरfies;
+	पूर्ण
 
-	if (metrics_table)
-		memcpy(metrics_table, smu_table->metrics_table, table_size);
+	अगर (metrics_table)
+		स_नकल(metrics_table, smu_table->metrics_table, table_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smu_cmn_get_metrics_table(struct smu_context *smu,
-			      void *metrics_table,
+पूर्णांक smu_cmn_get_metrics_table(काष्ठा smu_context *smu,
+			      व्योम *metrics_table,
 			      bool bypass_cache)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&smu->metrics_lock);
 	ret = smu_cmn_get_metrics_table_locked(smu,
@@ -744,67 +745,67 @@ int smu_cmn_get_metrics_table(struct smu_context *smu,
 					       bypass_cache);
 	mutex_unlock(&smu->metrics_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void smu_cmn_init_soft_gpu_metrics(void *table, uint8_t frev, uint8_t crev)
-{
-	struct metrics_table_header *header = (struct metrics_table_header *)table;
-	uint16_t structure_size;
+व्योम smu_cmn_init_soft_gpu_metrics(व्योम *table, uपूर्णांक8_t frev, uपूर्णांक8_t crev)
+अणु
+	काष्ठा metrics_table_header *header = (काष्ठा metrics_table_header *)table;
+	uपूर्णांक16_t काष्ठाure_size;
 
-#define METRICS_VERSION(a, b)	((a << 16) | b )
+#घोषणा METRICS_VERSION(a, b)	((a << 16) | b )
 
-	switch (METRICS_VERSION(frev, crev)) {
-	case METRICS_VERSION(1, 0):
-		structure_size = sizeof(struct gpu_metrics_v1_0);
-		break;
-	case METRICS_VERSION(1, 1):
-		structure_size = sizeof(struct gpu_metrics_v1_1);
-		break;
-	case METRICS_VERSION(2, 0):
-		structure_size = sizeof(struct gpu_metrics_v2_0);
-		break;
-	case METRICS_VERSION(2, 1):
-		structure_size = sizeof(struct gpu_metrics_v2_1);
-		break;
-	default:
-		return;
-	}
+	चयन (METRICS_VERSION(frev, crev)) अणु
+	हाल METRICS_VERSION(1, 0):
+		काष्ठाure_size = माप(काष्ठा gpu_metrics_v1_0);
+		अवरोध;
+	हाल METRICS_VERSION(1, 1):
+		काष्ठाure_size = माप(काष्ठा gpu_metrics_v1_1);
+		अवरोध;
+	हाल METRICS_VERSION(2, 0):
+		काष्ठाure_size = माप(काष्ठा gpu_metrics_v2_0);
+		अवरोध;
+	हाल METRICS_VERSION(2, 1):
+		काष्ठाure_size = माप(काष्ठा gpu_metrics_v2_1);
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-#undef METRICS_VERSION
+#अघोषित METRICS_VERSION
 
-	memset(header, 0xFF, structure_size);
+	स_रखो(header, 0xFF, काष्ठाure_size);
 
-	header->format_revision = frev;
+	header->क्रमmat_revision = frev;
 	header->content_revision = crev;
-	header->structure_size = structure_size;
+	header->काष्ठाure_size = काष्ठाure_size;
 
-}
+पूर्ण
 
-int smu_cmn_set_mp1_state(struct smu_context *smu,
-			  enum pp_mp1_state mp1_state)
-{
-	enum smu_message_type msg;
-	int ret;
+पूर्णांक smu_cmn_set_mp1_state(काष्ठा smu_context *smu,
+			  क्रमागत pp_mp1_state mp1_state)
+अणु
+	क्रमागत smu_message_type msg;
+	पूर्णांक ret;
 
-	switch (mp1_state) {
-	case PP_MP1_STATE_SHUTDOWN:
-		msg = SMU_MSG_PrepareMp1ForShutdown;
-		break;
-	case PP_MP1_STATE_UNLOAD:
+	चयन (mp1_state) अणु
+	हाल PP_MP1_STATE_SHUTDOWN:
+		msg = SMU_MSG_PrepareMp1ForShutकरोwn;
+		अवरोध;
+	हाल PP_MP1_STATE_UNLOAD:
 		msg = SMU_MSG_PrepareMp1ForUnload;
-		break;
-	case PP_MP1_STATE_RESET:
+		अवरोध;
+	हाल PP_MP1_STATE_RESET:
 		msg = SMU_MSG_PrepareMp1ForReset;
-		break;
-	case PP_MP1_STATE_NONE:
-	default:
-		return 0;
-	}
+		अवरोध;
+	हाल PP_MP1_STATE_NONE:
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	ret = smu_cmn_send_smc_msg(smu, msg, NULL);
-	if (ret)
+	ret = smu_cmn_send_smc_msg(smu, msg, शून्य);
+	अगर (ret)
 		dev_err(smu->adev->dev, "[PrepareMp1] Failed!\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

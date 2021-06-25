@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * (c) Copyright 2007 Hewlett-Packard Development Company, L.P.
  *        Contributed by Peter Keilty <peter.keilty@hp.com>
  *
- * fsyscall gettimeofday data
+ * fsyscall समय_लोofday data
  */
 
-/* like timespec, but includes "shifted nanoseconds" */
-struct time_sn_spec {
+/* like बारpec, but includes "shifted nanoseconds" */
+काष्ठा समय_sn_spec अणु
 	u64	sec;
 	u64	snsec;
-};
+पूर्ण;
 
-struct fsyscall_gtod_data_t {
+काष्ठा fsyscall_gtod_data_t अणु
 	seqcount_t	seq;
-	struct time_sn_spec wall_time;
-	struct time_sn_spec monotonic_time;
+	काष्ठा समय_sn_spec wall_समय;
+	काष्ठा समय_sn_spec monotonic_समय;
 	u64		clk_mask;
 	u32		clk_mult;
-	u32		clk_shift;
-	void		*clk_fsys_mmio;
+	u32		clk_shअगरt;
+	व्योम		*clk_fsys_mmio;
 	u64		clk_cycle_last;
-} ____cacheline_aligned;
+पूर्ण ____cacheline_aligned;
 
-struct itc_jitter_data_t {
-	int		itc_jitter;
+काष्ठा itc_jitter_data_t अणु
+	पूर्णांक		itc_jitter;
 	u64		itc_lastcycle;
-} ____cacheline_aligned;
+पूर्ण ____cacheline_aligned;
 

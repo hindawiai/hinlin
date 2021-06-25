@@ -1,11 +1,12 @@
+<शैली गुरु>
 /*
- * Clocksource driver for NXP LPC32xx/18xx/43xx timer
+ * Clocksource driver क्रम NXP LPC32xx/18xx/43xx समयr
  *
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  *
  * Based on:
- * time-efm32 Copyright (C) 2013 Pengutronix
- * mach-lpc32xx/timer.c Copyright (C) 2009 - 2010 NXP Semiconductors
+ * समय-efm32 Copyright (C) 2013 Pengutronix
+ * mach-lpc32xx/समयr.c Copyright (C) 2009 - 2010 NXP Semiconductors
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2. This program is licensed "as is" without any
@@ -13,267 +14,267 @@
  *
  */
 
-#define pr_fmt(fmt) "%s: " fmt, __func__
+#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
 
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/sched_clock.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/sched_घड़ी.h>
 
-#define LPC32XX_TIMER_IR		0x000
-#define  LPC32XX_TIMER_IR_MR0INT	BIT(0)
-#define LPC32XX_TIMER_TCR		0x004
-#define  LPC32XX_TIMER_TCR_CEN		BIT(0)
-#define  LPC32XX_TIMER_TCR_CRST		BIT(1)
-#define LPC32XX_TIMER_TC		0x008
-#define LPC32XX_TIMER_PR		0x00c
-#define LPC32XX_TIMER_MCR		0x014
-#define  LPC32XX_TIMER_MCR_MR0I		BIT(0)
-#define  LPC32XX_TIMER_MCR_MR0R		BIT(1)
-#define  LPC32XX_TIMER_MCR_MR0S		BIT(2)
-#define LPC32XX_TIMER_MR0		0x018
-#define LPC32XX_TIMER_CTCR		0x070
+#घोषणा LPC32XX_TIMER_IR		0x000
+#घोषणा  LPC32XX_TIMER_IR_MR0INT	BIT(0)
+#घोषणा LPC32XX_TIMER_TCR		0x004
+#घोषणा  LPC32XX_TIMER_TCR_CEN		BIT(0)
+#घोषणा  LPC32XX_TIMER_TCR_CRST		BIT(1)
+#घोषणा LPC32XX_TIMER_TC		0x008
+#घोषणा LPC32XX_TIMER_PR		0x00c
+#घोषणा LPC32XX_TIMER_MCR		0x014
+#घोषणा  LPC32XX_TIMER_MCR_MR0I		BIT(0)
+#घोषणा  LPC32XX_TIMER_MCR_MR0R		BIT(1)
+#घोषणा  LPC32XX_TIMER_MCR_MR0S		BIT(2)
+#घोषणा LPC32XX_TIMER_MR0		0x018
+#घोषणा LPC32XX_TIMER_CTCR		0x070
 
-struct lpc32xx_clock_event_ddata {
-	struct clock_event_device evtdev;
-	void __iomem *base;
-	u32 ticks_per_jiffy;
-};
+काष्ठा lpc32xx_घड़ी_event_ddata अणु
+	काष्ठा घड़ी_event_device evtdev;
+	व्योम __iomem *base;
+	u32 ticks_per_jअगरfy;
+पूर्ण;
 
-/* Needed for the sched clock */
-static void __iomem *clocksource_timer_counter;
+/* Needed क्रम the sched घड़ी */
+अटल व्योम __iomem *घड़ीsource_समयr_counter;
 
-static u64 notrace lpc32xx_read_sched_clock(void)
-{
-	return readl(clocksource_timer_counter);
-}
+अटल u64 notrace lpc32xx_पढ़ो_sched_घड़ी(व्योम)
+अणु
+	वापस पढ़ोl(घड़ीsource_समयr_counter);
+पूर्ण
 
-static unsigned long lpc32xx_delay_timer_read(void)
-{
-	return readl(clocksource_timer_counter);
-}
+अटल अचिन्हित दीर्घ lpc32xx_delay_समयr_पढ़ो(व्योम)
+अणु
+	वापस पढ़ोl(घड़ीsource_समयr_counter);
+पूर्ण
 
-static struct delay_timer lpc32xx_delay_timer = {
-	.read_current_timer = lpc32xx_delay_timer_read,
-};
+अटल काष्ठा delay_समयr lpc32xx_delay_समयr = अणु
+	.पढ़ो_current_समयr = lpc32xx_delay_समयr_पढ़ो,
+पूर्ण;
 
-static int lpc32xx_clkevt_next_event(unsigned long delta,
-				     struct clock_event_device *evtdev)
-{
-	struct lpc32xx_clock_event_ddata *ddata =
-		container_of(evtdev, struct lpc32xx_clock_event_ddata, evtdev);
-
-	/*
-	 * Place timer in reset and program the delta in the match
-	 * channel 0 (MR0). When the timer counter matches the value
-	 * in MR0 register the match will trigger an interrupt.
-	 * After setup the timer is released from reset and enabled.
-	 */
-	writel_relaxed(LPC32XX_TIMER_TCR_CRST, ddata->base + LPC32XX_TIMER_TCR);
-	writel_relaxed(delta, ddata->base + LPC32XX_TIMER_MR0);
-	writel_relaxed(LPC32XX_TIMER_TCR_CEN, ddata->base + LPC32XX_TIMER_TCR);
-
-	return 0;
-}
-
-static int lpc32xx_clkevt_shutdown(struct clock_event_device *evtdev)
-{
-	struct lpc32xx_clock_event_ddata *ddata =
-		container_of(evtdev, struct lpc32xx_clock_event_ddata, evtdev);
-
-	/* Disable the timer */
-	writel_relaxed(0, ddata->base + LPC32XX_TIMER_TCR);
-
-	return 0;
-}
-
-static int lpc32xx_clkevt_oneshot(struct clock_event_device *evtdev)
-{
-	struct lpc32xx_clock_event_ddata *ddata =
-		container_of(evtdev, struct lpc32xx_clock_event_ddata, evtdev);
+अटल पूर्णांक lpc32xx_clkevt_next_event(अचिन्हित दीर्घ delta,
+				     काष्ठा घड़ी_event_device *evtdev)
+अणु
+	काष्ठा lpc32xx_घड़ी_event_ddata *ddata =
+		container_of(evtdev, काष्ठा lpc32xx_घड़ी_event_ddata, evtdev);
 
 	/*
-	 * When using oneshot, we must also disable the timer
-	 * to wait for the first call to set_next_event().
+	 * Place समयr in reset and program the delta in the match
+	 * channel 0 (MR0). When the समयr counter matches the value
+	 * in MR0 रेजिस्टर the match will trigger an पूर्णांकerrupt.
+	 * After setup the समयr is released from reset and enabled.
 	 */
-	writel_relaxed(0, ddata->base + LPC32XX_TIMER_TCR);
+	ग_लिखोl_relaxed(LPC32XX_TIMER_TCR_CRST, ddata->base + LPC32XX_TIMER_TCR);
+	ग_लिखोl_relaxed(delta, ddata->base + LPC32XX_TIMER_MR0);
+	ग_लिखोl_relaxed(LPC32XX_TIMER_TCR_CEN, ddata->base + LPC32XX_TIMER_TCR);
 
-	/* Enable interrupt, reset on match and stop on match (MCR). */
-	writel_relaxed(LPC32XX_TIMER_MCR_MR0I | LPC32XX_TIMER_MCR_MR0R |
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक lpc32xx_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *evtdev)
+अणु
+	काष्ठा lpc32xx_घड़ी_event_ddata *ddata =
+		container_of(evtdev, काष्ठा lpc32xx_घड़ी_event_ddata, evtdev);
+
+	/* Disable the समयr */
+	ग_लिखोl_relaxed(0, ddata->base + LPC32XX_TIMER_TCR);
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक lpc32xx_clkevt_oneshot(काष्ठा घड़ी_event_device *evtdev)
+अणु
+	काष्ठा lpc32xx_घड़ी_event_ddata *ddata =
+		container_of(evtdev, काष्ठा lpc32xx_घड़ी_event_ddata, evtdev);
+
+	/*
+	 * When using oneshot, we must also disable the समयr
+	 * to रुको क्रम the first call to set_next_event().
+	 */
+	ग_लिखोl_relaxed(0, ddata->base + LPC32XX_TIMER_TCR);
+
+	/* Enable पूर्णांकerrupt, reset on match and stop on match (MCR). */
+	ग_लिखोl_relaxed(LPC32XX_TIMER_MCR_MR0I | LPC32XX_TIMER_MCR_MR0R |
 		       LPC32XX_TIMER_MCR_MR0S, ddata->base + LPC32XX_TIMER_MCR);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc32xx_clkevt_periodic(struct clock_event_device *evtdev)
-{
-	struct lpc32xx_clock_event_ddata *ddata =
-		container_of(evtdev, struct lpc32xx_clock_event_ddata, evtdev);
+अटल पूर्णांक lpc32xx_clkevt_periodic(काष्ठा घड़ी_event_device *evtdev)
+अणु
+	काष्ठा lpc32xx_घड़ी_event_ddata *ddata =
+		container_of(evtdev, काष्ठा lpc32xx_घड़ी_event_ddata, evtdev);
 
-	/* Enable interrupt and reset on match. */
-	writel_relaxed(LPC32XX_TIMER_MCR_MR0I | LPC32XX_TIMER_MCR_MR0R,
+	/* Enable पूर्णांकerrupt and reset on match. */
+	ग_लिखोl_relaxed(LPC32XX_TIMER_MCR_MR0I | LPC32XX_TIMER_MCR_MR0R,
 		       ddata->base + LPC32XX_TIMER_MCR);
 
 	/*
-	 * Place timer in reset and program the delta in the match
+	 * Place समयr in reset and program the delta in the match
 	 * channel 0 (MR0).
 	 */
-	writel_relaxed(LPC32XX_TIMER_TCR_CRST, ddata->base + LPC32XX_TIMER_TCR);
-	writel_relaxed(ddata->ticks_per_jiffy, ddata->base + LPC32XX_TIMER_MR0);
-	writel_relaxed(LPC32XX_TIMER_TCR_CEN, ddata->base + LPC32XX_TIMER_TCR);
+	ग_लिखोl_relaxed(LPC32XX_TIMER_TCR_CRST, ddata->base + LPC32XX_TIMER_TCR);
+	ग_लिखोl_relaxed(ddata->ticks_per_jअगरfy, ddata->base + LPC32XX_TIMER_MR0);
+	ग_लिखोl_relaxed(LPC32XX_TIMER_TCR_CEN, ddata->base + LPC32XX_TIMER_TCR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t lpc32xx_clock_event_handler(int irq, void *dev_id)
-{
-	struct lpc32xx_clock_event_ddata *ddata = dev_id;
+अटल irqवापस_t lpc32xx_घड़ी_event_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा lpc32xx_घड़ी_event_ddata *ddata = dev_id;
 
 	/* Clear match on channel 0 */
-	writel_relaxed(LPC32XX_TIMER_IR_MR0INT, ddata->base + LPC32XX_TIMER_IR);
+	ग_लिखोl_relaxed(LPC32XX_TIMER_IR_MR0INT, ddata->base + LPC32XX_TIMER_IR);
 
 	ddata->evtdev.event_handler(&ddata->evtdev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct lpc32xx_clock_event_ddata lpc32xx_clk_event_ddata = {
-	.evtdev = {
+अटल काष्ठा lpc32xx_घड़ी_event_ddata lpc32xx_clk_event_ddata = अणु
+	.evtdev = अणु
 		.name			= "lpc3220 clockevent",
 		.features		= CLOCK_EVT_FEAT_ONESHOT |
 					  CLOCK_EVT_FEAT_PERIODIC,
 		.rating			= 300,
 		.set_next_event		= lpc32xx_clkevt_next_event,
-		.set_state_shutdown	= lpc32xx_clkevt_shutdown,
+		.set_state_shutकरोwn	= lpc32xx_clkevt_shutकरोwn,
 		.set_state_oneshot	= lpc32xx_clkevt_oneshot,
 		.set_state_periodic	= lpc32xx_clkevt_periodic,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init lpc32xx_clocksource_init(struct device_node *np)
-{
-	void __iomem *base;
-	unsigned long rate;
-	struct clk *clk;
-	int ret;
+अटल पूर्णांक __init lpc32xx_घड़ीsource_init(काष्ठा device_node *np)
+अणु
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ rate;
+	काष्ठा clk *clk;
+	पूर्णांक ret;
 
 	clk = of_clk_get_by_name(np, "timerclk");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		pr_err("clock get failed (%ld)\n", PTR_ERR(clk));
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(clk);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("clock enable failed (%d)\n", ret);
-		goto err_clk_enable;
-	}
+		जाओ err_clk_enable;
+	पूर्ण
 
 	base = of_iomap(np, 0);
-	if (!base) {
+	अगर (!base) अणु
 		pr_err("unable to map registers\n");
 		ret = -EADDRNOTAVAIL;
-		goto err_iomap;
-	}
+		जाओ err_iomap;
+	पूर्ण
 
 	/*
-	 * Disable and reset timer then set it to free running timer
+	 * Disable and reset समयr then set it to मुक्त running समयr
 	 * mode (CTCR) with no prescaler (PR) or match operations (MCR).
-	 * After setup the timer is released from reset and enabled.
+	 * After setup the समयr is released from reset and enabled.
 	 */
-	writel_relaxed(LPC32XX_TIMER_TCR_CRST, base + LPC32XX_TIMER_TCR);
-	writel_relaxed(0, base + LPC32XX_TIMER_PR);
-	writel_relaxed(0, base + LPC32XX_TIMER_MCR);
-	writel_relaxed(0, base + LPC32XX_TIMER_CTCR);
-	writel_relaxed(LPC32XX_TIMER_TCR_CEN, base + LPC32XX_TIMER_TCR);
+	ग_लिखोl_relaxed(LPC32XX_TIMER_TCR_CRST, base + LPC32XX_TIMER_TCR);
+	ग_लिखोl_relaxed(0, base + LPC32XX_TIMER_PR);
+	ग_लिखोl_relaxed(0, base + LPC32XX_TIMER_MCR);
+	ग_लिखोl_relaxed(0, base + LPC32XX_TIMER_CTCR);
+	ग_लिखोl_relaxed(LPC32XX_TIMER_TCR_CEN, base + LPC32XX_TIMER_TCR);
 
 	rate = clk_get_rate(clk);
-	ret = clocksource_mmio_init(base + LPC32XX_TIMER_TC, "lpc3220 timer",
-				    rate, 300, 32, clocksource_mmio_readl_up);
-	if (ret) {
+	ret = घड़ीsource_mmio_init(base + LPC32XX_TIMER_TC, "lpc3220 timer",
+				    rate, 300, 32, घड़ीsource_mmio_पढ़ोl_up);
+	अगर (ret) अणु
 		pr_err("failed to init clocksource (%d)\n", ret);
-		goto err_clocksource_init;
-	}
+		जाओ err_घड़ीsource_init;
+	पूर्ण
 
-	clocksource_timer_counter = base + LPC32XX_TIMER_TC;
-	lpc32xx_delay_timer.freq = rate;
-	register_current_timer_delay(&lpc32xx_delay_timer);
-	sched_clock_register(lpc32xx_read_sched_clock, 32, rate);
+	घड़ीsource_समयr_counter = base + LPC32XX_TIMER_TC;
+	lpc32xx_delay_समयr.freq = rate;
+	रेजिस्टर_current_समयr_delay(&lpc32xx_delay_समयr);
+	sched_घड़ी_रेजिस्टर(lpc32xx_पढ़ो_sched_घड़ी, 32, rate);
 
-	return 0;
+	वापस 0;
 
-err_clocksource_init:
+err_घड़ीsource_init:
 	iounmap(base);
 err_iomap:
 	clk_disable_unprepare(clk);
 err_clk_enable:
 	clk_put(clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init lpc32xx_clockevent_init(struct device_node *np)
-{
-	void __iomem *base;
-	unsigned long rate;
-	struct clk *clk;
-	int ret, irq;
+अटल पूर्णांक __init lpc32xx_घड़ीevent_init(काष्ठा device_node *np)
+अणु
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ rate;
+	काष्ठा clk *clk;
+	पूर्णांक ret, irq;
 
 	clk = of_clk_get_by_name(np, "timerclk");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		pr_err("clock get failed (%ld)\n", PTR_ERR(clk));
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(clk);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("clock enable failed (%d)\n", ret);
-		goto err_clk_enable;
-	}
+		जाओ err_clk_enable;
+	पूर्ण
 
 	base = of_iomap(np, 0);
-	if (!base) {
+	अगर (!base) अणु
 		pr_err("unable to map registers\n");
 		ret = -EADDRNOTAVAIL;
-		goto err_iomap;
-	}
+		जाओ err_iomap;
+	पूर्ण
 
 	irq = irq_of_parse_and_map(np, 0);
-	if (!irq) {
+	अगर (!irq) अणु
 		pr_err("get irq failed\n");
 		ret = -ENOENT;
-		goto err_irq;
-	}
+		जाओ err_irq;
+	पूर्ण
 
 	/*
-	 * Disable timer and clear any pending interrupt (IR) on match
+	 * Disable समयr and clear any pending पूर्णांकerrupt (IR) on match
 	 * channel 0 (MR0). Clear the prescaler as it's not used.
 	 */
-	writel_relaxed(0, base + LPC32XX_TIMER_TCR);
-	writel_relaxed(0, base + LPC32XX_TIMER_PR);
-	writel_relaxed(0, base + LPC32XX_TIMER_CTCR);
-	writel_relaxed(LPC32XX_TIMER_IR_MR0INT, base + LPC32XX_TIMER_IR);
+	ग_लिखोl_relaxed(0, base + LPC32XX_TIMER_TCR);
+	ग_लिखोl_relaxed(0, base + LPC32XX_TIMER_PR);
+	ग_लिखोl_relaxed(0, base + LPC32XX_TIMER_CTCR);
+	ग_लिखोl_relaxed(LPC32XX_TIMER_IR_MR0INT, base + LPC32XX_TIMER_IR);
 
 	rate = clk_get_rate(clk);
 	lpc32xx_clk_event_ddata.base = base;
-	lpc32xx_clk_event_ddata.ticks_per_jiffy = DIV_ROUND_CLOSEST(rate, HZ);
-	clockevents_config_and_register(&lpc32xx_clk_event_ddata.evtdev,
+	lpc32xx_clk_event_ddata.ticks_per_jअगरfy = DIV_ROUND_CLOSEST(rate, HZ);
+	घड़ीevents_config_and_रेजिस्टर(&lpc32xx_clk_event_ddata.evtdev,
 					rate, 1, -1);
 
-	ret = request_irq(irq, lpc32xx_clock_event_handler,
+	ret = request_irq(irq, lpc32xx_घड़ी_event_handler,
 			  IRQF_TIMER | IRQF_IRQPOLL, "lpc3220 clockevent",
 			  &lpc32xx_clk_event_ddata);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("request irq failed\n");
-		goto err_irq;
-	}
+		जाओ err_irq;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_irq:
 	iounmap(base);
@@ -281,34 +282,34 @@ err_iomap:
 	clk_disable_unprepare(clk);
 err_clk_enable:
 	clk_put(clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This function asserts that we have exactly one clocksource and one
- * clock_event_device in the end.
+ * This function निश्चितs that we have exactly one घड़ीsource and one
+ * घड़ी_event_device in the end.
  */
-static int __init lpc32xx_timer_init(struct device_node *np)
-{
-	static int has_clocksource, has_clockevent;
-	int ret = 0;
+अटल पूर्णांक __init lpc32xx_समयr_init(काष्ठा device_node *np)
+अणु
+	अटल पूर्णांक has_घड़ीsource, has_घड़ीevent;
+	पूर्णांक ret = 0;
 
-	if (!has_clocksource) {
-		ret = lpc32xx_clocksource_init(np);
-		if (!ret) {
-			has_clocksource = 1;
-			return 0;
-		}
-	}
+	अगर (!has_घड़ीsource) अणु
+		ret = lpc32xx_घड़ीsource_init(np);
+		अगर (!ret) अणु
+			has_घड़ीsource = 1;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (!has_clockevent) {
-		ret = lpc32xx_clockevent_init(np);
-		if (!ret) {
-			has_clockevent = 1;
-			return 0;
-		}
-	}
+	अगर (!has_घड़ीevent) अणु
+		ret = lpc32xx_घड़ीevent_init(np);
+		अगर (!ret) अणु
+			has_घड़ीevent = 1;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
-TIMER_OF_DECLARE(lpc32xx_timer, "nxp,lpc3220-timer", lpc32xx_timer_init);
+	वापस ret;
+पूर्ण
+TIMER_OF_DECLARE(lpc32xx_समयr, "nxp,lpc3220-timer", lpc32xx_समयr_init);

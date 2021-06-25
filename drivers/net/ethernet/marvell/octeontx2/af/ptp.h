@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Marvell PTP driver
  *
  * Copyright (C) 2020 Marvell International Ltd.
  */
 
-#ifndef PTP_H
-#define PTP_H
+#अगर_अघोषित PTP_H
+#घोषणा PTP_H
 
-#include <linux/timecounter.h>
-#include <linux/time64.h>
-#include <linux/spinlock.h>
+#समावेश <linux/समयcounter.h>
+#समावेश <linux/समय64.h>
+#समावेश <linux/spinlock.h>
 
-struct ptp {
-	struct pci_dev *pdev;
-	void __iomem *reg_base;
-	u32 clock_rate;
-};
+काष्ठा ptp अणु
+	काष्ठा pci_dev *pdev;
+	व्योम __iomem *reg_base;
+	u32 घड़ी_rate;
+पूर्ण;
 
-struct ptp *ptp_get(void);
-void ptp_put(struct ptp *ptp);
+काष्ठा ptp *ptp_get(व्योम);
+व्योम ptp_put(काष्ठा ptp *ptp);
 
-extern struct pci_driver ptp_driver;
+बाह्य काष्ठा pci_driver ptp_driver;
 
-#endif
+#पूर्ण_अगर

@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_UPROBES_H
-#define _ASM_UPROBES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_UPROBES_H
+#घोषणा _ASM_UPROBES_H
 /*
- * User-space Probes (UProbes) for x86
+ * User-space Probes (UProbes) क्रम x86
  *
  * Copyright (C) IBM Corporation, 2008-2011
  * Authors:
@@ -10,49 +11,49 @@
  *	Jim Keniston
  */
 
-#include <linux/notifier.h>
+#समावेश <linux/notअगरier.h>
 
-typedef u8 uprobe_opcode_t;
+प्रकार u8 uprobe_opcode_t;
 
-#define MAX_UINSN_BYTES			  16
-#define UPROBE_XOL_SLOT_BYTES		 128	/* to keep it cache aligned */
+#घोषणा MAX_UINSN_BYTES			  16
+#घोषणा UPROBE_XOL_SLOT_BYTES		 128	/* to keep it cache aligned */
 
-#define UPROBE_SWBP_INSN		0xcc
-#define UPROBE_SWBP_INSN_SIZE		   1
+#घोषणा UPROBE_SWBP_INSN		0xcc
+#घोषणा UPROBE_SWBP_INSN_SIZE		   1
 
-struct uprobe_xol_ops;
+काष्ठा uprobe_xol_ops;
 
-struct arch_uprobe {
-	union {
+काष्ठा arch_uprobe अणु
+	जोड़ अणु
 		u8			insn[MAX_UINSN_BYTES];
 		u8			ixol[MAX_UINSN_BYTES];
-	};
+	पूर्ण;
 
-	const struct uprobe_xol_ops	*ops;
+	स्थिर काष्ठा uprobe_xol_ops	*ops;
 
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			s32	offs;
 			u8	ilen;
 			u8	opc1;
-		}			branch;
-		struct {
+		पूर्ण			branch;
+		काष्ठा अणु
 			u8	fixups;
 			u8	ilen;
-		} 			defparam;
-		struct {
+		पूर्ण 			defparam;
+		काष्ठा अणु
 			u8	reg_offset;	/* to the start of pt_regs */
 			u8	ilen;
-		}			push;
-	};
-};
+		पूर्ण			push;
+	पूर्ण;
+पूर्ण;
 
-struct arch_uprobe_task {
-#ifdef CONFIG_X86_64
-	unsigned long			saved_scratch_register;
-#endif
-	unsigned int			saved_trap_nr;
-	unsigned int			saved_tf;
-};
+काष्ठा arch_uprobe_task अणु
+#अगर_घोषित CONFIG_X86_64
+	अचिन्हित दीर्घ			saved_scratch_रेजिस्टर;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक			saved_trap_nr;
+	अचिन्हित पूर्णांक			saved_tf;
+पूर्ण;
 
-#endif	/* _ASM_UPROBES_H */
+#पूर्ण_अगर	/* _ASM_UPROBES_H */

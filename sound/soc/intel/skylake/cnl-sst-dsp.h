@@ -1,103 +1,104 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Cannonlake SST DSP Support
  *
  * Copyright (C) 2016-17, Intel Corporation.
  */
 
-#ifndef __CNL_SST_DSP_H__
-#define __CNL_SST_DSP_H__
+#अगर_अघोषित __CNL_SST_DSP_H__
+#घोषणा __CNL_SST_DSP_H__
 
-struct sst_dsp;
-struct sst_dsp_device;
-struct sst_generic_ipc;
+काष्ठा sst_dsp;
+काष्ठा sst_dsp_device;
+काष्ठा sst_generic_ipc;
 
 /* Intel HD Audio General DSP Registers */
-#define CNL_ADSP_GEN_BASE		0x0
-#define CNL_ADSP_REG_ADSPCS		(CNL_ADSP_GEN_BASE + 0x04)
-#define CNL_ADSP_REG_ADSPIC		(CNL_ADSP_GEN_BASE + 0x08)
-#define CNL_ADSP_REG_ADSPIS		(CNL_ADSP_GEN_BASE + 0x0c)
+#घोषणा CNL_ADSP_GEN_BASE		0x0
+#घोषणा CNL_ADSP_REG_ADSPCS		(CNL_ADSP_GEN_BASE + 0x04)
+#घोषणा CNL_ADSP_REG_ADSPIC		(CNL_ADSP_GEN_BASE + 0x08)
+#घोषणा CNL_ADSP_REG_ADSPIS		(CNL_ADSP_GEN_BASE + 0x0c)
 
 /* Intel HD Audio Inter-Processor Communication Registers */
-#define CNL_ADSP_IPC_BASE               0xc0
-#define CNL_ADSP_REG_HIPCTDR            (CNL_ADSP_IPC_BASE + 0x00)
-#define CNL_ADSP_REG_HIPCTDA            (CNL_ADSP_IPC_BASE + 0x04)
-#define CNL_ADSP_REG_HIPCTDD            (CNL_ADSP_IPC_BASE + 0x08)
-#define CNL_ADSP_REG_HIPCIDR            (CNL_ADSP_IPC_BASE + 0x10)
-#define CNL_ADSP_REG_HIPCIDA            (CNL_ADSP_IPC_BASE + 0x14)
-#define CNL_ADSP_REG_HIPCIDD            (CNL_ADSP_IPC_BASE + 0x18)
-#define CNL_ADSP_REG_HIPCCTL            (CNL_ADSP_IPC_BASE + 0x28)
+#घोषणा CNL_ADSP_IPC_BASE               0xc0
+#घोषणा CNL_ADSP_REG_HIPCTDR            (CNL_ADSP_IPC_BASE + 0x00)
+#घोषणा CNL_ADSP_REG_HIPCTDA            (CNL_ADSP_IPC_BASE + 0x04)
+#घोषणा CNL_ADSP_REG_HIPCTDD            (CNL_ADSP_IPC_BASE + 0x08)
+#घोषणा CNL_ADSP_REG_HIPCIDR            (CNL_ADSP_IPC_BASE + 0x10)
+#घोषणा CNL_ADSP_REG_HIPCIDA            (CNL_ADSP_IPC_BASE + 0x14)
+#घोषणा CNL_ADSP_REG_HIPCIDD            (CNL_ADSP_IPC_BASE + 0x18)
+#घोषणा CNL_ADSP_REG_HIPCCTL            (CNL_ADSP_IPC_BASE + 0x28)
 
 /* HIPCTDR */
-#define CNL_ADSP_REG_HIPCTDR_BUSY	BIT(31)
+#घोषणा CNL_ADSP_REG_HIPCTDR_BUSY	BIT(31)
 
 /* HIPCTDA */
-#define CNL_ADSP_REG_HIPCTDA_DONE	BIT(31)
+#घोषणा CNL_ADSP_REG_HIPCTDA_DONE	BIT(31)
 
 /* HIPCIDR */
-#define CNL_ADSP_REG_HIPCIDR_BUSY	BIT(31)
+#घोषणा CNL_ADSP_REG_HIPCIDR_BUSY	BIT(31)
 
 /* HIPCIDA */
-#define CNL_ADSP_REG_HIPCIDA_DONE	BIT(31)
+#घोषणा CNL_ADSP_REG_HIPCIDA_DONE	BIT(31)
 
 /* CNL HIPCCTL */
-#define CNL_ADSP_REG_HIPCCTL_DONE	BIT(1)
-#define CNL_ADSP_REG_HIPCCTL_BUSY	BIT(0)
+#घोषणा CNL_ADSP_REG_HIPCCTL_DONE	BIT(1)
+#घोषणा CNL_ADSP_REG_HIPCCTL_BUSY	BIT(0)
 
 /* CNL HIPCT */
-#define CNL_ADSP_REG_HIPCT_BUSY		BIT(31)
+#घोषणा CNL_ADSP_REG_HIPCT_BUSY		BIT(31)
 
-/* Intel HD Audio SRAM Window 1 */
-#define CNL_ADSP_SRAM1_BASE		0xa0000
+/* Intel HD Audio SRAM Winकरोw 1 */
+#घोषणा CNL_ADSP_SRAM1_BASE		0xa0000
 
-#define CNL_ADSP_MMIO_LEN		0x10000
+#घोषणा CNL_ADSP_MMIO_LEN		0x10000
 
-#define CNL_ADSP_W0_STAT_SZ		0x1000
+#घोषणा CNL_ADSP_W0_STAT_SZ		0x1000
 
-#define CNL_ADSP_W0_UP_SZ		0x1000
+#घोषणा CNL_ADSP_W0_UP_SZ		0x1000
 
-#define CNL_ADSP_W1_SZ			0x1000
+#घोषणा CNL_ADSP_W1_SZ			0x1000
 
-#define CNL_FW_STS_MASK			0xf
+#घोषणा CNL_FW_STS_MASK			0xf
 
-#define CNL_ADSPIC_IPC			0x1
-#define CNL_ADSPIS_IPC			0x1
+#घोषणा CNL_ADSPIC_IPC			0x1
+#घोषणा CNL_ADSPIS_IPC			0x1
 
-#define CNL_DSP_CORES		4
-#define CNL_DSP_CORES_MASK	((1 << CNL_DSP_CORES) - 1)
+#घोषणा CNL_DSP_CORES		4
+#घोषणा CNL_DSP_CORES_MASK	((1 << CNL_DSP_CORES) - 1)
 
-/* core reset - asserted high */
-#define CNL_ADSPCS_CRST_SHIFT	0
-#define CNL_ADSPCS_CRST(x)	(x << CNL_ADSPCS_CRST_SHIFT)
+/* core reset - निश्चितed high */
+#घोषणा CNL_ADSPCS_CRST_SHIFT	0
+#घोषणा CNL_ADSPCS_CRST(x)	(x << CNL_ADSPCS_CRST_SHIFT)
 
 /* core run/stall - when set to 1 core is stalled */
-#define CNL_ADSPCS_CSTALL_SHIFT	8
-#define CNL_ADSPCS_CSTALL(x)	(x << CNL_ADSPCS_CSTALL_SHIFT)
+#घोषणा CNL_ADSPCS_CSTALL_SHIFT	8
+#घोषणा CNL_ADSPCS_CSTALL(x)	(x << CNL_ADSPCS_CSTALL_SHIFT)
 
-/* set power active - when set to 1 turn core on */
-#define CNL_ADSPCS_SPA_SHIFT	16
-#define CNL_ADSPCS_SPA(x)	(x << CNL_ADSPCS_SPA_SHIFT)
+/* set घातer active - when set to 1 turn core on */
+#घोषणा CNL_ADSPCS_SPA_SHIFT	16
+#घोषणा CNL_ADSPCS_SPA(x)	(x << CNL_ADSPCS_SPA_SHIFT)
 
-/* current power active - power status of cores, set by hardware */
-#define CNL_ADSPCS_CPA_SHIFT	24
-#define CNL_ADSPCS_CPA(x)	(x << CNL_ADSPCS_CPA_SHIFT)
+/* current घातer active - घातer status of cores, set by hardware */
+#घोषणा CNL_ADSPCS_CPA_SHIFT	24
+#घोषणा CNL_ADSPCS_CPA(x)	(x << CNL_ADSPCS_CPA_SHIFT)
 
-int cnl_dsp_enable_core(struct sst_dsp *ctx, unsigned int core_mask);
-int cnl_dsp_disable_core(struct sst_dsp *ctx, unsigned int core_mask);
-irqreturn_t cnl_dsp_sst_interrupt(int irq, void *dev_id);
-void cnl_dsp_free(struct sst_dsp *dsp);
+पूर्णांक cnl_dsp_enable_core(काष्ठा sst_dsp *ctx, अचिन्हित पूर्णांक core_mask);
+पूर्णांक cnl_dsp_disable_core(काष्ठा sst_dsp *ctx, अचिन्हित पूर्णांक core_mask);
+irqवापस_t cnl_dsp_sst_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
+व्योम cnl_dsp_मुक्त(काष्ठा sst_dsp *dsp);
 
-void cnl_ipc_int_enable(struct sst_dsp *ctx);
-void cnl_ipc_int_disable(struct sst_dsp *ctx);
-void cnl_ipc_op_int_enable(struct sst_dsp *ctx);
-void cnl_ipc_op_int_disable(struct sst_dsp *ctx);
-bool cnl_ipc_int_status(struct sst_dsp *ctx);
-void cnl_ipc_free(struct sst_generic_ipc *ipc);
+व्योम cnl_ipc_पूर्णांक_enable(काष्ठा sst_dsp *ctx);
+व्योम cnl_ipc_पूर्णांक_disable(काष्ठा sst_dsp *ctx);
+व्योम cnl_ipc_op_पूर्णांक_enable(काष्ठा sst_dsp *ctx);
+व्योम cnl_ipc_op_पूर्णांक_disable(काष्ठा sst_dsp *ctx);
+bool cnl_ipc_पूर्णांक_status(काष्ठा sst_dsp *ctx);
+व्योम cnl_ipc_मुक्त(काष्ठा sst_generic_ipc *ipc);
 
-int cnl_sst_dsp_init(struct device *dev, void __iomem *mmio_base, int irq,
-		     const char *fw_name, struct skl_dsp_loader_ops dsp_ops,
-		     struct skl_dev **dsp);
-int cnl_sst_init_fw(struct device *dev, struct skl_dev *skl);
-void cnl_sst_dsp_cleanup(struct device *dev, struct skl_dev *skl);
+पूर्णांक cnl_sst_dsp_init(काष्ठा device *dev, व्योम __iomem *mmio_base, पूर्णांक irq,
+		     स्थिर अक्षर *fw_name, काष्ठा skl_dsp_loader_ops dsp_ops,
+		     काष्ठा skl_dev **dsp);
+पूर्णांक cnl_sst_init_fw(काष्ठा device *dev, काष्ठा skl_dev *skl);
+व्योम cnl_sst_dsp_cleanup(काष्ठा device *dev, काष्ठा skl_dev *skl);
 
-#endif /*__CNL_SST_DSP_H__*/
+#पूर्ण_अगर /*__CNL_SST_DSP_H__*/

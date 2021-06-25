@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2002-2005, Instant802 Networks, Inc.
  * Copyright 2005-2006, Devicescape Software, Inc.
@@ -9,181 +10,181 @@
  * Copyright 2018-2020  Intel Corporation
  */
 
-#include <linux/if_ether.h>
-#include <linux/etherdevice.h>
-#include <linux/list.h>
-#include <linux/rcupdate.h>
-#include <linux/rtnetlink.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <net/mac80211.h>
-#include <crypto/algapi.h>
-#include <asm/unaligned.h>
-#include "ieee80211_i.h"
-#include "driver-ops.h"
-#include "debugfs_key.h"
-#include "aes_ccm.h"
-#include "aes_cmac.h"
-#include "aes_gmac.h"
-#include "aes_gcm.h"
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <net/mac80211.h>
+#समावेश <crypto/algapi.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश "ieee80211_i.h"
+#समावेश "driver-ops.h"
+#समावेश "debugfs_key.h"
+#समावेश "aes_ccm.h"
+#समावेश "aes_cmac.h"
+#समावेश "aes_gmac.h"
+#समावेश "aes_gcm.h"
 
 
 /**
  * DOC: Key handling basics
  *
- * Key handling in mac80211 is done based on per-interface (sub_if_data)
- * keys and per-station keys. Since each station belongs to an interface,
- * each station key also belongs to that interface.
+ * Key handling in mac80211 is करोne based on per-पूर्णांकerface (sub_अगर_data)
+ * keys and per-station keys. Since each station beदीर्घs to an पूर्णांकerface,
+ * each station key also beदीर्घs to that पूर्णांकerface.
  *
- * Hardware acceleration is done on a best-effort basis for algorithms
- * that are implemented in software,  for each key the hardware is asked
- * to enable that key for offloading but if it cannot do that the key is
- * simply kept for software encryption (unless it is for an algorithm
+ * Hardware acceleration is करोne on a best-efक्रमt basis क्रम algorithms
+ * that are implemented in software,  क्रम each key the hardware is asked
+ * to enable that key क्रम offloading but अगर it cannot करो that the key is
+ * simply kept क्रम software encryption (unless it is क्रम an algorithm
  * that isn't implemented in software).
  * There is currently no way of knowing whether a key is handled in SW
- * or HW except by looking into debugfs.
+ * or HW except by looking पूर्णांकo debugfs.
  *
- * All key management is internally protected by a mutex. Within all
- * other parts of mac80211, key references are, just as STA structure
- * references, protected by RCU. Note, however, that some things are
- * unprotected, namely the key->sta dereferences within the hardware
+ * All key management is पूर्णांकernally रक्षित by a mutex. Within all
+ * other parts of mac80211, key references are, just as STA काष्ठाure
+ * references, रक्षित by RCU. Note, however, that some things are
+ * unरक्षित, namely the key->sta dereferences within the hardware
  * acceleration functions. This means that sta_info_destroy() must
- * remove the key which waits for an RCU grace period.
+ * हटाओ the key which रुकोs क्रम an RCU grace period.
  */
 
-static const u8 bcast_addr[ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+अटल स्थिर u8 bcast_addr[ETH_ALEN] = अणु 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF पूर्ण;
 
-static void assert_key_lock(struct ieee80211_local *local)
-{
-	lockdep_assert_held(&local->key_mtx);
-}
+अटल व्योम निश्चित_key_lock(काष्ठा ieee80211_local *local)
+अणु
+	lockdep_निश्चित_held(&local->key_mtx);
+पूर्ण
 
-static void
-update_vlan_tailroom_need_count(struct ieee80211_sub_if_data *sdata, int delta)
-{
-	struct ieee80211_sub_if_data *vlan;
+अटल व्योम
+update_vlan_tailroom_need_count(काष्ठा ieee80211_sub_अगर_data *sdata, पूर्णांक delta)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *vlan;
 
-	if (sdata->vif.type != NL80211_IFTYPE_AP)
-		return;
+	अगर (sdata->vअगर.type != NL80211_IFTYPE_AP)
+		वापस;
 
-	/* crypto_tx_tailroom_needed_cnt is protected by this */
-	assert_key_lock(sdata->local);
+	/* crypto_tx_tailroom_needed_cnt is रक्षित by this */
+	निश्चित_key_lock(sdata->local);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(vlan, &sdata->u.ap.vlans, u.vlan.list)
+	list_क्रम_each_entry_rcu(vlan, &sdata->u.ap.vlans, u.vlan.list)
 		vlan->crypto_tx_tailroom_needed_cnt += delta;
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void increment_tailroom_need_count(struct ieee80211_sub_if_data *sdata)
-{
+अटल व्योम increment_tailroom_need_count(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
 	/*
-	 * When this count is zero, SKB resizing for allocating tailroom
-	 * for IV or MMIC is skipped. But, this check has created two race
-	 * cases in xmit path while transiting from zero count to one:
+	 * When this count is zero, SKB resizing क्रम allocating tailroom
+	 * क्रम IV or MMIC is skipped. But, this check has created two race
+	 * हालs in xmit path जबतक transiting from zero count to one:
 	 *
-	 * 1. SKB resize was skipped because no key was added but just before
+	 * 1. SKB resize was skipped because no key was added but just beक्रमe
 	 * the xmit key is added and SW encryption kicks off.
 	 *
 	 * 2. SKB resize was skipped because all the keys were hw planted but
-	 * just before xmit one of the key is deleted and SW encryption kicks
+	 * just beक्रमe xmit one of the key is deleted and SW encryption kicks
 	 * off.
 	 *
-	 * In both the above case SW encryption will find not enough space for
-	 * tailroom and exits with WARN_ON. (See WARN_ONs at wpa.c)
+	 * In both the above हाल SW encryption will find not enough space क्रम
+	 * tailroom and निकासs with WARN_ON. (See WARN_ONs at wpa.c)
 	 *
 	 * Solution has been explained at
 	 * http://mid.gmane.org/1308590980.4322.19.camel@jlt3.sipsolutions.net
 	 */
 
-	assert_key_lock(sdata->local);
+	निश्चित_key_lock(sdata->local);
 
 	update_vlan_tailroom_need_count(sdata, 1);
 
-	if (!sdata->crypto_tx_tailroom_needed_cnt++) {
+	अगर (!sdata->crypto_tx_tailroom_needed_cnt++) अणु
 		/*
 		 * Flush all XMIT packets currently using HW encryption or no
-		 * encryption at all if the count transition is from 0 -> 1.
+		 * encryption at all अगर the count transition is from 0 -> 1.
 		 */
 		synchronize_net();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void decrease_tailroom_need_count(struct ieee80211_sub_if_data *sdata,
-					 int delta)
-{
-	assert_key_lock(sdata->local);
+अटल व्योम decrease_tailroom_need_count(काष्ठा ieee80211_sub_अगर_data *sdata,
+					 पूर्णांक delta)
+अणु
+	निश्चित_key_lock(sdata->local);
 
 	WARN_ON_ONCE(sdata->crypto_tx_tailroom_needed_cnt < delta);
 
 	update_vlan_tailroom_need_count(sdata, -delta);
 	sdata->crypto_tx_tailroom_needed_cnt -= delta;
-}
+पूर्ण
 
-static int ieee80211_key_enable_hw_accel(struct ieee80211_key *key)
-{
-	struct ieee80211_sub_if_data *sdata = key->sdata;
-	struct sta_info *sta;
-	int ret = -EOPNOTSUPP;
+अटल पूर्णांक ieee80211_key_enable_hw_accel(काष्ठा ieee80211_key *key)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = key->sdata;
+	काष्ठा sta_info *sta;
+	पूर्णांक ret = -EOPNOTSUPP;
 
 	might_sleep();
 
-	if (key->flags & KEY_FLAG_TAINTED) {
+	अगर (key->flags & KEY_FLAG_TAINTED) अणु
 		/* If we get here, it's during resume and the key is
-		 * tainted so shouldn't be used/programmed any more.
+		 * taपूर्णांकed so shouldn't be used/programmed any more.
 		 * However, its flags may still indicate that it was
-		 * programmed into the device (since we're in resume)
-		 * so clear that flag now to avoid trying to remove
+		 * programmed पूर्णांकo the device (since we're in resume)
+		 * so clear that flag now to aव्योम trying to हटाओ
 		 * it again later.
 		 */
-		if (key->flags & KEY_FLAG_UPLOADED_TO_HARDWARE &&
+		अगर (key->flags & KEY_FLAG_UPLOADED_TO_HARDWARE &&
 		    !(key->conf.flags & (IEEE80211_KEY_FLAG_GENERATE_MMIC |
 					 IEEE80211_KEY_FLAG_PUT_MIC_SPACE |
 					 IEEE80211_KEY_FLAG_RESERVE_TAILROOM)))
 			increment_tailroom_need_count(sdata);
 
 		key->flags &= ~KEY_FLAG_UPLOADED_TO_HARDWARE;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!key->local->ops->set_key)
-		goto out_unsupported;
+	अगर (!key->local->ops->set_key)
+		जाओ out_unsupported;
 
-	assert_key_lock(key->local);
+	निश्चित_key_lock(key->local);
 
 	sta = key->sta;
 
 	/*
-	 * If this is a per-STA GTK, check if it
-	 * is supported; if not, return.
+	 * If this is a per-STA GTK, check अगर it
+	 * is supported; अगर not, वापस.
 	 */
-	if (sta && !(key->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE) &&
+	अगर (sta && !(key->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE) &&
 	    !ieee80211_hw_check(&key->local->hw, SUPPORTS_PER_STA_GTK))
-		goto out_unsupported;
+		जाओ out_unsupported;
 
-	if (sta && !sta->uploaded)
-		goto out_unsupported;
+	अगर (sta && !sta->uploaded)
+		जाओ out_unsupported;
 
-	if (sdata->vif.type == NL80211_IFTYPE_AP_VLAN) {
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN) अणु
 		/*
-		 * The driver doesn't know anything about VLAN interfaces.
-		 * Hence, don't send GTKs for VLAN interfaces to the driver.
+		 * The driver करोesn't know anything about VLAN पूर्णांकerfaces.
+		 * Hence, करोn't send GTKs क्रम VLAN पूर्णांकerfaces to the driver.
 		 */
-		if (!(key->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE)) {
+		अगर (!(key->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE)) अणु
 			ret = 1;
-			goto out_unsupported;
-		}
-	}
+			जाओ out_unsupported;
+		पूर्ण
+	पूर्ण
 
 	ret = drv_set_key(key->local, SET_KEY, sdata,
-			  sta ? &sta->sta : NULL, &key->conf);
+			  sta ? &sta->sta : शून्य, &key->conf);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		key->flags |= KEY_FLAG_UPLOADED_TO_HARDWARE;
 
-		if (!(key->conf.flags & (IEEE80211_KEY_FLAG_GENERATE_MMIC |
+		अगर (!(key->conf.flags & (IEEE80211_KEY_FLAG_GENERATE_MMIC |
 					 IEEE80211_KEY_FLAG_PUT_MIC_SPACE |
 					 IEEE80211_KEY_FLAG_RESERVE_TAILROOM)))
 			decrease_tailroom_need_count(sdata, 1);
@@ -194,361 +195,361 @@ static int ieee80211_key_enable_hw_accel(struct ieee80211_key *key)
 		WARN_ON((key->conf.flags & IEEE80211_KEY_FLAG_PUT_MIC_SPACE) &&
 			(key->conf.flags & IEEE80211_KEY_FLAG_GENERATE_MMIC));
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (ret != -ENOSPC && ret != -EOPNOTSUPP && ret != 1)
+	अगर (ret != -ENOSPC && ret != -EOPNOTSUPP && ret != 1)
 		sdata_err(sdata,
 			  "failed to set key (%d, %pM) to hardware (%d)\n",
 			  key->conf.keyidx,
 			  sta ? sta->sta.addr : bcast_addr, ret);
 
  out_unsupported:
-	switch (key->conf.cipher) {
-	case WLAN_CIPHER_SUITE_WEP40:
-	case WLAN_CIPHER_SUITE_WEP104:
-	case WLAN_CIPHER_SUITE_TKIP:
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_CCMP_256:
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-		/* all of these we can do in software - if driver can */
-		if (ret == 1)
-			return 0;
-		if (ieee80211_hw_check(&key->local->hw, SW_CRYPTO_CONTROL))
-			return -EINVAL;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (key->conf.cipher) अणु
+	हाल WLAN_CIPHER_SUITE_WEP40:
+	हाल WLAN_CIPHER_SUITE_WEP104:
+	हाल WLAN_CIPHER_SUITE_TKIP:
+	हाल WLAN_CIPHER_SUITE_CCMP:
+	हाल WLAN_CIPHER_SUITE_CCMP_256:
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+	हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
+		/* all of these we can करो in software - अगर driver can */
+		अगर (ret == 1)
+			वापस 0;
+		अगर (ieee80211_hw_check(&key->local->hw, SW_CRYPTO_CONTROL))
+			वापस -EINVAL;
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void ieee80211_key_disable_hw_accel(struct ieee80211_key *key)
-{
-	struct ieee80211_sub_if_data *sdata;
-	struct sta_info *sta;
-	int ret;
+अटल व्योम ieee80211_key_disable_hw_accel(काष्ठा ieee80211_key *key)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata;
+	काष्ठा sta_info *sta;
+	पूर्णांक ret;
 
 	might_sleep();
 
-	if (!key || !key->local->ops->set_key)
-		return;
+	अगर (!key || !key->local->ops->set_key)
+		वापस;
 
-	assert_key_lock(key->local);
+	निश्चित_key_lock(key->local);
 
-	if (!(key->flags & KEY_FLAG_UPLOADED_TO_HARDWARE))
-		return;
+	अगर (!(key->flags & KEY_FLAG_UPLOADED_TO_HARDWARE))
+		वापस;
 
 	sta = key->sta;
 	sdata = key->sdata;
 
-	if (!(key->conf.flags & (IEEE80211_KEY_FLAG_GENERATE_MMIC |
+	अगर (!(key->conf.flags & (IEEE80211_KEY_FLAG_GENERATE_MMIC |
 				 IEEE80211_KEY_FLAG_PUT_MIC_SPACE |
 				 IEEE80211_KEY_FLAG_RESERVE_TAILROOM)))
 		increment_tailroom_need_count(sdata);
 
 	key->flags &= ~KEY_FLAG_UPLOADED_TO_HARDWARE;
 	ret = drv_set_key(key->local, DISABLE_KEY, sdata,
-			  sta ? &sta->sta : NULL, &key->conf);
+			  sta ? &sta->sta : शून्य, &key->conf);
 
-	if (ret)
+	अगर (ret)
 		sdata_err(sdata,
 			  "failed to remove key (%d, %pM) from hardware (%d)\n",
 			  key->conf.keyidx,
 			  sta ? sta->sta.addr : bcast_addr, ret);
-}
+पूर्ण
 
-static int _ieee80211_set_tx_key(struct ieee80211_key *key, bool force)
-{
-	struct sta_info *sta = key->sta;
-	struct ieee80211_local *local = key->local;
+अटल पूर्णांक _ieee80211_set_tx_key(काष्ठा ieee80211_key *key, bool क्रमce)
+अणु
+	काष्ठा sta_info *sta = key->sta;
+	काष्ठा ieee80211_local *local = key->local;
 
-	assert_key_lock(local);
+	निश्चित_key_lock(local);
 
 	set_sta_flag(sta, WLAN_STA_USES_ENCRYPTION);
 
 	sta->ptk_idx = key->conf.keyidx;
 
-	if (force || !ieee80211_hw_check(&local->hw, AMPDU_KEYBORDER_SUPPORT))
+	अगर (क्रमce || !ieee80211_hw_check(&local->hw, AMPDU_KEYBORDER_SUPPORT))
 		clear_sta_flag(sta, WLAN_STA_BLOCK_BA);
 	ieee80211_check_fast_xmit(sta);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ieee80211_set_tx_key(struct ieee80211_key *key)
-{
-	return _ieee80211_set_tx_key(key, false);
-}
+पूर्णांक ieee80211_set_tx_key(काष्ठा ieee80211_key *key)
+अणु
+	वापस _ieee80211_set_tx_key(key, false);
+पूर्ण
 
-static void ieee80211_pairwise_rekey(struct ieee80211_key *old,
-				     struct ieee80211_key *new)
-{
-	struct ieee80211_local *local = new->local;
-	struct sta_info *sta = new->sta;
-	int i;
+अटल व्योम ieee80211_pairwise_rekey(काष्ठा ieee80211_key *old,
+				     काष्ठा ieee80211_key *new)
+अणु
+	काष्ठा ieee80211_local *local = new->local;
+	काष्ठा sta_info *sta = new->sta;
+	पूर्णांक i;
 
-	assert_key_lock(local);
+	निश्चित_key_lock(local);
 
-	if (new->conf.flags & IEEE80211_KEY_FLAG_NO_AUTO_TX) {
+	अगर (new->conf.flags & IEEE80211_KEY_FLAG_NO_AUTO_TX) अणु
 		/* Extended Key ID key install, initial one or rekey */
 
-		if (sta->ptk_idx != INVALID_PTK_KEYIDX &&
-		    !ieee80211_hw_check(&local->hw, AMPDU_KEYBORDER_SUPPORT)) {
+		अगर (sta->ptk_idx != INVALID_PTK_KEYIDX &&
+		    !ieee80211_hw_check(&local->hw, AMPDU_KEYBORDER_SUPPORT)) अणु
 			/* Aggregation Sessions with Extended Key ID must not
-			 * mix MPDUs with different keyIDs within one A-MPDU.
-			 * Tear down running Tx aggregation sessions and block
+			 * mix MPDUs with dअगरferent keyIDs within one A-MPDU.
+			 * Tear करोwn running Tx aggregation sessions and block
 			 * new Rx/Tx aggregation requests during rekey to
 			 * ensure there are no A-MPDUs when the driver is not
 			 * supporting A-MPDU key borders. (Blocking Tx only
-			 * would be sufficient but WLAN_STA_BLOCK_BA gets the
-			 * job done for the few ms we need it.)
+			 * would be sufficient but WLAN_STA_BLOCK_BA माला_लो the
+			 * job करोne क्रम the few ms we need it.)
 			 */
 			set_sta_flag(sta, WLAN_STA_BLOCK_BA);
 			mutex_lock(&sta->ampdu_mlme.mtx);
-			for (i = 0; i <  IEEE80211_NUM_TIDS; i++)
+			क्रम (i = 0; i <  IEEE80211_NUM_TIDS; i++)
 				___ieee80211_stop_tx_ba_session(sta, i,
 								AGG_STOP_LOCAL_REQUEST);
 			mutex_unlock(&sta->ampdu_mlme.mtx);
-		}
-	} else if (old) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (old) अणु
 		/* Rekey without Extended Key ID.
 		 * Aggregation sessions are OK when running on SW crypto.
 		 * A broken remote STA may cause issues not observed with HW
 		 * crypto, though.
 		 */
-		if (!(old->flags & KEY_FLAG_UPLOADED_TO_HARDWARE))
-			return;
+		अगर (!(old->flags & KEY_FLAG_UPLOADED_TO_HARDWARE))
+			वापस;
 
 		/* Stop Tx till we are on the new key */
 		old->flags |= KEY_FLAG_TAINTED;
 		ieee80211_clear_fast_xmit(sta);
-		if (ieee80211_hw_check(&local->hw, AMPDU_AGGREGATION)) {
+		अगर (ieee80211_hw_check(&local->hw, AMPDU_AGGREGATION)) अणु
 			set_sta_flag(sta, WLAN_STA_BLOCK_BA);
-			ieee80211_sta_tear_down_BA_sessions(sta,
+			ieee80211_sta_tear_करोwn_BA_sessions(sta,
 							    AGG_STOP_LOCAL_REQUEST);
-		}
-		if (!wiphy_ext_feature_isset(local->hw.wiphy,
-					     NL80211_EXT_FEATURE_CAN_REPLACE_PTK0)) {
+		पूर्ण
+		अगर (!wiphy_ext_feature_isset(local->hw.wiphy,
+					     NL80211_EXT_FEATURE_CAN_REPLACE_PTK0)) अणु
 			pr_warn_ratelimited("Rekeying PTK for STA %pM but driver can't safely do that.",
 					    sta->sta.addr);
 			/* Flushing the driver queues *may* help prevent
-			 * the clear text leaks and freezes.
+			 * the clear text leaks and मुक्तzes.
 			 */
 			ieee80211_flush_queues(local, old->sdata, false);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __ieee80211_set_default_key(struct ieee80211_sub_if_data *sdata,
-					int idx, bool uni, bool multi)
-{
-	struct ieee80211_key *key = NULL;
+अटल व्योम __ieee80211_set_शेष_key(काष्ठा ieee80211_sub_अगर_data *sdata,
+					पूर्णांक idx, bool uni, bool multi)
+अणु
+	काष्ठा ieee80211_key *key = शून्य;
 
-	assert_key_lock(sdata->local);
+	निश्चित_key_lock(sdata->local);
 
-	if (idx >= 0 && idx < NUM_DEFAULT_KEYS)
+	अगर (idx >= 0 && idx < NUM_DEFAULT_KEYS)
 		key = key_mtx_dereference(sdata->local, sdata->keys[idx]);
 
-	if (uni) {
-		rcu_assign_pointer(sdata->default_unicast_key, key);
-		ieee80211_check_fast_xmit_iface(sdata);
-		if (sdata->vif.type != NL80211_IFTYPE_AP_VLAN)
-			drv_set_default_unicast_key(sdata->local, sdata, idx);
-	}
+	अगर (uni) अणु
+		rcu_assign_poपूर्णांकer(sdata->शेष_unicast_key, key);
+		ieee80211_check_fast_xmit_अगरace(sdata);
+		अगर (sdata->vअगर.type != NL80211_IFTYPE_AP_VLAN)
+			drv_set_शेष_unicast_key(sdata->local, sdata, idx);
+	पूर्ण
 
-	if (multi)
-		rcu_assign_pointer(sdata->default_multicast_key, key);
+	अगर (multi)
+		rcu_assign_poपूर्णांकer(sdata->शेष_multicast_key, key);
 
-	ieee80211_debugfs_key_update_default(sdata);
-}
+	ieee80211_debugfs_key_update_शेष(sdata);
+पूर्ण
 
-void ieee80211_set_default_key(struct ieee80211_sub_if_data *sdata, int idx,
+व्योम ieee80211_set_शेष_key(काष्ठा ieee80211_sub_अगर_data *sdata, पूर्णांक idx,
 			       bool uni, bool multi)
-{
+अणु
 	mutex_lock(&sdata->local->key_mtx);
-	__ieee80211_set_default_key(sdata, idx, uni, multi);
+	__ieee80211_set_शेष_key(sdata, idx, uni, multi);
 	mutex_unlock(&sdata->local->key_mtx);
-}
+पूर्ण
 
-static void
-__ieee80211_set_default_mgmt_key(struct ieee80211_sub_if_data *sdata, int idx)
-{
-	struct ieee80211_key *key = NULL;
+अटल व्योम
+__ieee80211_set_शेष_mgmt_key(काष्ठा ieee80211_sub_अगर_data *sdata, पूर्णांक idx)
+अणु
+	काष्ठा ieee80211_key *key = शून्य;
 
-	assert_key_lock(sdata->local);
+	निश्चित_key_lock(sdata->local);
 
-	if (idx >= NUM_DEFAULT_KEYS &&
+	अगर (idx >= NUM_DEFAULT_KEYS &&
 	    idx < NUM_DEFAULT_KEYS + NUM_DEFAULT_MGMT_KEYS)
 		key = key_mtx_dereference(sdata->local, sdata->keys[idx]);
 
-	rcu_assign_pointer(sdata->default_mgmt_key, key);
+	rcu_assign_poपूर्णांकer(sdata->शेष_mgmt_key, key);
 
-	ieee80211_debugfs_key_update_default(sdata);
-}
+	ieee80211_debugfs_key_update_शेष(sdata);
+पूर्ण
 
-void ieee80211_set_default_mgmt_key(struct ieee80211_sub_if_data *sdata,
-				    int idx)
-{
+व्योम ieee80211_set_शेष_mgmt_key(काष्ठा ieee80211_sub_अगर_data *sdata,
+				    पूर्णांक idx)
+अणु
 	mutex_lock(&sdata->local->key_mtx);
-	__ieee80211_set_default_mgmt_key(sdata, idx);
+	__ieee80211_set_शेष_mgmt_key(sdata, idx);
 	mutex_unlock(&sdata->local->key_mtx);
-}
+पूर्ण
 
-static void
-__ieee80211_set_default_beacon_key(struct ieee80211_sub_if_data *sdata, int idx)
-{
-	struct ieee80211_key *key = NULL;
+अटल व्योम
+__ieee80211_set_शेष_beacon_key(काष्ठा ieee80211_sub_अगर_data *sdata, पूर्णांक idx)
+अणु
+	काष्ठा ieee80211_key *key = शून्य;
 
-	assert_key_lock(sdata->local);
+	निश्चित_key_lock(sdata->local);
 
-	if (idx >= NUM_DEFAULT_KEYS + NUM_DEFAULT_MGMT_KEYS &&
+	अगर (idx >= NUM_DEFAULT_KEYS + NUM_DEFAULT_MGMT_KEYS &&
 	    idx < NUM_DEFAULT_KEYS + NUM_DEFAULT_MGMT_KEYS +
 	    NUM_DEFAULT_BEACON_KEYS)
 		key = key_mtx_dereference(sdata->local, sdata->keys[idx]);
 
-	rcu_assign_pointer(sdata->default_beacon_key, key);
+	rcu_assign_poपूर्णांकer(sdata->शेष_beacon_key, key);
 
-	ieee80211_debugfs_key_update_default(sdata);
-}
+	ieee80211_debugfs_key_update_शेष(sdata);
+पूर्ण
 
-void ieee80211_set_default_beacon_key(struct ieee80211_sub_if_data *sdata,
-				      int idx)
-{
+व्योम ieee80211_set_शेष_beacon_key(काष्ठा ieee80211_sub_अगर_data *sdata,
+				      पूर्णांक idx)
+अणु
 	mutex_lock(&sdata->local->key_mtx);
-	__ieee80211_set_default_beacon_key(sdata, idx);
+	__ieee80211_set_शेष_beacon_key(sdata, idx);
 	mutex_unlock(&sdata->local->key_mtx);
-}
+पूर्ण
 
-static int ieee80211_key_replace(struct ieee80211_sub_if_data *sdata,
-				  struct sta_info *sta,
+अटल पूर्णांक ieee80211_key_replace(काष्ठा ieee80211_sub_अगर_data *sdata,
+				  काष्ठा sta_info *sta,
 				  bool pairwise,
-				  struct ieee80211_key *old,
-				  struct ieee80211_key *new)
-{
-	int idx;
-	int ret = 0;
+				  काष्ठा ieee80211_key *old,
+				  काष्ठा ieee80211_key *new)
+अणु
+	पूर्णांक idx;
+	पूर्णांक ret = 0;
 	bool defunikey, defmultikey, defmgmtkey, defbeaconkey;
 
 	/* caller must provide at least one old/new */
-	if (WARN_ON(!new && !old))
-		return 0;
+	अगर (WARN_ON(!new && !old))
+		वापस 0;
 
-	if (new)
+	अगर (new)
 		list_add_tail_rcu(&new->list, &sdata->key_list);
 
 	WARN_ON(new && old && new->conf.keyidx != old->conf.keyidx);
 
-	if (new && sta && pairwise) {
+	अगर (new && sta && pairwise) अणु
 		/* Unicast rekey needs special handling. With Extended Key ID
-		 * old is still NULL for the first rekey.
+		 * old is still शून्य क्रम the first rekey.
 		 */
 		ieee80211_pairwise_rekey(old, new);
-	}
+	पूर्ण
 
-	if (old) {
+	अगर (old) अणु
 		idx = old->conf.keyidx;
 
-		if (old->flags & KEY_FLAG_UPLOADED_TO_HARDWARE) {
+		अगर (old->flags & KEY_FLAG_UPLOADED_TO_HARDWARE) अणु
 			ieee80211_key_disable_hw_accel(old);
 
-			if (new)
+			अगर (new)
 				ret = ieee80211_key_enable_hw_accel(new);
-		}
-	} else {
-		/* new must be provided in case old is not */
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* new must be provided in हाल old is not */
 		idx = new->conf.keyidx;
-		if (!new->local->wowlan)
+		अगर (!new->local->wowlan)
 			ret = ieee80211_key_enable_hw_accel(new);
-	}
+	पूर्ण
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (sta) {
-		if (pairwise) {
-			rcu_assign_pointer(sta->ptk[idx], new);
-			if (new &&
+	अगर (sta) अणु
+		अगर (pairwise) अणु
+			rcu_assign_poपूर्णांकer(sta->ptk[idx], new);
+			अगर (new &&
 			    !(new->conf.flags & IEEE80211_KEY_FLAG_NO_AUTO_TX))
 				_ieee80211_set_tx_key(new, true);
-		} else {
-			rcu_assign_pointer(sta->gtk[idx], new);
-		}
-		/* Only needed for transition from no key -> key.
+		पूर्ण अन्यथा अणु
+			rcu_assign_poपूर्णांकer(sta->gtk[idx], new);
+		पूर्ण
+		/* Only needed क्रम transition from no key -> key.
 		 * Still triggers unnecessary when using Extended Key ID
-		 * and installing the second key ID the first time.
+		 * and installing the second key ID the first समय.
 		 */
-		if (new && !old)
+		अगर (new && !old)
 			ieee80211_check_fast_rx(sta);
-	} else {
+	पूर्ण अन्यथा अणु
 		defunikey = old &&
 			old == key_mtx_dereference(sdata->local,
-						sdata->default_unicast_key);
+						sdata->शेष_unicast_key);
 		defmultikey = old &&
 			old == key_mtx_dereference(sdata->local,
-						sdata->default_multicast_key);
+						sdata->शेष_multicast_key);
 		defmgmtkey = old &&
 			old == key_mtx_dereference(sdata->local,
-						sdata->default_mgmt_key);
+						sdata->शेष_mgmt_key);
 		defbeaconkey = old &&
 			old == key_mtx_dereference(sdata->local,
-						   sdata->default_beacon_key);
+						   sdata->शेष_beacon_key);
 
-		if (defunikey && !new)
-			__ieee80211_set_default_key(sdata, -1, true, false);
-		if (defmultikey && !new)
-			__ieee80211_set_default_key(sdata, -1, false, true);
-		if (defmgmtkey && !new)
-			__ieee80211_set_default_mgmt_key(sdata, -1);
-		if (defbeaconkey && !new)
-			__ieee80211_set_default_beacon_key(sdata, -1);
+		अगर (defunikey && !new)
+			__ieee80211_set_शेष_key(sdata, -1, true, false);
+		अगर (defmultikey && !new)
+			__ieee80211_set_शेष_key(sdata, -1, false, true);
+		अगर (defmgmtkey && !new)
+			__ieee80211_set_शेष_mgmt_key(sdata, -1);
+		अगर (defbeaconkey && !new)
+			__ieee80211_set_शेष_beacon_key(sdata, -1);
 
-		rcu_assign_pointer(sdata->keys[idx], new);
-		if (defunikey && new)
-			__ieee80211_set_default_key(sdata, new->conf.keyidx,
+		rcu_assign_poपूर्णांकer(sdata->keys[idx], new);
+		अगर (defunikey && new)
+			__ieee80211_set_शेष_key(sdata, new->conf.keyidx,
 						    true, false);
-		if (defmultikey && new)
-			__ieee80211_set_default_key(sdata, new->conf.keyidx,
+		अगर (defmultikey && new)
+			__ieee80211_set_शेष_key(sdata, new->conf.keyidx,
 						    false, true);
-		if (defmgmtkey && new)
-			__ieee80211_set_default_mgmt_key(sdata,
+		अगर (defmgmtkey && new)
+			__ieee80211_set_शेष_mgmt_key(sdata,
 							 new->conf.keyidx);
-		if (defbeaconkey && new)
-			__ieee80211_set_default_beacon_key(sdata,
+		अगर (defbeaconkey && new)
+			__ieee80211_set_शेष_beacon_key(sdata,
 							   new->conf.keyidx);
-	}
+	पूर्ण
 
-	if (old)
+	अगर (old)
 		list_del_rcu(&old->list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct ieee80211_key *
-ieee80211_key_alloc(u32 cipher, int idx, size_t key_len,
-		    const u8 *key_data,
-		    size_t seq_len, const u8 *seq,
-		    const struct ieee80211_cipher_scheme *cs)
-{
-	struct ieee80211_key *key;
-	int i, j, err;
+काष्ठा ieee80211_key *
+ieee80211_key_alloc(u32 cipher, पूर्णांक idx, माप_प्रकार key_len,
+		    स्थिर u8 *key_data,
+		    माप_प्रकार seq_len, स्थिर u8 *seq,
+		    स्थिर काष्ठा ieee80211_cipher_scheme *cs)
+अणु
+	काष्ठा ieee80211_key *key;
+	पूर्णांक i, j, err;
 
-	if (WARN_ON(idx < 0 ||
+	अगर (WARN_ON(idx < 0 ||
 		    idx >= NUM_DEFAULT_KEYS + NUM_DEFAULT_MGMT_KEYS +
 		    NUM_DEFAULT_BEACON_KEYS))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	key = kzalloc(sizeof(struct ieee80211_key) + key_len, GFP_KERNEL);
-	if (!key)
-		return ERR_PTR(-ENOMEM);
+	key = kzalloc(माप(काष्ठा ieee80211_key) + key_len, GFP_KERNEL);
+	अगर (!key)
+		वापस ERR_PTR(-ENOMEM);
 
 	/*
 	 * Default to software encryption; we'll later upload the
-	 * key to the hardware if possible.
+	 * key to the hardware अगर possible.
 	 */
 	key->conf.flags = 0;
 	key->flags = 0;
@@ -556,296 +557,296 @@ ieee80211_key_alloc(u32 cipher, int idx, size_t key_len,
 	key->conf.cipher = cipher;
 	key->conf.keyidx = idx;
 	key->conf.keylen = key_len;
-	switch (cipher) {
-	case WLAN_CIPHER_SUITE_WEP40:
-	case WLAN_CIPHER_SUITE_WEP104:
+	चयन (cipher) अणु
+	हाल WLAN_CIPHER_SUITE_WEP40:
+	हाल WLAN_CIPHER_SUITE_WEP104:
 		key->conf.iv_len = IEEE80211_WEP_IV_LEN;
 		key->conf.icv_len = IEEE80211_WEP_ICV_LEN;
-		break;
-	case WLAN_CIPHER_SUITE_TKIP:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_TKIP:
 		key->conf.iv_len = IEEE80211_TKIP_IV_LEN;
 		key->conf.icv_len = IEEE80211_TKIP_ICV_LEN;
-		if (seq) {
-			for (i = 0; i < IEEE80211_NUM_TIDS; i++) {
+		अगर (seq) अणु
+			क्रम (i = 0; i < IEEE80211_NUM_TIDS; i++) अणु
 				key->u.tkip.rx[i].iv32 =
 					get_unaligned_le32(&seq[2]);
 				key->u.tkip.rx[i].iv16 =
 					get_unaligned_le16(seq);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		spin_lock_init(&key->u.tkip.txlock);
-		break;
-	case WLAN_CIPHER_SUITE_CCMP:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP:
 		key->conf.iv_len = IEEE80211_CCMP_HDR_LEN;
 		key->conf.icv_len = IEEE80211_CCMP_MIC_LEN;
-		if (seq) {
-			for (i = 0; i < IEEE80211_NUM_TIDS + 1; i++)
-				for (j = 0; j < IEEE80211_CCMP_PN_LEN; j++)
+		अगर (seq) अणु
+			क्रम (i = 0; i < IEEE80211_NUM_TIDS + 1; i++)
+				क्रम (j = 0; j < IEEE80211_CCMP_PN_LEN; j++)
 					key->u.ccmp.rx_pn[i][j] =
 						seq[IEEE80211_CCMP_PN_LEN - j - 1];
-		}
+		पूर्ण
 		/*
 		 * Initialize AES key state here as an optimization so that
-		 * it does not need to be initialized for every packet.
+		 * it करोes not need to be initialized क्रम every packet.
 		 */
 		key->u.ccmp.tfm = ieee80211_aes_key_setup_encrypt(
 			key_data, key_len, IEEE80211_CCMP_MIC_LEN);
-		if (IS_ERR(key->u.ccmp.tfm)) {
+		अगर (IS_ERR(key->u.ccmp.tfm)) अणु
 			err = PTR_ERR(key->u.ccmp.tfm);
-			kfree(key);
-			return ERR_PTR(err);
-		}
-		break;
-	case WLAN_CIPHER_SUITE_CCMP_256:
+			kमुक्त(key);
+			वापस ERR_PTR(err);
+		पूर्ण
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP_256:
 		key->conf.iv_len = IEEE80211_CCMP_256_HDR_LEN;
 		key->conf.icv_len = IEEE80211_CCMP_256_MIC_LEN;
-		for (i = 0; seq && i < IEEE80211_NUM_TIDS + 1; i++)
-			for (j = 0; j < IEEE80211_CCMP_256_PN_LEN; j++)
+		क्रम (i = 0; seq && i < IEEE80211_NUM_TIDS + 1; i++)
+			क्रम (j = 0; j < IEEE80211_CCMP_256_PN_LEN; j++)
 				key->u.ccmp.rx_pn[i][j] =
 					seq[IEEE80211_CCMP_256_PN_LEN - j - 1];
 		/* Initialize AES key state here as an optimization so that
-		 * it does not need to be initialized for every packet.
+		 * it करोes not need to be initialized क्रम every packet.
 		 */
 		key->u.ccmp.tfm = ieee80211_aes_key_setup_encrypt(
 			key_data, key_len, IEEE80211_CCMP_256_MIC_LEN);
-		if (IS_ERR(key->u.ccmp.tfm)) {
+		अगर (IS_ERR(key->u.ccmp.tfm)) अणु
 			err = PTR_ERR(key->u.ccmp.tfm);
-			kfree(key);
-			return ERR_PTR(err);
-		}
-		break;
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
+			kमुक्त(key);
+			वापस ERR_PTR(err);
+		पूर्ण
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+	हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
 		key->conf.iv_len = 0;
-		if (cipher == WLAN_CIPHER_SUITE_AES_CMAC)
-			key->conf.icv_len = sizeof(struct ieee80211_mmie);
-		else
-			key->conf.icv_len = sizeof(struct ieee80211_mmie_16);
-		if (seq)
-			for (j = 0; j < IEEE80211_CMAC_PN_LEN; j++)
+		अगर (cipher == WLAN_CIPHER_SUITE_AES_CMAC)
+			key->conf.icv_len = माप(काष्ठा ieee80211_mmie);
+		अन्यथा
+			key->conf.icv_len = माप(काष्ठा ieee80211_mmie_16);
+		अगर (seq)
+			क्रम (j = 0; j < IEEE80211_CMAC_PN_LEN; j++)
 				key->u.aes_cmac.rx_pn[j] =
 					seq[IEEE80211_CMAC_PN_LEN - j - 1];
 		/*
 		 * Initialize AES key state here as an optimization so that
-		 * it does not need to be initialized for every packet.
+		 * it करोes not need to be initialized क्रम every packet.
 		 */
 		key->u.aes_cmac.tfm =
 			ieee80211_aes_cmac_key_setup(key_data, key_len);
-		if (IS_ERR(key->u.aes_cmac.tfm)) {
+		अगर (IS_ERR(key->u.aes_cmac.tfm)) अणु
 			err = PTR_ERR(key->u.aes_cmac.tfm);
-			kfree(key);
-			return ERR_PTR(err);
-		}
-		break;
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
+			kमुक्त(key);
+			वापस ERR_PTR(err);
+		पूर्ण
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
 		key->conf.iv_len = 0;
-		key->conf.icv_len = sizeof(struct ieee80211_mmie_16);
-		if (seq)
-			for (j = 0; j < IEEE80211_GMAC_PN_LEN; j++)
+		key->conf.icv_len = माप(काष्ठा ieee80211_mmie_16);
+		अगर (seq)
+			क्रम (j = 0; j < IEEE80211_GMAC_PN_LEN; j++)
 				key->u.aes_gmac.rx_pn[j] =
 					seq[IEEE80211_GMAC_PN_LEN - j - 1];
 		/* Initialize AES key state here as an optimization so that
-		 * it does not need to be initialized for every packet.
+		 * it करोes not need to be initialized क्रम every packet.
 		 */
 		key->u.aes_gmac.tfm =
 			ieee80211_aes_gmac_key_setup(key_data, key_len);
-		if (IS_ERR(key->u.aes_gmac.tfm)) {
+		अगर (IS_ERR(key->u.aes_gmac.tfm)) अणु
 			err = PTR_ERR(key->u.aes_gmac.tfm);
-			kfree(key);
-			return ERR_PTR(err);
-		}
-		break;
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
+			kमुक्त(key);
+			वापस ERR_PTR(err);
+		पूर्ण
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
 		key->conf.iv_len = IEEE80211_GCMP_HDR_LEN;
 		key->conf.icv_len = IEEE80211_GCMP_MIC_LEN;
-		for (i = 0; seq && i < IEEE80211_NUM_TIDS + 1; i++)
-			for (j = 0; j < IEEE80211_GCMP_PN_LEN; j++)
+		क्रम (i = 0; seq && i < IEEE80211_NUM_TIDS + 1; i++)
+			क्रम (j = 0; j < IEEE80211_GCMP_PN_LEN; j++)
 				key->u.gcmp.rx_pn[i][j] =
 					seq[IEEE80211_GCMP_PN_LEN - j - 1];
 		/* Initialize AES key state here as an optimization so that
-		 * it does not need to be initialized for every packet.
+		 * it करोes not need to be initialized क्रम every packet.
 		 */
 		key->u.gcmp.tfm = ieee80211_aes_gcm_key_setup_encrypt(key_data,
 								      key_len);
-		if (IS_ERR(key->u.gcmp.tfm)) {
+		अगर (IS_ERR(key->u.gcmp.tfm)) अणु
 			err = PTR_ERR(key->u.gcmp.tfm);
-			kfree(key);
-			return ERR_PTR(err);
-		}
-		break;
-	default:
-		if (cs) {
-			if (seq_len && seq_len != cs->pn_len) {
-				kfree(key);
-				return ERR_PTR(-EINVAL);
-			}
+			kमुक्त(key);
+			वापस ERR_PTR(err);
+		पूर्ण
+		अवरोध;
+	शेष:
+		अगर (cs) अणु
+			अगर (seq_len && seq_len != cs->pn_len) अणु
+				kमुक्त(key);
+				वापस ERR_PTR(-EINVAL);
+			पूर्ण
 
 			key->conf.iv_len = cs->hdr_len;
 			key->conf.icv_len = cs->mic_len;
-			for (i = 0; i < IEEE80211_NUM_TIDS + 1; i++)
-				for (j = 0; j < seq_len; j++)
+			क्रम (i = 0; i < IEEE80211_NUM_TIDS + 1; i++)
+				क्रम (j = 0; j < seq_len; j++)
 					key->u.gen.rx_pn[i][j] =
 							seq[seq_len - j - 1];
 			key->flags |= KEY_FLAG_CIPHER_SCHEME;
-		}
-	}
-	memcpy(key->conf.key, key_data, key_len);
+		पूर्ण
+	पूर्ण
+	स_नकल(key->conf.key, key_data, key_len);
 	INIT_LIST_HEAD(&key->list);
 
-	return key;
-}
+	वापस key;
+पूर्ण
 
-static void ieee80211_key_free_common(struct ieee80211_key *key)
-{
-	switch (key->conf.cipher) {
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_CCMP_256:
-		ieee80211_aes_key_free(key->u.ccmp.tfm);
-		break;
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
-		ieee80211_aes_cmac_key_free(key->u.aes_cmac.tfm);
-		break;
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-		ieee80211_aes_gmac_key_free(key->u.aes_gmac.tfm);
-		break;
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
-		ieee80211_aes_gcm_key_free(key->u.gcmp.tfm);
-		break;
-	}
-	kfree_sensitive(key);
-}
+अटल व्योम ieee80211_key_मुक्त_common(काष्ठा ieee80211_key *key)
+अणु
+	चयन (key->conf.cipher) अणु
+	हाल WLAN_CIPHER_SUITE_CCMP:
+	हाल WLAN_CIPHER_SUITE_CCMP_256:
+		ieee80211_aes_key_मुक्त(key->u.ccmp.tfm);
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+	हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
+		ieee80211_aes_cmac_key_मुक्त(key->u.aes_cmac.tfm);
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
+		ieee80211_aes_gmac_key_मुक्त(key->u.aes_gmac.tfm);
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
+		ieee80211_aes_gcm_key_मुक्त(key->u.gcmp.tfm);
+		अवरोध;
+	पूर्ण
+	kमुक्त_sensitive(key);
+पूर्ण
 
-static void __ieee80211_key_destroy(struct ieee80211_key *key,
+अटल व्योम __ieee80211_key_destroy(काष्ठा ieee80211_key *key,
 				    bool delay_tailroom)
-{
-	if (key->local) {
-		struct ieee80211_sub_if_data *sdata = key->sdata;
+अणु
+	अगर (key->local) अणु
+		काष्ठा ieee80211_sub_अगर_data *sdata = key->sdata;
 
-		ieee80211_debugfs_key_remove(key);
+		ieee80211_debugfs_key_हटाओ(key);
 
-		if (delay_tailroom) {
+		अगर (delay_tailroom) अणु
 			/* see ieee80211_delayed_tailroom_dec */
 			sdata->crypto_tx_tailroom_pending_dec++;
 			schedule_delayed_work(&sdata->dec_tailroom_needed_wk,
 					      HZ/2);
-		} else {
+		पूर्ण अन्यथा अणु
 			decrease_tailroom_need_count(sdata, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ieee80211_key_free_common(key);
-}
+	ieee80211_key_मुक्त_common(key);
+पूर्ण
 
-static void ieee80211_key_destroy(struct ieee80211_key *key,
+अटल व्योम ieee80211_key_destroy(काष्ठा ieee80211_key *key,
 				  bool delay_tailroom)
-{
-	if (!key)
-		return;
+अणु
+	अगर (!key)
+		वापस;
 
 	/*
 	 * Synchronize so the TX path and rcu key iterators
-	 * can no longer be using this key before we free/remove it.
+	 * can no दीर्घer be using this key beक्रमe we मुक्त/हटाओ it.
 	 */
 	synchronize_net();
 
 	__ieee80211_key_destroy(key, delay_tailroom);
-}
+पूर्ण
 
-void ieee80211_key_free_unused(struct ieee80211_key *key)
-{
+व्योम ieee80211_key_मुक्त_unused(काष्ठा ieee80211_key *key)
+अणु
 	WARN_ON(key->sdata || key->local);
-	ieee80211_key_free_common(key);
-}
+	ieee80211_key_मुक्त_common(key);
+पूर्ण
 
-static bool ieee80211_key_identical(struct ieee80211_sub_if_data *sdata,
-				    struct ieee80211_key *old,
-				    struct ieee80211_key *new)
-{
+अटल bool ieee80211_key_identical(काष्ठा ieee80211_sub_अगर_data *sdata,
+				    काष्ठा ieee80211_key *old,
+				    काष्ठा ieee80211_key *new)
+अणु
 	u8 tkip_old[WLAN_KEY_LEN_TKIP], tkip_new[WLAN_KEY_LEN_TKIP];
 	u8 *tk_old, *tk_new;
 
-	if (!old || new->conf.keylen != old->conf.keylen)
-		return false;
+	अगर (!old || new->conf.keylen != old->conf.keylen)
+		वापस false;
 
 	tk_old = old->conf.key;
 	tk_new = new->conf.key;
 
 	/*
-	 * In station mode, don't compare the TX MIC key, as it's never used
+	 * In station mode, करोn't compare the TX MIC key, as it's never used
 	 * and offloaded rekeying may not care to send it to the host. This
-	 * is the case in iwlwifi, for example.
+	 * is the हाल in iwlwअगरi, क्रम example.
 	 */
-	if (sdata->vif.type == NL80211_IFTYPE_STATION &&
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_STATION &&
 	    new->conf.cipher == WLAN_CIPHER_SUITE_TKIP &&
 	    new->conf.keylen == WLAN_KEY_LEN_TKIP &&
-	    !(new->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE)) {
-		memcpy(tkip_old, tk_old, WLAN_KEY_LEN_TKIP);
-		memcpy(tkip_new, tk_new, WLAN_KEY_LEN_TKIP);
-		memset(tkip_old + NL80211_TKIP_DATA_OFFSET_TX_MIC_KEY, 0, 8);
-		memset(tkip_new + NL80211_TKIP_DATA_OFFSET_TX_MIC_KEY, 0, 8);
+	    !(new->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE)) अणु
+		स_नकल(tkip_old, tk_old, WLAN_KEY_LEN_TKIP);
+		स_नकल(tkip_new, tk_new, WLAN_KEY_LEN_TKIP);
+		स_रखो(tkip_old + NL80211_TKIP_DATA_OFFSET_TX_MIC_KEY, 0, 8);
+		स_रखो(tkip_new + NL80211_TKIP_DATA_OFFSET_TX_MIC_KEY, 0, 8);
 		tk_old = tkip_old;
 		tk_new = tkip_new;
-	}
+	पूर्ण
 
-	return !crypto_memneq(tk_old, tk_new, new->conf.keylen);
-}
+	वापस !crypto_memneq(tk_old, tk_new, new->conf.keylen);
+पूर्ण
 
-int ieee80211_key_link(struct ieee80211_key *key,
-		       struct ieee80211_sub_if_data *sdata,
-		       struct sta_info *sta)
-{
-	static atomic_t key_color = ATOMIC_INIT(0);
-	struct ieee80211_key *old_key;
-	int idx = key->conf.keyidx;
+पूर्णांक ieee80211_key_link(काष्ठा ieee80211_key *key,
+		       काष्ठा ieee80211_sub_अगर_data *sdata,
+		       काष्ठा sta_info *sta)
+अणु
+	अटल atomic_t key_color = ATOMIC_INIT(0);
+	काष्ठा ieee80211_key *old_key;
+	पूर्णांक idx = key->conf.keyidx;
 	bool pairwise = key->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE;
 	/*
-	 * We want to delay tailroom updates only for station - in that
-	 * case it helps roaming speed, but in other cases it hurts and
+	 * We want to delay tailroom updates only क्रम station - in that
+	 * हाल it helps roaming speed, but in other हालs it hurts and
 	 * can cause warnings to appear.
 	 */
-	bool delay_tailroom = sdata->vif.type == NL80211_IFTYPE_STATION;
-	int ret = -EOPNOTSUPP;
+	bool delay_tailroom = sdata->vअगर.type == NL80211_IFTYPE_STATION;
+	पूर्णांक ret = -EOPNOTSUPP;
 
 	mutex_lock(&sdata->local->key_mtx);
 
-	if (sta && pairwise) {
-		struct ieee80211_key *alt_key;
+	अगर (sta && pairwise) अणु
+		काष्ठा ieee80211_key *alt_key;
 
 		old_key = key_mtx_dereference(sdata->local, sta->ptk[idx]);
 		alt_key = key_mtx_dereference(sdata->local, sta->ptk[idx ^ 1]);
 
 		/* The rekey code assumes that the old and new key are using
-		 * the same cipher. Enforce the assumption for pairwise keys.
+		 * the same cipher. Enक्रमce the assumption क्रम pairwise keys.
 		 */
-		if ((alt_key && alt_key->conf.cipher != key->conf.cipher) ||
+		अगर ((alt_key && alt_key->conf.cipher != key->conf.cipher) ||
 		    (old_key && old_key->conf.cipher != key->conf.cipher))
-			goto out;
-	} else if (sta) {
+			जाओ out;
+	पूर्ण अन्यथा अगर (sta) अणु
 		old_key = key_mtx_dereference(sdata->local, sta->gtk[idx]);
-	} else {
+	पूर्ण अन्यथा अणु
 		old_key = key_mtx_dereference(sdata->local, sdata->keys[idx]);
-	}
+	पूर्ण
 
-	/* Non-pairwise keys must also not switch the cipher on rekey */
-	if (!pairwise) {
-		if (old_key && old_key->conf.cipher != key->conf.cipher)
-			goto out;
-	}
+	/* Non-pairwise keys must also not चयन the cipher on rekey */
+	अगर (!pairwise) अणु
+		अगर (old_key && old_key->conf.cipher != key->conf.cipher)
+			जाओ out;
+	पूर्ण
 
 	/*
 	 * Silently accept key re-installation without really installing the
-	 * new version of the key to avoid nonce reuse or replay issues.
+	 * new version of the key to aव्योम nonce reuse or replay issues.
 	 */
-	if (ieee80211_key_identical(sdata, old_key, key)) {
-		ieee80211_key_free_unused(key);
+	अगर (ieee80211_key_identical(sdata, old_key, key)) अणु
+		ieee80211_key_मुक्त_unused(key);
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	key->local = sdata->local;
 	key->sdata = sdata;
@@ -855,272 +856,272 @@ int ieee80211_key_link(struct ieee80211_key *key,
 	 * Assign a unique ID to every key so we can easily prevent mixed
 	 * key and fragment cache attacks.
 	 */
-	key->color = atomic_inc_return(&key_color);
+	key->color = atomic_inc_वापस(&key_color);
 
 	increment_tailroom_need_count(sdata);
 
 	ret = ieee80211_key_replace(sdata, sta, pairwise, old_key, key);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		ieee80211_debugfs_key_add(key);
 		ieee80211_key_destroy(old_key, delay_tailroom);
-	} else {
-		ieee80211_key_free(key, delay_tailroom);
-	}
+	पूर्ण अन्यथा अणु
+		ieee80211_key_मुक्त(key, delay_tailroom);
+	पूर्ण
 
  out:
 	mutex_unlock(&sdata->local->key_mtx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ieee80211_key_free(struct ieee80211_key *key, bool delay_tailroom)
-{
-	if (!key)
-		return;
+व्योम ieee80211_key_मुक्त(काष्ठा ieee80211_key *key, bool delay_tailroom)
+अणु
+	अगर (!key)
+		वापस;
 
 	/*
-	 * Replace key with nothingness if it was ever used.
+	 * Replace key with nothingness अगर it was ever used.
 	 */
-	if (key->sdata)
+	अगर (key->sdata)
 		ieee80211_key_replace(key->sdata, key->sta,
 				key->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE,
-				key, NULL);
+				key, शून्य);
 	ieee80211_key_destroy(key, delay_tailroom);
-}
+पूर्ण
 
-void ieee80211_reenable_keys(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_key *key;
-	struct ieee80211_sub_if_data *vlan;
+व्योम ieee80211_reenable_keys(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_key *key;
+	काष्ठा ieee80211_sub_अगर_data *vlan;
 
-	lockdep_assert_wiphy(sdata->local->hw.wiphy);
+	lockdep_निश्चित_wiphy(sdata->local->hw.wiphy);
 
 	mutex_lock(&sdata->local->key_mtx);
 
 	sdata->crypto_tx_tailroom_needed_cnt = 0;
 	sdata->crypto_tx_tailroom_pending_dec = 0;
 
-	if (sdata->vif.type == NL80211_IFTYPE_AP) {
-		list_for_each_entry(vlan, &sdata->u.ap.vlans, u.vlan.list) {
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_AP) अणु
+		list_क्रम_each_entry(vlan, &sdata->u.ap.vlans, u.vlan.list) अणु
 			vlan->crypto_tx_tailroom_needed_cnt = 0;
 			vlan->crypto_tx_tailroom_pending_dec = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ieee80211_sdata_running(sdata)) {
-		list_for_each_entry(key, &sdata->key_list, list) {
+	अगर (ieee80211_sdata_running(sdata)) अणु
+		list_क्रम_each_entry(key, &sdata->key_list, list) अणु
 			increment_tailroom_need_count(sdata);
 			ieee80211_key_enable_hw_accel(key);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&sdata->local->key_mtx);
-}
+पूर्ण
 
-void ieee80211_iter_keys(struct ieee80211_hw *hw,
-			 struct ieee80211_vif *vif,
-			 void (*iter)(struct ieee80211_hw *hw,
-				      struct ieee80211_vif *vif,
-				      struct ieee80211_sta *sta,
-				      struct ieee80211_key_conf *key,
-				      void *data),
-			 void *iter_data)
-{
-	struct ieee80211_local *local = hw_to_local(hw);
-	struct ieee80211_key *key, *tmp;
-	struct ieee80211_sub_if_data *sdata;
+व्योम ieee80211_iter_keys(काष्ठा ieee80211_hw *hw,
+			 काष्ठा ieee80211_vअगर *vअगर,
+			 व्योम (*iter)(काष्ठा ieee80211_hw *hw,
+				      काष्ठा ieee80211_vअगर *vअगर,
+				      काष्ठा ieee80211_sta *sta,
+				      काष्ठा ieee80211_key_conf *key,
+				      व्योम *data),
+			 व्योम *iter_data)
+अणु
+	काष्ठा ieee80211_local *local = hw_to_local(hw);
+	काष्ठा ieee80211_key *key, *पंचांगp;
+	काष्ठा ieee80211_sub_अगर_data *sdata;
 
-	lockdep_assert_wiphy(hw->wiphy);
+	lockdep_निश्चित_wiphy(hw->wiphy);
 
 	mutex_lock(&local->key_mtx);
-	if (vif) {
-		sdata = vif_to_sdata(vif);
-		list_for_each_entry_safe(key, tmp, &sdata->key_list, list)
-			iter(hw, &sdata->vif,
-			     key->sta ? &key->sta->sta : NULL,
+	अगर (vअगर) अणु
+		sdata = vअगर_to_sdata(vअगर);
+		list_क्रम_each_entry_safe(key, पंचांगp, &sdata->key_list, list)
+			iter(hw, &sdata->vअगर,
+			     key->sta ? &key->sta->sta : शून्य,
 			     &key->conf, iter_data);
-	} else {
-		list_for_each_entry(sdata, &local->interfaces, list)
-			list_for_each_entry_safe(key, tmp,
+	पूर्ण अन्यथा अणु
+		list_क्रम_each_entry(sdata, &local->पूर्णांकerfaces, list)
+			list_क्रम_each_entry_safe(key, पंचांगp,
 						 &sdata->key_list, list)
-				iter(hw, &sdata->vif,
-				     key->sta ? &key->sta->sta : NULL,
+				iter(hw, &sdata->vअगर,
+				     key->sta ? &key->sta->sta : शून्य,
 				     &key->conf, iter_data);
-	}
+	पूर्ण
 	mutex_unlock(&local->key_mtx);
-}
+पूर्ण
 EXPORT_SYMBOL(ieee80211_iter_keys);
 
-static void
-_ieee80211_iter_keys_rcu(struct ieee80211_hw *hw,
-			 struct ieee80211_sub_if_data *sdata,
-			 void (*iter)(struct ieee80211_hw *hw,
-				      struct ieee80211_vif *vif,
-				      struct ieee80211_sta *sta,
-				      struct ieee80211_key_conf *key,
-				      void *data),
-			 void *iter_data)
-{
-	struct ieee80211_key *key;
+अटल व्योम
+_ieee80211_iter_keys_rcu(काष्ठा ieee80211_hw *hw,
+			 काष्ठा ieee80211_sub_अगर_data *sdata,
+			 व्योम (*iter)(काष्ठा ieee80211_hw *hw,
+				      काष्ठा ieee80211_vअगर *vअगर,
+				      काष्ठा ieee80211_sta *sta,
+				      काष्ठा ieee80211_key_conf *key,
+				      व्योम *data),
+			 व्योम *iter_data)
+अणु
+	काष्ठा ieee80211_key *key;
 
-	list_for_each_entry_rcu(key, &sdata->key_list, list) {
+	list_क्रम_each_entry_rcu(key, &sdata->key_list, list) अणु
 		/* skip keys of station in removal process */
-		if (key->sta && key->sta->removed)
-			continue;
-		if (!(key->flags & KEY_FLAG_UPLOADED_TO_HARDWARE))
-			continue;
+		अगर (key->sta && key->sta->हटाओd)
+			जारी;
+		अगर (!(key->flags & KEY_FLAG_UPLOADED_TO_HARDWARE))
+			जारी;
 
-		iter(hw, &sdata->vif,
-		     key->sta ? &key->sta->sta : NULL,
+		iter(hw, &sdata->vअगर,
+		     key->sta ? &key->sta->sta : शून्य,
 		     &key->conf, iter_data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ieee80211_iter_keys_rcu(struct ieee80211_hw *hw,
-			     struct ieee80211_vif *vif,
-			     void (*iter)(struct ieee80211_hw *hw,
-					  struct ieee80211_vif *vif,
-					  struct ieee80211_sta *sta,
-					  struct ieee80211_key_conf *key,
-					  void *data),
-			     void *iter_data)
-{
-	struct ieee80211_local *local = hw_to_local(hw);
-	struct ieee80211_sub_if_data *sdata;
+व्योम ieee80211_iter_keys_rcu(काष्ठा ieee80211_hw *hw,
+			     काष्ठा ieee80211_vअगर *vअगर,
+			     व्योम (*iter)(काष्ठा ieee80211_hw *hw,
+					  काष्ठा ieee80211_vअगर *vअगर,
+					  काष्ठा ieee80211_sta *sta,
+					  काष्ठा ieee80211_key_conf *key,
+					  व्योम *data),
+			     व्योम *iter_data)
+अणु
+	काष्ठा ieee80211_local *local = hw_to_local(hw);
+	काष्ठा ieee80211_sub_अगर_data *sdata;
 
-	if (vif) {
-		sdata = vif_to_sdata(vif);
+	अगर (vअगर) अणु
+		sdata = vअगर_to_sdata(vअगर);
 		_ieee80211_iter_keys_rcu(hw, sdata, iter, iter_data);
-	} else {
-		list_for_each_entry_rcu(sdata, &local->interfaces, list)
+	पूर्ण अन्यथा अणु
+		list_क्रम_each_entry_rcu(sdata, &local->पूर्णांकerfaces, list)
 			_ieee80211_iter_keys_rcu(hw, sdata, iter, iter_data);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(ieee80211_iter_keys_rcu);
 
-static void ieee80211_free_keys_iface(struct ieee80211_sub_if_data *sdata,
-				      struct list_head *keys)
-{
-	struct ieee80211_key *key, *tmp;
+अटल व्योम ieee80211_मुक्त_keys_अगरace(काष्ठा ieee80211_sub_अगर_data *sdata,
+				      काष्ठा list_head *keys)
+अणु
+	काष्ठा ieee80211_key *key, *पंचांगp;
 
 	decrease_tailroom_need_count(sdata,
 				     sdata->crypto_tx_tailroom_pending_dec);
 	sdata->crypto_tx_tailroom_pending_dec = 0;
 
-	ieee80211_debugfs_key_remove_mgmt_default(sdata);
-	ieee80211_debugfs_key_remove_beacon_default(sdata);
+	ieee80211_debugfs_key_हटाओ_mgmt_शेष(sdata);
+	ieee80211_debugfs_key_हटाओ_beacon_शेष(sdata);
 
-	list_for_each_entry_safe(key, tmp, &sdata->key_list, list) {
+	list_क्रम_each_entry_safe(key, पंचांगp, &sdata->key_list, list) अणु
 		ieee80211_key_replace(key->sdata, key->sta,
 				key->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE,
-				key, NULL);
+				key, शून्य);
 		list_add_tail(&key->list, keys);
-	}
+	पूर्ण
 
-	ieee80211_debugfs_key_update_default(sdata);
-}
+	ieee80211_debugfs_key_update_शेष(sdata);
+पूर्ण
 
-void ieee80211_free_keys(struct ieee80211_sub_if_data *sdata,
-			 bool force_synchronize)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct ieee80211_sub_if_data *vlan;
-	struct ieee80211_sub_if_data *master;
-	struct ieee80211_key *key, *tmp;
+व्योम ieee80211_मुक्त_keys(काष्ठा ieee80211_sub_अगर_data *sdata,
+			 bool क्रमce_synchronize)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा ieee80211_sub_अगर_data *vlan;
+	काष्ठा ieee80211_sub_अगर_data *master;
+	काष्ठा ieee80211_key *key, *पंचांगp;
 	LIST_HEAD(keys);
 
 	cancel_delayed_work_sync(&sdata->dec_tailroom_needed_wk);
 
 	mutex_lock(&local->key_mtx);
 
-	ieee80211_free_keys_iface(sdata, &keys);
+	ieee80211_मुक्त_keys_अगरace(sdata, &keys);
 
-	if (sdata->vif.type == NL80211_IFTYPE_AP) {
-		list_for_each_entry(vlan, &sdata->u.ap.vlans, u.vlan.list)
-			ieee80211_free_keys_iface(vlan, &keys);
-	}
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_AP) अणु
+		list_क्रम_each_entry(vlan, &sdata->u.ap.vlans, u.vlan.list)
+			ieee80211_मुक्त_keys_अगरace(vlan, &keys);
+	पूर्ण
 
-	if (!list_empty(&keys) || force_synchronize)
+	अगर (!list_empty(&keys) || क्रमce_synchronize)
 		synchronize_net();
-	list_for_each_entry_safe(key, tmp, &keys, list)
+	list_क्रम_each_entry_safe(key, पंचांगp, &keys, list)
 		__ieee80211_key_destroy(key, false);
 
-	if (sdata->vif.type == NL80211_IFTYPE_AP_VLAN) {
-		if (sdata->bss) {
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN) अणु
+		अगर (sdata->bss) अणु
 			master = container_of(sdata->bss,
-					      struct ieee80211_sub_if_data,
+					      काष्ठा ieee80211_sub_अगर_data,
 					      u.ap);
 
 			WARN_ON_ONCE(sdata->crypto_tx_tailroom_needed_cnt !=
 				     master->crypto_tx_tailroom_needed_cnt);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		WARN_ON_ONCE(sdata->crypto_tx_tailroom_needed_cnt ||
 			     sdata->crypto_tx_tailroom_pending_dec);
-	}
+	पूर्ण
 
-	if (sdata->vif.type == NL80211_IFTYPE_AP) {
-		list_for_each_entry(vlan, &sdata->u.ap.vlans, u.vlan.list)
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_AP) अणु
+		list_क्रम_each_entry(vlan, &sdata->u.ap.vlans, u.vlan.list)
 			WARN_ON_ONCE(vlan->crypto_tx_tailroom_needed_cnt ||
 				     vlan->crypto_tx_tailroom_pending_dec);
-	}
+	पूर्ण
 
 	mutex_unlock(&local->key_mtx);
-}
+पूर्ण
 
-void ieee80211_free_sta_keys(struct ieee80211_local *local,
-			     struct sta_info *sta)
-{
-	struct ieee80211_key *key;
-	int i;
+व्योम ieee80211_मुक्त_sta_keys(काष्ठा ieee80211_local *local,
+			     काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_key *key;
+	पूर्णांक i;
 
 	mutex_lock(&local->key_mtx);
-	for (i = 0; i < ARRAY_SIZE(sta->gtk); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(sta->gtk); i++) अणु
 		key = key_mtx_dereference(local, sta->gtk[i]);
-		if (!key)
-			continue;
+		अगर (!key)
+			जारी;
 		ieee80211_key_replace(key->sdata, key->sta,
 				key->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE,
-				key, NULL);
-		__ieee80211_key_destroy(key, key->sdata->vif.type ==
+				key, शून्य);
+		__ieee80211_key_destroy(key, key->sdata->vअगर.type ==
 					NL80211_IFTYPE_STATION);
-	}
+	पूर्ण
 
-	for (i = 0; i < NUM_DEFAULT_KEYS; i++) {
+	क्रम (i = 0; i < NUM_DEFAULT_KEYS; i++) अणु
 		key = key_mtx_dereference(local, sta->ptk[i]);
-		if (!key)
-			continue;
+		अगर (!key)
+			जारी;
 		ieee80211_key_replace(key->sdata, key->sta,
 				key->conf.flags & IEEE80211_KEY_FLAG_PAIRWISE,
-				key, NULL);
-		__ieee80211_key_destroy(key, key->sdata->vif.type ==
+				key, शून्य);
+		__ieee80211_key_destroy(key, key->sdata->vअगर.type ==
 					NL80211_IFTYPE_STATION);
-	}
+	पूर्ण
 
 	mutex_unlock(&local->key_mtx);
-}
+पूर्ण
 
-void ieee80211_delayed_tailroom_dec(struct work_struct *wk)
-{
-	struct ieee80211_sub_if_data *sdata;
+व्योम ieee80211_delayed_tailroom_dec(काष्ठा work_काष्ठा *wk)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata;
 
-	sdata = container_of(wk, struct ieee80211_sub_if_data,
+	sdata = container_of(wk, काष्ठा ieee80211_sub_अगर_data,
 			     dec_tailroom_needed_wk.work);
 
 	/*
-	 * The reason for the delayed tailroom needed decrementing is to
+	 * The reason क्रम the delayed tailroom needed decrementing is to
 	 * make roaming faster: during roaming, all keys are first deleted
 	 * and then new keys are installed. The first new key causes the
 	 * crypto_tx_tailroom_needed_cnt to go from 0 to 1, which invokes
-	 * the cost of synchronize_net() (which can be slow). Avoid this
+	 * the cost of synchronize_net() (which can be slow). Aव्योम this
 	 * by deferring the crypto_tx_tailroom_needed_cnt decrementing on
-	 * key removal for a while, so if we roam the value is larger than
+	 * key removal क्रम a जबतक, so अगर we roam the value is larger than
 	 * zero and no 0->1 transition happens.
 	 *
-	 * The cost is that if the AP switching was from an AP with keys
-	 * to one without, we still allocate tailroom while it would no
-	 * longer be needed. However, in the typical (fast) roaming case
+	 * The cost is that अगर the AP चयनing was from an AP with keys
+	 * to one without, we still allocate tailroom जबतक it would no
+	 * दीर्घer be needed. However, in the typical (fast) roaming हाल
 	 * within an ESS this usually won't happen.
 	 */
 
@@ -1129,230 +1130,230 @@ void ieee80211_delayed_tailroom_dec(struct work_struct *wk)
 				     sdata->crypto_tx_tailroom_pending_dec);
 	sdata->crypto_tx_tailroom_pending_dec = 0;
 	mutex_unlock(&sdata->local->key_mtx);
-}
+पूर्ण
 
-void ieee80211_gtk_rekey_notify(struct ieee80211_vif *vif, const u8 *bssid,
-				const u8 *replay_ctr, gfp_t gfp)
-{
-	struct ieee80211_sub_if_data *sdata = vif_to_sdata(vif);
+व्योम ieee80211_gtk_rekey_notअगरy(काष्ठा ieee80211_vअगर *vअगर, स्थिर u8 *bssid,
+				स्थिर u8 *replay_ctr, gfp_t gfp)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = vअगर_to_sdata(vअगर);
 
-	trace_api_gtk_rekey_notify(sdata, bssid, replay_ctr);
+	trace_api_gtk_rekey_notअगरy(sdata, bssid, replay_ctr);
 
-	cfg80211_gtk_rekey_notify(sdata->dev, bssid, replay_ctr, gfp);
-}
-EXPORT_SYMBOL_GPL(ieee80211_gtk_rekey_notify);
+	cfg80211_gtk_rekey_notअगरy(sdata->dev, bssid, replay_ctr, gfp);
+पूर्ण
+EXPORT_SYMBOL_GPL(ieee80211_gtk_rekey_notअगरy);
 
-void ieee80211_get_key_rx_seq(struct ieee80211_key_conf *keyconf,
-			      int tid, struct ieee80211_key_seq *seq)
-{
-	struct ieee80211_key *key;
-	const u8 *pn;
+व्योम ieee80211_get_key_rx_seq(काष्ठा ieee80211_key_conf *keyconf,
+			      पूर्णांक tid, काष्ठा ieee80211_key_seq *seq)
+अणु
+	काष्ठा ieee80211_key *key;
+	स्थिर u8 *pn;
 
-	key = container_of(keyconf, struct ieee80211_key, conf);
+	key = container_of(keyconf, काष्ठा ieee80211_key, conf);
 
-	switch (key->conf.cipher) {
-	case WLAN_CIPHER_SUITE_TKIP:
-		if (WARN_ON(tid < 0 || tid >= IEEE80211_NUM_TIDS))
-			return;
+	चयन (key->conf.cipher) अणु
+	हाल WLAN_CIPHER_SUITE_TKIP:
+		अगर (WARN_ON(tid < 0 || tid >= IEEE80211_NUM_TIDS))
+			वापस;
 		seq->tkip.iv32 = key->u.tkip.rx[tid].iv32;
 		seq->tkip.iv16 = key->u.tkip.rx[tid].iv16;
-		break;
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_CCMP_256:
-		if (WARN_ON(tid < -1 || tid >= IEEE80211_NUM_TIDS))
-			return;
-		if (tid < 0)
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP:
+	हाल WLAN_CIPHER_SUITE_CCMP_256:
+		अगर (WARN_ON(tid < -1 || tid >= IEEE80211_NUM_TIDS))
+			वापस;
+		अगर (tid < 0)
 			pn = key->u.ccmp.rx_pn[IEEE80211_NUM_TIDS];
-		else
+		अन्यथा
 			pn = key->u.ccmp.rx_pn[tid];
-		memcpy(seq->ccmp.pn, pn, IEEE80211_CCMP_PN_LEN);
-		break;
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
-		if (WARN_ON(tid != 0))
-			return;
+		स_नकल(seq->ccmp.pn, pn, IEEE80211_CCMP_PN_LEN);
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+	हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
+		अगर (WARN_ON(tid != 0))
+			वापस;
 		pn = key->u.aes_cmac.rx_pn;
-		memcpy(seq->aes_cmac.pn, pn, IEEE80211_CMAC_PN_LEN);
-		break;
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-		if (WARN_ON(tid != 0))
-			return;
+		स_नकल(seq->aes_cmac.pn, pn, IEEE80211_CMAC_PN_LEN);
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
+		अगर (WARN_ON(tid != 0))
+			वापस;
 		pn = key->u.aes_gmac.rx_pn;
-		memcpy(seq->aes_gmac.pn, pn, IEEE80211_GMAC_PN_LEN);
-		break;
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
-		if (WARN_ON(tid < -1 || tid >= IEEE80211_NUM_TIDS))
-			return;
-		if (tid < 0)
+		स_नकल(seq->aes_gmac.pn, pn, IEEE80211_GMAC_PN_LEN);
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
+		अगर (WARN_ON(tid < -1 || tid >= IEEE80211_NUM_TIDS))
+			वापस;
+		अगर (tid < 0)
 			pn = key->u.gcmp.rx_pn[IEEE80211_NUM_TIDS];
-		else
+		अन्यथा
 			pn = key->u.gcmp.rx_pn[tid];
-		memcpy(seq->gcmp.pn, pn, IEEE80211_GCMP_PN_LEN);
-		break;
-	}
-}
+		स_नकल(seq->gcmp.pn, pn, IEEE80211_GCMP_PN_LEN);
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_key_rx_seq);
 
-void ieee80211_set_key_rx_seq(struct ieee80211_key_conf *keyconf,
-			      int tid, struct ieee80211_key_seq *seq)
-{
-	struct ieee80211_key *key;
+व्योम ieee80211_set_key_rx_seq(काष्ठा ieee80211_key_conf *keyconf,
+			      पूर्णांक tid, काष्ठा ieee80211_key_seq *seq)
+अणु
+	काष्ठा ieee80211_key *key;
 	u8 *pn;
 
-	key = container_of(keyconf, struct ieee80211_key, conf);
+	key = container_of(keyconf, काष्ठा ieee80211_key, conf);
 
-	switch (key->conf.cipher) {
-	case WLAN_CIPHER_SUITE_TKIP:
-		if (WARN_ON(tid < 0 || tid >= IEEE80211_NUM_TIDS))
-			return;
+	चयन (key->conf.cipher) अणु
+	हाल WLAN_CIPHER_SUITE_TKIP:
+		अगर (WARN_ON(tid < 0 || tid >= IEEE80211_NUM_TIDS))
+			वापस;
 		key->u.tkip.rx[tid].iv32 = seq->tkip.iv32;
 		key->u.tkip.rx[tid].iv16 = seq->tkip.iv16;
-		break;
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_CCMP_256:
-		if (WARN_ON(tid < -1 || tid >= IEEE80211_NUM_TIDS))
-			return;
-		if (tid < 0)
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP:
+	हाल WLAN_CIPHER_SUITE_CCMP_256:
+		अगर (WARN_ON(tid < -1 || tid >= IEEE80211_NUM_TIDS))
+			वापस;
+		अगर (tid < 0)
 			pn = key->u.ccmp.rx_pn[IEEE80211_NUM_TIDS];
-		else
+		अन्यथा
 			pn = key->u.ccmp.rx_pn[tid];
-		memcpy(pn, seq->ccmp.pn, IEEE80211_CCMP_PN_LEN);
-		break;
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
-		if (WARN_ON(tid != 0))
-			return;
+		स_नकल(pn, seq->ccmp.pn, IEEE80211_CCMP_PN_LEN);
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+	हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
+		अगर (WARN_ON(tid != 0))
+			वापस;
 		pn = key->u.aes_cmac.rx_pn;
-		memcpy(pn, seq->aes_cmac.pn, IEEE80211_CMAC_PN_LEN);
-		break;
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-		if (WARN_ON(tid != 0))
-			return;
+		स_नकल(pn, seq->aes_cmac.pn, IEEE80211_CMAC_PN_LEN);
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
+		अगर (WARN_ON(tid != 0))
+			वापस;
 		pn = key->u.aes_gmac.rx_pn;
-		memcpy(pn, seq->aes_gmac.pn, IEEE80211_GMAC_PN_LEN);
-		break;
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
-		if (WARN_ON(tid < -1 || tid >= IEEE80211_NUM_TIDS))
-			return;
-		if (tid < 0)
+		स_नकल(pn, seq->aes_gmac.pn, IEEE80211_GMAC_PN_LEN);
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
+		अगर (WARN_ON(tid < -1 || tid >= IEEE80211_NUM_TIDS))
+			वापस;
+		अगर (tid < 0)
 			pn = key->u.gcmp.rx_pn[IEEE80211_NUM_TIDS];
-		else
+		अन्यथा
 			pn = key->u.gcmp.rx_pn[tid];
-		memcpy(pn, seq->gcmp.pn, IEEE80211_GCMP_PN_LEN);
-		break;
-	default:
+		स_नकल(pn, seq->gcmp.pn, IEEE80211_GCMP_PN_LEN);
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(ieee80211_set_key_rx_seq);
 
-void ieee80211_remove_key(struct ieee80211_key_conf *keyconf)
-{
-	struct ieee80211_key *key;
+व्योम ieee80211_हटाओ_key(काष्ठा ieee80211_key_conf *keyconf)
+अणु
+	काष्ठा ieee80211_key *key;
 
-	key = container_of(keyconf, struct ieee80211_key, conf);
+	key = container_of(keyconf, काष्ठा ieee80211_key, conf);
 
-	assert_key_lock(key->local);
+	निश्चित_key_lock(key->local);
 
 	/*
-	 * if key was uploaded, we assume the driver will/has remove(d)
+	 * अगर key was uploaded, we assume the driver will/has हटाओ(d)
 	 * it, so adjust bookkeeping accordingly
 	 */
-	if (key->flags & KEY_FLAG_UPLOADED_TO_HARDWARE) {
+	अगर (key->flags & KEY_FLAG_UPLOADED_TO_HARDWARE) अणु
 		key->flags &= ~KEY_FLAG_UPLOADED_TO_HARDWARE;
 
-		if (!(key->conf.flags & (IEEE80211_KEY_FLAG_GENERATE_MMIC |
+		अगर (!(key->conf.flags & (IEEE80211_KEY_FLAG_GENERATE_MMIC |
 					 IEEE80211_KEY_FLAG_PUT_MIC_SPACE |
 					 IEEE80211_KEY_FLAG_RESERVE_TAILROOM)))
 			increment_tailroom_need_count(key->sdata);
-	}
+	पूर्ण
 
-	ieee80211_key_free(key, false);
-}
-EXPORT_SYMBOL_GPL(ieee80211_remove_key);
+	ieee80211_key_मुक्त(key, false);
+पूर्ण
+EXPORT_SYMBOL_GPL(ieee80211_हटाओ_key);
 
-struct ieee80211_key_conf *
-ieee80211_gtk_rekey_add(struct ieee80211_vif *vif,
-			struct ieee80211_key_conf *keyconf)
-{
-	struct ieee80211_sub_if_data *sdata = vif_to_sdata(vif);
-	struct ieee80211_local *local = sdata->local;
-	struct ieee80211_key *key;
-	int err;
+काष्ठा ieee80211_key_conf *
+ieee80211_gtk_rekey_add(काष्ठा ieee80211_vअगर *vअगर,
+			काष्ठा ieee80211_key_conf *keyconf)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = vअगर_to_sdata(vअगर);
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा ieee80211_key *key;
+	पूर्णांक err;
 
-	if (WARN_ON(!local->wowlan))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON(!local->wowlan))
+		वापस ERR_PTR(-EINVAL);
 
-	if (WARN_ON(vif->type != NL80211_IFTYPE_STATION))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON(vअगर->type != NL80211_IFTYPE_STATION))
+		वापस ERR_PTR(-EINVAL);
 
 	key = ieee80211_key_alloc(keyconf->cipher, keyconf->keyidx,
 				  keyconf->keylen, keyconf->key,
-				  0, NULL, NULL);
-	if (IS_ERR(key))
-		return ERR_CAST(key);
+				  0, शून्य, शून्य);
+	अगर (IS_ERR(key))
+		वापस ERR_CAST(key);
 
-	if (sdata->u.mgd.mfp != IEEE80211_MFP_DISABLED)
+	अगर (sdata->u.mgd.mfp != IEEE80211_MFP_DISABLED)
 		key->conf.flags |= IEEE80211_KEY_FLAG_RX_MGMT;
 
-	err = ieee80211_key_link(key, sdata, NULL);
-	if (err)
-		return ERR_PTR(err);
+	err = ieee80211_key_link(key, sdata, शून्य);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	return &key->conf;
-}
+	वापस &key->conf;
+पूर्ण
 EXPORT_SYMBOL_GPL(ieee80211_gtk_rekey_add);
 
-void ieee80211_key_mic_failure(struct ieee80211_key_conf *keyconf)
-{
-	struct ieee80211_key *key;
+व्योम ieee80211_key_mic_failure(काष्ठा ieee80211_key_conf *keyconf)
+अणु
+	काष्ठा ieee80211_key *key;
 
-	key = container_of(keyconf, struct ieee80211_key, conf);
+	key = container_of(keyconf, काष्ठा ieee80211_key, conf);
 
-	switch (key->conf.cipher) {
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
+	चयन (key->conf.cipher) अणु
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+	हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
 		key->u.aes_cmac.icverrors++;
-		break;
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
 		key->u.aes_gmac.icverrors++;
-		break;
-	default:
-		/* ignore the others for now, we don't keep counters now */
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		/* ignore the others क्रम now, we करोn't keep counters now */
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(ieee80211_key_mic_failure);
 
-void ieee80211_key_replay(struct ieee80211_key_conf *keyconf)
-{
-	struct ieee80211_key *key;
+व्योम ieee80211_key_replay(काष्ठा ieee80211_key_conf *keyconf)
+अणु
+	काष्ठा ieee80211_key *key;
 
-	key = container_of(keyconf, struct ieee80211_key, conf);
+	key = container_of(keyconf, काष्ठा ieee80211_key, conf);
 
-	switch (key->conf.cipher) {
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_CCMP_256:
+	चयन (key->conf.cipher) अणु
+	हाल WLAN_CIPHER_SUITE_CCMP:
+	हाल WLAN_CIPHER_SUITE_CCMP_256:
 		key->u.ccmp.replays++;
-		break;
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+	हाल WLAN_CIPHER_SUITE_BIP_CMAC_256:
 		key->u.aes_cmac.replays++;
-		break;
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_128:
+	हाल WLAN_CIPHER_SUITE_BIP_GMAC_256:
 		key->u.aes_gmac.replays++;
-		break;
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_GCMP:
+	हाल WLAN_CIPHER_SUITE_GCMP_256:
 		key->u.gcmp.replays++;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(ieee80211_key_replay);

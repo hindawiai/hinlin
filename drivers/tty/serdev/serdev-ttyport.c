@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2016-2017 Linaro Ltd., Rob Herring <robh@kernel.org>
  */
-#include <linux/kernel.h>
-#include <linux/serdev.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/poll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/serdev.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/poll.h>
 
-#define SERPORT_ACTIVE		1
+#घोषणा SERPORT_ACTIVE		1
 
-struct serport {
-	struct tty_port *port;
-	struct tty_struct *tty;
-	struct tty_driver *tty_drv;
-	int tty_idx;
-	unsigned long flags;
-};
+काष्ठा serport अणु
+	काष्ठा tty_port *port;
+	काष्ठा tty_काष्ठा *tty;
+	काष्ठा tty_driver *tty_drv;
+	पूर्णांक tty_idx;
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
 /*
  * Callback functions from the tty port.
  */
 
-static int ttyport_receive_buf(struct tty_port *port, const unsigned char *cp,
-				const unsigned char *fp, size_t count)
-{
-	struct serdev_controller *ctrl = port->client_data;
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	int ret;
+अटल पूर्णांक ttyport_receive_buf(काष्ठा tty_port *port, स्थिर अचिन्हित अक्षर *cp,
+				स्थिर अचिन्हित अक्षर *fp, माप_प्रकार count)
+अणु
+	काष्ठा serdev_controller *ctrl = port->client_data;
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	पूर्णांक ret;
 
-	if (!test_bit(SERPORT_ACTIVE, &serport->flags))
-		return 0;
+	अगर (!test_bit(SERPORT_ACTIVE, &serport->flags))
+		वापस 0;
 
 	ret = serdev_controller_receive_buf(ctrl, cp, count);
 
 	dev_WARN_ONCE(&ctrl->dev, ret < 0 || ret > count,
 				"receive_buf returns %d (count = %zu)\n",
 				ret, count);
-	if (ret < 0)
-		return 0;
-	else if (ret > count)
-		return count;
+	अगर (ret < 0)
+		वापस 0;
+	अन्यथा अगर (ret > count)
+		वापस count;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ttyport_write_wakeup(struct tty_port *port)
-{
-	struct serdev_controller *ctrl = port->client_data;
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty;
+अटल व्योम ttyport_ग_लिखो_wakeup(काष्ठा tty_port *port)
+अणु
+	काष्ठा serdev_controller *ctrl = port->client_data;
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty;
 
 	tty = tty_port_tty_get(port);
-	if (!tty)
-		return;
+	अगर (!tty)
+		वापस;
 
-	if (test_and_clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags) &&
+	अगर (test_and_clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags) &&
 	    test_bit(SERPORT_ACTIVE, &serport->flags))
-		serdev_controller_write_wakeup(ctrl);
+		serdev_controller_ग_लिखो_wakeup(ctrl);
 
-	/* Wake up any tty_wait_until_sent() */
-	wake_up_interruptible(&tty->write_wait);
+	/* Wake up any tty_रुको_until_sent() */
+	wake_up_पूर्णांकerruptible(&tty->ग_लिखो_रुको);
 
 	tty_kref_put(tty);
-}
+पूर्ण
 
-static const struct tty_port_client_operations client_ops = {
+अटल स्थिर काष्ठा tty_port_client_operations client_ops = अणु
 	.receive_buf = ttyport_receive_buf,
-	.write_wakeup = ttyport_write_wakeup,
-};
+	.ग_लिखो_wakeup = ttyport_ग_लिखो_wakeup,
+पूर्ण;
 
 /*
  * Callback functions from the serdev core.
  */
 
-static int ttyport_write_buf(struct serdev_controller *ctrl, const unsigned char *data, size_t len)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty = serport->tty;
+अटल पूर्णांक ttyport_ग_लिखो_buf(काष्ठा serdev_controller *ctrl, स्थिर अचिन्हित अक्षर *data, माप_प्रकार len)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty = serport->tty;
 
-	if (!test_bit(SERPORT_ACTIVE, &serport->flags))
-		return 0;
+	अगर (!test_bit(SERPORT_ACTIVE, &serport->flags))
+		वापस 0;
 
 	set_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
-	return tty->ops->write(serport->tty, data, len);
-}
+	वापस tty->ops->ग_लिखो(serport->tty, data, len);
+पूर्ण
 
-static void ttyport_write_flush(struct serdev_controller *ctrl)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty = serport->tty;
+अटल व्योम ttyport_ग_लिखो_flush(काष्ठा serdev_controller *ctrl)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty = serport->tty;
 
 	tty_driver_flush_buffer(tty);
-}
+पूर्ण
 
-static int ttyport_write_room(struct serdev_controller *ctrl)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty = serport->tty;
+अटल पूर्णांक ttyport_ग_लिखो_room(काष्ठा serdev_controller *ctrl)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty = serport->tty;
 
-	return tty_write_room(tty);
-}
+	वापस tty_ग_लिखो_room(tty);
+पूर्ण
 
-static int ttyport_open(struct serdev_controller *ctrl)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty;
-	struct ktermios ktermios;
-	int ret;
+अटल पूर्णांक ttyport_खोलो(काष्ठा serdev_controller *ctrl)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty;
+	काष्ठा ktermios ktermios;
+	पूर्णांक ret;
 
 	tty = tty_init_dev(serport->tty_drv, serport->tty_idx);
-	if (IS_ERR(tty))
-		return PTR_ERR(tty);
+	अगर (IS_ERR(tty))
+		वापस PTR_ERR(tty);
 	serport->tty = tty;
 
-	if (!tty->ops->open || !tty->ops->close) {
+	अगर (!tty->ops->खोलो || !tty->ops->बंद) अणु
 		ret = -ENODEV;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
-	ret = tty->ops->open(serport->tty, NULL);
-	if (ret)
-		goto err_close;
+	ret = tty->ops->खोलो(serport->tty, शून्य);
+	अगर (ret)
+		जाओ err_बंद;
 
 	tty_unlock(serport->tty);
 
-	/* Bring the UART into a known 8 bits no parity hw fc state */
+	/* Bring the UART पूर्णांकo a known 8 bits no parity hw fc state */
 	ktermios = tty->termios;
-	ktermios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP |
+	ktermios.c_अगरlag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP |
 			      INLCR | IGNCR | ICRNL | IXON);
 	ktermios.c_oflag &= ~OPOST;
 	ktermios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
@@ -140,141 +141,141 @@ static int ttyport_open(struct serdev_controller *ctrl)
 
 	set_bit(SERPORT_ACTIVE, &serport->flags);
 
-	return 0;
+	वापस 0;
 
-err_close:
-	tty->ops->close(tty, NULL);
+err_बंद:
+	tty->ops->बंद(tty, शून्य);
 err_unlock:
 	tty_unlock(tty);
-	tty_release_struct(tty, serport->tty_idx);
+	tty_release_काष्ठा(tty, serport->tty_idx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ttyport_close(struct serdev_controller *ctrl)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty = serport->tty;
+अटल व्योम ttyport_बंद(काष्ठा serdev_controller *ctrl)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty = serport->tty;
 
 	clear_bit(SERPORT_ACTIVE, &serport->flags);
 
 	tty_lock(tty);
-	if (tty->ops->close)
-		tty->ops->close(tty, NULL);
+	अगर (tty->ops->बंद)
+		tty->ops->बंद(tty, शून्य);
 	tty_unlock(tty);
 
-	tty_release_struct(tty, serport->tty_idx);
-}
+	tty_release_काष्ठा(tty, serport->tty_idx);
+पूर्ण
 
-static unsigned int ttyport_set_baudrate(struct serdev_controller *ctrl, unsigned int speed)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty = serport->tty;
-	struct ktermios ktermios = tty->termios;
+अटल अचिन्हित पूर्णांक ttyport_set_baudrate(काष्ठा serdev_controller *ctrl, अचिन्हित पूर्णांक speed)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty = serport->tty;
+	काष्ठा ktermios ktermios = tty->termios;
 
 	ktermios.c_cflag &= ~CBAUD;
 	tty_termios_encode_baud_rate(&ktermios, speed, speed);
 
-	/* tty_set_termios() return not checked as it is always 0 */
+	/* tty_set_termios() वापस not checked as it is always 0 */
 	tty_set_termios(tty, &ktermios);
-	return ktermios.c_ospeed;
-}
+	वापस ktermios.c_ospeed;
+पूर्ण
 
-static void ttyport_set_flow_control(struct serdev_controller *ctrl, bool enable)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty = serport->tty;
-	struct ktermios ktermios = tty->termios;
+अटल व्योम ttyport_set_flow_control(काष्ठा serdev_controller *ctrl, bool enable)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty = serport->tty;
+	काष्ठा ktermios ktermios = tty->termios;
 
-	if (enable)
+	अगर (enable)
 		ktermios.c_cflag |= CRTSCTS;
-	else
+	अन्यथा
 		ktermios.c_cflag &= ~CRTSCTS;
 
 	tty_set_termios(tty, &ktermios);
-}
+पूर्ण
 
-static int ttyport_set_parity(struct serdev_controller *ctrl,
-			      enum serdev_parity parity)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty = serport->tty;
-	struct ktermios ktermios = tty->termios;
+अटल पूर्णांक ttyport_set_parity(काष्ठा serdev_controller *ctrl,
+			      क्रमागत serdev_parity parity)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty = serport->tty;
+	काष्ठा ktermios ktermios = tty->termios;
 
 	ktermios.c_cflag &= ~(PARENB | PARODD | CMSPAR);
-	if (parity != SERDEV_PARITY_NONE) {
+	अगर (parity != SERDEV_PARITY_NONE) अणु
 		ktermios.c_cflag |= PARENB;
-		if (parity == SERDEV_PARITY_ODD)
+		अगर (parity == SERDEV_PARITY_ODD)
 			ktermios.c_cflag |= PARODD;
-	}
+	पूर्ण
 
 	tty_set_termios(tty, &ktermios);
 
-	if ((tty->termios.c_cflag & (PARENB | PARODD | CMSPAR)) !=
+	अगर ((tty->termios.c_cflag & (PARENB | PARODD | CMSPAR)) !=
 	    (ktermios.c_cflag & (PARENB | PARODD | CMSPAR)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ttyport_wait_until_sent(struct serdev_controller *ctrl, long timeout)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty = serport->tty;
+अटल व्योम ttyport_रुको_until_sent(काष्ठा serdev_controller *ctrl, दीर्घ समयout)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty = serport->tty;
 
-	tty_wait_until_sent(tty, timeout);
-}
+	tty_रुको_until_sent(tty, समयout);
+पूर्ण
 
-static int ttyport_get_tiocm(struct serdev_controller *ctrl)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty = serport->tty;
+अटल पूर्णांक ttyport_get_tiocm(काष्ठा serdev_controller *ctrl)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty = serport->tty;
 
-	if (!tty->ops->tiocmget)
-		return -ENOTSUPP;
+	अगर (!tty->ops->tiocmget)
+		वापस -ENOTSUPP;
 
-	return tty->ops->tiocmget(tty);
-}
+	वापस tty->ops->tiocmget(tty);
+पूर्ण
 
-static int ttyport_set_tiocm(struct serdev_controller *ctrl, unsigned int set, unsigned int clear)
-{
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
-	struct tty_struct *tty = serport->tty;
+अटल पूर्णांक ttyport_set_tiocm(काष्ठा serdev_controller *ctrl, अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
+	काष्ठा tty_काष्ठा *tty = serport->tty;
 
-	if (!tty->ops->tiocmset)
-		return -ENOTSUPP;
+	अगर (!tty->ops->tiocmset)
+		वापस -ENOTSUPP;
 
-	return tty->ops->tiocmset(tty, set, clear);
-}
+	वापस tty->ops->tiocmset(tty, set, clear);
+पूर्ण
 
-static const struct serdev_controller_ops ctrl_ops = {
-	.write_buf = ttyport_write_buf,
-	.write_flush = ttyport_write_flush,
-	.write_room = ttyport_write_room,
-	.open = ttyport_open,
-	.close = ttyport_close,
+अटल स्थिर काष्ठा serdev_controller_ops ctrl_ops = अणु
+	.ग_लिखो_buf = ttyport_ग_लिखो_buf,
+	.ग_लिखो_flush = ttyport_ग_लिखो_flush,
+	.ग_लिखो_room = ttyport_ग_लिखो_room,
+	.खोलो = ttyport_खोलो,
+	.बंद = ttyport_बंद,
 	.set_flow_control = ttyport_set_flow_control,
 	.set_parity = ttyport_set_parity,
 	.set_baudrate = ttyport_set_baudrate,
-	.wait_until_sent = ttyport_wait_until_sent,
+	.रुको_until_sent = ttyport_रुको_until_sent,
 	.get_tiocm = ttyport_get_tiocm,
 	.set_tiocm = ttyport_set_tiocm,
-};
+पूर्ण;
 
-struct device *serdev_tty_port_register(struct tty_port *port,
-					struct device *parent,
-					struct tty_driver *drv, int idx)
-{
-	struct serdev_controller *ctrl;
-	struct serport *serport;
-	int ret;
+काष्ठा device *serdev_tty_port_रेजिस्टर(काष्ठा tty_port *port,
+					काष्ठा device *parent,
+					काष्ठा tty_driver *drv, पूर्णांक idx)
+अणु
+	काष्ठा serdev_controller *ctrl;
+	काष्ठा serport *serport;
+	पूर्णांक ret;
 
-	if (!port || !drv || !parent)
-		return ERR_PTR(-ENODEV);
+	अगर (!port || !drv || !parent)
+		वापस ERR_PTR(-ENODEV);
 
-	ctrl = serdev_controller_alloc(parent, sizeof(struct serport));
-	if (!ctrl)
-		return ERR_PTR(-ENOMEM);
+	ctrl = serdev_controller_alloc(parent, माप(काष्ठा serport));
+	अगर (!ctrl)
+		वापस ERR_PTR(-ENOMEM);
 	serport = serdev_controller_get_drvdata(ctrl);
 
 	serport->port = port;
@@ -287,32 +288,32 @@ struct device *serdev_tty_port_register(struct tty_port *port,
 	port->client_data = ctrl;
 
 	ret = serdev_controller_add(ctrl);
-	if (ret)
-		goto err_reset_data;
+	अगर (ret)
+		जाओ err_reset_data;
 
 	dev_info(&ctrl->dev, "tty port %s%d registered\n", drv->name, idx);
-	return &ctrl->dev;
+	वापस &ctrl->dev;
 
 err_reset_data:
-	port->client_data = NULL;
-	port->client_ops = &tty_port_default_client_ops;
+	port->client_data = शून्य;
+	port->client_ops = &tty_port_शेष_client_ops;
 	serdev_controller_put(ctrl);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-int serdev_tty_port_unregister(struct tty_port *port)
-{
-	struct serdev_controller *ctrl = port->client_data;
-	struct serport *serport = serdev_controller_get_drvdata(ctrl);
+पूर्णांक serdev_tty_port_unरेजिस्टर(काष्ठा tty_port *port)
+अणु
+	काष्ठा serdev_controller *ctrl = port->client_data;
+	काष्ठा serport *serport = serdev_controller_get_drvdata(ctrl);
 
-	if (!serport)
-		return -ENODEV;
+	अगर (!serport)
+		वापस -ENODEV;
 
-	serdev_controller_remove(ctrl);
-	port->client_data = NULL;
-	port->client_ops = &tty_port_default_client_ops;
+	serdev_controller_हटाओ(ctrl);
+	port->client_data = शून्य;
+	port->client_ops = &tty_port_शेष_client_ops;
 	serdev_controller_put(ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

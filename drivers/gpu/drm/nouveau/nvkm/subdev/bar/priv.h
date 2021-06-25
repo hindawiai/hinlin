@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_BAR_PRIV_H__
-#define __NVKM_BAR_PRIV_H__
-#define nvkm_bar(p) container_of((p), struct nvkm_bar, subdev)
-#include <subdev/bar.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_BAR_PRIV_H__
+#घोषणा __NVKM_BAR_PRIV_H__
+#घोषणा nvkm_bar(p) container_of((p), काष्ठा nvkm_bar, subdev)
+#समावेश <subdev/bar.h>
 
-void nvkm_bar_ctor(const struct nvkm_bar_func *, struct nvkm_device *,
-		   enum nvkm_subdev_type, int, struct nvkm_bar *);
+व्योम nvkm_bar_ctor(स्थिर काष्ठा nvkm_bar_func *, काष्ठा nvkm_device *,
+		   क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_bar *);
 
-struct nvkm_bar_func {
-	void *(*dtor)(struct nvkm_bar *);
-	int (*oneinit)(struct nvkm_bar *);
-	void (*init)(struct nvkm_bar *);
+काष्ठा nvkm_bar_func अणु
+	व्योम *(*dtor)(काष्ठा nvkm_bar *);
+	पूर्णांक (*oneinit)(काष्ठा nvkm_bar *);
+	व्योम (*init)(काष्ठा nvkm_bar *);
 
-	struct {
-		void (*init)(struct nvkm_bar *);
-		void (*fini)(struct nvkm_bar *);
-		void (*wait)(struct nvkm_bar *);
-		struct nvkm_vmm *(*vmm)(struct nvkm_bar *);
-	} bar1, bar2;
+	काष्ठा अणु
+		व्योम (*init)(काष्ठा nvkm_bar *);
+		व्योम (*fini)(काष्ठा nvkm_bar *);
+		व्योम (*रुको)(काष्ठा nvkm_bar *);
+		काष्ठा nvkm_vmm *(*vmm)(काष्ठा nvkm_bar *);
+	पूर्ण bar1, bar2;
 
-	void (*flush)(struct nvkm_bar *);
-};
+	व्योम (*flush)(काष्ठा nvkm_bar *);
+पूर्ण;
 
-void nv50_bar_bar1_fini(struct nvkm_bar *);
-void nv50_bar_bar2_fini(struct nvkm_bar *);
+व्योम nv50_bar_bar1_fini(काष्ठा nvkm_bar *);
+व्योम nv50_bar_bar2_fini(काष्ठा nvkm_bar *);
 
-void g84_bar_flush(struct nvkm_bar *);
+व्योम g84_bar_flush(काष्ठा nvkm_bar *);
 
-void gf100_bar_bar1_fini(struct nvkm_bar *);
-void gf100_bar_bar2_fini(struct nvkm_bar *);
+व्योम gf100_bar_bar1_fini(काष्ठा nvkm_bar *);
+व्योम gf100_bar_bar2_fini(काष्ठा nvkm_bar *);
 
-void gm107_bar_bar1_wait(struct nvkm_bar *);
-#endif
+व्योम gm107_bar_bar1_रुको(काष्ठा nvkm_bar *);
+#पूर्ण_अगर

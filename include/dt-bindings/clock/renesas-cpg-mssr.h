@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+
  *
  * Copyright (C) 2015 Renesas Electronics Corp.
  */
-#ifndef __DT_BINDINGS_CLOCK_RENESAS_CPG_MSSR_H__
-#define __DT_BINDINGS_CLOCK_RENESAS_CPG_MSSR_H__
+#अगर_अघोषित __DT_BINDINGS_CLOCK_RENESAS_CPG_MSSR_H__
+#घोषणा __DT_BINDINGS_CLOCK_RENESAS_CPG_MSSR_H__
 
-#define CPG_CORE			0	/* Core Clock */
-#define CPG_MOD				1	/* Module Clock */
+#घोषणा CPG_CORE			0	/* Core Clock */
+#घोषणा CPG_MOD				1	/* Module Clock */
 
-#endif /* __DT_BINDINGS_CLOCK_RENESAS_CPG_MSSR_H__ */
+#पूर्ण_अगर /* __DT_BINDINGS_CLOCK_RENESAS_CPG_MSSR_H__ */

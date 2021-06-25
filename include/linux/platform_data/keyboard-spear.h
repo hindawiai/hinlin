@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2010 ST Microelectronics
  * Rajeev Kumar <rajeevkumar.linux@gmail.com>
@@ -7,16 +8,16 @@
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef __PLAT_KEYBOARD_H
-#define __PLAT_KEYBOARD_H
+#अगर_अघोषित __PLAT_KEYBOARD_H
+#घोषणा __PLAT_KEYBOARD_H
 
-#include <linux/bitops.h>
-#include <linux/input.h>
-#include <linux/input/matrix_keypad.h>
-#include <linux/types.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/matrix_keypad.h>
+#समावेश <linux/types.h>
 
-#define DECLARE_9x9_KEYMAP(_name) \
-int _name[] = { \
+#घोषणा DECLARE_9x9_KEYMAP(_name) \
+पूर्णांक _name[] = अणु \
 	KEY(0, 0, KEY_ESC), \
 	KEY(0, 1, KEY_1), \
 	KEY(0, 2, KEY_2), \
@@ -98,10 +99,10 @@ int _name[] = { \
 	KEY(8, 6, KEY_KP2), \
 	KEY(8, 7, KEY_KP3), \
 	KEY(8, 8, KEY_KP0), \
-}
+पूर्ण
 
-#define DECLARE_6x6_KEYMAP(_name) \
-int _name[] = { \
+#घोषणा DECLARE_6x6_KEYMAP(_name) \
+पूर्णांक _name[] = अणु \
 	KEY(0, 0, KEY_RESERVED), \
 	KEY(0, 1, KEY_1), \
 	KEY(0, 2, KEY_2), \
@@ -138,27 +139,27 @@ int _name[] = { \
 	KEY(5, 3, KEY_KPDOT), \
 	KEY(5, 4, KEY_RO), \
 	KEY(5, 5, KEY_ZENKAKUHANKAKU), \
-}
+पूर्ण
 
-#define KEYPAD_9x9     0
-#define KEYPAD_6x6     1
-#define KEYPAD_2x2     2
+#घोषणा KEYPAD_9x9     0
+#घोषणा KEYPAD_6x6     1
+#घोषणा KEYPAD_2x2     2
 
 /**
- * struct kbd_platform_data - spear keyboard platform data
- * keymap: pointer to keymap data (table and size)
- * rep: enables key autorepeat
+ * काष्ठा kbd_platक्रमm_data - spear keyboard platक्रमm data
+ * keymap: poपूर्णांकer to keymap data (table and size)
+ * rep: enables key स्वतःrepeat
  * mode: choose keyboard support(9x9, 6x6, 2x2)
  * suspended_rate: rate at which keyboard would operate in suspended mode
  *
- * This structure is supposed to be used by platform code to supply
+ * This काष्ठाure is supposed to be used by platक्रमm code to supply
  * keymaps to drivers that implement keyboards.
  */
-struct kbd_platform_data {
-	const struct matrix_keymap_data *keymap;
+काष्ठा kbd_platक्रमm_data अणु
+	स्थिर काष्ठा matrix_keymap_data *keymap;
 	bool rep;
-	unsigned int mode;
-	unsigned int suspended_rate;
-};
+	अचिन्हित पूर्णांक mode;
+	अचिन्हित पूर्णांक suspended_rate;
+पूर्ण;
 
-#endif /* __PLAT_KEYBOARD_H */
+#पूर्ण_अगर /* __PLAT_KEYBOARD_H */

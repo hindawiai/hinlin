@@ -1,76 +1,77 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file "COPYING" in the main directory of this
- * archive for more details.
+ * Public License.  See the file "COPYING" in the मुख्य directory of this
+ * archive क्रम more details.
  *
  * Copyright (C) 2000 - 2001 by Kanoj Sarcar (kanoj@sgi.com)
  * Copyright (C) 2000 - 2001 by Silicon Graphics, Inc.
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/smp.h>
-#include <linux/mm.h>
-#include <linux/export.h>
-#include <linux/cpumask.h>
-#include <asm/bootinfo.h>
-#include <asm/cpu.h>
-#include <asm/io.h>
-#include <asm/sgialib.h>
-#include <asm/time.h>
-#include <asm/sn/agent.h>
-#include <asm/sn/types.h>
-#include <asm/sn/klconfig.h>
-#include <asm/sn/ioc3.h>
-#include <asm/mipsregs.h>
-#include <asm/sn/gda.h>
-#include <asm/sn/intr.h>
-#include <asm/current.h>
-#include <asm/processor.h>
-#include <asm/mmu_context.h>
-#include <asm/thread_info.h>
-#include <asm/sn/launch.h>
-#include <asm/sn/mapped_kernel.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/export.h>
+#समावेश <linux/cpumask.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/sgialib.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/sn/agent.h>
+#समावेश <यंत्र/sn/types.h>
+#समावेश <यंत्र/sn/klconfig.h>
+#समावेश <यंत्र/sn/ioc3.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/sn/gda.h>
+#समावेश <यंत्र/sn/पूर्णांकr.h>
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/thपढ़ो_info.h>
+#समावेश <यंत्र/sn/launch.h>
+#समावेश <यंत्र/sn/mapped_kernel.h>
 
-#include "ip27-common.h"
+#समावेश "ip27-common.h"
 
-#define CPU_NONE		(cpuid_t)-1
+#घोषणा CPU_NONE		(cpuid_t)-1
 
-static DECLARE_BITMAP(hub_init_mask, MAX_NUMNODES);
+अटल DECLARE_BITMAP(hub_init_mask, MAX_NUMNODES);
 nasid_t master_nasid = INVALID_NASID;
 
-struct cpuinfo_ip27 sn_cpu_info[NR_CPUS];
+काष्ठा cpuinfo_ip27 sn_cpu_info[NR_CPUS];
 EXPORT_SYMBOL_GPL(sn_cpu_info);
 
-static void per_hub_init(nasid_t nasid)
-{
-	struct hub_data *hub = hub_data(nasid);
+अटल व्योम per_hub_init(nasid_t nasid)
+अणु
+	काष्ठा hub_data *hub = hub_data(nasid);
 
 	cpumask_set_cpu(smp_processor_id(), &hub->h_cpus);
 
-	if (test_and_set_bit(nasid, hub_init_mask))
-		return;
+	अगर (test_and_set_bit(nasid, hub_init_mask))
+		वापस;
 	/*
-	 * Set CRB timeout at 5ms, (< PI timeout of 10ms)
+	 * Set CRB समयout at 5ms, (< PI समयout of 10ms)
 	 */
 	REMOTE_HUB_S(nasid, IIO_ICTP, 0x800);
 	REMOTE_HUB_S(nasid, IIO_ICTO, 0xff);
 
 	hub_rtc_init(nasid);
 
-	if (nasid) {
+	अगर (nasid) अणु
 		/* copy exception handlers from first node to current node */
-		memcpy((void *)NODE_OFFSET_TO_K0(nasid, 0),
-		       (void *)CKSEG0, 0x200);
+		स_नकल((व्योम *)NODE_OFFSET_TO_K0(nasid, 0),
+		       (व्योम *)CKSEG0, 0x200);
 		__flush_cache_all();
-		/* switch to node local exception handlers */
+		/* चयन to node local exception handlers */
 		REMOTE_HUB_S(nasid, PI_CALIAS_SIZE, PI_CALIAS_SIZE_8K);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void per_cpu_init(void)
-{
-	int cpu = smp_processor_id();
+व्योम per_cpu_init(व्योम)
+अणु
+	पूर्णांक cpu = smp_processor_id();
 	nasid_t nasid = get_nasid();
 
 	clear_c0_status(ST0_IM);
@@ -81,37 +82,37 @@ void per_cpu_init(void)
 
 	install_ipi();
 
-	/* Install our NMI handler if symmon hasn't installed one. */
+	/* Install our NMI handler अगर symmon hasn't installed one. */
 	install_cpu_nmi_handler(cputoslice(cpu));
 
 	enable_percpu_irq(IP27_HUB_PEND0_IRQ, IRQ_TYPE_NONE);
 	enable_percpu_irq(IP27_HUB_PEND1_IRQ, IRQ_TYPE_NONE);
-}
+पूर्ण
 
-void __init plat_mem_setup(void)
-{
+व्योम __init plat_mem_setup(व्योम)
+अणु
 	u64 p, e, n_mode;
 	nasid_t nid;
 
-	register_smp_ops(&ip27_smp_ops);
+	रेजिस्टर_smp_ops(&ip27_smp_ops);
 
 	ip27_reboot_setup();
 
 	/*
-	 * hub_rtc init and cpu clock intr enabled for later calibrate_delay.
+	 * hub_rtc init and cpu घड़ी पूर्णांकr enabled क्रम later calibrate_delay.
 	 */
 	nid = get_nasid();
-	printk("IP27: Running on node %d.\n", nid);
+	prपूर्णांकk("IP27: Running on node %d.\n", nid);
 
 	p = LOCAL_HUB_L(PI_CPU_PRESENT_A) & 1;
 	e = LOCAL_HUB_L(PI_CPU_ENABLE_A) & 1;
-	printk("Node %d has %s primary CPU%s.\n", nid,
+	prपूर्णांकk("Node %d has %s primary CPU%s.\n", nid,
 	       p ? "a" : "no",
 	       e ? ", CPU is running" : "");
 
 	p = LOCAL_HUB_L(PI_CPU_PRESENT_B) & 1;
 	e = LOCAL_HUB_L(PI_CPU_ENABLE_B) & 1;
-	printk("Node %d has %s secondary CPU%s.\n", nid,
+	prपूर्णांकk("Node %d has %s secondary CPU%s.\n", nid,
 	       p ? "a" : "no",
 	       e ? ", CPU is running" : "");
 
@@ -120,28 +121,28 @@ void __init plat_mem_setup(void)
 	 * indication what option to select.
 	 */
 	n_mode = LOCAL_HUB_L(NI_STATUS_REV_ID) & NSRI_MORENODES_MASK;
-	printk("Machine is in %c mode.\n", n_mode ? 'N' : 'M');
-#ifdef CONFIG_SGI_SN_N_MODE
-	if (!n_mode)
+	prपूर्णांकk("Machine is in %c mode.\n", n_mode ? 'N' : 'M');
+#अगर_घोषित CONFIG_SGI_SN_N_MODE
+	अगर (!n_mode)
 		panic("Kernel compiled for M mode.");
-#else
-	if (n_mode)
+#अन्यथा
+	अगर (n_mode)
 		panic("Kernel compiled for N mode.");
-#endif
+#पूर्ण_अगर
 
 	ioport_resource.start = 0;
 	ioport_resource.end = ~0UL;
 	set_io_port_base(IO_BASE);
-}
+पूर्ण
 
-const char *get_system_type(void)
-{
-	return "SGI Origin";
-}
+स्थिर अक्षर *get_प्रणाली_type(व्योम)
+अणु
+	वापस "SGI Origin";
+पूर्ण
 
-void __init prom_init(void)
-{
+व्योम __init prom_init(व्योम)
+अणु
 	prom_init_cmdline(fw_arg0, (LONG *)fw_arg1);
 	prom_meminit();
-}
+पूर्ण
 

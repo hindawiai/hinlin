@@ -1,197 +1,198 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  WMI hotkeys support for Dell All-In-One series
+ *  WMI hotkeys support क्रम Dell All-In-One series
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/input.h>
-#include <linux/input/sparse-keymap.h>
-#include <linux/acpi.h>
-#include <linux/string.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/sparse-keymap.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/माला.स>
 
 MODULE_DESCRIPTION("WMI hotkeys driver for Dell All-In-One series");
 MODULE_LICENSE("GPL");
 
-#define EVENT_GUID1 "284A0E6B-380E-472A-921F-E52786257FB4"
-#define EVENT_GUID2 "02314822-307C-4F66-BF0E-48AEAEB26CC8"
+#घोषणा EVENT_GUID1 "284A0E6B-380E-472A-921F-E52786257FB4"
+#घोषणा EVENT_GUID2 "02314822-307C-4F66-BF0E-48AEAEB26CC8"
 
-struct dell_wmi_event {
+काष्ठा dell_wmi_event अणु
 	u16	length;
 	/* 0x000: A hot key pressed or an event occurred
 	 * 0x00F: A sequence of hot keys are pressed */
 	u16	type;
 	u16	event[];
-};
+पूर्ण;
 
-static const char *dell_wmi_aio_guids[] = {
+अटल स्थिर अक्षर *dell_wmi_aio_guids[] = अणु
 	EVENT_GUID1,
 	EVENT_GUID2,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 MODULE_ALIAS("wmi:"EVENT_GUID1);
 MODULE_ALIAS("wmi:"EVENT_GUID2);
 
-static const struct key_entry dell_wmi_aio_keymap[] = {
-	{ KE_KEY, 0xc0, { KEY_VOLUMEUP } },
-	{ KE_KEY, 0xc1, { KEY_VOLUMEDOWN } },
-	{ KE_KEY, 0xe030, { KEY_VOLUMEUP } },
-	{ KE_KEY, 0xe02e, { KEY_VOLUMEDOWN } },
-	{ KE_KEY, 0xe020, { KEY_MUTE } },
-	{ KE_KEY, 0xe027, { KEY_DISPLAYTOGGLE } },
-	{ KE_KEY, 0xe006, { KEY_BRIGHTNESSUP } },
-	{ KE_KEY, 0xe005, { KEY_BRIGHTNESSDOWN } },
-	{ KE_KEY, 0xe00b, { KEY_SWITCHVIDEOMODE } },
-	{ KE_END, 0 }
-};
+अटल स्थिर काष्ठा key_entry dell_wmi_aio_keymap[] = अणु
+	अणु KE_KEY, 0xc0, अणु KEY_VOLUMEUP पूर्ण पूर्ण,
+	अणु KE_KEY, 0xc1, अणु KEY_VOLUMEDOWN पूर्ण पूर्ण,
+	अणु KE_KEY, 0xe030, अणु KEY_VOLUMEUP पूर्ण पूर्ण,
+	अणु KE_KEY, 0xe02e, अणु KEY_VOLUMEDOWN पूर्ण पूर्ण,
+	अणु KE_KEY, 0xe020, अणु KEY_MUTE पूर्ण पूर्ण,
+	अणु KE_KEY, 0xe027, अणु KEY_DISPLAYTOGGLE पूर्ण पूर्ण,
+	अणु KE_KEY, 0xe006, अणु KEY_BRIGHTNESSUP पूर्ण पूर्ण,
+	अणु KE_KEY, 0xe005, अणु KEY_BRIGHTNESSDOWN पूर्ण पूर्ण,
+	अणु KE_KEY, 0xe00b, अणु KEY_SWITCHVIDEOMODE पूर्ण पूर्ण,
+	अणु KE_END, 0 पूर्ण
+पूर्ण;
 
-static struct input_dev *dell_wmi_aio_input_dev;
+अटल काष्ठा input_dev *dell_wmi_aio_input_dev;
 
 /*
- * The new WMI event data format will follow the dell_wmi_event structure
- * So, we will check if the buffer matches the format
+ * The new WMI event data क्रमmat will follow the dell_wmi_event काष्ठाure
+ * So, we will check अगर the buffer matches the क्रमmat
  */
-static bool dell_wmi_aio_event_check(u8 *buffer, int length)
-{
-	struct dell_wmi_event *event = (struct dell_wmi_event *)buffer;
+अटल bool dell_wmi_aio_event_check(u8 *buffer, पूर्णांक length)
+अणु
+	काष्ठा dell_wmi_event *event = (काष्ठा dell_wmi_event *)buffer;
 
-	if (event == NULL || length < 6)
-		return false;
+	अगर (event == शून्य || length < 6)
+		वापस false;
 
-	if ((event->type == 0 || event->type == 0xf) &&
+	अगर ((event->type == 0 || event->type == 0xf) &&
 			event->length >= 2)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void dell_wmi_aio_notify(u32 value, void *context)
-{
-	struct acpi_buffer response = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *obj;
-	struct dell_wmi_event *event;
+अटल व्योम dell_wmi_aio_notअगरy(u32 value, व्योम *context)
+अणु
+	काष्ठा acpi_buffer response = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *obj;
+	काष्ठा dell_wmi_event *event;
 	acpi_status status;
 
 	status = wmi_get_event_data(value, &response);
-	if (status != AE_OK) {
+	अगर (status != AE_OK) अणु
 		pr_info("bad event status 0x%x\n", status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	obj = (union acpi_object *)response.pointer;
-	if (obj) {
-		unsigned int scancode = 0;
+	obj = (जोड़ acpi_object *)response.poपूर्णांकer;
+	अगर (obj) अणु
+		अचिन्हित पूर्णांक scancode = 0;
 
-		switch (obj->type) {
-		case ACPI_TYPE_INTEGER:
-			/* Most All-In-One correctly return integer scancode */
-			scancode = obj->integer.value;
+		चयन (obj->type) अणु
+		हाल ACPI_TYPE_INTEGER:
+			/* Most All-In-One correctly वापस पूर्णांकeger scancode */
+			scancode = obj->पूर्णांकeger.value;
 			sparse_keymap_report_event(dell_wmi_aio_input_dev,
 				scancode, 1, true);
-			break;
-		case ACPI_TYPE_BUFFER:
-			if (dell_wmi_aio_event_check(obj->buffer.pointer,
-						obj->buffer.length)) {
-				event = (struct dell_wmi_event *)
-					obj->buffer.pointer;
+			अवरोध;
+		हाल ACPI_TYPE_BUFFER:
+			अगर (dell_wmi_aio_event_check(obj->buffer.poपूर्णांकer,
+						obj->buffer.length)) अणु
+				event = (काष्ठा dell_wmi_event *)
+					obj->buffer.poपूर्णांकer;
 				scancode = event->event[0];
-			} else {
-				/* Broken machines return the scancode in a
+			पूर्ण अन्यथा अणु
+				/* Broken machines वापस the scancode in a
 				   buffer */
-				if (obj->buffer.pointer &&
+				अगर (obj->buffer.poपूर्णांकer &&
 						obj->buffer.length > 0)
-					scancode = obj->buffer.pointer[0];
-			}
-			if (scancode)
+					scancode = obj->buffer.poपूर्णांकer[0];
+			पूर्ण
+			अगर (scancode)
 				sparse_keymap_report_event(
 					dell_wmi_aio_input_dev,
 					scancode, 1, true);
-			break;
-		}
-	}
-	kfree(obj);
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	kमुक्त(obj);
+पूर्ण
 
-static int __init dell_wmi_aio_input_setup(void)
-{
-	int err;
+अटल पूर्णांक __init dell_wmi_aio_input_setup(व्योम)
+अणु
+	पूर्णांक err;
 
 	dell_wmi_aio_input_dev = input_allocate_device();
 
-	if (!dell_wmi_aio_input_dev)
-		return -ENOMEM;
+	अगर (!dell_wmi_aio_input_dev)
+		वापस -ENOMEM;
 
 	dell_wmi_aio_input_dev->name = "Dell AIO WMI hotkeys";
 	dell_wmi_aio_input_dev->phys = "wmi/input0";
 	dell_wmi_aio_input_dev->id.bustype = BUS_HOST;
 
 	err = sparse_keymap_setup(dell_wmi_aio_input_dev,
-			dell_wmi_aio_keymap, NULL);
-	if (err) {
+			dell_wmi_aio_keymap, शून्य);
+	अगर (err) अणु
 		pr_err("Unable to setup input device keymap\n");
-		goto err_free_dev;
-	}
-	err = input_register_device(dell_wmi_aio_input_dev);
-	if (err) {
+		जाओ err_मुक्त_dev;
+	पूर्ण
+	err = input_रेजिस्टर_device(dell_wmi_aio_input_dev);
+	अगर (err) अणु
 		pr_info("Unable to register input device\n");
-		goto err_free_dev;
-	}
-	return 0;
+		जाओ err_मुक्त_dev;
+	पूर्ण
+	वापस 0;
 
-err_free_dev:
-	input_free_device(dell_wmi_aio_input_dev);
-	return err;
-}
+err_मुक्त_dev:
+	input_मुक्त_device(dell_wmi_aio_input_dev);
+	वापस err;
+पूर्ण
 
-static const char *dell_wmi_aio_find(void)
-{
-	int i;
+अटल स्थिर अक्षर *dell_wmi_aio_find(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; dell_wmi_aio_guids[i] != NULL; i++)
-		if (wmi_has_guid(dell_wmi_aio_guids[i]))
-			return dell_wmi_aio_guids[i];
+	क्रम (i = 0; dell_wmi_aio_guids[i] != शून्य; i++)
+		अगर (wmi_has_guid(dell_wmi_aio_guids[i]))
+			वापस dell_wmi_aio_guids[i];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int __init dell_wmi_aio_init(void)
-{
-	int err;
-	const char *guid;
+अटल पूर्णांक __init dell_wmi_aio_init(व्योम)
+अणु
+	पूर्णांक err;
+	स्थिर अक्षर *guid;
 
 	guid = dell_wmi_aio_find();
-	if (!guid) {
+	अगर (!guid) अणु
 		pr_warn("No known WMI GUID found\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	err = dell_wmi_aio_input_setup();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = wmi_install_notify_handler(guid, dell_wmi_aio_notify, NULL);
-	if (err) {
+	err = wmi_install_notअगरy_handler(guid, dell_wmi_aio_notअगरy, शून्य);
+	अगर (err) अणु
 		pr_err("Unable to register notify handler - %d\n", err);
-		input_unregister_device(dell_wmi_aio_input_dev);
-		return err;
-	}
+		input_unरेजिस्टर_device(dell_wmi_aio_input_dev);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit dell_wmi_aio_exit(void)
-{
-	const char *guid;
+अटल व्योम __निकास dell_wmi_aio_निकास(व्योम)
+अणु
+	स्थिर अक्षर *guid;
 
 	guid = dell_wmi_aio_find();
-	wmi_remove_notify_handler(guid);
-	input_unregister_device(dell_wmi_aio_input_dev);
-}
+	wmi_हटाओ_notअगरy_handler(guid);
+	input_unरेजिस्टर_device(dell_wmi_aio_input_dev);
+पूर्ण
 
 module_init(dell_wmi_aio_init);
-module_exit(dell_wmi_aio_exit);
+module_निकास(dell_wmi_aio_निकास);

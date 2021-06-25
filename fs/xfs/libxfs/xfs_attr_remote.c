@@ -1,253 +1,254 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * Copyright (c) 2013 Red Hat, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_bit.h"
-#include "xfs_mount.h"
-#include "xfs_defer.h"
-#include "xfs_da_format.h"
-#include "xfs_da_btree.h"
-#include "xfs_inode.h"
-#include "xfs_trans.h"
-#include "xfs_bmap.h"
-#include "xfs_attr.h"
-#include "xfs_attr_remote.h"
-#include "xfs_trace.h"
-#include "xfs_error.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_bit.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_defer.h"
+#समावेश "xfs_da_format.h"
+#समावेश "xfs_da_btree.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_bmap.h"
+#समावेश "xfs_attr.h"
+#समावेश "xfs_attr_remote.h"
+#समावेश "xfs_trace.h"
+#समावेश "xfs_error.h"
 
-#define ATTR_RMTVALUE_MAPSIZE	1	/* # of map entries at once */
+#घोषणा ATTR_RMTVALUE_MAPSIZE	1	/* # of map entries at once */
 
 /*
  * Remote Attribute Values
  * =======================
  *
  * Remote extended attribute values are conceptually simple -- they're written
- * to data blocks mapped by an inode's attribute fork, and they have an upper
- * size limit of 64k.  Setting a value does not involve the XFS log.
+ * to data blocks mapped by an inode's attribute विभाजन, and they have an upper
+ * size limit of 64k.  Setting a value करोes not involve the XFS log.
  *
- * However, on a v5 filesystem, maximally sized remote attr values require one
+ * However, on a v5 fileप्रणाली, maximally sized remote attr values require one
  * block more than 64k worth of space to hold both the remote attribute value
- * header (64 bytes).  On a 4k block filesystem this results in a 68k buffer;
- * on a 64k block filesystem, this would be a 128k buffer.  Note that the log
- * format can only handle a dirty buffer of XFS_MAX_BLOCKSIZE length (64k).
- * Therefore, we /must/ ensure that remote attribute value buffers never touch
- * the logging system and therefore never have a log item.
+ * header (64 bytes).  On a 4k block fileप्रणाली this results in a 68k buffer;
+ * on a 64k block fileप्रणाली, this would be a 128k buffer.  Note that the log
+ * क्रमmat can only handle a dirty buffer of XFS_MAX_BLOCKSIZE length (64k).
+ * Thereक्रमe, we /must/ ensure that remote attribute value buffers never touch
+ * the logging प्रणाली and thereक्रमe never have a log item.
  */
 
 /*
  * Each contiguous block has a header, so it is not just a simple attribute
  * length to FSB conversion.
  */
-int
+पूर्णांक
 xfs_attr3_rmt_blocks(
-	struct xfs_mount *mp,
-	int		attrlen)
-{
-	if (xfs_sb_version_hascrc(&mp->m_sb)) {
-		int buflen = XFS_ATTR3_RMT_BUF_SPACE(mp, mp->m_sb.sb_blocksize);
-		return (attrlen + buflen - 1) / buflen;
-	}
-	return XFS_B_TO_FSB(mp, attrlen);
-}
+	काष्ठा xfs_mount *mp,
+	पूर्णांक		attrlen)
+अणु
+	अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
+		पूर्णांक buflen = XFS_ATTR3_RMT_BUF_SPACE(mp, mp->m_sb.sb_blocksize);
+		वापस (attrlen + buflen - 1) / buflen;
+	पूर्ण
+	वापस XFS_B_TO_FSB(mp, attrlen);
+पूर्ण
 
 /*
- * Checking of the remote attribute header is split into two parts. The verifier
- * does CRC, location and bounds checking, the unpacking function checks the
+ * Checking of the remote attribute header is split पूर्णांकo two parts. The verअगरier
+ * करोes CRC, location and bounds checking, the unpacking function checks the
  * attribute parameters and owner.
  */
-static xfs_failaddr_t
+अटल xfs_failaddr_t
 xfs_attr3_rmt_hdr_ok(
-	void			*ptr,
+	व्योम			*ptr,
 	xfs_ino_t		ino,
-	uint32_t		offset,
-	uint32_t		size,
+	uपूर्णांक32_t		offset,
+	uपूर्णांक32_t		size,
 	xfs_daddr_t		bno)
-{
-	struct xfs_attr3_rmt_hdr *rmt = ptr;
+अणु
+	काष्ठा xfs_attr3_rmt_hdr *rmt = ptr;
 
-	if (bno != be64_to_cpu(rmt->rm_blkno))
-		return __this_address;
-	if (offset != be32_to_cpu(rmt->rm_offset))
-		return __this_address;
-	if (size != be32_to_cpu(rmt->rm_bytes))
-		return __this_address;
-	if (ino != be64_to_cpu(rmt->rm_owner))
-		return __this_address;
+	अगर (bno != be64_to_cpu(rmt->rm_blkno))
+		वापस __this_address;
+	अगर (offset != be32_to_cpu(rmt->rm_offset))
+		वापस __this_address;
+	अगर (size != be32_to_cpu(rmt->rm_bytes))
+		वापस __this_address;
+	अगर (ino != be64_to_cpu(rmt->rm_owner))
+		वापस __this_address;
 
 	/* ok */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static xfs_failaddr_t
-xfs_attr3_rmt_verify(
-	struct xfs_mount	*mp,
-	struct xfs_buf		*bp,
-	void			*ptr,
-	int			fsbsize,
+अटल xfs_failaddr_t
+xfs_attr3_rmt_verअगरy(
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_buf		*bp,
+	व्योम			*ptr,
+	पूर्णांक			fsbsize,
 	xfs_daddr_t		bno)
-{
-	struct xfs_attr3_rmt_hdr *rmt = ptr;
+अणु
+	काष्ठा xfs_attr3_rmt_hdr *rmt = ptr;
 
-	if (!xfs_verify_magic(bp, rmt->rm_magic))
-		return __this_address;
-	if (!uuid_equal(&rmt->rm_uuid, &mp->m_sb.sb_meta_uuid))
-		return __this_address;
-	if (be64_to_cpu(rmt->rm_blkno) != bno)
-		return __this_address;
-	if (be32_to_cpu(rmt->rm_bytes) > fsbsize - sizeof(*rmt))
-		return __this_address;
-	if (be32_to_cpu(rmt->rm_offset) +
+	अगर (!xfs_verअगरy_magic(bp, rmt->rm_magic))
+		वापस __this_address;
+	अगर (!uuid_equal(&rmt->rm_uuid, &mp->m_sb.sb_meta_uuid))
+		वापस __this_address;
+	अगर (be64_to_cpu(rmt->rm_blkno) != bno)
+		वापस __this_address;
+	अगर (be32_to_cpu(rmt->rm_bytes) > fsbsize - माप(*rmt))
+		वापस __this_address;
+	अगर (be32_to_cpu(rmt->rm_offset) +
 				be32_to_cpu(rmt->rm_bytes) > XFS_XATTR_SIZE_MAX)
-		return __this_address;
-	if (rmt->rm_owner == 0)
-		return __this_address;
+		वापस __this_address;
+	अगर (rmt->rm_owner == 0)
+		वापस __this_address;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int
-__xfs_attr3_rmt_read_verify(
-	struct xfs_buf	*bp,
+अटल पूर्णांक
+__xfs_attr3_rmt_पढ़ो_verअगरy(
+	काष्ठा xfs_buf	*bp,
 	bool		check_crc,
 	xfs_failaddr_t	*failaddr)
-{
-	struct xfs_mount *mp = bp->b_mount;
-	char		*ptr;
-	int		len;
+अणु
+	काष्ठा xfs_mount *mp = bp->b_mount;
+	अक्षर		*ptr;
+	पूर्णांक		len;
 	xfs_daddr_t	bno;
-	int		blksize = mp->m_attr_geo->blksize;
+	पूर्णांक		blksize = mp->m_attr_geo->blksize;
 
-	/* no verification of non-crc buffers */
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
-		return 0;
+	/* no verअगरication of non-crc buffers */
+	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
+		वापस 0;
 
 	ptr = bp->b_addr;
 	bno = bp->b_bn;
 	len = BBTOB(bp->b_length);
 	ASSERT(len >= blksize);
 
-	while (len > 0) {
-		if (check_crc &&
-		    !xfs_verify_cksum(ptr, blksize, XFS_ATTR3_RMT_CRC_OFF)) {
+	जबतक (len > 0) अणु
+		अगर (check_crc &&
+		    !xfs_verअगरy_cksum(ptr, blksize, XFS_ATTR3_RMT_CRC_OFF)) अणु
 			*failaddr = __this_address;
-			return -EFSBADCRC;
-		}
-		*failaddr = xfs_attr3_rmt_verify(mp, bp, ptr, blksize, bno);
-		if (*failaddr)
-			return -EFSCORRUPTED;
+			वापस -EFSBADCRC;
+		पूर्ण
+		*failaddr = xfs_attr3_rmt_verअगरy(mp, bp, ptr, blksize, bno);
+		अगर (*failaddr)
+			वापस -EFSCORRUPTED;
 		len -= blksize;
 		ptr += blksize;
 		bno += BTOBB(blksize);
-	}
+	पूर्ण
 
-	if (len != 0) {
+	अगर (len != 0) अणु
 		*failaddr = __this_address;
-		return -EFSCORRUPTED;
-	}
+		वापस -EFSCORRUPTED;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-xfs_attr3_rmt_read_verify(
-	struct xfs_buf	*bp)
-{
+अटल व्योम
+xfs_attr3_rmt_पढ़ो_verअगरy(
+	काष्ठा xfs_buf	*bp)
+अणु
 	xfs_failaddr_t	fa;
-	int		error;
+	पूर्णांक		error;
 
-	error = __xfs_attr3_rmt_read_verify(bp, true, &fa);
-	if (error)
-		xfs_verifier_error(bp, error, fa);
-}
+	error = __xfs_attr3_rmt_पढ़ो_verअगरy(bp, true, &fa);
+	अगर (error)
+		xfs_verअगरier_error(bp, error, fa);
+पूर्ण
 
-static xfs_failaddr_t
-xfs_attr3_rmt_verify_struct(
-	struct xfs_buf	*bp)
-{
+अटल xfs_failaddr_t
+xfs_attr3_rmt_verअगरy_काष्ठा(
+	काष्ठा xfs_buf	*bp)
+अणु
 	xfs_failaddr_t	fa;
-	int		error;
+	पूर्णांक		error;
 
-	error = __xfs_attr3_rmt_read_verify(bp, false, &fa);
-	return error ? fa : NULL;
-}
+	error = __xfs_attr3_rmt_पढ़ो_verअगरy(bp, false, &fa);
+	वापस error ? fa : शून्य;
+पूर्ण
 
-static void
-xfs_attr3_rmt_write_verify(
-	struct xfs_buf	*bp)
-{
-	struct xfs_mount *mp = bp->b_mount;
+अटल व्योम
+xfs_attr3_rmt_ग_लिखो_verअगरy(
+	काष्ठा xfs_buf	*bp)
+अणु
+	काष्ठा xfs_mount *mp = bp->b_mount;
 	xfs_failaddr_t	fa;
-	int		blksize = mp->m_attr_geo->blksize;
-	char		*ptr;
-	int		len;
+	पूर्णांक		blksize = mp->m_attr_geo->blksize;
+	अक्षर		*ptr;
+	पूर्णांक		len;
 	xfs_daddr_t	bno;
 
-	/* no verification of non-crc buffers */
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
-		return;
+	/* no verअगरication of non-crc buffers */
+	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
+		वापस;
 
 	ptr = bp->b_addr;
 	bno = bp->b_bn;
 	len = BBTOB(bp->b_length);
 	ASSERT(len >= blksize);
 
-	while (len > 0) {
-		struct xfs_attr3_rmt_hdr *rmt = (struct xfs_attr3_rmt_hdr *)ptr;
+	जबतक (len > 0) अणु
+		काष्ठा xfs_attr3_rmt_hdr *rmt = (काष्ठा xfs_attr3_rmt_hdr *)ptr;
 
-		fa = xfs_attr3_rmt_verify(mp, bp, ptr, blksize, bno);
-		if (fa) {
-			xfs_verifier_error(bp, -EFSCORRUPTED, fa);
-			return;
-		}
+		fa = xfs_attr3_rmt_verअगरy(mp, bp, ptr, blksize, bno);
+		अगर (fa) अणु
+			xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
+			वापस;
+		पूर्ण
 
 		/*
 		 * Ensure we aren't writing bogus LSNs to disk. See
-		 * xfs_attr3_rmt_hdr_set() for the explanation.
+		 * xfs_attr3_rmt_hdr_set() क्रम the explanation.
 		 */
-		if (rmt->rm_lsn != cpu_to_be64(NULLCOMMITLSN)) {
-			xfs_verifier_error(bp, -EFSCORRUPTED, __this_address);
-			return;
-		}
+		अगर (rmt->rm_lsn != cpu_to_be64(शून्यCOMMITLSN)) अणु
+			xfs_verअगरier_error(bp, -EFSCORRUPTED, __this_address);
+			वापस;
+		पूर्ण
 		xfs_update_cksum(ptr, blksize, XFS_ATTR3_RMT_CRC_OFF);
 
 		len -= blksize;
 		ptr += blksize;
 		bno += BTOBB(blksize);
-	}
+	पूर्ण
 
-	if (len != 0)
-		xfs_verifier_error(bp, -EFSCORRUPTED, __this_address);
-}
+	अगर (len != 0)
+		xfs_verअगरier_error(bp, -EFSCORRUPTED, __this_address);
+पूर्ण
 
-const struct xfs_buf_ops xfs_attr3_rmt_buf_ops = {
+स्थिर काष्ठा xfs_buf_ops xfs_attr3_rmt_buf_ops = अणु
 	.name = "xfs_attr3_rmt",
-	.magic = { 0, cpu_to_be32(XFS_ATTR3_RMT_MAGIC) },
-	.verify_read = xfs_attr3_rmt_read_verify,
-	.verify_write = xfs_attr3_rmt_write_verify,
-	.verify_struct = xfs_attr3_rmt_verify_struct,
-};
+	.magic = अणु 0, cpu_to_be32(XFS_ATTR3_RMT_MAGIC) पूर्ण,
+	.verअगरy_पढ़ो = xfs_attr3_rmt_पढ़ो_verअगरy,
+	.verअगरy_ग_लिखो = xfs_attr3_rmt_ग_लिखो_verअगरy,
+	.verअगरy_काष्ठा = xfs_attr3_rmt_verअगरy_काष्ठा,
+पूर्ण;
 
-STATIC int
+STATIC पूर्णांक
 xfs_attr3_rmt_hdr_set(
-	struct xfs_mount	*mp,
-	void			*ptr,
+	काष्ठा xfs_mount	*mp,
+	व्योम			*ptr,
 	xfs_ino_t		ino,
-	uint32_t		offset,
-	uint32_t		size,
+	uपूर्णांक32_t		offset,
+	uपूर्णांक32_t		size,
 	xfs_daddr_t		bno)
-{
-	struct xfs_attr3_rmt_hdr *rmt = ptr;
+अणु
+	काष्ठा xfs_attr3_rmt_hdr *rmt = ptr;
 
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
-		return 0;
+	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
+		वापस 0;
 
 	rmt->rm_magic = cpu_to_be32(XFS_ATTR3_RMT_MAGIC);
 	rmt->rm_offset = cpu_to_be32(offset);
@@ -257,119 +258,119 @@ xfs_attr3_rmt_hdr_set(
 	rmt->rm_blkno = cpu_to_be64(bno);
 
 	/*
-	 * Remote attribute blocks are written synchronously, so we don't
+	 * Remote attribute blocks are written synchronously, so we करोn't
 	 * have an LSN that we can stamp in them that makes any sense to log
-	 * recovery. To ensure that log recovery handles overwrites of these
-	 * blocks sanely (i.e. once they've been freed and reallocated as some
+	 * recovery. To ensure that log recovery handles overग_लिखोs of these
+	 * blocks sanely (i.e. once they've been मुक्तd and पुनः_स्मृतिated as some
 	 * other type of metadata) we need to ensure that the LSN has a value
-	 * that tells log recovery to ignore the LSN and overwrite the buffer
-	 * with whatever is in it's log. To do this, we use the magic
-	 * NULLCOMMITLSN to indicate that the LSN is invalid.
+	 * that tells log recovery to ignore the LSN and overग_लिखो the buffer
+	 * with whatever is in it's log. To करो this, we use the magic
+	 * शून्यCOMMITLSN to indicate that the LSN is invalid.
 	 */
-	rmt->rm_lsn = cpu_to_be64(NULLCOMMITLSN);
+	rmt->rm_lsn = cpu_to_be64(शून्यCOMMITLSN);
 
-	return sizeof(struct xfs_attr3_rmt_hdr);
-}
+	वापस माप(काष्ठा xfs_attr3_rmt_hdr);
+पूर्ण
 
 /*
  * Helper functions to copy attribute data in and out of the one disk extents
  */
-STATIC int
+STATIC पूर्णांक
 xfs_attr_rmtval_copyout(
-	struct xfs_mount *mp,
-	struct xfs_buf	*bp,
+	काष्ठा xfs_mount *mp,
+	काष्ठा xfs_buf	*bp,
 	xfs_ino_t	ino,
-	int		*offset,
-	int		*valuelen,
-	uint8_t		**dst)
-{
-	char		*src = bp->b_addr;
+	पूर्णांक		*offset,
+	पूर्णांक		*valuelen,
+	uपूर्णांक8_t		**dst)
+अणु
+	अक्षर		*src = bp->b_addr;
 	xfs_daddr_t	bno = bp->b_bn;
-	int		len = BBTOB(bp->b_length);
-	int		blksize = mp->m_attr_geo->blksize;
+	पूर्णांक		len = BBTOB(bp->b_length);
+	पूर्णांक		blksize = mp->m_attr_geo->blksize;
 
 	ASSERT(len >= blksize);
 
-	while (len > 0 && *valuelen > 0) {
-		int hdr_size = 0;
-		int byte_cnt = XFS_ATTR3_RMT_BUF_SPACE(mp, blksize);
+	जबतक (len > 0 && *valuelen > 0) अणु
+		पूर्णांक hdr_size = 0;
+		पूर्णांक byte_cnt = XFS_ATTR3_RMT_BUF_SPACE(mp, blksize);
 
 		byte_cnt = min(*valuelen, byte_cnt);
 
-		if (xfs_sb_version_hascrc(&mp->m_sb)) {
-			if (xfs_attr3_rmt_hdr_ok(src, ino, *offset,
-						  byte_cnt, bno)) {
+		अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
+			अगर (xfs_attr3_rmt_hdr_ok(src, ino, *offset,
+						  byte_cnt, bno)) अणु
 				xfs_alert(mp,
 "remote attribute header mismatch bno/off/len/owner (0x%llx/0x%x/Ox%x/0x%llx)",
 					bno, *offset, byte_cnt, ino);
-				return -EFSCORRUPTED;
-			}
-			hdr_size = sizeof(struct xfs_attr3_rmt_hdr);
-		}
+				वापस -EFSCORRUPTED;
+			पूर्ण
+			hdr_size = माप(काष्ठा xfs_attr3_rmt_hdr);
+		पूर्ण
 
-		memcpy(*dst, src + hdr_size, byte_cnt);
+		स_नकल(*dst, src + hdr_size, byte_cnt);
 
-		/* roll buffer forwards */
+		/* roll buffer क्रमwards */
 		len -= blksize;
 		src += blksize;
 		bno += BTOBB(blksize);
 
-		/* roll attribute data forwards */
+		/* roll attribute data क्रमwards */
 		*valuelen -= byte_cnt;
 		*dst += byte_cnt;
 		*offset += byte_cnt;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-STATIC void
+STATIC व्योम
 xfs_attr_rmtval_copyin(
-	struct xfs_mount *mp,
-	struct xfs_buf	*bp,
+	काष्ठा xfs_mount *mp,
+	काष्ठा xfs_buf	*bp,
 	xfs_ino_t	ino,
-	int		*offset,
-	int		*valuelen,
-	uint8_t		**src)
-{
-	char		*dst = bp->b_addr;
+	पूर्णांक		*offset,
+	पूर्णांक		*valuelen,
+	uपूर्णांक8_t		**src)
+अणु
+	अक्षर		*dst = bp->b_addr;
 	xfs_daddr_t	bno = bp->b_bn;
-	int		len = BBTOB(bp->b_length);
-	int		blksize = mp->m_attr_geo->blksize;
+	पूर्णांक		len = BBTOB(bp->b_length);
+	पूर्णांक		blksize = mp->m_attr_geo->blksize;
 
 	ASSERT(len >= blksize);
 
-	while (len > 0 && *valuelen > 0) {
-		int hdr_size;
-		int byte_cnt = XFS_ATTR3_RMT_BUF_SPACE(mp, blksize);
+	जबतक (len > 0 && *valuelen > 0) अणु
+		पूर्णांक hdr_size;
+		पूर्णांक byte_cnt = XFS_ATTR3_RMT_BUF_SPACE(mp, blksize);
 
 		byte_cnt = min(*valuelen, byte_cnt);
 		hdr_size = xfs_attr3_rmt_hdr_set(mp, dst, ino, *offset,
 						 byte_cnt, bno);
 
-		memcpy(dst + hdr_size, *src, byte_cnt);
+		स_नकल(dst + hdr_size, *src, byte_cnt);
 
 		/*
-		 * If this is the last block, zero the remainder of it.
+		 * If this is the last block, zero the reमुख्यder of it.
 		 * Check that we are actually the last block, too.
 		 */
-		if (byte_cnt + hdr_size < blksize) {
+		अगर (byte_cnt + hdr_size < blksize) अणु
 			ASSERT(*valuelen - byte_cnt == 0);
 			ASSERT(len == blksize);
-			memset(dst + hdr_size + byte_cnt, 0,
+			स_रखो(dst + hdr_size + byte_cnt, 0,
 					blksize - hdr_size - byte_cnt);
-		}
+		पूर्ण
 
-		/* roll buffer forwards */
+		/* roll buffer क्रमwards */
 		len -= blksize;
 		dst += blksize;
 		bno += BTOBB(blksize);
 
-		/* roll attribute data forwards */
+		/* roll attribute data क्रमwards */
 		*valuelen -= byte_cnt;
 		*src += byte_cnt;
 		*offset += byte_cnt;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Read the value associated with an attribute from the out-of-line buffer
@@ -377,21 +378,21 @@ xfs_attr_rmtval_copyin(
  *
  * Returns 0 on successful retrieval, otherwise an error.
  */
-int
+पूर्णांक
 xfs_attr_rmtval_get(
-	struct xfs_da_args	*args)
-{
-	struct xfs_bmbt_irec	map[ATTR_RMTVALUE_MAPSIZE];
-	struct xfs_mount	*mp = args->dp->i_mount;
-	struct xfs_buf		*bp;
+	काष्ठा xfs_da_args	*args)
+अणु
+	काष्ठा xfs_bmbt_irec	map[ATTR_RMTVALUE_MAPSIZE];
+	काष्ठा xfs_mount	*mp = args->dp->i_mount;
+	काष्ठा xfs_buf		*bp;
 	xfs_dablk_t		lblkno = args->rmtblkno;
-	uint8_t			*dst = args->value;
-	int			valuelen;
-	int			nmap;
-	int			error;
-	int			blkcnt = args->rmtblkcnt;
-	int			i;
-	int			offset = 0;
+	uपूर्णांक8_t			*dst = args->value;
+	पूर्णांक			valuelen;
+	पूर्णांक			nmap;
+	पूर्णांक			error;
+	पूर्णांक			blkcnt = args->rmtblkcnt;
+	पूर्णांक			i;
+	पूर्णांक			offset = 0;
 
 	trace_xfs_attr_rmtval_get(args);
 
@@ -399,112 +400,112 @@ xfs_attr_rmtval_get(
 	ASSERT(args->rmtvaluelen == args->valuelen);
 
 	valuelen = args->rmtvaluelen;
-	while (valuelen > 0) {
+	जबतक (valuelen > 0) अणु
 		nmap = ATTR_RMTVALUE_MAPSIZE;
-		error = xfs_bmapi_read(args->dp, (xfs_fileoff_t)lblkno,
+		error = xfs_bmapi_पढ़ो(args->dp, (xfs_fileoff_t)lblkno,
 				       blkcnt, map, &nmap,
 				       XFS_BMAPI_ATTRFORK);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 		ASSERT(nmap >= 1);
 
-		for (i = 0; (i < nmap) && (valuelen > 0); i++) {
+		क्रम (i = 0; (i < nmap) && (valuelen > 0); i++) अणु
 			xfs_daddr_t	dblkno;
-			int		dblkcnt;
+			पूर्णांक		dblkcnt;
 
 			ASSERT((map[i].br_startblock != DELAYSTARTBLOCK) &&
 			       (map[i].br_startblock != HOLESTARTBLOCK));
 			dblkno = XFS_FSB_TO_DADDR(mp, map[i].br_startblock);
 			dblkcnt = XFS_FSB_TO_BB(mp, map[i].br_blockcount);
-			error = xfs_buf_read(mp->m_ddev_targp, dblkno, dblkcnt,
+			error = xfs_buf_पढ़ो(mp->m_ddev_targp, dblkno, dblkcnt,
 					0, &bp, &xfs_attr3_rmt_buf_ops);
-			if (error)
-				return error;
+			अगर (error)
+				वापस error;
 
 			error = xfs_attr_rmtval_copyout(mp, bp, args->dp->i_ino,
 							&offset, &valuelen,
 							&dst);
-			xfs_buf_relse(bp);
-			if (error)
-				return error;
+			xfs_buf_rअन्यथा(bp);
+			अगर (error)
+				वापस error;
 
-			/* roll attribute extent map forwards */
+			/* roll attribute extent map क्रमwards */
 			lblkno += map[i].br_blockcount;
 			blkcnt -= map[i].br_blockcount;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ASSERT(valuelen == 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Find a "hole" in the attribute address space large enough for us to drop the
- * new attribute's value into
+ * Find a "hole" in the attribute address space large enough क्रम us to drop the
+ * new attribute's value पूर्णांकo
  */
-STATIC int
+STATIC पूर्णांक
 xfs_attr_rmt_find_hole(
-	struct xfs_da_args	*args)
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	int			error;
-	int			blkcnt;
+	काष्ठा xfs_da_args	*args)
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	पूर्णांक			error;
+	पूर्णांक			blkcnt;
 	xfs_fileoff_t		lfileoff = 0;
 
 	/*
-	 * Because CRC enable attributes have headers, we can't just do a
+	 * Because CRC enable attributes have headers, we can't just करो a
 	 * straight byte to FSB conversion and have to take the header space
-	 * into account.
+	 * पूर्णांकo account.
 	 */
 	blkcnt = xfs_attr3_rmt_blocks(mp, args->rmtvaluelen);
 	error = xfs_bmap_first_unused(args->trans, args->dp, blkcnt, &lfileoff,
 						   XFS_ATTR_FORK);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	args->rmtblkno = (xfs_dablk_t)lfileoff;
 	args->rmtblkcnt = blkcnt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-STATIC int
+STATIC पूर्णांक
 xfs_attr_rmtval_set_value(
-	struct xfs_da_args	*args)
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	struct xfs_bmbt_irec	map;
+	काष्ठा xfs_da_args	*args)
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	काष्ठा xfs_bmbt_irec	map;
 	xfs_dablk_t		lblkno;
-	uint8_t			*src = args->value;
-	int			blkcnt;
-	int			valuelen;
-	int			nmap;
-	int			error;
-	int			offset = 0;
+	uपूर्णांक8_t			*src = args->value;
+	पूर्णांक			blkcnt;
+	पूर्णांक			valuelen;
+	पूर्णांक			nmap;
+	पूर्णांक			error;
+	पूर्णांक			offset = 0;
 
 	/*
 	 * Roll through the "value", copying the attribute value to the
-	 * already-allocated blocks.  Blocks are written synchronously
-	 * so that we can know they are all on disk before we turn off
+	 * alपढ़ोy-allocated blocks.  Blocks are written synchronously
+	 * so that we can know they are all on disk beक्रमe we turn off
 	 * the INCOMPLETE flag.
 	 */
 	lblkno = args->rmtblkno;
 	blkcnt = args->rmtblkcnt;
 	valuelen = args->rmtvaluelen;
-	while (valuelen > 0) {
-		struct xfs_buf	*bp;
+	जबतक (valuelen > 0) अणु
+		काष्ठा xfs_buf	*bp;
 		xfs_daddr_t	dblkno;
-		int		dblkcnt;
+		पूर्णांक		dblkcnt;
 
 		ASSERT(blkcnt > 0);
 
 		nmap = 1;
-		error = xfs_bmapi_read(dp, (xfs_fileoff_t)lblkno,
+		error = xfs_bmapi_पढ़ो(dp, (xfs_fileoff_t)lblkno,
 				       blkcnt, &map, &nmap,
 				       XFS_BMAPI_ATTRFORK);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 		ASSERT(nmap == 1);
 		ASSERT((map.br_startblock != DELAYSTARTBLOCK) &&
 		       (map.br_startblock != HOLESTARTBLOCK));
@@ -513,102 +514,102 @@ xfs_attr_rmtval_set_value(
 		dblkcnt = XFS_FSB_TO_BB(mp, map.br_blockcount);
 
 		error = xfs_buf_get(mp->m_ddev_targp, dblkno, dblkcnt, &bp);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 		bp->b_ops = &xfs_attr3_rmt_buf_ops;
 
 		xfs_attr_rmtval_copyin(mp, bp, args->dp->i_ino, &offset,
 				       &valuelen, &src);
 
-		error = xfs_bwrite(bp);	/* GROT: NOTE: synchronous write */
-		xfs_buf_relse(bp);
-		if (error)
-			return error;
+		error = xfs_bग_लिखो(bp);	/* GROT: NOTE: synchronous ग_लिखो */
+		xfs_buf_rअन्यथा(bp);
+		अगर (error)
+			वापस error;
 
 
-		/* roll attribute extent map forwards */
+		/* roll attribute extent map क्रमwards */
 		lblkno += map.br_blockcount;
 		blkcnt -= map.br_blockcount;
-	}
+	पूर्ण
 	ASSERT(valuelen == 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Mark stale any incore buffers for the remote value. */
-int
+/* Mark stale any incore buffers क्रम the remote value. */
+पूर्णांक
 xfs_attr_rmtval_stale(
-	struct xfs_inode	*ip,
-	struct xfs_bmbt_irec	*map,
+	काष्ठा xfs_inode	*ip,
+	काष्ठा xfs_bmbt_irec	*map,
 	xfs_buf_flags_t		incore_flags)
-{
-	struct xfs_mount	*mp = ip->i_mount;
-	struct xfs_buf		*bp;
+अणु
+	काष्ठा xfs_mount	*mp = ip->i_mount;
+	काष्ठा xfs_buf		*bp;
 
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
 
-	if (XFS_IS_CORRUPT(mp, map->br_startblock == DELAYSTARTBLOCK) ||
+	अगर (XFS_IS_CORRUPT(mp, map->br_startblock == DELAYSTARTBLOCK) ||
 	    XFS_IS_CORRUPT(mp, map->br_startblock == HOLESTARTBLOCK))
-		return -EFSCORRUPTED;
+		वापस -EFSCORRUPTED;
 
 	bp = xfs_buf_incore(mp->m_ddev_targp,
 			XFS_FSB_TO_DADDR(mp, map->br_startblock),
 			XFS_FSB_TO_BB(mp, map->br_blockcount), incore_flags);
-	if (bp) {
+	अगर (bp) अणु
 		xfs_buf_stale(bp);
-		xfs_buf_relse(bp);
-	}
+		xfs_buf_rअन्यथा(bp);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Write the value associated with an attribute into the out-of-line buffer
- * that we have defined for it.
+ * Write the value associated with an attribute पूर्णांकo the out-of-line buffer
+ * that we have defined क्रम it.
  */
-int
+पूर्णांक
 xfs_attr_rmtval_set(
-	struct xfs_da_args	*args)
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_bmbt_irec	map;
+	काष्ठा xfs_da_args	*args)
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_bmbt_irec	map;
 	xfs_dablk_t		lblkno;
-	int			blkcnt;
-	int			nmap;
-	int			error;
+	पूर्णांक			blkcnt;
+	पूर्णांक			nmap;
+	पूर्णांक			error;
 
 	trace_xfs_attr_rmtval_set(args);
 
 	error = xfs_attr_rmt_find_hole(args);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	blkcnt = args->rmtblkcnt;
 	lblkno = (xfs_dablk_t)args->rmtblkno;
 	/*
 	 * Roll through the "value", allocating blocks on disk as required.
 	 */
-	while (blkcnt > 0) {
+	जबतक (blkcnt > 0) अणु
 		/*
 		 * Allocate a single extent, up to the size of the value.
 		 *
 		 * Note that we have to consider this a data allocation as we
-		 * write the remote attribute without logging the contents.
+		 * ग_लिखो the remote attribute without logging the contents.
 		 * Hence we must ensure that we aren't using blocks that are on
-		 * the busy list so that we don't overwrite blocks which have
-		 * recently been freed but their transactions are not yet
-		 * committed to disk. If we overwrite the contents of a busy
+		 * the busy list so that we करोn't overग_लिखो blocks which have
+		 * recently been मुक्तd but their transactions are not yet
+		 * committed to disk. If we overग_लिखो the contents of a busy
 		 * extent and then crash then the block may not contain the
 		 * correct metadata after log recovery occurs.
 		 */
 		nmap = 1;
-		error = xfs_bmapi_write(args->trans, dp, (xfs_fileoff_t)lblkno,
+		error = xfs_bmapi_ग_लिखो(args->trans, dp, (xfs_fileoff_t)lblkno,
 				  blkcnt, XFS_BMAPI_ATTRFORK, args->total, &map,
 				  &nmap);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 		error = xfs_defer_finish(&args->trans);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
 		ASSERT(nmap == 1);
 		ASSERT((map.br_startblock != DELAYSTARTBLOCK) &&
@@ -620,111 +621,111 @@ xfs_attr_rmtval_set(
 		 * Start the next trans in the chain.
 		 */
 		error = xfs_trans_roll_inode(&args->trans, dp);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	return xfs_attr_rmtval_set_value(args);
-}
+	वापस xfs_attr_rmtval_set_value(args);
+पूर्ण
 
 /*
  * Remove the value associated with an attribute by deleting the
  * out-of-line buffer that it is stored on.
  */
-int
+पूर्णांक
 xfs_attr_rmtval_invalidate(
-	struct xfs_da_args	*args)
-{
+	काष्ठा xfs_da_args	*args)
+अणु
 	xfs_dablk_t		lblkno;
-	int			blkcnt;
-	int			error;
+	पूर्णांक			blkcnt;
+	पूर्णांक			error;
 
 	/*
 	 * Roll through the "value", invalidating the attribute value's blocks.
 	 */
 	lblkno = args->rmtblkno;
 	blkcnt = args->rmtblkcnt;
-	while (blkcnt > 0) {
-		struct xfs_bmbt_irec	map;
-		int			nmap;
+	जबतक (blkcnt > 0) अणु
+		काष्ठा xfs_bmbt_irec	map;
+		पूर्णांक			nmap;
 
 		/*
 		 * Try to remember where we decided to put the value.
 		 */
 		nmap = 1;
-		error = xfs_bmapi_read(args->dp, (xfs_fileoff_t)lblkno,
+		error = xfs_bmapi_पढ़ो(args->dp, (xfs_fileoff_t)lblkno,
 				       blkcnt, &map, &nmap, XFS_BMAPI_ATTRFORK);
-		if (error)
-			return error;
-		if (XFS_IS_CORRUPT(args->dp->i_mount, nmap != 1))
-			return -EFSCORRUPTED;
+		अगर (error)
+			वापस error;
+		अगर (XFS_IS_CORRUPT(args->dp->i_mount, nmap != 1))
+			वापस -EFSCORRUPTED;
 		error = xfs_attr_rmtval_stale(args->dp, &map, XBF_TRYLOCK);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
 		lblkno += map.br_blockcount;
 		blkcnt -= map.br_blockcount;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Remove the value associated with an attribute by deleting the
  * out-of-line buffer that it is stored on.
  */
-int
-xfs_attr_rmtval_remove(
-	struct xfs_da_args      *args)
-{
-	int			error;
-	int			retval;
+पूर्णांक
+xfs_attr_rmtval_हटाओ(
+	काष्ठा xfs_da_args      *args)
+अणु
+	पूर्णांक			error;
+	पूर्णांक			retval;
 
-	trace_xfs_attr_rmtval_remove(args);
+	trace_xfs_attr_rmtval_हटाओ(args);
 
 	/*
 	 * Keep de-allocating extents until the remote-value region is gone.
 	 */
-	do {
-		retval = __xfs_attr_rmtval_remove(args);
-		if (retval && retval != -EAGAIN)
-			return retval;
+	करो अणु
+		retval = __xfs_attr_rmtval_हटाओ(args);
+		अगर (retval && retval != -EAGAIN)
+			वापस retval;
 
 		/*
 		 * Close out trans and start the next one in the chain.
 		 */
 		error = xfs_trans_roll_inode(&args->trans, args->dp);
-		if (error)
-			return error;
-	} while (retval == -EAGAIN);
+		अगर (error)
+			वापस error;
+	पूर्ण जबतक (retval == -EAGAIN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Remove the value associated with an attribute by deleting the out-of-line
- * buffer that it is stored on. Returns EAGAIN for the caller to refresh the
+ * buffer that it is stored on. Returns EAGAIN क्रम the caller to refresh the
  * transaction and re-call the function
  */
-int
-__xfs_attr_rmtval_remove(
-	struct xfs_da_args	*args)
-{
-	int			error, done;
+पूर्णांक
+__xfs_attr_rmtval_हटाओ(
+	काष्ठा xfs_da_args	*args)
+अणु
+	पूर्णांक			error, करोne;
 
 	/*
-	 * Unmap value blocks for this attr.
+	 * Unmap value blocks क्रम this attr.
 	 */
 	error = xfs_bunmapi(args->trans, args->dp, args->rmtblkno,
-			    args->rmtblkcnt, XFS_BMAPI_ATTRFORK, 1, &done);
-	if (error)
-		return error;
+			    args->rmtblkcnt, XFS_BMAPI_ATTRFORK, 1, &करोne);
+	अगर (error)
+		वापस error;
 
 	error = xfs_defer_finish(&args->trans);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (!done)
-		return -EAGAIN;
+	अगर (!करोne)
+		वापस -EAGAIN;
 
-	return error;
-}
+	वापस error;
+पूर्ण

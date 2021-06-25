@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
   Broadcom B43 wireless driver
@@ -13,581 +14,581 @@
 
 */
 
-#include "phy_common.h"
-#include "phy_g.h"
-#include "phy_a.h"
-#include "phy_n.h"
-#include "phy_lp.h"
-#include "phy_ht.h"
-#include "phy_lcn.h"
-#include "phy_ac.h"
-#include "b43.h"
-#include "main.h"
+#समावेश "phy_common.h"
+#समावेश "phy_g.h"
+#समावेश "phy_a.h"
+#समावेश "phy_n.h"
+#समावेश "phy_lp.h"
+#समावेश "phy_ht.h"
+#समावेश "phy_lcn.h"
+#समावेश "phy_ac.h"
+#समावेश "b43.h"
+#समावेश "main.h"
 
 
-int b43_phy_allocate(struct b43_wldev *dev)
-{
-	struct b43_phy *phy = &(dev->phy);
-	int err;
+पूर्णांक b43_phy_allocate(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy *phy = &(dev->phy);
+	पूर्णांक err;
 
-	phy->ops = NULL;
+	phy->ops = शून्य;
 
-	switch (phy->type) {
-	case B43_PHYTYPE_G:
-#ifdef CONFIG_B43_PHY_G
+	चयन (phy->type) अणु
+	हाल B43_PHYTYPE_G:
+#अगर_घोषित CONFIG_B43_PHY_G
 		phy->ops = &b43_phyops_g;
-#endif
-		break;
-	case B43_PHYTYPE_N:
-#ifdef CONFIG_B43_PHY_N
+#पूर्ण_अगर
+		अवरोध;
+	हाल B43_PHYTYPE_N:
+#अगर_घोषित CONFIG_B43_PHY_N
 		phy->ops = &b43_phyops_n;
-#endif
-		break;
-	case B43_PHYTYPE_LP:
-#ifdef CONFIG_B43_PHY_LP
+#पूर्ण_अगर
+		अवरोध;
+	हाल B43_PHYTYPE_LP:
+#अगर_घोषित CONFIG_B43_PHY_LP
 		phy->ops = &b43_phyops_lp;
-#endif
-		break;
-	case B43_PHYTYPE_HT:
-#ifdef CONFIG_B43_PHY_HT
+#पूर्ण_अगर
+		अवरोध;
+	हाल B43_PHYTYPE_HT:
+#अगर_घोषित CONFIG_B43_PHY_HT
 		phy->ops = &b43_phyops_ht;
-#endif
-		break;
-	case B43_PHYTYPE_LCN:
-#ifdef CONFIG_B43_PHY_LCN
+#पूर्ण_अगर
+		अवरोध;
+	हाल B43_PHYTYPE_LCN:
+#अगर_घोषित CONFIG_B43_PHY_LCN
 		phy->ops = &b43_phyops_lcn;
-#endif
-		break;
-	case B43_PHYTYPE_AC:
-#ifdef CONFIG_B43_PHY_AC
+#पूर्ण_अगर
+		अवरोध;
+	हाल B43_PHYTYPE_AC:
+#अगर_घोषित CONFIG_B43_PHY_AC
 		phy->ops = &b43_phyops_ac;
-#endif
-		break;
-	}
-	if (B43_WARN_ON(!phy->ops))
-		return -ENODEV;
+#पूर्ण_अगर
+		अवरोध;
+	पूर्ण
+	अगर (B43_WARN_ON(!phy->ops))
+		वापस -ENODEV;
 
 	err = phy->ops->allocate(dev);
-	if (err)
-		phy->ops = NULL;
+	अगर (err)
+		phy->ops = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void b43_phy_free(struct b43_wldev *dev)
-{
-	dev->phy.ops->free(dev);
-	dev->phy.ops = NULL;
-}
+व्योम b43_phy_मुक्त(काष्ठा b43_wldev *dev)
+अणु
+	dev->phy.ops->मुक्त(dev);
+	dev->phy.ops = शून्य;
+पूर्ण
 
-int b43_phy_init(struct b43_wldev *dev)
-{
-	struct b43_phy *phy = &dev->phy;
-	const struct b43_phy_operations *ops = phy->ops;
-	int err;
+पूर्णांक b43_phy_init(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	स्थिर काष्ठा b43_phy_operations *ops = phy->ops;
+	पूर्णांक err;
 
 	/* During PHY init we need to use some channel. On the first init this
-	 * function is called *before* b43_op_config, so our pointer is NULL.
+	 * function is called *beक्रमe* b43_op_config, so our poपूर्णांकer is शून्य.
 	 */
-	if (!phy->chandef) {
+	अगर (!phy->chandef) अणु
 		phy->chandef = &dev->wl->hw->conf.chandef;
 		phy->channel = phy->chandef->chan->hw_value;
-	}
+	पूर्ण
 
-	phy->ops->switch_analog(dev, true);
-	b43_software_rfkill(dev, false);
+	phy->ops->चयन_analog(dev, true);
+	b43_software_rfसमाप्त(dev, false);
 
 	err = ops->init(dev);
-	if (err) {
+	अगर (err) अणु
 		b43err(dev->wl, "PHY init failed\n");
-		goto err_block_rf;
-	}
-	phy->do_full_init = false;
+		जाओ err_block_rf;
+	पूर्ण
+	phy->करो_full_init = false;
 
-	err = b43_switch_channel(dev, phy->channel);
-	if (err) {
+	err = b43_चयन_channel(dev, phy->channel);
+	अगर (err) अणु
 		b43err(dev->wl, "PHY init: Channel switch to default failed\n");
-		goto err_phy_exit;
-	}
+		जाओ err_phy_निकास;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_phy_exit:
-	phy->do_full_init = true;
-	if (ops->exit)
-		ops->exit(dev);
+err_phy_निकास:
+	phy->करो_full_init = true;
+	अगर (ops->निकास)
+		ops->निकास(dev);
 err_block_rf:
-	b43_software_rfkill(dev, true);
+	b43_software_rfसमाप्त(dev, true);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void b43_phy_exit(struct b43_wldev *dev)
-{
-	const struct b43_phy_operations *ops = dev->phy.ops;
+व्योम b43_phy_निकास(काष्ठा b43_wldev *dev)
+अणु
+	स्थिर काष्ठा b43_phy_operations *ops = dev->phy.ops;
 
-	b43_software_rfkill(dev, true);
-	dev->phy.do_full_init = true;
-	if (ops->exit)
-		ops->exit(dev);
-}
+	b43_software_rfसमाप्त(dev, true);
+	dev->phy.करो_full_init = true;
+	अगर (ops->निकास)
+		ops->निकास(dev);
+पूर्ण
 
-bool b43_has_hardware_pctl(struct b43_wldev *dev)
-{
-	if (!dev->phy.hardware_power_control)
-		return false;
-	if (!dev->phy.ops->supports_hwpctl)
-		return false;
-	return dev->phy.ops->supports_hwpctl(dev);
-}
+bool b43_has_hardware_pctl(काष्ठा b43_wldev *dev)
+अणु
+	अगर (!dev->phy.hardware_घातer_control)
+		वापस false;
+	अगर (!dev->phy.ops->supports_hwpctl)
+		वापस false;
+	वापस dev->phy.ops->supports_hwpctl(dev);
+पूर्ण
 
-void b43_radio_lock(struct b43_wldev *dev)
-{
+व्योम b43_radio_lock(काष्ठा b43_wldev *dev)
+अणु
 	u32 macctl;
 
-#if B43_DEBUG
+#अगर B43_DEBUG
 	B43_WARN_ON(dev->phy.radio_locked);
 	dev->phy.radio_locked = true;
-#endif
+#पूर्ण_अगर
 
-	macctl = b43_read32(dev, B43_MMIO_MACCTL);
+	macctl = b43_पढ़ो32(dev, B43_MMIO_MACCTL);
 	macctl |= B43_MACCTL_RADIOLOCK;
-	b43_write32(dev, B43_MMIO_MACCTL, macctl);
-	/* Commit the write and wait for the firmware
-	 * to finish any radio register access. */
-	b43_read32(dev, B43_MMIO_MACCTL);
+	b43_ग_लिखो32(dev, B43_MMIO_MACCTL, macctl);
+	/* Commit the ग_लिखो and रुको क्रम the firmware
+	 * to finish any radio रेजिस्टर access. */
+	b43_पढ़ो32(dev, B43_MMIO_MACCTL);
 	udelay(10);
-}
+पूर्ण
 
-void b43_radio_unlock(struct b43_wldev *dev)
-{
+व्योम b43_radio_unlock(काष्ठा b43_wldev *dev)
+अणु
 	u32 macctl;
 
-#if B43_DEBUG
+#अगर B43_DEBUG
 	B43_WARN_ON(!dev->phy.radio_locked);
 	dev->phy.radio_locked = false;
-#endif
+#पूर्ण_अगर
 
-	/* Commit any write */
-	b43_read16(dev, B43_MMIO_PHY_VER);
+	/* Commit any ग_लिखो */
+	b43_पढ़ो16(dev, B43_MMIO_PHY_VER);
 	/* unlock */
-	macctl = b43_read32(dev, B43_MMIO_MACCTL);
+	macctl = b43_पढ़ो32(dev, B43_MMIO_MACCTL);
 	macctl &= ~B43_MACCTL_RADIOLOCK;
-	b43_write32(dev, B43_MMIO_MACCTL, macctl);
-}
+	b43_ग_लिखो32(dev, B43_MMIO_MACCTL, macctl);
+पूर्ण
 
-void b43_phy_lock(struct b43_wldev *dev)
-{
-#if B43_DEBUG
+व्योम b43_phy_lock(काष्ठा b43_wldev *dev)
+अणु
+#अगर B43_DEBUG
 	B43_WARN_ON(dev->phy.phy_locked);
 	dev->phy.phy_locked = true;
-#endif
+#पूर्ण_अगर
 	B43_WARN_ON(dev->dev->core_rev < 3);
 
-	if (!b43_is_mode(dev->wl, NL80211_IFTYPE_AP))
-		b43_power_saving_ctl_bits(dev, B43_PS_AWAKE);
-}
+	अगर (!b43_is_mode(dev->wl, NL80211_IFTYPE_AP))
+		b43_घातer_saving_ctl_bits(dev, B43_PS_AWAKE);
+पूर्ण
 
-void b43_phy_unlock(struct b43_wldev *dev)
-{
-#if B43_DEBUG
+व्योम b43_phy_unlock(काष्ठा b43_wldev *dev)
+अणु
+#अगर B43_DEBUG
 	B43_WARN_ON(!dev->phy.phy_locked);
 	dev->phy.phy_locked = false;
-#endif
+#पूर्ण_अगर
 	B43_WARN_ON(dev->dev->core_rev < 3);
 
-	if (!b43_is_mode(dev->wl, NL80211_IFTYPE_AP))
-		b43_power_saving_ctl_bits(dev, 0);
-}
+	अगर (!b43_is_mode(dev->wl, NL80211_IFTYPE_AP))
+		b43_घातer_saving_ctl_bits(dev, 0);
+पूर्ण
 
-static inline void assert_mac_suspended(struct b43_wldev *dev)
-{
-	if (!B43_DEBUG)
-		return;
-	if ((b43_status(dev) >= B43_STAT_INITIALIZED) &&
-	    (dev->mac_suspended <= 0)) {
+अटल अंतरभूत व्योम निश्चित_mac_suspended(काष्ठा b43_wldev *dev)
+अणु
+	अगर (!B43_DEBUG)
+		वापस;
+	अगर ((b43_status(dev) >= B43_STAT_INITIALIZED) &&
+	    (dev->mac_suspended <= 0)) अणु
 		b43dbg(dev->wl, "PHY/RADIO register access with "
 		       "enabled MAC.\n");
 		dump_stack();
-	}
-}
+	पूर्ण
+पूर्ण
 
-u16 b43_radio_read(struct b43_wldev *dev, u16 reg)
-{
-	assert_mac_suspended(dev);
-	dev->phy.writes_counter = 0;
-	return dev->phy.ops->radio_read(dev, reg);
-}
+u16 b43_radio_पढ़ो(काष्ठा b43_wldev *dev, u16 reg)
+अणु
+	निश्चित_mac_suspended(dev);
+	dev->phy.ग_लिखोs_counter = 0;
+	वापस dev->phy.ops->radio_पढ़ो(dev, reg);
+पूर्ण
 
-void b43_radio_write(struct b43_wldev *dev, u16 reg, u16 value)
-{
-	assert_mac_suspended(dev);
-	if (b43_bus_host_is_pci(dev->dev) &&
-	    ++dev->phy.writes_counter > B43_MAX_WRITES_IN_ROW) {
-		b43_read32(dev, B43_MMIO_MACCTL);
-		dev->phy.writes_counter = 1;
-	}
-	dev->phy.ops->radio_write(dev, reg, value);
-}
+व्योम b43_radio_ग_लिखो(काष्ठा b43_wldev *dev, u16 reg, u16 value)
+अणु
+	निश्चित_mac_suspended(dev);
+	अगर (b43_bus_host_is_pci(dev->dev) &&
+	    ++dev->phy.ग_लिखोs_counter > B43_MAX_WRITES_IN_ROW) अणु
+		b43_पढ़ो32(dev, B43_MMIO_MACCTL);
+		dev->phy.ग_लिखोs_counter = 1;
+	पूर्ण
+	dev->phy.ops->radio_ग_लिखो(dev, reg, value);
+पूर्ण
 
-void b43_radio_mask(struct b43_wldev *dev, u16 offset, u16 mask)
-{
-	b43_radio_write16(dev, offset,
-			  b43_radio_read16(dev, offset) & mask);
-}
+व्योम b43_radio_mask(काष्ठा b43_wldev *dev, u16 offset, u16 mask)
+अणु
+	b43_radio_ग_लिखो16(dev, offset,
+			  b43_radio_पढ़ो16(dev, offset) & mask);
+पूर्ण
 
-void b43_radio_set(struct b43_wldev *dev, u16 offset, u16 set)
-{
-	b43_radio_write16(dev, offset,
-			  b43_radio_read16(dev, offset) | set);
-}
+व्योम b43_radio_set(काष्ठा b43_wldev *dev, u16 offset, u16 set)
+अणु
+	b43_radio_ग_लिखो16(dev, offset,
+			  b43_radio_पढ़ो16(dev, offset) | set);
+पूर्ण
 
-void b43_radio_maskset(struct b43_wldev *dev, u16 offset, u16 mask, u16 set)
-{
-	b43_radio_write16(dev, offset,
-			  (b43_radio_read16(dev, offset) & mask) | set);
-}
+व्योम b43_radio_maskset(काष्ठा b43_wldev *dev, u16 offset, u16 mask, u16 set)
+अणु
+	b43_radio_ग_लिखो16(dev, offset,
+			  (b43_radio_पढ़ो16(dev, offset) & mask) | set);
+पूर्ण
 
-bool b43_radio_wait_value(struct b43_wldev *dev, u16 offset, u16 mask,
-			  u16 value, int delay, int timeout)
-{
+bool b43_radio_रुको_value(काष्ठा b43_wldev *dev, u16 offset, u16 mask,
+			  u16 value, पूर्णांक delay, पूर्णांक समयout)
+अणु
 	u16 val;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < timeout; i += delay) {
-		val = b43_radio_read(dev, offset);
-		if ((val & mask) == value)
-			return true;
+	क्रम (i = 0; i < समयout; i += delay) अणु
+		val = b43_radio_पढ़ो(dev, offset);
+		अगर ((val & mask) == value)
+			वापस true;
 		udelay(delay);
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
-u16 b43_phy_read(struct b43_wldev *dev, u16 reg)
-{
-	assert_mac_suspended(dev);
-	dev->phy.writes_counter = 0;
+u16 b43_phy_पढ़ो(काष्ठा b43_wldev *dev, u16 reg)
+अणु
+	निश्चित_mac_suspended(dev);
+	dev->phy.ग_लिखोs_counter = 0;
 
-	if (dev->phy.ops->phy_read)
-		return dev->phy.ops->phy_read(dev, reg);
+	अगर (dev->phy.ops->phy_पढ़ो)
+		वापस dev->phy.ops->phy_पढ़ो(dev, reg);
 
-	b43_write16f(dev, B43_MMIO_PHY_CONTROL, reg);
-	return b43_read16(dev, B43_MMIO_PHY_DATA);
-}
+	b43_ग_लिखो16f(dev, B43_MMIO_PHY_CONTROL, reg);
+	वापस b43_पढ़ो16(dev, B43_MMIO_PHY_DATA);
+पूर्ण
 
-void b43_phy_write(struct b43_wldev *dev, u16 reg, u16 value)
-{
-	assert_mac_suspended(dev);
-	if (b43_bus_host_is_pci(dev->dev) &&
-	    ++dev->phy.writes_counter > B43_MAX_WRITES_IN_ROW) {
-		b43_read16(dev, B43_MMIO_PHY_VER);
-		dev->phy.writes_counter = 1;
-	}
+व्योम b43_phy_ग_लिखो(काष्ठा b43_wldev *dev, u16 reg, u16 value)
+अणु
+	निश्चित_mac_suspended(dev);
+	अगर (b43_bus_host_is_pci(dev->dev) &&
+	    ++dev->phy.ग_लिखोs_counter > B43_MAX_WRITES_IN_ROW) अणु
+		b43_पढ़ो16(dev, B43_MMIO_PHY_VER);
+		dev->phy.ग_लिखोs_counter = 1;
+	पूर्ण
 
-	if (dev->phy.ops->phy_write)
-		return dev->phy.ops->phy_write(dev, reg, value);
+	अगर (dev->phy.ops->phy_ग_लिखो)
+		वापस dev->phy.ops->phy_ग_लिखो(dev, reg, value);
 
-	b43_write16f(dev, B43_MMIO_PHY_CONTROL, reg);
-	b43_write16(dev, B43_MMIO_PHY_DATA, value);
-}
+	b43_ग_लिखो16f(dev, B43_MMIO_PHY_CONTROL, reg);
+	b43_ग_लिखो16(dev, B43_MMIO_PHY_DATA, value);
+पूर्ण
 
-void b43_phy_copy(struct b43_wldev *dev, u16 destreg, u16 srcreg)
-{
-	b43_phy_write(dev, destreg, b43_phy_read(dev, srcreg));
-}
+व्योम b43_phy_copy(काष्ठा b43_wldev *dev, u16 destreg, u16 srcreg)
+अणु
+	b43_phy_ग_लिखो(dev, destreg, b43_phy_पढ़ो(dev, srcreg));
+पूर्ण
 
-void b43_phy_mask(struct b43_wldev *dev, u16 offset, u16 mask)
-{
-	if (dev->phy.ops->phy_maskset) {
-		assert_mac_suspended(dev);
+व्योम b43_phy_mask(काष्ठा b43_wldev *dev, u16 offset, u16 mask)
+अणु
+	अगर (dev->phy.ops->phy_maskset) अणु
+		निश्चित_mac_suspended(dev);
 		dev->phy.ops->phy_maskset(dev, offset, mask, 0);
-	} else {
-		b43_phy_write(dev, offset,
-			      b43_phy_read(dev, offset) & mask);
-	}
-}
+	पूर्ण अन्यथा अणु
+		b43_phy_ग_लिखो(dev, offset,
+			      b43_phy_पढ़ो(dev, offset) & mask);
+	पूर्ण
+पूर्ण
 
-void b43_phy_set(struct b43_wldev *dev, u16 offset, u16 set)
-{
-	if (dev->phy.ops->phy_maskset) {
-		assert_mac_suspended(dev);
+व्योम b43_phy_set(काष्ठा b43_wldev *dev, u16 offset, u16 set)
+अणु
+	अगर (dev->phy.ops->phy_maskset) अणु
+		निश्चित_mac_suspended(dev);
 		dev->phy.ops->phy_maskset(dev, offset, 0xFFFF, set);
-	} else {
-		b43_phy_write(dev, offset,
-			      b43_phy_read(dev, offset) | set);
-	}
-}
+	पूर्ण अन्यथा अणु
+		b43_phy_ग_लिखो(dev, offset,
+			      b43_phy_पढ़ो(dev, offset) | set);
+	पूर्ण
+पूर्ण
 
-void b43_phy_maskset(struct b43_wldev *dev, u16 offset, u16 mask, u16 set)
-{
-	if (dev->phy.ops->phy_maskset) {
-		assert_mac_suspended(dev);
+व्योम b43_phy_maskset(काष्ठा b43_wldev *dev, u16 offset, u16 mask, u16 set)
+अणु
+	अगर (dev->phy.ops->phy_maskset) अणु
+		निश्चित_mac_suspended(dev);
 		dev->phy.ops->phy_maskset(dev, offset, mask, set);
-	} else {
-		b43_phy_write(dev, offset,
-			      (b43_phy_read(dev, offset) & mask) | set);
-	}
-}
+	पूर्ण अन्यथा अणु
+		b43_phy_ग_लिखो(dev, offset,
+			      (b43_phy_पढ़ो(dev, offset) & mask) | set);
+	पूर्ण
+पूर्ण
 
-void b43_phy_put_into_reset(struct b43_wldev *dev)
-{
-	u32 tmp;
+व्योम b43_phy_put_पूर्णांकo_reset(काष्ठा b43_wldev *dev)
+अणु
+	u32 पंचांगp;
 
-	switch (dev->dev->bus_type) {
-#ifdef CONFIG_B43_BCMA
-	case B43_BUS_BCMA:
-		tmp = bcma_aread32(dev->dev->bdev, BCMA_IOCTL);
-		tmp &= ~B43_BCMA_IOCTL_GMODE;
-		tmp |= B43_BCMA_IOCTL_PHY_RESET;
-		tmp |= BCMA_IOCTL_FGC;
-		bcma_awrite32(dev->dev->bdev, BCMA_IOCTL, tmp);
+	चयन (dev->dev->bus_type) अणु
+#अगर_घोषित CONFIG_B43_BCMA
+	हाल B43_BUS_BCMA:
+		पंचांगp = bcma_aपढ़ो32(dev->dev->bdev, BCMA_IOCTL);
+		पंचांगp &= ~B43_BCMA_IOCTL_GMODE;
+		पंचांगp |= B43_BCMA_IOCTL_PHY_RESET;
+		पंचांगp |= BCMA_IOCTL_FGC;
+		bcma_aग_लिखो32(dev->dev->bdev, BCMA_IOCTL, पंचांगp);
 		udelay(1);
 
-		tmp = bcma_aread32(dev->dev->bdev, BCMA_IOCTL);
-		tmp &= ~BCMA_IOCTL_FGC;
-		bcma_awrite32(dev->dev->bdev, BCMA_IOCTL, tmp);
+		पंचांगp = bcma_aपढ़ो32(dev->dev->bdev, BCMA_IOCTL);
+		पंचांगp &= ~BCMA_IOCTL_FGC;
+		bcma_aग_लिखो32(dev->dev->bdev, BCMA_IOCTL, पंचांगp);
 		udelay(1);
-		break;
-#endif
-#ifdef CONFIG_B43_SSB
-	case B43_BUS_SSB:
-		tmp = ssb_read32(dev->dev->sdev, SSB_TMSLOW);
-		tmp &= ~B43_TMSLOW_GMODE;
-		tmp |= B43_TMSLOW_PHYRESET;
-		tmp |= SSB_TMSLOW_FGC;
-		ssb_write32(dev->dev->sdev, SSB_TMSLOW, tmp);
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_B43_SSB
+	हाल B43_BUS_SSB:
+		पंचांगp = ssb_पढ़ो32(dev->dev->sdev, SSB_TMSLOW);
+		पंचांगp &= ~B43_TMSLOW_GMODE;
+		पंचांगp |= B43_TMSLOW_PHYRESET;
+		पंचांगp |= SSB_TMSLOW_FGC;
+		ssb_ग_लिखो32(dev->dev->sdev, SSB_TMSLOW, पंचांगp);
 		usleep_range(1000, 2000);
 
-		tmp = ssb_read32(dev->dev->sdev, SSB_TMSLOW);
-		tmp &= ~SSB_TMSLOW_FGC;
-		ssb_write32(dev->dev->sdev, SSB_TMSLOW, tmp);
+		पंचांगp = ssb_पढ़ो32(dev->dev->sdev, SSB_TMSLOW);
+		पंचांगp &= ~SSB_TMSLOW_FGC;
+		ssb_ग_लिखो32(dev->dev->sdev, SSB_TMSLOW, पंचांगp);
 		usleep_range(1000, 2000);
 
-		break;
-#endif
-	}
-}
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-void b43_phy_take_out_of_reset(struct b43_wldev *dev)
-{
-	u32 tmp;
+व्योम b43_phy_take_out_of_reset(काष्ठा b43_wldev *dev)
+अणु
+	u32 पंचांगp;
 
-	switch (dev->dev->bus_type) {
-#ifdef CONFIG_B43_BCMA
-	case B43_BUS_BCMA:
-		/* Unset reset bit (with forcing clock) */
-		tmp = bcma_aread32(dev->dev->bdev, BCMA_IOCTL);
-		tmp &= ~B43_BCMA_IOCTL_PHY_RESET;
-		tmp &= ~B43_BCMA_IOCTL_PHY_CLKEN;
-		tmp |= BCMA_IOCTL_FGC;
-		bcma_awrite32(dev->dev->bdev, BCMA_IOCTL, tmp);
+	चयन (dev->dev->bus_type) अणु
+#अगर_घोषित CONFIG_B43_BCMA
+	हाल B43_BUS_BCMA:
+		/* Unset reset bit (with क्रमcing घड़ी) */
+		पंचांगp = bcma_aपढ़ो32(dev->dev->bdev, BCMA_IOCTL);
+		पंचांगp &= ~B43_BCMA_IOCTL_PHY_RESET;
+		पंचांगp &= ~B43_BCMA_IOCTL_PHY_CLKEN;
+		पंचांगp |= BCMA_IOCTL_FGC;
+		bcma_aग_लिखो32(dev->dev->bdev, BCMA_IOCTL, पंचांगp);
 		udelay(1);
 
-		/* Do not force clock anymore */
-		tmp = bcma_aread32(dev->dev->bdev, BCMA_IOCTL);
-		tmp &= ~BCMA_IOCTL_FGC;
-		tmp |= B43_BCMA_IOCTL_PHY_CLKEN;
-		bcma_awrite32(dev->dev->bdev, BCMA_IOCTL, tmp);
+		/* Do not क्रमce घड़ी anymore */
+		पंचांगp = bcma_aपढ़ो32(dev->dev->bdev, BCMA_IOCTL);
+		पंचांगp &= ~BCMA_IOCTL_FGC;
+		पंचांगp |= B43_BCMA_IOCTL_PHY_CLKEN;
+		bcma_aग_लिखो32(dev->dev->bdev, BCMA_IOCTL, पंचांगp);
 		udelay(1);
-		break;
-#endif
-#ifdef CONFIG_B43_SSB
-	case B43_BUS_SSB:
-		/* Unset reset bit (with forcing clock) */
-		tmp = ssb_read32(dev->dev->sdev, SSB_TMSLOW);
-		tmp &= ~B43_TMSLOW_PHYRESET;
-		tmp &= ~B43_TMSLOW_PHYCLKEN;
-		tmp |= SSB_TMSLOW_FGC;
-		ssb_write32(dev->dev->sdev, SSB_TMSLOW, tmp);
-		ssb_read32(dev->dev->sdev, SSB_TMSLOW); /* flush */
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_B43_SSB
+	हाल B43_BUS_SSB:
+		/* Unset reset bit (with क्रमcing घड़ी) */
+		पंचांगp = ssb_पढ़ो32(dev->dev->sdev, SSB_TMSLOW);
+		पंचांगp &= ~B43_TMSLOW_PHYRESET;
+		पंचांगp &= ~B43_TMSLOW_PHYCLKEN;
+		पंचांगp |= SSB_TMSLOW_FGC;
+		ssb_ग_लिखो32(dev->dev->sdev, SSB_TMSLOW, पंचांगp);
+		ssb_पढ़ो32(dev->dev->sdev, SSB_TMSLOW); /* flush */
 		usleep_range(1000, 2000);
 
-		tmp = ssb_read32(dev->dev->sdev, SSB_TMSLOW);
-		tmp &= ~SSB_TMSLOW_FGC;
-		tmp |= B43_TMSLOW_PHYCLKEN;
-		ssb_write32(dev->dev->sdev, SSB_TMSLOW, tmp);
-		ssb_read32(dev->dev->sdev, SSB_TMSLOW); /* flush */
+		पंचांगp = ssb_पढ़ो32(dev->dev->sdev, SSB_TMSLOW);
+		पंचांगp &= ~SSB_TMSLOW_FGC;
+		पंचांगp |= B43_TMSLOW_PHYCLKEN;
+		ssb_ग_लिखो32(dev->dev->sdev, SSB_TMSLOW, पंचांगp);
+		ssb_पढ़ो32(dev->dev->sdev, SSB_TMSLOW); /* flush */
 		usleep_range(1000, 2000);
-		break;
-#endif
-	}
-}
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-int b43_switch_channel(struct b43_wldev *dev, unsigned int new_channel)
-{
-	struct b43_phy *phy = &(dev->phy);
+पूर्णांक b43_चयन_channel(काष्ठा b43_wldev *dev, अचिन्हित पूर्णांक new_channel)
+अणु
+	काष्ठा b43_phy *phy = &(dev->phy);
 	u16 channelcookie, savedcookie;
-	int err;
+	पूर्णांक err;
 
 	/* First we set the channel radio code to prevent the
 	 * firmware from sending ghost packets.
 	 */
 	channelcookie = new_channel;
-	if (b43_current_band(dev->wl) == NL80211_BAND_5GHZ)
+	अगर (b43_current_band(dev->wl) == NL80211_BAND_5GHZ)
 		channelcookie |= B43_SHM_SH_CHAN_5GHZ;
-	/* FIXME: set 40Mhz flag if required */
-	if (0)
+	/* FIXME: set 40Mhz flag अगर required */
+	अगर (0)
 		channelcookie |= B43_SHM_SH_CHAN_40MHZ;
-	savedcookie = b43_shm_read16(dev, B43_SHM_SHARED, B43_SHM_SH_CHAN);
-	b43_shm_write16(dev, B43_SHM_SHARED, B43_SHM_SH_CHAN, channelcookie);
+	savedcookie = b43_shm_पढ़ो16(dev, B43_SHM_SHARED, B43_SHM_SH_CHAN);
+	b43_shm_ग_लिखो16(dev, B43_SHM_SHARED, B43_SHM_SH_CHAN, channelcookie);
 
-	/* Now try to switch the PHY hardware channel. */
-	err = phy->ops->switch_channel(dev, new_channel);
-	if (err)
-		goto err_restore_cookie;
+	/* Now try to चयन the PHY hardware channel. */
+	err = phy->ops->चयन_channel(dev, new_channel);
+	अगर (err)
+		जाओ err_restore_cookie;
 
-	/* Wait for the radio to tune to the channel and stabilize. */
+	/* Wait क्रम the radio to tune to the channel and stabilize. */
 	msleep(8);
 
-	return 0;
+	वापस 0;
 
 err_restore_cookie:
-	b43_shm_write16(dev, B43_SHM_SHARED,
+	b43_shm_ग_लिखो16(dev, B43_SHM_SHARED,
 			B43_SHM_SH_CHAN, savedcookie);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void b43_software_rfkill(struct b43_wldev *dev, bool blocked)
-{
-	struct b43_phy *phy = &dev->phy;
+व्योम b43_software_rfसमाप्त(काष्ठा b43_wldev *dev, bool blocked)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
 
 	b43_mac_suspend(dev);
-	phy->ops->software_rfkill(dev, blocked);
+	phy->ops->software_rfसमाप्त(dev, blocked);
 	phy->radio_on = !blocked;
 	b43_mac_enable(dev);
-}
+पूर्ण
 
 /*
- * b43_phy_txpower_adjust_work - TX power workqueue.
+ * b43_phy_txघातer_adjust_work - TX घातer workqueue.
  *
- * Workqueue for updating the TX power parameters in hardware.
+ * Workqueue क्रम updating the TX घातer parameters in hardware.
  */
-void b43_phy_txpower_adjust_work(struct work_struct *work)
-{
-	struct b43_wl *wl = container_of(work, struct b43_wl,
-					 txpower_adjust_work);
-	struct b43_wldev *dev;
+व्योम b43_phy_txघातer_adjust_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा b43_wl *wl = container_of(work, काष्ठा b43_wl,
+					 txघातer_adjust_work);
+	काष्ठा b43_wldev *dev;
 
 	mutex_lock(&wl->mutex);
 	dev = wl->current_dev;
 
-	if (likely(dev && (b43_status(dev) >= B43_STAT_STARTED)))
-		dev->phy.ops->adjust_txpower(dev);
+	अगर (likely(dev && (b43_status(dev) >= B43_STAT_STARTED)))
+		dev->phy.ops->adjust_txघातer(dev);
 
 	mutex_unlock(&wl->mutex);
-}
+पूर्ण
 
-void b43_phy_txpower_check(struct b43_wldev *dev, unsigned int flags)
-{
-	struct b43_phy *phy = &dev->phy;
-	unsigned long now = jiffies;
-	enum b43_txpwr_result result;
+व्योम b43_phy_txघातer_check(काष्ठा b43_wldev *dev, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	अचिन्हित दीर्घ now = jअगरfies;
+	क्रमागत b43_txpwr_result result;
 
-	if (!(flags & B43_TXPWR_IGNORE_TIME)) {
-		/* Check if it's time for a TXpower check. */
-		if (time_before(now, phy->next_txpwr_check_time))
-			return; /* Not yet */
-	}
+	अगर (!(flags & B43_TXPWR_IGNORE_TIME)) अणु
+		/* Check अगर it's समय क्रम a TXघातer check. */
+		अगर (समय_beक्रमe(now, phy->next_txpwr_check_समय))
+			वापस; /* Not yet */
+	पूर्ण
 	/* The next check will be needed in two seconds, or later. */
-	phy->next_txpwr_check_time = round_jiffies(now + (HZ * 2));
+	phy->next_txpwr_check_समय = round_jअगरfies(now + (HZ * 2));
 
-	if ((dev->dev->board_vendor == SSB_BOARDVENDOR_BCM) &&
+	अगर ((dev->dev->board_venकरोr == SSB_BOARDVENDOR_BCM) &&
 	    (dev->dev->board_type == SSB_BOARD_BU4306))
-		return; /* No software txpower adjustment needed */
+		वापस; /* No software txघातer adjusपंचांगent needed */
 
-	result = phy->ops->recalc_txpower(dev, !!(flags & B43_TXPWR_IGNORE_TSSI));
-	if (result == B43_TXPWR_RES_DONE)
-		return; /* We are done. */
+	result = phy->ops->recalc_txघातer(dev, !!(flags & B43_TXPWR_IGNORE_TSSI));
+	अगर (result == B43_TXPWR_RES_DONE)
+		वापस; /* We are करोne. */
 	B43_WARN_ON(result != B43_TXPWR_RES_NEED_ADJUST);
-	B43_WARN_ON(phy->ops->adjust_txpower == NULL);
+	B43_WARN_ON(phy->ops->adjust_txघातer == शून्य);
 
-	/* We must adjust the transmission power in hardware.
-	 * Schedule b43_phy_txpower_adjust_work(). */
-	ieee80211_queue_work(dev->wl->hw, &dev->wl->txpower_adjust_work);
-}
+	/* We must adjust the transmission घातer in hardware.
+	 * Schedule b43_phy_txघातer_adjust_work(). */
+	ieee80211_queue_work(dev->wl->hw, &dev->wl->txघातer_adjust_work);
+पूर्ण
 
-int b43_phy_shm_tssi_read(struct b43_wldev *dev, u16 shm_offset)
-{
-	const bool is_ofdm = (shm_offset != B43_SHM_SH_TSSI_CCK);
-	unsigned int a, b, c, d;
-	unsigned int average;
-	u32 tmp;
+पूर्णांक b43_phy_shm_tssi_पढ़ो(काष्ठा b43_wldev *dev, u16 shm_offset)
+अणु
+	स्थिर bool is_ofdm = (shm_offset != B43_SHM_SH_TSSI_CCK);
+	अचिन्हित पूर्णांक a, b, c, d;
+	अचिन्हित पूर्णांक average;
+	u32 पंचांगp;
 
-	tmp = b43_shm_read32(dev, B43_SHM_SHARED, shm_offset);
-	a = tmp & 0xFF;
-	b = (tmp >> 8) & 0xFF;
-	c = (tmp >> 16) & 0xFF;
-	d = (tmp >> 24) & 0xFF;
-	if (a == 0 || a == B43_TSSI_MAX ||
+	पंचांगp = b43_shm_पढ़ो32(dev, B43_SHM_SHARED, shm_offset);
+	a = पंचांगp & 0xFF;
+	b = (पंचांगp >> 8) & 0xFF;
+	c = (पंचांगp >> 16) & 0xFF;
+	d = (पंचांगp >> 24) & 0xFF;
+	अगर (a == 0 || a == B43_TSSI_MAX ||
 	    b == 0 || b == B43_TSSI_MAX ||
 	    c == 0 || c == B43_TSSI_MAX ||
 	    d == 0 || d == B43_TSSI_MAX)
-		return -ENOENT;
+		वापस -ENOENT;
 	/* The values are OK. Clear them. */
-	tmp = B43_TSSI_MAX | (B43_TSSI_MAX << 8) |
+	पंचांगp = B43_TSSI_MAX | (B43_TSSI_MAX << 8) |
 	      (B43_TSSI_MAX << 16) | (B43_TSSI_MAX << 24);
-	b43_shm_write32(dev, B43_SHM_SHARED, shm_offset, tmp);
+	b43_shm_ग_लिखो32(dev, B43_SHM_SHARED, shm_offset, पंचांगp);
 
-	if (is_ofdm) {
+	अगर (is_ofdm) अणु
 		a = (a + 32) & 0x3F;
 		b = (b + 32) & 0x3F;
 		c = (c + 32) & 0x3F;
 		d = (d + 32) & 0x3F;
-	}
+	पूर्ण
 
 	/* Get the average of the values with 0.5 added to each value. */
 	average = (a + b + c + d + 2) / 4;
-	if (is_ofdm) {
-		/* Adjust for CCK-boost */
-		if (b43_shm_read16(dev, B43_SHM_SHARED, B43_SHM_SH_HOSTF1)
+	अगर (is_ofdm) अणु
+		/* Adjust क्रम CCK-boost */
+		अगर (b43_shm_पढ़ो16(dev, B43_SHM_SHARED, B43_SHM_SH_HOSTF1)
 		    & B43_HF_CCKBOOST)
 			average = (average >= 13) ? (average - 13) : 0;
-	}
+	पूर्ण
 
-	return average;
-}
+	वापस average;
+पूर्ण
 
-void b43_phyop_switch_analog_generic(struct b43_wldev *dev, bool on)
-{
-	b43_write16(dev, B43_MMIO_PHY0, on ? 0 : 0xF4);
-}
+व्योम b43_phyop_चयन_analog_generic(काष्ठा b43_wldev *dev, bool on)
+अणु
+	b43_ग_लिखो16(dev, B43_MMIO_PHY0, on ? 0 : 0xF4);
+पूर्ण
 
 
-bool b43_is_40mhz(struct b43_wldev *dev)
-{
-	return dev->phy.chandef->width == NL80211_CHAN_WIDTH_40;
-}
+bool b43_is_40mhz(काष्ठा b43_wldev *dev)
+अणु
+	वापस dev->phy.chandef->width == NL80211_CHAN_WIDTH_40;
+पूर्ण
 
 /* https://bcm-v4.sipsolutions.net/802.11/PHY/N/BmacPhyClkFgc */
-void b43_phy_force_clock(struct b43_wldev *dev, bool force)
-{
-	u32 tmp;
+व्योम b43_phy_क्रमce_घड़ी(काष्ठा b43_wldev *dev, bool क्रमce)
+अणु
+	u32 पंचांगp;
 
 	WARN_ON(dev->phy.type != B43_PHYTYPE_N &&
 		dev->phy.type != B43_PHYTYPE_HT &&
 		dev->phy.type != B43_PHYTYPE_AC);
 
-	switch (dev->dev->bus_type) {
-#ifdef CONFIG_B43_BCMA
-	case B43_BUS_BCMA:
-		tmp = bcma_aread32(dev->dev->bdev, BCMA_IOCTL);
-		if (force)
-			tmp |= BCMA_IOCTL_FGC;
-		else
-			tmp &= ~BCMA_IOCTL_FGC;
-		bcma_awrite32(dev->dev->bdev, BCMA_IOCTL, tmp);
-		break;
-#endif
-#ifdef CONFIG_B43_SSB
-	case B43_BUS_SSB:
-		tmp = ssb_read32(dev->dev->sdev, SSB_TMSLOW);
-		if (force)
-			tmp |= SSB_TMSLOW_FGC;
-		else
-			tmp &= ~SSB_TMSLOW_FGC;
-		ssb_write32(dev->dev->sdev, SSB_TMSLOW, tmp);
-		break;
-#endif
-	}
-}
+	चयन (dev->dev->bus_type) अणु
+#अगर_घोषित CONFIG_B43_BCMA
+	हाल B43_BUS_BCMA:
+		पंचांगp = bcma_aपढ़ो32(dev->dev->bdev, BCMA_IOCTL);
+		अगर (क्रमce)
+			पंचांगp |= BCMA_IOCTL_FGC;
+		अन्यथा
+			पंचांगp &= ~BCMA_IOCTL_FGC;
+		bcma_aग_लिखो32(dev->dev->bdev, BCMA_IOCTL, पंचांगp);
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_B43_SSB
+	हाल B43_BUS_SSB:
+		पंचांगp = ssb_पढ़ो32(dev->dev->sdev, SSB_TMSLOW);
+		अगर (क्रमce)
+			पंचांगp |= SSB_TMSLOW_FGC;
+		अन्यथा
+			पंचांगp &= ~SSB_TMSLOW_FGC;
+		ssb_ग_लिखो32(dev->dev->sdev, SSB_TMSLOW, पंचांगp);
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण

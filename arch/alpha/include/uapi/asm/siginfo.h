@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ALPHA_SIGINFO_H
-#define _ALPHA_SIGINFO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ALPHA_SIGINFO_H
+#घोषणा _ALPHA_SIGINFO_H
 
-#define __ARCH_SI_TRAPNO
+#घोषणा __ARCH_SI_TRAPNO
 
-#include <asm-generic/siginfo.h>
+#समावेश <यंत्र-generic/siginfo.h>
 
-#endif
+#पूर्ण_अगर

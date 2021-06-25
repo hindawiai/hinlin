@@ -1,6 +1,7 @@
-#ifndef _SPARC_USER_H
-#define _SPARC_USER_H
+<शैली गुरु>
+#अगर_अघोषित _SPARC_USER_H
+#घोषणा _SPARC_USER_H
 
 /* Nothing to define.  */
 
-#endif /* !(_SPARC_USER_H) */
+#पूर्ण_अगर /* !(_SPARC_USER_H) */

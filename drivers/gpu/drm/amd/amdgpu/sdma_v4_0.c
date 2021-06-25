@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,42 +22,42 @@
  *
  */
 
-#include <linux/delay.h>
-#include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
-#include "amdgpu.h"
-#include "amdgpu_ucode.h"
-#include "amdgpu_trace.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_ucode.h"
+#समावेश "amdgpu_trace.h"
 
-#include "sdma0/sdma0_4_2_offset.h"
-#include "sdma0/sdma0_4_2_sh_mask.h"
-#include "sdma1/sdma1_4_2_offset.h"
-#include "sdma1/sdma1_4_2_sh_mask.h"
-#include "sdma2/sdma2_4_2_2_offset.h"
-#include "sdma2/sdma2_4_2_2_sh_mask.h"
-#include "sdma3/sdma3_4_2_2_offset.h"
-#include "sdma3/sdma3_4_2_2_sh_mask.h"
-#include "sdma4/sdma4_4_2_2_offset.h"
-#include "sdma4/sdma4_4_2_2_sh_mask.h"
-#include "sdma5/sdma5_4_2_2_offset.h"
-#include "sdma5/sdma5_4_2_2_sh_mask.h"
-#include "sdma6/sdma6_4_2_2_offset.h"
-#include "sdma6/sdma6_4_2_2_sh_mask.h"
-#include "sdma7/sdma7_4_2_2_offset.h"
-#include "sdma7/sdma7_4_2_2_sh_mask.h"
-#include "sdma0/sdma0_4_1_default.h"
+#समावेश "sdma0/sdma0_4_2_offset.h"
+#समावेश "sdma0/sdma0_4_2_sh_mask.h"
+#समावेश "sdma1/sdma1_4_2_offset.h"
+#समावेश "sdma1/sdma1_4_2_sh_mask.h"
+#समावेश "sdma2/sdma2_4_2_2_offset.h"
+#समावेश "sdma2/sdma2_4_2_2_sh_mask.h"
+#समावेश "sdma3/sdma3_4_2_2_offset.h"
+#समावेश "sdma3/sdma3_4_2_2_sh_mask.h"
+#समावेश "sdma4/sdma4_4_2_2_offset.h"
+#समावेश "sdma4/sdma4_4_2_2_sh_mask.h"
+#समावेश "sdma5/sdma5_4_2_2_offset.h"
+#समावेश "sdma5/sdma5_4_2_2_sh_mask.h"
+#समावेश "sdma6/sdma6_4_2_2_offset.h"
+#समावेश "sdma6/sdma6_4_2_2_sh_mask.h"
+#समावेश "sdma7/sdma7_4_2_2_offset.h"
+#समावेश "sdma7/sdma7_4_2_2_sh_mask.h"
+#समावेश "sdma0/sdma0_4_1_default.h"
 
-#include "soc15_common.h"
-#include "soc15.h"
-#include "vega10_sdma_pkt_open.h"
+#समावेश "soc15_common.h"
+#समावेश "soc15.h"
+#समावेश "vega10_sdma_pkt_open.h"
 
-#include "ivsrcid/sdma0/irqsrcs_sdma0_4_0.h"
-#include "ivsrcid/sdma1/irqsrcs_sdma1_4_0.h"
+#समावेश "ivsrcid/sdma0/irqsrcs_sdma0_4_0.h"
+#समावेश "ivsrcid/sdma1/irqsrcs_sdma1_4_0.h"
 
-#include "amdgpu_ras.h"
-#include "sdma_v4_4.h"
+#समावेश "amdgpu_ras.h"
+#समावेश "sdma_v4_4.h"
 
 MODULE_FIRMWARE("amdgpu/vega10_sdma.bin");
 MODULE_FIRMWARE("amdgpu/vega10_sdma1.bin");
@@ -72,21 +73,21 @@ MODULE_FIRMWARE("amdgpu/renoir_sdma.bin");
 MODULE_FIRMWARE("amdgpu/green_sardine_sdma.bin");
 MODULE_FIRMWARE("amdgpu/aldebaran_sdma.bin");
 
-#define SDMA0_POWER_CNTL__ON_OFF_CONDITION_HOLD_TIME_MASK  0x000000F8L
-#define SDMA0_POWER_CNTL__ON_OFF_STATUS_DURATION_TIME_MASK 0xFC000000L
+#घोषणा SDMA0_POWER_CNTL__ON_OFF_CONDITION_HOLD_TIME_MASK  0x000000F8L
+#घोषणा SDMA0_POWER_CNTL__ON_OFF_STATUS_DURATION_TIME_MASK 0xFC000000L
 
-#define WREG32_SDMA(instance, offset, value) \
+#घोषणा WREG32_SDMA(instance, offset, value) \
 	WREG32(sdma_v4_0_get_reg_offset(adev, (instance), (offset)), value)
-#define RREG32_SDMA(instance, offset) \
+#घोषणा RREG32_SDMA(instance, offset) \
 	RREG32(sdma_v4_0_get_reg_offset(adev, (instance), (offset)))
 
-static void sdma_v4_0_set_ring_funcs(struct amdgpu_device *adev);
-static void sdma_v4_0_set_buffer_funcs(struct amdgpu_device *adev);
-static void sdma_v4_0_set_vm_pte_funcs(struct amdgpu_device *adev);
-static void sdma_v4_0_set_irq_funcs(struct amdgpu_device *adev);
-static void sdma_v4_0_set_ras_funcs(struct amdgpu_device *adev);
+अटल व्योम sdma_v4_0_set_ring_funcs(काष्ठा amdgpu_device *adev);
+अटल व्योम sdma_v4_0_set_buffer_funcs(काष्ठा amdgpu_device *adev);
+अटल व्योम sdma_v4_0_set_vm_pte_funcs(काष्ठा amdgpu_device *adev);
+अटल व्योम sdma_v4_0_set_irq_funcs(काष्ठा amdgpu_device *adev);
+अटल व्योम sdma_v4_0_set_ras_funcs(काष्ठा amdgpu_device *adev);
 
-static const struct soc15_reg_golden golden_settings_sdma_4[] = {
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma_4[] = अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_CHICKEN_BITS, 0xfe931f07, 0x02831d07),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_CLK_CTRL, 0xff000ff0, 0x3f000100),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GFX_IB_CNTL, 0x800f0100, 0x00000100),
@@ -112,9 +113,9 @@ static const struct soc15_reg_golden golden_settings_sdma_4[] = {
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_RLC1_RB_WPTR_POLL_CNTL, 0x0000fff0, 0x00403000),
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_UTCL1_PAGE, 0x000003ff, 0x000003c0),
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_UTCL1_WATERMK, 0xfc000000, 0x00000000)
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma_vg10[] = {
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma_vg10[] = अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG, 0x0018773f, 0x00104002),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG_READ, 0x0018773f, 0x00104002),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_UTCL1_TIMEOUT, 0xffffffff, 0x00010001),
@@ -122,9 +123,9 @@ static const struct soc15_reg_golden golden_settings_sdma_vg10[] = {
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_GB_ADDR_CONFIG, 0x0018773f, 0x00104002),
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_GB_ADDR_CONFIG_READ, 0x0018773f, 0x00104002),
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_UTCL1_TIMEOUT, 0xffffffff, 0x00010001),
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma_vg12[] = {
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma_vg12[] = अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG, 0x0018773f, 0x00104001),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG_READ, 0x0018773f, 0x00104001),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_UTCL1_TIMEOUT, 0xffffffff, 0x00010001),
@@ -132,9 +133,9 @@ static const struct soc15_reg_golden golden_settings_sdma_vg12[] = {
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_GB_ADDR_CONFIG, 0x0018773f, 0x00104001),
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_GB_ADDR_CONFIG_READ, 0x0018773f, 0x00104001),
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_UTCL1_TIMEOUT, 0xffffffff, 0x00010001),
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma_4_1[] = {
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma_4_1[] = अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_CHICKEN_BITS, 0xfe931f07, 0x02831d07),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_CLK_CTRL, 0xffffffff, 0x3f000100),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GFX_IB_CNTL, 0x800f0111, 0x00000100),
@@ -146,14 +147,14 @@ static const struct soc15_reg_golden golden_settings_sdma_4_1[] = {
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_RLC1_RB_WPTR_POLL_CNTL, 0xfffffff7, 0x00403000),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_UTCL1_PAGE, 0x000003ff, 0x000003c0),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_UTCL1_WATERMK, 0xfc000000, 0x00000000)
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma0_4_2_init[] = {
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma0_4_2_init[] = अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_RLC0_RB_WPTR_POLL_CNTL, 0xfffffff0, 0x00403000),
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma0_4_2[] =
-{
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma0_4_2[] =
+अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_CHICKEN_BITS, 0xfe931f07, 0x02831f07),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_CLK_CTRL, 0xffffffff, 0x3f000100),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG, 0x0000773f, 0x00004002),
@@ -181,9 +182,9 @@ static const struct soc15_reg_golden golden_settings_sdma0_4_2[] =
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_RLC7_RB_WPTR_POLL_CNTL, 0xfffffff7, 0x00403000),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_UTCL1_PAGE, 0x000003ff, 0x000003c0),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_UTCL1_TIMEOUT, 0xffffffff, 0x00010001),
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma1_4_2[] = {
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma1_4_2[] = अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_CHICKEN_BITS, 0xfe931f07, 0x02831f07),
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_CLK_CTRL, 0xffffffff, 0x3f000100),
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_GB_ADDR_CONFIG, 0x0000773f, 0x00004002),
@@ -211,22 +212,22 @@ static const struct soc15_reg_golden golden_settings_sdma1_4_2[] = {
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_RLC7_RB_WPTR_POLL_CNTL, 0xfffffff7, 0x00403000),
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_UTCL1_PAGE, 0x000003ff, 0x000003c0),
 	SOC15_REG_GOLDEN_VALUE(SDMA1, 0, mmSDMA1_UTCL1_TIMEOUT, 0xffffffff, 0x00010001),
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma_rv1[] =
-{
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma_rv1[] =
+अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG, 0x0018773f, 0x00000002),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG_READ, 0x0018773f, 0x00000002)
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma_rv2[] =
-{
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma_rv2[] =
+अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG, 0x0018773f, 0x00003001),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG_READ, 0x0018773f, 0x00003001)
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma_arct[] =
-{
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma_arct[] =
+अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_CHICKEN_BITS, 0xfe931f07, 0x02831f07),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG, 0x0000773f, 0x00004002),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG_READ, 0x0000773f, 0x00004002),
@@ -259,9 +260,9 @@ static const struct soc15_reg_golden golden_settings_sdma_arct[] =
 	SOC15_REG_GOLDEN_VALUE(SDMA7, 0, mmSDMA7_GB_ADDR_CONFIG, 0x0000773f, 0x00004002),
 	SOC15_REG_GOLDEN_VALUE(SDMA7, 0, mmSDMA7_GB_ADDR_CONFIG_READ, 0x0000773f, 0x00004002),
 	SOC15_REG_GOLDEN_VALUE(SDMA7, 0, mmSDMA7_UTCL1_TIMEOUT, 0xffffffff, 0x00010001)
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma_aldebaran[] = {
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma_aldebaran[] = अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG, 0x0018773f, 0x00104002),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG_READ, 0x0018773f, 0x00104002),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_UTCL1_TIMEOUT, 0xffffffff, 0x00010001),
@@ -277,9 +278,9 @@ static const struct soc15_reg_golden golden_settings_sdma_aldebaran[] = {
 	SOC15_REG_GOLDEN_VALUE(SDMA4, 0, mmSDMA4_GB_ADDR_CONFIG, 0x0018773f, 0x00104002),
 	SOC15_REG_GOLDEN_VALUE(SDMA4, 0, mmSDMA4_GB_ADDR_CONFIG_READ, 0x0018773f, 0x00104002),
 	SOC15_REG_GOLDEN_VALUE(SDMA4, 0, mmSDMA4_UTCL1_TIMEOUT, 0xffffffff, 0x00010001),
-};
+पूर्ण;
 
-static const struct soc15_reg_golden golden_settings_sdma_4_3[] = {
+अटल स्थिर काष्ठा soc15_reg_golden golden_settings_sdma_4_3[] = अणु
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_CHICKEN_BITS, 0xfe931f07, 0x02831f07),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_CLK_CTRL, 0xffffffff, 0x3f000100),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_GB_ADDR_CONFIG, 0x0018773f, 0x00000002),
@@ -290,482 +291,482 @@ static const struct soc15_reg_golden golden_settings_sdma_4_3[] = {
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_RLC1_RB_WPTR_POLL_CNTL, 0xfffffff7, 0x00403000),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_UTCL1_PAGE, 0x000003ff, 0x000003c0),
 	SOC15_REG_GOLDEN_VALUE(SDMA0, 0, mmSDMA0_UTCL1_WATERMK, 0xfc000000, 0x03fbe1fe)
-};
+पूर्ण;
 
-static const struct soc15_ras_field_entry sdma_v4_0_ras_fields[] = {
-	{ "SDMA_UCODE_BUF_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+अटल स्थिर काष्ठा soc15_ras_field_entry sdma_v4_0_ras_fields[] = अणु
+	अणु "SDMA_UCODE_BUF_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_UCODE_BUF_SED),
 	0, 0,
-	},
-	{ "SDMA_RB_CMD_BUF_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_RB_CMD_BUF_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_RB_CMD_BUF_SED),
 	0, 0,
-	},
-	{ "SDMA_IB_CMD_BUF_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_IB_CMD_BUF_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_IB_CMD_BUF_SED),
 	0, 0,
-	},
-	{ "SDMA_UTCL1_RD_FIFO_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_UTCL1_RD_FIFO_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_UTCL1_RD_FIFO_SED),
 	0, 0,
-	},
-	{ "SDMA_UTCL1_RDBST_FIFO_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_UTCL1_RDBST_FIFO_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_UTCL1_RDBST_FIFO_SED),
 	0, 0,
-	},
-	{ "SDMA_DATA_LUT_FIFO_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_DATA_LUT_FIFO_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_DATA_LUT_FIFO_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF0_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF0_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF0_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF1_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF1_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF1_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF2_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF2_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF2_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF3_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF3_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF3_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF4_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF4_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF4_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF5_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF5_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF5_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF6_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF6_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF6_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF7_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF7_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF7_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF8_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF8_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF8_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF9_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF9_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF9_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF10_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF10_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF10_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF11_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF11_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF11_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF12_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF12_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF12_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF13_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF13_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF13_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF14_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF14_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF14_SED),
 	0, 0,
-	},
-	{ "SDMA_MBANK_DATA_BUF15_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MBANK_DATA_BUF15_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MBANK_DATA_BUF15_SED),
 	0, 0,
-	},
-	{ "SDMA_SPLIT_DAT_BUF_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_SPLIT_DAT_BUF_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_SPLIT_DAT_BUF_SED),
 	0, 0,
-	},
-	{ "SDMA_MC_WR_ADDR_FIFO_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
+	पूर्ण,
+	अणु "SDMA_MC_WR_ADDR_FIFO_SED", SOC15_REG_ENTRY(SDMA0, 0, mmSDMA0_EDC_COUNTER),
 	SOC15_REG_FIELD(SDMA0_EDC_COUNTER, SDMA_MC_WR_ADDR_FIFO_SED),
 	0, 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static u32 sdma_v4_0_get_reg_offset(struct amdgpu_device *adev,
+अटल u32 sdma_v4_0_get_reg_offset(काष्ठा amdgpu_device *adev,
 		u32 instance, u32 offset)
-{
-	switch (instance) {
-	case 0:
-		return (adev->reg_offset[SDMA0_HWIP][0][0] + offset);
-	case 1:
-		return (adev->reg_offset[SDMA1_HWIP][0][0] + offset);
-	case 2:
-		return (adev->reg_offset[SDMA2_HWIP][0][1] + offset);
-	case 3:
-		return (adev->reg_offset[SDMA3_HWIP][0][1] + offset);
-	case 4:
-		return (adev->reg_offset[SDMA4_HWIP][0][1] + offset);
-	case 5:
-		return (adev->reg_offset[SDMA5_HWIP][0][1] + offset);
-	case 6:
-		return (adev->reg_offset[SDMA6_HWIP][0][1] + offset);
-	case 7:
-		return (adev->reg_offset[SDMA7_HWIP][0][1] + offset);
-	default:
-		break;
-	}
-	return 0;
-}
+अणु
+	चयन (instance) अणु
+	हाल 0:
+		वापस (adev->reg_offset[SDMA0_HWIP][0][0] + offset);
+	हाल 1:
+		वापस (adev->reg_offset[SDMA1_HWIP][0][0] + offset);
+	हाल 2:
+		वापस (adev->reg_offset[SDMA2_HWIP][0][1] + offset);
+	हाल 3:
+		वापस (adev->reg_offset[SDMA3_HWIP][0][1] + offset);
+	हाल 4:
+		वापस (adev->reg_offset[SDMA4_HWIP][0][1] + offset);
+	हाल 5:
+		वापस (adev->reg_offset[SDMA5_HWIP][0][1] + offset);
+	हाल 6:
+		वापस (adev->reg_offset[SDMA6_HWIP][0][1] + offset);
+	हाल 7:
+		वापस (adev->reg_offset[SDMA7_HWIP][0][1] + offset);
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static unsigned sdma_v4_0_seq_to_irq_id(int seq_num)
-{
-	switch (seq_num) {
-	case 0:
-		return SOC15_IH_CLIENTID_SDMA0;
-	case 1:
-		return SOC15_IH_CLIENTID_SDMA1;
-	case 2:
-		return SOC15_IH_CLIENTID_SDMA2;
-	case 3:
-		return SOC15_IH_CLIENTID_SDMA3;
-	case 4:
-		return SOC15_IH_CLIENTID_SDMA4;
-	case 5:
-		return SOC15_IH_CLIENTID_SDMA5;
-	case 6:
-		return SOC15_IH_CLIENTID_SDMA6;
-	case 7:
-		return SOC15_IH_CLIENTID_SDMA7;
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+अटल अचिन्हित sdma_v4_0_seq_to_irq_id(पूर्णांक seq_num)
+अणु
+	चयन (seq_num) अणु
+	हाल 0:
+		वापस SOC15_IH_CLIENTID_SDMA0;
+	हाल 1:
+		वापस SOC15_IH_CLIENTID_SDMA1;
+	हाल 2:
+		वापस SOC15_IH_CLIENTID_SDMA2;
+	हाल 3:
+		वापस SOC15_IH_CLIENTID_SDMA3;
+	हाल 4:
+		वापस SOC15_IH_CLIENTID_SDMA4;
+	हाल 5:
+		वापस SOC15_IH_CLIENTID_SDMA5;
+	हाल 6:
+		वापस SOC15_IH_CLIENTID_SDMA6;
+	हाल 7:
+		वापस SOC15_IH_CLIENTID_SDMA7;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int sdma_v4_0_irq_id_to_seq(unsigned client_id)
-{
-	switch (client_id) {
-	case SOC15_IH_CLIENTID_SDMA0:
-		return 0;
-	case SOC15_IH_CLIENTID_SDMA1:
-		return 1;
-	case SOC15_IH_CLIENTID_SDMA2:
-		return 2;
-	case SOC15_IH_CLIENTID_SDMA3:
-		return 3;
-	case SOC15_IH_CLIENTID_SDMA4:
-		return 4;
-	case SOC15_IH_CLIENTID_SDMA5:
-		return 5;
-	case SOC15_IH_CLIENTID_SDMA6:
-		return 6;
-	case SOC15_IH_CLIENTID_SDMA7:
-		return 7;
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+अटल पूर्णांक sdma_v4_0_irq_id_to_seq(अचिन्हित client_id)
+अणु
+	चयन (client_id) अणु
+	हाल SOC15_IH_CLIENTID_SDMA0:
+		वापस 0;
+	हाल SOC15_IH_CLIENTID_SDMA1:
+		वापस 1;
+	हाल SOC15_IH_CLIENTID_SDMA2:
+		वापस 2;
+	हाल SOC15_IH_CLIENTID_SDMA3:
+		वापस 3;
+	हाल SOC15_IH_CLIENTID_SDMA4:
+		वापस 4;
+	हाल SOC15_IH_CLIENTID_SDMA5:
+		वापस 5;
+	हाल SOC15_IH_CLIENTID_SDMA6:
+		वापस 6;
+	हाल SOC15_IH_CLIENTID_SDMA7:
+		वापस 7;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static void sdma_v4_0_init_golden_registers(struct amdgpu_device *adev)
-{
-	switch (adev->asic_type) {
-	case CHIP_VEGA10:
-		soc15_program_register_sequence(adev,
+अटल व्योम sdma_v4_0_init_golden_रेजिस्टरs(काष्ठा amdgpu_device *adev)
+अणु
+	चयन (adev->asic_type) अणु
+	हाल CHIP_VEGA10:
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma_4,
 						ARRAY_SIZE(golden_settings_sdma_4));
-		soc15_program_register_sequence(adev,
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma_vg10,
 						ARRAY_SIZE(golden_settings_sdma_vg10));
-		break;
-	case CHIP_VEGA12:
-		soc15_program_register_sequence(adev,
+		अवरोध;
+	हाल CHIP_VEGA12:
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma_4,
 						ARRAY_SIZE(golden_settings_sdma_4));
-		soc15_program_register_sequence(adev,
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma_vg12,
 						ARRAY_SIZE(golden_settings_sdma_vg12));
-		break;
-	case CHIP_VEGA20:
-		soc15_program_register_sequence(adev,
+		अवरोध;
+	हाल CHIP_VEGA20:
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma0_4_2_init,
 						ARRAY_SIZE(golden_settings_sdma0_4_2_init));
-		soc15_program_register_sequence(adev,
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma0_4_2,
 						ARRAY_SIZE(golden_settings_sdma0_4_2));
-		soc15_program_register_sequence(adev,
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma1_4_2,
 						ARRAY_SIZE(golden_settings_sdma1_4_2));
-		break;
-	case CHIP_ARCTURUS:
-		soc15_program_register_sequence(adev,
+		अवरोध;
+	हाल CHIP_ARCTURUS:
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma_arct,
 						ARRAY_SIZE(golden_settings_sdma_arct));
-		break;
-	case CHIP_ALDEBARAN:
-		soc15_program_register_sequence(adev,
+		अवरोध;
+	हाल CHIP_ALDEBARAN:
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma_aldebaran,
 						ARRAY_SIZE(golden_settings_sdma_aldebaran));
-		break;
-	case CHIP_RAVEN:
-		soc15_program_register_sequence(adev,
+		अवरोध;
+	हाल CHIP_RAVEN:
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma_4_1,
 						ARRAY_SIZE(golden_settings_sdma_4_1));
-		if (adev->apu_flags & AMD_APU_IS_RAVEN2)
-			soc15_program_register_sequence(adev,
+		अगर (adev->apu_flags & AMD_APU_IS_RAVEN2)
+			soc15_program_रेजिस्टर_sequence(adev,
 							golden_settings_sdma_rv2,
 							ARRAY_SIZE(golden_settings_sdma_rv2));
-		else
-			soc15_program_register_sequence(adev,
+		अन्यथा
+			soc15_program_रेजिस्टर_sequence(adev,
 							golden_settings_sdma_rv1,
 							ARRAY_SIZE(golden_settings_sdma_rv1));
-		break;
-	case CHIP_RENOIR:
-		soc15_program_register_sequence(adev,
+		अवरोध;
+	हाल CHIP_RENOIR:
+		soc15_program_रेजिस्टर_sequence(adev,
 						golden_settings_sdma_4_3,
 						ARRAY_SIZE(golden_settings_sdma_4_3));
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void sdma_v4_0_setup_ulv(struct amdgpu_device *adev)
-{
-	int i;
+अटल व्योम sdma_v4_0_setup_ulv(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
 
 	/*
 	 * The only chips with SDMAv4 and ULV are VG10 and VG20.
-	 * Server SKUs take a different hysteresis setting from other SKUs.
+	 * Server SKUs take a dअगरferent hysteresis setting from other SKUs.
 	 */
-	switch (adev->asic_type) {
-	case CHIP_VEGA10:
-		if (adev->pdev->device == 0x6860)
-			break;
-		return;
-	case CHIP_VEGA20:
-		if (adev->pdev->device == 0x66a1)
-			break;
-		return;
-	default:
-		return;
-	}
+	चयन (adev->asic_type) अणु
+	हाल CHIP_VEGA10:
+		अगर (adev->pdev->device == 0x6860)
+			अवरोध;
+		वापस;
+	हाल CHIP_VEGA20:
+		अगर (adev->pdev->device == 0x66a1)
+			अवरोध;
+		वापस;
+	शेष:
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
-		uint32_t temp;
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
+		uपूर्णांक32_t temp;
 
 		temp = RREG32_SDMA(i, mmSDMA0_ULV_CNTL);
 		temp = REG_SET_FIELD(temp, SDMA0_ULV_CNTL, HYSTERESIS, 0x0);
 		WREG32_SDMA(i, mmSDMA0_ULV_CNTL, temp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sdma_v4_0_init_inst_ctx(struct amdgpu_sdma_instance *sdma_inst)
-{
-	int err = 0;
-	const struct sdma_firmware_header_v1_0 *hdr;
+अटल पूर्णांक sdma_v4_0_init_inst_ctx(काष्ठा amdgpu_sdma_instance *sdma_inst)
+अणु
+	पूर्णांक err = 0;
+	स्थिर काष्ठा sdma_firmware_header_v1_0 *hdr;
 
 	err = amdgpu_ucode_validate(sdma_inst->fw);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	hdr = (const struct sdma_firmware_header_v1_0 *)sdma_inst->fw->data;
+	hdr = (स्थिर काष्ठा sdma_firmware_header_v1_0 *)sdma_inst->fw->data;
 	sdma_inst->fw_version = le32_to_cpu(hdr->header.ucode_version);
 	sdma_inst->feature_version = le32_to_cpu(hdr->ucode_feature_version);
 
-	if (sdma_inst->feature_version >= 20)
+	अगर (sdma_inst->feature_version >= 20)
 		sdma_inst->burst_nop = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sdma_v4_0_destroy_inst_ctx(struct amdgpu_device *adev)
-{
-	int i;
+अटल व्योम sdma_v4_0_destroy_inst_ctx(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		release_firmware(adev->sdma.instance[i].fw);
-		adev->sdma.instance[i].fw = NULL;
+		adev->sdma.instance[i].fw = शून्य;
 
 		/* arcturus shares the same FW memory across
 		   all SDMA isntances */
-		if (adev->asic_type == CHIP_ARCTURUS ||
+		अगर (adev->asic_type == CHIP_ARCTURUS ||
 		    adev->asic_type == CHIP_ALDEBARAN)
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	memset((void *)adev->sdma.instance, 0,
-		sizeof(struct amdgpu_sdma_instance) * AMDGPU_MAX_SDMA_INSTANCES);
-}
+	स_रखो((व्योम *)adev->sdma.instance, 0,
+		माप(काष्ठा amdgpu_sdma_instance) * AMDGPU_MAX_SDMA_INSTANCES);
+पूर्ण
 
 /**
  * sdma_v4_0_init_microcode - load ucode images from disk
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Use the firmware interface to load the ucode images into
- * the driver (not loaded into hw).
+ * Use the firmware पूर्णांकerface to load the ucode images पूर्णांकo
+ * the driver (not loaded पूर्णांकo hw).
  * Returns 0 on success, error on failure.
  */
 
 // emulation only, won't work on real chip
 // vega10 real chip need to use PSP to load firmware
-static int sdma_v4_0_init_microcode(struct amdgpu_device *adev)
-{
-	const char *chip_name;
-	char fw_name[30];
-	int err = 0, i;
-	struct amdgpu_firmware_info *info = NULL;
-	const struct common_firmware_header *header = NULL;
+अटल पूर्णांक sdma_v4_0_init_microcode(काष्ठा amdgpu_device *adev)
+अणु
+	स्थिर अक्षर *chip_name;
+	अक्षर fw_name[30];
+	पूर्णांक err = 0, i;
+	काष्ठा amdgpu_firmware_info *info = शून्य;
+	स्थिर काष्ठा common_firmware_header *header = शून्य;
 
 	DRM_DEBUG("\n");
 
-	switch (adev->asic_type) {
-	case CHIP_VEGA10:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_VEGA10:
 		chip_name = "vega10";
-		break;
-	case CHIP_VEGA12:
+		अवरोध;
+	हाल CHIP_VEGA12:
 		chip_name = "vega12";
-		break;
-	case CHIP_VEGA20:
+		अवरोध;
+	हाल CHIP_VEGA20:
 		chip_name = "vega20";
-		break;
-	case CHIP_RAVEN:
-		if (adev->apu_flags & AMD_APU_IS_RAVEN2)
+		अवरोध;
+	हाल CHIP_RAVEN:
+		अगर (adev->apu_flags & AMD_APU_IS_RAVEN2)
 			chip_name = "raven2";
-		else if (adev->apu_flags & AMD_APU_IS_PICASSO)
+		अन्यथा अगर (adev->apu_flags & AMD_APU_IS_PICASSO)
 			chip_name = "picasso";
-		else
+		अन्यथा
 			chip_name = "raven";
-		break;
-	case CHIP_ARCTURUS:
+		अवरोध;
+	हाल CHIP_ARCTURUS:
 		chip_name = "arcturus";
-		break;
-	case CHIP_RENOIR:
-		if (adev->apu_flags & AMD_APU_IS_RENOIR)
+		अवरोध;
+	हाल CHIP_RENOIR:
+		अगर (adev->apu_flags & AMD_APU_IS_RENOIR)
 			chip_name = "renoir";
-		else
+		अन्यथा
 			chip_name = "green_sardine";
-		break;
-	case CHIP_ALDEBARAN:
+		अवरोध;
+	हाल CHIP_ALDEBARAN:
 		chip_name = "aldebaran";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_sdma.bin", chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "amdgpu/%s_sdma.bin", chip_name);
 
 	err = request_firmware(&adev->sdma.instance[0].fw, fw_name, adev->dev);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = sdma_v4_0_init_inst_ctx(&adev->sdma.instance[0]);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	for (i = 1; i < adev->sdma.num_instances; i++) {
-		if (adev->asic_type == CHIP_ARCTURUS ||
-		    adev->asic_type == CHIP_ALDEBARAN) {
+	क्रम (i = 1; i < adev->sdma.num_instances; i++) अणु
+		अगर (adev->asic_type == CHIP_ARCTURUS ||
+		    adev->asic_type == CHIP_ALDEBARAN) अणु
 			/* Acturus & Aldebaran will leverage the same FW memory
-			   for every SDMA instance */
-			memcpy((void *)&adev->sdma.instance[i],
-			       (void *)&adev->sdma.instance[0],
-			       sizeof(struct amdgpu_sdma_instance));
-		}
-		else {
-			snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_sdma%d.bin", chip_name, i);
+			   क्रम every SDMA instance */
+			स_नकल((व्योम *)&adev->sdma.instance[i],
+			       (व्योम *)&adev->sdma.instance[0],
+			       माप(काष्ठा amdgpu_sdma_instance));
+		पूर्ण
+		अन्यथा अणु
+			snम_लिखो(fw_name, माप(fw_name), "amdgpu/%s_sdma%d.bin", chip_name, i);
 
 			err = request_firmware(&adev->sdma.instance[i].fw, fw_name, adev->dev);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
 			err = sdma_v4_0_init_inst_ctx(&adev->sdma.instance[i]);
-			if (err)
-				goto out;
-		}
-	}
+			अगर (err)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 	DRM_DEBUG("psp_load == '%s'\n",
 		adev->firmware.load_type == AMDGPU_FW_LOAD_PSP ? "true" : "false");
 
-	if (adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) {
-		for (i = 0; i < adev->sdma.num_instances; i++) {
+	अगर (adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) अणु
+		क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 			info = &adev->firmware.ucode[AMDGPU_UCODE_ID_SDMA0 + i];
 			info->ucode_id = AMDGPU_UCODE_ID_SDMA0 + i;
 			info->fw = adev->sdma.instance[i].fw;
-			header = (const struct common_firmware_header *)info->fw->data;
+			header = (स्थिर काष्ठा common_firmware_header *)info->fw->data;
 			adev->firmware.fw_size +=
 				ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	if (err) {
+	अगर (err) अणु
 		DRM_ERROR("sdma_v4_0: Failed to load firmware \"%s\"\n", fw_name);
 		sdma_v4_0_destroy_inst_ctx(adev);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /**
- * sdma_v4_0_ring_get_rptr - get the current read pointer
+ * sdma_v4_0_ring_get_rptr - get the current पढ़ो poपूर्णांकer
  *
- * @ring: amdgpu ring pointer
+ * @ring: amdgpu ring poपूर्णांकer
  *
  * Get the current rptr from the hardware (VEGA10+).
  */
-static uint64_t sdma_v4_0_ring_get_rptr(struct amdgpu_ring *ring)
-{
+अटल uपूर्णांक64_t sdma_v4_0_ring_get_rptr(काष्ठा amdgpu_ring *ring)
+अणु
 	u64 *rptr;
 
-	/* XXX check if swapping is necessary on BE */
+	/* XXX check अगर swapping is necessary on BE */
 	rptr = ((u64 *)&ring->adev->wb.wb[ring->rptr_offs]);
 
 	DRM_DEBUG("rptr before shift == 0x%016llx\n", *rptr);
-	return ((*rptr) >> 2);
-}
+	वापस ((*rptr) >> 2);
+पूर्ण
 
 /**
- * sdma_v4_0_ring_get_wptr - get the current write pointer
+ * sdma_v4_0_ring_get_wptr - get the current ग_लिखो poपूर्णांकer
  *
- * @ring: amdgpu ring pointer
+ * @ring: amdgpu ring poपूर्णांकer
  *
  * Get the current wptr from the hardware (VEGA10+).
  */
-static uint64_t sdma_v4_0_ring_get_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल uपूर्णांक64_t sdma_v4_0_ring_get_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 	u64 wptr;
 
-	if (ring->use_doorbell) {
-		/* XXX check if swapping is necessary on BE */
+	अगर (ring->use_करोorbell) अणु
+		/* XXX check अगर swapping is necessary on BE */
 		wptr = READ_ONCE(*((u64 *)&adev->wb.wb[ring->wptr_offs]));
 		DRM_DEBUG("wptr/doorbell before shift == 0x%016llx\n", wptr);
-	} else {
+	पूर्ण अन्यथा अणु
 		wptr = RREG32_SDMA(ring->me, mmSDMA0_GFX_RB_WPTR_HI);
 		wptr = wptr << 32;
 		wptr |= RREG32_SDMA(ring->me, mmSDMA0_GFX_RB_WPTR);
 		DRM_DEBUG("wptr before shift [%i] wptr == 0x%016llx\n",
 				ring->me, wptr);
-	}
+	पूर्ण
 
-	return wptr >> 2;
-}
+	वापस wptr >> 2;
+पूर्ण
 
 /**
- * sdma_v4_0_page_ring_set_wptr - commit the write pointer
+ * sdma_v4_0_page_ring_set_wptr - commit the ग_लिखो poपूर्णांकer
  *
- * @ring: amdgpu ring pointer
+ * @ring: amdgpu ring poपूर्णांकer
  *
  * Write the wptr back to the hardware (VEGA10+).
  */
-static void sdma_v4_0_ring_set_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल व्योम sdma_v4_0_ring_set_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
 	DRM_DEBUG("Setting write pointer\n");
-	if (ring->use_doorbell) {
+	अगर (ring->use_करोorbell) अणु
 		u64 *wb = (u64 *)&adev->wb.wb[ring->wptr_offs];
 
 		DRM_DEBUG("Using doorbell -- "
@@ -775,12 +776,12 @@ static void sdma_v4_0_ring_set_wptr(struct amdgpu_ring *ring)
 				ring->wptr_offs,
 				lower_32_bits(ring->wptr << 2),
 				upper_32_bits(ring->wptr << 2));
-		/* XXX check if swapping is necessary on BE */
+		/* XXX check अगर swapping is necessary on BE */
 		WRITE_ONCE(*wb, (ring->wptr << 2));
 		DRM_DEBUG("calling WDOORBELL64(0x%08x, 0x%016llx)\n",
-				ring->doorbell_index, ring->wptr << 2);
-		WDOORBELL64(ring->doorbell_index, ring->wptr << 2);
-	} else {
+				ring->करोorbell_index, ring->wptr << 2);
+		WDOORBELL64(ring->करोorbell_index, ring->wptr << 2);
+	पूर्ण अन्यथा अणु
 		DRM_DEBUG("Not using doorbell -- "
 				"mmSDMA%i_GFX_RB_WPTR == 0x%08x "
 				"mmSDMA%i_GFX_RB_WPTR_HI == 0x%08x\n",
@@ -792,211 +793,211 @@ static void sdma_v4_0_ring_set_wptr(struct amdgpu_ring *ring)
 			    lower_32_bits(ring->wptr << 2));
 		WREG32_SDMA(ring->me, mmSDMA0_GFX_RB_WPTR_HI,
 			    upper_32_bits(ring->wptr << 2));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * sdma_v4_0_page_ring_get_wptr - get the current write pointer
+ * sdma_v4_0_page_ring_get_wptr - get the current ग_लिखो poपूर्णांकer
  *
- * @ring: amdgpu ring pointer
+ * @ring: amdgpu ring poपूर्णांकer
  *
  * Get the current wptr from the hardware (VEGA10+).
  */
-static uint64_t sdma_v4_0_page_ring_get_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल uपूर्णांक64_t sdma_v4_0_page_ring_get_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 	u64 wptr;
 
-	if (ring->use_doorbell) {
-		/* XXX check if swapping is necessary on BE */
+	अगर (ring->use_करोorbell) अणु
+		/* XXX check अगर swapping is necessary on BE */
 		wptr = READ_ONCE(*((u64 *)&adev->wb.wb[ring->wptr_offs]));
-	} else {
+	पूर्ण अन्यथा अणु
 		wptr = RREG32_SDMA(ring->me, mmSDMA0_PAGE_RB_WPTR_HI);
 		wptr = wptr << 32;
 		wptr |= RREG32_SDMA(ring->me, mmSDMA0_PAGE_RB_WPTR);
-	}
+	पूर्ण
 
-	return wptr >> 2;
-}
+	वापस wptr >> 2;
+पूर्ण
 
 /**
- * sdma_v4_0_ring_set_wptr - commit the write pointer
+ * sdma_v4_0_ring_set_wptr - commit the ग_लिखो poपूर्णांकer
  *
- * @ring: amdgpu ring pointer
+ * @ring: amdgpu ring poपूर्णांकer
  *
  * Write the wptr back to the hardware (VEGA10+).
  */
-static void sdma_v4_0_page_ring_set_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल व्योम sdma_v4_0_page_ring_set_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
-	if (ring->use_doorbell) {
+	अगर (ring->use_करोorbell) अणु
 		u64 *wb = (u64 *)&adev->wb.wb[ring->wptr_offs];
 
-		/* XXX check if swapping is necessary on BE */
+		/* XXX check अगर swapping is necessary on BE */
 		WRITE_ONCE(*wb, (ring->wptr << 2));
-		WDOORBELL64(ring->doorbell_index, ring->wptr << 2);
-	} else {
-		uint64_t wptr = ring->wptr << 2;
+		WDOORBELL64(ring->करोorbell_index, ring->wptr << 2);
+	पूर्ण अन्यथा अणु
+		uपूर्णांक64_t wptr = ring->wptr << 2;
 
 		WREG32_SDMA(ring->me, mmSDMA0_PAGE_RB_WPTR,
 			    lower_32_bits(wptr));
 		WREG32_SDMA(ring->me, mmSDMA0_PAGE_RB_WPTR_HI,
 			    upper_32_bits(wptr));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sdma_v4_0_ring_insert_nop(struct amdgpu_ring *ring, uint32_t count)
-{
-	struct amdgpu_sdma_instance *sdma = amdgpu_sdma_get_instance_from_ring(ring);
-	int i;
+अटल व्योम sdma_v4_0_ring_insert_nop(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t count)
+अणु
+	काष्ठा amdgpu_sdma_instance *sdma = amdgpu_sdma_get_instance_from_ring(ring);
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++)
-		if (sdma && sdma->burst_nop && (i == 0))
-			amdgpu_ring_write(ring, ring->funcs->nop |
+	क्रम (i = 0; i < count; i++)
+		अगर (sdma && sdma->burst_nop && (i == 0))
+			amdgpu_ring_ग_लिखो(ring, ring->funcs->nop |
 				SDMA_PKT_NOP_HEADER_COUNT(count - 1));
-		else
-			amdgpu_ring_write(ring, ring->funcs->nop);
-}
+		अन्यथा
+			amdgpu_ring_ग_लिखो(ring, ring->funcs->nop);
+पूर्ण
 
 /**
  * sdma_v4_0_ring_emit_ib - Schedule an IB on the DMA engine
  *
- * @ring: amdgpu ring pointer
+ * @ring: amdgpu ring poपूर्णांकer
  * @job: job to retrieve vmid from
  * @ib: IB object to schedule
  * @flags: unused
  *
  * Schedule an IB in the DMA ring (VEGA10).
  */
-static void sdma_v4_0_ring_emit_ib(struct amdgpu_ring *ring,
-				   struct amdgpu_job *job,
-				   struct amdgpu_ib *ib,
-				   uint32_t flags)
-{
-	unsigned vmid = AMDGPU_JOB_GET_VMID(job);
+अटल व्योम sdma_v4_0_ring_emit_ib(काष्ठा amdgpu_ring *ring,
+				   काष्ठा amdgpu_job *job,
+				   काष्ठा amdgpu_ib *ib,
+				   uपूर्णांक32_t flags)
+अणु
+	अचिन्हित vmid = AMDGPU_JOB_GET_VMID(job);
 
 	/* IB packet must end on a 8 DW boundary */
 	sdma_v4_0_ring_insert_nop(ring, (2 - lower_32_bits(ring->wptr)) & 7);
 
-	amdgpu_ring_write(ring, SDMA_PKT_HEADER_OP(SDMA_OP_INDIRECT) |
-			  SDMA_PKT_INDIRECT_HEADER_VMID(vmid & 0xf));
+	amdgpu_ring_ग_लिखो(ring, SDMA_PKT_HEADER_OP(SDMA_OP_INसूचीECT) |
+			  SDMA_PKT_INसूचीECT_HEADER_VMID(vmid & 0xf));
 	/* base must be 32 byte aligned */
-	amdgpu_ring_write(ring, lower_32_bits(ib->gpu_addr) & 0xffffffe0);
-	amdgpu_ring_write(ring, upper_32_bits(ib->gpu_addr));
-	amdgpu_ring_write(ring, ib->length_dw);
-	amdgpu_ring_write(ring, 0);
-	amdgpu_ring_write(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, lower_32_bits(ib->gpu_addr) & 0xffffffe0);
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(ib->gpu_addr));
+	amdgpu_ring_ग_लिखो(ring, ib->length_dw);
+	amdgpu_ring_ग_लिखो(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, 0);
 
-}
+पूर्ण
 
-static void sdma_v4_0_wait_reg_mem(struct amdgpu_ring *ring,
-				   int mem_space, int hdp,
-				   uint32_t addr0, uint32_t addr1,
-				   uint32_t ref, uint32_t mask,
-				   uint32_t inv)
-{
-	amdgpu_ring_write(ring, SDMA_PKT_HEADER_OP(SDMA_OP_POLL_REGMEM) |
+अटल व्योम sdma_v4_0_रुको_reg_mem(काष्ठा amdgpu_ring *ring,
+				   पूर्णांक mem_space, पूर्णांक hdp,
+				   uपूर्णांक32_t addr0, uपूर्णांक32_t addr1,
+				   uपूर्णांक32_t ref, uपूर्णांक32_t mask,
+				   uपूर्णांक32_t inv)
+अणु
+	amdgpu_ring_ग_लिखो(ring, SDMA_PKT_HEADER_OP(SDMA_OP_POLL_REGMEM) |
 			  SDMA_PKT_POLL_REGMEM_HEADER_HDP_FLUSH(hdp) |
 			  SDMA_PKT_POLL_REGMEM_HEADER_MEM_POLL(mem_space) |
 			  SDMA_PKT_POLL_REGMEM_HEADER_FUNC(3)); /* == */
-	if (mem_space) {
+	अगर (mem_space) अणु
 		/* memory */
-		amdgpu_ring_write(ring, addr0);
-		amdgpu_ring_write(ring, addr1);
-	} else {
-		/* registers */
-		amdgpu_ring_write(ring, addr0 << 2);
-		amdgpu_ring_write(ring, addr1 << 2);
-	}
-	amdgpu_ring_write(ring, ref); /* reference */
-	amdgpu_ring_write(ring, mask); /* mask */
-	amdgpu_ring_write(ring, SDMA_PKT_POLL_REGMEM_DW5_RETRY_COUNT(0xfff) |
-			  SDMA_PKT_POLL_REGMEM_DW5_INTERVAL(inv)); /* retry count, poll interval */
-}
+		amdgpu_ring_ग_लिखो(ring, addr0);
+		amdgpu_ring_ग_लिखो(ring, addr1);
+	पूर्ण अन्यथा अणु
+		/* रेजिस्टरs */
+		amdgpu_ring_ग_लिखो(ring, addr0 << 2);
+		amdgpu_ring_ग_लिखो(ring, addr1 << 2);
+	पूर्ण
+	amdgpu_ring_ग_लिखो(ring, ref); /* reference */
+	amdgpu_ring_ग_लिखो(ring, mask); /* mask */
+	amdgpu_ring_ग_लिखो(ring, SDMA_PKT_POLL_REGMEM_DW5_RETRY_COUNT(0xfff) |
+			  SDMA_PKT_POLL_REGMEM_DW5_INTERVAL(inv)); /* retry count, poll पूर्णांकerval */
+पूर्ण
 
 /**
  * sdma_v4_0_ring_emit_hdp_flush - emit an hdp flush on the DMA ring
  *
- * @ring: amdgpu ring pointer
+ * @ring: amdgpu ring poपूर्णांकer
  *
  * Emit an hdp flush packet on the requested DMA ring.
  */
-static void sdma_v4_0_ring_emit_hdp_flush(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल व्योम sdma_v4_0_ring_emit_hdp_flush(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 	u32 ref_and_mask = 0;
-	const struct nbio_hdp_flush_reg *nbio_hf_reg = adev->nbio.hdp_flush_reg;
+	स्थिर काष्ठा nbio_hdp_flush_reg *nbio_hf_reg = adev->nbपन.सdp_flush_reg;
 
 	ref_and_mask = nbio_hf_reg->ref_and_mask_sdma0 << ring->me;
 
-	sdma_v4_0_wait_reg_mem(ring, 0, 1,
-			       adev->nbio.funcs->get_hdp_flush_done_offset(adev),
+	sdma_v4_0_रुको_reg_mem(ring, 0, 1,
+			       adev->nbio.funcs->get_hdp_flush_करोne_offset(adev),
 			       adev->nbio.funcs->get_hdp_flush_req_offset(adev),
 			       ref_and_mask, ref_and_mask, 10);
-}
+पूर्ण
 
 /**
  * sdma_v4_0_ring_emit_fence - emit a fence on the DMA ring
  *
- * @ring: amdgpu ring pointer
+ * @ring: amdgpu ring poपूर्णांकer
  * @addr: address
  * @seq: sequence number
  * @flags: fence related flags
  *
- * Add a DMA fence packet to the ring to write
+ * Add a DMA fence packet to the ring to ग_लिखो
  * the fence seq number and DMA trap packet to generate
- * an interrupt if needed (VEGA10).
+ * an पूर्णांकerrupt अगर needed (VEGA10).
  */
-static void sdma_v4_0_ring_emit_fence(struct amdgpu_ring *ring, u64 addr, u64 seq,
-				      unsigned flags)
-{
-	bool write64bit = flags & AMDGPU_FENCE_FLAG_64BIT;
-	/* write the fence */
-	amdgpu_ring_write(ring, SDMA_PKT_HEADER_OP(SDMA_OP_FENCE));
+अटल व्योम sdma_v4_0_ring_emit_fence(काष्ठा amdgpu_ring *ring, u64 addr, u64 seq,
+				      अचिन्हित flags)
+अणु
+	bool ग_लिखो64bit = flags & AMDGPU_FENCE_FLAG_64BIT;
+	/* ग_लिखो the fence */
+	amdgpu_ring_ग_लिखो(ring, SDMA_PKT_HEADER_OP(SDMA_OP_FENCE));
 	/* zero in first two bits */
 	BUG_ON(addr & 0x3);
-	amdgpu_ring_write(ring, lower_32_bits(addr));
-	amdgpu_ring_write(ring, upper_32_bits(addr));
-	amdgpu_ring_write(ring, lower_32_bits(seq));
+	amdgpu_ring_ग_लिखो(ring, lower_32_bits(addr));
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(addr));
+	amdgpu_ring_ग_लिखो(ring, lower_32_bits(seq));
 
-	/* optionally write high bits as well */
-	if (write64bit) {
+	/* optionally ग_लिखो high bits as well */
+	अगर (ग_लिखो64bit) अणु
 		addr += 4;
-		amdgpu_ring_write(ring, SDMA_PKT_HEADER_OP(SDMA_OP_FENCE));
+		amdgpu_ring_ग_लिखो(ring, SDMA_PKT_HEADER_OP(SDMA_OP_FENCE));
 		/* zero in first two bits */
 		BUG_ON(addr & 0x3);
-		amdgpu_ring_write(ring, lower_32_bits(addr));
-		amdgpu_ring_write(ring, upper_32_bits(addr));
-		amdgpu_ring_write(ring, upper_32_bits(seq));
-	}
+		amdgpu_ring_ग_लिखो(ring, lower_32_bits(addr));
+		amdgpu_ring_ग_लिखो(ring, upper_32_bits(addr));
+		amdgpu_ring_ग_लिखो(ring, upper_32_bits(seq));
+	पूर्ण
 
-	/* generate an interrupt */
-	amdgpu_ring_write(ring, SDMA_PKT_HEADER_OP(SDMA_OP_TRAP));
-	amdgpu_ring_write(ring, SDMA_PKT_TRAP_INT_CONTEXT_INT_CONTEXT(0));
-}
+	/* generate an पूर्णांकerrupt */
+	amdgpu_ring_ग_लिखो(ring, SDMA_PKT_HEADER_OP(SDMA_OP_TRAP));
+	amdgpu_ring_ग_लिखो(ring, SDMA_PKT_TRAP_INT_CONTEXT_INT_CONTEXT(0));
+पूर्ण
 
 
 /**
  * sdma_v4_0_gfx_stop - stop the gfx async dma engines
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Stop the gfx async dma ring buffers (VEGA10).
  */
-static void sdma_v4_0_gfx_stop(struct amdgpu_device *adev)
-{
-	struct amdgpu_ring *sdma[AMDGPU_MAX_SDMA_INSTANCES];
+अटल व्योम sdma_v4_0_gfx_stop(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ring *sdma[AMDGPU_MAX_SDMA_INSTANCES];
 	u32 rb_cntl, ib_cntl;
-	int i, unset = 0;
+	पूर्णांक i, unset = 0;
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		sdma[i] = &adev->sdma.instance[i].ring;
 
-		if ((adev->mman.buffer_funcs_ring == sdma[i]) && unset != 1) {
-			amdgpu_ttm_set_buffer_funcs_status(adev, false);
+		अगर ((adev->mman.buffer_funcs_ring == sdma[i]) && unset != 1) अणु
+			amdgpu_tपंचांग_set_buffer_funcs_status(adev, false);
 			unset = 1;
-		}
+		पूर्ण
 
 		rb_cntl = RREG32_SDMA(i, mmSDMA0_GFX_RB_CNTL);
 		rb_cntl = REG_SET_FIELD(rb_cntl, SDMA0_GFX_RB_CNTL, RB_ENABLE, 0);
@@ -1004,43 +1005,43 @@ static void sdma_v4_0_gfx_stop(struct amdgpu_device *adev)
 		ib_cntl = RREG32_SDMA(i, mmSDMA0_GFX_IB_CNTL);
 		ib_cntl = REG_SET_FIELD(ib_cntl, SDMA0_GFX_IB_CNTL, IB_ENABLE, 0);
 		WREG32_SDMA(i, mmSDMA0_GFX_IB_CNTL, ib_cntl);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * sdma_v4_0_rlc_stop - stop the compute async dma engines
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Stop the compute async dma queues (VEGA10).
  */
-static void sdma_v4_0_rlc_stop(struct amdgpu_device *adev)
-{
-	/* XXX todo */
-}
+अटल व्योम sdma_v4_0_rlc_stop(काष्ठा amdgpu_device *adev)
+अणु
+	/* XXX toकरो */
+पूर्ण
 
 /**
  * sdma_v4_0_page_stop - stop the page async dma engines
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Stop the page async dma ring buffers (VEGA10).
  */
-static void sdma_v4_0_page_stop(struct amdgpu_device *adev)
-{
-	struct amdgpu_ring *sdma[AMDGPU_MAX_SDMA_INSTANCES];
+अटल व्योम sdma_v4_0_page_stop(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ring *sdma[AMDGPU_MAX_SDMA_INSTANCES];
 	u32 rb_cntl, ib_cntl;
-	int i;
+	पूर्णांक i;
 	bool unset = false;
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		sdma[i] = &adev->sdma.instance[i].page;
 
-		if ((adev->mman.buffer_funcs_ring == sdma[i]) &&
-			(!unset)) {
-			amdgpu_ttm_set_buffer_funcs_status(adev, false);
+		अगर ((adev->mman.buffer_funcs_ring == sdma[i]) &&
+			(!unset)) अणु
+			amdgpu_tपंचांग_set_buffer_funcs_status(adev, false);
 			unset = true;
-		}
+		पूर्ण
 
 		rb_cntl = RREG32_SDMA(i, mmSDMA0_PAGE_RB_CNTL);
 		rb_cntl = REG_SET_FIELD(rb_cntl, SDMA0_PAGE_RB_CNTL,
@@ -1050,33 +1051,33 @@ static void sdma_v4_0_page_stop(struct amdgpu_device *adev)
 		ib_cntl = REG_SET_FIELD(ib_cntl, SDMA0_PAGE_IB_CNTL,
 					IB_ENABLE, 0);
 		WREG32_SDMA(i, mmSDMA0_PAGE_IB_CNTL, ib_cntl);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * sdma_v4_0_ctx_switch_enable - stop the async dma engines context switch
+ * sdma_v4_0_ctx_चयन_enable - stop the async dma engines context चयन
  *
- * @adev: amdgpu_device pointer
- * @enable: enable/disable the DMA MEs context switch.
+ * @adev: amdgpu_device poपूर्णांकer
+ * @enable: enable/disable the DMA MEs context चयन.
  *
- * Halt or unhalt the async dma engines context switch (VEGA10).
+ * Halt or unhalt the async dma engines context चयन (VEGA10).
  */
-static void sdma_v4_0_ctx_switch_enable(struct amdgpu_device *adev, bool enable)
-{
+अटल व्योम sdma_v4_0_ctx_चयन_enable(काष्ठा amdgpu_device *adev, bool enable)
+अणु
 	u32 f32_cntl, phase_quantum = 0;
-	int i;
+	पूर्णांक i;
 
-	if (amdgpu_sdma_phase_quantum) {
-		unsigned value = amdgpu_sdma_phase_quantum;
-		unsigned unit = 0;
+	अगर (amdgpu_sdma_phase_quantum) अणु
+		अचिन्हित value = amdgpu_sdma_phase_quantum;
+		अचिन्हित unit = 0;
 
-		while (value > (SDMA0_PHASE0_QUANTUM__VALUE_MASK >>
-				SDMA0_PHASE0_QUANTUM__VALUE__SHIFT)) {
+		जबतक (value > (SDMA0_PHASE0_QUANTUM__VALUE_MASK >>
+				SDMA0_PHASE0_QUANTUM__VALUE__SHIFT)) अणु
 			value = (value + 1) >> 1;
 			unit++;
-		}
-		if (unit > (SDMA0_PHASE0_QUANTUM__UNIT_MASK >>
-			    SDMA0_PHASE0_QUANTUM__UNIT__SHIFT)) {
+		पूर्ण
+		अगर (unit > (SDMA0_PHASE0_QUANTUM__UNIT_MASK >>
+			    SDMA0_PHASE0_QUANTUM__UNIT__SHIFT)) अणु
 			value = (SDMA0_PHASE0_QUANTUM__VALUE_MASK >>
 				 SDMA0_PHASE0_QUANTUM__VALUE__SHIFT);
 			unit = (SDMA0_PHASE0_QUANTUM__UNIT_MASK >>
@@ -1084,95 +1085,95 @@ static void sdma_v4_0_ctx_switch_enable(struct amdgpu_device *adev, bool enable)
 			WARN_ONCE(1,
 			"clamping sdma_phase_quantum to %uK clock cycles\n",
 				  value << unit);
-		}
+		पूर्ण
 		phase_quantum =
 			value << SDMA0_PHASE0_QUANTUM__VALUE__SHIFT |
 			unit  << SDMA0_PHASE0_QUANTUM__UNIT__SHIFT;
-	}
+	पूर्ण
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		f32_cntl = RREG32_SDMA(i, mmSDMA0_CNTL);
 		f32_cntl = REG_SET_FIELD(f32_cntl, SDMA0_CNTL,
 				AUTO_CTXSW_ENABLE, enable ? 1 : 0);
-		if (enable && amdgpu_sdma_phase_quantum) {
+		अगर (enable && amdgpu_sdma_phase_quantum) अणु
 			WREG32_SDMA(i, mmSDMA0_PHASE0_QUANTUM, phase_quantum);
 			WREG32_SDMA(i, mmSDMA0_PHASE1_QUANTUM, phase_quantum);
 			WREG32_SDMA(i, mmSDMA0_PHASE2_QUANTUM, phase_quantum);
-		}
+		पूर्ण
 		WREG32_SDMA(i, mmSDMA0_CNTL, f32_cntl);
 
 		/*
 		 * Enable SDMA utilization. Its only supported on
-		 * Arcturus for the moment and firmware version 14
+		 * Arcturus क्रम the moment and firmware version 14
 		 * and above.
 		 */
-		if (adev->asic_type == CHIP_ARCTURUS &&
+		अगर (adev->asic_type == CHIP_ARCTURUS &&
 		    adev->sdma.instance[i].fw_version >= 14)
 			WREG32_SDMA(i, mmSDMA0_PUB_DUMMY_REG2, enable);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 /**
  * sdma_v4_0_enable - stop the async dma engines
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @enable: enable/disable the DMA MEs.
  *
  * Halt or unhalt the async dma engines (VEGA10).
  */
-static void sdma_v4_0_enable(struct amdgpu_device *adev, bool enable)
-{
+अटल व्योम sdma_v4_0_enable(काष्ठा amdgpu_device *adev, bool enable)
+अणु
 	u32 f32_cntl;
-	int i;
+	पूर्णांक i;
 
-	if (!enable) {
+	अगर (!enable) अणु
 		sdma_v4_0_gfx_stop(adev);
 		sdma_v4_0_rlc_stop(adev);
-		if (adev->sdma.has_page_queue)
+		अगर (adev->sdma.has_page_queue)
 			sdma_v4_0_page_stop(adev);
-	}
+	पूर्ण
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		f32_cntl = RREG32_SDMA(i, mmSDMA0_F32_CNTL);
 		f32_cntl = REG_SET_FIELD(f32_cntl, SDMA0_F32_CNTL, HALT, enable ? 0 : 1);
 		WREG32_SDMA(i, mmSDMA0_F32_CNTL, f32_cntl);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * sdma_v4_0_rb_cntl - get parameters for rb_cntl
+ * sdma_v4_0_rb_cntl - get parameters क्रम rb_cntl
  */
-static uint32_t sdma_v4_0_rb_cntl(struct amdgpu_ring *ring, uint32_t rb_cntl)
-{
+अटल uपूर्णांक32_t sdma_v4_0_rb_cntl(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t rb_cntl)
+अणु
 	/* Set ring buffer size in dwords */
-	uint32_t rb_bufsz = order_base_2(ring->ring_size / 4);
+	uपूर्णांक32_t rb_bufsz = order_base_2(ring->ring_size / 4);
 
 	rb_cntl = REG_SET_FIELD(rb_cntl, SDMA0_GFX_RB_CNTL, RB_SIZE, rb_bufsz);
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 	rb_cntl = REG_SET_FIELD(rb_cntl, SDMA0_GFX_RB_CNTL, RB_SWAP_ENABLE, 1);
 	rb_cntl = REG_SET_FIELD(rb_cntl, SDMA0_GFX_RB_CNTL,
 				RPTR_WRITEBACK_SWAP_ENABLE, 1);
-#endif
-	return rb_cntl;
-}
+#पूर्ण_अगर
+	वापस rb_cntl;
+पूर्ण
 
 /**
  * sdma_v4_0_gfx_resume - setup and start the async dma engines
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @i: instance to resume
  *
  * Set up the gfx DMA ring buffers and enable them (VEGA10).
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static void sdma_v4_0_gfx_resume(struct amdgpu_device *adev, unsigned int i)
-{
-	struct amdgpu_ring *ring = &adev->sdma.instance[i].ring;
+अटल व्योम sdma_v4_0_gfx_resume(काष्ठा amdgpu_device *adev, अचिन्हित पूर्णांक i)
+अणु
+	काष्ठा amdgpu_ring *ring = &adev->sdma.instance[i].ring;
 	u32 rb_cntl, ib_cntl, wptr_poll_cntl;
 	u32 wb_offset;
-	u32 doorbell;
-	u32 doorbell_offset;
+	u32 करोorbell;
+	u32 करोorbell_offset;
 	u64 wptr_gpu_addr;
 
 	wb_offset = (ring->rptr_offs * 4);
@@ -1181,7 +1182,7 @@ static void sdma_v4_0_gfx_resume(struct amdgpu_device *adev, unsigned int i)
 	rb_cntl = sdma_v4_0_rb_cntl(ring, rb_cntl);
 	WREG32_SDMA(i, mmSDMA0_GFX_RB_CNTL, rb_cntl);
 
-	/* Initialize the ring buffer's read and write pointers */
+	/* Initialize the ring buffer's पढ़ो and ग_लिखो poपूर्णांकers */
 	WREG32_SDMA(i, mmSDMA0_GFX_RB_RPTR, 0);
 	WREG32_SDMA(i, mmSDMA0_GFX_RB_RPTR_HI, 0);
 	WREG32_SDMA(i, mmSDMA0_GFX_RB_WPTR, 0);
@@ -1201,26 +1202,26 @@ static void sdma_v4_0_gfx_resume(struct amdgpu_device *adev, unsigned int i)
 
 	ring->wptr = 0;
 
-	/* before programing wptr to a less value, need set minor_ptr_update first */
+	/* beक्रमe programing wptr to a less value, need set minor_ptr_update first */
 	WREG32_SDMA(i, mmSDMA0_GFX_MINOR_PTR_UPDATE, 1);
 
-	doorbell = RREG32_SDMA(i, mmSDMA0_GFX_DOORBELL);
-	doorbell_offset = RREG32_SDMA(i, mmSDMA0_GFX_DOORBELL_OFFSET);
+	करोorbell = RREG32_SDMA(i, mmSDMA0_GFX_DOORBELL);
+	करोorbell_offset = RREG32_SDMA(i, mmSDMA0_GFX_DOORBELL_OFFSET);
 
-	doorbell = REG_SET_FIELD(doorbell, SDMA0_GFX_DOORBELL, ENABLE,
-				 ring->use_doorbell);
-	doorbell_offset = REG_SET_FIELD(doorbell_offset,
+	करोorbell = REG_SET_FIELD(करोorbell, SDMA0_GFX_DOORBELL, ENABLE,
+				 ring->use_करोorbell);
+	करोorbell_offset = REG_SET_FIELD(करोorbell_offset,
 					SDMA0_GFX_DOORBELL_OFFSET,
-					OFFSET, ring->doorbell_index);
-	WREG32_SDMA(i, mmSDMA0_GFX_DOORBELL, doorbell);
-	WREG32_SDMA(i, mmSDMA0_GFX_DOORBELL_OFFSET, doorbell_offset);
+					OFFSET, ring->करोorbell_index);
+	WREG32_SDMA(i, mmSDMA0_GFX_DOORBELL, करोorbell);
+	WREG32_SDMA(i, mmSDMA0_GFX_DOORBELL_OFFSET, करोorbell_offset);
 
 	sdma_v4_0_ring_set_wptr(ring);
 
 	/* set minor_ptr_update to 0 after wptr programed */
 	WREG32_SDMA(i, mmSDMA0_GFX_MINOR_PTR_UPDATE, 0);
 
-	/* setup the wptr shadow polling */
+	/* setup the wptr shaकरोw polling */
 	wptr_gpu_addr = adev->wb.gpu_addr + (ring->wptr_offs * 4);
 	WREG32_SDMA(i, mmSDMA0_GFX_RB_WPTR_POLL_ADDR_LO,
 		    lower_32_bits(wptr_gpu_addr));
@@ -1238,31 +1239,31 @@ static void sdma_v4_0_gfx_resume(struct amdgpu_device *adev, unsigned int i)
 
 	ib_cntl = RREG32_SDMA(i, mmSDMA0_GFX_IB_CNTL);
 	ib_cntl = REG_SET_FIELD(ib_cntl, SDMA0_GFX_IB_CNTL, IB_ENABLE, 1);
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 	ib_cntl = REG_SET_FIELD(ib_cntl, SDMA0_GFX_IB_CNTL, IB_SWAP_ENABLE, 1);
-#endif
+#पूर्ण_अगर
 	/* enable DMA IBs */
 	WREG32_SDMA(i, mmSDMA0_GFX_IB_CNTL, ib_cntl);
 
-	ring->sched.ready = true;
-}
+	ring->sched.पढ़ोy = true;
+पूर्ण
 
 /**
  * sdma_v4_0_page_resume - setup and start the async dma engines
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @i: instance to resume
  *
  * Set up the page DMA ring buffers and enable them (VEGA10).
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static void sdma_v4_0_page_resume(struct amdgpu_device *adev, unsigned int i)
-{
-	struct amdgpu_ring *ring = &adev->sdma.instance[i].page;
+अटल व्योम sdma_v4_0_page_resume(काष्ठा amdgpu_device *adev, अचिन्हित पूर्णांक i)
+अणु
+	काष्ठा amdgpu_ring *ring = &adev->sdma.instance[i].page;
 	u32 rb_cntl, ib_cntl, wptr_poll_cntl;
 	u32 wb_offset;
-	u32 doorbell;
-	u32 doorbell_offset;
+	u32 करोorbell;
+	u32 करोorbell_offset;
 	u64 wptr_gpu_addr;
 
 	wb_offset = (ring->rptr_offs * 4);
@@ -1271,7 +1272,7 @@ static void sdma_v4_0_page_resume(struct amdgpu_device *adev, unsigned int i)
 	rb_cntl = sdma_v4_0_rb_cntl(ring, rb_cntl);
 	WREG32_SDMA(i, mmSDMA0_PAGE_RB_CNTL, rb_cntl);
 
-	/* Initialize the ring buffer's read and write pointers */
+	/* Initialize the ring buffer's पढ़ो and ग_लिखो poपूर्णांकers */
 	WREG32_SDMA(i, mmSDMA0_PAGE_RB_RPTR, 0);
 	WREG32_SDMA(i, mmSDMA0_PAGE_RB_RPTR_HI, 0);
 	WREG32_SDMA(i, mmSDMA0_PAGE_RB_WPTR, 0);
@@ -1291,27 +1292,27 @@ static void sdma_v4_0_page_resume(struct amdgpu_device *adev, unsigned int i)
 
 	ring->wptr = 0;
 
-	/* before programing wptr to a less value, need set minor_ptr_update first */
+	/* beक्रमe programing wptr to a less value, need set minor_ptr_update first */
 	WREG32_SDMA(i, mmSDMA0_PAGE_MINOR_PTR_UPDATE, 1);
 
-	doorbell = RREG32_SDMA(i, mmSDMA0_PAGE_DOORBELL);
-	doorbell_offset = RREG32_SDMA(i, mmSDMA0_PAGE_DOORBELL_OFFSET);
+	करोorbell = RREG32_SDMA(i, mmSDMA0_PAGE_DOORBELL);
+	करोorbell_offset = RREG32_SDMA(i, mmSDMA0_PAGE_DOORBELL_OFFSET);
 
-	doorbell = REG_SET_FIELD(doorbell, SDMA0_PAGE_DOORBELL, ENABLE,
-				 ring->use_doorbell);
-	doorbell_offset = REG_SET_FIELD(doorbell_offset,
+	करोorbell = REG_SET_FIELD(करोorbell, SDMA0_PAGE_DOORBELL, ENABLE,
+				 ring->use_करोorbell);
+	करोorbell_offset = REG_SET_FIELD(करोorbell_offset,
 					SDMA0_PAGE_DOORBELL_OFFSET,
-					OFFSET, ring->doorbell_index);
-	WREG32_SDMA(i, mmSDMA0_PAGE_DOORBELL, doorbell);
-	WREG32_SDMA(i, mmSDMA0_PAGE_DOORBELL_OFFSET, doorbell_offset);
+					OFFSET, ring->करोorbell_index);
+	WREG32_SDMA(i, mmSDMA0_PAGE_DOORBELL, करोorbell);
+	WREG32_SDMA(i, mmSDMA0_PAGE_DOORBELL_OFFSET, करोorbell_offset);
 
-	/* paging queue doorbell range is setup at sdma_v4_0_gfx_resume */
+	/* paging queue करोorbell range is setup at sdma_v4_0_gfx_resume */
 	sdma_v4_0_page_ring_set_wptr(ring);
 
 	/* set minor_ptr_update to 0 after wptr programed */
 	WREG32_SDMA(i, mmSDMA0_PAGE_MINOR_PTR_UPDATE, 0);
 
-	/* setup the wptr shadow polling */
+	/* setup the wptr shaकरोw polling */
 	wptr_gpu_addr = adev->wb.gpu_addr + (ring->wptr_offs * 4);
 	WREG32_SDMA(i, mmSDMA0_PAGE_RB_WPTR_POLL_ADDR_LO,
 		    lower_32_bits(wptr_gpu_addr));
@@ -1329,174 +1330,174 @@ static void sdma_v4_0_page_resume(struct amdgpu_device *adev, unsigned int i)
 
 	ib_cntl = RREG32_SDMA(i, mmSDMA0_PAGE_IB_CNTL);
 	ib_cntl = REG_SET_FIELD(ib_cntl, SDMA0_PAGE_IB_CNTL, IB_ENABLE, 1);
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 	ib_cntl = REG_SET_FIELD(ib_cntl, SDMA0_PAGE_IB_CNTL, IB_SWAP_ENABLE, 1);
-#endif
+#पूर्ण_अगर
 	/* enable DMA IBs */
 	WREG32_SDMA(i, mmSDMA0_PAGE_IB_CNTL, ib_cntl);
 
-	ring->sched.ready = true;
-}
+	ring->sched.पढ़ोy = true;
+पूर्ण
 
-static void
-sdma_v4_1_update_power_gating(struct amdgpu_device *adev, bool enable)
-{
-	uint32_t def, data;
+अटल व्योम
+sdma_v4_1_update_घातer_gating(काष्ठा amdgpu_device *adev, bool enable)
+अणु
+	uपूर्णांक32_t def, data;
 
-	if (enable && (adev->pg_flags & AMD_PG_SUPPORT_SDMA)) {
-		/* enable idle interrupt */
+	अगर (enable && (adev->pg_flags & AMD_PG_SUPPORT_SDMA)) अणु
+		/* enable idle पूर्णांकerrupt */
 		def = data = RREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_CNTL));
 		data |= SDMA0_CNTL__CTXEMPTY_INT_ENABLE_MASK;
 
-		if (data != def)
+		अगर (data != def)
 			WREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_CNTL), data);
-	} else {
-		/* disable idle interrupt */
+	पूर्ण अन्यथा अणु
+		/* disable idle पूर्णांकerrupt */
 		def = data = RREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_CNTL));
 		data &= ~SDMA0_CNTL__CTXEMPTY_INT_ENABLE_MASK;
-		if (data != def)
+		अगर (data != def)
 			WREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_CNTL), data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sdma_v4_1_init_power_gating(struct amdgpu_device *adev)
-{
-	uint32_t def, data;
+अटल व्योम sdma_v4_1_init_घातer_gating(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक32_t def, data;
 
 	/* Enable HW based PG. */
 	def = data = RREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_POWER_CNTL));
 	data |= SDMA0_POWER_CNTL__PG_CNTL_ENABLE_MASK;
-	if (data != def)
+	अगर (data != def)
 		WREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_POWER_CNTL), data);
 
-	/* enable interrupt */
+	/* enable पूर्णांकerrupt */
 	def = data = RREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_CNTL));
 	data |= SDMA0_CNTL__CTXEMPTY_INT_ENABLE_MASK;
-	if (data != def)
+	अगर (data != def)
 		WREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_CNTL), data);
 
-	/* Configure hold time to filter in-valid power on/off request. Use default right now */
+	/* Configure hold समय to filter in-valid घातer on/off request. Use शेष right now */
 	def = data = RREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_POWER_CNTL));
 	data &= ~SDMA0_POWER_CNTL__ON_OFF_CONDITION_HOLD_TIME_MASK;
 	data |= (mmSDMA0_POWER_CNTL_DEFAULT & SDMA0_POWER_CNTL__ON_OFF_CONDITION_HOLD_TIME_MASK);
-	/* Configure switch time for hysteresis purpose. Use default right now */
+	/* Configure चयन समय क्रम hysteresis purpose. Use शेष right now */
 	data &= ~SDMA0_POWER_CNTL__ON_OFF_STATUS_DURATION_TIME_MASK;
 	data |= (mmSDMA0_POWER_CNTL_DEFAULT & SDMA0_POWER_CNTL__ON_OFF_STATUS_DURATION_TIME_MASK);
-	if(data != def)
+	अगर(data != def)
 		WREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_POWER_CNTL), data);
-}
+पूर्ण
 
-static void sdma_v4_0_init_pg(struct amdgpu_device *adev)
-{
-	if (!(adev->pg_flags & AMD_PG_SUPPORT_SDMA))
-		return;
+अटल व्योम sdma_v4_0_init_pg(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (!(adev->pg_flags & AMD_PG_SUPPORT_SDMA))
+		वापस;
 
-	switch (adev->asic_type) {
-	case CHIP_RAVEN:
-	case CHIP_RENOIR:
-		sdma_v4_1_init_power_gating(adev);
-		sdma_v4_1_update_power_gating(adev, true);
-		break;
-	default:
-		break;
-	}
-}
+	चयन (adev->asic_type) अणु
+	हाल CHIP_RAVEN:
+	हाल CHIP_RENOIR:
+		sdma_v4_1_init_घातer_gating(adev);
+		sdma_v4_1_update_घातer_gating(adev, true);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * sdma_v4_0_rlc_resume - setup and start the async dma engines
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Set up the compute DMA queues and enable them (VEGA10).
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int sdma_v4_0_rlc_resume(struct amdgpu_device *adev)
-{
+अटल पूर्णांक sdma_v4_0_rlc_resume(काष्ठा amdgpu_device *adev)
+अणु
 	sdma_v4_0_init_pg(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sdma_v4_0_load_microcode - load the sDMA ME ucode
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Loads the sDMA0/1 ucode.
- * Returns 0 for success, -EINVAL if the ucode is not available.
+ * Returns 0 क्रम success, -EINVAL अगर the ucode is not available.
  */
-static int sdma_v4_0_load_microcode(struct amdgpu_device *adev)
-{
-	const struct sdma_firmware_header_v1_0 *hdr;
-	const __le32 *fw_data;
+अटल पूर्णांक sdma_v4_0_load_microcode(काष्ठा amdgpu_device *adev)
+अणु
+	स्थिर काष्ठा sdma_firmware_header_v1_0 *hdr;
+	स्थिर __le32 *fw_data;
 	u32 fw_size;
-	int i, j;
+	पूर्णांक i, j;
 
 	/* halt the MEs */
 	sdma_v4_0_enable(adev, false);
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
-		if (!adev->sdma.instance[i].fw)
-			return -EINVAL;
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
+		अगर (!adev->sdma.instance[i].fw)
+			वापस -EINVAL;
 
-		hdr = (const struct sdma_firmware_header_v1_0 *)adev->sdma.instance[i].fw->data;
-		amdgpu_ucode_print_sdma_hdr(&hdr->header);
+		hdr = (स्थिर काष्ठा sdma_firmware_header_v1_0 *)adev->sdma.instance[i].fw->data;
+		amdgpu_ucode_prपूर्णांक_sdma_hdr(&hdr->header);
 		fw_size = le32_to_cpu(hdr->header.ucode_size_bytes) / 4;
 
-		fw_data = (const __le32 *)
+		fw_data = (स्थिर __le32 *)
 			(adev->sdma.instance[i].fw->data +
 				le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 
 		WREG32_SDMA(i, mmSDMA0_UCODE_ADDR, 0);
 
-		for (j = 0; j < fw_size; j++)
+		क्रम (j = 0; j < fw_size; j++)
 			WREG32_SDMA(i, mmSDMA0_UCODE_DATA,
 				    le32_to_cpup(fw_data++));
 
 		WREG32_SDMA(i, mmSDMA0_UCODE_ADDR,
 			    adev->sdma.instance[i].fw_version);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sdma_v4_0_start - setup and start the async dma engines
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Set up the DMA engines and enable them (VEGA10).
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int sdma_v4_0_start(struct amdgpu_device *adev)
-{
-	struct amdgpu_ring *ring;
-	int i, r = 0;
+अटल पूर्णांक sdma_v4_0_start(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ring *ring;
+	पूर्णांक i, r = 0;
 
-	if (amdgpu_sriov_vf(adev)) {
-		sdma_v4_0_ctx_switch_enable(adev, false);
+	अगर (amdgpu_sriov_vf(adev)) अणु
+		sdma_v4_0_ctx_चयन_enable(adev, false);
 		sdma_v4_0_enable(adev, false);
-	} else {
+	पूर्ण अन्यथा अणु
 
-		if (adev->firmware.load_type != AMDGPU_FW_LOAD_PSP) {
+		अगर (adev->firmware.load_type != AMDGPU_FW_LOAD_PSP) अणु
 			r = sdma_v4_0_load_microcode(adev);
-			if (r)
-				return r;
-		}
+			अगर (r)
+				वापस r;
+		पूर्ण
 
 		/* unhalt the MEs */
 		sdma_v4_0_enable(adev, true);
 		/* enable sdma ring preemption */
-		sdma_v4_0_ctx_switch_enable(adev, true);
-	}
+		sdma_v4_0_ctx_चयन_enable(adev, true);
+	पूर्ण
 
 	/* start the gfx rings and rlc compute queues */
-	for (i = 0; i < adev->sdma.num_instances; i++) {
-		uint32_t temp;
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
+		uपूर्णांक32_t temp;
 
 		WREG32_SDMA(i, mmSDMA0_SEM_WAIT_FAIL_TIMER_CNTL, 0);
 		sdma_v4_0_gfx_resume(adev, i);
-		if (adev->sdma.has_page_queue)
+		अगर (adev->sdma.has_page_queue)
 			sdma_v4_0_page_resume(adev, i);
 
 		/* set utc l1 enable flag always to 1 */
@@ -1504,132 +1505,132 @@ static int sdma_v4_0_start(struct amdgpu_device *adev)
 		temp = REG_SET_FIELD(temp, SDMA0_CNTL, UTC_L1_ENABLE, 1);
 		WREG32_SDMA(i, mmSDMA0_CNTL, temp);
 
-		if (!amdgpu_sriov_vf(adev)) {
+		अगर (!amdgpu_sriov_vf(adev)) अणु
 			/* unhalt engine */
 			temp = RREG32_SDMA(i, mmSDMA0_F32_CNTL);
 			temp = REG_SET_FIELD(temp, SDMA0_F32_CNTL, HALT, 0);
 			WREG32_SDMA(i, mmSDMA0_F32_CNTL, temp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (amdgpu_sriov_vf(adev)) {
-		sdma_v4_0_ctx_switch_enable(adev, true);
+	अगर (amdgpu_sriov_vf(adev)) अणु
+		sdma_v4_0_ctx_चयन_enable(adev, true);
 		sdma_v4_0_enable(adev, true);
-	} else {
+	पूर्ण अन्यथा अणु
 		r = sdma_v4_0_rlc_resume(adev);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		ring = &adev->sdma.instance[i].ring;
 
 		r = amdgpu_ring_test_helper(ring);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 
-		if (adev->sdma.has_page_queue) {
-			struct amdgpu_ring *page = &adev->sdma.instance[i].page;
+		अगर (adev->sdma.has_page_queue) अणु
+			काष्ठा amdgpu_ring *page = &adev->sdma.instance[i].page;
 
 			r = amdgpu_ring_test_helper(page);
-			if (r)
-				return r;
+			अगर (r)
+				वापस r;
 
-			if (adev->mman.buffer_funcs_ring == page)
-				amdgpu_ttm_set_buffer_funcs_status(adev, true);
-		}
+			अगर (adev->mman.buffer_funcs_ring == page)
+				amdgpu_tपंचांग_set_buffer_funcs_status(adev, true);
+		पूर्ण
 
-		if (adev->mman.buffer_funcs_ring == ring)
-			amdgpu_ttm_set_buffer_funcs_status(adev, true);
-	}
+		अगर (adev->mman.buffer_funcs_ring == ring)
+			amdgpu_tपंचांग_set_buffer_funcs_status(adev, true);
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * sdma_v4_0_ring_test_ring - simple async dma engine test
  *
- * @ring: amdgpu_ring structure holding ring information
+ * @ring: amdgpu_ring काष्ठाure holding ring inक्रमmation
  *
- * Test the DMA engine by writing using it to write an
+ * Test the DMA engine by writing using it to ग_लिखो an
  * value to memory. (VEGA10).
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int sdma_v4_0_ring_test_ring(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
-	unsigned i;
-	unsigned index;
-	int r;
-	u32 tmp;
+अटल पूर्णांक sdma_v4_0_ring_test_ring(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	अचिन्हित i;
+	अचिन्हित index;
+	पूर्णांक r;
+	u32 पंचांगp;
 	u64 gpu_addr;
 
 	r = amdgpu_device_wb_get(adev, &index);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	gpu_addr = adev->wb.gpu_addr + (index * 4);
-	tmp = 0xCAFEDEAD;
-	adev->wb.wb[index] = cpu_to_le32(tmp);
+	पंचांगp = 0xCAFEDEAD;
+	adev->wb.wb[index] = cpu_to_le32(पंचांगp);
 
 	r = amdgpu_ring_alloc(ring, 5);
-	if (r)
-		goto error_free_wb;
+	अगर (r)
+		जाओ error_मुक्त_wb;
 
-	amdgpu_ring_write(ring, SDMA_PKT_HEADER_OP(SDMA_OP_WRITE) |
+	amdgpu_ring_ग_लिखो(ring, SDMA_PKT_HEADER_OP(SDMA_OP_WRITE) |
 			  SDMA_PKT_HEADER_SUB_OP(SDMA_SUBOP_WRITE_LINEAR));
-	amdgpu_ring_write(ring, lower_32_bits(gpu_addr));
-	amdgpu_ring_write(ring, upper_32_bits(gpu_addr));
-	amdgpu_ring_write(ring, SDMA_PKT_WRITE_UNTILED_DW_3_COUNT(0));
-	amdgpu_ring_write(ring, 0xDEADBEEF);
+	amdgpu_ring_ग_लिखो(ring, lower_32_bits(gpu_addr));
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(gpu_addr));
+	amdgpu_ring_ग_लिखो(ring, SDMA_PKT_WRITE_UNTILED_DW_3_COUNT(0));
+	amdgpu_ring_ग_लिखो(ring, 0xDEADBEEF);
 	amdgpu_ring_commit(ring);
 
-	for (i = 0; i < adev->usec_timeout; i++) {
-		tmp = le32_to_cpu(adev->wb.wb[index]);
-		if (tmp == 0xDEADBEEF)
-			break;
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		पंचांगp = le32_to_cpu(adev->wb.wb[index]);
+		अगर (पंचांगp == 0xDEADBEEF)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
-	if (i >= adev->usec_timeout)
+	अगर (i >= adev->usec_समयout)
 		r = -ETIMEDOUT;
 
-error_free_wb:
-	amdgpu_device_wb_free(adev, index);
-	return r;
-}
+error_मुक्त_wb:
+	amdgpu_device_wb_मुक्त(adev, index);
+	वापस r;
+पूर्ण
 
 /**
  * sdma_v4_0_ring_test_ib - test an IB on the DMA engine
  *
- * @ring: amdgpu_ring structure holding ring information
- * @timeout: timeout value in jiffies, or MAX_SCHEDULE_TIMEOUT
+ * @ring: amdgpu_ring काष्ठाure holding ring inक्रमmation
+ * @समयout: समयout value in jअगरfies, or MAX_SCHEDULE_TIMEOUT
  *
  * Test a simple IB in the DMA ring (VEGA10).
  * Returns 0 on success, error on failure.
  */
-static int sdma_v4_0_ring_test_ib(struct amdgpu_ring *ring, long timeout)
-{
-	struct amdgpu_device *adev = ring->adev;
-	struct amdgpu_ib ib;
-	struct dma_fence *f = NULL;
-	unsigned index;
-	long r;
-	u32 tmp = 0;
+अटल पूर्णांक sdma_v4_0_ring_test_ib(काष्ठा amdgpu_ring *ring, दीर्घ समयout)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	काष्ठा amdgpu_ib ib;
+	काष्ठा dma_fence *f = शून्य;
+	अचिन्हित index;
+	दीर्घ r;
+	u32 पंचांगp = 0;
 	u64 gpu_addr;
 
 	r = amdgpu_device_wb_get(adev, &index);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	gpu_addr = adev->wb.gpu_addr + (index * 4);
-	tmp = 0xCAFEDEAD;
-	adev->wb.wb[index] = cpu_to_le32(tmp);
-	memset(&ib, 0, sizeof(ib));
-	r = amdgpu_ib_get(adev, NULL, 256,
-					AMDGPU_IB_POOL_DIRECT, &ib);
-	if (r)
-		goto err0;
+	पंचांगp = 0xCAFEDEAD;
+	adev->wb.wb[index] = cpu_to_le32(पंचांगp);
+	स_रखो(&ib, 0, माप(ib));
+	r = amdgpu_ib_get(adev, शून्य, 256,
+					AMDGPU_IB_POOL_सूचीECT, &ib);
+	अगर (r)
+		जाओ err0;
 
 	ib.ptr[0] = SDMA_PKT_HEADER_OP(SDMA_OP_WRITE) |
 		SDMA_PKT_HEADER_SUB_OP(SDMA_SUBOP_WRITE_LINEAR);
@@ -1642,30 +1643,30 @@ static int sdma_v4_0_ring_test_ib(struct amdgpu_ring *ring, long timeout)
 	ib.ptr[7] = SDMA_PKT_NOP_HEADER_OP(SDMA_OP_NOP);
 	ib.length_dw = 8;
 
-	r = amdgpu_ib_schedule(ring, 1, &ib, NULL, &f);
-	if (r)
-		goto err1;
+	r = amdgpu_ib_schedule(ring, 1, &ib, शून्य, &f);
+	अगर (r)
+		जाओ err1;
 
-	r = dma_fence_wait_timeout(f, false, timeout);
-	if (r == 0) {
+	r = dma_fence_रुको_समयout(f, false, समयout);
+	अगर (r == 0) अणु
 		r = -ETIMEDOUT;
-		goto err1;
-	} else if (r < 0) {
-		goto err1;
-	}
-	tmp = le32_to_cpu(adev->wb.wb[index]);
-	if (tmp == 0xDEADBEEF)
+		जाओ err1;
+	पूर्ण अन्यथा अगर (r < 0) अणु
+		जाओ err1;
+	पूर्ण
+	पंचांगp = le32_to_cpu(adev->wb.wb[index]);
+	अगर (पंचांगp == 0xDEADBEEF)
 		r = 0;
-	else
+	अन्यथा
 		r = -EINVAL;
 
 err1:
-	amdgpu_ib_free(adev, &ib, NULL);
+	amdgpu_ib_मुक्त(adev, &ib, शून्य);
 	dma_fence_put(f);
 err0:
-	amdgpu_device_wb_free(adev, index);
-	return r;
-}
+	amdgpu_device_wb_मुक्त(adev, index);
+	वापस r;
+पूर्ण
 
 
 /**
@@ -1678,11 +1679,11 @@ err0:
  *
  * Update PTEs by copying them from the GART using sDMA (VEGA10).
  */
-static void sdma_v4_0_vm_copy_pte(struct amdgpu_ib *ib,
-				  uint64_t pe, uint64_t src,
-				  unsigned count)
-{
-	unsigned bytes = count * 8;
+अटल व्योम sdma_v4_0_vm_copy_pte(काष्ठा amdgpu_ib *ib,
+				  uपूर्णांक64_t pe, uपूर्णांक64_t src,
+				  अचिन्हित count)
+अणु
+	अचिन्हित bytes = count * 8;
 
 	ib->ptr[ib->length_dw++] = SDMA_PKT_HEADER_OP(SDMA_OP_COPY) |
 		SDMA_PKT_HEADER_SUB_OP(SDMA_SUBOP_COPY_LINEAR);
@@ -1693,55 +1694,55 @@ static void sdma_v4_0_vm_copy_pte(struct amdgpu_ib *ib,
 	ib->ptr[ib->length_dw++] = lower_32_bits(pe);
 	ib->ptr[ib->length_dw++] = upper_32_bits(pe);
 
-}
+पूर्ण
 
 /**
- * sdma_v4_0_vm_write_pte - update PTEs by writing them manually
+ * sdma_v4_0_vm_ग_लिखो_pte - update PTEs by writing them manually
  *
  * @ib: indirect buffer to fill with commands
  * @pe: addr of the page entry
- * @value: dst addr to write into pe
+ * @value: dst addr to ग_लिखो पूर्णांकo pe
  * @count: number of page entries to update
  * @incr: increase next addr by incr bytes
  *
  * Update PTEs by writing them manually using sDMA (VEGA10).
  */
-static void sdma_v4_0_vm_write_pte(struct amdgpu_ib *ib, uint64_t pe,
-				   uint64_t value, unsigned count,
-				   uint32_t incr)
-{
-	unsigned ndw = count * 2;
+अटल व्योम sdma_v4_0_vm_ग_लिखो_pte(काष्ठा amdgpu_ib *ib, uपूर्णांक64_t pe,
+				   uपूर्णांक64_t value, अचिन्हित count,
+				   uपूर्णांक32_t incr)
+अणु
+	अचिन्हित ndw = count * 2;
 
 	ib->ptr[ib->length_dw++] = SDMA_PKT_HEADER_OP(SDMA_OP_WRITE) |
 		SDMA_PKT_HEADER_SUB_OP(SDMA_SUBOP_WRITE_LINEAR);
 	ib->ptr[ib->length_dw++] = lower_32_bits(pe);
 	ib->ptr[ib->length_dw++] = upper_32_bits(pe);
 	ib->ptr[ib->length_dw++] = ndw - 1;
-	for (; ndw > 0; ndw -= 2) {
+	क्रम (; ndw > 0; ndw -= 2) अणु
 		ib->ptr[ib->length_dw++] = lower_32_bits(value);
 		ib->ptr[ib->length_dw++] = upper_32_bits(value);
 		value += incr;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * sdma_v4_0_vm_set_pte_pde - update the page tables using sDMA
  *
  * @ib: indirect buffer to fill with commands
  * @pe: addr of the page entry
- * @addr: dst addr to write into pe
+ * @addr: dst addr to ग_लिखो पूर्णांकo pe
  * @count: number of page entries to update
  * @incr: increase next addr by incr bytes
  * @flags: access flags
  *
  * Update the page tables using sDMA (VEGA10).
  */
-static void sdma_v4_0_vm_set_pte_pde(struct amdgpu_ib *ib,
-				     uint64_t pe,
-				     uint64_t addr, unsigned count,
-				     uint32_t incr, uint64_t flags)
-{
-	/* for physically contiguous pages (vram) */
+अटल व्योम sdma_v4_0_vm_set_pte_pde(काष्ठा amdgpu_ib *ib,
+				     uपूर्णांक64_t pe,
+				     uपूर्णांक64_t addr, अचिन्हित count,
+				     uपूर्णांक32_t incr, uपूर्णांक64_t flags)
+अणु
+	/* क्रम physically contiguous pages (vram) */
 	ib->ptr[ib->length_dw++] = SDMA_PKT_HEADER_OP(SDMA_OP_PTEPDE);
 	ib->ptr[ib->length_dw++] = lower_32_bits(pe); /* dst addr */
 	ib->ptr[ib->length_dw++] = upper_32_bits(pe);
@@ -1752,124 +1753,124 @@ static void sdma_v4_0_vm_set_pte_pde(struct amdgpu_ib *ib,
 	ib->ptr[ib->length_dw++] = incr; /* increment size */
 	ib->ptr[ib->length_dw++] = 0;
 	ib->ptr[ib->length_dw++] = count - 1; /* number of entries */
-}
+पूर्ण
 
 /**
  * sdma_v4_0_ring_pad_ib - pad the IB to the required number of dw
  *
- * @ring: amdgpu_ring structure holding ring information
+ * @ring: amdgpu_ring काष्ठाure holding ring inक्रमmation
  * @ib: indirect buffer to fill with padding
  */
-static void sdma_v4_0_ring_pad_ib(struct amdgpu_ring *ring, struct amdgpu_ib *ib)
-{
-	struct amdgpu_sdma_instance *sdma = amdgpu_sdma_get_instance_from_ring(ring);
+अटल व्योम sdma_v4_0_ring_pad_ib(काष्ठा amdgpu_ring *ring, काष्ठा amdgpu_ib *ib)
+अणु
+	काष्ठा amdgpu_sdma_instance *sdma = amdgpu_sdma_get_instance_from_ring(ring);
 	u32 pad_count;
-	int i;
+	पूर्णांक i;
 
 	pad_count = (-ib->length_dw) & 7;
-	for (i = 0; i < pad_count; i++)
-		if (sdma && sdma->burst_nop && (i == 0))
+	क्रम (i = 0; i < pad_count; i++)
+		अगर (sdma && sdma->burst_nop && (i == 0))
 			ib->ptr[ib->length_dw++] =
 				SDMA_PKT_HEADER_OP(SDMA_OP_NOP) |
 				SDMA_PKT_NOP_HEADER_COUNT(pad_count - 1);
-		else
+		अन्यथा
 			ib->ptr[ib->length_dw++] =
 				SDMA_PKT_HEADER_OP(SDMA_OP_NOP);
-}
+पूर्ण
 
 
 /**
  * sdma_v4_0_ring_emit_pipeline_sync - sync the pipeline
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
  * Make sure all previous operations are completed (CIK).
  */
-static void sdma_v4_0_ring_emit_pipeline_sync(struct amdgpu_ring *ring)
-{
-	uint32_t seq = ring->fence_drv.sync_seq;
-	uint64_t addr = ring->fence_drv.gpu_addr;
+अटल व्योम sdma_v4_0_ring_emit_pipeline_sync(काष्ठा amdgpu_ring *ring)
+अणु
+	uपूर्णांक32_t seq = ring->fence_drv.sync_seq;
+	uपूर्णांक64_t addr = ring->fence_drv.gpu_addr;
 
-	/* wait for idle */
-	sdma_v4_0_wait_reg_mem(ring, 1, 0,
+	/* रुको क्रम idle */
+	sdma_v4_0_रुको_reg_mem(ring, 1, 0,
 			       addr & 0xfffffffc,
 			       upper_32_bits(addr) & 0xffffffff,
 			       seq, 0xffffffff, 4);
-}
+पूर्ण
 
 
 /**
  * sdma_v4_0_ring_emit_vm_flush - vm flush using sDMA
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  * @vmid: vmid number to use
  * @pd_addr: address
  *
  * Update the page table base and flush the VM TLB
  * using sDMA (VEGA10).
  */
-static void sdma_v4_0_ring_emit_vm_flush(struct amdgpu_ring *ring,
-					 unsigned vmid, uint64_t pd_addr)
-{
+अटल व्योम sdma_v4_0_ring_emit_vm_flush(काष्ठा amdgpu_ring *ring,
+					 अचिन्हित vmid, uपूर्णांक64_t pd_addr)
+अणु
 	amdgpu_gmc_emit_flush_gpu_tlb(ring, vmid, pd_addr);
-}
+पूर्ण
 
-static void sdma_v4_0_ring_emit_wreg(struct amdgpu_ring *ring,
-				     uint32_t reg, uint32_t val)
-{
-	amdgpu_ring_write(ring, SDMA_PKT_HEADER_OP(SDMA_OP_SRBM_WRITE) |
+अटल व्योम sdma_v4_0_ring_emit_wreg(काष्ठा amdgpu_ring *ring,
+				     uपूर्णांक32_t reg, uपूर्णांक32_t val)
+अणु
+	amdgpu_ring_ग_लिखो(ring, SDMA_PKT_HEADER_OP(SDMA_OP_SRBM_WRITE) |
 			  SDMA_PKT_SRBM_WRITE_HEADER_BYTE_EN(0xf));
-	amdgpu_ring_write(ring, reg);
-	amdgpu_ring_write(ring, val);
-}
+	amdgpu_ring_ग_लिखो(ring, reg);
+	amdgpu_ring_ग_लिखो(ring, val);
+पूर्ण
 
-static void sdma_v4_0_ring_emit_reg_wait(struct amdgpu_ring *ring, uint32_t reg,
-					 uint32_t val, uint32_t mask)
-{
-	sdma_v4_0_wait_reg_mem(ring, 0, 0, reg, 0, val, mask, 10);
-}
+अटल व्योम sdma_v4_0_ring_emit_reg_रुको(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t reg,
+					 uपूर्णांक32_t val, uपूर्णांक32_t mask)
+अणु
+	sdma_v4_0_रुको_reg_mem(ring, 0, 0, reg, 0, val, mask, 10);
+पूर्ण
 
-static bool sdma_v4_0_fw_support_paging_queue(struct amdgpu_device *adev)
-{
-	uint fw_version = adev->sdma.instance[0].fw_version;
+अटल bool sdma_v4_0_fw_support_paging_queue(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक fw_version = adev->sdma.instance[0].fw_version;
 
-	switch (adev->asic_type) {
-	case CHIP_VEGA10:
-		return fw_version >= 430;
-	case CHIP_VEGA12:
-		/*return fw_version >= 31;*/
-		return false;
-	case CHIP_VEGA20:
-		return fw_version >= 123;
-	default:
-		return false;
-	}
-}
+	चयन (adev->asic_type) अणु
+	हाल CHIP_VEGA10:
+		वापस fw_version >= 430;
+	हाल CHIP_VEGA12:
+		/*वापस fw_version >= 31;*/
+		वापस false;
+	हाल CHIP_VEGA20:
+		वापस fw_version >= 123;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int sdma_v4_0_early_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int r;
+अटल पूर्णांक sdma_v4_0_early_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक r;
 
-	if (adev->flags & AMD_IS_APU)
+	अगर (adev->flags & AMD_IS_APU)
 		adev->sdma.num_instances = 1;
-	else if (adev->asic_type == CHIP_ARCTURUS)
+	अन्यथा अगर (adev->asic_type == CHIP_ARCTURUS)
 		adev->sdma.num_instances = 8;
-	else if (adev->asic_type == CHIP_ALDEBARAN)
+	अन्यथा अगर (adev->asic_type == CHIP_ALDEBARAN)
 		adev->sdma.num_instances = 5;
-	else
+	अन्यथा
 		adev->sdma.num_instances = 2;
 
 	r = sdma_v4_0_init_microcode(adev);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to load sdma firmware!\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	/* TODO: Page queue breaks driver reload under SRIOV */
-	if ((adev->asic_type == CHIP_VEGA10) && amdgpu_sriov_vf((adev)))
+	/* TODO: Page queue अवरोधs driver reload under SRIOV */
+	अगर ((adev->asic_type == CHIP_VEGA10) && amdgpu_sriov_vf((adev)))
 		adev->sdma.has_page_queue = false;
-	else if (sdma_v4_0_fw_support_paging_queue(adev))
+	अन्यथा अगर (sdma_v4_0_fw_support_paging_queue(adev))
 		adev->sdma.has_page_queue = true;
 
 	sdma_v4_0_set_ring_funcs(adev);
@@ -1878,241 +1879,241 @@ static int sdma_v4_0_early_init(void *handle)
 	sdma_v4_0_set_irq_funcs(adev);
 	sdma_v4_0_set_ras_funcs(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_process_ras_data_cb(struct amdgpu_device *adev,
-		void *err_data,
-		struct amdgpu_iv_entry *entry);
+अटल पूर्णांक sdma_v4_0_process_ras_data_cb(काष्ठा amdgpu_device *adev,
+		व्योम *err_data,
+		काष्ठा amdgpu_iv_entry *entry);
 
-static int sdma_v4_0_late_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct ras_ih_if ih_info = {
+अटल पूर्णांक sdma_v4_0_late_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा ras_ih_अगर ih_info = अणु
 		.cb = sdma_v4_0_process_ras_data_cb,
-	};
+	पूर्ण;
 
 	sdma_v4_0_setup_ulv(adev);
 
-	if (adev->sdma.funcs && adev->sdma.funcs->reset_ras_error_count)
+	अगर (adev->sdma.funcs && adev->sdma.funcs->reset_ras_error_count)
 		adev->sdma.funcs->reset_ras_error_count(adev);
 
-	if (adev->sdma.funcs && adev->sdma.funcs->ras_late_init)
-		return adev->sdma.funcs->ras_late_init(adev, &ih_info);
-	else
-		return 0;
-}
+	अगर (adev->sdma.funcs && adev->sdma.funcs->ras_late_init)
+		वापस adev->sdma.funcs->ras_late_init(adev, &ih_info);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int sdma_v4_0_sw_init(void *handle)
-{
-	struct amdgpu_ring *ring;
-	int r, i;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक sdma_v4_0_sw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_ring *ring;
+	पूर्णांक r, i;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	/* SDMA trap event */
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		r = amdgpu_irq_add_id(adev, sdma_v4_0_seq_to_irq_id(i),
 				      SDMA0_4_0__SRCID__SDMA_TRAP,
 				      &adev->sdma.trap_irq);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	/* SDMA SRAM ECC event */
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		r = amdgpu_irq_add_id(adev, sdma_v4_0_seq_to_irq_id(i),
 				      SDMA0_4_0__SRCID__SDMA_SRAM_ECC,
 				      &adev->sdma.ecc_irq);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	/* SDMA VM_HOLE/DOORBELL_INV/POLL_TIMEOUT/SRBM_WRITE_PROTECTION event*/
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		r = amdgpu_irq_add_id(adev, sdma_v4_0_seq_to_irq_id(i),
 				      SDMA0_4_0__SRCID__SDMA_VM_HOLE,
 				      &adev->sdma.vm_hole_irq);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 
 		r = amdgpu_irq_add_id(adev, sdma_v4_0_seq_to_irq_id(i),
 				      SDMA0_4_0__SRCID__SDMA_DOORBELL_INVALID,
-				      &adev->sdma.doorbell_invalid_irq);
-		if (r)
-			return r;
+				      &adev->sdma.करोorbell_invalid_irq);
+		अगर (r)
+			वापस r;
 
 		r = amdgpu_irq_add_id(adev, sdma_v4_0_seq_to_irq_id(i),
 				      SDMA0_4_0__SRCID__SDMA_POLL_TIMEOUT,
-				      &adev->sdma.pool_timeout_irq);
-		if (r)
-			return r;
+				      &adev->sdma.pool_समयout_irq);
+		अगर (r)
+			वापस r;
 
 		r = amdgpu_irq_add_id(adev, sdma_v4_0_seq_to_irq_id(i),
 				      SDMA0_4_0__SRCID__SDMA_SRBMWRITE,
-				      &adev->sdma.srbm_write_irq);
-		if (r)
-			return r;
-	}
+				      &adev->sdma.srbm_ग_लिखो_irq);
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		ring = &adev->sdma.instance[i].ring;
-		ring->ring_obj = NULL;
-		ring->use_doorbell = true;
+		ring->ring_obj = शून्य;
+		ring->use_करोorbell = true;
 
 		DRM_DEBUG("SDMA %d use_doorbell being set to: [%s]\n", i,
-				ring->use_doorbell?"true":"false");
+				ring->use_करोorbell?"true":"false");
 
-		/* doorbell size is 2 dwords, get DWORD offset */
-		ring->doorbell_index = adev->doorbell_index.sdma_engine[i] << 1;
+		/* करोorbell size is 2 dwords, get DWORD offset */
+		ring->करोorbell_index = adev->करोorbell_index.sdma_engine[i] << 1;
 
-		sprintf(ring->name, "sdma%d", i);
+		प्र_लिखो(ring->name, "sdma%d", i);
 		r = amdgpu_ring_init(adev, ring, 1024, &adev->sdma.trap_irq,
 				     AMDGPU_SDMA_IRQ_INSTANCE0 + i,
-				     AMDGPU_RING_PRIO_DEFAULT, NULL);
-		if (r)
-			return r;
+				     AMDGPU_RING_PRIO_DEFAULT, शून्य);
+		अगर (r)
+			वापस r;
 
-		if (adev->sdma.has_page_queue) {
+		अगर (adev->sdma.has_page_queue) अणु
 			ring = &adev->sdma.instance[i].page;
-			ring->ring_obj = NULL;
-			ring->use_doorbell = true;
+			ring->ring_obj = शून्य;
+			ring->use_करोorbell = true;
 
-			/* paging queue use same doorbell index/routing as gfx queue
-			 * with 0x400 (4096 dwords) offset on second doorbell page
+			/* paging queue use same करोorbell index/routing as gfx queue
+			 * with 0x400 (4096 dwords) offset on second करोorbell page
 			 */
-			ring->doorbell_index = adev->doorbell_index.sdma_engine[i] << 1;
-			ring->doorbell_index += 0x400;
+			ring->करोorbell_index = adev->करोorbell_index.sdma_engine[i] << 1;
+			ring->करोorbell_index += 0x400;
 
-			sprintf(ring->name, "page%d", i);
+			प्र_लिखो(ring->name, "page%d", i);
 			r = amdgpu_ring_init(adev, ring, 1024,
 					     &adev->sdma.trap_irq,
 					     AMDGPU_SDMA_IRQ_INSTANCE0 + i,
-					     AMDGPU_RING_PRIO_DEFAULT, NULL);
-			if (r)
-				return r;
-		}
-	}
+					     AMDGPU_RING_PRIO_DEFAULT, शून्य);
+			अगर (r)
+				वापस r;
+		पूर्ण
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int sdma_v4_0_sw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int i;
+अटल पूर्णांक sdma_v4_0_sw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक i;
 
-	if (adev->sdma.funcs && adev->sdma.funcs->ras_fini)
+	अगर (adev->sdma.funcs && adev->sdma.funcs->ras_fini)
 		adev->sdma.funcs->ras_fini(adev);
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		amdgpu_ring_fini(&adev->sdma.instance[i].ring);
-		if (adev->sdma.has_page_queue)
+		अगर (adev->sdma.has_page_queue)
 			amdgpu_ring_fini(&adev->sdma.instance[i].page);
-	}
+	पूर्ण
 
 	sdma_v4_0_destroy_inst_ctx(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_hw_init(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक sdma_v4_0_hw_init(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	if (adev->flags & AMD_IS_APU)
-		amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_SDMA, false);
+	अगर (adev->flags & AMD_IS_APU)
+		amdgpu_dpm_set_घातergating_by_smu(adev, AMD_IP_BLOCK_TYPE_SDMA, false);
 
-	if (!amdgpu_sriov_vf(adev))
-		sdma_v4_0_init_golden_registers(adev);
+	अगर (!amdgpu_sriov_vf(adev))
+		sdma_v4_0_init_golden_रेजिस्टरs(adev);
 
 	r = sdma_v4_0_start(adev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int sdma_v4_0_hw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int i;
+अटल पूर्णांक sdma_v4_0_hw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक i;
 
-	if (amdgpu_sriov_vf(adev))
-		return 0;
+	अगर (amdgpu_sriov_vf(adev))
+		वापस 0;
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		amdgpu_irq_put(adev, &adev->sdma.ecc_irq,
 			       AMDGPU_SDMA_IRQ_INSTANCE0 + i);
-	}
+	पूर्ण
 
-	sdma_v4_0_ctx_switch_enable(adev, false);
+	sdma_v4_0_ctx_चयन_enable(adev, false);
 	sdma_v4_0_enable(adev, false);
 
-	if (adev->flags & AMD_IS_APU)
-		amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_SDMA, true);
+	अगर (adev->flags & AMD_IS_APU)
+		amdgpu_dpm_set_घातergating_by_smu(adev, AMD_IP_BLOCK_TYPE_SDMA, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_suspend(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक sdma_v4_0_suspend(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return sdma_v4_0_hw_fini(adev);
-}
+	वापस sdma_v4_0_hw_fini(adev);
+पूर्ण
 
-static int sdma_v4_0_resume(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक sdma_v4_0_resume(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return sdma_v4_0_hw_init(adev);
-}
+	वापस sdma_v4_0_hw_init(adev);
+पूर्ण
 
-static bool sdma_v4_0_is_idle(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल bool sdma_v4_0_is_idle(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 	u32 i;
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
-		u32 tmp = RREG32_SDMA(i, mmSDMA0_STATUS_REG);
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
+		u32 पंचांगp = RREG32_SDMA(i, mmSDMA0_STATUS_REG);
 
-		if (!(tmp & SDMA0_STATUS_REG__IDLE_MASK))
-			return false;
-	}
+		अगर (!(पंचांगp & SDMA0_STATUS_REG__IDLE_MASK))
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int sdma_v4_0_wait_for_idle(void *handle)
-{
-	unsigned i, j;
+अटल पूर्णांक sdma_v4_0_रुको_क्रम_idle(व्योम *handle)
+अणु
+	अचिन्हित i, j;
 	u32 sdma[AMDGPU_MAX_SDMA_INSTANCES];
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	for (i = 0; i < adev->usec_timeout; i++) {
-		for (j = 0; j < adev->sdma.num_instances; j++) {
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		क्रम (j = 0; j < adev->sdma.num_instances; j++) अणु
 			sdma[j] = RREG32_SDMA(j, mmSDMA0_STATUS_REG);
-			if (!(sdma[j] & SDMA0_STATUS_REG__IDLE_MASK))
-				break;
-		}
-		if (j == adev->sdma.num_instances)
-			return 0;
+			अगर (!(sdma[j] & SDMA0_STATUS_REG__IDLE_MASK))
+				अवरोध;
+		पूर्ण
+		अगर (j == adev->sdma.num_instances)
+			वापस 0;
 		udelay(1);
-	}
-	return -ETIMEDOUT;
-}
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int sdma_v4_0_soft_reset(void *handle)
-{
-	/* todo */
+अटल पूर्णांक sdma_v4_0_soft_reset(व्योम *handle)
+अणु
+	/* toकरो */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_set_trap_irq_state(struct amdgpu_device *adev,
-					struct amdgpu_irq_src *source,
-					unsigned type,
-					enum amdgpu_interrupt_state state)
-{
+अटल पूर्णांक sdma_v4_0_set_trap_irq_state(काष्ठा amdgpu_device *adev,
+					काष्ठा amdgpu_irq_src *source,
+					अचिन्हित type,
+					क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
 	u32 sdma_cntl;
 
 	sdma_cntl = RREG32_SDMA(type, mmSDMA0_CNTL);
@@ -2120,84 +2121,84 @@ static int sdma_v4_0_set_trap_irq_state(struct amdgpu_device *adev,
 		       state == AMDGPU_IRQ_STATE_ENABLE ? 1 : 0);
 	WREG32_SDMA(type, mmSDMA0_CNTL, sdma_cntl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_process_trap_irq(struct amdgpu_device *adev,
-				      struct amdgpu_irq_src *source,
-				      struct amdgpu_iv_entry *entry)
-{
-	uint32_t instance;
+अटल पूर्णांक sdma_v4_0_process_trap_irq(काष्ठा amdgpu_device *adev,
+				      काष्ठा amdgpu_irq_src *source,
+				      काष्ठा amdgpu_iv_entry *entry)
+अणु
+	uपूर्णांक32_t instance;
 
 	DRM_DEBUG("IH: SDMA trap\n");
 	instance = sdma_v4_0_irq_id_to_seq(entry->client_id);
-	switch (entry->ring_id) {
-	case 0:
+	चयन (entry->ring_id) अणु
+	हाल 0:
 		amdgpu_fence_process(&adev->sdma.instance[instance].ring);
-		break;
-	case 1:
-		if (adev->asic_type == CHIP_VEGA20)
+		अवरोध;
+	हाल 1:
+		अगर (adev->asic_type == CHIP_VEGA20)
 			amdgpu_fence_process(&adev->sdma.instance[instance].page);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		/* XXX compute */
-		break;
-	case 3:
-		if (adev->asic_type != CHIP_VEGA20)
+		अवरोध;
+	हाल 3:
+		अगर (adev->asic_type != CHIP_VEGA20)
 			amdgpu_fence_process(&adev->sdma.instance[instance].page);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_process_ras_data_cb(struct amdgpu_device *adev,
-		void *err_data,
-		struct amdgpu_iv_entry *entry)
-{
-	int instance;
+अटल पूर्णांक sdma_v4_0_process_ras_data_cb(काष्ठा amdgpu_device *adev,
+		व्योम *err_data,
+		काष्ठा amdgpu_iv_entry *entry)
+अणु
+	पूर्णांक instance;
 
-	/* When “Full RAS” is enabled, the per-IP interrupt sources should
-	 * be disabled and the driver should only look for the aggregated
-	 * interrupt via sync flood
+	/* When ै Full RASै  is enabled, the per-IP पूर्णांकerrupt sources should
+	 * be disabled and the driver should only look क्रम the aggregated
+	 * पूर्णांकerrupt via sync flood
 	 */
-	if (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__GFX))
-		goto out;
+	अगर (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__GFX))
+		जाओ out;
 
 	instance = sdma_v4_0_irq_id_to_seq(entry->client_id);
-	if (instance < 0)
-		goto out;
+	अगर (instance < 0)
+		जाओ out;
 
 	amdgpu_sdma_process_ras_data_cb(adev, err_data, entry);
 
 out:
-	return AMDGPU_RAS_SUCCESS;
-}
+	वापस AMDGPU_RAS_SUCCESS;
+पूर्ण
 
-static int sdma_v4_0_process_illegal_inst_irq(struct amdgpu_device *adev,
-					      struct amdgpu_irq_src *source,
-					      struct amdgpu_iv_entry *entry)
-{
-	int instance;
+अटल पूर्णांक sdma_v4_0_process_illegal_inst_irq(काष्ठा amdgpu_device *adev,
+					      काष्ठा amdgpu_irq_src *source,
+					      काष्ठा amdgpu_iv_entry *entry)
+अणु
+	पूर्णांक instance;
 
 	DRM_ERROR("Illegal instruction in SDMA command stream\n");
 
 	instance = sdma_v4_0_irq_id_to_seq(entry->client_id);
-	if (instance < 0)
-		return 0;
+	अगर (instance < 0)
+		वापस 0;
 
-	switch (entry->ring_id) {
-	case 0:
+	चयन (entry->ring_id) अणु
+	हाल 0:
 		drm_sched_fault(&adev->sdma.instance[instance].ring.sched);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_set_ecc_irq_state(struct amdgpu_device *adev,
-					struct amdgpu_irq_src *source,
-					unsigned type,
-					enum amdgpu_interrupt_state state)
-{
+अटल पूर्णांक sdma_v4_0_set_ecc_irq_state(काष्ठा amdgpu_device *adev,
+					काष्ठा amdgpu_irq_src *source,
+					अचिन्हित type,
+					क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
 	u32 sdma_edc_config;
 
 	sdma_edc_config = RREG32_SDMA(type, mmSDMA0_EDC_CONFIG);
@@ -2205,26 +2206,26 @@ static int sdma_v4_0_set_ecc_irq_state(struct amdgpu_device *adev,
 		       state == AMDGPU_IRQ_STATE_ENABLE ? 1 : 0);
 	WREG32_SDMA(type, mmSDMA0_EDC_CONFIG, sdma_edc_config);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_print_iv_entry(struct amdgpu_device *adev,
-					      struct amdgpu_iv_entry *entry)
-{
-	int instance;
-	struct amdgpu_task_info task_info;
+अटल पूर्णांक sdma_v4_0_prपूर्णांक_iv_entry(काष्ठा amdgpu_device *adev,
+					      काष्ठा amdgpu_iv_entry *entry)
+अणु
+	पूर्णांक instance;
+	काष्ठा amdgpu_task_info task_info;
 	u64 addr;
 
 	instance = sdma_v4_0_irq_id_to_seq(entry->client_id);
-	if (instance < 0 || instance >= adev->sdma.num_instances) {
+	अगर (instance < 0 || instance >= adev->sdma.num_instances) अणु
 		dev_err(adev->dev, "sdma instance invalid %d\n", instance);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	addr = (u64)entry->src_data[0] << 12;
 	addr |= ((u64)entry->src_data[1] & 0xf) << 44;
 
-	memset(&task_info, 0, sizeof(struct amdgpu_task_info));
+	स_रखो(&task_info, 0, माप(काष्ठा amdgpu_task_info));
 	amdgpu_vm_get_task_info(adev, entry->pasid, &task_info);
 
 	dev_info(adev->dev,
@@ -2233,56 +2234,56 @@ static int sdma_v4_0_print_iv_entry(struct amdgpu_device *adev,
 		   instance, addr, entry->src_id, entry->ring_id, entry->vmid,
 		   entry->pasid, task_info.process_name, task_info.tgid,
 		   task_info.task_name, task_info.pid);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_process_vm_hole_irq(struct amdgpu_device *adev,
-					      struct amdgpu_irq_src *source,
-					      struct amdgpu_iv_entry *entry)
-{
+अटल पूर्णांक sdma_v4_0_process_vm_hole_irq(काष्ठा amdgpu_device *adev,
+					      काष्ठा amdgpu_irq_src *source,
+					      काष्ठा amdgpu_iv_entry *entry)
+अणु
 	dev_err(adev->dev, "MC or SEM address in VM hole\n");
-	sdma_v4_0_print_iv_entry(adev, entry);
-	return 0;
-}
+	sdma_v4_0_prपूर्णांक_iv_entry(adev, entry);
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_process_doorbell_invalid_irq(struct amdgpu_device *adev,
-					      struct amdgpu_irq_src *source,
-					      struct amdgpu_iv_entry *entry)
-{
+अटल पूर्णांक sdma_v4_0_process_करोorbell_invalid_irq(काष्ठा amdgpu_device *adev,
+					      काष्ठा amdgpu_irq_src *source,
+					      काष्ठा amdgpu_iv_entry *entry)
+अणु
 	dev_err(adev->dev, "SDMA received a doorbell from BIF with byte_enable !=0xff\n");
-	sdma_v4_0_print_iv_entry(adev, entry);
-	return 0;
-}
+	sdma_v4_0_prपूर्णांक_iv_entry(adev, entry);
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_process_pool_timeout_irq(struct amdgpu_device *adev,
-					      struct amdgpu_irq_src *source,
-					      struct amdgpu_iv_entry *entry)
-{
+अटल पूर्णांक sdma_v4_0_process_pool_समयout_irq(काष्ठा amdgpu_device *adev,
+					      काष्ठा amdgpu_irq_src *source,
+					      काष्ठा amdgpu_iv_entry *entry)
+अणु
 	dev_err(adev->dev,
 		"Polling register/memory timeout executing POLL_REG/MEM with finite timer\n");
-	sdma_v4_0_print_iv_entry(adev, entry);
-	return 0;
-}
+	sdma_v4_0_prपूर्णांक_iv_entry(adev, entry);
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_process_srbm_write_irq(struct amdgpu_device *adev,
-					      struct amdgpu_irq_src *source,
-					      struct amdgpu_iv_entry *entry)
-{
+अटल पूर्णांक sdma_v4_0_process_srbm_ग_लिखो_irq(काष्ठा amdgpu_device *adev,
+					      काष्ठा amdgpu_irq_src *source,
+					      काष्ठा amdgpu_iv_entry *entry)
+अणु
 	dev_err(adev->dev,
 		"SDMA gets an Register Write SRBM_WRITE command in non-privilege command buffer\n");
-	sdma_v4_0_print_iv_entry(adev, entry);
-	return 0;
-}
+	sdma_v4_0_prपूर्णांक_iv_entry(adev, entry);
+	वापस 0;
+पूर्ण
 
-static void sdma_v4_0_update_medium_grain_clock_gating(
-		struct amdgpu_device *adev,
+अटल व्योम sdma_v4_0_update_medium_grain_घड़ी_gating(
+		काष्ठा amdgpu_device *adev,
 		bool enable)
-{
-	uint32_t data, def;
-	int i;
+अणु
+	uपूर्णांक32_t data, def;
+	पूर्णांक i;
 
-	if (enable && (adev->cg_flags & AMD_CG_SUPPORT_SDMA_MGCG)) {
-		for (i = 0; i < adev->sdma.num_instances; i++) {
+	अगर (enable && (adev->cg_flags & AMD_CG_SUPPORT_SDMA_MGCG)) अणु
+		क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 			def = data = RREG32_SDMA(i, mmSDMA0_CLK_CTRL);
 			data &= ~(SDMA0_CLK_CTRL__SOFT_OVERRIDE7_MASK |
 				  SDMA0_CLK_CTRL__SOFT_OVERRIDE6_MASK |
@@ -2292,11 +2293,11 @@ static void sdma_v4_0_update_medium_grain_clock_gating(
 				  SDMA0_CLK_CTRL__SOFT_OVERRIDE2_MASK |
 				  SDMA0_CLK_CTRL__SOFT_OVERRIDE1_MASK |
 				  SDMA0_CLK_CTRL__SOFT_OVERRIDE0_MASK);
-			if (def != data)
+			अगर (def != data)
 				WREG32_SDMA(i, mmSDMA0_CLK_CTRL, data);
-		}
-	} else {
-		for (i = 0; i < adev->sdma.num_instances; i++) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 			def = data = RREG32_SDMA(i, mmSDMA0_CLK_CTRL);
 			data |= (SDMA0_CLK_CTRL__SOFT_OVERRIDE7_MASK |
 				 SDMA0_CLK_CTRL__SOFT_OVERRIDE6_MASK |
@@ -2306,92 +2307,92 @@ static void sdma_v4_0_update_medium_grain_clock_gating(
 				 SDMA0_CLK_CTRL__SOFT_OVERRIDE2_MASK |
 				 SDMA0_CLK_CTRL__SOFT_OVERRIDE1_MASK |
 				 SDMA0_CLK_CTRL__SOFT_OVERRIDE0_MASK);
-			if (def != data)
+			अगर (def != data)
 				WREG32_SDMA(i, mmSDMA0_CLK_CTRL, data);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-static void sdma_v4_0_update_medium_grain_light_sleep(
-		struct amdgpu_device *adev,
+अटल व्योम sdma_v4_0_update_medium_grain_light_sleep(
+		काष्ठा amdgpu_device *adev,
 		bool enable)
-{
-	uint32_t data, def;
-	int i;
+अणु
+	uपूर्णांक32_t data, def;
+	पूर्णांक i;
 
-	if (enable && (adev->cg_flags & AMD_CG_SUPPORT_SDMA_LS)) {
-		for (i = 0; i < adev->sdma.num_instances; i++) {
+	अगर (enable && (adev->cg_flags & AMD_CG_SUPPORT_SDMA_LS)) अणु
+		क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 			/* 1-not override: enable sdma mem light sleep */
 			def = data = RREG32_SDMA(0, mmSDMA0_POWER_CNTL);
 			data |= SDMA0_POWER_CNTL__MEM_POWER_OVERRIDE_MASK;
-			if (def != data)
+			अगर (def != data)
 				WREG32_SDMA(0, mmSDMA0_POWER_CNTL, data);
-		}
-	} else {
-		for (i = 0; i < adev->sdma.num_instances; i++) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
 		/* 0-override:disable sdma mem light sleep */
 			def = data = RREG32_SDMA(0, mmSDMA0_POWER_CNTL);
 			data &= ~SDMA0_POWER_CNTL__MEM_POWER_OVERRIDE_MASK;
-			if (def != data)
+			अगर (def != data)
 				WREG32_SDMA(0, mmSDMA0_POWER_CNTL, data);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int sdma_v4_0_set_clockgating_state(void *handle,
-					  enum amd_clockgating_state state)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक sdma_v4_0_set_घड़ीgating_state(व्योम *handle,
+					  क्रमागत amd_घड़ीgating_state state)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	if (amdgpu_sriov_vf(adev))
-		return 0;
+	अगर (amdgpu_sriov_vf(adev))
+		वापस 0;
 
-	sdma_v4_0_update_medium_grain_clock_gating(adev,
+	sdma_v4_0_update_medium_grain_घड़ी_gating(adev,
 			state == AMD_CG_STATE_GATE);
 	sdma_v4_0_update_medium_grain_light_sleep(adev,
 			state == AMD_CG_STATE_GATE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdma_v4_0_set_powergating_state(void *handle,
-					  enum amd_powergating_state state)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक sdma_v4_0_set_घातergating_state(व्योम *handle,
+					  क्रमागत amd_घातergating_state state)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	switch (adev->asic_type) {
-	case CHIP_RAVEN:
-	case CHIP_RENOIR:
-		sdma_v4_1_update_power_gating(adev,
+	चयन (adev->asic_type) अणु
+	हाल CHIP_RAVEN:
+	हाल CHIP_RENOIR:
+		sdma_v4_1_update_घातer_gating(adev,
 				state == AMD_PG_STATE_GATE);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sdma_v4_0_get_clockgating_state(void *handle, u32 *flags)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int data;
+अटल व्योम sdma_v4_0_get_घड़ीgating_state(व्योम *handle, u32 *flags)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक data;
 
-	if (amdgpu_sriov_vf(adev))
+	अगर (amdgpu_sriov_vf(adev))
 		*flags = 0;
 
 	/* AMD_CG_SUPPORT_SDMA_MGCG */
 	data = RREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_CLK_CTRL));
-	if (!(data & SDMA0_CLK_CTRL__SOFT_OVERRIDE7_MASK))
+	अगर (!(data & SDMA0_CLK_CTRL__SOFT_OVERRIDE7_MASK))
 		*flags |= AMD_CG_SUPPORT_SDMA_MGCG;
 
 	/* AMD_CG_SUPPORT_SDMA_LS */
 	data = RREG32(SOC15_REG_OFFSET(SDMA0, 0, mmSDMA0_POWER_CNTL));
-	if (data & SDMA0_POWER_CNTL__MEM_POWER_OVERRIDE_MASK)
+	अगर (data & SDMA0_POWER_CNTL__MEM_POWER_OVERRIDE_MASK)
 		*flags |= AMD_CG_SUPPORT_SDMA_LS;
-}
+पूर्ण
 
-const struct amd_ip_funcs sdma_v4_0_ip_funcs = {
+स्थिर काष्ठा amd_ip_funcs sdma_v4_0_ip_funcs = अणु
 	.name = "sdma_v4_0",
 	.early_init = sdma_v4_0_early_init,
 	.late_init = sdma_v4_0_late_init,
@@ -2402,14 +2403,14 @@ const struct amd_ip_funcs sdma_v4_0_ip_funcs = {
 	.suspend = sdma_v4_0_suspend,
 	.resume = sdma_v4_0_resume,
 	.is_idle = sdma_v4_0_is_idle,
-	.wait_for_idle = sdma_v4_0_wait_for_idle,
+	.रुको_क्रम_idle = sdma_v4_0_रुको_क्रम_idle,
 	.soft_reset = sdma_v4_0_soft_reset,
-	.set_clockgating_state = sdma_v4_0_set_clockgating_state,
-	.set_powergating_state = sdma_v4_0_set_powergating_state,
-	.get_clockgating_state = sdma_v4_0_get_clockgating_state,
-};
+	.set_घड़ीgating_state = sdma_v4_0_set_घड़ीgating_state,
+	.set_घातergating_state = sdma_v4_0_set_घातergating_state,
+	.get_घड़ीgating_state = sdma_v4_0_get_घड़ीgating_state,
+पूर्ण;
 
-static const struct amdgpu_ring_funcs sdma_v4_0_ring_funcs = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs sdma_v4_0_ring_funcs = अणु
 	.type = AMDGPU_RING_TYPE_SDMA,
 	.align_mask = 0xf,
 	.nop = SDMA_PKT_NOP_HEADER_OP(SDMA_OP_NOP),
@@ -2425,7 +2426,7 @@ static const struct amdgpu_ring_funcs sdma_v4_0_ring_funcs = {
 		/* sdma_v4_0_ring_emit_vm_flush */
 		SOC15_FLUSH_GPU_TLB_NUM_WREG * 3 +
 		SOC15_FLUSH_GPU_TLB_NUM_REG_WAIT * 6 +
-		10 + 10 + 10, /* sdma_v4_0_ring_emit_fence x3 for user fence, vm fence */
+		10 + 10 + 10, /* sdma_v4_0_ring_emit_fence x3 क्रम user fence, vm fence */
 	.emit_ib_size = 7 + 6, /* sdma_v4_0_ring_emit_ib */
 	.emit_ib = sdma_v4_0_ring_emit_ib,
 	.emit_fence = sdma_v4_0_ring_emit_fence,
@@ -2437,15 +2438,15 @@ static const struct amdgpu_ring_funcs sdma_v4_0_ring_funcs = {
 	.insert_nop = sdma_v4_0_ring_insert_nop,
 	.pad_ib = sdma_v4_0_ring_pad_ib,
 	.emit_wreg = sdma_v4_0_ring_emit_wreg,
-	.emit_reg_wait = sdma_v4_0_ring_emit_reg_wait,
-	.emit_reg_write_reg_wait = amdgpu_ring_emit_reg_write_reg_wait_helper,
-};
+	.emit_reg_रुको = sdma_v4_0_ring_emit_reg_रुको,
+	.emit_reg_ग_लिखो_reg_रुको = amdgpu_ring_emit_reg_ग_लिखो_reg_रुको_helper,
+पूर्ण;
 
 /*
- * On Arcturus, SDMA instance 5~7 has a different vmhub type(AMDGPU_MMHUB_1).
- * So create a individual constant ring_funcs for those instances.
+ * On Arcturus, SDMA instance 5~7 has a dअगरferent vmhub type(AMDGPU_MMHUB_1).
+ * So create a inभागidual स्थिरant ring_funcs क्रम those instances.
  */
-static const struct amdgpu_ring_funcs sdma_v4_0_ring_funcs_2nd_mmhub = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs sdma_v4_0_ring_funcs_2nd_mmhub = अणु
 	.type = AMDGPU_RING_TYPE_SDMA,
 	.align_mask = 0xf,
 	.nop = SDMA_PKT_NOP_HEADER_OP(SDMA_OP_NOP),
@@ -2461,7 +2462,7 @@ static const struct amdgpu_ring_funcs sdma_v4_0_ring_funcs_2nd_mmhub = {
 		/* sdma_v4_0_ring_emit_vm_flush */
 		SOC15_FLUSH_GPU_TLB_NUM_WREG * 3 +
 		SOC15_FLUSH_GPU_TLB_NUM_REG_WAIT * 6 +
-		10 + 10 + 10, /* sdma_v4_0_ring_emit_fence x3 for user fence, vm fence */
+		10 + 10 + 10, /* sdma_v4_0_ring_emit_fence x3 क्रम user fence, vm fence */
 	.emit_ib_size = 7 + 6, /* sdma_v4_0_ring_emit_ib */
 	.emit_ib = sdma_v4_0_ring_emit_ib,
 	.emit_fence = sdma_v4_0_ring_emit_fence,
@@ -2473,11 +2474,11 @@ static const struct amdgpu_ring_funcs sdma_v4_0_ring_funcs_2nd_mmhub = {
 	.insert_nop = sdma_v4_0_ring_insert_nop,
 	.pad_ib = sdma_v4_0_ring_pad_ib,
 	.emit_wreg = sdma_v4_0_ring_emit_wreg,
-	.emit_reg_wait = sdma_v4_0_ring_emit_reg_wait,
-	.emit_reg_write_reg_wait = amdgpu_ring_emit_reg_write_reg_wait_helper,
-};
+	.emit_reg_रुको = sdma_v4_0_ring_emit_reg_रुको,
+	.emit_reg_ग_लिखो_reg_रुको = amdgpu_ring_emit_reg_ग_लिखो_reg_रुको_helper,
+पूर्ण;
 
-static const struct amdgpu_ring_funcs sdma_v4_0_page_ring_funcs = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs sdma_v4_0_page_ring_funcs = अणु
 	.type = AMDGPU_RING_TYPE_SDMA,
 	.align_mask = 0xf,
 	.nop = SDMA_PKT_NOP_HEADER_OP(SDMA_OP_NOP),
@@ -2493,7 +2494,7 @@ static const struct amdgpu_ring_funcs sdma_v4_0_page_ring_funcs = {
 		/* sdma_v4_0_ring_emit_vm_flush */
 		SOC15_FLUSH_GPU_TLB_NUM_WREG * 3 +
 		SOC15_FLUSH_GPU_TLB_NUM_REG_WAIT * 6 +
-		10 + 10 + 10, /* sdma_v4_0_ring_emit_fence x3 for user fence, vm fence */
+		10 + 10 + 10, /* sdma_v4_0_ring_emit_fence x3 क्रम user fence, vm fence */
 	.emit_ib_size = 7 + 6, /* sdma_v4_0_ring_emit_ib */
 	.emit_ib = sdma_v4_0_ring_emit_ib,
 	.emit_fence = sdma_v4_0_ring_emit_fence,
@@ -2505,11 +2506,11 @@ static const struct amdgpu_ring_funcs sdma_v4_0_page_ring_funcs = {
 	.insert_nop = sdma_v4_0_ring_insert_nop,
 	.pad_ib = sdma_v4_0_ring_pad_ib,
 	.emit_wreg = sdma_v4_0_ring_emit_wreg,
-	.emit_reg_wait = sdma_v4_0_ring_emit_reg_wait,
-	.emit_reg_write_reg_wait = amdgpu_ring_emit_reg_write_reg_wait_helper,
-};
+	.emit_reg_रुको = sdma_v4_0_ring_emit_reg_रुको,
+	.emit_reg_ग_लिखो_reg_रुको = amdgpu_ring_emit_reg_ग_लिखो_reg_रुको_helper,
+पूर्ण;
 
-static const struct amdgpu_ring_funcs sdma_v4_0_page_ring_funcs_2nd_mmhub = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs sdma_v4_0_page_ring_funcs_2nd_mmhub = अणु
 	.type = AMDGPU_RING_TYPE_SDMA,
 	.align_mask = 0xf,
 	.nop = SDMA_PKT_NOP_HEADER_OP(SDMA_OP_NOP),
@@ -2525,7 +2526,7 @@ static const struct amdgpu_ring_funcs sdma_v4_0_page_ring_funcs_2nd_mmhub = {
 		/* sdma_v4_0_ring_emit_vm_flush */
 		SOC15_FLUSH_GPU_TLB_NUM_WREG * 3 +
 		SOC15_FLUSH_GPU_TLB_NUM_REG_WAIT * 6 +
-		10 + 10 + 10, /* sdma_v4_0_ring_emit_fence x3 for user fence, vm fence */
+		10 + 10 + 10, /* sdma_v4_0_ring_emit_fence x3 क्रम user fence, vm fence */
 	.emit_ib_size = 7 + 6, /* sdma_v4_0_ring_emit_ib */
 	.emit_ib = sdma_v4_0_ring_emit_ib,
 	.emit_fence = sdma_v4_0_ring_emit_fence,
@@ -2537,97 +2538,97 @@ static const struct amdgpu_ring_funcs sdma_v4_0_page_ring_funcs_2nd_mmhub = {
 	.insert_nop = sdma_v4_0_ring_insert_nop,
 	.pad_ib = sdma_v4_0_ring_pad_ib,
 	.emit_wreg = sdma_v4_0_ring_emit_wreg,
-	.emit_reg_wait = sdma_v4_0_ring_emit_reg_wait,
-	.emit_reg_write_reg_wait = amdgpu_ring_emit_reg_write_reg_wait_helper,
-};
+	.emit_reg_रुको = sdma_v4_0_ring_emit_reg_रुको,
+	.emit_reg_ग_लिखो_reg_रुको = amdgpu_ring_emit_reg_ग_लिखो_reg_रुको_helper,
+पूर्ण;
 
-static void sdma_v4_0_set_ring_funcs(struct amdgpu_device *adev)
-{
-	int i;
+अटल व्योम sdma_v4_0_set_ring_funcs(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adev->sdma.num_instances; i++) {
-		if (adev->asic_type == CHIP_ARCTURUS && i >= 5)
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
+		अगर (adev->asic_type == CHIP_ARCTURUS && i >= 5)
 			adev->sdma.instance[i].ring.funcs =
 					&sdma_v4_0_ring_funcs_2nd_mmhub;
-		else
+		अन्यथा
 			adev->sdma.instance[i].ring.funcs =
 					&sdma_v4_0_ring_funcs;
 		adev->sdma.instance[i].ring.me = i;
-		if (adev->sdma.has_page_queue) {
-			if (adev->asic_type == CHIP_ARCTURUS && i >= 5)
+		अगर (adev->sdma.has_page_queue) अणु
+			अगर (adev->asic_type == CHIP_ARCTURUS && i >= 5)
 				adev->sdma.instance[i].page.funcs =
 					&sdma_v4_0_page_ring_funcs_2nd_mmhub;
-			else
+			अन्यथा
 				adev->sdma.instance[i].page.funcs =
 					&sdma_v4_0_page_ring_funcs;
 			adev->sdma.instance[i].page.me = i;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static const struct amdgpu_irq_src_funcs sdma_v4_0_trap_irq_funcs = {
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs sdma_v4_0_trap_irq_funcs = अणु
 	.set = sdma_v4_0_set_trap_irq_state,
 	.process = sdma_v4_0_process_trap_irq,
-};
+पूर्ण;
 
-static const struct amdgpu_irq_src_funcs sdma_v4_0_illegal_inst_irq_funcs = {
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs sdma_v4_0_illegal_inst_irq_funcs = अणु
 	.process = sdma_v4_0_process_illegal_inst_irq,
-};
+पूर्ण;
 
-static const struct amdgpu_irq_src_funcs sdma_v4_0_ecc_irq_funcs = {
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs sdma_v4_0_ecc_irq_funcs = अणु
 	.set = sdma_v4_0_set_ecc_irq_state,
 	.process = amdgpu_sdma_process_ecc_irq,
-};
+पूर्ण;
 
-static const struct amdgpu_irq_src_funcs sdma_v4_0_vm_hole_irq_funcs = {
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs sdma_v4_0_vm_hole_irq_funcs = अणु
 	.process = sdma_v4_0_process_vm_hole_irq,
-};
+पूर्ण;
 
-static const struct amdgpu_irq_src_funcs sdma_v4_0_doorbell_invalid_irq_funcs = {
-	.process = sdma_v4_0_process_doorbell_invalid_irq,
-};
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs sdma_v4_0_करोorbell_invalid_irq_funcs = अणु
+	.process = sdma_v4_0_process_करोorbell_invalid_irq,
+पूर्ण;
 
-static const struct amdgpu_irq_src_funcs sdma_v4_0_pool_timeout_irq_funcs = {
-	.process = sdma_v4_0_process_pool_timeout_irq,
-};
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs sdma_v4_0_pool_समयout_irq_funcs = अणु
+	.process = sdma_v4_0_process_pool_समयout_irq,
+पूर्ण;
 
-static const struct amdgpu_irq_src_funcs sdma_v4_0_srbm_write_irq_funcs = {
-	.process = sdma_v4_0_process_srbm_write_irq,
-};
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs sdma_v4_0_srbm_ग_लिखो_irq_funcs = अणु
+	.process = sdma_v4_0_process_srbm_ग_लिखो_irq,
+पूर्ण;
 
-static void sdma_v4_0_set_irq_funcs(struct amdgpu_device *adev)
-{
-	switch (adev->sdma.num_instances) {
-	case 1:
+अटल व्योम sdma_v4_0_set_irq_funcs(काष्ठा amdgpu_device *adev)
+अणु
+	चयन (adev->sdma.num_instances) अणु
+	हाल 1:
 		adev->sdma.trap_irq.num_types = AMDGPU_SDMA_IRQ_INSTANCE1;
 		adev->sdma.ecc_irq.num_types = AMDGPU_SDMA_IRQ_INSTANCE1;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		adev->sdma.trap_irq.num_types = AMDGPU_SDMA_IRQ_INSTANCE5;
 		adev->sdma.ecc_irq.num_types = AMDGPU_SDMA_IRQ_INSTANCE5;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		adev->sdma.trap_irq.num_types = AMDGPU_SDMA_IRQ_LAST;
 		adev->sdma.ecc_irq.num_types = AMDGPU_SDMA_IRQ_LAST;
 		adev->sdma.vm_hole_irq.num_types = AMDGPU_SDMA_IRQ_INSTANCE5;
-		adev->sdma.doorbell_invalid_irq.num_types = AMDGPU_SDMA_IRQ_LAST;
-		adev->sdma.pool_timeout_irq.num_types = AMDGPU_SDMA_IRQ_LAST;
-		adev->sdma.srbm_write_irq.num_types = AMDGPU_SDMA_IRQ_LAST;
-		break;
-	case 2:
-	default:
+		adev->sdma.करोorbell_invalid_irq.num_types = AMDGPU_SDMA_IRQ_LAST;
+		adev->sdma.pool_समयout_irq.num_types = AMDGPU_SDMA_IRQ_LAST;
+		adev->sdma.srbm_ग_लिखो_irq.num_types = AMDGPU_SDMA_IRQ_LAST;
+		अवरोध;
+	हाल 2:
+	शेष:
 		adev->sdma.trap_irq.num_types = AMDGPU_SDMA_IRQ_INSTANCE2;
 		adev->sdma.ecc_irq.num_types = AMDGPU_SDMA_IRQ_INSTANCE2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	adev->sdma.trap_irq.funcs = &sdma_v4_0_trap_irq_funcs;
 	adev->sdma.illegal_inst_irq.funcs = &sdma_v4_0_illegal_inst_irq_funcs;
 	adev->sdma.ecc_irq.funcs = &sdma_v4_0_ecc_irq_funcs;
 	adev->sdma.vm_hole_irq.funcs = &sdma_v4_0_vm_hole_irq_funcs;
-	adev->sdma.doorbell_invalid_irq.funcs = &sdma_v4_0_doorbell_invalid_irq_funcs;
-	adev->sdma.pool_timeout_irq.funcs = &sdma_v4_0_pool_timeout_irq_funcs;
-	adev->sdma.srbm_write_irq.funcs = &sdma_v4_0_srbm_write_irq_funcs;
-}
+	adev->sdma.करोorbell_invalid_irq.funcs = &sdma_v4_0_करोorbell_invalid_irq_funcs;
+	adev->sdma.pool_समयout_irq.funcs = &sdma_v4_0_pool_समयout_irq_funcs;
+	adev->sdma.srbm_ग_लिखो_irq.funcs = &sdma_v4_0_srbm_ग_लिखो_irq_funcs;
+पूर्ण
 
 /**
  * sdma_v4_0_emit_copy_buffer - copy buffer using the sDMA engine
@@ -2636,52 +2637,52 @@ static void sdma_v4_0_set_irq_funcs(struct amdgpu_device *adev)
  * @src_offset: src GPU address
  * @dst_offset: dst GPU address
  * @byte_count: number of bytes to xfer
- * @tmz: if a secure copy should be used
+ * @पंचांगz: अगर a secure copy should be used
  *
  * Copy GPU buffers using the DMA engine (VEGA10/12).
- * Used by the amdgpu ttm implementation to move pages if
- * registered as the asic copy callback.
+ * Used by the amdgpu tपंचांग implementation to move pages अगर
+ * रेजिस्टरed as the asic copy callback.
  */
-static void sdma_v4_0_emit_copy_buffer(struct amdgpu_ib *ib,
-				       uint64_t src_offset,
-				       uint64_t dst_offset,
-				       uint32_t byte_count,
-				       bool tmz)
-{
+अटल व्योम sdma_v4_0_emit_copy_buffer(काष्ठा amdgpu_ib *ib,
+				       uपूर्णांक64_t src_offset,
+				       uपूर्णांक64_t dst_offset,
+				       uपूर्णांक32_t byte_count,
+				       bool पंचांगz)
+अणु
 	ib->ptr[ib->length_dw++] = SDMA_PKT_HEADER_OP(SDMA_OP_COPY) |
 		SDMA_PKT_HEADER_SUB_OP(SDMA_SUBOP_COPY_LINEAR) |
-		SDMA_PKT_COPY_LINEAR_HEADER_TMZ(tmz ? 1 : 0);
+		SDMA_PKT_COPY_LINEAR_HEADER_TMZ(पंचांगz ? 1 : 0);
 	ib->ptr[ib->length_dw++] = byte_count - 1;
 	ib->ptr[ib->length_dw++] = 0; /* src/dst endian swap */
 	ib->ptr[ib->length_dw++] = lower_32_bits(src_offset);
 	ib->ptr[ib->length_dw++] = upper_32_bits(src_offset);
 	ib->ptr[ib->length_dw++] = lower_32_bits(dst_offset);
 	ib->ptr[ib->length_dw++] = upper_32_bits(dst_offset);
-}
+पूर्ण
 
 /**
  * sdma_v4_0_emit_fill_buffer - fill buffer using the sDMA engine
  *
  * @ib: indirect buffer to copy to
- * @src_data: value to write to buffer
+ * @src_data: value to ग_लिखो to buffer
  * @dst_offset: dst GPU address
  * @byte_count: number of bytes to xfer
  *
  * Fill GPU buffers using the DMA engine (VEGA10/12).
  */
-static void sdma_v4_0_emit_fill_buffer(struct amdgpu_ib *ib,
-				       uint32_t src_data,
-				       uint64_t dst_offset,
-				       uint32_t byte_count)
-{
+अटल व्योम sdma_v4_0_emit_fill_buffer(काष्ठा amdgpu_ib *ib,
+				       uपूर्णांक32_t src_data,
+				       uपूर्णांक64_t dst_offset,
+				       uपूर्णांक32_t byte_count)
+अणु
 	ib->ptr[ib->length_dw++] = SDMA_PKT_HEADER_OP(SDMA_OP_CONST_FILL);
 	ib->ptr[ib->length_dw++] = lower_32_bits(dst_offset);
 	ib->ptr[ib->length_dw++] = upper_32_bits(dst_offset);
 	ib->ptr[ib->length_dw++] = src_data;
 	ib->ptr[ib->length_dw++] = byte_count - 1;
-}
+पूर्ण
 
-static const struct amdgpu_buffer_funcs sdma_v4_0_buffer_funcs = {
+अटल स्थिर काष्ठा amdgpu_buffer_funcs sdma_v4_0_buffer_funcs = अणु
 	.copy_max_bytes = 0x400000,
 	.copy_num_dw = 7,
 	.emit_copy_buffer = sdma_v4_0_emit_copy_buffer,
@@ -2689,124 +2690,124 @@ static const struct amdgpu_buffer_funcs sdma_v4_0_buffer_funcs = {
 	.fill_max_bytes = 0x400000,
 	.fill_num_dw = 5,
 	.emit_fill_buffer = sdma_v4_0_emit_fill_buffer,
-};
+पूर्ण;
 
-static void sdma_v4_0_set_buffer_funcs(struct amdgpu_device *adev)
-{
+अटल व्योम sdma_v4_0_set_buffer_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->mman.buffer_funcs = &sdma_v4_0_buffer_funcs;
-	if (adev->sdma.has_page_queue)
+	अगर (adev->sdma.has_page_queue)
 		adev->mman.buffer_funcs_ring = &adev->sdma.instance[0].page;
-	else
+	अन्यथा
 		adev->mman.buffer_funcs_ring = &adev->sdma.instance[0].ring;
-}
+पूर्ण
 
-static const struct amdgpu_vm_pte_funcs sdma_v4_0_vm_pte_funcs = {
+अटल स्थिर काष्ठा amdgpu_vm_pte_funcs sdma_v4_0_vm_pte_funcs = अणु
 	.copy_pte_num_dw = 7,
 	.copy_pte = sdma_v4_0_vm_copy_pte,
 
-	.write_pte = sdma_v4_0_vm_write_pte,
+	.ग_लिखो_pte = sdma_v4_0_vm_ग_लिखो_pte,
 	.set_pte_pde = sdma_v4_0_vm_set_pte_pde,
-};
+पूर्ण;
 
-static void sdma_v4_0_set_vm_pte_funcs(struct amdgpu_device *adev)
-{
-	struct drm_gpu_scheduler *sched;
-	unsigned i;
+अटल व्योम sdma_v4_0_set_vm_pte_funcs(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा drm_gpu_scheduler *sched;
+	अचिन्हित i;
 
 	adev->vm_manager.vm_pte_funcs = &sdma_v4_0_vm_pte_funcs;
-	for (i = 0; i < adev->sdma.num_instances; i++) {
-		if (adev->sdma.has_page_queue)
+	क्रम (i = 0; i < adev->sdma.num_instances; i++) अणु
+		अगर (adev->sdma.has_page_queue)
 			sched = &adev->sdma.instance[i].page.sched;
-		else
+		अन्यथा
 			sched = &adev->sdma.instance[i].ring.sched;
 		adev->vm_manager.vm_pte_scheds[i] = sched;
-	}
+	पूर्ण
 	adev->vm_manager.vm_pte_num_scheds = adev->sdma.num_instances;
-}
+पूर्ण
 
-static void sdma_v4_0_get_ras_error_count(uint32_t value,
-					uint32_t instance,
-					uint32_t *sec_count)
-{
-	uint32_t i;
-	uint32_t sec_cnt;
+अटल व्योम sdma_v4_0_get_ras_error_count(uपूर्णांक32_t value,
+					uपूर्णांक32_t instance,
+					uपूर्णांक32_t *sec_count)
+अणु
+	uपूर्णांक32_t i;
+	uपूर्णांक32_t sec_cnt;
 
-	/* double bits error (multiple bits) error detection is not supported */
-	for (i = 0; i < ARRAY_SIZE(sdma_v4_0_ras_fields); i++) {
-		/* the SDMA_EDC_COUNTER register in each sdma instance
-		 * shares the same sed shift_mask
+	/* द्विगुन bits error (multiple bits) error detection is not supported */
+	क्रम (i = 0; i < ARRAY_SIZE(sdma_v4_0_ras_fields); i++) अणु
+		/* the SDMA_EDC_COUNTER रेजिस्टर in each sdma instance
+		 * shares the same sed shअगरt_mask
 		 * */
 		sec_cnt = (value &
 			sdma_v4_0_ras_fields[i].sec_count_mask) >>
-			sdma_v4_0_ras_fields[i].sec_count_shift;
-		if (sec_cnt) {
+			sdma_v4_0_ras_fields[i].sec_count_shअगरt;
+		अगर (sec_cnt) अणु
 			DRM_INFO("Detected %s in SDMA%d, SED %d\n",
 				sdma_v4_0_ras_fields[i].name,
 				instance, sec_cnt);
 			*sec_count += sec_cnt;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int sdma_v4_0_query_ras_error_count(struct amdgpu_device *adev,
-			uint32_t instance, void *ras_error_status)
-{
-	struct ras_err_data *err_data = (struct ras_err_data *)ras_error_status;
-	uint32_t sec_count = 0;
-	uint32_t reg_value = 0;
+अटल पूर्णांक sdma_v4_0_query_ras_error_count(काष्ठा amdgpu_device *adev,
+			uपूर्णांक32_t instance, व्योम *ras_error_status)
+अणु
+	काष्ठा ras_err_data *err_data = (काष्ठा ras_err_data *)ras_error_status;
+	uपूर्णांक32_t sec_count = 0;
+	uपूर्णांक32_t reg_value = 0;
 
 	reg_value = RREG32_SDMA(instance, mmSDMA0_EDC_COUNTER);
-	/* double bit error is not supported */
-	if (reg_value)
+	/* द्विगुन bit error is not supported */
+	अगर (reg_value)
 		sdma_v4_0_get_ras_error_count(reg_value,
 				instance, &sec_count);
 	/* err_data->ce_count should be initialized to 0
-	 * before calling into this function */
+	 * beक्रमe calling पूर्णांकo this function */
 	err_data->ce_count += sec_count;
-	/* double bit error is not supported
+	/* द्विगुन bit error is not supported
 	 * set ue count to 0 */
 	err_data->ue_count = 0;
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static void sdma_v4_0_reset_ras_error_count(struct amdgpu_device *adev)
-{
-	int i;
+अटल व्योम sdma_v4_0_reset_ras_error_count(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
 
-	/* read back edc counter registers to clear the counters */
-	if (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__SDMA)) {
-		for (i = 0; i < adev->sdma.num_instances; i++)
+	/* पढ़ो back edc counter रेजिस्टरs to clear the counters */
+	अगर (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__SDMA)) अणु
+		क्रम (i = 0; i < adev->sdma.num_instances; i++)
 			RREG32_SDMA(i, mmSDMA0_EDC_COUNTER);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct amdgpu_sdma_ras_funcs sdma_v4_0_ras_funcs = {
+अटल स्थिर काष्ठा amdgpu_sdma_ras_funcs sdma_v4_0_ras_funcs = अणु
 	.ras_late_init = amdgpu_sdma_ras_late_init,
 	.ras_fini = amdgpu_sdma_ras_fini,
 	.query_ras_error_count = sdma_v4_0_query_ras_error_count,
 	.reset_ras_error_count = sdma_v4_0_reset_ras_error_count,
-};
+पूर्ण;
 
-static void sdma_v4_0_set_ras_funcs(struct amdgpu_device *adev)
-{
-	switch (adev->asic_type) {
-	case CHIP_VEGA20:
-	case CHIP_ARCTURUS:
+अटल व्योम sdma_v4_0_set_ras_funcs(काष्ठा amdgpu_device *adev)
+अणु
+	चयन (adev->asic_type) अणु
+	हाल CHIP_VEGA20:
+	हाल CHIP_ARCTURUS:
 		adev->sdma.funcs = &sdma_v4_0_ras_funcs;
-		break;
-	case CHIP_ALDEBARAN:
+		अवरोध;
+	हाल CHIP_ALDEBARAN:
 		adev->sdma.funcs = &sdma_v4_4_ras_funcs;
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-const struct amdgpu_ip_block_version sdma_v4_0_ip_block = {
+स्थिर काष्ठा amdgpu_ip_block_version sdma_v4_0_ip_block = अणु
 	.type = AMD_IP_BLOCK_TYPE_SDMA,
 	.major = 4,
 	.minor = 0,
 	.rev = 0,
 	.funcs = &sdma_v4_0_ip_funcs,
-};
+पूर्ण;

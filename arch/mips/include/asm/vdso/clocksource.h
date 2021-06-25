@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __ASM_VDSOCLOCKSOURCE_H
-#define __ASM_VDSOCLOCKSOURCE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __ASM_VDSOCLOCKSOURCE_H
+#घोषणा __ASM_VDSOCLOCKSOURCE_H
 
-#define VDSO_ARCH_CLOCKMODES	\
+#घोषणा VDSO_ARCH_CLOCKMODES	\
 	VDSO_CLOCKMODE_R4K,	\
 	VDSO_CLOCKMODE_GIC
 
-#endif /* __ASM_VDSOCLOCKSOURCE_H */
+#पूर्ण_अगर /* __ASM_VDSOCLOCKSOURCE_H */

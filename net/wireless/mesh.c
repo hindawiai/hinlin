@@ -1,297 +1,298 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ieee80211.h>
-#include <linux/export.h>
-#include <net/cfg80211.h>
-#include "nl80211.h"
-#include "core.h"
-#include "rdev-ops.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/ieee80211.h>
+#समावेश <linux/export.h>
+#समावेश <net/cfg80211.h>
+#समावेश "nl80211.h"
+#समावेश "core.h"
+#समावेश "rdev-ops.h"
 
-/* Default values, timeouts in ms */
-#define MESH_TTL 		31
-#define MESH_DEFAULT_ELEMENT_TTL 31
-#define MESH_MAX_RETR	 	3
-#define MESH_RET_T 		100
-#define MESH_CONF_T 		100
-#define MESH_HOLD_T 		100
+/* Default values, समयouts in ms */
+#घोषणा MESH_TTL 		31
+#घोषणा MESH_DEFAULT_ELEMENT_TTL 31
+#घोषणा MESH_MAX_RETR	 	3
+#घोषणा MESH_RET_T 		100
+#घोषणा MESH_CONF_T 		100
+#घोषणा MESH_HOLD_T 		100
 
-#define MESH_PATH_TIMEOUT	5000
-#define MESH_RANN_INTERVAL      5000
-#define MESH_PATH_TO_ROOT_TIMEOUT      6000
-#define MESH_ROOT_INTERVAL     5000
-#define MESH_ROOT_CONFIRMATION_INTERVAL 2000
-#define MESH_DEFAULT_PLINK_TIMEOUT	1800 /* timeout in seconds */
+#घोषणा MESH_PATH_TIMEOUT	5000
+#घोषणा MESH_RANN_INTERVAL      5000
+#घोषणा MESH_PATH_TO_ROOT_TIMEOUT      6000
+#घोषणा MESH_ROOT_INTERVAL     5000
+#घोषणा MESH_ROOT_CONFIRMATION_INTERVAL 2000
+#घोषणा MESH_DEFAULT_PLINK_TIMEOUT	1800 /* समयout in seconds */
 
 /*
- * Minimum interval between two consecutive PREQs originated by the same
- * interface
+ * Minimum पूर्णांकerval between two consecutive PREQs originated by the same
+ * पूर्णांकerface
  */
-#define MESH_PREQ_MIN_INT	10
-#define MESH_PERR_MIN_INT	100
-#define MESH_DIAM_TRAVERSAL_TIME 50
+#घोषणा MESH_PREQ_MIN_INT	10
+#घोषणा MESH_PERR_MIN_INT	100
+#घोषणा MESH_DIAM_TRAVERSAL_TIME 50
 
-#define MESH_RSSI_THRESHOLD	0
+#घोषणा MESH_RSSI_THRESHOLD	0
 
 /*
- * A path will be refreshed if it is used PATH_REFRESH_TIME milliseconds
- * before timing out.  This way it will remain ACTIVE and no data frames
+ * A path will be refreshed अगर it is used PATH_REFRESH_TIME milliseconds
+ * beक्रमe timing out.  This way it will reमुख्य ACTIVE and no data frames
  * will be unnecessarily held in the pending queue.
  */
-#define MESH_PATH_REFRESH_TIME			1000
-#define MESH_MIN_DISCOVERY_TIMEOUT (2 * MESH_DIAM_TRAVERSAL_TIME)
+#घोषणा MESH_PATH_REFRESH_TIME			1000
+#घोषणा MESH_MIN_DISCOVERY_TIMEOUT (2 * MESH_DIAM_TRAVERSAL_TIME)
 
-/* Default maximum number of established plinks per interface */
-#define MESH_MAX_ESTAB_PLINKS	32
+/* Default maximum number of established plinks per पूर्णांकerface */
+#घोषणा MESH_MAX_ESTAB_PLINKS	32
 
-#define MESH_MAX_PREQ_RETRIES	4
+#घोषणा MESH_MAX_PREQ_RETRIES	4
 
-#define MESH_SYNC_NEIGHBOR_OFFSET_MAX 50
+#घोषणा MESH_SYNC_NEIGHBOR_OFFSET_MAX 50
 
-#define MESH_DEFAULT_BEACON_INTERVAL	1000	/* in 1024 us units (=TUs) */
-#define MESH_DEFAULT_DTIM_PERIOD	2
-#define MESH_DEFAULT_AWAKE_WINDOW	10	/* in 1024 us units (=TUs) */
+#घोषणा MESH_DEFAULT_BEACON_INTERVAL	1000	/* in 1024 us units (=TUs) */
+#घोषणा MESH_DEFAULT_DTIM_PERIOD	2
+#घोषणा MESH_DEFAULT_AWAKE_WINDOW	10	/* in 1024 us units (=TUs) */
 
-const struct mesh_config default_mesh_config = {
-	.dot11MeshRetryTimeout = MESH_RET_T,
-	.dot11MeshConfirmTimeout = MESH_CONF_T,
-	.dot11MeshHoldingTimeout = MESH_HOLD_T,
-	.dot11MeshMaxRetries = MESH_MAX_RETR,
-	.dot11MeshTTL = MESH_TTL,
+स्थिर काष्ठा mesh_config शेष_mesh_config = अणु
+	.करोt11MeshRetryTimeout = MESH_RET_T,
+	.करोt11MeshConfirmTimeout = MESH_CONF_T,
+	.करोt11MeshHoldingTimeout = MESH_HOLD_T,
+	.करोt11MeshMaxRetries = MESH_MAX_RETR,
+	.करोt11MeshTTL = MESH_TTL,
 	.element_ttl = MESH_DEFAULT_ELEMENT_TTL,
-	.auto_open_plinks = true,
-	.dot11MeshMaxPeerLinks = MESH_MAX_ESTAB_PLINKS,
-	.dot11MeshNbrOffsetMaxNeighbor = MESH_SYNC_NEIGHBOR_OFFSET_MAX,
-	.dot11MeshHWMPactivePathTimeout = MESH_PATH_TIMEOUT,
-	.dot11MeshHWMPpreqMinInterval = MESH_PREQ_MIN_INT,
-	.dot11MeshHWMPperrMinInterval = MESH_PERR_MIN_INT,
-	.dot11MeshHWMPnetDiameterTraversalTime = MESH_DIAM_TRAVERSAL_TIME,
-	.dot11MeshHWMPmaxPREQretries = MESH_MAX_PREQ_RETRIES,
-	.path_refresh_time = MESH_PATH_REFRESH_TIME,
-	.min_discovery_timeout = MESH_MIN_DISCOVERY_TIMEOUT,
-	.dot11MeshHWMPRannInterval = MESH_RANN_INTERVAL,
-	.dot11MeshGateAnnouncementProtocol = false,
-	.dot11MeshForwarding = true,
+	.स्वतः_खोलो_plinks = true,
+	.करोt11MeshMaxPeerLinks = MESH_MAX_ESTAB_PLINKS,
+	.करोt11MeshNbrOffsetMaxNeighbor = MESH_SYNC_NEIGHBOR_OFFSET_MAX,
+	.करोt11MeshHWMPactivePathTimeout = MESH_PATH_TIMEOUT,
+	.करोt11MeshHWMPpreqMinInterval = MESH_PREQ_MIN_INT,
+	.करोt11MeshHWMPperrMinInterval = MESH_PERR_MIN_INT,
+	.करोt11MeshHWMPnetDiameterTraversalTime = MESH_DIAM_TRAVERSAL_TIME,
+	.करोt11MeshHWMPmaxPREQretries = MESH_MAX_PREQ_RETRIES,
+	.path_refresh_समय = MESH_PATH_REFRESH_TIME,
+	.min_discovery_समयout = MESH_MIN_DISCOVERY_TIMEOUT,
+	.करोt11MeshHWMPRannInterval = MESH_RANN_INTERVAL,
+	.करोt11MeshGateAnnouncementProtocol = false,
+	.करोt11MeshForwarding = true,
 	.rssi_threshold = MESH_RSSI_THRESHOLD,
 	.ht_opmode = IEEE80211_HT_OP_MODE_PROTECTION_NONHT_MIXED,
-	.dot11MeshHWMPactivePathToRootTimeout = MESH_PATH_TO_ROOT_TIMEOUT,
-	.dot11MeshHWMProotInterval = MESH_ROOT_INTERVAL,
-	.dot11MeshHWMPconfirmationInterval = MESH_ROOT_CONFIRMATION_INTERVAL,
-	.power_mode = NL80211_MESH_POWER_ACTIVE,
-	.dot11MeshAwakeWindowDuration = MESH_DEFAULT_AWAKE_WINDOW,
-	.plink_timeout = MESH_DEFAULT_PLINK_TIMEOUT,
-	.dot11MeshNolearn = false,
-};
+	.करोt11MeshHWMPactivePathToRootTimeout = MESH_PATH_TO_ROOT_TIMEOUT,
+	.करोt11MeshHWMProotInterval = MESH_ROOT_INTERVAL,
+	.करोt11MeshHWMPconfirmationInterval = MESH_ROOT_CONFIRMATION_INTERVAL,
+	.घातer_mode = NL80211_MESH_POWER_ACTIVE,
+	.करोt11MeshAwakeWinकरोwDuration = MESH_DEFAULT_AWAKE_WINDOW,
+	.plink_समयout = MESH_DEFAULT_PLINK_TIMEOUT,
+	.करोt11MeshNolearn = false,
+पूर्ण;
 
-const struct mesh_setup default_mesh_setup = {
-	/* cfg80211_join_mesh() will pick a channel if needed */
+स्थिर काष्ठा mesh_setup शेष_mesh_setup = अणु
+	/* cfg80211_join_mesh() will pick a channel अगर needed */
 	.sync_method = IEEE80211_SYNC_METHOD_NEIGHBOR_OFFSET,
 	.path_sel_proto = IEEE80211_PATH_PROTOCOL_HWMP,
 	.path_metric = IEEE80211_PATH_METRIC_AIRTIME,
-	.auth_id = 0, /* open */
-	.ie = NULL,
+	.auth_id = 0, /* खोलो */
+	.ie = शून्य,
 	.ie_len = 0,
 	.is_secure = false,
 	.user_mpm = false,
-	.beacon_interval = MESH_DEFAULT_BEACON_INTERVAL,
+	.beacon_पूर्णांकerval = MESH_DEFAULT_BEACON_INTERVAL,
 	.dtim_period = MESH_DEFAULT_DTIM_PERIOD,
-};
+पूर्ण;
 
-int __cfg80211_join_mesh(struct cfg80211_registered_device *rdev,
-			 struct net_device *dev,
-			 struct mesh_setup *setup,
-			 const struct mesh_config *conf)
-{
-	struct wireless_dev *wdev = dev->ieee80211_ptr;
-	int err;
+पूर्णांक __cfg80211_join_mesh(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
+			 काष्ठा net_device *dev,
+			 काष्ठा mesh_setup *setup,
+			 स्थिर काष्ठा mesh_config *conf)
+अणु
+	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
+	पूर्णांक err;
 
 	BUILD_BUG_ON(IEEE80211_MAX_SSID_LEN != IEEE80211_MAX_MESH_ID_LEN);
 
 	ASSERT_WDEV_LOCK(wdev);
 
-	if (dev->ieee80211_ptr->iftype != NL80211_IFTYPE_MESH_POINT)
-		return -EOPNOTSUPP;
+	अगर (dev->ieee80211_ptr->अगरtype != NL80211_IFTYPE_MESH_POINT)
+		वापस -EOPNOTSUPP;
 
-	if (!(rdev->wiphy.flags & WIPHY_FLAG_MESH_AUTH) &&
+	अगर (!(rdev->wiphy.flags & WIPHY_FLAG_MESH_AUTH) &&
 	      setup->is_secure)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (wdev->mesh_id_len)
-		return -EALREADY;
+	अगर (wdev->mesh_id_len)
+		वापस -EALREADY;
 
-	if (!setup->mesh_id_len)
-		return -EINVAL;
+	अगर (!setup->mesh_id_len)
+		वापस -EINVAL;
 
-	if (!rdev->ops->join_mesh)
-		return -EOPNOTSUPP;
+	अगर (!rdev->ops->join_mesh)
+		वापस -EOPNOTSUPP;
 
-	if (!setup->chandef.chan) {
-		/* if no channel explicitly given, use preset channel */
+	अगर (!setup->chandef.chan) अणु
+		/* अगर no channel explicitly given, use preset channel */
 		setup->chandef = wdev->preset_chandef;
-	}
+	पूर्ण
 
-	if (!setup->chandef.chan) {
-		/* if we don't have that either, use the first usable channel */
-		enum nl80211_band band;
+	अगर (!setup->chandef.chan) अणु
+		/* अगर we करोn't have that either, use the first usable channel */
+		क्रमागत nl80211_band band;
 
-		for (band = 0; band < NUM_NL80211_BANDS; band++) {
-			struct ieee80211_supported_band *sband;
-			struct ieee80211_channel *chan;
-			int i;
+		क्रम (band = 0; band < NUM_NL80211_BANDS; band++) अणु
+			काष्ठा ieee80211_supported_band *sband;
+			काष्ठा ieee80211_channel *chan;
+			पूर्णांक i;
 
 			sband = rdev->wiphy.bands[band];
-			if (!sband)
-				continue;
+			अगर (!sband)
+				जारी;
 
-			for (i = 0; i < sband->n_channels; i++) {
+			क्रम (i = 0; i < sband->n_channels; i++) अणु
 				chan = &sband->channels[i];
-				if (chan->flags & (IEEE80211_CHAN_NO_IR |
+				अगर (chan->flags & (IEEE80211_CHAN_NO_IR |
 						   IEEE80211_CHAN_DISABLED |
 						   IEEE80211_CHAN_RADAR))
-					continue;
+					जारी;
 				setup->chandef.chan = chan;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (setup->chandef.chan)
-				break;
-		}
+			अगर (setup->chandef.chan)
+				अवरोध;
+		पूर्ण
 
 		/* no usable channel ... */
-		if (!setup->chandef.chan)
-			return -EINVAL;
+		अगर (!setup->chandef.chan)
+			वापस -EINVAL;
 
 		setup->chandef.width = NL80211_CHAN_WIDTH_20_NOHT;
 		setup->chandef.center_freq1 = setup->chandef.chan->center_freq;
-	}
+	पूर्ण
 
 	/*
-	 * check if basic rates are available otherwise use mandatory rates as
+	 * check अगर basic rates are available otherwise use mandatory rates as
 	 * basic rates
 	 */
-	if (!setup->basic_rates) {
-		enum nl80211_bss_scan_width scan_width;
-		struct ieee80211_supported_band *sband =
+	अगर (!setup->basic_rates) अणु
+		क्रमागत nl80211_bss_scan_width scan_width;
+		काष्ठा ieee80211_supported_band *sband =
 				rdev->wiphy.bands[setup->chandef.chan->band];
 
-		if (setup->chandef.chan->band == NL80211_BAND_2GHZ) {
-			int i;
+		अगर (setup->chandef.chan->band == NL80211_BAND_2GHZ) अणु
+			पूर्णांक i;
 
 			/*
-			 * Older versions selected the mandatory rates for
+			 * Older versions selected the mandatory rates क्रम
 			 * 2.4 GHz as well, but were broken in that only
 			 * 1 Mbps was regarded as a mandatory rate. Keep
-			 * using just 1 Mbps as the default basic rate for
-			 * mesh to be interoperable with older versions.
+			 * using just 1 Mbps as the शेष basic rate क्रम
+			 * mesh to be पूर्णांकeroperable with older versions.
 			 */
-			for (i = 0; i < sband->n_bitrates; i++) {
-				if (sband->bitrates[i].bitrate == 10) {
+			क्रम (i = 0; i < sband->n_bitrates; i++) अणु
+				अगर (sband->bitrates[i].bitrate == 10) अणु
 					setup->basic_rates = BIT(i);
-					break;
-				}
-			}
-		} else {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			scan_width = cfg80211_chandef_to_scan_width(&setup->chandef);
 			setup->basic_rates = ieee80211_mandatory_rates(sband,
 								       scan_width);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	err = cfg80211_chandef_dfs_required(&rdev->wiphy,
 					    &setup->chandef,
 					    NL80211_IFTYPE_MESH_POINT);
-	if (err < 0)
-		return err;
-	if (err > 0 && !setup->userspace_handles_dfs)
-		return -EINVAL;
+	अगर (err < 0)
+		वापस err;
+	अगर (err > 0 && !setup->userspace_handles_dfs)
+		वापस -EINVAL;
 
-	if (!cfg80211_reg_can_beacon(&rdev->wiphy, &setup->chandef,
+	अगर (!cfg80211_reg_can_beacon(&rdev->wiphy, &setup->chandef,
 				     NL80211_IFTYPE_MESH_POINT))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	err = rdev_join_mesh(rdev, dev, conf, setup);
-	if (!err) {
-		memcpy(wdev->ssid, setup->mesh_id, setup->mesh_id_len);
+	अगर (!err) अणु
+		स_नकल(wdev->ssid, setup->mesh_id, setup->mesh_id_len);
 		wdev->mesh_id_len = setup->mesh_id_len;
 		wdev->chandef = setup->chandef;
-		wdev->beacon_interval = setup->beacon_interval;
-	}
+		wdev->beacon_पूर्णांकerval = setup->beacon_पूर्णांकerval;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int cfg80211_set_mesh_channel(struct cfg80211_registered_device *rdev,
-			      struct wireless_dev *wdev,
-			      struct cfg80211_chan_def *chandef)
-{
-	int err;
+पूर्णांक cfg80211_set_mesh_channel(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
+			      काष्ठा wireless_dev *wdev,
+			      काष्ठा cfg80211_chan_def *chandef)
+अणु
+	पूर्णांक err;
 
 	/*
-	 * Workaround for libertas (only!), it puts the interface
-	 * into mesh mode but doesn't implement join_mesh. Instead,
+	 * Workaround क्रम libertas (only!), it माला_दो the पूर्णांकerface
+	 * पूर्णांकo mesh mode but करोesn't implement join_mesh. Instead,
 	 * it is configured via sysfs and then joins the mesh when
 	 * you set the channel. Note that the libertas mesh isn't
 	 * compatible with 802.11 mesh.
 	 */
-	if (rdev->ops->libertas_set_mesh_channel) {
-		if (chandef->width != NL80211_CHAN_WIDTH_20_NOHT)
-			return -EINVAL;
+	अगर (rdev->ops->libertas_set_mesh_channel) अणु
+		अगर (chandef->width != NL80211_CHAN_WIDTH_20_NOHT)
+			वापस -EINVAL;
 
-		if (!netif_running(wdev->netdev))
-			return -ENETDOWN;
+		अगर (!netअगर_running(wdev->netdev))
+			वापस -ENETDOWN;
 
 		err = rdev_libertas_set_mesh_channel(rdev, wdev->netdev,
 						     chandef->chan);
-		if (!err)
+		अगर (!err)
 			wdev->chandef = *chandef;
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (wdev->mesh_id_len)
-		return -EBUSY;
+	अगर (wdev->mesh_id_len)
+		वापस -EBUSY;
 
 	wdev->preset_chandef = *chandef;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __cfg80211_leave_mesh(struct cfg80211_registered_device *rdev,
-			  struct net_device *dev)
-{
-	struct wireless_dev *wdev = dev->ieee80211_ptr;
-	int err;
+पूर्णांक __cfg80211_leave_mesh(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
+			  काष्ठा net_device *dev)
+अणु
+	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
+	पूर्णांक err;
 
 	ASSERT_WDEV_LOCK(wdev);
 
-	if (dev->ieee80211_ptr->iftype != NL80211_IFTYPE_MESH_POINT)
-		return -EOPNOTSUPP;
+	अगर (dev->ieee80211_ptr->अगरtype != NL80211_IFTYPE_MESH_POINT)
+		वापस -EOPNOTSUPP;
 
-	if (!rdev->ops->leave_mesh)
-		return -EOPNOTSUPP;
+	अगर (!rdev->ops->leave_mesh)
+		वापस -EOPNOTSUPP;
 
-	if (!wdev->mesh_id_len)
-		return -ENOTCONN;
+	अगर (!wdev->mesh_id_len)
+		वापस -ENOTCONN;
 
 	err = rdev_leave_mesh(rdev, dev);
-	if (!err) {
+	अगर (!err) अणु
 		wdev->conn_owner_nlportid = 0;
 		wdev->mesh_id_len = 0;
-		wdev->beacon_interval = 0;
-		memset(&wdev->chandef, 0, sizeof(wdev->chandef));
-		rdev_set_qos_map(rdev, dev, NULL);
+		wdev->beacon_पूर्णांकerval = 0;
+		स_रखो(&wdev->chandef, 0, माप(wdev->chandef));
+		rdev_set_qos_map(rdev, dev, शून्य);
 		cfg80211_sched_dfs_chan_update(rdev);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int cfg80211_leave_mesh(struct cfg80211_registered_device *rdev,
-			struct net_device *dev)
-{
-	struct wireless_dev *wdev = dev->ieee80211_ptr;
-	int err;
+पूर्णांक cfg80211_leave_mesh(काष्ठा cfg80211_रेजिस्टरed_device *rdev,
+			काष्ठा net_device *dev)
+अणु
+	काष्ठा wireless_dev *wdev = dev->ieee80211_ptr;
+	पूर्णांक err;
 
 	wdev_lock(wdev);
 	err = __cfg80211_leave_mesh(rdev, dev);
 	wdev_unlock(wdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण

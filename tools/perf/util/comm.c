@@ -1,153 +1,154 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "comm.h"
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <linux/refcount.h>
-#include <linux/rbtree.h>
-#include <linux/zalloc.h>
-#include "rwsem.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "comm.h"
+#समावेश <त्रुटिसं.स>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <linux/refcount.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/zभाग.स>
+#समावेश "rwsem.h"
 
-struct comm_str {
-	char *str;
-	struct rb_node rb_node;
+काष्ठा comm_str अणु
+	अक्षर *str;
+	काष्ठा rb_node rb_node;
 	refcount_t refcnt;
-};
+पूर्ण;
 
-/* Should perhaps be moved to struct machine */
-static struct rb_root comm_str_root;
-static struct rw_semaphore comm_str_lock = {.lock = PTHREAD_RWLOCK_INITIALIZER,};
+/* Should perhaps be moved to काष्ठा machine */
+अटल काष्ठा rb_root comm_str_root;
+अटल काष्ठा rw_semaphore comm_str_lock = अणु.lock = PTHREAD_RWLOCK_INITIALIZER,पूर्ण;
 
-static struct comm_str *comm_str__get(struct comm_str *cs)
-{
-	if (cs && refcount_inc_not_zero(&cs->refcnt))
-		return cs;
+अटल काष्ठा comm_str *comm_str__get(काष्ठा comm_str *cs)
+अणु
+	अगर (cs && refcount_inc_not_zero(&cs->refcnt))
+		वापस cs;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void comm_str__put(struct comm_str *cs)
-{
-	if (cs && refcount_dec_and_test(&cs->refcnt)) {
-		down_write(&comm_str_lock);
+अटल व्योम comm_str__put(काष्ठा comm_str *cs)
+अणु
+	अगर (cs && refcount_dec_and_test(&cs->refcnt)) अणु
+		करोwn_ग_लिखो(&comm_str_lock);
 		rb_erase(&cs->rb_node, &comm_str_root);
-		up_write(&comm_str_lock);
-		zfree(&cs->str);
-		free(cs);
-	}
-}
+		up_ग_लिखो(&comm_str_lock);
+		zमुक्त(&cs->str);
+		मुक्त(cs);
+	पूर्ण
+पूर्ण
 
-static struct comm_str *comm_str__alloc(const char *str)
-{
-	struct comm_str *cs;
+अटल काष्ठा comm_str *comm_str__alloc(स्थिर अक्षर *str)
+अणु
+	काष्ठा comm_str *cs;
 
-	cs = zalloc(sizeof(*cs));
-	if (!cs)
-		return NULL;
+	cs = zalloc(माप(*cs));
+	अगर (!cs)
+		वापस शून्य;
 
 	cs->str = strdup(str);
-	if (!cs->str) {
-		free(cs);
-		return NULL;
-	}
+	अगर (!cs->str) अणु
+		मुक्त(cs);
+		वापस शून्य;
+	पूर्ण
 
 	refcount_set(&cs->refcnt, 1);
 
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
-static
-struct comm_str *__comm_str__findnew(const char *str, struct rb_root *root)
-{
-	struct rb_node **p = &root->rb_node;
-	struct rb_node *parent = NULL;
-	struct comm_str *iter, *new;
-	int cmp;
+अटल
+काष्ठा comm_str *__comm_str__findnew(स्थिर अक्षर *str, काष्ठा rb_root *root)
+अणु
+	काष्ठा rb_node **p = &root->rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा comm_str *iter, *new;
+	पूर्णांक cmp;
 
-	while (*p != NULL) {
+	जबतक (*p != शून्य) अणु
 		parent = *p;
-		iter = rb_entry(parent, struct comm_str, rb_node);
+		iter = rb_entry(parent, काष्ठा comm_str, rb_node);
 
 		/*
 		 * If we race with comm_str__put, iter->refcnt is 0
-		 * and it will be removed within comm_str__put call
-		 * shortly, ignore it in this search.
+		 * and it will be हटाओd within comm_str__put call
+		 * लघुly, ignore it in this search.
 		 */
-		cmp = strcmp(str, iter->str);
-		if (!cmp && comm_str__get(iter))
-			return iter;
+		cmp = म_भेद(str, iter->str);
+		अगर (!cmp && comm_str__get(iter))
+			वापस iter;
 
-		if (cmp < 0)
+		अगर (cmp < 0)
 			p = &(*p)->rb_left;
-		else
+		अन्यथा
 			p = &(*p)->rb_right;
-	}
+	पूर्ण
 
 	new = comm_str__alloc(str);
-	if (!new)
-		return NULL;
+	अगर (!new)
+		वापस शून्य;
 
 	rb_link_node(&new->rb_node, parent, p);
 	rb_insert_color(&new->rb_node, root);
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
-static struct comm_str *comm_str__findnew(const char *str, struct rb_root *root)
-{
-	struct comm_str *cs;
+अटल काष्ठा comm_str *comm_str__findnew(स्थिर अक्षर *str, काष्ठा rb_root *root)
+अणु
+	काष्ठा comm_str *cs;
 
-	down_write(&comm_str_lock);
+	करोwn_ग_लिखो(&comm_str_lock);
 	cs = __comm_str__findnew(str, root);
-	up_write(&comm_str_lock);
+	up_ग_लिखो(&comm_str_lock);
 
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
-struct comm *comm__new(const char *str, u64 timestamp, bool exec)
-{
-	struct comm *comm = zalloc(sizeof(*comm));
+काष्ठा comm *comm__new(स्थिर अक्षर *str, u64 बारtamp, bool exec)
+अणु
+	काष्ठा comm *comm = zalloc(माप(*comm));
 
-	if (!comm)
-		return NULL;
+	अगर (!comm)
+		वापस शून्य;
 
-	comm->start = timestamp;
+	comm->start = बारtamp;
 	comm->exec = exec;
 
 	comm->comm_str = comm_str__findnew(str, &comm_str_root);
-	if (!comm->comm_str) {
-		free(comm);
-		return NULL;
-	}
+	अगर (!comm->comm_str) अणु
+		मुक्त(comm);
+		वापस शून्य;
+	पूर्ण
 
-	return comm;
-}
+	वापस comm;
+पूर्ण
 
-int comm__override(struct comm *comm, const char *str, u64 timestamp, bool exec)
-{
-	struct comm_str *new, *old = comm->comm_str;
+पूर्णांक comm__override(काष्ठा comm *comm, स्थिर अक्षर *str, u64 बारtamp, bool exec)
+अणु
+	काष्ठा comm_str *new, *old = comm->comm_str;
 
 	new = comm_str__findnew(str, &comm_str_root);
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 
 	comm_str__put(old);
 	comm->comm_str = new;
-	comm->start = timestamp;
-	if (exec)
+	comm->start = बारtamp;
+	अगर (exec)
 		comm->exec = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void comm__free(struct comm *comm)
-{
+व्योम comm__मुक्त(काष्ठा comm *comm)
+अणु
 	comm_str__put(comm->comm_str);
-	free(comm);
-}
+	मुक्त(comm);
+पूर्ण
 
-const char *comm__str(const struct comm *comm)
-{
-	return comm->comm_str->str;
-}
+स्थिर अक्षर *comm__str(स्थिर काष्ठा comm *comm)
+अणु
+	वापस comm->comm_str->str;
+पूर्ण

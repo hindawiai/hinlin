@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,366 +22,366 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
-#include "chan.h"
+#समावेश "priv.h"
+#समावेश "chan.h"
 
-#include <core/client.h>
-#include <core/gpuobj.h>
-#include <core/notify.h>
-#include <subdev/mc.h>
+#समावेश <core/client.h>
+#समावेश <core/gpuobj.h>
+#समावेश <core/notअगरy.h>
+#समावेश <subdev/mc.h>
 
-#include <nvif/event.h>
-#include <nvif/cl0080.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/event.h>
+#समावेश <nvअगर/cl0080.h>
+#समावेश <nvअगर/unpack.h>
 
-void
-nvkm_fifo_recover_chan(struct nvkm_fifo *fifo, int chid)
-{
-	unsigned long flags;
-	if (WARN_ON(!fifo->func->recover_chan))
-		return;
-	spin_lock_irqsave(&fifo->lock, flags);
-	fifo->func->recover_chan(fifo, chid);
-	spin_unlock_irqrestore(&fifo->lock, flags);
-}
+व्योम
+nvkm_fअगरo_recover_chan(काष्ठा nvkm_fअगरo *fअगरo, पूर्णांक chid)
+अणु
+	अचिन्हित दीर्घ flags;
+	अगर (WARN_ON(!fअगरo->func->recover_chan))
+		वापस;
+	spin_lock_irqsave(&fअगरo->lock, flags);
+	fअगरo->func->recover_chan(fअगरo, chid);
+	spin_unlock_irqrestore(&fअगरo->lock, flags);
+पूर्ण
 
-void
-nvkm_fifo_pause(struct nvkm_fifo *fifo, unsigned long *flags)
-{
-	return fifo->func->pause(fifo, flags);
-}
+व्योम
+nvkm_fअगरo_छोड़ो(काष्ठा nvkm_fअगरo *fअगरo, अचिन्हित दीर्घ *flags)
+अणु
+	वापस fअगरo->func->छोड़ो(fअगरo, flags);
+पूर्ण
 
-void
-nvkm_fifo_start(struct nvkm_fifo *fifo, unsigned long *flags)
-{
-	return fifo->func->start(fifo, flags);
-}
+व्योम
+nvkm_fअगरo_start(काष्ठा nvkm_fअगरo *fअगरo, अचिन्हित दीर्घ *flags)
+अणु
+	वापस fअगरo->func->start(fअगरo, flags);
+पूर्ण
 
-void
-nvkm_fifo_fault(struct nvkm_fifo *fifo, struct nvkm_fault_data *info)
-{
-	return fifo->func->fault(fifo, info);
-}
+व्योम
+nvkm_fअगरo_fault(काष्ठा nvkm_fअगरo *fअगरo, काष्ठा nvkm_fault_data *info)
+अणु
+	वापस fअगरo->func->fault(fअगरo, info);
+पूर्ण
 
-void
-nvkm_fifo_chan_put(struct nvkm_fifo *fifo, unsigned long flags,
-		   struct nvkm_fifo_chan **pchan)
-{
-	struct nvkm_fifo_chan *chan = *pchan;
-	if (likely(chan)) {
-		*pchan = NULL;
-		spin_unlock_irqrestore(&fifo->lock, flags);
-	}
-}
+व्योम
+nvkm_fअगरo_chan_put(काष्ठा nvkm_fअगरo *fअगरo, अचिन्हित दीर्घ flags,
+		   काष्ठा nvkm_fअगरo_chan **pchan)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan = *pchan;
+	अगर (likely(chan)) अणु
+		*pchan = शून्य;
+		spin_unlock_irqrestore(&fअगरo->lock, flags);
+	पूर्ण
+पूर्ण
 
-struct nvkm_fifo_chan *
-nvkm_fifo_chan_inst_locked(struct nvkm_fifo *fifo, u64 inst)
-{
-	struct nvkm_fifo_chan *chan;
-	list_for_each_entry(chan, &fifo->chan, head) {
-		if (chan->inst->addr == inst) {
+काष्ठा nvkm_fअगरo_chan *
+nvkm_fअगरo_chan_inst_locked(काष्ठा nvkm_fअगरo *fअगरo, u64 inst)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan;
+	list_क्रम_each_entry(chan, &fअगरo->chan, head) अणु
+		अगर (chan->inst->addr == inst) अणु
 			list_del(&chan->head);
-			list_add(&chan->head, &fifo->chan);
-			return chan;
-		}
-	}
-	return NULL;
-}
+			list_add(&chan->head, &fअगरo->chan);
+			वापस chan;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct nvkm_fifo_chan *
-nvkm_fifo_chan_inst(struct nvkm_fifo *fifo, u64 inst, unsigned long *rflags)
-{
-	struct nvkm_fifo_chan *chan;
-	unsigned long flags;
-	spin_lock_irqsave(&fifo->lock, flags);
-	if ((chan = nvkm_fifo_chan_inst_locked(fifo, inst))) {
+काष्ठा nvkm_fअगरo_chan *
+nvkm_fअगरo_chan_inst(काष्ठा nvkm_fअगरo *fअगरo, u64 inst, अचिन्हित दीर्घ *rflags)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan;
+	अचिन्हित दीर्घ flags;
+	spin_lock_irqsave(&fअगरo->lock, flags);
+	अगर ((chan = nvkm_fअगरo_chan_inst_locked(fअगरo, inst))) अणु
 		*rflags = flags;
-		return chan;
-	}
-	spin_unlock_irqrestore(&fifo->lock, flags);
-	return NULL;
-}
+		वापस chan;
+	पूर्ण
+	spin_unlock_irqrestore(&fअगरo->lock, flags);
+	वापस शून्य;
+पूर्ण
 
-struct nvkm_fifo_chan *
-nvkm_fifo_chan_chid(struct nvkm_fifo *fifo, int chid, unsigned long *rflags)
-{
-	struct nvkm_fifo_chan *chan;
-	unsigned long flags;
-	spin_lock_irqsave(&fifo->lock, flags);
-	list_for_each_entry(chan, &fifo->chan, head) {
-		if (chan->chid == chid) {
+काष्ठा nvkm_fअगरo_chan *
+nvkm_fअगरo_chan_chid(काष्ठा nvkm_fअगरo *fअगरo, पूर्णांक chid, अचिन्हित दीर्घ *rflags)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan;
+	अचिन्हित दीर्घ flags;
+	spin_lock_irqsave(&fअगरo->lock, flags);
+	list_क्रम_each_entry(chan, &fअगरo->chan, head) अणु
+		अगर (chan->chid == chid) अणु
 			list_del(&chan->head);
-			list_add(&chan->head, &fifo->chan);
+			list_add(&chan->head, &fअगरo->chan);
 			*rflags = flags;
-			return chan;
-		}
-	}
-	spin_unlock_irqrestore(&fifo->lock, flags);
-	return NULL;
-}
+			वापस chan;
+		पूर्ण
+	पूर्ण
+	spin_unlock_irqrestore(&fअगरo->lock, flags);
+	वापस शून्य;
+पूर्ण
 
-void
-nvkm_fifo_kevent(struct nvkm_fifo *fifo, int chid)
-{
-	nvkm_event_send(&fifo->kevent, 1, chid, NULL, 0);
-}
+व्योम
+nvkm_fअगरo_kevent(काष्ठा nvkm_fअगरo *fअगरo, पूर्णांक chid)
+अणु
+	nvkm_event_send(&fअगरo->kevent, 1, chid, शून्य, 0);
+पूर्ण
 
-static int
-nvkm_fifo_kevent_ctor(struct nvkm_object *object, void *data, u32 size,
-		      struct nvkm_notify *notify)
-{
-	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
-	if (size == 0) {
-		notify->size  = 0;
-		notify->types = 1;
-		notify->index = chan->chid;
-		return 0;
-	}
-	return -ENOSYS;
-}
+अटल पूर्णांक
+nvkm_fअगरo_kevent_ctor(काष्ठा nvkm_object *object, व्योम *data, u32 size,
+		      काष्ठा nvkm_notअगरy *notअगरy)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan = nvkm_fअगरo_chan(object);
+	अगर (size == 0) अणु
+		notअगरy->size  = 0;
+		notअगरy->types = 1;
+		notअगरy->index = chan->chid;
+		वापस 0;
+	पूर्ण
+	वापस -ENOSYS;
+पूर्ण
 
-static const struct nvkm_event_func
-nvkm_fifo_kevent_func = {
-	.ctor = nvkm_fifo_kevent_ctor,
-};
+अटल स्थिर काष्ठा nvkm_event_func
+nvkm_fअगरo_kevent_func = अणु
+	.ctor = nvkm_fअगरo_kevent_ctor,
+पूर्ण;
 
-static int
-nvkm_fifo_cevent_ctor(struct nvkm_object *object, void *data, u32 size,
-		      struct nvkm_notify *notify)
-{
-	if (size == 0) {
-		notify->size  = 0;
-		notify->types = 1;
-		notify->index = 0;
-		return 0;
-	}
-	return -ENOSYS;
-}
+अटल पूर्णांक
+nvkm_fअगरo_cevent_ctor(काष्ठा nvkm_object *object, व्योम *data, u32 size,
+		      काष्ठा nvkm_notअगरy *notअगरy)
+अणु
+	अगर (size == 0) अणु
+		notअगरy->size  = 0;
+		notअगरy->types = 1;
+		notअगरy->index = 0;
+		वापस 0;
+	पूर्ण
+	वापस -ENOSYS;
+पूर्ण
 
-static const struct nvkm_event_func
-nvkm_fifo_cevent_func = {
-	.ctor = nvkm_fifo_cevent_ctor,
-};
+अटल स्थिर काष्ठा nvkm_event_func
+nvkm_fअगरo_cevent_func = अणु
+	.ctor = nvkm_fअगरo_cevent_ctor,
+पूर्ण;
 
-void
-nvkm_fifo_cevent(struct nvkm_fifo *fifo)
-{
-	nvkm_event_send(&fifo->cevent, 1, 0, NULL, 0);
-}
+व्योम
+nvkm_fअगरo_cevent(काष्ठा nvkm_fअगरo *fअगरo)
+अणु
+	nvkm_event_send(&fअगरo->cevent, 1, 0, शून्य, 0);
+पूर्ण
 
-static void
-nvkm_fifo_uevent_fini(struct nvkm_event *event, int type, int index)
-{
-	struct nvkm_fifo *fifo = container_of(event, typeof(*fifo), uevent);
-	fifo->func->uevent_fini(fifo);
-}
+अटल व्योम
+nvkm_fअगरo_uevent_fini(काष्ठा nvkm_event *event, पूर्णांक type, पूर्णांक index)
+अणु
+	काष्ठा nvkm_fअगरo *fअगरo = container_of(event, typeof(*fअगरo), uevent);
+	fअगरo->func->uevent_fini(fअगरo);
+पूर्ण
 
-static void
-nvkm_fifo_uevent_init(struct nvkm_event *event, int type, int index)
-{
-	struct nvkm_fifo *fifo = container_of(event, typeof(*fifo), uevent);
-	fifo->func->uevent_init(fifo);
-}
+अटल व्योम
+nvkm_fअगरo_uevent_init(काष्ठा nvkm_event *event, पूर्णांक type, पूर्णांक index)
+अणु
+	काष्ठा nvkm_fअगरo *fअगरo = container_of(event, typeof(*fअगरo), uevent);
+	fअगरo->func->uevent_init(fअगरo);
+पूर्ण
 
-static int
-nvkm_fifo_uevent_ctor(struct nvkm_object *object, void *data, u32 size,
-		      struct nvkm_notify *notify)
-{
-	union {
-		struct nvif_notify_uevent_req none;
-	} *req = data;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+nvkm_fअगरo_uevent_ctor(काष्ठा nvkm_object *object, व्योम *data, u32 size,
+		      काष्ठा nvkm_notअगरy *notअगरy)
+अणु
+	जोड़ अणु
+		काष्ठा nvअगर_notअगरy_uevent_req none;
+	पूर्ण *req = data;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unvers(ret, &data, &size, req->none))) {
-		notify->size  = sizeof(struct nvif_notify_uevent_rep);
-		notify->types = 1;
-		notify->index = 0;
-	}
+	अगर (!(ret = nvअगर_unvers(ret, &data, &size, req->none))) अणु
+		notअगरy->size  = माप(काष्ठा nvअगर_notअगरy_uevent_rep);
+		notअगरy->types = 1;
+		notअगरy->index = 0;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nvkm_event_func
-nvkm_fifo_uevent_func = {
-	.ctor = nvkm_fifo_uevent_ctor,
-	.init = nvkm_fifo_uevent_init,
-	.fini = nvkm_fifo_uevent_fini,
-};
+अटल स्थिर काष्ठा nvkm_event_func
+nvkm_fअगरo_uevent_func = अणु
+	.ctor = nvkm_fअगरo_uevent_ctor,
+	.init = nvkm_fअगरo_uevent_init,
+	.fini = nvkm_fअगरo_uevent_fini,
+पूर्ण;
 
-void
-nvkm_fifo_uevent(struct nvkm_fifo *fifo)
-{
-	struct nvif_notify_uevent_rep rep = {
-	};
-	nvkm_event_send(&fifo->uevent, 1, 0, &rep, sizeof(rep));
-}
+व्योम
+nvkm_fअगरo_uevent(काष्ठा nvkm_fअगरo *fअगरo)
+अणु
+	काष्ठा nvअगर_notअगरy_uevent_rep rep = अणु
+	पूर्ण;
+	nvkm_event_send(&fअगरo->uevent, 1, 0, &rep, माप(rep));
+पूर्ण
 
-static int
-nvkm_fifo_class_new_(struct nvkm_device *device,
-		     const struct nvkm_oclass *oclass, void *data, u32 size,
-		     struct nvkm_object **pobject)
-{
-	struct nvkm_fifo *fifo = nvkm_fifo(oclass->engine);
-	return fifo->func->class_new(fifo, oclass, data, size, pobject);
-}
+अटल पूर्णांक
+nvkm_fअगरo_class_new_(काष्ठा nvkm_device *device,
+		     स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
+		     काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nvkm_fअगरo *fअगरo = nvkm_fअगरo(oclass->engine);
+	वापस fअगरo->func->class_new(fअगरo, oclass, data, size, pobject);
+पूर्ण
 
-static const struct nvkm_device_oclass
-nvkm_fifo_class_ = {
-	.ctor = nvkm_fifo_class_new_,
-};
+अटल स्थिर काष्ठा nvkm_device_oclass
+nvkm_fअगरo_class_ = अणु
+	.ctor = nvkm_fअगरo_class_new_,
+पूर्ण;
 
-static int
-nvkm_fifo_class_new(struct nvkm_device *device,
-		    const struct nvkm_oclass *oclass, void *data, u32 size,
-		    struct nvkm_object **pobject)
-{
-	const struct nvkm_fifo_chan_oclass *sclass = oclass->engn;
-	struct nvkm_fifo *fifo = nvkm_fifo(oclass->engine);
-	return sclass->ctor(fifo, oclass, data, size, pobject);
-}
+अटल पूर्णांक
+nvkm_fअगरo_class_new(काष्ठा nvkm_device *device,
+		    स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
+		    काष्ठा nvkm_object **pobject)
+अणु
+	स्थिर काष्ठा nvkm_fअगरo_chan_oclass *sclass = oclass->engn;
+	काष्ठा nvkm_fअगरo *fअगरo = nvkm_fअगरo(oclass->engine);
+	वापस sclass->ctor(fअगरo, oclass, data, size, pobject);
+पूर्ण
 
-static const struct nvkm_device_oclass
-nvkm_fifo_class = {
-	.ctor = nvkm_fifo_class_new,
-};
+अटल स्थिर काष्ठा nvkm_device_oclass
+nvkm_fअगरo_class = अणु
+	.ctor = nvkm_fअगरo_class_new,
+पूर्ण;
 
-static int
-nvkm_fifo_class_get(struct nvkm_oclass *oclass, int index,
-		    const struct nvkm_device_oclass **class)
-{
-	struct nvkm_fifo *fifo = nvkm_fifo(oclass->engine);
-	const struct nvkm_fifo_chan_oclass *sclass;
-	int c = 0;
+अटल पूर्णांक
+nvkm_fअगरo_class_get(काष्ठा nvkm_oclass *oclass, पूर्णांक index,
+		    स्थिर काष्ठा nvkm_device_oclass **class)
+अणु
+	काष्ठा nvkm_fअगरo *fअगरo = nvkm_fअगरo(oclass->engine);
+	स्थिर काष्ठा nvkm_fअगरo_chan_oclass *sclass;
+	पूर्णांक c = 0;
 
-	if (fifo->func->class_get) {
-		int ret = fifo->func->class_get(fifo, index, oclass);
-		if (ret == 0)
-			*class = &nvkm_fifo_class_;
-		return ret;
-	}
+	अगर (fअगरo->func->class_get) अणु
+		पूर्णांक ret = fअगरo->func->class_get(fअगरo, index, oclass);
+		अगर (ret == 0)
+			*class = &nvkm_fअगरo_class_;
+		वापस ret;
+	पूर्ण
 
-	while ((sclass = fifo->func->chan[c])) {
-		if (c++ == index) {
+	जबतक ((sclass = fअगरo->func->chan[c])) अणु
+		अगर (c++ == index) अणु
 			oclass->base = sclass->base;
 			oclass->engn = sclass;
-			*class = &nvkm_fifo_class;
-			return 0;
-		}
-	}
+			*class = &nvkm_fअगरo_class;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static void
-nvkm_fifo_intr(struct nvkm_engine *engine)
-{
-	struct nvkm_fifo *fifo = nvkm_fifo(engine);
-	fifo->func->intr(fifo);
-}
+अटल व्योम
+nvkm_fअगरo_पूर्णांकr(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_fअगरo *fअगरo = nvkm_fअगरo(engine);
+	fअगरo->func->पूर्णांकr(fअगरo);
+पूर्ण
 
-static int
-nvkm_fifo_fini(struct nvkm_engine *engine, bool suspend)
-{
-	struct nvkm_fifo *fifo = nvkm_fifo(engine);
-	if (fifo->func->fini)
-		fifo->func->fini(fifo);
-	return 0;
-}
+अटल पूर्णांक
+nvkm_fअगरo_fini(काष्ठा nvkm_engine *engine, bool suspend)
+अणु
+	काष्ठा nvkm_fअगरo *fअगरo = nvkm_fअगरo(engine);
+	अगर (fअगरo->func->fini)
+		fअगरo->func->fini(fअगरo);
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_fifo_info(struct nvkm_engine *engine, u64 mthd, u64 *data)
-{
-	struct nvkm_fifo *fifo = nvkm_fifo(engine);
-	switch (mthd) {
-	case NV_DEVICE_HOST_CHANNELS: *data = fifo->nr; return 0;
-	default:
-		if (fifo->func->info)
-			return fifo->func->info(fifo, mthd, data);
-		break;
-	}
-	return -ENOSYS;
-}
+अटल पूर्णांक
+nvkm_fअगरo_info(काष्ठा nvkm_engine *engine, u64 mthd, u64 *data)
+अणु
+	काष्ठा nvkm_fअगरo *fअगरo = nvkm_fअगरo(engine);
+	चयन (mthd) अणु
+	हाल NV_DEVICE_HOST_CHANNELS: *data = fअगरo->nr; वापस 0;
+	शेष:
+		अगर (fअगरo->func->info)
+			वापस fअगरo->func->info(fअगरo, mthd, data);
+		अवरोध;
+	पूर्ण
+	वापस -ENOSYS;
+पूर्ण
 
-static int
-nvkm_fifo_oneinit(struct nvkm_engine *engine)
-{
-	struct nvkm_fifo *fifo = nvkm_fifo(engine);
-	if (fifo->func->oneinit)
-		return fifo->func->oneinit(fifo);
-	return 0;
-}
+अटल पूर्णांक
+nvkm_fअगरo_oneinit(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_fअगरo *fअगरo = nvkm_fअगरo(engine);
+	अगर (fअगरo->func->oneinit)
+		वापस fअगरo->func->oneinit(fअगरo);
+	वापस 0;
+पूर्ण
 
-static void
-nvkm_fifo_preinit(struct nvkm_engine *engine)
-{
+अटल व्योम
+nvkm_fअगरo_preinit(काष्ठा nvkm_engine *engine)
+अणु
 	nvkm_mc_reset(engine->subdev.device, NVKM_ENGINE_FIFO, 0);
-}
+पूर्ण
 
-static int
-nvkm_fifo_init(struct nvkm_engine *engine)
-{
-	struct nvkm_fifo *fifo = nvkm_fifo(engine);
-	fifo->func->init(fifo);
-	return 0;
-}
+अटल पूर्णांक
+nvkm_fअगरo_init(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_fअगरo *fअगरo = nvkm_fअगरo(engine);
+	fअगरo->func->init(fअगरo);
+	वापस 0;
+पूर्ण
 
-static void *
-nvkm_fifo_dtor(struct nvkm_engine *engine)
-{
-	struct nvkm_fifo *fifo = nvkm_fifo(engine);
-	void *data = fifo;
-	if (fifo->func->dtor)
-		data = fifo->func->dtor(fifo);
-	nvkm_event_fini(&fifo->kevent);
-	nvkm_event_fini(&fifo->cevent);
-	nvkm_event_fini(&fifo->uevent);
-	mutex_destroy(&fifo->mutex);
-	return data;
-}
+अटल व्योम *
+nvkm_fअगरo_dtor(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_fअगरo *fअगरo = nvkm_fअगरo(engine);
+	व्योम *data = fअगरo;
+	अगर (fअगरo->func->dtor)
+		data = fअगरo->func->dtor(fअगरo);
+	nvkm_event_fini(&fअगरo->kevent);
+	nvkm_event_fini(&fअगरo->cevent);
+	nvkm_event_fini(&fअगरo->uevent);
+	mutex_destroy(&fअगरo->mutex);
+	वापस data;
+पूर्ण
 
-static const struct nvkm_engine_func
-nvkm_fifo = {
-	.dtor = nvkm_fifo_dtor,
-	.preinit = nvkm_fifo_preinit,
-	.oneinit = nvkm_fifo_oneinit,
-	.info = nvkm_fifo_info,
-	.init = nvkm_fifo_init,
-	.fini = nvkm_fifo_fini,
-	.intr = nvkm_fifo_intr,
-	.base.sclass = nvkm_fifo_class_get,
-};
+अटल स्थिर काष्ठा nvkm_engine_func
+nvkm_fअगरo = अणु
+	.dtor = nvkm_fअगरo_dtor,
+	.preinit = nvkm_fअगरo_preinit,
+	.oneinit = nvkm_fअगरo_oneinit,
+	.info = nvkm_fअगरo_info,
+	.init = nvkm_fअगरo_init,
+	.fini = nvkm_fअगरo_fini,
+	.पूर्णांकr = nvkm_fअगरo_पूर्णांकr,
+	.base.sclass = nvkm_fअगरo_class_get,
+पूर्ण;
 
-int
-nvkm_fifo_ctor(const struct nvkm_fifo_func *func, struct nvkm_device *device,
-	       enum nvkm_subdev_type type, int inst, int nr, struct nvkm_fifo *fifo)
-{
-	int ret;
+पूर्णांक
+nvkm_fअगरo_ctor(स्थिर काष्ठा nvkm_fअगरo_func *func, काष्ठा nvkm_device *device,
+	       क्रमागत nvkm_subdev_type type, पूर्णांक inst, पूर्णांक nr, काष्ठा nvkm_fअगरo *fअगरo)
+अणु
+	पूर्णांक ret;
 
-	fifo->func = func;
-	INIT_LIST_HEAD(&fifo->chan);
-	spin_lock_init(&fifo->lock);
-	mutex_init(&fifo->mutex);
+	fअगरo->func = func;
+	INIT_LIST_HEAD(&fअगरo->chan);
+	spin_lock_init(&fअगरo->lock);
+	mutex_init(&fअगरo->mutex);
 
-	if (WARN_ON(fifo->nr > NVKM_FIFO_CHID_NR))
-		fifo->nr = NVKM_FIFO_CHID_NR;
-	else
-		fifo->nr = nr;
-	bitmap_clear(fifo->mask, 0, fifo->nr);
+	अगर (WARN_ON(fअगरo->nr > NVKM_FIFO_CHID_NR))
+		fअगरo->nr = NVKM_FIFO_CHID_NR;
+	अन्यथा
+		fअगरo->nr = nr;
+	biपंचांगap_clear(fअगरo->mask, 0, fअगरo->nr);
 
-	ret = nvkm_engine_ctor(&nvkm_fifo, device, type, inst, true, &fifo->engine);
-	if (ret)
-		return ret;
+	ret = nvkm_engine_ctor(&nvkm_fअगरo, device, type, inst, true, &fअगरo->engine);
+	अगर (ret)
+		वापस ret;
 
-	if (func->uevent_init) {
-		ret = nvkm_event_init(&nvkm_fifo_uevent_func, 1, 1,
-				      &fifo->uevent);
-		if (ret)
-			return ret;
-	}
+	अगर (func->uevent_init) अणु
+		ret = nvkm_event_init(&nvkm_fअगरo_uevent_func, 1, 1,
+				      &fअगरo->uevent);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = nvkm_event_init(&nvkm_fifo_cevent_func, 1, 1, &fifo->cevent);
-	if (ret)
-		return ret;
+	ret = nvkm_event_init(&nvkm_fअगरo_cevent_func, 1, 1, &fअगरo->cevent);
+	अगर (ret)
+		वापस ret;
 
-	return nvkm_event_init(&nvkm_fifo_kevent_func, 1, nr, &fifo->kevent);
-}
+	वापस nvkm_event_init(&nvkm_fअगरo_kevent_func, 1, nr, &fअगरo->kevent);
+पूर्ण

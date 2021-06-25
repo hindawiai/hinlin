@@ -1,273 +1,274 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2009, Wind River Systems Inc
  * Implemented by fredrik.markstrom@gmail.com and ivarholmqvist@gmail.com
  */
 
-#include <linux/export.h>
-#include <linux/sched.h>
-#include <linux/mm.h>
-#include <linux/fs.h>
-#include <linux/pagemap.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/pagemap.h>
 
-#include <asm/cacheflush.h>
-#include <asm/cpuinfo.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cpuinfo.h>
 
-static void __flush_dcache(unsigned long start, unsigned long end)
-{
-	unsigned long addr;
+अटल व्योम __flush_dcache(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ addr;
 
 	start &= ~(cpuinfo.dcache_line_size - 1);
 	end += (cpuinfo.dcache_line_size - 1);
 	end &= ~(cpuinfo.dcache_line_size - 1);
 
-	if (end > start + cpuinfo.dcache_size)
+	अगर (end > start + cpuinfo.dcache_size)
 		end = start + cpuinfo.dcache_size;
 
-	for (addr = start; addr < end; addr += cpuinfo.dcache_line_size) {
-		__asm__ __volatile__ ("   flushd 0(%0)\n"
-					: /* Outputs */
-					: /* Inputs  */ "r"(addr)
+	क्रम (addr = start; addr < end; addr += cpuinfo.dcache_line_size) अणु
+		__यंत्र__ __अस्थिर__ ("   flushd 0(%0)\n"
+					: /* Outमाला_दो */
+					: /* Inमाला_दो  */ "r"(addr)
 					/* : No clobber */);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __invalidate_dcache(unsigned long start, unsigned long end)
-{
-	unsigned long addr;
+अटल व्योम __invalidate_dcache(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ addr;
 
 	start &= ~(cpuinfo.dcache_line_size - 1);
 	end += (cpuinfo.dcache_line_size - 1);
 	end &= ~(cpuinfo.dcache_line_size - 1);
 
-	for (addr = start; addr < end; addr += cpuinfo.dcache_line_size) {
-		__asm__ __volatile__ ("   initda 0(%0)\n"
-					: /* Outputs */
-					: /* Inputs  */ "r"(addr)
+	क्रम (addr = start; addr < end; addr += cpuinfo.dcache_line_size) अणु
+		__यंत्र__ __अस्थिर__ ("   initda 0(%0)\n"
+					: /* Outमाला_दो */
+					: /* Inमाला_दो  */ "r"(addr)
 					/* : No clobber */);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __flush_icache(unsigned long start, unsigned long end)
-{
-	unsigned long addr;
+अटल व्योम __flush_icache(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ addr;
 
 	start &= ~(cpuinfo.icache_line_size - 1);
 	end += (cpuinfo.icache_line_size - 1);
 	end &= ~(cpuinfo.icache_line_size - 1);
 
-	if (end > start + cpuinfo.icache_size)
+	अगर (end > start + cpuinfo.icache_size)
 		end = start + cpuinfo.icache_size;
 
-	for (addr = start; addr < end; addr += cpuinfo.icache_line_size) {
-		__asm__ __volatile__ ("   flushi %0\n"
-					: /* Outputs */
-					: /* Inputs  */ "r"(addr)
+	क्रम (addr = start; addr < end; addr += cpuinfo.icache_line_size) अणु
+		__यंत्र__ __अस्थिर__ ("   flushi %0\n"
+					: /* Outमाला_दो */
+					: /* Inमाला_दो  */ "r"(addr)
 					/* : No clobber */);
-	}
-	__asm__ __volatile(" flushp\n");
-}
+	पूर्ण
+	__यंत्र__ __अस्थिर(" flushp\n");
+पूर्ण
 
-static void flush_aliases(struct address_space *mapping, struct page *page)
-{
-	struct mm_struct *mm = current->active_mm;
-	struct vm_area_struct *mpnt;
+अटल व्योम flush_aliases(काष्ठा address_space *mapping, काष्ठा page *page)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->active_mm;
+	काष्ठा vm_area_काष्ठा *mpnt;
 	pgoff_t pgoff;
 
 	pgoff = page->index;
 
 	flush_dcache_mmap_lock(mapping);
-	vma_interval_tree_foreach(mpnt, &mapping->i_mmap, pgoff, pgoff) {
-		unsigned long offset;
+	vma_पूर्णांकerval_tree_क्रमeach(mpnt, &mapping->i_mmap, pgoff, pgoff) अणु
+		अचिन्हित दीर्घ offset;
 
-		if (mpnt->vm_mm != mm)
-			continue;
-		if (!(mpnt->vm_flags & VM_MAYSHARE))
-			continue;
+		अगर (mpnt->vm_mm != mm)
+			जारी;
+		अगर (!(mpnt->vm_flags & VM_MAYSHARE))
+			जारी;
 
 		offset = (pgoff - mpnt->vm_pgoff) << PAGE_SHIFT;
 		flush_cache_page(mpnt, mpnt->vm_start + offset,
 			page_to_pfn(page));
-	}
+	पूर्ण
 	flush_dcache_mmap_unlock(mapping);
-}
+पूर्ण
 
-void flush_cache_all(void)
-{
+व्योम flush_cache_all(व्योम)
+अणु
 	__flush_dcache(0, cpuinfo.dcache_size);
 	__flush_icache(0, cpuinfo.icache_size);
-}
+पूर्ण
 
-void flush_cache_mm(struct mm_struct *mm)
-{
+व्योम flush_cache_mm(काष्ठा mm_काष्ठा *mm)
+अणु
 	flush_cache_all();
-}
+पूर्ण
 
-void flush_cache_dup_mm(struct mm_struct *mm)
-{
+व्योम flush_cache_dup_mm(काष्ठा mm_काष्ठा *mm)
+अणु
 	flush_cache_all();
-}
+पूर्ण
 
-void flush_icache_range(unsigned long start, unsigned long end)
-{
+व्योम flush_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	__flush_dcache(start, end);
 	__flush_icache(start, end);
-}
+पूर्ण
 
-void flush_dcache_range(unsigned long start, unsigned long end)
-{
+व्योम flush_dcache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	__flush_dcache(start, end);
 	__flush_icache(start, end);
-}
+पूर्ण
 EXPORT_SYMBOL(flush_dcache_range);
 
-void invalidate_dcache_range(unsigned long start, unsigned long end)
-{
+व्योम invalidate_dcache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	__invalidate_dcache(start, end);
-}
+पूर्ण
 EXPORT_SYMBOL(invalidate_dcache_range);
 
-void flush_cache_range(struct vm_area_struct *vma, unsigned long start,
-			unsigned long end)
-{
+व्योम flush_cache_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+			अचिन्हित दीर्घ end)
+अणु
 	__flush_dcache(start, end);
-	if (vma == NULL || (vma->vm_flags & VM_EXEC))
+	अगर (vma == शून्य || (vma->vm_flags & VM_EXEC))
 		__flush_icache(start, end);
-}
+पूर्ण
 
-void flush_icache_page(struct vm_area_struct *vma, struct page *page)
-{
-	unsigned long start = (unsigned long) page_address(page);
-	unsigned long end = start + PAGE_SIZE;
+व्योम flush_icache_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ) page_address(page);
+	अचिन्हित दीर्घ end = start + PAGE_SIZE;
 
 	__flush_dcache(start, end);
 	__flush_icache(start, end);
-}
+पूर्ण
 
-void flush_cache_page(struct vm_area_struct *vma, unsigned long vmaddr,
-			unsigned long pfn)
-{
-	unsigned long start = vmaddr;
-	unsigned long end = start + PAGE_SIZE;
+व्योम flush_cache_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ vmaddr,
+			अचिन्हित दीर्घ pfn)
+अणु
+	अचिन्हित दीर्घ start = vmaddr;
+	अचिन्हित दीर्घ end = start + PAGE_SIZE;
 
 	__flush_dcache(start, end);
-	if (vma->vm_flags & VM_EXEC)
+	अगर (vma->vm_flags & VM_EXEC)
 		__flush_icache(start, end);
-}
+पूर्ण
 
-void __flush_dcache_page(struct address_space *mapping, struct page *page)
-{
+व्योम __flush_dcache_page(काष्ठा address_space *mapping, काष्ठा page *page)
+अणु
 	/*
 	 * Writeback any data associated with the kernel mapping of this
 	 * page.  This ensures that data in the physical page is mutually
 	 * coherent with the kernels mapping.
 	 */
-	unsigned long start = (unsigned long)page_address(page);
+	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ)page_address(page);
 
 	__flush_dcache(start, start + PAGE_SIZE);
-}
+पूर्ण
 
-void flush_dcache_page(struct page *page)
-{
-	struct address_space *mapping;
+व्योम flush_dcache_page(काष्ठा page *page)
+अणु
+	काष्ठा address_space *mapping;
 
 	/*
 	 * The zero page is never written to, so never has any dirty
-	 * cache lines, and therefore never needs to be flushed.
+	 * cache lines, and thereक्रमe never needs to be flushed.
 	 */
-	if (page == ZERO_PAGE(0))
-		return;
+	अगर (page == ZERO_PAGE(0))
+		वापस;
 
 	mapping = page_mapping_file(page);
 
-	/* Flush this page if there are aliases. */
-	if (mapping && !mapping_mapped(mapping)) {
+	/* Flush this page अगर there are aliases. */
+	अगर (mapping && !mapping_mapped(mapping)) अणु
 		clear_bit(PG_dcache_clean, &page->flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		__flush_dcache_page(mapping, page);
-		if (mapping) {
-			unsigned long start = (unsigned long)page_address(page);
+		अगर (mapping) अणु
+			अचिन्हित दीर्घ start = (अचिन्हित दीर्घ)page_address(page);
 			flush_aliases(mapping,  page);
 			flush_icache_range(start, start + PAGE_SIZE);
-		}
+		पूर्ण
 		set_bit(PG_dcache_clean, &page->flags);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(flush_dcache_page);
 
-void update_mmu_cache(struct vm_area_struct *vma,
-		      unsigned long address, pte_t *ptep)
-{
+व्योम update_mmu_cache(काष्ठा vm_area_काष्ठा *vma,
+		      अचिन्हित दीर्घ address, pte_t *ptep)
+अणु
 	pte_t pte = *ptep;
-	unsigned long pfn = pte_pfn(pte);
-	struct page *page;
-	struct address_space *mapping;
+	अचिन्हित दीर्घ pfn = pte_pfn(pte);
+	काष्ठा page *page;
+	काष्ठा address_space *mapping;
 
 	reload_tlb_page(vma, address, pte);
 
-	if (!pfn_valid(pfn))
-		return;
+	अगर (!pfn_valid(pfn))
+		वापस;
 
 	/*
 	* The zero page is never written to, so never has any dirty
-	* cache lines, and therefore never needs to be flushed.
+	* cache lines, and thereक्रमe never needs to be flushed.
 	*/
 	page = pfn_to_page(pfn);
-	if (page == ZERO_PAGE(0))
-		return;
+	अगर (page == ZERO_PAGE(0))
+		वापस;
 
 	mapping = page_mapping_file(page);
-	if (!test_and_set_bit(PG_dcache_clean, &page->flags))
+	अगर (!test_and_set_bit(PG_dcache_clean, &page->flags))
 		__flush_dcache_page(mapping, page);
 
-	if(mapping)
-	{
+	अगर(mapping)
+	अणु
 		flush_aliases(mapping, page);
-		if (vma->vm_flags & VM_EXEC)
+		अगर (vma->vm_flags & VM_EXEC)
 			flush_icache_page(vma, page);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void copy_user_page(void *vto, void *vfrom, unsigned long vaddr,
-		    struct page *to)
-{
+व्योम copy_user_page(व्योम *vto, व्योम *vfrom, अचिन्हित दीर्घ vaddr,
+		    काष्ठा page *to)
+अणु
 	__flush_dcache(vaddr, vaddr + PAGE_SIZE);
 	__flush_icache(vaddr, vaddr + PAGE_SIZE);
 	copy_page(vto, vfrom);
-	__flush_dcache((unsigned long)vto, (unsigned long)vto + PAGE_SIZE);
-	__flush_icache((unsigned long)vto, (unsigned long)vto + PAGE_SIZE);
-}
+	__flush_dcache((अचिन्हित दीर्घ)vto, (अचिन्हित दीर्घ)vto + PAGE_SIZE);
+	__flush_icache((अचिन्हित दीर्घ)vto, (अचिन्हित दीर्घ)vto + PAGE_SIZE);
+पूर्ण
 
-void clear_user_page(void *addr, unsigned long vaddr, struct page *page)
-{
+व्योम clear_user_page(व्योम *addr, अचिन्हित दीर्घ vaddr, काष्ठा page *page)
+अणु
 	__flush_dcache(vaddr, vaddr + PAGE_SIZE);
 	__flush_icache(vaddr, vaddr + PAGE_SIZE);
 	clear_page(addr);
-	__flush_dcache((unsigned long)addr, (unsigned long)addr + PAGE_SIZE);
-	__flush_icache((unsigned long)addr, (unsigned long)addr + PAGE_SIZE);
-}
+	__flush_dcache((अचिन्हित दीर्घ)addr, (अचिन्हित दीर्घ)addr + PAGE_SIZE);
+	__flush_icache((अचिन्हित दीर्घ)addr, (अचिन्हित दीर्घ)addr + PAGE_SIZE);
+पूर्ण
 
-void copy_from_user_page(struct vm_area_struct *vma, struct page *page,
-			unsigned long user_vaddr,
-			void *dst, void *src, int len)
-{
+व्योम copy_from_user_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
+			अचिन्हित दीर्घ user_vaddr,
+			व्योम *dst, व्योम *src, पूर्णांक len)
+अणु
 	flush_cache_page(vma, user_vaddr, page_to_pfn(page));
-	memcpy(dst, src, len);
-	__flush_dcache((unsigned long)src, (unsigned long)src + len);
-	if (vma->vm_flags & VM_EXEC)
-		__flush_icache((unsigned long)src, (unsigned long)src + len);
-}
+	स_नकल(dst, src, len);
+	__flush_dcache((अचिन्हित दीर्घ)src, (अचिन्हित दीर्घ)src + len);
+	अगर (vma->vm_flags & VM_EXEC)
+		__flush_icache((अचिन्हित दीर्घ)src, (अचिन्हित दीर्घ)src + len);
+पूर्ण
 
-void copy_to_user_page(struct vm_area_struct *vma, struct page *page,
-			unsigned long user_vaddr,
-			void *dst, void *src, int len)
-{
+व्योम copy_to_user_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
+			अचिन्हित दीर्घ user_vaddr,
+			व्योम *dst, व्योम *src, पूर्णांक len)
+अणु
 	flush_cache_page(vma, user_vaddr, page_to_pfn(page));
-	memcpy(dst, src, len);
-	__flush_dcache((unsigned long)dst, (unsigned long)dst + len);
-	if (vma->vm_flags & VM_EXEC)
-		__flush_icache((unsigned long)dst, (unsigned long)dst + len);
-}
+	स_नकल(dst, src, len);
+	__flush_dcache((अचिन्हित दीर्घ)dst, (अचिन्हित दीर्घ)dst + len);
+	अगर (vma->vm_flags & VM_EXEC)
+		__flush_icache((अचिन्हित दीर्घ)dst, (अचिन्हित दीर्घ)dst + len);
+पूर्ण

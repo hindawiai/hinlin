@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PERF_PRINT_BINARY_H
-#define PERF_PRINT_BINARY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PERF_PRINT_BINARY_H
+#घोषणा PERF_PRINT_BINARY_H
 
-#include <stddef.h>
-#include <stdio.h>
+#समावेश <मानकघोष.स>
+#समावेश <मानकपन.स>
 
-enum binary_printer_ops {
+क्रमागत binary_prपूर्णांकer_ops अणु
 	BINARY_PRINT_DATA_BEGIN,
 	BINARY_PRINT_LINE_BEGIN,
 	BINARY_PRINT_ADDR,
@@ -16,22 +17,22 @@ enum binary_printer_ops {
 	BINARY_PRINT_CHAR_PAD,
 	BINARY_PRINT_LINE_END,
 	BINARY_PRINT_DATA_END,
-};
+पूर्ण;
 
-typedef int (*binary__fprintf_t)(enum binary_printer_ops op,
-				 unsigned int val, void *extra, FILE *fp);
+प्रकार पूर्णांक (*binary__ख_लिखो_t)(क्रमागत binary_prपूर्णांकer_ops op,
+				 अचिन्हित पूर्णांक val, व्योम *extra, खाता *fp);
 
-int binary__fprintf(unsigned char *data, size_t len,
-		    size_t bytes_per_line, binary__fprintf_t printer,
-		    void *extra, FILE *fp);
+पूर्णांक binary__ख_लिखो(अचिन्हित अक्षर *data, माप_प्रकार len,
+		    माप_प्रकार bytes_per_line, binary__ख_लिखो_t prपूर्णांकer,
+		    व्योम *extra, खाता *fp);
 
-static inline void print_binary(unsigned char *data, size_t len,
-				size_t bytes_per_line, binary__fprintf_t printer,
-				void *extra)
-{
-	binary__fprintf(data, len, bytes_per_line, printer, extra, stdout);
-}
+अटल अंतरभूत व्योम prपूर्णांक_binary(अचिन्हित अक्षर *data, माप_प्रकार len,
+				माप_प्रकार bytes_per_line, binary__ख_लिखो_t prपूर्णांकer,
+				व्योम *extra)
+अणु
+	binary__ख_लिखो(data, len, bytes_per_line, prपूर्णांकer, extra, मानक_निकास);
+पूर्ण
 
-int is_printable_array(char *p, unsigned int len);
+पूर्णांक is_prपूर्णांकable_array(अक्षर *p, अचिन्हित पूर्णांक len);
 
-#endif /* PERF_PRINT_BINARY_H */
+#पूर्ण_अगर /* PERF_PRINT_BINARY_H */

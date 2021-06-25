@@ -1,217 +1,218 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright(c) 2014 Intel Mobile Communications GmbH
  * Copyright(c) 2015 Intel Deutschland GmbH
  *
- * Contact Information:
- *  Intel Linux Wireless <ilw@linux.intel.com>
+ * Contact Inक्रमmation:
+ *  Intel Linux Wireless <ilw@linux.पूर्णांकel.com>
  * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  *
  * Author: Johannes Berg <johannes@sipsolutions.net>
  */
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/devcoredump.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/workqueue.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/devcoredump.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/workqueue.h>
 
-static struct class devcd_class;
+अटल काष्ठा class devcd_class;
 
-/* global disable flag, for security purposes */
-static bool devcd_disabled;
+/* global disable flag, क्रम security purposes */
+अटल bool devcd_disabled;
 
-/* if data isn't read by userspace after 5 minutes then delete it */
-#define DEVCD_TIMEOUT	(HZ * 60 * 5)
+/* अगर data isn't पढ़ो by userspace after 5 minutes then delete it */
+#घोषणा DEVCD_TIMEOUT	(HZ * 60 * 5)
 
-struct devcd_entry {
-	struct device devcd_dev;
-	void *data;
-	size_t datalen;
-	struct module *owner;
-	ssize_t (*read)(char *buffer, loff_t offset, size_t count,
-			void *data, size_t datalen);
-	void (*free)(void *data);
-	struct delayed_work del_wk;
-	struct device *failing_dev;
-};
+काष्ठा devcd_entry अणु
+	काष्ठा device devcd_dev;
+	व्योम *data;
+	माप_प्रकार datalen;
+	काष्ठा module *owner;
+	sमाप_प्रकार (*पढ़ो)(अक्षर *buffer, loff_t offset, माप_प्रकार count,
+			व्योम *data, माप_प्रकार datalen);
+	व्योम (*मुक्त)(व्योम *data);
+	काष्ठा delayed_work del_wk;
+	काष्ठा device *failing_dev;
+पूर्ण;
 
-static struct devcd_entry *dev_to_devcd(struct device *dev)
-{
-	return container_of(dev, struct devcd_entry, devcd_dev);
-}
+अटल काष्ठा devcd_entry *dev_to_devcd(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा devcd_entry, devcd_dev);
+पूर्ण
 
-static void devcd_dev_release(struct device *dev)
-{
-	struct devcd_entry *devcd = dev_to_devcd(dev);
+अटल व्योम devcd_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा devcd_entry *devcd = dev_to_devcd(dev);
 
-	devcd->free(devcd->data);
+	devcd->मुक्त(devcd->data);
 	module_put(devcd->owner);
 
 	/*
-	 * this seems racy, but I don't see a notifier or such on
-	 * a struct device to know when it goes away?
+	 * this seems racy, but I करोn't see a notअगरier or such on
+	 * a काष्ठा device to know when it goes away?
 	 */
-	if (devcd->failing_dev->kobj.sd)
+	अगर (devcd->failing_dev->kobj.sd)
 		sysfs_delete_link(&devcd->failing_dev->kobj, &dev->kobj,
 				  "devcoredump");
 
 	put_device(devcd->failing_dev);
-	kfree(devcd);
-}
+	kमुक्त(devcd);
+पूर्ण
 
-static void devcd_del(struct work_struct *wk)
-{
-	struct devcd_entry *devcd;
+अटल व्योम devcd_del(काष्ठा work_काष्ठा *wk)
+अणु
+	काष्ठा devcd_entry *devcd;
 
-	devcd = container_of(wk, struct devcd_entry, del_wk.work);
+	devcd = container_of(wk, काष्ठा devcd_entry, del_wk.work);
 
 	device_del(&devcd->devcd_dev);
 	put_device(&devcd->devcd_dev);
-}
+पूर्ण
 
-static ssize_t devcd_data_read(struct file *filp, struct kobject *kobj,
-			       struct bin_attribute *bin_attr,
-			       char *buffer, loff_t offset, size_t count)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct devcd_entry *devcd = dev_to_devcd(dev);
+अटल sमाप_प्रकार devcd_data_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			       काष्ठा bin_attribute *bin_attr,
+			       अक्षर *buffer, loff_t offset, माप_प्रकार count)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा devcd_entry *devcd = dev_to_devcd(dev);
 
-	return devcd->read(buffer, offset, count, devcd->data, devcd->datalen);
-}
+	वापस devcd->पढ़ो(buffer, offset, count, devcd->data, devcd->datalen);
+पूर्ण
 
-static ssize_t devcd_data_write(struct file *filp, struct kobject *kobj,
-				struct bin_attribute *bin_attr,
-				char *buffer, loff_t offset, size_t count)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct devcd_entry *devcd = dev_to_devcd(dev);
+अटल sमाप_प्रकार devcd_data_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
+				काष्ठा bin_attribute *bin_attr,
+				अक्षर *buffer, loff_t offset, माप_प्रकार count)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा devcd_entry *devcd = dev_to_devcd(dev);
 
-	mod_delayed_work(system_wq, &devcd->del_wk, 0);
+	mod_delayed_work(प्रणाली_wq, &devcd->del_wk, 0);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct bin_attribute devcd_attr_data = {
-	.attr = { .name = "data", .mode = S_IRUSR | S_IWUSR, },
+अटल काष्ठा bin_attribute devcd_attr_data = अणु
+	.attr = अणु .name = "data", .mode = S_IRUSR | S_IWUSR, पूर्ण,
 	.size = 0,
-	.read = devcd_data_read,
-	.write = devcd_data_write,
-};
+	.पढ़ो = devcd_data_पढ़ो,
+	.ग_लिखो = devcd_data_ग_लिखो,
+पूर्ण;
 
-static struct bin_attribute *devcd_dev_bin_attrs[] = {
-	&devcd_attr_data, NULL,
-};
+अटल काष्ठा bin_attribute *devcd_dev_bin_attrs[] = अणु
+	&devcd_attr_data, शून्य,
+पूर्ण;
 
-static const struct attribute_group devcd_dev_group = {
+अटल स्थिर काष्ठा attribute_group devcd_dev_group = अणु
 	.bin_attrs = devcd_dev_bin_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *devcd_dev_groups[] = {
-	&devcd_dev_group, NULL,
-};
+अटल स्थिर काष्ठा attribute_group *devcd_dev_groups[] = अणु
+	&devcd_dev_group, शून्य,
+पूर्ण;
 
-static int devcd_free(struct device *dev, void *data)
-{
-	struct devcd_entry *devcd = dev_to_devcd(dev);
+अटल पूर्णांक devcd_मुक्त(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा devcd_entry *devcd = dev_to_devcd(dev);
 
 	flush_delayed_work(&devcd->del_wk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t disabled_show(struct class *class, struct class_attribute *attr,
-			     char *buf)
-{
-	return sysfs_emit(buf, "%d\n", devcd_disabled);
-}
+अटल sमाप_प्रकार disabled_show(काष्ठा class *class, काष्ठा class_attribute *attr,
+			     अक्षर *buf)
+अणु
+	वापस sysfs_emit(buf, "%d\n", devcd_disabled);
+पूर्ण
 
-static ssize_t disabled_store(struct class *class, struct class_attribute *attr,
-			      const char *buf, size_t count)
-{
-	long tmp = simple_strtol(buf, NULL, 10);
+अटल sमाप_प्रकार disabled_store(काष्ठा class *class, काष्ठा class_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	दीर्घ पंचांगp = simple_म_से_दीर्घ(buf, शून्य, 10);
 
 	/*
-	 * This essentially makes the attribute write-once, since you can't
-	 * go back to not having it disabled. This is intentional, it serves
-	 * as a system lockdown feature.
+	 * This essentially makes the attribute ग_लिखो-once, since you can't
+	 * go back to not having it disabled. This is पूर्णांकentional, it serves
+	 * as a प्रणाली lockकरोwn feature.
 	 */
-	if (tmp != 1)
-		return -EINVAL;
+	अगर (पंचांगp != 1)
+		वापस -EINVAL;
 
 	devcd_disabled = true;
 
-	class_for_each_device(&devcd_class, NULL, NULL, devcd_free);
+	class_क्रम_each_device(&devcd_class, शून्य, शून्य, devcd_मुक्त);
 
-	return count;
-}
-static CLASS_ATTR_RW(disabled);
+	वापस count;
+पूर्ण
+अटल CLASS_ATTR_RW(disabled);
 
-static struct attribute *devcd_class_attrs[] = {
+अटल काष्ठा attribute *devcd_class_attrs[] = अणु
 	&class_attr_disabled.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(devcd_class);
 
-static struct class devcd_class = {
+अटल काष्ठा class devcd_class = अणु
 	.name		= "devcoredump",
 	.owner		= THIS_MODULE,
 	.dev_release	= devcd_dev_release,
 	.dev_groups	= devcd_dev_groups,
 	.class_groups	= devcd_class_groups,
-};
+पूर्ण;
 
-static ssize_t devcd_readv(char *buffer, loff_t offset, size_t count,
-			   void *data, size_t datalen)
-{
-	return memory_read_from_buffer(buffer, count, &offset, data, datalen);
-}
+अटल sमाप_प्रकार devcd_पढ़ोv(अक्षर *buffer, loff_t offset, माप_प्रकार count,
+			   व्योम *data, माप_प्रकार datalen)
+अणु
+	वापस memory_पढ़ो_from_buffer(buffer, count, &offset, data, datalen);
+पूर्ण
 
-static void devcd_freev(void *data)
-{
-	vfree(data);
-}
+अटल व्योम devcd_मुक्तv(व्योम *data)
+अणु
+	vमुक्त(data);
+पूर्ण
 
 /**
- * dev_coredumpv - create device coredump with vmalloc data
- * @dev: the struct device for the crashed device
- * @data: vmalloc data containing the device coredump
+ * dev_coredumpv - create device coredump with vदो_स्मृति data
+ * @dev: the काष्ठा device क्रम the crashed device
+ * @data: vदो_स्मृति data containing the device coredump
  * @datalen: length of the data
  * @gfp: allocation flags
  *
- * This function takes ownership of the vmalloc'ed data and will free
- * it when it is no longer used. See dev_coredumpm() for more information.
+ * This function takes ownership of the vदो_स्मृति'ed data and will मुक्त
+ * it when it is no दीर्घer used. See dev_coredumpm() क्रम more inक्रमmation.
  */
-void dev_coredumpv(struct device *dev, void *data, size_t datalen,
+व्योम dev_coredumpv(काष्ठा device *dev, व्योम *data, माप_प्रकार datalen,
 		   gfp_t gfp)
-{
-	dev_coredumpm(dev, NULL, data, datalen, gfp, devcd_readv, devcd_freev);
-}
+अणु
+	dev_coredumpm(dev, शून्य, data, datalen, gfp, devcd_पढ़ोv, devcd_मुक्तv);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_coredumpv);
 
-static int devcd_match_failing(struct device *dev, const void *failing)
-{
-	struct devcd_entry *devcd = dev_to_devcd(dev);
+अटल पूर्णांक devcd_match_failing(काष्ठा device *dev, स्थिर व्योम *failing)
+अणु
+	काष्ठा devcd_entry *devcd = dev_to_devcd(dev);
 
-	return devcd->failing_dev == failing;
-}
+	वापस devcd->failing_dev == failing;
+पूर्ण
 
 /**
- * devcd_free_sgtable - free all the memory of the given scatterlist table
+ * devcd_मुक्त_sgtable - मुक्त all the memory of the given scatterlist table
  * (i.e. both pages and scatterlist instances)
- * NOTE: if two tables allocated with devcd_alloc_sgtable and then chained
+ * NOTE: अगर two tables allocated with devcd_alloc_sgtable and then chained
  * using the sg_chain function then that function should be called only once
  * on the chained table
- * @data: pointer to sg_table to free
+ * @data: poपूर्णांकer to sg_table to मुक्त
  */
-static void devcd_free_sgtable(void *data)
-{
-	_devcd_free_sgtable(data);
-}
+अटल व्योम devcd_मुक्त_sgtable(व्योम *data)
+अणु
+	_devcd_मुक्त_sgtable(data);
+पूर्ण
 
 /**
- * devcd_read_from_sgtable - copy data from sg_table to a given buffer
- * and return the number of bytes read
+ * devcd_पढ़ो_from_sgtable - copy data from sg_table to a given buffer
+ * and वापस the number of bytes पढ़ो
  * @buffer: the buffer to copy the data to it
  * @buf_len: the length of the buffer
  * @data: the scatterlist table to copy from
@@ -219,85 +220,85 @@ static void devcd_free_sgtable(void *data)
  *	in the given scatterlist
  * @data_len: the length of the data in the sg_table
  */
-static ssize_t devcd_read_from_sgtable(char *buffer, loff_t offset,
-				       size_t buf_len, void *data,
-				       size_t data_len)
-{
-	struct scatterlist *table = data;
+अटल sमाप_प्रकार devcd_पढ़ो_from_sgtable(अक्षर *buffer, loff_t offset,
+				       माप_प्रकार buf_len, व्योम *data,
+				       माप_प्रकार data_len)
+अणु
+	काष्ठा scatterlist *table = data;
 
-	if (offset > data_len)
-		return -EINVAL;
+	अगर (offset > data_len)
+		वापस -EINVAL;
 
-	if (offset + buf_len > data_len)
+	अगर (offset + buf_len > data_len)
 		buf_len = data_len - offset;
-	return sg_pcopy_to_buffer(table, sg_nents(table), buffer, buf_len,
+	वापस sg_pcopy_to_buffer(table, sg_nents(table), buffer, buf_len,
 				  offset);
-}
+पूर्ण
 
 /**
- * dev_coredumpm - create device coredump with read/free methods
- * @dev: the struct device for the crashed device
- * @owner: the module that contains the read/free functions, use %THIS_MODULE
- * @data: data cookie for the @read/@free functions
+ * dev_coredumpm - create device coredump with पढ़ो/मुक्त methods
+ * @dev: the काष्ठा device क्रम the crashed device
+ * @owner: the module that contains the पढ़ो/मुक्त functions, use %THIS_MODULE
+ * @data: data cookie क्रम the @पढ़ो/@मुक्त functions
  * @datalen: length of the data
  * @gfp: allocation flags
- * @read: function to read from the given buffer
- * @free: function to free the given buffer
+ * @पढ़ो: function to पढ़ो from the given buffer
+ * @मुक्त: function to मुक्त the given buffer
  *
- * Creates a new device coredump for the given device. If a previous one hasn't
- * been read yet, the new coredump is discarded. The data lifetime is determined
- * by the device coredump framework and when it is no longer needed the @free
- * function will be called to free the data.
+ * Creates a new device coredump क्रम the given device. If a previous one hasn't
+ * been पढ़ो yet, the new coredump is discarded. The data lअगरeसमय is determined
+ * by the device coredump framework and when it is no दीर्घer needed the @मुक्त
+ * function will be called to मुक्त the data.
  */
-void dev_coredumpm(struct device *dev, struct module *owner,
-		   void *data, size_t datalen, gfp_t gfp,
-		   ssize_t (*read)(char *buffer, loff_t offset, size_t count,
-				   void *data, size_t datalen),
-		   void (*free)(void *data))
-{
-	static atomic_t devcd_count = ATOMIC_INIT(0);
-	struct devcd_entry *devcd;
-	struct device *existing;
+व्योम dev_coredumpm(काष्ठा device *dev, काष्ठा module *owner,
+		   व्योम *data, माप_प्रकार datalen, gfp_t gfp,
+		   sमाप_प्रकार (*पढ़ो)(अक्षर *buffer, loff_t offset, माप_प्रकार count,
+				   व्योम *data, माप_प्रकार datalen),
+		   व्योम (*मुक्त)(व्योम *data))
+अणु
+	अटल atomic_t devcd_count = ATOMIC_INIT(0);
+	काष्ठा devcd_entry *devcd;
+	काष्ठा device *existing;
 
-	if (devcd_disabled)
-		goto free;
+	अगर (devcd_disabled)
+		जाओ मुक्त;
 
-	existing = class_find_device(&devcd_class, NULL, dev,
+	existing = class_find_device(&devcd_class, शून्य, dev,
 				     devcd_match_failing);
-	if (existing) {
+	अगर (existing) अणु
 		put_device(existing);
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	if (!try_module_get(owner))
-		goto free;
+	अगर (!try_module_get(owner))
+		जाओ मुक्त;
 
-	devcd = kzalloc(sizeof(*devcd), gfp);
-	if (!devcd)
-		goto put_module;
+	devcd = kzalloc(माप(*devcd), gfp);
+	अगर (!devcd)
+		जाओ put_module;
 
 	devcd->owner = owner;
 	devcd->data = data;
 	devcd->datalen = datalen;
-	devcd->read = read;
-	devcd->free = free;
+	devcd->पढ़ो = पढ़ो;
+	devcd->मुक्त = मुक्त;
 	devcd->failing_dev = get_device(dev);
 
 	device_initialize(&devcd->devcd_dev);
 
 	dev_set_name(&devcd->devcd_dev, "devcd%d",
-		     atomic_inc_return(&devcd_count));
+		     atomic_inc_वापस(&devcd_count));
 	devcd->devcd_dev.class = &devcd_class;
 
-	if (device_add(&devcd->devcd_dev))
-		goto put_device;
+	अगर (device_add(&devcd->devcd_dev))
+		जाओ put_device;
 
 	/*
 	 * These should normally not fail, but there is no problem
 	 * continuing without the links, so just warn instead of
 	 * failing.
 	 */
-	if (sysfs_create_link(&devcd->devcd_dev.kobj, &dev->kobj,
+	अगर (sysfs_create_link(&devcd->devcd_dev.kobj, &dev->kobj,
 			      "failing_device") ||
 	    sysfs_create_link(&dev->kobj, &devcd->devcd_dev.kobj,
 		              "devcoredump"))
@@ -306,46 +307,46 @@ void dev_coredumpm(struct device *dev, struct module *owner,
 	INIT_DELAYED_WORK(&devcd->del_wk, devcd_del);
 	schedule_delayed_work(&devcd->del_wk, DEVCD_TIMEOUT);
 
-	return;
+	वापस;
  put_device:
 	put_device(&devcd->devcd_dev);
  put_module:
 	module_put(owner);
- free:
-	free(data);
-}
+ मुक्त:
+	मुक्त(data);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_coredumpm);
 
 /**
  * dev_coredumpsg - create device coredump that uses scatterlist as data
  * parameter
- * @dev: the struct device for the crashed device
+ * @dev: the काष्ठा device क्रम the crashed device
  * @table: the dump data
  * @datalen: length of the data
  * @gfp: allocation flags
  *
- * Creates a new device coredump for the given device. If a previous one hasn't
- * been read yet, the new coredump is discarded. The data lifetime is determined
- * by the device coredump framework and when it is no longer needed
- * it will free the data.
+ * Creates a new device coredump क्रम the given device. If a previous one hasn't
+ * been पढ़ो yet, the new coredump is discarded. The data lअगरeसमय is determined
+ * by the device coredump framework and when it is no दीर्घer needed
+ * it will मुक्त the data.
  */
-void dev_coredumpsg(struct device *dev, struct scatterlist *table,
-		    size_t datalen, gfp_t gfp)
-{
-	dev_coredumpm(dev, NULL, table, datalen, gfp, devcd_read_from_sgtable,
-		      devcd_free_sgtable);
-}
+व्योम dev_coredumpsg(काष्ठा device *dev, काष्ठा scatterlist *table,
+		    माप_प्रकार datalen, gfp_t gfp)
+अणु
+	dev_coredumpm(dev, शून्य, table, datalen, gfp, devcd_पढ़ो_from_sgtable,
+		      devcd_मुक्त_sgtable);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_coredumpsg);
 
-static int __init devcoredump_init(void)
-{
-	return class_register(&devcd_class);
-}
+अटल पूर्णांक __init devcoredump_init(व्योम)
+अणु
+	वापस class_रेजिस्टर(&devcd_class);
+पूर्ण
 __initcall(devcoredump_init);
 
-static void __exit devcoredump_exit(void)
-{
-	class_for_each_device(&devcd_class, NULL, NULL, devcd_free);
-	class_unregister(&devcd_class);
-}
-__exitcall(devcoredump_exit);
+अटल व्योम __निकास devcoredump_निकास(व्योम)
+अणु
+	class_क्रम_each_device(&devcd_class, शून्य, शून्य, devcd_मुक्त);
+	class_unरेजिस्टर(&devcd_class);
+पूर्ण
+__निकासcall(devcoredump_निकास);

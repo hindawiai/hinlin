@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_UM_IO_H
-#define _ASM_UM_IO_H
-#include <linux/types.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_UM_IO_H
+#घोषणा _ASM_UM_IO_H
+#समावेश <linux/types.h>
 
-#define ioremap ioremap
-static inline void __iomem *ioremap(phys_addr_t offset, size_t size)
-{
-	return NULL;
-}
+#घोषणा ioremap ioremap
+अटल अंतरभूत व्योम __iomem *ioremap(phys_addr_t offset, माप_प्रकार size)
+अणु
+	वापस शून्य;
+पूर्ण
 
-#define iounmap iounmap
-static inline void iounmap(void __iomem *addr)
-{
-}
+#घोषणा iounmap iounmap
+अटल अंतरभूत व्योम iounmap(व्योम __iomem *addr)
+अणु
+पूर्ण
 
-#include <asm-generic/io.h>
+#समावेश <यंत्र-generic/पन.स>
 
-#endif
+#पूर्ण_अगर

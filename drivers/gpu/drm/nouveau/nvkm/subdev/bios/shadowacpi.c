@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,121 +21,121 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-static int
-acpi_read_bios(acpi_handle rom_handle, u8 *bios, u32 offset, u32 length)
-{
-#if defined(CONFIG_ACPI) && defined(CONFIG_X86)
+अटल पूर्णांक
+acpi_पढ़ो_bios(acpi_handle rom_handle, u8 *bios, u32 offset, u32 length)
+अणु
+#अगर defined(CONFIG_ACPI) && defined(CONFIG_X86)
 	acpi_status status;
-	union acpi_object rom_arg_elements[2], *obj;
-	struct acpi_object_list rom_arg;
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL};
+	जोड़ acpi_object rom_arg_elements[2], *obj;
+	काष्ठा acpi_object_list rom_arg;
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
 
 	rom_arg.count = 2;
-	rom_arg.pointer = &rom_arg_elements[0];
+	rom_arg.poपूर्णांकer = &rom_arg_elements[0];
 
 	rom_arg_elements[0].type = ACPI_TYPE_INTEGER;
-	rom_arg_elements[0].integer.value = offset;
+	rom_arg_elements[0].पूर्णांकeger.value = offset;
 
 	rom_arg_elements[1].type = ACPI_TYPE_INTEGER;
-	rom_arg_elements[1].integer.value = length;
+	rom_arg_elements[1].पूर्णांकeger.value = length;
 
-	status = acpi_evaluate_object(rom_handle, NULL, &rom_arg, &buffer);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_object(rom_handle, शून्य, &rom_arg, &buffer);
+	अगर (ACPI_FAILURE(status)) अणु
 		pr_info("failed to evaluate ROM got %s\n",
-			acpi_format_exception(status));
-		return -ENODEV;
-	}
-	obj = (union acpi_object *)buffer.pointer;
+			acpi_क्रमmat_exception(status));
+		वापस -ENODEV;
+	पूर्ण
+	obj = (जोड़ acpi_object *)buffer.poपूर्णांकer;
 	length = min(length, obj->buffer.length);
-	memcpy(bios+offset, obj->buffer.pointer, length);
-	kfree(buffer.pointer);
-	return length;
-#else
-	return -EINVAL;
-#endif
-}
+	स_नकल(bios+offset, obj->buffer.poपूर्णांकer, length);
+	kमुक्त(buffer.poपूर्णांकer);
+	वापस length;
+#अन्यथा
+	वापस -EINVAL;
+#पूर्ण_अगर
+पूर्ण
 
-/* This version of the shadow function disobeys the ACPI spec and tries
- * to fetch in units of more than 4KiB at a time.  This is a LOT faster
- * on some systems, such as Lenovo W530.
+/* This version of the shaकरोw function disobeys the ACPI spec and tries
+ * to fetch in units of more than 4KiB at a समय.  This is a LOT faster
+ * on some प्रणालीs, such as Lenovo W530.
  */
-static u32
-acpi_read_fast(void *data, u32 offset, u32 length, struct nvkm_bios *bios)
-{
+अटल u32
+acpi_पढ़ो_fast(व्योम *data, u32 offset, u32 length, काष्ठा nvkm_bios *bios)
+अणु
 	u32 limit = (offset + length + 0xfff) & ~0xfff;
 	u32 start = offset & ~0x00000fff;
 	u32 fetch = limit - start;
 
-	if (nvbios_extend(bios, limit) >= 0) {
-		int ret = acpi_read_bios(data, bios->data, start, fetch);
-		if (ret == fetch)
-			return fetch;
-	}
+	अगर (nvbios_extend(bios, limit) >= 0) अणु
+		पूर्णांक ret = acpi_पढ़ो_bios(data, bios->data, start, fetch);
+		अगर (ret == fetch)
+			वापस fetch;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Other systems, such as the one in fdo#55948, will report a success
- * but only return 4KiB of data.  The common bios fetching logic will
- * detect an invalid image, and fall back to this version of the read
+/* Other प्रणालीs, such as the one in fकरो#55948, will report a success
+ * but only वापस 4KiB of data.  The common bios fetching logic will
+ * detect an invalid image, and fall back to this version of the पढ़ो
  * function.
  */
-static u32
-acpi_read_slow(void *data, u32 offset, u32 length, struct nvkm_bios *bios)
-{
+अटल u32
+acpi_पढ़ो_slow(व्योम *data, u32 offset, u32 length, काष्ठा nvkm_bios *bios)
+अणु
 	u32 limit = (offset + length + 0xfff) & ~0xfff;
 	u32 start = offset & ~0xfff;
 	u32 fetch = 0;
 
-	if (nvbios_extend(bios, limit) >= 0) {
-		while (start + fetch < limit) {
-			int ret = acpi_read_bios(data, bios->data,
+	अगर (nvbios_extend(bios, limit) >= 0) अणु
+		जबतक (start + fetch < limit) अणु
+			पूर्णांक ret = acpi_पढ़ो_bios(data, bios->data,
 						 start + fetch, 0x1000);
-			if (ret != 0x1000)
-				break;
+			अगर (ret != 0x1000)
+				अवरोध;
 			fetch += 0x1000;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return fetch;
-}
+	वापस fetch;
+पूर्ण
 
-static void *
-acpi_init(struct nvkm_bios *bios, const char *name)
-{
-#if defined(CONFIG_ACPI) && defined(CONFIG_X86)
+अटल व्योम *
+acpi_init(काष्ठा nvkm_bios *bios, स्थिर अक्षर *name)
+अणु
+#अगर defined(CONFIG_ACPI) && defined(CONFIG_X86)
 	acpi_status status;
 	acpi_handle dhandle, rom_handle;
 
 	dhandle = ACPI_HANDLE(bios->subdev.device->dev);
-	if (!dhandle)
-		return ERR_PTR(-ENODEV);
+	अगर (!dhandle)
+		वापस ERR_PTR(-ENODEV);
 
 	status = acpi_get_handle(dhandle, "_ROM", &rom_handle);
-	if (ACPI_FAILURE(status))
-		return ERR_PTR(-ENODEV);
+	अगर (ACPI_FAILURE(status))
+		वापस ERR_PTR(-ENODEV);
 
-	return rom_handle;
-#else
-	return ERR_PTR(-ENODEV);
-#endif
-}
+	वापस rom_handle;
+#अन्यथा
+	वापस ERR_PTR(-ENODEV);
+#पूर्ण_अगर
+पूर्ण
 
-const struct nvbios_source
-nvbios_acpi_fast = {
+स्थिर काष्ठा nvbios_source
+nvbios_acpi_fast = अणु
 	.name = "ACPI",
 	.init = acpi_init,
-	.read = acpi_read_fast,
+	.पढ़ो = acpi_पढ़ो_fast,
 	.rw = false,
 	.require_checksum = true,
-};
+पूर्ण;
 
-const struct nvbios_source
-nvbios_acpi_slow = {
+स्थिर काष्ठा nvbios_source
+nvbios_acpi_slow = अणु
 	.name = "ACPI",
 	.init = acpi_init,
-	.read = acpi_read_slow,
+	.पढ़ो = acpi_पढ़ो_slow,
 	.rw = false,
-};
+पूर्ण;

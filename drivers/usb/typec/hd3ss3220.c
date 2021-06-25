@@ -1,197 +1,198 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * TI HD3SS3220 Type-C DRP Port Controller Driver
  *
  * Copyright (C) 2019 Renesas Electronics Corp.
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/usb/role.h>
-#include <linux/irqreturn.h>
-#include <linux/interrupt.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/usb/typec.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/usb/role.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb/typec.h>
+#समावेश <linux/delay.h>
 
-#define HD3SS3220_REG_CN_STAT_CTRL	0x09
-#define HD3SS3220_REG_GEN_CTRL		0x0A
-#define HD3SS3220_REG_DEV_REV		0xA0
+#घोषणा HD3SS3220_REG_CN_STAT_CTRL	0x09
+#घोषणा HD3SS3220_REG_GEN_CTRL		0x0A
+#घोषणा HD3SS3220_REG_DEV_REV		0xA0
 
 /* Register HD3SS3220_REG_CN_STAT_CTRL*/
-#define HD3SS3220_REG_CN_STAT_CTRL_ATTACHED_STATE_MASK	(BIT(7) | BIT(6))
-#define HD3SS3220_REG_CN_STAT_CTRL_AS_DFP		BIT(6)
-#define HD3SS3220_REG_CN_STAT_CTRL_AS_UFP		BIT(7)
-#define HD3SS3220_REG_CN_STAT_CTRL_TO_ACCESSORY		(BIT(7) | BIT(6))
-#define HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS		BIT(4)
+#घोषणा HD3SS3220_REG_CN_STAT_CTRL_ATTACHED_STATE_MASK	(BIT(7) | BIT(6))
+#घोषणा HD3SS3220_REG_CN_STAT_CTRL_AS_DFP		BIT(6)
+#घोषणा HD3SS3220_REG_CN_STAT_CTRL_AS_UFP		BIT(7)
+#घोषणा HD3SS3220_REG_CN_STAT_CTRL_TO_ACCESSORY		(BIT(7) | BIT(6))
+#घोषणा HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS		BIT(4)
 
 /* Register HD3SS3220_REG_GEN_CTRL*/
-#define HD3SS3220_REG_GEN_CTRL_SRC_PREF_MASK		(BIT(2) | BIT(1))
-#define HD3SS3220_REG_GEN_CTRL_SRC_PREF_DRP_DEFAULT	0x00
-#define HD3SS3220_REG_GEN_CTRL_SRC_PREF_DRP_TRY_SNK	BIT(1)
-#define HD3SS3220_REG_GEN_CTRL_SRC_PREF_DRP_TRY_SRC	(BIT(2) | BIT(1))
+#घोषणा HD3SS3220_REG_GEN_CTRL_SRC_PREF_MASK		(BIT(2) | BIT(1))
+#घोषणा HD3SS3220_REG_GEN_CTRL_SRC_PREF_DRP_DEFAULT	0x00
+#घोषणा HD3SS3220_REG_GEN_CTRL_SRC_PREF_DRP_TRY_SNK	BIT(1)
+#घोषणा HD3SS3220_REG_GEN_CTRL_SRC_PREF_DRP_TRY_SRC	(BIT(2) | BIT(1))
 
-struct hd3ss3220 {
-	struct device *dev;
-	struct regmap *regmap;
-	struct usb_role_switch	*role_sw;
-	struct typec_port *port;
-};
+काष्ठा hd3ss3220 अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	काष्ठा usb_role_चयन	*role_sw;
+	काष्ठा typec_port *port;
+पूर्ण;
 
-static int hd3ss3220_set_source_pref(struct hd3ss3220 *hd3ss3220, int src_pref)
-{
-	return regmap_update_bits(hd3ss3220->regmap, HD3SS3220_REG_GEN_CTRL,
+अटल पूर्णांक hd3ss3220_set_source_pref(काष्ठा hd3ss3220 *hd3ss3220, पूर्णांक src_pref)
+अणु
+	वापस regmap_update_bits(hd3ss3220->regmap, HD3SS3220_REG_GEN_CTRL,
 				  HD3SS3220_REG_GEN_CTRL_SRC_PREF_MASK,
 				  src_pref);
-}
+पूर्ण
 
-static enum usb_role hd3ss3220_get_attached_state(struct hd3ss3220 *hd3ss3220)
-{
-	unsigned int reg_val;
-	enum usb_role attached_state;
-	int ret;
+अटल क्रमागत usb_role hd3ss3220_get_attached_state(काष्ठा hd3ss3220 *hd3ss3220)
+अणु
+	अचिन्हित पूर्णांक reg_val;
+	क्रमागत usb_role attached_state;
+	पूर्णांक ret;
 
-	ret = regmap_read(hd3ss3220->regmap, HD3SS3220_REG_CN_STAT_CTRL,
+	ret = regmap_पढ़ो(hd3ss3220->regmap, HD3SS3220_REG_CN_STAT_CTRL,
 			  &reg_val);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (reg_val & HD3SS3220_REG_CN_STAT_CTRL_ATTACHED_STATE_MASK) {
-	case HD3SS3220_REG_CN_STAT_CTRL_AS_DFP:
+	चयन (reg_val & HD3SS3220_REG_CN_STAT_CTRL_ATTACHED_STATE_MASK) अणु
+	हाल HD3SS3220_REG_CN_STAT_CTRL_AS_DFP:
 		attached_state = USB_ROLE_HOST;
-		break;
-	case HD3SS3220_REG_CN_STAT_CTRL_AS_UFP:
+		अवरोध;
+	हाल HD3SS3220_REG_CN_STAT_CTRL_AS_UFP:
 		attached_state = USB_ROLE_DEVICE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		attached_state = USB_ROLE_NONE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return attached_state;
-}
+	वापस attached_state;
+पूर्ण
 
-static int hd3ss3220_dr_set(struct typec_port *port, enum typec_data_role role)
-{
-	struct hd3ss3220 *hd3ss3220 = typec_get_drvdata(port);
-	enum usb_role role_val;
-	int pref, ret = 0;
+अटल पूर्णांक hd3ss3220_dr_set(काष्ठा typec_port *port, क्रमागत typec_data_role role)
+अणु
+	काष्ठा hd3ss3220 *hd3ss3220 = typec_get_drvdata(port);
+	क्रमागत usb_role role_val;
+	पूर्णांक pref, ret = 0;
 
-	if (role == TYPEC_HOST) {
+	अगर (role == TYPEC_HOST) अणु
 		role_val = USB_ROLE_HOST;
 		pref = HD3SS3220_REG_GEN_CTRL_SRC_PREF_DRP_TRY_SRC;
-	} else {
+	पूर्ण अन्यथा अणु
 		role_val = USB_ROLE_DEVICE;
 		pref = HD3SS3220_REG_GEN_CTRL_SRC_PREF_DRP_TRY_SNK;
-	}
+	पूर्ण
 
 	ret = hd3ss3220_set_source_pref(hd3ss3220, pref);
 	usleep_range(10, 100);
 
-	usb_role_switch_set_role(hd3ss3220->role_sw, role_val);
+	usb_role_चयन_set_role(hd3ss3220->role_sw, role_val);
 	typec_set_data_role(hd3ss3220->port, role);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct typec_operations hd3ss3220_ops = {
+अटल स्थिर काष्ठा typec_operations hd3ss3220_ops = अणु
 	.dr_set = hd3ss3220_dr_set
-};
+पूर्ण;
 
-static void hd3ss3220_set_role(struct hd3ss3220 *hd3ss3220)
-{
-	enum usb_role role_state = hd3ss3220_get_attached_state(hd3ss3220);
+अटल व्योम hd3ss3220_set_role(काष्ठा hd3ss3220 *hd3ss3220)
+अणु
+	क्रमागत usb_role role_state = hd3ss3220_get_attached_state(hd3ss3220);
 
-	usb_role_switch_set_role(hd3ss3220->role_sw, role_state);
-	if (role_state == USB_ROLE_NONE)
+	usb_role_चयन_set_role(hd3ss3220->role_sw, role_state);
+	अगर (role_state == USB_ROLE_NONE)
 		hd3ss3220_set_source_pref(hd3ss3220,
 				HD3SS3220_REG_GEN_CTRL_SRC_PREF_DRP_DEFAULT);
 
-	switch (role_state) {
-	case USB_ROLE_HOST:
+	चयन (role_state) अणु
+	हाल USB_ROLE_HOST:
 		typec_set_data_role(hd3ss3220->port, TYPEC_HOST);
-		break;
-	case USB_ROLE_DEVICE:
+		अवरोध;
+	हाल USB_ROLE_DEVICE:
 		typec_set_data_role(hd3ss3220->port, TYPEC_DEVICE);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static irqreturn_t hd3ss3220_irq(struct hd3ss3220 *hd3ss3220)
-{
-	int err;
+अटल irqवापस_t hd3ss3220_irq(काष्ठा hd3ss3220 *hd3ss3220)
+अणु
+	पूर्णांक err;
 
 	hd3ss3220_set_role(hd3ss3220);
 	err = regmap_update_bits_base(hd3ss3220->regmap,
 				      HD3SS3220_REG_CN_STAT_CTRL,
 				      HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS,
 				      HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS,
-				      NULL, false, true);
-	if (err < 0)
-		return IRQ_NONE;
+				      शून्य, false, true);
+	अगर (err < 0)
+		वापस IRQ_NONE;
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t hd3ss3220_irq_handler(int irq, void *data)
-{
-	struct i2c_client *client = to_i2c_client(data);
-	struct hd3ss3220 *hd3ss3220 = i2c_get_clientdata(client);
+अटल irqवापस_t hd3ss3220_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(data);
+	काष्ठा hd3ss3220 *hd3ss3220 = i2c_get_clientdata(client);
 
-	return hd3ss3220_irq(hd3ss3220);
-}
+	वापस hd3ss3220_irq(hd3ss3220);
+पूर्ण
 
-static const struct regmap_config config = {
+अटल स्थिर काष्ठा regmap_config config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = 0x0A,
-};
+	.max_रेजिस्टर = 0x0A,
+पूर्ण;
 
-static int hd3ss3220_probe(struct i2c_client *client,
-		const struct i2c_device_id *id)
-{
-	struct typec_capability typec_cap = { };
-	struct hd3ss3220 *hd3ss3220;
-	struct fwnode_handle *connector, *ep;
-	int ret;
-	unsigned int data;
+अटल पूर्णांक hd3ss3220_probe(काष्ठा i2c_client *client,
+		स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा typec_capability typec_cap = अणु पूर्ण;
+	काष्ठा hd3ss3220 *hd3ss3220;
+	काष्ठा fwnode_handle *connector, *ep;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक data;
 
-	hd3ss3220 = devm_kzalloc(&client->dev, sizeof(struct hd3ss3220),
+	hd3ss3220 = devm_kzalloc(&client->dev, माप(काष्ठा hd3ss3220),
 				 GFP_KERNEL);
-	if (!hd3ss3220)
-		return -ENOMEM;
+	अगर (!hd3ss3220)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, hd3ss3220);
 
 	hd3ss3220->dev = &client->dev;
 	hd3ss3220->regmap = devm_regmap_init_i2c(client, &config);
-	if (IS_ERR(hd3ss3220->regmap))
-		return PTR_ERR(hd3ss3220->regmap);
+	अगर (IS_ERR(hd3ss3220->regmap))
+		वापस PTR_ERR(hd3ss3220->regmap);
 
 	hd3ss3220_set_source_pref(hd3ss3220,
 				  HD3SS3220_REG_GEN_CTRL_SRC_PREF_DRP_DEFAULT);
 	/* For backward compatibility check the connector child node first */
 	connector = device_get_named_child_node(hd3ss3220->dev, "connector");
-	if (connector) {
-		hd3ss3220->role_sw = fwnode_usb_role_switch_get(connector);
-	} else {
-		ep = fwnode_graph_get_next_endpoint(dev_fwnode(hd3ss3220->dev), NULL);
-		if (!ep)
-			return -ENODEV;
+	अगर (connector) अणु
+		hd3ss3220->role_sw = fwnode_usb_role_चयन_get(connector);
+	पूर्ण अन्यथा अणु
+		ep = fwnode_graph_get_next_endpoपूर्णांक(dev_fwnode(hd3ss3220->dev), शून्य);
+		अगर (!ep)
+			वापस -ENODEV;
 		connector = fwnode_graph_get_remote_port_parent(ep);
 		fwnode_handle_put(ep);
-		if (!connector)
-			return -ENODEV;
-		hd3ss3220->role_sw = usb_role_switch_get(hd3ss3220->dev);
-	}
+		अगर (!connector)
+			वापस -ENODEV;
+		hd3ss3220->role_sw = usb_role_चयन_get(hd3ss3220->dev);
+	पूर्ण
 
-	if (IS_ERR(hd3ss3220->role_sw)) {
+	अगर (IS_ERR(hd3ss3220->role_sw)) अणु
 		ret = PTR_ERR(hd3ss3220->role_sw);
-		goto err_put_fwnode;
-	}
+		जाओ err_put_fwnode;
+	पूर्ण
 
 	typec_cap.prefer_role = TYPEC_NO_PREFERRED_ROLE;
 	typec_cap.driver_data = hd3ss3220;
@@ -200,77 +201,77 @@ static int hd3ss3220_probe(struct i2c_client *client,
 	typec_cap.ops = &hd3ss3220_ops;
 	typec_cap.fwnode = connector;
 
-	hd3ss3220->port = typec_register_port(&client->dev, &typec_cap);
-	if (IS_ERR(hd3ss3220->port)) {
+	hd3ss3220->port = typec_रेजिस्टर_port(&client->dev, &typec_cap);
+	अगर (IS_ERR(hd3ss3220->port)) अणु
 		ret = PTR_ERR(hd3ss3220->port);
-		goto err_put_role;
-	}
+		जाओ err_put_role;
+	पूर्ण
 
 	hd3ss3220_set_role(hd3ss3220);
-	ret = regmap_read(hd3ss3220->regmap, HD3SS3220_REG_CN_STAT_CTRL, &data);
-	if (ret < 0)
-		goto err_unreg_port;
+	ret = regmap_पढ़ो(hd3ss3220->regmap, HD3SS3220_REG_CN_STAT_CTRL, &data);
+	अगर (ret < 0)
+		जाओ err_unreg_port;
 
-	if (data & HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS) {
-		ret = regmap_write(hd3ss3220->regmap,
+	अगर (data & HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS) अणु
+		ret = regmap_ग_लिखो(hd3ss3220->regmap,
 				HD3SS3220_REG_CN_STAT_CTRL,
 				data | HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS);
-		if (ret < 0)
-			goto err_unreg_port;
-	}
+		अगर (ret < 0)
+			जाओ err_unreg_port;
+	पूर्ण
 
-	if (client->irq > 0) {
-		ret = devm_request_threaded_irq(&client->dev, client->irq, NULL,
+	अगर (client->irq > 0) अणु
+		ret = devm_request_thपढ़ोed_irq(&client->dev, client->irq, शून्य,
 					hd3ss3220_irq_handler,
 					IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					"hd3ss3220", &client->dev);
-		if (ret)
-			goto err_unreg_port;
-	}
+		अगर (ret)
+			जाओ err_unreg_port;
+	पूर्ण
 
-	ret = i2c_smbus_read_byte_data(client, HD3SS3220_REG_DEV_REV);
-	if (ret < 0)
-		goto err_unreg_port;
+	ret = i2c_smbus_पढ़ो_byte_data(client, HD3SS3220_REG_DEV_REV);
+	अगर (ret < 0)
+		जाओ err_unreg_port;
 
 	fwnode_handle_put(connector);
 
 	dev_info(&client->dev, "probed revision=0x%x\n", ret);
 
-	return 0;
+	वापस 0;
 err_unreg_port:
-	typec_unregister_port(hd3ss3220->port);
+	typec_unरेजिस्टर_port(hd3ss3220->port);
 err_put_role:
-	usb_role_switch_put(hd3ss3220->role_sw);
+	usb_role_चयन_put(hd3ss3220->role_sw);
 err_put_fwnode:
 	fwnode_handle_put(connector);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hd3ss3220_remove(struct i2c_client *client)
-{
-	struct hd3ss3220 *hd3ss3220 = i2c_get_clientdata(client);
+अटल पूर्णांक hd3ss3220_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा hd3ss3220 *hd3ss3220 = i2c_get_clientdata(client);
 
-	typec_unregister_port(hd3ss3220->port);
-	usb_role_switch_put(hd3ss3220->role_sw);
+	typec_unरेजिस्टर_port(hd3ss3220->port);
+	usb_role_चयन_put(hd3ss3220->role_sw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id dev_ids[] = {
-	{ .compatible = "ti,hd3ss3220"},
-	{}
-};
+अटल स्थिर काष्ठा of_device_id dev_ids[] = अणु
+	अणु .compatible = "ti,hd3ss3220"पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, dev_ids);
 
-static struct i2c_driver hd3ss3220_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver hd3ss3220_driver = अणु
+	.driver = अणु
 		.name = "hd3ss3220",
 		.of_match_table = of_match_ptr(dev_ids),
-	},
+	पूर्ण,
 	.probe = hd3ss3220_probe,
-	.remove =  hd3ss3220_remove,
-};
+	.हटाओ =  hd3ss3220_हटाओ,
+पूर्ण;
 
 module_i2c_driver(hd3ss3220_driver);
 

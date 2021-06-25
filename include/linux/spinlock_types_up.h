@@ -1,37 +1,38 @@
-#ifndef __LINUX_SPINLOCK_TYPES_UP_H
-#define __LINUX_SPINLOCK_TYPES_UP_H
+<शैली गुरु>
+#अगर_अघोषित __LINUX_SPINLOCK_TYPES_UP_H
+#घोषणा __LINUX_SPINLOCK_TYPES_UP_H
 
-#ifndef __LINUX_SPINLOCK_TYPES_H
+#अगर_अघोषित __LINUX_SPINLOCK_TYPES_H
 # error "please don't include this file directly"
-#endif
+#पूर्ण_अगर
 
 /*
- * include/linux/spinlock_types_up.h - spinlock type definitions for UP
+ * include/linux/spinlock_types_up.h - spinlock type definitions क्रम UP
  *
  * portions Copyright 2005, Red Hat, Inc., Ingo Molnar
  * Released under the General Public License (GPL).
  */
 
-#ifdef CONFIG_DEBUG_SPINLOCK
+#अगर_घोषित CONFIG_DEBUG_SPINLOCK
 
-typedef struct {
-	volatile unsigned int slock;
-} arch_spinlock_t;
+प्रकार काष्ठा अणु
+	अस्थिर अचिन्हित पूर्णांक slock;
+पूर्ण arch_spinlock_t;
 
-#define __ARCH_SPIN_LOCK_UNLOCKED { 1 }
+#घोषणा __ARCH_SPIN_LOCK_UNLOCKED अणु 1 पूर्ण
 
-#else
+#अन्यथा
 
-typedef struct { } arch_spinlock_t;
+प्रकार काष्ठा अणु पूर्ण arch_spinlock_t;
 
-#define __ARCH_SPIN_LOCK_UNLOCKED { }
+#घोषणा __ARCH_SPIN_LOCK_UNLOCKED अणु पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-typedef struct {
+प्रकार काष्ठा अणु
 	/* no debug version on UP */
-} arch_rwlock_t;
+पूर्ण arch_rwlock_t;
 
-#define __ARCH_RW_LOCK_UNLOCKED { }
+#घोषणा __ARCH_RW_LOCK_UNLOCKED अणु पूर्ण
 
-#endif /* __LINUX_SPINLOCK_TYPES_UP_H */
+#पूर्ण_अगर /* __LINUX_SPINLOCK_TYPES_UP_H */

@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * v4l2-dv-timings - dv-timings helper functions
  *
  * Copyright 2013 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/rational.h>
-#include <linux/videodev2.h>
-#include <linux/v4l2-dv-timings.h>
-#include <media/v4l2-dv-timings.h>
-#include <linux/math64.h>
-#include <linux/hdmi.h>
-#include <media/cec.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/rational.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/v4l2-dv-timings.h>
+#समावेश <media/v4l2-dv-timings.h>
+#समावेश <linux/math64.h>
+#समावेश <linux/hdmi.h>
+#समावेश <media/cec.h>
 
 MODULE_AUTHOR("Hans Verkuil");
 MODULE_DESCRIPTION("V4L2 DV Timings Helper Functions");
 MODULE_LICENSE("GPL");
 
-const struct v4l2_dv_timings v4l2_dv_timings_presets[] = {
+स्थिर काष्ठा v4l2_dv_timings v4l2_dv_timings_presets[] = अणु
 	V4L2_DV_BT_CEA_640X480P59_94,
 	V4L2_DV_BT_CEA_720X480I59_94,
 	V4L2_DV_BT_CEA_720X480P59_94,
@@ -133,127 +134,127 @@ const struct v4l2_dv_timings v4l2_dv_timings_presets[] = {
 	V4L2_DV_BT_CEA_4096X2160P50,
 	V4L2_DV_BT_DMT_4096X2160P59_94_RB,
 	V4L2_DV_BT_CEA_4096X2160P60,
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 EXPORT_SYMBOL_GPL(v4l2_dv_timings_presets);
 
-bool v4l2_valid_dv_timings(const struct v4l2_dv_timings *t,
-			   const struct v4l2_dv_timings_cap *dvcap,
+bool v4l2_valid_dv_timings(स्थिर काष्ठा v4l2_dv_timings *t,
+			   स्थिर काष्ठा v4l2_dv_timings_cap *dvcap,
 			   v4l2_check_dv_timings_fnc fnc,
-			   void *fnc_handle)
-{
-	const struct v4l2_bt_timings *bt = &t->bt;
-	const struct v4l2_bt_timings_cap *cap = &dvcap->bt;
+			   व्योम *fnc_handle)
+अणु
+	स्थिर काष्ठा v4l2_bt_timings *bt = &t->bt;
+	स्थिर काष्ठा v4l2_bt_timings_cap *cap = &dvcap->bt;
 	u32 caps = cap->capabilities;
 
-	if (t->type != V4L2_DV_BT_656_1120)
-		return false;
-	if (t->type != dvcap->type ||
+	अगर (t->type != V4L2_DV_BT_656_1120)
+		वापस false;
+	अगर (t->type != dvcap->type ||
 	    bt->height < cap->min_height ||
 	    bt->height > cap->max_height ||
 	    bt->width < cap->min_width ||
 	    bt->width > cap->max_width ||
-	    bt->pixelclock < cap->min_pixelclock ||
-	    bt->pixelclock > cap->max_pixelclock ||
+	    bt->pixelघड़ी < cap->min_pixelघड़ी ||
+	    bt->pixelघड़ी > cap->max_pixelघड़ी ||
 	    (!(caps & V4L2_DV_BT_CAP_CUSTOM) &&
 	     cap->standards && bt->standards &&
 	     !(bt->standards & cap->standards)) ||
-	    (bt->interlaced && !(caps & V4L2_DV_BT_CAP_INTERLACED)) ||
-	    (!bt->interlaced && !(caps & V4L2_DV_BT_CAP_PROGRESSIVE)))
-		return false;
-	return fnc == NULL || fnc(t, fnc_handle);
-}
+	    (bt->पूर्णांकerlaced && !(caps & V4L2_DV_BT_CAP_INTERLACED)) ||
+	    (!bt->पूर्णांकerlaced && !(caps & V4L2_DV_BT_CAP_PROGRESSIVE)))
+		वापस false;
+	वापस fnc == शून्य || fnc(t, fnc_handle);
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_valid_dv_timings);
 
-int v4l2_enum_dv_timings_cap(struct v4l2_enum_dv_timings *t,
-			     const struct v4l2_dv_timings_cap *cap,
+पूर्णांक v4l2_क्रमागत_dv_timings_cap(काष्ठा v4l2_क्रमागत_dv_timings *t,
+			     स्थिर काष्ठा v4l2_dv_timings_cap *cap,
 			     v4l2_check_dv_timings_fnc fnc,
-			     void *fnc_handle)
-{
+			     व्योम *fnc_handle)
+अणु
 	u32 i, idx;
 
-	memset(t->reserved, 0, sizeof(t->reserved));
-	for (i = idx = 0; v4l2_dv_timings_presets[i].bt.width; i++) {
-		if (v4l2_valid_dv_timings(v4l2_dv_timings_presets + i, cap,
+	स_रखो(t->reserved, 0, माप(t->reserved));
+	क्रम (i = idx = 0; v4l2_dv_timings_presets[i].bt.width; i++) अणु
+		अगर (v4l2_valid_dv_timings(v4l2_dv_timings_presets + i, cap,
 					  fnc, fnc_handle) &&
-		    idx++ == t->index) {
+		    idx++ == t->index) अणु
 			t->timings = v4l2_dv_timings_presets[i];
-			return 0;
-		}
-	}
-	return -EINVAL;
-}
-EXPORT_SYMBOL_GPL(v4l2_enum_dv_timings_cap);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_क्रमागत_dv_timings_cap);
 
-bool v4l2_find_dv_timings_cap(struct v4l2_dv_timings *t,
-			      const struct v4l2_dv_timings_cap *cap,
-			      unsigned pclock_delta,
+bool v4l2_find_dv_timings_cap(काष्ठा v4l2_dv_timings *t,
+			      स्थिर काष्ठा v4l2_dv_timings_cap *cap,
+			      अचिन्हित pघड़ी_delta,
 			      v4l2_check_dv_timings_fnc fnc,
-			      void *fnc_handle)
-{
-	int i;
+			      व्योम *fnc_handle)
+अणु
+	पूर्णांक i;
 
-	if (!v4l2_valid_dv_timings(t, cap, fnc, fnc_handle))
-		return false;
+	अगर (!v4l2_valid_dv_timings(t, cap, fnc, fnc_handle))
+		वापस false;
 
-	for (i = 0; i < v4l2_dv_timings_presets[i].bt.width; i++) {
-		if (v4l2_valid_dv_timings(v4l2_dv_timings_presets + i, cap,
+	क्रम (i = 0; i < v4l2_dv_timings_presets[i].bt.width; i++) अणु
+		अगर (v4l2_valid_dv_timings(v4l2_dv_timings_presets + i, cap,
 					  fnc, fnc_handle) &&
 		    v4l2_match_dv_timings(t, v4l2_dv_timings_presets + i,
-					  pclock_delta, false)) {
+					  pघड़ी_delta, false)) अणु
 			u32 flags = t->bt.flags & V4L2_DV_FL_REDUCED_FPS;
 
 			*t = v4l2_dv_timings_presets[i];
-			if (can_reduce_fps(&t->bt))
+			अगर (can_reduce_fps(&t->bt))
 				t->bt.flags |= flags;
 
-			return true;
-		}
-	}
-	return false;
-}
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_find_dv_timings_cap);
 
-bool v4l2_find_dv_timings_cea861_vic(struct v4l2_dv_timings *t, u8 vic)
-{
-	unsigned int i;
+bool v4l2_find_dv_timings_cea861_vic(काष्ठा v4l2_dv_timings *t, u8 vic)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < v4l2_dv_timings_presets[i].bt.width; i++) {
-		const struct v4l2_bt_timings *bt =
+	क्रम (i = 0; i < v4l2_dv_timings_presets[i].bt.width; i++) अणु
+		स्थिर काष्ठा v4l2_bt_timings *bt =
 			&v4l2_dv_timings_presets[i].bt;
 
-		if ((bt->flags & V4L2_DV_FL_HAS_CEA861_VIC) &&
-		    bt->cea861_vic == vic) {
+		अगर ((bt->flags & V4L2_DV_FL_HAS_CEA861_VIC) &&
+		    bt->cea861_vic == vic) अणु
 			*t = v4l2_dv_timings_presets[i];
-			return true;
-		}
-	}
-	return false;
-}
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_find_dv_timings_cea861_vic);
 
 /**
- * v4l2_match_dv_timings - check if two timings match
- * @t1: compare this v4l2_dv_timings struct...
- * @t2: with this struct.
- * @pclock_delta: the allowed pixelclock deviation.
- * @match_reduced_fps: if true, then fail if V4L2_DV_FL_REDUCED_FPS does not
+ * v4l2_match_dv_timings - check अगर two timings match
+ * @t1: compare this v4l2_dv_timings काष्ठा...
+ * @t2: with this काष्ठा.
+ * @pघड़ी_delta: the allowed pixelघड़ी deviation.
+ * @match_reduced_fps: अगर true, then fail अगर V4L2_DV_FL_REDUCED_FPS करोes not
  *	match.
  *
- * Compare t1 with t2 with a given margin of error for the pixelclock.
+ * Compare t1 with t2 with a given margin of error क्रम the pixelघड़ी.
  */
-bool v4l2_match_dv_timings(const struct v4l2_dv_timings *t1,
-			   const struct v4l2_dv_timings *t2,
-			   unsigned pclock_delta, bool match_reduced_fps)
-{
-	if (t1->type != t2->type || t1->type != V4L2_DV_BT_656_1120)
-		return false;
-	if (t1->bt.width == t2->bt.width &&
+bool v4l2_match_dv_timings(स्थिर काष्ठा v4l2_dv_timings *t1,
+			   स्थिर काष्ठा v4l2_dv_timings *t2,
+			   अचिन्हित pघड़ी_delta, bool match_reduced_fps)
+अणु
+	अगर (t1->type != t2->type || t1->type != V4L2_DV_BT_656_1120)
+		वापस false;
+	अगर (t1->bt.width == t2->bt.width &&
 	    t1->bt.height == t2->bt.height &&
-	    t1->bt.interlaced == t2->bt.interlaced &&
+	    t1->bt.पूर्णांकerlaced == t2->bt.पूर्णांकerlaced &&
 	    t1->bt.polarities == t2->bt.polarities &&
-	    t1->bt.pixelclock >= t2->bt.pixelclock - pclock_delta &&
-	    t1->bt.pixelclock <= t2->bt.pixelclock + pclock_delta &&
+	    t1->bt.pixelघड़ी >= t2->bt.pixelघड़ी - pघड़ी_delta &&
+	    t1->bt.pixelघड़ी <= t2->bt.pixelघड़ी + pघड़ी_delta &&
 	    t1->bt.hfrontporch == t2->bt.hfrontporch &&
 	    t1->bt.hsync == t2->bt.hsync &&
 	    t1->bt.hbackporch == t2->bt.hbackporch &&
@@ -263,42 +264,42 @@ bool v4l2_match_dv_timings(const struct v4l2_dv_timings *t1,
 	    (!match_reduced_fps ||
 	     (t1->bt.flags & V4L2_DV_FL_REDUCED_FPS) ==
 		(t2->bt.flags & V4L2_DV_FL_REDUCED_FPS)) &&
-	    (!t1->bt.interlaced ||
+	    (!t1->bt.पूर्णांकerlaced ||
 		(t1->bt.il_vfrontporch == t2->bt.il_vfrontporch &&
 		 t1->bt.il_vsync == t2->bt.il_vsync &&
 		 t1->bt.il_vbackporch == t2->bt.il_vbackporch)))
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_match_dv_timings);
 
-void v4l2_print_dv_timings(const char *dev_prefix, const char *prefix,
-			   const struct v4l2_dv_timings *t, bool detailed)
-{
-	const struct v4l2_bt_timings *bt = &t->bt;
+व्योम v4l2_prपूर्णांक_dv_timings(स्थिर अक्षर *dev_prefix, स्थिर अक्षर *prefix,
+			   स्थिर काष्ठा v4l2_dv_timings *t, bool detailed)
+अणु
+	स्थिर काष्ठा v4l2_bt_timings *bt = &t->bt;
 	u32 htot, vtot;
 	u32 fps;
 
-	if (t->type != V4L2_DV_BT_656_1120)
-		return;
+	अगर (t->type != V4L2_DV_BT_656_1120)
+		वापस;
 
 	htot = V4L2_DV_BT_FRAME_WIDTH(bt);
 	vtot = V4L2_DV_BT_FRAME_HEIGHT(bt);
-	if (bt->interlaced)
+	अगर (bt->पूर्णांकerlaced)
 		vtot /= 2;
 
-	fps = (htot * vtot) > 0 ? div_u64((100 * (u64)bt->pixelclock),
+	fps = (htot * vtot) > 0 ? भाग_u64((100 * (u64)bt->pixelघड़ी),
 				  (htot * vtot)) : 0;
 
-	if (prefix == NULL)
+	अगर (prefix == शून्य)
 		prefix = "";
 
 	pr_info("%s: %s%ux%u%s%u.%02u (%ux%u)\n", dev_prefix, prefix,
-		bt->width, bt->height, bt->interlaced ? "i" : "p",
+		bt->width, bt->height, bt->पूर्णांकerlaced ? "i" : "p",
 		fps / 100, fps % 100, htot, vtot);
 
-	if (!detailed)
-		return;
+	अगर (!detailed)
+		वापस;
 
 	pr_info("%s: horizontal: fp = %u, %ssync = %u, bp = %u\n",
 			dev_prefix, bt->hfrontporch,
@@ -308,12 +309,12 @@ void v4l2_print_dv_timings(const char *dev_prefix, const char *prefix,
 			dev_prefix, bt->vfrontporch,
 			(bt->polarities & V4L2_DV_VSYNC_POS_POL) ? "+" : "-",
 			bt->vsync, bt->vbackporch);
-	if (bt->interlaced)
+	अगर (bt->पूर्णांकerlaced)
 		pr_info("%s: vertical bottom field: fp = %u, %ssync = %u, bp = %u\n",
 			dev_prefix, bt->il_vfrontporch,
 			(bt->polarities & V4L2_DV_VSYNC_POS_POL) ? "+" : "-",
 			bt->il_vsync, bt->il_vbackporch);
-	pr_info("%s: pixelclock: %llu\n", dev_prefix, bt->pixelclock);
+	pr_info("%s: pixelclock: %llu\n", dev_prefix, bt->pixelघड़ी);
 	pr_info("%s: flags (0x%x):%s%s%s%s%s%s%s%s%s%s\n",
 			dev_prefix, bt->flags,
 			(bt->flags & V4L2_DV_FL_REDUCED_BLANKING) ?
@@ -342,26 +343,26 @@ void v4l2_print_dv_timings(const char *dev_prefix, const char *prefix,
 			(bt->standards & V4L2_DV_BT_STD_CVT) ?  " CVT" : "",
 			(bt->standards & V4L2_DV_BT_STD_GTF) ?  " GTF" : "",
 			(bt->standards & V4L2_DV_BT_STD_SDI) ?  " SDI" : "");
-	if (bt->flags & V4L2_DV_FL_HAS_PICTURE_ASPECT)
+	अगर (bt->flags & V4L2_DV_FL_HAS_PICTURE_ASPECT)
 		pr_info("%s: picture aspect (hor:vert): %u:%u\n", dev_prefix,
 			bt->picture_aspect.numerator,
 			bt->picture_aspect.denominator);
-	if (bt->flags & V4L2_DV_FL_HAS_CEA861_VIC)
+	अगर (bt->flags & V4L2_DV_FL_HAS_CEA861_VIC)
 		pr_info("%s: CEA-861 VIC: %u\n", dev_prefix, bt->cea861_vic);
-	if (bt->flags & V4L2_DV_FL_HAS_HDMI_VIC)
+	अगर (bt->flags & V4L2_DV_FL_HAS_HDMI_VIC)
 		pr_info("%s: HDMI VIC: %u\n", dev_prefix, bt->hdmi_vic);
-}
-EXPORT_SYMBOL_GPL(v4l2_print_dv_timings);
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_prपूर्णांक_dv_timings);
 
-struct v4l2_fract v4l2_dv_timings_aspect_ratio(const struct v4l2_dv_timings *t)
-{
-	struct v4l2_fract ratio = { 1, 1 };
-	unsigned long n, d;
+काष्ठा v4l2_fract v4l2_dv_timings_aspect_ratio(स्थिर काष्ठा v4l2_dv_timings *t)
+अणु
+	काष्ठा v4l2_fract ratio = अणु 1, 1 पूर्ण;
+	अचिन्हित दीर्घ n, d;
 
-	if (t->type != V4L2_DV_BT_656_1120)
-		return ratio;
-	if (!(t->bt.flags & V4L2_DV_FL_HAS_PICTURE_ASPECT))
-		return ratio;
+	अगर (t->type != V4L2_DV_BT_656_1120)
+		वापस ratio;
+	अगर (!(t->bt.flags & V4L2_DV_FL_HAS_PICTURE_ASPECT))
+		वापस ratio;
 
 	ratio.numerator = t->bt.width * t->bt.picture_aspect.denominator;
 	ratio.denominator = t->bt.height * t->bt.picture_aspect.numerator;
@@ -370,48 +371,48 @@ struct v4l2_fract v4l2_dv_timings_aspect_ratio(const struct v4l2_dv_timings *t)
 				    ratio.numerator, ratio.denominator, &n, &d);
 	ratio.numerator = n;
 	ratio.denominator = d;
-	return ratio;
-}
+	वापस ratio;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_dv_timings_aspect_ratio);
 
-/** v4l2_calc_timeperframe - helper function to calculate timeperframe based
+/** v4l2_calc_समयperframe - helper function to calculate समयperframe based
  *	v4l2_dv_timings fields.
- * @t - Timings for the video mode.
+ * @t - Timings क्रम the video mode.
  *
- * Calculates the expected timeperframe using the pixel clock value and
- * horizontal/vertical measures. This means that v4l2_dv_timings structure
+ * Calculates the expected समयperframe using the pixel घड़ी value and
+ * horizontal/vertical measures. This means that v4l2_dv_timings काष्ठाure
  * must be correctly and fully filled.
  */
-struct v4l2_fract v4l2_calc_timeperframe(const struct v4l2_dv_timings *t)
-{
-	const struct v4l2_bt_timings *bt = &t->bt;
-	struct v4l2_fract fps_fract = { 1, 1 };
-	unsigned long n, d;
+काष्ठा v4l2_fract v4l2_calc_समयperframe(स्थिर काष्ठा v4l2_dv_timings *t)
+अणु
+	स्थिर काष्ठा v4l2_bt_timings *bt = &t->bt;
+	काष्ठा v4l2_fract fps_fract = अणु 1, 1 पूर्ण;
+	अचिन्हित दीर्घ n, d;
 	u32 htot, vtot, fps;
 	u64 pclk;
 
-	if (t->type != V4L2_DV_BT_656_1120)
-		return fps_fract;
+	अगर (t->type != V4L2_DV_BT_656_1120)
+		वापस fps_fract;
 
 	htot = V4L2_DV_BT_FRAME_WIDTH(bt);
 	vtot = V4L2_DV_BT_FRAME_HEIGHT(bt);
-	pclk = bt->pixelclock;
+	pclk = bt->pixelघड़ी;
 
-	if ((bt->flags & V4L2_DV_FL_CAN_DETECT_REDUCED_FPS) &&
+	अगर ((bt->flags & V4L2_DV_FL_CAN_DETECT_REDUCED_FPS) &&
 	    (bt->flags & V4L2_DV_FL_REDUCED_FPS))
-		pclk = div_u64(pclk * 1000ULL, 1001);
+		pclk = भाग_u64(pclk * 1000ULL, 1001);
 
-	fps = (htot * vtot) > 0 ? div_u64((100 * pclk), (htot * vtot)) : 0;
-	if (!fps)
-		return fps_fract;
+	fps = (htot * vtot) > 0 ? भाग_u64((100 * pclk), (htot * vtot)) : 0;
+	अगर (!fps)
+		वापस fps_fract;
 
 	rational_best_approximation(fps, 100, fps, 100, &n, &d);
 
 	fps_fract.numerator = d;
 	fps_fract.denominator = n;
-	return fps_fract;
-}
-EXPORT_SYMBOL_GPL(v4l2_calc_timeperframe);
+	वापस fps_fract;
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_calc_समयperframe);
 
 /*
  * CVT defines
@@ -419,155 +420,155 @@ EXPORT_SYMBOL_GPL(v4l2_calc_timeperframe);
  * version 1.1 September 10, 2003
  */
 
-#define CVT_PXL_CLK_GRAN	250000	/* pixel clock granularity */
-#define CVT_PXL_CLK_GRAN_RB_V2 1000	/* granularity for reduced blanking v2*/
+#घोषणा CVT_PXL_CLK_GRAN	250000	/* pixel घड़ी granularity */
+#घोषणा CVT_PXL_CLK_GRAN_RB_V2 1000	/* granularity क्रम reduced blanking v2*/
 
 /* Normal blanking */
-#define CVT_MIN_V_BPORCH	7	/* lines */
-#define CVT_MIN_V_PORCH_RND	3	/* lines */
-#define CVT_MIN_VSYNC_BP	550	/* min time of vsync + back porch (us) */
-#define CVT_HSYNC_PERCENT       8       /* nominal hsync as percentage of line */
+#घोषणा CVT_MIN_V_BPORCH	7	/* lines */
+#घोषणा CVT_MIN_V_PORCH_RND	3	/* lines */
+#घोषणा CVT_MIN_VSYNC_BP	550	/* min समय of vsync + back porch (us) */
+#घोषणा CVT_HSYNC_PERCENT       8       /* nominal hsync as percentage of line */
 
-/* Normal blanking for CVT uses GTF to calculate horizontal blanking */
-#define CVT_CELL_GRAN		8	/* character cell granularity */
-#define CVT_M			600	/* blanking formula gradient */
-#define CVT_C			40	/* blanking formula offset */
-#define CVT_K			128	/* blanking formula scaling factor */
-#define CVT_J			20	/* blanking formula scaling factor */
-#define CVT_C_PRIME (((CVT_C - CVT_J) * CVT_K / 256) + CVT_J)
-#define CVT_M_PRIME (CVT_K * CVT_M / 256)
+/* Normal blanking क्रम CVT uses GTF to calculate horizontal blanking */
+#घोषणा CVT_CELL_GRAN		8	/* अक्षरacter cell granularity */
+#घोषणा CVT_M			600	/* blanking क्रमmula gradient */
+#घोषणा CVT_C			40	/* blanking क्रमmula offset */
+#घोषणा CVT_K			128	/* blanking क्रमmula scaling factor */
+#घोषणा CVT_J			20	/* blanking क्रमmula scaling factor */
+#घोषणा CVT_C_PRIME (((CVT_C - CVT_J) * CVT_K / 256) + CVT_J)
+#घोषणा CVT_M_PRIME (CVT_K * CVT_M / 256)
 
 /* Reduced Blanking */
-#define CVT_RB_MIN_V_BPORCH    7       /* lines  */
-#define CVT_RB_V_FPORCH        3       /* lines  */
-#define CVT_RB_MIN_V_BLANK   460       /* us     */
-#define CVT_RB_H_SYNC         32       /* pixels */
-#define CVT_RB_H_BLANK       160       /* pixels */
+#घोषणा CVT_RB_MIN_V_BPORCH    7       /* lines  */
+#घोषणा CVT_RB_V_FPORCH        3       /* lines  */
+#घोषणा CVT_RB_MIN_V_BLANK   460       /* us     */
+#घोषणा CVT_RB_H_SYNC         32       /* pixels */
+#घोषणा CVT_RB_H_BLANK       160       /* pixels */
 /* Reduce blanking Version 2 */
-#define CVT_RB_V2_H_BLANK     80       /* pixels */
-#define CVT_RB_MIN_V_FPORCH    3       /* lines  */
-#define CVT_RB_V2_MIN_V_FPORCH 1       /* lines  */
-#define CVT_RB_V_BPORCH        6       /* lines  */
+#घोषणा CVT_RB_V2_H_BLANK     80       /* pixels */
+#घोषणा CVT_RB_MIN_V_FPORCH    3       /* lines  */
+#घोषणा CVT_RB_V2_MIN_V_FPORCH 1       /* lines  */
+#घोषणा CVT_RB_V_BPORCH        6       /* lines  */
 
-/** v4l2_detect_cvt - detect if the given timings follow the CVT standard
+/** v4l2_detect_cvt - detect अगर the given timings follow the CVT standard
  * @frame_height - the total height of the frame (including blanking) in lines.
  * @hfreq - the horizontal frequency in Hz.
  * @vsync - the height of the vertical sync in lines.
- * @active_width - active width of image (does not include blanking). This
- * information is needed only in case of version 2 of reduced blanking.
- * In other cases, this parameter does not have any effect on timings.
- * @polarities - the horizontal and vertical polarities (same as struct
+ * @active_width - active width of image (करोes not include blanking). This
+ * inक्रमmation is needed only in हाल of version 2 of reduced blanking.
+ * In other हालs, this parameter करोes not have any effect on timings.
+ * @polarities - the horizontal and vertical polarities (same as काष्ठा
  *		v4l2_bt_timings polarities).
- * @interlaced - if this flag is true, it indicates interlaced format
+ * @पूर्णांकerlaced - अगर this flag is true, it indicates पूर्णांकerlaced क्रमmat
  * @fmt - the resulting timings.
  *
- * This function will attempt to detect if the given values correspond to a
- * valid CVT format. If so, then it will return true, and fmt will be filled
+ * This function will attempt to detect अगर the given values correspond to a
+ * valid CVT क्रमmat. If so, then it will वापस true, and fmt will be filled
  * in with the found CVT timings.
  */
-bool v4l2_detect_cvt(unsigned frame_height,
-		     unsigned hfreq,
-		     unsigned vsync,
-		     unsigned active_width,
+bool v4l2_detect_cvt(अचिन्हित frame_height,
+		     अचिन्हित hfreq,
+		     अचिन्हित vsync,
+		     अचिन्हित active_width,
 		     u32 polarities,
-		     bool interlaced,
-		     struct v4l2_dv_timings *fmt)
-{
-	int  v_fp, v_bp, h_fp, h_bp, hsync;
-	int  frame_width, image_height, image_width;
+		     bool पूर्णांकerlaced,
+		     काष्ठा v4l2_dv_timings *fmt)
+अणु
+	पूर्णांक  v_fp, v_bp, h_fp, h_bp, hsync;
+	पूर्णांक  frame_width, image_height, image_width;
 	bool reduced_blanking;
 	bool rb_v2 = false;
-	unsigned pix_clk;
+	अचिन्हित pix_clk;
 
-	if (vsync < 4 || vsync > 8)
-		return false;
+	अगर (vsync < 4 || vsync > 8)
+		वापस false;
 
-	if (polarities == V4L2_DV_VSYNC_POS_POL)
+	अगर (polarities == V4L2_DV_VSYNC_POS_POL)
 		reduced_blanking = false;
-	else if (polarities == V4L2_DV_HSYNC_POS_POL)
+	अन्यथा अगर (polarities == V4L2_DV_HSYNC_POS_POL)
 		reduced_blanking = true;
-	else
-		return false;
+	अन्यथा
+		वापस false;
 
-	if (reduced_blanking && vsync == 8)
+	अगर (reduced_blanking && vsync == 8)
 		rb_v2 = true;
 
-	if (rb_v2 && active_width == 0)
-		return false;
+	अगर (rb_v2 && active_width == 0)
+		वापस false;
 
-	if (!rb_v2 && vsync > 7)
-		return false;
+	अगर (!rb_v2 && vsync > 7)
+		वापस false;
 
-	if (hfreq == 0)
-		return false;
+	अगर (hfreq == 0)
+		वापस false;
 
 	/* Vertical */
-	if (reduced_blanking) {
-		if (rb_v2) {
+	अगर (reduced_blanking) अणु
+		अगर (rb_v2) अणु
 			v_bp = CVT_RB_V_BPORCH;
 			v_fp = (CVT_RB_MIN_V_BLANK * hfreq) / 1000000 + 1;
 			v_fp -= vsync + v_bp;
 
-			if (v_fp < CVT_RB_V2_MIN_V_FPORCH)
+			अगर (v_fp < CVT_RB_V2_MIN_V_FPORCH)
 				v_fp = CVT_RB_V2_MIN_V_FPORCH;
-		} else {
+		पूर्ण अन्यथा अणु
 			v_fp = CVT_RB_V_FPORCH;
 			v_bp = (CVT_RB_MIN_V_BLANK * hfreq) / 1000000 + 1;
 			v_bp -= vsync + v_fp;
 
-			if (v_bp < CVT_RB_MIN_V_BPORCH)
+			अगर (v_bp < CVT_RB_MIN_V_BPORCH)
 				v_bp = CVT_RB_MIN_V_BPORCH;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		v_fp = CVT_MIN_V_PORCH_RND;
 		v_bp = (CVT_MIN_VSYNC_BP * hfreq) / 1000000 + 1 - vsync;
 
-		if (v_bp < CVT_MIN_V_BPORCH)
+		अगर (v_bp < CVT_MIN_V_BPORCH)
 			v_bp = CVT_MIN_V_BPORCH;
-	}
+	पूर्ण
 
-	if (interlaced)
+	अगर (पूर्णांकerlaced)
 		image_height = (frame_height - 2 * v_fp - 2 * vsync - 2 * v_bp) & ~0x1;
-	else
+	अन्यथा
 		image_height = (frame_height - v_fp - vsync - v_bp + 1) & ~0x1;
 
-	if (image_height < 0)
-		return false;
+	अगर (image_height < 0)
+		वापस false;
 
 	/* Aspect ratio based on vsync */
-	switch (vsync) {
-	case 4:
+	चयन (vsync) अणु
+	हाल 4:
 		image_width = (image_height * 4) / 3;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		image_width = (image_height * 16) / 9;
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		image_width = (image_height * 16) / 10;
-		break;
-	case 7:
-		/* special case */
-		if (image_height == 1024)
+		अवरोध;
+	हाल 7:
+		/* special हाल */
+		अगर (image_height == 1024)
 			image_width = (image_height * 5) / 4;
-		else if (image_height == 768)
+		अन्यथा अगर (image_height == 768)
 			image_width = (image_height * 15) / 9;
-		else
-			return false;
-		break;
-	case 8:
+		अन्यथा
+			वापस false;
+		अवरोध;
+	हाल 8:
 		image_width = active_width;
-		break;
-	default:
-		return false;
-	}
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	if (!rb_v2)
+	अगर (!rb_v2)
 		image_width = image_width & ~7;
 
 	/* Horizontal */
-	if (reduced_blanking) {
-		int h_blank;
-		int clk_gran;
+	अगर (reduced_blanking) अणु
+		पूर्णांक h_blank;
+		पूर्णांक clk_gran;
 
 		h_blank = rb_v2 ? CVT_RB_V2_H_BLANK : CVT_RB_H_BLANK;
 		clk_gran = rb_v2 ? CVT_PXL_CLK_GRAN_RB_V2 : CVT_PXL_CLK_GRAN;
@@ -580,12 +581,12 @@ bool v4l2_detect_cvt(unsigned frame_height,
 		h_fp  = h_blank - h_bp - hsync;
 
 		frame_width = image_width + h_blank;
-	} else {
-		unsigned ideal_duty_cycle_per_myriad =
+	पूर्ण अन्यथा अणु
+		अचिन्हित ideal_duty_cycle_per_myriad =
 			100 * CVT_C_PRIME - (CVT_M_PRIME * 100000) / hfreq;
-		int h_blank;
+		पूर्णांक h_blank;
 
-		if (ideal_duty_cycle_per_myriad < 2000)
+		अगर (ideal_duty_cycle_per_myriad < 2000)
 			ideal_duty_cycle_per_myriad = 2000;
 
 		h_blank = image_width * ideal_duty_cycle_per_myriad /
@@ -601,7 +602,7 @@ bool v4l2_detect_cvt(unsigned frame_height,
 		hsync = frame_width * CVT_HSYNC_PERCENT / 100;
 		hsync = (hsync / CVT_CELL_GRAN) * CVT_CELL_GRAN;
 		h_fp = h_blank - hsync - h_bp;
-	}
+	पूर्ण
 
 	fmt->type = V4L2_DV_BT_656_1120;
 	fmt->bt.polarities = polarities;
@@ -613,10 +614,10 @@ bool v4l2_detect_cvt(unsigned frame_height,
 	fmt->bt.vsync = vsync;
 	fmt->bt.hbackporch = frame_width - image_width - h_fp - hsync;
 
-	if (!interlaced) {
+	अगर (!पूर्णांकerlaced) अणु
 		fmt->bt.vbackporch = frame_height - image_height - v_fp - vsync;
-		fmt->bt.interlaced = V4L2_DV_PROGRESSIVE;
-	} else {
+		fmt->bt.पूर्णांकerlaced = V4L2_DV_PROGRESSIVE;
+	पूर्ण अन्यथा अणु
 		fmt->bt.vbackporch = (frame_height - image_height - 2 * v_fp -
 				      2 * vsync) / 2;
 		fmt->bt.il_vbackporch = frame_height - image_height - 2 * v_fp -
@@ -624,17 +625,17 @@ bool v4l2_detect_cvt(unsigned frame_height,
 		fmt->bt.il_vfrontporch = v_fp;
 		fmt->bt.il_vsync = vsync;
 		fmt->bt.flags |= V4L2_DV_FL_HALF_LINE;
-		fmt->bt.interlaced = V4L2_DV_INTERLACED;
-	}
+		fmt->bt.पूर्णांकerlaced = V4L2_DV_INTERLACED;
+	पूर्ण
 
-	fmt->bt.pixelclock = pix_clk;
+	fmt->bt.pixelघड़ी = pix_clk;
 	fmt->bt.standards = V4L2_DV_BT_STD_CVT;
 
-	if (reduced_blanking)
+	अगर (reduced_blanking)
 		fmt->bt.flags |= V4L2_DV_FL_REDUCED_BLANKING;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_detect_cvt);
 
 /*
@@ -643,93 +644,93 @@ EXPORT_SYMBOL_GPL(v4l2_detect_cvt);
  * Version 1.1 September 2, 1999
  */
 
-#define GTF_PXL_CLK_GRAN	250000	/* pixel clock granularity */
+#घोषणा GTF_PXL_CLK_GRAN	250000	/* pixel घड़ी granularity */
 
-#define GTF_MIN_VSYNC_BP	550	/* min time of vsync + back porch (us) */
-#define GTF_V_FP		1	/* vertical front porch (lines) */
-#define GTF_CELL_GRAN		8	/* character cell granularity */
+#घोषणा GTF_MIN_VSYNC_BP	550	/* min समय of vsync + back porch (us) */
+#घोषणा GTF_V_FP		1	/* vertical front porch (lines) */
+#घोषणा GTF_CELL_GRAN		8	/* अक्षरacter cell granularity */
 
 /* Default */
-#define GTF_D_M			600	/* blanking formula gradient */
-#define GTF_D_C			40	/* blanking formula offset */
-#define GTF_D_K			128	/* blanking formula scaling factor */
-#define GTF_D_J			20	/* blanking formula scaling factor */
-#define GTF_D_C_PRIME ((((GTF_D_C - GTF_D_J) * GTF_D_K) / 256) + GTF_D_J)
-#define GTF_D_M_PRIME ((GTF_D_K * GTF_D_M) / 256)
+#घोषणा GTF_D_M			600	/* blanking क्रमmula gradient */
+#घोषणा GTF_D_C			40	/* blanking क्रमmula offset */
+#घोषणा GTF_D_K			128	/* blanking क्रमmula scaling factor */
+#घोषणा GTF_D_J			20	/* blanking क्रमmula scaling factor */
+#घोषणा GTF_D_C_PRIME ((((GTF_D_C - GTF_D_J) * GTF_D_K) / 256) + GTF_D_J)
+#घोषणा GTF_D_M_PRIME ((GTF_D_K * GTF_D_M) / 256)
 
 /* Secondary */
-#define GTF_S_M			3600	/* blanking formula gradient */
-#define GTF_S_C			40	/* blanking formula offset */
-#define GTF_S_K			128	/* blanking formula scaling factor */
-#define GTF_S_J			35	/* blanking formula scaling factor */
-#define GTF_S_C_PRIME ((((GTF_S_C - GTF_S_J) * GTF_S_K) / 256) + GTF_S_J)
-#define GTF_S_M_PRIME ((GTF_S_K * GTF_S_M) / 256)
+#घोषणा GTF_S_M			3600	/* blanking क्रमmula gradient */
+#घोषणा GTF_S_C			40	/* blanking क्रमmula offset */
+#घोषणा GTF_S_K			128	/* blanking क्रमmula scaling factor */
+#घोषणा GTF_S_J			35	/* blanking क्रमmula scaling factor */
+#घोषणा GTF_S_C_PRIME ((((GTF_S_C - GTF_S_J) * GTF_S_K) / 256) + GTF_S_J)
+#घोषणा GTF_S_M_PRIME ((GTF_S_K * GTF_S_M) / 256)
 
-/** v4l2_detect_gtf - detect if the given timings follow the GTF standard
+/** v4l2_detect_gtf - detect अगर the given timings follow the GTF standard
  * @frame_height - the total height of the frame (including blanking) in lines.
  * @hfreq - the horizontal frequency in Hz.
  * @vsync - the height of the vertical sync in lines.
- * @polarities - the horizontal and vertical polarities (same as struct
+ * @polarities - the horizontal and vertical polarities (same as काष्ठा
  *		v4l2_bt_timings polarities).
- * @interlaced - if this flag is true, it indicates interlaced format
+ * @पूर्णांकerlaced - अगर this flag is true, it indicates पूर्णांकerlaced क्रमmat
  * @aspect - preferred aspect ratio. GTF has no method of determining the
  *		aspect ratio in order to derive the image width from the
  *		image height, so it has to be passed explicitly. Usually
- *		the native screen aspect ratio is used for this. If it
+ *		the native screen aspect ratio is used क्रम this. If it
  *		is not filled in correctly, then 16:9 will be assumed.
  * @fmt - the resulting timings.
  *
- * This function will attempt to detect if the given values correspond to a
- * valid GTF format. If so, then it will return true, and fmt will be filled
+ * This function will attempt to detect अगर the given values correspond to a
+ * valid GTF क्रमmat. If so, then it will वापस true, and fmt will be filled
  * in with the found GTF timings.
  */
-bool v4l2_detect_gtf(unsigned frame_height,
-		unsigned hfreq,
-		unsigned vsync,
+bool v4l2_detect_gtf(अचिन्हित frame_height,
+		अचिन्हित hfreq,
+		अचिन्हित vsync,
 		u32 polarities,
-		bool interlaced,
-		struct v4l2_fract aspect,
-		struct v4l2_dv_timings *fmt)
-{
-	int pix_clk;
-	int  v_fp, v_bp, h_fp, hsync;
-	int frame_width, image_height, image_width;
-	bool default_gtf;
-	int h_blank;
+		bool पूर्णांकerlaced,
+		काष्ठा v4l2_fract aspect,
+		काष्ठा v4l2_dv_timings *fmt)
+अणु
+	पूर्णांक pix_clk;
+	पूर्णांक  v_fp, v_bp, h_fp, hsync;
+	पूर्णांक frame_width, image_height, image_width;
+	bool शेष_gtf;
+	पूर्णांक h_blank;
 
-	if (vsync != 3)
-		return false;
+	अगर (vsync != 3)
+		वापस false;
 
-	if (polarities == V4L2_DV_VSYNC_POS_POL)
-		default_gtf = true;
-	else if (polarities == V4L2_DV_HSYNC_POS_POL)
-		default_gtf = false;
-	else
-		return false;
+	अगर (polarities == V4L2_DV_VSYNC_POS_POL)
+		शेष_gtf = true;
+	अन्यथा अगर (polarities == V4L2_DV_HSYNC_POS_POL)
+		शेष_gtf = false;
+	अन्यथा
+		वापस false;
 
-	if (hfreq == 0)
-		return false;
+	अगर (hfreq == 0)
+		वापस false;
 
 	/* Vertical */
 	v_fp = GTF_V_FP;
 	v_bp = (GTF_MIN_VSYNC_BP * hfreq + 500000) / 1000000 - vsync;
-	if (interlaced)
+	अगर (पूर्णांकerlaced)
 		image_height = (frame_height - 2 * v_fp - 2 * vsync - 2 * v_bp) & ~0x1;
-	else
+	अन्यथा
 		image_height = (frame_height - v_fp - vsync - v_bp + 1) & ~0x1;
 
-	if (image_height < 0)
-		return false;
+	अगर (image_height < 0)
+		वापस false;
 
-	if (aspect.numerator == 0 || aspect.denominator == 0) {
+	अगर (aspect.numerator == 0 || aspect.denominator == 0) अणु
 		aspect.numerator = 16;
 		aspect.denominator = 9;
-	}
+	पूर्ण
 	image_width = ((image_height * aspect.numerator) / aspect.denominator);
 	image_width = (image_width + GTF_CELL_GRAN/2) & ~(GTF_CELL_GRAN - 1);
 
 	/* Horizontal */
-	if (default_gtf) {
+	अगर (शेष_gtf) अणु
 		u64 num;
 		u32 den;
 
@@ -737,9 +738,9 @@ bool v4l2_detect_gtf(unsigned frame_height,
 		      ((u64)image_width * GTF_D_M_PRIME * 1000));
 		den = (hfreq * (100 - GTF_D_C_PRIME) + GTF_D_M_PRIME * 1000) *
 		      (2 * GTF_CELL_GRAN);
-		h_blank = div_u64((num + (den >> 1)), den);
+		h_blank = भाग_u64((num + (den >> 1)), den);
 		h_blank *= (2 * GTF_CELL_GRAN);
-	} else {
+	पूर्ण अन्यथा अणु
 		u64 num;
 		u32 den;
 
@@ -747,9 +748,9 @@ bool v4l2_detect_gtf(unsigned frame_height,
 		      ((u64)image_width * GTF_S_M_PRIME * 1000));
 		den = (hfreq * (100 - GTF_S_C_PRIME) + GTF_S_M_PRIME * 1000) *
 		      (2 * GTF_CELL_GRAN);
-		h_blank = div_u64((num + (den >> 1)), den);
+		h_blank = भाग_u64((num + (den >> 1)), den);
 		h_blank *= (2 * GTF_CELL_GRAN);
-	}
+	पूर्ण
 
 	frame_width = image_width + h_blank;
 
@@ -771,10 +772,10 @@ bool v4l2_detect_gtf(unsigned frame_height,
 	fmt->bt.vsync = vsync;
 	fmt->bt.hbackporch = frame_width - image_width - h_fp - hsync;
 
-	if (!interlaced) {
+	अगर (!पूर्णांकerlaced) अणु
 		fmt->bt.vbackporch = frame_height - image_height - v_fp - vsync;
-		fmt->bt.interlaced = V4L2_DV_PROGRESSIVE;
-	} else {
+		fmt->bt.पूर्णांकerlaced = V4L2_DV_PROGRESSIVE;
+	पूर्ण अन्यथा अणु
 		fmt->bt.vbackporch = (frame_height - image_height - 2 * v_fp -
 				      2 * vsync) / 2;
 		fmt->bt.il_vbackporch = frame_height - image_height - 2 * v_fp -
@@ -782,17 +783,17 @@ bool v4l2_detect_gtf(unsigned frame_height,
 		fmt->bt.il_vfrontporch = v_fp;
 		fmt->bt.il_vsync = vsync;
 		fmt->bt.flags |= V4L2_DV_FL_HALF_LINE;
-		fmt->bt.interlaced = V4L2_DV_INTERLACED;
-	}
+		fmt->bt.पूर्णांकerlaced = V4L2_DV_INTERLACED;
+	पूर्ण
 
-	fmt->bt.pixelclock = pix_clk;
+	fmt->bt.pixelघड़ी = pix_clk;
 	fmt->bt.standards = V4L2_DV_BT_STD_GTF;
 
-	if (!default_gtf)
+	अगर (!शेष_gtf)
 		fmt->bt.flags |= V4L2_DV_FL_REDUCED_BLANKING;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_detect_gtf);
 
 /** v4l2_calc_aspect_ratio - calculate the aspect ratio based on bytes
@@ -804,242 +805,242 @@ EXPORT_SYMBOL_GPL(v4l2_detect_gtf);
  * See VESA Enhanced EDID standard, release A, rev 2, section 3.6.2:
  * "Horizontal and Vertical Screen Size or Aspect Ratio"
  */
-struct v4l2_fract v4l2_calc_aspect_ratio(u8 hor_landscape, u8 vert_portrait)
-{
-	struct v4l2_fract aspect = { 16, 9 };
+काष्ठा v4l2_fract v4l2_calc_aspect_ratio(u8 hor_landscape, u8 vert_portrait)
+अणु
+	काष्ठा v4l2_fract aspect = अणु 16, 9 पूर्ण;
 	u8 ratio;
 
 	/* Nothing filled in, fallback to 16:9 */
-	if (!hor_landscape && !vert_portrait)
-		return aspect;
-	/* Both filled in, so they are interpreted as the screen size in cm */
-	if (hor_landscape && vert_portrait) {
+	अगर (!hor_landscape && !vert_portrait)
+		वापस aspect;
+	/* Both filled in, so they are पूर्णांकerpreted as the screen size in cm */
+	अगर (hor_landscape && vert_portrait) अणु
 		aspect.numerator = hor_landscape;
 		aspect.denominator = vert_portrait;
-		return aspect;
-	}
-	/* Only one is filled in, so interpret them as a ratio:
+		वापस aspect;
+	पूर्ण
+	/* Only one is filled in, so पूर्णांकerpret them as a ratio:
 	   (val + 99) / 100 */
 	ratio = hor_landscape | vert_portrait;
-	/* Change some rounded values into the exact aspect ratio */
-	if (ratio == 79) {
+	/* Change some rounded values पूर्णांकo the exact aspect ratio */
+	अगर (ratio == 79) अणु
 		aspect.numerator = 16;
 		aspect.denominator = 9;
-	} else if (ratio == 34) {
+	पूर्ण अन्यथा अगर (ratio == 34) अणु
 		aspect.numerator = 4;
 		aspect.denominator = 3;
-	} else if (ratio == 68) {
+	पूर्ण अन्यथा अगर (ratio == 68) अणु
 		aspect.numerator = 15;
 		aspect.denominator = 9;
-	} else {
+	पूर्ण अन्यथा अणु
 		aspect.numerator = hor_landscape + 99;
 		aspect.denominator = 100;
-	}
-	if (hor_landscape)
-		return aspect;
-	/* The aspect ratio is for portrait, so swap numerator and denominator */
+	पूर्ण
+	अगर (hor_landscape)
+		वापस aspect;
+	/* The aspect ratio is क्रम portrait, so swap numerator and denominator */
 	swap(aspect.denominator, aspect.numerator);
-	return aspect;
-}
+	वापस aspect;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_calc_aspect_ratio);
 
-/** v4l2_hdmi_rx_colorimetry - determine HDMI colorimetry information
+/** v4l2_hdmi_rx_colorimetry - determine HDMI colorimetry inक्रमmation
  *	based on various InfoFrames.
  * @avi: the AVI InfoFrame
- * @hdmi: the HDMI Vendor InfoFrame, may be NULL
+ * @hdmi: the HDMI Venकरोr InfoFrame, may be शून्य
  * @height: the frame height
  *
- * Determines the HDMI colorimetry information, i.e. how the HDMI
- * pixel color data should be interpreted.
+ * Determines the HDMI colorimetry inक्रमmation, i.e. how the HDMI
+ * pixel color data should be पूर्णांकerpreted.
  *
  * Note that some of the newer features (DCI-P3, HDR) are not yet
  * implemented: the hdmi.h header needs to be updated to the HDMI 2.0
  * and CTA-861-G standards.
  */
-struct v4l2_hdmi_colorimetry
-v4l2_hdmi_rx_colorimetry(const struct hdmi_avi_infoframe *avi,
-			 const struct hdmi_vendor_infoframe *hdmi,
-			 unsigned int height)
-{
-	struct v4l2_hdmi_colorimetry c = {
+काष्ठा v4l2_hdmi_colorimetry
+v4l2_hdmi_rx_colorimetry(स्थिर काष्ठा hdmi_avi_infoframe *avi,
+			 स्थिर काष्ठा hdmi_venकरोr_infoframe *hdmi,
+			 अचिन्हित पूर्णांक height)
+अणु
+	काष्ठा v4l2_hdmi_colorimetry c = अणु
 		V4L2_COLORSPACE_SRGB,
 		V4L2_YCBCR_ENC_DEFAULT,
 		V4L2_QUANTIZATION_FULL_RANGE,
 		V4L2_XFER_FUNC_SRGB
-	};
+	पूर्ण;
 	bool is_ce = avi->video_code || (hdmi && hdmi->vic);
 	bool is_sdtv = height <= 576;
-	bool default_is_lim_range_rgb = avi->video_code > 1;
+	bool शेष_is_lim_range_rgb = avi->video_code > 1;
 
-	switch (avi->colorspace) {
-	case HDMI_COLORSPACE_RGB:
+	चयन (avi->colorspace) अणु
+	हाल HDMI_COLORSPACE_RGB:
 		/* RGB pixel encoding */
-		switch (avi->colorimetry) {
-		case HDMI_COLORIMETRY_EXTENDED:
-			switch (avi->extended_colorimetry) {
-			case HDMI_EXTENDED_COLORIMETRY_OPRGB:
+		चयन (avi->colorimetry) अणु
+		हाल HDMI_COLORIMETRY_EXTENDED:
+			चयन (avi->extended_colorimetry) अणु
+			हाल HDMI_EXTENDED_COLORIMETRY_OPRGB:
 				c.colorspace = V4L2_COLORSPACE_OPRGB;
 				c.xfer_func = V4L2_XFER_FUNC_OPRGB;
-				break;
-			case HDMI_EXTENDED_COLORIMETRY_BT2020:
+				अवरोध;
+			हाल HDMI_EXTENDED_COLORIMETRY_BT2020:
 				c.colorspace = V4L2_COLORSPACE_BT2020;
 				c.xfer_func = V4L2_XFER_FUNC_709;
-				break;
-			default:
-				break;
-			}
-			break;
-		default:
-			break;
-		}
-		switch (avi->quantization_range) {
-		case HDMI_QUANTIZATION_RANGE_LIMITED:
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		चयन (avi->quantization_range) अणु
+		हाल HDMI_QUANTIZATION_RANGE_LIMITED:
 			c.quantization = V4L2_QUANTIZATION_LIM_RANGE;
-			break;
-		case HDMI_QUANTIZATION_RANGE_FULL:
-			break;
-		default:
-			if (default_is_lim_range_rgb)
+			अवरोध;
+		हाल HDMI_QUANTIZATION_RANGE_FULL:
+			अवरोध;
+		शेष:
+			अगर (शेष_is_lim_range_rgb)
 				c.quantization = V4L2_QUANTIZATION_LIM_RANGE;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		/* YCbCr pixel encoding */
 		c.quantization = V4L2_QUANTIZATION_LIM_RANGE;
-		switch (avi->colorimetry) {
-		case HDMI_COLORIMETRY_NONE:
-			if (!is_ce)
-				break;
-			if (is_sdtv) {
+		चयन (avi->colorimetry) अणु
+		हाल HDMI_COLORIMETRY_NONE:
+			अगर (!is_ce)
+				अवरोध;
+			अगर (is_sdtv) अणु
 				c.colorspace = V4L2_COLORSPACE_SMPTE170M;
 				c.ycbcr_enc = V4L2_YCBCR_ENC_601;
-			} else {
+			पूर्ण अन्यथा अणु
 				c.colorspace = V4L2_COLORSPACE_REC709;
 				c.ycbcr_enc = V4L2_YCBCR_ENC_709;
-			}
+			पूर्ण
 			c.xfer_func = V4L2_XFER_FUNC_709;
-			break;
-		case HDMI_COLORIMETRY_ITU_601:
+			अवरोध;
+		हाल HDMI_COLORIMETRY_ITU_601:
 			c.colorspace = V4L2_COLORSPACE_SMPTE170M;
 			c.ycbcr_enc = V4L2_YCBCR_ENC_601;
 			c.xfer_func = V4L2_XFER_FUNC_709;
-			break;
-		case HDMI_COLORIMETRY_ITU_709:
+			अवरोध;
+		हाल HDMI_COLORIMETRY_ITU_709:
 			c.colorspace = V4L2_COLORSPACE_REC709;
 			c.ycbcr_enc = V4L2_YCBCR_ENC_709;
 			c.xfer_func = V4L2_XFER_FUNC_709;
-			break;
-		case HDMI_COLORIMETRY_EXTENDED:
-			switch (avi->extended_colorimetry) {
-			case HDMI_EXTENDED_COLORIMETRY_XV_YCC_601:
+			अवरोध;
+		हाल HDMI_COLORIMETRY_EXTENDED:
+			चयन (avi->extended_colorimetry) अणु
+			हाल HDMI_EXTENDED_COLORIMETRY_XV_YCC_601:
 				c.colorspace = V4L2_COLORSPACE_REC709;
 				c.ycbcr_enc = V4L2_YCBCR_ENC_XV709;
 				c.xfer_func = V4L2_XFER_FUNC_709;
-				break;
-			case HDMI_EXTENDED_COLORIMETRY_XV_YCC_709:
+				अवरोध;
+			हाल HDMI_EXTENDED_COLORIMETRY_XV_YCC_709:
 				c.colorspace = V4L2_COLORSPACE_REC709;
 				c.ycbcr_enc = V4L2_YCBCR_ENC_XV601;
 				c.xfer_func = V4L2_XFER_FUNC_709;
-				break;
-			case HDMI_EXTENDED_COLORIMETRY_S_YCC_601:
+				अवरोध;
+			हाल HDMI_EXTENDED_COLORIMETRY_S_YCC_601:
 				c.colorspace = V4L2_COLORSPACE_SRGB;
 				c.ycbcr_enc = V4L2_YCBCR_ENC_601;
 				c.xfer_func = V4L2_XFER_FUNC_SRGB;
-				break;
-			case HDMI_EXTENDED_COLORIMETRY_OPYCC_601:
+				अवरोध;
+			हाल HDMI_EXTENDED_COLORIMETRY_OPYCC_601:
 				c.colorspace = V4L2_COLORSPACE_OPRGB;
 				c.ycbcr_enc = V4L2_YCBCR_ENC_601;
 				c.xfer_func = V4L2_XFER_FUNC_OPRGB;
-				break;
-			case HDMI_EXTENDED_COLORIMETRY_BT2020:
+				अवरोध;
+			हाल HDMI_EXTENDED_COLORIMETRY_BT2020:
 				c.colorspace = V4L2_COLORSPACE_BT2020;
 				c.ycbcr_enc = V4L2_YCBCR_ENC_BT2020;
 				c.xfer_func = V4L2_XFER_FUNC_709;
-				break;
-			case HDMI_EXTENDED_COLORIMETRY_BT2020_CONST_LUM:
+				अवरोध;
+			हाल HDMI_EXTENDED_COLORIMETRY_BT2020_CONST_LUM:
 				c.colorspace = V4L2_COLORSPACE_BT2020;
 				c.ycbcr_enc = V4L2_YCBCR_ENC_BT2020_CONST_LUM;
 				c.xfer_func = V4L2_XFER_FUNC_709;
-				break;
-			default: /* fall back to ITU_709 */
+				अवरोध;
+			शेष: /* fall back to ITU_709 */
 				c.colorspace = V4L2_COLORSPACE_REC709;
 				c.ycbcr_enc = V4L2_YCBCR_ENC_709;
 				c.xfer_func = V4L2_XFER_FUNC_709;
-				break;
-			}
-			break;
-		default:
-			break;
-		}
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		/*
-		 * YCC Quantization Range signaling is more-or-less broken,
+		 * YCC Quantization Range संकेतing is more-or-less broken,
 		 * let's just ignore this.
 		 */
-		break;
-	}
-	return c;
-}
+		अवरोध;
+	पूर्ण
+	वापस c;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_hdmi_rx_colorimetry);
 
 /**
- * v4l2_get_edid_phys_addr() - find and return the physical address
+ * v4l2_get_edid_phys_addr() - find and वापस the physical address
  *
- * @edid:	pointer to the EDID data
+ * @edid:	poपूर्णांकer to the EDID data
  * @size:	size in bytes of the EDID data
- * @offset:	If not %NULL then the location of the physical address
- *		bytes in the EDID will be returned here. This is set to 0
- *		if there is no physical address found.
+ * @offset:	If not %शून्य then the location of the physical address
+ *		bytes in the EDID will be वापसed here. This is set to 0
+ *		अगर there is no physical address found.
  *
- * Return: the physical address or CEC_PHYS_ADDR_INVALID if there is none.
+ * Return: the physical address or CEC_PHYS_ADDR_INVALID अगर there is none.
  */
-u16 v4l2_get_edid_phys_addr(const u8 *edid, unsigned int size,
-			    unsigned int *offset)
-{
-	unsigned int loc = cec_get_edid_spa_location(edid, size);
+u16 v4l2_get_edid_phys_addr(स्थिर u8 *edid, अचिन्हित पूर्णांक size,
+			    अचिन्हित पूर्णांक *offset)
+अणु
+	अचिन्हित पूर्णांक loc = cec_get_edid_spa_location(edid, size);
 
-	if (offset)
+	अगर (offset)
 		*offset = loc;
-	if (loc == 0)
-		return CEC_PHYS_ADDR_INVALID;
-	return (edid[loc] << 8) | edid[loc + 1];
-}
+	अगर (loc == 0)
+		वापस CEC_PHYS_ADDR_INVALID;
+	वापस (edid[loc] << 8) | edid[loc + 1];
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_get_edid_phys_addr);
 
 /**
  * v4l2_set_edid_phys_addr() - find and set the physical address
  *
- * @edid:	pointer to the EDID data
+ * @edid:	poपूर्णांकer to the EDID data
  * @size:	size in bytes of the EDID data
  * @phys_addr:	the new physical address
  *
  * This function finds the location of the physical address in the EDID
  * and fills in the given physical address and updates the checksum
- * at the end of the EDID block. It does nothing if the EDID doesn't
+ * at the end of the EDID block. It करोes nothing अगर the EDID करोesn't
  * contain a physical address.
  */
-void v4l2_set_edid_phys_addr(u8 *edid, unsigned int size, u16 phys_addr)
-{
-	unsigned int loc = cec_get_edid_spa_location(edid, size);
+व्योम v4l2_set_edid_phys_addr(u8 *edid, अचिन्हित पूर्णांक size, u16 phys_addr)
+अणु
+	अचिन्हित पूर्णांक loc = cec_get_edid_spa_location(edid, size);
 	u8 sum = 0;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	if (loc == 0)
-		return;
+	अगर (loc == 0)
+		वापस;
 	edid[loc] = phys_addr >> 8;
 	edid[loc + 1] = phys_addr & 0xff;
 	loc &= ~0x7f;
 
 	/* update the checksum */
-	for (i = loc; i < loc + 127; i++)
+	क्रम (i = loc; i < loc + 127; i++)
 		sum += edid[i];
 	edid[i] = 256 - sum;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_set_edid_phys_addr);
 
 /**
- * v4l2_phys_addr_for_input() - calculate the PA for an input
+ * v4l2_phys_addr_क्रम_input() - calculate the PA क्रम an input
  *
  * @phys_addr:	the physical address of the parent
  * @input:	the number of the input port, must be between 1 and 15
@@ -1057,44 +1058,44 @@ EXPORT_SYMBOL_GPL(v4l2_set_edid_phys_addr);
  *
  * Return: the new physical address or CEC_PHYS_ADDR_INVALID.
  */
-u16 v4l2_phys_addr_for_input(u16 phys_addr, u8 input)
-{
-	/* Check if input is sane */
-	if (WARN_ON(input == 0 || input > 0xf))
-		return CEC_PHYS_ADDR_INVALID;
+u16 v4l2_phys_addr_क्रम_input(u16 phys_addr, u8 input)
+अणु
+	/* Check अगर input is sane */
+	अगर (WARN_ON(input == 0 || input > 0xf))
+		वापस CEC_PHYS_ADDR_INVALID;
 
-	if (phys_addr == 0)
-		return input << 12;
+	अगर (phys_addr == 0)
+		वापस input << 12;
 
-	if ((phys_addr & 0x0fff) == 0)
-		return phys_addr | (input << 8);
+	अगर ((phys_addr & 0x0fff) == 0)
+		वापस phys_addr | (input << 8);
 
-	if ((phys_addr & 0x00ff) == 0)
-		return phys_addr | (input << 4);
+	अगर ((phys_addr & 0x00ff) == 0)
+		वापस phys_addr | (input << 4);
 
-	if ((phys_addr & 0x000f) == 0)
-		return phys_addr | input;
+	अगर ((phys_addr & 0x000f) == 0)
+		वापस phys_addr | input;
 
 	/*
-	 * All nibbles are used so no valid physical addresses can be assigned
+	 * All nibbles are used so no valid physical addresses can be asचिन्हित
 	 * to the input.
 	 */
-	return CEC_PHYS_ADDR_INVALID;
-}
-EXPORT_SYMBOL_GPL(v4l2_phys_addr_for_input);
+	वापस CEC_PHYS_ADDR_INVALID;
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_phys_addr_क्रम_input);
 
 /**
  * v4l2_phys_addr_validate() - validate a physical address from an EDID
  *
  * @phys_addr:	the physical address to validate
- * @parent:	if not %NULL, then this is filled with the parents PA.
- * @port:	if not %NULL, then this is filled with the input port.
+ * @parent:	अगर not %शून्य, then this is filled with the parents PA.
+ * @port:	अगर not %शून्य, then this is filled with the input port.
  *
- * This validates a physical address as read from an EDID. If the
+ * This validates a physical address as पढ़ो from an EDID. If the
  * PA is invalid (such as 1.0.1.0 since '0' is only allowed at the end),
- * then it will return -EINVAL.
+ * then it will वापस -EINVAL.
  *
- * The parent PA is passed into %parent and the input port is passed into
+ * The parent PA is passed पूर्णांकo %parent and the input port is passed पूर्णांकo
  * %port. For example:
  *
  * PA = 0.0.0.0: has parent 0.0.0.0 and input port 0.
@@ -1105,30 +1106,30 @@ EXPORT_SYMBOL_GPL(v4l2_phys_addr_for_input);
  *
  * PA = f.f.f.f: has parent f.f.f.f and input port 0.
  *
- * Return: 0 if the PA is valid, -EINVAL if not.
+ * Return: 0 अगर the PA is valid, -EINVAL अगर not.
  */
-int v4l2_phys_addr_validate(u16 phys_addr, u16 *parent, u16 *port)
-{
-	int i;
+पूर्णांक v4l2_phys_addr_validate(u16 phys_addr, u16 *parent, u16 *port)
+अणु
+	पूर्णांक i;
 
-	if (parent)
+	अगर (parent)
 		*parent = phys_addr;
-	if (port)
+	अगर (port)
 		*port = 0;
-	if (phys_addr == CEC_PHYS_ADDR_INVALID)
-		return 0;
-	for (i = 0; i < 16; i += 4)
-		if (phys_addr & (0xf << i))
-			break;
-	if (i == 16)
-		return 0;
-	if (parent)
+	अगर (phys_addr == CEC_PHYS_ADDR_INVALID)
+		वापस 0;
+	क्रम (i = 0; i < 16; i += 4)
+		अगर (phys_addr & (0xf << i))
+			अवरोध;
+	अगर (i == 16)
+		वापस 0;
+	अगर (parent)
 		*parent = phys_addr & (0xfff0 << i);
-	if (port)
+	अगर (port)
 		*port = (phys_addr >> i) & 0xf;
-	for (i += 4; i < 16; i += 4)
-		if ((phys_addr & (0xf << i)) == 0)
-			return -EINVAL;
-	return 0;
-}
+	क्रम (i += 4; i < 16; i += 4)
+		अगर ((phys_addr & (0xf << i)) == 0)
+			वापस -EINVAL;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_phys_addr_validate);

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * CXL Flash Device Driver
  *
@@ -8,213 +9,213 @@
  * Copyright (C) 2015 IBM Corporation
  */
 
-#ifndef _CXLFLASH_COMMON_H
-#define _CXLFLASH_COMMON_H
+#अगर_अघोषित _CXLFLASH_COMMON_H
+#घोषणा _CXLFLASH_COMMON_H
 
-#include <linux/async.h>
-#include <linux/cdev.h>
-#include <linux/irq_poll.h>
-#include <linux/list.h>
-#include <linux/rwsem.h>
-#include <linux/types.h>
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
+#समावेश <linux/async.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/irq_poll.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/types.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
 
-#include "backend.h"
+#समावेश "backend.h"
 
-extern const struct file_operations cxlflash_cxl_fops;
+बाह्य स्थिर काष्ठा file_operations cxlflash_cxl_fops;
 
-#define MAX_CONTEXT	CXLFLASH_MAX_CONTEXT	/* num contexts per afu */
-#define MAX_FC_PORTS	CXLFLASH_MAX_FC_PORTS	/* max ports per AFU */
-#define LEGACY_FC_PORTS	2			/* legacy ports per AFU */
+#घोषणा MAX_CONTEXT	CXLFLASH_MAX_CONTEXT	/* num contexts per afu */
+#घोषणा MAX_FC_PORTS	CXLFLASH_MAX_FC_PORTS	/* max ports per AFU */
+#घोषणा LEGACY_FC_PORTS	2			/* legacy ports per AFU */
 
-#define CHAN2PORTBANK(_x)	((_x) >> ilog2(CXLFLASH_NUM_FC_PORTS_PER_BANK))
-#define CHAN2BANKPORT(_x)	((_x) & (CXLFLASH_NUM_FC_PORTS_PER_BANK - 1))
+#घोषणा CHAN2PORTBANK(_x)	((_x) >> ilog2(CXLFLASH_NUM_FC_PORTS_PER_BANK))
+#घोषणा CHAN2BANKPORT(_x)	((_x) & (CXLFLASH_NUM_FC_PORTS_PER_BANK - 1))
 
-#define CHAN2PORTMASK(_x)	(1 << (_x))	/* channel to port mask */
-#define PORTMASK2CHAN(_x)	(ilog2((_x)))	/* port mask to channel */
-#define PORTNUM2CHAN(_x)	((_x) - 1)	/* port number to channel */
+#घोषणा CHAN2PORTMASK(_x)	(1 << (_x))	/* channel to port mask */
+#घोषणा PORTMASK2CHAN(_x)	(ilog2((_x)))	/* port mask to channel */
+#घोषणा PORTNUM2CHAN(_x)	((_x) - 1)	/* port number to channel */
 
-#define CXLFLASH_BLOCK_SIZE	4096		/* 4K blocks */
-#define CXLFLASH_MAX_XFER_SIZE	16777216	/* 16MB transfer */
-#define CXLFLASH_MAX_SECTORS	(CXLFLASH_MAX_XFER_SIZE/512)	/* SCSI wants
+#घोषणा CXLFLASH_BLOCK_SIZE	4096		/* 4K blocks */
+#घोषणा CXLFLASH_MAX_XFER_SIZE	16777216	/* 16MB transfer */
+#घोषणा CXLFLASH_MAX_SECTORS	(CXLFLASH_MAX_XFER_SIZE/512)	/* SCSI wants
 								 * max_sectors
 								 * in units of
 								 * 512 byte
 								 * sectors
 								 */
 
-#define MAX_RHT_PER_CONTEXT (PAGE_SIZE / sizeof(struct sisl_rht_entry))
+#घोषणा MAX_RHT_PER_CONTEXT (PAGE_SIZE / माप(काष्ठा sisl_rht_entry))
 
 /* AFU command retry limit */
-#define MC_RETRY_CNT	5	/* Sufficient for SCSI and certain AFU errors */
+#घोषणा MC_RETRY_CNT	5	/* Sufficient क्रम SCSI and certain AFU errors */
 
 /* Command management definitions */
-#define CXLFLASH_MAX_CMDS               256
-#define CXLFLASH_MAX_CMDS_PER_LUN       CXLFLASH_MAX_CMDS
+#घोषणा CXLFLASH_MAX_CMDS               256
+#घोषणा CXLFLASH_MAX_CMDS_PER_LUN       CXLFLASH_MAX_CMDS
 
-/* RRQ for master issued cmds */
-#define NUM_RRQ_ENTRY                   CXLFLASH_MAX_CMDS
+/* RRQ क्रम master issued cmds */
+#घोषणा NUM_RRQ_ENTRY                   CXLFLASH_MAX_CMDS
 
-/* SQ for master issued cmds */
-#define NUM_SQ_ENTRY			CXLFLASH_MAX_CMDS
+/* SQ क्रम master issued cmds */
+#घोषणा NUM_SQ_ENTRY			CXLFLASH_MAX_CMDS
 
 /* Hardware queue definitions */
-#define CXLFLASH_DEF_HWQS		1
-#define CXLFLASH_MAX_HWQS		8
-#define PRIMARY_HWQ			0
+#घोषणा CXLFLASH_DEF_HWQS		1
+#घोषणा CXLFLASH_MAX_HWQS		8
+#घोषणा PRIMARY_HWQ			0
 
 
-static inline void check_sizes(void)
-{
+अटल अंतरभूत व्योम check_sizes(व्योम)
+अणु
 	BUILD_BUG_ON_NOT_POWER_OF_2(CXLFLASH_NUM_FC_PORTS_PER_BANK);
 	BUILD_BUG_ON_NOT_POWER_OF_2(CXLFLASH_MAX_CMDS);
-}
+पूर्ण
 
-/* AFU defines a fixed size of 4K for command buffers (borrow 4K page define) */
-#define CMD_BUFSIZE     SIZE_4K
+/* AFU defines a fixed size of 4K क्रम command buffers (borrow 4K page define) */
+#घोषणा CMD_बफ_मानE     SIZE_4K
 
-enum cxlflash_lr_state {
+क्रमागत cxlflash_lr_state अणु
 	LINK_RESET_INVALID,
 	LINK_RESET_REQUIRED,
 	LINK_RESET_COMPLETE
-};
+पूर्ण;
 
-enum cxlflash_init_state {
+क्रमागत cxlflash_init_state अणु
 	INIT_STATE_NONE,
 	INIT_STATE_PCI,
 	INIT_STATE_AFU,
 	INIT_STATE_SCSI,
 	INIT_STATE_CDEV
-};
+पूर्ण;
 
-enum cxlflash_state {
+क्रमागत cxlflash_state अणु
 	STATE_PROBING,	/* Initial state during probe */
 	STATE_PROBED,	/* Temporary state, probe completed but EEH occurred */
 	STATE_NORMAL,	/* Normal running state, everything good */
 	STATE_RESET,	/* Reset state, trying to reset/recover */
-	STATE_FAILTERM	/* Failed/terminating state, error out users/threads */
-};
+	STATE_FAILTERM	/* Failed/terminating state, error out users/thपढ़ोs */
+पूर्ण;
 
-enum cxlflash_hwq_mode {
-	HWQ_MODE_RR,	/* Roundrobin (default) */
+क्रमागत cxlflash_hwq_mode अणु
+	HWQ_MODE_RR,	/* Roundrobin (शेष) */
 	HWQ_MODE_TAG,	/* Distribute based on block MQ tag */
 	HWQ_MODE_CPU,	/* CPU affinity */
 	MAX_HWQ_MODE
-};
+पूर्ण;
 
 /*
  * Each context has its own set of resource handles that is visible
  * only from that context.
  */
 
-struct cxlflash_cfg {
-	struct afu *afu;
+काष्ठा cxlflash_cfg अणु
+	काष्ठा afu *afu;
 
-	const struct cxlflash_backend_ops *ops;
-	struct pci_dev *dev;
-	struct pci_device_id *dev_id;
-	struct Scsi_Host *host;
-	int num_fc_ports;
-	struct cdev cdev;
-	struct device *chardev;
+	स्थिर काष्ठा cxlflash_backend_ops *ops;
+	काष्ठा pci_dev *dev;
+	काष्ठा pci_device_id *dev_id;
+	काष्ठा Scsi_Host *host;
+	पूर्णांक num_fc_ports;
+	काष्ठा cdev cdev;
+	काष्ठा device *अक्षरdev;
 
-	ulong cxlflash_regs_pci;
+	uदीर्घ cxlflash_regs_pci;
 
-	struct work_struct work_q;
-	enum cxlflash_init_state init_state;
-	enum cxlflash_lr_state lr_state;
-	int lr_port;
+	काष्ठा work_काष्ठा work_q;
+	क्रमागत cxlflash_init_state init_state;
+	क्रमागत cxlflash_lr_state lr_state;
+	पूर्णांक lr_port;
 	atomic_t scan_host_needed;
 
-	void *afu_cookie;
+	व्योम *afu_cookie;
 
-	atomic_t recovery_threads;
-	struct mutex ctx_recovery_mutex;
-	struct mutex ctx_tbl_list_mutex;
-	struct rw_semaphore ioctl_rwsem;
-	struct ctx_info *ctx_tbl[MAX_CONTEXT];
-	struct list_head ctx_err_recovery; /* contexts w/ recovery pending */
-	struct file_operations cxl_fops;
+	atomic_t recovery_thपढ़ोs;
+	काष्ठा mutex ctx_recovery_mutex;
+	काष्ठा mutex ctx_tbl_list_mutex;
+	काष्ठा rw_semaphore ioctl_rwsem;
+	काष्ठा ctx_info *ctx_tbl[MAX_CONTEXT];
+	काष्ठा list_head ctx_err_recovery; /* contexts w/ recovery pending */
+	काष्ठा file_operations cxl_fops;
 
 	/* Parameters that are LUN table related */
-	int last_lun_index[MAX_FC_PORTS];
-	int promote_lun_index;
-	struct list_head lluns; /* list of llun_info structs */
+	पूर्णांक last_lun_index[MAX_FC_PORTS];
+	पूर्णांक promote_lun_index;
+	काष्ठा list_head lluns; /* list of llun_info काष्ठाs */
 
-	wait_queue_head_t tmf_waitq;
-	spinlock_t tmf_slock;
-	bool tmf_active;
+	रुको_queue_head_t पंचांगf_रुकोq;
+	spinlock_t पंचांगf_slock;
+	bool पंचांगf_active;
 	bool ws_unmap;		/* Write-same unmap supported */
-	wait_queue_head_t reset_waitq;
-	enum cxlflash_state state;
+	रुको_queue_head_t reset_रुकोq;
+	क्रमागत cxlflash_state state;
 	async_cookie_t async_reset_cookie;
-};
+पूर्ण;
 
-struct afu_cmd {
-	struct sisl_ioarcb rcb;	/* IOARCB (cache line aligned) */
-	struct sisl_ioasa sa;	/* IOASA must follow IOARCB */
-	struct afu *parent;
-	struct scsi_cmnd *scp;
-	struct completion cevent;
-	struct list_head queue;
+काष्ठा afu_cmd अणु
+	काष्ठा sisl_ioarcb rcb;	/* IOARCB (cache line aligned) */
+	काष्ठा sisl_ioasa sa;	/* IOASA must follow IOARCB */
+	काष्ठा afu *parent;
+	काष्ठा scsi_cmnd *scp;
+	काष्ठा completion cevent;
+	काष्ठा list_head queue;
 	u32 hwq_index;
 
-	u8 cmd_tmf:1,
-	   cmd_aborted:1;
+	u8 cmd_पंचांगf:1,
+	   cmd_पातed:1;
 
-	struct list_head list;	/* Pending commands link */
+	काष्ठा list_head list;	/* Pending commands link */
 
 	/* As per the SISLITE spec the IOARCB EA has to be 16-byte aligned.
-	 * However for performance reasons the IOARCB/IOASA should be
+	 * However क्रम perक्रमmance reasons the IOARCB/IOASA should be
 	 * cache line aligned.
 	 */
-} __aligned(cache_line_size());
+पूर्ण __aligned(cache_line_size());
 
-static inline struct afu_cmd *sc_to_afuc(struct scsi_cmnd *sc)
-{
-	return PTR_ALIGN(scsi_cmd_priv(sc), __alignof__(struct afu_cmd));
-}
+अटल अंतरभूत काष्ठा afu_cmd *sc_to_afuc(काष्ठा scsi_cmnd *sc)
+अणु
+	वापस PTR_ALIGN(scsi_cmd_priv(sc), __alignof__(काष्ठा afu_cmd));
+पूर्ण
 
-static inline struct afu_cmd *sc_to_afuci(struct scsi_cmnd *sc)
-{
-	struct afu_cmd *afuc = sc_to_afuc(sc);
+अटल अंतरभूत काष्ठा afu_cmd *sc_to_afuci(काष्ठा scsi_cmnd *sc)
+अणु
+	काष्ठा afu_cmd *afuc = sc_to_afuc(sc);
 
 	INIT_LIST_HEAD(&afuc->queue);
-	return afuc;
-}
+	वापस afuc;
+पूर्ण
 
-static inline struct afu_cmd *sc_to_afucz(struct scsi_cmnd *sc)
-{
-	struct afu_cmd *afuc = sc_to_afuc(sc);
+अटल अंतरभूत काष्ठा afu_cmd *sc_to_afucz(काष्ठा scsi_cmnd *sc)
+अणु
+	काष्ठा afu_cmd *afuc = sc_to_afuc(sc);
 
-	memset(afuc, 0, sizeof(*afuc));
-	return sc_to_afuci(sc);
-}
+	स_रखो(afuc, 0, माप(*afuc));
+	वापस sc_to_afuci(sc);
+पूर्ण
 
-struct hwq {
+काष्ठा hwq अणु
 	/* Stuff requiring alignment go first. */
-	struct sisl_ioarcb sq[NUM_SQ_ENTRY];		/* 16K SQ */
+	काष्ठा sisl_ioarcb sq[NUM_SQ_ENTRY];		/* 16K SQ */
 	u64 rrq_entry[NUM_RRQ_ENTRY];			/* 2K RRQ */
 
-	/* Beware of alignment till here. Preferably introduce new
-	 * fields after this point
+	/* Beware of alignment till here. Preferably पूर्णांकroduce new
+	 * fields after this poपूर्णांक
 	 */
-	struct afu *afu;
-	void *ctx_cookie;
-	struct sisl_host_map __iomem *host_map;		/* MC host map */
-	struct sisl_ctrl_map __iomem *ctrl_map;		/* MC control map */
+	काष्ठा afu *afu;
+	व्योम *ctx_cookie;
+	काष्ठा sisl_host_map __iomem *host_map;		/* MC host map */
+	काष्ठा sisl_ctrl_map __iomem *ctrl_map;		/* MC control map */
 	ctx_hndl_t ctx_hndl;	/* master's context handle */
 	u32 index;		/* Index of this hwq */
-	int num_irqs;		/* Number of interrupts requested for context */
-	struct list_head pending_cmds;	/* Commands pending completion */
+	पूर्णांक num_irqs;		/* Number of पूर्णांकerrupts requested क्रम context */
+	काष्ठा list_head pending_cmds;	/* Commands pending completion */
 
 	atomic_t hsq_credits;
 	spinlock_t hsq_slock;	/* Hardware send queue lock */
-	struct sisl_ioarcb *hsq_start;
-	struct sisl_ioarcb *hsq_end;
-	struct sisl_ioarcb *hsq_curr;
+	काष्ठा sisl_ioarcb *hsq_start;
+	काष्ठा sisl_ioarcb *hsq_end;
+	काष्ठा sisl_ioarcb *hsq_curr;
 	spinlock_t hrrq_slock;
 	u64 *hrrq_start;
 	u64 *hrrq_end;
@@ -224,117 +225,117 @@ struct hwq {
 
 	s64 room;
 
-	struct irq_poll irqpoll;
-} __aligned(cache_line_size());
+	काष्ठा irq_poll irqpoll;
+पूर्ण __aligned(cache_line_size());
 
-struct afu {
-	struct hwq hwqs[CXLFLASH_MAX_HWQS];
-	int (*send_cmd)(struct afu *afu, struct afu_cmd *cmd);
-	int (*context_reset)(struct hwq *hwq);
+काष्ठा afu अणु
+	काष्ठा hwq hwqs[CXLFLASH_MAX_HWQS];
+	पूर्णांक (*send_cmd)(काष्ठा afu *afu, काष्ठा afu_cmd *cmd);
+	पूर्णांक (*context_reset)(काष्ठा hwq *hwq);
 
 	/* AFU HW */
-	struct cxlflash_afu_map __iomem *afu_map;	/* entire MMIO map */
+	काष्ठा cxlflash_afu_map __iomem *afu_map;	/* entire MMIO map */
 
 	atomic_t cmds_active;	/* Number of currently active AFU commands */
-	struct mutex sync_active;	/* Mutex to serialize AFU commands */
+	काष्ठा mutex sync_active;	/* Mutex to serialize AFU commands */
 	u64 hb;
-	u32 internal_lun;	/* User-desired LUN mode for this AFU */
+	u32 पूर्णांकernal_lun;	/* User-desired LUN mode क्रम this AFU */
 
 	u32 num_hwqs;		/* Number of hardware queues */
 	u32 desired_hwqs;	/* Desired h/w queues, effective on AFU reset */
-	enum cxlflash_hwq_mode hwq_mode; /* Steering mode for h/w queues */
-	u32 hwq_rr_count;	/* Count to distribute traffic for roundrobin */
+	क्रमागत cxlflash_hwq_mode hwq_mode; /* Steering mode क्रम h/w queues */
+	u32 hwq_rr_count;	/* Count to distribute traffic क्रम roundrobin */
 
-	char version[16];
-	u64 interface_version;
+	अक्षर version[16];
+	u64 पूर्णांकerface_version;
 
 	u32 irqpoll_weight;
-	struct cxlflash_cfg *parent; /* Pointer back to parent cxlflash_cfg */
-};
+	काष्ठा cxlflash_cfg *parent; /* Poपूर्णांकer back to parent cxlflash_cfg */
+पूर्ण;
 
-static inline struct hwq *get_hwq(struct afu *afu, u32 index)
-{
+अटल अंतरभूत काष्ठा hwq *get_hwq(काष्ठा afu *afu, u32 index)
+अणु
 	WARN_ON(index >= CXLFLASH_MAX_HWQS);
 
-	return &afu->hwqs[index];
-}
+	वापस &afu->hwqs[index];
+पूर्ण
 
-static inline bool afu_is_irqpoll_enabled(struct afu *afu)
-{
-	return !!afu->irqpoll_weight;
-}
+अटल अंतरभूत bool afu_is_irqpoll_enabled(काष्ठा afu *afu)
+अणु
+	वापस !!afu->irqpoll_weight;
+पूर्ण
 
-static inline bool afu_has_cap(struct afu *afu, u64 cap)
-{
-	u64 afu_cap = afu->interface_version >> SISL_INTVER_CAP_SHIFT;
+अटल अंतरभूत bool afu_has_cap(काष्ठा afu *afu, u64 cap)
+अणु
+	u64 afu_cap = afu->पूर्णांकerface_version >> SISL_INTVER_CAP_SHIFT;
 
-	return afu_cap & cap;
-}
+	वापस afu_cap & cap;
+पूर्ण
 
-static inline bool afu_is_ocxl_lisn(struct afu *afu)
-{
-	return afu_has_cap(afu, SISL_INTVER_CAP_OCXL_LISN);
-}
+अटल अंतरभूत bool afu_is_ocxl_lisn(काष्ठा afu *afu)
+अणु
+	वापस afu_has_cap(afu, SISL_INTVER_CAP_OCXL_LISN);
+पूर्ण
 
-static inline bool afu_is_afu_debug(struct afu *afu)
-{
-	return afu_has_cap(afu, SISL_INTVER_CAP_AFU_DEBUG);
-}
+अटल अंतरभूत bool afu_is_afu_debug(काष्ठा afu *afu)
+अणु
+	वापस afu_has_cap(afu, SISL_INTVER_CAP_AFU_DEBUG);
+पूर्ण
 
-static inline bool afu_is_lun_provision(struct afu *afu)
-{
-	return afu_has_cap(afu, SISL_INTVER_CAP_LUN_PROVISION);
-}
+अटल अंतरभूत bool afu_is_lun_provision(काष्ठा afu *afu)
+अणु
+	वापस afu_has_cap(afu, SISL_INTVER_CAP_LUN_PROVISION);
+पूर्ण
 
-static inline bool afu_is_sq_cmd_mode(struct afu *afu)
-{
-	return afu_has_cap(afu, SISL_INTVER_CAP_SQ_CMD_MODE);
-}
+अटल अंतरभूत bool afu_is_sq_cmd_mode(काष्ठा afu *afu)
+अणु
+	वापस afu_has_cap(afu, SISL_INTVER_CAP_SQ_CMD_MODE);
+पूर्ण
 
-static inline bool afu_is_ioarrin_cmd_mode(struct afu *afu)
-{
-	return afu_has_cap(afu, SISL_INTVER_CAP_IOARRIN_CMD_MODE);
-}
+अटल अंतरभूत bool afu_is_ioarrin_cmd_mode(काष्ठा afu *afu)
+अणु
+	वापस afu_has_cap(afu, SISL_INTVER_CAP_IOARRIN_CMD_MODE);
+पूर्ण
 
-static inline u64 lun_to_lunid(u64 lun)
-{
+अटल अंतरभूत u64 lun_to_lunid(u64 lun)
+अणु
 	__be64 lun_id;
 
-	int_to_scsilun(lun, (struct scsi_lun *)&lun_id);
-	return be64_to_cpu(lun_id);
-}
+	पूर्णांक_to_scsilun(lun, (काष्ठा scsi_lun *)&lun_id);
+	वापस be64_to_cpu(lun_id);
+पूर्ण
 
-static inline struct fc_port_bank __iomem *get_fc_port_bank(
-					    struct cxlflash_cfg *cfg, int i)
-{
-	struct afu *afu = cfg->afu;
+अटल अंतरभूत काष्ठा fc_port_bank __iomem *get_fc_port_bank(
+					    काष्ठा cxlflash_cfg *cfg, पूर्णांक i)
+अणु
+	काष्ठा afu *afu = cfg->afu;
 
-	return &afu->afu_map->global.bank[CHAN2PORTBANK(i)];
-}
+	वापस &afu->afu_map->global.bank[CHAN2PORTBANK(i)];
+पूर्ण
 
-static inline __be64 __iomem *get_fc_port_regs(struct cxlflash_cfg *cfg, int i)
-{
-	struct fc_port_bank __iomem *fcpb = get_fc_port_bank(cfg, i);
+अटल अंतरभूत __be64 __iomem *get_fc_port_regs(काष्ठा cxlflash_cfg *cfg, पूर्णांक i)
+अणु
+	काष्ठा fc_port_bank __iomem *fcpb = get_fc_port_bank(cfg, i);
 
-	return &fcpb->fc_port_regs[CHAN2BANKPORT(i)][0];
-}
+	वापस &fcpb->fc_port_regs[CHAN2BANKPORT(i)][0];
+पूर्ण
 
-static inline __be64 __iomem *get_fc_port_luns(struct cxlflash_cfg *cfg, int i)
-{
-	struct fc_port_bank __iomem *fcpb = get_fc_port_bank(cfg, i);
+अटल अंतरभूत __be64 __iomem *get_fc_port_luns(काष्ठा cxlflash_cfg *cfg, पूर्णांक i)
+अणु
+	काष्ठा fc_port_bank __iomem *fcpb = get_fc_port_bank(cfg, i);
 
-	return &fcpb->fc_port_luns[CHAN2BANKPORT(i)][0];
-}
+	वापस &fcpb->fc_port_luns[CHAN2BANKPORT(i)][0];
+पूर्ण
 
-int cxlflash_afu_sync(struct afu *afu, ctx_hndl_t c, res_hndl_t r, u8 mode);
-void cxlflash_list_init(void);
-void cxlflash_term_global_luns(void);
-void cxlflash_free_errpage(void);
-int cxlflash_ioctl(struct scsi_device *sdev, unsigned int cmd,
-		   void __user *arg);
-void cxlflash_stop_term_user_contexts(struct cxlflash_cfg *cfg);
-int cxlflash_mark_contexts_error(struct cxlflash_cfg *cfg);
-void cxlflash_term_local_luns(struct cxlflash_cfg *cfg);
-void cxlflash_restore_luntable(struct cxlflash_cfg *cfg);
+पूर्णांक cxlflash_afu_sync(काष्ठा afu *afu, ctx_hndl_t c, res_hndl_t r, u8 mode);
+व्योम cxlflash_list_init(व्योम);
+व्योम cxlflash_term_global_luns(व्योम);
+व्योम cxlflash_मुक्त_errpage(व्योम);
+पूर्णांक cxlflash_ioctl(काष्ठा scsi_device *sdev, अचिन्हित पूर्णांक cmd,
+		   व्योम __user *arg);
+व्योम cxlflash_stop_term_user_contexts(काष्ठा cxlflash_cfg *cfg);
+पूर्णांक cxlflash_mark_contexts_error(काष्ठा cxlflash_cfg *cfg);
+व्योम cxlflash_term_local_luns(काष्ठा cxlflash_cfg *cfg);
+व्योम cxlflash_restore_luntable(काष्ठा cxlflash_cfg *cfg);
 
-#endif /* ifndef _CXLFLASH_COMMON_H */
+#पूर्ण_अगर /* अगरndef _CXLFLASH_COMMON_H */

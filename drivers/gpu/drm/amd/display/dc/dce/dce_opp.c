@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,39 +24,39 @@
  *
  */
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "dm_services.h"
-#include "basics/conversion.h"
+#समावेश "dm_services.h"
+#समावेश "basics/conversion.h"
 
-#include "dce_opp.h"
+#समावेश "dce_opp.h"
 
-#include "reg_helper.h"
+#समावेश "reg_helper.h"
 
-#define REG(reg)\
+#घोषणा REG(reg)\
 	(opp110->regs->reg)
 
-#undef FN
-#define FN(reg_name, field_name) \
-	opp110->opp_shift->field_name, opp110->opp_mask->field_name
+#अघोषित FN
+#घोषणा FN(reg_name, field_name) \
+	opp110->opp_shअगरt->field_name, opp110->opp_mask->field_name
 
-#define CTX \
+#घोषणा CTX \
 	opp110->base.ctx
 
-enum {
+क्रमागत अणु
 	MAX_PWL_ENTRY = 128,
 	MAX_REGIONS_NUMBER = 16
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MAX_LUT_ENTRY = 256,
 	MAX_NUMBER_OF_ENTRIES = 256
-};
+पूर्ण;
 
 
-enum {
+क्रमागत अणु
 	OUTPUT_CSC_MATRIX_SIZE = 12
-};
+पूर्ण;
 
 
 
@@ -82,11 +83,11 @@ enum {
  *****************************************************************************
  *  Function: regamma_config_regions_and_segments
  *
- *     build regamma curve by using predefined hw points
- *     uses interface parameters ,like EDID coeff.
+ *     build regamma curve by using predefined hw poपूर्णांकs
+ *     uses पूर्णांकerface parameters ,like EDID coeff.
  *
- * @param   : parameters   interface parameters
- *  @return void
+ * @param   : parameters   पूर्णांकerface parameters
+ *  @वापस व्योम
  *
  *  @note
  *
@@ -99,14 +100,14 @@ enum {
 
 /*
  *	set_truncation
- *	1) set truncation depth: 0 for 18 bpp or 1 for 24 bpp
+ *	1) set truncation depth: 0 क्रम 18 bpp or 1 क्रम 24 bpp
  *	2) enable truncation
- *	3) HW remove 12bit FMT support for DCE11 power saving reason.
+ *	3) HW हटाओ 12bit FMT support क्रम DCE11 घातer saving reason.
  */
-static void set_truncation(
-		struct dce110_opp *opp110,
-		const struct bit_depth_reduction_params *params)
-{
+अटल व्योम set_truncation(
+		काष्ठा dce110_opp *opp110,
+		स्थिर काष्ठा bit_depth_reduction_params *params)
+अणु
 	/*Disable truncation*/
 	REG_UPDATE_3(FMT_BIT_DEPTH_CONTROL,
 			FMT_TRUNCATE_EN, 0,
@@ -114,24 +115,24 @@ static void set_truncation(
 			FMT_TRUNCATE_MODE, 0);
 
 
-	if (params->pixel_encoding == PIXEL_ENCODING_YCBCR422) {
+	अगर (params->pixel_encoding == PIXEL_ENCODING_YCBCR422) अणु
 		/*  8bpc trunc on YCbCr422*/
-		if (params->flags.TRUNCATE_DEPTH == 1)
+		अगर (params->flags.TRUNCATE_DEPTH == 1)
 			REG_UPDATE_3(FMT_BIT_DEPTH_CONTROL,
 					FMT_TRUNCATE_EN, 1,
 					FMT_TRUNCATE_DEPTH, 1,
 					FMT_TRUNCATE_MODE, 0);
-		else if (params->flags.TRUNCATE_DEPTH == 2)
+		अन्यथा अगर (params->flags.TRUNCATE_DEPTH == 2)
 			/*  10bpc trunc on YCbCr422*/
 			REG_UPDATE_3(FMT_BIT_DEPTH_CONTROL,
 					FMT_TRUNCATE_EN, 1,
 					FMT_TRUNCATE_DEPTH, 2,
 					FMT_TRUNCATE_MODE, 0);
-		return;
-	}
-	/* on other format-to do */
-	if (params->flags.TRUNCATE_ENABLED == 0)
-		return;
+		वापस;
+	पूर्ण
+	/* on other क्रमmat-to करो */
+	अगर (params->flags.TRUNCATE_ENABLED == 0)
+		वापस;
 	/*Set truncation depth and Enable truncation*/
 	REG_UPDATE_3(FMT_BIT_DEPTH_CONTROL,
 				FMT_TRUNCATE_EN, 1,
@@ -139,19 +140,19 @@ static void set_truncation(
 				params->flags.TRUNCATE_DEPTH,
 				FMT_TRUNCATE_MODE,
 				params->flags.TRUNCATE_MODE);
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
 /*
  *	dce60_set_truncation
- *	1) set truncation depth: 0 for 18 bpp or 1 for 24 bpp
+ *	1) set truncation depth: 0 क्रम 18 bpp or 1 क्रम 24 bpp
  *	2) enable truncation
- *	3) HW remove 12bit FMT support for DCE11 power saving reason.
+ *	3) HW हटाओ 12bit FMT support क्रम DCE11 घातer saving reason.
  */
-static void dce60_set_truncation(
-		struct dce110_opp *opp110,
-		const struct bit_depth_reduction_params *params)
-{
+अटल व्योम dce60_set_truncation(
+		काष्ठा dce110_opp *opp110,
+		स्थिर काष्ठा bit_depth_reduction_params *params)
+अणु
 	/* DCE6 has no FMT_TRUNCATE_MODE bit in FMT_BIT_DEPTH_CONTROL reg */
 
 	/*Disable truncation*/
@@ -159,36 +160,36 @@ static void dce60_set_truncation(
 			FMT_TRUNCATE_EN, 0,
 			FMT_TRUNCATE_DEPTH, 0);
 
-	if (params->pixel_encoding == PIXEL_ENCODING_YCBCR422) {
+	अगर (params->pixel_encoding == PIXEL_ENCODING_YCBCR422) अणु
 		/*  8bpc trunc on YCbCr422*/
-		if (params->flags.TRUNCATE_DEPTH == 1)
+		अगर (params->flags.TRUNCATE_DEPTH == 1)
 			REG_UPDATE_2(FMT_BIT_DEPTH_CONTROL,
 					FMT_TRUNCATE_EN, 1,
 					FMT_TRUNCATE_DEPTH, 1);
-		else if (params->flags.TRUNCATE_DEPTH == 2)
+		अन्यथा अगर (params->flags.TRUNCATE_DEPTH == 2)
 			/*  10bpc trunc on YCbCr422*/
 			REG_UPDATE_2(FMT_BIT_DEPTH_CONTROL,
 					FMT_TRUNCATE_EN, 1,
 					FMT_TRUNCATE_DEPTH, 2);
-		return;
-	}
-	/* on other format-to do */
-	if (params->flags.TRUNCATE_ENABLED == 0)
-		return;
+		वापस;
+	पूर्ण
+	/* on other क्रमmat-to करो */
+	अगर (params->flags.TRUNCATE_ENABLED == 0)
+		वापस;
 	/*Set truncation depth and Enable truncation*/
 	REG_UPDATE_2(FMT_BIT_DEPTH_CONTROL,
 				FMT_TRUNCATE_EN, 1,
 				FMT_TRUNCATE_DEPTH,
 				params->flags.TRUNCATE_DEPTH);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
  *	set_spatial_dither
  *	1) set spatial dithering mode: pattern of seed
- *	2) set spatial dithering depth: 0 for 18bpp or 1 for 24bpp
- *	3) set random seed
- *	4) set random mode
+ *	2) set spatial dithering depth: 0 क्रम 18bpp or 1 क्रम 24bpp
+ *	3) set अक्रमom seed
+ *	4) set अक्रमom mode
  *		lfsr is reset every frame or not reset
  *		RGB dithering method
  *		0: RGB data are all dithered with x^28+x^3+1
@@ -198,11 +199,11 @@ static void dce60_set_truncation(
  *		enable high pass filter or not
  *	5) enable spatical dithering
  */
-static void set_spatial_dither(
-	struct dce110_opp *opp110,
-	const struct bit_depth_reduction_params *params)
-{
-	/*Disable spatial (random) dithering*/
+अटल व्योम set_spatial_dither(
+	काष्ठा dce110_opp *opp110,
+	स्थिर काष्ठा bit_depth_reduction_params *params)
+अणु
+	/*Disable spatial (अक्रमom) dithering*/
 	REG_UPDATE_3(FMT_BIT_DEPTH_CONTROL,
 		FMT_SPATIAL_DITHER_EN, 0,
 		FMT_SPATIAL_DITHER_DEPTH, 0,
@@ -216,33 +217,33 @@ static void set_spatial_dither(
 	REG_UPDATE(FMT_BIT_DEPTH_CONTROL,
 		FMT_TEMPORAL_DITHER_EN, 0);
 
-	if (params->flags.SPATIAL_DITHER_ENABLED == 0)
-		return;
+	अगर (params->flags.SPATIAL_DITHER_ENABLED == 0)
+		वापस;
 
-	/* only use FRAME_COUNTER_MAX if frameRandom == 1*/
+	/* only use FRAME_COUNTER_MAX अगर frameRanकरोm == 1*/
 
-	if (opp110->opp_mask->FMT_SPATIAL_DITHER_FRAME_COUNTER_MAX &&
-			opp110->opp_mask->FMT_SPATIAL_DITHER_FRAME_COUNTER_BIT_SWAP) {
-		if (params->flags.FRAME_RANDOM == 1) {
-			if (params->flags.SPATIAL_DITHER_DEPTH == 0 ||
-			params->flags.SPATIAL_DITHER_DEPTH == 1) {
+	अगर (opp110->opp_mask->FMT_SPATIAL_DITHER_FRAME_COUNTER_MAX &&
+			opp110->opp_mask->FMT_SPATIAL_DITHER_FRAME_COUNTER_BIT_SWAP) अणु
+		अगर (params->flags.FRAME_RANDOM == 1) अणु
+			अगर (params->flags.SPATIAL_DITHER_DEPTH == 0 ||
+			params->flags.SPATIAL_DITHER_DEPTH == 1) अणु
 				REG_UPDATE_2(FMT_CONTROL,
 					FMT_SPATIAL_DITHER_FRAME_COUNTER_MAX, 15,
 					FMT_SPATIAL_DITHER_FRAME_COUNTER_BIT_SWAP, 2);
-			} else if (params->flags.SPATIAL_DITHER_DEPTH == 2) {
+			पूर्ण अन्यथा अगर (params->flags.SPATIAL_DITHER_DEPTH == 2) अणु
 				REG_UPDATE_2(FMT_CONTROL,
 					FMT_SPATIAL_DITHER_FRAME_COUNTER_MAX, 3,
 					FMT_SPATIAL_DITHER_FRAME_COUNTER_BIT_SWAP, 1);
-			} else
-				return;
-		} else {
+			पूर्ण अन्यथा
+				वापस;
+		पूर्ण अन्यथा अणु
 			REG_UPDATE_2(FMT_CONTROL,
 					FMT_SPATIAL_DITHER_FRAME_COUNTER_MAX, 0,
 					FMT_SPATIAL_DITHER_FRAME_COUNTER_BIT_SWAP, 0);
-		}
-	}
-	/* Set seed for random values for
-	 * spatial dithering for R,G,B channels
+		पूर्ण
+	पूर्ण
+	/* Set seed क्रम अक्रमom values क्रम
+	 * spatial dithering क्रम R,G,B channels
 	 */
 	REG_UPDATE(FMT_DITHER_RAND_R_SEED,
 			FMT_RAND_R_SEED, params->r_seed_value);
@@ -254,18 +255,18 @@ static void set_spatial_dither(
 			FMT_RAND_B_SEED, params->b_seed_value);
 
 	/* FMT_OFFSET_R_Cr  31:16 0x0 Setting the zero
-	 * offset for the R/Cr channel, lower 4LSB
-	 * is forced to zeros. Typically set to 0
+	 * offset क्रम the R/Cr channel, lower 4LSB
+	 * is क्रमced to zeros. Typically set to 0
 	 * RGB and 0x80000 YCbCr.
 	 */
 	/* FMT_OFFSET_G_Y   31:16 0x0 Setting the zero
-	 * offset for the G/Y  channel, lower 4LSB is
-	 * forced to zeros. Typically set to 0 RGB
+	 * offset क्रम the G/Y  channel, lower 4LSB is
+	 * क्रमced to zeros. Typically set to 0 RGB
 	 * and 0x80000 YCbCr.
 	 */
 	/* FMT_OFFSET_B_Cb  31:16 0x0 Setting the zero
-	 * offset for the B/Cb channel, lower 4LSB is
-	 * forced to zeros. Typically set to 0 RGB and
+	 * offset क्रम the B/Cb channel, lower 4LSB is
+	 * क्रमced to zeros. Typically set to 0 RGB and
 	 * 0x80000 YCbCr.
 	 */
 
@@ -280,30 +281,30 @@ static void set_spatial_dither(
 
 	/* Set spatial dithering bit depth
 	 * Set spatial dithering mode
-	 * (default is Seed patterrn AAAA...)
+	 * (शेष is Seed patterrn AAAA...)
 	 * Enable spatial dithering
 	 */
 	REG_UPDATE_3(FMT_BIT_DEPTH_CONTROL,
 		FMT_SPATIAL_DITHER_DEPTH, params->flags.SPATIAL_DITHER_DEPTH,
 		FMT_SPATIAL_DITHER_MODE, params->flags.SPATIAL_DITHER_MODE,
 		FMT_SPATIAL_DITHER_EN, 1);
-}
+पूर्ण
 
 /*
  *	SetTemporalDither (Frame Modulation)
  *	1) set temporal dither depth
  *	2) select pattern: from hard-coded pattern or programmable pattern
- *	3) select optimized strips for BGR or RGB LCD sub-pixel
+ *	3) select optimized strips क्रम BGR or RGB LCD sub-pixel
  *	4) set s matrix
  *	5) set t matrix
- *	6) set grey level for 0.25, 0.5, 0.75
+ *	6) set grey level क्रम 0.25, 0.5, 0.75
  *	7) enable temporal dithering
  */
 
-static void set_temporal_dither(
-	struct dce110_opp *opp110,
-	const struct bit_depth_reduction_params *params)
-{
+अटल व्योम set_temporal_dither(
+	काष्ठा dce110_opp *opp110,
+	स्थिर काष्ठा bit_depth_reduction_params *params)
+अणु
 	/*Disable temporal (frame modulation) dithering first*/
 	REG_UPDATE_3(FMT_BIT_DEPTH_CONTROL,
 		FMT_TEMPORAL_DITHER_EN, 0,
@@ -320,9 +321,9 @@ static void set_temporal_dither(
 		FMT_75FRC_SEL, 0);
 
 	/* no 10bpc dither on DCE11*/
-	if (params->flags.FRAME_MODULATION_ENABLED == 0 ||
+	अगर (params->flags.FRAME_MODULATION_ENABLED == 0 ||
 		params->flags.FRAME_MODULATION_DEPTH == 2)
-		return;
+		वापस;
 
 	/* Set temporal dithering depth*/
 	REG_UPDATE_3(FMT_BIT_DEPTH_CONTROL,
@@ -331,15 +332,15 @@ static void set_temporal_dither(
 		FMT_TEMPORAL_DITHER_OFFSET, 0);
 
 	/*Select legacy pattern based on FRC and Temporal level*/
-	if (REG(FMT_TEMPORAL_DITHER_PATTERN_CONTROL)) {
+	अगर (REG(FMT_TEMPORAL_DITHER_PATTERN_CONTROL)) अणु
 		REG_WRITE(FMT_TEMPORAL_DITHER_PATTERN_CONTROL, 0);
 		/*Set s matrix*/
 		REG_WRITE(FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_S_MATRIX, 0);
 		/*Set t matrix*/
 		REG_WRITE(FMT_TEMPORAL_DITHER_PROGRAMMABLE_PATTERN_T_MATRIX, 0);
-	}
+	पूर्ण
 
-	/*Select patterns for 0.25, 0.5 and 0.75 grey level*/
+	/*Select patterns क्रम 0.25, 0.5 and 0.75 grey level*/
 	REG_UPDATE(FMT_BIT_DEPTH_CONTROL,
 		FMT_TEMPORAL_LEVEL, params->flags.TEMPORAL_LEVEL);
 
@@ -351,50 +352,50 @@ static void set_temporal_dither(
 	/*Enable bit reduction by temporal (frame modulation) dithering*/
 	REG_UPDATE(FMT_BIT_DEPTH_CONTROL,
 		FMT_TEMPORAL_DITHER_EN, 1);
-}
+पूर्ण
 
 /*
  *	Set Clamping
- *	1) Set clamping format based on bpc - 0 for 6bpc (No clamping)
- *		1 for 8 bpc
- *		2 for 10 bpc
- *		3 for 12 bpc
- *		7 for programable
- *	2) Enable clamp if Limited range requested
+ *	1) Set clamping क्रमmat based on bpc - 0 क्रम 6bpc (No clamping)
+ *		1 क्रम 8 bpc
+ *		2 क्रम 10 bpc
+ *		3 क्रम 12 bpc
+ *		7 क्रम programable
+ *	2) Enable clamp अगर Limited range requested
  */
-void dce110_opp_set_clamping(
-	struct dce110_opp *opp110,
-	const struct clamping_and_pixel_encoding_params *params)
-{
+व्योम dce110_opp_set_clamping(
+	काष्ठा dce110_opp *opp110,
+	स्थिर काष्ठा clamping_and_pixel_encoding_params *params)
+अणु
 	REG_SET_2(FMT_CLAMP_CNTL, 0,
 		FMT_CLAMP_DATA_EN, 0,
 		FMT_CLAMP_COLOR_FORMAT, 0);
 
-	switch (params->clamping_level) {
-	case CLAMPING_FULL_RANGE:
-		break;
-	case CLAMPING_LIMITED_RANGE_8BPC:
+	चयन (params->clamping_level) अणु
+	हाल CLAMPING_FULL_RANGE:
+		अवरोध;
+	हाल CLAMPING_LIMITED_RANGE_8BPC:
 		REG_SET_2(FMT_CLAMP_CNTL, 0,
 			FMT_CLAMP_DATA_EN, 1,
 			FMT_CLAMP_COLOR_FORMAT, 1);
-		break;
-	case CLAMPING_LIMITED_RANGE_10BPC:
+		अवरोध;
+	हाल CLAMPING_LIMITED_RANGE_10BPC:
 		REG_SET_2(FMT_CLAMP_CNTL, 0,
 			FMT_CLAMP_DATA_EN, 1,
 			FMT_CLAMP_COLOR_FORMAT, 2);
-		break;
-	case CLAMPING_LIMITED_RANGE_12BPC:
+		अवरोध;
+	हाल CLAMPING_LIMITED_RANGE_12BPC:
 		REG_SET_2(FMT_CLAMP_CNTL, 0,
 			FMT_CLAMP_DATA_EN, 1,
 			FMT_CLAMP_COLOR_FORMAT, 3);
-		break;
-	case CLAMPING_LIMITED_RANGE_PROGRAMMABLE:
+		अवरोध;
+	हाल CLAMPING_LIMITED_RANGE_PROGRAMMABLE:
 		/*Set clamp control*/
 		REG_SET_2(FMT_CLAMP_CNTL, 0,
 			FMT_CLAMP_DATA_EN, 1,
 			FMT_CLAMP_COLOR_FORMAT, 7);
 
-		/*set the defaults*/
+		/*set the शेषs*/
 		REG_SET_2(FMT_CLAMP_COMPONENT_R, 0,
 			FMT_CLAMP_LOWER_R, 0x10,
 			FMT_CLAMP_UPPER_R, 0xFEF);
@@ -406,62 +407,62 @@ void dce110_opp_set_clamping(
 		REG_SET_2(FMT_CLAMP_COMPONENT_B, 0,
 			FMT_CLAMP_LOWER_B, 0x10,
 			FMT_CLAMP_UPPER_B, 0xFEF);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
 /*
- *	Set Clamping for DCE6 parts
- *	1) Set clamping format based on bpc - 0 for 6bpc (No clamping)
- *		1 for 8 bpc
- *		2 for 10 bpc
- *		3 for 12 bpc
- *		7 for programable
- *	2) Enable clamp if Limited range requested
+ *	Set Clamping क्रम DCE6 parts
+ *	1) Set clamping क्रमmat based on bpc - 0 क्रम 6bpc (No clamping)
+ *		1 क्रम 8 bpc
+ *		2 क्रम 10 bpc
+ *		3 क्रम 12 bpc
+ *		7 क्रम programable
+ *	2) Enable clamp अगर Limited range requested
  */
-static void dce60_opp_set_clamping(
-	struct dce110_opp *opp110,
-	const struct clamping_and_pixel_encoding_params *params)
-{
+अटल व्योम dce60_opp_set_clamping(
+	काष्ठा dce110_opp *opp110,
+	स्थिर काष्ठा clamping_and_pixel_encoding_params *params)
+अणु
 	REG_SET_2(FMT_CLAMP_CNTL, 0,
 		FMT_CLAMP_DATA_EN, 0,
 		FMT_CLAMP_COLOR_FORMAT, 0);
 
-	switch (params->clamping_level) {
-	case CLAMPING_FULL_RANGE:
-		break;
-	case CLAMPING_LIMITED_RANGE_8BPC:
+	चयन (params->clamping_level) अणु
+	हाल CLAMPING_FULL_RANGE:
+		अवरोध;
+	हाल CLAMPING_LIMITED_RANGE_8BPC:
 		REG_SET_2(FMT_CLAMP_CNTL, 0,
 			FMT_CLAMP_DATA_EN, 1,
 			FMT_CLAMP_COLOR_FORMAT, 1);
-		break;
-	case CLAMPING_LIMITED_RANGE_10BPC:
+		अवरोध;
+	हाल CLAMPING_LIMITED_RANGE_10BPC:
 		REG_SET_2(FMT_CLAMP_CNTL, 0,
 			FMT_CLAMP_DATA_EN, 1,
 			FMT_CLAMP_COLOR_FORMAT, 2);
-		break;
-	case CLAMPING_LIMITED_RANGE_12BPC:
+		अवरोध;
+	हाल CLAMPING_LIMITED_RANGE_12BPC:
 		REG_SET_2(FMT_CLAMP_CNTL, 0,
 			FMT_CLAMP_DATA_EN, 1,
 			FMT_CLAMP_COLOR_FORMAT, 3);
-		break;
-	case CLAMPING_LIMITED_RANGE_PROGRAMMABLE:
+		अवरोध;
+	हाल CLAMPING_LIMITED_RANGE_PROGRAMMABLE:
 		/*Set clamp control*/
 		REG_SET_2(FMT_CLAMP_CNTL, 0,
 			FMT_CLAMP_DATA_EN, 1,
 			FMT_CLAMP_COLOR_FORMAT, 7);
 
-		/* DCE6 does have FMT_CLAMP_COMPONENT_{R,G,B} registers */
+		/* DCE6 करोes have FMT_CLAMP_COMPONENT_अणुR,G,Bपूर्ण रेजिस्टरs */
 
-		break;
-	default:
-		break;
-	}
-}
-#endif
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /*
  *	set_pixel_encoding
@@ -470,122 +471,122 @@ static void dce60_opp_set_clamping(
  *		0: RGB 4:4:4 or YCbCr 4:4:4 or YOnly
  *		1: YCbCr 4:2:2
  */
-static void set_pixel_encoding(
-	struct dce110_opp *opp110,
-	const struct clamping_and_pixel_encoding_params *params)
-{
-	if (opp110->opp_mask->FMT_CBCR_BIT_REDUCTION_BYPASS)
+अटल व्योम set_pixel_encoding(
+	काष्ठा dce110_opp *opp110,
+	स्थिर काष्ठा clamping_and_pixel_encoding_params *params)
+अणु
+	अगर (opp110->opp_mask->FMT_CBCR_BIT_REDUCTION_BYPASS)
 		REG_UPDATE_3(FMT_CONTROL,
 				FMT_PIXEL_ENCODING, 0,
 				FMT_SUBSAMPLING_MODE, 0,
 				FMT_CBCR_BIT_REDUCTION_BYPASS, 0);
-	else
+	अन्यथा
 		REG_UPDATE_2(FMT_CONTROL,
 				FMT_PIXEL_ENCODING, 0,
 				FMT_SUBSAMPLING_MODE, 0);
 
-	if (params->pixel_encoding == PIXEL_ENCODING_YCBCR422) {
+	अगर (params->pixel_encoding == PIXEL_ENCODING_YCBCR422) अणु
 		REG_UPDATE_2(FMT_CONTROL,
 				FMT_PIXEL_ENCODING, 1,
 				FMT_SUBSAMPLING_ORDER, 0);
-	}
-	if (params->pixel_encoding == PIXEL_ENCODING_YCBCR420) {
+	पूर्ण
+	अगर (params->pixel_encoding == PIXEL_ENCODING_YCBCR420) अणु
 		REG_UPDATE_3(FMT_CONTROL,
 				FMT_PIXEL_ENCODING, 2,
 				FMT_SUBSAMPLING_MODE, 2,
 				FMT_CBCR_BIT_REDUCTION_BYPASS, 1);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
 /*
  *	dce60_set_pixel_encoding
- *	DCE6 has no FMT_SUBSAMPLING_{MODE,ORDER} bits in FMT_CONTROL reg
+ *	DCE6 has no FMT_SUBSAMPLING_अणुMODE,ORDERपूर्ण bits in FMT_CONTROL reg
  *	Set Pixel Encoding
  *		0: RGB 4:4:4 or YCbCr 4:4:4 or YOnly
  *		1: YCbCr 4:2:2
  */
-static void dce60_set_pixel_encoding(
-	struct dce110_opp *opp110,
-	const struct clamping_and_pixel_encoding_params *params)
-{
-	if (opp110->opp_mask->FMT_CBCR_BIT_REDUCTION_BYPASS)
+अटल व्योम dce60_set_pixel_encoding(
+	काष्ठा dce110_opp *opp110,
+	स्थिर काष्ठा clamping_and_pixel_encoding_params *params)
+अणु
+	अगर (opp110->opp_mask->FMT_CBCR_BIT_REDUCTION_BYPASS)
 		REG_UPDATE_2(FMT_CONTROL,
 				FMT_PIXEL_ENCODING, 0,
 				FMT_CBCR_BIT_REDUCTION_BYPASS, 0);
-	else
+	अन्यथा
 		REG_UPDATE(FMT_CONTROL,
 				FMT_PIXEL_ENCODING, 0);
 
-	if (params->pixel_encoding == PIXEL_ENCODING_YCBCR422) {
+	अगर (params->pixel_encoding == PIXEL_ENCODING_YCBCR422) अणु
 		REG_UPDATE(FMT_CONTROL,
 				FMT_PIXEL_ENCODING, 1);
-	}
-	if (params->pixel_encoding == PIXEL_ENCODING_YCBCR420) {
+	पूर्ण
+	अगर (params->pixel_encoding == PIXEL_ENCODING_YCBCR420) अणु
 		REG_UPDATE_2(FMT_CONTROL,
 				FMT_PIXEL_ENCODING, 2,
 				FMT_CBCR_BIT_REDUCTION_BYPASS, 1);
-	}
+	पूर्ण
 
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void dce110_opp_program_bit_depth_reduction(
-	struct output_pixel_processor *opp,
-	const struct bit_depth_reduction_params *params)
-{
-	struct dce110_opp *opp110 = TO_DCE110_OPP(opp);
+व्योम dce110_opp_program_bit_depth_reduction(
+	काष्ठा output_pixel_processor *opp,
+	स्थिर काष्ठा bit_depth_reduction_params *params)
+अणु
+	काष्ठा dce110_opp *opp110 = TO_DCE110_OPP(opp);
 
 	set_truncation(opp110, params);
 	set_spatial_dither(opp110, params);
 	set_temporal_dither(opp110, params);
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_opp_program_bit_depth_reduction(
-	struct output_pixel_processor *opp,
-	const struct bit_depth_reduction_params *params)
-{
-	struct dce110_opp *opp110 = TO_DCE110_OPP(opp);
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_opp_program_bit_depth_reduction(
+	काष्ठा output_pixel_processor *opp,
+	स्थिर काष्ठा bit_depth_reduction_params *params)
+अणु
+	काष्ठा dce110_opp *opp110 = TO_DCE110_OPP(opp);
 
 	dce60_set_truncation(opp110, params);
 	set_spatial_dither(opp110, params);
 	set_temporal_dither(opp110, params);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void dce110_opp_program_clamping_and_pixel_encoding(
-	struct output_pixel_processor *opp,
-	const struct clamping_and_pixel_encoding_params *params)
-{
-	struct dce110_opp *opp110 = TO_DCE110_OPP(opp);
+व्योम dce110_opp_program_clamping_and_pixel_encoding(
+	काष्ठा output_pixel_processor *opp,
+	स्थिर काष्ठा clamping_and_pixel_encoding_params *params)
+अणु
+	काष्ठा dce110_opp *opp110 = TO_DCE110_OPP(opp);
 
 	dce110_opp_set_clamping(opp110, params);
 	set_pixel_encoding(opp110, params);
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_opp_program_clamping_and_pixel_encoding(
-	struct output_pixel_processor *opp,
-	const struct clamping_and_pixel_encoding_params *params)
-{
-	struct dce110_opp *opp110 = TO_DCE110_OPP(opp);
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_opp_program_clamping_and_pixel_encoding(
+	काष्ठा output_pixel_processor *opp,
+	स्थिर काष्ठा clamping_and_pixel_encoding_params *params)
+अणु
+	काष्ठा dce110_opp *opp110 = TO_DCE110_OPP(opp);
 
 	dce60_opp_set_clamping(opp110, params);
 	dce60_set_pixel_encoding(opp110, params);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 
-static void program_formatter_420_memory(struct output_pixel_processor *opp)
-{
-	struct dce110_opp *opp110 = TO_DCE110_OPP(opp);
-	uint32_t fmt_mem_cntl_value;
+अटल व्योम program_क्रमmatter_420_memory(काष्ठा output_pixel_processor *opp)
+अणु
+	काष्ठा dce110_opp *opp110 = TO_DCE110_OPP(opp);
+	uपूर्णांक32_t fmt_mem_cntl_value;
 
 	/* Program source select*/
-	/* Use HW default source select for FMT_MEMORYx_CONTROL */
-	/* Use that value for FMT_SRC_SELECT as well*/
+	/* Use HW शेष source select क्रम FMT_MEMORYx_CONTROL */
+	/* Use that value क्रम FMT_SRC_SELECT as well*/
 	REG_GET(CONTROL,
 			FMT420_MEM0_SOURCE_SEL, &fmt_mem_cntl_value);
 
@@ -595,15 +596,15 @@ static void program_formatter_420_memory(struct output_pixel_processor *opp)
 	/* Turn on the memory */
 	REG_UPDATE(CONTROL,
 			FMT420_MEM0_PWR_FORCE, 0);
-}
+पूर्ण
 
-void dce110_opp_set_dyn_expansion(
-	struct output_pixel_processor *opp,
-	enum dc_color_space color_sp,
-	enum dc_color_depth color_dpth,
-	enum signal_type signal)
-{
-	struct dce110_opp *opp110 = TO_DCE110_OPP(opp);
+व्योम dce110_opp_set_dyn_expansion(
+	काष्ठा output_pixel_processor *opp,
+	क्रमागत dc_color_space color_sp,
+	क्रमागत dc_color_depth color_dpth,
+	क्रमागत संकेत_type संकेत)
+अणु
+	काष्ठा dce110_opp *opp110 = TO_DCE110_OPP(opp);
 
 	REG_UPDATE_2(FMT_DYNAMIC_EXP_CNTL,
 			FMT_DYNAMIC_EXP_EN, 0,
@@ -611,35 +612,35 @@ void dce110_opp_set_dyn_expansion(
 
 	/*00 - 10-bit -> 12-bit dynamic expansion*/
 	/*01 - 8-bit  -> 12-bit dynamic expansion*/
-	if (signal == SIGNAL_TYPE_HDMI_TYPE_A ||
-		signal == SIGNAL_TYPE_DISPLAY_PORT ||
-		signal == SIGNAL_TYPE_DISPLAY_PORT_MST) {
-		switch (color_dpth) {
-		case COLOR_DEPTH_888:
+	अगर (संकेत == SIGNAL_TYPE_HDMI_TYPE_A ||
+		संकेत == SIGNAL_TYPE_DISPLAY_PORT ||
+		संकेत == SIGNAL_TYPE_DISPLAY_PORT_MST) अणु
+		चयन (color_dpth) अणु
+		हाल COLOR_DEPTH_888:
 			REG_UPDATE_2(FMT_DYNAMIC_EXP_CNTL,
 				FMT_DYNAMIC_EXP_EN, 1,
 				FMT_DYNAMIC_EXP_MODE, 1);
-			break;
-		case COLOR_DEPTH_101010:
+			अवरोध;
+		हाल COLOR_DEPTH_101010:
 			REG_UPDATE_2(FMT_DYNAMIC_EXP_CNTL,
 				FMT_DYNAMIC_EXP_EN, 1,
 				FMT_DYNAMIC_EXP_MODE, 0);
-			break;
-		case COLOR_DEPTH_121212:
+			अवरोध;
+		हाल COLOR_DEPTH_121212:
 			REG_UPDATE_2(
 				FMT_DYNAMIC_EXP_CNTL,
 				FMT_DYNAMIC_EXP_EN, 1,/*otherwise last two bits are zero*/
 				FMT_DYNAMIC_EXP_MODE, 0);
-			break;
-		default:
-			break;
-		}
-	}
-}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void program_formatter_reset_dig_resync_fifo(struct output_pixel_processor *opp)
-{
-	struct dce110_opp *opp110 = TO_DCE110_OPP(opp);
+अटल व्योम program_क्रमmatter_reset_dig_resync_fअगरo(काष्ठा output_pixel_processor *opp)
+अणु
+	काष्ठा dce110_opp *opp110 = TO_DCE110_OPP(opp);
 
 	/* clear previous phase lock status*/
 	REG_UPDATE(FMT_CONTROL,
@@ -648,18 +649,18 @@ static void program_formatter_reset_dig_resync_fifo(struct output_pixel_processo
 	/* poll until FMT_420_PIXEL_PHASE_LOCKED become 1*/
 	REG_WAIT(FMT_CONTROL, FMT_420_PIXEL_PHASE_LOCKED, 1, 10, 10);
 
-}
+पूर्ण
 
-void dce110_opp_program_fmt(
-	struct output_pixel_processor *opp,
-	struct bit_depth_reduction_params *fmt_bit_depth,
-	struct clamping_and_pixel_encoding_params *clamping)
-{
+व्योम dce110_opp_program_fmt(
+	काष्ठा output_pixel_processor *opp,
+	काष्ठा bit_depth_reduction_params *fmt_bit_depth,
+	काष्ठा clamping_and_pixel_encoding_params *clamping)
+अणु
 	/* dithering is affected by <CrtcSourceSelect>, hence should be
 	 * programmed afterwards */
 
-	if (clamping->pixel_encoding == PIXEL_ENCODING_YCBCR420)
-		program_formatter_420_memory(opp);
+	अगर (clamping->pixel_encoding == PIXEL_ENCODING_YCBCR420)
+		program_क्रमmatter_420_memory(opp);
 
 	dce110_opp_program_bit_depth_reduction(
 		opp,
@@ -669,23 +670,23 @@ void dce110_opp_program_fmt(
 		opp,
 		clamping);
 
-	if (clamping->pixel_encoding == PIXEL_ENCODING_YCBCR420)
-		program_formatter_reset_dig_resync_fifo(opp);
+	अगर (clamping->pixel_encoding == PIXEL_ENCODING_YCBCR420)
+		program_क्रमmatter_reset_dig_resync_fअगरo(opp);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_opp_program_fmt(
-	struct output_pixel_processor *opp,
-	struct bit_depth_reduction_params *fmt_bit_depth,
-	struct clamping_and_pixel_encoding_params *clamping)
-{
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_opp_program_fmt(
+	काष्ठा output_pixel_processor *opp,
+	काष्ठा bit_depth_reduction_params *fmt_bit_depth,
+	काष्ठा clamping_and_pixel_encoding_params *clamping)
+अणु
 	/* dithering is affected by <CrtcSourceSelect>, hence should be
 	 * programmed afterwards */
 
-	if (clamping->pixel_encoding == PIXEL_ENCODING_YCBCR420)
-		program_formatter_420_memory(opp);
+	अगर (clamping->pixel_encoding == PIXEL_ENCODING_YCBCR420)
+		program_क्रमmatter_420_memory(opp);
 
 	dce60_opp_program_bit_depth_reduction(
 		opp,
@@ -695,42 +696,42 @@ static void dce60_opp_program_fmt(
 		opp,
 		clamping);
 
-	if (clamping->pixel_encoding == PIXEL_ENCODING_YCBCR420)
-		program_formatter_reset_dig_resync_fifo(opp);
+	अगर (clamping->pixel_encoding == PIXEL_ENCODING_YCBCR420)
+		program_क्रमmatter_reset_dig_resync_fअगरo(opp);
 
-	return;
-}
-#endif
+	वापस;
+पूर्ण
+#पूर्ण_अगर
 
 
 
 /*****************************************/
-/* Constructor, Destructor               */
+/* Conकाष्ठाor, Deकाष्ठाor               */
 /*****************************************/
 
-static const struct opp_funcs funcs = {
+अटल स्थिर काष्ठा opp_funcs funcs = अणु
 	.opp_set_dyn_expansion = dce110_opp_set_dyn_expansion,
 	.opp_destroy = dce110_opp_destroy,
 	.opp_program_fmt = dce110_opp_program_fmt,
 	.opp_program_bit_depth_reduction = dce110_opp_program_bit_depth_reduction
-};
+पूर्ण;
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static const struct opp_funcs dce60_opp_funcs = {
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल स्थिर काष्ठा opp_funcs dce60_opp_funcs = अणु
 	.opp_set_dyn_expansion = dce110_opp_set_dyn_expansion,
 	.opp_destroy = dce110_opp_destroy,
 	.opp_program_fmt = dce60_opp_program_fmt,
 	.opp_program_bit_depth_reduction = dce60_opp_program_bit_depth_reduction
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-void dce110_opp_construct(struct dce110_opp *opp110,
-	struct dc_context *ctx,
-	uint32_t inst,
-	const struct dce_opp_registers *regs,
-	const struct dce_opp_shift *opp_shift,
-	const struct dce_opp_mask *opp_mask)
-{
+व्योम dce110_opp_स्थिरruct(काष्ठा dce110_opp *opp110,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst,
+	स्थिर काष्ठा dce_opp_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_opp_shअगरt *opp_shअगरt,
+	स्थिर काष्ठा dce_opp_mask *opp_mask)
+अणु
 	opp110->base.funcs = &funcs;
 
 	opp110->base.ctx = ctx;
@@ -738,18 +739,18 @@ void dce110_opp_construct(struct dce110_opp *opp110,
 	opp110->base.inst = inst;
 
 	opp110->regs = regs;
-	opp110->opp_shift = opp_shift;
+	opp110->opp_shअगरt = opp_shअगरt;
 	opp110->opp_mask = opp_mask;
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-void dce60_opp_construct(struct dce110_opp *opp110,
-	struct dc_context *ctx,
-	uint32_t inst,
-	const struct dce_opp_registers *regs,
-	const struct dce_opp_shift *opp_shift,
-	const struct dce_opp_mask *opp_mask)
-{
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+व्योम dce60_opp_स्थिरruct(काष्ठा dce110_opp *opp110,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst,
+	स्थिर काष्ठा dce_opp_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_opp_shअगरt *opp_shअगरt,
+	स्थिर काष्ठा dce_opp_mask *opp_mask)
+अणु
 	opp110->base.funcs = &dce60_opp_funcs;
 
 	opp110->base.ctx = ctx;
@@ -757,15 +758,15 @@ void dce60_opp_construct(struct dce110_opp *opp110,
 	opp110->base.inst = inst;
 
 	opp110->regs = regs;
-	opp110->opp_shift = opp_shift;
+	opp110->opp_shअगरt = opp_shअगरt;
 	opp110->opp_mask = opp_mask;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void dce110_opp_destroy(struct output_pixel_processor **opp)
-{
-	if (*opp)
-		kfree(FROM_DCE11_OPP(*opp));
-	*opp = NULL;
-}
+व्योम dce110_opp_destroy(काष्ठा output_pixel_processor **opp)
+अणु
+	अगर (*opp)
+		kमुक्त(FROM_DCE11_OPP(*opp));
+	*opp = शून्य;
+पूर्ण
 

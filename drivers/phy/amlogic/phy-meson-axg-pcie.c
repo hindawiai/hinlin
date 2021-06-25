@@ -1,189 +1,190 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Amlogic AXG PCIE PHY driver
  *
  * Copyright (C) 2020 Remi Pommarel <repk@triplefau.lt>
  */
-#include <linux/module.h>
-#include <linux/phy/phy.h>
-#include <linux/regmap.h>
-#include <linux/reset.h>
-#include <linux/platform_device.h>
-#include <linux/bitfield.h>
-#include <dt-bindings/phy/phy.h>
+#समावेश <linux/module.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/bitfield.h>
+#समावेश <dt-bindings/phy/phy.h>
 
-#define MESON_PCIE_REG0 0x00
-#define		MESON_PCIE_COMMON_CLK	BIT(4)
-#define		MESON_PCIE_PORT_SEL	GENMASK(3, 2)
-#define		MESON_PCIE_CLK		BIT(1)
-#define		MESON_PCIE_POWERDOWN	BIT(0)
+#घोषणा MESON_PCIE_REG0 0x00
+#घोषणा		MESON_PCIE_COMMON_CLK	BIT(4)
+#घोषणा		MESON_PCIE_PORT_SEL	GENMASK(3, 2)
+#घोषणा		MESON_PCIE_CLK		BIT(1)
+#घोषणा		MESON_PCIE_POWERDOWN	BIT(0)
 
-#define MESON_PCIE_TWO_X1		FIELD_PREP(MESON_PCIE_PORT_SEL, 0x3)
-#define MESON_PCIE_COMMON_REF_CLK	FIELD_PREP(MESON_PCIE_COMMON_CLK, 0x1)
-#define MESON_PCIE_PHY_INIT		(MESON_PCIE_TWO_X1 |		\
+#घोषणा MESON_PCIE_TWO_X1		FIELD_PREP(MESON_PCIE_PORT_SEL, 0x3)
+#घोषणा MESON_PCIE_COMMON_REF_CLK	FIELD_PREP(MESON_PCIE_COMMON_CLK, 0x1)
+#घोषणा MESON_PCIE_PHY_INIT		(MESON_PCIE_TWO_X1 |		\
 					 MESON_PCIE_COMMON_REF_CLK)
-#define MESON_PCIE_RESET_DELAY		500
+#घोषणा MESON_PCIE_RESET_DELAY		500
 
-struct phy_axg_pcie_priv {
-	struct phy *phy;
-	struct phy *analog;
-	struct regmap *regmap;
-	struct reset_control *reset;
-};
+काष्ठा phy_axg_pcie_priv अणु
+	काष्ठा phy *phy;
+	काष्ठा phy *analog;
+	काष्ठा regmap *regmap;
+	काष्ठा reset_control *reset;
+पूर्ण;
 
-static const struct regmap_config phy_axg_pcie_regmap_conf = {
+अटल स्थिर काष्ठा regmap_config phy_axg_pcie_regmap_conf = अणु
 	.reg_bits = 8,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = MESON_PCIE_REG0,
-};
+	.max_रेजिस्टर = MESON_PCIE_REG0,
+पूर्ण;
 
-static int phy_axg_pcie_power_on(struct phy *phy)
-{
-	struct phy_axg_pcie_priv *priv = phy_get_drvdata(phy);
-	int ret;
+अटल पूर्णांक phy_axg_pcie_घातer_on(काष्ठा phy *phy)
+अणु
+	काष्ठा phy_axg_pcie_priv *priv = phy_get_drvdata(phy);
+	पूर्णांक ret;
 
-	ret = phy_power_on(priv->analog);
-	if (ret != 0)
-		return ret;
+	ret = phy_घातer_on(priv->analog);
+	अगर (ret != 0)
+		वापस ret;
 
 	regmap_update_bits(priv->regmap, MESON_PCIE_REG0,
 			   MESON_PCIE_POWERDOWN, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int phy_axg_pcie_power_off(struct phy *phy)
-{
-	struct phy_axg_pcie_priv *priv = phy_get_drvdata(phy);
-	int ret;
+अटल पूर्णांक phy_axg_pcie_घातer_off(काष्ठा phy *phy)
+अणु
+	काष्ठा phy_axg_pcie_priv *priv = phy_get_drvdata(phy);
+	पूर्णांक ret;
 
-	ret = phy_power_off(priv->analog);
-	if (ret != 0)
-		return ret;
+	ret = phy_घातer_off(priv->analog);
+	अगर (ret != 0)
+		वापस ret;
 
 	regmap_update_bits(priv->regmap, MESON_PCIE_REG0,
 			   MESON_PCIE_POWERDOWN, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int phy_axg_pcie_init(struct phy *phy)
-{
-	struct phy_axg_pcie_priv *priv = phy_get_drvdata(phy);
-	int ret;
+अटल पूर्णांक phy_axg_pcie_init(काष्ठा phy *phy)
+अणु
+	काष्ठा phy_axg_pcie_priv *priv = phy_get_drvdata(phy);
+	पूर्णांक ret;
 
 	ret = phy_init(priv->analog);
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
-	regmap_write(priv->regmap, MESON_PCIE_REG0, MESON_PCIE_PHY_INIT);
-	return reset_control_reset(priv->reset);
-}
+	regmap_ग_लिखो(priv->regmap, MESON_PCIE_REG0, MESON_PCIE_PHY_INIT);
+	वापस reset_control_reset(priv->reset);
+पूर्ण
 
-static int phy_axg_pcie_exit(struct phy *phy)
-{
-	struct phy_axg_pcie_priv *priv = phy_get_drvdata(phy);
-	int ret;
+अटल पूर्णांक phy_axg_pcie_निकास(काष्ठा phy *phy)
+अणु
+	काष्ठा phy_axg_pcie_priv *priv = phy_get_drvdata(phy);
+	पूर्णांक ret;
 
-	ret = phy_exit(priv->analog);
-	if (ret != 0)
-		return ret;
+	ret = phy_निकास(priv->analog);
+	अगर (ret != 0)
+		वापस ret;
 
-	return reset_control_reset(priv->reset);
-}
+	वापस reset_control_reset(priv->reset);
+पूर्ण
 
-static int phy_axg_pcie_reset(struct phy *phy)
-{
-	struct phy_axg_pcie_priv *priv = phy_get_drvdata(phy);
-	int ret = 0;
+अटल पूर्णांक phy_axg_pcie_reset(काष्ठा phy *phy)
+अणु
+	काष्ठा phy_axg_pcie_priv *priv = phy_get_drvdata(phy);
+	पूर्णांक ret = 0;
 
 	ret = phy_reset(priv->analog);
-	if (ret != 0)
-		goto out;
+	अगर (ret != 0)
+		जाओ out;
 
-	ret = reset_control_assert(priv->reset);
-	if (ret != 0)
-		goto out;
+	ret = reset_control_निश्चित(priv->reset);
+	अगर (ret != 0)
+		जाओ out;
 	udelay(MESON_PCIE_RESET_DELAY);
 
-	ret = reset_control_deassert(priv->reset);
-	if (ret != 0)
-		goto out;
+	ret = reset_control_deनिश्चित(priv->reset);
+	अगर (ret != 0)
+		जाओ out;
 	udelay(MESON_PCIE_RESET_DELAY);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct phy_ops phy_axg_pcie_ops = {
+अटल स्थिर काष्ठा phy_ops phy_axg_pcie_ops = अणु
 	.init = phy_axg_pcie_init,
-	.exit = phy_axg_pcie_exit,
-	.power_on = phy_axg_pcie_power_on,
-	.power_off = phy_axg_pcie_power_off,
+	.निकास = phy_axg_pcie_निकास,
+	.घातer_on = phy_axg_pcie_घातer_on,
+	.घातer_off = phy_axg_pcie_घातer_off,
 	.reset = phy_axg_pcie_reset,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int phy_axg_pcie_probe(struct platform_device *pdev)
-{
-	struct phy_provider *pphy;
-	struct device *dev = &pdev->dev;
-	struct phy_axg_pcie_priv *priv;
-	struct device_node *np = dev->of_node;
-	void __iomem *base;
-	int ret;
+अटल पूर्णांक phy_axg_pcie_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा phy_provider *pphy;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा phy_axg_pcie_priv *priv;
+	काष्ठा device_node *np = dev->of_node;
+	व्योम __iomem *base;
+	पूर्णांक ret;
 
-	priv = devm_kmalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kदो_स्मृति(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->phy = devm_phy_create(dev, np, &phy_axg_pcie_ops);
-	if (IS_ERR(priv->phy)) {
+	अगर (IS_ERR(priv->phy)) अणु
 		ret = PTR_ERR(priv->phy);
-		if (ret != -EPROBE_DEFER)
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to create PHY\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	priv->regmap = devm_regmap_init_mmio(dev, base,
 					     &phy_axg_pcie_regmap_conf);
-	if (IS_ERR(priv->regmap))
-		return PTR_ERR(priv->regmap);
+	अगर (IS_ERR(priv->regmap))
+		वापस PTR_ERR(priv->regmap);
 
 	priv->reset = devm_reset_control_array_get_exclusive(dev);
-	if (IS_ERR(priv->reset))
-		return PTR_ERR(priv->reset);
+	अगर (IS_ERR(priv->reset))
+		वापस PTR_ERR(priv->reset);
 
 	priv->analog = devm_phy_get(dev, "analog");
-	if (IS_ERR(priv->analog))
-		return PTR_ERR(priv->analog);
+	अगर (IS_ERR(priv->analog))
+		वापस PTR_ERR(priv->analog);
 
 	phy_set_drvdata(priv->phy, priv);
 	dev_set_drvdata(dev, priv);
-	pphy = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+	pphy = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
 
-	return PTR_ERR_OR_ZERO(pphy);
-}
+	वापस PTR_ERR_OR_ZERO(pphy);
+पूर्ण
 
-static const struct of_device_id phy_axg_pcie_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id phy_axg_pcie_of_match[] = अणु
+	अणु
 		.compatible = "amlogic,axg-pcie-phy",
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, phy_axg_pcie_of_match);
 
-static struct platform_driver phy_axg_pcie_driver = {
+अटल काष्ठा platक्रमm_driver phy_axg_pcie_driver = अणु
 	.probe = phy_axg_pcie_probe,
-	.driver = {
+	.driver = अणु
 		.name = "phy-axg-pcie",
 		.of_match_table = phy_axg_pcie_of_match,
-	},
-};
-module_platform_driver(phy_axg_pcie_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(phy_axg_pcie_driver);
 
 MODULE_AUTHOR("Remi Pommarel <repk@triplefau.lt>");
 MODULE_DESCRIPTION("Amlogic AXG PCIE PHY driver");

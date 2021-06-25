@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright 2008 ioogle, Inc.  All rights reserved.
  *
@@ -7,280 +8,280 @@
  * The ATA transport class contains common code to deal with ATA HBAs,
  * an approximated representation of ATA topologies in the driver model,
  * and various sysfs attributes to expose these topologies and management
- * interfaces to user-space.
+ * पूर्णांकerfaces to user-space.
  *
  * There are 3 objects defined in in this class:
  * - ata_port
  * - ata_link
  * - ata_device
- * Each port has a link object. Each link can have up to two devices for PATA
- * and generally one for SATA.
+ * Each port has a link object. Each link can have up to two devices क्रम PATA
+ * and generally one क्रम SATA.
  * If there is SATA port multiplier [PMP], 15 additional ata_link object are
  * created.
  *
  * These objects are created when the ata host is initialized and when a PMP is
- * found. They are removed only when the HBA is removed, cleaned before the
+ * found. They are हटाओd only when the HBA is हटाओd, cleaned beक्रमe the
  * error handler runs.
  */
 
 
-#include <linux/kernel.h>
-#include <linux/blkdev.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <scsi/scsi_transport.h>
-#include <linux/libata.h>
-#include <linux/hdreg.h>
-#include <linux/uaccess.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <scsi/scsi_transport.h>
+#समावेश <linux/libata.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "libata.h"
-#include "libata-transport.h"
+#समावेश "libata.h"
+#समावेश "libata-transport.h"
 
-#define ATA_PORT_ATTRS		3
-#define ATA_LINK_ATTRS		3
-#define ATA_DEV_ATTRS		9
+#घोषणा ATA_PORT_ATTRS		3
+#घोषणा ATA_LINK_ATTRS		3
+#घोषणा ATA_DEV_ATTRS		9
 
-struct scsi_transport_template;
-struct scsi_transport_template *ata_scsi_transport_template;
+काष्ठा scsi_transport_ढाँचा;
+काष्ठा scsi_transport_ढाँचा *ata_scsi_transport_ढाँचा;
 
-struct ata_internal {
-	struct scsi_transport_template t;
+काष्ठा ata_पूर्णांकernal अणु
+	काष्ठा scsi_transport_ढाँचा t;
 
-	struct device_attribute private_port_attrs[ATA_PORT_ATTRS];
-	struct device_attribute private_link_attrs[ATA_LINK_ATTRS];
-	struct device_attribute private_dev_attrs[ATA_DEV_ATTRS];
+	काष्ठा device_attribute निजी_port_attrs[ATA_PORT_ATTRS];
+	काष्ठा device_attribute निजी_link_attrs[ATA_LINK_ATTRS];
+	काष्ठा device_attribute निजी_dev_attrs[ATA_DEV_ATTRS];
 
-	struct transport_container link_attr_cont;
-	struct transport_container dev_attr_cont;
+	काष्ठा transport_container link_attr_cont;
+	काष्ठा transport_container dev_attr_cont;
 
 	/*
-	 * The array of null terminated pointers to attributes
+	 * The array of null terminated poपूर्णांकers to attributes
 	 * needed by scsi_sysfs.c
 	 */
-	struct device_attribute *link_attrs[ATA_LINK_ATTRS + 1];
-	struct device_attribute *port_attrs[ATA_PORT_ATTRS + 1];
-	struct device_attribute *dev_attrs[ATA_DEV_ATTRS + 1];
-};
-#define to_ata_internal(tmpl)	container_of(tmpl, struct ata_internal, t)
+	काष्ठा device_attribute *link_attrs[ATA_LINK_ATTRS + 1];
+	काष्ठा device_attribute *port_attrs[ATA_PORT_ATTRS + 1];
+	काष्ठा device_attribute *dev_attrs[ATA_DEV_ATTRS + 1];
+पूर्ण;
+#घोषणा to_ata_पूर्णांकernal(पंचांगpl)	container_of(पंचांगpl, काष्ठा ata_पूर्णांकernal, t)
 
 
-#define tdev_to_device(d)					\
-	container_of((d), struct ata_device, tdev)
-#define transport_class_to_dev(dev)				\
+#घोषणा tdev_to_device(d)					\
+	container_of((d), काष्ठा ata_device, tdev)
+#घोषणा transport_class_to_dev(dev)				\
 	tdev_to_device((dev)->parent)
 
-#define tdev_to_link(d)						\
-	container_of((d), struct ata_link, tdev)
-#define transport_class_to_link(dev)				\
+#घोषणा tdev_to_link(d)						\
+	container_of((d), काष्ठा ata_link, tdev)
+#घोषणा transport_class_to_link(dev)				\
 	tdev_to_link((dev)->parent)
 
-#define tdev_to_port(d)						\
-	container_of((d), struct ata_port, tdev)
-#define transport_class_to_port(dev)				\
+#घोषणा tdev_to_port(d)						\
+	container_of((d), काष्ठा ata_port, tdev)
+#घोषणा transport_class_to_port(dev)				\
 	tdev_to_port((dev)->parent)
 
 
 /* Device objects are always created whit link objects */
-static int ata_tdev_add(struct ata_device *dev);
-static void ata_tdev_delete(struct ata_device *dev);
+अटल पूर्णांक ata_tdev_add(काष्ठा ata_device *dev);
+अटल व्योम ata_tdev_delete(काष्ठा ata_device *dev);
 
 
 /*
- * Hack to allow attributes of the same name in different objects.
+ * Hack to allow attributes of the same name in dअगरferent objects.
  */
-#define ATA_DEVICE_ATTR(_prefix,_name,_mode,_show,_store) \
-	struct device_attribute device_attr_##_prefix##_##_name = \
+#घोषणा ATA_DEVICE_ATTR(_prefix,_name,_mode,_show,_store) \
+	काष्ठा device_attribute device_attr_##_prefix##_##_name = \
 	__ATTR(_name,_mode,_show,_store)
 
-#define ata_bitfield_name_match(title, table)			\
-static ssize_t							\
-get_ata_##title##_names(u32 table_key, char *buf)		\
-{								\
-	char *prefix = "";					\
-	ssize_t len = 0;					\
-	int i;							\
+#घोषणा ata_bitfield_name_match(title, table)			\
+अटल sमाप_प्रकार							\
+get_ata_##title##_names(u32 table_key, अक्षर *buf)		\
+अणु								\
+	अक्षर *prefix = "";					\
+	sमाप_प्रकार len = 0;					\
+	पूर्णांक i;							\
 								\
-	for (i = 0; i < ARRAY_SIZE(table); i++) {		\
-		if (table[i].value & table_key) {		\
-			len += sprintf(buf + len, "%s%s",	\
+	क्रम (i = 0; i < ARRAY_SIZE(table); i++) अणु		\
+		अगर (table[i].value & table_key) अणु		\
+			len += प्र_लिखो(buf + len, "%s%s",	\
 				prefix, table[i].name);		\
 			prefix = ", ";				\
-		}						\
-	}							\
-	len += sprintf(buf + len, "\n");			\
-	return len;						\
-}
+		पूर्ण						\
+	पूर्ण							\
+	len += प्र_लिखो(buf + len, "\n");			\
+	वापस len;						\
+पूर्ण
 
-#define ata_bitfield_name_search(title, table)			\
-static ssize_t							\
-get_ata_##title##_names(u32 table_key, char *buf)		\
-{								\
-	ssize_t len = 0;					\
-	int i;							\
+#घोषणा ata_bitfield_name_search(title, table)			\
+अटल sमाप_प्रकार							\
+get_ata_##title##_names(u32 table_key, अक्षर *buf)		\
+अणु								\
+	sमाप_प्रकार len = 0;					\
+	पूर्णांक i;							\
 								\
-	for (i = 0; i < ARRAY_SIZE(table); i++) {		\
-		if (table[i].value == table_key) {		\
-			len += sprintf(buf + len, "%s",		\
+	क्रम (i = 0; i < ARRAY_SIZE(table); i++) अणु		\
+		अगर (table[i].value == table_key) अणु		\
+			len += प्र_लिखो(buf + len, "%s",		\
 				table[i].name);			\
-			break;					\
-		}						\
-	}							\
-	len += sprintf(buf + len, "\n");			\
-	return len;						\
-}
+			अवरोध;					\
+		पूर्ण						\
+	पूर्ण							\
+	len += प्र_लिखो(buf + len, "\n");			\
+	वापस len;						\
+पूर्ण
 
-static struct {
+अटल काष्ठा अणु
 	u32		value;
-	char		*name;
-} ata_class_names[] = {
-	{ ATA_DEV_UNKNOWN,		"unknown" },
-	{ ATA_DEV_ATA,			"ata" },
-	{ ATA_DEV_ATA_UNSUP,		"ata" },
-	{ ATA_DEV_ATAPI,		"atapi" },
-	{ ATA_DEV_ATAPI_UNSUP,		"atapi" },
-	{ ATA_DEV_PMP,			"pmp" },
-	{ ATA_DEV_PMP_UNSUP,		"pmp" },
-	{ ATA_DEV_SEMB,			"semb" },
-	{ ATA_DEV_SEMB_UNSUP,		"semb" },
-	{ ATA_DEV_ZAC,			"zac" },
-	{ ATA_DEV_NONE,			"none" }
-};
+	अक्षर		*name;
+पूर्ण ata_class_names[] = अणु
+	अणु ATA_DEV_UNKNOWN,		"unknown" पूर्ण,
+	अणु ATA_DEV_ATA,			"ata" पूर्ण,
+	अणु ATA_DEV_ATA_UNSUP,		"ata" पूर्ण,
+	अणु ATA_DEV_ATAPI,		"atapi" पूर्ण,
+	अणु ATA_DEV_ATAPI_UNSUP,		"atapi" पूर्ण,
+	अणु ATA_DEV_PMP,			"pmp" पूर्ण,
+	अणु ATA_DEV_PMP_UNSUP,		"pmp" पूर्ण,
+	अणु ATA_DEV_SEMB,			"semb" पूर्ण,
+	अणु ATA_DEV_SEMB_UNSUP,		"semb" पूर्ण,
+	अणु ATA_DEV_ZAC,			"zac" पूर्ण,
+	अणु ATA_DEV_NONE,			"none" पूर्ण
+पूर्ण;
 ata_bitfield_name_search(class, ata_class_names)
 
 
-static struct {
+अटल काष्ठा अणु
 	u32		value;
-	char		*name;
-} ata_err_names[] = {
-	{ AC_ERR_DEV,			"DeviceError" },
-	{ AC_ERR_HSM,			"HostStateMachineError" },
-	{ AC_ERR_TIMEOUT,		"Timeout" },
-	{ AC_ERR_MEDIA,			"MediaError" },
-	{ AC_ERR_ATA_BUS,		"BusError" },
-	{ AC_ERR_HOST_BUS,		"HostBusError" },
-	{ AC_ERR_SYSTEM,		"SystemError" },
-	{ AC_ERR_INVALID,		"InvalidArg" },
-	{ AC_ERR_OTHER,			"Unknown" },
-	{ AC_ERR_NODEV_HINT,		"NoDeviceHint" },
-	{ AC_ERR_NCQ,		 	"NCQError" }
-};
+	अक्षर		*name;
+पूर्ण ata_err_names[] = अणु
+	अणु AC_ERR_DEV,			"DeviceError" पूर्ण,
+	अणु AC_ERR_HSM,			"HostStateMachineError" पूर्ण,
+	अणु AC_ERR_TIMEOUT,		"Timeout" पूर्ण,
+	अणु AC_ERR_MEDIA,			"MediaError" पूर्ण,
+	अणु AC_ERR_ATA_BUS,		"BusError" पूर्ण,
+	अणु AC_ERR_HOST_BUS,		"HostBusError" पूर्ण,
+	अणु AC_ERR_SYSTEM,		"SystemError" पूर्ण,
+	अणु AC_ERR_INVALID,		"InvalidArg" पूर्ण,
+	अणु AC_ERR_OTHER,			"Unknown" पूर्ण,
+	अणु AC_ERR_NODEV_HINT,		"NoDeviceHint" पूर्ण,
+	अणु AC_ERR_NCQ,		 	"NCQError" पूर्ण
+पूर्ण;
 ata_bitfield_name_match(err, ata_err_names)
 
-static struct {
+अटल काष्ठा अणु
 	u32		value;
-	char		*name;
-} ata_xfer_names[] = {
-	{ XFER_UDMA_7,			"XFER_UDMA_7" },
-	{ XFER_UDMA_6,			"XFER_UDMA_6" },
-	{ XFER_UDMA_5,			"XFER_UDMA_5" },
-	{ XFER_UDMA_4,			"XFER_UDMA_4" },
-	{ XFER_UDMA_3,			"XFER_UDMA_3" },
-	{ XFER_UDMA_2,			"XFER_UDMA_2" },
-	{ XFER_UDMA_1,			"XFER_UDMA_1" },
-	{ XFER_UDMA_0,			"XFER_UDMA_0" },
-	{ XFER_MW_DMA_4,		"XFER_MW_DMA_4" },
-	{ XFER_MW_DMA_3,		"XFER_MW_DMA_3" },
-	{ XFER_MW_DMA_2,		"XFER_MW_DMA_2" },
-	{ XFER_MW_DMA_1,		"XFER_MW_DMA_1" },
-	{ XFER_MW_DMA_0,		"XFER_MW_DMA_0" },
-	{ XFER_SW_DMA_2,		"XFER_SW_DMA_2" },
-	{ XFER_SW_DMA_1,		"XFER_SW_DMA_1" },
-	{ XFER_SW_DMA_0,		"XFER_SW_DMA_0" },
-	{ XFER_PIO_6,			"XFER_PIO_6" },
-	{ XFER_PIO_5,			"XFER_PIO_5" },
-	{ XFER_PIO_4,			"XFER_PIO_4" },
-	{ XFER_PIO_3,			"XFER_PIO_3" },
-	{ XFER_PIO_2,			"XFER_PIO_2" },
-	{ XFER_PIO_1,			"XFER_PIO_1" },
-	{ XFER_PIO_0,			"XFER_PIO_0" },
-	{ XFER_PIO_SLOW,		"XFER_PIO_SLOW" }
-};
+	अक्षर		*name;
+पूर्ण ata_xfer_names[] = अणु
+	अणु XFER_UDMA_7,			"XFER_UDMA_7" पूर्ण,
+	अणु XFER_UDMA_6,			"XFER_UDMA_6" पूर्ण,
+	अणु XFER_UDMA_5,			"XFER_UDMA_5" पूर्ण,
+	अणु XFER_UDMA_4,			"XFER_UDMA_4" पूर्ण,
+	अणु XFER_UDMA_3,			"XFER_UDMA_3" पूर्ण,
+	अणु XFER_UDMA_2,			"XFER_UDMA_2" पूर्ण,
+	अणु XFER_UDMA_1,			"XFER_UDMA_1" पूर्ण,
+	अणु XFER_UDMA_0,			"XFER_UDMA_0" पूर्ण,
+	अणु XFER_MW_DMA_4,		"XFER_MW_DMA_4" पूर्ण,
+	अणु XFER_MW_DMA_3,		"XFER_MW_DMA_3" पूर्ण,
+	अणु XFER_MW_DMA_2,		"XFER_MW_DMA_2" पूर्ण,
+	अणु XFER_MW_DMA_1,		"XFER_MW_DMA_1" पूर्ण,
+	अणु XFER_MW_DMA_0,		"XFER_MW_DMA_0" पूर्ण,
+	अणु XFER_SW_DMA_2,		"XFER_SW_DMA_2" पूर्ण,
+	अणु XFER_SW_DMA_1,		"XFER_SW_DMA_1" पूर्ण,
+	अणु XFER_SW_DMA_0,		"XFER_SW_DMA_0" पूर्ण,
+	अणु XFER_PIO_6,			"XFER_PIO_6" पूर्ण,
+	अणु XFER_PIO_5,			"XFER_PIO_5" पूर्ण,
+	अणु XFER_PIO_4,			"XFER_PIO_4" पूर्ण,
+	अणु XFER_PIO_3,			"XFER_PIO_3" पूर्ण,
+	अणु XFER_PIO_2,			"XFER_PIO_2" पूर्ण,
+	अणु XFER_PIO_1,			"XFER_PIO_1" पूर्ण,
+	अणु XFER_PIO_0,			"XFER_PIO_0" पूर्ण,
+	अणु XFER_PIO_SLOW,		"XFER_PIO_SLOW" पूर्ण
+पूर्ण;
 ata_bitfield_name_match(xfer,ata_xfer_names)
 
 /*
  * ATA Port attributes
  */
-#define ata_port_show_simple(field, name, format_string, cast)		\
-static ssize_t								\
-show_ata_port_##name(struct device *dev,				\
-		     struct device_attribute *attr, char *buf)		\
-{									\
-	struct ata_port *ap = transport_class_to_port(dev);		\
+#घोषणा ata_port_show_simple(field, name, क्रमmat_string, cast)		\
+अटल sमाप_प्रकार								\
+show_ata_port_##name(काष्ठा device *dev,				\
+		     काष्ठा device_attribute *attr, अक्षर *buf)		\
+अणु									\
+	काष्ठा ata_port *ap = transport_class_to_port(dev);		\
 									\
-	return scnprintf(buf, 20, format_string, cast ap->field);	\
-}
+	वापस scnम_लिखो(buf, 20, क्रमmat_string, cast ap->field);	\
+पूर्ण
 
-#define ata_port_simple_attr(field, name, format_string, type)		\
-	ata_port_show_simple(field, name, format_string, (type))	\
-static DEVICE_ATTR(name, S_IRUGO, show_ata_port_##name, NULL)
+#घोषणा ata_port_simple_attr(field, name, क्रमmat_string, type)		\
+	ata_port_show_simple(field, name, क्रमmat_string, (type))	\
+अटल DEVICE_ATTR(name, S_IRUGO, show_ata_port_##name, शून्य)
 
-ata_port_simple_attr(nr_pmp_links, nr_pmp_links, "%d\n", int);
-ata_port_simple_attr(stats.idle_irq, idle_irq, "%ld\n", unsigned long);
-ata_port_simple_attr(local_port_no, port_no, "%u\n", unsigned int);
+ata_port_simple_attr(nr_pmp_links, nr_pmp_links, "%d\n", पूर्णांक);
+ata_port_simple_attr(stats.idle_irq, idle_irq, "%ld\n", अचिन्हित दीर्घ);
+ata_port_simple_attr(local_port_no, port_no, "%u\n", अचिन्हित पूर्णांक);
 
-static DECLARE_TRANSPORT_CLASS(ata_port_class,
-			       "ata_port", NULL, NULL, NULL);
+अटल DECLARE_TRANSPORT_CLASS(ata_port_class,
+			       "ata_port", शून्य, शून्य, शून्य);
 
-static void ata_tport_release(struct device *dev)
-{
-	struct ata_port *ap = tdev_to_port(dev);
+अटल व्योम ata_tport_release(काष्ठा device *dev)
+अणु
+	काष्ठा ata_port *ap = tdev_to_port(dev);
 	ata_host_put(ap->host);
-}
+पूर्ण
 
 /**
- * ata_is_port --  check if a struct device represents a ATA port
+ * ata_is_port --  check अगर a काष्ठा device represents a ATA port
  * @dev:	device to check
  *
  * Returns:
- *	%1 if the device represents a ATA Port, %0 else
+ *	%1 अगर the device represents a ATA Port, %0 अन्यथा
  */
-static int ata_is_port(const struct device *dev)
-{
-	return dev->release == ata_tport_release;
-}
+अटल पूर्णांक ata_is_port(स्थिर काष्ठा device *dev)
+अणु
+	वापस dev->release == ata_tport_release;
+पूर्ण
 
-static int ata_tport_match(struct attribute_container *cont,
-			   struct device *dev)
-{
-	if (!ata_is_port(dev))
-		return 0;
-	return &ata_scsi_transport_template->host_attrs.ac == cont;
-}
+अटल पूर्णांक ata_tport_match(काष्ठा attribute_container *cont,
+			   काष्ठा device *dev)
+अणु
+	अगर (!ata_is_port(dev))
+		वापस 0;
+	वापस &ata_scsi_transport_ढाँचा->host_attrs.ac == cont;
+पूर्ण
 
 /**
- * ata_tport_delete  --  remove ATA PORT
- * @ap:	ATA PORT to remove
+ * ata_tport_delete  --  हटाओ ATA PORT
+ * @ap:	ATA PORT to हटाओ
  *
- * Removes the specified ATA PORT.  Remove the associated link as well.
+ * Removes the specअगरied ATA PORT.  Remove the associated link as well.
  */
-void ata_tport_delete(struct ata_port *ap)
-{
-	struct device *dev = &ap->tdev;
+व्योम ata_tport_delete(काष्ठा ata_port *ap)
+अणु
+	काष्ठा device *dev = &ap->tdev;
 
 	ata_tlink_delete(&ap->link);
 
-	transport_remove_device(dev);
+	transport_हटाओ_device(dev);
 	device_del(dev);
 	transport_destroy_device(dev);
 	put_device(dev);
-}
+पूर्ण
 
-/** ata_tport_add - initialize a transport ATA port structure
+/** ata_tport_add - initialize a transport ATA port काष्ठाure
  *
  * @parent:	parent device
- * @ap:		existing ata_port structure
+ * @ap:		existing ata_port काष्ठाure
  *
- * Initialize a ATA port structure for sysfs.  It will be added to the device
- * tree below the device specified by @parent which could be a PCI device.
+ * Initialize a ATA port काष्ठाure क्रम sysfs.  It will be added to the device
+ * tree below the device specअगरied by @parent which could be a PCI device.
  *
  * Returns %0 on success
  */
-int ata_tport_add(struct device *parent,
-		  struct ata_port *ap)
-{
-	int error;
-	struct device *dev = &ap->tdev;
+पूर्णांक ata_tport_add(काष्ठा device *parent,
+		  काष्ठा ata_port *ap)
+अणु
+	पूर्णांक error;
+	काष्ठा device *dev = &ap->tdev;
 
 	device_initialize(dev);
 	dev->type = &ata_port_type;
@@ -288,183 +289,183 @@ int ata_tport_add(struct device *parent,
 	dev->parent = parent;
 	ata_host_get(ap->host);
 	dev->release = ata_tport_release;
-	dev_set_name(dev, "ata%d", ap->print_id);
+	dev_set_name(dev, "ata%d", ap->prपूर्णांक_id);
 	transport_setup_device(dev);
 	ata_acpi_bind_port(ap);
 	error = device_add(dev);
-	if (error) {
-		goto tport_err;
-	}
+	अगर (error) अणु
+		जाओ tport_err;
+	पूर्ण
 
 	device_enable_async_suspend(dev);
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
-	pm_runtime_forbid(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_enable(dev);
+	pm_runसमय_क्रमbid(dev);
 
 	transport_add_device(dev);
 	transport_configure_device(dev);
 
 	error = ata_tlink_add(&ap->link);
-	if (error) {
-		goto tport_link_err;
-	}
-	return 0;
+	अगर (error) अणु
+		जाओ tport_link_err;
+	पूर्ण
+	वापस 0;
 
  tport_link_err:
-	transport_remove_device(dev);
+	transport_हटाओ_device(dev);
 	device_del(dev);
 
  tport_err:
 	transport_destroy_device(dev);
 	put_device(dev);
 	ata_host_put(ap->host);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 
 /*
  * ATA link attributes
  */
-static int noop(int x) { return x; }
+अटल पूर्णांक noop(पूर्णांक x) अणु वापस x; पूर्ण
 
-#define ata_link_show_linkspeed(field, format)			        \
-static ssize_t								\
-show_ata_link_##field(struct device *dev,				\
-		      struct device_attribute *attr, char *buf)		\
-{									\
-	struct ata_link *link = transport_class_to_link(dev);		\
+#घोषणा ata_link_show_linkspeed(field, क्रमmat)			        \
+अटल sमाप_प्रकार								\
+show_ata_link_##field(काष्ठा device *dev,				\
+		      काष्ठा device_attribute *attr, अक्षर *buf)		\
+अणु									\
+	काष्ठा ata_link *link = transport_class_to_link(dev);		\
 									\
-	return sprintf(buf, "%s\n", sata_spd_string(format(link->field))); \
-}
+	वापस प्र_लिखो(buf, "%s\n", sata_spd_string(क्रमmat(link->field))); \
+पूर्ण
 
-#define ata_link_linkspeed_attr(field, format)				\
-	ata_link_show_linkspeed(field, format)				\
-static DEVICE_ATTR(field, S_IRUGO, show_ata_link_##field, NULL)
+#घोषणा ata_link_linkspeed_attr(field, क्रमmat)				\
+	ata_link_show_linkspeed(field, क्रमmat)				\
+अटल DEVICE_ATTR(field, S_IRUGO, show_ata_link_##field, शून्य)
 
 ata_link_linkspeed_attr(hw_sata_spd_limit, fls);
 ata_link_linkspeed_attr(sata_spd_limit, fls);
 ata_link_linkspeed_attr(sata_spd, noop);
 
 
-static DECLARE_TRANSPORT_CLASS(ata_link_class,
-		"ata_link", NULL, NULL, NULL);
+अटल DECLARE_TRANSPORT_CLASS(ata_link_class,
+		"ata_link", शून्य, शून्य, शून्य);
 
-static void ata_tlink_release(struct device *dev)
-{
-}
+अटल व्योम ata_tlink_release(काष्ठा device *dev)
+अणु
+पूर्ण
 
 /**
- * ata_is_link --  check if a struct device represents a ATA link
+ * ata_is_link --  check अगर a काष्ठा device represents a ATA link
  * @dev:	device to check
  *
  * Returns:
- *	%1 if the device represents a ATA link, %0 else
+ *	%1 अगर the device represents a ATA link, %0 अन्यथा
  */
-static int ata_is_link(const struct device *dev)
-{
-	return dev->release == ata_tlink_release;
-}
+अटल पूर्णांक ata_is_link(स्थिर काष्ठा device *dev)
+अणु
+	वापस dev->release == ata_tlink_release;
+पूर्ण
 
-static int ata_tlink_match(struct attribute_container *cont,
-			   struct device *dev)
-{
-	struct ata_internal* i = to_ata_internal(ata_scsi_transport_template);
-	if (!ata_is_link(dev))
-		return 0;
-	return &i->link_attr_cont.ac == cont;
-}
+अटल पूर्णांक ata_tlink_match(काष्ठा attribute_container *cont,
+			   काष्ठा device *dev)
+अणु
+	काष्ठा ata_पूर्णांकernal* i = to_ata_पूर्णांकernal(ata_scsi_transport_ढाँचा);
+	अगर (!ata_is_link(dev))
+		वापस 0;
+	वापस &i->link_attr_cont.ac == cont;
+पूर्ण
 
 /**
- * ata_tlink_delete  --  remove ATA LINK
- * @link:	ATA LINK to remove
+ * ata_tlink_delete  --  हटाओ ATA LINK
+ * @link:	ATA LINK to हटाओ
  *
- * Removes the specified ATA LINK.  remove associated ATA device(s) as well.
+ * Removes the specअगरied ATA LINK.  हटाओ associated ATA device(s) as well.
  */
-void ata_tlink_delete(struct ata_link *link)
-{
-	struct device *dev = &link->tdev;
-	struct ata_device *ata_dev;
+व्योम ata_tlink_delete(काष्ठा ata_link *link)
+अणु
+	काष्ठा device *dev = &link->tdev;
+	काष्ठा ata_device *ata_dev;
 
-	ata_for_each_dev(ata_dev, link, ALL) {
+	ata_क्रम_each_dev(ata_dev, link, ALL) अणु
 		ata_tdev_delete(ata_dev);
-	}
+	पूर्ण
 
-	transport_remove_device(dev);
+	transport_हटाओ_device(dev);
 	device_del(dev);
 	transport_destroy_device(dev);
 	put_device(dev);
-}
+पूर्ण
 
 /**
- * ata_tlink_add  --  initialize a transport ATA link structure
- * @link:	allocated ata_link structure.
+ * ata_tlink_add  --  initialize a transport ATA link काष्ठाure
+ * @link:	allocated ata_link काष्ठाure.
  *
- * Initialize an ATA LINK structure for sysfs.  It will be added in the
- * device tree below the ATA PORT it belongs to.
+ * Initialize an ATA LINK काष्ठाure क्रम sysfs.  It will be added in the
+ * device tree below the ATA PORT it beदीर्घs to.
  *
  * Returns %0 on success
  */
-int ata_tlink_add(struct ata_link *link)
-{
-	struct device *dev = &link->tdev;
-	struct ata_port *ap = link->ap;
-	struct ata_device *ata_dev;
-	int error;
+पूर्णांक ata_tlink_add(काष्ठा ata_link *link)
+अणु
+	काष्ठा device *dev = &link->tdev;
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_device *ata_dev;
+	पूर्णांक error;
 
 	device_initialize(dev);
 	dev->parent = &ap->tdev;
 	dev->release = ata_tlink_release;
-	if (ata_is_host_link(link))
-		dev_set_name(dev, "link%d", ap->print_id);
-        else
-		dev_set_name(dev, "link%d.%d", ap->print_id, link->pmp);
+	अगर (ata_is_host_link(link))
+		dev_set_name(dev, "link%d", ap->prपूर्णांक_id);
+        अन्यथा
+		dev_set_name(dev, "link%d.%d", ap->prपूर्णांक_id, link->pmp);
 
 	transport_setup_device(dev);
 
 	error = device_add(dev);
-	if (error) {
-		goto tlink_err;
-	}
+	अगर (error) अणु
+		जाओ tlink_err;
+	पूर्ण
 
 	transport_add_device(dev);
 	transport_configure_device(dev);
 
-	ata_for_each_dev(ata_dev, link, ALL) {
+	ata_क्रम_each_dev(ata_dev, link, ALL) अणु
 		error = ata_tdev_add(ata_dev);
-		if (error) {
-			goto tlink_dev_err;
-		}
-	}
-	return 0;
+		अगर (error) अणु
+			जाओ tlink_dev_err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
   tlink_dev_err:
-	while (--ata_dev >= link->device) {
+	जबतक (--ata_dev >= link->device) अणु
 		ata_tdev_delete(ata_dev);
-	}
-	transport_remove_device(dev);
+	पूर्ण
+	transport_हटाओ_device(dev);
 	device_del(dev);
   tlink_err:
 	transport_destroy_device(dev);
 	put_device(dev);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * ATA device attributes
  */
 
-#define ata_dev_show_class(title, field)				\
-static ssize_t								\
-show_ata_dev_##field(struct device *dev,				\
-		     struct device_attribute *attr, char *buf)		\
-{									\
-	struct ata_device *ata_dev = transport_class_to_dev(dev);	\
+#घोषणा ata_dev_show_class(title, field)				\
+अटल sमाप_प्रकार								\
+show_ata_dev_##field(काष्ठा device *dev,				\
+		     काष्ठा device_attribute *attr, अक्षर *buf)		\
+अणु									\
+	काष्ठा ata_device *ata_dev = transport_class_to_dev(dev);	\
 									\
-	return get_ata_##title##_names(ata_dev->field, buf);		\
-}
+	वापस get_ata_##title##_names(ata_dev->field, buf);		\
+पूर्ण
 
-#define ata_dev_attr(title, field)					\
+#घोषणा ata_dev_attr(title, field)					\
 	ata_dev_show_class(title, field)				\
-static DEVICE_ATTR(field, S_IRUGO, show_ata_dev_##field, NULL)
+अटल DEVICE_ATTR(field, S_IRUGO, show_ata_dev_##field, शून्य)
 
 ata_dev_attr(class, class);
 ata_dev_attr(xfer, pio_mode);
@@ -472,249 +473,249 @@ ata_dev_attr(xfer, dma_mode);
 ata_dev_attr(xfer, xfer_mode);
 
 
-#define ata_dev_show_simple(field, format_string, cast)		\
-static ssize_t								\
-show_ata_dev_##field(struct device *dev,				\
-		     struct device_attribute *attr, char *buf)		\
-{									\
-	struct ata_device *ata_dev = transport_class_to_dev(dev);	\
+#घोषणा ata_dev_show_simple(field, क्रमmat_string, cast)		\
+अटल sमाप_प्रकार								\
+show_ata_dev_##field(काष्ठा device *dev,				\
+		     काष्ठा device_attribute *attr, अक्षर *buf)		\
+अणु									\
+	काष्ठा ata_device *ata_dev = transport_class_to_dev(dev);	\
 									\
-	return scnprintf(buf, 20, format_string, cast ata_dev->field);	\
-}
+	वापस scnम_लिखो(buf, 20, क्रमmat_string, cast ata_dev->field);	\
+पूर्ण
 
-#define ata_dev_simple_attr(field, format_string, type)	\
-	ata_dev_show_simple(field, format_string, (type))	\
-static DEVICE_ATTR(field, S_IRUGO, 			\
-		   show_ata_dev_##field, NULL)
+#घोषणा ata_dev_simple_attr(field, क्रमmat_string, type)	\
+	ata_dev_show_simple(field, क्रमmat_string, (type))	\
+अटल DEVICE_ATTR(field, S_IRUGO, 			\
+		   show_ata_dev_##field, शून्य)
 
-ata_dev_simple_attr(spdn_cnt, "%d\n", int);
+ata_dev_simple_attr(spdn_cnt, "%d\n", पूर्णांक);
 
-struct ata_show_ering_arg {
-	char* buf;
-	int written;
-};
+काष्ठा ata_show_ering_arg अणु
+	अक्षर* buf;
+	पूर्णांक written;
+पूर्ण;
 
-static int ata_show_ering(struct ata_ering_entry *ent, void *void_arg)
-{
-	struct ata_show_ering_arg* arg = void_arg;
+अटल पूर्णांक ata_show_ering(काष्ठा ata_ering_entry *ent, व्योम *व्योम_arg)
+अणु
+	काष्ठा ata_show_ering_arg* arg = व्योम_arg;
 	u64 seconds;
 	u32 rem;
 
-	seconds = div_u64_rem(ent->timestamp, HZ, &rem);
-	arg->written += sprintf(arg->buf + arg->written,
+	seconds = भाग_u64_rem(ent->बारtamp, HZ, &rem);
+	arg->written += प्र_लिखो(arg->buf + arg->written,
 			        "[%5llu.%09lu]", seconds,
 				rem * NSEC_PER_SEC / HZ);
 	arg->written += get_ata_err_names(ent->err_mask,
 					  arg->buf + arg->written);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t
-show_ata_dev_ering(struct device *dev,
-		   struct device_attribute *attr, char *buf)
-{
-	struct ata_device *ata_dev = transport_class_to_dev(dev);
-	struct ata_show_ering_arg arg = { buf, 0 };
+अटल sमाप_प्रकार
+show_ata_dev_ering(काष्ठा device *dev,
+		   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ata_device *ata_dev = transport_class_to_dev(dev);
+	काष्ठा ata_show_ering_arg arg = अणु buf, 0 पूर्ण;
 
 	ata_ering_map(&ata_dev->ering, ata_show_ering, &arg);
-	return arg.written;
-}
+	वापस arg.written;
+पूर्ण
 
 
-static DEVICE_ATTR(ering, S_IRUGO, show_ata_dev_ering, NULL);
+अटल DEVICE_ATTR(ering, S_IRUGO, show_ata_dev_ering, शून्य);
 
-static ssize_t
-show_ata_dev_id(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct ata_device *ata_dev = transport_class_to_dev(dev);
-	int written = 0, i = 0;
+अटल sमाप_प्रकार
+show_ata_dev_id(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ata_device *ata_dev = transport_class_to_dev(dev);
+	पूर्णांक written = 0, i = 0;
 
-	if (ata_dev->class == ATA_DEV_PMP)
-		return 0;
-	for(i=0;i<ATA_ID_WORDS;i++)  {
-		written += scnprintf(buf+written, 20, "%04x%c",
+	अगर (ata_dev->class == ATA_DEV_PMP)
+		वापस 0;
+	क्रम(i=0;i<ATA_ID_WORDS;i++)  अणु
+		written += scnम_लिखो(buf+written, 20, "%04x%c",
 				    ata_dev->id[i],
 				    ((i+1) & 7) ? ' ' : '\n');
-	}
-	return written;
-}
+	पूर्ण
+	वापस written;
+पूर्ण
 
-static DEVICE_ATTR(id, S_IRUGO, show_ata_dev_id, NULL);
+अटल DEVICE_ATTR(id, S_IRUGO, show_ata_dev_id, शून्य);
 
-static ssize_t
-show_ata_dev_gscr(struct device *dev,
-		  struct device_attribute *attr, char *buf)
-{
-	struct ata_device *ata_dev = transport_class_to_dev(dev);
-	int written = 0, i = 0;
+अटल sमाप_प्रकार
+show_ata_dev_gscr(काष्ठा device *dev,
+		  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ata_device *ata_dev = transport_class_to_dev(dev);
+	पूर्णांक written = 0, i = 0;
 
-	if (ata_dev->class != ATA_DEV_PMP)
-		return 0;
-	for(i=0;i<SATA_PMP_GSCR_DWORDS;i++)  {
-		written += scnprintf(buf+written, 20, "%08x%c",
+	अगर (ata_dev->class != ATA_DEV_PMP)
+		वापस 0;
+	क्रम(i=0;i<SATA_PMP_GSCR_DWORDS;i++)  अणु
+		written += scnम_लिखो(buf+written, 20, "%08x%c",
 				    ata_dev->gscr[i],
 				    ((i+1) & 3) ? ' ' : '\n');
-	}
-	if (SATA_PMP_GSCR_DWORDS & 3)
+	पूर्ण
+	अगर (SATA_PMP_GSCR_DWORDS & 3)
 		buf[written-1] = '\n';
-	return written;
-}
+	वापस written;
+पूर्ण
 
-static DEVICE_ATTR(gscr, S_IRUGO, show_ata_dev_gscr, NULL);
+अटल DEVICE_ATTR(gscr, S_IRUGO, show_ata_dev_gscr, शून्य);
 
-static ssize_t
-show_ata_dev_trim(struct device *dev,
-		  struct device_attribute *attr, char *buf)
-{
-	struct ata_device *ata_dev = transport_class_to_dev(dev);
-	unsigned char *mode;
+अटल sमाप_प्रकार
+show_ata_dev_trim(काष्ठा device *dev,
+		  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ata_device *ata_dev = transport_class_to_dev(dev);
+	अचिन्हित अक्षर *mode;
 
-	if (!ata_id_has_trim(ata_dev->id))
+	अगर (!ata_id_has_trim(ata_dev->id))
 		mode = "unsupported";
-	else if (ata_dev->horkage & ATA_HORKAGE_NOTRIM)
+	अन्यथा अगर (ata_dev->horkage & ATA_HORKAGE_NOTRIM)
 		mode = "forced_unsupported";
-	else if (ata_dev->horkage & ATA_HORKAGE_NO_NCQ_TRIM)
+	अन्यथा अगर (ata_dev->horkage & ATA_HORKAGE_NO_NCQ_TRIM)
 			mode = "forced_unqueued";
-	else if (ata_fpdma_dsm_supported(ata_dev))
+	अन्यथा अगर (ata_fpdma_dsm_supported(ata_dev))
 		mode = "queued";
-	else
+	अन्यथा
 		mode = "unqueued";
 
-	return scnprintf(buf, 20, "%s\n", mode);
-}
+	वापस scnम_लिखो(buf, 20, "%s\n", mode);
+पूर्ण
 
-static DEVICE_ATTR(trim, S_IRUGO, show_ata_dev_trim, NULL);
+अटल DEVICE_ATTR(trim, S_IRUGO, show_ata_dev_trim, शून्य);
 
-static DECLARE_TRANSPORT_CLASS(ata_dev_class,
-			       "ata_device", NULL, NULL, NULL);
+अटल DECLARE_TRANSPORT_CLASS(ata_dev_class,
+			       "ata_device", शून्य, शून्य, शून्य);
 
-static void ata_tdev_release(struct device *dev)
-{
-}
+अटल व्योम ata_tdev_release(काष्ठा device *dev)
+अणु
+पूर्ण
 
 /**
- * ata_is_ata_dev  --  check if a struct device represents a ATA device
+ * ata_is_ata_dev  --  check अगर a काष्ठा device represents a ATA device
  * @dev:	device to check
  *
  * Returns:
- *	%1 if the device represents a ATA device, %0 else
+ *	%1 अगर the device represents a ATA device, %0 अन्यथा
  */
-static int ata_is_ata_dev(const struct device *dev)
-{
-	return dev->release == ata_tdev_release;
-}
+अटल पूर्णांक ata_is_ata_dev(स्थिर काष्ठा device *dev)
+अणु
+	वापस dev->release == ata_tdev_release;
+पूर्ण
 
-static int ata_tdev_match(struct attribute_container *cont,
-			  struct device *dev)
-{
-	struct ata_internal* i = to_ata_internal(ata_scsi_transport_template);
-	if (!ata_is_ata_dev(dev))
-		return 0;
-	return &i->dev_attr_cont.ac == cont;
-}
+अटल पूर्णांक ata_tdev_match(काष्ठा attribute_container *cont,
+			  काष्ठा device *dev)
+अणु
+	काष्ठा ata_पूर्णांकernal* i = to_ata_पूर्णांकernal(ata_scsi_transport_ढाँचा);
+	अगर (!ata_is_ata_dev(dev))
+		वापस 0;
+	वापस &i->dev_attr_cont.ac == cont;
+पूर्ण
 
 /**
- * ata_tdev_free  --  free a ATA LINK
- * @dev:	ATA PHY to free
+ * ata_tdev_मुक्त  --  मुक्त a ATA LINK
+ * @dev:	ATA PHY to मुक्त
  *
- * Frees the specified ATA PHY.
+ * Frees the specअगरied ATA PHY.
  *
  * Note:
  *   This function must only be called on a PHY that has not
  *   successfully been added using ata_tdev_add().
  */
-static void ata_tdev_free(struct ata_device *dev)
-{
+अटल व्योम ata_tdev_मुक्त(काष्ठा ata_device *dev)
+अणु
 	transport_destroy_device(&dev->tdev);
 	put_device(&dev->tdev);
-}
+पूर्ण
 
 /**
- * ata_tdev_delete  --  remove ATA device
- * @ata_dev:	ATA device to remove
+ * ata_tdev_delete  --  हटाओ ATA device
+ * @ata_dev:	ATA device to हटाओ
  *
- * Removes the specified ATA device.
+ * Removes the specअगरied ATA device.
  */
-static void ata_tdev_delete(struct ata_device *ata_dev)
-{
-	struct device *dev = &ata_dev->tdev;
+अटल व्योम ata_tdev_delete(काष्ठा ata_device *ata_dev)
+अणु
+	काष्ठा device *dev = &ata_dev->tdev;
 
-	transport_remove_device(dev);
+	transport_हटाओ_device(dev);
 	device_del(dev);
-	ata_tdev_free(ata_dev);
-}
+	ata_tdev_मुक्त(ata_dev);
+पूर्ण
 
 
 /**
- * ata_tdev_add  --  initialize a transport ATA device structure.
- * @ata_dev:	ata_dev structure.
+ * ata_tdev_add  --  initialize a transport ATA device काष्ठाure.
+ * @ata_dev:	ata_dev काष्ठाure.
  *
- * Initialize an ATA device structure for sysfs.  It will be added in the
- * device tree below the ATA LINK device it belongs to.
+ * Initialize an ATA device काष्ठाure क्रम sysfs.  It will be added in the
+ * device tree below the ATA LINK device it beदीर्घs to.
  *
  * Returns %0 on success
  */
-static int ata_tdev_add(struct ata_device *ata_dev)
-{
-	struct device *dev = &ata_dev->tdev;
-	struct ata_link *link = ata_dev->link;
-	struct ata_port *ap = link->ap;
-	int error;
+अटल पूर्णांक ata_tdev_add(काष्ठा ata_device *ata_dev)
+अणु
+	काष्ठा device *dev = &ata_dev->tdev;
+	काष्ठा ata_link *link = ata_dev->link;
+	काष्ठा ata_port *ap = link->ap;
+	पूर्णांक error;
 
 	device_initialize(dev);
 	dev->parent = &link->tdev;
 	dev->release = ata_tdev_release;
-	if (ata_is_host_link(link))
-		dev_set_name(dev, "dev%d.%d", ap->print_id,ata_dev->devno);
-        else
-		dev_set_name(dev, "dev%d.%d.0", ap->print_id, link->pmp);
+	अगर (ata_is_host_link(link))
+		dev_set_name(dev, "dev%d.%d", ap->prपूर्णांक_id,ata_dev->devno);
+        अन्यथा
+		dev_set_name(dev, "dev%d.%d.0", ap->prपूर्णांक_id, link->pmp);
 
 	transport_setup_device(dev);
 	ata_acpi_bind_dev(ata_dev);
 	error = device_add(dev);
-	if (error) {
-		ata_tdev_free(ata_dev);
-		return error;
-	}
+	अगर (error) अणु
+		ata_tdev_मुक्त(ata_dev);
+		वापस error;
+	पूर्ण
 
 	transport_add_device(dev);
 	transport_configure_device(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * Setup / Teardown code
+ * Setup / Tearकरोwn code
  */
 
-#define SETUP_TEMPLATE(attrb, field, perm, test)			\
-	i->private_##attrb[count] = dev_attr_##field;		       	\
-	i->private_##attrb[count].attr.mode = perm;			\
-	i->attrb[count] = &i->private_##attrb[count];			\
-	if (test)							\
+#घोषणा SETUP_TEMPLATE(attrb, field, perm, test)			\
+	i->निजी_##attrb[count] = dev_attr_##field;		       	\
+	i->निजी_##attrb[count].attr.mode = perm;			\
+	i->attrb[count] = &i->निजी_##attrb[count];			\
+	अगर (test)							\
 		count++
 
-#define SETUP_LINK_ATTRIBUTE(field)					\
+#घोषणा SETUP_LINK_ATTRIBUTE(field)					\
 	SETUP_TEMPLATE(link_attrs, field, S_IRUGO, 1)
 
-#define SETUP_PORT_ATTRIBUTE(field)					\
+#घोषणा SETUP_PORT_ATTRIBUTE(field)					\
 	SETUP_TEMPLATE(port_attrs, field, S_IRUGO, 1)
 
-#define SETUP_DEV_ATTRIBUTE(field)					\
+#घोषणा SETUP_DEV_ATTRIBUTE(field)					\
 	SETUP_TEMPLATE(dev_attrs, field, S_IRUGO, 1)
 
 /**
- * ata_attach_transport  --  instantiate ATA transport template
+ * ata_attach_transport  --  instantiate ATA transport ढाँचा
  */
-struct scsi_transport_template *ata_attach_transport(void)
-{
-	struct ata_internal *i;
-	int count;
+काष्ठा scsi_transport_ढाँचा *ata_attach_transport(व्योम)
+अणु
+	काष्ठा ata_पूर्णांकernal *i;
+	पूर्णांक count;
 
-	i = kzalloc(sizeof(struct ata_internal), GFP_KERNEL);
-	if (!i)
-		return NULL;
+	i = kzalloc(माप(काष्ठा ata_पूर्णांकernal), GFP_KERNEL);
+	अगर (!i)
+		वापस शून्य;
 
 	i->t.eh_strategy_handler	= ata_scsi_error;
 	i->t.user_scan			= ata_scsi_user_scan;
@@ -722,31 +723,31 @@ struct scsi_transport_template *ata_attach_transport(void)
 	i->t.host_attrs.ac.attrs = &i->port_attrs[0];
 	i->t.host_attrs.ac.class = &ata_port_class.class;
 	i->t.host_attrs.ac.match = ata_tport_match;
-	transport_container_register(&i->t.host_attrs);
+	transport_container_रेजिस्टर(&i->t.host_attrs);
 
 	i->link_attr_cont.ac.class = &ata_link_class.class;
 	i->link_attr_cont.ac.attrs = &i->link_attrs[0];
 	i->link_attr_cont.ac.match = ata_tlink_match;
-	transport_container_register(&i->link_attr_cont);
+	transport_container_रेजिस्टर(&i->link_attr_cont);
 
 	i->dev_attr_cont.ac.class = &ata_dev_class.class;
 	i->dev_attr_cont.ac.attrs = &i->dev_attrs[0];
 	i->dev_attr_cont.ac.match = ata_tdev_match;
-	transport_container_register(&i->dev_attr_cont);
+	transport_container_रेजिस्टर(&i->dev_attr_cont);
 
 	count = 0;
 	SETUP_PORT_ATTRIBUTE(nr_pmp_links);
 	SETUP_PORT_ATTRIBUTE(idle_irq);
 	SETUP_PORT_ATTRIBUTE(port_no);
 	BUG_ON(count > ATA_PORT_ATTRS);
-	i->port_attrs[count] = NULL;
+	i->port_attrs[count] = शून्य;
 
 	count = 0;
 	SETUP_LINK_ATTRIBUTE(hw_sata_spd_limit);
 	SETUP_LINK_ATTRIBUTE(sata_spd_limit);
 	SETUP_LINK_ATTRIBUTE(sata_spd);
 	BUG_ON(count > ATA_LINK_ATTRS);
-	i->link_attrs[count] = NULL;
+	i->link_attrs[count] = शून्य;
 
 	count = 0;
 	SETUP_DEV_ATTRIBUTE(class);
@@ -759,53 +760,53 @@ struct scsi_transport_template *ata_attach_transport(void)
 	SETUP_DEV_ATTRIBUTE(gscr);
 	SETUP_DEV_ATTRIBUTE(trim);
 	BUG_ON(count > ATA_DEV_ATTRS);
-	i->dev_attrs[count] = NULL;
+	i->dev_attrs[count] = शून्य;
 
-	return &i->t;
-}
+	वापस &i->t;
+पूर्ण
 
 /**
- * ata_release_transport  --  release ATA transport template instance
- * @t:		transport template instance
+ * ata_release_transport  --  release ATA transport ढाँचा instance
+ * @t:		transport ढाँचा instance
  */
-void ata_release_transport(struct scsi_transport_template *t)
-{
-	struct ata_internal *i = to_ata_internal(t);
+व्योम ata_release_transport(काष्ठा scsi_transport_ढाँचा *t)
+अणु
+	काष्ठा ata_पूर्णांकernal *i = to_ata_पूर्णांकernal(t);
 
-	transport_container_unregister(&i->t.host_attrs);
-	transport_container_unregister(&i->link_attr_cont);
-	transport_container_unregister(&i->dev_attr_cont);
+	transport_container_unरेजिस्टर(&i->t.host_attrs);
+	transport_container_unरेजिस्टर(&i->link_attr_cont);
+	transport_container_unरेजिस्टर(&i->dev_attr_cont);
 
-	kfree(i);
-}
+	kमुक्त(i);
+पूर्ण
 
-__init int libata_transport_init(void)
-{
-	int error;
+__init पूर्णांक libata_transport_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	error = transport_class_register(&ata_link_class);
-	if (error)
-		goto out_unregister_transport;
-	error = transport_class_register(&ata_port_class);
-	if (error)
-		goto out_unregister_link;
-	error = transport_class_register(&ata_dev_class);
-	if (error)
-		goto out_unregister_port;
-	return 0;
+	error = transport_class_रेजिस्टर(&ata_link_class);
+	अगर (error)
+		जाओ out_unरेजिस्टर_transport;
+	error = transport_class_रेजिस्टर(&ata_port_class);
+	अगर (error)
+		जाओ out_unरेजिस्टर_link;
+	error = transport_class_रेजिस्टर(&ata_dev_class);
+	अगर (error)
+		जाओ out_unरेजिस्टर_port;
+	वापस 0;
 
- out_unregister_port:
-	transport_class_unregister(&ata_port_class);
- out_unregister_link:
-	transport_class_unregister(&ata_link_class);
- out_unregister_transport:
-	return error;
+ out_unरेजिस्टर_port:
+	transport_class_unरेजिस्टर(&ata_port_class);
+ out_unरेजिस्टर_link:
+	transport_class_unरेजिस्टर(&ata_link_class);
+ out_unरेजिस्टर_transport:
+	वापस error;
 
-}
+पूर्ण
 
-void __exit libata_transport_exit(void)
-{
-	transport_class_unregister(&ata_link_class);
-	transport_class_unregister(&ata_port_class);
-	transport_class_unregister(&ata_dev_class);
-}
+व्योम __निकास libata_transport_निकास(व्योम)
+अणु
+	transport_class_unरेजिस्टर(&ata_link_class);
+	transport_class_unरेजिस्टर(&ata_port_class);
+	transport_class_unरेजिस्टर(&ata_dev_class);
+पूर्ण

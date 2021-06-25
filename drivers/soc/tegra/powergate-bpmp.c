@@ -1,362 +1,363 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2017, NVIDIA CORPORATION. All rights reserved
  */
 
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_domain.h>
-#include <linux/slab.h>
-#include <linux/version.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/version.h>
 
-#include <soc/tegra/bpmp.h>
-#include <soc/tegra/bpmp-abi.h>
+#समावेश <soc/tegra/bpmp.h>
+#समावेश <soc/tegra/bpmp-abi.h>
 
-struct tegra_powergate_info {
-	unsigned int id;
-	char *name;
-};
+काष्ठा tegra_घातergate_info अणु
+	अचिन्हित पूर्णांक id;
+	अक्षर *name;
+पूर्ण;
 
-struct tegra_powergate {
-	struct generic_pm_domain genpd;
-	struct tegra_bpmp *bpmp;
-	unsigned int id;
-};
+काष्ठा tegra_घातergate अणु
+	काष्ठा generic_pm_करोमुख्य genpd;
+	काष्ठा tegra_bpmp *bpmp;
+	अचिन्हित पूर्णांक id;
+पूर्ण;
 
-static inline struct tegra_powergate *
-to_tegra_powergate(struct generic_pm_domain *genpd)
-{
-	return container_of(genpd, struct tegra_powergate, genpd);
-}
+अटल अंतरभूत काष्ठा tegra_घातergate *
+to_tegra_घातergate(काष्ठा generic_pm_करोमुख्य *genpd)
+अणु
+	वापस container_of(genpd, काष्ठा tegra_घातergate, genpd);
+पूर्ण
 
-static int tegra_bpmp_powergate_set_state(struct tegra_bpmp *bpmp,
-					  unsigned int id, u32 state)
-{
-	struct mrq_pg_request request;
-	struct tegra_bpmp_message msg;
-	int err;
+अटल पूर्णांक tegra_bpmp_घातergate_set_state(काष्ठा tegra_bpmp *bpmp,
+					  अचिन्हित पूर्णांक id, u32 state)
+अणु
+	काष्ठा mrq_pg_request request;
+	काष्ठा tegra_bpmp_message msg;
+	पूर्णांक err;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.cmd = CMD_PG_SET_STATE;
 	request.id = id;
 	request.set_state.state = state;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.mrq = MRQ_PG;
 	msg.tx.data = &request;
-	msg.tx.size = sizeof(request);
+	msg.tx.size = माप(request);
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	if (err < 0)
-		return err;
-	else if (msg.rx.ret < 0)
-		return -EINVAL;
+	अगर (err < 0)
+		वापस err;
+	अन्यथा अगर (msg.rx.ret < 0)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_bpmp_powergate_get_state(struct tegra_bpmp *bpmp,
-					  unsigned int id)
-{
-	struct mrq_pg_response response;
-	struct mrq_pg_request request;
-	struct tegra_bpmp_message msg;
-	int err;
+अटल पूर्णांक tegra_bpmp_घातergate_get_state(काष्ठा tegra_bpmp *bpmp,
+					  अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा mrq_pg_response response;
+	काष्ठा mrq_pg_request request;
+	काष्ठा tegra_bpmp_message msg;
+	पूर्णांक err;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.cmd = CMD_PG_GET_STATE;
 	request.id = id;
 
-	memset(&response, 0, sizeof(response));
+	स_रखो(&response, 0, माप(response));
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.mrq = MRQ_PG;
 	msg.tx.data = &request;
-	msg.tx.size = sizeof(request);
+	msg.tx.size = माप(request);
 	msg.rx.data = &response;
-	msg.rx.size = sizeof(response);
+	msg.rx.size = माप(response);
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	if (err < 0)
-		return PG_STATE_OFF;
-	else if (msg.rx.ret < 0)
-		return -EINVAL;
+	अगर (err < 0)
+		वापस PG_STATE_OFF;
+	अन्यथा अगर (msg.rx.ret < 0)
+		वापस -EINVAL;
 
-	return response.get_state.state;
-}
+	वापस response.get_state.state;
+पूर्ण
 
-static int tegra_bpmp_powergate_get_max_id(struct tegra_bpmp *bpmp)
-{
-	struct mrq_pg_response response;
-	struct mrq_pg_request request;
-	struct tegra_bpmp_message msg;
-	int err;
+अटल पूर्णांक tegra_bpmp_घातergate_get_max_id(काष्ठा tegra_bpmp *bpmp)
+अणु
+	काष्ठा mrq_pg_response response;
+	काष्ठा mrq_pg_request request;
+	काष्ठा tegra_bpmp_message msg;
+	पूर्णांक err;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.cmd = CMD_PG_GET_MAX_ID;
 
-	memset(&response, 0, sizeof(response));
+	स_रखो(&response, 0, माप(response));
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.mrq = MRQ_PG;
 	msg.tx.data = &request;
-	msg.tx.size = sizeof(request);
+	msg.tx.size = माप(request);
 	msg.rx.data = &response;
-	msg.rx.size = sizeof(response);
+	msg.rx.size = माप(response);
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	if (err < 0)
-		return err;
-	else if (msg.rx.ret < 0)
-		return -EINVAL;
+	अगर (err < 0)
+		वापस err;
+	अन्यथा अगर (msg.rx.ret < 0)
+		वापस -EINVAL;
 
-	return response.get_max_id.max_id;
-}
+	वापस response.get_max_id.max_id;
+पूर्ण
 
-static char *tegra_bpmp_powergate_get_name(struct tegra_bpmp *bpmp,
-					   unsigned int id)
-{
-	struct mrq_pg_response response;
-	struct mrq_pg_request request;
-	struct tegra_bpmp_message msg;
-	int err;
+अटल अक्षर *tegra_bpmp_घातergate_get_name(काष्ठा tegra_bpmp *bpmp,
+					   अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा mrq_pg_response response;
+	काष्ठा mrq_pg_request request;
+	काष्ठा tegra_bpmp_message msg;
+	पूर्णांक err;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.cmd = CMD_PG_GET_NAME;
 	request.id = id;
 
-	memset(&response, 0, sizeof(response));
+	स_रखो(&response, 0, माप(response));
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.mrq = MRQ_PG;
 	msg.tx.data = &request;
-	msg.tx.size = sizeof(request);
+	msg.tx.size = माप(request);
 	msg.rx.data = &response;
-	msg.rx.size = sizeof(response);
+	msg.rx.size = माप(response);
 
 	err = tegra_bpmp_transfer(bpmp, &msg);
-	if (err < 0 || msg.rx.ret < 0)
-		return NULL;
+	अगर (err < 0 || msg.rx.ret < 0)
+		वापस शून्य;
 
-	return kstrdup(response.get_name.name, GFP_KERNEL);
-}
+	वापस kstrdup(response.get_name.name, GFP_KERNEL);
+पूर्ण
 
-static inline bool tegra_bpmp_powergate_is_powered(struct tegra_bpmp *bpmp,
-						   unsigned int id)
-{
-	return tegra_bpmp_powergate_get_state(bpmp, id) != PG_STATE_OFF;
-}
+अटल अंतरभूत bool tegra_bpmp_घातergate_is_घातered(काष्ठा tegra_bpmp *bpmp,
+						   अचिन्हित पूर्णांक id)
+अणु
+	वापस tegra_bpmp_घातergate_get_state(bpmp, id) != PG_STATE_OFF;
+पूर्ण
 
-static int tegra_powergate_power_on(struct generic_pm_domain *domain)
-{
-	struct tegra_powergate *powergate = to_tegra_powergate(domain);
-	struct tegra_bpmp *bpmp = powergate->bpmp;
+अटल पूर्णांक tegra_घातergate_घातer_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा tegra_घातergate *घातergate = to_tegra_घातergate(करोमुख्य);
+	काष्ठा tegra_bpmp *bpmp = घातergate->bpmp;
 
-	return tegra_bpmp_powergate_set_state(bpmp, powergate->id,
+	वापस tegra_bpmp_घातergate_set_state(bpmp, घातergate->id,
 					      PG_STATE_ON);
-}
+पूर्ण
 
-static int tegra_powergate_power_off(struct generic_pm_domain *domain)
-{
-	struct tegra_powergate *powergate = to_tegra_powergate(domain);
-	struct tegra_bpmp *bpmp = powergate->bpmp;
+अटल पूर्णांक tegra_घातergate_घातer_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा tegra_घातergate *घातergate = to_tegra_घातergate(करोमुख्य);
+	काष्ठा tegra_bpmp *bpmp = घातergate->bpmp;
 
-	return tegra_bpmp_powergate_set_state(bpmp, powergate->id,
+	वापस tegra_bpmp_घातergate_set_state(bpmp, घातergate->id,
 					      PG_STATE_OFF);
-}
+पूर्ण
 
-static struct tegra_powergate *
-tegra_powergate_add(struct tegra_bpmp *bpmp,
-		    const struct tegra_powergate_info *info)
-{
-	struct tegra_powergate *powergate;
+अटल काष्ठा tegra_घातergate *
+tegra_घातergate_add(काष्ठा tegra_bpmp *bpmp,
+		    स्थिर काष्ठा tegra_घातergate_info *info)
+अणु
+	काष्ठा tegra_घातergate *घातergate;
 	bool off;
-	int err;
+	पूर्णांक err;
 
-	off = !tegra_bpmp_powergate_is_powered(bpmp, info->id);
+	off = !tegra_bpmp_घातergate_is_घातered(bpmp, info->id);
 
-	powergate = devm_kzalloc(bpmp->dev, sizeof(*powergate), GFP_KERNEL);
-	if (!powergate)
-		return ERR_PTR(-ENOMEM);
+	घातergate = devm_kzalloc(bpmp->dev, माप(*घातergate), GFP_KERNEL);
+	अगर (!घातergate)
+		वापस ERR_PTR(-ENOMEM);
 
-	powergate->id = info->id;
-	powergate->bpmp = bpmp;
+	घातergate->id = info->id;
+	घातergate->bpmp = bpmp;
 
-	powergate->genpd.name = kstrdup(info->name, GFP_KERNEL);
-	powergate->genpd.power_on = tegra_powergate_power_on;
-	powergate->genpd.power_off = tegra_powergate_power_off;
+	घातergate->genpd.name = kstrdup(info->name, GFP_KERNEL);
+	घातergate->genpd.घातer_on = tegra_घातergate_घातer_on;
+	घातergate->genpd.घातer_off = tegra_घातergate_घातer_off;
 
-	err = pm_genpd_init(&powergate->genpd, NULL, off);
-	if (err < 0) {
-		kfree(powergate->genpd.name);
-		return ERR_PTR(err);
-	}
+	err = pm_genpd_init(&घातergate->genpd, शून्य, off);
+	अगर (err < 0) अणु
+		kमुक्त(घातergate->genpd.name);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return powergate;
-}
+	वापस घातergate;
+पूर्ण
 
-static void tegra_powergate_remove(struct tegra_powergate *powergate)
-{
-	struct generic_pm_domain *genpd = &powergate->genpd;
-	struct tegra_bpmp *bpmp = powergate->bpmp;
-	int err;
+अटल व्योम tegra_घातergate_हटाओ(काष्ठा tegra_घातergate *घातergate)
+अणु
+	काष्ठा generic_pm_करोमुख्य *genpd = &घातergate->genpd;
+	काष्ठा tegra_bpmp *bpmp = घातergate->bpmp;
+	पूर्णांक err;
 
-	err = pm_genpd_remove(genpd);
-	if (err < 0)
+	err = pm_genpd_हटाओ(genpd);
+	अगर (err < 0)
 		dev_err(bpmp->dev, "failed to remove power domain %s: %d\n",
 			genpd->name, err);
 
-	kfree(genpd->name);
-}
+	kमुक्त(genpd->name);
+पूर्ण
 
-static int
-tegra_bpmp_probe_powergates(struct tegra_bpmp *bpmp,
-			    struct tegra_powergate_info **powergatesp)
-{
-	struct tegra_powergate_info *powergates;
-	unsigned int max_id, id, count = 0;
-	unsigned int num_holes = 0;
-	int err;
+अटल पूर्णांक
+tegra_bpmp_probe_घातergates(काष्ठा tegra_bpmp *bpmp,
+			    काष्ठा tegra_घातergate_info **घातergatesp)
+अणु
+	काष्ठा tegra_घातergate_info *घातergates;
+	अचिन्हित पूर्णांक max_id, id, count = 0;
+	अचिन्हित पूर्णांक num_holes = 0;
+	पूर्णांक err;
 
-	err = tegra_bpmp_powergate_get_max_id(bpmp);
-	if (err < 0)
-		return err;
+	err = tegra_bpmp_घातergate_get_max_id(bpmp);
+	अगर (err < 0)
+		वापस err;
 
 	max_id = err;
 
 	dev_dbg(bpmp->dev, "maximum powergate ID: %u\n", max_id);
 
-	powergates = kcalloc(max_id + 1, sizeof(*powergates), GFP_KERNEL);
-	if (!powergates)
-		return -ENOMEM;
+	घातergates = kसुस्मृति(max_id + 1, माप(*घातergates), GFP_KERNEL);
+	अगर (!घातergates)
+		वापस -ENOMEM;
 
-	for (id = 0; id <= max_id; id++) {
-		struct tegra_powergate_info *info = &powergates[count];
+	क्रम (id = 0; id <= max_id; id++) अणु
+		काष्ठा tegra_घातergate_info *info = &घातergates[count];
 
-		info->name = tegra_bpmp_powergate_get_name(bpmp, id);
-		if (!info->name || info->name[0] == '\0') {
+		info->name = tegra_bpmp_घातergate_get_name(bpmp, id);
+		अगर (!info->name || info->name[0] == '\0') अणु
 			num_holes++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		info->id = id;
 		count++;
-	}
+	पूर्ण
 
 	dev_dbg(bpmp->dev, "holes: %u\n", num_holes);
 
-	*powergatesp = powergates;
+	*घातergatesp = घातergates;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int tegra_bpmp_add_powergates(struct tegra_bpmp *bpmp,
-				     struct tegra_powergate_info *powergates,
-				     unsigned int count)
-{
-	struct genpd_onecell_data *genpd = &bpmp->genpd;
-	struct generic_pm_domain **domains;
-	struct tegra_powergate *powergate;
-	unsigned int i;
-	int err;
+अटल पूर्णांक tegra_bpmp_add_घातergates(काष्ठा tegra_bpmp *bpmp,
+				     काष्ठा tegra_घातergate_info *घातergates,
+				     अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा genpd_onecell_data *genpd = &bpmp->genpd;
+	काष्ठा generic_pm_करोमुख्य **करोमुख्यs;
+	काष्ठा tegra_घातergate *घातergate;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	domains = kcalloc(count, sizeof(*domains), GFP_KERNEL);
-	if (!domains)
-		return -ENOMEM;
+	करोमुख्यs = kसुस्मृति(count, माप(*करोमुख्यs), GFP_KERNEL);
+	अगर (!करोमुख्यs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < count; i++) {
-		powergate = tegra_powergate_add(bpmp, &powergates[i]);
-		if (IS_ERR(powergate)) {
-			err = PTR_ERR(powergate);
-			goto remove;
-		}
+	क्रम (i = 0; i < count; i++) अणु
+		घातergate = tegra_घातergate_add(bpmp, &घातergates[i]);
+		अगर (IS_ERR(घातergate)) अणु
+			err = PTR_ERR(घातergate);
+			जाओ हटाओ;
+		पूर्ण
 
 		dev_dbg(bpmp->dev, "added power domain %s\n",
-			powergate->genpd.name);
-		domains[i] = &powergate->genpd;
-	}
+			घातergate->genpd.name);
+		करोमुख्यs[i] = &घातergate->genpd;
+	पूर्ण
 
-	genpd->num_domains = count;
-	genpd->domains = domains;
+	genpd->num_करोमुख्यs = count;
+	genpd->करोमुख्यs = करोमुख्यs;
 
-	return 0;
+	वापस 0;
 
-remove:
-	while (i--) {
-		powergate = to_tegra_powergate(domains[i]);
-		tegra_powergate_remove(powergate);
-	}
+हटाओ:
+	जबतक (i--) अणु
+		घातergate = to_tegra_घातergate(करोमुख्यs[i]);
+		tegra_घातergate_हटाओ(घातergate);
+	पूर्ण
 
-	kfree(genpd->domains);
-	return err;
-}
+	kमुक्त(genpd->करोमुख्यs);
+	वापस err;
+पूर्ण
 
-static void tegra_bpmp_remove_powergates(struct tegra_bpmp *bpmp)
-{
-	struct genpd_onecell_data *genpd = &bpmp->genpd;
-	unsigned int i = genpd->num_domains;
-	struct tegra_powergate *powergate;
+अटल व्योम tegra_bpmp_हटाओ_घातergates(काष्ठा tegra_bpmp *bpmp)
+अणु
+	काष्ठा genpd_onecell_data *genpd = &bpmp->genpd;
+	अचिन्हित पूर्णांक i = genpd->num_करोमुख्यs;
+	काष्ठा tegra_घातergate *घातergate;
 
-	while (i--) {
+	जबतक (i--) अणु
 		dev_dbg(bpmp->dev, "removing power domain %s\n",
-			genpd->domains[i]->name);
-		powergate = to_tegra_powergate(genpd->domains[i]);
-		tegra_powergate_remove(powergate);
-	}
-}
+			genpd->करोमुख्यs[i]->name);
+		घातergate = to_tegra_घातergate(genpd->करोमुख्यs[i]);
+		tegra_घातergate_हटाओ(घातergate);
+	पूर्ण
+पूर्ण
 
-static struct generic_pm_domain *
-tegra_powergate_xlate(struct of_phandle_args *spec, void *data)
-{
-	struct generic_pm_domain *domain = ERR_PTR(-ENOENT);
-	struct genpd_onecell_data *genpd = data;
-	unsigned int i;
+अटल काष्ठा generic_pm_करोमुख्य *
+tegra_घातergate_xlate(काष्ठा of_phandle_args *spec, व्योम *data)
+अणु
+	काष्ठा generic_pm_करोमुख्य *करोमुख्य = ERR_PTR(-ENOENT);
+	काष्ठा genpd_onecell_data *genpd = data;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < genpd->num_domains; i++) {
-		struct tegra_powergate *powergate;
+	क्रम (i = 0; i < genpd->num_करोमुख्यs; i++) अणु
+		काष्ठा tegra_घातergate *घातergate;
 
-		powergate = to_tegra_powergate(genpd->domains[i]);
-		if (powergate->id == spec->args[0]) {
-			domain = &powergate->genpd;
-			break;
-		}
-	}
+		घातergate = to_tegra_घातergate(genpd->करोमुख्यs[i]);
+		अगर (घातergate->id == spec->args[0]) अणु
+			करोमुख्य = &घातergate->genpd;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return domain;
-}
+	वापस करोमुख्य;
+पूर्ण
 
-int tegra_bpmp_init_powergates(struct tegra_bpmp *bpmp)
-{
-	struct device_node *np = bpmp->dev->of_node;
-	struct tegra_powergate_info *powergates;
-	struct device *dev = bpmp->dev;
-	unsigned int count, i;
-	int err;
+पूर्णांक tegra_bpmp_init_घातergates(काष्ठा tegra_bpmp *bpmp)
+अणु
+	काष्ठा device_node *np = bpmp->dev->of_node;
+	काष्ठा tegra_घातergate_info *घातergates;
+	काष्ठा device *dev = bpmp->dev;
+	अचिन्हित पूर्णांक count, i;
+	पूर्णांक err;
 
-	err = tegra_bpmp_probe_powergates(bpmp, &powergates);
-	if (err < 0)
-		return err;
+	err = tegra_bpmp_probe_घातergates(bpmp, &घातergates);
+	अगर (err < 0)
+		वापस err;
 
 	count = err;
 
 	dev_dbg(dev, "%u power domains probed\n", count);
 
-	err = tegra_bpmp_add_powergates(bpmp, powergates, count);
-	if (err < 0)
-		goto free;
+	err = tegra_bpmp_add_घातergates(bpmp, घातergates, count);
+	अगर (err < 0)
+		जाओ मुक्त;
 
-	bpmp->genpd.xlate = tegra_powergate_xlate;
+	bpmp->genpd.xlate = tegra_घातergate_xlate;
 
 	err = of_genpd_add_provider_onecell(np, &bpmp->genpd);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "failed to add power domain provider: %d\n", err);
-		tegra_bpmp_remove_powergates(bpmp);
-	}
+		tegra_bpmp_हटाओ_घातergates(bpmp);
+	पूर्ण
 
-free:
-	for (i = 0; i < count; i++)
-		kfree(powergates[i].name);
+मुक्त:
+	क्रम (i = 0; i < count; i++)
+		kमुक्त(घातergates[i].name);
 
-	kfree(powergates);
-	return err;
-}
+	kमुक्त(घातergates);
+	वापस err;
+पूर्ण

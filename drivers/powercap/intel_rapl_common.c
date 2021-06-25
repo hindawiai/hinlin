@@ -1,638 +1,639 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Common code for Intel Running Average Power Limit (RAPL) support.
+ * Common code क्रम Intel Running Average Power Limit (RAPL) support.
  * Copyright (c) 2019, Intel Corporation.
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/list.h>
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/log2.h>
-#include <linux/bitmap.h>
-#include <linux/delay.h>
-#include <linux/sysfs.h>
-#include <linux/cpu.h>
-#include <linux/powercap.h>
-#include <linux/suspend.h>
-#include <linux/intel_rapl.h>
-#include <linux/processor.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/list.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/घातercap.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/पूर्णांकel_rapl.h>
+#समावेश <linux/processor.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/iosf_mbi.h>
-#include <asm/cpu_device_id.h>
-#include <asm/intel-family.h>
+#समावेश <यंत्र/iosf_mbi.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
 
-/* bitmasks for RAPL MSRs, used by primitive access functions */
-#define ENERGY_STATUS_MASK      0xffffffff
+/* biपंचांगasks क्रम RAPL MSRs, used by primitive access functions */
+#घोषणा ENERGY_STATUS_MASK      0xffffffff
 
-#define POWER_LIMIT1_MASK       0x7FFF
-#define POWER_LIMIT1_ENABLE     BIT(15)
-#define POWER_LIMIT1_CLAMP      BIT(16)
+#घोषणा POWER_LIMIT1_MASK       0x7FFF
+#घोषणा POWER_LIMIT1_ENABLE     BIT(15)
+#घोषणा POWER_LIMIT1_CLAMP      BIT(16)
 
-#define POWER_LIMIT2_MASK       (0x7FFFULL<<32)
-#define POWER_LIMIT2_ENABLE     BIT_ULL(47)
-#define POWER_LIMIT2_CLAMP      BIT_ULL(48)
-#define POWER_HIGH_LOCK         BIT_ULL(63)
-#define POWER_LOW_LOCK          BIT(31)
+#घोषणा POWER_LIMIT2_MASK       (0x7FFFULL<<32)
+#घोषणा POWER_LIMIT2_ENABLE     BIT_ULL(47)
+#घोषणा POWER_LIMIT2_CLAMP      BIT_ULL(48)
+#घोषणा POWER_HIGH_LOCK         BIT_ULL(63)
+#घोषणा POWER_LOW_LOCK          BIT(31)
 
-#define POWER_LIMIT4_MASK		0x1FFF
+#घोषणा POWER_LIMIT4_MASK		0x1FFF
 
-#define TIME_WINDOW1_MASK       (0x7FULL<<17)
-#define TIME_WINDOW2_MASK       (0x7FULL<<49)
+#घोषणा TIME_WINDOW1_MASK       (0x7FULL<<17)
+#घोषणा TIME_WINDOW2_MASK       (0x7FULL<<49)
 
-#define POWER_UNIT_OFFSET	0
-#define POWER_UNIT_MASK		0x0F
+#घोषणा POWER_UNIT_OFFSET	0
+#घोषणा POWER_UNIT_MASK		0x0F
 
-#define ENERGY_UNIT_OFFSET	0x08
-#define ENERGY_UNIT_MASK	0x1F00
+#घोषणा ENERGY_UNIT_OFFSET	0x08
+#घोषणा ENERGY_UNIT_MASK	0x1F00
 
-#define TIME_UNIT_OFFSET	0x10
-#define TIME_UNIT_MASK		0xF0000
+#घोषणा TIME_UNIT_OFFSET	0x10
+#घोषणा TIME_UNIT_MASK		0xF0000
 
-#define POWER_INFO_MAX_MASK     (0x7fffULL<<32)
-#define POWER_INFO_MIN_MASK     (0x7fffULL<<16)
-#define POWER_INFO_MAX_TIME_WIN_MASK     (0x3fULL<<48)
-#define POWER_INFO_THERMAL_SPEC_MASK     0x7fff
+#घोषणा POWER_INFO_MAX_MASK     (0x7fffULL<<32)
+#घोषणा POWER_INFO_MIN_MASK     (0x7fffULL<<16)
+#घोषणा POWER_INFO_MAX_TIME_WIN_MASK     (0x3fULL<<48)
+#घोषणा POWER_INFO_THERMAL_SPEC_MASK     0x7fff
 
-#define PERF_STATUS_THROTTLE_TIME_MASK 0xffffffff
-#define PP_POLICY_MASK         0x1F
+#घोषणा PERF_STATUS_THROTTLE_TIME_MASK 0xffffffff
+#घोषणा PP_POLICY_MASK         0x1F
 
-/* Non HW constants */
-#define RAPL_PRIMITIVE_DERIVED       BIT(1)	/* not from raw data */
-#define RAPL_PRIMITIVE_DUMMY         BIT(2)
+/* Non HW स्थिरants */
+#घोषणा RAPL_PRIMITIVE_DERIVED       BIT(1)	/* not from raw data */
+#घोषणा RAPL_PRIMITIVE_DUMMY         BIT(2)
 
-#define TIME_WINDOW_MAX_MSEC 40000
-#define TIME_WINDOW_MIN_MSEC 250
-#define ENERGY_UNIT_SCALE    1000	/* scale from driver unit to powercap unit */
-enum unit_type {
+#घोषणा TIME_WINDOW_MAX_MSEC 40000
+#घोषणा TIME_WINDOW_MIN_MSEC 250
+#घोषणा ENERGY_UNIT_SCALE    1000	/* scale from driver unit to घातercap unit */
+क्रमागत unit_type अणु
 	ARBITRARY_UNIT,		/* no translation */
 	POWER_UNIT,
 	ENERGY_UNIT,
 	TIME_UNIT,
-};
+पूर्ण;
 
-/* per domain data, some are optional */
-#define NR_RAW_PRIMITIVES (NR_RAPL_PRIMITIVES - 2)
+/* per करोमुख्य data, some are optional */
+#घोषणा NR_RAW_PRIMITIVES (NR_RAPL_PRIMITIVES - 2)
 
-#define	DOMAIN_STATE_INACTIVE           BIT(0)
-#define	DOMAIN_STATE_POWER_LIMIT_SET    BIT(1)
-#define DOMAIN_STATE_BIOS_LOCKED        BIT(2)
+#घोषणा	DOMAIN_STATE_INACTIVE           BIT(0)
+#घोषणा	DOMAIN_STATE_POWER_LIMIT_SET    BIT(1)
+#घोषणा DOMAIN_STATE_BIOS_LOCKED        BIT(2)
 
-static const char pl1_name[] = "long_term";
-static const char pl2_name[] = "short_term";
-static const char pl4_name[] = "peak_power";
+अटल स्थिर अक्षर pl1_name[] = "long_term";
+अटल स्थिर अक्षर pl2_name[] = "short_term";
+अटल स्थिर अक्षर pl4_name[] = "peak_power";
 
-#define power_zone_to_rapl_domain(_zone) \
-	container_of(_zone, struct rapl_domain, power_zone)
+#घोषणा घातer_zone_to_rapl_करोमुख्य(_zone) \
+	container_of(_zone, काष्ठा rapl_करोमुख्य, घातer_zone)
 
-struct rapl_defaults {
-	u8 floor_freq_reg_addr;
-	int (*check_unit)(struct rapl_package *rp, int cpu);
-	void (*set_floor_freq)(struct rapl_domain *rd, bool mode);
-	u64 (*compute_time_window)(struct rapl_package *rp, u64 val,
+काष्ठा rapl_शेषs अणु
+	u8 न्यूनमान_freq_reg_addr;
+	पूर्णांक (*check_unit)(काष्ठा rapl_package *rp, पूर्णांक cpu);
+	व्योम (*set_न्यूनमान_freq)(काष्ठा rapl_करोमुख्य *rd, bool mode);
+	u64 (*compute_समय_winकरोw)(काष्ठा rapl_package *rp, u64 val,
 				    bool to_raw);
-	unsigned int dram_domain_energy_unit;
-	unsigned int psys_domain_energy_unit;
-};
-static struct rapl_defaults *rapl_defaults;
+	अचिन्हित पूर्णांक dram_करोमुख्य_energy_unit;
+	अचिन्हित पूर्णांक psys_करोमुख्य_energy_unit;
+पूर्ण;
+अटल काष्ठा rapl_शेषs *rapl_शेषs;
 
-/* Sideband MBI registers */
-#define IOSF_CPU_POWER_BUDGET_CTL_BYT (0x2)
-#define IOSF_CPU_POWER_BUDGET_CTL_TNG (0xdf)
+/* Sideband MBI रेजिस्टरs */
+#घोषणा IOSF_CPU_POWER_BUDGET_CTL_BYT (0x2)
+#घोषणा IOSF_CPU_POWER_BUDGET_CTL_TNG (0xdf)
 
-#define PACKAGE_PLN_INT_SAVED   BIT(0)
-#define MAX_PRIM_NAME (32)
+#घोषणा PACKAGE_PLN_INT_SAVED   BIT(0)
+#घोषणा MAX_PRIM_NAME (32)
 
-/* per domain data. used to describe individual knobs such that access function
- * can be consolidated into one instead of many inline functions.
+/* per करोमुख्य data. used to describe inभागidual knobs such that access function
+ * can be consolidated पूर्णांकo one instead of many अंतरभूत functions.
  */
-struct rapl_primitive_info {
-	const char *name;
+काष्ठा rapl_primitive_info अणु
+	स्थिर अक्षर *name;
 	u64 mask;
-	int shift;
-	enum rapl_domain_reg_id id;
-	enum unit_type unit;
+	पूर्णांक shअगरt;
+	क्रमागत rapl_करोमुख्य_reg_id id;
+	क्रमागत unit_type unit;
 	u32 flag;
-};
+पूर्ण;
 
-#define PRIMITIVE_INFO_INIT(p, m, s, i, u, f) {	\
+#घोषणा PRIMITIVE_INFO_INIT(p, m, s, i, u, f) अणु	\
 		.name = #p,			\
 		.mask = m,			\
-		.shift = s,			\
+		.shअगरt = s,			\
 		.id = i,			\
 		.unit = u,			\
 		.flag = f			\
-	}
+	पूर्ण
 
-static void rapl_init_domains(struct rapl_package *rp);
-static int rapl_read_data_raw(struct rapl_domain *rd,
-			      enum rapl_primitives prim,
+अटल व्योम rapl_init_करोमुख्यs(काष्ठा rapl_package *rp);
+अटल पूर्णांक rapl_पढ़ो_data_raw(काष्ठा rapl_करोमुख्य *rd,
+			      क्रमागत rapl_primitives prim,
 			      bool xlate, u64 *data);
-static int rapl_write_data_raw(struct rapl_domain *rd,
-			       enum rapl_primitives prim,
-			       unsigned long long value);
-static u64 rapl_unit_xlate(struct rapl_domain *rd,
-			   enum unit_type type, u64 value, int to_raw);
-static void package_power_limit_irq_save(struct rapl_package *rp);
+अटल पूर्णांक rapl_ग_लिखो_data_raw(काष्ठा rapl_करोमुख्य *rd,
+			       क्रमागत rapl_primitives prim,
+			       अचिन्हित दीर्घ दीर्घ value);
+अटल u64 rapl_unit_xlate(काष्ठा rapl_करोमुख्य *rd,
+			   क्रमागत unit_type type, u64 value, पूर्णांक to_raw);
+अटल व्योम package_घातer_limit_irq_save(काष्ठा rapl_package *rp);
 
-static LIST_HEAD(rapl_packages);	/* guarded by CPU hotplug lock */
+अटल LIST_HEAD(rapl_packages);	/* guarded by CPU hotplug lock */
 
-static const char *const rapl_domain_names[] = {
+अटल स्थिर अक्षर *स्थिर rapl_करोमुख्य_names[] = अणु
 	"package",
 	"core",
 	"uncore",
 	"dram",
 	"psys",
-};
+पूर्ण;
 
-static int get_energy_counter(struct powercap_zone *power_zone,
+अटल पूर्णांक get_energy_counter(काष्ठा घातercap_zone *घातer_zone,
 			      u64 *energy_raw)
-{
-	struct rapl_domain *rd;
+अणु
+	काष्ठा rapl_करोमुख्य *rd;
 	u64 energy_now;
 
-	/* prevent CPU hotplug, make sure the RAPL domain does not go
-	 * away while reading the counter.
+	/* prevent CPU hotplug, make sure the RAPL करोमुख्य करोes not go
+	 * away जबतक पढ़ोing the counter.
 	 */
 	get_online_cpus();
-	rd = power_zone_to_rapl_domain(power_zone);
+	rd = घातer_zone_to_rapl_करोमुख्य(घातer_zone);
 
-	if (!rapl_read_data_raw(rd, ENERGY_COUNTER, true, &energy_now)) {
+	अगर (!rapl_पढ़ो_data_raw(rd, ENERGY_COUNTER, true, &energy_now)) अणु
 		*energy_raw = energy_now;
 		put_online_cpus();
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	put_online_cpus();
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int get_max_energy_counter(struct powercap_zone *pcd_dev, u64 *energy)
-{
-	struct rapl_domain *rd = power_zone_to_rapl_domain(pcd_dev);
+अटल पूर्णांक get_max_energy_counter(काष्ठा घातercap_zone *pcd_dev, u64 *energy)
+अणु
+	काष्ठा rapl_करोमुख्य *rd = घातer_zone_to_rapl_करोमुख्य(pcd_dev);
 
 	*energy = rapl_unit_xlate(rd, ENERGY_UNIT, ENERGY_STATUS_MASK, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int release_zone(struct powercap_zone *power_zone)
-{
-	struct rapl_domain *rd = power_zone_to_rapl_domain(power_zone);
-	struct rapl_package *rp = rd->rp;
+अटल पूर्णांक release_zone(काष्ठा घातercap_zone *घातer_zone)
+अणु
+	काष्ठा rapl_करोमुख्य *rd = घातer_zone_to_rapl_करोमुख्य(घातer_zone);
+	काष्ठा rapl_package *rp = rd->rp;
 
-	/* package zone is the last zone of a package, we can free
-	 * memory here since all children has been unregistered.
+	/* package zone is the last zone of a package, we can मुक्त
+	 * memory here since all children has been unरेजिस्टरed.
 	 */
-	if (rd->id == RAPL_DOMAIN_PACKAGE) {
-		kfree(rd);
-		rp->domains = NULL;
-	}
+	अगर (rd->id == RAPL_DOMAIN_PACKAGE) अणु
+		kमुक्त(rd);
+		rp->करोमुख्यs = शून्य;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int find_nr_power_limit(struct rapl_domain *rd)
-{
-	int i, nr_pl = 0;
+अटल पूर्णांक find_nr_घातer_limit(काष्ठा rapl_करोमुख्य *rd)
+अणु
+	पूर्णांक i, nr_pl = 0;
 
-	for (i = 0; i < NR_POWER_LIMITS; i++) {
-		if (rd->rpl[i].name)
+	क्रम (i = 0; i < NR_POWER_LIMITS; i++) अणु
+		अगर (rd->rpl[i].name)
 			nr_pl++;
-	}
+	पूर्ण
 
-	return nr_pl;
-}
+	वापस nr_pl;
+पूर्ण
 
-static int set_domain_enable(struct powercap_zone *power_zone, bool mode)
-{
-	struct rapl_domain *rd = power_zone_to_rapl_domain(power_zone);
+अटल पूर्णांक set_करोमुख्य_enable(काष्ठा घातercap_zone *घातer_zone, bool mode)
+अणु
+	काष्ठा rapl_करोमुख्य *rd = घातer_zone_to_rapl_करोमुख्य(घातer_zone);
 
-	if (rd->state & DOMAIN_STATE_BIOS_LOCKED)
-		return -EACCES;
+	अगर (rd->state & DOMAIN_STATE_BIOS_LOCKED)
+		वापस -EACCES;
 
 	get_online_cpus();
-	rapl_write_data_raw(rd, PL1_ENABLE, mode);
-	if (rapl_defaults->set_floor_freq)
-		rapl_defaults->set_floor_freq(rd, mode);
+	rapl_ग_लिखो_data_raw(rd, PL1_ENABLE, mode);
+	अगर (rapl_शेषs->set_न्यूनमान_freq)
+		rapl_शेषs->set_न्यूनमान_freq(rd, mode);
 	put_online_cpus();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_domain_enable(struct powercap_zone *power_zone, bool *mode)
-{
-	struct rapl_domain *rd = power_zone_to_rapl_domain(power_zone);
+अटल पूर्णांक get_करोमुख्य_enable(काष्ठा घातercap_zone *घातer_zone, bool *mode)
+अणु
+	काष्ठा rapl_करोमुख्य *rd = घातer_zone_to_rapl_करोमुख्य(घातer_zone);
 	u64 val;
 
-	if (rd->state & DOMAIN_STATE_BIOS_LOCKED) {
+	अगर (rd->state & DOMAIN_STATE_BIOS_LOCKED) अणु
 		*mode = false;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	get_online_cpus();
-	if (rapl_read_data_raw(rd, PL1_ENABLE, true, &val)) {
+	अगर (rapl_पढ़ो_data_raw(rd, PL1_ENABLE, true, &val)) अणु
 		put_online_cpus();
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	*mode = val;
 	put_online_cpus();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* per RAPL domain ops, in the order of rapl_domain_type */
-static const struct powercap_zone_ops zone_ops[] = {
+/* per RAPL करोमुख्य ops, in the order of rapl_करोमुख्य_type */
+अटल स्थिर काष्ठा घातercap_zone_ops zone_ops[] = अणु
 	/* RAPL_DOMAIN_PACKAGE */
-	{
+	अणु
 	 .get_energy_uj = get_energy_counter,
 	 .get_max_energy_range_uj = get_max_energy_counter,
 	 .release = release_zone,
-	 .set_enable = set_domain_enable,
-	 .get_enable = get_domain_enable,
-	 },
+	 .set_enable = set_करोमुख्य_enable,
+	 .get_enable = get_करोमुख्य_enable,
+	 पूर्ण,
 	/* RAPL_DOMAIN_PP0 */
-	{
+	अणु
 	 .get_energy_uj = get_energy_counter,
 	 .get_max_energy_range_uj = get_max_energy_counter,
 	 .release = release_zone,
-	 .set_enable = set_domain_enable,
-	 .get_enable = get_domain_enable,
-	 },
+	 .set_enable = set_करोमुख्य_enable,
+	 .get_enable = get_करोमुख्य_enable,
+	 पूर्ण,
 	/* RAPL_DOMAIN_PP1 */
-	{
+	अणु
 	 .get_energy_uj = get_energy_counter,
 	 .get_max_energy_range_uj = get_max_energy_counter,
 	 .release = release_zone,
-	 .set_enable = set_domain_enable,
-	 .get_enable = get_domain_enable,
-	 },
+	 .set_enable = set_करोमुख्य_enable,
+	 .get_enable = get_करोमुख्य_enable,
+	 पूर्ण,
 	/* RAPL_DOMAIN_DRAM */
-	{
+	अणु
 	 .get_energy_uj = get_energy_counter,
 	 .get_max_energy_range_uj = get_max_energy_counter,
 	 .release = release_zone,
-	 .set_enable = set_domain_enable,
-	 .get_enable = get_domain_enable,
-	 },
+	 .set_enable = set_करोमुख्य_enable,
+	 .get_enable = get_करोमुख्य_enable,
+	 पूर्ण,
 	/* RAPL_DOMAIN_PLATFORM */
-	{
+	अणु
 	 .get_energy_uj = get_energy_counter,
 	 .get_max_energy_range_uj = get_max_energy_counter,
 	 .release = release_zone,
-	 .set_enable = set_domain_enable,
-	 .get_enable = get_domain_enable,
-	 },
-};
+	 .set_enable = set_करोमुख्य_enable,
+	 .get_enable = get_करोमुख्य_enable,
+	 पूर्ण,
+पूर्ण;
 
 /*
- * Constraint index used by powercap can be different than power limit (PL)
+ * Constraपूर्णांक index used by घातercap can be dअगरferent than घातer limit (PL)
  * index in that some  PLs maybe missing due to non-existent MSRs. So we
  * need to convert here by finding the valid PLs only (name populated).
  */
-static int contraint_to_pl(struct rapl_domain *rd, int cid)
-{
-	int i, j;
+अटल पूर्णांक contraपूर्णांक_to_pl(काष्ठा rapl_करोमुख्य *rd, पूर्णांक cid)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 0, j = 0; i < NR_POWER_LIMITS; i++) {
-		if ((rd->rpl[i].name) && j++ == cid) {
+	क्रम (i = 0, j = 0; i < NR_POWER_LIMITS; i++) अणु
+		अगर ((rd->rpl[i].name) && j++ == cid) अणु
 			pr_debug("%s: index %d\n", __func__, i);
-			return i;
-		}
-	}
+			वापस i;
+		पूर्ण
+	पूर्ण
 	pr_err("Cannot find matching power limit for constraint %d\n", cid);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int set_power_limit(struct powercap_zone *power_zone, int cid,
-			   u64 power_limit)
-{
-	struct rapl_domain *rd;
-	struct rapl_package *rp;
-	int ret = 0;
-	int id;
+अटल पूर्णांक set_घातer_limit(काष्ठा घातercap_zone *घातer_zone, पूर्णांक cid,
+			   u64 घातer_limit)
+अणु
+	काष्ठा rapl_करोमुख्य *rd;
+	काष्ठा rapl_package *rp;
+	पूर्णांक ret = 0;
+	पूर्णांक id;
 
 	get_online_cpus();
-	rd = power_zone_to_rapl_domain(power_zone);
-	id = contraint_to_pl(rd, cid);
-	if (id < 0) {
+	rd = घातer_zone_to_rapl_करोमुख्य(घातer_zone);
+	id = contraपूर्णांक_to_pl(rd, cid);
+	अगर (id < 0) अणु
 		ret = id;
-		goto set_exit;
-	}
+		जाओ set_निकास;
+	पूर्ण
 
 	rp = rd->rp;
 
-	if (rd->state & DOMAIN_STATE_BIOS_LOCKED) {
-		dev_warn(&power_zone->dev,
+	अगर (rd->state & DOMAIN_STATE_BIOS_LOCKED) अणु
+		dev_warn(&घातer_zone->dev,
 			 "%s locked by BIOS, monitoring only\n", rd->name);
 		ret = -EACCES;
-		goto set_exit;
-	}
+		जाओ set_निकास;
+	पूर्ण
 
-	switch (rd->rpl[id].prim_id) {
-	case PL1_ENABLE:
-		rapl_write_data_raw(rd, POWER_LIMIT1, power_limit);
-		break;
-	case PL2_ENABLE:
-		rapl_write_data_raw(rd, POWER_LIMIT2, power_limit);
-		break;
-	case PL4_ENABLE:
-		rapl_write_data_raw(rd, POWER_LIMIT4, power_limit);
-		break;
-	default:
+	चयन (rd->rpl[id].prim_id) अणु
+	हाल PL1_ENABLE:
+		rapl_ग_लिखो_data_raw(rd, POWER_LIMIT1, घातer_limit);
+		अवरोध;
+	हाल PL2_ENABLE:
+		rapl_ग_लिखो_data_raw(rd, POWER_LIMIT2, घातer_limit);
+		अवरोध;
+	हाल PL4_ENABLE:
+		rapl_ग_लिखो_data_raw(rd, POWER_LIMIT4, घातer_limit);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
-	if (!ret)
-		package_power_limit_irq_save(rp);
-set_exit:
+	पूर्ण
+	अगर (!ret)
+		package_घातer_limit_irq_save(rp);
+set_निकास:
 	put_online_cpus();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int get_current_power_limit(struct powercap_zone *power_zone, int cid,
+अटल पूर्णांक get_current_घातer_limit(काष्ठा घातercap_zone *घातer_zone, पूर्णांक cid,
 				   u64 *data)
-{
-	struct rapl_domain *rd;
+अणु
+	काष्ठा rapl_करोमुख्य *rd;
 	u64 val;
-	int prim;
-	int ret = 0;
-	int id;
+	पूर्णांक prim;
+	पूर्णांक ret = 0;
+	पूर्णांक id;
 
 	get_online_cpus();
-	rd = power_zone_to_rapl_domain(power_zone);
-	id = contraint_to_pl(rd, cid);
-	if (id < 0) {
+	rd = घातer_zone_to_rapl_करोमुख्य(घातer_zone);
+	id = contraपूर्णांक_to_pl(rd, cid);
+	अगर (id < 0) अणु
 		ret = id;
-		goto get_exit;
-	}
+		जाओ get_निकास;
+	पूर्ण
 
-	switch (rd->rpl[id].prim_id) {
-	case PL1_ENABLE:
+	चयन (rd->rpl[id].prim_id) अणु
+	हाल PL1_ENABLE:
 		prim = POWER_LIMIT1;
-		break;
-	case PL2_ENABLE:
+		अवरोध;
+	हाल PL2_ENABLE:
 		prim = POWER_LIMIT2;
-		break;
-	case PL4_ENABLE:
+		अवरोध;
+	हाल PL4_ENABLE:
 		prim = POWER_LIMIT4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		put_online_cpus();
-		return -EINVAL;
-	}
-	if (rapl_read_data_raw(rd, prim, true, &val))
+		वापस -EINVAL;
+	पूर्ण
+	अगर (rapl_पढ़ो_data_raw(rd, prim, true, &val))
 		ret = -EIO;
-	else
+	अन्यथा
 		*data = val;
 
-get_exit:
+get_निकास:
 	put_online_cpus();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int set_time_window(struct powercap_zone *power_zone, int cid,
-			   u64 window)
-{
-	struct rapl_domain *rd;
-	int ret = 0;
-	int id;
+अटल पूर्णांक set_समय_winकरोw(काष्ठा घातercap_zone *घातer_zone, पूर्णांक cid,
+			   u64 winकरोw)
+अणु
+	काष्ठा rapl_करोमुख्य *rd;
+	पूर्णांक ret = 0;
+	पूर्णांक id;
 
 	get_online_cpus();
-	rd = power_zone_to_rapl_domain(power_zone);
-	id = contraint_to_pl(rd, cid);
-	if (id < 0) {
+	rd = घातer_zone_to_rapl_करोमुख्य(घातer_zone);
+	id = contraपूर्णांक_to_pl(rd, cid);
+	अगर (id < 0) अणु
 		ret = id;
-		goto set_time_exit;
-	}
+		जाओ set_समय_निकास;
+	पूर्ण
 
-	switch (rd->rpl[id].prim_id) {
-	case PL1_ENABLE:
-		rapl_write_data_raw(rd, TIME_WINDOW1, window);
-		break;
-	case PL2_ENABLE:
-		rapl_write_data_raw(rd, TIME_WINDOW2, window);
-		break;
-	default:
+	चयन (rd->rpl[id].prim_id) अणु
+	हाल PL1_ENABLE:
+		rapl_ग_लिखो_data_raw(rd, TIME_WINDOW1, winकरोw);
+		अवरोध;
+	हाल PL2_ENABLE:
+		rapl_ग_लिखो_data_raw(rd, TIME_WINDOW2, winकरोw);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-set_time_exit:
+set_समय_निकास:
 	put_online_cpus();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int get_time_window(struct powercap_zone *power_zone, int cid,
+अटल पूर्णांक get_समय_winकरोw(काष्ठा घातercap_zone *घातer_zone, पूर्णांक cid,
 			   u64 *data)
-{
-	struct rapl_domain *rd;
+अणु
+	काष्ठा rapl_करोमुख्य *rd;
 	u64 val;
-	int ret = 0;
-	int id;
+	पूर्णांक ret = 0;
+	पूर्णांक id;
 
 	get_online_cpus();
-	rd = power_zone_to_rapl_domain(power_zone);
-	id = contraint_to_pl(rd, cid);
-	if (id < 0) {
+	rd = घातer_zone_to_rapl_करोमुख्य(घातer_zone);
+	id = contraपूर्णांक_to_pl(rd, cid);
+	अगर (id < 0) अणु
 		ret = id;
-		goto get_time_exit;
-	}
+		जाओ get_समय_निकास;
+	पूर्ण
 
-	switch (rd->rpl[id].prim_id) {
-	case PL1_ENABLE:
-		ret = rapl_read_data_raw(rd, TIME_WINDOW1, true, &val);
-		break;
-	case PL2_ENABLE:
-		ret = rapl_read_data_raw(rd, TIME_WINDOW2, true, &val);
-		break;
-	case PL4_ENABLE:
+	चयन (rd->rpl[id].prim_id) अणु
+	हाल PL1_ENABLE:
+		ret = rapl_पढ़ो_data_raw(rd, TIME_WINDOW1, true, &val);
+		अवरोध;
+	हाल PL2_ENABLE:
+		ret = rapl_पढ़ो_data_raw(rd, TIME_WINDOW2, true, &val);
+		अवरोध;
+	हाल PL4_ENABLE:
 		/*
-		 * Time window parameter is not applicable for PL4 entry
-		 * so assigining '0' as default value.
+		 * Time winकरोw parameter is not applicable क्रम PL4 entry
+		 * so assigining '0' as शेष value.
 		 */
 		val = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		put_online_cpus();
-		return -EINVAL;
-	}
-	if (!ret)
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!ret)
 		*data = val;
 
-get_time_exit:
+get_समय_निकास:
 	put_online_cpus();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *get_constraint_name(struct powercap_zone *power_zone,
-				       int cid)
-{
-	struct rapl_domain *rd;
-	int id;
+अटल स्थिर अक्षर *get_स्थिरraपूर्णांक_name(काष्ठा घातercap_zone *घातer_zone,
+				       पूर्णांक cid)
+अणु
+	काष्ठा rapl_करोमुख्य *rd;
+	पूर्णांक id;
 
-	rd = power_zone_to_rapl_domain(power_zone);
-	id = contraint_to_pl(rd, cid);
-	if (id >= 0)
-		return rd->rpl[id].name;
+	rd = घातer_zone_to_rapl_करोमुख्य(घातer_zone);
+	id = contraपूर्णांक_to_pl(rd, cid);
+	अगर (id >= 0)
+		वापस rd->rpl[id].name;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int get_max_power(struct powercap_zone *power_zone, int id, u64 *data)
-{
-	struct rapl_domain *rd;
+अटल पूर्णांक get_max_घातer(काष्ठा घातercap_zone *घातer_zone, पूर्णांक id, u64 *data)
+अणु
+	काष्ठा rapl_करोमुख्य *rd;
 	u64 val;
-	int prim;
-	int ret = 0;
+	पूर्णांक prim;
+	पूर्णांक ret = 0;
 
 	get_online_cpus();
-	rd = power_zone_to_rapl_domain(power_zone);
-	switch (rd->rpl[id].prim_id) {
-	case PL1_ENABLE:
+	rd = घातer_zone_to_rapl_करोमुख्य(घातer_zone);
+	चयन (rd->rpl[id].prim_id) अणु
+	हाल PL1_ENABLE:
 		prim = THERMAL_SPEC_POWER;
-		break;
-	case PL2_ENABLE:
+		अवरोध;
+	हाल PL2_ENABLE:
 		prim = MAX_POWER;
-		break;
-	case PL4_ENABLE:
+		अवरोध;
+	हाल PL4_ENABLE:
 		prim = MAX_POWER;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		put_online_cpus();
-		return -EINVAL;
-	}
-	if (rapl_read_data_raw(rd, prim, true, &val))
+		वापस -EINVAL;
+	पूर्ण
+	अगर (rapl_पढ़ो_data_raw(rd, prim, true, &val))
 		ret = -EIO;
-	else
+	अन्यथा
 		*data = val;
 
-	/* As a generalization rule, PL4 would be around two times PL2. */
-	if (rd->rpl[id].prim_id == PL4_ENABLE)
+	/* As a generalization rule, PL4 would be around two बार PL2. */
+	अगर (rd->rpl[id].prim_id == PL4_ENABLE)
 		*data = *data * 2;
 
 	put_online_cpus();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct powercap_zone_constraint_ops constraint_ops = {
-	.set_power_limit_uw = set_power_limit,
-	.get_power_limit_uw = get_current_power_limit,
-	.set_time_window_us = set_time_window,
-	.get_time_window_us = get_time_window,
-	.get_max_power_uw = get_max_power,
-	.get_name = get_constraint_name,
-};
+अटल स्थिर काष्ठा घातercap_zone_स्थिरraपूर्णांक_ops स्थिरraपूर्णांक_ops = अणु
+	.set_घातer_limit_uw = set_घातer_limit,
+	.get_घातer_limit_uw = get_current_घातer_limit,
+	.set_समय_winकरोw_us = set_समय_winकरोw,
+	.get_समय_winकरोw_us = get_समय_winकरोw,
+	.get_max_घातer_uw = get_max_घातer,
+	.get_name = get_स्थिरraपूर्णांक_name,
+पूर्ण;
 
-/* called after domain detection and package level data are set */
-static void rapl_init_domains(struct rapl_package *rp)
-{
-	enum rapl_domain_type i;
-	enum rapl_domain_reg_id j;
-	struct rapl_domain *rd = rp->domains;
+/* called after करोमुख्य detection and package level data are set */
+अटल व्योम rapl_init_करोमुख्यs(काष्ठा rapl_package *rp)
+अणु
+	क्रमागत rapl_करोमुख्य_type i;
+	क्रमागत rapl_करोमुख्य_reg_id j;
+	काष्ठा rapl_करोमुख्य *rd = rp->करोमुख्यs;
 
-	for (i = 0; i < RAPL_DOMAIN_MAX; i++) {
-		unsigned int mask = rp->domain_map & (1 << i);
+	क्रम (i = 0; i < RAPL_DOMAIN_MAX; i++) अणु
+		अचिन्हित पूर्णांक mask = rp->करोमुख्य_map & (1 << i);
 
-		if (!mask)
-			continue;
+		अगर (!mask)
+			जारी;
 
 		rd->rp = rp;
 
-		if (i == RAPL_DOMAIN_PLATFORM && rp->id > 0) {
-			snprintf(rd->name, RAPL_DOMAIN_NAME_LENGTH, "psys-%d",
+		अगर (i == RAPL_DOMAIN_PLATFORM && rp->id > 0) अणु
+			snम_लिखो(rd->name, RAPL_DOMAIN_NAME_LENGTH, "psys-%d",
 				topology_physical_package_id(rp->lead_cpu));
-		} else
-			snprintf(rd->name, RAPL_DOMAIN_NAME_LENGTH, "%s",
-				rapl_domain_names[i]);
+		पूर्ण अन्यथा
+			snम_लिखो(rd->name, RAPL_DOMAIN_NAME_LENGTH, "%s",
+				rapl_करोमुख्य_names[i]);
 
 		rd->id = i;
 		rd->rpl[0].prim_id = PL1_ENABLE;
 		rd->rpl[0].name = pl1_name;
 
 		/*
-		 * The PL2 power domain is applicable for limits two
+		 * The PL2 घातer करोमुख्य is applicable क्रम limits two
 		 * and limits three
 		 */
-		if (rp->priv->limits[i] >= 2) {
+		अगर (rp->priv->limits[i] >= 2) अणु
 			rd->rpl[1].prim_id = PL2_ENABLE;
 			rd->rpl[1].name = pl2_name;
-		}
+		पूर्ण
 
-		/* Enable PL4 domain if the total power limits are three */
-		if (rp->priv->limits[i] == 3) {
+		/* Enable PL4 करोमुख्य अगर the total घातer limits are three */
+		अगर (rp->priv->limits[i] == 3) अणु
 			rd->rpl[2].prim_id = PL4_ENABLE;
 			rd->rpl[2].name = pl4_name;
-		}
+		पूर्ण
 
-		for (j = 0; j < RAPL_DOMAIN_REG_MAX; j++)
+		क्रम (j = 0; j < RAPL_DOMAIN_REG_MAX; j++)
 			rd->regs[j] = rp->priv->regs[i][j];
 
-		switch (i) {
-		case RAPL_DOMAIN_DRAM:
-			rd->domain_energy_unit =
-			    rapl_defaults->dram_domain_energy_unit;
-			if (rd->domain_energy_unit)
+		चयन (i) अणु
+		हाल RAPL_DOMAIN_DRAM:
+			rd->करोमुख्य_energy_unit =
+			    rapl_शेषs->dram_करोमुख्य_energy_unit;
+			अगर (rd->करोमुख्य_energy_unit)
 				pr_info("DRAM domain energy unit %dpj\n",
-					rd->domain_energy_unit);
-			break;
-		case RAPL_DOMAIN_PLATFORM:
-			rd->domain_energy_unit =
-			    rapl_defaults->psys_domain_energy_unit;
-			if (rd->domain_energy_unit)
+					rd->करोमुख्य_energy_unit);
+			अवरोध;
+		हाल RAPL_DOMAIN_PLATFORM:
+			rd->करोमुख्य_energy_unit =
+			    rapl_शेषs->psys_करोमुख्य_energy_unit;
+			अगर (rd->करोमुख्य_energy_unit)
 				pr_info("Platform domain energy unit %dpj\n",
-					rd->domain_energy_unit);
-			break;
-		default:
-			break;
-		}
+					rd->करोमुख्य_energy_unit);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		rd++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u64 rapl_unit_xlate(struct rapl_domain *rd, enum unit_type type,
-			   u64 value, int to_raw)
-{
+अटल u64 rapl_unit_xlate(काष्ठा rapl_करोमुख्य *rd, क्रमागत unit_type type,
+			   u64 value, पूर्णांक to_raw)
+अणु
 	u64 units = 1;
-	struct rapl_package *rp = rd->rp;
+	काष्ठा rapl_package *rp = rd->rp;
 	u64 scale = 1;
 
-	switch (type) {
-	case POWER_UNIT:
-		units = rp->power_unit;
-		break;
-	case ENERGY_UNIT:
+	चयन (type) अणु
+	हाल POWER_UNIT:
+		units = rp->घातer_unit;
+		अवरोध;
+	हाल ENERGY_UNIT:
 		scale = ENERGY_UNIT_SCALE;
-		/* per domain unit takes precedence */
-		if (rd->domain_energy_unit)
-			units = rd->domain_energy_unit;
-		else
+		/* per करोमुख्य unit takes precedence */
+		अगर (rd->करोमुख्य_energy_unit)
+			units = rd->करोमुख्य_energy_unit;
+		अन्यथा
 			units = rp->energy_unit;
-		break;
-	case TIME_UNIT:
-		return rapl_defaults->compute_time_window(rp, value, to_raw);
-	case ARBITRARY_UNIT:
-	default:
-		return value;
-	}
+		अवरोध;
+	हाल TIME_UNIT:
+		वापस rapl_शेषs->compute_समय_winकरोw(rp, value, to_raw);
+	हाल ARBITRARY_UNIT:
+	शेष:
+		वापस value;
+	पूर्ण
 
-	if (to_raw)
-		return div64_u64(value, units) * scale;
+	अगर (to_raw)
+		वापस भाग64_u64(value, units) * scale;
 
 	value *= units;
 
-	return div64_u64(value, scale);
-}
+	वापस भाग64_u64(value, scale);
+पूर्ण
 
-/* in the order of enum rapl_primitives */
-static struct rapl_primitive_info rpi[] = {
-	/* name, mask, shift, msr index, unit divisor */
+/* in the order of क्रमागत rapl_primitives */
+अटल काष्ठा rapl_primitive_info rpi[] = अणु
+	/* name, mask, shअगरt, msr index, unit भागisor */
 	PRIMITIVE_INFO_INIT(ENERGY_COUNTER, ENERGY_STATUS_MASK, 0,
 			    RAPL_DOMAIN_REG_STATUS, ENERGY_UNIT, 0),
 	PRIMITIVE_INFO_INIT(POWER_LIMIT1, POWER_LIMIT1_MASK, 0,
@@ -672,826 +673,826 @@ static struct rapl_primitive_info rpi[] = {
 	/* non-hardware */
 	PRIMITIVE_INFO_INIT(AVERAGE_POWER, 0, 0, 0, POWER_UNIT,
 			    RAPL_PRIMITIVE_DERIVED),
-	{NULL, 0, 0, 0},
-};
+	अणुशून्य, 0, 0, 0पूर्ण,
+पूर्ण;
 
-/* Read primitive data based on its related struct rapl_primitive_info.
- * if xlate flag is set, return translated data based on data units, i.e.
- * time, energy, and power.
+/* Read primitive data based on its related काष्ठा rapl_primitive_info.
+ * अगर xlate flag is set, वापस translated data based on data units, i.e.
+ * समय, energy, and घातer.
  * RAPL MSRs are non-architectual and are laid out not consistently across
- * domains. Here we use primitive info to allow writing consolidated access
+ * करोमुख्यs. Here we use primitive info to allow writing consolidated access
  * functions.
- * For a given primitive, it is processed by MSR mask and shift. Unit conversion
- * is pre-assigned based on RAPL unit MSRs read at init time.
+ * For a given primitive, it is processed by MSR mask and shअगरt. Unit conversion
+ * is pre-asचिन्हित based on RAPL unit MSRs पढ़ो at init समय.
  * 63-------------------------- 31--------------------------- 0
  * |                           xxxxx (mask)                   |
- * |                                |<- shift ----------------|
+ * |                                |<- shअगरt ----------------|
  * 63-------------------------- 31--------------------------- 0
  */
-static int rapl_read_data_raw(struct rapl_domain *rd,
-			      enum rapl_primitives prim, bool xlate, u64 *data)
-{
+अटल पूर्णांक rapl_पढ़ो_data_raw(काष्ठा rapl_करोमुख्य *rd,
+			      क्रमागत rapl_primitives prim, bool xlate, u64 *data)
+अणु
 	u64 value;
-	struct rapl_primitive_info *rp = &rpi[prim];
-	struct reg_action ra;
-	int cpu;
+	काष्ठा rapl_primitive_info *rp = &rpi[prim];
+	काष्ठा reg_action ra;
+	पूर्णांक cpu;
 
-	if (!rp->name || rp->flag & RAPL_PRIMITIVE_DUMMY)
-		return -EINVAL;
+	अगर (!rp->name || rp->flag & RAPL_PRIMITIVE_DUMMY)
+		वापस -EINVAL;
 
 	ra.reg = rd->regs[rp->id];
-	if (!ra.reg)
-		return -EINVAL;
+	अगर (!ra.reg)
+		वापस -EINVAL;
 
 	cpu = rd->rp->lead_cpu;
 
-	/* domain with 2 limits has different bit */
-	if (prim == FW_LOCK && rd->rp->priv->limits[rd->id] == 2) {
+	/* करोमुख्य with 2 limits has dअगरferent bit */
+	अगर (prim == FW_LOCK && rd->rp->priv->limits[rd->id] == 2) अणु
 		rp->mask = POWER_HIGH_LOCK;
-		rp->shift = 63;
-	}
-	/* non-hardware data are collected by the polling thread */
-	if (rp->flag & RAPL_PRIMITIVE_DERIVED) {
+		rp->shअगरt = 63;
+	पूर्ण
+	/* non-hardware data are collected by the polling thपढ़ो */
+	अगर (rp->flag & RAPL_PRIMITIVE_DERIVED) अणु
 		*data = rd->rdd.primitives[prim];
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ra.mask = rp->mask;
 
-	if (rd->rp->priv->read_raw(cpu, &ra)) {
+	अगर (rd->rp->priv->पढ़ो_raw(cpu, &ra)) अणु
 		pr_debug("failed to read reg 0x%llx on cpu %d\n", ra.reg, cpu);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	value = ra.value >> rp->shift;
+	value = ra.value >> rp->shअगरt;
 
-	if (xlate)
+	अगर (xlate)
 		*data = rapl_unit_xlate(rd, rp->unit, value, 0);
-	else
+	अन्यथा
 		*data = value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Similar use of primitive info in the read counterpart */
-static int rapl_write_data_raw(struct rapl_domain *rd,
-			       enum rapl_primitives prim,
-			       unsigned long long value)
-{
-	struct rapl_primitive_info *rp = &rpi[prim];
-	int cpu;
+/* Similar use of primitive info in the पढ़ो counterpart */
+अटल पूर्णांक rapl_ग_लिखो_data_raw(काष्ठा rapl_करोमुख्य *rd,
+			       क्रमागत rapl_primitives prim,
+			       अचिन्हित दीर्घ दीर्घ value)
+अणु
+	काष्ठा rapl_primitive_info *rp = &rpi[prim];
+	पूर्णांक cpu;
 	u64 bits;
-	struct reg_action ra;
-	int ret;
+	काष्ठा reg_action ra;
+	पूर्णांक ret;
 
 	cpu = rd->rp->lead_cpu;
 	bits = rapl_unit_xlate(rd, rp->unit, value, 1);
-	bits <<= rp->shift;
+	bits <<= rp->shअगरt;
 	bits &= rp->mask;
 
-	memset(&ra, 0, sizeof(ra));
+	स_रखो(&ra, 0, माप(ra));
 
 	ra.reg = rd->regs[rp->id];
 	ra.mask = rp->mask;
 	ra.value = bits;
 
-	ret = rd->rp->priv->write_raw(cpu, &ra);
+	ret = rd->rp->priv->ग_लिखो_raw(cpu, &ra);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Raw RAPL data stored in MSRs are in certain scales. We need to
- * convert them into standard units based on the units reported in
- * the RAPL unit MSRs. This is specific to CPUs as the method to
- * calculate units differ on different CPUs.
- * We convert the units to below format based on CPUs.
+ * convert them पूर्णांकo standard units based on the units reported in
+ * the RAPL unit MSRs. This is specअगरic to CPUs as the method to
+ * calculate units dअगरfer on dअगरferent CPUs.
+ * We convert the units to below क्रमmat based on CPUs.
  * i.e.
- * energy unit: picoJoules  : Represented in picoJoules by default
- * power unit : microWatts  : Represented in milliWatts by default
- * time unit  : microseconds: Represented in seconds by default
+ * energy unit: picoJoules  : Represented in picoJoules by शेष
+ * घातer unit : microWatts  : Represented in milliWatts by शेष
+ * समय unit  : microseconds: Represented in seconds by शेष
  */
-static int rapl_check_unit_core(struct rapl_package *rp, int cpu)
-{
-	struct reg_action ra;
+अटल पूर्णांक rapl_check_unit_core(काष्ठा rapl_package *rp, पूर्णांक cpu)
+अणु
+	काष्ठा reg_action ra;
 	u32 value;
 
 	ra.reg = rp->priv->reg_unit;
 	ra.mask = ~0;
-	if (rp->priv->read_raw(cpu, &ra)) {
+	अगर (rp->priv->पढ़ो_raw(cpu, &ra)) अणु
 		pr_err("Failed to read power unit REG 0x%llx on CPU %d, exit.\n",
 		       rp->priv->reg_unit, cpu);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	value = (ra.value & ENERGY_UNIT_MASK) >> ENERGY_UNIT_OFFSET;
 	rp->energy_unit = ENERGY_UNIT_SCALE * 1000000 / (1 << value);
 
 	value = (ra.value & POWER_UNIT_MASK) >> POWER_UNIT_OFFSET;
-	rp->power_unit = 1000000 / (1 << value);
+	rp->घातer_unit = 1000000 / (1 << value);
 
 	value = (ra.value & TIME_UNIT_MASK) >> TIME_UNIT_OFFSET;
-	rp->time_unit = 1000000 / (1 << value);
+	rp->समय_unit = 1000000 / (1 << value);
 
 	pr_debug("Core CPU %s energy=%dpJ, time=%dus, power=%duW\n",
-		 rp->name, rp->energy_unit, rp->time_unit, rp->power_unit);
+		 rp->name, rp->energy_unit, rp->समय_unit, rp->घातer_unit);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rapl_check_unit_atom(struct rapl_package *rp, int cpu)
-{
-	struct reg_action ra;
+अटल पूर्णांक rapl_check_unit_atom(काष्ठा rapl_package *rp, पूर्णांक cpu)
+अणु
+	काष्ठा reg_action ra;
 	u32 value;
 
 	ra.reg = rp->priv->reg_unit;
 	ra.mask = ~0;
-	if (rp->priv->read_raw(cpu, &ra)) {
+	अगर (rp->priv->पढ़ो_raw(cpu, &ra)) अणु
 		pr_err("Failed to read power unit REG 0x%llx on CPU %d, exit.\n",
 		       rp->priv->reg_unit, cpu);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	value = (ra.value & ENERGY_UNIT_MASK) >> ENERGY_UNIT_OFFSET;
 	rp->energy_unit = ENERGY_UNIT_SCALE * 1 << value;
 
 	value = (ra.value & POWER_UNIT_MASK) >> POWER_UNIT_OFFSET;
-	rp->power_unit = (1 << value) * 1000;
+	rp->घातer_unit = (1 << value) * 1000;
 
 	value = (ra.value & TIME_UNIT_MASK) >> TIME_UNIT_OFFSET;
-	rp->time_unit = 1000000 / (1 << value);
+	rp->समय_unit = 1000000 / (1 << value);
 
 	pr_debug("Atom %s energy=%dpJ, time=%dus, power=%duW\n",
-		 rp->name, rp->energy_unit, rp->time_unit, rp->power_unit);
+		 rp->name, rp->energy_unit, rp->समय_unit, rp->घातer_unit);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void power_limit_irq_save_cpu(void *info)
-{
+अटल व्योम घातer_limit_irq_save_cpu(व्योम *info)
+अणु
 	u32 l, h = 0;
-	struct rapl_package *rp = (struct rapl_package *)info;
+	काष्ठा rapl_package *rp = (काष्ठा rapl_package *)info;
 
-	/* save the state of PLN irq mask bit before disabling it */
+	/* save the state of PLN irq mask bit beक्रमe disabling it */
 	rdmsr_safe(MSR_IA32_PACKAGE_THERM_INTERRUPT, &l, &h);
-	if (!(rp->power_limit_irq & PACKAGE_PLN_INT_SAVED)) {
-		rp->power_limit_irq = l & PACKAGE_THERM_INT_PLN_ENABLE;
-		rp->power_limit_irq |= PACKAGE_PLN_INT_SAVED;
-	}
+	अगर (!(rp->घातer_limit_irq & PACKAGE_PLN_INT_SAVED)) अणु
+		rp->घातer_limit_irq = l & PACKAGE_THERM_INT_PLN_ENABLE;
+		rp->घातer_limit_irq |= PACKAGE_PLN_INT_SAVED;
+	पूर्ण
 	l &= ~PACKAGE_THERM_INT_PLN_ENABLE;
 	wrmsr_safe(MSR_IA32_PACKAGE_THERM_INTERRUPT, l, h);
-}
+पूर्ण
 
 /* REVISIT:
- * When package power limit is set artificially low by RAPL, LVT
- * thermal interrupt for package power limit should be ignored
- * since we are not really exceeding the real limit. The intention
- * is to avoid excessive interrupts while we are trying to save power.
- * A useful feature might be routing the package_power_limit interrupt
- * to userspace via eventfd. once we have a usecase, this is simple
- * to do by adding an atomic notifier.
+ * When package घातer limit is set artअगरicially low by RAPL, LVT
+ * thermal पूर्णांकerrupt क्रम package घातer limit should be ignored
+ * since we are not really exceeding the real limit. The पूर्णांकention
+ * is to aव्योम excessive पूर्णांकerrupts जबतक we are trying to save घातer.
+ * A useful feature might be routing the package_घातer_limit पूर्णांकerrupt
+ * to userspace via eventfd. once we have a useहाल, this is simple
+ * to करो by adding an atomic notअगरier.
  */
 
-static void package_power_limit_irq_save(struct rapl_package *rp)
-{
-	if (!boot_cpu_has(X86_FEATURE_PTS) || !boot_cpu_has(X86_FEATURE_PLN))
-		return;
+अटल व्योम package_घातer_limit_irq_save(काष्ठा rapl_package *rp)
+अणु
+	अगर (!boot_cpu_has(X86_FEATURE_PTS) || !boot_cpu_has(X86_FEATURE_PLN))
+		वापस;
 
-	smp_call_function_single(rp->lead_cpu, power_limit_irq_save_cpu, rp, 1);
-}
+	smp_call_function_single(rp->lead_cpu, घातer_limit_irq_save_cpu, rp, 1);
+पूर्ण
 
 /*
- * Restore per package power limit interrupt enable state. Called from cpu
+ * Restore per package घातer limit पूर्णांकerrupt enable state. Called from cpu
  * hotplug code on package removal.
  */
-static void package_power_limit_irq_restore(struct rapl_package *rp)
-{
+अटल व्योम package_घातer_limit_irq_restore(काष्ठा rapl_package *rp)
+अणु
 	u32 l, h;
 
-	if (!boot_cpu_has(X86_FEATURE_PTS) || !boot_cpu_has(X86_FEATURE_PLN))
-		return;
+	अगर (!boot_cpu_has(X86_FEATURE_PTS) || !boot_cpu_has(X86_FEATURE_PLN))
+		वापस;
 
 	/* irq enable state not saved, nothing to restore */
-	if (!(rp->power_limit_irq & PACKAGE_PLN_INT_SAVED))
-		return;
+	अगर (!(rp->घातer_limit_irq & PACKAGE_PLN_INT_SAVED))
+		वापस;
 
 	rdmsr_safe(MSR_IA32_PACKAGE_THERM_INTERRUPT, &l, &h);
 
-	if (rp->power_limit_irq & PACKAGE_THERM_INT_PLN_ENABLE)
+	अगर (rp->घातer_limit_irq & PACKAGE_THERM_INT_PLN_ENABLE)
 		l |= PACKAGE_THERM_INT_PLN_ENABLE;
-	else
+	अन्यथा
 		l &= ~PACKAGE_THERM_INT_PLN_ENABLE;
 
 	wrmsr_safe(MSR_IA32_PACKAGE_THERM_INTERRUPT, l, h);
-}
+पूर्ण
 
-static void set_floor_freq_default(struct rapl_domain *rd, bool mode)
-{
-	int nr_powerlimit = find_nr_power_limit(rd);
+अटल व्योम set_न्यूनमान_freq_शेष(काष्ठा rapl_करोमुख्य *rd, bool mode)
+अणु
+	पूर्णांक nr_घातerlimit = find_nr_घातer_limit(rd);
 
 	/* always enable clamp such that p-state can go below OS requested
-	 * range. power capping priority over guranteed frequency.
+	 * range. घातer capping priority over guranteed frequency.
 	 */
-	rapl_write_data_raw(rd, PL1_CLAMP, mode);
+	rapl_ग_लिखो_data_raw(rd, PL1_CLAMP, mode);
 
-	/* some domains have pl2 */
-	if (nr_powerlimit > 1) {
-		rapl_write_data_raw(rd, PL2_ENABLE, mode);
-		rapl_write_data_raw(rd, PL2_CLAMP, mode);
-	}
-}
+	/* some करोमुख्यs have pl2 */
+	अगर (nr_घातerlimit > 1) अणु
+		rapl_ग_लिखो_data_raw(rd, PL2_ENABLE, mode);
+		rapl_ग_लिखो_data_raw(rd, PL2_CLAMP, mode);
+	पूर्ण
+पूर्ण
 
-static void set_floor_freq_atom(struct rapl_domain *rd, bool enable)
-{
-	static u32 power_ctrl_orig_val;
+अटल व्योम set_न्यूनमान_freq_atom(काष्ठा rapl_करोमुख्य *rd, bool enable)
+अणु
+	अटल u32 घातer_ctrl_orig_val;
 	u32 mdata;
 
-	if (!rapl_defaults->floor_freq_reg_addr) {
+	अगर (!rapl_शेषs->न्यूनमान_freq_reg_addr) अणु
 		pr_err("Invalid floor frequency config register\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!power_ctrl_orig_val)
-		iosf_mbi_read(BT_MBI_UNIT_PMC, MBI_CR_READ,
-			      rapl_defaults->floor_freq_reg_addr,
-			      &power_ctrl_orig_val);
-	mdata = power_ctrl_orig_val;
-	if (enable) {
+	अगर (!घातer_ctrl_orig_val)
+		iosf_mbi_पढ़ो(BT_MBI_UNIT_PMC, MBI_CR_READ,
+			      rapl_शेषs->न्यूनमान_freq_reg_addr,
+			      &घातer_ctrl_orig_val);
+	mdata = घातer_ctrl_orig_val;
+	अगर (enable) अणु
 		mdata &= ~(0x7f << 8);
 		mdata |= 1 << 8;
-	}
-	iosf_mbi_write(BT_MBI_UNIT_PMC, MBI_CR_WRITE,
-		       rapl_defaults->floor_freq_reg_addr, mdata);
-}
+	पूर्ण
+	iosf_mbi_ग_लिखो(BT_MBI_UNIT_PMC, MBI_CR_WRITE,
+		       rapl_शेषs->न्यूनमान_freq_reg_addr, mdata);
+पूर्ण
 
-static u64 rapl_compute_time_window_core(struct rapl_package *rp, u64 value,
+अटल u64 rapl_compute_समय_winकरोw_core(काष्ठा rapl_package *rp, u64 value,
 					 bool to_raw)
-{
-	u64 f, y;		/* fraction and exp. used for time unit */
+अणु
+	u64 f, y;		/* fraction and exp. used क्रम समय unit */
 
 	/*
 	 * Special processing based on 2^Y*(1+F/4), refer
 	 * to Intel Software Developer's manual Vol.3B: CH 14.9.3.
 	 */
-	if (!to_raw) {
+	अगर (!to_raw) अणु
 		f = (value & 0x60) >> 5;
 		y = value & 0x1f;
-		value = (1 << y) * (4 + f) * rp->time_unit / 4;
-	} else {
-		do_div(value, rp->time_unit);
+		value = (1 << y) * (4 + f) * rp->समय_unit / 4;
+	पूर्ण अन्यथा अणु
+		करो_भाग(value, rp->समय_unit);
 		y = ilog2(value);
-		f = div64_u64(4 * (value - (1 << y)), 1 << y);
+		f = भाग64_u64(4 * (value - (1 << y)), 1 << y);
 		value = (y & 0x1f) | ((f & 0x3) << 5);
-	}
-	return value;
-}
+	पूर्ण
+	वापस value;
+पूर्ण
 
-static u64 rapl_compute_time_window_atom(struct rapl_package *rp, u64 value,
+अटल u64 rapl_compute_समय_winकरोw_atom(काष्ठा rapl_package *rp, u64 value,
 					 bool to_raw)
-{
+अणु
 	/*
-	 * Atom time unit encoding is straight forward val * time_unit,
-	 * where time_unit is default to 1 sec. Never 0.
+	 * Atom समय unit encoding is straight क्रमward val * समय_unit,
+	 * where समय_unit is शेष to 1 sec. Never 0.
 	 */
-	if (!to_raw)
-		return (value) ? value *= rp->time_unit : rp->time_unit;
+	अगर (!to_raw)
+		वापस (value) ? value *= rp->समय_unit : rp->समय_unit;
 
-	value = div64_u64(value, rp->time_unit);
+	value = भाग64_u64(value, rp->समय_unit);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static const struct rapl_defaults rapl_defaults_core = {
-	.floor_freq_reg_addr = 0,
+अटल स्थिर काष्ठा rapl_शेषs rapl_शेषs_core = अणु
+	.न्यूनमान_freq_reg_addr = 0,
 	.check_unit = rapl_check_unit_core,
-	.set_floor_freq = set_floor_freq_default,
-	.compute_time_window = rapl_compute_time_window_core,
-};
+	.set_न्यूनमान_freq = set_न्यूनमान_freq_शेष,
+	.compute_समय_winकरोw = rapl_compute_समय_winकरोw_core,
+पूर्ण;
 
-static const struct rapl_defaults rapl_defaults_hsw_server = {
+अटल स्थिर काष्ठा rapl_शेषs rapl_शेषs_hsw_server = अणु
 	.check_unit = rapl_check_unit_core,
-	.set_floor_freq = set_floor_freq_default,
-	.compute_time_window = rapl_compute_time_window_core,
-	.dram_domain_energy_unit = 15300,
-};
+	.set_न्यूनमान_freq = set_न्यूनमान_freq_शेष,
+	.compute_समय_winकरोw = rapl_compute_समय_winकरोw_core,
+	.dram_करोमुख्य_energy_unit = 15300,
+पूर्ण;
 
-static const struct rapl_defaults rapl_defaults_spr_server = {
+अटल स्थिर काष्ठा rapl_शेषs rapl_शेषs_spr_server = अणु
 	.check_unit = rapl_check_unit_core,
-	.set_floor_freq = set_floor_freq_default,
-	.compute_time_window = rapl_compute_time_window_core,
-	.dram_domain_energy_unit = 15300,
-	.psys_domain_energy_unit = 1000000000,
-};
+	.set_न्यूनमान_freq = set_न्यूनमान_freq_शेष,
+	.compute_समय_winकरोw = rapl_compute_समय_winकरोw_core,
+	.dram_करोमुख्य_energy_unit = 15300,
+	.psys_करोमुख्य_energy_unit = 1000000000,
+पूर्ण;
 
-static const struct rapl_defaults rapl_defaults_byt = {
-	.floor_freq_reg_addr = IOSF_CPU_POWER_BUDGET_CTL_BYT,
+अटल स्थिर काष्ठा rapl_शेषs rapl_शेषs_byt = अणु
+	.न्यूनमान_freq_reg_addr = IOSF_CPU_POWER_BUDGET_CTL_BYT,
 	.check_unit = rapl_check_unit_atom,
-	.set_floor_freq = set_floor_freq_atom,
-	.compute_time_window = rapl_compute_time_window_atom,
-};
+	.set_न्यूनमान_freq = set_न्यूनमान_freq_atom,
+	.compute_समय_winकरोw = rapl_compute_समय_winकरोw_atom,
+पूर्ण;
 
-static const struct rapl_defaults rapl_defaults_tng = {
-	.floor_freq_reg_addr = IOSF_CPU_POWER_BUDGET_CTL_TNG,
+अटल स्थिर काष्ठा rapl_शेषs rapl_शेषs_tng = अणु
+	.न्यूनमान_freq_reg_addr = IOSF_CPU_POWER_BUDGET_CTL_TNG,
 	.check_unit = rapl_check_unit_atom,
-	.set_floor_freq = set_floor_freq_atom,
-	.compute_time_window = rapl_compute_time_window_atom,
-};
+	.set_न्यूनमान_freq = set_न्यूनमान_freq_atom,
+	.compute_समय_winकरोw = rapl_compute_समय_winकरोw_atom,
+पूर्ण;
 
-static const struct rapl_defaults rapl_defaults_ann = {
-	.floor_freq_reg_addr = 0,
+अटल स्थिर काष्ठा rapl_शेषs rapl_शेषs_ann = अणु
+	.न्यूनमान_freq_reg_addr = 0,
 	.check_unit = rapl_check_unit_atom,
-	.set_floor_freq = NULL,
-	.compute_time_window = rapl_compute_time_window_atom,
-};
+	.set_न्यूनमान_freq = शून्य,
+	.compute_समय_winकरोw = rapl_compute_समय_winकरोw_atom,
+पूर्ण;
 
-static const struct rapl_defaults rapl_defaults_cht = {
-	.floor_freq_reg_addr = 0,
+अटल स्थिर काष्ठा rapl_शेषs rapl_शेषs_cht = अणु
+	.न्यूनमान_freq_reg_addr = 0,
 	.check_unit = rapl_check_unit_atom,
-	.set_floor_freq = NULL,
-	.compute_time_window = rapl_compute_time_window_atom,
-};
+	.set_न्यूनमान_freq = शून्य,
+	.compute_समय_winकरोw = rapl_compute_समय_winकरोw_atom,
+पूर्ण;
 
-static const struct rapl_defaults rapl_defaults_amd = {
+अटल स्थिर काष्ठा rapl_शेषs rapl_शेषs_amd = अणु
 	.check_unit = rapl_check_unit_core,
-};
+पूर्ण;
 
-static const struct x86_cpu_id rapl_ids[] __initconst = {
-	X86_MATCH_INTEL_FAM6_MODEL(SANDYBRIDGE,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(SANDYBRIDGE_X,	&rapl_defaults_core),
+अटल स्थिर काष्ठा x86_cpu_id rapl_ids[] __initस्थिर = अणु
+	X86_MATCH_INTEL_FAM6_MODEL(SANDYBRIDGE,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(SANDYBRIDGE_X,	&rapl_शेषs_core),
 
-	X86_MATCH_INTEL_FAM6_MODEL(IVYBRIDGE,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(IVYBRIDGE_X,		&rapl_defaults_core),
+	X86_MATCH_INTEL_FAM6_MODEL(IVYBRIDGE,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(IVYBRIDGE_X,		&rapl_शेषs_core),
 
-	X86_MATCH_INTEL_FAM6_MODEL(HASWELL,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(HASWELL_L,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(HASWELL_G,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(HASWELL_X,		&rapl_defaults_hsw_server),
+	X86_MATCH_INTEL_FAM6_MODEL(HASWELL,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(HASWELL_L,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(HASWELL_G,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(HASWELL_X,		&rapl_शेषs_hsw_server),
 
-	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL_G,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL_D,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL_X,		&rapl_defaults_hsw_server),
+	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL_G,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL_D,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL_X,		&rapl_शेषs_hsw_server),
 
-	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_L,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_X,		&rapl_defaults_hsw_server),
-	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE_L,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(CANNONLAKE_L,	&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_L,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_NNPI,	&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_X,		&rapl_defaults_hsw_server),
-	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_D,		&rapl_defaults_hsw_server),
-	X86_MATCH_INTEL_FAM6_MODEL(COMETLAKE_L,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(COMETLAKE,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(TIGERLAKE_L,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(TIGERLAKE,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ROCKETLAKE,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ALDERLAKE,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ALDERLAKE_L,		&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(SAPPHIRERAPIDS_X,	&rapl_defaults_spr_server),
-	X86_MATCH_INTEL_FAM6_MODEL(LAKEFIELD,		&rapl_defaults_core),
+	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_L,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_X,		&rapl_शेषs_hsw_server),
+	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE_L,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(CANNONLAKE_L,	&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_L,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_NNPI,	&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_X,		&rapl_शेषs_hsw_server),
+	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_D,		&rapl_शेषs_hsw_server),
+	X86_MATCH_INTEL_FAM6_MODEL(COMETLAKE_L,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(COMETLAKE,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(TIGERLAKE_L,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(TIGERLAKE,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ROCKETLAKE,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ALDERLAKE,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ALDERLAKE_L,		&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(SAPPHIRERAPIDS_X,	&rapl_शेषs_spr_server),
+	X86_MATCH_INTEL_FAM6_MODEL(LAKEFIELD,		&rapl_शेषs_core),
 
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT,	&rapl_defaults_byt),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_AIRMONT,	&rapl_defaults_cht),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT_MID,	&rapl_defaults_tng),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_AIRMONT_MID,	&rapl_defaults_ann),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT,	&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT_PLUS,	&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT_D,	&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_TREMONT,	&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_TREMONT_D,	&rapl_defaults_core),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_TREMONT_L,	&rapl_defaults_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT,	&rapl_शेषs_byt),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_AIRMONT,	&rapl_शेषs_cht),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT_MID,	&rapl_शेषs_tng),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_AIRMONT_MID,	&rapl_शेषs_ann),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT,	&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT_PLUS,	&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT_D,	&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_TREMONT,	&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_TREMONT_D,	&rapl_शेषs_core),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_TREMONT_L,	&rapl_शेषs_core),
 
-	X86_MATCH_INTEL_FAM6_MODEL(XEON_PHI_KNL,	&rapl_defaults_hsw_server),
-	X86_MATCH_INTEL_FAM6_MODEL(XEON_PHI_KNM,	&rapl_defaults_hsw_server),
+	X86_MATCH_INTEL_FAM6_MODEL(XEON_PHI_KNL,	&rapl_शेषs_hsw_server),
+	X86_MATCH_INTEL_FAM6_MODEL(XEON_PHI_KNM,	&rapl_शेषs_hsw_server),
 
-	X86_MATCH_VENDOR_FAM(AMD, 0x17, &rapl_defaults_amd),
-	X86_MATCH_VENDOR_FAM(AMD, 0x19, &rapl_defaults_amd),
-	X86_MATCH_VENDOR_FAM(HYGON, 0x18, &rapl_defaults_amd),
-	{}
-};
+	X86_MATCH_VENDOR_FAM(AMD, 0x17, &rapl_शेषs_amd),
+	X86_MATCH_VENDOR_FAM(AMD, 0x19, &rapl_शेषs_amd),
+	X86_MATCH_VENDOR_FAM(HYGON, 0x18, &rapl_शेषs_amd),
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(x86cpu, rapl_ids);
 
-/* Read once for all raw primitive data for domains */
-static void rapl_update_domain_data(struct rapl_package *rp)
-{
-	int dmn, prim;
+/* Read once क्रम all raw primitive data क्रम करोमुख्यs */
+अटल व्योम rapl_update_करोमुख्य_data(काष्ठा rapl_package *rp)
+अणु
+	पूर्णांक dmn, prim;
 	u64 val;
 
-	for (dmn = 0; dmn < rp->nr_domains; dmn++) {
+	क्रम (dmn = 0; dmn < rp->nr_करोमुख्यs; dmn++) अणु
 		pr_debug("update %s domain %s data\n", rp->name,
-			 rp->domains[dmn].name);
+			 rp->करोमुख्यs[dmn].name);
 		/* exclude non-raw primitives */
-		for (prim = 0; prim < NR_RAW_PRIMITIVES; prim++) {
-			if (!rapl_read_data_raw(&rp->domains[dmn], prim,
+		क्रम (prim = 0; prim < NR_RAW_PRIMITIVES; prim++) अणु
+			अगर (!rapl_पढ़ो_data_raw(&rp->करोमुख्यs[dmn], prim,
 						rpi[prim].unit, &val))
-				rp->domains[dmn].rdd.primitives[prim] = val;
-		}
-	}
+				rp->करोमुख्यs[dmn].rdd.primitives[prim] = val;
+		पूर्ण
+	पूर्ण
 
-}
+पूर्ण
 
-static int rapl_package_register_powercap(struct rapl_package *rp)
-{
-	struct rapl_domain *rd;
-	struct powercap_zone *power_zone = NULL;
-	int nr_pl, ret;
+अटल पूर्णांक rapl_package_रेजिस्टर_घातercap(काष्ठा rapl_package *rp)
+अणु
+	काष्ठा rapl_करोमुख्य *rd;
+	काष्ठा घातercap_zone *घातer_zone = शून्य;
+	पूर्णांक nr_pl, ret;
 
-	/* Update the domain data of the new package */
-	rapl_update_domain_data(rp);
+	/* Update the करोमुख्य data of the new package */
+	rapl_update_करोमुख्य_data(rp);
 
-	/* first we register package domain as the parent zone */
-	for (rd = rp->domains; rd < rp->domains + rp->nr_domains; rd++) {
-		if (rd->id == RAPL_DOMAIN_PACKAGE) {
-			nr_pl = find_nr_power_limit(rd);
+	/* first we रेजिस्टर package करोमुख्य as the parent zone */
+	क्रम (rd = rp->करोमुख्यs; rd < rp->करोमुख्यs + rp->nr_करोमुख्यs; rd++) अणु
+		अगर (rd->id == RAPL_DOMAIN_PACKAGE) अणु
+			nr_pl = find_nr_घातer_limit(rd);
 			pr_debug("register package domain %s\n", rp->name);
-			power_zone = powercap_register_zone(&rd->power_zone,
+			घातer_zone = घातercap_रेजिस्टर_zone(&rd->घातer_zone,
 					    rp->priv->control_type, rp->name,
-					    NULL, &zone_ops[rd->id], nr_pl,
-					    &constraint_ops);
-			if (IS_ERR(power_zone)) {
+					    शून्य, &zone_ops[rd->id], nr_pl,
+					    &स्थिरraपूर्णांक_ops);
+			अगर (IS_ERR(घातer_zone)) अणु
 				pr_debug("failed to register power zone %s\n",
 					 rp->name);
-				return PTR_ERR(power_zone);
-			}
+				वापस PTR_ERR(घातer_zone);
+			पूर्ण
 			/* track parent zone in per package/socket data */
-			rp->power_zone = power_zone;
-			/* done, only one package domain per socket */
-			break;
-		}
-	}
-	if (!power_zone) {
+			rp->घातer_zone = घातer_zone;
+			/* करोne, only one package करोमुख्य per socket */
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!घातer_zone) अणु
 		pr_err("no package domain found, unknown topology!\n");
-		return -ENODEV;
-	}
-	/* now register domains as children of the socket/package */
-	for (rd = rp->domains; rd < rp->domains + rp->nr_domains; rd++) {
-		struct powercap_zone *parent = rp->power_zone;
+		वापस -ENODEV;
+	पूर्ण
+	/* now रेजिस्टर करोमुख्यs as children of the socket/package */
+	क्रम (rd = rp->करोमुख्यs; rd < rp->करोमुख्यs + rp->nr_करोमुख्यs; rd++) अणु
+		काष्ठा घातercap_zone *parent = rp->घातer_zone;
 
-		if (rd->id == RAPL_DOMAIN_PACKAGE)
-			continue;
-		if (rd->id == RAPL_DOMAIN_PLATFORM)
-			parent = NULL;
-		/* number of power limits per domain varies */
-		nr_pl = find_nr_power_limit(rd);
-		power_zone = powercap_register_zone(&rd->power_zone,
+		अगर (rd->id == RAPL_DOMAIN_PACKAGE)
+			जारी;
+		अगर (rd->id == RAPL_DOMAIN_PLATFORM)
+			parent = शून्य;
+		/* number of घातer limits per करोमुख्य varies */
+		nr_pl = find_nr_घातer_limit(rd);
+		घातer_zone = घातercap_रेजिस्टर_zone(&rd->घातer_zone,
 						    rp->priv->control_type,
 						    rd->name, parent,
 						    &zone_ops[rd->id], nr_pl,
-						    &constraint_ops);
+						    &स्थिरraपूर्णांक_ops);
 
-		if (IS_ERR(power_zone)) {
+		अगर (IS_ERR(घातer_zone)) अणु
 			pr_debug("failed to register power_zone, %s:%s\n",
 				 rp->name, rd->name);
-			ret = PTR_ERR(power_zone);
-			goto err_cleanup;
-		}
-	}
-	return 0;
+			ret = PTR_ERR(घातer_zone);
+			जाओ err_cleanup;
+		पूर्ण
+	पूर्ण
+	वापस 0;
 
 err_cleanup:
 	/*
-	 * Clean up previously initialized domains within the package if we
-	 * failed after the first domain setup.
+	 * Clean up previously initialized करोमुख्यs within the package अगर we
+	 * failed after the first करोमुख्य setup.
 	 */
-	while (--rd >= rp->domains) {
+	जबतक (--rd >= rp->करोमुख्यs) अणु
 		pr_debug("unregister %s domain %s\n", rp->name, rd->name);
-		powercap_unregister_zone(rp->priv->control_type,
-					 &rd->power_zone);
-	}
+		घातercap_unरेजिस्टर_zone(rp->priv->control_type,
+					 &rd->घातer_zone);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rapl_check_domain(int cpu, int domain, struct rapl_package *rp)
-{
-	struct reg_action ra;
+अटल पूर्णांक rapl_check_करोमुख्य(पूर्णांक cpu, पूर्णांक करोमुख्य, काष्ठा rapl_package *rp)
+अणु
+	काष्ठा reg_action ra;
 
-	switch (domain) {
-	case RAPL_DOMAIN_PACKAGE:
-	case RAPL_DOMAIN_PP0:
-	case RAPL_DOMAIN_PP1:
-	case RAPL_DOMAIN_DRAM:
-	case RAPL_DOMAIN_PLATFORM:
-		ra.reg = rp->priv->regs[domain][RAPL_DOMAIN_REG_STATUS];
-		break;
-	default:
-		pr_err("invalid domain id %d\n", domain);
-		return -EINVAL;
-	}
-	/* make sure domain counters are available and contains non-zero
+	चयन (करोमुख्य) अणु
+	हाल RAPL_DOMAIN_PACKAGE:
+	हाल RAPL_DOMAIN_PP0:
+	हाल RAPL_DOMAIN_PP1:
+	हाल RAPL_DOMAIN_DRAM:
+	हाल RAPL_DOMAIN_PLATFORM:
+		ra.reg = rp->priv->regs[करोमुख्य][RAPL_DOMAIN_REG_STATUS];
+		अवरोध;
+	शेष:
+		pr_err("invalid domain id %d\n", करोमुख्य);
+		वापस -EINVAL;
+	पूर्ण
+	/* make sure करोमुख्य counters are available and contains non-zero
 	 * values, otherwise skip it.
 	 */
 
 	ra.mask = ENERGY_STATUS_MASK;
-	if (rp->priv->read_raw(cpu, &ra) || !ra.value)
-		return -ENODEV;
+	अगर (rp->priv->पढ़ो_raw(cpu, &ra) || !ra.value)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Check if power limits are available. Two cases when they are not available:
- * 1. Locked by BIOS, in this case we still provide read-only access so that
+ * Check अगर घातer limits are available. Two हालs when they are not available:
+ * 1. Locked by BIOS, in this हाल we still provide पढ़ो-only access so that
  *    users can see what limit is set by the BIOS.
- * 2. Some CPUs make some domains monitoring only which means PLx MSRs may not
- *    exist at all. In this case, we do not show the constraints in powercap.
+ * 2. Some CPUs make some करोमुख्यs monitoring only which means PLx MSRs may not
+ *    exist at all. In this हाल, we करो not show the स्थिरraपूर्णांकs in घातercap.
  *
- * Called after domains are detected and initialized.
+ * Called after करोमुख्यs are detected and initialized.
  */
-static void rapl_detect_powerlimit(struct rapl_domain *rd)
-{
+अटल व्योम rapl_detect_घातerlimit(काष्ठा rapl_करोमुख्य *rd)
+अणु
 	u64 val64;
-	int i;
+	पूर्णांक i;
 
-	/* check if the domain is locked by BIOS, ignore if MSR doesn't exist */
-	if (!rapl_read_data_raw(rd, FW_LOCK, false, &val64)) {
-		if (val64) {
+	/* check अगर the करोमुख्य is locked by BIOS, ignore अगर MSR करोesn't exist */
+	अगर (!rapl_पढ़ो_data_raw(rd, FW_LOCK, false, &val64)) अणु
+		अगर (val64) अणु
 			pr_info("RAPL %s domain %s locked by BIOS\n",
 				rd->rp->name, rd->name);
 			rd->state |= DOMAIN_STATE_BIOS_LOCKED;
-		}
-	}
-	/* check if power limit MSR exists, otherwise domain is monitoring only */
-	for (i = 0; i < NR_POWER_LIMITS; i++) {
-		int prim = rd->rpl[i].prim_id;
+		पूर्ण
+	पूर्ण
+	/* check अगर घातer limit MSR exists, otherwise करोमुख्य is monitoring only */
+	क्रम (i = 0; i < NR_POWER_LIMITS; i++) अणु
+		पूर्णांक prim = rd->rpl[i].prim_id;
 
-		if (rapl_read_data_raw(rd, prim, false, &val64))
-			rd->rpl[i].name = NULL;
-	}
-}
+		अगर (rapl_पढ़ो_data_raw(rd, prim, false, &val64))
+			rd->rpl[i].name = शून्य;
+	पूर्ण
+पूर्ण
 
-/* Detect active and valid domains for the given CPU, caller must
- * ensure the CPU belongs to the targeted package and CPU hotlug is disabled.
+/* Detect active and valid करोमुख्यs क्रम the given CPU, caller must
+ * ensure the CPU beदीर्घs to the targeted package and CPU hotlug is disabled.
  */
-static int rapl_detect_domains(struct rapl_package *rp, int cpu)
-{
-	struct rapl_domain *rd;
-	int i;
+अटल पूर्णांक rapl_detect_करोमुख्यs(काष्ठा rapl_package *rp, पूर्णांक cpu)
+अणु
+	काष्ठा rapl_करोमुख्य *rd;
+	पूर्णांक i;
 
-	for (i = 0; i < RAPL_DOMAIN_MAX; i++) {
-		/* use physical package id to read counters */
-		if (!rapl_check_domain(cpu, i, rp)) {
-			rp->domain_map |= 1 << i;
-			pr_info("Found RAPL domain %s\n", rapl_domain_names[i]);
-		}
-	}
-	rp->nr_domains = bitmap_weight(&rp->domain_map, RAPL_DOMAIN_MAX);
-	if (!rp->nr_domains) {
+	क्रम (i = 0; i < RAPL_DOMAIN_MAX; i++) अणु
+		/* use physical package id to पढ़ो counters */
+		अगर (!rapl_check_करोमुख्य(cpu, i, rp)) अणु
+			rp->करोमुख्य_map |= 1 << i;
+			pr_info("Found RAPL domain %s\n", rapl_करोमुख्य_names[i]);
+		पूर्ण
+	पूर्ण
+	rp->nr_करोमुख्यs = biपंचांगap_weight(&rp->करोमुख्य_map, RAPL_DOMAIN_MAX);
+	अगर (!rp->nr_करोमुख्यs) अणु
 		pr_debug("no valid rapl domains found in %s\n", rp->name);
-		return -ENODEV;
-	}
-	pr_debug("found %d domains on %s\n", rp->nr_domains, rp->name);
+		वापस -ENODEV;
+	पूर्ण
+	pr_debug("found %d domains on %s\n", rp->nr_करोमुख्यs, rp->name);
 
-	rp->domains = kcalloc(rp->nr_domains + 1, sizeof(struct rapl_domain),
+	rp->करोमुख्यs = kसुस्मृति(rp->nr_करोमुख्यs + 1, माप(काष्ठा rapl_करोमुख्य),
 			      GFP_KERNEL);
-	if (!rp->domains)
-		return -ENOMEM;
+	अगर (!rp->करोमुख्यs)
+		वापस -ENOMEM;
 
-	rapl_init_domains(rp);
+	rapl_init_करोमुख्यs(rp);
 
-	for (rd = rp->domains; rd < rp->domains + rp->nr_domains; rd++)
-		rapl_detect_powerlimit(rd);
+	क्रम (rd = rp->करोमुख्यs; rd < rp->करोमुख्यs + rp->nr_करोमुख्यs; rd++)
+		rapl_detect_घातerlimit(rd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* called from CPU hotplug notifier, hotplug lock held */
-void rapl_remove_package(struct rapl_package *rp)
-{
-	struct rapl_domain *rd, *rd_package = NULL;
+/* called from CPU hotplug notअगरier, hotplug lock held */
+व्योम rapl_हटाओ_package(काष्ठा rapl_package *rp)
+अणु
+	काष्ठा rapl_करोमुख्य *rd, *rd_package = शून्य;
 
-	package_power_limit_irq_restore(rp);
+	package_घातer_limit_irq_restore(rp);
 
-	for (rd = rp->domains; rd < rp->domains + rp->nr_domains; rd++) {
-		rapl_write_data_raw(rd, PL1_ENABLE, 0);
-		rapl_write_data_raw(rd, PL1_CLAMP, 0);
-		if (find_nr_power_limit(rd) > 1) {
-			rapl_write_data_raw(rd, PL2_ENABLE, 0);
-			rapl_write_data_raw(rd, PL2_CLAMP, 0);
-			rapl_write_data_raw(rd, PL4_ENABLE, 0);
-		}
-		if (rd->id == RAPL_DOMAIN_PACKAGE) {
+	क्रम (rd = rp->करोमुख्यs; rd < rp->करोमुख्यs + rp->nr_करोमुख्यs; rd++) अणु
+		rapl_ग_लिखो_data_raw(rd, PL1_ENABLE, 0);
+		rapl_ग_लिखो_data_raw(rd, PL1_CLAMP, 0);
+		अगर (find_nr_घातer_limit(rd) > 1) अणु
+			rapl_ग_लिखो_data_raw(rd, PL2_ENABLE, 0);
+			rapl_ग_लिखो_data_raw(rd, PL2_CLAMP, 0);
+			rapl_ग_लिखो_data_raw(rd, PL4_ENABLE, 0);
+		पूर्ण
+		अगर (rd->id == RAPL_DOMAIN_PACKAGE) अणु
 			rd_package = rd;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		pr_debug("remove package, undo power limit on %s: %s\n",
 			 rp->name, rd->name);
-		powercap_unregister_zone(rp->priv->control_type,
-					 &rd->power_zone);
-	}
-	/* do parent zone last */
-	powercap_unregister_zone(rp->priv->control_type,
-				 &rd_package->power_zone);
+		घातercap_unरेजिस्टर_zone(rp->priv->control_type,
+					 &rd->घातer_zone);
+	पूर्ण
+	/* करो parent zone last */
+	घातercap_unरेजिस्टर_zone(rp->priv->control_type,
+				 &rd_package->घातer_zone);
 	list_del(&rp->plist);
-	kfree(rp);
-}
-EXPORT_SYMBOL_GPL(rapl_remove_package);
+	kमुक्त(rp);
+पूर्ण
+EXPORT_SYMBOL_GPL(rapl_हटाओ_package);
 
 /* caller to ensure CPU hotplug lock is held */
-struct rapl_package *rapl_find_package_domain(int cpu, struct rapl_if_priv *priv)
-{
-	int id = topology_logical_die_id(cpu);
-	struct rapl_package *rp;
+काष्ठा rapl_package *rapl_find_package_करोमुख्य(पूर्णांक cpu, काष्ठा rapl_अगर_priv *priv)
+अणु
+	पूर्णांक id = topology_logical_die_id(cpu);
+	काष्ठा rapl_package *rp;
 
-	list_for_each_entry(rp, &rapl_packages, plist) {
-		if (rp->id == id
+	list_क्रम_each_entry(rp, &rapl_packages, plist) अणु
+		अगर (rp->id == id
 		    && rp->priv->control_type == priv->control_type)
-			return rp;
-	}
+			वापस rp;
+	पूर्ण
 
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(rapl_find_package_domain);
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(rapl_find_package_करोमुख्य);
 
-/* called from CPU hotplug notifier, hotplug lock held */
-struct rapl_package *rapl_add_package(int cpu, struct rapl_if_priv *priv)
-{
-	int id = topology_logical_die_id(cpu);
-	struct rapl_package *rp;
-	int ret;
+/* called from CPU hotplug notअगरier, hotplug lock held */
+काष्ठा rapl_package *rapl_add_package(पूर्णांक cpu, काष्ठा rapl_अगर_priv *priv)
+अणु
+	पूर्णांक id = topology_logical_die_id(cpu);
+	काष्ठा rapl_package *rp;
+	पूर्णांक ret;
 
-	if (!rapl_defaults)
-		return ERR_PTR(-ENODEV);
+	अगर (!rapl_शेषs)
+		वापस ERR_PTR(-ENODEV);
 
-	rp = kzalloc(sizeof(struct rapl_package), GFP_KERNEL);
-	if (!rp)
-		return ERR_PTR(-ENOMEM);
+	rp = kzalloc(माप(काष्ठा rapl_package), GFP_KERNEL);
+	अगर (!rp)
+		वापस ERR_PTR(-ENOMEM);
 
 	/* add the new package to the list */
 	rp->id = id;
 	rp->lead_cpu = cpu;
 	rp->priv = priv;
 
-	if (topology_max_die_per_package() > 1)
-		snprintf(rp->name, PACKAGE_DOMAIN_NAME_LENGTH,
+	अगर (topology_max_die_per_package() > 1)
+		snम_लिखो(rp->name, PACKAGE_DOMAIN_NAME_LENGTH,
 			 "package-%d-die-%d",
 			 topology_physical_package_id(cpu), topology_die_id(cpu));
-	else
-		snprintf(rp->name, PACKAGE_DOMAIN_NAME_LENGTH, "package-%d",
+	अन्यथा
+		snम_लिखो(rp->name, PACKAGE_DOMAIN_NAME_LENGTH, "package-%d",
 			 topology_physical_package_id(cpu));
 
-	/* check if the package contains valid domains */
-	if (rapl_detect_domains(rp, cpu) || rapl_defaults->check_unit(rp, cpu)) {
+	/* check अगर the package contains valid करोमुख्यs */
+	अगर (rapl_detect_करोमुख्यs(rp, cpu) || rapl_शेषs->check_unit(rp, cpu)) अणु
 		ret = -ENODEV;
-		goto err_free_package;
-	}
-	ret = rapl_package_register_powercap(rp);
-	if (!ret) {
+		जाओ err_मुक्त_package;
+	पूर्ण
+	ret = rapl_package_रेजिस्टर_घातercap(rp);
+	अगर (!ret) अणु
 		INIT_LIST_HEAD(&rp->plist);
 		list_add(&rp->plist, &rapl_packages);
-		return rp;
-	}
+		वापस rp;
+	पूर्ण
 
-err_free_package:
-	kfree(rp->domains);
-	kfree(rp);
-	return ERR_PTR(ret);
-}
+err_मुक्त_package:
+	kमुक्त(rp->करोमुख्यs);
+	kमुक्त(rp);
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(rapl_add_package);
 
-static void power_limit_state_save(void)
-{
-	struct rapl_package *rp;
-	struct rapl_domain *rd;
-	int nr_pl, ret, i;
+अटल व्योम घातer_limit_state_save(व्योम)
+अणु
+	काष्ठा rapl_package *rp;
+	काष्ठा rapl_करोमुख्य *rd;
+	पूर्णांक nr_pl, ret, i;
 
 	get_online_cpus();
-	list_for_each_entry(rp, &rapl_packages, plist) {
-		if (!rp->power_zone)
-			continue;
-		rd = power_zone_to_rapl_domain(rp->power_zone);
-		nr_pl = find_nr_power_limit(rd);
-		for (i = 0; i < nr_pl; i++) {
-			switch (rd->rpl[i].prim_id) {
-			case PL1_ENABLE:
-				ret = rapl_read_data_raw(rd,
+	list_क्रम_each_entry(rp, &rapl_packages, plist) अणु
+		अगर (!rp->घातer_zone)
+			जारी;
+		rd = घातer_zone_to_rapl_करोमुख्य(rp->घातer_zone);
+		nr_pl = find_nr_घातer_limit(rd);
+		क्रम (i = 0; i < nr_pl; i++) अणु
+			चयन (rd->rpl[i].prim_id) अणु
+			हाल PL1_ENABLE:
+				ret = rapl_पढ़ो_data_raw(rd,
 						 POWER_LIMIT1, true,
-						 &rd->rpl[i].last_power_limit);
-				if (ret)
-					rd->rpl[i].last_power_limit = 0;
-				break;
-			case PL2_ENABLE:
-				ret = rapl_read_data_raw(rd,
+						 &rd->rpl[i].last_घातer_limit);
+				अगर (ret)
+					rd->rpl[i].last_घातer_limit = 0;
+				अवरोध;
+			हाल PL2_ENABLE:
+				ret = rapl_पढ़ो_data_raw(rd,
 						 POWER_LIMIT2, true,
-						 &rd->rpl[i].last_power_limit);
-				if (ret)
-					rd->rpl[i].last_power_limit = 0;
-				break;
-			case PL4_ENABLE:
-				ret = rapl_read_data_raw(rd,
+						 &rd->rpl[i].last_घातer_limit);
+				अगर (ret)
+					rd->rpl[i].last_घातer_limit = 0;
+				अवरोध;
+			हाल PL4_ENABLE:
+				ret = rapl_पढ़ो_data_raw(rd,
 						 POWER_LIMIT4, true,
-						 &rd->rpl[i].last_power_limit);
-				if (ret)
-					rd->rpl[i].last_power_limit = 0;
-				break;
-			}
-		}
-	}
+						 &rd->rpl[i].last_घातer_limit);
+				अगर (ret)
+					rd->rpl[i].last_घातer_limit = 0;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	put_online_cpus();
-}
+पूर्ण
 
-static void power_limit_state_restore(void)
-{
-	struct rapl_package *rp;
-	struct rapl_domain *rd;
-	int nr_pl, i;
+अटल व्योम घातer_limit_state_restore(व्योम)
+अणु
+	काष्ठा rapl_package *rp;
+	काष्ठा rapl_करोमुख्य *rd;
+	पूर्णांक nr_pl, i;
 
 	get_online_cpus();
-	list_for_each_entry(rp, &rapl_packages, plist) {
-		if (!rp->power_zone)
-			continue;
-		rd = power_zone_to_rapl_domain(rp->power_zone);
-		nr_pl = find_nr_power_limit(rd);
-		for (i = 0; i < nr_pl; i++) {
-			switch (rd->rpl[i].prim_id) {
-			case PL1_ENABLE:
-				if (rd->rpl[i].last_power_limit)
-					rapl_write_data_raw(rd, POWER_LIMIT1,
-					    rd->rpl[i].last_power_limit);
-				break;
-			case PL2_ENABLE:
-				if (rd->rpl[i].last_power_limit)
-					rapl_write_data_raw(rd, POWER_LIMIT2,
-					    rd->rpl[i].last_power_limit);
-				break;
-			case PL4_ENABLE:
-				if (rd->rpl[i].last_power_limit)
-					rapl_write_data_raw(rd, POWER_LIMIT4,
-					    rd->rpl[i].last_power_limit);
-				break;
-			}
-		}
-	}
+	list_क्रम_each_entry(rp, &rapl_packages, plist) अणु
+		अगर (!rp->घातer_zone)
+			जारी;
+		rd = घातer_zone_to_rapl_करोमुख्य(rp->घातer_zone);
+		nr_pl = find_nr_घातer_limit(rd);
+		क्रम (i = 0; i < nr_pl; i++) अणु
+			चयन (rd->rpl[i].prim_id) अणु
+			हाल PL1_ENABLE:
+				अगर (rd->rpl[i].last_घातer_limit)
+					rapl_ग_लिखो_data_raw(rd, POWER_LIMIT1,
+					    rd->rpl[i].last_घातer_limit);
+				अवरोध;
+			हाल PL2_ENABLE:
+				अगर (rd->rpl[i].last_घातer_limit)
+					rapl_ग_लिखो_data_raw(rd, POWER_LIMIT2,
+					    rd->rpl[i].last_घातer_limit);
+				अवरोध;
+			हाल PL4_ENABLE:
+				अगर (rd->rpl[i].last_घातer_limit)
+					rapl_ग_लिखो_data_raw(rd, POWER_LIMIT4,
+					    rd->rpl[i].last_घातer_limit);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	put_online_cpus();
-}
+पूर्ण
 
-static int rapl_pm_callback(struct notifier_block *nb,
-			    unsigned long mode, void *_unused)
-{
-	switch (mode) {
-	case PM_SUSPEND_PREPARE:
-		power_limit_state_save();
-		break;
-	case PM_POST_SUSPEND:
-		power_limit_state_restore();
-		break;
-	}
-	return NOTIFY_OK;
-}
+अटल पूर्णांक rapl_pm_callback(काष्ठा notअगरier_block *nb,
+			    अचिन्हित दीर्घ mode, व्योम *_unused)
+अणु
+	चयन (mode) अणु
+	हाल PM_SUSPEND_PREPARE:
+		घातer_limit_state_save();
+		अवरोध;
+	हाल PM_POST_SUSPEND:
+		घातer_limit_state_restore();
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block rapl_pm_notifier = {
-	.notifier_call = rapl_pm_callback,
-};
+अटल काष्ठा notअगरier_block rapl_pm_notअगरier = अणु
+	.notअगरier_call = rapl_pm_callback,
+पूर्ण;
 
-static struct platform_device *rapl_msr_platdev;
+अटल काष्ठा platक्रमm_device *rapl_msr_platdev;
 
-static int __init rapl_init(void)
-{
-	const struct x86_cpu_id *id;
-	int ret;
+अटल पूर्णांक __init rapl_init(व्योम)
+अणु
+	स्थिर काष्ठा x86_cpu_id *id;
+	पूर्णांक ret;
 
 	id = x86_match_cpu(rapl_ids);
-	if (!id) {
+	अगर (!id) अणु
 		pr_err("driver does not support CPU family %d model %d\n",
 		       boot_cpu_data.x86, boot_cpu_data.x86_model);
 
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	rapl_defaults = (struct rapl_defaults *)id->driver_data;
+	rapl_शेषs = (काष्ठा rapl_शेषs *)id->driver_data;
 
-	ret = register_pm_notifier(&rapl_pm_notifier);
-	if (ret)
-		return ret;
+	ret = रेजिस्टर_pm_notअगरier(&rapl_pm_notअगरier);
+	अगर (ret)
+		वापस ret;
 
-	rapl_msr_platdev = platform_device_alloc("intel_rapl_msr", 0);
-	if (!rapl_msr_platdev) {
+	rapl_msr_platdev = platक्रमm_device_alloc("intel_rapl_msr", 0);
+	अगर (!rapl_msr_platdev) अणु
 		ret = -ENOMEM;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	ret = platform_device_add(rapl_msr_platdev);
-	if (ret)
-		platform_device_put(rapl_msr_platdev);
+	ret = platक्रमm_device_add(rapl_msr_platdev);
+	अगर (ret)
+		platक्रमm_device_put(rapl_msr_platdev);
 
 end:
-	if (ret)
-		unregister_pm_notifier(&rapl_pm_notifier);
+	अगर (ret)
+		unरेजिस्टर_pm_notअगरier(&rapl_pm_notअगरier);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit rapl_exit(void)
-{
-	platform_device_unregister(rapl_msr_platdev);
-	unregister_pm_notifier(&rapl_pm_notifier);
-}
+अटल व्योम __निकास rapl_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(rapl_msr_platdev);
+	unरेजिस्टर_pm_notअगरier(&rapl_pm_notअगरier);
+पूर्ण
 
 fs_initcall(rapl_init);
-module_exit(rapl_exit);
+module_निकास(rapl_निकास);
 
 MODULE_DESCRIPTION("Intel Runtime Average Power Limit (RAPL) common code");
 MODULE_AUTHOR("Jacob Pan <jacob.jun.pan@intel.com>");

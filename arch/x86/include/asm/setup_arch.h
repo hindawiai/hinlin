@@ -1,3 +1,4 @@
+<शैली गुरु>
 /* Hook to call BIOS initialisation function */
 
-/* no action for generic */
+/* no action क्रम generic */

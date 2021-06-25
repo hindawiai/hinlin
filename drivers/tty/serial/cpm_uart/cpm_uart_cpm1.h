@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Driver for CPM (SCC/SMC) serial ports
+ * Driver क्रम CPM (SCC/SMC) serial ports
  *
- * definitions for cpm1
+ * definitions क्रम cpm1
  *
  */
 
-#ifndef CPM_UART_CPM1_H
-#define CPM_UART_CPM1_H
+#अगर_अघोषित CPM_UART_CPM1_H
+#घोषणा CPM_UART_CPM1_H
 
-#include <asm/cpm1.h>
+#समावेश <यंत्र/cpm1.h>
 
-static inline void cpm_set_brg(int brg, int baud)
-{
+अटल अंतरभूत व्योम cpm_set_brg(पूर्णांक brg, पूर्णांक baud)
+अणु
 	cpm_setbrg(brg, baud);
-}
+पूर्ण
 
-static inline void cpm_set_scc_fcr(scc_uart_t __iomem * sup)
-{
+अटल अंतरभूत व्योम cpm_set_scc_fcr(scc_uart_t __iomem * sup)
+अणु
 	out_8(&sup->scc_genscc.scc_rfcr, SMC_EB);
 	out_8(&sup->scc_genscc.scc_tfcr, SMC_EB);
-}
+पूर्ण
 
-static inline void cpm_set_smc_fcr(smc_uart_t __iomem * up)
-{
+अटल अंतरभूत व्योम cpm_set_smc_fcr(smc_uart_t __iomem * up)
+अणु
 	out_8(&up->smc_rfcr, SMC_EB);
 	out_8(&up->smc_tfcr, SMC_EB);
-}
+पूर्ण
 
-#define DPRAM_BASE	((u8 __iomem __force *)cpm_dpram_addr(0))
+#घोषणा DPRAM_BASE	((u8 __iomem __क्रमce *)cpm_dpram_addr(0))
 
-#endif
+#पूर्ण_अगर

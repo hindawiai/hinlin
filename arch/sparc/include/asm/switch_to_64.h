@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SPARC64_SWITCH_TO_64_H
-#define __SPARC64_SWITCH_TO_64_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SPARC64_SWITCH_TO_64_H
+#घोषणा __SPARC64_SWITCH_TO_64_H
 
-#include <asm/visasm.h>
+#समावेश <यंत्र/visयंत्र.h>
 
-#define prepare_arch_switch(next)		\
-do {						\
+#घोषणा prepare_arch_चयन(next)		\
+करो अणु						\
 	flushw_all();				\
-} while (0)
+पूर्ण जबतक (0)
 
 	/* See what happens when you design the chip correctly?
 	 *
-	 * We tell gcc we clobber all non-fixed-usage registers except
-	 * for l0/l1.  It will use one for 'next' and the other to hold
+	 * We tell gcc we clobber all non-fixed-usage रेजिस्टरs except
+	 * क्रम l0/l1.  It will use one क्रम 'next' and the other to hold
 	 * the output value of 'last'.  'next' is not referenced again
-	 * past the invocation of switch_to in the scheduler, so we need
-	 * not preserve it's value.  Hairy, but it lets us remove 2 loads
+	 * past the invocation of चयन_to in the scheduler, so we need
+	 * not preserve it's value.  Hairy, but it lets us हटाओ 2 loads
 	 * and 2 stores in this critical code path.  -DaveM
 	 */
-#define switch_to(prev, next, last)					\
-do {	save_and_clear_fpu();						\
+#घोषणा चयन_to(prev, next, last)					\
+करो अणु	save_and_clear_fpu();						\
 	/* If you are tempted to conditionalize the following */	\
-	/* so that ASI is only written if it changes, think again. */	\
-	__asm__ __volatile__("wr %%g0, %0, %%asi"			\
-	: : "r" (task_thread_info(next)->current_ds));\
-	trap_block[current_thread_info()->cpu].thread =			\
-		task_thread_info(next);					\
-	__asm__ __volatile__(						\
+	/* so that ASI is only written अगर it changes, think again. */	\
+	__यंत्र__ __अस्थिर__("wr %%g0, %0, %%asi"			\
+	: : "r" (task_thपढ़ो_info(next)->current_ds));\
+	trap_block[current_thपढ़ो_info()->cpu].thपढ़ो =			\
+		task_thपढ़ो_info(next);					\
+	__यंत्र__ __अस्थिर__(						\
 	"mov	%%g4, %%g7\n\t"						\
 	"stx	%%i6, [%%sp + 2047 + 0x70]\n\t"				\
 	"stx	%%i7, [%%sp + 2047 + 0x78]\n\t"				\
@@ -54,9 +55,9 @@ do {	save_and_clear_fpu();						\
 	" nop\n\t"							\
 	".globl switch_to_pc\n\t"					\
 	"switch_to_pc:\n\t"						\
-	: "=&r" (last), "=r" (current), "=r" (current_thread_info_reg),	\
+	: "=&r" (last), "=r" (current), "=r" (current_thपढ़ो_info_reg),	\
 	  "=r" (__local_per_cpu_offset)					\
-	: "0" (task_thread_info(next)),					\
+	: "0" (task_thपढ़ो_info(next)),					\
 	  "i" (TI_WSTATE), "i" (TI_KSP), "i" (TI_NEW_CHILD),            \
 	  "i" (TI_CWP), "i" (TI_TASK)					\
 	: "cc",								\
@@ -64,10 +65,10 @@ do {	save_and_clear_fpu();						\
 	        "l1", "l2", "l3", "l4", "l5", "l6", "l7",		\
 	  "i0", "i1", "i2", "i3", "i4", "i5",				\
 	  "o0", "o1", "o2", "o3", "o4", "o5",       "o7");		\
-} while(0)
+पूर्ण जबतक(0)
 
-void synchronize_user_stack(void);
-struct pt_regs;
-void fault_in_user_windows(struct pt_regs *);
+व्योम synchronize_user_stack(व्योम);
+काष्ठा pt_regs;
+व्योम fault_in_user_winकरोws(काष्ठा pt_regs *);
 
-#endif /* __SPARC64_SWITCH_TO_64_H */
+#पूर्ण_अगर /* __SPARC64_SWITCH_TO_64_H */

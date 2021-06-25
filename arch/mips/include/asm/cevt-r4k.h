@@ -1,29 +1,30 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2008 Kevin D. Kissell
  */
 
 /*
- * Definitions used for common event timer implementation
- * for MIPS 4K-type processors and their MIPS MT variants.
- * Avoids unsightly extern declarations in C files.
+ * Definitions used क्रम common event समयr implementation
+ * क्रम MIPS 4K-type processors and their MIPS MT variants.
+ * Aव्योमs unsightly बाह्य declarations in C files.
  */
-#ifndef __ASM_CEVT_R4K_H
-#define __ASM_CEVT_R4K_H
+#अगर_अघोषित __ASM_CEVT_R4K_H
+#घोषणा __ASM_CEVT_R4K_H
 
-#include <linux/clockchips.h>
-#include <asm/time.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <यंत्र/समय.स>
 
-DECLARE_PER_CPU(struct clock_event_device, mips_clockevent_device);
+DECLARE_PER_CPU(काष्ठा घड़ी_event_device, mips_घड़ीevent_device);
 
-void mips_event_handler(struct clock_event_device *dev);
-int c0_compare_int_usable(void);
-irqreturn_t c0_compare_interrupt(int, void *);
+व्योम mips_event_handler(काष्ठा घड़ी_event_device *dev);
+पूर्णांक c0_compare_पूर्णांक_usable(व्योम);
+irqवापस_t c0_compare_पूर्णांकerrupt(पूर्णांक, व्योम *);
 
-extern struct irqaction c0_compare_irqaction;
-extern int cp0_timer_irq_installed;
+बाह्य काष्ठा irqaction c0_compare_irqaction;
+बाह्य पूर्णांक cp0_समयr_irq_installed;
 
-#endif /* __ASM_CEVT_R4K_H */
+#पूर्ण_अगर /* __ASM_CEVT_R4K_H */

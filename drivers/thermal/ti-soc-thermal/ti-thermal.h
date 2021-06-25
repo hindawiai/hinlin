@@ -1,93 +1,94 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * OMAP thermal definitions
  *
  * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
  * Contact:
- *   Eduardo Valentin <eduardo.valentin@ti.com>
+ *   Eduarकरो Valentin <eduarकरो.valentin@ti.com>
  */
-#ifndef __TI_THERMAL_H
-#define __TI_THERMAL_H
+#अगर_अघोषित __TI_THERMAL_H
+#घोषणा __TI_THERMAL_H
 
-#include "ti-bandgap.h"
+#समावेश "ti-bandgap.h"
 
-/* PCB sensor calculation constants */
-#define OMAP_GRADIENT_SLOPE_W_PCB_4430				0
-#define OMAP_GRADIENT_CONST_W_PCB_4430				20000
-#define OMAP_GRADIENT_SLOPE_W_PCB_4460				1142
-#define OMAP_GRADIENT_CONST_W_PCB_4460				-393
-#define OMAP_GRADIENT_SLOPE_W_PCB_4470				1063
-#define OMAP_GRADIENT_CONST_W_PCB_4470				-477
+/* PCB sensor calculation स्थिरants */
+#घोषणा OMAP_GRADIENT_SLOPE_W_PCB_4430				0
+#घोषणा OMAP_GRADIENT_CONST_W_PCB_4430				20000
+#घोषणा OMAP_GRADIENT_SLOPE_W_PCB_4460				1142
+#घोषणा OMAP_GRADIENT_CONST_W_PCB_4460				-393
+#घोषणा OMAP_GRADIENT_SLOPE_W_PCB_4470				1063
+#घोषणा OMAP_GRADIENT_CONST_W_PCB_4470				-477
 
-#define OMAP_GRADIENT_SLOPE_W_PCB_5430_CPU			100
-#define OMAP_GRADIENT_CONST_W_PCB_5430_CPU			484
-#define OMAP_GRADIENT_SLOPE_W_PCB_5430_GPU			464
-#define OMAP_GRADIENT_CONST_W_PCB_5430_GPU			-5102
+#घोषणा OMAP_GRADIENT_SLOPE_W_PCB_5430_CPU			100
+#घोषणा OMAP_GRADIENT_CONST_W_PCB_5430_CPU			484
+#घोषणा OMAP_GRADIENT_SLOPE_W_PCB_5430_GPU			464
+#घोषणा OMAP_GRADIENT_CONST_W_PCB_5430_GPU			-5102
 
-#define DRA752_GRADIENT_SLOPE_W_PCB				0
-#define DRA752_GRADIENT_CONST_W_PCB				2000
+#घोषणा DRA752_GRADIENT_SLOPE_W_PCB				0
+#घोषणा DRA752_GRADIENT_CONST_W_PCB				2000
 
-/* trip points of interest in milicelsius (at hotspot level) */
-#define OMAP_TRIP_COLD						100000
-#define OMAP_TRIP_HOT						110000
-#define OMAP_TRIP_SHUTDOWN					125000
-#define OMAP_TRIP_NUMBER					2
-#define OMAP_TRIP_STEP							\
+/* trip poपूर्णांकs of पूर्णांकerest in milicelsius (at hotspot level) */
+#घोषणा OMAP_TRIP_COLD						100000
+#घोषणा OMAP_TRIP_HOT						110000
+#घोषणा OMAP_TRIP_SHUTDOWN					125000
+#घोषणा OMAP_TRIP_NUMBER					2
+#घोषणा OMAP_TRIP_STEP							\
 	((OMAP_TRIP_SHUTDOWN - OMAP_TRIP_HOT) / (OMAP_TRIP_NUMBER - 1))
 
 /* Update rates */
-#define FAST_TEMP_MONITORING_RATE				250
+#घोषणा FAST_TEMP_MONITORING_RATE				250
 
 /* helper macros */
 /**
- * ti_thermal_get_trip_value - returns trip temperature based on index
+ * ti_thermal_get_trip_value - वापसs trip temperature based on index
  * @i:	trip index
  */
-#define ti_thermal_get_trip_value(i)					\
+#घोषणा ti_thermal_get_trip_value(i)					\
 	(OMAP_TRIP_HOT + ((i) * OMAP_TRIP_STEP))
 
 /**
- * ti_thermal_is_valid_trip - check for trip index
+ * ti_thermal_is_valid_trip - check क्रम trip index
  * @i:	trip index
  */
-#define ti_thermal_is_valid_trip(trip)				\
+#घोषणा ti_thermal_is_valid_trip(trip)				\
 	((trip) >= 0 && (trip) < OMAP_TRIP_NUMBER)
 
-#ifdef CONFIG_TI_THERMAL
-int ti_thermal_expose_sensor(struct ti_bandgap *bgp, int id, char *domain);
-int ti_thermal_remove_sensor(struct ti_bandgap *bgp, int id);
-int ti_thermal_report_sensor_temperature(struct ti_bandgap *bgp, int id);
-int ti_thermal_register_cpu_cooling(struct ti_bandgap *bgp, int id);
-int ti_thermal_unregister_cpu_cooling(struct ti_bandgap *bgp, int id);
-#else
-static inline
-int ti_thermal_expose_sensor(struct ti_bandgap *bgp, int id, char *domain)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_TI_THERMAL
+पूर्णांक ti_thermal_expose_sensor(काष्ठा ti_bandgap *bgp, पूर्णांक id, अक्षर *करोमुख्य);
+पूर्णांक ti_thermal_हटाओ_sensor(काष्ठा ti_bandgap *bgp, पूर्णांक id);
+पूर्णांक ti_thermal_report_sensor_temperature(काष्ठा ti_bandgap *bgp, पूर्णांक id);
+पूर्णांक ti_thermal_रेजिस्टर_cpu_cooling(काष्ठा ti_bandgap *bgp, पूर्णांक id);
+पूर्णांक ti_thermal_unरेजिस्टर_cpu_cooling(काष्ठा ti_bandgap *bgp, पूर्णांक id);
+#अन्यथा
+अटल अंतरभूत
+पूर्णांक ti_thermal_expose_sensor(काष्ठा ti_bandgap *bgp, पूर्णांक id, अक्षर *करोमुख्य)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-int ti_thermal_remove_sensor(struct ti_bandgap *bgp, int id)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक ti_thermal_हटाओ_sensor(काष्ठा ti_bandgap *bgp, पूर्णांक id)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-int ti_thermal_report_sensor_temperature(struct ti_bandgap *bgp, int id)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक ti_thermal_report_sensor_temperature(काष्ठा ti_bandgap *bgp, पूर्णांक id)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-int ti_thermal_register_cpu_cooling(struct ti_bandgap *bgp, int id)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक ti_thermal_रेजिस्टर_cpu_cooling(काष्ठा ti_bandgap *bgp, पूर्णांक id)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-int ti_thermal_unregister_cpu_cooling(struct ti_bandgap *bgp, int id)
-{
-	return 0;
-}
-#endif
-#endif
+अटल अंतरभूत
+पूर्णांक ti_thermal_unरेजिस्टर_cpu_cooling(काष्ठा ti_bandgap *bgp, पूर्णांक id)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर

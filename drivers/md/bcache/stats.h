@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _BCACHE_STATS_H_
-#define _BCACHE_STATS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _BCACHE_STATS_H_
+#घोषणा _BCACHE_STATS_H_
 
-struct cache_stat_collector {
+काष्ठा cache_stat_collector अणु
 	atomic_t cache_hits;
 	atomic_t cache_misses;
 	atomic_t cache_bypass_hits;
 	atomic_t cache_bypass_misses;
 	atomic_t cache_miss_collisions;
 	atomic_t sectors_bypassed;
-};
+पूर्ण;
 
-struct cache_stats {
-	struct kobject		kobj;
+काष्ठा cache_stats अणु
+	काष्ठा kobject		kobj;
 
-	unsigned long cache_hits;
-	unsigned long cache_misses;
-	unsigned long cache_bypass_hits;
-	unsigned long cache_bypass_misses;
-	unsigned long cache_readaheads;
-	unsigned long cache_miss_collisions;
-	unsigned long sectors_bypassed;
+	अचिन्हित दीर्घ cache_hits;
+	अचिन्हित दीर्घ cache_misses;
+	अचिन्हित दीर्घ cache_bypass_hits;
+	अचिन्हित दीर्घ cache_bypass_misses;
+	अचिन्हित दीर्घ cache_पढ़ोaheads;
+	अचिन्हित दीर्घ cache_miss_collisions;
+	अचिन्हित दीर्घ sectors_bypassed;
 
-	unsigned int		rescale;
-};
+	अचिन्हित पूर्णांक		rescale;
+पूर्ण;
 
-struct cache_accounting {
-	struct closure		cl;
-	struct timer_list	timer;
+काष्ठा cache_accounting अणु
+	काष्ठा closure		cl;
+	काष्ठा समयr_list	समयr;
 	atomic_t		closing;
 
-	struct cache_stat_collector collector;
+	काष्ठा cache_stat_collector collector;
 
-	struct cache_stats total;
-	struct cache_stats five_minute;
-	struct cache_stats hour;
-	struct cache_stats day;
-};
+	काष्ठा cache_stats total;
+	काष्ठा cache_stats five_minute;
+	काष्ठा cache_stats hour;
+	काष्ठा cache_stats day;
+पूर्ण;
 
-struct cache_set;
-struct cached_dev;
-struct bcache_device;
+काष्ठा cache_set;
+काष्ठा cached_dev;
+काष्ठा bcache_device;
 
-void bch_cache_accounting_init(struct cache_accounting *acc,
-			       struct closure *parent);
+व्योम bch_cache_accounting_init(काष्ठा cache_accounting *acc,
+			       काष्ठा closure *parent);
 
-int bch_cache_accounting_add_kobjs(struct cache_accounting *acc,
-				   struct kobject *parent);
+पूर्णांक bch_cache_accounting_add_kobjs(काष्ठा cache_accounting *acc,
+				   काष्ठा kobject *parent);
 
-void bch_cache_accounting_clear(struct cache_accounting *acc);
+व्योम bch_cache_accounting_clear(काष्ठा cache_accounting *acc);
 
-void bch_cache_accounting_destroy(struct cache_accounting *acc);
+व्योम bch_cache_accounting_destroy(काष्ठा cache_accounting *acc);
 
-void bch_mark_cache_accounting(struct cache_set *c, struct bcache_device *d,
+व्योम bch_mark_cache_accounting(काष्ठा cache_set *c, काष्ठा bcache_device *d,
 			       bool hit, bool bypass);
-void bch_mark_cache_readahead(struct cache_set *c, struct bcache_device *d);
-void bch_mark_cache_miss_collision(struct cache_set *c,
-				   struct bcache_device *d);
-void bch_mark_sectors_bypassed(struct cache_set *c,
-			       struct cached_dev *dc,
-			       int sectors);
+व्योम bch_mark_cache_पढ़ोahead(काष्ठा cache_set *c, काष्ठा bcache_device *d);
+व्योम bch_mark_cache_miss_collision(काष्ठा cache_set *c,
+				   काष्ठा bcache_device *d);
+व्योम bch_mark_sectors_bypassed(काष्ठा cache_set *c,
+			       काष्ठा cached_dev *dc,
+			       पूर्णांक sectors);
 
-#endif /* _BCACHE_STATS_H_ */
+#पूर्ण_अगर /* _BCACHE_STATS_H_ */

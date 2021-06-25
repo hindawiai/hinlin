@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * fs/kernfs/symlink.c - kernfs symlink implementation
  *
@@ -7,147 +8,147 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
-#include <linux/fs.h>
-#include <linux/gfp.h>
-#include <linux/namei.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/namei.h>
 
-#include "kernfs-internal.h"
+#समावेश "kernfs-internal.h"
 
 /**
  * kernfs_create_link - create a symlink
  * @parent: directory to create the symlink in
  * @name: name of the symlink
- * @target: target node for the symlink to point to
+ * @target: target node क्रम the symlink to poपूर्णांक to
  *
  * Returns the created node on success, ERR_PTR() value on error.
  * Ownership of the link matches ownership of the target.
  */
-struct kernfs_node *kernfs_create_link(struct kernfs_node *parent,
-				       const char *name,
-				       struct kernfs_node *target)
-{
-	struct kernfs_node *kn;
-	int error;
+काष्ठा kernfs_node *kernfs_create_link(काष्ठा kernfs_node *parent,
+				       स्थिर अक्षर *name,
+				       काष्ठा kernfs_node *target)
+अणु
+	काष्ठा kernfs_node *kn;
+	पूर्णांक error;
 	kuid_t uid = GLOBAL_ROOT_UID;
 	kgid_t gid = GLOBAL_ROOT_GID;
 
-	if (target->iattr) {
+	अगर (target->iattr) अणु
 		uid = target->iattr->ia_uid;
 		gid = target->iattr->ia_gid;
-	}
+	पूर्ण
 
 	kn = kernfs_new_node(parent, name, S_IFLNK|S_IRWXUGO, uid, gid,
 			     KERNFS_LINK);
-	if (!kn)
-		return ERR_PTR(-ENOMEM);
+	अगर (!kn)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (kernfs_ns_enabled(parent))
+	अगर (kernfs_ns_enabled(parent))
 		kn->ns = target->ns;
 	kn->symlink.target_kn = target;
 	kernfs_get(target);	/* ref owned by symlink */
 
 	error = kernfs_add_one(kn);
-	if (!error)
-		return kn;
+	अगर (!error)
+		वापस kn;
 
 	kernfs_put(kn);
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण
 
-static int kernfs_get_target_path(struct kernfs_node *parent,
-				  struct kernfs_node *target, char *path)
-{
-	struct kernfs_node *base, *kn;
-	char *s = path;
-	int len = 0;
+अटल पूर्णांक kernfs_get_target_path(काष्ठा kernfs_node *parent,
+				  काष्ठा kernfs_node *target, अक्षर *path)
+अणु
+	काष्ठा kernfs_node *base, *kn;
+	अक्षर *s = path;
+	पूर्णांक len = 0;
 
 	/* go up to the root, stop at the base */
 	base = parent;
-	while (base->parent) {
+	जबतक (base->parent) अणु
 		kn = target->parent;
-		while (kn->parent && base != kn)
+		जबतक (kn->parent && base != kn)
 			kn = kn->parent;
 
-		if (base == kn)
-			break;
+		अगर (base == kn)
+			अवरोध;
 
-		if ((s - path) + 3 >= PATH_MAX)
-			return -ENAMETOOLONG;
+		अगर ((s - path) + 3 >= PATH_MAX)
+			वापस -ENAMETOOLONG;
 
-		strcpy(s, "../");
+		म_नकल(s, "../");
 		s += 3;
 		base = base->parent;
-	}
+	पूर्ण
 
-	/* determine end of target string for reverse fillup */
+	/* determine end of target string क्रम reverse fillup */
 	kn = target;
-	while (kn->parent && kn != base) {
-		len += strlen(kn->name) + 1;
+	जबतक (kn->parent && kn != base) अणु
+		len += म_माप(kn->name) + 1;
 		kn = kn->parent;
-	}
+	पूर्ण
 
 	/* check limits */
-	if (len < 2)
-		return -EINVAL;
+	अगर (len < 2)
+		वापस -EINVAL;
 	len--;
-	if ((s - path) + len >= PATH_MAX)
-		return -ENAMETOOLONG;
+	अगर ((s - path) + len >= PATH_MAX)
+		वापस -ENAMETOOLONG;
 
 	/* reverse fillup of target string from target to base */
 	kn = target;
-	while (kn->parent && kn != base) {
-		int slen = strlen(kn->name);
+	जबतक (kn->parent && kn != base) अणु
+		पूर्णांक slen = म_माप(kn->name);
 
 		len -= slen;
-		memcpy(s + len, kn->name, slen);
-		if (len)
+		स_नकल(s + len, kn->name, slen);
+		अगर (len)
 			s[--len] = '/';
 
 		kn = kn->parent;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kernfs_getlink(struct inode *inode, char *path)
-{
-	struct kernfs_node *kn = inode->i_private;
-	struct kernfs_node *parent = kn->parent;
-	struct kernfs_node *target = kn->symlink.target_kn;
-	int error;
+अटल पूर्णांक kernfs_getlink(काष्ठा inode *inode, अक्षर *path)
+अणु
+	काष्ठा kernfs_node *kn = inode->i_निजी;
+	काष्ठा kernfs_node *parent = kn->parent;
+	काष्ठा kernfs_node *target = kn->symlink.target_kn;
+	पूर्णांक error;
 
 	mutex_lock(&kernfs_mutex);
 	error = kernfs_get_target_path(parent, target, path);
 	mutex_unlock(&kernfs_mutex);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const char *kernfs_iop_get_link(struct dentry *dentry,
-				       struct inode *inode,
-				       struct delayed_call *done)
-{
-	char *body;
-	int error;
+अटल स्थिर अक्षर *kernfs_iop_get_link(काष्ठा dentry *dentry,
+				       काष्ठा inode *inode,
+				       काष्ठा delayed_call *करोne)
+अणु
+	अक्षर *body;
+	पूर्णांक error;
 
-	if (!dentry)
-		return ERR_PTR(-ECHILD);
+	अगर (!dentry)
+		वापस ERR_PTR(-ECHILD);
 	body = kzalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!body)
-		return ERR_PTR(-ENOMEM);
+	अगर (!body)
+		वापस ERR_PTR(-ENOMEM);
 	error = kernfs_getlink(inode, body);
-	if (unlikely(error < 0)) {
-		kfree(body);
-		return ERR_PTR(error);
-	}
-	set_delayed_call(done, kfree_link, body);
-	return body;
-}
+	अगर (unlikely(error < 0)) अणु
+		kमुक्त(body);
+		वापस ERR_PTR(error);
+	पूर्ण
+	set_delayed_call(करोne, kमुक्त_link, body);
+	वापस body;
+पूर्ण
 
-const struct inode_operations kernfs_symlink_iops = {
+स्थिर काष्ठा inode_operations kernfs_symlink_iops = अणु
 	.listxattr	= kernfs_iop_listxattr,
 	.get_link	= kernfs_iop_get_link,
 	.setattr	= kernfs_iop_setattr,
 	.getattr	= kernfs_iop_getattr,
 	.permission	= kernfs_iop_permission,
-};
+पूर्ण;

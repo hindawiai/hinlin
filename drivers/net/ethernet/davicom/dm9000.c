@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *      Davicom DM9000 Fast Ethernet driver for Linux.
+ *      Davicom DM9000 Fast Ethernet driver क्रम Linux.
  * 	Copyright (C) 1997  Sten Wang
  *
  * (C) Copyright 1997-1998 DAVICOM Semiconductor,Inc. All Rights Reserved.
@@ -10,68 +11,68 @@
  *	Sascha Hauer <s.hauer@pengutronix.de>
  */
 
-#include <linux/module.h>
-#include <linux/ioport.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/interrupt.h>
-#include <linux/skbuff.h>
-#include <linux/spinlock.h>
-#include <linux/crc32.h>
-#include <linux/mii.h>
-#include <linux/of.h>
-#include <linux/of_net.h>
-#include <linux/ethtool.h>
-#include <linux/dm9000.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/irq.h>
-#include <linux/slab.h>
-#include <linux/regulator/consumer.h>
-#include <linux/gpio.h>
-#include <linux/of_gpio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/dm9000.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/of_gpपन.स>
 
-#include <asm/delay.h>
-#include <asm/irq.h>
-#include <asm/io.h>
+#समावेश <यंत्र/delay.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/पन.स>
 
-#include "dm9000.h"
+#समावेश "dm9000.h"
 
-/* Board/System/Debug information/definition ---------------- */
+/* Board/System/Debug inक्रमmation/definition ---------------- */
 
-#define DM9000_PHY		0x40	/* PHY address 0x01 */
+#घोषणा DM9000_PHY		0x40	/* PHY address 0x01 */
 
-#define CARDNAME	"dm9000"
+#घोषणा CARDNAME	"dm9000"
 
 /*
- * Transmit timeout, default 5 seconds.
+ * Transmit समयout, शेष 5 seconds.
  */
-static int watchdog = 5000;
-module_param(watchdog, int, 0400);
-MODULE_PARM_DESC(watchdog, "transmit timeout in milliseconds");
+अटल पूर्णांक watchकरोg = 5000;
+module_param(watchकरोg, पूर्णांक, 0400);
+MODULE_PARM_DESC(watchकरोg, "transmit timeout in milliseconds");
 
 /*
  * Debug messages level
  */
-static int debug;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "dm9000 debug level (0-6)");
 
-/* DM9000 register address locking.
+/* DM9000 रेजिस्टर address locking.
  *
- * The DM9000 uses an address register to control where data written
- * to the data register goes. This means that the address register
- * must be preserved over interrupts or similar calls.
+ * The DM9000 uses an address रेजिस्टर to control where data written
+ * to the data रेजिस्टर goes. This means that the address रेजिस्टर
+ * must be preserved over पूर्णांकerrupts or similar calls.
  *
- * During interrupt and other critical calls, a spinlock is used to
- * protect the system, but the calls themselves save the address
- * in the address register in case they are interrupting another
+ * During पूर्णांकerrupt and other critical calls, a spinlock is used to
+ * protect the प्रणाली, but the calls themselves save the address
+ * in the address रेजिस्टर in हाल they are पूर्णांकerrupting another
  * access to the device.
  *
  * For general accesses a lock is provided so that calls which are
- * allowed to sleep are serialised so that the address register does
+ * allowed to sleep are serialised so that the address रेजिस्टर करोes
  * not need to be saved. This lock also serves to serialise access
- * to the EEPROM and PHY access registers which are shared between
+ * to the EEPROM and PHY access रेजिस्टरs which are shared between
  * these two devices.
  */
 
@@ -79,17 +80,17 @@ MODULE_PARM_DESC(debug, "dm9000 debug level (0-6)");
  * devices, DM9000A and DM9000B.
  */
 
-enum dm9000_type {
+क्रमागत dm9000_type अणु
 	TYPE_DM9000E,	/* original DM9000 */
 	TYPE_DM9000A,
 	TYPE_DM9000B
-};
+पूर्ण;
 
-/* Structure/enum declaration ------------------------------- */
-struct board_info {
+/* Structure/क्रमागत declaration ------------------------------- */
+काष्ठा board_info अणु
 
-	void __iomem	*io_addr;	/* Register I/O base address */
-	void __iomem	*io_data;	/* Data I/O address */
+	व्योम __iomem	*io_addr;	/* Register I/O base address */
+	व्योम __iomem	*io_data;	/* Data I/O address */
 	u16		 irq;		/* IRQ */
 
 	u16		tx_pkt_cnt;
@@ -101,380 +102,380 @@ struct board_info {
 	u8		phy_addr;
 	u8		imr_all;
 
-	unsigned int	flags;
-	unsigned int	in_timeout:1;
-	unsigned int	in_suspend:1;
-	unsigned int	wake_supported:1;
+	अचिन्हित पूर्णांक	flags;
+	अचिन्हित पूर्णांक	in_समयout:1;
+	अचिन्हित पूर्णांक	in_suspend:1;
+	अचिन्हित पूर्णांक	wake_supported:1;
 
-	enum dm9000_type type;
+	क्रमागत dm9000_type type;
 
-	void (*inblk)(void __iomem *port, void *data, int length);
-	void (*outblk)(void __iomem *port, void *data, int length);
-	void (*dumpblk)(void __iomem *port, int length);
+	व्योम (*inblk)(व्योम __iomem *port, व्योम *data, पूर्णांक length);
+	व्योम (*outblk)(व्योम __iomem *port, व्योम *data, पूर्णांक length);
+	व्योम (*dumpblk)(व्योम __iomem *port, पूर्णांक length);
 
-	struct device	*dev;	     /* parent device */
+	काष्ठा device	*dev;	     /* parent device */
 
-	struct resource	*addr_res;   /* resources found */
-	struct resource *data_res;
-	struct resource	*addr_req;   /* resources requested */
-	struct resource *data_req;
+	काष्ठा resource	*addr_res;   /* resources found */
+	काष्ठा resource *data_res;
+	काष्ठा resource	*addr_req;   /* resources requested */
+	काष्ठा resource *data_req;
 
-	int		 irq_wake;
+	पूर्णांक		 irq_wake;
 
-	struct mutex	 addr_lock;	/* phy and eeprom access lock */
+	काष्ठा mutex	 addr_lock;	/* phy and eeprom access lock */
 
-	struct delayed_work phy_poll;
-	struct net_device  *ndev;
+	काष्ठा delayed_work phy_poll;
+	काष्ठा net_device  *ndev;
 
 	spinlock_t	lock;
 
-	struct mii_if_info mii;
+	काष्ठा mii_अगर_info mii;
 	u32		msg_enable;
 	u32		wake_state;
 
-	int		ip_summed;
+	पूर्णांक		ip_summed;
 
-	struct regulator *power_supply;
-};
+	काष्ठा regulator *घातer_supply;
+पूर्ण;
 
 /* debug code */
 
-#define dm9000_dbg(db, lev, msg...) do {		\
-	if ((lev) < debug) {				\
+#घोषणा dm9000_dbg(db, lev, msg...) करो अणु		\
+	अगर ((lev) < debug) अणु				\
 		dev_dbg(db->dev, msg);			\
-	}						\
-} while (0)
+	पूर्ण						\
+पूर्ण जबतक (0)
 
-static inline struct board_info *to_dm9000_board(struct net_device *dev)
-{
-	return netdev_priv(dev);
-}
+अटल अंतरभूत काष्ठा board_info *to_dm9000_board(काष्ठा net_device *dev)
+अणु
+	वापस netdev_priv(dev);
+पूर्ण
 
 /* DM9000 network board routine ---------------------------- */
 
 /*
  *   Read a byte from I/O port
  */
-static u8
-ior(struct board_info *db, int reg)
-{
-	writeb(reg, db->io_addr);
-	return readb(db->io_data);
-}
+अटल u8
+ior(काष्ठा board_info *db, पूर्णांक reg)
+अणु
+	ग_लिखोb(reg, db->io_addr);
+	वापस पढ़ोb(db->io_data);
+पूर्ण
 
 /*
  *   Write a byte to I/O port
  */
 
-static void
-iow(struct board_info *db, int reg, int value)
-{
-	writeb(reg, db->io_addr);
-	writeb(value, db->io_data);
-}
+अटल व्योम
+iow(काष्ठा board_info *db, पूर्णांक reg, पूर्णांक value)
+अणु
+	ग_लिखोb(reg, db->io_addr);
+	ग_लिखोb(value, db->io_data);
+पूर्ण
 
-static void
-dm9000_reset(struct board_info *db)
-{
+अटल व्योम
+dm9000_reset(काष्ठा board_info *db)
+अणु
 	dev_dbg(db->dev, "resetting device\n");
 
 	/* Reset DM9000, see DM9000 Application Notes V1.22 Jun 11, 2004 page 29
-	 * The essential point is that we have to do a double reset, and the
-	 * instruction is to set LBK into MAC internal loopback mode.
+	 * The essential poपूर्णांक is that we have to करो a द्विगुन reset, and the
+	 * inकाष्ठाion is to set LBK पूर्णांकo MAC पूर्णांकernal loopback mode.
 	 */
 	iow(db, DM9000_NCR, NCR_RST | NCR_MAC_LBK);
 	udelay(100); /* Application note says at least 20 us */
-	if (ior(db, DM9000_NCR) & 1)
+	अगर (ior(db, DM9000_NCR) & 1)
 		dev_err(db->dev, "dm9000 did not respond to first reset\n");
 
 	iow(db, DM9000_NCR, 0);
 	iow(db, DM9000_NCR, NCR_RST | NCR_MAC_LBK);
 	udelay(100);
-	if (ior(db, DM9000_NCR) & 1)
+	अगर (ior(db, DM9000_NCR) & 1)
 		dev_err(db->dev, "dm9000 did not respond to second reset\n");
-}
+पूर्ण
 
-/* routines for sending block to chip */
+/* routines क्रम sending block to chip */
 
-static void dm9000_outblk_8bit(void __iomem *reg, void *data, int count)
-{
-	iowrite8_rep(reg, data, count);
-}
+अटल व्योम dm9000_outblk_8bit(व्योम __iomem *reg, व्योम *data, पूर्णांक count)
+अणु
+	ioग_लिखो8_rep(reg, data, count);
+पूर्ण
 
-static void dm9000_outblk_16bit(void __iomem *reg, void *data, int count)
-{
-	iowrite16_rep(reg, data, (count+1) >> 1);
-}
+अटल व्योम dm9000_outblk_16bit(व्योम __iomem *reg, व्योम *data, पूर्णांक count)
+अणु
+	ioग_लिखो16_rep(reg, data, (count+1) >> 1);
+पूर्ण
 
-static void dm9000_outblk_32bit(void __iomem *reg, void *data, int count)
-{
-	iowrite32_rep(reg, data, (count+3) >> 2);
-}
+अटल व्योम dm9000_outblk_32bit(व्योम __iomem *reg, व्योम *data, पूर्णांक count)
+अणु
+	ioग_लिखो32_rep(reg, data, (count+3) >> 2);
+पूर्ण
 
 /* input block from chip to memory */
 
-static void dm9000_inblk_8bit(void __iomem *reg, void *data, int count)
-{
-	ioread8_rep(reg, data, count);
-}
+अटल व्योम dm9000_inblk_8bit(व्योम __iomem *reg, व्योम *data, पूर्णांक count)
+अणु
+	ioपढ़ो8_rep(reg, data, count);
+पूर्ण
 
 
-static void dm9000_inblk_16bit(void __iomem *reg, void *data, int count)
-{
-	ioread16_rep(reg, data, (count+1) >> 1);
-}
+अटल व्योम dm9000_inblk_16bit(व्योम __iomem *reg, व्योम *data, पूर्णांक count)
+अणु
+	ioपढ़ो16_rep(reg, data, (count+1) >> 1);
+पूर्ण
 
-static void dm9000_inblk_32bit(void __iomem *reg, void *data, int count)
-{
-	ioread32_rep(reg, data, (count+3) >> 2);
-}
+अटल व्योम dm9000_inblk_32bit(व्योम __iomem *reg, व्योम *data, पूर्णांक count)
+अणु
+	ioपढ़ो32_rep(reg, data, (count+3) >> 2);
+पूर्ण
 
 /* dump block from chip to null */
 
-static void dm9000_dumpblk_8bit(void __iomem *reg, int count)
-{
-	int i;
+अटल व्योम dm9000_dumpblk_8bit(व्योम __iomem *reg, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++)
-		readb(reg);
-}
+	क्रम (i = 0; i < count; i++)
+		पढ़ोb(reg);
+पूर्ण
 
-static void dm9000_dumpblk_16bit(void __iomem *reg, int count)
-{
-	int i;
+अटल व्योम dm9000_dumpblk_16bit(व्योम __iomem *reg, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
 	count = (count + 1) >> 1;
 
-	for (i = 0; i < count; i++)
-		readw(reg);
-}
+	क्रम (i = 0; i < count; i++)
+		पढ़ोw(reg);
+पूर्ण
 
-static void dm9000_dumpblk_32bit(void __iomem *reg, int count)
-{
-	int i;
+अटल व्योम dm9000_dumpblk_32bit(व्योम __iomem *reg, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
 	count = (count + 3) >> 2;
 
-	for (i = 0; i < count; i++)
-		readl(reg);
-}
+	क्रम (i = 0; i < count; i++)
+		पढ़ोl(reg);
+पूर्ण
 
 /*
- * Sleep, either by using msleep() or if we are suspending, then
+ * Sleep, either by using msleep() or अगर we are suspending, then
  * use mdelay() to sleep.
  */
-static void dm9000_msleep(struct board_info *db, unsigned int ms)
-{
-	if (db->in_suspend || db->in_timeout)
+अटल व्योम dm9000_msleep(काष्ठा board_info *db, अचिन्हित पूर्णांक ms)
+अणु
+	अगर (db->in_suspend || db->in_समयout)
 		mdelay(ms);
-	else
+	अन्यथा
 		msleep(ms);
-}
+पूर्ण
 
 /* Read a word from phyxcer */
-static int
-dm9000_phy_read(struct net_device *dev, int phy_reg_unused, int reg)
-{
-	struct board_info *db = netdev_priv(dev);
-	unsigned long flags;
-	unsigned int reg_save;
-	int ret;
+अटल पूर्णांक
+dm9000_phy_पढ़ो(काष्ठा net_device *dev, पूर्णांक phy_reg_unused, पूर्णांक reg)
+अणु
+	काष्ठा board_info *db = netdev_priv(dev);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक reg_save;
+	पूर्णांक ret;
 
 	mutex_lock(&db->addr_lock);
 
 	spin_lock_irqsave(&db->lock, flags);
 
-	/* Save previous register address */
-	reg_save = readb(db->io_addr);
+	/* Save previous रेजिस्टर address */
+	reg_save = पढ़ोb(db->io_addr);
 
-	/* Fill the phyxcer register into REG_0C */
+	/* Fill the phyxcer रेजिस्टर पूर्णांकo REG_0C */
 	iow(db, DM9000_EPAR, DM9000_PHY | reg);
 
-	/* Issue phyxcer read command */
+	/* Issue phyxcer पढ़ो command */
 	iow(db, DM9000_EPCR, EPCR_ERPRR | EPCR_EPOS);
 
-	writeb(reg_save, db->io_addr);
+	ग_लिखोb(reg_save, db->io_addr);
 	spin_unlock_irqrestore(&db->lock, flags);
 
-	dm9000_msleep(db, 1);		/* Wait read complete */
+	dm9000_msleep(db, 1);		/* Wait पढ़ो complete */
 
 	spin_lock_irqsave(&db->lock, flags);
-	reg_save = readb(db->io_addr);
+	reg_save = पढ़ोb(db->io_addr);
 
-	iow(db, DM9000_EPCR, 0x0);	/* Clear phyxcer read command */
+	iow(db, DM9000_EPCR, 0x0);	/* Clear phyxcer पढ़ो command */
 
-	/* The read data keeps on REG_0D & REG_0E */
+	/* The पढ़ो data keeps on REG_0D & REG_0E */
 	ret = (ior(db, DM9000_EPDRH) << 8) | ior(db, DM9000_EPDRL);
 
 	/* restore the previous address */
-	writeb(reg_save, db->io_addr);
+	ग_लिखोb(reg_save, db->io_addr);
 	spin_unlock_irqrestore(&db->lock, flags);
 
 	mutex_unlock(&db->addr_lock);
 
 	dm9000_dbg(db, 5, "phy_read[%02x] -> %04x\n", reg, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Write a word to phyxcer */
-static void
-dm9000_phy_write(struct net_device *dev,
-		 int phyaddr_unused, int reg, int value)
-{
-	struct board_info *db = netdev_priv(dev);
-	unsigned long flags;
-	unsigned long reg_save;
+अटल व्योम
+dm9000_phy_ग_लिखो(काष्ठा net_device *dev,
+		 पूर्णांक phyaddr_unused, पूर्णांक reg, पूर्णांक value)
+अणु
+	काष्ठा board_info *db = netdev_priv(dev);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ reg_save;
 
 	dm9000_dbg(db, 5, "phy_write[%02x] = %04x\n", reg, value);
-	if (!db->in_timeout)
+	अगर (!db->in_समयout)
 		mutex_lock(&db->addr_lock);
 
 	spin_lock_irqsave(&db->lock, flags);
 
-	/* Save previous register address */
-	reg_save = readb(db->io_addr);
+	/* Save previous रेजिस्टर address */
+	reg_save = पढ़ोb(db->io_addr);
 
-	/* Fill the phyxcer register into REG_0C */
+	/* Fill the phyxcer रेजिस्टर पूर्णांकo REG_0C */
 	iow(db, DM9000_EPAR, DM9000_PHY | reg);
 
-	/* Fill the written data into REG_0D & REG_0E */
+	/* Fill the written data पूर्णांकo REG_0D & REG_0E */
 	iow(db, DM9000_EPDRL, value);
 	iow(db, DM9000_EPDRH, value >> 8);
 
-	/* Issue phyxcer write command */
+	/* Issue phyxcer ग_लिखो command */
 	iow(db, DM9000_EPCR, EPCR_EPOS | EPCR_ERPRW);
 
-	writeb(reg_save, db->io_addr);
+	ग_लिखोb(reg_save, db->io_addr);
 	spin_unlock_irqrestore(&db->lock, flags);
 
-	dm9000_msleep(db, 1);		/* Wait write complete */
+	dm9000_msleep(db, 1);		/* Wait ग_लिखो complete */
 
 	spin_lock_irqsave(&db->lock, flags);
-	reg_save = readb(db->io_addr);
+	reg_save = पढ़ोb(db->io_addr);
 
-	iow(db, DM9000_EPCR, 0x0);	/* Clear phyxcer write command */
+	iow(db, DM9000_EPCR, 0x0);	/* Clear phyxcer ग_लिखो command */
 
 	/* restore the previous address */
-	writeb(reg_save, db->io_addr);
+	ग_लिखोb(reg_save, db->io_addr);
 
 	spin_unlock_irqrestore(&db->lock, flags);
-	if (!db->in_timeout)
+	अगर (!db->in_समयout)
 		mutex_unlock(&db->addr_lock);
-}
+पूर्ण
 
 /* dm9000_set_io
  *
- * select the specified set of io routines to use with the
+ * select the specअगरied set of io routines to use with the
  * device
  */
 
-static void dm9000_set_io(struct board_info *db, int byte_width)
-{
+अटल व्योम dm9000_set_io(काष्ठा board_info *db, पूर्णांक byte_width)
+अणु
 	/* use the size of the data resource to work out what IO
 	 * routines we want to use
 	 */
 
-	switch (byte_width) {
-	case 1:
+	चयन (byte_width) अणु
+	हाल 1:
 		db->dumpblk = dm9000_dumpblk_8bit;
 		db->outblk  = dm9000_outblk_8bit;
 		db->inblk   = dm9000_inblk_8bit;
-		break;
+		अवरोध;
 
 
-	case 3:
+	हाल 3:
 		dev_dbg(db->dev, ": 3 byte IO, falling back to 16bit\n");
 		fallthrough;
-	case 2:
+	हाल 2:
 		db->dumpblk = dm9000_dumpblk_16bit;
 		db->outblk  = dm9000_outblk_16bit;
 		db->inblk   = dm9000_inblk_16bit;
-		break;
+		अवरोध;
 
-	case 4:
-	default:
+	हाल 4:
+	शेष:
 		db->dumpblk = dm9000_dumpblk_32bit;
 		db->outblk  = dm9000_outblk_32bit;
 		db->inblk   = dm9000_inblk_32bit;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void dm9000_schedule_poll(struct board_info *db)
-{
-	if (db->type == TYPE_DM9000E)
+अटल व्योम dm9000_schedule_poll(काष्ठा board_info *db)
+अणु
+	अगर (db->type == TYPE_DM9000E)
 		schedule_delayed_work(&db->phy_poll, HZ * 2);
-}
+पूर्ण
 
-static int dm9000_ioctl(struct net_device *dev, struct ifreq *req, int cmd)
-{
-	struct board_info *dm = to_dm9000_board(dev);
+अटल पूर्णांक dm9000_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *req, पूर्णांक cmd)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
 
-	if (!netif_running(dev))
-		return -EINVAL;
+	अगर (!netअगर_running(dev))
+		वापस -EINVAL;
 
-	return generic_mii_ioctl(&dm->mii, if_mii(req), cmd, NULL);
-}
+	वापस generic_mii_ioctl(&dm->mii, अगर_mii(req), cmd, शून्य);
+पूर्ण
 
-static unsigned int
-dm9000_read_locked(struct board_info *db, int reg)
-{
-	unsigned long flags;
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक
+dm9000_पढ़ो_locked(काष्ठा board_info *db, पूर्णांक reg)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ret;
 
 	spin_lock_irqsave(&db->lock, flags);
 	ret = ior(db, reg);
 	spin_unlock_irqrestore(&db->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dm9000_wait_eeprom(struct board_info *db)
-{
-	unsigned int status;
-	int timeout = 8;	/* wait max 8msec */
+अटल पूर्णांक dm9000_रुको_eeprom(काष्ठा board_info *db)
+अणु
+	अचिन्हित पूर्णांक status;
+	पूर्णांक समयout = 8;	/* रुको max 8msec */
 
 	/* The DM9000 data sheets say we should be able to
-	 * poll the ERRE bit in EPCR to wait for the EEPROM
+	 * poll the ERRE bit in EPCR to रुको क्रम the EEPROM
 	 * operation. From testing several chips, this bit
-	 * does not seem to work.
+	 * करोes not seem to work.
 	 *
 	 * We attempt to use the bit, but fall back to the
-	 * timeout (which is why we do not return an error
+	 * समयout (which is why we करो not वापस an error
 	 * on expiry) to say that the EEPROM operation has
 	 * completed.
 	 */
 
-	while (1) {
-		status = dm9000_read_locked(db, DM9000_EPCR);
+	जबतक (1) अणु
+		status = dm9000_पढ़ो_locked(db, DM9000_EPCR);
 
-		if ((status & EPCR_ERRE) == 0)
-			break;
+		अगर ((status & EPCR_ERRE) == 0)
+			अवरोध;
 
 		msleep(1);
 
-		if (timeout-- < 0) {
+		अगर (समयout-- < 0) अणु
 			dev_dbg(db->dev, "timeout waiting EEPROM\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *  Read a word data from EEPROM
  */
-static void
-dm9000_read_eeprom(struct board_info *db, int offset, u8 *to)
-{
-	unsigned long flags;
+अटल व्योम
+dm9000_पढ़ो_eeprom(काष्ठा board_info *db, पूर्णांक offset, u8 *to)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (db->flags & DM9000_PLATF_NO_EEPROM) {
+	अगर (db->flags & DM9000_PLATF_NO_EEPROM) अणु
 		to[0] = 0xff;
 		to[1] = 0xff;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&db->addr_lock);
 
@@ -485,9 +486,9 @@ dm9000_read_eeprom(struct board_info *db, int offset, u8 *to)
 
 	spin_unlock_irqrestore(&db->lock, flags);
 
-	dm9000_wait_eeprom(db);
+	dm9000_रुको_eeprom(db);
 
-	/* delay for at-least 150uS */
+	/* delay क्रम at-least 150uS */
 	msleep(1);
 
 	spin_lock_irqsave(&db->lock, flags);
@@ -500,18 +501,18 @@ dm9000_read_eeprom(struct board_info *db, int offset, u8 *to)
 	spin_unlock_irqrestore(&db->lock, flags);
 
 	mutex_unlock(&db->addr_lock);
-}
+पूर्ण
 
 /*
  * Write a word data to SROM
  */
-static void
-dm9000_write_eeprom(struct board_info *db, int offset, u8 *data)
-{
-	unsigned long flags;
+अटल व्योम
+dm9000_ग_लिखो_eeprom(काष्ठा board_info *db, पूर्णांक offset, u8 *data)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (db->flags & DM9000_PLATF_NO_EEPROM)
-		return;
+	अगर (db->flags & DM9000_PLATF_NO_EEPROM)
+		वापस;
 
 	mutex_lock(&db->addr_lock);
 
@@ -522,191 +523,191 @@ dm9000_write_eeprom(struct board_info *db, int offset, u8 *data)
 	iow(db, DM9000_EPCR, EPCR_WEP | EPCR_ERPRW);
 	spin_unlock_irqrestore(&db->lock, flags);
 
-	dm9000_wait_eeprom(db);
+	dm9000_रुको_eeprom(db);
 
-	mdelay(1);	/* wait at least 150uS to clear */
+	mdelay(1);	/* रुको at least 150uS to clear */
 
 	spin_lock_irqsave(&db->lock, flags);
 	iow(db, DM9000_EPCR, 0);
 	spin_unlock_irqrestore(&db->lock, flags);
 
 	mutex_unlock(&db->addr_lock);
-}
+पूर्ण
 
 /* ethtool ops */
 
-static void dm9000_get_drvinfo(struct net_device *dev,
-			       struct ethtool_drvinfo *info)
-{
-	struct board_info *dm = to_dm9000_board(dev);
+अटल व्योम dm9000_get_drvinfo(काष्ठा net_device *dev,
+			       काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
 
-	strlcpy(info->driver, CARDNAME, sizeof(info->driver));
-	strlcpy(info->bus_info, to_platform_device(dm->dev)->name,
-		sizeof(info->bus_info));
-}
+	strlcpy(info->driver, CARDNAME, माप(info->driver));
+	strlcpy(info->bus_info, to_platक्रमm_device(dm->dev)->name,
+		माप(info->bus_info));
+पूर्ण
 
-static u32 dm9000_get_msglevel(struct net_device *dev)
-{
-	struct board_info *dm = to_dm9000_board(dev);
+अटल u32 dm9000_get_msglevel(काष्ठा net_device *dev)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
 
-	return dm->msg_enable;
-}
+	वापस dm->msg_enable;
+पूर्ण
 
-static void dm9000_set_msglevel(struct net_device *dev, u32 value)
-{
-	struct board_info *dm = to_dm9000_board(dev);
+अटल व्योम dm9000_set_msglevel(काष्ठा net_device *dev, u32 value)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
 
 	dm->msg_enable = value;
-}
+पूर्ण
 
-static int dm9000_get_link_ksettings(struct net_device *dev,
-				     struct ethtool_link_ksettings *cmd)
-{
-	struct board_info *dm = to_dm9000_board(dev);
+अटल पूर्णांक dm9000_get_link_ksettings(काष्ठा net_device *dev,
+				     काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
 
 	mii_ethtool_get_link_ksettings(&dm->mii, cmd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dm9000_set_link_ksettings(struct net_device *dev,
-				     const struct ethtool_link_ksettings *cmd)
-{
-	struct board_info *dm = to_dm9000_board(dev);
+अटल पूर्णांक dm9000_set_link_ksettings(काष्ठा net_device *dev,
+				     स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
 
-	return mii_ethtool_set_link_ksettings(&dm->mii, cmd);
-}
+	वापस mii_ethtool_set_link_ksettings(&dm->mii, cmd);
+पूर्ण
 
-static int dm9000_nway_reset(struct net_device *dev)
-{
-	struct board_info *dm = to_dm9000_board(dev);
-	return mii_nway_restart(&dm->mii);
-}
+अटल पूर्णांक dm9000_nway_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
+	वापस mii_nway_restart(&dm->mii);
+पूर्ण
 
-static int dm9000_set_features(struct net_device *dev,
+अटल पूर्णांक dm9000_set_features(काष्ठा net_device *dev,
 	netdev_features_t features)
-{
-	struct board_info *dm = to_dm9000_board(dev);
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
 	netdev_features_t changed = dev->features ^ features;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (!(changed & NETIF_F_RXCSUM))
-		return 0;
+	अगर (!(changed & NETIF_F_RXCSUM))
+		वापस 0;
 
 	spin_lock_irqsave(&dm->lock, flags);
 	iow(dm, DM9000_RCSR, (features & NETIF_F_RXCSUM) ? RCSR_CSUM : 0);
 	spin_unlock_irqrestore(&dm->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 dm9000_get_link(struct net_device *dev)
-{
-	struct board_info *dm = to_dm9000_board(dev);
+अटल u32 dm9000_get_link(काष्ठा net_device *dev)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
 	u32 ret;
 
-	if (dm->flags & DM9000_PLATF_EXT_PHY)
+	अगर (dm->flags & DM9000_PLATF_EXT_PHY)
 		ret = mii_link_ok(&dm->mii);
-	else
-		ret = dm9000_read_locked(dm, DM9000_NSR) & NSR_LINKST ? 1 : 0;
+	अन्यथा
+		ret = dm9000_पढ़ो_locked(dm, DM9000_NSR) & NSR_LINKST ? 1 : 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define DM_EEPROM_MAGIC		(0x444D394B)
+#घोषणा DM_EEPROM_MAGIC		(0x444D394B)
 
-static int dm9000_get_eeprom_len(struct net_device *dev)
-{
-	return 128;
-}
+अटल पूर्णांक dm9000_get_eeprom_len(काष्ठा net_device *dev)
+अणु
+	वापस 128;
+पूर्ण
 
-static int dm9000_get_eeprom(struct net_device *dev,
-			     struct ethtool_eeprom *ee, u8 *data)
-{
-	struct board_info *dm = to_dm9000_board(dev);
-	int offset = ee->offset;
-	int len = ee->len;
-	int i;
+अटल पूर्णांक dm9000_get_eeprom(काष्ठा net_device *dev,
+			     काष्ठा ethtool_eeprom *ee, u8 *data)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
+	पूर्णांक offset = ee->offset;
+	पूर्णांक len = ee->len;
+	पूर्णांक i;
 
 	/* EEPROM access is aligned to two bytes */
 
-	if ((len & 1) != 0 || (offset & 1) != 0)
-		return -EINVAL;
+	अगर ((len & 1) != 0 || (offset & 1) != 0)
+		वापस -EINVAL;
 
-	if (dm->flags & DM9000_PLATF_NO_EEPROM)
-		return -ENOENT;
+	अगर (dm->flags & DM9000_PLATF_NO_EEPROM)
+		वापस -ENOENT;
 
 	ee->magic = DM_EEPROM_MAGIC;
 
-	for (i = 0; i < len; i += 2)
-		dm9000_read_eeprom(dm, (offset + i) / 2, data + i);
+	क्रम (i = 0; i < len; i += 2)
+		dm9000_पढ़ो_eeprom(dm, (offset + i) / 2, data + i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dm9000_set_eeprom(struct net_device *dev,
-			     struct ethtool_eeprom *ee, u8 *data)
-{
-	struct board_info *dm = to_dm9000_board(dev);
-	int offset = ee->offset;
-	int len = ee->len;
-	int done;
+अटल पूर्णांक dm9000_set_eeprom(काष्ठा net_device *dev,
+			     काष्ठा ethtool_eeprom *ee, u8 *data)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
+	पूर्णांक offset = ee->offset;
+	पूर्णांक len = ee->len;
+	पूर्णांक करोne;
 
 	/* EEPROM access is aligned to two bytes */
 
-	if (dm->flags & DM9000_PLATF_NO_EEPROM)
-		return -ENOENT;
+	अगर (dm->flags & DM9000_PLATF_NO_EEPROM)
+		वापस -ENOENT;
 
-	if (ee->magic != DM_EEPROM_MAGIC)
-		return -EINVAL;
+	अगर (ee->magic != DM_EEPROM_MAGIC)
+		वापस -EINVAL;
 
-	while (len > 0) {
-		if (len & 1 || offset & 1) {
-			int which = offset & 1;
-			u8 tmp[2];
+	जबतक (len > 0) अणु
+		अगर (len & 1 || offset & 1) अणु
+			पूर्णांक which = offset & 1;
+			u8 पंचांगp[2];
 
-			dm9000_read_eeprom(dm, offset / 2, tmp);
-			tmp[which] = *data;
-			dm9000_write_eeprom(dm, offset / 2, tmp);
+			dm9000_पढ़ो_eeprom(dm, offset / 2, पंचांगp);
+			पंचांगp[which] = *data;
+			dm9000_ग_लिखो_eeprom(dm, offset / 2, पंचांगp);
 
-			done = 1;
-		} else {
-			dm9000_write_eeprom(dm, offset / 2, data);
-			done = 2;
-		}
+			करोne = 1;
+		पूर्ण अन्यथा अणु
+			dm9000_ग_लिखो_eeprom(dm, offset / 2, data);
+			करोne = 2;
+		पूर्ण
 
-		data += done;
-		offset += done;
-		len -= done;
-	}
+		data += करोne;
+		offset += करोne;
+		len -= करोne;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dm9000_get_wol(struct net_device *dev, struct ethtool_wolinfo *w)
-{
-	struct board_info *dm = to_dm9000_board(dev);
+अटल व्योम dm9000_get_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *w)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
 
-	memset(w, 0, sizeof(struct ethtool_wolinfo));
+	स_रखो(w, 0, माप(काष्ठा ethtool_wolinfo));
 
 	/* note, we could probably support wake-phy too */
 	w->supported = dm->wake_supported ? WAKE_MAGIC : 0;
 	w->wolopts = dm->wake_state;
-}
+पूर्ण
 
-static int dm9000_set_wol(struct net_device *dev, struct ethtool_wolinfo *w)
-{
-	struct board_info *dm = to_dm9000_board(dev);
-	unsigned long flags;
+अटल पूर्णांक dm9000_set_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *w)
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
+	अचिन्हित दीर्घ flags;
 	u32 opts = w->wolopts;
 	u32 wcr = 0;
 
-	if (!dm->wake_supported)
-		return -EOPNOTSUPP;
+	अगर (!dm->wake_supported)
+		वापस -EOPNOTSUPP;
 
-	if (opts & ~WAKE_MAGIC)
-		return -EINVAL;
+	अगर (opts & ~WAKE_MAGIC)
+		वापस -EINVAL;
 
-	if (opts & WAKE_MAGIC)
+	अगर (opts & WAKE_MAGIC)
 		wcr |= WCR_MAGICEN;
 
 	mutex_lock(&dm->addr_lock);
@@ -717,20 +718,20 @@ static int dm9000_set_wol(struct net_device *dev, struct ethtool_wolinfo *w)
 
 	mutex_unlock(&dm->addr_lock);
 
-	if (dm->wake_state != opts) {
+	अगर (dm->wake_state != opts) अणु
 		/* change in wol state, update IRQ state */
 
-		if (!dm->wake_state)
+		अगर (!dm->wake_state)
 			irq_set_irq_wake(dm->irq_wake, 1);
-		else if (dm->wake_state && !opts)
+		अन्यथा अगर (dm->wake_state && !opts)
 			irq_set_irq_wake(dm->irq_wake, 0);
-	}
+	पूर्ण
 
 	dm->wake_state = opts;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ethtool_ops dm9000_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops dm9000_ethtool_ops = अणु
 	.get_drvinfo		= dm9000_get_drvinfo,
 	.get_msglevel		= dm9000_get_msglevel,
 	.set_msglevel		= dm9000_set_msglevel,
@@ -743,66 +744,66 @@ static const struct ethtool_ops dm9000_ethtool_ops = {
 	.set_eeprom		= dm9000_set_eeprom,
 	.get_link_ksettings	= dm9000_get_link_ksettings,
 	.set_link_ksettings	= dm9000_set_link_ksettings,
-};
+पूर्ण;
 
-static void dm9000_show_carrier(struct board_info *db,
-				unsigned carrier, unsigned nsr)
-{
-	int lpa;
-	struct net_device *ndev = db->ndev;
-	struct mii_if_info *mii = &db->mii;
-	unsigned ncr = dm9000_read_locked(db, DM9000_NCR);
+अटल व्योम dm9000_show_carrier(काष्ठा board_info *db,
+				अचिन्हित carrier, अचिन्हित nsr)
+अणु
+	पूर्णांक lpa;
+	काष्ठा net_device *ndev = db->ndev;
+	काष्ठा mii_अगर_info *mii = &db->mii;
+	अचिन्हित ncr = dm9000_पढ़ो_locked(db, DM9000_NCR);
 
-	if (carrier) {
-		lpa = mii->mdio_read(mii->dev, mii->phy_id, MII_LPA);
+	अगर (carrier) अणु
+		lpa = mii->mdio_पढ़ो(mii->dev, mii->phy_id, MII_LPA);
 		dev_info(db->dev,
 			 "%s: link up, %dMbps, %s-duplex, lpa 0x%04X\n",
 			 ndev->name, (nsr & NSR_SPEED) ? 10 : 100,
 			 (ncr & NCR_FDX) ? "full" : "half", lpa);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_info(db->dev, "%s: link down\n", ndev->name);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-dm9000_poll_work(struct work_struct *w)
-{
-	struct delayed_work *dw = to_delayed_work(w);
-	struct board_info *db = container_of(dw, struct board_info, phy_poll);
-	struct net_device *ndev = db->ndev;
+अटल व्योम
+dm9000_poll_work(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा delayed_work *dw = to_delayed_work(w);
+	काष्ठा board_info *db = container_of(dw, काष्ठा board_info, phy_poll);
+	काष्ठा net_device *ndev = db->ndev;
 
-	if (db->flags & DM9000_PLATF_SIMPLE_PHY &&
-	    !(db->flags & DM9000_PLATF_EXT_PHY)) {
-		unsigned nsr = dm9000_read_locked(db, DM9000_NSR);
-		unsigned old_carrier = netif_carrier_ok(ndev) ? 1 : 0;
-		unsigned new_carrier;
+	अगर (db->flags & DM9000_PLATF_SIMPLE_PHY &&
+	    !(db->flags & DM9000_PLATF_EXT_PHY)) अणु
+		अचिन्हित nsr = dm9000_पढ़ो_locked(db, DM9000_NSR);
+		अचिन्हित old_carrier = netअगर_carrier_ok(ndev) ? 1 : 0;
+		अचिन्हित new_carrier;
 
 		new_carrier = (nsr & NSR_LINKST) ? 1 : 0;
 
-		if (old_carrier != new_carrier) {
-			if (netif_msg_link(db))
+		अगर (old_carrier != new_carrier) अणु
+			अगर (netअगर_msg_link(db))
 				dm9000_show_carrier(db, new_carrier, nsr);
 
-			if (!new_carrier)
-				netif_carrier_off(ndev);
-			else
-				netif_carrier_on(ndev);
-		}
-	} else
-		mii_check_media(&db->mii, netif_msg_link(db), 0);
+			अगर (!new_carrier)
+				netअगर_carrier_off(ndev);
+			अन्यथा
+				netअगर_carrier_on(ndev);
+		पूर्ण
+	पूर्ण अन्यथा
+		mii_check_media(&db->mii, netअगर_msg_link(db), 0);
 
-	if (netif_running(ndev))
+	अगर (netअगर_running(ndev))
 		dm9000_schedule_poll(db);
-}
+पूर्ण
 
 /* dm9000_release_board
  *
  * release a board, and any mapped resources
  */
 
-static void
-dm9000_release_board(struct platform_device *pdev, struct board_info *db)
-{
+अटल व्योम
+dm9000_release_board(काष्ठा platक्रमm_device *pdev, काष्ठा board_info *db)
+अणु
 	/* unmap our resources */
 
 	iounmap(db->io_addr);
@@ -810,108 +811,108 @@ dm9000_release_board(struct platform_device *pdev, struct board_info *db)
 
 	/* release the resources */
 
-	if (db->data_req)
+	अगर (db->data_req)
 		release_resource(db->data_req);
-	kfree(db->data_req);
+	kमुक्त(db->data_req);
 
-	if (db->addr_req)
+	अगर (db->addr_req)
 		release_resource(db->addr_req);
-	kfree(db->addr_req);
-}
+	kमुक्त(db->addr_req);
+पूर्ण
 
-static unsigned char dm9000_type_to_char(enum dm9000_type type)
-{
-	switch (type) {
-	case TYPE_DM9000E: return 'e';
-	case TYPE_DM9000A: return 'a';
-	case TYPE_DM9000B: return 'b';
-	}
+अटल अचिन्हित अक्षर dm9000_type_to_अक्षर(क्रमागत dm9000_type type)
+अणु
+	चयन (type) अणु
+	हाल TYPE_DM9000E: वापस 'e';
+	हाल TYPE_DM9000A: वापस 'a';
+	हाल TYPE_DM9000B: वापस 'b';
+	पूर्ण
 
-	return '?';
-}
+	वापस '?';
+पूर्ण
 
 /*
  *  Set DM9000 multicast address
  */
-static void
-dm9000_hash_table_unlocked(struct net_device *dev)
-{
-	struct board_info *db = netdev_priv(dev);
-	struct netdev_hw_addr *ha;
-	int i, oft;
+अटल व्योम
+dm9000_hash_table_unlocked(काष्ठा net_device *dev)
+अणु
+	काष्ठा board_info *db = netdev_priv(dev);
+	काष्ठा netdev_hw_addr *ha;
+	पूर्णांक i, oft;
 	u32 hash_val;
-	u16 hash_table[4] = { 0, 0, 0, 0x8000 }; /* broadcast address */
+	u16 hash_table[4] = अणु 0, 0, 0, 0x8000 पूर्ण; /* broadcast address */
 	u8 rcr = RCR_DIS_LONG | RCR_DIS_CRC | RCR_RXEN;
 
 	dm9000_dbg(db, 1, "entering %s\n", __func__);
 
-	for (i = 0, oft = DM9000_PAR; i < 6; i++, oft++)
+	क्रम (i = 0, oft = DM9000_PAR; i < 6; i++, oft++)
 		iow(db, oft, dev->dev_addr[i]);
 
-	if (dev->flags & IFF_PROMISC)
+	अगर (dev->flags & IFF_PROMISC)
 		rcr |= RCR_PRMSC;
 
-	if (dev->flags & IFF_ALLMULTI)
+	अगर (dev->flags & IFF_ALLMULTI)
 		rcr |= RCR_ALL;
 
 	/* the multicast address in Hash Table : 64 bits */
-	netdev_for_each_mc_addr(ha, dev) {
+	netdev_क्रम_each_mc_addr(ha, dev) अणु
 		hash_val = ether_crc_le(6, ha->addr) & 0x3f;
 		hash_table[hash_val / 16] |= (u16) 1 << (hash_val % 16);
-	}
+	पूर्ण
 
 	/* Write the hash table to MAC MD table */
-	for (i = 0, oft = DM9000_MAR; i < 4; i++) {
+	क्रम (i = 0, oft = DM9000_MAR; i < 4; i++) अणु
 		iow(db, oft++, hash_table[i]);
 		iow(db, oft++, hash_table[i] >> 8);
-	}
+	पूर्ण
 
 	iow(db, DM9000_RCR, rcr);
-}
+पूर्ण
 
-static void
-dm9000_hash_table(struct net_device *dev)
-{
-	struct board_info *db = netdev_priv(dev);
-	unsigned long flags;
+अटल व्योम
+dm9000_hash_table(काष्ठा net_device *dev)
+अणु
+	काष्ठा board_info *db = netdev_priv(dev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&db->lock, flags);
 	dm9000_hash_table_unlocked(dev);
 	spin_unlock_irqrestore(&db->lock, flags);
-}
+पूर्ण
 
-static void
-dm9000_mask_interrupts(struct board_info *db)
-{
+अटल व्योम
+dm9000_mask_पूर्णांकerrupts(काष्ठा board_info *db)
+अणु
 	iow(db, DM9000_IMR, IMR_PAR);
-}
+पूर्ण
 
-static void
-dm9000_unmask_interrupts(struct board_info *db)
-{
+अटल व्योम
+dm9000_unmask_पूर्णांकerrupts(काष्ठा board_info *db)
+अणु
 	iow(db, DM9000_IMR, db->imr_all);
-}
+पूर्ण
 
 /*
  * Initialize dm9000 board
  */
-static void
-dm9000_init_dm9000(struct net_device *dev)
-{
-	struct board_info *db = netdev_priv(dev);
-	unsigned int imr;
-	unsigned int ncr;
+अटल व्योम
+dm9000_init_dm9000(काष्ठा net_device *dev)
+अणु
+	काष्ठा board_info *db = netdev_priv(dev);
+	अचिन्हित पूर्णांक imr;
+	अचिन्हित पूर्णांक ncr;
 
 	dm9000_dbg(db, 1, "entering %s\n", __func__);
 
 	dm9000_reset(db);
-	dm9000_mask_interrupts(db);
+	dm9000_mask_पूर्णांकerrupts(db);
 
 	/* I/O mode */
 	db->io_mode = ior(db, DM9000_ISR) >> 6;	/* ISR bit7:6 keeps I/O mode */
 
 	/* Checksum mode */
-	if (dev->hw_features & NETIF_F_RXCSUM)
+	अगर (dev->hw_features & NETIF_F_RXCSUM)
 		iow(db, DM9000_RCSR,
 			(dev->features & NETIF_F_RXCSUM) ? RCSR_CSUM : 0);
 
@@ -921,35 +922,35 @@ dm9000_init_dm9000(struct net_device *dev)
 	/* If we are dealing with DM9000B, some extra steps are required: a
 	 * manual phy reset, and setting init params.
 	 */
-	if (db->type == TYPE_DM9000B) {
-		dm9000_phy_write(dev, 0, MII_BMCR, BMCR_RESET);
-		dm9000_phy_write(dev, 0, MII_DM_DSPCR, DSPCR_INIT_PARAM);
-	}
+	अगर (db->type == TYPE_DM9000B) अणु
+		dm9000_phy_ग_लिखो(dev, 0, MII_BMCR, BMCR_RESET);
+		dm9000_phy_ग_लिखो(dev, 0, MII_DM_DSPCR, DSPCR_INIT_PARAM);
+	पूर्ण
 
 	ncr = (db->flags & DM9000_PLATF_EXT_PHY) ? NCR_EXT_PHY : 0;
 
-	/* if wol is needed, then always set NCR_WAKEEN otherwise we end
-	 * up dumping the wake events if we disable this. There is already
+	/* अगर wol is needed, then always set NCR_WAKEEN otherwise we end
+	 * up dumping the wake events अगर we disable this. There is alपढ़ोy
 	 * a wake-mask in DM9000_WCR */
-	if (db->wake_supported)
+	अगर (db->wake_supported)
 		ncr |= NCR_WAKEEN;
 
 	iow(db, DM9000_NCR, ncr);
 
-	/* Program operating register */
+	/* Program operating रेजिस्टर */
 	iow(db, DM9000_TCR, 0);	        /* TX Polling clear */
 	iow(db, DM9000_BPTR, 0x3f);	/* Less 3Kb, 200us */
 	iow(db, DM9000_FCR, 0xff);	/* Flow Control */
 	iow(db, DM9000_SMCR, 0);        /* Special Mode */
 	/* clear TX status */
 	iow(db, DM9000_NSR, NSR_WAKEST | NSR_TX2END | NSR_TX1END);
-	iow(db, DM9000_ISR, ISR_CLR_STATUS); /* Clear interrupt status */
+	iow(db, DM9000_ISR, ISR_CLR_STATUS); /* Clear पूर्णांकerrupt status */
 
 	/* Set address filter table */
 	dm9000_hash_table_unlocked(dev);
 
 	imr = IMR_PAR | IMR_PTM | IMR_PRM;
-	if (db->type != TYPE_DM9000E)
+	अगर (db->type != TYPE_DM9000E)
 		imr |= IMR_LNKCHNG;
 
 	db->imr_all = imr;
@@ -957,48 +958,48 @@ dm9000_init_dm9000(struct net_device *dev)
 	/* Init Driver variable */
 	db->tx_pkt_cnt = 0;
 	db->queue_pkt_len = 0;
-	netif_trans_update(dev);
-}
+	netअगर_trans_update(dev);
+पूर्ण
 
-/* Our watchdog timed out. Called by the networking layer */
-static void dm9000_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct board_info *db = netdev_priv(dev);
+/* Our watchकरोg समयd out. Called by the networking layer */
+अटल व्योम dm9000_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा board_info *db = netdev_priv(dev);
 	u8 reg_save;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	/* Save previous register address */
+	/* Save previous रेजिस्टर address */
 	spin_lock_irqsave(&db->lock, flags);
-	db->in_timeout = 1;
-	reg_save = readb(db->io_addr);
+	db->in_समयout = 1;
+	reg_save = पढ़ोb(db->io_addr);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	dm9000_init_dm9000(dev);
-	dm9000_unmask_interrupts(db);
+	dm9000_unmask_पूर्णांकerrupts(db);
 	/* We can accept TX packets again */
-	netif_trans_update(dev); /* prevent tx timeout */
-	netif_wake_queue(dev);
+	netअगर_trans_update(dev); /* prevent tx समयout */
+	netअगर_wake_queue(dev);
 
-	/* Restore previous register address */
-	writeb(reg_save, db->io_addr);
-	db->in_timeout = 0;
+	/* Restore previous रेजिस्टर address */
+	ग_लिखोb(reg_save, db->io_addr);
+	db->in_समयout = 0;
 	spin_unlock_irqrestore(&db->lock, flags);
-}
+पूर्ण
 
-static void dm9000_send_packet(struct net_device *dev,
-			       int ip_summed,
+अटल व्योम dm9000_send_packet(काष्ठा net_device *dev,
+			       पूर्णांक ip_summed,
 			       u16 pkt_len)
-{
-	struct board_info *dm = to_dm9000_board(dev);
+अणु
+	काष्ठा board_info *dm = to_dm9000_board(dev);
 
 	/* The DM9000 is not smart enough to leave fragmented packets alone. */
-	if (dm->ip_summed != ip_summed) {
-		if (ip_summed == CHECKSUM_NONE)
+	अगर (dm->ip_summed != ip_summed) अणु
+		अगर (ip_summed == CHECKSUM_NONE)
 			iow(dm, DM9000_TCCR, 0);
-		else
+		अन्यथा
 			iow(dm, DM9000_TCCR, TCCR_IP | TCCR_UDP | TCCR_TCP);
 		dm->ip_summed = ip_summed;
-	}
+	पूर्ण
 
 	/* Set TX length to DM9000 */
 	iow(dm, DM9000_TXPLL, pkt_len);
@@ -1006,159 +1007,159 @@ static void dm9000_send_packet(struct net_device *dev,
 
 	/* Issue TX polling command */
 	iow(dm, DM9000_TCR, TCR_TXREQ);	/* Cleared after TX complete */
-}
+पूर्ण
 
 /*
  *  Hardware start transmission.
  *  Send a packet to media from the upper layer.
  */
-static int
-dm9000_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	unsigned long flags;
-	struct board_info *db = netdev_priv(dev);
+अटल पूर्णांक
+dm9000_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा board_info *db = netdev_priv(dev);
 
 	dm9000_dbg(db, 3, "%s:\n", __func__);
 
-	if (db->tx_pkt_cnt > 1)
-		return NETDEV_TX_BUSY;
+	अगर (db->tx_pkt_cnt > 1)
+		वापस NETDEV_TX_BUSY;
 
 	spin_lock_irqsave(&db->lock, flags);
 
 	/* Move data to DM9000 TX RAM */
-	writeb(DM9000_MWCMD, db->io_addr);
+	ग_लिखोb(DM9000_MWCMD, db->io_addr);
 
 	(db->outblk)(db->io_data, skb->data, skb->len);
 	dev->stats.tx_bytes += skb->len;
 
 	db->tx_pkt_cnt++;
 	/* TX control: First packet immediately send, second packet queue */
-	if (db->tx_pkt_cnt == 1) {
+	अगर (db->tx_pkt_cnt == 1) अणु
 		dm9000_send_packet(dev, skb->ip_summed, skb->len);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Second packet */
 		db->queue_pkt_len = skb->len;
 		db->queue_ip_summed = skb->ip_summed;
-		netif_stop_queue(dev);
-	}
+		netअगर_stop_queue(dev);
+	पूर्ण
 
 	spin_unlock_irqrestore(&db->lock, flags);
 
-	/* free this SKB */
+	/* मुक्त this SKB */
 	dev_consume_skb_any(skb);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 /*
- * DM9000 interrupt handler
- * receive the packet to upper layer, free the transmitted packet
+ * DM9000 पूर्णांकerrupt handler
+ * receive the packet to upper layer, मुक्त the transmitted packet
  */
 
-static void dm9000_tx_done(struct net_device *dev, struct board_info *db)
-{
-	int tx_status = ior(db, DM9000_NSR);	/* Got TX status */
+अटल व्योम dm9000_tx_करोne(काष्ठा net_device *dev, काष्ठा board_info *db)
+अणु
+	पूर्णांक tx_status = ior(db, DM9000_NSR);	/* Got TX status */
 
-	if (tx_status & (NSR_TX2END | NSR_TX1END)) {
+	अगर (tx_status & (NSR_TX2END | NSR_TX1END)) अणु
 		/* One packet sent complete */
 		db->tx_pkt_cnt--;
 		dev->stats.tx_packets++;
 
-		if (netif_msg_tx_done(db))
+		अगर (netअगर_msg_tx_करोne(db))
 			dev_dbg(db->dev, "tx done, NSR %02x\n", tx_status);
 
 		/* Queue packet check & send */
-		if (db->tx_pkt_cnt > 0)
+		अगर (db->tx_pkt_cnt > 0)
 			dm9000_send_packet(dev, db->queue_ip_summed,
 					   db->queue_pkt_len);
-		netif_wake_queue(dev);
-	}
-}
+		netअगर_wake_queue(dev);
+	पूर्ण
+पूर्ण
 
-struct dm9000_rxhdr {
+काष्ठा dm9000_rxhdr अणु
 	u8	RxPktReady;
 	u8	RxStatus;
 	__le16	RxLen;
-} __packed;
+पूर्ण __packed;
 
 /*
  *  Received a packet and pass to upper layer
  */
-static void
-dm9000_rx(struct net_device *dev)
-{
-	struct board_info *db = netdev_priv(dev);
-	struct dm9000_rxhdr rxhdr;
-	struct sk_buff *skb;
+अटल व्योम
+dm9000_rx(काष्ठा net_device *dev)
+अणु
+	काष्ठा board_info *db = netdev_priv(dev);
+	काष्ठा dm9000_rxhdr rxhdr;
+	काष्ठा sk_buff *skb;
 	u8 rxbyte, *rdptr;
 	bool GoodPacket;
-	int RxLen;
+	पूर्णांक RxLen;
 
-	/* Check packet ready or not */
-	do {
-		ior(db, DM9000_MRCMDX);	/* Dummy read */
+	/* Check packet पढ़ोy or not */
+	करो अणु
+		ior(db, DM9000_MRCMDX);	/* Dummy पढ़ो */
 
 		/* Get most updated data */
-		rxbyte = readb(db->io_data);
+		rxbyte = पढ़ोb(db->io_data);
 
 		/* Status check: this byte must be 0 or 1 */
-		if (rxbyte & DM9000_PKT_ERR) {
+		अगर (rxbyte & DM9000_PKT_ERR) अणु
 			dev_warn(db->dev, "status check fail: %d\n", rxbyte);
 			iow(db, DM9000_RCR, 0x00);	/* Stop Device */
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (!(rxbyte & DM9000_PKT_RDY))
-			return;
+		अगर (!(rxbyte & DM9000_PKT_RDY))
+			वापस;
 
-		/* A packet ready now  & Get status/length */
+		/* A packet पढ़ोy now  & Get status/length */
 		GoodPacket = true;
-		writeb(DM9000_MRCMD, db->io_addr);
+		ग_लिखोb(DM9000_MRCMD, db->io_addr);
 
-		(db->inblk)(db->io_data, &rxhdr, sizeof(rxhdr));
+		(db->inblk)(db->io_data, &rxhdr, माप(rxhdr));
 
 		RxLen = le16_to_cpu(rxhdr.RxLen);
 
-		if (netif_msg_rx_status(db))
+		अगर (netअगर_msg_rx_status(db))
 			dev_dbg(db->dev, "RX: status %02x, length %04x\n",
 				rxhdr.RxStatus, RxLen);
 
 		/* Packet Status check */
-		if (RxLen < 0x40) {
+		अगर (RxLen < 0x40) अणु
 			GoodPacket = false;
-			if (netif_msg_rx_err(db))
+			अगर (netअगर_msg_rx_err(db))
 				dev_dbg(db->dev, "RX: Bad Packet (runt)\n");
-		}
+		पूर्ण
 
-		if (RxLen > DM9000_PKT_MAX) {
+		अगर (RxLen > DM9000_PKT_MAX) अणु
 			dev_dbg(db->dev, "RST: RX Len:%x\n", RxLen);
-		}
+		पूर्ण
 
-		/* rxhdr.RxStatus is identical to RSR register. */
-		if (rxhdr.RxStatus & (RSR_FOE | RSR_CE | RSR_AE |
+		/* rxhdr.RxStatus is identical to RSR रेजिस्टर. */
+		अगर (rxhdr.RxStatus & (RSR_FOE | RSR_CE | RSR_AE |
 				      RSR_PLE | RSR_RWTO |
-				      RSR_LCS | RSR_RF)) {
+				      RSR_LCS | RSR_RF)) अणु
 			GoodPacket = false;
-			if (rxhdr.RxStatus & RSR_FOE) {
-				if (netif_msg_rx_err(db))
+			अगर (rxhdr.RxStatus & RSR_FOE) अणु
+				अगर (netअगर_msg_rx_err(db))
 					dev_dbg(db->dev, "fifo error\n");
-				dev->stats.rx_fifo_errors++;
-			}
-			if (rxhdr.RxStatus & RSR_CE) {
-				if (netif_msg_rx_err(db))
+				dev->stats.rx_fअगरo_errors++;
+			पूर्ण
+			अगर (rxhdr.RxStatus & RSR_CE) अणु
+				अगर (netअगर_msg_rx_err(db))
 					dev_dbg(db->dev, "crc error\n");
 				dev->stats.rx_crc_errors++;
-			}
-			if (rxhdr.RxStatus & RSR_RF) {
-				if (netif_msg_rx_err(db))
+			पूर्ण
+			अगर (rxhdr.RxStatus & RSR_RF) अणु
+				अगर (netअगर_msg_rx_err(db))
 					dev_dbg(db->dev, "length error\n");
 				dev->stats.rx_length_errors++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* Move data from DM9000 */
-		if (GoodPacket &&
-		    ((skb = netdev_alloc_skb(dev, RxLen + 4)) != NULL)) {
+		अगर (GoodPacket &&
+		    ((skb = netdev_alloc_skb(dev, RxLen + 4)) != शून्य)) अणु
 			skb_reserve(skb, 2);
 			rdptr = skb_put(skb, RxLen - 4);
 
@@ -1169,79 +1170,79 @@ dm9000_rx(struct net_device *dev)
 
 			/* Pass to upper layer */
 			skb->protocol = eth_type_trans(skb, dev);
-			if (dev->features & NETIF_F_RXCSUM) {
-				if ((((rxbyte & 0x1c) << 3) & rxbyte) == 0)
+			अगर (dev->features & NETIF_F_RXCSUM) अणु
+				अगर ((((rxbyte & 0x1c) << 3) & rxbyte) == 0)
 					skb->ip_summed = CHECKSUM_UNNECESSARY;
-				else
-					skb_checksum_none_assert(skb);
-			}
-			netif_rx(skb);
+				अन्यथा
+					skb_checksum_none_निश्चित(skb);
+			पूर्ण
+			netअगर_rx(skb);
 			dev->stats.rx_packets++;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* need to dump the packet's data */
 
 			(db->dumpblk)(db->io_data, RxLen);
-		}
-	} while (rxbyte & DM9000_PKT_RDY);
-}
+		पूर्ण
+	पूर्ण जबतक (rxbyte & DM9000_PKT_RDY);
+पूर्ण
 
-static irqreturn_t dm9000_interrupt(int irq, void *dev_id)
-{
-	struct net_device *dev = dev_id;
-	struct board_info *db = netdev_priv(dev);
-	int int_status;
-	unsigned long flags;
+अटल irqवापस_t dm9000_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा board_info *db = netdev_priv(dev);
+	पूर्णांक पूर्णांक_status;
+	अचिन्हित दीर्घ flags;
 	u8 reg_save;
 
 	dm9000_dbg(db, 3, "entering %s\n", __func__);
 
-	/* A real interrupt coming */
+	/* A real पूर्णांकerrupt coming */
 
 	/* holders of db->lock must always block IRQs */
 	spin_lock_irqsave(&db->lock, flags);
 
-	/* Save previous register address */
-	reg_save = readb(db->io_addr);
+	/* Save previous रेजिस्टर address */
+	reg_save = पढ़ोb(db->io_addr);
 
-	dm9000_mask_interrupts(db);
-	/* Got DM9000 interrupt status */
-	int_status = ior(db, DM9000_ISR);	/* Got ISR */
-	iow(db, DM9000_ISR, int_status);	/* Clear ISR status */
+	dm9000_mask_पूर्णांकerrupts(db);
+	/* Got DM9000 पूर्णांकerrupt status */
+	पूर्णांक_status = ior(db, DM9000_ISR);	/* Got ISR */
+	iow(db, DM9000_ISR, पूर्णांक_status);	/* Clear ISR status */
 
-	if (netif_msg_intr(db))
-		dev_dbg(db->dev, "interrupt status %02x\n", int_status);
+	अगर (netअगर_msg_पूर्णांकr(db))
+		dev_dbg(db->dev, "interrupt status %02x\n", पूर्णांक_status);
 
 	/* Received the coming packet */
-	if (int_status & ISR_PRS)
+	अगर (पूर्णांक_status & ISR_PRS)
 		dm9000_rx(dev);
 
 	/* Transmit Interrupt check */
-	if (int_status & ISR_PTS)
-		dm9000_tx_done(dev, db);
+	अगर (पूर्णांक_status & ISR_PTS)
+		dm9000_tx_करोne(dev, db);
 
-	if (db->type != TYPE_DM9000E) {
-		if (int_status & ISR_LNKCHNG) {
+	अगर (db->type != TYPE_DM9000E) अणु
+		अगर (पूर्णांक_status & ISR_LNKCHNG) अणु
 			/* fire a link-change request */
 			schedule_delayed_work(&db->phy_poll, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	dm9000_unmask_interrupts(db);
-	/* Restore previous register address */
-	writeb(reg_save, db->io_addr);
+	dm9000_unmask_पूर्णांकerrupts(db);
+	/* Restore previous रेजिस्टर address */
+	ग_लिखोb(reg_save, db->io_addr);
 
 	spin_unlock_irqrestore(&db->lock, flags);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t dm9000_wol_interrupt(int irq, void *dev_id)
-{
-	struct net_device *dev = dev_id;
-	struct board_info *db = netdev_priv(dev);
-	unsigned long flags;
-	unsigned nsr, wcr;
+अटल irqवापस_t dm9000_wol_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा board_info *db = netdev_priv(dev);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित nsr, wcr;
 
 	spin_lock_irqsave(&db->lock, flags);
 
@@ -1250,55 +1251,55 @@ static irqreturn_t dm9000_wol_interrupt(int irq, void *dev_id)
 
 	dev_dbg(db->dev, "%s: NSR=0x%02x, WCR=0x%02x\n", __func__, nsr, wcr);
 
-	if (nsr & NSR_WAKEST) {
-		/* clear, so we can avoid */
+	अगर (nsr & NSR_WAKEST) अणु
+		/* clear, so we can aव्योम */
 		iow(db, DM9000_NSR, NSR_WAKEST);
 
-		if (wcr & WCR_LINKST)
+		अगर (wcr & WCR_LINKST)
 			dev_info(db->dev, "wake by link status change\n");
-		if (wcr & WCR_SAMPLEST)
+		अगर (wcr & WCR_SAMPLEST)
 			dev_info(db->dev, "wake by sample packet\n");
-		if (wcr & WCR_MAGICST)
+		अगर (wcr & WCR_MAGICST)
 			dev_info(db->dev, "wake by magic packet\n");
-		if (!(wcr & (WCR_LINKST | WCR_SAMPLEST | WCR_MAGICST)))
+		अगर (!(wcr & (WCR_LINKST | WCR_SAMPLEST | WCR_MAGICST)))
 			dev_err(db->dev, "wake signalled with no reason? "
 				"NSR=0x%02x, WSR=0x%02x\n", nsr, wcr);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&db->lock, flags);
 
-	return (nsr & NSR_WAKEST) ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस (nsr & NSR_WAKEST) ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
 /*
  *Used by netconsole
  */
-static void dm9000_poll_controller(struct net_device *dev)
-{
+अटल व्योम dm9000_poll_controller(काष्ठा net_device *dev)
+अणु
 	disable_irq(dev->irq);
-	dm9000_interrupt(dev->irq, dev);
+	dm9000_पूर्णांकerrupt(dev->irq, dev);
 	enable_irq(dev->irq);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
- *  Open the interface.
- *  The interface is opened whenever "ifconfig" actives it.
+ *  Open the पूर्णांकerface.
+ *  The पूर्णांकerface is खोलोed whenever "ifconfig" actives it.
  */
-static int
-dm9000_open(struct net_device *dev)
-{
-	struct board_info *db = netdev_priv(dev);
-	unsigned int irq_flags = irq_get_trigger_type(dev->irq);
+अटल पूर्णांक
+dm9000_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा board_info *db = netdev_priv(dev);
+	अचिन्हित पूर्णांक irq_flags = irq_get_trigger_type(dev->irq);
 
-	if (netif_msg_ifup(db))
+	अगर (netअगर_msg_अगरup(db))
 		dev_dbg(db->dev, "enabling %s\n", dev->name);
 
-	/* If there is no IRQ type specified, tell the user that this is a
+	/* If there is no IRQ type specअगरied, tell the user that this is a
 	 * problem
 	 */
-	if (irq_flags == IRQF_TRIGGER_NONE)
+	अगर (irq_flags == IRQF_TRIGGER_NONE)
 		dev_warn(db->dev, "WARNING: no IRQ resource flags set.\n");
 
 	irq_flags |= IRQF_SHARED;
@@ -1310,496 +1311,496 @@ dm9000_open(struct net_device *dev)
 	/* Initialize DM9000 board */
 	dm9000_init_dm9000(dev);
 
-	if (request_irq(dev->irq, dm9000_interrupt, irq_flags, dev->name, dev))
-		return -EAGAIN;
-	/* Now that we have an interrupt handler hooked up we can unmask
-	 * our interrupts
+	अगर (request_irq(dev->irq, dm9000_पूर्णांकerrupt, irq_flags, dev->name, dev))
+		वापस -EAGAIN;
+	/* Now that we have an पूर्णांकerrupt handler hooked up we can unmask
+	 * our पूर्णांकerrupts
 	 */
-	dm9000_unmask_interrupts(db);
+	dm9000_unmask_पूर्णांकerrupts(db);
 
 	/* Init driver variable */
 	db->dbug_cnt = 0;
 
-	mii_check_media(&db->mii, netif_msg_link(db), 1);
-	netif_start_queue(dev);
+	mii_check_media(&db->mii, netअगर_msg_link(db), 1);
+	netअगर_start_queue(dev);
 
 	/* Poll initial link status */
 	schedule_delayed_work(&db->phy_poll, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-dm9000_shutdown(struct net_device *dev)
-{
-	struct board_info *db = netdev_priv(dev);
+अटल व्योम
+dm9000_shutकरोwn(काष्ठा net_device *dev)
+अणु
+	काष्ठा board_info *db = netdev_priv(dev);
 
 	/* RESET device */
-	dm9000_phy_write(dev, 0, MII_BMCR, BMCR_RESET);	/* PHY RESET */
+	dm9000_phy_ग_लिखो(dev, 0, MII_BMCR, BMCR_RESET);	/* PHY RESET */
 	iow(db, DM9000_GPR, 0x01);	/* Power-Down PHY */
-	dm9000_mask_interrupts(db);
+	dm9000_mask_पूर्णांकerrupts(db);
 	iow(db, DM9000_RCR, 0x00);	/* Disable RX */
-}
+पूर्ण
 
 /*
- * Stop the interface.
- * The interface is stopped when it is brought.
+ * Stop the पूर्णांकerface.
+ * The पूर्णांकerface is stopped when it is brought.
  */
-static int
-dm9000_stop(struct net_device *ndev)
-{
-	struct board_info *db = netdev_priv(ndev);
+अटल पूर्णांक
+dm9000_stop(काष्ठा net_device *ndev)
+अणु
+	काष्ठा board_info *db = netdev_priv(ndev);
 
-	if (netif_msg_ifdown(db))
+	अगर (netअगर_msg_अगरकरोwn(db))
 		dev_dbg(db->dev, "shutting down %s\n", ndev->name);
 
 	cancel_delayed_work_sync(&db->phy_poll);
 
-	netif_stop_queue(ndev);
-	netif_carrier_off(ndev);
+	netअगर_stop_queue(ndev);
+	netअगर_carrier_off(ndev);
 
-	/* free interrupt */
-	free_irq(ndev->irq, ndev);
+	/* मुक्त पूर्णांकerrupt */
+	मुक्त_irq(ndev->irq, ndev);
 
-	dm9000_shutdown(ndev);
+	dm9000_shutकरोwn(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops dm9000_netdev_ops = {
-	.ndo_open		= dm9000_open,
-	.ndo_stop		= dm9000_stop,
-	.ndo_start_xmit		= dm9000_start_xmit,
-	.ndo_tx_timeout		= dm9000_timeout,
-	.ndo_set_rx_mode	= dm9000_hash_table,
-	.ndo_do_ioctl		= dm9000_ioctl,
-	.ndo_set_features	= dm9000_set_features,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= eth_mac_addr,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= dm9000_poll_controller,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops dm9000_netdev_ops = अणु
+	.nकरो_खोलो		= dm9000_खोलो,
+	.nकरो_stop		= dm9000_stop,
+	.nकरो_start_xmit		= dm9000_start_xmit,
+	.nकरो_tx_समयout		= dm9000_समयout,
+	.nकरो_set_rx_mode	= dm9000_hash_table,
+	.nकरो_करो_ioctl		= dm9000_ioctl,
+	.nकरो_set_features	= dm9000_set_features,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= eth_mac_addr,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	= dm9000_poll_controller,
+#पूर्ण_अगर
+पूर्ण;
 
-static struct dm9000_plat_data *dm9000_parse_dt(struct device *dev)
-{
-	struct dm9000_plat_data *pdata;
-	struct device_node *np = dev->of_node;
-	int ret;
+अटल काष्ठा dm9000_plat_data *dm9000_parse_dt(काष्ठा device *dev)
+अणु
+	काष्ठा dm9000_plat_data *pdata;
+	काष्ठा device_node *np = dev->of_node;
+	पूर्णांक ret;
 
-	if (!IS_ENABLED(CONFIG_OF) || !np)
-		return ERR_PTR(-ENXIO);
+	अगर (!IS_ENABLED(CONFIG_OF) || !np)
+		वापस ERR_PTR(-ENXIO);
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (of_find_property(np, "davicom,ext-phy", NULL))
+	अगर (of_find_property(np, "davicom,ext-phy", शून्य))
 		pdata->flags |= DM9000_PLATF_EXT_PHY;
-	if (of_find_property(np, "davicom,no-eeprom", NULL))
+	अगर (of_find_property(np, "davicom,no-eeprom", शून्य))
 		pdata->flags |= DM9000_PLATF_NO_EEPROM;
 
 	ret = of_get_mac_address(np, pdata->dev_addr);
-	if (ret == -EPROBE_DEFER)
-		return ERR_PTR(ret);
+	अगर (ret == -EPROBE_DEFER)
+		वापस ERR_PTR(ret);
 
-	return pdata;
-}
+	वापस pdata;
+पूर्ण
 
 /*
- * Search DM9000 board, allocate space and register it
+ * Search DM9000 board, allocate space and रेजिस्टर it
  */
-static int
-dm9000_probe(struct platform_device *pdev)
-{
-	struct dm9000_plat_data *pdata = dev_get_platdata(&pdev->dev);
-	struct board_info *db;	/* Point a board information structure */
-	struct net_device *ndev;
-	struct device *dev = &pdev->dev;
-	const unsigned char *mac_src;
-	int ret = 0;
-	int iosize;
-	int i;
+अटल पूर्णांक
+dm9000_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dm9000_plat_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा board_info *db;	/* Poपूर्णांक a board inक्रमmation काष्ठाure */
+	काष्ठा net_device *ndev;
+	काष्ठा device *dev = &pdev->dev;
+	स्थिर अचिन्हित अक्षर *mac_src;
+	पूर्णांक ret = 0;
+	पूर्णांक iosize;
+	पूर्णांक i;
 	u32 id_val;
-	int reset_gpios;
-	enum of_gpio_flags flags;
-	struct regulator *power;
+	पूर्णांक reset_gpios;
+	क्रमागत of_gpio_flags flags;
+	काष्ठा regulator *घातer;
 	bool inv_mac_addr = false;
 
-	power = devm_regulator_get(dev, "vcc");
-	if (IS_ERR(power)) {
-		if (PTR_ERR(power) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+	घातer = devm_regulator_get(dev, "vcc");
+	अगर (IS_ERR(घातer)) अणु
+		अगर (PTR_ERR(घातer) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 		dev_dbg(dev, "no regulator provided\n");
-	} else {
-		ret = regulator_enable(power);
-		if (ret != 0) {
+	पूर्ण अन्यथा अणु
+		ret = regulator_enable(घातer);
+		अगर (ret != 0) अणु
 			dev_err(dev,
 				"Failed to enable power regulator: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		dev_dbg(dev, "regulator enabled\n");
-	}
+	पूर्ण
 
 	reset_gpios = of_get_named_gpio_flags(dev->of_node, "reset-gpios", 0,
 					      &flags);
-	if (gpio_is_valid(reset_gpios)) {
+	अगर (gpio_is_valid(reset_gpios)) अणु
 		ret = devm_gpio_request_one(dev, reset_gpios, flags,
 					    "dm9000_reset");
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "failed to request reset gpio %d: %d\n",
 				reset_gpios, ret);
-			goto out_regulator_disable;
-		}
+			जाओ out_regulator_disable;
+		पूर्ण
 
 		/* According to manual PWRST# Low Period Min 1ms */
 		msleep(2);
 		gpio_set_value(reset_gpios, 1);
-		/* Needs 3ms to read eeprom when PWRST is deasserted */
+		/* Needs 3ms to पढ़ो eeprom when PWRST is deनिश्चितed */
 		msleep(4);
-	}
+	पूर्ण
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		pdata = dm9000_parse_dt(&pdev->dev);
-		if (IS_ERR(pdata)) {
+		अगर (IS_ERR(pdata)) अणु
 			ret = PTR_ERR(pdata);
-			goto out_regulator_disable;
-		}
-	}
+			जाओ out_regulator_disable;
+		पूर्ण
+	पूर्ण
 
 	/* Init network device */
-	ndev = alloc_etherdev(sizeof(struct board_info));
-	if (!ndev) {
+	ndev = alloc_etherdev(माप(काष्ठा board_info));
+	अगर (!ndev) अणु
 		ret = -ENOMEM;
-		goto out_regulator_disable;
-	}
+		जाओ out_regulator_disable;
+	पूर्ण
 
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 
 	dev_dbg(&pdev->dev, "dm9000_probe()\n");
 
-	/* setup board info structure */
+	/* setup board info काष्ठाure */
 	db = netdev_priv(ndev);
 
 	db->dev = &pdev->dev;
 	db->ndev = ndev;
-	if (!IS_ERR(power))
-		db->power_supply = power;
+	अगर (!IS_ERR(घातer))
+		db->घातer_supply = घातer;
 
 	spin_lock_init(&db->lock);
 	mutex_init(&db->addr_lock);
 
 	INIT_DELAYED_WORK(&db->phy_poll, dm9000_poll_work);
 
-	db->addr_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	db->data_res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	db->addr_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	db->data_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 
-	if (!db->addr_res || !db->data_res) {
+	अगर (!db->addr_res || !db->data_res) अणु
 		dev_err(db->dev, "insufficient resources addr=%p data=%p\n",
 			db->addr_res, db->data_res);
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ndev->irq = platform_get_irq(pdev, 0);
-	if (ndev->irq < 0) {
+	ndev->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (ndev->irq < 0) अणु
 		ret = ndev->irq;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	db->irq_wake = platform_get_irq_optional(pdev, 1);
-	if (db->irq_wake >= 0) {
+	db->irq_wake = platक्रमm_get_irq_optional(pdev, 1);
+	अगर (db->irq_wake >= 0) अणु
 		dev_dbg(db->dev, "wakeup irq %d\n", db->irq_wake);
 
-		ret = request_irq(db->irq_wake, dm9000_wol_interrupt,
+		ret = request_irq(db->irq_wake, dm9000_wol_पूर्णांकerrupt,
 				  IRQF_SHARED, dev_name(db->dev), ndev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(db->dev, "cannot get wakeup irq (%d)\n", ret);
-		} else {
+		पूर्ण अन्यथा अणु
 
-			/* test to see if irq is really wakeup capable */
+			/* test to see अगर irq is really wakeup capable */
 			ret = irq_set_irq_wake(db->irq_wake, 1);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(db->dev, "irq %d cannot set wakeup (%d)\n",
 					db->irq_wake, ret);
-			} else {
+			पूर्ण अन्यथा अणु
 				irq_set_irq_wake(db->irq_wake, 0);
 				db->wake_supported = 1;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	iosize = resource_size(db->addr_res);
 	db->addr_req = request_mem_region(db->addr_res->start, iosize,
 					  pdev->name);
 
-	if (db->addr_req == NULL) {
+	अगर (db->addr_req == शून्य) अणु
 		dev_err(db->dev, "cannot claim address reg area\n");
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	db->io_addr = ioremap(db->addr_res->start, iosize);
 
-	if (db->io_addr == NULL) {
+	अगर (db->io_addr == शून्य) अणु
 		dev_err(db->dev, "failed to ioremap address reg\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	iosize = resource_size(db->data_res);
 	db->data_req = request_mem_region(db->data_res->start, iosize,
 					  pdev->name);
 
-	if (db->data_req == NULL) {
+	अगर (db->data_req == शून्य) अणु
 		dev_err(db->dev, "cannot claim data reg area\n");
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	db->io_data = ioremap(db->data_res->start, iosize);
 
-	if (db->io_data == NULL) {
+	अगर (db->io_data == शून्य) अणु
 		dev_err(db->dev, "failed to ioremap data reg\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* fill in parameters for net-dev structure */
-	ndev->base_addr = (unsigned long)db->io_addr;
+	/* fill in parameters क्रम net-dev काष्ठाure */
+	ndev->base_addr = (अचिन्हित दीर्घ)db->io_addr;
 
-	/* ensure at least we have a default set of IO routines */
+	/* ensure at least we have a शेष set of IO routines */
 	dm9000_set_io(db, iosize);
 
-	/* check to see if anything is being over-ridden */
-	if (pdata != NULL) {
-		/* check to see if the driver wants to over-ride the
-		 * default IO width */
+	/* check to see अगर anything is being over-ridden */
+	अगर (pdata != शून्य) अणु
+		/* check to see अगर the driver wants to over-ride the
+		 * शेष IO width */
 
-		if (pdata->flags & DM9000_PLATF_8BITONLY)
+		अगर (pdata->flags & DM9000_PLATF_8BITONLY)
 			dm9000_set_io(db, 1);
 
-		if (pdata->flags & DM9000_PLATF_16BITONLY)
+		अगर (pdata->flags & DM9000_PLATF_16BITONLY)
 			dm9000_set_io(db, 2);
 
-		if (pdata->flags & DM9000_PLATF_32BITONLY)
+		अगर (pdata->flags & DM9000_PLATF_32BITONLY)
 			dm9000_set_io(db, 4);
 
-		/* check to see if there are any IO routine
+		/* check to see अगर there are any IO routine
 		 * over-rides */
 
-		if (pdata->inblk != NULL)
+		अगर (pdata->inblk != शून्य)
 			db->inblk = pdata->inblk;
 
-		if (pdata->outblk != NULL)
+		अगर (pdata->outblk != शून्य)
 			db->outblk = pdata->outblk;
 
-		if (pdata->dumpblk != NULL)
+		अगर (pdata->dumpblk != शून्य)
 			db->dumpblk = pdata->dumpblk;
 
 		db->flags = pdata->flags;
-	}
+	पूर्ण
 
-#ifdef CONFIG_DM9000_FORCE_SIMPLE_PHY_POLL
+#अगर_घोषित CONFIG_DM9000_FORCE_SIMPLE_PHY_POLL
 	db->flags |= DM9000_PLATF_SIMPLE_PHY;
-#endif
+#पूर्ण_अगर
 
 	dm9000_reset(db);
 
-	/* try multiple times, DM9000 sometimes gets the read wrong */
-	for (i = 0; i < 8; i++) {
+	/* try multiple बार, DM9000 someबार माला_लो the पढ़ो wrong */
+	क्रम (i = 0; i < 8; i++) अणु
 		id_val  = ior(db, DM9000_VIDL);
 		id_val |= (u32)ior(db, DM9000_VIDH) << 8;
 		id_val |= (u32)ior(db, DM9000_PIDL) << 16;
 		id_val |= (u32)ior(db, DM9000_PIDH) << 24;
 
-		if (id_val == DM9000_ID)
-			break;
+		अगर (id_val == DM9000_ID)
+			अवरोध;
 		dev_err(db->dev, "read wrong id 0x%08x\n", id_val);
-	}
+	पूर्ण
 
-	if (id_val != DM9000_ID) {
+	अगर (id_val != DM9000_ID) अणु
 		dev_err(db->dev, "wrong id: 0x%08x\n", id_val);
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Identify what type of DM9000 we are working on */
+	/* Identअगरy what type of DM9000 we are working on */
 
 	id_val = ior(db, DM9000_CHIPR);
 	dev_dbg(db->dev, "dm9000 revision 0x%02x\n", id_val);
 
-	switch (id_val) {
-	case CHIPR_DM9000A:
+	चयन (id_val) अणु
+	हाल CHIPR_DM9000A:
 		db->type = TYPE_DM9000A;
-		break;
-	case CHIPR_DM9000B:
+		अवरोध;
+	हाल CHIPR_DM9000B:
 		db->type = TYPE_DM9000B;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(db->dev, "ID %02x => defaulting to DM9000E\n", id_val);
 		db->type = TYPE_DM9000E;
-	}
+	पूर्ण
 
 	/* dm9000a/b are capable of hardware checksum offload */
-	if (db->type == TYPE_DM9000A || db->type == TYPE_DM9000B) {
+	अगर (db->type == TYPE_DM9000A || db->type == TYPE_DM9000B) अणु
 		ndev->hw_features = NETIF_F_RXCSUM | NETIF_F_IP_CSUM;
 		ndev->features |= ndev->hw_features;
-	}
+	पूर्ण
 
-	/* from this point we assume that we have found a DM9000 */
+	/* from this poपूर्णांक we assume that we have found a DM9000 */
 
 	ndev->netdev_ops	= &dm9000_netdev_ops;
-	ndev->watchdog_timeo	= msecs_to_jiffies(watchdog);
+	ndev->watchकरोg_समयo	= msecs_to_jअगरfies(watchकरोg);
 	ndev->ethtool_ops	= &dm9000_ethtool_ops;
 
 	db->msg_enable       = NETIF_MSG_LINK;
 	db->mii.phy_id_mask  = 0x1f;
 	db->mii.reg_num_mask = 0x1f;
-	db->mii.force_media  = 0;
+	db->mii.क्रमce_media  = 0;
 	db->mii.full_duplex  = 0;
 	db->mii.dev	     = ndev;
-	db->mii.mdio_read    = dm9000_phy_read;
-	db->mii.mdio_write   = dm9000_phy_write;
+	db->mii.mdio_पढ़ो    = dm9000_phy_पढ़ो;
+	db->mii.mdio_ग_लिखो   = dm9000_phy_ग_लिखो;
 
 	mac_src = "eeprom";
 
-	/* try reading the node address from the attached EEPROM */
-	for (i = 0; i < 6; i += 2)
-		dm9000_read_eeprom(db, i / 2, ndev->dev_addr+i);
+	/* try पढ़ोing the node address from the attached EEPROM */
+	क्रम (i = 0; i < 6; i += 2)
+		dm9000_पढ़ो_eeprom(db, i / 2, ndev->dev_addr+i);
 
-	if (!is_valid_ether_addr(ndev->dev_addr) && pdata != NULL) {
+	अगर (!is_valid_ether_addr(ndev->dev_addr) && pdata != शून्य) अणु
 		mac_src = "platform data";
-		memcpy(ndev->dev_addr, pdata->dev_addr, ETH_ALEN);
-	}
+		स_नकल(ndev->dev_addr, pdata->dev_addr, ETH_ALEN);
+	पूर्ण
 
-	if (!is_valid_ether_addr(ndev->dev_addr)) {
-		/* try reading from mac */
+	अगर (!is_valid_ether_addr(ndev->dev_addr)) अणु
+		/* try पढ़ोing from mac */
 
 		mac_src = "chip";
-		for (i = 0; i < 6; i++)
+		क्रम (i = 0; i < 6; i++)
 			ndev->dev_addr[i] = ior(db, i+DM9000_PAR);
-	}
+	पूर्ण
 
-	if (!is_valid_ether_addr(ndev->dev_addr)) {
+	अगर (!is_valid_ether_addr(ndev->dev_addr)) अणु
 		inv_mac_addr = true;
-		eth_hw_addr_random(ndev);
+		eth_hw_addr_अक्रमom(ndev);
 		mac_src = "random";
-	}
+	पूर्ण
 
 
-	platform_set_drvdata(pdev, ndev);
-	ret = register_netdev(ndev);
+	platक्रमm_set_drvdata(pdev, ndev);
+	ret = रेजिस्टर_netdev(ndev);
 
-	if (ret == 0) {
-		if (inv_mac_addr)
+	अगर (ret == 0) अणु
+		अगर (inv_mac_addr)
 			dev_warn(db->dev, "%s: Invalid ethernet MAC address. Please set using ip\n",
 				 ndev->name);
-		printk(KERN_INFO "%s: dm9000%c at %p,%p IRQ %d MAC: %pM (%s)\n",
-		       ndev->name, dm9000_type_to_char(db->type),
+		prपूर्णांकk(KERN_INFO "%s: dm9000%c at %p,%p IRQ %d MAC: %pM (%s)\n",
+		       ndev->name, dm9000_type_to_अक्षर(db->type),
 		       db->io_addr, db->io_data, ndev->irq,
 		       ndev->dev_addr, mac_src);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 out:
 	dev_err(db->dev, "not found (%d).\n", ret);
 
 	dm9000_release_board(pdev, db);
-	free_netdev(ndev);
+	मुक्त_netdev(ndev);
 
 out_regulator_disable:
-	if (!IS_ERR(power))
-		regulator_disable(power);
+	अगर (!IS_ERR(घातer))
+		regulator_disable(घातer);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-dm9000_drv_suspend(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct board_info *db;
+अटल पूर्णांक
+dm9000_drv_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा board_info *db;
 
-	if (ndev) {
+	अगर (ndev) अणु
 		db = netdev_priv(ndev);
 		db->in_suspend = 1;
 
-		if (!netif_running(ndev))
-			return 0;
+		अगर (!netअगर_running(ndev))
+			वापस 0;
 
-		netif_device_detach(ndev);
+		netअगर_device_detach(ndev);
 
-		/* only shutdown if not using WoL */
-		if (!db->wake_state)
-			dm9000_shutdown(ndev);
-	}
-	return 0;
-}
+		/* only shutकरोwn अगर not using WoL */
+		अगर (!db->wake_state)
+			dm9000_shutकरोwn(ndev);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-dm9000_drv_resume(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct board_info *db = netdev_priv(ndev);
+अटल पूर्णांक
+dm9000_drv_resume(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा board_info *db = netdev_priv(ndev);
 
-	if (ndev) {
-		if (netif_running(ndev)) {
-			/* reset if we were not in wake mode to ensure if
-			 * the device was powered off it is in a known state */
-			if (!db->wake_state) {
+	अगर (ndev) अणु
+		अगर (netअगर_running(ndev)) अणु
+			/* reset अगर we were not in wake mode to ensure अगर
+			 * the device was घातered off it is in a known state */
+			अगर (!db->wake_state) अणु
 				dm9000_init_dm9000(ndev);
-				dm9000_unmask_interrupts(db);
-			}
+				dm9000_unmask_पूर्णांकerrupts(db);
+			पूर्ण
 
-			netif_device_attach(ndev);
-		}
+			netअगर_device_attach(ndev);
+		पूर्ण
 
 		db->in_suspend = 0;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops dm9000_drv_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops dm9000_drv_pm_ops = अणु
 	.suspend	= dm9000_drv_suspend,
 	.resume		= dm9000_drv_resume,
-};
+पूर्ण;
 
-static int
-dm9000_drv_remove(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct board_info *dm = to_dm9000_board(ndev);
+अटल पूर्णांक
+dm9000_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा board_info *dm = to_dm9000_board(ndev);
 
-	unregister_netdev(ndev);
+	unरेजिस्टर_netdev(ndev);
 	dm9000_release_board(pdev, dm);
-	free_netdev(ndev);		/* free device structure */
-	if (dm->power_supply)
-		regulator_disable(dm->power_supply);
+	मुक्त_netdev(ndev);		/* मुक्त device काष्ठाure */
+	अगर (dm->घातer_supply)
+		regulator_disable(dm->घातer_supply);
 
 	dev_dbg(&pdev->dev, "released and freed device\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id dm9000_of_matches[] = {
-	{ .compatible = "davicom,dm9000", },
-	{ /* sentinel */ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id dm9000_of_matches[] = अणु
+	अणु .compatible = "davicom,dm9000", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, dm9000_of_matches);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver dm9000_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver dm9000_driver = अणु
+	.driver	= अणु
 		.name    = "dm9000",
 		.pm	 = &dm9000_drv_pm_ops,
 		.of_match_table = of_match_ptr(dm9000_of_matches),
-	},
+	पूर्ण,
 	.probe   = dm9000_probe,
-	.remove  = dm9000_drv_remove,
-};
+	.हटाओ  = dm9000_drv_हटाओ,
+पूर्ण;
 
-module_platform_driver(dm9000_driver);
+module_platक्रमm_driver(dm9000_driver);
 
 MODULE_AUTHOR("Sascha Hauer, Ben Dooks");
 MODULE_DESCRIPTION("Davicom DM9000 network driver");

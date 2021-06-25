@@ -1,184 +1,185 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2018 Chelsio Communications, Inc.
  *
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
-#include <linux/module.h>
-#include <linux/list.h>
-#include <linux/workqueue.h>
-#include <linux/skbuff.h>
-#include <linux/timer.h>
-#include <linux/notifier.h>
-#include <linux/inetdevice.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/sched/signal.h>
-#include <net/tcp.h>
-#include <net/busy_poll.h>
-#include <crypto/aes.h>
+#समावेश <linux/module.h>
+#समावेश <linux/list.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <net/tcp.h>
+#समावेश <net/busy_poll.h>
+#समावेश <crypto/aes.h>
 
-#include "chtls.h"
-#include "chtls_cm.h"
+#समावेश "chtls.h"
+#समावेश "chtls_cm.h"
 
-static bool is_tls_tx(struct chtls_sock *csk)
-{
-	return csk->tlshws.txkey >= 0;
-}
+अटल bool is_tls_tx(काष्ठा chtls_sock *csk)
+अणु
+	वापस csk->tlshws.txkey >= 0;
+पूर्ण
 
-static bool is_tls_rx(struct chtls_sock *csk)
-{
-	return csk->tlshws.rxkey >= 0;
-}
+अटल bool is_tls_rx(काष्ठा chtls_sock *csk)
+अणु
+	वापस csk->tlshws.rxkey >= 0;
+पूर्ण
 
-static int data_sgl_len(const struct sk_buff *skb)
-{
-	unsigned int cnt;
+अटल पूर्णांक data_sgl_len(स्थिर काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक cnt;
 
 	cnt = skb_shinfo(skb)->nr_frags;
-	return sgl_len(cnt) * 8;
-}
+	वापस sgl_len(cnt) * 8;
+पूर्ण
 
-static int nos_ivs(struct sock *sk, unsigned int size)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+अटल पूर्णांक nos_ivs(काष्ठा sock *sk, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
 
-	return DIV_ROUND_UP(size, csk->tlshws.mfs);
-}
+	वापस DIV_ROUND_UP(size, csk->tlshws.mfs);
+पूर्ण
 
-static int set_ivs_imm(struct sock *sk, const struct sk_buff *skb)
-{
-	int ivs_size = nos_ivs(sk, skb->len) * CIPHER_BLOCK_SIZE;
-	int hlen = TLS_WR_CPL_LEN + data_sgl_len(skb);
+अटल पूर्णांक set_ivs_imm(काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ivs_size = nos_ivs(sk, skb->len) * CIPHER_BLOCK_SIZE;
+	पूर्णांक hlen = TLS_WR_CPL_LEN + data_sgl_len(skb);
 
-	if ((hlen + KEY_ON_MEM_SZ + ivs_size) <
-	    MAX_IMM_OFLD_TX_DATA_WR_LEN) {
+	अगर ((hlen + KEY_ON_MEM_SZ + ivs_size) <
+	    MAX_IMM_OFLD_TX_DATA_WR_LEN) अणु
 		ULP_SKB_CB(skb)->ulp.tls.iv = 1;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	ULP_SKB_CB(skb)->ulp.tls.iv = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max_ivs_size(struct sock *sk, int size)
-{
-	return nos_ivs(sk, size) * CIPHER_BLOCK_SIZE;
-}
+अटल पूर्णांक max_ivs_size(काष्ठा sock *sk, पूर्णांक size)
+अणु
+	वापस nos_ivs(sk, size) * CIPHER_BLOCK_SIZE;
+पूर्ण
 
-static int ivs_size(struct sock *sk, const struct sk_buff *skb)
-{
-	return set_ivs_imm(sk, skb) ? (nos_ivs(sk, skb->len) *
+अटल पूर्णांक ivs_size(काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस set_ivs_imm(sk, skb) ? (nos_ivs(sk, skb->len) *
 		 CIPHER_BLOCK_SIZE) : 0;
-}
+पूर्ण
 
-static int flowc_wr_credits(int nparams, int *flowclenp)
-{
-	int flowclen16, flowclen;
+अटल पूर्णांक flowc_wr_credits(पूर्णांक nparams, पूर्णांक *flowclenp)
+अणु
+	पूर्णांक flowclen16, flowclen;
 
-	flowclen = offsetof(struct fw_flowc_wr, mnemval[nparams]);
+	flowclen = दुरत्व(काष्ठा fw_flowc_wr, mnemval[nparams]);
 	flowclen16 = DIV_ROUND_UP(flowclen, 16);
 	flowclen = flowclen16 * 16;
 
-	if (flowclenp)
+	अगर (flowclenp)
 		*flowclenp = flowclen;
 
-	return flowclen16;
-}
+	वापस flowclen16;
+पूर्ण
 
-static struct sk_buff *create_flowc_wr_skb(struct sock *sk,
-					   struct fw_flowc_wr *flowc,
-					   int flowclen)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *create_flowc_wr_skb(काष्ठा sock *sk,
+					   काष्ठा fw_flowc_wr *flowc,
+					   पूर्णांक flowclen)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(flowclen, GFP_ATOMIC);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	__skb_put_data(skb, flowc, flowclen);
 	skb_set_queue_mapping(skb, (csk->txq_idx << 1) | CPL_PRIORITY_DATA);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int send_flowc_wr(struct sock *sk, struct fw_flowc_wr *flowc,
-			 int flowclen)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	struct tcp_sock *tp = tcp_sk(sk);
-	struct sk_buff *skb;
-	int flowclen16;
-	int ret;
+अटल पूर्णांक send_flowc_wr(काष्ठा sock *sk, काष्ठा fw_flowc_wr *flowc,
+			 पूर्णांक flowclen)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
+	काष्ठा sk_buff *skb;
+	पूर्णांक flowclen16;
+	पूर्णांक ret;
 
 	flowclen16 = flowclen / 16;
 
-	if (csk_flag(sk, CSK_TX_DATA_SENT)) {
+	अगर (csk_flag(sk, CSK_TX_DATA_SENT)) अणु
 		skb = create_flowc_wr_skb(sk, flowc, flowclen);
-		if (!skb)
-			return -ENOMEM;
+		अगर (!skb)
+			वापस -ENOMEM;
 
 		skb_entail(sk, skb,
 			   ULPCB_FLAG_NO_HDR | ULPCB_FLAG_NO_APPEND);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = cxgb4_immdata_send(csk->egress_dev,
 				 csk->txq_idx,
 				 flowc, flowclen);
-	if (!ret)
-		return flowclen16;
+	अगर (!ret)
+		वापस flowclen16;
 	skb = create_flowc_wr_skb(sk, flowc, flowclen);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 	send_or_defer(sk, tp, skb, 0);
-	return flowclen16;
-}
+	वापस flowclen16;
+पूर्ण
 
-static u8 tcp_state_to_flowc_state(u8 state)
-{
-	switch (state) {
-	case TCP_ESTABLISHED:
-		return FW_FLOWC_MNEM_TCPSTATE_ESTABLISHED;
-	case TCP_CLOSE_WAIT:
-		return FW_FLOWC_MNEM_TCPSTATE_CLOSEWAIT;
-	case TCP_FIN_WAIT1:
-		return FW_FLOWC_MNEM_TCPSTATE_FINWAIT1;
-	case TCP_CLOSING:
-		return FW_FLOWC_MNEM_TCPSTATE_CLOSING;
-	case TCP_LAST_ACK:
-		return FW_FLOWC_MNEM_TCPSTATE_LASTACK;
-	case TCP_FIN_WAIT2:
-		return FW_FLOWC_MNEM_TCPSTATE_FINWAIT2;
-	}
+अटल u8 tcp_state_to_flowc_state(u8 state)
+अणु
+	चयन (state) अणु
+	हाल TCP_ESTABLISHED:
+		वापस FW_FLOWC_MNEM_TCPSTATE_ESTABLISHED;
+	हाल TCP_CLOSE_WAIT:
+		वापस FW_FLOWC_MNEM_TCPSTATE_CLOSEWAIT;
+	हाल TCP_FIN_WAIT1:
+		वापस FW_FLOWC_MNEM_TCPSTATE_FINWAIT1;
+	हाल TCP_CLOSING:
+		वापस FW_FLOWC_MNEM_TCPSTATE_CLOSING;
+	हाल TCP_LAST_ACK:
+		वापस FW_FLOWC_MNEM_TCPSTATE_LASTACK;
+	हाल TCP_FIN_WAIT2:
+		वापस FW_FLOWC_MNEM_TCPSTATE_FINWAIT2;
+	पूर्ण
 
-	return FW_FLOWC_MNEM_TCPSTATE_ESTABLISHED;
-}
+	वापस FW_FLOWC_MNEM_TCPSTATE_ESTABLISHED;
+पूर्ण
 
-int send_tx_flowc_wr(struct sock *sk, int compl,
+पूर्णांक send_tx_flowc_wr(काष्ठा sock *sk, पूर्णांक compl,
 		     u32 snd_nxt, u32 rcv_nxt)
-{
-	struct flowc_packed {
-		struct fw_flowc_wr fc;
-		struct fw_flowc_mnemval mnemval[FW_FLOWC_MNEM_MAX];
-	} __packed sflowc;
-	int nparams, paramidx, flowclen16, flowclen;
-	struct fw_flowc_wr *flowc;
-	struct chtls_sock *csk;
-	struct tcp_sock *tp;
+अणु
+	काष्ठा flowc_packed अणु
+		काष्ठा fw_flowc_wr fc;
+		काष्ठा fw_flowc_mnemval mnemval[FW_FLOWC_MNEM_MAX];
+	पूर्ण __packed sflowc;
+	पूर्णांक nparams, paramidx, flowclen16, flowclen;
+	काष्ठा fw_flowc_wr *flowc;
+	काष्ठा chtls_sock *csk;
+	काष्ठा tcp_sock *tp;
 
 	csk = rcu_dereference_sk_user_data(sk);
 	tp = tcp_sk(sk);
-	memset(&sflowc, 0, sizeof(sflowc));
+	स_रखो(&sflowc, 0, माप(sflowc));
 	flowc = &sflowc.fc;
 
-#define FLOWC_PARAM(__m, __v) \
-	do { \
+#घोषणा FLOWC_PARAM(__m, __v) \
+	करो अणु \
 		flowc->mnemval[paramidx].mnemonic = FW_FLOWC_MNEM_##__m; \
 		flowc->mnemval[paramidx].val = cpu_to_be32(__v); \
 		paramidx++; \
-	} while (0)
+	पूर्ण जबतक (0)
 
 	paramidx = 0;
 
@@ -192,17 +193,17 @@ int send_tx_flowc_wr(struct sock *sk, int compl,
 	FLOWC_PARAM(MSS, tp->mss_cache);
 	FLOWC_PARAM(TCPSTATE, tcp_state_to_flowc_state(sk->sk_state));
 
-	if (SND_WSCALE(tp))
+	अगर (SND_WSCALE(tp))
 		FLOWC_PARAM(RCV_SCALE, SND_WSCALE(tp));
 
-	if (csk->ulp_mode == ULP_MODE_TLS)
+	अगर (csk->ulp_mode == ULP_MODE_TLS)
 		FLOWC_PARAM(ULD_MODE, ULP_MODE_TLS);
 
-	if (csk->tlshws.fcplenmax)
+	अगर (csk->tlshws.fcplenmax)
 		FLOWC_PARAM(TXDATAPLEN_MAX, csk->tlshws.fcplenmax);
 
 	nparams = paramidx;
-#undef FLOWC_PARAM
+#अघोषित FLOWC_PARAM
 
 	flowclen16 = flowc_wr_credits(nparams, &flowclen);
 	flowc->op_to_nparams =
@@ -212,149 +213,149 @@ int send_tx_flowc_wr(struct sock *sk, int compl,
 	flowc->flowid_len16 = cpu_to_be32(FW_WR_LEN16_V(flowclen16) |
 					  FW_WR_FLOWID_V(csk->tid));
 
-	return send_flowc_wr(sk, flowc, flowclen);
-}
+	वापस send_flowc_wr(sk, flowc, flowclen);
+पूर्ण
 
 /* Copy IVs to WR */
-static int tls_copy_ivs(struct sock *sk, struct sk_buff *skb)
+अटल पूर्णांक tls_copy_ivs(काष्ठा sock *sk, काष्ठा sk_buff *skb)
 
-{
-	struct chtls_sock *csk;
-	unsigned char *iv_loc;
-	struct chtls_hws *hws;
-	unsigned char *ivs;
+अणु
+	काष्ठा chtls_sock *csk;
+	अचिन्हित अक्षर *iv_loc;
+	काष्ठा chtls_hws *hws;
+	अचिन्हित अक्षर *ivs;
 	u16 number_of_ivs;
-	struct page *page;
-	int err = 0;
+	काष्ठा page *page;
+	पूर्णांक err = 0;
 
 	csk = rcu_dereference_sk_user_data(sk);
 	hws = &csk->tlshws;
 	number_of_ivs = nos_ivs(sk, skb->len);
 
-	if (number_of_ivs > MAX_IVS_PAGE) {
+	अगर (number_of_ivs > MAX_IVS_PAGE) अणु
 		pr_warn("MAX IVs in PAGE exceeded %d\n", number_of_ivs);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* generate the  IVs */
-	ivs = kmalloc_array(CIPHER_BLOCK_SIZE, number_of_ivs, GFP_ATOMIC);
-	if (!ivs)
-		return -ENOMEM;
-	get_random_bytes(ivs, number_of_ivs * CIPHER_BLOCK_SIZE);
+	ivs = kदो_स्मृति_array(CIPHER_BLOCK_SIZE, number_of_ivs, GFP_ATOMIC);
+	अगर (!ivs)
+		वापस -ENOMEM;
+	get_अक्रमom_bytes(ivs, number_of_ivs * CIPHER_BLOCK_SIZE);
 
-	if (skb_ulp_tls_iv_imm(skb)) {
+	अगर (skb_ulp_tls_iv_imm(skb)) अणु
 		/* send the IVs as immediate data in the WR */
-		iv_loc = (unsigned char *)__skb_push(skb, number_of_ivs *
+		iv_loc = (अचिन्हित अक्षर *)__skb_push(skb, number_of_ivs *
 						CIPHER_BLOCK_SIZE);
-		if (iv_loc)
-			memcpy(iv_loc, ivs, number_of_ivs * CIPHER_BLOCK_SIZE);
+		अगर (iv_loc)
+			स_नकल(iv_loc, ivs, number_of_ivs * CIPHER_BLOCK_SIZE);
 
 		hws->ivsize = number_of_ivs * CIPHER_BLOCK_SIZE;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Send the IVs as sgls */
-		/* Already accounted IV DSGL for credits */
+		/* Alपढ़ोy accounted IV DSGL क्रम credits */
 		skb_shinfo(skb)->nr_frags--;
 		page = alloc_pages(sk->sk_allocation | __GFP_COMP, 0);
-		if (!page) {
+		अगर (!page) अणु
 			pr_info("%s : Page allocation for IVs failed\n",
 				__func__);
 			err = -ENOMEM;
-			goto out;
-		}
-		memcpy(page_address(page), ivs, number_of_ivs *
+			जाओ out;
+		पूर्ण
+		स_नकल(page_address(page), ivs, number_of_ivs *
 		       CIPHER_BLOCK_SIZE);
 		skb_fill_page_desc(skb, skb_shinfo(skb)->nr_frags, page, 0,
 				   number_of_ivs * CIPHER_BLOCK_SIZE);
 		hws->ivsize = 0;
-	}
+	पूर्ण
 out:
-	kfree(ivs);
-	return err;
-}
+	kमुक्त(ivs);
+	वापस err;
+पूर्ण
 
 /* Copy Key to WR */
-static void tls_copy_tx_key(struct sock *sk, struct sk_buff *skb)
-{
-	struct ulptx_sc_memrd *sc_memrd;
-	struct chtls_sock *csk;
-	struct chtls_dev *cdev;
-	struct ulptx_idata *sc;
-	struct chtls_hws *hws;
+अटल व्योम tls_copy_tx_key(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ulptx_sc_memrd *sc_memrd;
+	काष्ठा chtls_sock *csk;
+	काष्ठा chtls_dev *cdev;
+	काष्ठा ulptx_idata *sc;
+	काष्ठा chtls_hws *hws;
 	u32 immdlen;
-	int kaddr;
+	पूर्णांक kaddr;
 
 	csk = rcu_dereference_sk_user_data(sk);
 	hws = &csk->tlshws;
 	cdev = csk->cdev;
 
-	immdlen = sizeof(*sc) + sizeof(*sc_memrd);
+	immdlen = माप(*sc) + माप(*sc_memrd);
 	kaddr = keyid_to_addr(cdev->kmap.start, hws->txkey);
-	sc = (struct ulptx_idata *)__skb_push(skb, immdlen);
-	if (sc) {
+	sc = (काष्ठा ulptx_idata *)__skb_push(skb, immdlen);
+	अगर (sc) अणु
 		sc->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_NOOP));
 		sc->len = htonl(0);
-		sc_memrd = (struct ulptx_sc_memrd *)(sc + 1);
+		sc_memrd = (काष्ठा ulptx_sc_memrd *)(sc + 1);
 		sc_memrd->cmd_to_len =
 				htonl(ULPTX_CMD_V(ULP_TX_SC_MEMRD) |
 				ULP_TX_SC_MORE_V(1) |
 				ULPTX_LEN16_V(hws->keylen >> 4));
 		sc_memrd->addr = htonl(kaddr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u64 tlstx_incr_seqnum(struct chtls_hws *hws)
-{
-	return hws->tx_seq_no++;
-}
+अटल u64 tlstx_incr_seqnum(काष्ठा chtls_hws *hws)
+अणु
+	वापस hws->tx_seq_no++;
+पूर्ण
 
-static bool is_sg_request(const struct sk_buff *skb)
-{
-	return skb->peeked ||
+अटल bool is_sg_request(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस skb->peeked ||
 		(skb->len > MAX_IMM_ULPTX_WR_LEN);
-}
+पूर्ण
 
 /*
- * Returns true if an sk_buff carries urgent data.
+ * Returns true अगर an sk_buff carries urgent data.
  */
-static bool skb_urgent(struct sk_buff *skb)
-{
-	return ULP_SKB_CB(skb)->flags & ULPCB_FLAG_URG;
-}
+अटल bool skb_urgent(काष्ठा sk_buff *skb)
+अणु
+	वापस ULP_SKB_CB(skb)->flags & ULPCB_FLAG_URG;
+पूर्ण
 
-/* TLS content type for CPL SFO */
-static unsigned char tls_content_type(unsigned char content_type)
-{
-	switch (content_type) {
-	case TLS_HDR_TYPE_CCS:
-		return CPL_TX_TLS_SFO_TYPE_CCS;
-	case TLS_HDR_TYPE_ALERT:
-		return CPL_TX_TLS_SFO_TYPE_ALERT;
-	case TLS_HDR_TYPE_HANDSHAKE:
-		return CPL_TX_TLS_SFO_TYPE_HANDSHAKE;
-	case TLS_HDR_TYPE_HEARTBEAT:
-		return CPL_TX_TLS_SFO_TYPE_HEARTBEAT;
-	}
-	return CPL_TX_TLS_SFO_TYPE_DATA;
-}
+/* TLS content type क्रम CPL SFO */
+अटल अचिन्हित अक्षर tls_content_type(अचिन्हित अक्षर content_type)
+अणु
+	चयन (content_type) अणु
+	हाल TLS_HDR_TYPE_CCS:
+		वापस CPL_TX_TLS_SFO_TYPE_CCS;
+	हाल TLS_HDR_TYPE_ALERT:
+		वापस CPL_TX_TLS_SFO_TYPE_ALERT;
+	हाल TLS_HDR_TYPE_HANDSHAKE:
+		वापस CPL_TX_TLS_SFO_TYPE_HANDSHAKE;
+	हाल TLS_HDR_TYPE_HEARTBEAT:
+		वापस CPL_TX_TLS_SFO_TYPE_HEARTBEAT;
+	पूर्ण
+	वापस CPL_TX_TLS_SFO_TYPE_DATA;
+पूर्ण
 
-static void tls_tx_data_wr(struct sock *sk, struct sk_buff *skb,
-			   int dlen, int tls_immd, u32 credits,
-			   int expn, int pdus)
-{
-	struct fw_tlstx_data_wr *req_wr;
-	struct cpl_tx_tls_sfo *req_cpl;
-	unsigned int wr_ulp_mode_force;
-	struct tls_scmd *updated_scmd;
-	unsigned char data_type;
-	struct chtls_sock *csk;
-	struct net_device *dev;
-	struct chtls_hws *hws;
-	struct tls_scmd *scmd;
-	struct adapter *adap;
-	unsigned char *req;
-	int immd_len;
-	int iv_imm;
-	int len;
+अटल व्योम tls_tx_data_wr(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+			   पूर्णांक dlen, पूर्णांक tls_immd, u32 credits,
+			   पूर्णांक expn, पूर्णांक pdus)
+अणु
+	काष्ठा fw_tlstx_data_wr *req_wr;
+	काष्ठा cpl_tx_tls_sfo *req_cpl;
+	अचिन्हित पूर्णांक wr_ulp_mode_क्रमce;
+	काष्ठा tls_scmd *updated_scmd;
+	अचिन्हित अक्षर data_type;
+	काष्ठा chtls_sock *csk;
+	काष्ठा net_device *dev;
+	काष्ठा chtls_hws *hws;
+	काष्ठा tls_scmd *scmd;
+	काष्ठा adapter *adap;
+	अचिन्हित अक्षर *req;
+	पूर्णांक immd_len;
+	पूर्णांक iv_imm;
+	पूर्णांक len;
 
 	csk = rcu_dereference_sk_user_data(sk);
 	iv_imm = skb_ulp_tls_iv_imm(skb);
@@ -372,12 +373,12 @@ static void tls_tx_data_wr(struct sock *sk, struct sk_buff *skb,
 	updated_scmd->seqno_numivs |= SCMD_NUM_IVS_V(pdus);
 	hws->scmd = *updated_scmd;
 
-	req = (unsigned char *)__skb_push(skb, sizeof(struct cpl_tx_tls_sfo));
-	req_cpl = (struct cpl_tx_tls_sfo *)req;
-	req = (unsigned char *)__skb_push(skb, (sizeof(struct
+	req = (अचिन्हित अक्षर *)__skb_push(skb, माप(काष्ठा cpl_tx_tls_sfo));
+	req_cpl = (काष्ठा cpl_tx_tls_sfo *)req;
+	req = (अचिन्हित अक्षर *)__skb_push(skb, (माप(काष्ठा
 				fw_tlstx_data_wr)));
 
-	req_wr = (struct fw_tlstx_data_wr *)req;
+	req_wr = (काष्ठा fw_tlstx_data_wr *)req;
 	immd_len = (tls_immd ? dlen : 0);
 	req_wr->op_to_immdlen =
 		htonl(FW_WR_OP_V(FW_TLSTX_DATA_WR) |
@@ -385,17 +386,17 @@ static void tls_tx_data_wr(struct sock *sk, struct sk_buff *skb,
 		FW_TLSTX_DATA_WR_IMMDLEN_V(immd_len));
 	req_wr->flowid_len16 = htonl(FW_TLSTX_DATA_WR_FLOWID_V(csk->tid) |
 				     FW_TLSTX_DATA_WR_LEN16_V(credits));
-	wr_ulp_mode_force = TX_ULP_MODE_V(ULP_MODE_TLS);
+	wr_ulp_mode_क्रमce = TX_ULP_MODE_V(ULP_MODE_TLS);
 
-	if (is_sg_request(skb))
-		wr_ulp_mode_force |= FW_OFLD_TX_DATA_WR_ALIGNPLD_F |
+	अगर (is_sg_request(skb))
+		wr_ulp_mode_क्रमce |= FW_OFLD_TX_DATA_WR_ALIGNPLD_F |
 			((tcp_sk(sk)->nonagle & TCP_NAGLE_OFF) ? 0 :
 			FW_OFLD_TX_DATA_WR_SHOVE_F);
 
 	req_wr->lsodisable_to_flags =
 			htonl(TX_ULP_MODE_V(ULP_MODE_TLS) |
 			      TX_URG_V(skb_urgent(skb)) |
-			      T6_TX_FORCE_F | wr_ulp_mode_force |
+			      T6_TX_FORCE_F | wr_ulp_mode_क्रमce |
 			      TX_SHOVE_V((!csk_flag(sk, CSK_TX_MORE_DATA)) &&
 					 skb_queue_empty(&csk->txq)));
 
@@ -434,62 +435,62 @@ static void tls_tx_data_wr(struct sock *sk, struct sk_buff *skb,
 	req_cpl->seqno_numivs  = cpu_to_be32(hws->scmd.seqno_numivs);
 	req_cpl->ivgen_hdrlen = cpu_to_be32(hws->scmd.ivgen_hdrlen);
 	req_cpl->scmd1 = cpu_to_be64(tlstx_incr_seqnum(hws));
-}
+पूर्ण
 
 /*
  * Calculate the TLS data expansion size
  */
-static int chtls_expansion_size(struct sock *sk, int data_len,
-				int fullpdu,
-				unsigned short *pducnt)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	struct chtls_hws *hws = &csk->tlshws;
-	struct tls_scmd *scmd = &hws->scmd;
-	int fragsize = hws->mfs;
-	int expnsize = 0;
-	int fragleft;
-	int fragcnt;
-	int expppdu;
+अटल पूर्णांक chtls_expansion_size(काष्ठा sock *sk, पूर्णांक data_len,
+				पूर्णांक fullpdu,
+				अचिन्हित लघु *pducnt)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	काष्ठा chtls_hws *hws = &csk->tlshws;
+	काष्ठा tls_scmd *scmd = &hws->scmd;
+	पूर्णांक fragsize = hws->mfs;
+	पूर्णांक expnsize = 0;
+	पूर्णांक fragleft;
+	पूर्णांक fragcnt;
+	पूर्णांक expppdu;
 
-	if (SCMD_CIPH_MODE_G(scmd->seqno_numivs) ==
-	    SCMD_CIPH_MODE_AES_GCM) {
+	अगर (SCMD_CIPH_MODE_G(scmd->seqno_numivs) ==
+	    SCMD_CIPH_MODE_AES_GCM) अणु
 		expppdu = GCM_TAG_SIZE + AEAD_EXPLICIT_DATA_SIZE +
 			  TLS_HEADER_LENGTH;
 
-		if (fullpdu) {
+		अगर (fullpdu) अणु
 			*pducnt = data_len / (expppdu + fragsize);
-			if (*pducnt > 32)
+			अगर (*pducnt > 32)
 				*pducnt = 32;
-			else if (!*pducnt)
+			अन्यथा अगर (!*pducnt)
 				*pducnt = 1;
 			expnsize = (*pducnt) * expppdu;
-			return expnsize;
-		}
+			वापस expnsize;
+		पूर्ण
 		fragcnt = (data_len / fragsize);
 		expnsize =  fragcnt * expppdu;
 		fragleft = data_len % fragsize;
-		if (fragleft > 0)
+		अगर (fragleft > 0)
 			expnsize += expppdu;
-	}
-	return expnsize;
-}
+	पूर्ण
+	वापस expnsize;
+पूर्ण
 
 /* WR with IV, KEY and CPL SFO added */
-static void make_tlstx_data_wr(struct sock *sk, struct sk_buff *skb,
-			       int tls_tx_imm, int tls_len, u32 credits)
-{
-	unsigned short pdus_per_ulp = 0;
-	struct chtls_sock *csk;
-	struct chtls_hws *hws;
-	int expn_sz;
-	int pdus;
+अटल व्योम make_tlstx_data_wr(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+			       पूर्णांक tls_tx_imm, पूर्णांक tls_len, u32 credits)
+अणु
+	अचिन्हित लघु pdus_per_ulp = 0;
+	काष्ठा chtls_sock *csk;
+	काष्ठा chtls_hws *hws;
+	पूर्णांक expn_sz;
+	पूर्णांक pdus;
 
 	csk = rcu_dereference_sk_user_data(sk);
 	hws = &csk->tlshws;
 	pdus = DIV_ROUND_UP(tls_len, hws->mfs);
-	expn_sz = chtls_expansion_size(sk, tls_len, 0, NULL);
-	if (!hws->compute) {
+	expn_sz = chtls_expansion_size(sk, tls_len, 0, शून्य);
+	अगर (!hws->compute) अणु
 		hws->expansion = chtls_expansion_size(sk,
 						      hws->fcplenmax,
 						      1, &pdus_per_ulp);
@@ -497,886 +498,886 @@ static void make_tlstx_data_wr(struct sock *sk, struct sk_buff *skb,
 		hws->adjustlen = hws->pdus *
 			((hws->expansion / hws->pdus) + hws->mfs);
 		hws->compute = 1;
-	}
-	if (tls_copy_ivs(sk, skb))
-		return;
+	पूर्ण
+	अगर (tls_copy_ivs(sk, skb))
+		वापस;
 	tls_copy_tx_key(sk, skb);
 	tls_tx_data_wr(sk, skb, tls_len, tls_tx_imm, credits, expn_sz, pdus);
 	hws->tx_seq_no += (pdus - 1);
-}
+पूर्ण
 
-static void make_tx_data_wr(struct sock *sk, struct sk_buff *skb,
-			    unsigned int immdlen, int len,
+अटल व्योम make_tx_data_wr(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+			    अचिन्हित पूर्णांक immdlen, पूर्णांक len,
 			    u32 credits, u32 compl)
-{
-	struct fw_ofld_tx_data_wr *req;
-	unsigned int wr_ulp_mode_force;
-	struct chtls_sock *csk;
-	unsigned int opcode;
+अणु
+	काष्ठा fw_ofld_tx_data_wr *req;
+	अचिन्हित पूर्णांक wr_ulp_mode_क्रमce;
+	काष्ठा chtls_sock *csk;
+	अचिन्हित पूर्णांक opcode;
 
 	csk = rcu_dereference_sk_user_data(sk);
 	opcode = FW_OFLD_TX_DATA_WR;
 
-	req = (struct fw_ofld_tx_data_wr *)__skb_push(skb, sizeof(*req));
+	req = (काष्ठा fw_ofld_tx_data_wr *)__skb_push(skb, माप(*req));
 	req->op_to_immdlen = htonl(WR_OP_V(opcode) |
 				FW_WR_COMPL_V(compl) |
 				FW_WR_IMMDLEN_V(immdlen));
 	req->flowid_len16 = htonl(FW_WR_FLOWID_V(csk->tid) |
 				FW_WR_LEN16_V(credits));
 
-	wr_ulp_mode_force = TX_ULP_MODE_V(csk->ulp_mode);
-	if (is_sg_request(skb))
-		wr_ulp_mode_force |= FW_OFLD_TX_DATA_WR_ALIGNPLD_F |
+	wr_ulp_mode_क्रमce = TX_ULP_MODE_V(csk->ulp_mode);
+	अगर (is_sg_request(skb))
+		wr_ulp_mode_क्रमce |= FW_OFLD_TX_DATA_WR_ALIGNPLD_F |
 			((tcp_sk(sk)->nonagle & TCP_NAGLE_OFF) ? 0 :
 				FW_OFLD_TX_DATA_WR_SHOVE_F);
 
-	req->tunnel_to_proxy = htonl(wr_ulp_mode_force |
+	req->tunnel_to_proxy = htonl(wr_ulp_mode_क्रमce |
 			TX_URG_V(skb_urgent(skb)) |
 			TX_SHOVE_V((!csk_flag(sk, CSK_TX_MORE_DATA)) &&
 				   skb_queue_empty(&csk->txq)));
 	req->plen = htonl(len);
-}
+पूर्ण
 
-static int chtls_wr_size(struct chtls_sock *csk, const struct sk_buff *skb,
+अटल पूर्णांक chtls_wr_size(काष्ठा chtls_sock *csk, स्थिर काष्ठा sk_buff *skb,
 			 bool size)
-{
-	int wr_size;
+अणु
+	पूर्णांक wr_size;
 
 	wr_size = TLS_WR_CPL_LEN;
 	wr_size += KEY_ON_MEM_SZ;
 	wr_size += ivs_size(csk->sk, skb);
 
-	if (size)
-		return wr_size;
+	अगर (size)
+		वापस wr_size;
 
-	/* frags counted for IV dsgl */
-	if (!skb_ulp_tls_iv_imm(skb))
+	/* frags counted क्रम IV dsgl */
+	अगर (!skb_ulp_tls_iv_imm(skb))
 		skb_shinfo(skb)->nr_frags++;
 
-	return wr_size;
-}
+	वापस wr_size;
+पूर्ण
 
-static bool is_ofld_imm(struct chtls_sock *csk, const struct sk_buff *skb)
-{
-	int length = skb->len;
+अटल bool is_ofld_imm(काष्ठा chtls_sock *csk, स्थिर काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक length = skb->len;
 
-	if (skb->peeked || skb->len > MAX_IMM_ULPTX_WR_LEN)
-		return false;
+	अगर (skb->peeked || skb->len > MAX_IMM_ULPTX_WR_LEN)
+		वापस false;
 
-	if (likely(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NEED_HDR)) {
-		/* Check TLS header len for Immediate */
-		if (csk->ulp_mode == ULP_MODE_TLS &&
-		    skb_ulp_tls_inline(skb))
+	अगर (likely(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NEED_HDR)) अणु
+		/* Check TLS header len क्रम Immediate */
+		अगर (csk->ulp_mode == ULP_MODE_TLS &&
+		    skb_ulp_tls_अंतरभूत(skb))
 			length += chtls_wr_size(csk, skb, true);
-		else
-			length += sizeof(struct fw_ofld_tx_data_wr);
+		अन्यथा
+			length += माप(काष्ठा fw_ofld_tx_data_wr);
 
-		return length <= MAX_IMM_OFLD_TX_DATA_WR_LEN;
-	}
-	return true;
-}
+		वापस length <= MAX_IMM_OFLD_TX_DATA_WR_LEN;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static unsigned int calc_tx_flits(const struct sk_buff *skb,
-				  unsigned int immdlen)
-{
-	unsigned int flits, cnt;
+अटल अचिन्हित पूर्णांक calc_tx_flits(स्थिर काष्ठा sk_buff *skb,
+				  अचिन्हित पूर्णांक immdlen)
+अणु
+	अचिन्हित पूर्णांक flits, cnt;
 
 	flits = immdlen / 8;   /* headers */
 	cnt = skb_shinfo(skb)->nr_frags;
-	if (skb_tail_pointer(skb) != skb_transport_header(skb))
+	अगर (skb_tail_poपूर्णांकer(skb) != skb_transport_header(skb))
 		cnt++;
-	return flits + sgl_len(cnt);
-}
+	वापस flits + sgl_len(cnt);
+पूर्ण
 
-static void arp_failure_discard(void *handle, struct sk_buff *skb)
-{
-	kfree_skb(skb);
-}
+अटल व्योम arp_failure_discard(व्योम *handle, काष्ठा sk_buff *skb)
+अणु
+	kमुक्त_skb(skb);
+पूर्ण
 
-int chtls_push_frames(struct chtls_sock *csk, int comp)
-{
-	struct chtls_hws *hws = &csk->tlshws;
-	struct tcp_sock *tp;
-	struct sk_buff *skb;
-	int total_size = 0;
-	struct sock *sk;
-	int wr_size;
+पूर्णांक chtls_push_frames(काष्ठा chtls_sock *csk, पूर्णांक comp)
+अणु
+	काष्ठा chtls_hws *hws = &csk->tlshws;
+	काष्ठा tcp_sock *tp;
+	काष्ठा sk_buff *skb;
+	पूर्णांक total_size = 0;
+	काष्ठा sock *sk;
+	पूर्णांक wr_size;
 
-	wr_size = sizeof(struct fw_ofld_tx_data_wr);
+	wr_size = माप(काष्ठा fw_ofld_tx_data_wr);
 	sk = csk->sk;
 	tp = tcp_sk(sk);
 
-	if (unlikely(sk_in_state(sk, TCPF_SYN_SENT | TCPF_CLOSE)))
-		return 0;
+	अगर (unlikely(sk_in_state(sk, TCPF_SYN_SENT | TCPF_CLOSE)))
+		वापस 0;
 
-	if (unlikely(csk_flag(sk, CSK_ABORT_SHUTDOWN)))
-		return 0;
+	अगर (unlikely(csk_flag(sk, CSK_ABORT_SHUTDOWN)))
+		वापस 0;
 
-	while (csk->wr_credits && (skb = skb_peek(&csk->txq)) &&
+	जबतक (csk->wr_credits && (skb = skb_peek(&csk->txq)) &&
 	       (!(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_HOLD) ||
-		skb_queue_len(&csk->txq) > 1)) {
-		unsigned int credit_len = skb->len;
-		unsigned int credits_needed;
-		unsigned int completion = 0;
-		int tls_len = skb->len;/* TLS data len before IV/key */
-		unsigned int immdlen;
-		int len = skb->len;    /* length [ulp bytes] inserted by hw */
-		int flowclen16 = 0;
-		int tls_tx_imm = 0;
+		skb_queue_len(&csk->txq) > 1)) अणु
+		अचिन्हित पूर्णांक credit_len = skb->len;
+		अचिन्हित पूर्णांक credits_needed;
+		अचिन्हित पूर्णांक completion = 0;
+		पूर्णांक tls_len = skb->len;/* TLS data len beक्रमe IV/key */
+		अचिन्हित पूर्णांक immdlen;
+		पूर्णांक len = skb->len;    /* length [ulp bytes] inserted by hw */
+		पूर्णांक flowclen16 = 0;
+		पूर्णांक tls_tx_imm = 0;
 
 		immdlen = skb->len;
-		if (!is_ofld_imm(csk, skb)) {
+		अगर (!is_ofld_imm(csk, skb)) अणु
 			immdlen = skb_transport_offset(skb);
-			if (skb_ulp_tls_inline(skb))
+			अगर (skb_ulp_tls_अंतरभूत(skb))
 				wr_size = chtls_wr_size(csk, skb, false);
 			credit_len = 8 * calc_tx_flits(skb, immdlen);
-		} else {
-			if (skb_ulp_tls_inline(skb)) {
+		पूर्ण अन्यथा अणु
+			अगर (skb_ulp_tls_अंतरभूत(skb)) अणु
 				wr_size = chtls_wr_size(csk, skb, false);
 				tls_tx_imm = 1;
-			}
-		}
-		if (likely(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NEED_HDR))
+			पूर्ण
+		पूर्ण
+		अगर (likely(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NEED_HDR))
 			credit_len += wr_size;
 		credits_needed = DIV_ROUND_UP(credit_len, 16);
-		if (!csk_flag_nochk(csk, CSK_TX_DATA_SENT)) {
+		अगर (!csk_flag_nochk(csk, CSK_TX_DATA_SENT)) अणु
 			flowclen16 = send_tx_flowc_wr(sk, 1, tp->snd_nxt,
 						      tp->rcv_nxt);
-			if (flowclen16 <= 0)
-				break;
+			अगर (flowclen16 <= 0)
+				अवरोध;
 			csk->wr_credits -= flowclen16;
 			csk->wr_unacked += flowclen16;
 			csk->wr_nondata += flowclen16;
 			csk_set_flag(csk, CSK_TX_DATA_SENT);
-		}
+		पूर्ण
 
-		if (csk->wr_credits < credits_needed) {
-			if (skb_ulp_tls_inline(skb) &&
+		अगर (csk->wr_credits < credits_needed) अणु
+			अगर (skb_ulp_tls_अंतरभूत(skb) &&
 			    !skb_ulp_tls_iv_imm(skb))
 				skb_shinfo(skb)->nr_frags--;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		__skb_unlink(skb, &csk->txq);
 		skb_set_queue_mapping(skb, (csk->txq_idx << 1) |
 				      CPL_PRIORITY_DATA);
-		if (hws->ofld)
+		अगर (hws->ofld)
 			hws->txqid = (skb->queue_mapping >> 1);
-		skb->csum = (__force __wsum)(credits_needed + csk->wr_nondata);
+		skb->csum = (__क्रमce __wsum)(credits_needed + csk->wr_nondata);
 		csk->wr_credits -= credits_needed;
 		csk->wr_unacked += credits_needed;
 		csk->wr_nondata = 0;
 		enqueue_wr(csk, skb);
 
-		if (likely(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NEED_HDR)) {
-			if ((comp && csk->wr_unacked == credits_needed) ||
+		अगर (likely(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NEED_HDR)) अणु
+			अगर ((comp && csk->wr_unacked == credits_needed) ||
 			    (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_COMPL) ||
-			    csk->wr_unacked >= csk->wr_max_credits / 2) {
+			    csk->wr_unacked >= csk->wr_max_credits / 2) अणु
 				completion = 1;
 				csk->wr_unacked = 0;
-			}
-			if (skb_ulp_tls_inline(skb))
+			पूर्ण
+			अगर (skb_ulp_tls_अंतरभूत(skb))
 				make_tlstx_data_wr(sk, skb, tls_tx_imm,
 						   tls_len, credits_needed);
-			else
+			अन्यथा
 				make_tx_data_wr(sk, skb, immdlen, len,
 						credits_needed, completion);
 			tp->snd_nxt += len;
-			tp->lsndtime = tcp_jiffies32;
-			if (completion)
+			tp->lsndसमय = tcp_jअगरfies32;
+			अगर (completion)
 				ULP_SKB_CB(skb)->flags &= ~ULPCB_FLAG_NEED_HDR;
-		} else {
-			struct cpl_close_con_req *req = cplhdr(skb);
-			unsigned int cmd  = CPL_OPCODE_G(ntohl
+		पूर्ण अन्यथा अणु
+			काष्ठा cpl_बंद_con_req *req = cplhdr(skb);
+			अचिन्हित पूर्णांक cmd  = CPL_OPCODE_G(ntohl
 					     (OPCODE_TID(req)));
 
-			if (cmd == CPL_CLOSE_CON_REQ)
+			अगर (cmd == CPL_CLOSE_CON_REQ)
 				csk_set_flag(csk,
 					     CSK_CLOSE_CON_REQUESTED);
 
-			if ((ULP_SKB_CB(skb)->flags & ULPCB_FLAG_COMPL) &&
-			    (csk->wr_unacked >= csk->wr_max_credits / 2)) {
+			अगर ((ULP_SKB_CB(skb)->flags & ULPCB_FLAG_COMPL) &&
+			    (csk->wr_unacked >= csk->wr_max_credits / 2)) अणु
 				req->wr.wr_hi |= htonl(FW_WR_COMPL_F);
 				csk->wr_unacked = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		total_size += skb->truesize;
-		if (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_BARRIER)
+		अगर (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_BARRIER)
 			csk_set_flag(csk, CSK_TX_WAIT_IDLE);
-		t4_set_arp_err_handler(skb, NULL, arp_failure_discard);
+		t4_set_arp_err_handler(skb, शून्य, arp_failure_discard);
 		cxgb4_l2t_send(csk->egress_dev, skb, csk->l2t_entry);
-	}
+	पूर्ण
 	sk->sk_wmem_queued -= total_size;
-	return total_size;
-}
+	वापस total_size;
+पूर्ण
 
-static void mark_urg(struct tcp_sock *tp, int flags,
-		     struct sk_buff *skb)
-{
-	if (unlikely(flags & MSG_OOB)) {
-		tp->snd_up = tp->write_seq;
+अटल व्योम mark_urg(काष्ठा tcp_sock *tp, पूर्णांक flags,
+		     काष्ठा sk_buff *skb)
+अणु
+	अगर (unlikely(flags & MSG_OOB)) अणु
+		tp->snd_up = tp->ग_लिखो_seq;
 		ULP_SKB_CB(skb)->flags = ULPCB_FLAG_URG |
 					 ULPCB_FLAG_BARRIER |
 					 ULPCB_FLAG_NO_APPEND |
 					 ULPCB_FLAG_NEED_HDR;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Returns true if a connection should send more data to TCP engine
+ * Returns true अगर a connection should send more data to TCP engine
  */
-static bool should_push(struct sock *sk)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	struct chtls_dev *cdev = csk->cdev;
-	struct tcp_sock *tp = tcp_sk(sk);
+अटल bool should_push(काष्ठा sock *sk)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	काष्ठा chtls_dev *cdev = csk->cdev;
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
 
 	/*
-	 * If we've released our offload resources there's nothing to do ...
+	 * If we've released our offload resources there's nothing to करो ...
 	 */
-	if (!cdev)
-		return false;
+	अगर (!cdev)
+		वापस false;
 
 	/*
 	 * If there aren't any work requests in flight, or there isn't enough
 	 * data in flight, or Nagle is off then send the current TX_DATA
-	 * otherwise hold it and wait to accumulate more data.
+	 * otherwise hold it and रुको to accumulate more data.
 	 */
-	return csk->wr_credits == csk->wr_max_credits ||
+	वापस csk->wr_credits == csk->wr_max_credits ||
 		(tp->nonagle & TCP_NAGLE_OFF);
-}
+पूर्ण
 
 /*
- * Returns true if a TCP socket is corked.
+ * Returns true अगर a TCP socket is corked.
  */
-static bool corked(const struct tcp_sock *tp, int flags)
-{
-	return (flags & MSG_MORE) || (tp->nonagle & TCP_NAGLE_CORK);
-}
+अटल bool corked(स्थिर काष्ठा tcp_sock *tp, पूर्णांक flags)
+अणु
+	वापस (flags & MSG_MORE) || (tp->nonagle & TCP_NAGLE_CORK);
+पूर्ण
 
 /*
- * Returns true if a send should try to push new data.
+ * Returns true अगर a send should try to push new data.
  */
-static bool send_should_push(struct sock *sk, int flags)
-{
-	return should_push(sk) && !corked(tcp_sk(sk), flags);
-}
+अटल bool send_should_push(काष्ठा sock *sk, पूर्णांक flags)
+अणु
+	वापस should_push(sk) && !corked(tcp_sk(sk), flags);
+पूर्ण
 
-void chtls_tcp_push(struct sock *sk, int flags)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	int qlen = skb_queue_len(&csk->txq);
+व्योम chtls_tcp_push(काष्ठा sock *sk, पूर्णांक flags)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	पूर्णांक qlen = skb_queue_len(&csk->txq);
 
-	if (likely(qlen)) {
-		struct sk_buff *skb = skb_peek_tail(&csk->txq);
-		struct tcp_sock *tp = tcp_sk(sk);
+	अगर (likely(qlen)) अणु
+		काष्ठा sk_buff *skb = skb_peek_tail(&csk->txq);
+		काष्ठा tcp_sock *tp = tcp_sk(sk);
 
 		mark_urg(tp, flags, skb);
 
-		if (!(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND) &&
-		    corked(tp, flags)) {
+		अगर (!(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND) &&
+		    corked(tp, flags)) अणु
 			ULP_SKB_CB(skb)->flags |= ULPCB_FLAG_HOLD;
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		ULP_SKB_CB(skb)->flags &= ~ULPCB_FLAG_HOLD;
-		if (qlen == 1 &&
+		अगर (qlen == 1 &&
 		    ((ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND) ||
 		     should_push(sk)))
 			chtls_push_frames(csk, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Calculate the size for a new send sk_buff.  It's maximum size so we can
- * pack lots of data into it, unless we plan to send it immediately, in which
- * case we size it more tightly.
+ * Calculate the size क्रम a new send sk_buff.  It's maximum size so we can
+ * pack lots of data पूर्णांकo it, unless we plan to send it immediately, in which
+ * हाल we size it more tightly.
  *
- * Note: we don't bother compensating for MSS < PAGE_SIZE because it doesn't
- * arise in normal cases and when it does we are just wasting memory.
+ * Note: we करोn't bother compensating for MSS < PAGE_SIZE because it doesn't
+ * arise in normal हालs and when it करोes we are just wasting memory.
  */
-static int select_size(struct sock *sk, int io_len, int flags, int len)
-{
-	const int pgbreak = SKB_MAX_HEAD(len);
+अटल पूर्णांक select_size(काष्ठा sock *sk, पूर्णांक io_len, पूर्णांक flags, पूर्णांक len)
+अणु
+	स्थिर पूर्णांक pgअवरोध = SKB_MAX_HEAD(len);
 
 	/*
-	 * If the data wouldn't fit in the main body anyway, put only the
-	 * header in the main body so it can use immediate data and place all
+	 * If the data wouldn't fit in the मुख्य body anyway, put only the
+	 * header in the मुख्य body so it can use immediate data and place all
 	 * the payload in page fragments.
 	 */
-	if (io_len > pgbreak)
-		return 0;
+	अगर (io_len > pgअवरोध)
+		वापस 0;
 
 	/*
-	 * If we will be accumulating payload get a large main body.
+	 * If we will be accumulating payload get a large मुख्य body.
 	 */
-	if (!send_should_push(sk, flags))
-		return pgbreak;
+	अगर (!send_should_push(sk, flags))
+		वापस pgअवरोध;
 
-	return io_len;
-}
+	वापस io_len;
+पूर्ण
 
-void skb_entail(struct sock *sk, struct sk_buff *skb, int flags)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	struct tcp_sock *tp = tcp_sk(sk);
+व्योम skb_entail(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक flags)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
 
-	ULP_SKB_CB(skb)->seq = tp->write_seq;
+	ULP_SKB_CB(skb)->seq = tp->ग_लिखो_seq;
 	ULP_SKB_CB(skb)->flags = flags;
 	__skb_queue_tail(&csk->txq, skb);
 	sk->sk_wmem_queued += skb->truesize;
 
-	if (TCP_PAGE(sk) && TCP_OFF(sk)) {
+	अगर (TCP_PAGE(sk) && TCP_OFF(sk)) अणु
 		put_page(TCP_PAGE(sk));
-		TCP_PAGE(sk) = NULL;
+		TCP_PAGE(sk) = शून्य;
 		TCP_OFF(sk) = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct sk_buff *get_tx_skb(struct sock *sk, int size)
-{
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *get_tx_skb(काष्ठा sock *sk, पूर्णांक size)
+अणु
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(size + TX_HEADER_LEN, sk->sk_allocation);
-	if (likely(skb)) {
+	अगर (likely(skb)) अणु
 		skb_reserve(skb, TX_HEADER_LEN);
 		skb_entail(sk, skb, ULPCB_FLAG_NEED_HDR);
 		skb_reset_transport_header(skb);
-	}
-	return skb;
-}
+	पूर्ण
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *get_record_skb(struct sock *sk, int size, bool zcopy)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *get_record_skb(काष्ठा sock *sk, पूर्णांक size, bool zcopy)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(((zcopy ? 0 : size) + TX_TLSHDR_LEN +
 			KEY_ON_MEM_SZ + max_ivs_size(sk, size)),
 			sk->sk_allocation);
-	if (likely(skb)) {
+	अगर (likely(skb)) अणु
 		skb_reserve(skb, (TX_TLSHDR_LEN +
 			    KEY_ON_MEM_SZ + max_ivs_size(sk, size)));
 		skb_entail(sk, skb, ULPCB_FLAG_NEED_HDR);
 		skb_reset_transport_header(skb);
 		ULP_SKB_CB(skb)->ulp.tls.ofld = 1;
 		ULP_SKB_CB(skb)->ulp.tls.type = csk->tlshws.type;
-	}
-	return skb;
-}
+	पूर्ण
+	वापस skb;
+पूर्ण
 
-static void tx_skb_finalize(struct sk_buff *skb)
-{
-	struct ulp_skb_cb *cb = ULP_SKB_CB(skb);
+अटल व्योम tx_skb_finalize(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ulp_skb_cb *cb = ULP_SKB_CB(skb);
 
-	if (!(cb->flags & ULPCB_FLAG_NO_HDR))
+	अगर (!(cb->flags & ULPCB_FLAG_NO_HDR))
 		cb->flags = ULPCB_FLAG_NEED_HDR;
 	cb->flags |= ULPCB_FLAG_NO_APPEND;
-}
+पूर्ण
 
-static void push_frames_if_head(struct sock *sk)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+अटल व्योम push_frames_अगर_head(काष्ठा sock *sk)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
 
-	if (skb_queue_len(&csk->txq) == 1)
+	अगर (skb_queue_len(&csk->txq) == 1)
 		chtls_push_frames(csk, 1);
-}
+पूर्ण
 
-static int chtls_skb_copy_to_page_nocache(struct sock *sk,
-					  struct iov_iter *from,
-					  struct sk_buff *skb,
-					  struct page *page,
-					  int off, int copy)
-{
-	int err;
+अटल पूर्णांक chtls_skb_copy_to_page_nocache(काष्ठा sock *sk,
+					  काष्ठा iov_iter *from,
+					  काष्ठा sk_buff *skb,
+					  काष्ठा page *page,
+					  पूर्णांक off, पूर्णांक copy)
+अणु
+	पूर्णांक err;
 
-	err = skb_do_copy_data_nocache(sk, skb, from, page_address(page) +
+	err = skb_करो_copy_data_nocache(sk, skb, from, page_address(page) +
 				       off, copy, skb->len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	skb->len             += copy;
 	skb->data_len        += copy;
 	skb->truesize        += copy;
 	sk->sk_wmem_queued   += copy;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool csk_mem_free(struct chtls_dev *cdev, struct sock *sk)
-{
-	return (cdev->max_host_sndbuf - sk->sk_wmem_queued > 0);
-}
+अटल bool csk_mem_मुक्त(काष्ठा chtls_dev *cdev, काष्ठा sock *sk)
+अणु
+	वापस (cdev->max_host_sndbuf - sk->sk_wmem_queued > 0);
+पूर्ण
 
-static int csk_wait_memory(struct chtls_dev *cdev,
-			   struct sock *sk, long *timeo_p)
-{
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
-	int err = 0;
-	long current_timeo;
-	long vm_wait = 0;
+अटल पूर्णांक csk_रुको_memory(काष्ठा chtls_dev *cdev,
+			   काष्ठा sock *sk, दीर्घ *समयo_p)
+अणु
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+	पूर्णांक err = 0;
+	दीर्घ current_समयo;
+	दीर्घ vm_रुको = 0;
 	bool noblock;
 
-	current_timeo = *timeo_p;
-	noblock = (*timeo_p ? false : true);
-	if (csk_mem_free(cdev, sk)) {
-		current_timeo = (prandom_u32() % (HZ / 5)) + 2;
-		vm_wait = (prandom_u32() % (HZ / 5)) + 2;
-	}
+	current_समयo = *समयo_p;
+	noblock = (*समयo_p ? false : true);
+	अगर (csk_mem_मुक्त(cdev, sk)) अणु
+		current_समयo = (pअक्रमom_u32() % (HZ / 5)) + 2;
+		vm_रुको = (pअक्रमom_u32() % (HZ / 5)) + 2;
+	पूर्ण
 
-	add_wait_queue(sk_sleep(sk), &wait);
-	while (1) {
+	add_रुको_queue(sk_sleep(sk), &रुको);
+	जबतक (1) अणु
 		sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
-		if (sk->sk_err || (sk->sk_shutdown & SEND_SHUTDOWN))
-			goto do_error;
-		if (!*timeo_p) {
-			if (noblock)
+		अगर (sk->sk_err || (sk->sk_shutकरोwn & SEND_SHUTDOWN))
+			जाओ करो_error;
+		अगर (!*समयo_p) अणु
+			अगर (noblock)
 				set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-			goto do_nonblock;
-		}
-		if (signal_pending(current))
-			goto do_interrupted;
+			जाओ करो_nonblock;
+		पूर्ण
+		अगर (संकेत_pending(current))
+			जाओ करो_पूर्णांकerrupted;
 		sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
-		if (csk_mem_free(cdev, sk) && !vm_wait)
-			break;
+		अगर (csk_mem_मुक्त(cdev, sk) && !vm_रुको)
+			अवरोध;
 
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-		sk->sk_write_pending++;
-		sk_wait_event(sk, &current_timeo, sk->sk_err ||
-			      (sk->sk_shutdown & SEND_SHUTDOWN) ||
-			      (csk_mem_free(cdev, sk) && !vm_wait), &wait);
-		sk->sk_write_pending--;
+		sk->sk_ग_लिखो_pending++;
+		sk_रुको_event(sk, &current_समयo, sk->sk_err ||
+			      (sk->sk_shutकरोwn & SEND_SHUTDOWN) ||
+			      (csk_mem_मुक्त(cdev, sk) && !vm_रुको), &रुको);
+		sk->sk_ग_लिखो_pending--;
 
-		if (vm_wait) {
-			vm_wait -= current_timeo;
-			current_timeo = *timeo_p;
-			if (current_timeo != MAX_SCHEDULE_TIMEOUT) {
-				current_timeo -= vm_wait;
-				if (current_timeo < 0)
-					current_timeo = 0;
-			}
-			vm_wait = 0;
-		}
-		*timeo_p = current_timeo;
-	}
-do_rm_wq:
-	remove_wait_queue(sk_sleep(sk), &wait);
-	return err;
-do_error:
+		अगर (vm_रुको) अणु
+			vm_रुको -= current_समयo;
+			current_समयo = *समयo_p;
+			अगर (current_समयo != MAX_SCHEDULE_TIMEOUT) अणु
+				current_समयo -= vm_रुको;
+				अगर (current_समयo < 0)
+					current_समयo = 0;
+			पूर्ण
+			vm_रुको = 0;
+		पूर्ण
+		*समयo_p = current_समयo;
+	पूर्ण
+करो_rm_wq:
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+	वापस err;
+करो_error:
 	err = -EPIPE;
-	goto do_rm_wq;
-do_nonblock:
+	जाओ करो_rm_wq;
+करो_nonblock:
 	err = -EAGAIN;
-	goto do_rm_wq;
-do_interrupted:
-	err = sock_intr_errno(*timeo_p);
-	goto do_rm_wq;
-}
+	जाओ करो_rm_wq;
+करो_पूर्णांकerrupted:
+	err = sock_पूर्णांकr_त्रुटि_सं(*समयo_p);
+	जाओ करो_rm_wq;
+पूर्ण
 
-static int chtls_proccess_cmsg(struct sock *sk, struct msghdr *msg,
-			       unsigned char *record_type)
-{
-	struct cmsghdr *cmsg;
-	int rc = -EINVAL;
+अटल पूर्णांक chtls_proccess_cmsg(काष्ठा sock *sk, काष्ठा msghdr *msg,
+			       अचिन्हित अक्षर *record_type)
+अणु
+	काष्ठा cmsghdr *cmsg;
+	पूर्णांक rc = -EINVAL;
 
-	for_each_cmsghdr(cmsg, msg) {
-		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
-		if (cmsg->cmsg_level != SOL_TLS)
-			continue;
+	क्रम_each_cmsghdr(cmsg, msg) अणु
+		अगर (!CMSG_OK(msg, cmsg))
+			वापस -EINVAL;
+		अगर (cmsg->cmsg_level != SOL_TLS)
+			जारी;
 
-		switch (cmsg->cmsg_type) {
-		case TLS_SET_RECORD_TYPE:
-			if (cmsg->cmsg_len < CMSG_LEN(sizeof(*record_type)))
-				return -EINVAL;
+		चयन (cmsg->cmsg_type) अणु
+		हाल TLS_SET_RECORD_TYPE:
+			अगर (cmsg->cmsg_len < CMSG_LEN(माप(*record_type)))
+				वापस -EINVAL;
 
-			if (msg->msg_flags & MSG_MORE)
-				return -EINVAL;
+			अगर (msg->msg_flags & MSG_MORE)
+				वापस -EINVAL;
 
-			*record_type = *(unsigned char *)CMSG_DATA(cmsg);
+			*record_type = *(अचिन्हित अक्षर *)CMSG_DATA(cmsg);
 			rc = 0;
-			break;
-		default:
-			return -EINVAL;
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int chtls_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	struct chtls_dev *cdev = csk->cdev;
-	struct tcp_sock *tp = tcp_sk(sk);
-	struct sk_buff *skb;
-	int mss, flags, err;
-	int recordsz = 0;
-	int copied = 0;
-	long timeo;
+पूर्णांक chtls_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार size)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	काष्ठा chtls_dev *cdev = csk->cdev;
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
+	काष्ठा sk_buff *skb;
+	पूर्णांक mss, flags, err;
+	पूर्णांक recordsz = 0;
+	पूर्णांक copied = 0;
+	दीर्घ समयo;
 
 	lock_sock(sk);
 	flags = msg->msg_flags;
-	timeo = sock_sndtimeo(sk, flags & MSG_DONTWAIT);
+	समयo = sock_sndसमयo(sk, flags & MSG_DONTWAIT);
 
-	if (!sk_in_state(sk, TCPF_ESTABLISHED | TCPF_CLOSE_WAIT)) {
-		err = sk_stream_wait_connect(sk, &timeo);
-		if (err)
-			goto out_err;
-	}
+	अगर (!sk_in_state(sk, TCPF_ESTABLISHED | TCPF_CLOSE_WAIT)) अणु
+		err = sk_stream_रुको_connect(sk, &समयo);
+		अगर (err)
+			जाओ out_err;
+	पूर्ण
 
 	sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 	err = -EPIPE;
-	if (sk->sk_err || (sk->sk_shutdown & SEND_SHUTDOWN))
-		goto out_err;
+	अगर (sk->sk_err || (sk->sk_shutकरोwn & SEND_SHUTDOWN))
+		जाओ out_err;
 
 	mss = csk->mss;
 	csk_set_flag(csk, CSK_TX_MORE_DATA);
 
-	while (msg_data_left(msg)) {
-		int copy = 0;
+	जबतक (msg_data_left(msg)) अणु
+		पूर्णांक copy = 0;
 
 		skb = skb_peek_tail(&csk->txq);
-		if (skb) {
+		अगर (skb) अणु
 			copy = mss - skb->len;
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-		}
-		if (!csk_mem_free(cdev, sk))
-			goto wait_for_sndbuf;
+		पूर्ण
+		अगर (!csk_mem_मुक्त(cdev, sk))
+			जाओ रुको_क्रम_sndbuf;
 
-		if (is_tls_tx(csk) && !csk->tlshws.txleft) {
-			unsigned char record_type = TLS_RECORD_TYPE_DATA;
+		अगर (is_tls_tx(csk) && !csk->tlshws.txleft) अणु
+			अचिन्हित अक्षर record_type = TLS_RECORD_TYPE_DATA;
 
-			if (unlikely(msg->msg_controllen)) {
+			अगर (unlikely(msg->msg_controllen)) अणु
 				err = chtls_proccess_cmsg(sk, msg,
 							  &record_type);
-				if (err)
-					goto out_err;
+				अगर (err)
+					जाओ out_err;
 
-				/* Avoid appending tls handshake, alert to tls data */
-				if (skb)
+				/* Aव्योम appending tls handshake, alert to tls data */
+				अगर (skb)
 					tx_skb_finalize(skb);
-			}
+			पूर्ण
 
 			recordsz = size;
 			csk->tlshws.txleft = recordsz;
 			csk->tlshws.type = record_type;
-		}
+		पूर्ण
 
-		if (!skb || (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND) ||
-		    copy <= 0) {
+		अगर (!skb || (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND) ||
+		    copy <= 0) अणु
 new_buf:
-			if (skb) {
+			अगर (skb) अणु
 				tx_skb_finalize(skb);
-				push_frames_if_head(sk);
-			}
+				push_frames_अगर_head(sk);
+			पूर्ण
 
-			if (is_tls_tx(csk)) {
+			अगर (is_tls_tx(csk)) अणु
 				skb = get_record_skb(sk,
 						     select_size(sk,
 								 recordsz,
 								 flags,
 								 TX_TLSHDR_LEN),
 								 false);
-			} else {
+			पूर्ण अन्यथा अणु
 				skb = get_tx_skb(sk,
 						 select_size(sk, size, flags,
 							     TX_HEADER_LEN));
-			}
-			if (unlikely(!skb))
-				goto wait_for_memory;
+			पूर्ण
+			अगर (unlikely(!skb))
+				जाओ रुको_क्रम_memory;
 
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 			copy = mss;
-		}
-		if (copy > size)
+		पूर्ण
+		अगर (copy > size)
 			copy = size;
 
-		if (skb_tailroom(skb) > 0) {
+		अगर (skb_tailroom(skb) > 0) अणु
 			copy = min(copy, skb_tailroom(skb));
-			if (is_tls_tx(csk))
-				copy = min_t(int, copy, csk->tlshws.txleft);
+			अगर (is_tls_tx(csk))
+				copy = min_t(पूर्णांक, copy, csk->tlshws.txleft);
 			err = skb_add_data_nocache(sk, skb,
 						   &msg->msg_iter, copy);
-			if (err)
-				goto do_fault;
-		} else {
-			int i = skb_shinfo(skb)->nr_frags;
-			struct page *page = TCP_PAGE(sk);
-			int pg_size = PAGE_SIZE;
-			int off = TCP_OFF(sk);
+			अगर (err)
+				जाओ करो_fault;
+		पूर्ण अन्यथा अणु
+			पूर्णांक i = skb_shinfo(skb)->nr_frags;
+			काष्ठा page *page = TCP_PAGE(sk);
+			पूर्णांक pg_size = PAGE_SIZE;
+			पूर्णांक off = TCP_OFF(sk);
 			bool merge;
 
-			if (page)
+			अगर (page)
 				pg_size = page_size(page);
-			if (off < pg_size &&
-			    skb_can_coalesce(skb, i, page, off)) {
+			अगर (off < pg_size &&
+			    skb_can_coalesce(skb, i, page, off)) अणु
 				merge = true;
-				goto copy;
-			}
+				जाओ copy;
+			पूर्ण
 			merge = false;
-			if (i == (is_tls_tx(csk) ? (MAX_SKB_FRAGS - 1) :
+			अगर (i == (is_tls_tx(csk) ? (MAX_SKB_FRAGS - 1) :
 			    MAX_SKB_FRAGS))
-				goto new_buf;
+				जाओ new_buf;
 
-			if (page && off == pg_size) {
+			अगर (page && off == pg_size) अणु
 				put_page(page);
-				TCP_PAGE(sk) = page = NULL;
+				TCP_PAGE(sk) = page = शून्य;
 				pg_size = PAGE_SIZE;
-			}
+			पूर्ण
 
-			if (!page) {
+			अगर (!page) अणु
 				gfp_t gfp = sk->sk_allocation;
-				int order = cdev->send_page_order;
+				पूर्णांक order = cdev->send_page_order;
 
-				if (order) {
+				अगर (order) अणु
 					page = alloc_pages(gfp | __GFP_COMP |
 							   __GFP_NOWARN |
 							   __GFP_NORETRY,
 							   order);
-					if (page)
+					अगर (page)
 						pg_size <<= order;
-				}
-				if (!page) {
+				पूर्ण
+				अगर (!page) अणु
 					page = alloc_page(gfp);
 					pg_size = PAGE_SIZE;
-				}
-				if (!page)
-					goto wait_for_memory;
+				पूर्ण
+				अगर (!page)
+					जाओ रुको_क्रम_memory;
 				off = 0;
-			}
+			पूर्ण
 copy:
-			if (copy > pg_size - off)
+			अगर (copy > pg_size - off)
 				copy = pg_size - off;
-			if (is_tls_tx(csk))
-				copy = min_t(int, copy, csk->tlshws.txleft);
+			अगर (is_tls_tx(csk))
+				copy = min_t(पूर्णांक, copy, csk->tlshws.txleft);
 
 			err = chtls_skb_copy_to_page_nocache(sk, &msg->msg_iter,
 							     skb, page,
 							     off, copy);
-			if (unlikely(err)) {
-				if (!TCP_PAGE(sk)) {
+			अगर (unlikely(err)) अणु
+				अगर (!TCP_PAGE(sk)) अणु
 					TCP_PAGE(sk) = page;
 					TCP_OFF(sk) = 0;
-				}
-				goto do_fault;
-			}
+				पूर्ण
+				जाओ करो_fault;
+			पूर्ण
 			/* Update the skb. */
-			if (merge) {
+			अगर (merge) अणु
 				skb_frag_size_add(
 						&skb_shinfo(skb)->frags[i - 1],
 						copy);
-			} else {
+			पूर्ण अन्यथा अणु
 				skb_fill_page_desc(skb, i, page, off, copy);
-				if (off + copy < pg_size) {
+				अगर (off + copy < pg_size) अणु
 					/* space left keep page */
 					get_page(page);
 					TCP_PAGE(sk) = page;
-				} else {
-					TCP_PAGE(sk) = NULL;
-				}
-			}
+				पूर्ण अन्यथा अणु
+					TCP_PAGE(sk) = शून्य;
+				पूर्ण
+			पूर्ण
 			TCP_OFF(sk) = off + copy;
-		}
-		if (unlikely(skb->len == mss))
+		पूर्ण
+		अगर (unlikely(skb->len == mss))
 			tx_skb_finalize(skb);
-		tp->write_seq += copy;
+		tp->ग_लिखो_seq += copy;
 		copied += copy;
 		size -= copy;
 
-		if (is_tls_tx(csk))
+		अगर (is_tls_tx(csk))
 			csk->tlshws.txleft -= copy;
 
-		if (corked(tp, flags) &&
+		अगर (corked(tp, flags) &&
 		    (sk_stream_wspace(sk) < sk_stream_min_wspace(sk)))
 			ULP_SKB_CB(skb)->flags |= ULPCB_FLAG_NO_APPEND;
 
-		if (size == 0)
-			goto out;
+		अगर (size == 0)
+			जाओ out;
 
-		if (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND)
-			push_frames_if_head(sk);
-		continue;
-wait_for_sndbuf:
+		अगर (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND)
+			push_frames_अगर_head(sk);
+		जारी;
+रुको_क्रम_sndbuf:
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-wait_for_memory:
-		err = csk_wait_memory(cdev, sk, &timeo);
-		if (err)
-			goto do_error;
-	}
+रुको_क्रम_memory:
+		err = csk_रुको_memory(cdev, sk, &समयo);
+		अगर (err)
+			जाओ करो_error;
+	पूर्ण
 out:
 	csk_reset_flag(csk, CSK_TX_MORE_DATA);
-	if (copied)
+	अगर (copied)
 		chtls_tcp_push(sk, flags);
-done:
+करोne:
 	release_sock(sk);
-	return copied;
-do_fault:
-	if (!skb->len) {
+	वापस copied;
+करो_fault:
+	अगर (!skb->len) अणु
 		__skb_unlink(skb, &csk->txq);
 		sk->sk_wmem_queued -= skb->truesize;
-		__kfree_skb(skb);
-	}
-do_error:
-	if (copied)
-		goto out;
+		__kमुक्त_skb(skb);
+	पूर्ण
+करो_error:
+	अगर (copied)
+		जाओ out;
 out_err:
-	if (csk_conn_inline(csk))
+	अगर (csk_conn_अंतरभूत(csk))
 		csk_reset_flag(csk, CSK_TX_MORE_DATA);
 	copied = sk_stream_error(sk, flags, err);
-	goto done;
-}
+	जाओ करोne;
+पूर्ण
 
-int chtls_sendpage(struct sock *sk, struct page *page,
-		   int offset, size_t size, int flags)
-{
-	struct chtls_sock *csk;
-	struct chtls_dev *cdev;
-	int mss, err, copied;
-	struct tcp_sock *tp;
-	long timeo;
+पूर्णांक chtls_sendpage(काष्ठा sock *sk, काष्ठा page *page,
+		   पूर्णांक offset, माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा chtls_sock *csk;
+	काष्ठा chtls_dev *cdev;
+	पूर्णांक mss, err, copied;
+	काष्ठा tcp_sock *tp;
+	दीर्घ समयo;
 
 	tp = tcp_sk(sk);
 	copied = 0;
 	csk = rcu_dereference_sk_user_data(sk);
 	cdev = csk->cdev;
 	lock_sock(sk);
-	timeo = sock_sndtimeo(sk, flags & MSG_DONTWAIT);
+	समयo = sock_sndसमयo(sk, flags & MSG_DONTWAIT);
 
-	err = sk_stream_wait_connect(sk, &timeo);
-	if (!sk_in_state(sk, TCPF_ESTABLISHED | TCPF_CLOSE_WAIT) &&
+	err = sk_stream_रुको_connect(sk, &समयo);
+	अगर (!sk_in_state(sk, TCPF_ESTABLISHED | TCPF_CLOSE_WAIT) &&
 	    err != 0)
-		goto out_err;
+		जाओ out_err;
 
 	mss = csk->mss;
 	csk_set_flag(csk, CSK_TX_MORE_DATA);
 
-	while (size > 0) {
-		struct sk_buff *skb = skb_peek_tail(&csk->txq);
-		int copy, i;
+	जबतक (size > 0) अणु
+		काष्ठा sk_buff *skb = skb_peek_tail(&csk->txq);
+		पूर्णांक copy, i;
 
-		if (!skb || (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND) ||
-		    (copy = mss - skb->len) <= 0) {
+		अगर (!skb || (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND) ||
+		    (copy = mss - skb->len) <= 0) अणु
 new_buf:
-			if (!csk_mem_free(cdev, sk))
-				goto wait_for_sndbuf;
+			अगर (!csk_mem_मुक्त(cdev, sk))
+				जाओ रुको_क्रम_sndbuf;
 
-			if (is_tls_tx(csk)) {
+			अगर (is_tls_tx(csk)) अणु
 				skb = get_record_skb(sk,
 						     select_size(sk, size,
 								 flags,
 								 TX_TLSHDR_LEN),
 						     true);
-			} else {
+			पूर्ण अन्यथा अणु
 				skb = get_tx_skb(sk, 0);
-			}
-			if (!skb)
-				goto wait_for_memory;
+			पूर्ण
+			अगर (!skb)
+				जाओ रुको_क्रम_memory;
 			copy = mss;
-		}
-		if (copy > size)
+		पूर्ण
+		अगर (copy > size)
 			copy = size;
 
 		i = skb_shinfo(skb)->nr_frags;
-		if (skb_can_coalesce(skb, i, page, offset)) {
+		अगर (skb_can_coalesce(skb, i, page, offset)) अणु
 			skb_frag_size_add(&skb_shinfo(skb)->frags[i - 1], copy);
-		} else if (i < MAX_SKB_FRAGS) {
+		पूर्ण अन्यथा अगर (i < MAX_SKB_FRAGS) अणु
 			get_page(page);
 			skb_fill_page_desc(skb, i, page, offset, copy);
-		} else {
+		पूर्ण अन्यथा अणु
 			tx_skb_finalize(skb);
-			push_frames_if_head(sk);
-			goto new_buf;
-		}
+			push_frames_अगर_head(sk);
+			जाओ new_buf;
+		पूर्ण
 
 		skb->len += copy;
-		if (skb->len == mss)
+		अगर (skb->len == mss)
 			tx_skb_finalize(skb);
 		skb->data_len += copy;
 		skb->truesize += copy;
 		sk->sk_wmem_queued += copy;
-		tp->write_seq += copy;
+		tp->ग_लिखो_seq += copy;
 		copied += copy;
 		offset += copy;
 		size -= copy;
 
-		if (corked(tp, flags) &&
+		अगर (corked(tp, flags) &&
 		    (sk_stream_wspace(sk) < sk_stream_min_wspace(sk)))
 			ULP_SKB_CB(skb)->flags |= ULPCB_FLAG_NO_APPEND;
 
-		if (!size)
-			break;
+		अगर (!size)
+			अवरोध;
 
-		if (unlikely(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND))
-			push_frames_if_head(sk);
-		continue;
-wait_for_sndbuf:
+		अगर (unlikely(ULP_SKB_CB(skb)->flags & ULPCB_FLAG_NO_APPEND))
+			push_frames_अगर_head(sk);
+		जारी;
+रुको_क्रम_sndbuf:
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-wait_for_memory:
-		err = csk_wait_memory(cdev, sk, &timeo);
-		if (err)
-			goto do_error;
-	}
+रुको_क्रम_memory:
+		err = csk_रुको_memory(cdev, sk, &समयo);
+		अगर (err)
+			जाओ करो_error;
+	पूर्ण
 out:
 	csk_reset_flag(csk, CSK_TX_MORE_DATA);
-	if (copied)
+	अगर (copied)
 		chtls_tcp_push(sk, flags);
-done:
+करोne:
 	release_sock(sk);
-	return copied;
+	वापस copied;
 
-do_error:
-	if (copied)
-		goto out;
+करो_error:
+	अगर (copied)
+		जाओ out;
 
 out_err:
-	if (csk_conn_inline(csk))
+	अगर (csk_conn_अंतरभूत(csk))
 		csk_reset_flag(csk, CSK_TX_MORE_DATA);
 	copied = sk_stream_error(sk, flags, err);
-	goto done;
-}
+	जाओ करोne;
+पूर्ण
 
-static void chtls_select_window(struct sock *sk)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	struct tcp_sock *tp = tcp_sk(sk);
-	unsigned int wnd = tp->rcv_wnd;
+अटल व्योम chtls_select_winकरोw(काष्ठा sock *sk)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
+	अचिन्हित पूर्णांक wnd = tp->rcv_wnd;
 
-	wnd = max_t(unsigned int, wnd, tcp_full_space(sk));
-	wnd = max_t(unsigned int, MIN_RCV_WND, wnd);
+	wnd = max_t(अचिन्हित पूर्णांक, wnd, tcp_full_space(sk));
+	wnd = max_t(अचिन्हित पूर्णांक, MIN_RCV_WND, wnd);
 
-	if (wnd > MAX_RCV_WND)
+	अगर (wnd > MAX_RCV_WND)
 		wnd = MAX_RCV_WND;
 
 /*
- * Check if we need to grow the receive window in response to an increase in
+ * Check अगर we need to grow the receive winकरोw in response to an increase in
  * the socket's receive buffer size.  Some applications increase the buffer
- * size dynamically and rely on the window to grow accordingly.
+ * size dynamically and rely on the winकरोw to grow accordingly.
  */
 
-	if (wnd > tp->rcv_wnd) {
+	अगर (wnd > tp->rcv_wnd) अणु
 		tp->rcv_wup -= wnd - tp->rcv_wnd;
 		tp->rcv_wnd = wnd;
-		/* Mark the receive window as updated */
+		/* Mark the receive winकरोw as updated */
 		csk_reset_flag(csk, CSK_UPDATE_RCV_WND);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Send RX credits through an RX_DATA_ACK CPL message.  We are permitted
- * to return without sending the message in case we cannot allocate
+ * to वापस without sending the message in हाल we cannot allocate
  * an sk_buff.  Returns the number of credits sent.
  */
-static u32 send_rx_credits(struct chtls_sock *csk, u32 credits)
-{
-	struct cpl_rx_data_ack *req;
-	struct sk_buff *skb;
+अटल u32 send_rx_credits(काष्ठा chtls_sock *csk, u32 credits)
+अणु
+	काष्ठा cpl_rx_data_ack *req;
+	काष्ठा sk_buff *skb;
 
-	skb = alloc_skb(sizeof(*req), GFP_ATOMIC);
-	if (!skb)
-		return 0;
-	__skb_put(skb, sizeof(*req));
-	req = (struct cpl_rx_data_ack *)skb->head;
+	skb = alloc_skb(माप(*req), GFP_ATOMIC);
+	अगर (!skb)
+		वापस 0;
+	__skb_put(skb, माप(*req));
+	req = (काष्ठा cpl_rx_data_ack *)skb->head;
 
 	set_wr_txq(skb, CPL_PRIORITY_ACK, csk->port_id);
 	INIT_TP_WR(req, csk->tid);
@@ -1385,378 +1386,378 @@ static u32 send_rx_credits(struct chtls_sock *csk, u32 credits)
 	req->credit_dack = cpu_to_be32(RX_CREDITS_V(credits) |
 				       RX_FORCE_ACK_F);
 	cxgb4_ofld_send(csk->cdev->ports[csk->port_id], skb);
-	return credits;
-}
+	वापस credits;
+पूर्ण
 
-#define CREDIT_RETURN_STATE (TCPF_ESTABLISHED | \
+#घोषणा CREDIT_RETURN_STATE (TCPF_ESTABLISHED | \
 			     TCPF_FIN_WAIT1 | \
 			     TCPF_FIN_WAIT2)
 
 /*
- * Called after some received data has been read.  It returns RX credits
- * to the HW for the amount of data processed.
+ * Called after some received data has been पढ़ो.  It वापसs RX credits
+ * to the HW क्रम the amount of data processed.
  */
-static void chtls_cleanup_rbuf(struct sock *sk, int copied)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	struct tcp_sock *tp;
-	int must_send;
+अटल व्योम chtls_cleanup_rbuf(काष्ठा sock *sk, पूर्णांक copied)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	काष्ठा tcp_sock *tp;
+	पूर्णांक must_send;
 	u32 credits;
 	u32 thres;
 
 	thres = 15 * 1024;
 
-	if (!sk_in_state(sk, CREDIT_RETURN_STATE))
-		return;
+	अगर (!sk_in_state(sk, CREDIT_RETURN_STATE))
+		वापस;
 
-	chtls_select_window(sk);
+	chtls_select_winकरोw(sk);
 	tp = tcp_sk(sk);
 	credits = tp->copied_seq - tp->rcv_wup;
-	if (unlikely(!credits))
-		return;
+	अगर (unlikely(!credits))
+		वापस;
 
 /*
- * For coalescing to work effectively ensure the receive window has
+ * For coalescing to work effectively ensure the receive winकरोw has
  * at least 16KB left.
  */
 	must_send = credits + 16384 >= tp->rcv_wnd;
 
-	if (must_send || credits >= thres)
+	अगर (must_send || credits >= thres)
 		tp->rcv_wup += send_rx_credits(csk, credits);
-}
+पूर्ण
 
-static int chtls_pt_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
-			    int nonblock, int flags, int *addr_len)
-{
-	struct chtls_sock *csk = rcu_dereference_sk_user_data(sk);
-	struct chtls_hws *hws = &csk->tlshws;
-	struct net_device *dev = csk->egress_dev;
-	struct adapter *adap = netdev2adap(dev);
-	struct tcp_sock *tp = tcp_sk(sk);
-	unsigned long avail;
-	int buffers_freed;
-	int copied = 0;
-	int target;
-	long timeo;
+अटल पूर्णांक chtls_pt_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
+			    पूर्णांक nonblock, पूर्णांक flags, पूर्णांक *addr_len)
+अणु
+	काष्ठा chtls_sock *csk = rcu_dereference_sk_user_data(sk);
+	काष्ठा chtls_hws *hws = &csk->tlshws;
+	काष्ठा net_device *dev = csk->egress_dev;
+	काष्ठा adapter *adap = netdev2adap(dev);
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
+	अचिन्हित दीर्घ avail;
+	पूर्णांक buffers_मुक्तd;
+	पूर्णांक copied = 0;
+	पूर्णांक target;
+	दीर्घ समयo;
 
-	buffers_freed = 0;
+	buffers_मुक्तd = 0;
 
-	timeo = sock_rcvtimeo(sk, nonblock);
+	समयo = sock_rcvसमयo(sk, nonblock);
 	target = sock_rcvlowat(sk, flags & MSG_WAITALL, len);
 
-	if (unlikely(csk_flag(sk, CSK_UPDATE_RCV_WND)))
+	अगर (unlikely(csk_flag(sk, CSK_UPDATE_RCV_WND)))
 		chtls_cleanup_rbuf(sk, copied);
 
-	do {
-		struct sk_buff *skb;
+	करो अणु
+		काष्ठा sk_buff *skb;
 		u32 offset = 0;
 
-		if (unlikely(tp->urg_data &&
-			     tp->urg_seq == tp->copied_seq)) {
-			if (copied)
-				break;
-			if (signal_pending(current)) {
-				copied = timeo ? sock_intr_errno(timeo) :
+		अगर (unlikely(tp->urg_data &&
+			     tp->urg_seq == tp->copied_seq)) अणु
+			अगर (copied)
+				अवरोध;
+			अगर (संकेत_pending(current)) अणु
+				copied = समयo ? sock_पूर्णांकr_त्रुटि_सं(समयo) :
 					-EAGAIN;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		skb = skb_peek(&sk->sk_receive_queue);
-		if (skb)
-			goto found_ok_skb;
-		if (csk->wr_credits &&
+		अगर (skb)
+			जाओ found_ok_skb;
+		अगर (csk->wr_credits &&
 		    skb_queue_len(&csk->txq) &&
 		    chtls_push_frames(csk, csk->wr_credits ==
 				      csk->wr_max_credits))
-			sk->sk_write_space(sk);
+			sk->sk_ग_लिखो_space(sk);
 
-		if (copied >= target && !READ_ONCE(sk->sk_backlog.tail))
-			break;
+		अगर (copied >= target && !READ_ONCE(sk->sk_backlog.tail))
+			अवरोध;
 
-		if (copied) {
-			if (sk->sk_err || sk->sk_state == TCP_CLOSE ||
-			    (sk->sk_shutdown & RCV_SHUTDOWN) ||
-			    signal_pending(current))
-				break;
+		अगर (copied) अणु
+			अगर (sk->sk_err || sk->sk_state == TCP_CLOSE ||
+			    (sk->sk_shutकरोwn & RCV_SHUTDOWN) ||
+			    संकेत_pending(current))
+				अवरोध;
 
-			if (!timeo)
-				break;
-		} else {
-			if (sock_flag(sk, SOCK_DONE))
-				break;
-			if (sk->sk_err) {
+			अगर (!समयo)
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर (sock_flag(sk, SOCK_DONE))
+				अवरोध;
+			अगर (sk->sk_err) अणु
 				copied = sock_error(sk);
-				break;
-			}
-			if (sk->sk_shutdown & RCV_SHUTDOWN)
-				break;
-			if (sk->sk_state == TCP_CLOSE) {
+				अवरोध;
+			पूर्ण
+			अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+				अवरोध;
+			अगर (sk->sk_state == TCP_CLOSE) अणु
 				copied = -ENOTCONN;
-				break;
-			}
-			if (!timeo) {
+				अवरोध;
+			पूर्ण
+			अगर (!समयo) अणु
 				copied = -EAGAIN;
-				break;
-			}
-			if (signal_pending(current)) {
-				copied = sock_intr_errno(timeo);
-				break;
-			}
-		}
-		if (READ_ONCE(sk->sk_backlog.tail)) {
+				अवरोध;
+			पूर्ण
+			अगर (संकेत_pending(current)) अणु
+				copied = sock_पूर्णांकr_त्रुटि_सं(समयo);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (READ_ONCE(sk->sk_backlog.tail)) अणु
 			release_sock(sk);
 			lock_sock(sk);
 			chtls_cleanup_rbuf(sk, copied);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (copied >= target)
-			break;
+		अगर (copied >= target)
+			अवरोध;
 		chtls_cleanup_rbuf(sk, copied);
-		sk_wait_data(sk, &timeo, NULL);
-		continue;
+		sk_रुको_data(sk, &समयo, शून्य);
+		जारी;
 found_ok_skb:
-		if (!skb->len) {
-			skb_dst_set(skb, NULL);
+		अगर (!skb->len) अणु
+			skb_dst_set(skb, शून्य);
 			__skb_unlink(skb, &sk->sk_receive_queue);
-			kfree_skb(skb);
+			kमुक्त_skb(skb);
 
-			if (!copied && !timeo) {
+			अगर (!copied && !समयo) अणु
 				copied = -EAGAIN;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (copied < target) {
+			अगर (copied < target) अणु
 				release_sock(sk);
 				lock_sock(sk);
-				continue;
-			}
-			break;
-		}
+				जारी;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 		offset = hws->copied_seq;
 		avail = skb->len - offset;
-		if (len < avail)
+		अगर (len < avail)
 			avail = len;
 
-		if (unlikely(tp->urg_data)) {
+		अगर (unlikely(tp->urg_data)) अणु
 			u32 urg_offset = tp->urg_seq - tp->copied_seq;
 
-			if (urg_offset < avail) {
-				if (urg_offset) {
+			अगर (urg_offset < avail) अणु
+				अगर (urg_offset) अणु
 					avail = urg_offset;
-				} else if (!sock_flag(sk, SOCK_URGINLINE)) {
+				पूर्ण अन्यथा अगर (!sock_flag(sk, SOCK_URGINLINE)) अणु
 					/* First byte is urgent, skip */
 					tp->copied_seq++;
 					offset++;
 					avail--;
-					if (!avail)
-						goto skip_copy;
-				}
-			}
-		}
-		/* Set record type if not already done. For a non-data record,
-		 * do not proceed if record type could not be copied.
+					अगर (!avail)
+						जाओ skip_copy;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		/* Set record type अगर not alपढ़ोy करोne. For a non-data record,
+		 * करो not proceed अगर record type could not be copied.
 		 */
-		if (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_TLS_HDR) {
-			struct tls_hdr *thdr = (struct tls_hdr *)skb->data;
-			int cerr = 0;
+		अगर (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_TLS_HDR) अणु
+			काष्ठा tls_hdr *thdr = (काष्ठा tls_hdr *)skb->data;
+			पूर्णांक cerr = 0;
 
 			cerr = put_cmsg(msg, SOL_TLS, TLS_GET_RECORD_TYPE,
-					sizeof(thdr->type), &thdr->type);
+					माप(thdr->type), &thdr->type);
 
-			if (cerr && thdr->type != TLS_RECORD_TYPE_DATA) {
+			अगर (cerr && thdr->type != TLS_RECORD_TYPE_DATA) अणु
 				copied = -EIO;
-				break;
-			}
-			/*  don't send tls header, skip copy */
-			goto skip_copy;
-		}
+				अवरोध;
+			पूर्ण
+			/*  करोn't send tls header, skip copy */
+			जाओ skip_copy;
+		पूर्ण
 
-		if (skb_copy_datagram_msg(skb, offset, msg, avail)) {
-			if (!copied) {
+		अगर (skb_copy_datagram_msg(skb, offset, msg, avail)) अणु
+			अगर (!copied) अणु
 				copied = -EFAULT;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		copied += avail;
 		len -= avail;
 		hws->copied_seq += avail;
 skip_copy:
-		if (tp->urg_data && after(tp->copied_seq, tp->urg_seq))
+		अगर (tp->urg_data && after(tp->copied_seq, tp->urg_seq))
 			tp->urg_data = 0;
 
-		if ((avail + offset) >= skb->len) {
-			struct sk_buff *next_skb;
-			if (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_TLS_HDR) {
+		अगर ((avail + offset) >= skb->len) अणु
+			काष्ठा sk_buff *next_skb;
+			अगर (ULP_SKB_CB(skb)->flags & ULPCB_FLAG_TLS_HDR) अणु
 				tp->copied_seq += skb->len;
 				hws->rcvpld = skb->hdr_len;
-			} else {
+			पूर्ण अन्यथा अणु
 				atomic_inc(&adap->chcr_stats.tls_pdu_rx);
 				tp->copied_seq += hws->rcvpld;
-			}
-			chtls_free_skb(sk, skb);
-			buffers_freed++;
+			पूर्ण
+			chtls_मुक्त_skb(sk, skb);
+			buffers_मुक्तd++;
 			hws->copied_seq = 0;
 			next_skb = skb_peek(&sk->sk_receive_queue);
-			if (copied >= target && !next_skb)
-				break;
-			if (ULP_SKB_CB(next_skb)->flags & ULPCB_FLAG_TLS_HDR)
-				break;
-		}
-	} while (len > 0);
+			अगर (copied >= target && !next_skb)
+				अवरोध;
+			अगर (ULP_SKB_CB(next_skb)->flags & ULPCB_FLAG_TLS_HDR)
+				अवरोध;
+		पूर्ण
+	पूर्ण जबतक (len > 0);
 
-	if (buffers_freed)
+	अगर (buffers_मुक्तd)
 		chtls_cleanup_rbuf(sk, copied);
 	release_sock(sk);
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
 /*
  * Peek at data in a socket's receive buffer.
  */
-static int peekmsg(struct sock *sk, struct msghdr *msg,
-		   size_t len, int nonblock, int flags)
-{
-	struct tcp_sock *tp = tcp_sk(sk);
+अटल पूर्णांक peekmsg(काष्ठा sock *sk, काष्ठा msghdr *msg,
+		   माप_प्रकार len, पूर्णांक nonblock, पूर्णांक flags)
+अणु
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
 	u32 peek_seq, offset;
-	struct sk_buff *skb;
-	int copied = 0;
-	size_t avail;          /* amount of available data in current skb */
-	long timeo;
+	काष्ठा sk_buff *skb;
+	पूर्णांक copied = 0;
+	माप_प्रकार avail;          /* amount of available data in current skb */
+	दीर्घ समयo;
 
 	lock_sock(sk);
-	timeo = sock_rcvtimeo(sk, nonblock);
+	समयo = sock_rcvसमयo(sk, nonblock);
 	peek_seq = tp->copied_seq;
 
-	do {
-		if (unlikely(tp->urg_data && tp->urg_seq == peek_seq)) {
-			if (copied)
-				break;
-			if (signal_pending(current)) {
-				copied = timeo ? sock_intr_errno(timeo) :
+	करो अणु
+		अगर (unlikely(tp->urg_data && tp->urg_seq == peek_seq)) अणु
+			अगर (copied)
+				अवरोध;
+			अगर (संकेत_pending(current)) अणु
+				copied = समयo ? sock_पूर्णांकr_त्रुटि_सं(समयo) :
 				-EAGAIN;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		skb_queue_walk(&sk->sk_receive_queue, skb) {
+		skb_queue_walk(&sk->sk_receive_queue, skb) अणु
 			offset = peek_seq - ULP_SKB_CB(skb)->seq;
-			if (offset < skb->len)
-				goto found_ok_skb;
-		}
+			अगर (offset < skb->len)
+				जाओ found_ok_skb;
+		पूर्ण
 
 		/* empty receive queue */
-		if (copied)
-			break;
-		if (sock_flag(sk, SOCK_DONE))
-			break;
-		if (sk->sk_err) {
+		अगर (copied)
+			अवरोध;
+		अगर (sock_flag(sk, SOCK_DONE))
+			अवरोध;
+		अगर (sk->sk_err) अणु
 			copied = sock_error(sk);
-			break;
-		}
-		if (sk->sk_shutdown & RCV_SHUTDOWN)
-			break;
-		if (sk->sk_state == TCP_CLOSE) {
+			अवरोध;
+		पूर्ण
+		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+			अवरोध;
+		अगर (sk->sk_state == TCP_CLOSE) अणु
 			copied = -ENOTCONN;
-			break;
-		}
-		if (!timeo) {
+			अवरोध;
+		पूर्ण
+		अगर (!समयo) अणु
 			copied = -EAGAIN;
-			break;
-		}
-		if (signal_pending(current)) {
-			copied = sock_intr_errno(timeo);
-			break;
-		}
+			अवरोध;
+		पूर्ण
+		अगर (संकेत_pending(current)) अणु
+			copied = sock_पूर्णांकr_त्रुटि_सं(समयo);
+			अवरोध;
+		पूर्ण
 
-		if (READ_ONCE(sk->sk_backlog.tail)) {
+		अगर (READ_ONCE(sk->sk_backlog.tail)) अणु
 			/* Do not sleep, just process backlog. */
 			release_sock(sk);
 			lock_sock(sk);
-		} else {
-			sk_wait_data(sk, &timeo, NULL);
-		}
+		पूर्ण अन्यथा अणु
+			sk_रुको_data(sk, &समयo, शून्य);
+		पूर्ण
 
-		if (unlikely(peek_seq != tp->copied_seq)) {
-			if (net_ratelimit())
+		अगर (unlikely(peek_seq != tp->copied_seq)) अणु
+			अगर (net_ratelimit())
 				pr_info("TCP(%s:%d), race in MSG_PEEK.\n",
 					current->comm, current->pid);
 			peek_seq = tp->copied_seq;
-		}
-		continue;
+		पूर्ण
+		जारी;
 
 found_ok_skb:
 		avail = skb->len - offset;
-		if (len < avail)
+		अगर (len < avail)
 			avail = len;
 		/*
 		 * Do we have urgent data here?  We need to skip over the
 		 * urgent byte.
 		 */
-		if (unlikely(tp->urg_data)) {
+		अगर (unlikely(tp->urg_data)) अणु
 			u32 urg_offset = tp->urg_seq - peek_seq;
 
-			if (urg_offset < avail) {
+			अगर (urg_offset < avail) अणु
 				/*
 				 * The amount of data we are preparing to copy
 				 * contains urgent data.
 				 */
-				if (!urg_offset) { /* First byte is urgent */
-					if (!sock_flag(sk, SOCK_URGINLINE)) {
+				अगर (!urg_offset) अणु /* First byte is urgent */
+					अगर (!sock_flag(sk, SOCK_URGINLINE)) अणु
 						peek_seq++;
 						offset++;
 						avail--;
-					}
-					if (!avail)
-						continue;
-				} else {
-					/* stop short of the urgent data */
+					पूर्ण
+					अगर (!avail)
+						जारी;
+				पूर्ण अन्यथा अणु
+					/* stop लघु of the urgent data */
 					avail = urg_offset;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * If MSG_TRUNC is specified the data is discarded.
+		 * If MSG_TRUNC is specअगरied the data is discarded.
 		 */
-		if (likely(!(flags & MSG_TRUNC)))
-			if (skb_copy_datagram_msg(skb, offset, msg, len)) {
-				if (!copied) {
+		अगर (likely(!(flags & MSG_TRUNC)))
+			अगर (skb_copy_datagram_msg(skb, offset, msg, len)) अणु
+				अगर (!copied) अणु
 					copied = -EFAULT;
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 		peek_seq += avail;
 		copied += avail;
 		len -= avail;
-	} while (len > 0);
+	पूर्ण जबतक (len > 0);
 
 	release_sock(sk);
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
-int chtls_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
-		  int nonblock, int flags, int *addr_len)
-{
-	struct tcp_sock *tp = tcp_sk(sk);
-	struct chtls_sock *csk;
-	unsigned long avail;    /* amount of available data in current skb */
-	int buffers_freed;
-	int copied = 0;
-	long timeo;
-	int target;             /* Read at least this many bytes */
+पूर्णांक chtls_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
+		  पूर्णांक nonblock, पूर्णांक flags, पूर्णांक *addr_len)
+अणु
+	काष्ठा tcp_sock *tp = tcp_sk(sk);
+	काष्ठा chtls_sock *csk;
+	अचिन्हित दीर्घ avail;    /* amount of available data in current skb */
+	पूर्णांक buffers_मुक्तd;
+	पूर्णांक copied = 0;
+	दीर्घ समयo;
+	पूर्णांक target;             /* Read at least this many bytes */
 
-	buffers_freed = 0;
+	buffers_मुक्तd = 0;
 
-	if (unlikely(flags & MSG_OOB))
-		return tcp_prot.recvmsg(sk, msg, len, nonblock, flags,
+	अगर (unlikely(flags & MSG_OOB))
+		वापस tcp_prot.recvmsg(sk, msg, len, nonblock, flags,
 					addr_len);
 
-	if (unlikely(flags & MSG_PEEK))
-		return peekmsg(sk, msg, len, nonblock, flags);
+	अगर (unlikely(flags & MSG_PEEK))
+		वापस peekmsg(sk, msg, len, nonblock, flags);
 
-	if (sk_can_busy_loop(sk) &&
+	अगर (sk_can_busy_loop(sk) &&
 	    skb_queue_empty_lockless(&sk->sk_receive_queue) &&
 	    sk->sk_state == TCP_ESTABLISHED)
 		sk_busy_loop(sk, nonblock);
@@ -1764,150 +1765,150 @@ int chtls_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 	lock_sock(sk);
 	csk = rcu_dereference_sk_user_data(sk);
 
-	if (is_tls_rx(csk))
-		return chtls_pt_recvmsg(sk, msg, len, nonblock,
+	अगर (is_tls_rx(csk))
+		वापस chtls_pt_recvmsg(sk, msg, len, nonblock,
 					flags, addr_len);
 
-	timeo = sock_rcvtimeo(sk, nonblock);
+	समयo = sock_rcvसमयo(sk, nonblock);
 	target = sock_rcvlowat(sk, flags & MSG_WAITALL, len);
 
-	if (unlikely(csk_flag(sk, CSK_UPDATE_RCV_WND)))
+	अगर (unlikely(csk_flag(sk, CSK_UPDATE_RCV_WND)))
 		chtls_cleanup_rbuf(sk, copied);
 
-	do {
-		struct sk_buff *skb;
+	करो अणु
+		काष्ठा sk_buff *skb;
 		u32 offset;
 
-		if (unlikely(tp->urg_data && tp->urg_seq == tp->copied_seq)) {
-			if (copied)
-				break;
-			if (signal_pending(current)) {
-				copied = timeo ? sock_intr_errno(timeo) :
+		अगर (unlikely(tp->urg_data && tp->urg_seq == tp->copied_seq)) अणु
+			अगर (copied)
+				अवरोध;
+			अगर (संकेत_pending(current)) अणु
+				copied = समयo ? sock_पूर्णांकr_त्रुटि_सं(समयo) :
 					-EAGAIN;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		skb = skb_peek(&sk->sk_receive_queue);
-		if (skb)
-			goto found_ok_skb;
+		अगर (skb)
+			जाओ found_ok_skb;
 
-		if (csk->wr_credits &&
+		अगर (csk->wr_credits &&
 		    skb_queue_len(&csk->txq) &&
 		    chtls_push_frames(csk, csk->wr_credits ==
 				      csk->wr_max_credits))
-			sk->sk_write_space(sk);
+			sk->sk_ग_लिखो_space(sk);
 
-		if (copied >= target && !READ_ONCE(sk->sk_backlog.tail))
-			break;
+		अगर (copied >= target && !READ_ONCE(sk->sk_backlog.tail))
+			अवरोध;
 
-		if (copied) {
-			if (sk->sk_err || sk->sk_state == TCP_CLOSE ||
-			    (sk->sk_shutdown & RCV_SHUTDOWN) ||
-			    signal_pending(current))
-				break;
-		} else {
-			if (sock_flag(sk, SOCK_DONE))
-				break;
-			if (sk->sk_err) {
+		अगर (copied) अणु
+			अगर (sk->sk_err || sk->sk_state == TCP_CLOSE ||
+			    (sk->sk_shutकरोwn & RCV_SHUTDOWN) ||
+			    संकेत_pending(current))
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर (sock_flag(sk, SOCK_DONE))
+				अवरोध;
+			अगर (sk->sk_err) अणु
 				copied = sock_error(sk);
-				break;
-			}
-			if (sk->sk_shutdown & RCV_SHUTDOWN)
-				break;
-			if (sk->sk_state == TCP_CLOSE) {
+				अवरोध;
+			पूर्ण
+			अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+				अवरोध;
+			अगर (sk->sk_state == TCP_CLOSE) अणु
 				copied = -ENOTCONN;
-				break;
-			}
-			if (!timeo) {
+				अवरोध;
+			पूर्ण
+			अगर (!समयo) अणु
 				copied = -EAGAIN;
-				break;
-			}
-			if (signal_pending(current)) {
-				copied = sock_intr_errno(timeo);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+			अगर (संकेत_pending(current)) अणु
+				copied = sock_पूर्णांकr_त्रुटि_सं(समयo);
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (READ_ONCE(sk->sk_backlog.tail)) {
+		अगर (READ_ONCE(sk->sk_backlog.tail)) अणु
 			release_sock(sk);
 			lock_sock(sk);
 			chtls_cleanup_rbuf(sk, copied);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (copied >= target)
-			break;
+		अगर (copied >= target)
+			अवरोध;
 		chtls_cleanup_rbuf(sk, copied);
-		sk_wait_data(sk, &timeo, NULL);
-		continue;
+		sk_रुको_data(sk, &समयo, शून्य);
+		जारी;
 
 found_ok_skb:
-		if (!skb->len) {
-			chtls_kfree_skb(sk, skb);
-			if (!copied && !timeo) {
+		अगर (!skb->len) अणु
+			chtls_kमुक्त_skb(sk, skb);
+			अगर (!copied && !समयo) अणु
 				copied = -EAGAIN;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (copied < target)
-				continue;
+			अगर (copied < target)
+				जारी;
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		offset = tp->copied_seq - ULP_SKB_CB(skb)->seq;
 		avail = skb->len - offset;
-		if (len < avail)
+		अगर (len < avail)
 			avail = len;
 
-		if (unlikely(tp->urg_data)) {
+		अगर (unlikely(tp->urg_data)) अणु
 			u32 urg_offset = tp->urg_seq - tp->copied_seq;
 
-			if (urg_offset < avail) {
-				if (urg_offset) {
+			अगर (urg_offset < avail) अणु
+				अगर (urg_offset) अणु
 					avail = urg_offset;
-				} else if (!sock_flag(sk, SOCK_URGINLINE)) {
+				पूर्ण अन्यथा अगर (!sock_flag(sk, SOCK_URGINLINE)) अणु
 					tp->copied_seq++;
 					offset++;
 					avail--;
-					if (!avail)
-						goto skip_copy;
-				}
-			}
-		}
+					अगर (!avail)
+						जाओ skip_copy;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (likely(!(flags & MSG_TRUNC))) {
-			if (skb_copy_datagram_msg(skb, offset,
-						  msg, avail)) {
-				if (!copied) {
+		अगर (likely(!(flags & MSG_TRUNC))) अणु
+			अगर (skb_copy_datagram_msg(skb, offset,
+						  msg, avail)) अणु
+				अगर (!copied) अणु
 					copied = -EFAULT;
-					break;
-				}
-			}
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		tp->copied_seq += avail;
 		copied += avail;
 		len -= avail;
 
 skip_copy:
-		if (tp->urg_data && after(tp->copied_seq, tp->urg_seq))
+		अगर (tp->urg_data && after(tp->copied_seq, tp->urg_seq))
 			tp->urg_data = 0;
 
-		if (avail + offset >= skb->len) {
-			chtls_free_skb(sk, skb);
-			buffers_freed++;
+		अगर (avail + offset >= skb->len) अणु
+			chtls_मुक्त_skb(sk, skb);
+			buffers_मुक्तd++;
 
-			if  (copied >= target &&
+			अगर  (copied >= target &&
 			     !skb_peek(&sk->sk_receive_queue))
-				break;
-		}
-	} while (len > 0);
+				अवरोध;
+		पूर्ण
+	पूर्ण जबतक (len > 0);
 
-	if (buffers_freed)
+	अगर (buffers_मुक्तd)
 		chtls_cleanup_rbuf(sk, copied);
 
 	release_sock(sk);
-	return copied;
-}
+	वापस copied;
+पूर्ण

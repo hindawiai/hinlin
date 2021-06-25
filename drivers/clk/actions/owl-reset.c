@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 //
 // Actions Semi Owl SoCs Reset Management Unit driver
 //
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
-#include <linux/delay.h>
-#include <linux/regmap.h>
-#include <linux/reset-controller.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset-controller.h>
 
-#include "owl-reset.h"
+#समावेश "owl-reset.h"
 
-static int owl_reset_assert(struct reset_controller_dev *rcdev,
-			    unsigned long id)
-{
-	struct owl_reset *reset = to_owl_reset(rcdev);
-	const struct owl_reset_map *map = &reset->reset_map[id];
+अटल पूर्णांक owl_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
+			    अचिन्हित दीर्घ id)
+अणु
+	काष्ठा owl_reset *reset = to_owl_reset(rcdev);
+	स्थिर काष्ठा owl_reset_map *map = &reset->reset_map[id];
 
-	return regmap_update_bits(reset->regmap, map->reg, map->bit, 0);
-}
+	वापस regmap_update_bits(reset->regmap, map->reg, map->bit, 0);
+पूर्ण
 
-static int owl_reset_deassert(struct reset_controller_dev *rcdev,
-			      unsigned long id)
-{
-	struct owl_reset *reset = to_owl_reset(rcdev);
-	const struct owl_reset_map *map = &reset->reset_map[id];
+अटल पूर्णांक owl_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
+			      अचिन्हित दीर्घ id)
+अणु
+	काष्ठा owl_reset *reset = to_owl_reset(rcdev);
+	स्थिर काष्ठा owl_reset_map *map = &reset->reset_map[id];
 
-	return regmap_update_bits(reset->regmap, map->reg, map->bit, map->bit);
-}
+	वापस regmap_update_bits(reset->regmap, map->reg, map->bit, map->bit);
+पूर्ण
 
-static int owl_reset_reset(struct reset_controller_dev *rcdev,
-			   unsigned long id)
-{
-	owl_reset_assert(rcdev, id);
+अटल पूर्णांक owl_reset_reset(काष्ठा reset_controller_dev *rcdev,
+			   अचिन्हित दीर्घ id)
+अणु
+	owl_reset_निश्चित(rcdev, id);
 	udelay(1);
-	owl_reset_deassert(rcdev, id);
+	owl_reset_deनिश्चित(rcdev, id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_reset_status(struct reset_controller_dev *rcdev,
-			    unsigned long id)
-{
-	struct owl_reset *reset = to_owl_reset(rcdev);
-	const struct owl_reset_map *map = &reset->reset_map[id];
+अटल पूर्णांक owl_reset_status(काष्ठा reset_controller_dev *rcdev,
+			    अचिन्हित दीर्घ id)
+अणु
+	काष्ठा owl_reset *reset = to_owl_reset(rcdev);
+	स्थिर काष्ठा owl_reset_map *map = &reset->reset_map[id];
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(reset->regmap, map->reg, &reg);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(reset->regmap, map->reg, &reg);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * The reset control API expects 0 if reset is not asserted,
+	 * The reset control API expects 0 अगर reset is not निश्चितed,
 	 * which is the opposite of what our hardware uses.
 	 */
-	return !(map->bit & reg);
-}
+	वापस !(map->bit & reg);
+पूर्ण
 
-const struct reset_control_ops owl_reset_ops = {
-	.assert		= owl_reset_assert,
-	.deassert	= owl_reset_deassert,
+स्थिर काष्ठा reset_control_ops owl_reset_ops = अणु
+	.निश्चित		= owl_reset_निश्चित,
+	.deनिश्चित	= owl_reset_deनिश्चित,
 	.reset		= owl_reset_reset,
 	.status		= owl_reset_status,
-};
+पूर्ण;

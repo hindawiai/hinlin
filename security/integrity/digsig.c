@@ -1,205 +1,206 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Intel Corporation
  *
  * Author:
- * Dmitry Kasatkin <dmitry.kasatkin@intel.com>
+ * Dmitry Kasatkin <dmitry.kasatkin@पूर्णांकel.com>
  */
 
-#include <linux/err.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/cred.h>
-#include <linux/kernel_read_file.h>
-#include <linux/key-type.h>
-#include <linux/digsig.h>
-#include <linux/vmalloc.h>
-#include <crypto/public_key.h>
-#include <keys/system_keyring.h>
+#समावेश <linux/err.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/kernel_पढ़ो_file.h>
+#समावेश <linux/key-type.h>
+#समावेश <linux/digsig.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <crypto/खुला_key.h>
+#समावेश <keys/प्रणाली_keyring.h>
 
-#include "integrity.h"
+#समावेश "integrity.h"
 
-static struct key *keyring[INTEGRITY_KEYRING_MAX];
+अटल काष्ठा key *keyring[INTEGRITY_KEYRING_MAX];
 
-static const char * const keyring_name[INTEGRITY_KEYRING_MAX] = {
-#ifndef CONFIG_INTEGRITY_TRUSTED_KEYRING
+अटल स्थिर अक्षर * स्थिर keyring_name[INTEGRITY_KEYRING_MAX] = अणु
+#अगर_अघोषित CONFIG_INTEGRITY_TRUSTED_KEYRING
 	"_evm",
 	"_ima",
-#else
+#अन्यथा
 	".evm",
 	".ima",
-#endif
+#पूर्ण_अगर
 	".platform",
-};
+पूर्ण;
 
-#ifdef CONFIG_IMA_KEYRINGS_PERMIT_SIGNED_BY_BUILTIN_OR_SECONDARY
-#define restrict_link_to_ima restrict_link_by_builtin_and_secondary_trusted
-#else
-#define restrict_link_to_ima restrict_link_by_builtin_trusted
-#endif
+#अगर_घोषित CONFIG_IMA_KEYRINGS_PERMIT_SIGNED_BY_BUILTIN_OR_SECONDARY
+#घोषणा restrict_link_to_ima restrict_link_by_builtin_and_secondary_trusted
+#अन्यथा
+#घोषणा restrict_link_to_ima restrict_link_by_builtin_trusted
+#पूर्ण_अगर
 
-static struct key *integrity_keyring_from_id(const unsigned int id)
-{
-	if (id >= INTEGRITY_KEYRING_MAX)
-		return ERR_PTR(-EINVAL);
+अटल काष्ठा key *पूर्णांकegrity_keyring_from_id(स्थिर अचिन्हित पूर्णांक id)
+अणु
+	अगर (id >= INTEGRITY_KEYRING_MAX)
+		वापस ERR_PTR(-EINVAL);
 
-	if (!keyring[id]) {
+	अगर (!keyring[id]) अणु
 		keyring[id] =
-			request_key(&key_type_keyring, keyring_name[id], NULL);
-		if (IS_ERR(keyring[id])) {
-			int err = PTR_ERR(keyring[id]);
+			request_key(&key_type_keyring, keyring_name[id], शून्य);
+		अगर (IS_ERR(keyring[id])) अणु
+			पूर्णांक err = PTR_ERR(keyring[id]);
 			pr_err("no %s keyring: %d\n", keyring_name[id], err);
-			keyring[id] = NULL;
-			return ERR_PTR(err);
-		}
-	}
+			keyring[id] = शून्य;
+			वापस ERR_PTR(err);
+		पूर्ण
+	पूर्ण
 
-	return keyring[id];
-}
+	वापस keyring[id];
+पूर्ण
 
-int integrity_digsig_verify(const unsigned int id, const char *sig, int siglen,
-			    const char *digest, int digestlen)
-{
-	struct key *keyring;
+पूर्णांक पूर्णांकegrity_digsig_verअगरy(स्थिर अचिन्हित पूर्णांक id, स्थिर अक्षर *sig, पूर्णांक siglen,
+			    स्थिर अक्षर *digest, पूर्णांक digestlen)
+अणु
+	काष्ठा key *keyring;
 
-	if (siglen < 2)
-		return -EINVAL;
+	अगर (siglen < 2)
+		वापस -EINVAL;
 
-	keyring = integrity_keyring_from_id(id);
-	if (IS_ERR(keyring))
-		return PTR_ERR(keyring);
+	keyring = पूर्णांकegrity_keyring_from_id(id);
+	अगर (IS_ERR(keyring))
+		वापस PTR_ERR(keyring);
 
-	switch (sig[1]) {
-	case 1:
+	चयन (sig[1]) अणु
+	हाल 1:
 		/* v1 API expect signature without xattr type */
-		return digsig_verify(keyring, sig + 1, siglen - 1, digest,
+		वापस digsig_verअगरy(keyring, sig + 1, siglen - 1, digest,
 				     digestlen);
-	case 2:
-		return asymmetric_verify(keyring, sig, siglen, digest,
+	हाल 2:
+		वापस asymmetric_verअगरy(keyring, sig, siglen, digest,
 					 digestlen);
-	}
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-int integrity_modsig_verify(const unsigned int id, const struct modsig *modsig)
-{
-	struct key *keyring;
+पूर्णांक पूर्णांकegrity_modsig_verअगरy(स्थिर अचिन्हित पूर्णांक id, स्थिर काष्ठा modsig *modsig)
+अणु
+	काष्ठा key *keyring;
 
-	keyring = integrity_keyring_from_id(id);
-	if (IS_ERR(keyring))
-		return PTR_ERR(keyring);
+	keyring = पूर्णांकegrity_keyring_from_id(id);
+	अगर (IS_ERR(keyring))
+		वापस PTR_ERR(keyring);
 
-	return ima_modsig_verify(keyring, modsig);
-}
+	वापस ima_modsig_verअगरy(keyring, modsig);
+पूर्ण
 
-static int __init __integrity_init_keyring(const unsigned int id,
+अटल पूर्णांक __init __पूर्णांकegrity_init_keyring(स्थिर अचिन्हित पूर्णांक id,
 					   key_perm_t perm,
-					   struct key_restriction *restriction)
-{
-	const struct cred *cred = current_cred();
-	int err = 0;
+					   काष्ठा key_restriction *restriction)
+अणु
+	स्थिर काष्ठा cred *cred = current_cred();
+	पूर्णांक err = 0;
 
 	keyring[id] = keyring_alloc(keyring_name[id], KUIDT_INIT(0),
 				    KGIDT_INIT(0), cred, perm,
-				    KEY_ALLOC_NOT_IN_QUOTA, restriction, NULL);
-	if (IS_ERR(keyring[id])) {
+				    KEY_ALLOC_NOT_IN_QUOTA, restriction, शून्य);
+	अगर (IS_ERR(keyring[id])) अणु
 		err = PTR_ERR(keyring[id]);
 		pr_info("Can't allocate %s keyring (%d)\n",
 			keyring_name[id], err);
-		keyring[id] = NULL;
-	} else {
-		if (id == INTEGRITY_KEYRING_PLATFORM)
-			set_platform_trusted_keys(keyring[id]);
-		if (id == INTEGRITY_KEYRING_IMA)
+		keyring[id] = शून्य;
+	पूर्ण अन्यथा अणु
+		अगर (id == INTEGRITY_KEYRING_PLATFORM)
+			set_platक्रमm_trusted_keys(keyring[id]);
+		अगर (id == INTEGRITY_KEYRING_IMA)
 			load_module_cert(keyring[id]);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int __init integrity_init_keyring(const unsigned int id)
-{
-	struct key_restriction *restriction;
+पूर्णांक __init पूर्णांकegrity_init_keyring(स्थिर अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा key_restriction *restriction;
 	key_perm_t perm;
 
 	perm = (KEY_POS_ALL & ~KEY_POS_SETATTR) | KEY_USR_VIEW
 		| KEY_USR_READ | KEY_USR_SEARCH;
 
-	if (id == INTEGRITY_KEYRING_PLATFORM) {
-		restriction = NULL;
-		goto out;
-	}
+	अगर (id == INTEGRITY_KEYRING_PLATFORM) अणु
+		restriction = शून्य;
+		जाओ out;
+	पूर्ण
 
-	if (!IS_ENABLED(CONFIG_INTEGRITY_TRUSTED_KEYRING))
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_INTEGRITY_TRUSTED_KEYRING))
+		वापस 0;
 
-	restriction = kzalloc(sizeof(struct key_restriction), GFP_KERNEL);
-	if (!restriction)
-		return -ENOMEM;
+	restriction = kzalloc(माप(काष्ठा key_restriction), GFP_KERNEL);
+	अगर (!restriction)
+		वापस -ENOMEM;
 
 	restriction->check = restrict_link_to_ima;
 	perm |= KEY_USR_WRITE;
 
 out:
-	return __integrity_init_keyring(id, perm, restriction);
-}
+	वापस __पूर्णांकegrity_init_keyring(id, perm, restriction);
+पूर्ण
 
-static int __init integrity_add_key(const unsigned int id, const void *data,
+अटल पूर्णांक __init पूर्णांकegrity_add_key(स्थिर अचिन्हित पूर्णांक id, स्थिर व्योम *data,
 				    off_t size, key_perm_t perm)
-{
+अणु
 	key_ref_t key;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	if (!keyring[id])
-		return -EINVAL;
+	अगर (!keyring[id])
+		वापस -EINVAL;
 
 	key = key_create_or_update(make_key_ref(keyring[id], 1), "asymmetric",
-				   NULL, data, size, perm,
+				   शून्य, data, size, perm,
 				   KEY_ALLOC_NOT_IN_QUOTA);
-	if (IS_ERR(key)) {
+	अगर (IS_ERR(key)) अणु
 		rc = PTR_ERR(key);
 		pr_err("Problem loading X.509 certificate %d\n", rc);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_notice("Loaded X.509 cert '%s'\n",
 			  key_ref_to_ptr(key)->description);
 		key_ref_put(key);
-	}
+	पूर्ण
 
-	return rc;
+	वापस rc;
 
-}
+पूर्ण
 
-int __init integrity_load_x509(const unsigned int id, const char *path)
-{
-	void *data = NULL;
-	size_t size;
-	int rc;
+पूर्णांक __init पूर्णांकegrity_load_x509(स्थिर अचिन्हित पूर्णांक id, स्थिर अक्षर *path)
+अणु
+	व्योम *data = शून्य;
+	माप_प्रकार size;
+	पूर्णांक rc;
 	key_perm_t perm;
 
-	rc = kernel_read_file_from_path(path, 0, &data, INT_MAX, NULL,
+	rc = kernel_पढ़ो_file_from_path(path, 0, &data, पूर्णांक_उच्च, शून्य,
 					READING_X509_CERTIFICATE);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		pr_err("Unable to open file: %s (%d)", path, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	size = rc;
 
 	perm = (KEY_POS_ALL & ~KEY_POS_SETATTR) | KEY_USR_VIEW | KEY_USR_READ;
 
 	pr_info("Loading X.509 certificate: %s\n", path);
-	rc = integrity_add_key(id, (const void *)data, size, perm);
+	rc = पूर्णांकegrity_add_key(id, (स्थिर व्योम *)data, size, perm);
 
-	vfree(data);
-	return rc;
-}
+	vमुक्त(data);
+	वापस rc;
+पूर्ण
 
-int __init integrity_load_cert(const unsigned int id, const char *source,
-			       const void *data, size_t len, key_perm_t perm)
-{
-	if (!data)
-		return -EINVAL;
+पूर्णांक __init पूर्णांकegrity_load_cert(स्थिर अचिन्हित पूर्णांक id, स्थिर अक्षर *source,
+			       स्थिर व्योम *data, माप_प्रकार len, key_perm_t perm)
+अणु
+	अगर (!data)
+		वापस -EINVAL;
 
 	pr_info("Loading X.509 certificate: %s\n", source);
-	return integrity_add_key(id, data, len, perm);
-}
+	वापस पूर्णांकegrity_add_key(id, data, len, perm);
+पूर्ण

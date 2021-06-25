@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef INTEL_RC6_TYPES_H
-#define INTEL_RC6_TYPES_H
+#अगर_अघोषित INTEL_RC6_TYPES_H
+#घोषणा INTEL_RC6_TYPES_H
 
-#include <linux/spinlock.h>
-#include <linux/types.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
 
-#include "intel_engine_types.h"
+#समावेश "intel_engine_types.h"
 
-struct drm_i915_gem_object;
+काष्ठा drm_i915_gem_object;
 
-struct intel_rc6 {
+काष्ठा पूर्णांकel_rc6 अणु
 	u64 prev_hw_residency[4];
 	u64 cur_residency[4];
 
 	u32 ctl_enable;
 
-	struct drm_i915_gem_object *pctx;
+	काष्ठा drm_i915_gem_object *pctx;
 
 	bool supported : 1;
 	bool enabled : 1;
 	bool manual : 1;
 	bool wakeref : 1;
-};
+पूर्ण;
 
-#endif /* INTEL_RC6_TYPES_H */
+#पूर्ण_अगर /* INTEL_RC6_TYPES_H */

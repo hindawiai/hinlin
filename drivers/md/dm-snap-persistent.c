@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2001-2002 Sistina Software (UK) Limited.
  * Copyright (C) 2006-2008 Red Hat GmbH
@@ -5,21 +6,21 @@
  * This file is released under the GPL.
  */
 
-#include "dm-exception-store.h"
+#समावेश "dm-exception-store.h"
 
-#include <linux/ctype.h>
-#include <linux/mm.h>
-#include <linux/pagemap.h>
-#include <linux/vmalloc.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/dm-io.h>
-#include <linux/dm-bufio.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/dm-पन.स>
+#समावेश <linux/dm-bufपन.स>
 
-#define DM_MSG_PREFIX "persistent snapshot"
-#define DM_CHUNK_SIZE_DEFAULT_SECTORS 32U	/* 16KB */
+#घोषणा DM_MSG_PREFIX "persistent snapshot"
+#घोषणा DM_CHUNK_SIZE_DEFAULT_SECTORS 32U	/* 16KB */
 
-#define DM_PREFETCH_CHUNKS		12
+#घोषणा DM_PREFETCH_CHUNKS		12
 
 /*-----------------------------------------------------------------
  * Persistent snapshots, by persistent we mean that the snapshot
@@ -30,39 +31,39 @@
  * We need to store a record of which parts of the origin have
  * been copied to the snapshot device.  The snapshot code
  * requires that we copy exception chunks to chunk aligned areas
- * of the COW store.  It makes sense therefore, to store the
+ * of the COW store.  It makes sense thereक्रमe, to store the
  * metadata in chunk size blocks.
  *
- * There is no backward or forward compatibility implemented,
- * snapshots with different disk versions than the kernel will
+ * There is no backward or क्रमward compatibility implemented,
+ * snapshots with dअगरferent disk versions than the kernel will
  * not be usable.  It is expected that "lvcreate" will blank out
- * the start of a fresh COW device before calling the snapshot
- * constructor.
+ * the start of a fresh COW device beक्रमe calling the snapshot
+ * स्थिरructor.
  *
  * The first chunk of the COW device just contains the header.
  * After this there is a chunk filled with exception metadata,
  * followed by as many exception chunks as can fit in the
  * metadata areas.
  *
- * All on disk structures are in little-endian format.  The end
+ * All on disk काष्ठाures are in little-endian क्रमmat.  The end
  * of the exceptions info is indicated by an exception with a
- * new_chunk of 0, which is invalid since it would point to the
+ * new_chunk of 0, which is invalid since it would poपूर्णांक to the
  * header chunk.
  */
 
 /*
- * Magic for persistent snapshots: "SnAp" - Feeble isn't it.
+ * Magic क्रम persistent snapshots: "SnAp" - Feeble isn't it.
  */
-#define SNAP_MAGIC 0x70416e53
+#घोषणा SNAP_MAGIC 0x70416e53
 
 /*
  * The on-disk version of the metadata.
  */
-#define SNAPSHOT_DISK_VERSION 1
+#घोषणा SNAPSHOT_DISK_VERSION 1
 
-#define NUM_SNAPSHOT_HDR_CHUNKS 1
+#घोषणा NUM_SNAPSHOT_HDR_CHUNKS 1
 
-struct disk_header {
+काष्ठा disk_header अणु
 	__le32 magic;
 
 	/*
@@ -79,50 +80,50 @@ struct disk_header {
 
 	/* In sectors */
 	__le32 chunk_size;
-} __packed;
+पूर्ण __packed;
 
-struct disk_exception {
+काष्ठा disk_exception अणु
 	__le64 old_chunk;
 	__le64 new_chunk;
-} __packed;
+पूर्ण __packed;
 
-struct core_exception {
-	uint64_t old_chunk;
-	uint64_t new_chunk;
-};
+काष्ठा core_exception अणु
+	uपूर्णांक64_t old_chunk;
+	uपूर्णांक64_t new_chunk;
+पूर्ण;
 
-struct commit_callback {
-	void (*callback)(void *, int success);
-	void *context;
-};
+काष्ठा commit_callback अणु
+	व्योम (*callback)(व्योम *, पूर्णांक success);
+	व्योम *context;
+पूर्ण;
 
 /*
- * The top level structure for a persistent exception store.
+ * The top level काष्ठाure क्रम a persistent exception store.
  */
-struct pstore {
-	struct dm_exception_store *store;
-	int version;
-	int valid;
-	uint32_t exceptions_per_area;
+काष्ठा pstore अणु
+	काष्ठा dm_exception_store *store;
+	पूर्णांक version;
+	पूर्णांक valid;
+	uपूर्णांक32_t exceptions_per_area;
 
 	/*
 	 * Now that we have an asynchronous kcopyd there is no
-	 * need for large chunk sizes, so it wont hurt to have a
+	 * need क्रम large chunk sizes, so it wont hurt to have a
 	 * whole chunks worth of metadata in memory at once.
 	 */
-	void *area;
+	व्योम *area;
 
 	/*
 	 * An area of zeros used to clear the next area.
 	 */
-	void *zero_area;
+	व्योम *zero_area;
 
 	/*
-	 * An area used for header. The header can be written
+	 * An area used क्रम header. The header can be written
 	 * concurrently with metadata (when invalidating the snapshot),
 	 * so it needs a separate buffer.
 	 */
-	void *header_area;
+	व्योम *header_area;
 
 	/*
 	 * Used to keep track of which metadata area the data in
@@ -131,43 +132,43 @@ struct pstore {
 	chunk_t current_area;
 
 	/*
-	 * The next free chunk for an exception.
+	 * The next मुक्त chunk क्रम an exception.
 	 *
 	 * When creating exceptions, all the chunks here and above are
-	 * free.  It holds the next chunk to be allocated.  On rare
-	 * occasions (e.g. after a system crash) holes can be left in
+	 * मुक्त.  It holds the next chunk to be allocated.  On rare
+	 * occasions (e.g. after a प्रणाली crash) holes can be left in
 	 * the exception store because chunks can be committed out of
 	 * order.
 	 *
-	 * When merging exceptions, it does not necessarily mean all the
-	 * chunks here and above are free.  It holds the value it would
-	 * have held if all chunks had been committed in order of
+	 * When merging exceptions, it करोes not necessarily mean all the
+	 * chunks here and above are मुक्त.  It holds the value it would
+	 * have held अगर all chunks had been committed in order of
 	 * allocation.  Consequently the value may occasionally be
 	 * slightly too low, but since it's only used for 'status' and
-	 * it can never reach its minimum value too early this doesn't
+	 * it can never reach its minimum value too early this करोesn't
 	 * matter.
 	 */
 
-	chunk_t next_free;
+	chunk_t next_मुक्त;
 
 	/*
-	 * The index of next free exception in the current
+	 * The index of next मुक्त exception in the current
 	 * metadata area.
 	 */
-	uint32_t current_committed;
+	uपूर्णांक32_t current_committed;
 
 	atomic_t pending_count;
-	uint32_t callback_count;
-	struct commit_callback *callbacks;
-	struct dm_io_client *io_client;
+	uपूर्णांक32_t callback_count;
+	काष्ठा commit_callback *callbacks;
+	काष्ठा dm_io_client *io_client;
 
-	struct workqueue_struct *metadata_wq;
-};
+	काष्ठा workqueue_काष्ठा *metadata_wq;
+पूर्ण;
 
-static int alloc_area(struct pstore *ps)
-{
-	int r = -ENOMEM;
-	size_t len;
+अटल पूर्णांक alloc_area(काष्ठा pstore *ps)
+अणु
+	पूर्णांक r = -ENOMEM;
+	माप_प्रकार len;
 
 	len = ps->store->chunk_size << SECTOR_SHIFT;
 
@@ -175,214 +176,214 @@ static int alloc_area(struct pstore *ps)
 	 * Allocate the chunk_size block of memory that will hold
 	 * a single metadata area.
 	 */
-	ps->area = vmalloc(len);
-	if (!ps->area)
-		goto err_area;
+	ps->area = vदो_स्मृति(len);
+	अगर (!ps->area)
+		जाओ err_area;
 
 	ps->zero_area = vzalloc(len);
-	if (!ps->zero_area)
-		goto err_zero_area;
+	अगर (!ps->zero_area)
+		जाओ err_zero_area;
 
-	ps->header_area = vmalloc(len);
-	if (!ps->header_area)
-		goto err_header_area;
+	ps->header_area = vदो_स्मृति(len);
+	अगर (!ps->header_area)
+		जाओ err_header_area;
 
-	return 0;
+	वापस 0;
 
 err_header_area:
-	vfree(ps->zero_area);
+	vमुक्त(ps->zero_area);
 
 err_zero_area:
-	vfree(ps->area);
+	vमुक्त(ps->area);
 
 err_area:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void free_area(struct pstore *ps)
-{
-	vfree(ps->area);
-	ps->area = NULL;
-	vfree(ps->zero_area);
-	ps->zero_area = NULL;
-	vfree(ps->header_area);
-	ps->header_area = NULL;
-}
+अटल व्योम मुक्त_area(काष्ठा pstore *ps)
+अणु
+	vमुक्त(ps->area);
+	ps->area = शून्य;
+	vमुक्त(ps->zero_area);
+	ps->zero_area = शून्य;
+	vमुक्त(ps->header_area);
+	ps->header_area = शून्य;
+पूर्ण
 
-struct mdata_req {
-	struct dm_io_region *where;
-	struct dm_io_request *io_req;
-	struct work_struct work;
-	int result;
-};
+काष्ठा mdata_req अणु
+	काष्ठा dm_io_region *where;
+	काष्ठा dm_io_request *io_req;
+	काष्ठा work_काष्ठा work;
+	पूर्णांक result;
+पूर्ण;
 
-static void do_metadata(struct work_struct *work)
-{
-	struct mdata_req *req = container_of(work, struct mdata_req, work);
+अटल व्योम करो_metadata(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mdata_req *req = container_of(work, काष्ठा mdata_req, work);
 
-	req->result = dm_io(req->io_req, 1, req->where, NULL);
-}
+	req->result = dm_io(req->io_req, 1, req->where, शून्य);
+पूर्ण
 
 /*
- * Read or write a chunk aligned and sized block of data from a device.
+ * Read or ग_लिखो a chunk aligned and sized block of data from a device.
  */
-static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, int op,
-		    int op_flags, int metadata)
-{
-	struct dm_io_region where = {
+अटल पूर्णांक chunk_io(काष्ठा pstore *ps, व्योम *area, chunk_t chunk, पूर्णांक op,
+		    पूर्णांक op_flags, पूर्णांक metadata)
+अणु
+	काष्ठा dm_io_region where = अणु
 		.bdev = dm_snap_cow(ps->store->snap)->bdev,
 		.sector = ps->store->chunk_size * chunk,
 		.count = ps->store->chunk_size,
-	};
-	struct dm_io_request io_req = {
+	पूर्ण;
+	काष्ठा dm_io_request io_req = अणु
 		.bi_op = op,
 		.bi_op_flags = op_flags,
 		.mem.type = DM_IO_VMA,
 		.mem.ptr.vma = area,
 		.client = ps->io_client,
-		.notify.fn = NULL,
-	};
-	struct mdata_req req;
+		.notअगरy.fn = शून्य,
+	पूर्ण;
+	काष्ठा mdata_req req;
 
-	if (!metadata)
-		return dm_io(&io_req, 1, &where, NULL);
+	अगर (!metadata)
+		वापस dm_io(&io_req, 1, &where, शून्य);
 
 	req.where = &where;
 	req.io_req = &io_req;
 
 	/*
-	 * Issue the synchronous I/O from a different thread
-	 * to avoid submit_bio_noacct recursion.
+	 * Issue the synchronous I/O from a dअगरferent thपढ़ो
+	 * to aव्योम submit_bio_noacct recursion.
 	 */
-	INIT_WORK_ONSTACK(&req.work, do_metadata);
+	INIT_WORK_ONSTACK(&req.work, करो_metadata);
 	queue_work(ps->metadata_wq, &req.work);
 	flush_workqueue(ps->metadata_wq);
 	destroy_work_on_stack(&req.work);
 
-	return req.result;
-}
+	वापस req.result;
+पूर्ण
 
 /*
  * Convert a metadata area index to a chunk index.
  */
-static chunk_t area_location(struct pstore *ps, chunk_t area)
-{
-	return NUM_SNAPSHOT_HDR_CHUNKS + ((ps->exceptions_per_area + 1) * area);
-}
+अटल chunk_t area_location(काष्ठा pstore *ps, chunk_t area)
+अणु
+	वापस NUM_SNAPSHOT_HDR_CHUNKS + ((ps->exceptions_per_area + 1) * area);
+पूर्ण
 
-static void skip_metadata(struct pstore *ps)
-{
-	uint32_t stride = ps->exceptions_per_area + 1;
-	chunk_t next_free = ps->next_free;
-	if (sector_div(next_free, stride) == NUM_SNAPSHOT_HDR_CHUNKS)
-		ps->next_free++;
-}
+अटल व्योम skip_metadata(काष्ठा pstore *ps)
+अणु
+	uपूर्णांक32_t stride = ps->exceptions_per_area + 1;
+	chunk_t next_मुक्त = ps->next_मुक्त;
+	अगर (sector_भाग(next_मुक्त, stride) == NUM_SNAPSHOT_HDR_CHUNKS)
+		ps->next_मुक्त++;
+पूर्ण
 
 /*
- * Read or write a metadata area.  Remembering to skip the first
+ * Read or ग_लिखो a metadata area.  Remembering to skip the first
  * chunk which holds the header.
  */
-static int area_io(struct pstore *ps, int op, int op_flags)
-{
+अटल पूर्णांक area_io(काष्ठा pstore *ps, पूर्णांक op, पूर्णांक op_flags)
+अणु
 	chunk_t chunk = area_location(ps, ps->current_area);
 
-	return chunk_io(ps, ps->area, chunk, op, op_flags, 0);
-}
+	वापस chunk_io(ps, ps->area, chunk, op, op_flags, 0);
+पूर्ण
 
-static void zero_memory_area(struct pstore *ps)
-{
-	memset(ps->area, 0, ps->store->chunk_size << SECTOR_SHIFT);
-}
+अटल व्योम zero_memory_area(काष्ठा pstore *ps)
+अणु
+	स_रखो(ps->area, 0, ps->store->chunk_size << SECTOR_SHIFT);
+पूर्ण
 
-static int zero_disk_area(struct pstore *ps, chunk_t area)
-{
-	return chunk_io(ps, ps->zero_area, area_location(ps, area),
+अटल पूर्णांक zero_disk_area(काष्ठा pstore *ps, chunk_t area)
+अणु
+	वापस chunk_io(ps, ps->zero_area, area_location(ps, area),
 			REQ_OP_WRITE, 0, 0);
-}
+पूर्ण
 
-static int read_header(struct pstore *ps, int *new_snapshot)
-{
-	int r;
-	struct disk_header *dh;
-	unsigned chunk_size;
-	int chunk_size_supplied = 1;
-	char *chunk_err;
+अटल पूर्णांक पढ़ो_header(काष्ठा pstore *ps, पूर्णांक *new_snapshot)
+अणु
+	पूर्णांक r;
+	काष्ठा disk_header *dh;
+	अचिन्हित chunk_size;
+	पूर्णांक chunk_size_supplied = 1;
+	अक्षर *chunk_err;
 
 	/*
-	 * Use default chunk size (or logical_block_size, if larger)
-	 * if none supplied
+	 * Use शेष chunk size (or logical_block_size, अगर larger)
+	 * अगर none supplied
 	 */
-	if (!ps->store->chunk_size) {
+	अगर (!ps->store->chunk_size) अणु
 		ps->store->chunk_size = max(DM_CHUNK_SIZE_DEFAULT_SECTORS,
 		    bdev_logical_block_size(dm_snap_cow(ps->store->snap)->
 					    bdev) >> 9);
 		ps->store->chunk_mask = ps->store->chunk_size - 1;
-		ps->store->chunk_shift = __ffs(ps->store->chunk_size);
+		ps->store->chunk_shअगरt = __ffs(ps->store->chunk_size);
 		chunk_size_supplied = 0;
-	}
+	पूर्ण
 
 	ps->io_client = dm_io_client_create();
-	if (IS_ERR(ps->io_client))
-		return PTR_ERR(ps->io_client);
+	अगर (IS_ERR(ps->io_client))
+		वापस PTR_ERR(ps->io_client);
 
 	r = alloc_area(ps);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = chunk_io(ps, ps->header_area, 0, REQ_OP_READ, 0, 1);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	dh = ps->header_area;
 
-	if (le32_to_cpu(dh->magic) == 0) {
+	अगर (le32_to_cpu(dh->magic) == 0) अणु
 		*new_snapshot = 1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (le32_to_cpu(dh->magic) != SNAP_MAGIC) {
+	अगर (le32_to_cpu(dh->magic) != SNAP_MAGIC) अणु
 		DMWARN("Invalid or corrupt snapshot");
 		r = -ENXIO;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	*new_snapshot = 0;
 	ps->valid = le32_to_cpu(dh->valid);
 	ps->version = le32_to_cpu(dh->version);
 	chunk_size = le32_to_cpu(dh->chunk_size);
 
-	if (ps->store->chunk_size == chunk_size)
-		return 0;
+	अगर (ps->store->chunk_size == chunk_size)
+		वापस 0;
 
-	if (chunk_size_supplied)
+	अगर (chunk_size_supplied)
 		DMWARN("chunk size %u in device metadata overrides "
 		       "table chunk size of %u.",
 		       chunk_size, ps->store->chunk_size);
 
 	/* We had a bogus chunk_size. Fix stuff up. */
-	free_area(ps);
+	मुक्त_area(ps);
 
 	r = dm_exception_store_set_chunk_size(ps->store, chunk_size,
 					      &chunk_err);
-	if (r) {
+	अगर (r) अणु
 		DMERR("invalid on-disk chunk size %u: %s.",
 		      chunk_size, chunk_err);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = alloc_area(ps);
-	return r;
+	वापस r;
 
 bad:
-	free_area(ps);
-	return r;
-}
+	मुक्त_area(ps);
+	वापस r;
+पूर्ण
 
-static int write_header(struct pstore *ps)
-{
-	struct disk_header *dh;
+अटल पूर्णांक ग_लिखो_header(काष्ठा pstore *ps)
+अणु
+	काष्ठा disk_header *dh;
 
-	memset(ps->header_area, 0, ps->store->chunk_size << SECTOR_SHIFT);
+	स_रखो(ps->header_area, 0, ps->store->chunk_size << SECTOR_SHIFT);
 
 	dh = ps->header_area;
 	dh->magic = cpu_to_le32(SNAP_MAGIC);
@@ -390,163 +391,163 @@ static int write_header(struct pstore *ps)
 	dh->version = cpu_to_le32(ps->version);
 	dh->chunk_size = cpu_to_le32(ps->store->chunk_size);
 
-	return chunk_io(ps, ps->header_area, 0, REQ_OP_WRITE, 0, 1);
-}
+	वापस chunk_io(ps, ps->header_area, 0, REQ_OP_WRITE, 0, 1);
+पूर्ण
 
 /*
- * Access functions for the disk exceptions, these do the endian conversions.
+ * Access functions क्रम the disk exceptions, these करो the endian conversions.
  */
-static struct disk_exception *get_exception(struct pstore *ps, void *ps_area,
-					    uint32_t index)
-{
+अटल काष्ठा disk_exception *get_exception(काष्ठा pstore *ps, व्योम *ps_area,
+					    uपूर्णांक32_t index)
+अणु
 	BUG_ON(index >= ps->exceptions_per_area);
 
-	return ((struct disk_exception *) ps_area) + index;
-}
+	वापस ((काष्ठा disk_exception *) ps_area) + index;
+पूर्ण
 
-static void read_exception(struct pstore *ps, void *ps_area,
-			   uint32_t index, struct core_exception *result)
-{
-	struct disk_exception *de = get_exception(ps, ps_area, index);
+अटल व्योम पढ़ो_exception(काष्ठा pstore *ps, व्योम *ps_area,
+			   uपूर्णांक32_t index, काष्ठा core_exception *result)
+अणु
+	काष्ठा disk_exception *de = get_exception(ps, ps_area, index);
 
 	/* copy it */
 	result->old_chunk = le64_to_cpu(de->old_chunk);
 	result->new_chunk = le64_to_cpu(de->new_chunk);
-}
+पूर्ण
 
-static void write_exception(struct pstore *ps,
-			    uint32_t index, struct core_exception *e)
-{
-	struct disk_exception *de = get_exception(ps, ps->area, index);
+अटल व्योम ग_लिखो_exception(काष्ठा pstore *ps,
+			    uपूर्णांक32_t index, काष्ठा core_exception *e)
+अणु
+	काष्ठा disk_exception *de = get_exception(ps, ps->area, index);
 
 	/* copy it */
 	de->old_chunk = cpu_to_le64(e->old_chunk);
 	de->new_chunk = cpu_to_le64(e->new_chunk);
-}
+पूर्ण
 
-static void clear_exception(struct pstore *ps, uint32_t index)
-{
-	struct disk_exception *de = get_exception(ps, ps->area, index);
+अटल व्योम clear_exception(काष्ठा pstore *ps, uपूर्णांक32_t index)
+अणु
+	काष्ठा disk_exception *de = get_exception(ps, ps->area, index);
 
 	/* clear it */
 	de->old_chunk = 0;
 	de->new_chunk = 0;
-}
+पूर्ण
 
 /*
  * Registers the exceptions that are present in the current area.
- * 'full' is filled in to indicate if the area has been
+ * 'full' is filled in to indicate अगर the area has been
  * filled.
  */
-static int insert_exceptions(struct pstore *ps, void *ps_area,
-			     int (*callback)(void *callback_context,
+अटल पूर्णांक insert_exceptions(काष्ठा pstore *ps, व्योम *ps_area,
+			     पूर्णांक (*callback)(व्योम *callback_context,
 					     chunk_t old, chunk_t new),
-			     void *callback_context,
-			     int *full)
-{
-	int r;
-	unsigned int i;
-	struct core_exception e;
+			     व्योम *callback_context,
+			     पूर्णांक *full)
+अणु
+	पूर्णांक r;
+	अचिन्हित पूर्णांक i;
+	काष्ठा core_exception e;
 
 	/* presume the area is full */
 	*full = 1;
 
-	for (i = 0; i < ps->exceptions_per_area; i++) {
-		read_exception(ps, ps_area, i, &e);
+	क्रम (i = 0; i < ps->exceptions_per_area; i++) अणु
+		पढ़ो_exception(ps, ps_area, i, &e);
 
 		/*
-		 * If the new_chunk is pointing at the start of
+		 * If the new_chunk is poपूर्णांकing at the start of
 		 * the COW device, where the first metadata area
 		 * is we know that we've hit the end of the
-		 * exceptions.  Therefore the area is not full.
+		 * exceptions.  Thereक्रमe the area is not full.
 		 */
-		if (e.new_chunk == 0LL) {
+		अगर (e.new_chunk == 0LL) अणु
 			ps->current_committed = i;
 			*full = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * Keep track of the start of the free chunks.
+		 * Keep track of the start of the मुक्त chunks.
 		 */
-		if (ps->next_free <= e.new_chunk)
-			ps->next_free = e.new_chunk + 1;
+		अगर (ps->next_मुक्त <= e.new_chunk)
+			ps->next_मुक्त = e.new_chunk + 1;
 
 		/*
 		 * Otherwise we add the exception to the snapshot.
 		 */
 		r = callback(callback_context, e.old_chunk, e.new_chunk);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int read_exceptions(struct pstore *ps,
-			   int (*callback)(void *callback_context, chunk_t old,
+अटल पूर्णांक पढ़ो_exceptions(काष्ठा pstore *ps,
+			   पूर्णांक (*callback)(व्योम *callback_context, chunk_t old,
 					   chunk_t new),
-			   void *callback_context)
-{
-	int r, full = 1;
-	struct dm_bufio_client *client;
+			   व्योम *callback_context)
+अणु
+	पूर्णांक r, full = 1;
+	काष्ठा dm_bufio_client *client;
 	chunk_t prefetch_area = 0;
 
 	client = dm_bufio_client_create(dm_snap_cow(ps->store->snap)->bdev,
 					ps->store->chunk_size << SECTOR_SHIFT,
-					1, 0, NULL, NULL);
+					1, 0, शून्य, शून्य);
 
-	if (IS_ERR(client))
-		return PTR_ERR(client);
+	अगर (IS_ERR(client))
+		वापस PTR_ERR(client);
 
 	/*
-	 * Setup for one current buffer + desired readahead buffers.
+	 * Setup क्रम one current buffer + desired पढ़ोahead buffers.
 	 */
 	dm_bufio_set_minimum_buffers(client, 1 + DM_PREFETCH_CHUNKS);
 
 	/*
-	 * Keeping reading chunks and inserting exceptions until
+	 * Keeping पढ़ोing chunks and inserting exceptions until
 	 * we find a partially full area.
 	 */
-	for (ps->current_area = 0; full; ps->current_area++) {
-		struct dm_buffer *bp;
-		void *area;
+	क्रम (ps->current_area = 0; full; ps->current_area++) अणु
+		काष्ठा dm_buffer *bp;
+		व्योम *area;
 		chunk_t chunk;
 
-		if (unlikely(prefetch_area < ps->current_area))
+		अगर (unlikely(prefetch_area < ps->current_area))
 			prefetch_area = ps->current_area;
 
-		if (DM_PREFETCH_CHUNKS) do {
+		अगर (DM_PREFETCH_CHUNKS) करो अणु
 			chunk_t pf_chunk = area_location(ps, prefetch_area);
-			if (unlikely(pf_chunk >= dm_bufio_get_device_size(client)))
-				break;
+			अगर (unlikely(pf_chunk >= dm_bufio_get_device_size(client)))
+				अवरोध;
 			dm_bufio_prefetch(client, pf_chunk, 1);
 			prefetch_area++;
-			if (unlikely(!prefetch_area))
-				break;
-		} while (prefetch_area <= ps->current_area + DM_PREFETCH_CHUNKS);
+			अगर (unlikely(!prefetch_area))
+				अवरोध;
+		पूर्ण जबतक (prefetch_area <= ps->current_area + DM_PREFETCH_CHUNKS);
 
 		chunk = area_location(ps, ps->current_area);
 
-		area = dm_bufio_read(client, chunk, &bp);
-		if (IS_ERR(area)) {
+		area = dm_bufio_पढ़ो(client, chunk, &bp);
+		अगर (IS_ERR(area)) अणु
 			r = PTR_ERR(area);
-			goto ret_destroy_bufio;
-		}
+			जाओ ret_destroy_bufio;
+		पूर्ण
 
 		r = insert_exceptions(ps, area, callback, callback_context,
 				      &full);
 
-		if (!full)
-			memcpy(ps->area, area, ps->store->chunk_size << SECTOR_SHIFT);
+		अगर (!full)
+			स_नकल(ps->area, area, ps->store->chunk_size << SECTOR_SHIFT);
 
 		dm_bufio_release(bp);
 
-		dm_bufio_forget(client, chunk);
+		dm_bufio_क्रमget(client, chunk);
 
-		if (unlikely(r))
-			goto ret_destroy_bufio;
-	}
+		अगर (unlikely(r))
+			जाओ ret_destroy_bufio;
+	पूर्ण
 
 	ps->current_area--;
 
@@ -557,22 +558,22 @@ static int read_exceptions(struct pstore *ps,
 ret_destroy_bufio:
 	dm_bufio_client_destroy(client);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static struct pstore *get_info(struct dm_exception_store *store)
-{
-	return (struct pstore *) store->context;
-}
+अटल काष्ठा pstore *get_info(काष्ठा dm_exception_store *store)
+अणु
+	वापस (काष्ठा pstore *) store->context;
+पूर्ण
 
-static void persistent_usage(struct dm_exception_store *store,
+अटल व्योम persistent_usage(काष्ठा dm_exception_store *store,
 			     sector_t *total_sectors,
 			     sector_t *sectors_allocated,
 			     sector_t *metadata_sectors)
-{
-	struct pstore *ps = get_info(store);
+अणु
+	काष्ठा pstore *ps = get_info(store);
 
-	*sectors_allocated = ps->next_free * store->chunk_size;
+	*sectors_allocated = ps->next_मुक्त * store->chunk_size;
 	*total_sectors = get_dev_size(dm_snap_cow(store->snap)->bdev);
 
 	/*
@@ -582,135 +583,135 @@ static void persistent_usage(struct dm_exception_store *store,
 	 */
 	*metadata_sectors = (ps->current_area + 1 + NUM_SNAPSHOT_HDR_CHUNKS) *
 			    store->chunk_size;
-}
+पूर्ण
 
-static void persistent_dtr(struct dm_exception_store *store)
-{
-	struct pstore *ps = get_info(store);
+अटल व्योम persistent_dtr(काष्ठा dm_exception_store *store)
+अणु
+	काष्ठा pstore *ps = get_info(store);
 
 	destroy_workqueue(ps->metadata_wq);
 
-	/* Created in read_header */
-	if (ps->io_client)
+	/* Created in पढ़ो_header */
+	अगर (ps->io_client)
 		dm_io_client_destroy(ps->io_client);
-	free_area(ps);
+	मुक्त_area(ps);
 
-	/* Allocated in persistent_read_metadata */
-	kvfree(ps->callbacks);
+	/* Allocated in persistent_पढ़ो_metadata */
+	kvमुक्त(ps->callbacks);
 
-	kfree(ps);
-}
+	kमुक्त(ps);
+पूर्ण
 
-static int persistent_read_metadata(struct dm_exception_store *store,
-				    int (*callback)(void *callback_context,
+अटल पूर्णांक persistent_पढ़ो_metadata(काष्ठा dm_exception_store *store,
+				    पूर्णांक (*callback)(व्योम *callback_context,
 						    chunk_t old, chunk_t new),
-				    void *callback_context)
-{
-	int r, new_snapshot;
-	struct pstore *ps = get_info(store);
+				    व्योम *callback_context)
+अणु
+	पूर्णांक r, new_snapshot;
+	काष्ठा pstore *ps = get_info(store);
 
 	/*
 	 * Read the snapshot header.
 	 */
-	r = read_header(ps, &new_snapshot);
-	if (r)
-		return r;
+	r = पढ़ो_header(ps, &new_snapshot);
+	अगर (r)
+		वापस r;
 
 	/*
 	 * Now we know correct chunk_size, complete the initialisation.
 	 */
 	ps->exceptions_per_area = (ps->store->chunk_size << SECTOR_SHIFT) /
-				  sizeof(struct disk_exception);
-	ps->callbacks = kvcalloc(ps->exceptions_per_area,
-				 sizeof(*ps->callbacks), GFP_KERNEL);
-	if (!ps->callbacks)
-		return -ENOMEM;
+				  माप(काष्ठा disk_exception);
+	ps->callbacks = kvसुस्मृति(ps->exceptions_per_area,
+				 माप(*ps->callbacks), GFP_KERNEL);
+	अगर (!ps->callbacks)
+		वापस -ENOMEM;
 
 	/*
 	 * Do we need to setup a new snapshot ?
 	 */
-	if (new_snapshot) {
-		r = write_header(ps);
-		if (r) {
+	अगर (new_snapshot) अणु
+		r = ग_लिखो_header(ps);
+		अगर (r) अणु
 			DMWARN("write_header failed");
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		ps->current_area = 0;
 		zero_memory_area(ps);
 		r = zero_disk_area(ps, 0);
-		if (r)
+		अगर (r)
 			DMWARN("zero_disk_area(0) failed");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	/*
 	 * Sanity checks.
 	 */
-	if (ps->version != SNAPSHOT_DISK_VERSION) {
+	अगर (ps->version != SNAPSHOT_DISK_VERSION) अणु
 		DMWARN("unable to handle snapshot disk version %d",
 		       ps->version);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Metadata are valid, but snapshot is invalidated
 	 */
-	if (!ps->valid)
-		return 1;
+	अगर (!ps->valid)
+		वापस 1;
 
 	/*
 	 * Read the metadata.
 	 */
-	r = read_exceptions(ps, callback, callback_context);
+	r = पढ़ो_exceptions(ps, callback, callback_context);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int persistent_prepare_exception(struct dm_exception_store *store,
-					struct dm_exception *e)
-{
-	struct pstore *ps = get_info(store);
+अटल पूर्णांक persistent_prepare_exception(काष्ठा dm_exception_store *store,
+					काष्ठा dm_exception *e)
+अणु
+	काष्ठा pstore *ps = get_info(store);
 	sector_t size = get_dev_size(dm_snap_cow(store->snap)->bdev);
 
 	/* Is there enough room ? */
-	if (size < ((ps->next_free + 1) * store->chunk_size))
-		return -ENOSPC;
+	अगर (size < ((ps->next_मुक्त + 1) * store->chunk_size))
+		वापस -ENOSPC;
 
-	e->new_chunk = ps->next_free;
+	e->new_chunk = ps->next_मुक्त;
 
 	/*
-	 * Move onto the next free pending, making sure to take
-	 * into account the location of the metadata chunks.
+	 * Move onto the next मुक्त pending, making sure to take
+	 * पूर्णांकo account the location of the metadata chunks.
 	 */
-	ps->next_free++;
+	ps->next_मुक्त++;
 	skip_metadata(ps);
 
 	atomic_inc(&ps->pending_count);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void persistent_commit_exception(struct dm_exception_store *store,
-					struct dm_exception *e, int valid,
-					void (*callback) (void *, int success),
-					void *callback_context)
-{
-	unsigned int i;
-	struct pstore *ps = get_info(store);
-	struct core_exception ce;
-	struct commit_callback *cb;
+अटल व्योम persistent_commit_exception(काष्ठा dm_exception_store *store,
+					काष्ठा dm_exception *e, पूर्णांक valid,
+					व्योम (*callback) (व्योम *, पूर्णांक success),
+					व्योम *callback_context)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा pstore *ps = get_info(store);
+	काष्ठा core_exception ce;
+	काष्ठा commit_callback *cb;
 
-	if (!valid)
+	अगर (!valid)
 		ps->valid = 0;
 
 	ce.old_chunk = e->old_chunk;
 	ce.new_chunk = e->new_chunk;
-	write_exception(ps, ps->current_committed++, &ce);
+	ग_लिखो_exception(ps, ps->current_committed++, &ce);
 
 	/*
 	 * Add the callback to the back of the array.  This code
 	 * is the only place where the callback array is
 	 * manipulated, and we know that it will never be called
-	 * multiple times concurrently.
+	 * multiple बार concurrently.
 	 */
 	cb = ps->callbacks + ps->callback_count++;
 	cb->callback = callback;
@@ -718,70 +719,70 @@ static void persistent_commit_exception(struct dm_exception_store *store,
 
 	/*
 	 * If there are exceptions in flight and we have not yet
-	 * filled this metadata area there's nothing more to do.
+	 * filled this metadata area there's nothing more to करो.
 	 */
-	if (!atomic_dec_and_test(&ps->pending_count) &&
+	अगर (!atomic_dec_and_test(&ps->pending_count) &&
 	    (ps->current_committed != ps->exceptions_per_area))
-		return;
+		वापस;
 
 	/*
 	 * If we completely filled the current area, then wipe the next one.
 	 */
-	if ((ps->current_committed == ps->exceptions_per_area) &&
+	अगर ((ps->current_committed == ps->exceptions_per_area) &&
 	    zero_disk_area(ps, ps->current_area + 1))
 		ps->valid = 0;
 
 	/*
 	 * Commit exceptions to disk.
 	 */
-	if (ps->valid && area_io(ps, REQ_OP_WRITE,
+	अगर (ps->valid && area_io(ps, REQ_OP_WRITE,
 				 REQ_PREFLUSH | REQ_FUA | REQ_SYNC))
 		ps->valid = 0;
 
 	/*
-	 * Advance to the next area if this one is full.
+	 * Advance to the next area अगर this one is full.
 	 */
-	if (ps->current_committed == ps->exceptions_per_area) {
+	अगर (ps->current_committed == ps->exceptions_per_area) अणु
 		ps->current_committed = 0;
 		ps->current_area++;
 		zero_memory_area(ps);
-	}
+	पूर्ण
 
-	for (i = 0; i < ps->callback_count; i++) {
+	क्रम (i = 0; i < ps->callback_count; i++) अणु
 		cb = ps->callbacks + i;
 		cb->callback(cb->context, ps->valid);
-	}
+	पूर्ण
 
 	ps->callback_count = 0;
-}
+पूर्ण
 
-static int persistent_prepare_merge(struct dm_exception_store *store,
+अटल पूर्णांक persistent_prepare_merge(काष्ठा dm_exception_store *store,
 				    chunk_t *last_old_chunk,
 				    chunk_t *last_new_chunk)
-{
-	struct pstore *ps = get_info(store);
-	struct core_exception ce;
-	int nr_consecutive;
-	int r;
+अणु
+	काष्ठा pstore *ps = get_info(store);
+	काष्ठा core_exception ce;
+	पूर्णांक nr_consecutive;
+	पूर्णांक r;
 
 	/*
 	 * When current area is empty, move back to preceding area.
 	 */
-	if (!ps->current_committed) {
+	अगर (!ps->current_committed) अणु
 		/*
 		 * Have we finished?
 		 */
-		if (!ps->current_area)
-			return 0;
+		अगर (!ps->current_area)
+			वापस 0;
 
 		ps->current_area--;
 		r = area_io(ps, REQ_OP_READ, 0);
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 		ps->current_committed = ps->exceptions_per_area;
-	}
+	पूर्ण
 
-	read_exception(ps, ps->area, ps->current_committed - 1, &ce);
+	पढ़ो_exception(ps, ps->area, ps->current_committed - 1, &ce);
 	*last_old_chunk = ce.old_chunk;
 	*last_new_chunk = ce.new_chunk;
 
@@ -789,136 +790,136 @@ static int persistent_prepare_merge(struct dm_exception_store *store,
 	 * Find number of consecutive chunks within the current area,
 	 * working backwards.
 	 */
-	for (nr_consecutive = 1; nr_consecutive < ps->current_committed;
-	     nr_consecutive++) {
-		read_exception(ps, ps->area,
+	क्रम (nr_consecutive = 1; nr_consecutive < ps->current_committed;
+	     nr_consecutive++) अणु
+		पढ़ो_exception(ps, ps->area,
 			       ps->current_committed - 1 - nr_consecutive, &ce);
-		if (ce.old_chunk != *last_old_chunk - nr_consecutive ||
+		अगर (ce.old_chunk != *last_old_chunk - nr_consecutive ||
 		    ce.new_chunk != *last_new_chunk - nr_consecutive)
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	return nr_consecutive;
-}
+	वापस nr_consecutive;
+पूर्ण
 
-static int persistent_commit_merge(struct dm_exception_store *store,
-				   int nr_merged)
-{
-	int r, i;
-	struct pstore *ps = get_info(store);
+अटल पूर्णांक persistent_commit_merge(काष्ठा dm_exception_store *store,
+				   पूर्णांक nr_merged)
+अणु
+	पूर्णांक r, i;
+	काष्ठा pstore *ps = get_info(store);
 
 	BUG_ON(nr_merged > ps->current_committed);
 
-	for (i = 0; i < nr_merged; i++)
+	क्रम (i = 0; i < nr_merged; i++)
 		clear_exception(ps, ps->current_committed - 1 - i);
 
 	r = area_io(ps, REQ_OP_WRITE, REQ_PREFLUSH | REQ_FUA);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	ps->current_committed -= nr_merged;
 
 	/*
-	 * At this stage, only persistent_usage() uses ps->next_free, so
-	 * we make no attempt to keep ps->next_free strictly accurate
+	 * At this stage, only persistent_usage() uses ps->next_मुक्त, so
+	 * we make no attempt to keep ps->next_मुक्त strictly accurate
 	 * as exceptions may have been committed out-of-order originally.
 	 * Once a snapshot has become merging, we set it to the value it
 	 * would have held had all the exceptions been committed in order.
 	 *
-	 * ps->current_area does not get reduced by prepare_merge() until
-	 * after commit_merge() has removed the nr_merged previous exceptions.
+	 * ps->current_area करोes not get reduced by prepare_merge() until
+	 * after commit_merge() has हटाओd the nr_merged previous exceptions.
 	 */
-	ps->next_free = area_location(ps, ps->current_area) +
+	ps->next_मुक्त = area_location(ps, ps->current_area) +
 			ps->current_committed + 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void persistent_drop_snapshot(struct dm_exception_store *store)
-{
-	struct pstore *ps = get_info(store);
+अटल व्योम persistent_drop_snapshot(काष्ठा dm_exception_store *store)
+अणु
+	काष्ठा pstore *ps = get_info(store);
 
 	ps->valid = 0;
-	if (write_header(ps))
+	अगर (ग_लिखो_header(ps))
 		DMWARN("write header failed");
-}
+पूर्ण
 
-static int persistent_ctr(struct dm_exception_store *store, char *options)
-{
-	struct pstore *ps;
-	int r;
+अटल पूर्णांक persistent_ctr(काष्ठा dm_exception_store *store, अक्षर *options)
+अणु
+	काष्ठा pstore *ps;
+	पूर्णांक r;
 
 	/* allocate the pstore */
-	ps = kzalloc(sizeof(*ps), GFP_KERNEL);
-	if (!ps)
-		return -ENOMEM;
+	ps = kzalloc(माप(*ps), GFP_KERNEL);
+	अगर (!ps)
+		वापस -ENOMEM;
 
 	ps->store = store;
 	ps->valid = 1;
 	ps->version = SNAPSHOT_DISK_VERSION;
-	ps->area = NULL;
-	ps->zero_area = NULL;
-	ps->header_area = NULL;
-	ps->next_free = NUM_SNAPSHOT_HDR_CHUNKS + 1; /* header and 1st area */
+	ps->area = शून्य;
+	ps->zero_area = शून्य;
+	ps->header_area = शून्य;
+	ps->next_मुक्त = NUM_SNAPSHOT_HDR_CHUNKS + 1; /* header and 1st area */
 	ps->current_committed = 0;
 
 	ps->callback_count = 0;
 	atomic_set(&ps->pending_count, 0);
-	ps->callbacks = NULL;
+	ps->callbacks = शून्य;
 
 	ps->metadata_wq = alloc_workqueue("ksnaphd", WQ_MEM_RECLAIM, 0);
-	if (!ps->metadata_wq) {
+	अगर (!ps->metadata_wq) अणु
 		DMERR("couldn't start header metadata update thread");
 		r = -ENOMEM;
-		goto err_workqueue;
-	}
+		जाओ err_workqueue;
+	पूर्ण
 
-	if (options) {
-		char overflow = toupper(options[0]);
-		if (overflow == 'O')
+	अगर (options) अणु
+		अक्षर overflow = बड़े(options[0]);
+		अगर (overflow == 'O')
 			store->userspace_supports_overflow = true;
-		else {
+		अन्यथा अणु
 			DMERR("Unsupported persistent store option: %s", options);
 			r = -EINVAL;
-			goto err_options;
-		}
-	}
+			जाओ err_options;
+		पूर्ण
+	पूर्ण
 
 	store->context = ps;
 
-	return 0;
+	वापस 0;
 
 err_options:
 	destroy_workqueue(ps->metadata_wq);
 err_workqueue:
-	kfree(ps);
+	kमुक्त(ps);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static unsigned persistent_status(struct dm_exception_store *store,
-				  status_type_t status, char *result,
-				  unsigned maxlen)
-{
-	unsigned sz = 0;
+अटल अचिन्हित persistent_status(काष्ठा dm_exception_store *store,
+				  status_type_t status, अक्षर *result,
+				  अचिन्हित maxlen)
+अणु
+	अचिन्हित sz = 0;
 
-	switch (status) {
-	case STATUSTYPE_INFO:
-		break;
-	case STATUSTYPE_TABLE:
+	चयन (status) अणु
+	हाल STATUSTYPE_INFO:
+		अवरोध;
+	हाल STATUSTYPE_TABLE:
 		DMEMIT(" %s %llu", store->userspace_supports_overflow ? "PO" : "P",
-		       (unsigned long long)store->chunk_size);
-	}
+		       (अचिन्हित दीर्घ दीर्घ)store->chunk_size);
+	पूर्ण
 
-	return sz;
-}
+	वापस sz;
+पूर्ण
 
-static struct dm_exception_store_type _persistent_type = {
+अटल काष्ठा dm_exception_store_type _persistent_type = अणु
 	.name = "persistent",
 	.module = THIS_MODULE,
 	.ctr = persistent_ctr,
 	.dtr = persistent_dtr,
-	.read_metadata = persistent_read_metadata,
+	.पढ़ो_metadata = persistent_पढ़ो_metadata,
 	.prepare_exception = persistent_prepare_exception,
 	.commit_exception = persistent_commit_exception,
 	.prepare_merge = persistent_prepare_merge,
@@ -926,14 +927,14 @@ static struct dm_exception_store_type _persistent_type = {
 	.drop_snapshot = persistent_drop_snapshot,
 	.usage = persistent_usage,
 	.status = persistent_status,
-};
+पूर्ण;
 
-static struct dm_exception_store_type _persistent_compat_type = {
+अटल काष्ठा dm_exception_store_type _persistent_compat_type = अणु
 	.name = "P",
 	.module = THIS_MODULE,
 	.ctr = persistent_ctr,
 	.dtr = persistent_dtr,
-	.read_metadata = persistent_read_metadata,
+	.पढ़ो_metadata = persistent_पढ़ो_metadata,
 	.prepare_exception = persistent_prepare_exception,
 	.commit_exception = persistent_commit_exception,
 	.prepare_merge = persistent_prepare_merge,
@@ -941,31 +942,31 @@ static struct dm_exception_store_type _persistent_compat_type = {
 	.drop_snapshot = persistent_drop_snapshot,
 	.usage = persistent_usage,
 	.status = persistent_status,
-};
+पूर्ण;
 
-int dm_persistent_snapshot_init(void)
-{
-	int r;
+पूर्णांक dm_persistent_snapshot_init(व्योम)
+अणु
+	पूर्णांक r;
 
-	r = dm_exception_store_type_register(&_persistent_type);
-	if (r) {
+	r = dm_exception_store_type_रेजिस्टर(&_persistent_type);
+	अगर (r) अणु
 		DMERR("Unable to register persistent exception store type");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	r = dm_exception_store_type_register(&_persistent_compat_type);
-	if (r) {
+	r = dm_exception_store_type_रेजिस्टर(&_persistent_compat_type);
+	अगर (r) अणु
 		DMERR("Unable to register old-style persistent exception "
 		      "store type");
-		dm_exception_store_type_unregister(&_persistent_type);
-		return r;
-	}
+		dm_exception_store_type_unरेजिस्टर(&_persistent_type);
+		वापस r;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void dm_persistent_snapshot_exit(void)
-{
-	dm_exception_store_type_unregister(&_persistent_type);
-	dm_exception_store_type_unregister(&_persistent_compat_type);
-}
+व्योम dm_persistent_snapshot_निकास(व्योम)
+अणु
+	dm_exception_store_type_unरेजिस्टर(&_persistent_type);
+	dm_exception_store_type_unरेजिस्टर(&_persistent_compat_type);
+पूर्ण

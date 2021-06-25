@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __BEN_VLAN_PROC_INC__
-#define __BEN_VLAN_PROC_INC__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __BEN_VLAN_PROC_INC__
+#घोषणा __BEN_VLAN_PROC_INC__
 
-#ifdef CONFIG_PROC_FS
-struct net;
+#अगर_घोषित CONFIG_PROC_FS
+काष्ठा net;
 
-int vlan_proc_init(struct net *net);
-void vlan_proc_rem_dev(struct net_device *vlandev);
-int vlan_proc_add_dev(struct net_device *vlandev);
-void vlan_proc_cleanup(struct net *net);
+पूर्णांक vlan_proc_init(काष्ठा net *net);
+व्योम vlan_proc_rem_dev(काष्ठा net_device *vlandev);
+पूर्णांक vlan_proc_add_dev(काष्ठा net_device *vlandev);
+व्योम vlan_proc_cleanup(काष्ठा net *net);
 
-#else /* No CONFIG_PROC_FS */
+#अन्यथा /* No CONFIG_PROC_FS */
 
-#define vlan_proc_init(net)	(0)
-#define vlan_proc_cleanup(net)	do {} while (0)
-#define vlan_proc_add_dev(dev)	({(void)(dev), 0; })
-#define vlan_proc_rem_dev(dev)	do {} while (0)
-#endif
+#घोषणा vlan_proc_init(net)	(0)
+#घोषणा vlan_proc_cleanup(net)	करो अणुपूर्ण जबतक (0)
+#घोषणा vlan_proc_add_dev(dev)	(अणु(व्योम)(dev), 0; पूर्ण)
+#घोषणा vlan_proc_rem_dev(dev)	करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#endif /* !(__BEN_VLAN_PROC_INC__) */
+#पूर्ण_अगर /* !(__BEN_VLAN_PROC_INC__) */

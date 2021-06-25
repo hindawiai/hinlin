@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * /proc interface for comedi
+ * /proc पूर्णांकerface क्रम comedi
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1998 David A. Schleef <ds@schleef.org>
@@ -13,62 +14,62 @@
  * was cool.
  */
 
-#include "comedidev.h"
-#include "comedi_internal.h"
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
+#समावेश "comedidev.h"
+#समावेश "comedi_internal.h"
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
 
-static int comedi_read(struct seq_file *m, void *v)
-{
-	int i;
-	int devices_q = 0;
-	struct comedi_driver *driv;
+अटल पूर्णांक comedi_पढ़ो(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक i;
+	पूर्णांक devices_q = 0;
+	काष्ठा comedi_driver *driv;
 
-	seq_printf(m, "comedi version " COMEDI_RELEASE "\nformat string: %s\n",
+	seq_म_लिखो(m, "comedi version " COMEDI_RELEASE "\nformat string: %s\n",
 		   "\"%2d: %-20s %-20s %4d\", i, driver_name, board_name, n_subdevices");
 
-	for (i = 0; i < COMEDI_NUM_BOARD_MINORS; i++) {
-		struct comedi_device *dev = comedi_dev_get_from_minor(i);
+	क्रम (i = 0; i < COMEDI_NUM_BOARD_MINORS; i++) अणु
+		काष्ठा comedi_device *dev = comedi_dev_get_from_minor(i);
 
-		if (!dev)
-			continue;
+		अगर (!dev)
+			जारी;
 
-		down_read(&dev->attach_lock);
-		if (dev->attached) {
+		करोwn_पढ़ो(&dev->attach_lock);
+		अगर (dev->attached) अणु
 			devices_q = 1;
-			seq_printf(m, "%2d: %-20s %-20s %4d\n",
+			seq_म_लिखो(m, "%2d: %-20s %-20s %4d\n",
 				   i, dev->driver->driver_name,
 				   dev->board_name, dev->n_subdevices);
-		}
-		up_read(&dev->attach_lock);
+		पूर्ण
+		up_पढ़ो(&dev->attach_lock);
 		comedi_dev_put(dev);
-	}
-	if (!devices_q)
-		seq_puts(m, "no devices\n");
+	पूर्ण
+	अगर (!devices_q)
+		seq_माला_दो(m, "no devices\n");
 
 	mutex_lock(&comedi_drivers_list_lock);
-	for (driv = comedi_drivers; driv; driv = driv->next) {
-		seq_printf(m, "%s:\n", driv->driver_name);
-		for (i = 0; i < driv->num_names; i++)
-			seq_printf(m, " %s\n",
-				   *(char **)((char *)driv->board_name +
+	क्रम (driv = comedi_drivers; driv; driv = driv->next) अणु
+		seq_म_लिखो(m, "%s:\n", driv->driver_name);
+		क्रम (i = 0; i < driv->num_names; i++)
+			seq_म_लिखो(m, " %s\n",
+				   *(अक्षर **)((अक्षर *)driv->board_name +
 					      i * driv->offset));
 
-		if (!driv->num_names)
-			seq_printf(m, " %s\n", driv->driver_name);
-	}
+		अगर (!driv->num_names)
+			seq_म_लिखो(m, " %s\n", driv->driver_name);
+	पूर्ण
 	mutex_unlock(&comedi_drivers_list_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init comedi_proc_init(void)
-{
-	if (!proc_create_single("comedi", 0444, NULL, comedi_read))
+व्योम __init comedi_proc_init(व्योम)
+अणु
+	अगर (!proc_create_single("comedi", 0444, शून्य, comedi_पढ़ो))
 		pr_warn("comedi: unable to create proc entry\n");
-}
+पूर्ण
 
-void comedi_proc_cleanup(void)
-{
-	remove_proc_entry("comedi", NULL);
-}
+व्योम comedi_proc_cleanup(व्योम)
+अणु
+	हटाओ_proc_entry("comedi", शून्य);
+पूर्ण

@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * ACRN_HSM: Handle I/O requests
  *
  * Copyright (C) 2020 Intel Corporation. All rights reserved.
  *
  * Authors:
- *	Jason Chen CJ <jason.cj.chen@intel.com>
- *	Fengwei Yin <fengwei.yin@intel.com>
+ *	Jason Chen CJ <jason.cj.chen@पूर्णांकel.com>
+ *	Fengwei Yin <fengwei.yin@पूर्णांकel.com>
  */
 
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kthread.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
 
-#include <asm/acrn.h>
+#समावेश <यंत्र/acrn.h>
 
-#include "acrn_drv.h"
+#समावेश "acrn_drv.h"
 
-static void ioreq_pause(void);
-static void ioreq_resume(void);
+अटल व्योम ioreq_छोड़ो(व्योम);
+अटल व्योम ioreq_resume(व्योम);
 
-static void ioreq_dispatcher(struct work_struct *work);
-static struct workqueue_struct *ioreq_wq;
-static DECLARE_WORK(ioreq_work, ioreq_dispatcher);
+अटल व्योम ioreq_dispatcher(काष्ठा work_काष्ठा *work);
+अटल काष्ठा workqueue_काष्ठा *ioreq_wq;
+अटल DECLARE_WORK(ioreq_work, ioreq_dispatcher);
 
-static inline bool has_pending_request(struct acrn_ioreq_client *client)
-{
-	return !bitmap_empty(client->ioreqs_map, ACRN_IO_REQUEST_MAX);
-}
+अटल अंतरभूत bool has_pending_request(काष्ठा acrn_ioreq_client *client)
+अणु
+	वापस !biपंचांगap_empty(client->ioreqs_map, ACRN_IO_REQUEST_MAX);
+पूर्ण
 
-static inline bool is_destroying(struct acrn_ioreq_client *client)
-{
-	return test_bit(ACRN_IOREQ_CLIENT_DESTROYING, &client->flags);
-}
+अटल अंतरभूत bool is_destroying(काष्ठा acrn_ioreq_client *client)
+अणु
+	वापस test_bit(ACRN_IOREQ_CLIENT_DESTROYING, &client->flags);
+पूर्ण
 
-static int ioreq_complete_request(struct acrn_vm *vm, u16 vcpu,
-				  struct acrn_io_request *acrn_req)
-{
+अटल पूर्णांक ioreq_complete_request(काष्ठा acrn_vm *vm, u16 vcpu,
+				  काष्ठा acrn_io_request *acrn_req)
+अणु
 	bool polling_mode;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	polling_mode = acrn_req->completion_polling;
-	/* Add barrier() to make sure the writes are done before completion */
+	/* Add barrier() to make sure the ग_लिखोs are करोne beक्रमe completion */
 	smp_store_release(&acrn_req->processed, ACRN_IOREQ_STATE_COMPLETE);
 
 	/*
-	 * To fulfill the requirement of real-time in several industry
-	 * scenarios, like automotive, ACRN can run under the partition mode,
+	 * To fulfill the requirement of real-समय in several industry
+	 * scenarios, like स्वतःmotive, ACRN can run under the partition mode,
 	 * in which User VMs and Service VM are bound to dedicated CPU cores.
-	 * Polling mode of handling the I/O request is introduced to achieve a
+	 * Polling mode of handling the I/O request is पूर्णांकroduced to achieve a
 	 * faster I/O request handling. In polling mode, the hypervisor polls
 	 * I/O request's completion. Once an I/O request is marked as
-	 * ACRN_IOREQ_STATE_COMPLETE, hypervisor resumes from the polling point
-	 * to continue the I/O request flow. Thus, the completion notification
+	 * ACRN_IOREQ_STATE_COMPLETE, hypervisor resumes from the polling poपूर्णांक
+	 * to जारी the I/O request flow. Thus, the completion notअगरication
 	 * from HSM of I/O request is not needed.  Please note,
-	 * completion_polling needs to be read before the I/O request being
-	 * marked as ACRN_IOREQ_STATE_COMPLETE to avoid racing with the
+	 * completion_polling needs to be पढ़ो beक्रमe the I/O request being
+	 * marked as ACRN_IOREQ_STATE_COMPLETE to aव्योम racing with the
 	 * hypervisor.
 	 */
-	if (!polling_mode) {
-		ret = hcall_notify_req_finish(vm->vmid, vcpu);
-		if (ret < 0)
+	अगर (!polling_mode) अणु
+		ret = hcall_notअगरy_req_finish(vm->vmid, vcpu);
+		अगर (ret < 0)
 			dev_err(acrn_dev.this_device,
 				"Notify I/O request finished failed!\n");
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int acrn_ioreq_complete_request(struct acrn_ioreq_client *client,
+अटल पूर्णांक acrn_ioreq_complete_request(काष्ठा acrn_ioreq_client *client,
 				       u16 vcpu,
-				       struct acrn_io_request *acrn_req)
-{
-	int ret;
+				       काष्ठा acrn_io_request *acrn_req)
+अणु
+	पूर्णांक ret;
 
-	if (vcpu >= client->vm->vcpu_num)
-		return -EINVAL;
+	अगर (vcpu >= client->vm->vcpu_num)
+		वापस -EINVAL;
 
 	clear_bit(vcpu, client->ioreqs_map);
-	if (!acrn_req) {
-		acrn_req = (struct acrn_io_request *)client->vm->ioreq_buf;
+	अगर (!acrn_req) अणु
+		acrn_req = (काष्ठा acrn_io_request *)client->vm->ioreq_buf;
 		acrn_req += vcpu;
-	}
+	पूर्ण
 
 	ret = ioreq_complete_request(client->vm, vcpu, acrn_req);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int acrn_ioreq_request_default_complete(struct acrn_vm *vm, u16 vcpu)
-{
-	int ret = 0;
+पूर्णांक acrn_ioreq_request_शेष_complete(काष्ठा acrn_vm *vm, u16 vcpu)
+अणु
+	पूर्णांक ret = 0;
 
 	spin_lock_bh(&vm->ioreq_clients_lock);
-	if (vm->default_client)
-		ret = acrn_ioreq_complete_request(vm->default_client,
-						  vcpu, NULL);
+	अगर (vm->शेष_client)
+		ret = acrn_ioreq_complete_request(vm->शेष_client,
+						  vcpu, शून्य);
 	spin_unlock_bh(&vm->ioreq_clients_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * acrn_ioreq_range_add() - Add an iorange monitored by an ioreq client
@@ -112,31 +113,31 @@ int acrn_ioreq_request_default_complete(struct acrn_vm *vm, u16 vcpu)
  *
  * Return: 0 on success, <0 on error
  */
-int acrn_ioreq_range_add(struct acrn_ioreq_client *client,
+पूर्णांक acrn_ioreq_range_add(काष्ठा acrn_ioreq_client *client,
 			 u32 type, u64 start, u64 end)
-{
-	struct acrn_ioreq_range *range;
+अणु
+	काष्ठा acrn_ioreq_range *range;
 
-	if (end < start) {
+	अगर (end < start) अणु
 		dev_err(acrn_dev.this_device,
 			"Invalid IO range [0x%llx,0x%llx]\n", start, end);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	range = kzalloc(sizeof(*range), GFP_KERNEL);
-	if (!range)
-		return -ENOMEM;
+	range = kzalloc(माप(*range), GFP_KERNEL);
+	अगर (!range)
+		वापस -ENOMEM;
 
 	range->type = type;
 	range->start = start;
 	range->end = end;
 
-	write_lock_bh(&client->range_lock);
+	ग_लिखो_lock_bh(&client->range_lock);
 	list_add(&range->list, &client->range_list);
-	write_unlock_bh(&client->range_lock);
+	ग_लिखो_unlock_bh(&client->range_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * acrn_ioreq_range_del() - Del an iorange monitored by an ioreq client
@@ -145,34 +146,34 @@ int acrn_ioreq_range_add(struct acrn_ioreq_client *client,
  * @start:	Start address of iorange
  * @end:	End address of iorange
  */
-void acrn_ioreq_range_del(struct acrn_ioreq_client *client,
+व्योम acrn_ioreq_range_del(काष्ठा acrn_ioreq_client *client,
 			  u32 type, u64 start, u64 end)
-{
-	struct acrn_ioreq_range *range;
+अणु
+	काष्ठा acrn_ioreq_range *range;
 
-	write_lock_bh(&client->range_lock);
-	list_for_each_entry(range, &client->range_list, list) {
-		if (type == range->type &&
+	ग_लिखो_lock_bh(&client->range_lock);
+	list_क्रम_each_entry(range, &client->range_list, list) अणु
+		अगर (type == range->type &&
 		    start == range->start &&
-		    end == range->end) {
+		    end == range->end) अणु
 			list_del(&range->list);
-			kfree(range);
-			break;
-		}
-	}
-	write_unlock_bh(&client->range_lock);
-}
+			kमुक्त(range);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock_bh(&client->range_lock);
+पूर्ण
 
 /*
- * ioreq_task() is the execution entity of handler thread of an I/O client.
- * The handler callback of the I/O client is called within the handler thread.
+ * ioreq_task() is the execution entity of handler thपढ़ो of an I/O client.
+ * The handler callback of the I/O client is called within the handler thपढ़ो.
  */
-static int ioreq_task(void *data)
-{
-	struct acrn_ioreq_client *client = data;
-	struct acrn_io_request *req;
-	unsigned long *ioreqs_map;
-	int vcpu, ret;
+अटल पूर्णांक ioreq_task(व्योम *data)
+अणु
+	काष्ठा acrn_ioreq_client *client = data;
+	काष्ठा acrn_io_request *req;
+	अचिन्हित दीर्घ *ioreqs_map;
+	पूर्णांक vcpu, ret;
 
 	/*
 	 * Lockless access to ioreqs_map is safe, because
@@ -180,160 +181,160 @@ static int ioreq_task(void *data)
 	 * 2) I/O requests arrives serialized. The access flow of ioreqs_map is:
 	 *	set_bit() - in ioreq_work handler
 	 *	Handler callback handles corresponding I/O request
-	 *	clear_bit() - in handler thread (include ACRN userspace)
+	 *	clear_bit() - in handler thपढ़ो (include ACRN userspace)
 	 *	Mark corresponding I/O request completed
-	 *	Loop again if a new I/O request occurs
+	 *	Loop again अगर a new I/O request occurs
 	 */
 	ioreqs_map = client->ioreqs_map;
-	while (!kthread_should_stop()) {
-		acrn_ioreq_client_wait(client);
-		while (has_pending_request(client)) {
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		acrn_ioreq_client_रुको(client);
+		जबतक (has_pending_request(client)) अणु
 			vcpu = find_first_bit(ioreqs_map, client->vm->vcpu_num);
 			req = client->vm->ioreq_buf->req_slot + vcpu;
 			ret = client->handler(client, req);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(acrn_dev.this_device,
 					"IO handle failure: %d\n", ret);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			acrn_ioreq_complete_request(client, vcpu, req);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * For the non-default I/O clients, give them chance to complete the current
- * I/O requests if there are any. For the default I/O client, it is safe to
+ * For the non-शेष I/O clients, give them chance to complete the current
+ * I/O requests अगर there are any. For the शेष I/O client, it is safe to
  * clear all pending I/O requests because the clearing request is from ACRN
  * userspace.
  */
-void acrn_ioreq_request_clear(struct acrn_vm *vm)
-{
-	struct acrn_ioreq_client *client;
+व्योम acrn_ioreq_request_clear(काष्ठा acrn_vm *vm)
+अणु
+	काष्ठा acrn_ioreq_client *client;
 	bool has_pending = false;
-	unsigned long vcpu;
-	int retry = 10;
+	अचिन्हित दीर्घ vcpu;
+	पूर्णांक retry = 10;
 
 	/*
 	 * IO requests of this VM will be completed directly in
-	 * acrn_ioreq_dispatch if ACRN_VM_FLAG_CLEARING_IOREQ flag is set.
+	 * acrn_ioreq_dispatch अगर ACRN_VM_FLAG_CLEARING_IOREQ flag is set.
 	 */
 	set_bit(ACRN_VM_FLAG_CLEARING_IOREQ, &vm->flags);
 
 	/*
-	 * acrn_ioreq_request_clear is only called in VM reset case. Simply
-	 * wait 100ms in total for the IO requests' completion.
+	 * acrn_ioreq_request_clear is only called in VM reset हाल. Simply
+	 * रुको 100ms in total क्रम the IO requests' completion.
 	 */
-	do {
+	करो अणु
 		spin_lock_bh(&vm->ioreq_clients_lock);
-		list_for_each_entry(client, &vm->ioreq_clients, list) {
+		list_क्रम_each_entry(client, &vm->ioreq_clients, list) अणु
 			has_pending = has_pending_request(client);
-			if (has_pending)
-				break;
-		}
+			अगर (has_pending)
+				अवरोध;
+		पूर्ण
 		spin_unlock_bh(&vm->ioreq_clients_lock);
 
-		if (has_pending)
-			schedule_timeout_interruptible(HZ / 100);
-	} while (has_pending && --retry > 0);
-	if (retry == 0)
+		अगर (has_pending)
+			schedule_समयout_पूर्णांकerruptible(HZ / 100);
+	पूर्ण जबतक (has_pending && --retry > 0);
+	अगर (retry == 0)
 		dev_warn(acrn_dev.this_device,
 			 "%s cannot flush pending request!\n", client->name);
 
-	/* Clear all ioreqs belonging to the default client */
+	/* Clear all ioreqs beदीर्घing to the शेष client */
 	spin_lock_bh(&vm->ioreq_clients_lock);
-	client = vm->default_client;
-	if (client) {
+	client = vm->शेष_client;
+	अगर (client) अणु
 		vcpu = find_next_bit(client->ioreqs_map,
 				     ACRN_IO_REQUEST_MAX, 0);
-		while (vcpu < ACRN_IO_REQUEST_MAX) {
-			acrn_ioreq_complete_request(client, vcpu, NULL);
+		जबतक (vcpu < ACRN_IO_REQUEST_MAX) अणु
+			acrn_ioreq_complete_request(client, vcpu, शून्य);
 			vcpu = find_next_bit(client->ioreqs_map,
 					     ACRN_IO_REQUEST_MAX, vcpu + 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&vm->ioreq_clients_lock);
 
 	/* Clear ACRN_VM_FLAG_CLEARING_IOREQ flag after the clearing */
 	clear_bit(ACRN_VM_FLAG_CLEARING_IOREQ, &vm->flags);
-}
+पूर्ण
 
-int acrn_ioreq_client_wait(struct acrn_ioreq_client *client)
-{
-	if (client->is_default) {
+पूर्णांक acrn_ioreq_client_रुको(काष्ठा acrn_ioreq_client *client)
+अणु
+	अगर (client->is_शेष) अणु
 		/*
-		 * In the default client, a user space thread waits on the
-		 * waitqueue. The is_destroying() check is used to notify user
+		 * In the शेष client, a user space thपढ़ो रुकोs on the
+		 * रुकोqueue. The is_destroying() check is used to notअगरy user
 		 * space the client is going to be destroyed.
 		 */
-		wait_event_interruptible(client->wq,
+		रुको_event_पूर्णांकerruptible(client->wq,
 					 has_pending_request(client) ||
 					 is_destroying(client));
-		if (is_destroying(client))
-			return -ENODEV;
-	} else {
-		wait_event_interruptible(client->wq,
+		अगर (is_destroying(client))
+			वापस -ENODEV;
+	पूर्ण अन्यथा अणु
+		रुको_event_पूर्णांकerruptible(client->wq,
 					 has_pending_request(client) ||
-					 kthread_should_stop());
-	}
+					 kthपढ़ो_should_stop());
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool is_cfg_addr(struct acrn_io_request *req)
-{
-	return ((req->type == ACRN_IOREQ_TYPE_PORTIO) &&
+अटल bool is_cfg_addr(काष्ठा acrn_io_request *req)
+अणु
+	वापस ((req->type == ACRN_IOREQ_TYPE_PORTIO) &&
 		(req->reqs.pio_request.address == 0xcf8));
-}
+पूर्ण
 
-static bool is_cfg_data(struct acrn_io_request *req)
-{
-	return ((req->type == ACRN_IOREQ_TYPE_PORTIO) &&
+अटल bool is_cfg_data(काष्ठा acrn_io_request *req)
+अणु
+	वापस ((req->type == ACRN_IOREQ_TYPE_PORTIO) &&
 		((req->reqs.pio_request.address >= 0xcfc) &&
 		 (req->reqs.pio_request.address < (0xcfc + 4))));
-}
+पूर्ण
 
 /* The low 8-bit of supported pci_reg addr.*/
-#define PCI_LOWREG_MASK  0xFC
+#घोषणा PCI_LOWREG_MASK  0xFC
 /* The high 4-bit of supported pci_reg addr */
-#define PCI_HIGHREG_MASK 0xF00
+#घोषणा PCI_HIGHREG_MASK 0xF00
 /* Max number of supported functions */
-#define PCI_FUNCMAX	7
+#घोषणा PCI_FUNCMAX	7
 /* Max number of supported slots */
-#define PCI_SLOTMAX	31
+#घोषणा PCI_SLOTMAX	31
 /* Max number of supported buses */
-#define PCI_BUSMAX	255
-#define CONF1_ENABLE	0x80000000UL
+#घोषणा PCI_BUSMAX	255
+#घोषणा CONF1_ENABLE	0x80000000UL
 /*
  * A PCI configuration space access via PIO 0xCF8 and 0xCFC normally has two
  * following steps:
- *   1) writes address into 0xCF8 port
+ *   1) ग_लिखोs address पूर्णांकo 0xCF8 port
  *   2) accesses data in/from 0xCFC
- * This function combines such paired PCI configuration space I/O requests into
- * one ACRN_IOREQ_TYPE_PCICFG type I/O request and continues the processing.
+ * This function combines such paired PCI configuration space I/O requests पूर्णांकo
+ * one ACRN_IOREQ_TYPE_PCICFG type I/O request and जारीs the processing.
  */
-static bool handle_cf8cfc(struct acrn_vm *vm,
-			  struct acrn_io_request *req, u16 vcpu)
-{
-	int offset, pci_cfg_addr, pci_reg;
+अटल bool handle_cf8cfc(काष्ठा acrn_vm *vm,
+			  काष्ठा acrn_io_request *req, u16 vcpu)
+अणु
+	पूर्णांक offset, pci_cfg_addr, pci_reg;
 	bool is_handled = false;
 
-	if (is_cfg_addr(req)) {
+	अगर (is_cfg_addr(req)) अणु
 		WARN_ON(req->reqs.pio_request.size != 4);
-		if (req->reqs.pio_request.direction == ACRN_IOREQ_DIR_WRITE)
+		अगर (req->reqs.pio_request.direction == ACRN_IOREQ_सूची_WRITE)
 			vm->pci_conf_addr = req->reqs.pio_request.value;
-		else
+		अन्यथा
 			req->reqs.pio_request.value = vm->pci_conf_addr;
 		is_handled = true;
-	} else if (is_cfg_data(req)) {
-		if (!(vm->pci_conf_addr & CONF1_ENABLE)) {
-			if (req->reqs.pio_request.direction ==
-					ACRN_IOREQ_DIR_READ)
+	पूर्ण अन्यथा अगर (is_cfg_data(req)) अणु
+		अगर (!(vm->pci_conf_addr & CONF1_ENABLE)) अणु
+			अगर (req->reqs.pio_request.direction ==
+					ACRN_IOREQ_सूची_READ)
 				req->reqs.pio_request.value = 0xffffffff;
 			is_handled = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			offset = req->reqs.pio_request.address - 0xcfc;
 
 			req->type = ACRN_IOREQ_TYPE_PCICFG;
@@ -347,311 +348,311 @@ static bool handle_cf8cfc(struct acrn_vm *vm,
 			pci_reg = (pci_cfg_addr & PCI_LOWREG_MASK) +
 				   ((pci_cfg_addr >> 16) & PCI_HIGHREG_MASK);
 			req->reqs.pci_request.reg = pci_reg + offset;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (is_handled)
+	अगर (is_handled)
 		ioreq_complete_request(vm, vcpu, req);
 
-	return is_handled;
-}
+	वापस is_handled;
+पूर्ण
 
-static bool in_range(struct acrn_ioreq_range *range,
-		     struct acrn_io_request *req)
-{
+अटल bool in_range(काष्ठा acrn_ioreq_range *range,
+		     काष्ठा acrn_io_request *req)
+अणु
 	bool ret = false;
 
-	if (range->type == req->type) {
-		switch (req->type) {
-		case ACRN_IOREQ_TYPE_MMIO:
-			if (req->reqs.mmio_request.address >= range->start &&
+	अगर (range->type == req->type) अणु
+		चयन (req->type) अणु
+		हाल ACRN_IOREQ_TYPE_MMIO:
+			अगर (req->reqs.mmio_request.address >= range->start &&
 			    (req->reqs.mmio_request.address +
 			     req->reqs.mmio_request.size - 1) <= range->end)
 				ret = true;
-			break;
-		case ACRN_IOREQ_TYPE_PORTIO:
-			if (req->reqs.pio_request.address >= range->start &&
+			अवरोध;
+		हाल ACRN_IOREQ_TYPE_PORTIO:
+			अगर (req->reqs.pio_request.address >= range->start &&
 			    (req->reqs.pio_request.address +
 			     req->reqs.pio_request.size - 1) <= range->end)
 				ret = true;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct acrn_ioreq_client *find_ioreq_client(struct acrn_vm *vm,
-						   struct acrn_io_request *req)
-{
-	struct acrn_ioreq_client *client, *found = NULL;
-	struct acrn_ioreq_range *range;
+अटल काष्ठा acrn_ioreq_client *find_ioreq_client(काष्ठा acrn_vm *vm,
+						   काष्ठा acrn_io_request *req)
+अणु
+	काष्ठा acrn_ioreq_client *client, *found = शून्य;
+	काष्ठा acrn_ioreq_range *range;
 
-	lockdep_assert_held(&vm->ioreq_clients_lock);
+	lockdep_निश्चित_held(&vm->ioreq_clients_lock);
 
-	list_for_each_entry(client, &vm->ioreq_clients, list) {
-		read_lock_bh(&client->range_lock);
-		list_for_each_entry(range, &client->range_list, list) {
-			if (in_range(range, req)) {
+	list_क्रम_each_entry(client, &vm->ioreq_clients, list) अणु
+		पढ़ो_lock_bh(&client->range_lock);
+		list_क्रम_each_entry(range, &client->range_list, list) अणु
+			अगर (in_range(range, req)) अणु
 				found = client;
-				break;
-			}
-		}
-		read_unlock_bh(&client->range_lock);
-		if (found)
-			break;
-	}
-	return found ? found : vm->default_client;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		पढ़ो_unlock_bh(&client->range_lock);
+		अगर (found)
+			अवरोध;
+	पूर्ण
+	वापस found ? found : vm->शेष_client;
+पूर्ण
 
 /**
  * acrn_ioreq_client_create() - Create an ioreq client
- * @vm:		The VM that this client belongs to
+ * @vm:		The VM that this client beदीर्घs to
  * @handler:	The ioreq_handler of ioreq client acrn_hsm will create a kernel
- *		thread and call the handler to handle I/O requests.
- * @priv:	Private data for the handler
- * @is_default:	If it is the default client
+ *		thपढ़ो and call the handler to handle I/O requests.
+ * @priv:	Private data क्रम the handler
+ * @is_शेष:	If it is the शेष client
  * @name:	The name of ioreq client
  *
- * Return: acrn_ioreq_client pointer on success, NULL on error
+ * Return: acrn_ioreq_client poपूर्णांकer on success, शून्य on error
  */
-struct acrn_ioreq_client *acrn_ioreq_client_create(struct acrn_vm *vm,
+काष्ठा acrn_ioreq_client *acrn_ioreq_client_create(काष्ठा acrn_vm *vm,
 						   ioreq_handler_t handler,
-						   void *priv, bool is_default,
-						   const char *name)
-{
-	struct acrn_ioreq_client *client;
+						   व्योम *priv, bool is_शेष,
+						   स्थिर अक्षर *name)
+अणु
+	काष्ठा acrn_ioreq_client *client;
 
-	if (!handler && !is_default) {
+	अगर (!handler && !is_शेष) अणु
 		dev_dbg(acrn_dev.this_device,
 			"Cannot create non-default client w/o handler!\n");
-		return NULL;
-	}
-	client = kzalloc(sizeof(*client), GFP_KERNEL);
-	if (!client)
-		return NULL;
+		वापस शून्य;
+	पूर्ण
+	client = kzalloc(माप(*client), GFP_KERNEL);
+	अगर (!client)
+		वापस शून्य;
 
 	client->handler = handler;
 	client->vm = vm;
 	client->priv = priv;
-	client->is_default = is_default;
-	if (name)
-		strncpy(client->name, name, sizeof(client->name) - 1);
+	client->is_शेष = is_शेष;
+	अगर (name)
+		म_नकलन(client->name, name, माप(client->name) - 1);
 	rwlock_init(&client->range_lock);
 	INIT_LIST_HEAD(&client->range_list);
-	init_waitqueue_head(&client->wq);
+	init_रुकोqueue_head(&client->wq);
 
-	if (client->handler) {
-		client->thread = kthread_run(ioreq_task, client, "VM%u-%s",
+	अगर (client->handler) अणु
+		client->thपढ़ो = kthपढ़ो_run(ioreq_task, client, "VM%u-%s",
 					     client->vm->vmid, client->name);
-		if (IS_ERR(client->thread)) {
-			kfree(client);
-			return NULL;
-		}
-	}
+		अगर (IS_ERR(client->thपढ़ो)) अणु
+			kमुक्त(client);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_bh(&vm->ioreq_clients_lock);
-	if (is_default)
-		vm->default_client = client;
-	else
+	अगर (is_शेष)
+		vm->शेष_client = client;
+	अन्यथा
 		list_add(&client->list, &vm->ioreq_clients);
 	spin_unlock_bh(&vm->ioreq_clients_lock);
 
 	dev_dbg(acrn_dev.this_device, "Created ioreq client %s.\n", name);
-	return client;
-}
+	वापस client;
+पूर्ण
 
 /**
  * acrn_ioreq_client_destroy() - Destroy an ioreq client
  * @client:	The ioreq client
  */
-void acrn_ioreq_client_destroy(struct acrn_ioreq_client *client)
-{
-	struct acrn_ioreq_range *range, *next;
-	struct acrn_vm *vm = client->vm;
+व्योम acrn_ioreq_client_destroy(काष्ठा acrn_ioreq_client *client)
+अणु
+	काष्ठा acrn_ioreq_range *range, *next;
+	काष्ठा acrn_vm *vm = client->vm;
 
 	dev_dbg(acrn_dev.this_device,
 		"Destroy ioreq client %s.\n", client->name);
-	ioreq_pause();
+	ioreq_छोड़ो();
 	set_bit(ACRN_IOREQ_CLIENT_DESTROYING, &client->flags);
-	if (client->is_default)
-		wake_up_interruptible(&client->wq);
-	else
-		kthread_stop(client->thread);
+	अगर (client->is_शेष)
+		wake_up_पूर्णांकerruptible(&client->wq);
+	अन्यथा
+		kthपढ़ो_stop(client->thपढ़ो);
 
 	spin_lock_bh(&vm->ioreq_clients_lock);
-	if (client->is_default)
-		vm->default_client = NULL;
-	else
+	अगर (client->is_शेष)
+		vm->शेष_client = शून्य;
+	अन्यथा
 		list_del(&client->list);
 	spin_unlock_bh(&vm->ioreq_clients_lock);
 
-	write_lock_bh(&client->range_lock);
-	list_for_each_entry_safe(range, next, &client->range_list, list) {
+	ग_लिखो_lock_bh(&client->range_lock);
+	list_क्रम_each_entry_safe(range, next, &client->range_list, list) अणु
 		list_del(&range->list);
-		kfree(range);
-	}
-	write_unlock_bh(&client->range_lock);
-	kfree(client);
+		kमुक्त(range);
+	पूर्ण
+	ग_लिखो_unlock_bh(&client->range_lock);
+	kमुक्त(client);
 
 	ioreq_resume();
-}
+पूर्ण
 
-static int acrn_ioreq_dispatch(struct acrn_vm *vm)
-{
-	struct acrn_ioreq_client *client;
-	struct acrn_io_request *req;
-	int i;
+अटल पूर्णांक acrn_ioreq_dispatch(काष्ठा acrn_vm *vm)
+अणु
+	काष्ठा acrn_ioreq_client *client;
+	काष्ठा acrn_io_request *req;
+	पूर्णांक i;
 
-	for (i = 0; i < vm->vcpu_num; i++) {
+	क्रम (i = 0; i < vm->vcpu_num; i++) अणु
 		req = vm->ioreq_buf->req_slot + i;
 
-		/* barrier the read of processed of acrn_io_request */
-		if (smp_load_acquire(&req->processed) ==
-				     ACRN_IOREQ_STATE_PENDING) {
+		/* barrier the पढ़ो of processed of acrn_io_request */
+		अगर (smp_load_acquire(&req->processed) ==
+				     ACRN_IOREQ_STATE_PENDING) अणु
 			/* Complete the IO request directly in clearing stage */
-			if (test_bit(ACRN_VM_FLAG_CLEARING_IOREQ, &vm->flags)) {
+			अगर (test_bit(ACRN_VM_FLAG_CLEARING_IOREQ, &vm->flags)) अणु
 				ioreq_complete_request(vm, i, req);
-				continue;
-			}
-			if (handle_cf8cfc(vm, req, i))
-				continue;
+				जारी;
+			पूर्ण
+			अगर (handle_cf8cfc(vm, req, i))
+				जारी;
 
 			spin_lock_bh(&vm->ioreq_clients_lock);
 			client = find_ioreq_client(vm, req);
-			if (!client) {
+			अगर (!client) अणु
 				dev_err(acrn_dev.this_device,
 					"Failed to find ioreq client!\n");
 				spin_unlock_bh(&vm->ioreq_clients_lock);
-				return -EINVAL;
-			}
-			if (!client->is_default)
+				वापस -EINVAL;
+			पूर्ण
+			अगर (!client->is_शेष)
 				req->kernel_handled = 1;
-			else
+			अन्यथा
 				req->kernel_handled = 0;
 			/*
-			 * Add barrier() to make sure the writes are done
-			 * before setting ACRN_IOREQ_STATE_PROCESSING
+			 * Add barrier() to make sure the ग_लिखोs are करोne
+			 * beक्रमe setting ACRN_IOREQ_STATE_PROCESSING
 			 */
 			smp_store_release(&req->processed,
 					  ACRN_IOREQ_STATE_PROCESSING);
 			set_bit(i, client->ioreqs_map);
-			wake_up_interruptible(&client->wq);
+			wake_up_पूर्णांकerruptible(&client->wq);
 			spin_unlock_bh(&vm->ioreq_clients_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ioreq_dispatcher(struct work_struct *work)
-{
-	struct acrn_vm *vm;
+अटल व्योम ioreq_dispatcher(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा acrn_vm *vm;
 
-	read_lock(&acrn_vm_list_lock);
-	list_for_each_entry(vm, &acrn_vm_list, list) {
-		if (!vm->ioreq_buf)
-			break;
+	पढ़ो_lock(&acrn_vm_list_lock);
+	list_क्रम_each_entry(vm, &acrn_vm_list, list) अणु
+		अगर (!vm->ioreq_buf)
+			अवरोध;
 		acrn_ioreq_dispatch(vm);
-	}
-	read_unlock(&acrn_vm_list_lock);
-}
+	पूर्ण
+	पढ़ो_unlock(&acrn_vm_list_lock);
+पूर्ण
 
-static void ioreq_intr_handler(void)
-{
+अटल व्योम ioreq_पूर्णांकr_handler(व्योम)
+अणु
 	queue_work(ioreq_wq, &ioreq_work);
-}
+पूर्ण
 
-static void ioreq_pause(void)
-{
+अटल व्योम ioreq_छोड़ो(व्योम)
+अणु
 	/* Flush and unarm the handler to ensure no I/O requests pending */
-	acrn_remove_intr_handler();
+	acrn_हटाओ_पूर्णांकr_handler();
 	drain_workqueue(ioreq_wq);
-}
+पूर्ण
 
-static void ioreq_resume(void)
-{
-	/* Schedule after enabling in case other clients miss interrupt */
-	acrn_setup_intr_handler(ioreq_intr_handler);
+अटल व्योम ioreq_resume(व्योम)
+अणु
+	/* Schedule after enabling in हाल other clients miss पूर्णांकerrupt */
+	acrn_setup_पूर्णांकr_handler(ioreq_पूर्णांकr_handler);
 	queue_work(ioreq_wq, &ioreq_work);
-}
+पूर्ण
 
-int acrn_ioreq_intr_setup(void)
-{
-	acrn_setup_intr_handler(ioreq_intr_handler);
+पूर्णांक acrn_ioreq_पूर्णांकr_setup(व्योम)
+अणु
+	acrn_setup_पूर्णांकr_handler(ioreq_पूर्णांकr_handler);
 	ioreq_wq = alloc_workqueue("ioreq_wq",
 				   WQ_HIGHPRI | WQ_MEM_RECLAIM | WQ_UNBOUND, 1);
-	if (!ioreq_wq) {
+	अगर (!ioreq_wq) अणु
 		dev_err(acrn_dev.this_device, "Failed to alloc workqueue!\n");
-		acrn_remove_intr_handler();
-		return -ENOMEM;
-	}
-	return 0;
-}
+		acrn_हटाओ_पूर्णांकr_handler();
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void acrn_ioreq_intr_remove(void)
-{
-	if (ioreq_wq)
+व्योम acrn_ioreq_पूर्णांकr_हटाओ(व्योम)
+अणु
+	अगर (ioreq_wq)
 		destroy_workqueue(ioreq_wq);
-	acrn_remove_intr_handler();
-}
+	acrn_हटाओ_पूर्णांकr_handler();
+पूर्ण
 
-int acrn_ioreq_init(struct acrn_vm *vm, u64 buf_vma)
-{
-	struct acrn_ioreq_buffer *set_buffer;
-	struct page *page;
-	int ret;
+पूर्णांक acrn_ioreq_init(काष्ठा acrn_vm *vm, u64 buf_vma)
+अणु
+	काष्ठा acrn_ioreq_buffer *set_buffer;
+	काष्ठा page *page;
+	पूर्णांक ret;
 
-	if (vm->ioreq_buf)
-		return -EEXIST;
+	अगर (vm->ioreq_buf)
+		वापस -EEXIST;
 
-	set_buffer = kzalloc(sizeof(*set_buffer), GFP_KERNEL);
-	if (!set_buffer)
-		return -ENOMEM;
+	set_buffer = kzalloc(माप(*set_buffer), GFP_KERNEL);
+	अगर (!set_buffer)
+		वापस -ENOMEM;
 
 	ret = pin_user_pages_fast(buf_vma, 1,
 				  FOLL_WRITE | FOLL_LONGTERM, &page);
-	if (unlikely(ret != 1) || !page) {
+	अगर (unlikely(ret != 1) || !page) अणु
 		dev_err(acrn_dev.this_device, "Failed to pin ioreq page!\n");
 		ret = -EFAULT;
-		goto free_buf;
-	}
+		जाओ मुक्त_buf;
+	पूर्ण
 
 	vm->ioreq_buf = page_address(page);
 	vm->ioreq_page = page;
 	set_buffer->ioreq_buf = page_to_phys(page);
 	ret = hcall_set_ioreq_buffer(vm->vmid, virt_to_phys(set_buffer));
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(acrn_dev.this_device, "Failed to init ioreq buffer!\n");
 		unpin_user_page(page);
-		vm->ioreq_buf = NULL;
-		goto free_buf;
-	}
+		vm->ioreq_buf = शून्य;
+		जाओ मुक्त_buf;
+	पूर्ण
 
 	dev_dbg(acrn_dev.this_device,
 		"Init ioreq buffer %pK!\n", vm->ioreq_buf);
 	ret = 0;
-free_buf:
-	kfree(set_buffer);
-	return ret;
-}
+मुक्त_buf:
+	kमुक्त(set_buffer);
+	वापस ret;
+पूर्ण
 
-void acrn_ioreq_deinit(struct acrn_vm *vm)
-{
-	struct acrn_ioreq_client *client, *next;
+व्योम acrn_ioreq_deinit(काष्ठा acrn_vm *vm)
+अणु
+	काष्ठा acrn_ioreq_client *client, *next;
 
 	dev_dbg(acrn_dev.this_device,
 		"Deinit ioreq buffer %pK!\n", vm->ioreq_buf);
-	/* Destroy all clients belonging to this VM */
-	list_for_each_entry_safe(client, next, &vm->ioreq_clients, list)
+	/* Destroy all clients beदीर्घing to this VM */
+	list_क्रम_each_entry_safe(client, next, &vm->ioreq_clients, list)
 		acrn_ioreq_client_destroy(client);
-	if (vm->default_client)
-		acrn_ioreq_client_destroy(vm->default_client);
+	अगर (vm->शेष_client)
+		acrn_ioreq_client_destroy(vm->शेष_client);
 
-	if (vm->ioreq_buf && vm->ioreq_page) {
+	अगर (vm->ioreq_buf && vm->ioreq_page) अणु
 		unpin_user_page(vm->ioreq_page);
-		vm->ioreq_buf = NULL;
-	}
-}
+		vm->ioreq_buf = शून्य;
+	पूर्ण
+पूर्ण

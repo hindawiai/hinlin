@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
 
-  fp_trig.h: floating-point math routines for the Linux-m68k
-  floating point emulator.
+  fp_trig.h: भग्नing-poपूर्णांक math routines क्रम the Linux-m68k
+  भग्नing poपूर्णांक emulator.
 
   Copyright (c) 1998 David Huggins-Daines.
 
-  I hereby give permission, free of charge, to copy, modify, and
-  redistribute this software, in source or binary form, provided that
+  I hereby give permission, मुक्त of अक्षरge, to copy, modअगरy, and
+  redistribute this software, in source or binary क्रमm, provided that
   the above copyright notice and the following disclaimer are included
   in all such copies.
 
@@ -15,18 +16,18 @@
 
 */
 
-#ifndef FP_TRIG_H
-#define FP_TRIG_H
+#अगर_अघोषित FP_TRIG_H
+#घोषणा FP_TRIG_H
 
-#include "fp_emu.h"
+#समावेश "fp_emu.h"
 
-/* floating point trigonometric instructions:
+/* भग्नing poपूर्णांक trigonometric inकाष्ठाions:
 
-   the arguments to these are in the "internal" extended format, that
-   is, an "exploded" version of the 96-bit extended fp format used by
+   the arguments to these are in the "internal" extended क्रमmat, that
+   is, an "exploded" version of the 96-bit extended fp क्रमmat used by
    the 68881.
 
-   they return a status code, which should end up in %d0, if all goes
+   they वापस a status code, which should end up in %d0, अगर all goes
    well.  */
 
-#endif /* FP_TRIG__H */
+#पूर्ण_अगर /* FP_TRIG__H */

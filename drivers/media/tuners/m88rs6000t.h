@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Driver for the internal tuner of Montage M88RS6000
+ * Driver क्रम the पूर्णांकernal tuner of Montage M88RS6000
  *
  * Copyright (C) 2014 Max nibble <nibble.max@gmail.com>
  */
 
-#ifndef _M88RS6000T_H_
-#define _M88RS6000T_H_
+#अगर_अघोषित _M88RS6000T_H_
+#घोषणा _M88RS6000T_H_
 
-#include <media/dvb_frontend.h>
+#समावेश <media/dvb_frontend.h>
 
-struct m88rs6000t_config {
+काष्ठा m88rs6000t_config अणु
 	/*
-	 * pointer to DVB frontend
+	 * poपूर्णांकer to DVB frontend
 	 */
-	struct dvb_frontend *fe;
-};
+	काष्ठा dvb_frontend *fe;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

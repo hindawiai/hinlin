@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * NOOP APIC driver.
  *
  * Does almost nothing and should be substituted by a real apic driver via
  * probe routine.
  *
- * Though in case if apic is disabled (for some reason) we try
- * to not uglify the caller's code and allow to call (some) apic routines
+ * Though in हाल अगर apic is disabled (क्रम some reason) we try
+ * to not uglअगरy the caller's code and allow to call (some) apic routines
  * like self-ipi, etc...
  */
-#include <linux/cpumask.h>
-#include <linux/thread_info.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/thपढ़ो_info.h>
 
-#include <asm/apic.h>
+#समावेश <यंत्र/apic.h>
 
-static void noop_init_apic_ldr(void) { }
-static void noop_send_IPI(int cpu, int vector) { }
-static void noop_send_IPI_mask(const struct cpumask *cpumask, int vector) { }
-static void noop_send_IPI_mask_allbutself(const struct cpumask *cpumask, int vector) { }
-static void noop_send_IPI_allbutself(int vector) { }
-static void noop_send_IPI_all(int vector) { }
-static void noop_send_IPI_self(int vector) { }
-static void noop_apic_wait_icr_idle(void) { }
-static void noop_apic_icr_write(u32 low, u32 id) { }
+अटल व्योम noop_init_apic_ldr(व्योम) अणु पूर्ण
+अटल व्योम noop_send_IPI(पूर्णांक cpu, पूर्णांक vector) अणु पूर्ण
+अटल व्योम noop_send_IPI_mask(स्थिर काष्ठा cpumask *cpumask, पूर्णांक vector) अणु पूर्ण
+अटल व्योम noop_send_IPI_mask_allbutself(स्थिर काष्ठा cpumask *cpumask, पूर्णांक vector) अणु पूर्ण
+अटल व्योम noop_send_IPI_allbutself(पूर्णांक vector) अणु पूर्ण
+अटल व्योम noop_send_IPI_all(पूर्णांक vector) अणु पूर्ण
+अटल व्योम noop_send_IPI_self(पूर्णांक vector) अणु पूर्ण
+अटल व्योम noop_apic_रुको_icr_idle(व्योम) अणु पूर्ण
+अटल व्योम noop_apic_icr_ग_लिखो(u32 low, u32 id) अणु पूर्ण
 
-static int noop_wakeup_secondary_cpu(int apicid, unsigned long start_eip)
-{
-	return -1;
-}
+अटल पूर्णांक noop_wakeup_secondary_cpu(पूर्णांक apicid, अचिन्हित दीर्घ start_eip)
+अणु
+	वापस -1;
+पूर्ण
 
-static u32 noop_safe_apic_wait_icr_idle(void)
-{
-	return 0;
-}
+अटल u32 noop_safe_apic_रुको_icr_idle(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static u64 noop_apic_icr_read(void)
-{
-	return 0;
-}
+अटल u64 noop_apic_icr_पढ़ो(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static int noop_phys_pkg_id(int cpuid_apic, int index_msb)
-{
-	return 0;
-}
+अटल पूर्णांक noop_phys_pkg_id(पूर्णांक cpuid_apic, पूर्णांक index_msb)
+अणु
+	वापस 0;
+पूर्ण
 
-static unsigned int noop_get_apic_id(unsigned long x)
-{
-	return 0;
-}
+अटल अचिन्हित पूर्णांक noop_get_apic_id(अचिन्हित दीर्घ x)
+अणु
+	वापस 0;
+पूर्ण
 
-static int noop_probe(void)
-{
+अटल पूर्णांक noop_probe(व्योम)
+अणु
 	/*
 	 * NOOP apic should not ever be
 	 * enabled via probe routine
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int noop_apic_id_registered(void)
-{
+अटल पूर्णांक noop_apic_id_रेजिस्टरed(व्योम)
+अणु
 	/*
-	 * if we would be really "pedantic"
-	 * we should pass read_apic_id() here
+	 * अगर we would be really "pedantic"
+	 * we should pass पढ़ो_apic_id() here
 	 * but since NOOP suppose APIC ID = 0
 	 * lets save a few cycles
 	 */
-	return physid_isset(0, phys_cpu_present_map);
-}
+	वापस physid_isset(0, phys_cpu_present_map);
+पूर्ण
 
-static u32 noop_apic_read(u32 reg)
-{
+अटल u32 noop_apic_पढ़ो(u32 reg)
+अणु
 	WARN_ON_ONCE(boot_cpu_has(X86_FEATURE_APIC) && !disable_apic);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void noop_apic_write(u32 reg, u32 v)
-{
+अटल व्योम noop_apic_ग_लिखो(u32 reg, u32 v)
+अणु
 	WARN_ON_ONCE(boot_cpu_has(X86_FEATURE_APIC) && !disable_apic);
-}
+पूर्ण
 
-#ifdef CONFIG_X86_32
-static int noop_x86_32_early_logical_apicid(int cpu)
-{
-	return BAD_APICID;
-}
-#endif
+#अगर_घोषित CONFIG_X86_32
+अटल पूर्णांक noop_x86_32_early_logical_apicid(पूर्णांक cpu)
+अणु
+	वापस BAD_APICID;
+पूर्ण
+#पूर्ण_अगर
 
-struct apic apic_noop __ro_after_init = {
+काष्ठा apic apic_noop __ro_after_init = अणु
 	.name				= "noop",
 	.probe				= noop_probe,
-	.acpi_madt_oem_check		= NULL,
+	.acpi_madt_oem_check		= शून्य,
 
-	.apic_id_valid			= default_apic_id_valid,
-	.apic_id_registered		= noop_apic_id_registered,
+	.apic_id_valid			= शेष_apic_id_valid,
+	.apic_id_रेजिस्टरed		= noop_apic_id_रेजिस्टरed,
 
 	.delivery_mode			= APIC_DELIVERY_MODE_FIXED,
 	.dest_mode_logical		= true,
 
 	.disable_esr			= 0,
 
-	.check_apicid_used		= default_check_apicid_used,
+	.check_apicid_used		= शेष_check_apicid_used,
 	.init_apic_ldr			= noop_init_apic_ldr,
-	.ioapic_phys_id_map		= default_ioapic_phys_id_map,
-	.setup_apic_routing		= NULL,
-	.cpu_present_to_apicid		= default_cpu_present_to_apicid,
+	.ioapic_phys_id_map		= शेष_ioapic_phys_id_map,
+	.setup_apic_routing		= शून्य,
+	.cpu_present_to_apicid		= शेष_cpu_present_to_apicid,
 	.apicid_to_cpu_present		= physid_set_mask_of_physid,
 
-	.check_phys_apicid_present	= default_check_phys_apicid_present,
+	.check_phys_apicid_present	= शेष_check_phys_apicid_present,
 
 	.phys_pkg_id			= noop_phys_pkg_id,
 
 	.get_apic_id			= noop_get_apic_id,
-	.set_apic_id			= NULL,
+	.set_apic_id			= शून्य,
 
 	.calc_dest_apicid		= apic_flat_calc_apicid,
 
@@ -125,17 +126,17 @@ struct apic apic_noop __ro_after_init = {
 
 	.wakeup_secondary_cpu		= noop_wakeup_secondary_cpu,
 
-	.inquire_remote_apic		= NULL,
+	.inquire_remote_apic		= शून्य,
 
-	.read				= noop_apic_read,
-	.write				= noop_apic_write,
-	.eoi_write			= noop_apic_write,
-	.icr_read			= noop_apic_icr_read,
-	.icr_write			= noop_apic_icr_write,
-	.wait_icr_idle			= noop_apic_wait_icr_idle,
-	.safe_wait_icr_idle		= noop_safe_apic_wait_icr_idle,
+	.पढ़ो				= noop_apic_पढ़ो,
+	.ग_लिखो				= noop_apic_ग_लिखो,
+	.eoi_ग_लिखो			= noop_apic_ग_लिखो,
+	.icr_पढ़ो			= noop_apic_icr_पढ़ो,
+	.icr_ग_लिखो			= noop_apic_icr_ग_लिखो,
+	.रुको_icr_idle			= noop_apic_रुको_icr_idle,
+	.safe_रुको_icr_idle		= noop_safe_apic_रुको_icr_idle,
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	.x86_32_early_logical_apicid	= noop_x86_32_early_logical_apicid,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

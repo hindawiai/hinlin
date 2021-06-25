@@ -1,174 +1,175 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef _IA_CSS_CIRCBUF_DESC_H_
-#define _IA_CSS_CIRCBUF_DESC_H_
+#अगर_अघोषित _IA_CSS_CIRCBUF_DESC_H_
+#घोषणा _IA_CSS_CIRCBUF_DESC_H_
 
-#include <type_support.h>
-#include <math_support.h>
-#include <platform_support.h>
-#include <sp.h>
-#include "ia_css_circbuf_comm.h"
+#समावेश <type_support.h>
+#समावेश <math_support.h>
+#समावेश <platक्रमm_support.h>
+#समावेश <sp.h>
+#समावेश "ia_css_circbuf_comm.h"
 /****************************************************************
  *
  * Inline functions.
  *
  ****************************************************************/
 /**
- * @brief Test if the circular buffer is empty.
+ * @brief Test अगर the circular buffer is empty.
  *
- * @param cb_desc The pointer to the circular buffer descriptor.
+ * @param cb_desc The poपूर्णांकer to the circular buffer descriptor.
  *
- * @return
+ * @वापस
  *	- true when it is empty.
  *	- false when it is not empty.
  */
-static inline bool ia_css_circbuf_desc_is_empty(
+अटल अंतरभूत bool ia_css_circbuf_desc_is_empty(
     ia_css_circbuf_desc_t *cb_desc)
-{
-	OP___assert(cb_desc);
-	return (cb_desc->end == cb_desc->start);
-}
+अणु
+	OP___निश्चित(cb_desc);
+	वापस (cb_desc->end == cb_desc->start);
+पूर्ण
 
 /**
- * @brief Test if the circular buffer descriptor is full.
+ * @brief Test अगर the circular buffer descriptor is full.
  *
- * @param cb_desc	The pointer to the circular buffer
+ * @param cb_desc	The poपूर्णांकer to the circular buffer
  *			descriptor.
  *
- * @return
+ * @वापस
  *	- true when it is full.
  *	- false when it is not full.
  */
-static inline bool ia_css_circbuf_desc_is_full(
+अटल अंतरभूत bool ia_css_circbuf_desc_is_full(
     ia_css_circbuf_desc_t *cb_desc)
-{
-	OP___assert(cb_desc);
-	return (OP_std_modadd(cb_desc->end, 1, cb_desc->size) == cb_desc->start);
-}
+अणु
+	OP___निश्चित(cb_desc);
+	वापस (OP_std_modadd(cb_desc->end, 1, cb_desc->size) == cb_desc->start);
+पूर्ण
 
 /**
  * @brief Initialize the circular buffer descriptor
  *
- * @param cb_desc	The pointer circular buffer descriptor
+ * @param cb_desc	The poपूर्णांकer circular buffer descriptor
  * @param size		The size of the circular buffer
  */
-static inline void ia_css_circbuf_desc_init(
+अटल अंतरभूत व्योम ia_css_circbuf_desc_init(
     ia_css_circbuf_desc_t *cb_desc,
-    int8_t size)
-{
-	OP___assert(cb_desc);
+    पूर्णांक8_t size)
+अणु
+	OP___निश्चित(cb_desc);
 	cb_desc->size = size;
-}
+पूर्ण
 
 /**
  * @brief Get a position in the circular buffer descriptor.
  *
- * @param cb     The pointer to the circular buffer descriptor.
+ * @param cb     The poपूर्णांकer to the circular buffer descriptor.
  * @param base   The base position.
  * @param offset The offset.
  *
- * @return the position in the circular buffer descriptor.
+ * @वापस the position in the circular buffer descriptor.
  */
-static inline uint8_t ia_css_circbuf_desc_get_pos_at_offset(
+अटल अंतरभूत uपूर्णांक8_t ia_css_circbuf_desc_get_pos_at_offset(
     ia_css_circbuf_desc_t *cb_desc,
     u32 base,
-    int offset)
-{
+    पूर्णांक offset)
+अणु
 	u8 dest;
 
-	OP___assert(cb_desc);
-	OP___assert(cb_desc->size > 0);
+	OP___निश्चित(cb_desc);
+	OP___निश्चित(cb_desc->size > 0);
 
 	/* step 1: adjust the offset  */
-	while (offset < 0) {
+	जबतक (offset < 0) अणु
 		offset += cb_desc->size;
-	}
+	पूर्ण
 
-	/* step 2: shift and round by the upper limit */
+	/* step 2: shअगरt and round by the upper limit */
 	dest = OP_std_modadd(base, offset, cb_desc->size);
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
 /**
  * @brief Get the offset between two positions in the circular buffer
  * descriptor.
  * Get the offset from the source position to the terminal position,
- * along the direction in which the new elements come in.
+ * aदीर्घ the direction in which the new elements come in.
  *
- * @param cb_desc	The pointer to the circular buffer descriptor.
+ * @param cb_desc	The poपूर्णांकer to the circular buffer descriptor.
  * @param src_pos	The source position.
  * @param dest_pos	The terminal position.
  *
- * @return the offset.
+ * @वापस the offset.
  */
-static inline int ia_css_circbuf_desc_get_offset(
+अटल अंतरभूत पूर्णांक ia_css_circbuf_desc_get_offset(
     ia_css_circbuf_desc_t *cb_desc,
     u32 src_pos,
-    uint32_t dest_pos)
-{
-	int offset;
+    uपूर्णांक32_t dest_pos)
+अणु
+	पूर्णांक offset;
 
-	OP___assert(cb_desc);
+	OP___निश्चित(cb_desc);
 
-	offset = (int)(dest_pos - src_pos);
+	offset = (पूर्णांक)(dest_pos - src_pos);
 	offset += (offset < 0) ? cb_desc->size : 0;
 
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
 /**
  * @brief Get the number of available elements.
  *
- * @param cb_desc The pointer to the circular buffer.
+ * @param cb_desc The poपूर्णांकer to the circular buffer.
  *
- * @return The number of available elements.
+ * @वापस The number of available elements.
  */
-static inline uint32_t ia_css_circbuf_desc_get_num_elems(
+अटल अंतरभूत uपूर्णांक32_t ia_css_circbuf_desc_get_num_elems(
     ia_css_circbuf_desc_t *cb_desc)
-{
-	int num;
+अणु
+	पूर्णांक num;
 
-	OP___assert(cb_desc);
+	OP___निश्चित(cb_desc);
 
 	num = ia_css_circbuf_desc_get_offset(cb_desc,
 					     cb_desc->start,
 					     cb_desc->end);
 
-	return (uint32_t)num;
-}
+	वापस (uपूर्णांक32_t)num;
+पूर्ण
 
 /**
- * @brief Get the number of free elements.
+ * @brief Get the number of मुक्त elements.
  *
- * @param cb_desc The pointer to the circular buffer descriptor.
+ * @param cb_desc The poपूर्णांकer to the circular buffer descriptor.
  *
- * @return: The number of free elements.
+ * @वापस: The number of मुक्त elements.
  */
-static inline uint32_t ia_css_circbuf_desc_get_free_elems(
+अटल अंतरभूत uपूर्णांक32_t ia_css_circbuf_desc_get_मुक्त_elems(
     ia_css_circbuf_desc_t *cb_desc)
-{
+अणु
 	u32 num;
 
-	OP___assert(cb_desc);
+	OP___निश्चित(cb_desc);
 
 	num = ia_css_circbuf_desc_get_offset(cb_desc,
 					     cb_desc->start,
 					     cb_desc->end);
 
-	return (cb_desc->size - num);
-}
-#endif /*_IA_CSS_CIRCBUF_DESC_H_ */
+	वापस (cb_desc->size - num);
+पूर्ण
+#पूर्ण_अगर /*_IA_CSS_CIRCBUF_DESC_H_ */

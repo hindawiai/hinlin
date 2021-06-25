@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _PARISC_SETUP_H
-#define _PARISC_SETUP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _PARISC_SETUP_H
+#घोषणा _PARISC_SETUP_H
 
-#define COMMAND_LINE_SIZE	1024
+#घोषणा COMMAND_LINE_SIZE	1024
 
-#endif /* _PARISC_SETUP_H */
+#पूर्ण_अगर /* _PARISC_SETUP_H */

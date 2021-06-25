@@ -1,107 +1,108 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_ICMPV6_H
-#define _LINUX_ICMPV6_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_ICMPV6_H
+#घोषणा _LINUX_ICMPV6_H
 
-#include <linux/skbuff.h>
-#include <linux/ipv6.h>
-#include <uapi/linux/icmpv6.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ipv6.h>
+#समावेश <uapi/linux/icmpv6.h>
 
-static inline struct icmp6hdr *icmp6_hdr(const struct sk_buff *skb)
-{
-	return (struct icmp6hdr *)skb_transport_header(skb);
-}
+अटल अंतरभूत काष्ठा icmp6hdr *icmp6_hdr(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा icmp6hdr *)skb_transport_header(skb);
+पूर्ण
 
-#include <linux/netdevice.h>
+#समावेश <linux/netdevice.h>
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 
-typedef void ip6_icmp_send_t(struct sk_buff *skb, u8 type, u8 code, __u32 info,
-			     const struct in6_addr *force_saddr,
-			     const struct inet6_skb_parm *parm);
-void icmp6_send(struct sk_buff *skb, u8 type, u8 code, __u32 info,
-		const struct in6_addr *force_saddr,
-		const struct inet6_skb_parm *parm);
-#if IS_BUILTIN(CONFIG_IPV6)
-static inline void __icmpv6_send(struct sk_buff *skb, u8 type, u8 code, __u32 info,
-				 const struct inet6_skb_parm *parm)
-{
-	icmp6_send(skb, type, code, info, NULL, parm);
-}
-static inline int inet6_register_icmp_sender(ip6_icmp_send_t *fn)
-{
+प्रकार व्योम ip6_icmp_send_t(काष्ठा sk_buff *skb, u8 type, u8 code, __u32 info,
+			     स्थिर काष्ठा in6_addr *क्रमce_saddr,
+			     स्थिर काष्ठा inet6_skb_parm *parm);
+व्योम icmp6_send(काष्ठा sk_buff *skb, u8 type, u8 code, __u32 info,
+		स्थिर काष्ठा in6_addr *क्रमce_saddr,
+		स्थिर काष्ठा inet6_skb_parm *parm);
+#अगर IS_BUILTIN(CONFIG_IPV6)
+अटल अंतरभूत व्योम __icmpv6_send(काष्ठा sk_buff *skb, u8 type, u8 code, __u32 info,
+				 स्थिर काष्ठा inet6_skb_parm *parm)
+अणु
+	icmp6_send(skb, type, code, info, शून्य, parm);
+पूर्ण
+अटल अंतरभूत पूर्णांक inet6_रेजिस्टर_icmp_sender(ip6_icmp_send_t *fn)
+अणु
 	BUILD_BUG_ON(fn != icmp6_send);
-	return 0;
-}
-static inline int inet6_unregister_icmp_sender(ip6_icmp_send_t *fn)
-{
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक inet6_unरेजिस्टर_icmp_sender(ip6_icmp_send_t *fn)
+अणु
 	BUILD_BUG_ON(fn != icmp6_send);
-	return 0;
-}
-#else
-extern void __icmpv6_send(struct sk_buff *skb, u8 type, u8 code, __u32 info,
-			  const struct inet6_skb_parm *parm);
-extern int inet6_register_icmp_sender(ip6_icmp_send_t *fn);
-extern int inet6_unregister_icmp_sender(ip6_icmp_send_t *fn);
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+बाह्य व्योम __icmpv6_send(काष्ठा sk_buff *skb, u8 type, u8 code, __u32 info,
+			  स्थिर काष्ठा inet6_skb_parm *parm);
+बाह्य पूर्णांक inet6_रेजिस्टर_icmp_sender(ip6_icmp_send_t *fn);
+बाह्य पूर्णांक inet6_unरेजिस्टर_icmp_sender(ip6_icmp_send_t *fn);
+#पूर्ण_अगर
 
-static inline void icmpv6_send(struct sk_buff *skb, u8 type, u8 code, __u32 info)
-{
+अटल अंतरभूत व्योम icmpv6_send(काष्ठा sk_buff *skb, u8 type, u8 code, __u32 info)
+अणु
 	__icmpv6_send(skb, type, code, info, IP6CB(skb));
-}
+पूर्ण
 
-int ip6_err_gen_icmpv6_unreach(struct sk_buff *skb, int nhs, int type,
-			       unsigned int data_len);
+पूर्णांक ip6_err_gen_icmpv6_unreach(काष्ठा sk_buff *skb, पूर्णांक nhs, पूर्णांक type,
+			       अचिन्हित पूर्णांक data_len);
 
-#if IS_ENABLED(CONFIG_NF_NAT)
-void icmpv6_ndo_send(struct sk_buff *skb_in, u8 type, u8 code, __u32 info);
-#else
-static inline void icmpv6_ndo_send(struct sk_buff *skb_in, u8 type, u8 code, __u32 info)
-{
-	struct inet6_skb_parm parm = { 0 };
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+व्योम icmpv6_nकरो_send(काष्ठा sk_buff *skb_in, u8 type, u8 code, __u32 info);
+#अन्यथा
+अटल अंतरभूत व्योम icmpv6_nकरो_send(काष्ठा sk_buff *skb_in, u8 type, u8 code, __u32 info)
+अणु
+	काष्ठा inet6_skb_parm parm = अणु 0 पूर्ण;
 	__icmpv6_send(skb_in, type, code, info, &parm);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#else
+#अन्यथा
 
-static inline void icmpv6_send(struct sk_buff *skb,
+अटल अंतरभूत व्योम icmpv6_send(काष्ठा sk_buff *skb,
 			       u8 type, u8 code, __u32 info)
-{
-}
+अणु
+पूर्ण
 
-static inline void icmpv6_ndo_send(struct sk_buff *skb,
+अटल अंतरभूत व्योम icmpv6_nकरो_send(काष्ठा sk_buff *skb,
 				   u8 type, u8 code, __u32 info)
-{
-}
-#endif
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-extern int				icmpv6_init(void);
-extern int				icmpv6_err_convert(u8 type, u8 code,
-							   int *err);
-extern void				icmpv6_cleanup(void);
-extern void				icmpv6_param_prob(struct sk_buff *skb,
-							  u8 code, int pos);
+बाह्य पूर्णांक				icmpv6_init(व्योम);
+बाह्य पूर्णांक				icmpv6_err_convert(u8 type, u8 code,
+							   पूर्णांक *err);
+बाह्य व्योम				icmpv6_cleanup(व्योम);
+बाह्य व्योम				icmpv6_param_prob(काष्ठा sk_buff *skb,
+							  u8 code, पूर्णांक pos);
 
-struct flowi6;
-struct in6_addr;
-extern void				icmpv6_flow_init(struct sock *sk,
-							 struct flowi6 *fl6,
+काष्ठा flowi6;
+काष्ठा in6_addr;
+बाह्य व्योम				icmpv6_flow_init(काष्ठा sock *sk,
+							 काष्ठा flowi6 *fl6,
 							 u8 type,
-							 const struct in6_addr *saddr,
-							 const struct in6_addr *daddr,
-							 int oif);
+							 स्थिर काष्ठा in6_addr *saddr,
+							 स्थिर काष्ठा in6_addr *daddr,
+							 पूर्णांक oअगर);
 
-static inline bool icmpv6_is_err(int type)
-{
-	switch (type) {
-	case ICMPV6_DEST_UNREACH:
-	case ICMPV6_PKT_TOOBIG:
-	case ICMPV6_TIME_EXCEED:
-	case ICMPV6_PARAMPROB:
-		return true;
-	}
+अटल अंतरभूत bool icmpv6_is_err(पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल ICMPV6_DEST_UNREACH:
+	हाल ICMPV6_PKT_TOOBIG:
+	हाल ICMPV6_TIME_EXCEED:
+	हाल ICMPV6_PARAMPROB:
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

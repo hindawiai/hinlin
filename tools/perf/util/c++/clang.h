@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PERF_UTIL_CLANG_H
-#define PERF_UTIL_CLANG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PERF_UTIL_CLANG_H
+#घोषणा PERF_UTIL_CLANG_H
 
-#include "llvm/ADT/StringRef.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Option/Option.h"
-#include <memory>
+#समावेश "llvm/ADT/StringRef.h"
+#समावेश "llvm/IR/LLVMContext.h"
+#समावेश "llvm/IR/Module.h"
+#समावेश "llvm/Option/Option.h"
+#समावेश <memory>
 
-namespace perf {
+namespace perf अणु
 
 using namespace llvm;
 
@@ -20,8 +21,8 @@ std::unique_ptr<Module>
 getModuleFromSource(opt::ArgStringList CFlags,
 		    StringRef Path);
 
-std::unique_ptr<llvm::SmallVectorImpl<char>>
+std::unique_ptr<llvm::SmallVectorImpl<अक्षर>>
 getBPFObjectFromModule(llvm::Module *Module);
 
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

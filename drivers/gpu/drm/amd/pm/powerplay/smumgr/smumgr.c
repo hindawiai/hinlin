@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,13 +22,13 @@
  *
  */
 
-#include <linux/delay.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <drm/amdgpu_drm.h>
-#include "smumgr.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <drm/amdgpu_drm.h>
+#समावेश "smumgr.h"
 
 MODULE_FIRMWARE("amdgpu/bonaire_smc.bin");
 MODULE_FIRMWARE("amdgpu/bonaire_k_smc.bin");
@@ -54,202 +55,202 @@ MODULE_FIRMWARE("amdgpu/vega10_acg_smc.bin");
 MODULE_FIRMWARE("amdgpu/vega12_smc.bin");
 MODULE_FIRMWARE("amdgpu/vega20_smc.bin");
 
-int smum_thermal_avfs_enable(struct pp_hwmgr *hwmgr)
-{
-	if (NULL != hwmgr->smumgr_funcs->thermal_avfs_enable)
-		return hwmgr->smumgr_funcs->thermal_avfs_enable(hwmgr);
+पूर्णांक smum_thermal_avfs_enable(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->thermal_avfs_enable)
+		वापस hwmgr->smumgr_funcs->thermal_avfs_enable(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smum_thermal_setup_fan_table(struct pp_hwmgr *hwmgr)
-{
-	if (NULL != hwmgr->smumgr_funcs->thermal_setup_fan_table)
-		return hwmgr->smumgr_funcs->thermal_setup_fan_table(hwmgr);
+पूर्णांक smum_thermal_setup_fan_table(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->thermal_setup_fan_table)
+		वापस hwmgr->smumgr_funcs->thermal_setup_fan_table(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smum_update_sclk_threshold(struct pp_hwmgr *hwmgr)
-{
+पूर्णांक smum_update_sclk_threshold(काष्ठा pp_hwmgr *hwmgr)
+अणु
 
-	if (NULL != hwmgr->smumgr_funcs->update_sclk_threshold)
-		return hwmgr->smumgr_funcs->update_sclk_threshold(hwmgr);
+	अगर (शून्य != hwmgr->smumgr_funcs->update_sclk_threshold)
+		वापस hwmgr->smumgr_funcs->update_sclk_threshold(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smum_update_smc_table(struct pp_hwmgr *hwmgr, uint32_t type)
-{
+पूर्णांक smum_update_smc_table(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t type)
+अणु
 
-	if (NULL != hwmgr->smumgr_funcs->update_smc_table)
-		return hwmgr->smumgr_funcs->update_smc_table(hwmgr, type);
+	अगर (शून्य != hwmgr->smumgr_funcs->update_smc_table)
+		वापस hwmgr->smumgr_funcs->update_smc_table(hwmgr, type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-uint32_t smum_get_offsetof(struct pp_hwmgr *hwmgr, uint32_t type, uint32_t member)
-{
-	if (NULL != hwmgr->smumgr_funcs->get_offsetof)
-		return hwmgr->smumgr_funcs->get_offsetof(type, member);
+uपूर्णांक32_t smum_get_दुरत्व(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t type, uपूर्णांक32_t member)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->get_दुरत्व)
+		वापस hwmgr->smumgr_funcs->get_दुरत्व(type, member);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smum_process_firmware_header(struct pp_hwmgr *hwmgr)
-{
-	if (NULL != hwmgr->smumgr_funcs->process_firmware_header)
-		return hwmgr->smumgr_funcs->process_firmware_header(hwmgr);
-	return 0;
-}
+पूर्णांक smum_process_firmware_header(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->process_firmware_header)
+		वापस hwmgr->smumgr_funcs->process_firmware_header(hwmgr);
+	वापस 0;
+पूर्ण
 
-uint32_t smum_get_mac_definition(struct pp_hwmgr *hwmgr, uint32_t value)
-{
-	if (NULL != hwmgr->smumgr_funcs->get_mac_definition)
-		return hwmgr->smumgr_funcs->get_mac_definition(value);
+uपूर्णांक32_t smum_get_mac_definition(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t value)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->get_mac_definition)
+		वापस hwmgr->smumgr_funcs->get_mac_definition(value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smum_download_powerplay_table(struct pp_hwmgr *hwmgr, void **table)
-{
-	if (NULL != hwmgr->smumgr_funcs->download_pptable_settings)
-		return hwmgr->smumgr_funcs->download_pptable_settings(hwmgr,
+पूर्णांक smum_करोwnload_घातerplay_table(काष्ठा pp_hwmgr *hwmgr, व्योम **table)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->करोwnload_pptable_settings)
+		वापस hwmgr->smumgr_funcs->करोwnload_pptable_settings(hwmgr,
 									table);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smum_upload_powerplay_table(struct pp_hwmgr *hwmgr)
-{
-	if (NULL != hwmgr->smumgr_funcs->upload_pptable_settings)
-		return hwmgr->smumgr_funcs->upload_pptable_settings(hwmgr);
+पूर्णांक smum_upload_घातerplay_table(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->upload_pptable_settings)
+		वापस hwmgr->smumgr_funcs->upload_pptable_settings(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smum_send_msg_to_smc(struct pp_hwmgr *hwmgr, uint16_t msg, uint32_t *resp)
-{
-	int ret = 0;
+पूर्णांक smum_send_msg_to_smc(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक16_t msg, uपूर्णांक32_t *resp)
+अणु
+	पूर्णांक ret = 0;
 
-	if (hwmgr == NULL ||
-	    hwmgr->smumgr_funcs->send_msg_to_smc == NULL ||
+	अगर (hwmgr == शून्य ||
+	    hwmgr->smumgr_funcs->send_msg_to_smc == शून्य ||
 	    (resp && !hwmgr->smumgr_funcs->get_argument))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mutex_lock(&hwmgr->msg_lock);
 
 	ret = hwmgr->smumgr_funcs->send_msg_to_smc(hwmgr, msg);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&hwmgr->msg_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (resp)
+	अगर (resp)
 		*resp = hwmgr->smumgr_funcs->get_argument(hwmgr);
 
 	mutex_unlock(&hwmgr->msg_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smum_send_msg_to_smc_with_parameter(struct pp_hwmgr *hwmgr,
-					uint16_t msg,
-					uint32_t parameter,
-					uint32_t *resp)
-{
-	int ret = 0;
+पूर्णांक smum_send_msg_to_smc_with_parameter(काष्ठा pp_hwmgr *hwmgr,
+					uपूर्णांक16_t msg,
+					uपूर्णांक32_t parameter,
+					uपूर्णांक32_t *resp)
+अणु
+	पूर्णांक ret = 0;
 
-	if (hwmgr == NULL ||
-	    hwmgr->smumgr_funcs->send_msg_to_smc_with_parameter == NULL ||
+	अगर (hwmgr == शून्य ||
+	    hwmgr->smumgr_funcs->send_msg_to_smc_with_parameter == शून्य ||
 	    (resp && !hwmgr->smumgr_funcs->get_argument))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mutex_lock(&hwmgr->msg_lock);
 
 	ret = hwmgr->smumgr_funcs->send_msg_to_smc_with_parameter(
 						hwmgr, msg, parameter);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&hwmgr->msg_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (resp)
+	अगर (resp)
 		*resp = hwmgr->smumgr_funcs->get_argument(hwmgr);
 
 	mutex_unlock(&hwmgr->msg_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smum_init_smc_table(struct pp_hwmgr *hwmgr)
-{
-	if (NULL != hwmgr->smumgr_funcs->init_smc_table)
-		return hwmgr->smumgr_funcs->init_smc_table(hwmgr);
+पूर्णांक smum_init_smc_table(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->init_smc_table)
+		वापस hwmgr->smumgr_funcs->init_smc_table(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smum_populate_all_graphic_levels(struct pp_hwmgr *hwmgr)
-{
-	if (NULL != hwmgr->smumgr_funcs->populate_all_graphic_levels)
-		return hwmgr->smumgr_funcs->populate_all_graphic_levels(hwmgr);
+पूर्णांक smum_populate_all_graphic_levels(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->populate_all_graphic_levels)
+		वापस hwmgr->smumgr_funcs->populate_all_graphic_levels(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smum_populate_all_memory_levels(struct pp_hwmgr *hwmgr)
-{
-	if (NULL != hwmgr->smumgr_funcs->populate_all_memory_levels)
-		return hwmgr->smumgr_funcs->populate_all_memory_levels(hwmgr);
+पूर्णांक smum_populate_all_memory_levels(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->populate_all_memory_levels)
+		वापस hwmgr->smumgr_funcs->populate_all_memory_levels(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/*this interface is needed by island ci/vi */
-int smum_initialize_mc_reg_table(struct pp_hwmgr *hwmgr)
-{
-	if (NULL != hwmgr->smumgr_funcs->initialize_mc_reg_table)
-		return hwmgr->smumgr_funcs->initialize_mc_reg_table(hwmgr);
+/*this पूर्णांकerface is needed by island ci/vi */
+पूर्णांक smum_initialize_mc_reg_table(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->initialize_mc_reg_table)
+		वापस hwmgr->smumgr_funcs->initialize_mc_reg_table(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool smum_is_dpm_running(struct pp_hwmgr *hwmgr)
-{
-	if (NULL != hwmgr->smumgr_funcs->is_dpm_running)
-		return hwmgr->smumgr_funcs->is_dpm_running(hwmgr);
+bool smum_is_dpm_running(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (शून्य != hwmgr->smumgr_funcs->is_dpm_running)
+		वापस hwmgr->smumgr_funcs->is_dpm_running(hwmgr);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool smum_is_hw_avfs_present(struct pp_hwmgr *hwmgr)
-{
-	if (hwmgr->smumgr_funcs->is_hw_avfs_present)
-		return hwmgr->smumgr_funcs->is_hw_avfs_present(hwmgr);
+bool smum_is_hw_avfs_present(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (hwmgr->smumgr_funcs->is_hw_avfs_present)
+		वापस hwmgr->smumgr_funcs->is_hw_avfs_present(hwmgr);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int smum_update_dpm_settings(struct pp_hwmgr *hwmgr, void *profile_setting)
-{
-	if (hwmgr->smumgr_funcs->update_dpm_settings)
-		return hwmgr->smumgr_funcs->update_dpm_settings(hwmgr, profile_setting);
+पूर्णांक smum_update_dpm_settings(काष्ठा pp_hwmgr *hwmgr, व्योम *profile_setting)
+अणु
+	अगर (hwmgr->smumgr_funcs->update_dpm_settings)
+		वापस hwmgr->smumgr_funcs->update_dpm_settings(hwmgr, profile_setting);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int smum_smc_table_manager(struct pp_hwmgr *hwmgr, uint8_t *table, uint16_t table_id, bool rw)
-{
-	if (hwmgr->smumgr_funcs->smc_table_manager)
-		return hwmgr->smumgr_funcs->smc_table_manager(hwmgr, table, table_id, rw);
+पूर्णांक smum_smc_table_manager(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक8_t *table, uपूर्णांक16_t table_id, bool rw)
+अणु
+	अगर (hwmgr->smumgr_funcs->smc_table_manager)
+		वापस hwmgr->smumgr_funcs->smc_table_manager(hwmgr, table, table_id, rw);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int smum_stop_smc(struct pp_hwmgr *hwmgr)
-{
-	if (hwmgr->smumgr_funcs->stop_smc)
-		return hwmgr->smumgr_funcs->stop_smc(hwmgr);
+पूर्णांक smum_stop_smc(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (hwmgr->smumgr_funcs->stop_smc)
+		वापस hwmgr->smumgr_funcs->stop_smc(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

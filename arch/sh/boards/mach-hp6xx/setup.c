@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/arch/sh/boards/hp6xx/setup.c
  *
  * Copyright (C) 2002 Andriy Skulysh
- * Copyright (C) 2007 Kristoffer Ericson <Kristoffer_e1@hotmail.com>
+ * Copyright (C) 2007 Kristoffer Ericson <Kristoffer_e1@hoपंचांगail.com>
  *
- * Setup code for HP620/HP660/HP680/HP690 (internal peripherials only)
+ * Setup code क्रम HP620/HP660/HP680/HP690 (पूर्णांकernal peripherials only)
  */
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/irq.h>
-#include <linux/sh_intc.h>
-#include <sound/sh_dac_audio.h>
-#include <asm/hd64461.h>
-#include <asm/io.h>
-#include <mach/hp6xx.h>
-#include <cpu/dac.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/sh_पूर्णांकc.h>
+#समावेश <sound/sh_dac_audपन.स>
+#समावेश <यंत्र/hd64461.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <mach/hp6xx.h>
+#समावेश <cpu/dac.h>
 
-#define	SCPCR	0xa4000116
-#define	SCPDR	0xa4000136
+#घोषणा	SCPCR	0xa4000116
+#घोषणा	SCPDR	0xa4000136
 
 /* CF Slot */
-static struct resource cf_ide_resources[] = {
-	[0] = {
+अटल काष्ठा resource cf_ide_resources[] = अणु
+	[0] = अणु
 		.start = 0x15000000 + 0x1f0,
 		.end   = 0x15000000 + 0x1f0 + 0x08 - 0x01,
 		.flags = IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start = 0x15000000 + 0x1fe,
 		.end   = 0x15000000 + 0x1fe + 0x01,
 		.flags = IORESOURCE_MEM,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.start = evt2irq(0xba0),
 		.flags = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device cf_ide_device = {
+अटल काष्ठा platक्रमm_device cf_ide_device = अणु
 	.name		=  "pata_platform",
 	.id		=  -1,
 	.num_resources	= ARRAY_SIZE(cf_ide_resources),
 	.resource	= cf_ide_resources,
-};
+पूर्ण;
 
-static struct platform_device jornadakbd_device = {
+अटल काष्ठा platक्रमm_device jornadakbd_device = अणु
 	.name		= "jornada680_kbd",
 	.id		= -1,
-};
+पूर्ण;
 
-static void dac_audio_start(struct dac_audio_pdata *pdata)
-{
+अटल व्योम dac_audio_start(काष्ठा dac_audio_pdata *pdata)
+अणु
 	u16 v;
 	u8 v8;
 
@@ -67,10 +68,10 @@ static void dac_audio_start(struct dac_audio_pdata *pdata)
 	outb(v8, PKDR);
 
 	sh_dac_enable(pdata->channel);
-}
+पूर्ण
 
-static void dac_audio_stop(struct dac_audio_pdata *pdata)
-{
+अटल व्योम dac_audio_stop(काष्ठा dac_audio_pdata *pdata)
+अणु
 	u16 v;
 	u8 v8;
 
@@ -86,43 +87,43 @@ static void dac_audio_stop(struct dac_audio_pdata *pdata)
 
 	sh_dac_output(0, pdata->channel);
 	sh_dac_disable(pdata->channel);
-}
+पूर्ण
 
-static struct dac_audio_pdata dac_audio_platform_data = {
+अटल काष्ठा dac_audio_pdata dac_audio_platक्रमm_data = अणु
 	.buffer_size		= 64000,
 	.channel		= 1,
 	.start			= dac_audio_start,
 	.stop			= dac_audio_stop,
-};
+पूर्ण;
 
-static struct platform_device dac_audio_device = {
+अटल काष्ठा platक्रमm_device dac_audio_device = अणु
 	.name		= "dac_audio",
 	.id		= -1,
-	.dev		= {
-		.platform_data	= &dac_audio_platform_data,
-	}
+	.dev		= अणु
+		.platक्रमm_data	= &dac_audio_platक्रमm_data,
+	पूर्ण
 
-};
+पूर्ण;
 
-static struct platform_device *hp6xx_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *hp6xx_devices[] __initdata = अणु
 	&cf_ide_device,
 	&jornadakbd_device,
 	&dac_audio_device,
-};
+पूर्ण;
 
-static void __init hp6xx_init_irq(void)
-{
-	/* Gets touchscreen and powerbutton IRQ working */
+अटल व्योम __init hp6xx_init_irq(व्योम)
+अणु
+	/* Gets touchscreen and घातerbutton IRQ working */
 	plat_irq_setup_pins(IRQ_MODE_IRQ);
-}
+पूर्ण
 
-static int __init hp6xx_devices_setup(void)
-{
-	return platform_add_devices(hp6xx_devices, ARRAY_SIZE(hp6xx_devices));
-}
+अटल पूर्णांक __init hp6xx_devices_setup(व्योम)
+अणु
+	वापस platक्रमm_add_devices(hp6xx_devices, ARRAY_SIZE(hp6xx_devices));
+पूर्ण
 
-static void __init hp6xx_setup(char **cmdline_p)
-{
+अटल व्योम __init hp6xx_setup(अक्षर **cmdline_p)
+अणु
 	u8 v8;
 	u16 v;
 
@@ -132,9 +133,9 @@ static void __init hp6xx_setup(char **cmdline_p)
 		HD64461_STBCR_SAFEST | HD64461_STBCR_SPC0ST	|
 		HD64461_STBCR_SMIAST | HD64461_STBCR_SAFECKE_OST|
 		HD64461_STBCR_SAFECKE_IST;
-#ifndef CONFIG_HD64461_ENABLER
+#अगर_अघोषित CONFIG_HD64461_ENABLER
 	v |= HD64461_STBCR_SPC1ST;
-#endif
+#पूर्ण_अगर
 	outw(v, HD64461_STBCR);
 	v = inw(HD64461_GPADR);
 	v |= HD64461_GPADR_SPEAKER | HD64461_GPADR_PCMCIA0;
@@ -142,31 +143,31 @@ static void __init hp6xx_setup(char **cmdline_p)
 
 	outw(HD64461_PCCGCR_VCC0 | HD64461_PCCSCR_VCC1, HD64461_PCC0GCR);
 
-#ifndef CONFIG_HD64461_ENABLER
+#अगर_अघोषित CONFIG_HD64461_ENABLER
 	outw(HD64461_PCCGCR_VCC0 | HD64461_PCCSCR_VCC1, HD64461_PCC1GCR);
-#endif
+#पूर्ण_अगर
 
 	sh_dac_output(0, DAC_SPEAKER_VOLUME);
 	sh_dac_disable(DAC_SPEAKER_VOLUME);
-	v8 = __raw_readb(DACR);
+	v8 = __raw_पढ़ोb(DACR);
 	v8 &= ~DACR_DAE;
-	__raw_writeb(v8,DACR);
+	__raw_ग_लिखोb(v8,DACR);
 
-	v8 = __raw_readb(SCPDR);
+	v8 = __raw_पढ़ोb(SCPDR);
 	v8 |= SCPDR_TS_SCAN_X | SCPDR_TS_SCAN_Y;
 	v8 &= ~SCPDR_TS_SCAN_ENABLE;
-	__raw_writeb(v8, SCPDR);
+	__raw_ग_लिखोb(v8, SCPDR);
 
-	v = __raw_readw(SCPCR);
+	v = __raw_पढ़ोw(SCPCR);
 	v &= ~SCPCR_TS_MASK;
 	v |= SCPCR_TS_ENABLE;
-	__raw_writew(v, SCPCR);
-}
+	__raw_ग_लिखोw(v, SCPCR);
+पूर्ण
 device_initcall(hp6xx_devices_setup);
 
-static struct sh_machine_vector mv_hp6xx __initmv = {
+अटल काष्ठा sh_machine_vector mv_hp6xx __iniपंचांगv = अणु
 	.mv_name = "hp6xx",
 	.mv_setup = hp6xx_setup,
 	/* Enable IRQ0 -> IRQ3 in IRQ_MODE */
 	.mv_init_irq = hp6xx_init_irq,
-};
+पूर्ण;

@@ -1,963 +1,964 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for the Analog Devices AXI-DMAC core
+ * Driver क्रम the Analog Devices AXI-DMAC core
  *
  * Copyright 2013-2019 Analog Devices Inc.
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#include <linux/bitfield.h>
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_dma.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/fpga/adi-axi-common.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fpga/adi-axi-common.h>
 
-#include <dt-bindings/dma/axi-dmac.h>
+#समावेश <dt-bindings/dma/axi-dmac.h>
 
-#include "dmaengine.h"
-#include "virt-dma.h"
+#समावेश "dmaengine.h"
+#समावेश "virt-dma.h"
 
 /*
  * The AXI-DMAC is a soft IP core that is used in FPGA designs. The core has
  * various instantiation parameters which decided the exact feature set support
  * by the core.
  *
- * Each channel of the core has a source interface and a destination interface.
- * The number of channels and the type of the channel interfaces is selected at
- * configuration time. A interface can either be a connected to a central memory
- * interconnect, which allows access to system memory, or it can be connected to
+ * Each channel of the core has a source पूर्णांकerface and a destination पूर्णांकerface.
+ * The number of channels and the type of the channel पूर्णांकerfaces is selected at
+ * configuration समय. A पूर्णांकerface can either be a connected to a central memory
+ * पूर्णांकerconnect, which allows access to प्रणाली memory, or it can be connected to
  * a dedicated bus which is directly connected to a data port on a peripheral.
  * Given that those are configuration options of the core that are selected when
  * it is instantiated this means that they can not be changed by software at
- * runtime. By extension this means that each channel is uni-directional. It can
+ * runसमय. By extension this means that each channel is uni-directional. It can
  * either be device to memory or memory to device, but not both. Also since the
  * device side is a dedicated data bus only connected to a single peripheral
- * there is no address than can or needs to be configured for the device side.
+ * there is no address than can or needs to be configured क्रम the device side.
  */
 
-#define AXI_DMAC_REG_INTERFACE_DESC	0x10
-#define   AXI_DMAC_DMA_SRC_TYPE_MSK	GENMASK(13, 12)
-#define   AXI_DMAC_DMA_SRC_TYPE_GET(x)	FIELD_GET(AXI_DMAC_DMA_SRC_TYPE_MSK, x)
-#define   AXI_DMAC_DMA_SRC_WIDTH_MSK	GENMASK(11, 8)
-#define   AXI_DMAC_DMA_SRC_WIDTH_GET(x)	FIELD_GET(AXI_DMAC_DMA_SRC_WIDTH_MSK, x)
-#define   AXI_DMAC_DMA_DST_TYPE_MSK	GENMASK(5, 4)
-#define   AXI_DMAC_DMA_DST_TYPE_GET(x)	FIELD_GET(AXI_DMAC_DMA_DST_TYPE_MSK, x)
-#define   AXI_DMAC_DMA_DST_WIDTH_MSK	GENMASK(3, 0)
-#define   AXI_DMAC_DMA_DST_WIDTH_GET(x)	FIELD_GET(AXI_DMAC_DMA_DST_WIDTH_MSK, x)
+#घोषणा AXI_DMAC_REG_INTERFACE_DESC	0x10
+#घोषणा   AXI_DMAC_DMA_SRC_TYPE_MSK	GENMASK(13, 12)
+#घोषणा   AXI_DMAC_DMA_SRC_TYPE_GET(x)	FIELD_GET(AXI_DMAC_DMA_SRC_TYPE_MSK, x)
+#घोषणा   AXI_DMAC_DMA_SRC_WIDTH_MSK	GENMASK(11, 8)
+#घोषणा   AXI_DMAC_DMA_SRC_WIDTH_GET(x)	FIELD_GET(AXI_DMAC_DMA_SRC_WIDTH_MSK, x)
+#घोषणा   AXI_DMAC_DMA_DST_TYPE_MSK	GENMASK(5, 4)
+#घोषणा   AXI_DMAC_DMA_DST_TYPE_GET(x)	FIELD_GET(AXI_DMAC_DMA_DST_TYPE_MSK, x)
+#घोषणा   AXI_DMAC_DMA_DST_WIDTH_MSK	GENMASK(3, 0)
+#घोषणा   AXI_DMAC_DMA_DST_WIDTH_GET(x)	FIELD_GET(AXI_DMAC_DMA_DST_WIDTH_MSK, x)
 
-#define AXI_DMAC_REG_IRQ_MASK		0x80
-#define AXI_DMAC_REG_IRQ_PENDING	0x84
-#define AXI_DMAC_REG_IRQ_SOURCE		0x88
+#घोषणा AXI_DMAC_REG_IRQ_MASK		0x80
+#घोषणा AXI_DMAC_REG_IRQ_PENDING	0x84
+#घोषणा AXI_DMAC_REG_IRQ_SOURCE		0x88
 
-#define AXI_DMAC_REG_CTRL		0x400
-#define AXI_DMAC_REG_TRANSFER_ID	0x404
-#define AXI_DMAC_REG_START_TRANSFER	0x408
-#define AXI_DMAC_REG_FLAGS		0x40c
-#define AXI_DMAC_REG_DEST_ADDRESS	0x410
-#define AXI_DMAC_REG_SRC_ADDRESS	0x414
-#define AXI_DMAC_REG_X_LENGTH		0x418
-#define AXI_DMAC_REG_Y_LENGTH		0x41c
-#define AXI_DMAC_REG_DEST_STRIDE	0x420
-#define AXI_DMAC_REG_SRC_STRIDE		0x424
-#define AXI_DMAC_REG_TRANSFER_DONE	0x428
-#define AXI_DMAC_REG_ACTIVE_TRANSFER_ID 0x42c
-#define AXI_DMAC_REG_STATUS		0x430
-#define AXI_DMAC_REG_CURRENT_SRC_ADDR	0x434
-#define AXI_DMAC_REG_CURRENT_DEST_ADDR	0x438
-#define AXI_DMAC_REG_PARTIAL_XFER_LEN	0x44c
-#define AXI_DMAC_REG_PARTIAL_XFER_ID	0x450
+#घोषणा AXI_DMAC_REG_CTRL		0x400
+#घोषणा AXI_DMAC_REG_TRANSFER_ID	0x404
+#घोषणा AXI_DMAC_REG_START_TRANSFER	0x408
+#घोषणा AXI_DMAC_REG_FLAGS		0x40c
+#घोषणा AXI_DMAC_REG_DEST_ADDRESS	0x410
+#घोषणा AXI_DMAC_REG_SRC_ADDRESS	0x414
+#घोषणा AXI_DMAC_REG_X_LENGTH		0x418
+#घोषणा AXI_DMAC_REG_Y_LENGTH		0x41c
+#घोषणा AXI_DMAC_REG_DEST_STRIDE	0x420
+#घोषणा AXI_DMAC_REG_SRC_STRIDE		0x424
+#घोषणा AXI_DMAC_REG_TRANSFER_DONE	0x428
+#घोषणा AXI_DMAC_REG_ACTIVE_TRANSFER_ID 0x42c
+#घोषणा AXI_DMAC_REG_STATUS		0x430
+#घोषणा AXI_DMAC_REG_CURRENT_SRC_ADDR	0x434
+#घोषणा AXI_DMAC_REG_CURRENT_DEST_ADDR	0x438
+#घोषणा AXI_DMAC_REG_PARTIAL_XFER_LEN	0x44c
+#घोषणा AXI_DMAC_REG_PARTIAL_XFER_ID	0x450
 
-#define AXI_DMAC_CTRL_ENABLE		BIT(0)
-#define AXI_DMAC_CTRL_PAUSE		BIT(1)
+#घोषणा AXI_DMAC_CTRL_ENABLE		BIT(0)
+#घोषणा AXI_DMAC_CTRL_PAUSE		BIT(1)
 
-#define AXI_DMAC_IRQ_SOT		BIT(0)
-#define AXI_DMAC_IRQ_EOT		BIT(1)
+#घोषणा AXI_DMAC_IRQ_SOT		BIT(0)
+#घोषणा AXI_DMAC_IRQ_EOT		BIT(1)
 
-#define AXI_DMAC_FLAG_CYCLIC		BIT(0)
-#define AXI_DMAC_FLAG_LAST		BIT(1)
-#define AXI_DMAC_FLAG_PARTIAL_REPORT	BIT(2)
+#घोषणा AXI_DMAC_FLAG_CYCLIC		BIT(0)
+#घोषणा AXI_DMAC_FLAG_LAST		BIT(1)
+#घोषणा AXI_DMAC_FLAG_PARTIAL_REPORT	BIT(2)
 
-#define AXI_DMAC_FLAG_PARTIAL_XFER_DONE BIT(31)
+#घोषणा AXI_DMAC_FLAG_PARTIAL_XFER_DONE BIT(31)
 
 /* The maximum ID allocated by the hardware is 31 */
-#define AXI_DMAC_SG_UNUSED 32U
+#घोषणा AXI_DMAC_SG_UNUSED 32U
 
-struct axi_dmac_sg {
+काष्ठा axi_dmac_sg अणु
 	dma_addr_t src_addr;
 	dma_addr_t dest_addr;
-	unsigned int x_len;
-	unsigned int y_len;
-	unsigned int dest_stride;
-	unsigned int src_stride;
-	unsigned int id;
-	unsigned int partial_len;
-	bool schedule_when_free;
-};
+	अचिन्हित पूर्णांक x_len;
+	अचिन्हित पूर्णांक y_len;
+	अचिन्हित पूर्णांक dest_stride;
+	अचिन्हित पूर्णांक src_stride;
+	अचिन्हित पूर्णांक id;
+	अचिन्हित पूर्णांक partial_len;
+	bool schedule_when_मुक्त;
+पूर्ण;
 
-struct axi_dmac_desc {
-	struct virt_dma_desc vdesc;
+काष्ठा axi_dmac_desc अणु
+	काष्ठा virt_dma_desc vdesc;
 	bool cyclic;
 	bool have_partial_xfer;
 
-	unsigned int num_submitted;
-	unsigned int num_completed;
-	unsigned int num_sgs;
-	struct axi_dmac_sg sg[];
-};
+	अचिन्हित पूर्णांक num_submitted;
+	अचिन्हित पूर्णांक num_completed;
+	अचिन्हित पूर्णांक num_sgs;
+	काष्ठा axi_dmac_sg sg[];
+पूर्ण;
 
-struct axi_dmac_chan {
-	struct virt_dma_chan vchan;
+काष्ठा axi_dmac_chan अणु
+	काष्ठा virt_dma_chan vchan;
 
-	struct axi_dmac_desc *next_desc;
-	struct list_head active_descs;
-	enum dma_transfer_direction direction;
+	काष्ठा axi_dmac_desc *next_desc;
+	काष्ठा list_head active_descs;
+	क्रमागत dma_transfer_direction direction;
 
-	unsigned int src_width;
-	unsigned int dest_width;
-	unsigned int src_type;
-	unsigned int dest_type;
+	अचिन्हित पूर्णांक src_width;
+	अचिन्हित पूर्णांक dest_width;
+	अचिन्हित पूर्णांक src_type;
+	अचिन्हित पूर्णांक dest_type;
 
-	unsigned int max_length;
-	unsigned int address_align_mask;
-	unsigned int length_align_mask;
+	अचिन्हित पूर्णांक max_length;
+	अचिन्हित पूर्णांक address_align_mask;
+	अचिन्हित पूर्णांक length_align_mask;
 
 	bool hw_partial_xfer;
 	bool hw_cyclic;
 	bool hw_2d;
-};
+पूर्ण;
 
-struct axi_dmac {
-	void __iomem *base;
-	int irq;
+काष्ठा axi_dmac अणु
+	व्योम __iomem *base;
+	पूर्णांक irq;
 
-	struct clk *clk;
+	काष्ठा clk *clk;
 
-	struct dma_device dma_dev;
-	struct axi_dmac_chan chan;
-};
+	काष्ठा dma_device dma_dev;
+	काष्ठा axi_dmac_chan chan;
+पूर्ण;
 
-static struct axi_dmac *chan_to_axi_dmac(struct axi_dmac_chan *chan)
-{
-	return container_of(chan->vchan.chan.device, struct axi_dmac,
+अटल काष्ठा axi_dmac *chan_to_axi_dmac(काष्ठा axi_dmac_chan *chan)
+अणु
+	वापस container_of(chan->vchan.chan.device, काष्ठा axi_dmac,
 		dma_dev);
-}
+पूर्ण
 
-static struct axi_dmac_chan *to_axi_dmac_chan(struct dma_chan *c)
-{
-	return container_of(c, struct axi_dmac_chan, vchan.chan);
-}
+अटल काष्ठा axi_dmac_chan *to_axi_dmac_chan(काष्ठा dma_chan *c)
+अणु
+	वापस container_of(c, काष्ठा axi_dmac_chan, vchan.chan);
+पूर्ण
 
-static struct axi_dmac_desc *to_axi_dmac_desc(struct virt_dma_desc *vdesc)
-{
-	return container_of(vdesc, struct axi_dmac_desc, vdesc);
-}
+अटल काष्ठा axi_dmac_desc *to_axi_dmac_desc(काष्ठा virt_dma_desc *vdesc)
+अणु
+	वापस container_of(vdesc, काष्ठा axi_dmac_desc, vdesc);
+पूर्ण
 
-static void axi_dmac_write(struct axi_dmac *axi_dmac, unsigned int reg,
-	unsigned int val)
-{
-	writel(val, axi_dmac->base + reg);
-}
+अटल व्योम axi_dmac_ग_लिखो(काष्ठा axi_dmac *axi_dmac, अचिन्हित पूर्णांक reg,
+	अचिन्हित पूर्णांक val)
+अणु
+	ग_लिखोl(val, axi_dmac->base + reg);
+पूर्ण
 
-static int axi_dmac_read(struct axi_dmac *axi_dmac, unsigned int reg)
-{
-	return readl(axi_dmac->base + reg);
-}
+अटल पूर्णांक axi_dmac_पढ़ो(काष्ठा axi_dmac *axi_dmac, अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोl(axi_dmac->base + reg);
+पूर्ण
 
-static int axi_dmac_src_is_mem(struct axi_dmac_chan *chan)
-{
-	return chan->src_type == AXI_DMAC_BUS_TYPE_AXI_MM;
-}
+अटल पूर्णांक axi_dmac_src_is_mem(काष्ठा axi_dmac_chan *chan)
+अणु
+	वापस chan->src_type == AXI_DMAC_BUS_TYPE_AXI_MM;
+पूर्ण
 
-static int axi_dmac_dest_is_mem(struct axi_dmac_chan *chan)
-{
-	return chan->dest_type == AXI_DMAC_BUS_TYPE_AXI_MM;
-}
+अटल पूर्णांक axi_dmac_dest_is_mem(काष्ठा axi_dmac_chan *chan)
+अणु
+	वापस chan->dest_type == AXI_DMAC_BUS_TYPE_AXI_MM;
+पूर्ण
 
-static bool axi_dmac_check_len(struct axi_dmac_chan *chan, unsigned int len)
-{
-	if (len == 0)
-		return false;
-	if ((len & chan->length_align_mask) != 0) /* Not aligned */
-		return false;
-	return true;
-}
+अटल bool axi_dmac_check_len(काष्ठा axi_dmac_chan *chan, अचिन्हित पूर्णांक len)
+अणु
+	अगर (len == 0)
+		वापस false;
+	अगर ((len & chan->length_align_mask) != 0) /* Not aligned */
+		वापस false;
+	वापस true;
+पूर्ण
 
-static bool axi_dmac_check_addr(struct axi_dmac_chan *chan, dma_addr_t addr)
-{
-	if ((addr & chan->address_align_mask) != 0) /* Not aligned */
-		return false;
-	return true;
-}
+अटल bool axi_dmac_check_addr(काष्ठा axi_dmac_chan *chan, dma_addr_t addr)
+अणु
+	अगर ((addr & chan->address_align_mask) != 0) /* Not aligned */
+		वापस false;
+	वापस true;
+पूर्ण
 
-static void axi_dmac_start_transfer(struct axi_dmac_chan *chan)
-{
-	struct axi_dmac *dmac = chan_to_axi_dmac(chan);
-	struct virt_dma_desc *vdesc;
-	struct axi_dmac_desc *desc;
-	struct axi_dmac_sg *sg;
-	unsigned int flags = 0;
-	unsigned int val;
+अटल व्योम axi_dmac_start_transfer(काष्ठा axi_dmac_chan *chan)
+अणु
+	काष्ठा axi_dmac *dmac = chan_to_axi_dmac(chan);
+	काष्ठा virt_dma_desc *vdesc;
+	काष्ठा axi_dmac_desc *desc;
+	काष्ठा axi_dmac_sg *sg;
+	अचिन्हित पूर्णांक flags = 0;
+	अचिन्हित पूर्णांक val;
 
-	val = axi_dmac_read(dmac, AXI_DMAC_REG_START_TRANSFER);
-	if (val) /* Queue is full, wait for the next SOT IRQ */
-		return;
+	val = axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_START_TRANSFER);
+	अगर (val) /* Queue is full, रुको क्रम the next SOT IRQ */
+		वापस;
 
 	desc = chan->next_desc;
 
-	if (!desc) {
+	अगर (!desc) अणु
 		vdesc = vchan_next_desc(&chan->vchan);
-		if (!vdesc)
-			return;
+		अगर (!vdesc)
+			वापस;
 		list_move_tail(&vdesc->node, &chan->active_descs);
 		desc = to_axi_dmac_desc(vdesc);
-	}
+	पूर्ण
 	sg = &desc->sg[desc->num_submitted];
 
-	/* Already queued in cyclic mode. Wait for it to finish */
-	if (sg->id != AXI_DMAC_SG_UNUSED) {
-		sg->schedule_when_free = true;
-		return;
-	}
+	/* Alपढ़ोy queued in cyclic mode. Wait क्रम it to finish */
+	अगर (sg->id != AXI_DMAC_SG_UNUSED) अणु
+		sg->schedule_when_मुक्त = true;
+		वापस;
+	पूर्ण
 
 	desc->num_submitted++;
-	if (desc->num_submitted == desc->num_sgs ||
-	    desc->have_partial_xfer) {
-		if (desc->cyclic)
+	अगर (desc->num_submitted == desc->num_sgs ||
+	    desc->have_partial_xfer) अणु
+		अगर (desc->cyclic)
 			desc->num_submitted = 0; /* Start again */
-		else
-			chan->next_desc = NULL;
+		अन्यथा
+			chan->next_desc = शून्य;
 		flags |= AXI_DMAC_FLAG_LAST;
-	} else {
+	पूर्ण अन्यथा अणु
 		chan->next_desc = desc;
-	}
+	पूर्ण
 
-	sg->id = axi_dmac_read(dmac, AXI_DMAC_REG_TRANSFER_ID);
+	sg->id = axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_TRANSFER_ID);
 
-	if (axi_dmac_dest_is_mem(chan)) {
-		axi_dmac_write(dmac, AXI_DMAC_REG_DEST_ADDRESS, sg->dest_addr);
-		axi_dmac_write(dmac, AXI_DMAC_REG_DEST_STRIDE, sg->dest_stride);
-	}
+	अगर (axi_dmac_dest_is_mem(chan)) अणु
+		axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_DEST_ADDRESS, sg->dest_addr);
+		axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_DEST_STRIDE, sg->dest_stride);
+	पूर्ण
 
-	if (axi_dmac_src_is_mem(chan)) {
-		axi_dmac_write(dmac, AXI_DMAC_REG_SRC_ADDRESS, sg->src_addr);
-		axi_dmac_write(dmac, AXI_DMAC_REG_SRC_STRIDE, sg->src_stride);
-	}
+	अगर (axi_dmac_src_is_mem(chan)) अणु
+		axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_SRC_ADDRESS, sg->src_addr);
+		axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_SRC_STRIDE, sg->src_stride);
+	पूर्ण
 
 	/*
 	 * If the hardware supports cyclic transfers and there is no callback to
-	 * call and only a single segment, enable hw cyclic mode to avoid
-	 * unnecessary interrupts.
+	 * call and only a single segment, enable hw cyclic mode to aव्योम
+	 * unnecessary पूर्णांकerrupts.
 	 */
-	if (chan->hw_cyclic && desc->cyclic && !desc->vdesc.tx.callback &&
+	अगर (chan->hw_cyclic && desc->cyclic && !desc->vdesc.tx.callback &&
 		desc->num_sgs == 1)
 		flags |= AXI_DMAC_FLAG_CYCLIC;
 
-	if (chan->hw_partial_xfer)
+	अगर (chan->hw_partial_xfer)
 		flags |= AXI_DMAC_FLAG_PARTIAL_REPORT;
 
-	axi_dmac_write(dmac, AXI_DMAC_REG_X_LENGTH, sg->x_len - 1);
-	axi_dmac_write(dmac, AXI_DMAC_REG_Y_LENGTH, sg->y_len - 1);
-	axi_dmac_write(dmac, AXI_DMAC_REG_FLAGS, flags);
-	axi_dmac_write(dmac, AXI_DMAC_REG_START_TRANSFER, 1);
-}
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_X_LENGTH, sg->x_len - 1);
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_Y_LENGTH, sg->y_len - 1);
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_FLAGS, flags);
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_START_TRANSFER, 1);
+पूर्ण
 
-static struct axi_dmac_desc *axi_dmac_active_desc(struct axi_dmac_chan *chan)
-{
-	return list_first_entry_or_null(&chan->active_descs,
-		struct axi_dmac_desc, vdesc.node);
-}
+अटल काष्ठा axi_dmac_desc *axi_dmac_active_desc(काष्ठा axi_dmac_chan *chan)
+अणु
+	वापस list_first_entry_or_null(&chan->active_descs,
+		काष्ठा axi_dmac_desc, vdesc.node);
+पूर्ण
 
-static inline unsigned int axi_dmac_total_sg_bytes(struct axi_dmac_chan *chan,
-	struct axi_dmac_sg *sg)
-{
-	if (chan->hw_2d)
-		return sg->x_len * sg->y_len;
-	else
-		return sg->x_len;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक axi_dmac_total_sg_bytes(काष्ठा axi_dmac_chan *chan,
+	काष्ठा axi_dmac_sg *sg)
+अणु
+	अगर (chan->hw_2d)
+		वापस sg->x_len * sg->y_len;
+	अन्यथा
+		वापस sg->x_len;
+पूर्ण
 
-static void axi_dmac_dequeue_partial_xfers(struct axi_dmac_chan *chan)
-{
-	struct axi_dmac *dmac = chan_to_axi_dmac(chan);
-	struct axi_dmac_desc *desc;
-	struct axi_dmac_sg *sg;
-	u32 xfer_done, len, id, i;
+अटल व्योम axi_dmac_dequeue_partial_xfers(काष्ठा axi_dmac_chan *chan)
+अणु
+	काष्ठा axi_dmac *dmac = chan_to_axi_dmac(chan);
+	काष्ठा axi_dmac_desc *desc;
+	काष्ठा axi_dmac_sg *sg;
+	u32 xfer_करोne, len, id, i;
 	bool found_sg;
 
-	do {
-		len = axi_dmac_read(dmac, AXI_DMAC_REG_PARTIAL_XFER_LEN);
-		id  = axi_dmac_read(dmac, AXI_DMAC_REG_PARTIAL_XFER_ID);
+	करो अणु
+		len = axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_PARTIAL_XFER_LEN);
+		id  = axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_PARTIAL_XFER_ID);
 
 		found_sg = false;
-		list_for_each_entry(desc, &chan->active_descs, vdesc.node) {
-			for (i = 0; i < desc->num_sgs; i++) {
+		list_क्रम_each_entry(desc, &chan->active_descs, vdesc.node) अणु
+			क्रम (i = 0; i < desc->num_sgs; i++) अणु
 				sg = &desc->sg[i];
-				if (sg->id == AXI_DMAC_SG_UNUSED)
-					continue;
-				if (sg->id == id) {
+				अगर (sg->id == AXI_DMAC_SG_UNUSED)
+					जारी;
+				अगर (sg->id == id) अणु
 					desc->have_partial_xfer = true;
 					sg->partial_len = len;
 					found_sg = true;
-					break;
-				}
-			}
-			if (found_sg)
-				break;
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (found_sg)
+				अवरोध;
+		पूर्ण
 
-		if (found_sg) {
+		अगर (found_sg) अणु
 			dev_dbg(dmac->dma_dev.dev,
 				"Found partial segment id=%u, len=%u\n",
 				id, len);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_warn(dmac->dma_dev.dev,
 				 "Not found partial segment id=%u, len=%u\n",
 				 id, len);
-		}
+		पूर्ण
 
-		/* Check if we have any more partial transfers */
-		xfer_done = axi_dmac_read(dmac, AXI_DMAC_REG_TRANSFER_DONE);
-		xfer_done = !(xfer_done & AXI_DMAC_FLAG_PARTIAL_XFER_DONE);
+		/* Check अगर we have any more partial transfers */
+		xfer_करोne = axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_TRANSFER_DONE);
+		xfer_करोne = !(xfer_करोne & AXI_DMAC_FLAG_PARTIAL_XFER_DONE);
 
-	} while (!xfer_done);
-}
+	पूर्ण जबतक (!xfer_करोne);
+पूर्ण
 
-static void axi_dmac_compute_residue(struct axi_dmac_chan *chan,
-	struct axi_dmac_desc *active)
-{
-	struct dmaengine_result *rslt = &active->vdesc.tx_result;
-	unsigned int start = active->num_completed - 1;
-	struct axi_dmac_sg *sg;
-	unsigned int i, total;
+अटल व्योम axi_dmac_compute_residue(काष्ठा axi_dmac_chan *chan,
+	काष्ठा axi_dmac_desc *active)
+अणु
+	काष्ठा dmaengine_result *rslt = &active->vdesc.tx_result;
+	अचिन्हित पूर्णांक start = active->num_completed - 1;
+	काष्ठा axi_dmac_sg *sg;
+	अचिन्हित पूर्णांक i, total;
 
 	rslt->result = DMA_TRANS_NOERROR;
 	rslt->residue = 0;
 
 	/*
-	 * We get here if the last completed segment is partial, which
+	 * We get here अगर the last completed segment is partial, which
 	 * means we can compute the residue from that segment onwards
 	 */
-	for (i = start; i < active->num_sgs; i++) {
+	क्रम (i = start; i < active->num_sgs; i++) अणु
 		sg = &active->sg[i];
 		total = axi_dmac_total_sg_bytes(chan, sg);
 		rslt->residue += (total - sg->partial_len);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool axi_dmac_transfer_done(struct axi_dmac_chan *chan,
-	unsigned int completed_transfers)
-{
-	struct axi_dmac_desc *active;
-	struct axi_dmac_sg *sg;
+अटल bool axi_dmac_transfer_करोne(काष्ठा axi_dmac_chan *chan,
+	अचिन्हित पूर्णांक completed_transfers)
+अणु
+	काष्ठा axi_dmac_desc *active;
+	काष्ठा axi_dmac_sg *sg;
 	bool start_next = false;
 
 	active = axi_dmac_active_desc(chan);
-	if (!active)
-		return false;
+	अगर (!active)
+		वापस false;
 
-	if (chan->hw_partial_xfer &&
+	अगर (chan->hw_partial_xfer &&
 	    (completed_transfers & AXI_DMAC_FLAG_PARTIAL_XFER_DONE))
 		axi_dmac_dequeue_partial_xfers(chan);
 
-	do {
+	करो अणु
 		sg = &active->sg[active->num_completed];
-		if (sg->id == AXI_DMAC_SG_UNUSED) /* Not yet submitted */
-			break;
-		if (!(BIT(sg->id) & completed_transfers))
-			break;
+		अगर (sg->id == AXI_DMAC_SG_UNUSED) /* Not yet submitted */
+			अवरोध;
+		अगर (!(BIT(sg->id) & completed_transfers))
+			अवरोध;
 		active->num_completed++;
 		sg->id = AXI_DMAC_SG_UNUSED;
-		if (sg->schedule_when_free) {
-			sg->schedule_when_free = false;
+		अगर (sg->schedule_when_मुक्त) अणु
+			sg->schedule_when_मुक्त = false;
 			start_next = true;
-		}
+		पूर्ण
 
-		if (sg->partial_len)
+		अगर (sg->partial_len)
 			axi_dmac_compute_residue(chan, active);
 
-		if (active->cyclic)
+		अगर (active->cyclic)
 			vchan_cyclic_callback(&active->vdesc);
 
-		if (active->num_completed == active->num_sgs ||
-		    sg->partial_len) {
-			if (active->cyclic) {
+		अगर (active->num_completed == active->num_sgs ||
+		    sg->partial_len) अणु
+			अगर (active->cyclic) अणु
 				active->num_completed = 0; /* wrap around */
-			} else {
+			पूर्ण अन्यथा अणु
 				list_del(&active->vdesc.node);
 				vchan_cookie_complete(&active->vdesc);
 				active = axi_dmac_active_desc(chan);
-			}
-		}
-	} while (active);
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (active);
 
-	return start_next;
-}
+	वापस start_next;
+पूर्ण
 
-static irqreturn_t axi_dmac_interrupt_handler(int irq, void *devid)
-{
-	struct axi_dmac *dmac = devid;
-	unsigned int pending;
+अटल irqवापस_t axi_dmac_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा axi_dmac *dmac = devid;
+	अचिन्हित पूर्णांक pending;
 	bool start_next = false;
 
-	pending = axi_dmac_read(dmac, AXI_DMAC_REG_IRQ_PENDING);
-	if (!pending)
-		return IRQ_NONE;
+	pending = axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_IRQ_PENDING);
+	अगर (!pending)
+		वापस IRQ_NONE;
 
-	axi_dmac_write(dmac, AXI_DMAC_REG_IRQ_PENDING, pending);
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_IRQ_PENDING, pending);
 
 	spin_lock(&dmac->chan.vchan.lock);
 	/* One or more transfers have finished */
-	if (pending & AXI_DMAC_IRQ_EOT) {
-		unsigned int completed;
+	अगर (pending & AXI_DMAC_IRQ_EOT) अणु
+		अचिन्हित पूर्णांक completed;
 
-		completed = axi_dmac_read(dmac, AXI_DMAC_REG_TRANSFER_DONE);
-		start_next = axi_dmac_transfer_done(&dmac->chan, completed);
-	}
+		completed = axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_TRANSFER_DONE);
+		start_next = axi_dmac_transfer_करोne(&dmac->chan, completed);
+	पूर्ण
 	/* Space has become available in the descriptor queue */
-	if ((pending & AXI_DMAC_IRQ_SOT) || start_next)
+	अगर ((pending & AXI_DMAC_IRQ_SOT) || start_next)
 		axi_dmac_start_transfer(&dmac->chan);
 	spin_unlock(&dmac->chan.vchan.lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int axi_dmac_terminate_all(struct dma_chan *c)
-{
-	struct axi_dmac_chan *chan = to_axi_dmac_chan(c);
-	struct axi_dmac *dmac = chan_to_axi_dmac(chan);
-	unsigned long flags;
+अटल पूर्णांक axi_dmac_terminate_all(काष्ठा dma_chan *c)
+अणु
+	काष्ठा axi_dmac_chan *chan = to_axi_dmac_chan(c);
+	काष्ठा axi_dmac *dmac = chan_to_axi_dmac(chan);
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(head);
 
 	spin_lock_irqsave(&chan->vchan.lock, flags);
-	axi_dmac_write(dmac, AXI_DMAC_REG_CTRL, 0);
-	chan->next_desc = NULL;
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_CTRL, 0);
+	chan->next_desc = शून्य;
 	vchan_get_all_descriptors(&chan->vchan, &head);
 	list_splice_tail_init(&chan->active_descs, &head);
 	spin_unlock_irqrestore(&chan->vchan.lock, flags);
 
-	vchan_dma_desc_free_list(&chan->vchan, &head);
+	vchan_dma_desc_मुक्त_list(&chan->vchan, &head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void axi_dmac_synchronize(struct dma_chan *c)
-{
-	struct axi_dmac_chan *chan = to_axi_dmac_chan(c);
+अटल व्योम axi_dmac_synchronize(काष्ठा dma_chan *c)
+अणु
+	काष्ठा axi_dmac_chan *chan = to_axi_dmac_chan(c);
 
 	vchan_synchronize(&chan->vchan);
-}
+पूर्ण
 
-static void axi_dmac_issue_pending(struct dma_chan *c)
-{
-	struct axi_dmac_chan *chan = to_axi_dmac_chan(c);
-	struct axi_dmac *dmac = chan_to_axi_dmac(chan);
-	unsigned long flags;
+अटल व्योम axi_dmac_issue_pending(काष्ठा dma_chan *c)
+अणु
+	काष्ठा axi_dmac_chan *chan = to_axi_dmac_chan(c);
+	काष्ठा axi_dmac *dmac = chan_to_axi_dmac(chan);
+	अचिन्हित दीर्घ flags;
 
-	axi_dmac_write(dmac, AXI_DMAC_REG_CTRL, AXI_DMAC_CTRL_ENABLE);
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_CTRL, AXI_DMAC_CTRL_ENABLE);
 
 	spin_lock_irqsave(&chan->vchan.lock, flags);
-	if (vchan_issue_pending(&chan->vchan))
+	अगर (vchan_issue_pending(&chan->vchan))
 		axi_dmac_start_transfer(chan);
 	spin_unlock_irqrestore(&chan->vchan.lock, flags);
-}
+पूर्ण
 
-static struct axi_dmac_desc *axi_dmac_alloc_desc(unsigned int num_sgs)
-{
-	struct axi_dmac_desc *desc;
-	unsigned int i;
+अटल काष्ठा axi_dmac_desc *axi_dmac_alloc_desc(अचिन्हित पूर्णांक num_sgs)
+अणु
+	काष्ठा axi_dmac_desc *desc;
+	अचिन्हित पूर्णांक i;
 
-	desc = kzalloc(struct_size(desc, sg, num_sgs), GFP_NOWAIT);
-	if (!desc)
-		return NULL;
+	desc = kzalloc(काष्ठा_size(desc, sg, num_sgs), GFP_NOWAIT);
+	अगर (!desc)
+		वापस शून्य;
 
-	for (i = 0; i < num_sgs; i++)
+	क्रम (i = 0; i < num_sgs; i++)
 		desc->sg[i].id = AXI_DMAC_SG_UNUSED;
 
 	desc->num_sgs = num_sgs;
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-static struct axi_dmac_sg *axi_dmac_fill_linear_sg(struct axi_dmac_chan *chan,
-	enum dma_transfer_direction direction, dma_addr_t addr,
-	unsigned int num_periods, unsigned int period_len,
-	struct axi_dmac_sg *sg)
-{
-	unsigned int num_segments, i;
-	unsigned int segment_size;
-	unsigned int len;
+अटल काष्ठा axi_dmac_sg *axi_dmac_fill_linear_sg(काष्ठा axi_dmac_chan *chan,
+	क्रमागत dma_transfer_direction direction, dma_addr_t addr,
+	अचिन्हित पूर्णांक num_periods, अचिन्हित पूर्णांक period_len,
+	काष्ठा axi_dmac_sg *sg)
+अणु
+	अचिन्हित पूर्णांक num_segments, i;
+	अचिन्हित पूर्णांक segment_size;
+	अचिन्हित पूर्णांक len;
 
-	/* Split into multiple equally sized segments if necessary */
+	/* Split पूर्णांकo multiple equally sized segments अगर necessary */
 	num_segments = DIV_ROUND_UP(period_len, chan->max_length);
 	segment_size = DIV_ROUND_UP(period_len, num_segments);
 	/* Take care of alignment */
 	segment_size = ((segment_size - 1) | chan->length_align_mask) + 1;
 
-	for (i = 0; i < num_periods; i++) {
+	क्रम (i = 0; i < num_periods; i++) अणु
 		len = period_len;
 
-		while (len > segment_size) {
-			if (direction == DMA_DEV_TO_MEM)
+		जबतक (len > segment_size) अणु
+			अगर (direction == DMA_DEV_TO_MEM)
 				sg->dest_addr = addr;
-			else
+			अन्यथा
 				sg->src_addr = addr;
 			sg->x_len = segment_size;
 			sg->y_len = 1;
 			sg++;
 			addr += segment_size;
 			len -= segment_size;
-		}
+		पूर्ण
 
-		if (direction == DMA_DEV_TO_MEM)
+		अगर (direction == DMA_DEV_TO_MEM)
 			sg->dest_addr = addr;
-		else
+		अन्यथा
 			sg->src_addr = addr;
 		sg->x_len = len;
 		sg->y_len = 1;
 		sg++;
 		addr += len;
-	}
+	पूर्ण
 
-	return sg;
-}
+	वापस sg;
+पूर्ण
 
-static struct dma_async_tx_descriptor *axi_dmac_prep_slave_sg(
-	struct dma_chan *c, struct scatterlist *sgl,
-	unsigned int sg_len, enum dma_transfer_direction direction,
-	unsigned long flags, void *context)
-{
-	struct axi_dmac_chan *chan = to_axi_dmac_chan(c);
-	struct axi_dmac_desc *desc;
-	struct axi_dmac_sg *dsg;
-	struct scatterlist *sg;
-	unsigned int num_sgs;
-	unsigned int i;
+अटल काष्ठा dma_async_tx_descriptor *axi_dmac_prep_slave_sg(
+	काष्ठा dma_chan *c, काष्ठा scatterlist *sgl,
+	अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
+	अचिन्हित दीर्घ flags, व्योम *context)
+अणु
+	काष्ठा axi_dmac_chan *chan = to_axi_dmac_chan(c);
+	काष्ठा axi_dmac_desc *desc;
+	काष्ठा axi_dmac_sg *dsg;
+	काष्ठा scatterlist *sg;
+	अचिन्हित पूर्णांक num_sgs;
+	अचिन्हित पूर्णांक i;
 
-	if (direction != chan->direction)
-		return NULL;
+	अगर (direction != chan->direction)
+		वापस शून्य;
 
 	num_sgs = 0;
-	for_each_sg(sgl, sg, sg_len, i)
+	क्रम_each_sg(sgl, sg, sg_len, i)
 		num_sgs += DIV_ROUND_UP(sg_dma_len(sg), chan->max_length);
 
 	desc = axi_dmac_alloc_desc(num_sgs);
-	if (!desc)
-		return NULL;
+	अगर (!desc)
+		वापस शून्य;
 
 	dsg = desc->sg;
 
-	for_each_sg(sgl, sg, sg_len, i) {
-		if (!axi_dmac_check_addr(chan, sg_dma_address(sg)) ||
-		    !axi_dmac_check_len(chan, sg_dma_len(sg))) {
-			kfree(desc);
-			return NULL;
-		}
+	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+		अगर (!axi_dmac_check_addr(chan, sg_dma_address(sg)) ||
+		    !axi_dmac_check_len(chan, sg_dma_len(sg))) अणु
+			kमुक्त(desc);
+			वापस शून्य;
+		पूर्ण
 
 		dsg = axi_dmac_fill_linear_sg(chan, direction, sg_dma_address(sg), 1,
 			sg_dma_len(sg), dsg);
-	}
+	पूर्ण
 
 	desc->cyclic = false;
 
-	return vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
-}
+	वापस vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
+पूर्ण
 
-static struct dma_async_tx_descriptor *axi_dmac_prep_dma_cyclic(
-	struct dma_chan *c, dma_addr_t buf_addr, size_t buf_len,
-	size_t period_len, enum dma_transfer_direction direction,
-	unsigned long flags)
-{
-	struct axi_dmac_chan *chan = to_axi_dmac_chan(c);
-	struct axi_dmac_desc *desc;
-	unsigned int num_periods, num_segments;
+अटल काष्ठा dma_async_tx_descriptor *axi_dmac_prep_dma_cyclic(
+	काष्ठा dma_chan *c, dma_addr_t buf_addr, माप_प्रकार buf_len,
+	माप_प्रकार period_len, क्रमागत dma_transfer_direction direction,
+	अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा axi_dmac_chan *chan = to_axi_dmac_chan(c);
+	काष्ठा axi_dmac_desc *desc;
+	अचिन्हित पूर्णांक num_periods, num_segments;
 
-	if (direction != chan->direction)
-		return NULL;
+	अगर (direction != chan->direction)
+		वापस शून्य;
 
-	if (!axi_dmac_check_len(chan, buf_len) ||
+	अगर (!axi_dmac_check_len(chan, buf_len) ||
 	    !axi_dmac_check_addr(chan, buf_addr))
-		return NULL;
+		वापस शून्य;
 
-	if (period_len == 0 || buf_len % period_len)
-		return NULL;
+	अगर (period_len == 0 || buf_len % period_len)
+		वापस शून्य;
 
 	num_periods = buf_len / period_len;
 	num_segments = DIV_ROUND_UP(period_len, chan->max_length);
 
 	desc = axi_dmac_alloc_desc(num_periods * num_segments);
-	if (!desc)
-		return NULL;
+	अगर (!desc)
+		वापस शून्य;
 
 	axi_dmac_fill_linear_sg(chan, direction, buf_addr, num_periods,
 		period_len, desc->sg);
 
 	desc->cyclic = true;
 
-	return vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
-}
+	वापस vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
+पूर्ण
 
-static struct dma_async_tx_descriptor *axi_dmac_prep_interleaved(
-	struct dma_chan *c, struct dma_interleaved_template *xt,
-	unsigned long flags)
-{
-	struct axi_dmac_chan *chan = to_axi_dmac_chan(c);
-	struct axi_dmac_desc *desc;
-	size_t dst_icg, src_icg;
+अटल काष्ठा dma_async_tx_descriptor *axi_dmac_prep_पूर्णांकerleaved(
+	काष्ठा dma_chan *c, काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt,
+	अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा axi_dmac_chan *chan = to_axi_dmac_chan(c);
+	काष्ठा axi_dmac_desc *desc;
+	माप_प्रकार dst_icg, src_icg;
 
-	if (xt->frame_size != 1)
-		return NULL;
+	अगर (xt->frame_size != 1)
+		वापस शून्य;
 
-	if (xt->dir != chan->direction)
-		return NULL;
+	अगर (xt->dir != chan->direction)
+		वापस शून्य;
 
-	if (axi_dmac_src_is_mem(chan)) {
-		if (!xt->src_inc || !axi_dmac_check_addr(chan, xt->src_start))
-			return NULL;
-	}
+	अगर (axi_dmac_src_is_mem(chan)) अणु
+		अगर (!xt->src_inc || !axi_dmac_check_addr(chan, xt->src_start))
+			वापस शून्य;
+	पूर्ण
 
-	if (axi_dmac_dest_is_mem(chan)) {
-		if (!xt->dst_inc || !axi_dmac_check_addr(chan, xt->dst_start))
-			return NULL;
-	}
+	अगर (axi_dmac_dest_is_mem(chan)) अणु
+		अगर (!xt->dst_inc || !axi_dmac_check_addr(chan, xt->dst_start))
+			वापस शून्य;
+	पूर्ण
 
 	dst_icg = dmaengine_get_dst_icg(xt, &xt->sgl[0]);
 	src_icg = dmaengine_get_src_icg(xt, &xt->sgl[0]);
 
-	if (chan->hw_2d) {
-		if (!axi_dmac_check_len(chan, xt->sgl[0].size) ||
+	अगर (chan->hw_2d) अणु
+		अगर (!axi_dmac_check_len(chan, xt->sgl[0].size) ||
 		    xt->numf == 0)
-			return NULL;
-		if (xt->sgl[0].size + dst_icg > chan->max_length ||
+			वापस शून्य;
+		अगर (xt->sgl[0].size + dst_icg > chan->max_length ||
 		    xt->sgl[0].size + src_icg > chan->max_length)
-			return NULL;
-	} else {
-		if (dst_icg != 0 || src_icg != 0)
-			return NULL;
-		if (chan->max_length / xt->sgl[0].size < xt->numf)
-			return NULL;
-		if (!axi_dmac_check_len(chan, xt->sgl[0].size * xt->numf))
-			return NULL;
-	}
+			वापस शून्य;
+	पूर्ण अन्यथा अणु
+		अगर (dst_icg != 0 || src_icg != 0)
+			वापस शून्य;
+		अगर (chan->max_length / xt->sgl[0].size < xt->numf)
+			वापस शून्य;
+		अगर (!axi_dmac_check_len(chan, xt->sgl[0].size * xt->numf))
+			वापस शून्य;
+	पूर्ण
 
 	desc = axi_dmac_alloc_desc(1);
-	if (!desc)
-		return NULL;
+	अगर (!desc)
+		वापस शून्य;
 
-	if (axi_dmac_src_is_mem(chan)) {
+	अगर (axi_dmac_src_is_mem(chan)) अणु
 		desc->sg[0].src_addr = xt->src_start;
 		desc->sg[0].src_stride = xt->sgl[0].size + src_icg;
-	}
+	पूर्ण
 
-	if (axi_dmac_dest_is_mem(chan)) {
+	अगर (axi_dmac_dest_is_mem(chan)) अणु
 		desc->sg[0].dest_addr = xt->dst_start;
 		desc->sg[0].dest_stride = xt->sgl[0].size + dst_icg;
-	}
+	पूर्ण
 
-	if (chan->hw_2d) {
+	अगर (chan->hw_2d) अणु
 		desc->sg[0].x_len = xt->sgl[0].size;
 		desc->sg[0].y_len = xt->numf;
-	} else {
+	पूर्ण अन्यथा अणु
 		desc->sg[0].x_len = xt->sgl[0].size * xt->numf;
 		desc->sg[0].y_len = 1;
-	}
+	पूर्ण
 
-	if (flags & DMA_CYCLIC)
+	अगर (flags & DMA_CYCLIC)
 		desc->cyclic = true;
 
-	return vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
-}
+	वापस vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
+पूर्ण
 
-static void axi_dmac_free_chan_resources(struct dma_chan *c)
-{
-	vchan_free_chan_resources(to_virt_chan(c));
-}
+अटल व्योम axi_dmac_मुक्त_chan_resources(काष्ठा dma_chan *c)
+अणु
+	vchan_मुक्त_chan_resources(to_virt_chan(c));
+पूर्ण
 
-static void axi_dmac_desc_free(struct virt_dma_desc *vdesc)
-{
-	kfree(container_of(vdesc, struct axi_dmac_desc, vdesc));
-}
+अटल व्योम axi_dmac_desc_मुक्त(काष्ठा virt_dma_desc *vdesc)
+अणु
+	kमुक्त(container_of(vdesc, काष्ठा axi_dmac_desc, vdesc));
+पूर्ण
 
-static bool axi_dmac_regmap_rdwr(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case AXI_DMAC_REG_IRQ_MASK:
-	case AXI_DMAC_REG_IRQ_SOURCE:
-	case AXI_DMAC_REG_IRQ_PENDING:
-	case AXI_DMAC_REG_CTRL:
-	case AXI_DMAC_REG_TRANSFER_ID:
-	case AXI_DMAC_REG_START_TRANSFER:
-	case AXI_DMAC_REG_FLAGS:
-	case AXI_DMAC_REG_DEST_ADDRESS:
-	case AXI_DMAC_REG_SRC_ADDRESS:
-	case AXI_DMAC_REG_X_LENGTH:
-	case AXI_DMAC_REG_Y_LENGTH:
-	case AXI_DMAC_REG_DEST_STRIDE:
-	case AXI_DMAC_REG_SRC_STRIDE:
-	case AXI_DMAC_REG_TRANSFER_DONE:
-	case AXI_DMAC_REG_ACTIVE_TRANSFER_ID:
-	case AXI_DMAC_REG_STATUS:
-	case AXI_DMAC_REG_CURRENT_SRC_ADDR:
-	case AXI_DMAC_REG_CURRENT_DEST_ADDR:
-	case AXI_DMAC_REG_PARTIAL_XFER_LEN:
-	case AXI_DMAC_REG_PARTIAL_XFER_ID:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool axi_dmac_regmap_rdwr(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल AXI_DMAC_REG_IRQ_MASK:
+	हाल AXI_DMAC_REG_IRQ_SOURCE:
+	हाल AXI_DMAC_REG_IRQ_PENDING:
+	हाल AXI_DMAC_REG_CTRL:
+	हाल AXI_DMAC_REG_TRANSFER_ID:
+	हाल AXI_DMAC_REG_START_TRANSFER:
+	हाल AXI_DMAC_REG_FLAGS:
+	हाल AXI_DMAC_REG_DEST_ADDRESS:
+	हाल AXI_DMAC_REG_SRC_ADDRESS:
+	हाल AXI_DMAC_REG_X_LENGTH:
+	हाल AXI_DMAC_REG_Y_LENGTH:
+	हाल AXI_DMAC_REG_DEST_STRIDE:
+	हाल AXI_DMAC_REG_SRC_STRIDE:
+	हाल AXI_DMAC_REG_TRANSFER_DONE:
+	हाल AXI_DMAC_REG_ACTIVE_TRANSFER_ID:
+	हाल AXI_DMAC_REG_STATUS:
+	हाल AXI_DMAC_REG_CURRENT_SRC_ADDR:
+	हाल AXI_DMAC_REG_CURRENT_DEST_ADDR:
+	हाल AXI_DMAC_REG_PARTIAL_XFER_LEN:
+	हाल AXI_DMAC_REG_PARTIAL_XFER_ID:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const struct regmap_config axi_dmac_regmap_config = {
+अटल स्थिर काष्ठा regmap_config axi_dmac_regmap_config = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = AXI_DMAC_REG_PARTIAL_XFER_ID,
-	.readable_reg = axi_dmac_regmap_rdwr,
-	.writeable_reg = axi_dmac_regmap_rdwr,
-};
+	.max_रेजिस्टर = AXI_DMAC_REG_PARTIAL_XFER_ID,
+	.पढ़ोable_reg = axi_dmac_regmap_rdwr,
+	.ग_लिखोable_reg = axi_dmac_regmap_rdwr,
+पूर्ण;
 
-static void axi_dmac_adjust_chan_params(struct axi_dmac_chan *chan)
-{
+अटल व्योम axi_dmac_adjust_chan_params(काष्ठा axi_dmac_chan *chan)
+अणु
 	chan->address_align_mask = max(chan->dest_width, chan->src_width) - 1;
 
-	if (axi_dmac_dest_is_mem(chan) && axi_dmac_src_is_mem(chan))
+	अगर (axi_dmac_dest_is_mem(chan) && axi_dmac_src_is_mem(chan))
 		chan->direction = DMA_MEM_TO_MEM;
-	else if (!axi_dmac_dest_is_mem(chan) && axi_dmac_src_is_mem(chan))
+	अन्यथा अगर (!axi_dmac_dest_is_mem(chan) && axi_dmac_src_is_mem(chan))
 		chan->direction = DMA_MEM_TO_DEV;
-	else if (axi_dmac_dest_is_mem(chan) && !axi_dmac_src_is_mem(chan))
+	अन्यथा अगर (axi_dmac_dest_is_mem(chan) && !axi_dmac_src_is_mem(chan))
 		chan->direction = DMA_DEV_TO_MEM;
-	else
+	अन्यथा
 		chan->direction = DMA_DEV_TO_DEV;
-}
+पूर्ण
 
 /*
  * The configuration stored in the devicetree matches the configuration
  * parameters of the peripheral instance and allows the driver to know which
  * features are implemented and how it should behave.
  */
-static int axi_dmac_parse_chan_dt(struct device_node *of_chan,
-	struct axi_dmac_chan *chan)
-{
+अटल पूर्णांक axi_dmac_parse_chan_dt(काष्ठा device_node *of_chan,
+	काष्ठा axi_dmac_chan *chan)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = of_property_read_u32(of_chan, "reg", &val);
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32(of_chan, "reg", &val);
+	अगर (ret)
+		वापस ret;
 
-	/* We only support 1 channel for now */
-	if (val != 0)
-		return -EINVAL;
+	/* We only support 1 channel क्रम now */
+	अगर (val != 0)
+		वापस -EINVAL;
 
-	ret = of_property_read_u32(of_chan, "adi,source-bus-type", &val);
-	if (ret)
-		return ret;
-	if (val > AXI_DMAC_BUS_TYPE_FIFO)
-		return -EINVAL;
+	ret = of_property_पढ़ो_u32(of_chan, "adi,source-bus-type", &val);
+	अगर (ret)
+		वापस ret;
+	अगर (val > AXI_DMAC_BUS_TYPE_FIFO)
+		वापस -EINVAL;
 	chan->src_type = val;
 
-	ret = of_property_read_u32(of_chan, "adi,destination-bus-type", &val);
-	if (ret)
-		return ret;
-	if (val > AXI_DMAC_BUS_TYPE_FIFO)
-		return -EINVAL;
+	ret = of_property_पढ़ो_u32(of_chan, "adi,destination-bus-type", &val);
+	अगर (ret)
+		वापस ret;
+	अगर (val > AXI_DMAC_BUS_TYPE_FIFO)
+		वापस -EINVAL;
 	chan->dest_type = val;
 
-	ret = of_property_read_u32(of_chan, "adi,source-bus-width", &val);
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32(of_chan, "adi,source-bus-width", &val);
+	अगर (ret)
+		वापस ret;
 	chan->src_width = val / 8;
 
-	ret = of_property_read_u32(of_chan, "adi,destination-bus-width", &val);
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32(of_chan, "adi,destination-bus-width", &val);
+	अगर (ret)
+		वापस ret;
 	chan->dest_width = val / 8;
 
 	axi_dmac_adjust_chan_params(chan);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axi_dmac_parse_dt(struct device *dev, struct axi_dmac *dmac)
-{
-	struct device_node *of_channels, *of_chan;
-	int ret;
+अटल पूर्णांक axi_dmac_parse_dt(काष्ठा device *dev, काष्ठा axi_dmac *dmac)
+अणु
+	काष्ठा device_node *of_channels, *of_chan;
+	पूर्णांक ret;
 
 	of_channels = of_get_child_by_name(dev->of_node, "adi,channels");
-	if (of_channels == NULL)
-		return -ENODEV;
+	अगर (of_channels == शून्य)
+		वापस -ENODEV;
 
-	for_each_child_of_node(of_channels, of_chan) {
+	क्रम_each_child_of_node(of_channels, of_chan) अणु
 		ret = axi_dmac_parse_chan_dt(of_chan, &dmac->chan);
-		if (ret) {
+		अगर (ret) अणु
 			of_node_put(of_chan);
 			of_node_put(of_channels);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 	of_node_put(of_channels);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axi_dmac_read_chan_config(struct device *dev, struct axi_dmac *dmac)
-{
-	struct axi_dmac_chan *chan = &dmac->chan;
-	unsigned int val, desc;
+अटल पूर्णांक axi_dmac_पढ़ो_chan_config(काष्ठा device *dev, काष्ठा axi_dmac *dmac)
+अणु
+	काष्ठा axi_dmac_chan *chan = &dmac->chan;
+	अचिन्हित पूर्णांक val, desc;
 
-	desc = axi_dmac_read(dmac, AXI_DMAC_REG_INTERFACE_DESC);
-	if (desc == 0) {
+	desc = axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_INTERFACE_DESC);
+	अगर (desc == 0) अणु
 		dev_err(dev, "DMA interface register reads zero\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	val = AXI_DMAC_DMA_SRC_TYPE_GET(desc);
-	if (val > AXI_DMAC_BUS_TYPE_FIFO) {
+	अगर (val > AXI_DMAC_BUS_TYPE_FIFO) अणु
 		dev_err(dev, "Invalid source bus type read: %d\n", val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	chan->src_type = val;
 
 	val = AXI_DMAC_DMA_DST_TYPE_GET(desc);
-	if (val > AXI_DMAC_BUS_TYPE_FIFO) {
+	अगर (val > AXI_DMAC_BUS_TYPE_FIFO) अणु
 		dev_err(dev, "Invalid destination bus type read: %d\n", val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	chan->dest_type = val;
 
 	val = AXI_DMAC_DMA_SRC_WIDTH_GET(desc);
-	if (val == 0) {
+	अगर (val == 0) अणु
 		dev_err(dev, "Source bus width is zero\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	/* widths are stored in log2 */
 	chan->src_width = 1 << val;
 
 	val = AXI_DMAC_DMA_DST_WIDTH_GET(desc);
-	if (val == 0) {
+	अगर (val == 0) अणु
 		dev_err(dev, "Destination bus width is zero\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	chan->dest_width = 1 << val;
 
 	axi_dmac_adjust_chan_params(chan);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axi_dmac_detect_caps(struct axi_dmac *dmac, unsigned int version)
-{
-	struct axi_dmac_chan *chan = &dmac->chan;
+अटल पूर्णांक axi_dmac_detect_caps(काष्ठा axi_dmac *dmac, अचिन्हित पूर्णांक version)
+अणु
+	काष्ठा axi_dmac_chan *chan = &dmac->chan;
 
-	axi_dmac_write(dmac, AXI_DMAC_REG_FLAGS, AXI_DMAC_FLAG_CYCLIC);
-	if (axi_dmac_read(dmac, AXI_DMAC_REG_FLAGS) == AXI_DMAC_FLAG_CYCLIC)
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_FLAGS, AXI_DMAC_FLAG_CYCLIC);
+	अगर (axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_FLAGS) == AXI_DMAC_FLAG_CYCLIC)
 		chan->hw_cyclic = true;
 
-	axi_dmac_write(dmac, AXI_DMAC_REG_Y_LENGTH, 1);
-	if (axi_dmac_read(dmac, AXI_DMAC_REG_Y_LENGTH) == 1)
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_Y_LENGTH, 1);
+	अगर (axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_Y_LENGTH) == 1)
 		chan->hw_2d = true;
 
-	axi_dmac_write(dmac, AXI_DMAC_REG_X_LENGTH, 0xffffffff);
-	chan->max_length = axi_dmac_read(dmac, AXI_DMAC_REG_X_LENGTH);
-	if (chan->max_length != UINT_MAX)
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_X_LENGTH, 0xffffffff);
+	chan->max_length = axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_X_LENGTH);
+	अगर (chan->max_length != अच_पूर्णांक_उच्च)
 		chan->max_length++;
 
-	axi_dmac_write(dmac, AXI_DMAC_REG_DEST_ADDRESS, 0xffffffff);
-	if (axi_dmac_read(dmac, AXI_DMAC_REG_DEST_ADDRESS) == 0 &&
-	    chan->dest_type == AXI_DMAC_BUS_TYPE_AXI_MM) {
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_DEST_ADDRESS, 0xffffffff);
+	अगर (axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_DEST_ADDRESS) == 0 &&
+	    chan->dest_type == AXI_DMAC_BUS_TYPE_AXI_MM) अणु
 		dev_err(dmac->dma_dev.dev,
 			"Destination memory-mapped interface not supported.");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	axi_dmac_write(dmac, AXI_DMAC_REG_SRC_ADDRESS, 0xffffffff);
-	if (axi_dmac_read(dmac, AXI_DMAC_REG_SRC_ADDRESS) == 0 &&
-	    chan->src_type == AXI_DMAC_BUS_TYPE_AXI_MM) {
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_SRC_ADDRESS, 0xffffffff);
+	अगर (axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_SRC_ADDRESS) == 0 &&
+	    chan->src_type == AXI_DMAC_BUS_TYPE_AXI_MM) अणु
 		dev_err(dmac->dma_dev.dev,
 			"Source memory-mapped interface not supported.");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (version >= ADI_AXI_PCORE_VER(4, 2, 'a'))
+	अगर (version >= ADI_AXI_PCORE_VER(4, 2, 'a'))
 		chan->hw_partial_xfer = true;
 
-	if (version >= ADI_AXI_PCORE_VER(4, 1, 'a')) {
-		axi_dmac_write(dmac, AXI_DMAC_REG_X_LENGTH, 0x00);
+	अगर (version >= ADI_AXI_PCORE_VER(4, 1, 'a')) अणु
+		axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_X_LENGTH, 0x00);
 		chan->length_align_mask =
-			axi_dmac_read(dmac, AXI_DMAC_REG_X_LENGTH);
-	} else {
+			axi_dmac_पढ़ो(dmac, AXI_DMAC_REG_X_LENGTH);
+	पूर्ण अन्यथा अणु
 		chan->length_align_mask = chan->address_align_mask;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axi_dmac_probe(struct platform_device *pdev)
-{
-	struct dma_device *dma_dev;
-	struct axi_dmac *dmac;
-	struct resource *res;
-	struct regmap *regmap;
-	unsigned int version;
-	int ret;
+अटल पूर्णांक axi_dmac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dma_device *dma_dev;
+	काष्ठा axi_dmac *dmac;
+	काष्ठा resource *res;
+	काष्ठा regmap *regmap;
+	अचिन्हित पूर्णांक version;
+	पूर्णांक ret;
 
-	dmac = devm_kzalloc(&pdev->dev, sizeof(*dmac), GFP_KERNEL);
-	if (!dmac)
-		return -ENOMEM;
+	dmac = devm_kzalloc(&pdev->dev, माप(*dmac), GFP_KERNEL);
+	अगर (!dmac)
+		वापस -ENOMEM;
 
-	dmac->irq = platform_get_irq(pdev, 0);
-	if (dmac->irq < 0)
-		return dmac->irq;
-	if (dmac->irq == 0)
-		return -EINVAL;
+	dmac->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (dmac->irq < 0)
+		वापस dmac->irq;
+	अगर (dmac->irq == 0)
+		वापस -EINVAL;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	dmac->base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(dmac->base))
-		return PTR_ERR(dmac->base);
+	अगर (IS_ERR(dmac->base))
+		वापस PTR_ERR(dmac->base);
 
-	dmac->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(dmac->clk))
-		return PTR_ERR(dmac->clk);
+	dmac->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(dmac->clk))
+		वापस PTR_ERR(dmac->clk);
 
 	ret = clk_prepare_enable(dmac->clk);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	version = axi_dmac_read(dmac, ADI_AXI_REG_VERSION);
+	version = axi_dmac_पढ़ो(dmac, ADI_AXI_REG_VERSION);
 
-	if (version >= ADI_AXI_PCORE_VER(4, 3, 'a'))
-		ret = axi_dmac_read_chan_config(&pdev->dev, dmac);
-	else
+	अगर (version >= ADI_AXI_PCORE_VER(4, 3, 'a'))
+		ret = axi_dmac_पढ़ो_chan_config(&pdev->dev, dmac);
+	अन्यथा
 		ret = axi_dmac_parse_dt(&pdev->dev, dmac);
 
-	if (ret < 0)
-		goto err_clk_disable;
+	अगर (ret < 0)
+		जाओ err_clk_disable;
 
 	INIT_LIST_HEAD(&dmac->chan.active_descs);
 
-	dma_set_max_seg_size(&pdev->dev, UINT_MAX);
+	dma_set_max_seg_size(&pdev->dev, अच_पूर्णांक_उच्च);
 
 	dma_dev = &dmac->dma_dev;
 	dma_cap_set(DMA_SLAVE, dma_dev->cap_mask);
 	dma_cap_set(DMA_CYCLIC, dma_dev->cap_mask);
 	dma_cap_set(DMA_INTERLEAVE, dma_dev->cap_mask);
-	dma_dev->device_free_chan_resources = axi_dmac_free_chan_resources;
+	dma_dev->device_मुक्त_chan_resources = axi_dmac_मुक्त_chan_resources;
 	dma_dev->device_tx_status = dma_cookie_status;
 	dma_dev->device_issue_pending = axi_dmac_issue_pending;
 	dma_dev->device_prep_slave_sg = axi_dmac_prep_slave_sg;
 	dma_dev->device_prep_dma_cyclic = axi_dmac_prep_dma_cyclic;
-	dma_dev->device_prep_interleaved_dma = axi_dmac_prep_interleaved;
+	dma_dev->device_prep_पूर्णांकerleaved_dma = axi_dmac_prep_पूर्णांकerleaved;
 	dma_dev->device_terminate_all = axi_dmac_terminate_all;
 	dma_dev->device_synchronize = axi_dmac_synchronize;
 	dma_dev->dev = &pdev->dev;
@@ -968,82 +969,82 @@ static int axi_dmac_probe(struct platform_device *pdev)
 	dma_dev->residue_granularity = DMA_RESIDUE_GRANULARITY_DESCRIPTOR;
 	INIT_LIST_HEAD(&dma_dev->channels);
 
-	dmac->chan.vchan.desc_free = axi_dmac_desc_free;
+	dmac->chan.vchan.desc_मुक्त = axi_dmac_desc_मुक्त;
 	vchan_init(&dmac->chan.vchan, dma_dev);
 
 	ret = axi_dmac_detect_caps(dmac, version);
-	if (ret)
-		goto err_clk_disable;
+	अगर (ret)
+		जाओ err_clk_disable;
 
 	dma_dev->copy_align = (dmac->chan.address_align_mask + 1);
 
-	axi_dmac_write(dmac, AXI_DMAC_REG_IRQ_MASK, 0x00);
+	axi_dmac_ग_लिखो(dmac, AXI_DMAC_REG_IRQ_MASK, 0x00);
 
-	ret = dma_async_device_register(dma_dev);
-	if (ret)
-		goto err_clk_disable;
+	ret = dma_async_device_रेजिस्टर(dma_dev);
+	अगर (ret)
+		जाओ err_clk_disable;
 
-	ret = of_dma_controller_register(pdev->dev.of_node,
+	ret = of_dma_controller_रेजिस्टर(pdev->dev.of_node,
 		of_dma_xlate_by_chan_id, dma_dev);
-	if (ret)
-		goto err_unregister_device;
+	अगर (ret)
+		जाओ err_unरेजिस्टर_device;
 
-	ret = request_irq(dmac->irq, axi_dmac_interrupt_handler, IRQF_SHARED,
+	ret = request_irq(dmac->irq, axi_dmac_पूर्णांकerrupt_handler, IRQF_SHARED,
 		dev_name(&pdev->dev), dmac);
-	if (ret)
-		goto err_unregister_of;
+	अगर (ret)
+		जाओ err_unरेजिस्टर_of;
 
-	platform_set_drvdata(pdev, dmac);
+	platक्रमm_set_drvdata(pdev, dmac);
 
 	regmap = devm_regmap_init_mmio(&pdev->dev, dmac->base,
 		 &axi_dmac_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		ret = PTR_ERR(regmap);
-		goto err_free_irq;
-	}
+		जाओ err_मुक्त_irq;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_irq:
-	free_irq(dmac->irq, dmac);
-err_unregister_of:
-	of_dma_controller_free(pdev->dev.of_node);
-err_unregister_device:
-	dma_async_device_unregister(&dmac->dma_dev);
+err_मुक्त_irq:
+	मुक्त_irq(dmac->irq, dmac);
+err_unरेजिस्टर_of:
+	of_dma_controller_मुक्त(pdev->dev.of_node);
+err_unरेजिस्टर_device:
+	dma_async_device_unरेजिस्टर(&dmac->dma_dev);
 err_clk_disable:
 	clk_disable_unprepare(dmac->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int axi_dmac_remove(struct platform_device *pdev)
-{
-	struct axi_dmac *dmac = platform_get_drvdata(pdev);
+अटल पूर्णांक axi_dmac_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा axi_dmac *dmac = platक्रमm_get_drvdata(pdev);
 
-	of_dma_controller_free(pdev->dev.of_node);
-	free_irq(dmac->irq, dmac);
-	tasklet_kill(&dmac->chan.vchan.task);
-	dma_async_device_unregister(&dmac->dma_dev);
+	of_dma_controller_मुक्त(pdev->dev.of_node);
+	मुक्त_irq(dmac->irq, dmac);
+	tasklet_समाप्त(&dmac->chan.vchan.task);
+	dma_async_device_unरेजिस्टर(&dmac->dma_dev);
 	clk_disable_unprepare(dmac->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id axi_dmac_of_match_table[] = {
-	{ .compatible = "adi,axi-dmac-1.00.a" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id axi_dmac_of_match_table[] = अणु
+	अणु .compatible = "adi,axi-dmac-1.00.a" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, axi_dmac_of_match_table);
 
-static struct platform_driver axi_dmac_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver axi_dmac_driver = अणु
+	.driver = अणु
 		.name = "dma-axi-dmac",
 		.of_match_table = axi_dmac_of_match_table,
-	},
+	पूर्ण,
 	.probe = axi_dmac_probe,
-	.remove = axi_dmac_remove,
-};
-module_platform_driver(axi_dmac_driver);
+	.हटाओ = axi_dmac_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(axi_dmac_driver);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");
 MODULE_DESCRIPTION("DMA controller driver for the AXI-DMAC controller");

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015 Josh Poimboeuf <jpoimboe@redhat.com>
  */
@@ -7,201 +8,201 @@
  * objtool:
  *
  * The 'check' subcmd analyzes every .o file and ensures the validity of its
- * stack trace metadata.  It enforces a set of rules on asm code and C inline
+ * stack trace metadata.  It enक्रमces a set of rules on यंत्र code and C अंतरभूत
  * assembly code so that stack traces can be reliable.
  *
- * For more information, see tools/objtool/Documentation/stack-validation.txt.
+ * For more inक्रमmation, see tools/objtool/Documentation/stack-validation.txt.
  */
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <subcmd/exec-cmd.h>
-#include <subcmd/pager.h>
-#include <linux/kernel.h>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <subcmd/exec-cmd.h>
+#समावेश <subcmd/pager.h>
+#समावेश <linux/kernel.h>
 
-#include <objtool/builtin.h>
-#include <objtool/objtool.h>
-#include <objtool/warn.h>
+#समावेश <objtool/builtin.h>
+#समावेश <objtool/objtool.h>
+#समावेश <objtool/warn.h>
 
-struct cmd_struct {
-	const char *name;
-	int (*fn)(int, const char **);
-	const char *help;
-};
+काष्ठा cmd_काष्ठा अणु
+	स्थिर अक्षर *name;
+	पूर्णांक (*fn)(पूर्णांक, स्थिर अक्षर **);
+	स्थिर अक्षर *help;
+पूर्ण;
 
-static const char objtool_usage_string[] =
+अटल स्थिर अक्षर objtool_usage_string[] =
 	"objtool COMMAND [ARGS]";
 
-static struct cmd_struct objtool_cmds[] = {
-	{"check",	cmd_check,	"Perform stack metadata validation on an object file" },
-	{"orc",		cmd_orc,	"Generate in-place ORC unwind tables for an object file" },
-};
+अटल काष्ठा cmd_काष्ठा objtool_cmds[] = अणु
+	अणु"check",	cmd_check,	"Perform stack metadata validation on an object file" पूर्ण,
+	अणु"orc",		cmd_orc,	"Generate in-place ORC unwind tables for an object file" पूर्ण,
+पूर्ण;
 
 bool help;
 
-const char *objname;
-static struct objtool_file file;
+स्थिर अक्षर *objname;
+अटल काष्ठा objtool_file file;
 
-static bool objtool_create_backup(const char *_objname)
-{
-	int len = strlen(_objname);
-	char *buf, *base, *name = malloc(len+6);
-	int s, d, l, t;
+अटल bool objtool_create_backup(स्थिर अक्षर *_objname)
+अणु
+	पूर्णांक len = म_माप(_objname);
+	अक्षर *buf, *base, *name = दो_स्मृति(len+6);
+	पूर्णांक s, d, l, t;
 
-	if (!name) {
-		perror("failed backup name malloc");
-		return false;
-	}
+	अगर (!name) अणु
+		लिखो_त्रुटि("failed backup name malloc");
+		वापस false;
+	पूर्ण
 
-	strcpy(name, _objname);
-	strcpy(name + len, ".orig");
+	म_नकल(name, _objname);
+	म_नकल(name + len, ".orig");
 
-	d = open(name, O_CREAT|O_WRONLY|O_TRUNC, 0644);
-	if (d < 0) {
-		perror("failed to create backup file");
-		return false;
-	}
+	d = खोलो(name, O_CREAT|O_WRONLY|O_TRUNC, 0644);
+	अगर (d < 0) अणु
+		लिखो_त्रुटि("failed to create backup file");
+		वापस false;
+	पूर्ण
 
-	s = open(_objname, O_RDONLY);
-	if (s < 0) {
-		perror("failed to open orig file");
-		return false;
-	}
+	s = खोलो(_objname, O_RDONLY);
+	अगर (s < 0) अणु
+		लिखो_त्रुटि("failed to open orig file");
+		वापस false;
+	पूर्ण
 
-	buf = malloc(4096);
-	if (!buf) {
-		perror("failed backup data malloc");
-		return false;
-	}
+	buf = दो_स्मृति(4096);
+	अगर (!buf) अणु
+		लिखो_त्रुटि("failed backup data malloc");
+		वापस false;
+	पूर्ण
 
-	while ((l = read(s, buf, 4096)) > 0) {
+	जबतक ((l = पढ़ो(s, buf, 4096)) > 0) अणु
 		base = buf;
-		do {
-			t = write(d, base, l);
-			if (t < 0) {
-				perror("failed backup write");
-				return false;
-			}
+		करो अणु
+			t = ग_लिखो(d, base, l);
+			अगर (t < 0) अणु
+				लिखो_त्रुटि("failed backup write");
+				वापस false;
+			पूर्ण
 			base += t;
 			l -= t;
-		} while (l);
-	}
+		पूर्ण जबतक (l);
+	पूर्ण
 
-	if (l < 0) {
-		perror("failed backup read");
-		return false;
-	}
+	अगर (l < 0) अणु
+		लिखो_त्रुटि("failed backup read");
+		वापस false;
+	पूर्ण
 
-	free(name);
-	free(buf);
-	close(d);
-	close(s);
+	मुक्त(name);
+	मुक्त(buf);
+	बंद(d);
+	बंद(s);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-struct objtool_file *objtool_open_read(const char *_objname)
-{
-	if (objname) {
-		if (strcmp(objname, _objname)) {
+काष्ठा objtool_file *objtool_खोलो_पढ़ो(स्थिर अक्षर *_objname)
+अणु
+	अगर (objname) अणु
+		अगर (म_भेद(objname, _objname)) अणु
 			WARN("won't handle more than one file at a time");
-			return NULL;
-		}
-		return &file;
-	}
+			वापस शून्य;
+		पूर्ण
+		वापस &file;
+	पूर्ण
 	objname = _objname;
 
-	file.elf = elf_open_read(objname, O_RDWR);
-	if (!file.elf)
-		return NULL;
+	file.elf = elf_खोलो_पढ़ो(objname, O_RDWR);
+	अगर (!file.elf)
+		वापस शून्य;
 
-	if (backup && !objtool_create_backup(objname)) {
+	अगर (backup && !objtool_create_backup(objname)) अणु
 		WARN("can't create backup file");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	INIT_LIST_HEAD(&file.insn_list);
 	hash_init(file.insn_hash);
 	INIT_LIST_HEAD(&file.retpoline_call_list);
-	INIT_LIST_HEAD(&file.static_call_list);
+	INIT_LIST_HEAD(&file.अटल_call_list);
 	INIT_LIST_HEAD(&file.mcount_loc_list);
 	file.c_file = !vmlinux && find_section_by_name(file.elf, ".comment");
 	file.ignore_unreachables = no_unreachable;
-	file.hints = false;
+	file.hपूर्णांकs = false;
 
-	return &file;
-}
+	वापस &file;
+पूर्ण
 
-static void cmd_usage(void)
-{
-	unsigned int i, longest = 0;
+अटल व्योम cmd_usage(व्योम)
+अणु
+	अचिन्हित पूर्णांक i, दीर्घest = 0;
 
-	printf("\n usage: %s\n\n", objtool_usage_string);
+	म_लिखो("\n usage: %s\n\n", objtool_usage_string);
 
-	for (i = 0; i < ARRAY_SIZE(objtool_cmds); i++) {
-		if (longest < strlen(objtool_cmds[i].name))
-			longest = strlen(objtool_cmds[i].name);
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(objtool_cmds); i++) अणु
+		अगर (दीर्घest < म_माप(objtool_cmds[i].name))
+			दीर्घest = म_माप(objtool_cmds[i].name);
+	पूर्ण
 
-	puts(" Commands:");
-	for (i = 0; i < ARRAY_SIZE(objtool_cmds); i++) {
-		printf("   %-*s   ", longest, objtool_cmds[i].name);
-		puts(objtool_cmds[i].help);
-	}
+	माला_दो(" Commands:");
+	क्रम (i = 0; i < ARRAY_SIZE(objtool_cmds); i++) अणु
+		म_लिखो("   %-*s   ", दीर्घest, objtool_cmds[i].name);
+		माला_दो(objtool_cmds[i].help);
+	पूर्ण
 
-	printf("\n");
+	म_लिखो("\n");
 
-	if (!help)
-		exit(129);
-	exit(0);
-}
+	अगर (!help)
+		निकास(129);
+	निकास(0);
+पूर्ण
 
-static void handle_options(int *argc, const char ***argv)
-{
-	while (*argc > 0) {
-		const char *cmd = (*argv)[0];
+अटल व्योम handle_options(पूर्णांक *argc, स्थिर अक्षर ***argv)
+अणु
+	जबतक (*argc > 0) अणु
+		स्थिर अक्षर *cmd = (*argv)[0];
 
-		if (cmd[0] != '-')
-			break;
+		अगर (cmd[0] != '-')
+			अवरोध;
 
-		if (!strcmp(cmd, "--help") || !strcmp(cmd, "-h")) {
+		अगर (!म_भेद(cmd, "--help") || !म_भेद(cmd, "-h")) अणु
 			help = true;
-			break;
-		} else {
-			fprintf(stderr, "Unknown option: %s\n", cmd);
+			अवरोध;
+		पूर्ण अन्यथा अणु
+			ख_लिखो(मानक_त्रुटि, "Unknown option: %s\n", cmd);
 			cmd_usage();
-		}
+		पूर्ण
 
 		(*argv)++;
 		(*argc)--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void handle_internal_command(int argc, const char **argv)
-{
-	const char *cmd = argv[0];
-	unsigned int i, ret;
+अटल व्योम handle_पूर्णांकernal_command(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	स्थिर अक्षर *cmd = argv[0];
+	अचिन्हित पूर्णांक i, ret;
 
-	for (i = 0; i < ARRAY_SIZE(objtool_cmds); i++) {
-		struct cmd_struct *p = objtool_cmds+i;
+	क्रम (i = 0; i < ARRAY_SIZE(objtool_cmds); i++) अणु
+		काष्ठा cmd_काष्ठा *p = objtool_cmds+i;
 
-		if (strcmp(p->name, cmd))
-			continue;
+		अगर (म_भेद(p->name, cmd))
+			जारी;
 
 		ret = p->fn(argc, argv);
 
-		exit(ret);
-	}
+		निकास(ret);
+	पूर्ण
 
 	cmd_usage();
-}
+पूर्ण
 
-int main(int argc, const char **argv)
-{
-	static const char *UNUSED = "OBJTOOL_NOT_IMPLEMENTED";
+पूर्णांक मुख्य(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अटल स्थिर अक्षर *UNUSED = "OBJTOOL_NOT_IMPLEMENTED";
 
 	/* libsubcmd init */
 	exec_cmd_init("objtool", UNUSED, UNUSED, UNUSED);
@@ -211,10 +212,10 @@ int main(int argc, const char **argv)
 	argc--;
 	handle_options(&argc, &argv);
 
-	if (!argc || help)
+	अगर (!argc || help)
 		cmd_usage();
 
-	handle_internal_command(argc, argv);
+	handle_पूर्णांकernal_command(argc, argv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

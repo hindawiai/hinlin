@@ -1,403 +1,404 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2019 Spreadtrum Communications Inc.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2019 Spपढ़ोtrum Communications Inc.
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/hwspinlock.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/nvmem-provider.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hwspinlock.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define SPRD_EFUSE_ENABLE		0x20
-#define SPRD_EFUSE_ERR_FLAG		0x24
-#define SPRD_EFUSE_ERR_CLR		0x28
-#define SPRD_EFUSE_MAGIC_NUM		0x2c
-#define SPRD_EFUSE_FW_CFG		0x50
-#define SPRD_EFUSE_PW_SWT		0x54
-#define SPRD_EFUSE_MEM(val)		(0x1000 + ((val) << 2))
+#घोषणा SPRD_EFUSE_ENABLE		0x20
+#घोषणा SPRD_EFUSE_ERR_FLAG		0x24
+#घोषणा SPRD_EFUSE_ERR_CLR		0x28
+#घोषणा SPRD_EFUSE_MAGIC_NUM		0x2c
+#घोषणा SPRD_EFUSE_FW_CFG		0x50
+#घोषणा SPRD_EFUSE_PW_SWT		0x54
+#घोषणा SPRD_EFUSE_MEM(val)		(0x1000 + ((val) << 2))
 
-#define SPRD_EFUSE_VDD_EN		BIT(0)
-#define SPRD_EFUSE_AUTO_CHECK_EN	BIT(1)
-#define SPRD_EFUSE_DOUBLE_EN		BIT(2)
-#define SPRD_EFUSE_MARGIN_RD_EN		BIT(3)
-#define SPRD_EFUSE_LOCK_WR_EN		BIT(4)
+#घोषणा SPRD_EFUSE_VDD_EN		BIT(0)
+#घोषणा SPRD_EFUSE_AUTO_CHECK_EN	BIT(1)
+#घोषणा SPRD_EFUSE_DOUBLE_EN		BIT(2)
+#घोषणा SPRD_EFUSE_MARGIN_RD_EN		BIT(3)
+#घोषणा SPRD_EFUSE_LOCK_WR_EN		BIT(4)
 
-#define SPRD_EFUSE_ERR_CLR_MASK		GENMASK(13, 0)
+#घोषणा SPRD_EFUSE_ERR_CLR_MASK		GENMASK(13, 0)
 
-#define SPRD_EFUSE_ENK1_ON		BIT(0)
-#define SPRD_EFUSE_ENK2_ON		BIT(1)
-#define SPRD_EFUSE_PROG_EN		BIT(2)
+#घोषणा SPRD_EFUSE_ENK1_ON		BIT(0)
+#घोषणा SPRD_EFUSE_ENK2_ON		BIT(1)
+#घोषणा SPRD_EFUSE_PROG_EN		BIT(2)
 
-#define SPRD_EFUSE_MAGIC_NUMBER		0x8810
+#घोषणा SPRD_EFUSE_MAGIC_NUMBER		0x8810
 
 /* Block width (bytes) definitions */
-#define SPRD_EFUSE_BLOCK_WIDTH		4
+#घोषणा SPRD_EFUSE_BLOCK_WIDTH		4
 
 /*
- * The Spreadtrum AP efuse contains 2 parts: normal efuse and secure efuse,
+ * The Spपढ़ोtrum AP efuse contains 2 parts: normal efuse and secure efuse,
  * and we can only access the normal efuse in kernel. So define the normal
  * block offset index and normal block numbers.
  */
-#define SPRD_EFUSE_NORMAL_BLOCK_NUMS	24
-#define SPRD_EFUSE_NORMAL_BLOCK_OFFSET	72
+#घोषणा SPRD_EFUSE_NORMAL_BLOCK_NUMS	24
+#घोषणा SPRD_EFUSE_NORMAL_BLOCK_OFFSET	72
 
-/* Timeout (ms) for the trylock of hardware spinlocks */
-#define SPRD_EFUSE_HWLOCK_TIMEOUT	5000
+/* Timeout (ms) क्रम the trylock of hardware spinlocks */
+#घोषणा SPRD_EFUSE_HWLOCK_TIMEOUT	5000
 
 /*
- * Since different Spreadtrum SoC chip can have different normal block numbers
- * and offset. And some SoC can support block double feature, which means
- * when reading or writing data to efuse memory, the controller can save double
- * data in case one data become incorrect after a long period.
+ * Since dअगरferent Spपढ़ोtrum SoC chip can have dअगरferent normal block numbers
+ * and offset. And some SoC can support block द्विगुन feature, which means
+ * when पढ़ोing or writing data to efuse memory, the controller can save द्विगुन
+ * data in हाल one data become incorrect after a दीर्घ period.
  *
- * Thus we should save them in the device data structure.
+ * Thus we should save them in the device data काष्ठाure.
  */
-struct sprd_efuse_variant_data {
+काष्ठा sprd_efuse_variant_data अणु
 	u32 blk_nums;
 	u32 blk_offset;
-	bool blk_double;
-};
+	bool blk_द्विगुन;
+पूर्ण;
 
-struct sprd_efuse {
-	struct device *dev;
-	struct clk *clk;
-	struct hwspinlock *hwlock;
-	struct mutex mutex;
-	void __iomem *base;
-	const struct sprd_efuse_variant_data *data;
-};
+काष्ठा sprd_efuse अणु
+	काष्ठा device *dev;
+	काष्ठा clk *clk;
+	काष्ठा hwspinlock *hwlock;
+	काष्ठा mutex mutex;
+	व्योम __iomem *base;
+	स्थिर काष्ठा sprd_efuse_variant_data *data;
+पूर्ण;
 
-static const struct sprd_efuse_variant_data ums312_data = {
+अटल स्थिर काष्ठा sprd_efuse_variant_data ums312_data = अणु
 	.blk_nums = SPRD_EFUSE_NORMAL_BLOCK_NUMS,
 	.blk_offset = SPRD_EFUSE_NORMAL_BLOCK_OFFSET,
-	.blk_double = false,
-};
+	.blk_द्विगुन = false,
+पूर्ण;
 
 /*
- * On Spreadtrum platform, we have multi-subsystems will access the unique
+ * On Spपढ़ोtrum platक्रमm, we have multi-subप्रणालीs will access the unique
  * efuse controller, so we need one hardware spinlock to synchronize between
- * the multiple subsystems.
+ * the multiple subप्रणालीs.
  */
-static int sprd_efuse_lock(struct sprd_efuse *efuse)
-{
-	int ret;
+अटल पूर्णांक sprd_efuse_lock(काष्ठा sprd_efuse *efuse)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&efuse->mutex);
 
-	ret = hwspin_lock_timeout_raw(efuse->hwlock,
+	ret = hwspin_lock_समयout_raw(efuse->hwlock,
 				      SPRD_EFUSE_HWLOCK_TIMEOUT);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(efuse->dev, "timeout get the hwspinlock\n");
 		mutex_unlock(&efuse->mutex);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sprd_efuse_unlock(struct sprd_efuse *efuse)
-{
+अटल व्योम sprd_efuse_unlock(काष्ठा sprd_efuse *efuse)
+अणु
 	hwspin_unlock_raw(efuse->hwlock);
 	mutex_unlock(&efuse->mutex);
-}
+पूर्ण
 
-static void sprd_efuse_set_prog_power(struct sprd_efuse *efuse, bool en)
-{
-	u32 val = readl(efuse->base + SPRD_EFUSE_PW_SWT);
+अटल व्योम sprd_efuse_set_prog_घातer(काष्ठा sprd_efuse *efuse, bool en)
+अणु
+	u32 val = पढ़ोl(efuse->base + SPRD_EFUSE_PW_SWT);
 
-	if (en)
+	अगर (en)
 		val &= ~SPRD_EFUSE_ENK2_ON;
-	else
+	अन्यथा
 		val &= ~SPRD_EFUSE_ENK1_ON;
 
-	writel(val, efuse->base + SPRD_EFUSE_PW_SWT);
+	ग_लिखोl(val, efuse->base + SPRD_EFUSE_PW_SWT);
 
-	/* Open or close efuse power need wait 1000us to make power stable. */
+	/* Open or बंद efuse घातer need रुको 1000us to make घातer stable. */
 	usleep_range(1000, 1200);
 
-	if (en)
+	अगर (en)
 		val |= SPRD_EFUSE_ENK1_ON;
-	else
+	अन्यथा
 		val |= SPRD_EFUSE_ENK2_ON;
 
-	writel(val, efuse->base + SPRD_EFUSE_PW_SWT);
+	ग_लिखोl(val, efuse->base + SPRD_EFUSE_PW_SWT);
 
-	/* Open or close efuse power need wait 1000us to make power stable. */
+	/* Open or बंद efuse घातer need रुको 1000us to make घातer stable. */
 	usleep_range(1000, 1200);
-}
+पूर्ण
 
-static void sprd_efuse_set_read_power(struct sprd_efuse *efuse, bool en)
-{
-	u32 val = readl(efuse->base + SPRD_EFUSE_ENABLE);
+अटल व्योम sprd_efuse_set_पढ़ो_घातer(काष्ठा sprd_efuse *efuse, bool en)
+अणु
+	u32 val = पढ़ोl(efuse->base + SPRD_EFUSE_ENABLE);
 
-	if (en)
+	अगर (en)
 		val |= SPRD_EFUSE_VDD_EN;
-	else
+	अन्यथा
 		val &= ~SPRD_EFUSE_VDD_EN;
 
-	writel(val, efuse->base + SPRD_EFUSE_ENABLE);
+	ग_लिखोl(val, efuse->base + SPRD_EFUSE_ENABLE);
 
-	/* Open or close efuse power need wait 1000us to make power stable. */
+	/* Open or बंद efuse घातer need रुको 1000us to make घातer stable. */
 	usleep_range(1000, 1200);
-}
+पूर्ण
 
-static void sprd_efuse_set_prog_lock(struct sprd_efuse *efuse, bool en)
-{
-	u32 val = readl(efuse->base + SPRD_EFUSE_ENABLE);
+अटल व्योम sprd_efuse_set_prog_lock(काष्ठा sprd_efuse *efuse, bool en)
+अणु
+	u32 val = पढ़ोl(efuse->base + SPRD_EFUSE_ENABLE);
 
-	if (en)
+	अगर (en)
 		val |= SPRD_EFUSE_LOCK_WR_EN;
-	else
+	अन्यथा
 		val &= ~SPRD_EFUSE_LOCK_WR_EN;
 
-	writel(val, efuse->base + SPRD_EFUSE_ENABLE);
-}
+	ग_लिखोl(val, efuse->base + SPRD_EFUSE_ENABLE);
+पूर्ण
 
-static void sprd_efuse_set_auto_check(struct sprd_efuse *efuse, bool en)
-{
-	u32 val = readl(efuse->base + SPRD_EFUSE_ENABLE);
+अटल व्योम sprd_efuse_set_स्वतः_check(काष्ठा sprd_efuse *efuse, bool en)
+अणु
+	u32 val = पढ़ोl(efuse->base + SPRD_EFUSE_ENABLE);
 
-	if (en)
+	अगर (en)
 		val |= SPRD_EFUSE_AUTO_CHECK_EN;
-	else
+	अन्यथा
 		val &= ~SPRD_EFUSE_AUTO_CHECK_EN;
 
-	writel(val, efuse->base + SPRD_EFUSE_ENABLE);
-}
+	ग_लिखोl(val, efuse->base + SPRD_EFUSE_ENABLE);
+पूर्ण
 
-static void sprd_efuse_set_data_double(struct sprd_efuse *efuse, bool en)
-{
-	u32 val = readl(efuse->base + SPRD_EFUSE_ENABLE);
+अटल व्योम sprd_efuse_set_data_द्विगुन(काष्ठा sprd_efuse *efuse, bool en)
+अणु
+	u32 val = पढ़ोl(efuse->base + SPRD_EFUSE_ENABLE);
 
-	if (en)
+	अगर (en)
 		val |= SPRD_EFUSE_DOUBLE_EN;
-	else
+	अन्यथा
 		val &= ~SPRD_EFUSE_DOUBLE_EN;
 
-	writel(val, efuse->base + SPRD_EFUSE_ENABLE);
-}
+	ग_लिखोl(val, efuse->base + SPRD_EFUSE_ENABLE);
+पूर्ण
 
-static void sprd_efuse_set_prog_en(struct sprd_efuse *efuse, bool en)
-{
-	u32 val = readl(efuse->base + SPRD_EFUSE_PW_SWT);
+अटल व्योम sprd_efuse_set_prog_en(काष्ठा sprd_efuse *efuse, bool en)
+अणु
+	u32 val = पढ़ोl(efuse->base + SPRD_EFUSE_PW_SWT);
 
-	if (en)
+	अगर (en)
 		val |= SPRD_EFUSE_PROG_EN;
-	else
+	अन्यथा
 		val &= ~SPRD_EFUSE_PROG_EN;
 
-	writel(val, efuse->base + SPRD_EFUSE_PW_SWT);
-}
+	ग_लिखोl(val, efuse->base + SPRD_EFUSE_PW_SWT);
+पूर्ण
 
-static int sprd_efuse_raw_prog(struct sprd_efuse *efuse, u32 blk, bool doub,
+अटल पूर्णांक sprd_efuse_raw_prog(काष्ठा sprd_efuse *efuse, u32 blk, bool करोub,
 			       bool lock, u32 *data)
-{
+अणु
 	u32 status;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/*
-	 * We need set the correct magic number before writing the efuse to
+	 * We need set the correct magic number beक्रमe writing the efuse to
 	 * allow programming, and block other programming until we clear the
 	 * magic number.
 	 */
-	writel(SPRD_EFUSE_MAGIC_NUMBER,
+	ग_लिखोl(SPRD_EFUSE_MAGIC_NUMBER,
 	       efuse->base + SPRD_EFUSE_MAGIC_NUM);
 
 	/*
-	 * Power on the efuse, enable programme and enable double data
-	 * if asked.
+	 * Power on the efuse, enable programme and enable द्विगुन data
+	 * अगर asked.
 	 */
-	sprd_efuse_set_prog_power(efuse, true);
+	sprd_efuse_set_prog_घातer(efuse, true);
 	sprd_efuse_set_prog_en(efuse, true);
-	sprd_efuse_set_data_double(efuse, doub);
+	sprd_efuse_set_data_द्विगुन(efuse, करोub);
 
 	/*
-	 * Enable the auto-check function to validate if the programming is
+	 * Enable the स्वतः-check function to validate अगर the programming is
 	 * successful.
 	 */
-	if (lock)
-		sprd_efuse_set_auto_check(efuse, true);
+	अगर (lock)
+		sprd_efuse_set_स्वतः_check(efuse, true);
 
-	writel(*data, efuse->base + SPRD_EFUSE_MEM(blk));
+	ग_लिखोl(*data, efuse->base + SPRD_EFUSE_MEM(blk));
 
-	/* Disable auto-check and data double after programming */
-	if (lock)
-		sprd_efuse_set_auto_check(efuse, false);
-	sprd_efuse_set_data_double(efuse, false);
+	/* Disable स्वतः-check and data द्विगुन after programming */
+	अगर (lock)
+		sprd_efuse_set_स्वतः_check(efuse, false);
+	sprd_efuse_set_data_द्विगुन(efuse, false);
 
 	/*
-	 * Check the efuse error status, if the programming is successful,
-	 * we should lock this efuse block to avoid programming again.
+	 * Check the efuse error status, अगर the programming is successful,
+	 * we should lock this efuse block to aव्योम programming again.
 	 */
-	status = readl(efuse->base + SPRD_EFUSE_ERR_FLAG);
-	if (status) {
+	status = पढ़ोl(efuse->base + SPRD_EFUSE_ERR_FLAG);
+	अगर (status) अणु
 		dev_err(efuse->dev,
 			"write error status %d of block %d\n", ret, blk);
 
-		writel(SPRD_EFUSE_ERR_CLR_MASK,
+		ग_लिखोl(SPRD_EFUSE_ERR_CLR_MASK,
 		       efuse->base + SPRD_EFUSE_ERR_CLR);
 		ret = -EBUSY;
-	} else if (lock) {
+	पूर्ण अन्यथा अगर (lock) अणु
 		sprd_efuse_set_prog_lock(efuse, lock);
-		writel(0, efuse->base + SPRD_EFUSE_MEM(blk));
+		ग_लिखोl(0, efuse->base + SPRD_EFUSE_MEM(blk));
 		sprd_efuse_set_prog_lock(efuse, false);
-	}
+	पूर्ण
 
-	sprd_efuse_set_prog_power(efuse, false);
-	writel(0, efuse->base + SPRD_EFUSE_MAGIC_NUM);
+	sprd_efuse_set_prog_घातer(efuse, false);
+	ग_लिखोl(0, efuse->base + SPRD_EFUSE_MAGIC_NUM);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sprd_efuse_raw_read(struct sprd_efuse *efuse, int blk, u32 *val,
-			       bool doub)
-{
+अटल पूर्णांक sprd_efuse_raw_पढ़ो(काष्ठा sprd_efuse *efuse, पूर्णांक blk, u32 *val,
+			       bool करोub)
+अणु
 	u32 status;
 
 	/*
-	 * Need power on the efuse before reading data from efuse, and will
-	 * power off the efuse after reading process.
+	 * Need घातer on the efuse beक्रमe पढ़ोing data from efuse, and will
+	 * घातer off the efuse after पढ़ोing process.
 	 */
-	sprd_efuse_set_read_power(efuse, true);
+	sprd_efuse_set_पढ़ो_घातer(efuse, true);
 
-	/* Enable double data if asked */
-	sprd_efuse_set_data_double(efuse, doub);
+	/* Enable द्विगुन data अगर asked */
+	sprd_efuse_set_data_द्विगुन(efuse, करोub);
 
-	/* Start to read data from efuse block */
-	*val = readl(efuse->base + SPRD_EFUSE_MEM(blk));
+	/* Start to पढ़ो data from efuse block */
+	*val = पढ़ोl(efuse->base + SPRD_EFUSE_MEM(blk));
 
-	/* Disable double data */
-	sprd_efuse_set_data_double(efuse, false);
+	/* Disable द्विगुन data */
+	sprd_efuse_set_data_द्विगुन(efuse, false);
 
 	/* Power off the efuse */
-	sprd_efuse_set_read_power(efuse, false);
+	sprd_efuse_set_पढ़ो_घातer(efuse, false);
 
 	/*
-	 * Check the efuse error status and clear them if there are some
+	 * Check the efuse error status and clear them अगर there are some
 	 * errors occurred.
 	 */
-	status = readl(efuse->base + SPRD_EFUSE_ERR_FLAG);
-	if (status) {
+	status = पढ़ोl(efuse->base + SPRD_EFUSE_ERR_FLAG);
+	अगर (status) अणु
 		dev_err(efuse->dev,
 			"read error status %d of block %d\n", status, blk);
 
-		writel(SPRD_EFUSE_ERR_CLR_MASK,
+		ग_लिखोl(SPRD_EFUSE_ERR_CLR_MASK,
 		       efuse->base + SPRD_EFUSE_ERR_CLR);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sprd_efuse_read(void *context, u32 offset, void *val, size_t bytes)
-{
-	struct sprd_efuse *efuse = context;
-	bool blk_double = efuse->data->blk_double;
+अटल पूर्णांक sprd_efuse_पढ़ो(व्योम *context, u32 offset, व्योम *val, माप_प्रकार bytes)
+अणु
+	काष्ठा sprd_efuse *efuse = context;
+	bool blk_द्विगुन = efuse->data->blk_द्विगुन;
 	u32 index = offset / SPRD_EFUSE_BLOCK_WIDTH + efuse->data->blk_offset;
 	u32 blk_offset = (offset % SPRD_EFUSE_BLOCK_WIDTH) * BITS_PER_BYTE;
 	u32 data;
-	int ret;
+	पूर्णांक ret;
 
 	ret = sprd_efuse_lock(efuse);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(efuse->clk);
-	if (ret)
-		goto unlock;
+	अगर (ret)
+		जाओ unlock;
 
-	ret = sprd_efuse_raw_read(efuse, index, &data, blk_double);
-	if (!ret) {
+	ret = sprd_efuse_raw_पढ़ो(efuse, index, &data, blk_द्विगुन);
+	अगर (!ret) अणु
 		data >>= blk_offset;
-		memcpy(val, &data, bytes);
-	}
+		स_नकल(val, &data, bytes);
+	पूर्ण
 
 	clk_disable_unprepare(efuse->clk);
 
 unlock:
 	sprd_efuse_unlock(efuse);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sprd_efuse_write(void *context, u32 offset, void *val, size_t bytes)
-{
-	struct sprd_efuse *efuse = context;
-	bool blk_double = efuse->data->blk_double;
+अटल पूर्णांक sprd_efuse_ग_लिखो(व्योम *context, u32 offset, व्योम *val, माप_प्रकार bytes)
+अणु
+	काष्ठा sprd_efuse *efuse = context;
+	bool blk_द्विगुन = efuse->data->blk_द्विगुन;
 	bool lock;
-	int ret;
+	पूर्णांक ret;
 
 	ret = sprd_efuse_lock(efuse);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(efuse->clk);
-	if (ret)
-		goto unlock;
+	अगर (ret)
+		जाओ unlock;
 
 	/*
 	 * If the writing bytes are equal with the block width, which means the
-	 * whole block will be programmed. For this case, we should not allow
+	 * whole block will be programmed. For this हाल, we should not allow
 	 * this block to be programmed again by locking this block.
 	 *
 	 * If the block was programmed partially, we should allow this block to
 	 * be programmed again.
 	 */
-	if (bytes < SPRD_EFUSE_BLOCK_WIDTH)
+	अगर (bytes < SPRD_EFUSE_BLOCK_WIDTH)
 		lock = false;
-	else
+	अन्यथा
 		lock = true;
 
-	ret = sprd_efuse_raw_prog(efuse, offset, blk_double, lock, val);
+	ret = sprd_efuse_raw_prog(efuse, offset, blk_द्विगुन, lock, val);
 
 	clk_disable_unprepare(efuse->clk);
 
 unlock:
 	sprd_efuse_unlock(efuse);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sprd_efuse_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct nvmem_device *nvmem;
-	struct nvmem_config econfig = { };
-	struct sprd_efuse *efuse;
-	const struct sprd_efuse_variant_data *pdata;
-	int ret;
+अटल पूर्णांक sprd_efuse_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा nvmem_device *nvmem;
+	काष्ठा nvmem_config econfig = अणु पूर्ण;
+	काष्ठा sprd_efuse *efuse;
+	स्थिर काष्ठा sprd_efuse_variant_data *pdata;
+	पूर्णांक ret;
 
 	pdata = of_device_get_match_data(&pdev->dev);
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "No matching driver data found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	efuse = devm_kzalloc(&pdev->dev, sizeof(*efuse), GFP_KERNEL);
-	if (!efuse)
-		return -ENOMEM;
+	efuse = devm_kzalloc(&pdev->dev, माप(*efuse), GFP_KERNEL);
+	अगर (!efuse)
+		वापस -ENOMEM;
 
-	efuse->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(efuse->base))
-		return PTR_ERR(efuse->base);
+	efuse->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(efuse->base))
+		वापस PTR_ERR(efuse->base);
 
 	ret = of_hwspin_lock_get_id(np, 0);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to get hwlock id\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	efuse->hwlock = devm_hwspin_lock_request_specific(&pdev->dev, ret);
-	if (!efuse->hwlock) {
+	efuse->hwlock = devm_hwspin_lock_request_specअगरic(&pdev->dev, ret);
+	अगर (!efuse->hwlock) अणु
 		dev_err(&pdev->dev, "failed to request hwlock\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	efuse->clk = devm_clk_get(&pdev->dev, "enable");
-	if (IS_ERR(efuse->clk)) {
+	अगर (IS_ERR(efuse->clk)) अणु
 		dev_err(&pdev->dev, "failed to get enable clock\n");
-		return PTR_ERR(efuse->clk);
-	}
+		वापस PTR_ERR(efuse->clk);
+	पूर्ण
 
 	mutex_init(&efuse->mutex);
 	efuse->dev = &pdev->dev;
@@ -405,36 +406,36 @@ static int sprd_efuse_probe(struct platform_device *pdev)
 
 	econfig.stride = 1;
 	econfig.word_size = 1;
-	econfig.read_only = false;
+	econfig.पढ़ो_only = false;
 	econfig.name = "sprd-efuse";
 	econfig.size = efuse->data->blk_nums * SPRD_EFUSE_BLOCK_WIDTH;
-	econfig.reg_read = sprd_efuse_read;
-	econfig.reg_write = sprd_efuse_write;
+	econfig.reg_पढ़ो = sprd_efuse_पढ़ो;
+	econfig.reg_ग_लिखो = sprd_efuse_ग_लिखो;
 	econfig.priv = efuse;
 	econfig.dev = &pdev->dev;
-	nvmem = devm_nvmem_register(&pdev->dev, &econfig);
-	if (IS_ERR(nvmem)) {
+	nvmem = devm_nvmem_रेजिस्टर(&pdev->dev, &econfig);
+	अगर (IS_ERR(nvmem)) अणु
 		dev_err(&pdev->dev, "failed to register nvmem\n");
-		return PTR_ERR(nvmem);
-	}
+		वापस PTR_ERR(nvmem);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id sprd_efuse_of_match[] = {
-	{ .compatible = "sprd,ums312-efuse", .data = &ums312_data },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sprd_efuse_of_match[] = अणु
+	अणु .compatible = "sprd,ums312-efuse", .data = &ums312_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver sprd_efuse_driver = {
+अटल काष्ठा platक्रमm_driver sprd_efuse_driver = अणु
 	.probe = sprd_efuse_probe,
-	.driver = {
+	.driver = अणु
 		.name = "sprd-efuse",
 		.of_match_table = sprd_efuse_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(sprd_efuse_driver);
+module_platक्रमm_driver(sprd_efuse_driver);
 
 MODULE_AUTHOR("Freeman Liu <freeman.liu@spreadtrum.com>");
 MODULE_DESCRIPTION("Spreadtrum AP efuse driver");

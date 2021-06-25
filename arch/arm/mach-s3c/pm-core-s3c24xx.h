@@ -1,96 +1,97 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright 2008 Simtec Electronics
  *      Ben Dooks <ben@simtec.co.uk>
  *      http://armlinux.simtec.co.uk/
  *
- * S3C24xx - PM core support for arch/arm/plat-s3c/pm.c
+ * S3C24xx - PM core support क्रम arch/arm/plat-s3c/pm.c
  */
 
-#include <linux/delay.h>
-#include <linux/io.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
 
-#include "regs-clock.h"
-#include "regs-irq-s3c24xx.h"
-#include <mach/irqs.h>
+#समावेश "regs-clock.h"
+#समावेश "regs-irq-s3c24xx.h"
+#समावेश <mach/irqs.h>
 
-static inline void s3c_pm_debug_init_uart(void)
-{
-#ifdef CONFIG_SAMSUNG_PM_DEBUG
-	unsigned long tmp = __raw_readl(S3C2410_CLKCON);
+अटल अंतरभूत व्योम s3c_pm_debug_init_uart(व्योम)
+अणु
+#अगर_घोषित CONFIG_SAMSUNG_PM_DEBUG
+	अचिन्हित दीर्घ पंचांगp = __raw_पढ़ोl(S3C2410_CLKCON);
 
-	/* re-start uart clocks */
-	tmp |= S3C2410_CLKCON_UART0;
-	tmp |= S3C2410_CLKCON_UART1;
-	tmp |= S3C2410_CLKCON_UART2;
+	/* re-start uart घड़ीs */
+	पंचांगp |= S3C2410_CLKCON_UART0;
+	पंचांगp |= S3C2410_CLKCON_UART1;
+	पंचांगp |= S3C2410_CLKCON_UART2;
 
-	__raw_writel(tmp, S3C2410_CLKCON);
+	__raw_ग_लिखोl(पंचांगp, S3C2410_CLKCON);
 	udelay(10);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void s3c_pm_arch_prepare_irqs(void)
-{
-	__raw_writel(s3c_irqwake_intmask, S3C2410_INTMSK);
-	__raw_writel(s3c_irqwake_eintmask, S3C2410_EINTMASK);
+अटल अंतरभूत व्योम s3c_pm_arch_prepare_irqs(व्योम)
+अणु
+	__raw_ग_लिखोl(s3c_irqwake_पूर्णांकmask, S3C2410_INTMSK);
+	__raw_ग_लिखोl(s3c_irqwake_eपूर्णांकmask, S3C2410_EINTMASK);
 
-	/* ack any outstanding external interrupts before we go to sleep */
+	/* ack any outstanding बाह्यal पूर्णांकerrupts beक्रमe we go to sleep */
 
-	__raw_writel(__raw_readl(S3C2410_EINTPEND), S3C2410_EINTPEND);
-	__raw_writel(__raw_readl(S3C2410_INTPND), S3C2410_INTPND);
-	__raw_writel(__raw_readl(S3C2410_SRCPND), S3C2410_SRCPND);
+	__raw_ग_लिखोl(__raw_पढ़ोl(S3C2410_EINTPEND), S3C2410_EINTPEND);
+	__raw_ग_लिखोl(__raw_पढ़ोl(S3C2410_INTPND), S3C2410_INTPND);
+	__raw_ग_लिखोl(__raw_पढ़ोl(S3C2410_SRCPND), S3C2410_SRCPND);
 
-}
+पूर्ण
 
-static inline void s3c_pm_arch_stop_clocks(void)
-{
-	__raw_writel(0x00, S3C2410_CLKCON);  /* turn off clocks over sleep */
-}
+अटल अंतरभूत व्योम s3c_pm_arch_stop_घड़ीs(व्योम)
+अणु
+	__raw_ग_लिखोl(0x00, S3C2410_CLKCON);  /* turn off घड़ीs over sleep */
+पूर्ण
 
 /* s3c2410_pm_show_resume_irqs
  *
- * print any IRQs asserted at resume time (ie, we woke from)
+ * prपूर्णांक any IRQs निश्चितed at resume समय (ie, we woke from)
 */
-static inline void s3c_pm_show_resume_irqs(int start, unsigned long which,
-					   unsigned long mask)
-{
-	int i;
+अटल अंतरभूत व्योम s3c_pm_show_resume_irqs(पूर्णांक start, अचिन्हित दीर्घ which,
+					   अचिन्हित दीर्घ mask)
+अणु
+	पूर्णांक i;
 
 	which &= ~mask;
 
-	for (i = 0; i <= 31; i++) {
-		if (which & (1L<<i)) {
+	क्रम (i = 0; i <= 31; i++) अणु
+		अगर (which & (1L<<i)) अणु
 			S3C_PMDBG("IRQ %d asserted at resume\n", start+i);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline void s3c_pm_arch_show_resume_irqs(void)
-{
+अटल अंतरभूत व्योम s3c_pm_arch_show_resume_irqs(व्योम)
+अणु
 	S3C_PMDBG("post sleep: IRQs 0x%08x, 0x%08x\n",
-		  __raw_readl(S3C2410_SRCPND),
-		  __raw_readl(S3C2410_EINTPEND));
+		  __raw_पढ़ोl(S3C2410_SRCPND),
+		  __raw_पढ़ोl(S3C2410_EINTPEND));
 
-	s3c_pm_show_resume_irqs(IRQ_EINT0, __raw_readl(S3C2410_SRCPND),
-				s3c_irqwake_intmask);
+	s3c_pm_show_resume_irqs(IRQ_EINT0, __raw_पढ़ोl(S3C2410_SRCPND),
+				s3c_irqwake_पूर्णांकmask);
 
-	s3c_pm_show_resume_irqs(IRQ_EINT4-4, __raw_readl(S3C2410_EINTPEND),
-				s3c_irqwake_eintmask);
-}
+	s3c_pm_show_resume_irqs(IRQ_EINT4-4, __raw_पढ़ोl(S3C2410_EINTPEND),
+				s3c_irqwake_eपूर्णांकmask);
+पूर्ण
 
-static inline void s3c_pm_restored_gpios(void) { }
-static inline void samsung_pm_saved_gpios(void) { }
+अटल अंतरभूत व्योम s3c_pm_restored_gpios(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम samsung_pm_saved_gpios(व्योम) अणु पूर्ण
 
-/* state for IRQs over sleep */
+/* state क्रम IRQs over sleep */
 
-/* default is to allow for EINT0..EINT15, and IRQ_RTC as wakeup sources
+/* शेष is to allow क्रम EINT0..EINT15, and IRQ_RTC as wakeup sources
  *
  * set bit to 1 in allow bitfield to enable the wakeup settings on it
 */
-#ifdef CONFIG_PM_SLEEP
-#define s3c_irqwake_intallow	(1L << 30 | 0xfL)
-#define s3c_irqwake_eintallow	(0x0000fff0L)
-#else
-#define s3c_irqwake_eintallow 0
-#define s3c_irqwake_intallow  0
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP
+#घोषणा s3c_irqwake_पूर्णांकallow	(1L << 30 | 0xfL)
+#घोषणा s3c_irqwake_eपूर्णांकallow	(0x0000fff0L)
+#अन्यथा
+#घोषणा s3c_irqwake_eपूर्णांकallow 0
+#घोषणा s3c_irqwake_पूर्णांकallow  0
+#पूर्ण_अगर

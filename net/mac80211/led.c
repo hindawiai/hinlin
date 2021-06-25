@@ -1,311 +1,312 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2006, Johannes Berg <johannes@sipsolutions.net>
  */
 
-/* just for IFNAMSIZ */
-#include <linux/if.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include "led.h"
+/* just क्रम IFNAMSIZ */
+#समावेश <linux/अगर.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश "led.h"
 
-void ieee80211_led_assoc(struct ieee80211_local *local, bool associated)
-{
-	if (!atomic_read(&local->assoc_led_active))
-		return;
-	if (associated)
+व्योम ieee80211_led_assoc(काष्ठा ieee80211_local *local, bool associated)
+अणु
+	अगर (!atomic_पढ़ो(&local->assoc_led_active))
+		वापस;
+	अगर (associated)
 		led_trigger_event(&local->assoc_led, LED_FULL);
-	else
+	अन्यथा
 		led_trigger_event(&local->assoc_led, LED_OFF);
-}
+पूर्ण
 
-void ieee80211_led_radio(struct ieee80211_local *local, bool enabled)
-{
-	if (!atomic_read(&local->radio_led_active))
-		return;
-	if (enabled)
+व्योम ieee80211_led_radio(काष्ठा ieee80211_local *local, bool enabled)
+अणु
+	अगर (!atomic_पढ़ो(&local->radio_led_active))
+		वापस;
+	अगर (enabled)
 		led_trigger_event(&local->radio_led, LED_FULL);
-	else
+	अन्यथा
 		led_trigger_event(&local->radio_led, LED_OFF);
-}
+पूर्ण
 
-void ieee80211_alloc_led_names(struct ieee80211_local *local)
-{
-	local->rx_led.name = kasprintf(GFP_KERNEL, "%srx",
+व्योम ieee80211_alloc_led_names(काष्ठा ieee80211_local *local)
+अणु
+	local->rx_led.name = kaप्र_लिखो(GFP_KERNEL, "%srx",
 				       wiphy_name(local->hw.wiphy));
-	local->tx_led.name = kasprintf(GFP_KERNEL, "%stx",
+	local->tx_led.name = kaप्र_लिखो(GFP_KERNEL, "%stx",
 				       wiphy_name(local->hw.wiphy));
-	local->assoc_led.name = kasprintf(GFP_KERNEL, "%sassoc",
+	local->assoc_led.name = kaप्र_लिखो(GFP_KERNEL, "%sassoc",
 					  wiphy_name(local->hw.wiphy));
-	local->radio_led.name = kasprintf(GFP_KERNEL, "%sradio",
+	local->radio_led.name = kaप्र_लिखो(GFP_KERNEL, "%sradio",
 					  wiphy_name(local->hw.wiphy));
-}
+पूर्ण
 
-void ieee80211_free_led_names(struct ieee80211_local *local)
-{
-	kfree(local->rx_led.name);
-	kfree(local->tx_led.name);
-	kfree(local->assoc_led.name);
-	kfree(local->radio_led.name);
-}
+व्योम ieee80211_मुक्त_led_names(काष्ठा ieee80211_local *local)
+अणु
+	kमुक्त(local->rx_led.name);
+	kमुक्त(local->tx_led.name);
+	kमुक्त(local->assoc_led.name);
+	kमुक्त(local->radio_led.name);
+पूर्ण
 
-static int ieee80211_tx_led_activate(struct led_classdev *led_cdev)
-{
-	struct ieee80211_local *local = container_of(led_cdev->trigger,
-						     struct ieee80211_local,
+अटल पूर्णांक ieee80211_tx_led_activate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ieee80211_local *local = container_of(led_cdev->trigger,
+						     काष्ठा ieee80211_local,
 						     tx_led);
 
 	atomic_inc(&local->tx_led_active);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ieee80211_tx_led_deactivate(struct led_classdev *led_cdev)
-{
-	struct ieee80211_local *local = container_of(led_cdev->trigger,
-						     struct ieee80211_local,
+अटल व्योम ieee80211_tx_led_deactivate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ieee80211_local *local = container_of(led_cdev->trigger,
+						     काष्ठा ieee80211_local,
 						     tx_led);
 
 	atomic_dec(&local->tx_led_active);
-}
+पूर्ण
 
-static int ieee80211_rx_led_activate(struct led_classdev *led_cdev)
-{
-	struct ieee80211_local *local = container_of(led_cdev->trigger,
-						     struct ieee80211_local,
+अटल पूर्णांक ieee80211_rx_led_activate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ieee80211_local *local = container_of(led_cdev->trigger,
+						     काष्ठा ieee80211_local,
 						     rx_led);
 
 	atomic_inc(&local->rx_led_active);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ieee80211_rx_led_deactivate(struct led_classdev *led_cdev)
-{
-	struct ieee80211_local *local = container_of(led_cdev->trigger,
-						     struct ieee80211_local,
+अटल व्योम ieee80211_rx_led_deactivate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ieee80211_local *local = container_of(led_cdev->trigger,
+						     काष्ठा ieee80211_local,
 						     rx_led);
 
 	atomic_dec(&local->rx_led_active);
-}
+पूर्ण
 
-static int ieee80211_assoc_led_activate(struct led_classdev *led_cdev)
-{
-	struct ieee80211_local *local = container_of(led_cdev->trigger,
-						     struct ieee80211_local,
+अटल पूर्णांक ieee80211_assoc_led_activate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ieee80211_local *local = container_of(led_cdev->trigger,
+						     काष्ठा ieee80211_local,
 						     assoc_led);
 
 	atomic_inc(&local->assoc_led_active);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ieee80211_assoc_led_deactivate(struct led_classdev *led_cdev)
-{
-	struct ieee80211_local *local = container_of(led_cdev->trigger,
-						     struct ieee80211_local,
+अटल व्योम ieee80211_assoc_led_deactivate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ieee80211_local *local = container_of(led_cdev->trigger,
+						     काष्ठा ieee80211_local,
 						     assoc_led);
 
 	atomic_dec(&local->assoc_led_active);
-}
+पूर्ण
 
-static int ieee80211_radio_led_activate(struct led_classdev *led_cdev)
-{
-	struct ieee80211_local *local = container_of(led_cdev->trigger,
-						     struct ieee80211_local,
+अटल पूर्णांक ieee80211_radio_led_activate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ieee80211_local *local = container_of(led_cdev->trigger,
+						     काष्ठा ieee80211_local,
 						     radio_led);
 
 	atomic_inc(&local->radio_led_active);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ieee80211_radio_led_deactivate(struct led_classdev *led_cdev)
-{
-	struct ieee80211_local *local = container_of(led_cdev->trigger,
-						     struct ieee80211_local,
+अटल व्योम ieee80211_radio_led_deactivate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ieee80211_local *local = container_of(led_cdev->trigger,
+						     काष्ठा ieee80211_local,
 						     radio_led);
 
 	atomic_dec(&local->radio_led_active);
-}
+पूर्ण
 
-static int ieee80211_tpt_led_activate(struct led_classdev *led_cdev)
-{
-	struct ieee80211_local *local = container_of(led_cdev->trigger,
-						     struct ieee80211_local,
+अटल पूर्णांक ieee80211_tpt_led_activate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ieee80211_local *local = container_of(led_cdev->trigger,
+						     काष्ठा ieee80211_local,
 						     tpt_led);
 
 	atomic_inc(&local->tpt_led_active);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ieee80211_tpt_led_deactivate(struct led_classdev *led_cdev)
-{
-	struct ieee80211_local *local = container_of(led_cdev->trigger,
-						     struct ieee80211_local,
+अटल व्योम ieee80211_tpt_led_deactivate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ieee80211_local *local = container_of(led_cdev->trigger,
+						     काष्ठा ieee80211_local,
 						     tpt_led);
 
 	atomic_dec(&local->tpt_led_active);
-}
+पूर्ण
 
-void ieee80211_led_init(struct ieee80211_local *local)
-{
+व्योम ieee80211_led_init(काष्ठा ieee80211_local *local)
+अणु
 	atomic_set(&local->rx_led_active, 0);
 	local->rx_led.activate = ieee80211_rx_led_activate;
 	local->rx_led.deactivate = ieee80211_rx_led_deactivate;
-	if (local->rx_led.name && led_trigger_register(&local->rx_led)) {
-		kfree(local->rx_led.name);
-		local->rx_led.name = NULL;
-	}
+	अगर (local->rx_led.name && led_trigger_रेजिस्टर(&local->rx_led)) अणु
+		kमुक्त(local->rx_led.name);
+		local->rx_led.name = शून्य;
+	पूर्ण
 
 	atomic_set(&local->tx_led_active, 0);
 	local->tx_led.activate = ieee80211_tx_led_activate;
 	local->tx_led.deactivate = ieee80211_tx_led_deactivate;
-	if (local->tx_led.name && led_trigger_register(&local->tx_led)) {
-		kfree(local->tx_led.name);
-		local->tx_led.name = NULL;
-	}
+	अगर (local->tx_led.name && led_trigger_रेजिस्टर(&local->tx_led)) अणु
+		kमुक्त(local->tx_led.name);
+		local->tx_led.name = शून्य;
+	पूर्ण
 
 	atomic_set(&local->assoc_led_active, 0);
 	local->assoc_led.activate = ieee80211_assoc_led_activate;
 	local->assoc_led.deactivate = ieee80211_assoc_led_deactivate;
-	if (local->assoc_led.name && led_trigger_register(&local->assoc_led)) {
-		kfree(local->assoc_led.name);
-		local->assoc_led.name = NULL;
-	}
+	अगर (local->assoc_led.name && led_trigger_रेजिस्टर(&local->assoc_led)) अणु
+		kमुक्त(local->assoc_led.name);
+		local->assoc_led.name = शून्य;
+	पूर्ण
 
 	atomic_set(&local->radio_led_active, 0);
 	local->radio_led.activate = ieee80211_radio_led_activate;
 	local->radio_led.deactivate = ieee80211_radio_led_deactivate;
-	if (local->radio_led.name && led_trigger_register(&local->radio_led)) {
-		kfree(local->radio_led.name);
-		local->radio_led.name = NULL;
-	}
+	अगर (local->radio_led.name && led_trigger_रेजिस्टर(&local->radio_led)) अणु
+		kमुक्त(local->radio_led.name);
+		local->radio_led.name = शून्य;
+	पूर्ण
 
 	atomic_set(&local->tpt_led_active, 0);
-	if (local->tpt_led_trigger) {
+	अगर (local->tpt_led_trigger) अणु
 		local->tpt_led.activate = ieee80211_tpt_led_activate;
 		local->tpt_led.deactivate = ieee80211_tpt_led_deactivate;
-		if (led_trigger_register(&local->tpt_led)) {
-			kfree(local->tpt_led_trigger);
-			local->tpt_led_trigger = NULL;
-		}
-	}
-}
+		अगर (led_trigger_रेजिस्टर(&local->tpt_led)) अणु
+			kमुक्त(local->tpt_led_trigger);
+			local->tpt_led_trigger = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void ieee80211_led_exit(struct ieee80211_local *local)
-{
-	if (local->radio_led.name)
-		led_trigger_unregister(&local->radio_led);
-	if (local->assoc_led.name)
-		led_trigger_unregister(&local->assoc_led);
-	if (local->tx_led.name)
-		led_trigger_unregister(&local->tx_led);
-	if (local->rx_led.name)
-		led_trigger_unregister(&local->rx_led);
+व्योम ieee80211_led_निकास(काष्ठा ieee80211_local *local)
+अणु
+	अगर (local->radio_led.name)
+		led_trigger_unरेजिस्टर(&local->radio_led);
+	अगर (local->assoc_led.name)
+		led_trigger_unरेजिस्टर(&local->assoc_led);
+	अगर (local->tx_led.name)
+		led_trigger_unरेजिस्टर(&local->tx_led);
+	अगर (local->rx_led.name)
+		led_trigger_unरेजिस्टर(&local->rx_led);
 
-	if (local->tpt_led_trigger) {
-		led_trigger_unregister(&local->tpt_led);
-		kfree(local->tpt_led_trigger);
-	}
-}
+	अगर (local->tpt_led_trigger) अणु
+		led_trigger_unरेजिस्टर(&local->tpt_led);
+		kमुक्त(local->tpt_led_trigger);
+	पूर्ण
+पूर्ण
 
-const char *__ieee80211_get_radio_led_name(struct ieee80211_hw *hw)
-{
-	struct ieee80211_local *local = hw_to_local(hw);
+स्थिर अक्षर *__ieee80211_get_radio_led_name(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा ieee80211_local *local = hw_to_local(hw);
 
-	return local->radio_led.name;
-}
+	वापस local->radio_led.name;
+पूर्ण
 EXPORT_SYMBOL(__ieee80211_get_radio_led_name);
 
-const char *__ieee80211_get_assoc_led_name(struct ieee80211_hw *hw)
-{
-	struct ieee80211_local *local = hw_to_local(hw);
+स्थिर अक्षर *__ieee80211_get_assoc_led_name(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा ieee80211_local *local = hw_to_local(hw);
 
-	return local->assoc_led.name;
-}
+	वापस local->assoc_led.name;
+पूर्ण
 EXPORT_SYMBOL(__ieee80211_get_assoc_led_name);
 
-const char *__ieee80211_get_tx_led_name(struct ieee80211_hw *hw)
-{
-	struct ieee80211_local *local = hw_to_local(hw);
+स्थिर अक्षर *__ieee80211_get_tx_led_name(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा ieee80211_local *local = hw_to_local(hw);
 
-	return local->tx_led.name;
-}
+	वापस local->tx_led.name;
+पूर्ण
 EXPORT_SYMBOL(__ieee80211_get_tx_led_name);
 
-const char *__ieee80211_get_rx_led_name(struct ieee80211_hw *hw)
-{
-	struct ieee80211_local *local = hw_to_local(hw);
+स्थिर अक्षर *__ieee80211_get_rx_led_name(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा ieee80211_local *local = hw_to_local(hw);
 
-	return local->rx_led.name;
-}
+	वापस local->rx_led.name;
+पूर्ण
 EXPORT_SYMBOL(__ieee80211_get_rx_led_name);
 
-static unsigned long tpt_trig_traffic(struct ieee80211_local *local,
-				      struct tpt_led_trigger *tpt_trig)
-{
-	unsigned long traffic, delta;
+अटल अचिन्हित दीर्घ tpt_trig_traffic(काष्ठा ieee80211_local *local,
+				      काष्ठा tpt_led_trigger *tpt_trig)
+अणु
+	अचिन्हित दीर्घ traffic, delta;
 
 	traffic = tpt_trig->tx_bytes + tpt_trig->rx_bytes;
 
 	delta = traffic - tpt_trig->prev_traffic;
 	tpt_trig->prev_traffic = traffic;
-	return DIV_ROUND_UP(delta, 1024 / 8);
-}
+	वापस DIV_ROUND_UP(delta, 1024 / 8);
+पूर्ण
 
-static void tpt_trig_timer(struct timer_list *t)
-{
-	struct tpt_led_trigger *tpt_trig = from_timer(tpt_trig, t, timer);
-	struct ieee80211_local *local = tpt_trig->local;
-	struct led_classdev *led_cdev;
-	unsigned long on, off, tpt;
-	int i;
+अटल व्योम tpt_trig_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा tpt_led_trigger *tpt_trig = from_समयr(tpt_trig, t, समयr);
+	काष्ठा ieee80211_local *local = tpt_trig->local;
+	काष्ठा led_classdev *led_cdev;
+	अचिन्हित दीर्घ on, off, tpt;
+	पूर्णांक i;
 
-	if (!tpt_trig->running)
-		return;
+	अगर (!tpt_trig->running)
+		वापस;
 
-	mod_timer(&tpt_trig->timer, round_jiffies(jiffies + HZ));
+	mod_समयr(&tpt_trig->समयr, round_jअगरfies(jअगरfies + HZ));
 
 	tpt = tpt_trig_traffic(local, tpt_trig);
 
-	/* default to just solid on */
+	/* शेष to just solid on */
 	on = 1;
 	off = 0;
 
-	for (i = tpt_trig->blink_table_len - 1; i >= 0; i--) {
-		if (tpt_trig->blink_table[i].throughput < 0 ||
-		    tpt > tpt_trig->blink_table[i].throughput) {
-			off = tpt_trig->blink_table[i].blink_time / 2;
-			on = tpt_trig->blink_table[i].blink_time - off;
-			break;
-		}
-	}
+	क्रम (i = tpt_trig->blink_table_len - 1; i >= 0; i--) अणु
+		अगर (tpt_trig->blink_table[i].throughput < 0 ||
+		    tpt > tpt_trig->blink_table[i].throughput) अणु
+			off = tpt_trig->blink_table[i].blink_समय / 2;
+			on = tpt_trig->blink_table[i].blink_समय - off;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	read_lock(&local->tpt_led.leddev_list_lock);
-	list_for_each_entry(led_cdev, &local->tpt_led.led_cdevs, trig_list)
+	पढ़ो_lock(&local->tpt_led.leddev_list_lock);
+	list_क्रम_each_entry(led_cdev, &local->tpt_led.led_cdevs, trig_list)
 		led_blink_set(led_cdev, &on, &off);
-	read_unlock(&local->tpt_led.leddev_list_lock);
-}
+	पढ़ो_unlock(&local->tpt_led.leddev_list_lock);
+पूर्ण
 
-const char *
-__ieee80211_create_tpt_led_trigger(struct ieee80211_hw *hw,
-				   unsigned int flags,
-				   const struct ieee80211_tpt_blink *blink_table,
-				   unsigned int blink_table_len)
-{
-	struct ieee80211_local *local = hw_to_local(hw);
-	struct tpt_led_trigger *tpt_trig;
+स्थिर अक्षर *
+__ieee80211_create_tpt_led_trigger(काष्ठा ieee80211_hw *hw,
+				   अचिन्हित पूर्णांक flags,
+				   स्थिर काष्ठा ieee80211_tpt_blink *blink_table,
+				   अचिन्हित पूर्णांक blink_table_len)
+अणु
+	काष्ठा ieee80211_local *local = hw_to_local(hw);
+	काष्ठा tpt_led_trigger *tpt_trig;
 
-	if (WARN_ON(local->tpt_led_trigger))
-		return NULL;
+	अगर (WARN_ON(local->tpt_led_trigger))
+		वापस शून्य;
 
-	tpt_trig = kzalloc(sizeof(struct tpt_led_trigger), GFP_KERNEL);
-	if (!tpt_trig)
-		return NULL;
+	tpt_trig = kzalloc(माप(काष्ठा tpt_led_trigger), GFP_KERNEL);
+	अगर (!tpt_trig)
+		वापस शून्य;
 
-	snprintf(tpt_trig->name, sizeof(tpt_trig->name),
+	snम_लिखो(tpt_trig->name, माप(tpt_trig->name),
 		 "%stpt", wiphy_name(local->hw.wiphy));
 
 	local->tpt_led.name = tpt_trig->name;
@@ -315,56 +316,56 @@ __ieee80211_create_tpt_led_trigger(struct ieee80211_hw *hw,
 	tpt_trig->want = flags;
 	tpt_trig->local = local;
 
-	timer_setup(&tpt_trig->timer, tpt_trig_timer, 0);
+	समयr_setup(&tpt_trig->समयr, tpt_trig_समयr, 0);
 
 	local->tpt_led_trigger = tpt_trig;
 
-	return tpt_trig->name;
-}
+	वापस tpt_trig->name;
+पूर्ण
 EXPORT_SYMBOL(__ieee80211_create_tpt_led_trigger);
 
-static void ieee80211_start_tpt_led_trig(struct ieee80211_local *local)
-{
-	struct tpt_led_trigger *tpt_trig = local->tpt_led_trigger;
+अटल व्योम ieee80211_start_tpt_led_trig(काष्ठा ieee80211_local *local)
+अणु
+	काष्ठा tpt_led_trigger *tpt_trig = local->tpt_led_trigger;
 
-	if (tpt_trig->running)
-		return;
+	अगर (tpt_trig->running)
+		वापस;
 
 	/* reset traffic */
 	tpt_trig_traffic(local, tpt_trig);
 	tpt_trig->running = true;
 
-	tpt_trig_timer(&tpt_trig->timer);
-	mod_timer(&tpt_trig->timer, round_jiffies(jiffies + HZ));
-}
+	tpt_trig_समयr(&tpt_trig->समयr);
+	mod_समयr(&tpt_trig->समयr, round_jअगरfies(jअगरfies + HZ));
+पूर्ण
 
-static void ieee80211_stop_tpt_led_trig(struct ieee80211_local *local)
-{
-	struct tpt_led_trigger *tpt_trig = local->tpt_led_trigger;
-	struct led_classdev *led_cdev;
+अटल व्योम ieee80211_stop_tpt_led_trig(काष्ठा ieee80211_local *local)
+अणु
+	काष्ठा tpt_led_trigger *tpt_trig = local->tpt_led_trigger;
+	काष्ठा led_classdev *led_cdev;
 
-	if (!tpt_trig->running)
-		return;
+	अगर (!tpt_trig->running)
+		वापस;
 
 	tpt_trig->running = false;
-	del_timer_sync(&tpt_trig->timer);
+	del_समयr_sync(&tpt_trig->समयr);
 
-	read_lock(&local->tpt_led.leddev_list_lock);
-	list_for_each_entry(led_cdev, &local->tpt_led.led_cdevs, trig_list)
+	पढ़ो_lock(&local->tpt_led.leddev_list_lock);
+	list_क्रम_each_entry(led_cdev, &local->tpt_led.led_cdevs, trig_list)
 		led_set_brightness(led_cdev, LED_OFF);
-	read_unlock(&local->tpt_led.leddev_list_lock);
-}
+	पढ़ो_unlock(&local->tpt_led.leddev_list_lock);
+पूर्ण
 
-void ieee80211_mod_tpt_led_trig(struct ieee80211_local *local,
-				unsigned int types_on, unsigned int types_off)
-{
-	struct tpt_led_trigger *tpt_trig = local->tpt_led_trigger;
+व्योम ieee80211_mod_tpt_led_trig(काष्ठा ieee80211_local *local,
+				अचिन्हित पूर्णांक types_on, अचिन्हित पूर्णांक types_off)
+अणु
+	काष्ठा tpt_led_trigger *tpt_trig = local->tpt_led_trigger;
 	bool allowed;
 
 	WARN_ON(types_on & types_off);
 
-	if (!tpt_trig)
-		return;
+	अगर (!tpt_trig)
+		वापस;
 
 	tpt_trig->active &= ~types_off;
 	tpt_trig->active |= types_on;
@@ -373,12 +374,12 @@ void ieee80211_mod_tpt_led_trig(struct ieee80211_local *local,
 	 * Regardless of wanted state, we shouldn't blink when
 	 * the radio is disabled -- this can happen due to some
 	 * code ordering issues with __ieee80211_recalc_idle()
-	 * being called before the radio is started.
+	 * being called beक्रमe the radio is started.
 	 */
 	allowed = tpt_trig->active & IEEE80211_TPT_LEDTRIG_FL_RADIO;
 
-	if (!allowed || !(tpt_trig->active & tpt_trig->want))
+	अगर (!allowed || !(tpt_trig->active & tpt_trig->want))
 		ieee80211_stop_tpt_led_trig(local);
-	else
+	अन्यथा
 		ieee80211_start_tpt_led_trig(local);
-}
+पूर्ण

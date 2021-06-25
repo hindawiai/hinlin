@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2020 Google LLC
  *
  * This driver serves as the receiver of cros_ec PD host events.
  */
 
-#include <linux/acpi.h>
-#include <linux/module.h>
-#include <linux/platform_data/cros_ec_proto.h>
-#include <linux/platform_data/cros_usbpd_notify.h>
-#include <linux/platform_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/cros_ec_proto.h>
+#समावेश <linux/platक्रमm_data/cros_usbpd_notअगरy.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define DRV_NAME "cros-usbpd-notify"
-#define DRV_NAME_PLAT_ACPI "cros-usbpd-notify-acpi"
-#define ACPI_DRV_NAME "GOOG0003"
+#घोषणा DRV_NAME "cros-usbpd-notify"
+#घोषणा DRV_NAME_PLAT_ACPI "cros-usbpd-notify-acpi"
+#घोषणा ACPI_DRV_NAME "GOOG0003"
 
-static BLOCKING_NOTIFIER_HEAD(cros_usbpd_notifier_list);
+अटल BLOCKING_NOTIFIER_HEAD(cros_usbpd_notअगरier_list);
 
-struct cros_usbpd_notify_data {
-	struct device *dev;
-	struct cros_ec_device *ec;
-	struct notifier_block nb;
-};
+काष्ठा cros_usbpd_notअगरy_data अणु
+	काष्ठा device *dev;
+	काष्ठा cros_ec_device *ec;
+	काष्ठा notअगरier_block nb;
+पूर्ण;
 
 /**
- * cros_usbpd_register_notify - Register a notifier callback for PD events.
- * @nb: Notifier block pointer to register
+ * cros_usbpd_रेजिस्टर_notअगरy - Register a notअगरier callback क्रम PD events.
+ * @nb: Notअगरier block poपूर्णांकer to रेजिस्टर
  *
- * On ACPI platforms this corresponds to host events on the ECPD
- * "GOOG0003" ACPI device. On non-ACPI platforms this will filter mkbp events
- * for USB PD events.
+ * On ACPI platक्रमms this corresponds to host events on the ECPD
+ * "GOOG0003" ACPI device. On non-ACPI platक्रमms this will filter mkbp events
+ * क्रम USB PD events.
  *
  * Return: 0 on success or negative error code.
  */
-int cros_usbpd_register_notify(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&cros_usbpd_notifier_list,
+पूर्णांक cros_usbpd_रेजिस्टर_notअगरy(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&cros_usbpd_notअगरier_list,
 						nb);
-}
-EXPORT_SYMBOL_GPL(cros_usbpd_register_notify);
+पूर्ण
+EXPORT_SYMBOL_GPL(cros_usbpd_रेजिस्टर_notअगरy);
 
 /**
- * cros_usbpd_unregister_notify - Unregister notifier callback for PD events.
- * @nb: Notifier block pointer to unregister
+ * cros_usbpd_unरेजिस्टर_notअगरy - Unरेजिस्टर notअगरier callback क्रम PD events.
+ * @nb: Notअगरier block poपूर्णांकer to unरेजिस्टर
  *
- * Unregister a notifier callback that was previously registered with
- * cros_usbpd_register_notify().
+ * Unरेजिस्टर a notअगरier callback that was previously रेजिस्टरed with
+ * cros_usbpd_रेजिस्टर_notअगरy().
  */
-void cros_usbpd_unregister_notify(struct notifier_block *nb)
-{
-	blocking_notifier_chain_unregister(&cros_usbpd_notifier_list, nb);
-}
-EXPORT_SYMBOL_GPL(cros_usbpd_unregister_notify);
+व्योम cros_usbpd_unरेजिस्टर_notअगरy(काष्ठा notअगरier_block *nb)
+अणु
+	blocking_notअगरier_chain_unरेजिस्टर(&cros_usbpd_notअगरier_list, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(cros_usbpd_unरेजिस्टर_notअगरy);
 
 /**
  * cros_ec_pd_command - Send a command to the EC.
@@ -65,241 +66,241 @@ EXPORT_SYMBOL_GPL(cros_usbpd_unregister_notify);
  *
  * Return: >= 0 on success, negative error number on failure.
  */
-static int cros_ec_pd_command(struct cros_ec_device *ec_dev,
-			      int command,
-			      uint8_t *outdata,
-			      int outsize,
-			      uint8_t *indata,
-			      int insize)
-{
-	struct cros_ec_command *msg;
-	int ret;
+अटल पूर्णांक cros_ec_pd_command(काष्ठा cros_ec_device *ec_dev,
+			      पूर्णांक command,
+			      uपूर्णांक8_t *outdata,
+			      पूर्णांक outsize,
+			      uपूर्णांक8_t *indata,
+			      पूर्णांक insize)
+अणु
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक ret;
 
-	msg = kzalloc(sizeof(*msg) + max(insize, outsize), GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	msg = kzalloc(माप(*msg) + max(insize, outsize), GFP_KERNEL);
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	msg->command = command;
 	msg->outsize = outsize;
 	msg->insize = insize;
 
-	if (outsize)
-		memcpy(msg->data, outdata, outsize);
+	अगर (outsize)
+		स_नकल(msg->data, outdata, outsize);
 
 	ret = cros_ec_cmd_xfer_status(ec_dev, msg);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
-	if (insize)
-		memcpy(indata, msg->data, insize);
+	अगर (insize)
+		स_नकल(indata, msg->data, insize);
 error:
-	kfree(msg);
-	return ret;
-}
+	kमुक्त(msg);
+	वापस ret;
+पूर्ण
 
-static void cros_usbpd_get_event_and_notify(struct device  *dev,
-					    struct cros_ec_device *ec_dev)
-{
-	struct ec_response_host_event_status host_event_status;
+अटल व्योम cros_usbpd_get_event_and_notअगरy(काष्ठा device  *dev,
+					    काष्ठा cros_ec_device *ec_dev)
+अणु
+	काष्ठा ec_response_host_event_status host_event_status;
 	u32 event = 0;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * We still send a 0 event out to older devices which don't
+	 * We still send a 0 event out to older devices which करोn't
 	 * have the updated device heirarchy.
 	 */
-	if (!ec_dev) {
+	अगर (!ec_dev) अणु
 		dev_dbg(dev,
 			"EC device inaccessible; sending 0 event status.\n");
-		goto send_notify;
-	}
+		जाओ send_notअगरy;
+	पूर्ण
 
-	/* Check for PD host events on EC. */
+	/* Check क्रम PD host events on EC. */
 	ret = cros_ec_pd_command(ec_dev, EC_CMD_PD_HOST_EVENT_STATUS,
-				 NULL, 0,
-				 (uint8_t *)&host_event_status,
-				 sizeof(host_event_status));
-	if (ret < 0) {
+				 शून्य, 0,
+				 (uपूर्णांक8_t *)&host_event_status,
+				 माप(host_event_status));
+	अगर (ret < 0) अणु
 		dev_warn(dev, "Can't get host event status (err: %d)\n", ret);
-		goto send_notify;
-	}
+		जाओ send_notअगरy;
+	पूर्ण
 
 	event = host_event_status.status;
 
-send_notify:
-	blocking_notifier_call_chain(&cros_usbpd_notifier_list, event, NULL);
-}
+send_notअगरy:
+	blocking_notअगरier_call_chain(&cros_usbpd_notअगरier_list, event, शून्य);
+पूर्ण
 
-#ifdef CONFIG_ACPI
+#अगर_घोषित CONFIG_ACPI
 
-static void cros_usbpd_notify_acpi(acpi_handle device, u32 event, void *data)
-{
-	struct cros_usbpd_notify_data *pdnotify = data;
+अटल व्योम cros_usbpd_notअगरy_acpi(acpi_handle device, u32 event, व्योम *data)
+अणु
+	काष्ठा cros_usbpd_notअगरy_data *pdnotअगरy = data;
 
-	cros_usbpd_get_event_and_notify(pdnotify->dev, pdnotify->ec);
-}
+	cros_usbpd_get_event_and_notअगरy(pdnotअगरy->dev, pdnotअगरy->ec);
+पूर्ण
 
-static int cros_usbpd_notify_probe_acpi(struct platform_device *pdev)
-{
-	struct cros_usbpd_notify_data *pdnotify;
-	struct device *dev = &pdev->dev;
-	struct acpi_device *adev;
-	struct cros_ec_device *ec_dev;
+अटल पूर्णांक cros_usbpd_notअगरy_probe_acpi(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cros_usbpd_notअगरy_data *pdnotअगरy;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा acpi_device *adev;
+	काष्ठा cros_ec_device *ec_dev;
 	acpi_status status;
 
 	adev = ACPI_COMPANION(dev);
 
-	pdnotify = devm_kzalloc(dev, sizeof(*pdnotify), GFP_KERNEL);
-	if (!pdnotify)
-		return -ENOMEM;
+	pdnotअगरy = devm_kzalloc(dev, माप(*pdnotअगरy), GFP_KERNEL);
+	अगर (!pdnotअगरy)
+		वापस -ENOMEM;
 
-	/* Get the EC device pointer needed to talk to the EC. */
+	/* Get the EC device poपूर्णांकer needed to talk to the EC. */
 	ec_dev = dev_get_drvdata(dev->parent);
-	if (!ec_dev) {
+	अगर (!ec_dev) अणु
 		/*
-		 * We continue even for older devices which don't have the
+		 * We जारी even क्रम older devices which करोn't have the
 		 * correct device heirarchy, namely, GOOG0003 is a child
 		 * of GOOG0004.
 		 */
 		dev_warn(dev, "Couldn't get Chrome EC device pointer.\n");
-	}
+	पूर्ण
 
-	pdnotify->dev = dev;
-	pdnotify->ec = ec_dev;
+	pdnotअगरy->dev = dev;
+	pdnotअगरy->ec = ec_dev;
 
-	status = acpi_install_notify_handler(adev->handle,
+	status = acpi_install_notअगरy_handler(adev->handle,
 					     ACPI_ALL_NOTIFY,
-					     cros_usbpd_notify_acpi,
-					     pdnotify);
-	if (ACPI_FAILURE(status)) {
+					     cros_usbpd_notअगरy_acpi,
+					     pdnotअगरy);
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_warn(dev, "Failed to register notify handler %08x\n",
 			 status);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cros_usbpd_notify_remove_acpi(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct acpi_device *adev = ACPI_COMPANION(dev);
+अटल पूर्णांक cros_usbpd_notअगरy_हटाओ_acpi(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
 
-	acpi_remove_notify_handler(adev->handle, ACPI_ALL_NOTIFY,
-				   cros_usbpd_notify_acpi);
+	acpi_हटाओ_notअगरy_handler(adev->handle, ACPI_ALL_NOTIFY,
+				   cros_usbpd_notअगरy_acpi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id cros_usbpd_notify_acpi_device_ids[] = {
-	{ ACPI_DRV_NAME, 0 },
-	{ }
-};
-MODULE_DEVICE_TABLE(acpi, cros_usbpd_notify_acpi_device_ids);
+अटल स्थिर काष्ठा acpi_device_id cros_usbpd_notअगरy_acpi_device_ids[] = अणु
+	अणु ACPI_DRV_NAME, 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(acpi, cros_usbpd_notअगरy_acpi_device_ids);
 
-static struct platform_driver cros_usbpd_notify_acpi_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cros_usbpd_notअगरy_acpi_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME_PLAT_ACPI,
-		.acpi_match_table = cros_usbpd_notify_acpi_device_ids,
-	},
-	.probe = cros_usbpd_notify_probe_acpi,
-	.remove = cros_usbpd_notify_remove_acpi,
-};
+		.acpi_match_table = cros_usbpd_notअगरy_acpi_device_ids,
+	पूर्ण,
+	.probe = cros_usbpd_notअगरy_probe_acpi,
+	.हटाओ = cros_usbpd_notअगरy_हटाओ_acpi,
+पूर्ण;
 
-#endif /* CONFIG_ACPI */
+#पूर्ण_अगर /* CONFIG_ACPI */
 
-static int cros_usbpd_notify_plat(struct notifier_block *nb,
-				  unsigned long queued_during_suspend,
-				  void *data)
-{
-	struct cros_usbpd_notify_data *pdnotify = container_of(nb,
-			struct cros_usbpd_notify_data, nb);
-	struct cros_ec_device *ec_dev = (struct cros_ec_device *)data;
+अटल पूर्णांक cros_usbpd_notअगरy_plat(काष्ठा notअगरier_block *nb,
+				  अचिन्हित दीर्घ queued_during_suspend,
+				  व्योम *data)
+अणु
+	काष्ठा cros_usbpd_notअगरy_data *pdnotअगरy = container_of(nb,
+			काष्ठा cros_usbpd_notअगरy_data, nb);
+	काष्ठा cros_ec_device *ec_dev = (काष्ठा cros_ec_device *)data;
 	u32 host_event = cros_ec_get_host_event(ec_dev);
 
-	if (!host_event)
-		return NOTIFY_DONE;
+	अगर (!host_event)
+		वापस NOTIFY_DONE;
 
-	if (host_event & (EC_HOST_EVENT_MASK(EC_HOST_EVENT_PD_MCU) |
-			  EC_HOST_EVENT_MASK(EC_HOST_EVENT_USB_MUX))) {
-		cros_usbpd_get_event_and_notify(pdnotify->dev, ec_dev);
-		return NOTIFY_OK;
-	}
-	return NOTIFY_DONE;
-}
+	अगर (host_event & (EC_HOST_EVENT_MASK(EC_HOST_EVENT_PD_MCU) |
+			  EC_HOST_EVENT_MASK(EC_HOST_EVENT_USB_MUX))) अणु
+		cros_usbpd_get_event_and_notअगरy(pdnotअगरy->dev, ec_dev);
+		वापस NOTIFY_OK;
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int cros_usbpd_notify_probe_plat(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct cros_ec_dev *ecdev = dev_get_drvdata(dev->parent);
-	struct cros_usbpd_notify_data *pdnotify;
-	int ret;
+अटल पूर्णांक cros_usbpd_notअगरy_probe_plat(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा cros_ec_dev *ecdev = dev_get_drvdata(dev->parent);
+	काष्ठा cros_usbpd_notअगरy_data *pdnotअगरy;
+	पूर्णांक ret;
 
-	pdnotify = devm_kzalloc(dev, sizeof(*pdnotify), GFP_KERNEL);
-	if (!pdnotify)
-		return -ENOMEM;
+	pdnotअगरy = devm_kzalloc(dev, माप(*pdnotअगरy), GFP_KERNEL);
+	अगर (!pdnotअगरy)
+		वापस -ENOMEM;
 
-	pdnotify->dev = dev;
-	pdnotify->ec = ecdev->ec_dev;
-	pdnotify->nb.notifier_call = cros_usbpd_notify_plat;
+	pdnotअगरy->dev = dev;
+	pdnotअगरy->ec = ecdev->ec_dev;
+	pdnotअगरy->nb.notअगरier_call = cros_usbpd_notअगरy_plat;
 
-	dev_set_drvdata(dev, pdnotify);
+	dev_set_drvdata(dev, pdnotअगरy);
 
-	ret = blocking_notifier_chain_register(&ecdev->ec_dev->event_notifier,
-					       &pdnotify->nb);
-	if (ret < 0) {
+	ret = blocking_notअगरier_chain_रेजिस्टर(&ecdev->ec_dev->event_notअगरier,
+					       &pdnotअगरy->nb);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to register notifier\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cros_usbpd_notify_remove_plat(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct cros_ec_dev *ecdev = dev_get_drvdata(dev->parent);
-	struct cros_usbpd_notify_data *pdnotify =
-		(struct cros_usbpd_notify_data *)dev_get_drvdata(dev);
+अटल पूर्णांक cros_usbpd_notअगरy_हटाओ_plat(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा cros_ec_dev *ecdev = dev_get_drvdata(dev->parent);
+	काष्ठा cros_usbpd_notअगरy_data *pdnotअगरy =
+		(काष्ठा cros_usbpd_notअगरy_data *)dev_get_drvdata(dev);
 
-	blocking_notifier_chain_unregister(&ecdev->ec_dev->event_notifier,
-					   &pdnotify->nb);
+	blocking_notअगरier_chain_unरेजिस्टर(&ecdev->ec_dev->event_notअगरier,
+					   &pdnotअगरy->nb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver cros_usbpd_notify_plat_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cros_usbpd_notअगरy_plat_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
-	},
-	.probe = cros_usbpd_notify_probe_plat,
-	.remove = cros_usbpd_notify_remove_plat,
-};
+	पूर्ण,
+	.probe = cros_usbpd_notअगरy_probe_plat,
+	.हटाओ = cros_usbpd_notअगरy_हटाओ_plat,
+पूर्ण;
 
-static int __init cros_usbpd_notify_init(void)
-{
-	int ret;
+अटल पूर्णांक __init cros_usbpd_notअगरy_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&cros_usbpd_notify_plat_driver);
-	if (ret < 0)
-		return ret;
+	ret = platक्रमm_driver_रेजिस्टर(&cros_usbpd_notअगरy_plat_driver);
+	अगर (ret < 0)
+		वापस ret;
 
-#ifdef CONFIG_ACPI
-	platform_driver_register(&cros_usbpd_notify_acpi_driver);
-#endif
-	return 0;
-}
+#अगर_घोषित CONFIG_ACPI
+	platक्रमm_driver_रेजिस्टर(&cros_usbpd_notअगरy_acpi_driver);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void __exit cros_usbpd_notify_exit(void)
-{
-#ifdef CONFIG_ACPI
-	platform_driver_unregister(&cros_usbpd_notify_acpi_driver);
-#endif
-	platform_driver_unregister(&cros_usbpd_notify_plat_driver);
-}
+अटल व्योम __निकास cros_usbpd_notअगरy_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_ACPI
+	platक्रमm_driver_unरेजिस्टर(&cros_usbpd_notअगरy_acpi_driver);
+#पूर्ण_अगर
+	platक्रमm_driver_unरेजिस्टर(&cros_usbpd_notअगरy_plat_driver);
+पूर्ण
 
-module_init(cros_usbpd_notify_init);
-module_exit(cros_usbpd_notify_exit);
+module_init(cros_usbpd_notअगरy_init);
+module_निकास(cros_usbpd_notअगरy_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("ChromeOS power delivery notifier device");

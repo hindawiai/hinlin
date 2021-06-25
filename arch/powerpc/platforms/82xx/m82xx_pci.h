@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _PPC_KERNEL_M82XX_PCI_H
-#define _PPC_KERNEL_M82XX_PCI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _PPC_KERNEL_M82XX_PCI_H
+#घोषणा _PPC_KERNEL_M82XX_PCI_H
 
 /*
  */
 
-#define SIU_INT_IRQ1   ((uint)0x13 + CPM_IRQ_OFFSET)
+#घोषणा SIU_INT_IRQ1   ((uपूर्णांक)0x13 + CPM_IRQ_OFFSET)
 
-#ifndef _IO_BASE
-#define _IO_BASE isa_io_base
-#endif
+#अगर_अघोषित _IO_BASE
+#घोषणा _IO_BASE isa_io_base
+#पूर्ण_अगर
 
-#endif				/* _PPC_KERNEL_M8260_PCI_H */
+#पूर्ण_अगर				/* _PPC_KERNEL_M8260_PCI_H */

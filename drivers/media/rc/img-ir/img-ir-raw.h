@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * ImgTec IR Raw Decoder found in PowerDown Controller.
  *
  * Copyright 2010-2014 Imagination Technologies Ltd.
  */
 
-#ifndef _IMG_IR_RAW_H_
-#define _IMG_IR_RAW_H_
+#अगर_अघोषित _IMG_IR_RAW_H_
+#घोषणा _IMG_IR_RAW_H_
 
-struct img_ir_priv;
+काष्ठा img_ir_priv;
 
-#ifdef CONFIG_IR_IMG_RAW
+#अगर_घोषित CONFIG_IR_IMG_RAW
 
 /**
- * struct img_ir_priv_raw - Private driver data for raw decoder.
+ * काष्ठा img_ir_priv_raw - Private driver data क्रम raw decoder.
  * @rdev:		Raw remote control device
- * @timer:		Timer to echo samples to keep soft decoders happy.
+ * @समयr:		Timer to echo samples to keep soft decoders happy.
  * @last_status:	Last raw status bits.
  */
-struct img_ir_priv_raw {
-	struct rc_dev		*rdev;
-	struct timer_list	timer;
+काष्ठा img_ir_priv_raw अणु
+	काष्ठा rc_dev		*rdev;
+	काष्ठा समयr_list	समयr;
 	u32			last_status;
-};
+पूर्ण;
 
-static inline bool img_ir_raw_enabled(struct img_ir_priv_raw *raw)
-{
-	return raw->rdev;
-};
+अटल अंतरभूत bool img_ir_raw_enabled(काष्ठा img_ir_priv_raw *raw)
+अणु
+	वापस raw->rdev;
+पूर्ण;
 
-void img_ir_isr_raw(struct img_ir_priv *priv, u32 irq_status);
-void img_ir_setup_raw(struct img_ir_priv *priv);
-int img_ir_probe_raw(struct img_ir_priv *priv);
-void img_ir_remove_raw(struct img_ir_priv *priv);
+व्योम img_ir_isr_raw(काष्ठा img_ir_priv *priv, u32 irq_status);
+व्योम img_ir_setup_raw(काष्ठा img_ir_priv *priv);
+पूर्णांक img_ir_probe_raw(काष्ठा img_ir_priv *priv);
+व्योम img_ir_हटाओ_raw(काष्ठा img_ir_priv *priv);
 
-#else
+#अन्यथा
 
-struct img_ir_priv_raw {
-};
-static inline bool img_ir_raw_enabled(struct img_ir_priv_raw *raw)
-{
-	return false;
-};
-static inline void img_ir_isr_raw(struct img_ir_priv *priv, u32 irq_status)
-{
-}
-static inline void img_ir_setup_raw(struct img_ir_priv *priv)
-{
-}
-static inline int img_ir_probe_raw(struct img_ir_priv *priv)
-{
-	return -ENODEV;
-}
-static inline void img_ir_remove_raw(struct img_ir_priv *priv)
-{
-}
+काष्ठा img_ir_priv_raw अणु
+पूर्ण;
+अटल अंतरभूत bool img_ir_raw_enabled(काष्ठा img_ir_priv_raw *raw)
+अणु
+	वापस false;
+पूर्ण;
+अटल अंतरभूत व्योम img_ir_isr_raw(काष्ठा img_ir_priv *priv, u32 irq_status)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम img_ir_setup_raw(काष्ठा img_ir_priv *priv)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक img_ir_probe_raw(काष्ठा img_ir_priv *priv)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल अंतरभूत व्योम img_ir_हटाओ_raw(काष्ठा img_ir_priv *priv)
+अणु
+पूर्ण
 
-#endif /* CONFIG_IR_IMG_RAW */
+#पूर्ण_अगर /* CONFIG_IR_IMG_RAW */
 
-#endif /* _IMG_IR_RAW_H_ */
+#पूर्ण_अगर /* _IMG_IR_RAW_H_ */

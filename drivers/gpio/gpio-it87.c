@@ -1,153 +1,154 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  GPIO interface for IT87xx Super I/O chips
+ *  GPIO पूर्णांकerface क्रम IT87xx Super I/O chips
  *
- *  Author: Diego Elio Pettenò <flameeyes@flameeyes.eu>
+ *  Author: Diego Elio Pettenथऑ <flameeyes@flameeyes.eu>
  *  Copyright (c) 2017 Google, Inc.
  *
  *  Based on it87_wdt.c     by Oliver Schuster
  *           gpio-it8761e.c by Denis Turischev
- *           gpio-stmpe.c   by Rabin Vincent
+ *           gpio-sपंचांगpe.c   by Rabin Vincent
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/gpio/driver.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/gpio/driver.h>
 
 /* Chip Id numbers */
-#define NO_DEV_ID	0xffff
-#define IT8613_ID	0x8613
-#define IT8620_ID	0x8620
-#define IT8628_ID	0x8628
-#define IT8718_ID       0x8718
-#define IT8728_ID	0x8728
-#define IT8732_ID	0x8732
-#define IT8761_ID	0x8761
-#define IT8772_ID	0x8772
-#define IT8786_ID	0x8786
+#घोषणा NO_DEV_ID	0xffff
+#घोषणा IT8613_ID	0x8613
+#घोषणा IT8620_ID	0x8620
+#घोषणा IT8628_ID	0x8628
+#घोषणा IT8718_ID       0x8718
+#घोषणा IT8728_ID	0x8728
+#घोषणा IT8732_ID	0x8732
+#घोषणा IT8761_ID	0x8761
+#घोषणा IT8772_ID	0x8772
+#घोषणा IT8786_ID	0x8786
 
 /* IO Ports */
-#define REG		0x2e
-#define VAL		0x2f
+#घोषणा REG		0x2e
+#घोषणा VAL		0x2f
 
 /* Logical device Numbers LDN */
-#define GPIO		0x07
+#घोषणा GPIO		0x07
 
 /* Configuration Registers and Functions */
-#define LDNREG		0x07
-#define CHIPID		0x20
-#define CHIPREV		0x22
+#घोषणा LDNREG		0x07
+#घोषणा CHIPID		0x20
+#घोषणा CHIPREV		0x22
 
 /**
- * struct it87_gpio - it87-specific GPIO chip
- * @chip: the underlying gpio_chip structure
- * @lock: a lock to avoid races between operations
- * @io_base: base address for gpio ports
+ * काष्ठा it87_gpio - it87-specअगरic GPIO chip
+ * @chip: the underlying gpio_chip काष्ठाure
+ * @lock: a lock to aव्योम races between operations
+ * @io_base: base address क्रम gpio ports
  * @io_size: size of the port rage starting from io_base.
- * @output_base: Super I/O register address for Output Enable register
- * @simple_base: Super I/O 'Simple I/O' Enable register
- * @simple_size: Super IO 'Simple I/O' Enable register size; this is
+ * @output_base: Super I/O रेजिस्टर address क्रम Output Enable रेजिस्टर
+ * @simple_base: Super I/O 'Simple I/O' Enable रेजिस्टर
+ * @simple_size: Super IO 'Simple I/O' Enable रेजिस्टर size; this is
  *	required because IT87xx chips might only provide Simple I/O
- *	switches on a subset of lines, whereas the others keep the
- *	same status all time.
+ *	चयनes on a subset of lines, whereas the others keep the
+ *	same status all समय.
  */
-struct it87_gpio {
-	struct gpio_chip chip;
+काष्ठा it87_gpio अणु
+	काष्ठा gpio_chip chip;
 	spinlock_t lock;
 	u16 io_base;
 	u16 io_size;
 	u8 output_base;
 	u8 simple_base;
 	u8 simple_size;
-};
+पूर्ण;
 
-static struct it87_gpio it87_gpio_chip = {
+अटल काष्ठा it87_gpio it87_gpio_chip = अणु
 	.lock = __SPIN_LOCK_UNLOCKED(it87_gpio_chip.lock),
-};
+पूर्ण;
 
 /* Superio chip access functions; copied from wdt_it87 */
 
-static inline int superio_enter(void)
-{
+अटल अंतरभूत पूर्णांक superio_enter(व्योम)
+अणु
 	/*
-	 * Try to reserve REG and REG + 1 for exclusive access.
+	 * Try to reserve REG and REG + 1 क्रम exclusive access.
 	 */
-	if (!request_muxed_region(REG, 2, KBUILD_MODNAME))
-		return -EBUSY;
+	अगर (!request_muxed_region(REG, 2, KBUILD_MODNAME))
+		वापस -EBUSY;
 
 	outb(0x87, REG);
 	outb(0x01, REG);
 	outb(0x55, REG);
 	outb(0x55, REG);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void superio_exit(void)
-{
+अटल अंतरभूत व्योम superio_निकास(व्योम)
+अणु
 	outb(0x02, REG);
 	outb(0x02, VAL);
 	release_region(REG, 2);
-}
+पूर्ण
 
-static inline void superio_select(int ldn)
-{
+अटल अंतरभूत व्योम superio_select(पूर्णांक ldn)
+अणु
 	outb(LDNREG, REG);
 	outb(ldn, VAL);
-}
+पूर्ण
 
-static inline int superio_inb(int reg)
-{
+अटल अंतरभूत पूर्णांक superio_inb(पूर्णांक reg)
+अणु
 	outb(reg, REG);
-	return inb(VAL);
-}
+	वापस inb(VAL);
+पूर्ण
 
-static inline void superio_outb(int val, int reg)
-{
+अटल अंतरभूत व्योम superio_outb(पूर्णांक val, पूर्णांक reg)
+अणु
 	outb(reg, REG);
 	outb(val, VAL);
-}
+पूर्ण
 
-static inline int superio_inw(int reg)
-{
-	int val;
+अटल अंतरभूत पूर्णांक superio_inw(पूर्णांक reg)
+अणु
+	पूर्णांक val;
 
 	outb(reg++, REG);
 	val = inb(VAL) << 8;
 	outb(reg, REG);
 	val |= inb(VAL);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void superio_set_mask(int mask, int reg)
-{
+अटल अंतरभूत व्योम superio_set_mask(पूर्णांक mask, पूर्णांक reg)
+अणु
 	u8 curr_val = superio_inb(reg);
 	u8 new_val = curr_val | mask;
 
-	if (curr_val != new_val)
+	अगर (curr_val != new_val)
 		superio_outb(new_val, reg);
-}
+पूर्ण
 
-static inline void superio_clear_mask(int mask, int reg)
-{
+अटल अंतरभूत व्योम superio_clear_mask(पूर्णांक mask, पूर्णांक reg)
+अणु
 	u8 curr_val = superio_inb(reg);
 	u8 new_val = curr_val & ~mask;
 
-	if (curr_val != new_val)
+	अगर (curr_val != new_val)
 		superio_outb(new_val, reg);
-}
+पूर्ण
 
-static int it87_gpio_request(struct gpio_chip *chip, unsigned gpio_num)
-{
+अटल पूर्णांक it87_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित gpio_num)
+अणु
 	u8 mask, group;
-	int rc = 0;
-	struct it87_gpio *it87_gpio = gpiochip_get_data(chip);
+	पूर्णांक rc = 0;
+	काष्ठा it87_gpio *it87_gpio = gpiochip_get_data(chip);
 
 	mask = 1 << (gpio_num % 8);
 	group = (gpio_num / 8);
@@ -155,44 +156,44 @@ static int it87_gpio_request(struct gpio_chip *chip, unsigned gpio_num)
 	spin_lock(&it87_gpio->lock);
 
 	rc = superio_enter();
-	if (rc)
-		goto exit;
+	अगर (rc)
+		जाओ निकास;
 
 	/* not all the IT87xx chips support Simple I/O and not all of
 	 * them allow all the lines to be set/unset to Simple I/O.
 	 */
-	if (group < it87_gpio->simple_size)
+	अगर (group < it87_gpio->simple_size)
 		superio_set_mask(mask, group + it87_gpio->simple_base);
 
 	/* clear output enable, setting the pin to input, as all the
-	 * newly-exported GPIO interfaces are set to input.
+	 * newly-exported GPIO पूर्णांकerfaces are set to input.
 	 */
 	superio_clear_mask(mask, group + it87_gpio->output_base);
 
-	superio_exit();
+	superio_निकास();
 
-exit:
+निकास:
 	spin_unlock(&it87_gpio->lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int it87_gpio_get(struct gpio_chip *chip, unsigned gpio_num)
-{
+अटल पूर्णांक it87_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित gpio_num)
+अणु
 	u16 reg;
 	u8 mask;
-	struct it87_gpio *it87_gpio = gpiochip_get_data(chip);
+	काष्ठा it87_gpio *it87_gpio = gpiochip_get_data(chip);
 
 	mask = 1 << (gpio_num % 8);
 	reg = (gpio_num / 8) + it87_gpio->io_base;
 
-	return !!(inb(reg) & mask);
-}
+	वापस !!(inb(reg) & mask);
+पूर्ण
 
-static int it87_gpio_direction_in(struct gpio_chip *chip, unsigned gpio_num)
-{
+अटल पूर्णांक it87_gpio_direction_in(काष्ठा gpio_chip *chip, अचिन्हित gpio_num)
+अणु
 	u8 mask, group;
-	int rc = 0;
-	struct it87_gpio *it87_gpio = gpiochip_get_data(chip);
+	पूर्णांक rc = 0;
+	काष्ठा it87_gpio *it87_gpio = gpiochip_get_data(chip);
 
 	mask = 1 << (gpio_num % 8);
 	group = (gpio_num / 8);
@@ -200,42 +201,42 @@ static int it87_gpio_direction_in(struct gpio_chip *chip, unsigned gpio_num)
 	spin_lock(&it87_gpio->lock);
 
 	rc = superio_enter();
-	if (rc)
-		goto exit;
+	अगर (rc)
+		जाओ निकास;
 
 	/* clear the output enable bit */
 	superio_clear_mask(mask, group + it87_gpio->output_base);
 
-	superio_exit();
+	superio_निकास();
 
-exit:
+निकास:
 	spin_unlock(&it87_gpio->lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void it87_gpio_set(struct gpio_chip *chip,
-			  unsigned gpio_num, int val)
-{
+अटल व्योम it87_gpio_set(काष्ठा gpio_chip *chip,
+			  अचिन्हित gpio_num, पूर्णांक val)
+अणु
 	u8 mask, curr_vals;
 	u16 reg;
-	struct it87_gpio *it87_gpio = gpiochip_get_data(chip);
+	काष्ठा it87_gpio *it87_gpio = gpiochip_get_data(chip);
 
 	mask = 1 << (gpio_num % 8);
 	reg = (gpio_num / 8) + it87_gpio->io_base;
 
 	curr_vals = inb(reg);
-	if (val)
+	अगर (val)
 		outb(curr_vals | mask, reg);
-	else
+	अन्यथा
 		outb(curr_vals & ~mask, reg);
-}
+पूर्ण
 
-static int it87_gpio_direction_out(struct gpio_chip *chip,
-				   unsigned gpio_num, int val)
-{
+अटल पूर्णांक it87_gpio_direction_out(काष्ठा gpio_chip *chip,
+				   अचिन्हित gpio_num, पूर्णांक val)
+अणु
 	u8 mask, group;
-	int rc = 0;
-	struct it87_gpio *it87_gpio = gpiochip_get_data(chip);
+	पूर्णांक rc = 0;
+	काष्ठा it87_gpio *it87_gpio = gpiochip_get_data(chip);
 
 	mask = 1 << (gpio_num % 8);
 	group = (gpio_num / 8);
@@ -243,22 +244,22 @@ static int it87_gpio_direction_out(struct gpio_chip *chip,
 	spin_lock(&it87_gpio->lock);
 
 	rc = superio_enter();
-	if (rc)
-		goto exit;
+	अगर (rc)
+		जाओ निकास;
 
 	/* set the output enable bit */
 	superio_set_mask(mask, group + it87_gpio->output_base);
 
 	it87_gpio_set(chip, gpio_num, val);
 
-	superio_exit();
+	superio_निकास();
 
-exit:
+निकास:
 	spin_unlock(&it87_gpio->lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct gpio_chip it87_template_chip = {
+अटल स्थिर काष्ठा gpio_chip it87_ढाँचा_chip = अणु
 	.label			= KBUILD_MODNAME,
 	.owner			= THIS_MODULE,
 	.request		= it87_gpio_request,
@@ -267,146 +268,146 @@ static const struct gpio_chip it87_template_chip = {
 	.set			= it87_gpio_set,
 	.direction_output	= it87_gpio_direction_out,
 	.base			= -1
-};
+पूर्ण;
 
-static int __init it87_gpio_init(void)
-{
-	int rc = 0, i;
+अटल पूर्णांक __init it87_gpio_init(व्योम)
+अणु
+	पूर्णांक rc = 0, i;
 	u16 chip_type;
 	u8 chip_rev, gpio_ba_reg;
-	char *labels, **labels_table;
+	अक्षर *labels, **labels_table;
 
-	struct it87_gpio *it87_gpio = &it87_gpio_chip;
+	काष्ठा it87_gpio *it87_gpio = &it87_gpio_chip;
 
 	rc = superio_enter();
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	chip_type = superio_inw(CHIPID);
 	chip_rev  = superio_inb(CHIPREV) & 0x0f;
-	superio_exit();
+	superio_निकास();
 
-	it87_gpio->chip = it87_template_chip;
+	it87_gpio->chip = it87_ढाँचा_chip;
 
-	switch (chip_type) {
-	case IT8613_ID:
+	चयन (chip_type) अणु
+	हाल IT8613_ID:
 		gpio_ba_reg = 0x62;
-		it87_gpio->io_size = 8;  /* it8613 only needs 6, use 8 for alignment */
+		it87_gpio->io_size = 8;  /* it8613 only needs 6, use 8 क्रम alignment */
 		it87_gpio->output_base = 0xc8;
 		it87_gpio->simple_base = 0xc0;
 		it87_gpio->simple_size = 6;
-		it87_gpio->chip.ngpio = 64;  /* has 48, use 64 for convenient calc */
-		break;
-	case IT8620_ID:
-	case IT8628_ID:
+		it87_gpio->chip.ngpio = 64;  /* has 48, use 64 क्रम convenient calc */
+		अवरोध;
+	हाल IT8620_ID:
+	हाल IT8628_ID:
 		gpio_ba_reg = 0x62;
 		it87_gpio->io_size = 11;
 		it87_gpio->output_base = 0xc8;
 		it87_gpio->simple_size = 0;
 		it87_gpio->chip.ngpio = 64;
-		break;
-	case IT8718_ID:
-	case IT8728_ID:
-	case IT8732_ID:
-	case IT8772_ID:
-	case IT8786_ID:
+		अवरोध;
+	हाल IT8718_ID:
+	हाल IT8728_ID:
+	हाल IT8732_ID:
+	हाल IT8772_ID:
+	हाल IT8786_ID:
 		gpio_ba_reg = 0x62;
 		it87_gpio->io_size = 8;
 		it87_gpio->output_base = 0xc8;
 		it87_gpio->simple_base = 0xc0;
 		it87_gpio->simple_size = 5;
 		it87_gpio->chip.ngpio = 64;
-		break;
-	case IT8761_ID:
+		अवरोध;
+	हाल IT8761_ID:
 		gpio_ba_reg = 0x60;
 		it87_gpio->io_size = 4;
 		it87_gpio->output_base = 0xf0;
 		it87_gpio->simple_size = 0;
 		it87_gpio->chip.ngpio = 16;
-		break;
-	case NO_DEV_ID:
+		अवरोध;
+	हाल NO_DEV_ID:
 		pr_err("no device\n");
-		return -ENODEV;
-	default:
+		वापस -ENODEV;
+	शेष:
 		pr_err("Unknown Chip found, Chip %04x Revision %x\n",
 		       chip_type, chip_rev);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	rc = superio_enter();
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	superio_select(GPIO);
 
 	/* fetch GPIO base address */
 	it87_gpio->io_base = superio_inw(gpio_ba_reg);
 
-	superio_exit();
+	superio_निकास();
 
 	pr_info("Found Chip IT%04x rev %x. %u GPIO lines starting at %04xh\n",
 		chip_type, chip_rev, it87_gpio->chip.ngpio,
 		it87_gpio->io_base);
 
-	if (!request_region(it87_gpio->io_base, it87_gpio->io_size,
+	अगर (!request_region(it87_gpio->io_base, it87_gpio->io_size,
 							KBUILD_MODNAME))
-		return -EBUSY;
+		वापस -EBUSY;
 
-	/* Set up aliases for the GPIO connection.
+	/* Set up aliases क्रम the GPIO connection.
 	 *
-	 * ITE documentation for recent chips such as the IT8728F
-	 * refers to the GPIO lines as GPxy, with a coordinates system
+	 * ITE करोcumentation क्रम recent chips such as the IT8728F
+	 * refers to the GPIO lines as GPxy, with a coordinates प्रणाली
 	 * where x is the GPIO group (starting from 1) and y is the
 	 * bit within the group.
 	 *
 	 * By creating these aliases, we make it easier to understand
 	 * to which GPIO pin we're referring to.
 	 */
-	labels = kcalloc(it87_gpio->chip.ngpio, sizeof("it87_gpXY"),
+	labels = kसुस्मृति(it87_gpio->chip.ngpio, माप("it87_gpXY"),
 								GFP_KERNEL);
-	labels_table = kcalloc(it87_gpio->chip.ngpio, sizeof(const char *),
+	labels_table = kसुस्मृति(it87_gpio->chip.ngpio, माप(स्थिर अक्षर *),
 								GFP_KERNEL);
 
-	if (!labels || !labels_table) {
+	अगर (!labels || !labels_table) अणु
 		rc = -ENOMEM;
-		goto labels_free;
-	}
+		जाओ labels_मुक्त;
+	पूर्ण
 
-	for (i = 0; i < it87_gpio->chip.ngpio; i++) {
-		char *label = &labels[i * sizeof("it87_gpXY")];
+	क्रम (i = 0; i < it87_gpio->chip.ngpio; i++) अणु
+		अक्षर *label = &labels[i * माप("it87_gpXY")];
 
-		sprintf(label, "it87_gp%u%u", 1+(i/8), i%8);
+		प्र_लिखो(label, "it87_gp%u%u", 1+(i/8), i%8);
 		labels_table[i] = label;
-	}
+	पूर्ण
 
-	it87_gpio->chip.names = (const char *const*)labels_table;
+	it87_gpio->chip.names = (स्थिर अक्षर *स्थिर*)labels_table;
 
 	rc = gpiochip_add_data(&it87_gpio->chip, it87_gpio);
-	if (rc)
-		goto labels_free;
+	अगर (rc)
+		जाओ labels_मुक्त;
 
-	return 0;
+	वापस 0;
 
-labels_free:
-	kfree(labels_table);
-	kfree(labels);
+labels_मुक्त:
+	kमुक्त(labels_table);
+	kमुक्त(labels);
 	release_region(it87_gpio->io_base, it87_gpio->io_size);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit it87_gpio_exit(void)
-{
-	struct it87_gpio *it87_gpio = &it87_gpio_chip;
+अटल व्योम __निकास it87_gpio_निकास(व्योम)
+अणु
+	काष्ठा it87_gpio *it87_gpio = &it87_gpio_chip;
 
-	gpiochip_remove(&it87_gpio->chip);
+	gpiochip_हटाओ(&it87_gpio->chip);
 	release_region(it87_gpio->io_base, it87_gpio->io_size);
-	kfree(it87_gpio->chip.names[0]);
-	kfree(it87_gpio->chip.names);
-}
+	kमुक्त(it87_gpio->chip.names[0]);
+	kमुक्त(it87_gpio->chip.names);
+पूर्ण
 
 module_init(it87_gpio_init);
-module_exit(it87_gpio_exit);
+module_निकास(it87_gpio_निकास);
 
-MODULE_AUTHOR("Diego Elio Pettenò <flameeyes@flameeyes.eu>");
+MODULE_AUTHOR("Diego Elio Pettenथऑ <flameeyes@flameeyes.eu>");
 MODULE_DESCRIPTION("GPIO interface for IT87xx Super I/O chips");
 MODULE_LICENSE("GPL");

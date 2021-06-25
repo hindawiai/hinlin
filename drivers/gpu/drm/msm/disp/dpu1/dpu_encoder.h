@@ -1,171 +1,172 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#ifndef __DPU_ENCODER_H__
-#define __DPU_ENCODER_H__
+#अगर_अघोषित __DPU_ENCODER_H__
+#घोषणा __DPU_ENCODER_H__
 
-#include <drm/drm_crtc.h>
-#include "dpu_hw_mdss.h"
+#समावेश <drm/drm_crtc.h>
+#समावेश "dpu_hw_mdss.h"
 
-#define DPU_ENCODER_FRAME_EVENT_DONE			BIT(0)
-#define DPU_ENCODER_FRAME_EVENT_ERROR			BIT(1)
-#define DPU_ENCODER_FRAME_EVENT_PANEL_DEAD		BIT(2)
-#define DPU_ENCODER_FRAME_EVENT_IDLE			BIT(3)
+#घोषणा DPU_ENCODER_FRAME_EVENT_DONE			BIT(0)
+#घोषणा DPU_ENCODER_FRAME_EVENT_ERROR			BIT(1)
+#घोषणा DPU_ENCODER_FRAME_EVENT_PANEL_DEAD		BIT(2)
+#घोषणा DPU_ENCODER_FRAME_EVENT_IDLE			BIT(3)
 
-#define IDLE_TIMEOUT	(66 - 16/2)
+#घोषणा IDLE_TIMEOUT	(66 - 16/2)
 
 /**
  * Encoder functions and data types
- * @intfs:	Interfaces this encoder is using, INTF_MODE_NONE if unused
+ * @पूर्णांकfs:	Interfaces this encoder is using, INTF_MODE_NONE अगर unused
  */
-struct dpu_encoder_hw_resources {
-	enum dpu_intf_mode intfs[INTF_MAX];
-};
+काष्ठा dpu_encoder_hw_resources अणु
+	क्रमागत dpu_पूर्णांकf_mode पूर्णांकfs[INTF_MAX];
+पूर्ण;
 
 /**
  * dpu_encoder_get_hw_resources - Populate table of required hardware resources
- * @encoder:	encoder pointer
+ * @encoder:	encoder poपूर्णांकer
  * @hw_res:	resource table to populate with encoder required resources
  */
-void dpu_encoder_get_hw_resources(struct drm_encoder *encoder,
-				  struct dpu_encoder_hw_resources *hw_res);
+व्योम dpu_encoder_get_hw_resources(काष्ठा drm_encoder *encoder,
+				  काष्ठा dpu_encoder_hw_resources *hw_res);
 
 /**
- * dpu_encoder_assign_crtc - Link the encoder to the crtc it's assigned to
- * @encoder:	encoder pointer
- * @crtc:	crtc pointer
+ * dpu_encoder_assign_crtc - Link the encoder to the crtc it's asचिन्हित to
+ * @encoder:	encoder poपूर्णांकer
+ * @crtc:	crtc poपूर्णांकer
  */
-void dpu_encoder_assign_crtc(struct drm_encoder *encoder,
-			     struct drm_crtc *crtc);
+व्योम dpu_encoder_assign_crtc(काष्ठा drm_encoder *encoder,
+			     काष्ठा drm_crtc *crtc);
 
 /**
- * dpu_encoder_toggle_vblank_for_crtc - Toggles vblank interrupts on or off if
- *	the encoder is assigned to the given crtc
- * @encoder:	encoder pointer
- * @crtc:	crtc pointer
- * @enable:	true if vblank should be enabled
+ * dpu_encoder_toggle_vblank_क्रम_crtc - Toggles vblank पूर्णांकerrupts on or off अगर
+ *	the encoder is asचिन्हित to the given crtc
+ * @encoder:	encoder poपूर्णांकer
+ * @crtc:	crtc poपूर्णांकer
+ * @enable:	true अगर vblank should be enabled
  */
-void dpu_encoder_toggle_vblank_for_crtc(struct drm_encoder *encoder,
-					struct drm_crtc *crtc, bool enable);
+व्योम dpu_encoder_toggle_vblank_क्रम_crtc(काष्ठा drm_encoder *encoder,
+					काष्ठा drm_crtc *crtc, bool enable);
 
 /**
- * dpu_encoder_register_frame_event_callback - provide callback to encoder that
+ * dpu_encoder_रेजिस्टर_frame_event_callback - provide callback to encoder that
  *	will be called after the request is complete, or other events.
- * @encoder:	encoder pointer
- * @cb:		callback pointer, provide NULL to deregister
+ * @encoder:	encoder poपूर्णांकer
+ * @cb:		callback poपूर्णांकer, provide शून्य to deरेजिस्टर
  * @data:	user data provided to callback
  */
-void dpu_encoder_register_frame_event_callback(struct drm_encoder *encoder,
-		void (*cb)(void *, u32), void *data);
+व्योम dpu_encoder_रेजिस्टर_frame_event_callback(काष्ठा drm_encoder *encoder,
+		व्योम (*cb)(व्योम *, u32), व्योम *data);
 
 /**
- * dpu_encoder_prepare_for_kickoff - schedule double buffer flip of the ctl
- *	path (i.e. ctl flush and start) at next appropriate time.
- *	Immediately: if no previous commit is outstanding.
+ * dpu_encoder_prepare_क्रम_kickoff - schedule द्विगुन buffer flip of the ctl
+ *	path (i.e. ctl flush and start) at next appropriate समय.
+ *	Immediately: अगर no previous commit is outstanding.
  *	Delayed: Block until next trigger can be issued.
- * @encoder:	encoder pointer
+ * @encoder:	encoder poपूर्णांकer
  */
-void dpu_encoder_prepare_for_kickoff(struct drm_encoder *encoder);
+व्योम dpu_encoder_prepare_क्रम_kickoff(काष्ठा drm_encoder *encoder);
 
 /**
  * dpu_encoder_trigger_kickoff_pending - Clear the flush bits from previous
- *        kickoff and trigger the ctl prepare progress for command mode display.
- * @encoder:	encoder pointer
+ *        kickoff and trigger the ctl prepare progress क्रम command mode display.
+ * @encoder:	encoder poपूर्णांकer
  */
-void dpu_encoder_trigger_kickoff_pending(struct drm_encoder *encoder);
+व्योम dpu_encoder_trigger_kickoff_pending(काष्ठा drm_encoder *encoder);
 
 /**
- * dpu_encoder_kickoff - trigger a double buffer flip of the ctl path
+ * dpu_encoder_kickoff - trigger a द्विगुन buffer flip of the ctl path
  *	(i.e. ctl flush and start) immediately.
- * @encoder:	encoder pointer
+ * @encoder:	encoder poपूर्णांकer
  */
-void dpu_encoder_kickoff(struct drm_encoder *encoder);
+व्योम dpu_encoder_kickoff(काष्ठा drm_encoder *encoder);
 
 /**
- * dpu_encoder_wakeup_time - get the time of the next vsync
+ * dpu_encoder_wakeup_समय - get the समय of the next vsync
  */
-int dpu_encoder_vsync_time(struct drm_encoder *drm_enc, ktime_t *wakeup_time);
+पूर्णांक dpu_encoder_vsync_समय(काष्ठा drm_encoder *drm_enc, kसमय_प्रकार *wakeup_समय);
 
 /**
- * dpu_encoder_wait_for_event - Waits for encoder events
- * @encoder:	encoder pointer
- * @event:      event to wait for
- * MSM_ENC_COMMIT_DONE -  Wait for hardware to have flushed the current pending
+ * dpu_encoder_रुको_क्रम_event - Waits क्रम encoder events
+ * @encoder:	encoder poपूर्णांकer
+ * @event:      event to रुको क्रम
+ * MSM_ENC_COMMIT_DONE -  Wait क्रम hardware to have flushed the current pending
  *                        frames to hardware at a vblank or ctl_start
- *                        Encoders will map this differently depending on the
+ *                        Encoders will map this dअगरferently depending on the
  *                        panel type.
  *	                  vid mode -> vsync_irq
  *                        cmd mode -> ctl_start
- * MSM_ENC_TX_COMPLETE -  Wait for the hardware to transfer all the pixels to
- *                        the panel. Encoders will map this differently
+ * MSM_ENC_TX_COMPLETE -  Wait क्रम the hardware to transfer all the pixels to
+ *                        the panel. Encoders will map this dअगरferently
  *                        depending on the panel type.
  *                        vid mode -> vsync_irq
- *                        cmd mode -> pp_done
- * Returns: 0 on success, -EWOULDBLOCK if already signaled, error otherwise
+ *                        cmd mode -> pp_करोne
+ * Returns: 0 on success, -EWOULDBLOCK अगर alपढ़ोy संकेतed, error otherwise
  */
-int dpu_encoder_wait_for_event(struct drm_encoder *drm_encoder,
-						enum msm_event_wait event);
+पूर्णांक dpu_encoder_रुको_क्रम_event(काष्ठा drm_encoder *drm_encoder,
+						क्रमागत msm_event_रुको event);
 
 /*
- * dpu_encoder_get_intf_mode - get interface mode of the given encoder
- * @encoder: Pointer to drm encoder object
+ * dpu_encoder_get_पूर्णांकf_mode - get पूर्णांकerface mode of the given encoder
+ * @encoder: Poपूर्णांकer to drm encoder object
  */
-enum dpu_intf_mode dpu_encoder_get_intf_mode(struct drm_encoder *encoder);
+क्रमागत dpu_पूर्णांकf_mode dpu_encoder_get_पूर्णांकf_mode(काष्ठा drm_encoder *encoder);
 
 /**
- * dpu_encoder_virt_runtime_resume - pm runtime resume the encoder configs
- * @encoder:	encoder pointer
+ * dpu_encoder_virt_runसमय_resume - pm runसमय resume the encoder configs
+ * @encoder:	encoder poपूर्णांकer
  */
-void dpu_encoder_virt_runtime_resume(struct drm_encoder *encoder);
+व्योम dpu_encoder_virt_runसमय_resume(काष्ठा drm_encoder *encoder);
 
 /**
- * dpu_encoder_init - initialize virtual encoder object
- * @dev:        Pointer to drm device structure
- * @disp_info:  Pointer to display information structure
- * Returns:     Pointer to newly created drm encoder
+ * dpu_encoder_init - initialize भव encoder object
+ * @dev:        Poपूर्णांकer to drm device काष्ठाure
+ * @disp_info:  Poपूर्णांकer to display inक्रमmation काष्ठाure
+ * Returns:     Poपूर्णांकer to newly created drm encoder
  */
-struct drm_encoder *dpu_encoder_init(
-		struct drm_device *dev,
-		int drm_enc_mode);
+काष्ठा drm_encoder *dpu_encoder_init(
+		काष्ठा drm_device *dev,
+		पूर्णांक drm_enc_mode);
 
 /**
- * dpu_encoder_setup - setup dpu_encoder for the display probed
- * @dev:		Pointer to drm device structure
- * @enc:		Pointer to the drm_encoder
- * @disp_info:	Pointer to the display info
+ * dpu_encoder_setup - setup dpu_encoder क्रम the display probed
+ * @dev:		Poपूर्णांकer to drm device काष्ठाure
+ * @enc:		Poपूर्णांकer to the drm_encoder
+ * @disp_info:	Poपूर्णांकer to the display info
  */
-int dpu_encoder_setup(struct drm_device *dev, struct drm_encoder *enc,
-		struct msm_display_info *disp_info);
+पूर्णांक dpu_encoder_setup(काष्ठा drm_device *dev, काष्ठा drm_encoder *enc,
+		काष्ठा msm_display_info *disp_info);
 
 /**
  * dpu_encoder_prepare_commit - prepare encoder at the very beginning of an
- *	atomic commit, before any registers are written
- * @drm_enc:    Pointer to previously created drm encoder structure
+ *	atomic commit, beक्रमe any रेजिस्टरs are written
+ * @drm_enc:    Poपूर्णांकer to previously created drm encoder काष्ठाure
  */
-void dpu_encoder_prepare_commit(struct drm_encoder *drm_enc);
+व्योम dpu_encoder_prepare_commit(काष्ठा drm_encoder *drm_enc);
 
 /**
- * dpu_encoder_set_idle_timeout - set the idle timeout for video
+ * dpu_encoder_set_idle_समयout - set the idle समयout क्रम video
  *                    and command mode encoders.
- * @drm_enc:    Pointer to previously created drm encoder structure
- * @idle_timeout:    idle timeout duration in milliseconds
+ * @drm_enc:    Poपूर्णांकer to previously created drm encoder काष्ठाure
+ * @idle_समयout:    idle समयout duration in milliseconds
  */
-void dpu_encoder_set_idle_timeout(struct drm_encoder *drm_enc,
-							u32 idle_timeout);
+व्योम dpu_encoder_set_idle_समयout(काष्ठा drm_encoder *drm_enc,
+							u32 idle_समयout);
 /**
- * dpu_encoder_get_linecount - get interface line count for the encoder.
- * @drm_enc:    Pointer to previously created drm encoder structure
+ * dpu_encoder_get_linecount - get पूर्णांकerface line count क्रम the encoder.
+ * @drm_enc:    Poपूर्णांकer to previously created drm encoder काष्ठाure
  */
-int dpu_encoder_get_linecount(struct drm_encoder *drm_enc);
+पूर्णांक dpu_encoder_get_linecount(काष्ठा drm_encoder *drm_enc);
 
 /**
- * dpu_encoder_get_frame_count - get interface frame count for the encoder.
- * @drm_enc:    Pointer to previously created drm encoder structure
+ * dpu_encoder_get_frame_count - get पूर्णांकerface frame count क्रम the encoder.
+ * @drm_enc:    Poपूर्णांकer to previously created drm encoder काष्ठाure
  */
-int dpu_encoder_get_frame_count(struct drm_encoder *drm_enc);
+पूर्णांक dpu_encoder_get_frame_count(काष्ठा drm_encoder *drm_enc);
 
-#endif /* __DPU_ENCODER_H__ */
+#पूर्ण_अगर /* __DPU_ENCODER_H__ */

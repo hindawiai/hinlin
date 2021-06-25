@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *   Driver for KeyStream wireless LAN cards.
+ *   Driver क्रम KeyStream wireless LAN cards.
  *
  *   Copyright (C) 2005-2008 KeyStream Corp.
  *   Copyright (C) 2009 Renesas Technology Corp.
  */
 
-#include <crypto/hash.h>
-#include <linux/circ_buf.h>
-#include <linux/if_arp.h>
-#include <net/iw_handler.h>
-#include <uapi/linux/llc.h>
-#include "eap_packet.h"
-#include "ks_wlan.h"
-#include "ks_hostif.h"
+#समावेश <crypto/hash.h>
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <net/iw_handler.h>
+#समावेश <uapi/linux/llc.h>
+#समावेश "eap_packet.h"
+#समावेश "ks_wlan.h"
+#समावेश "ks_hostif.h"
 
-#define MICHAEL_MIC_KEY_LEN 8
-#define MICHAEL_MIC_LEN     8
+#घोषणा MICHAEL_MIC_KEY_LEN 8
+#घोषणा MICHAEL_MIC_LEN     8
 
-static inline void inc_smeqhead(struct ks_wlan_private *priv)
-{
+अटल अंतरभूत व्योम inc_smeqhead(काष्ठा ks_wlan_निजी *priv)
+अणु
 	priv->sme_i.qhead = (priv->sme_i.qhead + 1) % SME_EVENT_BUFF_SIZE;
-}
+पूर्ण
 
-static inline void inc_smeqtail(struct ks_wlan_private *priv)
-{
+अटल अंतरभूत व्योम inc_smeqtail(काष्ठा ks_wlan_निजी *priv)
+अणु
 	priv->sme_i.qtail = (priv->sme_i.qtail + 1) % SME_EVENT_BUFF_SIZE;
-}
+पूर्ण
 
-static inline unsigned int cnt_smeqbody(struct ks_wlan_private *priv)
-{
-	return CIRC_CNT_TO_END(priv->sme_i.qhead, priv->sme_i.qtail,
+अटल अंतरभूत अचिन्हित पूर्णांक cnt_smeqbody(काष्ठा ks_wlan_निजी *priv)
+अणु
+	वापस CIRC_CNT_TO_END(priv->sme_i.qhead, priv->sme_i.qtail,
 			       SME_EVENT_BUFF_SIZE);
-}
+पूर्ण
 
-static inline u8 get_byte(struct ks_wlan_private *priv)
-{
+अटल अंतरभूत u8 get_byte(काष्ठा ks_wlan_निजी *priv)
+अणु
 	u8 data;
 
 	data = *priv->rxp++;
 	/* length check in advance ! */
 	--(priv->rx_size);
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static inline u16 get_word(struct ks_wlan_private *priv)
-{
+अटल अंतरभूत u16 get_word(काष्ठा ks_wlan_निजी *priv)
+अणु
 	u16 data;
 
 	data = (get_byte(priv) & 0xff);
 	data |= ((get_byte(priv) << 8) & 0xff00);
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static inline u32 get_dword(struct ks_wlan_private *priv)
-{
+अटल अंतरभूत u32 get_dword(काष्ठा ks_wlan_निजी *priv)
+अणु
 	u32 data;
 
 	data = (get_byte(priv) & 0xff);
 	data |= ((get_byte(priv) << 8) & 0x0000ff00);
 	data |= ((get_byte(priv) << 16) & 0x00ff0000);
 	data |= ((get_byte(priv) << 24) & 0xff000000);
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static void ks_wlan_hw_wakeup_task(struct work_struct *work)
-{
-	struct ks_wlan_private *priv;
-	int ps_status;
-	long time_left;
+अटल व्योम ks_wlan_hw_wakeup_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ks_wlan_निजी *priv;
+	पूर्णांक ps_status;
+	दीर्घ समय_left;
 
-	priv = container_of(work, struct ks_wlan_private, wakeup_work);
-	ps_status = atomic_read(&priv->psstatus.status);
+	priv = container_of(work, काष्ठा ks_wlan_निजी, wakeup_work);
+	ps_status = atomic_पढ़ो(&priv->psstatus.status);
 
-	if (ps_status == PS_SNOOZE) {
+	अगर (ps_status == PS_SNOOZE) अणु
 		ks_wlan_hw_wakeup_request(priv);
-		time_left = wait_for_completion_interruptible_timeout(
-				&priv->psstatus.wakeup_wait,
-				msecs_to_jiffies(20));
-		if (time_left <= 0) {
+		समय_left = रुको_क्रम_completion_पूर्णांकerruptible_समयout(
+				&priv->psstatus.wakeup_रुको,
+				msecs_to_jअगरfies(20));
+		अगर (समय_left <= 0) अणु
 			netdev_dbg(priv->net_dev, "wake up timeout or interrupted !!!\n");
 			schedule_work(&priv->wakeup_work);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	/* power save */
-	if (atomic_read(&priv->sme_task.count) > 0)
+	/* घातer save */
+	अगर (atomic_पढ़ो(&priv->sme_task.count) > 0)
 		tasklet_enable(&priv->sme_task);
-}
+पूर्ण
 
-static void ks_wlan_do_power_save(struct ks_wlan_private *priv)
-{
-	if (is_connect_status(priv->connect_status))
-		hostif_sme_enqueue(priv, SME_POW_MNGMT_REQUEST);
-	else
+अटल व्योम ks_wlan_करो_घातer_save(काष्ठा ks_wlan_निजी *priv)
+अणु
+	अगर (is_connect_status(priv->connect_status))
+		hostअगर_sme_enqueue(priv, SME_POW_MNGMT_REQUEST);
+	अन्यथा
 		priv->dev_state = DEVICE_STATE_READY;
-}
+पूर्ण
 
-static
-int get_current_ap(struct ks_wlan_private *priv, struct link_ap_info *ap_info)
-{
-	struct local_ap *ap;
-	union iwreq_data wrqu;
-	struct net_device *netdev = priv->net_dev;
+अटल
+पूर्णांक get_current_ap(काष्ठा ks_wlan_निजी *priv, काष्ठा link_ap_info *ap_info)
+अणु
+	काष्ठा local_ap *ap;
+	जोड़ iwreq_data wrqu;
+	काष्ठा net_device *netdev = priv->net_dev;
 	u8 size;
 
 	ap = &priv->current_ap;
 
-	if (is_disconnect_status(priv->connect_status)) {
-		memset(ap, 0, sizeof(struct local_ap));
-		return -EPERM;
-	}
+	अगर (is_disconnect_status(priv->connect_status)) अणु
+		स_रखो(ap, 0, माप(काष्ठा local_ap));
+		वापस -EPERM;
+	पूर्ण
 
 	ether_addr_copy(ap->bssid, ap_info->bssid);
-	memcpy(ap->ssid.body, priv->reg.ssid.body,
+	स_नकल(ap->ssid.body, priv->reg.ssid.body,
 	       priv->reg.ssid.size);
 	ap->ssid.size = priv->reg.ssid.size;
-	memcpy(ap->rate_set.body, ap_info->rate_set.body,
+	स_नकल(ap->rate_set.body, ap_info->rate_set.body,
 	       ap_info->rate_set.size);
 	ap->rate_set.size = ap_info->rate_set.size;
-	if (ap_info->ext_rate_set.size != 0) {
-		memcpy(&ap->rate_set.body[ap->rate_set.size],
+	अगर (ap_info->ext_rate_set.size != 0) अणु
+		स_नकल(&ap->rate_set.body[ap->rate_set.size],
 		       ap_info->ext_rate_set.body,
 		       ap_info->ext_rate_set.size);
 		ap->rate_set.size += ap_info->ext_rate_set.size;
-	}
+	पूर्ण
 	ap->channel = ap_info->ds_parameter.channel;
 	ap->rssi = ap_info->rssi;
 	ap->sq = ap_info->sq;
@@ -133,33 +134,33 @@ int get_current_ap(struct ks_wlan_private *priv, struct link_ap_info *ap_info)
 	ap->capability = le16_to_cpu(ap_info->capability);
 	size = (ap_info->rsn.size <= RSN_IE_BODY_MAX) ?
 		ap_info->rsn.size : RSN_IE_BODY_MAX;
-	if ((ap_info->rsn_mode & RSN_MODE_WPA2) &&
-	    (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2)) {
+	अगर ((ap_info->rsn_mode & RSN_MODE_WPA2) &&
+	    (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2)) अणु
 		ap->rsn_ie.id = RSN_INFO_ELEM_ID;
 		ap->rsn_ie.size = size;
-		memcpy(ap->rsn_ie.body, ap_info->rsn.body, size);
-	} else if ((ap_info->rsn_mode & RSN_MODE_WPA) &&
-		   (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA)) {
+		स_नकल(ap->rsn_ie.body, ap_info->rsn.body, size);
+	पूर्ण अन्यथा अगर ((ap_info->rsn_mode & RSN_MODE_WPA) &&
+		   (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA)) अणु
 		ap->wpa_ie.id = WPA_INFO_ELEM_ID;
 		ap->wpa_ie.size = size;
-		memcpy(ap->wpa_ie.body, ap_info->rsn.body, size);
-	} else {
+		स_नकल(ap->wpa_ie.body, ap_info->rsn.body, size);
+	पूर्ण अन्यथा अणु
 		ap->rsn_ie.id = 0;
 		ap->rsn_ie.size = 0;
 		ap->wpa_ie.id = 0;
 		ap->wpa_ie.size = 0;
-	}
+	पूर्ण
 
 	wrqu.data.length = 0;
 	wrqu.data.flags = 0;
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
-	if (is_connect_status(priv->connect_status)) {
+	अगर (is_connect_status(priv->connect_status)) अणु
 		ether_addr_copy(wrqu.ap_addr.sa_data, priv->current_ap.bssid);
 		netdev_dbg(priv->net_dev,
 			   "IWEVENT: connect bssid=%pM\n",
 			   wrqu.ap_addr.sa_data);
-		wireless_send_event(netdev, SIOCGIWAP, &wrqu, NULL);
-	}
+		wireless_send_event(netdev, SIOCGIWAP, &wrqu, शून्य);
+	पूर्ण
 	netdev_dbg(priv->net_dev, "Link AP\n"
 		   "- bssid=%pM\n"
 		   "- essid=%s\n"
@@ -182,51 +183,51 @@ int get_current_ap(struct ks_wlan_private *priv, struct link_ap_info *ap_info)
 		   ap_info->rsn_mode, ap_info->rsn.size,
 		   ap_info->ext_rate_set.size, ap_info->rate_set.size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 read_ie(unsigned char *bp, u8 max, u8 *body)
-{
+अटल u8 पढ़ो_ie(अचिन्हित अक्षर *bp, u8 max, u8 *body)
+अणु
 	u8 size = (*(bp + 1) <= max) ? *(bp + 1) : max;
 
-	memcpy(body, bp + 2, size);
-	return size;
-}
+	स_नकल(body, bp + 2, size);
+	वापस size;
+पूर्ण
 
-static int
-michael_mic(u8 *key, u8 *data, unsigned int len, u8 priority, u8 *result)
-{
-	u8 pad_data[4] = { priority, 0, 0, 0 };
-	struct crypto_shash *tfm = NULL;
-	struct shash_desc *desc = NULL;
-	int ret;
+अटल पूर्णांक
+michael_mic(u8 *key, u8 *data, अचिन्हित पूर्णांक len, u8 priority, u8 *result)
+अणु
+	u8 pad_data[4] = अणु priority, 0, 0, 0 पूर्ण;
+	काष्ठा crypto_shash *tfm = शून्य;
+	काष्ठा shash_desc *desc = शून्य;
+	पूर्णांक ret;
 
 	tfm = crypto_alloc_shash("michael_mic", 0, 0);
-	if (IS_ERR(tfm)) {
+	अगर (IS_ERR(tfm)) अणु
 		ret = PTR_ERR(tfm);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = crypto_shash_setkey(tfm, key, MICHAEL_MIC_KEY_LEN);
-	if (ret < 0)
-		goto err_free_tfm;
+	अगर (ret < 0)
+		जाओ err_मुक्त_tfm;
 
-	desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(tfm), GFP_KERNEL);
-	if (!desc) {
+	desc = kदो_स्मृति(माप(*desc) + crypto_shash_descsize(tfm), GFP_KERNEL);
+	अगर (!desc) अणु
 		ret = -ENOMEM;
-		goto err_free_tfm;
-	}
+		जाओ err_मुक्त_tfm;
+	पूर्ण
 
 	desc->tfm = tfm;
 
 	ret = crypto_shash_init(desc);
-	if (ret < 0)
-		goto err_free_desc;
+	अगर (ret < 0)
+		जाओ err_मुक्त_desc;
 
 	// Compute the MIC value
 	/*
 	 * IEEE802.11i  page 47
-	 * Figure 43g TKIP MIC processing format
+	 * Figure 43g TKIP MIC processing क्रमmat
 	 * +--+--+--------+--+----+--+--+--+--+--+--+--+--+
 	 * |6 |6 |1       |3 |M   |1 |1 |1 |1 |1 |1 |1 |1 | Octet
 	 * +--+--+--------+--+----+--+--+--+--+--+--+--+--+
@@ -235,33 +236,33 @@ michael_mic(u8 *key, u8 *data, unsigned int len, u8 priority, u8 *result)
 	 */
 
 	ret = crypto_shash_update(desc, data, 12);
-	if (ret < 0)
-		goto err_free_desc;
+	अगर (ret < 0)
+		जाओ err_मुक्त_desc;
 
 	ret = crypto_shash_update(desc, pad_data, 4);
-	if (ret < 0)
-		goto err_free_desc;
+	अगर (ret < 0)
+		जाओ err_मुक्त_desc;
 
 	ret = crypto_shash_finup(desc, data + 12, len - 12, result);
 
-err_free_desc:
-	kfree_sensitive(desc);
+err_मुक्त_desc:
+	kमुक्त_sensitive(desc);
 
-err_free_tfm:
-	crypto_free_shash(tfm);
+err_मुक्त_tfm:
+	crypto_मुक्त_shash(tfm);
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static
-int get_ap_information(struct ks_wlan_private *priv, struct ap_info *ap_info,
-		       struct local_ap *ap)
-{
-	unsigned char *bp;
-	int bsize, offset;
+अटल
+पूर्णांक get_ap_inक्रमmation(काष्ठा ks_wlan_निजी *priv, काष्ठा ap_info *ap_info,
+		       काष्ठा local_ap *ap)
+अणु
+	अचिन्हित अक्षर *bp;
+	पूर्णांक bsize, offset;
 
-	memset(ap, 0, sizeof(struct local_ap));
+	स_रखो(ap, 0, माप(काष्ठा local_ap));
 
 	ether_addr_copy(ap->bssid, ap_info->bssid);
 	ap->rssi = ap_info->rssi;
@@ -274,196 +275,196 @@ int get_ap_information(struct ks_wlan_private *priv, struct ap_info *ap_info,
 	bsize = le16_to_cpu(ap_info->body_size);
 	offset = 0;
 
-	while (bsize > offset) {
-		switch (*bp) { /* Information Element ID */
-		case WLAN_EID_SSID:
-			ap->ssid.size = read_ie(bp, IEEE80211_MAX_SSID_LEN,
+	जबतक (bsize > offset) अणु
+		चयन (*bp) अणु /* Inक्रमmation Element ID */
+		हाल WLAN_EID_SSID:
+			ap->ssid.size = पढ़ो_ie(bp, IEEE80211_MAX_SSID_LEN,
 						ap->ssid.body);
-			break;
-		case WLAN_EID_SUPP_RATES:
-		case WLAN_EID_EXT_SUPP_RATES:
-			if ((*(bp + 1) + ap->rate_set.size) <=
-			    RATE_SET_MAX_SIZE) {
-				memcpy(&ap->rate_set.body[ap->rate_set.size],
+			अवरोध;
+		हाल WLAN_EID_SUPP_RATES:
+		हाल WLAN_EID_EXT_SUPP_RATES:
+			अगर ((*(bp + 1) + ap->rate_set.size) <=
+			    RATE_SET_MAX_SIZE) अणु
+				स_नकल(&ap->rate_set.body[ap->rate_set.size],
 				       bp + 2, *(bp + 1));
 				ap->rate_set.size += *(bp + 1);
-			} else {
-				memcpy(&ap->rate_set.body[ap->rate_set.size],
+			पूर्ण अन्यथा अणु
+				स_नकल(&ap->rate_set.body[ap->rate_set.size],
 				       bp + 2,
 				       RATE_SET_MAX_SIZE - ap->rate_set.size);
 				ap->rate_set.size +=
 				    (RATE_SET_MAX_SIZE - ap->rate_set.size);
-			}
-			break;
-		case WLAN_EID_RSN:
+			पूर्ण
+			अवरोध;
+		हाल WLAN_EID_RSN:
 			ap->rsn_ie.id = *bp;
-			ap->rsn_ie.size = read_ie(bp, RSN_IE_BODY_MAX,
+			ap->rsn_ie.size = पढ़ो_ie(bp, RSN_IE_BODY_MAX,
 						  ap->rsn_ie.body);
-			break;
-		case WLAN_EID_VENDOR_SPECIFIC: /* WPA */
+			अवरोध;
+		हाल WLAN_EID_VENDOR_SPECIFIC: /* WPA */
 			/* WPA OUI check */
-			if (memcmp(bp + 2, CIPHER_ID_WPA_WEP40, 4) == 0) {
+			अगर (स_भेद(bp + 2, CIPHER_ID_WPA_WEP40, 4) == 0) अणु
 				ap->wpa_ie.id = *bp;
-				ap->wpa_ie.size = read_ie(bp, RSN_IE_BODY_MAX,
+				ap->wpa_ie.size = पढ़ो_ie(bp, RSN_IE_BODY_MAX,
 							  ap->wpa_ie.body);
-			}
-			break;
-		case WLAN_EID_DS_PARAMS:
-		case WLAN_EID_FH_PARAMS:
-		case WLAN_EID_CF_PARAMS:
-		case WLAN_EID_TIM:
-		case WLAN_EID_IBSS_PARAMS:
-		case WLAN_EID_COUNTRY:
-		case WLAN_EID_ERP_INFO:
-			break;
-		default:
+			पूर्ण
+			अवरोध;
+		हाल WLAN_EID_DS_PARAMS:
+		हाल WLAN_EID_FH_PARAMS:
+		हाल WLAN_EID_CF_PARAMS:
+		हाल WLAN_EID_TIM:
+		हाल WLAN_EID_IBSS_PARAMS:
+		हाल WLAN_EID_COUNTRY:
+		हाल WLAN_EID_ERP_INFO:
+			अवरोध;
+		शेष:
 			netdev_err(priv->net_dev,
 				   "unknown Element ID=%d\n", *bp);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		offset += 2;	/* id & size field */
 		offset += *(bp + 1);	/* +size offset */
-		bp += (*(bp + 1) + 2);	/* pointer update */
-	}
+		bp += (*(bp + 1) + 2);	/* poपूर्णांकer update */
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static
-int hostif_data_indication_wpa(struct ks_wlan_private *priv,
-			       unsigned short auth_type)
-{
-	struct ether_hdr *eth_hdr;
-	unsigned short eth_proto;
-	unsigned char recv_mic[MICHAEL_MIC_LEN];
-	char buf[128];
-	unsigned long now;
-	struct mic_failure *mic_failure;
+अटल
+पूर्णांक hostअगर_data_indication_wpa(काष्ठा ks_wlan_निजी *priv,
+			       अचिन्हित लघु auth_type)
+अणु
+	काष्ठा ether_hdr *eth_hdr;
+	अचिन्हित लघु eth_proto;
+	अचिन्हित अक्षर recv_mic[MICHAEL_MIC_LEN];
+	अक्षर buf[128];
+	अचिन्हित दीर्घ now;
+	काष्ठा mic_failure *mic_failure;
 	u8 mic[MICHAEL_MIC_LEN];
-	union iwreq_data wrqu;
-	unsigned int key_index = auth_type - 1;
-	struct wpa_key *key = &priv->wpa.key[key_index];
+	जोड़ iwreq_data wrqu;
+	अचिन्हित पूर्णांक key_index = auth_type - 1;
+	काष्ठा wpa_key *key = &priv->wpa.key[key_index];
 
-	eth_hdr = (struct ether_hdr *)(priv->rxp);
+	eth_hdr = (काष्ठा ether_hdr *)(priv->rxp);
 	eth_proto = ntohs(eth_hdr->h_proto);
 
-	if (eth_hdr->h_dest_snap != eth_hdr->h_source_snap) {
+	अगर (eth_hdr->h_dest_snap != eth_hdr->h_source_snap) अणु
 		netdev_err(priv->net_dev, "invalid data format\n");
 		priv->nstats.rx_errors++;
-		return -EINVAL;
-	}
-	if (((auth_type == TYPE_PMK1 &&
+		वापस -EINVAL;
+	पूर्ण
+	अगर (((auth_type == TYPE_PMK1 &&
 	      priv->wpa.pairwise_suite == IW_AUTH_CIPHER_TKIP) ||
 	     (auth_type == TYPE_GMK1 &&
 	      priv->wpa.group_suite == IW_AUTH_CIPHER_TKIP) ||
 	     (auth_type == TYPE_GMK2 &&
 	      priv->wpa.group_suite == IW_AUTH_CIPHER_TKIP)) &&
-	    key->key_len) {
-		int ret;
+	    key->key_len) अणु
+		पूर्णांक ret;
 
 		netdev_dbg(priv->net_dev, "TKIP: protocol=%04X: size=%u\n",
 			   eth_proto, priv->rx_size);
 		/* MIC save */
-		memcpy(&recv_mic[0],
-		       (priv->rxp) + ((priv->rx_size) - sizeof(recv_mic)),
-		       sizeof(recv_mic));
-		priv->rx_size = priv->rx_size - sizeof(recv_mic);
+		स_नकल(&recv_mic[0],
+		       (priv->rxp) + ((priv->rx_size) - माप(recv_mic)),
+		       माप(recv_mic));
+		priv->rx_size = priv->rx_size - माप(recv_mic);
 
 		ret = michael_mic(key->rx_mic_key, priv->rxp, priv->rx_size,
 				  0, mic);
-		if (ret < 0)
-			return ret;
-		if (memcmp(mic, recv_mic, sizeof(mic)) != 0) {
-			now = jiffies;
+		अगर (ret < 0)
+			वापस ret;
+		अगर (स_भेद(mic, recv_mic, माप(mic)) != 0) अणु
+			now = jअगरfies;
 			mic_failure = &priv->wpa.mic_failure;
 			/* MIC FAILURE */
-			if (mic_failure->last_failure_time &&
-			    (now - mic_failure->last_failure_time) / HZ >= 60) {
+			अगर (mic_failure->last_failure_समय &&
+			    (now - mic_failure->last_failure_समय) / HZ >= 60) अणु
 				mic_failure->failure = 0;
-			}
+			पूर्ण
 			netdev_err(priv->net_dev, "MIC FAILURE\n");
-			if (mic_failure->failure == 0) {
+			अगर (mic_failure->failure == 0) अणु
 				mic_failure->failure = 1;
 				mic_failure->counter = 0;
-			} else if (mic_failure->failure == 1) {
+			पूर्ण अन्यथा अगर (mic_failure->failure == 1) अणु
 				mic_failure->failure = 2;
 				mic_failure->counter =
-					(u16)((now - mic_failure->last_failure_time) / HZ);
+					(u16)((now - mic_failure->last_failure_समय) / HZ);
 				/*  range 1-60 */
-				if (!mic_failure->counter)
+				अगर (!mic_failure->counter)
 					mic_failure->counter = 1;
-			}
-			priv->wpa.mic_failure.last_failure_time = now;
+			पूर्ण
+			priv->wpa.mic_failure.last_failure_समय = now;
 
 			/*  needed parameters: count, keyid, key type, TSC */
-			sprintf(buf,
+			प्र_लिखो(buf,
 				"MLME-MICHAELMICFAILURE.indication(keyid=%d %scast addr=%pM)",
 				key_index,
 				eth_hdr->h_dest[0] & 0x01 ? "broad" : "uni",
 				eth_hdr->h_source);
-			memset(&wrqu, 0, sizeof(wrqu));
-			wrqu.data.length = strlen(buf);
+			स_रखो(&wrqu, 0, माप(wrqu));
+			wrqu.data.length = म_माप(buf);
 			wireless_send_event(priv->net_dev, IWEVCUSTOM, &wrqu,
 					    buf);
-			return -EINVAL;
-		}
-	}
-	return 0;
-}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static
-void hostif_data_indication(struct ks_wlan_private *priv)
-{
-	unsigned int rx_ind_size;	/* indicate data size */
-	struct sk_buff *skb;
+अटल
+व्योम hostअगर_data_indication(काष्ठा ks_wlan_निजी *priv)
+अणु
+	अचिन्हित पूर्णांक rx_ind_size;	/* indicate data size */
+	काष्ठा sk_buff *skb;
 	u16 auth_type;
-	unsigned char temp[256];
-	struct ether_hdr *eth_hdr;
-	struct ieee802_1x_hdr *aa1x_hdr;
-	size_t size;
-	int ret;
+	अचिन्हित अक्षर temp[256];
+	काष्ठा ether_hdr *eth_hdr;
+	काष्ठा ieee802_1x_hdr *aa1x_hdr;
+	माप_प्रकार size;
+	पूर्णांक ret;
 
 	/* min length check */
-	if (priv->rx_size <= ETH_HLEN) {
+	अगर (priv->rx_size <= ETH_HLEN) अणु
 		priv->nstats.rx_errors++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	auth_type = get_word(priv);	/* AuthType */
 	get_word(priv);	/* Reserve Area */
 
-	eth_hdr = (struct ether_hdr *)(priv->rxp);
+	eth_hdr = (काष्ठा ether_hdr *)(priv->rxp);
 
 	/* source address check */
-	if (ether_addr_equal(&priv->eth_addr[0], eth_hdr->h_source)) {
+	अगर (ether_addr_equal(&priv->eth_addr[0], eth_hdr->h_source)) अणु
 		netdev_err(priv->net_dev, "invalid : source is own mac address !!\n");
 		netdev_err(priv->net_dev, "eth_hdrernet->h_dest=%pM\n", eth_hdr->h_source);
 		priv->nstats.rx_errors++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/*  for WPA */
-	if (auth_type != TYPE_DATA && priv->wpa.rsn_enabled) {
-		ret = hostif_data_indication_wpa(priv, auth_type);
-		if (ret)
-			return;
-	}
+	/*  क्रम WPA */
+	अगर (auth_type != TYPE_DATA && priv->wpa.rsn_enabled) अणु
+		ret = hostअगर_data_indication_wpa(priv, auth_type);
+		अगर (ret)
+			वापस;
+	पूर्ण
 
-	if ((priv->connect_status & FORCE_DISCONNECT) ||
-	    priv->wpa.mic_failure.failure == 2) {
-		return;
-	}
+	अगर ((priv->connect_status & FORCE_DISCONNECT) ||
+	    priv->wpa.mic_failure.failure == 2) अणु
+		वापस;
+	पूर्ण
 
 	/* check 13th byte at rx data */
-	switch (*(priv->rxp + 12)) {
-	case LLC_SAP_SNAP:
+	चयन (*(priv->rxp + 12)) अणु
+	हाल LLC_SAP_SNAP:
 		rx_ind_size = priv->rx_size - 6;
 		skb = dev_alloc_skb(rx_ind_size);
-		if (!skb) {
+		अगर (!skb) अणु
 			priv->nstats.rx_dropped++;
-			return;
-		}
+			वापस;
+		पूर्ण
 		netdev_dbg(priv->net_dev, "SNAP, rx_ind_size = %d\n",
 			   rx_ind_size);
 
@@ -475,15 +476,15 @@ void hostif_data_indication(struct ks_wlan_private *priv)
 		size = rx_ind_size - (ETH_ALEN * 2);
 		skb_put_data(skb, &eth_hdr->h_proto, size);
 
-		aa1x_hdr = (struct ieee802_1x_hdr *)(priv->rxp + ETHER_HDR_SIZE);
-		break;
-	case LLC_SAP_NETBEUI:
+		aa1x_hdr = (काष्ठा ieee802_1x_hdr *)(priv->rxp + ETHER_HDR_SIZE);
+		अवरोध;
+	हाल LLC_SAP_NETBEUI:
 		rx_ind_size = (priv->rx_size + 2);
 		skb = dev_alloc_skb(rx_ind_size);
-		if (!skb) {
+		अगर (!skb) अणु
 			priv->nstats.rx_dropped++;
-			return;
-		}
+			वापस;
+		पूर्ण
 		netdev_dbg(priv->net_dev, "NETBEUI/NetBIOS rx_ind_size=%d\n",
 			   rx_ind_size);
 
@@ -498,15 +499,15 @@ void hostif_data_indication(struct ks_wlan_private *priv)
 		/* copy after Type */
 		skb_put_data(skb, priv->rxp + 12, rx_ind_size - 14);
 
-		aa1x_hdr = (struct ieee802_1x_hdr *)(priv->rxp + 14);
-		break;
-	default:	/* other rx data */
+		aa1x_hdr = (काष्ठा ieee802_1x_hdr *)(priv->rxp + 14);
+		अवरोध;
+	शेष:	/* other rx data */
 		netdev_err(priv->net_dev, "invalid data format\n");
 		priv->nstats.rx_errors++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (aa1x_hdr->type == IEEE802_1X_TYPE_EAPOL_KEY &&
+	अगर (aa1x_hdr->type == IEEE802_1X_TYPE_EAPOL_KEY &&
 	    priv->wpa.rsn_enabled)
 		atomic_set(&priv->psstatus.snooze_guard, 1);
 
@@ -515,13 +516,13 @@ void hostif_data_indication(struct ks_wlan_private *priv)
 	skb->protocol = eth_type_trans(skb, skb->dev);
 	priv->nstats.rx_packets++;
 	priv->nstats.rx_bytes += rx_ind_size;
-	netif_rx(skb);
-}
+	netअगर_rx(skb);
+पूर्ण
 
-static
-void hostif_mib_get_confirm(struct ks_wlan_private *priv)
-{
-	struct net_device *dev = priv->net_dev;
+अटल
+व्योम hostअगर_mib_get_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
+	काष्ठा net_device *dev = priv->net_dev;
 	u32 mib_status;
 	u32 mib_attribute;
 	u16 mib_val_size;
@@ -532,407 +533,407 @@ void hostif_mib_get_confirm(struct ks_wlan_private *priv)
 	mib_val_size = get_word(priv);
 	mib_val_type = get_word(priv);
 
-	if (mib_status) {
+	अगर (mib_status) अणु
 		netdev_err(priv->net_dev, "attribute=%08X, status=%08X\n",
 			   mib_attribute, mib_status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (mib_attribute) {
-	case DOT11_MAC_ADDRESS:
-		hostif_sme_enqueue(priv, SME_GET_MAC_ADDRESS);
+	चयन (mib_attribute) अणु
+	हाल DOT11_MAC_ADDRESS:
+		hostअगर_sme_enqueue(priv, SME_GET_MAC_ADDRESS);
 		ether_addr_copy(priv->eth_addr, priv->rxp);
 		priv->mac_address_valid = true;
 		ether_addr_copy(dev->dev_addr, priv->eth_addr);
 		netdev_info(dev, "MAC ADDRESS = %pM\n", priv->eth_addr);
-		break;
-	case DOT11_PRODUCT_VERSION:
+		अवरोध;
+	हाल DOT11_PRODUCT_VERSION:
 		priv->version_size = priv->rx_size;
-		memcpy(priv->firmware_version, priv->rxp, priv->rx_size);
+		स_नकल(priv->firmware_version, priv->rxp, priv->rx_size);
 		priv->firmware_version[priv->rx_size] = '\0';
 		netdev_info(dev, "firmware ver. = %s\n",
 			    priv->firmware_version);
-		hostif_sme_enqueue(priv, SME_GET_PRODUCT_VERSION);
-		/* wake_up_interruptible_all(&priv->confirm_wait); */
-		complete(&priv->confirm_wait);
-		break;
-	case LOCAL_GAIN:
-		memcpy(&priv->gain, priv->rxp, sizeof(priv->gain));
+		hostअगर_sme_enqueue(priv, SME_GET_PRODUCT_VERSION);
+		/* wake_up_पूर्णांकerruptible_all(&priv->confirm_रुको); */
+		complete(&priv->confirm_रुको);
+		अवरोध;
+	हाल LOCAL_GAIN:
+		स_नकल(&priv->gain, priv->rxp, माप(priv->gain));
 		netdev_dbg(priv->net_dev, "tx_mode=%d, rx_mode=%d, tx_gain=%d, rx_gain=%d\n",
 			   priv->gain.tx_mode, priv->gain.rx_mode,
 			   priv->gain.tx_gain, priv->gain.rx_gain);
-		break;
-	case LOCAL_EEPROM_SUM:
-		memcpy(&priv->eeprom_sum, priv->rxp, sizeof(priv->eeprom_sum));
-		if (priv->eeprom_sum.type != 0 &&
-		    priv->eeprom_sum.type != 1) {
+		अवरोध;
+	हाल LOCAL_EEPROM_SUM:
+		स_नकल(&priv->eeprom_sum, priv->rxp, माप(priv->eeprom_sum));
+		अगर (priv->eeprom_sum.type != 0 &&
+		    priv->eeprom_sum.type != 1) अणु
 			netdev_err(dev, "LOCAL_EEPROM_SUM error!\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		priv->eeprom_checksum = (priv->eeprom_sum.type == 0) ?
 					 EEPROM_CHECKSUM_NONE :
 					 (priv->eeprom_sum.result == 0) ?
 					 EEPROM_NG : EEPROM_OK;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_err(priv->net_dev, "mib_attribute=%08x\n",
-			   (unsigned int)mib_attribute);
-		break;
-	}
-}
+			   (अचिन्हित पूर्णांक)mib_attribute);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static
-void hostif_mib_set_confirm(struct ks_wlan_private *priv)
-{
+अटल
+व्योम hostअगर_mib_set_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
 	u32 mib_status;
 	u32 mib_attribute;
 
 	mib_status = get_dword(priv);
 	mib_attribute = get_dword(priv);
 
-	if (mib_status) {
-		/* in case of error */
+	अगर (mib_status) अणु
+		/* in हाल of error */
 		netdev_err(priv->net_dev, "error :: attribute=%08X, status=%08X\n",
 			   mib_attribute, mib_status);
-	}
+	पूर्ण
 
-	switch (mib_attribute) {
-	case DOT11_RTS_THRESHOLD:
-		hostif_sme_enqueue(priv, SME_RTS_THRESHOLD_CONFIRM);
-		break;
-	case DOT11_FRAGMENTATION_THRESHOLD:
-		hostif_sme_enqueue(priv, SME_FRAGMENTATION_THRESHOLD_CONFIRM);
-		break;
-	case DOT11_WEP_DEFAULT_KEY_ID:
-		if (!priv->wpa.wpa_enabled)
-			hostif_sme_enqueue(priv, SME_WEP_INDEX_CONFIRM);
-		break;
-	case DOT11_WEP_DEFAULT_KEY_VALUE1:
-		if (priv->wpa.rsn_enabled)
-			hostif_sme_enqueue(priv, SME_SET_PMK_TSC);
-		else
-			hostif_sme_enqueue(priv, SME_WEP_KEY1_CONFIRM);
-		break;
-	case DOT11_WEP_DEFAULT_KEY_VALUE2:
-		if (priv->wpa.rsn_enabled)
-			hostif_sme_enqueue(priv, SME_SET_GMK1_TSC);
-		else
-			hostif_sme_enqueue(priv, SME_WEP_KEY2_CONFIRM);
-		break;
-	case DOT11_WEP_DEFAULT_KEY_VALUE3:
-		if (priv->wpa.rsn_enabled)
-			hostif_sme_enqueue(priv, SME_SET_GMK2_TSC);
-		else
-			hostif_sme_enqueue(priv, SME_WEP_KEY3_CONFIRM);
-		break;
-	case DOT11_WEP_DEFAULT_KEY_VALUE4:
-		if (!priv->wpa.rsn_enabled)
-			hostif_sme_enqueue(priv, SME_WEP_KEY4_CONFIRM);
-		break;
-	case DOT11_PRIVACY_INVOKED:
-		if (!priv->wpa.rsn_enabled)
-			hostif_sme_enqueue(priv, SME_WEP_FLAG_CONFIRM);
-		break;
-	case DOT11_RSN_ENABLED:
-		hostif_sme_enqueue(priv, SME_RSN_ENABLED_CONFIRM);
-		break;
-	case LOCAL_RSN_MODE:
-		hostif_sme_enqueue(priv, SME_RSN_MODE_CONFIRM);
-		break;
-	case LOCAL_MULTICAST_ADDRESS:
-		hostif_sme_enqueue(priv, SME_MULTICAST_REQUEST);
-		break;
-	case LOCAL_MULTICAST_FILTER:
-		hostif_sme_enqueue(priv, SME_MULTICAST_CONFIRM);
-		break;
-	case LOCAL_CURRENTADDRESS:
+	चयन (mib_attribute) अणु
+	हाल DOT11_RTS_THRESHOLD:
+		hostअगर_sme_enqueue(priv, SME_RTS_THRESHOLD_CONFIRM);
+		अवरोध;
+	हाल DOT11_FRAGMENTATION_THRESHOLD:
+		hostअगर_sme_enqueue(priv, SME_FRAGMENTATION_THRESHOLD_CONFIRM);
+		अवरोध;
+	हाल DOT11_WEP_DEFAULT_KEY_ID:
+		अगर (!priv->wpa.wpa_enabled)
+			hostअगर_sme_enqueue(priv, SME_WEP_INDEX_CONFIRM);
+		अवरोध;
+	हाल DOT11_WEP_DEFAULT_KEY_VALUE1:
+		अगर (priv->wpa.rsn_enabled)
+			hostअगर_sme_enqueue(priv, SME_SET_PMK_TSC);
+		अन्यथा
+			hostअगर_sme_enqueue(priv, SME_WEP_KEY1_CONFIRM);
+		अवरोध;
+	हाल DOT11_WEP_DEFAULT_KEY_VALUE2:
+		अगर (priv->wpa.rsn_enabled)
+			hostअगर_sme_enqueue(priv, SME_SET_GMK1_TSC);
+		अन्यथा
+			hostअगर_sme_enqueue(priv, SME_WEP_KEY2_CONFIRM);
+		अवरोध;
+	हाल DOT11_WEP_DEFAULT_KEY_VALUE3:
+		अगर (priv->wpa.rsn_enabled)
+			hostअगर_sme_enqueue(priv, SME_SET_GMK2_TSC);
+		अन्यथा
+			hostअगर_sme_enqueue(priv, SME_WEP_KEY3_CONFIRM);
+		अवरोध;
+	हाल DOT11_WEP_DEFAULT_KEY_VALUE4:
+		अगर (!priv->wpa.rsn_enabled)
+			hostअगर_sme_enqueue(priv, SME_WEP_KEY4_CONFIRM);
+		अवरोध;
+	हाल DOT11_PRIVACY_INVOKED:
+		अगर (!priv->wpa.rsn_enabled)
+			hostअगर_sme_enqueue(priv, SME_WEP_FLAG_CONFIRM);
+		अवरोध;
+	हाल DOT11_RSN_ENABLED:
+		hostअगर_sme_enqueue(priv, SME_RSN_ENABLED_CONFIRM);
+		अवरोध;
+	हाल LOCAL_RSN_MODE:
+		hostअगर_sme_enqueue(priv, SME_RSN_MODE_CONFIRM);
+		अवरोध;
+	हाल LOCAL_MULTICAST_ADDRESS:
+		hostअगर_sme_enqueue(priv, SME_MULTICAST_REQUEST);
+		अवरोध;
+	हाल LOCAL_MULTICAST_FILTER:
+		hostअगर_sme_enqueue(priv, SME_MULTICAST_CONFIRM);
+		अवरोध;
+	हाल LOCAL_CURRENTADDRESS:
 		priv->mac_address_valid = true;
-		break;
-	case DOT11_RSN_CONFIG_MULTICAST_CIPHER:
-		hostif_sme_enqueue(priv, SME_RSN_MCAST_CONFIRM);
-		break;
-	case DOT11_RSN_CONFIG_UNICAST_CIPHER:
-		hostif_sme_enqueue(priv, SME_RSN_UCAST_CONFIRM);
-		break;
-	case DOT11_RSN_CONFIG_AUTH_SUITE:
-		hostif_sme_enqueue(priv, SME_RSN_AUTH_CONFIRM);
-		break;
-	case DOT11_GMK1_TSC:
-		if (atomic_read(&priv->psstatus.snooze_guard))
+		अवरोध;
+	हाल DOT11_RSN_CONFIG_MULTICAST_CIPHER:
+		hostअगर_sme_enqueue(priv, SME_RSN_MCAST_CONFIRM);
+		अवरोध;
+	हाल DOT11_RSN_CONFIG_UNICAST_CIPHER:
+		hostअगर_sme_enqueue(priv, SME_RSN_UCAST_CONFIRM);
+		अवरोध;
+	हाल DOT11_RSN_CONFIG_AUTH_SUITE:
+		hostअगर_sme_enqueue(priv, SME_RSN_AUTH_CONFIRM);
+		अवरोध;
+	हाल DOT11_GMK1_TSC:
+		अगर (atomic_पढ़ो(&priv->psstatus.snooze_guard))
 			atomic_set(&priv->psstatus.snooze_guard, 0);
-		break;
-	case DOT11_GMK2_TSC:
-		if (atomic_read(&priv->psstatus.snooze_guard))
+		अवरोध;
+	हाल DOT11_GMK2_TSC:
+		अगर (atomic_पढ़ो(&priv->psstatus.snooze_guard))
 			atomic_set(&priv->psstatus.snooze_guard, 0);
-		break;
-	case DOT11_PMK_TSC:
-	case LOCAL_PMK:
-	case LOCAL_GAIN:
-	case LOCAL_WPS_ENABLE:
-	case LOCAL_WPS_PROBE_REQ:
-	case LOCAL_REGION:
-	default:
-		break;
-	}
-}
+		अवरोध;
+	हाल DOT11_PMK_TSC:
+	हाल LOCAL_PMK:
+	हाल LOCAL_GAIN:
+	हाल LOCAL_WPS_ENABLE:
+	हाल LOCAL_WPS_PROBE_REQ:
+	हाल LOCAL_REGION:
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static
-void hostif_power_mgmt_confirm(struct ks_wlan_private *priv)
-{
-	if (priv->reg.power_mgmt > POWER_MGMT_ACTIVE &&
-	    priv->reg.operation_mode == MODE_INFRASTRUCTURE) {
-		atomic_set(&priv->psstatus.confirm_wait, 0);
+अटल
+व्योम hostअगर_घातer_mgmt_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
+	अगर (priv->reg.घातer_mgmt > POWER_MGMT_ACTIVE &&
+	    priv->reg.operation_mode == MODE_INFRASTRUCTURE) अणु
+		atomic_set(&priv->psstatus.confirm_रुको, 0);
 		priv->dev_state = DEVICE_STATE_SLEEP;
-		ks_wlan_hw_power_save(priv);
-	} else {
+		ks_wlan_hw_घातer_save(priv);
+	पूर्ण अन्यथा अणु
 		priv->dev_state = DEVICE_STATE_READY;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static
-void hostif_sleep_confirm(struct ks_wlan_private *priv)
-{
-	atomic_set(&priv->sleepstatus.doze_request, 1);
+अटल
+व्योम hostअगर_sleep_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
+	atomic_set(&priv->sleepstatus.करोze_request, 1);
 	queue_delayed_work(priv->wq, &priv->rw_dwork, 1);
-}
+पूर्ण
 
-static
-void hostif_start_confirm(struct ks_wlan_private *priv)
-{
-	union iwreq_data wrqu;
+अटल
+व्योम hostअगर_start_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
+	जोड़ iwreq_data wrqu;
 
 	wrqu.data.length = 0;
 	wrqu.data.flags = 0;
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
-	if (is_connect_status(priv->connect_status)) {
+	अगर (is_connect_status(priv->connect_status)) अणु
 		eth_zero_addr(wrqu.ap_addr.sa_data);
-		wireless_send_event(priv->net_dev, SIOCGIWAP, &wrqu, NULL);
-	}
+		wireless_send_event(priv->net_dev, SIOCGIWAP, &wrqu, शून्य);
+	पूर्ण
 	netdev_dbg(priv->net_dev, " scan_ind_count=%d\n", priv->scan_ind_count);
-	hostif_sme_enqueue(priv, SME_START_CONFIRM);
-}
+	hostअगर_sme_enqueue(priv, SME_START_CONFIRM);
+पूर्ण
 
-static
-void hostif_connect_indication(struct ks_wlan_private *priv)
-{
+अटल
+व्योम hostअगर_connect_indication(काष्ठा ks_wlan_निजी *priv)
+अणु
 	u16 connect_code;
-	unsigned int tmp = 0;
-	unsigned int old_status = priv->connect_status;
-	struct net_device *netdev = priv->net_dev;
-	union iwreq_data wrqu0;
+	अचिन्हित पूर्णांक पंचांगp = 0;
+	अचिन्हित पूर्णांक old_status = priv->connect_status;
+	काष्ठा net_device *netdev = priv->net_dev;
+	जोड़ iwreq_data wrqu0;
 
 	connect_code = get_word(priv);
 
-	switch (connect_code) {
-	case RESULT_CONNECT:
-		if (!(priv->connect_status & FORCE_DISCONNECT))
-			netif_carrier_on(netdev);
-		tmp = FORCE_DISCONNECT & priv->connect_status;
-		priv->connect_status = tmp + CONNECT_STATUS;
-		break;
-	case RESULT_DISCONNECT:
-		netif_carrier_off(netdev);
-		tmp = FORCE_DISCONNECT & priv->connect_status;
-		priv->connect_status = tmp + DISCONNECT_STATUS;
-		break;
-	default:
+	चयन (connect_code) अणु
+	हाल RESULT_CONNECT:
+		अगर (!(priv->connect_status & FORCE_DISCONNECT))
+			netअगर_carrier_on(netdev);
+		पंचांगp = FORCE_DISCONNECT & priv->connect_status;
+		priv->connect_status = पंचांगp + CONNECT_STATUS;
+		अवरोध;
+	हाल RESULT_DISCONNECT:
+		netअगर_carrier_off(netdev);
+		पंचांगp = FORCE_DISCONNECT & priv->connect_status;
+		priv->connect_status = पंचांगp + DISCONNECT_STATUS;
+		अवरोध;
+	शेष:
 		netdev_dbg(priv->net_dev, "unknown connect_code=%d :: scan_ind_count=%d\n",
 			   connect_code, priv->scan_ind_count);
-		netif_carrier_off(netdev);
-		tmp = FORCE_DISCONNECT & priv->connect_status;
-		priv->connect_status = tmp + DISCONNECT_STATUS;
-		break;
-	}
+		netअगर_carrier_off(netdev);
+		पंचांगp = FORCE_DISCONNECT & priv->connect_status;
+		priv->connect_status = पंचांगp + DISCONNECT_STATUS;
+		अवरोध;
+	पूर्ण
 
-	get_current_ap(priv, (struct link_ap_info *)priv->rxp);
-	if (is_connect_status(priv->connect_status) &&
-	    is_disconnect_status(old_status)) {
-		/* for power save */
+	get_current_ap(priv, (काष्ठा link_ap_info *)priv->rxp);
+	अगर (is_connect_status(priv->connect_status) &&
+	    is_disconnect_status(old_status)) अणु
+		/* क्रम घातer save */
 		atomic_set(&priv->psstatus.snooze_guard, 0);
-		atomic_set(&priv->psstatus.confirm_wait, 0);
-	}
-	ks_wlan_do_power_save(priv);
+		atomic_set(&priv->psstatus.confirm_रुको, 0);
+	पूर्ण
+	ks_wlan_करो_घातer_save(priv);
 
 	wrqu0.data.length = 0;
 	wrqu0.data.flags = 0;
 	wrqu0.ap_addr.sa_family = ARPHRD_ETHER;
-	if (is_disconnect_status(priv->connect_status) &&
-	    is_connect_status(old_status)) {
+	अगर (is_disconnect_status(priv->connect_status) &&
+	    is_connect_status(old_status)) अणु
 		eth_zero_addr(wrqu0.ap_addr.sa_data);
 		netdev_dbg(priv->net_dev, "disconnect :: scan_ind_count=%d\n",
 			   priv->scan_ind_count);
-		wireless_send_event(netdev, SIOCGIWAP, &wrqu0, NULL);
-	}
+		wireless_send_event(netdev, SIOCGIWAP, &wrqu0, शून्य);
+	पूर्ण
 	priv->scan_ind_count = 0;
-}
+पूर्ण
 
-static
-void hostif_scan_indication(struct ks_wlan_private *priv)
-{
-	int i;
-	struct ap_info *ap_info;
+अटल
+व्योम hostअगर_scan_indication(काष्ठा ks_wlan_निजी *priv)
+अणु
+	पूर्णांक i;
+	काष्ठा ap_info *ap_info;
 
 	netdev_dbg(priv->net_dev,
 		   "scan_ind_count = %d\n", priv->scan_ind_count);
-	ap_info = (struct ap_info *)(priv->rxp);
+	ap_info = (काष्ठा ap_info *)(priv->rxp);
 
-	if (priv->scan_ind_count) {
+	अगर (priv->scan_ind_count) अणु
 		/* bssid check */
-		for (i = 0; i < priv->aplist.size; i++) {
+		क्रम (i = 0; i < priv->aplist.size; i++) अणु
 			u8 *bssid = priv->aplist.ap[i].bssid;
 
-			if (ether_addr_equal(ap_info->bssid, bssid))
-				continue;
+			अगर (ether_addr_equal(ap_info->bssid, bssid))
+				जारी;
 
-			if (ap_info->frame_type == IEEE80211_STYPE_PROBE_RESP)
-				get_ap_information(priv, ap_info,
+			अगर (ap_info->frame_type == IEEE80211_STYPE_PROBE_RESP)
+				get_ap_inक्रमmation(priv, ap_info,
 						   &priv->aplist.ap[i]);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	priv->scan_ind_count++;
-	if (priv->scan_ind_count < LOCAL_APLIST_MAX + 1) {
+	अगर (priv->scan_ind_count < LOCAL_APLIST_MAX + 1) अणु
 		netdev_dbg(priv->net_dev, " scan_ind_count=%d :: aplist.size=%d\n",
 			   priv->scan_ind_count, priv->aplist.size);
-		get_ap_information(priv, (struct ap_info *)(priv->rxp),
+		get_ap_inक्रमmation(priv, (काष्ठा ap_info *)(priv->rxp),
 				   &priv->aplist.ap[priv->scan_ind_count - 1]);
 		priv->aplist.size = priv->scan_ind_count;
-	} else {
+	पूर्ण अन्यथा अणु
 		netdev_dbg(priv->net_dev, " count over :: scan_ind_count=%d\n",
 			   priv->scan_ind_count);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static
-void hostif_stop_confirm(struct ks_wlan_private *priv)
-{
-	unsigned int tmp = 0;
-	unsigned int old_status = priv->connect_status;
-	struct net_device *netdev = priv->net_dev;
-	union iwreq_data wrqu0;
+अटल
+व्योम hostअगर_stop_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
+	अचिन्हित पूर्णांक पंचांगp = 0;
+	अचिन्हित पूर्णांक old_status = priv->connect_status;
+	काष्ठा net_device *netdev = priv->net_dev;
+	जोड़ iwreq_data wrqu0;
 
-	if (priv->dev_state == DEVICE_STATE_SLEEP)
+	अगर (priv->dev_state == DEVICE_STATE_SLEEP)
 		priv->dev_state = DEVICE_STATE_READY;
 
 	/* disconnect indication */
-	if (is_connect_status(priv->connect_status)) {
-		netif_carrier_off(netdev);
-		tmp = FORCE_DISCONNECT & priv->connect_status;
-		priv->connect_status = tmp | DISCONNECT_STATUS;
+	अगर (is_connect_status(priv->connect_status)) अणु
+		netअगर_carrier_off(netdev);
+		पंचांगp = FORCE_DISCONNECT & priv->connect_status;
+		priv->connect_status = पंचांगp | DISCONNECT_STATUS;
 		netdev_info(netdev, "IWEVENT: disconnect\n");
 
 		wrqu0.data.length = 0;
 		wrqu0.data.flags = 0;
 		wrqu0.ap_addr.sa_family = ARPHRD_ETHER;
-		if (is_disconnect_status(priv->connect_status) &&
-		    is_connect_status(old_status)) {
+		अगर (is_disconnect_status(priv->connect_status) &&
+		    is_connect_status(old_status)) अणु
 			eth_zero_addr(wrqu0.ap_addr.sa_data);
 			netdev_info(netdev, "IWEVENT: disconnect\n");
-			wireless_send_event(netdev, SIOCGIWAP, &wrqu0, NULL);
-		}
+			wireless_send_event(netdev, SIOCGIWAP, &wrqu0, शून्य);
+		पूर्ण
 		priv->scan_ind_count = 0;
-	}
+	पूर्ण
 
-	hostif_sme_enqueue(priv, SME_STOP_CONFIRM);
-}
+	hostअगर_sme_enqueue(priv, SME_STOP_CONFIRM);
+पूर्ण
 
-static
-void hostif_ps_adhoc_set_confirm(struct ks_wlan_private *priv)
-{
-	priv->infra_status = 0;	/* infrastructure mode cancel */
-	hostif_sme_enqueue(priv, SME_MODE_SET_CONFIRM);
-}
+अटल
+व्योम hostअगर_ps_adhoc_set_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
+	priv->infra_status = 0;	/* infraकाष्ठाure mode cancel */
+	hostअगर_sme_enqueue(priv, SME_MODE_SET_CONFIRM);
+पूर्ण
 
-static
-void hostif_infrastructure_set_confirm(struct ks_wlan_private *priv)
-{
+अटल
+व्योम hostअगर_infraकाष्ठाure_set_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
 	u16 result_code;
 
 	result_code = get_word(priv);
-	priv->infra_status = 1;	/* infrastructure mode set */
-	hostif_sme_enqueue(priv, SME_MODE_SET_CONFIRM);
-}
+	priv->infra_status = 1;	/* infraकाष्ठाure mode set */
+	hostअगर_sme_enqueue(priv, SME_MODE_SET_CONFIRM);
+पूर्ण
 
-static
-void hostif_adhoc_set_confirm(struct ks_wlan_private *priv)
-{
-	priv->infra_status = 1;	/* infrastructure mode set */
-	hostif_sme_enqueue(priv, SME_MODE_SET_CONFIRM);
-}
+अटल
+व्योम hostअगर_adhoc_set_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
+	priv->infra_status = 1;	/* infraकाष्ठाure mode set */
+	hostअगर_sme_enqueue(priv, SME_MODE_SET_CONFIRM);
+पूर्ण
 
-static
-void hostif_associate_indication(struct ks_wlan_private *priv)
-{
-	struct association_request *assoc_req;
-	struct association_response *assoc_resp;
-	unsigned char *pb;
-	union iwreq_data wrqu;
-	char buf[IW_CUSTOM_MAX];
-	char *pbuf = &buf[0];
-	int i;
+अटल
+व्योम hostअगर_associate_indication(काष्ठा ks_wlan_निजी *priv)
+अणु
+	काष्ठा association_request *assoc_req;
+	काष्ठा association_response *assoc_resp;
+	अचिन्हित अक्षर *pb;
+	जोड़ iwreq_data wrqu;
+	अक्षर buf[IW_CUSTOM_MAX];
+	अक्षर *pbuf = &buf[0];
+	पूर्णांक i;
 
-	static const char associnfo_leader0[] = "ASSOCINFO(ReqIEs=";
-	static const char associnfo_leader1[] = " RespIEs=";
+	अटल स्थिर अक्षर associnfo_leader0[] = "ASSOCINFO(ReqIEs=";
+	अटल स्थिर अक्षर associnfo_leader1[] = " RespIEs=";
 
-	assoc_req = (struct association_request *)(priv->rxp);
-	assoc_resp = (struct association_response *)(assoc_req + 1);
-	pb = (unsigned char *)(assoc_resp + 1);
+	assoc_req = (काष्ठा association_request *)(priv->rxp);
+	assoc_resp = (काष्ठा association_response *)(assoc_req + 1);
+	pb = (अचिन्हित अक्षर *)(assoc_resp + 1);
 
-	memset(&wrqu, 0, sizeof(wrqu));
-	memcpy(pbuf, associnfo_leader0, sizeof(associnfo_leader0) - 1);
-	wrqu.data.length += sizeof(associnfo_leader0) - 1;
-	pbuf += sizeof(associnfo_leader0) - 1;
+	स_रखो(&wrqu, 0, माप(wrqu));
+	स_नकल(pbuf, associnfo_leader0, माप(associnfo_leader0) - 1);
+	wrqu.data.length += माप(associnfo_leader0) - 1;
+	pbuf += माप(associnfo_leader0) - 1;
 
-	for (i = 0; i < le16_to_cpu(assoc_req->req_ies_size); i++)
-		pbuf += sprintf(pbuf, "%02x", *(pb + i));
+	क्रम (i = 0; i < le16_to_cpu(assoc_req->req_ies_size); i++)
+		pbuf += प्र_लिखो(pbuf, "%02x", *(pb + i));
 	wrqu.data.length += (le16_to_cpu(assoc_req->req_ies_size)) * 2;
 
-	memcpy(pbuf, associnfo_leader1, sizeof(associnfo_leader1) - 1);
-	wrqu.data.length += sizeof(associnfo_leader1) - 1;
-	pbuf += sizeof(associnfo_leader1) - 1;
+	स_नकल(pbuf, associnfo_leader1, माप(associnfo_leader1) - 1);
+	wrqu.data.length += माप(associnfo_leader1) - 1;
+	pbuf += माप(associnfo_leader1) - 1;
 
 	pb += le16_to_cpu(assoc_req->req_ies_size);
-	for (i = 0; i < le16_to_cpu(assoc_resp->resp_ies_size); i++)
-		pbuf += sprintf(pbuf, "%02x", *(pb + i));
+	क्रम (i = 0; i < le16_to_cpu(assoc_resp->resp_ies_size); i++)
+		pbuf += प्र_लिखो(pbuf, "%02x", *(pb + i));
 	wrqu.data.length += (le16_to_cpu(assoc_resp->resp_ies_size)) * 2;
 
-	pbuf += sprintf(pbuf, ")");
+	pbuf += प्र_लिखो(pbuf, ")");
 	wrqu.data.length += 1;
 
 	wireless_send_event(priv->net_dev, IWEVCUSTOM, &wrqu, buf);
-}
+पूर्ण
 
-static
-void hostif_bss_scan_confirm(struct ks_wlan_private *priv)
-{
+अटल
+व्योम hostअगर_bss_scan_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
 	u32 result_code;
-	struct net_device *dev = priv->net_dev;
-	union iwreq_data wrqu;
+	काष्ठा net_device *dev = priv->net_dev;
+	जोड़ iwreq_data wrqu;
 
 	result_code = get_dword(priv);
 	netdev_dbg(priv->net_dev, "result=%d :: scan_ind_count=%d\n",
 		   result_code, priv->scan_ind_count);
 
 	priv->sme_i.sme_flag &= ~SME_AP_SCAN;
-	hostif_sme_enqueue(priv, SME_BSS_SCAN_CONFIRM);
+	hostअगर_sme_enqueue(priv, SME_BSS_SCAN_CONFIRM);
 
 	wrqu.data.length = 0;
 	wrqu.data.flags = 0;
-	wireless_send_event(dev, SIOCGIWSCAN, &wrqu, NULL);
+	wireless_send_event(dev, SIOCGIWSCAN, &wrqu, शून्य);
 	priv->scan_ind_count = 0;
-}
+पूर्ण
 
-static
-void hostif_phy_information_confirm(struct ks_wlan_private *priv)
-{
-	struct iw_statistics *wstats = &priv->wstats;
-	u8 rssi, signal, noise;
+अटल
+व्योम hostअगर_phy_inक्रमmation_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
+	काष्ठा iw_statistics *wstats = &priv->wstats;
+	u8 rssi, संकेत, noise;
 	u8 link_speed;
 	u32 transmitted_frame_count, received_fragment_count;
 	u32 failed_count, fcs_error_count;
 
 	rssi = get_byte(priv);
-	signal = get_byte(priv);
+	संकेत = get_byte(priv);
 	noise = get_byte(priv);
 	link_speed = get_byte(priv);
 	transmitted_frame_count = get_dword(priv);
@@ -941,9 +942,9 @@ void hostif_phy_information_confirm(struct ks_wlan_private *priv)
 	fcs_error_count = get_dword(priv);
 
 	netdev_dbg(priv->net_dev, "phyinfo confirm rssi=%d signal=%d\n",
-		   rssi, signal);
+		   rssi, संकेत);
 	priv->current_rate = (link_speed & RATE_MASK);
-	wstats->qual.qual = signal;
+	wstats->qual.qual = संकेत;
 	wstats->qual.level = 256 - rssi;
 	wstats->qual.noise = 0;	/* invalid noise value */
 	wstats->qual.updated = IW_QUAL_ALL_UPDATED | IW_QUAL_DBM;
@@ -955,177 +956,177 @@ void hostif_phy_information_confirm(struct ks_wlan_private *priv)
 		   "    received_fragment_count=%u\n"
 		   "    failed_count=%u\n"
 		   "    fcs_error_count=%u\n",
-		   rssi, signal, link_speed, transmitted_frame_count,
+		   rssi, संकेत, link_speed, transmitted_frame_count,
 		   received_fragment_count, failed_count, fcs_error_count);
-	/* wake_up_interruptible_all(&priv->confirm_wait); */
-	complete(&priv->confirm_wait);
-}
+	/* wake_up_पूर्णांकerruptible_all(&priv->confirm_रुको); */
+	complete(&priv->confirm_रुको);
+पूर्ण
 
-static
-void hostif_mic_failure_confirm(struct ks_wlan_private *priv)
-{
+अटल
+व्योम hostअगर_mic_failure_confirm(काष्ठा ks_wlan_निजी *priv)
+अणु
 	netdev_dbg(priv->net_dev, "mic_failure=%u\n",
 		   priv->wpa.mic_failure.failure);
-	hostif_sme_enqueue(priv, SME_MIC_FAILURE_CONFIRM);
-}
+	hostअगर_sme_enqueue(priv, SME_MIC_FAILURE_CONFIRM);
+पूर्ण
 
-static
-void hostif_event_check(struct ks_wlan_private *priv)
-{
+अटल
+व्योम hostअगर_event_check(काष्ठा ks_wlan_निजी *priv)
+अणु
 	u16 event;
 
 	event = get_word(priv);
-	switch (event) {
-	case HIF_DATA_IND:
-		hostif_data_indication(priv);
-		break;
-	case HIF_MIB_GET_CONF:
-		hostif_mib_get_confirm(priv);
-		break;
-	case HIF_MIB_SET_CONF:
-		hostif_mib_set_confirm(priv);
-		break;
-	case HIF_POWER_MGMT_CONF:
-		hostif_power_mgmt_confirm(priv);
-		break;
-	case HIF_SLEEP_CONF:
-		hostif_sleep_confirm(priv);
-		break;
-	case HIF_START_CONF:
-		hostif_start_confirm(priv);
-		break;
-	case HIF_CONNECT_IND:
-		hostif_connect_indication(priv);
-		break;
-	case HIF_STOP_CONF:
-		hostif_stop_confirm(priv);
-		break;
-	case HIF_PS_ADH_SET_CONF:
-		hostif_ps_adhoc_set_confirm(priv);
-		break;
-	case HIF_INFRA_SET_CONF:
-	case HIF_INFRA_SET2_CONF:
-		hostif_infrastructure_set_confirm(priv);
-		break;
-	case HIF_ADH_SET_CONF:
-	case HIF_ADH_SET2_CONF:
-		hostif_adhoc_set_confirm(priv);
-		break;
-	case HIF_ASSOC_INFO_IND:
-		hostif_associate_indication(priv);
-		break;
-	case HIF_MIC_FAILURE_CONF:
-		hostif_mic_failure_confirm(priv);
-		break;
-	case HIF_SCAN_CONF:
-		hostif_bss_scan_confirm(priv);
-		break;
-	case HIF_PHY_INFO_CONF:
-	case HIF_PHY_INFO_IND:
-		hostif_phy_information_confirm(priv);
-		break;
-	case HIF_SCAN_IND:
-		hostif_scan_indication(priv);
-		break;
-	case HIF_AP_SET_CONF:
-	default:
+	चयन (event) अणु
+	हाल HIF_DATA_IND:
+		hostअगर_data_indication(priv);
+		अवरोध;
+	हाल HIF_MIB_GET_CONF:
+		hostअगर_mib_get_confirm(priv);
+		अवरोध;
+	हाल HIF_MIB_SET_CONF:
+		hostअगर_mib_set_confirm(priv);
+		अवरोध;
+	हाल HIF_POWER_MGMT_CONF:
+		hostअगर_घातer_mgmt_confirm(priv);
+		अवरोध;
+	हाल HIF_SLEEP_CONF:
+		hostअगर_sleep_confirm(priv);
+		अवरोध;
+	हाल HIF_START_CONF:
+		hostअगर_start_confirm(priv);
+		अवरोध;
+	हाल HIF_CONNECT_IND:
+		hostअगर_connect_indication(priv);
+		अवरोध;
+	हाल HIF_STOP_CONF:
+		hostअगर_stop_confirm(priv);
+		अवरोध;
+	हाल HIF_PS_ADH_SET_CONF:
+		hostअगर_ps_adhoc_set_confirm(priv);
+		अवरोध;
+	हाल HIF_INFRA_SET_CONF:
+	हाल HIF_INFRA_SET2_CONF:
+		hostअगर_infraकाष्ठाure_set_confirm(priv);
+		अवरोध;
+	हाल HIF_ADH_SET_CONF:
+	हाल HIF_ADH_SET2_CONF:
+		hostअगर_adhoc_set_confirm(priv);
+		अवरोध;
+	हाल HIF_ASSOC_INFO_IND:
+		hostअगर_associate_indication(priv);
+		अवरोध;
+	हाल HIF_MIC_FAILURE_CONF:
+		hostअगर_mic_failure_confirm(priv);
+		अवरोध;
+	हाल HIF_SCAN_CONF:
+		hostअगर_bss_scan_confirm(priv);
+		अवरोध;
+	हाल HIF_PHY_INFO_CONF:
+	हाल HIF_PHY_INFO_IND:
+		hostअगर_phy_inक्रमmation_confirm(priv);
+		अवरोध;
+	हाल HIF_SCAN_IND:
+		hostअगर_scan_indication(priv);
+		अवरोध;
+	हाल HIF_AP_SET_CONF:
+	शेष:
 		netdev_err(priv->net_dev, "undefined event[%04X]\n", event);
-		/* wake_up_all(&priv->confirm_wait); */
-		complete(&priv->confirm_wait);
-		break;
-	}
+		/* wake_up_all(&priv->confirm_रुको); */
+		complete(&priv->confirm_रुको);
+		अवरोध;
+	पूर्ण
 
 	/* add event to hostt buffer */
 	priv->hostt.buff[priv->hostt.qtail] = event;
 	priv->hostt.qtail = (priv->hostt.qtail + 1) % SME_EVENT_BUFF_SIZE;
-}
+पूर्ण
 
 /* allocate size bytes, set header size and event */
-static void *hostif_generic_request(size_t size, int event)
-{
-	struct hostif_hdr *p;
+अटल व्योम *hostअगर_generic_request(माप_प्रकार size, पूर्णांक event)
+अणु
+	काष्ठा hostअगर_hdr *p;
 
-	p = kzalloc(hif_align_size(size), GFP_ATOMIC);
-	if (!p)
-		return NULL;
+	p = kzalloc(hअगर_align_size(size), GFP_ATOMIC);
+	अगर (!p)
+		वापस शून्य;
 
-	p->size = cpu_to_le16(size - sizeof(p->size));
+	p->size = cpu_to_le16(size - माप(p->size));
 	p->event = cpu_to_le16(event);
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-int hostif_data_request(struct ks_wlan_private *priv, struct sk_buff *skb)
-{
-	unsigned int skb_len = 0;
-	unsigned char *buffer = NULL;
-	unsigned int length = 0;
-	struct hostif_data_request *pp;
-	unsigned char *p;
-	unsigned short eth_proto;
-	struct ether_hdr *eth_hdr;
-	unsigned short keyinfo = 0;
-	struct ieee802_1x_hdr *aa1x_hdr;
-	struct wpa_eapol_key *eap_key;
-	struct ethhdr *eth;
-	size_t size;
-	int ret;
+पूर्णांक hostअगर_data_request(काष्ठा ks_wlan_निजी *priv, काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक skb_len = 0;
+	अचिन्हित अक्षर *buffer = शून्य;
+	अचिन्हित पूर्णांक length = 0;
+	काष्ठा hostअगर_data_request *pp;
+	अचिन्हित अक्षर *p;
+	अचिन्हित लघु eth_proto;
+	काष्ठा ether_hdr *eth_hdr;
+	अचिन्हित लघु keyinfo = 0;
+	काष्ठा ieee802_1x_hdr *aa1x_hdr;
+	काष्ठा wpa_eapol_key *eap_key;
+	काष्ठा ethhdr *eth;
+	माप_प्रकार size;
+	पूर्णांक ret;
 
 	skb_len = skb->len;
-	if (skb_len > ETH_FRAME_LEN) {
+	अगर (skb_len > ETH_FRAME_LEN) अणु
 		netdev_err(priv->net_dev, "bad length skb_len=%d\n", skb_len);
 		ret = -EOVERFLOW;
-		goto err_kfree_skb;
-	}
+		जाओ err_kमुक्त_skb;
+	पूर्ण
 
-	if (is_disconnect_status(priv->connect_status) ||
+	अगर (is_disconnect_status(priv->connect_status) ||
 	    (priv->connect_status & FORCE_DISCONNECT) ||
-	    priv->wpa.mic_failure.stop) {
-		if (netif_queue_stopped(priv->net_dev))
-			netif_wake_queue(priv->net_dev);
+	    priv->wpa.mic_failure.stop) अणु
+		अगर (netअगर_queue_stopped(priv->net_dev))
+			netअगर_wake_queue(priv->net_dev);
 
-		dev_kfree_skb(skb);
+		dev_kमुक्त_skb(skb);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* power save wakeup */
-	if (atomic_read(&priv->psstatus.status) == PS_SNOOZE) {
-		if (!netif_queue_stopped(priv->net_dev))
-			netif_stop_queue(priv->net_dev);
-	}
+	/* घातer save wakeup */
+	अगर (atomic_पढ़ो(&priv->psstatus.status) == PS_SNOOZE) अणु
+		अगर (!netअगर_queue_stopped(priv->net_dev))
+			netअगर_stop_queue(priv->net_dev);
+	पूर्ण
 
-	size = sizeof(*pp) + 6 + skb_len + 8;
-	pp = kmalloc(hif_align_size(size), GFP_ATOMIC);
-	if (!pp) {
+	size = माप(*pp) + 6 + skb_len + 8;
+	pp = kदो_स्मृति(hअगर_align_size(size), GFP_ATOMIC);
+	अगर (!pp) अणु
 		ret = -ENOMEM;
-		goto err_kfree_skb;
-	}
+		जाओ err_kमुक्त_skb;
+	पूर्ण
 
-	p = (unsigned char *)pp->data;
+	p = (अचिन्हित अक्षर *)pp->data;
 
 	buffer = skb->data;
 	length = skb->len;
 
 	/* skb check */
-	eth = (struct ethhdr *)skb->data;
-	if (!ether_addr_equal(&priv->eth_addr[0], eth->h_source)) {
+	eth = (काष्ठा ethhdr *)skb->data;
+	अगर (!ether_addr_equal(&priv->eth_addr[0], eth->h_source)) अणु
 		netdev_err(priv->net_dev,
 			   "Invalid mac address: ethernet->h_source=%pM\n",
 			   eth->h_source);
 		ret = -ENXIO;
-		goto err_kfree;
-	}
+		जाओ err_kमुक्त;
+	पूर्ण
 
 	/* dest and src MAC address copy */
 	size = ETH_ALEN * 2;
-	memcpy(p, buffer, size);
+	स_नकल(p, buffer, size);
 	p += size;
 	buffer += size;
 	length -= size;
 
 	/* EtherType/Length check */
-	if (*(buffer + 1) + (*buffer << 8) > 1500) {
+	अगर (*(buffer + 1) + (*buffer << 8) > 1500) अणु
 		/* ProtocolEAP = *(buffer+1) + (*buffer << 8); */
 		/* SAP/CTL/OUI(6 byte) add */
 		*p++ = 0xAA;	/* DSAP */
@@ -1135,248 +1136,248 @@ int hostif_data_request(struct ks_wlan_private *priv, struct sk_buff *skb)
 		*p++ = 0x00;	/* OUI ("000000") */
 		*p++ = 0x00;	/* OUI ("000000") */
 		skb_len += 6;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Length(2 byte) delete */
 		buffer += 2;
 		length -= 2;
 		skb_len -= 2;
-	}
+	पूर्ण
 
 	/* pp->data copy */
-	memcpy(p, buffer, length);
+	स_नकल(p, buffer, length);
 
 	p += length;
 
-	/* for WPA */
-	eth_hdr = (struct ether_hdr *)&pp->data[0];
+	/* क्रम WPA */
+	eth_hdr = (काष्ठा ether_hdr *)&pp->data[0];
 	eth_proto = ntohs(eth_hdr->h_proto);
 
-	/* for MIC FAILURE REPORT check */
-	if (eth_proto == ETH_P_PAE &&
-	    priv->wpa.mic_failure.failure > 0) {
-		aa1x_hdr = (struct ieee802_1x_hdr *)(eth_hdr + 1);
-		if (aa1x_hdr->type == IEEE802_1X_TYPE_EAPOL_KEY) {
-			eap_key = (struct wpa_eapol_key *)(aa1x_hdr + 1);
+	/* क्रम MIC FAILURE REPORT check */
+	अगर (eth_proto == ETH_P_PAE &&
+	    priv->wpa.mic_failure.failure > 0) अणु
+		aa1x_hdr = (काष्ठा ieee802_1x_hdr *)(eth_hdr + 1);
+		अगर (aa1x_hdr->type == IEEE802_1X_TYPE_EAPOL_KEY) अणु
+			eap_key = (काष्ठा wpa_eapol_key *)(aa1x_hdr + 1);
 			keyinfo = ntohs(eap_key->key_info);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (priv->wpa.rsn_enabled && priv->wpa.key[0].key_len) {
+	अगर (priv->wpa.rsn_enabled && priv->wpa.key[0].key_len) अणु
 		/* no encryption */
-		if (eth_proto == ETH_P_PAE &&
+		अगर (eth_proto == ETH_P_PAE &&
 		    priv->wpa.key[1].key_len == 0 &&
 		    priv->wpa.key[2].key_len == 0 &&
-		    priv->wpa.key[3].key_len == 0) {
+		    priv->wpa.key[3].key_len == 0) अणु
 			pp->auth_type = cpu_to_le16(TYPE_AUTH);
-		} else {
-			if (priv->wpa.pairwise_suite == IW_AUTH_CIPHER_TKIP) {
+		पूर्ण अन्यथा अणु
+			अगर (priv->wpa.pairwise_suite == IW_AUTH_CIPHER_TKIP) अणु
 				u8 mic[MICHAEL_MIC_LEN];
 
 				ret = michael_mic(priv->wpa.key[0].tx_mic_key,
 						  &pp->data[0], skb_len,
 						  0, mic);
-				if (ret < 0)
-					goto err_kfree;
+				अगर (ret < 0)
+					जाओ err_kमुक्त;
 
-				memcpy(p, mic, sizeof(mic));
-				length += sizeof(mic);
-				skb_len += sizeof(mic);
-				p += sizeof(mic);
+				स_नकल(p, mic, माप(mic));
+				length += माप(mic);
+				skb_len += माप(mic);
+				p += माप(mic);
 				pp->auth_type =
 				    cpu_to_le16(TYPE_DATA);
-			} else if (priv->wpa.pairwise_suite ==
-				   IW_AUTH_CIPHER_CCMP) {
+			पूर्ण अन्यथा अगर (priv->wpa.pairwise_suite ==
+				   IW_AUTH_CIPHER_CCMP) अणु
 				pp->auth_type =
 				    cpu_to_le16(TYPE_DATA);
-			}
-		}
-	} else {
-		if (eth_proto == ETH_P_PAE)
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (eth_proto == ETH_P_PAE)
 			pp->auth_type = cpu_to_le16(TYPE_AUTH);
-		else
+		अन्यथा
 			pp->auth_type = cpu_to_le16(TYPE_DATA);
-	}
+	पूर्ण
 
 	/* header value set */
 	pp->header.size =
-	    cpu_to_le16((sizeof(*pp) - sizeof(pp->header.size) + skb_len));
+	    cpu_to_le16((माप(*pp) - माप(pp->header.size) + skb_len));
 	pp->header.event = cpu_to_le16(HIF_DATA_REQ);
 
 	/* tx request */
-	ret = ks_wlan_hw_tx(priv, pp, hif_align_size(sizeof(*pp) + skb_len),
+	ret = ks_wlan_hw_tx(priv, pp, hअगर_align_size(माप(*pp) + skb_len),
 			    send_packet_complete, skb);
 
 	/* MIC FAILURE REPORT check */
-	if (eth_proto == ETH_P_PAE &&
-	    priv->wpa.mic_failure.failure > 0) {
-		if (keyinfo & WPA_KEY_INFO_ERROR &&
-		    keyinfo & WPA_KEY_INFO_REQUEST) {
+	अगर (eth_proto == ETH_P_PAE &&
+	    priv->wpa.mic_failure.failure > 0) अणु
+		अगर (keyinfo & WPA_KEY_INFO_ERROR &&
+		    keyinfo & WPA_KEY_INFO_REQUEST) अणु
 			netdev_err(priv->net_dev,
 				   "MIC ERROR Report SET : %04X\n", keyinfo);
-			hostif_sme_enqueue(priv, SME_MIC_FAILURE_REQUEST);
-		}
-		if (priv->wpa.mic_failure.failure == 2)
+			hostअगर_sme_enqueue(priv, SME_MIC_FAILURE_REQUEST);
+		पूर्ण
+		अगर (priv->wpa.mic_failure.failure == 2)
 			priv->wpa.mic_failure.stop = 1;
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
-err_kfree:
-	kfree(pp);
-err_kfree_skb:
-	dev_kfree_skb(skb);
+err_kमुक्त:
+	kमुक्त(pp);
+err_kमुक्त_skb:
+	dev_kमुक्त_skb(skb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void ps_confirm_wait_inc(struct ks_wlan_private *priv)
-{
-	if (atomic_read(&priv->psstatus.status) > PS_ACTIVE_SET)
-		atomic_inc(&priv->psstatus.confirm_wait);
-}
+अटल अंतरभूत व्योम ps_confirm_रुको_inc(काष्ठा ks_wlan_निजी *priv)
+अणु
+	अगर (atomic_पढ़ो(&priv->psstatus.status) > PS_ACTIVE_SET)
+		atomic_inc(&priv->psstatus.confirm_रुको);
+पूर्ण
 
-static inline void send_request_to_device(struct ks_wlan_private *priv,
-					  void *data, size_t size)
-{
-	ps_confirm_wait_inc(priv);
-	ks_wlan_hw_tx(priv, data, size, NULL, NULL);
-}
+अटल अंतरभूत व्योम send_request_to_device(काष्ठा ks_wlan_निजी *priv,
+					  व्योम *data, माप_प्रकार size)
+अणु
+	ps_confirm_रुको_inc(priv);
+	ks_wlan_hw_tx(priv, data, size, शून्य, शून्य);
+पूर्ण
 
-static void hostif_mib_get_request(struct ks_wlan_private *priv,
+अटल व्योम hostअगर_mib_get_request(काष्ठा ks_wlan_निजी *priv,
 				   u32 mib_attribute)
-{
-	struct hostif_mib_get_request *pp;
+अणु
+	काष्ठा hostअगर_mib_get_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_MIB_GET_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_MIB_GET_REQ);
+	अगर (!pp)
+		वापस;
 
 	pp->mib_attribute = cpu_to_le32(mib_attribute);
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
-}
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
+पूर्ण
 
-static void hostif_mib_set_request(struct ks_wlan_private *priv,
-				   enum mib_attribute attr,
-				   enum mib_data_type type,
-				   void *data, size_t size)
-{
-	struct hostif_mib_set_request_t *pp;
+अटल व्योम hostअगर_mib_set_request(काष्ठा ks_wlan_निजी *priv,
+				   क्रमागत mib_attribute attr,
+				   क्रमागत mib_data_type type,
+				   व्योम *data, माप_प्रकार size)
+अणु
+	काष्ठा hostअगर_mib_set_request_t *pp;
 
-	if (priv->dev_state < DEVICE_STATE_BOOT)
-		return;
+	अगर (priv->dev_state < DEVICE_STATE_BOOT)
+		वापस;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_MIB_SET_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_MIB_SET_REQ);
+	अगर (!pp)
+		वापस;
 
 	pp->mib_attribute = cpu_to_le32(attr);
 	pp->mib_value.size = cpu_to_le16(size);
 	pp->mib_value.type = cpu_to_le16(type);
-	memcpy(&pp->mib_value.body, data, size);
+	स_नकल(&pp->mib_value.body, data, size);
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp) + size));
-}
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp) + size));
+पूर्ण
 
-static inline void hostif_mib_set_request_int(struct ks_wlan_private *priv,
-					      enum mib_attribute attr, int val)
-{
+अटल अंतरभूत व्योम hostअगर_mib_set_request_पूर्णांक(काष्ठा ks_wlan_निजी *priv,
+					      क्रमागत mib_attribute attr, पूर्णांक val)
+अणु
 	__le32 v = cpu_to_le32(val);
-	size_t size = sizeof(v);
+	माप_प्रकार size = माप(v);
 
-	hostif_mib_set_request(priv, attr, MIB_VALUE_TYPE_INT, &v, size);
-}
+	hostअगर_mib_set_request(priv, attr, MIB_VALUE_TYPE_INT, &v, size);
+पूर्ण
 
-static inline void hostif_mib_set_request_bool(struct ks_wlan_private *priv,
-					       enum mib_attribute attr,
+अटल अंतरभूत व्योम hostअगर_mib_set_request_bool(काष्ठा ks_wlan_निजी *priv,
+					       क्रमागत mib_attribute attr,
 					       bool val)
-{
+अणु
 	__le32 v = cpu_to_le32(val);
-	size_t size = sizeof(v);
+	माप_प्रकार size = माप(v);
 
-	hostif_mib_set_request(priv, attr, MIB_VALUE_TYPE_BOOL, &v, size);
-}
+	hostअगर_mib_set_request(priv, attr, MIB_VALUE_TYPE_BOOL, &v, size);
+पूर्ण
 
-static inline void hostif_mib_set_request_ostring(struct ks_wlan_private *priv,
-						  enum mib_attribute attr,
-						  void *data, size_t size)
-{
-	hostif_mib_set_request(priv, attr, MIB_VALUE_TYPE_OSTRING, data, size);
-}
+अटल अंतरभूत व्योम hostअगर_mib_set_request_ostring(काष्ठा ks_wlan_निजी *priv,
+						  क्रमागत mib_attribute attr,
+						  व्योम *data, माप_प्रकार size)
+अणु
+	hostअगर_mib_set_request(priv, attr, MIB_VALUE_TYPE_OSTRING, data, size);
+पूर्ण
 
-static
-void hostif_start_request(struct ks_wlan_private *priv, unsigned char mode)
-{
-	struct hostif_start_request *pp;
+अटल
+व्योम hostअगर_start_request(काष्ठा ks_wlan_निजी *priv, अचिन्हित अक्षर mode)
+अणु
+	काष्ठा hostअगर_start_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_START_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_START_REQ);
+	अगर (!pp)
+		वापस;
 
 	pp->mode = cpu_to_le16(mode);
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
 
 	priv->aplist.size = 0;
 	priv->scan_ind_count = 0;
-}
+पूर्ण
 
-static __le16 ks_wlan_cap(struct ks_wlan_private *priv)
-{
+अटल __le16 ks_wlan_cap(काष्ठा ks_wlan_निजी *priv)
+अणु
 	u16 capability = 0x0000;
 
-	if (priv->reg.preamble == SHORT_PREAMBLE)
+	अगर (priv->reg.preamble == SHORT_PREAMBLE)
 		capability |= WLAN_CAPABILITY_SHORT_PREAMBLE;
 
 	capability &= ~(WLAN_CAPABILITY_PBCC);	/* pbcc not support */
 
-	if (priv->reg.phy_type != D_11B_ONLY_MODE) {
+	अगर (priv->reg.phy_type != D_11B_ONLY_MODE) अणु
 		capability |= WLAN_CAPABILITY_SHORT_SLOT_TIME;
 		capability &= ~(WLAN_CAPABILITY_DSSS_OFDM);
-	}
+	पूर्ण
 
-	return cpu_to_le16(capability);
-}
+	वापस cpu_to_le16(capability);
+पूर्ण
 
-static void init_request(struct ks_wlan_private *priv,
-			 struct hostif_request *req)
-{
+अटल व्योम init_request(काष्ठा ks_wlan_निजी *priv,
+			 काष्ठा hostअगर_request *req)
+अणु
 	req->phy_type = cpu_to_le16(priv->reg.phy_type);
 	req->cts_mode = cpu_to_le16(priv->reg.cts_mode);
 	req->scan_type = cpu_to_le16(priv->reg.scan_type);
 	req->rate_set.size = priv->reg.rate_set.size;
 	req->capability = ks_wlan_cap(priv);
-	memcpy(&req->rate_set.body[0], &priv->reg.rate_set.body[0],
+	स_नकल(&req->rate_set.body[0], &priv->reg.rate_set.body[0],
 	       priv->reg.rate_set.size);
-}
+पूर्ण
 
-static
-void hostif_ps_adhoc_set_request(struct ks_wlan_private *priv)
-{
-	struct hostif_ps_adhoc_set_request *pp;
+अटल
+व्योम hostअगर_ps_adhoc_set_request(काष्ठा ks_wlan_निजी *priv)
+अणु
+	काष्ठा hostअगर_ps_adhoc_set_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_PS_ADH_SET_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_PS_ADH_SET_REQ);
+	अगर (!pp)
+		वापस;
 
 	init_request(priv, &pp->request);
 	pp->channel = cpu_to_le16(priv->reg.channel);
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
-}
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
+पूर्ण
 
-static
-void hostif_infrastructure_set_request(struct ks_wlan_private *priv, int event)
-{
-	struct hostif_infrastructure_set_request *pp;
+अटल
+व्योम hostअगर_infraकाष्ठाure_set_request(काष्ठा ks_wlan_निजी *priv, पूर्णांक event)
+अणु
+	काष्ठा hostअगर_infraकाष्ठाure_set_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), event);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), event);
+	अगर (!pp)
+		वापस;
 
 	init_request(priv, &pp->request);
 	pp->ssid.size = priv->reg.ssid.size;
-	memcpy(&pp->ssid.body[0], &priv->reg.ssid.body[0], priv->reg.ssid.size);
+	स_नकल(&pp->ssid.body[0], &priv->reg.ssid.body[0], priv->reg.ssid.size);
 	pp->beacon_lost_count =
 	    cpu_to_le16(priv->reg.beacon_lost_count);
 	pp->auth_type = cpu_to_le16(priv->reg.authenticate_type);
@@ -1394,138 +1395,138 @@ void hostif_infrastructure_set_request(struct ks_wlan_private *priv, int event)
 	pp->channel_list.body[10] = 6;
 	pp->channel_list.body[11] = 13;
 	pp->channel_list.body[12] = 7;
-	if (priv->reg.phy_type == D_11G_ONLY_MODE) {
+	अगर (priv->reg.phy_type == D_11G_ONLY_MODE) अणु
 		pp->channel_list.size = 13;
-	} else {
+	पूर्ण अन्यथा अणु
 		pp->channel_list.body[13] = 14;
 		pp->channel_list.size = 14;
-	}
+	पूर्ण
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
-}
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
+पूर्ण
 
-static
-void hostif_adhoc_set_request(struct ks_wlan_private *priv)
-{
-	struct hostif_adhoc_set_request *pp;
+अटल
+व्योम hostअगर_adhoc_set_request(काष्ठा ks_wlan_निजी *priv)
+अणु
+	काष्ठा hostअगर_adhoc_set_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_ADH_SET_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_ADH_SET_REQ);
+	अगर (!pp)
+		वापस;
 
 	init_request(priv, &pp->request);
 	pp->channel = cpu_to_le16(priv->reg.channel);
 	pp->ssid.size = priv->reg.ssid.size;
-	memcpy(&pp->ssid.body[0], &priv->reg.ssid.body[0], priv->reg.ssid.size);
+	स_नकल(&pp->ssid.body[0], &priv->reg.ssid.body[0], priv->reg.ssid.size);
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
-}
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
+पूर्ण
 
-static
-void hostif_adhoc_set2_request(struct ks_wlan_private *priv)
-{
-	struct hostif_adhoc_set2_request *pp;
+अटल
+व्योम hostअगर_adhoc_set2_request(काष्ठा ks_wlan_निजी *priv)
+अणु
+	काष्ठा hostअगर_adhoc_set2_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_ADH_SET_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_ADH_SET_REQ);
+	अगर (!pp)
+		वापस;
 
 	init_request(priv, &pp->request);
 	pp->ssid.size = priv->reg.ssid.size;
-	memcpy(&pp->ssid.body[0], &priv->reg.ssid.body[0], priv->reg.ssid.size);
+	स_नकल(&pp->ssid.body[0], &priv->reg.ssid.body[0], priv->reg.ssid.size);
 
 	pp->channel_list.body[0] = priv->reg.channel;
 	pp->channel_list.size = 1;
-	memcpy(pp->bssid, priv->reg.bssid, ETH_ALEN);
+	स_नकल(pp->bssid, priv->reg.bssid, ETH_ALEN);
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
-}
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
+पूर्ण
 
-static
-void hostif_stop_request(struct ks_wlan_private *priv)
-{
-	struct hostif_stop_request *pp;
+अटल
+व्योम hostअगर_stop_request(काष्ठा ks_wlan_निजी *priv)
+अणु
+	काष्ठा hostअगर_stop_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_STOP_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_STOP_REQ);
+	अगर (!pp)
+		वापस;
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
-}
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
+पूर्ण
 
-static
-void hostif_phy_information_request(struct ks_wlan_private *priv)
-{
-	struct hostif_phy_information_request *pp;
+अटल
+व्योम hostअगर_phy_inक्रमmation_request(काष्ठा ks_wlan_निजी *priv)
+अणु
+	काष्ठा hostअगर_phy_inक्रमmation_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_PHY_INFO_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_PHY_INFO_REQ);
+	अगर (!pp)
+		वापस;
 
-	if (priv->reg.phy_info_timer) {
+	अगर (priv->reg.phy_info_समयr) अणु
 		pp->type = cpu_to_le16(TIME_TYPE);
-		pp->time = cpu_to_le16(priv->reg.phy_info_timer);
-	} else {
+		pp->समय = cpu_to_le16(priv->reg.phy_info_समयr);
+	पूर्ण अन्यथा अणु
 		pp->type = cpu_to_le16(NORMAL_TYPE);
-		pp->time = cpu_to_le16(0);
-	}
+		pp->समय = cpu_to_le16(0);
+	पूर्ण
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
-}
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
+पूर्ण
 
-static
-void hostif_power_mgmt_request(struct ks_wlan_private *priv,
+अटल
+व्योम hostअगर_घातer_mgmt_request(काष्ठा ks_wlan_निजी *priv,
 			       u32 mode, u32 wake_up, u32 receive_dtims)
-{
-	struct hostif_power_mgmt_request *pp;
+अणु
+	काष्ठा hostअगर_घातer_mgmt_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_POWER_MGMT_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_POWER_MGMT_REQ);
+	अगर (!pp)
+		वापस;
 
 	pp->mode = cpu_to_le32(mode);
 	pp->wake_up = cpu_to_le32(wake_up);
 	pp->receive_dtims = cpu_to_le32(receive_dtims);
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
-}
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
+पूर्ण
 
-static
-void hostif_sleep_request(struct ks_wlan_private *priv,
-			  enum sleep_mode_type mode)
-{
-	struct hostif_sleep_request *pp;
+अटल
+व्योम hostअगर_sleep_request(काष्ठा ks_wlan_निजी *priv,
+			  क्रमागत sleep_mode_type mode)
+अणु
+	काष्ठा hostअगर_sleep_request *pp;
 
-	if (mode == SLP_SLEEP) {
-		pp = hostif_generic_request(sizeof(*pp), HIF_SLEEP_REQ);
-		if (!pp)
-			return;
+	अगर (mode == SLP_SLEEP) अणु
+		pp = hostअगर_generic_request(माप(*pp), HIF_SLEEP_REQ);
+		अगर (!pp)
+			वापस;
 
-		send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
-	} else if (mode == SLP_ACTIVE) {
+		send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
+	पूर्ण अन्यथा अगर (mode == SLP_ACTIVE) अणु
 		atomic_set(&priv->sleepstatus.wakeup_request, 1);
 		queue_delayed_work(priv->wq, &priv->rw_dwork, 1);
-	} else {
-		netdev_err(priv->net_dev, "invalid mode %ld\n", (long)mode);
-		return;
-	}
-}
+	पूर्ण अन्यथा अणु
+		netdev_err(priv->net_dev, "invalid mode %ld\n", (दीर्घ)mode);
+		वापस;
+	पूर्ण
+पूर्ण
 
-static
-void hostif_bss_scan_request(struct ks_wlan_private *priv,
-			     unsigned long scan_type, u8 *scan_ssid,
+अटल
+व्योम hostअगर_bss_scan_request(काष्ठा ks_wlan_निजी *priv,
+			     अचिन्हित दीर्घ scan_type, u8 *scan_ssid,
 			     u8 scan_ssid_len)
-{
-	struct hostif_bss_scan_request *pp;
+अणु
+	काष्ठा hostअगर_bss_scan_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_SCAN_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_SCAN_REQ);
+	अगर (!pp)
+		वापस;
 
 	pp->scan_type = scan_type;
 
-	pp->ch_time_min = cpu_to_le32(110);	/* default value */
-	pp->ch_time_max = cpu_to_le32(130);	/* default value */
+	pp->ch_समय_min = cpu_to_le32(110);	/* शेष value */
+	pp->ch_समय_max = cpu_to_le32(130);	/* शेष value */
 	pp->channel_list.body[0] = 1;
 	pp->channel_list.body[1] = 8;
 	pp->channel_list.body[2] = 2;
@@ -1539,271 +1540,271 @@ void hostif_bss_scan_request(struct ks_wlan_private *priv,
 	pp->channel_list.body[10] = 6;
 	pp->channel_list.body[11] = 13;
 	pp->channel_list.body[12] = 7;
-	if (priv->reg.phy_type == D_11G_ONLY_MODE) {
+	अगर (priv->reg.phy_type == D_11G_ONLY_MODE) अणु
 		pp->channel_list.size = 13;
-	} else {
+	पूर्ण अन्यथा अणु
 		pp->channel_list.body[13] = 14;
 		pp->channel_list.size = 14;
-	}
+	पूर्ण
 	pp->ssid.size = 0;
 
-	/* specified SSID SCAN */
-	if (scan_ssid_len > 0 && scan_ssid_len <= 32) {
+	/* specअगरied SSID SCAN */
+	अगर (scan_ssid_len > 0 && scan_ssid_len <= 32) अणु
 		pp->ssid.size = scan_ssid_len;
-		memcpy(&pp->ssid.body[0], scan_ssid, scan_ssid_len);
-	}
+		स_नकल(&pp->ssid.body[0], scan_ssid, scan_ssid_len);
+	पूर्ण
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
 
 	priv->aplist.size = 0;
 	priv->scan_ind_count = 0;
-}
+पूर्ण
 
-static
-void hostif_mic_failure_request(struct ks_wlan_private *priv,
-				u16 failure_count, u16 timer)
-{
-	struct hostif_mic_failure_request *pp;
+अटल
+व्योम hostअगर_mic_failure_request(काष्ठा ks_wlan_निजी *priv,
+				u16 failure_count, u16 समयr)
+अणु
+	काष्ठा hostअगर_mic_failure_request *pp;
 
-	pp = hostif_generic_request(sizeof(*pp), HIF_MIC_FAILURE_REQ);
-	if (!pp)
-		return;
+	pp = hostअगर_generic_request(माप(*pp), HIF_MIC_FAILURE_REQ);
+	अगर (!pp)
+		वापस;
 
 	pp->failure_count = cpu_to_le16(failure_count);
-	pp->timer = cpu_to_le16(timer);
+	pp->समयr = cpu_to_le16(समयr);
 
-	send_request_to_device(priv, pp, hif_align_size(sizeof(*pp)));
-}
+	send_request_to_device(priv, pp, hअगर_align_size(माप(*pp)));
+पूर्ण
 
 /* Device I/O Receive indicate */
-static void devio_rec_ind(struct ks_wlan_private *priv, unsigned char *p,
-			  unsigned int size)
-{
-	if (!priv->is_device_open)
-		return;
+अटल व्योम devio_rec_ind(काष्ठा ks_wlan_निजी *priv, अचिन्हित अक्षर *p,
+			  अचिन्हित पूर्णांक size)
+अणु
+	अगर (!priv->is_device_खोलो)
+		वापस;
 
-	spin_lock(&priv->dev_read_lock);
-	priv->dev_data[atomic_read(&priv->rec_count)] = p;
-	priv->dev_size[atomic_read(&priv->rec_count)] = size;
+	spin_lock(&priv->dev_पढ़ो_lock);
+	priv->dev_data[atomic_पढ़ो(&priv->rec_count)] = p;
+	priv->dev_size[atomic_पढ़ो(&priv->rec_count)] = size;
 
-	if (atomic_read(&priv->event_count) != DEVICE_STOCK_COUNT) {
+	अगर (atomic_पढ़ो(&priv->event_count) != DEVICE_STOCK_COUNT) अणु
 		/* rx event count inc */
 		atomic_inc(&priv->event_count);
-	}
+	पूर्ण
 	atomic_inc(&priv->rec_count);
-	if (atomic_read(&priv->rec_count) == DEVICE_STOCK_COUNT)
+	अगर (atomic_पढ़ो(&priv->rec_count) == DEVICE_STOCK_COUNT)
 		atomic_set(&priv->rec_count, 0);
 
-	wake_up_interruptible_all(&priv->devread_wait);
+	wake_up_पूर्णांकerruptible_all(&priv->devपढ़ो_रुको);
 
-	spin_unlock(&priv->dev_read_lock);
-}
+	spin_unlock(&priv->dev_पढ़ो_lock);
+पूर्ण
 
-void hostif_receive(struct ks_wlan_private *priv, unsigned char *p,
-		    unsigned int size)
-{
+व्योम hostअगर_receive(काष्ठा ks_wlan_निजी *priv, अचिन्हित अक्षर *p,
+		    अचिन्हित पूर्णांक size)
+अणु
 	devio_rec_ind(priv, p, size);
 
 	priv->rxp = p;
 	priv->rx_size = size;
 
-	if (get_word(priv) == priv->rx_size)
-		hostif_event_check(priv);
-}
+	अगर (get_word(priv) == priv->rx_size)
+		hostअगर_event_check(priv);
+पूर्ण
 
-static void hostif_sme_set_wep(struct ks_wlan_private *priv, int type)
-{
-	switch (type) {
-	case SME_WEP_INDEX_REQUEST:
-		hostif_mib_set_request_int(priv, DOT11_WEP_DEFAULT_KEY_ID,
+अटल व्योम hostअगर_sme_set_wep(काष्ठा ks_wlan_निजी *priv, पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल SME_WEP_INDEX_REQUEST:
+		hostअगर_mib_set_request_पूर्णांक(priv, DOT11_WEP_DEFAULT_KEY_ID,
 					   priv->reg.wep_index);
-		break;
-	case SME_WEP_KEY1_REQUEST:
-		if (priv->wpa.wpa_enabled)
-			return;
-		hostif_mib_set_request_ostring(priv,
+		अवरोध;
+	हाल SME_WEP_KEY1_REQUEST:
+		अगर (priv->wpa.wpa_enabled)
+			वापस;
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_WEP_DEFAULT_KEY_VALUE1,
 					       &priv->reg.wep_key[0].val[0],
 					       priv->reg.wep_key[0].size);
-		break;
-	case SME_WEP_KEY2_REQUEST:
-		if (priv->wpa.wpa_enabled)
-			return;
-		hostif_mib_set_request_ostring(priv,
+		अवरोध;
+	हाल SME_WEP_KEY2_REQUEST:
+		अगर (priv->wpa.wpa_enabled)
+			वापस;
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_WEP_DEFAULT_KEY_VALUE2,
 					       &priv->reg.wep_key[1].val[0],
 					       priv->reg.wep_key[1].size);
-		break;
-	case SME_WEP_KEY3_REQUEST:
-		if (priv->wpa.wpa_enabled)
-			return;
-		hostif_mib_set_request_ostring(priv,
+		अवरोध;
+	हाल SME_WEP_KEY3_REQUEST:
+		अगर (priv->wpa.wpa_enabled)
+			वापस;
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_WEP_DEFAULT_KEY_VALUE3,
 					       &priv->reg.wep_key[2].val[0],
 					       priv->reg.wep_key[2].size);
-		break;
-	case SME_WEP_KEY4_REQUEST:
-		if (priv->wpa.wpa_enabled)
-			return;
-		hostif_mib_set_request_ostring(priv,
+		अवरोध;
+	हाल SME_WEP_KEY4_REQUEST:
+		अगर (priv->wpa.wpa_enabled)
+			वापस;
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_WEP_DEFAULT_KEY_VALUE4,
 					       &priv->reg.wep_key[3].val[0],
 					       priv->reg.wep_key[3].size);
-		break;
-	case SME_WEP_FLAG_REQUEST:
-		hostif_mib_set_request_bool(priv, DOT11_PRIVACY_INVOKED,
+		अवरोध;
+	हाल SME_WEP_FLAG_REQUEST:
+		hostअगर_mib_set_request_bool(priv, DOT11_PRIVACY_INVOKED,
 					    priv->reg.privacy_invoked);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-struct wpa_suite {
+काष्ठा wpa_suite अणु
 	__le16 size;
-	unsigned char suite[4][CIPHER_ID_LEN];
-} __packed;
+	अचिन्हित अक्षर suite[4][CIPHER_ID_LEN];
+पूर्ण __packed;
 
-struct rsn_mode {
+काष्ठा rsn_mode अणु
 	__le32 rsn_mode;
 	__le16 rsn_capability;
-} __packed;
+पूर्ण __packed;
 
-static void hostif_sme_set_rsn(struct ks_wlan_private *priv, int type)
-{
-	struct wpa_suite wpa_suite;
-	struct rsn_mode rsn_mode;
-	size_t size;
+अटल व्योम hostअगर_sme_set_rsn(काष्ठा ks_wlan_निजी *priv, पूर्णांक type)
+अणु
+	काष्ठा wpa_suite wpa_suite;
+	काष्ठा rsn_mode rsn_mode;
+	माप_प्रकार size;
 	u32 mode;
-	const u8 *buf = NULL;
+	स्थिर u8 *buf = शून्य;
 
-	memset(&wpa_suite, 0, sizeof(wpa_suite));
+	स_रखो(&wpa_suite, 0, माप(wpa_suite));
 
-	switch (type) {
-	case SME_RSN_UCAST_REQUEST:
+	चयन (type) अणु
+	हाल SME_RSN_UCAST_REQUEST:
 		wpa_suite.size = cpu_to_le16(1);
-		switch (priv->wpa.pairwise_suite) {
-		case IW_AUTH_CIPHER_NONE:
+		चयन (priv->wpa.pairwise_suite) अणु
+		हाल IW_AUTH_CIPHER_NONE:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				CIPHER_ID_WPA2_NONE : CIPHER_ID_WPA_NONE;
-			break;
-		case IW_AUTH_CIPHER_WEP40:
+			अवरोध;
+		हाल IW_AUTH_CIPHER_WEP40:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				CIPHER_ID_WPA2_WEP40 : CIPHER_ID_WPA_WEP40;
-			break;
-		case IW_AUTH_CIPHER_TKIP:
+			अवरोध;
+		हाल IW_AUTH_CIPHER_TKIP:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				CIPHER_ID_WPA2_TKIP : CIPHER_ID_WPA_TKIP;
-			break;
-		case IW_AUTH_CIPHER_CCMP:
+			अवरोध;
+		हाल IW_AUTH_CIPHER_CCMP:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				CIPHER_ID_WPA2_CCMP : CIPHER_ID_WPA_CCMP;
-			break;
-		case IW_AUTH_CIPHER_WEP104:
+			अवरोध;
+		हाल IW_AUTH_CIPHER_WEP104:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				CIPHER_ID_WPA2_WEP104 : CIPHER_ID_WPA_WEP104;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (buf)
-			memcpy(&wpa_suite.suite[0][0], buf, CIPHER_ID_LEN);
-		size = sizeof(wpa_suite.size) +
+		अगर (buf)
+			स_नकल(&wpa_suite.suite[0][0], buf, CIPHER_ID_LEN);
+		size = माप(wpa_suite.size) +
 		       (CIPHER_ID_LEN * le16_to_cpu(wpa_suite.size));
-		hostif_mib_set_request_ostring(priv,
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_RSN_CONFIG_UNICAST_CIPHER,
 					       &wpa_suite, size);
-		break;
-	case SME_RSN_MCAST_REQUEST:
-		switch (priv->wpa.group_suite) {
-		case IW_AUTH_CIPHER_NONE:
+		अवरोध;
+	हाल SME_RSN_MCAST_REQUEST:
+		चयन (priv->wpa.group_suite) अणु
+		हाल IW_AUTH_CIPHER_NONE:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				CIPHER_ID_WPA2_NONE : CIPHER_ID_WPA_NONE;
-			break;
-		case IW_AUTH_CIPHER_WEP40:
+			अवरोध;
+		हाल IW_AUTH_CIPHER_WEP40:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				CIPHER_ID_WPA2_WEP40 : CIPHER_ID_WPA_WEP40;
-			break;
-		case IW_AUTH_CIPHER_TKIP:
+			अवरोध;
+		हाल IW_AUTH_CIPHER_TKIP:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				CIPHER_ID_WPA2_TKIP : CIPHER_ID_WPA_TKIP;
-			break;
-		case IW_AUTH_CIPHER_CCMP:
+			अवरोध;
+		हाल IW_AUTH_CIPHER_CCMP:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				CIPHER_ID_WPA2_CCMP : CIPHER_ID_WPA_CCMP;
-			break;
-		case IW_AUTH_CIPHER_WEP104:
+			अवरोध;
+		हाल IW_AUTH_CIPHER_WEP104:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				CIPHER_ID_WPA2_WEP104 : CIPHER_ID_WPA_WEP104;
-			break;
-		}
-		if (buf)
-			memcpy(&wpa_suite.suite[0][0], buf, CIPHER_ID_LEN);
-		hostif_mib_set_request_ostring(priv,
+			अवरोध;
+		पूर्ण
+		अगर (buf)
+			स_नकल(&wpa_suite.suite[0][0], buf, CIPHER_ID_LEN);
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_RSN_CONFIG_MULTICAST_CIPHER,
 					       &wpa_suite.suite[0][0],
 					       CIPHER_ID_LEN);
-		break;
-	case SME_RSN_AUTH_REQUEST:
+		अवरोध;
+	हाल SME_RSN_AUTH_REQUEST:
 		wpa_suite.size = cpu_to_le16(1);
-		switch (priv->wpa.key_mgmt_suite) {
-		case IW_AUTH_KEY_MGMT_802_1X:
+		चयन (priv->wpa.key_mgmt_suite) अणु
+		हाल IW_AUTH_KEY_MGMT_802_1X:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				KEY_MGMT_ID_WPA2_1X : KEY_MGMT_ID_WPA_1X;
-			break;
-		case IW_AUTH_KEY_MGMT_PSK:
+			अवरोध;
+		हाल IW_AUTH_KEY_MGMT_PSK:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				KEY_MGMT_ID_WPA2_PSK : KEY_MGMT_ID_WPA_PSK;
-			break;
-		case 0:
+			अवरोध;
+		हाल 0:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				KEY_MGMT_ID_WPA2_NONE : KEY_MGMT_ID_WPA_NONE;
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			buf = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 				KEY_MGMT_ID_WPA2_WPANONE :
 				KEY_MGMT_ID_WPA_WPANONE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (buf)
-			memcpy(&wpa_suite.suite[0][0], buf, KEY_MGMT_ID_LEN);
-		size = sizeof(wpa_suite.size) +
+		अगर (buf)
+			स_नकल(&wpa_suite.suite[0][0], buf, KEY_MGMT_ID_LEN);
+		size = माप(wpa_suite.size) +
 		       (KEY_MGMT_ID_LEN * le16_to_cpu(wpa_suite.size));
-		hostif_mib_set_request_ostring(priv,
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_RSN_CONFIG_AUTH_SUITE,
 					       &wpa_suite, size);
-		break;
-	case SME_RSN_ENABLED_REQUEST:
-		hostif_mib_set_request_bool(priv, DOT11_RSN_ENABLED,
+		अवरोध;
+	हाल SME_RSN_ENABLED_REQUEST:
+		hostअगर_mib_set_request_bool(priv, DOT11_RSN_ENABLED,
 					    priv->wpa.rsn_enabled);
-		break;
-	case SME_RSN_MODE_REQUEST:
+		अवरोध;
+	हाल SME_RSN_MODE_REQUEST:
 		mode = (priv->wpa.version == IW_AUTH_WPA_VERSION_WPA2) ?
 			RSN_MODE_WPA2 :
 			(priv->wpa.version == IW_AUTH_WPA_VERSION_WPA) ?
 			 RSN_MODE_WPA : RSN_MODE_NONE;
 		rsn_mode.rsn_mode = cpu_to_le32(mode);
 		rsn_mode.rsn_capability = cpu_to_le16(0);
-		hostif_mib_set_request_ostring(priv, LOCAL_RSN_MODE,
-					       &rsn_mode, sizeof(rsn_mode));
-		break;
-	}
-}
+		hostअगर_mib_set_request_ostring(priv, LOCAL_RSN_MODE,
+					       &rsn_mode, माप(rsn_mode));
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static
-void hostif_sme_mode_setup(struct ks_wlan_private *priv)
-{
-	unsigned char rate_size;
-	unsigned char rate_octet[RATE_SET_MAX_SIZE];
-	int i = 0;
+अटल
+व्योम hostअगर_sme_mode_setup(काष्ठा ks_wlan_निजी *priv)
+अणु
+	अचिन्हित अक्षर rate_size;
+	अचिन्हित अक्षर rate_octet[RATE_SET_MAX_SIZE];
+	पूर्णांक i = 0;
 
-	/* rate setting if rate segging is auto for changing phy_type (#94) */
-	if (priv->reg.tx_rate == TX_RATE_FULL_AUTO) {
-		if (priv->reg.phy_type == D_11B_ONLY_MODE) {
+	/* rate setting अगर rate segging is स्वतः क्रम changing phy_type (#94) */
+	अगर (priv->reg.tx_rate == TX_RATE_FULL_AUTO) अणु
+		अगर (priv->reg.phy_type == D_11B_ONLY_MODE) अणु
 			priv->reg.rate_set.body[3] = TX_RATE_11M;
 			priv->reg.rate_set.body[2] = TX_RATE_5M;
 			priv->reg.rate_set.body[1] = TX_RATE_2M | BASIC_RATE;
 			priv->reg.rate_set.body[0] = TX_RATE_1M | BASIC_RATE;
 			priv->reg.rate_set.size = 4;
-		} else {	/* D_11G_ONLY_MODE or D_11BG_COMPATIBLE_MODE */
+		पूर्ण अन्यथा अणु	/* D_11G_ONLY_MODE or D_11BG_COMPATIBLE_MODE */
 			priv->reg.rate_set.body[11] = TX_RATE_54M;
 			priv->reg.rate_set.body[10] = TX_RATE_48M;
 			priv->reg.rate_set.body[9] = TX_RATE_36M;
@@ -1817,504 +1818,504 @@ void hostif_sme_mode_setup(struct ks_wlan_private *priv)
 			priv->reg.rate_set.body[1] = TX_RATE_2M | BASIC_RATE;
 			priv->reg.rate_set.body[0] = TX_RATE_1M | BASIC_RATE;
 			priv->reg.rate_set.size = 12;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* rate mask by phy setting */
-	if (priv->reg.phy_type == D_11B_ONLY_MODE) {
-		for (i = 0; i < priv->reg.rate_set.size; i++) {
-			if (!is_11b_rate(priv->reg.rate_set.body[i]))
-				break;
+	अगर (priv->reg.phy_type == D_11B_ONLY_MODE) अणु
+		क्रम (i = 0; i < priv->reg.rate_set.size; i++) अणु
+			अगर (!is_11b_rate(priv->reg.rate_set.body[i]))
+				अवरोध;
 
-			if ((priv->reg.rate_set.body[i] & RATE_MASK) >= TX_RATE_5M) {
+			अगर ((priv->reg.rate_set.body[i] & RATE_MASK) >= TX_RATE_5M) अणु
 				rate_octet[i] = priv->reg.rate_set.body[i] &
 						RATE_MASK;
-			} else {
+			पूर्ण अन्यथा अणु
 				rate_octet[i] = priv->reg.rate_set.body[i];
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	} else {	/* D_11G_ONLY_MODE or D_11BG_COMPATIBLE_MODE */
-		for (i = 0; i < priv->reg.rate_set.size; i++) {
-			if (!is_11bg_rate(priv->reg.rate_set.body[i]))
-				break;
+	पूर्ण अन्यथा अणु	/* D_11G_ONLY_MODE or D_11BG_COMPATIBLE_MODE */
+		क्रम (i = 0; i < priv->reg.rate_set.size; i++) अणु
+			अगर (!is_11bg_rate(priv->reg.rate_set.body[i]))
+				अवरोध;
 
-			if (is_ofdm_ext_rate(priv->reg.rate_set.body[i])) {
+			अगर (is_ofdm_ext_rate(priv->reg.rate_set.body[i])) अणु
 				rate_octet[i] = priv->reg.rate_set.body[i] &
 						RATE_MASK;
-			} else {
+			पूर्ण अन्यथा अणु
 				rate_octet[i] = priv->reg.rate_set.body[i];
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	rate_size = i;
-	if (rate_size == 0) {
-		if (priv->reg.phy_type == D_11G_ONLY_MODE)
+	अगर (rate_size == 0) अणु
+		अगर (priv->reg.phy_type == D_11G_ONLY_MODE)
 			rate_octet[0] = TX_RATE_6M | BASIC_RATE;
-		else
+		अन्यथा
 			rate_octet[0] = TX_RATE_2M | BASIC_RATE;
 		rate_size = 1;
-	}
+	पूर्ण
 
 	/* rate set update */
 	priv->reg.rate_set.size = rate_size;
-	memcpy(&priv->reg.rate_set.body[0], &rate_octet[0], rate_size);
+	स_नकल(&priv->reg.rate_set.body[0], &rate_octet[0], rate_size);
 
-	switch (priv->reg.operation_mode) {
-	case MODE_PSEUDO_ADHOC:
-		hostif_ps_adhoc_set_request(priv);
-		break;
-	case MODE_INFRASTRUCTURE:
-		if (!is_valid_ether_addr((u8 *)priv->reg.bssid)) {
-			hostif_infrastructure_set_request(priv,
+	चयन (priv->reg.operation_mode) अणु
+	हाल MODE_PSEUDO_ADHOC:
+		hostअगर_ps_adhoc_set_request(priv);
+		अवरोध;
+	हाल MODE_INFRASTRUCTURE:
+		अगर (!is_valid_ether_addr((u8 *)priv->reg.bssid)) अणु
+			hostअगर_infraकाष्ठाure_set_request(priv,
 							  HIF_INFRA_SET_REQ);
-		} else {
-			hostif_infrastructure_set_request(priv,
+		पूर्ण अन्यथा अणु
+			hostअगर_infraकाष्ठाure_set_request(priv,
 							  HIF_INFRA_SET2_REQ);
 			netdev_dbg(priv->net_dev,
 				   "Infra bssid = %pM\n", priv->reg.bssid);
-		}
-		break;
-	case MODE_ADHOC:
-		if (!is_valid_ether_addr((u8 *)priv->reg.bssid)) {
-			hostif_adhoc_set_request(priv);
-		} else {
-			hostif_adhoc_set2_request(priv);
+		पूर्ण
+		अवरोध;
+	हाल MODE_ADHOC:
+		अगर (!is_valid_ether_addr((u8 *)priv->reg.bssid)) अणु
+			hostअगर_adhoc_set_request(priv);
+		पूर्ण अन्यथा अणु
+			hostअगर_adhoc_set2_request(priv);
 			netdev_dbg(priv->net_dev,
 				   "Adhoc bssid = %pM\n", priv->reg.bssid);
-		}
-		break;
-	default:
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static
-void hostif_sme_multicast_set(struct ks_wlan_private *priv)
-{
-	struct net_device *dev = priv->net_dev;
-	int mc_count;
-	struct netdev_hw_addr *ha;
-	char set_address[NIC_MAX_MCAST_LIST * ETH_ALEN];
-	int i = 0;
+अटल
+व्योम hostअगर_sme_multicast_set(काष्ठा ks_wlan_निजी *priv)
+अणु
+	काष्ठा net_device *dev = priv->net_dev;
+	पूर्णांक mc_count;
+	काष्ठा netdev_hw_addr *ha;
+	अक्षर set_address[NIC_MAX_MCAST_LIST * ETH_ALEN];
+	पूर्णांक i = 0;
 
 	spin_lock(&priv->multicast_spin);
 
-	memset(set_address, 0, NIC_MAX_MCAST_LIST * ETH_ALEN);
+	स_रखो(set_address, 0, NIC_MAX_MCAST_LIST * ETH_ALEN);
 
-	if (dev->flags & IFF_PROMISC) {
-		hostif_mib_set_request_int(priv, LOCAL_MULTICAST_FILTER,
+	अगर (dev->flags & IFF_PROMISC) अणु
+		hostअगर_mib_set_request_पूर्णांक(priv, LOCAL_MULTICAST_FILTER,
 					   MCAST_FILTER_PROMISC);
-		goto spin_unlock;
-	}
+		जाओ spin_unlock;
+	पूर्ण
 
-	if ((netdev_mc_count(dev) > NIC_MAX_MCAST_LIST) ||
-	    (dev->flags & IFF_ALLMULTI)) {
-		hostif_mib_set_request_int(priv, LOCAL_MULTICAST_FILTER,
+	अगर ((netdev_mc_count(dev) > NIC_MAX_MCAST_LIST) ||
+	    (dev->flags & IFF_ALLMULTI)) अणु
+		hostअगर_mib_set_request_पूर्णांक(priv, LOCAL_MULTICAST_FILTER,
 					   MCAST_FILTER_MCASTALL);
-		goto spin_unlock;
-	}
+		जाओ spin_unlock;
+	पूर्ण
 
-	if (priv->sme_i.sme_flag & SME_MULTICAST) {
+	अगर (priv->sme_i.sme_flag & SME_MULTICAST) अणु
 		mc_count = netdev_mc_count(dev);
-		netdev_for_each_mc_addr(ha, dev) {
+		netdev_क्रम_each_mc_addr(ha, dev) अणु
 			ether_addr_copy(&set_address[i * ETH_ALEN], ha->addr);
 			i++;
-		}
+		पूर्ण
 		priv->sme_i.sme_flag &= ~SME_MULTICAST;
-		hostif_mib_set_request_ostring(priv, LOCAL_MULTICAST_ADDRESS,
+		hostअगर_mib_set_request_ostring(priv, LOCAL_MULTICAST_ADDRESS,
 					       &set_address[0],
 					       ETH_ALEN * mc_count);
-	} else {
+	पूर्ण अन्यथा अणु
 		priv->sme_i.sme_flag |= SME_MULTICAST;
-		hostif_mib_set_request_int(priv, LOCAL_MULTICAST_FILTER,
+		hostअगर_mib_set_request_पूर्णांक(priv, LOCAL_MULTICAST_FILTER,
 					   MCAST_FILTER_MCAST);
-	}
+	पूर्ण
 
 spin_unlock:
 	spin_unlock(&priv->multicast_spin);
-}
+पूर्ण
 
-static void hostif_sme_power_mgmt_set(struct ks_wlan_private *priv)
-{
+अटल व्योम hostअगर_sme_घातer_mgmt_set(काष्ठा ks_wlan_निजी *priv)
+अणु
 	u32 mode, wake_up, receive_dtims;
 
-	if (priv->reg.power_mgmt != POWER_MGMT_SAVE1 &&
-	    priv->reg.power_mgmt != POWER_MGMT_SAVE2) {
+	अगर (priv->reg.घातer_mgmt != POWER_MGMT_SAVE1 &&
+	    priv->reg.घातer_mgmt != POWER_MGMT_SAVE2) अणु
 		mode = POWER_ACTIVE;
 		wake_up = 0;
 		receive_dtims = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		mode = (priv->reg.operation_mode == MODE_INFRASTRUCTURE) ?
 			POWER_SAVE : POWER_ACTIVE;
 		wake_up = 0;
 		receive_dtims = (priv->reg.operation_mode == MODE_INFRASTRUCTURE &&
-				 priv->reg.power_mgmt == POWER_MGMT_SAVE2);
-	}
+				 priv->reg.घातer_mgmt == POWER_MGMT_SAVE2);
+	पूर्ण
 
-	hostif_power_mgmt_request(priv, mode, wake_up, receive_dtims);
-}
+	hostअगर_घातer_mgmt_request(priv, mode, wake_up, receive_dtims);
+पूर्ण
 
-static void hostif_sme_sleep_set(struct ks_wlan_private *priv)
-{
-	if (priv->sleep_mode != SLP_SLEEP &&
+अटल व्योम hostअगर_sme_sleep_set(काष्ठा ks_wlan_निजी *priv)
+अणु
+	अगर (priv->sleep_mode != SLP_SLEEP &&
 	    priv->sleep_mode != SLP_ACTIVE)
-		return;
+		वापस;
 
-	hostif_sleep_request(priv, priv->sleep_mode);
-}
+	hostअगर_sleep_request(priv, priv->sleep_mode);
+पूर्ण
 
-static
-void hostif_sme_set_key(struct ks_wlan_private *priv, int type)
-{
-	switch (type) {
-	case SME_SET_FLAG:
-		hostif_mib_set_request_bool(priv, DOT11_PRIVACY_INVOKED,
+अटल
+व्योम hostअगर_sme_set_key(काष्ठा ks_wlan_निजी *priv, पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल SME_SET_FLAG:
+		hostअगर_mib_set_request_bool(priv, DOT11_PRIVACY_INVOKED,
 					    priv->reg.privacy_invoked);
-		break;
-	case SME_SET_TXKEY:
-		hostif_mib_set_request_int(priv, DOT11_WEP_DEFAULT_KEY_ID,
+		अवरोध;
+	हाल SME_SET_TXKEY:
+		hostअगर_mib_set_request_पूर्णांक(priv, DOT11_WEP_DEFAULT_KEY_ID,
 					   priv->wpa.txkey);
-		break;
-	case SME_SET_KEY1:
-		hostif_mib_set_request_ostring(priv,
+		अवरोध;
+	हाल SME_SET_KEY1:
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_WEP_DEFAULT_KEY_VALUE1,
 					       &priv->wpa.key[0].key_val[0],
 					       priv->wpa.key[0].key_len);
-		break;
-	case SME_SET_KEY2:
-		hostif_mib_set_request_ostring(priv,
+		अवरोध;
+	हाल SME_SET_KEY2:
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_WEP_DEFAULT_KEY_VALUE2,
 					       &priv->wpa.key[1].key_val[0],
 					       priv->wpa.key[1].key_len);
-		break;
-	case SME_SET_KEY3:
-		hostif_mib_set_request_ostring(priv,
+		अवरोध;
+	हाल SME_SET_KEY3:
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_WEP_DEFAULT_KEY_VALUE3,
 					       &priv->wpa.key[2].key_val[0],
 					       priv->wpa.key[2].key_len);
-		break;
-	case SME_SET_KEY4:
-		hostif_mib_set_request_ostring(priv,
+		अवरोध;
+	हाल SME_SET_KEY4:
+		hostअगर_mib_set_request_ostring(priv,
 					       DOT11_WEP_DEFAULT_KEY_VALUE4,
 					       &priv->wpa.key[3].key_val[0],
 					       priv->wpa.key[3].key_len);
-		break;
-	case SME_SET_PMK_TSC:
-		hostif_mib_set_request_ostring(priv, DOT11_PMK_TSC,
+		अवरोध;
+	हाल SME_SET_PMK_TSC:
+		hostअगर_mib_set_request_ostring(priv, DOT11_PMK_TSC,
 					       &priv->wpa.key[0].rx_seq[0],
 					       WPA_RX_SEQ_LEN);
-		break;
-	case SME_SET_GMK1_TSC:
-		hostif_mib_set_request_ostring(priv, DOT11_GMK1_TSC,
+		अवरोध;
+	हाल SME_SET_GMK1_TSC:
+		hostअगर_mib_set_request_ostring(priv, DOT11_GMK1_TSC,
 					       &priv->wpa.key[1].rx_seq[0],
 					       WPA_RX_SEQ_LEN);
-		break;
-	case SME_SET_GMK2_TSC:
-		hostif_mib_set_request_ostring(priv, DOT11_GMK2_TSC,
+		अवरोध;
+	हाल SME_SET_GMK2_TSC:
+		hostअगर_mib_set_request_ostring(priv, DOT11_GMK2_TSC,
 					       &priv->wpa.key[2].rx_seq[0],
 					       WPA_RX_SEQ_LEN);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static
-void hostif_sme_set_pmksa(struct ks_wlan_private *priv)
-{
-	struct pmk_cache {
+अटल
+व्योम hostअगर_sme_set_pmksa(काष्ठा ks_wlan_निजी *priv)
+अणु
+	काष्ठा pmk_cache अणु
 		__le16 size;
-		struct {
+		काष्ठा अणु
 			u8 bssid[ETH_ALEN];
 			u8 pmkid[IW_PMKID_LEN];
-		} __packed list[PMK_LIST_MAX];
-	} __packed pmkcache;
-	struct pmk *pmk;
-	size_t size;
-	int i = 0;
+		पूर्ण __packed list[PMK_LIST_MAX];
+	पूर्ण __packed pmkcache;
+	काष्ठा pmk *pmk;
+	माप_प्रकार size;
+	पूर्णांक i = 0;
 
-	list_for_each_entry(pmk, &priv->pmklist.head, list) {
-		if (i >= PMK_LIST_MAX)
-			break;
+	list_क्रम_each_entry(pmk, &priv->pmklist.head, list) अणु
+		अगर (i >= PMK_LIST_MAX)
+			अवरोध;
 		ether_addr_copy(pmkcache.list[i].bssid, pmk->bssid);
-		memcpy(pmkcache.list[i].pmkid, pmk->pmkid, IW_PMKID_LEN);
+		स_नकल(pmkcache.list[i].pmkid, pmk->pmkid, IW_PMKID_LEN);
 		i++;
-	}
+	पूर्ण
 	pmkcache.size = cpu_to_le16(priv->pmklist.size);
-	size = sizeof(priv->pmklist.size) +
+	size = माप(priv->pmklist.size) +
 	       ((ETH_ALEN + IW_PMKID_LEN) * priv->pmklist.size);
-	hostif_mib_set_request_ostring(priv, LOCAL_PMK, &pmkcache, size);
-}
+	hostअगर_mib_set_request_ostring(priv, LOCAL_PMK, &pmkcache, size);
+पूर्ण
 
 /* execute sme */
-static void hostif_sme_execute(struct ks_wlan_private *priv, int event)
-{
+अटल व्योम hostअगर_sme_execute(काष्ठा ks_wlan_निजी *priv, पूर्णांक event)
+अणु
 	u16 failure;
 
-	switch (event) {
-	case SME_START:
-		if (priv->dev_state == DEVICE_STATE_BOOT)
-			hostif_mib_get_request(priv, DOT11_MAC_ADDRESS);
-		break;
-	case SME_MULTICAST_REQUEST:
-		hostif_sme_multicast_set(priv);
-		break;
-	case SME_MACADDRESS_SET_REQUEST:
-		hostif_mib_set_request_ostring(priv, LOCAL_CURRENTADDRESS,
+	चयन (event) अणु
+	हाल SME_START:
+		अगर (priv->dev_state == DEVICE_STATE_BOOT)
+			hostअगर_mib_get_request(priv, DOT11_MAC_ADDRESS);
+		अवरोध;
+	हाल SME_MULTICAST_REQUEST:
+		hostअगर_sme_multicast_set(priv);
+		अवरोध;
+	हाल SME_MACADDRESS_SET_REQUEST:
+		hostअगर_mib_set_request_ostring(priv, LOCAL_CURRENTADDRESS,
 					       &priv->eth_addr[0], ETH_ALEN);
-		break;
-	case SME_BSS_SCAN_REQUEST:
-		hostif_bss_scan_request(priv, priv->reg.scan_type,
+		अवरोध;
+	हाल SME_BSS_SCAN_REQUEST:
+		hostअगर_bss_scan_request(priv, priv->reg.scan_type,
 					priv->scan_ssid, priv->scan_ssid_len);
-		break;
-	case SME_POW_MNGMT_REQUEST:
-		hostif_sme_power_mgmt_set(priv);
-		break;
-	case SME_PHY_INFO_REQUEST:
-		hostif_phy_information_request(priv);
-		break;
-	case SME_MIC_FAILURE_REQUEST:
+		अवरोध;
+	हाल SME_POW_MNGMT_REQUEST:
+		hostअगर_sme_घातer_mgmt_set(priv);
+		अवरोध;
+	हाल SME_PHY_INFO_REQUEST:
+		hostअगर_phy_inक्रमmation_request(priv);
+		अवरोध;
+	हाल SME_MIC_FAILURE_REQUEST:
 		failure = priv->wpa.mic_failure.failure;
-		if (failure != 1 && failure != 2) {
+		अगर (failure != 1 && failure != 2) अणु
 			netdev_err(priv->net_dev,
 				   "SME_MIC_FAILURE_REQUEST: failure count=%u error?\n",
 				   failure);
-			return;
-		}
-		hostif_mic_failure_request(priv, failure - 1, (failure == 1) ?
+			वापस;
+		पूर्ण
+		hostअगर_mic_failure_request(priv, failure - 1, (failure == 1) ?
 					    0 : priv->wpa.mic_failure.counter);
-		break;
-	case SME_MIC_FAILURE_CONFIRM:
-		if (priv->wpa.mic_failure.failure == 2) {
-			if (priv->wpa.mic_failure.stop)
+		अवरोध;
+	हाल SME_MIC_FAILURE_CONFIRM:
+		अगर (priv->wpa.mic_failure.failure == 2) अणु
+			अगर (priv->wpa.mic_failure.stop)
 				priv->wpa.mic_failure.stop = 0;
 			priv->wpa.mic_failure.failure = 0;
-			hostif_start_request(priv, priv->reg.operation_mode);
-		}
-		break;
-	case SME_GET_MAC_ADDRESS:
-		if (priv->dev_state == DEVICE_STATE_BOOT)
-			hostif_mib_get_request(priv, DOT11_PRODUCT_VERSION);
-		break;
-	case SME_GET_PRODUCT_VERSION:
-		if (priv->dev_state == DEVICE_STATE_BOOT)
+			hostअगर_start_request(priv, priv->reg.operation_mode);
+		पूर्ण
+		अवरोध;
+	हाल SME_GET_MAC_ADDRESS:
+		अगर (priv->dev_state == DEVICE_STATE_BOOT)
+			hostअगर_mib_get_request(priv, DOT11_PRODUCT_VERSION);
+		अवरोध;
+	हाल SME_GET_PRODUCT_VERSION:
+		अगर (priv->dev_state == DEVICE_STATE_BOOT)
 			priv->dev_state = DEVICE_STATE_PREINIT;
-		break;
-	case SME_STOP_REQUEST:
-		hostif_stop_request(priv);
-		break;
-	case SME_RTS_THRESHOLD_REQUEST:
-		hostif_mib_set_request_int(priv, DOT11_RTS_THRESHOLD,
+		अवरोध;
+	हाल SME_STOP_REQUEST:
+		hostअगर_stop_request(priv);
+		अवरोध;
+	हाल SME_RTS_THRESHOLD_REQUEST:
+		hostअगर_mib_set_request_पूर्णांक(priv, DOT11_RTS_THRESHOLD,
 					   priv->reg.rts);
-		break;
-	case SME_FRAGMENTATION_THRESHOLD_REQUEST:
-		hostif_mib_set_request_int(priv, DOT11_FRAGMENTATION_THRESHOLD,
+		अवरोध;
+	हाल SME_FRAGMENTATION_THRESHOLD_REQUEST:
+		hostअगर_mib_set_request_पूर्णांक(priv, DOT11_FRAGMENTATION_THRESHOLD,
 					   priv->reg.fragment);
-		break;
-	case SME_WEP_INDEX_REQUEST:
-	case SME_WEP_KEY1_REQUEST:
-	case SME_WEP_KEY2_REQUEST:
-	case SME_WEP_KEY3_REQUEST:
-	case SME_WEP_KEY4_REQUEST:
-	case SME_WEP_FLAG_REQUEST:
-		hostif_sme_set_wep(priv, event);
-		break;
-	case SME_RSN_UCAST_REQUEST:
-	case SME_RSN_MCAST_REQUEST:
-	case SME_RSN_AUTH_REQUEST:
-	case SME_RSN_ENABLED_REQUEST:
-	case SME_RSN_MODE_REQUEST:
-		hostif_sme_set_rsn(priv, event);
-		break;
-	case SME_SET_FLAG:
-	case SME_SET_TXKEY:
-	case SME_SET_KEY1:
-	case SME_SET_KEY2:
-	case SME_SET_KEY3:
-	case SME_SET_KEY4:
-	case SME_SET_PMK_TSC:
-	case SME_SET_GMK1_TSC:
-	case SME_SET_GMK2_TSC:
-		hostif_sme_set_key(priv, event);
-		break;
-	case SME_SET_PMKSA:
-		hostif_sme_set_pmksa(priv);
-		break;
-	case SME_WPS_ENABLE_REQUEST:
-		hostif_mib_set_request_int(priv, LOCAL_WPS_ENABLE,
+		अवरोध;
+	हाल SME_WEP_INDEX_REQUEST:
+	हाल SME_WEP_KEY1_REQUEST:
+	हाल SME_WEP_KEY2_REQUEST:
+	हाल SME_WEP_KEY3_REQUEST:
+	हाल SME_WEP_KEY4_REQUEST:
+	हाल SME_WEP_FLAG_REQUEST:
+		hostअगर_sme_set_wep(priv, event);
+		अवरोध;
+	हाल SME_RSN_UCAST_REQUEST:
+	हाल SME_RSN_MCAST_REQUEST:
+	हाल SME_RSN_AUTH_REQUEST:
+	हाल SME_RSN_ENABLED_REQUEST:
+	हाल SME_RSN_MODE_REQUEST:
+		hostअगर_sme_set_rsn(priv, event);
+		अवरोध;
+	हाल SME_SET_FLAG:
+	हाल SME_SET_TXKEY:
+	हाल SME_SET_KEY1:
+	हाल SME_SET_KEY2:
+	हाल SME_SET_KEY3:
+	हाल SME_SET_KEY4:
+	हाल SME_SET_PMK_TSC:
+	हाल SME_SET_GMK1_TSC:
+	हाल SME_SET_GMK2_TSC:
+		hostअगर_sme_set_key(priv, event);
+		अवरोध;
+	हाल SME_SET_PMKSA:
+		hostअगर_sme_set_pmksa(priv);
+		अवरोध;
+	हाल SME_WPS_ENABLE_REQUEST:
+		hostअगर_mib_set_request_पूर्णांक(priv, LOCAL_WPS_ENABLE,
 					   priv->wps.wps_enabled);
-		break;
-	case SME_WPS_PROBE_REQUEST:
-		hostif_mib_set_request_ostring(priv, LOCAL_WPS_PROBE_REQ,
+		अवरोध;
+	हाल SME_WPS_PROBE_REQUEST:
+		hostअगर_mib_set_request_ostring(priv, LOCAL_WPS_PROBE_REQ,
 					       priv->wps.ie, priv->wps.ielen);
-		break;
-	case SME_MODE_SET_REQUEST:
-		hostif_sme_mode_setup(priv);
-		break;
-	case SME_SET_GAIN:
-		hostif_mib_set_request_ostring(priv, LOCAL_GAIN,
-					       &priv->gain, sizeof(priv->gain));
-		break;
-	case SME_GET_GAIN:
-		hostif_mib_get_request(priv, LOCAL_GAIN);
-		break;
-	case SME_GET_EEPROM_CKSUM:
+		अवरोध;
+	हाल SME_MODE_SET_REQUEST:
+		hostअगर_sme_mode_setup(priv);
+		अवरोध;
+	हाल SME_SET_GAIN:
+		hostअगर_mib_set_request_ostring(priv, LOCAL_GAIN,
+					       &priv->gain, माप(priv->gain));
+		अवरोध;
+	हाल SME_GET_GAIN:
+		hostअगर_mib_get_request(priv, LOCAL_GAIN);
+		अवरोध;
+	हाल SME_GET_EEPROM_CKSUM:
 		priv->eeprom_checksum = EEPROM_FW_NOT_SUPPORT;	/* initialize */
-		hostif_mib_get_request(priv, LOCAL_EEPROM_SUM);
-		break;
-	case SME_START_REQUEST:
-		hostif_start_request(priv, priv->reg.operation_mode);
-		break;
-	case SME_START_CONFIRM:
-		/* for power save */
+		hostअगर_mib_get_request(priv, LOCAL_EEPROM_SUM);
+		अवरोध;
+	हाल SME_START_REQUEST:
+		hostअगर_start_request(priv, priv->reg.operation_mode);
+		अवरोध;
+	हाल SME_START_CONFIRM:
+		/* क्रम घातer save */
 		atomic_set(&priv->psstatus.snooze_guard, 0);
-		atomic_set(&priv->psstatus.confirm_wait, 0);
-		if (priv->dev_state == DEVICE_STATE_PREINIT)
+		atomic_set(&priv->psstatus.confirm_रुको, 0);
+		अगर (priv->dev_state == DEVICE_STATE_PREINIT)
 			priv->dev_state = DEVICE_STATE_INIT;
-		/* wake_up_interruptible_all(&priv->confirm_wait); */
-		complete(&priv->confirm_wait);
-		break;
-	case SME_SLEEP_REQUEST:
-		hostif_sme_sleep_set(priv);
-		break;
-	case SME_SET_REGION:
-		hostif_mib_set_request_int(priv, LOCAL_REGION, priv->region);
-		break;
-	case SME_MULTICAST_CONFIRM:
-	case SME_BSS_SCAN_CONFIRM:
-	case SME_POW_MNGMT_CONFIRM:
-	case SME_PHY_INFO_CONFIRM:
-	case SME_STOP_CONFIRM:
-	case SME_RTS_THRESHOLD_CONFIRM:
-	case SME_FRAGMENTATION_THRESHOLD_CONFIRM:
-	case SME_WEP_INDEX_CONFIRM:
-	case SME_WEP_KEY1_CONFIRM:
-	case SME_WEP_KEY2_CONFIRM:
-	case SME_WEP_KEY3_CONFIRM:
-	case SME_WEP_KEY4_CONFIRM:
-	case SME_WEP_FLAG_CONFIRM:
-	case SME_RSN_UCAST_CONFIRM:
-	case SME_RSN_MCAST_CONFIRM:
-	case SME_RSN_AUTH_CONFIRM:
-	case SME_RSN_ENABLED_CONFIRM:
-	case SME_RSN_MODE_CONFIRM:
-	case SME_MODE_SET_CONFIRM:
-	case SME_TERMINATE:
-	default:
-		break;
-	}
-}
+		/* wake_up_पूर्णांकerruptible_all(&priv->confirm_रुको); */
+		complete(&priv->confirm_रुको);
+		अवरोध;
+	हाल SME_SLEEP_REQUEST:
+		hostअगर_sme_sleep_set(priv);
+		अवरोध;
+	हाल SME_SET_REGION:
+		hostअगर_mib_set_request_पूर्णांक(priv, LOCAL_REGION, priv->region);
+		अवरोध;
+	हाल SME_MULTICAST_CONFIRM:
+	हाल SME_BSS_SCAN_CONFIRM:
+	हाल SME_POW_MNGMT_CONFIRM:
+	हाल SME_PHY_INFO_CONFIRM:
+	हाल SME_STOP_CONFIRM:
+	हाल SME_RTS_THRESHOLD_CONFIRM:
+	हाल SME_FRAGMENTATION_THRESHOLD_CONFIRM:
+	हाल SME_WEP_INDEX_CONFIRM:
+	हाल SME_WEP_KEY1_CONFIRM:
+	हाल SME_WEP_KEY2_CONFIRM:
+	हाल SME_WEP_KEY3_CONFIRM:
+	हाल SME_WEP_KEY4_CONFIRM:
+	हाल SME_WEP_FLAG_CONFIRM:
+	हाल SME_RSN_UCAST_CONFIRM:
+	हाल SME_RSN_MCAST_CONFIRM:
+	हाल SME_RSN_AUTH_CONFIRM:
+	हाल SME_RSN_ENABLED_CONFIRM:
+	हाल SME_RSN_MODE_CONFIRM:
+	हाल SME_MODE_SET_CONFIRM:
+	हाल SME_TERMINATE:
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static
-void hostif_sme_task(struct tasklet_struct *t)
-{
-	struct ks_wlan_private *priv = from_tasklet(priv, t, sme_task);
+अटल
+व्योम hostअगर_sme_task(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा ks_wlan_निजी *priv = from_tasklet(priv, t, sme_task);
 
-	if (priv->dev_state < DEVICE_STATE_BOOT)
-		return;
+	अगर (priv->dev_state < DEVICE_STATE_BOOT)
+		वापस;
 
-	if (cnt_smeqbody(priv) <= 0)
-		return;
+	अगर (cnt_smeqbody(priv) <= 0)
+		वापस;
 
-	hostif_sme_execute(priv, priv->sme_i.event_buff[priv->sme_i.qhead]);
+	hostअगर_sme_execute(priv, priv->sme_i.event_buff[priv->sme_i.qhead]);
 	inc_smeqhead(priv);
-	if (cnt_smeqbody(priv) > 0)
+	अगर (cnt_smeqbody(priv) > 0)
 		tasklet_schedule(&priv->sme_task);
-}
+पूर्ण
 
 /* send to Station Management Entity module */
-void hostif_sme_enqueue(struct ks_wlan_private *priv, u16 event)
-{
+व्योम hostअगर_sme_enqueue(काष्ठा ks_wlan_निजी *priv, u16 event)
+अणु
 	/* enqueue sme event */
-	if (cnt_smeqbody(priv) < (SME_EVENT_BUFF_SIZE - 1)) {
+	अगर (cnt_smeqbody(priv) < (SME_EVENT_BUFF_SIZE - 1)) अणु
 		priv->sme_i.event_buff[priv->sme_i.qtail] = event;
 		inc_smeqtail(priv);
-	} else {
-		/* in case of buffer overflow */
+	पूर्ण अन्यथा अणु
+		/* in हाल of buffer overflow */
 		netdev_err(priv->net_dev, "sme queue buffer overflow\n");
-	}
+	पूर्ण
 
 	tasklet_schedule(&priv->sme_task);
-}
+पूर्ण
 
-static inline void hostif_aplist_init(struct ks_wlan_private *priv)
-{
-	size_t size = LOCAL_APLIST_MAX * sizeof(struct local_ap);
+अटल अंतरभूत व्योम hostअगर_aplist_init(काष्ठा ks_wlan_निजी *priv)
+अणु
+	माप_प्रकार size = LOCAL_APLIST_MAX * माप(काष्ठा local_ap);
 
 	priv->aplist.size = 0;
-	memset(&priv->aplist.ap[0], 0, size);
-}
+	स_रखो(&priv->aplist.ap[0], 0, size);
+पूर्ण
 
-static inline void hostif_status_init(struct ks_wlan_private *priv)
-{
+अटल अंतरभूत व्योम hostअगर_status_init(काष्ठा ks_wlan_निजी *priv)
+अणु
 	priv->infra_status = 0;
 	priv->current_rate = 4;
 	priv->connect_status = DISCONNECT_STATUS;
-}
+पूर्ण
 
-static inline void hostif_sme_init(struct ks_wlan_private *priv)
-{
+अटल अंतरभूत व्योम hostअगर_sme_init(काष्ठा ks_wlan_निजी *priv)
+अणु
 	priv->sme_i.sme_status = SME_IDLE;
 	priv->sme_i.qhead = 0;
 	priv->sme_i.qtail = 0;
 	spin_lock_init(&priv->sme_i.sme_spin);
 	priv->sme_i.sme_flag = 0;
-	tasklet_setup(&priv->sme_task, hostif_sme_task);
-}
+	tasklet_setup(&priv->sme_task, hostअगर_sme_task);
+पूर्ण
 
-static inline void hostif_wpa_init(struct ks_wlan_private *priv)
-{
-	memset(&priv->wpa, 0, sizeof(priv->wpa));
+अटल अंतरभूत व्योम hostअगर_wpa_init(काष्ठा ks_wlan_निजी *priv)
+अणु
+	स_रखो(&priv->wpa, 0, माप(priv->wpa));
 	priv->wpa.rsn_enabled = false;
 	priv->wpa.mic_failure.failure = 0;
-	priv->wpa.mic_failure.last_failure_time = 0;
+	priv->wpa.mic_failure.last_failure_समय = 0;
 	priv->wpa.mic_failure.stop = 0;
-}
+पूर्ण
 
-static inline void hostif_power_save_init(struct ks_wlan_private *priv)
-{
+अटल अंतरभूत व्योम hostअगर_घातer_save_init(काष्ठा ks_wlan_निजी *priv)
+अणु
 	atomic_set(&priv->psstatus.status, PS_NONE);
-	atomic_set(&priv->psstatus.confirm_wait, 0);
+	atomic_set(&priv->psstatus.confirm_रुको, 0);
 	atomic_set(&priv->psstatus.snooze_guard, 0);
-	init_completion(&priv->psstatus.wakeup_wait);
+	init_completion(&priv->psstatus.wakeup_रुको);
 	INIT_WORK(&priv->wakeup_work, ks_wlan_hw_wakeup_task);
-}
+पूर्ण
 
-static inline void hostif_pmklist_init(struct ks_wlan_private *priv)
-{
-	int i;
+अटल अंतरभूत व्योम hostअगर_pmklist_init(काष्ठा ks_wlan_निजी *priv)
+अणु
+	पूर्णांक i;
 
-	memset(&priv->pmklist, 0, sizeof(priv->pmklist));
+	स_रखो(&priv->pmklist, 0, माप(priv->pmklist));
 	INIT_LIST_HEAD(&priv->pmklist.head);
-	for (i = 0; i < PMK_LIST_MAX; i++)
+	क्रम (i = 0; i < PMK_LIST_MAX; i++)
 		INIT_LIST_HEAD(&priv->pmklist.pmk[i].list);
-}
+पूर्ण
 
-static inline void hostif_counters_init(struct ks_wlan_private *priv)
-{
+अटल अंतरभूत व्योम hostअगर_counters_init(काष्ठा ks_wlan_निजी *priv)
+अणु
 	priv->dev_count = 0;
 	atomic_set(&priv->event_count, 0);
 	atomic_set(&priv->rec_count, 0);
-}
+पूर्ण
 
-int hostif_init(struct ks_wlan_private *priv)
-{
-	hostif_aplist_init(priv);
-	hostif_status_init(priv);
+पूर्णांक hostअगर_init(काष्ठा ks_wlan_निजी *priv)
+अणु
+	hostअगर_aplist_init(priv);
+	hostअगर_status_init(priv);
 
 	spin_lock_init(&priv->multicast_spin);
-	spin_lock_init(&priv->dev_read_lock);
-	init_waitqueue_head(&priv->devread_wait);
+	spin_lock_init(&priv->dev_पढ़ो_lock);
+	init_रुकोqueue_head(&priv->devपढ़ो_रुको);
 
-	hostif_counters_init(priv);
-	hostif_power_save_init(priv);
-	hostif_wpa_init(priv);
-	hostif_pmklist_init(priv);
-	hostif_sme_init(priv);
+	hostअगर_counters_init(priv);
+	hostअगर_घातer_save_init(priv);
+	hostअगर_wpa_init(priv);
+	hostअगर_pmklist_init(priv);
+	hostअगर_sme_init(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void hostif_exit(struct ks_wlan_private *priv)
-{
-	tasklet_kill(&priv->sme_task);
-}
+व्योम hostअगर_निकास(काष्ठा ks_wlan_निजी *priv)
+अणु
+	tasklet_समाप्त(&priv->sme_task);
+पूर्ण

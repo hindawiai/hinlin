@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * arch/arm/include/asm/mach/time.h
+ * arch/arm/include/यंत्र/mach/समय.स
  *
  * Copyright (C) 2004 MontaVista Software, Inc.
  */
-#ifndef __ASM_ARM_MACH_TIME_H
-#define __ASM_ARM_MACH_TIME_H
+#अगर_अघोषित __ASM_ARM_MACH_TIME_H
+#घोषणा __ASM_ARM_MACH_TIME_H
 
-typedef void (*clock_access_fn)(struct timespec64 *);
-extern int register_persistent_clock(clock_access_fn read_persistent);
+प्रकार व्योम (*घड़ी_access_fn)(काष्ठा बारpec64 *);
+बाह्य पूर्णांक रेजिस्टर_persistent_घड़ी(घड़ी_access_fn पढ़ो_persistent);
 
-#endif
+#पूर्ण_अगर

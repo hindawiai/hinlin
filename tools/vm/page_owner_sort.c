@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * User-space helper to sort the output of /sys/kernel/debug/page_owner
  *
@@ -9,145 +10,145 @@
  * See Documentation/vm/page_owner.rst
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <unistd.h>
+#समावेश <माला.स>
 
-struct block_list {
-	char *txt;
-	int len;
-	int num;
-};
+काष्ठा block_list अणु
+	अक्षर *txt;
+	पूर्णांक len;
+	पूर्णांक num;
+पूर्ण;
 
 
-static struct block_list *list;
-static int list_size;
-static int max_size;
+अटल काष्ठा block_list *list;
+अटल पूर्णांक list_size;
+अटल पूर्णांक max_size;
 
-struct block_list *block_head;
+काष्ठा block_list *block_head;
 
-int read_block(char *buf, int buf_size, FILE *fin)
-{
-	char *curr = buf, *const buf_end = buf + buf_size;
+पूर्णांक पढ़ो_block(अक्षर *buf, पूर्णांक buf_size, खाता *fin)
+अणु
+	अक्षर *curr = buf, *स्थिर buf_end = buf + buf_size;
 
-	while (buf_end - curr > 1 && fgets(curr, buf_end - curr, fin)) {
-		if (*curr == '\n') /* empty line */
-			return curr - buf;
-		if (!strncmp(curr, "PFN", 3))
-			continue;
-		curr += strlen(curr);
-	}
+	जबतक (buf_end - curr > 1 && ख_माला_लो(curr, buf_end - curr, fin)) अणु
+		अगर (*curr == '\n') /* empty line */
+			वापस curr - buf;
+		अगर (!म_भेदन(curr, "PFN", 3))
+			जारी;
+		curr += म_माप(curr);
+	पूर्ण
 
-	return -1; /* EOF or no space left in buf. */
-}
+	वापस -1; /* खातापूर्ण or no space left in buf. */
+पूर्ण
 
-static int compare_txt(const void *p1, const void *p2)
-{
-	const struct block_list *l1 = p1, *l2 = p2;
+अटल पूर्णांक compare_txt(स्थिर व्योम *p1, स्थिर व्योम *p2)
+अणु
+	स्थिर काष्ठा block_list *l1 = p1, *l2 = p2;
 
-	return strcmp(l1->txt, l2->txt);
-}
+	वापस म_भेद(l1->txt, l2->txt);
+पूर्ण
 
-static int compare_num(const void *p1, const void *p2)
-{
-	const struct block_list *l1 = p1, *l2 = p2;
+अटल पूर्णांक compare_num(स्थिर व्योम *p1, स्थिर व्योम *p2)
+अणु
+	स्थिर काष्ठा block_list *l1 = p1, *l2 = p2;
 
-	return l2->num - l1->num;
-}
+	वापस l2->num - l1->num;
+पूर्ण
 
-static void add_list(char *buf, int len)
-{
-	if (list_size != 0 &&
+अटल व्योम add_list(अक्षर *buf, पूर्णांक len)
+अणु
+	अगर (list_size != 0 &&
 	    len == list[list_size-1].len &&
-	    memcmp(buf, list[list_size-1].txt, len) == 0) {
+	    स_भेद(buf, list[list_size-1].txt, len) == 0) अणु
 		list[list_size-1].num++;
-		return;
-	}
-	if (list_size == max_size) {
-		printf("max_size too small??\n");
-		exit(1);
-	}
-	list[list_size].txt = malloc(len+1);
+		वापस;
+	पूर्ण
+	अगर (list_size == max_size) अणु
+		म_लिखो("max_size too small??\n");
+		निकास(1);
+	पूर्ण
+	list[list_size].txt = दो_स्मृति(len+1);
 	list[list_size].len = len;
 	list[list_size].num = 1;
-	memcpy(list[list_size].txt, buf, len);
+	स_नकल(list[list_size].txt, buf, len);
 	list[list_size].txt[len] = 0;
 	list_size++;
-	if (list_size % 1000 == 0) {
-		printf("loaded %d\r", list_size);
-		fflush(stdout);
-	}
-}
+	अगर (list_size % 1000 == 0) अणु
+		म_लिखो("loaded %d\r", list_size);
+		ख_साफ(मानक_निकास);
+	पूर्ण
+पूर्ण
 
-#define BUF_SIZE	(128 * 1024)
+#घोषणा BUF_SIZE	(128 * 1024)
 
-int main(int argc, char **argv)
-{
-	FILE *fin, *fout;
-	char *buf;
-	int ret, i, count;
-	struct block_list *list2;
-	struct stat st;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	खाता *fin, *fout;
+	अक्षर *buf;
+	पूर्णांक ret, i, count;
+	काष्ठा block_list *list2;
+	काष्ठा stat st;
 
-	if (argc < 3) {
-		printf("Usage: ./program <input> <output>\n");
-		perror("open: ");
-		exit(1);
-	}
+	अगर (argc < 3) अणु
+		म_लिखो("Usage: ./program <input> <output>\n");
+		लिखो_त्रुटि("open: ");
+		निकास(1);
+	पूर्ण
 
-	fin = fopen(argv[1], "r");
-	fout = fopen(argv[2], "w");
-	if (!fin || !fout) {
-		printf("Usage: ./program <input> <output>\n");
-		perror("open: ");
-		exit(1);
-	}
+	fin = ख_खोलो(argv[1], "r");
+	fout = ख_खोलो(argv[2], "w");
+	अगर (!fin || !fout) अणु
+		म_लिखो("Usage: ./program <input> <output>\n");
+		लिखो_त्रुटि("open: ");
+		निकास(1);
+	पूर्ण
 
-	fstat(fileno(fin), &st);
+	ख_स्थिति(fileno(fin), &st);
 	max_size = st.st_size / 100; /* hack ... */
 
-	list = malloc(max_size * sizeof(*list));
-	buf = malloc(BUF_SIZE);
-	if (!list || !buf) {
-		printf("Out of memory\n");
-		exit(1);
-	}
+	list = दो_स्मृति(max_size * माप(*list));
+	buf = दो_स्मृति(BUF_SIZE);
+	अगर (!list || !buf) अणु
+		म_लिखो("Out of memory\n");
+		निकास(1);
+	पूर्ण
 
-	for ( ; ; ) {
-		ret = read_block(buf, BUF_SIZE, fin);
-		if (ret < 0)
-			break;
+	क्रम ( ; ; ) अणु
+		ret = पढ़ो_block(buf, BUF_SIZE, fin);
+		अगर (ret < 0)
+			अवरोध;
 
 		add_list(buf, ret);
-	}
+	पूर्ण
 
-	printf("loaded %d\n", list_size);
+	म_लिखो("loaded %d\n", list_size);
 
-	printf("sorting ....\n");
+	म_लिखो("sorting ....\n");
 
-	qsort(list, list_size, sizeof(list[0]), compare_txt);
+	क्विक(list, list_size, माप(list[0]), compare_txt);
 
-	list2 = malloc(sizeof(*list) * list_size);
+	list2 = दो_स्मृति(माप(*list) * list_size);
 
-	printf("culling\n");
+	म_लिखो("culling\n");
 
-	for (i = count = 0; i < list_size; i++) {
-		if (count == 0 ||
-		    strcmp(list2[count-1].txt, list[i].txt) != 0) {
+	क्रम (i = count = 0; i < list_size; i++) अणु
+		अगर (count == 0 ||
+		    म_भेद(list2[count-1].txt, list[i].txt) != 0) अणु
 			list2[count++] = list[i];
-		} else {
+		पूर्ण अन्यथा अणु
 			list2[count-1].num += list[i].num;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	qsort(list2, count, sizeof(list[0]), compare_num);
+	क्विक(list2, count, माप(list[0]), compare_num);
 
-	for (i = 0; i < count; i++)
-		fprintf(fout, "%d times:\n%s\n", list2[i].num, list2[i].txt);
+	क्रम (i = 0; i < count; i++)
+		ख_लिखो(fout, "%d times:\n%s\n", list2[i].num, list2[i].txt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

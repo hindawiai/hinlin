@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * arch/arm/plat-orion/include/plat/irq.h
  *
@@ -8,8 +9,8 @@
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef __PLAT_IRQ_H
-#define __PLAT_IRQ_H
+#अगर_अघोषित __PLAT_IRQ_H
+#घोषणा __PLAT_IRQ_H
 
-void orion_irq_init(unsigned int irq_start, void __iomem *maskaddr);
-#endif
+व्योम orion_irq_init(अचिन्हित पूर्णांक irq_start, व्योम __iomem *maskaddr);
+#पूर्ण_अगर

@@ -1,180 +1,181 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for PowerMac AWACS
+ * Driver क्रम PowerMac AWACS
  * Copyright (c) 2001 by Takashi Iwai <tiwai@suse.de>
  *   based on dmasound.c.
  */
 
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/initval.h>
-#include "pmac.h"
-#include "awacs.h"
-#include "burgundy.h"
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश "pmac.h"
+#समावेश "awacs.h"
+#समावेश "burgundy.h"
 
-#define CHIP_NAME "PMac"
+#घोषणा CHIP_NAME "PMac"
 
 MODULE_DESCRIPTION("PowerMac");
 MODULE_LICENSE("GPL");
 
-static int index = SNDRV_DEFAULT_IDX1;		/* Index 0-MAX */
-static char *id = SNDRV_DEFAULT_STR1;		/* ID for this card */
-static bool enable_beep = 1;
+अटल पूर्णांक index = SNDRV_DEFAULT_IDX1;		/* Index 0-MAX */
+अटल अक्षर *id = SNDRV_DEFAULT_STR1;		/* ID क्रम this card */
+अटल bool enable_beep = 1;
 
-module_param(index, int, 0444);
+module_param(index, पूर्णांक, 0444);
 MODULE_PARM_DESC(index, "Index value for " CHIP_NAME " soundchip.");
-module_param(id, charp, 0444);
+module_param(id, अक्षरp, 0444);
 MODULE_PARM_DESC(id, "ID string for " CHIP_NAME " soundchip.");
 module_param(enable_beep, bool, 0444);
 MODULE_PARM_DESC(enable_beep, "Enable beep using PCM.");
 
-static struct platform_device *device;
+अटल काष्ठा platक्रमm_device *device;
 
 
 /*
  */
 
-static int snd_pmac_probe(struct platform_device *devptr)
-{
-	struct snd_card *card;
-	struct snd_pmac *chip;
-	char *name_ext;
-	int err;
+अटल पूर्णांक snd_pmac_probe(काष्ठा platक्रमm_device *devptr)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_pmac *chip;
+	अक्षर *name_ext;
+	पूर्णांक err;
 
 	err = snd_card_new(&devptr->dev, index, id, THIS_MODULE, 0, &card);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if ((err = snd_pmac_new(card, &chip)) < 0)
-		goto __error;
-	card->private_data = chip;
+	अगर ((err = snd_pmac_new(card, &chip)) < 0)
+		जाओ __error;
+	card->निजी_data = chip;
 
-	switch (chip->model) {
-	case PMAC_BURGUNDY:
-		strcpy(card->driver, "PMac Burgundy");
-		strcpy(card->shortname, "PowerMac Burgundy");
-		sprintf(card->longname, "%s (Dev %d) Sub-frame %d",
-			card->shortname, chip->device_id, chip->subframe);
-		if ((err = snd_pmac_burgundy_init(chip)) < 0)
-			goto __error;
-		break;
-	case PMAC_DACA:
-		strcpy(card->driver, "PMac DACA");
-		strcpy(card->shortname, "PowerMac DACA");
-		sprintf(card->longname, "%s (Dev %d) Sub-frame %d",
-			card->shortname, chip->device_id, chip->subframe);
-		if ((err = snd_pmac_daca_init(chip)) < 0)
-			goto __error;
-		break;
-	case PMAC_TUMBLER:
-	case PMAC_SNAPPER:
+	चयन (chip->model) अणु
+	हाल PMAC_BURGUNDY:
+		म_नकल(card->driver, "PMac Burgundy");
+		म_नकल(card->लघुname, "PowerMac Burgundy");
+		प्र_लिखो(card->दीर्घname, "%s (Dev %d) Sub-frame %d",
+			card->लघुname, chip->device_id, chip->subframe);
+		अगर ((err = snd_pmac_burgundy_init(chip)) < 0)
+			जाओ __error;
+		अवरोध;
+	हाल PMAC_DACA:
+		म_नकल(card->driver, "PMac DACA");
+		म_नकल(card->लघुname, "PowerMac DACA");
+		प्र_लिखो(card->दीर्घname, "%s (Dev %d) Sub-frame %d",
+			card->लघुname, chip->device_id, chip->subframe);
+		अगर ((err = snd_pmac_daca_init(chip)) < 0)
+			जाओ __error;
+		अवरोध;
+	हाल PMAC_TUMBLER:
+	हाल PMAC_SNAPPER:
 		name_ext = chip->model == PMAC_TUMBLER ? "Tumbler" : "Snapper";
-		sprintf(card->driver, "PMac %s", name_ext);
-		sprintf(card->shortname, "PowerMac %s", name_ext);
-		sprintf(card->longname, "%s (Dev %d) Sub-frame %d",
-			card->shortname, chip->device_id, chip->subframe);
-		if ( snd_pmac_tumbler_init(chip) < 0 || snd_pmac_tumbler_post_init() < 0)
-			goto __error;
-		break;
-	case PMAC_AWACS:
-	case PMAC_SCREAMER:
+		प्र_लिखो(card->driver, "PMac %s", name_ext);
+		प्र_लिखो(card->लघुname, "PowerMac %s", name_ext);
+		प्र_लिखो(card->दीर्घname, "%s (Dev %d) Sub-frame %d",
+			card->लघुname, chip->device_id, chip->subframe);
+		अगर ( snd_pmac_tumbler_init(chip) < 0 || snd_pmac_tumbler_post_init() < 0)
+			जाओ __error;
+		अवरोध;
+	हाल PMAC_AWACS:
+	हाल PMAC_SCREAMER:
 		name_ext = chip->model == PMAC_SCREAMER ? "Screamer" : "AWACS";
-		sprintf(card->driver, "PMac %s", name_ext);
-		sprintf(card->shortname, "PowerMac %s", name_ext);
-		if (chip->is_pbook_3400)
+		प्र_लिखो(card->driver, "PMac %s", name_ext);
+		प्र_लिखो(card->लघुname, "PowerMac %s", name_ext);
+		अगर (chip->is_pbook_3400)
 			name_ext = " [PB3400]";
-		else if (chip->is_pbook_G3)
+		अन्यथा अगर (chip->is_pbook_G3)
 			name_ext = " [PBG3]";
-		else
+		अन्यथा
 			name_ext = "";
-		sprintf(card->longname, "%s%s Rev %d",
-			card->shortname, name_ext, chip->revision);
-		if ((err = snd_pmac_awacs_init(chip)) < 0)
-			goto __error;
-		break;
-	default:
-		snd_printk(KERN_ERR "unsupported hardware %d\n", chip->model);
+		प्र_लिखो(card->दीर्घname, "%s%s Rev %d",
+			card->लघुname, name_ext, chip->revision);
+		अगर ((err = snd_pmac_awacs_init(chip)) < 0)
+			जाओ __error;
+		अवरोध;
+	शेष:
+		snd_prपूर्णांकk(KERN_ERR "unsupported hardware %d\n", chip->model);
 		err = -EINVAL;
-		goto __error;
-	}
+		जाओ __error;
+	पूर्ण
 
-	if ((err = snd_pmac_pcm_new(chip)) < 0)
-		goto __error;
+	अगर ((err = snd_pmac_pcm_new(chip)) < 0)
+		जाओ __error;
 
 	chip->initialized = 1;
-	if (enable_beep)
+	अगर (enable_beep)
 		snd_pmac_attach_beep(chip);
 
-	if ((err = snd_card_register(card)) < 0)
-		goto __error;
+	अगर ((err = snd_card_रेजिस्टर(card)) < 0)
+		जाओ __error;
 
-	platform_set_drvdata(devptr, card);
-	return 0;
+	platक्रमm_set_drvdata(devptr, card);
+	वापस 0;
 
 __error:
-	snd_card_free(card);
-	return err;
-}
+	snd_card_मुक्त(card);
+	वापस err;
+पूर्ण
 
 
-static int snd_pmac_remove(struct platform_device *devptr)
-{
-	snd_card_free(platform_get_drvdata(devptr));
-	return 0;
-}
+अटल पूर्णांक snd_pmac_हटाओ(काष्ठा platक्रमm_device *devptr)
+अणु
+	snd_card_मुक्त(platक्रमm_get_drvdata(devptr));
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int snd_pmac_driver_suspend(struct device *dev)
-{
-	struct snd_card *card = dev_get_drvdata(dev);
-	snd_pmac_suspend(card->private_data);
-	return 0;
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक snd_pmac_driver_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा snd_card *card = dev_get_drvdata(dev);
+	snd_pmac_suspend(card->निजी_data);
+	वापस 0;
+पूर्ण
 
-static int snd_pmac_driver_resume(struct device *dev)
-{
-	struct snd_card *card = dev_get_drvdata(dev);
-	snd_pmac_resume(card->private_data);
-	return 0;
-}
+अटल पूर्णांक snd_pmac_driver_resume(काष्ठा device *dev)
+अणु
+	काष्ठा snd_card *card = dev_get_drvdata(dev);
+	snd_pmac_resume(card->निजी_data);
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(snd_pmac_pm, snd_pmac_driver_suspend, snd_pmac_driver_resume);
-#define SND_PMAC_PM_OPS	&snd_pmac_pm
-#else
-#define SND_PMAC_PM_OPS	NULL
-#endif
+अटल SIMPLE_DEV_PM_OPS(snd_pmac_pm, snd_pmac_driver_suspend, snd_pmac_driver_resume);
+#घोषणा SND_PMAC_PM_OPS	&snd_pmac_pm
+#अन्यथा
+#घोषणा SND_PMAC_PM_OPS	शून्य
+#पूर्ण_अगर
 
-#define SND_PMAC_DRIVER		"snd_powermac"
+#घोषणा SND_PMAC_DRIVER		"snd_powermac"
 
-static struct platform_driver snd_pmac_driver = {
+अटल काष्ठा platक्रमm_driver snd_pmac_driver = अणु
 	.probe		= snd_pmac_probe,
-	.remove		= snd_pmac_remove,
-	.driver		= {
+	.हटाओ		= snd_pmac_हटाओ,
+	.driver		= अणु
 		.name	= SND_PMAC_DRIVER,
 		.pm	= SND_PMAC_PM_OPS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init alsa_card_pmac_init(void)
-{
-	int err;
+अटल पूर्णांक __init alsa_card_pmac_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	if ((err = platform_driver_register(&snd_pmac_driver)) < 0)
-		return err;
-	device = platform_device_register_simple(SND_PMAC_DRIVER, -1, NULL, 0);
-	return 0;
+	अगर ((err = platक्रमm_driver_रेजिस्टर(&snd_pmac_driver)) < 0)
+		वापस err;
+	device = platक्रमm_device_रेजिस्टर_simple(SND_PMAC_DRIVER, -1, शून्य, 0);
+	वापस 0;
 
-}
+पूर्ण
 
-static void __exit alsa_card_pmac_exit(void)
-{
-	if (!IS_ERR(device))
-		platform_device_unregister(device);
-	platform_driver_unregister(&snd_pmac_driver);
-}
+अटल व्योम __निकास alsa_card_pmac_निकास(व्योम)
+अणु
+	अगर (!IS_ERR(device))
+		platक्रमm_device_unरेजिस्टर(device);
+	platक्रमm_driver_unरेजिस्टर(&snd_pmac_driver);
+पूर्ण
 
 module_init(alsa_card_pmac_init)
-module_exit(alsa_card_pmac_exit)
+module_निकास(alsa_card_pmac_निकास)

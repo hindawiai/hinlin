@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM alarmtimer
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM alarmसमयr
 
-#if !defined(_TRACE_ALARMTIMER_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_ALARMTIMER_H
+#अगर !defined(_TRACE_ALARMTIMER_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_ALARMTIMER_H
 
-#include <linux/alarmtimer.h>
-#include <linux/rtc.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/alarmसमयr.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 TRACE_DEFINE_ENUM(ALARM_REALTIME);
 TRACE_DEFINE_ENUM(ALARM_BOOTTIME);
 TRACE_DEFINE_ENUM(ALARM_REALTIME_FREEZER);
 TRACE_DEFINE_ENUM(ALARM_BOOTTIME_FREEZER);
 
-#define show_alarm_type(type)	__print_flags(type, " | ",	\
-	{ 1 << ALARM_REALTIME, "REALTIME" },			\
-	{ 1 << ALARM_BOOTTIME, "BOOTTIME" },			\
-	{ 1 << ALARM_REALTIME_FREEZER, "REALTIME Freezer" },	\
-	{ 1 << ALARM_BOOTTIME_FREEZER, "BOOTTIME Freezer" })
+#घोषणा show_alarm_type(type)	__prपूर्णांक_flags(type, " | ",	\
+	अणु 1 << ALARM_REALTIME, "REALTIME" पूर्ण,			\
+	अणु 1 << ALARM_BOOTTIME, "BOOTTIME" पूर्ण,			\
+	अणु 1 << ALARM_REALTIME_FREEZER, "REALTIME Freezer" पूर्ण,	\
+	अणु 1 << ALARM_BOOTTIME_FREEZER, "BOOTTIME Freezer" पूर्ण)
 
-TRACE_EVENT(alarmtimer_suspend,
+TRACE_EVENT(alarmसमयr_suspend,
 
-	TP_PROTO(ktime_t expires, int flag),
+	TP_PROTO(kसमय_प्रकार expires, पूर्णांक flag),
 
 	TP_ARGS(expires, flag),
 
 	TP_STRUCT__entry(
 		__field(s64, expires)
-		__field(unsigned char, alarm_type)
+		__field(अचिन्हित अक्षर, alarm_type)
 	),
 
 	TP_fast_assign(
@@ -36,7 +37,7 @@ TRACE_EVENT(alarmtimer_suspend,
 		__entry->alarm_type = flag;
 	),
 
-	TP_printk("alarmtimer type:%s expires:%llu",
+	TP_prपूर्णांकk("alarmtimer type:%s expires:%llu",
 		  show_alarm_type((1 << __entry->alarm_type)),
 		  __entry->expires
 	)
@@ -44,13 +45,13 @@ TRACE_EVENT(alarmtimer_suspend,
 
 DECLARE_EVENT_CLASS(alarm_class,
 
-	TP_PROTO(struct alarm *alarm, ktime_t now),
+	TP_PROTO(काष्ठा alarm *alarm, kसमय_प्रकार now),
 
 	TP_ARGS(alarm, now),
 
 	TP_STRUCT__entry(
-		__field(void *,	alarm)
-		__field(unsigned char, alarm_type)
+		__field(व्योम *,	alarm)
+		__field(अचिन्हित अक्षर, alarm_type)
 		__field(s64, expires)
 		__field(s64, now)
 	),
@@ -62,7 +63,7 @@ DECLARE_EVENT_CLASS(alarm_class,
 		__entry->now = now;
 	),
 
-	TP_printk("alarmtimer:%p type:%s expires:%llu now:%llu",
+	TP_prपूर्णांकk("alarmtimer:%p type:%s expires:%llu now:%llu",
 		  __entry->alarm,
 		  show_alarm_type((1 << __entry->alarm_type)),
 		  __entry->expires,
@@ -70,28 +71,28 @@ DECLARE_EVENT_CLASS(alarm_class,
 	)
 );
 
-DEFINE_EVENT(alarm_class, alarmtimer_fired,
+DEFINE_EVENT(alarm_class, alarmसमयr_fired,
 
-	TP_PROTO(struct alarm *alarm, ktime_t now),
-
-	TP_ARGS(alarm, now)
-);
-
-DEFINE_EVENT(alarm_class, alarmtimer_start,
-
-	TP_PROTO(struct alarm *alarm, ktime_t now),
+	TP_PROTO(काष्ठा alarm *alarm, kसमय_प्रकार now),
 
 	TP_ARGS(alarm, now)
 );
 
-DEFINE_EVENT(alarm_class, alarmtimer_cancel,
+DEFINE_EVENT(alarm_class, alarmसमयr_start,
 
-	TP_PROTO(struct alarm *alarm, ktime_t now),
+	TP_PROTO(काष्ठा alarm *alarm, kसमय_प्रकार now),
 
 	TP_ARGS(alarm, now)
 );
 
-#endif /* _TRACE_ALARMTIMER_H */
+DEFINE_EVENT(alarm_class, alarmसमयr_cancel,
+
+	TP_PROTO(काष्ठा alarm *alarm, kसमय_प्रकार now),
+
+	TP_ARGS(alarm, now)
+);
+
+#पूर्ण_अगर /* _TRACE_ALARMTIMER_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

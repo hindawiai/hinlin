@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Scheduler internal SMP callback types and methods between the scheduler
- * and other internal parts of the core kernel:
+ * Scheduler पूर्णांकernal SMP callback types and methods between the scheduler
+ * and other पूर्णांकernal parts of the core kernel:
  */
 
-extern void sched_ttwu_pending(void *arg);
+बाह्य व्योम sched_ttwu_pending(व्योम *arg);
 
-extern void send_call_function_single_ipi(int cpu);
+बाह्य व्योम send_call_function_single_ipi(पूर्णांक cpu);

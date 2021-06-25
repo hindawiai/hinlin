@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Loopback IEEE 802.15.4 interface
+ * Loopback IEEE 802.15.4 पूर्णांकerface
  *
  * Copyright 2007-2012 Siemens AG
  *
@@ -10,107 +11,107 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
-#include <linux/module.h>
-#include <linux/timer.h>
-#include <linux/platform_device.h>
-#include <linux/netdevice.h>
-#include <linux/device.h>
-#include <linux/spinlock.h>
-#include <net/mac802154.h>
-#include <net/cfg802154.h>
+#समावेश <linux/module.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/device.h>
+#समावेश <linux/spinlock.h>
+#समावेश <net/mac802154.h>
+#समावेश <net/cfg802154.h>
 
-static int numlbs = 2;
+अटल पूर्णांक numlbs = 2;
 
-static LIST_HEAD(fakelb_phys);
-static DEFINE_MUTEX(fakelb_phys_lock);
+अटल LIST_HEAD(fakelb_phys);
+अटल DEFINE_MUTEX(fakelb_phys_lock);
 
-static LIST_HEAD(fakelb_ifup_phys);
-static DEFINE_RWLOCK(fakelb_ifup_phys_lock);
+अटल LIST_HEAD(fakelb_अगरup_phys);
+अटल DEFINE_RWLOCK(fakelb_अगरup_phys_lock);
 
-struct fakelb_phy {
-	struct ieee802154_hw *hw;
+काष्ठा fakelb_phy अणु
+	काष्ठा ieee802154_hw *hw;
 
 	u8 page;
 	u8 channel;
 
 	bool suspended;
 
-	struct list_head list;
-	struct list_head list_ifup;
-};
+	काष्ठा list_head list;
+	काष्ठा list_head list_अगरup;
+पूर्ण;
 
-static int fakelb_hw_ed(struct ieee802154_hw *hw, u8 *level)
-{
+अटल पूर्णांक fakelb_hw_ed(काष्ठा ieee802154_hw *hw, u8 *level)
+अणु
 	WARN_ON(!level);
 	*level = 0xbe;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fakelb_hw_channel(struct ieee802154_hw *hw, u8 page, u8 channel)
-{
-	struct fakelb_phy *phy = hw->priv;
+अटल पूर्णांक fakelb_hw_channel(काष्ठा ieee802154_hw *hw, u8 page, u8 channel)
+अणु
+	काष्ठा fakelb_phy *phy = hw->priv;
 
-	write_lock_bh(&fakelb_ifup_phys_lock);
+	ग_लिखो_lock_bh(&fakelb_अगरup_phys_lock);
 	phy->page = page;
 	phy->channel = channel;
-	write_unlock_bh(&fakelb_ifup_phys_lock);
-	return 0;
-}
+	ग_लिखो_unlock_bh(&fakelb_अगरup_phys_lock);
+	वापस 0;
+पूर्ण
 
-static int fakelb_hw_xmit(struct ieee802154_hw *hw, struct sk_buff *skb)
-{
-	struct fakelb_phy *current_phy = hw->priv, *phy;
+अटल पूर्णांक fakelb_hw_xmit(काष्ठा ieee802154_hw *hw, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा fakelb_phy *current_phy = hw->priv, *phy;
 
-	read_lock_bh(&fakelb_ifup_phys_lock);
+	पढ़ो_lock_bh(&fakelb_अगरup_phys_lock);
 	WARN_ON(current_phy->suspended);
-	list_for_each_entry(phy, &fakelb_ifup_phys, list_ifup) {
-		if (current_phy == phy)
-			continue;
+	list_क्रम_each_entry(phy, &fakelb_अगरup_phys, list_अगरup) अणु
+		अगर (current_phy == phy)
+			जारी;
 
-		if (current_phy->page == phy->page &&
-		    current_phy->channel == phy->channel) {
-			struct sk_buff *newskb = pskb_copy(skb, GFP_ATOMIC);
+		अगर (current_phy->page == phy->page &&
+		    current_phy->channel == phy->channel) अणु
+			काष्ठा sk_buff *newskb = pskb_copy(skb, GFP_ATOMIC);
 
-			if (newskb)
+			अगर (newskb)
 				ieee802154_rx_irqsafe(phy->hw, newskb, 0xcc);
-		}
-	}
-	read_unlock_bh(&fakelb_ifup_phys_lock);
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock_bh(&fakelb_अगरup_phys_lock);
 
 	ieee802154_xmit_complete(hw, skb, false);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fakelb_hw_start(struct ieee802154_hw *hw)
-{
-	struct fakelb_phy *phy = hw->priv;
+अटल पूर्णांक fakelb_hw_start(काष्ठा ieee802154_hw *hw)
+अणु
+	काष्ठा fakelb_phy *phy = hw->priv;
 
-	write_lock_bh(&fakelb_ifup_phys_lock);
+	ग_लिखो_lock_bh(&fakelb_अगरup_phys_lock);
 	phy->suspended = false;
-	list_add(&phy->list_ifup, &fakelb_ifup_phys);
-	write_unlock_bh(&fakelb_ifup_phys_lock);
+	list_add(&phy->list_अगरup, &fakelb_अगरup_phys);
+	ग_लिखो_unlock_bh(&fakelb_अगरup_phys_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fakelb_hw_stop(struct ieee802154_hw *hw)
-{
-	struct fakelb_phy *phy = hw->priv;
+अटल व्योम fakelb_hw_stop(काष्ठा ieee802154_hw *hw)
+अणु
+	काष्ठा fakelb_phy *phy = hw->priv;
 
-	write_lock_bh(&fakelb_ifup_phys_lock);
+	ग_लिखो_lock_bh(&fakelb_अगरup_phys_lock);
 	phy->suspended = true;
-	list_del(&phy->list_ifup);
-	write_unlock_bh(&fakelb_ifup_phys_lock);
-}
+	list_del(&phy->list_अगरup);
+	ग_लिखो_unlock_bh(&fakelb_अगरup_phys_lock);
+पूर्ण
 
-static int
-fakelb_set_promiscuous_mode(struct ieee802154_hw *hw, const bool on)
-{
-	return 0;
-}
+अटल पूर्णांक
+fakelb_set_promiscuous_mode(काष्ठा ieee802154_hw *hw, स्थिर bool on)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct ieee802154_ops fakelb_ops = {
+अटल स्थिर काष्ठा ieee802154_ops fakelb_ops = अणु
 	.owner = THIS_MODULE,
 	.xmit_async = fakelb_hw_xmit,
 	.ed = fakelb_hw_ed,
@@ -118,21 +119,21 @@ static const struct ieee802154_ops fakelb_ops = {
 	.start = fakelb_hw_start,
 	.stop = fakelb_hw_stop,
 	.set_promiscuous_mode = fakelb_set_promiscuous_mode,
-};
+पूर्ण;
 
 /* Number of dummy devices to be set up by this module. */
-module_param(numlbs, int, 0);
+module_param(numlbs, पूर्णांक, 0);
 MODULE_PARM_DESC(numlbs, " number of pseudo devices");
 
-static int fakelb_add_one(struct device *dev)
-{
-	struct ieee802154_hw *hw;
-	struct fakelb_phy *phy;
-	int err;
+अटल पूर्णांक fakelb_add_one(काष्ठा device *dev)
+अणु
+	काष्ठा ieee802154_hw *hw;
+	काष्ठा fakelb_phy *phy;
+	पूर्णांक err;
 
-	hw = ieee802154_alloc_hw(sizeof(*phy), &fakelb_ops);
-	if (!hw)
-		return -ENOMEM;
+	hw = ieee802154_alloc_hw(माप(*phy), &fakelb_ops);
+	अगर (!hw)
+		वापस -ENOMEM;
 
 	phy = hw->priv;
 	phy->hw = hw;
@@ -168,96 +169,96 @@ static int fakelb_add_one(struct device *dev)
 	/* 950 MHz GFSK 802.15.4d-2009 */
 	hw->phy->supported.channels[6] |= 0x3ffc00;
 
-	ieee802154_random_extended_addr(&hw->phy->perm_extended_addr);
-	/* fake phy channel 13 as default */
+	ieee802154_अक्रमom_extended_addr(&hw->phy->perm_extended_addr);
+	/* fake phy channel 13 as शेष */
 	hw->phy->current_channel = 13;
 	phy->channel = hw->phy->current_channel;
 
 	hw->flags = IEEE802154_HW_PROMISCUOUS;
 	hw->parent = dev;
 
-	err = ieee802154_register_hw(hw);
-	if (err)
-		goto err_reg;
+	err = ieee802154_रेजिस्टर_hw(hw);
+	अगर (err)
+		जाओ err_reg;
 
 	mutex_lock(&fakelb_phys_lock);
 	list_add_tail(&phy->list, &fakelb_phys);
 	mutex_unlock(&fakelb_phys_lock);
 
-	return 0;
+	वापस 0;
 
 err_reg:
-	ieee802154_free_hw(phy->hw);
-	return err;
-}
+	ieee802154_मुक्त_hw(phy->hw);
+	वापस err;
+पूर्ण
 
-static void fakelb_del(struct fakelb_phy *phy)
-{
+अटल व्योम fakelb_del(काष्ठा fakelb_phy *phy)
+अणु
 	list_del(&phy->list);
 
-	ieee802154_unregister_hw(phy->hw);
-	ieee802154_free_hw(phy->hw);
-}
+	ieee802154_unरेजिस्टर_hw(phy->hw);
+	ieee802154_मुक्त_hw(phy->hw);
+पूर्ण
 
-static int fakelb_probe(struct platform_device *pdev)
-{
-	struct fakelb_phy *phy, *tmp;
-	int err, i;
+अटल पूर्णांक fakelb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fakelb_phy *phy, *पंचांगp;
+	पूर्णांक err, i;
 
-	for (i = 0; i < numlbs; i++) {
+	क्रम (i = 0; i < numlbs; i++) अणु
 		err = fakelb_add_one(&pdev->dev);
-		if (err < 0)
-			goto err_slave;
-	}
+		अगर (err < 0)
+			जाओ err_slave;
+	पूर्ण
 
 	dev_info(&pdev->dev, "added %i fake ieee802154 hardware devices\n", numlbs);
-	return 0;
+	वापस 0;
 
 err_slave:
 	mutex_lock(&fakelb_phys_lock);
-	list_for_each_entry_safe(phy, tmp, &fakelb_phys, list)
+	list_क्रम_each_entry_safe(phy, पंचांगp, &fakelb_phys, list)
 		fakelb_del(phy);
 	mutex_unlock(&fakelb_phys_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int fakelb_remove(struct platform_device *pdev)
-{
-	struct fakelb_phy *phy, *tmp;
+अटल पूर्णांक fakelb_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fakelb_phy *phy, *पंचांगp;
 
 	mutex_lock(&fakelb_phys_lock);
-	list_for_each_entry_safe(phy, tmp, &fakelb_phys, list)
+	list_क्रम_each_entry_safe(phy, पंचांगp, &fakelb_phys, list)
 		fakelb_del(phy);
 	mutex_unlock(&fakelb_phys_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_device *ieee802154fake_dev;
+अटल काष्ठा platक्रमm_device *ieee802154fake_dev;
 
-static struct platform_driver ieee802154fake_driver = {
+अटल काष्ठा platक्रमm_driver ieee802154fake_driver = अणु
 	.probe = fakelb_probe,
-	.remove = fakelb_remove,
-	.driver = {
+	.हटाओ = fakelb_हटाओ,
+	.driver = अणु
 			.name = "ieee802154fakelb",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static __init int fakelb_init_module(void)
-{
-	ieee802154fake_dev = platform_device_register_simple(
-			     "ieee802154fakelb", -1, NULL, 0);
+अटल __init पूर्णांक fakelb_init_module(व्योम)
+अणु
+	ieee802154fake_dev = platक्रमm_device_रेजिस्टर_simple(
+			     "ieee802154fakelb", -1, शून्य, 0);
 
 	pr_warn("fakelb driver is marked as deprecated, please use mac802154_hwsim!\n");
 
-	return platform_driver_register(&ieee802154fake_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&ieee802154fake_driver);
+पूर्ण
 
-static __exit void fake_remove_module(void)
-{
-	platform_driver_unregister(&ieee802154fake_driver);
-	platform_device_unregister(ieee802154fake_dev);
-}
+अटल __निकास व्योम fake_हटाओ_module(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&ieee802154fake_driver);
+	platक्रमm_device_unरेजिस्टर(ieee802154fake_dev);
+पूर्ण
 
 module_init(fakelb_init_module);
-module_exit(fake_remove_module);
+module_निकास(fake_हटाओ_module);
 MODULE_LICENSE("GPL");

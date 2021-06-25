@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2014 Intel Corporation
+ * Copyright तऊ 2014 Intel Corporation
  */
 
-#include "i915_drv.h"
-#include "intel_renderstate.h"
-#include "intel_context.h"
-#include "intel_gpu_commands.h"
-#include "intel_ring.h"
+#समावेश "i915_drv.h"
+#समावेश "intel_renderstate.h"
+#समावेश "intel_context.h"
+#समावेश "intel_gpu_commands.h"
+#समावेश "intel_ring.h"
 
-static const struct intel_renderstate_rodata *
-render_state_get_rodata(const struct intel_engine_cs *engine)
-{
-	if (engine->class != RENDER_CLASS)
-		return NULL;
+अटल स्थिर काष्ठा पूर्णांकel_renderstate_rodata *
+render_state_get_rodata(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (engine->class != RENDER_CLASS)
+		वापस शून्य;
 
-	switch (INTEL_GEN(engine->i915)) {
-	case 6:
-		return &gen6_null_state;
-	case 7:
-		return &gen7_null_state;
-	case 8:
-		return &gen8_null_state;
-	case 9:
-		return &gen9_null_state;
-	}
+	चयन (INTEL_GEN(engine->i915)) अणु
+	हाल 6:
+		वापस &gen6_null_state;
+	हाल 7:
+		वापस &gen7_null_state;
+	हाल 8:
+		वापस &gen8_null_state;
+	हाल 9:
+		वापस &gen9_null_state;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Macro to add commands to auxiliary batch.
- * This macro only checks for page overflow before inserting the commands,
+ * This macro only checks क्रम page overflow beक्रमe inserting the commands,
  * this is sufficient as the null state generator makes the final batch
- * with two passes to build command and state separately. At this point
+ * with two passes to build command and state separately. At this poपूर्णांक
  * the size of both are known and it compacts them by relocating the state
  * right after the commands taking care of alignment so we should sufficient
- * space below them for adding new commands.
+ * space below them क्रम adding new commands.
  */
-#define OUT_BATCH(batch, i, val)				\
-	do {							\
-		if ((i) >= PAGE_SIZE / sizeof(u32))		\
-			goto out;				\
+#घोषणा OUT_BATCH(batch, i, val)				\
+	करो अणु							\
+		अगर ((i) >= PAGE_SIZE / माप(u32))		\
+			जाओ out;				\
 		(batch)[(i)++] = (val);				\
-	} while (0)
+	पूर्ण जबतक (0)
 
-static int render_state_setup(struct intel_renderstate *so,
-			      struct drm_i915_private *i915)
-{
-	const struct intel_renderstate_rodata *rodata = so->rodata;
-	unsigned int i = 0, reloc_index = 0;
-	int ret = -EINVAL;
+अटल पूर्णांक render_state_setup(काष्ठा पूर्णांकel_renderstate *so,
+			      काष्ठा drm_i915_निजी *i915)
+अणु
+	स्थिर काष्ठा पूर्णांकel_renderstate_rodata *rodata = so->rodata;
+	अचिन्हित पूर्णांक i = 0, reloc_index = 0;
+	पूर्णांक ret = -EINVAL;
 	u32 *d;
 
 	d = i915_gem_object_pin_map(so->vma->obj, I915_MAP_WB);
-	if (IS_ERR(d))
-		return PTR_ERR(d);
+	अगर (IS_ERR(d))
+		वापस PTR_ERR(d);
 
-	while (i < rodata->batch_items) {
+	जबतक (i < rodata->batch_items) अणु
 		u32 s = rodata->batch[i];
 
-		if (i * 4  == rodata->reloc[reloc_index]) {
+		अगर (i * 4  == rodata->reloc[reloc_index]) अणु
 			u64 r = s + so->vma->node.start;
 
 			s = lower_32_bits(r);
-			if (HAS_64BIT_RELOC(i915)) {
-				if (i + 1 >= rodata->batch_items ||
+			अगर (HAS_64BIT_RELOC(i915)) अणु
+				अगर (i + 1 >= rodata->batch_items ||
 				    rodata->batch[i + 1] != 0)
-					goto out;
+					जाओ out;
 
 				d[i++] = s;
 				s = upper_32_bits(r);
-			}
+			पूर्ण
 
 			reloc_index++;
-		}
+		पूर्ण
 
 		d[i++] = s;
-	}
+	पूर्ण
 
-	if (rodata->reloc[reloc_index] != -1) {
+	अगर (rodata->reloc[reloc_index] != -1) अणु
 		drm_err(&i915->drm, "only %d relocs resolved\n", reloc_index);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	so->batch_offset = i915_ggtt_offset(so->vma);
-	so->batch_size = rodata->batch_items * sizeof(u32);
+	so->batch_size = rodata->batch_items * माप(u32);
 
-	while (i % CACHELINE_DWORDS)
+	जबतक (i % CACHELINE_DWORDS)
 		OUT_BATCH(d, i, MI_NOOP);
 
-	so->aux_offset = i * sizeof(u32);
+	so->aux_offset = i * माप(u32);
 
-	if (HAS_POOLED_EU(i915)) {
+	अगर (HAS_POOLED_EU(i915)) अणु
 		/*
 		 * We always program 3x6 pool config but depending upon which
-		 * subslice is disabled HW drops down to appropriate config
+		 * subslice is disabled HW drops करोwn to appropriate config
 		 * shown below.
 		 *
 		 * In the below table 2x6 config always refers to
-		 * fused-down version, native 2x6 is not available and can
+		 * fused-करोwn version, native 2x6 is not available and can
 		 * be ignored
 		 *
 		 * SNo  subslices config                eu pool configuration
@@ -117,136 +118,136 @@ static int render_state_setup(struct intel_renderstate *so,
 		OUT_BATCH(d, i, 0);
 		OUT_BATCH(d, i, 0);
 		OUT_BATCH(d, i, 0);
-	}
+	पूर्ण
 
 	OUT_BATCH(d, i, MI_BATCH_BUFFER_END);
-	so->aux_size = i * sizeof(u32) - so->aux_offset;
+	so->aux_size = i * माप(u32) - so->aux_offset;
 	so->aux_offset += so->batch_offset;
 	/*
-	 * Since we are sending length, we need to strictly conform to
+	 * Since we are sending length, we need to strictly conक्रमm to
 	 * all requirements. For Gen2 this must be a multiple of 8.
 	 */
 	so->aux_size = ALIGN(so->aux_size, 8);
 
 	ret = 0;
 out:
-	__i915_gem_object_flush_map(so->vma->obj, 0, i * sizeof(u32));
+	__i915_gem_object_flush_map(so->vma->obj, 0, i * माप(u32));
 	__i915_gem_object_release_map(so->vma->obj);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#undef OUT_BATCH
+#अघोषित OUT_BATCH
 
-int intel_renderstate_init(struct intel_renderstate *so,
-			   struct intel_context *ce)
-{
-	struct intel_engine_cs *engine = ce->engine;
-	struct drm_i915_gem_object *obj = NULL;
-	int err;
+पूर्णांक पूर्णांकel_renderstate_init(काष्ठा पूर्णांकel_renderstate *so,
+			   काष्ठा पूर्णांकel_context *ce)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine = ce->engine;
+	काष्ठा drm_i915_gem_object *obj = शून्य;
+	पूर्णांक err;
 
-	memset(so, 0, sizeof(*so));
+	स_रखो(so, 0, माप(*so));
 
 	so->rodata = render_state_get_rodata(engine);
-	if (so->rodata) {
-		if (so->rodata->batch_items * 4 > PAGE_SIZE)
-			return -EINVAL;
+	अगर (so->rodata) अणु
+		अगर (so->rodata->batch_items * 4 > PAGE_SIZE)
+			वापस -EINVAL;
 
-		obj = i915_gem_object_create_internal(engine->i915, PAGE_SIZE);
-		if (IS_ERR(obj))
-			return PTR_ERR(obj);
+		obj = i915_gem_object_create_पूर्णांकernal(engine->i915, PAGE_SIZE);
+		अगर (IS_ERR(obj))
+			वापस PTR_ERR(obj);
 
-		so->vma = i915_vma_instance(obj, &engine->gt->ggtt->vm, NULL);
-		if (IS_ERR(so->vma)) {
+		so->vma = i915_vma_instance(obj, &engine->gt->ggtt->vm, शून्य);
+		अगर (IS_ERR(so->vma)) अणु
 			err = PTR_ERR(so->vma);
-			goto err_obj;
-		}
-	}
+			जाओ err_obj;
+		पूर्ण
+	पूर्ण
 
 	i915_gem_ww_ctx_init(&so->ww, true);
 retry:
-	err = intel_context_pin_ww(ce, &so->ww);
-	if (err)
-		goto err_fini;
+	err = पूर्णांकel_context_pin_ww(ce, &so->ww);
+	अगर (err)
+		जाओ err_fini;
 
-	/* return early if there's nothing to setup */
-	if (!err && !so->rodata)
-		return 0;
+	/* वापस early अगर there's nothing to setup */
+	अगर (!err && !so->rodata)
+		वापस 0;
 
 	err = i915_gem_object_lock(so->vma->obj, &so->ww);
-	if (err)
-		goto err_context;
+	अगर (err)
+		जाओ err_context;
 
 	err = i915_vma_pin_ww(so->vma, &so->ww, 0, 0, PIN_GLOBAL | PIN_HIGH);
-	if (err)
-		goto err_context;
+	अगर (err)
+		जाओ err_context;
 
 	err = render_state_setup(so, engine->i915);
-	if (err)
-		goto err_unpin;
+	अगर (err)
+		जाओ err_unpin;
 
-	return 0;
+	वापस 0;
 
 err_unpin:
 	i915_vma_unpin(so->vma);
 err_context:
-	intel_context_unpin(ce);
+	पूर्णांकel_context_unpin(ce);
 err_fini:
-	if (err == -EDEADLK) {
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&so->ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&so->ww);
 err_obj:
-	if (obj)
+	अगर (obj)
 		i915_gem_object_put(obj);
-	so->vma = NULL;
-	return err;
-}
+	so->vma = शून्य;
+	वापस err;
+पूर्ण
 
-int intel_renderstate_emit(struct intel_renderstate *so,
-			   struct i915_request *rq)
-{
-	struct intel_engine_cs *engine = rq->engine;
-	int err;
+पूर्णांक पूर्णांकel_renderstate_emit(काष्ठा पूर्णांकel_renderstate *so,
+			   काष्ठा i915_request *rq)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine = rq->engine;
+	पूर्णांक err;
 
-	if (!so->vma)
-		return 0;
+	अगर (!so->vma)
+		वापस 0;
 
-	err = i915_request_await_object(rq, so->vma->obj, false);
-	if (err == 0)
+	err = i915_request_aरुको_object(rq, so->vma->obj, false);
+	अगर (err == 0)
 		err = i915_vma_move_to_active(so->vma, rq, 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = engine->emit_bb_start(rq,
 				    so->batch_offset, so->batch_size,
 				    I915_DISPATCH_SECURE);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (so->aux_size > 8) {
+	अगर (so->aux_size > 8) अणु
 		err = engine->emit_bb_start(rq,
 					    so->aux_offset, so->aux_size,
 					    I915_DISPATCH_SECURE);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void intel_renderstate_fini(struct intel_renderstate *so,
-			    struct intel_context *ce)
-{
-	if (so->vma) {
+व्योम पूर्णांकel_renderstate_fini(काष्ठा पूर्णांकel_renderstate *so,
+			    काष्ठा पूर्णांकel_context *ce)
+अणु
+	अगर (so->vma) अणु
 		i915_vma_unpin(so->vma);
-		i915_vma_close(so->vma);
-	}
+		i915_vma_बंद(so->vma);
+	पूर्ण
 
-	intel_context_unpin(ce);
+	पूर्णांकel_context_unpin(ce);
 	i915_gem_ww_ctx_fini(&so->ww);
 
-	if (so->vma)
+	अगर (so->vma)
 		i915_gem_object_put(so->vma->obj);
-}
+पूर्ण

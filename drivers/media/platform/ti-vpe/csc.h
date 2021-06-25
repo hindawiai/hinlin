@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2013 Texas Instruments Inc.
  *
@@ -6,60 +7,60 @@
  * Dale Farnsworth, <dale@farnsworth.org>
  * Archit Taneja, <archit@ti.com>
  */
-#ifndef TI_CSC_H
-#define TI_CSC_H
+#अगर_अघोषित TI_CSC_H
+#घोषणा TI_CSC_H
 
 /* VPE color space converter regs */
-#define CSC_CSC00		0x00
-#define CSC_A0_MASK		0x1fff
-#define CSC_A0_SHIFT		0
-#define CSC_B0_MASK		0x1fff
-#define CSC_B0_SHIFT		16
+#घोषणा CSC_CSC00		0x00
+#घोषणा CSC_A0_MASK		0x1fff
+#घोषणा CSC_A0_SHIFT		0
+#घोषणा CSC_B0_MASK		0x1fff
+#घोषणा CSC_B0_SHIFT		16
 
-#define CSC_CSC01		0x04
-#define CSC_C0_MASK		0x1fff
-#define CSC_C0_SHIFT		0
-#define CSC_A1_MASK		0x1fff
-#define CSC_A1_SHIFT		16
+#घोषणा CSC_CSC01		0x04
+#घोषणा CSC_C0_MASK		0x1fff
+#घोषणा CSC_C0_SHIFT		0
+#घोषणा CSC_A1_MASK		0x1fff
+#घोषणा CSC_A1_SHIFT		16
 
-#define CSC_CSC02		0x08
-#define CSC_B1_MASK		0x1fff
-#define CSC_B1_SHIFT		0
-#define CSC_C1_MASK		0x1fff
-#define CSC_C1_SHIFT		16
+#घोषणा CSC_CSC02		0x08
+#घोषणा CSC_B1_MASK		0x1fff
+#घोषणा CSC_B1_SHIFT		0
+#घोषणा CSC_C1_MASK		0x1fff
+#घोषणा CSC_C1_SHIFT		16
 
-#define CSC_CSC03		0x0c
-#define CSC_A2_MASK		0x1fff
-#define CSC_A2_SHIFT		0
-#define CSC_B2_MASK		0x1fff
-#define CSC_B2_SHIFT		16
+#घोषणा CSC_CSC03		0x0c
+#घोषणा CSC_A2_MASK		0x1fff
+#घोषणा CSC_A2_SHIFT		0
+#घोषणा CSC_B2_MASK		0x1fff
+#घोषणा CSC_B2_SHIFT		16
 
-#define CSC_CSC04		0x10
-#define CSC_C2_MASK		0x1fff
-#define CSC_C2_SHIFT		0
-#define CSC_D0_MASK		0x0fff
-#define CSC_D0_SHIFT		16
+#घोषणा CSC_CSC04		0x10
+#घोषणा CSC_C2_MASK		0x1fff
+#घोषणा CSC_C2_SHIFT		0
+#घोषणा CSC_D0_MASK		0x0fff
+#घोषणा CSC_D0_SHIFT		16
 
-#define CSC_CSC05		0x14
-#define CSC_D1_MASK		0x0fff
-#define CSC_D1_SHIFT		0
-#define CSC_D2_MASK		0x0fff
-#define CSC_D2_SHIFT		16
+#घोषणा CSC_CSC05		0x14
+#घोषणा CSC_D1_MASK		0x0fff
+#घोषणा CSC_D1_SHIFT		0
+#घोषणा CSC_D2_MASK		0x0fff
+#घोषणा CSC_D2_SHIFT		16
 
-#define CSC_BYPASS		(1 << 28)
+#घोषणा CSC_BYPASS		(1 << 28)
 
-struct csc_data {
-	void __iomem		*base;
-	struct resource		*res;
+काष्ठा csc_data अणु
+	व्योम __iomem		*base;
+	काष्ठा resource		*res;
 
-	struct platform_device	*pdev;
-};
+	काष्ठा platक्रमm_device	*pdev;
+पूर्ण;
 
-void csc_dump_regs(struct csc_data *csc);
-void csc_set_coeff_bypass(struct csc_data *csc, u32 *csc_reg5);
-void csc_set_coeff(struct csc_data *csc, u32 *csc_reg0,
-		   struct v4l2_format *src_fmt, struct v4l2_format *dst_fmt);
+व्योम csc_dump_regs(काष्ठा csc_data *csc);
+व्योम csc_set_coeff_bypass(काष्ठा csc_data *csc, u32 *csc_reg5);
+व्योम csc_set_coeff(काष्ठा csc_data *csc, u32 *csc_reg0,
+		   काष्ठा v4l2_क्रमmat *src_fmt, काष्ठा v4l2_क्रमmat *dst_fmt);
 
-struct csc_data *csc_create(struct platform_device *pdev, const char *res_name);
+काष्ठा csc_data *csc_create(काष्ठा platक्रमm_device *pdev, स्थिर अक्षर *res_name);
 
-#endif
+#पूर्ण_अगर

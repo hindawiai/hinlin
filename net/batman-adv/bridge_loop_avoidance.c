@@ -1,185 +1,186 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
  * Simon Wunderlich
  */
 
-#include "bridge_loop_avoidance.h"
-#include "main.h"
+#समावेश "bridge_loop_avoidance.h"
+#समावेश "main.h"
 
-#include <linux/atomic.h>
-#include <linux/byteorder/generic.h>
-#include <linux/compiler.h>
-#include <linux/crc16.h>
-#include <linux/errno.h>
-#include <linux/etherdevice.h>
-#include <linux/gfp.h>
-#include <linux/if_arp.h>
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include <linux/jhash.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/kref.h>
-#include <linux/list.h>
-#include <linux/lockdep.h>
-#include <linux/netdevice.h>
-#include <linux/netlink.h>
-#include <linux/rculist.h>
-#include <linux/rcupdate.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/stddef.h>
-#include <linux/string.h>
-#include <linux/workqueue.h>
-#include <net/arp.h>
-#include <net/genetlink.h>
-#include <net/netlink.h>
-#include <net/sock.h>
-#include <uapi/linux/batadv_packet.h>
-#include <uapi/linux/batman_adv.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/byteorder/generic.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/crc16.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/list.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/workqueue.h>
+#समावेश <net/arp.h>
+#समावेश <net/genetlink.h>
+#समावेश <net/netlink.h>
+#समावेश <net/sock.h>
+#समावेश <uapi/linux/batadv_packet.h>
+#समावेश <uapi/linux/baपंचांगan_adv.h>
 
-#include "hard-interface.h"
-#include "hash.h"
-#include "log.h"
-#include "netlink.h"
-#include "originator.h"
-#include "soft-interface.h"
-#include "translation-table.h"
+#समावेश "hard-interface.h"
+#समावेश "hash.h"
+#समावेश "log.h"
+#समावेश "netlink.h"
+#समावेश "originator.h"
+#समावेश "soft-interface.h"
+#समावेश "translation-table.h"
 
-static const u8 batadv_announce_mac[4] = {0x43, 0x05, 0x43, 0x05};
+अटल स्थिर u8 batadv_announce_mac[4] = अणु0x43, 0x05, 0x43, 0x05पूर्ण;
 
-static void batadv_bla_periodic_work(struct work_struct *work);
-static void
-batadv_bla_send_announce(struct batadv_priv *bat_priv,
-			 struct batadv_bla_backbone_gw *backbone_gw);
+अटल व्योम batadv_bla_periodic_work(काष्ठा work_काष्ठा *work);
+अटल व्योम
+batadv_bla_send_announce(काष्ठा batadv_priv *bat_priv,
+			 काष्ठा batadv_bla_backbone_gw *backbone_gw);
 
 /**
- * batadv_choose_claim() - choose the right bucket for a claim.
+ * batadv_choose_claim() - choose the right bucket क्रम a claim.
  * @data: data to hash
  * @size: size of the hash table
  *
  * Return: the hash index of the claim
  */
-static inline u32 batadv_choose_claim(const void *data, u32 size)
-{
-	struct batadv_bla_claim *claim = (struct batadv_bla_claim *)data;
+अटल अंतरभूत u32 batadv_choose_claim(स्थिर व्योम *data, u32 size)
+अणु
+	काष्ठा batadv_bla_claim *claim = (काष्ठा batadv_bla_claim *)data;
 	u32 hash = 0;
 
-	hash = jhash(&claim->addr, sizeof(claim->addr), hash);
-	hash = jhash(&claim->vid, sizeof(claim->vid), hash);
+	hash = jhash(&claim->addr, माप(claim->addr), hash);
+	hash = jhash(&claim->vid, माप(claim->vid), hash);
 
-	return hash % size;
-}
+	वापस hash % size;
+पूर्ण
 
 /**
- * batadv_choose_backbone_gw() - choose the right bucket for a backbone gateway.
+ * batadv_choose_backbone_gw() - choose the right bucket क्रम a backbone gateway.
  * @data: data to hash
  * @size: size of the hash table
  *
  * Return: the hash index of the backbone gateway
  */
-static inline u32 batadv_choose_backbone_gw(const void *data, u32 size)
-{
-	const struct batadv_bla_backbone_gw *gw;
+अटल अंतरभूत u32 batadv_choose_backbone_gw(स्थिर व्योम *data, u32 size)
+अणु
+	स्थिर काष्ठा batadv_bla_backbone_gw *gw;
 	u32 hash = 0;
 
-	gw = (struct batadv_bla_backbone_gw *)data;
-	hash = jhash(&gw->orig, sizeof(gw->orig), hash);
-	hash = jhash(&gw->vid, sizeof(gw->vid), hash);
+	gw = (काष्ठा batadv_bla_backbone_gw *)data;
+	hash = jhash(&gw->orig, माप(gw->orig), hash);
+	hash = jhash(&gw->vid, माप(gw->vid), hash);
 
-	return hash % size;
-}
+	वापस hash % size;
+पूर्ण
 
 /**
  * batadv_compare_backbone_gw() - compare address and vid of two backbone gws
  * @node: list node of the first entry to compare
- * @data2: pointer to the second backbone gateway
+ * @data2: poपूर्णांकer to the second backbone gateway
  *
- * Return: true if the backbones have the same data, false otherwise
+ * Return: true अगर the backbones have the same data, false otherwise
  */
-static bool batadv_compare_backbone_gw(const struct hlist_node *node,
-				       const void *data2)
-{
-	const void *data1 = container_of(node, struct batadv_bla_backbone_gw,
+अटल bool batadv_compare_backbone_gw(स्थिर काष्ठा hlist_node *node,
+				       स्थिर व्योम *data2)
+अणु
+	स्थिर व्योम *data1 = container_of(node, काष्ठा batadv_bla_backbone_gw,
 					 hash_entry);
-	const struct batadv_bla_backbone_gw *gw1 = data1;
-	const struct batadv_bla_backbone_gw *gw2 = data2;
+	स्थिर काष्ठा batadv_bla_backbone_gw *gw1 = data1;
+	स्थिर काष्ठा batadv_bla_backbone_gw *gw2 = data2;
 
-	if (!batadv_compare_eth(gw1->orig, gw2->orig))
-		return false;
+	अगर (!batadv_compare_eth(gw1->orig, gw2->orig))
+		वापस false;
 
-	if (gw1->vid != gw2->vid)
-		return false;
+	अगर (gw1->vid != gw2->vid)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * batadv_compare_claim() - compare address and vid of two claims
  * @node: list node of the first entry to compare
- * @data2: pointer to the second claims
+ * @data2: poपूर्णांकer to the second claims
  *
- * Return: true if the claim have the same data, 0 otherwise
+ * Return: true अगर the claim have the same data, 0 otherwise
  */
-static bool batadv_compare_claim(const struct hlist_node *node,
-				 const void *data2)
-{
-	const void *data1 = container_of(node, struct batadv_bla_claim,
+अटल bool batadv_compare_claim(स्थिर काष्ठा hlist_node *node,
+				 स्थिर व्योम *data2)
+अणु
+	स्थिर व्योम *data1 = container_of(node, काष्ठा batadv_bla_claim,
 					 hash_entry);
-	const struct batadv_bla_claim *cl1 = data1;
-	const struct batadv_bla_claim *cl2 = data2;
+	स्थिर काष्ठा batadv_bla_claim *cl1 = data1;
+	स्थिर काष्ठा batadv_bla_claim *cl2 = data2;
 
-	if (!batadv_compare_eth(cl1->addr, cl2->addr))
-		return false;
+	अगर (!batadv_compare_eth(cl1->addr, cl2->addr))
+		वापस false;
 
-	if (cl1->vid != cl2->vid)
-		return false;
+	अगर (cl1->vid != cl2->vid)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * batadv_backbone_gw_release() - release backbone gw from lists and queue for
- *  free after rcu grace period
- * @ref: kref pointer of the backbone gw
+ * batadv_backbone_gw_release() - release backbone gw from lists and queue क्रम
+ *  मुक्त after rcu grace period
+ * @ref: kref poपूर्णांकer of the backbone gw
  */
-static void batadv_backbone_gw_release(struct kref *ref)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
+अटल व्योम batadv_backbone_gw_release(काष्ठा kref *ref)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
 
-	backbone_gw = container_of(ref, struct batadv_bla_backbone_gw,
+	backbone_gw = container_of(ref, काष्ठा batadv_bla_backbone_gw,
 				   refcount);
 
-	kfree_rcu(backbone_gw, rcu);
-}
+	kमुक्त_rcu(backbone_gw, rcu);
+पूर्ण
 
 /**
  * batadv_backbone_gw_put() - decrement the backbone gw refcounter and possibly
  *  release it
- * @backbone_gw: backbone gateway to be free'd
+ * @backbone_gw: backbone gateway to be मुक्त'd
  */
-static void batadv_backbone_gw_put(struct batadv_bla_backbone_gw *backbone_gw)
-{
+अटल व्योम batadv_backbone_gw_put(काष्ठा batadv_bla_backbone_gw *backbone_gw)
+अणु
 	kref_put(&backbone_gw->refcount, batadv_backbone_gw_release);
-}
+पूर्ण
 
 /**
- * batadv_claim_release() - release claim from lists and queue for free after
+ * batadv_claim_release() - release claim from lists and queue क्रम मुक्त after
  *  rcu grace period
- * @ref: kref pointer of the claim
+ * @ref: kref poपूर्णांकer of the claim
  */
-static void batadv_claim_release(struct kref *ref)
-{
-	struct batadv_bla_claim *claim;
-	struct batadv_bla_backbone_gw *old_backbone_gw;
+अटल व्योम batadv_claim_release(काष्ठा kref *ref)
+अणु
+	काष्ठा batadv_bla_claim *claim;
+	काष्ठा batadv_bla_backbone_gw *old_backbone_gw;
 
-	claim = container_of(ref, struct batadv_bla_claim, refcount);
+	claim = container_of(ref, काष्ठा batadv_bla_claim, refcount);
 
 	spin_lock_bh(&claim->backbone_lock);
 	old_backbone_gw = claim->backbone_gw;
-	claim->backbone_gw = NULL;
+	claim->backbone_gw = शून्य;
 	spin_unlock_bh(&claim->backbone_lock);
 
 	spin_lock_bh(&old_backbone_gw->crc_lock);
@@ -188,77 +189,77 @@ static void batadv_claim_release(struct kref *ref)
 
 	batadv_backbone_gw_put(old_backbone_gw);
 
-	kfree_rcu(claim, rcu);
-}
+	kमुक्त_rcu(claim, rcu);
+पूर्ण
 
 /**
  * batadv_claim_put() - decrement the claim refcounter and possibly release it
- * @claim: claim to be free'd
+ * @claim: claim to be मुक्त'd
  */
-static void batadv_claim_put(struct batadv_bla_claim *claim)
-{
+अटल व्योम batadv_claim_put(काष्ठा batadv_bla_claim *claim)
+अणु
 	kref_put(&claim->refcount, batadv_claim_release);
-}
+पूर्ण
 
 /**
- * batadv_claim_hash_find() - looks for a claim in the claim hash
- * @bat_priv: the bat priv with all the soft interface information
- * @data: search data (may be local/static data)
+ * batadv_claim_hash_find() - looks क्रम a claim in the claim hash
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @data: search data (may be local/अटल data)
  *
- * Return: claim if found or NULL otherwise.
+ * Return: claim अगर found or शून्य otherwise.
  */
-static struct batadv_bla_claim *
-batadv_claim_hash_find(struct batadv_priv *bat_priv,
-		       struct batadv_bla_claim *data)
-{
-	struct batadv_hashtable *hash = bat_priv->bla.claim_hash;
-	struct hlist_head *head;
-	struct batadv_bla_claim *claim;
-	struct batadv_bla_claim *claim_tmp = NULL;
-	int index;
+अटल काष्ठा batadv_bla_claim *
+batadv_claim_hash_find(काष्ठा batadv_priv *bat_priv,
+		       काष्ठा batadv_bla_claim *data)
+अणु
+	काष्ठा batadv_hashtable *hash = bat_priv->bla.claim_hash;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_bla_claim *claim;
+	काष्ठा batadv_bla_claim *claim_पंचांगp = शून्य;
+	पूर्णांक index;
 
-	if (!hash)
-		return NULL;
+	अगर (!hash)
+		वापस शून्य;
 
 	index = batadv_choose_claim(data, hash->size);
 	head = &hash->table[index];
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(claim, head, hash_entry) {
-		if (!batadv_compare_claim(&claim->hash_entry, data))
-			continue;
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(claim, head, hash_entry) अणु
+		अगर (!batadv_compare_claim(&claim->hash_entry, data))
+			जारी;
 
-		if (!kref_get_unless_zero(&claim->refcount))
-			continue;
+		अगर (!kref_get_unless_zero(&claim->refcount))
+			जारी;
 
-		claim_tmp = claim;
-		break;
-	}
-	rcu_read_unlock();
+		claim_पंचांगp = claim;
+		अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return claim_tmp;
-}
+	वापस claim_पंचांगp;
+पूर्ण
 
 /**
- * batadv_backbone_hash_find() - looks for a backbone gateway in the hash
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_backbone_hash_find() - looks क्रम a backbone gateway in the hash
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @addr: the address of the originator
  * @vid: the VLAN ID
  *
- * Return: backbone gateway if found or NULL otherwise
+ * Return: backbone gateway अगर found or शून्य otherwise
  */
-static struct batadv_bla_backbone_gw *
-batadv_backbone_hash_find(struct batadv_priv *bat_priv, u8 *addr,
-			  unsigned short vid)
-{
-	struct batadv_hashtable *hash = bat_priv->bla.backbone_hash;
-	struct hlist_head *head;
-	struct batadv_bla_backbone_gw search_entry, *backbone_gw;
-	struct batadv_bla_backbone_gw *backbone_gw_tmp = NULL;
-	int index;
+अटल काष्ठा batadv_bla_backbone_gw *
+batadv_backbone_hash_find(काष्ठा batadv_priv *bat_priv, u8 *addr,
+			  अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_hashtable *hash = bat_priv->bla.backbone_hash;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_bla_backbone_gw search_entry, *backbone_gw;
+	काष्ठा batadv_bla_backbone_gw *backbone_gw_पंचांगp = शून्य;
+	पूर्णांक index;
 
-	if (!hash)
-		return NULL;
+	अगर (!hash)
+		वापस शून्य;
 
 	ether_addr_copy(search_entry.orig, addr);
 	search_entry.vid = vid;
@@ -266,143 +267,143 @@ batadv_backbone_hash_find(struct batadv_priv *bat_priv, u8 *addr,
 	index = batadv_choose_backbone_gw(&search_entry, hash->size);
 	head = &hash->table[index];
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(backbone_gw, head, hash_entry) {
-		if (!batadv_compare_backbone_gw(&backbone_gw->hash_entry,
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(backbone_gw, head, hash_entry) अणु
+		अगर (!batadv_compare_backbone_gw(&backbone_gw->hash_entry,
 						&search_entry))
-			continue;
+			जारी;
 
-		if (!kref_get_unless_zero(&backbone_gw->refcount))
-			continue;
+		अगर (!kref_get_unless_zero(&backbone_gw->refcount))
+			जारी;
 
-		backbone_gw_tmp = backbone_gw;
-		break;
-	}
-	rcu_read_unlock();
+		backbone_gw_पंचांगp = backbone_gw;
+		अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return backbone_gw_tmp;
-}
+	वापस backbone_gw_पंचांगp;
+पूर्ण
 
 /**
- * batadv_bla_del_backbone_claims() - delete all claims for a backbone
- * @backbone_gw: backbone gateway where the claims should be removed
+ * batadv_bla_del_backbone_claims() - delete all claims क्रम a backbone
+ * @backbone_gw: backbone gateway where the claims should be हटाओd
  */
-static void
-batadv_bla_del_backbone_claims(struct batadv_bla_backbone_gw *backbone_gw)
-{
-	struct batadv_hashtable *hash;
-	struct hlist_node *node_tmp;
-	struct hlist_head *head;
-	struct batadv_bla_claim *claim;
-	int i;
-	spinlock_t *list_lock;	/* protects write access to the hash lists */
+अटल व्योम
+batadv_bla_del_backbone_claims(काष्ठा batadv_bla_backbone_gw *backbone_gw)
+अणु
+	काष्ठा batadv_hashtable *hash;
+	काष्ठा hlist_node *node_पंचांगp;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_bla_claim *claim;
+	पूर्णांक i;
+	spinlock_t *list_lock;	/* protects ग_लिखो access to the hash lists */
 
 	hash = backbone_gw->bat_priv->bla.claim_hash;
-	if (!hash)
-		return;
+	अगर (!hash)
+		वापस;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 		list_lock = &hash->list_locks[i];
 
 		spin_lock_bh(list_lock);
-		hlist_for_each_entry_safe(claim, node_tmp,
-					  head, hash_entry) {
-			if (claim->backbone_gw != backbone_gw)
-				continue;
+		hlist_क्रम_each_entry_safe(claim, node_पंचांगp,
+					  head, hash_entry) अणु
+			अगर (claim->backbone_gw != backbone_gw)
+				जारी;
 
 			batadv_claim_put(claim);
 			hlist_del_rcu(&claim->hash_entry);
-		}
+		पूर्ण
 		spin_unlock_bh(list_lock);
-	}
+	पूर्ण
 
 	/* all claims gone, initialize CRC */
 	spin_lock_bh(&backbone_gw->crc_lock);
 	backbone_gw->crc = BATADV_BLA_CRC_INIT;
 	spin_unlock_bh(&backbone_gw->crc_lock);
-}
+पूर्ण
 
 /**
  * batadv_bla_send_claim() - sends a claim frame according to the provided info
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @mac: the mac address to be announced within the claim
  * @vid: the VLAN ID
  * @claimtype: the type of the claim (CLAIM, UNCLAIM, ANNOUNCE, ...)
  */
-static void batadv_bla_send_claim(struct batadv_priv *bat_priv, u8 *mac,
-				  unsigned short vid, int claimtype)
-{
-	struct sk_buff *skb;
-	struct ethhdr *ethhdr;
-	struct batadv_hard_iface *primary_if;
-	struct net_device *soft_iface;
+अटल व्योम batadv_bla_send_claim(काष्ठा batadv_priv *bat_priv, u8 *mac,
+				  अचिन्हित लघु vid, पूर्णांक claimtype)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा ethhdr *ethhdr;
+	काष्ठा batadv_hard_अगरace *primary_अगर;
+	काष्ठा net_device *soft_अगरace;
 	u8 *hw_src;
-	struct batadv_bla_claim_dst local_claim_dest;
+	काष्ठा batadv_bla_claim_dst local_claim_dest;
 	__be32 zeroip = 0;
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		return;
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर)
+		वापस;
 
-	memcpy(&local_claim_dest, &bat_priv->bla.claim_dest,
-	       sizeof(local_claim_dest));
+	स_नकल(&local_claim_dest, &bat_priv->bla.claim_dest,
+	       माप(local_claim_dest));
 	local_claim_dest.type = claimtype;
 
-	soft_iface = primary_if->soft_iface;
+	soft_अगरace = primary_अगर->soft_अगरace;
 
 	skb = arp_create(ARPOP_REPLY, ETH_P_ARP,
 			 /* IP DST: 0.0.0.0 */
 			 zeroip,
-			 primary_if->soft_iface,
+			 primary_अगर->soft_अगरace,
 			 /* IP SRC: 0.0.0.0 */
 			 zeroip,
 			 /* Ethernet DST: Broadcast */
-			 NULL,
+			 शून्य,
 			 /* Ethernet SRC/HW SRC:  originator mac */
-			 primary_if->net_dev->dev_addr,
+			 primary_अगर->net_dev->dev_addr,
 			 /* HW DST: FF:43:05:XX:YY:YY
 			  * with XX   = claim type
 			  * and YY:YY = group id
 			  */
 			 (u8 *)&local_claim_dest);
 
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
-	ethhdr = (struct ethhdr *)skb->data;
-	hw_src = (u8 *)ethhdr + ETH_HLEN + sizeof(struct arphdr);
+	ethhdr = (काष्ठा ethhdr *)skb->data;
+	hw_src = (u8 *)ethhdr + ETH_HLEN + माप(काष्ठा arphdr);
 
 	/* now we pretend that the client would have sent this ... */
-	switch (claimtype) {
-	case BATADV_CLAIM_TYPE_CLAIM:
+	चयन (claimtype) अणु
+	हाल BATADV_CLAIM_TYPE_CLAIM:
 		/* normal claim frame
 		 * set Ethernet SRC to the clients mac
 		 */
 		ether_addr_copy(ethhdr->h_source, mac);
 		batadv_dbg(BATADV_DBG_BLA, bat_priv,
 			   "%s(): CLAIM %pM on vid %d\n", __func__, mac,
-			   batadv_print_vid(vid));
-		break;
-	case BATADV_CLAIM_TYPE_UNCLAIM:
+			   batadv_prपूर्णांक_vid(vid));
+		अवरोध;
+	हाल BATADV_CLAIM_TYPE_UNCLAIM:
 		/* unclaim frame
 		 * set HW SRC to the clients mac
 		 */
 		ether_addr_copy(hw_src, mac);
 		batadv_dbg(BATADV_DBG_BLA, bat_priv,
 			   "%s(): UNCLAIM %pM on vid %d\n", __func__, mac,
-			   batadv_print_vid(vid));
-		break;
-	case BATADV_CLAIM_TYPE_ANNOUNCE:
+			   batadv_prपूर्णांक_vid(vid));
+		अवरोध;
+	हाल BATADV_CLAIM_TYPE_ANNOUNCE:
 		/* announcement frame
 		 * set HW SRC to the special mac containg the crc
 		 */
 		ether_addr_copy(hw_src, mac);
 		batadv_dbg(BATADV_DBG_BLA, bat_priv,
 			   "%s(): ANNOUNCE of %pM on vid %d\n", __func__,
-			   ethhdr->h_source, batadv_print_vid(vid));
-		break;
-	case BATADV_CLAIM_TYPE_REQUEST:
+			   ethhdr->h_source, batadv_prपूर्णांक_vid(vid));
+		अवरोध;
+	हाल BATADV_CLAIM_TYPE_REQUEST:
 		/* request frame
 		 * set HW SRC and header destination to the receiving backbone
 		 * gws mac
@@ -412,104 +413,104 @@ static void batadv_bla_send_claim(struct batadv_priv *bat_priv, u8 *mac,
 		batadv_dbg(BATADV_DBG_BLA, bat_priv,
 			   "%s(): REQUEST of %pM to %pM on vid %d\n", __func__,
 			   ethhdr->h_source, ethhdr->h_dest,
-			   batadv_print_vid(vid));
-		break;
-	case BATADV_CLAIM_TYPE_LOOPDETECT:
+			   batadv_prपूर्णांक_vid(vid));
+		अवरोध;
+	हाल BATADV_CLAIM_TYPE_LOOPDETECT:
 		ether_addr_copy(ethhdr->h_source, mac);
 		batadv_dbg(BATADV_DBG_BLA, bat_priv,
 			   "%s(): LOOPDETECT of %pM to %pM on vid %d\n",
 			   __func__, ethhdr->h_source, ethhdr->h_dest,
-			   batadv_print_vid(vid));
+			   batadv_prपूर्णांक_vid(vid));
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (vid & BATADV_VLAN_HAS_TAG) {
+	अगर (vid & BATADV_VLAN_HAS_TAG) अणु
 		skb = vlan_insert_tag(skb, htons(ETH_P_8021Q),
 				      vid & VLAN_VID_MASK);
-		if (!skb)
-			goto out;
-	}
+		अगर (!skb)
+			जाओ out;
+	पूर्ण
 
 	skb_reset_mac_header(skb);
-	skb->protocol = eth_type_trans(skb, soft_iface);
+	skb->protocol = eth_type_trans(skb, soft_अगरace);
 	batadv_inc_counter(bat_priv, BATADV_CNT_RX);
 	batadv_add_counter(bat_priv, BATADV_CNT_RX_BYTES,
 			   skb->len + ETH_HLEN);
 
-	netif_rx_any_context(skb);
+	netअगर_rx_any_context(skb);
 out:
-	if (primary_if)
-		batadv_hardif_put(primary_if);
-}
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
+पूर्ण
 
 /**
- * batadv_bla_loopdetect_report() - worker for reporting the loop
+ * batadv_bla_loopdetect_report() - worker क्रम reporting the loop
  * @work: work queue item
  *
- * Throws an uevent, as the loopdetect check function can't do that itself
- * since the kernel may sleep while throwing uevents.
+ * Throws an uevent, as the loopdetect check function can't करो that itself
+ * since the kernel may sleep जबतक throwing uevents.
  */
-static void batadv_bla_loopdetect_report(struct work_struct *work)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
-	struct batadv_priv *bat_priv;
-	char vid_str[6] = { '\0' };
+अटल व्योम batadv_bla_loopdetect_report(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	काष्ठा batadv_priv *bat_priv;
+	अक्षर vid_str[6] = अणु '\0' पूर्ण;
 
-	backbone_gw = container_of(work, struct batadv_bla_backbone_gw,
+	backbone_gw = container_of(work, काष्ठा batadv_bla_backbone_gw,
 				   report_work);
 	bat_priv = backbone_gw->bat_priv;
 
-	batadv_info(bat_priv->soft_iface,
+	batadv_info(bat_priv->soft_अगरace,
 		    "Possible loop on VLAN %d detected which can't be handled by BLA - please check your network setup!\n",
-		    batadv_print_vid(backbone_gw->vid));
-	snprintf(vid_str, sizeof(vid_str), "%d",
-		 batadv_print_vid(backbone_gw->vid));
-	vid_str[sizeof(vid_str) - 1] = 0;
+		    batadv_prपूर्णांक_vid(backbone_gw->vid));
+	snम_लिखो(vid_str, माप(vid_str), "%d",
+		 batadv_prपूर्णांक_vid(backbone_gw->vid));
+	vid_str[माप(vid_str) - 1] = 0;
 
 	batadv_throw_uevent(bat_priv, BATADV_UEV_BLA, BATADV_UEV_LOOPDETECT,
 			    vid_str);
 
 	batadv_backbone_gw_put(backbone_gw);
-}
+पूर्ण
 
 /**
  * batadv_bla_get_backbone_gw() - finds or creates a backbone gateway
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @orig: the mac address of the originator
  * @vid: the VLAN ID
- * @own_backbone: set if the requested backbone is local
+ * @own_backbone: set अगर the requested backbone is local
  *
- * Return: the (possibly created) backbone gateway or NULL on error
+ * Return: the (possibly created) backbone gateway or शून्य on error
  */
-static struct batadv_bla_backbone_gw *
-batadv_bla_get_backbone_gw(struct batadv_priv *bat_priv, u8 *orig,
-			   unsigned short vid, bool own_backbone)
-{
-	struct batadv_bla_backbone_gw *entry;
-	struct batadv_orig_node *orig_node;
-	int hash_added;
+अटल काष्ठा batadv_bla_backbone_gw *
+batadv_bla_get_backbone_gw(काष्ठा batadv_priv *bat_priv, u8 *orig,
+			   अचिन्हित लघु vid, bool own_backbone)
+अणु
+	काष्ठा batadv_bla_backbone_gw *entry;
+	काष्ठा batadv_orig_node *orig_node;
+	पूर्णांक hash_added;
 
 	entry = batadv_backbone_hash_find(bat_priv, orig, vid);
 
-	if (entry)
-		return entry;
+	अगर (entry)
+		वापस entry;
 
 	batadv_dbg(BATADV_DBG_BLA, bat_priv,
 		   "%s(): not found (%pM, %d), creating new entry\n", __func__,
-		   orig, batadv_print_vid(vid));
+		   orig, batadv_prपूर्णांक_vid(vid));
 
-	entry = kzalloc(sizeof(*entry), GFP_ATOMIC);
-	if (!entry)
-		return NULL;
+	entry = kzalloc(माप(*entry), GFP_ATOMIC);
+	अगर (!entry)
+		वापस शून्य;
 
 	entry->vid = vid;
-	entry->lasttime = jiffies;
+	entry->lastसमय = jअगरfies;
 	entry->crc = BATADV_BLA_CRC_INIT;
 	entry->bat_priv = bat_priv;
 	spin_lock_init(&entry->crc_lock);
 	atomic_set(&entry->request_sent, 0);
-	atomic_set(&entry->wait_periods, 0);
+	atomic_set(&entry->रुको_periods, 0);
 	ether_addr_copy(entry->orig, orig);
 	INIT_WORK(&entry->report_work, batadv_bla_loopdetect_report);
 	kref_init(&entry->refcount);
@@ -520,119 +521,119 @@ batadv_bla_get_backbone_gw(struct batadv_priv *bat_priv, u8 *orig,
 				     batadv_choose_backbone_gw, entry,
 				     &entry->hash_entry);
 
-	if (unlikely(hash_added != 0)) {
-		/* hash failed, free the structure */
-		kfree(entry);
-		return NULL;
-	}
+	अगर (unlikely(hash_added != 0)) अणु
+		/* hash failed, मुक्त the काष्ठाure */
+		kमुक्त(entry);
+		वापस शून्य;
+	पूर्ण
 
-	/* this is a gateway now, remove any TT entry on this VLAN */
+	/* this is a gateway now, हटाओ any TT entry on this VLAN */
 	orig_node = batadv_orig_hash_find(bat_priv, orig);
-	if (orig_node) {
+	अगर (orig_node) अणु
 		batadv_tt_global_del_orig(bat_priv, orig_node, vid,
 					  "became a backbone gateway");
 		batadv_orig_node_put(orig_node);
-	}
+	पूर्ण
 
-	if (own_backbone) {
+	अगर (own_backbone) अणु
 		batadv_bla_send_announce(bat_priv, entry);
 
-		/* this will be decreased in the worker thread */
+		/* this will be decreased in the worker thपढ़ो */
 		atomic_inc(&entry->request_sent);
-		atomic_set(&entry->wait_periods, BATADV_BLA_WAIT_PERIODS);
+		atomic_set(&entry->रुको_periods, BATADV_BLA_WAIT_PERIODS);
 		atomic_inc(&bat_priv->bla.num_requests);
-	}
+	पूर्ण
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
 /**
- * batadv_bla_update_own_backbone_gw() - updates the own backbone gw for a VLAN
- * @bat_priv: the bat priv with all the soft interface information
- * @primary_if: the selected primary interface
- * @vid: VLAN identifier
+ * batadv_bla_update_own_backbone_gw() - updates the own backbone gw क्रम a VLAN
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @primary_अगर: the selected primary पूर्णांकerface
+ * @vid: VLAN identअगरier
  *
  * update or add the own backbone gw to make sure we announce
  * where we receive other backbone gws
  */
-static void
-batadv_bla_update_own_backbone_gw(struct batadv_priv *bat_priv,
-				  struct batadv_hard_iface *primary_if,
-				  unsigned short vid)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
+अटल व्योम
+batadv_bla_update_own_backbone_gw(काष्ठा batadv_priv *bat_priv,
+				  काष्ठा batadv_hard_अगरace *primary_अगर,
+				  अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
 
 	backbone_gw = batadv_bla_get_backbone_gw(bat_priv,
-						 primary_if->net_dev->dev_addr,
+						 primary_अगर->net_dev->dev_addr,
 						 vid, true);
-	if (unlikely(!backbone_gw))
-		return;
+	अगर (unlikely(!backbone_gw))
+		वापस;
 
-	backbone_gw->lasttime = jiffies;
+	backbone_gw->lastसमय = jअगरfies;
 	batadv_backbone_gw_put(backbone_gw);
-}
+पूर्ण
 
 /**
  * batadv_bla_answer_request() - answer a bla request by sending own claims
- * @bat_priv: the bat priv with all the soft interface information
- * @primary_if: interface where the request came on
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @primary_अगर: पूर्णांकerface where the request came on
  * @vid: the vid where the request came on
  *
  * Repeat all of our own claims, and finally send an ANNOUNCE frame
- * to allow the requester another check if the CRC is correct now.
+ * to allow the requester another check अगर the CRC is correct now.
  */
-static void batadv_bla_answer_request(struct batadv_priv *bat_priv,
-				      struct batadv_hard_iface *primary_if,
-				      unsigned short vid)
-{
-	struct hlist_head *head;
-	struct batadv_hashtable *hash;
-	struct batadv_bla_claim *claim;
-	struct batadv_bla_backbone_gw *backbone_gw;
-	int i;
+अटल व्योम batadv_bla_answer_request(काष्ठा batadv_priv *bat_priv,
+				      काष्ठा batadv_hard_अगरace *primary_अगर,
+				      अचिन्हित लघु vid)
+अणु
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_hashtable *hash;
+	काष्ठा batadv_bla_claim *claim;
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	पूर्णांक i;
 
 	batadv_dbg(BATADV_DBG_BLA, bat_priv,
 		   "%s(): received a claim request, send all of our own claims again\n",
 		   __func__);
 
 	backbone_gw = batadv_backbone_hash_find(bat_priv,
-						primary_if->net_dev->dev_addr,
+						primary_अगर->net_dev->dev_addr,
 						vid);
-	if (!backbone_gw)
-		return;
+	अगर (!backbone_gw)
+		वापस;
 
 	hash = bat_priv->bla.claim_hash;
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 
-		rcu_read_lock();
-		hlist_for_each_entry_rcu(claim, head, hash_entry) {
-			/* only own claims are interesting */
-			if (claim->backbone_gw != backbone_gw)
-				continue;
+		rcu_पढ़ो_lock();
+		hlist_क्रम_each_entry_rcu(claim, head, hash_entry) अणु
+			/* only own claims are पूर्णांकeresting */
+			अगर (claim->backbone_gw != backbone_gw)
+				जारी;
 
 			batadv_bla_send_claim(bat_priv, claim->addr, claim->vid,
 					      BATADV_CLAIM_TYPE_CLAIM);
-		}
-		rcu_read_unlock();
-	}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
 	/* finally, send an announcement frame */
 	batadv_bla_send_announce(bat_priv, backbone_gw);
 	batadv_backbone_gw_put(backbone_gw);
-}
+पूर्ण
 
 /**
  * batadv_bla_send_request() - send a request to repeat claims
  * @backbone_gw: the backbone gateway from whom we are out of sync
  *
- * When the crc is wrong, ask the backbone gateway for a full table update.
+ * When the crc is wrong, ask the backbone gateway क्रम a full table update.
  * After the request, it will repeat all of his own claims and finally
  * send an announcement claim with which we can check again.
  */
-static void batadv_bla_send_request(struct batadv_bla_backbone_gw *backbone_gw)
-{
-	/* first, remove all old entries */
+अटल व्योम batadv_bla_send_request(काष्ठा batadv_bla_backbone_gw *backbone_gw)
+अणु
+	/* first, हटाओ all old entries */
 	batadv_bla_del_backbone_claims(backbone_gw);
 
 	batadv_dbg(BATADV_DBG_BLA, backbone_gw->bat_priv,
@@ -642,72 +643,72 @@ static void batadv_bla_send_request(struct batadv_bla_backbone_gw *backbone_gw)
 	batadv_bla_send_claim(backbone_gw->bat_priv, backbone_gw->orig,
 			      backbone_gw->vid, BATADV_CLAIM_TYPE_REQUEST);
 
-	/* no local broadcasts should be sent or received, for now. */
-	if (!atomic_read(&backbone_gw->request_sent)) {
+	/* no local broadcasts should be sent or received, क्रम now. */
+	अगर (!atomic_पढ़ो(&backbone_gw->request_sent)) अणु
 		atomic_inc(&backbone_gw->bat_priv->bla.num_requests);
 		atomic_set(&backbone_gw->request_sent, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * batadv_bla_send_announce() - Send an announcement frame
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @backbone_gw: our backbone gateway which should be announced
  */
-static void batadv_bla_send_announce(struct batadv_priv *bat_priv,
-				     struct batadv_bla_backbone_gw *backbone_gw)
-{
+अटल व्योम batadv_bla_send_announce(काष्ठा batadv_priv *bat_priv,
+				     काष्ठा batadv_bla_backbone_gw *backbone_gw)
+अणु
 	u8 mac[ETH_ALEN];
 	__be16 crc;
 
-	memcpy(mac, batadv_announce_mac, 4);
+	स_नकल(mac, batadv_announce_mac, 4);
 	spin_lock_bh(&backbone_gw->crc_lock);
 	crc = htons(backbone_gw->crc);
 	spin_unlock_bh(&backbone_gw->crc_lock);
-	memcpy(&mac[4], &crc, 2);
+	स_नकल(&mac[4], &crc, 2);
 
 	batadv_bla_send_claim(bat_priv, mac, backbone_gw->vid,
 			      BATADV_CLAIM_TYPE_ANNOUNCE);
-}
+पूर्ण
 
 /**
  * batadv_bla_add_claim() - Adds a claim in the claim hash
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @mac: the mac address of the claim
  * @vid: the VLAN ID of the frame
  * @backbone_gw: the backbone gateway which claims it
  */
-static void batadv_bla_add_claim(struct batadv_priv *bat_priv,
-				 const u8 *mac, const unsigned short vid,
-				 struct batadv_bla_backbone_gw *backbone_gw)
-{
-	struct batadv_bla_backbone_gw *old_backbone_gw;
-	struct batadv_bla_claim *claim;
-	struct batadv_bla_claim search_claim;
-	bool remove_crc = false;
-	int hash_added;
+अटल व्योम batadv_bla_add_claim(काष्ठा batadv_priv *bat_priv,
+				 स्थिर u8 *mac, स्थिर अचिन्हित लघु vid,
+				 काष्ठा batadv_bla_backbone_gw *backbone_gw)
+अणु
+	काष्ठा batadv_bla_backbone_gw *old_backbone_gw;
+	काष्ठा batadv_bla_claim *claim;
+	काष्ठा batadv_bla_claim search_claim;
+	bool हटाओ_crc = false;
+	पूर्णांक hash_added;
 
 	ether_addr_copy(search_claim.addr, mac);
 	search_claim.vid = vid;
 	claim = batadv_claim_hash_find(bat_priv, &search_claim);
 
-	/* create a new claim entry if it does not exist yet. */
-	if (!claim) {
-		claim = kzalloc(sizeof(*claim), GFP_ATOMIC);
-		if (!claim)
-			return;
+	/* create a new claim entry अगर it करोes not exist yet. */
+	अगर (!claim) अणु
+		claim = kzalloc(माप(*claim), GFP_ATOMIC);
+		अगर (!claim)
+			वापस;
 
 		ether_addr_copy(claim->addr, mac);
 		spin_lock_init(&claim->backbone_lock);
 		claim->vid = vid;
-		claim->lasttime = jiffies;
+		claim->lastसमय = jअगरfies;
 		kref_get(&backbone_gw->refcount);
 		claim->backbone_gw = backbone_gw;
 		kref_init(&claim->refcount);
 
 		batadv_dbg(BATADV_DBG_BLA, bat_priv,
 			   "%s(): adding new entry %pM, vid %d to hash ...\n",
-			   __func__, mac, batadv_print_vid(vid));
+			   __func__, mac, batadv_prपूर्णांक_vid(vid));
 
 		kref_get(&claim->refcount);
 		hash_added = batadv_hash_add(bat_priv->bla.claim_hash,
@@ -715,24 +716,24 @@ static void batadv_bla_add_claim(struct batadv_priv *bat_priv,
 					     batadv_choose_claim, claim,
 					     &claim->hash_entry);
 
-		if (unlikely(hash_added != 0)) {
+		अगर (unlikely(hash_added != 0)) अणु
 			/* only local changes happened. */
-			kfree(claim);
-			return;
-		}
-	} else {
-		claim->lasttime = jiffies;
-		if (claim->backbone_gw == backbone_gw)
-			/* no need to register a new backbone */
-			goto claim_free_ref;
+			kमुक्त(claim);
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		claim->lastसमय = jअगरfies;
+		अगर (claim->backbone_gw == backbone_gw)
+			/* no need to रेजिस्टर a new backbone */
+			जाओ claim_मुक्त_ref;
 
 		batadv_dbg(BATADV_DBG_BLA, bat_priv,
 			   "%s(): changing ownership for %pM, vid %d to gw %pM\n",
-			   __func__, mac, batadv_print_vid(vid),
+			   __func__, mac, batadv_prपूर्णांक_vid(vid),
 			   backbone_gw->orig);
 
-		remove_crc = true;
-	}
+		हटाओ_crc = true;
+	पूर्ण
 
 	/* replace backbone_gw atomically and adjust reference counters */
 	spin_lock_bh(&claim->backbone_lock);
@@ -741,12 +742,12 @@ static void batadv_bla_add_claim(struct batadv_priv *bat_priv,
 	claim->backbone_gw = backbone_gw;
 	spin_unlock_bh(&claim->backbone_lock);
 
-	if (remove_crc) {
-		/* remove claim address from old backbone_gw */
+	अगर (हटाओ_crc) अणु
+		/* हटाओ claim address from old backbone_gw */
 		spin_lock_bh(&old_backbone_gw->crc_lock);
 		old_backbone_gw->crc ^= crc16(0, claim->addr, ETH_ALEN);
 		spin_unlock_bh(&old_backbone_gw->crc_lock);
-	}
+	पूर्ण
 
 	batadv_backbone_gw_put(old_backbone_gw);
 
@@ -754,545 +755,545 @@ static void batadv_bla_add_claim(struct batadv_priv *bat_priv,
 	spin_lock_bh(&backbone_gw->crc_lock);
 	backbone_gw->crc ^= crc16(0, claim->addr, ETH_ALEN);
 	spin_unlock_bh(&backbone_gw->crc_lock);
-	backbone_gw->lasttime = jiffies;
+	backbone_gw->lastसमय = jअगरfies;
 
-claim_free_ref:
+claim_मुक्त_ref:
 	batadv_claim_put(claim);
-}
+पूर्ण
 
 /**
- * batadv_bla_claim_get_backbone_gw() - Get valid reference for backbone_gw of
+ * batadv_bla_claim_get_backbone_gw() - Get valid reference क्रम backbone_gw of
  *  claim
- * @claim: claim whose backbone_gw should be returned
+ * @claim: claim whose backbone_gw should be वापसed
  *
  * Return: valid reference to claim::backbone_gw
  */
-static struct batadv_bla_backbone_gw *
-batadv_bla_claim_get_backbone_gw(struct batadv_bla_claim *claim)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
+अटल काष्ठा batadv_bla_backbone_gw *
+batadv_bla_claim_get_backbone_gw(काष्ठा batadv_bla_claim *claim)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
 
 	spin_lock_bh(&claim->backbone_lock);
 	backbone_gw = claim->backbone_gw;
 	kref_get(&backbone_gw->refcount);
 	spin_unlock_bh(&claim->backbone_lock);
 
-	return backbone_gw;
-}
+	वापस backbone_gw;
+पूर्ण
 
 /**
  * batadv_bla_del_claim() - delete a claim from the claim hash
- * @bat_priv: the bat priv with all the soft interface information
- * @mac: mac address of the claim to be removed
- * @vid: VLAN id for the claim to be removed
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @mac: mac address of the claim to be हटाओd
+ * @vid: VLAN id क्रम the claim to be हटाओd
  */
-static void batadv_bla_del_claim(struct batadv_priv *bat_priv,
-				 const u8 *mac, const unsigned short vid)
-{
-	struct batadv_bla_claim search_claim, *claim;
-	struct batadv_bla_claim *claim_removed_entry;
-	struct hlist_node *claim_removed_node;
+अटल व्योम batadv_bla_del_claim(काष्ठा batadv_priv *bat_priv,
+				 स्थिर u8 *mac, स्थिर अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_bla_claim search_claim, *claim;
+	काष्ठा batadv_bla_claim *claim_हटाओd_entry;
+	काष्ठा hlist_node *claim_हटाओd_node;
 
 	ether_addr_copy(search_claim.addr, mac);
 	search_claim.vid = vid;
 	claim = batadv_claim_hash_find(bat_priv, &search_claim);
-	if (!claim)
-		return;
+	अगर (!claim)
+		वापस;
 
 	batadv_dbg(BATADV_DBG_BLA, bat_priv, "%s(): %pM, vid %d\n", __func__,
-		   mac, batadv_print_vid(vid));
+		   mac, batadv_prपूर्णांक_vid(vid));
 
-	claim_removed_node = batadv_hash_remove(bat_priv->bla.claim_hash,
+	claim_हटाओd_node = batadv_hash_हटाओ(bat_priv->bla.claim_hash,
 						batadv_compare_claim,
 						batadv_choose_claim, claim);
-	if (!claim_removed_node)
-		goto free_claim;
+	अगर (!claim_हटाओd_node)
+		जाओ मुक्त_claim;
 
 	/* reference from the hash is gone */
-	claim_removed_entry = hlist_entry(claim_removed_node,
-					  struct batadv_bla_claim, hash_entry);
-	batadv_claim_put(claim_removed_entry);
+	claim_हटाओd_entry = hlist_entry(claim_हटाओd_node,
+					  काष्ठा batadv_bla_claim, hash_entry);
+	batadv_claim_put(claim_हटाओd_entry);
 
-free_claim:
-	/* don't need the reference from hash_find() anymore */
+मुक्त_claim:
+	/* करोn't need the reference from hash_find() anymore */
 	batadv_claim_put(claim);
-}
+पूर्ण
 
 /**
- * batadv_handle_announce() - check for ANNOUNCE frame
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_handle_announce() - check क्रम ANNOUNCE frame
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @an_addr: announcement mac address (ARP Sender HW address)
  * @backbone_addr: originator address of the sender (Ethernet source MAC)
  * @vid: the VLAN ID of the frame
  *
- * Return: true if handled
+ * Return: true अगर handled
  */
-static bool batadv_handle_announce(struct batadv_priv *bat_priv, u8 *an_addr,
-				   u8 *backbone_addr, unsigned short vid)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
+अटल bool batadv_handle_announce(काष्ठा batadv_priv *bat_priv, u8 *an_addr,
+				   u8 *backbone_addr, अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
 	u16 backbone_crc, crc;
 
-	if (memcmp(an_addr, batadv_announce_mac, 4) != 0)
-		return false;
+	अगर (स_भेद(an_addr, batadv_announce_mac, 4) != 0)
+		वापस false;
 
 	backbone_gw = batadv_bla_get_backbone_gw(bat_priv, backbone_addr, vid,
 						 false);
 
-	if (unlikely(!backbone_gw))
-		return true;
+	अगर (unlikely(!backbone_gw))
+		वापस true;
 
 	/* handle as ANNOUNCE frame */
-	backbone_gw->lasttime = jiffies;
-	crc = ntohs(*((__force __be16 *)(&an_addr[4])));
+	backbone_gw->lastसमय = jअगरfies;
+	crc = ntohs(*((__क्रमce __be16 *)(&an_addr[4])));
 
 	batadv_dbg(BATADV_DBG_BLA, bat_priv,
 		   "%s(): ANNOUNCE vid %d (sent by %pM)... CRC = %#.4x\n",
-		   __func__, batadv_print_vid(vid), backbone_gw->orig, crc);
+		   __func__, batadv_prपूर्णांक_vid(vid), backbone_gw->orig, crc);
 
 	spin_lock_bh(&backbone_gw->crc_lock);
 	backbone_crc = backbone_gw->crc;
 	spin_unlock_bh(&backbone_gw->crc_lock);
 
-	if (backbone_crc != crc) {
+	अगर (backbone_crc != crc) अणु
 		batadv_dbg(BATADV_DBG_BLA, backbone_gw->bat_priv,
 			   "%s(): CRC FAILED for %pM/%d (my = %#.4x, sent = %#.4x)\n",
 			   __func__, backbone_gw->orig,
-			   batadv_print_vid(backbone_gw->vid),
+			   batadv_prपूर्णांक_vid(backbone_gw->vid),
 			   backbone_crc, crc);
 
 		batadv_bla_send_request(backbone_gw);
-	} else {
-		/* if we have sent a request and the crc was OK,
+	पूर्ण अन्यथा अणु
+		/* अगर we have sent a request and the crc was OK,
 		 * we can allow traffic again.
 		 */
-		if (atomic_read(&backbone_gw->request_sent)) {
+		अगर (atomic_पढ़ो(&backbone_gw->request_sent)) अणु
 			atomic_dec(&backbone_gw->bat_priv->bla.num_requests);
 			atomic_set(&backbone_gw->request_sent, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	batadv_backbone_gw_put(backbone_gw);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * batadv_handle_request() - check for REQUEST frame
- * @bat_priv: the bat priv with all the soft interface information
- * @primary_if: the primary hard interface of this batman soft interface
+ * batadv_handle_request() - check क्रम REQUEST frame
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @primary_अगर: the primary hard पूर्णांकerface of this baपंचांगan soft पूर्णांकerface
  * @backbone_addr: backbone address to be requested (ARP sender HW MAC)
  * @ethhdr: ethernet header of a packet
  * @vid: the VLAN ID of the frame
  *
- * Return: true if handled
+ * Return: true अगर handled
  */
-static bool batadv_handle_request(struct batadv_priv *bat_priv,
-				  struct batadv_hard_iface *primary_if,
-				  u8 *backbone_addr, struct ethhdr *ethhdr,
-				  unsigned short vid)
-{
-	/* check for REQUEST frame */
-	if (!batadv_compare_eth(backbone_addr, ethhdr->h_dest))
-		return false;
+अटल bool batadv_handle_request(काष्ठा batadv_priv *bat_priv,
+				  काष्ठा batadv_hard_अगरace *primary_अगर,
+				  u8 *backbone_addr, काष्ठा ethhdr *ethhdr,
+				  अचिन्हित लघु vid)
+अणु
+	/* check क्रम REQUEST frame */
+	अगर (!batadv_compare_eth(backbone_addr, ethhdr->h_dest))
+		वापस false;
 
-	/* sanity check, this should not happen on a normal switch,
-	 * we ignore it in this case.
+	/* sanity check, this should not happen on a normal चयन,
+	 * we ignore it in this हाल.
 	 */
-	if (!batadv_compare_eth(ethhdr->h_dest, primary_if->net_dev->dev_addr))
-		return true;
+	अगर (!batadv_compare_eth(ethhdr->h_dest, primary_अगर->net_dev->dev_addr))
+		वापस true;
 
 	batadv_dbg(BATADV_DBG_BLA, bat_priv,
 		   "%s(): REQUEST vid %d (sent by %pM)...\n",
-		   __func__, batadv_print_vid(vid), ethhdr->h_source);
+		   __func__, batadv_prपूर्णांक_vid(vid), ethhdr->h_source);
 
-	batadv_bla_answer_request(bat_priv, primary_if, vid);
-	return true;
-}
+	batadv_bla_answer_request(bat_priv, primary_अगर, vid);
+	वापस true;
+पूर्ण
 
 /**
- * batadv_handle_unclaim() - check for UNCLAIM frame
- * @bat_priv: the bat priv with all the soft interface information
- * @primary_if: the primary hard interface of this batman soft interface
+ * batadv_handle_unclaim() - check क्रम UNCLAIM frame
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @primary_अगर: the primary hard पूर्णांकerface of this baपंचांगan soft पूर्णांकerface
  * @backbone_addr: originator address of the backbone (Ethernet source)
  * @claim_addr: Client to be unclaimed (ARP sender HW MAC)
  * @vid: the VLAN ID of the frame
  *
- * Return: true if handled
+ * Return: true अगर handled
  */
-static bool batadv_handle_unclaim(struct batadv_priv *bat_priv,
-				  struct batadv_hard_iface *primary_if,
+अटल bool batadv_handle_unclaim(काष्ठा batadv_priv *bat_priv,
+				  काष्ठा batadv_hard_अगरace *primary_अगर,
 				  u8 *backbone_addr, u8 *claim_addr,
-				  unsigned short vid)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
+				  अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
 
-	/* unclaim in any case if it is our own */
-	if (primary_if && batadv_compare_eth(backbone_addr,
-					     primary_if->net_dev->dev_addr))
+	/* unclaim in any हाल अगर it is our own */
+	अगर (primary_अगर && batadv_compare_eth(backbone_addr,
+					     primary_अगर->net_dev->dev_addr))
 		batadv_bla_send_claim(bat_priv, claim_addr, vid,
 				      BATADV_CLAIM_TYPE_UNCLAIM);
 
 	backbone_gw = batadv_backbone_hash_find(bat_priv, backbone_addr, vid);
 
-	if (!backbone_gw)
-		return true;
+	अगर (!backbone_gw)
+		वापस true;
 
 	/* this must be an UNCLAIM frame */
 	batadv_dbg(BATADV_DBG_BLA, bat_priv,
 		   "%s(): UNCLAIM %pM on vid %d (sent by %pM)...\n", __func__,
-		   claim_addr, batadv_print_vid(vid), backbone_gw->orig);
+		   claim_addr, batadv_prपूर्णांक_vid(vid), backbone_gw->orig);
 
 	batadv_bla_del_claim(bat_priv, claim_addr, vid);
 	batadv_backbone_gw_put(backbone_gw);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * batadv_handle_claim() - check for CLAIM frame
- * @bat_priv: the bat priv with all the soft interface information
- * @primary_if: the primary hard interface of this batman soft interface
+ * batadv_handle_claim() - check क्रम CLAIM frame
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @primary_अगर: the primary hard पूर्णांकerface of this baपंचांगan soft पूर्णांकerface
  * @backbone_addr: originator address of the backbone (Ethernet Source)
  * @claim_addr: client mac address to be claimed (ARP sender HW MAC)
  * @vid: the VLAN ID of the frame
  *
- * Return: true if handled
+ * Return: true अगर handled
  */
-static bool batadv_handle_claim(struct batadv_priv *bat_priv,
-				struct batadv_hard_iface *primary_if,
+अटल bool batadv_handle_claim(काष्ठा batadv_priv *bat_priv,
+				काष्ठा batadv_hard_अगरace *primary_अगर,
 				u8 *backbone_addr, u8 *claim_addr,
-				unsigned short vid)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
+				अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
 
-	/* register the gateway if not yet available, and add the claim. */
+	/* रेजिस्टर the gateway अगर not yet available, and add the claim. */
 
 	backbone_gw = batadv_bla_get_backbone_gw(bat_priv, backbone_addr, vid,
 						 false);
 
-	if (unlikely(!backbone_gw))
-		return true;
+	अगर (unlikely(!backbone_gw))
+		वापस true;
 
 	/* this must be a CLAIM frame */
 	batadv_bla_add_claim(bat_priv, claim_addr, vid, backbone_gw);
-	if (batadv_compare_eth(backbone_addr, primary_if->net_dev->dev_addr))
+	अगर (batadv_compare_eth(backbone_addr, primary_अगर->net_dev->dev_addr))
 		batadv_bla_send_claim(bat_priv, claim_addr, vid,
 				      BATADV_CLAIM_TYPE_CLAIM);
 
 	/* TODO: we could call something like tt_local_del() here. */
 
 	batadv_backbone_gw_put(backbone_gw);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * batadv_check_claim_group() - check for claim group membership
- * @bat_priv: the bat priv with all the soft interface information
- * @primary_if: the primary interface of this batman interface
+ * batadv_check_claim_group() - check क्रम claim group membership
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @primary_अगर: the primary पूर्णांकerface of this baपंचांगan पूर्णांकerface
  * @hw_src: the Hardware source in the ARP Header
  * @hw_dst: the Hardware destination in the ARP Header
- * @ethhdr: pointer to the Ethernet header of the claim frame
+ * @ethhdr: poपूर्णांकer to the Ethernet header of the claim frame
  *
- * checks if it is a claim packet and if it's on the same group.
+ * checks अगर it is a claim packet and अगर it's on the same group.
  * This function also applies the group ID of the sender
- * if it is in the same mesh.
+ * अगर it is in the same mesh.
  *
  * Return:
- *	2  - if it is a claim packet and on the same group
- *	1  - if is a claim packet from another group
- *	0  - if it is not a claim packet
+ *	2  - अगर it is a claim packet and on the same group
+ *	1  - अगर is a claim packet from another group
+ *	0  - अगर it is not a claim packet
  */
-static int batadv_check_claim_group(struct batadv_priv *bat_priv,
-				    struct batadv_hard_iface *primary_if,
+अटल पूर्णांक batadv_check_claim_group(काष्ठा batadv_priv *bat_priv,
+				    काष्ठा batadv_hard_अगरace *primary_अगर,
 				    u8 *hw_src, u8 *hw_dst,
-				    struct ethhdr *ethhdr)
-{
+				    काष्ठा ethhdr *ethhdr)
+अणु
 	u8 *backbone_addr;
-	struct batadv_orig_node *orig_node;
-	struct batadv_bla_claim_dst *bla_dst, *bla_dst_own;
+	काष्ठा batadv_orig_node *orig_node;
+	काष्ठा batadv_bla_claim_dst *bla_dst, *bla_dst_own;
 
-	bla_dst = (struct batadv_bla_claim_dst *)hw_dst;
+	bla_dst = (काष्ठा batadv_bla_claim_dst *)hw_dst;
 	bla_dst_own = &bat_priv->bla.claim_dest;
 
-	/* if announcement packet, use the source,
+	/* अगर announcement packet, use the source,
 	 * otherwise assume it is in the hw_src
 	 */
-	switch (bla_dst->type) {
-	case BATADV_CLAIM_TYPE_CLAIM:
+	चयन (bla_dst->type) अणु
+	हाल BATADV_CLAIM_TYPE_CLAIM:
 		backbone_addr = hw_src;
-		break;
-	case BATADV_CLAIM_TYPE_REQUEST:
-	case BATADV_CLAIM_TYPE_ANNOUNCE:
-	case BATADV_CLAIM_TYPE_UNCLAIM:
+		अवरोध;
+	हाल BATADV_CLAIM_TYPE_REQUEST:
+	हाल BATADV_CLAIM_TYPE_ANNOUNCE:
+	हाल BATADV_CLAIM_TYPE_UNCLAIM:
 		backbone_addr = ethhdr->h_source;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	/* don't accept claim frames from ourselves */
-	if (batadv_compare_eth(backbone_addr, primary_if->net_dev->dev_addr))
-		return 0;
+	/* करोn't accept claim frames from ourselves */
+	अगर (batadv_compare_eth(backbone_addr, primary_अगर->net_dev->dev_addr))
+		वापस 0;
 
-	/* if its already the same group, it is fine. */
-	if (bla_dst->group == bla_dst_own->group)
-		return 2;
+	/* अगर its alपढ़ोy the same group, it is fine. */
+	अगर (bla_dst->group == bla_dst_own->group)
+		वापस 2;
 
-	/* lets see if this originator is in our mesh */
+	/* lets see अगर this originator is in our mesh */
 	orig_node = batadv_orig_hash_find(bat_priv, backbone_addr);
 
-	/* dont accept claims from gateways which are not in
+	/* करोnt accept claims from gateways which are not in
 	 * the same mesh or group.
 	 */
-	if (!orig_node)
-		return 1;
+	अगर (!orig_node)
+		वापस 1;
 
-	/* if our mesh friends mac is bigger, use it for ourselves. */
-	if (ntohs(bla_dst->group) > ntohs(bla_dst_own->group)) {
+	/* अगर our mesh मित्रs mac is bigger, use it क्रम ourselves. */
+	अगर (ntohs(bla_dst->group) > ntohs(bla_dst_own->group)) अणु
 		batadv_dbg(BATADV_DBG_BLA, bat_priv,
 			   "taking other backbones claim group: %#.4x\n",
 			   ntohs(bla_dst->group));
 		bla_dst_own->group = bla_dst->group;
-	}
+	पूर्ण
 
 	batadv_orig_node_put(orig_node);
 
-	return 2;
-}
+	वापस 2;
+पूर्ण
 
 /**
- * batadv_bla_process_claim() - Check if this is a claim frame, and process it
- * @bat_priv: the bat priv with all the soft interface information
- * @primary_if: the primary hard interface of this batman soft interface
+ * batadv_bla_process_claim() - Check अगर this is a claim frame, and process it
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @primary_अगर: the primary hard पूर्णांकerface of this baपंचांगan soft पूर्णांकerface
  * @skb: the frame to be checked
  *
- * Return: true if it was a claim frame, otherwise return false to
+ * Return: true अगर it was a claim frame, otherwise वापस false to
  * tell the callee that it can use the frame on its own.
  */
-static bool batadv_bla_process_claim(struct batadv_priv *bat_priv,
-				     struct batadv_hard_iface *primary_if,
-				     struct sk_buff *skb)
-{
-	struct batadv_bla_claim_dst *bla_dst, *bla_dst_own;
+अटल bool batadv_bla_process_claim(काष्ठा batadv_priv *bat_priv,
+				     काष्ठा batadv_hard_अगरace *primary_अगर,
+				     काष्ठा sk_buff *skb)
+अणु
+	काष्ठा batadv_bla_claim_dst *bla_dst, *bla_dst_own;
 	u8 *hw_src, *hw_dst;
-	struct vlan_hdr *vhdr, vhdr_buf;
-	struct ethhdr *ethhdr;
-	struct arphdr *arphdr;
-	unsigned short vid;
-	int vlan_depth = 0;
+	काष्ठा vlan_hdr *vhdr, vhdr_buf;
+	काष्ठा ethhdr *ethhdr;
+	काष्ठा arphdr *arphdr;
+	अचिन्हित लघु vid;
+	पूर्णांक vlan_depth = 0;
 	__be16 proto;
-	int headlen;
-	int ret;
+	पूर्णांक headlen;
+	पूर्णांक ret;
 
 	vid = batadv_get_vid(skb, 0);
 	ethhdr = eth_hdr(skb);
 
 	proto = ethhdr->h_proto;
 	headlen = ETH_HLEN;
-	if (vid & BATADV_VLAN_HAS_TAG) {
+	अगर (vid & BATADV_VLAN_HAS_TAG) अणु
 		/* Traverse the VLAN/Ethertypes.
 		 *
-		 * At this point it is known that the first protocol is a VLAN
+		 * At this poपूर्णांक it is known that the first protocol is a VLAN
 		 * header, so start checking at the encapsulated protocol.
 		 *
 		 * The depth of the VLAN headers is recorded to drop BLA claim
-		 * frames encapsulated into multiple VLAN headers (QinQ).
+		 * frames encapsulated पूर्णांकo multiple VLAN headers (QinQ).
 		 */
-		do {
-			vhdr = skb_header_pointer(skb, headlen, VLAN_HLEN,
+		करो अणु
+			vhdr = skb_header_poपूर्णांकer(skb, headlen, VLAN_HLEN,
 						  &vhdr_buf);
-			if (!vhdr)
-				return false;
+			अगर (!vhdr)
+				वापस false;
 
 			proto = vhdr->h_vlan_encapsulated_proto;
 			headlen += VLAN_HLEN;
 			vlan_depth++;
-		} while (proto == htons(ETH_P_8021Q));
-	}
+		पूर्ण जबतक (proto == htons(ETH_P_8021Q));
+	पूर्ण
 
-	if (proto != htons(ETH_P_ARP))
-		return false; /* not a claim frame */
+	अगर (proto != htons(ETH_P_ARP))
+		वापस false; /* not a claim frame */
 
-	/* this must be a ARP frame. check if it is a claim. */
+	/* this must be a ARP frame. check अगर it is a claim. */
 
-	if (unlikely(!pskb_may_pull(skb, headlen + arp_hdr_len(skb->dev))))
-		return false;
+	अगर (unlikely(!pskb_may_pull(skb, headlen + arp_hdr_len(skb->dev))))
+		वापस false;
 
-	/* pskb_may_pull() may have modified the pointers, get ethhdr again */
+	/* pskb_may_pull() may have modअगरied the poपूर्णांकers, get ethhdr again */
 	ethhdr = eth_hdr(skb);
-	arphdr = (struct arphdr *)((u8 *)ethhdr + headlen);
+	arphdr = (काष्ठा arphdr *)((u8 *)ethhdr + headlen);
 
 	/* Check whether the ARP frame carries a valid
-	 * IP information
+	 * IP inक्रमmation
 	 */
-	if (arphdr->ar_hrd != htons(ARPHRD_ETHER))
-		return false;
-	if (arphdr->ar_pro != htons(ETH_P_IP))
-		return false;
-	if (arphdr->ar_hln != ETH_ALEN)
-		return false;
-	if (arphdr->ar_pln != 4)
-		return false;
+	अगर (arphdr->ar_hrd != htons(ARPHRD_ETHER))
+		वापस false;
+	अगर (arphdr->ar_pro != htons(ETH_P_IP))
+		वापस false;
+	अगर (arphdr->ar_hln != ETH_ALEN)
+		वापस false;
+	अगर (arphdr->ar_pln != 4)
+		वापस false;
 
-	hw_src = (u8 *)arphdr + sizeof(struct arphdr);
+	hw_src = (u8 *)arphdr + माप(काष्ठा arphdr);
 	hw_dst = hw_src + ETH_ALEN + 4;
-	bla_dst = (struct batadv_bla_claim_dst *)hw_dst;
+	bla_dst = (काष्ठा batadv_bla_claim_dst *)hw_dst;
 	bla_dst_own = &bat_priv->bla.claim_dest;
 
-	/* check if it is a claim frame in general */
-	if (memcmp(bla_dst->magic, bla_dst_own->magic,
-		   sizeof(bla_dst->magic)) != 0)
-		return false;
+	/* check अगर it is a claim frame in general */
+	अगर (स_भेद(bla_dst->magic, bla_dst_own->magic,
+		   माप(bla_dst->magic)) != 0)
+		वापस false;
 
-	/* check if there is a claim frame encapsulated deeper in (QinQ) and
+	/* check अगर there is a claim frame encapsulated deeper in (QinQ) and
 	 * drop that, as this is not supported by BLA but should also not be
 	 * sent via the mesh.
 	 */
-	if (vlan_depth > 1)
-		return true;
+	अगर (vlan_depth > 1)
+		वापस true;
 
-	/* Let the loopdetect frames on the mesh in any case. */
-	if (bla_dst->type == BATADV_CLAIM_TYPE_LOOPDETECT)
-		return false;
+	/* Let the loopdetect frames on the mesh in any हाल. */
+	अगर (bla_dst->type == BATADV_CLAIM_TYPE_LOOPDETECT)
+		वापस false;
 
-	/* check if it is a claim frame. */
-	ret = batadv_check_claim_group(bat_priv, primary_if, hw_src, hw_dst,
+	/* check अगर it is a claim frame. */
+	ret = batadv_check_claim_group(bat_priv, primary_अगर, hw_src, hw_dst,
 				       ethhdr);
-	if (ret == 1)
+	अगर (ret == 1)
 		batadv_dbg(BATADV_DBG_BLA, bat_priv,
 			   "%s(): received a claim frame from another group. From: %pM on vid %d ...(hw_src %pM, hw_dst %pM)\n",
-			   __func__, ethhdr->h_source, batadv_print_vid(vid),
+			   __func__, ethhdr->h_source, batadv_prपूर्णांक_vid(vid),
 			   hw_src, hw_dst);
 
-	if (ret < 2)
-		return !!ret;
+	अगर (ret < 2)
+		वापस !!ret;
 
-	/* become a backbone gw ourselves on this vlan if not happened yet */
-	batadv_bla_update_own_backbone_gw(bat_priv, primary_if, vid);
+	/* become a backbone gw ourselves on this vlan अगर not happened yet */
+	batadv_bla_update_own_backbone_gw(bat_priv, primary_अगर, vid);
 
-	/* check for the different types of claim frames ... */
-	switch (bla_dst->type) {
-	case BATADV_CLAIM_TYPE_CLAIM:
-		if (batadv_handle_claim(bat_priv, primary_if, hw_src,
+	/* check क्रम the dअगरferent types of claim frames ... */
+	चयन (bla_dst->type) अणु
+	हाल BATADV_CLAIM_TYPE_CLAIM:
+		अगर (batadv_handle_claim(bat_priv, primary_अगर, hw_src,
 					ethhdr->h_source, vid))
-			return true;
-		break;
-	case BATADV_CLAIM_TYPE_UNCLAIM:
-		if (batadv_handle_unclaim(bat_priv, primary_if,
+			वापस true;
+		अवरोध;
+	हाल BATADV_CLAIM_TYPE_UNCLAIM:
+		अगर (batadv_handle_unclaim(bat_priv, primary_अगर,
 					  ethhdr->h_source, hw_src, vid))
-			return true;
-		break;
+			वापस true;
+		अवरोध;
 
-	case BATADV_CLAIM_TYPE_ANNOUNCE:
-		if (batadv_handle_announce(bat_priv, hw_src, ethhdr->h_source,
+	हाल BATADV_CLAIM_TYPE_ANNOUNCE:
+		अगर (batadv_handle_announce(bat_priv, hw_src, ethhdr->h_source,
 					   vid))
-			return true;
-		break;
-	case BATADV_CLAIM_TYPE_REQUEST:
-		if (batadv_handle_request(bat_priv, primary_if, hw_src, ethhdr,
+			वापस true;
+		अवरोध;
+	हाल BATADV_CLAIM_TYPE_REQUEST:
+		अगर (batadv_handle_request(bat_priv, primary_अगर, hw_src, ethhdr,
 					  vid))
-			return true;
-		break;
-	}
+			वापस true;
+		अवरोध;
+	पूर्ण
 
 	batadv_dbg(BATADV_DBG_BLA, bat_priv,
 		   "%s(): ERROR - this looks like a claim frame, but is useless. eth src %pM on vid %d ...(hw_src %pM, hw_dst %pM)\n",
-		   __func__, ethhdr->h_source, batadv_print_vid(vid), hw_src,
+		   __func__, ethhdr->h_source, batadv_prपूर्णांक_vid(vid), hw_src,
 		   hw_dst);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * batadv_bla_purge_backbone_gw() - Remove backbone gateways after a timeout or
+ * batadv_bla_purge_backbone_gw() - Remove backbone gateways after a समयout or
  *  immediately
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @now: whether the whole hash shall be wiped now
  *
- * Check when we last heard from other nodes, and remove them in case of
- * a time out, or clean all backbone gws if now is set.
+ * Check when we last heard from other nodes, and हटाओ them in हाल of
+ * a समय out, or clean all backbone gws अगर now is set.
  */
-static void batadv_bla_purge_backbone_gw(struct batadv_priv *bat_priv, int now)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
-	struct hlist_node *node_tmp;
-	struct hlist_head *head;
-	struct batadv_hashtable *hash;
-	spinlock_t *list_lock;	/* protects write access to the hash lists */
-	int i;
+अटल व्योम batadv_bla_purge_backbone_gw(काष्ठा batadv_priv *bat_priv, पूर्णांक now)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	काष्ठा hlist_node *node_पंचांगp;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_hashtable *hash;
+	spinlock_t *list_lock;	/* protects ग_लिखो access to the hash lists */
+	पूर्णांक i;
 
 	hash = bat_priv->bla.backbone_hash;
-	if (!hash)
-		return;
+	अगर (!hash)
+		वापस;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 		list_lock = &hash->list_locks[i];
 
 		spin_lock_bh(list_lock);
-		hlist_for_each_entry_safe(backbone_gw, node_tmp,
-					  head, hash_entry) {
-			if (now)
-				goto purge_now;
-			if (!batadv_has_timed_out(backbone_gw->lasttime,
+		hlist_क्रम_each_entry_safe(backbone_gw, node_पंचांगp,
+					  head, hash_entry) अणु
+			अगर (now)
+				जाओ purge_now;
+			अगर (!batadv_has_समयd_out(backbone_gw->lastसमय,
 						  BATADV_BLA_BACKBONE_TIMEOUT))
-				continue;
+				जारी;
 
 			batadv_dbg(BATADV_DBG_BLA, backbone_gw->bat_priv,
 				   "%s(): backbone gw %pM timed out\n",
 				   __func__, backbone_gw->orig);
 
 purge_now:
-			/* don't wait for the pending request anymore */
-			if (atomic_read(&backbone_gw->request_sent))
+			/* करोn't रुको क्रम the pending request anymore */
+			अगर (atomic_पढ़ो(&backbone_gw->request_sent))
 				atomic_dec(&bat_priv->bla.num_requests);
 
 			batadv_bla_del_backbone_claims(backbone_gw);
 
 			hlist_del_rcu(&backbone_gw->hash_entry);
 			batadv_backbone_gw_put(backbone_gw);
-		}
+		पूर्ण
 		spin_unlock_bh(list_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * batadv_bla_purge_claims() - Remove claims after a timeout or immediately
- * @bat_priv: the bat priv with all the soft interface information
- * @primary_if: the selected primary interface, may be NULL if now is set
+ * batadv_bla_purge_claims() - Remove claims after a समयout or immediately
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @primary_अगर: the selected primary पूर्णांकerface, may be शून्य अगर now is set
  * @now: whether the whole hash shall be wiped now
  *
- * Check when we heard last time from our own claims, and remove them in case of
- * a time out, or clean all claims if now is set
+ * Check when we heard last समय from our own claims, and हटाओ them in हाल of
+ * a समय out, or clean all claims अगर now is set
  */
-static void batadv_bla_purge_claims(struct batadv_priv *bat_priv,
-				    struct batadv_hard_iface *primary_if,
-				    int now)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
-	struct batadv_bla_claim *claim;
-	struct hlist_head *head;
-	struct batadv_hashtable *hash;
-	int i;
+अटल व्योम batadv_bla_purge_claims(काष्ठा batadv_priv *bat_priv,
+				    काष्ठा batadv_hard_अगरace *primary_अगर,
+				    पूर्णांक now)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	काष्ठा batadv_bla_claim *claim;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_hashtable *hash;
+	पूर्णांक i;
 
 	hash = bat_priv->bla.claim_hash;
-	if (!hash)
-		return;
+	अगर (!hash)
+		वापस;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 
-		rcu_read_lock();
-		hlist_for_each_entry_rcu(claim, head, hash_entry) {
+		rcu_पढ़ो_lock();
+		hlist_क्रम_each_entry_rcu(claim, head, hash_entry) अणु
 			backbone_gw = batadv_bla_claim_get_backbone_gw(claim);
-			if (now)
-				goto purge_now;
+			अगर (now)
+				जाओ purge_now;
 
-			if (!batadv_compare_eth(backbone_gw->orig,
-						primary_if->net_dev->dev_addr))
-				goto skip;
+			अगर (!batadv_compare_eth(backbone_gw->orig,
+						primary_अगर->net_dev->dev_addr))
+				जाओ skip;
 
-			if (!batadv_has_timed_out(claim->lasttime,
+			अगर (!batadv_has_समयd_out(claim->lastसमय,
 						  BATADV_BLA_CLAIM_TIMEOUT))
-				goto skip;
+				जाओ skip;
 
 			batadv_dbg(BATADV_DBG_BLA, bat_priv,
 				   "%s(): timed out.\n", __func__);
@@ -1302,264 +1303,264 @@ purge_now:
 				   "%s(): %pM, vid %d\n", __func__,
 				   claim->addr, claim->vid);
 
-			batadv_handle_unclaim(bat_priv, primary_if,
+			batadv_handle_unclaim(bat_priv, primary_अगर,
 					      backbone_gw->orig,
 					      claim->addr, claim->vid);
 skip:
 			batadv_backbone_gw_put(backbone_gw);
-		}
-		rcu_read_unlock();
-	}
-}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
 /**
  * batadv_bla_update_orig_address() - Update the backbone gateways when the own
  *  originator address changes
- * @bat_priv: the bat priv with all the soft interface information
- * @primary_if: the new selected primary_if
- * @oldif: the old primary interface, may be NULL
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @primary_अगर: the new selected primary_अगर
+ * @oldअगर: the old primary पूर्णांकerface, may be शून्य
  */
-void batadv_bla_update_orig_address(struct batadv_priv *bat_priv,
-				    struct batadv_hard_iface *primary_if,
-				    struct batadv_hard_iface *oldif)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
-	struct hlist_head *head;
-	struct batadv_hashtable *hash;
+व्योम batadv_bla_update_orig_address(काष्ठा batadv_priv *bat_priv,
+				    काष्ठा batadv_hard_अगरace *primary_अगर,
+				    काष्ठा batadv_hard_अगरace *oldअगर)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_hashtable *hash;
 	__be16 group;
-	int i;
+	पूर्णांक i;
 
-	/* reset bridge loop avoidance group id */
-	group = htons(crc16(0, primary_if->net_dev->dev_addr, ETH_ALEN));
+	/* reset bridge loop aव्योमance group id */
+	group = htons(crc16(0, primary_अगर->net_dev->dev_addr, ETH_ALEN));
 	bat_priv->bla.claim_dest.group = group;
 
-	/* purge everything when bridge loop avoidance is turned off */
-	if (!atomic_read(&bat_priv->bridge_loop_avoidance))
-		oldif = NULL;
+	/* purge everything when bridge loop aव्योमance is turned off */
+	अगर (!atomic_पढ़ो(&bat_priv->bridge_loop_aव्योमance))
+		oldअगर = शून्य;
 
-	if (!oldif) {
-		batadv_bla_purge_claims(bat_priv, NULL, 1);
+	अगर (!oldअगर) अणु
+		batadv_bla_purge_claims(bat_priv, शून्य, 1);
 		batadv_bla_purge_backbone_gw(bat_priv, 1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hash = bat_priv->bla.backbone_hash;
-	if (!hash)
-		return;
+	अगर (!hash)
+		वापस;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 
-		rcu_read_lock();
-		hlist_for_each_entry_rcu(backbone_gw, head, hash_entry) {
+		rcu_पढ़ो_lock();
+		hlist_क्रम_each_entry_rcu(backbone_gw, head, hash_entry) अणु
 			/* own orig still holds the old value. */
-			if (!batadv_compare_eth(backbone_gw->orig,
-						oldif->net_dev->dev_addr))
-				continue;
+			अगर (!batadv_compare_eth(backbone_gw->orig,
+						oldअगर->net_dev->dev_addr))
+				जारी;
 
 			ether_addr_copy(backbone_gw->orig,
-					primary_if->net_dev->dev_addr);
-			/* send an announce frame so others will ask for our
+					primary_अगर->net_dev->dev_addr);
+			/* send an announce frame so others will ask क्रम our
 			 * claims and update their tables.
 			 */
 			batadv_bla_send_announce(bat_priv, backbone_gw);
-		}
-		rcu_read_unlock();
-	}
-}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
 /**
  * batadv_bla_send_loopdetect() - send a loopdetect frame
- * @bat_priv: the bat priv with all the soft interface information
- * @backbone_gw: the backbone gateway for which a loop should be detected
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @backbone_gw: the backbone gateway क्रम which a loop should be detected
  *
- * To detect loops that the bridge loop avoidance can't handle, send a loop
+ * To detect loops that the bridge loop aव्योमance can't handle, send a loop
  * detection packet on the backbone. Unlike other BLA frames, this frame will
  * be allowed on the mesh by other nodes. If it is received on the mesh, this
  * indicates that there is a loop.
  */
-static void
-batadv_bla_send_loopdetect(struct batadv_priv *bat_priv,
-			   struct batadv_bla_backbone_gw *backbone_gw)
-{
+अटल व्योम
+batadv_bla_send_loopdetect(काष्ठा batadv_priv *bat_priv,
+			   काष्ठा batadv_bla_backbone_gw *backbone_gw)
+अणु
 	batadv_dbg(BATADV_DBG_BLA, bat_priv, "Send loopdetect frame for vid %d\n",
 		   backbone_gw->vid);
 	batadv_bla_send_claim(bat_priv, bat_priv->bla.loopdetect_addr,
 			      backbone_gw->vid, BATADV_CLAIM_TYPE_LOOPDETECT);
-}
+पूर्ण
 
 /**
- * batadv_bla_status_update() - purge bla interfaces if necessary
- * @net_dev: the soft interface net device
+ * batadv_bla_status_update() - purge bla पूर्णांकerfaces अगर necessary
+ * @net_dev: the soft पूर्णांकerface net device
  */
-void batadv_bla_status_update(struct net_device *net_dev)
-{
-	struct batadv_priv *bat_priv = netdev_priv(net_dev);
-	struct batadv_hard_iface *primary_if;
+व्योम batadv_bla_status_update(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा batadv_priv *bat_priv = netdev_priv(net_dev);
+	काष्ठा batadv_hard_अगरace *primary_अगर;
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		return;
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर)
+		वापस;
 
-	/* this function already purges everything when bla is disabled,
+	/* this function alपढ़ोy purges everything when bla is disabled,
 	 * so just call that one.
 	 */
-	batadv_bla_update_orig_address(bat_priv, primary_if, primary_if);
-	batadv_hardif_put(primary_if);
-}
+	batadv_bla_update_orig_address(bat_priv, primary_अगर, primary_अगर);
+	batadv_hardअगर_put(primary_अगर);
+पूर्ण
 
 /**
- * batadv_bla_periodic_work() - performs periodic bla work
- * @work: kernel work struct
+ * batadv_bla_periodic_work() - perक्रमms periodic bla work
+ * @work: kernel work काष्ठा
  *
- * periodic work to do:
- *  * purge structures when they are too old
+ * periodic work to करो:
+ *  * purge काष्ठाures when they are too old
  *  * send announcements
  */
-static void batadv_bla_periodic_work(struct work_struct *work)
-{
-	struct delayed_work *delayed_work;
-	struct batadv_priv *bat_priv;
-	struct batadv_priv_bla *priv_bla;
-	struct hlist_head *head;
-	struct batadv_bla_backbone_gw *backbone_gw;
-	struct batadv_hashtable *hash;
-	struct batadv_hard_iface *primary_if;
+अटल व्योम batadv_bla_periodic_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा delayed_work *delayed_work;
+	काष्ठा batadv_priv *bat_priv;
+	काष्ठा batadv_priv_bla *priv_bla;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	काष्ठा batadv_hashtable *hash;
+	काष्ठा batadv_hard_अगरace *primary_अगर;
 	bool send_loopdetect = false;
-	int i;
+	पूर्णांक i;
 
 	delayed_work = to_delayed_work(work);
-	priv_bla = container_of(delayed_work, struct batadv_priv_bla, work);
-	bat_priv = container_of(priv_bla, struct batadv_priv, bla);
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		goto out;
+	priv_bla = container_of(delayed_work, काष्ठा batadv_priv_bla, work);
+	bat_priv = container_of(priv_bla, काष्ठा batadv_priv, bla);
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर)
+		जाओ out;
 
-	batadv_bla_purge_claims(bat_priv, primary_if, 0);
+	batadv_bla_purge_claims(bat_priv, primary_अगर, 0);
 	batadv_bla_purge_backbone_gw(bat_priv, 0);
 
-	if (!atomic_read(&bat_priv->bridge_loop_avoidance))
-		goto out;
+	अगर (!atomic_पढ़ो(&bat_priv->bridge_loop_aव्योमance))
+		जाओ out;
 
-	if (atomic_dec_and_test(&bat_priv->bla.loopdetect_next)) {
-		/* set a new random mac address for the next bridge loop
-		 * detection frames. Set the locally administered bit to avoid
+	अगर (atomic_dec_and_test(&bat_priv->bla.loopdetect_next)) अणु
+		/* set a new अक्रमom mac address क्रम the next bridge loop
+		 * detection frames. Set the locally administered bit to aव्योम
 		 * collisions with users mac addresses.
 		 */
-		eth_random_addr(bat_priv->bla.loopdetect_addr);
+		eth_अक्रमom_addr(bat_priv->bla.loopdetect_addr);
 		bat_priv->bla.loopdetect_addr[0] = 0xba;
 		bat_priv->bla.loopdetect_addr[1] = 0xbe;
-		bat_priv->bla.loopdetect_lasttime = jiffies;
+		bat_priv->bla.loopdetect_lastसमय = jअगरfies;
 		atomic_set(&bat_priv->bla.loopdetect_next,
 			   BATADV_BLA_LOOPDETECT_PERIODS);
 
-		/* mark for sending loop detect on all VLANs */
+		/* mark क्रम sending loop detect on all VLANs */
 		send_loopdetect = true;
-	}
+	पूर्ण
 
 	hash = bat_priv->bla.backbone_hash;
-	if (!hash)
-		goto out;
+	अगर (!hash)
+		जाओ out;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 
-		rcu_read_lock();
-		hlist_for_each_entry_rcu(backbone_gw, head, hash_entry) {
-			if (!batadv_compare_eth(backbone_gw->orig,
-						primary_if->net_dev->dev_addr))
-				continue;
+		rcu_पढ़ो_lock();
+		hlist_क्रम_each_entry_rcu(backbone_gw, head, hash_entry) अणु
+			अगर (!batadv_compare_eth(backbone_gw->orig,
+						primary_अगर->net_dev->dev_addr))
+				जारी;
 
-			backbone_gw->lasttime = jiffies;
+			backbone_gw->lastसमय = jअगरfies;
 
 			batadv_bla_send_announce(bat_priv, backbone_gw);
-			if (send_loopdetect)
+			अगर (send_loopdetect)
 				batadv_bla_send_loopdetect(bat_priv,
 							   backbone_gw);
 
-			/* request_sent is only set after creation to avoid
+			/* request_sent is only set after creation to aव्योम
 			 * problems when we are not yet known as backbone gw
 			 * in the backbone.
 			 *
-			 * We can reset this now after we waited some periods
-			 * to give bridge forward delays and bla group forming
-			 * some grace time.
+			 * We can reset this now after we रुकोed some periods
+			 * to give bridge क्रमward delays and bla group क्रमming
+			 * some grace समय.
 			 */
 
-			if (atomic_read(&backbone_gw->request_sent) == 0)
-				continue;
+			अगर (atomic_पढ़ो(&backbone_gw->request_sent) == 0)
+				जारी;
 
-			if (!atomic_dec_and_test(&backbone_gw->wait_periods))
-				continue;
+			अगर (!atomic_dec_and_test(&backbone_gw->रुको_periods))
+				जारी;
 
 			atomic_dec(&backbone_gw->bat_priv->bla.num_requests);
 			atomic_set(&backbone_gw->request_sent, 0);
-		}
-		rcu_read_unlock();
-	}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 out:
-	if (primary_if)
-		batadv_hardif_put(primary_if);
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
 
 	queue_delayed_work(batadv_event_workqueue, &bat_priv->bla.work,
-			   msecs_to_jiffies(BATADV_BLA_PERIOD_LENGTH));
-}
+			   msecs_to_jअगरfies(BATADV_BLA_PERIOD_LENGTH));
+पूर्ण
 
-/* The hash for claim and backbone hash receive the same key because they
+/* The hash क्रम claim and backbone hash receive the same key because they
  * are getting initialized by hash_new with the same key. Reinitializing
- * them with to different keys to allow nested locking without generating
+ * them with to dअगरferent keys to allow nested locking without generating
  * lockdep warnings
  */
-static struct lock_class_key batadv_claim_hash_lock_class_key;
-static struct lock_class_key batadv_backbone_hash_lock_class_key;
+अटल काष्ठा lock_class_key batadv_claim_hash_lock_class_key;
+अटल काष्ठा lock_class_key batadv_backbone_hash_lock_class_key;
 
 /**
- * batadv_bla_init() - initialize all bla structures
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_bla_init() - initialize all bla काष्ठाures
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  *
  * Return: 0 on success, < 0 on error.
  */
-int batadv_bla_init(struct batadv_priv *bat_priv)
-{
-	int i;
-	u8 claim_dest[ETH_ALEN] = {0xff, 0x43, 0x05, 0x00, 0x00, 0x00};
-	struct batadv_hard_iface *primary_if;
+पूर्णांक batadv_bla_init(काष्ठा batadv_priv *bat_priv)
+अणु
+	पूर्णांक i;
+	u8 claim_dest[ETH_ALEN] = अणु0xff, 0x43, 0x05, 0x00, 0x00, 0x00पूर्ण;
+	काष्ठा batadv_hard_अगरace *primary_अगर;
 	u16 crc;
-	unsigned long entrytime;
+	अचिन्हित दीर्घ entryसमय;
 
 	spin_lock_init(&bat_priv->bla.bcast_duplist_lock);
 
 	batadv_dbg(BATADV_DBG_BLA, bat_priv, "bla hash registering\n");
 
 	/* setting claim destination address */
-	memcpy(&bat_priv->bla.claim_dest.magic, claim_dest, 3);
+	स_नकल(&bat_priv->bla.claim_dest.magic, claim_dest, 3);
 	bat_priv->bla.claim_dest.type = 0;
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (primary_if) {
-		crc = crc16(0, primary_if->net_dev->dev_addr, ETH_ALEN);
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (primary_अगर) अणु
+		crc = crc16(0, primary_अगर->net_dev->dev_addr, ETH_ALEN);
 		bat_priv->bla.claim_dest.group = htons(crc);
-		batadv_hardif_put(primary_if);
-	} else {
+		batadv_hardअगर_put(primary_अगर);
+	पूर्ण अन्यथा अणु
 		bat_priv->bla.claim_dest.group = 0; /* will be set later */
-	}
+	पूर्ण
 
 	/* initialize the duplicate list */
-	entrytime = jiffies - msecs_to_jiffies(BATADV_DUPLIST_TIMEOUT);
-	for (i = 0; i < BATADV_DUPLIST_SIZE; i++)
-		bat_priv->bla.bcast_duplist[i].entrytime = entrytime;
+	entryसमय = jअगरfies - msecs_to_jअगरfies(BATADV_DUPLIST_TIMEOUT);
+	क्रम (i = 0; i < BATADV_DUPLIST_SIZE; i++)
+		bat_priv->bla.bcast_duplist[i].entryसमय = entryसमय;
 	bat_priv->bla.bcast_duplist_curr = 0;
 
 	atomic_set(&bat_priv->bla.loopdetect_next,
 		   BATADV_BLA_LOOPDETECT_PERIODS);
 
-	if (bat_priv->bla.claim_hash)
-		return 0;
+	अगर (bat_priv->bla.claim_hash)
+		वापस 0;
 
 	bat_priv->bla.claim_hash = batadv_hash_new(128);
 	bat_priv->bla.backbone_hash = batadv_hash_new(32);
 
-	if (!bat_priv->bla.claim_hash || !bat_priv->bla.backbone_hash)
-		return -ENOMEM;
+	अगर (!bat_priv->bla.claim_hash || !bat_priv->bla.backbone_hash)
+		वापस -ENOMEM;
 
 	batadv_hash_set_lock_class(bat_priv->bla.claim_hash,
 				   &batadv_claim_hash_lock_class_key);
@@ -1571,36 +1572,36 @@ int batadv_bla_init(struct batadv_priv *bat_priv)
 	INIT_DELAYED_WORK(&bat_priv->bla.work, batadv_bla_periodic_work);
 
 	queue_delayed_work(batadv_event_workqueue, &bat_priv->bla.work,
-			   msecs_to_jiffies(BATADV_BLA_PERIOD_LENGTH));
-	return 0;
-}
+			   msecs_to_jअगरfies(BATADV_BLA_PERIOD_LENGTH));
+	वापस 0;
+पूर्ण
 
 /**
- * batadv_bla_check_duplist() - Check if a frame is in the broadcast dup.
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_bla_check_duplist() - Check अगर a frame is in the broadcast dup.
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @skb: contains the multicast packet to be checked
- * @payload_ptr: pointer to position inside the head buffer of the skb
+ * @payload_ptr: poपूर्णांकer to position inside the head buffer of the skb
  *  marking the start of the data to be CRC'ed
- * @orig: originator mac address, NULL if unknown
+ * @orig: originator mac address, शून्य अगर unknown
  *
- * Check if it is on our broadcast list. Another gateway might have sent the
+ * Check अगर it is on our broadcast list. Another gateway might have sent the
  * same packet because it is connected to the same backbone, so we have to
- * remove this duplicate.
+ * हटाओ this duplicate.
  *
- * This is performed by checking the CRC, which will tell us
+ * This is perक्रमmed by checking the CRC, which will tell us
  * with a good chance that it is the same packet. If it is furthermore
  * sent by another host, drop it. We allow equal packets from
- * the same host however as this might be intended.
+ * the same host however as this might be पूर्णांकended.
  *
- * Return: true if a packet is in the duplicate list, false otherwise.
+ * Return: true अगर a packet is in the duplicate list, false otherwise.
  */
-static bool batadv_bla_check_duplist(struct batadv_priv *bat_priv,
-				     struct sk_buff *skb, u8 *payload_ptr,
-				     const u8 *orig)
-{
-	struct batadv_bcast_duplist_entry *entry;
+अटल bool batadv_bla_check_duplist(काष्ठा batadv_priv *bat_priv,
+				     काष्ठा sk_buff *skb, u8 *payload_ptr,
+				     स्थिर u8 *orig)
+अणु
+	काष्ठा batadv_bcast_duplist_entry *entry;
 	bool ret = false;
-	int i, curr;
+	पूर्णांक i, curr;
 	__be32 crc;
 
 	/* calculate the crc ... */
@@ -1608,57 +1609,57 @@ static bool batadv_bla_check_duplist(struct batadv_priv *bat_priv,
 
 	spin_lock_bh(&bat_priv->bla.bcast_duplist_lock);
 
-	for (i = 0; i < BATADV_DUPLIST_SIZE; i++) {
+	क्रम (i = 0; i < BATADV_DUPLIST_SIZE; i++) अणु
 		curr = (bat_priv->bla.bcast_duplist_curr + i);
 		curr %= BATADV_DUPLIST_SIZE;
 		entry = &bat_priv->bla.bcast_duplist[curr];
 
-		/* we can stop searching if the entry is too old ;
+		/* we can stop searching अगर the entry is too old ;
 		 * later entries will be even older
 		 */
-		if (batadv_has_timed_out(entry->entrytime,
+		अगर (batadv_has_समयd_out(entry->entryसमय,
 					 BATADV_DUPLIST_TIMEOUT))
-			break;
+			अवरोध;
 
-		if (entry->crc != crc)
-			continue;
+		अगर (entry->crc != crc)
+			जारी;
 
 		/* are the originators both known and not anonymous? */
-		if (orig && !is_zero_ether_addr(orig) &&
-		    !is_zero_ether_addr(entry->orig)) {
-			/* If known, check if the new frame came from
+		अगर (orig && !is_zero_ether_addr(orig) &&
+		    !is_zero_ether_addr(entry->orig)) अणु
+			/* If known, check अगर the new frame came from
 			 * the same originator:
 			 * We are safe to take identical frames from the
-			 * same orig, if known, as multiplications in
+			 * same orig, अगर known, as multiplications in
 			 * the mesh are detected via the (orig, seqno) pair.
 			 * So we can be a bit more liberal here and allow
 			 * identical frames from the same orig which the source
-			 * host might have sent multiple times on purpose.
+			 * host might have sent multiple बार on purpose.
 			 */
-			if (batadv_compare_eth(entry->orig, orig))
-				continue;
-		}
+			अगर (batadv_compare_eth(entry->orig, orig))
+				जारी;
+		पूर्ण
 
 		/* this entry seems to match: same crc, not too old,
-		 * and from another gw. therefore return true to forbid it.
+		 * and from another gw. thereक्रमe वापस true to क्रमbid it.
 		 */
 		ret = true;
-		goto out;
-	}
-	/* not found, add a new entry (overwrite the oldest entry)
+		जाओ out;
+	पूर्ण
+	/* not found, add a new entry (overग_लिखो the oldest entry)
 	 * and allow it, its the first occurrence.
 	 */
 	curr = (bat_priv->bla.bcast_duplist_curr + BATADV_DUPLIST_SIZE - 1);
 	curr %= BATADV_DUPLIST_SIZE;
 	entry = &bat_priv->bla.bcast_duplist[curr];
 	entry->crc = crc;
-	entry->entrytime = jiffies;
+	entry->entryसमय = jअगरfies;
 
 	/* known originator */
-	if (orig)
+	अगर (orig)
 		ether_addr_copy(entry->orig, orig);
 	/* anonymous originator */
-	else
+	अन्यथा
 		eth_zero_addr(entry->orig);
 
 	bat_priv->bla.bcast_duplist_curr = curr;
@@ -1666,280 +1667,280 @@ static bool batadv_bla_check_duplist(struct batadv_priv *bat_priv,
 out:
 	spin_unlock_bh(&bat_priv->bla.bcast_duplist_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * batadv_bla_check_ucast_duplist() - Check if a frame is in the broadcast dup.
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_bla_check_ucast_duplist() - Check अगर a frame is in the broadcast dup.
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @skb: contains the multicast packet to be checked, decapsulated from a
  *  unicast_packet
  *
- * Check if it is on our broadcast list. Another gateway might have sent the
+ * Check अगर it is on our broadcast list. Another gateway might have sent the
  * same packet because it is connected to the same backbone, so we have to
- * remove this duplicate.
+ * हटाओ this duplicate.
  *
- * Return: true if a packet is in the duplicate list, false otherwise.
+ * Return: true अगर a packet is in the duplicate list, false otherwise.
  */
-static bool batadv_bla_check_ucast_duplist(struct batadv_priv *bat_priv,
-					   struct sk_buff *skb)
-{
-	return batadv_bla_check_duplist(bat_priv, skb, (u8 *)skb->data, NULL);
-}
+अटल bool batadv_bla_check_ucast_duplist(काष्ठा batadv_priv *bat_priv,
+					   काष्ठा sk_buff *skb)
+अणु
+	वापस batadv_bla_check_duplist(bat_priv, skb, (u8 *)skb->data, शून्य);
+पूर्ण
 
 /**
- * batadv_bla_check_bcast_duplist() - Check if a frame is in the broadcast dup.
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_bla_check_bcast_duplist() - Check अगर a frame is in the broadcast dup.
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @skb: contains the bcast_packet to be checked
  *
- * Check if it is on our broadcast list. Another gateway might have sent the
+ * Check अगर it is on our broadcast list. Another gateway might have sent the
  * same packet because it is connected to the same backbone, so we have to
- * remove this duplicate.
+ * हटाओ this duplicate.
  *
- * Return: true if a packet is in the duplicate list, false otherwise.
+ * Return: true अगर a packet is in the duplicate list, false otherwise.
  */
-bool batadv_bla_check_bcast_duplist(struct batadv_priv *bat_priv,
-				    struct sk_buff *skb)
-{
-	struct batadv_bcast_packet *bcast_packet;
+bool batadv_bla_check_bcast_duplist(काष्ठा batadv_priv *bat_priv,
+				    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा batadv_bcast_packet *bcast_packet;
 	u8 *payload_ptr;
 
-	bcast_packet = (struct batadv_bcast_packet *)skb->data;
+	bcast_packet = (काष्ठा batadv_bcast_packet *)skb->data;
 	payload_ptr = (u8 *)(bcast_packet + 1);
 
-	return batadv_bla_check_duplist(bat_priv, skb, payload_ptr,
+	वापस batadv_bla_check_duplist(bat_priv, skb, payload_ptr,
 					bcast_packet->orig);
-}
+पूर्ण
 
 /**
- * batadv_bla_is_backbone_gw_orig() - Check if the originator is a gateway for
- *  the VLAN identified by vid.
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_bla_is_backbone_gw_orig() - Check अगर the originator is a gateway क्रम
+ *  the VLAN identअगरied by vid.
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @orig: originator mac address
- * @vid: VLAN identifier
+ * @vid: VLAN identअगरier
  *
- * Return: true if orig is a backbone for this vid, false otherwise.
+ * Return: true अगर orig is a backbone क्रम this vid, false otherwise.
  */
-bool batadv_bla_is_backbone_gw_orig(struct batadv_priv *bat_priv, u8 *orig,
-				    unsigned short vid)
-{
-	struct batadv_hashtable *hash = bat_priv->bla.backbone_hash;
-	struct hlist_head *head;
-	struct batadv_bla_backbone_gw *backbone_gw;
-	int i;
+bool batadv_bla_is_backbone_gw_orig(काष्ठा batadv_priv *bat_priv, u8 *orig,
+				    अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_hashtable *hash = bat_priv->bla.backbone_hash;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	पूर्णांक i;
 
-	if (!atomic_read(&bat_priv->bridge_loop_avoidance))
-		return false;
+	अगर (!atomic_पढ़ो(&bat_priv->bridge_loop_aव्योमance))
+		वापस false;
 
-	if (!hash)
-		return false;
+	अगर (!hash)
+		वापस false;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 
-		rcu_read_lock();
-		hlist_for_each_entry_rcu(backbone_gw, head, hash_entry) {
-			if (batadv_compare_eth(backbone_gw->orig, orig) &&
-			    backbone_gw->vid == vid) {
-				rcu_read_unlock();
-				return true;
-			}
-		}
-		rcu_read_unlock();
-	}
+		rcu_पढ़ो_lock();
+		hlist_क्रम_each_entry_rcu(backbone_gw, head, hash_entry) अणु
+			अगर (batadv_compare_eth(backbone_gw->orig, orig) &&
+			    backbone_gw->vid == vid) अणु
+				rcu_पढ़ो_unlock();
+				वापस true;
+			पूर्ण
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * batadv_bla_is_backbone_gw() - check if originator is a backbone gw for a VLAN
+ * batadv_bla_is_backbone_gw() - check अगर originator is a backbone gw क्रम a VLAN
  * @skb: the frame to be checked
  * @orig_node: the orig_node of the frame
  * @hdr_size: maximum length of the frame
  *
- * Return: true if the orig_node is also a gateway on the soft interface,
- * otherwise it returns false.
+ * Return: true अगर the orig_node is also a gateway on the soft पूर्णांकerface,
+ * otherwise it वापसs false.
  */
-bool batadv_bla_is_backbone_gw(struct sk_buff *skb,
-			       struct batadv_orig_node *orig_node, int hdr_size)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
-	unsigned short vid;
+bool batadv_bla_is_backbone_gw(काष्ठा sk_buff *skb,
+			       काष्ठा batadv_orig_node *orig_node, पूर्णांक hdr_size)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	अचिन्हित लघु vid;
 
-	if (!atomic_read(&orig_node->bat_priv->bridge_loop_avoidance))
-		return false;
+	अगर (!atomic_पढ़ो(&orig_node->bat_priv->bridge_loop_aव्योमance))
+		वापस false;
 
 	/* first, find out the vid. */
-	if (!pskb_may_pull(skb, hdr_size + ETH_HLEN))
-		return false;
+	अगर (!pskb_may_pull(skb, hdr_size + ETH_HLEN))
+		वापस false;
 
 	vid = batadv_get_vid(skb, hdr_size);
 
-	/* see if this originator is a backbone gw for this VLAN */
+	/* see अगर this originator is a backbone gw क्रम this VLAN */
 	backbone_gw = batadv_backbone_hash_find(orig_node->bat_priv,
 						orig_node->orig, vid);
-	if (!backbone_gw)
-		return false;
+	अगर (!backbone_gw)
+		वापस false;
 
 	batadv_backbone_gw_put(backbone_gw);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * batadv_bla_free() - free all bla structures
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_bla_मुक्त() - मुक्त all bla काष्ठाures
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  *
- * for softinterface free or module unload
+ * क्रम softपूर्णांकerface मुक्त or module unload
  */
-void batadv_bla_free(struct batadv_priv *bat_priv)
-{
-	struct batadv_hard_iface *primary_if;
+व्योम batadv_bla_मुक्त(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_hard_अगरace *primary_अगर;
 
 	cancel_delayed_work_sync(&bat_priv->bla.work);
-	primary_if = batadv_primary_if_get_selected(bat_priv);
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
 
-	if (bat_priv->bla.claim_hash) {
-		batadv_bla_purge_claims(bat_priv, primary_if, 1);
+	अगर (bat_priv->bla.claim_hash) अणु
+		batadv_bla_purge_claims(bat_priv, primary_अगर, 1);
 		batadv_hash_destroy(bat_priv->bla.claim_hash);
-		bat_priv->bla.claim_hash = NULL;
-	}
-	if (bat_priv->bla.backbone_hash) {
+		bat_priv->bla.claim_hash = शून्य;
+	पूर्ण
+	अगर (bat_priv->bla.backbone_hash) अणु
 		batadv_bla_purge_backbone_gw(bat_priv, 1);
 		batadv_hash_destroy(bat_priv->bla.backbone_hash);
-		bat_priv->bla.backbone_hash = NULL;
-	}
-	if (primary_if)
-		batadv_hardif_put(primary_if);
-}
+		bat_priv->bla.backbone_hash = शून्य;
+	पूर्ण
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
+पूर्ण
 
 /**
  * batadv_bla_loopdetect_check() - check and handle a detected loop
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @skb: the packet to check
- * @primary_if: interface where the request came on
+ * @primary_अगर: पूर्णांकerface where the request came on
  * @vid: the VLAN ID of the frame
  *
- * Checks if this packet is a loop detect frame which has been sent by us,
- * throws an uevent and logs the event if that is the case.
+ * Checks अगर this packet is a loop detect frame which has been sent by us,
+ * throws an uevent and logs the event अगर that is the हाल.
  *
- * Return: true if it is a loop detect frame which is to be dropped, false
+ * Return: true अगर it is a loop detect frame which is to be dropped, false
  * otherwise.
  */
-static bool
-batadv_bla_loopdetect_check(struct batadv_priv *bat_priv, struct sk_buff *skb,
-			    struct batadv_hard_iface *primary_if,
-			    unsigned short vid)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
-	struct ethhdr *ethhdr;
+अटल bool
+batadv_bla_loopdetect_check(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb,
+			    काष्ठा batadv_hard_अगरace *primary_अगर,
+			    अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	काष्ठा ethhdr *ethhdr;
 	bool ret;
 
 	ethhdr = eth_hdr(skb);
 
-	/* Only check for the MAC address and skip more checks here for
-	 * performance reasons - this function is on the hotpath, after all.
+	/* Only check क्रम the MAC address and skip more checks here क्रम
+	 * perक्रमmance reasons - this function is on the hotpath, after all.
 	 */
-	if (!batadv_compare_eth(ethhdr->h_source,
+	अगर (!batadv_compare_eth(ethhdr->h_source,
 				bat_priv->bla.loopdetect_addr))
-		return false;
+		वापस false;
 
-	/* If the packet came too late, don't forward it on the mesh
-	 * but don't consider that as loop. It might be a coincidence.
+	/* If the packet came too late, करोn't क्रमward it on the mesh
+	 * but करोn't consider that as loop. It might be a coincidence.
 	 */
-	if (batadv_has_timed_out(bat_priv->bla.loopdetect_lasttime,
+	अगर (batadv_has_समयd_out(bat_priv->bla.loopdetect_lastसमय,
 				 BATADV_BLA_LOOPDETECT_TIMEOUT))
-		return true;
+		वापस true;
 
 	backbone_gw = batadv_bla_get_backbone_gw(bat_priv,
-						 primary_if->net_dev->dev_addr,
+						 primary_अगर->net_dev->dev_addr,
 						 vid, true);
-	if (unlikely(!backbone_gw))
-		return true;
+	अगर (unlikely(!backbone_gw))
+		वापस true;
 
 	ret = queue_work(batadv_event_workqueue, &backbone_gw->report_work);
 
 	/* backbone_gw is unreferenced in the report work function
-	 * if queue_work() call was successful
+	 * अगर queue_work() call was successful
 	 */
-	if (!ret)
+	अगर (!ret)
 		batadv_backbone_gw_put(backbone_gw);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * batadv_bla_rx() - check packets coming from the mesh.
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @skb: the frame to be checked
  * @vid: the VLAN ID of the frame
- * @packet_type: the batman packet type this frame came in
+ * @packet_type: the baपंचांगan packet type this frame came in
  *
- * batadv_bla_rx avoidance checks if:
- *  * we have to race for a claim
- *  * if the frame is allowed on the LAN
+ * batadv_bla_rx aव्योमance checks अगर:
+ *  * we have to race क्रम a claim
+ *  * अगर the frame is allowed on the LAN
  *
- * In these cases, the skb is further handled by this function
+ * In these हालs, the skb is further handled by this function
  *
- * Return: true if handled, otherwise it returns false and the caller shall
+ * Return: true अगर handled, otherwise it वापसs false and the caller shall
  * further process the skb.
  */
-bool batadv_bla_rx(struct batadv_priv *bat_priv, struct sk_buff *skb,
-		   unsigned short vid, int packet_type)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
-	struct ethhdr *ethhdr;
-	struct batadv_bla_claim search_claim, *claim = NULL;
-	struct batadv_hard_iface *primary_if;
+bool batadv_bla_rx(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb,
+		   अचिन्हित लघु vid, पूर्णांक packet_type)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	काष्ठा ethhdr *ethhdr;
+	काष्ठा batadv_bla_claim search_claim, *claim = शून्य;
+	काष्ठा batadv_hard_अगरace *primary_अगर;
 	bool own_claim;
 	bool ret;
 
 	ethhdr = eth_hdr(skb);
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		goto handled;
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर)
+		जाओ handled;
 
-	if (!atomic_read(&bat_priv->bridge_loop_avoidance))
-		goto allow;
+	अगर (!atomic_पढ़ो(&bat_priv->bridge_loop_aव्योमance))
+		जाओ allow;
 
-	if (batadv_bla_loopdetect_check(bat_priv, skb, primary_if, vid))
-		goto handled;
+	अगर (batadv_bla_loopdetect_check(bat_priv, skb, primary_अगर, vid))
+		जाओ handled;
 
-	if (unlikely(atomic_read(&bat_priv->bla.num_requests)))
-		/* don't allow multicast packets while requests are in flight */
-		if (is_multicast_ether_addr(ethhdr->h_dest))
+	अगर (unlikely(atomic_पढ़ो(&bat_priv->bla.num_requests)))
+		/* करोn't allow multicast packets जबतक requests are in flight */
+		अगर (is_multicast_ether_addr(ethhdr->h_dest))
 			/* Both broadcast flooding or multicast-via-unicasts
 			 * delivery might send to multiple backbone gateways
-			 * sharing the same LAN and therefore need to coordinate
-			 * which backbone gateway forwards into the LAN,
+			 * sharing the same LAN and thereक्रमe need to coordinate
+			 * which backbone gateway क्रमwards पूर्णांकo the LAN,
 			 * by claiming the payload source address.
 			 *
 			 * Broadcast flooding and multicast-via-unicasts
-			 * delivery use the following two batman packet types.
+			 * delivery use the following two baपंचांगan packet types.
 			 * Note: explicitly exclude BATADV_UNICAST_4ADDR,
 			 * as the DHCP gateway feature will send explicitly
 			 * to only one BLA gateway, so the claiming process
-			 * should be avoided there.
+			 * should be aव्योमed there.
 			 */
-			if (packet_type == BATADV_BCAST ||
+			अगर (packet_type == BATADV_BCAST ||
 			    packet_type == BATADV_UNICAST)
-				goto handled;
+				जाओ handled;
 
-	/* potential duplicates from foreign BLA backbone gateways via
+	/* potential duplicates from क्रमeign BLA backbone gateways via
 	 * multicast-in-unicast packets
 	 */
-	if (is_multicast_ether_addr(ethhdr->h_dest) &&
+	अगर (is_multicast_ether_addr(ethhdr->h_dest) &&
 	    packet_type == BATADV_UNICAST &&
 	    batadv_bla_check_ucast_duplist(bat_priv, skb))
-		goto handled;
+		जाओ handled;
 
 	ether_addr_copy(search_claim.addr, ethhdr->h_source);
 	search_claim.vid = vid;
 	claim = batadv_claim_hash_find(bat_priv, &search_claim);
 
-	if (!claim) {
-		/* possible optimization: race for a claim */
-		/* No claim exists yet, claim it for us!
+	अगर (!claim) अणु
+		/* possible optimization: race क्रम a claim */
+		/* No claim exists yet, claim it क्रम us!
 		 */
 
 		batadv_dbg(BATADV_DBG_BLA, bat_priv,
@@ -1948,198 +1949,198 @@ bool batadv_bla_rx(struct batadv_priv *bat_priv, struct sk_buff *skb,
 			   batadv_is_my_client(bat_priv,
 					       ethhdr->h_source, vid) ?
 			   "yes" : "no");
-		batadv_handle_claim(bat_priv, primary_if,
-				    primary_if->net_dev->dev_addr,
+		batadv_handle_claim(bat_priv, primary_अगर,
+				    primary_अगर->net_dev->dev_addr,
 				    ethhdr->h_source, vid);
-		goto allow;
-	}
+		जाओ allow;
+	पूर्ण
 
-	/* if it is our own claim ... */
+	/* अगर it is our own claim ... */
 	backbone_gw = batadv_bla_claim_get_backbone_gw(claim);
 	own_claim = batadv_compare_eth(backbone_gw->orig,
-				       primary_if->net_dev->dev_addr);
+				       primary_अगर->net_dev->dev_addr);
 	batadv_backbone_gw_put(backbone_gw);
 
-	if (own_claim) {
-		/* ... allow it in any case */
-		claim->lasttime = jiffies;
-		goto allow;
-	}
+	अगर (own_claim) अणु
+		/* ... allow it in any हाल */
+		claim->lastसमय = jअगरfies;
+		जाओ allow;
+	पूर्ण
 
-	/* if it is a multicast ... */
-	if (is_multicast_ether_addr(ethhdr->h_dest) &&
-	    (packet_type == BATADV_BCAST || packet_type == BATADV_UNICAST)) {
-		/* ... drop it. the responsible gateway is in charge.
+	/* अगर it is a multicast ... */
+	अगर (is_multicast_ether_addr(ethhdr->h_dest) &&
+	    (packet_type == BATADV_BCAST || packet_type == BATADV_UNICAST)) अणु
+		/* ... drop it. the responsible gateway is in अक्षरge.
 		 *
 		 * We need to check packet type because with the gateway
 		 * feature, broadcasts (like DHCP requests) may be sent
 		 * using a unicast 4 address packet type. See comment above.
 		 */
-		goto handled;
-	} else {
+		जाओ handled;
+	पूर्ण अन्यथा अणु
 		/* seems the client considers us as its best gateway.
 		 * send a claim and update the claim table
 		 * immediately.
 		 */
-		batadv_handle_claim(bat_priv, primary_if,
-				    primary_if->net_dev->dev_addr,
+		batadv_handle_claim(bat_priv, primary_अगर,
+				    primary_अगर->net_dev->dev_addr,
 				    ethhdr->h_source, vid);
-		goto allow;
-	}
+		जाओ allow;
+	पूर्ण
 allow:
-	batadv_bla_update_own_backbone_gw(bat_priv, primary_if, vid);
+	batadv_bla_update_own_backbone_gw(bat_priv, primary_अगर, vid);
 	ret = false;
-	goto out;
+	जाओ out;
 
 handled:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 	ret = true;
 
 out:
-	if (primary_if)
-		batadv_hardif_put(primary_if);
-	if (claim)
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
+	अगर (claim)
 		batadv_claim_put(claim);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * batadv_bla_tx() - check packets going into the mesh
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_bla_tx() - check packets going पूर्णांकo the mesh
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @skb: the frame to be checked
  * @vid: the VLAN ID of the frame
  *
- * batadv_bla_tx checks if:
+ * batadv_bla_tx checks अगर:
  *  * a claim was received which has to be processed
  *  * the frame is allowed on the mesh
  *
- * in these cases, the skb is further handled by this function.
+ * in these हालs, the skb is further handled by this function.
  *
- * This call might reallocate skb data.
+ * This call might पुनः_स्मृतिate skb data.
  *
- * Return: true if handled, otherwise it returns false and the caller shall
+ * Return: true अगर handled, otherwise it वापसs false and the caller shall
  * further process the skb.
  */
-bool batadv_bla_tx(struct batadv_priv *bat_priv, struct sk_buff *skb,
-		   unsigned short vid)
-{
-	struct ethhdr *ethhdr;
-	struct batadv_bla_claim search_claim, *claim = NULL;
-	struct batadv_bla_backbone_gw *backbone_gw;
-	struct batadv_hard_iface *primary_if;
+bool batadv_bla_tx(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb,
+		   अचिन्हित लघु vid)
+अणु
+	काष्ठा ethhdr *ethhdr;
+	काष्ठा batadv_bla_claim search_claim, *claim = शून्य;
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	काष्ठा batadv_hard_अगरace *primary_अगर;
 	bool client_roamed;
 	bool ret = false;
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		goto out;
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर)
+		जाओ out;
 
-	if (!atomic_read(&bat_priv->bridge_loop_avoidance))
-		goto allow;
+	अगर (!atomic_पढ़ो(&bat_priv->bridge_loop_aव्योमance))
+		जाओ allow;
 
-	if (batadv_bla_process_claim(bat_priv, primary_if, skb))
-		goto handled;
+	अगर (batadv_bla_process_claim(bat_priv, primary_अगर, skb))
+		जाओ handled;
 
 	ethhdr = eth_hdr(skb);
 
-	if (unlikely(atomic_read(&bat_priv->bla.num_requests)))
-		/* don't allow broadcasts while requests are in flight */
-		if (is_multicast_ether_addr(ethhdr->h_dest))
-			goto handled;
+	अगर (unlikely(atomic_पढ़ो(&bat_priv->bla.num_requests)))
+		/* करोn't allow broadcasts जबतक requests are in flight */
+		अगर (is_multicast_ether_addr(ethhdr->h_dest))
+			जाओ handled;
 
 	ether_addr_copy(search_claim.addr, ethhdr->h_source);
 	search_claim.vid = vid;
 
 	claim = batadv_claim_hash_find(bat_priv, &search_claim);
 
-	/* if no claim exists, allow it. */
-	if (!claim)
-		goto allow;
+	/* अगर no claim exists, allow it. */
+	अगर (!claim)
+		जाओ allow;
 
-	/* check if we are responsible. */
+	/* check अगर we are responsible. */
 	backbone_gw = batadv_bla_claim_get_backbone_gw(claim);
 	client_roamed = batadv_compare_eth(backbone_gw->orig,
-					   primary_if->net_dev->dev_addr);
+					   primary_अगर->net_dev->dev_addr);
 	batadv_backbone_gw_put(backbone_gw);
 
-	if (client_roamed) {
-		/* if yes, the client has roamed and we have
+	अगर (client_roamed) अणु
+		/* अगर yes, the client has roamed and we have
 		 * to unclaim it.
 		 */
-		if (batadv_has_timed_out(claim->lasttime, 100)) {
-			/* only unclaim if the last claim entry is
+		अगर (batadv_has_समयd_out(claim->lastसमय, 100)) अणु
+			/* only unclaim अगर the last claim entry is
 			 * older than 100 ms to make sure we really
 			 * have a roaming client here.
 			 */
 			batadv_dbg(BATADV_DBG_BLA, bat_priv, "%s(): Roaming client %pM detected. Unclaim it.\n",
 				   __func__, ethhdr->h_source);
-			batadv_handle_unclaim(bat_priv, primary_if,
-					      primary_if->net_dev->dev_addr,
+			batadv_handle_unclaim(bat_priv, primary_अगर,
+					      primary_अगर->net_dev->dev_addr,
 					      ethhdr->h_source, vid);
-			goto allow;
-		} else {
+			जाओ allow;
+		पूर्ण अन्यथा अणु
 			batadv_dbg(BATADV_DBG_BLA, bat_priv, "%s(): Race for claim %pM detected. Drop packet.\n",
 				   __func__, ethhdr->h_source);
-			goto handled;
-		}
-	}
+			जाओ handled;
+		पूर्ण
+	पूर्ण
 
-	/* check if it is a multicast/broadcast frame */
-	if (is_multicast_ether_addr(ethhdr->h_dest)) {
-		/* drop it. the responsible gateway has forwarded it into
+	/* check अगर it is a multicast/broadcast frame */
+	अगर (is_multicast_ether_addr(ethhdr->h_dest)) अणु
+		/* drop it. the responsible gateway has क्रमwarded it पूर्णांकo
 		 * the backbone network.
 		 */
-		goto handled;
-	} else {
-		/* we must allow it. at least if we are
-		 * responsible for the DESTINATION.
+		जाओ handled;
+	पूर्ण अन्यथा अणु
+		/* we must allow it. at least अगर we are
+		 * responsible क्रम the DESTINATION.
 		 */
-		goto allow;
-	}
+		जाओ allow;
+	पूर्ण
 allow:
-	batadv_bla_update_own_backbone_gw(bat_priv, primary_if, vid);
+	batadv_bla_update_own_backbone_gw(bat_priv, primary_अगर, vid);
 	ret = false;
-	goto out;
+	जाओ out;
 handled:
 	ret = true;
 out:
-	if (primary_if)
-		batadv_hardif_put(primary_if);
-	if (claim)
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
+	अगर (claim)
 		batadv_claim_put(claim);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_bla_claim_dump_entry() - dump one entry of the claim table
  * to a netlink socket
- * @msg: buffer for the message
+ * @msg: buffer क्रम the message
  * @portid: netlink port
  * @cb: Control block containing additional options
- * @primary_if: primary interface
+ * @primary_अगर: primary पूर्णांकerface
  * @claim: entry to dump
  *
  * Return: 0 or error code.
  */
-static int
-batadv_bla_claim_dump_entry(struct sk_buff *msg, u32 portid,
-			    struct netlink_callback *cb,
-			    struct batadv_hard_iface *primary_if,
-			    struct batadv_bla_claim *claim)
-{
-	u8 *primary_addr = primary_if->net_dev->dev_addr;
+अटल पूर्णांक
+batadv_bla_claim_dump_entry(काष्ठा sk_buff *msg, u32 portid,
+			    काष्ठा netlink_callback *cb,
+			    काष्ठा batadv_hard_अगरace *primary_अगर,
+			    काष्ठा batadv_bla_claim *claim)
+अणु
+	u8 *primary_addr = primary_अगर->net_dev->dev_addr;
 	u16 backbone_crc;
 	bool is_own;
-	void *hdr;
-	int ret = -EINVAL;
+	व्योम *hdr;
+	पूर्णांक ret = -EINVAL;
 
 	hdr = genlmsg_put(msg, portid, cb->nlh->nlmsg_seq,
 			  &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_BLA_CLAIM);
-	if (!hdr) {
+	अगर (!hdr) अणु
 		ret = -ENOBUFS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	genl_dump_check_consistent(cb, hdr);
 
@@ -2150,120 +2151,120 @@ batadv_bla_claim_dump_entry(struct sk_buff *msg, u32 portid,
 	backbone_crc = claim->backbone_gw->crc;
 	spin_unlock_bh(&claim->backbone_gw->crc_lock);
 
-	if (is_own)
-		if (nla_put_flag(msg, BATADV_ATTR_BLA_OWN)) {
+	अगर (is_own)
+		अगर (nla_put_flag(msg, BATADV_ATTR_BLA_OWN)) अणु
 			genlmsg_cancel(msg, hdr);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-	if (nla_put(msg, BATADV_ATTR_BLA_ADDRESS, ETH_ALEN, claim->addr) ||
+	अगर (nla_put(msg, BATADV_ATTR_BLA_ADDRESS, ETH_ALEN, claim->addr) ||
 	    nla_put_u16(msg, BATADV_ATTR_BLA_VID, claim->vid) ||
 	    nla_put(msg, BATADV_ATTR_BLA_BACKBONE, ETH_ALEN,
 		    claim->backbone_gw->orig) ||
 	    nla_put_u16(msg, BATADV_ATTR_BLA_CRC,
-			backbone_crc)) {
+			backbone_crc)) अणु
 		genlmsg_cancel(msg, hdr);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	genlmsg_end(msg, hdr);
 	ret = 0;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_bla_claim_dump_bucket() - dump one bucket of the claim table
  * to a netlink socket
- * @msg: buffer for the message
+ * @msg: buffer क्रम the message
  * @portid: netlink port
  * @cb: Control block containing additional options
- * @primary_if: primary interface
+ * @primary_अगर: primary पूर्णांकerface
  * @hash: hash to dump
  * @bucket: bucket index to dump
  * @idx_skip: How many entries to skip
  *
  * Return: always 0.
  */
-static int
-batadv_bla_claim_dump_bucket(struct sk_buff *msg, u32 portid,
-			     struct netlink_callback *cb,
-			     struct batadv_hard_iface *primary_if,
-			     struct batadv_hashtable *hash, unsigned int bucket,
-			     int *idx_skip)
-{
-	struct batadv_bla_claim *claim;
-	int idx = 0;
-	int ret = 0;
+अटल पूर्णांक
+batadv_bla_claim_dump_bucket(काष्ठा sk_buff *msg, u32 portid,
+			     काष्ठा netlink_callback *cb,
+			     काष्ठा batadv_hard_अगरace *primary_अगर,
+			     काष्ठा batadv_hashtable *hash, अचिन्हित पूर्णांक bucket,
+			     पूर्णांक *idx_skip)
+अणु
+	काष्ठा batadv_bla_claim *claim;
+	पूर्णांक idx = 0;
+	पूर्णांक ret = 0;
 
 	spin_lock_bh(&hash->list_locks[bucket]);
-	cb->seq = atomic_read(&hash->generation) << 1 | 1;
+	cb->seq = atomic_पढ़ो(&hash->generation) << 1 | 1;
 
-	hlist_for_each_entry(claim, &hash->table[bucket], hash_entry) {
-		if (idx++ < *idx_skip)
-			continue;
+	hlist_क्रम_each_entry(claim, &hash->table[bucket], hash_entry) अणु
+		अगर (idx++ < *idx_skip)
+			जारी;
 
 		ret = batadv_bla_claim_dump_entry(msg, portid, cb,
-						  primary_if, claim);
-		if (ret) {
+						  primary_अगर, claim);
+		अगर (ret) अणु
 			*idx_skip = idx - 1;
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
 	*idx_skip = 0;
 unlock:
 	spin_unlock_bh(&hash->list_locks[bucket]);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_bla_claim_dump() - dump claim table to a netlink socket
- * @msg: buffer for the message
- * @cb: callback structure containing arguments
+ * @msg: buffer क्रम the message
+ * @cb: callback काष्ठाure containing arguments
  *
  * Return: message length.
  */
-int batadv_bla_claim_dump(struct sk_buff *msg, struct netlink_callback *cb)
-{
-	struct batadv_hard_iface *primary_if = NULL;
-	int portid = NETLINK_CB(cb->skb).portid;
-	struct net *net = sock_net(cb->skb->sk);
-	struct net_device *soft_iface;
-	struct batadv_hashtable *hash;
-	struct batadv_priv *bat_priv;
-	int bucket = cb->args[0];
-	int idx = cb->args[1];
-	int ifindex;
-	int ret = 0;
+पूर्णांक batadv_bla_claim_dump(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा batadv_hard_अगरace *primary_अगर = शून्य;
+	पूर्णांक portid = NETLINK_CB(cb->skb).portid;
+	काष्ठा net *net = sock_net(cb->skb->sk);
+	काष्ठा net_device *soft_अगरace;
+	काष्ठा batadv_hashtable *hash;
+	काष्ठा batadv_priv *bat_priv;
+	पूर्णांक bucket = cb->args[0];
+	पूर्णांक idx = cb->args[1];
+	पूर्णांक अगरindex;
+	पूर्णांक ret = 0;
 
-	ifindex = batadv_netlink_get_ifindex(cb->nlh,
+	अगरindex = batadv_netlink_get_अगरindex(cb->nlh,
 					     BATADV_ATTR_MESH_IFINDEX);
-	if (!ifindex)
-		return -EINVAL;
+	अगर (!अगरindex)
+		वापस -EINVAL;
 
-	soft_iface = dev_get_by_index(net, ifindex);
-	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
+	soft_अगरace = dev_get_by_index(net, अगरindex);
+	अगर (!soft_अगरace || !batadv_softअगर_is_valid(soft_अगरace)) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	bat_priv = netdev_priv(soft_iface);
+	bat_priv = netdev_priv(soft_अगरace);
 	hash = bat_priv->bla.claim_hash;
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if || primary_if->if_status != BATADV_IF_ACTIVE) {
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर || primary_अगर->अगर_status != BATADV_IF_ACTIVE) अणु
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (bucket < hash->size) {
-		if (batadv_bla_claim_dump_bucket(msg, portid, cb, primary_if,
+	जबतक (bucket < hash->size) अणु
+		अगर (batadv_bla_claim_dump_bucket(msg, portid, cb, primary_अगर,
 						 hash, bucket, &idx))
-			break;
+			अवरोध;
 		bucket++;
-	}
+	पूर्ण
 
 	cb->args[0] = bucket;
 	cb->args[1] = idx;
@@ -2271,46 +2272,46 @@ int batadv_bla_claim_dump(struct sk_buff *msg, struct netlink_callback *cb)
 	ret = msg->len;
 
 out:
-	if (primary_if)
-		batadv_hardif_put(primary_if);
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
 
-	if (soft_iface)
-		dev_put(soft_iface);
+	अगर (soft_अगरace)
+		dev_put(soft_अगरace);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_bla_backbone_dump_entry() - dump one entry of the backbone table to a
  *  netlink socket
- * @msg: buffer for the message
+ * @msg: buffer क्रम the message
  * @portid: netlink port
  * @cb: Control block containing additional options
- * @primary_if: primary interface
+ * @primary_अगर: primary पूर्णांकerface
  * @backbone_gw: entry to dump
  *
  * Return: 0 or error code.
  */
-static int
-batadv_bla_backbone_dump_entry(struct sk_buff *msg, u32 portid,
-			       struct netlink_callback *cb,
-			       struct batadv_hard_iface *primary_if,
-			       struct batadv_bla_backbone_gw *backbone_gw)
-{
-	u8 *primary_addr = primary_if->net_dev->dev_addr;
+अटल पूर्णांक
+batadv_bla_backbone_dump_entry(काष्ठा sk_buff *msg, u32 portid,
+			       काष्ठा netlink_callback *cb,
+			       काष्ठा batadv_hard_अगरace *primary_अगर,
+			       काष्ठा batadv_bla_backbone_gw *backbone_gw)
+अणु
+	u8 *primary_addr = primary_अगर->net_dev->dev_addr;
 	u16 backbone_crc;
 	bool is_own;
-	int msecs;
-	void *hdr;
-	int ret = -EINVAL;
+	पूर्णांक msecs;
+	व्योम *hdr;
+	पूर्णांक ret = -EINVAL;
 
 	hdr = genlmsg_put(msg, portid, cb->nlh->nlmsg_seq,
 			  &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_BLA_BACKBONE);
-	if (!hdr) {
+	अगर (!hdr) अणु
 		ret = -ENOBUFS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	genl_dump_check_consistent(cb, hdr);
 
@@ -2320,122 +2321,122 @@ batadv_bla_backbone_dump_entry(struct sk_buff *msg, u32 portid,
 	backbone_crc = backbone_gw->crc;
 	spin_unlock_bh(&backbone_gw->crc_lock);
 
-	msecs = jiffies_to_msecs(jiffies - backbone_gw->lasttime);
+	msecs = jअगरfies_to_msecs(jअगरfies - backbone_gw->lastसमय);
 
-	if (is_own)
-		if (nla_put_flag(msg, BATADV_ATTR_BLA_OWN)) {
+	अगर (is_own)
+		अगर (nla_put_flag(msg, BATADV_ATTR_BLA_OWN)) अणु
 			genlmsg_cancel(msg, hdr);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-	if (nla_put(msg, BATADV_ATTR_BLA_BACKBONE, ETH_ALEN,
+	अगर (nla_put(msg, BATADV_ATTR_BLA_BACKBONE, ETH_ALEN,
 		    backbone_gw->orig) ||
 	    nla_put_u16(msg, BATADV_ATTR_BLA_VID, backbone_gw->vid) ||
 	    nla_put_u16(msg, BATADV_ATTR_BLA_CRC,
 			backbone_crc) ||
-	    nla_put_u32(msg, BATADV_ATTR_LAST_SEEN_MSECS, msecs)) {
+	    nla_put_u32(msg, BATADV_ATTR_LAST_SEEN_MSECS, msecs)) अणु
 		genlmsg_cancel(msg, hdr);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	genlmsg_end(msg, hdr);
 	ret = 0;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_bla_backbone_dump_bucket() - dump one bucket of the backbone table to
  *  a netlink socket
- * @msg: buffer for the message
+ * @msg: buffer क्रम the message
  * @portid: netlink port
  * @cb: Control block containing additional options
- * @primary_if: primary interface
+ * @primary_अगर: primary पूर्णांकerface
  * @hash: hash to dump
  * @bucket: bucket index to dump
  * @idx_skip: How many entries to skip
  *
  * Return: always 0.
  */
-static int
-batadv_bla_backbone_dump_bucket(struct sk_buff *msg, u32 portid,
-				struct netlink_callback *cb,
-				struct batadv_hard_iface *primary_if,
-				struct batadv_hashtable *hash,
-				unsigned int bucket, int *idx_skip)
-{
-	struct batadv_bla_backbone_gw *backbone_gw;
-	int idx = 0;
-	int ret = 0;
+अटल पूर्णांक
+batadv_bla_backbone_dump_bucket(काष्ठा sk_buff *msg, u32 portid,
+				काष्ठा netlink_callback *cb,
+				काष्ठा batadv_hard_अगरace *primary_अगर,
+				काष्ठा batadv_hashtable *hash,
+				अचिन्हित पूर्णांक bucket, पूर्णांक *idx_skip)
+अणु
+	काष्ठा batadv_bla_backbone_gw *backbone_gw;
+	पूर्णांक idx = 0;
+	पूर्णांक ret = 0;
 
 	spin_lock_bh(&hash->list_locks[bucket]);
-	cb->seq = atomic_read(&hash->generation) << 1 | 1;
+	cb->seq = atomic_पढ़ो(&hash->generation) << 1 | 1;
 
-	hlist_for_each_entry(backbone_gw, &hash->table[bucket], hash_entry) {
-		if (idx++ < *idx_skip)
-			continue;
+	hlist_क्रम_each_entry(backbone_gw, &hash->table[bucket], hash_entry) अणु
+		अगर (idx++ < *idx_skip)
+			जारी;
 
 		ret = batadv_bla_backbone_dump_entry(msg, portid, cb,
-						     primary_if, backbone_gw);
-		if (ret) {
+						     primary_अगर, backbone_gw);
+		अगर (ret) अणु
 			*idx_skip = idx - 1;
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
 	*idx_skip = 0;
 unlock:
 	spin_unlock_bh(&hash->list_locks[bucket]);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_bla_backbone_dump() - dump backbone table to a netlink socket
- * @msg: buffer for the message
- * @cb: callback structure containing arguments
+ * @msg: buffer क्रम the message
+ * @cb: callback काष्ठाure containing arguments
  *
  * Return: message length.
  */
-int batadv_bla_backbone_dump(struct sk_buff *msg, struct netlink_callback *cb)
-{
-	struct batadv_hard_iface *primary_if = NULL;
-	int portid = NETLINK_CB(cb->skb).portid;
-	struct net *net = sock_net(cb->skb->sk);
-	struct net_device *soft_iface;
-	struct batadv_hashtable *hash;
-	struct batadv_priv *bat_priv;
-	int bucket = cb->args[0];
-	int idx = cb->args[1];
-	int ifindex;
-	int ret = 0;
+पूर्णांक batadv_bla_backbone_dump(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा batadv_hard_अगरace *primary_अगर = शून्य;
+	पूर्णांक portid = NETLINK_CB(cb->skb).portid;
+	काष्ठा net *net = sock_net(cb->skb->sk);
+	काष्ठा net_device *soft_अगरace;
+	काष्ठा batadv_hashtable *hash;
+	काष्ठा batadv_priv *bat_priv;
+	पूर्णांक bucket = cb->args[0];
+	पूर्णांक idx = cb->args[1];
+	पूर्णांक अगरindex;
+	पूर्णांक ret = 0;
 
-	ifindex = batadv_netlink_get_ifindex(cb->nlh,
+	अगरindex = batadv_netlink_get_अगरindex(cb->nlh,
 					     BATADV_ATTR_MESH_IFINDEX);
-	if (!ifindex)
-		return -EINVAL;
+	अगर (!अगरindex)
+		वापस -EINVAL;
 
-	soft_iface = dev_get_by_index(net, ifindex);
-	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
+	soft_अगरace = dev_get_by_index(net, अगरindex);
+	अगर (!soft_अगरace || !batadv_softअगर_is_valid(soft_अगरace)) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	bat_priv = netdev_priv(soft_iface);
+	bat_priv = netdev_priv(soft_अगरace);
 	hash = bat_priv->bla.backbone_hash;
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if || primary_if->if_status != BATADV_IF_ACTIVE) {
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर || primary_अगर->अगर_status != BATADV_IF_ACTIVE) अणु
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (bucket < hash->size) {
-		if (batadv_bla_backbone_dump_bucket(msg, portid, cb, primary_if,
+	जबतक (bucket < hash->size) अणु
+		अगर (batadv_bla_backbone_dump_bucket(msg, portid, cb, primary_अगर,
 						    hash, bucket, &idx))
-			break;
+			अवरोध;
 		bucket++;
-	}
+	पूर्ण
 
 	cb->args[0] = bucket;
 	cb->args[1] = idx;
@@ -2443,60 +2444,60 @@ int batadv_bla_backbone_dump(struct sk_buff *msg, struct netlink_callback *cb)
 	ret = msg->len;
 
 out:
-	if (primary_if)
-		batadv_hardif_put(primary_if);
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
 
-	if (soft_iface)
-		dev_put(soft_iface);
+	अगर (soft_अगरace)
+		dev_put(soft_अगरace);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_BATMAN_ADV_DAT
+#अगर_घोषित CONFIG_BATMAN_ADV_DAT
 /**
- * batadv_bla_check_claim() - check if address is claimed
+ * batadv_bla_check_claim() - check अगर address is claimed
  *
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @addr: mac address of which the claim status is checked
  * @vid: the VLAN ID
  *
- * addr is checked if this address is claimed by the local device itself.
+ * addr is checked अगर this address is claimed by the local device itself.
  *
- * Return: true if bla is disabled or the mac is claimed by the device,
- * false if the device addr is already claimed by another gateway
+ * Return: true अगर bla is disabled or the mac is claimed by the device,
+ * false अगर the device addr is alपढ़ोy claimed by another gateway
  */
-bool batadv_bla_check_claim(struct batadv_priv *bat_priv,
-			    u8 *addr, unsigned short vid)
-{
-	struct batadv_bla_claim search_claim;
-	struct batadv_bla_claim *claim = NULL;
-	struct batadv_hard_iface *primary_if = NULL;
+bool batadv_bla_check_claim(काष्ठा batadv_priv *bat_priv,
+			    u8 *addr, अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_bla_claim search_claim;
+	काष्ठा batadv_bla_claim *claim = शून्य;
+	काष्ठा batadv_hard_अगरace *primary_अगर = शून्य;
 	bool ret = true;
 
-	if (!atomic_read(&bat_priv->bridge_loop_avoidance))
-		return ret;
+	अगर (!atomic_पढ़ो(&bat_priv->bridge_loop_aव्योमance))
+		वापस ret;
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		return ret;
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर)
+		वापस ret;
 
-	/* First look if the mac address is claimed */
+	/* First look अगर the mac address is claimed */
 	ether_addr_copy(search_claim.addr, addr);
 	search_claim.vid = vid;
 
 	claim = batadv_claim_hash_find(bat_priv, &search_claim);
 
 	/* If there is a claim and we are not owner of the claim,
-	 * return false.
+	 * वापस false.
 	 */
-	if (claim) {
-		if (!batadv_compare_eth(claim->backbone_gw->orig,
-					primary_if->net_dev->dev_addr))
+	अगर (claim) अणु
+		अगर (!batadv_compare_eth(claim->backbone_gw->orig,
+					primary_अगर->net_dev->dev_addr))
 			ret = false;
 		batadv_claim_put(claim);
-	}
+	पूर्ण
 
-	batadv_hardif_put(primary_if);
-	return ret;
-}
-#endif
+	batadv_hardअगर_put(primary_अगर);
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर

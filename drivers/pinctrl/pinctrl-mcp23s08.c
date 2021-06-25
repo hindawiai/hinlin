@@ -1,164 +1,165 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* MCP23S08 SPI/I2C GPIO driver */
 
-#include <linux/bitops.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/mutex.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/export.h>
-#include <linux/gpio/driver.h>
-#include <linux/slab.h>
-#include <asm/byteorder.h>
-#include <linux/interrupt.h>
-#include <linux/regmap.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/export.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
 
-#include "pinctrl-mcp23s08.h"
+#समावेश "pinctrl-mcp23s08.h"
 
 /* Registers are all 8 bits wide.
  *
  * The mcp23s17 has twice as many bits, and can be configured to work
- * with either 16 bit registers or with two adjacent 8 bit banks.
+ * with either 16 bit रेजिस्टरs or with two adjacent 8 bit banks.
  */
-#define MCP_IODIR	0x00		/* init/reset:  all ones */
-#define MCP_IPOL	0x01
-#define MCP_GPINTEN	0x02
-#define MCP_DEFVAL	0x03
-#define MCP_INTCON	0x04
-#define MCP_IOCON	0x05
+#घोषणा MCP_IOसूची	0x00		/* init/reset:  all ones */
+#घोषणा MCP_IPOL	0x01
+#घोषणा MCP_GPINTEN	0x02
+#घोषणा MCP_DEFVAL	0x03
+#घोषणा MCP_INTCON	0x04
+#घोषणा MCP_IOCON	0x05
 #	define IOCON_MIRROR	(1 << 6)
 #	define IOCON_SEQOP	(1 << 5)
 #	define IOCON_HAEN	(1 << 3)
 #	define IOCON_ODR	(1 << 2)
 #	define IOCON_INTPOL	(1 << 1)
 #	define IOCON_INTCC	(1)
-#define MCP_GPPU	0x06
-#define MCP_INTF	0x07
-#define MCP_INTCAP	0x08
-#define MCP_GPIO	0x09
-#define MCP_OLAT	0x0a
+#घोषणा MCP_GPPU	0x06
+#घोषणा MCP_INTF	0x07
+#घोषणा MCP_INTCAP	0x08
+#घोषणा MCP_GPIO	0x09
+#घोषणा MCP_OLAT	0x0a
 
-static const struct reg_default mcp23x08_defaults[] = {
-	{.reg = MCP_IODIR,		.def = 0xff},
-	{.reg = MCP_IPOL,		.def = 0x00},
-	{.reg = MCP_GPINTEN,		.def = 0x00},
-	{.reg = MCP_DEFVAL,		.def = 0x00},
-	{.reg = MCP_INTCON,		.def = 0x00},
-	{.reg = MCP_IOCON,		.def = 0x00},
-	{.reg = MCP_GPPU,		.def = 0x00},
-	{.reg = MCP_OLAT,		.def = 0x00},
-};
+अटल स्थिर काष्ठा reg_शेष mcp23x08_शेषs[] = अणु
+	अणु.reg = MCP_IOसूची,		.def = 0xffपूर्ण,
+	अणु.reg = MCP_IPOL,		.def = 0x00पूर्ण,
+	अणु.reg = MCP_GPINTEN,		.def = 0x00पूर्ण,
+	अणु.reg = MCP_DEFVAL,		.def = 0x00पूर्ण,
+	अणु.reg = MCP_INTCON,		.def = 0x00पूर्ण,
+	अणु.reg = MCP_IOCON,		.def = 0x00पूर्ण,
+	अणु.reg = MCP_GPPU,		.def = 0x00पूर्ण,
+	अणु.reg = MCP_OLAT,		.def = 0x00पूर्ण,
+पूर्ण;
 
-static const struct regmap_range mcp23x08_volatile_range = {
+अटल स्थिर काष्ठा regmap_range mcp23x08_अस्थिर_range = अणु
 	.range_min = MCP_INTF,
 	.range_max = MCP_GPIO,
-};
+पूर्ण;
 
-static const struct regmap_access_table mcp23x08_volatile_table = {
-	.yes_ranges = &mcp23x08_volatile_range,
+अटल स्थिर काष्ठा regmap_access_table mcp23x08_अस्थिर_table = अणु
+	.yes_ranges = &mcp23x08_अस्थिर_range,
 	.n_yes_ranges = 1,
-};
+पूर्ण;
 
-static const struct regmap_range mcp23x08_precious_range = {
+अटल स्थिर काष्ठा regmap_range mcp23x08_precious_range = अणु
 	.range_min = MCP_GPIO,
 	.range_max = MCP_GPIO,
-};
+पूर्ण;
 
-static const struct regmap_access_table mcp23x08_precious_table = {
+अटल स्थिर काष्ठा regmap_access_table mcp23x08_precious_table = अणु
 	.yes_ranges = &mcp23x08_precious_range,
 	.n_yes_ranges = 1,
-};
+पूर्ण;
 
-const struct regmap_config mcp23x08_regmap = {
+स्थिर काष्ठा regmap_config mcp23x08_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
 	.reg_stride = 1,
-	.volatile_table = &mcp23x08_volatile_table,
+	.अस्थिर_table = &mcp23x08_अस्थिर_table,
 	.precious_table = &mcp23x08_precious_table,
-	.reg_defaults = mcp23x08_defaults,
-	.num_reg_defaults = ARRAY_SIZE(mcp23x08_defaults),
+	.reg_शेषs = mcp23x08_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(mcp23x08_शेषs),
 	.cache_type = REGCACHE_FLAT,
-	.max_register = MCP_OLAT,
-};
+	.max_रेजिस्टर = MCP_OLAT,
+पूर्ण;
 EXPORT_SYMBOL_GPL(mcp23x08_regmap);
 
-static const struct reg_default mcp23x17_defaults[] = {
-	{.reg = MCP_IODIR << 1,		.def = 0xffff},
-	{.reg = MCP_IPOL << 1,		.def = 0x0000},
-	{.reg = MCP_GPINTEN << 1,	.def = 0x0000},
-	{.reg = MCP_DEFVAL << 1,	.def = 0x0000},
-	{.reg = MCP_INTCON << 1,	.def = 0x0000},
-	{.reg = MCP_IOCON << 1,		.def = 0x0000},
-	{.reg = MCP_GPPU << 1,		.def = 0x0000},
-	{.reg = MCP_OLAT << 1,		.def = 0x0000},
-};
+अटल स्थिर काष्ठा reg_शेष mcp23x17_शेषs[] = अणु
+	अणु.reg = MCP_IOसूची << 1,		.def = 0xffffपूर्ण,
+	अणु.reg = MCP_IPOL << 1,		.def = 0x0000पूर्ण,
+	अणु.reg = MCP_GPINTEN << 1,	.def = 0x0000पूर्ण,
+	अणु.reg = MCP_DEFVAL << 1,	.def = 0x0000पूर्ण,
+	अणु.reg = MCP_INTCON << 1,	.def = 0x0000पूर्ण,
+	अणु.reg = MCP_IOCON << 1,		.def = 0x0000पूर्ण,
+	अणु.reg = MCP_GPPU << 1,		.def = 0x0000पूर्ण,
+	अणु.reg = MCP_OLAT << 1,		.def = 0x0000पूर्ण,
+पूर्ण;
 
-static const struct regmap_range mcp23x17_volatile_range = {
+अटल स्थिर काष्ठा regmap_range mcp23x17_अस्थिर_range = अणु
 	.range_min = MCP_INTF << 1,
 	.range_max = MCP_GPIO << 1,
-};
+पूर्ण;
 
-static const struct regmap_access_table mcp23x17_volatile_table = {
-	.yes_ranges = &mcp23x17_volatile_range,
+अटल स्थिर काष्ठा regmap_access_table mcp23x17_अस्थिर_table = अणु
+	.yes_ranges = &mcp23x17_अस्थिर_range,
 	.n_yes_ranges = 1,
-};
+पूर्ण;
 
-static const struct regmap_range mcp23x17_precious_range = {
+अटल स्थिर काष्ठा regmap_range mcp23x17_precious_range = अणु
 	.range_min = MCP_INTCAP << 1,
 	.range_max = MCP_GPIO << 1,
-};
+पूर्ण;
 
-static const struct regmap_access_table mcp23x17_precious_table = {
+अटल स्थिर काष्ठा regmap_access_table mcp23x17_precious_table = अणु
 	.yes_ranges = &mcp23x17_precious_range,
 	.n_yes_ranges = 1,
-};
+पूर्ण;
 
-const struct regmap_config mcp23x17_regmap = {
+स्थिर काष्ठा regmap_config mcp23x17_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 16,
 
 	.reg_stride = 2,
-	.max_register = MCP_OLAT << 1,
-	.volatile_table = &mcp23x17_volatile_table,
+	.max_रेजिस्टर = MCP_OLAT << 1,
+	.अस्थिर_table = &mcp23x17_अस्थिर_table,
 	.precious_table = &mcp23x17_precious_table,
-	.reg_defaults = mcp23x17_defaults,
-	.num_reg_defaults = ARRAY_SIZE(mcp23x17_defaults),
+	.reg_शेषs = mcp23x17_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(mcp23x17_शेषs),
 	.cache_type = REGCACHE_FLAT,
-	.val_format_endian = REGMAP_ENDIAN_LITTLE,
-};
+	.val_क्रमmat_endian = REGMAP_ENDIAN_LITTLE,
+पूर्ण;
 EXPORT_SYMBOL_GPL(mcp23x17_regmap);
 
-static int mcp_read(struct mcp23s08 *mcp, unsigned int reg, unsigned int *val)
-{
-	return regmap_read(mcp->regmap, reg << mcp->reg_shift, val);
-}
+अटल पूर्णांक mcp_पढ़ो(काष्ठा mcp23s08 *mcp, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val)
+अणु
+	वापस regmap_पढ़ो(mcp->regmap, reg << mcp->reg_shअगरt, val);
+पूर्ण
 
-static int mcp_write(struct mcp23s08 *mcp, unsigned int reg, unsigned int val)
-{
-	return regmap_write(mcp->regmap, reg << mcp->reg_shift, val);
-}
+अटल पूर्णांक mcp_ग_लिखो(काष्ठा mcp23s08 *mcp, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
+अणु
+	वापस regmap_ग_लिखो(mcp->regmap, reg << mcp->reg_shअगरt, val);
+पूर्ण
 
-static int mcp_set_mask(struct mcp23s08 *mcp, unsigned int reg,
-		       unsigned int mask, bool enabled)
-{
+अटल पूर्णांक mcp_set_mask(काष्ठा mcp23s08 *mcp, अचिन्हित पूर्णांक reg,
+		       अचिन्हित पूर्णांक mask, bool enabled)
+अणु
 	u16 val  = enabled ? 0xffff : 0x0000;
-	return regmap_update_bits(mcp->regmap, reg << mcp->reg_shift,
+	वापस regmap_update_bits(mcp->regmap, reg << mcp->reg_shअगरt,
 				  mask, val);
-}
+पूर्ण
 
-static int mcp_set_bit(struct mcp23s08 *mcp, unsigned int reg,
-		       unsigned int pin, bool enabled)
-{
+अटल पूर्णांक mcp_set_bit(काष्ठा mcp23s08 *mcp, अचिन्हित पूर्णांक reg,
+		       अचिन्हित पूर्णांक pin, bool enabled)
+अणु
 	u16 mask = BIT(pin);
-	return mcp_set_mask(mcp, reg, mask, enabled);
-}
+	वापस mcp_set_mask(mcp, reg, mask, enabled);
+पूर्ण
 
-static const struct pinctrl_pin_desc mcp23x08_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc mcp23x08_pins[] = अणु
 	PINCTRL_PIN(0, "gpio0"),
 	PINCTRL_PIN(1, "gpio1"),
 	PINCTRL_PIN(2, "gpio2"),
@@ -167,9 +168,9 @@ static const struct pinctrl_pin_desc mcp23x08_pins[] = {
 	PINCTRL_PIN(5, "gpio5"),
 	PINCTRL_PIN(6, "gpio6"),
 	PINCTRL_PIN(7, "gpio7"),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc mcp23x17_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc mcp23x17_pins[] = अणु
 	PINCTRL_PIN(0, "gpio0"),
 	PINCTRL_PIN(1, "gpio1"),
 	PINCTRL_PIN(2, "gpio2"),
@@ -186,350 +187,350 @@ static const struct pinctrl_pin_desc mcp23x17_pins[] = {
 	PINCTRL_PIN(13, "gpio13"),
 	PINCTRL_PIN(14, "gpio14"),
 	PINCTRL_PIN(15, "gpio15"),
-};
+पूर्ण;
 
-static int mcp_pinctrl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	return 0;
-}
+अटल पूर्णांक mcp_pinctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस 0;
+पूर्ण
 
-static const char *mcp_pinctrl_get_group_name(struct pinctrl_dev *pctldev,
-						unsigned int group)
-{
-	return NULL;
-}
+अटल स्थिर अक्षर *mcp_pinctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+						अचिन्हित पूर्णांक group)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static int mcp_pinctrl_get_group_pins(struct pinctrl_dev *pctldev,
-					unsigned int group,
-					const unsigned int **pins,
-					unsigned int *num_pins)
-{
-	return -ENOTSUPP;
-}
+अटल पूर्णांक mcp_pinctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+					अचिन्हित पूर्णांक group,
+					स्थिर अचिन्हित पूर्णांक **pins,
+					अचिन्हित पूर्णांक *num_pins)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static const struct pinctrl_ops mcp_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops mcp_pinctrl_ops = अणु
 	.get_groups_count = mcp_pinctrl_get_groups_count,
 	.get_group_name = mcp_pinctrl_get_group_name,
 	.get_group_pins = mcp_pinctrl_get_group_pins,
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_pin,
-	.dt_free_map = pinconf_generic_dt_free_map,
-#endif
-};
+	.dt_मुक्त_map = pinconf_generic_dt_मुक्त_map,
+#पूर्ण_अगर
+पूर्ण;
 
-static int mcp_pinconf_get(struct pinctrl_dev *pctldev, unsigned int pin,
-			      unsigned long *config)
-{
-	struct mcp23s08 *mcp = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param = pinconf_to_config_param(*config);
-	unsigned int data, status;
-	int ret;
+अटल पूर्णांक mcp_pinconf_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			      अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा mcp23s08 *mcp = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+	अचिन्हित पूर्णांक data, status;
+	पूर्णांक ret;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_PULL_UP:
-		ret = mcp_read(mcp, MCP_GPPU, &data);
-		if (ret < 0)
-			return ret;
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		ret = mcp_पढ़ो(mcp, MCP_GPPU, &data);
+		अगर (ret < 0)
+			वापस ret;
 		status = (data & BIT(pin)) ? 1 : 0;
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = 0;
 
-	return status ? 0 : -EINVAL;
-}
+	वापस status ? 0 : -EINVAL;
+पूर्ण
 
-static int mcp_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
-			      unsigned long *configs, unsigned int num_configs)
-{
-	struct mcp23s08 *mcp = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param;
+अटल पूर्णांक mcp_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			      अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा mcp23s08 *mcp = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param;
 	u32 arg;
-	int ret = 0;
-	int i;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_PULL_UP:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			ret = mcp_set_bit(mcp, MCP_GPPU, pin, arg);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_dbg(mcp->dev, "Invalid config param %04x\n", param);
-			return -ENOTSUPP;
-		}
-	}
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct pinconf_ops mcp_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops mcp_pinconf_ops = अणु
 	.pin_config_get = mcp_pinconf_get,
 	.pin_config_set = mcp_pinconf_set,
 	.is_generic = true,
-};
+पूर्ण;
 
 /*----------------------------------------------------------------------*/
 
-static int mcp23s08_direction_input(struct gpio_chip *chip, unsigned offset)
-{
-	struct mcp23s08	*mcp = gpiochip_get_data(chip);
-	int status;
+अटल पूर्णांक mcp23s08_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा mcp23s08	*mcp = gpiochip_get_data(chip);
+	पूर्णांक status;
 
 	mutex_lock(&mcp->lock);
-	status = mcp_set_bit(mcp, MCP_IODIR, offset, true);
+	status = mcp_set_bit(mcp, MCP_IOसूची, offset, true);
 	mutex_unlock(&mcp->lock);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int mcp23s08_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct mcp23s08	*mcp = gpiochip_get_data(chip);
-	int status, ret;
+अटल पूर्णांक mcp23s08_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा mcp23s08	*mcp = gpiochip_get_data(chip);
+	पूर्णांक status, ret;
 
 	mutex_lock(&mcp->lock);
 
-	/* REVISIT reading this clears any IRQ ... */
-	ret = mcp_read(mcp, MCP_GPIO, &status);
-	if (ret < 0)
+	/* REVISIT पढ़ोing this clears any IRQ ... */
+	ret = mcp_पढ़ो(mcp, MCP_GPIO, &status);
+	अगर (ret < 0)
 		status = 0;
-	else {
+	अन्यथा अणु
 		mcp->cached_gpio = status;
 		status = !!(status & (1 << offset));
-	}
+	पूर्ण
 
 	mutex_unlock(&mcp->lock);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int __mcp23s08_set(struct mcp23s08 *mcp, unsigned mask, bool value)
-{
-	return mcp_set_mask(mcp, MCP_OLAT, mask, value);
-}
+अटल पूर्णांक __mcp23s08_set(काष्ठा mcp23s08 *mcp, अचिन्हित mask, bool value)
+अणु
+	वापस mcp_set_mask(mcp, MCP_OLAT, mask, value);
+पूर्ण
 
-static void mcp23s08_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	struct mcp23s08	*mcp = gpiochip_get_data(chip);
-	unsigned mask = BIT(offset);
+अटल व्योम mcp23s08_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा mcp23s08	*mcp = gpiochip_get_data(chip);
+	अचिन्हित mask = BIT(offset);
 
 	mutex_lock(&mcp->lock);
 	__mcp23s08_set(mcp, mask, !!value);
 	mutex_unlock(&mcp->lock);
-}
+पूर्ण
 
-static int
-mcp23s08_direction_output(struct gpio_chip *chip, unsigned offset, int value)
-{
-	struct mcp23s08	*mcp = gpiochip_get_data(chip);
-	unsigned mask = BIT(offset);
-	int status;
+अटल पूर्णांक
+mcp23s08_direction_output(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा mcp23s08	*mcp = gpiochip_get_data(chip);
+	अचिन्हित mask = BIT(offset);
+	पूर्णांक status;
 
 	mutex_lock(&mcp->lock);
 	status = __mcp23s08_set(mcp, mask, value);
-	if (status == 0) {
-		status = mcp_set_mask(mcp, MCP_IODIR, mask, false);
-	}
+	अगर (status == 0) अणु
+		status = mcp_set_mask(mcp, MCP_IOसूची, mask, false);
+	पूर्ण
 	mutex_unlock(&mcp->lock);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*----------------------------------------------------------------------*/
-static irqreturn_t mcp23s08_irq(int irq, void *data)
-{
-	struct mcp23s08 *mcp = data;
-	int intcap, intcon, intf, i, gpio, gpio_orig, intcap_mask, defval;
-	unsigned int child_irq;
-	bool intf_set, intcap_changed, gpio_bit_changed,
+अटल irqवापस_t mcp23s08_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा mcp23s08 *mcp = data;
+	पूर्णांक पूर्णांकcap, पूर्णांकcon, पूर्णांकf, i, gpio, gpio_orig, पूर्णांकcap_mask, defval;
+	अचिन्हित पूर्णांक child_irq;
+	bool पूर्णांकf_set, पूर्णांकcap_changed, gpio_bit_changed,
 		defval_changed, gpio_set;
 
 	mutex_lock(&mcp->lock);
-	if (mcp_read(mcp, MCP_INTF, &intf))
-		goto unlock;
+	अगर (mcp_पढ़ो(mcp, MCP_INTF, &पूर्णांकf))
+		जाओ unlock;
 
-	if (mcp_read(mcp, MCP_INTCAP, &intcap))
-		goto unlock;
+	अगर (mcp_पढ़ो(mcp, MCP_INTCAP, &पूर्णांकcap))
+		जाओ unlock;
 
-	if (mcp_read(mcp, MCP_INTCON, &intcon))
-		goto unlock;
+	अगर (mcp_पढ़ो(mcp, MCP_INTCON, &पूर्णांकcon))
+		जाओ unlock;
 
-	if (mcp_read(mcp, MCP_DEFVAL, &defval))
-		goto unlock;
+	अगर (mcp_पढ़ो(mcp, MCP_DEFVAL, &defval))
+		जाओ unlock;
 
-	/* This clears the interrupt(configurable on S18) */
-	if (mcp_read(mcp, MCP_GPIO, &gpio))
-		goto unlock;
+	/* This clears the पूर्णांकerrupt(configurable on S18) */
+	अगर (mcp_पढ़ो(mcp, MCP_GPIO, &gpio))
+		जाओ unlock;
 
 	gpio_orig = mcp->cached_gpio;
 	mcp->cached_gpio = gpio;
 	mutex_unlock(&mcp->lock);
 
-	if (intf == 0) {
-		/* There is no interrupt pending */
-		return IRQ_HANDLED;
-	}
+	अगर (पूर्णांकf == 0) अणु
+		/* There is no पूर्णांकerrupt pending */
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	dev_dbg(mcp->chip.parent,
 		"intcap 0x%04X intf 0x%04X gpio_orig 0x%04X gpio 0x%04X\n",
-		intcap, intf, gpio_orig, gpio);
+		पूर्णांकcap, पूर्णांकf, gpio_orig, gpio);
 
-	for (i = 0; i < mcp->chip.ngpio; i++) {
-		/* We must check all of the inputs on the chip,
+	क्रम (i = 0; i < mcp->chip.ngpio; i++) अणु
+		/* We must check all of the inमाला_दो on the chip,
 		 * otherwise we may not notice a change on >=2 pins.
 		 *
 		 * On at least the mcp23s17, INTCAP is only updated
-		 * one byte at a time(INTCAPA and INTCAPB are
-		 * not written to at the same time - only on a per-bank
+		 * one byte at a समय(INTCAPA and INTCAPB are
+		 * not written to at the same समय - only on a per-bank
 		 * basis).
 		 *
 		 * INTF only contains the single bit that caused the
-		 * interrupt per-bank.  On the mcp23s17, there is
+		 * पूर्णांकerrupt per-bank.  On the mcp23s17, there is
 		 * INTFA and INTFB.  If two pins are changed on the A
-		 * side at the same time, INTF will only have one bit
+		 * side at the same समय, INTF will only have one bit
 		 * set.  If one pin on the A side and one pin on the B
-		 * side are changed at the same time, INTF will have
+		 * side are changed at the same समय, INTF will have
 		 * two bits set.  Thus, INTF can't be the only check
-		 * to see if the input has changed.
+		 * to see अगर the input has changed.
 		 */
 
-		intf_set = intf & BIT(i);
-		if (i < 8 && intf_set)
-			intcap_mask = 0x00FF;
-		else if (i >= 8 && intf_set)
-			intcap_mask = 0xFF00;
-		else
-			intcap_mask = 0x00;
+		पूर्णांकf_set = पूर्णांकf & BIT(i);
+		अगर (i < 8 && पूर्णांकf_set)
+			पूर्णांकcap_mask = 0x00FF;
+		अन्यथा अगर (i >= 8 && पूर्णांकf_set)
+			पूर्णांकcap_mask = 0xFF00;
+		अन्यथा
+			पूर्णांकcap_mask = 0x00;
 
-		intcap_changed = (intcap_mask &
-			(intcap & BIT(i))) !=
-			(intcap_mask & (BIT(i) & gpio_orig));
+		पूर्णांकcap_changed = (पूर्णांकcap_mask &
+			(पूर्णांकcap & BIT(i))) !=
+			(पूर्णांकcap_mask & (BIT(i) & gpio_orig));
 		gpio_set = BIT(i) & gpio;
 		gpio_bit_changed = (BIT(i) & gpio_orig) !=
 			(BIT(i) & gpio);
-		defval_changed = (BIT(i) & intcon) &&
+		defval_changed = (BIT(i) & पूर्णांकcon) &&
 			((BIT(i) & gpio) !=
 			(BIT(i) & defval));
 
-		if (((gpio_bit_changed || intcap_changed) &&
+		अगर (((gpio_bit_changed || पूर्णांकcap_changed) &&
 			(BIT(i) & mcp->irq_rise) && gpio_set) ||
-		    ((gpio_bit_changed || intcap_changed) &&
+		    ((gpio_bit_changed || पूर्णांकcap_changed) &&
 			(BIT(i) & mcp->irq_fall) && !gpio_set) ||
-		    defval_changed) {
-			child_irq = irq_find_mapping(mcp->chip.irq.domain, i);
+		    defval_changed) अणु
+			child_irq = irq_find_mapping(mcp->chip.irq.करोमुख्य, i);
 			handle_nested_irq(child_irq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 
 unlock:
 	mutex_unlock(&mcp->lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void mcp23s08_irq_mask(struct irq_data *data)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(data);
-	struct mcp23s08 *mcp = gpiochip_get_data(gc);
-	unsigned int pos = data->hwirq;
+अटल व्योम mcp23s08_irq_mask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(data);
+	काष्ठा mcp23s08 *mcp = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक pos = data->hwirq;
 
 	mcp_set_bit(mcp, MCP_GPINTEN, pos, false);
-}
+पूर्ण
 
-static void mcp23s08_irq_unmask(struct irq_data *data)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(data);
-	struct mcp23s08 *mcp = gpiochip_get_data(gc);
-	unsigned int pos = data->hwirq;
+अटल व्योम mcp23s08_irq_unmask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(data);
+	काष्ठा mcp23s08 *mcp = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक pos = data->hwirq;
 
 	mcp_set_bit(mcp, MCP_GPINTEN, pos, true);
-}
+पूर्ण
 
-static int mcp23s08_irq_set_type(struct irq_data *data, unsigned int type)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(data);
-	struct mcp23s08 *mcp = gpiochip_get_data(gc);
-	unsigned int pos = data->hwirq;
+अटल पूर्णांक mcp23s08_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(data);
+	काष्ठा mcp23s08 *mcp = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक pos = data->hwirq;
 
-	if ((type & IRQ_TYPE_EDGE_BOTH) == IRQ_TYPE_EDGE_BOTH) {
+	अगर ((type & IRQ_TYPE_EDGE_BOTH) == IRQ_TYPE_EDGE_BOTH) अणु
 		mcp_set_bit(mcp, MCP_INTCON, pos, false);
 		mcp->irq_rise |= BIT(pos);
 		mcp->irq_fall |= BIT(pos);
-	} else if (type & IRQ_TYPE_EDGE_RISING) {
+	पूर्ण अन्यथा अगर (type & IRQ_TYPE_EDGE_RISING) अणु
 		mcp_set_bit(mcp, MCP_INTCON, pos, false);
 		mcp->irq_rise |= BIT(pos);
 		mcp->irq_fall &= ~BIT(pos);
-	} else if (type & IRQ_TYPE_EDGE_FALLING) {
+	पूर्ण अन्यथा अगर (type & IRQ_TYPE_EDGE_FALLING) अणु
 		mcp_set_bit(mcp, MCP_INTCON, pos, false);
 		mcp->irq_rise &= ~BIT(pos);
 		mcp->irq_fall |= BIT(pos);
-	} else if (type & IRQ_TYPE_LEVEL_HIGH) {
+	पूर्ण अन्यथा अगर (type & IRQ_TYPE_LEVEL_HIGH) अणु
 		mcp_set_bit(mcp, MCP_INTCON, pos, true);
 		mcp_set_bit(mcp, MCP_DEFVAL, pos, false);
-	} else if (type & IRQ_TYPE_LEVEL_LOW) {
+	पूर्ण अन्यथा अगर (type & IRQ_TYPE_LEVEL_LOW) अणु
 		mcp_set_bit(mcp, MCP_INTCON, pos, true);
 		mcp_set_bit(mcp, MCP_DEFVAL, pos, true);
-	} else
-		return -EINVAL;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mcp23s08_irq_bus_lock(struct irq_data *data)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(data);
-	struct mcp23s08 *mcp = gpiochip_get_data(gc);
+अटल व्योम mcp23s08_irq_bus_lock(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(data);
+	काष्ठा mcp23s08 *mcp = gpiochip_get_data(gc);
 
 	mutex_lock(&mcp->lock);
 	regcache_cache_only(mcp->regmap, true);
-}
+पूर्ण
 
-static void mcp23s08_irq_bus_unlock(struct irq_data *data)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(data);
-	struct mcp23s08 *mcp = gpiochip_get_data(gc);
+अटल व्योम mcp23s08_irq_bus_unlock(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(data);
+	काष्ठा mcp23s08 *mcp = gpiochip_get_data(gc);
 
 	regcache_cache_only(mcp->regmap, false);
 	regcache_sync(mcp->regmap);
 
 	mutex_unlock(&mcp->lock);
-}
+पूर्ण
 
-static int mcp23s08_irq_setup(struct mcp23s08 *mcp)
-{
-	struct gpio_chip *chip = &mcp->chip;
-	int err;
-	unsigned long irqflags = IRQF_ONESHOT | IRQF_SHARED;
+अटल पूर्णांक mcp23s08_irq_setup(काष्ठा mcp23s08 *mcp)
+अणु
+	काष्ठा gpio_chip *chip = &mcp->chip;
+	पूर्णांक err;
+	अचिन्हित दीर्घ irqflags = IRQF_ONESHOT | IRQF_SHARED;
 
-	if (mcp->irq_active_high)
+	अगर (mcp->irq_active_high)
 		irqflags |= IRQF_TRIGGER_HIGH;
-	else
+	अन्यथा
 		irqflags |= IRQF_TRIGGER_LOW;
 
-	err = devm_request_threaded_irq(chip->parent, mcp->irq, NULL,
+	err = devm_request_thपढ़ोed_irq(chip->parent, mcp->irq, शून्य,
 					mcp23s08_irq,
 					irqflags, dev_name(chip->parent), mcp);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		dev_err(chip->parent, "unable to request IRQ#%d: %d\n",
 			mcp->irq, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
-int mcp23s08_probe_one(struct mcp23s08 *mcp, struct device *dev,
-		       unsigned int addr, unsigned int type, unsigned int base)
-{
-	int status, ret;
+पूर्णांक mcp23s08_probe_one(काष्ठा mcp23s08 *mcp, काष्ठा device *dev,
+		       अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक base)
+अणु
+	पूर्णांक status, ret;
 	bool mirror = false;
-	bool open_drain = false;
+	bool खोलो_drain = false;
 
 	mutex_init(&mcp->lock);
 
@@ -548,97 +549,97 @@ int mcp23s08_probe_one(struct mcp23s08 *mcp, struct device *dev,
 	mcp->chip.get = mcp23s08_get;
 	mcp->chip.direction_output = mcp23s08_direction_output;
 	mcp->chip.set = mcp23s08_set;
-#ifdef CONFIG_OF_GPIO
+#अगर_घोषित CONFIG_OF_GPIO
 	mcp->chip.of_gpio_n_cells = 2;
 	mcp->chip.of_node = dev->of_node;
-#endif
+#पूर्ण_अगर
 
 	mcp->chip.base = base;
 	mcp->chip.can_sleep = true;
 	mcp->chip.parent = dev;
 	mcp->chip.owner = THIS_MODULE;
 
-	/* verify MCP_IOCON.SEQOP = 0, so sequential reads work,
+	/* verअगरy MCP_IOCON.SEQOP = 0, so sequential पढ़ोs work,
 	 * and MCP_IOCON.HAEN = 1, so we work with all chips.
 	 */
 
-	ret = mcp_read(mcp, MCP_IOCON, &status);
-	if (ret < 0)
-		return dev_err_probe(dev, ret, "can't identify chip %d\n", addr);
+	ret = mcp_पढ़ो(mcp, MCP_IOCON, &status);
+	अगर (ret < 0)
+		वापस dev_err_probe(dev, ret, "can't identify chip %d\n", addr);
 
 	mcp->irq_controller =
-		device_property_read_bool(dev, "interrupt-controller");
-	if (mcp->irq && mcp->irq_controller) {
+		device_property_पढ़ो_bool(dev, "interrupt-controller");
+	अगर (mcp->irq && mcp->irq_controller) अणु
 		mcp->irq_active_high =
-			device_property_read_bool(dev,
+			device_property_पढ़ो_bool(dev,
 					      "microchip,irq-active-high");
 
-		mirror = device_property_read_bool(dev, "microchip,irq-mirror");
-		open_drain = device_property_read_bool(dev, "drive-open-drain");
-	}
+		mirror = device_property_पढ़ो_bool(dev, "microchip,irq-mirror");
+		खोलो_drain = device_property_पढ़ो_bool(dev, "drive-open-drain");
+	पूर्ण
 
-	if ((status & IOCON_SEQOP) || !(status & IOCON_HAEN) || mirror ||
-	     mcp->irq_active_high || open_drain) {
+	अगर ((status & IOCON_SEQOP) || !(status & IOCON_HAEN) || mirror ||
+	     mcp->irq_active_high || खोलो_drain) अणु
 		/* mcp23s17 has IOCON twice, make sure they are in sync */
 		status &= ~(IOCON_SEQOP | (IOCON_SEQOP << 8));
 		status |= IOCON_HAEN | (IOCON_HAEN << 8);
-		if (mcp->irq_active_high)
+		अगर (mcp->irq_active_high)
 			status |= IOCON_INTPOL | (IOCON_INTPOL << 8);
-		else
+		अन्यथा
 			status &= ~(IOCON_INTPOL | (IOCON_INTPOL << 8));
 
-		if (mirror)
+		अगर (mirror)
 			status |= IOCON_MIRROR | (IOCON_MIRROR << 8);
 
-		if (open_drain)
+		अगर (खोलो_drain)
 			status |= IOCON_ODR | (IOCON_ODR << 8);
 
-		if (type == MCP_TYPE_S18 || type == MCP_TYPE_018)
+		अगर (type == MCP_TYPE_S18 || type == MCP_TYPE_018)
 			status |= IOCON_INTCC | (IOCON_INTCC << 8);
 
-		ret = mcp_write(mcp, MCP_IOCON, status);
-		if (ret < 0)
-			return dev_err_probe(dev, ret, "can't write IOCON %d\n", addr);
-	}
+		ret = mcp_ग_लिखो(mcp, MCP_IOCON, status);
+		अगर (ret < 0)
+			वापस dev_err_probe(dev, ret, "can't write IOCON %d\n", addr);
+	पूर्ण
 
-	if (mcp->irq && mcp->irq_controller) {
-		struct gpio_irq_chip *girq = &mcp->chip.irq;
+	अगर (mcp->irq && mcp->irq_controller) अणु
+		काष्ठा gpio_irq_chip *girq = &mcp->chip.irq;
 
 		girq->chip = &mcp->irq_chip;
 		/* This will let us handle the parent IRQ in the driver */
-		girq->parent_handler = NULL;
+		girq->parent_handler = शून्य;
 		girq->num_parents = 0;
-		girq->parents = NULL;
-		girq->default_type = IRQ_TYPE_NONE;
+		girq->parents = शून्य;
+		girq->शेष_type = IRQ_TYPE_NONE;
 		girq->handler = handle_simple_irq;
-		girq->threaded = true;
-	}
+		girq->thपढ़ोed = true;
+	पूर्ण
 
 	ret = devm_gpiochip_add_data(dev, &mcp->chip, mcp);
-	if (ret < 0)
-		return dev_err_probe(dev, ret, "can't add GPIO chip\n");
+	अगर (ret < 0)
+		वापस dev_err_probe(dev, ret, "can't add GPIO chip\n");
 
 	mcp->pinctrl_desc.pctlops = &mcp_pinctrl_ops;
 	mcp->pinctrl_desc.confops = &mcp_pinconf_ops;
 	mcp->pinctrl_desc.npins = mcp->chip.ngpio;
-	if (mcp->pinctrl_desc.npins == 8)
+	अगर (mcp->pinctrl_desc.npins == 8)
 		mcp->pinctrl_desc.pins = mcp23x08_pins;
-	else if (mcp->pinctrl_desc.npins == 16)
+	अन्यथा अगर (mcp->pinctrl_desc.npins == 16)
 		mcp->pinctrl_desc.pins = mcp23x17_pins;
 	mcp->pinctrl_desc.owner = THIS_MODULE;
 
-	mcp->pctldev = devm_pinctrl_register(dev, &mcp->pinctrl_desc, mcp);
-	if (IS_ERR(mcp->pctldev))
-		return dev_err_probe(dev, PTR_ERR(mcp->pctldev), "can't register controller\n");
+	mcp->pctldev = devm_pinctrl_रेजिस्टर(dev, &mcp->pinctrl_desc, mcp);
+	अगर (IS_ERR(mcp->pctldev))
+		वापस dev_err_probe(dev, PTR_ERR(mcp->pctldev), "can't register controller\n");
 
-	if (mcp->irq) {
+	अगर (mcp->irq) अणु
 		ret = mcp23s08_irq_setup(mcp);
-		if (ret)
-			return dev_err_probe(dev, ret, "can't setup IRQ\n");
-	}
+		अगर (ret)
+			वापस dev_err_probe(dev, ret, "can't setup IRQ\n");
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mcp23s08_probe_one);
 
 MODULE_LICENSE("GPL");

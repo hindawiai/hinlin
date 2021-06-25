@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014-2015 Pengutronix, Markus Pargmann <mpa@pengutronix.de>
  *
- * This is the driver for the imx25 GCQ (Generic Conversion Queue)
+ * This is the driver क्रम the imx25 GCQ (Generic Conversion Queue)
  * connected to the imx25 ADC.
  */
 
-#include <dt-bindings/iio/adc/fsl-imx25-gcq.h>
-#include <linux/clk.h>
-#include <linux/iio/iio.h>
-#include <linux/interrupt.h>
-#include <linux/mfd/imx25-tsadc.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
+#समावेश <dt-bindings/iio/adc/fsl-imx25-gcq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mfd/imx25-tsadc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
 
-#define MX25_GCQ_TIMEOUT (msecs_to_jiffies(2000))
+#घोषणा MX25_GCQ_TIMEOUT (msecs_to_jअगरfies(2000))
 
-static const char * const driver_name = "mx25-gcq";
+अटल स्थिर अक्षर * स्थिर driver_name = "mx25-gcq";
 
-enum mx25_gcq_cfgs {
+क्रमागत mx25_gcq_cfgs अणु
 	MX25_CFG_XP = 0,
 	MX25_CFG_YP,
 	MX25_CFG_XN,
@@ -31,36 +32,36 @@ enum mx25_gcq_cfgs {
 	MX25_CFG_INAUX1,
 	MX25_CFG_INAUX2,
 	MX25_NUM_CFGS,
-};
+पूर्ण;
 
-struct mx25_gcq_priv {
-	struct regmap *regs;
-	struct completion completed;
-	struct clk *clk;
-	int irq;
-	struct regulator *vref[4];
+काष्ठा mx25_gcq_priv अणु
+	काष्ठा regmap *regs;
+	काष्ठा completion completed;
+	काष्ठा clk *clk;
+	पूर्णांक irq;
+	काष्ठा regulator *vref[4];
 	u32 channel_vref_mv[MX25_NUM_CFGS];
 	/*
 	 * Lock to protect the device state during a potential concurrent
-	 * read access from userspace. Reading a raw value requires a sequence
-	 * of register writes, then a wait for a completion callback,
-	 * and finally a register read, during which userspace could issue
-	 * another read request. This lock protects a read access from
-	 * ocurring before another one has finished.
+	 * पढ़ो access from userspace. Reading a raw value requires a sequence
+	 * of रेजिस्टर ग_लिखोs, then a रुको क्रम a completion callback,
+	 * and finally a रेजिस्टर पढ़ो, during which userspace could issue
+	 * another पढ़ो request. This lock protects a पढ़ो access from
+	 * ocurring beक्रमe another one has finished.
 	 */
-	struct mutex lock;
-};
+	काष्ठा mutex lock;
+पूर्ण;
 
-#define MX25_CQG_CHAN(chan, id) {\
+#घोषणा MX25_CQG_CHAN(chan, id) अणु\
 	.type = IIO_VOLTAGE,\
 	.indexed = 1,\
 	.channel = chan,\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) | \
 			      BIT(IIO_CHAN_INFO_SCALE),\
 	.datasheet_name = id,\
-}
+पूर्ण
 
-static const struct iio_chan_spec mx25_gcq_channels[MX25_NUM_CFGS] = {
+अटल स्थिर काष्ठा iio_chan_spec mx25_gcq_channels[MX25_NUM_CFGS] = अणु
 	MX25_CQG_CHAN(MX25_CFG_XP, "xp"),
 	MX25_CQG_CHAN(MX25_CFG_YP, "yp"),
 	MX25_CQG_CHAN(MX25_CFG_XN, "xn"),
@@ -69,124 +70,124 @@ static const struct iio_chan_spec mx25_gcq_channels[MX25_NUM_CFGS] = {
 	MX25_CQG_CHAN(MX25_CFG_INAUX0, "inaux0"),
 	MX25_CQG_CHAN(MX25_CFG_INAUX1, "inaux1"),
 	MX25_CQG_CHAN(MX25_CFG_INAUX2, "inaux2"),
-};
+पूर्ण;
 
-static const char * const mx25_gcq_refp_names[] = {
+अटल स्थिर अक्षर * स्थिर mx25_gcq_refp_names[] = अणु
 	[MX25_ADC_REFP_YP] = "yp",
 	[MX25_ADC_REFP_XP] = "xp",
 	[MX25_ADC_REFP_INT] = "int",
 	[MX25_ADC_REFP_EXT] = "ext",
-};
+पूर्ण;
 
-static irqreturn_t mx25_gcq_irq(int irq, void *data)
-{
-	struct mx25_gcq_priv *priv = data;
+अटल irqवापस_t mx25_gcq_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा mx25_gcq_priv *priv = data;
 	u32 stats;
 
-	regmap_read(priv->regs, MX25_ADCQ_SR, &stats);
+	regmap_पढ़ो(priv->regs, MX25_ADCQ_SR, &stats);
 
-	if (stats & MX25_ADCQ_SR_EOQ) {
+	अगर (stats & MX25_ADCQ_SR_EOQ) अणु
 		regmap_update_bits(priv->regs, MX25_ADCQ_MR,
 				   MX25_ADCQ_MR_EOQ_IRQ, MX25_ADCQ_MR_EOQ_IRQ);
 		complete(&priv->completed);
-	}
+	पूर्ण
 
 	/* Disable conversion queue run */
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR, MX25_ADCQ_CR_FQS, 0);
 
 	/* Acknowledge all possible irqs */
-	regmap_write(priv->regs, MX25_ADCQ_SR, MX25_ADCQ_SR_FRR |
+	regmap_ग_लिखो(priv->regs, MX25_ADCQ_SR, MX25_ADCQ_SR_FRR |
 		     MX25_ADCQ_SR_FUR | MX25_ADCQ_SR_FOR |
 		     MX25_ADCQ_SR_EOQ | MX25_ADCQ_SR_PD);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mx25_gcq_get_raw_value(struct device *dev,
-				  struct iio_chan_spec const *chan,
-				  struct mx25_gcq_priv *priv,
-				  int *val)
-{
-	long timeout;
+अटल पूर्णांक mx25_gcq_get_raw_value(काष्ठा device *dev,
+				  काष्ठा iio_chan_spec स्थिर *chan,
+				  काष्ठा mx25_gcq_priv *priv,
+				  पूर्णांक *val)
+अणु
+	दीर्घ समयout;
 	u32 data;
 
 	/* Setup the configuration we want to use */
-	regmap_write(priv->regs, MX25_ADCQ_ITEM_7_0,
+	regmap_ग_लिखो(priv->regs, MX25_ADCQ_ITEM_7_0,
 		     MX25_ADCQ_ITEM(0, chan->channel));
 
 	regmap_update_bits(priv->regs, MX25_ADCQ_MR, MX25_ADCQ_MR_EOQ_IRQ, 0);
 
-	/* Trigger queue for one run */
+	/* Trigger queue क्रम one run */
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR, MX25_ADCQ_CR_FQS,
 			   MX25_ADCQ_CR_FQS);
 
-	timeout = wait_for_completion_interruptible_timeout(
+	समयout = रुको_क्रम_completion_पूर्णांकerruptible_समयout(
 		&priv->completed, MX25_GCQ_TIMEOUT);
-	if (timeout < 0) {
+	अगर (समयout < 0) अणु
 		dev_err(dev, "ADC wait for measurement failed\n");
-		return timeout;
-	} else if (timeout == 0) {
+		वापस समयout;
+	पूर्ण अन्यथा अगर (समयout == 0) अणु
 		dev_err(dev, "ADC timed out\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	regmap_read(priv->regs, MX25_ADCQ_FIFO, &data);
+	regmap_पढ़ो(priv->regs, MX25_ADCQ_FIFO, &data);
 
 	*val = MX25_ADCQ_FIFO_DATA(data);
 
-	return IIO_VAL_INT;
-}
+	वापस IIO_VAL_INT;
+पूर्ण
 
-static int mx25_gcq_read_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan, int *val,
-			     int *val2, long mask)
-{
-	struct mx25_gcq_priv *priv = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक mx25_gcq_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
+			     पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा mx25_gcq_priv *priv = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		mutex_lock(&priv->lock);
 		ret = mx25_gcq_get_raw_value(&indio_dev->dev, chan, priv, val);
 		mutex_unlock(&priv->lock);
-		return ret;
+		वापस ret;
 
-	case IIO_CHAN_INFO_SCALE:
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = priv->channel_vref_mv[chan->channel];
 		*val2 = 12;
-		return IIO_VAL_FRACTIONAL_LOG2;
+		वापस IIO_VAL_FRACTIONAL_LOG2;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info mx25_gcq_iio_info = {
-	.read_raw = mx25_gcq_read_raw,
-};
+अटल स्थिर काष्ठा iio_info mx25_gcq_iio_info = अणु
+	.पढ़ो_raw = mx25_gcq_पढ़ो_raw,
+पूर्ण;
 
-static const struct regmap_config mx25_gcq_regconfig = {
-	.max_register = 0x5c,
+अटल स्थिर काष्ठा regmap_config mx25_gcq_regconfig = अणु
+	.max_रेजिस्टर = 0x5c,
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-};
+पूर्ण;
 
-static int mx25_gcq_setup_cfgs(struct platform_device *pdev,
-			       struct mx25_gcq_priv *priv)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct device_node *child;
-	struct device *dev = &pdev->dev;
-	unsigned int refp_used[4] = {};
-	int ret, i;
+अटल पूर्णांक mx25_gcq_setup_cfgs(काष्ठा platक्रमm_device *pdev,
+			       काष्ठा mx25_gcq_priv *priv)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा device_node *child;
+	काष्ठा device *dev = &pdev->dev;
+	अचिन्हित पूर्णांक refp_used[4] = अणुपूर्ण;
+	पूर्णांक ret, i;
 
 	/*
-	 * Setup all configurations registers with a default conversion
-	 * configuration for each input
+	 * Setup all configurations रेजिस्टरs with a शेष conversion
+	 * configuration क्रम each input
 	 */
-	for (i = 0; i < MX25_NUM_CFGS; ++i)
-		regmap_write(priv->regs, MX25_ADCQ_CFG(i),
+	क्रम (i = 0; i < MX25_NUM_CFGS; ++i)
+		regmap_ग_लिखो(priv->regs, MX25_ADCQ_CFG(i),
 			     MX25_ADCQ_CFG_YPLL_OFF |
 			     MX25_ADCQ_CFG_XNUR_OFF |
 			     MX25_ADCQ_CFG_XPUL_OFF |
@@ -195,11 +196,11 @@ static int mx25_gcq_setup_cfgs(struct platform_device *pdev,
 			     MX25_ADCQ_CFG_REFN_NGND2);
 
 	/*
-	 * First get all regulators to store them in channel_vref_mv if
-	 * necessary. Later we use that information for proper IIO scale
-	 * information.
+	 * First get all regulators to store them in channel_vref_mv अगर
+	 * necessary. Later we use that inक्रमmation क्रम proper IIO scale
+	 * inक्रमmation.
 	 */
-	priv->vref[MX25_ADC_REFP_INT] = NULL;
+	priv->vref[MX25_ADC_REFP_INT] = शून्य;
 	priv->vref[MX25_ADC_REFP_EXT] =
 		devm_regulator_get_optional(&pdev->dev, "vref-ext");
 	priv->vref[MX25_ADC_REFP_XP] =
@@ -207,221 +208,221 @@ static int mx25_gcq_setup_cfgs(struct platform_device *pdev,
 	priv->vref[MX25_ADC_REFP_YP] =
 		devm_regulator_get_optional(&pdev->dev, "vref-yp");
 
-	for_each_child_of_node(np, child) {
+	क्रम_each_child_of_node(np, child) अणु
 		u32 reg;
 		u32 refp = MX25_ADCQ_CFG_REFP_INT;
 		u32 refn = MX25_ADCQ_CFG_REFN_NGND2;
 
-		ret = of_property_read_u32(child, "reg", &reg);
-		if (ret) {
+		ret = of_property_पढ़ो_u32(child, "reg", &reg);
+		अगर (ret) अणु
 			dev_err(dev, "Failed to get reg property\n");
 			of_node_put(child);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (reg >= MX25_NUM_CFGS) {
+		अगर (reg >= MX25_NUM_CFGS) अणु
 			dev_err(dev,
 				"reg value is greater than the number of available configuration registers\n");
 			of_node_put(child);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		of_property_read_u32(child, "fsl,adc-refp", &refp);
-		of_property_read_u32(child, "fsl,adc-refn", &refn);
+		of_property_पढ़ो_u32(child, "fsl,adc-refp", &refp);
+		of_property_पढ़ो_u32(child, "fsl,adc-refn", &refn);
 
-		switch (refp) {
-		case MX25_ADC_REFP_EXT:
-		case MX25_ADC_REFP_XP:
-		case MX25_ADC_REFP_YP:
-			if (IS_ERR(priv->vref[refp])) {
+		चयन (refp) अणु
+		हाल MX25_ADC_REFP_EXT:
+		हाल MX25_ADC_REFP_XP:
+		हाल MX25_ADC_REFP_YP:
+			अगर (IS_ERR(priv->vref[refp])) अणु
 				dev_err(dev, "Error, trying to use external voltage reference without a vref-%s regulator.",
 					mx25_gcq_refp_names[refp]);
 				of_node_put(child);
-				return PTR_ERR(priv->vref[refp]);
-			}
+				वापस PTR_ERR(priv->vref[refp]);
+			पूर्ण
 			priv->channel_vref_mv[reg] =
 				regulator_get_voltage(priv->vref[refp]);
 			/* Conversion from uV to mV */
 			priv->channel_vref_mv[reg] /= 1000;
-			break;
-		case MX25_ADC_REFP_INT:
+			अवरोध;
+		हाल MX25_ADC_REFP_INT:
 			priv->channel_vref_mv[reg] = 2500;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(dev, "Invalid positive reference %d\n", refp);
 			of_node_put(child);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		++refp_used[refp];
 
 		/*
-		 * Shift the read values to the correct positions within the
-		 * register.
+		 * Shअगरt the पढ़ो values to the correct positions within the
+		 * रेजिस्टर.
 		 */
 		refp = MX25_ADCQ_CFG_REFP(refp);
 		refn = MX25_ADCQ_CFG_REFN(refn);
 
-		if ((refp & MX25_ADCQ_CFG_REFP_MASK) != refp) {
+		अगर ((refp & MX25_ADCQ_CFG_REFP_MASK) != refp) अणु
 			dev_err(dev, "Invalid fsl,adc-refp property value\n");
 			of_node_put(child);
-			return -EINVAL;
-		}
-		if ((refn & MX25_ADCQ_CFG_REFN_MASK) != refn) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर ((refn & MX25_ADCQ_CFG_REFN_MASK) != refn) अणु
 			dev_err(dev, "Invalid fsl,adc-refn property value\n");
 			of_node_put(child);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		regmap_update_bits(priv->regs, MX25_ADCQ_CFG(reg),
 				   MX25_ADCQ_CFG_REFP_MASK |
 				   MX25_ADCQ_CFG_REFN_MASK,
 				   refp | refn);
-	}
+	पूर्ण
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR,
 			   MX25_ADCQ_CR_FRST | MX25_ADCQ_CR_QRST,
 			   MX25_ADCQ_CR_FRST | MX25_ADCQ_CR_QRST);
 
-	regmap_write(priv->regs, MX25_ADCQ_CR,
+	regmap_ग_लिखो(priv->regs, MX25_ADCQ_CR,
 		     MX25_ADCQ_CR_PDMSK | MX25_ADCQ_CR_QSM_FQS);
 
 	/* Remove unused regulators */
-	for (i = 0; i != 4; ++i) {
-		if (!refp_used[i]) {
-			if (!IS_ERR_OR_NULL(priv->vref[i]))
+	क्रम (i = 0; i != 4; ++i) अणु
+		अगर (!refp_used[i]) अणु
+			अगर (!IS_ERR_OR_शून्य(priv->vref[i]))
 				devm_regulator_put(priv->vref[i]);
-			priv->vref[i] = NULL;
-		}
-	}
+			priv->vref[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mx25_gcq_probe(struct platform_device *pdev)
-{
-	struct iio_dev *indio_dev;
-	struct mx25_gcq_priv *priv;
-	struct mx25_tsadc *tsadc = dev_get_drvdata(pdev->dev.parent);
-	struct device *dev = &pdev->dev;
-	void __iomem *mem;
-	int ret;
-	int i;
+अटल पूर्णांक mx25_gcq_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा mx25_gcq_priv *priv;
+	काष्ठा mx25_tsadc *tsadc = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा device *dev = &pdev->dev;
+	व्योम __iomem *mem;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*priv));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&pdev->dev, माप(*priv));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	priv = iio_priv(indio_dev);
 
-	mem = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(mem))
-		return PTR_ERR(mem);
+	mem = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(mem))
+		वापस PTR_ERR(mem);
 
 	priv->regs = devm_regmap_init_mmio(dev, mem, &mx25_gcq_regconfig);
-	if (IS_ERR(priv->regs)) {
+	अगर (IS_ERR(priv->regs)) अणु
 		dev_err(dev, "Failed to initialize regmap\n");
-		return PTR_ERR(priv->regs);
-	}
+		वापस PTR_ERR(priv->regs);
+	पूर्ण
 
 	mutex_init(&priv->lock);
 
 	init_completion(&priv->completed);
 
 	ret = mx25_gcq_setup_cfgs(pdev, priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i != 4; ++i) {
-		if (!priv->vref[i])
-			continue;
+	क्रम (i = 0; i != 4; ++i) अणु
+		अगर (!priv->vref[i])
+			जारी;
 
 		ret = regulator_enable(priv->vref[i]);
-		if (ret)
-			goto err_regulator_disable;
-	}
+		अगर (ret)
+			जाओ err_regulator_disable;
+	पूर्ण
 
 	priv->clk = tsadc->clk;
 	ret = clk_prepare_enable(priv->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable clock\n");
-		goto err_vref_disable;
-	}
+		जाओ err_vref_disable;
+	पूर्ण
 
-	priv->irq = platform_get_irq(pdev, 0);
-	if (priv->irq <= 0) {
+	priv->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (priv->irq <= 0) अणु
 		ret = priv->irq;
-		if (!ret)
+		अगर (!ret)
 			ret = -ENXIO;
-		goto err_clk_unprepare;
-	}
+		जाओ err_clk_unprepare;
+	पूर्ण
 
 	ret = request_irq(priv->irq, mx25_gcq_irq, 0, pdev->name, priv);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed requesting IRQ\n");
-		goto err_clk_unprepare;
-	}
+		जाओ err_clk_unprepare;
+	पूर्ण
 
 	indio_dev->channels = mx25_gcq_channels;
 	indio_dev->num_channels = ARRAY_SIZE(mx25_gcq_channels);
 	indio_dev->info = &mx25_gcq_iio_info;
 	indio_dev->name = driver_name;
 
-	ret = iio_device_register(indio_dev);
-	if (ret) {
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret) अणु
 		dev_err(dev, "Failed to register iio device\n");
-		goto err_irq_free;
-	}
+		जाओ err_irq_मुक्त;
+	पूर्ण
 
-	platform_set_drvdata(pdev, indio_dev);
+	platक्रमm_set_drvdata(pdev, indio_dev);
 
-	return 0;
+	वापस 0;
 
-err_irq_free:
-	free_irq(priv->irq, priv);
+err_irq_मुक्त:
+	मुक्त_irq(priv->irq, priv);
 err_clk_unprepare:
 	clk_disable_unprepare(priv->clk);
 err_vref_disable:
 	i = 4;
 err_regulator_disable:
-	for (; i-- > 0;) {
-		if (priv->vref[i])
+	क्रम (; i-- > 0;) अणु
+		अगर (priv->vref[i])
 			regulator_disable(priv->vref[i]);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int mx25_gcq_remove(struct platform_device *pdev)
-{
-	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
-	struct mx25_gcq_priv *priv = iio_priv(indio_dev);
-	int i;
+अटल पूर्णांक mx25_gcq_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा mx25_gcq_priv *priv = iio_priv(indio_dev);
+	पूर्णांक i;
 
-	iio_device_unregister(indio_dev);
-	free_irq(priv->irq, priv);
+	iio_device_unरेजिस्टर(indio_dev);
+	मुक्त_irq(priv->irq, priv);
 	clk_disable_unprepare(priv->clk);
-	for (i = 4; i-- > 0;) {
-		if (priv->vref[i])
+	क्रम (i = 4; i-- > 0;) अणु
+		अगर (priv->vref[i])
 			regulator_disable(priv->vref[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mx25_gcq_ids[] = {
-	{ .compatible = "fsl,imx25-gcq", },
-	{ /* Sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id mx25_gcq_ids[] = अणु
+	अणु .compatible = "fsl,imx25-gcq", पूर्ण,
+	अणु /* Sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mx25_gcq_ids);
 
-static struct platform_driver mx25_gcq_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver mx25_gcq_driver = अणु
+	.driver		= अणु
 		.name	= "mx25-gcq",
 		.of_match_table = mx25_gcq_ids,
-	},
+	पूर्ण,
 	.probe		= mx25_gcq_probe,
-	.remove		= mx25_gcq_remove,
-};
-module_platform_driver(mx25_gcq_driver);
+	.हटाओ		= mx25_gcq_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(mx25_gcq_driver);
 
 MODULE_DESCRIPTION("ADC driver for Freescale mx25");
 MODULE_AUTHOR("Markus Pargmann <mpa@pengutronix.de>");

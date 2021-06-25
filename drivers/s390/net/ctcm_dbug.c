@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	Copyright IBM Corp. 2001, 2007
  *	Authors:	Peter Tiedemann (ptiedem@de.ibm.com)
  *
  */
 
-#include <linux/stddef.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/ctype.h>
-#include <linux/sysctl.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/debugfs.h>
-#include "ctcm_dbug.h"
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/debugfs.h>
+#समावेश "ctcm_dbug.h"
 
 /*
  * Debug Facility Stuff
  */
 
-struct ctcm_dbf_info ctcm_dbf[CTCM_DBF_INFOS] = {
-	[CTCM_DBF_SETUP]     = {"ctc_setup", 8, 1, 64, CTC_DBF_INFO, NULL},
-	[CTCM_DBF_ERROR]     = {"ctc_error", 8, 1, 64, CTC_DBF_ERROR, NULL},
-	[CTCM_DBF_TRACE]     = {"ctc_trace", 8, 1, 64, CTC_DBF_ERROR, NULL},
-	[CTCM_DBF_MPC_SETUP] = {"mpc_setup", 8, 1, 80, CTC_DBF_INFO, NULL},
-	[CTCM_DBF_MPC_ERROR] = {"mpc_error", 8, 1, 80, CTC_DBF_ERROR, NULL},
-	[CTCM_DBF_MPC_TRACE] = {"mpc_trace", 8, 1, 80, CTC_DBF_ERROR, NULL},
-};
+काष्ठा ctcm_dbf_info ctcm_dbf[CTCM_DBF_INFOS] = अणु
+	[CTCM_DBF_SETUP]     = अणु"ctc_setup", 8, 1, 64, CTC_DBF_INFO, शून्यपूर्ण,
+	[CTCM_DBF_ERROR]     = अणु"ctc_error", 8, 1, 64, CTC_DBF_ERROR, शून्यपूर्ण,
+	[CTCM_DBF_TRACE]     = अणु"ctc_trace", 8, 1, 64, CTC_DBF_ERROR, शून्यपूर्ण,
+	[CTCM_DBF_MPC_SETUP] = अणु"mpc_setup", 8, 1, 80, CTC_DBF_INFO, शून्यपूर्ण,
+	[CTCM_DBF_MPC_ERROR] = अणु"mpc_error", 8, 1, 80, CTC_DBF_ERROR, शून्यपूर्ण,
+	[CTCM_DBF_MPC_TRACE] = अणु"mpc_trace", 8, 1, 80, CTC_DBF_ERROR, शून्यपूर्ण,
+पूर्ण;
 
-void ctcm_unregister_dbf_views(void)
-{
-	int x;
-	for (x = 0; x < CTCM_DBF_INFOS; x++) {
-		debug_unregister(ctcm_dbf[x].id);
-		ctcm_dbf[x].id = NULL;
-	}
-}
+व्योम ctcm_unरेजिस्टर_dbf_views(व्योम)
+अणु
+	पूर्णांक x;
+	क्रम (x = 0; x < CTCM_DBF_INFOS; x++) अणु
+		debug_unरेजिस्टर(ctcm_dbf[x].id);
+		ctcm_dbf[x].id = शून्य;
+	पूर्ण
+पूर्ण
 
-int ctcm_register_dbf_views(void)
-{
-	int x;
-	for (x = 0; x < CTCM_DBF_INFOS; x++) {
-		/* register the areas */
-		ctcm_dbf[x].id = debug_register(ctcm_dbf[x].name,
+पूर्णांक ctcm_रेजिस्टर_dbf_views(व्योम)
+अणु
+	पूर्णांक x;
+	क्रम (x = 0; x < CTCM_DBF_INFOS; x++) अणु
+		/* रेजिस्टर the areas */
+		ctcm_dbf[x].id = debug_रेजिस्टर(ctcm_dbf[x].name,
 						ctcm_dbf[x].pages,
 						ctcm_dbf[x].areas,
 						ctcm_dbf[x].len);
-		if (ctcm_dbf[x].id == NULL) {
-			ctcm_unregister_dbf_views();
-			return -ENOMEM;
-		}
+		अगर (ctcm_dbf[x].id == शून्य) अणु
+			ctcm_unरेजिस्टर_dbf_views();
+			वापस -ENOMEM;
+		पूर्ण
 
-		/* register a view */
-		debug_register_view(ctcm_dbf[x].id, &debug_hex_ascii_view);
+		/* रेजिस्टर a view */
+		debug_रेजिस्टर_view(ctcm_dbf[x].id, &debug_hex_ascii_view);
 		/* set a passing level */
 		debug_set_level(ctcm_dbf[x].id, ctcm_dbf[x].level);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ctcm_dbf_longtext(enum ctcm_dbf_names dbf_nix, int level, char *fmt, ...)
-{
-	char dbf_txt_buf[64];
-	va_list args;
+व्योम ctcm_dbf_दीर्घtext(क्रमागत ctcm_dbf_names dbf_nix, पूर्णांक level, अक्षर *fmt, ...)
+अणु
+	अक्षर dbf_txt_buf[64];
+	बहु_सूची args;
 
-	if (!debug_level_enabled(ctcm_dbf[dbf_nix].id, level))
-		return;
-	va_start(args, fmt);
-	vsnprintf(dbf_txt_buf, sizeof(dbf_txt_buf), fmt, args);
-	va_end(args);
+	अगर (!debug_level_enabled(ctcm_dbf[dbf_nix].id, level))
+		वापस;
+	बहु_शुरू(args, fmt);
+	vsnम_लिखो(dbf_txt_buf, माप(dbf_txt_buf), fmt, args);
+	बहु_पूर्ण(args);
 
 	debug_text_event(ctcm_dbf[dbf_nix].id, level, dbf_txt_buf);
-}
+पूर्ण
 

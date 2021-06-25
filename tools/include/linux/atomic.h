@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __TOOLS_LINUX_ATOMIC_H
-#define __TOOLS_LINUX_ATOMIC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __TOOLS_LINUX_ATOMIC_H
+#घोषणा __TOOLS_LINUX_ATOMIC_H
 
-#include <asm/atomic.h>
+#समावेश <यंत्र/atomic.h>
 
 /* atomic_cmpxchg_relaxed */
-#ifndef atomic_cmpxchg_relaxed
-#define  atomic_cmpxchg_relaxed		atomic_cmpxchg
-#define  atomic_cmpxchg_release         atomic_cmpxchg
-#endif /* atomic_cmpxchg_relaxed */
+#अगर_अघोषित atomic_cmpxchg_relaxed
+#घोषणा  atomic_cmpxchg_relaxed		atomic_cmpxchg
+#घोषणा  atomic_cmpxchg_release         atomic_cmpxchg
+#पूर्ण_अगर /* atomic_cmpxchg_relaxed */
 
-#endif /* __TOOLS_LINUX_ATOMIC_H */
+#पूर्ण_अगर /* __TOOLS_LINUX_ATOMIC_H */

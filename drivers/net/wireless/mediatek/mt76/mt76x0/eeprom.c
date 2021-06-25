@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2014 Felix Fietkau <nbd@openwrt.org>
+ * Copyright (C) 2014 Felix Fietkau <nbd@खोलोwrt.org>
  * Copyright (C) 2015 Jakub Kicinski <kubakici@wp.pl>
  * Copyright (C) 2018 Stanislaw Gruszka <stf_xl@wp.pl>
  */
 
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/etherdevice.h>
-#include <asm/unaligned.h>
-#include "mt76x0.h"
-#include "eeprom.h"
-#include "../mt76x02_phy.h"
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश "mt76x0.h"
+#समावेश "eeprom.h"
+#समावेश "../mt76x02_phy.h"
 
-#define MT_MAP_READS	DIV_ROUND_UP(MT_EFUSE_USAGE_MAP_SIZE, 16)
-static int
-mt76x0_efuse_physical_size_check(struct mt76x02_dev *dev)
-{
+#घोषणा MT_MAP_READS	DIV_ROUND_UP(MT_EFUSE_USAGE_MAP_SIZE, 16)
+अटल पूर्णांक
+mt76x0_efuse_physical_size_check(काष्ठा mt76x02_dev *dev)
+अणु
 	u8 data[MT_MAP_READS * 16];
-	int ret, i;
-	u32 start = 0, end = 0, cnt_free;
+	पूर्णांक ret, i;
+	u32 start = 0, end = 0, cnt_मुक्त;
 
 	ret = mt76x02_get_efuse_data(dev, MT_EE_USAGE_MAP_START, data,
-				     sizeof(data), MT_EE_PHYSICAL_READ);
-	if (ret)
-		return ret;
+				     माप(data), MT_EE_PHYSICAL_READ);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < MT_EFUSE_USAGE_MAP_SIZE; i++)
-		if (!data[i]) {
-			if (!start)
+	क्रम (i = 0; i < MT_EFUSE_USAGE_MAP_SIZE; i++)
+		अगर (!data[i]) अणु
+			अगर (!start)
 				start = MT_EE_USAGE_MAP_START + i;
 			end = MT_EE_USAGE_MAP_START + i;
-		}
-	cnt_free = end - start + 1;
+		पूर्ण
+	cnt_मुक्त = end - start + 1;
 
-	if (MT_EFUSE_USAGE_MAP_SIZE - cnt_free < 5) {
+	अगर (MT_EFUSE_USAGE_MAP_SIZE - cnt_मुक्त < 5) अणु
 		dev_err(dev->mt76.dev,
 			"driver does not support default EEPROM\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mt76x0_set_chip_cap(struct mt76x02_dev *dev)
-{
+अटल व्योम mt76x0_set_chip_cap(काष्ठा mt76x02_dev *dev)
+अणु
 	u16 nic_conf0 = mt76x02_eeprom_get(dev, MT_EE_NIC_CONF_0);
 	u16 nic_conf1 = mt76x02_eeprom_get(dev, MT_EE_NIC_CONF_1);
 
@@ -54,110 +55,110 @@ static void mt76x0_set_chip_cap(struct mt76x02_dev *dev)
 	dev_dbg(dev->mt76.dev, "2GHz %d 5GHz %d\n",
 		dev->mphy.cap.has_2ghz, dev->mphy.cap.has_5ghz);
 
-	if (dev->no_2ghz) {
+	अगर (dev->no_2ghz) अणु
 		dev->mphy.cap.has_2ghz = false;
 		dev_dbg(dev->mt76.dev, "mask out 2GHz support\n");
-	}
+	पूर्ण
 
-	if (is_mt7630(dev)) {
+	अगर (is_mt7630(dev)) अणु
 		dev->mphy.cap.has_5ghz = false;
 		dev_dbg(dev->mt76.dev, "mask out 5GHz support\n");
-	}
+	पूर्ण
 
-	if (!mt76x02_field_valid(nic_conf1 & 0xff))
+	अगर (!mt76x02_field_valid(nic_conf1 & 0xff))
 		nic_conf1 &= 0xff00;
 
-	if (nic_conf1 & MT_EE_NIC_CONF_1_HW_RF_CTRL)
+	अगर (nic_conf1 & MT_EE_NIC_CONF_1_HW_RF_CTRL)
 		dev_err(dev->mt76.dev,
 			"driver does not support HW RF ctrl\n");
 
-	if (!mt76x02_field_valid(nic_conf0 >> 8))
-		return;
+	अगर (!mt76x02_field_valid(nic_conf0 >> 8))
+		वापस;
 
-	if (FIELD_GET(MT_EE_NIC_CONF_0_RX_PATH, nic_conf0) > 1 ||
+	अगर (FIELD_GET(MT_EE_NIC_CONF_0_RX_PATH, nic_conf0) > 1 ||
 	    FIELD_GET(MT_EE_NIC_CONF_0_TX_PATH, nic_conf0) > 1)
 		dev_err(dev->mt76.dev, "invalid tx-rx stream\n");
-}
+पूर्ण
 
-static void mt76x0_set_temp_offset(struct mt76x02_dev *dev)
-{
+अटल व्योम mt76x0_set_temp_offset(काष्ठा mt76x02_dev *dev)
+अणु
 	u8 val;
 
 	val = mt76x02_eeprom_get(dev, MT_EE_2G_TARGET_POWER) >> 8;
-	if (mt76x02_field_valid(val))
+	अगर (mt76x02_field_valid(val))
 		dev->cal.rx.temp_offset = mt76x02_sign_extend(val, 8);
-	else
+	अन्यथा
 		dev->cal.rx.temp_offset = -10;
-}
+पूर्ण
 
-static void mt76x0_set_freq_offset(struct mt76x02_dev *dev)
-{
-	struct mt76x02_rx_freq_cal *caldata = &dev->cal.rx;
+अटल व्योम mt76x0_set_freq_offset(काष्ठा mt76x02_dev *dev)
+अणु
+	काष्ठा mt76x02_rx_freq_cal *caldata = &dev->cal.rx;
 	u8 val;
 
 	val = mt76x02_eeprom_get(dev, MT_EE_FREQ_OFFSET);
-	if (!mt76x02_field_valid(val))
+	अगर (!mt76x02_field_valid(val))
 		val = 0;
 	caldata->freq_offset = val;
 
 	val = mt76x02_eeprom_get(dev, MT_EE_TSSI_BOUND4) >> 8;
-	if (!mt76x02_field_valid(val))
+	अगर (!mt76x02_field_valid(val))
 		val = 0;
 
 	caldata->freq_offset -= mt76x02_sign_extend(val, 8);
-}
+पूर्ण
 
-void mt76x0_read_rx_gain(struct mt76x02_dev *dev)
-{
-	struct ieee80211_channel *chan = dev->mphy.chandef.chan;
-	struct mt76x02_rx_freq_cal *caldata = &dev->cal.rx;
+व्योम mt76x0_पढ़ो_rx_gain(काष्ठा mt76x02_dev *dev)
+अणु
+	काष्ठा ieee80211_channel *chan = dev->mphy.chandef.chan;
+	काष्ठा mt76x02_rx_freq_cal *caldata = &dev->cal.rx;
 	s8 val, lna_5g[3], lna_2g;
 	u16 rssi_offset;
-	int i;
+	पूर्णांक i;
 
 	mt76x02_get_rx_gain(dev, chan->band, &rssi_offset, &lna_2g, lna_5g);
 	caldata->lna_gain = mt76x02_get_lna_gain(dev, &lna_2g, lna_5g, chan);
 
-	for (i = 0; i < ARRAY_SIZE(caldata->rssi_offset); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(caldata->rssi_offset); i++) अणु
 		val = rssi_offset >> (8 * i);
-		if (val < -10 || val > 10)
+		अगर (val < -10 || val > 10)
 			val = 0;
 
 		caldata->rssi_offset[i] = val;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static s8 mt76x0_get_delta(struct mt76x02_dev *dev)
-{
-	struct cfg80211_chan_def *chandef = &dev->mphy.chandef;
+अटल s8 mt76x0_get_delta(काष्ठा mt76x02_dev *dev)
+अणु
+	काष्ठा cfg80211_chan_def *chandef = &dev->mphy.chandef;
 	u8 val;
 
-	if (chandef->width == NL80211_CHAN_WIDTH_80) {
+	अगर (chandef->width == NL80211_CHAN_WIDTH_80) अणु
 		val = mt76x02_eeprom_get(dev, MT_EE_5G_TARGET_POWER) >> 8;
-	} else if (chandef->width == NL80211_CHAN_WIDTH_40) {
+	पूर्ण अन्यथा अगर (chandef->width == NL80211_CHAN_WIDTH_40) अणु
 		u16 data;
 
 		data = mt76x02_eeprom_get(dev, MT_EE_TX_POWER_DELTA_BW40);
-		if (chandef->chan->band == NL80211_BAND_5GHZ)
+		अगर (chandef->chan->band == NL80211_BAND_5GHZ)
 			val = data >> 8;
-		else
+		अन्यथा
 			val = data;
-	} else {
-		return 0;
-	}
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
 
-	return mt76x02_rate_power_val(val);
-}
+	वापस mt76x02_rate_घातer_val(val);
+पूर्ण
 
-void mt76x0_get_tx_power_per_rate(struct mt76x02_dev *dev,
-				  struct ieee80211_channel *chan,
-				  struct mt76_rate_power *t)
-{
+व्योम mt76x0_get_tx_घातer_per_rate(काष्ठा mt76x02_dev *dev,
+				  काष्ठा ieee80211_channel *chan,
+				  काष्ठा mt76_rate_घातer *t)
+अणु
 	bool is_2ghz = chan->band == NL80211_BAND_2GHZ;
 	u16 val, addr;
 	s8 delta;
 
-	memset(t, 0, sizeof(*t));
+	स_रखो(t, 0, माप(*t));
 
 	/* cck 1M, 2M, 5.5M, 11M */
 	val = mt76x02_eeprom_get(dev, MT_EE_TX_POWER_BYRATE_BASE);
@@ -206,143 +207,143 @@ void mt76x0_get_tx_power_per_rate(struct mt76x02_dev *dev,
 	t->vht[9] = s6_to_s8(val >> 8);
 
 	delta = mt76x0_tssi_enabled(dev) ? 0 : mt76x0_get_delta(dev);
-	mt76x02_add_rate_power_offset(t, delta);
-}
+	mt76x02_add_rate_घातer_offset(t, delta);
+पूर्ण
 
-void mt76x0_get_power_info(struct mt76x02_dev *dev,
-			   struct ieee80211_channel *chan, s8 *tp)
-{
-	static const struct mt76x0_chan_map {
+व्योम mt76x0_get_घातer_info(काष्ठा mt76x02_dev *dev,
+			   काष्ठा ieee80211_channel *chan, s8 *tp)
+अणु
+	अटल स्थिर काष्ठा mt76x0_chan_map अणु
 		u8 chan;
 		u8 offset;
-	} chan_map[] = {
-		{   2,  0 }, {   4,  2 }, {   6,  4 }, {   8,  6 },
-		{  10,  8 }, {  12, 10 }, {  14, 12 }, {  38,  0 },
-		{  44,  2 }, {  48,  4 }, {  54,  6 }, {  60,  8 },
-		{  64, 10 }, { 102, 12 }, { 108, 14 }, { 112, 16 },
-		{ 118, 18 }, { 124, 20 }, { 128, 22 }, { 134, 24 },
-		{ 140, 26 }, { 151, 28 }, { 157, 30 }, { 161, 32 },
-		{ 167, 34 }, { 171, 36 }, { 175, 38 },
-	};
+	पूर्ण chan_map[] = अणु
+		अणु   2,  0 पूर्ण, अणु   4,  2 पूर्ण, अणु   6,  4 पूर्ण, अणु   8,  6 पूर्ण,
+		अणु  10,  8 पूर्ण, अणु  12, 10 पूर्ण, अणु  14, 12 पूर्ण, अणु  38,  0 पूर्ण,
+		अणु  44,  2 पूर्ण, अणु  48,  4 पूर्ण, अणु  54,  6 पूर्ण, अणु  60,  8 पूर्ण,
+		अणु  64, 10 पूर्ण, अणु 102, 12 पूर्ण, अणु 108, 14 पूर्ण, अणु 112, 16 पूर्ण,
+		अणु 118, 18 पूर्ण, अणु 124, 20 पूर्ण, अणु 128, 22 पूर्ण, अणु 134, 24 पूर्ण,
+		अणु 140, 26 पूर्ण, अणु 151, 28 पूर्ण, अणु 157, 30 पूर्ण, अणु 161, 32 पूर्ण,
+		अणु 167, 34 पूर्ण, अणु 171, 36 पूर्ण, अणु 175, 38 पूर्ण,
+	पूर्ण;
 	u8 offset, addr;
-	int i, idx = 0;
+	पूर्णांक i, idx = 0;
 	u16 data;
 
-	if (mt76x0_tssi_enabled(dev)) {
-		s8 target_power;
+	अगर (mt76x0_tssi_enabled(dev)) अणु
+		s8 target_घातer;
 
-		if (chan->band == NL80211_BAND_5GHZ)
+		अगर (chan->band == NL80211_BAND_5GHZ)
 			data = mt76x02_eeprom_get(dev, MT_EE_5G_TARGET_POWER);
-		else
+		अन्यथा
 			data = mt76x02_eeprom_get(dev, MT_EE_2G_TARGET_POWER);
-		target_power = (data & 0xff) - dev->mt76.rate_power.ofdm[7];
-		*tp = target_power + mt76x0_get_delta(dev);
+		target_घातer = (data & 0xff) - dev->mt76.rate_घातer.ofdm[7];
+		*tp = target_घातer + mt76x0_get_delta(dev);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(chan_map); i++) {
-		if (chan->hw_value <= chan_map[i].chan) {
+	क्रम (i = 0; i < ARRAY_SIZE(chan_map); i++) अणु
+		अगर (chan->hw_value <= chan_map[i].chan) अणु
 			idx = (chan->hw_value == chan_map[i].chan);
 			offset = chan_map[i].offset;
-			break;
-		}
-	}
-	if (i == ARRAY_SIZE(chan_map))
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (i == ARRAY_SIZE(chan_map))
 		offset = chan_map[0].offset;
 
-	if (chan->band == NL80211_BAND_2GHZ) {
+	अगर (chan->band == NL80211_BAND_2GHZ) अणु
 		addr = MT_EE_TX_POWER_DELTA_BW80 + offset;
-	} else {
-		switch (chan->hw_value) {
-		case 42:
+	पूर्ण अन्यथा अणु
+		चयन (chan->hw_value) अणु
+		हाल 42:
 			offset = 2;
-			break;
-		case 58:
+			अवरोध;
+		हाल 58:
 			offset = 8;
-			break;
-		case 106:
+			अवरोध;
+		हाल 106:
 			offset = 14;
-			break;
-		case 122:
+			अवरोध;
+		हाल 122:
 			offset = 20;
-			break;
-		case 155:
+			अवरोध;
+		हाल 155:
 			offset = 30;
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		addr = MT_EE_TX_POWER_0_GRP4_TSSI_SLOPE + 2 + offset;
-	}
+	पूर्ण
 
 	data = mt76x02_eeprom_get(dev, addr);
 	*tp = data >> (8 * idx);
-	if (*tp < 0 || *tp > 0x3f)
+	अगर (*tp < 0 || *tp > 0x3f)
 		*tp = 5;
-}
+पूर्ण
 
-static int mt76x0_check_eeprom(struct mt76x02_dev *dev)
-{
+अटल पूर्णांक mt76x0_check_eeprom(काष्ठा mt76x02_dev *dev)
+अणु
 	u16 val;
 
 	val = get_unaligned_le16(dev->mt76.eeprom.data);
-	if (!val)
+	अगर (!val)
 		val = get_unaligned_le16(dev->mt76.eeprom.data +
 					 MT_EE_PCI_ID);
 
-	switch (val) {
-	case 0x7650:
-	case 0x7610:
-		return 0;
-	default:
+	चयन (val) अणु
+	हाल 0x7650:
+	हाल 0x7610:
+		वापस 0;
+	शेष:
 		dev_err(dev->mt76.dev, "EEPROM data check failed: %04x\n",
 			val);
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int mt76x0_load_eeprom(struct mt76x02_dev *dev)
-{
-	int found;
+अटल पूर्णांक mt76x0_load_eeprom(काष्ठा mt76x02_dev *dev)
+अणु
+	पूर्णांक found;
 
 	found = mt76_eeprom_init(&dev->mt76, MT76X0_EEPROM_SIZE);
-	if (found < 0)
-		return found;
+	अगर (found < 0)
+		वापस found;
 
-	if (found && !mt76x0_check_eeprom(dev))
-		return 0;
+	अगर (found && !mt76x0_check_eeprom(dev))
+		वापस 0;
 
 	found = mt76x0_efuse_physical_size_check(dev);
-	if (found < 0)
-		return found;
+	अगर (found < 0)
+		वापस found;
 
-	return mt76x02_get_efuse_data(dev, 0, dev->mt76.eeprom.data,
+	वापस mt76x02_get_efuse_data(dev, 0, dev->mt76.eeprom.data,
 				      MT76X0_EEPROM_SIZE, MT_EE_READ);
-}
+पूर्ण
 
-int mt76x0_eeprom_init(struct mt76x02_dev *dev)
-{
+पूर्णांक mt76x0_eeprom_init(काष्ठा mt76x02_dev *dev)
+अणु
 	u8 version, fae;
 	u16 data;
-	int err;
+	पूर्णांक err;
 
 	err = mt76x0_load_eeprom(dev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	data = mt76x02_eeprom_get(dev, MT_EE_VERSION);
 	version = data >> 8;
 	fae = data;
 
-	if (version > MT76X0U_EE_MAX_VER)
+	अगर (version > MT76X0U_EE_MAX_VER)
 		dev_warn(dev->mt76.dev,
 			 "Warning: unsupported EEPROM version %02hhx\n",
 			 version);
 	dev_info(dev->mt76.dev, "EEPROM ver:%02hhx fae:%02hhx\n",
 		 version, fae);
 
-	memcpy(dev->mphy.macaddr, (u8 *)dev->mt76.eeprom.data + MT_EE_MAC_ADDR,
+	स_नकल(dev->mphy.macaddr, (u8 *)dev->mt76.eeprom.data + MT_EE_MAC_ADDR,
 	       ETH_ALEN);
 	mt76_eeprom_override(&dev->mphy);
 	mt76x02_mac_setaddr(dev, dev->mphy.macaddr);
@@ -351,7 +352,7 @@ int mt76x0_eeprom_init(struct mt76x02_dev *dev)
 	mt76x0_set_freq_offset(dev);
 	mt76x0_set_temp_offset(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 MODULE_LICENSE("Dual BSD/GPL");

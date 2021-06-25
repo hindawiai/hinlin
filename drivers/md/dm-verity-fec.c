@@ -1,685 +1,686 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015 Google, Inc.
  *
  * Author: Sami Tolvanen <samitolvanen@google.com>
  */
 
-#include "dm-verity-fec.h"
-#include <linux/math64.h>
+#समावेश "dm-verity-fec.h"
+#समावेश <linux/math64.h>
 
-#define DM_MSG_PREFIX	"verity-fec"
+#घोषणा DM_MSG_PREFIX	"verity-fec"
 
 /*
- * If error correction has been configured, returns true.
+ * If error correction has been configured, वापसs true.
  */
-bool verity_fec_is_enabled(struct dm_verity *v)
-{
-	return v->fec && v->fec->dev;
-}
+bool verity_fec_is_enabled(काष्ठा dm_verity *v)
+अणु
+	वापस v->fec && v->fec->dev;
+पूर्ण
 
 /*
- * Return a pointer to dm_verity_fec_io after dm_verity_io and its variable
+ * Return a poपूर्णांकer to dm_verity_fec_io after dm_verity_io and its variable
  * length fields.
  */
-static inline struct dm_verity_fec_io *fec_io(struct dm_verity_io *io)
-{
-	return (struct dm_verity_fec_io *) verity_io_digest_end(io->v, io);
-}
+अटल अंतरभूत काष्ठा dm_verity_fec_io *fec_io(काष्ठा dm_verity_io *io)
+अणु
+	वापस (काष्ठा dm_verity_fec_io *) verity_io_digest_end(io->v, io);
+पूर्ण
 
 /*
- * Return an interleaved offset for a byte in RS block.
+ * Return an पूर्णांकerleaved offset क्रम a byte in RS block.
  */
-static inline u64 fec_interleave(struct dm_verity *v, u64 offset)
-{
+अटल अंतरभूत u64 fec_पूर्णांकerleave(काष्ठा dm_verity *v, u64 offset)
+अणु
 	u32 mod;
 
-	mod = do_div(offset, v->fec->rsn);
-	return offset + mod * (v->fec->rounds << v->data_dev_block_bits);
-}
+	mod = करो_भाग(offset, v->fec->rsn);
+	वापस offset + mod * (v->fec->rounds << v->data_dev_block_bits);
+पूर्ण
 
 /*
  * Decode an RS block using Reed-Solomon.
  */
-static int fec_decode_rs8(struct dm_verity *v, struct dm_verity_fec_io *fio,
-			  u8 *data, u8 *fec, int neras)
-{
-	int i;
-	uint16_t par[DM_VERITY_FEC_RSM - DM_VERITY_FEC_MIN_RSN];
+अटल पूर्णांक fec_decode_rs8(काष्ठा dm_verity *v, काष्ठा dm_verity_fec_io *fio,
+			  u8 *data, u8 *fec, पूर्णांक neras)
+अणु
+	पूर्णांक i;
+	uपूर्णांक16_t par[DM_VERITY_FEC_RSM - DM_VERITY_FEC_MIN_RSN];
 
-	for (i = 0; i < v->fec->roots; i++)
+	क्रम (i = 0; i < v->fec->roots; i++)
 		par[i] = fec[i];
 
-	return decode_rs8(fio->rs, data, par, v->fec->rsn, NULL, neras,
-			  fio->erasures, 0, NULL);
-}
+	वापस decode_rs8(fio->rs, data, par, v->fec->rsn, शून्य, neras,
+			  fio->erasures, 0, शून्य);
+पूर्ण
 
 /*
- * Read error-correcting codes for the requested RS block. Returns a pointer
- * to the data block. Caller is responsible for releasing buf.
+ * Read error-correcting codes क्रम the requested RS block. Returns a poपूर्णांकer
+ * to the data block. Caller is responsible क्रम releasing buf.
  */
-static u8 *fec_read_parity(struct dm_verity *v, u64 rsb, int index,
-			   unsigned *offset, struct dm_buffer **buf)
-{
+अटल u8 *fec_पढ़ो_parity(काष्ठा dm_verity *v, u64 rsb, पूर्णांक index,
+			   अचिन्हित *offset, काष्ठा dm_buffer **buf)
+अणु
 	u64 position, block, rem;
 	u8 *res;
 
 	position = (index + rsb) * v->fec->roots;
-	block = div64_u64_rem(position, v->fec->io_size, &rem);
-	*offset = (unsigned)rem;
+	block = भाग64_u64_rem(position, v->fec->io_size, &rem);
+	*offset = (अचिन्हित)rem;
 
-	res = dm_bufio_read(v->fec->bufio, block, buf);
-	if (IS_ERR(res)) {
+	res = dm_bufio_पढ़ो(v->fec->bufio, block, buf);
+	अगर (IS_ERR(res)) अणु
 		DMERR("%s: FEC %llu: parity read failed (block %llu): %ld",
-		      v->data_dev->name, (unsigned long long)rsb,
-		      (unsigned long long)block, PTR_ERR(res));
-		*buf = NULL;
-	}
+		      v->data_dev->name, (अचिन्हित दीर्घ दीर्घ)rsb,
+		      (अचिन्हित दीर्घ दीर्घ)block, PTR_ERR(res));
+		*buf = शून्य;
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-/* Loop over each preallocated buffer slot. */
-#define fec_for_each_prealloc_buffer(__i) \
-	for (__i = 0; __i < DM_VERITY_FEC_BUF_PREALLOC; __i++)
+/* Loop over each pपुनः_स्मृतिated buffer slot. */
+#घोषणा fec_क्रम_each_pपुनः_स्मृति_buffer(__i) \
+	क्रम (__i = 0; __i < DM_VERITY_FEC_BUF_PREALLOC; __i++)
 
 /* Loop over each extra buffer slot. */
-#define fec_for_each_extra_buffer(io, __i) \
-	for (__i = DM_VERITY_FEC_BUF_PREALLOC; __i < DM_VERITY_FEC_BUF_MAX; __i++)
+#घोषणा fec_क्रम_each_extra_buffer(io, __i) \
+	क्रम (__i = DM_VERITY_FEC_BUF_PREALLOC; __i < DM_VERITY_FEC_BUF_MAX; __i++)
 
 /* Loop over each allocated buffer. */
-#define fec_for_each_buffer(io, __i) \
-	for (__i = 0; __i < (io)->nbufs; __i++)
+#घोषणा fec_क्रम_each_buffer(io, __i) \
+	क्रम (__i = 0; __i < (io)->nbufs; __i++)
 
 /* Loop over each RS block in each allocated buffer. */
-#define fec_for_each_buffer_rs_block(io, __i, __j) \
-	fec_for_each_buffer(io, __i) \
-		for (__j = 0; __j < 1 << DM_VERITY_FEC_BUF_RS_BITS; __j++)
+#घोषणा fec_क्रम_each_buffer_rs_block(io, __i, __j) \
+	fec_क्रम_each_buffer(io, __i) \
+		क्रम (__j = 0; __j < 1 << DM_VERITY_FEC_BUF_RS_BITS; __j++)
 
 /*
- * Return a pointer to the current RS block when called inside
- * fec_for_each_buffer_rs_block.
+ * Return a poपूर्णांकer to the current RS block when called inside
+ * fec_क्रम_each_buffer_rs_block.
  */
-static inline u8 *fec_buffer_rs_block(struct dm_verity *v,
-				      struct dm_verity_fec_io *fio,
-				      unsigned i, unsigned j)
-{
-	return &fio->bufs[i][j * v->fec->rsn];
-}
+अटल अंतरभूत u8 *fec_buffer_rs_block(काष्ठा dm_verity *v,
+				      काष्ठा dm_verity_fec_io *fio,
+				      अचिन्हित i, अचिन्हित j)
+अणु
+	वापस &fio->bufs[i][j * v->fec->rsn];
+पूर्ण
 
 /*
  * Return an index to the current RS block when called inside
- * fec_for_each_buffer_rs_block.
+ * fec_क्रम_each_buffer_rs_block.
  */
-static inline unsigned fec_buffer_rs_index(unsigned i, unsigned j)
-{
-	return (i << DM_VERITY_FEC_BUF_RS_BITS) + j;
-}
+अटल अंतरभूत अचिन्हित fec_buffer_rs_index(अचिन्हित i, अचिन्हित j)
+अणु
+	वापस (i << DM_VERITY_FEC_BUF_RS_BITS) + j;
+पूर्ण
 
 /*
- * Decode all RS blocks from buffers and copy corrected bytes into fio->output
+ * Decode all RS blocks from buffers and copy corrected bytes पूर्णांकo fio->output
  * starting from block_offset.
  */
-static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio,
-			   u64 rsb, int byte_index, unsigned block_offset,
-			   int neras)
-{
-	int r, corrected = 0, res;
-	struct dm_buffer *buf;
-	unsigned n, i, offset;
+अटल पूर्णांक fec_decode_bufs(काष्ठा dm_verity *v, काष्ठा dm_verity_fec_io *fio,
+			   u64 rsb, पूर्णांक byte_index, अचिन्हित block_offset,
+			   पूर्णांक neras)
+अणु
+	पूर्णांक r, corrected = 0, res;
+	काष्ठा dm_buffer *buf;
+	अचिन्हित n, i, offset;
 	u8 *par, *block;
 
-	par = fec_read_parity(v, rsb, block_offset, &offset, &buf);
-	if (IS_ERR(par))
-		return PTR_ERR(par);
+	par = fec_पढ़ो_parity(v, rsb, block_offset, &offset, &buf);
+	अगर (IS_ERR(par))
+		वापस PTR_ERR(par);
 
 	/*
 	 * Decode the RS blocks we have in bufs. Each RS block results in
 	 * one corrected target byte and consumes fec->roots parity bytes.
 	 */
-	fec_for_each_buffer_rs_block(fio, n, i) {
+	fec_क्रम_each_buffer_rs_block(fio, n, i) अणु
 		block = fec_buffer_rs_block(v, fio, n, i);
 		res = fec_decode_rs8(v, fio, block, &par[offset], neras);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			r = res;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		corrected += res;
 		fio->output[block_offset] = block[byte_index];
 
 		block_offset++;
-		if (block_offset >= 1 << v->data_dev_block_bits)
-			goto done;
+		अगर (block_offset >= 1 << v->data_dev_block_bits)
+			जाओ करोne;
 
-		/* read the next block when we run out of parity bytes */
+		/* पढ़ो the next block when we run out of parity bytes */
 		offset += v->fec->roots;
-		if (offset >= v->fec->io_size) {
+		अगर (offset >= v->fec->io_size) अणु
 			dm_bufio_release(buf);
 
-			par = fec_read_parity(v, rsb, block_offset, &offset, &buf);
-			if (IS_ERR(par))
-				return PTR_ERR(par);
-		}
-	}
-done:
+			par = fec_पढ़ो_parity(v, rsb, block_offset, &offset, &buf);
+			अगर (IS_ERR(par))
+				वापस PTR_ERR(par);
+		पूर्ण
+	पूर्ण
+करोne:
 	r = corrected;
 error:
 	dm_bufio_release(buf);
 
-	if (r < 0 && neras)
+	अगर (r < 0 && neras)
 		DMERR_LIMIT("%s: FEC %llu: failed to correct: %d",
-			    v->data_dev->name, (unsigned long long)rsb, r);
-	else if (r > 0)
+			    v->data_dev->name, (अचिन्हित दीर्घ दीर्घ)rsb, r);
+	अन्यथा अगर (r > 0)
 		DMWARN_LIMIT("%s: FEC %llu: corrected %d errors",
-			     v->data_dev->name, (unsigned long long)rsb, r);
+			     v->data_dev->name, (अचिन्हित दीर्घ दीर्घ)rsb, r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * Locate data block erasures using verity hashes.
  */
-static int fec_is_erasure(struct dm_verity *v, struct dm_verity_io *io,
+अटल पूर्णांक fec_is_erasure(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io,
 			  u8 *want_digest, u8 *data)
-{
-	if (unlikely(verity_hash(v, verity_io_hash_req(v, io),
+अणु
+	अगर (unlikely(verity_hash(v, verity_io_hash_req(v, io),
 				 data, 1 << v->data_dev_block_bits,
 				 verity_io_real_digest(v, io))))
-		return 0;
+		वापस 0;
 
-	return memcmp(verity_io_real_digest(v, io), want_digest,
+	वापस स_भेद(verity_io_real_digest(v, io), want_digest,
 		      v->digest_size) != 0;
-}
+पूर्ण
 
 /*
- * Read data blocks that are part of the RS block and deinterleave as much as
- * fits into buffers. Check for erasure locations if @neras is non-NULL.
+ * Read data blocks that are part of the RS block and deपूर्णांकerleave as much as
+ * fits पूर्णांकo buffers. Check क्रम erasure locations अगर @neras is non-शून्य.
  */
-static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
-			 u64 rsb, u64 target, unsigned block_offset,
-			 int *neras)
-{
+अटल पूर्णांक fec_पढ़ो_bufs(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io,
+			 u64 rsb, u64 target, अचिन्हित block_offset,
+			 पूर्णांक *neras)
+अणु
 	bool is_zero;
-	int i, j, target_index = -1;
-	struct dm_buffer *buf;
-	struct dm_bufio_client *bufio;
-	struct dm_verity_fec_io *fio = fec_io(io);
+	पूर्णांक i, j, target_index = -1;
+	काष्ठा dm_buffer *buf;
+	काष्ठा dm_bufio_client *bufio;
+	काष्ठा dm_verity_fec_io *fio = fec_io(io);
 	u64 block, ileaved;
 	u8 *bbuf, *rs_block;
 	u8 want_digest[HASH_MAX_DIGESTSIZE];
-	unsigned n, k;
+	अचिन्हित n, k;
 
-	if (neras)
+	अगर (neras)
 		*neras = 0;
 
-	if (WARN_ON(v->digest_size > sizeof(want_digest)))
-		return -EINVAL;
+	अगर (WARN_ON(v->digest_size > माप(want_digest)))
+		वापस -EINVAL;
 
 	/*
-	 * read each of the rsn data blocks that are part of the RS block, and
-	 * interleave contents to available bufs
+	 * पढ़ो each of the rsn data blocks that are part of the RS block, and
+	 * पूर्णांकerleave contents to available bufs
 	 */
-	for (i = 0; i < v->fec->rsn; i++) {
-		ileaved = fec_interleave(v, rsb * v->fec->rsn + i);
+	क्रम (i = 0; i < v->fec->rsn; i++) अणु
+		ileaved = fec_पूर्णांकerleave(v, rsb * v->fec->rsn + i);
 
 		/*
 		 * target is the data block we want to correct, target_index is
 		 * the index of this block within the rsn RS blocks
 		 */
-		if (ileaved == target)
+		अगर (ileaved == target)
 			target_index = i;
 
 		block = ileaved >> v->data_dev_block_bits;
 		bufio = v->fec->data_bufio;
 
-		if (block >= v->data_blocks) {
+		अगर (block >= v->data_blocks) अणु
 			block -= v->data_blocks;
 
 			/*
 			 * blocks outside the area were assumed to contain
 			 * zeros when encoding data was generated
 			 */
-			if (unlikely(block >= v->fec->hash_blocks))
-				continue;
+			अगर (unlikely(block >= v->fec->hash_blocks))
+				जारी;
 
 			block += v->hash_start;
 			bufio = v->bufio;
-		}
+		पूर्ण
 
-		bbuf = dm_bufio_read(bufio, block, &buf);
-		if (IS_ERR(bbuf)) {
+		bbuf = dm_bufio_पढ़ो(bufio, block, &buf);
+		अगर (IS_ERR(bbuf)) अणु
 			DMWARN_LIMIT("%s: FEC %llu: read failed (%llu): %ld",
 				     v->data_dev->name,
-				     (unsigned long long)rsb,
-				     (unsigned long long)block, PTR_ERR(bbuf));
+				     (अचिन्हित दीर्घ दीर्घ)rsb,
+				     (अचिन्हित दीर्घ दीर्घ)block, PTR_ERR(bbuf));
 
 			/* assume the block is corrupted */
-			if (neras && *neras <= v->fec->roots)
+			अगर (neras && *neras <= v->fec->roots)
 				fio->erasures[(*neras)++] = i;
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* locate erasures if the block is on the data device */
-		if (bufio == v->fec->data_bufio &&
-		    verity_hash_for_block(v, io, block, want_digest,
-					  &is_zero) == 0) {
+		/* locate erasures अगर the block is on the data device */
+		अगर (bufio == v->fec->data_bufio &&
+		    verity_hash_क्रम_block(v, io, block, want_digest,
+					  &is_zero) == 0) अणु
 			/* skip known zero blocks entirely */
-			if (is_zero)
-				goto done;
+			अगर (is_zero)
+				जाओ करोne;
 
 			/*
-			 * skip if we have already found the theoretical
+			 * skip अगर we have alपढ़ोy found the theoretical
 			 * maximum number (i.e. fec->roots) of erasures
 			 */
-			if (neras && *neras <= v->fec->roots &&
+			अगर (neras && *neras <= v->fec->roots &&
 			    fec_is_erasure(v, io, want_digest, bbuf))
 				fio->erasures[(*neras)++] = i;
-		}
+		पूर्ण
 
 		/*
-		 * deinterleave and copy the bytes that fit into bufs,
+		 * deपूर्णांकerleave and copy the bytes that fit पूर्णांकo bufs,
 		 * starting from block_offset
 		 */
-		fec_for_each_buffer_rs_block(fio, n, j) {
+		fec_क्रम_each_buffer_rs_block(fio, n, j) अणु
 			k = fec_buffer_rs_index(n, j) + block_offset;
 
-			if (k >= 1 << v->data_dev_block_bits)
-				goto done;
+			अगर (k >= 1 << v->data_dev_block_bits)
+				जाओ करोne;
 
 			rs_block = fec_buffer_rs_block(v, fio, n, j);
 			rs_block[i] = bbuf[k];
-		}
-done:
+		पूर्ण
+करोne:
 		dm_bufio_release(buf);
-	}
+	पूर्ण
 
-	return target_index;
-}
+	वापस target_index;
+पूर्ण
 
 /*
- * Allocate RS control structure and FEC buffers from preallocated mempools,
+ * Allocate RS control काष्ठाure and FEC buffers from pपुनः_स्मृतिated mempools,
  * and attempt to allocate as many extra buffers as available.
  */
-static int fec_alloc_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio)
-{
-	unsigned n;
+अटल पूर्णांक fec_alloc_bufs(काष्ठा dm_verity *v, काष्ठा dm_verity_fec_io *fio)
+अणु
+	अचिन्हित n;
 
-	if (!fio->rs)
+	अगर (!fio->rs)
 		fio->rs = mempool_alloc(&v->fec->rs_pool, GFP_NOIO);
 
-	fec_for_each_prealloc_buffer(n) {
-		if (fio->bufs[n])
-			continue;
+	fec_क्रम_each_pपुनः_स्मृति_buffer(n) अणु
+		अगर (fio->bufs[n])
+			जारी;
 
-		fio->bufs[n] = mempool_alloc(&v->fec->prealloc_pool, GFP_NOWAIT);
-		if (unlikely(!fio->bufs[n])) {
+		fio->bufs[n] = mempool_alloc(&v->fec->pपुनः_स्मृति_pool, GFP_NOWAIT);
+		अगर (unlikely(!fio->bufs[n])) अणु
 			DMERR("failed to allocate FEC buffer");
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	/* try to allocate the maximum number of buffers */
-	fec_for_each_extra_buffer(fio, n) {
-		if (fio->bufs[n])
-			continue;
+	fec_क्रम_each_extra_buffer(fio, n) अणु
+		अगर (fio->bufs[n])
+			जारी;
 
 		fio->bufs[n] = mempool_alloc(&v->fec->extra_pool, GFP_NOWAIT);
-		/* we can manage with even one buffer if necessary */
-		if (unlikely(!fio->bufs[n]))
-			break;
-	}
+		/* we can manage with even one buffer अगर necessary */
+		अगर (unlikely(!fio->bufs[n]))
+			अवरोध;
+	पूर्ण
 	fio->nbufs = n;
 
-	if (!fio->output)
+	अगर (!fio->output)
 		fio->output = mempool_alloc(&v->fec->output_pool, GFP_NOIO);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Initialize buffers and clear erasures. fec_read_bufs() assumes buffers are
- * zeroed before deinterleaving.
+ * Initialize buffers and clear erasures. fec_पढ़ो_bufs() assumes buffers are
+ * zeroed beक्रमe deपूर्णांकerleaving.
  */
-static void fec_init_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio)
-{
-	unsigned n;
+अटल व्योम fec_init_bufs(काष्ठा dm_verity *v, काष्ठा dm_verity_fec_io *fio)
+अणु
+	अचिन्हित n;
 
-	fec_for_each_buffer(fio, n)
-		memset(fio->bufs[n], 0, v->fec->rsn << DM_VERITY_FEC_BUF_RS_BITS);
+	fec_क्रम_each_buffer(fio, n)
+		स_रखो(fio->bufs[n], 0, v->fec->rsn << DM_VERITY_FEC_BUF_RS_BITS);
 
-	memset(fio->erasures, 0, sizeof(fio->erasures));
-}
+	स_रखो(fio->erasures, 0, माप(fio->erasures));
+पूर्ण
 
 /*
- * Decode all RS blocks in a single data block and return the target block
+ * Decode all RS blocks in a single data block and वापस the target block
  * (indicated by @offset) in fio->output. If @use_erasures is non-zero, uses
  * hashes to locate erasures.
  */
-static int fec_decode_rsb(struct dm_verity *v, struct dm_verity_io *io,
-			  struct dm_verity_fec_io *fio, u64 rsb, u64 offset,
+अटल पूर्णांक fec_decode_rsb(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io,
+			  काष्ठा dm_verity_fec_io *fio, u64 rsb, u64 offset,
 			  bool use_erasures)
-{
-	int r, neras = 0;
-	unsigned pos;
+अणु
+	पूर्णांक r, neras = 0;
+	अचिन्हित pos;
 
 	r = fec_alloc_bufs(v, fio);
-	if (unlikely(r < 0))
-		return r;
+	अगर (unlikely(r < 0))
+		वापस r;
 
-	for (pos = 0; pos < 1 << v->data_dev_block_bits; ) {
+	क्रम (pos = 0; pos < 1 << v->data_dev_block_bits; ) अणु
 		fec_init_bufs(v, fio);
 
-		r = fec_read_bufs(v, io, rsb, offset, pos,
-				  use_erasures ? &neras : NULL);
-		if (unlikely(r < 0))
-			return r;
+		r = fec_पढ़ो_bufs(v, io, rsb, offset, pos,
+				  use_erasures ? &neras : शून्य);
+		अगर (unlikely(r < 0))
+			वापस r;
 
 		r = fec_decode_bufs(v, fio, rsb, r, pos, neras);
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 
 		pos += fio->nbufs << DM_VERITY_FEC_BUF_RS_BITS;
-	}
+	पूर्ण
 
 	/* Always re-validate the corrected block against the expected hash */
 	r = verity_hash(v, verity_io_hash_req(v, io), fio->output,
 			1 << v->data_dev_block_bits,
 			verity_io_real_digest(v, io));
-	if (unlikely(r < 0))
-		return r;
+	अगर (unlikely(r < 0))
+		वापस r;
 
-	if (memcmp(verity_io_real_digest(v, io), verity_io_want_digest(v, io),
-		   v->digest_size)) {
+	अगर (स_भेद(verity_io_real_digest(v, io), verity_io_want_digest(v, io),
+		   v->digest_size)) अणु
 		DMERR_LIMIT("%s: FEC %llu: failed to correct (%d erasures)",
-			    v->data_dev->name, (unsigned long long)rsb, neras);
-		return -EILSEQ;
-	}
+			    v->data_dev->name, (अचिन्हित दीर्घ दीर्घ)rsb, neras);
+		वापस -EILSEQ;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fec_bv_copy(struct dm_verity *v, struct dm_verity_io *io, u8 *data,
-		       size_t len)
-{
-	struct dm_verity_fec_io *fio = fec_io(io);
+अटल पूर्णांक fec_bv_copy(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io, u8 *data,
+		       माप_प्रकार len)
+अणु
+	काष्ठा dm_verity_fec_io *fio = fec_io(io);
 
-	memcpy(data, &fio->output[fio->output_pos], len);
+	स_नकल(data, &fio->output[fio->output_pos], len);
 	fio->output_pos += len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Correct errors in a block. Copies corrected block to dest if non-NULL,
+ * Correct errors in a block. Copies corrected block to dest अगर non-शून्य,
  * otherwise to a bio_vec starting from iter.
  */
-int verity_fec_decode(struct dm_verity *v, struct dm_verity_io *io,
-		      enum verity_block_type type, sector_t block, u8 *dest,
-		      struct bvec_iter *iter)
-{
-	int r;
-	struct dm_verity_fec_io *fio = fec_io(io);
+पूर्णांक verity_fec_decode(काष्ठा dm_verity *v, काष्ठा dm_verity_io *io,
+		      क्रमागत verity_block_type type, sector_t block, u8 *dest,
+		      काष्ठा bvec_iter *iter)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_verity_fec_io *fio = fec_io(io);
 	u64 offset, res, rsb;
 
-	if (!verity_fec_is_enabled(v))
-		return -EOPNOTSUPP;
+	अगर (!verity_fec_is_enabled(v))
+		वापस -EOPNOTSUPP;
 
-	if (fio->level >= DM_VERITY_FEC_MAX_RECURSION) {
+	अगर (fio->level >= DM_VERITY_FEC_MAX_RECURSION) अणु
 		DMWARN_LIMIT("%s: FEC: recursion too deep", v->data_dev->name);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	fio->level++;
 
-	if (type == DM_VERITY_BLOCK_TYPE_METADATA)
+	अगर (type == DM_VERITY_BLOCK_TYPE_METADATA)
 		block = block - v->hash_start + v->data_blocks;
 
 	/*
-	 * For RS(M, N), the continuous FEC data is divided into blocks of N
-	 * bytes. Since block size may not be divisible by N, the last block
+	 * For RS(M, N), the continuous FEC data is भागided पूर्णांकo blocks of N
+	 * bytes. Since block size may not be भागisible by N, the last block
 	 * is zero padded when decoding.
 	 *
-	 * Each byte of the block is covered by a different RS(M, N) code,
-	 * and each code is interleaved over N blocks to make it less likely
+	 * Each byte of the block is covered by a dअगरferent RS(M, N) code,
+	 * and each code is पूर्णांकerleaved over N blocks to make it less likely
 	 * that bursty corruption will leave us in unrecoverable state.
 	 */
 
 	offset = block << v->data_dev_block_bits;
-	res = div64_u64(offset, v->fec->rounds << v->data_dev_block_bits);
+	res = भाग64_u64(offset, v->fec->rounds << v->data_dev_block_bits);
 
 	/*
-	 * The base RS block we can feed to the interleaver to find out all
-	 * blocks required for decoding.
+	 * The base RS block we can feed to the पूर्णांकerleaver to find out all
+	 * blocks required क्रम decoding.
 	 */
 	rsb = offset - res * (v->fec->rounds << v->data_dev_block_bits);
 
 	/*
 	 * Locating erasures is slow, so attempt to recover the block without
-	 * them first. Do a second attempt with erasures if the corruption is
+	 * them first. Do a second attempt with erasures अगर the corruption is
 	 * bad enough.
 	 */
 	r = fec_decode_rsb(v, io, fio, rsb, offset, false);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		r = fec_decode_rsb(v, io, fio, rsb, offset, true);
-		if (r < 0)
-			goto done;
-	}
+		अगर (r < 0)
+			जाओ करोne;
+	पूर्ण
 
-	if (dest)
-		memcpy(dest, fio->output, 1 << v->data_dev_block_bits);
-	else if (iter) {
+	अगर (dest)
+		स_नकल(dest, fio->output, 1 << v->data_dev_block_bits);
+	अन्यथा अगर (iter) अणु
 		fio->output_pos = 0;
-		r = verity_for_bv_block(v, io, iter, fec_bv_copy);
-	}
+		r = verity_क्रम_bv_block(v, io, iter, fec_bv_copy);
+	पूर्ण
 
-done:
+करोne:
 	fio->level--;
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * Clean up per-bio data.
  */
-void verity_fec_finish_io(struct dm_verity_io *io)
-{
-	unsigned n;
-	struct dm_verity_fec *f = io->v->fec;
-	struct dm_verity_fec_io *fio = fec_io(io);
+व्योम verity_fec_finish_io(काष्ठा dm_verity_io *io)
+अणु
+	अचिन्हित n;
+	काष्ठा dm_verity_fec *f = io->v->fec;
+	काष्ठा dm_verity_fec_io *fio = fec_io(io);
 
-	if (!verity_fec_is_enabled(io->v))
-		return;
+	अगर (!verity_fec_is_enabled(io->v))
+		वापस;
 
-	mempool_free(fio->rs, &f->rs_pool);
+	mempool_मुक्त(fio->rs, &f->rs_pool);
 
-	fec_for_each_prealloc_buffer(n)
-		mempool_free(fio->bufs[n], &f->prealloc_pool);
+	fec_क्रम_each_pपुनः_स्मृति_buffer(n)
+		mempool_मुक्त(fio->bufs[n], &f->pपुनः_स्मृति_pool);
 
-	fec_for_each_extra_buffer(fio, n)
-		mempool_free(fio->bufs[n], &f->extra_pool);
+	fec_क्रम_each_extra_buffer(fio, n)
+		mempool_मुक्त(fio->bufs[n], &f->extra_pool);
 
-	mempool_free(fio->output, &f->output_pool);
-}
+	mempool_मुक्त(fio->output, &f->output_pool);
+पूर्ण
 
 /*
  * Initialize per-bio data.
  */
-void verity_fec_init_io(struct dm_verity_io *io)
-{
-	struct dm_verity_fec_io *fio = fec_io(io);
+व्योम verity_fec_init_io(काष्ठा dm_verity_io *io)
+अणु
+	काष्ठा dm_verity_fec_io *fio = fec_io(io);
 
-	if (!verity_fec_is_enabled(io->v))
-		return;
+	अगर (!verity_fec_is_enabled(io->v))
+		वापस;
 
-	fio->rs = NULL;
-	memset(fio->bufs, 0, sizeof(fio->bufs));
+	fio->rs = शून्य;
+	स_रखो(fio->bufs, 0, माप(fio->bufs));
 	fio->nbufs = 0;
-	fio->output = NULL;
+	fio->output = शून्य;
 	fio->level = 0;
-}
+पूर्ण
 
 /*
  * Append feature arguments and values to the status table.
  */
-unsigned verity_fec_status_table(struct dm_verity *v, unsigned sz,
-				 char *result, unsigned maxlen)
-{
-	if (!verity_fec_is_enabled(v))
-		return sz;
+अचिन्हित verity_fec_status_table(काष्ठा dm_verity *v, अचिन्हित sz,
+				 अक्षर *result, अचिन्हित maxlen)
+अणु
+	अगर (!verity_fec_is_enabled(v))
+		वापस sz;
 
 	DMEMIT(" " DM_VERITY_OPT_FEC_DEV " %s "
 	       DM_VERITY_OPT_FEC_BLOCKS " %llu "
 	       DM_VERITY_OPT_FEC_START " %llu "
 	       DM_VERITY_OPT_FEC_ROOTS " %d",
 	       v->fec->dev->name,
-	       (unsigned long long)v->fec->blocks,
-	       (unsigned long long)v->fec->start,
+	       (अचिन्हित दीर्घ दीर्घ)v->fec->blocks,
+	       (अचिन्हित दीर्घ दीर्घ)v->fec->start,
 	       v->fec->roots);
 
-	return sz;
-}
+	वापस sz;
+पूर्ण
 
-void verity_fec_dtr(struct dm_verity *v)
-{
-	struct dm_verity_fec *f = v->fec;
+व्योम verity_fec_dtr(काष्ठा dm_verity *v)
+अणु
+	काष्ठा dm_verity_fec *f = v->fec;
 
-	if (!verity_fec_is_enabled(v))
-		goto out;
+	अगर (!verity_fec_is_enabled(v))
+		जाओ out;
 
-	mempool_exit(&f->rs_pool);
-	mempool_exit(&f->prealloc_pool);
-	mempool_exit(&f->extra_pool);
-	mempool_exit(&f->output_pool);
+	mempool_निकास(&f->rs_pool);
+	mempool_निकास(&f->pपुनः_स्मृति_pool);
+	mempool_निकास(&f->extra_pool);
+	mempool_निकास(&f->output_pool);
 	kmem_cache_destroy(f->cache);
 
-	if (f->data_bufio)
+	अगर (f->data_bufio)
 		dm_bufio_client_destroy(f->data_bufio);
-	if (f->bufio)
+	अगर (f->bufio)
 		dm_bufio_client_destroy(f->bufio);
 
-	if (f->dev)
+	अगर (f->dev)
 		dm_put_device(v->ti, f->dev);
 out:
-	kfree(f);
-	v->fec = NULL;
-}
+	kमुक्त(f);
+	v->fec = शून्य;
+पूर्ण
 
-static void *fec_rs_alloc(gfp_t gfp_mask, void *pool_data)
-{
-	struct dm_verity *v = (struct dm_verity *)pool_data;
+अटल व्योम *fec_rs_alloc(gfp_t gfp_mask, व्योम *pool_data)
+अणु
+	काष्ठा dm_verity *v = (काष्ठा dm_verity *)pool_data;
 
-	return init_rs_gfp(8, 0x11d, 0, 1, v->fec->roots, gfp_mask);
-}
+	वापस init_rs_gfp(8, 0x11d, 0, 1, v->fec->roots, gfp_mask);
+पूर्ण
 
-static void fec_rs_free(void *element, void *pool_data)
-{
-	struct rs_control *rs = (struct rs_control *)element;
+अटल व्योम fec_rs_मुक्त(व्योम *element, व्योम *pool_data)
+अणु
+	काष्ठा rs_control *rs = (काष्ठा rs_control *)element;
 
-	if (rs)
-		free_rs(rs);
-}
+	अगर (rs)
+		मुक्त_rs(rs);
+पूर्ण
 
-bool verity_is_fec_opt_arg(const char *arg_name)
-{
-	return (!strcasecmp(arg_name, DM_VERITY_OPT_FEC_DEV) ||
-		!strcasecmp(arg_name, DM_VERITY_OPT_FEC_BLOCKS) ||
-		!strcasecmp(arg_name, DM_VERITY_OPT_FEC_START) ||
-		!strcasecmp(arg_name, DM_VERITY_OPT_FEC_ROOTS));
-}
+bool verity_is_fec_opt_arg(स्थिर अक्षर *arg_name)
+अणु
+	वापस (!strहालcmp(arg_name, DM_VERITY_OPT_FEC_DEV) ||
+		!strहालcmp(arg_name, DM_VERITY_OPT_FEC_BLOCKS) ||
+		!strहालcmp(arg_name, DM_VERITY_OPT_FEC_START) ||
+		!strहालcmp(arg_name, DM_VERITY_OPT_FEC_ROOTS));
+पूर्ण
 
-int verity_fec_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
-			      unsigned *argc, const char *arg_name)
-{
-	int r;
-	struct dm_target *ti = v->ti;
-	const char *arg_value;
-	unsigned long long num_ll;
-	unsigned char num_c;
-	char dummy;
+पूर्णांक verity_fec_parse_opt_args(काष्ठा dm_arg_set *as, काष्ठा dm_verity *v,
+			      अचिन्हित *argc, स्थिर अक्षर *arg_name)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_target *ti = v->ti;
+	स्थिर अक्षर *arg_value;
+	अचिन्हित दीर्घ दीर्घ num_ll;
+	अचिन्हित अक्षर num_c;
+	अक्षर dummy;
 
-	if (!*argc) {
+	अगर (!*argc) अणु
 		ti->error = "FEC feature arguments require a value";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	arg_value = dm_shift_arg(as);
+	arg_value = dm_shअगरt_arg(as);
 	(*argc)--;
 
-	if (!strcasecmp(arg_name, DM_VERITY_OPT_FEC_DEV)) {
+	अगर (!strहालcmp(arg_name, DM_VERITY_OPT_FEC_DEV)) अणु
 		r = dm_get_device(ti, arg_value, FMODE_READ, &v->fec->dev);
-		if (r) {
+		अगर (r) अणु
 			ti->error = "FEC device lookup failed";
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
-	} else if (!strcasecmp(arg_name, DM_VERITY_OPT_FEC_BLOCKS)) {
-		if (sscanf(arg_value, "%llu%c", &num_ll, &dummy) != 1 ||
+	पूर्ण अन्यथा अगर (!strहालcmp(arg_name, DM_VERITY_OPT_FEC_BLOCKS)) अणु
+		अगर (माला_पूछो(arg_value, "%llu%c", &num_ll, &dummy) != 1 ||
 		    ((sector_t)(num_ll << (v->data_dev_block_bits - SECTOR_SHIFT))
-		     >> (v->data_dev_block_bits - SECTOR_SHIFT) != num_ll)) {
+		     >> (v->data_dev_block_bits - SECTOR_SHIFT) != num_ll)) अणु
 			ti->error = "Invalid " DM_VERITY_OPT_FEC_BLOCKS;
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		v->fec->blocks = num_ll;
 
-	} else if (!strcasecmp(arg_name, DM_VERITY_OPT_FEC_START)) {
-		if (sscanf(arg_value, "%llu%c", &num_ll, &dummy) != 1 ||
+	पूर्ण अन्यथा अगर (!strहालcmp(arg_name, DM_VERITY_OPT_FEC_START)) अणु
+		अगर (माला_पूछो(arg_value, "%llu%c", &num_ll, &dummy) != 1 ||
 		    ((sector_t)(num_ll << (v->data_dev_block_bits - SECTOR_SHIFT)) >>
-		     (v->data_dev_block_bits - SECTOR_SHIFT) != num_ll)) {
+		     (v->data_dev_block_bits - SECTOR_SHIFT) != num_ll)) अणु
 			ti->error = "Invalid " DM_VERITY_OPT_FEC_START;
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		v->fec->start = num_ll;
 
-	} else if (!strcasecmp(arg_name, DM_VERITY_OPT_FEC_ROOTS)) {
-		if (sscanf(arg_value, "%hhu%c", &num_c, &dummy) != 1 || !num_c ||
+	पूर्ण अन्यथा अगर (!strहालcmp(arg_name, DM_VERITY_OPT_FEC_ROOTS)) अणु
+		अगर (माला_पूछो(arg_value, "%hhu%c", &num_c, &dummy) != 1 || !num_c ||
 		    num_c < (DM_VERITY_FEC_RSM - DM_VERITY_FEC_MAX_RSN) ||
-		    num_c > (DM_VERITY_FEC_RSM - DM_VERITY_FEC_MIN_RSN)) {
+		    num_c > (DM_VERITY_FEC_RSM - DM_VERITY_FEC_MIN_RSN)) अणु
 			ti->error = "Invalid " DM_VERITY_OPT_FEC_ROOTS;
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		v->fec->roots = num_c;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		ti->error = "Unrecognized verity FEC feature request";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Allocate dm_verity_fec for v->fec. Must be called before verity_fec_ctr.
+ * Allocate dm_verity_fec क्रम v->fec. Must be called beक्रमe verity_fec_ctr.
  */
-int verity_fec_ctr_alloc(struct dm_verity *v)
-{
-	struct dm_verity_fec *f;
+पूर्णांक verity_fec_ctr_alloc(काष्ठा dm_verity *v)
+अणु
+	काष्ठा dm_verity_fec *f;
 
-	f = kzalloc(sizeof(struct dm_verity_fec), GFP_KERNEL);
-	if (!f) {
+	f = kzalloc(माप(काष्ठा dm_verity_fec), GFP_KERNEL);
+	अगर (!f) अणु
 		v->ti->error = "Cannot allocate FEC structure";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	v->fec = f;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Validate arguments and preallocate memory. Must be called after arguments
+ * Validate arguments and pपुनः_स्मृतिate memory. Must be called after arguments
  * have been parsed using verity_fec_parse_opt_args.
  */
-int verity_fec_ctr(struct dm_verity *v)
-{
-	struct dm_verity_fec *f = v->fec;
-	struct dm_target *ti = v->ti;
+पूर्णांक verity_fec_ctr(काष्ठा dm_verity *v)
+अणु
+	काष्ठा dm_verity_fec *f = v->fec;
+	काष्ठा dm_target *ti = v->ti;
 	u64 hash_blocks, fec_blocks;
-	int ret;
+	पूर्णांक ret;
 
-	if (!verity_fec_is_enabled(v)) {
+	अगर (!verity_fec_is_enabled(v)) अणु
 		verity_fec_dtr(v);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * FEC is computed over data blocks, possible metadata, and
@@ -688,7 +689,7 @@ int verity_fec_ctr(struct dm_verity *v)
 	 *
 	 *  data blocks | hash blocks | metadata (optional)
 	 *
-	 * We allow metadata after hash blocks to support a use case
+	 * We allow metadata after hash blocks to support a use हाल
 	 * where all data is stored on the same device and FEC covers
 	 * the entire area.
 	 *
@@ -699,124 +700,124 @@ int verity_fec_ctr(struct dm_verity *v)
 	hash_blocks = v->hash_blocks - v->hash_start;
 
 	/*
-	 * Require matching block sizes for data and hash devices for
+	 * Require matching block sizes क्रम data and hash devices क्रम
 	 * simplicity.
 	 */
-	if (v->data_dev_block_bits != v->hash_dev_block_bits) {
+	अगर (v->data_dev_block_bits != v->hash_dev_block_bits) अणु
 		ti->error = "Block sizes must match to use FEC";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!f->roots) {
+	अगर (!f->roots) अणु
 		ti->error = "Missing " DM_VERITY_OPT_FEC_ROOTS;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	f->rsn = DM_VERITY_FEC_RSM - f->roots;
 
-	if (!f->blocks) {
+	अगर (!f->blocks) अणु
 		ti->error = "Missing " DM_VERITY_OPT_FEC_BLOCKS;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	f->rounds = f->blocks;
-	if (sector_div(f->rounds, f->rsn))
+	अगर (sector_भाग(f->rounds, f->rsn))
 		f->rounds++;
 
 	/*
 	 * Due to optional metadata, f->blocks can be larger than
 	 * data_blocks and hash_blocks combined.
 	 */
-	if (f->blocks < v->data_blocks + hash_blocks || !f->rounds) {
+	अगर (f->blocks < v->data_blocks + hash_blocks || !f->rounds) अणु
 		ti->error = "Invalid " DM_VERITY_OPT_FEC_BLOCKS;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Metadata is accessed through the hash device, so we require
 	 * it to be large enough.
 	 */
 	f->hash_blocks = f->blocks - v->data_blocks;
-	if (dm_bufio_get_device_size(v->bufio) < f->hash_blocks) {
+	अगर (dm_bufio_get_device_size(v->bufio) < f->hash_blocks) अणु
 		ti->error = "Hash device is too small for "
 			DM_VERITY_OPT_FEC_BLOCKS;
-		return -E2BIG;
-	}
+		वापस -E2BIG;
+	पूर्ण
 
-	if ((f->roots << SECTOR_SHIFT) & ((1 << v->data_dev_block_bits) - 1))
+	अगर ((f->roots << SECTOR_SHIFT) & ((1 << v->data_dev_block_bits) - 1))
 		f->io_size = 1 << v->data_dev_block_bits;
-	else
+	अन्यथा
 		f->io_size = v->fec->roots << SECTOR_SHIFT;
 
 	f->bufio = dm_bufio_client_create(f->dev->bdev,
 					  f->io_size,
-					  1, 0, NULL, NULL);
-	if (IS_ERR(f->bufio)) {
+					  1, 0, शून्य, शून्य);
+	अगर (IS_ERR(f->bufio)) अणु
 		ti->error = "Cannot initialize FEC bufio client";
-		return PTR_ERR(f->bufio);
-	}
+		वापस PTR_ERR(f->bufio);
+	पूर्ण
 
 	dm_bufio_set_sector_offset(f->bufio, f->start << (v->data_dev_block_bits - SECTOR_SHIFT));
 
-	fec_blocks = div64_u64(f->rounds * f->roots, v->fec->roots << SECTOR_SHIFT);
-	if (dm_bufio_get_device_size(f->bufio) < fec_blocks) {
+	fec_blocks = भाग64_u64(f->rounds * f->roots, v->fec->roots << SECTOR_SHIFT);
+	अगर (dm_bufio_get_device_size(f->bufio) < fec_blocks) अणु
 		ti->error = "FEC device is too small";
-		return -E2BIG;
-	}
+		वापस -E2BIG;
+	पूर्ण
 
 	f->data_bufio = dm_bufio_client_create(v->data_dev->bdev,
 					       1 << v->data_dev_block_bits,
-					       1, 0, NULL, NULL);
-	if (IS_ERR(f->data_bufio)) {
+					       1, 0, शून्य, शून्य);
+	अगर (IS_ERR(f->data_bufio)) अणु
 		ti->error = "Cannot initialize FEC data bufio client";
-		return PTR_ERR(f->data_bufio);
-	}
+		वापस PTR_ERR(f->data_bufio);
+	पूर्ण
 
-	if (dm_bufio_get_device_size(f->data_bufio) < v->data_blocks) {
+	अगर (dm_bufio_get_device_size(f->data_bufio) < v->data_blocks) अणु
 		ti->error = "Data device is too small";
-		return -E2BIG;
-	}
+		वापस -E2BIG;
+	पूर्ण
 
-	/* Preallocate an rs_control structure for each worker thread */
+	/* Pपुनः_स्मृतिate an rs_control काष्ठाure क्रम each worker thपढ़ो */
 	ret = mempool_init(&f->rs_pool, num_online_cpus(), fec_rs_alloc,
-			   fec_rs_free, (void *) v);
-	if (ret) {
+			   fec_rs_मुक्त, (व्योम *) v);
+	अगर (ret) अणु
 		ti->error = "Cannot allocate RS pool";
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	f->cache = kmem_cache_create("dm_verity_fec_buffers",
 				     f->rsn << DM_VERITY_FEC_BUF_RS_BITS,
-				     0, 0, NULL);
-	if (!f->cache) {
+				     0, 0, शून्य);
+	अगर (!f->cache) अणु
 		ti->error = "Cannot create FEC buffer cache";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Preallocate DM_VERITY_FEC_BUF_PREALLOC buffers for each thread */
-	ret = mempool_init_slab_pool(&f->prealloc_pool, num_online_cpus() *
+	/* Pपुनः_स्मृतिate DM_VERITY_FEC_BUF_PREALLOC buffers क्रम each thपढ़ो */
+	ret = mempool_init_slab_pool(&f->pपुनः_स्मृति_pool, num_online_cpus() *
 				     DM_VERITY_FEC_BUF_PREALLOC,
 				     f->cache);
-	if (ret) {
+	अगर (ret) अणु
 		ti->error = "Cannot allocate FEC buffer prealloc pool";
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = mempool_init_slab_pool(&f->extra_pool, 0, f->cache);
-	if (ret) {
+	अगर (ret) अणु
 		ti->error = "Cannot allocate FEC buffer extra pool";
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Preallocate an output buffer for each thread */
-	ret = mempool_init_kmalloc_pool(&f->output_pool, num_online_cpus(),
+	/* Pपुनः_स्मृतिate an output buffer क्रम each thपढ़ो */
+	ret = mempool_init_kदो_स्मृति_pool(&f->output_pool, num_online_cpus(),
 					1 << v->data_dev_block_bits);
-	if (ret) {
+	अगर (ret) अणु
 		ti->error = "Cannot allocate FEC output pool";
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Reserve space for our per-bio data */
-	ti->per_io_data_size += sizeof(struct dm_verity_fec_io);
+	/* Reserve space क्रम our per-bio data */
+	ti->per_io_data_size += माप(काष्ठा dm_verity_fec_io);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

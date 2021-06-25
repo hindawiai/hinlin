@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * builtin-report.c
  *
  * Builtin report command: Analyze the perf.data input file,
- * look up and read DSOs and symbol information and display
- * a histogram of results, along various sorting keys.
+ * look up and पढ़ो DSOs and symbol inक्रमmation and display
+ * a histogram of results, aदीर्घ various sorting keys.
  */
-#include "builtin.h"
+#समावेश "builtin.h"
 
-#include "util/config.h"
+#समावेश "util/config.h"
 
-#include "util/annotate.h"
-#include "util/color.h"
-#include "util/dso.h"
-#include <linux/list.h>
-#include <linux/rbtree.h>
-#include <linux/err.h>
-#include <linux/zalloc.h>
-#include "util/map.h"
-#include "util/symbol.h"
-#include "util/map_symbol.h"
-#include "util/mem-events.h"
-#include "util/branch.h"
-#include "util/callchain.h"
-#include "util/values.h"
+#समावेश "util/annotate.h"
+#समावेश "util/color.h"
+#समावेश "util/dso.h"
+#समावेश <linux/list.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/err.h>
+#समावेश <linux/zभाग.स>
+#समावेश "util/map.h"
+#समावेश "util/symbol.h"
+#समावेश "util/map_symbol.h"
+#समावेश "util/mem-events.h"
+#समावेश "util/branch.h"
+#समावेश "util/callchain.h"
+#समावेश "util/values.h"
 
-#include "perf.h"
-#include "util/debug.h"
-#include "util/evlist.h"
-#include "util/evsel.h"
-#include "util/evswitch.h"
-#include "util/header.h"
-#include "util/session.h"
-#include "util/srcline.h"
-#include "util/tool.h"
+#समावेश "perf.h"
+#समावेश "util/debug.h"
+#समावेश "util/evlist.h"
+#समावेश "util/evsel.h"
+#समावेश "util/evswitch.h"
+#समावेश "util/header.h"
+#समावेश "util/session.h"
+#समावेश "util/srcline.h"
+#समावेश "util/tool.h"
 
-#include <subcmd/parse-options.h>
-#include <subcmd/exec-cmd.h>
-#include "util/parse-events.h"
+#समावेश <subcmd/parse-options.h>
+#समावेश <subcmd/exec-cmd.h>
+#समावेश "util/parse-events.h"
 
-#include "util/thread.h"
-#include "util/sort.h"
-#include "util/hist.h"
-#include "util/data.h"
-#include "arch/common.h"
-#include "util/time-utils.h"
-#include "util/auxtrace.h"
-#include "util/units.h"
-#include "util/util.h" // perf_tip()
-#include "ui/ui.h"
-#include "ui/progress.h"
-#include "util/block-info.h"
+#समावेश "util/thread.h"
+#समावेश "util/sort.h"
+#समावेश "util/hist.h"
+#समावेश "util/data.h"
+#समावेश "arch/common.h"
+#समावेश "util/time-utils.h"
+#समावेश "util/auxtrace.h"
+#समावेश "util/units.h"
+#समावेश "util/util.h" // perf_tip()
+#समावेश "ui/ui.h"
+#समावेश "ui/progress.h"
+#समावेश "util/block-info.h"
 
-#include <dlfcn.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <regex.h>
-#include <linux/ctype.h>
-#include <signal.h>
-#include <linux/bitmap.h>
-#include <linux/string.h>
-#include <linux/stringify.h>
-#include <linux/time64.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <linux/mman.h>
+#समावेश <dlfcn.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <regex.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <संकेत.स>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/समय64.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <unistd.h>
+#समावेश <linux/mman.h>
 
-struct report {
-	struct perf_tool	tool;
-	struct perf_session	*session;
-	struct evswitch		evswitch;
+काष्ठा report अणु
+	काष्ठा perf_tool	tool;
+	काष्ठा perf_session	*session;
+	काष्ठा evचयन		evचयन;
 	bool			use_tui, use_gtk, use_stdio;
 	bool			show_full_info;
-	bool			show_threads;
+	bool			show_thपढ़ोs;
 	bool			inverted_callchain;
 	bool			mem_mode;
 	bool			stats_mode;
@@ -86,714 +87,714 @@ struct report {
 	bool			stitch_lbr;
 	bool			disable_order;
 	bool			skip_empty;
-	int			max_stack;
-	struct perf_read_values	show_threads_values;
-	struct annotation_options annotation_opts;
-	const char		*pretty_printing_style;
-	const char		*cpu_list;
-	const char		*symbol_filter_str;
-	const char		*time_str;
-	struct perf_time_interval *ptime_range;
-	int			range_size;
-	int			range_num;
-	float			min_percent;
+	पूर्णांक			max_stack;
+	काष्ठा perf_पढ़ो_values	show_thपढ़ोs_values;
+	काष्ठा annotation_options annotation_opts;
+	स्थिर अक्षर		*pretty_prपूर्णांकing_style;
+	स्थिर अक्षर		*cpu_list;
+	स्थिर अक्षर		*symbol_filter_str;
+	स्थिर अक्षर		*समय_str;
+	काष्ठा perf_समय_पूर्णांकerval *pसमय_range;
+	पूर्णांक			range_size;
+	पूर्णांक			range_num;
+	भग्न			min_percent;
 	u64			nr_entries;
 	u64			queue_size;
 	u64			total_cycles;
-	int			socket_filter;
-	DECLARE_BITMAP(cpu_bitmap, MAX_NR_CPUS);
-	struct branch_type_stat	brtype_stat;
+	पूर्णांक			socket_filter;
+	DECLARE_BITMAP(cpu_biपंचांगap, MAX_NR_CPUS);
+	काष्ठा branch_type_stat	brtype_stat;
 	bool			symbol_ipc;
 	bool			total_cycles_mode;
-	struct block_report	*block_reports;
-	int			nr_block_reports;
-};
+	काष्ठा block_report	*block_reports;
+	पूर्णांक			nr_block_reports;
+पूर्ण;
 
-static int report__config(const char *var, const char *value, void *cb)
-{
-	struct report *rep = cb;
+अटल पूर्णांक report__config(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *cb)
+अणु
+	काष्ठा report *rep = cb;
 
-	if (!strcmp(var, "report.group")) {
+	अगर (!म_भेद(var, "report.group")) अणु
 		symbol_conf.event_group = perf_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "report.percent-limit")) {
-		double pcnt = strtof(value, NULL);
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेद(var, "report.percent-limit")) अणु
+		द्विगुन pcnt = strtof(value, शून्य);
 
 		rep->min_percent = pcnt;
 		callchain_param.min_percent = pcnt;
-		return 0;
-	}
-	if (!strcmp(var, "report.children")) {
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेद(var, "report.children")) अणु
 		symbol_conf.cumulate_callchain = perf_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "report.queue-size"))
-		return perf_config_u64(&rep->queue_size, var, value);
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेद(var, "report.queue-size"))
+		वापस perf_config_u64(&rep->queue_size, var, value);
 
-	if (!strcmp(var, "report.sort_order")) {
-		default_sort_order = strdup(value);
-		return 0;
-	}
+	अगर (!म_भेद(var, "report.sort_order")) अणु
+		शेष_sort_order = strdup(value);
+		वापस 0;
+	पूर्ण
 
-	if (!strcmp(var, "report.skip-empty")) {
+	अगर (!म_भेद(var, "report.skip-empty")) अणु
 		rep->skip_empty = perf_config_bool(var, value);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hist_iter__report_callback(struct hist_entry_iter *iter,
-				      struct addr_location *al, bool single,
-				      void *arg)
-{
-	int err = 0;
-	struct report *rep = arg;
-	struct hist_entry *he = iter->he;
-	struct evsel *evsel = iter->evsel;
-	struct perf_sample *sample = iter->sample;
-	struct mem_info *mi;
-	struct branch_info *bi;
+अटल पूर्णांक hist_iter__report_callback(काष्ठा hist_entry_iter *iter,
+				      काष्ठा addr_location *al, bool single,
+				      व्योम *arg)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा report *rep = arg;
+	काष्ठा hist_entry *he = iter->he;
+	काष्ठा evsel *evsel = iter->evsel;
+	काष्ठा perf_sample *sample = iter->sample;
+	काष्ठा mem_info *mi;
+	काष्ठा branch_info *bi;
 
-	if (!ui__has_annotation() && !rep->symbol_ipc)
-		return 0;
+	अगर (!ui__has_annotation() && !rep->symbol_ipc)
+		वापस 0;
 
-	if (sort__mode == SORT_MODE__BRANCH) {
+	अगर (sort__mode == SORT_MODE__BRANCH) अणु
 		bi = he->branch_info;
 		err = addr_map_symbol__inc_samples(&bi->from, sample, evsel);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		err = addr_map_symbol__inc_samples(&bi->to, sample, evsel);
 
-	} else if (rep->mem_mode) {
+	पूर्ण अन्यथा अगर (rep->mem_mode) अणु
 		mi = he->mem_info;
 		err = addr_map_symbol__inc_samples(&mi->daddr, sample, evsel);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		err = hist_entry__inc_addr_samples(he, sample, evsel, al->addr);
 
-	} else if (symbol_conf.cumulate_callchain) {
-		if (single)
+	पूर्ण अन्यथा अगर (symbol_conf.cumulate_callchain) अणु
+		अगर (single)
 			err = hist_entry__inc_addr_samples(he, sample, evsel, al->addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = hist_entry__inc_addr_samples(he, sample, evsel, al->addr);
-	}
+	पूर्ण
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hist_iter__branch_callback(struct hist_entry_iter *iter,
-				      struct addr_location *al __maybe_unused,
+अटल पूर्णांक hist_iter__branch_callback(काष्ठा hist_entry_iter *iter,
+				      काष्ठा addr_location *al __maybe_unused,
 				      bool single __maybe_unused,
-				      void *arg)
-{
-	struct hist_entry *he = iter->he;
-	struct report *rep = arg;
-	struct branch_info *bi = he->branch_info;
-	struct perf_sample *sample = iter->sample;
-	struct evsel *evsel = iter->evsel;
-	int err;
+				      व्योम *arg)
+अणु
+	काष्ठा hist_entry *he = iter->he;
+	काष्ठा report *rep = arg;
+	काष्ठा branch_info *bi = he->branch_info;
+	काष्ठा perf_sample *sample = iter->sample;
+	काष्ठा evsel *evsel = iter->evsel;
+	पूर्णांक err;
 
 	branch_type_count(&rep->brtype_stat, &bi->flags,
 			  bi->from.addr, bi->to.addr);
 
-	if (!ui__has_annotation() && !rep->symbol_ipc)
-		return 0;
+	अगर (!ui__has_annotation() && !rep->symbol_ipc)
+		वापस 0;
 
 	err = addr_map_symbol__inc_samples(&bi->from, sample, evsel);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = addr_map_symbol__inc_samples(&bi->to, sample, evsel);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void setup_forced_leader(struct report *report,
-				struct evlist *evlist)
-{
-	if (report->group_set)
-		evlist__force_leader(evlist);
-}
+अटल व्योम setup_क्रमced_leader(काष्ठा report *report,
+				काष्ठा evlist *evlist)
+अणु
+	अगर (report->group_set)
+		evlist__क्रमce_leader(evlist);
+पूर्ण
 
-static int process_feature_event(struct perf_session *session,
-				 union perf_event *event)
-{
-	struct report *rep = container_of(session->tool, struct report, tool);
+अटल पूर्णांक process_feature_event(काष्ठा perf_session *session,
+				 जोड़ perf_event *event)
+अणु
+	काष्ठा report *rep = container_of(session->tool, काष्ठा report, tool);
 
-	if (event->feat.feat_id < HEADER_LAST_FEATURE)
-		return perf_event__process_feature(session, event);
+	अगर (event->feat.feat_id < HEADER_LAST_FEATURE)
+		वापस perf_event__process_feature(session, event);
 
-	if (event->feat.feat_id != HEADER_LAST_FEATURE) {
+	अगर (event->feat.feat_id != HEADER_LAST_FEATURE) अणु
 		pr_err("failed: wrong feature ID: %" PRI_lu64 "\n",
 		       event->feat.feat_id);
-		return -1;
-	} else if (rep->header_only) {
-		session_done = 1;
-	}
+		वापस -1;
+	पूर्ण अन्यथा अगर (rep->header_only) अणु
+		session_करोne = 1;
+	पूर्ण
 
 	/*
 	 * (feat_id = HEADER_LAST_FEATURE) is the end marker which
-	 * means all features are received, now we can force the
-	 * group if needed.
+	 * means all features are received, now we can क्रमce the
+	 * group अगर needed.
 	 */
-	setup_forced_leader(rep, session->evlist);
-	return 0;
-}
+	setup_क्रमced_leader(rep, session->evlist);
+	वापस 0;
+पूर्ण
 
-static int process_sample_event(struct perf_tool *tool,
-				union perf_event *event,
-				struct perf_sample *sample,
-				struct evsel *evsel,
-				struct machine *machine)
-{
-	struct report *rep = container_of(tool, struct report, tool);
-	struct addr_location al;
-	struct hist_entry_iter iter = {
+अटल पूर्णांक process_sample_event(काष्ठा perf_tool *tool,
+				जोड़ perf_event *event,
+				काष्ठा perf_sample *sample,
+				काष्ठा evsel *evsel,
+				काष्ठा machine *machine)
+अणु
+	काष्ठा report *rep = container_of(tool, काष्ठा report, tool);
+	काष्ठा addr_location al;
+	काष्ठा hist_entry_iter iter = अणु
 		.evsel 			= evsel,
 		.sample 		= sample,
 		.hide_unresolved 	= symbol_conf.hide_unresolved,
 		.add_entry_cb 		= hist_iter__report_callback,
-	};
-	int ret = 0;
+	पूर्ण;
+	पूर्णांक ret = 0;
 
-	if (perf_time__ranges_skip_sample(rep->ptime_range, rep->range_num,
-					  sample->time)) {
-		return 0;
-	}
+	अगर (perf_समय__ranges_skip_sample(rep->pसमय_range, rep->range_num,
+					  sample->समय)) अणु
+		वापस 0;
+	पूर्ण
 
-	if (evswitch__discard(&rep->evswitch, evsel))
-		return 0;
+	अगर (evचयन__discard(&rep->evचयन, evsel))
+		वापस 0;
 
-	if (machine__resolve(machine, &al, sample) < 0) {
+	अगर (machine__resolve(machine, &al, sample) < 0) अणु
 		pr_debug("problem processing %d event, skipping it.\n",
 			 event->header.type);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (rep->stitch_lbr)
-		al.thread->lbr_stitch_enable = true;
+	अगर (rep->stitch_lbr)
+		al.thपढ़ो->lbr_stitch_enable = true;
 
-	if (symbol_conf.hide_unresolved && al.sym == NULL)
-		goto out_put;
+	अगर (symbol_conf.hide_unresolved && al.sym == शून्य)
+		जाओ out_put;
 
-	if (rep->cpu_list && !test_bit(sample->cpu, rep->cpu_bitmap))
-		goto out_put;
+	अगर (rep->cpu_list && !test_bit(sample->cpu, rep->cpu_biपंचांगap))
+		जाओ out_put;
 
-	if (sort__mode == SORT_MODE__BRANCH) {
+	अगर (sort__mode == SORT_MODE__BRANCH) अणु
 		/*
-		 * A non-synthesized event might not have a branch stack if
+		 * A non-synthesized event might not have a branch stack अगर
 		 * branch stacks have been synthesized (using itrace options).
 		 */
-		if (!sample->branch_stack)
-			goto out_put;
+		अगर (!sample->branch_stack)
+			जाओ out_put;
 
 		iter.add_entry_cb = hist_iter__branch_callback;
 		iter.ops = &hist_iter_branch;
-	} else if (rep->mem_mode) {
+	पूर्ण अन्यथा अगर (rep->mem_mode) अणु
 		iter.ops = &hist_iter_mem;
-	} else if (symbol_conf.cumulate_callchain) {
+	पूर्ण अन्यथा अगर (symbol_conf.cumulate_callchain) अणु
 		iter.ops = &hist_iter_cumulative;
-	} else {
+	पूर्ण अन्यथा अणु
 		iter.ops = &hist_iter_normal;
-	}
+	पूर्ण
 
-	if (al.map != NULL)
+	अगर (al.map != शून्य)
 		al.map->dso->hit = 1;
 
-	if (ui__has_annotation() || rep->symbol_ipc || rep->total_cycles_mode) {
+	अगर (ui__has_annotation() || rep->symbol_ipc || rep->total_cycles_mode) अणु
 		hist__account_cycles(sample->branch_stack, &al, sample,
 				     rep->nonany_branch_mode,
 				     &rep->total_cycles);
-	}
+	पूर्ण
 
 	ret = hist_entry_iter__add(&iter, &al, rep->max_stack, rep);
-	if (ret < 0)
+	अगर (ret < 0)
 		pr_debug("problem adding hist entry, skipping event\n");
 out_put:
 	addr_location__put(&al);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int process_read_event(struct perf_tool *tool,
-			      union perf_event *event,
-			      struct perf_sample *sample __maybe_unused,
-			      struct evsel *evsel,
-			      struct machine *machine __maybe_unused)
-{
-	struct report *rep = container_of(tool, struct report, tool);
+अटल पूर्णांक process_पढ़ो_event(काष्ठा perf_tool *tool,
+			      जोड़ perf_event *event,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा evsel *evsel,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा report *rep = container_of(tool, काष्ठा report, tool);
 
-	if (rep->show_threads) {
-		const char *name = evsel__name(evsel);
-		int err = perf_read_values_add_value(&rep->show_threads_values,
-					   event->read.pid, event->read.tid,
+	अगर (rep->show_thपढ़ोs) अणु
+		स्थिर अक्षर *name = evsel__name(evsel);
+		पूर्णांक err = perf_पढ़ो_values_add_value(&rep->show_thपढ़ोs_values,
+					   event->पढ़ो.pid, event->पढ़ो.tid,
 					   evsel->idx,
 					   name,
-					   event->read.value);
+					   event->पढ़ो.value);
 
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* For pipe mode, sample_type is not currently set */
-static int report__setup_sample_type(struct report *rep)
-{
-	struct perf_session *session = rep->session;
+अटल पूर्णांक report__setup_sample_type(काष्ठा report *rep)
+अणु
+	काष्ठा perf_session *session = rep->session;
 	u64 sample_type = evlist__combined_sample_type(session->evlist);
 	bool is_pipe = perf_data__is_pipe(session->data);
 
-	if (session->itrace_synth_opts->callchain ||
+	अगर (session->itrace_synth_opts->callchain ||
 	    session->itrace_synth_opts->add_callchain ||
 	    (!is_pipe &&
 	     perf_header__has_feat(&session->header, HEADER_AUXTRACE) &&
 	     !session->itrace_synth_opts->set))
 		sample_type |= PERF_SAMPLE_CALLCHAIN;
 
-	if (session->itrace_synth_opts->last_branch ||
+	अगर (session->itrace_synth_opts->last_branch ||
 	    session->itrace_synth_opts->add_last_branch)
 		sample_type |= PERF_SAMPLE_BRANCH_STACK;
 
-	if (!is_pipe && !(sample_type & PERF_SAMPLE_CALLCHAIN)) {
-		if (perf_hpp_list.parent) {
+	अगर (!is_pipe && !(sample_type & PERF_SAMPLE_CALLCHAIN)) अणु
+		अगर (perf_hpp_list.parent) अणु
 			ui__error("Selected --sort parent, but no "
 				    "callchain data. Did you call "
 				    "'perf record' without -g?\n");
-			return -EINVAL;
-		}
-		if (symbol_conf.use_callchain &&
-			!symbol_conf.show_branchflag_count) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (symbol_conf.use_callchain &&
+			!symbol_conf.show_branchflag_count) अणु
 			ui__error("Selected -g or --branch-history.\n"
 				  "But no callchain or branch data.\n"
 				  "Did you call 'perf record' without -g or -b?\n");
-			return -1;
-		}
-	} else if (!callchain_param.enabled &&
+			वापस -1;
+		पूर्ण
+	पूर्ण अन्यथा अगर (!callchain_param.enabled &&
 		   callchain_param.mode != CHAIN_NONE &&
-		   !symbol_conf.use_callchain) {
+		   !symbol_conf.use_callchain) अणु
 			symbol_conf.use_callchain = true;
-			if (callchain_register_param(&callchain_param) < 0) {
+			अगर (callchain_रेजिस्टर_param(&callchain_param) < 0) अणु
 				ui__error("Can't register callchain params.\n");
-				return -EINVAL;
-			}
-	}
+				वापस -EINVAL;
+			पूर्ण
+	पूर्ण
 
-	if (symbol_conf.cumulate_callchain) {
-		/* Silently ignore if callchain is missing */
-		if (!(sample_type & PERF_SAMPLE_CALLCHAIN)) {
+	अगर (symbol_conf.cumulate_callchain) अणु
+		/* Silently ignore अगर callchain is missing */
+		अगर (!(sample_type & PERF_SAMPLE_CALLCHAIN)) अणु
 			symbol_conf.cumulate_callchain = false;
 			perf_hpp__cancel_cumulate();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sort__mode == SORT_MODE__BRANCH) {
-		if (!is_pipe &&
-		    !(sample_type & PERF_SAMPLE_BRANCH_STACK)) {
+	अगर (sort__mode == SORT_MODE__BRANCH) अणु
+		अगर (!is_pipe &&
+		    !(sample_type & PERF_SAMPLE_BRANCH_STACK)) अणु
 			ui__error("Selected -b but no branch data. "
 				  "Did you call perf record without -b?\n");
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	if (sort__mode == SORT_MODE__MEMORY) {
-		if (!is_pipe && !(sample_type & PERF_SAMPLE_DATA_SRC)) {
+	अगर (sort__mode == SORT_MODE__MEMORY) अणु
+		अगर (!is_pipe && !(sample_type & PERF_SAMPLE_DATA_SRC)) अणु
 			ui__error("Selected --mem-mode but no mem data. "
 				  "Did you call perf record without -d?\n");
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
 	callchain_param_setup(sample_type);
 
-	if (rep->stitch_lbr && (callchain_param.record_mode != CALLCHAIN_LBR)) {
+	अगर (rep->stitch_lbr && (callchain_param.record_mode != CALLCHAIN_LBR)) अणु
 		ui__warning("Can't find LBR callchain. Switch off --stitch-lbr.\n"
 			    "Please apply --call-graph lbr when recording.\n");
 		rep->stitch_lbr = false;
-	}
+	पूर्ण
 
-	/* ??? handle more cases than just ANY? */
-	if (!(evlist__combined_branch_type(session->evlist) & PERF_SAMPLE_BRANCH_ANY))
+	/* ??? handle more हालs than just ANY? */
+	अगर (!(evlist__combined_branch_type(session->evlist) & PERF_SAMPLE_BRANCH_ANY))
 		rep->nonany_branch_mode = true;
 
-#if !defined(HAVE_LIBUNWIND_SUPPORT) && !defined(HAVE_DWARF_SUPPORT)
-	if (dwarf_callchain_users) {
+#अगर !defined(HAVE_LIBUNWIND_SUPPORT) && !defined(HAVE_DWARF_SUPPORT)
+	अगर (dwarf_callchain_users) अणु
 		ui__warning("Please install libunwind or libdw "
 			    "development packages during the perf build.\n");
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sig_handler(int sig __maybe_unused)
-{
-	session_done = 1;
-}
+अटल व्योम sig_handler(पूर्णांक sig __maybe_unused)
+अणु
+	session_करोne = 1;
+पूर्ण
 
-static size_t hists__fprintf_nr_sample_events(struct hists *hists, struct report *rep,
-					      const char *evname, FILE *fp)
-{
-	size_t ret;
-	char unit;
-	unsigned long nr_samples = hists->stats.nr_samples;
+अटल माप_प्रकार hists__ख_लिखो_nr_sample_events(काष्ठा hists *hists, काष्ठा report *rep,
+					      स्थिर अक्षर *evname, खाता *fp)
+अणु
+	माप_प्रकार ret;
+	अक्षर unit;
+	अचिन्हित दीर्घ nr_samples = hists->stats.nr_samples;
 	u64 nr_events = hists->stats.total_period;
-	struct evsel *evsel = hists_to_evsel(hists);
-	char buf[512];
-	size_t size = sizeof(buf);
-	int socked_id = hists->socket_filter;
+	काष्ठा evsel *evsel = hists_to_evsel(hists);
+	अक्षर buf[512];
+	माप_प्रकार size = माप(buf);
+	पूर्णांक socked_id = hists->socket_filter;
 
-	if (quiet)
-		return 0;
+	अगर (quiet)
+		वापस 0;
 
-	if (symbol_conf.filter_relative) {
+	अगर (symbol_conf.filter_relative) अणु
 		nr_samples = hists->stats.nr_non_filtered_samples;
 		nr_events = hists->stats.total_non_filtered_period;
-	}
+	पूर्ण
 
-	if (evsel__is_group_event(evsel)) {
-		struct evsel *pos;
+	अगर (evsel__is_group_event(evsel)) अणु
+		काष्ठा evsel *pos;
 
 		evsel__group_desc(evsel, buf, size);
 		evname = buf;
 
-		for_each_group_member(pos, evsel) {
-			const struct hists *pos_hists = evsel__hists(pos);
+		क्रम_each_group_member(pos, evsel) अणु
+			स्थिर काष्ठा hists *pos_hists = evsel__hists(pos);
 
-			if (symbol_conf.filter_relative) {
+			अगर (symbol_conf.filter_relative) अणु
 				nr_samples += pos_hists->stats.nr_non_filtered_samples;
 				nr_events += pos_hists->stats.total_non_filtered_period;
-			} else {
+			पूर्ण अन्यथा अणु
 				nr_samples += pos_hists->stats.nr_samples;
 				nr_events += pos_hists->stats.total_period;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	nr_samples = convert_unit(nr_samples, &unit);
-	ret = fprintf(fp, "# Samples: %lu%c", nr_samples, unit);
-	if (evname != NULL) {
-		ret += fprintf(fp, " of event%s '%s'",
+	ret = ख_लिखो(fp, "# Samples: %lu%c", nr_samples, unit);
+	अगर (evname != शून्य) अणु
+		ret += ख_लिखो(fp, " of event%s '%s'",
 			       evsel->core.nr_members > 1 ? "s" : "", evname);
-	}
+	पूर्ण
 
-	if (rep->time_str)
-		ret += fprintf(fp, " (time slices: %s)", rep->time_str);
+	अगर (rep->समय_str)
+		ret += ख_लिखो(fp, " (time slices: %s)", rep->समय_str);
 
-	if (symbol_conf.show_ref_callgraph && evname && strstr(evname, "call-graph=no")) {
-		ret += fprintf(fp, ", show reference callgraph");
-	}
+	अगर (symbol_conf.show_ref_callgraph && evname && म_माला(evname, "call-graph=no")) अणु
+		ret += ख_लिखो(fp, ", show reference callgraph");
+	पूर्ण
 
-	if (rep->mem_mode) {
-		ret += fprintf(fp, "\n# Total weight : %" PRIu64, nr_events);
-		ret += fprintf(fp, "\n# Sort order   : %s", sort_order ? : default_mem_sort_order);
-	} else
-		ret += fprintf(fp, "\n# Event count (approx.): %" PRIu64, nr_events);
+	अगर (rep->mem_mode) अणु
+		ret += ख_लिखो(fp, "\n# Total weight : %" PRIu64, nr_events);
+		ret += ख_लिखो(fp, "\n# Sort order   : %s", sort_order ? : शेष_mem_sort_order);
+	पूर्ण अन्यथा
+		ret += ख_लिखो(fp, "\n# Event count (approx.): %" PRIu64, nr_events);
 
-	if (socked_id > -1)
-		ret += fprintf(fp, "\n# Processor Socket: %d", socked_id);
+	अगर (socked_id > -1)
+		ret += ख_लिखो(fp, "\n# Processor Socket: %d", socked_id);
 
-	return ret + fprintf(fp, "\n#\n");
-}
+	वापस ret + ख_लिखो(fp, "\n#\n");
+पूर्ण
 
-static int evlist__tui_block_hists_browse(struct evlist *evlist, struct report *rep)
-{
-	struct evsel *pos;
-	int i = 0, ret;
+अटल पूर्णांक evlist__tui_block_hists_browse(काष्ठा evlist *evlist, काष्ठा report *rep)
+अणु
+	काष्ठा evsel *pos;
+	पूर्णांक i = 0, ret;
 
-	evlist__for_each_entry(evlist, pos) {
+	evlist__क्रम_each_entry(evlist, pos) अणु
 		ret = report__browse_block_hists(&rep->block_reports[i++].hist,
 						 rep->min_percent, pos,
 						 &rep->session->header.env,
 						 &rep->annotation_opts);
-		if (ret != 0)
-			return ret;
-	}
+		अगर (ret != 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int evlist__tty_browse_hists(struct evlist *evlist, struct report *rep, const char *help)
-{
-	struct evsel *pos;
-	int i = 0;
+अटल पूर्णांक evlist__tty_browse_hists(काष्ठा evlist *evlist, काष्ठा report *rep, स्थिर अक्षर *help)
+अणु
+	काष्ठा evsel *pos;
+	पूर्णांक i = 0;
 
-	if (!quiet) {
-		fprintf(stdout, "#\n# Total Lost Samples: %" PRIu64 "\n#\n",
+	अगर (!quiet) अणु
+		ख_लिखो(मानक_निकास, "#\n# Total Lost Samples: %" PRIu64 "\n#\n",
 			evlist->stats.total_lost_samples);
-	}
+	पूर्ण
 
-	evlist__for_each_entry(evlist, pos) {
-		struct hists *hists = evsel__hists(pos);
-		const char *evname = evsel__name(pos);
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		काष्ठा hists *hists = evsel__hists(pos);
+		स्थिर अक्षर *evname = evsel__name(pos);
 
-		if (symbol_conf.event_group && !evsel__is_group_leader(pos))
-			continue;
+		अगर (symbol_conf.event_group && !evsel__is_group_leader(pos))
+			जारी;
 
-		if (rep->skip_empty && !hists->stats.nr_samples)
-			continue;
+		अगर (rep->skip_empty && !hists->stats.nr_samples)
+			जारी;
 
-		hists__fprintf_nr_sample_events(hists, rep, evname, stdout);
+		hists__ख_लिखो_nr_sample_events(hists, rep, evname, मानक_निकास);
 
-		if (rep->total_cycles_mode) {
+		अगर (rep->total_cycles_mode) अणु
 			report__browse_block_hists(&rep->block_reports[i++].hist,
 						   rep->min_percent, pos,
-						   NULL, NULL);
-			continue;
-		}
+						   शून्य, शून्य);
+			जारी;
+		पूर्ण
 
-		hists__fprintf(hists, !quiet, 0, 0, rep->min_percent, stdout,
+		hists__ख_लिखो(hists, !quiet, 0, 0, rep->min_percent, मानक_निकास,
 			       !(symbol_conf.use_callchain ||
 			         symbol_conf.show_branchflag_count));
-		fprintf(stdout, "\n\n");
-	}
+		ख_लिखो(मानक_निकास, "\n\n");
+	पूर्ण
 
-	if (!quiet)
-		fprintf(stdout, "#\n# (%s)\n#\n", help);
+	अगर (!quiet)
+		ख_लिखो(मानक_निकास, "#\n# (%s)\n#\n", help);
 
-	if (rep->show_threads) {
-		bool style = !strcmp(rep->pretty_printing_style, "raw");
-		perf_read_values_display(stdout, &rep->show_threads_values,
+	अगर (rep->show_thपढ़ोs) अणु
+		bool style = !म_भेद(rep->pretty_prपूर्णांकing_style, "raw");
+		perf_पढ़ो_values_display(मानक_निकास, &rep->show_thपढ़ोs_values,
 					 style);
-		perf_read_values_destroy(&rep->show_threads_values);
-	}
+		perf_पढ़ो_values_destroy(&rep->show_thपढ़ोs_values);
+	पूर्ण
 
-	if (sort__mode == SORT_MODE__BRANCH)
-		branch_type_stat_display(stdout, &rep->brtype_stat);
+	अगर (sort__mode == SORT_MODE__BRANCH)
+		branch_type_stat_display(मानक_निकास, &rep->brtype_stat);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void report__warn_kptr_restrict(const struct report *rep)
-{
-	struct map *kernel_map = machine__kernel_map(&rep->session->machines.host);
-	struct kmap *kernel_kmap = kernel_map ? map__kmap(kernel_map) : NULL;
+अटल व्योम report__warn_kptr_restrict(स्थिर काष्ठा report *rep)
+अणु
+	काष्ठा map *kernel_map = machine__kernel_map(&rep->session->machines.host);
+	काष्ठा kmap *kernel_kmap = kernel_map ? map__kmap(kernel_map) : शून्य;
 
-	if (evlist__exclude_kernel(rep->session->evlist))
-		return;
+	अगर (evlist__exclude_kernel(rep->session->evlist))
+		वापस;
 
-	if (kernel_map == NULL ||
+	अगर (kernel_map == शून्य ||
 	    (kernel_map->dso->hit &&
-	     (kernel_kmap->ref_reloc_sym == NULL ||
-	      kernel_kmap->ref_reloc_sym->addr == 0))) {
-		const char *desc =
+	     (kernel_kmap->ref_reloc_sym == शून्य ||
+	      kernel_kmap->ref_reloc_sym->addr == 0))) अणु
+		स्थिर अक्षर *desc =
 		    "As no suitable kallsyms nor vmlinux was found, kernel samples\n"
 		    "can't be resolved.";
 
-		if (kernel_map && map__has_symbols(kernel_map)) {
+		अगर (kernel_map && map__has_symbols(kernel_map)) अणु
 			desc = "If some relocation was applied (e.g. "
 			       "kexec) symbols may be misresolved.";
-		}
+		पूर्ण
 
 		ui__warning(
 "Kernel address maps (/proc/{kallsyms,modules}) were restricted.\n\n"
 "Check /proc/sys/kernel/kptr_restrict before running 'perf record'.\n\n%s\n\n"
 "Samples in kernel modules can't be resolved as well.\n\n",
 		desc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int report__gtk_browse_hists(struct report *rep, const char *help)
-{
-	int (*hist_browser)(struct evlist *evlist, const char *help,
-			    struct hist_browser_timer *timer, float min_pcnt);
+अटल पूर्णांक report__gtk_browse_hists(काष्ठा report *rep, स्थिर अक्षर *help)
+अणु
+	पूर्णांक (*hist_browser)(काष्ठा evlist *evlist, स्थिर अक्षर *help,
+			    काष्ठा hist_browser_समयr *समयr, भग्न min_pcnt);
 
 	hist_browser = dlsym(perf_gtk_handle, "evlist__gtk_browse_hists");
 
-	if (hist_browser == NULL) {
+	अगर (hist_browser == शून्य) अणु
 		ui__error("GTK browser not found!\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return hist_browser(rep->session->evlist, help, NULL, rep->min_percent);
-}
+	वापस hist_browser(rep->session->evlist, help, शून्य, rep->min_percent);
+पूर्ण
 
-static int report__browse_hists(struct report *rep)
-{
-	int ret;
-	struct perf_session *session = rep->session;
-	struct evlist *evlist = session->evlist;
-	const char *help = perf_tip(system_path(TIPDIR));
+अटल पूर्णांक report__browse_hists(काष्ठा report *rep)
+अणु
+	पूर्णांक ret;
+	काष्ठा perf_session *session = rep->session;
+	काष्ठा evlist *evlist = session->evlist;
+	स्थिर अक्षर *help = perf_tip(प्रणाली_path(TIPसूची));
 
-	if (help == NULL) {
-		/* fallback for people who don't install perf ;-) */
-		help = perf_tip(DOCDIR);
-		if (help == NULL)
+	अगर (help == शून्य) अणु
+		/* fallback क्रम people who करोn't install perf ;-) */
+		help = perf_tip(DOCसूची);
+		अगर (help == शून्य)
 			help = "Cannot load tips.txt file, please install perf!";
-	}
+	पूर्ण
 
-	switch (use_browser) {
-	case 1:
-		if (rep->total_cycles_mode) {
+	चयन (use_browser) अणु
+	हाल 1:
+		अगर (rep->total_cycles_mode) अणु
 			ret = evlist__tui_block_hists_browse(evlist, rep);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ret = evlist__tui_browse_hists(evlist, help, NULL, rep->min_percent,
+		ret = evlist__tui_browse_hists(evlist, help, शून्य, rep->min_percent,
 					       &session->header.env, true, &rep->annotation_opts);
 		/*
 		 * Usually "ret" is the last pressed key, and we only
-		 * care if the key notifies us to switch data file.
+		 * care अगर the key notअगरies us to चयन data file.
 		 */
-		if (ret != K_SWITCH_INPUT_DATA && ret != K_RELOAD)
+		अगर (ret != K_SWITCH_INPUT_DATA && ret != K_RELOAD)
 			ret = 0;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		ret = report__gtk_browse_hists(rep, help);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = evlist__tty_browse_hists(evlist, rep, help);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int report__collapse_hists(struct report *rep)
-{
-	struct ui_progress prog;
-	struct evsel *pos;
-	int ret = 0;
+अटल पूर्णांक report__collapse_hists(काष्ठा report *rep)
+अणु
+	काष्ठा ui_progress prog;
+	काष्ठा evsel *pos;
+	पूर्णांक ret = 0;
 
 	ui_progress__init(&prog, rep->nr_entries, "Merging related events...");
 
-	evlist__for_each_entry(rep->session->evlist, pos) {
-		struct hists *hists = evsel__hists(pos);
+	evlist__क्रम_each_entry(rep->session->evlist, pos) अणु
+		काष्ठा hists *hists = evsel__hists(pos);
 
-		if (pos->idx == 0)
+		अगर (pos->idx == 0)
 			hists->symbol_filter_str = rep->symbol_filter_str;
 
 		hists->socket_filter = rep->socket_filter;
 
 		ret = hists__collapse_resort(hists, &prog);
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
 		/* Non-group events are considered as leader */
-		if (symbol_conf.event_group && !evsel__is_group_leader(pos)) {
-			struct hists *leader_hists = evsel__hists(pos->leader);
+		अगर (symbol_conf.event_group && !evsel__is_group_leader(pos)) अणु
+			काष्ठा hists *leader_hists = evsel__hists(pos->leader);
 
 			hists__match(leader_hists, hists);
 			hists__link(leader_hists, hists);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ui_progress__finish();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hists__resort_cb(struct hist_entry *he, void *arg)
-{
-	struct report *rep = arg;
-	struct symbol *sym = he->ms.sym;
+अटल पूर्णांक hists__resort_cb(काष्ठा hist_entry *he, व्योम *arg)
+अणु
+	काष्ठा report *rep = arg;
+	काष्ठा symbol *sym = he->ms.sym;
 
-	if (rep->symbol_ipc && sym && !sym->annotate2) {
-		struct evsel *evsel = hists_to_evsel(he->hists);
+	अगर (rep->symbol_ipc && sym && !sym->annotate2) अणु
+		काष्ठा evsel *evsel = hists_to_evsel(he->hists);
 
 		symbol__annotate2(&he->ms, evsel,
-				  &annotation__default_options, NULL);
-	}
+				  &annotation__शेष_options, शून्य);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void report__output_resort(struct report *rep)
-{
-	struct ui_progress prog;
-	struct evsel *pos;
+अटल व्योम report__output_resort(काष्ठा report *rep)
+अणु
+	काष्ठा ui_progress prog;
+	काष्ठा evsel *pos;
 
 	ui_progress__init(&prog, rep->nr_entries, "Sorting events for output...");
 
-	evlist__for_each_entry(rep->session->evlist, pos) {
+	evlist__क्रम_each_entry(rep->session->evlist, pos) अणु
 		evsel__output_resort_cb(pos, &prog, hists__resort_cb, rep);
-	}
+	पूर्ण
 
 	ui_progress__finish();
-}
+पूर्ण
 
-static int count_sample_event(struct perf_tool *tool __maybe_unused,
-			      union perf_event *event __maybe_unused,
-			      struct perf_sample *sample __maybe_unused,
-			      struct evsel *evsel,
-			      struct machine *machine __maybe_unused)
-{
-	struct hists *hists = evsel__hists(evsel);
+अटल पूर्णांक count_sample_event(काष्ठा perf_tool *tool __maybe_unused,
+			      जोड़ perf_event *event __maybe_unused,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा evsel *evsel,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा hists *hists = evsel__hists(evsel);
 
 	hists__inc_nr_events(hists);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stats_setup(struct report *rep)
-{
-	memset(&rep->tool, 0, sizeof(rep->tool));
+अटल व्योम stats_setup(काष्ठा report *rep)
+अणु
+	स_रखो(&rep->tool, 0, माप(rep->tool));
 	rep->tool.sample = count_sample_event;
 	rep->tool.no_warn = true;
-}
+पूर्ण
 
-static int stats_print(struct report *rep)
-{
-	struct perf_session *session = rep->session;
+अटल पूर्णांक stats_prपूर्णांक(काष्ठा report *rep)
+अणु
+	काष्ठा perf_session *session = rep->session;
 
-	perf_session__fprintf_nr_events(session, stdout, rep->skip_empty);
-	evlist__fprintf_nr_events(session->evlist, stdout, rep->skip_empty);
-	return 0;
-}
+	perf_session__ख_लिखो_nr_events(session, मानक_निकास, rep->skip_empty);
+	evlist__ख_लिखो_nr_events(session->evlist, मानक_निकास, rep->skip_empty);
+	वापस 0;
+पूर्ण
 
-static void tasks_setup(struct report *rep)
-{
-	memset(&rep->tool, 0, sizeof(rep->tool));
+अटल व्योम tasks_setup(काष्ठा report *rep)
+अणु
+	स_रखो(&rep->tool, 0, माप(rep->tool));
 	rep->tool.ordered_events = true;
-	if (rep->mmaps_mode) {
+	अगर (rep->mmaps_mode) अणु
 		rep->tool.mmap = perf_event__process_mmap;
 		rep->tool.mmap2 = perf_event__process_mmap2;
-	}
+	पूर्ण
 	rep->tool.comm = perf_event__process_comm;
-	rep->tool.exit = perf_event__process_exit;
-	rep->tool.fork = perf_event__process_fork;
+	rep->tool.निकास = perf_event__process_निकास;
+	rep->tool.विभाजन = perf_event__process_विभाजन;
 	rep->tool.no_warn = true;
-}
+पूर्ण
 
-struct task {
-	struct thread		*thread;
-	struct list_head	 list;
-	struct list_head	 children;
-};
+काष्ठा task अणु
+	काष्ठा thपढ़ो		*thपढ़ो;
+	काष्ठा list_head	 list;
+	काष्ठा list_head	 children;
+पूर्ण;
 
-static struct task *tasks_list(struct task *task, struct machine *machine)
-{
-	struct thread *parent_thread, *thread = task->thread;
-	struct task   *parent_task;
+अटल काष्ठा task *tasks_list(काष्ठा task *task, काष्ठा machine *machine)
+अणु
+	काष्ठा thपढ़ो *parent_thपढ़ो, *thपढ़ो = task->thपढ़ो;
+	काष्ठा task   *parent_task;
 
-	/* Already listed. */
-	if (!list_empty(&task->list))
-		return NULL;
+	/* Alपढ़ोy listed. */
+	अगर (!list_empty(&task->list))
+		वापस शून्य;
 
 	/* Last one in the chain. */
-	if (thread->ppid == -1)
-		return task;
+	अगर (thपढ़ो->ppid == -1)
+		वापस task;
 
-	parent_thread = machine__find_thread(machine, -1, thread->ppid);
-	if (!parent_thread)
-		return ERR_PTR(-ENOENT);
+	parent_thपढ़ो = machine__find_thपढ़ो(machine, -1, thपढ़ो->ppid);
+	अगर (!parent_thपढ़ो)
+		वापस ERR_PTR(-ENOENT);
 
-	parent_task = thread__priv(parent_thread);
+	parent_task = thपढ़ो__priv(parent_thपढ़ो);
 	list_add_tail(&task->list, &parent_task->children);
-	return tasks_list(parent_task, machine);
-}
+	वापस tasks_list(parent_task, machine);
+पूर्ण
 
-static size_t maps__fprintf_task(struct maps *maps, int indent, FILE *fp)
-{
-	size_t printed = 0;
-	struct map *map;
+अटल माप_प्रकार maps__ख_लिखो_task(काष्ठा maps *maps, पूर्णांक indent, खाता *fp)
+अणु
+	माप_प्रकार prपूर्णांकed = 0;
+	काष्ठा map *map;
 
-	maps__for_each_entry(maps, map) {
-		printed += fprintf(fp, "%*s  %" PRIx64 "-%" PRIx64 " %c%c%c%c %08" PRIx64 " %" PRIu64 " %s\n",
+	maps__क्रम_each_entry(maps, map) अणु
+		prपूर्णांकed += ख_लिखो(fp, "%*s  %" PRIx64 "-%" PRIx64 " %c%c%c%c %08" PRIx64 " %" PRIu64 " %s\n",
 				   indent, "", map->start, map->end,
 				   map->prot & PROT_READ ? 'r' : '-',
 				   map->prot & PROT_WRITE ? 'w' : '-',
@@ -801,355 +802,355 @@ static size_t maps__fprintf_task(struct maps *maps, int indent, FILE *fp)
 				   map->flags & MAP_SHARED ? 's' : 'p',
 				   map->pgoff,
 				   map->dso->id.ino, map->dso->name);
-	}
+	पूर्ण
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-static void task__print_level(struct task *task, FILE *fp, int level)
-{
-	struct thread *thread = task->thread;
-	struct task *child;
-	int comm_indent = fprintf(fp, "  %8d %8d %8d |%*s",
-				  thread->pid_, thread->tid, thread->ppid,
+अटल व्योम task__prपूर्णांक_level(काष्ठा task *task, खाता *fp, पूर्णांक level)
+अणु
+	काष्ठा thपढ़ो *thपढ़ो = task->thपढ़ो;
+	काष्ठा task *child;
+	पूर्णांक comm_indent = ख_लिखो(fp, "  %8d %8d %8d |%*s",
+				  thपढ़ो->pid_, thपढ़ो->tid, thपढ़ो->ppid,
 				  level, "");
 
-	fprintf(fp, "%s\n", thread__comm_str(thread));
+	ख_लिखो(fp, "%s\n", thपढ़ो__comm_str(thपढ़ो));
 
-	maps__fprintf_task(thread->maps, comm_indent, fp);
+	maps__ख_लिखो_task(thपढ़ो->maps, comm_indent, fp);
 
-	if (!list_empty(&task->children)) {
-		list_for_each_entry(child, &task->children, list)
-			task__print_level(child, fp, level + 1);
-	}
-}
+	अगर (!list_empty(&task->children)) अणु
+		list_क्रम_each_entry(child, &task->children, list)
+			task__prपूर्णांक_level(child, fp, level + 1);
+	पूर्ण
+पूर्ण
 
-static int tasks_print(struct report *rep, FILE *fp)
-{
-	struct perf_session *session = rep->session;
-	struct machine      *machine = &session->machines.host;
-	struct task *tasks, *task;
-	unsigned int nr = 0, itask = 0, i;
-	struct rb_node *nd;
+अटल पूर्णांक tasks_prपूर्णांक(काष्ठा report *rep, खाता *fp)
+अणु
+	काष्ठा perf_session *session = rep->session;
+	काष्ठा machine      *machine = &session->machines.host;
+	काष्ठा task *tasks, *task;
+	अचिन्हित पूर्णांक nr = 0, itask = 0, i;
+	काष्ठा rb_node *nd;
 	LIST_HEAD(list);
 
 	/*
-	 * No locking needed while accessing machine->threads,
-	 * because --tasks is single threaded command.
+	 * No locking needed जबतक accessing machine->thपढ़ोs,
+	 * because --tasks is single thपढ़ोed command.
 	 */
 
-	/* Count all the threads. */
-	for (i = 0; i < THREADS__TABLE_SIZE; i++)
-		nr += machine->threads[i].nr;
+	/* Count all the thपढ़ोs. */
+	क्रम (i = 0; i < THREADS__TABLE_SIZE; i++)
+		nr += machine->thपढ़ोs[i].nr;
 
-	tasks = malloc(sizeof(*tasks) * nr);
-	if (!tasks)
-		return -ENOMEM;
+	tasks = दो_स्मृति(माप(*tasks) * nr);
+	अगर (!tasks)
+		वापस -ENOMEM;
 
-	for (i = 0; i < THREADS__TABLE_SIZE; i++) {
-		struct threads *threads = &machine->threads[i];
+	क्रम (i = 0; i < THREADS__TABLE_SIZE; i++) अणु
+		काष्ठा thपढ़ोs *thपढ़ोs = &machine->thपढ़ोs[i];
 
-		for (nd = rb_first_cached(&threads->entries); nd;
-		     nd = rb_next(nd)) {
+		क्रम (nd = rb_first_cached(&thपढ़ोs->entries); nd;
+		     nd = rb_next(nd)) अणु
 			task = tasks + itask++;
 
-			task->thread = rb_entry(nd, struct thread, rb_node);
+			task->thपढ़ो = rb_entry(nd, काष्ठा thपढ़ो, rb_node);
 			INIT_LIST_HEAD(&task->children);
 			INIT_LIST_HEAD(&task->list);
-			thread__set_priv(task->thread, task);
-		}
-	}
+			thपढ़ो__set_priv(task->thपढ़ो, task);
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Iterate every task down to the unprocessed parent
+	 * Iterate every task करोwn to the unprocessed parent
 	 * and link all in task children list. Task with no
-	 * parent is added into 'list'.
+	 * parent is added पूर्णांकo 'list'.
 	 */
-	for (itask = 0; itask < nr; itask++) {
+	क्रम (itask = 0; itask < nr; itask++) अणु
 		task = tasks + itask;
 
-		if (!list_empty(&task->list))
-			continue;
+		अगर (!list_empty(&task->list))
+			जारी;
 
 		task = tasks_list(task, machine);
-		if (IS_ERR(task)) {
+		अगर (IS_ERR(task)) अणु
 			pr_err("Error: failed to process tasks\n");
-			free(tasks);
-			return PTR_ERR(task);
-		}
+			मुक्त(tasks);
+			वापस PTR_ERR(task);
+		पूर्ण
 
-		if (task)
+		अगर (task)
 			list_add_tail(&task->list, &list);
-	}
+	पूर्ण
 
-	fprintf(fp, "# %8s %8s %8s  %s\n", "pid", "tid", "ppid", "comm");
+	ख_लिखो(fp, "# %8s %8s %8s  %s\n", "pid", "tid", "ppid", "comm");
 
-	list_for_each_entry(task, &list, list)
-		task__print_level(task, fp, 0);
+	list_क्रम_each_entry(task, &list, list)
+		task__prपूर्णांक_level(task, fp, 0);
 
-	free(tasks);
-	return 0;
-}
+	मुक्त(tasks);
+	वापस 0;
+पूर्ण
 
-static int __cmd_report(struct report *rep)
-{
-	int ret;
-	struct perf_session *session = rep->session;
-	struct evsel *pos;
-	struct perf_data *data = session->data;
+अटल पूर्णांक __cmd_report(काष्ठा report *rep)
+अणु
+	पूर्णांक ret;
+	काष्ठा perf_session *session = rep->session;
+	काष्ठा evsel *pos;
+	काष्ठा perf_data *data = session->data;
 
-	signal(SIGINT, sig_handler);
+	संकेत(संक_विघ्न, sig_handler);
 
-	if (rep->cpu_list) {
-		ret = perf_session__cpu_bitmap(session, rep->cpu_list,
-					       rep->cpu_bitmap);
-		if (ret) {
+	अगर (rep->cpu_list) अणु
+		ret = perf_session__cpu_biपंचांगap(session, rep->cpu_list,
+					       rep->cpu_biपंचांगap);
+		अगर (ret) अणु
 			ui__error("failed to set cpu bitmap\n");
-			return ret;
-		}
-		session->itrace_synth_opts->cpu_bitmap = rep->cpu_bitmap;
-	}
+			वापस ret;
+		पूर्ण
+		session->itrace_synth_opts->cpu_biपंचांगap = rep->cpu_biपंचांगap;
+	पूर्ण
 
-	if (rep->show_threads) {
-		ret = perf_read_values_init(&rep->show_threads_values);
-		if (ret)
-			return ret;
-	}
+	अगर (rep->show_thपढ़ोs) अणु
+		ret = perf_पढ़ो_values_init(&rep->show_thपढ़ोs_values);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = report__setup_sample_type(rep);
-	if (ret) {
-		/* report__setup_sample_type() already showed error message */
-		return ret;
-	}
+	अगर (ret) अणु
+		/* report__setup_sample_type() alपढ़ोy showed error message */
+		वापस ret;
+	पूर्ण
 
-	if (rep->stats_mode)
+	अगर (rep->stats_mode)
 		stats_setup(rep);
 
-	if (rep->tasks_mode)
+	अगर (rep->tasks_mode)
 		tasks_setup(rep);
 
 	ret = perf_session__process_events(session);
-	if (ret) {
+	अगर (ret) अणु
 		ui__error("failed to process sample\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (rep->stats_mode)
-		return stats_print(rep);
+	अगर (rep->stats_mode)
+		वापस stats_prपूर्णांक(rep);
 
-	if (rep->tasks_mode)
-		return tasks_print(rep, stdout);
+	अगर (rep->tasks_mode)
+		वापस tasks_prपूर्णांक(rep, मानक_निकास);
 
 	report__warn_kptr_restrict(rep);
 
-	evlist__for_each_entry(session->evlist, pos)
+	evlist__क्रम_each_entry(session->evlist, pos)
 		rep->nr_entries += evsel__hists(pos)->nr_entries;
 
-	if (use_browser == 0) {
-		if (verbose > 3)
-			perf_session__fprintf(session, stdout);
+	अगर (use_browser == 0) अणु
+		अगर (verbose > 3)
+			perf_session__ख_लिखो(session, मानक_निकास);
 
-		if (verbose > 2)
-			perf_session__fprintf_dsos(session, stdout);
+		अगर (verbose > 2)
+			perf_session__ख_लिखो_dsos(session, मानक_निकास);
 
-		if (dump_trace) {
-			perf_session__fprintf_nr_events(session, stdout,
+		अगर (dump_trace) अणु
+			perf_session__ख_लिखो_nr_events(session, मानक_निकास,
 							rep->skip_empty);
-			evlist__fprintf_nr_events(session->evlist, stdout,
+			evlist__ख_लिखो_nr_events(session->evlist, मानक_निकास,
 						  rep->skip_empty);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	ret = report__collapse_hists(rep);
-	if (ret) {
+	अगर (ret) अणु
 		ui__error("failed to process hist entry\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (session_done())
-		return 0;
+	अगर (session_करोne())
+		वापस 0;
 
 	/*
 	 * recalculate number of entries after collapsing since it
 	 * might be changed during the collapse phase.
 	 */
 	rep->nr_entries = 0;
-	evlist__for_each_entry(session->evlist, pos)
+	evlist__क्रम_each_entry(session->evlist, pos)
 		rep->nr_entries += evsel__hists(pos)->nr_entries;
 
-	if (rep->nr_entries == 0) {
+	अगर (rep->nr_entries == 0) अणु
 		ui__error("The %s data has no samples!\n", data->path);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	report__output_resort(rep);
 
-	if (rep->total_cycles_mode) {
-		int block_hpps[6] = {
+	अगर (rep->total_cycles_mode) अणु
+		पूर्णांक block_hpps[6] = अणु
 			PERF_HPP_REPORT__BLOCK_TOTAL_CYCLES_PCT,
 			PERF_HPP_REPORT__BLOCK_LBR_CYCLES,
 			PERF_HPP_REPORT__BLOCK_CYCLES_PCT,
 			PERF_HPP_REPORT__BLOCK_AVG_CYCLES,
 			PERF_HPP_REPORT__BLOCK_RANGE,
 			PERF_HPP_REPORT__BLOCK_DSO,
-		};
+		पूर्ण;
 
 		rep->block_reports = block_info__create_report(session->evlist,
 							       rep->total_cycles,
 							       block_hpps, 6,
 							       &rep->nr_block_reports);
-		if (!rep->block_reports)
-			return -1;
-	}
+		अगर (!rep->block_reports)
+			वापस -1;
+	पूर्ण
 
-	return report__browse_hists(rep);
-}
+	वापस report__browse_hists(rep);
+पूर्ण
 
-static int
-report_parse_callchain_opt(const struct option *opt, const char *arg, int unset)
-{
-	struct callchain_param *callchain = opt->value;
+अटल पूर्णांक
+report_parse_callchain_opt(स्थिर काष्ठा option *opt, स्थिर अक्षर *arg, पूर्णांक unset)
+अणु
+	काष्ठा callchain_param *callchain = opt->value;
 
 	callchain->enabled = !unset;
 	/*
 	 * --no-call-graph
 	 */
-	if (unset) {
+	अगर (unset) अणु
 		symbol_conf.use_callchain = false;
 		callchain->mode = CHAIN_NONE;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return parse_callchain_report_opt(arg);
-}
+	वापस parse_callchain_report_opt(arg);
+पूर्ण
 
-static int
-parse_time_quantum(const struct option *opt, const char *arg,
-		   int unset __maybe_unused)
-{
-	unsigned long *time_q = opt->value;
-	char *end;
+अटल पूर्णांक
+parse_समय_quantum(स्थिर काष्ठा option *opt, स्थिर अक्षर *arg,
+		   पूर्णांक unset __maybe_unused)
+अणु
+	अचिन्हित दीर्घ *समय_q = opt->value;
+	अक्षर *end;
 
-	*time_q = strtoul(arg, &end, 0);
-	if (end == arg)
-		goto parse_err;
-	if (*time_q == 0) {
+	*समय_q = म_से_अदीर्घ(arg, &end, 0);
+	अगर (end == arg)
+		जाओ parse_err;
+	अगर (*समय_q == 0) अणु
 		pr_err("time quantum cannot be 0");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	end = skip_spaces(end);
-	if (*end == 0)
-		return 0;
-	if (!strcmp(end, "s")) {
-		*time_q *= NSEC_PER_SEC;
-		return 0;
-	}
-	if (!strcmp(end, "ms")) {
-		*time_q *= NSEC_PER_MSEC;
-		return 0;
-	}
-	if (!strcmp(end, "us")) {
-		*time_q *= NSEC_PER_USEC;
-		return 0;
-	}
-	if (!strcmp(end, "ns"))
-		return 0;
+	अगर (*end == 0)
+		वापस 0;
+	अगर (!म_भेद(end, "s")) अणु
+		*समय_q *= NSEC_PER_SEC;
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेद(end, "ms")) अणु
+		*समय_q *= NSEC_PER_MSEC;
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेद(end, "us")) अणु
+		*समय_q *= NSEC_PER_USEC;
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेद(end, "ns"))
+		वापस 0;
 parse_err:
 	pr_err("Cannot parse time quantum `%s'\n", arg);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int
-report_parse_ignore_callees_opt(const struct option *opt __maybe_unused,
-				const char *arg, int unset __maybe_unused)
-{
-	if (arg) {
-		int err = regcomp(&ignore_callees_regex, arg, REG_EXTENDED);
-		if (err) {
-			char buf[BUFSIZ];
-			regerror(err, &ignore_callees_regex, buf, sizeof(buf));
+पूर्णांक
+report_parse_ignore_callees_opt(स्थिर काष्ठा option *opt __maybe_unused,
+				स्थिर अक्षर *arg, पूर्णांक unset __maybe_unused)
+अणु
+	अगर (arg) अणु
+		पूर्णांक err = regcomp(&ignore_callees_regex, arg, REG_EXTENDED);
+		अगर (err) अणु
+			अक्षर buf[बफ_मान];
+			regerror(err, &ignore_callees_regex, buf, माप(buf));
 			pr_err("Invalid --ignore-callees regex: %s\n%s", arg, buf);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		have_ignore_callees = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-parse_branch_mode(const struct option *opt,
-		  const char *str __maybe_unused, int unset)
-{
-	int *branch_mode = opt->value;
+अटल पूर्णांक
+parse_branch_mode(स्थिर काष्ठा option *opt,
+		  स्थिर अक्षर *str __maybe_unused, पूर्णांक unset)
+अणु
+	पूर्णांक *branch_mode = opt->value;
 
 	*branch_mode = !unset;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-parse_percent_limit(const struct option *opt, const char *str,
-		    int unset __maybe_unused)
-{
-	struct report *rep = opt->value;
-	double pcnt = strtof(str, NULL);
+अटल पूर्णांक
+parse_percent_limit(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
+		    पूर्णांक unset __maybe_unused)
+अणु
+	काष्ठा report *rep = opt->value;
+	द्विगुन pcnt = strtof(str, शून्य);
 
 	rep->min_percent = pcnt;
 	callchain_param.min_percent = pcnt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_attr(struct perf_tool *tool __maybe_unused,
-			union perf_event *event,
-			struct evlist **pevlist)
-{
+अटल पूर्णांक process_attr(काष्ठा perf_tool *tool __maybe_unused,
+			जोड़ perf_event *event,
+			काष्ठा evlist **pevlist)
+अणु
 	u64 sample_type;
-	int err;
+	पूर्णांक err;
 
 	err = perf_event__process_attr(tool, event, pevlist);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/*
-	 * Check if we need to enable callchains based
+	 * Check अगर we need to enable callchains based
 	 * on events sample_type.
 	 */
 	sample_type = evlist__combined_sample_type(*pevlist);
 	callchain_param_setup(sample_type);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cmd_report(int argc, const char **argv)
-{
-	struct perf_session *session;
-	struct itrace_synth_opts itrace_synth_opts = { .set = 0, };
-	struct stat st;
+पूर्णांक cmd_report(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा perf_session *session;
+	काष्ठा itrace_synth_opts itrace_synth_opts = अणु .set = 0, पूर्ण;
+	काष्ठा stat st;
 	bool has_br_stack = false;
-	int branch_mode = -1;
-	int last_key = 0;
+	पूर्णांक branch_mode = -1;
+	पूर्णांक last_key = 0;
 	bool branch_call_mode = false;
-#define CALLCHAIN_DEFAULT_OPT  "graph,0.5,caller,function,percent"
-	static const char report_callchain_help[] = "Display call graph (stack chain/backtrace):\n\n"
+#घोषणा CALLCHAIN_DEFAULT_OPT  "graph,0.5,caller,function,percent"
+	अटल स्थिर अक्षर report_callchain_help[] = "Display call graph (stack chain/backtrace):\n\n"
 						    CALLCHAIN_REPORT_HELP
 						    "\n\t\t\t\tDefault: " CALLCHAIN_DEFAULT_OPT;
-	char callchain_default_opt[] = CALLCHAIN_DEFAULT_OPT;
-	const char * const report_usage[] = {
+	अक्षर callchain_शेष_opt[] = CALLCHAIN_DEFAULT_OPT;
+	स्थिर अक्षर * स्थिर report_usage[] = अणु
 		"perf report [<options>]",
-		NULL
-	};
-	struct report report = {
-		.tool = {
+		शून्य
+	पूर्ण;
+	काष्ठा report report = अणु
+		.tool = अणु
 			.sample		 = process_sample_event,
 			.mmap		 = perf_event__process_mmap,
 			.mmap2		 = perf_event__process_mmap2,
 			.comm		 = perf_event__process_comm,
 			.namespaces	 = perf_event__process_namespaces,
 			.cgroup		 = perf_event__process_cgroup,
-			.exit		 = perf_event__process_exit,
-			.fork		 = perf_event__process_fork,
+			.निकास		 = perf_event__process_निकास,
+			.विभाजन		 = perf_event__process_विभाजन,
 			.lost		 = perf_event__process_lost,
-			.read		 = process_read_event,
+			.पढ़ो		 = process_पढ़ो_event,
 			.attr		 = process_attr,
 			.tracing_data	 = perf_event__process_tracing_data,
 			.build_id	 = perf_event__process_build_id,
@@ -1159,15 +1160,15 @@ int cmd_report(int argc, const char **argv)
 			.event_update	 = perf_event__process_event_update,
 			.feature	 = process_feature_event,
 			.ordered_events	 = true,
-			.ordering_requires_timestamps = true,
-		},
+			.ordering_requires_बारtamps = true,
+		पूर्ण,
 		.max_stack		 = PERF_MAX_STACK_DEPTH,
-		.pretty_printing_style	 = "normal",
+		.pretty_prपूर्णांकing_style	 = "normal",
 		.socket_filter		 = -1,
-		.annotation_opts	 = annotation__default_options,
+		.annotation_opts	 = annotation__शेष_options,
 		.skip_empty		 = true,
-	};
-	const struct option options[] = {
+	पूर्ण;
+	स्थिर काष्ठा option options[] = अणु
 	OPT_STRING('i', "input", &input_name, "file",
 		    "input file name"),
 	OPT_INCR('v', "verbose", &verbose,
@@ -1184,14 +1185,14 @@ int cmd_report(int argc, const char **argv)
                     "don't load vmlinux even if found"),
 	OPT_STRING(0, "kallsyms", &symbol_conf.kallsyms_name,
 		   "file", "kallsyms pathname"),
-	OPT_BOOLEAN('f', "force", &symbol_conf.force, "don't complain, do it"),
+	OPT_BOOLEAN('f', "force", &symbol_conf.force, "don't complain, करो it"),
 	OPT_BOOLEAN('m', "modules", &symbol_conf.use_modules,
 		    "load module symbols - WARNING: use only with -k and LIVE kernel"),
 	OPT_BOOLEAN('n', "show-nr-samples", &symbol_conf.show_nr_samples,
 		    "Show a column with the number of samples"),
-	OPT_BOOLEAN('T', "threads", &report.show_threads,
+	OPT_BOOLEAN('T', "threads", &report.show_thपढ़ोs,
 		    "Show per-thread event counters"),
-	OPT_STRING(0, "pretty", &report.pretty_printing_style, "key",
+	OPT_STRING(0, "pretty", &report.pretty_prपूर्णांकing_style, "key",
 		   "pretty printing style key: normal raw"),
 	OPT_BOOLEAN(0, "tui", &report.use_tui, "Use the TUI interface"),
 	OPT_BOOLEAN(0, "gtk", &report.use_gtk, "Use the GTK2 interface"),
@@ -1215,17 +1216,17 @@ int cmd_report(int argc, const char **argv)
 	OPT_CALLBACK_DEFAULT('g', "call-graph", &callchain_param,
 			     "print_type,threshold[,print_limit],order,sort_key[,branch],value",
 			     report_callchain_help, &report_parse_callchain_opt,
-			     callchain_default_opt),
+			     callchain_शेष_opt),
 	OPT_BOOLEAN(0, "children", &symbol_conf.cumulate_callchain,
 		    "Accumulate callchains of children and show total overhead as well. "
 		    "Enabled by default, use --no-children to disable."),
 	OPT_INTEGER(0, "max-stack", &report.max_stack,
 		    "Set the maximum stack depth when parsing the callchain, "
 		    "anything beyond the specified depth will be ignored. "
-		    "Default: kernel.perf_event_max_stack or " __stringify(PERF_MAX_STACK_DEPTH)),
+		    "Default: kernel.perf_event_max_stack or " __stringअगरy(PERF_MAX_STACK_DEPTH)),
 	OPT_BOOLEAN('G', "inverted", &report.inverted_callchain,
 		    "alias for inverted call graph"),
-	OPT_CALLBACK(0, "ignore-callees", NULL, "regex",
+	OPT_CALLBACK(0, "ignore-callees", शून्य, "regex",
 		   "ignore callees of these functions in call graphs",
 		   report_parse_ignore_callees_opt),
 	OPT_STRING('d', "dsos", &symbol_conf.dso_list_str, "dso[,dso...]",
@@ -1248,7 +1249,7 @@ int cmd_report(int argc, const char **argv)
 		   "columns '.' is reserved."),
 	OPT_BOOLEAN('U', "hide-unresolved", &symbol_conf.hide_unresolved,
 		    "Only display entries resolved to a symbol"),
-	OPT_CALLBACK(0, "symfs", NULL, "directory",
+	OPT_CALLBACK(0, "symfs", शून्य, "directory",
 		     "Look for files with symbols relative to this directory",
 		     symbol__config_symfs),
 	OPT_STRING('C', "cpu", &report.cpu_list, "cpu",
@@ -1257,7 +1258,7 @@ int cmd_report(int argc, const char **argv)
 		    "Display extended information about perf.data file"),
 	OPT_BOOLEAN(0, "source", &report.annotation_opts.annotate_src,
 		    "Interleave source code with assembly code (default)"),
-	OPT_BOOLEAN(0, "asm-raw", &report.annotation_opts.show_asm_raw,
+	OPT_BOOLEAN(0, "asm-raw", &report.annotation_opts.show_यंत्र_raw,
 		    "Display raw encoding of assembly instructions (default)"),
 	OPT_STRING('M', "disassembler-style", &report.annotation_opts.disassembler_style, "disassembler style",
 		   "Specify disassembler style (e.g. -M intel for intel syntax)"),
@@ -1289,9 +1290,9 @@ int cmd_report(int argc, const char **argv)
 		    "Number of samples to save per histogram entry for individual browsing"),
 	OPT_CALLBACK(0, "percent-limit", &report, "percent",
 		     "Don't show entries under that percent", parse_percent_limit),
-	OPT_CALLBACK(0, "percentage", NULL, "relative|absolute",
+	OPT_CALLBACK(0, "percentage", शून्य, "relative|absolute",
 		     "how to display percentage of filtered entries", parse_filter_percentage),
-	OPT_CALLBACK_OPTARG(0, "itrace", &itrace_synth_opts, NULL, "opts",
+	OPT_CALLBACK_OPTARG(0, "itrace", &itrace_synth_opts, शून्य, "opts",
 			    "Instruction Tracing options\n" ITRACE_HELP,
 			    itrace_parse_synth_opts),
 	OPT_BOOLEAN(0, "full-source-path", &srcline_full_filename,
@@ -1306,21 +1307,21 @@ int cmd_report(int argc, const char **argv)
 		    "Show raw trace event output (do not use print fmt or plugins)"),
 	OPT_BOOLEAN(0, "hierarchy", &symbol_conf.report_hierarchy,
 		    "Show entries in a hierarchy"),
-	OPT_CALLBACK_DEFAULT(0, "stdio-color", NULL, "mode",
+	OPT_CALLBACK_DEFAULT(0, "stdio-color", शून्य, "mode",
 			     "'always' (default), 'never' or 'auto' only applicable to --stdio mode",
 			     stdio__config_color, "always"),
-	OPT_STRING(0, "time", &report.time_str, "str",
+	OPT_STRING(0, "time", &report.समय_str, "str",
 		   "Time span of interest (start,stop)"),
-	OPT_BOOLEAN(0, "inline", &symbol_conf.inline_name,
+	OPT_BOOLEAN(0, "inline", &symbol_conf.अंतरभूत_name,
 		    "Show inline function"),
 	OPT_CALLBACK(0, "percent-type", &report.annotation_opts, "local-period",
 		     "Set percent type local/global-period/hits",
 		     annotate_parse_percent_type),
 	OPT_BOOLEAN(0, "ns", &symbol_conf.nanosecs, "Show times in nanosecs"),
-	OPT_CALLBACK(0, "time-quantum", &symbol_conf.time_quantum, "time (ms|us|ns|s)",
+	OPT_CALLBACK(0, "time-quantum", &symbol_conf.समय_quantum, "time (ms|us|ns|s)",
 		     "Set time quantum for time sort key (default 100ms)",
-		     parse_time_quantum),
-	OPTS_EVSWITCH(&report.evswitch),
+		     parse_समय_quantum),
+	OPTS_EVSWITCH(&report.evचयन),
 	OPT_BOOLEAN(0, "total-cycles", &report.total_cycles_mode,
 		    "Sort all blocks by 'Sampled Cycles%'"),
 	OPT_BOOLEAN(0, "disable-order", &report.disable_order,
@@ -1328,90 +1329,90 @@ int cmd_report(int argc, const char **argv)
 	OPT_BOOLEAN(0, "skip-empty", &report.skip_empty,
 		    "Do not display empty (or dummy) events in the output"),
 	OPT_END()
-	};
-	struct perf_data data = {
+	पूर्ण;
+	काष्ठा perf_data data = अणु
 		.mode  = PERF_DATA_MODE_READ,
-	};
-	int ret = hists__init();
-	char sort_tmp[128];
+	पूर्ण;
+	पूर्णांक ret = hists__init();
+	अक्षर sort_पंचांगp[128];
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = perf_config(report__config, &report);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	argc = parse_options(argc, argv, options, report_usage, 0);
-	if (argc) {
+	अगर (argc) अणु
 		/*
-		 * Special case: if there's an argument left then assume that
+		 * Special हाल: अगर there's an argument left then assume that
 		 * it's a symbol filter:
 		 */
-		if (argc > 1)
+		अगर (argc > 1)
 			usage_with_options(report_usage, options);
 
 		report.symbol_filter_str = argv[0];
-	}
+	पूर्ण
 
-	if (annotate_check_args(&report.annotation_opts) < 0)
-		return -EINVAL;
+	अगर (annotate_check_args(&report.annotation_opts) < 0)
+		वापस -EINVAL;
 
-	if (report.mmaps_mode)
+	अगर (report.mmaps_mode)
 		report.tasks_mode = true;
 
-	if (dump_trace && report.disable_order)
+	अगर (dump_trace && report.disable_order)
 		report.tool.ordered_events = false;
 
-	if (quiet)
+	अगर (quiet)
 		perf_quiet_option();
 
-	if (symbol_conf.vmlinux_name &&
-	    access(symbol_conf.vmlinux_name, R_OK)) {
+	अगर (symbol_conf.vmlinux_name &&
+	    access(symbol_conf.vmlinux_name, R_OK)) अणु
 		pr_err("Invalid file: %s\n", symbol_conf.vmlinux_name);
-		return -EINVAL;
-	}
-	if (symbol_conf.kallsyms_name &&
-	    access(symbol_conf.kallsyms_name, R_OK)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (symbol_conf.kallsyms_name &&
+	    access(symbol_conf.kallsyms_name, R_OK)) अणु
 		pr_err("Invalid file: %s\n", symbol_conf.kallsyms_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (report.inverted_callchain)
+	अगर (report.inverted_callchain)
 		callchain_param.order = ORDER_CALLER;
-	if (symbol_conf.cumulate_callchain && !callchain_param.order_set)
+	अगर (symbol_conf.cumulate_callchain && !callchain_param.order_set)
 		callchain_param.order = ORDER_CALLER;
 
-	if ((itrace_synth_opts.callchain || itrace_synth_opts.add_callchain) &&
-	    (int)itrace_synth_opts.callchain_sz > report.max_stack)
+	अगर ((itrace_synth_opts.callchain || itrace_synth_opts.add_callchain) &&
+	    (पूर्णांक)itrace_synth_opts.callchain_sz > report.max_stack)
 		report.max_stack = itrace_synth_opts.callchain_sz;
 
-	if (!input_name || !strlen(input_name)) {
-		if (!fstat(STDIN_FILENO, &st) && S_ISFIFO(st.st_mode))
+	अगर (!input_name || !म_माप(input_name)) अणु
+		अगर (!ख_स्थिति(STDIN_खाताNO, &st) && S_ISFIFO(st.st_mode))
 			input_name = "-";
-		else
+		अन्यथा
 			input_name = "perf.data";
-	}
+	पूर्ण
 
 	data.path  = input_name;
-	data.force = symbol_conf.force;
+	data.क्रमce = symbol_conf.क्रमce;
 
 repeat:
 	session = perf_session__new(&data, false, &report.tool);
-	if (IS_ERR(session))
-		return PTR_ERR(session);
+	अगर (IS_ERR(session))
+		वापस PTR_ERR(session);
 
-	ret = evswitch__init(&report.evswitch, session->evlist, stderr);
-	if (ret)
-		return ret;
+	ret = evचयन__init(&report.evचयन, session->evlist, मानक_त्रुटि);
+	अगर (ret)
+		वापस ret;
 
-	if (zstd_init(&(session->zstd_data), 0) < 0)
+	अगर (zstd_init(&(session->zstd_data), 0) < 0)
 		pr_warning("Decompression initialization failed. Reported data may be incomplete.\n");
 
-	if (report.queue_size) {
+	अगर (report.queue_size) अणु
 		ordered_events__set_alloc_size(&session->ordered_events,
 					       report.queue_size);
-	}
+	पूर्ण
 
 	session->itrace_synth_opts = &itrace_synth_opts;
 
@@ -1419,224 +1420,224 @@ repeat:
 
 	has_br_stack = perf_header__has_feat(&session->header,
 					     HEADER_BRANCH_STACK);
-	if (evlist__combined_sample_type(session->evlist) & PERF_SAMPLE_STACK_USER)
+	अगर (evlist__combined_sample_type(session->evlist) & PERF_SAMPLE_STACK_USER)
 		has_br_stack = false;
 
-	setup_forced_leader(&report, session->evlist);
+	setup_क्रमced_leader(&report, session->evlist);
 
-	if (symbol_conf.group_sort_idx && !session->evlist->nr_groups) {
-		parse_options_usage(NULL, options, "group-sort-idx", 0);
+	अगर (symbol_conf.group_sort_idx && !session->evlist->nr_groups) अणु
+		parse_options_usage(शून्य, options, "group-sort-idx", 0);
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (itrace_synth_opts.last_branch || itrace_synth_opts.add_last_branch)
+	अगर (itrace_synth_opts.last_branch || itrace_synth_opts.add_last_branch)
 		has_br_stack = true;
 
-	if (has_br_stack && branch_call_mode)
+	अगर (has_br_stack && branch_call_mode)
 		symbol_conf.show_branchflag_count = true;
 
-	memset(&report.brtype_stat, 0, sizeof(struct branch_type_stat));
+	स_रखो(&report.brtype_stat, 0, माप(काष्ठा branch_type_stat));
 
 	/*
 	 * Branch mode is a tristate:
-	 * -1 means default, so decide based on the file having branch data.
+	 * -1 means शेष, so decide based on the file having branch data.
 	 * 0/1 means the user chose a mode.
 	 */
-	if (((branch_mode == -1 && has_br_stack) || branch_mode == 1) &&
-	    !branch_call_mode) {
+	अगर (((branch_mode == -1 && has_br_stack) || branch_mode == 1) &&
+	    !branch_call_mode) अणु
 		sort__mode = SORT_MODE__BRANCH;
 		symbol_conf.cumulate_callchain = false;
-	}
-	if (branch_call_mode) {
+	पूर्ण
+	अगर (branch_call_mode) अणु
 		callchain_param.key = CCKEY_ADDRESS;
 		callchain_param.branch_callstack = true;
 		symbol_conf.use_callchain = true;
-		callchain_register_param(&callchain_param);
-		if (sort_order == NULL)
+		callchain_रेजिस्टर_param(&callchain_param);
+		अगर (sort_order == शून्य)
 			sort_order = "srcline,symbol,dso";
-	}
+	पूर्ण
 
-	if (report.mem_mode) {
-		if (sort__mode == SORT_MODE__BRANCH) {
+	अगर (report.mem_mode) अणु
+		अगर (sort__mode == SORT_MODE__BRANCH) अणु
 			pr_err("branch and mem mode incompatible\n");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		sort__mode = SORT_MODE__MEMORY;
 		symbol_conf.cumulate_callchain = false;
-	}
+	पूर्ण
 
-	if (symbol_conf.report_hierarchy) {
+	अगर (symbol_conf.report_hierarchy) अणु
 		/* disable incompatible options */
 		symbol_conf.cumulate_callchain = false;
 
-		if (field_order) {
+		अगर (field_order) अणु
 			pr_err("Error: --hierarchy and --fields options cannot be used together\n");
 			parse_options_usage(report_usage, options, "F", 1);
-			parse_options_usage(NULL, options, "hierarchy", 0);
-			goto error;
-		}
+			parse_options_usage(शून्य, options, "hierarchy", 0);
+			जाओ error;
+		पूर्ण
 
 		perf_hpp_list.need_collapse = true;
-	}
+	पूर्ण
 
-	if (report.use_stdio)
+	अगर (report.use_stdio)
 		use_browser = 0;
-	else if (report.use_tui)
+	अन्यथा अगर (report.use_tui)
 		use_browser = 1;
-	else if (report.use_gtk)
+	अन्यथा अगर (report.use_gtk)
 		use_browser = 2;
 
-	/* Force tty output for header output and per-thread stat. */
-	if (report.header || report.header_only || report.show_threads)
+	/* Force tty output क्रम header output and per-thपढ़ो stat. */
+	अगर (report.header || report.header_only || report.show_thपढ़ोs)
 		use_browser = 0;
-	if (report.header || report.header_only)
+	अगर (report.header || report.header_only)
 		report.tool.show_feat_hdr = SHOW_FEAT_HEADER;
-	if (report.show_full_info)
+	अगर (report.show_full_info)
 		report.tool.show_feat_hdr = SHOW_FEAT_HEADER_FULL_INFO;
-	if (report.stats_mode || report.tasks_mode)
+	अगर (report.stats_mode || report.tasks_mode)
 		use_browser = 0;
-	if (report.stats_mode && report.tasks_mode) {
+	अगर (report.stats_mode && report.tasks_mode) अणु
 		pr_err("Error: --tasks and --mmaps can't be used together with --stats\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (report.total_cycles_mode) {
-		if (sort__mode != SORT_MODE__BRANCH)
+	अगर (report.total_cycles_mode) अणु
+		अगर (sort__mode != SORT_MODE__BRANCH)
 			report.total_cycles_mode = false;
-		else
-			sort_order = NULL;
-	}
+		अन्यथा
+			sort_order = शून्य;
+	पूर्ण
 
-	if (strcmp(input_name, "-") != 0)
+	अगर (म_भेद(input_name, "-") != 0)
 		setup_browser(true);
-	else
+	अन्यथा
 		use_browser = 0;
 
-	if (sort_order && strstr(sort_order, "ipc")) {
+	अगर (sort_order && म_माला(sort_order, "ipc")) अणु
 		parse_options_usage(report_usage, options, "s", 1);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (sort_order && strstr(sort_order, "symbol")) {
-		if (sort__mode == SORT_MODE__BRANCH) {
-			snprintf(sort_tmp, sizeof(sort_tmp), "%s,%s",
+	अगर (sort_order && म_माला(sort_order, "symbol")) अणु
+		अगर (sort__mode == SORT_MODE__BRANCH) अणु
+			snम_लिखो(sort_पंचांगp, माप(sort_पंचांगp), "%s,%s",
 				 sort_order, "ipc_lbr");
 			report.symbol_ipc = true;
-		} else {
-			snprintf(sort_tmp, sizeof(sort_tmp), "%s,%s",
+		पूर्ण अन्यथा अणु
+			snम_लिखो(sort_पंचांगp, माप(sort_पंचांगp), "%s,%s",
 				 sort_order, "ipc_null");
-		}
+		पूर्ण
 
-		sort_order = sort_tmp;
-	}
+		sort_order = sort_पंचांगp;
+	पूर्ण
 
-	if ((last_key != K_SWITCH_INPUT_DATA && last_key != K_RELOAD) &&
-	    (setup_sorting(session->evlist) < 0)) {
-		if (sort_order)
+	अगर ((last_key != K_SWITCH_INPUT_DATA && last_key != K_RELOAD) &&
+	    (setup_sorting(session->evlist) < 0)) अणु
+		अगर (sort_order)
 			parse_options_usage(report_usage, options, "s", 1);
-		if (field_order)
-			parse_options_usage(sort_order ? NULL : report_usage,
+		अगर (field_order)
+			parse_options_usage(sort_order ? शून्य : report_usage,
 					    options, "F", 1);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if ((report.header || report.header_only) && !quiet) {
-		perf_session__fprintf_info(session, stdout,
+	अगर ((report.header || report.header_only) && !quiet) अणु
+		perf_session__ख_लिखो_info(session, मानक_निकास,
 					   report.show_full_info);
-		if (report.header_only) {
-			if (data.is_pipe) {
+		अगर (report.header_only) अणु
+			अगर (data.is_pipe) अणु
 				/*
 				 * we need to process first few records
 				 * which contains PERF_RECORD_HEADER_FEATURE.
 				 */
 				perf_session__process_events(session);
-			}
+			पूर्ण
 			ret = 0;
-			goto error;
-		}
-	} else if (use_browser == 0 && !quiet &&
-		   !report.stats_mode && !report.tasks_mode) {
-		fputs("# To display the perf.data header info, please use --header/--header-only options.\n#\n",
-		      stdout);
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण अन्यथा अगर (use_browser == 0 && !quiet &&
+		   !report.stats_mode && !report.tasks_mode) अणु
+		ख_माला_दो("# To display the perf.data header info, please use --header/--header-only options.\n#\n",
+		      मानक_निकास);
+	पूर्ण
 
 	/*
-	 * Only in the TUI browser we are doing integrated annotation,
-	 * so don't allocate extra space that won't be used in the stdio
+	 * Only in the TUI browser we are करोing पूर्णांकegrated annotation,
+	 * so करोn't allocate extra space that won't be used in the stdio
 	 * implementation.
 	 */
-	if (ui__has_annotation() || report.symbol_ipc ||
-	    report.total_cycles_mode) {
+	अगर (ui__has_annotation() || report.symbol_ipc ||
+	    report.total_cycles_mode) अणु
 		ret = symbol__annotation_init();
-		if (ret < 0)
-			goto error;
+		अगर (ret < 0)
+			जाओ error;
 		/*
  		 * For searching by name on the "Browse map details".
  		 * providing it only in verbose mode not to bloat too
- 		 * much struct symbol.
+ 		 * much काष्ठा symbol.
  		 */
-		if (verbose > 0) {
+		अगर (verbose > 0) अणु
 			/*
-			 * XXX: Need to provide a less kludgy way to ask for
-			 * more space per symbol, the u32 is for the index on
+			 * XXX: Need to provide a less kludgy way to ask क्रम
+			 * more space per symbol, the u32 is क्रम the index on
 			 * the ui browser.
 			 * See symbol__browser_index.
 			 */
-			symbol_conf.priv_size += sizeof(u32);
+			symbol_conf.priv_size += माप(u32);
 			symbol_conf.sort_by_name = true;
-		}
+		पूर्ण
 		annotation_config__init(&report.annotation_opts);
-	}
+	पूर्ण
 
-	if (symbol__init(&session->header.env) < 0)
-		goto error;
+	अगर (symbol__init(&session->header.env) < 0)
+		जाओ error;
 
-	if (report.time_str) {
-		ret = perf_time__parse_for_ranges(report.time_str, session,
-						  &report.ptime_range,
+	अगर (report.समय_str) अणु
+		ret = perf_समय__parse_क्रम_ranges(report.समय_str, session,
+						  &report.pसमय_range,
 						  &report.range_size,
 						  &report.range_num);
-		if (ret < 0)
-			goto error;
+		अगर (ret < 0)
+			जाओ error;
 
-		itrace_synth_opts__set_time_range(&itrace_synth_opts,
-						  report.ptime_range,
+		itrace_synth_opts__set_समय_range(&itrace_synth_opts,
+						  report.pसमय_range,
 						  report.range_num);
-	}
+	पूर्ण
 
-	if (session->tevent.pevent &&
+	अगर (session->tevent.pevent &&
 	    tep_set_function_resolver(session->tevent.pevent,
 				      machine__resolve_kernel_addr,
-				      &session->machines.host) < 0) {
+				      &session->machines.host) < 0) अणु
 		pr_err("%s: failed to set libtraceevent function resolver\n",
 		       __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	sort__setup_elide(stdout);
+	sort__setup_elide(मानक_निकास);
 
 	ret = __cmd_report(&report);
-	if (ret == K_SWITCH_INPUT_DATA || ret == K_RELOAD) {
+	अगर (ret == K_SWITCH_INPUT_DATA || ret == K_RELOAD) अणु
 		perf_session__delete(session);
 		last_key = K_SWITCH_INPUT_DATA;
-		goto repeat;
-	} else
+		जाओ repeat;
+	पूर्ण अन्यथा
 		ret = 0;
 
 error:
-	if (report.ptime_range) {
-		itrace_synth_opts__clear_time_range(&itrace_synth_opts);
-		zfree(&report.ptime_range);
-	}
+	अगर (report.pसमय_range) अणु
+		itrace_synth_opts__clear_समय_range(&itrace_synth_opts);
+		zमुक्त(&report.pसमय_range);
+	पूर्ण
 
-	if (report.block_reports) {
-		block_info__free_report(report.block_reports,
+	अगर (report.block_reports) अणु
+		block_info__मुक्त_report(report.block_reports,
 					report.nr_block_reports);
-		report.block_reports = NULL;
-	}
+		report.block_reports = शून्य;
+	पूर्ण
 
 	zstd_fini(&(session->zstd_data));
 	perf_session__delete(session);
-	return ret;
-}
+	वापस ret;
+पूर्ण

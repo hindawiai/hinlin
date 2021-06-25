@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * PWM Greybus driver.
  *
@@ -6,276 +7,276 @@
  * Copyright 2014 Linaro Ltd.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/pwm.h>
-#include <linux/greybus.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/greybus.h>
 
-#include "gbphy.h"
+#समावेश "gbphy.h"
 
-struct gb_pwm_chip {
-	struct gb_connection	*connection;
+काष्ठा gb_pwm_chip अणु
+	काष्ठा gb_connection	*connection;
 	u8			pwm_max;	/* max pwm number */
 
-	struct pwm_chip		chip;
-	struct pwm_chip		*pwm;
-};
-#define pwm_chip_to_gb_pwm_chip(chip) \
-	container_of(chip, struct gb_pwm_chip, chip)
+	काष्ठा pwm_chip		chip;
+	काष्ठा pwm_chip		*pwm;
+पूर्ण;
+#घोषणा pwm_chip_to_gb_pwm_chip(chip) \
+	container_of(chip, काष्ठा gb_pwm_chip, chip)
 
 
-static int gb_pwm_count_operation(struct gb_pwm_chip *pwmc)
-{
-	struct gb_pwm_count_response response;
-	int ret;
+अटल पूर्णांक gb_pwm_count_operation(काष्ठा gb_pwm_chip *pwmc)
+अणु
+	काष्ठा gb_pwm_count_response response;
+	पूर्णांक ret;
 
 	ret = gb_operation_sync(pwmc->connection, GB_PWM_TYPE_PWM_COUNT,
-				NULL, 0, &response, sizeof(response));
-	if (ret)
-		return ret;
+				शून्य, 0, &response, माप(response));
+	अगर (ret)
+		वापस ret;
 	pwmc->pwm_max = response.count;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_pwm_activate_operation(struct gb_pwm_chip *pwmc,
+अटल पूर्णांक gb_pwm_activate_operation(काष्ठा gb_pwm_chip *pwmc,
 				     u8 which)
-{
-	struct gb_pwm_activate_request request;
-	struct gbphy_device *gbphy_dev;
-	int ret;
+अणु
+	काष्ठा gb_pwm_activate_request request;
+	काष्ठा gbphy_device *gbphy_dev;
+	पूर्णांक ret;
 
-	if (which > pwmc->pwm_max)
-		return -EINVAL;
+	अगर (which > pwmc->pwm_max)
+		वापस -EINVAL;
 
 	request.which = which;
 
 	gbphy_dev = to_gbphy_dev(pwmc->chip.dev);
-	ret = gbphy_runtime_get_sync(gbphy_dev);
-	if (ret)
-		return ret;
+	ret = gbphy_runसमय_get_sync(gbphy_dev);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_operation_sync(pwmc->connection, GB_PWM_TYPE_ACTIVATE,
-				&request, sizeof(request), NULL, 0);
+				&request, माप(request), शून्य, 0);
 
-	gbphy_runtime_put_autosuspend(gbphy_dev);
+	gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_pwm_deactivate_operation(struct gb_pwm_chip *pwmc,
+अटल पूर्णांक gb_pwm_deactivate_operation(काष्ठा gb_pwm_chip *pwmc,
 				       u8 which)
-{
-	struct gb_pwm_deactivate_request request;
-	struct gbphy_device *gbphy_dev;
-	int ret;
+अणु
+	काष्ठा gb_pwm_deactivate_request request;
+	काष्ठा gbphy_device *gbphy_dev;
+	पूर्णांक ret;
 
-	if (which > pwmc->pwm_max)
-		return -EINVAL;
+	अगर (which > pwmc->pwm_max)
+		वापस -EINVAL;
 
 	request.which = which;
 
 	gbphy_dev = to_gbphy_dev(pwmc->chip.dev);
-	ret = gbphy_runtime_get_sync(gbphy_dev);
-	if (ret)
-		return ret;
+	ret = gbphy_runसमय_get_sync(gbphy_dev);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_operation_sync(pwmc->connection, GB_PWM_TYPE_DEACTIVATE,
-				&request, sizeof(request), NULL, 0);
+				&request, माप(request), शून्य, 0);
 
-	gbphy_runtime_put_autosuspend(gbphy_dev);
+	gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_pwm_config_operation(struct gb_pwm_chip *pwmc,
+अटल पूर्णांक gb_pwm_config_operation(काष्ठा gb_pwm_chip *pwmc,
 				   u8 which, u32 duty, u32 period)
-{
-	struct gb_pwm_config_request request;
-	struct gbphy_device *gbphy_dev;
-	int ret;
+अणु
+	काष्ठा gb_pwm_config_request request;
+	काष्ठा gbphy_device *gbphy_dev;
+	पूर्णांक ret;
 
-	if (which > pwmc->pwm_max)
-		return -EINVAL;
+	अगर (which > pwmc->pwm_max)
+		वापस -EINVAL;
 
 	request.which = which;
 	request.duty = cpu_to_le32(duty);
 	request.period = cpu_to_le32(period);
 
 	gbphy_dev = to_gbphy_dev(pwmc->chip.dev);
-	ret = gbphy_runtime_get_sync(gbphy_dev);
-	if (ret)
-		return ret;
+	ret = gbphy_runसमय_get_sync(gbphy_dev);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_operation_sync(pwmc->connection, GB_PWM_TYPE_CONFIG,
-				&request, sizeof(request), NULL, 0);
+				&request, माप(request), शून्य, 0);
 
-	gbphy_runtime_put_autosuspend(gbphy_dev);
+	gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_pwm_set_polarity_operation(struct gb_pwm_chip *pwmc,
+अटल पूर्णांक gb_pwm_set_polarity_operation(काष्ठा gb_pwm_chip *pwmc,
 					 u8 which, u8 polarity)
-{
-	struct gb_pwm_polarity_request request;
-	struct gbphy_device *gbphy_dev;
-	int ret;
+अणु
+	काष्ठा gb_pwm_polarity_request request;
+	काष्ठा gbphy_device *gbphy_dev;
+	पूर्णांक ret;
 
-	if (which > pwmc->pwm_max)
-		return -EINVAL;
+	अगर (which > pwmc->pwm_max)
+		वापस -EINVAL;
 
 	request.which = which;
 	request.polarity = polarity;
 
 	gbphy_dev = to_gbphy_dev(pwmc->chip.dev);
-	ret = gbphy_runtime_get_sync(gbphy_dev);
-	if (ret)
-		return ret;
+	ret = gbphy_runसमय_get_sync(gbphy_dev);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_operation_sync(pwmc->connection, GB_PWM_TYPE_POLARITY,
-				&request, sizeof(request), NULL, 0);
+				&request, माप(request), शून्य, 0);
 
-	gbphy_runtime_put_autosuspend(gbphy_dev);
+	gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_pwm_enable_operation(struct gb_pwm_chip *pwmc,
+अटल पूर्णांक gb_pwm_enable_operation(काष्ठा gb_pwm_chip *pwmc,
 				   u8 which)
-{
-	struct gb_pwm_enable_request request;
-	struct gbphy_device *gbphy_dev;
-	int ret;
+अणु
+	काष्ठा gb_pwm_enable_request request;
+	काष्ठा gbphy_device *gbphy_dev;
+	पूर्णांक ret;
 
-	if (which > pwmc->pwm_max)
-		return -EINVAL;
+	अगर (which > pwmc->pwm_max)
+		वापस -EINVAL;
 
 	request.which = which;
 
 	gbphy_dev = to_gbphy_dev(pwmc->chip.dev);
-	ret = gbphy_runtime_get_sync(gbphy_dev);
-	if (ret)
-		return ret;
+	ret = gbphy_runसमय_get_sync(gbphy_dev);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_operation_sync(pwmc->connection, GB_PWM_TYPE_ENABLE,
-				&request, sizeof(request), NULL, 0);
-	if (ret)
-		gbphy_runtime_put_autosuspend(gbphy_dev);
+				&request, माप(request), शून्य, 0);
+	अगर (ret)
+		gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_pwm_disable_operation(struct gb_pwm_chip *pwmc,
+अटल पूर्णांक gb_pwm_disable_operation(काष्ठा gb_pwm_chip *pwmc,
 				    u8 which)
-{
-	struct gb_pwm_disable_request request;
-	struct gbphy_device *gbphy_dev;
-	int ret;
+अणु
+	काष्ठा gb_pwm_disable_request request;
+	काष्ठा gbphy_device *gbphy_dev;
+	पूर्णांक ret;
 
-	if (which > pwmc->pwm_max)
-		return -EINVAL;
+	अगर (which > pwmc->pwm_max)
+		वापस -EINVAL;
 
 	request.which = which;
 
 	ret = gb_operation_sync(pwmc->connection, GB_PWM_TYPE_DISABLE,
-				&request, sizeof(request), NULL, 0);
+				&request, माप(request), शून्य, 0);
 
 	gbphy_dev = to_gbphy_dev(pwmc->chip.dev);
-	gbphy_runtime_put_autosuspend(gbphy_dev);
+	gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_pwm_request(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
+अटल पूर्णांक gb_pwm_request(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
 
-	return gb_pwm_activate_operation(pwmc, pwm->hwpwm);
-};
+	वापस gb_pwm_activate_operation(pwmc, pwm->hwpwm);
+पूर्ण;
 
-static void gb_pwm_free(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
+अटल व्योम gb_pwm_मुक्त(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
 
-	if (pwm_is_enabled(pwm))
+	अगर (pwm_is_enabled(pwm))
 		dev_warn(chip->dev, "freeing PWM device without disabling\n");
 
 	gb_pwm_deactivate_operation(pwmc, pwm->hwpwm);
-}
+पूर्ण
 
-static int gb_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
-			 int duty_ns, int period_ns)
-{
-	struct gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
+अटल पूर्णांक gb_pwm_config(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+			 पूर्णांक duty_ns, पूर्णांक period_ns)
+अणु
+	काष्ठा gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
 
-	return gb_pwm_config_operation(pwmc, pwm->hwpwm, duty_ns, period_ns);
-};
+	वापस gb_pwm_config_operation(pwmc, pwm->hwpwm, duty_ns, period_ns);
+पूर्ण;
 
-static int gb_pwm_set_polarity(struct pwm_chip *chip, struct pwm_device *pwm,
-			       enum pwm_polarity polarity)
-{
-	struct gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
+अटल पूर्णांक gb_pwm_set_polarity(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+			       क्रमागत pwm_polarity polarity)
+अणु
+	काष्ठा gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
 
-	return gb_pwm_set_polarity_operation(pwmc, pwm->hwpwm, polarity);
-};
+	वापस gb_pwm_set_polarity_operation(pwmc, pwm->hwpwm, polarity);
+पूर्ण;
 
-static int gb_pwm_enable(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
+अटल पूर्णांक gb_pwm_enable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
 
-	return gb_pwm_enable_operation(pwmc, pwm->hwpwm);
-};
+	वापस gb_pwm_enable_operation(pwmc, pwm->hwpwm);
+पूर्ण;
 
-static void gb_pwm_disable(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
+अटल व्योम gb_pwm_disable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा gb_pwm_chip *pwmc = pwm_chip_to_gb_pwm_chip(chip);
 
 	gb_pwm_disable_operation(pwmc, pwm->hwpwm);
-};
+पूर्ण;
 
-static const struct pwm_ops gb_pwm_ops = {
+अटल स्थिर काष्ठा pwm_ops gb_pwm_ops = अणु
 	.request = gb_pwm_request,
-	.free = gb_pwm_free,
+	.मुक्त = gb_pwm_मुक्त,
 	.config = gb_pwm_config,
 	.set_polarity = gb_pwm_set_polarity,
 	.enable = gb_pwm_enable,
 	.disable = gb_pwm_disable,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int gb_pwm_probe(struct gbphy_device *gbphy_dev,
-			const struct gbphy_device_id *id)
-{
-	struct gb_connection *connection;
-	struct gb_pwm_chip *pwmc;
-	struct pwm_chip *pwm;
-	int ret;
+अटल पूर्णांक gb_pwm_probe(काष्ठा gbphy_device *gbphy_dev,
+			स्थिर काष्ठा gbphy_device_id *id)
+अणु
+	काष्ठा gb_connection *connection;
+	काष्ठा gb_pwm_chip *pwmc;
+	काष्ठा pwm_chip *pwm;
+	पूर्णांक ret;
 
-	pwmc = kzalloc(sizeof(*pwmc), GFP_KERNEL);
-	if (!pwmc)
-		return -ENOMEM;
+	pwmc = kzalloc(माप(*pwmc), GFP_KERNEL);
+	अगर (!pwmc)
+		वापस -ENOMEM;
 
 	connection = gb_connection_create(gbphy_dev->bundle,
 					  le16_to_cpu(gbphy_dev->cport_desc->id),
-					  NULL);
-	if (IS_ERR(connection)) {
+					  शून्य);
+	अगर (IS_ERR(connection)) अणु
 		ret = PTR_ERR(connection);
-		goto exit_pwmc_free;
-	}
+		जाओ निकास_pwmc_मुक्त;
+	पूर्ण
 
 	pwmc->connection = connection;
 	gb_connection_set_data(connection, pwmc);
 	gb_gbphy_set_data(gbphy_dev, pwmc);
 
 	ret = gb_connection_enable(connection);
-	if (ret)
-		goto exit_connection_destroy;
+	अगर (ret)
+		जाओ निकास_connection_destroy;
 
 	/* Query number of pwms present */
 	ret = gb_pwm_count_operation(pwmc);
-	if (ret)
-		goto exit_connection_disable;
+	अगर (ret)
+		जाओ निकास_connection_disable;
 
 	pwm = &pwmc->chip;
 
@@ -285,52 +286,52 @@ static int gb_pwm_probe(struct gbphy_device *gbphy_dev,
 	pwm->npwm = pwmc->pwm_max + 1;
 
 	ret = pwmchip_add(pwm);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&gbphy_dev->dev,
 			"failed to register PWM: %d\n", ret);
-		goto exit_connection_disable;
-	}
+		जाओ निकास_connection_disable;
+	पूर्ण
 
-	gbphy_runtime_put_autosuspend(gbphy_dev);
-	return 0;
+	gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
+	वापस 0;
 
-exit_connection_disable:
+निकास_connection_disable:
 	gb_connection_disable(connection);
-exit_connection_destroy:
+निकास_connection_destroy:
 	gb_connection_destroy(connection);
-exit_pwmc_free:
-	kfree(pwmc);
-	return ret;
-}
+निकास_pwmc_मुक्त:
+	kमुक्त(pwmc);
+	वापस ret;
+पूर्ण
 
-static void gb_pwm_remove(struct gbphy_device *gbphy_dev)
-{
-	struct gb_pwm_chip *pwmc = gb_gbphy_get_data(gbphy_dev);
-	struct gb_connection *connection = pwmc->connection;
-	int ret;
+अटल व्योम gb_pwm_हटाओ(काष्ठा gbphy_device *gbphy_dev)
+अणु
+	काष्ठा gb_pwm_chip *pwmc = gb_gbphy_get_data(gbphy_dev);
+	काष्ठा gb_connection *connection = pwmc->connection;
+	पूर्णांक ret;
 
-	ret = gbphy_runtime_get_sync(gbphy_dev);
-	if (ret)
-		gbphy_runtime_get_noresume(gbphy_dev);
+	ret = gbphy_runसमय_get_sync(gbphy_dev);
+	अगर (ret)
+		gbphy_runसमय_get_noresume(gbphy_dev);
 
-	pwmchip_remove(&pwmc->chip);
+	pwmchip_हटाओ(&pwmc->chip);
 	gb_connection_disable(connection);
 	gb_connection_destroy(connection);
-	kfree(pwmc);
-}
+	kमुक्त(pwmc);
+पूर्ण
 
-static const struct gbphy_device_id gb_pwm_id_table[] = {
-	{ GBPHY_PROTOCOL(GREYBUS_PROTOCOL_PWM) },
-	{ },
-};
+अटल स्थिर काष्ठा gbphy_device_id gb_pwm_id_table[] = अणु
+	अणु GBPHY_PROTOCOL(GREYBUS_PROTOCOL_PWM) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(gbphy, gb_pwm_id_table);
 
-static struct gbphy_driver pwm_driver = {
+अटल काष्ठा gbphy_driver pwm_driver = अणु
 	.name		= "pwm",
 	.probe		= gb_pwm_probe,
-	.remove		= gb_pwm_remove,
+	.हटाओ		= gb_pwm_हटाओ,
 	.id_table	= gb_pwm_id_table,
-};
+पूर्ण;
 
 module_gbphy_driver(pwm_driver);
 MODULE_LICENSE("GPL v2");

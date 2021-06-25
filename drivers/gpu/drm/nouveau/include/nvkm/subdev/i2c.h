@@ -1,189 +1,190 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_I2C_H__
-#define __NVKM_I2C_H__
-#include <core/subdev.h>
-#include <core/event.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_I2C_H__
+#घोषणा __NVKM_I2C_H__
+#समावेश <core/subdev.h>
+#समावेश <core/event.h>
 
-#include <subdev/bios.h>
-#include <subdev/bios/i2c.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/i2c.h>
 
-struct nvkm_i2c_ntfy_req {
-#define NVKM_I2C_PLUG                                                      0x01
-#define NVKM_I2C_UNPLUG                                                    0x02
-#define NVKM_I2C_IRQ                                                       0x04
-#define NVKM_I2C_DONE                                                      0x08
-#define NVKM_I2C_ANY                                                       0x0f
+काष्ठा nvkm_i2c_ntfy_req अणु
+#घोषणा NVKM_I2C_PLUG                                                      0x01
+#घोषणा NVKM_I2C_UNPLUG                                                    0x02
+#घोषणा NVKM_I2C_IRQ                                                       0x04
+#घोषणा NVKM_I2C_DONE                                                      0x08
+#घोषणा NVKM_I2C_ANY                                                       0x0f
 	u8 mask;
 	u8 port;
-};
+पूर्ण;
 
-struct nvkm_i2c_ntfy_rep {
+काष्ठा nvkm_i2c_ntfy_rep अणु
 	u8 mask;
-};
+पूर्ण;
 
-struct nvkm_i2c_bus_probe {
-	struct i2c_board_info dev;
+काष्ठा nvkm_i2c_bus_probe अणु
+	काष्ठा i2c_board_info dev;
 	u8 udelay; /* set to 0 to use the standard delay */
-};
+पूर्ण;
 
-struct nvkm_i2c_bus {
-	const struct nvkm_i2c_bus_func *func;
-	struct nvkm_i2c_pad *pad;
-#define NVKM_I2C_BUS_CCB(n) /* 'n' is ccb index */                           (n)
-#define NVKM_I2C_BUS_EXT(n) /* 'n' is dcb external encoder type */ ((n) + 0x100)
-#define NVKM_I2C_BUS_PRI /* ccb primary comm. port */                        -1
-#define NVKM_I2C_BUS_SEC /* ccb secondary comm. port */                      -2
-	int id;
+काष्ठा nvkm_i2c_bus अणु
+	स्थिर काष्ठा nvkm_i2c_bus_func *func;
+	काष्ठा nvkm_i2c_pad *pad;
+#घोषणा NVKM_I2C_BUS_CCB(n) /* 'n' is ccb index */                           (n)
+#घोषणा NVKM_I2C_BUS_EXT(n) /* 'n' is dcb बाह्यal encoder type */ ((n) + 0x100)
+#घोषणा NVKM_I2C_BUS_PRI /* ccb primary comm. port */                        -1
+#घोषणा NVKM_I2C_BUS_SEC /* ccb secondary comm. port */                      -2
+	पूर्णांक id;
 
-	struct mutex mutex;
-	struct list_head head;
-	struct i2c_adapter i2c;
+	काष्ठा mutex mutex;
+	काष्ठा list_head head;
+	काष्ठा i2c_adapter i2c;
 	u8 enabled;
-};
+पूर्ण;
 
-int nvkm_i2c_bus_acquire(struct nvkm_i2c_bus *);
-void nvkm_i2c_bus_release(struct nvkm_i2c_bus *);
-int nvkm_i2c_bus_probe(struct nvkm_i2c_bus *, const char *,
-		       struct nvkm_i2c_bus_probe *,
-		       bool (*)(struct nvkm_i2c_bus *,
-			        struct i2c_board_info *, void *), void *);
+पूर्णांक nvkm_i2c_bus_acquire(काष्ठा nvkm_i2c_bus *);
+व्योम nvkm_i2c_bus_release(काष्ठा nvkm_i2c_bus *);
+पूर्णांक nvkm_i2c_bus_probe(काष्ठा nvkm_i2c_bus *, स्थिर अक्षर *,
+		       काष्ठा nvkm_i2c_bus_probe *,
+		       bool (*)(काष्ठा nvkm_i2c_bus *,
+			        काष्ठा i2c_board_info *, व्योम *), व्योम *);
 
-struct nvkm_i2c_aux {
-	const struct nvkm_i2c_aux_func *func;
-	struct nvkm_i2c_pad *pad;
-#define NVKM_I2C_AUX_CCB(n) /* 'n' is ccb index */                           (n)
-#define NVKM_I2C_AUX_EXT(n) /* 'n' is dcb external encoder type */ ((n) + 0x100)
-	int id;
+काष्ठा nvkm_i2c_aux अणु
+	स्थिर काष्ठा nvkm_i2c_aux_func *func;
+	काष्ठा nvkm_i2c_pad *pad;
+#घोषणा NVKM_I2C_AUX_CCB(n) /* 'n' is ccb index */                           (n)
+#घोषणा NVKM_I2C_AUX_EXT(n) /* 'n' is dcb बाह्यal encoder type */ ((n) + 0x100)
+	पूर्णांक id;
 
-	struct mutex mutex;
-	struct list_head head;
-	struct i2c_adapter i2c;
+	काष्ठा mutex mutex;
+	काष्ठा list_head head;
+	काष्ठा i2c_adapter i2c;
 	u8 enabled;
 
-	u32 intr;
-};
+	u32 पूर्णांकr;
+पूर्ण;
 
-void nvkm_i2c_aux_monitor(struct nvkm_i2c_aux *, bool monitor);
-int nvkm_i2c_aux_acquire(struct nvkm_i2c_aux *);
-void nvkm_i2c_aux_release(struct nvkm_i2c_aux *);
-int nvkm_i2c_aux_xfer(struct nvkm_i2c_aux *, bool retry, u8 type,
+व्योम nvkm_i2c_aux_monitor(काष्ठा nvkm_i2c_aux *, bool monitor);
+पूर्णांक nvkm_i2c_aux_acquire(काष्ठा nvkm_i2c_aux *);
+व्योम nvkm_i2c_aux_release(काष्ठा nvkm_i2c_aux *);
+पूर्णांक nvkm_i2c_aux_xfer(काष्ठा nvkm_i2c_aux *, bool retry, u8 type,
 		      u32 addr, u8 *data, u8 *size);
-int nvkm_i2c_aux_lnk_ctl(struct nvkm_i2c_aux *, int link_nr, int link_bw,
+पूर्णांक nvkm_i2c_aux_lnk_ctl(काष्ठा nvkm_i2c_aux *, पूर्णांक link_nr, पूर्णांक link_bw,
 			 bool enhanced_framing);
 
-struct nvkm_i2c {
-	const struct nvkm_i2c_func *func;
-	struct nvkm_subdev subdev;
+काष्ठा nvkm_i2c अणु
+	स्थिर काष्ठा nvkm_i2c_func *func;
+	काष्ठा nvkm_subdev subdev;
 
-	struct list_head pad;
-	struct list_head bus;
-	struct list_head aux;
+	काष्ठा list_head pad;
+	काष्ठा list_head bus;
+	काष्ठा list_head aux;
 
-	struct nvkm_event event;
-};
+	काष्ठा nvkm_event event;
+पूर्ण;
 
-struct nvkm_i2c_bus *nvkm_i2c_bus_find(struct nvkm_i2c *, int);
-struct nvkm_i2c_aux *nvkm_i2c_aux_find(struct nvkm_i2c *, int);
+काष्ठा nvkm_i2c_bus *nvkm_i2c_bus_find(काष्ठा nvkm_i2c *, पूर्णांक);
+काष्ठा nvkm_i2c_aux *nvkm_i2c_aux_find(काष्ठा nvkm_i2c *, पूर्णांक);
 
-int nv04_i2c_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_i2c **);
-int nv4e_i2c_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_i2c **);
-int nv50_i2c_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_i2c **);
-int g94_i2c_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_i2c **);
-int gf117_i2c_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_i2c **);
-int gf119_i2c_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_i2c **);
-int gk104_i2c_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_i2c **);
-int gk110_i2c_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_i2c **);
-int gm200_i2c_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_i2c **);
+पूर्णांक nv04_i2c_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_i2c **);
+पूर्णांक nv4e_i2c_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_i2c **);
+पूर्णांक nv50_i2c_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_i2c **);
+पूर्णांक g94_i2c_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_i2c **);
+पूर्णांक gf117_i2c_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_i2c **);
+पूर्णांक gf119_i2c_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_i2c **);
+पूर्णांक gk104_i2c_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_i2c **);
+पूर्णांक gk110_i2c_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_i2c **);
+पूर्णांक gm200_i2c_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_i2c **);
 
-static inline int
-nvkm_rdi2cr(struct i2c_adapter *adap, u8 addr, u8 reg)
-{
+अटल अंतरभूत पूर्णांक
+nvkm_rdi2cr(काष्ठा i2c_adapter *adap, u8 addr, u8 reg)
+अणु
 	u8 val;
-	struct i2c_msg msgs[] = {
-		{ .addr = addr, .flags = 0, .len = 1, .buf = &reg },
-		{ .addr = addr, .flags = I2C_M_RD, .len = 1, .buf = &val },
-	};
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु .addr = addr, .flags = 0, .len = 1, .buf = &reg पूर्ण,
+		अणु .addr = addr, .flags = I2C_M_RD, .len = 1, .buf = &val पूर्ण,
+	पूर्ण;
 
-	int ret = i2c_transfer(adap, msgs, ARRAY_SIZE(msgs));
-	if (ret != 2)
-		return -EIO;
+	पूर्णांक ret = i2c_transfer(adap, msgs, ARRAY_SIZE(msgs));
+	अगर (ret != 2)
+		वापस -EIO;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline int
-nv_rd16i2cr(struct i2c_adapter *adap, u8 addr, u8 reg)
-{
+अटल अंतरभूत पूर्णांक
+nv_rd16i2cr(काष्ठा i2c_adapter *adap, u8 addr, u8 reg)
+अणु
 	u8 val[2];
-	struct i2c_msg msgs[] = {
-		{ .addr = addr, .flags = 0, .len = 1, .buf = &reg },
-		{ .addr = addr, .flags = I2C_M_RD, .len = 2, .buf = val },
-	};
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु .addr = addr, .flags = 0, .len = 1, .buf = &reg पूर्ण,
+		अणु .addr = addr, .flags = I2C_M_RD, .len = 2, .buf = val पूर्ण,
+	पूर्ण;
 
-	int ret = i2c_transfer(adap, msgs, ARRAY_SIZE(msgs));
-	if (ret != 2)
-		return -EIO;
+	पूर्णांक ret = i2c_transfer(adap, msgs, ARRAY_SIZE(msgs));
+	अगर (ret != 2)
+		वापस -EIO;
 
-	return val[0] << 8 | val[1];
-}
+	वापस val[0] << 8 | val[1];
+पूर्ण
 
-static inline int
-nvkm_wri2cr(struct i2c_adapter *adap, u8 addr, u8 reg, u8 val)
-{
-	u8 buf[2] = { reg, val };
-	struct i2c_msg msgs[] = {
-		{ .addr = addr, .flags = 0, .len = 2, .buf = buf },
-	};
+अटल अंतरभूत पूर्णांक
+nvkm_wri2cr(काष्ठा i2c_adapter *adap, u8 addr, u8 reg, u8 val)
+अणु
+	u8 buf[2] = अणु reg, val पूर्ण;
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु .addr = addr, .flags = 0, .len = 2, .buf = buf पूर्ण,
+	पूर्ण;
 
-	int ret = i2c_transfer(adap, msgs, ARRAY_SIZE(msgs));
-	if (ret != 1)
-		return -EIO;
+	पूर्णांक ret = i2c_transfer(adap, msgs, ARRAY_SIZE(msgs));
+	अगर (ret != 1)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int
-nv_wr16i2cr(struct i2c_adapter *adap, u8 addr, u8 reg, u16 val)
-{
-	u8 buf[3] = { reg, val >> 8, val & 0xff};
-	struct i2c_msg msgs[] = {
-		{ .addr = addr, .flags = 0, .len = 3, .buf = buf },
-	};
+अटल अंतरभूत पूर्णांक
+nv_wr16i2cr(काष्ठा i2c_adapter *adap, u8 addr, u8 reg, u16 val)
+अणु
+	u8 buf[3] = अणु reg, val >> 8, val & 0xffपूर्ण;
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु .addr = addr, .flags = 0, .len = 3, .buf = buf पूर्ण,
+	पूर्ण;
 
-	int ret = i2c_transfer(adap, msgs, ARRAY_SIZE(msgs));
-	if (ret != 1)
-		return -EIO;
+	पूर्णांक ret = i2c_transfer(adap, msgs, ARRAY_SIZE(msgs));
+	अगर (ret != 1)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool
-nvkm_probe_i2c(struct i2c_adapter *adap, u8 addr)
-{
-	return nvkm_rdi2cr(adap, addr, 0) >= 0;
-}
+अटल अंतरभूत bool
+nvkm_probe_i2c(काष्ठा i2c_adapter *adap, u8 addr)
+अणु
+	वापस nvkm_rdi2cr(adap, addr, 0) >= 0;
+पूर्ण
 
-static inline int
-nvkm_rdaux(struct nvkm_i2c_aux *aux, u32 addr, u8 *data, u8 size)
-{
-	const u8 xfer = size;
-	int ret = nvkm_i2c_aux_acquire(aux);
-	if (ret == 0) {
+अटल अंतरभूत पूर्णांक
+nvkm_rdaux(काष्ठा nvkm_i2c_aux *aux, u32 addr, u8 *data, u8 size)
+अणु
+	स्थिर u8 xfer = size;
+	पूर्णांक ret = nvkm_i2c_aux_acquire(aux);
+	अगर (ret == 0) अणु
 		ret = nvkm_i2c_aux_xfer(aux, true, 9, addr, data, &size);
 		WARN_ON(!ret && size != xfer);
 		nvkm_i2c_aux_release(aux);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static inline int
-nvkm_wraux(struct nvkm_i2c_aux *aux, u32 addr, u8 *data, u8 size)
-{
-	int ret = nvkm_i2c_aux_acquire(aux);
-	if (ret == 0) {
+अटल अंतरभूत पूर्णांक
+nvkm_wraux(काष्ठा nvkm_i2c_aux *aux, u32 addr, u8 *data, u8 size)
+अणु
+	पूर्णांक ret = nvkm_i2c_aux_acquire(aux);
+	अगर (ret == 0) अणु
 		ret = nvkm_i2c_aux_xfer(aux, true, 8, addr, data, &size);
 		nvkm_i2c_aux_release(aux);
-	}
-	return ret;
-}
-#endif
+	पूर्ण
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर

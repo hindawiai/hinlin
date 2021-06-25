@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright 2020 Monolithic Power Systems, Inc
  */
 
-#ifndef __MP2629_H__
-#define __MP2629_H__
+#अगर_अघोषित __MP2629_H__
+#घोषणा __MP2629_H__
 
-#include <linux/device.h>
-#include <linux/regmap.h>
+#समावेश <linux/device.h>
+#समावेश <linux/regmap.h>
 
-struct mp2629_data {
-	struct device *dev;
-	struct regmap *regmap;
-};
+काष्ठा mp2629_data अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+पूर्ण;
 
-enum mp2629_adc_chan {
+क्रमागत mp2629_adc_chan अणु
 	MP2629_BATT_VOLT,
 	MP2629_SYSTEM_VOLT,
 	MP2629_INPUT_VOLT,
 	MP2629_BATT_CURRENT,
 	MP2629_INPUT_CURRENT,
 	MP2629_ADC_CHAN_END
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

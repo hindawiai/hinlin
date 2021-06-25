@@ -1,224 +1,225 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * I2C Link Layer for PN544 HCI based Driver
+ * I2C Link Layer क्रम PN544 HCI based Driver
  *
  * Copyright (C) 2012  Intel Corporation. All rights reserved.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/crc-ccitt.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/acpi.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/nfc.h>
-#include <linux/firmware.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/crc-ccitt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/nfc.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/gpio/consumer.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <net/nfc/hci.h>
-#include <net/nfc/llc.h>
-#include <net/nfc/nfc.h>
+#समावेश <net/nfc/hci.h>
+#समावेश <net/nfc/llc.h>
+#समावेश <net/nfc/nfc.h>
 
-#include "pn544.h"
+#समावेश "pn544.h"
 
-#define PN544_I2C_FRAME_HEADROOM 1
-#define PN544_I2C_FRAME_TAILROOM 2
+#घोषणा PN544_I2C_FRAME_HEADROOM 1
+#घोषणा PN544_I2C_FRAME_TAILROOM 2
 
 /* GPIO names */
-#define PN544_GPIO_NAME_IRQ "pn544_irq"
-#define PN544_GPIO_NAME_FW  "pn544_fw"
-#define PN544_GPIO_NAME_EN  "pn544_en"
+#घोषणा PN544_GPIO_NAME_IRQ "pn544_irq"
+#घोषणा PN544_GPIO_NAME_FW  "pn544_fw"
+#घोषणा PN544_GPIO_NAME_EN  "pn544_en"
 
 /* framing in HCI mode */
-#define PN544_HCI_I2C_LLC_LEN		1
-#define PN544_HCI_I2C_LLC_CRC		2
-#define PN544_HCI_I2C_LLC_LEN_CRC	(PN544_HCI_I2C_LLC_LEN + \
+#घोषणा PN544_HCI_I2C_LLC_LEN		1
+#घोषणा PN544_HCI_I2C_LLC_CRC		2
+#घोषणा PN544_HCI_I2C_LLC_LEN_CRC	(PN544_HCI_I2C_LLC_LEN + \
 					 PN544_HCI_I2C_LLC_CRC)
-#define PN544_HCI_I2C_LLC_MIN_SIZE	(1 + PN544_HCI_I2C_LLC_LEN_CRC)
-#define PN544_HCI_I2C_LLC_MAX_PAYLOAD	29
-#define PN544_HCI_I2C_LLC_MAX_SIZE	(PN544_HCI_I2C_LLC_LEN_CRC + 1 + \
+#घोषणा PN544_HCI_I2C_LLC_MIN_SIZE	(1 + PN544_HCI_I2C_LLC_LEN_CRC)
+#घोषणा PN544_HCI_I2C_LLC_MAX_PAYLOAD	29
+#घोषणा PN544_HCI_I2C_LLC_MAX_SIZE	(PN544_HCI_I2C_LLC_LEN_CRC + 1 + \
 					 PN544_HCI_I2C_LLC_MAX_PAYLOAD)
 
-static const struct i2c_device_id pn544_hci_i2c_id_table[] = {
-	{"pn544", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id pn544_hci_i2c_id_table[] = अणु
+	अणु"pn544", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, pn544_hci_i2c_id_table);
 
-static const struct acpi_device_id pn544_hci_i2c_acpi_match[] = {
-	{"NXP5440", 0},
-	{}
-};
+अटल स्थिर काष्ठा acpi_device_id pn544_hci_i2c_acpi_match[] = अणु
+	अणु"NXP5440", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(acpi, pn544_hci_i2c_acpi_match);
 
-#define PN544_HCI_I2C_DRIVER_NAME "pn544_hci_i2c"
+#घोषणा PN544_HCI_I2C_DRIVER_NAME "pn544_hci_i2c"
 
 /*
- * Exposed through the 4 most significant bytes
+ * Exposed through the 4 most signअगरicant bytes
  * from the HCI SW_VERSION first byte, a.k.a.
  * SW RomLib.
  */
-#define PN544_HW_VARIANT_C2 0xa
-#define PN544_HW_VARIANT_C3 0xb
+#घोषणा PN544_HW_VARIANT_C2 0xa
+#घोषणा PN544_HW_VARIANT_C3 0xb
 
-#define PN544_FW_CMD_RESET 0x01
-#define PN544_FW_CMD_WRITE 0x08
-#define PN544_FW_CMD_CHECK 0x06
-#define PN544_FW_CMD_SECURE_WRITE 0x0C
-#define PN544_FW_CMD_SECURE_CHUNK_WRITE 0x0D
+#घोषणा PN544_FW_CMD_RESET 0x01
+#घोषणा PN544_FW_CMD_WRITE 0x08
+#घोषणा PN544_FW_CMD_CHECK 0x06
+#घोषणा PN544_FW_CMD_SECURE_WRITE 0x0C
+#घोषणा PN544_FW_CMD_SECURE_CHUNK_WRITE 0x0D
 
-struct pn544_i2c_fw_frame_write {
+काष्ठा pn544_i2c_fw_frame_ग_लिखो अणु
 	u8 cmd;
 	u16 be_length;
 	u8 be_dest_addr[3];
 	u16 be_datalen;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
-struct pn544_i2c_fw_frame_check {
+काष्ठा pn544_i2c_fw_frame_check अणु
 	u8 cmd;
 	u16 be_length;
 	u8 be_start_addr[3];
 	u16 be_datalen;
 	u16 be_crc;
-} __packed;
+पूर्ण __packed;
 
-struct pn544_i2c_fw_frame_response {
+काष्ठा pn544_i2c_fw_frame_response अणु
 	u8 status;
 	u16 be_length;
-} __packed;
+पूर्ण __packed;
 
-struct pn544_i2c_fw_blob {
+काष्ठा pn544_i2c_fw_blob अणु
 	u32 be_size;
 	u32 be_destaddr;
 	u8 data[];
-};
+पूर्ण;
 
-struct pn544_i2c_fw_secure_frame {
+काष्ठा pn544_i2c_fw_secure_frame अणु
 	u8 cmd;
 	u16 be_datalen;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
-struct pn544_i2c_fw_secure_blob {
+काष्ठा pn544_i2c_fw_secure_blob अणु
 	u64 header;
 	u8 data[];
-};
+पूर्ण;
 
-#define PN544_FW_CMD_RESULT_TIMEOUT 0x01
-#define PN544_FW_CMD_RESULT_BAD_CRC 0x02
-#define PN544_FW_CMD_RESULT_ACCESS_DENIED 0x08
-#define PN544_FW_CMD_RESULT_PROTOCOL_ERROR 0x0B
-#define PN544_FW_CMD_RESULT_INVALID_PARAMETER 0x11
-#define PN544_FW_CMD_RESULT_UNSUPPORTED_COMMAND 0x13
-#define PN544_FW_CMD_RESULT_INVALID_LENGTH 0x18
-#define PN544_FW_CMD_RESULT_CRYPTOGRAPHIC_ERROR 0x19
-#define PN544_FW_CMD_RESULT_VERSION_CONDITIONS_ERROR 0x1D
-#define PN544_FW_CMD_RESULT_MEMORY_ERROR 0x20
-#define PN544_FW_CMD_RESULT_CHUNK_OK 0x21
-#define PN544_FW_CMD_RESULT_WRITE_FAILED 0x74
-#define PN544_FW_CMD_RESULT_COMMAND_REJECTED 0xE0
-#define PN544_FW_CMD_RESULT_CHUNK_ERROR 0xE6
+#घोषणा PN544_FW_CMD_RESULT_TIMEOUT 0x01
+#घोषणा PN544_FW_CMD_RESULT_BAD_CRC 0x02
+#घोषणा PN544_FW_CMD_RESULT_ACCESS_DENIED 0x08
+#घोषणा PN544_FW_CMD_RESULT_PROTOCOL_ERROR 0x0B
+#घोषणा PN544_FW_CMD_RESULT_INVALID_PARAMETER 0x11
+#घोषणा PN544_FW_CMD_RESULT_UNSUPPORTED_COMMAND 0x13
+#घोषणा PN544_FW_CMD_RESULT_INVALID_LENGTH 0x18
+#घोषणा PN544_FW_CMD_RESULT_CRYPTOGRAPHIC_ERROR 0x19
+#घोषणा PN544_FW_CMD_RESULT_VERSION_CONDITIONS_ERROR 0x1D
+#घोषणा PN544_FW_CMD_RESULT_MEMORY_ERROR 0x20
+#घोषणा PN544_FW_CMD_RESULT_CHUNK_OK 0x21
+#घोषणा PN544_FW_CMD_RESULT_WRITE_FAILED 0x74
+#घोषणा PN544_FW_CMD_RESULT_COMMAND_REJECTED 0xE0
+#घोषणा PN544_FW_CMD_RESULT_CHUNK_ERROR 0xE6
 
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+#घोषणा MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
-#define PN544_FW_WRITE_BUFFER_MAX_LEN 0x9f7
-#define PN544_FW_I2C_MAX_PAYLOAD PN544_HCI_I2C_LLC_MAX_SIZE
-#define PN544_FW_I2C_WRITE_FRAME_HEADER_LEN 8
-#define PN544_FW_I2C_WRITE_DATA_MAX_LEN MIN((PN544_FW_I2C_MAX_PAYLOAD -\
+#घोषणा PN544_FW_WRITE_BUFFER_MAX_LEN 0x9f7
+#घोषणा PN544_FW_I2C_MAX_PAYLOAD PN544_HCI_I2C_LLC_MAX_SIZE
+#घोषणा PN544_FW_I2C_WRITE_FRAME_HEADER_LEN 8
+#घोषणा PN544_FW_I2C_WRITE_DATA_MAX_LEN MIN((PN544_FW_I2C_MAX_PAYLOAD -\
 					 PN544_FW_I2C_WRITE_FRAME_HEADER_LEN),\
 					 PN544_FW_WRITE_BUFFER_MAX_LEN)
-#define PN544_FW_SECURE_CHUNK_WRITE_HEADER_LEN 3
-#define PN544_FW_SECURE_CHUNK_WRITE_DATA_MAX_LEN (PN544_FW_I2C_MAX_PAYLOAD -\
+#घोषणा PN544_FW_SECURE_CHUNK_WRITE_HEADER_LEN 3
+#घोषणा PN544_FW_SECURE_CHUNK_WRITE_DATA_MAX_LEN (PN544_FW_I2C_MAX_PAYLOAD -\
 			PN544_FW_SECURE_CHUNK_WRITE_HEADER_LEN)
-#define PN544_FW_SECURE_FRAME_HEADER_LEN 3
-#define PN544_FW_SECURE_BLOB_HEADER_LEN 8
+#घोषणा PN544_FW_SECURE_FRAME_HEADER_LEN 3
+#घोषणा PN544_FW_SECURE_BLOB_HEADER_LEN 8
 
-#define FW_WORK_STATE_IDLE 1
-#define FW_WORK_STATE_START 2
-#define FW_WORK_STATE_WAIT_WRITE_ANSWER 3
-#define FW_WORK_STATE_WAIT_CHECK_ANSWER 4
-#define FW_WORK_STATE_WAIT_SECURE_WRITE_ANSWER 5
+#घोषणा FW_WORK_STATE_IDLE 1
+#घोषणा FW_WORK_STATE_START 2
+#घोषणा FW_WORK_STATE_WAIT_WRITE_ANSWER 3
+#घोषणा FW_WORK_STATE_WAIT_CHECK_ANSWER 4
+#घोषणा FW_WORK_STATE_WAIT_SECURE_WRITE_ANSWER 5
 
-struct pn544_i2c_phy {
-	struct i2c_client *i2c_dev;
-	struct nfc_hci_dev *hdev;
+काष्ठा pn544_i2c_phy अणु
+	काष्ठा i2c_client *i2c_dev;
+	काष्ठा nfc_hci_dev *hdev;
 
-	struct gpio_desc *gpiod_en;
-	struct gpio_desc *gpiod_fw;
+	काष्ठा gpio_desc *gpiod_en;
+	काष्ठा gpio_desc *gpiod_fw;
 
-	unsigned int en_polarity;
+	अचिन्हित पूर्णांक en_polarity;
 
 	u8 hw_variant;
 
-	struct work_struct fw_work;
-	int fw_work_state;
-	char firmware_name[NFC_FIRMWARE_NAME_MAXSIZE + 1];
-	const struct firmware *fw;
+	काष्ठा work_काष्ठा fw_work;
+	पूर्णांक fw_work_state;
+	अक्षर firmware_name[NFC_FIRMWARE_NAME_MAXSIZE + 1];
+	स्थिर काष्ठा firmware *fw;
 	u32 fw_blob_dest_addr;
-	size_t fw_blob_size;
-	const u8 *fw_blob_data;
-	size_t fw_written;
-	size_t fw_size;
+	माप_प्रकार fw_blob_size;
+	स्थिर u8 *fw_blob_data;
+	माप_प्रकार fw_written;
+	माप_प्रकार fw_size;
 
-	int fw_cmd_result;
+	पूर्णांक fw_cmd_result;
 
-	int powered;
-	int run_mode;
+	पूर्णांक घातered;
+	पूर्णांक run_mode;
 
-	int hard_fault;		/*
-				 * < 0 if hardware error occured (e.g. i2c err)
+	पूर्णांक hard_fault;		/*
+				 * < 0 अगर hardware error occured (e.g. i2c err)
 				 * and prevents normal operation.
 				 */
-};
+पूर्ण;
 
-#define I2C_DUMP_SKB(info, skb)					\
-do {								\
+#घोषणा I2C_DUMP_SKB(info, skb)					\
+करो अणु								\
 	pr_debug("%s:\n", info);				\
-	print_hex_dump(KERN_DEBUG, "i2c: ", DUMP_PREFIX_OFFSET,	\
+	prपूर्णांक_hex_dump(KERN_DEBUG, "i2c: ", DUMP_PREFIX_OFFSET,	\
 		       16, 1, (skb)->data, (skb)->len, 0);	\
-} while (0)
+पूर्ण जबतक (0)
 
-static void pn544_hci_i2c_platform_init(struct pn544_i2c_phy *phy)
-{
-	int polarity, retry, ret;
-	char rset_cmd[] = { 0x05, 0xF9, 0x04, 0x00, 0xC3, 0xE5 };
-	int count = sizeof(rset_cmd);
+अटल व्योम pn544_hci_i2c_platक्रमm_init(काष्ठा pn544_i2c_phy *phy)
+अणु
+	पूर्णांक polarity, retry, ret;
+	अक्षर rset_cmd[] = अणु 0x05, 0xF9, 0x04, 0x00, 0xC3, 0xE5 पूर्ण;
+	पूर्णांक count = माप(rset_cmd);
 
 	nfc_info(&phy->i2c_dev->dev, "Detecting nfc_en polarity\n");
 
-	/* Disable fw download */
+	/* Disable fw करोwnload */
 	gpiod_set_value_cansleep(phy->gpiod_fw, 0);
 
-	for (polarity = 0; polarity < 2; polarity++) {
+	क्रम (polarity = 0; polarity < 2; polarity++) अणु
 		phy->en_polarity = polarity;
 		retry = 3;
-		while (retry--) {
-			/* power off */
+		जबतक (retry--) अणु
+			/* घातer off */
 			gpiod_set_value_cansleep(phy->gpiod_en, !phy->en_polarity);
 			usleep_range(10000, 15000);
 
-			/* power on */
+			/* घातer on */
 			gpiod_set_value_cansleep(phy->gpiod_en, phy->en_polarity);
 			usleep_range(10000, 15000);
 
 			/* send reset */
 			dev_dbg(&phy->i2c_dev->dev, "Sending reset cmd\n");
 			ret = i2c_master_send(phy->i2c_dev, rset_cmd, count);
-			if (ret == count) {
+			अगर (ret == count) अणु
 				nfc_info(&phy->i2c_dev->dev,
 					 "nfc_en polarity : active %s\n",
 					 (polarity == 0 ? "low" : "high"));
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	nfc_err(&phy->i2c_dev->dev,
 		"Could not detect nfc_en polarity, fallback to active high\n");
@@ -226,33 +227,33 @@ static void pn544_hci_i2c_platform_init(struct pn544_i2c_phy *phy)
 out:
 	gpiod_set_value_cansleep(phy->gpiod_en, !phy->en_polarity);
 	usleep_range(10000, 15000);
-}
+पूर्ण
 
-static void pn544_hci_i2c_enable_mode(struct pn544_i2c_phy *phy, int run_mode)
-{
+अटल व्योम pn544_hci_i2c_enable_mode(काष्ठा pn544_i2c_phy *phy, पूर्णांक run_mode)
+अणु
 	gpiod_set_value_cansleep(phy->gpiod_fw, run_mode == PN544_FW_MODE ? 1 : 0);
 	gpiod_set_value_cansleep(phy->gpiod_en, phy->en_polarity);
 	usleep_range(10000, 15000);
 
 	phy->run_mode = run_mode;
-}
+पूर्ण
 
-static int pn544_hci_i2c_enable(void *phy_id)
-{
-	struct pn544_i2c_phy *phy = phy_id;
+अटल पूर्णांक pn544_hci_i2c_enable(व्योम *phy_id)
+अणु
+	काष्ठा pn544_i2c_phy *phy = phy_id;
 
 	pr_info("%s\n", __func__);
 
 	pn544_hci_i2c_enable_mode(phy, PN544_HCI_MODE);
 
-	phy->powered = 1;
+	phy->घातered = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pn544_hci_i2c_disable(void *phy_id)
-{
-	struct pn544_i2c_phy *phy = phy_id;
+अटल व्योम pn544_hci_i2c_disable(व्योम *phy_id)
+अणु
+	काष्ठा pn544_i2c_phy *phy = phy_id;
 
 	gpiod_set_value_cansleep(phy->gpiod_fw, 0);
 	gpiod_set_value_cansleep(phy->gpiod_en, !phy->en_polarity);
@@ -264,13 +265,13 @@ static void pn544_hci_i2c_disable(void *phy_id)
 	gpiod_set_value_cansleep(phy->gpiod_en, !phy->en_polarity);
 	usleep_range(10000, 15000);
 
-	phy->powered = 0;
-}
+	phy->घातered = 0;
+पूर्ण
 
-static void pn544_hci_i2c_add_len_crc(struct sk_buff *skb)
-{
+अटल व्योम pn544_hci_i2c_add_len_crc(काष्ठा sk_buff *skb)
+अणु
 	u16 crc;
-	int len;
+	पूर्णांक len;
 
 	len = skb->len + 2;
 	*(u8 *)skb_push(skb, 1) = len;
@@ -279,27 +280,27 @@ static void pn544_hci_i2c_add_len_crc(struct sk_buff *skb)
 	crc = ~crc;
 	skb_put_u8(skb, crc & 0xff);
 	skb_put_u8(skb, crc >> 8);
-}
+पूर्ण
 
-static void pn544_hci_i2c_remove_len_crc(struct sk_buff *skb)
-{
+अटल व्योम pn544_hci_i2c_हटाओ_len_crc(काष्ठा sk_buff *skb)
+अणु
 	skb_pull(skb, PN544_I2C_FRAME_HEADROOM);
 	skb_trim(skb, PN544_I2C_FRAME_TAILROOM);
-}
+पूर्ण
 
 /*
- * Writing a frame must not return the number of written bytes.
- * It must return either zero for success, or <0 for error.
+ * Writing a frame must not वापस the number of written bytes.
+ * It must वापस either zero क्रम success, or <0 क्रम error.
  * In addition, it must not alter the skb
  */
-static int pn544_hci_i2c_write(void *phy_id, struct sk_buff *skb)
-{
-	int r;
-	struct pn544_i2c_phy *phy = phy_id;
-	struct i2c_client *client = phy->i2c_dev;
+अटल पूर्णांक pn544_hci_i2c_ग_लिखो(व्योम *phy_id, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक r;
+	काष्ठा pn544_i2c_phy *phy = phy_id;
+	काष्ठा i2c_client *client = phy->i2c_dev;
 
-	if (phy->hard_fault != 0)
-		return phy->hard_fault;
+	अगर (phy->hard_fault != 0)
+		वापस phy->hard_fault;
 
 	usleep_range(3000, 6000);
 
@@ -309,272 +310,272 @@ static int pn544_hci_i2c_write(void *phy_id, struct sk_buff *skb)
 
 	r = i2c_master_send(client, skb->data, skb->len);
 
-	if (r == -EREMOTEIO) {	/* Retry, chip was in standby */
+	अगर (r == -EREMOTEIO) अणु	/* Retry, chip was in standby */
 		usleep_range(6000, 10000);
 		r = i2c_master_send(client, skb->data, skb->len);
-	}
+	पूर्ण
 
-	if (r >= 0) {
-		if (r != skb->len)
+	अगर (r >= 0) अणु
+		अगर (r != skb->len)
 			r = -EREMOTEIO;
-		else
+		अन्यथा
 			r = 0;
-	}
+	पूर्ण
 
-	pn544_hci_i2c_remove_len_crc(skb);
+	pn544_hci_i2c_हटाओ_len_crc(skb);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int check_crc(u8 *buf, int buflen)
-{
-	int len;
+अटल पूर्णांक check_crc(u8 *buf, पूर्णांक buflen)
+अणु
+	पूर्णांक len;
 	u16 crc;
 
 	len = buf[0] + 1;
 	crc = crc_ccitt(0xffff, buf, len - 2);
 	crc = ~crc;
 
-	if (buf[len - 2] != (crc & 0xff) || buf[len - 1] != (crc >> 8)) {
+	अगर (buf[len - 2] != (crc & 0xff) || buf[len - 1] != (crc >> 8)) अणु
 		pr_err("CRC error 0x%x != 0x%x 0x%x\n",
 		       crc, buf[len - 1], buf[len - 2]);
 		pr_info("%s: BAD CRC\n", __func__);
-		print_hex_dump(KERN_DEBUG, "crc: ", DUMP_PREFIX_NONE,
+		prपूर्णांक_hex_dump(KERN_DEBUG, "crc: ", DUMP_PREFIX_NONE,
 			       16, 2, buf, buflen, false);
-		return -EPERM;
-	}
-	return 0;
-}
+		वापस -EPERM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Reads an shdlc frame and returns it in a newly allocated sk_buff. Guarantees
- * that i2c bus will be flushed and that next read will start on a new frame.
- * returned skb contains only LLC header and payload.
- * returns:
- * -EREMOTEIO : i2c read error (fatal)
+ * Reads an shdlc frame and वापसs it in a newly allocated sk_buff. Guarantees
+ * that i2c bus will be flushed and that next पढ़ो will start on a new frame.
+ * वापसed skb contains only LLC header and payload.
+ * वापसs:
+ * -EREMOTEIO : i2c पढ़ो error (fatal)
  * -EBADMSG : frame was incorrect and discarded
  * -ENOMEM : cannot allocate skb, frame dropped
  */
-static int pn544_hci_i2c_read(struct pn544_i2c_phy *phy, struct sk_buff **skb)
-{
-	int r;
+अटल पूर्णांक pn544_hci_i2c_पढ़ो(काष्ठा pn544_i2c_phy *phy, काष्ठा sk_buff **skb)
+अणु
+	पूर्णांक r;
 	u8 len;
-	u8 tmp[PN544_HCI_I2C_LLC_MAX_SIZE - 1];
-	struct i2c_client *client = phy->i2c_dev;
+	u8 पंचांगp[PN544_HCI_I2C_LLC_MAX_SIZE - 1];
+	काष्ठा i2c_client *client = phy->i2c_dev;
 
 	r = i2c_master_recv(client, &len, 1);
-	if (r != 1) {
+	अगर (r != 1) अणु
 		nfc_err(&client->dev, "cannot read len byte\n");
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	if ((len < (PN544_HCI_I2C_LLC_MIN_SIZE - 1)) ||
-	    (len > (PN544_HCI_I2C_LLC_MAX_SIZE - 1))) {
+	अगर ((len < (PN544_HCI_I2C_LLC_MIN_SIZE - 1)) ||
+	    (len > (PN544_HCI_I2C_LLC_MAX_SIZE - 1))) अणु
 		nfc_err(&client->dev, "invalid len byte\n");
 		r = -EBADMSG;
-		goto flush;
-	}
+		जाओ flush;
+	पूर्ण
 
 	*skb = alloc_skb(1 + len, GFP_KERNEL);
-	if (*skb == NULL) {
+	अगर (*skb == शून्य) अणु
 		r = -ENOMEM;
-		goto flush;
-	}
+		जाओ flush;
+	पूर्ण
 
 	skb_put_u8(*skb, len);
 
 	r = i2c_master_recv(client, skb_put(*skb, len), len);
-	if (r != len) {
-		kfree_skb(*skb);
-		return -EREMOTEIO;
-	}
+	अगर (r != len) अणु
+		kमुक्त_skb(*skb);
+		वापस -EREMOTEIO;
+	पूर्ण
 
 	I2C_DUMP_SKB("i2c frame read", *skb);
 
 	r = check_crc((*skb)->data, (*skb)->len);
-	if (r != 0) {
-		kfree_skb(*skb);
+	अगर (r != 0) अणु
+		kमुक्त_skb(*skb);
 		r = -EBADMSG;
-		goto flush;
-	}
+		जाओ flush;
+	पूर्ण
 
 	skb_pull(*skb, 1);
 	skb_trim(*skb, (*skb)->len - 2);
 
 	usleep_range(3000, 6000);
 
-	return 0;
+	वापस 0;
 
 flush:
-	if (i2c_master_recv(client, tmp, sizeof(tmp)) < 0)
+	अगर (i2c_master_recv(client, पंचांगp, माप(पंचांगp)) < 0)
 		r = -EREMOTEIO;
 
 	usleep_range(3000, 6000);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int pn544_hci_i2c_fw_read_status(struct pn544_i2c_phy *phy)
-{
-	int r;
-	struct pn544_i2c_fw_frame_response response;
-	struct i2c_client *client = phy->i2c_dev;
+अटल पूर्णांक pn544_hci_i2c_fw_पढ़ो_status(काष्ठा pn544_i2c_phy *phy)
+अणु
+	पूर्णांक r;
+	काष्ठा pn544_i2c_fw_frame_response response;
+	काष्ठा i2c_client *client = phy->i2c_dev;
 
-	r = i2c_master_recv(client, (char *) &response, sizeof(response));
-	if (r != sizeof(response)) {
+	r = i2c_master_recv(client, (अक्षर *) &response, माप(response));
+	अगर (r != माप(response)) अणु
 		nfc_err(&client->dev, "cannot read fw status\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	usleep_range(3000, 6000);
 
-	switch (response.status) {
-	case 0:
-		return 0;
-	case PN544_FW_CMD_RESULT_CHUNK_OK:
-		return response.status;
-	case PN544_FW_CMD_RESULT_TIMEOUT:
-		return -ETIMEDOUT;
-	case PN544_FW_CMD_RESULT_BAD_CRC:
-		return -ENODATA;
-	case PN544_FW_CMD_RESULT_ACCESS_DENIED:
-		return -EACCES;
-	case PN544_FW_CMD_RESULT_PROTOCOL_ERROR:
-		return -EPROTO;
-	case PN544_FW_CMD_RESULT_INVALID_PARAMETER:
-		return -EINVAL;
-	case PN544_FW_CMD_RESULT_UNSUPPORTED_COMMAND:
-		return -ENOTSUPP;
-	case PN544_FW_CMD_RESULT_INVALID_LENGTH:
-		return -EBADMSG;
-	case PN544_FW_CMD_RESULT_CRYPTOGRAPHIC_ERROR:
-		return -ENOKEY;
-	case PN544_FW_CMD_RESULT_VERSION_CONDITIONS_ERROR:
-		return -EINVAL;
-	case PN544_FW_CMD_RESULT_MEMORY_ERROR:
-		return -ENOMEM;
-	case PN544_FW_CMD_RESULT_COMMAND_REJECTED:
-		return -EACCES;
-	case PN544_FW_CMD_RESULT_WRITE_FAILED:
-	case PN544_FW_CMD_RESULT_CHUNK_ERROR:
-		return -EIO;
-	default:
-		return -EIO;
-	}
-}
+	चयन (response.status) अणु
+	हाल 0:
+		वापस 0;
+	हाल PN544_FW_CMD_RESULT_CHUNK_OK:
+		वापस response.status;
+	हाल PN544_FW_CMD_RESULT_TIMEOUT:
+		वापस -ETIMEDOUT;
+	हाल PN544_FW_CMD_RESULT_BAD_CRC:
+		वापस -ENODATA;
+	हाल PN544_FW_CMD_RESULT_ACCESS_DENIED:
+		वापस -EACCES;
+	हाल PN544_FW_CMD_RESULT_PROTOCOL_ERROR:
+		वापस -EPROTO;
+	हाल PN544_FW_CMD_RESULT_INVALID_PARAMETER:
+		वापस -EINVAL;
+	हाल PN544_FW_CMD_RESULT_UNSUPPORTED_COMMAND:
+		वापस -ENOTSUPP;
+	हाल PN544_FW_CMD_RESULT_INVALID_LENGTH:
+		वापस -EBADMSG;
+	हाल PN544_FW_CMD_RESULT_CRYPTOGRAPHIC_ERROR:
+		वापस -ENOKEY;
+	हाल PN544_FW_CMD_RESULT_VERSION_CONDITIONS_ERROR:
+		वापस -EINVAL;
+	हाल PN544_FW_CMD_RESULT_MEMORY_ERROR:
+		वापस -ENOMEM;
+	हाल PN544_FW_CMD_RESULT_COMMAND_REJECTED:
+		वापस -EACCES;
+	हाल PN544_FW_CMD_RESULT_WRITE_FAILED:
+	हाल PN544_FW_CMD_RESULT_CHUNK_ERROR:
+		वापस -EIO;
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
 /*
- * Reads an shdlc frame from the chip. This is not as straightforward as it
- * seems. There are cases where we could loose the frame start synchronization.
- * The frame format is len-data-crc, and corruption can occur anywhere while
- * transiting on i2c bus, such that we could read an invalid len.
+ * Reads an shdlc frame from the chip. This is not as straightक्रमward as it
+ * seems. There are हालs where we could loose the frame start synchronization.
+ * The frame क्रमmat is len-data-crc, and corruption can occur anywhere जबतक
+ * transiting on i2c bus, such that we could पढ़ो an invalid len.
  * In order to recover synchronization with the next frame, we must be sure
- * to read the real amount of data without using the len byte. We do this by
+ * to पढ़ो the real amount of data without using the len byte. We करो this by
  * assuming the following:
  * - the chip will always present only one single complete frame on the bus
- *   before triggering the interrupt
- * - the chip will not present a new frame until we have completely read
- *   the previous one (or until we have handled the interrupt).
- * The tricky case is when we read a corrupted len that is less than the real
+ *   beक्रमe triggering the पूर्णांकerrupt
+ * - the chip will not present a new frame until we have completely पढ़ो
+ *   the previous one (or until we have handled the पूर्णांकerrupt).
+ * The tricky हाल is when we पढ़ो a corrupted len that is less than the real
  * len. We must detect this here in order to determine that we need to flush
  * the bus. This is the reason why we check the crc here.
  */
-static irqreturn_t pn544_hci_i2c_irq_thread_fn(int irq, void *phy_id)
-{
-	struct pn544_i2c_phy *phy = phy_id;
-	struct i2c_client *client;
-	struct sk_buff *skb = NULL;
-	int r;
+अटल irqवापस_t pn544_hci_i2c_irq_thपढ़ो_fn(पूर्णांक irq, व्योम *phy_id)
+अणु
+	काष्ठा pn544_i2c_phy *phy = phy_id;
+	काष्ठा i2c_client *client;
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक r;
 
-	if (!phy || irq != phy->i2c_dev->irq) {
+	अगर (!phy || irq != phy->i2c_dev->irq) अणु
 		WARN_ON_ONCE(1);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	client = phy->i2c_dev;
 	dev_dbg(&client->dev, "IRQ\n");
 
-	if (phy->hard_fault != 0)
-		return IRQ_HANDLED;
+	अगर (phy->hard_fault != 0)
+		वापस IRQ_HANDLED;
 
-	if (phy->run_mode == PN544_FW_MODE) {
-		phy->fw_cmd_result = pn544_hci_i2c_fw_read_status(phy);
+	अगर (phy->run_mode == PN544_FW_MODE) अणु
+		phy->fw_cmd_result = pn544_hci_i2c_fw_पढ़ो_status(phy);
 		schedule_work(&phy->fw_work);
-	} else {
-		r = pn544_hci_i2c_read(phy, &skb);
-		if (r == -EREMOTEIO) {
+	पूर्ण अन्यथा अणु
+		r = pn544_hci_i2c_पढ़ो(phy, &skb);
+		अगर (r == -EREMOTEIO) अणु
 			phy->hard_fault = r;
 
-			nfc_hci_recv_frame(phy->hdev, NULL);
+			nfc_hci_recv_frame(phy->hdev, शून्य);
 
-			return IRQ_HANDLED;
-		} else if ((r == -ENOMEM) || (r == -EBADMSG)) {
-			return IRQ_HANDLED;
-		}
+			वापस IRQ_HANDLED;
+		पूर्ण अन्यथा अगर ((r == -ENOMEM) || (r == -EBADMSG)) अणु
+			वापस IRQ_HANDLED;
+		पूर्ण
 
 		nfc_hci_recv_frame(phy->hdev, skb);
-	}
-	return IRQ_HANDLED;
-}
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct nfc_phy_ops i2c_phy_ops = {
-	.write = pn544_hci_i2c_write,
+अटल काष्ठा nfc_phy_ops i2c_phy_ops = अणु
+	.ग_लिखो = pn544_hci_i2c_ग_लिखो,
 	.enable = pn544_hci_i2c_enable,
 	.disable = pn544_hci_i2c_disable,
-};
+पूर्ण;
 
-static int pn544_hci_i2c_fw_download(void *phy_id, const char *firmware_name,
+अटल पूर्णांक pn544_hci_i2c_fw_करोwnload(व्योम *phy_id, स्थिर अक्षर *firmware_name,
 					u8 hw_variant)
-{
-	struct pn544_i2c_phy *phy = phy_id;
+अणु
+	काष्ठा pn544_i2c_phy *phy = phy_id;
 
 	pr_info("Starting Firmware Download (%s)\n", firmware_name);
 
-	strcpy(phy->firmware_name, firmware_name);
+	म_नकल(phy->firmware_name, firmware_name);
 
 	phy->hw_variant = hw_variant;
 	phy->fw_work_state = FW_WORK_STATE_START;
 
 	schedule_work(&phy->fw_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pn544_hci_i2c_fw_work_complete(struct pn544_i2c_phy *phy,
-					   int result)
-{
+अटल व्योम pn544_hci_i2c_fw_work_complete(काष्ठा pn544_i2c_phy *phy,
+					   पूर्णांक result)
+अणु
 	pr_info("Firmware Download Complete, result=%d\n", result);
 
 	pn544_hci_i2c_disable(phy);
 
 	phy->fw_work_state = FW_WORK_STATE_IDLE;
 
-	if (phy->fw) {
+	अगर (phy->fw) अणु
 		release_firmware(phy->fw);
-		phy->fw = NULL;
-	}
+		phy->fw = शून्य;
+	पूर्ण
 
-	nfc_fw_download_done(phy->hdev->ndev, phy->firmware_name, (u32) -result);
-}
+	nfc_fw_करोwnload_करोne(phy->hdev->ndev, phy->firmware_name, (u32) -result);
+पूर्ण
 
-static int pn544_hci_i2c_fw_write_cmd(struct i2c_client *client, u32 dest_addr,
-				      const u8 *data, u16 datalen)
-{
+अटल पूर्णांक pn544_hci_i2c_fw_ग_लिखो_cmd(काष्ठा i2c_client *client, u32 dest_addr,
+				      स्थिर u8 *data, u16 datalen)
+अणु
 	u8 frame[PN544_FW_I2C_MAX_PAYLOAD];
-	struct pn544_i2c_fw_frame_write *framep;
+	काष्ठा pn544_i2c_fw_frame_ग_लिखो *framep;
 	u16 params_len;
-	int framelen;
-	int r;
+	पूर्णांक framelen;
+	पूर्णांक r;
 
-	if (datalen > PN544_FW_I2C_WRITE_DATA_MAX_LEN)
+	अगर (datalen > PN544_FW_I2C_WRITE_DATA_MAX_LEN)
 		datalen = PN544_FW_I2C_WRITE_DATA_MAX_LEN;
 
-	framep = (struct pn544_i2c_fw_frame_write *) frame;
+	framep = (काष्ठा pn544_i2c_fw_frame_ग_लिखो *) frame;
 
-	params_len = sizeof(framep->be_dest_addr) +
-		     sizeof(framep->be_datalen) + datalen;
-	framelen = params_len + sizeof(framep->cmd) +
-			     sizeof(framep->be_length);
+	params_len = माप(framep->be_dest_addr) +
+		     माप(framep->be_datalen) + datalen;
+	framelen = params_len + माप(framep->cmd) +
+			     माप(framep->be_length);
 
 	framep->cmd = PN544_FW_CMD_WRITE;
 
@@ -586,32 +587,32 @@ static int pn544_hci_i2c_fw_write_cmd(struct i2c_client *client, u32 dest_addr,
 
 	put_unaligned_be16(datalen, &framep->be_datalen);
 
-	memcpy(framep->data, data, datalen);
+	स_नकल(framep->data, data, datalen);
 
 	r = i2c_master_send(client, frame, framelen);
 
-	if (r == framelen)
-		return datalen;
-	else if (r < 0)
-		return r;
-	else
-		return -EIO;
-}
+	अगर (r == framelen)
+		वापस datalen;
+	अन्यथा अगर (r < 0)
+		वापस r;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
-static int pn544_hci_i2c_fw_check_cmd(struct i2c_client *client, u32 start_addr,
-				      const u8 *data, u16 datalen)
-{
-	struct pn544_i2c_fw_frame_check frame;
-	int r;
+अटल पूर्णांक pn544_hci_i2c_fw_check_cmd(काष्ठा i2c_client *client, u32 start_addr,
+				      स्थिर u8 *data, u16 datalen)
+अणु
+	काष्ठा pn544_i2c_fw_frame_check frame;
+	पूर्णांक r;
 	u16 crc;
 
-	/* calculate local crc for the data we want to check */
+	/* calculate local crc क्रम the data we want to check */
 	crc = crc_ccitt(0xffff, data, datalen);
 
 	frame.cmd = PN544_FW_CMD_CHECK;
 
-	put_unaligned_be16(sizeof(frame.be_start_addr) +
-			   sizeof(frame.be_datalen) + sizeof(frame.be_crc),
+	put_unaligned_be16(माप(frame.be_start_addr) +
+			   माप(frame.be_datalen) + माप(frame.be_crc),
 			   &frame.be_length);
 
 	/* tell the chip the memory region to which our crc applies */
@@ -622,271 +623,271 @@ static int pn544_hci_i2c_fw_check_cmd(struct i2c_client *client, u32 start_addr,
 	put_unaligned_be16(datalen, &frame.be_datalen);
 
 	/*
-	 * and give our local crc. Chip will calculate its own crc for the
+	 * and give our local crc. Chip will calculate its own crc क्रम the
 	 * region and compare with ours.
 	 */
 	put_unaligned_be16(crc, &frame.be_crc);
 
-	r = i2c_master_send(client, (const char *) &frame, sizeof(frame));
+	r = i2c_master_send(client, (स्थिर अक्षर *) &frame, माप(frame));
 
-	if (r == sizeof(frame))
-		return 0;
-	else if (r < 0)
-		return r;
-	else
-		return -EIO;
-}
+	अगर (r == माप(frame))
+		वापस 0;
+	अन्यथा अगर (r < 0)
+		वापस r;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
-static int pn544_hci_i2c_fw_write_chunk(struct pn544_i2c_phy *phy)
-{
-	int r;
+अटल पूर्णांक pn544_hci_i2c_fw_ग_लिखो_chunk(काष्ठा pn544_i2c_phy *phy)
+अणु
+	पूर्णांक r;
 
-	r = pn544_hci_i2c_fw_write_cmd(phy->i2c_dev,
+	r = pn544_hci_i2c_fw_ग_लिखो_cmd(phy->i2c_dev,
 				       phy->fw_blob_dest_addr + phy->fw_written,
 				       phy->fw_blob_data + phy->fw_written,
 				       phy->fw_blob_size - phy->fw_written);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	phy->fw_written += r;
 	phy->fw_work_state = FW_WORK_STATE_WAIT_WRITE_ANSWER;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pn544_hci_i2c_fw_secure_write_frame_cmd(struct pn544_i2c_phy *phy,
-					const u8 *data, u16 datalen)
-{
+अटल पूर्णांक pn544_hci_i2c_fw_secure_ग_लिखो_frame_cmd(काष्ठा pn544_i2c_phy *phy,
+					स्थिर u8 *data, u16 datalen)
+अणु
 	u8 buf[PN544_FW_I2C_MAX_PAYLOAD];
-	struct pn544_i2c_fw_secure_frame *chunk;
-	int chunklen;
-	int r;
+	काष्ठा pn544_i2c_fw_secure_frame *chunk;
+	पूर्णांक chunklen;
+	पूर्णांक r;
 
-	if (datalen > PN544_FW_SECURE_CHUNK_WRITE_DATA_MAX_LEN)
+	अगर (datalen > PN544_FW_SECURE_CHUNK_WRITE_DATA_MAX_LEN)
 		datalen = PN544_FW_SECURE_CHUNK_WRITE_DATA_MAX_LEN;
 
-	chunk = (struct pn544_i2c_fw_secure_frame *) buf;
+	chunk = (काष्ठा pn544_i2c_fw_secure_frame *) buf;
 
 	chunk->cmd = PN544_FW_CMD_SECURE_CHUNK_WRITE;
 
 	put_unaligned_be16(datalen, &chunk->be_datalen);
 
-	memcpy(chunk->data, data, datalen);
+	स_नकल(chunk->data, data, datalen);
 
-	chunklen = sizeof(chunk->cmd) + sizeof(chunk->be_datalen) + datalen;
+	chunklen = माप(chunk->cmd) + माप(chunk->be_datalen) + datalen;
 
 	r = i2c_master_send(phy->i2c_dev, buf, chunklen);
 
-	if (r == chunklen)
-		return datalen;
-	else if (r < 0)
-		return r;
-	else
-		return -EIO;
+	अगर (r == chunklen)
+		वापस datalen;
+	अन्यथा अगर (r < 0)
+		वापस r;
+	अन्यथा
+		वापस -EIO;
 
-}
+पूर्ण
 
-static int pn544_hci_i2c_fw_secure_write_frame(struct pn544_i2c_phy *phy)
-{
-	struct pn544_i2c_fw_secure_frame *framep;
-	int r;
+अटल पूर्णांक pn544_hci_i2c_fw_secure_ग_लिखो_frame(काष्ठा pn544_i2c_phy *phy)
+अणु
+	काष्ठा pn544_i2c_fw_secure_frame *framep;
+	पूर्णांक r;
 
-	framep = (struct pn544_i2c_fw_secure_frame *) phy->fw_blob_data;
-	if (phy->fw_written == 0)
+	framep = (काष्ठा pn544_i2c_fw_secure_frame *) phy->fw_blob_data;
+	अगर (phy->fw_written == 0)
 		phy->fw_blob_size = get_unaligned_be16(&framep->be_datalen)
 				+ PN544_FW_SECURE_FRAME_HEADER_LEN;
 
-	/* Only secure write command can be chunked*/
-	if (phy->fw_blob_size > PN544_FW_I2C_MAX_PAYLOAD &&
+	/* Only secure ग_लिखो command can be chunked*/
+	अगर (phy->fw_blob_size > PN544_FW_I2C_MAX_PAYLOAD &&
 			framep->cmd != PN544_FW_CMD_SECURE_WRITE)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* The firmware also have other commands, we just send them directly */
-	if (phy->fw_blob_size < PN544_FW_I2C_MAX_PAYLOAD) {
+	अगर (phy->fw_blob_size < PN544_FW_I2C_MAX_PAYLOAD) अणु
 		r = i2c_master_send(phy->i2c_dev,
-			(const char *) phy->fw_blob_data, phy->fw_blob_size);
+			(स्थिर अक्षर *) phy->fw_blob_data, phy->fw_blob_size);
 
-		if (r == phy->fw_blob_size)
-			goto exit;
-		else if (r < 0)
-			return r;
-		else
-			return -EIO;
-	}
+		अगर (r == phy->fw_blob_size)
+			जाओ निकास;
+		अन्यथा अगर (r < 0)
+			वापस r;
+		अन्यथा
+			वापस -EIO;
+	पूर्ण
 
-	r = pn544_hci_i2c_fw_secure_write_frame_cmd(phy,
+	r = pn544_hci_i2c_fw_secure_ग_लिखो_frame_cmd(phy,
 				       phy->fw_blob_data + phy->fw_written,
 				       phy->fw_blob_size - phy->fw_written);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-exit:
+निकास:
 	phy->fw_written += r;
 	phy->fw_work_state = FW_WORK_STATE_WAIT_SECURE_WRITE_ANSWER;
 
 	/* SW reset command will not trig any response from PN544 */
-	if (framep->cmd == PN544_FW_CMD_RESET) {
+	अगर (framep->cmd == PN544_FW_CMD_RESET) अणु
 		pn544_hci_i2c_enable_mode(phy, PN544_FW_MODE);
 		phy->fw_cmd_result = 0;
 		schedule_work(&phy->fw_work);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pn544_hci_i2c_fw_work(struct work_struct *work)
-{
-	struct pn544_i2c_phy *phy = container_of(work, struct pn544_i2c_phy,
+अटल व्योम pn544_hci_i2c_fw_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pn544_i2c_phy *phy = container_of(work, काष्ठा pn544_i2c_phy,
 						fw_work);
-	int r;
-	struct pn544_i2c_fw_blob *blob;
-	struct pn544_i2c_fw_secure_blob *secure_blob;
+	पूर्णांक r;
+	काष्ठा pn544_i2c_fw_blob *blob;
+	काष्ठा pn544_i2c_fw_secure_blob *secure_blob;
 
-	switch (phy->fw_work_state) {
-	case FW_WORK_STATE_START:
+	चयन (phy->fw_work_state) अणु
+	हाल FW_WORK_STATE_START:
 		pn544_hci_i2c_enable_mode(phy, PN544_FW_MODE);
 
 		r = request_firmware(&phy->fw, phy->firmware_name,
 				     &phy->i2c_dev->dev);
-		if (r < 0)
-			goto exit_state_start;
+		अगर (r < 0)
+			जाओ निकास_state_start;
 
 		phy->fw_written = 0;
 
-		switch (phy->hw_variant) {
-		case PN544_HW_VARIANT_C2:
-			blob = (struct pn544_i2c_fw_blob *) phy->fw->data;
+		चयन (phy->hw_variant) अणु
+		हाल PN544_HW_VARIANT_C2:
+			blob = (काष्ठा pn544_i2c_fw_blob *) phy->fw->data;
 			phy->fw_blob_size = get_unaligned_be32(&blob->be_size);
 			phy->fw_blob_dest_addr = get_unaligned_be32(
 							&blob->be_destaddr);
 			phy->fw_blob_data = blob->data;
 
-			r = pn544_hci_i2c_fw_write_chunk(phy);
-			break;
-		case PN544_HW_VARIANT_C3:
-			secure_blob = (struct pn544_i2c_fw_secure_blob *)
+			r = pn544_hci_i2c_fw_ग_लिखो_chunk(phy);
+			अवरोध;
+		हाल PN544_HW_VARIANT_C3:
+			secure_blob = (काष्ठा pn544_i2c_fw_secure_blob *)
 								phy->fw->data;
 			phy->fw_blob_data = secure_blob->data;
 			phy->fw_size = phy->fw->size;
-			r = pn544_hci_i2c_fw_secure_write_frame(phy);
-			break;
-		default:
+			r = pn544_hci_i2c_fw_secure_ग_लिखो_frame(phy);
+			अवरोध;
+		शेष:
 			r = -ENOTSUPP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-exit_state_start:
-		if (r < 0)
+निकास_state_start:
+		अगर (r < 0)
 			pn544_hci_i2c_fw_work_complete(phy, r);
-		break;
+		अवरोध;
 
-	case FW_WORK_STATE_WAIT_WRITE_ANSWER:
+	हाल FW_WORK_STATE_WAIT_WRITE_ANSWER:
 		r = phy->fw_cmd_result;
-		if (r < 0)
-			goto exit_state_wait_write_answer;
+		अगर (r < 0)
+			जाओ निकास_state_रुको_ग_लिखो_answer;
 
-		if (phy->fw_written == phy->fw_blob_size) {
+		अगर (phy->fw_written == phy->fw_blob_size) अणु
 			r = pn544_hci_i2c_fw_check_cmd(phy->i2c_dev,
 						       phy->fw_blob_dest_addr,
 						       phy->fw_blob_data,
 						       phy->fw_blob_size);
-			if (r < 0)
-				goto exit_state_wait_write_answer;
+			अगर (r < 0)
+				जाओ निकास_state_रुको_ग_लिखो_answer;
 			phy->fw_work_state = FW_WORK_STATE_WAIT_CHECK_ANSWER;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		r = pn544_hci_i2c_fw_write_chunk(phy);
+		r = pn544_hci_i2c_fw_ग_लिखो_chunk(phy);
 
-exit_state_wait_write_answer:
-		if (r < 0)
+निकास_state_रुको_ग_लिखो_answer:
+		अगर (r < 0)
 			pn544_hci_i2c_fw_work_complete(phy, r);
-		break;
+		अवरोध;
 
-	case FW_WORK_STATE_WAIT_CHECK_ANSWER:
+	हाल FW_WORK_STATE_WAIT_CHECK_ANSWER:
 		r = phy->fw_cmd_result;
-		if (r < 0)
-			goto exit_state_wait_check_answer;
+		अगर (r < 0)
+			जाओ निकास_state_रुको_check_answer;
 
-		blob = (struct pn544_i2c_fw_blob *) (phy->fw_blob_data +
+		blob = (काष्ठा pn544_i2c_fw_blob *) (phy->fw_blob_data +
 		       phy->fw_blob_size);
 		phy->fw_blob_size = get_unaligned_be32(&blob->be_size);
-		if (phy->fw_blob_size != 0) {
+		अगर (phy->fw_blob_size != 0) अणु
 			phy->fw_blob_dest_addr =
 					get_unaligned_be32(&blob->be_destaddr);
 			phy->fw_blob_data = blob->data;
 
 			phy->fw_written = 0;
-			r = pn544_hci_i2c_fw_write_chunk(phy);
-		}
+			r = pn544_hci_i2c_fw_ग_लिखो_chunk(phy);
+		पूर्ण
 
-exit_state_wait_check_answer:
-		if (r < 0 || phy->fw_blob_size == 0)
+निकास_state_रुको_check_answer:
+		अगर (r < 0 || phy->fw_blob_size == 0)
 			pn544_hci_i2c_fw_work_complete(phy, r);
-		break;
+		अवरोध;
 
-	case FW_WORK_STATE_WAIT_SECURE_WRITE_ANSWER:
+	हाल FW_WORK_STATE_WAIT_SECURE_WRITE_ANSWER:
 		r = phy->fw_cmd_result;
-		if (r < 0)
-			goto exit_state_wait_secure_write_answer;
+		अगर (r < 0)
+			जाओ निकास_state_रुको_secure_ग_लिखो_answer;
 
-		if (r == PN544_FW_CMD_RESULT_CHUNK_OK) {
-			r = pn544_hci_i2c_fw_secure_write_frame(phy);
-			goto exit_state_wait_secure_write_answer;
-		}
+		अगर (r == PN544_FW_CMD_RESULT_CHUNK_OK) अणु
+			r = pn544_hci_i2c_fw_secure_ग_लिखो_frame(phy);
+			जाओ निकास_state_रुको_secure_ग_लिखो_answer;
+		पूर्ण
 
-		if (phy->fw_written == phy->fw_blob_size) {
-			secure_blob = (struct pn544_i2c_fw_secure_blob *)
+		अगर (phy->fw_written == phy->fw_blob_size) अणु
+			secure_blob = (काष्ठा pn544_i2c_fw_secure_blob *)
 				(phy->fw_blob_data + phy->fw_blob_size);
 			phy->fw_size -= phy->fw_blob_size +
 				PN544_FW_SECURE_BLOB_HEADER_LEN;
-			if (phy->fw_size >= PN544_FW_SECURE_BLOB_HEADER_LEN
-					+ PN544_FW_SECURE_FRAME_HEADER_LEN) {
+			अगर (phy->fw_size >= PN544_FW_SECURE_BLOB_HEADER_LEN
+					+ PN544_FW_SECURE_FRAME_HEADER_LEN) अणु
 				phy->fw_blob_data = secure_blob->data;
 
 				phy->fw_written = 0;
-				r = pn544_hci_i2c_fw_secure_write_frame(phy);
-			}
-		}
+				r = pn544_hci_i2c_fw_secure_ग_लिखो_frame(phy);
+			पूर्ण
+		पूर्ण
 
-exit_state_wait_secure_write_answer:
-		if (r < 0 || phy->fw_size == 0)
+निकास_state_रुको_secure_ग_लिखो_answer:
+		अगर (r < 0 || phy->fw_size == 0)
 			pn544_hci_i2c_fw_work_complete(phy, r);
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const struct acpi_gpio_params enable_gpios = { 1, 0, false };
-static const struct acpi_gpio_params firmware_gpios = { 2, 0, false };
+अटल स्थिर काष्ठा acpi_gpio_params enable_gpios = अणु 1, 0, false पूर्ण;
+अटल स्थिर काष्ठा acpi_gpio_params firmware_gpios = अणु 2, 0, false पूर्ण;
 
-static const struct acpi_gpio_mapping acpi_pn544_gpios[] = {
-	{ "enable-gpios", &enable_gpios, 1 },
-	{ "firmware-gpios", &firmware_gpios, 1 },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_gpio_mapping acpi_pn544_gpios[] = अणु
+	अणु "enable-gpios", &enable_gpios, 1 पूर्ण,
+	अणु "firmware-gpios", &firmware_gpios, 1 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int pn544_hci_i2c_probe(struct i2c_client *client,
-			       const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct pn544_i2c_phy *phy;
-	int r = 0;
+अटल पूर्णांक pn544_hci_i2c_probe(काष्ठा i2c_client *client,
+			       स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा pn544_i2c_phy *phy;
+	पूर्णांक r = 0;
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 	dev_dbg(&client->dev, "IRQ: %d\n", client->irq);
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
 		nfc_err(&client->dev, "Need I2C_FUNC_I2C\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	phy = devm_kzalloc(&client->dev, sizeof(struct pn544_i2c_phy),
+	phy = devm_kzalloc(&client->dev, माप(काष्ठा pn544_i2c_phy),
 			   GFP_KERNEL);
-	if (!phy)
-		return -ENOMEM;
+	अगर (!phy)
+		वापस -ENOMEM;
 
 	INIT_WORK(&phy->fw_work, pn544_hci_i2c_fw_work);
 	phy->fw_work_state = FW_WORK_STATE_IDLE;
@@ -895,78 +896,78 @@ static int pn544_hci_i2c_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, phy);
 
 	r = devm_acpi_dev_add_driver_gpios(dev, acpi_pn544_gpios);
-	if (r)
+	अगर (r)
 		dev_dbg(dev, "Unable to add GPIO mapping table\n");
 
 	/* Get EN GPIO */
 	phy->gpiod_en = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
-	if (IS_ERR(phy->gpiod_en)) {
+	अगर (IS_ERR(phy->gpiod_en)) अणु
 		nfc_err(dev, "Unable to get EN GPIO\n");
-		return PTR_ERR(phy->gpiod_en);
-	}
+		वापस PTR_ERR(phy->gpiod_en);
+	पूर्ण
 
 	/* Get FW GPIO */
 	phy->gpiod_fw = devm_gpiod_get(dev, "firmware", GPIOD_OUT_LOW);
-	if (IS_ERR(phy->gpiod_fw)) {
+	अगर (IS_ERR(phy->gpiod_fw)) अणु
 		nfc_err(dev, "Unable to get FW GPIO\n");
-		return PTR_ERR(phy->gpiod_fw);
-	}
+		वापस PTR_ERR(phy->gpiod_fw);
+	पूर्ण
 
-	pn544_hci_i2c_platform_init(phy);
+	pn544_hci_i2c_platक्रमm_init(phy);
 
-	r = devm_request_threaded_irq(&client->dev, client->irq, NULL,
-				      pn544_hci_i2c_irq_thread_fn,
+	r = devm_request_thपढ़ोed_irq(&client->dev, client->irq, शून्य,
+				      pn544_hci_i2c_irq_thपढ़ो_fn,
 				      IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 				      PN544_HCI_I2C_DRIVER_NAME, phy);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		nfc_err(&client->dev, "Unable to register IRQ handler\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = pn544_hci_probe(phy, &i2c_phy_ops, LLC_SHDLC_NAME,
 			    PN544_I2C_FRAME_HEADROOM, PN544_I2C_FRAME_TAILROOM,
 			    PN544_HCI_I2C_LLC_MAX_PAYLOAD,
-			    pn544_hci_i2c_fw_download, &phy->hdev);
-	if (r < 0)
-		return r;
+			    pn544_hci_i2c_fw_करोwnload, &phy->hdev);
+	अगर (r < 0)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pn544_hci_i2c_remove(struct i2c_client *client)
-{
-	struct pn544_i2c_phy *phy = i2c_get_clientdata(client);
+अटल पूर्णांक pn544_hci_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा pn544_i2c_phy *phy = i2c_get_clientdata(client);
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 
 	cancel_work_sync(&phy->fw_work);
-	if (phy->fw_work_state != FW_WORK_STATE_IDLE)
+	अगर (phy->fw_work_state != FW_WORK_STATE_IDLE)
 		pn544_hci_i2c_fw_work_complete(phy, -ENODEV);
 
-	pn544_hci_remove(phy->hdev);
+	pn544_hci_हटाओ(phy->hdev);
 
-	if (phy->powered)
+	अगर (phy->घातered)
 		pn544_hci_i2c_disable(phy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id of_pn544_i2c_match[] = {
-	{ .compatible = "nxp,pn544-i2c", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_pn544_i2c_match[] = अणु
+	अणु .compatible = "nxp,pn544-i2c", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_pn544_i2c_match);
 
-static struct i2c_driver pn544_hci_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver pn544_hci_i2c_driver = अणु
+	.driver = अणु
 		   .name = PN544_HCI_I2C_DRIVER_NAME,
 		   .of_match_table = of_match_ptr(of_pn544_i2c_match),
 		   .acpi_match_table = ACPI_PTR(pn544_hci_i2c_acpi_match),
-		  },
+		  पूर्ण,
 	.probe = pn544_hci_i2c_probe,
 	.id_table = pn544_hci_i2c_id_table,
-	.remove = pn544_hci_i2c_remove,
-};
+	.हटाओ = pn544_hci_i2c_हटाओ,
+पूर्ण;
 
 module_i2c_driver(pn544_hci_i2c_driver);
 

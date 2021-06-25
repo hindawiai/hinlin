@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-ep93xx/micro9.c
  *
@@ -8,118 +9,118 @@
  *                    Hubert Feurstein <hubert.feurstein@contec.at>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
 
-#include "hardware.h"
+#समावेश "hardware.h"
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "soc.h"
+#समावेश "soc.h"
 
 /*************************************************************************
  * Micro9 NOR Flash
  *
  * Micro9-High has up to 64MB of 32-bit flash on CS1
  * Micro9-Mid has up to 64MB of either 32-bit or 16-bit flash on CS1
- * Micro9-Lite uses a separate MTD map driver for flash support
+ * Micro9-Lite uses a separate MTD map driver क्रम flash support
  * Micro9-Slim has up to 64MB of either 32-bit or 16-bit flash on CS1
  *************************************************************************/
-static unsigned int __init micro9_detect_bootwidth(void)
-{
+अटल अचिन्हित पूर्णांक __init micro9_detect_bootwidth(व्योम)
+अणु
 	u32 v;
 
-	/* Detect the bus width of the external flash memory */
-	v = __raw_readl(EP93XX_SYSCON_SYSCFG);
-	if (v & EP93XX_SYSCON_SYSCFG_LCSN7)
-		return 4; /* 32-bit */
-	else
-		return 2; /* 16-bit */
-}
+	/* Detect the bus width of the बाह्यal flash memory */
+	v = __raw_पढ़ोl(EP93XX_SYSCON_SYSCFG);
+	अगर (v & EP93XX_SYSCON_SYSCFG_LCSN7)
+		वापस 4; /* 32-bit */
+	अन्यथा
+		वापस 2; /* 16-bit */
+पूर्ण
 
-static void __init micro9_register_flash(void)
-{
-	unsigned int width;
+अटल व्योम __init micro9_रेजिस्टर_flash(व्योम)
+अणु
+	अचिन्हित पूर्णांक width;
 
-	if (machine_is_micro9())
+	अगर (machine_is_micro9())
 		width = 4;
-	else if (machine_is_micro9m() || machine_is_micro9s())
+	अन्यथा अगर (machine_is_micro9m() || machine_is_micro9s())
 		width = micro9_detect_bootwidth();
-	else
+	अन्यथा
 		width = 0;
 
-	if (width)
-		ep93xx_register_flash(width, EP93XX_CS1_PHYS_BASE, SZ_64M);
-}
+	अगर (width)
+		ep93xx_रेजिस्टर_flash(width, EP93XX_CS1_PHYS_BASE, SZ_64M);
+पूर्ण
 
 
 /*************************************************************************
  * Micro9 Ethernet
  *************************************************************************/
-static struct ep93xx_eth_data __initdata micro9_eth_data = {
+अटल काष्ठा ep93xx_eth_data __initdata micro9_eth_data = अणु
 	.phy_id		= 0x1f,
-};
+पूर्ण;
 
 
-static void __init micro9_init_machine(void)
-{
+अटल व्योम __init micro9_init_machine(व्योम)
+अणु
 	ep93xx_init_devices();
-	ep93xx_register_eth(&micro9_eth_data, 1);
-	micro9_register_flash();
-}
+	ep93xx_रेजिस्टर_eth(&micro9_eth_data, 1);
+	micro9_रेजिस्टर_flash();
+पूर्ण
 
 
-#ifdef CONFIG_MACH_MICRO9H
+#अगर_घोषित CONFIG_MACH_MICRO9H
 MACHINE_START(MICRO9, "Contec Micro9-High")
-	/* Maintainer: Hubert Feurstein <hubert.feurstein@contec.at> */
+	/* Maपूर्णांकainer: Hubert Feurstein <hubert.feurstein@contec.at> */
 	.atag_offset	= 0x100,
 	.map_io		= ep93xx_map_io,
 	.init_irq	= ep93xx_init_irq,
-	.init_time	= ep93xx_timer_init,
+	.init_समय	= ep93xx_समयr_init,
 	.init_machine	= micro9_init_machine,
 	.init_late	= ep93xx_init_late,
 	.restart	= ep93xx_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_MICRO9M
+#अगर_घोषित CONFIG_MACH_MICRO9M
 MACHINE_START(MICRO9M, "Contec Micro9-Mid")
-	/* Maintainer: Hubert Feurstein <hubert.feurstein@contec.at> */
+	/* Maपूर्णांकainer: Hubert Feurstein <hubert.feurstein@contec.at> */
 	.atag_offset	= 0x100,
 	.map_io		= ep93xx_map_io,
 	.init_irq	= ep93xx_init_irq,
-	.init_time	= ep93xx_timer_init,
+	.init_समय	= ep93xx_समयr_init,
 	.init_machine	= micro9_init_machine,
 	.init_late	= ep93xx_init_late,
 	.restart	= ep93xx_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_MICRO9L
+#अगर_घोषित CONFIG_MACH_MICRO9L
 MACHINE_START(MICRO9L, "Contec Micro9-Lite")
-	/* Maintainer: Hubert Feurstein <hubert.feurstein@contec.at> */
+	/* Maपूर्णांकainer: Hubert Feurstein <hubert.feurstein@contec.at> */
 	.atag_offset	= 0x100,
 	.map_io		= ep93xx_map_io,
 	.init_irq	= ep93xx_init_irq,
-	.init_time	= ep93xx_timer_init,
+	.init_समय	= ep93xx_समयr_init,
 	.init_machine	= micro9_init_machine,
 	.init_late	= ep93xx_init_late,
 	.restart	= ep93xx_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_MICRO9S
+#अगर_घोषित CONFIG_MACH_MICRO9S
 MACHINE_START(MICRO9S, "Contec Micro9-Slim")
-	/* Maintainer: Hubert Feurstein <hubert.feurstein@contec.at> */
+	/* Maपूर्णांकainer: Hubert Feurstein <hubert.feurstein@contec.at> */
 	.atag_offset	= 0x100,
 	.map_io		= ep93xx_map_io,
 	.init_irq	= ep93xx_init_irq,
-	.init_time	= ep93xx_timer_init,
+	.init_समय	= ep93xx_समयr_init,
 	.init_machine	= micro9_init_machine,
 	.init_late	= ep93xx_init_late,
 	.restart	= ep93xx_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर

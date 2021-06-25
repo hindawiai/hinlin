@@ -1,86 +1,87 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2008-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2008-2009 PetaLogix
- * Copyright (C) 2006 Atmark Techno, Inc.
+ * Copyright (C) 2006 Aपंचांगark Techno, Inc.
  */
 
-#ifndef _ASM_MICROBLAZE_MMU_H
-#define _ASM_MICROBLAZE_MMU_H
+#अगर_अघोषित _ASM_MICROBLAZE_MMU_H
+#घोषणा _ASM_MICROBLAZE_MMU_H
 
-#  ifdef __KERNEL__
-#   ifndef __ASSEMBLY__
+#  अगरdef __KERNEL__
+#   अगरndef __ASSEMBLY__
 
 /* Default "unsigned long" context */
-typedef unsigned long mm_context_t;
+प्रकार अचिन्हित दीर्घ mm_context_t;
 
 /* Hardware Page Table Entry */
-typedef struct _PTE {
-	unsigned long    v:1;	/* Entry is valid */
-	unsigned long vsid:24;	/* Virtual segment identifier */
-	unsigned long    h:1;	/* Hash algorithm indicator */
-	unsigned long  api:6;	/* Abbreviated page index */
-	unsigned long  rpn:20;	/* Real (physical) page number */
-	unsigned long     :3;	/* Unused */
-	unsigned long    r:1;	/* Referenced */
-	unsigned long    c:1;	/* Changed */
-	unsigned long    w:1;	/* Write-thru cache mode */
-	unsigned long    i:1;	/* Cache inhibited */
-	unsigned long    m:1;	/* Memory coherence */
-	unsigned long    g:1;	/* Guarded */
-	unsigned long     :1;	/* Unused */
-	unsigned long   pp:2;	/* Page protection */
-} PTE;
+प्रकार काष्ठा _PTE अणु
+	अचिन्हित दीर्घ    v:1;	/* Entry is valid */
+	अचिन्हित दीर्घ vsid:24;	/* Virtual segment identअगरier */
+	अचिन्हित दीर्घ    h:1;	/* Hash algorithm indicator */
+	अचिन्हित दीर्घ  api:6;	/* Abbreviated page index */
+	अचिन्हित दीर्घ  rpn:20;	/* Real (physical) page number */
+	अचिन्हित दीर्घ     :3;	/* Unused */
+	अचिन्हित दीर्घ    r:1;	/* Referenced */
+	अचिन्हित दीर्घ    c:1;	/* Changed */
+	अचिन्हित दीर्घ    w:1;	/* Write-thru cache mode */
+	अचिन्हित दीर्घ    i:1;	/* Cache inhibited */
+	अचिन्हित दीर्घ    m:1;	/* Memory coherence */
+	अचिन्हित दीर्घ    g:1;	/* Guarded */
+	अचिन्हित दीर्घ     :1;	/* Unused */
+	अचिन्हित दीर्घ   pp:2;	/* Page protection */
+पूर्ण PTE;
 
-/* Values for PP (assumes Ks=0, Kp=1) */
-#  define PP_RWXX	0 /* Supervisor read/write, User none */
-#  define PP_RWRX	1 /* Supervisor read/write, User read */
-#  define PP_RWRW	2 /* Supervisor read/write, User read/write */
-#  define PP_RXRX	3 /* Supervisor read,       User read */
+/* Values क्रम PP (assumes Ks=0, Kp=1) */
+#  define PP_RWXX	0 /* Supervisor पढ़ो/ग_लिखो, User none */
+#  define PP_RWRX	1 /* Supervisor पढ़ो/ग_लिखो, User पढ़ो */
+#  define PP_RWRW	2 /* Supervisor पढ़ो/ग_लिखो, User पढ़ो/ग_लिखो */
+#  define PP_RXRX	3 /* Supervisor पढ़ो,       User पढ़ो */
 
 /* Segment Register */
-typedef struct _SEGREG {
-	unsigned long    t:1;	/* Normal or I/O  type */
-	unsigned long   ks:1;	/* Supervisor 'key' (normally 0) */
-	unsigned long   kp:1;	/* User 'key' (normally 1) */
-	unsigned long    n:1;	/* No-execute */
-	unsigned long     :4;	/* Unused */
-	unsigned long vsid:24;	/* Virtual Segment Identifier */
-} SEGREG;
+प्रकार काष्ठा _SEGREG अणु
+	अचिन्हित दीर्घ    t:1;	/* Normal or I/O  type */
+	अचिन्हित दीर्घ   ks:1;	/* Supervisor 'key' (normally 0) */
+	अचिन्हित दीर्घ   kp:1;	/* User 'key' (normally 1) */
+	अचिन्हित दीर्घ    n:1;	/* No-execute */
+	अचिन्हित दीर्घ     :4;	/* Unused */
+	अचिन्हित दीर्घ vsid:24;	/* Virtual Segment Identअगरier */
+पूर्ण SEGREG;
 
-extern void _tlbie(unsigned long va);	/* invalidate a TLB entry */
-extern void _tlbia(void);		/* invalidate all TLB entries */
+बाह्य व्योम _tlbie(अचिन्हित दीर्घ va);	/* invalidate a TLB entry */
+बाह्य व्योम _tlbia(व्योम);		/* invalidate all TLB entries */
 
 /*
  * tlb_skip size stores actual number skipped TLBs from TLB0 - every directy TLB
  * mapping has to increase tlb_skip size.
  */
-extern u32 tlb_skip;
-#   endif /* __ASSEMBLY__ */
+बाह्य u32 tlb_skip;
+#   endअगर /* __ASSEMBLY__ */
 
 /*
  * The MicroBlaze processor has a TLB architecture identical to PPC-40x. The
- * instruction and data sides share a unified, 64-entry, semi-associative
- * TLB which is maintained totally under software control. In addition, the
- * instruction side has a hardware-managed, 2,4, or 8-entry, fully-associative
+ * inकाष्ठाion and data sides share a unअगरied, 64-entry, semi-associative
+ * TLB which is मुख्यtained totally under software control. In addition, the
+ * inकाष्ठाion side has a hardware-managed, 2,4, or 8-entry, fully-associative
  * TLB which serves as a first level to the shared TLB. These two TLBs are
  * known as the UTLB and ITLB, respectively.
  */
 
 #  define MICROBLAZE_TLB_SIZE 64
 
-/* For cases when you want to skip some TLB entries */
+/* For हालs when you want to skip some TLB entries */
 #  define MICROBLAZE_TLB_SKIP 0
 
-/* Use the last TLB for temporary access to LMB */
+/* Use the last TLB क्रम temporary access to LMB */
 #  define MICROBLAZE_LMB_TLB_ID 63
 
 /*
  * TLB entries are defined by a "high" tag portion and a "low" data
  * portion. The data portion is 32-bits.
  *
- * TLB entries are managed entirely under software control by reading,
- * writing, and searching using the MTS and MFS instructions.
+ * TLB entries are managed entirely under software control by पढ़ोing,
+ * writing, and searching using the MTS and MFS inकाष्ठाions.
  */
 
 #  define TLB_LO		1
@@ -105,15 +106,15 @@ extern u32 tlb_skip;
 /* Data portion */
 #  define TLB_RPN_MASK		0xFFFFFC00 /* Real Page Number */
 #  define TLB_PERM_MASK		0x00000300
-#  define TLB_EX		0x00000200 /* Instruction execution allowed */
+#  define TLB_EX		0x00000200 /* Inकाष्ठाion execution allowed */
 #  define TLB_WR		0x00000100 /* Writes permitted */
 #  define TLB_ZSEL_MASK		0x000000F0
 #  define TLB_ZSEL(x)		(((x) & 0xF) << 4)
 #  define TLB_ATTR_MASK		0x0000000F
-#  define TLB_W			0x00000008 /* Caching is write-through */
+#  define TLB_W			0x00000008 /* Caching is ग_लिखो-through */
 #  define TLB_I			0x00000004 /* Caching is inhibited */
 #  define TLB_M			0x00000002 /* Memory is coherent */
 #  define TLB_G			0x00000001 /* Memory is guarded from prefetch */
 
-#  endif /* __KERNEL__ */
-#endif /* _ASM_MICROBLAZE_MMU_H */
+#  endअगर /* __KERNEL__ */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_MMU_H */

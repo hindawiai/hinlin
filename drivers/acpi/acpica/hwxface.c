@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: hwxface - Public ACPICA hardware interfaces
+ * Module Name: hwxface - Public ACPICA hardware पूर्णांकerfaces
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#define EXPORT_ACPI_INTERFACES
+#घोषणा EXPORT_ACPI_INTERFACES
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acnamesp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acnamesp.h"
 
-#define _COMPONENT          ACPI_HARDWARE
+#घोषणा _COMPONENT          ACPI_HARDWARE
 ACPI_MODULE_NAME("hwxface")
 
 /******************************************************************************
@@ -24,425 +25,425 @@ ACPI_MODULE_NAME("hwxface")
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Set reset register in memory or IO space. Note: Does not
- *              support reset register in PCI config space, this must be
+ * DESCRIPTION: Set reset रेजिस्टर in memory or IO space. Note: Does not
+ *              support reset रेजिस्टर in PCI config space, this must be
  *              handled separately.
  *
  ******************************************************************************/
-acpi_status acpi_reset(void)
-{
-	struct acpi_generic_address *reset_reg;
+acpi_status acpi_reset(व्योम)
+अणु
+	काष्ठा acpi_generic_address *reset_reg;
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_reset);
 
-	reset_reg = &acpi_gbl_FADT.reset_register;
+	reset_reg = &acpi_gbl_FADT.reset_रेजिस्टर;
 
-	/* Check if the reset register is supported */
+	/* Check अगर the reset रेजिस्टर is supported */
 
-	if (!(acpi_gbl_FADT.flags & ACPI_FADT_RESET_REGISTER) ||
-	    !reset_reg->address) {
-		return_ACPI_STATUS(AE_NOT_EXIST);
-	}
+	अगर (!(acpi_gbl_FADT.flags & ACPI_FADT_RESET_REGISTER) ||
+	    !reset_reg->address) अणु
+		वापस_ACPI_STATUS(AE_NOT_EXIST);
+	पूर्ण
 
-	if (reset_reg->space_id == ACPI_ADR_SPACE_SYSTEM_IO) {
+	अगर (reset_reg->space_id == ACPI_ADR_SPACE_SYSTEM_IO) अणु
 		/*
-		 * For I/O space, write directly to the OSL. This bypasses the port
-		 * validation mechanism, which may block a valid write to the reset
-		 * register.
+		 * For I/O space, ग_लिखो directly to the OSL. This bypasses the port
+		 * validation mechanism, which may block a valid ग_लिखो to the reset
+		 * रेजिस्टर.
 		 *
 		 * NOTE:
-		 * The ACPI spec requires the reset register width to be 8, so we
-		 * hardcode it here and ignore the FADT value. This maintains
+		 * The ACPI spec requires the reset रेजिस्टर width to be 8, so we
+		 * hardcode it here and ignore the FADT value. This मुख्यtains
 		 * compatibility with other ACPI implementations that have allowed
-		 * BIOS code with bad register width values to go unnoticed.
+		 * BIOS code with bad रेजिस्टर width values to go unnoticed.
 		 */
-		status = acpi_os_write_port((acpi_io_address)reset_reg->address,
+		status = acpi_os_ग_लिखो_port((acpi_io_address)reset_reg->address,
 					    acpi_gbl_FADT.reset_value,
 					    ACPI_RESET_REGISTER_WIDTH);
-	} else {
-		/* Write the reset value to the reset register */
+	पूर्ण अन्यथा अणु
+		/* Write the reset value to the reset रेजिस्टर */
 
-		status = acpi_hw_write(acpi_gbl_FADT.reset_value, reset_reg);
-	}
+		status = acpi_hw_ग_लिखो(acpi_gbl_FADT.reset_value, reset_reg);
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_reset)
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_read
+ * FUNCTION:    acpi_पढ़ो
  *
- * PARAMETERS:  value               - Where the value is returned
- *              reg                 - GAS register structure
+ * PARAMETERS:  value               - Where the value is वापसed
+ *              reg                 - GAS रेजिस्टर काष्ठाure
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Read from either memory or IO space.
  *
- * LIMITATIONS: <These limitations also apply to acpi_write>
+ * LIMITATIONS: <These limitations also apply to acpi_ग_लिखो>
  *      bit_width must be exactly 8, 16, 32, or 64.
- *      space_ID must be system_memory or system_IO.
+ *      space_ID must be प्रणाली_memory or प्रणाली_IO.
  *      bit_offset and access_width are currently ignored, as there has
  *          not been a need to implement these.
  *
  ******************************************************************************/
-acpi_status acpi_read(u64 *return_value, struct acpi_generic_address *reg)
-{
+acpi_status acpi_पढ़ो(u64 *वापस_value, काष्ठा acpi_generic_address *reg)
+अणु
 	acpi_status status;
 
-	ACPI_FUNCTION_NAME(acpi_read);
+	ACPI_FUNCTION_NAME(acpi_पढ़ो);
 
-	status = acpi_hw_read(return_value, reg);
-	return (status);
-}
+	status = acpi_hw_पढ़ो(वापस_value, reg);
+	वापस (status);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_read)
+ACPI_EXPORT_SYMBOL(acpi_पढ़ो)
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_write
+ * FUNCTION:    acpi_ग_लिखो
  *
  * PARAMETERS:  value               - Value to be written
- *              reg                 - GAS register structure
+ *              reg                 - GAS रेजिस्टर काष्ठाure
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Write to either memory or IO space.
  *
  ******************************************************************************/
-acpi_status acpi_write(u64 value, struct acpi_generic_address *reg)
-{
+acpi_status acpi_ग_लिखो(u64 value, काष्ठा acpi_generic_address *reg)
+अणु
 	acpi_status status;
 
-	ACPI_FUNCTION_NAME(acpi_write);
+	ACPI_FUNCTION_NAME(acpi_ग_लिखो);
 
-	status = acpi_hw_write(value, reg);
-	return (status);
-}
+	status = acpi_hw_ग_लिखो(value, reg);
+	वापस (status);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_write)
+ACPI_EXPORT_SYMBOL(acpi_ग_लिखो)
 
-#if (!ACPI_REDUCED_HARDWARE)
+#अगर (!ACPI_REDUCED_HARDWARE)
 /*******************************************************************************
  *
- * FUNCTION:    acpi_read_bit_register
+ * FUNCTION:    acpi_पढ़ो_bit_रेजिस्टर
  *
- * PARAMETERS:  register_id     - ID of ACPI Bit Register to access
- *              return_value    - Value that was read from the register,
+ * PARAMETERS:  रेजिस्टर_id     - ID of ACPI Bit Register to access
+ *              वापस_value    - Value that was पढ़ो from the रेजिस्टर,
  *                                normalized to bit position zero.
  *
- * RETURN:      Status and the value read from the specified Register. Value
- *              returned is normalized to bit0 (is shifted all the way right)
+ * RETURN:      Status and the value पढ़ो from the specअगरied Register. Value
+ *              वापसed is normalized to bit0 (is shअगरted all the way right)
  *
- * DESCRIPTION: ACPI bit_register read function. Does not acquire the HW lock.
+ * DESCRIPTION: ACPI bit_रेजिस्टर पढ़ो function. Does not acquire the HW lock.
  *
  * SUPPORTS:    Bit fields in PM1 Status, PM1 Enable, PM1 Control, and
  *              PM2 Control.
  *
- * Note: The hardware lock is not required when reading the ACPI bit registers
- *       since almost all of them are single bit and it does not matter that
- *       the parent hardware register can be split across two physical
- *       registers. The only multi-bit field is SLP_TYP in the PM1 control
- *       register, but this field does not cross an 8-bit boundary (nor does
- *       it make much sense to actually read this field.)
+ * Note: The hardware lock is not required when पढ़ोing the ACPI bit रेजिस्टरs
+ *       since almost all of them are single bit and it करोes not matter that
+ *       the parent hardware रेजिस्टर can be split across two physical
+ *       रेजिस्टरs. The only multi-bit field is SLP_TYP in the PM1 control
+ *       रेजिस्टर, but this field करोes not cross an 8-bit boundary (nor करोes
+ *       it make much sense to actually पढ़ो this field.)
  *
  ******************************************************************************/
-acpi_status acpi_read_bit_register(u32 register_id, u32 *return_value)
-{
-	struct acpi_bit_register_info *bit_reg_info;
-	u32 register_value;
+acpi_status acpi_पढ़ो_bit_रेजिस्टर(u32 रेजिस्टर_id, u32 *वापस_value)
+अणु
+	काष्ठा acpi_bit_रेजिस्टर_info *bit_reg_info;
+	u32 रेजिस्टर_value;
 	u32 value;
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE_U32(acpi_read_bit_register, register_id);
+	ACPI_FUNCTION_TRACE_U32(acpi_पढ़ो_bit_रेजिस्टर, रेजिस्टर_id);
 
-	/* Get the info structure corresponding to the requested ACPI Register */
+	/* Get the info काष्ठाure corresponding to the requested ACPI Register */
 
-	bit_reg_info = acpi_hw_get_bit_register_info(register_id);
-	if (!bit_reg_info) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	bit_reg_info = acpi_hw_get_bit_रेजिस्टर_info(रेजिस्टर_id);
+	अगर (!bit_reg_info) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
-	/* Read the entire parent register */
+	/* Read the entire parent रेजिस्टर */
 
-	status = acpi_hw_register_read(bit_reg_info->parent_register,
-				       &register_value);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	status = acpi_hw_रेजिस्टर_पढ़ो(bit_reg_info->parent_रेजिस्टर,
+				       &रेजिस्टर_value);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	/* Normalize the value that was read, mask off other bits */
+	/* Normalize the value that was पढ़ो, mask off other bits */
 
-	value = ((register_value & bit_reg_info->access_bit_mask)
+	value = ((रेजिस्टर_value & bit_reg_info->access_bit_mask)
 		 >> bit_reg_info->bit_position);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_IO,
 			  "BitReg %X, ParentReg %X, Actual %8.8X, ReturnValue %8.8X\n",
-			  register_id, bit_reg_info->parent_register,
-			  register_value, value));
+			  रेजिस्टर_id, bit_reg_info->parent_रेजिस्टर,
+			  रेजिस्टर_value, value));
 
-	*return_value = value;
-	return_ACPI_STATUS(AE_OK);
-}
+	*वापस_value = value;
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_read_bit_register)
+ACPI_EXPORT_SYMBOL(acpi_पढ़ो_bit_रेजिस्टर)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_write_bit_register
+ * FUNCTION:    acpi_ग_लिखो_bit_रेजिस्टर
  *
- * PARAMETERS:  register_id     - ID of ACPI Bit Register to access
- *              value           - Value to write to the register, in bit
- *                                position zero. The bit is automatically
- *                                shifted to the correct position.
+ * PARAMETERS:  रेजिस्टर_id     - ID of ACPI Bit Register to access
+ *              value           - Value to ग_लिखो to the रेजिस्टर, in bit
+ *                                position zero. The bit is स्वतःmatically
+ *                                shअगरted to the correct position.
  *
  * RETURN:      Status
  *
- * DESCRIPTION: ACPI Bit Register write function. Acquires the hardware lock
- *              since most operations require a read/modify/write sequence.
+ * DESCRIPTION: ACPI Bit Register ग_लिखो function. Acquires the hardware lock
+ *              since most operations require a पढ़ो/modअगरy/ग_लिखो sequence.
  *
  * SUPPORTS:    Bit fields in PM1 Status, PM1 Enable, PM1 Control, and
  *              PM2 Control.
  *
  * Note that at this level, the fact that there may be actually two
- * hardware registers (A and B - and B may not exist) is abstracted.
+ * hardware रेजिस्टरs (A and B - and B may not exist) is असलtracted.
  *
  ******************************************************************************/
-acpi_status acpi_write_bit_register(u32 register_id, u32 value)
-{
-	struct acpi_bit_register_info *bit_reg_info;
+acpi_status acpi_ग_लिखो_bit_रेजिस्टर(u32 रेजिस्टर_id, u32 value)
+अणु
+	काष्ठा acpi_bit_रेजिस्टर_info *bit_reg_info;
 	acpi_cpu_flags lock_flags;
-	u32 register_value;
+	u32 रेजिस्टर_value;
 	acpi_status status = AE_OK;
 
-	ACPI_FUNCTION_TRACE_U32(acpi_write_bit_register, register_id);
+	ACPI_FUNCTION_TRACE_U32(acpi_ग_लिखो_bit_रेजिस्टर, रेजिस्टर_id);
 
-	/* Get the info structure corresponding to the requested ACPI Register */
+	/* Get the info काष्ठाure corresponding to the requested ACPI Register */
 
-	bit_reg_info = acpi_hw_get_bit_register_info(register_id);
-	if (!bit_reg_info) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	bit_reg_info = acpi_hw_get_bit_रेजिस्टर_info(रेजिस्टर_id);
+	अगर (!bit_reg_info) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	lock_flags = acpi_os_acquire_raw_lock(acpi_gbl_hardware_lock);
 
 	/*
-	 * At this point, we know that the parent register is one of the
+	 * At this poपूर्णांक, we know that the parent रेजिस्टर is one of the
 	 * following: PM1 Status, PM1 Enable, PM1 Control, or PM2 Control
 	 */
-	if (bit_reg_info->parent_register != ACPI_REGISTER_PM1_STATUS) {
+	अगर (bit_reg_info->parent_रेजिस्टर != ACPI_REGISTER_PM1_STATUS) अणु
 		/*
-		 * 1) Case for PM1 Enable, PM1 Control, and PM2 Control
+		 * 1) Case क्रम PM1 Enable, PM1 Control, and PM2 Control
 		 *
-		 * Perform a register read to preserve the bits that we are not
-		 * interested in
+		 * Perक्रमm a रेजिस्टर पढ़ो to preserve the bits that we are not
+		 * पूर्णांकerested in
 		 */
-		status = acpi_hw_register_read(bit_reg_info->parent_register,
-					       &register_value);
-		if (ACPI_FAILURE(status)) {
-			goto unlock_and_exit;
-		}
+		status = acpi_hw_रेजिस्टर_पढ़ो(bit_reg_info->parent_रेजिस्टर,
+					       &रेजिस्टर_value);
+		अगर (ACPI_FAILURE(status)) अणु
+			जाओ unlock_and_निकास;
+		पूर्ण
 
 		/*
-		 * Insert the input bit into the value that was just read
-		 * and write the register
+		 * Insert the input bit पूर्णांकo the value that was just पढ़ो
+		 * and ग_लिखो the रेजिस्टर
 		 */
-		ACPI_REGISTER_INSERT_VALUE(register_value,
+		ACPI_REGISTER_INSERT_VALUE(रेजिस्टर_value,
 					   bit_reg_info->bit_position,
 					   bit_reg_info->access_bit_mask,
 					   value);
 
-		status = acpi_hw_register_write(bit_reg_info->parent_register,
-						register_value);
-	} else {
+		status = acpi_hw_रेजिस्टर_ग_लिखो(bit_reg_info->parent_रेजिस्टर,
+						रेजिस्टर_value);
+	पूर्ण अन्यथा अणु
 		/*
-		 * 2) Case for PM1 Status
+		 * 2) Case क्रम PM1 Status
 		 *
-		 * The Status register is different from the rest. Clear an event
+		 * The Status रेजिस्टर is dअगरferent from the rest. Clear an event
 		 * by writing 1, writing 0 has no effect. So, the only relevant
-		 * information is the single bit we're interested in, all others
+		 * inक्रमmation is the single bit we're पूर्णांकerested in, all others
 		 * should be written as 0 so they will be left unchanged.
 		 */
-		register_value = ACPI_REGISTER_PREPARE_BITS(value,
+		रेजिस्टर_value = ACPI_REGISTER_PREPARE_BITS(value,
 							    bit_reg_info->
 							    bit_position,
 							    bit_reg_info->
 							    access_bit_mask);
 
-		/* No need to write the register if value is all zeros */
+		/* No need to ग_लिखो the रेजिस्टर अगर value is all zeros */
 
-		if (register_value) {
+		अगर (रेजिस्टर_value) अणु
 			status =
-			    acpi_hw_register_write(ACPI_REGISTER_PM1_STATUS,
-						   register_value);
-		}
-	}
+			    acpi_hw_रेजिस्टर_ग_लिखो(ACPI_REGISTER_PM1_STATUS,
+						   रेजिस्टर_value);
+		पूर्ण
+	पूर्ण
 
 	ACPI_DEBUG_PRINT((ACPI_DB_IO,
 			  "BitReg %X, ParentReg %X, Value %8.8X, Actual %8.8X\n",
-			  register_id, bit_reg_info->parent_register, value,
-			  register_value));
+			  रेजिस्टर_id, bit_reg_info->parent_रेजिस्टर, value,
+			  रेजिस्टर_value));
 
-unlock_and_exit:
+unlock_and_निकास:
 
 	acpi_os_release_raw_lock(acpi_gbl_hardware_lock, lock_flags);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_write_bit_register)
-#endif				/* !ACPI_REDUCED_HARDWARE */
+ACPI_EXPORT_SYMBOL(acpi_ग_लिखो_bit_रेजिस्टर)
+#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */
 /*******************************************************************************
  *
  * FUNCTION:    acpi_get_sleep_type_data
  *
  * PARAMETERS:  sleep_state         - Numeric sleep state
- *              *sleep_type_a        - Where SLP_TYPa is returned
- *              *sleep_type_b        - Where SLP_TYPb is returned
+ *              *sleep_type_a        - Where SLP_TYPa is वापसed
+ *              *sleep_type_b        - Where SLP_TYPb is वापसed
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Obtain the SLP_TYPa and SLP_TYPb values for the requested
+ * DESCRIPTION: Obtain the SLP_TYPa and SLP_TYPb values क्रम the requested
  *              sleep state via the appropriate \_Sx object.
  *
- *  The sleep state package returned from the corresponding \_Sx_ object
- *  must contain at least one integer.
+ *  The sleep state package वापसed from the corresponding \_Sx_ object
+ *  must contain at least one पूर्णांकeger.
  *
  *  March 2005:
- *  Added support for a package that contains two integers. This
- *  goes against the ACPI specification which defines this object as a
- *  package with one encoded DWORD integer. However, existing practice
- *  by many BIOS vendors is to return a package with 2 or more integer
+ *  Added support क्रम a package that contains two पूर्णांकegers. This
+ *  goes against the ACPI specअगरication which defines this object as a
+ *  package with one encoded DWORD पूर्णांकeger. However, existing practice
+ *  by many BIOS venकरोrs is to वापस a package with 2 or more पूर्णांकeger
  *  elements, at least one per sleep type (A/B).
  *
  *  January 2013:
- *  Therefore, we must be prepared to accept a package with either a
- *  single integer or multiple integers.
+ *  Thereक्रमe, we must be prepared to accept a package with either a
+ *  single पूर्णांकeger or multiple पूर्णांकegers.
  *
- *  The single integer DWORD format is as follows:
- *      BYTE 0 - Value for the PM1A SLP_TYP register
- *      BYTE 1 - Value for the PM1B SLP_TYP register
+ *  The single पूर्णांकeger DWORD क्रमmat is as follows:
+ *      BYTE 0 - Value क्रम the PM1A SLP_TYP रेजिस्टर
+ *      BYTE 1 - Value क्रम the PM1B SLP_TYP रेजिस्टर
  *      BYTE 2-3 - Reserved
  *
- *  The dual integer format is as follows:
- *      Integer 0 - Value for the PM1A SLP_TYP register
- *      Integer 1 - Value for the PM1A SLP_TYP register
+ *  The dual पूर्णांकeger क्रमmat is as follows:
+ *      Integer 0 - Value क्रम the PM1A SLP_TYP रेजिस्टर
+ *      Integer 1 - Value क्रम the PM1A SLP_TYP रेजिस्टर
  *
  ******************************************************************************/
 acpi_status
 acpi_get_sleep_type_data(u8 sleep_state, u8 *sleep_type_a, u8 *sleep_type_b)
-{
+अणु
 	acpi_status status;
-	struct acpi_evaluate_info *info;
-	union acpi_operand_object **elements;
+	काष्ठा acpi_evaluate_info *info;
+	जोड़ acpi_opeअक्रम_object **elements;
 
 	ACPI_FUNCTION_TRACE(acpi_get_sleep_type_data);
 
 	/* Validate parameters */
 
-	if ((sleep_state > ACPI_S_STATES_MAX) || !sleep_type_a || !sleep_type_b) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर ((sleep_state > ACPI_S_STATES_MAX) || !sleep_type_a || !sleep_type_b) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
-	/* Allocate the evaluation information block */
+	/* Allocate the evaluation inक्रमmation block */
 
-	info = ACPI_ALLOCATE_ZEROED(sizeof(struct acpi_evaluate_info));
-	if (!info) {
-		return_ACPI_STATUS(AE_NO_MEMORY);
-	}
+	info = ACPI_ALLOCATE_ZEROED(माप(काष्ठा acpi_evaluate_info));
+	अगर (!info) अणु
+		वापस_ACPI_STATUS(AE_NO_MEMORY);
+	पूर्ण
 
 	/*
-	 * Evaluate the \_Sx namespace object containing the register values
-	 * for this state
+	 * Evaluate the \_Sx namespace object containing the रेजिस्टर values
+	 * क्रम this state
 	 */
 	info->relative_pathname = acpi_gbl_sleep_state_names[sleep_state];
 
 	status = acpi_ns_evaluate(info);
-	if (ACPI_FAILURE(status)) {
-		if (status == AE_NOT_FOUND) {
+	अगर (ACPI_FAILURE(status)) अणु
+		अगर (status == AE_NOT_FOUND) अणु
 
 			/* The _Sx states are optional, ignore NOT_FOUND */
 
-			goto final_cleanup;
-		}
+			जाओ final_cleanup;
+		पूर्ण
 
-		goto warning_cleanup;
-	}
+		जाओ warning_cleanup;
+	पूर्ण
 
-	/* Must have a return object */
+	/* Must have a वापस object */
 
-	if (!info->return_object) {
+	अगर (!info->वापस_object) अणु
 		ACPI_ERROR((AE_INFO, "No Sleep State object returned from [%s]",
 			    info->relative_pathname));
 		status = AE_AML_NO_RETURN_VALUE;
-		goto warning_cleanup;
-	}
+		जाओ warning_cleanup;
+	पूर्ण
 
 	/* Return object must be of type Package */
 
-	if (info->return_object->common.type != ACPI_TYPE_PACKAGE) {
+	अगर (info->वापस_object->common.type != ACPI_TYPE_PACKAGE) अणु
 		ACPI_ERROR((AE_INFO,
 			    "Sleep State return object is not a Package"));
 		status = AE_AML_OPERAND_TYPE;
-		goto return_value_cleanup;
-	}
+		जाओ वापस_value_cleanup;
+	पूर्ण
 
 	/*
 	 * Any warnings about the package length or the object types have
-	 * already been issued by the predefined name module -- there is no
+	 * alपढ़ोy been issued by the predefined name module -- there is no
 	 * need to repeat them here.
 	 */
-	elements = info->return_object->package.elements;
-	switch (info->return_object->package.count) {
-	case 0:
+	elements = info->वापस_object->package.elements;
+	चयन (info->वापस_object->package.count) अणु
+	हाल 0:
 
 		status = AE_AML_PACKAGE_LIMIT;
-		break;
+		अवरोध;
 
-	case 1:
+	हाल 1:
 
-		if (elements[0]->common.type != ACPI_TYPE_INTEGER) {
+		अगर (elements[0]->common.type != ACPI_TYPE_INTEGER) अणु
 			status = AE_AML_OPERAND_TYPE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* A valid _Sx_ package with one integer */
+		/* A valid _Sx_ package with one पूर्णांकeger */
 
-		*sleep_type_a = (u8)elements[0]->integer.value;
-		*sleep_type_b = (u8)(elements[0]->integer.value >> 8);
-		break;
+		*sleep_type_a = (u8)elements[0]->पूर्णांकeger.value;
+		*sleep_type_b = (u8)(elements[0]->पूर्णांकeger.value >> 8);
+		अवरोध;
 
-	case 2:
-	default:
+	हाल 2:
+	शेष:
 
-		if ((elements[0]->common.type != ACPI_TYPE_INTEGER) ||
-		    (elements[1]->common.type != ACPI_TYPE_INTEGER)) {
+		अगर ((elements[0]->common.type != ACPI_TYPE_INTEGER) ||
+		    (elements[1]->common.type != ACPI_TYPE_INTEGER)) अणु
 			status = AE_AML_OPERAND_TYPE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* A valid _Sx_ package with two integers */
+		/* A valid _Sx_ package with two पूर्णांकegers */
 
-		*sleep_type_a = (u8)elements[0]->integer.value;
-		*sleep_type_b = (u8)elements[1]->integer.value;
-		break;
-	}
+		*sleep_type_a = (u8)elements[0]->पूर्णांकeger.value;
+		*sleep_type_b = (u8)elements[1]->पूर्णांकeger.value;
+		अवरोध;
+	पूर्ण
 
-return_value_cleanup:
-	acpi_ut_remove_reference(info->return_object);
+वापस_value_cleanup:
+	acpi_ut_हटाओ_reference(info->वापस_object);
 
 warning_cleanup:
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_EXCEPTION((AE_INFO, status,
 				"While evaluating Sleep State [%s]",
 				info->relative_pathname));
-	}
+	पूर्ण
 
 final_cleanup:
 	ACPI_FREE(info);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_get_sleep_type_data)

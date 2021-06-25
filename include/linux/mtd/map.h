@@ -1,464 +1,465 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Copyright © 2000-2010 David Woodhouse <dwmw2@infradead.org> et al.
+ * Copyright तऊ 2000-2010 David Woodhouse <dwmw2@infradead.org> et al.
  */
 
-/* Overhauled routines for dealing with different mmap regions of flash */
+/* Overhauled routines क्रम dealing with dअगरferent mmap regions of flash */
 
-#ifndef __LINUX_MTD_MAP_H__
-#define __LINUX_MTD_MAP_H__
+#अगर_अघोषित __LINUX_MTD_MAP_H__
+#घोषणा __LINUX_MTD_MAP_H__
 
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/string.h>
-#include <linux/bug.h>
-#include <linux/kernel.h>
-#include <linux/io.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
 
-#include <asm/unaligned.h>
-#include <asm/barrier.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <यंत्र/barrier.h>
 
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_1
-#define map_bankwidth(map) 1
-#define map_bankwidth_is_1(map) (map_bankwidth(map) == 1)
-#define map_bankwidth_is_large(map) (0)
-#define map_words(map) (1)
-#define MAX_MAP_BANKWIDTH 1
-#else
-#define map_bankwidth_is_1(map) (0)
-#endif
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_1
+#घोषणा map_bankwidth(map) 1
+#घोषणा map_bankwidth_is_1(map) (map_bankwidth(map) == 1)
+#घोषणा map_bankwidth_is_large(map) (0)
+#घोषणा map_words(map) (1)
+#घोषणा MAX_MAP_BANKWIDTH 1
+#अन्यथा
+#घोषणा map_bankwidth_is_1(map) (0)
+#पूर्ण_अगर
 
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_2
-# ifdef map_bankwidth
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_2
+# अगरdef map_bankwidth
 #  undef map_bankwidth
 #  define map_bankwidth(map) ((map)->bankwidth)
-# else
+# अन्यथा
 #  define map_bankwidth(map) 2
 #  define map_bankwidth_is_large(map) (0)
 #  define map_words(map) (1)
-# endif
-#define map_bankwidth_is_2(map) (map_bankwidth(map) == 2)
-#undef MAX_MAP_BANKWIDTH
-#define MAX_MAP_BANKWIDTH 2
-#else
-#define map_bankwidth_is_2(map) (0)
-#endif
+# endअगर
+#घोषणा map_bankwidth_is_2(map) (map_bankwidth(map) == 2)
+#अघोषित MAX_MAP_BANKWIDTH
+#घोषणा MAX_MAP_BANKWIDTH 2
+#अन्यथा
+#घोषणा map_bankwidth_is_2(map) (0)
+#पूर्ण_अगर
 
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_4
-# ifdef map_bankwidth
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_4
+# अगरdef map_bankwidth
 #  undef map_bankwidth
 #  define map_bankwidth(map) ((map)->bankwidth)
-# else
+# अन्यथा
 #  define map_bankwidth(map) 4
 #  define map_bankwidth_is_large(map) (0)
 #  define map_words(map) (1)
-# endif
-#define map_bankwidth_is_4(map) (map_bankwidth(map) == 4)
-#undef MAX_MAP_BANKWIDTH
-#define MAX_MAP_BANKWIDTH 4
-#else
-#define map_bankwidth_is_4(map) (0)
-#endif
+# endअगर
+#घोषणा map_bankwidth_is_4(map) (map_bankwidth(map) == 4)
+#अघोषित MAX_MAP_BANKWIDTH
+#घोषणा MAX_MAP_BANKWIDTH 4
+#अन्यथा
+#घोषणा map_bankwidth_is_4(map) (0)
+#पूर्ण_अगर
 
-/* ensure we never evaluate anything shorted than an unsigned long
+/* ensure we never evaluate anything लघुed than an अचिन्हित दीर्घ
  * to zero, and ensure we'll never miss the end of an comparison (bjd) */
 
-#define map_calc_words(map) ((map_bankwidth(map) + (sizeof(unsigned long)-1)) / sizeof(unsigned long))
+#घोषणा map_calc_words(map) ((map_bankwidth(map) + (माप(अचिन्हित दीर्घ)-1)) / माप(अचिन्हित दीर्घ))
 
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_8
-# ifdef map_bankwidth
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_8
+# अगरdef map_bankwidth
 #  undef map_bankwidth
 #  define map_bankwidth(map) ((map)->bankwidth)
-#  if BITS_PER_LONG < 64
+#  अगर BITS_PER_LONG < 64
 #   undef map_bankwidth_is_large
 #   define map_bankwidth_is_large(map) (map_bankwidth(map) > BITS_PER_LONG/8)
 #   undef map_words
 #   define map_words(map) map_calc_words(map)
-#  endif
-# else
+#  endअगर
+# अन्यथा
 #  define map_bankwidth(map) 8
 #  define map_bankwidth_is_large(map) (BITS_PER_LONG < 64)
 #  define map_words(map) map_calc_words(map)
-# endif
-#define map_bankwidth_is_8(map) (map_bankwidth(map) == 8)
-#undef MAX_MAP_BANKWIDTH
-#define MAX_MAP_BANKWIDTH 8
-#else
-#define map_bankwidth_is_8(map) (0)
-#endif
+# endअगर
+#घोषणा map_bankwidth_is_8(map) (map_bankwidth(map) == 8)
+#अघोषित MAX_MAP_BANKWIDTH
+#घोषणा MAX_MAP_BANKWIDTH 8
+#अन्यथा
+#घोषणा map_bankwidth_is_8(map) (0)
+#पूर्ण_अगर
 
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_16
-# ifdef map_bankwidth
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_16
+# अगरdef map_bankwidth
 #  undef map_bankwidth
 #  define map_bankwidth(map) ((map)->bankwidth)
 #  undef map_bankwidth_is_large
 #  define map_bankwidth_is_large(map) (map_bankwidth(map) > BITS_PER_LONG/8)
 #  undef map_words
 #  define map_words(map) map_calc_words(map)
-# else
+# अन्यथा
 #  define map_bankwidth(map) 16
 #  define map_bankwidth_is_large(map) (1)
 #  define map_words(map) map_calc_words(map)
-# endif
-#define map_bankwidth_is_16(map) (map_bankwidth(map) == 16)
-#undef MAX_MAP_BANKWIDTH
-#define MAX_MAP_BANKWIDTH 16
-#else
-#define map_bankwidth_is_16(map) (0)
-#endif
+# endअगर
+#घोषणा map_bankwidth_is_16(map) (map_bankwidth(map) == 16)
+#अघोषित MAX_MAP_BANKWIDTH
+#घोषणा MAX_MAP_BANKWIDTH 16
+#अन्यथा
+#घोषणा map_bankwidth_is_16(map) (0)
+#पूर्ण_अगर
 
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_32
-/* always use indirect access for 256-bit to preserve kernel stack */
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_32
+/* always use indirect access क्रम 256-bit to preserve kernel stack */
 # undef map_bankwidth
 # define map_bankwidth(map) ((map)->bankwidth)
 # undef map_bankwidth_is_large
 # define map_bankwidth_is_large(map) (map_bankwidth(map) > BITS_PER_LONG/8)
 # undef map_words
 # define map_words(map) map_calc_words(map)
-#define map_bankwidth_is_32(map) (map_bankwidth(map) == 32)
-#undef MAX_MAP_BANKWIDTH
-#define MAX_MAP_BANKWIDTH 32
-#else
-#define map_bankwidth_is_32(map) (0)
-#endif
+#घोषणा map_bankwidth_is_32(map) (map_bankwidth(map) == 32)
+#अघोषित MAX_MAP_BANKWIDTH
+#घोषणा MAX_MAP_BANKWIDTH 32
+#अन्यथा
+#घोषणा map_bankwidth_is_32(map) (0)
+#पूर्ण_अगर
 
-#ifndef map_bankwidth
-#ifdef CONFIG_MTD
+#अगर_अघोषित map_bankwidth
+#अगर_घोषित CONFIG_MTD
 #warning "No CONFIG_MTD_MAP_BANK_WIDTH_xx selected. No NOR chip support can work"
-#endif
-static inline int map_bankwidth(void *map)
-{
+#पूर्ण_अगर
+अटल अंतरभूत पूर्णांक map_bankwidth(व्योम *map)
+अणु
 	BUG();
-	return 0;
-}
-#define map_bankwidth_is_large(map) (0)
-#define map_words(map) (0)
-#define MAX_MAP_BANKWIDTH 1
-#endif
+	वापस 0;
+पूर्ण
+#घोषणा map_bankwidth_is_large(map) (0)
+#घोषणा map_words(map) (0)
+#घोषणा MAX_MAP_BANKWIDTH 1
+#पूर्ण_अगर
 
-static inline int map_bankwidth_supported(int w)
-{
-	switch (w) {
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_1
-	case 1:
-#endif
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_2
-	case 2:
-#endif
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_4
-	case 4:
-#endif
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_8
-	case 8:
-#endif
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_16
-	case 16:
-#endif
-#ifdef CONFIG_MTD_MAP_BANK_WIDTH_32
-	case 32:
-#endif
-		return 1;
+अटल अंतरभूत पूर्णांक map_bankwidth_supported(पूर्णांक w)
+अणु
+	चयन (w) अणु
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_1
+	हाल 1:
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_2
+	हाल 2:
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_4
+	हाल 4:
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_8
+	हाल 8:
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_16
+	हाल 16:
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MTD_MAP_BANK_WIDTH_32
+	हाल 32:
+#पूर्ण_अगर
+		वापस 1;
 
-	default:
-		return 0;
-	}
-}
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-#define MAX_MAP_LONGS (((MAX_MAP_BANKWIDTH * 8) + BITS_PER_LONG - 1) / BITS_PER_LONG)
+#घोषणा MAX_MAP_LONGS (((MAX_MAP_BANKWIDTH * 8) + BITS_PER_LONG - 1) / BITS_PER_LONG)
 
-typedef union {
-	unsigned long x[MAX_MAP_LONGS];
-} map_word;
+प्रकार जोड़ अणु
+	अचिन्हित दीर्घ x[MAX_MAP_LONGS];
+पूर्ण map_word;
 
-/* The map stuff is very simple. You fill in your struct map_info with
-   a handful of routines for accessing the device, making sure they handle
-   paging etc. correctly if your device needs it. Then you pass it off
+/* The map stuff is very simple. You fill in your काष्ठा map_info with
+   a handful of routines क्रम accessing the device, making sure they handle
+   paging etc. correctly अगर your device needs it. Then you pass it off
    to a chip probe routine -- either JEDEC or CFI probe or both -- via
-   do_map_probe(). If a chip is recognised, the probe code will invoke the
-   appropriate chip driver (if present) and return a struct mtd_info.
-   At which point, you fill in the mtd->module with your own module
-   address, and register it with the MTD core code. Or you could partition
-   it and register the partitions instead, or keep it for your own private
+   करो_map_probe(). If a chip is recognised, the probe code will invoke the
+   appropriate chip driver (अगर present) and वापस a काष्ठा mtd_info.
+   At which poपूर्णांक, you fill in the mtd->module with your own module
+   address, and रेजिस्टर it with the MTD core code. Or you could partition
+   it and रेजिस्टर the partitions instead, or keep it क्रम your own निजी
    use; whatever.
 
-   The mtd->priv field will point to the struct map_info, and any further
-   private data required by the chip driver is linked from the
+   The mtd->priv field will poपूर्णांक to the काष्ठा map_info, and any further
+   निजी data required by the chip driver is linked from the
    mtd->priv->fldrv_priv field. This allows the map driver to get at
-   the destructor function map->fldrv_destroy() when it's tired
+   the deकाष्ठाor function map->fldrv_destroy() when it's tired
    of living.
 */
 
-struct map_info {
-	const char *name;
-	unsigned long size;
-	resource_size_t phys;
-#define NO_XIP (-1UL)
+काष्ठा map_info अणु
+	स्थिर अक्षर *name;
+	अचिन्हित दीर्घ size;
+	resource_माप_प्रकार phys;
+#घोषणा NO_XIP (-1UL)
 
-	void __iomem *virt;
-	void *cached;
+	व्योम __iomem *virt;
+	व्योम *cached;
 
-	int swap; /* this mapping's byte-swapping requirement */
-	int bankwidth; /* in octets. This isn't necessarily the width
-		       of actual bus cycles -- it's the repeat interval
-		      in bytes, before you are talking to the first chip again.
+	पूर्णांक swap; /* this mapping's byte-swapping requirement */
+	पूर्णांक bankwidth; /* in octets. This isn't necessarily the width
+		       of actual bus cycles -- it's the repeat पूर्णांकerval
+		      in bytes, beक्रमe you are talking to the first chip again.
 		      */
 
-#ifdef CONFIG_MTD_COMPLEX_MAPPINGS
-	map_word (*read)(struct map_info *, unsigned long);
-	void (*copy_from)(struct map_info *, void *, unsigned long, ssize_t);
+#अगर_घोषित CONFIG_MTD_COMPLEX_MAPPINGS
+	map_word (*पढ़ो)(काष्ठा map_info *, अचिन्हित दीर्घ);
+	व्योम (*copy_from)(काष्ठा map_info *, व्योम *, अचिन्हित दीर्घ, sमाप_प्रकार);
 
-	void (*write)(struct map_info *, const map_word, unsigned long);
-	void (*copy_to)(struct map_info *, unsigned long, const void *, ssize_t);
+	व्योम (*ग_लिखो)(काष्ठा map_info *, स्थिर map_word, अचिन्हित दीर्घ);
+	व्योम (*copy_to)(काष्ठा map_info *, अचिन्हित दीर्घ, स्थिर व्योम *, sमाप_प्रकार);
 
-	/* We can perhaps put in 'point' and 'unpoint' methods, if we really
-	   want to enable XIP for non-linear mappings. Not yet though. */
-#endif
-	/* It's possible for the map driver to use cached memory in its
+	/* We can perhaps put in 'point' and 'unpoint' methods, अगर we really
+	   want to enable XIP क्रम non-linear mappings. Not yet though. */
+#पूर्ण_अगर
+	/* It's possible क्रम the map driver to use cached memory in its
 	   copy_from implementation (and _only_ with copy_from).  However,
 	   when the chip driver knows some flash area has changed contents,
-	   it will signal it to the map driver through this routine to let
+	   it will संकेत it to the map driver through this routine to let
 	   the map driver invalidate the corresponding cache as needed.
-	   If there is no cache to care about this can be set to NULL. */
-	void (*inval_cache)(struct map_info *, unsigned long, ssize_t);
+	   If there is no cache to care about this can be set to शून्य. */
+	व्योम (*inval_cache)(काष्ठा map_info *, अचिन्हित दीर्घ, sमाप_प्रकार);
 
 	/* This will be called with 1 as parameter when the first map user
-	 * needs VPP, and called with 0 when the last user exits. The map
-	 * core maintains a reference counter, and assumes that VPP is a
-	 * global resource applying to all mapped flash chips on the system.
+	 * needs VPP, and called with 0 when the last user निकासs. The map
+	 * core मुख्यtains a reference counter, and assumes that VPP is a
+	 * global resource applying to all mapped flash chips on the प्रणाली.
 	 */
-	void (*set_vpp)(struct map_info *, int);
+	व्योम (*set_vpp)(काष्ठा map_info *, पूर्णांक);
 
-	unsigned long pfow_base;
-	unsigned long map_priv_1;
-	unsigned long map_priv_2;
-	struct device_node *device_node;
-	void *fldrv_priv;
-	struct mtd_chip_driver *fldrv;
-};
+	अचिन्हित दीर्घ pfow_base;
+	अचिन्हित दीर्घ map_priv_1;
+	अचिन्हित दीर्घ map_priv_2;
+	काष्ठा device_node *device_node;
+	व्योम *fldrv_priv;
+	काष्ठा mtd_chip_driver *fldrv;
+पूर्ण;
 
-struct mtd_chip_driver {
-	struct mtd_info *(*probe)(struct map_info *map);
-	void (*destroy)(struct mtd_info *);
-	struct module *module;
-	char *name;
-	struct list_head list;
-};
+काष्ठा mtd_chip_driver अणु
+	काष्ठा mtd_info *(*probe)(काष्ठा map_info *map);
+	व्योम (*destroy)(काष्ठा mtd_info *);
+	काष्ठा module *module;
+	अक्षर *name;
+	काष्ठा list_head list;
+पूर्ण;
 
-void register_mtd_chip_driver(struct mtd_chip_driver *);
-void unregister_mtd_chip_driver(struct mtd_chip_driver *);
+व्योम रेजिस्टर_mtd_chip_driver(काष्ठा mtd_chip_driver *);
+व्योम unरेजिस्टर_mtd_chip_driver(काष्ठा mtd_chip_driver *);
 
-struct mtd_info *do_map_probe(const char *name, struct map_info *map);
-void map_destroy(struct mtd_info *mtd);
+काष्ठा mtd_info *करो_map_probe(स्थिर अक्षर *name, काष्ठा map_info *map);
+व्योम map_destroy(काष्ठा mtd_info *mtd);
 
-#define ENABLE_VPP(map) do { if (map->set_vpp) map->set_vpp(map, 1); } while (0)
-#define DISABLE_VPP(map) do { if (map->set_vpp) map->set_vpp(map, 0); } while (0)
+#घोषणा ENABLE_VPP(map) करो अणु अगर (map->set_vpp) map->set_vpp(map, 1); पूर्ण जबतक (0)
+#घोषणा DISABLE_VPP(map) करो अणु अगर (map->set_vpp) map->set_vpp(map, 0); पूर्ण जबतक (0)
 
-#define INVALIDATE_CACHED_RANGE(map, from, size) \
-	do { if (map->inval_cache) map->inval_cache(map, from, size); } while (0)
+#घोषणा INVALIDATE_CACHED_RANGE(map, from, size) \
+	करो अणु अगर (map->inval_cache) map->inval_cache(map, from, size); पूर्ण जबतक (0)
 
-#define map_word_equal(map, val1, val2)					\
-({									\
-	int i, ret = 1;							\
-	for (i = 0; i < map_words(map); i++)				\
-		if ((val1).x[i] != (val2).x[i]) {			\
+#घोषणा map_word_equal(map, val1, val2)					\
+(अणु									\
+	पूर्णांक i, ret = 1;							\
+	क्रम (i = 0; i < map_words(map); i++)				\
+		अगर ((val1).x[i] != (val2).x[i]) अणु			\
 			ret = 0;					\
-			break;						\
-		}							\
+			अवरोध;						\
+		पूर्ण							\
 	ret;								\
-})
+पूर्ण)
 
-#define map_word_and(map, val1, val2)					\
-({									\
+#घोषणा map_word_and(map, val1, val2)					\
+(अणु									\
 	map_word r;							\
-	int i;								\
-	for (i = 0; i < map_words(map); i++)				\
+	पूर्णांक i;								\
+	क्रम (i = 0; i < map_words(map); i++)				\
 		r.x[i] = (val1).x[i] & (val2).x[i];			\
 	r;								\
-})
+पूर्ण)
 
-#define map_word_clr(map, val1, val2)					\
-({									\
+#घोषणा map_word_clr(map, val1, val2)					\
+(अणु									\
 	map_word r;							\
-	int i;								\
-	for (i = 0; i < map_words(map); i++)				\
+	पूर्णांक i;								\
+	क्रम (i = 0; i < map_words(map); i++)				\
 		r.x[i] = (val1).x[i] & ~(val2).x[i];			\
 	r;								\
-})
+पूर्ण)
 
-#define map_word_or(map, val1, val2)					\
-({									\
+#घोषणा map_word_or(map, val1, val2)					\
+(अणु									\
 	map_word r;							\
-	int i;								\
-	for (i = 0; i < map_words(map); i++)				\
+	पूर्णांक i;								\
+	क्रम (i = 0; i < map_words(map); i++)				\
 		r.x[i] = (val1).x[i] | (val2).x[i];			\
 	r;								\
-})
+पूर्ण)
 
-#define map_word_andequal(map, val1, val2, val3)			\
-({									\
-	int i, ret = 1;							\
-	for (i = 0; i < map_words(map); i++) {				\
-		if (((val1).x[i] & (val2).x[i]) != (val3).x[i]) {	\
+#घोषणा map_word_andequal(map, val1, val2, val3)			\
+(अणु									\
+	पूर्णांक i, ret = 1;							\
+	क्रम (i = 0; i < map_words(map); i++) अणु				\
+		अगर (((val1).x[i] & (val2).x[i]) != (val3).x[i]) अणु	\
 			ret = 0;					\
-			break;						\
-		}							\
-	}								\
+			अवरोध;						\
+		पूर्ण							\
+	पूर्ण								\
 	ret;								\
-})
+पूर्ण)
 
-#define map_word_bitsset(map, val1, val2)				\
-({									\
-	int i, ret = 0;							\
-	for (i = 0; i < map_words(map); i++) {				\
-		if ((val1).x[i] & (val2).x[i]) {			\
+#घोषणा map_word_bitsset(map, val1, val2)				\
+(अणु									\
+	पूर्णांक i, ret = 0;							\
+	क्रम (i = 0; i < map_words(map); i++) अणु				\
+		अगर ((val1).x[i] & (val2).x[i]) अणु			\
 			ret = 1;					\
-			break;						\
-		}							\
-	}								\
+			अवरोध;						\
+		पूर्ण							\
+	पूर्ण								\
 	ret;								\
-})
+पूर्ण)
 
-static inline map_word map_word_load(struct map_info *map, const void *ptr)
-{
+अटल अंतरभूत map_word map_word_load(काष्ठा map_info *map, स्थिर व्योम *ptr)
+अणु
 	map_word r;
 
-	if (map_bankwidth_is_1(map))
-		r.x[0] = *(unsigned char *)ptr;
-	else if (map_bankwidth_is_2(map))
-		r.x[0] = get_unaligned((uint16_t *)ptr);
-	else if (map_bankwidth_is_4(map))
-		r.x[0] = get_unaligned((uint32_t *)ptr);
-#if BITS_PER_LONG >= 64
-	else if (map_bankwidth_is_8(map))
-		r.x[0] = get_unaligned((uint64_t *)ptr);
-#endif
-	else if (map_bankwidth_is_large(map))
-		memcpy(r.x, ptr, map->bankwidth);
-	else
+	अगर (map_bankwidth_is_1(map))
+		r.x[0] = *(अचिन्हित अक्षर *)ptr;
+	अन्यथा अगर (map_bankwidth_is_2(map))
+		r.x[0] = get_unaligned((uपूर्णांक16_t *)ptr);
+	अन्यथा अगर (map_bankwidth_is_4(map))
+		r.x[0] = get_unaligned((uपूर्णांक32_t *)ptr);
+#अगर BITS_PER_LONG >= 64
+	अन्यथा अगर (map_bankwidth_is_8(map))
+		r.x[0] = get_unaligned((uपूर्णांक64_t *)ptr);
+#पूर्ण_अगर
+	अन्यथा अगर (map_bankwidth_is_large(map))
+		स_नकल(r.x, ptr, map->bankwidth);
+	अन्यथा
 		BUG();
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static inline map_word map_word_load_partial(struct map_info *map, map_word orig, const unsigned char *buf, int start, int len)
-{
-	int i;
+अटल अंतरभूत map_word map_word_load_partial(काष्ठा map_info *map, map_word orig, स्थिर अचिन्हित अक्षर *buf, पूर्णांक start, पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	if (map_bankwidth_is_large(map)) {
-		char *dest = (char *)&orig;
+	अगर (map_bankwidth_is_large(map)) अणु
+		अक्षर *dest = (अक्षर *)&orig;
 
-		memcpy(dest+start, buf, len);
-	} else {
-		for (i = start; i < start+len; i++) {
-			int bitpos;
+		स_नकल(dest+start, buf, len);
+	पूर्ण अन्यथा अणु
+		क्रम (i = start; i < start+len; i++) अणु
+			पूर्णांक bitpos;
 
-#ifdef __LITTLE_ENDIAN
+#अगर_घोषित __LITTLE_ENDIAN
 			bitpos = i * 8;
-#else /* __BIG_ENDIAN */
+#अन्यथा /* __BIG_ENDIAN */
 			bitpos = (map_bankwidth(map) - 1 - i) * 8;
-#endif
+#पूर्ण_अगर
 			orig.x[0] &= ~(0xff << bitpos);
-			orig.x[0] |= (unsigned long)buf[i-start] << bitpos;
-		}
-	}
-	return orig;
-}
+			orig.x[0] |= (अचिन्हित दीर्घ)buf[i-start] << bitpos;
+		पूर्ण
+	पूर्ण
+	वापस orig;
+पूर्ण
 
-#if BITS_PER_LONG < 64
-#define MAP_FF_LIMIT 4
-#else
-#define MAP_FF_LIMIT 8
-#endif
+#अगर BITS_PER_LONG < 64
+#घोषणा MAP_FF_LIMIT 4
+#अन्यथा
+#घोषणा MAP_FF_LIMIT 8
+#पूर्ण_अगर
 
-static inline map_word map_word_ff(struct map_info *map)
-{
+अटल अंतरभूत map_word map_word_ff(काष्ठा map_info *map)
+अणु
 	map_word r;
-	int i;
+	पूर्णांक i;
 
-	if (map_bankwidth(map) < MAP_FF_LIMIT) {
-		int bw = 8 * map_bankwidth(map);
+	अगर (map_bankwidth(map) < MAP_FF_LIMIT) अणु
+		पूर्णांक bw = 8 * map_bankwidth(map);
 
 		r.x[0] = (1UL << bw) - 1;
-	} else {
-		for (i = 0; i < map_words(map); i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < map_words(map); i++)
 			r.x[i] = ~0UL;
-	}
-	return r;
-}
+	पूर्ण
+	वापस r;
+पूर्ण
 
-static inline map_word inline_map_read(struct map_info *map, unsigned long ofs)
-{
+अटल अंतरभूत map_word अंतरभूत_map_पढ़ो(काष्ठा map_info *map, अचिन्हित दीर्घ ofs)
+अणु
 	map_word r;
 
-	if (map_bankwidth_is_1(map))
-		r.x[0] = __raw_readb(map->virt + ofs);
-	else if (map_bankwidth_is_2(map))
-		r.x[0] = __raw_readw(map->virt + ofs);
-	else if (map_bankwidth_is_4(map))
-		r.x[0] = __raw_readl(map->virt + ofs);
-#if BITS_PER_LONG >= 64
-	else if (map_bankwidth_is_8(map))
-		r.x[0] = __raw_readq(map->virt + ofs);
-#endif
-	else if (map_bankwidth_is_large(map))
-		memcpy_fromio(r.x, map->virt + ofs, map->bankwidth);
-	else
+	अगर (map_bankwidth_is_1(map))
+		r.x[0] = __raw_पढ़ोb(map->virt + ofs);
+	अन्यथा अगर (map_bankwidth_is_2(map))
+		r.x[0] = __raw_पढ़ोw(map->virt + ofs);
+	अन्यथा अगर (map_bankwidth_is_4(map))
+		r.x[0] = __raw_पढ़ोl(map->virt + ofs);
+#अगर BITS_PER_LONG >= 64
+	अन्यथा अगर (map_bankwidth_is_8(map))
+		r.x[0] = __raw_पढ़ोq(map->virt + ofs);
+#पूर्ण_अगर
+	अन्यथा अगर (map_bankwidth_is_large(map))
+		स_नकल_fromio(r.x, map->virt + ofs, map->bankwidth);
+	अन्यथा
 		BUG();
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static inline void inline_map_write(struct map_info *map, const map_word datum, unsigned long ofs)
-{
-	if (map_bankwidth_is_1(map))
-		__raw_writeb(datum.x[0], map->virt + ofs);
-	else if (map_bankwidth_is_2(map))
-		__raw_writew(datum.x[0], map->virt + ofs);
-	else if (map_bankwidth_is_4(map))
-		__raw_writel(datum.x[0], map->virt + ofs);
-#if BITS_PER_LONG >= 64
-	else if (map_bankwidth_is_8(map))
-		__raw_writeq(datum.x[0], map->virt + ofs);
-#endif
-	else if (map_bankwidth_is_large(map))
-		memcpy_toio(map->virt+ofs, datum.x, map->bankwidth);
-	else
+अटल अंतरभूत व्योम अंतरभूत_map_ग_लिखो(काष्ठा map_info *map, स्थिर map_word datum, अचिन्हित दीर्घ ofs)
+अणु
+	अगर (map_bankwidth_is_1(map))
+		__raw_ग_लिखोb(datum.x[0], map->virt + ofs);
+	अन्यथा अगर (map_bankwidth_is_2(map))
+		__raw_ग_लिखोw(datum.x[0], map->virt + ofs);
+	अन्यथा अगर (map_bankwidth_is_4(map))
+		__raw_ग_लिखोl(datum.x[0], map->virt + ofs);
+#अगर BITS_PER_LONG >= 64
+	अन्यथा अगर (map_bankwidth_is_8(map))
+		__raw_ग_लिखोq(datum.x[0], map->virt + ofs);
+#पूर्ण_अगर
+	अन्यथा अगर (map_bankwidth_is_large(map))
+		स_नकल_toio(map->virt+ofs, datum.x, map->bankwidth);
+	अन्यथा
 		BUG();
 	mb();
-}
+पूर्ण
 
-static inline void inline_map_copy_from(struct map_info *map, void *to, unsigned long from, ssize_t len)
-{
-	if (map->cached)
-		memcpy(to, (char *)map->cached + from, len);
-	else
-		memcpy_fromio(to, map->virt + from, len);
-}
+अटल अंतरभूत व्योम अंतरभूत_map_copy_from(काष्ठा map_info *map, व्योम *to, अचिन्हित दीर्घ from, sमाप_प्रकार len)
+अणु
+	अगर (map->cached)
+		स_नकल(to, (अक्षर *)map->cached + from, len);
+	अन्यथा
+		स_नकल_fromio(to, map->virt + from, len);
+पूर्ण
 
-static inline void inline_map_copy_to(struct map_info *map, unsigned long to, const void *from, ssize_t len)
-{
-	memcpy_toio(map->virt + to, from, len);
-}
+अटल अंतरभूत व्योम अंतरभूत_map_copy_to(काष्ठा map_info *map, अचिन्हित दीर्घ to, स्थिर व्योम *from, sमाप_प्रकार len)
+अणु
+	स_नकल_toio(map->virt + to, from, len);
+पूर्ण
 
-#ifdef CONFIG_MTD_COMPLEX_MAPPINGS
-#define map_read(map, ofs) (map)->read(map, ofs)
-#define map_copy_from(map, to, from, len) (map)->copy_from(map, to, from, len)
-#define map_write(map, datum, ofs) (map)->write(map, datum, ofs)
-#define map_copy_to(map, to, from, len) (map)->copy_to(map, to, from, len)
+#अगर_घोषित CONFIG_MTD_COMPLEX_MAPPINGS
+#घोषणा map_पढ़ो(map, ofs) (map)->पढ़ो(map, ofs)
+#घोषणा map_copy_from(map, to, from, len) (map)->copy_from(map, to, from, len)
+#घोषणा map_ग_लिखो(map, datum, ofs) (map)->ग_लिखो(map, datum, ofs)
+#घोषणा map_copy_to(map, to, from, len) (map)->copy_to(map, to, from, len)
 
-extern void simple_map_init(struct map_info *);
-#define map_is_linear(map) (map->phys != NO_XIP)
+बाह्य व्योम simple_map_init(काष्ठा map_info *);
+#घोषणा map_is_linear(map) (map->phys != NO_XIP)
 
-#else
-#define map_read(map, ofs) inline_map_read(map, ofs)
-#define map_copy_from(map, to, from, len) inline_map_copy_from(map, to, from, len)
-#define map_write(map, datum, ofs) inline_map_write(map, datum, ofs)
-#define map_copy_to(map, to, from, len) inline_map_copy_to(map, to, from, len)
+#अन्यथा
+#घोषणा map_पढ़ो(map, ofs) अंतरभूत_map_पढ़ो(map, ofs)
+#घोषणा map_copy_from(map, to, from, len) अंतरभूत_map_copy_from(map, to, from, len)
+#घोषणा map_ग_लिखो(map, datum, ofs) अंतरभूत_map_ग_लिखो(map, datum, ofs)
+#घोषणा map_copy_to(map, to, from, len) अंतरभूत_map_copy_to(map, to, from, len)
 
 
-#define simple_map_init(map) BUG_ON(!map_bankwidth_supported((map)->bankwidth))
-#define map_is_linear(map) ({ (void)(map); 1; })
+#घोषणा simple_map_init(map) BUG_ON(!map_bankwidth_supported((map)->bankwidth))
+#घोषणा map_is_linear(map) (अणु (व्योम)(map); 1; पूर्ण)
 
-#endif /* !CONFIG_MTD_COMPLEX_MAPPINGS */
+#पूर्ण_अगर /* !CONFIG_MTD_COMPLEX_MAPPINGS */
 
-#endif /* __LINUX_MTD_MAP_H__ */
+#पूर्ण_अगर /* __LINUX_MTD_MAP_H__ */

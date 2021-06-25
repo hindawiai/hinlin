@@ -1,26 +1,27 @@
+<शैली गुरु>
 /* Broadcom NetXtreme-C/E network driver.
  *
  * Copyright (c) 2017-2018 Broadcom Limited
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#include <linux/dim.h>
-#include "bnxt_hsi.h"
-#include "bnxt.h"
+#समावेश <linux/dim.h>
+#समावेश "bnxt_hsi.h"
+#समावेश "bnxt.h"
 
-void bnxt_dim_work(struct work_struct *work)
-{
-	struct dim *dim = container_of(work, struct dim, work);
-	struct bnxt_cp_ring_info *cpr = container_of(dim,
-						     struct bnxt_cp_ring_info,
+व्योम bnxt_dim_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dim *dim = container_of(work, काष्ठा dim, work);
+	काष्ठा bnxt_cp_ring_info *cpr = container_of(dim,
+						     काष्ठा bnxt_cp_ring_info,
 						     dim);
-	struct bnxt_napi *bnapi = container_of(cpr,
-					       struct bnxt_napi,
+	काष्ठा bnxt_napi *bnapi = container_of(cpr,
+					       काष्ठा bnxt_napi,
 					       cp_ring);
-	struct dim_cq_moder cur_moder =
+	काष्ठा dim_cq_moder cur_moder =
 		net_dim_get_rx_moderation(dim->mode, dim->profile_ix);
 
 	cpr->rx_ring_coal.coal_ticks = cur_moder.usec;
@@ -28,4 +29,4 @@ void bnxt_dim_work(struct work_struct *work)
 
 	bnxt_hwrm_set_ring_coal(bnapi->bp, bnapi);
 	dim->state = DIM_START_MEASURE;
-}
+पूर्ण

@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_IDMAP_H
-#define __ASM_IDMAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_IDMAP_H
+#घोषणा __ASM_IDMAP_H
 
-#include <linux/compiler.h>
-#include <linux/pgtable.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/pgtable.h>
 
 /* Tag a function as requiring to be executed via an identity mapping. */
-#define __idmap __section(".idmap.text") noinline notrace
+#घोषणा __idmap __section(".idmap.text") noअंतरभूत notrace
 
-extern pgd_t *idmap_pgd;
+बाह्य pgd_t *idmap_pgd;
 
-void setup_mm_for_reboot(void);
+व्योम setup_mm_क्रम_reboot(व्योम);
 
-#endif	/* __ASM_IDMAP_H */
+#पूर्ण_अगर	/* __ASM_IDMAP_H */

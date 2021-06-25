@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * i2c-boardinfo.c - collect pre-declarations of I2C devices
  */
 
-#include <linux/export.h>
-#include <linux/i2c.h>
-#include <linux/kernel.h>
-#include <linux/property.h>
-#include <linux/rwsem.h>
-#include <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/property.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/slab.h>
 
-#include "i2c-core.h"
+#समावेश "i2c-core.h"
 
 
 /* These symbols are exported ONLY FOR the i2c core.
@@ -22,72 +23,72 @@ EXPORT_SYMBOL_GPL(__i2c_board_lock);
 LIST_HEAD(__i2c_board_list);
 EXPORT_SYMBOL_GPL(__i2c_board_list);
 
-int __i2c_first_dynamic_bus_num;
+पूर्णांक __i2c_first_dynamic_bus_num;
 EXPORT_SYMBOL_GPL(__i2c_first_dynamic_bus_num);
 
 
 /**
- * i2c_register_board_info - statically declare I2C devices
- * @busnum: identifies the bus to which these devices belong
+ * i2c_रेजिस्टर_board_info - अटलally declare I2C devices
+ * @busnum: identअगरies the bus to which these devices beदीर्घ
  * @info: vector of i2c device descriptors
  * @len: how many descriptors in the vector; may be zero to reserve
- *	the specified bus number.
+ *	the specअगरied bus number.
  *
  * Systems using the Linux I2C driver stack can declare tables of board info
- * while they initialize.  This should be done in board-specific init code
- * near arch_initcall() time, or equivalent, before any I2C adapter driver is
- * registered.  For example, mainboard init code could define several devices,
- * as could the init code for each daughtercard in a board stack.
+ * जबतक they initialize.  This should be करोne in board-specअगरic init code
+ * near arch_initcall() समय, or equivalent, beक्रमe any I2C adapter driver is
+ * रेजिस्टरed.  For example, मुख्यboard init code could define several devices,
+ * as could the init code क्रम each daughtercard in a board stack.
  *
- * The I2C devices will be created later, after the adapter for the relevant
- * bus has been registered.  After that moment, standard driver model tools
+ * The I2C devices will be created later, after the adapter क्रम the relevant
+ * bus has been रेजिस्टरed.  After that moment, standard driver model tools
  * are used to bind "new style" I2C drivers to the devices.  The bus number
- * for any device declared using this routine is not available for dynamic
+ * क्रम any device declared using this routine is not available क्रम dynamic
  * allocation.
  *
  * The board info passed can safely be __initdata, but be careful of embedded
- * pointers (for platform_data, functions, etc) since that won't be copied.
+ * poपूर्णांकers (क्रम platक्रमm_data, functions, etc) since that won't be copied.
  */
-int i2c_register_board_info(int busnum, struct i2c_board_info const *info, unsigned len)
-{
-	int status;
+पूर्णांक i2c_रेजिस्टर_board_info(पूर्णांक busnum, काष्ठा i2c_board_info स्थिर *info, अचिन्हित len)
+अणु
+	पूर्णांक status;
 
-	down_write(&__i2c_board_lock);
+	करोwn_ग_लिखो(&__i2c_board_lock);
 
-	/* dynamic bus numbers will be assigned after the last static one */
-	if (busnum >= __i2c_first_dynamic_bus_num)
+	/* dynamic bus numbers will be asचिन्हित after the last अटल one */
+	अगर (busnum >= __i2c_first_dynamic_bus_num)
 		__i2c_first_dynamic_bus_num = busnum + 1;
 
-	for (status = 0; len; len--, info++) {
-		struct i2c_devinfo	*devinfo;
+	क्रम (status = 0; len; len--, info++) अणु
+		काष्ठा i2c_devinfo	*devinfo;
 
-		devinfo = kzalloc(sizeof(*devinfo), GFP_KERNEL);
-		if (!devinfo) {
+		devinfo = kzalloc(माप(*devinfo), GFP_KERNEL);
+		अगर (!devinfo) अणु
 			pr_debug("i2c-core: can't register boardinfo!\n");
 			status = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		devinfo->busnum = busnum;
 		devinfo->board_info = *info;
 
-		if (info->resources) {
+		अगर (info->resources) अणु
 			devinfo->board_info.resources =
 				kmemdup(info->resources,
 					info->num_resources *
-						sizeof(*info->resources),
+						माप(*info->resources),
 					GFP_KERNEL);
-			if (!devinfo->board_info.resources) {
+			अगर (!devinfo->board_info.resources) अणु
 				status = -ENOMEM;
-				kfree(devinfo);
-				break;
-			}
-		}
+				kमुक्त(devinfo);
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		list_add_tail(&devinfo->list, &__i2c_board_list);
-	}
+	पूर्ण
 
-	up_write(&__i2c_board_lock);
+	up_ग_लिखो(&__i2c_board_lock);
 
-	return status;
-}
+	वापस status;
+पूर्ण

@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_FUTEX_H
-#define _ASM_X86_FUTEX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_FUTEX_H
+#घोषणा _ASM_X86_FUTEX_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <linux/futex.h>
-#include <linux/uaccess.h>
+#समावेश <linux/futex.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/asm.h>
-#include <asm/errno.h>
-#include <asm/processor.h>
-#include <asm/smap.h>
+#समावेश <यंत्र/यंत्र.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/smap.h>
 
-#define unsafe_atomic_op1(insn, oval, uaddr, oparg, label)	\
-do {								\
-	int oldval = 0, ret;					\
-	asm volatile("1:\t" insn "\n"				\
+#घोषणा unsafe_atomic_op1(insn, oval, uaddr, oparg, label)	\
+करो अणु								\
+	पूर्णांक oldval = 0, ret;					\
+	यंत्र अस्थिर("1:\t" insn "\n"				\
 		     "2:\n"					\
 		     "\t.section .fixup,\"ax\"\n"		\
 		     "3:\tmov\t%3, %1\n"			\
@@ -24,16 +25,16 @@ do {								\
 		     _ASM_EXTABLE_UA(1b, 3b)			\
 		     : "=r" (oldval), "=r" (ret), "+m" (*uaddr)	\
 		     : "i" (-EFAULT), "0" (oparg), "1" (0));	\
-	if (ret)						\
-		goto label;					\
+	अगर (ret)						\
+		जाओ label;					\
 	*oval = oldval;						\
-} while(0)
+पूर्ण जबतक(0)
 
 
-#define unsafe_atomic_op2(insn, oval, uaddr, oparg, label)	\
-do {								\
-	int oldval = 0, ret, tem;				\
-	asm volatile("1:\tmovl	%2, %0\n"			\
+#घोषणा unsafe_atomic_op2(insn, oval, uaddr, oparg, label)	\
+करो अणु								\
+	पूर्णांक oldval = 0, ret, tem;				\
+	यंत्र अस्थिर("1:\tmovl	%2, %0\n"			\
 		     "2:\tmovl\t%0, %3\n"			\
 		     "\t" insn "\n"				\
 		     "3:\t" LOCK_PREFIX "cmpxchgl %3, %2\n"	\
@@ -48,53 +49,53 @@ do {								\
 		     : "=&a" (oldval), "=&r" (ret),		\
 		       "+m" (*uaddr), "=&r" (tem)		\
 		     : "r" (oparg), "i" (-EFAULT), "1" (0));	\
-	if (ret)						\
-		goto label;					\
+	अगर (ret)						\
+		जाओ label;					\
 	*oval = oldval;						\
-} while(0)
+पूर्ण जबतक(0)
 
-static __always_inline int arch_futex_atomic_op_inuser(int op, int oparg, int *oval,
+अटल __always_अंतरभूत पूर्णांक arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval,
 		u32 __user *uaddr)
-{
-	if (!user_access_begin(uaddr, sizeof(u32)))
-		return -EFAULT;
+अणु
+	अगर (!user_access_begin(uaddr, माप(u32)))
+		वापस -EFAULT;
 
-	switch (op) {
-	case FUTEX_OP_SET:
+	चयन (op) अणु
+	हाल FUTEX_OP_SET:
 		unsafe_atomic_op1("xchgl %0, %2", oval, uaddr, oparg, Efault);
-		break;
-	case FUTEX_OP_ADD:
+		अवरोध;
+	हाल FUTEX_OP_ADD:
 		unsafe_atomic_op1(LOCK_PREFIX "xaddl %0, %2", oval,
 				   uaddr, oparg, Efault);
-		break;
-	case FUTEX_OP_OR:
+		अवरोध;
+	हाल FUTEX_OP_OR:
 		unsafe_atomic_op2("orl %4, %3", oval, uaddr, oparg, Efault);
-		break;
-	case FUTEX_OP_ANDN:
+		अवरोध;
+	हाल FUTEX_OP_ANDN:
 		unsafe_atomic_op2("andl %4, %3", oval, uaddr, ~oparg, Efault);
-		break;
-	case FUTEX_OP_XOR:
+		अवरोध;
+	हाल FUTEX_OP_XOR:
 		unsafe_atomic_op2("xorl %4, %3", oval, uaddr, oparg, Efault);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		user_access_end();
-		return -ENOSYS;
-	}
+		वापस -ENOSYS;
+	पूर्ण
 	user_access_end();
-	return 0;
+	वापस 0;
 Efault:
 	user_access_end();
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-static inline int futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
+अटल अंतरभूत पूर्णांक futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 						u32 oldval, u32 newval)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 
-	if (!user_access_begin(uaddr, sizeof(u32)))
-		return -EFAULT;
-	asm volatile("\n"
+	अगर (!user_access_begin(uaddr, माप(u32)))
+		वापस -EFAULT;
+	यंत्र अस्थिर("\n"
 		"1:\t" LOCK_PREFIX "cmpxchgl %4, %2\n"
 		"2:\n"
 		"\t.section .fixup, \"ax\"\n"
@@ -108,8 +109,8 @@ static inline int futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 	);
 	user_access_end();
 	*uval = oldval;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif
-#endif /* _ASM_X86_FUTEX_H */
+#पूर्ण_अगर
+#पूर्ण_अगर /* _ASM_X86_FUTEX_H */

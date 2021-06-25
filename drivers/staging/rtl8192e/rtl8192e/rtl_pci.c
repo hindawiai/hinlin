@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
  * Based on the r8180 driver, which is:
  * Copyright 2004-2005 Andrea Merello <andrea.merello@gmail.com>, et al.
  *
- * Contact Information: wlanfae <wlanfae@realtek.com>
+ * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
  */
-#include "rtl_pci.h"
-#include "rtl_core.h"
+#समावेश "rtl_pci.h"
+#समावेश "rtl_core.h"
 
-static void _rtl92e_parse_pci_configuration(struct pci_dev *pdev,
-					    struct net_device *dev)
-{
-	struct r8192_priv *priv = (struct r8192_priv *)rtllib_priv(dev);
+अटल व्योम _rtl92e_parse_pci_configuration(काष्ठा pci_dev *pdev,
+					    काष्ठा net_device *dev)
+अणु
+	काष्ठा r8192_priv *priv = (काष्ठा r8192_priv *)rtllib_priv(dev);
 
-	u8 tmp;
+	u8 पंचांगp;
 	u16 LinkCtrlReg;
 
-	pcie_capability_read_word(priv->pdev, PCI_EXP_LNKCTL, &LinkCtrlReg);
+	pcie_capability_पढ़ो_word(priv->pdev, PCI_EXP_LNKCTL, &LinkCtrlReg);
 
 	RT_TRACE(COMP_INIT, "Link Control Register =%x\n", LinkCtrlReg);
 
-	pci_read_config_byte(pdev, 0x98, &tmp);
-	tmp |= BIT4;
-	pci_write_config_byte(pdev, 0x98, tmp);
+	pci_पढ़ो_config_byte(pdev, 0x98, &पंचांगp);
+	पंचांगp |= BIT4;
+	pci_ग_लिखो_config_byte(pdev, 0x98, पंचांगp);
 
-	tmp = 0x17;
-	pci_write_config_byte(pdev, 0x70f, tmp);
-}
+	पंचांगp = 0x17;
+	pci_ग_लिखो_config_byte(pdev, 0x70f, पंचांगp);
+पूर्ण
 
-bool rtl92e_check_adapter(struct pci_dev *pdev, struct net_device *dev)
-{
-	struct r8192_priv *priv = (struct r8192_priv *)rtllib_priv(dev);
+bool rtl92e_check_adapter(काष्ठा pci_dev *pdev, काष्ठा net_device *dev)
+अणु
+	काष्ठा r8192_priv *priv = (काष्ठा r8192_priv *)rtllib_priv(dev);
 	u16 DeviceID;
 	u8  RevisionID;
 	u16 IrqLine;
 
 	DeviceID = pdev->device;
 	RevisionID = pdev->revision;
-	pci_read_config_word(pdev, 0x3C, &IrqLine);
+	pci_पढ़ो_config_word(pdev, 0x3C, &IrqLine);
 
 	priv->card_8192 = priv->ops->nic_type;
 
-	if (DeviceID == 0x8192) {
-		switch (RevisionID) {
-		case HAL_HW_PCI_REVISION_ID_8192PCIE:
+	अगर (DeviceID == 0x8192) अणु
+		चयन (RevisionID) अणु
+		हाल HAL_HW_PCI_REVISION_ID_8192PCIE:
 			dev_info(&pdev->dev,
 				 "Adapter(8192 PCI-E) is found - DeviceID=%x\n",
 				 DeviceID);
 			priv->card_8192 = NIC_8192E;
-			break;
-		case HAL_HW_PCI_REVISION_ID_8192SE:
+			अवरोध;
+		हाल HAL_HW_PCI_REVISION_ID_8192SE:
 			dev_info(&pdev->dev,
 				 "Adapter(8192SE) is found - DeviceID=%x\n",
 				 DeviceID);
 			priv->card_8192 = NIC_8192SE;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_info(&pdev->dev,
 				 "UNKNOWN nic type(%4x:%4x)\n",
-				 pdev->vendor, pdev->device);
+				 pdev->venकरोr, pdev->device);
 			priv->card_8192 = NIC_UNKNOWN;
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	if (priv->ops->nic_type != priv->card_8192) {
+	अगर (priv->ops->nic_type != priv->card_8192) अणु
 		dev_info(&pdev->dev,
 			 "Detect info(%x) and hardware info(%x) not match!\n",
 			 priv->ops->nic_type, priv->card_8192);
 		dev_info(&pdev->dev,
 			 "Please select proper driver before install!!!!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	_rtl92e_parse_pci_configuration(pdev, dev);
 
-	return true;
-}
+	वापस true;
+पूर्ण

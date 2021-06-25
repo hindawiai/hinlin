@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * PCM3168A codec driver
  *
@@ -7,132 +8,132 @@
  * Author: Damien Horsley <Damien.Horsley@imgtec.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/of_gpio.h>
-#include <linux/pm_runtime.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regulator/consumer.h>
 
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/tlv.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/tlv.h>
 
-#include "pcm3168a.h"
+#समावेश "pcm3168a.h"
 
-#define PCM3168A_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | \
+#घोषणा PCM3168A_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | \
 			 SNDRV_PCM_FMTBIT_S24_3LE | \
 			 SNDRV_PCM_FMTBIT_S24_LE)
 
-#define PCM3168A_FMT_I2S		0x0
-#define PCM3168A_FMT_LEFT_J		0x1
-#define PCM3168A_FMT_RIGHT_J		0x2
-#define PCM3168A_FMT_RIGHT_J_16		0x3
-#define PCM3168A_FMT_DSP_A		0x4
-#define PCM3168A_FMT_DSP_B		0x5
-#define PCM3168A_FMT_I2S_TDM		0x6
-#define PCM3168A_FMT_LEFT_J_TDM		0x7
-#define PCM3168A_FMT_DSP_MASK		0x4
+#घोषणा PCM3168A_FMT_I2S		0x0
+#घोषणा PCM3168A_FMT_LEFT_J		0x1
+#घोषणा PCM3168A_FMT_RIGHT_J		0x2
+#घोषणा PCM3168A_FMT_RIGHT_J_16		0x3
+#घोषणा PCM3168A_FMT_DSP_A		0x4
+#घोषणा PCM3168A_FMT_DSP_B		0x5
+#घोषणा PCM3168A_FMT_I2S_TDM		0x6
+#घोषणा PCM3168A_FMT_LEFT_J_TDM		0x7
+#घोषणा PCM3168A_FMT_DSP_MASK		0x4
 
-#define PCM3168A_NUM_SUPPLIES 6
-static const char *const pcm3168a_supply_names[PCM3168A_NUM_SUPPLIES] = {
+#घोषणा PCM3168A_NUM_SUPPLIES 6
+अटल स्थिर अक्षर *स्थिर pcm3168a_supply_names[PCM3168A_NUM_SUPPLIES] = अणु
 	"VDD1",
 	"VDD2",
 	"VCCAD1",
 	"VCCAD2",
 	"VCCDA1",
 	"VCCDA2"
-};
+पूर्ण;
 
-#define PCM3168A_DAI_DAC		0
-#define PCM3168A_DAI_ADC		1
+#घोषणा PCM3168A_DAI_DAC		0
+#घोषणा PCM3168A_DAI_ADC		1
 
 /* ADC/DAC side parameters */
-struct pcm3168a_io_params {
+काष्ठा pcm3168a_io_params अणु
 	bool master_mode;
-	unsigned int fmt;
-	int tdm_slots;
+	अचिन्हित पूर्णांक fmt;
+	पूर्णांक tdm_slots;
 	u32 tdm_mask;
-	int slot_width;
-};
+	पूर्णांक slot_width;
+पूर्ण;
 
-struct pcm3168a_priv {
-	struct regulator_bulk_data supplies[PCM3168A_NUM_SUPPLIES];
-	struct regmap *regmap;
-	struct clk *scki;
-	struct gpio_desc *gpio_rst;
-	unsigned long sysclk;
+काष्ठा pcm3168a_priv अणु
+	काष्ठा regulator_bulk_data supplies[PCM3168A_NUM_SUPPLIES];
+	काष्ठा regmap *regmap;
+	काष्ठा clk *scki;
+	काष्ठा gpio_desc *gpio_rst;
+	अचिन्हित दीर्घ sysclk;
 
-	struct pcm3168a_io_params io_params[2];
-	struct snd_soc_dai_driver dai_drv[2];
-};
+	काष्ठा pcm3168a_io_params io_params[2];
+	काष्ठा snd_soc_dai_driver dai_drv[2];
+पूर्ण;
 
-static const char *const pcm3168a_roll_off[] = { "Sharp", "Slow" };
+अटल स्थिर अक्षर *स्थिर pcm3168a_roll_off[] = अणु "Sharp", "Slow" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(pcm3168a_d1_roll_off, PCM3168A_DAC_OP_FLT,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_d1_roll_off, PCM3168A_DAC_OP_FLT,
 		PCM3168A_DAC_FLT_SHIFT, pcm3168a_roll_off);
-static SOC_ENUM_SINGLE_DECL(pcm3168a_d2_roll_off, PCM3168A_DAC_OP_FLT,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_d2_roll_off, PCM3168A_DAC_OP_FLT,
 		PCM3168A_DAC_FLT_SHIFT + 1, pcm3168a_roll_off);
-static SOC_ENUM_SINGLE_DECL(pcm3168a_d3_roll_off, PCM3168A_DAC_OP_FLT,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_d3_roll_off, PCM3168A_DAC_OP_FLT,
 		PCM3168A_DAC_FLT_SHIFT + 2, pcm3168a_roll_off);
-static SOC_ENUM_SINGLE_DECL(pcm3168a_d4_roll_off, PCM3168A_DAC_OP_FLT,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_d4_roll_off, PCM3168A_DAC_OP_FLT,
 		PCM3168A_DAC_FLT_SHIFT + 3, pcm3168a_roll_off);
 
-static const char *const pcm3168a_volume_type[] = {
-		"Individual", "Master + Individual" };
+अटल स्थिर अक्षर *स्थिर pcm3168a_volume_type[] = अणु
+		"Individual", "Master + Individual" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(pcm3168a_dac_volume_type, PCM3168A_DAC_ATT_DEMP_ZF,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_dac_volume_type, PCM3168A_DAC_ATT_DEMP_ZF,
 		PCM3168A_DAC_ATMDDA_SHIFT, pcm3168a_volume_type);
 
-static const char *const pcm3168a_att_speed_mult[] = { "2048", "4096" };
+अटल स्थिर अक्षर *स्थिर pcm3168a_att_speed_mult[] = अणु "2048", "4096" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(pcm3168a_dac_att_mult, PCM3168A_DAC_ATT_DEMP_ZF,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_dac_att_mult, PCM3168A_DAC_ATT_DEMP_ZF,
 		PCM3168A_DAC_ATSPDA_SHIFT, pcm3168a_att_speed_mult);
 
-static const char *const pcm3168a_demp[] = {
-		"Disabled", "48khz", "44.1khz", "32khz" };
+अटल स्थिर अक्षर *स्थिर pcm3168a_demp[] = अणु
+		"Disabled", "48khz", "44.1khz", "32khz" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(pcm3168a_dac_demp, PCM3168A_DAC_ATT_DEMP_ZF,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_dac_demp, PCM3168A_DAC_ATT_DEMP_ZF,
 		PCM3168A_DAC_DEMP_SHIFT, pcm3168a_demp);
 
-static const char *const pcm3168a_zf_func[] = {
+अटल स्थिर अक्षर *स्थिर pcm3168a_zf_func[] = अणु
 		"DAC 1/2/3/4 AND", "DAC 1/2/3/4 OR", "DAC 1/2/3 AND",
-		"DAC 1/2/3 OR", "DAC 4 AND", "DAC 4 OR" };
+		"DAC 1/2/3 OR", "DAC 4 AND", "DAC 4 OR" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(pcm3168a_dac_zf_func, PCM3168A_DAC_ATT_DEMP_ZF,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_dac_zf_func, PCM3168A_DAC_ATT_DEMP_ZF,
 		PCM3168A_DAC_AZRO_SHIFT, pcm3168a_zf_func);
 
-static const char *const pcm3168a_pol[] = { "Active High", "Active Low" };
+अटल स्थिर अक्षर *स्थिर pcm3168a_pol[] = अणु "Active High", "Active Low" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(pcm3168a_dac_zf_pol, PCM3168A_DAC_ATT_DEMP_ZF,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_dac_zf_pol, PCM3168A_DAC_ATT_DEMP_ZF,
 		PCM3168A_DAC_ATSPDA_SHIFT, pcm3168a_pol);
 
-static const char *const pcm3168a_con[] = { "Differential", "Single-Ended" };
+अटल स्थिर अक्षर *स्थिर pcm3168a_con[] = अणु "Differential", "Single-Ended" पूर्ण;
 
-static SOC_ENUM_DOUBLE_DECL(pcm3168a_adc1_con, PCM3168A_ADC_SEAD,
+अटल SOC_ENUM_DOUBLE_DECL(pcm3168a_adc1_con, PCM3168A_ADC_SEAD,
 				0, 1, pcm3168a_con);
-static SOC_ENUM_DOUBLE_DECL(pcm3168a_adc2_con, PCM3168A_ADC_SEAD,
+अटल SOC_ENUM_DOUBLE_DECL(pcm3168a_adc2_con, PCM3168A_ADC_SEAD,
 				2, 3, pcm3168a_con);
-static SOC_ENUM_DOUBLE_DECL(pcm3168a_adc3_con, PCM3168A_ADC_SEAD,
+अटल SOC_ENUM_DOUBLE_DECL(pcm3168a_adc3_con, PCM3168A_ADC_SEAD,
 				4, 5, pcm3168a_con);
 
-static SOC_ENUM_SINGLE_DECL(pcm3168a_adc_volume_type, PCM3168A_ADC_ATT_OVF,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_adc_volume_type, PCM3168A_ADC_ATT_OVF,
 		PCM3168A_ADC_ATMDAD_SHIFT, pcm3168a_volume_type);
 
-static SOC_ENUM_SINGLE_DECL(pcm3168a_adc_att_mult, PCM3168A_ADC_ATT_OVF,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_adc_att_mult, PCM3168A_ADC_ATT_OVF,
 		PCM3168A_ADC_ATSPAD_SHIFT, pcm3168a_att_speed_mult);
 
-static SOC_ENUM_SINGLE_DECL(pcm3168a_adc_ov_pol, PCM3168A_ADC_ATT_OVF,
+अटल SOC_ENUM_SINGLE_DECL(pcm3168a_adc_ov_pol, PCM3168A_ADC_ATT_OVF,
 		PCM3168A_ADC_OVFP_SHIFT, pcm3168a_pol);
 
-/* -100db to 0db, register values 0-54 cause mute */
-static const DECLARE_TLV_DB_SCALE(pcm3168a_dac_tlv, -10050, 50, 1);
+/* -100db to 0db, रेजिस्टर values 0-54 cause mute */
+अटल स्थिर DECLARE_TLV_DB_SCALE(pcm3168a_dac_tlv, -10050, 50, 1);
 
-/* -100db to 20db, register values 0-14 cause mute */
-static const DECLARE_TLV_DB_SCALE(pcm3168a_adc_tlv, -10050, 50, 1);
+/* -100db to 20db, रेजिस्टर values 0-14 cause mute */
+अटल स्थिर DECLARE_TLV_DB_SCALE(pcm3168a_adc_tlv, -10050, 50, 1);
 
-static const struct snd_kcontrol_new pcm3168a_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new pcm3168a_snd_controls[] = अणु
 	SOC_SINGLE("DAC Power-Save Switch", PCM3168A_DAC_PWR_MST_FMT,
 			PCM3168A_DAC_PSMDA_SHIFT, 1, 1),
 	SOC_ENUM("DAC1 Digital Filter roll-off", pcm3168a_d1_roll_off),
@@ -200,9 +201,9 @@ static const struct snd_kcontrol_new pcm3168a_snd_controls[] = {
 			PCM3168A_ADC_VOL_CHAN_START + 4,
 			PCM3168A_ADC_VOL_CHAN_START + 5,
 			0, 14, 255, 0, pcm3168a_adc_tlv)
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget pcm3168a_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget pcm3168a_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_DAC("DAC1", "Playback", PCM3168A_DAC_OP_FLT,
 			PCM3168A_DAC_OPEDA_SHIFT, 1),
 	SND_SOC_DAPM_DAC("DAC2", "Playback", PCM3168A_DAC_OP_FLT,
@@ -234,483 +235,483 @@ static const struct snd_soc_dapm_widget pcm3168a_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("AIN2R"),
 	SND_SOC_DAPM_INPUT("AIN3L"),
 	SND_SOC_DAPM_INPUT("AIN3R")
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route pcm3168a_dapm_routes[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route pcm3168a_dapm_routes[] = अणु
 	/* Playback */
-	{ "AOUT1L", NULL, "DAC1" },
-	{ "AOUT1R", NULL, "DAC1" },
+	अणु "AOUT1L", शून्य, "DAC1" पूर्ण,
+	अणु "AOUT1R", शून्य, "DAC1" पूर्ण,
 
-	{ "AOUT2L", NULL, "DAC2" },
-	{ "AOUT2R", NULL, "DAC2" },
+	अणु "AOUT2L", शून्य, "DAC2" पूर्ण,
+	अणु "AOUT2R", शून्य, "DAC2" पूर्ण,
 
-	{ "AOUT3L", NULL, "DAC3" },
-	{ "AOUT3R", NULL, "DAC3" },
+	अणु "AOUT3L", शून्य, "DAC3" पूर्ण,
+	अणु "AOUT3R", शून्य, "DAC3" पूर्ण,
 
-	{ "AOUT4L", NULL, "DAC4" },
-	{ "AOUT4R", NULL, "DAC4" },
+	अणु "AOUT4L", शून्य, "DAC4" पूर्ण,
+	अणु "AOUT4R", शून्य, "DAC4" पूर्ण,
 
 	/* Capture */
-	{ "ADC1", NULL, "AIN1L" },
-	{ "ADC1", NULL, "AIN1R" },
+	अणु "ADC1", शून्य, "AIN1L" पूर्ण,
+	अणु "ADC1", शून्य, "AIN1R" पूर्ण,
 
-	{ "ADC2", NULL, "AIN2L" },
-	{ "ADC2", NULL, "AIN2R" },
+	अणु "ADC2", शून्य, "AIN2L" पूर्ण,
+	अणु "ADC2", शून्य, "AIN2R" पूर्ण,
 
-	{ "ADC3", NULL, "AIN3L" },
-	{ "ADC3", NULL, "AIN3R" }
-};
+	अणु "ADC3", शून्य, "AIN3L" पूर्ण,
+	अणु "ADC3", शून्य, "AIN3R" पूर्ण
+पूर्ण;
 
-static unsigned int pcm3168a_scki_ratios[] = {
+अटल अचिन्हित पूर्णांक pcm3168a_scki_ratios[] = अणु
 	768,
 	512,
 	384,
 	256,
 	192,
 	128
-};
+पूर्ण;
 
-#define PCM3168A_NUM_SCKI_RATIOS_DAC	ARRAY_SIZE(pcm3168a_scki_ratios)
-#define PCM3168A_NUM_SCKI_RATIOS_ADC	(ARRAY_SIZE(pcm3168a_scki_ratios) - 2)
+#घोषणा PCM3168A_NUM_SCKI_RATIOS_DAC	ARRAY_SIZE(pcm3168a_scki_ratios)
+#घोषणा PCM3168A_NUM_SCKI_RATIOS_ADC	(ARRAY_SIZE(pcm3168a_scki_ratios) - 2)
 
-#define PCM3168A_MAX_SYSCLK		36864000
+#घोषणा PCM3168A_MAX_SYSCLK		36864000
 
-static int pcm3168a_reset(struct pcm3168a_priv *pcm3168a)
-{
-	int ret;
+अटल पूर्णांक pcm3168a_reset(काष्ठा pcm3168a_priv *pcm3168a)
+अणु
+	पूर्णांक ret;
 
-	ret = regmap_write(pcm3168a->regmap, PCM3168A_RST_SMODE, 0);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(pcm3168a->regmap, PCM3168A_RST_SMODE, 0);
+	अगर (ret)
+		वापस ret;
 
-	/* Internal reset is de-asserted after 3846 SCKI cycles */
+	/* Internal reset is de-निश्चितed after 3846 SCKI cycles */
 	msleep(DIV_ROUND_UP(3846 * 1000, pcm3168a->sysclk));
 
-	return regmap_write(pcm3168a->regmap, PCM3168A_RST_SMODE,
+	वापस regmap_ग_लिखो(pcm3168a->regmap, PCM3168A_RST_SMODE,
 			PCM3168A_MRST_MASK | PCM3168A_SRST_MASK);
-}
+पूर्ण
 
-static int pcm3168a_mute(struct snd_soc_dai *dai, int mute, int direction)
-{
-	struct snd_soc_component *component = dai->component;
-	struct pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक pcm3168a_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(component);
 
-	regmap_write(pcm3168a->regmap, PCM3168A_DAC_MUTE, mute ? 0xff : 0);
+	regmap_ग_लिखो(pcm3168a->regmap, PCM3168A_DAC_MUTE, mute ? 0xff : 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcm3168a_set_dai_sysclk(struct snd_soc_dai *dai,
-				  int clk_id, unsigned int freq, int dir)
-{
-	struct pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(dai->component);
-	int ret;
+अटल पूर्णांक pcm3168a_set_dai_sysclk(काष्ठा snd_soc_dai *dai,
+				  पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(dai->component);
+	पूर्णांक ret;
 
 	/*
 	 * Some sound card sets 0 Hz as reset,
 	 * but it is impossible to set. Ignore it here
 	 */
-	if (freq == 0)
-		return 0;
+	अगर (freq == 0)
+		वापस 0;
 
-	if (freq > PCM3168A_MAX_SYSCLK)
-		return -EINVAL;
+	अगर (freq > PCM3168A_MAX_SYSCLK)
+		वापस -EINVAL;
 
 	ret = clk_set_rate(pcm3168a->scki, freq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pcm3168a->sysclk = freq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pcm3168a_update_fixup_pcm_stream(struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(component);
-	u64 formats = SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S24_LE;
-	unsigned int channel_max = dai->id == PCM3168A_DAI_DAC ? 8 : 6;
+अटल व्योम pcm3168a_update_fixup_pcm_stream(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(component);
+	u64 क्रमmats = SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S24_LE;
+	अचिन्हित पूर्णांक channel_max = dai->id == PCM3168A_DAI_DAC ? 8 : 6;
 
-	if (pcm3168a->io_params[dai->id].fmt == PCM3168A_FMT_RIGHT_J) {
+	अगर (pcm3168a->io_params[dai->id].fmt == PCM3168A_FMT_RIGHT_J) अणु
 		/* S16_LE is only supported in RIGHT_J mode */
-		formats |= SNDRV_PCM_FMTBIT_S16_LE;
+		क्रमmats |= SNDRV_PCM_FMTBIT_S16_LE;
 
 		/*
 		 * If multi DIN/DOUT is not selected, RIGHT_J can only support
 		 * two channels (no TDM support)
 		 */
-		if (pcm3168a->io_params[dai->id].tdm_slots != 2)
+		अगर (pcm3168a->io_params[dai->id].tdm_slots != 2)
 			channel_max = 2;
-	}
+	पूर्ण
 
-	if (dai->id == PCM3168A_DAI_DAC) {
+	अगर (dai->id == PCM3168A_DAI_DAC) अणु
 		dai->driver->playback.channels_max = channel_max;
-		dai->driver->playback.formats = formats;
-	} else {
+		dai->driver->playback.क्रमmats = क्रमmats;
+	पूर्ण अन्यथा अणु
 		dai->driver->capture.channels_max = channel_max;
-		dai->driver->capture.formats = formats;
-	}
-}
+		dai->driver->capture.क्रमmats = क्रमmats;
+	पूर्ण
+पूर्ण
 
-static int pcm3168a_set_dai_fmt(struct snd_soc_dai *dai, unsigned int format)
-{
-	struct snd_soc_component *component = dai->component;
-	struct pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(component);
-	u32 fmt, reg, mask, shift;
+अटल पूर्णांक pcm3168a_set_dai_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक क्रमmat)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(component);
+	u32 fmt, reg, mask, shअगरt;
 	bool master_mode;
 
-	switch (format & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_LEFT_J:
+	चयन (क्रमmat & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		fmt = PCM3168A_FMT_LEFT_J;
-		break;
-	case SND_SOC_DAIFMT_I2S:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_I2S:
 		fmt = PCM3168A_FMT_I2S;
-		break;
-	case SND_SOC_DAIFMT_RIGHT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_RIGHT_J:
 		fmt = PCM3168A_FMT_RIGHT_J;
-		break;
-	case SND_SOC_DAIFMT_DSP_A:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_A:
 		fmt = PCM3168A_FMT_DSP_A;
-		break;
-	case SND_SOC_DAIFMT_DSP_B:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_DSP_B:
 		fmt = PCM3168A_FMT_DSP_B;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(component->dev, "unsupported dai format\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (format & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS:
+	चयन (क्रमmat & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBS_CFS:
 		master_mode = false;
-		break;
-	case SND_SOC_DAIFMT_CBM_CFM:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBM_CFM:
 		master_mode = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(component->dev, "unsupported master/slave mode\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (format & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (क्रमmat & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (dai->id == PCM3168A_DAI_DAC) {
+	अगर (dai->id == PCM3168A_DAI_DAC) अणु
 		reg = PCM3168A_DAC_PWR_MST_FMT;
 		mask = PCM3168A_DAC_FMT_MASK;
-		shift = PCM3168A_DAC_FMT_SHIFT;
-	} else {
+		shअगरt = PCM3168A_DAC_FMT_SHIFT;
+	पूर्ण अन्यथा अणु
 		reg = PCM3168A_ADC_MST_FMT;
 		mask = PCM3168A_ADC_FMTAD_MASK;
-		shift = PCM3168A_ADC_FMTAD_SHIFT;
-	}
+		shअगरt = PCM3168A_ADC_FMTAD_SHIFT;
+	पूर्ण
 
 	pcm3168a->io_params[dai->id].master_mode = master_mode;
 	pcm3168a->io_params[dai->id].fmt = fmt;
 
-	regmap_update_bits(pcm3168a->regmap, reg, mask, fmt << shift);
+	regmap_update_bits(pcm3168a->regmap, reg, mask, fmt << shअगरt);
 
 	pcm3168a_update_fixup_pcm_stream(dai);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcm3168a_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
-				 unsigned int rx_mask, int slots,
-				 int slot_width)
-{
-	struct snd_soc_component *component = dai->component;
-	struct pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(component);
-	struct pcm3168a_io_params *io_params = &pcm3168a->io_params[dai->id];
+अटल पूर्णांक pcm3168a_set_tdm_slot(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक tx_mask,
+				 अचिन्हित पूर्णांक rx_mask, पूर्णांक slots,
+				 पूर्णांक slot_width)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(component);
+	काष्ठा pcm3168a_io_params *io_params = &pcm3168a->io_params[dai->id];
 
-	if (tx_mask >= (1<<slots) || rx_mask >= (1<<slots)) {
+	अगर (tx_mask >= (1<<slots) || rx_mask >= (1<<slots)) अणु
 		dev_err(component->dev,
 			"Bad tdm mask tx: 0x%08x rx: 0x%08x slots %d\n",
 			tx_mask, rx_mask, slots);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (slot_width &&
-	    (slot_width != 16 && slot_width != 24 && slot_width != 32 )) {
+	अगर (slot_width &&
+	    (slot_width != 16 && slot_width != 24 && slot_width != 32 )) अणु
 		dev_err(component->dev, "Unsupported slot_width %d\n",
 			slot_width);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	io_params->tdm_slots = slots;
 	io_params->slot_width = slot_width;
-	/* Ignore the not relevant mask for the DAI/direction */
-	if (dai->id == PCM3168A_DAI_DAC)
+	/* Ignore the not relevant mask क्रम the DAI/direction */
+	अगर (dai->id == PCM3168A_DAI_DAC)
 		io_params->tdm_mask = tx_mask;
-	else
+	अन्यथा
 		io_params->tdm_mask = rx_mask;
 
 	pcm3168a_update_fixup_pcm_stream(dai);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcm3168a_hw_params(struct snd_pcm_substream *substream,
-			     struct snd_pcm_hw_params *params,
-			     struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(component);
-	struct pcm3168a_io_params *io_params = &pcm3168a->io_params[dai->id];
+अटल पूर्णांक pcm3168a_hw_params(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_pcm_hw_params *params,
+			     काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा pcm3168a_priv *pcm3168a = snd_soc_component_get_drvdata(component);
+	काष्ठा pcm3168a_io_params *io_params = &pcm3168a->io_params[dai->id];
 	bool master_mode;
-	u32 val, mask, shift, reg;
-	unsigned int rate, fmt, ratio, max_ratio;
-	unsigned int tdm_slots;
-	int i, slot_width;
+	u32 val, mask, shअगरt, reg;
+	अचिन्हित पूर्णांक rate, fmt, ratio, max_ratio;
+	अचिन्हित पूर्णांक tdm_slots;
+	पूर्णांक i, slot_width;
 
 	rate = params_rate(params);
 
 	ratio = pcm3168a->sysclk / rate;
 
-	if (dai->id == PCM3168A_DAI_DAC) {
+	अगर (dai->id == PCM3168A_DAI_DAC) अणु
 		max_ratio = PCM3168A_NUM_SCKI_RATIOS_DAC;
 		reg = PCM3168A_DAC_PWR_MST_FMT;
 		mask = PCM3168A_DAC_MSDA_MASK;
-		shift = PCM3168A_DAC_MSDA_SHIFT;
-	} else {
+		shअगरt = PCM3168A_DAC_MSDA_SHIFT;
+	पूर्ण अन्यथा अणु
 		max_ratio = PCM3168A_NUM_SCKI_RATIOS_ADC;
 		reg = PCM3168A_ADC_MST_FMT;
 		mask = PCM3168A_ADC_MSAD_MASK;
-		shift = PCM3168A_ADC_MSAD_SHIFT;
-	}
+		shअगरt = PCM3168A_ADC_MSAD_SHIFT;
+	पूर्ण
 
 	master_mode = io_params->master_mode;
 	fmt = io_params->fmt;
 
-	for (i = 0; i < max_ratio; i++) {
-		if (pcm3168a_scki_ratios[i] == ratio)
-			break;
-	}
+	क्रम (i = 0; i < max_ratio; i++) अणु
+		अगर (pcm3168a_scki_ratios[i] == ratio)
+			अवरोध;
+	पूर्ण
 
-	if (i == max_ratio) {
+	अगर (i == max_ratio) अणु
 		dev_err(component->dev, "unsupported sysclk ratio\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (io_params->slot_width)
+	अगर (io_params->slot_width)
 		slot_width = io_params->slot_width;
-	else
+	अन्यथा
 		slot_width = params_width(params);
 
-	switch (slot_width) {
-	case 16:
-		if (master_mode || (fmt != PCM3168A_FMT_RIGHT_J)) {
+	चयन (slot_width) अणु
+	हाल 16:
+		अगर (master_mode || (fmt != PCM3168A_FMT_RIGHT_J)) अणु
 			dev_err(component->dev, "16-bit slots are supported only for slave mode using right justified\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		fmt = PCM3168A_FMT_RIGHT_J_16;
-		break;
-	case 24:
-		if (master_mode || (fmt & PCM3168A_FMT_DSP_MASK)) {
+		अवरोध;
+	हाल 24:
+		अगर (master_mode || (fmt & PCM3168A_FMT_DSP_MASK)) अणु
 			dev_err(component->dev, "24-bit slots not supported in master mode, or slave mode using DSP\n");
-			return -EINVAL;
-		}
-		break;
-	case 32:
-		break;
-	default:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल 32:
+		अवरोध;
+	शेष:
 		dev_err(component->dev, "unsupported frame size: %d\n", slot_width);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (io_params->tdm_slots)
+	अगर (io_params->tdm_slots)
 		tdm_slots = io_params->tdm_slots;
-	else
+	अन्यथा
 		tdm_slots = params_channels(params);
 
 	/*
 	 * Switch the codec to TDM mode when more than 2 TDM slots are needed
-	 * for the stream.
+	 * क्रम the stream.
 	 * If pcm3168a->tdm_slots is not set or set to more than 2 (8/6 usually)
 	 * then DIN1/DOUT1 is used in TDM mode.
 	 * If pcm3168a->tdm_slots is set to 2 then DIN1/2/3/4 and DOUT1/2/3 is
-	 * used in normal mode, no need to switch to TDM modes.
+	 * used in normal mode, no need to चयन to TDM modes.
 	 */
-	if (tdm_slots > 2) {
-		switch (fmt) {
-		case PCM3168A_FMT_I2S:
-		case PCM3168A_FMT_DSP_A:
+	अगर (tdm_slots > 2) अणु
+		चयन (fmt) अणु
+		हाल PCM3168A_FMT_I2S:
+		हाल PCM3168A_FMT_DSP_A:
 			fmt = PCM3168A_FMT_I2S_TDM;
-			break;
-		case PCM3168A_FMT_LEFT_J:
-		case PCM3168A_FMT_DSP_B:
+			अवरोध;
+		हाल PCM3168A_FMT_LEFT_J:
+		हाल PCM3168A_FMT_DSP_B:
 			fmt = PCM3168A_FMT_LEFT_J_TDM;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(component->dev,
 				"TDM is supported under DSP/I2S/Left_J only\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (master_mode)
-		val = ((i + 1) << shift);
-	else
+	अगर (master_mode)
+		val = ((i + 1) << shअगरt);
+	अन्यथा
 		val = 0;
 
 	regmap_update_bits(pcm3168a->regmap, reg, mask, val);
 
-	if (dai->id == PCM3168A_DAI_DAC) {
+	अगर (dai->id == PCM3168A_DAI_DAC) अणु
 		mask = PCM3168A_DAC_FMT_MASK;
-		shift = PCM3168A_DAC_FMT_SHIFT;
-	} else {
+		shअगरt = PCM3168A_DAC_FMT_SHIFT;
+	पूर्ण अन्यथा अणु
 		mask = PCM3168A_ADC_FMTAD_MASK;
-		shift = PCM3168A_ADC_FMTAD_SHIFT;
-	}
+		shअगरt = PCM3168A_ADC_FMTAD_SHIFT;
+	पूर्ण
 
-	regmap_update_bits(pcm3168a->regmap, reg, mask, fmt << shift);
+	regmap_update_bits(pcm3168a->regmap, reg, mask, fmt << shअगरt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops pcm3168a_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops pcm3168a_dai_ops = अणु
 	.set_fmt	= pcm3168a_set_dai_fmt,
 	.set_sysclk	= pcm3168a_set_dai_sysclk,
 	.hw_params	= pcm3168a_hw_params,
 	.mute_stream	= pcm3168a_mute,
 	.set_tdm_slot	= pcm3168a_set_tdm_slot,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver pcm3168a_dais[] = {
-	{
+अटल काष्ठा snd_soc_dai_driver pcm3168a_dais[] = अणु
+	अणु
 		.name = "pcm3168a-dac",
 		.id = PCM3168A_DAI_DAC,
-		.playback = {
+		.playback = अणु
 			.stream_name = "Playback",
 			.channels_min = 1,
 			.channels_max = 8,
 			.rates = SNDRV_PCM_RATE_8000_192000,
-			.formats = PCM3168A_FORMATS
-		},
+			.क्रमmats = PCM3168A_FORMATS
+		पूर्ण,
 		.ops = &pcm3168a_dai_ops
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "pcm3168a-adc",
 		.id = PCM3168A_DAI_ADC,
-		.capture = {
+		.capture = अणु
 			.stream_name = "Capture",
 			.channels_min = 1,
 			.channels_max = 6,
 			.rates = SNDRV_PCM_RATE_8000_96000,
-			.formats = PCM3168A_FORMATS
-		},
+			.क्रमmats = PCM3168A_FORMATS
+		पूर्ण,
 		.ops = &pcm3168a_dai_ops
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct reg_default pcm3168a_reg_default[] = {
-	{ PCM3168A_RST_SMODE, PCM3168A_MRST_MASK | PCM3168A_SRST_MASK },
-	{ PCM3168A_DAC_PWR_MST_FMT, 0x00 },
-	{ PCM3168A_DAC_OP_FLT, 0x00 },
-	{ PCM3168A_DAC_INV, 0x00 },
-	{ PCM3168A_DAC_MUTE, 0x00 },
-	{ PCM3168A_DAC_ZERO, 0x00 },
-	{ PCM3168A_DAC_ATT_DEMP_ZF, 0x00 },
-	{ PCM3168A_DAC_VOL_MASTER, 0xff },
-	{ PCM3168A_DAC_VOL_CHAN_START, 0xff },
-	{ PCM3168A_DAC_VOL_CHAN_START + 1, 0xff },
-	{ PCM3168A_DAC_VOL_CHAN_START + 2, 0xff },
-	{ PCM3168A_DAC_VOL_CHAN_START + 3, 0xff },
-	{ PCM3168A_DAC_VOL_CHAN_START + 4, 0xff },
-	{ PCM3168A_DAC_VOL_CHAN_START + 5, 0xff },
-	{ PCM3168A_DAC_VOL_CHAN_START + 6, 0xff },
-	{ PCM3168A_DAC_VOL_CHAN_START + 7, 0xff },
-	{ PCM3168A_ADC_SMODE, 0x00 },
-	{ PCM3168A_ADC_MST_FMT, 0x00 },
-	{ PCM3168A_ADC_PWR_HPFB, 0x00 },
-	{ PCM3168A_ADC_SEAD, 0x00 },
-	{ PCM3168A_ADC_INV, 0x00 },
-	{ PCM3168A_ADC_MUTE, 0x00 },
-	{ PCM3168A_ADC_OV, 0x00 },
-	{ PCM3168A_ADC_ATT_OVF, 0x00 },
-	{ PCM3168A_ADC_VOL_MASTER, 0xd3 },
-	{ PCM3168A_ADC_VOL_CHAN_START, 0xd3 },
-	{ PCM3168A_ADC_VOL_CHAN_START + 1, 0xd3 },
-	{ PCM3168A_ADC_VOL_CHAN_START + 2, 0xd3 },
-	{ PCM3168A_ADC_VOL_CHAN_START + 3, 0xd3 },
-	{ PCM3168A_ADC_VOL_CHAN_START + 4, 0xd3 },
-	{ PCM3168A_ADC_VOL_CHAN_START + 5, 0xd3 }
-};
+अटल स्थिर काष्ठा reg_शेष pcm3168a_reg_शेष[] = अणु
+	अणु PCM3168A_RST_SMODE, PCM3168A_MRST_MASK | PCM3168A_SRST_MASK पूर्ण,
+	अणु PCM3168A_DAC_PWR_MST_FMT, 0x00 पूर्ण,
+	अणु PCM3168A_DAC_OP_FLT, 0x00 पूर्ण,
+	अणु PCM3168A_DAC_INV, 0x00 पूर्ण,
+	अणु PCM3168A_DAC_MUTE, 0x00 पूर्ण,
+	अणु PCM3168A_DAC_ZERO, 0x00 पूर्ण,
+	अणु PCM3168A_DAC_ATT_DEMP_ZF, 0x00 पूर्ण,
+	अणु PCM3168A_DAC_VOL_MASTER, 0xff पूर्ण,
+	अणु PCM3168A_DAC_VOL_CHAN_START, 0xff पूर्ण,
+	अणु PCM3168A_DAC_VOL_CHAN_START + 1, 0xff पूर्ण,
+	अणु PCM3168A_DAC_VOL_CHAN_START + 2, 0xff पूर्ण,
+	अणु PCM3168A_DAC_VOL_CHAN_START + 3, 0xff पूर्ण,
+	अणु PCM3168A_DAC_VOL_CHAN_START + 4, 0xff पूर्ण,
+	अणु PCM3168A_DAC_VOL_CHAN_START + 5, 0xff पूर्ण,
+	अणु PCM3168A_DAC_VOL_CHAN_START + 6, 0xff पूर्ण,
+	अणु PCM3168A_DAC_VOL_CHAN_START + 7, 0xff पूर्ण,
+	अणु PCM3168A_ADC_SMODE, 0x00 पूर्ण,
+	अणु PCM3168A_ADC_MST_FMT, 0x00 पूर्ण,
+	अणु PCM3168A_ADC_PWR_HPFB, 0x00 पूर्ण,
+	अणु PCM3168A_ADC_SEAD, 0x00 पूर्ण,
+	अणु PCM3168A_ADC_INV, 0x00 पूर्ण,
+	अणु PCM3168A_ADC_MUTE, 0x00 पूर्ण,
+	अणु PCM3168A_ADC_OV, 0x00 पूर्ण,
+	अणु PCM3168A_ADC_ATT_OVF, 0x00 पूर्ण,
+	अणु PCM3168A_ADC_VOL_MASTER, 0xd3 पूर्ण,
+	अणु PCM3168A_ADC_VOL_CHAN_START, 0xd3 पूर्ण,
+	अणु PCM3168A_ADC_VOL_CHAN_START + 1, 0xd3 पूर्ण,
+	अणु PCM3168A_ADC_VOL_CHAN_START + 2, 0xd3 पूर्ण,
+	अणु PCM3168A_ADC_VOL_CHAN_START + 3, 0xd3 पूर्ण,
+	अणु PCM3168A_ADC_VOL_CHAN_START + 4, 0xd3 पूर्ण,
+	अणु PCM3168A_ADC_VOL_CHAN_START + 5, 0xd3 पूर्ण
+पूर्ण;
 
-static bool pcm3168a_readable_register(struct device *dev, unsigned int reg)
-{
-	if (reg >= PCM3168A_RST_SMODE)
-		return true;
-	else
-		return false;
-}
+अटल bool pcm3168a_पढ़ोable_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	अगर (reg >= PCM3168A_RST_SMODE)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static bool pcm3168a_volatile_register(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case PCM3168A_RST_SMODE:
-	case PCM3168A_DAC_ZERO:
-	case PCM3168A_ADC_OV:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool pcm3168a_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल PCM3168A_RST_SMODE:
+	हाल PCM3168A_DAC_ZERO:
+	हाल PCM3168A_ADC_OV:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool pcm3168a_writeable_register(struct device *dev, unsigned int reg)
-{
-	if (reg < PCM3168A_RST_SMODE)
-		return false;
+अटल bool pcm3168a_ग_लिखोable_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	अगर (reg < PCM3168A_RST_SMODE)
+		वापस false;
 
-	switch (reg) {
-	case PCM3168A_DAC_ZERO:
-	case PCM3168A_ADC_OV:
-		return false;
-	default:
-		return true;
-	}
-}
+	चयन (reg) अणु
+	हाल PCM3168A_DAC_ZERO:
+	हाल PCM3168A_ADC_OV:
+		वापस false;
+	शेष:
+		वापस true;
+	पूर्ण
+पूर्ण
 
-const struct regmap_config pcm3168a_regmap = {
+स्थिर काष्ठा regmap_config pcm3168a_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = PCM3168A_ADC_VOL_CHAN_START + 5,
-	.reg_defaults = pcm3168a_reg_default,
-	.num_reg_defaults = ARRAY_SIZE(pcm3168a_reg_default),
-	.readable_reg = pcm3168a_readable_register,
-	.volatile_reg = pcm3168a_volatile_register,
-	.writeable_reg = pcm3168a_writeable_register,
+	.max_रेजिस्टर = PCM3168A_ADC_VOL_CHAN_START + 5,
+	.reg_शेषs = pcm3168a_reg_शेष,
+	.num_reg_शेषs = ARRAY_SIZE(pcm3168a_reg_शेष),
+	.पढ़ोable_reg = pcm3168a_पढ़ोable_रेजिस्टर,
+	.अस्थिर_reg = pcm3168a_अस्थिर_रेजिस्टर,
+	.ग_लिखोable_reg = pcm3168a_ग_लिखोable_रेजिस्टर,
 	.cache_type = REGCACHE_FLAT
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(pcm3168a_regmap);
 
-static const struct snd_soc_component_driver pcm3168a_driver = {
+अटल स्थिर काष्ठा snd_soc_component_driver pcm3168a_driver = अणु
 	.controls		= pcm3168a_snd_controls,
 	.num_controls		= ARRAY_SIZE(pcm3168a_snd_controls),
-	.dapm_widgets		= pcm3168a_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(pcm3168a_dapm_widgets),
+	.dapm_widमाला_लो		= pcm3168a_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(pcm3168a_dapm_widमाला_लो),
 	.dapm_routes		= pcm3168a_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(pcm3168a_dapm_routes),
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-int pcm3168a_probe(struct device *dev, struct regmap *regmap)
-{
-	struct pcm3168a_priv *pcm3168a;
-	int ret, i;
+पूर्णांक pcm3168a_probe(काष्ठा device *dev, काष्ठा regmap *regmap)
+अणु
+	काष्ठा pcm3168a_priv *pcm3168a;
+	पूर्णांक ret, i;
 
-	pcm3168a = devm_kzalloc(dev, sizeof(*pcm3168a), GFP_KERNEL);
-	if (pcm3168a == NULL)
-		return -ENOMEM;
+	pcm3168a = devm_kzalloc(dev, माप(*pcm3168a), GFP_KERNEL);
+	अगर (pcm3168a == शून्य)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(dev, pcm3168a);
 
@@ -720,88 +721,88 @@ int pcm3168a_probe(struct device *dev, struct regmap *regmap)
 	 *
 	 * The RST is low active, we want the GPIO line to be high initially, so
 	 * request the initial level to LOW which in practice means DEASSERTED:
-	 * The deasserted level of GPIO_ACTIVE_LOW is HIGH.
+	 * The deनिश्चितed level of GPIO_ACTIVE_LOW is HIGH.
 	 */
 	pcm3168a->gpio_rst = devm_gpiod_get_optional(dev, "reset",
 						GPIOD_OUT_LOW |
 						GPIOD_FLAGS_BIT_NONEXCLUSIVE);
-	if (IS_ERR(pcm3168a->gpio_rst)) {
+	अगर (IS_ERR(pcm3168a->gpio_rst)) अणु
 		ret = PTR_ERR(pcm3168a->gpio_rst);
-		if (ret != -EPROBE_DEFER )
+		अगर (ret != -EPROBE_DEFER )
 			dev_err(dev, "failed to acquire RST gpio: %d\n", ret);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pcm3168a->scki = devm_clk_get(dev, "scki");
-	if (IS_ERR(pcm3168a->scki)) {
+	अगर (IS_ERR(pcm3168a->scki)) अणु
 		ret = PTR_ERR(pcm3168a->scki);
-		if (ret != -EPROBE_DEFER)
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to acquire clock 'scki': %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(pcm3168a->scki);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable mclk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pcm3168a->sysclk = clk_get_rate(pcm3168a->scki);
 
-	for (i = 0; i < ARRAY_SIZE(pcm3168a->supplies); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(pcm3168a->supplies); i++)
 		pcm3168a->supplies[i].supply = pcm3168a_supply_names[i];
 
 	ret = devm_regulator_bulk_get(dev,
 			ARRAY_SIZE(pcm3168a->supplies), pcm3168a->supplies);
-	if (ret) {
-		if (ret != -EPROBE_DEFER)
+	अगर (ret) अणु
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to request supplies: %d\n", ret);
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(pcm3168a->supplies),
 				    pcm3168a->supplies);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable supplies: %d\n", ret);
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
 	pcm3168a->regmap = regmap;
-	if (IS_ERR(pcm3168a->regmap)) {
+	अगर (IS_ERR(pcm3168a->regmap)) अणु
 		ret = PTR_ERR(pcm3168a->regmap);
 		dev_err(dev, "failed to allocate regmap: %d\n", ret);
-		goto err_regulator;
-	}
+		जाओ err_regulator;
+	पूर्ण
 
-	if (pcm3168a->gpio_rst) {
+	अगर (pcm3168a->gpio_rst) अणु
 		/*
-		 * The device is taken out from reset via GPIO line, wait for
-		 * 3846 SCKI clock cycles for the internal reset de-assertion
+		 * The device is taken out from reset via GPIO line, रुको क्रम
+		 * 3846 SCKI घड़ी cycles क्रम the पूर्णांकernal reset de-निश्चितion
 		 */
 		msleep(DIV_ROUND_UP(3846 * 1000, pcm3168a->sysclk));
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = pcm3168a_reset(pcm3168a);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to reset device: %d\n", ret);
-			goto err_regulator;
-		}
-	}
+			जाओ err_regulator;
+		पूर्ण
+	पूर्ण
 
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
-	pm_runtime_idle(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_enable(dev);
+	pm_runसमय_idle(dev);
 
-	memcpy(pcm3168a->dai_drv, pcm3168a_dais, sizeof(pcm3168a->dai_drv));
-	ret = devm_snd_soc_register_component(dev, &pcm3168a_driver,
+	स_नकल(pcm3168a->dai_drv, pcm3168a_dais, माप(pcm3168a->dai_drv));
+	ret = devm_snd_soc_रेजिस्टर_component(dev, &pcm3168a_driver,
 					      pcm3168a->dai_drv,
 					      ARRAY_SIZE(pcm3168a->dai_drv));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to register component: %d\n", ret);
-		goto err_regulator;
-	}
+		जाओ err_regulator;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_regulator:
 	regulator_bulk_disable(ARRAY_SIZE(pcm3168a->supplies),
@@ -809,73 +810,73 @@ err_regulator:
 err_clk:
 	clk_disable_unprepare(pcm3168a->scki);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pcm3168a_probe);
 
-static void pcm3168a_disable(struct device *dev)
-{
-	struct pcm3168a_priv *pcm3168a = dev_get_drvdata(dev);
+अटल व्योम pcm3168a_disable(काष्ठा device *dev)
+अणु
+	काष्ठा pcm3168a_priv *pcm3168a = dev_get_drvdata(dev);
 
 	regulator_bulk_disable(ARRAY_SIZE(pcm3168a->supplies),
 			       pcm3168a->supplies);
 	clk_disable_unprepare(pcm3168a->scki);
-}
+पूर्ण
 
-void pcm3168a_remove(struct device *dev)
-{
-	struct pcm3168a_priv *pcm3168a = dev_get_drvdata(dev);
+व्योम pcm3168a_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा pcm3168a_priv *pcm3168a = dev_get_drvdata(dev);
 
 	/*
 	 * The RST is low active, we want the GPIO line to be low when the
-	 * driver is removed, so set level to 1 which in practice means
+	 * driver is हटाओd, so set level to 1 which in practice means
 	 * ASSERTED:
-	 * The asserted level of GPIO_ACTIVE_LOW is LOW.
+	 * The निश्चितed level of GPIO_ACTIVE_LOW is LOW.
 	 */
 	gpiod_set_value_cansleep(pcm3168a->gpio_rst, 1);
-	pm_runtime_disable(dev);
-#ifndef CONFIG_PM
+	pm_runसमय_disable(dev);
+#अगर_अघोषित CONFIG_PM
 	pcm3168a_disable(dev);
-#endif
-}
-EXPORT_SYMBOL_GPL(pcm3168a_remove);
+#पूर्ण_अगर
+पूर्ण
+EXPORT_SYMBOL_GPL(pcm3168a_हटाओ);
 
-#ifdef CONFIG_PM
-static int pcm3168a_rt_resume(struct device *dev)
-{
-	struct pcm3168a_priv *pcm3168a = dev_get_drvdata(dev);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक pcm3168a_rt_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pcm3168a_priv *pcm3168a = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(pcm3168a->scki);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable mclk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(pcm3168a->supplies),
 				    pcm3168a->supplies);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable supplies: %d\n", ret);
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
 	ret = pcm3168a_reset(pcm3168a);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to reset device: %d\n", ret);
-		goto err_regulator;
-	}
+		जाओ err_regulator;
+	पूर्ण
 
 	regcache_cache_only(pcm3168a->regmap, false);
 
 	regcache_mark_dirty(pcm3168a->regmap);
 
 	ret = regcache_sync(pcm3168a->regmap);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to sync regmap: %d\n", ret);
-		goto err_regulator;
-	}
+		जाओ err_regulator;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_regulator:
 	regulator_bulk_disable(ARRAY_SIZE(pcm3168a->supplies),
@@ -883,24 +884,24 @@ err_regulator:
 err_clk:
 	clk_disable_unprepare(pcm3168a->scki);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pcm3168a_rt_suspend(struct device *dev)
-{
-	struct pcm3168a_priv *pcm3168a = dev_get_drvdata(dev);
+अटल पूर्णांक pcm3168a_rt_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pcm3168a_priv *pcm3168a = dev_get_drvdata(dev);
 
 	regcache_cache_only(pcm3168a->regmap, true);
 
 	pcm3168a_disable(dev);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-const struct dev_pm_ops pcm3168a_pm_ops = {
-	SET_RUNTIME_PM_OPS(pcm3168a_rt_suspend, pcm3168a_rt_resume, NULL)
-};
+स्थिर काष्ठा dev_pm_ops pcm3168a_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(pcm3168a_rt_suspend, pcm3168a_rt_resume, शून्य)
+पूर्ण;
 EXPORT_SYMBOL_GPL(pcm3168a_pm_ops);
 
 MODULE_DESCRIPTION("PCM3168A codec driver");

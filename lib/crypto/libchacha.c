@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * The ChaCha stream cipher (RFC7539)
  *
  * Copyright (C) 2015 Martin Willi
  */
 
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
 
-#include <crypto/algapi.h> // for crypto_xor_cpy
-#include <crypto/chacha.h>
+#समावेश <crypto/algapi.h> // क्रम crypto_xor_cpy
+#समावेश <crypto/chacha.h>
 
-void chacha_crypt_generic(u32 *state, u8 *dst, const u8 *src,
-			  unsigned int bytes, int nrounds)
-{
+व्योम chacha_crypt_generic(u32 *state, u8 *dst, स्थिर u8 *src,
+			  अचिन्हित पूर्णांक bytes, पूर्णांक nrounds)
+अणु
 	/* aligned to potentially speed up crypto_xor() */
-	u8 stream[CHACHA_BLOCK_SIZE] __aligned(sizeof(long));
+	u8 stream[CHACHA_BLOCK_SIZE] __aligned(माप(दीर्घ));
 
-	while (bytes >= CHACHA_BLOCK_SIZE) {
+	जबतक (bytes >= CHACHA_BLOCK_SIZE) अणु
 		chacha_block_generic(state, stream, nrounds);
 		crypto_xor_cpy(dst, src, stream, CHACHA_BLOCK_SIZE);
 		bytes -= CHACHA_BLOCK_SIZE;
 		dst += CHACHA_BLOCK_SIZE;
 		src += CHACHA_BLOCK_SIZE;
-	}
-	if (bytes) {
+	पूर्ण
+	अगर (bytes) अणु
 		chacha_block_generic(state, stream, nrounds);
 		crypto_xor_cpy(dst, src, stream, bytes);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(chacha_crypt_generic);
 
 MODULE_LICENSE("GPL");

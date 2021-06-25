@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * cn_proc.c - process events connector
  *
  * Copyright (C) Matt Helsley, IBM Corp. 2005
- * Based on cn_fork.c by Guillaume Thouvenin <guillaume.thouvenin@bull.net>
+ * Based on cn_विभाजन.c by Guillaume Thouvenin <guillaume.thouvenin@bull.net>
  * Original copyright notice follows:
  * Copyright (C) 2005 BULL SA.
  */
 
-#include <linux/kernel.h>
-#include <linux/ktime.h>
-#include <linux/init.h>
-#include <linux/connector.h>
-#include <linux/gfp.h>
-#include <linux/ptrace.h>
-#include <linux/atomic.h>
-#include <linux/pid_namespace.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/init.h>
+#समावेश <linux/connector.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/pid_namespace.h>
 
-#include <linux/cn_proc.h>
-#include <linux/local_lock.h>
+#समावेश <linux/cn_proc.h>
+#समावेश <linux/local_lock.h>
 
 /*
- * Size of a cn_msg followed by a proc_event structure.  Since the
- * sizeof struct cn_msg is a multiple of 4 bytes, but not 8 bytes, we
+ * Size of a cn_msg followed by a proc_event काष्ठाure.  Since the
+ * माप काष्ठा cn_msg is a multiple of 4 bytes, but not 8 bytes, we
  * add one 4-byte word to the size here, and then start the actual
- * cn_msg structure 4 bytes into the stack buffer.  The result is that
- * the immediately following proc_event structure is aligned to 8 bytes.
+ * cn_msg काष्ठाure 4 bytes पूर्णांकo the stack buffer.  The result is that
+ * the immediately following proc_event काष्ठाure is aligned to 8 bytes.
  */
-#define CN_PROC_MSG_SIZE (sizeof(struct cn_msg) + sizeof(struct proc_event) + 4)
+#घोषणा CN_PROC_MSG_SIZE (माप(काष्ठा cn_msg) + माप(काष्ठा proc_event) + 4)
 
-/* See comment above; we test our assumption about sizeof struct cn_msg here. */
-static inline struct cn_msg *buffer_to_cn_msg(__u8 *buffer)
-{
-	BUILD_BUG_ON(sizeof(struct cn_msg) != 20);
-	return (struct cn_msg *)(buffer + 4);
-}
+/* See comment above; we test our assumption about माप काष्ठा cn_msg here. */
+अटल अंतरभूत काष्ठा cn_msg *buffer_to_cn_msg(__u8 *buffer)
+अणु
+	BUILD_BUG_ON(माप(काष्ठा cn_msg) != 20);
+	वापस (काष्ठा cn_msg *)(buffer + 4);
+पूर्ण
 
-static atomic_t proc_event_num_listeners = ATOMIC_INIT(0);
-static struct cb_id cn_proc_event_id = { CN_IDX_PROC, CN_VAL_PROC };
+अटल atomic_t proc_event_num_listeners = ATOMIC_INIT(0);
+अटल काष्ठा cb_id cn_proc_event_id = अणु CN_IDX_PROC, CN_VAL_PROC पूर्ण;
 
 /* local_event.count is used as the sequence number of the netlink message */
-struct local_event {
+काष्ठा local_event अणु
 	local_lock_t lock;
 	__u32 count;
-};
-static DEFINE_PER_CPU(struct local_event, local_event) = {
+पूर्ण;
+अटल DEFINE_PER_CPU(काष्ठा local_event, local_event) = अणु
 	.lock = INIT_LOCAL_LOCK(lock),
-};
+पूर्ण;
 
-static inline void send_msg(struct cn_msg *msg)
-{
+अटल अंतरभूत व्योम send_msg(काष्ठा cn_msg *msg)
+अणु
 	local_lock(&local_event.lock);
 
-	msg->seq = __this_cpu_inc_return(local_event.count) - 1;
-	((struct proc_event *)msg->data)->cpu = smp_processor_id();
+	msg->seq = __this_cpu_inc_वापस(local_event.count) - 1;
+	((काष्ठा proc_event *)msg->data)->cpu = smp_processor_id();
 
 	/*
 	 * local_lock() disables preemption during send to ensure the messages
@@ -64,340 +65,340 @@ static inline void send_msg(struct cn_msg *msg)
 	cn_netlink_send(msg, 0, CN_IDX_PROC, GFP_NOWAIT);
 
 	local_unlock(&local_event.lock);
-}
+पूर्ण
 
-void proc_fork_connector(struct task_struct *task)
-{
-	struct cn_msg *msg;
-	struct proc_event *ev;
+व्योम proc_विभाजन_connector(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा cn_msg *msg;
+	काष्ठा proc_event *ev;
 	__u8 buffer[CN_PROC_MSG_SIZE] __aligned(8);
-	struct task_struct *parent;
+	काष्ठा task_काष्ठा *parent;
 
-	if (atomic_read(&proc_event_num_listeners) < 1)
-		return;
+	अगर (atomic_पढ़ो(&proc_event_num_listeners) < 1)
+		वापस;
 
 	msg = buffer_to_cn_msg(buffer);
-	ev = (struct proc_event *)msg->data;
-	memset(&ev->event_data, 0, sizeof(ev->event_data));
-	ev->timestamp_ns = ktime_get_ns();
+	ev = (काष्ठा proc_event *)msg->data;
+	स_रखो(&ev->event_data, 0, माप(ev->event_data));
+	ev->बारtamp_ns = kसमय_get_ns();
 	ev->what = PROC_EVENT_FORK;
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	parent = rcu_dereference(task->real_parent);
-	ev->event_data.fork.parent_pid = parent->pid;
-	ev->event_data.fork.parent_tgid = parent->tgid;
-	rcu_read_unlock();
-	ev->event_data.fork.child_pid = task->pid;
-	ev->event_data.fork.child_tgid = task->tgid;
+	ev->event_data.विभाजन.parent_pid = parent->pid;
+	ev->event_data.विभाजन.parent_tgid = parent->tgid;
+	rcu_पढ़ो_unlock();
+	ev->event_data.विभाजन.child_pid = task->pid;
+	ev->event_data.विभाजन.child_tgid = task->tgid;
 
-	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
+	स_नकल(&msg->id, &cn_proc_event_id, माप(msg->id));
 	msg->ack = 0; /* not used */
-	msg->len = sizeof(*ev);
+	msg->len = माप(*ev);
 	msg->flags = 0; /* not used */
 	send_msg(msg);
-}
+पूर्ण
 
-void proc_exec_connector(struct task_struct *task)
-{
-	struct cn_msg *msg;
-	struct proc_event *ev;
+व्योम proc_exec_connector(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा cn_msg *msg;
+	काष्ठा proc_event *ev;
 	__u8 buffer[CN_PROC_MSG_SIZE] __aligned(8);
 
-	if (atomic_read(&proc_event_num_listeners) < 1)
-		return;
+	अगर (atomic_पढ़ो(&proc_event_num_listeners) < 1)
+		वापस;
 
 	msg = buffer_to_cn_msg(buffer);
-	ev = (struct proc_event *)msg->data;
-	memset(&ev->event_data, 0, sizeof(ev->event_data));
-	ev->timestamp_ns = ktime_get_ns();
+	ev = (काष्ठा proc_event *)msg->data;
+	स_रखो(&ev->event_data, 0, माप(ev->event_data));
+	ev->बारtamp_ns = kसमय_get_ns();
 	ev->what = PROC_EVENT_EXEC;
 	ev->event_data.exec.process_pid = task->pid;
 	ev->event_data.exec.process_tgid = task->tgid;
 
-	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
+	स_नकल(&msg->id, &cn_proc_event_id, माप(msg->id));
 	msg->ack = 0; /* not used */
-	msg->len = sizeof(*ev);
+	msg->len = माप(*ev);
 	msg->flags = 0; /* not used */
 	send_msg(msg);
-}
+पूर्ण
 
-void proc_id_connector(struct task_struct *task, int which_id)
-{
-	struct cn_msg *msg;
-	struct proc_event *ev;
+व्योम proc_id_connector(काष्ठा task_काष्ठा *task, पूर्णांक which_id)
+अणु
+	काष्ठा cn_msg *msg;
+	काष्ठा proc_event *ev;
 	__u8 buffer[CN_PROC_MSG_SIZE] __aligned(8);
-	const struct cred *cred;
+	स्थिर काष्ठा cred *cred;
 
-	if (atomic_read(&proc_event_num_listeners) < 1)
-		return;
+	अगर (atomic_पढ़ो(&proc_event_num_listeners) < 1)
+		वापस;
 
 	msg = buffer_to_cn_msg(buffer);
-	ev = (struct proc_event *)msg->data;
-	memset(&ev->event_data, 0, sizeof(ev->event_data));
+	ev = (काष्ठा proc_event *)msg->data;
+	स_रखो(&ev->event_data, 0, माप(ev->event_data));
 	ev->what = which_id;
 	ev->event_data.id.process_pid = task->pid;
 	ev->event_data.id.process_tgid = task->tgid;
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	cred = __task_cred(task);
-	if (which_id == PROC_EVENT_UID) {
+	अगर (which_id == PROC_EVENT_UID) अणु
 		ev->event_data.id.r.ruid = from_kuid_munged(&init_user_ns, cred->uid);
 		ev->event_data.id.e.euid = from_kuid_munged(&init_user_ns, cred->euid);
-	} else if (which_id == PROC_EVENT_GID) {
+	पूर्ण अन्यथा अगर (which_id == PROC_EVENT_GID) अणु
 		ev->event_data.id.r.rgid = from_kgid_munged(&init_user_ns, cred->gid);
 		ev->event_data.id.e.egid = from_kgid_munged(&init_user_ns, cred->egid);
-	} else {
-		rcu_read_unlock();
-		return;
-	}
-	rcu_read_unlock();
-	ev->timestamp_ns = ktime_get_ns();
+	पूर्ण अन्यथा अणु
+		rcu_पढ़ो_unlock();
+		वापस;
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	ev->बारtamp_ns = kसमय_get_ns();
 
-	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
+	स_नकल(&msg->id, &cn_proc_event_id, माप(msg->id));
 	msg->ack = 0; /* not used */
-	msg->len = sizeof(*ev);
+	msg->len = माप(*ev);
 	msg->flags = 0; /* not used */
 	send_msg(msg);
-}
+पूर्ण
 
-void proc_sid_connector(struct task_struct *task)
-{
-	struct cn_msg *msg;
-	struct proc_event *ev;
+व्योम proc_sid_connector(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा cn_msg *msg;
+	काष्ठा proc_event *ev;
 	__u8 buffer[CN_PROC_MSG_SIZE] __aligned(8);
 
-	if (atomic_read(&proc_event_num_listeners) < 1)
-		return;
+	अगर (atomic_पढ़ो(&proc_event_num_listeners) < 1)
+		वापस;
 
 	msg = buffer_to_cn_msg(buffer);
-	ev = (struct proc_event *)msg->data;
-	memset(&ev->event_data, 0, sizeof(ev->event_data));
-	ev->timestamp_ns = ktime_get_ns();
+	ev = (काष्ठा proc_event *)msg->data;
+	स_रखो(&ev->event_data, 0, माप(ev->event_data));
+	ev->बारtamp_ns = kसमय_get_ns();
 	ev->what = PROC_EVENT_SID;
 	ev->event_data.sid.process_pid = task->pid;
 	ev->event_data.sid.process_tgid = task->tgid;
 
-	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
+	स_नकल(&msg->id, &cn_proc_event_id, माप(msg->id));
 	msg->ack = 0; /* not used */
-	msg->len = sizeof(*ev);
+	msg->len = माप(*ev);
 	msg->flags = 0; /* not used */
 	send_msg(msg);
-}
+पूर्ण
 
-void proc_ptrace_connector(struct task_struct *task, int ptrace_id)
-{
-	struct cn_msg *msg;
-	struct proc_event *ev;
+व्योम proc_ptrace_connector(काष्ठा task_काष्ठा *task, पूर्णांक ptrace_id)
+अणु
+	काष्ठा cn_msg *msg;
+	काष्ठा proc_event *ev;
 	__u8 buffer[CN_PROC_MSG_SIZE] __aligned(8);
 
-	if (atomic_read(&proc_event_num_listeners) < 1)
-		return;
+	अगर (atomic_पढ़ो(&proc_event_num_listeners) < 1)
+		वापस;
 
 	msg = buffer_to_cn_msg(buffer);
-	ev = (struct proc_event *)msg->data;
-	memset(&ev->event_data, 0, sizeof(ev->event_data));
-	ev->timestamp_ns = ktime_get_ns();
+	ev = (काष्ठा proc_event *)msg->data;
+	स_रखो(&ev->event_data, 0, माप(ev->event_data));
+	ev->बारtamp_ns = kसमय_get_ns();
 	ev->what = PROC_EVENT_PTRACE;
 	ev->event_data.ptrace.process_pid  = task->pid;
 	ev->event_data.ptrace.process_tgid = task->tgid;
-	if (ptrace_id == PTRACE_ATTACH) {
+	अगर (ptrace_id == PTRACE_ATTACH) अणु
 		ev->event_data.ptrace.tracer_pid  = current->pid;
 		ev->event_data.ptrace.tracer_tgid = current->tgid;
-	} else if (ptrace_id == PTRACE_DETACH) {
+	पूर्ण अन्यथा अगर (ptrace_id == PTRACE_DETACH) अणु
 		ev->event_data.ptrace.tracer_pid  = 0;
 		ev->event_data.ptrace.tracer_tgid = 0;
-	} else
-		return;
+	पूर्ण अन्यथा
+		वापस;
 
-	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
+	स_नकल(&msg->id, &cn_proc_event_id, माप(msg->id));
 	msg->ack = 0; /* not used */
-	msg->len = sizeof(*ev);
+	msg->len = माप(*ev);
 	msg->flags = 0; /* not used */
 	send_msg(msg);
-}
+पूर्ण
 
-void proc_comm_connector(struct task_struct *task)
-{
-	struct cn_msg *msg;
-	struct proc_event *ev;
+व्योम proc_comm_connector(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा cn_msg *msg;
+	काष्ठा proc_event *ev;
 	__u8 buffer[CN_PROC_MSG_SIZE] __aligned(8);
 
-	if (atomic_read(&proc_event_num_listeners) < 1)
-		return;
+	अगर (atomic_पढ़ो(&proc_event_num_listeners) < 1)
+		वापस;
 
 	msg = buffer_to_cn_msg(buffer);
-	ev = (struct proc_event *)msg->data;
-	memset(&ev->event_data, 0, sizeof(ev->event_data));
-	ev->timestamp_ns = ktime_get_ns();
+	ev = (काष्ठा proc_event *)msg->data;
+	स_रखो(&ev->event_data, 0, माप(ev->event_data));
+	ev->बारtamp_ns = kसमय_get_ns();
 	ev->what = PROC_EVENT_COMM;
 	ev->event_data.comm.process_pid  = task->pid;
 	ev->event_data.comm.process_tgid = task->tgid;
 	get_task_comm(ev->event_data.comm.comm, task);
 
-	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
+	स_नकल(&msg->id, &cn_proc_event_id, माप(msg->id));
 	msg->ack = 0; /* not used */
-	msg->len = sizeof(*ev);
+	msg->len = माप(*ev);
 	msg->flags = 0; /* not used */
 	send_msg(msg);
-}
+पूर्ण
 
-void proc_coredump_connector(struct task_struct *task)
-{
-	struct cn_msg *msg;
-	struct proc_event *ev;
-	struct task_struct *parent;
+व्योम proc_coredump_connector(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा cn_msg *msg;
+	काष्ठा proc_event *ev;
+	काष्ठा task_काष्ठा *parent;
 	__u8 buffer[CN_PROC_MSG_SIZE] __aligned(8);
 
-	if (atomic_read(&proc_event_num_listeners) < 1)
-		return;
+	अगर (atomic_पढ़ो(&proc_event_num_listeners) < 1)
+		वापस;
 
 	msg = buffer_to_cn_msg(buffer);
-	ev = (struct proc_event *)msg->data;
-	memset(&ev->event_data, 0, sizeof(ev->event_data));
-	ev->timestamp_ns = ktime_get_ns();
+	ev = (काष्ठा proc_event *)msg->data;
+	स_रखो(&ev->event_data, 0, माप(ev->event_data));
+	ev->बारtamp_ns = kसमय_get_ns();
 	ev->what = PROC_EVENT_COREDUMP;
 	ev->event_data.coredump.process_pid = task->pid;
 	ev->event_data.coredump.process_tgid = task->tgid;
 
-	rcu_read_lock();
-	if (pid_alive(task)) {
+	rcu_पढ़ो_lock();
+	अगर (pid_alive(task)) अणु
 		parent = rcu_dereference(task->real_parent);
 		ev->event_data.coredump.parent_pid = parent->pid;
 		ev->event_data.coredump.parent_tgid = parent->tgid;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
+	स_नकल(&msg->id, &cn_proc_event_id, माप(msg->id));
 	msg->ack = 0; /* not used */
-	msg->len = sizeof(*ev);
+	msg->len = माप(*ev);
 	msg->flags = 0; /* not used */
 	send_msg(msg);
-}
+पूर्ण
 
-void proc_exit_connector(struct task_struct *task)
-{
-	struct cn_msg *msg;
-	struct proc_event *ev;
-	struct task_struct *parent;
+व्योम proc_निकास_connector(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा cn_msg *msg;
+	काष्ठा proc_event *ev;
+	काष्ठा task_काष्ठा *parent;
 	__u8 buffer[CN_PROC_MSG_SIZE] __aligned(8);
 
-	if (atomic_read(&proc_event_num_listeners) < 1)
-		return;
+	अगर (atomic_पढ़ो(&proc_event_num_listeners) < 1)
+		वापस;
 
 	msg = buffer_to_cn_msg(buffer);
-	ev = (struct proc_event *)msg->data;
-	memset(&ev->event_data, 0, sizeof(ev->event_data));
-	ev->timestamp_ns = ktime_get_ns();
+	ev = (काष्ठा proc_event *)msg->data;
+	स_रखो(&ev->event_data, 0, माप(ev->event_data));
+	ev->बारtamp_ns = kसमय_get_ns();
 	ev->what = PROC_EVENT_EXIT;
-	ev->event_data.exit.process_pid = task->pid;
-	ev->event_data.exit.process_tgid = task->tgid;
-	ev->event_data.exit.exit_code = task->exit_code;
-	ev->event_data.exit.exit_signal = task->exit_signal;
+	ev->event_data.निकास.process_pid = task->pid;
+	ev->event_data.निकास.process_tgid = task->tgid;
+	ev->event_data.निकास.निकास_code = task->निकास_code;
+	ev->event_data.निकास.निकास_संकेत = task->निकास_संकेत;
 
-	rcu_read_lock();
-	if (pid_alive(task)) {
+	rcu_पढ़ो_lock();
+	अगर (pid_alive(task)) अणु
 		parent = rcu_dereference(task->real_parent);
-		ev->event_data.exit.parent_pid = parent->pid;
-		ev->event_data.exit.parent_tgid = parent->tgid;
-	}
-	rcu_read_unlock();
+		ev->event_data.निकास.parent_pid = parent->pid;
+		ev->event_data.निकास.parent_tgid = parent->tgid;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
+	स_नकल(&msg->id, &cn_proc_event_id, माप(msg->id));
 	msg->ack = 0; /* not used */
-	msg->len = sizeof(*ev);
+	msg->len = माप(*ev);
 	msg->flags = 0; /* not used */
 	send_msg(msg);
-}
+पूर्ण
 
 /*
  * Send an acknowledgement message to userspace
  *
- * Use 0 for success, EFOO otherwise.
+ * Use 0 क्रम success, EFOO otherwise.
  * Note: this is the negative of conventional kernel error
- * values because it's not being returned via syscall return
+ * values because it's not being वापसed via syscall वापस
  * mechanisms.
  */
-static void cn_proc_ack(int err, int rcvd_seq, int rcvd_ack)
-{
-	struct cn_msg *msg;
-	struct proc_event *ev;
+अटल व्योम cn_proc_ack(पूर्णांक err, पूर्णांक rcvd_seq, पूर्णांक rcvd_ack)
+अणु
+	काष्ठा cn_msg *msg;
+	काष्ठा proc_event *ev;
 	__u8 buffer[CN_PROC_MSG_SIZE] __aligned(8);
 
-	if (atomic_read(&proc_event_num_listeners) < 1)
-		return;
+	अगर (atomic_पढ़ो(&proc_event_num_listeners) < 1)
+		वापस;
 
 	msg = buffer_to_cn_msg(buffer);
-	ev = (struct proc_event *)msg->data;
-	memset(&ev->event_data, 0, sizeof(ev->event_data));
+	ev = (काष्ठा proc_event *)msg->data;
+	स_रखो(&ev->event_data, 0, माप(ev->event_data));
 	msg->seq = rcvd_seq;
-	ev->timestamp_ns = ktime_get_ns();
+	ev->बारtamp_ns = kसमय_get_ns();
 	ev->cpu = -1;
 	ev->what = PROC_EVENT_NONE;
 	ev->event_data.ack.err = err;
-	memcpy(&msg->id, &cn_proc_event_id, sizeof(msg->id));
+	स_नकल(&msg->id, &cn_proc_event_id, माप(msg->id));
 	msg->ack = rcvd_ack + 1;
-	msg->len = sizeof(*ev);
+	msg->len = माप(*ev);
 	msg->flags = 0; /* not used */
 	send_msg(msg);
-}
+पूर्ण
 
 /**
  * cn_proc_mcast_ctl
  * @data: message sent from userspace via the connector
  */
-static void cn_proc_mcast_ctl(struct cn_msg *msg,
-			      struct netlink_skb_parms *nsp)
-{
-	enum proc_cn_mcast_op *mc_op = NULL;
-	int err = 0;
+अटल व्योम cn_proc_mcast_ctl(काष्ठा cn_msg *msg,
+			      काष्ठा netlink_skb_parms *nsp)
+अणु
+	क्रमागत proc_cn_mcast_op *mc_op = शून्य;
+	पूर्णांक err = 0;
 
-	if (msg->len != sizeof(*mc_op))
-		return;
+	अगर (msg->len != माप(*mc_op))
+		वापस;
 
 	/* 
 	 * Events are reported with respect to the initial pid
 	 * and user namespaces so ignore requestors from
 	 * other namespaces.
 	 */
-	if ((current_user_ns() != &init_user_ns) ||
+	अगर ((current_user_ns() != &init_user_ns) ||
 	    (task_active_pid_ns(current) != &init_pid_ns))
-		return;
+		वापस;
 
-	/* Can only change if privileged. */
-	if (!__netlink_ns_capable(nsp, &init_user_ns, CAP_NET_ADMIN)) {
+	/* Can only change अगर privileged. */
+	अगर (!__netlink_ns_capable(nsp, &init_user_ns, CAP_NET_ADMIN)) अणु
 		err = EPERM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	mc_op = (enum proc_cn_mcast_op *)msg->data;
-	switch (*mc_op) {
-	case PROC_CN_MCAST_LISTEN:
+	mc_op = (क्रमागत proc_cn_mcast_op *)msg->data;
+	चयन (*mc_op) अणु
+	हाल PROC_CN_MCAST_LISTEN:
 		atomic_inc(&proc_event_num_listeners);
-		break;
-	case PROC_CN_MCAST_IGNORE:
+		अवरोध;
+	हाल PROC_CN_MCAST_IGNORE:
 		atomic_dec(&proc_event_num_listeners);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
 	cn_proc_ack(err, msg->seq, msg->ack);
-}
+पूर्ण
 
 /*
- * cn_proc_init - initialization entry point
+ * cn_proc_init - initialization entry poपूर्णांक
  *
  * Adds the connector callback to the connector driver.
  */
-static int __init cn_proc_init(void)
-{
-	int err = cn_add_callback(&cn_proc_event_id,
+अटल पूर्णांक __init cn_proc_init(व्योम)
+अणु
+	पूर्णांक err = cn_add_callback(&cn_proc_event_id,
 				  "cn_proc",
 				  &cn_proc_mcast_ctl);
-	if (err) {
+	अगर (err) अणु
 		pr_warn("cn_proc failed to register\n");
-		return err;
-	}
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 device_initcall(cn_proc_init);

@@ -1,128 +1,129 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2010-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AR9003_MCI_H
-#define AR9003_MCI_H
+#अगर_अघोषित AR9003_MCI_H
+#घोषणा AR9003_MCI_H
 
-#define MCI_FLAG_DISABLE_TIMESTAMP      0x00000001      /* Disable time stamp */
-#define MCI_RECOVERY_DUR_TSF		(100 * 1000)    /* 100 ms */
+#घोषणा MCI_FLAG_DISABLE_TIMESTAMP      0x00000001      /* Disable समय stamp */
+#घोषणा MCI_RECOVERY_DUR_TSF		(100 * 1000)    /* 100 ms */
 
 /* Default remote BT device MCI COEX version */
-#define MCI_GPM_COEX_MAJOR_VERSION_DEFAULT  3
-#define MCI_GPM_COEX_MINOR_VERSION_DEFAULT  0
+#घोषणा MCI_GPM_COEX_MAJOR_VERSION_DEFAULT  3
+#घोषणा MCI_GPM_COEX_MINOR_VERSION_DEFAULT  0
 
 /* Local WLAN MCI COEX version */
-#define MCI_GPM_COEX_MAJOR_VERSION_WLAN     3
-#define MCI_GPM_COEX_MINOR_VERSION_WLAN     0
+#घोषणा MCI_GPM_COEX_MAJOR_VERSION_WLAN     3
+#घोषणा MCI_GPM_COEX_MINOR_VERSION_WLAN     0
 
-enum mci_gpm_coex_query_type {
+क्रमागत mci_gpm_coex_query_type अणु
 	MCI_GPM_COEX_QUERY_BT_ALL_INFO      = BIT(0),
 	MCI_GPM_COEX_QUERY_BT_TOPOLOGY      = BIT(1),
 	MCI_GPM_COEX_QUERY_BT_DEBUG         = BIT(2),
-};
+पूर्ण;
 
-enum mci_gpm_coex_halt_bt_gpm {
+क्रमागत mci_gpm_coex_halt_bt_gpm अणु
 	MCI_GPM_COEX_BT_GPM_UNHALT,
 	MCI_GPM_COEX_BT_GPM_HALT
-};
+पूर्ण;
 
-enum mci_gpm_coex_bt_update_flags_op {
+क्रमागत mci_gpm_coex_bt_update_flags_op अणु
 	MCI_GPM_COEX_BT_FLAGS_READ,
 	MCI_GPM_COEX_BT_FLAGS_SET,
 	MCI_GPM_COEX_BT_FLAGS_CLEAR
-};
+पूर्ण;
 
-#define MCI_NUM_BT_CHANNELS     79
+#घोषणा MCI_NUM_BT_CHANNELS     79
 
-#define MCI_BT_MCI_FLAGS_UPDATE_CORR          0x00000002
-#define MCI_BT_MCI_FLAGS_UPDATE_HDR           0x00000004
-#define MCI_BT_MCI_FLAGS_UPDATE_PLD           0x00000008
-#define MCI_BT_MCI_FLAGS_LNA_CTRL             0x00000010
-#define MCI_BT_MCI_FLAGS_DEBUG                0x00000020
-#define MCI_BT_MCI_FLAGS_SCHED_MSG            0x00000040
-#define MCI_BT_MCI_FLAGS_CONT_MSG             0x00000080
-#define MCI_BT_MCI_FLAGS_COEX_GPM             0x00000100
-#define MCI_BT_MCI_FLAGS_CPU_INT_MSG          0x00000200
-#define MCI_BT_MCI_FLAGS_MCI_MODE             0x00000400
-#define MCI_BT_MCI_FLAGS_AR9462_MODE          0x00001000
-#define MCI_BT_MCI_FLAGS_OTHER                0x00010000
+#घोषणा MCI_BT_MCI_FLAGS_UPDATE_CORR          0x00000002
+#घोषणा MCI_BT_MCI_FLAGS_UPDATE_HDR           0x00000004
+#घोषणा MCI_BT_MCI_FLAGS_UPDATE_PLD           0x00000008
+#घोषणा MCI_BT_MCI_FLAGS_LNA_CTRL             0x00000010
+#घोषणा MCI_BT_MCI_FLAGS_DEBUG                0x00000020
+#घोषणा MCI_BT_MCI_FLAGS_SCHED_MSG            0x00000040
+#घोषणा MCI_BT_MCI_FLAGS_CONT_MSG             0x00000080
+#घोषणा MCI_BT_MCI_FLAGS_COEX_GPM             0x00000100
+#घोषणा MCI_BT_MCI_FLAGS_CPU_INT_MSG          0x00000200
+#घोषणा MCI_BT_MCI_FLAGS_MCI_MODE             0x00000400
+#घोषणा MCI_BT_MCI_FLAGS_AR9462_MODE          0x00001000
+#घोषणा MCI_BT_MCI_FLAGS_OTHER                0x00010000
 
-#define MCI_DEFAULT_BT_MCI_FLAGS              0x00011dde
+#घोषणा MCI_DEFAULT_BT_MCI_FLAGS              0x00011dde
 
-#define MCI_TOGGLE_BT_MCI_FLAGS  (MCI_BT_MCI_FLAGS_UPDATE_CORR | \
+#घोषणा MCI_TOGGLE_BT_MCI_FLAGS  (MCI_BT_MCI_FLAGS_UPDATE_CORR | \
 				  MCI_BT_MCI_FLAGS_UPDATE_HDR  | \
 				  MCI_BT_MCI_FLAGS_UPDATE_PLD  | \
 				  MCI_BT_MCI_FLAGS_MCI_MODE)
 
-#define MCI_2G_FLAGS_CLEAR_MASK   0x00000000
-#define MCI_2G_FLAGS_SET_MASK     MCI_TOGGLE_BT_MCI_FLAGS
-#define MCI_2G_FLAGS              MCI_DEFAULT_BT_MCI_FLAGS
+#घोषणा MCI_2G_FLAGS_CLEAR_MASK   0x00000000
+#घोषणा MCI_2G_FLAGS_SET_MASK     MCI_TOGGLE_BT_MCI_FLAGS
+#घोषणा MCI_2G_FLAGS              MCI_DEFAULT_BT_MCI_FLAGS
 
-#define MCI_5G_FLAGS_CLEAR_MASK   MCI_TOGGLE_BT_MCI_FLAGS
-#define MCI_5G_FLAGS_SET_MASK     0x00000000
-#define MCI_5G_FLAGS              (MCI_DEFAULT_BT_MCI_FLAGS & \
+#घोषणा MCI_5G_FLAGS_CLEAR_MASK   MCI_TOGGLE_BT_MCI_FLAGS
+#घोषणा MCI_5G_FLAGS_SET_MASK     0x00000000
+#घोषणा MCI_5G_FLAGS              (MCI_DEFAULT_BT_MCI_FLAGS & \
 				   ~MCI_TOGGLE_BT_MCI_FLAGS)
 
 /*
- * Default value for AR9462 is 0x00002201
+ * Default value क्रम AR9462 is 0x00002201
  */
-#define ATH_MCI_CONFIG_CONCUR_TX            0x00000003
-#define ATH_MCI_CONFIG_MCI_OBS_MCI          0x00000004
-#define ATH_MCI_CONFIG_MCI_OBS_TXRX         0x00000008
-#define ATH_MCI_CONFIG_MCI_OBS_BT           0x00000010
-#define ATH_MCI_CONFIG_DISABLE_MCI_CAL      0x00000020
-#define ATH_MCI_CONFIG_DISABLE_OSLA         0x00000040
-#define ATH_MCI_CONFIG_DISABLE_FTP_STOMP    0x00000080
-#define ATH_MCI_CONFIG_AGGR_THRESH          0x00000700
-#define ATH_MCI_CONFIG_AGGR_THRESH_S        8
-#define ATH_MCI_CONFIG_DISABLE_AGGR_THRESH  0x00000800
-#define ATH_MCI_CONFIG_CLK_DIV              0x00003000
-#define ATH_MCI_CONFIG_CLK_DIV_S            12
-#define ATH_MCI_CONFIG_DISABLE_TUNING       0x00004000
-#define ATH_MCI_CONFIG_DISABLE_AIC          0x00008000
-#define ATH_MCI_CONFIG_AIC_CAL_NUM_CHAN     0x007f0000
-#define ATH_MCI_CONFIG_AIC_CAL_NUM_CHAN_S   16
-#define ATH_MCI_CONFIG_NO_QUIET_ACK         0x00800000
-#define ATH_MCI_CONFIG_NO_QUIET_ACK_S       23
-#define ATH_MCI_CONFIG_ANT_ARCH             0x07000000
-#define ATH_MCI_CONFIG_ANT_ARCH_S           24
-#define ATH_MCI_CONFIG_FORCE_QUIET_ACK      0x08000000
-#define ATH_MCI_CONFIG_FORCE_QUIET_ACK_S    27
-#define ATH_MCI_CONFIG_FORCE_2CHAIN_ACK     0x10000000
-#define ATH_MCI_CONFIG_MCI_STAT_DBG         0x20000000
-#define ATH_MCI_CONFIG_MCI_WEIGHT_DBG       0x40000000
-#define ATH_MCI_CONFIG_DISABLE_MCI          0x80000000
+#घोषणा ATH_MCI_CONFIG_CONCUR_TX            0x00000003
+#घोषणा ATH_MCI_CONFIG_MCI_OBS_MCI          0x00000004
+#घोषणा ATH_MCI_CONFIG_MCI_OBS_TXRX         0x00000008
+#घोषणा ATH_MCI_CONFIG_MCI_OBS_BT           0x00000010
+#घोषणा ATH_MCI_CONFIG_DISABLE_MCI_CAL      0x00000020
+#घोषणा ATH_MCI_CONFIG_DISABLE_OSLA         0x00000040
+#घोषणा ATH_MCI_CONFIG_DISABLE_FTP_STOMP    0x00000080
+#घोषणा ATH_MCI_CONFIG_AGGR_THRESH          0x00000700
+#घोषणा ATH_MCI_CONFIG_AGGR_THRESH_S        8
+#घोषणा ATH_MCI_CONFIG_DISABLE_AGGR_THRESH  0x00000800
+#घोषणा ATH_MCI_CONFIG_CLK_DIV              0x00003000
+#घोषणा ATH_MCI_CONFIG_CLK_DIV_S            12
+#घोषणा ATH_MCI_CONFIG_DISABLE_TUNING       0x00004000
+#घोषणा ATH_MCI_CONFIG_DISABLE_AIC          0x00008000
+#घोषणा ATH_MCI_CONFIG_AIC_CAL_NUM_CHAN     0x007f0000
+#घोषणा ATH_MCI_CONFIG_AIC_CAL_NUM_CHAN_S   16
+#घोषणा ATH_MCI_CONFIG_NO_QUIET_ACK         0x00800000
+#घोषणा ATH_MCI_CONFIG_NO_QUIET_ACK_S       23
+#घोषणा ATH_MCI_CONFIG_ANT_ARCH             0x07000000
+#घोषणा ATH_MCI_CONFIG_ANT_ARCH_S           24
+#घोषणा ATH_MCI_CONFIG_FORCE_QUIET_ACK      0x08000000
+#घोषणा ATH_MCI_CONFIG_FORCE_QUIET_ACK_S    27
+#घोषणा ATH_MCI_CONFIG_FORCE_2CHAIN_ACK     0x10000000
+#घोषणा ATH_MCI_CONFIG_MCI_STAT_DBG         0x20000000
+#घोषणा ATH_MCI_CONFIG_MCI_WEIGHT_DBG       0x40000000
+#घोषणा ATH_MCI_CONFIG_DISABLE_MCI          0x80000000
 
-#define ATH_MCI_CONFIG_MCI_OBS_MASK     (ATH_MCI_CONFIG_MCI_OBS_MCI  | \
+#घोषणा ATH_MCI_CONFIG_MCI_OBS_MASK     (ATH_MCI_CONFIG_MCI_OBS_MCI  | \
 					 ATH_MCI_CONFIG_MCI_OBS_TXRX | \
 					 ATH_MCI_CONFIG_MCI_OBS_BT)
 
-#define ATH_MCI_CONFIG_MCI_OBS_GPIO     0x0000002F
+#घोषणा ATH_MCI_CONFIG_MCI_OBS_GPIO     0x0000002F
 
-#define ATH_MCI_ANT_ARCH_1_ANT_PA_LNA_NON_SHARED 0x00
-#define ATH_MCI_ANT_ARCH_1_ANT_PA_LNA_SHARED     0x01
-#define ATH_MCI_ANT_ARCH_2_ANT_PA_LNA_NON_SHARED 0x02
-#define ATH_MCI_ANT_ARCH_2_ANT_PA_LNA_SHARED     0x03
-#define ATH_MCI_ANT_ARCH_3_ANT                   0x04
+#घोषणा ATH_MCI_ANT_ARCH_1_ANT_PA_LNA_NON_SHARED 0x00
+#घोषणा ATH_MCI_ANT_ARCH_1_ANT_PA_LNA_SHARED     0x01
+#घोषणा ATH_MCI_ANT_ARCH_2_ANT_PA_LNA_NON_SHARED 0x02
+#घोषणा ATH_MCI_ANT_ARCH_2_ANT_PA_LNA_SHARED     0x03
+#घोषणा ATH_MCI_ANT_ARCH_3_ANT                   0x04
 
-#define MCI_ANT_ARCH_PA_LNA_SHARED(mci)					\
+#घोषणा MCI_ANT_ARCH_PA_LNA_SHARED(mci)					\
 	((MS(mci->config, ATH_MCI_CONFIG_ANT_ARCH) == ATH_MCI_ANT_ARCH_1_ANT_PA_LNA_SHARED) || \
 	 (MS(mci->config, ATH_MCI_CONFIG_ANT_ARCH) == ATH_MCI_ANT_ARCH_2_ANT_PA_LNA_SHARED))
 
-enum mci_message_header {		/* length of payload */
+क्रमागत mci_message_header अणु		/* length of payload */
 	MCI_LNA_CTRL     = 0x10,        /* len = 0 */
 	MCI_CONT_NACK    = 0x20,        /* len = 0 */
 	MCI_CONT_INFO    = 0x30,        /* len = 4 */
@@ -139,21 +140,21 @@ enum mci_message_header {		/* length of payload */
 	MCI_REQ_WAKE     = 0xc0,        /* len = 0 */
 	MCI_DEBUG_16     = 0xfe,        /* len = 2 */
 	MCI_REMOTE_RESET = 0xff         /* len = 16 */
-};
+पूर्ण;
 
-enum ath_mci_gpm_coex_profile_type {
-	MCI_GPM_COEX_PROFILE_UNKNOWN,
-	MCI_GPM_COEX_PROFILE_RFCOMM,
-	MCI_GPM_COEX_PROFILE_A2DP,
-	MCI_GPM_COEX_PROFILE_HID,
-	MCI_GPM_COEX_PROFILE_BNEP,
-	MCI_GPM_COEX_PROFILE_VOICE,
-	MCI_GPM_COEX_PROFILE_A2DPVO,
-	MCI_GPM_COEX_PROFILE_MAX
-};
+क्रमागत ath_mci_gpm_coex_profile_type अणु
+	MCI_GPM_COEX_PROखाता_UNKNOWN,
+	MCI_GPM_COEX_PROखाता_RFCOMM,
+	MCI_GPM_COEX_PROखाता_A2DP,
+	MCI_GPM_COEX_PROखाता_HID,
+	MCI_GPM_COEX_PROखाता_BNEP,
+	MCI_GPM_COEX_PROखाता_VOICE,
+	MCI_GPM_COEX_PROखाता_A2DPVO,
+	MCI_GPM_COEX_PROखाता_MAX
+पूर्ण;
 
 /* MCI GPM/Coex opcode/type definitions */
-enum {
+क्रमागत अणु
 	MCI_GPM_COEX_W_GPM_PAYLOAD      = 1,
 	MCI_GPM_COEX_B_GPM_TYPE         = 4,
 	MCI_GPM_COEX_B_GPM_OPCODE       = 5,
@@ -171,16 +172,16 @@ enum {
 	MCI_GPM_COEX_B_HALT_STATE       = 6,
 	/* MCI_GPM_COEX_WLAN_CHANNELS */
 	MCI_GPM_COEX_B_CHANNEL_MAP      = 6,
-	/* MCI_GPM_COEX_BT_PROFILE_INFO */
-	MCI_GPM_COEX_B_PROFILE_TYPE     = 6,
-	MCI_GPM_COEX_B_PROFILE_LINKID   = 7,
-	MCI_GPM_COEX_B_PROFILE_STATE    = 8,
-	MCI_GPM_COEX_B_PROFILE_ROLE     = 9,
-	MCI_GPM_COEX_B_PROFILE_RATE     = 10,
-	MCI_GPM_COEX_B_PROFILE_VOTYPE   = 11,
-	MCI_GPM_COEX_H_PROFILE_T        = 12,
-	MCI_GPM_COEX_B_PROFILE_W        = 14,
-	MCI_GPM_COEX_B_PROFILE_A        = 15,
+	/* MCI_GPM_COEX_BT_PROखाता_INFO */
+	MCI_GPM_COEX_B_PROखाता_TYPE     = 6,
+	MCI_GPM_COEX_B_PROखाता_LINKID   = 7,
+	MCI_GPM_COEX_B_PROखाता_STATE    = 8,
+	MCI_GPM_COEX_B_PROखाता_ROLE     = 9,
+	MCI_GPM_COEX_B_PROखाता_RATE     = 10,
+	MCI_GPM_COEX_B_PROखाता_VOTYPE   = 11,
+	MCI_GPM_COEX_H_PROखाता_T        = 12,
+	MCI_GPM_COEX_B_PROखाता_W        = 14,
+	MCI_GPM_COEX_B_PROखाता_A        = 15,
 	/* MCI_GPM_COEX_BT_STATUS_UPDATE */
 	MCI_GPM_COEX_B_STATUS_TYPE      = 6,
 	MCI_GPM_COEX_B_STATUS_LINKID    = 7,
@@ -188,9 +189,9 @@ enum {
 	/* MCI_GPM_COEX_BT_UPDATE_FLAGS */
 	MCI_GPM_COEX_W_BT_FLAGS         = 6,
 	MCI_GPM_COEX_B_BT_FLAGS_OP      = 10
-};
+पूर्ण;
 
-enum mci_gpm_subtype {
+क्रमागत mci_gpm_subtype अणु
 	MCI_GPM_BT_CAL_REQ      = 0,
 	MCI_GPM_BT_CAL_GRANT    = 1,
 	MCI_GPM_BT_CAL_DONE     = 2,
@@ -201,24 +202,24 @@ enum mci_gpm_subtype {
 	MCI_GPM_RSVD_PATTERN    = 0xfe,
 	MCI_GPM_RSVD_PATTERN32  = 0xfefefefe,
 	MCI_GPM_BT_DEBUG        = 0xff
-};
+पूर्ण;
 
-enum mci_bt_state {
+क्रमागत mci_bt_state अणु
 	MCI_BT_SLEEP,
 	MCI_BT_AWAKE,
 	MCI_BT_CAL_START,
 	MCI_BT_CAL
-};
+पूर्ण;
 
-enum mci_ps_state {
+क्रमागत mci_ps_state अणु
 	MCI_PS_DISABLE,
 	MCI_PS_ENABLE,
 	MCI_PS_ENABLE_OFF,
 	MCI_PS_ENABLE_ON
-};
+पूर्ण;
 
 /* Type of state query */
-enum mci_state_type {
+क्रमागत mci_state_type अणु
 	MCI_STATE_ENABLE,
 	MCI_STATE_INIT_GPM_OFFSET,
 	MCI_STATE_CHECK_GPM_OFFSET,
@@ -260,133 +261,133 @@ enum mci_state_type {
 	MCI_STATE_ALLOW_FCS,
 	MCI_STATE_SET_2G_CONTENTION,
 	MCI_STATE_MAX
-};
+पूर्ण;
 
-enum mci_gpm_coex_opcode {
+क्रमागत mci_gpm_coex_opcode अणु
 	MCI_GPM_COEX_VERSION_QUERY,
 	MCI_GPM_COEX_VERSION_RESPONSE,
 	MCI_GPM_COEX_STATUS_QUERY,
 	MCI_GPM_COEX_HALT_BT_GPM,
 	MCI_GPM_COEX_WLAN_CHANNELS,
-	MCI_GPM_COEX_BT_PROFILE_INFO,
+	MCI_GPM_COEX_BT_PROखाता_INFO,
 	MCI_GPM_COEX_BT_STATUS_UPDATE,
 	MCI_GPM_COEX_BT_UPDATE_FLAGS,
 	MCI_GPM_COEX_NOOP,
-};
+पूर्ण;
 
-#define MCI_GPM_NOMORE  0
-#define MCI_GPM_MORE    1
-#define MCI_GPM_INVALID 0xffffffff
+#घोषणा MCI_GPM_NOMORE  0
+#घोषणा MCI_GPM_MORE    1
+#घोषणा MCI_GPM_INVALID 0xffffffff
 
-#define MCI_GPM_RECYCLE(_p_gpm)	do {			  \
+#घोषणा MCI_GPM_RECYCLE(_p_gpm)	करो अणु			  \
 	*(((u32 *)_p_gpm) + MCI_GPM_COEX_W_GPM_PAYLOAD) = \
 				MCI_GPM_RSVD_PATTERN32;   \
-} while (0)
+पूर्ण जबतक (0)
 
-#define MCI_GPM_TYPE(_p_gpm)	\
+#घोषणा MCI_GPM_TYPE(_p_gpm)	\
 	(*(((u8 *)(_p_gpm)) + MCI_GPM_COEX_B_GPM_TYPE) & 0xff)
 
-#define MCI_GPM_OPCODE(_p_gpm)	\
+#घोषणा MCI_GPM_OPCODE(_p_gpm)	\
 	(*(((u8 *)(_p_gpm)) + MCI_GPM_COEX_B_GPM_OPCODE) & 0xff)
 
-#define MCI_GPM_SET_CAL_TYPE(_p_gpm, _cal_type)	do {			   \
+#घोषणा MCI_GPM_SET_CAL_TYPE(_p_gpm, _cal_type)	करो अणु			   \
 	*(((u8 *)(_p_gpm)) + MCI_GPM_COEX_B_GPM_TYPE) = (_cal_type) & 0xff;\
-} while (0)
+पूर्ण जबतक (0)
 
-#define MCI_GPM_SET_TYPE_OPCODE(_p_gpm, _type, _opcode) do {		   \
+#घोषणा MCI_GPM_SET_TYPE_OPCODE(_p_gpm, _type, _opcode) करो अणु		   \
 	*(((u8 *)(_p_gpm)) + MCI_GPM_COEX_B_GPM_TYPE) = (_type) & 0xff;	   \
 	*(((u8 *)(_p_gpm)) + MCI_GPM_COEX_B_GPM_OPCODE) = (_opcode) & 0xff;\
-} while (0)
+पूर्ण जबतक (0)
 
-#define MCI_GPM_IS_CAL_TYPE(_type) ((_type) <= MCI_GPM_WLAN_CAL_DONE)
+#घोषणा MCI_GPM_IS_CAL_TYPE(_type) ((_type) <= MCI_GPM_WLAN_CAL_DONE)
 
 /*
  * Functions that are available to the MCI driver core.
  */
-bool ar9003_mci_send_message(struct ath_hw *ah, u8 header, u32 flag,
-			     u32 *payload, u8 len, bool wait_done,
+bool ar9003_mci_send_message(काष्ठा ath_hw *ah, u8 header, u32 flag,
+			     u32 *payload, u8 len, bool रुको_करोne,
 			     bool check_bt);
-u32 ar9003_mci_state(struct ath_hw *ah, u32 state_type);
-int ar9003_mci_setup(struct ath_hw *ah, u32 gpm_addr, void *gpm_buf,
+u32 ar9003_mci_state(काष्ठा ath_hw *ah, u32 state_type);
+पूर्णांक ar9003_mci_setup(काष्ठा ath_hw *ah, u32 gpm_addr, व्योम *gpm_buf,
 		     u16 len, u32 sched_addr);
-void ar9003_mci_cleanup(struct ath_hw *ah);
-void ar9003_mci_get_interrupt(struct ath_hw *ah, u32 *raw_intr,
-			      u32 *rx_msg_intr);
-u32 ar9003_mci_get_next_gpm_offset(struct ath_hw *ah, u32 *more);
-void ar9003_mci_set_bt_version(struct ath_hw *ah, u8 major, u8 minor);
-void ar9003_mci_send_wlan_channels(struct ath_hw *ah);
+व्योम ar9003_mci_cleanup(काष्ठा ath_hw *ah);
+व्योम ar9003_mci_get_पूर्णांकerrupt(काष्ठा ath_hw *ah, u32 *raw_पूर्णांकr,
+			      u32 *rx_msg_पूर्णांकr);
+u32 ar9003_mci_get_next_gpm_offset(काष्ठा ath_hw *ah, u32 *more);
+व्योम ar9003_mci_set_bt_version(काष्ठा ath_hw *ah, u8 major, u8 minor);
+व्योम ar9003_mci_send_wlan_channels(काष्ठा ath_hw *ah);
 /*
  * These functions are used by ath9k_hw.
  */
 
-#ifdef CONFIG_ATH9K_BTCOEX_SUPPORT
+#अगर_घोषित CONFIG_ATH9K_BTCOEX_SUPPORT
 
-void ar9003_mci_stop_bt(struct ath_hw *ah, bool save_fullsleep);
-void ar9003_mci_init_cal_req(struct ath_hw *ah, bool *is_reusable);
-void ar9003_mci_init_cal_done(struct ath_hw *ah);
-void ar9003_mci_set_full_sleep(struct ath_hw *ah);
-void ar9003_mci_2g5g_switch(struct ath_hw *ah, bool force);
-void ar9003_mci_check_bt(struct ath_hw *ah);
-bool ar9003_mci_start_reset(struct ath_hw *ah, struct ath9k_channel *chan);
-int ar9003_mci_end_reset(struct ath_hw *ah, struct ath9k_channel *chan,
-			 struct ath9k_hw_cal_data *caldata);
-int ar9003_mci_reset(struct ath_hw *ah, bool en_int, bool is_2g,
+व्योम ar9003_mci_stop_bt(काष्ठा ath_hw *ah, bool save_fullsleep);
+व्योम ar9003_mci_init_cal_req(काष्ठा ath_hw *ah, bool *is_reusable);
+व्योम ar9003_mci_init_cal_करोne(काष्ठा ath_hw *ah);
+व्योम ar9003_mci_set_full_sleep(काष्ठा ath_hw *ah);
+व्योम ar9003_mci_2g5g_चयन(काष्ठा ath_hw *ah, bool क्रमce);
+व्योम ar9003_mci_check_bt(काष्ठा ath_hw *ah);
+bool ar9003_mci_start_reset(काष्ठा ath_hw *ah, काष्ठा ath9k_channel *chan);
+पूर्णांक ar9003_mci_end_reset(काष्ठा ath_hw *ah, काष्ठा ath9k_channel *chan,
+			 काष्ठा ath9k_hw_cal_data *caldata);
+पूर्णांक ar9003_mci_reset(काष्ठा ath_hw *ah, bool en_पूर्णांक, bool is_2g,
 		     bool is_full_sleep);
-void ar9003_mci_get_isr(struct ath_hw *ah, enum ath9k_int *masked);
-void ar9003_mci_bt_gain_ctrl(struct ath_hw *ah);
-void ar9003_mci_set_power_awake(struct ath_hw *ah);
-void ar9003_mci_check_gpm_offset(struct ath_hw *ah);
-u16 ar9003_mci_get_max_txpower(struct ath_hw *ah, u8 ctlmode);
+व्योम ar9003_mci_get_isr(काष्ठा ath_hw *ah, क्रमागत ath9k_पूर्णांक *masked);
+व्योम ar9003_mci_bt_gain_ctrl(काष्ठा ath_hw *ah);
+व्योम ar9003_mci_set_घातer_awake(काष्ठा ath_hw *ah);
+व्योम ar9003_mci_check_gpm_offset(काष्ठा ath_hw *ah);
+u16 ar9003_mci_get_max_txघातer(काष्ठा ath_hw *ah, u8 ctlmode);
 
-#else
+#अन्यथा
 
-static inline void ar9003_mci_stop_bt(struct ath_hw *ah, bool save_fullsleep)
-{
-}
-static inline void ar9003_mci_init_cal_req(struct ath_hw *ah, bool *is_reusable)
-{
-}
-static inline void ar9003_mci_init_cal_done(struct ath_hw *ah)
-{
-}
-static inline void ar9003_mci_set_full_sleep(struct ath_hw *ah)
-{
-}
-static inline void ar9003_mci_2g5g_switch(struct ath_hw *ah, bool wait_done)
-{
-}
-static inline void ar9003_mci_check_bt(struct ath_hw *ah)
-{
-}
-static inline bool ar9003_mci_start_reset(struct ath_hw *ah, struct ath9k_channel *chan)
-{
-	return false;
-}
-static inline int ar9003_mci_end_reset(struct ath_hw *ah, struct ath9k_channel *chan,
-				       struct ath9k_hw_cal_data *caldata)
-{
-	return 0;
-}
-static inline void ar9003_mci_reset(struct ath_hw *ah, bool en_int, bool is_2g,
+अटल अंतरभूत व्योम ar9003_mci_stop_bt(काष्ठा ath_hw *ah, bool save_fullsleep)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ar9003_mci_init_cal_req(काष्ठा ath_hw *ah, bool *is_reusable)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ar9003_mci_init_cal_करोne(काष्ठा ath_hw *ah)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ar9003_mci_set_full_sleep(काष्ठा ath_hw *ah)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ar9003_mci_2g5g_चयन(काष्ठा ath_hw *ah, bool रुको_करोne)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ar9003_mci_check_bt(काष्ठा ath_hw *ah)
+अणु
+पूर्ण
+अटल अंतरभूत bool ar9003_mci_start_reset(काष्ठा ath_hw *ah, काष्ठा ath9k_channel *chan)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत पूर्णांक ar9003_mci_end_reset(काष्ठा ath_hw *ah, काष्ठा ath9k_channel *chan,
+				       काष्ठा ath9k_hw_cal_data *caldata)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम ar9003_mci_reset(काष्ठा ath_hw *ah, bool en_पूर्णांक, bool is_2g,
 				    bool is_full_sleep)
-{
-}
-static inline void ar9003_mci_get_isr(struct ath_hw *ah, enum ath9k_int *masked)
-{
-}
-static inline void ar9003_mci_bt_gain_ctrl(struct ath_hw *ah)
-{
-}
-static inline void ar9003_mci_set_power_awake(struct ath_hw *ah)
-{
-}
-static inline void ar9003_mci_check_gpm_offset(struct ath_hw *ah)
-{
-}
-static inline u16 ar9003_mci_get_max_txpower(struct ath_hw *ah, u8 ctlmode)
-{
-	return -1;
-}
-#endif /* CONFIG_ATH9K_BTCOEX_SUPPORT */
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ar9003_mci_get_isr(काष्ठा ath_hw *ah, क्रमागत ath9k_पूर्णांक *masked)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ar9003_mci_bt_gain_ctrl(काष्ठा ath_hw *ah)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ar9003_mci_set_घातer_awake(काष्ठा ath_hw *ah)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ar9003_mci_check_gpm_offset(काष्ठा ath_hw *ah)
+अणु
+पूर्ण
+अटल अंतरभूत u16 ar9003_mci_get_max_txघातer(काष्ठा ath_hw *ah, u8 ctlmode)
+अणु
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ATH9K_BTCOEX_SUPPORT */
 
-#endif
+#पूर्ण_अगर

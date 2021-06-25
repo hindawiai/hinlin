@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2020 TOSHIBA CORPORATION
  * Copyright (c) 2020 Toshiba Electronic Devices & Storage Corporation
  * Copyright (c) 2020 Nobuhiro Iwamatsu <nobuhiro1.iwamatsu@toshiba.co.jp>
  */
 
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include "pinctrl-common.h"
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश "pinctrl-common.h"
 
-#define tmpv7700_MAGIC_NUM 0x4932f70e
+#घोषणा पंचांगpv7700_MAGIC_NUM 0x4932f70e
 
-/* register offset */
-#define REG_KEY_CTRL	0x0000
-#define REG_KEY_CMD	0x0004
-#define REG_PINMUX1	0x3000
-#define REG_PINMUX2	0x3004
-#define REG_PINMUX3	0x3008
-#define REG_PINMUX4	0x300c
-#define REG_PINMUX5	0x3010
-#define REG_IOSET	0x3014
-#define REG_IO_VSEL	0x3018
-#define REG_IO_DSEL1	0x301c
-#define REG_IO_DSEL2	0x3020
-#define REG_IO_DSEL3	0x3024
-#define REG_IO_DSEL4	0x3028
-#define REG_IO_DSEL5	0x302c
-#define REG_IO_DSEL6	0x3030
-#define REG_IO_DSEL7	0x3034
-#define REG_IO_DSEL8	0x3038
-#define REG_IO_PUDE1	0x303c
-#define REG_IO_PUDE2	0x3040
-#define REG_IO_PUDSEL1	0x3044
-#define REG_IO_PUDSEL2	0x3048
+/* रेजिस्टर offset */
+#घोषणा REG_KEY_CTRL	0x0000
+#घोषणा REG_KEY_CMD	0x0004
+#घोषणा REG_PINMUX1	0x3000
+#घोषणा REG_PINMUX2	0x3004
+#घोषणा REG_PINMUX3	0x3008
+#घोषणा REG_PINMUX4	0x300c
+#घोषणा REG_PINMUX5	0x3010
+#घोषणा REG_IOSET	0x3014
+#घोषणा REG_IO_VSEL	0x3018
+#घोषणा REG_IO_DSEL1	0x301c
+#घोषणा REG_IO_DSEL2	0x3020
+#घोषणा REG_IO_DSEL3	0x3024
+#घोषणा REG_IO_DSEL4	0x3028
+#घोषणा REG_IO_DSEL5	0x302c
+#घोषणा REG_IO_DSEL6	0x3030
+#घोषणा REG_IO_DSEL7	0x3034
+#घोषणा REG_IO_DSEL8	0x3038
+#घोषणा REG_IO_PUDE1	0x303c
+#घोषणा REG_IO_PUDE2	0x3040
+#घोषणा REG_IO_PUDSEL1	0x3044
+#घोषणा REG_IO_PUDSEL2	0x3048
 
 /* PIN */
-static const struct visconti_desc_pin pins_tmpv7700[] = {
+अटल स्थिर काष्ठा visconti_desc_pin pins_पंचांगpv7700[] = अणु
 	VISCONTI_PIN(PINCTRL_PIN(0, "gpio0"), REG_IO_DSEL4, 24,
 		    REG_IO_PUDE1, REG_IO_PUDSEL1, 30),
 	VISCONTI_PIN(PINCTRL_PIN(1, "gpio1"), REG_IO_DSEL4, 28,
@@ -109,7 +110,7 @@ static const struct visconti_desc_pin pins_tmpv7700[] = {
 		    REG_IO_PUDE1, REG_IO_PUDSEL1, 28),
 	VISCONTI_PIN(PINCTRL_PIN(34, "spi_sdi"), REG_IO_DSEL4, 20,
 		    REG_IO_PUDE1, REG_IO_PUDSEL1, 29),
-};
+पूर्ण;
 
 /* Group */
 VISCONTI_PINS(i2c0, 0, 1);
@@ -157,10 +158,10 @@ VISCONTI_PINS(pwm0_gpio16, 16);
 VISCONTI_PINS(pwm1_gpio17, 17);
 VISCONTI_PINS(pwm2_gpio18, 18);
 VISCONTI_PINS(pwm3_gpio19, 19);
-VISCONTI_PINS(pcmif_out, 20, 21, 22);
-VISCONTI_PINS(pcmif_in, 24, 25, 26);
+VISCONTI_PINS(pcmअगर_out, 20, 21, 22);
+VISCONTI_PINS(pcmअगर_in, 24, 25, 26);
 
-static const struct visconti_pin_group groups_tmpv7700[] = {
+अटल स्थिर काष्ठा visconti_pin_group groups_पंचांगpv7700[] = अणु
 	VISCONTI_PIN_GROUP(i2c0, REG_PINMUX2, GENMASK(7, 0), 0x00000022),
 	VISCONTI_PIN_GROUP(i2c1, REG_PINMUX2, GENMASK(15, 8), 0x00002200),
 	VISCONTI_PIN_GROUP(i2c2, REG_PINMUX3, GENMASK(23, 16), 0x00770000),
@@ -206,9 +207,9 @@ static const struct visconti_pin_group groups_tmpv7700[] = {
 	VISCONTI_PIN_GROUP(pwm1_gpio17, REG_PINMUX4, GENMASK(7, 4), 0x00000050),
 	VISCONTI_PIN_GROUP(pwm2_gpio18, REG_PINMUX4, GENMASK(11, 8), 0x00000500),
 	VISCONTI_PIN_GROUP(pwm3_gpio19, REG_PINMUX4, GENMASK(15, 12), 0x00005000),
-	VISCONTI_PIN_GROUP(pcmif_out, REG_PINMUX4, GENMASK(27, 16), 0x01110000),
-	VISCONTI_PIN_GROUP(pcmif_in, REG_PINMUX5, GENMASK(11, 0), 0x00000222),
-};
+	VISCONTI_PIN_GROUP(pcmअगर_out, REG_PINMUX4, GENMASK(27, 16), 0x01110000),
+	VISCONTI_PIN_GROUP(pcmअगर_in, REG_PINMUX5, GENMASK(11, 0), 0x00000222),
+पूर्ण;
 
 /* MUX */
 VISCONTI_GROUPS(i2c0, "i2c0_grp");
@@ -240,10 +241,10 @@ VISCONTI_GROUPS(pwm, "pwm0_gpio4_grp", "pwm0_gpio8_grp",
 		"pwm2_gpio14_grp", "pwm2_gpio18_grp",
 		"pwm3_gpio7_grp", "pwm3_gpio11_grp",
 		"pwm3_gpio15_grp", "pwm3_gpio19_grp");
-VISCONTI_GROUPS(pcmif_out, "pcmif_out_grp");
-VISCONTI_GROUPS(pcmif_in, "pcmif_in_grp");
+VISCONTI_GROUPS(pcmअगर_out, "pcmif_out_grp");
+VISCONTI_GROUPS(pcmअगर_in, "pcmif_in_grp");
 
-static const struct visconti_pin_function functions_tmpv7700[] = {
+अटल स्थिर काष्ठा visconti_pin_function functions_पंचांगpv7700[] = अणु
 	VISCONTI_PIN_FUNCTION(i2c0),
 	VISCONTI_PIN_FUNCTION(i2c1),
 	VISCONTI_PIN_FUNCTION(i2c2),
@@ -265,91 +266,91 @@ static const struct visconti_pin_function functions_tmpv7700[] = {
 	VISCONTI_PIN_FUNCTION(uart2),
 	VISCONTI_PIN_FUNCTION(uart3),
 	VISCONTI_PIN_FUNCTION(pwm),
-	VISCONTI_PIN_FUNCTION(pcmif_in),
-	VISCONTI_PIN_FUNCTION(pcmif_out),
-};
+	VISCONTI_PIN_FUNCTION(pcmअगर_in),
+	VISCONTI_PIN_FUNCTION(pcmअगर_out),
+पूर्ण;
 
 /* GPIO MUX */
-#define tmpv7700_GPIO_MUX(off, msk)	\
-{					\
+#घोषणा पंचांगpv7700_GPIO_MUX(off, msk)	\
+अणु					\
 	.offset = off,			\
 	.mask = msk,			\
 	.val = 0,			\
-}
+पूर्ण
 
-static const struct visconti_mux gpio_mux_tmpv7700[] = {
-	tmpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(3, 0)),
-	tmpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(7, 4)),
-	tmpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(11, 8)),
-	tmpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(15, 12)),
-	tmpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(19, 16)),
-	tmpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(23, 20)),
-	tmpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(27, 24)),
-	tmpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(31, 28)),
-	tmpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(3, 0)),
-	tmpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(7, 4)),
-	tmpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(11, 8)),
-	tmpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(15, 12)),
-	tmpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(19, 16)),
-	tmpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(23, 20)),
-	tmpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(27, 24)),
-	tmpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(31, 28)),
-	tmpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(3, 0)),
-	tmpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(7, 4)),
-	tmpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(11, 8)),
-	tmpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(15, 12)),
-	tmpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(19, 16)),
-	tmpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(23, 20)),
-	tmpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(27, 24)),
-	tmpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(31, 28)),
-	tmpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(3, 0)),
-	tmpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(7, 4)),
-	tmpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(11, 8)),
-	tmpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(15, 12)),
-	tmpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(19, 16)),
-	tmpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(23, 20)),
-	tmpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(27, 24)),
-	tmpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(31, 28)),
-};
+अटल स्थिर काष्ठा visconti_mux gpio_mux_पंचांगpv7700[] = अणु
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(3, 0)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(7, 4)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(11, 8)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(15, 12)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(19, 16)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(23, 20)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(27, 24)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX2, GENMASK(31, 28)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(3, 0)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(7, 4)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(11, 8)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(15, 12)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(19, 16)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(23, 20)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(27, 24)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX3, GENMASK(31, 28)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(3, 0)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(7, 4)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(11, 8)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(15, 12)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(19, 16)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(23, 20)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(27, 24)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX4, GENMASK(31, 28)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(3, 0)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(7, 4)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(11, 8)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(15, 12)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(19, 16)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(23, 20)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(27, 24)),
+	पंचांगpv7700_GPIO_MUX(REG_PINMUX5, GENMASK(31, 28)),
+पूर्ण;
 
-static void tmpv7700_pinctrl_unlock(void __iomem *base)
-{
-	writel(1, base + REG_KEY_CTRL);
-	writel(tmpv7700_MAGIC_NUM, base + REG_KEY_CMD);
-}
+अटल व्योम पंचांगpv7700_pinctrl_unlock(व्योम __iomem *base)
+अणु
+	ग_लिखोl(1, base + REG_KEY_CTRL);
+	ग_लिखोl(पंचांगpv7700_MAGIC_NUM, base + REG_KEY_CMD);
+पूर्ण
 
 /* chip dependent data */
-static const struct visconti_pinctrl_devdata tmpv7700_pinctrl_data = {
-	.pins = pins_tmpv7700,
-	.nr_pins = ARRAY_SIZE(pins_tmpv7700),
-	.groups = groups_tmpv7700,
-	.nr_groups = ARRAY_SIZE(groups_tmpv7700),
-	.functions = functions_tmpv7700,
-	.nr_functions = ARRAY_SIZE(functions_tmpv7700),
-	.gpio_mux = gpio_mux_tmpv7700,
-	.unlock = tmpv7700_pinctrl_unlock,
-};
+अटल स्थिर काष्ठा visconti_pinctrl_devdata पंचांगpv7700_pinctrl_data = अणु
+	.pins = pins_पंचांगpv7700,
+	.nr_pins = ARRAY_SIZE(pins_पंचांगpv7700),
+	.groups = groups_पंचांगpv7700,
+	.nr_groups = ARRAY_SIZE(groups_पंचांगpv7700),
+	.functions = functions_पंचांगpv7700,
+	.nr_functions = ARRAY_SIZE(functions_पंचांगpv7700),
+	.gpio_mux = gpio_mux_पंचांगpv7700,
+	.unlock = पंचांगpv7700_pinctrl_unlock,
+पूर्ण;
 
-static int tmpv7700_pinctrl_probe(struct platform_device *pdev)
-{
-	return visconti_pinctrl_probe(pdev, &tmpv7700_pinctrl_data);
-}
+अटल पूर्णांक पंचांगpv7700_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस visconti_pinctrl_probe(pdev, &पंचांगpv7700_pinctrl_data);
+पूर्ण
 
-static const struct of_device_id tmpv7700_pctrl_of_match[] = {
-	{ .compatible = "toshiba,tmpv7708-pinctrl", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id पंचांगpv7700_pctrl_of_match[] = अणु
+	अणु .compatible = "toshiba,tmpv7708-pinctrl", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver tmpv7700_pinctrl_driver = {
-	.probe = tmpv7700_pinctrl_probe,
-	.driver = {
+अटल काष्ठा platक्रमm_driver पंचांगpv7700_pinctrl_driver = अणु
+	.probe = पंचांगpv7700_pinctrl_probe,
+	.driver = अणु
 		.name = "tmpv7700-pinctrl",
-		.of_match_table = tmpv7700_pctrl_of_match,
-	},
-};
+		.of_match_table = पंचांगpv7700_pctrl_of_match,
+	पूर्ण,
+पूर्ण;
 
-static int __init tmpv7700_pinctrl_init(void)
-{
-	return platform_driver_register(&tmpv7700_pinctrl_driver);
-}
-arch_initcall(tmpv7700_pinctrl_init);
+अटल पूर्णांक __init पंचांगpv7700_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&पंचांगpv7700_pinctrl_driver);
+पूर्ण
+arch_initcall(पंचांगpv7700_pinctrl_init);

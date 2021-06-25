@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * lnbp22.h - driver for lnb supply and control ic lnbp22
+ * lnbp22.h - driver क्रम lnb supply and control ic lnbp22
  *
  * Copyright (C) 2006 Dominik Kuhlen
  * Based on lnbp21.h
@@ -8,32 +9,32 @@
  * the project's page is at https://linuxtv.org
  */
 
-#ifndef _LNBP22_H
-#define _LNBP22_H
+#अगर_अघोषित _LNBP22_H
+#घोषणा _LNBP22_H
 
 /* Enable */
-#define LNBP22_EN	  0x10
+#घोषणा LNBP22_EN	  0x10
 /* Voltage selection */
-#define LNBP22_VSEL	0x02
+#घोषणा LNBP22_VSEL	0x02
 /* Plus 1 Volt Bit */
-#define LNBP22_LLC	0x01
+#घोषणा LNBP22_LLC	0x01
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-#if IS_REACHABLE(CONFIG_DVB_LNBP22)
+#अगर IS_REACHABLE(CONFIG_DVB_LNBP22)
 /*
- * override_set and override_clear control which system register bits (above)
+ * override_set and override_clear control which प्रणाली रेजिस्टर bits (above)
  * to always set & clear
  */
-extern struct dvb_frontend *lnbp22_attach(struct dvb_frontend *fe,
-						struct i2c_adapter *i2c);
-#else
-static inline struct dvb_frontend *lnbp22_attach(struct dvb_frontend *fe,
-						struct i2c_adapter *i2c)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif /* CONFIG_DVB_LNBP22 */
+बाह्य काष्ठा dvb_frontend *lnbp22_attach(काष्ठा dvb_frontend *fe,
+						काष्ठा i2c_adapter *i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *lnbp22_attach(काष्ठा dvb_frontend *fe,
+						काष्ठा i2c_adapter *i2c)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DVB_LNBP22 */
 
-#endif /* _LNBP22_H */
+#पूर्ण_अगर /* _LNBP22_H */

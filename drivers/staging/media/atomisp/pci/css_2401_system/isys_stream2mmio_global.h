@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __ISYS_STREAM2MMIO_GLOBAL_H_INCLUDED__
-#define __ISYS_STREAM2MMIO_GLOBAL_H_INCLUDED__
+#अगर_अघोषित __ISYS_STREAM2MMIO_GLOBAL_H_INCLUDED__
+#घोषणा __ISYS_STREAM2MMIO_GLOBAL_H_INCLUDED__
 
-#include <type_support.h>
+#समावेश <type_support.h>
 
-typedef struct stream2mmio_cfg_s stream2mmio_cfg_t;
-struct stream2mmio_cfg_s {
+प्रकार काष्ठा stream2mmio_cfg_s stream2mmio_cfg_t;
+काष्ठा stream2mmio_cfg_s अणु
 	u32				bits_per_pixel;
 	u32				enable_blocking;
-};
+पूर्ण;
 
 /* Stream2MMIO limits  per ID*/
 /*
@@ -35,6 +36,6 @@ struct stream2mmio_cfg_s {
  * Stream2MMIO 2 has 4 SIDs that are indexed by
  * [STREAM2MMIO_SID0_ID...STREAM2MMIO_SID3_ID].
  */
-extern const stream2mmio_sid_ID_t N_STREAM2MMIO_SID_PROCS[N_STREAM2MMIO_ID];
+बाह्य स्थिर stream2mmio_sid_ID_t N_STREAM2MMIO_SID_PROCS[N_STREAM2MMIO_ID];
 
-#endif /* __ISYS_STREAM2MMIO_GLOBAL_H_INCLUDED__ */
+#पूर्ण_अगर /* __ISYS_STREAM2MMIO_GLOBAL_H_INCLUDED__ */

@@ -1,284 +1,285 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * IOMMU API for Graphics Address Relocation Table on Tegra20
+ * IOMMU API क्रम Graphics Address Relocation Table on Tegra20
  *
  * Copyright (c) 2010-2012, NVIDIA CORPORATION.  All rights reserved.
  *
- * Author: Hiroshi DOYU <hdoyu@nvidia.com>
+ * Author: Hiroshi DOYU <hकरोyu@nvidia.com>
  */
 
-#define dev_fmt(fmt)	"gart: " fmt
+#घोषणा dev_fmt(fmt)	"gart: " fmt
 
-#include <linux/io.h>
-#include <linux/iommu.h>
-#include <linux/moduleparam.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iommu.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <soc/tegra/mc.h>
+#समावेश <soc/tegra/mc.h>
 
-#define GART_REG_BASE		0x24
-#define GART_CONFIG		(0x24 - GART_REG_BASE)
-#define GART_ENTRY_ADDR		(0x28 - GART_REG_BASE)
-#define GART_ENTRY_DATA		(0x2c - GART_REG_BASE)
+#घोषणा GART_REG_BASE		0x24
+#घोषणा GART_CONFIG		(0x24 - GART_REG_BASE)
+#घोषणा GART_ENTRY_ADDR		(0x28 - GART_REG_BASE)
+#घोषणा GART_ENTRY_DATA		(0x2c - GART_REG_BASE)
 
-#define GART_ENTRY_PHYS_ADDR_VALID	BIT(31)
+#घोषणा GART_ENTRY_PHYS_ADDR_VALID	BIT(31)
 
-#define GART_PAGE_SHIFT		12
-#define GART_PAGE_SIZE		(1 << GART_PAGE_SHIFT)
-#define GART_PAGE_MASK		GENMASK(30, GART_PAGE_SHIFT)
+#घोषणा GART_PAGE_SHIFT		12
+#घोषणा GART_PAGE_SIZE		(1 << GART_PAGE_SHIFT)
+#घोषणा GART_PAGE_MASK		GENMASK(30, GART_PAGE_SHIFT)
 
-/* bitmap of the page sizes currently supported */
-#define GART_IOMMU_PGSIZES	(GART_PAGE_SIZE)
+/* biपंचांगap of the page sizes currently supported */
+#घोषणा GART_IOMMU_PGSIZES	(GART_PAGE_SIZE)
 
-struct gart_device {
-	void __iomem		*regs;
+काष्ठा gart_device अणु
+	व्योम __iomem		*regs;
 	u32			*savedata;
-	unsigned long		iovmm_base;	/* offset to vmm_area start */
-	unsigned long		iovmm_end;	/* offset to vmm_area end */
-	spinlock_t		pte_lock;	/* for pagetable */
-	spinlock_t		dom_lock;	/* for active domain */
-	unsigned int		active_devices;	/* number of active devices */
-	struct iommu_domain	*active_domain;	/* current active domain */
-	struct iommu_device	iommu;		/* IOMMU Core handle */
-	struct device		*dev;
-};
+	अचिन्हित दीर्घ		iovmm_base;	/* offset to vmm_area start */
+	अचिन्हित दीर्घ		iovmm_end;	/* offset to vmm_area end */
+	spinlock_t		pte_lock;	/* क्रम pagetable */
+	spinlock_t		करोm_lock;	/* क्रम active करोमुख्य */
+	अचिन्हित पूर्णांक		active_devices;	/* number of active devices */
+	काष्ठा iommu_करोमुख्य	*active_करोमुख्य;	/* current active करोमुख्य */
+	काष्ठा iommu_device	iommu;		/* IOMMU Core handle */
+	काष्ठा device		*dev;
+पूर्ण;
 
-static struct gart_device *gart_handle; /* unique for a system */
+अटल काष्ठा gart_device *gart_handle; /* unique क्रम a प्रणाली */
 
-static bool gart_debug;
+अटल bool gart_debug;
 
 /*
- * Any interaction between any block on PPSB and a block on APB or AHB
- * must have these read-back to ensure the APB/AHB bus transaction is
- * complete before initiating activity on the PPSB block.
+ * Any पूर्णांकeraction between any block on PPSB and a block on APB or AHB
+ * must have these पढ़ो-back to ensure the APB/AHB bus transaction is
+ * complete beक्रमe initiating activity on the PPSB block.
  */
-#define FLUSH_GART_REGS(gart)	readl_relaxed((gart)->regs + GART_CONFIG)
+#घोषणा FLUSH_GART_REGS(gart)	पढ़ोl_relaxed((gart)->regs + GART_CONFIG)
 
-#define for_each_gart_pte(gart, iova)					\
-	for (iova = gart->iovmm_base;					\
+#घोषणा क्रम_each_gart_pte(gart, iova)					\
+	क्रम (iova = gart->iovmm_base;					\
 	     iova < gart->iovmm_end;					\
 	     iova += GART_PAGE_SIZE)
 
-static inline void gart_set_pte(struct gart_device *gart,
-				unsigned long iova, unsigned long pte)
-{
-	writel_relaxed(iova, gart->regs + GART_ENTRY_ADDR);
-	writel_relaxed(pte, gart->regs + GART_ENTRY_DATA);
-}
+अटल अंतरभूत व्योम gart_set_pte(काष्ठा gart_device *gart,
+				अचिन्हित दीर्घ iova, अचिन्हित दीर्घ pte)
+अणु
+	ग_लिखोl_relaxed(iova, gart->regs + GART_ENTRY_ADDR);
+	ग_लिखोl_relaxed(pte, gart->regs + GART_ENTRY_DATA);
+पूर्ण
 
-static inline unsigned long gart_read_pte(struct gart_device *gart,
-					  unsigned long iova)
-{
-	unsigned long pte;
+अटल अंतरभूत अचिन्हित दीर्घ gart_पढ़ो_pte(काष्ठा gart_device *gart,
+					  अचिन्हित दीर्घ iova)
+अणु
+	अचिन्हित दीर्घ pte;
 
-	writel_relaxed(iova, gart->regs + GART_ENTRY_ADDR);
-	pte = readl_relaxed(gart->regs + GART_ENTRY_DATA);
+	ग_लिखोl_relaxed(iova, gart->regs + GART_ENTRY_ADDR);
+	pte = पढ़ोl_relaxed(gart->regs + GART_ENTRY_DATA);
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static void do_gart_setup(struct gart_device *gart, const u32 *data)
-{
-	unsigned long iova;
+अटल व्योम करो_gart_setup(काष्ठा gart_device *gart, स्थिर u32 *data)
+अणु
+	अचिन्हित दीर्घ iova;
 
-	for_each_gart_pte(gart, iova)
+	क्रम_each_gart_pte(gart, iova)
 		gart_set_pte(gart, iova, data ? *(data++) : 0);
 
-	writel_relaxed(1, gart->regs + GART_CONFIG);
+	ग_लिखोl_relaxed(1, gart->regs + GART_CONFIG);
 	FLUSH_GART_REGS(gart);
-}
+पूर्ण
 
-static inline bool gart_iova_range_invalid(struct gart_device *gart,
-					   unsigned long iova, size_t bytes)
-{
-	return unlikely(iova < gart->iovmm_base || bytes != GART_PAGE_SIZE ||
+अटल अंतरभूत bool gart_iova_range_invalid(काष्ठा gart_device *gart,
+					   अचिन्हित दीर्घ iova, माप_प्रकार bytes)
+अणु
+	वापस unlikely(iova < gart->iovmm_base || bytes != GART_PAGE_SIZE ||
 			iova + bytes > gart->iovmm_end);
-}
+पूर्ण
 
-static inline bool gart_pte_valid(struct gart_device *gart, unsigned long iova)
-{
-	return !!(gart_read_pte(gart, iova) & GART_ENTRY_PHYS_ADDR_VALID);
-}
+अटल अंतरभूत bool gart_pte_valid(काष्ठा gart_device *gart, अचिन्हित दीर्घ iova)
+अणु
+	वापस !!(gart_पढ़ो_pte(gart, iova) & GART_ENTRY_PHYS_ADDR_VALID);
+पूर्ण
 
-static int gart_iommu_attach_dev(struct iommu_domain *domain,
-				 struct device *dev)
-{
-	struct gart_device *gart = gart_handle;
-	int ret = 0;
+अटल पूर्णांक gart_iommu_attach_dev(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				 काष्ठा device *dev)
+अणु
+	काष्ठा gart_device *gart = gart_handle;
+	पूर्णांक ret = 0;
 
-	spin_lock(&gart->dom_lock);
+	spin_lock(&gart->करोm_lock);
 
-	if (gart->active_domain && gart->active_domain != domain) {
+	अगर (gart->active_करोमुख्य && gart->active_करोमुख्य != करोमुख्य) अणु
 		ret = -EBUSY;
-	} else if (dev_iommu_priv_get(dev) != domain) {
-		dev_iommu_priv_set(dev, domain);
-		gart->active_domain = domain;
+	पूर्ण अन्यथा अगर (dev_iommu_priv_get(dev) != करोमुख्य) अणु
+		dev_iommu_priv_set(dev, करोमुख्य);
+		gart->active_करोमुख्य = करोमुख्य;
 		gart->active_devices++;
-	}
+	पूर्ण
 
-	spin_unlock(&gart->dom_lock);
+	spin_unlock(&gart->करोm_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void gart_iommu_detach_dev(struct iommu_domain *domain,
-				  struct device *dev)
-{
-	struct gart_device *gart = gart_handle;
+अटल व्योम gart_iommu_detach_dev(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				  काष्ठा device *dev)
+अणु
+	काष्ठा gart_device *gart = gart_handle;
 
-	spin_lock(&gart->dom_lock);
+	spin_lock(&gart->करोm_lock);
 
-	if (dev_iommu_priv_get(dev) == domain) {
-		dev_iommu_priv_set(dev, NULL);
+	अगर (dev_iommu_priv_get(dev) == करोमुख्य) अणु
+		dev_iommu_priv_set(dev, शून्य);
 
-		if (--gart->active_devices == 0)
-			gart->active_domain = NULL;
-	}
+		अगर (--gart->active_devices == 0)
+			gart->active_करोमुख्य = शून्य;
+	पूर्ण
 
-	spin_unlock(&gart->dom_lock);
-}
+	spin_unlock(&gart->करोm_lock);
+पूर्ण
 
-static struct iommu_domain *gart_iommu_domain_alloc(unsigned type)
-{
-	struct iommu_domain *domain;
+अटल काष्ठा iommu_करोमुख्य *gart_iommu_करोमुख्य_alloc(अचिन्हित type)
+अणु
+	काष्ठा iommu_करोमुख्य *करोमुख्य;
 
-	if (type != IOMMU_DOMAIN_UNMANAGED)
-		return NULL;
+	अगर (type != IOMMU_DOMAIN_UNMANAGED)
+		वापस शून्य;
 
-	domain = kzalloc(sizeof(*domain), GFP_KERNEL);
-	if (domain) {
-		domain->geometry.aperture_start = gart_handle->iovmm_base;
-		domain->geometry.aperture_end = gart_handle->iovmm_end - 1;
-		domain->geometry.force_aperture = true;
-	}
+	करोमुख्य = kzalloc(माप(*करोमुख्य), GFP_KERNEL);
+	अगर (करोमुख्य) अणु
+		करोमुख्य->geometry.aperture_start = gart_handle->iovmm_base;
+		करोमुख्य->geometry.aperture_end = gart_handle->iovmm_end - 1;
+		करोमुख्य->geometry.क्रमce_aperture = true;
+	पूर्ण
 
-	return domain;
-}
+	वापस करोमुख्य;
+पूर्ण
 
-static void gart_iommu_domain_free(struct iommu_domain *domain)
-{
-	WARN_ON(gart_handle->active_domain == domain);
-	kfree(domain);
-}
+अटल व्योम gart_iommu_करोमुख्य_मुक्त(काष्ठा iommu_करोमुख्य *करोमुख्य)
+अणु
+	WARN_ON(gart_handle->active_करोमुख्य == करोमुख्य);
+	kमुक्त(करोमुख्य);
+पूर्ण
 
-static inline int __gart_iommu_map(struct gart_device *gart, unsigned long iova,
-				   unsigned long pa)
-{
-	if (unlikely(gart_debug && gart_pte_valid(gart, iova))) {
+अटल अंतरभूत पूर्णांक __gart_iommu_map(काष्ठा gart_device *gart, अचिन्हित दीर्घ iova,
+				   अचिन्हित दीर्घ pa)
+अणु
+	अगर (unlikely(gart_debug && gart_pte_valid(gart, iova))) अणु
 		dev_err(gart->dev, "Page entry is in-use\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	gart_set_pte(gart, iova, GART_ENTRY_PHYS_ADDR_VALID | pa);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gart_iommu_map(struct iommu_domain *domain, unsigned long iova,
-			  phys_addr_t pa, size_t bytes, int prot, gfp_t gfp)
-{
-	struct gart_device *gart = gart_handle;
-	int ret;
+अटल पूर्णांक gart_iommu_map(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+			  phys_addr_t pa, माप_प्रकार bytes, पूर्णांक prot, gfp_t gfp)
+अणु
+	काष्ठा gart_device *gart = gart_handle;
+	पूर्णांक ret;
 
-	if (gart_iova_range_invalid(gart, iova, bytes))
-		return -EINVAL;
+	अगर (gart_iova_range_invalid(gart, iova, bytes))
+		वापस -EINVAL;
 
 	spin_lock(&gart->pte_lock);
-	ret = __gart_iommu_map(gart, iova, (unsigned long)pa);
+	ret = __gart_iommu_map(gart, iova, (अचिन्हित दीर्घ)pa);
 	spin_unlock(&gart->pte_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int __gart_iommu_unmap(struct gart_device *gart,
-				     unsigned long iova)
-{
-	if (unlikely(gart_debug && !gart_pte_valid(gart, iova))) {
+अटल अंतरभूत पूर्णांक __gart_iommu_unmap(काष्ठा gart_device *gart,
+				     अचिन्हित दीर्घ iova)
+अणु
+	अगर (unlikely(gart_debug && !gart_pte_valid(gart, iova))) अणु
 		dev_err(gart->dev, "Page entry is invalid\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	gart_set_pte(gart, iova, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static size_t gart_iommu_unmap(struct iommu_domain *domain, unsigned long iova,
-			       size_t bytes, struct iommu_iotlb_gather *gather)
-{
-	struct gart_device *gart = gart_handle;
-	int err;
+अटल माप_प्रकार gart_iommu_unmap(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+			       माप_प्रकार bytes, काष्ठा iommu_iotlb_gather *gather)
+अणु
+	काष्ठा gart_device *gart = gart_handle;
+	पूर्णांक err;
 
-	if (gart_iova_range_invalid(gart, iova, bytes))
-		return 0;
+	अगर (gart_iova_range_invalid(gart, iova, bytes))
+		वापस 0;
 
 	spin_lock(&gart->pte_lock);
 	err = __gart_iommu_unmap(gart, iova);
 	spin_unlock(&gart->pte_lock);
 
-	return err ? 0 : bytes;
-}
+	वापस err ? 0 : bytes;
+पूर्ण
 
-static phys_addr_t gart_iommu_iova_to_phys(struct iommu_domain *domain,
+अटल phys_addr_t gart_iommu_iova_to_phys(काष्ठा iommu_करोमुख्य *करोमुख्य,
 					   dma_addr_t iova)
-{
-	struct gart_device *gart = gart_handle;
-	unsigned long pte;
+अणु
+	काष्ठा gart_device *gart = gart_handle;
+	अचिन्हित दीर्घ pte;
 
-	if (gart_iova_range_invalid(gart, iova, GART_PAGE_SIZE))
-		return -EINVAL;
+	अगर (gart_iova_range_invalid(gart, iova, GART_PAGE_SIZE))
+		वापस -EINVAL;
 
 	spin_lock(&gart->pte_lock);
-	pte = gart_read_pte(gart, iova);
+	pte = gart_पढ़ो_pte(gart, iova);
 	spin_unlock(&gart->pte_lock);
 
-	return pte & GART_PAGE_MASK;
-}
+	वापस pte & GART_PAGE_MASK;
+पूर्ण
 
-static bool gart_iommu_capable(enum iommu_cap cap)
-{
-	return false;
-}
+अटल bool gart_iommu_capable(क्रमागत iommu_cap cap)
+अणु
+	वापस false;
+पूर्ण
 
-static struct iommu_device *gart_iommu_probe_device(struct device *dev)
-{
-	if (!dev_iommu_fwspec_get(dev))
-		return ERR_PTR(-ENODEV);
+अटल काष्ठा iommu_device *gart_iommu_probe_device(काष्ठा device *dev)
+अणु
+	अगर (!dev_iommu_fwspec_get(dev))
+		वापस ERR_PTR(-ENODEV);
 
-	return &gart_handle->iommu;
-}
+	वापस &gart_handle->iommu;
+पूर्ण
 
-static void gart_iommu_release_device(struct device *dev)
-{
-}
+अटल व्योम gart_iommu_release_device(काष्ठा device *dev)
+अणु
+पूर्ण
 
-static int gart_iommu_of_xlate(struct device *dev,
-			       struct of_phandle_args *args)
-{
-	return 0;
-}
+अटल पूर्णांक gart_iommu_of_xlate(काष्ठा device *dev,
+			       काष्ठा of_phandle_args *args)
+अणु
+	वापस 0;
+पूर्ण
 
-static void gart_iommu_sync_map(struct iommu_domain *domain, unsigned long iova,
-				size_t size)
-{
+अटल व्योम gart_iommu_sync_map(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+				माप_प्रकार size)
+अणु
 	FLUSH_GART_REGS(gart_handle);
-}
+पूर्ण
 
-static void gart_iommu_sync(struct iommu_domain *domain,
-			    struct iommu_iotlb_gather *gather)
-{
-	size_t length = gather->end - gather->start + 1;
+अटल व्योम gart_iommu_sync(काष्ठा iommu_करोमुख्य *करोमुख्य,
+			    काष्ठा iommu_iotlb_gather *gather)
+अणु
+	माप_प्रकार length = gather->end - gather->start + 1;
 
-	gart_iommu_sync_map(domain, gather->start, length);
-}
+	gart_iommu_sync_map(करोमुख्य, gather->start, length);
+पूर्ण
 
-static const struct iommu_ops gart_iommu_ops = {
+अटल स्थिर काष्ठा iommu_ops gart_iommu_ops = अणु
 	.capable	= gart_iommu_capable,
-	.domain_alloc	= gart_iommu_domain_alloc,
-	.domain_free	= gart_iommu_domain_free,
+	.करोमुख्य_alloc	= gart_iommu_करोमुख्य_alloc,
+	.करोमुख्य_मुक्त	= gart_iommu_करोमुख्य_मुक्त,
 	.attach_dev	= gart_iommu_attach_dev,
 	.detach_dev	= gart_iommu_detach_dev,
 	.probe_device	= gart_iommu_probe_device,
@@ -287,56 +288,56 @@ static const struct iommu_ops gart_iommu_ops = {
 	.map		= gart_iommu_map,
 	.unmap		= gart_iommu_unmap,
 	.iova_to_phys	= gart_iommu_iova_to_phys,
-	.pgsize_bitmap	= GART_IOMMU_PGSIZES,
+	.pgsize_biपंचांगap	= GART_IOMMU_PGSIZES,
 	.of_xlate	= gart_iommu_of_xlate,
 	.iotlb_sync_map	= gart_iommu_sync_map,
 	.iotlb_sync	= gart_iommu_sync,
-};
+पूर्ण;
 
-int tegra_gart_suspend(struct gart_device *gart)
-{
+पूर्णांक tegra_gart_suspend(काष्ठा gart_device *gart)
+अणु
 	u32 *data = gart->savedata;
-	unsigned long iova;
+	अचिन्हित दीर्घ iova;
 
 	/*
-	 * All GART users shall be suspended at this point. Disable
+	 * All GART users shall be suspended at this poपूर्णांक. Disable
 	 * address translation to trap all GART accesses as invalid
 	 * memory accesses.
 	 */
-	writel_relaxed(0, gart->regs + GART_CONFIG);
+	ग_लिखोl_relaxed(0, gart->regs + GART_CONFIG);
 	FLUSH_GART_REGS(gart);
 
-	for_each_gart_pte(gart, iova)
-		*(data++) = gart_read_pte(gart, iova);
+	क्रम_each_gart_pte(gart, iova)
+		*(data++) = gart_पढ़ो_pte(gart, iova);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int tegra_gart_resume(struct gart_device *gart)
-{
-	do_gart_setup(gart, gart->savedata);
+पूर्णांक tegra_gart_resume(काष्ठा gart_device *gart)
+अणु
+	करो_gart_setup(gart, gart->savedata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct gart_device *tegra_gart_probe(struct device *dev, struct tegra_mc *mc)
-{
-	struct gart_device *gart;
-	struct resource *res;
-	int err;
+काष्ठा gart_device *tegra_gart_probe(काष्ठा device *dev, काष्ठा tegra_mc *mc)
+अणु
+	काष्ठा gart_device *gart;
+	काष्ठा resource *res;
+	पूर्णांक err;
 
 	BUILD_BUG_ON(PAGE_SHIFT != GART_PAGE_SHIFT);
 
 	/* the GART memory aperture is required */
-	res = platform_get_resource(to_platform_device(dev), IORESOURCE_MEM, 1);
-	if (!res) {
+	res = platक्रमm_get_resource(to_platक्रमm_device(dev), IORESOURCE_MEM, 1);
+	अगर (!res) अणु
 		dev_err(dev, "Memory aperture resource unavailable\n");
-		return ERR_PTR(-ENXIO);
-	}
+		वापस ERR_PTR(-ENXIO);
+	पूर्ण
 
-	gart = kzalloc(sizeof(*gart), GFP_KERNEL);
-	if (!gart)
-		return ERR_PTR(-ENOMEM);
+	gart = kzalloc(माप(*gart), GFP_KERNEL);
+	अगर (!gart)
+		वापस ERR_PTR(-ENOMEM);
 
 	gart_handle = gart;
 
@@ -345,36 +346,36 @@ struct gart_device *tegra_gart_probe(struct device *dev, struct tegra_mc *mc)
 	gart->iovmm_base = res->start;
 	gart->iovmm_end = res->end + 1;
 	spin_lock_init(&gart->pte_lock);
-	spin_lock_init(&gart->dom_lock);
+	spin_lock_init(&gart->करोm_lock);
 
-	do_gart_setup(gart, NULL);
+	करो_gart_setup(gart, शून्य);
 
-	err = iommu_device_sysfs_add(&gart->iommu, dev, NULL, "gart");
-	if (err)
-		goto free_gart;
+	err = iommu_device_sysfs_add(&gart->iommu, dev, शून्य, "gart");
+	अगर (err)
+		जाओ मुक्त_gart;
 
-	err = iommu_device_register(&gart->iommu, &gart_iommu_ops, dev);
-	if (err)
-		goto remove_sysfs;
+	err = iommu_device_रेजिस्टर(&gart->iommu, &gart_iommu_ops, dev);
+	अगर (err)
+		जाओ हटाओ_sysfs;
 
-	gart->savedata = vmalloc(resource_size(res) / GART_PAGE_SIZE *
-				 sizeof(u32));
-	if (!gart->savedata) {
+	gart->savedata = vदो_स्मृति(resource_size(res) / GART_PAGE_SIZE *
+				 माप(u32));
+	अगर (!gart->savedata) अणु
 		err = -ENOMEM;
-		goto unregister_iommu;
-	}
+		जाओ unरेजिस्टर_iommu;
+	पूर्ण
 
-	return gart;
+	वापस gart;
 
-unregister_iommu:
-	iommu_device_unregister(&gart->iommu);
-remove_sysfs:
-	iommu_device_sysfs_remove(&gart->iommu);
-free_gart:
-	kfree(gart);
+unरेजिस्टर_iommu:
+	iommu_device_unरेजिस्टर(&gart->iommu);
+हटाओ_sysfs:
+	iommu_device_sysfs_हटाओ(&gart->iommu);
+मुक्त_gart:
+	kमुक्त(gart);
 
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
 module_param(gart_debug, bool, 0644);
 MODULE_PARM_DESC(gart_debug, "Enable GART debugging");

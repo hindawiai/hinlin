@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  arch/arm/include/asm/ide.h
+ *  arch/arm/include/यंत्र/ide.h
  *
  *  Copyright (C) 1994-1996  Linus Torvalds & authors
  */
 
 /*
- *  This file contains the ARM architecture specific IDE code.
+ *  This file contains the ARM architecture specअगरic IDE code.
  */
 
-#ifndef __ASMARM_IDE_H
-#define __ASMARM_IDE_H
+#अगर_अघोषित __ASMARM_IDE_H
+#घोषणा __ASMARM_IDE_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#define __ide_mm_insw(port,addr,len)	readsw(port,addr,len)
-#define __ide_mm_insl(port,addr,len)	readsl(port,addr,len)
-#define __ide_mm_outsw(port,addr,len)	writesw(port,addr,len)
-#define __ide_mm_outsl(port,addr,len)	writesl(port,addr,len)
+#घोषणा __ide_mm_insw(port,addr,len)	पढ़ोsw(port,addr,len)
+#घोषणा __ide_mm_insl(port,addr,len)	पढ़ोsl(port,addr,len)
+#घोषणा __ide_mm_outsw(port,addr,len)	ग_लिखोsw(port,addr,len)
+#घोषणा __ide_mm_outsl(port,addr,len)	ग_लिखोsl(port,addr,len)
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* __ASMARM_IDE_H */
+#पूर्ण_अगर /* __ASMARM_IDE_H */

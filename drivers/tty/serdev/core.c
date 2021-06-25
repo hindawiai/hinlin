@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2016-2017 Linaro Ltd., Rob Herring <robh@kernel.org>
  *
@@ -6,494 +7,494 @@
  * Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/acpi.h>
-#include <linux/errno.h>
-#include <linux/idr.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pm_domain.h>
-#include <linux/pm_runtime.h>
-#include <linux/sched.h>
-#include <linux/serdev.h>
-#include <linux/slab.h>
-#include <linux/platform_data/x86/apple.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/idr.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/serdev.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_data/x86/apple.h>
 
-static bool is_registered;
-static DEFINE_IDA(ctrl_ida);
+अटल bool is_रेजिस्टरed;
+अटल DEFINE_IDA(ctrl_ida);
 
-static ssize_t modalias_show(struct device *dev,
-			     struct device_attribute *attr, char *buf)
-{
-	int len;
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक len;
 
 	len = acpi_device_modalias(dev, buf, PAGE_SIZE - 1);
-	if (len != -ENODEV)
-		return len;
+	अगर (len != -ENODEV)
+		वापस len;
 
-	return of_device_modalias(dev, buf, PAGE_SIZE);
-}
-static DEVICE_ATTR_RO(modalias);
+	वापस of_device_modalias(dev, buf, PAGE_SIZE);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static struct attribute *serdev_device_attrs[] = {
+अटल काष्ठा attribute *serdev_device_attrs[] = अणु
 	&dev_attr_modalias.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(serdev_device);
 
-static int serdev_device_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	int rc;
+अटल पूर्णांक serdev_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	पूर्णांक rc;
 
-	/* TODO: platform modalias */
+	/* TODO: platक्रमm modalias */
 
 	rc = acpi_device_uevent_modalias(dev, env);
-	if (rc != -ENODEV)
-		return rc;
+	अगर (rc != -ENODEV)
+		वापस rc;
 
-	return of_device_uevent_modalias(dev, env);
-}
+	वापस of_device_uevent_modalias(dev, env);
+पूर्ण
 
-static void serdev_device_release(struct device *dev)
-{
-	struct serdev_device *serdev = to_serdev_device(dev);
-	kfree(serdev);
-}
+अटल व्योम serdev_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा serdev_device *serdev = to_serdev_device(dev);
+	kमुक्त(serdev);
+पूर्ण
 
-static const struct device_type serdev_device_type = {
+अटल स्थिर काष्ठा device_type serdev_device_type = अणु
 	.groups		= serdev_device_groups,
 	.uevent		= serdev_device_uevent,
 	.release	= serdev_device_release,
-};
+पूर्ण;
 
-static bool is_serdev_device(const struct device *dev)
-{
-	return dev->type == &serdev_device_type;
-}
+अटल bool is_serdev_device(स्थिर काष्ठा device *dev)
+अणु
+	वापस dev->type == &serdev_device_type;
+पूर्ण
 
-static void serdev_ctrl_release(struct device *dev)
-{
-	struct serdev_controller *ctrl = to_serdev_controller(dev);
-	ida_simple_remove(&ctrl_ida, ctrl->nr);
-	kfree(ctrl);
-}
+अटल व्योम serdev_ctrl_release(काष्ठा device *dev)
+अणु
+	काष्ठा serdev_controller *ctrl = to_serdev_controller(dev);
+	ida_simple_हटाओ(&ctrl_ida, ctrl->nr);
+	kमुक्त(ctrl);
+पूर्ण
 
-static const struct device_type serdev_ctrl_type = {
+अटल स्थिर काष्ठा device_type serdev_ctrl_type = अणु
 	.release	= serdev_ctrl_release,
-};
+पूर्ण;
 
-static int serdev_device_match(struct device *dev, struct device_driver *drv)
-{
-	if (!is_serdev_device(dev))
-		return 0;
+अटल पूर्णांक serdev_device_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	अगर (!is_serdev_device(dev))
+		वापस 0;
 
-	/* TODO: platform matching */
-	if (acpi_driver_match_device(dev, drv))
-		return 1;
+	/* TODO: platक्रमm matching */
+	अगर (acpi_driver_match_device(dev, drv))
+		वापस 1;
 
-	return of_driver_match_device(dev, drv);
-}
+	वापस of_driver_match_device(dev, drv);
+पूर्ण
 
 /**
- * serdev_device_add() - add a device previously constructed via serdev_device_alloc()
+ * serdev_device_add() - add a device previously स्थिरructed via serdev_device_alloc()
  * @serdev:	serdev_device to be added
  */
-int serdev_device_add(struct serdev_device *serdev)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
-	struct device *parent = serdev->dev.parent;
-	int err;
+पूर्णांक serdev_device_add(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
+	काष्ठा device *parent = serdev->dev.parent;
+	पूर्णांक err;
 
 	dev_set_name(&serdev->dev, "%s-%d", dev_name(parent), serdev->nr);
 
 	/* Only a single slave device is currently supported. */
-	if (ctrl->serdev) {
+	अगर (ctrl->serdev) अणु
 		dev_err(&serdev->dev, "controller busy\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	ctrl->serdev = serdev;
 
 	err = device_add(&serdev->dev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&serdev->dev, "Can't add %s, status %pe\n",
 			dev_name(&serdev->dev), ERR_PTR(err));
-		goto err_clear_serdev;
-	}
+		जाओ err_clear_serdev;
+	पूर्ण
 
 	dev_dbg(&serdev->dev, "device %s registered\n", dev_name(&serdev->dev));
 
-	return 0;
+	वापस 0;
 
 err_clear_serdev:
-	ctrl->serdev = NULL;
-	return err;
-}
+	ctrl->serdev = शून्य;
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(serdev_device_add);
 
 /**
- * serdev_device_remove(): remove an serdev device
- * @serdev:	serdev_device to be removed
+ * serdev_device_हटाओ(): हटाओ an serdev device
+ * @serdev:	serdev_device to be हटाओd
  */
-void serdev_device_remove(struct serdev_device *serdev)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+व्योम serdev_device_हटाओ(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	device_unregister(&serdev->dev);
-	ctrl->serdev = NULL;
-}
-EXPORT_SYMBOL_GPL(serdev_device_remove);
+	device_unरेजिस्टर(&serdev->dev);
+	ctrl->serdev = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(serdev_device_हटाओ);
 
-int serdev_device_open(struct serdev_device *serdev)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
-	int ret;
+पूर्णांक serdev_device_खोलो(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
+	पूर्णांक ret;
 
-	if (!ctrl || !ctrl->ops->open)
-		return -EINVAL;
+	अगर (!ctrl || !ctrl->ops->खोलो)
+		वापस -EINVAL;
 
-	ret = ctrl->ops->open(ctrl);
-	if (ret)
-		return ret;
+	ret = ctrl->ops->खोलो(ctrl);
+	अगर (ret)
+		वापस ret;
 
-	ret = pm_runtime_get_sync(&ctrl->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(&ctrl->dev);
-		goto err_close;
-	}
+	ret = pm_runसमय_get_sync(&ctrl->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(&ctrl->dev);
+		जाओ err_बंद;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_close:
-	if (ctrl->ops->close)
-		ctrl->ops->close(ctrl);
+err_बंद:
+	अगर (ctrl->ops->बंद)
+		ctrl->ops->बंद(ctrl);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(serdev_device_open);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(serdev_device_खोलो);
 
-void serdev_device_close(struct serdev_device *serdev)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+व्योम serdev_device_बंद(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	if (!ctrl || !ctrl->ops->close)
-		return;
+	अगर (!ctrl || !ctrl->ops->बंद)
+		वापस;
 
-	pm_runtime_put(&ctrl->dev);
+	pm_runसमय_put(&ctrl->dev);
 
-	ctrl->ops->close(ctrl);
-}
-EXPORT_SYMBOL_GPL(serdev_device_close);
+	ctrl->ops->बंद(ctrl);
+पूर्ण
+EXPORT_SYMBOL_GPL(serdev_device_बंद);
 
-static void devm_serdev_device_release(struct device *dev, void *dr)
-{
-	serdev_device_close(*(struct serdev_device **)dr);
-}
+अटल व्योम devm_serdev_device_release(काष्ठा device *dev, व्योम *dr)
+अणु
+	serdev_device_बंद(*(काष्ठा serdev_device **)dr);
+पूर्ण
 
-int devm_serdev_device_open(struct device *dev, struct serdev_device *serdev)
-{
-	struct serdev_device **dr;
-	int ret;
+पूर्णांक devm_serdev_device_खोलो(काष्ठा device *dev, काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा serdev_device **dr;
+	पूर्णांक ret;
 
-	dr = devres_alloc(devm_serdev_device_release, sizeof(*dr), GFP_KERNEL);
-	if (!dr)
-		return -ENOMEM;
+	dr = devres_alloc(devm_serdev_device_release, माप(*dr), GFP_KERNEL);
+	अगर (!dr)
+		वापस -ENOMEM;
 
-	ret = serdev_device_open(serdev);
-	if (ret) {
-		devres_free(dr);
-		return ret;
-	}
+	ret = serdev_device_खोलो(serdev);
+	अगर (ret) अणु
+		devres_मुक्त(dr);
+		वापस ret;
+	पूर्ण
 
 	*dr = serdev;
 	devres_add(dev, dr);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(devm_serdev_device_open);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_serdev_device_खोलो);
 
-void serdev_device_write_wakeup(struct serdev_device *serdev)
-{
-	complete(&serdev->write_comp);
-}
-EXPORT_SYMBOL_GPL(serdev_device_write_wakeup);
+व्योम serdev_device_ग_लिखो_wakeup(काष्ठा serdev_device *serdev)
+अणु
+	complete(&serdev->ग_लिखो_comp);
+पूर्ण
+EXPORT_SYMBOL_GPL(serdev_device_ग_लिखो_wakeup);
 
 /**
- * serdev_device_write_buf() - write data asynchronously
+ * serdev_device_ग_लिखो_buf() - ग_लिखो data asynchronously
  * @serdev:	serdev device
  * @buf:	data to be written
- * @count:	number of bytes to write
+ * @count:	number of bytes to ग_लिखो
  *
  * Write data to the device asynchronously.
  *
  * Note that any accepted data has only been buffered by the controller; use
- * serdev_device_wait_until_sent() to make sure the controller write buffer
+ * serdev_device_रुको_until_sent() to make sure the controller ग_लिखो buffer
  * has actually been emptied.
  *
- * Return: The number of bytes written (less than count if not enough room in
- * the write buffer), or a negative errno on errors.
+ * Return: The number of bytes written (less than count अगर not enough room in
+ * the ग_लिखो buffer), or a negative त्रुटि_सं on errors.
  */
-int serdev_device_write_buf(struct serdev_device *serdev,
-			    const unsigned char *buf, size_t count)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+पूर्णांक serdev_device_ग_लिखो_buf(काष्ठा serdev_device *serdev,
+			    स्थिर अचिन्हित अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	if (!ctrl || !ctrl->ops->write_buf)
-		return -EINVAL;
+	अगर (!ctrl || !ctrl->ops->ग_लिखो_buf)
+		वापस -EINVAL;
 
-	return ctrl->ops->write_buf(ctrl, buf, count);
-}
-EXPORT_SYMBOL_GPL(serdev_device_write_buf);
+	वापस ctrl->ops->ग_लिखो_buf(ctrl, buf, count);
+पूर्ण
+EXPORT_SYMBOL_GPL(serdev_device_ग_लिखो_buf);
 
 /**
- * serdev_device_write() - write data synchronously
+ * serdev_device_ग_लिखो() - ग_लिखो data synchronously
  * @serdev:	serdev device
  * @buf:	data to be written
- * @count:	number of bytes to write
- * @timeout:	timeout in jiffies, or 0 to wait indefinitely
+ * @count:	number of bytes to ग_लिखो
+ * @समयout:	समयout in jअगरfies, or 0 to रुको indefinitely
  *
  * Write data to the device synchronously by repeatedly calling
- * serdev_device_write() until the controller has accepted all data (unless
- * interrupted by a timeout or a signal).
+ * serdev_device_ग_लिखो() until the controller has accepted all data (unless
+ * पूर्णांकerrupted by a समयout or a संकेत).
  *
  * Note that any accepted data has only been buffered by the controller; use
- * serdev_device_wait_until_sent() to make sure the controller write buffer
+ * serdev_device_रुको_until_sent() to make sure the controller ग_लिखो buffer
  * has actually been emptied.
  *
- * Note that this function depends on serdev_device_write_wakeup() being
- * called in the serdev driver write_wakeup() callback.
+ * Note that this function depends on serdev_device_ग_लिखो_wakeup() being
+ * called in the serdev driver ग_लिखो_wakeup() callback.
  *
- * Return: The number of bytes written (less than count if interrupted),
- * -ETIMEDOUT or -ERESTARTSYS if interrupted before any bytes were written, or
- * a negative errno on errors.
+ * Return: The number of bytes written (less than count अगर पूर्णांकerrupted),
+ * -ETIMEDOUT or -ERESTARTSYS अगर पूर्णांकerrupted beक्रमe any bytes were written, or
+ * a negative त्रुटि_सं on errors.
  */
-int serdev_device_write(struct serdev_device *serdev,
-			const unsigned char *buf, size_t count,
-			long timeout)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
-	int written = 0;
-	int ret;
+पूर्णांक serdev_device_ग_लिखो(काष्ठा serdev_device *serdev,
+			स्थिर अचिन्हित अक्षर *buf, माप_प्रकार count,
+			दीर्घ समयout)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
+	पूर्णांक written = 0;
+	पूर्णांक ret;
 
-	if (!ctrl || !ctrl->ops->write_buf || !serdev->ops->write_wakeup)
-		return -EINVAL;
+	अगर (!ctrl || !ctrl->ops->ग_लिखो_buf || !serdev->ops->ग_लिखो_wakeup)
+		वापस -EINVAL;
 
-	if (timeout == 0)
-		timeout = MAX_SCHEDULE_TIMEOUT;
+	अगर (समयout == 0)
+		समयout = MAX_SCHEDULE_TIMEOUT;
 
-	mutex_lock(&serdev->write_lock);
-	do {
-		reinit_completion(&serdev->write_comp);
+	mutex_lock(&serdev->ग_लिखो_lock);
+	करो अणु
+		reinit_completion(&serdev->ग_लिखो_comp);
 
-		ret = ctrl->ops->write_buf(ctrl, buf, count);
-		if (ret < 0)
-			break;
+		ret = ctrl->ops->ग_लिखो_buf(ctrl, buf, count);
+		अगर (ret < 0)
+			अवरोध;
 
 		written += ret;
 		buf += ret;
 		count -= ret;
 
-		if (count == 0)
-			break;
+		अगर (count == 0)
+			अवरोध;
 
-		timeout = wait_for_completion_interruptible_timeout(&serdev->write_comp,
-								    timeout);
-	} while (timeout > 0);
-	mutex_unlock(&serdev->write_lock);
+		समयout = रुको_क्रम_completion_पूर्णांकerruptible_समयout(&serdev->ग_लिखो_comp,
+								    समयout);
+	पूर्ण जबतक (समयout > 0);
+	mutex_unlock(&serdev->ग_लिखो_lock);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (timeout <= 0 && written == 0) {
-		if (timeout == -ERESTARTSYS)
-			return -ERESTARTSYS;
-		else
-			return -ETIMEDOUT;
-	}
+	अगर (समयout <= 0 && written == 0) अणु
+		अगर (समयout == -ERESTARTSYS)
+			वापस -ERESTARTSYS;
+		अन्यथा
+			वापस -ETIMEDOUT;
+	पूर्ण
 
-	return written;
-}
-EXPORT_SYMBOL_GPL(serdev_device_write);
+	वापस written;
+पूर्ण
+EXPORT_SYMBOL_GPL(serdev_device_ग_लिखो);
 
-void serdev_device_write_flush(struct serdev_device *serdev)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+व्योम serdev_device_ग_लिखो_flush(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	if (!ctrl || !ctrl->ops->write_flush)
-		return;
+	अगर (!ctrl || !ctrl->ops->ग_लिखो_flush)
+		वापस;
 
-	ctrl->ops->write_flush(ctrl);
-}
-EXPORT_SYMBOL_GPL(serdev_device_write_flush);
+	ctrl->ops->ग_लिखो_flush(ctrl);
+पूर्ण
+EXPORT_SYMBOL_GPL(serdev_device_ग_लिखो_flush);
 
-int serdev_device_write_room(struct serdev_device *serdev)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+पूर्णांक serdev_device_ग_लिखो_room(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	if (!ctrl || !ctrl->ops->write_room)
-		return 0;
+	अगर (!ctrl || !ctrl->ops->ग_लिखो_room)
+		वापस 0;
 
-	return serdev->ctrl->ops->write_room(ctrl);
-}
-EXPORT_SYMBOL_GPL(serdev_device_write_room);
+	वापस serdev->ctrl->ops->ग_लिखो_room(ctrl);
+पूर्ण
+EXPORT_SYMBOL_GPL(serdev_device_ग_लिखो_room);
 
-unsigned int serdev_device_set_baudrate(struct serdev_device *serdev, unsigned int speed)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+अचिन्हित पूर्णांक serdev_device_set_baudrate(काष्ठा serdev_device *serdev, अचिन्हित पूर्णांक speed)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	if (!ctrl || !ctrl->ops->set_baudrate)
-		return 0;
+	अगर (!ctrl || !ctrl->ops->set_baudrate)
+		वापस 0;
 
-	return ctrl->ops->set_baudrate(ctrl, speed);
+	वापस ctrl->ops->set_baudrate(ctrl, speed);
 
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(serdev_device_set_baudrate);
 
-void serdev_device_set_flow_control(struct serdev_device *serdev, bool enable)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+व्योम serdev_device_set_flow_control(काष्ठा serdev_device *serdev, bool enable)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	if (!ctrl || !ctrl->ops->set_flow_control)
-		return;
+	अगर (!ctrl || !ctrl->ops->set_flow_control)
+		वापस;
 
 	ctrl->ops->set_flow_control(ctrl, enable);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(serdev_device_set_flow_control);
 
-int serdev_device_set_parity(struct serdev_device *serdev,
-			     enum serdev_parity parity)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+पूर्णांक serdev_device_set_parity(काष्ठा serdev_device *serdev,
+			     क्रमागत serdev_parity parity)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	if (!ctrl || !ctrl->ops->set_parity)
-		return -ENOTSUPP;
+	अगर (!ctrl || !ctrl->ops->set_parity)
+		वापस -ENOTSUPP;
 
-	return ctrl->ops->set_parity(ctrl, parity);
-}
+	वापस ctrl->ops->set_parity(ctrl, parity);
+पूर्ण
 EXPORT_SYMBOL_GPL(serdev_device_set_parity);
 
-void serdev_device_wait_until_sent(struct serdev_device *serdev, long timeout)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+व्योम serdev_device_रुको_until_sent(काष्ठा serdev_device *serdev, दीर्घ समयout)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	if (!ctrl || !ctrl->ops->wait_until_sent)
-		return;
+	अगर (!ctrl || !ctrl->ops->रुको_until_sent)
+		वापस;
 
-	ctrl->ops->wait_until_sent(ctrl, timeout);
-}
-EXPORT_SYMBOL_GPL(serdev_device_wait_until_sent);
+	ctrl->ops->रुको_until_sent(ctrl, समयout);
+पूर्ण
+EXPORT_SYMBOL_GPL(serdev_device_रुको_until_sent);
 
-int serdev_device_get_tiocm(struct serdev_device *serdev)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+पूर्णांक serdev_device_get_tiocm(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	if (!ctrl || !ctrl->ops->get_tiocm)
-		return -ENOTSUPP;
+	अगर (!ctrl || !ctrl->ops->get_tiocm)
+		वापस -ENOTSUPP;
 
-	return ctrl->ops->get_tiocm(ctrl);
-}
+	वापस ctrl->ops->get_tiocm(ctrl);
+पूर्ण
 EXPORT_SYMBOL_GPL(serdev_device_get_tiocm);
 
-int serdev_device_set_tiocm(struct serdev_device *serdev, int set, int clear)
-{
-	struct serdev_controller *ctrl = serdev->ctrl;
+पूर्णांक serdev_device_set_tiocm(काष्ठा serdev_device *serdev, पूर्णांक set, पूर्णांक clear)
+अणु
+	काष्ठा serdev_controller *ctrl = serdev->ctrl;
 
-	if (!ctrl || !ctrl->ops->set_tiocm)
-		return -ENOTSUPP;
+	अगर (!ctrl || !ctrl->ops->set_tiocm)
+		वापस -ENOTSUPP;
 
-	return ctrl->ops->set_tiocm(ctrl, set, clear);
-}
+	वापस ctrl->ops->set_tiocm(ctrl, set, clear);
+पूर्ण
 EXPORT_SYMBOL_GPL(serdev_device_set_tiocm);
 
-static int serdev_drv_probe(struct device *dev)
-{
-	const struct serdev_device_driver *sdrv = to_serdev_device_driver(dev->driver);
-	int ret;
+अटल पूर्णांक serdev_drv_probe(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा serdev_device_driver *sdrv = to_serdev_device_driver(dev->driver);
+	पूर्णांक ret;
 
-	ret = dev_pm_domain_attach(dev, true);
-	if (ret)
-		return ret;
+	ret = dev_pm_करोमुख्य_attach(dev, true);
+	अगर (ret)
+		वापस ret;
 
 	ret = sdrv->probe(to_serdev_device(dev));
-	if (ret)
-		dev_pm_domain_detach(dev, true);
+	अगर (ret)
+		dev_pm_करोमुख्य_detach(dev, true);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int serdev_drv_remove(struct device *dev)
-{
-	const struct serdev_device_driver *sdrv = to_serdev_device_driver(dev->driver);
-	if (sdrv->remove)
-		sdrv->remove(to_serdev_device(dev));
+अटल पूर्णांक serdev_drv_हटाओ(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा serdev_device_driver *sdrv = to_serdev_device_driver(dev->driver);
+	अगर (sdrv->हटाओ)
+		sdrv->हटाओ(to_serdev_device(dev));
 
-	dev_pm_domain_detach(dev, true);
+	dev_pm_करोमुख्य_detach(dev, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct bus_type serdev_bus_type = {
+अटल काष्ठा bus_type serdev_bus_type = अणु
 	.name		= "serial",
 	.match		= serdev_device_match,
 	.probe		= serdev_drv_probe,
-	.remove		= serdev_drv_remove,
-};
+	.हटाओ		= serdev_drv_हटाओ,
+पूर्ण;
 
 /**
  * serdev_device_alloc() - Allocate a new serdev device
  * @ctrl:	associated controller
  *
- * Caller is responsible for either calling serdev_device_add() to add the
+ * Caller is responsible क्रम either calling serdev_device_add() to add the
  * newly allocated controller, or calling serdev_device_put() to discard it.
  */
-struct serdev_device *serdev_device_alloc(struct serdev_controller *ctrl)
-{
-	struct serdev_device *serdev;
+काष्ठा serdev_device *serdev_device_alloc(काष्ठा serdev_controller *ctrl)
+अणु
+	काष्ठा serdev_device *serdev;
 
-	serdev = kzalloc(sizeof(*serdev), GFP_KERNEL);
-	if (!serdev)
-		return NULL;
+	serdev = kzalloc(माप(*serdev), GFP_KERNEL);
+	अगर (!serdev)
+		वापस शून्य;
 
 	serdev->ctrl = ctrl;
 	device_initialize(&serdev->dev);
 	serdev->dev.parent = &ctrl->dev;
 	serdev->dev.bus = &serdev_bus_type;
 	serdev->dev.type = &serdev_device_type;
-	init_completion(&serdev->write_comp);
-	mutex_init(&serdev->write_lock);
-	return serdev;
-}
+	init_completion(&serdev->ग_लिखो_comp);
+	mutex_init(&serdev->ग_लिखो_lock);
+	वापस serdev;
+पूर्ण
 EXPORT_SYMBOL_GPL(serdev_device_alloc);
 
 /**
  * serdev_controller_alloc() - Allocate a new serdev controller
  * @parent:	parent device
- * @size:	size of private data
+ * @size:	size of निजी data
  *
- * Caller is responsible for either calling serdev_controller_add() to add the
+ * Caller is responsible क्रम either calling serdev_controller_add() to add the
  * newly allocated controller, or calling serdev_controller_put() to discard it.
- * The allocated private data region may be accessed via
+ * The allocated निजी data region may be accessed via
  * serdev_controller_get_drvdata()
  */
-struct serdev_controller *serdev_controller_alloc(struct device *parent,
-					      size_t size)
-{
-	struct serdev_controller *ctrl;
-	int id;
+काष्ठा serdev_controller *serdev_controller_alloc(काष्ठा device *parent,
+					      माप_प्रकार size)
+अणु
+	काष्ठा serdev_controller *ctrl;
+	पूर्णांक id;
 
-	if (WARN_ON(!parent))
-		return NULL;
+	अगर (WARN_ON(!parent))
+		वापस शून्य;
 
-	ctrl = kzalloc(sizeof(*ctrl) + size, GFP_KERNEL);
-	if (!ctrl)
-		return NULL;
+	ctrl = kzalloc(माप(*ctrl) + size, GFP_KERNEL);
+	अगर (!ctrl)
+		वापस शून्य;
 
 	id = ida_simple_get(&ctrl_ida, 0, 0, GFP_KERNEL);
-	if (id < 0) {
+	अगर (id < 0) अणु
 		dev_err(parent,
 			"unable to allocate serdev controller identifier.\n");
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	ctrl->nr = id;
 
@@ -506,336 +507,336 @@ struct serdev_controller *serdev_controller_alloc(struct device *parent,
 
 	dev_set_name(&ctrl->dev, "serial%d", id);
 
-	pm_runtime_no_callbacks(&ctrl->dev);
+	pm_runसमय_no_callbacks(&ctrl->dev);
 	pm_suspend_ignore_children(&ctrl->dev, true);
 
 	dev_dbg(&ctrl->dev, "allocated controller 0x%p id %d\n", ctrl, id);
-	return ctrl;
+	वापस ctrl;
 
-err_free:
-	kfree(ctrl);
+err_मुक्त:
+	kमुक्त(ctrl);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(serdev_controller_alloc);
 
-static int of_serdev_register_devices(struct serdev_controller *ctrl)
-{
-	struct device_node *node;
-	struct serdev_device *serdev = NULL;
-	int err;
+अटल पूर्णांक of_serdev_रेजिस्टर_devices(काष्ठा serdev_controller *ctrl)
+अणु
+	काष्ठा device_node *node;
+	काष्ठा serdev_device *serdev = शून्य;
+	पूर्णांक err;
 	bool found = false;
 
-	for_each_available_child_of_node(ctrl->dev.of_node, node) {
-		if (!of_get_property(node, "compatible", NULL))
-			continue;
+	क्रम_each_available_child_of_node(ctrl->dev.of_node, node) अणु
+		अगर (!of_get_property(node, "compatible", शून्य))
+			जारी;
 
 		dev_dbg(&ctrl->dev, "adding child %pOF\n", node);
 
 		serdev = serdev_device_alloc(ctrl);
-		if (!serdev)
-			continue;
+		अगर (!serdev)
+			जारी;
 
 		serdev->dev.of_node = node;
 
 		err = serdev_device_add(serdev);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&serdev->dev,
 				"failure adding device. status %pe\n",
 				ERR_PTR(err));
 			serdev_device_put(serdev);
-		} else
+		पूर्ण अन्यथा
 			found = true;
-	}
-	if (!found)
-		return -ENODEV;
+	पूर्ण
+	अगर (!found)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_ACPI
+#अगर_घोषित CONFIG_ACPI
 
-#define SERDEV_ACPI_MAX_SCAN_DEPTH 32
+#घोषणा SERDEV_ACPI_MAX_SCAN_DEPTH 32
 
-struct acpi_serdev_lookup {
+काष्ठा acpi_serdev_lookup अणु
 	acpi_handle device_handle;
 	acpi_handle controller_handle;
-	int n;
-	int index;
-};
+	पूर्णांक n;
+	पूर्णांक index;
+पूर्ण;
 
-static int acpi_serdev_parse_resource(struct acpi_resource *ares, void *data)
-{
-	struct acpi_serdev_lookup *lookup = data;
-	struct acpi_resource_uart_serialbus *sb;
+अटल पूर्णांक acpi_serdev_parse_resource(काष्ठा acpi_resource *ares, व्योम *data)
+अणु
+	काष्ठा acpi_serdev_lookup *lookup = data;
+	काष्ठा acpi_resource_uart_serialbus *sb;
 	acpi_status status;
 
-	if (ares->type != ACPI_RESOURCE_TYPE_SERIAL_BUS)
-		return 1;
+	अगर (ares->type != ACPI_RESOURCE_TYPE_SERIAL_BUS)
+		वापस 1;
 
-	if (ares->data.common_serial_bus.type != ACPI_RESOURCE_SERIAL_TYPE_UART)
-		return 1;
+	अगर (ares->data.common_serial_bus.type != ACPI_RESOURCE_SERIAL_TYPE_UART)
+		वापस 1;
 
-	if (lookup->index != -1 && lookup->n++ != lookup->index)
-		return 1;
+	अगर (lookup->index != -1 && lookup->n++ != lookup->index)
+		वापस 1;
 
 	sb = &ares->data.uart_serial_bus;
 
 	status = acpi_get_handle(lookup->device_handle,
 				 sb->resource_source.string_ptr,
 				 &lookup->controller_handle);
-	if (ACPI_FAILURE(status))
-		return 1;
+	अगर (ACPI_FAILURE(status))
+		वापस 1;
 
 	/*
 	 * NOTE: Ideally, we would also want to retreive other properties here,
-	 * once setting them before opening the device is supported by serdev.
+	 * once setting them beक्रमe खोलोing the device is supported by serdev.
 	 */
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int acpi_serdev_do_lookup(struct acpi_device *adev,
-                                 struct acpi_serdev_lookup *lookup)
-{
-	struct list_head resource_list;
-	int ret;
+अटल पूर्णांक acpi_serdev_करो_lookup(काष्ठा acpi_device *adev,
+                                 काष्ठा acpi_serdev_lookup *lookup)
+अणु
+	काष्ठा list_head resource_list;
+	पूर्णांक ret;
 
 	lookup->device_handle = acpi_device_handle(adev);
-	lookup->controller_handle = NULL;
+	lookup->controller_handle = शून्य;
 	lookup->n = 0;
 
 	INIT_LIST_HEAD(&resource_list);
 	ret = acpi_dev_get_resources(adev, &resource_list,
 				     acpi_serdev_parse_resource, lookup);
-	acpi_dev_free_resource_list(&resource_list);
+	acpi_dev_मुक्त_resource_list(&resource_list);
 
-	if (ret < 0)
-		return -EINVAL;
+	अगर (ret < 0)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_serdev_check_resources(struct serdev_controller *ctrl,
-				       struct acpi_device *adev)
-{
-	struct acpi_serdev_lookup lookup;
-	int ret;
+अटल पूर्णांक acpi_serdev_check_resources(काष्ठा serdev_controller *ctrl,
+				       काष्ठा acpi_device *adev)
+अणु
+	काष्ठा acpi_serdev_lookup lookup;
+	पूर्णांक ret;
 
-	if (acpi_bus_get_status(adev) || !adev->status.present)
-		return -EINVAL;
+	अगर (acpi_bus_get_status(adev) || !adev->status.present)
+		वापस -EINVAL;
 
-	/* Look for UARTSerialBusV2 resource */
-	lookup.index = -1;	// we only care for the last device
+	/* Look क्रम UARTSerialBusV2 resource */
+	lookup.index = -1;	// we only care क्रम the last device
 
-	ret = acpi_serdev_do_lookup(adev, &lookup);
-	if (ret)
-		return ret;
+	ret = acpi_serdev_करो_lookup(adev, &lookup);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Apple machines provide an empty resource template, so on those
-	 * machines just look for immediate children with a "baud" property
+	 * Apple machines provide an empty resource ढाँचा, so on those
+	 * machines just look क्रम immediate children with a "baud" property
 	 * (from the _DSM method) instead.
 	 */
-	if (!lookup.controller_handle && x86_apple_machine &&
-	    !acpi_dev_get_property(adev, "baud", ACPI_TYPE_BUFFER, NULL))
+	अगर (!lookup.controller_handle && x86_apple_machine &&
+	    !acpi_dev_get_property(adev, "baud", ACPI_TYPE_BUFFER, शून्य))
 		acpi_get_parent(adev->handle, &lookup.controller_handle);
 
 	/* Make sure controller and ResourceSource handle match */
-	if (ACPI_HANDLE(ctrl->dev.parent) != lookup.controller_handle)
-		return -ENODEV;
+	अगर (ACPI_HANDLE(ctrl->dev.parent) != lookup.controller_handle)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static acpi_status acpi_serdev_register_device(struct serdev_controller *ctrl,
-					       struct acpi_device *adev)
-{
-	struct serdev_device *serdev;
-	int err;
+अटल acpi_status acpi_serdev_रेजिस्टर_device(काष्ठा serdev_controller *ctrl,
+					       काष्ठा acpi_device *adev)
+अणु
+	काष्ठा serdev_device *serdev;
+	पूर्णांक err;
 
 	serdev = serdev_device_alloc(ctrl);
-	if (!serdev) {
+	अगर (!serdev) अणु
 		dev_err(&ctrl->dev, "failed to allocate serdev device for %s\n",
 			dev_name(&adev->dev));
-		return AE_NO_MEMORY;
-	}
+		वापस AE_NO_MEMORY;
+	पूर्ण
 
 	ACPI_COMPANION_SET(&serdev->dev, adev);
-	acpi_device_set_enumerated(adev);
+	acpi_device_set_क्रमागतerated(adev);
 
 	err = serdev_device_add(serdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&serdev->dev,
 			"failure adding ACPI serdev device. status %pe\n",
 			ERR_PTR(err));
 		serdev_device_put(serdev);
-	}
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static const struct acpi_device_id serdev_acpi_devices_blacklist[] = {
-	{ "INT3511", 0 },
-	{ "INT3512", 0 },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id serdev_acpi_devices_blacklist[] = अणु
+	अणु "INT3511", 0 पूर्ण,
+	अणु "INT3512", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static acpi_status acpi_serdev_add_device(acpi_handle handle, u32 level,
-					  void *data, void **return_value)
-{
-	struct serdev_controller *ctrl = data;
-	struct acpi_device *adev;
+अटल acpi_status acpi_serdev_add_device(acpi_handle handle, u32 level,
+					  व्योम *data, व्योम **वापस_value)
+अणु
+	काष्ठा serdev_controller *ctrl = data;
+	काष्ठा acpi_device *adev;
 
-	if (acpi_bus_get_device(handle, &adev))
-		return AE_OK;
+	अगर (acpi_bus_get_device(handle, &adev))
+		वापस AE_OK;
 
-	if (acpi_device_enumerated(adev))
-		return AE_OK;
+	अगर (acpi_device_क्रमागतerated(adev))
+		वापस AE_OK;
 
-	/* Skip if black listed */
-	if (!acpi_match_device_ids(adev, serdev_acpi_devices_blacklist))
-		return AE_OK;
+	/* Skip अगर black listed */
+	अगर (!acpi_match_device_ids(adev, serdev_acpi_devices_blacklist))
+		वापस AE_OK;
 
-	if (acpi_serdev_check_resources(ctrl, adev))
-		return AE_OK;
+	अगर (acpi_serdev_check_resources(ctrl, adev))
+		वापस AE_OK;
 
-	return acpi_serdev_register_device(ctrl, adev);
-}
+	वापस acpi_serdev_रेजिस्टर_device(ctrl, adev);
+पूर्ण
 
 
-static int acpi_serdev_register_devices(struct serdev_controller *ctrl)
-{
+अटल पूर्णांक acpi_serdev_रेजिस्टर_devices(काष्ठा serdev_controller *ctrl)
+अणु
 	acpi_status status;
 
-	if (!has_acpi_companion(ctrl->dev.parent))
-		return -ENODEV;
+	अगर (!has_acpi_companion(ctrl->dev.parent))
+		वापस -ENODEV;
 
 	status = acpi_walk_namespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
 				     SERDEV_ACPI_MAX_SCAN_DEPTH,
-				     acpi_serdev_add_device, NULL, ctrl, NULL);
-	if (ACPI_FAILURE(status))
+				     acpi_serdev_add_device, शून्य, ctrl, शून्य);
+	अगर (ACPI_FAILURE(status))
 		dev_warn(&ctrl->dev, "failed to enumerate serdev slaves\n");
 
-	if (!ctrl->serdev)
-		return -ENODEV;
+	अगर (!ctrl->serdev)
+		वापस -ENODEV;
 
-	return 0;
-}
-#else
-static inline int acpi_serdev_register_devices(struct serdev_controller *ctrl)
-{
-	return -ENODEV;
-}
-#endif /* CONFIG_ACPI */
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_serdev_रेजिस्टर_devices(काष्ठा serdev_controller *ctrl)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ACPI */
 
 /**
  * serdev_controller_add() - Add an serdev controller
- * @ctrl:	controller to be registered.
+ * @ctrl:	controller to be रेजिस्टरed.
  *
  * Register a controller previously allocated via serdev_controller_alloc() with
  * the serdev core.
  */
-int serdev_controller_add(struct serdev_controller *ctrl)
-{
-	int ret_of, ret_acpi, ret;
+पूर्णांक serdev_controller_add(काष्ठा serdev_controller *ctrl)
+अणु
+	पूर्णांक ret_of, ret_acpi, ret;
 
-	/* Can't register until after driver model init */
-	if (WARN_ON(!is_registered))
-		return -EAGAIN;
+	/* Can't रेजिस्टर until after driver model init */
+	अगर (WARN_ON(!is_रेजिस्टरed))
+		वापस -EAGAIN;
 
 	ret = device_add(&ctrl->dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	pm_runtime_enable(&ctrl->dev);
+	pm_runसमय_enable(&ctrl->dev);
 
-	ret_of = of_serdev_register_devices(ctrl);
-	ret_acpi = acpi_serdev_register_devices(ctrl);
-	if (ret_of && ret_acpi) {
+	ret_of = of_serdev_रेजिस्टर_devices(ctrl);
+	ret_acpi = acpi_serdev_रेजिस्टर_devices(ctrl);
+	अगर (ret_of && ret_acpi) अणु
 		dev_dbg(&ctrl->dev, "no devices registered: of:%pe acpi:%pe\n",
 			ERR_PTR(ret_of), ERR_PTR(ret_acpi));
 		ret = -ENODEV;
-		goto err_rpm_disable;
-	}
+		जाओ err_rpm_disable;
+	पूर्ण
 
 	dev_dbg(&ctrl->dev, "serdev%d registered: dev:%p\n",
 		ctrl->nr, &ctrl->dev);
-	return 0;
+	वापस 0;
 
 err_rpm_disable:
-	pm_runtime_disable(&ctrl->dev);
+	pm_runसमय_disable(&ctrl->dev);
 	device_del(&ctrl->dev);
-	return ret;
-};
+	वापस ret;
+पूर्ण;
 EXPORT_SYMBOL_GPL(serdev_controller_add);
 
 /* Remove a device associated with a controller */
-static int serdev_remove_device(struct device *dev, void *data)
-{
-	struct serdev_device *serdev = to_serdev_device(dev);
-	if (dev->type == &serdev_device_type)
-		serdev_device_remove(serdev);
-	return 0;
-}
+अटल पूर्णांक serdev_हटाओ_device(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा serdev_device *serdev = to_serdev_device(dev);
+	अगर (dev->type == &serdev_device_type)
+		serdev_device_हटाओ(serdev);
+	वापस 0;
+पूर्ण
 
 /**
- * serdev_controller_remove(): remove an serdev controller
- * @ctrl:	controller to remove
+ * serdev_controller_हटाओ(): हटाओ an serdev controller
+ * @ctrl:	controller to हटाओ
  *
- * Remove a serdev controller.  Caller is responsible for calling
+ * Remove a serdev controller.  Caller is responsible क्रम calling
  * serdev_controller_put() to discard the allocated controller.
  */
-void serdev_controller_remove(struct serdev_controller *ctrl)
-{
-	if (!ctrl)
-		return;
+व्योम serdev_controller_हटाओ(काष्ठा serdev_controller *ctrl)
+अणु
+	अगर (!ctrl)
+		वापस;
 
-	device_for_each_child(&ctrl->dev, NULL, serdev_remove_device);
-	pm_runtime_disable(&ctrl->dev);
+	device_क्रम_each_child(&ctrl->dev, शून्य, serdev_हटाओ_device);
+	pm_runसमय_disable(&ctrl->dev);
 	device_del(&ctrl->dev);
-}
-EXPORT_SYMBOL_GPL(serdev_controller_remove);
+पूर्ण
+EXPORT_SYMBOL_GPL(serdev_controller_हटाओ);
 
 /**
- * serdev_driver_register() - Register client driver with serdev core
+ * serdev_driver_रेजिस्टर() - Register client driver with serdev core
  * @sdrv:	client driver to be associated with client-device.
  * @owner:	client driver owner to set.
  *
- * This API will register the client driver with the serdev framework.
+ * This API will रेजिस्टर the client driver with the serdev framework.
  * It is typically called from the driver's module-init function.
  */
-int __serdev_device_driver_register(struct serdev_device_driver *sdrv, struct module *owner)
-{
+पूर्णांक __serdev_device_driver_रेजिस्टर(काष्ठा serdev_device_driver *sdrv, काष्ठा module *owner)
+अणु
 	sdrv->driver.bus = &serdev_bus_type;
 	sdrv->driver.owner = owner;
 
-	/* force drivers to async probe so I/O is possible in probe */
+	/* क्रमce drivers to async probe so I/O is possible in probe */
         sdrv->driver.probe_type = PROBE_PREFER_ASYNCHRONOUS;
 
-	return driver_register(&sdrv->driver);
-}
-EXPORT_SYMBOL_GPL(__serdev_device_driver_register);
+	वापस driver_रेजिस्टर(&sdrv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(__serdev_device_driver_रेजिस्टर);
 
-static void __exit serdev_exit(void)
-{
-	bus_unregister(&serdev_bus_type);
+अटल व्योम __निकास serdev_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&serdev_bus_type);
 	ida_destroy(&ctrl_ida);
-}
-module_exit(serdev_exit);
+पूर्ण
+module_निकास(serdev_निकास);
 
-static int __init serdev_init(void)
-{
-	int ret;
+अटल पूर्णांक __init serdev_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = bus_register(&serdev_bus_type);
-	if (ret)
-		return ret;
+	ret = bus_रेजिस्टर(&serdev_bus_type);
+	अगर (ret)
+		वापस ret;
 
-	is_registered = true;
-	return 0;
-}
-/* Must be before serial drivers register */
+	is_रेजिस्टरed = true;
+	वापस 0;
+पूर्ण
+/* Must be beक्रमe serial drivers रेजिस्टर */
 postcore_initcall(serdev_init);
 
 MODULE_AUTHOR("Rob Herring <robh@kernel.org>");

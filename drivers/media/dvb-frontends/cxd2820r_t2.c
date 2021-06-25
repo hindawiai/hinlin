@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Sony CXD2820R demodulator driver
  *
@@ -6,415 +7,415 @@
  */
 
 
-#include "cxd2820r_priv.h"
+#समावेश "cxd2820r_priv.h"
 
-int cxd2820r_set_frontend_t2(struct dvb_frontend *fe)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	int ret, bw_i;
-	unsigned int utmp;
-	u32 if_frequency;
+पूर्णांक cxd2820r_set_frontend_t2(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	पूर्णांक ret, bw_i;
+	अचिन्हित पूर्णांक uपंचांगp;
+	u32 अगर_frequency;
 	u8 buf[3], bw_param;
-	u8 bw_params1[][5] = {
-		{ 0x1c, 0xb3, 0x33, 0x33, 0x33 }, /* 5 MHz */
-		{ 0x17, 0xea, 0xaa, 0xaa, 0xaa }, /* 6 MHz */
-		{ 0x14, 0x80, 0x00, 0x00, 0x00 }, /* 7 MHz */
-		{ 0x11, 0xf0, 0x00, 0x00, 0x00 }, /* 8 MHz */
-	};
-	struct reg_val_mask tab[] = {
-		{ 0x00080, 0x02, 0xff },
-		{ 0x00081, 0x20, 0xff },
-		{ 0x00085, 0x07, 0xff },
-		{ 0x00088, 0x01, 0xff },
-		{ 0x02069, 0x01, 0xff },
+	u8 bw_params1[][5] = अणु
+		अणु 0x1c, 0xb3, 0x33, 0x33, 0x33 पूर्ण, /* 5 MHz */
+		अणु 0x17, 0xea, 0xaa, 0xaa, 0xaa पूर्ण, /* 6 MHz */
+		अणु 0x14, 0x80, 0x00, 0x00, 0x00 पूर्ण, /* 7 MHz */
+		अणु 0x11, 0xf0, 0x00, 0x00, 0x00 पूर्ण, /* 8 MHz */
+	पूर्ण;
+	काष्ठा reg_val_mask tab[] = अणु
+		अणु 0x00080, 0x02, 0xff पूर्ण,
+		अणु 0x00081, 0x20, 0xff पूर्ण,
+		अणु 0x00085, 0x07, 0xff पूर्ण,
+		अणु 0x00088, 0x01, 0xff पूर्ण,
+		अणु 0x02069, 0x01, 0xff पूर्ण,
 
-		{ 0x0207f, 0x2a, 0xff },
-		{ 0x02082, 0x0a, 0xff },
-		{ 0x02083, 0x0a, 0xff },
-		{ 0x020cb, priv->if_agc_polarity << 6, 0x40 },
-		{ 0x02070, priv->ts_mode, 0xff },
-		{ 0x02071, !priv->ts_clk_inv << 6, 0x40 },
-		{ 0x020b5, priv->spec_inv << 4, 0x10 },
-		{ 0x02567, 0x07, 0x0f },
-		{ 0x02569, 0x03, 0x03 },
-		{ 0x02595, 0x1a, 0xff },
-		{ 0x02596, 0x50, 0xff },
-		{ 0x02a8c, 0x00, 0xff },
-		{ 0x02a8d, 0x34, 0xff },
-		{ 0x02a45, 0x06, 0x07 },
-		{ 0x03f10, 0x0d, 0xff },
-		{ 0x03f11, 0x02, 0xff },
-		{ 0x03f12, 0x01, 0xff },
-		{ 0x03f23, 0x2c, 0xff },
-		{ 0x03f51, 0x13, 0xff },
-		{ 0x03f52, 0x01, 0xff },
-		{ 0x03f53, 0x00, 0xff },
-		{ 0x027e6, 0x14, 0xff },
-		{ 0x02786, 0x02, 0x07 },
-		{ 0x02787, 0x40, 0xe0 },
-		{ 0x027ef, 0x10, 0x18 },
-	};
+		अणु 0x0207f, 0x2a, 0xff पूर्ण,
+		अणु 0x02082, 0x0a, 0xff पूर्ण,
+		अणु 0x02083, 0x0a, 0xff पूर्ण,
+		अणु 0x020cb, priv->अगर_agc_polarity << 6, 0x40 पूर्ण,
+		अणु 0x02070, priv->ts_mode, 0xff पूर्ण,
+		अणु 0x02071, !priv->ts_clk_inv << 6, 0x40 पूर्ण,
+		अणु 0x020b5, priv->spec_inv << 4, 0x10 पूर्ण,
+		अणु 0x02567, 0x07, 0x0f पूर्ण,
+		अणु 0x02569, 0x03, 0x03 पूर्ण,
+		अणु 0x02595, 0x1a, 0xff पूर्ण,
+		अणु 0x02596, 0x50, 0xff पूर्ण,
+		अणु 0x02a8c, 0x00, 0xff पूर्ण,
+		अणु 0x02a8d, 0x34, 0xff पूर्ण,
+		अणु 0x02a45, 0x06, 0x07 पूर्ण,
+		अणु 0x03f10, 0x0d, 0xff पूर्ण,
+		अणु 0x03f11, 0x02, 0xff पूर्ण,
+		अणु 0x03f12, 0x01, 0xff पूर्ण,
+		अणु 0x03f23, 0x2c, 0xff पूर्ण,
+		अणु 0x03f51, 0x13, 0xff पूर्ण,
+		अणु 0x03f52, 0x01, 0xff पूर्ण,
+		अणु 0x03f53, 0x00, 0xff पूर्ण,
+		अणु 0x027e6, 0x14, 0xff पूर्ण,
+		अणु 0x02786, 0x02, 0x07 पूर्ण,
+		अणु 0x02787, 0x40, 0xe0 पूर्ण,
+		अणु 0x027ef, 0x10, 0x18 पूर्ण,
+	पूर्ण;
 
 	dev_dbg(&client->dev,
 		"delivery_system=%d modulation=%d frequency=%u bandwidth_hz=%u inversion=%d stream_id=%u\n",
-		c->delivery_system, c->modulation, c->frequency,
+		c->delivery_प्रणाली, c->modulation, c->frequency,
 		c->bandwidth_hz, c->inversion, c->stream_id);
 
-	switch (c->bandwidth_hz) {
-	case 5000000:
+	चयन (c->bandwidth_hz) अणु
+	हाल 5000000:
 		bw_i = 0;
 		bw_param = 3;
-		break;
-	case 6000000:
+		अवरोध;
+	हाल 6000000:
 		bw_i = 1;
 		bw_param = 2;
-		break;
-	case 7000000:
+		अवरोध;
+	हाल 7000000:
 		bw_i = 2;
 		bw_param = 1;
-		break;
-	case 8000000:
+		अवरोध;
+	हाल 8000000:
 		bw_i = 3;
 		bw_param = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* program tuner */
-	if (fe->ops.tuner_ops.set_params)
+	अगर (fe->ops.tuner_ops.set_params)
 		fe->ops.tuner_ops.set_params(fe);
 
-	if (priv->delivery_system != SYS_DVBT2) {
+	अगर (priv->delivery_प्रणाली != SYS_DVBT2) अणु
 		ret = cxd2820r_wr_reg_val_mask_tab(priv, tab, ARRAY_SIZE(tab));
-		if (ret)
-			goto error;
-	}
+		अगर (ret)
+			जाओ error;
+	पूर्ण
 
-	priv->delivery_system = SYS_DVBT2;
+	priv->delivery_प्रणाली = SYS_DVBT2;
 
 	/* program IF frequency */
-	if (fe->ops.tuner_ops.get_if_frequency) {
-		ret = fe->ops.tuner_ops.get_if_frequency(fe, &if_frequency);
-		if (ret)
-			goto error;
-		dev_dbg(&client->dev, "if_frequency=%u\n", if_frequency);
-	} else {
+	अगर (fe->ops.tuner_ops.get_अगर_frequency) अणु
+		ret = fe->ops.tuner_ops.get_अगर_frequency(fe, &अगर_frequency);
+		अगर (ret)
+			जाओ error;
+		dev_dbg(&client->dev, "if_frequency=%u\n", अगर_frequency);
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	utmp = DIV_ROUND_CLOSEST_ULL((u64)if_frequency * 0x1000000, CXD2820R_CLK);
-	buf[0] = (utmp >> 16) & 0xff;
-	buf[1] = (utmp >>  8) & 0xff;
-	buf[2] = (utmp >>  0) & 0xff;
-	ret = regmap_bulk_write(priv->regmap[0], 0x20b6, buf, 3);
-	if (ret)
-		goto error;
+	uपंचांगp = DIV_ROUND_CLOSEST_ULL((u64)अगर_frequency * 0x1000000, CXD2820R_CLK);
+	buf[0] = (uपंचांगp >> 16) & 0xff;
+	buf[1] = (uपंचांगp >>  8) & 0xff;
+	buf[2] = (uपंचांगp >>  0) & 0xff;
+	ret = regmap_bulk_ग_लिखो(priv->regmap[0], 0x20b6, buf, 3);
+	अगर (ret)
+		जाओ error;
 
 	/* PLP filtering */
-	if (c->stream_id > 255) {
+	अगर (c->stream_id > 255) अणु
 		dev_dbg(&client->dev, "disable PLP filtering\n");
-		ret = regmap_write(priv->regmap[0], 0x23ad, 0x00);
-		if (ret)
-			goto error;
-	} else {
+		ret = regmap_ग_लिखो(priv->regmap[0], 0x23ad, 0x00);
+		अगर (ret)
+			जाओ error;
+	पूर्ण अन्यथा अणु
 		dev_dbg(&client->dev, "enable PLP filtering\n");
-		ret = regmap_write(priv->regmap[0], 0x23af, c->stream_id & 0xff);
-		if (ret)
-			goto error;
-		ret = regmap_write(priv->regmap[0], 0x23ad, 0x01);
-		if (ret)
-			goto error;
-	}
+		ret = regmap_ग_लिखो(priv->regmap[0], 0x23af, c->stream_id & 0xff);
+		अगर (ret)
+			जाओ error;
+		ret = regmap_ग_लिखो(priv->regmap[0], 0x23ad, 0x01);
+		अगर (ret)
+			जाओ error;
+	पूर्ण
 
-	ret = regmap_bulk_write(priv->regmap[0], 0x209f, bw_params1[bw_i], 5);
-	if (ret)
-		goto error;
+	ret = regmap_bulk_ग_लिखो(priv->regmap[0], 0x209f, bw_params1[bw_i], 5);
+	अगर (ret)
+		जाओ error;
 
 	ret = regmap_update_bits(priv->regmap[0], 0x20d7, 0xc0, bw_param << 6);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	ret = regmap_write(priv->regmap[0], 0x00ff, 0x08);
-	if (ret)
-		goto error;
+	ret = regmap_ग_लिखो(priv->regmap[0], 0x00ff, 0x08);
+	अगर (ret)
+		जाओ error;
 
-	ret = regmap_write(priv->regmap[0], 0x00fe, 0x01);
-	if (ret)
-		goto error;
+	ret = regmap_ग_लिखो(priv->regmap[0], 0x00fe, 0x01);
+	अगर (ret)
+		जाओ error;
 
-	return ret;
+	वापस ret;
 error:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-int cxd2820r_get_frontend_t2(struct dvb_frontend *fe,
-			     struct dtv_frontend_properties *c)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	int ret;
-	unsigned int utmp;
+पूर्णांक cxd2820r_get_frontend_t2(काष्ठा dvb_frontend *fe,
+			     काष्ठा dtv_frontend_properties *c)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक uपंचांगp;
 	u8 buf[2];
 
 	dev_dbg(&client->dev, "\n");
 
-	ret = regmap_bulk_read(priv->regmap[0], 0x205c, buf, 2);
-	if (ret)
-		goto error;
+	ret = regmap_bulk_पढ़ो(priv->regmap[0], 0x205c, buf, 2);
+	अगर (ret)
+		जाओ error;
 
-	switch ((buf[0] >> 0) & 0x07) {
-	case 0:
+	चयन ((buf[0] >> 0) & 0x07) अणु
+	हाल 0:
 		c->transmission_mode = TRANSMISSION_MODE_2K;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		c->transmission_mode = TRANSMISSION_MODE_8K;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		c->transmission_mode = TRANSMISSION_MODE_4K;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		c->transmission_mode = TRANSMISSION_MODE_1K;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		c->transmission_mode = TRANSMISSION_MODE_16K;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		c->transmission_mode = TRANSMISSION_MODE_32K;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch ((buf[1] >> 4) & 0x07) {
-	case 0:
-		c->guard_interval = GUARD_INTERVAL_1_32;
-		break;
-	case 1:
-		c->guard_interval = GUARD_INTERVAL_1_16;
-		break;
-	case 2:
-		c->guard_interval = GUARD_INTERVAL_1_8;
-		break;
-	case 3:
-		c->guard_interval = GUARD_INTERVAL_1_4;
-		break;
-	case 4:
-		c->guard_interval = GUARD_INTERVAL_1_128;
-		break;
-	case 5:
-		c->guard_interval = GUARD_INTERVAL_19_128;
-		break;
-	case 6:
-		c->guard_interval = GUARD_INTERVAL_19_256;
-		break;
-	}
+	चयन ((buf[1] >> 4) & 0x07) अणु
+	हाल 0:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_1_32;
+		अवरोध;
+	हाल 1:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_1_16;
+		अवरोध;
+	हाल 2:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_1_8;
+		अवरोध;
+	हाल 3:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_1_4;
+		अवरोध;
+	हाल 4:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_1_128;
+		अवरोध;
+	हाल 5:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_19_128;
+		अवरोध;
+	हाल 6:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_19_256;
+		अवरोध;
+	पूर्ण
 
-	ret = regmap_bulk_read(priv->regmap[0], 0x225b, buf, 2);
-	if (ret)
-		goto error;
+	ret = regmap_bulk_पढ़ो(priv->regmap[0], 0x225b, buf, 2);
+	अगर (ret)
+		जाओ error;
 
-	switch ((buf[0] >> 0) & 0x07) {
-	case 0:
+	चयन ((buf[0] >> 0) & 0x07) अणु
+	हाल 0:
 		c->fec_inner = FEC_1_2;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		c->fec_inner = FEC_3_5;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		c->fec_inner = FEC_2_3;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		c->fec_inner = FEC_3_4;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		c->fec_inner = FEC_4_5;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		c->fec_inner = FEC_5_6;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch ((buf[1] >> 0) & 0x07) {
-	case 0:
+	चयन ((buf[1] >> 0) & 0x07) अणु
+	हाल 0:
 		c->modulation = QPSK;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		c->modulation = QAM_16;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		c->modulation = QAM_64;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		c->modulation = QAM_256;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	ret = regmap_read(priv->regmap[0], 0x20b5, &utmp);
-	if (ret)
-		goto error;
+	ret = regmap_पढ़ो(priv->regmap[0], 0x20b5, &uपंचांगp);
+	अगर (ret)
+		जाओ error;
 
-	switch ((utmp >> 4) & 0x01) {
-	case 0:
+	चयन ((uपंचांगp >> 4) & 0x01) अणु
+	हाल 0:
 		c->inversion = INVERSION_OFF;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		c->inversion = INVERSION_ON;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 error:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2820r_read_status_t2(struct dvb_frontend *fe, enum fe_status *status)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	struct i2c_client *client = priv->client[0];
-	int ret;
-	unsigned int utmp, utmp1, utmp2;
+पूर्णांक cxd2820r_पढ़ो_status_t2(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	काष्ठा i2c_client *client = priv->client[0];
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक uपंचांगp, uपंचांगp1, uपंचांगp2;
 	u8 buf[4];
 
 	/* Lock detection */
-	ret = regmap_bulk_read(priv->regmap[0], 0x2010, &buf[0], 1);
-	if (ret)
-		goto error;
+	ret = regmap_bulk_पढ़ो(priv->regmap[0], 0x2010, &buf[0], 1);
+	अगर (ret)
+		जाओ error;
 
-	utmp1 = (buf[0] >> 0) & 0x07;
-	utmp2 = (buf[0] >> 5) & 0x01;
+	uपंचांगp1 = (buf[0] >> 0) & 0x07;
+	uपंचांगp2 = (buf[0] >> 5) & 0x01;
 
-	if (utmp1 == 6 && utmp2 == 1) {
+	अगर (uपंचांगp1 == 6 && uपंचांगp2 == 1) अणु
 		*status = FE_HAS_SIGNAL | FE_HAS_CARRIER |
 			  FE_HAS_VITERBI | FE_HAS_SYNC | FE_HAS_LOCK;
-	} else if (utmp1 == 6 || utmp2 == 1) {
+	पूर्ण अन्यथा अगर (uपंचांगp1 == 6 || uपंचांगp2 == 1) अणु
 		*status = FE_HAS_SIGNAL | FE_HAS_CARRIER |
 			  FE_HAS_VITERBI | FE_HAS_SYNC;
-	} else {
+	पूर्ण अन्यथा अणु
 		*status = 0;
-	}
+	पूर्ण
 
 	dev_dbg(&client->dev, "status=%02x raw=%*ph sync=%u ts=%u\n",
-		*status, 1, buf, utmp1, utmp2);
+		*status, 1, buf, uपंचांगp1, uपंचांगp2);
 
 	/* Signal strength */
-	if (*status & FE_HAS_SIGNAL) {
-		unsigned int strength;
+	अगर (*status & FE_HAS_SIGNAL) अणु
+		अचिन्हित पूर्णांक strength;
 
-		ret = regmap_bulk_read(priv->regmap[0], 0x2026, buf, 2);
-		if (ret)
-			goto error;
+		ret = regmap_bulk_पढ़ो(priv->regmap[0], 0x2026, buf, 2);
+		अगर (ret)
+			जाओ error;
 
-		utmp = buf[0] << 8 | buf[1] << 0;
-		utmp = ~utmp & 0x0fff;
+		uपंचांगp = buf[0] << 8 | buf[1] << 0;
+		uपंचांगp = ~uपंचांगp & 0x0fff;
 		/* Scale value to 0x0000-0xffff */
-		strength = utmp << 4 | utmp >> 8;
+		strength = uपंचांगp << 4 | uपंचांगp >> 8;
 
 		c->strength.len = 1;
 		c->strength.stat[0].scale = FE_SCALE_RELATIVE;
 		c->strength.stat[0].uvalue = strength;
-	} else {
+	पूर्ण अन्यथा अणु
 		c->strength.len = 1;
 		c->strength.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-	}
+	पूर्ण
 
 	/* CNR */
-	if (*status & FE_HAS_VITERBI) {
-		unsigned int cnr;
+	अगर (*status & FE_HAS_VITERBI) अणु
+		अचिन्हित पूर्णांक cnr;
 
-		ret = regmap_bulk_read(priv->regmap[0], 0x2028, buf, 2);
-		if (ret)
-			goto error;
+		ret = regmap_bulk_पढ़ो(priv->regmap[0], 0x2028, buf, 2);
+		अगर (ret)
+			जाओ error;
 
-		utmp = buf[0] << 8 | buf[1] << 0;
-		utmp = utmp & 0x0fff;
-		#define CXD2820R_LOG10_8_24 15151336 /* log10(8) << 24 */
-		if (utmp)
-			cnr = div_u64((u64)(intlog10(utmp)
+		uपंचांगp = buf[0] << 8 | buf[1] << 0;
+		uपंचांगp = uपंचांगp & 0x0fff;
+		#घोषणा CXD2820R_LOG10_8_24 15151336 /* log10(8) << 24 */
+		अगर (uपंचांगp)
+			cnr = भाग_u64((u64)(पूर्णांकlog10(uपंचांगp)
 				      - CXD2820R_LOG10_8_24) * 10000,
 				      (1 << 24));
-		else
+		अन्यथा
 			cnr = 0;
 
 		c->cnr.len = 1;
 		c->cnr.stat[0].scale = FE_SCALE_DECIBEL;
 		c->cnr.stat[0].svalue = cnr;
-	} else {
+	पूर्ण अन्यथा अणु
 		c->cnr.len = 1;
 		c->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-	}
+	पूर्ण
 
 	/* BER */
-	if (*status & FE_HAS_SYNC) {
-		unsigned int post_bit_error;
+	अगर (*status & FE_HAS_SYNC) अणु
+		अचिन्हित पूर्णांक post_bit_error;
 
-		ret = regmap_bulk_read(priv->regmap[0], 0x2039, buf, 4);
-		if (ret)
-			goto error;
+		ret = regmap_bulk_पढ़ो(priv->regmap[0], 0x2039, buf, 4);
+		अगर (ret)
+			जाओ error;
 
-		if ((buf[0] >> 4) & 0x01) {
+		अगर ((buf[0] >> 4) & 0x01) अणु
 			post_bit_error = buf[0] << 24 | buf[1] << 16 |
 					 buf[2] << 8 | buf[3] << 0;
 			post_bit_error &= 0x0fffffff;
-		} else {
+		पूर्ण अन्यथा अणु
 			post_bit_error = 0;
-		}
+		पूर्ण
 
 		priv->post_bit_error += post_bit_error;
 
 		c->post_bit_error.len = 1;
 		c->post_bit_error.stat[0].scale = FE_SCALE_COUNTER;
 		c->post_bit_error.stat[0].uvalue = priv->post_bit_error;
-	} else {
+	पूर्ण अन्यथा अणु
 		c->post_bit_error.len = 1;
 		c->post_bit_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 error:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2820r_sleep_t2(struct dvb_frontend *fe)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	int ret;
-	static const struct reg_val_mask tab[] = {
-		{ 0x000ff, 0x1f, 0xff },
-		{ 0x00085, 0x00, 0xff },
-		{ 0x00088, 0x01, 0xff },
-		{ 0x02069, 0x00, 0xff },
-		{ 0x00081, 0x00, 0xff },
-		{ 0x00080, 0x00, 0xff },
-	};
+पूर्णांक cxd2820r_sleep_t2(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	पूर्णांक ret;
+	अटल स्थिर काष्ठा reg_val_mask tab[] = अणु
+		अणु 0x000ff, 0x1f, 0xff पूर्ण,
+		अणु 0x00085, 0x00, 0xff पूर्ण,
+		अणु 0x00088, 0x01, 0xff पूर्ण,
+		अणु 0x02069, 0x00, 0xff पूर्ण,
+		अणु 0x00081, 0x00, 0xff पूर्ण,
+		अणु 0x00080, 0x00, 0xff पूर्ण,
+	पूर्ण;
 
 	dev_dbg(&client->dev, "\n");
 
 	ret = cxd2820r_wr_reg_val_mask_tab(priv, tab, ARRAY_SIZE(tab));
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	priv->delivery_system = SYS_UNDEFINED;
+	priv->delivery_प्रणाली = SYS_UNDEFINED;
 
-	return ret;
+	वापस ret;
 error:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2820r_get_tune_settings_t2(struct dvb_frontend *fe,
-	struct dvb_frontend_tune_settings *s)
-{
+पूर्णांक cxd2820r_get_tune_settings_t2(काष्ठा dvb_frontend *fe,
+	काष्ठा dvb_frontend_tune_settings *s)
+अणु
 	s->min_delay_ms = 1500;
 	s->step_size = fe->ops.info.frequency_stepsize_hz * 2;
-	s->max_drift = (fe->ops.info.frequency_stepsize_hz * 2) + 1;
+	s->max_drअगरt = (fe->ops.info.frequency_stepsize_hz * 2) + 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  */
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#include "mdp5_kms.h"
+#समावेश "mdp5_kms.h"
 
-static struct mdp5_kms *get_kms(struct drm_encoder *encoder)
-{
-	struct msm_drm_private *priv = encoder->dev->dev_private;
-	return to_mdp5_kms(to_mdp_kms(priv->kms));
-}
+अटल काष्ठा mdp5_kms *get_kms(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा msm_drm_निजी *priv = encoder->dev->dev_निजी;
+	वापस to_mdp5_kms(to_mdp_kms(priv->kms));
+पूर्ण
 
-#define VSYNC_CLK_RATE 19200000
-static int pingpong_tearcheck_setup(struct drm_encoder *encoder,
-				    struct drm_display_mode *mode)
-{
-	struct mdp5_kms *mdp5_kms = get_kms(encoder);
-	struct device *dev = encoder->dev->dev;
+#घोषणा VSYNC_CLK_RATE 19200000
+अटल पूर्णांक pingpong_tearcheck_setup(काष्ठा drm_encoder *encoder,
+				    काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा mdp5_kms *mdp5_kms = get_kms(encoder);
+	काष्ठा device *dev = encoder->dev->dev;
 	u32 total_lines, vclks_line, cfg;
-	long vsync_clk_speed;
-	struct mdp5_hw_mixer *mixer = mdp5_crtc_get_mixer(encoder->crtc);
-	int pp_id = mixer->pp;
+	दीर्घ vsync_clk_speed;
+	काष्ठा mdp5_hw_mixer *mixer = mdp5_crtc_get_mixer(encoder->crtc);
+	पूर्णांक pp_id = mixer->pp;
 
-	if (IS_ERR_OR_NULL(mdp5_kms->vsync_clk)) {
+	अगर (IS_ERR_OR_शून्य(mdp5_kms->vsync_clk)) अणु
 		DRM_DEV_ERROR(dev, "vsync_clk is not initialized\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	total_lines = mode->vtotal * drm_mode_vrefresh(mode);
-	if (!total_lines) {
+	अगर (!total_lines) अणु
 		DRM_DEV_ERROR(dev, "%s: vtotal(%d) or vrefresh(%d) is 0\n",
 			      __func__, mode->vtotal, drm_mode_vrefresh(mode));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vsync_clk_speed = clk_round_rate(mdp5_kms->vsync_clk, VSYNC_CLK_RATE);
-	if (vsync_clk_speed <= 0) {
+	अगर (vsync_clk_speed <= 0) अणु
 		DRM_DEV_ERROR(dev, "vsync_clk round rate failed %ld\n",
 							vsync_clk_speed);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	vclks_line = vsync_clk_speed / total_lines;
 
 	cfg = MDP5_PP_SYNC_CONFIG_VSYNC_COUNTER_EN
@@ -50,151 +51,151 @@ static int pingpong_tearcheck_setup(struct drm_encoder *encoder,
 	cfg |= MDP5_PP_SYNC_CONFIG_VSYNC_COUNT(vclks_line);
 
 	/*
-	 * Tearcheck emits a blanking signal every vclks_line * vtotal * 2 ticks on
+	 * Tearcheck emits a blanking संकेत every vclks_line * vtotal * 2 ticks on
 	 * the vsync_clk equating to roughly half the desired panel refresh rate.
-	 * This is only necessary as stability fallback if interrupts from the
-	 * panel arrive too late or not at all, but is currently used by default
-	 * because these panel interrupts are not wired up yet.
+	 * This is only necessary as stability fallback अगर पूर्णांकerrupts from the
+	 * panel arrive too late or not at all, but is currently used by शेष
+	 * because these panel पूर्णांकerrupts are not wired up yet.
 	 */
-	mdp5_write(mdp5_kms, REG_MDP5_PP_SYNC_CONFIG_VSYNC(pp_id), cfg);
-	mdp5_write(mdp5_kms,
+	mdp5_ग_लिखो(mdp5_kms, REG_MDP5_PP_SYNC_CONFIG_VSYNC(pp_id), cfg);
+	mdp5_ग_लिखो(mdp5_kms,
 		REG_MDP5_PP_SYNC_CONFIG_HEIGHT(pp_id), (2 * mode->vtotal));
 
-	mdp5_write(mdp5_kms,
+	mdp5_ग_लिखो(mdp5_kms,
 		REG_MDP5_PP_VSYNC_INIT_VAL(pp_id), mode->vdisplay);
-	mdp5_write(mdp5_kms, REG_MDP5_PP_RD_PTR_IRQ(pp_id), mode->vdisplay + 1);
-	mdp5_write(mdp5_kms, REG_MDP5_PP_START_POS(pp_id), mode->vdisplay);
-	mdp5_write(mdp5_kms, REG_MDP5_PP_SYNC_THRESH(pp_id),
+	mdp5_ग_लिखो(mdp5_kms, REG_MDP5_PP_RD_PTR_IRQ(pp_id), mode->vdisplay + 1);
+	mdp5_ग_लिखो(mdp5_kms, REG_MDP5_PP_START_POS(pp_id), mode->vdisplay);
+	mdp5_ग_लिखो(mdp5_kms, REG_MDP5_PP_SYNC_THRESH(pp_id),
 			MDP5_PP_SYNC_THRESH_START(4) |
 			MDP5_PP_SYNC_THRESH_CONTINUE(4));
-	mdp5_write(mdp5_kms, REG_MDP5_PP_AUTOREFRESH_CONFIG(pp_id), 0x0);
+	mdp5_ग_लिखो(mdp5_kms, REG_MDP5_PP_AUTOREFRESH_CONFIG(pp_id), 0x0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pingpong_tearcheck_enable(struct drm_encoder *encoder)
-{
-	struct mdp5_kms *mdp5_kms = get_kms(encoder);
-	struct mdp5_hw_mixer *mixer = mdp5_crtc_get_mixer(encoder->crtc);
-	int pp_id = mixer->pp;
-	int ret;
+अटल पूर्णांक pingpong_tearcheck_enable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा mdp5_kms *mdp5_kms = get_kms(encoder);
+	काष्ठा mdp5_hw_mixer *mixer = mdp5_crtc_get_mixer(encoder->crtc);
+	पूर्णांक pp_id = mixer->pp;
+	पूर्णांक ret;
 
 	ret = clk_set_rate(mdp5_kms->vsync_clk,
 		clk_round_rate(mdp5_kms->vsync_clk, VSYNC_CLK_RATE));
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(encoder->dev->dev,
 			"vsync_clk clk_set_rate failed, %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = clk_prepare_enable(mdp5_kms->vsync_clk);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(encoder->dev->dev,
 			"vsync_clk clk_prepare_enable failed, %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	mdp5_write(mdp5_kms, REG_MDP5_PP_TEAR_CHECK_EN(pp_id), 1);
+	mdp5_ग_लिखो(mdp5_kms, REG_MDP5_PP_TEAR_CHECK_EN(pp_id), 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pingpong_tearcheck_disable(struct drm_encoder *encoder)
-{
-	struct mdp5_kms *mdp5_kms = get_kms(encoder);
-	struct mdp5_hw_mixer *mixer = mdp5_crtc_get_mixer(encoder->crtc);
-	int pp_id = mixer->pp;
+अटल व्योम pingpong_tearcheck_disable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा mdp5_kms *mdp5_kms = get_kms(encoder);
+	काष्ठा mdp5_hw_mixer *mixer = mdp5_crtc_get_mixer(encoder->crtc);
+	पूर्णांक pp_id = mixer->pp;
 
-	mdp5_write(mdp5_kms, REG_MDP5_PP_TEAR_CHECK_EN(pp_id), 0);
+	mdp5_ग_लिखो(mdp5_kms, REG_MDP5_PP_TEAR_CHECK_EN(pp_id), 0);
 	clk_disable_unprepare(mdp5_kms->vsync_clk);
-}
+पूर्ण
 
-void mdp5_cmd_encoder_mode_set(struct drm_encoder *encoder,
-			       struct drm_display_mode *mode,
-			       struct drm_display_mode *adjusted_mode)
-{
+व्योम mdp5_cmd_encoder_mode_set(काष्ठा drm_encoder *encoder,
+			       काष्ठा drm_display_mode *mode,
+			       काष्ठा drm_display_mode *adjusted_mode)
+अणु
 	mode = adjusted_mode;
 
 	DBG("set mode: " DRM_MODE_FMT, DRM_MODE_ARG(mode));
 	pingpong_tearcheck_setup(encoder, mode);
 	mdp5_crtc_set_pipeline(encoder->crtc);
-}
+पूर्ण
 
-void mdp5_cmd_encoder_disable(struct drm_encoder *encoder)
-{
-	struct mdp5_encoder *mdp5_cmd_enc = to_mdp5_encoder(encoder);
-	struct mdp5_ctl *ctl = mdp5_cmd_enc->ctl;
-	struct mdp5_interface *intf = mdp5_cmd_enc->intf;
-	struct mdp5_pipeline *pipeline = mdp5_crtc_get_pipeline(encoder->crtc);
+व्योम mdp5_cmd_encoder_disable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा mdp5_encoder *mdp5_cmd_enc = to_mdp5_encoder(encoder);
+	काष्ठा mdp5_ctl *ctl = mdp5_cmd_enc->ctl;
+	काष्ठा mdp5_पूर्णांकerface *पूर्णांकf = mdp5_cmd_enc->पूर्णांकf;
+	काष्ठा mdp5_pipeline *pipeline = mdp5_crtc_get_pipeline(encoder->crtc);
 
-	if (WARN_ON(!mdp5_cmd_enc->enabled))
-		return;
+	अगर (WARN_ON(!mdp5_cmd_enc->enabled))
+		वापस;
 
 	pingpong_tearcheck_disable(encoder);
 
 	mdp5_ctl_set_encoder_state(ctl, pipeline, false);
-	mdp5_ctl_commit(ctl, pipeline, mdp_ctl_flush_mask_encoder(intf), true);
+	mdp5_ctl_commit(ctl, pipeline, mdp_ctl_flush_mask_encoder(पूर्णांकf), true);
 
 	mdp5_cmd_enc->enabled = false;
-}
+पूर्ण
 
-void mdp5_cmd_encoder_enable(struct drm_encoder *encoder)
-{
-	struct mdp5_encoder *mdp5_cmd_enc = to_mdp5_encoder(encoder);
-	struct mdp5_ctl *ctl = mdp5_cmd_enc->ctl;
-	struct mdp5_interface *intf = mdp5_cmd_enc->intf;
-	struct mdp5_pipeline *pipeline = mdp5_crtc_get_pipeline(encoder->crtc);
+व्योम mdp5_cmd_encoder_enable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा mdp5_encoder *mdp5_cmd_enc = to_mdp5_encoder(encoder);
+	काष्ठा mdp5_ctl *ctl = mdp5_cmd_enc->ctl;
+	काष्ठा mdp5_पूर्णांकerface *पूर्णांकf = mdp5_cmd_enc->पूर्णांकf;
+	काष्ठा mdp5_pipeline *pipeline = mdp5_crtc_get_pipeline(encoder->crtc);
 
-	if (WARN_ON(mdp5_cmd_enc->enabled))
-		return;
+	अगर (WARN_ON(mdp5_cmd_enc->enabled))
+		वापस;
 
-	if (pingpong_tearcheck_enable(encoder))
-		return;
+	अगर (pingpong_tearcheck_enable(encoder))
+		वापस;
 
-	mdp5_ctl_commit(ctl, pipeline, mdp_ctl_flush_mask_encoder(intf), true);
+	mdp5_ctl_commit(ctl, pipeline, mdp_ctl_flush_mask_encoder(पूर्णांकf), true);
 
 	mdp5_ctl_set_encoder_state(ctl, pipeline, true);
 
 	mdp5_cmd_enc->enabled = true;
-}
+पूर्ण
 
-int mdp5_cmd_encoder_set_split_display(struct drm_encoder *encoder,
-				       struct drm_encoder *slave_encoder)
-{
-	struct mdp5_encoder *mdp5_cmd_enc = to_mdp5_encoder(encoder);
-	struct mdp5_kms *mdp5_kms;
-	struct device *dev;
-	int intf_num;
+पूर्णांक mdp5_cmd_encoder_set_split_display(काष्ठा drm_encoder *encoder,
+				       काष्ठा drm_encoder *slave_encoder)
+अणु
+	काष्ठा mdp5_encoder *mdp5_cmd_enc = to_mdp5_encoder(encoder);
+	काष्ठा mdp5_kms *mdp5_kms;
+	काष्ठा device *dev;
+	पूर्णांक पूर्णांकf_num;
 	u32 data = 0;
 
-	if (!encoder || !slave_encoder)
-		return -EINVAL;
+	अगर (!encoder || !slave_encoder)
+		वापस -EINVAL;
 
 	mdp5_kms = get_kms(encoder);
-	intf_num = mdp5_cmd_enc->intf->num;
+	पूर्णांकf_num = mdp5_cmd_enc->पूर्णांकf->num;
 
 	/* Switch slave encoder's trigger MUX, to use the master's
-	 * start signal for the slave encoder
+	 * start संकेत क्रम the slave encoder
 	 */
-	if (intf_num == 1)
+	अगर (पूर्णांकf_num == 1)
 		data |= MDP5_SPLIT_DPL_UPPER_INTF2_SW_TRG_MUX;
-	else if (intf_num == 2)
+	अन्यथा अगर (पूर्णांकf_num == 2)
 		data |= MDP5_SPLIT_DPL_UPPER_INTF1_SW_TRG_MUX;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	/* Smart Panel, Sync mode */
 	data |= MDP5_SPLIT_DPL_UPPER_SMART_PANEL;
 
 	dev = &mdp5_kms->pdev->dev;
 
-	/* Make sure clocks are on when connectors calling this function. */
-	pm_runtime_get_sync(dev);
-	mdp5_write(mdp5_kms, REG_MDP5_SPLIT_DPL_UPPER, data);
+	/* Make sure घड़ीs are on when connectors calling this function. */
+	pm_runसमय_get_sync(dev);
+	mdp5_ग_लिखो(mdp5_kms, REG_MDP5_SPLIT_DPL_UPPER, data);
 
-	mdp5_write(mdp5_kms, REG_MDP5_SPLIT_DPL_LOWER,
+	mdp5_ग_लिखो(mdp5_kms, REG_MDP5_SPLIT_DPL_LOWER,
 		   MDP5_SPLIT_DPL_LOWER_SMART_PANEL);
-	mdp5_write(mdp5_kms, REG_MDP5_SPLIT_DPL_EN, 1);
-	pm_runtime_put_sync(dev);
+	mdp5_ग_लिखो(mdp5_kms, REG_MDP5_SPLIT_DPL_EN, 1);
+	pm_runसमय_put_sync(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

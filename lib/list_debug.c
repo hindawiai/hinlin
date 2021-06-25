@@ -1,26 +1,27 @@
+<शैली गुरु>
 /*
  * Copyright 2006, Red Hat, Inc., Dave Jones
  * Released under the General Public License (GPL).
  *
- * This file contains the linked list validation for DEBUG_LIST.
+ * This file contains the linked list validation क्रम DEBUG_LIST.
  */
 
-#include <linux/export.h>
-#include <linux/list.h>
-#include <linux/bug.h>
-#include <linux/kernel.h>
-#include <linux/rculist.h>
+#समावेश <linux/export.h>
+#समावेश <linux/list.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/rculist.h>
 
 /*
- * Check that the data structures for the list manipulations are reasonably
+ * Check that the data काष्ठाures क्रम the list manipulations are reasonably
  * valid. Failures here indicate memory corruption (and possibly an exploit
  * attempt).
  */
 
-bool __list_add_valid(struct list_head *new, struct list_head *prev,
-		      struct list_head *next)
-{
-	if (CHECK_DATA_CORRUPTION(next->prev != prev,
+bool __list_add_valid(काष्ठा list_head *new, काष्ठा list_head *prev,
+		      काष्ठा list_head *next)
+अणु
+	अगर (CHECK_DATA_CORRUPTION(next->prev != prev,
 			"list_add corruption. next->prev should be prev (%px), but was %px. (next=%px).\n",
 			prev, next->prev, next) ||
 	    CHECK_DATA_CORRUPTION(prev->next != next,
@@ -29,20 +30,20 @@ bool __list_add_valid(struct list_head *new, struct list_head *prev,
 	    CHECK_DATA_CORRUPTION(new == prev || new == next,
 			"list_add double add: new=%px, prev=%px, next=%px.\n",
 			new, prev, next))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(__list_add_valid);
 
-bool __list_del_entry_valid(struct list_head *entry)
-{
-	struct list_head *prev, *next;
+bool __list_del_entry_valid(काष्ठा list_head *entry)
+अणु
+	काष्ठा list_head *prev, *next;
 
 	prev = entry->prev;
 	next = entry->next;
 
-	if (CHECK_DATA_CORRUPTION(next == LIST_POISON1,
+	अगर (CHECK_DATA_CORRUPTION(next == LIST_POISON1,
 			"list_del corruption, %px->next is LIST_POISON1 (%px)\n",
 			entry, LIST_POISON1) ||
 	    CHECK_DATA_CORRUPTION(prev == LIST_POISON2,
@@ -54,9 +55,9 @@ bool __list_del_entry_valid(struct list_head *entry)
 	    CHECK_DATA_CORRUPTION(next->prev != entry,
 			"list_del corruption. next->prev should be %px, but was %px\n",
 			entry, next->prev))
-		return false;
+		वापस false;
 
-	return true;
+	वापस true;
 
-}
+पूर्ण
 EXPORT_SYMBOL(__list_del_entry_valid);

@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2007 Ivo van Doorn
  * Copyright 2009 Johannes Berg <johannes@sipsolutions.net>
  */
 
 
-#ifndef __RFKILL_INPUT_H
-#define __RFKILL_INPUT_H
+#अगर_अघोषित __RFKILL_INPUT_H
+#घोषणा __RFKILL_INPUT_H
 
 /* core code */
-void rfkill_switch_all(const enum rfkill_type type, bool blocked);
-void rfkill_epo(void);
-void rfkill_restore_states(void);
-void rfkill_remove_epo_lock(void);
-bool rfkill_is_epo_lock_active(void);
-bool rfkill_get_global_sw_state(const enum rfkill_type type);
+व्योम rfसमाप्त_चयन_all(स्थिर क्रमागत rfसमाप्त_type type, bool blocked);
+व्योम rfसमाप्त_epo(व्योम);
+व्योम rfसमाप्त_restore_states(व्योम);
+व्योम rfसमाप्त_हटाओ_epo_lock(व्योम);
+bool rfसमाप्त_is_epo_lock_active(व्योम);
+bool rfसमाप्त_get_global_sw_state(स्थिर क्रमागत rfसमाप्त_type type);
 
 /* input handler */
-int rfkill_handler_init(void);
-void rfkill_handler_exit(void);
+पूर्णांक rfसमाप्त_handler_init(व्योम);
+व्योम rfसमाप्त_handler_निकास(व्योम);
 
-#endif /* __RFKILL_INPUT_H */
+#पूर्ण_अगर /* __RFKILL_INPUT_H */

@@ -1,111 +1,112 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <test_progs.h>
-#include <network_helpers.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <test_progs.h>
+#समावेश <network_helpers.h>
 
-void test_xdp_adjust_tail_shrink(void)
-{
-	const char *file = "./test_xdp_adjust_tail_shrink.o";
+व्योम test_xdp_adjust_tail_shrink(व्योम)
+अणु
+	स्थिर अक्षर *file = "./test_xdp_adjust_tail_shrink.o";
 	__u32 duration, retval, size, expect_sz;
-	struct bpf_object *obj;
-	int err, prog_fd;
-	char buf[128];
+	काष्ठा bpf_object *obj;
+	पूर्णांक err, prog_fd;
+	अक्षर buf[128];
 
 	err = bpf_prog_load(file, BPF_PROG_TYPE_XDP, &obj, &prog_fd);
-	if (CHECK_FAIL(err))
-		return;
+	अगर (CHECK_FAIL(err))
+		वापस;
 
-	err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, sizeof(pkt_v4),
+	err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, माप(pkt_v4),
 				buf, &size, &retval, &duration);
 
 	CHECK(err || retval != XDP_DROP,
 	      "ipv4", "err %d errno %d retval %d size %d\n",
-	      err, errno, retval, size);
+	      err, त्रुटि_सं, retval, size);
 
-	expect_sz = sizeof(pkt_v6) - 20;  /* Test shrink with 20 bytes */
-	err = bpf_prog_test_run(prog_fd, 1, &pkt_v6, sizeof(pkt_v6),
+	expect_sz = माप(pkt_v6) - 20;  /* Test shrink with 20 bytes */
+	err = bpf_prog_test_run(prog_fd, 1, &pkt_v6, माप(pkt_v6),
 				buf, &size, &retval, &duration);
 	CHECK(err || retval != XDP_TX || size != expect_sz,
 	      "ipv6", "err %d errno %d retval %d size %d expect-size %d\n",
-	      err, errno, retval, size, expect_sz);
-	bpf_object__close(obj);
-}
+	      err, त्रुटि_सं, retval, size, expect_sz);
+	bpf_object__बंद(obj);
+पूर्ण
 
-void test_xdp_adjust_tail_grow(void)
-{
-	const char *file = "./test_xdp_adjust_tail_grow.o";
-	struct bpf_object *obj;
-	char buf[4096]; /* avoid segfault: large buf to hold grow results */
+व्योम test_xdp_adjust_tail_grow(व्योम)
+अणु
+	स्थिर अक्षर *file = "./test_xdp_adjust_tail_grow.o";
+	काष्ठा bpf_object *obj;
+	अक्षर buf[4096]; /* aव्योम segfault: large buf to hold grow results */
 	__u32 duration, retval, size, expect_sz;
-	int err, prog_fd;
+	पूर्णांक err, prog_fd;
 
 	err = bpf_prog_load(file, BPF_PROG_TYPE_XDP, &obj, &prog_fd);
-	if (CHECK_FAIL(err))
-		return;
+	अगर (CHECK_FAIL(err))
+		वापस;
 
-	err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, sizeof(pkt_v4),
+	err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, माप(pkt_v4),
 				buf, &size, &retval, &duration);
 	CHECK(err || retval != XDP_DROP,
 	      "ipv4", "err %d errno %d retval %d size %d\n",
-	      err, errno, retval, size);
+	      err, त्रुटि_सं, retval, size);
 
-	expect_sz = sizeof(pkt_v6) + 40; /* Test grow with 40 bytes */
-	err = bpf_prog_test_run(prog_fd, 1, &pkt_v6, sizeof(pkt_v6) /* 74 */,
+	expect_sz = माप(pkt_v6) + 40; /* Test grow with 40 bytes */
+	err = bpf_prog_test_run(prog_fd, 1, &pkt_v6, माप(pkt_v6) /* 74 */,
 				buf, &size, &retval, &duration);
 	CHECK(err || retval != XDP_TX || size != expect_sz,
 	      "ipv6", "err %d errno %d retval %d size %d expect-size %d\n",
-	      err, errno, retval, size, expect_sz);
+	      err, त्रुटि_सं, retval, size, expect_sz);
 
-	bpf_object__close(obj);
-}
+	bpf_object__बंद(obj);
+पूर्ण
 
-void test_xdp_adjust_tail_grow2(void)
-{
-	const char *file = "./test_xdp_adjust_tail_grow.o";
-	char buf[4096]; /* avoid segfault: large buf to hold grow results */
-	int tailroom = 320; /* SKB_DATA_ALIGN(sizeof(struct skb_shared_info))*/;
-	struct bpf_object *obj;
-	int err, cnt, i;
-	int max_grow;
+व्योम test_xdp_adjust_tail_grow2(व्योम)
+अणु
+	स्थिर अक्षर *file = "./test_xdp_adjust_tail_grow.o";
+	अक्षर buf[4096]; /* aव्योम segfault: large buf to hold grow results */
+	पूर्णांक tailroom = 320; /* SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info))*/;
+	काष्ठा bpf_object *obj;
+	पूर्णांक err, cnt, i;
+	पूर्णांक max_grow;
 
-	struct bpf_prog_test_run_attr tattr = {
+	काष्ठा bpf_prog_test_run_attr tattr = अणु
 		.repeat		= 1,
 		.data_in	= &buf,
 		.data_out	= &buf,
 		.data_size_in	= 0, /* Per test */
 		.data_size_out	= 0, /* Per test */
-	};
+	पूर्ण;
 
 	err = bpf_prog_load(file, BPF_PROG_TYPE_XDP, &obj, &tattr.prog_fd);
-	if (CHECK_ATTR(err, "load", "err %d errno %d\n", err, errno))
-		return;
+	अगर (CHECK_ATTR(err, "load", "err %d errno %d\n", err, त्रुटि_सं))
+		वापस;
 
-	/* Test case-64 */
-	memset(buf, 1, sizeof(buf));
-	tattr.data_size_in  =  64; /* Determine test case via pkt size */
+	/* Test हाल-64 */
+	स_रखो(buf, 1, माप(buf));
+	tattr.data_size_in  =  64; /* Determine test हाल via pkt size */
 	tattr.data_size_out = 128; /* Limit copy_size */
 	/* Kernel side alloc packet memory area that is zero init */
 	err = bpf_prog_test_run_xattr(&tattr);
 
-	CHECK_ATTR(errno != ENOSPC /* Due limit copy_size in bpf_test_finish */
+	CHECK_ATTR(त्रुटि_सं != ENOSPC /* Due limit copy_size in bpf_test_finish */
 		   || tattr.retval != XDP_TX
 		   || tattr.data_size_out != 192, /* Expected grow size */
 		   "case-64",
 		   "err %d errno %d retval %d size %d\n",
-		   err, errno, tattr.retval, tattr.data_size_out);
+		   err, त्रुटि_सं, tattr.retval, tattr.data_size_out);
 
-	/* Extra checks for data contents */
+	/* Extra checks क्रम data contents */
 	CHECK_ATTR(tattr.data_size_out != 192
-		   || buf[0]   != 1 ||  buf[63]  != 1  /*  0-63  memset to 1 */
-		   || buf[64]  != 0 ||  buf[127] != 0  /* 64-127 memset to 0 */
-		   || buf[128] != 1 ||  buf[191] != 1, /*128-191 memset to 1 */
+		   || buf[0]   != 1 ||  buf[63]  != 1  /*  0-63  स_रखो to 1 */
+		   || buf[64]  != 0 ||  buf[127] != 0  /* 64-127 स_रखो to 0 */
+		   || buf[128] != 1 ||  buf[191] != 1, /*128-191 स_रखो to 1 */
 		   "case-64-data",
 		   "err %d errno %d retval %d size %d\n",
-		   err, errno, tattr.retval, tattr.data_size_out);
+		   err, त्रुटि_सं, tattr.retval, tattr.data_size_out);
 
-	/* Test case-128 */
-	memset(buf, 2, sizeof(buf));
-	tattr.data_size_in  = 128; /* Determine test case via pkt size */
-	tattr.data_size_out = sizeof(buf);   /* Copy everything */
+	/* Test हाल-128 */
+	स_रखो(buf, 2, माप(buf));
+	tattr.data_size_in  = 128; /* Determine test हाल via pkt size */
+	tattr.data_size_out = माप(buf);   /* Copy everything */
 	err = bpf_prog_test_run_xattr(&tattr);
 
 	max_grow = 4096 - XDP_PACKET_HEADROOM -	tailroom; /* 3520 */
@@ -114,28 +115,28 @@ void test_xdp_adjust_tail_grow2(void)
 		   || tattr.data_size_out != max_grow,/* Expect max grow size */
 		   "case-128",
 		   "err %d errno %d retval %d size %d expect-size %d\n",
-		   err, errno, tattr.retval, tattr.data_size_out, max_grow);
+		   err, त्रुटि_सं, tattr.retval, tattr.data_size_out, max_grow);
 
-	/* Extra checks for data content: Count grow size, will contain zeros */
-	for (i = 0, cnt = 0; i < sizeof(buf); i++) {
-		if (buf[i] == 0)
+	/* Extra checks क्रम data content: Count grow size, will contain zeros */
+	क्रम (i = 0, cnt = 0; i < माप(buf); i++) अणु
+		अगर (buf[i] == 0)
 			cnt++;
-	}
+	पूर्ण
 	CHECK_ATTR((cnt != (max_grow - tattr.data_size_in)) /* Grow increase */
 		   || tattr.data_size_out != max_grow, /* Total grow size */
 		   "case-128-data",
 		   "err %d errno %d retval %d size %d grow-size %d\n",
-		   err, errno, tattr.retval, tattr.data_size_out, cnt);
+		   err, त्रुटि_सं, tattr.retval, tattr.data_size_out, cnt);
 
-	bpf_object__close(obj);
-}
+	bpf_object__बंद(obj);
+पूर्ण
 
-void test_xdp_adjust_tail(void)
-{
-	if (test__start_subtest("xdp_adjust_tail_shrink"))
+व्योम test_xdp_adjust_tail(व्योम)
+अणु
+	अगर (test__start_subtest("xdp_adjust_tail_shrink"))
 		test_xdp_adjust_tail_shrink();
-	if (test__start_subtest("xdp_adjust_tail_grow"))
+	अगर (test__start_subtest("xdp_adjust_tail_grow"))
 		test_xdp_adjust_tail_grow();
-	if (test__start_subtest("xdp_adjust_tail_grow2"))
+	अगर (test__start_subtest("xdp_adjust_tail_grow2"))
 		test_xdp_adjust_tail_grow2();
-}
+पूर्ण

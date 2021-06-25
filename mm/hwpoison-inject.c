@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Inject a hwpoison memory failure on a arbitrary pfn */
-#include <linux/module.h>
-#include <linux/debugfs.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/pagemap.h>
-#include <linux/hugetlb.h>
-#include "internal.h"
+#समावेश <linux/module.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/hugetlb.h>
+#समावेश "internal.h"
 
-static struct dentry *hwpoison_dir;
+अटल काष्ठा dentry *hwpoison_dir;
 
-static int hwpoison_inject(void *data, u64 val)
-{
-	unsigned long pfn = val;
-	struct page *p;
-	struct page *hpage;
-	int err;
+अटल पूर्णांक hwpoison_inject(व्योम *data, u64 val)
+अणु
+	अचिन्हित दीर्घ pfn = val;
+	काष्ठा page *p;
+	काष्ठा page *hpage;
+	पूर्णांक err;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	if (!pfn_valid(pfn))
-		return -ENXIO;
+	अगर (!pfn_valid(pfn))
+		वापस -ENXIO;
 
 	p = pfn_to_page(pfn);
 	hpage = compound_head(p);
 
-	if (!hwpoison_filter_enable)
-		goto inject;
+	अगर (!hwpoison_filter_enable)
+		जाओ inject;
 
 	shake_page(hpage, 0);
 	/*
 	 * This implies unable to support non-LRU pages.
 	 */
-	if (!PageLRU(hpage) && !PageHuge(p))
-		return 0;
+	अगर (!PageLRU(hpage) && !PageHuge(p))
+		वापस 0;
 
 	/*
-	 * do a racy check to make sure PG_hwpoison will only be set for
-	 * the targeted owner (or on a free page).
-	 * memory_failure() will redo the check reliably inside page lock.
+	 * करो a racy check to make sure PG_hwpoison will only be set क्रम
+	 * the targeted owner (or on a मुक्त page).
+	 * memory_failure() will reकरो the check reliably inside page lock.
 	 */
 	err = hwpoison_filter(hpage);
-	if (err)
-		return 0;
+	अगर (err)
+		वापस 0;
 
 inject:
 	pr_info("Injecting memory failure at pfn %#lx\n", pfn);
-	return memory_failure(pfn, 0);
-}
+	वापस memory_failure(pfn, 0);
+पूर्ण
 
-static int hwpoison_unpoison(void *data, u64 val)
-{
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+अटल पूर्णांक hwpoison_unpoison(व्योम *data, u64 val)
+अणु
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	return unpoison_memory(val);
-}
+	वापस unpoison_memory(val);
+पूर्ण
 
-DEFINE_DEBUGFS_ATTRIBUTE(hwpoison_fops, NULL, hwpoison_inject, "%lli\n");
-DEFINE_DEBUGFS_ATTRIBUTE(unpoison_fops, NULL, hwpoison_unpoison, "%lli\n");
+DEFINE_DEBUGFS_ATTRIBUTE(hwpoison_fops, शून्य, hwpoison_inject, "%lli\n");
+DEFINE_DEBUGFS_ATTRIBUTE(unpoison_fops, शून्य, hwpoison_unpoison, "%lli\n");
 
-static void pfn_inject_exit(void)
-{
-	debugfs_remove_recursive(hwpoison_dir);
-}
+अटल व्योम pfn_inject_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(hwpoison_dir);
+पूर्ण
 
-static int pfn_inject_init(void)
-{
-	hwpoison_dir = debugfs_create_dir("hwpoison", NULL);
+अटल पूर्णांक pfn_inject_init(व्योम)
+अणु
+	hwpoison_dir = debugfs_create_dir("hwpoison", शून्य);
 
 	/*
-	 * Note that the below poison/unpoison interfaces do not involve
-	 * hardware status change, hence do not require hardware support.
-	 * They are mainly for testing hwpoison in software level.
+	 * Note that the below poison/unpoison पूर्णांकerfaces करो not involve
+	 * hardware status change, hence करो not require hardware support.
+	 * They are मुख्यly क्रम testing hwpoison in software level.
 	 */
-	debugfs_create_file("corrupt-pfn", 0200, hwpoison_dir, NULL,
+	debugfs_create_file("corrupt-pfn", 0200, hwpoison_dir, शून्य,
 			    &hwpoison_fops);
 
-	debugfs_create_file("unpoison-pfn", 0200, hwpoison_dir, NULL,
+	debugfs_create_file("unpoison-pfn", 0200, hwpoison_dir, शून्य,
 			    &unpoison_fops);
 
 	debugfs_create_u32("corrupt-filter-enable", 0600, hwpoison_dir,
@@ -97,14 +98,14 @@ static int pfn_inject_init(void)
 	debugfs_create_u64("corrupt-filter-flags-value", 0600, hwpoison_dir,
 			   &hwpoison_filter_flags_value);
 
-#ifdef CONFIG_MEMCG
+#अगर_घोषित CONFIG_MEMCG
 	debugfs_create_u64("corrupt-filter-memcg", 0600, hwpoison_dir,
 			   &hwpoison_filter_memcg);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(pfn_inject_init);
-module_exit(pfn_inject_exit);
+module_निकास(pfn_inject_निकास);
 MODULE_LICENSE("GPL");

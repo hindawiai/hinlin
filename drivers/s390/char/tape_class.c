@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright IBM Corp. 2004
  *
@@ -8,12 +9,12 @@
  * Based on simple class device code by Greg K-H
  */
 
-#define KMSG_COMPONENT "tape"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "tape"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "tape_class.h"
+#समावेश "tape_class.h"
 
 MODULE_AUTHOR("Stefan Bader <shbader@de.ibm.com>");
 MODULE_DESCRIPTION(
@@ -22,111 +23,111 @@ MODULE_DESCRIPTION(
 );
 MODULE_LICENSE("GPL");
 
-static struct class *tape_class;
+अटल काष्ठा class *tape_class;
 
 /*
- * Register a tape device and return a pointer to the cdev structure.
+ * Register a tape device and वापस a poपूर्णांकer to the cdev काष्ठाure.
  *
  * device
- *	The pointer to the struct device of the physical (base) device.
+ *	The poपूर्णांकer to the काष्ठा device of the physical (base) device.
  * drivername
- *	The pointer to the drivers name for it's character devices.
+ *	The poपूर्णांकer to the drivers name क्रम it's अक्षरacter devices.
  * dev
- *	The intended major/minor number. The major number may be 0 to
+ *	The पूर्णांकended major/minor number. The major number may be 0 to
  *	get a dynamic major number.
  * fops
- *	The pointer to the drivers file operations for the tape device.
+ *	The poपूर्णांकer to the drivers file operations क्रम the tape device.
  * devname
- *	The pointer to the name of the character device.
+ *	The poपूर्णांकer to the name of the अक्षरacter device.
  */
-struct tape_class_device *register_tape_dev(
-	struct device *		device,
+काष्ठा tape_class_device *रेजिस्टर_tape_dev(
+	काष्ठा device *		device,
 	dev_t			dev,
-	const struct file_operations *fops,
-	char *			device_name,
-	char *			mode_name)
-{
-	struct tape_class_device *	tcd;
-	int		rc;
-	char *		s;
+	स्थिर काष्ठा file_operations *fops,
+	अक्षर *			device_name,
+	अक्षर *			mode_name)
+अणु
+	काष्ठा tape_class_device *	tcd;
+	पूर्णांक		rc;
+	अक्षर *		s;
 
-	tcd = kzalloc(sizeof(struct tape_class_device), GFP_KERNEL);
-	if (!tcd)
-		return ERR_PTR(-ENOMEM);
+	tcd = kzalloc(माप(काष्ठा tape_class_device), GFP_KERNEL);
+	अगर (!tcd)
+		वापस ERR_PTR(-ENOMEM);
 
 	strlcpy(tcd->device_name, device_name, TAPECLASS_NAME_LEN);
-	for (s = strchr(tcd->device_name, '/'); s; s = strchr(s, '/'))
+	क्रम (s = म_अक्षर(tcd->device_name, '/'); s; s = strchr(s, '/'))
 		*s = '!';
 	strlcpy(tcd->mode_name, mode_name, TAPECLASS_NAME_LEN);
-	for (s = strchr(tcd->mode_name, '/'); s; s = strchr(s, '/'))
+	क्रम (s = म_अक्षर(tcd->mode_name, '/'); s; s = strchr(s, '/'))
 		*s = '!';
 
-	tcd->char_device = cdev_alloc();
-	if (!tcd->char_device) {
+	tcd->अक्षर_device = cdev_alloc();
+	अगर (!tcd->अक्षर_device) अणु
 		rc = -ENOMEM;
-		goto fail_with_tcd;
-	}
+		जाओ fail_with_tcd;
+	पूर्ण
 
-	tcd->char_device->owner = fops->owner;
-	tcd->char_device->ops   = fops;
+	tcd->अक्षर_device->owner = fops->owner;
+	tcd->अक्षर_device->ops   = fops;
 
-	rc = cdev_add(tcd->char_device, dev, 1);
-	if (rc)
-		goto fail_with_cdev;
+	rc = cdev_add(tcd->अक्षर_device, dev, 1);
+	अगर (rc)
+		जाओ fail_with_cdev;
 
 	tcd->class_device = device_create(tape_class, device,
-					  tcd->char_device->dev, NULL,
+					  tcd->अक्षर_device->dev, शून्य,
 					  "%s", tcd->device_name);
 	rc = PTR_ERR_OR_ZERO(tcd->class_device);
-	if (rc)
-		goto fail_with_cdev;
+	अगर (rc)
+		जाओ fail_with_cdev;
 	rc = sysfs_create_link(
 		&device->kobj,
 		&tcd->class_device->kobj,
 		tcd->mode_name
 	);
-	if (rc)
-		goto fail_with_class_device;
+	अगर (rc)
+		जाओ fail_with_class_device;
 
-	return tcd;
+	वापस tcd;
 
 fail_with_class_device:
-	device_destroy(tape_class, tcd->char_device->dev);
+	device_destroy(tape_class, tcd->अक्षर_device->dev);
 
 fail_with_cdev:
-	cdev_del(tcd->char_device);
+	cdev_del(tcd->अक्षर_device);
 
 fail_with_tcd:
-	kfree(tcd);
+	kमुक्त(tcd);
 
-	return ERR_PTR(rc);
-}
-EXPORT_SYMBOL(register_tape_dev);
+	वापस ERR_PTR(rc);
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_tape_dev);
 
-void unregister_tape_dev(struct device *device, struct tape_class_device *tcd)
-{
-	if (tcd != NULL && !IS_ERR(tcd)) {
-		sysfs_remove_link(&device->kobj, tcd->mode_name);
-		device_destroy(tape_class, tcd->char_device->dev);
-		cdev_del(tcd->char_device);
-		kfree(tcd);
-	}
-}
-EXPORT_SYMBOL(unregister_tape_dev);
+व्योम unरेजिस्टर_tape_dev(काष्ठा device *device, काष्ठा tape_class_device *tcd)
+अणु
+	अगर (tcd != शून्य && !IS_ERR(tcd)) अणु
+		sysfs_हटाओ_link(&device->kobj, tcd->mode_name);
+		device_destroy(tape_class, tcd->अक्षर_device->dev);
+		cdev_del(tcd->अक्षर_device);
+		kमुक्त(tcd);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_tape_dev);
 
 
-static int __init tape_init(void)
-{
+अटल पूर्णांक __init tape_init(व्योम)
+अणु
 	tape_class = class_create(THIS_MODULE, "tape390");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit tape_exit(void)
-{
+अटल व्योम __निकास tape_निकास(व्योम)
+अणु
 	class_destroy(tape_class);
-	tape_class = NULL;
-}
+	tape_class = शून्य;
+पूर्ण
 
 postcore_initcall(tape_init);
-module_exit(tape_exit);
+module_निकास(tape_निकास);

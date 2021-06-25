@@ -1,6 +1,7 @@
-{
+<शैली गुरु>
+अणु
 	"invalid and of negative number",
-	.insns = {
+	.insns = अणु
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -11,17 +12,17 @@
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_1, -4),
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_1, 2),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
-	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, offsetof(struct test_val, foo)),
+	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, दुरत्व(काष्ठा test_val, foo)),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R0 max value is outside of the allowed memory range",
 	.result = REJECT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-},
-{
+पूर्ण,
+अणु
 	"invalid range check",
-	.insns = {
+	.insns = अणु
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -42,16 +43,16 @@
 	BPF_STX_MEM(BPF_W, BPF_REG_0, BPF_REG_3, 0),
 	BPF_MOV64_REG(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R0 max value is outside of the allowed memory range",
 	.result = REJECT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-},
-{
+पूर्ण,
+अणु
 	"check known subreg with unknown reg",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_0, 32),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 0xFFFF1234),
@@ -60,9 +61,9 @@
 	BPF_LDX_MEM(BPF_W, BPF_REG_1, BPF_REG_1, 512),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr_unpriv = "R1 !read_ok",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.retval = 0
-},
+पूर्ण,

@@ -1,41 +1,42 @@
+<शैली गुरु>
 /*
  * Update: The Berkeley copyright was changed, and the change
  * is retroactive to all "true" BSD software (ie everything
  * from UCB as opposed to other peoples code that just carried
- * the same license). The new copyright doesn't clash with the
- * GPL, so the module-only restriction has been removed..
+ * the same license). The new copyright करोesn't clash with the
+ * GPL, so the module-only restriction has been हटाओd..
  */
 
 /* Because this code is derived from the 4.3BSD compress source:
  *
- * Copyright (c) 1985, 1986 The Regents of the University of California.
+ * Copyright (c) 1985, 1986 The Regents of the University of Calअगरornia.
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * James A. Woods, derived from original work by Spencer Thomas
  * and Joseph Orost.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	Calअगरornia, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *    may be used to enकरोrse or promote products derived from this software
+ *    without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -45,54 +46,54 @@
  */
 
 /*
- * This version is for use with contiguous buffers on Linux-derived systems.
+ * This version is क्रम use with contiguous buffers on Linux-derived प्रणालीs.
  *
- *  ==FILEVERSION 20000226==
+ *  ==खाताVERSION 20000226==
  *
  *  NOTE TO MAINTAINERS:
- *     If you modify this file at all, please set the number above to the
- *     date of the modification as YYMMDD (year month day).
+ *     If you modअगरy this file at all, please set the number above to the
+ *     date of the modअगरication as YYMMDD (year month day).
  *     bsd_comp.c is shipped with a PPP distribution as well as with
- *     the kernel; if everyone increases the FILEVERSION number above,
- *     then scripts can do the right thing when deciding whether to
- *     install a new bsd_comp.c file. Don't change the format of that
+ *     the kernel; अगर everyone increases the खाताVERSION number above,
+ *     then scripts can करो the right thing when deciding whether to
+ *     install a new bsd_comp.c file. Don't change the क्रमmat of that
  *     line otherwise, so the installation script can recognize it.
  *
  * From: bsd_comp.c,v 1.3 1994/12/08 01:59:58 paulus Exp
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/string.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/माला.स>
 
-#include <linux/ppp_defs.h>
+#समावेश <linux/ppp_defs.h>
 
-#undef   PACKETPTR
-#define  PACKETPTR 1
-#include <linux/ppp-comp.h>
-#undef   PACKETPTR
+#अघोषित   PACKETPTR
+#घोषणा  PACKETPTR 1
+#समावेश <linux/ppp-comp.h>
+#अघोषित   PACKETPTR
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
 /*
  * PPP "BSD compress" compression
- *  The differences between this compression and the classic BSD LZW
+ *  The dअगरferences between this compression and the classic BSD LZW
  *  source are obvious from the requirement that the classic code worked
- *  with files while this handles arbitrarily long streams that
- *  are broken into packets.  They are:
+ *  with files जबतक this handles arbitrarily दीर्घ streams that
+ *  are broken पूर्णांकo packets.  They are:
  *
  *	When the code size expands, a block of junk is not emitted by
  *	    the compressor and not expected by the decompressor.
  *
- *	New codes are not necessarily assigned every time an old
+ *	New codes are not necessarily asचिन्हित every समय an old
  *	    code is output by the compressor.  This is because a packet
- *	    end forces a code to be emitted, but does not imply that a
+ *	    end क्रमces a code to be emitted, but करोes not imply that a
  *	    new sequence has been seen.
  *
  *	The compression ratio is checked at the first end of a packet
- *	    after the appropriate gap.	Besides simplifying and speeding
+ *	    after the appropriate gap.	Besides simplअगरying and speeding
  *	    things up, this makes it more likely that the transmitter
  *	    and receiver will agree when the dictionary is cleared when
  *	    compression is not going well.
@@ -103,196 +104,196 @@
  * from the third byte of the BSD Compress CCP configuration option.
  */
 
-#define BSD_VERSION(x)	((x) >> 5)
-#define BSD_NBITS(x)	((x) & 0x1F)
+#घोषणा BSD_VERSION(x)	((x) >> 5)
+#घोषणा BSD_NBITS(x)	((x) & 0x1F)
 
-#define BSD_CURRENT_VERSION	1
+#घोषणा BSD_CURRENT_VERSION	1
 
 /*
- * A dictionary for doing BSD compress.
+ * A dictionary क्रम करोing BSD compress.
  */
 
-struct bsd_dict {
-    union {				/* hash value */
-	unsigned long	fcode;
-	struct {
-#if defined(__LITTLE_ENDIAN)		/* Little endian order */
-	    unsigned short	prefix;	/* preceding code */
-	    unsigned char	suffix; /* last character of new code */
-	    unsigned char	pad;
-#elif defined(__BIG_ENDIAN)		/* Big endian order */
-	    unsigned char	pad;
-	    unsigned char	suffix; /* last character of new code */
-	    unsigned short	prefix; /* preceding code */
-#else
-#error Endianness not defined...
-#endif
-	} hs;
-    } f;
-    unsigned short codem1;		/* output of hash table -1 */
-    unsigned short cptr;		/* map code to hash table entry */
-};
+काष्ठा bsd_dict अणु
+    जोड़ अणु				/* hash value */
+	अचिन्हित दीर्घ	fcode;
+	काष्ठा अणु
+#अगर defined(__LITTLE_ENDIAN)		/* Little endian order */
+	    अचिन्हित लघु	prefix;	/* preceding code */
+	    अचिन्हित अक्षर	suffix; /* last अक्षरacter of new code */
+	    अचिन्हित अक्षर	pad;
+#या_अगर defined(__BIG_ENDIAN)		/* Big endian order */
+	    अचिन्हित अक्षर	pad;
+	    अचिन्हित अक्षर	suffix; /* last अक्षरacter of new code */
+	    अचिन्हित लघु	prefix; /* preceding code */
+#अन्यथा
+#त्रुटि Endianness not defined...
+#पूर्ण_अगर
+	पूर्ण hs;
+    पूर्ण f;
+    अचिन्हित लघु codem1;		/* output of hash table -1 */
+    अचिन्हित लघु cptr;		/* map code to hash table entry */
+पूर्ण;
 
-struct bsd_db {
-    int	    totlen;			/* length of this structure */
-    unsigned int   hsize;		/* size of the hash table */
-    unsigned char  hshift;		/* used in hash function */
-    unsigned char  n_bits;		/* current bits/code */
-    unsigned char  maxbits;		/* maximum bits/code */
-    unsigned char  debug;		/* non-zero if debug desired */
-    unsigned char  unit;		/* ppp unit number */
-    unsigned short seqno;		/* sequence # of next packet */
-    unsigned int   mru;			/* size of receive (decompress) bufr */
-    unsigned int   maxmaxcode;		/* largest valid code */
-    unsigned int   max_ent;		/* largest code in use */
-    unsigned int   in_count;		/* uncompressed bytes, aged */
-    unsigned int   bytes_out;		/* compressed bytes, aged */
-    unsigned int   ratio;		/* recent compression ratio */
-    unsigned int   checkpoint;		/* when to next check the ratio */
-    unsigned int   clear_count;		/* times dictionary cleared */
-    unsigned int   incomp_count;	/* incompressible packets */
-    unsigned int   incomp_bytes;	/* incompressible bytes */
-    unsigned int   uncomp_count;	/* uncompressed packets */
-    unsigned int   uncomp_bytes;	/* uncompressed bytes */
-    unsigned int   comp_count;		/* compressed packets */
-    unsigned int   comp_bytes;		/* compressed bytes */
-    unsigned short  *lens;		/* array of lengths of codes */
-    struct bsd_dict *dict;		/* dictionary */
-};
+काष्ठा bsd_db अणु
+    पूर्णांक	    totlen;			/* length of this काष्ठाure */
+    अचिन्हित पूर्णांक   hsize;		/* size of the hash table */
+    अचिन्हित अक्षर  hshअगरt;		/* used in hash function */
+    अचिन्हित अक्षर  n_bits;		/* current bits/code */
+    अचिन्हित अक्षर  maxbits;		/* maximum bits/code */
+    अचिन्हित अक्षर  debug;		/* non-zero अगर debug desired */
+    अचिन्हित अक्षर  unit;		/* ppp unit number */
+    अचिन्हित लघु seqno;		/* sequence # of next packet */
+    अचिन्हित पूर्णांक   mru;			/* size of receive (decompress) bufr */
+    अचिन्हित पूर्णांक   maxmaxcode;		/* largest valid code */
+    अचिन्हित पूर्णांक   max_ent;		/* largest code in use */
+    अचिन्हित पूर्णांक   in_count;		/* uncompressed bytes, aged */
+    अचिन्हित पूर्णांक   bytes_out;		/* compressed bytes, aged */
+    अचिन्हित पूर्णांक   ratio;		/* recent compression ratio */
+    अचिन्हित पूर्णांक   checkpoपूर्णांक;		/* when to next check the ratio */
+    अचिन्हित पूर्णांक   clear_count;		/* बार dictionary cleared */
+    अचिन्हित पूर्णांक   incomp_count;	/* incompressible packets */
+    अचिन्हित पूर्णांक   incomp_bytes;	/* incompressible bytes */
+    अचिन्हित पूर्णांक   uncomp_count;	/* uncompressed packets */
+    अचिन्हित पूर्णांक   uncomp_bytes;	/* uncompressed bytes */
+    अचिन्हित पूर्णांक   comp_count;		/* compressed packets */
+    अचिन्हित पूर्णांक   comp_bytes;		/* compressed bytes */
+    अचिन्हित लघु  *lens;		/* array of lengths of codes */
+    काष्ठा bsd_dict *dict;		/* dictionary */
+पूर्ण;
 
-#define BSD_OVHD	2		/* BSD compress overhead/packet */
-#define MIN_BSD_BITS	9
-#define BSD_INIT_BITS	MIN_BSD_BITS
-#define MAX_BSD_BITS	15
+#घोषणा BSD_OVHD	2		/* BSD compress overhead/packet */
+#घोषणा MIN_BSD_BITS	9
+#घोषणा BSD_INIT_BITS	MIN_BSD_BITS
+#घोषणा MAX_BSD_BITS	15
 
-static void	bsd_free (void *state);
-static void	*bsd_alloc(unsigned char *options, int opt_len, int decomp);
-static void	*bsd_comp_alloc (unsigned char *options, int opt_len);
-static void	*bsd_decomp_alloc (unsigned char *options, int opt_len);
+अटल व्योम	bsd_मुक्त (व्योम *state);
+अटल व्योम	*bsd_alloc(अचिन्हित अक्षर *options, पूर्णांक opt_len, पूर्णांक decomp);
+अटल व्योम	*bsd_comp_alloc (अचिन्हित अक्षर *options, पूर्णांक opt_len);
+अटल व्योम	*bsd_decomp_alloc (अचिन्हित अक्षर *options, पूर्णांक opt_len);
 
-static int	bsd_init        (void *db, unsigned char *options,
-			         int opt_len, int unit, int debug, int decomp);
-static int	bsd_comp_init   (void *state, unsigned char *options,
-			         int opt_len, int unit, int opthdr, int debug);
-static int	bsd_decomp_init (void *state, unsigned char *options,
-				 int opt_len, int unit, int opthdr, int mru,
-				 int debug);
+अटल पूर्णांक	bsd_init        (व्योम *db, अचिन्हित अक्षर *options,
+			         पूर्णांक opt_len, पूर्णांक unit, पूर्णांक debug, पूर्णांक decomp);
+अटल पूर्णांक	bsd_comp_init   (व्योम *state, अचिन्हित अक्षर *options,
+			         पूर्णांक opt_len, पूर्णांक unit, पूर्णांक opthdr, पूर्णांक debug);
+अटल पूर्णांक	bsd_decomp_init (व्योम *state, अचिन्हित अक्षर *options,
+				 पूर्णांक opt_len, पूर्णांक unit, पूर्णांक opthdr, पूर्णांक mru,
+				 पूर्णांक debug);
 
-static void	bsd_reset (void *state);
-static void	bsd_comp_stats (void *state, struct compstat *stats);
+अटल व्योम	bsd_reset (व्योम *state);
+अटल व्योम	bsd_comp_stats (व्योम *state, काष्ठा compstat *stats);
 
-static int	bsd_compress (void *state, unsigned char *rptr,
-			      unsigned char *obuf, int isize, int osize);
-static void	bsd_incomp (void *state, unsigned char *ibuf, int icnt);
+अटल पूर्णांक	bsd_compress (व्योम *state, अचिन्हित अक्षर *rptr,
+			      अचिन्हित अक्षर *obuf, पूर्णांक isize, पूर्णांक osize);
+अटल व्योम	bsd_incomp (व्योम *state, अचिन्हित अक्षर *ibuf, पूर्णांक icnt);
 
-static int	bsd_decompress (void *state, unsigned char *ibuf, int isize,
-				unsigned char *obuf, int osize);
+अटल पूर्णांक	bsd_decompress (व्योम *state, अचिन्हित अक्षर *ibuf, पूर्णांक isize,
+				अचिन्हित अक्षर *obuf, पूर्णांक osize);
 
 /* These are in ppp_generic.c */
-extern int  ppp_register_compressor   (struct compressor *cp);
-extern void ppp_unregister_compressor (struct compressor *cp);
+बाह्य पूर्णांक  ppp_रेजिस्टर_compressor   (काष्ठा compressor *cp);
+बाह्य व्योम ppp_unरेजिस्टर_compressor (काष्ठा compressor *cp);
 
 /*
  * the next two codes should not be changed lightly, as they must not
  * lie within the contiguous general code space.
  */
-#define CLEAR	256			/* table clear output code */
-#define FIRST	257			/* first free entry */
-#define LAST	255
+#घोषणा CLEAR	256			/* table clear output code */
+#घोषणा FIRST	257			/* first मुक्त entry */
+#घोषणा LAST	255
 
-#define MAXCODE(b)	((1 << (b)) - 1)
-#define BADCODEM1	MAXCODE(MAX_BSD_BITS)
+#घोषणा MAXCODE(b)	((1 << (b)) - 1)
+#घोषणा BADCODEM1	MAXCODE(MAX_BSD_BITS)
 
-#define BSD_HASH(prefix,suffix,hshift) ((((unsigned long)(suffix))<<(hshift)) \
-					 ^ (unsigned long)(prefix))
-#define BSD_KEY(prefix,suffix)		((((unsigned long)(suffix)) << 16) \
-					 + (unsigned long)(prefix))
+#घोषणा BSD_HASH(prefix,suffix,hshअगरt) ((((अचिन्हित दीर्घ)(suffix))<<(hshअगरt)) \
+					 ^ (अचिन्हित दीर्घ)(prefix))
+#घोषणा BSD_KEY(prefix,suffix)		((((अचिन्हित दीर्घ)(suffix)) << 16) \
+					 + (अचिन्हित दीर्घ)(prefix))
 
-#define CHECK_GAP	10000		/* Ratio check interval */
+#घोषणा CHECK_GAP	10000		/* Ratio check पूर्णांकerval */
 
-#define RATIO_SCALE_LOG	8
-#define RATIO_SCALE	(1<<RATIO_SCALE_LOG)
-#define RATIO_MAX	(0x7fffffff>>RATIO_SCALE_LOG)
+#घोषणा RATIO_SCALE_LOG	8
+#घोषणा RATIO_SCALE	(1<<RATIO_SCALE_LOG)
+#घोषणा RATIO_MAX	(0x7fffffff>>RATIO_SCALE_LOG)
 
 /*
  * clear the dictionary
  */
 
-static void
-bsd_clear(struct bsd_db *db)
-{
+अटल व्योम
+bsd_clear(काष्ठा bsd_db *db)
+अणु
     db->clear_count++;
     db->max_ent      = FIRST-1;
     db->n_bits       = BSD_INIT_BITS;
     db->bytes_out    = 0;
     db->in_count     = 0;
     db->ratio	     = 0;
-    db->checkpoint   = CHECK_GAP;
-}
+    db->checkpoपूर्णांक   = CHECK_GAP;
+पूर्ण
 
 /*
- * If the dictionary is full, then see if it is time to reset it.
+ * If the dictionary is full, then see अगर it is समय to reset it.
  *
- * Compute the compression ratio using fixed-point arithmetic
+ * Compute the compression ratio using fixed-poपूर्णांक arithmetic
  * with 8 fractional bits.
  *
  * Since we have an infinite stream instead of a single file,
  * watch only the local compression ratio.
  *
- * Since both peers must reset the dictionary at the same time even in
- * the absence of CLEAR codes (while packets are incompressible), they
+ * Since both peers must reset the dictionary at the same समय even in
+ * the असलence of CLEAR codes (जबतक packets are incompressible), they
  * must compute the same ratio.
  */
 
-static int bsd_check (struct bsd_db *db)	/* 1=output CLEAR */
-  {
-    unsigned int new_ratio;
+अटल पूर्णांक bsd_check (काष्ठा bsd_db *db)	/* 1=output CLEAR */
+  अणु
+    अचिन्हित पूर्णांक new_ratio;
 
-    if (db->in_count >= db->checkpoint)
-      {
+    अगर (db->in_count >= db->checkpoपूर्णांक)
+      अणु
 	/* age the ratio by limiting the size of the counts */
-	if (db->in_count >= RATIO_MAX || db->bytes_out >= RATIO_MAX)
-	  {
+	अगर (db->in_count >= RATIO_MAX || db->bytes_out >= RATIO_MAX)
+	  अणु
 	    db->in_count  -= (db->in_count  >> 2);
 	    db->bytes_out -= (db->bytes_out >> 2);
-	  }
+	  पूर्ण
 
-	db->checkpoint = db->in_count + CHECK_GAP;
+	db->checkpoपूर्णांक = db->in_count + CHECK_GAP;
 
-	if (db->max_ent >= db->maxmaxcode)
-	  {
-	    /* Reset the dictionary only if the ratio is worse,
-	     * or if it looks as if it has been poisoned
+	अगर (db->max_ent >= db->maxmaxcode)
+	  अणु
+	    /* Reset the dictionary only अगर the ratio is worse,
+	     * or अगर it looks as अगर it has been poisoned
 	     * by incompressible data.
 	     *
-	     * This does not overflow, because
+	     * This करोes not overflow, because
 	     *	db->in_count <= RATIO_MAX.
 	     */
 
 	    new_ratio = db->in_count << RATIO_SCALE_LOG;
-	    if (db->bytes_out != 0)
-	      {
+	    अगर (db->bytes_out != 0)
+	      अणु
 		new_ratio /= db->bytes_out;
-	      }
+	      पूर्ण
 
-	    if (new_ratio < db->ratio || new_ratio < 1 * RATIO_SCALE)
-	      {
+	    अगर (new_ratio < db->ratio || new_ratio < 1 * RATIO_SCALE)
+	      अणु
 		bsd_clear (db);
-		return 1;
-	      }
+		वापस 1;
+	      पूर्ण
 	    db->ratio = new_ratio;
-	  }
-      }
-    return 0;
-  }
+	  पूर्ण
+      पूर्ण
+    वापस 0;
+  पूर्ण
 
 /*
  * Return statistics.
  */
 
-static void bsd_comp_stats (void *state, struct compstat *stats)
-  {
-    struct bsd_db *db = (struct bsd_db *) state;
+अटल व्योम bsd_comp_stats (व्योम *state, काष्ठा compstat *stats)
+  अणु
+    काष्ठा bsd_db *db = (काष्ठा bsd_db *) state;
 
     stats->unc_bytes    = db->uncomp_bytes;
     stats->unc_packets  = db->uncomp_count;
@@ -302,411 +303,411 @@ static void bsd_comp_stats (void *state, struct compstat *stats)
     stats->inc_packets  = db->incomp_count;
     stats->in_count     = db->in_count;
     stats->bytes_out    = db->bytes_out;
-  }
+  पूर्ण
 
 /*
  * Reset state, as on a CCP ResetReq.
  */
 
-static void bsd_reset (void *state)
-  {
-    struct bsd_db *db = (struct bsd_db *) state;
+अटल व्योम bsd_reset (व्योम *state)
+  अणु
+    काष्ठा bsd_db *db = (काष्ठा bsd_db *) state;
 
     bsd_clear(db);
 
     db->seqno       = 0;
     db->clear_count = 0;
-  }
+  पूर्ण
 
 /*
- * Release the compression structure
+ * Release the compression काष्ठाure
  */
 
-static void bsd_free (void *state)
-{
-	struct bsd_db *db = state;
+अटल व्योम bsd_मुक्त (व्योम *state)
+अणु
+	काष्ठा bsd_db *db = state;
 
-	if (!db)
-		return;
+	अगर (!db)
+		वापस;
 
 /*
  * Release the dictionary
  */
-	vfree(db->dict);
-	db->dict = NULL;
+	vमुक्त(db->dict);
+	db->dict = शून्य;
 /*
  * Release the string buffer
  */
-	vfree(db->lens);
-	db->lens = NULL;
+	vमुक्त(db->lens);
+	db->lens = शून्य;
 /*
- * Finally release the structure itself.
+ * Finally release the काष्ठाure itself.
  */
-	kfree(db);
-}
+	kमुक्त(db);
+पूर्ण
 
 /*
- * Allocate space for a (de) compressor.
+ * Allocate space क्रम a (de) compressor.
  */
 
-static void *bsd_alloc (unsigned char *options, int opt_len, int decomp)
-  {
-    int bits;
-    unsigned int hsize, hshift, maxmaxcode;
-    struct bsd_db *db;
+अटल व्योम *bsd_alloc (अचिन्हित अक्षर *options, पूर्णांक opt_len, पूर्णांक decomp)
+  अणु
+    पूर्णांक bits;
+    अचिन्हित पूर्णांक hsize, hshअगरt, maxmaxcode;
+    काष्ठा bsd_db *db;
 
-    if (opt_len != 3 || options[0] != CI_BSD_COMPRESS || options[1] != 3
+    अगर (opt_len != 3 || options[0] != CI_BSD_COMPRESS || options[1] != 3
 	|| BSD_VERSION(options[2]) != BSD_CURRENT_VERSION)
-      {
-	return NULL;
-      }
+      अणु
+	वापस शून्य;
+      पूर्ण
 
     bits = BSD_NBITS(options[2]);
 
-    switch (bits)
-      {
-    case 9:			/* needs 82152 for both directions */
-    case 10:			/* needs 84144 */
-    case 11:			/* needs 88240 */
-    case 12:			/* needs 96432 */
+    चयन (bits)
+      अणु
+    हाल 9:			/* needs 82152 क्रम both directions */
+    हाल 10:			/* needs 84144 */
+    हाल 11:			/* needs 88240 */
+    हाल 12:			/* needs 96432 */
 	hsize = 5003;
-	hshift = 4;
-	break;
-    case 13:			/* needs 176784 */
+	hshअगरt = 4;
+	अवरोध;
+    हाल 13:			/* needs 176784 */
 	hsize = 9001;
-	hshift = 5;
-	break;
-    case 14:			/* needs 353744 */
+	hshअगरt = 5;
+	अवरोध;
+    हाल 14:			/* needs 353744 */
 	hsize = 18013;
-	hshift = 6;
-	break;
-    case 15:			/* needs 691440 */
+	hshअगरt = 6;
+	अवरोध;
+    हाल 15:			/* needs 691440 */
 	hsize = 35023;
-	hshift = 7;
-	break;
-    case 16:			/* needs 1366160--far too much, */
-	/* hsize = 69001; */	/* and 69001 is too big for cptr */
-	/* hshift = 8; */	/* in struct bsd_db */
-	/* break; */
-    default:
-	return NULL;
-      }
+	hshअगरt = 7;
+	अवरोध;
+    हाल 16:			/* needs 1366160--far too much, */
+	/* hsize = 69001; */	/* and 69001 is too big क्रम cptr */
+	/* hshअगरt = 8; */	/* in काष्ठा bsd_db */
+	/* अवरोध; */
+    शेष:
+	वापस शून्य;
+      पूर्ण
 /*
- * Allocate the main control structure for this instance.
+ * Allocate the मुख्य control काष्ठाure क्रम this instance.
  */
     maxmaxcode = MAXCODE(bits);
-    db         = kzalloc(sizeof (struct bsd_db),
+    db         = kzalloc(माप (काष्ठा bsd_db),
 					    GFP_KERNEL);
-    if (!db)
-      {
-	return NULL;
-      }
+    अगर (!db)
+      अणु
+	वापस शून्य;
+      पूर्ण
 
 /*
- * Allocate space for the dictionary. This may be more than one page in
+ * Allocate space क्रम the dictionary. This may be more than one page in
  * length.
  */
-    db->dict = vmalloc(array_size(hsize, sizeof(struct bsd_dict)));
-    if (!db->dict)
-      {
-	bsd_free (db);
-	return NULL;
-      }
+    db->dict = vदो_स्मृति(array_size(hsize, माप(काष्ठा bsd_dict)));
+    अगर (!db->dict)
+      अणु
+	bsd_मुक्त (db);
+	वापस शून्य;
+      पूर्ण
 
 /*
  * If this is the compression buffer then there is no length data.
  */
-    if (!decomp)
-      {
-	db->lens = NULL;
-      }
+    अगर (!decomp)
+      अणु
+	db->lens = शून्य;
+      पूर्ण
 /*
- * For decompression, the length information is needed as well.
+ * For decompression, the length inक्रमmation is needed as well.
  */
-    else
-      {
-        db->lens = vmalloc(array_size(sizeof(db->lens[0]), (maxmaxcode + 1)));
-	if (!db->lens)
-	  {
-	    bsd_free (db);
-	    return NULL;
-	  }
-      }
+    अन्यथा
+      अणु
+        db->lens = vदो_स्मृति(array_size(माप(db->lens[0]), (maxmaxcode + 1)));
+	अगर (!db->lens)
+	  अणु
+	    bsd_मुक्त (db);
+	    वापस शून्य;
+	  पूर्ण
+      पूर्ण
 /*
- * Initialize the data information for the compression code
+ * Initialize the data inक्रमmation क्रम the compression code
  */
-    db->totlen     = sizeof (struct bsd_db)   +
-      		    (sizeof (struct bsd_dict) * hsize);
+    db->totlen     = माप (काष्ठा bsd_db)   +
+      		    (माप (काष्ठा bsd_dict) * hsize);
 
     db->hsize      = hsize;
-    db->hshift     = hshift;
+    db->hshअगरt     = hshअगरt;
     db->maxmaxcode = maxmaxcode;
     db->maxbits    = bits;
 
-    return (void *) db;
-  }
+    वापस (व्योम *) db;
+  पूर्ण
 
-static void *bsd_comp_alloc (unsigned char *options, int opt_len)
-  {
-    return bsd_alloc (options, opt_len, 0);
-  }
+अटल व्योम *bsd_comp_alloc (अचिन्हित अक्षर *options, पूर्णांक opt_len)
+  अणु
+    वापस bsd_alloc (options, opt_len, 0);
+  पूर्ण
 
-static void *bsd_decomp_alloc (unsigned char *options, int opt_len)
-  {
-    return bsd_alloc (options, opt_len, 1);
-  }
+अटल व्योम *bsd_decomp_alloc (अचिन्हित अक्षर *options, पूर्णांक opt_len)
+  अणु
+    वापस bsd_alloc (options, opt_len, 1);
+  पूर्ण
 
 /*
  * Initialize the database.
  */
 
-static int bsd_init (void *state, unsigned char *options,
-		     int opt_len, int unit, int debug, int decomp)
-  {
-    struct bsd_db *db = state;
-    int indx;
+अटल पूर्णांक bsd_init (व्योम *state, अचिन्हित अक्षर *options,
+		     पूर्णांक opt_len, पूर्णांक unit, पूर्णांक debug, पूर्णांक decomp)
+  अणु
+    काष्ठा bsd_db *db = state;
+    पूर्णांक indx;
 
-    if ((opt_len != 3) || (options[0] != CI_BSD_COMPRESS) || (options[1] != 3)
+    अगर ((opt_len != 3) || (options[0] != CI_BSD_COMPRESS) || (options[1] != 3)
 	|| (BSD_VERSION(options[2]) != BSD_CURRENT_VERSION)
 	|| (BSD_NBITS(options[2]) != db->maxbits)
-	|| (decomp && db->lens == NULL))
-      {
-	return 0;
-      }
+	|| (decomp && db->lens == शून्य))
+      अणु
+	वापस 0;
+      पूर्ण
 
-    if (decomp)
-      {
+    अगर (decomp)
+      अणु
 	indx = LAST;
-	do
-	  {
+	करो
+	  अणु
 	    db->lens[indx] = 1;
-	  }
-	while (indx-- > 0);
-      }
+	  पूर्ण
+	जबतक (indx-- > 0);
+      पूर्ण
 
     indx = db->hsize;
-    while (indx-- != 0)
-      {
+    जबतक (indx-- != 0)
+      अणु
 	db->dict[indx].codem1 = BADCODEM1;
 	db->dict[indx].cptr   = 0;
-      }
+      पूर्ण
 
     db->unit = unit;
     db->mru  = 0;
-#ifndef DEBUG
-    if (debug)
-#endif
+#अगर_अघोषित DEBUG
+    अगर (debug)
+#पूर्ण_अगर
       db->debug = 1;
 
     bsd_reset(db);
 
-    return 1;
-  }
+    वापस 1;
+  पूर्ण
 
-static int bsd_comp_init (void *state, unsigned char *options,
-			  int opt_len, int unit, int opthdr, int debug)
-  {
-    return bsd_init (state, options, opt_len, unit, debug, 0);
-  }
+अटल पूर्णांक bsd_comp_init (व्योम *state, अचिन्हित अक्षर *options,
+			  पूर्णांक opt_len, पूर्णांक unit, पूर्णांक opthdr, पूर्णांक debug)
+  अणु
+    वापस bsd_init (state, options, opt_len, unit, debug, 0);
+  पूर्ण
 
-static int bsd_decomp_init (void *state, unsigned char *options,
-			    int opt_len, int unit, int opthdr, int mru,
-			    int debug)
-  {
-    return bsd_init (state, options, opt_len, unit, debug, 1);
-  }
+अटल पूर्णांक bsd_decomp_init (व्योम *state, अचिन्हित अक्षर *options,
+			    पूर्णांक opt_len, पूर्णांक unit, पूर्णांक opthdr, पूर्णांक mru,
+			    पूर्णांक debug)
+  अणु
+    वापस bsd_init (state, options, opt_len, unit, debug, 1);
+  पूर्ण
 
 /*
- * Obtain pointers to the various structures in the compression tables
+ * Obtain poपूर्णांकers to the various काष्ठाures in the compression tables
  */
 
-#define dict_ptrx(p,idx) &(p->dict[idx])
-#define lens_ptrx(p,idx) &(p->lens[idx])
+#घोषणा dict_ptrx(p,idx) &(p->dict[idx])
+#घोषणा lens_ptrx(p,idx) &(p->lens[idx])
 
-#ifdef DEBUG
-static unsigned short *lens_ptr(struct bsd_db *db, int idx)
-  {
-    if ((unsigned int) idx > (unsigned int) db->maxmaxcode)
-      {
-	printk ("<9>ppp: lens_ptr(%d) > max\n", idx);
+#अगर_घोषित DEBUG
+अटल अचिन्हित लघु *lens_ptr(काष्ठा bsd_db *db, पूर्णांक idx)
+  अणु
+    अगर ((अचिन्हित पूर्णांक) idx > (अचिन्हित पूर्णांक) db->maxmaxcode)
+      अणु
+	prपूर्णांकk ("<9>ppp: lens_ptr(%d) > max\n", idx);
 	idx = 0;
-      }
-    return lens_ptrx (db, idx);
-  }
+      पूर्ण
+    वापस lens_ptrx (db, idx);
+  पूर्ण
 
-static struct bsd_dict *dict_ptr(struct bsd_db *db, int idx)
-  {
-    if ((unsigned int) idx >= (unsigned int) db->hsize)
-      {
-	printk ("<9>ppp: dict_ptr(%d) > max\n", idx);
+अटल काष्ठा bsd_dict *dict_ptr(काष्ठा bsd_db *db, पूर्णांक idx)
+  अणु
+    अगर ((अचिन्हित पूर्णांक) idx >= (अचिन्हित पूर्णांक) db->hsize)
+      अणु
+	prपूर्णांकk ("<9>ppp: dict_ptr(%d) > max\n", idx);
 	idx = 0;
-      }
-    return dict_ptrx (db, idx);
-  }
+      पूर्ण
+    वापस dict_ptrx (db, idx);
+  पूर्ण
 
-#else
-#define lens_ptr(db,idx) lens_ptrx(db,idx)
-#define dict_ptr(db,idx) dict_ptrx(db,idx)
-#endif
+#अन्यथा
+#घोषणा lens_ptr(db,idx) lens_ptrx(db,idx)
+#घोषणा dict_ptr(db,idx) dict_ptrx(db,idx)
+#पूर्ण_अगर
 
 /*
  * compress a packet
  *
  *	The result of this function is the size of the compressed
- *	packet. A zero is returned if the packet was not compressed
- *	for some reason, such as the size being larger than uncompressed.
+ *	packet. A zero is वापसed अगर the packet was not compressed
+ *	क्रम some reason, such as the size being larger than uncompressed.
  *
  *	One change from the BSD compress command is that when the
- *	code size expands, we do not output a bunch of padding.
+ *	code size expands, we करो not output a bunch of padding.
  */
 
-static int bsd_compress (void *state, unsigned char *rptr, unsigned char *obuf,
-			 int isize, int osize)
-  {
-    struct bsd_db *db;
-    int hshift;
-    unsigned int max_ent;
-    unsigned int n_bits;
-    unsigned int bitno;
-    unsigned long accm;
-    int ent;
-    unsigned long fcode;
-    struct bsd_dict *dictp;
-    unsigned char c;
-    int hval;
-    int disp;
-    int ilen;
-    int mxcode;
-    unsigned char *wptr;
-    int olen;
+अटल पूर्णांक bsd_compress (व्योम *state, अचिन्हित अक्षर *rptr, अचिन्हित अक्षर *obuf,
+			 पूर्णांक isize, पूर्णांक osize)
+  अणु
+    काष्ठा bsd_db *db;
+    पूर्णांक hshअगरt;
+    अचिन्हित पूर्णांक max_ent;
+    अचिन्हित पूर्णांक n_bits;
+    अचिन्हित पूर्णांक bitno;
+    अचिन्हित दीर्घ accm;
+    पूर्णांक ent;
+    अचिन्हित दीर्घ fcode;
+    काष्ठा bsd_dict *dictp;
+    अचिन्हित अक्षर c;
+    पूर्णांक hval;
+    पूर्णांक disp;
+    पूर्णांक ilen;
+    पूर्णांक mxcode;
+    अचिन्हित अक्षर *wptr;
+    पूर्णांक olen;
 
-#define PUTBYTE(v)			\
-  {					\
+#घोषणा PUTBYTE(v)			\
+  अणु					\
     ++olen;				\
-    if (wptr)				\
-      {					\
-	*wptr++ = (unsigned char) (v);	\
-	if (olen >= osize)		\
-	  {				\
-	    wptr = NULL;		\
-	  }				\
-      }					\
-  }
+    अगर (wptr)				\
+      अणु					\
+	*wptr++ = (अचिन्हित अक्षर) (v);	\
+	अगर (olen >= osize)		\
+	  अणु				\
+	    wptr = शून्य;		\
+	  पूर्ण				\
+      पूर्ण					\
+  पूर्ण
 
-#define OUTPUT(ent)			\
-  {					\
+#घोषणा OUTPUT(ent)			\
+  अणु					\
     bitno -= n_bits;			\
     accm |= ((ent) << bitno);		\
-    do					\
-      {					\
+    करो					\
+      अणु					\
 	PUTBYTE(accm >> 24);		\
 	accm <<= 8;			\
 	bitno += 8;			\
-      }					\
-    while (bitno <= 24);		\
-  }
+      पूर्ण					\
+    जबतक (bitno <= 24);		\
+  पूर्ण
 
   /*
-   * If the protocol is not in the range we're interested in,
-   * just return without compressing the packet.  If it is,
+   * If the protocol is not in the range we're पूर्णांकerested in,
+   * just वापस without compressing the packet.  If it is,
    * the protocol becomes the first byte to compress.
    */
 
     ent = PPP_PROTOCOL(rptr);
-    if (ent < 0x21 || ent > 0xf9)
-      {
-	return 0;
-      }
+    अगर (ent < 0x21 || ent > 0xf9)
+      अणु
+	वापस 0;
+      पूर्ण
 
-    db      = (struct bsd_db *) state;
-    hshift  = db->hshift;
+    db      = (काष्ठा bsd_db *) state;
+    hshअगरt  = db->hshअगरt;
     max_ent = db->max_ent;
     n_bits  = db->n_bits;
     bitno   = 32;
     accm    = 0;
     mxcode  = MAXCODE (n_bits);
 
-    /* Initialize the output pointers */
+    /* Initialize the output poपूर्णांकers */
     wptr  = obuf;
     olen  = PPP_HDRLEN + BSD_OVHD;
 
-    if (osize > isize)
-      {
+    अगर (osize > isize)
+      अणु
 	osize = isize;
-      }
+      पूर्ण
 
-    /* This is the PPP header information */
-    if (wptr)
-      {
+    /* This is the PPP header inक्रमmation */
+    अगर (wptr)
+      अणु
 	*wptr++ = PPP_ADDRESS(rptr);
 	*wptr++ = PPP_CONTROL(rptr);
 	*wptr++ = 0;
 	*wptr++ = PPP_COMP;
 	*wptr++ = db->seqno >> 8;
 	*wptr++ = db->seqno;
-      }
+      पूर्ण
 
     /* Skip the input header */
     rptr  += PPP_HDRLEN;
     isize -= PPP_HDRLEN;
     ilen   = ++isize;	/* Low byte of protocol is counted as input */
 
-    while (--ilen > 0)
-      {
+    जबतक (--ilen > 0)
+      अणु
 	c     = *rptr++;
 	fcode = BSD_KEY  (ent, c);
-	hval  = BSD_HASH (ent, c, hshift);
+	hval  = BSD_HASH (ent, c, hshअगरt);
 	dictp = dict_ptr (db, hval);
 
 	/* Validate and then check the entry. */
-	if (dictp->codem1 >= max_ent)
-	  {
-	    goto nomatch;
-	  }
+	अगर (dictp->codem1 >= max_ent)
+	  अणु
+	    जाओ nomatch;
+	  पूर्ण
 
-	if (dictp->f.fcode == fcode)
-	  {
+	अगर (dictp->f.fcode == fcode)
+	  अणु
 	    ent = dictp->codem1 + 1;
-	    continue;	/* found (prefix,suffix) */
-	  }
+	    जारी;	/* found (prefix,suffix) */
+	  पूर्ण
 
-	/* continue probing until a match or invalid entry */
+	/* जारी probing until a match or invalid entry */
 	disp = (hval == 0) ? 1 : hval;
 
-	do
-	  {
+	करो
+	  अणु
 	    hval += disp;
-	    if (hval >= db->hsize)
-	      {
+	    अगर (hval >= db->hsize)
+	      अणु
 		hval -= db->hsize;
-	      }
+	      पूर्ण
 	    dictp = dict_ptr (db, hval);
-	    if (dictp->codem1 >= max_ent)
-	      {
-		goto nomatch;
-	      }
-	  }
-	while (dictp->f.fcode != fcode);
+	    अगर (dictp->codem1 >= max_ent)
+	      अणु
+		जाओ nomatch;
+	      पूर्ण
+	  पूर्ण
+	जबतक (dictp->f.fcode != fcode);
 
 	ent = dictp->codem1 + 1;	/* finally found (prefix,suffix) */
-	continue;
+	जारी;
 
 nomatch:
 	OUTPUT(ent);		/* output the prefix */
 
 	/* code -> hashtable */
-	if (max_ent < db->maxmaxcode)
-	  {
-	    struct bsd_dict *dictp2;
-	    struct bsd_dict *dictp3;
-	    int    indx;
+	अगर (max_ent < db->maxmaxcode)
+	  अणु
+	    काष्ठा bsd_dict *dictp2;
+	    काष्ठा bsd_dict *dictp3;
+	    पूर्णांक    indx;
 
-	    /* expand code size if needed */
-	    if (max_ent >= mxcode)
-	      {
+	    /* expand code size अगर needed */
+	    अगर (max_ent >= mxcode)
+	      अणु
 		db->n_bits = ++n_bits;
 		mxcode     = MAXCODE (n_bits);
-	      }
+	      पूर्ण
 
 	    /* Invalidate old hash table entry using
 	     * this code, and then take it over.
@@ -716,25 +717,25 @@ nomatch:
 	    indx   = dictp2->cptr;
 	    dictp3 = dict_ptr (db, indx);
 
-	    if (dictp3->codem1 == max_ent)
-	      {
+	    अगर (dictp3->codem1 == max_ent)
+	      अणु
 		dictp3->codem1 = BADCODEM1;
-	      }
+	      पूर्ण
 
 	    dictp2->cptr   = hval;
 	    dictp->codem1  = max_ent;
 	    dictp->f.fcode = fcode;
 	    db->max_ent    = ++max_ent;
 
-	    if (db->lens)
-	      {
-		unsigned short *len1 = lens_ptr (db, max_ent);
-		unsigned short *len2 = lens_ptr (db, ent);
+	    अगर (db->lens)
+	      अणु
+		अचिन्हित लघु *len1 = lens_ptr (db, max_ent);
+		अचिन्हित लघु *len2 = lens_ptr (db, ent);
 		*len1 = *len2 + 1;
-	      }
-	  }
+	      पूर्ण
+	  पूर्ण
 	ent = c;
-      }
+      पूर्ण
 
     OUTPUT(ent);		/* output the last code */
 
@@ -744,110 +745,110 @@ nomatch:
     ++db->uncomp_count;
     ++db->seqno;
 
-    if (bitno < 32)
-      {
-	++db->bytes_out; /* must be set before calling bsd_check */
-      }
+    अगर (bitno < 32)
+      अणु
+	++db->bytes_out; /* must be set beक्रमe calling bsd_check */
+      पूर्ण
 
     /*
-     * Generate the clear command if needed
+     * Generate the clear command अगर needed
      */
 
-    if (bsd_check(db))
-      {
+    अगर (bsd_check(db))
+      अणु
 	OUTPUT (CLEAR);
-      }
+      पूर्ण
 
     /*
      * Pad dribble bits of last code with ones.
      * Do not emit a completely useless byte of ones.
      */
 
-    if (bitno != 32)
-      {
+    अगर (bitno != 32)
+      अणु
 	PUTBYTE((accm | (0xff << (bitno-8))) >> 24);
-      }
+      पूर्ण
 
     /*
-     * Increase code size if we would have without the packet
-     * boundary because the decompressor will do so.
+     * Increase code size अगर we would have without the packet
+     * boundary because the decompressor will करो so.
      */
 
-    if (max_ent >= mxcode && max_ent < db->maxmaxcode)
-      {
+    अगर (max_ent >= mxcode && max_ent < db->maxmaxcode)
+      अणु
 	db->n_bits++;
-      }
+      पूर्ण
 
     /* If output length is too large then this is an incomplete frame. */
-    if (wptr == NULL)
-      {
+    अगर (wptr == शून्य)
+      अणु
 	++db->incomp_count;
 	db->incomp_bytes += isize;
 	olen              = 0;
-      }
-    else /* Count the number of compressed frames */
-      {
+      पूर्ण
+    अन्यथा /* Count the number of compressed frames */
+      अणु
 	++db->comp_count;
 	db->comp_bytes += olen;
-      }
+      पूर्ण
 
     /* Return the resulting output length */
-    return olen;
-#undef OUTPUT
-#undef PUTBYTE
-  }
+    वापस olen;
+#अघोषित OUTPUT
+#अघोषित PUTBYTE
+  पूर्ण
 
 /*
- * Update the "BSD Compress" dictionary on the receiver for
+ * Update the "BSD Compress" dictionary on the receiver क्रम
  * incompressible data by pretending to compress the incoming data.
  */
 
-static void bsd_incomp (void *state, unsigned char *ibuf, int icnt)
-  {
-    (void) bsd_compress (state, ibuf, (char *) 0, icnt, 0);
-  }
+अटल व्योम bsd_incomp (व्योम *state, अचिन्हित अक्षर *ibuf, पूर्णांक icnt)
+  अणु
+    (व्योम) bsd_compress (state, ibuf, (अक्षर *) 0, icnt, 0);
+  पूर्ण
 
 /*
  * Decompress "BSD Compress".
  *
- * Because of patent problems, we return DECOMP_ERROR for errors
- * found by inspecting the input data and for system problems, but
- * DECOMP_FATALERROR for any errors which could possibly be said to
+ * Because of patent problems, we वापस DECOMP_ERROR क्रम errors
+ * found by inspecting the input data and क्रम प्रणाली problems, but
+ * DECOMP_FATALERROR क्रम any errors which could possibly be said to
  * be being detected "after" decompression.  For DECOMP_ERROR,
- * we can issue a CCP reset-request; for DECOMP_FATALERROR, we may be
- * infringing a patent of Motorola's if we do, so we take CCP down
+ * we can issue a CCP reset-request; क्रम DECOMP_FATALERROR, we may be
+ * infringing a patent of Motorola's अगर we करो, so we take CCP करोwn
  * instead.
  *
  * Given that the frame has the correct sequence number and a good FCS,
  * errors such as invalid codes in the input most likely indicate a
- * bug, so we return DECOMP_FATALERROR for them in order to turn off
+ * bug, so we वापस DECOMP_FATALERROR क्रम them in order to turn off
  * compression, even though they are detected by inspecting the input.
  */
 
-static int bsd_decompress (void *state, unsigned char *ibuf, int isize,
-			   unsigned char *obuf, int osize)
-  {
-    struct bsd_db *db;
-    unsigned int max_ent;
-    unsigned long accm;
-    unsigned int bitno;		/* 1st valid bit in accm */
-    unsigned int n_bits;
-    unsigned int tgtbitno;	/* bitno when we have a code */
-    struct bsd_dict *dictp;
-    int explen;
-    int seq;
-    unsigned int incode;
-    unsigned int oldcode;
-    unsigned int finchar;
-    unsigned char *p;
-    unsigned char *wptr;
-    int adrs;
-    int ctrl;
-    int ilen;
-    int codelen;
-    int extra;
+अटल पूर्णांक bsd_decompress (व्योम *state, अचिन्हित अक्षर *ibuf, पूर्णांक isize,
+			   अचिन्हित अक्षर *obuf, पूर्णांक osize)
+  अणु
+    काष्ठा bsd_db *db;
+    अचिन्हित पूर्णांक max_ent;
+    अचिन्हित दीर्घ accm;
+    अचिन्हित पूर्णांक bitno;		/* 1st valid bit in accm */
+    अचिन्हित पूर्णांक n_bits;
+    अचिन्हित पूर्णांक tgtbitno;	/* bitno when we have a code */
+    काष्ठा bsd_dict *dictp;
+    पूर्णांक explen;
+    पूर्णांक seq;
+    अचिन्हित पूर्णांक incode;
+    अचिन्हित पूर्णांक oldcode;
+    अचिन्हित पूर्णांक finअक्षर;
+    अचिन्हित अक्षर *p;
+    अचिन्हित अक्षर *wptr;
+    पूर्णांक adrs;
+    पूर्णांक ctrl;
+    पूर्णांक ilen;
+    पूर्णांक codelen;
+    पूर्णांक extra;
 
-    db       = (struct bsd_db *) state;
+    db       = (काष्ठा bsd_db *) state;
     max_ent  = db->max_ent;
     accm     = 0;
     bitno    = 32;		/* 1st valid bit in accm */
@@ -868,19 +869,19 @@ static int bsd_decompress (void *state, unsigned char *ibuf, int isize,
     ilen  = isize - (PPP_HDRLEN + 2);
 
     /*
-     * Check the sequence number and give up if it differs from
+     * Check the sequence number and give up अगर it dअगरfers from
      * the value we're expecting.
      */
 
-    if (seq != db->seqno)
-      {
-	if (db->debug)
-	  {
-	    printk("bsd_decomp%d: bad sequence # %d, expected %d\n",
+    अगर (seq != db->seqno)
+      अणु
+	अगर (db->debug)
+	  अणु
+	    prपूर्णांकk("bsd_decomp%d: bad sequence # %d, expected %d\n",
 		   db->unit, seq, db->seqno - 1);
-	  }
-	return DECOMP_ERROR;
-      }
+	  पूर्ण
+	वापस DECOMP_ERROR;
+      पूर्ण
 
     ++db->seqno;
     db->bytes_out += ilen;
@@ -899,30 +900,30 @@ static int bsd_decompress (void *state, unsigned char *ibuf, int isize,
     explen  = 3;
 
     /*
-     * Keep the checkpoint correctly so that incompressible packets
-     * clear the dictionary at the proper times.
+     * Keep the checkpoपूर्णांक correctly so that incompressible packets
+     * clear the dictionary at the proper बार.
      */
 
-    for (;;)
-      {
-	if (ilen-- <= 0)
-	  {
-	    db->in_count += (explen - 3); /* don't count the header */
-	    break;
-	  }
+    क्रम (;;)
+      अणु
+	अगर (ilen-- <= 0)
+	  अणु
+	    db->in_count += (explen - 3); /* करोn't count the header */
+	    अवरोध;
+	  पूर्ण
 
 	/*
 	 * Accumulate bytes until we have a complete code.
 	 * Then get the next code, relying on the 32-bit,
-	 * unsigned accm to mask the result.
+	 * अचिन्हित accm to mask the result.
 	 */
 
 	bitno -= 8;
 	accm  |= *ibuf++ << bitno;
-	if (tgtbitno < bitno)
-	  {
-	    continue;
-	  }
+	अगर (tgtbitno < bitno)
+	  अणु
+	    जारी;
+	  पूर्ण
 
 	incode = accm >> tgtbitno;
 	accm <<= n_bits;
@@ -932,60 +933,60 @@ static int bsd_decompress (void *state, unsigned char *ibuf, int isize,
 	 * The dictionary must only be cleared at the end of a packet.
 	 */
 
-	if (incode == CLEAR)
-	  {
-	    if (ilen > 0)
-	      {
-		if (db->debug)
-		  {
-		    printk("bsd_decomp%d: bad CLEAR\n", db->unit);
-		  }
-		return DECOMP_FATALERROR;	/* probably a bug */
-	      }
+	अगर (incode == CLEAR)
+	  अणु
+	    अगर (ilen > 0)
+	      अणु
+		अगर (db->debug)
+		  अणु
+		    prपूर्णांकk("bsd_decomp%d: bad CLEAR\n", db->unit);
+		  पूर्ण
+		वापस DECOMP_FATALERROR;	/* probably a bug */
+	      पूर्ण
 
 	    bsd_clear(db);
-	    break;
-	  }
+	    अवरोध;
+	  पूर्ण
 
-	if ((incode > max_ent + 2) || (incode > db->maxmaxcode)
+	अगर ((incode > max_ent + 2) || (incode > db->maxmaxcode)
 	    || (incode > max_ent && oldcode == CLEAR))
-	  {
-	    if (db->debug)
-	      {
-		printk("bsd_decomp%d: bad code 0x%x oldcode=0x%x ",
+	  अणु
+	    अगर (db->debug)
+	      अणु
+		prपूर्णांकk("bsd_decomp%d: bad code 0x%x oldcode=0x%x ",
 		       db->unit, incode, oldcode);
-		printk("max_ent=0x%x explen=%d seqno=%d\n",
+		prपूर्णांकk("max_ent=0x%x explen=%d seqno=%d\n",
 		       max_ent, explen, db->seqno);
-	      }
-	    return DECOMP_FATALERROR;	/* probably a bug */
-	  }
+	      पूर्ण
+	    वापस DECOMP_FATALERROR;	/* probably a bug */
+	  पूर्ण
 
-	/* Special case for KwKwK string. */
-	if (incode > max_ent)
-	  {
-	    finchar = oldcode;
+	/* Special हाल क्रम KwKwK string. */
+	अगर (incode > max_ent)
+	  अणु
+	    finअक्षर = oldcode;
 	    extra   = 1;
-	  }
-	else
-	  {
-	    finchar = incode;
+	  पूर्ण
+	अन्यथा
+	  अणु
+	    finअक्षर = incode;
 	    extra   = 0;
-	  }
+	  पूर्ण
 
-	codelen = *(lens_ptr (db, finchar));
+	codelen = *(lens_ptr (db, finअक्षर));
 	explen += codelen + extra;
-	if (explen > osize)
-	  {
-	    if (db->debug)
-	      {
-		printk("bsd_decomp%d: ran out of mru\n", db->unit);
-#ifdef DEBUG
-		printk("  len=%d, finchar=0x%x, codelen=%d, explen=%d\n",
-		       ilen, finchar, codelen, explen);
-#endif
-	      }
-	    return DECOMP_FATALERROR;
-	  }
+	अगर (explen > osize)
+	  अणु
+	    अगर (db->debug)
+	      अणु
+		prपूर्णांकk("bsd_decomp%d: ran out of mru\n", db->unit);
+#अगर_घोषित DEBUG
+		prपूर्णांकk("  len=%d, finchar=0x%x, codelen=%d, explen=%d\n",
+		       ilen, finअक्षर, codelen, explen);
+#पूर्ण_अगर
+	      पूर्ण
+	    वापस DECOMP_FATALERROR;
+	  पूर्ण
 
 	/*
 	 * Decode this code and install it in the decompressed buffer.
@@ -993,101 +994,101 @@ static int bsd_decompress (void *state, unsigned char *ibuf, int isize,
 
 	wptr += codelen;
 	p     = wptr;
-	while (finchar > LAST)
-	  {
-	    struct bsd_dict *dictp2 = dict_ptr (db, finchar);
+	जबतक (finअक्षर > LAST)
+	  अणु
+	    काष्ठा bsd_dict *dictp2 = dict_ptr (db, finअक्षर);
 
 	    dictp = dict_ptr (db, dictp2->cptr);
-#ifdef DEBUG
-	    if (--codelen <= 0 || dictp->codem1 != finchar-1)
-	      {
-		if (codelen <= 0)
-		  {
-		    printk("bsd_decomp%d: fell off end of chain ", db->unit);
-		    printk("0x%x at 0x%x by 0x%x, max_ent=0x%x\n",
-			   incode, finchar, dictp2->cptr, max_ent);
-		  }
-		else
-		  {
-		    if (dictp->codem1 != finchar-1)
-		      {
-			printk("bsd_decomp%d: bad code chain 0x%x "
+#अगर_घोषित DEBUG
+	    अगर (--codelen <= 0 || dictp->codem1 != finअक्षर-1)
+	      अणु
+		अगर (codelen <= 0)
+		  अणु
+		    prपूर्णांकk("bsd_decomp%d: fell off end of chain ", db->unit);
+		    prपूर्णांकk("0x%x at 0x%x by 0x%x, max_ent=0x%x\n",
+			   incode, finअक्षर, dictp2->cptr, max_ent);
+		  पूर्ण
+		अन्यथा
+		  अणु
+		    अगर (dictp->codem1 != finअक्षर-1)
+		      अणु
+			prपूर्णांकk("bsd_decomp%d: bad code chain 0x%x "
 			       "finchar=0x%x ",
-			       db->unit, incode, finchar);
+			       db->unit, incode, finअक्षर);
 
-			printk("oldcode=0x%x cptr=0x%x codem1=0x%x\n",
+			prपूर्णांकk("oldcode=0x%x cptr=0x%x codem1=0x%x\n",
 			       oldcode, dictp2->cptr, dictp->codem1);
-		      }
-		  }
-		return DECOMP_FATALERROR;
-	      }
-#endif
+		      पूर्ण
+		  पूर्ण
+		वापस DECOMP_FATALERROR;
+	      पूर्ण
+#पूर्ण_अगर
 	    *--p    = dictp->f.hs.suffix;
-	    finchar = dictp->f.hs.prefix;
-	  }
-	*--p = finchar;
+	    finअक्षर = dictp->f.hs.prefix;
+	  पूर्ण
+	*--p = finअक्षर;
 
-#ifdef DEBUG
-	if (--codelen != 0)
-	  {
-	    printk("bsd_decomp%d: short by %d after code 0x%x, max_ent=0x%x\n",
+#अगर_घोषित DEBUG
+	अगर (--codelen != 0)
+	  अणु
+	    prपूर्णांकk("bsd_decomp%d: short by %d after code 0x%x, max_ent=0x%x\n",
 		   db->unit, codelen, incode, max_ent);
-	  }
-#endif
+	  पूर्ण
+#पूर्ण_अगर
 
-	if (extra)		/* the KwKwK case again */
-	  {
-	    *wptr++ = finchar;
-	  }
+	अगर (extra)		/* the KwKwK हाल again */
+	  अणु
+	    *wptr++ = finअक्षर;
+	  पूर्ण
 
 	/*
 	 * If not first code in a packet, and
-	 * if not out of code space, then allocate a new code.
+	 * अगर not out of code space, then allocate a new code.
 	 *
 	 * Keep the hash table correct so it can be used
 	 * with uncompressed packets.
 	 */
 
-	if (oldcode != CLEAR && max_ent < db->maxmaxcode)
-	  {
-	    struct bsd_dict *dictp2, *dictp3;
-	    unsigned short  *lens1,  *lens2;
-	    unsigned long fcode;
-	    int hval, disp, indx;
+	अगर (oldcode != CLEAR && max_ent < db->maxmaxcode)
+	  अणु
+	    काष्ठा bsd_dict *dictp2, *dictp3;
+	    अचिन्हित लघु  *lens1,  *lens2;
+	    अचिन्हित दीर्घ fcode;
+	    पूर्णांक hval, disp, indx;
 
-	    fcode = BSD_KEY(oldcode,finchar);
-	    hval  = BSD_HASH(oldcode,finchar,db->hshift);
+	    fcode = BSD_KEY(oldcode,finअक्षर);
+	    hval  = BSD_HASH(oldcode,finअक्षर,db->hshअगरt);
 	    dictp = dict_ptr (db, hval);
 
-	    /* look for a free hash table entry */
-	    if (dictp->codem1 < max_ent)
-	      {
+	    /* look क्रम a मुक्त hash table entry */
+	    अगर (dictp->codem1 < max_ent)
+	      अणु
 		disp = (hval == 0) ? 1 : hval;
-		do
-		  {
+		करो
+		  अणु
 		    hval += disp;
-		    if (hval >= db->hsize)
-		      {
+		    अगर (hval >= db->hsize)
+		      अणु
 			hval -= db->hsize;
-		      }
+		      पूर्ण
 		    dictp = dict_ptr (db, hval);
-		  }
-		while (dictp->codem1 < max_ent);
-	      }
+		  पूर्ण
+		जबतक (dictp->codem1 < max_ent);
+	      पूर्ण
 
 	    /*
 	     * Invalidate previous hash table entry
-	     * assigned this code, and then take it over
+	     * asचिन्हित this code, and then take it over
 	     */
 
 	    dictp2 = dict_ptr (db, max_ent + 1);
 	    indx   = dictp2->cptr;
 	    dictp3 = dict_ptr (db, indx);
 
-	    if (dictp3->codem1 == max_ent)
-	      {
+	    अगर (dictp3->codem1 == max_ent)
+	      अणु
 		dictp3->codem1 = BADCODEM1;
-	      }
+	      पूर्ण
 
 	    dictp2->cptr   = hval;
 	    dictp->codem1  = max_ent;
@@ -1099,72 +1100,72 @@ static int bsd_decompress (void *state, unsigned char *ibuf, int isize,
 	    lens2  = lens_ptr (db, oldcode);
 	    *lens1 = *lens2 + 1;
 
-	    /* Expand code size if needed. */
-	    if (max_ent >= MAXCODE(n_bits) && max_ent < db->maxmaxcode)
-	      {
+	    /* Expand code size अगर needed. */
+	    अगर (max_ent >= MAXCODE(n_bits) && max_ent < db->maxmaxcode)
+	      अणु
 		db->n_bits = ++n_bits;
 		tgtbitno   = 32-n_bits;
-	      }
-	  }
+	      पूर्ण
+	  पूर्ण
 	oldcode = incode;
-      }
+      पूर्ण
 
     ++db->comp_count;
     ++db->uncomp_count;
     db->comp_bytes   += isize - BSD_OVHD - PPP_HDRLEN;
     db->uncomp_bytes += explen;
 
-    if (bsd_check(db))
-      {
-	if (db->debug)
-	  {
-	    printk("bsd_decomp%d: peer should have cleared dictionary on %d\n",
+    अगर (bsd_check(db))
+      अणु
+	अगर (db->debug)
+	  अणु
+	    prपूर्णांकk("bsd_decomp%d: peer should have cleared dictionary on %d\n",
 		   db->unit, db->seqno - 1);
-	  }
-      }
-    return explen;
-  }
+	  पूर्ण
+      पूर्ण
+    वापस explen;
+  पूर्ण
 
 /*************************************************************
- * Table of addresses for the BSD compression module
+ * Table of addresses क्रम the BSD compression module
  *************************************************************/
 
-static struct compressor ppp_bsd_compress = {
+अटल काष्ठा compressor ppp_bsd_compress = अणु
 	.compress_proto =	CI_BSD_COMPRESS,
 	.comp_alloc =		bsd_comp_alloc,
-	.comp_free =		bsd_free,
+	.comp_मुक्त =		bsd_मुक्त,
 	.comp_init =		bsd_comp_init,
 	.comp_reset =		bsd_reset,
 	.compress =		bsd_compress,
 	.comp_stat =		bsd_comp_stats,
 	.decomp_alloc =		bsd_decomp_alloc,
-	.decomp_free =		bsd_free,
+	.decomp_मुक्त =		bsd_मुक्त,
 	.decomp_init =		bsd_decomp_init,
 	.decomp_reset =		bsd_reset,
 	.decompress =		bsd_decompress,
 	.incomp =		bsd_incomp,
 	.decomp_stat =		bsd_comp_stats,
 	.owner =		THIS_MODULE
-};
+पूर्ण;
 
 /*************************************************************
  * Module support routines
  *************************************************************/
 
-static int __init bsdcomp_init(void)
-{
-	int answer = ppp_register_compressor(&ppp_bsd_compress);
-	if (answer == 0)
-		printk(KERN_INFO "PPP BSD Compression module registered\n");
-	return answer;
-}
+अटल पूर्णांक __init bsdcomp_init(व्योम)
+अणु
+	पूर्णांक answer = ppp_रेजिस्टर_compressor(&ppp_bsd_compress);
+	अगर (answer == 0)
+		prपूर्णांकk(KERN_INFO "PPP BSD Compression module registered\n");
+	वापस answer;
+पूर्ण
 
-static void __exit bsdcomp_cleanup(void)
-{
-	ppp_unregister_compressor(&ppp_bsd_compress);
-}
+अटल व्योम __निकास bsdcomp_cleanup(व्योम)
+अणु
+	ppp_unरेजिस्टर_compressor(&ppp_bsd_compress);
+पूर्ण
 
 module_init(bsdcomp_init);
-module_exit(bsdcomp_cleanup);
+module_निकास(bsdcomp_cleanup);
 MODULE_LICENSE("Dual BSD/GPL");
-MODULE_ALIAS("ppp-compress-" __stringify(CI_BSD_COMPRESS));
+MODULE_ALIAS("ppp-compress-" __stringअगरy(CI_BSD_COMPRESS));

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* Timeout API for single-threaded programs that use blocking
- * syscalls (read/write/send/recv/connect/accept).
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* Timeout API क्रम single-thपढ़ोed programs that use blocking
+ * syscalls (पढ़ो/ग_लिखो/send/recv/connect/accept).
  *
  * Copyright (C) 2017 Red Hat, Inc.
  *
@@ -9,52 +10,52 @@
 
 /* Use the following pattern:
  *
- *   timeout_begin(TIMEOUT);
- *   do {
+ *   समयout_begin(TIMEOUT);
+ *   करो अणु
  *       ret = accept(...);
- *       timeout_check("accept");
- *   } while (ret < 0 && ret == EINTR);
- *   timeout_end();
+ *       समयout_check("accept");
+ *   पूर्ण जबतक (ret < 0 && ret == EINTR);
+ *   समयout_end();
  */
 
-#include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <stdio.h>
-#include "timeout.h"
+#समावेश <मानककोष.स>
+#समावेश <stdbool.h>
+#समावेश <unistd.h>
+#समावेश <मानकपन.स>
+#समावेश "timeout.h"
 
-static volatile bool timeout;
+अटल अस्थिर bool समयout;
 
 /* SIGALRM handler function.  Do not use sleep(2), alarm(2), or
- * setitimer(2) while using this API - they may interfere with each
+ * setiसमयr(2) जबतक using this API - they may पूर्णांकerfere with each
  * other.
  */
-void sigalrm(int signo)
-{
-	timeout = true;
-}
+व्योम sigalrm(पूर्णांक signo)
+अणु
+	समयout = true;
+पूर्ण
 
-/* Start a timeout.  Call timeout_check() to verify that the timeout hasn't
- * expired.  timeout_end() must be called to stop the timeout.  Timeouts cannot
+/* Start a समयout.  Call समयout_check() to verअगरy that the समयout hasn't
+ * expired.  समयout_end() must be called to stop the समयout.  Timeouts cannot
  * be nested.
  */
-void timeout_begin(unsigned int seconds)
-{
+व्योम समयout_begin(अचिन्हित पूर्णांक seconds)
+अणु
 	alarm(seconds);
-}
+पूर्ण
 
-/* Exit with an error message if the timeout has expired */
-void timeout_check(const char *operation)
-{
-	if (timeout) {
-		fprintf(stderr, "%s timed out\n", operation);
-		exit(EXIT_FAILURE);
-	}
-}
+/* Exit with an error message अगर the समयout has expired */
+व्योम समयout_check(स्थिर अक्षर *operation)
+अणु
+	अगर (समयout) अणु
+		ख_लिखो(मानक_त्रुटि, "%s timed out\n", operation);
+		निकास(निकास_त्रुटि);
+	पूर्ण
+पूर्ण
 
-/* Stop a timeout */
-void timeout_end(void)
-{
+/* Stop a समयout */
+व्योम समयout_end(व्योम)
+अणु
 	alarm(0);
-	timeout = false;
-}
+	समयout = false;
+पूर्ण

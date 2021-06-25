@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef HOSTAP_AP_H
-#define HOSTAP_AP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित HOSTAP_AP_H
+#घोषणा HOSTAP_AP_H
 
-#include "hostap_80211.h"
+#समावेश "hostap_80211.h"
 
-/* AP data structures for STAs */
+/* AP data काष्ठाures क्रम STAs */
 
 /* maximum number of frames to buffer per STA */
-#define STA_MAX_TX_BUFFER 32
+#घोषणा STA_MAX_TX_BUFFER 32
 
 /* STA flags */
-#define WLAN_STA_AUTH BIT(0)
-#define WLAN_STA_ASSOC BIT(1)
-#define WLAN_STA_PS BIT(2)
-#define WLAN_STA_TIM BIT(3) /* TIM bit is on for PS stations */
-#define WLAN_STA_PERM BIT(4) /* permanent; do not remove entry on expiration */
-#define WLAN_STA_AUTHORIZED BIT(5) /* If 802.1X is used, this flag is
+#घोषणा WLAN_STA_AUTH BIT(0)
+#घोषणा WLAN_STA_ASSOC BIT(1)
+#घोषणा WLAN_STA_PS BIT(2)
+#घोषणा WLAN_STA_TIM BIT(3) /* TIM bit is on क्रम PS stations */
+#घोषणा WLAN_STA_PERM BIT(4) /* permanent; करो not हटाओ entry on expiration */
+#घोषणा WLAN_STA_AUTHORIZED BIT(5) /* If 802.1X is used, this flag is
 				    * controlling whether STA is authorized to
 				    * send and receive non-IEEE 802.1X frames
 				    */
-#define WLAN_STA_PENDING_POLL BIT(6) /* pending activity poll not ACKed */
+#घोषणा WLAN_STA_PENDING_POLL BIT(6) /* pending activity poll not ACKed */
 
-#define WLAN_RATE_1M BIT(0)
-#define WLAN_RATE_2M BIT(1)
-#define WLAN_RATE_5M5 BIT(2)
-#define WLAN_RATE_11M BIT(3)
-#define WLAN_RATE_COUNT 4
+#घोषणा WLAN_RATE_1M BIT(0)
+#घोषणा WLAN_RATE_2M BIT(1)
+#घोषणा WLAN_RATE_5M5 BIT(2)
+#घोषणा WLAN_RATE_11M BIT(3)
+#घोषणा WLAN_RATE_COUNT 4
 
 /* Maximum size of Supported Rates info element. IEEE 802.11 has a limit of 8,
- * but some pre-standard IEEE 802.11g products use longer elements. */
-#define WLAN_SUPP_RATES_MAX 32
+ * but some pre-standard IEEE 802.11g products use दीर्घer elements. */
+#घोषणा WLAN_SUPP_RATES_MAX 32
 
 /* Try to increase TX rate after # successfully sent consecutive packets */
-#define WLAN_RATE_UPDATE_COUNT 50
+#घोषणा WLAN_RATE_UPDATE_COUNT 50
 
 /* Decrease TX rate after # consecutive dropped packets */
-#define WLAN_RATE_DECREASE_THRESHOLD 2
+#घोषणा WLAN_RATE_DECREASE_THRESHOLD 2
 
-struct sta_info {
-	struct list_head list;
-	struct sta_info *hnext; /* next entry in hash table list */
-	atomic_t users; /* number of users (do not remove if > 0) */
-	struct proc_dir_entry *proc;
+काष्ठा sta_info अणु
+	काष्ठा list_head list;
+	काष्ठा sta_info *hnext; /* next entry in hash table list */
+	atomic_t users; /* number of users (करो not हटाओ अगर > 0) */
+	काष्ठा proc_dir_entry *proc;
 
 	u8 addr[6];
-	u16 aid; /* STA's unique AID (1 .. 2007) or 0 if not yet assigned */
+	u16 aid; /* STA's unique AID (1 .. 2007) or 0 अगर not yet asचिन्हित */
 	u32 flags;
 	u16 capability;
-	u16 listen_interval; /* or beacon_int for APs */
+	u16 listen_पूर्णांकerval; /* or beacon_पूर्णांक क्रम APs */
 	u8 supported_rates[WLAN_SUPP_RATES_MAX];
 
-	unsigned long last_auth;
-	unsigned long last_assoc;
-	unsigned long last_rx;
-	unsigned long last_tx;
-	unsigned long rx_packets, tx_packets;
-	unsigned long rx_bytes, tx_bytes;
-	struct sk_buff_head tx_buf;
-	/* FIX: timeout buffers with an expiry time somehow derived from
-	 * listen_interval */
+	अचिन्हित दीर्घ last_auth;
+	अचिन्हित दीर्घ last_assoc;
+	अचिन्हित दीर्घ last_rx;
+	अचिन्हित दीर्घ last_tx;
+	अचिन्हित दीर्घ rx_packets, tx_packets;
+	अचिन्हित दीर्घ rx_bytes, tx_bytes;
+	काष्ठा sk_buff_head tx_buf;
+	/* FIX: समयout buffers with an expiry समय somehow derived from
+	 * listen_पूर्णांकerval */
 
 	s8 last_rx_silence; /* Noise in dBm */
-	s8 last_rx_signal; /* Signal strength in dBm */
+	s8 last_rx_संकेत; /* Signal strength in dBm */
 	u8 last_rx_rate; /* TX rate in 0.1 Mbps */
-	u8 last_rx_updated; /* IWSPY's struct iw_quality::updated */
+	u8 last_rx_updated; /* IWSPY's काष्ठा iw_quality::updated */
 
 	u8 tx_supp_rates; /* bit field of supported TX rates */
 	u8 tx_rate; /* current TX rate (in 0.1 Mbps) */
@@ -75,190 +76,190 @@ struct sta_info {
 	u32 tx_since_last_failure;
 	u32 tx_consecutive_exc;
 
-	struct lib80211_crypt_data *crypt;
+	काष्ठा lib80211_crypt_data *crypt;
 
-	int ap; /* whether this station is an AP */
+	पूर्णांक ap; /* whether this station is an AP */
 
 	local_info_t *local;
 
-#ifndef PRISM2_NO_KERNEL_IEEE80211_MGMT
-	union {
-		struct {
-			char *challenge; /* shared key authentication
+#अगर_अघोषित PRISM2_NO_KERNEL_IEEE80211_MGMT
+	जोड़ अणु
+		काष्ठा अणु
+			अक्षर *challenge; /* shared key authentication
 					  * challenge */
-		} sta;
-		struct {
-			int ssid_len;
-			unsigned char ssid[MAX_SSID_LEN + 1]; /* AP's ssid */
-			int channel;
-			unsigned long last_beacon; /* last RX beacon time */
-		} ap;
-	} u;
+		पूर्ण sta;
+		काष्ठा अणु
+			पूर्णांक ssid_len;
+			अचिन्हित अक्षर ssid[MAX_SSID_LEN + 1]; /* AP's ssid */
+			पूर्णांक channel;
+			अचिन्हित दीर्घ last_beacon; /* last RX beacon समय */
+		पूर्ण ap;
+	पूर्ण u;
 
-	struct timer_list timer;
-	enum { STA_NULLFUNC = 0, STA_DISASSOC, STA_DEAUTH } timeout_next;
-#endif /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
-};
+	काष्ठा समयr_list समयr;
+	क्रमागत अणु STA_शून्यFUNC = 0, STA_DISASSOC, STA_DEAUTH पूर्ण समयout_next;
+#पूर्ण_अगर /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
+पूर्ण;
 
 
-#define MAX_STA_COUNT 1024
+#घोषणा MAX_STA_COUNT 1024
 
-/* Maximum number of AIDs to use for STAs; must be 2007 or lower
+/* Maximum number of AIDs to use क्रम STAs; must be 2007 or lower
  * (8802.11 limitation) */
-#define MAX_AID_TABLE_SIZE 128
+#घोषणा MAX_AID_TABLE_SIZE 128
 
-#define STA_HASH_SIZE 256
-#define STA_HASH(sta) (sta[5])
+#घोषणा STA_HASH_SIZE 256
+#घोषणा STA_HASH(sta) (sta[5])
 
 
-/* Default value for maximum station inactivity. After AP_MAX_INACTIVITY_SEC
+/* Default value क्रम maximum station inactivity. After AP_MAX_INACTIVITY_SEC
  * has passed since last received frame from the station, a nullfunc data
  * frame is sent to the station. If this frame is not acknowledged and no other
  * frames have been received, the station will be disassociated after
  * AP_DISASSOC_DELAY. Similarly, a the station will be deauthenticated after
  * AP_DEAUTH_DELAY. AP_TIMEOUT_RESOLUTION is the resolution that is used with
- * max inactivity timer. */
-#define AP_MAX_INACTIVITY_SEC (5 * 60)
-#define AP_DISASSOC_DELAY (HZ)
-#define AP_DEAUTH_DELAY (HZ)
+ * max inactivity समयr. */
+#घोषणा AP_MAX_INACTIVITY_SEC (5 * 60)
+#घोषणा AP_DISASSOC_DELAY (HZ)
+#घोषणा AP_DEAUTH_DELAY (HZ)
 
 /* ap_policy: whether to accept frames to/from other APs/IBSS */
-typedef enum {
+प्रकार क्रमागत अणु
 	AP_OTHER_AP_SKIP_ALL = 0,
 	AP_OTHER_AP_SAME_SSID = 1,
 	AP_OTHER_AP_ALL = 2,
 	AP_OTHER_AP_EVEN_IBSS = 3
-} ap_policy_enum;
+पूर्ण ap_policy_क्रमागत;
 
-#define PRISM2_AUTH_OPEN BIT(0)
-#define PRISM2_AUTH_SHARED_KEY BIT(1)
+#घोषणा PRISM2_AUTH_OPEN BIT(0)
+#घोषणा PRISM2_AUTH_SHARED_KEY BIT(1)
 
 
 /* MAC address-based restrictions */
-struct mac_entry {
-	struct list_head list;
+काष्ठा mac_entry अणु
+	काष्ठा list_head list;
 	u8 addr[6];
-};
+पूर्ण;
 
-struct mac_restrictions {
-	enum { MAC_POLICY_OPEN = 0, MAC_POLICY_ALLOW, MAC_POLICY_DENY } policy;
-	unsigned int entries;
-	struct list_head mac_list;
+काष्ठा mac_restrictions अणु
+	क्रमागत अणु MAC_POLICY_OPEN = 0, MAC_POLICY_ALLOW, MAC_POLICY_DENY पूर्ण policy;
+	अचिन्हित पूर्णांक entries;
+	काष्ठा list_head mac_list;
 	spinlock_t lock;
-};
+पूर्ण;
 
 
-struct add_sta_proc_data {
+काष्ठा add_sta_proc_data अणु
 	u8 addr[ETH_ALEN];
-	struct add_sta_proc_data *next;
-};
+	काष्ठा add_sta_proc_data *next;
+पूर्ण;
 
 
-typedef enum { WDS_ADD, WDS_DEL } wds_oper_type;
-struct wds_oper_data {
+प्रकार क्रमागत अणु WDS_ADD, WDS_DEL पूर्ण wds_oper_type;
+काष्ठा wds_oper_data अणु
 	wds_oper_type type;
 	u8 addr[ETH_ALEN];
-	struct wds_oper_data *next;
-};
+	काष्ठा wds_oper_data *next;
+पूर्ण;
 
 
-struct ap_data {
-	int initialized; /* whether ap_data has been initialized */
+काष्ठा ap_data अणु
+	पूर्णांक initialized; /* whether ap_data has been initialized */
 	local_info_t *local;
-	int bridge_packets; /* send packet to associated STAs directly to the
+	पूर्णांक bridge_packets; /* send packet to associated STAs directly to the
 			     * wireless media instead of higher layers in the
 			     * kernel */
-	unsigned int bridged_unicast; /* number of unicast frames bridged on
+	अचिन्हित पूर्णांक bridged_unicast; /* number of unicast frames bridged on
 				       * wireless media */
-	unsigned int bridged_multicast; /* number of non-unicast frames
+	अचिन्हित पूर्णांक bridged_multicast; /* number of non-unicast frames
 					 * bridged on wireless media */
-	unsigned int tx_drop_nonassoc; /* number of unicast TX packets dropped
+	अचिन्हित पूर्णांक tx_drop_nonassoc; /* number of unicast TX packets dropped
 					* because they were to an address that
 					* was not associated */
-	int nullfunc_ack; /* use workaround for nullfunc frame ACKs */
+	पूर्णांक nullfunc_ack; /* use workaround क्रम nullfunc frame ACKs */
 
 	spinlock_t sta_table_lock;
-	int num_sta; /* number of entries in sta_list */
-	struct list_head sta_list; /* STA info list head */
-	struct sta_info *sta_hash[STA_HASH_SIZE];
+	पूर्णांक num_sta; /* number of entries in sta_list */
+	काष्ठा list_head sta_list; /* STA info list head */
+	काष्ठा sta_info *sta_hash[STA_HASH_SIZE];
 
-	struct proc_dir_entry *proc;
+	काष्ठा proc_dir_entry *proc;
 
-	ap_policy_enum ap_policy;
-	unsigned int max_inactivity;
-	int autom_ap_wds;
+	ap_policy_क्रमागत ap_policy;
+	अचिन्हित पूर्णांक max_inactivity;
+	पूर्णांक स्वतःm_ap_wds;
 
-	struct mac_restrictions mac_restrictions; /* MAC-based auth */
-	int last_tx_rate;
+	काष्ठा mac_restrictions mac_restrictions; /* MAC-based auth */
+	पूर्णांक last_tx_rate;
 
-	struct work_struct add_sta_proc_queue;
-	struct add_sta_proc_data *add_sta_proc_entries;
+	काष्ठा work_काष्ठा add_sta_proc_queue;
+	काष्ठा add_sta_proc_data *add_sta_proc_entries;
 
-	struct work_struct wds_oper_queue;
-	struct wds_oper_data *wds_oper_entries;
+	काष्ठा work_काष्ठा wds_oper_queue;
+	काष्ठा wds_oper_data *wds_oper_entries;
 
 	u16 tx_callback_idx;
 
-#ifndef PRISM2_NO_KERNEL_IEEE80211_MGMT
-	/* pointers to STA info; based on allocated AID or NULL if AID free
+#अगर_अघोषित PRISM2_NO_KERNEL_IEEE80211_MGMT
+	/* poपूर्णांकers to STA info; based on allocated AID or शून्य अगर AID मुक्त
 	 * AID is in the range 1-2007, so sta_aid[0] corresponders to AID 1
 	 * and so on
 	 */
-	struct sta_info *sta_aid[MAX_AID_TABLE_SIZE];
+	काष्ठा sta_info *sta_aid[MAX_AID_TABLE_SIZE];
 
 	u16 tx_callback_auth, tx_callback_assoc, tx_callback_poll;
 
-	/* WEP operations for generating challenges to be used with shared key
+	/* WEP operations क्रम generating challenges to be used with shared key
 	 * authentication */
-	struct lib80211_crypto_ops *crypt;
-	void *crypt_priv;
-#endif /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
-};
+	काष्ठा lib80211_crypto_ops *crypt;
+	व्योम *crypt_priv;
+#पूर्ण_अगर /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
+पूर्ण;
 
 
-void hostap_rx(struct net_device *dev, struct sk_buff *skb,
-	       struct hostap_80211_rx_status *rx_stats);
-void hostap_init_data(local_info_t *local);
-void hostap_init_ap_proc(local_info_t *local);
-void hostap_free_data(struct ap_data *ap);
-void hostap_check_sta_fw_version(struct ap_data *ap, int sta_fw_ver);
+व्योम hostap_rx(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+	       काष्ठा hostap_80211_rx_status *rx_stats);
+व्योम hostap_init_data(local_info_t *local);
+व्योम hostap_init_ap_proc(local_info_t *local);
+व्योम hostap_मुक्त_data(काष्ठा ap_data *ap);
+व्योम hostap_check_sta_fw_version(काष्ठा ap_data *ap, पूर्णांक sta_fw_ver);
 
-typedef enum {
+प्रकार क्रमागत अणु
 	AP_TX_CONTINUE, AP_TX_DROP, AP_TX_RETRY, AP_TX_BUFFERED,
 	AP_TX_CONTINUE_NOT_AUTHORIZED
-} ap_tx_ret;
-struct hostap_tx_data {
-	struct sk_buff *skb;
-	int host_encrypt;
-	struct lib80211_crypt_data *crypt;
-	void *sta_ptr;
-};
-ap_tx_ret hostap_handle_sta_tx(local_info_t *local, struct hostap_tx_data *tx);
-void hostap_handle_sta_release(void *ptr);
-void hostap_handle_sta_tx_exc(local_info_t *local, struct sk_buff *skb);
-int hostap_update_sta_ps(local_info_t *local, struct ieee80211_hdr *hdr);
-typedef enum {
+पूर्ण ap_tx_ret;
+काष्ठा hostap_tx_data अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक host_encrypt;
+	काष्ठा lib80211_crypt_data *crypt;
+	व्योम *sta_ptr;
+पूर्ण;
+ap_tx_ret hostap_handle_sta_tx(local_info_t *local, काष्ठा hostap_tx_data *tx);
+व्योम hostap_handle_sta_release(व्योम *ptr);
+व्योम hostap_handle_sta_tx_exc(local_info_t *local, काष्ठा sk_buff *skb);
+पूर्णांक hostap_update_sta_ps(local_info_t *local, काष्ठा ieee80211_hdr *hdr);
+प्रकार क्रमागत अणु
 	AP_RX_CONTINUE, AP_RX_DROP, AP_RX_EXIT, AP_RX_CONTINUE_NOT_AUTHORIZED
-} ap_rx_ret;
-ap_rx_ret hostap_handle_sta_rx(local_info_t *local, struct net_device *dev,
-			       struct sk_buff *skb,
-			       struct hostap_80211_rx_status *rx_stats,
-			       int wds);
-int hostap_handle_sta_crypto(local_info_t *local, struct ieee80211_hdr *hdr,
-			     struct lib80211_crypt_data **crypt,
-			     void **sta_ptr);
-int hostap_is_sta_assoc(struct ap_data *ap, u8 *sta_addr);
-int hostap_is_sta_authorized(struct ap_data *ap, u8 *sta_addr);
-int hostap_add_sta(struct ap_data *ap, u8 *sta_addr);
-int hostap_update_rx_stats(struct ap_data *ap, struct ieee80211_hdr *hdr,
-			   struct hostap_80211_rx_status *rx_stats);
-void hostap_update_rates(local_info_t *local);
-void hostap_add_wds_links(local_info_t *local);
-void hostap_wds_link_oper(local_info_t *local, u8 *addr, wds_oper_type type);
+पूर्ण ap_rx_ret;
+ap_rx_ret hostap_handle_sta_rx(local_info_t *local, काष्ठा net_device *dev,
+			       काष्ठा sk_buff *skb,
+			       काष्ठा hostap_80211_rx_status *rx_stats,
+			       पूर्णांक wds);
+पूर्णांक hostap_handle_sta_crypto(local_info_t *local, काष्ठा ieee80211_hdr *hdr,
+			     काष्ठा lib80211_crypt_data **crypt,
+			     व्योम **sta_ptr);
+पूर्णांक hostap_is_sta_assoc(काष्ठा ap_data *ap, u8 *sta_addr);
+पूर्णांक hostap_is_sta_authorized(काष्ठा ap_data *ap, u8 *sta_addr);
+पूर्णांक hostap_add_sta(काष्ठा ap_data *ap, u8 *sta_addr);
+पूर्णांक hostap_update_rx_stats(काष्ठा ap_data *ap, काष्ठा ieee80211_hdr *hdr,
+			   काष्ठा hostap_80211_rx_status *rx_stats);
+व्योम hostap_update_rates(local_info_t *local);
+व्योम hostap_add_wds_links(local_info_t *local);
+व्योम hostap_wds_link_oper(local_info_t *local, u8 *addr, wds_oper_type type);
 
-#ifndef PRISM2_NO_KERNEL_IEEE80211_MGMT
-void hostap_deauth_all_stas(struct net_device *dev, struct ap_data *ap,
-			    int resend);
-#endif /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
+#अगर_अघोषित PRISM2_NO_KERNEL_IEEE80211_MGMT
+व्योम hostap_deauth_all_stas(काष्ठा net_device *dev, काष्ठा ap_data *ap,
+			    पूर्णांक resend);
+#पूर्ण_अगर /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
 
-#endif /* HOSTAP_AP_H */
+#पूर्ण_अगर /* HOSTAP_AP_H */

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _ASM_IA64_MMIOWB_H
-#define _ASM_IA64_MMIOWB_H
+#अगर_अघोषित _ASM_IA64_MMIOWB_H
+#घोषणा _ASM_IA64_MMIOWB_H
 
 /**
- * mmiowb - I/O write barrier
+ * mmiowb - I/O ग_लिखो barrier
  *
- * Ensure ordering of I/O space writes.  This will make sure that writes
- * following the barrier will arrive after all previous writes.  For most
- * ia64 platforms, this is a simple 'mf.a' instruction.
+ * Ensure ordering of I/O space ग_लिखोs.  This will make sure that ग_लिखोs
+ * following the barrier will arrive after all previous ग_लिखोs.  For most
+ * ia64 platक्रमms, this is a simple 'mf.a' inकाष्ठाion.
  */
-#define mmiowb()	ia64_mfa()
+#घोषणा mmiowb()	ia64_mfa()
 
-#include <asm-generic/mmiowb.h>
+#समावेश <यंत्र-generic/mmiowb.h>
 
-#endif	/* _ASM_IA64_MMIOWB_H */
+#पूर्ण_अगर	/* _ASM_IA64_MMIOWB_H */

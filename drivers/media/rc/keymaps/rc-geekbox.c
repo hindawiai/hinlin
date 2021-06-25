@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Keytable for the GeekBox remote controller
+ * Keytable क्रम the GeekBox remote controller
  *
  * Copyright (C) 2017 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  */
 
-#include <media/rc-map.h>
-#include <linux/module.h>
+#समावेश <media/rc-map.h>
+#समावेश <linux/module.h>
 
-static struct rc_map_table geekbox[] = {
-	{ 0x01, KEY_BACK },
-	{ 0x02, KEY_DOWN },
-	{ 0x03, KEY_UP },
-	{ 0x07, KEY_OK },
-	{ 0x0b, KEY_VOLUMEUP },
-	{ 0x0e, KEY_LEFT },
-	{ 0x13, KEY_MENU },
-	{ 0x14, KEY_POWER },
-	{ 0x1a, KEY_RIGHT },
-	{ 0x48, KEY_HOME },
-	{ 0x58, KEY_VOLUMEDOWN },
-	{ 0x5c, KEY_SCREEN },
-};
+अटल काष्ठा rc_map_table geekbox[] = अणु
+	अणु 0x01, KEY_BACK पूर्ण,
+	अणु 0x02, KEY_DOWN पूर्ण,
+	अणु 0x03, KEY_UP पूर्ण,
+	अणु 0x07, KEY_OK पूर्ण,
+	अणु 0x0b, KEY_VOLUMEUP पूर्ण,
+	अणु 0x0e, KEY_LEFT पूर्ण,
+	अणु 0x13, KEY_MENU पूर्ण,
+	अणु 0x14, KEY_POWER पूर्ण,
+	अणु 0x1a, KEY_RIGHT पूर्ण,
+	अणु 0x48, KEY_HOME पूर्ण,
+	अणु 0x58, KEY_VOLUMEDOWN पूर्ण,
+	अणु 0x5c, KEY_SCREEN पूर्ण,
+पूर्ण;
 
-static struct rc_map_list geekbox_map = {
-	.map = {
+अटल काष्ठा rc_map_list geekbox_map = अणु
+	.map = अणु
 		.scan     = geekbox,
 		.size     = ARRAY_SIZE(geekbox),
 		.rc_proto = RC_PROTO_NEC,
 		.name     = RC_MAP_GEEKBOX,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init init_rc_map_geekbox(void)
-{
-	return rc_map_register(&geekbox_map);
-}
+अटल पूर्णांक __init init_rc_map_geekbox(व्योम)
+अणु
+	वापस rc_map_रेजिस्टर(&geekbox_map);
+पूर्ण
 
-static void __exit exit_rc_map_geekbox(void)
-{
-	rc_map_unregister(&geekbox_map);
-}
+अटल व्योम __निकास निकास_rc_map_geekbox(व्योम)
+अणु
+	rc_map_unरेजिस्टर(&geekbox_map);
+पूर्ण
 
 module_init(init_rc_map_geekbox)
-module_exit(exit_rc_map_geekbox)
+module_निकास(निकास_rc_map_geekbox)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Martin Blumenstingl <martin.blumenstingl@googlemail.com>");

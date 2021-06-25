@@ -1,121 +1,122 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * HWDEP Interface for HD-audio codec
+ * HWDEP Interface क्रम HD-audio codec
  *
  * Copyright (c) 2007 Takashi Iwai <tiwai@suse.de>
  */
 
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/compat.h>
-#include <linux/nospec.h>
-#include <sound/core.h>
-#include <sound/hda_codec.h>
-#include "hda_local.h"
-#include <sound/hda_hwdep.h>
-#include <sound/minors.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/nospec.h>
+#समावेश <sound/core.h>
+#समावेश <sound/hda_codec.h>
+#समावेश "hda_local.h"
+#समावेश <sound/hda_hwdep.h>
+#समावेश <sound/minors.h>
 
 /*
- * write/read an out-of-bound verb
+ * ग_लिखो/पढ़ो an out-of-bound verb
  */
-static int verb_write_ioctl(struct hda_codec *codec,
-			    struct hda_verb_ioctl __user *arg)
-{
+अटल पूर्णांक verb_ग_लिखो_ioctl(काष्ठा hda_codec *codec,
+			    काष्ठा hda_verb_ioctl __user *arg)
+अणु
 	u32 verb, res;
 
-	if (get_user(verb, &arg->verb))
-		return -EFAULT;
-	res = snd_hda_codec_read(codec, verb >> 24, 0,
+	अगर (get_user(verb, &arg->verb))
+		वापस -EFAULT;
+	res = snd_hda_codec_पढ़ो(codec, verb >> 24, 0,
 				 (verb >> 8) & 0xffff, verb & 0xff);
-	if (put_user(res, &arg->res))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_user(res, &arg->res))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int get_wcap_ioctl(struct hda_codec *codec,
-			  struct hda_verb_ioctl __user *arg)
-{
+अटल पूर्णांक get_wcap_ioctl(काष्ठा hda_codec *codec,
+			  काष्ठा hda_verb_ioctl __user *arg)
+अणु
 	u32 verb, res;
 	
-	if (get_user(verb, &arg->verb))
-		return -EFAULT;
-	/* open-code get_wcaps(verb>>24) with nospec */
+	अगर (get_user(verb, &arg->verb))
+		वापस -EFAULT;
+	/* खोलो-code get_wcaps(verb>>24) with nospec */
 	verb >>= 24;
-	if (verb < codec->core.start_nid ||
-	    verb >= codec->core.start_nid + codec->core.num_nodes) {
+	अगर (verb < codec->core.start_nid ||
+	    verb >= codec->core.start_nid + codec->core.num_nodes) अणु
 		res = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		verb -= codec->core.start_nid;
 		verb = array_index_nospec(verb, codec->core.num_nodes);
 		res = codec->wcaps[verb];
-	}
-	if (put_user(res, &arg->res))
-		return -EFAULT;
-	return 0;
-}
+	पूर्ण
+	अगर (put_user(res, &arg->res))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 
 /*
  */
-static int hda_hwdep_ioctl(struct snd_hwdep *hw, struct file *file,
-			   unsigned int cmd, unsigned long arg)
-{
-	struct hda_codec *codec = hw->private_data;
-	void __user *argp = (void __user *)arg;
+अटल पूर्णांक hda_hwdep_ioctl(काष्ठा snd_hwdep *hw, काष्ठा file *file,
+			   अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा hda_codec *codec = hw->निजी_data;
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	switch (cmd) {
-	case HDA_IOCTL_PVERSION:
-		return put_user(HDA_HWDEP_VERSION, (int __user *)argp);
-	case HDA_IOCTL_VERB_WRITE:
-		return verb_write_ioctl(codec, argp);
-	case HDA_IOCTL_GET_WCAP:
-		return get_wcap_ioctl(codec, argp);
-	}
-	return -ENOIOCTLCMD;
-}
+	चयन (cmd) अणु
+	हाल HDA_IOCTL_PVERSION:
+		वापस put_user(HDA_HWDEP_VERSION, (पूर्णांक __user *)argp);
+	हाल HDA_IOCTL_VERB_WRITE:
+		वापस verb_ग_लिखो_ioctl(codec, argp);
+	हाल HDA_IOCTL_GET_WCAP:
+		वापस get_wcap_ioctl(codec, argp);
+	पूर्ण
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static int hda_hwdep_ioctl_compat(struct snd_hwdep *hw, struct file *file,
-				  unsigned int cmd, unsigned long arg)
-{
-	return hda_hwdep_ioctl(hw, file, cmd, (unsigned long)compat_ptr(arg));
-}
-#endif
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक hda_hwdep_ioctl_compat(काष्ठा snd_hwdep *hw, काष्ठा file *file,
+				  अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस hda_hwdep_ioctl(hw, file, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
+पूर्ण
+#पूर्ण_अगर
 
-static int hda_hwdep_open(struct snd_hwdep *hw, struct file *file)
-{
-#ifndef CONFIG_SND_DEBUG_VERBOSE
-	if (!capable(CAP_SYS_RAWIO))
-		return -EACCES;
-#endif
-	return 0;
-}
+अटल पूर्णांक hda_hwdep_खोलो(काष्ठा snd_hwdep *hw, काष्ठा file *file)
+अणु
+#अगर_अघोषित CONFIG_SND_DEBUG_VERBOSE
+	अगर (!capable(CAP_SYS_RAWIO))
+		वापस -EACCES;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-int snd_hda_create_hwdep(struct hda_codec *codec)
-{
-	char hwname[16];
-	struct snd_hwdep *hwdep;
-	int err;
+पूर्णांक snd_hda_create_hwdep(काष्ठा hda_codec *codec)
+अणु
+	अक्षर hwname[16];
+	काष्ठा snd_hwdep *hwdep;
+	पूर्णांक err;
 
-	sprintf(hwname, "HDA Codec %d", codec->addr);
+	प्र_लिखो(hwname, "HDA Codec %d", codec->addr);
 	err = snd_hwdep_new(codec->card, hwname, codec->addr, &hwdep);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	codec->hwdep = hwdep;
-	sprintf(hwdep->name, "HDA Codec %d", codec->addr);
-	hwdep->iface = SNDRV_HWDEP_IFACE_HDA;
-	hwdep->private_data = codec;
+	प्र_लिखो(hwdep->name, "HDA Codec %d", codec->addr);
+	hwdep->अगरace = SNDRV_HWDEP_IFACE_HDA;
+	hwdep->निजी_data = codec;
 	hwdep->exclusive = 1;
 
-	hwdep->ops.open = hda_hwdep_open;
+	hwdep->ops.खोलो = hda_hwdep_खोलो;
 	hwdep->ops.ioctl = hda_hwdep_ioctl;
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	hwdep->ops.ioctl_compat = hda_hwdep_ioctl_compat;
-#endif
+#पूर्ण_अगर
 
-	/* for sysfs */
+	/* क्रम sysfs */
 	hwdep->dev.groups = snd_hda_dev_attr_groups;
 	dev_set_drvdata(&hwdep->dev, codec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

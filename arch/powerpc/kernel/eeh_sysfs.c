@@ -1,181 +1,182 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Sysfs entries for PCI Error Recovery for PAPR-compliant platform.
+ * Sysfs entries क्रम PCI Error Recovery क्रम PAPR-compliant platक्रमm.
  * Copyright IBM Corporation 2007
  * Copyright Linas Vepstas <linas@austin.ibm.com> 2007
  *
  * Send comments and feedback to Linas Vepstas <linas@austin.ibm.com>
  */
-#include <linux/pci.h>
-#include <linux/stat.h>
-#include <asm/ppc-pci.h>
-#include <asm/pci-bridge.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <यंत्र/ppc-pci.h>
+#समावेश <यंत्र/pci-bridge.h>
 
 /**
- * EEH_SHOW_ATTR -- Create sysfs entry for eeh statistic
+ * EEH_SHOW_ATTR -- Create sysfs entry क्रम eeh statistic
  * @_name: name of file in sysfs directory
- * @_memb: name of member in struct eeh_dev to access
- * @_format: printf format for display
+ * @_memb: name of member in काष्ठा eeh_dev to access
+ * @_क्रमmat: म_लिखो क्रमmat क्रम display
  *
  * All of the attributes look very similar, so just
- * auto-gen a cut-n-paste routine to display them.
+ * स्वतः-gen a cut-n-paste routine to display them.
  */
-#define EEH_SHOW_ATTR(_name,_memb,_format)               \
-static ssize_t eeh_show_##_name(struct device *dev,      \
-		struct device_attribute *attr, char *buf)          \
-{                                                        \
-	struct pci_dev *pdev = to_pci_dev(dev);               \
-	struct eeh_dev *edev = pci_dev_to_eeh_dev(pdev);      \
+#घोषणा EEH_SHOW_ATTR(_name,_memb,_क्रमmat)               \
+अटल sमाप_प्रकार eeh_show_##_name(काष्ठा device *dev,      \
+		काष्ठा device_attribute *attr, अक्षर *buf)          \
+अणु                                                        \
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);               \
+	काष्ठा eeh_dev *edev = pci_dev_to_eeh_dev(pdev);      \
 	                                                      \
-	if (!edev)                                            \
-		return 0;                                     \
+	अगर (!edev)                                            \
+		वापस 0;                                     \
 	                                                      \
-	return sprintf(buf, _format "\n", edev->_memb);       \
-}                                                        \
-static DEVICE_ATTR(_name, 0444, eeh_show_##_name, NULL);
+	वापस प्र_लिखो(buf, _क्रमmat "\n", edev->_memb);       \
+पूर्ण                                                        \
+अटल DEVICE_ATTR(_name, 0444, eeh_show_##_name, शून्य);
 
 EEH_SHOW_ATTR(eeh_mode,            mode,            "0x%x");
 EEH_SHOW_ATTR(eeh_pe_config_addr,  pe_config_addr,  "0x%x");
 
-static ssize_t eeh_pe_state_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
-	int state;
+अटल sमाप_प्रकार eeh_pe_state_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
+	पूर्णांक state;
 
-	if (!edev || !edev->pe)
-		return -ENODEV;
+	अगर (!edev || !edev->pe)
+		वापस -ENODEV;
 
-	state = eeh_ops->get_state(edev->pe, NULL);
-	return sprintf(buf, "0x%08x 0x%08x\n",
+	state = eeh_ops->get_state(edev->pe, शून्य);
+	वापस प्र_लिखो(buf, "0x%08x 0x%08x\n",
 		       state, edev->pe->state);
-}
+पूर्ण
 
-static ssize_t eeh_pe_state_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t count)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
+अटल sमाप_प्रकार eeh_pe_state_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
 
-	if (!edev || !edev->pe)
-		return -ENODEV;
+	अगर (!edev || !edev->pe)
+		वापस -ENODEV;
 
-	/* Nothing to do if it's not frozen */
-	if (!(edev->pe->state & EEH_PE_ISOLATED))
-		return count;
+	/* Nothing to करो अगर it's not frozen */
+	अगर (!(edev->pe->state & EEH_PE_ISOLATED))
+		वापस count;
 
-	if (eeh_unfreeze_pe(edev->pe))
-		return -EIO;
+	अगर (eeh_unमुक्तze_pe(edev->pe))
+		वापस -EIO;
 	eeh_pe_state_clear(edev->pe, EEH_PE_ISOLATED, true);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(eeh_pe_state);
+अटल DEVICE_ATTR_RW(eeh_pe_state);
 
-#if defined(CONFIG_PCI_IOV) && defined(CONFIG_PPC_PSERIES)
-static ssize_t eeh_notify_resume_show(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
-	struct pci_dn *pdn = pci_get_pdn(pdev);
+#अगर defined(CONFIG_PCI_IOV) && defined(CONFIG_PPC_PSERIES)
+अटल sमाप_प्रकार eeh_notअगरy_resume_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
+	काष्ठा pci_dn *pdn = pci_get_pdn(pdev);
 
-	if (!edev || !edev->pe)
-		return -ENODEV;
+	अगर (!edev || !edev->pe)
+		वापस -ENODEV;
 
-	return sprintf(buf, "%d\n", pdn->last_allow_rc);
-}
+	वापस प्र_लिखो(buf, "%d\n", pdn->last_allow_rc);
+पूर्ण
 
-static ssize_t eeh_notify_resume_store(struct device *dev,
-				       struct device_attribute *attr,
-				       const char *buf, size_t count)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
+अटल sमाप_प्रकार eeh_notअगरy_resume_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
 
-	if (!edev || !edev->pe || !eeh_ops->notify_resume)
-		return -ENODEV;
+	अगर (!edev || !edev->pe || !eeh_ops->notअगरy_resume)
+		वापस -ENODEV;
 
-	if (eeh_ops->notify_resume(edev))
-		return -EIO;
+	अगर (eeh_ops->notअगरy_resume(edev))
+		वापस -EIO;
 
-	return count;
-}
-static DEVICE_ATTR_RW(eeh_notify_resume);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(eeh_notअगरy_resume);
 
-static int eeh_notify_resume_add(struct pci_dev *pdev)
-{
-	struct device_node *np;
-	int rc = 0;
-
-	np = pci_device_to_OF_node(pdev->is_physfn ? pdev : pdev->physfn);
-
-	if (of_property_read_bool(np, "ibm,is-open-sriov-pf"))
-		rc = device_create_file(&pdev->dev, &dev_attr_eeh_notify_resume);
-
-	return rc;
-}
-
-static void eeh_notify_resume_remove(struct pci_dev *pdev)
-{
-	struct device_node *np;
+अटल पूर्णांक eeh_notअगरy_resume_add(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा device_node *np;
+	पूर्णांक rc = 0;
 
 	np = pci_device_to_OF_node(pdev->is_physfn ? pdev : pdev->physfn);
 
-	if (of_property_read_bool(np, "ibm,is-open-sriov-pf"))
-		device_remove_file(&pdev->dev, &dev_attr_eeh_notify_resume);
-}
-#else
-static inline int eeh_notify_resume_add(struct pci_dev *pdev) { return 0; }
-static inline void eeh_notify_resume_remove(struct pci_dev *pdev) { }
-#endif /* CONFIG_PCI_IOV && CONFIG PPC_PSERIES*/
+	अगर (of_property_पढ़ो_bool(np, "ibm,is-open-sriov-pf"))
+		rc = device_create_file(&pdev->dev, &dev_attr_eeh_notअगरy_resume);
 
-void eeh_sysfs_add_device(struct pci_dev *pdev)
-{
-	struct eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
-	int rc=0;
+	वापस rc;
+पूर्ण
 
-	if (!eeh_enabled())
-		return;
+अटल व्योम eeh_notअगरy_resume_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा device_node *np;
 
-	if (edev && (edev->mode & EEH_DEV_SYSFS))
-		return;
+	np = pci_device_to_OF_node(pdev->is_physfn ? pdev : pdev->physfn);
+
+	अगर (of_property_पढ़ो_bool(np, "ibm,is-open-sriov-pf"))
+		device_हटाओ_file(&pdev->dev, &dev_attr_eeh_notअगरy_resume);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक eeh_notअगरy_resume_add(काष्ठा pci_dev *pdev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम eeh_notअगरy_resume_हटाओ(काष्ठा pci_dev *pdev) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_IOV && CONFIG PPC_PSERIES*/
+
+व्योम eeh_sysfs_add_device(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
+	पूर्णांक rc=0;
+
+	अगर (!eeh_enabled())
+		वापस;
+
+	अगर (edev && (edev->mode & EEH_DEV_SYSFS))
+		वापस;
 
 	rc += device_create_file(&pdev->dev, &dev_attr_eeh_mode);
 	rc += device_create_file(&pdev->dev, &dev_attr_eeh_pe_config_addr);
 	rc += device_create_file(&pdev->dev, &dev_attr_eeh_pe_state);
-	rc += eeh_notify_resume_add(pdev);
+	rc += eeh_notअगरy_resume_add(pdev);
 
-	if (rc)
+	अगर (rc)
 		pr_warn("EEH: Unable to create sysfs entries\n");
-	else if (edev)
+	अन्यथा अगर (edev)
 		edev->mode |= EEH_DEV_SYSFS;
-}
+पूर्ण
 
-void eeh_sysfs_remove_device(struct pci_dev *pdev)
-{
-	struct eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
+व्योम eeh_sysfs_हटाओ_device(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा eeh_dev *edev = pci_dev_to_eeh_dev(pdev);
 
-	if (!edev) {
+	अगर (!edev) अणु
 		WARN_ON(eeh_enabled());
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	edev->mode &= ~EEH_DEV_SYSFS;
 
 	/*
-	 * The parent directory might have been removed. We needn't
-	 * continue for that case.
+	 * The parent directory might have been हटाओd. We needn't
+	 * जारी क्रम that हाल.
 	 */
-	if (!pdev->dev.kobj.sd)
-		return;
+	अगर (!pdev->dev.kobj.sd)
+		वापस;
 
-	device_remove_file(&pdev->dev, &dev_attr_eeh_mode);
-	device_remove_file(&pdev->dev, &dev_attr_eeh_pe_config_addr);
-	device_remove_file(&pdev->dev, &dev_attr_eeh_pe_state);
+	device_हटाओ_file(&pdev->dev, &dev_attr_eeh_mode);
+	device_हटाओ_file(&pdev->dev, &dev_attr_eeh_pe_config_addr);
+	device_हटाओ_file(&pdev->dev, &dev_attr_eeh_pe_state);
 
-	eeh_notify_resume_remove(pdev);
-}
+	eeh_notअगरy_resume_हटाओ(pdev);
+पूर्ण

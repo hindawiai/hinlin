@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019 SiFive, Inc.
  */
-#ifndef __ASM_HEAD_H
-#define __ASM_HEAD_H
+#अगर_अघोषित __ASM_HEAD_H
+#घोषणा __ASM_HEAD_H
 
-#include <linux/linkage.h>
-#include <linux/init.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/init.h>
 
-extern atomic_t hart_lottery;
+बाह्य atomic_t hart_lottery;
 
-asmlinkage void do_page_fault(struct pt_regs *regs);
-asmlinkage void __init setup_vm(uintptr_t dtb_pa);
-#ifdef CONFIG_XIP_KERNEL
-asmlinkage void __init __copy_data(void);
-#endif
+यंत्रlinkage व्योम करो_page_fault(काष्ठा pt_regs *regs);
+यंत्रlinkage व्योम __init setup_vm(uपूर्णांकptr_t dtb_pa);
+#अगर_घोषित CONFIG_XIP_KERNEL
+यंत्रlinkage व्योम __init __copy_data(व्योम);
+#पूर्ण_अगर
 
-extern void *__cpu_up_stack_pointer[];
-extern void *__cpu_up_task_pointer[];
+बाह्य व्योम *__cpu_up_stack_poपूर्णांकer[];
+बाह्य व्योम *__cpu_up_task_poपूर्णांकer[];
 
-#endif /* __ASM_HEAD_H */
+#पूर्ण_अगर /* __ASM_HEAD_H */

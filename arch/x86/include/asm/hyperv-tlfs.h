@@ -1,343 +1,344 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
 /*
  * This file contains definitions from Hyper-V Hypervisor Top-Level Functional
- * Specification (TLFS):
- * https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/tlfs
+ * Specअगरication (TLFS):
+ * https://करोcs.microsoft.com/en-us/भवization/hyper-v-on-winकरोws/reference/tlfs
  */
 
-#ifndef _ASM_X86_HYPERV_TLFS_H
-#define _ASM_X86_HYPERV_TLFS_H
+#अगर_अघोषित _ASM_X86_HYPERV_TLFS_H
+#घोषणा _ASM_X86_HYPERV_TLFS_H
 
-#include <linux/types.h>
-#include <asm/page.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/page.h>
 /*
- * The below CPUID leaves are present if VersionAndFeatures.HypervisorPresent
+ * The below CPUID leaves are present अगर VersionAndFeatures.HypervisorPresent
  * is set by CPUID(HvCpuIdFunctionVersionAndFeatures).
  */
-#define HYPERV_CPUID_VENDOR_AND_MAX_FUNCTIONS	0x40000000
-#define HYPERV_CPUID_INTERFACE			0x40000001
-#define HYPERV_CPUID_VERSION			0x40000002
-#define HYPERV_CPUID_FEATURES			0x40000003
-#define HYPERV_CPUID_ENLIGHTMENT_INFO		0x40000004
-#define HYPERV_CPUID_IMPLEMENT_LIMITS		0x40000005
-#define HYPERV_CPUID_CPU_MANAGEMENT_FEATURES	0x40000007
-#define HYPERV_CPUID_NESTED_FEATURES		0x4000000A
-#define HYPERV_CPUID_ISOLATION_CONFIG		0x4000000C
+#घोषणा HYPERV_CPUID_VENDOR_AND_MAX_FUNCTIONS	0x40000000
+#घोषणा HYPERV_CPUID_INTERFACE			0x40000001
+#घोषणा HYPERV_CPUID_VERSION			0x40000002
+#घोषणा HYPERV_CPUID_FEATURES			0x40000003
+#घोषणा HYPERV_CPUID_ENLIGHTMENT_INFO		0x40000004
+#घोषणा HYPERV_CPUID_IMPLEMENT_LIMITS		0x40000005
+#घोषणा HYPERV_CPUID_CPU_MANAGEMENT_FEATURES	0x40000007
+#घोषणा HYPERV_CPUID_NESTED_FEATURES		0x4000000A
+#घोषणा HYPERV_CPUID_ISOLATION_CONFIG		0x4000000C
 
-#define HYPERV_CPUID_VIRT_STACK_INTERFACE	0x40000081
-#define HYPERV_VS_INTERFACE_EAX_SIGNATURE	0x31235356  /* "VS#1" */
+#घोषणा HYPERV_CPUID_VIRT_STACK_INTERFACE	0x40000081
+#घोषणा HYPERV_VS_INTERFACE_EAX_SIGNATURE	0x31235356  /* "VS#1" */
 
-#define HYPERV_CPUID_VIRT_STACK_PROPERTIES	0x40000082
-/* Support for the extended IOAPIC RTE format */
-#define HYPERV_VS_PROPERTIES_EAX_EXTENDED_IOAPIC_RTE	BIT(2)
+#घोषणा HYPERV_CPUID_VIRT_STACK_PROPERTIES	0x40000082
+/* Support क्रम the extended IOAPIC RTE क्रमmat */
+#घोषणा HYPERV_VS_PROPERTIES_EAX_EXTENDED_IOAPIC_RTE	BIT(2)
 
-#define HYPERV_HYPERVISOR_PRESENT_BIT		0x80000000
-#define HYPERV_CPUID_MIN			0x40000005
-#define HYPERV_CPUID_MAX			0x4000ffff
+#घोषणा HYPERV_HYPERVISOR_PRESENT_BIT		0x80000000
+#घोषणा HYPERV_CPUID_MIN			0x40000005
+#घोषणा HYPERV_CPUID_MAX			0x4000ffff
 
 /*
  * Group D Features.  The bit assignments are custom to each architecture.
  * On x86/x64 these are HYPERV_CPUID_FEATURES.EDX bits.
  */
-/* The MWAIT instruction is available (per section MONITOR / MWAIT) */
-#define HV_X64_MWAIT_AVAILABLE				BIT(0)
+/* The MWAIT inकाष्ठाion is available (per section MONITOR / MWAIT) */
+#घोषणा HV_X64_MWAIT_AVAILABLE				BIT(0)
 /* Guest debugging support is available */
-#define HV_X64_GUEST_DEBUGGING_AVAILABLE		BIT(1)
-/* Performance Monitor support is available*/
-#define HV_X64_PERF_MONITOR_AVAILABLE			BIT(2)
-/* Support for physical CPU dynamic partitioning events is available*/
-#define HV_X64_CPU_DYNAMIC_PARTITIONING_AVAILABLE	BIT(3)
+#घोषणा HV_X64_GUEST_DEBUGGING_AVAILABLE		BIT(1)
+/* Perक्रमmance Monitor support is available*/
+#घोषणा HV_X64_PERF_MONITOR_AVAILABLE			BIT(2)
+/* Support क्रम physical CPU dynamic partitioning events is available*/
+#घोषणा HV_X64_CPU_DYNAMIC_PARTITIONING_AVAILABLE	BIT(3)
 /*
- * Support for passing hypercall input parameter block via XMM
- * registers is available
+ * Support क्रम passing hypercall input parameter block via XMM
+ * रेजिस्टरs is available
  */
-#define HV_X64_HYPERCALL_PARAMS_XMM_AVAILABLE		BIT(4)
-/* Support for a virtual guest idle state is available */
-#define HV_X64_GUEST_IDLE_STATE_AVAILABLE		BIT(5)
+#घोषणा HV_X64_HYPERCALL_PARAMS_XMM_AVAILABLE		BIT(4)
+/* Support क्रम a भव guest idle state is available */
+#घोषणा HV_X64_GUEST_IDLE_STATE_AVAILABLE		BIT(5)
 /* Frequency MSRs available */
-#define HV_FEATURE_FREQUENCY_MSRS_AVAILABLE		BIT(8)
+#घोषणा HV_FEATURE_FREQUENCY_MSRS_AVAILABLE		BIT(8)
 /* Crash MSR available */
-#define HV_FEATURE_GUEST_CRASH_MSR_AVAILABLE		BIT(10)
-/* Support for debug MSRs available */
-#define HV_FEATURE_DEBUG_MSRS_AVAILABLE			BIT(11)
-/* stimer Direct Mode is available */
-#define HV_STIMER_DIRECT_MODE_AVAILABLE			BIT(19)
+#घोषणा HV_FEATURE_GUEST_CRASH_MSR_AVAILABLE		BIT(10)
+/* Support क्रम debug MSRs available */
+#घोषणा HV_FEATURE_DEBUG_MSRS_AVAILABLE			BIT(11)
+/* sसमयr Direct Mode is available */
+#घोषणा HV_STIMER_सूचीECT_MODE_AVAILABLE			BIT(19)
 
 /*
  * Implementation recommendations. Indicates which behaviors the hypervisor
- * recommends the OS implement for optimal performance.
+ * recommends the OS implement क्रम optimal perक्रमmance.
  * These are HYPERV_CPUID_ENLIGHTMENT_INFO.EAX bits.
  */
 /*
- * Recommend using hypercall for address space switches rather
- * than MOV to CR3 instruction
+ * Recommend using hypercall क्रम address space चयनes rather
+ * than MOV to CR3 inकाष्ठाion
  */
-#define HV_X64_AS_SWITCH_RECOMMENDED			BIT(0)
-/* Recommend using hypercall for local TLB flushes rather
- * than INVLPG or MOV to CR3 instructions */
-#define HV_X64_LOCAL_TLB_FLUSH_RECOMMENDED		BIT(1)
+#घोषणा HV_X64_AS_SWITCH_RECOMMENDED			BIT(0)
+/* Recommend using hypercall क्रम local TLB flushes rather
+ * than INVLPG or MOV to CR3 inकाष्ठाions */
+#घोषणा HV_X64_LOCAL_TLB_FLUSH_RECOMMENDED		BIT(1)
 /*
- * Recommend using hypercall for remote TLB flushes rather
- * than inter-processor interrupts
+ * Recommend using hypercall क्रम remote TLB flushes rather
+ * than पूर्णांकer-processor पूर्णांकerrupts
  */
-#define HV_X64_REMOTE_TLB_FLUSH_RECOMMENDED		BIT(2)
+#घोषणा HV_X64_REMOTE_TLB_FLUSH_RECOMMENDED		BIT(2)
 /*
- * Recommend using MSRs for accessing APIC registers
+ * Recommend using MSRs क्रम accessing APIC रेजिस्टरs
  * EOI, ICR and TPR rather than their memory-mapped counterparts
  */
-#define HV_X64_APIC_ACCESS_RECOMMENDED			BIT(3)
-/* Recommend using the hypervisor-provided MSR to initiate a system RESET */
-#define HV_X64_SYSTEM_RESET_RECOMMENDED			BIT(4)
+#घोषणा HV_X64_APIC_ACCESS_RECOMMENDED			BIT(3)
+/* Recommend using the hypervisor-provided MSR to initiate a प्रणाली RESET */
+#घोषणा HV_X64_SYSTEM_RESET_RECOMMENDED			BIT(4)
 /*
- * Recommend using relaxed timing for this partition. If used,
- * the VM should disable any watchdog timeouts that rely on the
- * timely delivery of external interrupts
+ * Recommend using relaxed timing क्रम this partition. If used,
+ * the VM should disable any watchकरोg समयouts that rely on the
+ * समयly delivery of बाह्यal पूर्णांकerrupts
  */
-#define HV_X64_RELAXED_TIMING_RECOMMENDED		BIT(5)
+#घोषणा HV_X64_RELAXED_TIMING_RECOMMENDED		BIT(5)
 
 /*
  * Recommend not using Auto End-Of-Interrupt feature
  */
-#define HV_DEPRECATING_AEOI_RECOMMENDED			BIT(9)
+#घोषणा HV_DEPRECATING_AEOI_RECOMMENDED			BIT(9)
 
 /*
  * Recommend using cluster IPI hypercalls.
  */
-#define HV_X64_CLUSTER_IPI_RECOMMENDED			BIT(10)
+#घोषणा HV_X64_CLUSTER_IPI_RECOMMENDED			BIT(10)
 
-/* Recommend using the newer ExProcessorMasks interface */
-#define HV_X64_EX_PROCESSOR_MASKS_RECOMMENDED		BIT(11)
+/* Recommend using the newer ExProcessorMasks पूर्णांकerface */
+#घोषणा HV_X64_EX_PROCESSOR_MASKS_RECOMMENDED		BIT(11)
 
 /* Recommend using enlightened VMCS */
-#define HV_X64_ENLIGHTENED_VMCS_RECOMMENDED		BIT(14)
+#घोषणा HV_X64_ENLIGHTENED_VMCS_RECOMMENDED		BIT(14)
 
 /*
- * CPU management features identification.
+ * CPU management features identअगरication.
  * These are HYPERV_CPUID_CPU_MANAGEMENT_FEATURES.EAX bits.
  */
-#define HV_X64_START_LOGICAL_PROCESSOR			BIT(0)
-#define HV_X64_CREATE_ROOT_VIRTUAL_PROCESSOR		BIT(1)
-#define HV_X64_PERFORMANCE_COUNTER_SYNC			BIT(2)
-#define HV_X64_RESERVED_IDENTITY_BIT			BIT(31)
+#घोषणा HV_X64_START_LOGICAL_PROCESSOR			BIT(0)
+#घोषणा HV_X64_CREATE_ROOT_VIRTUAL_PROCESSOR		BIT(1)
+#घोषणा HV_X64_PERFORMANCE_COUNTER_SYNC			BIT(2)
+#घोषणा HV_X64_RESERVED_IDENTITY_BIT			BIT(31)
 
 /*
- * Virtual processor will never share a physical core with another virtual
- * processor, except for virtual processors that are reported as sibling SMT
- * threads.
+ * Virtual processor will never share a physical core with another भव
+ * processor, except क्रम भव processors that are reported as sibling SMT
+ * thपढ़ोs.
  */
-#define HV_X64_NO_NONARCH_CORESHARING			BIT(18)
+#घोषणा HV_X64_NO_NONARCH_CORESHARING			BIT(18)
 
 /* Nested features. These are HYPERV_CPUID_NESTED_FEATURES.EAX bits. */
-#define HV_X64_NESTED_DIRECT_FLUSH			BIT(17)
-#define HV_X64_NESTED_GUEST_MAPPING_FLUSH		BIT(18)
-#define HV_X64_NESTED_MSR_BITMAP			BIT(19)
+#घोषणा HV_X64_NESTED_सूचीECT_FLUSH			BIT(17)
+#घोषणा HV_X64_NESTED_GUEST_MAPPING_FLUSH		BIT(18)
+#घोषणा HV_X64_NESTED_MSR_BITMAP			BIT(19)
 
 /* HYPERV_CPUID_ISOLATION_CONFIG.EAX bits. */
-#define HV_PARAVISOR_PRESENT				BIT(0)
+#घोषणा HV_PARAVISOR_PRESENT				BIT(0)
 
 /* HYPERV_CPUID_ISOLATION_CONFIG.EBX bits. */
-#define HV_ISOLATION_TYPE				GENMASK(3, 0)
-#define HV_SHARED_GPA_BOUNDARY_ACTIVE			BIT(5)
-#define HV_SHARED_GPA_BOUNDARY_BITS			GENMASK(11, 6)
+#घोषणा HV_ISOLATION_TYPE				GENMASK(3, 0)
+#घोषणा HV_SHARED_GPA_BOUNDARY_ACTIVE			BIT(5)
+#घोषणा HV_SHARED_GPA_BOUNDARY_BITS			GENMASK(11, 6)
 
-enum hv_isolation_type {
+क्रमागत hv_isolation_type अणु
 	HV_ISOLATION_TYPE_NONE	= 0,
 	HV_ISOLATION_TYPE_VBS	= 1,
 	HV_ISOLATION_TYPE_SNP	= 2
-};
+पूर्ण;
 
-/* Hyper-V specific model specific registers (MSRs) */
+/* Hyper-V specअगरic model specअगरic रेजिस्टरs (MSRs) */
 
-/* MSR used to identify the guest OS. */
-#define HV_X64_MSR_GUEST_OS_ID			0x40000000
+/* MSR used to identअगरy the guest OS. */
+#घोषणा HV_X64_MSR_GUEST_OS_ID			0x40000000
 
 /* MSR used to setup pages used to communicate with the hypervisor. */
-#define HV_X64_MSR_HYPERCALL			0x40000001
+#घोषणा HV_X64_MSR_HYPERCALL			0x40000001
 
 /* MSR used to provide vcpu index */
-#define HV_REGISTER_VP_INDEX			0x40000002
+#घोषणा HV_REGISTER_VP_INDEX			0x40000002
 
 /* MSR used to reset the guest OS. */
-#define HV_X64_MSR_RESET			0x40000003
+#घोषणा HV_X64_MSR_RESET			0x40000003
 
-/* MSR used to provide vcpu runtime in 100ns units */
-#define HV_X64_MSR_VP_RUNTIME			0x40000010
+/* MSR used to provide vcpu runसमय in 100ns units */
+#घोषणा HV_X64_MSR_VP_RUNTIME			0x40000010
 
-/* MSR used to read the per-partition time reference counter */
-#define HV_REGISTER_TIME_REF_COUNT		0x40000020
+/* MSR used to पढ़ो the per-partition समय reference counter */
+#घोषणा HV_REGISTER_TIME_REF_COUNT		0x40000020
 
-/* A partition's reference time stamp counter (TSC) page */
-#define HV_REGISTER_REFERENCE_TSC		0x40000021
+/* A partition's reference समय stamp counter (TSC) page */
+#घोषणा HV_REGISTER_REFERENCE_TSC		0x40000021
 
 /* MSR used to retrieve the TSC frequency */
-#define HV_X64_MSR_TSC_FREQUENCY		0x40000022
+#घोषणा HV_X64_MSR_TSC_FREQUENCY		0x40000022
 
-/* MSR used to retrieve the local APIC timer frequency */
-#define HV_X64_MSR_APIC_FREQUENCY		0x40000023
+/* MSR used to retrieve the local APIC समयr frequency */
+#घोषणा HV_X64_MSR_APIC_FREQUENCY		0x40000023
 
-/* Define the virtual APIC registers */
-#define HV_X64_MSR_EOI				0x40000070
-#define HV_X64_MSR_ICR				0x40000071
-#define HV_X64_MSR_TPR				0x40000072
-#define HV_X64_MSR_VP_ASSIST_PAGE		0x40000073
+/* Define the भव APIC रेजिस्टरs */
+#घोषणा HV_X64_MSR_EOI				0x40000070
+#घोषणा HV_X64_MSR_ICR				0x40000071
+#घोषणा HV_X64_MSR_TPR				0x40000072
+#घोषणा HV_X64_MSR_VP_ASSIST_PAGE		0x40000073
 
-/* Define synthetic interrupt controller model specific registers. */
-#define HV_REGISTER_SCONTROL			0x40000080
-#define HV_REGISTER_SVERSION			0x40000081
-#define HV_REGISTER_SIEFP			0x40000082
-#define HV_REGISTER_SIMP			0x40000083
-#define HV_REGISTER_EOM				0x40000084
-#define HV_REGISTER_SINT0			0x40000090
-#define HV_REGISTER_SINT1			0x40000091
-#define HV_REGISTER_SINT2			0x40000092
-#define HV_REGISTER_SINT3			0x40000093
-#define HV_REGISTER_SINT4			0x40000094
-#define HV_REGISTER_SINT5			0x40000095
-#define HV_REGISTER_SINT6			0x40000096
-#define HV_REGISTER_SINT7			0x40000097
-#define HV_REGISTER_SINT8			0x40000098
-#define HV_REGISTER_SINT9			0x40000099
-#define HV_REGISTER_SINT10			0x4000009A
-#define HV_REGISTER_SINT11			0x4000009B
-#define HV_REGISTER_SINT12			0x4000009C
-#define HV_REGISTER_SINT13			0x4000009D
-#define HV_REGISTER_SINT14			0x4000009E
-#define HV_REGISTER_SINT15			0x4000009F
+/* Define synthetic पूर्णांकerrupt controller model specअगरic रेजिस्टरs. */
+#घोषणा HV_REGISTER_SCONTROL			0x40000080
+#घोषणा HV_REGISTER_SVERSION			0x40000081
+#घोषणा HV_REGISTER_SIEFP			0x40000082
+#घोषणा HV_REGISTER_SIMP			0x40000083
+#घोषणा HV_REGISTER_EOM				0x40000084
+#घोषणा HV_REGISTER_SINT0			0x40000090
+#घोषणा HV_REGISTER_SINT1			0x40000091
+#घोषणा HV_REGISTER_SINT2			0x40000092
+#घोषणा HV_REGISTER_SINT3			0x40000093
+#घोषणा HV_REGISTER_SINT4			0x40000094
+#घोषणा HV_REGISTER_SINT5			0x40000095
+#घोषणा HV_REGISTER_SINT6			0x40000096
+#घोषणा HV_REGISTER_SINT7			0x40000097
+#घोषणा HV_REGISTER_SINT8			0x40000098
+#घोषणा HV_REGISTER_SINT9			0x40000099
+#घोषणा HV_REGISTER_SINT10			0x4000009A
+#घोषणा HV_REGISTER_SINT11			0x4000009B
+#घोषणा HV_REGISTER_SINT12			0x4000009C
+#घोषणा HV_REGISTER_SINT13			0x4000009D
+#घोषणा HV_REGISTER_SINT14			0x4000009E
+#घोषणा HV_REGISTER_SINT15			0x4000009F
 
 /*
- * Synthetic Timer MSRs. Four timers per vcpu.
+ * Synthetic Timer MSRs. Four समयrs per vcpu.
  */
-#define HV_REGISTER_STIMER0_CONFIG		0x400000B0
-#define HV_REGISTER_STIMER0_COUNT		0x400000B1
-#define HV_REGISTER_STIMER1_CONFIG		0x400000B2
-#define HV_REGISTER_STIMER1_COUNT		0x400000B3
-#define HV_REGISTER_STIMER2_CONFIG		0x400000B4
-#define HV_REGISTER_STIMER2_COUNT		0x400000B5
-#define HV_REGISTER_STIMER3_CONFIG		0x400000B6
-#define HV_REGISTER_STIMER3_COUNT		0x400000B7
+#घोषणा HV_REGISTER_STIMER0_CONFIG		0x400000B0
+#घोषणा HV_REGISTER_STIMER0_COUNT		0x400000B1
+#घोषणा HV_REGISTER_STIMER1_CONFIG		0x400000B2
+#घोषणा HV_REGISTER_STIMER1_COUNT		0x400000B3
+#घोषणा HV_REGISTER_STIMER2_CONFIG		0x400000B4
+#घोषणा HV_REGISTER_STIMER2_COUNT		0x400000B5
+#घोषणा HV_REGISTER_STIMER3_CONFIG		0x400000B6
+#घोषणा HV_REGISTER_STIMER3_COUNT		0x400000B7
 
 /* Hyper-V guest idle MSR */
-#define HV_X64_MSR_GUEST_IDLE			0x400000F0
+#घोषणा HV_X64_MSR_GUEST_IDLE			0x400000F0
 
-/* Hyper-V guest crash notification MSR's */
-#define HV_REGISTER_CRASH_P0			0x40000100
-#define HV_REGISTER_CRASH_P1			0x40000101
-#define HV_REGISTER_CRASH_P2			0x40000102
-#define HV_REGISTER_CRASH_P3			0x40000103
-#define HV_REGISTER_CRASH_P4			0x40000104
-#define HV_REGISTER_CRASH_CTL			0x40000105
+/* Hyper-V guest crash notअगरication MSR's */
+#घोषणा HV_REGISTER_CRASH_P0			0x40000100
+#घोषणा HV_REGISTER_CRASH_P1			0x40000101
+#घोषणा HV_REGISTER_CRASH_P2			0x40000102
+#घोषणा HV_REGISTER_CRASH_P3			0x40000103
+#घोषणा HV_REGISTER_CRASH_P4			0x40000104
+#घोषणा HV_REGISTER_CRASH_CTL			0x40000105
 
 /* TSC emulation after migration */
-#define HV_X64_MSR_REENLIGHTENMENT_CONTROL	0x40000106
-#define HV_X64_MSR_TSC_EMULATION_CONTROL	0x40000107
-#define HV_X64_MSR_TSC_EMULATION_STATUS		0x40000108
+#घोषणा HV_X64_MSR_REENLIGHTENMENT_CONTROL	0x40000106
+#घोषणा HV_X64_MSR_TSC_EMULATION_CONTROL	0x40000107
+#घोषणा HV_X64_MSR_TSC_EMULATION_STATUS		0x40000108
 
 /* TSC invariant control */
-#define HV_X64_MSR_TSC_INVARIANT_CONTROL	0x40000118
+#घोषणा HV_X64_MSR_TSC_INVARIANT_CONTROL	0x40000118
 
-/* Register name aliases for temporary compatibility */
-#define HV_X64_MSR_STIMER0_COUNT	HV_REGISTER_STIMER0_COUNT
-#define HV_X64_MSR_STIMER0_CONFIG	HV_REGISTER_STIMER0_CONFIG
-#define HV_X64_MSR_STIMER1_COUNT	HV_REGISTER_STIMER1_COUNT
-#define HV_X64_MSR_STIMER1_CONFIG	HV_REGISTER_STIMER1_CONFIG
-#define HV_X64_MSR_STIMER2_COUNT	HV_REGISTER_STIMER2_COUNT
-#define HV_X64_MSR_STIMER2_CONFIG	HV_REGISTER_STIMER2_CONFIG
-#define HV_X64_MSR_STIMER3_COUNT	HV_REGISTER_STIMER3_COUNT
-#define HV_X64_MSR_STIMER3_CONFIG	HV_REGISTER_STIMER3_CONFIG
-#define HV_X64_MSR_SCONTROL		HV_REGISTER_SCONTROL
-#define HV_X64_MSR_SVERSION		HV_REGISTER_SVERSION
-#define HV_X64_MSR_SIMP			HV_REGISTER_SIMP
-#define HV_X64_MSR_SIEFP		HV_REGISTER_SIEFP
-#define HV_X64_MSR_VP_INDEX		HV_REGISTER_VP_INDEX
-#define HV_X64_MSR_EOM			HV_REGISTER_EOM
-#define HV_X64_MSR_SINT0		HV_REGISTER_SINT0
-#define HV_X64_MSR_SINT15		HV_REGISTER_SINT15
-#define HV_X64_MSR_CRASH_P0		HV_REGISTER_CRASH_P0
-#define HV_X64_MSR_CRASH_P1		HV_REGISTER_CRASH_P1
-#define HV_X64_MSR_CRASH_P2		HV_REGISTER_CRASH_P2
-#define HV_X64_MSR_CRASH_P3		HV_REGISTER_CRASH_P3
-#define HV_X64_MSR_CRASH_P4		HV_REGISTER_CRASH_P4
-#define HV_X64_MSR_CRASH_CTL		HV_REGISTER_CRASH_CTL
-#define HV_X64_MSR_TIME_REF_COUNT	HV_REGISTER_TIME_REF_COUNT
-#define HV_X64_MSR_REFERENCE_TSC	HV_REGISTER_REFERENCE_TSC
+/* Register name aliases क्रम temporary compatibility */
+#घोषणा HV_X64_MSR_STIMER0_COUNT	HV_REGISTER_STIMER0_COUNT
+#घोषणा HV_X64_MSR_STIMER0_CONFIG	HV_REGISTER_STIMER0_CONFIG
+#घोषणा HV_X64_MSR_STIMER1_COUNT	HV_REGISTER_STIMER1_COUNT
+#घोषणा HV_X64_MSR_STIMER1_CONFIG	HV_REGISTER_STIMER1_CONFIG
+#घोषणा HV_X64_MSR_STIMER2_COUNT	HV_REGISTER_STIMER2_COUNT
+#घोषणा HV_X64_MSR_STIMER2_CONFIG	HV_REGISTER_STIMER2_CONFIG
+#घोषणा HV_X64_MSR_STIMER3_COUNT	HV_REGISTER_STIMER3_COUNT
+#घोषणा HV_X64_MSR_STIMER3_CONFIG	HV_REGISTER_STIMER3_CONFIG
+#घोषणा HV_X64_MSR_SCONTROL		HV_REGISTER_SCONTROL
+#घोषणा HV_X64_MSR_SVERSION		HV_REGISTER_SVERSION
+#घोषणा HV_X64_MSR_SIMP			HV_REGISTER_SIMP
+#घोषणा HV_X64_MSR_SIEFP		HV_REGISTER_SIEFP
+#घोषणा HV_X64_MSR_VP_INDEX		HV_REGISTER_VP_INDEX
+#घोषणा HV_X64_MSR_EOM			HV_REGISTER_EOM
+#घोषणा HV_X64_MSR_SINT0		HV_REGISTER_SINT0
+#घोषणा HV_X64_MSR_SINT15		HV_REGISTER_SINT15
+#घोषणा HV_X64_MSR_CRASH_P0		HV_REGISTER_CRASH_P0
+#घोषणा HV_X64_MSR_CRASH_P1		HV_REGISTER_CRASH_P1
+#घोषणा HV_X64_MSR_CRASH_P2		HV_REGISTER_CRASH_P2
+#घोषणा HV_X64_MSR_CRASH_P3		HV_REGISTER_CRASH_P3
+#घोषणा HV_X64_MSR_CRASH_P4		HV_REGISTER_CRASH_P4
+#घोषणा HV_X64_MSR_CRASH_CTL		HV_REGISTER_CRASH_CTL
+#घोषणा HV_X64_MSR_TIME_REF_COUNT	HV_REGISTER_TIME_REF_COUNT
+#घोषणा HV_X64_MSR_REFERENCE_TSC	HV_REGISTER_REFERENCE_TSC
 
 /*
  * Declare the MSR used to setup pages used to communicate with the hypervisor.
  */
-union hv_x64_msr_hypercall_contents {
-	u64 as_uint64;
-	struct {
+जोड़ hv_x64_msr_hypercall_contents अणु
+	u64 as_uपूर्णांक64;
+	काष्ठा अणु
 		u64 enable:1;
 		u64 reserved:11;
 		u64 guest_physical_address:52;
-	} __packed;
-};
+	पूर्ण __packed;
+पूर्ण;
 
-struct hv_reenlightenment_control {
+काष्ठा hv_reenlightenment_control अणु
 	__u64 vector:8;
 	__u64 reserved1:8;
 	__u64 enabled:1;
 	__u64 reserved2:15;
 	__u64 target_vp:32;
-}  __packed;
+पूर्ण  __packed;
 
-struct hv_tsc_emulation_control {
+काष्ठा hv_tsc_emulation_control अणु
 	__u64 enabled:1;
 	__u64 reserved:63;
-} __packed;
+पूर्ण __packed;
 
-struct hv_tsc_emulation_status {
+काष्ठा hv_tsc_emulation_status अणु
 	__u64 inprogress:1;
 	__u64 reserved:63;
-} __packed;
+पूर्ण __packed;
 
-#define HV_X64_MSR_HYPERCALL_ENABLE		0x00000001
-#define HV_X64_MSR_HYPERCALL_PAGE_ADDRESS_SHIFT	12
-#define HV_X64_MSR_HYPERCALL_PAGE_ADDRESS_MASK	\
+#घोषणा HV_X64_MSR_HYPERCALL_ENABLE		0x00000001
+#घोषणा HV_X64_MSR_HYPERCALL_PAGE_ADDRESS_SHIFT	12
+#घोषणा HV_X64_MSR_HYPERCALL_PAGE_ADDRESS_MASK	\
 		(~((1ull << HV_X64_MSR_HYPERCALL_PAGE_ADDRESS_SHIFT) - 1))
 
-#define HV_X64_MSR_CRASH_PARAMS		\
+#घोषणा HV_X64_MSR_CRASH_PARAMS		\
 		(1 + (HV_X64_MSR_CRASH_P4 - HV_X64_MSR_CRASH_P0))
 
-#define HV_IPI_LOW_VECTOR	0x10
-#define HV_IPI_HIGH_VECTOR	0xff
+#घोषणा HV_IPI_LOW_VECTOR	0x10
+#घोषणा HV_IPI_HIGH_VECTOR	0xff
 
-#define HV_X64_MSR_VP_ASSIST_PAGE_ENABLE	0x00000001
-#define HV_X64_MSR_VP_ASSIST_PAGE_ADDRESS_SHIFT	12
-#define HV_X64_MSR_VP_ASSIST_PAGE_ADDRESS_MASK	\
+#घोषणा HV_X64_MSR_VP_ASSIST_PAGE_ENABLE	0x00000001
+#घोषणा HV_X64_MSR_VP_ASSIST_PAGE_ADDRESS_SHIFT	12
+#घोषणा HV_X64_MSR_VP_ASSIST_PAGE_ADDRESS_MASK	\
 		(~((1ull << HV_X64_MSR_VP_ASSIST_PAGE_ADDRESS_SHIFT) - 1))
 
 /* Hyper-V Enlightened VMCS version mask in nested features CPUID */
-#define HV_X64_ENLIGHTENED_VMCS_VERSION		0xff
+#घोषणा HV_X64_ENLIGHTENED_VMCS_VERSION		0xff
 
-#define HV_X64_MSR_TSC_REFERENCE_ENABLE		0x00000001
-#define HV_X64_MSR_TSC_REFERENCE_ADDRESS_SHIFT	12
+#घोषणा HV_X64_MSR_TSC_REFERENCE_ENABLE		0x00000001
+#घोषणा HV_X64_MSR_TSC_REFERENCE_ADDRESS_SHIFT	12
 
-struct hv_nested_enlightenments_control {
-	struct {
+काष्ठा hv_nested_enlightenments_control अणु
+	काष्ठा अणु
 		__u32 directhypercall:1;
 		__u32 reserved:31;
-	} features;
-	struct {
+	पूर्ण features;
+	काष्ठा अणु
 		__u32 reserved;
-	} hypercallControls;
-} __packed;
+	पूर्ण hypercallControls;
+पूर्ण __packed;
 
-/* Define virtual processor assist page structure. */
-struct hv_vp_assist_page {
+/* Define भव processor assist page काष्ठाure. */
+काष्ठा hv_vp_assist_page अणु
 	__u32 apic_assist;
 	__u32 reserved1;
 	__u64 vtl_control[3];
-	struct hv_nested_enlightenments_control nested_control;
+	काष्ठा hv_nested_enlightenments_control nested_control;
 	__u8 enlighten_vmentry;
 	__u8 reserved2[7];
 	__u64 current_nested_vmcs;
-} __packed;
+पूर्ण __packed;
 
-struct hv_enlightened_vmcs {
+काष्ठा hv_enlightened_vmcs अणु
 	u32 revision_id;
-	u32 abort;
+	u32 पात;
 
 	u16 host_es_selector;
 	u16 host_cs_selector;
@@ -362,12 +363,12 @@ struct hv_enlightened_vmcs {
 	u32 host_ia32_sysenter_cs;
 
 	u32 pin_based_vm_exec_control;
-	u32 vm_exit_controls;
+	u32 vm_निकास_controls;
 	u32 secondary_vm_exec_control;
 
-	u64 io_bitmap_a;
-	u64 io_bitmap_b;
-	u64 msr_bitmap;
+	u64 io_biपंचांगap_a;
+	u64 io_biपंचांगap_b;
+	u64 msr_biपंचांगap;
 
 	u16 guest_es_selector;
 	u16 guest_cs_selector;
@@ -411,8 +412,8 @@ struct hv_enlightened_vmcs {
 
 	u64 padding64_1[3];
 
-	u64 vm_exit_msr_store_addr;
-	u64 vm_exit_msr_load_addr;
+	u64 vm_निकास_msr_store_addr;
+	u64 vm_निकास_msr_load_addr;
 	u64 vm_entry_msr_load_addr;
 
 	u64 cr3_target_value0;
@@ -424,13 +425,13 @@ struct hv_enlightened_vmcs {
 	u32 page_fault_error_code_match;
 
 	u32 cr3_target_count;
-	u32 vm_exit_msr_store_count;
-	u32 vm_exit_msr_load_count;
+	u32 vm_निकास_msr_store_count;
+	u32 vm_निकास_msr_load_count;
 	u32 vm_entry_msr_load_count;
 
 	u64 tsc_offset;
-	u64 virtual_apic_page_addr;
-	u64 vmcs_link_pointer;
+	u64 भव_apic_page_addr;
+	u64 vmcs_link_poपूर्णांकer;
 
 	u64 guest_ia32_debugctl;
 	u64 guest_ia32_pat;
@@ -450,8 +451,8 @@ struct hv_enlightened_vmcs {
 
 	u64 cr0_guest_host_mask;
 	u64 cr4_guest_host_mask;
-	u64 cr0_read_shadow;
-	u64 cr4_read_shadow;
+	u64 cr0_पढ़ो_shaकरोw;
+	u64 cr4_पढ़ो_shaकरोw;
 	u64 guest_cr0;
 	u64 guest_cr3;
 	u64 guest_cr4;
@@ -464,40 +465,40 @@ struct hv_enlightened_vmcs {
 	u64 host_idtr_base;
 	u64 host_rsp;
 
-	u64 ept_pointer;
+	u64 ept_poपूर्णांकer;
 
-	u16 virtual_processor_id;
+	u16 भव_processor_id;
 	u16 padding16_2[3];
 
 	u64 padding64_2[5];
 	u64 guest_physical_address;
 
-	u32 vm_instruction_error;
-	u32 vm_exit_reason;
-	u32 vm_exit_intr_info;
-	u32 vm_exit_intr_error_code;
+	u32 vm_inकाष्ठाion_error;
+	u32 vm_निकास_reason;
+	u32 vm_निकास_पूर्णांकr_info;
+	u32 vm_निकास_पूर्णांकr_error_code;
 	u32 idt_vectoring_info_field;
 	u32 idt_vectoring_error_code;
-	u32 vm_exit_instruction_len;
-	u32 vmx_instruction_info;
+	u32 vm_निकास_inकाष्ठाion_len;
+	u32 vmx_inकाष्ठाion_info;
 
-	u64 exit_qualification;
-	u64 exit_io_instruction_ecx;
-	u64 exit_io_instruction_esi;
-	u64 exit_io_instruction_edi;
-	u64 exit_io_instruction_eip;
+	u64 निकास_qualअगरication;
+	u64 निकास_io_inकाष्ठाion_ecx;
+	u64 निकास_io_inकाष्ठाion_esi;
+	u64 निकास_io_inकाष्ठाion_edi;
+	u64 निकास_io_inकाष्ठाion_eip;
 
 	u64 guest_linear_address;
 	u64 guest_rsp;
 	u64 guest_rflags;
 
-	u32 guest_interruptibility_info;
+	u32 guest_पूर्णांकerruptibility_info;
 	u32 cpu_based_vm_exec_control;
-	u32 exception_bitmap;
+	u32 exception_biपंचांगap;
 	u32 vm_entry_controls;
-	u32 vm_entry_intr_info_field;
+	u32 vm_entry_पूर्णांकr_info_field;
 	u32 vm_entry_exception_error_code;
-	u32 vm_entry_instruction_len;
+	u32 vm_entry_inकाष्ठाion_len;
 	u32 tpr_threshold;
 
 	u64 guest_rip;
@@ -505,11 +506,11 @@ struct hv_enlightened_vmcs {
 	u32 hv_clean_fields;
 	u32 hv_padding_32;
 	u32 hv_synthetic_controls;
-	struct {
+	काष्ठा अणु
 		u32 nested_flush_hypercall:1;
-		u32 msr_bitmap:1;
+		u32 msr_biपंचांगap:1;
 		u32 reserved:30;
-	}  __packed hv_enlightenments_control;
+	पूर्ण  __packed hv_enlightenments_control;
 	u32 hv_vp_id;
 
 	u64 hv_vm_id;
@@ -517,35 +518,35 @@ struct hv_enlightened_vmcs {
 	u64 padding64_4[4];
 	u64 guest_bndcfgs;
 	u64 padding64_5[7];
-	u64 xss_exit_bitmap;
+	u64 xss_निकास_biपंचांगap;
 	u64 padding64_6[7];
-} __packed;
+पूर्ण __packed;
 
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_NONE			0
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_IO_BITMAP		BIT(0)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_MSR_BITMAP		BIT(1)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_GRP2		BIT(2)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_GRP1		BIT(3)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_PROC		BIT(4)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_EVENT		BIT(5)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_ENTRY		BIT(6)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_EXCPN		BIT(7)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_CRDR			BIT(8)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_XLAT		BIT(9)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_GUEST_BASIC		BIT(10)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_GUEST_GRP1		BIT(11)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_GUEST_GRP2		BIT(12)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_HOST_POINTER		BIT(13)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_HOST_GRP1		BIT(14)
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_ENLIGHTENMENTSCONTROL	BIT(15)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_NONE			0
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_IO_BITMAP		BIT(0)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_MSR_BITMAP		BIT(1)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_GRP2		BIT(2)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_GRP1		BIT(3)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_PROC		BIT(4)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_EVENT		BIT(5)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_ENTRY		BIT(6)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_EXCPN		BIT(7)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_CRDR			BIT(8)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_CONTROL_XLAT		BIT(9)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_GUEST_BASIC		BIT(10)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_GUEST_GRP1		BIT(11)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_GUEST_GRP2		BIT(12)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_HOST_POINTER		BIT(13)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_HOST_GRP1		BIT(14)
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_ENLIGHTENMENTSCONTROL	BIT(15)
 
-#define HV_VMX_ENLIGHTENED_CLEAN_FIELD_ALL			0xFFFF
+#घोषणा HV_VMX_ENLIGHTENED_CLEAN_FIELD_ALL			0xFFFF
 
-struct hv_partition_assist_pg {
+काष्ठा hv_partition_assist_pg अणु
 	u32 tlb_lock_count;
-};
+पूर्ण;
 
-enum hv_interrupt_type {
+क्रमागत hv_पूर्णांकerrupt_type अणु
 	HV_X64_INTERRUPT_TYPE_FIXED             = 0x0000,
 	HV_X64_INTERRUPT_TYPE_LOWESTPRIORITY    = 0x0001,
 	HV_X64_INTERRUPT_TYPE_SMI               = 0x0002,
@@ -557,8 +558,8 @@ enum hv_interrupt_type {
 	HV_X64_INTERRUPT_TYPE_LOCALINT0         = 0x0008,
 	HV_X64_INTERRUPT_TYPE_LOCALINT1         = 0x0009,
 	HV_X64_INTERRUPT_TYPE_MAXIMUM           = 0x000A,
-};
+पूर्ण;
 
-#include <asm-generic/hyperv-tlfs.h>
+#समावेश <यंत्र-generic/hyperv-tlfs.h>
 
-#endif
+#पूर्ण_अगर

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_BRIDGE_EBT_PKTTYPE_H
-#define __LINUX_BRIDGE_EBT_PKTTYPE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_BRIDGE_EBT_PKTTYPE_H
+#घोषणा __LINUX_BRIDGE_EBT_PKTTYPE_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct ebt_pkttype_info {
+काष्ठा ebt_pkttype_info अणु
 	__u8 pkt_type;
 	__u8 invert;
-};
-#define EBT_PKTTYPE_MATCH "pkttype"
+पूर्ण;
+#घोषणा EBT_PKTTYPE_MATCH "pkttype"
 
-#endif
+#पूर्ण_अगर

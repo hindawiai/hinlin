@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014 Patrick McHardy <kaber@trash.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/nft_reject.h>
-#include <net/netfilter/ipv4/nf_reject.h>
-#include <net/netfilter/ipv6/nf_reject.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nft_reject.h>
+#समावेश <net/netfilter/ipv4/nf_reject.h>
+#समावेश <net/netfilter/ipv6/nf_reject.h>
 
-static void nft_reject_inet_eval(const struct nft_expr *expr,
-				 struct nft_regs *regs,
-				 const struct nft_pktinfo *pkt)
-{
-	struct nft_reject *priv = nft_expr_priv(expr);
+अटल व्योम nft_reject_inet_eval(स्थिर काष्ठा nft_expr *expr,
+				 काष्ठा nft_regs *regs,
+				 स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	काष्ठा nft_reject *priv = nft_expr_priv(expr);
 
-	switch (nft_pf(pkt)) {
-	case NFPROTO_IPV4:
-		switch (priv->type) {
-		case NFT_REJECT_ICMP_UNREACH:
+	चयन (nft_pf(pkt)) अणु
+	हाल NFPROTO_IPV4:
+		चयन (priv->type) अणु
+		हाल NFT_REJECT_ICMP_UNREACH:
 			nf_send_unreach(pkt->skb, priv->icmp_code,
 					nft_hook(pkt));
-			break;
-		case NFT_REJECT_TCP_RST:
+			अवरोध;
+		हाल NFT_REJECT_TCP_RST:
 			nf_send_reset(nft_net(pkt), pkt->xt.state->sk,
 				      pkt->skb, nft_hook(pkt));
-			break;
-		case NFT_REJECT_ICMPX_UNREACH:
+			अवरोध;
+		हाल NFT_REJECT_ICMPX_UNREACH:
 			nf_send_unreach(pkt->skb,
 					nft_reject_icmp_code(priv->icmp_code),
 					nft_hook(pkt));
-			break;
-		}
-		break;
-	case NFPROTO_IPV6:
-		switch (priv->type) {
-		case NFT_REJECT_ICMP_UNREACH:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल NFPROTO_IPV6:
+		चयन (priv->type) अणु
+		हाल NFT_REJECT_ICMP_UNREACH:
 			nf_send_unreach6(nft_net(pkt), pkt->skb,
 					 priv->icmp_code, nft_hook(pkt));
-			break;
-		case NFT_REJECT_TCP_RST:
+			अवरोध;
+		हाल NFT_REJECT_TCP_RST:
 			nf_send_reset6(nft_net(pkt), pkt->xt.state->sk,
 				       pkt->skb, nft_hook(pkt));
-			break;
-		case NFT_REJECT_ICMPX_UNREACH:
+			अवरोध;
+		हाल NFT_REJECT_ICMPX_UNREACH:
 			nf_send_unreach6(nft_net(pkt), pkt->skb,
 					 nft_reject_icmpv6_code(priv->icmp_code),
 					 nft_hook(pkt));
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	regs->verdict.code = NF_DROP;
-}
+पूर्ण
 
-static int nft_reject_inet_validate(const struct nft_ctx *ctx,
-				    const struct nft_expr *expr,
-				    const struct nft_data **data)
-{
-	return nft_chain_validate_hooks(ctx->chain,
+अटल पूर्णांक nft_reject_inet_validate(स्थिर काष्ठा nft_ctx *ctx,
+				    स्थिर काष्ठा nft_expr *expr,
+				    स्थिर काष्ठा nft_data **data)
+अणु
+	वापस nft_chain_validate_hooks(ctx->chain,
 					(1 << NF_INET_LOCAL_IN) |
 					(1 << NF_INET_FORWARD) |
 					(1 << NF_INET_LOCAL_OUT) |
 					(1 << NF_INET_PRE_ROUTING) |
 					(1 << NF_INET_INGRESS));
-}
+पूर्ण
 
-static struct nft_expr_type nft_reject_inet_type;
-static const struct nft_expr_ops nft_reject_inet_ops = {
+अटल काष्ठा nft_expr_type nft_reject_inet_type;
+अटल स्थिर काष्ठा nft_expr_ops nft_reject_inet_ops = अणु
 	.type		= &nft_reject_inet_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_reject)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_reject)),
 	.eval		= nft_reject_inet_eval,
 	.init		= nft_reject_init,
 	.dump		= nft_reject_dump,
 	.validate	= nft_reject_inet_validate,
-};
+पूर्ण;
 
-static struct nft_expr_type nft_reject_inet_type __read_mostly = {
+अटल काष्ठा nft_expr_type nft_reject_inet_type __पढ़ो_mostly = अणु
 	.family		= NFPROTO_INET,
 	.name		= "reject",
 	.ops		= &nft_reject_inet_ops,
 	.policy		= nft_reject_policy,
 	.maxattr	= NFTA_REJECT_MAX,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init nft_reject_inet_module_init(void)
-{
-	return nft_register_expr(&nft_reject_inet_type);
-}
+अटल पूर्णांक __init nft_reject_inet_module_init(व्योम)
+अणु
+	वापस nft_रेजिस्टर_expr(&nft_reject_inet_type);
+पूर्ण
 
-static void __exit nft_reject_inet_module_exit(void)
-{
-	nft_unregister_expr(&nft_reject_inet_type);
-}
+अटल व्योम __निकास nft_reject_inet_module_निकास(व्योम)
+अणु
+	nft_unरेजिस्टर_expr(&nft_reject_inet_type);
+पूर्ण
 
 module_init(nft_reject_inet_module_init);
-module_exit(nft_reject_inet_module_exit);
+module_निकास(nft_reject_inet_module_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");

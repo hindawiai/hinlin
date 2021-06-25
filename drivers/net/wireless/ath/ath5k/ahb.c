@@ -1,133 +1,134 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2008-2009 Atheros Communications Inc.
- * Copyright (c) 2009 Gabor Juhos <juhosg@openwrt.org>
- * Copyright (c) 2009 Imre Kaloz <kaloz@openwrt.org>
+ * Copyright (c) 2009 Gabor Juhos <juhosg@खोलोwrt.org>
+ * Copyright (c) 2009 Imre Kaloz <kaloz@खोलोwrt.org>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <linux/module.h>
-#include <linux/nl80211.h>
-#include <linux/platform_device.h>
-#include <linux/etherdevice.h>
-#include <ath25_platform.h>
-#include "ath5k.h"
-#include "debug.h"
-#include "base.h"
-#include "reg.h"
+#समावेश <linux/module.h>
+#समावेश <linux/nl80211.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <ath25_platक्रमm.h>
+#समावेश "ath5k.h"
+#समावेश "debug.h"
+#समावेश "base.h"
+#समावेश "reg.h"
 
-/* return bus cachesize in 4B word units */
-static void ath5k_ahb_read_cachesize(struct ath_common *common, int *csz)
-{
+/* वापस bus cachesize in 4B word units */
+अटल व्योम ath5k_ahb_पढ़ो_cachesize(काष्ठा ath_common *common, पूर्णांक *csz)
+अणु
 	*csz = L1_CACHE_BYTES >> 2;
-}
+पूर्ण
 
-static bool
-ath5k_ahb_eeprom_read(struct ath_common *common, u32 off, u16 *data)
-{
-	struct ath5k_hw *ah = common->priv;
-	struct platform_device *pdev = to_platform_device(ah->dev);
-	struct ar231x_board_config *bcfg = dev_get_platdata(&pdev->dev);
+अटल bool
+ath5k_ahb_eeprom_पढ़ो(काष्ठा ath_common *common, u32 off, u16 *data)
+अणु
+	काष्ठा ath5k_hw *ah = common->priv;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(ah->dev);
+	काष्ठा ar231x_board_config *bcfg = dev_get_platdata(&pdev->dev);
 	u16 *eeprom, *eeprom_end;
 
 	eeprom = (u16 *) bcfg->radio;
-	eeprom_end = ((void *) bcfg->config) + BOARD_CONFIG_BUFSZ;
+	eeprom_end = ((व्योम *) bcfg->config) + BOARD_CONFIG_BUFSZ;
 
 	eeprom += off;
-	if (eeprom > eeprom_end)
-		return false;
+	अगर (eeprom > eeprom_end)
+		वापस false;
 
 	*data = *eeprom;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int ath5k_hw_read_srev(struct ath5k_hw *ah)
-{
-	struct platform_device *pdev = to_platform_device(ah->dev);
-	struct ar231x_board_config *bcfg = dev_get_platdata(&pdev->dev);
+पूर्णांक ath5k_hw_पढ़ो_srev(काष्ठा ath5k_hw *ah)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(ah->dev);
+	काष्ठा ar231x_board_config *bcfg = dev_get_platdata(&pdev->dev);
 	ah->ah_mac_srev = bcfg->devid;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath5k_ahb_eeprom_read_mac(struct ath5k_hw *ah, u8 *mac)
-{
-	struct platform_device *pdev = to_platform_device(ah->dev);
-	struct ar231x_board_config *bcfg = dev_get_platdata(&pdev->dev);
+अटल पूर्णांक ath5k_ahb_eeprom_पढ़ो_mac(काष्ठा ath5k_hw *ah, u8 *mac)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(ah->dev);
+	काष्ठा ar231x_board_config *bcfg = dev_get_platdata(&pdev->dev);
 	u8 *cfg_mac;
 
-	if (to_platform_device(ah->dev)->id == 0)
+	अगर (to_platक्रमm_device(ah->dev)->id == 0)
 		cfg_mac = bcfg->config->wlan0_mac;
-	else
+	अन्यथा
 		cfg_mac = bcfg->config->wlan1_mac;
 
-	memcpy(mac, cfg_mac, ETH_ALEN);
-	return 0;
-}
+	स_नकल(mac, cfg_mac, ETH_ALEN);
+	वापस 0;
+पूर्ण
 
-static const struct ath_bus_ops ath_ahb_bus_ops = {
+अटल स्थिर काष्ठा ath_bus_ops ath_ahb_bus_ops = अणु
 	.ath_bus_type = ATH_AHB,
-	.read_cachesize = ath5k_ahb_read_cachesize,
-	.eeprom_read = ath5k_ahb_eeprom_read,
-	.eeprom_read_mac = ath5k_ahb_eeprom_read_mac,
-};
+	.पढ़ो_cachesize = ath5k_ahb_पढ़ो_cachesize,
+	.eeprom_पढ़ो = ath5k_ahb_eeprom_पढ़ो,
+	.eeprom_पढ़ो_mac = ath5k_ahb_eeprom_पढ़ो_mac,
+पूर्ण;
 
 /*Initialization*/
-static int ath_ahb_probe(struct platform_device *pdev)
-{
-	struct ar231x_board_config *bcfg = dev_get_platdata(&pdev->dev);
-	struct ath5k_hw *ah;
-	struct ieee80211_hw *hw;
-	struct resource *res;
-	void __iomem *mem;
-	int irq;
-	int ret = 0;
+अटल पूर्णांक ath_ahb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ar231x_board_config *bcfg = dev_get_platdata(&pdev->dev);
+	काष्ठा ath5k_hw *ah;
+	काष्ठा ieee80211_hw *hw;
+	काष्ठा resource *res;
+	व्योम __iomem *mem;
+	पूर्णांक irq;
+	पूर्णांक ret = 0;
 	u32 reg;
 
-	if (!dev_get_platdata(&pdev->dev)) {
+	अगर (!dev_get_platdata(&pdev->dev)) अणु
 		dev_err(&pdev->dev, "no platform data specified\n");
 		ret = -EINVAL;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य) अणु
 		dev_err(&pdev->dev, "no memory resource found\n");
 		ret = -ENXIO;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	mem = ioremap(res->start, resource_size(res));
-	if (mem == NULL) {
+	अगर (mem == शून्य) अणु
 		dev_err(&pdev->dev, "ioremap failed\n");
 		ret = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (res == शून्य) अणु
 		dev_err(&pdev->dev, "no IRQ resource found\n");
 		ret = -ENXIO;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
 	irq = res->start;
 
-	hw = ieee80211_alloc_hw(sizeof(struct ath5k_hw), &ath5k_hw_ops);
-	if (hw == NULL) {
+	hw = ieee80211_alloc_hw(माप(काष्ठा ath5k_hw), &ath5k_hw_ops);
+	अगर (hw == शून्य) अणु
 		dev_err(&pdev->dev, "no memory for ieee80211_hw\n");
 		ret = -ENOMEM;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
 	ah = hw->priv;
 	ah->hw = hw;
@@ -136,98 +137,98 @@ static int ath_ahb_probe(struct platform_device *pdev)
 	ah->irq = irq;
 	ah->devid = bcfg->devid;
 
-	if (bcfg->devid >= AR5K_SREV_AR2315_R6) {
+	अगर (bcfg->devid >= AR5K_SREV_AR2315_R6) अणु
 		/* Enable WMAC AHB arbitration */
-		reg = ioread32((void __iomem *) AR5K_AR2315_AHB_ARB_CTL);
+		reg = ioपढ़ो32((व्योम __iomem *) AR5K_AR2315_AHB_ARB_CTL);
 		reg |= AR5K_AR2315_AHB_ARB_CTL_WLAN;
-		iowrite32(reg, (void __iomem *) AR5K_AR2315_AHB_ARB_CTL);
+		ioग_लिखो32(reg, (व्योम __iomem *) AR5K_AR2315_AHB_ARB_CTL);
 
 		/* Enable global WMAC swapping */
-		reg = ioread32((void __iomem *) AR5K_AR2315_BYTESWAP);
+		reg = ioपढ़ो32((व्योम __iomem *) AR5K_AR2315_BYTESWAP);
 		reg |= AR5K_AR2315_BYTESWAP_WMAC;
-		iowrite32(reg, (void __iomem *) AR5K_AR2315_BYTESWAP);
-	} else {
+		ioग_लिखो32(reg, (व्योम __iomem *) AR5K_AR2315_BYTESWAP);
+	पूर्ण अन्यथा अणु
 		/* Enable WMAC DMA access (assuming 5312 or 231x*/
-		/* TODO: check other platforms */
-		reg = ioread32((void __iomem *) AR5K_AR5312_ENABLE);
-		if (to_platform_device(ah->dev)->id == 0)
+		/* TODO: check other platक्रमms */
+		reg = ioपढ़ो32((व्योम __iomem *) AR5K_AR5312_ENABLE);
+		अगर (to_platक्रमm_device(ah->dev)->id == 0)
 			reg |= AR5K_AR5312_ENABLE_WLAN0;
-		else
+		अन्यथा
 			reg |= AR5K_AR5312_ENABLE_WLAN1;
-		iowrite32(reg, (void __iomem *) AR5K_AR5312_ENABLE);
+		ioग_लिखो32(reg, (व्योम __iomem *) AR5K_AR5312_ENABLE);
 
 		/*
 		 * On a dual-band AR5312, the multiband radio is only
 		 * used as pass-through. Disable 2 GHz support in the
-		 * driver for it
+		 * driver क्रम it
 		 */
-		if (to_platform_device(ah->dev)->id == 0 &&
+		अगर (to_platक्रमm_device(ah->dev)->id == 0 &&
 		    (bcfg->config->flags & (BD_WLAN0 | BD_WLAN1)) ==
 		     (BD_WLAN1 | BD_WLAN0))
 			ah->ah_capabilities.cap_needs_2GHz_ovr = true;
-		else
+		अन्यथा
 			ah->ah_capabilities.cap_needs_2GHz_ovr = false;
-	}
+	पूर्ण
 
 	ret = ath5k_init_ah(ah, &ath_ahb_bus_ops);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(&pdev->dev, "failed to attach device, err=%d\n", ret);
 		ret = -ENODEV;
-		goto err_free_hw;
-	}
+		जाओ err_मुक्त_hw;
+	पूर्ण
 
-	platform_set_drvdata(pdev, hw);
+	platक्रमm_set_drvdata(pdev, hw);
 
-	return 0;
+	वापस 0;
 
- err_free_hw:
-	ieee80211_free_hw(hw);
+ err_मुक्त_hw:
+	ieee80211_मुक्त_hw(hw);
  err_iounmap:
         iounmap(mem);
  err_out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath_ahb_remove(struct platform_device *pdev)
-{
-	struct ar231x_board_config *bcfg = dev_get_platdata(&pdev->dev);
-	struct ieee80211_hw *hw = platform_get_drvdata(pdev);
-	struct ath5k_hw *ah;
+अटल पूर्णांक ath_ahb_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ar231x_board_config *bcfg = dev_get_platdata(&pdev->dev);
+	काष्ठा ieee80211_hw *hw = platक्रमm_get_drvdata(pdev);
+	काष्ठा ath5k_hw *ah;
 	u32 reg;
 
-	if (!hw)
-		return 0;
+	अगर (!hw)
+		वापस 0;
 
 	ah = hw->priv;
 
-	if (bcfg->devid >= AR5K_SREV_AR2315_R6) {
+	अगर (bcfg->devid >= AR5K_SREV_AR2315_R6) अणु
 		/* Disable WMAC AHB arbitration */
-		reg = ioread32((void __iomem *) AR5K_AR2315_AHB_ARB_CTL);
+		reg = ioपढ़ो32((व्योम __iomem *) AR5K_AR2315_AHB_ARB_CTL);
 		reg &= ~AR5K_AR2315_AHB_ARB_CTL_WLAN;
-		iowrite32(reg, (void __iomem *) AR5K_AR2315_AHB_ARB_CTL);
-	} else {
+		ioग_लिखो32(reg, (व्योम __iomem *) AR5K_AR2315_AHB_ARB_CTL);
+	पूर्ण अन्यथा अणु
 		/*Stop DMA access */
-		reg = ioread32((void __iomem *) AR5K_AR5312_ENABLE);
-		if (to_platform_device(ah->dev)->id == 0)
+		reg = ioपढ़ो32((व्योम __iomem *) AR5K_AR5312_ENABLE);
+		अगर (to_platक्रमm_device(ah->dev)->id == 0)
 			reg &= ~AR5K_AR5312_ENABLE_WLAN0;
-		else
+		अन्यथा
 			reg &= ~AR5K_AR5312_ENABLE_WLAN1;
-		iowrite32(reg, (void __iomem *) AR5K_AR5312_ENABLE);
-	}
+		ioग_लिखो32(reg, (व्योम __iomem *) AR5K_AR5312_ENABLE);
+	पूर्ण
 
 	ath5k_deinit_ah(ah);
 	iounmap(ah->iobase);
-	ieee80211_free_hw(hw);
+	ieee80211_मुक्त_hw(hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver ath_ahb_driver = {
+अटल काष्ठा platक्रमm_driver ath_ahb_driver = अणु
 	.probe      = ath_ahb_probe,
-	.remove     = ath_ahb_remove,
-	.driver		= {
+	.हटाओ     = ath_ahb_हटाओ,
+	.driver		= अणु
 		.name	= "ar231x-wmac",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ath_ahb_driver);
+module_platक्रमm_driver(ath_ahb_driver);

@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Interrupt handing routines for NEC VR4100 series.
+ *  Interrupt handing routines क्रम NEC VR4100 series.
  *
  *  Copyright (C) 2005-2007  Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#include <linux/export.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
+#समावेश <linux/export.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
 
-#include <asm/irq_cpu.h>
-#include <asm/vr41xx/irq.h>
+#समावेश <यंत्र/irq_cpu.h>
+#समावेश <यंत्र/vr41xx/irq.h>
 
-typedef struct irq_cascade {
-	int (*get_irq)(unsigned int);
-} irq_cascade_t;
+प्रकार काष्ठा irq_cascade अणु
+	पूर्णांक (*get_irq)(अचिन्हित पूर्णांक);
+पूर्ण irq_cascade_t;
 
-static irq_cascade_t irq_cascade[NR_IRQS] __cacheline_aligned;
+अटल irq_cascade_t irq_cascade[NR_IRQS] __cacheline_aligned;
 
-int cascade_irq(unsigned int irq, int (*get_irq)(unsigned int))
-{
-	int retval = 0;
+पूर्णांक cascade_irq(अचिन्हित पूर्णांक irq, पूर्णांक (*get_irq)(अचिन्हित पूर्णांक))
+अणु
+	पूर्णांक retval = 0;
 
-	if (irq >= NR_IRQS)
-		return -EINVAL;
+	अगर (irq >= NR_IRQS)
+		वापस -EINVAL;
 
-	if (irq_cascade[irq].get_irq != NULL)
-		free_irq(irq, NULL);
+	अगर (irq_cascade[irq].get_irq != शून्य)
+		मुक्त_irq(irq, शून्य);
 
 	irq_cascade[irq].get_irq = get_irq;
 
-	if (get_irq != NULL) {
+	अगर (get_irq != शून्य) अणु
 		retval = request_irq(irq, no_action, IRQF_NO_THREAD,
-				     "cascade", NULL);
-		if (retval < 0)
-			irq_cascade[irq].get_irq = NULL;
-	}
+				     "cascade", शून्य);
+		अगर (retval < 0)
+			irq_cascade[irq].get_irq = शून्य;
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(cascade_irq);
 
-static void irq_dispatch(unsigned int irq)
-{
+अटल व्योम irq_dispatch(अचिन्हित पूर्णांक irq)
+अणु
 	irq_cascade_t *cascade;
 
-	if (irq >= NR_IRQS) {
+	अगर (irq >= NR_IRQS) अणु
 		atomic_inc(&irq_err_count);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cascade = irq_cascade + irq;
-	if (cascade->get_irq != NULL) {
-		struct irq_desc *desc = irq_to_desc(irq);
-		struct irq_data *idata = irq_desc_get_irq_data(desc);
-		struct irq_chip *chip = irq_desc_get_chip(desc);
-		int ret;
+	अगर (cascade->get_irq != शून्य) अणु
+		काष्ठा irq_desc *desc = irq_to_desc(irq);
+		काष्ठा irq_data *idata = irq_desc_get_irq_data(desc);
+		काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+		पूर्णांक ret;
 
-		if (chip->irq_mask_ack)
+		अगर (chip->irq_mask_ack)
 			chip->irq_mask_ack(idata);
-		else {
+		अन्यथा अणु
 			chip->irq_mask(idata);
 			chip->irq_ack(idata);
-		}
+		पूर्ण
 		ret = cascade->get_irq(irq);
 		irq = ret;
-		if (ret < 0)
+		अगर (ret < 0)
 			atomic_inc(&irq_err_count);
-		else
+		अन्यथा
 			irq_dispatch(irq);
-		if (!irqd_irq_disabled(idata) && chip->irq_unmask)
+		अगर (!irqd_irq_disabled(idata) && chip->irq_unmask)
 			chip->irq_unmask(idata);
-	} else
-		do_IRQ(irq);
-}
+	पूर्ण अन्यथा
+		करो_IRQ(irq);
+पूर्ण
 
-asmlinkage void plat_irq_dispatch(void)
-{
-	unsigned int pending = read_c0_cause() & read_c0_status() & ST0_IM;
+यंत्रlinkage व्योम plat_irq_dispatch(व्योम)
+अणु
+	अचिन्हित पूर्णांक pending = पढ़ो_c0_cause() & पढ़ो_c0_status() & ST0_IM;
 
-	if (pending & CAUSEF_IP7)
-		do_IRQ(TIMER_IRQ);
-	else if (pending & 0x7800) {
-		if (pending & CAUSEF_IP3)
+	अगर (pending & CAUSEF_IP7)
+		करो_IRQ(TIMER_IRQ);
+	अन्यथा अगर (pending & 0x7800) अणु
+		अगर (pending & CAUSEF_IP3)
 			irq_dispatch(INT1_IRQ);
-		else if (pending & CAUSEF_IP4)
+		अन्यथा अगर (pending & CAUSEF_IP4)
 			irq_dispatch(INT2_IRQ);
-		else if (pending & CAUSEF_IP5)
+		अन्यथा अगर (pending & CAUSEF_IP5)
 			irq_dispatch(INT3_IRQ);
-		else if (pending & CAUSEF_IP6)
+		अन्यथा अगर (pending & CAUSEF_IP6)
 			irq_dispatch(INT4_IRQ);
-	} else if (pending & CAUSEF_IP2)
+	पूर्ण अन्यथा अगर (pending & CAUSEF_IP2)
 		irq_dispatch(INT0_IRQ);
-	else if (pending & CAUSEF_IP0)
-		do_IRQ(MIPS_SOFTINT0_IRQ);
-	else if (pending & CAUSEF_IP1)
-		do_IRQ(MIPS_SOFTINT1_IRQ);
-	else
-		spurious_interrupt();
-}
+	अन्यथा अगर (pending & CAUSEF_IP0)
+		करो_IRQ(MIPS_SOFTINT0_IRQ);
+	अन्यथा अगर (pending & CAUSEF_IP1)
+		करो_IRQ(MIPS_SOFTINT1_IRQ);
+	अन्यथा
+		spurious_पूर्णांकerrupt();
+पूर्ण
 
-void __init arch_init_irq(void)
-{
+व्योम __init arch_init_irq(व्योम)
+अणु
 	mips_cpu_irq_init();
-}
+पूर्ण

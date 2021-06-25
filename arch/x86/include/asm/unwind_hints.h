@@ -1,57 +1,58 @@
-#ifndef _ASM_X86_UNWIND_HINTS_H
-#define _ASM_X86_UNWIND_HINTS_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_X86_UNWIND_HINTS_H
+#घोषणा _ASM_X86_UNWIND_HINTS_H
 
-#include <linux/objtool.h>
+#समावेश <linux/objtool.h>
 
-#include "orc_types.h"
+#समावेश "orc_types.h"
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
 .macro UNWIND_HINT_EMPTY
 	UNWIND_HINT sp_reg=ORC_REG_UNDEFINED type=UNWIND_HINT_TYPE_CALL end=1
 .endm
 
 .macro UNWIND_HINT_REGS base=%rsp offset=0 indirect=0 extra=1 partial=0
-	.if \base == %rsp
-		.if \indirect
-			.set sp_reg, ORC_REG_SP_INDIRECT
-		.else
+	.अगर \मase == %rsp
+		.अगर \indirect
+			.set sp_reg, ORC_REG_SP_INसूचीECT
+		.अन्यथा
 			.set sp_reg, ORC_REG_SP
-		.endif
-	.elseif \base == %rbp
+		.endअगर
+	.अन्यथाअगर \मase == %rbp
 		.set sp_reg, ORC_REG_BP
-	.elseif \base == %rdi
+	.अन्यथाअगर \मase == %rdi
 		.set sp_reg, ORC_REG_DI
-	.elseif \base == %rdx
+	.अन्यथाअगर \मase == %rdx
 		.set sp_reg, ORC_REG_DX
-	.elseif \base == %r10
+	.अन्यथाअगर \मase == %r10
 		.set sp_reg, ORC_REG_R10
-	.else
+	.अन्यथा
 		.error "UNWIND_HINT_REGS: bad base register"
-	.endif
+	.endअगर
 
 	.set sp_offset, \offset
 
-	.if \partial
+	.अगर \partial
 		.set type, UNWIND_HINT_TYPE_REGS_PARTIAL
-	.elseif \extra == 0
+	.अन्यथाअगर \extra == 0
 		.set type, UNWIND_HINT_TYPE_REGS_PARTIAL
 		.set sp_offset, \offset + (16*8)
-	.else
+	.अन्यथा
 		.set type, UNWIND_HINT_TYPE_REGS
-	.endif
+	.endअगर
 
 	UNWIND_HINT sp_reg=sp_reg sp_offset=sp_offset type=type
 .endm
 
 .macro UNWIND_HINT_IRET_REGS base=%rsp offset=0
-	UNWIND_HINT_REGS base=\base offset=\offset partial=1
+	UNWIND_HINT_REGS base=\मase offset=\offset partial=1
 .endm
 
 .macro UNWIND_HINT_FUNC
 	UNWIND_HINT sp_reg=ORC_REG_SP sp_offset=8 type=UNWIND_HINT_TYPE_FUNC
 .endm
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* _ASM_X86_UNWIND_HINTS_H */
+#पूर्ण_अगर /* _ASM_X86_UNWIND_HINTS_H */

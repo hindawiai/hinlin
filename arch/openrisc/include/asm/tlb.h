@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,15 +13,15 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_TLB_H__
-#define __ASM_OPENRISC_TLB_H__
+#अगर_अघोषित __ASM_OPENRISC_TLB_H__
+#घोषणा __ASM_OPENRISC_TLB_H__
 
 /*
- * OpenRISC doesn't have an efficient flush_tlb_range() so use flush_tlb_mm()
- * for everything.
+ * OpenRISC करोesn't have an efficient flush_tlb_range() so use flush_tlb_mm()
+ * क्रम everything.
  */
 
-#include <linux/pagemap.h>
-#include <asm-generic/tlb.h>
+#समावेश <linux/pagemap.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-#endif /* __ASM_OPENRISC_TLB_H__ */
+#पूर्ण_अगर /* __ASM_OPENRISC_TLB_H__ */

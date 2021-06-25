@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: rsaddr - Address resource descriptors (16/32/64)
  *
  ******************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acresrc.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acresrc.h"
 
-#define _COMPONENT          ACPI_RESOURCES
+#घोषणा _COMPONENT          ACPI_RESOURCES
 ACPI_MODULE_NAME("rsaddr")
 
 /*******************************************************************************
@@ -17,18 +18,18 @@ ACPI_MODULE_NAME("rsaddr")
  * acpi_rs_convert_address16 - All WORD (16-bit) address resources
  *
  ******************************************************************************/
-struct acpi_rsconvert_info acpi_rs_convert_address16[5] = {
-	{ACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_ADDRESS16,
-	 ACPI_RS_SIZE(struct acpi_resource_address16),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_address16)},
+काष्ठा acpi_rsconvert_info acpi_rs_convert_address16[5] = अणु
+	अणुACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_ADDRESS16,
+	 ACPI_RS_SIZE(काष्ठा acpi_resource_address16),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_address16)पूर्ण,
 
-	{ACPI_RSC_INITSET, ACPI_RESOURCE_NAME_ADDRESS16,
-	 sizeof(struct aml_resource_address16),
-	 0},
+	अणुACPI_RSC_INITSET, ACPI_RESOURCE_NAME_ADDRESS16,
+	 माप(काष्ठा aml_resource_address16),
+	 0पूर्ण,
 
-	/* Resource Type, General Flags, and Type-Specific Flags */
+	/* Resource Type, General Flags, and Type-Specअगरic Flags */
 
-	{ACPI_RSC_ADDRESS, 0, 0, 0},
+	अणुACPI_RSC_ADDRESS, 0, 0, 0पूर्ण,
 
 	/*
 	 * These fields are contiguous in both the source and destination:
@@ -38,16 +39,16 @@ struct acpi_rsconvert_info acpi_rs_convert_address16[5] = {
 	 * Address Translation Offset
 	 * Address Length
 	 */
-	{ACPI_RSC_MOVE16, ACPI_RS_OFFSET(data.address16.address.granularity),
+	अणुACPI_RSC_MOVE16, ACPI_RS_OFFSET(data.address16.address.granularity),
 	 AML_OFFSET(address16.granularity),
-	 5},
+	 5पूर्ण,
 
 	/* Optional resource_source (Index and String) */
 
-	{ACPI_RSC_SOURCE, ACPI_RS_OFFSET(data.address16.resource_source),
+	अणुACPI_RSC_SOURCE, ACPI_RS_OFFSET(data.address16.resource_source),
 	 0,
-	 sizeof(struct aml_resource_address16)}
-};
+	 माप(काष्ठा aml_resource_address16)पूर्ण
+पूर्ण;
 
 /*******************************************************************************
  *
@@ -55,18 +56,18 @@ struct acpi_rsconvert_info acpi_rs_convert_address16[5] = {
  *
  ******************************************************************************/
 
-struct acpi_rsconvert_info acpi_rs_convert_address32[5] = {
-	{ACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_ADDRESS32,
-	 ACPI_RS_SIZE(struct acpi_resource_address32),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_address32)},
+काष्ठा acpi_rsconvert_info acpi_rs_convert_address32[5] = अणु
+	अणुACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_ADDRESS32,
+	 ACPI_RS_SIZE(काष्ठा acpi_resource_address32),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_address32)पूर्ण,
 
-	{ACPI_RSC_INITSET, ACPI_RESOURCE_NAME_ADDRESS32,
-	 sizeof(struct aml_resource_address32),
-	 0},
+	अणुACPI_RSC_INITSET, ACPI_RESOURCE_NAME_ADDRESS32,
+	 माप(काष्ठा aml_resource_address32),
+	 0पूर्ण,
 
-	/* Resource Type, General Flags, and Type-Specific Flags */
+	/* Resource Type, General Flags, and Type-Specअगरic Flags */
 
-	{ACPI_RSC_ADDRESS, 0, 0, 0},
+	अणुACPI_RSC_ADDRESS, 0, 0, 0पूर्ण,
 
 	/*
 	 * These fields are contiguous in both the source and destination:
@@ -76,16 +77,16 @@ struct acpi_rsconvert_info acpi_rs_convert_address32[5] = {
 	 * Address Translation Offset
 	 * Address Length
 	 */
-	{ACPI_RSC_MOVE32, ACPI_RS_OFFSET(data.address32.address.granularity),
+	अणुACPI_RSC_MOVE32, ACPI_RS_OFFSET(data.address32.address.granularity),
 	 AML_OFFSET(address32.granularity),
-	 5},
+	 5पूर्ण,
 
 	/* Optional resource_source (Index and String) */
 
-	{ACPI_RSC_SOURCE, ACPI_RS_OFFSET(data.address32.resource_source),
+	अणुACPI_RSC_SOURCE, ACPI_RS_OFFSET(data.address32.resource_source),
 	 0,
-	 sizeof(struct aml_resource_address32)}
-};
+	 माप(काष्ठा aml_resource_address32)पूर्ण
+पूर्ण;
 
 /*******************************************************************************
  *
@@ -93,18 +94,18 @@ struct acpi_rsconvert_info acpi_rs_convert_address32[5] = {
  *
  ******************************************************************************/
 
-struct acpi_rsconvert_info acpi_rs_convert_address64[5] = {
-	{ACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_ADDRESS64,
-	 ACPI_RS_SIZE(struct acpi_resource_address64),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_address64)},
+काष्ठा acpi_rsconvert_info acpi_rs_convert_address64[5] = अणु
+	अणुACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_ADDRESS64,
+	 ACPI_RS_SIZE(काष्ठा acpi_resource_address64),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_address64)पूर्ण,
 
-	{ACPI_RSC_INITSET, ACPI_RESOURCE_NAME_ADDRESS64,
-	 sizeof(struct aml_resource_address64),
-	 0},
+	अणुACPI_RSC_INITSET, ACPI_RESOURCE_NAME_ADDRESS64,
+	 माप(काष्ठा aml_resource_address64),
+	 0पूर्ण,
 
-	/* Resource Type, General Flags, and Type-Specific Flags */
+	/* Resource Type, General Flags, and Type-Specअगरic Flags */
 
-	{ACPI_RSC_ADDRESS, 0, 0, 0},
+	अणुACPI_RSC_ADDRESS, 0, 0, 0पूर्ण,
 
 	/*
 	 * These fields are contiguous in both the source and destination:
@@ -114,16 +115,16 @@ struct acpi_rsconvert_info acpi_rs_convert_address64[5] = {
 	 * Address Translation Offset
 	 * Address Length
 	 */
-	{ACPI_RSC_MOVE64, ACPI_RS_OFFSET(data.address64.address.granularity),
+	अणुACPI_RSC_MOVE64, ACPI_RS_OFFSET(data.address64.address.granularity),
 	 AML_OFFSET(address64.granularity),
-	 5},
+	 5पूर्ण,
 
 	/* Optional resource_source (Index and String) */
 
-	{ACPI_RSC_SOURCE, ACPI_RS_OFFSET(data.address64.resource_source),
+	अणुACPI_RSC_SOURCE, ACPI_RS_OFFSET(data.address64.resource_source),
 	 0,
-	 sizeof(struct aml_resource_address64)}
-};
+	 माप(काष्ठा aml_resource_address64)पूर्ण
+पूर्ण;
 
 /*******************************************************************************
  *
@@ -131,24 +132,24 @@ struct acpi_rsconvert_info acpi_rs_convert_address64[5] = {
  *
  ******************************************************************************/
 
-struct acpi_rsconvert_info acpi_rs_convert_ext_address64[5] = {
-	{ACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64,
-	 ACPI_RS_SIZE(struct acpi_resource_extended_address64),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_ext_address64)},
+काष्ठा acpi_rsconvert_info acpi_rs_convert_ext_address64[5] = अणु
+	अणुACPI_RSC_INITGET, ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64,
+	 ACPI_RS_SIZE(काष्ठा acpi_resource_extended_address64),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_ext_address64)पूर्ण,
 
-	{ACPI_RSC_INITSET, ACPI_RESOURCE_NAME_EXTENDED_ADDRESS64,
-	 sizeof(struct aml_resource_extended_address64),
-	 0},
+	अणुACPI_RSC_INITSET, ACPI_RESOURCE_NAME_EXTENDED_ADDRESS64,
+	 माप(काष्ठा aml_resource_extended_address64),
+	 0पूर्ण,
 
-	/* Resource Type, General Flags, and Type-Specific Flags */
+	/* Resource Type, General Flags, and Type-Specअगरic Flags */
 
-	{ACPI_RSC_ADDRESS, 0, 0, 0},
+	अणुACPI_RSC_ADDRESS, 0, 0, 0पूर्ण,
 
 	/* Revision ID */
 
-	{ACPI_RSC_MOVE8, ACPI_RS_OFFSET(data.ext_address64.revision_ID),
+	अणुACPI_RSC_MOVE8, ACPI_RS_OFFSET(data.ext_address64.revision_ID),
 	 AML_OFFSET(ext_address64.revision_ID),
-	 1},
+	 1पूर्ण,
 	/*
 	 * These fields are contiguous in both the source and destination:
 	 * Address Granularity
@@ -156,13 +157,13 @@ struct acpi_rsconvert_info acpi_rs_convert_ext_address64[5] = {
 	 * Address Range Maximum
 	 * Address Translation Offset
 	 * Address Length
-	 * Type-Specific Attribute
+	 * Type-Specअगरic Attribute
 	 */
-	{ACPI_RSC_MOVE64,
+	अणुACPI_RSC_MOVE64,
 	 ACPI_RS_OFFSET(data.ext_address64.address.granularity),
 	 AML_OFFSET(ext_address64.granularity),
-	 6}
-};
+	 6पूर्ण
+पूर्ण;
 
 /*******************************************************************************
  *
@@ -170,34 +171,34 @@ struct acpi_rsconvert_info acpi_rs_convert_ext_address64[5] = {
  *
  ******************************************************************************/
 
-static struct acpi_rsconvert_info acpi_rs_convert_general_flags[6] = {
-	{ACPI_RSC_FLAGINIT, 0, AML_OFFSET(address.flags),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_general_flags)},
+अटल काष्ठा acpi_rsconvert_info acpi_rs_convert_general_flags[6] = अणु
+	अणुACPI_RSC_FLAGINIT, 0, AML_OFFSET(address.flags),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_general_flags)पूर्ण,
 
 	/* Resource Type (Memory, Io, bus_number, etc.) */
 
-	{ACPI_RSC_MOVE8, ACPI_RS_OFFSET(data.address.resource_type),
+	अणुACPI_RSC_MOVE8, ACPI_RS_OFFSET(data.address.resource_type),
 	 AML_OFFSET(address.resource_type),
-	 1},
+	 1पूर्ण,
 
 	/* General flags - Consume, Decode, min_fixed, max_fixed */
 
-	{ACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.producer_consumer),
+	अणुACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.producer_consumer),
 	 AML_OFFSET(address.flags),
-	 0},
+	 0पूर्ण,
 
-	{ACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.decode),
+	अणुACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.decode),
 	 AML_OFFSET(address.flags),
-	 1},
+	 1पूर्ण,
 
-	{ACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.min_address_fixed),
+	अणुACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.min_address_fixed),
 	 AML_OFFSET(address.flags),
-	 2},
+	 2पूर्ण,
 
-	{ACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.max_address_fixed),
+	अणुACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.max_address_fixed),
 	 AML_OFFSET(address.flags),
-	 3}
-};
+	 3पूर्ण
+पूर्ण;
 
 /*******************************************************************************
  *
@@ -205,28 +206,28 @@ static struct acpi_rsconvert_info acpi_rs_convert_general_flags[6] = {
  *
  ******************************************************************************/
 
-static struct acpi_rsconvert_info acpi_rs_convert_mem_flags[5] = {
-	{ACPI_RSC_FLAGINIT, 0, AML_OFFSET(address.specific_flags),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_mem_flags)},
+अटल काष्ठा acpi_rsconvert_info acpi_rs_convert_mem_flags[5] = अणु
+	अणुACPI_RSC_FLAGINIT, 0, AML_OFFSET(address.specअगरic_flags),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_mem_flags)पूर्ण,
 
-	/* Memory-specific flags */
+	/* Memory-specअगरic flags */
 
-	{ACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.info.mem.write_protect),
-	 AML_OFFSET(address.specific_flags),
-	 0},
+	अणुACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.info.mem.ग_लिखो_protect),
+	 AML_OFFSET(address.specअगरic_flags),
+	 0पूर्ण,
 
-	{ACPI_RSC_2BITFLAG, ACPI_RS_OFFSET(data.address.info.mem.caching),
-	 AML_OFFSET(address.specific_flags),
-	 1},
+	अणुACPI_RSC_2BITFLAG, ACPI_RS_OFFSET(data.address.info.mem.caching),
+	 AML_OFFSET(address.specअगरic_flags),
+	 1पूर्ण,
 
-	{ACPI_RSC_2BITFLAG, ACPI_RS_OFFSET(data.address.info.mem.range_type),
-	 AML_OFFSET(address.specific_flags),
-	 3},
+	अणुACPI_RSC_2BITFLAG, ACPI_RS_OFFSET(data.address.info.mem.range_type),
+	 AML_OFFSET(address.specअगरic_flags),
+	 3पूर्ण,
 
-	{ACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.info.mem.translation),
-	 AML_OFFSET(address.specific_flags),
-	 5}
-};
+	अणुACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.info.mem.translation),
+	 AML_OFFSET(address.specअगरic_flags),
+	 5पूर्ण
+पूर्ण;
 
 /*******************************************************************************
  *
@@ -234,82 +235,82 @@ static struct acpi_rsconvert_info acpi_rs_convert_mem_flags[5] = {
  *
  ******************************************************************************/
 
-static struct acpi_rsconvert_info acpi_rs_convert_io_flags[4] = {
-	{ACPI_RSC_FLAGINIT, 0, AML_OFFSET(address.specific_flags),
-	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_io_flags)},
+अटल काष्ठा acpi_rsconvert_info acpi_rs_convert_io_flags[4] = अणु
+	अणुACPI_RSC_FLAGINIT, 0, AML_OFFSET(address.specअगरic_flags),
+	 ACPI_RSC_TABLE_SIZE(acpi_rs_convert_io_flags)पूर्ण,
 
-	/* I/O-specific flags */
+	/* I/O-specअगरic flags */
 
-	{ACPI_RSC_2BITFLAG, ACPI_RS_OFFSET(data.address.info.io.range_type),
-	 AML_OFFSET(address.specific_flags),
-	 0},
+	अणुACPI_RSC_2BITFLAG, ACPI_RS_OFFSET(data.address.info.io.range_type),
+	 AML_OFFSET(address.specअगरic_flags),
+	 0पूर्ण,
 
-	{ACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.info.io.translation),
-	 AML_OFFSET(address.specific_flags),
-	 4},
+	अणुACPI_RSC_1BITFLAG, ACPI_RS_OFFSET(data.address.info.io.translation),
+	 AML_OFFSET(address.specअगरic_flags),
+	 4पूर्ण,
 
-	{ACPI_RSC_1BITFLAG,
+	अणुACPI_RSC_1BITFLAG,
 	 ACPI_RS_OFFSET(data.address.info.io.translation_type),
-	 AML_OFFSET(address.specific_flags),
-	 5}
-};
+	 AML_OFFSET(address.specअगरic_flags),
+	 5पूर्ण
+पूर्ण;
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_rs_get_address_common
  *
- * PARAMETERS:  resource            - Pointer to the internal resource struct
- *              aml                 - Pointer to the AML resource descriptor
+ * PARAMETERS:  resource            - Poपूर्णांकer to the पूर्णांकernal resource काष्ठा
+ *              aml                 - Poपूर्णांकer to the AML resource descriptor
  *
- * RETURN:      TRUE if the resource_type field is OK, FALSE otherwise
+ * RETURN:      TRUE अगर the resource_type field is OK, FALSE otherwise
  *
  * DESCRIPTION: Convert common flag fields from a raw AML resource descriptor
- *              to an internal resource descriptor
+ *              to an पूर्णांकernal resource descriptor
  *
  ******************************************************************************/
 
 u8
-acpi_rs_get_address_common(struct acpi_resource *resource,
-			   union aml_resource *aml)
-{
+acpi_rs_get_address_common(काष्ठा acpi_resource *resource,
+			   जोड़ aml_resource *aml)
+अणु
 	ACPI_FUNCTION_ENTRY();
 
 	/* Validate the Resource Type */
 
-	if ((aml->address.resource_type > 2) &&
-	    (aml->address.resource_type < 0xC0)) {
-		return (FALSE);
-	}
+	अगर ((aml->address.resource_type > 2) &&
+	    (aml->address.resource_type < 0xC0)) अणु
+		वापस (FALSE);
+	पूर्ण
 
 	/* Get the Resource Type and General Flags */
 
-	(void)acpi_rs_convert_aml_to_resource(resource, aml,
+	(व्योम)acpi_rs_convert_aml_to_resource(resource, aml,
 					      acpi_rs_convert_general_flags);
 
-	/* Get the Type-Specific Flags (Memory and I/O descriptors only) */
+	/* Get the Type-Specअगरic Flags (Memory and I/O descriptors only) */
 
-	if (resource->data.address.resource_type == ACPI_MEMORY_RANGE) {
-		(void)acpi_rs_convert_aml_to_resource(resource, aml,
+	अगर (resource->data.address.resource_type == ACPI_MEMORY_RANGE) अणु
+		(व्योम)acpi_rs_convert_aml_to_resource(resource, aml,
 						      acpi_rs_convert_mem_flags);
-	} else if (resource->data.address.resource_type == ACPI_IO_RANGE) {
-		(void)acpi_rs_convert_aml_to_resource(resource, aml,
+	पूर्ण अन्यथा अगर (resource->data.address.resource_type == ACPI_IO_RANGE) अणु
+		(व्योम)acpi_rs_convert_aml_to_resource(resource, aml,
 						      acpi_rs_convert_io_flags);
-	} else {
-		/* Generic resource type, just grab the type_specific byte */
+	पूर्ण अन्यथा अणु
+		/* Generic resource type, just grab the type_specअगरic byte */
 
-		resource->data.address.info.type_specific =
-		    aml->address.specific_flags;
-	}
+		resource->data.address.info.type_specअगरic =
+		    aml->address.specअगरic_flags;
+	पूर्ण
 
-	return (TRUE);
-}
+	वापस (TRUE);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_rs_set_address_common
  *
- * PARAMETERS:  aml                 - Pointer to the AML resource descriptor
- *              resource            - Pointer to the internal resource struct
+ * PARAMETERS:  aml                 - Poपूर्णांकer to the AML resource descriptor
+ *              resource            - Poपूर्णांकer to the पूर्णांकernal resource काष्ठा
  *
  * RETURN:      None
  *
@@ -318,29 +319,29 @@ acpi_rs_get_address_common(struct acpi_resource *resource,
  *
  ******************************************************************************/
 
-void
-acpi_rs_set_address_common(union aml_resource *aml,
-			   struct acpi_resource *resource)
-{
+व्योम
+acpi_rs_set_address_common(जोड़ aml_resource *aml,
+			   काष्ठा acpi_resource *resource)
+अणु
 	ACPI_FUNCTION_ENTRY();
 
 	/* Set the Resource Type and General Flags */
 
-	(void)acpi_rs_convert_resource_to_aml(resource, aml,
+	(व्योम)acpi_rs_convert_resource_to_aml(resource, aml,
 					      acpi_rs_convert_general_flags);
 
-	/* Set the Type-Specific Flags (Memory and I/O descriptors only) */
+	/* Set the Type-Specअगरic Flags (Memory and I/O descriptors only) */
 
-	if (resource->data.address.resource_type == ACPI_MEMORY_RANGE) {
-		(void)acpi_rs_convert_resource_to_aml(resource, aml,
+	अगर (resource->data.address.resource_type == ACPI_MEMORY_RANGE) अणु
+		(व्योम)acpi_rs_convert_resource_to_aml(resource, aml,
 						      acpi_rs_convert_mem_flags);
-	} else if (resource->data.address.resource_type == ACPI_IO_RANGE) {
-		(void)acpi_rs_convert_resource_to_aml(resource, aml,
+	पूर्ण अन्यथा अगर (resource->data.address.resource_type == ACPI_IO_RANGE) अणु
+		(व्योम)acpi_rs_convert_resource_to_aml(resource, aml,
 						      acpi_rs_convert_io_flags);
-	} else {
-		/* Generic resource type, just copy the type_specific byte */
+	पूर्ण अन्यथा अणु
+		/* Generic resource type, just copy the type_specअगरic byte */
 
-		aml->address.specific_flags =
-		    resource->data.address.info.type_specific;
-	}
-}
+		aml->address.specअगरic_flags =
+		    resource->data.address.info.type_specअगरic;
+	पूर्ण
+पूर्ण

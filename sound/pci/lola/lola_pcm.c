@@ -1,196 +1,197 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Support for Digigram Lola PCI-e boards
+ *  Support क्रम Digigram Lola PCI-e boards
  *
  *  Copyright (c) 2011 Takashi Iwai <tiwai@suse.de>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/dma-mapping.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include "lola.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश "lola.h"
 
-#define LOLA_MAX_BDL_ENTRIES	8
-#define LOLA_MAX_BUF_SIZE	(1024*1024*1024)
-#define LOLA_BDL_ENTRY_SIZE	(16 * 16)
+#घोषणा LOLA_MAX_BDL_ENTRIES	8
+#घोषणा LOLA_MAX_BUF_SIZE	(1024*1024*1024)
+#घोषणा LOLA_BDL_ENTRY_SIZE	(16 * 16)
 
-static struct lola_pcm *lola_get_pcm(struct snd_pcm_substream *substream)
-{
-	struct lola *chip = snd_pcm_substream_chip(substream);
-	return &chip->pcm[substream->stream];
-}
+अटल काष्ठा lola_pcm *lola_get_pcm(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा lola *chip = snd_pcm_substream_chip(substream);
+	वापस &chip->pcm[substream->stream];
+पूर्ण
 
-static struct lola_stream *lola_get_stream(struct snd_pcm_substream *substream)
-{
-	struct lola_pcm *pcm = lola_get_pcm(substream);
-	unsigned int idx = substream->number;
-	return &pcm->streams[idx];
-}
+अटल काष्ठा lola_stream *lola_get_stream(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा lola_pcm *pcm = lola_get_pcm(substream);
+	अचिन्हित पूर्णांक idx = substream->number;
+	वापस &pcm->streams[idx];
+पूर्ण
 
-static unsigned int lola_get_lrc(struct lola *chip)
-{
-	return lola_readl(chip, BAR1, LRC);
-}
+अटल अचिन्हित पूर्णांक lola_get_lrc(काष्ठा lola *chip)
+अणु
+	वापस lola_पढ़ोl(chip, BAR1, LRC);
+पूर्ण
 
-static unsigned int lola_get_tstamp(struct lola *chip, bool quick_no_sync)
-{
-	unsigned int tstamp = lola_get_lrc(chip) >> 8;
-	if (chip->granularity) {
-		unsigned int wait_banks = quick_no_sync ? 0 : 8;
-		tstamp += (wait_banks + 1) * chip->granularity - 1;
+अटल अचिन्हित पूर्णांक lola_get_tstamp(काष्ठा lola *chip, bool quick_no_sync)
+अणु
+	अचिन्हित पूर्णांक tstamp = lola_get_lrc(chip) >> 8;
+	अगर (chip->granularity) अणु
+		अचिन्हित पूर्णांक रुको_banks = quick_no_sync ? 0 : 8;
+		tstamp += (रुको_banks + 1) * chip->granularity - 1;
 		tstamp -= tstamp % chip->granularity;
-	}
-	return tstamp << 8;
-}
+	पूर्ण
+	वापस tstamp << 8;
+पूर्ण
 
-/* clear any pending interrupt status */
-static void lola_stream_clear_pending_irq(struct lola *chip,
-					  struct lola_stream *str)
-{
-	unsigned int val = lola_dsd_read(chip, str->dsd, STS);
+/* clear any pending पूर्णांकerrupt status */
+अटल व्योम lola_stream_clear_pending_irq(काष्ठा lola *chip,
+					  काष्ठा lola_stream *str)
+अणु
+	अचिन्हित पूर्णांक val = lola_dsd_पढ़ो(chip, str->dsd, STS);
 	val &= LOLA_DSD_STS_DESE | LOLA_DSD_STS_BCIS;
-	if (val)
-		lola_dsd_write(chip, str->dsd, STS, val);
-}
+	अगर (val)
+		lola_dsd_ग_लिखो(chip, str->dsd, STS, val);
+पूर्ण
 
-static void lola_stream_start(struct lola *chip, struct lola_stream *str,
-			      unsigned int tstamp)
-{
+अटल व्योम lola_stream_start(काष्ठा lola *chip, काष्ठा lola_stream *str,
+			      अचिन्हित पूर्णांक tstamp)
+अणु
 	lola_stream_clear_pending_irq(chip, str);
-	lola_dsd_write(chip, str->dsd, CTL,
+	lola_dsd_ग_लिखो(chip, str->dsd, CTL,
 		       LOLA_DSD_CTL_SRUN |
 		       LOLA_DSD_CTL_IOCE |
 		       LOLA_DSD_CTL_DEIE |
 		       LOLA_DSD_CTL_VLRCV |
 		       tstamp);
-}
+पूर्ण
 
-static void lola_stream_stop(struct lola *chip, struct lola_stream *str,
-			     unsigned int tstamp)
-{
-	lola_dsd_write(chip, str->dsd, CTL,
+अटल व्योम lola_stream_stop(काष्ठा lola *chip, काष्ठा lola_stream *str,
+			     अचिन्हित पूर्णांक tstamp)
+अणु
+	lola_dsd_ग_लिखो(chip, str->dsd, CTL,
 		       LOLA_DSD_CTL_IOCE |
 		       LOLA_DSD_CTL_DEIE |
 		       LOLA_DSD_CTL_VLRCV |
 		       tstamp);
 	lola_stream_clear_pending_irq(chip, str);
-}
+पूर्ण
 
-static void wait_for_srst_clear(struct lola *chip, struct lola_stream *str)
-{
-	unsigned long end_time = jiffies + msecs_to_jiffies(200);
-	while (time_before(jiffies, end_time)) {
-		unsigned int val;
-		val = lola_dsd_read(chip, str->dsd, CTL);
-		if (!(val & LOLA_DSD_CTL_SRST))
-			return;
+अटल व्योम रुको_क्रम_srst_clear(काष्ठा lola *chip, काष्ठा lola_stream *str)
+अणु
+	अचिन्हित दीर्घ end_समय = jअगरfies + msecs_to_jअगरfies(200);
+	जबतक (समय_beक्रमe(jअगरfies, end_समय)) अणु
+		अचिन्हित पूर्णांक val;
+		val = lola_dsd_पढ़ो(chip, str->dsd, CTL);
+		अगर (!(val & LOLA_DSD_CTL_SRST))
+			वापस;
 		msleep(1);
-	}
+	पूर्ण
 	dev_warn(chip->card->dev, "SRST not clear (stream %d)\n", str->dsd);
-}
+पूर्ण
 
-static int lola_stream_wait_for_fifo(struct lola *chip,
-				     struct lola_stream *str,
-				     bool ready)
-{
-	unsigned int val = ready ? LOLA_DSD_STS_FIFORDY : 0;
-	unsigned long end_time = jiffies + msecs_to_jiffies(200);
-	while (time_before(jiffies, end_time)) {
-		unsigned int reg = lola_dsd_read(chip, str->dsd, STS);
-		if ((reg & LOLA_DSD_STS_FIFORDY) == val)
-			return 0;
+अटल पूर्णांक lola_stream_रुको_क्रम_fअगरo(काष्ठा lola *chip,
+				     काष्ठा lola_stream *str,
+				     bool पढ़ोy)
+अणु
+	अचिन्हित पूर्णांक val = पढ़ोy ? LOLA_DSD_STS_FIFORDY : 0;
+	अचिन्हित दीर्घ end_समय = jअगरfies + msecs_to_jअगरfies(200);
+	जबतक (समय_beक्रमe(jअगरfies, end_समय)) अणु
+		अचिन्हित पूर्णांक reg = lola_dsd_पढ़ो(chip, str->dsd, STS);
+		अगर ((reg & LOLA_DSD_STS_FIFORDY) == val)
+			वापस 0;
 		msleep(1);
-	}
+	पूर्ण
 	dev_warn(chip->card->dev, "FIFO not ready (stream %d)\n", str->dsd);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-/* sync for FIFO ready/empty for all linked streams;
- * clear paused flag when FIFO gets ready again
+/* sync क्रम FIFO पढ़ोy/empty क्रम all linked streams;
+ * clear छोड़ोd flag when FIFO माला_लो पढ़ोy again
  */
-static int lola_sync_wait_for_fifo(struct lola *chip,
-				   struct snd_pcm_substream *substream,
-				   bool ready)
-{
-	unsigned int val = ready ? LOLA_DSD_STS_FIFORDY : 0;
-	unsigned long end_time = jiffies + msecs_to_jiffies(200);
-	struct snd_pcm_substream *s;
-	int pending = 0;
+अटल पूर्णांक lola_sync_रुको_क्रम_fअगरo(काष्ठा lola *chip,
+				   काष्ठा snd_pcm_substream *substream,
+				   bool पढ़ोy)
+अणु
+	अचिन्हित पूर्णांक val = पढ़ोy ? LOLA_DSD_STS_FIFORDY : 0;
+	अचिन्हित दीर्घ end_समय = jअगरfies + msecs_to_jअगरfies(200);
+	काष्ठा snd_pcm_substream *s;
+	पूर्णांक pending = 0;
 
-	while (time_before(jiffies, end_time)) {
+	जबतक (समय_beक्रमe(jअगरfies, end_समय)) अणु
 		pending = 0;
-		snd_pcm_group_for_each_entry(s, substream) {
-			struct lola_stream *str;
-			if (s->pcm->card != substream->pcm->card)
-				continue;
+		snd_pcm_group_क्रम_each_entry(s, substream) अणु
+			काष्ठा lola_stream *str;
+			अगर (s->pcm->card != substream->pcm->card)
+				जारी;
 			str = lola_get_stream(s);
-			if (str->prepared && str->paused) {
-				unsigned int reg;
-				reg = lola_dsd_read(chip, str->dsd, STS);
-				if ((reg & LOLA_DSD_STS_FIFORDY) != val) {
+			अगर (str->prepared && str->छोड़ोd) अणु
+				अचिन्हित पूर्णांक reg;
+				reg = lola_dsd_पढ़ो(chip, str->dsd, STS);
+				अगर ((reg & LOLA_DSD_STS_FIFORDY) != val) अणु
 					pending = str->dsd + 1;
-					break;
-				}
-				if (ready)
-					str->paused = 0;
-			}
-		}
-		if (!pending)
-			return 0;
+					अवरोध;
+				पूर्ण
+				अगर (पढ़ोy)
+					str->छोड़ोd = 0;
+			पूर्ण
+		पूर्ण
+		अगर (!pending)
+			वापस 0;
 		msleep(1);
-	}
+	पूर्ण
 	dev_warn(chip->card->dev, "FIFO not ready (pending %d)\n", pending - 1);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-/* finish pause - prepare for a new resume */
-static void lola_sync_pause(struct lola *chip,
-			    struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_substream *s;
+/* finish छोड़ो - prepare क्रम a new resume */
+अटल व्योम lola_sync_छोड़ो(काष्ठा lola *chip,
+			    काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_substream *s;
 
-	lola_sync_wait_for_fifo(chip, substream, false);
-	snd_pcm_group_for_each_entry(s, substream) {
-		struct lola_stream *str;
-		if (s->pcm->card != substream->pcm->card)
-			continue;
+	lola_sync_रुको_क्रम_fअगरo(chip, substream, false);
+	snd_pcm_group_क्रम_each_entry(s, substream) अणु
+		काष्ठा lola_stream *str;
+		अगर (s->pcm->card != substream->pcm->card)
+			जारी;
 		str = lola_get_stream(s);
-		if (str->paused && str->prepared)
-			lola_dsd_write(chip, str->dsd, CTL, LOLA_DSD_CTL_SRUN |
+		अगर (str->छोड़ोd && str->prepared)
+			lola_dsd_ग_लिखो(chip, str->dsd, CTL, LOLA_DSD_CTL_SRUN |
 				       LOLA_DSD_CTL_IOCE | LOLA_DSD_CTL_DEIE);
-	}
-	lola_sync_wait_for_fifo(chip, substream, true);
-}
+	पूर्ण
+	lola_sync_रुको_क्रम_fअगरo(chip, substream, true);
+पूर्ण
 
-static void lola_stream_reset(struct lola *chip, struct lola_stream *str)
-{
-	if (str->prepared) {
-		if (str->paused)
-			lola_sync_pause(chip, str->substream);
+अटल व्योम lola_stream_reset(काष्ठा lola *chip, काष्ठा lola_stream *str)
+अणु
+	अगर (str->prepared) अणु
+		अगर (str->छोड़ोd)
+			lola_sync_छोड़ो(chip, str->substream);
 		str->prepared = 0;
-		lola_dsd_write(chip, str->dsd, CTL,
+		lola_dsd_ग_लिखो(chip, str->dsd, CTL,
 			       LOLA_DSD_CTL_IOCE | LOLA_DSD_CTL_DEIE);
-		lola_stream_wait_for_fifo(chip, str, false);
+		lola_stream_रुको_क्रम_fअगरo(chip, str, false);
 		lola_stream_clear_pending_irq(chip, str);
-		lola_dsd_write(chip, str->dsd, CTL, LOLA_DSD_CTL_SRST);
-		lola_dsd_write(chip, str->dsd, LVI, 0);
-		lola_dsd_write(chip, str->dsd, BDPU, 0);
-		lola_dsd_write(chip, str->dsd, BDPL, 0);
-		wait_for_srst_clear(chip, str);
-	}
-}
+		lola_dsd_ग_लिखो(chip, str->dsd, CTL, LOLA_DSD_CTL_SRST);
+		lola_dsd_ग_लिखो(chip, str->dsd, LVI, 0);
+		lola_dsd_ग_लिखो(chip, str->dsd, BDPU, 0);
+		lola_dsd_ग_लिखो(chip, str->dsd, BDPL, 0);
+		रुको_क्रम_srst_clear(chip, str);
+	पूर्ण
+पूर्ण
 
-static const struct snd_pcm_hardware lola_pcm_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware lola_pcm_hw = अणु
 	.info =			(SNDRV_PCM_INFO_MMAP |
 				 SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID |
 				 SNDRV_PCM_INFO_PAUSE),
-	.formats =		(SNDRV_PCM_FMTBIT_S16_LE |
+	.क्रमmats =		(SNDRV_PCM_FMTBIT_S16_LE |
 				 SNDRV_PCM_FMTBIT_S24_LE |
 				 SNDRV_PCM_FMTBIT_S32_LE |
 				 SNDRV_PCM_FMTBIT_FLOAT_LE),
@@ -204,115 +205,115 @@ static const struct snd_pcm_hardware lola_pcm_hw = {
 	.period_bytes_max =	LOLA_MAX_BUF_SIZE / 2,
 	.periods_min =		2,
 	.periods_max =		LOLA_MAX_BDL_ENTRIES,
-	.fifo_size =		0,
-};
+	.fअगरo_size =		0,
+पूर्ण;
 
-static int lola_pcm_open(struct snd_pcm_substream *substream)
-{
-	struct lola *chip = snd_pcm_substream_chip(substream);
-	struct lola_pcm *pcm = lola_get_pcm(substream);
-	struct lola_stream *str = lola_get_stream(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक lola_pcm_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा lola *chip = snd_pcm_substream_chip(substream);
+	काष्ठा lola_pcm *pcm = lola_get_pcm(substream);
+	काष्ठा lola_stream *str = lola_get_stream(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
-	mutex_lock(&chip->open_mutex);
-	if (str->opened) {
-		mutex_unlock(&chip->open_mutex);
-		return -EBUSY;
-	}
+	mutex_lock(&chip->खोलो_mutex);
+	अगर (str->खोलोed) अणु
+		mutex_unlock(&chip->खोलो_mutex);
+		वापस -EBUSY;
+	पूर्ण
 	str->substream = substream;
-	str->master = NULL;
-	str->opened = 1;
-	runtime->hw = lola_pcm_hw;
-	runtime->hw.channels_max = pcm->num_streams - str->index;
-	if (chip->sample_rate) {
+	str->master = शून्य;
+	str->खोलोed = 1;
+	runसमय->hw = lola_pcm_hw;
+	runसमय->hw.channels_max = pcm->num_streams - str->index;
+	अगर (chip->sample_rate) अणु
 		/* sample rate is locked */
-		runtime->hw.rate_min = chip->sample_rate;
-		runtime->hw.rate_max = chip->sample_rate;
-	} else {
-		runtime->hw.rate_min = chip->sample_rate_min;
-		runtime->hw.rate_max = chip->sample_rate_max;
-	}
+		runसमय->hw.rate_min = chip->sample_rate;
+		runसमय->hw.rate_max = chip->sample_rate;
+	पूर्ण अन्यथा अणु
+		runसमय->hw.rate_min = chip->sample_rate_min;
+		runसमय->hw.rate_max = chip->sample_rate_max;
+	पूर्ण
 	chip->ref_count_rate++;
-	snd_pcm_hw_constraint_integer(runtime, SNDRV_PCM_HW_PARAM_PERIODS);
+	snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय, SNDRV_PCM_HW_PARAM_PERIODS);
 	/* period size = multiple of chip->granularity (8, 16 or 32 frames)*/
-	snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
+	snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
 				   chip->granularity);
-	snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
+	snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
 				   chip->granularity);
-	mutex_unlock(&chip->open_mutex);
-	return 0;
-}
+	mutex_unlock(&chip->खोलो_mutex);
+	वापस 0;
+पूर्ण
 
-static void lola_cleanup_slave_streams(struct lola_pcm *pcm,
-				       struct lola_stream *str)
-{
-	int i;
-	for (i = str->index + 1; i < pcm->num_streams; i++) {
-		struct lola_stream *s = &pcm->streams[i];
-		if (s->master != str)
-			break;
-		s->master = NULL;
-		s->opened = 0;
-	}
-}
+अटल व्योम lola_cleanup_slave_streams(काष्ठा lola_pcm *pcm,
+				       काष्ठा lola_stream *str)
+अणु
+	पूर्णांक i;
+	क्रम (i = str->index + 1; i < pcm->num_streams; i++) अणु
+		काष्ठा lola_stream *s = &pcm->streams[i];
+		अगर (s->master != str)
+			अवरोध;
+		s->master = शून्य;
+		s->खोलोed = 0;
+	पूर्ण
+पूर्ण
 
-static int lola_pcm_close(struct snd_pcm_substream *substream)
-{
-	struct lola *chip = snd_pcm_substream_chip(substream);
-	struct lola_stream *str = lola_get_stream(substream);
+अटल पूर्णांक lola_pcm_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा lola *chip = snd_pcm_substream_chip(substream);
+	काष्ठा lola_stream *str = lola_get_stream(substream);
 
-	mutex_lock(&chip->open_mutex);
-	if (str->substream == substream) {
-		str->substream = NULL;
-		str->opened = 0;
-	}
-	if (--chip->ref_count_rate == 0) {
+	mutex_lock(&chip->खोलो_mutex);
+	अगर (str->substream == substream) अणु
+		str->substream = शून्य;
+		str->खोलोed = 0;
+	पूर्ण
+	अगर (--chip->ref_count_rate == 0) अणु
 		/* release sample rate */
 		chip->sample_rate = 0;
-	}
-	mutex_unlock(&chip->open_mutex);
-	return 0;
-}
+	पूर्ण
+	mutex_unlock(&chip->खोलो_mutex);
+	वापस 0;
+पूर्ण
 
-static int lola_pcm_hw_params(struct snd_pcm_substream *substream,
-			      struct snd_pcm_hw_params *hw_params)
-{
-	struct lola_stream *str = lola_get_stream(substream);
+अटल पूर्णांक lola_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
+			      काष्ठा snd_pcm_hw_params *hw_params)
+अणु
+	काष्ठा lola_stream *str = lola_get_stream(substream);
 
 	str->bufsize = 0;
 	str->period_bytes = 0;
-	str->format_verb = 0;
-	return 0;
-}
+	str->क्रमmat_verb = 0;
+	वापस 0;
+पूर्ण
 
-static int lola_pcm_hw_free(struct snd_pcm_substream *substream)
-{
-	struct lola *chip = snd_pcm_substream_chip(substream);
-	struct lola_pcm *pcm = lola_get_pcm(substream);
-	struct lola_stream *str = lola_get_stream(substream);
+अटल पूर्णांक lola_pcm_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा lola *chip = snd_pcm_substream_chip(substream);
+	काष्ठा lola_pcm *pcm = lola_get_pcm(substream);
+	काष्ठा lola_stream *str = lola_get_stream(substream);
 
-	mutex_lock(&chip->open_mutex);
+	mutex_lock(&chip->खोलो_mutex);
 	lola_stream_reset(chip, str);
 	lola_cleanup_slave_streams(pcm, str);
-	mutex_unlock(&chip->open_mutex);
-	return 0;
-}
+	mutex_unlock(&chip->खोलो_mutex);
+	वापस 0;
+पूर्ण
 
 /*
  * set up a BDL entry
  */
-static int setup_bdle(struct snd_pcm_substream *substream,
-		      struct lola_stream *str, __le32 **bdlp,
-		      int ofs, int size)
-{
+अटल पूर्णांक setup_bdle(काष्ठा snd_pcm_substream *substream,
+		      काष्ठा lola_stream *str, __le32 **bdlp,
+		      पूर्णांक ofs, पूर्णांक size)
+अणु
 	__le32 *bdl = *bdlp;
 
-	while (size > 0) {
+	जबतक (size > 0) अणु
 		dma_addr_t addr;
-		int chunk;
+		पूर्णांक chunk;
 
-		if (str->frags >= LOLA_MAX_BDL_ENTRIES)
-			return -EINVAL;
+		अगर (str->frags >= LOLA_MAX_BDL_ENTRIES)
+			वापस -EINVAL;
 
 		addr = snd_pcm_sgbuf_get_addr(substream, ofs);
 		/* program the address field of the BDL entry */
@@ -321,7 +322,7 @@ static int setup_bdle(struct snd_pcm_substream *substream,
 		/* program the size field of the BDL entry */
 		chunk = snd_pcm_sgbuf_get_chunk_size(substream, ofs, size);
 		bdl[2] = cpu_to_le32(chunk);
-		/* program the IOC to enable interrupt
+		/* program the IOC to enable पूर्णांकerrupt
 		 * only when the whole fragment is processed
 		 */
 		size -= chunk;
@@ -329,20 +330,20 @@ static int setup_bdle(struct snd_pcm_substream *substream,
 		bdl += 4;
 		str->frags++;
 		ofs += chunk;
-	}
+	पूर्ण
 	*bdlp = bdl;
-	return ofs;
-}
+	वापस ofs;
+पूर्ण
 
 /*
  * set up BDL entries
  */
-static int lola_setup_periods(struct lola *chip, struct lola_pcm *pcm,
-			      struct snd_pcm_substream *substream,
-			      struct lola_stream *str)
-{
+अटल पूर्णांक lola_setup_periods(काष्ठा lola *chip, काष्ठा lola_pcm *pcm,
+			      काष्ठा snd_pcm_substream *substream,
+			      काष्ठा lola_stream *str)
+अणु
 	__le32 *bdl;
-	int i, ofs, periods, period_bytes;
+	पूर्णांक i, ofs, periods, period_bytes;
 
 	period_bytes = str->period_bytes;
 	periods = str->bufsize / period_bytes;
@@ -351,344 +352,344 @@ static int lola_setup_periods(struct lola *chip, struct lola_pcm *pcm,
 	bdl = (__le32 *)(pcm->bdl.area + LOLA_BDL_ENTRY_SIZE * str->index);
 	ofs = 0;
 	str->frags = 0;
-	for (i = 0; i < periods; i++) {
+	क्रम (i = 0; i < periods; i++) अणु
 		ofs = setup_bdle(substream, str, &bdl, ofs, period_bytes);
-		if (ofs < 0)
-			goto error;
-	}
-	return 0;
+		अगर (ofs < 0)
+			जाओ error;
+	पूर्ण
+	वापस 0;
 
  error:
 	dev_err(chip->card->dev, "Too many BDL entries: buffer=%d, period=%d\n",
 		   str->bufsize, period_bytes);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static unsigned int lola_get_format_verb(struct snd_pcm_substream *substream)
-{
-	unsigned int verb;
+अटल अचिन्हित पूर्णांक lola_get_क्रमmat_verb(काष्ठा snd_pcm_substream *substream)
+अणु
+	अचिन्हित पूर्णांक verb;
 
-	switch (substream->runtime->format) {
-	case SNDRV_PCM_FORMAT_S16_LE:
+	चयन (substream->runसमय->क्रमmat) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
 		verb = 0x00000000;
-		break;
-	case SNDRV_PCM_FORMAT_S24_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S24_LE:
 		verb = 0x00000200;
-		break;
-	case SNDRV_PCM_FORMAT_S32_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S32_LE:
 		verb = 0x00000300;
-		break;
-	case SNDRV_PCM_FORMAT_FLOAT_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_FLOAT_LE:
 		verb = 0x00001300;
-		break;
-	default:
-		return 0;
-	}
-	verb |= substream->runtime->channels;
-	return verb;
-}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
+	verb |= substream->runसमय->channels;
+	वापस verb;
+पूर्ण
 
-static int lola_set_stream_config(struct lola *chip,
-				  struct lola_stream *str,
-				  int channels)
-{
-	int i, err;
-	unsigned int verb, val;
+अटल पूर्णांक lola_set_stream_config(काष्ठा lola *chip,
+				  काष्ठा lola_stream *str,
+				  पूर्णांक channels)
+अणु
+	पूर्णांक i, err;
+	अचिन्हित पूर्णांक verb, val;
 
-	/* set format info for all channels
-	 * (with only one command for the first channel)
+	/* set क्रमmat info क्रम all channels
+	 * (with only one command क्रम the first channel)
 	 */
-	err = lola_codec_read(chip, str->nid, LOLA_VERB_SET_STREAM_FORMAT,
-			      str->format_verb, 0, &val, NULL);
-	if (err < 0) {
+	err = lola_codec_पढ़ो(chip, str->nid, LOLA_VERB_SET_STREAM_FORMAT,
+			      str->क्रमmat_verb, 0, &val, शून्य);
+	अगर (err < 0) अणु
 		dev_err(chip->card->dev, "Cannot set stream format 0x%x\n",
-		       str->format_verb);
-		return err;
-	}
+		       str->क्रमmat_verb);
+		वापस err;
+	पूर्ण
 
 	/* update stream - channel config */
-	for (i = 0; i < channels; i++) {
+	क्रम (i = 0; i < channels; i++) अणु
 		verb = (str->index << 6) | i;
-		err = lola_codec_read(chip, str[i].nid,
+		err = lola_codec_पढ़ो(chip, str[i].nid,
 				      LOLA_VERB_SET_CHANNEL_STREAMID, 0, verb,
-				      &val, NULL);
-		if (err < 0) {
+				      &val, शून्य);
+		अगर (err < 0) अणु
 			dev_err(chip->card->dev,
 				"Cannot set stream channel %d\n", i);
-			return err;
-		}
-	}
-	return 0;
-}
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * set up the SD for streaming
+ * set up the SD क्रम streaming
  */
-static int lola_setup_controller(struct lola *chip, struct lola_pcm *pcm,
-				 struct lola_stream *str)
-{
+अटल पूर्णांक lola_setup_controller(काष्ठा lola *chip, काष्ठा lola_pcm *pcm,
+				 काष्ठा lola_stream *str)
+अणु
 	dma_addr_t bdl;
 
-	if (str->prepared)
-		return -EINVAL;
+	अगर (str->prepared)
+		वापस -EINVAL;
 
 	/* set up BDL */
 	bdl = pcm->bdl.addr + LOLA_BDL_ENTRY_SIZE * str->index;
-	lola_dsd_write(chip, str->dsd, BDPL, (u32)bdl);
-	lola_dsd_write(chip, str->dsd, BDPU, upper_32_bits(bdl));
+	lola_dsd_ग_लिखो(chip, str->dsd, BDPL, (u32)bdl);
+	lola_dsd_ग_लिखो(chip, str->dsd, BDPU, upper_32_bits(bdl));
 	/* program the stream LVI (last valid index) of the BDL */
-	lola_dsd_write(chip, str->dsd, LVI, str->frags - 1);
+	lola_dsd_ग_लिखो(chip, str->dsd, LVI, str->frags - 1);
 	lola_stream_clear_pending_irq(chip, str);
 
- 	lola_dsd_write(chip, str->dsd, CTL,
+ 	lola_dsd_ग_लिखो(chip, str->dsd, CTL,
 		       LOLA_DSD_CTL_IOCE | LOLA_DSD_CTL_DEIE | LOLA_DSD_CTL_SRUN);
 
 	str->prepared = 1;
 
-	return lola_stream_wait_for_fifo(chip, str, true);
-}
+	वापस lola_stream_रुको_क्रम_fअगरo(chip, str, true);
+पूर्ण
 
-static int lola_pcm_prepare(struct snd_pcm_substream *substream)
-{
-	struct lola *chip = snd_pcm_substream_chip(substream);
-	struct lola_pcm *pcm = lola_get_pcm(substream);
-	struct lola_stream *str = lola_get_stream(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	unsigned int bufsize, period_bytes, format_verb;
-	int i, err;
+अटल पूर्णांक lola_pcm_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा lola *chip = snd_pcm_substream_chip(substream);
+	काष्ठा lola_pcm *pcm = lola_get_pcm(substream);
+	काष्ठा lola_stream *str = lola_get_stream(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अचिन्हित पूर्णांक bufsize, period_bytes, क्रमmat_verb;
+	पूर्णांक i, err;
 
-	mutex_lock(&chip->open_mutex);
+	mutex_lock(&chip->खोलो_mutex);
 	lola_stream_reset(chip, str);
 	lola_cleanup_slave_streams(pcm, str);
-	if (str->index + runtime->channels > pcm->num_streams) {
-		mutex_unlock(&chip->open_mutex);
-		return -EINVAL;
-	}
-	for (i = 1; i < runtime->channels; i++) {
+	अगर (str->index + runसमय->channels > pcm->num_streams) अणु
+		mutex_unlock(&chip->खोलो_mutex);
+		वापस -EINVAL;
+	पूर्ण
+	क्रम (i = 1; i < runसमय->channels; i++) अणु
 		str[i].master = str;
-		str[i].opened = 1;
-	}
-	mutex_unlock(&chip->open_mutex);
+		str[i].खोलोed = 1;
+	पूर्ण
+	mutex_unlock(&chip->खोलो_mutex);
 
 	bufsize = snd_pcm_lib_buffer_bytes(substream);
 	period_bytes = snd_pcm_lib_period_bytes(substream);
-	format_verb = lola_get_format_verb(substream);
+	क्रमmat_verb = lola_get_क्रमmat_verb(substream);
 
 	str->bufsize = bufsize;
 	str->period_bytes = period_bytes;
-	str->format_verb = format_verb;
+	str->क्रमmat_verb = क्रमmat_verb;
 
 	err = lola_setup_periods(chip, pcm, substream, str);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = lola_set_sample_rate(chip, runtime->rate);
-	if (err < 0)
-		return err;
-	chip->sample_rate = runtime->rate;	/* sample rate gets locked */
+	err = lola_set_sample_rate(chip, runसमय->rate);
+	अगर (err < 0)
+		वापस err;
+	chip->sample_rate = runसमय->rate;	/* sample rate माला_लो locked */
 
-	err = lola_set_stream_config(chip, str, runtime->channels);
-	if (err < 0)
-		return err;
+	err = lola_set_stream_config(chip, str, runसमय->channels);
+	अगर (err < 0)
+		वापस err;
 
 	err = lola_setup_controller(chip, pcm, str);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		lola_stream_reset(chip, str);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lola_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct lola *chip = snd_pcm_substream_chip(substream);
-	struct lola_stream *str;
-	struct snd_pcm_substream *s;
-	unsigned int start;
-	unsigned int tstamp;
+अटल पूर्णांक lola_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा lola *chip = snd_pcm_substream_chip(substream);
+	काष्ठा lola_stream *str;
+	काष्ठा snd_pcm_substream *s;
+	अचिन्हित पूर्णांक start;
+	अचिन्हित पूर्णांक tstamp;
 	bool sync_streams;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-	case SNDRV_PCM_TRIGGER_RESUME:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
 		start = 1;
-		break;
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_STOP:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_STOP:
 		start = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * sample correct synchronization is only needed starting several
-	 * streams. On stop or if only one stream do as quick as possible
+	 * streams. On stop or अगर only one stream करो as quick as possible
 	 */
 	sync_streams = (start && snd_pcm_stream_linked(substream));
 	tstamp = lola_get_tstamp(chip, !sync_streams);
 	spin_lock(&chip->reg_lock);
-	snd_pcm_group_for_each_entry(s, substream) {
-		if (s->pcm->card != substream->pcm->card)
-			continue;
+	snd_pcm_group_क्रम_each_entry(s, substream) अणु
+		अगर (s->pcm->card != substream->pcm->card)
+			जारी;
 		str = lola_get_stream(s);
-		if (start)
+		अगर (start)
 			lola_stream_start(chip, str, tstamp);
-		else
+		अन्यथा
 			lola_stream_stop(chip, str, tstamp);
 		str->running = start;
-		str->paused = !start;
-		snd_pcm_trigger_done(s, substream);
-	}
+		str->छोड़ोd = !start;
+		snd_pcm_trigger_करोne(s, substream);
+	पूर्ण
 	spin_unlock(&chip->reg_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static snd_pcm_uframes_t lola_pcm_pointer(struct snd_pcm_substream *substream)
-{
-	struct lola *chip = snd_pcm_substream_chip(substream);
-	struct lola_stream *str = lola_get_stream(substream);
-	unsigned int pos = lola_dsd_read(chip, str->dsd, LPIB);
+अटल snd_pcm_uframes_t lola_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा lola *chip = snd_pcm_substream_chip(substream);
+	काष्ठा lola_stream *str = lola_get_stream(substream);
+	अचिन्हित पूर्णांक pos = lola_dsd_पढ़ो(chip, str->dsd, LPIB);
 
-	if (pos >= str->bufsize)
+	अगर (pos >= str->bufsize)
 		pos = 0;
-	return bytes_to_frames(substream->runtime, pos);
-}
+	वापस bytes_to_frames(substream->runसमय, pos);
+पूर्ण
 
-void lola_pcm_update(struct lola *chip, struct lola_pcm *pcm, unsigned int bits)
-{
-	int i;
+व्योम lola_pcm_update(काष्ठा lola *chip, काष्ठा lola_pcm *pcm, अचिन्हित पूर्णांक bits)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; bits && i < pcm->num_streams; i++) {
-		if (bits & (1 << i)) {
-			struct lola_stream *str = &pcm->streams[i];
-			if (str->substream && str->running)
+	क्रम (i = 0; bits && i < pcm->num_streams; i++) अणु
+		अगर (bits & (1 << i)) अणु
+			काष्ठा lola_stream *str = &pcm->streams[i];
+			अगर (str->substream && str->running)
 				snd_pcm_period_elapsed(str->substream);
 			bits &= ~(1 << i);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static const struct snd_pcm_ops lola_pcm_ops = {
-	.open = lola_pcm_open,
-	.close = lola_pcm_close,
+अटल स्थिर काष्ठा snd_pcm_ops lola_pcm_ops = अणु
+	.खोलो = lola_pcm_खोलो,
+	.बंद = lola_pcm_बंद,
 	.hw_params = lola_pcm_hw_params,
-	.hw_free = lola_pcm_hw_free,
+	.hw_मुक्त = lola_pcm_hw_मुक्त,
 	.prepare = lola_pcm_prepare,
 	.trigger = lola_pcm_trigger,
-	.pointer = lola_pcm_pointer,
-};
+	.poपूर्णांकer = lola_pcm_poपूर्णांकer,
+पूर्ण;
 
-int lola_create_pcm(struct lola *chip)
-{
-	struct snd_pcm *pcm;
-	int i, err;
+पूर्णांक lola_create_pcm(काष्ठा lola *chip)
+अणु
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक i, err;
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		err = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV,
 					  &chip->pci->dev,
 					  PAGE_SIZE, &chip->pcm[i].bdl);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	err = snd_pcm_new(chip->card, "Digigram Lola", 0,
 			  chip->pcm[SNDRV_PCM_STREAM_PLAYBACK].num_streams,
 			  chip->pcm[SNDRV_PCM_STREAM_CAPTURE].num_streams,
 			  &pcm);
-	if (err < 0)
-		return err;
-	strscpy(pcm->name, "Digigram Lola", sizeof(pcm->name));
-	pcm->private_data = chip;
-	for (i = 0; i < 2; i++) {
-		if (chip->pcm[i].num_streams)
+	अगर (err < 0)
+		वापस err;
+	strscpy(pcm->name, "Digigram Lola", माप(pcm->name));
+	pcm->निजी_data = chip;
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (chip->pcm[i].num_streams)
 			snd_pcm_set_ops(pcm, i, &lola_pcm_ops);
-	}
+	पूर्ण
 	/* buffer pre-allocation */
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV_SG,
 				       &chip->pci->dev,
 				       1024 * 64, 32 * 1024 * 1024);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void lola_free_pcm(struct lola *chip)
-{
-	snd_dma_free_pages(&chip->pcm[0].bdl);
-	snd_dma_free_pages(&chip->pcm[1].bdl);
-}
+व्योम lola_मुक्त_pcm(काष्ठा lola *chip)
+अणु
+	snd_dma_मुक्त_pages(&chip->pcm[0].bdl);
+	snd_dma_मुक्त_pages(&chip->pcm[1].bdl);
+पूर्ण
 
 /*
  */
 
-static int lola_init_stream(struct lola *chip, struct lola_stream *str,
-			    int idx, int nid, int dir)
-{
-	unsigned int val;
-	int err;
+अटल पूर्णांक lola_init_stream(काष्ठा lola *chip, काष्ठा lola_stream *str,
+			    पूर्णांक idx, पूर्णांक nid, पूर्णांक dir)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक err;
 
 	str->nid = nid;
 	str->index = idx;
 	str->dsd = idx;
-	if (dir == PLAY)
+	अगर (dir == PLAY)
 		str->dsd += MAX_STREAM_IN_COUNT;
-	err = lola_read_param(chip, nid, LOLA_PAR_AUDIO_WIDGET_CAP, &val);
-	if (err < 0) {
+	err = lola_पढ़ो_param(chip, nid, LOLA_PAR_AUDIO_WIDGET_CAP, &val);
+	अगर (err < 0) अणु
 		dev_err(chip->card->dev, "Can't read wcaps for 0x%x\n", nid);
-		return err;
-	}
-	if (dir == PLAY) {
+		वापस err;
+	पूर्ण
+	अगर (dir == PLAY) अणु
 		/* test TYPE and bits 0..11 (no test bit9 : Digital = 0/1) */
-		if ((val & 0x00f00dff) != 0x00000010) {
+		अगर ((val & 0x00f00dff) != 0x00000010) अणु
 			dev_err(chip->card->dev,
 				"Invalid wcaps 0x%x for 0x%x\n",
 			       val, nid);
-			return -EINVAL;
-		}
-	} else {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* test TYPE and bits 0..11 (no test bit9 : Digital = 0/1)
 		 * (bug : ignore bit8: Conn list = 0/1)
 		 */
-		if ((val & 0x00f00cff) != 0x00100010) {
+		अगर ((val & 0x00f00cff) != 0x00100010) अणु
 			dev_err(chip->card->dev,
 				"Invalid wcaps 0x%x for 0x%x\n",
 			       val, nid);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		/* test bit9:DIGITAL and bit12:SRC_PRESENT*/
-		if ((val & 0x00001200) == 0x00001200)
+		अगर ((val & 0x00001200) == 0x00001200)
 			chip->input_src_caps_mask |= (1 << idx);
-	}
+	पूर्ण
 
-	err = lola_read_param(chip, nid, LOLA_PAR_STREAM_FORMATS, &val);
-	if (err < 0) {
+	err = lola_पढ़ो_param(chip, nid, LOLA_PAR_STREAM_FORMATS, &val);
+	अगर (err < 0) अणु
 		dev_err(chip->card->dev, "Can't read FORMATS 0x%x\n", nid);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	val &= 3;
-	if (val == 3)
-		str->can_float = true;
-	if (!(val & 1)) {
+	अगर (val == 3)
+		str->can_भग्न = true;
+	अगर (!(val & 1)) अणु
 		dev_err(chip->card->dev,
 			"Invalid formats 0x%x for 0x%x", val, nid);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int lola_init_pcm(struct lola *chip, int dir, int *nidp)
-{
-	struct lola_pcm *pcm = &chip->pcm[dir];
-	int i, nid, err;
+पूर्णांक lola_init_pcm(काष्ठा lola *chip, पूर्णांक dir, पूर्णांक *nidp)
+अणु
+	काष्ठा lola_pcm *pcm = &chip->pcm[dir];
+	पूर्णांक i, nid, err;
 
 	nid = *nidp;
-	for (i = 0; i < pcm->num_streams; i++, nid++) {
+	क्रम (i = 0; i < pcm->num_streams; i++, nid++) अणु
 		err = lola_init_stream(chip, &pcm->streams[i], i, nid, dir);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 	*nidp = nid;
-	return 0;
-}
+	वापस 0;
+पूर्ण

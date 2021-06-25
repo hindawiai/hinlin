@@ -1,256 +1,257 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Cluster IP hashmark target
- * (C) 2003-2004 by Harald Welte <laforge@netfilter.org>
- * based on ideas of Fabio Olive Leite <olive@unixforge.org>
+ * (C) 2003-2004 by Harald Welte <laक्रमge@netfilter.org>
+ * based on ideas of Fabio Olive Leite <olive@unixक्रमge.org>
  *
  * Development of this code funded by SuSE Linux AG, https://www.suse.com/
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/module.h>
-#include <linux/proc_fs.h>
-#include <linux/jhash.h>
-#include <linux/bitops.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/icmp.h>
-#include <linux/if_arp.h>
-#include <linux/seq_file.h>
-#include <linux/refcount.h>
-#include <linux/netfilter_arp.h>
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv4/ipt_CLUSTERIP.h>
-#include <net/netfilter/nf_conntrack.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
-#include <net/checksum.h>
-#include <net/ip.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/module.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/netfilter_arp.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter_ipv4/ip_tables.h>
+#समावेश <linux/netfilter_ipv4/ipt_CLUSTERIP.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/checksum.h>
+#समावेश <net/ip.h>
 
-#define CLUSTERIP_VERSION "0.8"
+#घोषणा CLUSTERIP_VERSION "0.8"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Harald Welte <laforge@netfilter.org>");
 MODULE_DESCRIPTION("Xtables: CLUSTERIP target");
 
-struct clusterip_config {
-	struct list_head list;			/* list of all configs */
+काष्ठा clusterip_config अणु
+	काष्ठा list_head list;			/* list of all configs */
 	refcount_t refcount;			/* reference count */
 	refcount_t entries;			/* number of entries/rules
 						 * referencing us */
 
 	__be32 clusterip;			/* the IP address */
-	u_int8_t clustermac[ETH_ALEN];		/* the MAC address */
-	int ifindex;				/* device ifindex */
-	u_int16_t num_total_nodes;		/* total number of nodes */
-	unsigned long local_nodes;		/* node number array */
+	u_पूर्णांक8_t clustermac[ETH_ALEN];		/* the MAC address */
+	पूर्णांक अगरindex;				/* device अगरindex */
+	u_पूर्णांक16_t num_total_nodes;		/* total number of nodes */
+	अचिन्हित दीर्घ local_nodes;		/* node number array */
 
-#ifdef CONFIG_PROC_FS
-	struct proc_dir_entry *pde;		/* proc dir entry */
-#endif
-	enum clusterip_hashmode hash_mode;	/* which hashing mode */
-	u_int32_t hash_initval;			/* hash initialization */
-	struct rcu_head rcu;			/* for call_rcu */
-	struct net *net;			/* netns for pernet list */
-	char ifname[IFNAMSIZ];			/* device ifname */
-};
+#अगर_घोषित CONFIG_PROC_FS
+	काष्ठा proc_dir_entry *pde;		/* proc dir entry */
+#पूर्ण_अगर
+	क्रमागत clusterip_hashmode hash_mode;	/* which hashing mode */
+	u_पूर्णांक32_t hash_initval;			/* hash initialization */
+	काष्ठा rcu_head rcu;			/* क्रम call_rcu */
+	काष्ठा net *net;			/* netns क्रम pernet list */
+	अक्षर अगरname[IFNAMSIZ];			/* device अगरname */
+पूर्ण;
 
-#ifdef CONFIG_PROC_FS
-static const struct proc_ops clusterip_proc_ops;
-#endif
+#अगर_घोषित CONFIG_PROC_FS
+अटल स्थिर काष्ठा proc_ops clusterip_proc_ops;
+#पूर्ण_अगर
 
-struct clusterip_net {
-	struct list_head configs;
+काष्ठा clusterip_net अणु
+	काष्ठा list_head configs;
 	/* lock protects the configs list */
 	spinlock_t lock;
 
-#ifdef CONFIG_PROC_FS
-	struct proc_dir_entry *procdir;
+#अगर_घोषित CONFIG_PROC_FS
+	काष्ठा proc_dir_entry *procdir;
 	/* mutex protects the config->pde*/
-	struct mutex mutex;
-#endif
-};
+	काष्ठा mutex mutex;
+#पूर्ण_अगर
+पूर्ण;
 
-static unsigned int clusterip_net_id __read_mostly;
-static inline struct clusterip_net *clusterip_pernet(struct net *net)
-{
-	return net_generic(net, clusterip_net_id);
-}
+अटल अचिन्हित पूर्णांक clusterip_net_id __पढ़ो_mostly;
+अटल अंतरभूत काष्ठा clusterip_net *clusterip_pernet(काष्ठा net *net)
+अणु
+	वापस net_generic(net, clusterip_net_id);
+पूर्ण
 
-static inline void
-clusterip_config_get(struct clusterip_config *c)
-{
+अटल अंतरभूत व्योम
+clusterip_config_get(काष्ठा clusterip_config *c)
+अणु
 	refcount_inc(&c->refcount);
-}
+पूर्ण
 
-static void clusterip_config_rcu_free(struct rcu_head *head)
-{
-	struct clusterip_config *config;
-	struct net_device *dev;
+अटल व्योम clusterip_config_rcu_मुक्त(काष्ठा rcu_head *head)
+अणु
+	काष्ठा clusterip_config *config;
+	काष्ठा net_device *dev;
 
-	config = container_of(head, struct clusterip_config, rcu);
-	dev = dev_get_by_name(config->net, config->ifname);
-	if (dev) {
+	config = container_of(head, काष्ठा clusterip_config, rcu);
+	dev = dev_get_by_name(config->net, config->अगरname);
+	अगर (dev) अणु
 		dev_mc_del(dev, config->clustermac);
 		dev_put(dev);
-	}
-	kfree(config);
-}
+	पूर्ण
+	kमुक्त(config);
+पूर्ण
 
-static inline void
-clusterip_config_put(struct clusterip_config *c)
-{
-	if (refcount_dec_and_test(&c->refcount))
-		call_rcu(&c->rcu, clusterip_config_rcu_free);
-}
+अटल अंतरभूत व्योम
+clusterip_config_put(काष्ठा clusterip_config *c)
+अणु
+	अगर (refcount_dec_and_test(&c->refcount))
+		call_rcu(&c->rcu, clusterip_config_rcu_मुक्त);
+पूर्ण
 
 /* decrease the count of entries using/referencing this config.  If last
- * entry(rule) is removed, remove the config from lists, but don't free it
+ * entry(rule) is हटाओd, हटाओ the config from lists, but करोn't मुक्त it
  * yet, since proc-files could still be holding references */
-static inline void
-clusterip_config_entry_put(struct clusterip_config *c)
-{
-	struct clusterip_net *cn = clusterip_pernet(c->net);
+अटल अंतरभूत व्योम
+clusterip_config_entry_put(काष्ठा clusterip_config *c)
+अणु
+	काष्ठा clusterip_net *cn = clusterip_pernet(c->net);
 
 	local_bh_disable();
-	if (refcount_dec_and_lock(&c->entries, &cn->lock)) {
+	अगर (refcount_dec_and_lock(&c->entries, &cn->lock)) अणु
 		list_del_rcu(&c->list);
 		spin_unlock(&cn->lock);
 		local_bh_enable();
-		/* In case anyone still accesses the file, the open/close
+		/* In हाल anyone still accesses the file, the खोलो/बंद
 		 * functions are also incrementing the refcount on their own,
 		 * so it's safe to remove the entry even if it's in use. */
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 		mutex_lock(&cn->mutex);
-		if (cn->procdir)
-			proc_remove(c->pde);
+		अगर (cn->procdir)
+			proc_हटाओ(c->pde);
 		mutex_unlock(&cn->mutex);
-#endif
-		return;
-	}
+#पूर्ण_अगर
+		वापस;
+	पूर्ण
 	local_bh_enable();
-}
+पूर्ण
 
-static struct clusterip_config *
-__clusterip_config_find(struct net *net, __be32 clusterip)
-{
-	struct clusterip_config *c;
-	struct clusterip_net *cn = clusterip_pernet(net);
+अटल काष्ठा clusterip_config *
+__clusterip_config_find(काष्ठा net *net, __be32 clusterip)
+अणु
+	काष्ठा clusterip_config *c;
+	काष्ठा clusterip_net *cn = clusterip_pernet(net);
 
-	list_for_each_entry_rcu(c, &cn->configs, list) {
-		if (c->clusterip == clusterip)
-			return c;
-	}
+	list_क्रम_each_entry_rcu(c, &cn->configs, list) अणु
+		अगर (c->clusterip == clusterip)
+			वापस c;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline struct clusterip_config *
-clusterip_config_find_get(struct net *net, __be32 clusterip, int entry)
-{
-	struct clusterip_config *c;
+अटल अंतरभूत काष्ठा clusterip_config *
+clusterip_config_find_get(काष्ठा net *net, __be32 clusterip, पूर्णांक entry)
+अणु
+	काष्ठा clusterip_config *c;
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 	c = __clusterip_config_find(net, clusterip);
-	if (c) {
-#ifdef CONFIG_PROC_FS
-		if (!c->pde)
-			c = NULL;
-		else
-#endif
-		if (unlikely(!refcount_inc_not_zero(&c->refcount)))
-			c = NULL;
-		else if (entry) {
-			if (unlikely(!refcount_inc_not_zero(&c->entries))) {
+	अगर (c) अणु
+#अगर_घोषित CONFIG_PROC_FS
+		अगर (!c->pde)
+			c = शून्य;
+		अन्यथा
+#पूर्ण_अगर
+		अगर (unlikely(!refcount_inc_not_zero(&c->refcount)))
+			c = शून्य;
+		अन्यथा अगर (entry) अणु
+			अगर (unlikely(!refcount_inc_not_zero(&c->entries))) अणु
 				clusterip_config_put(c);
-				c = NULL;
-			}
-		}
-	}
-	rcu_read_unlock_bh();
+				c = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock_bh();
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static void
-clusterip_config_init_nodelist(struct clusterip_config *c,
-			       const struct ipt_clusterip_tgt_info *i)
-{
-	int n;
+अटल व्योम
+clusterip_config_init_nodelist(काष्ठा clusterip_config *c,
+			       स्थिर काष्ठा ipt_clusterip_tgt_info *i)
+अणु
+	पूर्णांक n;
 
-	for (n = 0; n < i->num_local_nodes; n++)
+	क्रम (n = 0; n < i->num_local_nodes; n++)
 		set_bit(i->local_nodes[n] - 1, &c->local_nodes);
-}
+पूर्ण
 
-static int
-clusterip_netdev_event(struct notifier_block *this, unsigned long event,
-		       void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct net *net = dev_net(dev);
-	struct clusterip_net *cn = clusterip_pernet(net);
-	struct clusterip_config *c;
+अटल पूर्णांक
+clusterip_netdev_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
+		       व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा clusterip_net *cn = clusterip_pernet(net);
+	काष्ठा clusterip_config *c;
 
 	spin_lock_bh(&cn->lock);
-	list_for_each_entry_rcu(c, &cn->configs, list) {
-		switch (event) {
-		case NETDEV_REGISTER:
-			if (!strcmp(dev->name, c->ifname)) {
-				c->ifindex = dev->ifindex;
+	list_क्रम_each_entry_rcu(c, &cn->configs, list) अणु
+		चयन (event) अणु
+		हाल NETDEV_REGISTER:
+			अगर (!म_भेद(dev->name, c->अगरname)) अणु
+				c->अगरindex = dev->अगरindex;
 				dev_mc_add(dev, c->clustermac);
-			}
-			break;
-		case NETDEV_UNREGISTER:
-			if (dev->ifindex == c->ifindex) {
+			पूर्ण
+			अवरोध;
+		हाल NETDEV_UNREGISTER:
+			अगर (dev->अगरindex == c->अगरindex) अणु
 				dev_mc_del(dev, c->clustermac);
-				c->ifindex = -1;
-			}
-			break;
-		case NETDEV_CHANGENAME:
-			if (!strcmp(dev->name, c->ifname)) {
-				c->ifindex = dev->ifindex;
+				c->अगरindex = -1;
+			पूर्ण
+			अवरोध;
+		हाल NETDEV_CHANGENAME:
+			अगर (!म_भेद(dev->name, c->अगरname)) अणु
+				c->अगरindex = dev->अगरindex;
 				dev_mc_add(dev, c->clustermac);
-			} else if (dev->ifindex == c->ifindex) {
+			पूर्ण अन्यथा अगर (dev->अगरindex == c->अगरindex) अणु
 				dev_mc_del(dev, c->clustermac);
-				c->ifindex = -1;
-			}
-			break;
-		}
-	}
+				c->अगरindex = -1;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&cn->lock);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct clusterip_config *
-clusterip_config_init(struct net *net, const struct ipt_clusterip_tgt_info *i,
-		      __be32 ip, const char *iniface)
-{
-	struct clusterip_net *cn = clusterip_pernet(net);
-	struct clusterip_config *c;
-	struct net_device *dev;
-	int err;
+अटल काष्ठा clusterip_config *
+clusterip_config_init(काष्ठा net *net, स्थिर काष्ठा ipt_clusterip_tgt_info *i,
+		      __be32 ip, स्थिर अक्षर *inअगरace)
+अणु
+	काष्ठा clusterip_net *cn = clusterip_pernet(net);
+	काष्ठा clusterip_config *c;
+	काष्ठा net_device *dev;
+	पूर्णांक err;
 
-	if (iniface[0] == '\0') {
+	अगर (inअगरace[0] == '\0') अणु
 		pr_info("Please specify an interface name\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	c = kzalloc(sizeof(*c), GFP_ATOMIC);
-	if (!c)
-		return ERR_PTR(-ENOMEM);
+	c = kzalloc(माप(*c), GFP_ATOMIC);
+	अगर (!c)
+		वापस ERR_PTR(-ENOMEM);
 
-	dev = dev_get_by_name(net, iniface);
-	if (!dev) {
-		pr_info("no such interface %s\n", iniface);
-		kfree(c);
-		return ERR_PTR(-ENOENT);
-	}
-	c->ifindex = dev->ifindex;
-	strcpy(c->ifname, dev->name);
-	memcpy(&c->clustermac, &i->clustermac, ETH_ALEN);
+	dev = dev_get_by_name(net, inअगरace);
+	अगर (!dev) अणु
+		pr_info("no such interface %s\n", inअगरace);
+		kमुक्त(c);
+		वापस ERR_PTR(-ENOENT);
+	पूर्ण
+	c->अगरindex = dev->अगरindex;
+	म_नकल(c->अगरname, dev->name);
+	स_नकल(&c->clustermac, &i->clustermac, ETH_ALEN);
 	dev_mc_add(dev, c->clustermac);
 	dev_put(dev);
 
@@ -263,433 +264,433 @@ clusterip_config_init(struct net *net, const struct ipt_clusterip_tgt_info *i,
 	refcount_set(&c->refcount, 1);
 
 	spin_lock_bh(&cn->lock);
-	if (__clusterip_config_find(net, ip)) {
+	अगर (__clusterip_config_find(net, ip)) अणु
 		err = -EBUSY;
-		goto out_config_put;
-	}
+		जाओ out_config_put;
+	पूर्ण
 
 	list_add_rcu(&c->list, &cn->configs);
 	spin_unlock_bh(&cn->lock);
 
-#ifdef CONFIG_PROC_FS
-	{
-		char buffer[16];
+#अगर_घोषित CONFIG_PROC_FS
+	अणु
+		अक्षर buffer[16];
 
 		/* create proc dir entry */
-		sprintf(buffer, "%pI4", &ip);
+		प्र_लिखो(buffer, "%pI4", &ip);
 		mutex_lock(&cn->mutex);
 		c->pde = proc_create_data(buffer, 0600,
 					  cn->procdir,
 					  &clusterip_proc_ops, c);
 		mutex_unlock(&cn->mutex);
-		if (!c->pde) {
+		अगर (!c->pde) अणु
 			err = -ENOMEM;
-			goto err;
-		}
-	}
-#endif
+			जाओ err;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	refcount_set(&c->entries, 1);
-	return c;
+	वापस c;
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 err:
-#endif
+#पूर्ण_अगर
 	spin_lock_bh(&cn->lock);
 	list_del_rcu(&c->list);
 out_config_put:
 	spin_unlock_bh(&cn->lock);
 	clusterip_config_put(c);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-static int
-clusterip_add_node(struct clusterip_config *c, u_int16_t nodenum)
-{
+#अगर_घोषित CONFIG_PROC_FS
+अटल पूर्णांक
+clusterip_add_node(काष्ठा clusterip_config *c, u_पूर्णांक16_t nodक्रमागत)
+अणु
 
-	if (nodenum == 0 ||
-	    nodenum > c->num_total_nodes)
-		return 1;
+	अगर (nodक्रमागत == 0 ||
+	    nodक्रमागत > c->num_total_nodes)
+		वापस 1;
 
-	/* check if we already have this number in our bitfield */
-	if (test_and_set_bit(nodenum - 1, &c->local_nodes))
-		return 1;
+	/* check अगर we alपढ़ोy have this number in our bitfield */
+	अगर (test_and_set_bit(nodक्रमागत - 1, &c->local_nodes))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool
-clusterip_del_node(struct clusterip_config *c, u_int16_t nodenum)
-{
-	if (nodenum == 0 ||
-	    nodenum > c->num_total_nodes)
-		return true;
+अटल bool
+clusterip_del_node(काष्ठा clusterip_config *c, u_पूर्णांक16_t nodक्रमागत)
+अणु
+	अगर (nodक्रमागत == 0 ||
+	    nodक्रमागत > c->num_total_nodes)
+		वापस true;
 
-	if (test_and_clear_bit(nodenum - 1, &c->local_nodes))
-		return false;
+	अगर (test_and_clear_bit(nodक्रमागत - 1, &c->local_nodes))
+		वापस false;
 
-	return true;
-}
-#endif
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-static inline u_int32_t
-clusterip_hashfn(const struct sk_buff *skb,
-		 const struct clusterip_config *config)
-{
-	const struct iphdr *iph = ip_hdr(skb);
-	unsigned long hashval;
-	u_int16_t sport = 0, dport = 0;
-	int poff;
+अटल अंतरभूत u_पूर्णांक32_t
+clusterip_hashfn(स्थिर काष्ठा sk_buff *skb,
+		 स्थिर काष्ठा clusterip_config *config)
+अणु
+	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
+	अचिन्हित दीर्घ hashval;
+	u_पूर्णांक16_t sport = 0, dport = 0;
+	पूर्णांक poff;
 
 	poff = proto_ports_offset(iph->protocol);
-	if (poff >= 0) {
-		const u_int16_t *ports;
+	अगर (poff >= 0) अणु
+		स्थिर u_पूर्णांक16_t *ports;
 		u16 _ports[2];
 
-		ports = skb_header_pointer(skb, iph->ihl * 4 + poff, 4, _ports);
-		if (ports) {
+		ports = skb_header_poपूर्णांकer(skb, iph->ihl * 4 + poff, 4, _ports);
+		अगर (ports) अणु
 			sport = ports[0];
 			dport = ports[1];
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		net_info_ratelimited("unknown protocol %u\n", iph->protocol);
-	}
+	पूर्ण
 
-	switch (config->hash_mode) {
-	case CLUSTERIP_HASHMODE_SIP:
+	चयन (config->hash_mode) अणु
+	हाल CLUSTERIP_HASHMODE_SIP:
 		hashval = jhash_1word(ntohl(iph->saddr),
 				      config->hash_initval);
-		break;
-	case CLUSTERIP_HASHMODE_SIP_SPT:
+		अवरोध;
+	हाल CLUSTERIP_HASHMODE_SIP_SPT:
 		hashval = jhash_2words(ntohl(iph->saddr), sport,
 				       config->hash_initval);
-		break;
-	case CLUSTERIP_HASHMODE_SIP_SPT_DPT:
+		अवरोध;
+	हाल CLUSTERIP_HASHMODE_SIP_SPT_DPT:
 		hashval = jhash_3words(ntohl(iph->saddr), sport, dport,
 				       config->hash_initval);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* to make gcc happy */
 		hashval = 0;
 		/* This cannot happen, unless the check function wasn't called
-		 * at rule load time */
+		 * at rule load समय */
 		pr_info("unknown mode %u\n", config->hash_mode);
 		BUG();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* node numbers are 1..n, not 0..n */
-	return reciprocal_scale(hashval, config->num_total_nodes) + 1;
-}
+	वापस reciprocal_scale(hashval, config->num_total_nodes) + 1;
+पूर्ण
 
-static inline int
-clusterip_responsible(const struct clusterip_config *config, u_int32_t hash)
-{
-	return test_bit(hash - 1, &config->local_nodes);
-}
+अटल अंतरभूत पूर्णांक
+clusterip_responsible(स्थिर काष्ठा clusterip_config *config, u_पूर्णांक32_t hash)
+अणु
+	वापस test_bit(hash - 1, &config->local_nodes);
+पूर्ण
 
 /***********************************************************************
  * IPTABLES TARGET
  ***********************************************************************/
 
-static unsigned int
-clusterip_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct ipt_clusterip_tgt_info *cipinfo = par->targinfo;
-	struct nf_conn *ct;
-	enum ip_conntrack_info ctinfo;
-	u_int32_t hash;
+अटल अचिन्हित पूर्णांक
+clusterip_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा ipt_clusterip_tgt_info *cipinfo = par->targinfo;
+	काष्ठा nf_conn *ct;
+	क्रमागत ip_conntrack_info ctinfo;
+	u_पूर्णांक32_t hash;
 
-	/* don't need to clusterip_config_get() here, since refcount
+	/* करोn't need to clusterip_config_get() here, since refcount
 	 * is only decremented by destroy() - and ip_tables guarantees
 	 * that the ->target() function isn't called after ->destroy() */
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (ct == NULL)
-		return NF_DROP;
+	अगर (ct == शून्य)
+		वापस NF_DROP;
 
-	/* special case: ICMP error handling. conntrack distinguishes between
-	 * error messages (RELATED) and information requests (see below) */
-	if (ip_hdr(skb)->protocol == IPPROTO_ICMP &&
+	/* special हाल: ICMP error handling. conntrack distinguishes between
+	 * error messages (RELATED) and inक्रमmation requests (see below) */
+	अगर (ip_hdr(skb)->protocol == IPPROTO_ICMP &&
 	    (ctinfo == IP_CT_RELATED ||
 	     ctinfo == IP_CT_RELATED_REPLY))
-		return XT_CONTINUE;
+		वापस XT_CONTINUE;
 
 	/* nf_conntrack_proto_icmp guarantees us that we only have ICMP_ECHO,
 	 * TIMESTAMP, INFO_REQUEST or ICMP_ADDRESS type icmp packets from here
-	 * on, which all have an ID field [relevant for hashing]. */
+	 * on, which all have an ID field [relevant क्रम hashing]. */
 
 	hash = clusterip_hashfn(skb, cipinfo->config);
 
-	switch (ctinfo) {
-	case IP_CT_NEW:
+	चयन (ctinfo) अणु
+	हाल IP_CT_NEW:
 		ct->mark = hash;
-		break;
-	case IP_CT_RELATED:
-	case IP_CT_RELATED_REPLY:
-		/* FIXME: we don't handle expectations at the moment.
-		 * They can arrive on a different node than
+		अवरोध;
+	हाल IP_CT_RELATED:
+	हाल IP_CT_RELATED_REPLY:
+		/* FIXME: we करोn't handle expectations at the moment.
+		 * They can arrive on a dअगरferent node than
 		 * the master connection (e.g. FTP passive mode) */
-	case IP_CT_ESTABLISHED:
-	case IP_CT_ESTABLISHED_REPLY:
-		break;
-	default:			/* Prevent gcc warnings */
-		break;
-	}
+	हाल IP_CT_ESTABLISHED:
+	हाल IP_CT_ESTABLISHED_REPLY:
+		अवरोध;
+	शेष:			/* Prevent gcc warnings */
+		अवरोध;
+	पूर्ण
 
-#ifdef DEBUG
-	nf_ct_dump_tuple_ip(&ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple);
-#endif
+#अगर_घोषित DEBUG
+	nf_ct_dump_tuple_ip(&ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple);
+#पूर्ण_अगर
 	pr_debug("hash=%u ct_hash=%u ", hash, ct->mark);
-	if (!clusterip_responsible(cipinfo->config, hash)) {
+	अगर (!clusterip_responsible(cipinfo->config, hash)) अणु
 		pr_debug("not responsible\n");
-		return NF_DROP;
-	}
+		वापस NF_DROP;
+	पूर्ण
 	pr_debug("responsible\n");
 
 	/* despite being received via linklayer multicast, this is
-	 * actually a unicast IP packet. TCP doesn't like PACKET_MULTICAST */
+	 * actually a unicast IP packet. TCP करोesn't like PACKET_MULTICAST */
 	skb->pkt_type = PACKET_HOST;
 
-	return XT_CONTINUE;
-}
+	वापस XT_CONTINUE;
+पूर्ण
 
-static int clusterip_tg_check(const struct xt_tgchk_param *par)
-{
-	struct ipt_clusterip_tgt_info *cipinfo = par->targinfo;
-	const struct ipt_entry *e = par->entryinfo;
-	struct clusterip_config *config;
-	int ret, i;
+अटल पूर्णांक clusterip_tg_check(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	काष्ठा ipt_clusterip_tgt_info *cipinfo = par->targinfo;
+	स्थिर काष्ठा ipt_entry *e = par->entryinfo;
+	काष्ठा clusterip_config *config;
+	पूर्णांक ret, i;
 
-	if (par->nft_compat) {
+	अगर (par->nft_compat) अणु
 		pr_err("cannot use CLUSTERIP target from nftables compat\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (cipinfo->hash_mode != CLUSTERIP_HASHMODE_SIP &&
+	अगर (cipinfo->hash_mode != CLUSTERIP_HASHMODE_SIP &&
 	    cipinfo->hash_mode != CLUSTERIP_HASHMODE_SIP_SPT &&
-	    cipinfo->hash_mode != CLUSTERIP_HASHMODE_SIP_SPT_DPT) {
+	    cipinfo->hash_mode != CLUSTERIP_HASHMODE_SIP_SPT_DPT) अणु
 		pr_info("unknown mode %u\n", cipinfo->hash_mode);
-		return -EINVAL;
+		वापस -EINVAL;
 
-	}
-	if (e->ip.dmsk.s_addr != htonl(0xffffffff) ||
-	    e->ip.dst.s_addr == 0) {
+	पूर्ण
+	अगर (e->ip.dmsk.s_addr != htonl(0xffffffff) ||
+	    e->ip.dst.s_addr == 0) अणु
 		pr_info("Please specify destination IP\n");
-		return -EINVAL;
-	}
-	if (cipinfo->num_local_nodes > ARRAY_SIZE(cipinfo->local_nodes)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (cipinfo->num_local_nodes > ARRAY_SIZE(cipinfo->local_nodes)) अणु
 		pr_info("bad num_local_nodes %u\n", cipinfo->num_local_nodes);
-		return -EINVAL;
-	}
-	for (i = 0; i < cipinfo->num_local_nodes; i++) {
-		if (cipinfo->local_nodes[i] - 1 >=
-		    sizeof(config->local_nodes) * 8) {
+		वापस -EINVAL;
+	पूर्ण
+	क्रम (i = 0; i < cipinfo->num_local_nodes; i++) अणु
+		अगर (cipinfo->local_nodes[i] - 1 >=
+		    माप(config->local_nodes) * 8) अणु
 			pr_info("bad local_nodes[%d] %u\n",
 				i, cipinfo->local_nodes[i]);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	config = clusterip_config_find_get(par->net, e->ip.dst.s_addr, 1);
-	if (!config) {
-		if (!(cipinfo->flags & CLUSTERIP_FLAG_NEW)) {
+	अगर (!config) अणु
+		अगर (!(cipinfo->flags & CLUSTERIP_FLAG_NEW)) अणु
 			pr_info("no config found for %pI4, need 'new'\n",
 				&e->ip.dst.s_addr);
-			return -EINVAL;
-		} else {
+			वापस -EINVAL;
+		पूर्ण अन्यथा अणु
 			config = clusterip_config_init(par->net, cipinfo,
 						       e->ip.dst.s_addr,
-						       e->ip.iniface);
-			if (IS_ERR(config))
-				return PTR_ERR(config);
-		}
-	} else if (memcmp(&config->clustermac, &cipinfo->clustermac, ETH_ALEN))
-		return -EINVAL;
+						       e->ip.inअगरace);
+			अगर (IS_ERR(config))
+				वापस PTR_ERR(config);
+		पूर्ण
+	पूर्ण अन्यथा अगर (स_भेद(&config->clustermac, &cipinfo->clustermac, ETH_ALEN))
+		वापस -EINVAL;
 
 	ret = nf_ct_netns_get(par->net, par->family);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_info("cannot load conntrack support for proto=%u\n",
 			par->family);
 		clusterip_config_entry_put(config);
 		clusterip_config_put(config);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!par->net->xt.clusterip_deprecated_warning) {
+	अगर (!par->net->xt.clusterip_deprecated_warning) अणु
 		pr_info("ipt_CLUSTERIP is deprecated and it will removed soon, "
 			"use xt_cluster instead\n");
 		par->net->xt.clusterip_deprecated_warning = true;
-	}
+	पूर्ण
 
 	cipinfo->config = config;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* drop reference count of cluster config when rule is deleted */
-static void clusterip_tg_destroy(const struct xt_tgdtor_param *par)
-{
-	const struct ipt_clusterip_tgt_info *cipinfo = par->targinfo;
+अटल व्योम clusterip_tg_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
+अणु
+	स्थिर काष्ठा ipt_clusterip_tgt_info *cipinfo = par->targinfo;
 
-	/* if no more entries are referencing the config, remove it
+	/* अगर no more entries are referencing the config, हटाओ it
 	 * from the list and destroy the proc entry */
 	clusterip_config_entry_put(cipinfo->config);
 
 	clusterip_config_put(cipinfo->config);
 
 	nf_ct_netns_put(par->net, par->family);
-}
+पूर्ण
 
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-struct compat_ipt_clusterip_tgt_info
-{
-	u_int32_t	flags;
-	u_int8_t	clustermac[6];
-	u_int16_t	num_total_nodes;
-	u_int16_t	num_local_nodes;
-	u_int16_t	local_nodes[CLUSTERIP_MAX_NODES];
-	u_int32_t	hash_mode;
-	u_int32_t	hash_initval;
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+काष्ठा compat_ipt_clusterip_tgt_info
+अणु
+	u_पूर्णांक32_t	flags;
+	u_पूर्णांक8_t	clustermac[6];
+	u_पूर्णांक16_t	num_total_nodes;
+	u_पूर्णांक16_t	num_local_nodes;
+	u_पूर्णांक16_t	local_nodes[CLUSTERIP_MAX_NODES];
+	u_पूर्णांक32_t	hash_mode;
+	u_पूर्णांक32_t	hash_initval;
 	compat_uptr_t	config;
-};
-#endif /* CONFIG_NETFILTER_XTABLES_COMPAT */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_NETFILTER_XTABLES_COMPAT */
 
-static struct xt_target clusterip_tg_reg __read_mostly = {
+अटल काष्ठा xt_target clusterip_tg_reg __पढ़ो_mostly = अणु
 	.name		= "CLUSTERIP",
 	.family		= NFPROTO_IPV4,
 	.target		= clusterip_tg,
 	.checkentry	= clusterip_tg_check,
 	.destroy	= clusterip_tg_destroy,
-	.targetsize	= sizeof(struct ipt_clusterip_tgt_info),
-	.usersize	= offsetof(struct ipt_clusterip_tgt_info, config),
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-	.compatsize	= sizeof(struct compat_ipt_clusterip_tgt_info),
-#endif /* CONFIG_NETFILTER_XTABLES_COMPAT */
+	.tarमाला_लोize	= माप(काष्ठा ipt_clusterip_tgt_info),
+	.usersize	= दुरत्व(काष्ठा ipt_clusterip_tgt_info, config),
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+	.compatsize	= माप(काष्ठा compat_ipt_clusterip_tgt_info),
+#पूर्ण_अगर /* CONFIG_NETFILTER_XTABLES_COMPAT */
 	.me		= THIS_MODULE
-};
+पूर्ण;
 
 
 /***********************************************************************
  * ARP MANGLING CODE
  ***********************************************************************/
 
-/* hardcoded for 48bit ethernet and 32bit ipv4 addresses */
-struct arp_payload {
-	u_int8_t src_hw[ETH_ALEN];
+/* hardcoded क्रम 48bit ethernet and 32bit ipv4 addresses */
+काष्ठा arp_payload अणु
+	u_पूर्णांक8_t src_hw[ETH_ALEN];
 	__be32 src_ip;
-	u_int8_t dst_hw[ETH_ALEN];
+	u_पूर्णांक8_t dst_hw[ETH_ALEN];
 	__be32 dst_ip;
-} __packed;
+पूर्ण __packed;
 
-#ifdef DEBUG
-static void arp_print(struct arp_payload *payload)
-{
-#define HBUFFERLEN 30
-	char hbuffer[HBUFFERLEN];
-	int j, k;
+#अगर_घोषित DEBUG
+अटल व्योम arp_prपूर्णांक(काष्ठा arp_payload *payload)
+अणु
+#घोषणा HBUFFERLEN 30
+	अक्षर hbuffer[HBUFFERLEN];
+	पूर्णांक j, k;
 
-	for (k = 0, j = 0; k < HBUFFERLEN - 3 && j < ETH_ALEN; j++) {
+	क्रम (k = 0, j = 0; k < HBUFFERLEN - 3 && j < ETH_ALEN; j++) अणु
 		hbuffer[k++] = hex_asc_hi(payload->src_hw[j]);
 		hbuffer[k++] = hex_asc_lo(payload->src_hw[j]);
 		hbuffer[k++] = ':';
-	}
+	पूर्ण
 	hbuffer[--k] = '\0';
 
 	pr_debug("src %pI4@%s, dst %pI4\n",
 		 &payload->src_ip, hbuffer, &payload->dst_ip);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static unsigned int
-arp_mangle(void *priv,
-	   struct sk_buff *skb,
-	   const struct nf_hook_state *state)
-{
-	struct arphdr *arp = arp_hdr(skb);
-	struct arp_payload *payload;
-	struct clusterip_config *c;
-	struct net *net = state->net;
+अटल अचिन्हित पूर्णांक
+arp_mangle(व्योम *priv,
+	   काष्ठा sk_buff *skb,
+	   स्थिर काष्ठा nf_hook_state *state)
+अणु
+	काष्ठा arphdr *arp = arp_hdr(skb);
+	काष्ठा arp_payload *payload;
+	काष्ठा clusterip_config *c;
+	काष्ठा net *net = state->net;
 
-	/* we don't care about non-ethernet and non-ipv4 ARP */
-	if (arp->ar_hrd != htons(ARPHRD_ETHER) ||
+	/* we करोn't care about non-ethernet and non-ipv4 ARP */
+	अगर (arp->ar_hrd != htons(ARPHRD_ETHER) ||
 	    arp->ar_pro != htons(ETH_P_IP) ||
 	    arp->ar_pln != 4 || arp->ar_hln != ETH_ALEN)
-		return NF_ACCEPT;
+		वापस NF_ACCEPT;
 
 	/* we only want to mangle arp requests and replies */
-	if (arp->ar_op != htons(ARPOP_REPLY) &&
+	अगर (arp->ar_op != htons(ARPOP_REPLY) &&
 	    arp->ar_op != htons(ARPOP_REQUEST))
-		return NF_ACCEPT;
+		वापस NF_ACCEPT;
 
-	payload = (void *)(arp+1);
+	payload = (व्योम *)(arp+1);
 
-	/* if there is no clusterip configuration for the arp reply's
-	 * source ip, we don't want to mangle it */
+	/* अगर there is no clusterip configuration क्रम the arp reply's
+	 * source ip, we करोn't want to mangle it */
 	c = clusterip_config_find_get(net, payload->src_ip, 0);
-	if (!c)
-		return NF_ACCEPT;
+	अगर (!c)
+		वापस NF_ACCEPT;
 
 	/* normally the linux kernel always replies to arp queries of
-	 * addresses on different interfacs.  However, in the CLUSTERIP case
+	 * addresses on dअगरferent पूर्णांकerfacs.  However, in the CLUSTERIP हाल
 	 * this wouldn't work, since we didn't subscribe the mcast group on
-	 * other interfaces */
-	if (c->ifindex != state->out->ifindex) {
+	 * other पूर्णांकerfaces */
+	अगर (c->अगरindex != state->out->अगरindex) अणु
 		pr_debug("not mangling arp reply on different interface: cip'%d'-skb'%d'\n",
-			 c->ifindex, state->out->ifindex);
+			 c->अगरindex, state->out->अगरindex);
 		clusterip_config_put(c);
-		return NF_ACCEPT;
-	}
+		वापस NF_ACCEPT;
+	पूर्ण
 
 	/* mangle reply hardware address */
-	memcpy(payload->src_hw, c->clustermac, arp->ar_hln);
+	स_नकल(payload->src_hw, c->clustermac, arp->ar_hln);
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	pr_debug("mangled arp reply: ");
-	arp_print(payload);
-#endif
+	arp_prपूर्णांक(payload);
+#पूर्ण_अगर
 
 	clusterip_config_put(c);
 
-	return NF_ACCEPT;
-}
+	वापस NF_ACCEPT;
+पूर्ण
 
-static const struct nf_hook_ops cip_arp_ops = {
+अटल स्थिर काष्ठा nf_hook_ops cip_arp_ops = अणु
 	.hook = arp_mangle,
 	.pf = NFPROTO_ARP,
 	.hooknum = NF_ARP_OUT,
 	.priority = -1
-};
+पूर्ण;
 
 /***********************************************************************
- * PROC DIR HANDLING
+ * PROC सूची HANDLING
  ***********************************************************************/
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 
-struct clusterip_seq_position {
-	unsigned int pos;	/* position */
-	unsigned int weight;	/* number of bits set == size */
-	unsigned int bit;	/* current bit */
-	unsigned long val;	/* current value */
-};
+काष्ठा clusterip_seq_position अणु
+	अचिन्हित पूर्णांक pos;	/* position */
+	अचिन्हित पूर्णांक weight;	/* number of bits set == size */
+	अचिन्हित पूर्णांक bit;	/* current bit */
+	अचिन्हित दीर्घ val;	/* current value */
+पूर्ण;
 
-static void *clusterip_seq_start(struct seq_file *s, loff_t *pos)
-{
-	struct clusterip_config *c = s->private;
-	unsigned int weight;
-	u_int32_t local_nodes;
-	struct clusterip_seq_position *idx;
+अटल व्योम *clusterip_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	काष्ठा clusterip_config *c = s->निजी;
+	अचिन्हित पूर्णांक weight;
+	u_पूर्णांक32_t local_nodes;
+	काष्ठा clusterip_seq_position *idx;
 
 	/* FIXME: possible race */
 	local_nodes = c->local_nodes;
 	weight = hweight32(local_nodes);
-	if (*pos >= weight)
-		return NULL;
+	अगर (*pos >= weight)
+		वापस शून्य;
 
-	idx = kmalloc(sizeof(struct clusterip_seq_position), GFP_KERNEL);
-	if (!idx)
-		return ERR_PTR(-ENOMEM);
+	idx = kदो_स्मृति(माप(काष्ठा clusterip_seq_position), GFP_KERNEL);
+	अगर (!idx)
+		वापस ERR_PTR(-ENOMEM);
 
 	idx->pos = *pos;
 	idx->weight = weight;
@@ -697,212 +698,212 @@ static void *clusterip_seq_start(struct seq_file *s, loff_t *pos)
 	idx->val = local_nodes;
 	clear_bit(idx->bit - 1, &idx->val);
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static void *clusterip_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
-	struct clusterip_seq_position *idx = v;
+अटल व्योम *clusterip_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा clusterip_seq_position *idx = v;
 
 	*pos = ++idx->pos;
-	if (*pos >= idx->weight) {
-		kfree(v);
-		return NULL;
-	}
+	अगर (*pos >= idx->weight) अणु
+		kमुक्त(v);
+		वापस शून्य;
+	पूर्ण
 	idx->bit = ffs(idx->val);
 	clear_bit(idx->bit - 1, &idx->val);
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static void clusterip_seq_stop(struct seq_file *s, void *v)
-{
-	if (!IS_ERR(v))
-		kfree(v);
-}
+अटल व्योम clusterip_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
+	अगर (!IS_ERR(v))
+		kमुक्त(v);
+पूर्ण
 
-static int clusterip_seq_show(struct seq_file *s, void *v)
-{
-	struct clusterip_seq_position *idx = v;
+अटल पूर्णांक clusterip_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	काष्ठा clusterip_seq_position *idx = v;
 
-	if (idx->pos != 0)
-		seq_putc(s, ',');
+	अगर (idx->pos != 0)
+		seq_अ_दो(s, ',');
 
-	seq_printf(s, "%u", idx->bit);
+	seq_म_लिखो(s, "%u", idx->bit);
 
-	if (idx->pos == idx->weight - 1)
-		seq_putc(s, '\n');
+	अगर (idx->pos == idx->weight - 1)
+		seq_अ_दो(s, '\n');
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations clusterip_seq_ops = {
+अटल स्थिर काष्ठा seq_operations clusterip_seq_ops = अणु
 	.start	= clusterip_seq_start,
 	.next	= clusterip_seq_next,
 	.stop	= clusterip_seq_stop,
 	.show	= clusterip_seq_show,
-};
+पूर्ण;
 
-static int clusterip_proc_open(struct inode *inode, struct file *file)
-{
-	int ret = seq_open(file, &clusterip_seq_ops);
+अटल पूर्णांक clusterip_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret = seq_खोलो(file, &clusterip_seq_ops);
 
-	if (!ret) {
-		struct seq_file *sf = file->private_data;
-		struct clusterip_config *c = PDE_DATA(inode);
+	अगर (!ret) अणु
+		काष्ठा seq_file *sf = file->निजी_data;
+		काष्ठा clusterip_config *c = PDE_DATA(inode);
 
-		sf->private = c;
+		sf->निजी = c;
 
 		clusterip_config_get(c);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int clusterip_proc_release(struct inode *inode, struct file *file)
-{
-	struct clusterip_config *c = PDE_DATA(inode);
-	int ret;
+अटल पूर्णांक clusterip_proc_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा clusterip_config *c = PDE_DATA(inode);
+	पूर्णांक ret;
 
 	ret = seq_release(inode, file);
 
-	if (!ret)
+	अगर (!ret)
 		clusterip_config_put(c);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t clusterip_proc_write(struct file *file, const char __user *input,
-				size_t size, loff_t *ofs)
-{
-	struct clusterip_config *c = PDE_DATA(file_inode(file));
-#define PROC_WRITELEN	10
-	char buffer[PROC_WRITELEN+1];
-	unsigned long nodenum;
-	int rc;
+अटल sमाप_प्रकार clusterip_proc_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *input,
+				माप_प्रकार size, loff_t *ofs)
+अणु
+	काष्ठा clusterip_config *c = PDE_DATA(file_inode(file));
+#घोषणा PROC_WRITELEN	10
+	अक्षर buffer[PROC_WRITELEN+1];
+	अचिन्हित दीर्घ nodक्रमागत;
+	पूर्णांक rc;
 
-	if (size > PROC_WRITELEN)
-		return -EIO;
-	if (copy_from_user(buffer, input, size))
-		return -EFAULT;
+	अगर (size > PROC_WRITELEN)
+		वापस -EIO;
+	अगर (copy_from_user(buffer, input, size))
+		वापस -EFAULT;
 	buffer[size] = 0;
 
-	if (*buffer == '+') {
-		rc = kstrtoul(buffer+1, 10, &nodenum);
-		if (rc)
-			return rc;
-		if (clusterip_add_node(c, nodenum))
-			return -ENOMEM;
-	} else if (*buffer == '-') {
-		rc = kstrtoul(buffer+1, 10, &nodenum);
-		if (rc)
-			return rc;
-		if (clusterip_del_node(c, nodenum))
-			return -ENOENT;
-	} else
-		return -EIO;
+	अगर (*buffer == '+') अणु
+		rc = kम_से_अदीर्घ(buffer+1, 10, &nodक्रमागत);
+		अगर (rc)
+			वापस rc;
+		अगर (clusterip_add_node(c, nodक्रमागत))
+			वापस -ENOMEM;
+	पूर्ण अन्यथा अगर (*buffer == '-') अणु
+		rc = kम_से_अदीर्घ(buffer+1, 10, &nodक्रमागत);
+		अगर (rc)
+			वापस rc;
+		अगर (clusterip_del_node(c, nodक्रमागत))
+			वापस -ENOENT;
+	पूर्ण अन्यथा
+		वापस -EIO;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static const struct proc_ops clusterip_proc_ops = {
-	.proc_open	= clusterip_proc_open,
-	.proc_read	= seq_read,
-	.proc_write	= clusterip_proc_write,
+अटल स्थिर काष्ठा proc_ops clusterip_proc_ops = अणु
+	.proc_खोलो	= clusterip_proc_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_ग_लिखो	= clusterip_proc_ग_लिखो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= clusterip_proc_release,
-};
+पूर्ण;
 
-#endif /* CONFIG_PROC_FS */
+#पूर्ण_अगर /* CONFIG_PROC_FS */
 
-static int clusterip_net_init(struct net *net)
-{
-	struct clusterip_net *cn = clusterip_pernet(net);
-	int ret;
+अटल पूर्णांक clusterip_net_init(काष्ठा net *net)
+अणु
+	काष्ठा clusterip_net *cn = clusterip_pernet(net);
+	पूर्णांक ret;
 
 	INIT_LIST_HEAD(&cn->configs);
 
 	spin_lock_init(&cn->lock);
 
-	ret = nf_register_net_hook(net, &cip_arp_ops);
-	if (ret < 0)
-		return ret;
+	ret = nf_रेजिस्टर_net_hook(net, &cip_arp_ops);
+	अगर (ret < 0)
+		वापस ret;
 
-#ifdef CONFIG_PROC_FS
-	cn->procdir = proc_mkdir("ipt_CLUSTERIP", net->proc_net);
-	if (!cn->procdir) {
-		nf_unregister_net_hook(net, &cip_arp_ops);
+#अगर_घोषित CONFIG_PROC_FS
+	cn->procdir = proc_सूची_गढ़ो("ipt_CLUSTERIP", net->proc_net);
+	अगर (!cn->procdir) अणु
+		nf_unरेजिस्टर_net_hook(net, &cip_arp_ops);
 		pr_err("Unable to proc dir entry\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	mutex_init(&cn->mutex);
-#endif /* CONFIG_PROC_FS */
+#पूर्ण_अगर /* CONFIG_PROC_FS */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clusterip_net_exit(struct net *net)
-{
-#ifdef CONFIG_PROC_FS
-	struct clusterip_net *cn = clusterip_pernet(net);
+अटल व्योम clusterip_net_निकास(काष्ठा net *net)
+अणु
+#अगर_घोषित CONFIG_PROC_FS
+	काष्ठा clusterip_net *cn = clusterip_pernet(net);
 
 	mutex_lock(&cn->mutex);
-	proc_remove(cn->procdir);
-	cn->procdir = NULL;
+	proc_हटाओ(cn->procdir);
+	cn->procdir = शून्य;
 	mutex_unlock(&cn->mutex);
-#endif
-	nf_unregister_net_hook(net, &cip_arp_ops);
-}
+#पूर्ण_अगर
+	nf_unरेजिस्टर_net_hook(net, &cip_arp_ops);
+पूर्ण
 
-static struct pernet_operations clusterip_net_ops = {
+अटल काष्ठा pernet_operations clusterip_net_ops = अणु
 	.init = clusterip_net_init,
-	.exit = clusterip_net_exit,
+	.निकास = clusterip_net_निकास,
 	.id   = &clusterip_net_id,
-	.size = sizeof(struct clusterip_net),
-};
+	.size = माप(काष्ठा clusterip_net),
+पूर्ण;
 
-static struct notifier_block cip_netdev_notifier = {
-	.notifier_call = clusterip_netdev_event
-};
+अटल काष्ठा notअगरier_block cip_netdev_notअगरier = अणु
+	.notअगरier_call = clusterip_netdev_event
+पूर्ण;
 
-static int __init clusterip_tg_init(void)
-{
-	int ret;
+अटल पूर्णांक __init clusterip_tg_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_pernet_subsys(&clusterip_net_ops);
-	if (ret < 0)
-		return ret;
+	ret = रेजिस्टर_pernet_subsys(&clusterip_net_ops);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = xt_register_target(&clusterip_tg_reg);
-	if (ret < 0)
-		goto cleanup_subsys;
+	ret = xt_रेजिस्टर_target(&clusterip_tg_reg);
+	अगर (ret < 0)
+		जाओ cleanup_subsys;
 
-	ret = register_netdevice_notifier(&cip_netdev_notifier);
-	if (ret < 0)
-		goto unregister_target;
+	ret = रेजिस्टर_netdevice_notअगरier(&cip_netdev_notअगरier);
+	अगर (ret < 0)
+		जाओ unरेजिस्टर_target;
 
 	pr_info("ClusterIP Version %s loaded successfully\n",
 		CLUSTERIP_VERSION);
 
-	return 0;
+	वापस 0;
 
-unregister_target:
-	xt_unregister_target(&clusterip_tg_reg);
+unरेजिस्टर_target:
+	xt_unरेजिस्टर_target(&clusterip_tg_reg);
 cleanup_subsys:
-	unregister_pernet_subsys(&clusterip_net_ops);
-	return ret;
-}
+	unरेजिस्टर_pernet_subsys(&clusterip_net_ops);
+	वापस ret;
+पूर्ण
 
-static void __exit clusterip_tg_exit(void)
-{
+अटल व्योम __निकास clusterip_tg_निकास(व्योम)
+अणु
 	pr_info("ClusterIP Version %s unloading\n", CLUSTERIP_VERSION);
 
-	unregister_netdevice_notifier(&cip_netdev_notifier);
-	xt_unregister_target(&clusterip_tg_reg);
-	unregister_pernet_subsys(&clusterip_net_ops);
+	unरेजिस्टर_netdevice_notअगरier(&cip_netdev_notअगरier);
+	xt_unरेजिस्टर_target(&clusterip_tg_reg);
+	unरेजिस्टर_pernet_subsys(&clusterip_net_ops);
 
-	/* Wait for completion of call_rcu()'s (clusterip_config_rcu_free) */
+	/* Wait क्रम completion of call_rcu()'s (clusterip_config_rcu_मुक्त) */
 	rcu_barrier();
-}
+पूर्ण
 
 module_init(clusterip_tg_init);
-module_exit(clusterip_tg_exit);
+module_निकास(clusterip_tg_निकास);

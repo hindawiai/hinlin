@@ -1,348 +1,349 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * wm8728.c  --  WM8728 ALSA SoC Audio driver
  *
  * Copyright 2008 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/i2c.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
-#include <linux/slab.h>
-#include <linux/of_device.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/initval.h>
-#include <sound/tlv.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_device.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/tlv.h>
 
-#include "wm8728.h"
+#समावेश "wm8728.h"
 
 /*
- * We can't read the WM8728 register space so we cache them instead.
- * Note that the defaults here aren't the physical defaults, we latch
+ * We can't पढ़ो the WM8728 रेजिस्टर space so we cache them instead.
+ * Note that the शेषs here aren't the physical शेषs, we latch
  * the volume update bits, mute the output and enable infinite zero
  * detect.
  */
-static const struct reg_default wm8728_reg_defaults[] = {
-	{ 0, 0x1ff },
-	{ 1, 0x1ff },
-	{ 2, 0x001 },
-	{ 3, 0x100 },
-};
+अटल स्थिर काष्ठा reg_शेष wm8728_reg_शेषs[] = अणु
+	अणु 0, 0x1ff पूर्ण,
+	अणु 1, 0x1ff पूर्ण,
+	अणु 2, 0x001 पूर्ण,
+	अणु 3, 0x100 पूर्ण,
+पूर्ण;
 
-/* codec private data */
-struct wm8728_priv {
-	struct regmap *regmap;
-};
+/* codec निजी data */
+काष्ठा wm8728_priv अणु
+	काष्ठा regmap *regmap;
+पूर्ण;
 
-static const DECLARE_TLV_DB_SCALE(wm8728_tlv, -12750, 50, 1);
+अटल स्थिर DECLARE_TLV_DB_SCALE(wm8728_tlv, -12750, 50, 1);
 
-static const struct snd_kcontrol_new wm8728_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8728_snd_controls[] = अणु
 
 SOC_DOUBLE_R_TLV("Digital Playback Volume", WM8728_DACLVOL, WM8728_DACRVOL,
 		 0, 255, 0, wm8728_tlv),
 
 SOC_SINGLE("Deemphasis", WM8728_DACCTL, 1, 1, 0),
-};
+पूर्ण;
 
 /*
  * DAPM controls.
  */
-static const struct snd_soc_dapm_widget wm8728_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget wm8728_dapm_widमाला_लो[] = अणु
 SND_SOC_DAPM_DAC("DAC", "HiFi Playback", SND_SOC_NOPM, 0, 0),
 SND_SOC_DAPM_OUTPUT("VOUTL"),
 SND_SOC_DAPM_OUTPUT("VOUTR"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route wm8728_intercon[] = {
-	{"VOUTL", NULL, "DAC"},
-	{"VOUTR", NULL, "DAC"},
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route wm8728_पूर्णांकercon[] = अणु
+	अणु"VOUTL", शून्य, "DAC"पूर्ण,
+	अणु"VOUTR", शून्य, "DAC"पूर्ण,
+पूर्ण;
 
-static int wm8728_mute(struct snd_soc_dai *dai, int mute, int direction)
-{
-	struct snd_soc_component *component = dai->component;
-	u16 mute_reg = snd_soc_component_read(component, WM8728_DACCTL);
+अटल पूर्णांक wm8728_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	u16 mute_reg = snd_soc_component_पढ़ो(component, WM8728_DACCTL);
 
-	if (mute)
-		snd_soc_component_write(component, WM8728_DACCTL, mute_reg | 1);
-	else
-		snd_soc_component_write(component, WM8728_DACCTL, mute_reg & ~1);
+	अगर (mute)
+		snd_soc_component_ग_लिखो(component, WM8728_DACCTL, mute_reg | 1);
+	अन्यथा
+		snd_soc_component_ग_लिखो(component, WM8728_DACCTL, mute_reg & ~1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8728_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params,
-	struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	u16 dac = snd_soc_component_read(component, WM8728_DACCTL);
+अटल पूर्णांक wm8728_hw_params(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_pcm_hw_params *params,
+	काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	u16 dac = snd_soc_component_पढ़ो(component, WM8728_DACCTL);
 
 	dac &= ~0x18;
 
-	switch (params_width(params)) {
-	case 16:
-		break;
-	case 20:
+	चयन (params_width(params)) अणु
+	हाल 16:
+		अवरोध;
+	हाल 20:
 		dac |= 0x10;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		dac |= 0x08;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	snd_soc_component_write(component, WM8728_DACCTL, dac);
+	snd_soc_component_ग_लिखो(component, WM8728_DACCTL, dac);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm8728_set_dai_fmt(struct snd_soc_dai *codec_dai,
-		unsigned int fmt)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	u16 iface = snd_soc_component_read(component, WM8728_IFCTL);
+अटल पूर्णांक wm8728_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai,
+		अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	u16 अगरace = snd_soc_component_पढ़ो(component, WM8728_IFCTL);
 
 	/* Currently only I2S is supported by the driver, though the
 	 * hardware is more flexible.
 	 */
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-		iface |= 1;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
+		अगरace |= 1;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* The hardware only support full slave mode */
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		iface &= ~0x22;
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
-		iface |=  0x20;
-		iface &= ~0x02;
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
-		iface |= 0x02;
-		iface &= ~0x20;
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
-		iface |= 0x22;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अगरace &= ~0x22;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
+		अगरace |=  0x20;
+		अगरace &= ~0x02;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF:
+		अगरace |= 0x02;
+		अगरace &= ~0x20;
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
+		अगरace |= 0x22;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	snd_soc_component_write(component, WM8728_IFCTL, iface);
-	return 0;
-}
+	snd_soc_component_ग_लिखो(component, WM8728_IFCTL, अगरace);
+	वापस 0;
+पूर्ण
 
-static int wm8728_set_bias_level(struct snd_soc_component *component,
-				 enum snd_soc_bias_level level)
-{
-	struct wm8728_priv *wm8728 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक wm8728_set_bias_level(काष्ठा snd_soc_component *component,
+				 क्रमागत snd_soc_bias_level level)
+अणु
+	काष्ठा wm8728_priv *wm8728 = snd_soc_component_get_drvdata(component);
 	u16 reg;
 
-	switch (level) {
-	case SND_SOC_BIAS_ON:
-	case SND_SOC_BIAS_PREPARE:
-	case SND_SOC_BIAS_STANDBY:
-		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
+	हाल SND_SOC_BIAS_PREPARE:
+	हाल SND_SOC_BIAS_STANDBY:
+		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
 			/* Power everything up... */
-			reg = snd_soc_component_read(component, WM8728_DACCTL);
-			snd_soc_component_write(component, WM8728_DACCTL, reg & ~0x4);
+			reg = snd_soc_component_पढ़ो(component, WM8728_DACCTL);
+			snd_soc_component_ग_लिखो(component, WM8728_DACCTL, reg & ~0x4);
 
-			/* ..then sync in the register cache. */
+			/* ..then sync in the रेजिस्टर cache. */
 			regcache_sync(wm8728->regmap);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case SND_SOC_BIAS_OFF:
-		reg = snd_soc_component_read(component, WM8728_DACCTL);
-		snd_soc_component_write(component, WM8728_DACCTL, reg | 0x4);
-		break;
-	}
-	return 0;
-}
+	हाल SND_SOC_BIAS_OFF:
+		reg = snd_soc_component_पढ़ो(component, WM8728_DACCTL);
+		snd_soc_component_ग_लिखो(component, WM8728_DACCTL, reg | 0x4);
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define WM8728_RATES (SNDRV_PCM_RATE_8000_192000)
+#घोषणा WM8728_RATES (SNDRV_PCM_RATE_8000_192000)
 
-#define WM8728_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
+#घोषणा WM8728_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 	SNDRV_PCM_FMTBIT_S24_LE)
 
-static const struct snd_soc_dai_ops wm8728_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops wm8728_dai_ops = अणु
 	.hw_params	= wm8728_hw_params,
 	.mute_stream	= wm8728_mute,
 	.set_fmt	= wm8728_set_dai_fmt,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver wm8728_dai = {
+अटल काष्ठा snd_soc_dai_driver wm8728_dai = अणु
 	.name = "wm8728-hifi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = WM8728_RATES,
-		.formats = WM8728_FORMATS,
-	},
+		.क्रमmats = WM8728_FORMATS,
+	पूर्ण,
 	.ops = &wm8728_dai_ops,
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver soc_component_dev_wm8728 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_wm8728 = अणु
 	.set_bias_level		= wm8728_set_bias_level,
 	.controls		= wm8728_snd_controls,
 	.num_controls		= ARRAY_SIZE(wm8728_snd_controls),
-	.dapm_widgets		= wm8728_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(wm8728_dapm_widgets),
-	.dapm_routes		= wm8728_intercon,
-	.num_dapm_routes	= ARRAY_SIZE(wm8728_intercon),
+	.dapm_widमाला_लो		= wm8728_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(wm8728_dapm_widमाला_लो),
+	.dapm_routes		= wm8728_पूर्णांकercon,
+	.num_dapm_routes	= ARRAY_SIZE(wm8728_पूर्णांकercon),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static const struct of_device_id wm8728_of_match[] = {
-	{ .compatible = "wlf,wm8728", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id wm8728_of_match[] = अणु
+	अणु .compatible = "wlf,wm8728", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, wm8728_of_match);
 
-static const struct regmap_config wm8728_regmap = {
+अटल स्थिर काष्ठा regmap_config wm8728_regmap = अणु
 	.reg_bits = 7,
 	.val_bits = 9,
-	.max_register = WM8728_IFCTL,
+	.max_रेजिस्टर = WM8728_IFCTL,
 
-	.reg_defaults = wm8728_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(wm8728_reg_defaults),
+	.reg_शेषs = wm8728_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(wm8728_reg_शेषs),
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 
-#if defined(CONFIG_SPI_MASTER)
-static int wm8728_spi_probe(struct spi_device *spi)
-{
-	struct wm8728_priv *wm8728;
-	int ret;
+#अगर defined(CONFIG_SPI_MASTER)
+अटल पूर्णांक wm8728_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा wm8728_priv *wm8728;
+	पूर्णांक ret;
 
-	wm8728 = devm_kzalloc(&spi->dev, sizeof(struct wm8728_priv),
+	wm8728 = devm_kzalloc(&spi->dev, माप(काष्ठा wm8728_priv),
 			      GFP_KERNEL);
-	if (wm8728 == NULL)
-		return -ENOMEM;
+	अगर (wm8728 == शून्य)
+		वापस -ENOMEM;
 
 	wm8728->regmap = devm_regmap_init_spi(spi, &wm8728_regmap);
-	if (IS_ERR(wm8728->regmap))
-		return PTR_ERR(wm8728->regmap);
+	अगर (IS_ERR(wm8728->regmap))
+		वापस PTR_ERR(wm8728->regmap);
 
 	spi_set_drvdata(spi, wm8728);
 
-	ret = devm_snd_soc_register_component(&spi->dev,
+	ret = devm_snd_soc_रेजिस्टर_component(&spi->dev,
 			&soc_component_dev_wm8728, &wm8728_dai, 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct spi_driver wm8728_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver wm8728_spi_driver = अणु
+	.driver = अणु
 		.name	= "wm8728",
 		.of_match_table = wm8728_of_match,
-	},
+	पूर्ण,
 	.probe		= wm8728_spi_probe,
-};
-#endif /* CONFIG_SPI_MASTER */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_SPI_MASTER */
 
-#if IS_ENABLED(CONFIG_I2C)
-static int wm8728_i2c_probe(struct i2c_client *i2c,
-			    const struct i2c_device_id *id)
-{
-	struct wm8728_priv *wm8728;
-	int ret;
+#अगर IS_ENABLED(CONFIG_I2C)
+अटल पूर्णांक wm8728_i2c_probe(काष्ठा i2c_client *i2c,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा wm8728_priv *wm8728;
+	पूर्णांक ret;
 
-	wm8728 = devm_kzalloc(&i2c->dev, sizeof(struct wm8728_priv),
+	wm8728 = devm_kzalloc(&i2c->dev, माप(काष्ठा wm8728_priv),
 			      GFP_KERNEL);
-	if (wm8728 == NULL)
-		return -ENOMEM;
+	अगर (wm8728 == शून्य)
+		वापस -ENOMEM;
 
 	wm8728->regmap = devm_regmap_init_i2c(i2c, &wm8728_regmap);
-	if (IS_ERR(wm8728->regmap))
-		return PTR_ERR(wm8728->regmap);
+	अगर (IS_ERR(wm8728->regmap))
+		वापस PTR_ERR(wm8728->regmap);
 
 	i2c_set_clientdata(i2c, wm8728);
 
-	ret =  devm_snd_soc_register_component(&i2c->dev,
+	ret =  devm_snd_soc_रेजिस्टर_component(&i2c->dev,
 			&soc_component_dev_wm8728, &wm8728_dai, 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct i2c_device_id wm8728_i2c_id[] = {
-	{ "wm8728", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id wm8728_i2c_id[] = अणु
+	अणु "wm8728", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, wm8728_i2c_id);
 
-static struct i2c_driver wm8728_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver wm8728_i2c_driver = अणु
+	.driver = अणु
 		.name = "wm8728",
 		.of_match_table = wm8728_of_match,
-	},
+	पूर्ण,
 	.probe =    wm8728_i2c_probe,
 	.id_table = wm8728_i2c_id,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static int __init wm8728_modinit(void)
-{
-	int ret = 0;
-#if IS_ENABLED(CONFIG_I2C)
+अटल पूर्णांक __init wm8728_modinit(व्योम)
+अणु
+	पूर्णांक ret = 0;
+#अगर IS_ENABLED(CONFIG_I2C)
 	ret = i2c_add_driver(&wm8728_i2c_driver);
-	if (ret != 0) {
-		printk(KERN_ERR "Failed to register wm8728 I2C driver: %d\n",
+	अगर (ret != 0) अणु
+		prपूर्णांकk(KERN_ERR "Failed to register wm8728 I2C driver: %d\n",
 		       ret);
-	}
-#endif
-#if defined(CONFIG_SPI_MASTER)
-	ret = spi_register_driver(&wm8728_spi_driver);
-	if (ret != 0) {
-		printk(KERN_ERR "Failed to register wm8728 SPI driver: %d\n",
+	पूर्ण
+#पूर्ण_अगर
+#अगर defined(CONFIG_SPI_MASTER)
+	ret = spi_रेजिस्टर_driver(&wm8728_spi_driver);
+	अगर (ret != 0) अणु
+		prपूर्णांकk(KERN_ERR "Failed to register wm8728 SPI driver: %d\n",
 		       ret);
-	}
-#endif
-	return ret;
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 module_init(wm8728_modinit);
 
-static void __exit wm8728_exit(void)
-{
-#if IS_ENABLED(CONFIG_I2C)
+अटल व्योम __निकास wm8728_निकास(व्योम)
+अणु
+#अगर IS_ENABLED(CONFIG_I2C)
 	i2c_del_driver(&wm8728_i2c_driver);
-#endif
-#if defined(CONFIG_SPI_MASTER)
-	spi_unregister_driver(&wm8728_spi_driver);
-#endif
-}
-module_exit(wm8728_exit);
+#पूर्ण_अगर
+#अगर defined(CONFIG_SPI_MASTER)
+	spi_unरेजिस्टर_driver(&wm8728_spi_driver);
+#पूर्ण_अगर
+पूर्ण
+module_निकास(wm8728_निकास);
 
 MODULE_DESCRIPTION("ASoC WM8728 driver");
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");

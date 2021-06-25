@@ -1,103 +1,104 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#ifndef I915_TIMELINE_H
-#define I915_TIMELINE_H
+#अगर_अघोषित I915_TIMELINE_H
+#घोषणा I915_TIMELINE_H
 
-#include <linux/lockdep.h>
+#समावेश <linux/lockdep.h>
 
-#include "i915_active.h"
-#include "i915_syncmap.h"
-#include "intel_timeline_types.h"
+#समावेश "i915_active.h"
+#समावेश "i915_syncmap.h"
+#समावेश "intel_timeline_types.h"
 
-struct drm_printer;
+काष्ठा drm_prपूर्णांकer;
 
-struct intel_timeline *
-__intel_timeline_create(struct intel_gt *gt,
-			struct i915_vma *global_hwsp,
-			unsigned int offset);
+काष्ठा पूर्णांकel_समयline *
+__पूर्णांकel_समयline_create(काष्ठा पूर्णांकel_gt *gt,
+			काष्ठा i915_vma *global_hwsp,
+			अचिन्हित पूर्णांक offset);
 
-static inline struct intel_timeline *
-intel_timeline_create(struct intel_gt *gt)
-{
-	return __intel_timeline_create(gt, NULL, 0);
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_समयline *
+पूर्णांकel_समयline_create(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	वापस __पूर्णांकel_समयline_create(gt, शून्य, 0);
+पूर्ण
 
-struct intel_timeline *
-intel_timeline_create_from_engine(struct intel_engine_cs *engine,
-				  unsigned int offset);
+काष्ठा पूर्णांकel_समयline *
+पूर्णांकel_समयline_create_from_engine(काष्ठा पूर्णांकel_engine_cs *engine,
+				  अचिन्हित पूर्णांक offset);
 
-static inline struct intel_timeline *
-intel_timeline_get(struct intel_timeline *timeline)
-{
-	kref_get(&timeline->kref);
-	return timeline;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_समयline *
+पूर्णांकel_समयline_get(काष्ठा पूर्णांकel_समयline *समयline)
+अणु
+	kref_get(&समयline->kref);
+	वापस समयline;
+पूर्ण
 
-void __intel_timeline_free(struct kref *kref);
-static inline void intel_timeline_put(struct intel_timeline *timeline)
-{
-	kref_put(&timeline->kref, __intel_timeline_free);
-}
+व्योम __पूर्णांकel_समयline_मुक्त(काष्ठा kref *kref);
+अटल अंतरभूत व्योम पूर्णांकel_समयline_put(काष्ठा पूर्णांकel_समयline *समयline)
+अणु
+	kref_put(&समयline->kref, __पूर्णांकel_समयline_मुक्त);
+पूर्ण
 
-static inline int __intel_timeline_sync_set(struct intel_timeline *tl,
+अटल अंतरभूत पूर्णांक __पूर्णांकel_समयline_sync_set(काष्ठा पूर्णांकel_समयline *tl,
 					    u64 context, u32 seqno)
-{
-	return i915_syncmap_set(&tl->sync, context, seqno);
-}
+अणु
+	वापस i915_syncmap_set(&tl->sync, context, seqno);
+पूर्ण
 
-static inline int intel_timeline_sync_set(struct intel_timeline *tl,
-					  const struct dma_fence *fence)
-{
-	return __intel_timeline_sync_set(tl, fence->context, fence->seqno);
-}
+अटल अंतरभूत पूर्णांक पूर्णांकel_समयline_sync_set(काष्ठा पूर्णांकel_समयline *tl,
+					  स्थिर काष्ठा dma_fence *fence)
+अणु
+	वापस __पूर्णांकel_समयline_sync_set(tl, fence->context, fence->seqno);
+पूर्ण
 
-static inline bool __intel_timeline_sync_is_later(struct intel_timeline *tl,
+अटल अंतरभूत bool __पूर्णांकel_समयline_sync_is_later(काष्ठा पूर्णांकel_समयline *tl,
 						  u64 context, u32 seqno)
-{
-	return i915_syncmap_is_later(&tl->sync, context, seqno);
-}
+अणु
+	वापस i915_syncmap_is_later(&tl->sync, context, seqno);
+पूर्ण
 
-static inline bool intel_timeline_sync_is_later(struct intel_timeline *tl,
-						const struct dma_fence *fence)
-{
-	return __intel_timeline_sync_is_later(tl, fence->context, fence->seqno);
-}
+अटल अंतरभूत bool पूर्णांकel_समयline_sync_is_later(काष्ठा पूर्णांकel_समयline *tl,
+						स्थिर काष्ठा dma_fence *fence)
+अणु
+	वापस __पूर्णांकel_समयline_sync_is_later(tl, fence->context, fence->seqno);
+पूर्ण
 
-void __intel_timeline_pin(struct intel_timeline *tl);
-int intel_timeline_pin(struct intel_timeline *tl, struct i915_gem_ww_ctx *ww);
-void intel_timeline_enter(struct intel_timeline *tl);
-int intel_timeline_get_seqno(struct intel_timeline *tl,
-			     struct i915_request *rq,
+व्योम __पूर्णांकel_समयline_pin(काष्ठा पूर्णांकel_समयline *tl);
+पूर्णांक पूर्णांकel_समयline_pin(काष्ठा पूर्णांकel_समयline *tl, काष्ठा i915_gem_ww_ctx *ww);
+व्योम पूर्णांकel_समयline_enter(काष्ठा पूर्णांकel_समयline *tl);
+पूर्णांक पूर्णांकel_समयline_get_seqno(काष्ठा पूर्णांकel_समयline *tl,
+			     काष्ठा i915_request *rq,
 			     u32 *seqno);
-void intel_timeline_exit(struct intel_timeline *tl);
-void intel_timeline_unpin(struct intel_timeline *tl);
+व्योम पूर्णांकel_समयline_निकास(काष्ठा पूर्णांकel_समयline *tl);
+व्योम पूर्णांकel_समयline_unpin(काष्ठा पूर्णांकel_समयline *tl);
 
-void intel_timeline_reset_seqno(const struct intel_timeline *tl);
+व्योम पूर्णांकel_समयline_reset_seqno(स्थिर काष्ठा पूर्णांकel_समयline *tl);
 
-int intel_timeline_read_hwsp(struct i915_request *from,
-			     struct i915_request *until,
+पूर्णांक पूर्णांकel_समयline_पढ़ो_hwsp(काष्ठा i915_request *from,
+			     काष्ठा i915_request *until,
 			     u32 *hwsp_offset);
 
-void intel_gt_init_timelines(struct intel_gt *gt);
-void intel_gt_fini_timelines(struct intel_gt *gt);
+व्योम पूर्णांकel_gt_init_समयlines(काष्ठा पूर्णांकel_gt *gt);
+व्योम पूर्णांकel_gt_fini_समयlines(काष्ठा पूर्णांकel_gt *gt);
 
-void intel_gt_show_timelines(struct intel_gt *gt,
-			     struct drm_printer *m,
-			     void (*show_request)(struct drm_printer *m,
-						  const struct i915_request *rq,
-						  const char *prefix,
-						  int indent));
+व्योम पूर्णांकel_gt_show_समयlines(काष्ठा पूर्णांकel_gt *gt,
+			     काष्ठा drm_prपूर्णांकer *m,
+			     व्योम (*show_request)(काष्ठा drm_prपूर्णांकer *m,
+						  स्थिर काष्ठा i915_request *rq,
+						  स्थिर अक्षर *prefix,
+						  पूर्णांक indent));
 
-static inline bool
-intel_timeline_is_last(const struct intel_timeline *tl,
-		       const struct i915_request *rq)
-{
-	return list_is_last_rcu(&rq->link, &tl->requests);
-}
+अटल अंतरभूत bool
+पूर्णांकel_समयline_is_last(स्थिर काष्ठा पूर्णांकel_समयline *tl,
+		       स्थिर काष्ठा i915_request *rq)
+अणु
+	वापस list_is_last_rcu(&rq->link, &tl->requests);
+पूर्ण
 
-I915_SELFTEST_DECLARE(int intel_timeline_pin_map(struct intel_timeline *tl));
+I915_SELFTEST_DECLARE(पूर्णांक पूर्णांकel_समयline_pin_map(काष्ठा पूर्णांकel_समयline *tl));
 
-#endif
+#पूर्ण_अगर

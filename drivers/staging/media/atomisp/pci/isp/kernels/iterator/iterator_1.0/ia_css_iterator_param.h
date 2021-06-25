@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __IA_CSS_ITERATOR_PARAM_H
-#define __IA_CSS_ITERATOR_PARAM_H
+#अगर_अघोषित __IA_CSS_ITERATOR_PARAM_H
+#घोषणा __IA_CSS_ITERATOR_PARAM_H
 
-#include "ia_css_types.h" /* ia_css_resolution */
-#include "ia_css_frame_public.h" /* ia_css_frame_info */
-#include "ia_css_frame_comm.h" /* ia_css_frame_sp_info */
+#समावेश "ia_css_types.h" /* ia_css_resolution */
+#समावेश "ia_css_frame_public.h" /* ia_css_frame_info */
+#समावेश "ia_css_frame_comm.h" /* ia_css_frame_sp_info */
 
-struct ia_css_iterator_configuration {
-	const struct ia_css_frame_info *input_info;
-	const struct ia_css_frame_info *internal_info;
-	const struct ia_css_frame_info *output_info;
-	const struct ia_css_frame_info *vf_info;
-	const struct ia_css_resolution *dvs_envelope;
-};
+काष्ठा ia_css_iterator_configuration अणु
+	स्थिर काष्ठा ia_css_frame_info *input_info;
+	स्थिर काष्ठा ia_css_frame_info *पूर्णांकernal_info;
+	स्थिर काष्ठा ia_css_frame_info *output_info;
+	स्थिर काष्ठा ia_css_frame_info *vf_info;
+	स्थिर काष्ठा ia_css_resolution *dvs_envelope;
+पूर्ण;
 
-struct sh_css_isp_iterator_isp_config {
-	struct ia_css_frame_sp_info input_info;
-	struct ia_css_frame_sp_info internal_info;
-	struct ia_css_frame_sp_info output_info;
-	struct ia_css_frame_sp_info vf_info;
-	struct ia_css_sp_resolution dvs_envelope;
-};
+काष्ठा sh_css_isp_iterator_isp_config अणु
+	काष्ठा ia_css_frame_sp_info input_info;
+	काष्ठा ia_css_frame_sp_info पूर्णांकernal_info;
+	काष्ठा ia_css_frame_sp_info output_info;
+	काष्ठा ia_css_frame_sp_info vf_info;
+	काष्ठा ia_css_sp_resolution dvs_envelope;
+पूर्ण;
 
-#endif /* __IA_CSS_ITERATOR_PARAM_H */
+#पूर्ण_अगर /* __IA_CSS_ITERATOR_PARAM_H */

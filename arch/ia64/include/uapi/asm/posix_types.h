@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_IA64_POSIX_TYPES_H
-#define _ASM_IA64_POSIX_TYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_IA64_POSIX_TYPES_H
+#घोषणा _ASM_IA64_POSIX_TYPES_H
 
-typedef unsigned long	__kernel_sigset_t;	/* at least 32 bits */
+प्रकार अचिन्हित दीर्घ	__kernel_sigset_t;	/* at least 32 bits */
 
-#include <asm-generic/posix_types.h>
+#समावेश <यंत्र-generic/posix_types.h>
 
-#endif /* _ASM_IA64_POSIX_TYPES_H */
+#पूर्ण_अगर /* _ASM_IA64_POSIX_TYPES_H */

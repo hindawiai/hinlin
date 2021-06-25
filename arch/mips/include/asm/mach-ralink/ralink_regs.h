@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  Ralink SoC register definitions
+ *  Ralink SoC रेजिस्टर definitions
  *
  *  Copyright (C) 2013 John Crispin <john@phrozen.org>
- *  Copyright (C) 2008-2010 Gabor Juhos <juhosg@openwrt.org>
- *  Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
+ *  Copyright (C) 2008-2010 Gabor Juhos <juhosg@खोलोwrt.org>
+ *  Copyright (C) 2008 Imre Kaloz <kaloz@खोलोwrt.org>
  */
 
-#ifndef _RALINK_REGS_H_
-#define _RALINK_REGS_H_
+#अगर_अघोषित _RALINK_REGS_H_
+#घोषणा _RALINK_REGS_H_
 
-#include <linux/io.h>
+#समावेश <linux/पन.स>
 
-enum ralink_soc_type {
+क्रमागत ralink_soc_type अणु
 	RALINK_UNKNOWN = 0,
 	RT2880_SOC,
 	RT3883_SOC,
@@ -26,37 +27,37 @@ enum ralink_soc_type {
 	MT762X_SOC_MT7621AT,
 	MT762X_SOC_MT7628AN,
 	MT762X_SOC_MT7688,
-};
-extern enum ralink_soc_type ralink_soc;
+पूर्ण;
+बाह्य क्रमागत ralink_soc_type ralink_soc;
 
-extern __iomem void *rt_sysc_membase;
-extern __iomem void *rt_memc_membase;
+बाह्य __iomem व्योम *rt_sysc_membase;
+बाह्य __iomem व्योम *rt_memc_membase;
 
-static inline void rt_sysc_w32(u32 val, unsigned reg)
-{
-	__raw_writel(val, rt_sysc_membase + reg);
-}
+अटल अंतरभूत व्योम rt_sysc_w32(u32 val, अचिन्हित reg)
+अणु
+	__raw_ग_लिखोl(val, rt_sysc_membase + reg);
+पूर्ण
 
-static inline u32 rt_sysc_r32(unsigned reg)
-{
-	return __raw_readl(rt_sysc_membase + reg);
-}
+अटल अंतरभूत u32 rt_sysc_r32(अचिन्हित reg)
+अणु
+	वापस __raw_पढ़ोl(rt_sysc_membase + reg);
+पूर्ण
 
-static inline void rt_sysc_m32(u32 clr, u32 set, unsigned reg)
-{
+अटल अंतरभूत व्योम rt_sysc_m32(u32 clr, u32 set, अचिन्हित reg)
+अणु
 	u32 val = rt_sysc_r32(reg) & ~clr;
 
-	__raw_writel(val | set, rt_sysc_membase + reg);
-}
+	__raw_ग_लिखोl(val | set, rt_sysc_membase + reg);
+पूर्ण
 
-static inline void rt_memc_w32(u32 val, unsigned reg)
-{
-	__raw_writel(val, rt_memc_membase + reg);
-}
+अटल अंतरभूत व्योम rt_memc_w32(u32 val, अचिन्हित reg)
+अणु
+	__raw_ग_लिखोl(val, rt_memc_membase + reg);
+पूर्ण
 
-static inline u32 rt_memc_r32(unsigned reg)
-{
-	return __raw_readl(rt_memc_membase + reg);
-}
+अटल अंतरभूत u32 rt_memc_r32(अचिन्हित reg)
+अणु
+	वापस __raw_पढ़ोl(rt_memc_membase + reg);
+पूर्ण
 
-#endif /* _RALINK_REGS_H_ */
+#पूर्ण_अगर /* _RALINK_REGS_H_ */

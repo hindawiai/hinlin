@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_TRACE_CLOCK_H
-#define _ASM_X86_TRACE_CLOCK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_TRACE_CLOCK_H
+#घोषणा _ASM_X86_TRACE_CLOCK_H
 
-#include <linux/compiler.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/types.h>
 
-#ifdef CONFIG_X86_TSC
+#अगर_घोषित CONFIG_X86_TSC
 
-extern u64 notrace trace_clock_x86_tsc(void);
+बाह्य u64 notrace trace_घड़ी_x86_tsc(व्योम);
 
 # define ARCH_TRACE_CLOCKS \
-	{ trace_clock_x86_tsc,	"x86-tsc",	.in_ns = 0 },
+	अणु trace_घड़ी_x86_tsc,	"x86-tsc",	.in_ns = 0 पूर्ण,
 
-#else /* !CONFIG_X86_TSC */
+#अन्यथा /* !CONFIG_X86_TSC */
 
-#define ARCH_TRACE_CLOCKS
+#घोषणा ARCH_TRACE_CLOCKS
 
-#endif
+#पूर्ण_अगर
 
-#endif  /* _ASM_X86_TRACE_CLOCK_H */
+#पूर्ण_अगर  /* _ASM_X86_TRACE_CLOCK_H */

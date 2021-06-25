@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* ANSI and traditional C compatibility macros
    Copyright 1991, 1992 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -7,24 +8,24 @@
 
 /* ANSI and traditional C compatibility macros
 
-   ANSI C is assumed if __STDC__ is #defined.
+   ANSI C is assumed अगर __STDC__ is #घोषणाd.
 
    Macro	ANSI C definition	Traditional C definition
    -----	---- - ----------	----------- - ----------
-   PTR		`void *'		`char *'
-   LONG_DOUBLE	`long double'		`double'
-   VOLATILE	`volatile'		`'
-   SIGNED	`signed'		`'
-   PTRCONST	`void *const'		`char *'
+   PTR		`व्योम *'		`char *'
+   LONG_DOUBLE	`दीर्घ द्विगुन'		`double'
+   VOLATILE	`अस्थिर'		`'
+   SIGNED	`चिन्हित'		`'
+   PTRCONST	`व्योम *स्थिर'		`char *'
    ANSI_PROTOTYPES  1			not defined
 
-   CONST is also defined, but is obsolete.  Just use const.
+   CONST is also defined, but is obsolete.  Just use स्थिर.
 
    DEFUN (name, arglist, args)
 
 	Defines function NAME.
 
-	ARGLIST lists the arguments, separated by commas and enclosed in
+	ARGLIST lists the arguments, separated by commas and enबंदd in
 	parentheses.  ARGLIST becomes the argument list in traditional C.
 
 	ARGS list the arguments with their types.  It becomes a prototype in
@@ -39,10 +40,10 @@
    obsolete --     EXFUN (name, (prototype))	-- obsolete.
 
 	Replaced by PARAMS.  Do not use; will disappear someday soon.
-	Was used in external function declarations.
-	In ANSI C it is `NAME PROTOTYPE' (so PROTOTYPE should be enclosed in
+	Was used in बाह्यal function declarations.
+	In ANSI C it is `NAME PROTOTYPE' (so PROTOTYPE should be enबंदd in
 	parentheses).  In traditional C it is `NAME()'.
-	For a function that takes no arguments, PROTOTYPE should be `(void)'.
+	For a function that takes no arguments, PROTOTYPE should be `(व्योम)'.
 
     PARAMS ((args))
 
@@ -50,81 +51,81 @@
 	the name is misleading and the result is ugly.  So we just define a
 	simple macro to handle the parameter lists, as in:
 
-	      static int foo PARAMS ((int, char));
+	      अटल पूर्णांक foo PARAMS ((पूर्णांक, अक्षर));
 
-	This produces:  `static int foo();' or `static int foo (int, char);'
+	This produces:  `अटल पूर्णांक foo();' or `static int foo (int, char);'
 
-	EXFUN would have done it like this:
+	EXFUN would have करोne it like this:
 
-	      static int EXFUN (foo, (int, char));
+	      अटल पूर्णांक EXFUN (foo, (पूर्णांक, अक्षर));
 
-	but the function is not external...and it's hard to visually parse
+	but the function is not बाह्यal...and it's hard to visually parse
 	the function name out of the mess.   EXFUN should be considered
 	obsolete; new code should be written to use PARAMS.
 
     For example:
-	extern int printf PARAMS ((CONST char *format DOTS));
-	int DEFUN(fprintf, (stream, format),
-		  FILE *stream AND CONST char *format DOTS) { ... }
-	void DEFUN_VOID(abort) { ... }
+	बाह्य पूर्णांक म_लिखो PARAMS ((CONST अक्षर *क्रमmat DOTS));
+	पूर्णांक DEFUN(ख_लिखो, (stream, क्रमmat),
+		  खाता *stream AND CONST अक्षर *क्रमmat DOTS) अणु ... पूर्ण
+	व्योम DEFUN_VOID(पात) अणु ... पूर्ण
 */
 
-#ifndef	_ANSIDECL_H
+#अगर_अघोषित	_ANSIDECL_H
 
-#define	_ANSIDECL_H	1
+#घोषणा	_ANSIDECL_H	1
 
 
 /* Every source file includes this file,
-   so they will all get the switch for lint.  */
+   so they will all get the चयन क्रम lपूर्णांक.  */
 /* LINTLIBRARY */
 
 
-#if defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(WIN32)
-/* All known AIX compilers implement these things (but don't always
+#अगर defined (__STDC__) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(WIN32)
+/* All known AIX compilers implement these things (but करोn't always
    define __STDC__).  The RISC/OS MIPS compiler defines these things
-   in SVR4 mode, but does not define __STDC__.  */
+   in SVR4 mode, but करोes not define __STDC__.  */
 
-#define	PTR		void *
-#define	PTRCONST	void *CONST
-#define	LONG_DOUBLE	long double
+#घोषणा	PTR		व्योम *
+#घोषणा	PTRCONST	व्योम *CONST
+#घोषणा	LONG_DOUBLE	दीर्घ द्विगुन
 
-#define	AND		,
-#define	NOARGS		void
-#define	CONST		const
-#define	VOLATILE	volatile
-#define	SIGNED		signed
-#define	DOTS		, ...
+#घोषणा	AND		,
+#घोषणा	NOARGS		व्योम
+#घोषणा	CONST		स्थिर
+#घोषणा	VOLATILE	अस्थिर
+#घोषणा	SIGNED		चिन्हित
+#घोषणा	DOTS		, ...
 
-#define	EXFUN(name, proto)		name proto
-#define	DEFUN(name, arglist, args)	name(args)
-#define	DEFUN_VOID(name)		name(void)
+#घोषणा	EXFUN(name, proto)		name proto
+#घोषणा	DEFUN(name, arglist, args)	name(args)
+#घोषणा	DEFUN_VOID(name)		name(व्योम)
 
-#define PROTO(type, name, arglist)	type name arglist
-#define PARAMS(paramlist)		paramlist
-#define ANSI_PROTOTYPES			1
+#घोषणा PROTO(type, name, arglist)	type name arglist
+#घोषणा PARAMS(paramlist)		paramlist
+#घोषणा ANSI_PROTOTYPES			1
 
-#else	/* Not ANSI C.  */
+#अन्यथा	/* Not ANSI C.  */
 
-#define	PTR		char *
-#define	PTRCONST	PTR
-#define	LONG_DOUBLE	double
+#घोषणा	PTR		अक्षर *
+#घोषणा	PTRCONST	PTR
+#घोषणा	LONG_DOUBLE	द्विगुन
 
-#define	AND		;
-#define	NOARGS
-#define	CONST
-#ifndef const /* some systems define it in header files for non-ansi mode */
-#define	const
-#endif
-#define	VOLATILE
-#define	SIGNED
-#define	DOTS
+#घोषणा	AND		;
+#घोषणा	NOARGS
+#घोषणा	CONST
+#अगर_अघोषित स्थिर /* some प्रणालीs define it in header files क्रम non-ansi mode */
+#घोषणा	स्थिर
+#पूर्ण_अगर
+#घोषणा	VOLATILE
+#घोषणा	SIGNED
+#घोषणा	DOTS
 
-#define	EXFUN(name, proto)		name()
-#define	DEFUN(name, arglist, args)	name arglist args;
-#define	DEFUN_VOID(name)		name()
-#define PROTO(type, name, arglist) type name ()
-#define PARAMS(paramlist)		()
+#घोषणा	EXFUN(name, proto)		name()
+#घोषणा	DEFUN(name, arglist, args)	name arglist args;
+#घोषणा	DEFUN_VOID(name)		name()
+#घोषणा PROTO(type, name, arglist) type name ()
+#घोषणा PARAMS(paramlist)		()
 
-#endif	/* ANSI C.  */
+#पूर्ण_अगर	/* ANSI C.  */
 
-#endif	/* ansidecl.h	*/
+#पूर्ण_अगर	/* ansidecl.h	*/

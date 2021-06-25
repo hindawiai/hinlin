@@ -1,961 +1,962 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Common time routines among all ppc machines.
+ * Common समय routines among all ppc machines.
  *
  * Written by Cort Dougan (cort@cs.nmt.edu) to merge
- * Paul Mackerras' version and mine for PReP and Pmac.
+ * Paul Mackerras' version and mine क्रम PReP and Pmac.
  * MPC8xx/MBX changes by Dan Malek (dmalek@jlc.net).
- * Converted for 64-bit by Mike Corrigan (mikejc@us.ibm.com)
+ * Converted क्रम 64-bit by Mike Corrigan (mikejc@us.ibm.com)
  *
  * First round of bugfixes by Gabriel Paubert (paubert@iram.es)
- * to make clock more stable (2.4.0-test5). The only thing
- * that this code assumes is that the timebases have been synchronized
- * by firmware on SMP and are never stopped (never do sleep
- * on SMP then, nap and doze are OK).
+ * to make घड़ी more stable (2.4.0-test5). The only thing
+ * that this code assumes is that the समयbases have been synchronized
+ * by firmware on SMP and are never stopped (never करो sleep
+ * on SMP then, nap and करोze are OK).
  * 
- * Speeded up do_gettimeofday by getting rid of references to
- * xtime (which required locks for consistency). (mikejc@us.ibm.com)
+ * Speeded up करो_समय_लोofday by getting rid of references to
+ * xसमय (which required locks क्रम consistency). (mikejc@us.ibm.com)
  *
  * TODO (not necessarily in this file):
- * - improve precision and reproducibility of timebase frequency
- * measurement at boot time.
- * - for astronomical applications: add a new function to get
- * non ambiguous timestamps even around leap seconds. This needs
- * a new timestamp format and a good name.
+ * - improve precision and reproducibility of समयbase frequency
+ * measurement at boot समय.
+ * - क्रम astronomical applications: add a new function to get
+ * non ambiguous बारtamps even around leap seconds. This needs
+ * a new बारtamp क्रमmat and a good name.
  *
- * 1997-09-10  Updated NTP code according to technical memorandum Jan '96
+ * 1997-09-10  Updated NTP code according to technical memoअक्रमum Jan '96
  *             "A Kernel Model for Precision Timekeeping" by Dave Mills
  */
 
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/sched.h>
-#include <linux/sched/clock.h>
-#include <linux/kernel.h>
-#include <linux/param.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/timex.h>
-#include <linux/kernel_stat.h>
-#include <linux/time.h>
-#include <linux/init.h>
-#include <linux/profile.h>
-#include <linux/cpu.h>
-#include <linux/security.h>
-#include <linux/percpu.h>
-#include <linux/rtc.h>
-#include <linux/jiffies.h>
-#include <linux/posix-timers.h>
-#include <linux/irq.h>
-#include <linux/delay.h>
-#include <linux/irq_work.h>
-#include <linux/of_clk.h>
-#include <linux/suspend.h>
-#include <linux/sched/cputime.h>
-#include <linux/sched/clock.h>
-#include <linux/processor.h>
-#include <asm/trace.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/param.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/init.h>
+#समावेश <linux/profile.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/security.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/posix-समयrs.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/irq_work.h>
+#समावेश <linux/of_clk.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/sched/cpuसमय.स>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/processor.h>
+#समावेश <यंत्र/trace.h>
 
-#include <asm/interrupt.h>
-#include <asm/io.h>
-#include <asm/nvram.h>
-#include <asm/cache.h>
-#include <asm/machdep.h>
-#include <linux/uaccess.h>
-#include <asm/time.h>
-#include <asm/prom.h>
-#include <asm/irq.h>
-#include <asm/div64.h>
-#include <asm/smp.h>
-#include <asm/vdso_datapage.h>
-#include <asm/firmware.h>
-#include <asm/asm-prototypes.h>
+#समावेश <यंत्र/पूर्णांकerrupt.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/nvram.h>
+#समावेश <यंत्र/cache.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/vdso_datapage.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/यंत्र-prototypes.h>
 
-/* powerpc clocksource/clockevent code */
+/* घातerpc घड़ीsource/घड़ीevent code */
 
-#include <linux/clockchips.h>
-#include <linux/timekeeper_internal.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/समयkeeper_पूर्णांकernal.h>
 
-static u64 timebase_read(struct clocksource *);
-static struct clocksource clocksource_timebase = {
+अटल u64 समयbase_पढ़ो(काष्ठा घड़ीsource *);
+अटल काष्ठा घड़ीsource घड़ीsource_समयbase = अणु
 	.name         = "timebase",
 	.rating       = 400,
 	.flags        = CLOCK_SOURCE_IS_CONTINUOUS,
 	.mask         = CLOCKSOURCE_MASK(64),
-	.read         = timebase_read,
-	.vdso_clock_mode	= VDSO_CLOCKMODE_ARCHTIMER,
-};
+	.पढ़ो         = समयbase_पढ़ो,
+	.vdso_घड़ी_mode	= VDSO_CLOCKMODE_ARCHTIMER,
+पूर्ण;
 
-#define DECREMENTER_DEFAULT_MAX 0x7FFFFFFF
+#घोषणा DECREMENTER_DEFAULT_MAX 0x7FFFFFFF
 u64 decrementer_max = DECREMENTER_DEFAULT_MAX;
 
-static int decrementer_set_next_event(unsigned long evt,
-				      struct clock_event_device *dev);
-static int decrementer_shutdown(struct clock_event_device *evt);
+अटल पूर्णांक decrementer_set_next_event(अचिन्हित दीर्घ evt,
+				      काष्ठा घड़ी_event_device *dev);
+अटल पूर्णांक decrementer_shutकरोwn(काष्ठा घड़ी_event_device *evt);
 
-struct clock_event_device decrementer_clockevent = {
+काष्ठा घड़ी_event_device decrementer_घड़ीevent = अणु
 	.name			= "decrementer",
 	.rating			= 200,
 	.irq			= 0,
 	.set_next_event		= decrementer_set_next_event,
-	.set_state_oneshot_stopped = decrementer_shutdown,
-	.set_state_shutdown	= decrementer_shutdown,
-	.tick_resume		= decrementer_shutdown,
+	.set_state_oneshot_stopped = decrementer_shutकरोwn,
+	.set_state_shutकरोwn	= decrementer_shutकरोwn,
+	.tick_resume		= decrementer_shutकरोwn,
 	.features		= CLOCK_EVT_FEAT_ONESHOT |
 				  CLOCK_EVT_FEAT_C3STOP,
-};
-EXPORT_SYMBOL(decrementer_clockevent);
+पूर्ण;
+EXPORT_SYMBOL(decrementer_घड़ीevent);
 
 DEFINE_PER_CPU(u64, decrementers_next_tb);
-static DEFINE_PER_CPU(struct clock_event_device, decrementers);
+अटल DEFINE_PER_CPU(काष्ठा घड़ी_event_device, decrementers);
 
-#define XSEC_PER_SEC (1024*1024)
+#घोषणा XSEC_PER_SEC (1024*1024)
 
-#ifdef CONFIG_PPC64
-#define SCALE_XSEC(xsec, max)	(((xsec) * max) / XSEC_PER_SEC)
-#else
+#अगर_घोषित CONFIG_PPC64
+#घोषणा SCALE_XSEC(xsec, max)	(((xsec) * max) / XSEC_PER_SEC)
+#अन्यथा
 /* compute ((xsec << 12) * max) >> 32 */
-#define SCALE_XSEC(xsec, max)	mulhwu((xsec) << 12, max)
-#endif
+#घोषणा SCALE_XSEC(xsec, max)	mulhwu((xsec) << 12, max)
+#पूर्ण_अगर
 
-unsigned long tb_ticks_per_jiffy;
-unsigned long tb_ticks_per_usec = 100; /* sane default */
+अचिन्हित दीर्घ tb_ticks_per_jअगरfy;
+अचिन्हित दीर्घ tb_ticks_per_usec = 100; /* sane शेष */
 EXPORT_SYMBOL(tb_ticks_per_usec);
-unsigned long tb_ticks_per_sec;
-EXPORT_SYMBOL(tb_ticks_per_sec);	/* for cputime_t conversions */
+अचिन्हित दीर्घ tb_ticks_per_sec;
+EXPORT_SYMBOL(tb_ticks_per_sec);	/* क्रम cpuसमय_प्रकार conversions */
 
 DEFINE_SPINLOCK(rtc_lock);
 EXPORT_SYMBOL_GPL(rtc_lock);
 
-static u64 tb_to_ns_scale __read_mostly;
-static unsigned tb_to_ns_shift __read_mostly;
-static u64 boot_tb __read_mostly;
+अटल u64 tb_to_ns_scale __पढ़ो_mostly;
+अटल अचिन्हित tb_to_ns_shअगरt __पढ़ो_mostly;
+अटल u64 boot_tb __पढ़ो_mostly;
 
-extern struct timezone sys_tz;
-static long timezone_offset;
+बाह्य काष्ठा समयzone sys_tz;
+अटल दीर्घ समयzone_offset;
 
-unsigned long ppc_proc_freq;
+अचिन्हित दीर्घ ppc_proc_freq;
 EXPORT_SYMBOL_GPL(ppc_proc_freq);
-unsigned long ppc_tb_freq;
+अचिन्हित दीर्घ ppc_tb_freq;
 EXPORT_SYMBOL_GPL(ppc_tb_freq);
 
 bool tb_invalid;
 
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
 /*
- * Factor for converting from cputime_t (timebase ticks) to
- * microseconds. This is stored as 0.64 fixed-point binary fraction.
+ * Factor क्रम converting from cpuसमय_प्रकार (समयbase ticks) to
+ * microseconds. This is stored as 0.64 fixed-poपूर्णांक binary fraction.
  */
-u64 __cputime_usec_factor;
-EXPORT_SYMBOL(__cputime_usec_factor);
+u64 __cpuसमय_usec_factor;
+EXPORT_SYMBOL(__cpuसमय_usec_factor);
 
-#ifdef CONFIG_PPC_SPLPAR
-void (*dtl_consumer)(struct dtl_entry *, u64);
-#endif
+#अगर_घोषित CONFIG_PPC_SPLPAR
+व्योम (*dtl_consumer)(काष्ठा dtl_entry *, u64);
+#पूर्ण_अगर
 
-static void calc_cputime_factors(void)
-{
-	struct div_result res;
+अटल व्योम calc_cpuसमय_factors(व्योम)
+अणु
+	काष्ठा भाग_result res;
 
-	div128_by_32(1000000, 0, tb_ticks_per_sec, &res);
-	__cputime_usec_factor = res.result_low;
-}
-
-/*
- * Read the SPURR on systems that have it, otherwise the PURR,
- * or if that doesn't exist return the timebase value passed in.
- */
-static inline unsigned long read_spurr(unsigned long tb)
-{
-	if (cpu_has_feature(CPU_FTR_SPURR))
-		return mfspr(SPRN_SPURR);
-	if (cpu_has_feature(CPU_FTR_PURR))
-		return mfspr(SPRN_PURR);
-	return tb;
-}
-
-#ifdef CONFIG_PPC_SPLPAR
-
-#include <asm/dtl.h>
+	भाग128_by_32(1000000, 0, tb_ticks_per_sec, &res);
+	__cpuसमय_usec_factor = res.result_low;
+पूर्ण
 
 /*
- * Scan the dispatch trace log and count up the stolen time.
- * Should be called with interrupts disabled.
+ * Read the SPURR on प्रणालीs that have it, otherwise the PURR,
+ * or अगर that करोesn't exist वापस the समयbase value passed in.
  */
-static u64 scan_dispatch_log(u64 stop_tb)
-{
+अटल अंतरभूत अचिन्हित दीर्घ पढ़ो_spurr(अचिन्हित दीर्घ tb)
+अणु
+	अगर (cpu_has_feature(CPU_FTR_SPURR))
+		वापस mfspr(SPRN_SPURR);
+	अगर (cpu_has_feature(CPU_FTR_PURR))
+		वापस mfspr(SPRN_PURR);
+	वापस tb;
+पूर्ण
+
+#अगर_घोषित CONFIG_PPC_SPLPAR
+
+#समावेश <यंत्र/dtl.h>
+
+/*
+ * Scan the dispatch trace log and count up the stolen समय.
+ * Should be called with पूर्णांकerrupts disabled.
+ */
+अटल u64 scan_dispatch_log(u64 stop_tb)
+अणु
 	u64 i = local_paca->dtl_ridx;
-	struct dtl_entry *dtl = local_paca->dtl_curr;
-	struct dtl_entry *dtl_end = local_paca->dispatch_log_end;
-	struct lppaca *vpa = local_paca->lppaca_ptr;
+	काष्ठा dtl_entry *dtl = local_paca->dtl_curr;
+	काष्ठा dtl_entry *dtl_end = local_paca->dispatch_log_end;
+	काष्ठा lppaca *vpa = local_paca->lppaca_ptr;
 	u64 tb_delta;
 	u64 stolen = 0;
 	u64 dtb;
 
-	if (!dtl)
-		return 0;
+	अगर (!dtl)
+		वापस 0;
 
-	if (i == be64_to_cpu(vpa->dtl_idx))
-		return 0;
-	while (i < be64_to_cpu(vpa->dtl_idx)) {
-		dtb = be64_to_cpu(dtl->timebase);
-		tb_delta = be32_to_cpu(dtl->enqueue_to_dispatch_time) +
-			be32_to_cpu(dtl->ready_to_enqueue_time);
+	अगर (i == be64_to_cpu(vpa->dtl_idx))
+		वापस 0;
+	जबतक (i < be64_to_cpu(vpa->dtl_idx)) अणु
+		dtb = be64_to_cpu(dtl->समयbase);
+		tb_delta = be32_to_cpu(dtl->enqueue_to_dispatch_समय) +
+			be32_to_cpu(dtl->पढ़ोy_to_enqueue_समय);
 		barrier();
-		if (i + N_DISPATCH_LOG < be64_to_cpu(vpa->dtl_idx)) {
+		अगर (i + N_DISPATCH_LOG < be64_to_cpu(vpa->dtl_idx)) अणु
 			/* buffer has overflowed */
 			i = be64_to_cpu(vpa->dtl_idx) - N_DISPATCH_LOG;
 			dtl = local_paca->dispatch_log + (i % N_DISPATCH_LOG);
-			continue;
-		}
-		if (dtb > stop_tb)
-			break;
-		if (dtl_consumer)
+			जारी;
+		पूर्ण
+		अगर (dtb > stop_tb)
+			अवरोध;
+		अगर (dtl_consumer)
 			dtl_consumer(dtl, i);
 		stolen += tb_delta;
 		++i;
 		++dtl;
-		if (dtl == dtl_end)
+		अगर (dtl == dtl_end)
 			dtl = local_paca->dispatch_log;
-	}
+	पूर्ण
 	local_paca->dtl_ridx = i;
 	local_paca->dtl_curr = dtl;
-	return stolen;
-}
+	वापस stolen;
+पूर्ण
 
 /*
- * Accumulate stolen time by scanning the dispatch trace log.
+ * Accumulate stolen समय by scanning the dispatch trace log.
  * Called on entry from user mode.
  */
-void notrace accumulate_stolen_time(void)
-{
+व्योम notrace accumulate_stolen_समय(व्योम)
+अणु
 	u64 sst, ust;
-	unsigned long save_irq_soft_mask = irq_soft_mask_return();
-	struct cpu_accounting_data *acct = &local_paca->accounting;
+	अचिन्हित दीर्घ save_irq_soft_mask = irq_soft_mask_वापस();
+	काष्ठा cpu_accounting_data *acct = &local_paca->accounting;
 
-	/* We are called early in the exception entry, before
+	/* We are called early in the exception entry, beक्रमe
 	 * soft/hard_enabled are sync'ed to the expected state
-	 * for the exception. We are hard disabled but the PACA
-	 * needs to reflect that so various debug stuff doesn't
+	 * क्रम the exception. We are hard disabled but the PACA
+	 * needs to reflect that so various debug stuff करोesn't
 	 * complain
 	 */
 	irq_soft_mask_set(IRQS_DISABLED);
 
-	sst = scan_dispatch_log(acct->starttime_user);
-	ust = scan_dispatch_log(acct->starttime);
-	acct->stime -= sst;
-	acct->utime -= ust;
-	acct->steal_time += ust + sst;
+	sst = scan_dispatch_log(acct->startसमय_user);
+	ust = scan_dispatch_log(acct->startसमय);
+	acct->sसमय -= sst;
+	acct->uसमय -= ust;
+	acct->steal_समय += ust + sst;
 
 	irq_soft_mask_set(save_irq_soft_mask);
-}
+पूर्ण
 
-static inline u64 calculate_stolen_time(u64 stop_tb)
-{
-	if (!firmware_has_feature(FW_FEATURE_SPLPAR))
-		return 0;
+अटल अंतरभूत u64 calculate_stolen_समय(u64 stop_tb)
+अणु
+	अगर (!firmware_has_feature(FW_FEATURE_SPLPAR))
+		वापस 0;
 
-	if (get_paca()->dtl_ridx != be64_to_cpu(get_lppaca()->dtl_idx))
-		return scan_dispatch_log(stop_tb);
+	अगर (get_paca()->dtl_ridx != be64_to_cpu(get_lppaca()->dtl_idx))
+		वापस scan_dispatch_log(stop_tb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* CONFIG_PPC_SPLPAR */
-static inline u64 calculate_stolen_time(u64 stop_tb)
-{
-	return 0;
-}
+#अन्यथा /* CONFIG_PPC_SPLPAR */
+अटल अंतरभूत u64 calculate_stolen_समय(u64 stop_tb)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_PPC_SPLPAR */
+#पूर्ण_अगर /* CONFIG_PPC_SPLPAR */
 
 /*
- * Account time for a transition between system, hard irq
+ * Account समय क्रम a transition between प्रणाली, hard irq
  * or soft irq state.
  */
-static unsigned long vtime_delta_scaled(struct cpu_accounting_data *acct,
-					unsigned long now, unsigned long stime)
-{
-	unsigned long stime_scaled = 0;
-#ifdef CONFIG_ARCH_HAS_SCALED_CPUTIME
-	unsigned long nowscaled, deltascaled;
-	unsigned long utime, utime_scaled;
+अटल अचिन्हित दीर्घ vसमय_delta_scaled(काष्ठा cpu_accounting_data *acct,
+					अचिन्हित दीर्घ now, अचिन्हित दीर्घ sसमय)
+अणु
+	अचिन्हित दीर्घ sसमय_scaled = 0;
+#अगर_घोषित CONFIG_ARCH_HAS_SCALED_CPUTIME
+	अचिन्हित दीर्घ nowscaled, deltascaled;
+	अचिन्हित दीर्घ uसमय, uसमय_scaled;
 
-	nowscaled = read_spurr(now);
+	nowscaled = पढ़ो_spurr(now);
 	deltascaled = nowscaled - acct->startspurr;
 	acct->startspurr = nowscaled;
-	utime = acct->utime - acct->utime_sspurr;
-	acct->utime_sspurr = acct->utime;
+	uसमय = acct->uसमय - acct->uसमय_sspurr;
+	acct->uसमय_sspurr = acct->uसमय;
 
 	/*
-	 * Because we don't read the SPURR on every kernel entry/exit,
-	 * deltascaled includes both user and system SPURR ticks.
-	 * Apportion these ticks to system SPURR ticks and user
-	 * SPURR ticks in the same ratio as the system time (delta)
-	 * and user time (udelta) values obtained from the timebase
-	 * over the same interval.  The system ticks get accounted here;
-	 * the user ticks get saved up in paca->user_time_scaled to be
+	 * Because we करोn't पढ़ो the SPURR on every kernel entry/निकास,
+	 * deltascaled includes both user and प्रणाली SPURR ticks.
+	 * Apportion these ticks to प्रणाली SPURR ticks and user
+	 * SPURR ticks in the same ratio as the प्रणाली समय (delta)
+	 * and user समय (udelta) values obtained from the समयbase
+	 * over the same पूर्णांकerval.  The प्रणाली ticks get accounted here;
+	 * the user ticks get saved up in paca->user_समय_scaled to be
 	 * used by account_process_tick.
 	 */
-	stime_scaled = stime;
-	utime_scaled = utime;
-	if (deltascaled != stime + utime) {
-		if (utime) {
-			stime_scaled = deltascaled * stime / (stime + utime);
-			utime_scaled = deltascaled - stime_scaled;
-		} else {
-			stime_scaled = deltascaled;
-		}
-	}
-	acct->utime_scaled += utime_scaled;
-#endif
+	sसमय_scaled = sसमय;
+	uसमय_scaled = uसमय;
+	अगर (deltascaled != sसमय + uसमय) अणु
+		अगर (uसमय) अणु
+			sसमय_scaled = deltascaled * sसमय / (sसमय + uसमय);
+			uसमय_scaled = deltascaled - sसमय_scaled;
+		पूर्ण अन्यथा अणु
+			sसमय_scaled = deltascaled;
+		पूर्ण
+	पूर्ण
+	acct->uसमय_scaled += uसमय_scaled;
+#पूर्ण_अगर
 
-	return stime_scaled;
-}
+	वापस sसमय_scaled;
+पूर्ण
 
-static unsigned long vtime_delta(struct cpu_accounting_data *acct,
-				 unsigned long *stime_scaled,
-				 unsigned long *steal_time)
-{
-	unsigned long now, stime;
+अटल अचिन्हित दीर्घ vसमय_delta(काष्ठा cpu_accounting_data *acct,
+				 अचिन्हित दीर्घ *sसमय_scaled,
+				 अचिन्हित दीर्घ *steal_समय)
+अणु
+	अचिन्हित दीर्घ now, sसमय;
 
 	WARN_ON_ONCE(!irqs_disabled());
 
 	now = mftb();
-	stime = now - acct->starttime;
-	acct->starttime = now;
+	sसमय = now - acct->startसमय;
+	acct->startसमय = now;
 
-	*stime_scaled = vtime_delta_scaled(acct, now, stime);
+	*sसमय_scaled = vसमय_delta_scaled(acct, now, sसमय);
 
-	*steal_time = calculate_stolen_time(now);
+	*steal_समय = calculate_stolen_समय(now);
 
-	return stime;
-}
+	वापस sसमय;
+पूर्ण
 
-static void vtime_delta_kernel(struct cpu_accounting_data *acct,
-			       unsigned long *stime, unsigned long *stime_scaled)
-{
-	unsigned long steal_time;
+अटल व्योम vसमय_delta_kernel(काष्ठा cpu_accounting_data *acct,
+			       अचिन्हित दीर्घ *sसमय, अचिन्हित दीर्घ *sसमय_scaled)
+अणु
+	अचिन्हित दीर्घ steal_समय;
 
-	*stime = vtime_delta(acct, stime_scaled, &steal_time);
-	*stime -= min(*stime, steal_time);
-	acct->steal_time += steal_time;
-}
+	*sसमय = vसमय_delta(acct, sसमय_scaled, &steal_समय);
+	*sसमय -= min(*sसमय, steal_समय);
+	acct->steal_समय += steal_समय;
+पूर्ण
 
-void vtime_account_kernel(struct task_struct *tsk)
-{
-	struct cpu_accounting_data *acct = get_accounting(tsk);
-	unsigned long stime, stime_scaled;
+व्योम vसमय_account_kernel(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा cpu_accounting_data *acct = get_accounting(tsk);
+	अचिन्हित दीर्घ sसमय, sसमय_scaled;
 
-	vtime_delta_kernel(acct, &stime, &stime_scaled);
+	vसमय_delta_kernel(acct, &sसमय, &sसमय_scaled);
 
-	if (tsk->flags & PF_VCPU) {
-		acct->gtime += stime;
-#ifdef CONFIG_ARCH_HAS_SCALED_CPUTIME
-		acct->utime_scaled += stime_scaled;
-#endif
-	} else {
-		acct->stime += stime;
-#ifdef CONFIG_ARCH_HAS_SCALED_CPUTIME
-		acct->stime_scaled += stime_scaled;
-#endif
-	}
-}
-EXPORT_SYMBOL_GPL(vtime_account_kernel);
+	अगर (tsk->flags & PF_VCPU) अणु
+		acct->gसमय += sसमय;
+#अगर_घोषित CONFIG_ARCH_HAS_SCALED_CPUTIME
+		acct->uसमय_scaled += sसमय_scaled;
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		acct->sसमय += sसमय;
+#अगर_घोषित CONFIG_ARCH_HAS_SCALED_CPUTIME
+		acct->sसमय_scaled += sसमय_scaled;
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(vसमय_account_kernel);
 
-void vtime_account_idle(struct task_struct *tsk)
-{
-	unsigned long stime, stime_scaled, steal_time;
-	struct cpu_accounting_data *acct = get_accounting(tsk);
+व्योम vसमय_account_idle(काष्ठा task_काष्ठा *tsk)
+अणु
+	अचिन्हित दीर्घ sसमय, sसमय_scaled, steal_समय;
+	काष्ठा cpu_accounting_data *acct = get_accounting(tsk);
 
-	stime = vtime_delta(acct, &stime_scaled, &steal_time);
-	acct->idle_time += stime + steal_time;
-}
+	sसमय = vसमय_delta(acct, &sसमय_scaled, &steal_समय);
+	acct->idle_समय += sसमय + steal_समय;
+पूर्ण
 
-static void vtime_account_irq_field(struct cpu_accounting_data *acct,
-				    unsigned long *field)
-{
-	unsigned long stime, stime_scaled;
+अटल व्योम vसमय_account_irq_field(काष्ठा cpu_accounting_data *acct,
+				    अचिन्हित दीर्घ *field)
+अणु
+	अचिन्हित दीर्घ sसमय, sसमय_scaled;
 
-	vtime_delta_kernel(acct, &stime, &stime_scaled);
-	*field += stime;
-#ifdef CONFIG_ARCH_HAS_SCALED_CPUTIME
-	acct->stime_scaled += stime_scaled;
-#endif
-}
+	vसमय_delta_kernel(acct, &sसमय, &sसमय_scaled);
+	*field += sसमय;
+#अगर_घोषित CONFIG_ARCH_HAS_SCALED_CPUTIME
+	acct->sसमय_scaled += sसमय_scaled;
+#पूर्ण_अगर
+पूर्ण
 
-void vtime_account_softirq(struct task_struct *tsk)
-{
-	struct cpu_accounting_data *acct = get_accounting(tsk);
-	vtime_account_irq_field(acct, &acct->softirq_time);
-}
+व्योम vसमय_account_softirq(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा cpu_accounting_data *acct = get_accounting(tsk);
+	vसमय_account_irq_field(acct, &acct->softirq_समय);
+पूर्ण
 
-void vtime_account_hardirq(struct task_struct *tsk)
-{
-	struct cpu_accounting_data *acct = get_accounting(tsk);
-	vtime_account_irq_field(acct, &acct->hardirq_time);
-}
+व्योम vसमय_account_hardirq(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा cpu_accounting_data *acct = get_accounting(tsk);
+	vसमय_account_irq_field(acct, &acct->hardirq_समय);
+पूर्ण
 
-static void vtime_flush_scaled(struct task_struct *tsk,
-			       struct cpu_accounting_data *acct)
-{
-#ifdef CONFIG_ARCH_HAS_SCALED_CPUTIME
-	if (acct->utime_scaled)
-		tsk->utimescaled += cputime_to_nsecs(acct->utime_scaled);
-	if (acct->stime_scaled)
-		tsk->stimescaled += cputime_to_nsecs(acct->stime_scaled);
+अटल व्योम vसमय_flush_scaled(काष्ठा task_काष्ठा *tsk,
+			       काष्ठा cpu_accounting_data *acct)
+अणु
+#अगर_घोषित CONFIG_ARCH_HAS_SCALED_CPUTIME
+	अगर (acct->uसमय_scaled)
+		tsk->uबारcaled += cpuसमय_प्रकारo_nsecs(acct->uसमय_scaled);
+	अगर (acct->sसमय_scaled)
+		tsk->sबारcaled += cpuसमय_प्रकारo_nsecs(acct->sसमय_scaled);
 
-	acct->utime_scaled = 0;
-	acct->utime_sspurr = 0;
-	acct->stime_scaled = 0;
-#endif
-}
+	acct->uसमय_scaled = 0;
+	acct->uसमय_sspurr = 0;
+	acct->sसमय_scaled = 0;
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Account the whole cputime accumulated in the paca
- * Must be called with interrupts disabled.
- * Assumes that vtime_account_kernel/idle() has been called
+ * Account the whole cpuसमय accumulated in the paca
+ * Must be called with पूर्णांकerrupts disabled.
+ * Assumes that vसमय_account_kernel/idle() has been called
  * recently (i.e. since the last entry from usermode) so that
- * get_paca()->user_time_scaled is up to date.
+ * get_paca()->user_समय_scaled is up to date.
  */
-void vtime_flush(struct task_struct *tsk)
-{
-	struct cpu_accounting_data *acct = get_accounting(tsk);
+व्योम vसमय_flush(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा cpu_accounting_data *acct = get_accounting(tsk);
 
-	if (acct->utime)
-		account_user_time(tsk, cputime_to_nsecs(acct->utime));
+	अगर (acct->uसमय)
+		account_user_समय(tsk, cpuसमय_प्रकारo_nsecs(acct->uसमय));
 
-	if (acct->gtime)
-		account_guest_time(tsk, cputime_to_nsecs(acct->gtime));
+	अगर (acct->gसमय)
+		account_guest_समय(tsk, cpuसमय_प्रकारo_nsecs(acct->gसमय));
 
-	if (IS_ENABLED(CONFIG_PPC_SPLPAR) && acct->steal_time) {
-		account_steal_time(cputime_to_nsecs(acct->steal_time));
-		acct->steal_time = 0;
-	}
+	अगर (IS_ENABLED(CONFIG_PPC_SPLPAR) && acct->steal_समय) अणु
+		account_steal_समय(cpuसमय_प्रकारo_nsecs(acct->steal_समय));
+		acct->steal_समय = 0;
+	पूर्ण
 
-	if (acct->idle_time)
-		account_idle_time(cputime_to_nsecs(acct->idle_time));
+	अगर (acct->idle_समय)
+		account_idle_समय(cpuसमय_प्रकारo_nsecs(acct->idle_समय));
 
-	if (acct->stime)
-		account_system_index_time(tsk, cputime_to_nsecs(acct->stime),
+	अगर (acct->sसमय)
+		account_प्रणाली_index_समय(tsk, cpuसमय_प्रकारo_nsecs(acct->sसमय),
 					  CPUTIME_SYSTEM);
 
-	if (acct->hardirq_time)
-		account_system_index_time(tsk, cputime_to_nsecs(acct->hardirq_time),
+	अगर (acct->hardirq_समय)
+		account_प्रणाली_index_समय(tsk, cpuसमय_प्रकारo_nsecs(acct->hardirq_समय),
 					  CPUTIME_IRQ);
-	if (acct->softirq_time)
-		account_system_index_time(tsk, cputime_to_nsecs(acct->softirq_time),
+	अगर (acct->softirq_समय)
+		account_प्रणाली_index_समय(tsk, cpuसमय_प्रकारo_nsecs(acct->softirq_समय),
 					  CPUTIME_SOFTIRQ);
 
-	vtime_flush_scaled(tsk, acct);
+	vसमय_flush_scaled(tsk, acct);
 
-	acct->utime = 0;
-	acct->gtime = 0;
-	acct->idle_time = 0;
-	acct->stime = 0;
-	acct->hardirq_time = 0;
-	acct->softirq_time = 0;
-}
+	acct->uसमय = 0;
+	acct->gसमय = 0;
+	acct->idle_समय = 0;
+	acct->sसमय = 0;
+	acct->hardirq_समय = 0;
+	acct->softirq_समय = 0;
+पूर्ण
 
-#else /* ! CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
-#define calc_cputime_factors()
-#endif
+#अन्यथा /* ! CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
+#घोषणा calc_cpuसमय_factors()
+#पूर्ण_अगर
 
-void __delay(unsigned long loops)
-{
-	unsigned long start;
+व्योम __delay(अचिन्हित दीर्घ loops)
+अणु
+	अचिन्हित दीर्घ start;
 
 	spin_begin();
-	if (tb_invalid) {
+	अगर (tb_invalid) अणु
 		/*
 		 * TB is in error state and isn't ticking anymore.
 		 * HMI handler was unable to recover from TB error.
 		 * Return immediately, so that kernel won't get stuck here.
 		 */
 		spin_cpu_relax();
-	} else {
+	पूर्ण अन्यथा अणु
 		start = mftb();
-		while (mftb() - start < loops)
+		जबतक (mftb() - start < loops)
 			spin_cpu_relax();
-	}
+	पूर्ण
 	spin_end();
-}
+पूर्ण
 EXPORT_SYMBOL(__delay);
 
-void udelay(unsigned long usecs)
-{
+व्योम udelay(अचिन्हित दीर्घ usecs)
+अणु
 	__delay(tb_ticks_per_usec * usecs);
-}
+पूर्ण
 EXPORT_SYMBOL(udelay);
 
-#ifdef CONFIG_SMP
-unsigned long profile_pc(struct pt_regs *regs)
-{
-	unsigned long pc = instruction_pointer(regs);
+#अगर_घोषित CONFIG_SMP
+अचिन्हित दीर्घ profile_pc(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pc = inकाष्ठाion_poपूर्णांकer(regs);
 
-	if (in_lock_functions(pc))
-		return regs->link;
+	अगर (in_lock_functions(pc))
+		वापस regs->link;
 
-	return pc;
-}
+	वापस pc;
+पूर्ण
 EXPORT_SYMBOL(profile_pc);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_IRQ_WORK
+#अगर_घोषित CONFIG_IRQ_WORK
 
 /*
  * 64-bit uses a byte in the PACA, 32-bit uses a per-cpu variable...
  */
-#ifdef CONFIG_PPC64
-static inline unsigned long test_irq_work_pending(void)
-{
-	unsigned long x;
+#अगर_घोषित CONFIG_PPC64
+अटल अंतरभूत अचिन्हित दीर्घ test_irq_work_pending(व्योम)
+अणु
+	अचिन्हित दीर्घ x;
 
-	asm volatile("lbz %0,%1(13)"
+	यंत्र अस्थिर("lbz %0,%1(13)"
 		: "=r" (x)
-		: "i" (offsetof(struct paca_struct, irq_work_pending)));
-	return x;
-}
+		: "i" (दुरत्व(काष्ठा paca_काष्ठा, irq_work_pending)));
+	वापस x;
+पूर्ण
 
-static inline void set_irq_work_pending_flag(void)
-{
-	asm volatile("stb %0,%1(13)" : :
+अटल अंतरभूत व्योम set_irq_work_pending_flag(व्योम)
+अणु
+	यंत्र अस्थिर("stb %0,%1(13)" : :
 		"r" (1),
-		"i" (offsetof(struct paca_struct, irq_work_pending)));
-}
+		"i" (दुरत्व(काष्ठा paca_काष्ठा, irq_work_pending)));
+पूर्ण
 
-static inline void clear_irq_work_pending(void)
-{
-	asm volatile("stb %0,%1(13)" : :
+अटल अंतरभूत व्योम clear_irq_work_pending(व्योम)
+अणु
+	यंत्र अस्थिर("stb %0,%1(13)" : :
 		"r" (0),
-		"i" (offsetof(struct paca_struct, irq_work_pending)));
-}
+		"i" (दुरत्व(काष्ठा paca_काष्ठा, irq_work_pending)));
+पूर्ण
 
-#else /* 32-bit */
+#अन्यथा /* 32-bit */
 
 DEFINE_PER_CPU(u8, irq_work_pending);
 
-#define set_irq_work_pending_flag()	__this_cpu_write(irq_work_pending, 1)
-#define test_irq_work_pending()		__this_cpu_read(irq_work_pending)
-#define clear_irq_work_pending()	__this_cpu_write(irq_work_pending, 0)
+#घोषणा set_irq_work_pending_flag()	__this_cpu_ग_लिखो(irq_work_pending, 1)
+#घोषणा test_irq_work_pending()		__this_cpu_पढ़ो(irq_work_pending)
+#घोषणा clear_irq_work_pending()	__this_cpu_ग_लिखो(irq_work_pending, 0)
 
-#endif /* 32 vs 64 bit */
+#पूर्ण_अगर /* 32 vs 64 bit */
 
-void arch_irq_work_raise(void)
-{
+व्योम arch_irq_work_उठाओ(व्योम)
+अणु
 	/*
 	 * 64-bit code that uses irq soft-mask can just cause an immediate
-	 * interrupt here that gets soft masked, if this is called under
+	 * पूर्णांकerrupt here that माला_लो soft masked, अगर this is called under
 	 * local_irq_disable(). It might be possible to prevent that happening
-	 * by noticing interrupts are disabled and setting decrementer pending
+	 * by noticing पूर्णांकerrupts are disabled and setting decrementer pending
 	 * to be replayed when irqs are enabled. The problem there is that
-	 * tracing can call irq_work_raise, including in code that does low
+	 * tracing can call irq_work_उठाओ, including in code that करोes low
 	 * level manipulations of irq soft-mask state (e.g., trace_hardirqs_on)
-	 * which could get tangled up if we're messing with the same state
+	 * which could get tangled up अगर we're messing with the same state
 	 * here.
 	 */
 	preempt_disable();
 	set_irq_work_pending_flag();
 	set_dec(1);
 	preempt_enable();
-}
+पूर्ण
 
-#else  /* CONFIG_IRQ_WORK */
+#अन्यथा  /* CONFIG_IRQ_WORK */
 
-#define test_irq_work_pending()	0
-#define clear_irq_work_pending()
+#घोषणा test_irq_work_pending()	0
+#घोषणा clear_irq_work_pending()
 
-#endif /* CONFIG_IRQ_WORK */
+#पूर्ण_अगर /* CONFIG_IRQ_WORK */
 
 /*
- * timer_interrupt - gets called when the decrementer overflows,
- * with interrupts disabled.
+ * समयr_पूर्णांकerrupt - माला_लो called when the decrementer overflows,
+ * with पूर्णांकerrupts disabled.
  */
-DEFINE_INTERRUPT_HANDLER_ASYNC(timer_interrupt)
-{
-	struct clock_event_device *evt = this_cpu_ptr(&decrementers);
+DEFINE_INTERRUPT_HANDLER_ASYNC(समयr_पूर्णांकerrupt)
+अणु
+	काष्ठा घड़ी_event_device *evt = this_cpu_ptr(&decrementers);
 	u64 *next_tb = this_cpu_ptr(&decrementers_next_tb);
-	struct pt_regs *old_regs;
+	काष्ठा pt_regs *old_regs;
 	u64 now;
 
 	/*
-	 * Some implementations of hotplug will get timer interrupts while
+	 * Some implementations of hotplug will get समयr पूर्णांकerrupts जबतक
 	 * offline, just ignore these.
 	 */
-	if (unlikely(!cpu_online(smp_processor_id()))) {
+	अगर (unlikely(!cpu_online(smp_processor_id()))) अणु
 		set_dec(decrementer_max);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Ensure a positive value is written to the decrementer, or else
-	 * some CPUs will continue to take decrementer exceptions. When the
+	/* Ensure a positive value is written to the decrementer, or अन्यथा
+	 * some CPUs will जारी to take decrementer exceptions. When the
 	 * PPC_WATCHDOG (decrementer based) is configured, keep this at most
-	 * 31 bits, which is about 4 seconds on most systems, which gives
-	 * the watchdog a chance of catching timer interrupt hard lockups.
+	 * 31 bits, which is about 4 seconds on most प्रणालीs, which gives
+	 * the watchकरोg a chance of catching समयr पूर्णांकerrupt hard lockups.
 	 */
-	if (IS_ENABLED(CONFIG_PPC_WATCHDOG))
+	अगर (IS_ENABLED(CONFIG_PPC_WATCHDOG))
 		set_dec(0x7fffffff);
-	else
+	अन्यथा
 		set_dec(decrementer_max);
 
-	/* Conditionally hard-enable interrupts now that the DEC has been
+	/* Conditionally hard-enable पूर्णांकerrupts now that the DEC has been
 	 * bumped to its maximum value
 	 */
 	may_hard_irq_enable();
 
 
-#if defined(CONFIG_PPC32) && defined(CONFIG_PPC_PMAC)
-	if (atomic_read(&ppc_n_lost_interrupts) != 0)
-		do_IRQ(regs);
-#endif
+#अगर defined(CONFIG_PPC32) && defined(CONFIG_PPC_PMAC)
+	अगर (atomic_पढ़ो(&ppc_n_lost_पूर्णांकerrupts) != 0)
+		करो_IRQ(regs);
+#पूर्ण_अगर
 
 	old_regs = set_irq_regs(regs);
 
-	trace_timer_interrupt_entry(regs);
+	trace_समयr_पूर्णांकerrupt_entry(regs);
 
-	if (test_irq_work_pending()) {
+	अगर (test_irq_work_pending()) अणु
 		clear_irq_work_pending();
 		irq_work_run();
-	}
+	पूर्ण
 
 	now = get_tb();
-	if (now >= *next_tb) {
+	अगर (now >= *next_tb) अणु
 		*next_tb = ~(u64)0;
-		if (evt->event_handler)
+		अगर (evt->event_handler)
 			evt->event_handler(evt);
-		__this_cpu_inc(irq_stat.timer_irqs_event);
-	} else {
+		__this_cpu_inc(irq_stat.समयr_irqs_event);
+	पूर्ण अन्यथा अणु
 		now = *next_tb - now;
-		if (now <= decrementer_max)
+		अगर (now <= decrementer_max)
 			set_dec(now);
 		/* We may have raced with new irq work */
-		if (test_irq_work_pending())
+		अगर (test_irq_work_pending())
 			set_dec(1);
-		__this_cpu_inc(irq_stat.timer_irqs_others);
-	}
+		__this_cpu_inc(irq_stat.समयr_irqs_others);
+	पूर्ण
 
-	trace_timer_interrupt_exit(regs);
+	trace_समयr_पूर्णांकerrupt_निकास(regs);
 
 	set_irq_regs(old_regs);
-}
-EXPORT_SYMBOL(timer_interrupt);
+पूर्ण
+EXPORT_SYMBOL(समयr_पूर्णांकerrupt);
 
-#ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-void timer_broadcast_interrupt(void)
-{
+#अगर_घोषित CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
+व्योम समयr_broadcast_पूर्णांकerrupt(व्योम)
+अणु
 	u64 *next_tb = this_cpu_ptr(&decrementers_next_tb);
 
 	*next_tb = ~(u64)0;
 	tick_receive_broadcast();
 	__this_cpu_inc(irq_stat.broadcast_irqs_event);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_SUSPEND
-static void generic_suspend_disable_irqs(void)
-{
-	/* Disable the decrementer, so that it doesn't interfere
+#अगर_घोषित CONFIG_SUSPEND
+अटल व्योम generic_suspend_disable_irqs(व्योम)
+अणु
+	/* Disable the decrementer, so that it करोesn't पूर्णांकerfere
 	 * with suspending.
 	 */
 
 	set_dec(decrementer_max);
 	local_irq_disable();
 	set_dec(decrementer_max);
-}
+पूर्ण
 
-static void generic_suspend_enable_irqs(void)
-{
+अटल व्योम generic_suspend_enable_irqs(व्योम)
+अणु
 	local_irq_enable();
-}
+पूर्ण
 
-/* Overrides the weak version in kernel/power/main.c */
-void arch_suspend_disable_irqs(void)
-{
-	if (ppc_md.suspend_disable_irqs)
+/* Overrides the weak version in kernel/घातer/मुख्य.c */
+व्योम arch_suspend_disable_irqs(व्योम)
+अणु
+	अगर (ppc_md.suspend_disable_irqs)
 		ppc_md.suspend_disable_irqs();
 	generic_suspend_disable_irqs();
-}
+पूर्ण
 
-/* Overrides the weak version in kernel/power/main.c */
-void arch_suspend_enable_irqs(void)
-{
+/* Overrides the weak version in kernel/घातer/मुख्य.c */
+व्योम arch_suspend_enable_irqs(व्योम)
+अणु
 	generic_suspend_enable_irqs();
-	if (ppc_md.suspend_enable_irqs)
+	अगर (ppc_md.suspend_enable_irqs)
 		ppc_md.suspend_enable_irqs();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-unsigned long long tb_to_ns(unsigned long long ticks)
-{
-	return mulhdu(ticks, tb_to_ns_scale) << tb_to_ns_shift;
-}
+अचिन्हित दीर्घ दीर्घ tb_to_ns(अचिन्हित दीर्घ दीर्घ ticks)
+अणु
+	वापस mulhdu(ticks, tb_to_ns_scale) << tb_to_ns_shअगरt;
+पूर्ण
 EXPORT_SYMBOL_GPL(tb_to_ns);
 
 /*
- * Scheduler clock - returns current time in nanosec units.
+ * Scheduler घड़ी - वापसs current समय in nanosec units.
  *
- * Note: mulhdu(a, b) (multiply high double unsigned) returns
+ * Note: mulhdu(a, b) (multiply high द्विगुन अचिन्हित) वापसs
  * the high 64 bits of a * b, i.e. (a * b) >> 64, where a and b
- * are 64-bit unsigned numbers.
+ * are 64-bit अचिन्हित numbers.
  */
-notrace unsigned long long sched_clock(void)
-{
-	return mulhdu(get_tb() - boot_tb, tb_to_ns_scale) << tb_to_ns_shift;
-}
+notrace अचिन्हित दीर्घ दीर्घ sched_घड़ी(व्योम)
+अणु
+	वापस mulhdu(get_tb() - boot_tb, tb_to_ns_scale) << tb_to_ns_shअगरt;
+पूर्ण
 
 
-#ifdef CONFIG_PPC_PSERIES
+#अगर_घोषित CONFIG_PPC_PSERIES
 
 /*
- * Running clock - attempts to give a view of time passing for a virtualised
+ * Running घड़ी - attempts to give a view of समय passing क्रम a भवised
  * kernels.
- * Uses the VTB register if available otherwise a next best guess.
+ * Uses the VTB रेजिस्टर अगर available otherwise a next best guess.
  */
-unsigned long long running_clock(void)
-{
+अचिन्हित दीर्घ दीर्घ running_घड़ी(व्योम)
+अणु
 	/*
-	 * Don't read the VTB as a host since KVM does not switch in host
-	 * timebase into the VTB when it takes a guest off the CPU, reading the
-	 * VTB would result in reading 'last switched out' guest VTB.
+	 * Don't पढ़ो the VTB as a host since KVM करोes not चयन in host
+	 * समयbase पूर्णांकo the VTB when it takes a guest off the CPU, पढ़ोing the
+	 * VTB would result in पढ़ोing 'last switched out' guest VTB.
 	 *
 	 * Host kernels are often compiled with CONFIG_PPC_PSERIES checked, it
-	 * would be unsafe to rely only on the #ifdef above.
+	 * would be unsafe to rely only on the #अगर_घोषित above.
 	 */
-	if (firmware_has_feature(FW_FEATURE_LPAR) &&
+	अगर (firmware_has_feature(FW_FEATURE_LPAR) &&
 	    cpu_has_feature(CPU_FTR_ARCH_207S))
-		return mulhdu(get_vtb() - boot_tb, tb_to_ns_scale) << tb_to_ns_shift;
+		वापस mulhdu(get_vtb() - boot_tb, tb_to_ns_scale) << tb_to_ns_shअगरt;
 
 	/*
 	 * This is a next best approximation without a VTB.
 	 * On a host which is running bare metal there should never be any stolen
-	 * time and on a host which doesn't do any virtualisation TB *should* equal
-	 * VTB so it makes no difference anyway.
+	 * समय and on a host which करोesn't करो any भवisation TB *should* equal
+	 * VTB so it makes no dअगरference anyway.
 	 */
-	return local_clock() - kcpustat_this_cpu->cpustat[CPUTIME_STEAL];
-}
-#endif
+	वापस local_घड़ी() - kcpustat_this_cpu->cpustat[CPUTIME_STEAL];
+पूर्ण
+#पूर्ण_अगर
 
-static int __init get_freq(char *name, int cells, unsigned long *val)
-{
-	struct device_node *cpu;
-	const __be32 *fp;
-	int found = 0;
+अटल पूर्णांक __init get_freq(अक्षर *name, पूर्णांक cells, अचिन्हित दीर्घ *val)
+अणु
+	काष्ठा device_node *cpu;
+	स्थिर __be32 *fp;
+	पूर्णांक found = 0;
 
-	/* The cpu node should have timebase and clock frequency properties */
-	cpu = of_find_node_by_type(NULL, "cpu");
+	/* The cpu node should have समयbase and घड़ी frequency properties */
+	cpu = of_find_node_by_type(शून्य, "cpu");
 
-	if (cpu) {
-		fp = of_get_property(cpu, name, NULL);
-		if (fp) {
+	अगर (cpu) अणु
+		fp = of_get_property(cpu, name, शून्य);
+		अगर (fp) अणु
 			found = 1;
-			*val = of_read_ulong(fp, cells);
-		}
+			*val = of_पढ़ो_uदीर्घ(fp, cells);
+		पूर्ण
 
 		of_node_put(cpu);
-	}
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static void start_cpu_decrementer(void)
-{
-#if defined(CONFIG_BOOKE) || defined(CONFIG_40x)
-	unsigned int tcr;
+अटल व्योम start_cpu_decrementer(व्योम)
+अणु
+#अगर defined(CONFIG_BOOKE) || defined(CONFIG_40x)
+	अचिन्हित पूर्णांक tcr;
 
-	/* Clear any pending timer interrupts */
+	/* Clear any pending समयr पूर्णांकerrupts */
 	mtspr(SPRN_TSR, TSR_ENW | TSR_WIS | TSR_DIS | TSR_FIS);
 
 	tcr = mfspr(SPRN_TCR);
 	/*
-	 * The watchdog may have already been enabled by u-boot. So leave
-	 * TRC[WP] (Watchdog Period) alone.
+	 * The watchकरोg may have alपढ़ोy been enabled by u-boot. So leave
+	 * TRC[WP] (Watchकरोg Period) alone.
 	 */
-	tcr &= TCR_WP_MASK;	/* Clear all bits except for TCR[WP] */
+	tcr &= TCR_WP_MASK;	/* Clear all bits except क्रम TCR[WP] */
 	tcr |= TCR_DIE;		/* Enable decrementer */
 	mtspr(SPRN_TCR, tcr);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void __init generic_calibrate_decr(void)
-{
-	ppc_tb_freq = DEFAULT_TB_FREQ;		/* hardcoded default */
+व्योम __init generic_calibrate_decr(व्योम)
+अणु
+	ppc_tb_freq = DEFAULT_TB_FREQ;		/* hardcoded शेष */
 
-	if (!get_freq("ibm,extended-timebase-frequency", 2, &ppc_tb_freq) &&
-	    !get_freq("timebase-frequency", 1, &ppc_tb_freq)) {
+	अगर (!get_freq("ibm,extended-timebase-frequency", 2, &ppc_tb_freq) &&
+	    !get_freq("timebase-frequency", 1, &ppc_tb_freq)) अणु
 
-		printk(KERN_ERR "WARNING: Estimating decrementer frequency "
+		prपूर्णांकk(KERN_ERR "WARNING: Estimating decrementer frequency "
 				"(not found)\n");
-	}
+	पूर्ण
 
-	ppc_proc_freq = DEFAULT_PROC_FREQ;	/* hardcoded default */
+	ppc_proc_freq = DEFAULT_PROC_FREQ;	/* hardcoded शेष */
 
-	if (!get_freq("ibm,extended-clock-frequency", 2, &ppc_proc_freq) &&
-	    !get_freq("clock-frequency", 1, &ppc_proc_freq)) {
+	अगर (!get_freq("ibm,extended-clock-frequency", 2, &ppc_proc_freq) &&
+	    !get_freq("clock-frequency", 1, &ppc_proc_freq)) अणु
 
-		printk(KERN_ERR "WARNING: Estimating processor frequency "
+		prपूर्णांकk(KERN_ERR "WARNING: Estimating processor frequency "
 				"(not found)\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-int update_persistent_clock64(struct timespec64 now)
-{
-	struct rtc_time tm;
+पूर्णांक update_persistent_घड़ी64(काष्ठा बारpec64 now)
+अणु
+	काष्ठा rtc_समय पंचांग;
 
-	if (!ppc_md.set_rtc_time)
-		return -ENODEV;
+	अगर (!ppc_md.set_rtc_समय)
+		वापस -ENODEV;
 
-	rtc_time64_to_tm(now.tv_sec + 1 + timezone_offset, &tm);
+	rtc_समय64_to_पंचांग(now.tv_sec + 1 + समयzone_offset, &पंचांग);
 
-	return ppc_md.set_rtc_time(&tm);
-}
+	वापस ppc_md.set_rtc_समय(&पंचांग);
+पूर्ण
 
-static void __read_persistent_clock(struct timespec64 *ts)
-{
-	struct rtc_time tm;
-	static int first = 1;
+अटल व्योम __पढ़ो_persistent_घड़ी(काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा rtc_समय पंचांग;
+	अटल पूर्णांक first = 1;
 
 	ts->tv_nsec = 0;
-	/* XXX this is a litle fragile but will work okay in the short term */
-	if (first) {
+	/* XXX this is a litle fragile but will work okay in the लघु term */
+	अगर (first) अणु
 		first = 0;
-		if (ppc_md.time_init)
-			timezone_offset = ppc_md.time_init();
+		अगर (ppc_md.समय_init)
+			समयzone_offset = ppc_md.समय_init();
 
-		/* get_boot_time() isn't guaranteed to be safe to call late */
-		if (ppc_md.get_boot_time) {
-			ts->tv_sec = ppc_md.get_boot_time() - timezone_offset;
-			return;
-		}
-	}
-	if (!ppc_md.get_rtc_time) {
+		/* get_boot_समय() isn't guaranteed to be safe to call late */
+		अगर (ppc_md.get_boot_समय) अणु
+			ts->tv_sec = ppc_md.get_boot_समय() - समयzone_offset;
+			वापस;
+		पूर्ण
+	पूर्ण
+	अगर (!ppc_md.get_rtc_समय) अणु
 		ts->tv_sec = 0;
-		return;
-	}
-	ppc_md.get_rtc_time(&tm);
+		वापस;
+	पूर्ण
+	ppc_md.get_rtc_समय(&पंचांग);
 
-	ts->tv_sec = rtc_tm_to_time64(&tm);
-}
+	ts->tv_sec = rtc_पंचांग_to_समय64(&पंचांग);
+पूर्ण
 
-void read_persistent_clock64(struct timespec64 *ts)
-{
-	__read_persistent_clock(ts);
+व्योम पढ़ो_persistent_घड़ी64(काष्ठा बारpec64 *ts)
+अणु
+	__पढ़ो_persistent_घड़ी(ts);
 
-	/* Sanitize it in case real time clock is set below EPOCH */
-	if (ts->tv_sec < 0) {
+	/* Sanitize it in हाल real समय घड़ी is set below EPOCH */
+	अगर (ts->tv_sec < 0) अणु
 		ts->tv_sec = 0;
 		ts->tv_nsec = 0;
-	}
+	पूर्ण
 		
-}
+पूर्ण
 
-/* clocksource code */
-static notrace u64 timebase_read(struct clocksource *cs)
-{
-	return (u64)get_tb();
-}
+/* घड़ीsource code */
+अटल notrace u64 समयbase_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	वापस (u64)get_tb();
+पूर्ण
 
-static void __init clocksource_init(void)
-{
-	struct clocksource *clock = &clocksource_timebase;
+अटल व्योम __init घड़ीsource_init(व्योम)
+अणु
+	काष्ठा घड़ीsource *घड़ी = &घड़ीsource_समयbase;
 
-	if (clocksource_register_hz(clock, tb_ticks_per_sec)) {
-		printk(KERN_ERR "clocksource: %s is already registered\n",
-		       clock->name);
-		return;
-	}
+	अगर (घड़ीsource_रेजिस्टर_hz(घड़ी, tb_ticks_per_sec)) अणु
+		prपूर्णांकk(KERN_ERR "clocksource: %s is already registered\n",
+		       घड़ी->name);
+		वापस;
+	पूर्ण
 
-	printk(KERN_INFO "clocksource: %s mult[%x] shift[%d] registered\n",
-	       clock->name, clock->mult, clock->shift);
-}
+	prपूर्णांकk(KERN_INFO "clocksource: %s mult[%x] shift[%d] registered\n",
+	       घड़ी->name, घड़ी->mult, घड़ी->shअगरt);
+पूर्ण
 
-static int decrementer_set_next_event(unsigned long evt,
-				      struct clock_event_device *dev)
-{
-	__this_cpu_write(decrementers_next_tb, get_tb() + evt);
+अटल पूर्णांक decrementer_set_next_event(अचिन्हित दीर्घ evt,
+				      काष्ठा घड़ी_event_device *dev)
+अणु
+	__this_cpu_ग_लिखो(decrementers_next_tb, get_tb() + evt);
 	set_dec(evt);
 
 	/* We may have raced with new irq work */
-	if (test_irq_work_pending())
+	अगर (test_irq_work_pending())
 		set_dec(1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int decrementer_shutdown(struct clock_event_device *dev)
-{
+अटल पूर्णांक decrementer_shutकरोwn(काष्ठा घड़ी_event_device *dev)
+अणु
 	decrementer_set_next_event(decrementer_max, dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void register_decrementer_clockevent(int cpu)
-{
-	struct clock_event_device *dec = &per_cpu(decrementers, cpu);
+अटल व्योम रेजिस्टर_decrementer_घड़ीevent(पूर्णांक cpu)
+अणु
+	काष्ठा घड़ी_event_device *dec = &per_cpu(decrementers, cpu);
 
-	*dec = decrementer_clockevent;
+	*dec = decrementer_घड़ीevent;
 	dec->cpumask = cpumask_of(cpu);
 
-	clockevents_config_and_register(dec, ppc_tb_freq, 2, decrementer_max);
+	घड़ीevents_config_and_रेजिस्टर(dec, ppc_tb_freq, 2, decrementer_max);
 
-	printk_once(KERN_DEBUG "clockevent: %s mult[%x] shift[%d] cpu[%d]\n",
-		    dec->name, dec->mult, dec->shift, cpu);
+	prपूर्णांकk_once(KERN_DEBUG "clockevent: %s mult[%x] shift[%d] cpu[%d]\n",
+		    dec->name, dec->mult, dec->shअगरt, cpu);
 
-	/* Set values for KVM, see kvm_emulate_dec() */
-	decrementer_clockevent.mult = dec->mult;
-	decrementer_clockevent.shift = dec->shift;
-}
+	/* Set values क्रम KVM, see kvm_emulate_dec() */
+	decrementer_घड़ीevent.mult = dec->mult;
+	decrementer_घड़ीevent.shअगरt = dec->shअगरt;
+पूर्ण
 
-static void enable_large_decrementer(void)
-{
-	if (!cpu_has_feature(CPU_FTR_ARCH_300))
-		return;
+अटल व्योम enable_large_decrementer(व्योम)
+अणु
+	अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+		वापस;
 
-	if (decrementer_max <= DECREMENTER_DEFAULT_MAX)
-		return;
+	अगर (decrementer_max <= DECREMENTER_DEFAULT_MAX)
+		वापस;
 
 	/*
 	 * If we're running as the hypervisor we need to enable the LD manually
-	 * otherwise firmware should have done it for us.
+	 * otherwise firmware should have करोne it क्रम us.
 	 */
-	if (cpu_has_feature(CPU_FTR_HVMODE))
+	अगर (cpu_has_feature(CPU_FTR_HVMODE))
 		mtspr(SPRN_LPCR, mfspr(SPRN_LPCR) | LPCR_LD);
-}
+पूर्ण
 
-static void __init set_decrementer_max(void)
-{
-	struct device_node *cpu;
+अटल व्योम __init set_decrementer_max(व्योम)
+अणु
+	काष्ठा device_node *cpu;
 	u32 bits = 32;
 
 	/* Prior to ISAv3 the decrementer is always 32 bit */
-	if (!cpu_has_feature(CPU_FTR_ARCH_300))
-		return;
+	अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+		वापस;
 
-	cpu = of_find_node_by_type(NULL, "cpu");
+	cpu = of_find_node_by_type(शून्य, "cpu");
 
-	if (of_property_read_u32(cpu, "ibm,dec-bits", &bits) == 0) {
-		if (bits > 64 || bits < 32) {
+	अगर (of_property_पढ़ो_u32(cpu, "ibm,dec-bits", &bits) == 0) अणु
+		अगर (bits > 64 || bits < 32) अणु
 			pr_warn("time_init: firmware supplied invalid ibm,dec-bits");
 			bits = 32;
-		}
+		पूर्ण
 
-		/* calculate the signed maximum given this many bits */
+		/* calculate the चिन्हित maximum given this many bits */
 		decrementer_max = (1ul << (bits - 1)) - 1;
-	}
+	पूर्ण
 
 	of_node_put(cpu);
 
 	pr_info("time_init: %u bit decrementer (max: %llx)\n",
 		bits, decrementer_max);
-}
+पूर्ण
 
-static void __init init_decrementer_clockevent(void)
-{
-	register_decrementer_clockevent(smp_processor_id());
-}
+अटल व्योम __init init_decrementer_घड़ीevent(व्योम)
+अणु
+	रेजिस्टर_decrementer_घड़ीevent(smp_processor_id());
+पूर्ण
 
-void secondary_cpu_time_init(void)
-{
-	/* Enable and test the large decrementer for this cpu */
+व्योम secondary_cpu_समय_init(व्योम)
+अणु
+	/* Enable and test the large decrementer क्रम this cpu */
 	enable_large_decrementer();
 
 	/* Start the decrementer on CPUs that have manual control
@@ -963,60 +964,60 @@ void secondary_cpu_time_init(void)
 	 */
 	start_cpu_decrementer();
 
-	/* FIME: Should make unrelatred change to move snapshot_timebase
+	/* FIME: Should make unrelatred change to move snapshot_समयbase
 	 * call here ! */
-	register_decrementer_clockevent(smp_processor_id());
-}
+	रेजिस्टर_decrementer_घड़ीevent(smp_processor_id());
+पूर्ण
 
 /* This function is only called on the boot processor */
-void __init time_init(void)
-{
-	struct div_result res;
+व्योम __init समय_init(व्योम)
+अणु
+	काष्ठा भाग_result res;
 	u64 scale;
-	unsigned shift;
+	अचिन्हित shअगरt;
 
-	/* Normal PowerPC with timebase register */
+	/* Normal PowerPC with समयbase रेजिस्टर */
 	ppc_md.calibrate_decr();
-	printk(KERN_DEBUG "time_init: decrementer frequency = %lu.%.6lu MHz\n",
+	prपूर्णांकk(KERN_DEBUG "time_init: decrementer frequency = %lu.%.6lu MHz\n",
 	       ppc_tb_freq / 1000000, ppc_tb_freq % 1000000);
-	printk(KERN_DEBUG "time_init: processor frequency   = %lu.%.6lu MHz\n",
+	prपूर्णांकk(KERN_DEBUG "time_init: processor frequency   = %lu.%.6lu MHz\n",
 	       ppc_proc_freq / 1000000, ppc_proc_freq % 1000000);
 
-	tb_ticks_per_jiffy = ppc_tb_freq / HZ;
+	tb_ticks_per_jअगरfy = ppc_tb_freq / HZ;
 	tb_ticks_per_sec = ppc_tb_freq;
 	tb_ticks_per_usec = ppc_tb_freq / 1000000;
-	calc_cputime_factors();
+	calc_cpuसमय_factors();
 
 	/*
-	 * Compute scale factor for sched_clock.
+	 * Compute scale factor क्रम sched_घड़ी.
 	 * The calibrate_decr() function has set tb_ticks_per_sec,
-	 * which is the timebase frequency.
-	 * We compute 1e9 * 2^64 / tb_ticks_per_sec and interpret
-	 * the 128-bit result as a 64.64 fixed-point number.
-	 * We then shift that number right until it is less than 1.0,
-	 * giving us the scale factor and shift count to use in
-	 * sched_clock().
+	 * which is the समयbase frequency.
+	 * We compute 1e9 * 2^64 / tb_ticks_per_sec and पूर्णांकerpret
+	 * the 128-bit result as a 64.64 fixed-poपूर्णांक number.
+	 * We then shअगरt that number right until it is less than 1.0,
+	 * giving us the scale factor and shअगरt count to use in
+	 * sched_घड़ी().
 	 */
-	div128_by_32(1000000000, 0, tb_ticks_per_sec, &res);
+	भाग128_by_32(1000000000, 0, tb_ticks_per_sec, &res);
 	scale = res.result_low;
-	for (shift = 0; res.result_high != 0; ++shift) {
+	क्रम (shअगरt = 0; res.result_high != 0; ++shअगरt) अणु
 		scale = (scale >> 1) | (res.result_high << 63);
 		res.result_high >>= 1;
-	}
+	पूर्ण
 	tb_to_ns_scale = scale;
-	tb_to_ns_shift = shift;
-	/* Save the current timebase to pretty up CONFIG_PRINTK_TIME */
+	tb_to_ns_shअगरt = shअगरt;
+	/* Save the current समयbase to pretty up CONFIG_PRINTK_TIME */
 	boot_tb = get_tb();
 
-	/* If platform provided a timezone (pmac), we correct the time */
-	if (timezone_offset) {
-		sys_tz.tz_minuteswest = -timezone_offset / 60;
-		sys_tz.tz_dsttime = 0;
-	}
+	/* If platक्रमm provided a समयzone (pmac), we correct the समय */
+	अगर (समयzone_offset) अणु
+		sys_tz.tz_minuteswest = -समयzone_offset / 60;
+		sys_tz.tz_dstसमय = 0;
+	पूर्ण
 
 	vdso_data->tb_ticks_per_sec = tb_ticks_per_sec;
 
-	/* initialise and enable the large decrementer (if we have one) */
+	/* initialise and enable the large decrementer (अगर we have one) */
 	set_decrementer_max();
 	enable_large_decrementer();
 
@@ -1025,94 +1026,94 @@ void __init time_init(void)
 	 */
 	start_cpu_decrementer();
 
-	/* Register the clocksource */
-	clocksource_init();
+	/* Register the घड़ीsource */
+	घड़ीsource_init();
 
-	init_decrementer_clockevent();
-	tick_setup_hrtimer_broadcast();
+	init_decrementer_घड़ीevent();
+	tick_setup_hrसमयr_broadcast();
 
-	of_clk_init(NULL);
-	enable_sched_clock_irqtime();
-}
+	of_clk_init(शून्य);
+	enable_sched_घड़ी_irqसमय();
+पूर्ण
 
 /*
- * Divide a 128-bit dividend by a 32-bit divisor, leaving a 128 bit
+ * Divide a 128-bit भागidend by a 32-bit भागisor, leaving a 128 bit
  * result.
  */
-void div128_by_32(u64 dividend_high, u64 dividend_low,
-		  unsigned divisor, struct div_result *dr)
-{
-	unsigned long a, b, c, d;
-	unsigned long w, x, y, z;
+व्योम भाग128_by_32(u64 भागidend_high, u64 भागidend_low,
+		  अचिन्हित भागisor, काष्ठा भाग_result *dr)
+अणु
+	अचिन्हित दीर्घ a, b, c, d;
+	अचिन्हित दीर्घ w, x, y, z;
 	u64 ra, rb, rc;
 
-	a = dividend_high >> 32;
-	b = dividend_high & 0xffffffff;
-	c = dividend_low >> 32;
-	d = dividend_low & 0xffffffff;
+	a = भागidend_high >> 32;
+	b = भागidend_high & 0xffffffff;
+	c = भागidend_low >> 32;
+	d = भागidend_low & 0xffffffff;
 
-	w = a / divisor;
-	ra = ((u64)(a - (w * divisor)) << 32) + b;
+	w = a / भागisor;
+	ra = ((u64)(a - (w * भागisor)) << 32) + b;
 
-	rb = ((u64) do_div(ra, divisor) << 32) + c;
+	rb = ((u64) करो_भाग(ra, भागisor) << 32) + c;
 	x = ra;
 
-	rc = ((u64) do_div(rb, divisor) << 32) + d;
+	rc = ((u64) करो_भाग(rb, भागisor) << 32) + d;
 	y = rb;
 
-	do_div(rc, divisor);
+	करो_भाग(rc, भागisor);
 	z = rc;
 
 	dr->result_high = ((u64)w << 32) + x;
 	dr->result_low  = ((u64)y << 32) + z;
 
-}
+पूर्ण
 
-/* We don't need to calibrate delay, we use the CPU timebase for that */
-void calibrate_delay(void)
-{
-	/* Some generic code (such as spinlock debug) use loops_per_jiffy
-	 * as the number of __delay(1) in a jiffy, so make it so
+/* We करोn't need to calibrate delay, we use the CPU समयbase क्रम that */
+व्योम calibrate_delay(व्योम)
+अणु
+	/* Some generic code (such as spinlock debug) use loops_per_jअगरfy
+	 * as the number of __delay(1) in a jअगरfy, so make it so
 	 */
-	loops_per_jiffy = tb_ticks_per_jiffy;
-}
+	loops_per_jअगरfy = tb_ticks_per_jअगरfy;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_RTC_DRV_GENERIC)
-static int rtc_generic_get_time(struct device *dev, struct rtc_time *tm)
-{
-	ppc_md.get_rtc_time(tm);
-	return 0;
-}
+#अगर IS_ENABLED(CONFIG_RTC_DRV_GENERIC)
+अटल पूर्णांक rtc_generic_get_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	ppc_md.get_rtc_समय(पंचांग);
+	वापस 0;
+पूर्ण
 
-static int rtc_generic_set_time(struct device *dev, struct rtc_time *tm)
-{
-	if (!ppc_md.set_rtc_time)
-		return -EOPNOTSUPP;
+अटल पूर्णांक rtc_generic_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	अगर (!ppc_md.set_rtc_समय)
+		वापस -EOPNOTSUPP;
 
-	if (ppc_md.set_rtc_time(tm) < 0)
-		return -EOPNOTSUPP;
+	अगर (ppc_md.set_rtc_समय(पंचांग) < 0)
+		वापस -EOPNOTSUPP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops rtc_generic_ops = {
-	.read_time = rtc_generic_get_time,
-	.set_time = rtc_generic_set_time,
-};
+अटल स्थिर काष्ठा rtc_class_ops rtc_generic_ops = अणु
+	.पढ़ो_समय = rtc_generic_get_समय,
+	.set_समय = rtc_generic_set_समय,
+पूर्ण;
 
-static int __init rtc_init(void)
-{
-	struct platform_device *pdev;
+अटल पूर्णांक __init rtc_init(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pdev;
 
-	if (!ppc_md.get_rtc_time)
-		return -ENODEV;
+	अगर (!ppc_md.get_rtc_समय)
+		वापस -ENODEV;
 
-	pdev = platform_device_register_data(NULL, "rtc-generic", -1,
+	pdev = platक्रमm_device_रेजिस्टर_data(शून्य, "rtc-generic", -1,
 					     &rtc_generic_ops,
-					     sizeof(rtc_generic_ops));
+					     माप(rtc_generic_ops));
 
-	return PTR_ERR_OR_ZERO(pdev);
-}
+	वापस PTR_ERR_OR_ZERO(pdev);
+पूर्ण
 
 device_initcall(rtc_init);
-#endif
+#पूर्ण_अगर

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,106 +20,106 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "priv.h"
-#include <core/falcon.h>
-#include <core/firmware.h>
-#include <nvfw/fw.h>
-#include <nvfw/ls.h>
+#समावेश "priv.h"
+#समावेश <core/falcon.h>
+#समावेश <core/firmware.h>
+#समावेश <nvfw/fw.h>
+#समावेश <nvfw/ls.h>
 
-void
-nvkm_acr_lsfw_del(struct nvkm_acr_lsfw *lsfw)
-{
+व्योम
+nvkm_acr_lsfw_del(काष्ठा nvkm_acr_lsfw *lsfw)
+अणु
 	nvkm_blob_dtor(&lsfw->img);
 	nvkm_firmware_put(lsfw->sig);
 	list_del(&lsfw->head);
-	kfree(lsfw);
-}
+	kमुक्त(lsfw);
+पूर्ण
 
-void
-nvkm_acr_lsfw_del_all(struct nvkm_acr *acr)
-{
-	struct nvkm_acr_lsfw *lsfw, *lsft;
-	list_for_each_entry_safe(lsfw, lsft, &acr->lsfw, head) {
+व्योम
+nvkm_acr_lsfw_del_all(काष्ठा nvkm_acr *acr)
+अणु
+	काष्ठा nvkm_acr_lsfw *lsfw, *lsft;
+	list_क्रम_each_entry_safe(lsfw, lsft, &acr->lsfw, head) अणु
 		nvkm_acr_lsfw_del(lsfw);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct nvkm_acr_lsfw *
-nvkm_acr_lsfw_get(struct nvkm_acr *acr, enum nvkm_acr_lsf_id id)
-{
-	struct nvkm_acr_lsfw *lsfw;
-	list_for_each_entry(lsfw, &acr->lsfw, head) {
-		if (lsfw->id == id)
-			return lsfw;
-	}
-	return NULL;
-}
+अटल काष्ठा nvkm_acr_lsfw *
+nvkm_acr_lsfw_get(काष्ठा nvkm_acr *acr, क्रमागत nvkm_acr_lsf_id id)
+अणु
+	काष्ठा nvkm_acr_lsfw *lsfw;
+	list_क्रम_each_entry(lsfw, &acr->lsfw, head) अणु
+		अगर (lsfw->id == id)
+			वापस lsfw;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct nvkm_acr_lsfw *
-nvkm_acr_lsfw_add(const struct nvkm_acr_lsf_func *func, struct nvkm_acr *acr,
-		 struct nvkm_falcon *falcon, enum nvkm_acr_lsf_id id)
-{
-	struct nvkm_acr_lsfw *lsfw;
+काष्ठा nvkm_acr_lsfw *
+nvkm_acr_lsfw_add(स्थिर काष्ठा nvkm_acr_lsf_func *func, काष्ठा nvkm_acr *acr,
+		 काष्ठा nvkm_falcon *falcon, क्रमागत nvkm_acr_lsf_id id)
+अणु
+	काष्ठा nvkm_acr_lsfw *lsfw;
 
-	if (!acr || list_empty(&acr->hsfw))
-		return ERR_PTR(-ENOSYS);
+	अगर (!acr || list_empty(&acr->hsfw))
+		वापस ERR_PTR(-ENOSYS);
 
 	lsfw = nvkm_acr_lsfw_get(acr, id);
-	if (lsfw && lsfw->func) {
+	अगर (lsfw && lsfw->func) अणु
 		nvkm_error(&acr->subdev, "LSFW %d redefined\n", id);
-		return ERR_PTR(-EEXIST);
-	}
+		वापस ERR_PTR(-EEXIST);
+	पूर्ण
 
-	if (!lsfw) {
-		if (!(lsfw = kzalloc(sizeof(*lsfw), GFP_KERNEL)))
-			return ERR_PTR(-ENOMEM);
+	अगर (!lsfw) अणु
+		अगर (!(lsfw = kzalloc(माप(*lsfw), GFP_KERNEL)))
+			वापस ERR_PTR(-ENOMEM);
 
 		lsfw->id = id;
 		list_add_tail(&lsfw->head, &acr->lsfw);
-	}
+	पूर्ण
 
 	lsfw->func = func;
 	lsfw->falcon = falcon;
-	return lsfw;
-}
+	वापस lsfw;
+पूर्ण
 
-static struct nvkm_acr_lsfw *
-nvkm_acr_lsfw_load_sig_image_desc_(struct nvkm_subdev *subdev,
-				   struct nvkm_falcon *falcon,
-				   enum nvkm_acr_lsf_id id,
-				   const char *path, int ver,
-				   const struct nvkm_acr_lsf_func *func,
-				   const struct firmware **pdesc)
-{
-	struct nvkm_acr *acr = subdev->device->acr;
-	struct nvkm_acr_lsfw *lsfw;
-	int ret;
+अटल काष्ठा nvkm_acr_lsfw *
+nvkm_acr_lsfw_load_sig_image_desc_(काष्ठा nvkm_subdev *subdev,
+				   काष्ठा nvkm_falcon *falcon,
+				   क्रमागत nvkm_acr_lsf_id id,
+				   स्थिर अक्षर *path, पूर्णांक ver,
+				   स्थिर काष्ठा nvkm_acr_lsf_func *func,
+				   स्थिर काष्ठा firmware **pdesc)
+अणु
+	काष्ठा nvkm_acr *acr = subdev->device->acr;
+	काष्ठा nvkm_acr_lsfw *lsfw;
+	पूर्णांक ret;
 
-	if (IS_ERR((lsfw = nvkm_acr_lsfw_add(func, acr, falcon, id))))
-		return lsfw;
+	अगर (IS_ERR((lsfw = nvkm_acr_lsfw_add(func, acr, falcon, id))))
+		वापस lsfw;
 
 	ret = nvkm_firmware_load_name(subdev, path, "sig", ver, &lsfw->sig);
-	if (ret)
-		goto done;
+	अगर (ret)
+		जाओ करोne;
 
 	ret = nvkm_firmware_load_blob(subdev, path, "image", ver, &lsfw->img);
-	if (ret)
-		goto done;
+	अगर (ret)
+		जाओ करोne;
 
 	ret = nvkm_firmware_load_name(subdev, path, "desc", ver, pdesc);
-done:
-	if (ret) {
+करोne:
+	अगर (ret) अणु
 		nvkm_acr_lsfw_del(lsfw);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return lsfw;
-}
+	वापस lsfw;
+पूर्ण
 
-static void
-nvkm_acr_lsfw_from_desc(const struct nvfw_ls_desc_head *desc,
-			struct nvkm_acr_lsfw *lsfw)
-{
+अटल व्योम
+nvkm_acr_lsfw_from_desc(स्थिर काष्ठा nvfw_ls_desc_head *desc,
+			काष्ठा nvkm_acr_lsfw *lsfw)
+अणु
 	lsfw->bootloader_size = ALIGN(desc->bootloader_size, 256);
 	lsfw->bootloader_imem_offset = desc->bootloader_imem_offset;
 
@@ -134,85 +135,85 @@ nvkm_acr_lsfw_from_desc(const struct nvfw_ls_desc_head *desc,
 			   lsfw->bootloader_size;
 	lsfw->data_size = lsfw->app_size + lsfw->bootloader_size -
 			  lsfw->ucode_size;
-}
+पूर्ण
 
-int
-nvkm_acr_lsfw_load_sig_image_desc(struct nvkm_subdev *subdev,
-				  struct nvkm_falcon *falcon,
-				  enum nvkm_acr_lsf_id id,
-				  const char *path, int ver,
-				  const struct nvkm_acr_lsf_func *func)
-{
-	const struct firmware *fw;
-	struct nvkm_acr_lsfw *lsfw;
+पूर्णांक
+nvkm_acr_lsfw_load_sig_image_desc(काष्ठा nvkm_subdev *subdev,
+				  काष्ठा nvkm_falcon *falcon,
+				  क्रमागत nvkm_acr_lsf_id id,
+				  स्थिर अक्षर *path, पूर्णांक ver,
+				  स्थिर काष्ठा nvkm_acr_lsf_func *func)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	काष्ठा nvkm_acr_lsfw *lsfw;
 
 	lsfw = nvkm_acr_lsfw_load_sig_image_desc_(subdev, falcon, id, path, ver,
 						  func, &fw);
-	if (IS_ERR(lsfw))
-		return PTR_ERR(lsfw);
+	अगर (IS_ERR(lsfw))
+		वापस PTR_ERR(lsfw);
 
 	nvkm_acr_lsfw_from_desc(&nvfw_ls_desc(subdev, fw->data)->head, lsfw);
 	nvkm_firmware_put(fw);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvkm_acr_lsfw_load_sig_image_desc_v1(struct nvkm_subdev *subdev,
-				     struct nvkm_falcon *falcon,
-				     enum nvkm_acr_lsf_id id,
-				     const char *path, int ver,
-				     const struct nvkm_acr_lsf_func *func)
-{
-	const struct firmware *fw;
-	struct nvkm_acr_lsfw *lsfw;
+पूर्णांक
+nvkm_acr_lsfw_load_sig_image_desc_v1(काष्ठा nvkm_subdev *subdev,
+				     काष्ठा nvkm_falcon *falcon,
+				     क्रमागत nvkm_acr_lsf_id id,
+				     स्थिर अक्षर *path, पूर्णांक ver,
+				     स्थिर काष्ठा nvkm_acr_lsf_func *func)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	काष्ठा nvkm_acr_lsfw *lsfw;
 
 	lsfw = nvkm_acr_lsfw_load_sig_image_desc_(subdev, falcon, id, path, ver,
 						  func, &fw);
-	if (IS_ERR(lsfw))
-		return PTR_ERR(lsfw);
+	अगर (IS_ERR(lsfw))
+		वापस PTR_ERR(lsfw);
 
 	nvkm_acr_lsfw_from_desc(&nvfw_ls_desc_v1(subdev, fw->data)->head, lsfw);
 	nvkm_firmware_put(fw);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvkm_acr_lsfw_load_bl_inst_data_sig(struct nvkm_subdev *subdev,
-				    struct nvkm_falcon *falcon,
-				    enum nvkm_acr_lsf_id id,
-				    const char *path, int ver,
-				    const struct nvkm_acr_lsf_func *func)
-{
-	struct nvkm_acr *acr = subdev->device->acr;
-	struct nvkm_acr_lsfw *lsfw;
-	const struct firmware *bl = NULL, *inst = NULL, *data = NULL;
-	const struct nvfw_bin_hdr *hdr;
-	const struct nvfw_bl_desc *desc;
+पूर्णांक
+nvkm_acr_lsfw_load_bl_inst_data_sig(काष्ठा nvkm_subdev *subdev,
+				    काष्ठा nvkm_falcon *falcon,
+				    क्रमागत nvkm_acr_lsf_id id,
+				    स्थिर अक्षर *path, पूर्णांक ver,
+				    स्थिर काष्ठा nvkm_acr_lsf_func *func)
+अणु
+	काष्ठा nvkm_acr *acr = subdev->device->acr;
+	काष्ठा nvkm_acr_lsfw *lsfw;
+	स्थिर काष्ठा firmware *bl = शून्य, *inst = शून्य, *data = शून्य;
+	स्थिर काष्ठा nvfw_bin_hdr *hdr;
+	स्थिर काष्ठा nvfw_bl_desc *desc;
 	u32 *bldata;
-	int ret;
+	पूर्णांक ret;
 
-	if (IS_ERR((lsfw = nvkm_acr_lsfw_add(func, acr, falcon, id))))
-		return PTR_ERR(lsfw);
+	अगर (IS_ERR((lsfw = nvkm_acr_lsfw_add(func, acr, falcon, id))))
+		वापस PTR_ERR(lsfw);
 
 	ret = nvkm_firmware_load_name(subdev, path, "bl", ver, &bl);
-	if (ret)
-		goto done;
+	अगर (ret)
+		जाओ करोne;
 
 	hdr = nvfw_bin_hdr(subdev, bl->data);
 	desc = nvfw_bl_desc(subdev, bl->data + hdr->header_offset);
-	bldata = (void *)(bl->data + hdr->data_offset);
+	bldata = (व्योम *)(bl->data + hdr->data_offset);
 
 	ret = nvkm_firmware_load_name(subdev, path, "inst", ver, &inst);
-	if (ret)
-		goto done;
+	अगर (ret)
+		जाओ करोne;
 
 	ret = nvkm_firmware_load_name(subdev, path, "data", ver, &data);
-	if (ret)
-		goto done;
+	अगर (ret)
+		जाओ करोne;
 
 	ret = nvkm_firmware_load_name(subdev, path, "sig", ver, &lsfw->sig);
-	if (ret)
-		goto done;
+	अगर (ret)
+		जाओ करोne;
 
 	lsfw->bootloader_size = ALIGN(desc->code_size, 256);
 	lsfw->bootloader_imem_offset = desc->start_tag << 8;
@@ -227,15 +228,15 @@ nvkm_acr_lsfw_load_bl_inst_data_sig(struct nvkm_subdev *subdev,
 			 lsfw->app_resident_data_size;
 
 	lsfw->img.size = lsfw->bootloader_size + lsfw->app_size;
-	if (!(lsfw->img.data = kzalloc(lsfw->img.size, GFP_KERNEL))) {
+	अगर (!(lsfw->img.data = kzalloc(lsfw->img.size, GFP_KERNEL))) अणु
 		ret = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	memcpy(lsfw->img.data, bldata, lsfw->bootloader_size);
-	memcpy(lsfw->img.data + lsfw->app_start_offset +
+	स_नकल(lsfw->img.data, bldata, lsfw->bootloader_size);
+	स_नकल(lsfw->img.data + lsfw->app_start_offset +
 	       lsfw->app_resident_code_offset, inst->data, inst->size);
-	memcpy(lsfw->img.data + lsfw->app_start_offset +
+	स_नकल(lsfw->img.data + lsfw->app_start_offset +
 	       lsfw->app_resident_data_offset, data->data, data->size);
 
 	lsfw->ucode_size = ALIGN(lsfw->app_resident_data_offset, 256) +
@@ -243,11 +244,11 @@ nvkm_acr_lsfw_load_bl_inst_data_sig(struct nvkm_subdev *subdev,
 	lsfw->data_size = lsfw->app_size + lsfw->bootloader_size -
 			  lsfw->ucode_size;
 
-done:
-	if (ret)
+करोne:
+	अगर (ret)
 		nvkm_acr_lsfw_del(lsfw);
 	nvkm_firmware_put(data);
 	nvkm_firmware_put(inst);
 	nvkm_firmware_put(bl);
-	return ret;
-}
+	वापस ret;
+पूर्ण

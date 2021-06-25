@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Carsten Langgaard, carstenl@mips.com
  * Copyright (C) 2000 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2008 Dmitri Vorobiev
  */
-#include <linux/cpu.h>
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/ioport.h>
-#include <linux/irq.h>
-#include <linux/of_fdt.h>
-#include <linux/pci.h>
-#include <linux/screen_info.h>
-#include <linux/time.h>
-#include <linux/dma-map-ops.h> /* for dma_default_coherent */
+#समावेश <linux/cpu.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/screen_info.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/dma-map-ops.h> /* क्रम dma_शेष_coherent */
 
-#include <asm/fw/fw.h>
-#include <asm/mips-cps.h>
-#include <asm/mips-boards/generic.h>
-#include <asm/mips-boards/malta.h>
-#include <asm/mips-boards/maltaint.h>
-#include <asm/dma.h>
-#include <asm/prom.h>
-#include <asm/traps.h>
-#ifdef CONFIG_VT
-#include <linux/console.h>
-#endif
+#समावेश <यंत्र/fw/fw.h>
+#समावेश <यंत्र/mips-cps.h>
+#समावेश <यंत्र/mips-boards/generic.h>
+#समावेश <यंत्र/mips-boards/malta.h>
+#समावेश <यंत्र/mips-boards/maltaपूर्णांक.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/traps.h>
+#अगर_घोषित CONFIG_VT
+#समावेश <linux/console.h>
+#पूर्ण_अगर
 
-#define ROCIT_CONFIG_GEN0		0x1f403000
-#define  ROCIT_CONFIG_GEN0_PCI_IOCU	BIT(7)
+#घोषणा ROCIT_CONFIG_GEN0		0x1f403000
+#घोषणा  ROCIT_CONFIG_GEN0_PCI_IOCU	BIT(7)
 
-static struct resource standard_io_resources[] = {
-	{
+अटल काष्ठा resource standard_io_resources[] = अणु
+	अणु
 		.name = "dma1",
 		.start = 0x00,
 		.end = 0x1f,
 		.flags = IORESOURCE_IO | IORESOURCE_BUSY
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "timer",
 		.start = 0x40,
 		.end = 0x5f,
 		.flags = IORESOURCE_IO | IORESOURCE_BUSY
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "keyboard",
 		.start = 0x60,
 		.end = 0x6f,
 		.flags = IORESOURCE_IO | IORESOURCE_BUSY
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "dma page reg",
 		.start = 0x80,
 		.end = 0x8f,
 		.flags = IORESOURCE_IO | IORESOURCE_BUSY
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "dma2",
 		.start = 0xc0,
 		.end = 0xdf,
 		.flags = IORESOURCE_IO | IORESOURCE_BUSY
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-const char *get_system_type(void)
-{
-	return "MIPS Malta";
-}
+स्थिर अक्षर *get_प्रणाली_type(व्योम)
+अणु
+	वापस "MIPS Malta";
+पूर्ण
 
-#ifdef CONFIG_BLK_DEV_FD
-static void __init fd_activate(void)
-{
+#अगर_घोषित CONFIG_BLK_DEV_FD
+अटल व्योम __init fd_activate(व्योम)
+अणु
 	/*
 	 * Activate Floppy Controller in the SMSC FDC37M817 Super I/O
 	 * Controller.
@@ -87,81 +88,81 @@ static void __init fd_activate(void)
 
 	/* Exit config state. */
 	SMSC_WRITE(SMSC_CONFIG_EXIT, SMSC_CONFIG_REG);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void __init plat_setup_iocoherency(void)
-{
+अटल व्योम __init plat_setup_iocoherency(व्योम)
+अणु
 	u32 cfg;
 
-	if (mips_revision_sconid == MIPS_REVISION_SCON_BONITO) {
-		if (BONITO_PCICACHECTRL & BONITO_PCICACHECTRL_CPUCOH_PRES) {
+	अगर (mips_revision_sconid == MIPS_REVISION_SCON_BONITO) अणु
+		अगर (BONITO_PCICACHECTRL & BONITO_PCICACHECTRL_CPUCOH_PRES) अणु
 			BONITO_PCICACHECTRL |= BONITO_PCICACHECTRL_CPUCOH_EN;
 			pr_info("Enabled Bonito CPU coherency\n");
-			dma_default_coherent = true;
-		}
-		if (strstr(fw_getcmdline(), "iobcuncached")) {
+			dma_शेष_coherent = true;
+		पूर्ण
+		अगर (म_माला(fw_अ_लोmdline(), "iobcuncached")) अणु
 			BONITO_PCICACHECTRL &= ~BONITO_PCICACHECTRL_IOBCCOH_EN;
 			BONITO_PCIMEMBASECFG = BONITO_PCIMEMBASECFG &
 				~(BONITO_PCIMEMBASECFG_MEMBASE0_CACHED |
 				  BONITO_PCIMEMBASECFG_MEMBASE1_CACHED);
 			pr_info("Disabled Bonito IOBC coherency\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			BONITO_PCICACHECTRL |= BONITO_PCICACHECTRL_IOBCCOH_EN;
 			BONITO_PCIMEMBASECFG |=
 				(BONITO_PCIMEMBASECFG_MEMBASE0_CACHED |
 				 BONITO_PCIMEMBASECFG_MEMBASE1_CACHED);
 			pr_info("Enabled Bonito IOBC coherency\n");
-		}
-	} else if (mips_cps_numiocu(0) != 0) {
-		/* Nothing special needs to be done to enable coherency */
+		पूर्ण
+	पूर्ण अन्यथा अगर (mips_cps_numiocu(0) != 0) अणु
+		/* Nothing special needs to be करोne to enable coherency */
 		pr_info("CMP IOCU detected\n");
-		cfg = __raw_readl((u32 *)CKSEG1ADDR(ROCIT_CONFIG_GEN0));
-		if (cfg & ROCIT_CONFIG_GEN0_PCI_IOCU)
-			dma_default_coherent = true;
-		else
+		cfg = __raw_पढ़ोl((u32 *)CKSEG1ADDR(ROCIT_CONFIG_GEN0));
+		अगर (cfg & ROCIT_CONFIG_GEN0_PCI_IOCU)
+			dma_शेष_coherent = true;
+		अन्यथा
 			pr_crit("IOCU OPERATION DISABLED BY SWITCH - DEFAULTING TO SW IO COHERENCY\n");
-	}
+	पूर्ण
 
-	if (dma_default_coherent)
+	अगर (dma_शेष_coherent)
 		pr_info("Hardware DMA cache coherency enabled\n");
-	else
+	अन्यथा
 		pr_info("Software DMA cache coherency enabled\n");
-}
+पूर्ण
 
-static void __init pci_clock_check(void)
-{
-	unsigned int __iomem *jmpr_p =
-		(unsigned int *) ioremap(MALTA_JMPRS_REG, sizeof(unsigned int));
-	int jmpr = (__raw_readl(jmpr_p) >> 2) & 0x07;
-	static const int pciclocks[] __initconst = {
+अटल व्योम __init pci_घड़ी_check(व्योम)
+अणु
+	अचिन्हित पूर्णांक __iomem *jmpr_p =
+		(अचिन्हित पूर्णांक *) ioremap(MALTA_JMPRS_REG, माप(अचिन्हित पूर्णांक));
+	पूर्णांक jmpr = (__raw_पढ़ोl(jmpr_p) >> 2) & 0x07;
+	अटल स्थिर पूर्णांक pciघड़ीs[] __initस्थिर = अणु
 		33, 20, 25, 30, 12, 16, 37, 10
-	};
-	int pciclock = pciclocks[jmpr];
-	char *optptr, *argptr = fw_getcmdline();
+	पूर्ण;
+	पूर्णांक pciघड़ी = pciघड़ीs[jmpr];
+	अक्षर *optptr, *argptr = fw_अ_लोmdline();
 
 	/*
-	 * If user passed a pci_clock= option, don't tack on another one
+	 * If user passed a pci_घड़ी= option, करोn't tack on another one
 	 */
-	optptr = strstr(argptr, "pci_clock=");
-	if (optptr && (optptr == argptr || optptr[-1] == ' '))
-		return;
+	optptr = म_माला(argptr, "pci_clock=");
+	अगर (optptr && (optptr == argptr || optptr[-1] == ' '))
+		वापस;
 
-	if (pciclock != 33) {
+	अगर (pciघड़ी != 33) अणु
 		pr_warn("WARNING: PCI clock is %dMHz, setting pci_clock\n",
-			pciclock);
-		argptr += strlen(argptr);
-		sprintf(argptr, " pci_clock=%d", pciclock);
-		if (pciclock < 20 || pciclock > 66)
+			pciघड़ी);
+		argptr += म_माप(argptr);
+		प्र_लिखो(argptr, " pci_clock=%d", pciघड़ी);
+		अगर (pciघड़ी < 20 || pciघड़ी > 66)
 			pr_warn("WARNING: IDE timing calculations will be "
 			        "incorrect\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_VT) && defined(CONFIG_VGA_CONSOLE)
-static void __init screen_info_setup(void)
-{
-	screen_info = (struct screen_info) {
+#अगर defined(CONFIG_VT) && defined(CONFIG_VGA_CONSOLE)
+अटल व्योम __init screen_info_setup(व्योम)
+अणु
+	screen_info = (काष्ठा screen_info) अणु
 		.orig_x = 0,
 		.orig_y = 25,
 		.ext_mem_k = 0,
@@ -173,44 +174,44 @@ static void __init screen_info_setup(void)
 		.unused3 = 0,
 		.orig_video_lines = 25,
 		.orig_video_isVGA = VIDEO_TYPE_VGAC,
-		.orig_video_points = 16
-	};
-}
-#endif
+		.orig_video_poपूर्णांकs = 16
+	पूर्ण;
+पूर्ण
+#पूर्ण_अगर
 
-static void __init bonito_quirks_setup(void)
-{
-	char *argptr;
+अटल व्योम __init bonito_quirks_setup(व्योम)
+अणु
+	अक्षर *argptr;
 
-	argptr = fw_getcmdline();
-	if (strstr(argptr, "debug")) {
+	argptr = fw_अ_लोmdline();
+	अगर (म_माला(argptr, "debug")) अणु
 		BONITO_BONGENCFG |= BONITO_BONGENCFG_DEBUGMODE;
 		pr_info("Enabled Bonito debug mode\n");
-	} else
+	पूर्ण अन्यथा
 		BONITO_BONGENCFG &= ~BONITO_BONGENCFG_DEBUGMODE;
-}
+पूर्ण
 
-void __init *plat_get_fdt(void)
-{
-	return (void *)__dtb_start;
-}
+व्योम __init *plat_get_fdt(व्योम)
+अणु
+	वापस (व्योम *)__dtb_start;
+पूर्ण
 
-void __init plat_mem_setup(void)
-{
-	unsigned int i;
-	void *fdt = plat_get_fdt();
+व्योम __init plat_mem_setup(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
+	व्योम *fdt = plat_get_fdt();
 
 	fdt = malta_dt_shim(fdt);
 	__dt_setup_arch(fdt);
 
-	if (IS_ENABLED(CONFIG_EVA))
-		/* EVA has already been configured in mach-malta/kernel-init.h */
+	अगर (IS_ENABLED(CONFIG_EVA))
+		/* EVA has alपढ़ोy been configured in mach-malta/kernel-init.h */
 		pr_info("Enhanced Virtual Addressing (EVA) activated\n");
 
 	mips_pcibios_init();
 
-	/* Request I/O space for devices used on the Malta board. */
-	for (i = 0; i < ARRAY_SIZE(standard_io_resources); i++)
+	/* Request I/O space क्रम devices used on the Malta board. */
+	क्रम (i = 0; i < ARRAY_SIZE(standard_io_resources); i++)
 		request_resource(&ioport_resource, standard_io_resources+i);
 
 	/*
@@ -218,18 +219,18 @@ void __init plat_mem_setup(void)
 	 */
 	enable_dma(4);
 
-	if (mips_revision_sconid == MIPS_REVISION_SCON_BONITO)
+	अगर (mips_revision_sconid == MIPS_REVISION_SCON_BONITO)
 		bonito_quirks_setup();
 
 	plat_setup_iocoherency();
 
-	pci_clock_check();
+	pci_घड़ी_check();
 
-#ifdef CONFIG_BLK_DEV_FD
+#अगर_घोषित CONFIG_BLK_DEV_FD
 	fd_activate();
-#endif
+#पूर्ण_अगर
 
-#if defined(CONFIG_VT) && defined(CONFIG_VGA_CONSOLE)
+#अगर defined(CONFIG_VT) && defined(CONFIG_VGA_CONSOLE)
 	screen_info_setup();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण

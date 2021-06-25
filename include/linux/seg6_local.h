@@ -1,6 +1,7 @@
-#ifndef _LINUX_SEG6_LOCAL_H
-#define _LINUX_SEG6_LOCAL_H
+<शैली गुरु>
+#अगर_अघोषित _LINUX_SEG6_LOCAL_H
+#घोषणा _LINUX_SEG6_LOCAL_H
 
-#include <uapi/linux/seg6_local.h>
+#समावेश <uapi/linux/seg6_local.h>
 
-#endif
+#पूर्ण_अगर

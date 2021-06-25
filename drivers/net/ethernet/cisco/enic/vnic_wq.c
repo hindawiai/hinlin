@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -17,201 +18,201 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
 
-#include "vnic_dev.h"
-#include "vnic_wq.h"
-#include "enic.h"
+#समावेश "vnic_dev.h"
+#समावेश "vnic_wq.h"
+#समावेश "enic.h"
 
-static int vnic_wq_alloc_bufs(struct vnic_wq *wq)
-{
-	struct vnic_wq_buf *buf;
-	unsigned int i, j, count = wq->ring.desc_count;
-	unsigned int blks = VNIC_WQ_BUF_BLKS_NEEDED(count);
+अटल पूर्णांक vnic_wq_alloc_bufs(काष्ठा vnic_wq *wq)
+अणु
+	काष्ठा vnic_wq_buf *buf;
+	अचिन्हित पूर्णांक i, j, count = wq->ring.desc_count;
+	अचिन्हित पूर्णांक blks = VNIC_WQ_BUF_BLKS_NEEDED(count);
 
-	for (i = 0; i < blks; i++) {
+	क्रम (i = 0; i < blks; i++) अणु
 		wq->bufs[i] = kzalloc(VNIC_WQ_BUF_BLK_SZ(count), GFP_KERNEL);
-		if (!wq->bufs[i])
-			return -ENOMEM;
-	}
+		अगर (!wq->bufs[i])
+			वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < blks; i++) {
+	क्रम (i = 0; i < blks; i++) अणु
 		buf = wq->bufs[i];
-		for (j = 0; j < VNIC_WQ_BUF_BLK_ENTRIES(count); j++) {
+		क्रम (j = 0; j < VNIC_WQ_BUF_BLK_ENTRIES(count); j++) अणु
 			buf->index = i * VNIC_WQ_BUF_BLK_ENTRIES(count) + j;
 			buf->desc = (u8 *)wq->ring.descs +
 				wq->ring.desc_size * buf->index;
-			if (buf->index + 1 == count) {
+			अगर (buf->index + 1 == count) अणु
 				buf->next = wq->bufs[0];
 				buf->next->prev = buf;
-				break;
-			} else if (j + 1 == VNIC_WQ_BUF_BLK_ENTRIES(count)) {
+				अवरोध;
+			पूर्ण अन्यथा अगर (j + 1 == VNIC_WQ_BUF_BLK_ENTRIES(count)) अणु
 				buf->next = wq->bufs[i + 1];
 				buf->next->prev = buf;
-			} else {
+			पूर्ण अन्यथा अणु
 				buf->next = buf + 1;
 				buf->next->prev = buf;
 				buf++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	wq->to_use = wq->to_clean = wq->bufs[0];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vnic_wq_free(struct vnic_wq *wq)
-{
-	struct vnic_dev *vdev;
-	unsigned int i;
+व्योम vnic_wq_मुक्त(काष्ठा vnic_wq *wq)
+अणु
+	काष्ठा vnic_dev *vdev;
+	अचिन्हित पूर्णांक i;
 
 	vdev = wq->vdev;
 
-	vnic_dev_free_desc_ring(vdev, &wq->ring);
+	vnic_dev_मुक्त_desc_ring(vdev, &wq->ring);
 
-	for (i = 0; i < VNIC_WQ_BUF_BLKS_MAX; i++) {
-		if (wq->bufs[i]) {
-			kfree(wq->bufs[i]);
-			wq->bufs[i] = NULL;
-		}
-	}
+	क्रम (i = 0; i < VNIC_WQ_BUF_BLKS_MAX; i++) अणु
+		अगर (wq->bufs[i]) अणु
+			kमुक्त(wq->bufs[i]);
+			wq->bufs[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	wq->ctrl = NULL;
-}
+	wq->ctrl = शून्य;
+पूर्ण
 
-int vnic_wq_alloc(struct vnic_dev *vdev, struct vnic_wq *wq, unsigned int index,
-	unsigned int desc_count, unsigned int desc_size)
-{
-	int err;
+पूर्णांक vnic_wq_alloc(काष्ठा vnic_dev *vdev, काष्ठा vnic_wq *wq, अचिन्हित पूर्णांक index,
+	अचिन्हित पूर्णांक desc_count, अचिन्हित पूर्णांक desc_size)
+अणु
+	पूर्णांक err;
 
 	wq->index = index;
 	wq->vdev = vdev;
 
 	wq->ctrl = vnic_dev_get_res(vdev, RES_TYPE_WQ, index);
-	if (!wq->ctrl) {
+	अगर (!wq->ctrl) अणु
 		vdev_err(vdev, "Failed to hook WQ[%d] resource\n", index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vnic_wq_disable(wq);
 
 	err = vnic_dev_alloc_desc_ring(vdev, &wq->ring, desc_count, desc_size);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = vnic_wq_alloc_bufs(wq);
-	if (err) {
-		vnic_wq_free(wq);
-		return err;
-	}
+	अगर (err) अणु
+		vnic_wq_मुक्त(wq);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int enic_wq_devcmd2_alloc(struct vnic_dev *vdev, struct vnic_wq *wq,
-			  unsigned int desc_count, unsigned int desc_size)
-{
-	int err;
+पूर्णांक enic_wq_devcmd2_alloc(काष्ठा vnic_dev *vdev, काष्ठा vnic_wq *wq,
+			  अचिन्हित पूर्णांक desc_count, अचिन्हित पूर्णांक desc_size)
+अणु
+	पूर्णांक err;
 
 	wq->index = 0;
 	wq->vdev = vdev;
 
 	wq->ctrl = vnic_dev_get_res(vdev, RES_TYPE_DEVCMD2, 0);
-	if (!wq->ctrl)
-		return -EINVAL;
+	अगर (!wq->ctrl)
+		वापस -EINVAL;
 	vnic_wq_disable(wq);
 	err = vnic_dev_alloc_desc_ring(vdev, &wq->ring, desc_count, desc_size);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void enic_wq_init_start(struct vnic_wq *wq, unsigned int cq_index,
-			unsigned int fetch_index, unsigned int posted_index,
-			unsigned int error_interrupt_enable,
-			unsigned int error_interrupt_offset)
-{
+व्योम enic_wq_init_start(काष्ठा vnic_wq *wq, अचिन्हित पूर्णांक cq_index,
+			अचिन्हित पूर्णांक fetch_index, अचिन्हित पूर्णांक posted_index,
+			अचिन्हित पूर्णांक error_पूर्णांकerrupt_enable,
+			अचिन्हित पूर्णांक error_पूर्णांकerrupt_offset)
+अणु
 	u64 paddr;
-	unsigned int count = wq->ring.desc_count;
+	अचिन्हित पूर्णांक count = wq->ring.desc_count;
 
 	paddr = (u64)wq->ring.base_addr | VNIC_PADDR_TARGET;
-	writeq(paddr, &wq->ctrl->ring_base);
-	iowrite32(count, &wq->ctrl->ring_size);
-	iowrite32(fetch_index, &wq->ctrl->fetch_index);
-	iowrite32(posted_index, &wq->ctrl->posted_index);
-	iowrite32(cq_index, &wq->ctrl->cq_index);
-	iowrite32(error_interrupt_enable, &wq->ctrl->error_interrupt_enable);
-	iowrite32(error_interrupt_offset, &wq->ctrl->error_interrupt_offset);
-	iowrite32(0, &wq->ctrl->error_status);
+	ग_लिखोq(paddr, &wq->ctrl->ring_base);
+	ioग_लिखो32(count, &wq->ctrl->ring_size);
+	ioग_लिखो32(fetch_index, &wq->ctrl->fetch_index);
+	ioग_लिखो32(posted_index, &wq->ctrl->posted_index);
+	ioग_लिखो32(cq_index, &wq->ctrl->cq_index);
+	ioग_लिखो32(error_पूर्णांकerrupt_enable, &wq->ctrl->error_पूर्णांकerrupt_enable);
+	ioग_लिखो32(error_पूर्णांकerrupt_offset, &wq->ctrl->error_पूर्णांकerrupt_offset);
+	ioग_लिखो32(0, &wq->ctrl->error_status);
 
 	wq->to_use = wq->to_clean =
 		&wq->bufs[fetch_index / VNIC_WQ_BUF_BLK_ENTRIES(count)]
 			[fetch_index % VNIC_WQ_BUF_BLK_ENTRIES(count)];
-}
+पूर्ण
 
-void vnic_wq_init(struct vnic_wq *wq, unsigned int cq_index,
-	unsigned int error_interrupt_enable,
-	unsigned int error_interrupt_offset)
-{
+व्योम vnic_wq_init(काष्ठा vnic_wq *wq, अचिन्हित पूर्णांक cq_index,
+	अचिन्हित पूर्णांक error_पूर्णांकerrupt_enable,
+	अचिन्हित पूर्णांक error_पूर्णांकerrupt_offset)
+अणु
 	enic_wq_init_start(wq, cq_index, 0, 0,
-		error_interrupt_enable,
-		error_interrupt_offset);
-}
+		error_पूर्णांकerrupt_enable,
+		error_पूर्णांकerrupt_offset);
+पूर्ण
 
-unsigned int vnic_wq_error_status(struct vnic_wq *wq)
-{
-	return ioread32(&wq->ctrl->error_status);
-}
+अचिन्हित पूर्णांक vnic_wq_error_status(काष्ठा vnic_wq *wq)
+अणु
+	वापस ioपढ़ो32(&wq->ctrl->error_status);
+पूर्ण
 
-void vnic_wq_enable(struct vnic_wq *wq)
-{
-	iowrite32(1, &wq->ctrl->enable);
-}
+व्योम vnic_wq_enable(काष्ठा vnic_wq *wq)
+अणु
+	ioग_लिखो32(1, &wq->ctrl->enable);
+पूर्ण
 
-int vnic_wq_disable(struct vnic_wq *wq)
-{
-	unsigned int wait;
-	struct vnic_dev *vdev = wq->vdev;
+पूर्णांक vnic_wq_disable(काष्ठा vnic_wq *wq)
+अणु
+	अचिन्हित पूर्णांक रुको;
+	काष्ठा vnic_dev *vdev = wq->vdev;
 
-	iowrite32(0, &wq->ctrl->enable);
+	ioग_लिखो32(0, &wq->ctrl->enable);
 
-	/* Wait for HW to ACK disable request */
-	for (wait = 0; wait < 1000; wait++) {
-		if (!(ioread32(&wq->ctrl->running)))
-			return 0;
+	/* Wait क्रम HW to ACK disable request */
+	क्रम (रुको = 0; रुको < 1000; रुको++) अणु
+		अगर (!(ioपढ़ो32(&wq->ctrl->running)))
+			वापस 0;
 		udelay(10);
-	}
+	पूर्ण
 
 	vdev_neterr(vdev, "Failed to disable WQ[%d]\n", wq->index);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-void vnic_wq_clean(struct vnic_wq *wq,
-	void (*buf_clean)(struct vnic_wq *wq, struct vnic_wq_buf *buf))
-{
-	struct vnic_wq_buf *buf;
+व्योम vnic_wq_clean(काष्ठा vnic_wq *wq,
+	व्योम (*buf_clean)(काष्ठा vnic_wq *wq, काष्ठा vnic_wq_buf *buf))
+अणु
+	काष्ठा vnic_wq_buf *buf;
 
 	buf = wq->to_clean;
 
-	while (vnic_wq_desc_used(wq) > 0) {
+	जबतक (vnic_wq_desc_used(wq) > 0) अणु
 
 		(*buf_clean)(wq, buf);
 
 		buf = wq->to_clean = buf->next;
 		wq->ring.desc_avail++;
-	}
+	पूर्ण
 
 	wq->to_use = wq->to_clean = wq->bufs[0];
 
-	iowrite32(0, &wq->ctrl->fetch_index);
-	iowrite32(0, &wq->ctrl->posted_index);
-	iowrite32(0, &wq->ctrl->error_status);
+	ioग_लिखो32(0, &wq->ctrl->fetch_index);
+	ioग_लिखो32(0, &wq->ctrl->posted_index);
+	ioग_लिखो32(0, &wq->ctrl->error_status);
 
 	vnic_dev_clear_desc_ring(&wq->ring);
-}
+पूर्ण

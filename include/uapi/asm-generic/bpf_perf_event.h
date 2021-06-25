@@ -1,9 +1,10 @@
-#ifndef _UAPI__ASM_GENERIC_BPF_PERF_EVENT_H__
-#define _UAPI__ASM_GENERIC_BPF_PERF_EVENT_H__
+<शैली गुरु>
+#अगर_अघोषित _UAPI__ASM_GENERIC_BPF_PERF_EVENT_H__
+#घोषणा _UAPI__ASM_GENERIC_BPF_PERF_EVENT_H__
 
-#include <linux/ptrace.h>
+#समावेश <linux/ptrace.h>
 
-/* Export kernel pt_regs structure */
-typedef struct pt_regs bpf_user_pt_regs_t;
+/* Export kernel pt_regs काष्ठाure */
+प्रकार काष्ठा pt_regs bpf_user_pt_regs_t;
 
-#endif /* _UAPI__ASM_GENERIC_BPF_PERF_EVENT_H__ */
+#पूर्ण_अगर /* _UAPI__ASM_GENERIC_BPF_PERF_EVENT_H__ */

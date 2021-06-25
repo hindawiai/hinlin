@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Common prep/pmac/chrp boot and setup code.
  */
 
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/reboot.h>
-#include <linux/delay.h>
-#include <linux/initrd.h>
-#include <linux/tty.h>
-#include <linux/seq_file.h>
-#include <linux/root_dev.h>
-#include <linux/cpu.h>
-#include <linux/console.h>
-#include <linux/memblock.h>
-#include <linux/export.h>
-#include <linux/nvram.h>
-#include <linux/pgtable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/root_dev.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/console.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/export.h>
+#समावेश <linux/nvram.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/processor.h>
-#include <asm/setup.h>
-#include <asm/smp.h>
-#include <asm/elf.h>
-#include <asm/cputable.h>
-#include <asm/bootx.h>
-#include <asm/btext.h>
-#include <asm/machdep.h>
-#include <linux/uaccess.h>
-#include <asm/pmac_feature.h>
-#include <asm/sections.h>
-#include <asm/nvram.h>
-#include <asm/xmon.h>
-#include <asm/time.h>
-#include <asm/serial.h>
-#include <asm/udbg.h>
-#include <asm/code-patching.h>
-#include <asm/cpu_has_feature.h>
-#include <asm/asm-prototypes.h>
-#include <asm/kdump.h>
-#include <asm/feature-fixups.h>
-#include <asm/early_ioremap.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/elf.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/bootx.h>
+#समावेश <यंत्र/btext.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/pmac_feature.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/nvram.h>
+#समावेश <यंत्र/xmon.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/serial.h>
+#समावेश <यंत्र/udbg.h>
+#समावेश <यंत्र/code-patching.h>
+#समावेश <यंत्र/cpu_has_feature.h>
+#समावेश <यंत्र/यंत्र-prototypes.h>
+#समावेश <यंत्र/kdump.h>
+#समावेश <यंत्र/feature-fixups.h>
+#समावेश <यंत्र/early_ioremap.h>
 
-#include "setup.h"
+#समावेश "setup.h"
 
-#define DBG(fmt...)
+#घोषणा DBG(fmt...)
 
-extern void bootx_init(unsigned long r4, unsigned long phys);
+बाह्य व्योम bootx_init(अचिन्हित दीर्घ r4, अचिन्हित दीर्घ phys);
 
-int boot_cpuid_phys;
+पूर्णांक boot_cpuid_phys;
 EXPORT_SYMBOL_GPL(boot_cpuid_phys);
 
-int smp_hw_index[NR_CPUS];
+पूर्णांक smp_hw_index[NR_CPUS];
 EXPORT_SYMBOL(smp_hw_index);
 
-unsigned int DMA_MODE_READ;
-unsigned int DMA_MODE_WRITE;
+अचिन्हित पूर्णांक DMA_MODE_READ;
+अचिन्हित पूर्णांक DMA_MODE_WRITE;
 
 EXPORT_SYMBOL(DMA_MODE_READ);
 EXPORT_SYMBOL(DMA_MODE_WRITE);
 
 /*
- * This is run before start_kernel(), the kernel has been relocated
+ * This is run beक्रमe start_kernel(), the kernel has been relocated
  * and we are running with enough of the MMU enabled to have our
- * proper kernel virtual addresses
+ * proper kernel भव addresses
  *
- * We do the initial parsing of the flat device-tree and prepares
- * for the MMU to be fully initialized.
+ * We करो the initial parsing of the flat device-tree and prepares
+ * क्रम the MMU to be fully initialized.
  */
-notrace void __init machine_init(u64 dt_ptr)
-{
-	struct ppc_inst *addr = (struct ppc_inst *)patch_site_addr(&patch__memset_nocache);
-	struct ppc_inst insn;
+notrace व्योम __init machine_init(u64 dt_ptr)
+अणु
+	काष्ठा ppc_inst *addr = (काष्ठा ppc_inst *)patch_site_addr(&patch__स_रखो_nocache);
+	काष्ठा ppc_inst insn;
 
-	/* Configure static keys first, now that we're relocated. */
+	/* Configure अटल keys first, now that we're relocated. */
 	setup_feature_keys();
 
 	early_ioremap_init();
 
-	/* Enable early debugging if any specified (see udbg.h) */
+	/* Enable early debugging अगर any specअगरied (see udbg.h) */
 	udbg_early_init();
 
-	patch_instruction_site(&patch__memcpy_nocache, ppc_inst(PPC_INST_NOP));
+	patch_inकाष्ठाion_site(&patch__स_नकल_nocache, ppc_inst(PPC_INST_NOP));
 
 	create_cond_branch(&insn, addr, branch_target(addr), 0x820000);
-	patch_instruction(addr, insn);	/* replace b by bne cr0 */
+	patch_inकाष्ठाion(addr, insn);	/* replace b by bne cr0 */
 
 	/* Do some early initialization based on the flat device tree */
 	early_init_devtree(__va(dt_ptr));
@@ -96,130 +97,130 @@ notrace void __init machine_init(u64 dt_ptr)
 	early_init_mmu();
 
 	setup_kdump_trampoline();
-}
+पूर्ण
 
 /* Checks "l2cr=xxxx" command-line option */
-static int __init ppc_setup_l2cr(char *str)
-{
-	if (cpu_has_feature(CPU_FTR_L2CR)) {
-		unsigned long val = simple_strtoul(str, NULL, 0);
-		printk(KERN_INFO "l2cr set to %lx\n", val);
-		_set_L2CR(0);		/* force invalidate by disable cache */
+अटल पूर्णांक __init ppc_setup_l2cr(अक्षर *str)
+अणु
+	अगर (cpu_has_feature(CPU_FTR_L2CR)) अणु
+		अचिन्हित दीर्घ val = simple_म_से_अदीर्घ(str, शून्य, 0);
+		prपूर्णांकk(KERN_INFO "l2cr set to %lx\n", val);
+		_set_L2CR(0);		/* क्रमce invalidate by disable cache */
 		_set_L2CR(val);		/* and enable it */
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 __setup("l2cr=", ppc_setup_l2cr);
 
 /* Checks "l3cr=xxxx" command-line option */
-static int __init ppc_setup_l3cr(char *str)
-{
-	if (cpu_has_feature(CPU_FTR_L3CR)) {
-		unsigned long val = simple_strtoul(str, NULL, 0);
-		printk(KERN_INFO "l3cr set to %lx\n", val);
+अटल पूर्णांक __init ppc_setup_l3cr(अक्षर *str)
+अणु
+	अगर (cpu_has_feature(CPU_FTR_L3CR)) अणु
+		अचिन्हित दीर्घ val = simple_म_से_अदीर्घ(str, शून्य, 0);
+		prपूर्णांकk(KERN_INFO "l3cr set to %lx\n", val);
 		_set_L3CR(val);		/* and enable it */
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 __setup("l3cr=", ppc_setup_l3cr);
 
-static int __init ppc_init(void)
-{
+अटल पूर्णांक __init ppc_init(व्योम)
+अणु
 	/* clear the progress line */
-	if (ppc_md.progress)
+	अगर (ppc_md.progress)
 		ppc_md.progress("             ", 0xffff);
 
-	/* call platform init */
-	if (ppc_md.init != NULL) {
+	/* call platक्रमm init */
+	अगर (ppc_md.init != शून्य) अणु
 		ppc_md.init();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 arch_initcall(ppc_init);
 
-static void *__init alloc_stack(void)
-{
-	void *ptr = memblock_alloc(THREAD_SIZE, THREAD_ALIGN);
+अटल व्योम *__init alloc_stack(व्योम)
+अणु
+	व्योम *ptr = memblock_alloc(THREAD_SIZE, THREAD_ALIGN);
 
-	if (!ptr)
+	अगर (!ptr)
 		panic("cannot allocate %d bytes for stack at %pS\n",
-		      THREAD_SIZE, (void *)_RET_IP_);
+		      THREAD_SIZE, (व्योम *)_RET_IP_);
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-void __init irqstack_early_init(void)
-{
-	unsigned int i;
+व्योम __init irqstack_early_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (IS_ENABLED(CONFIG_VMAP_STACK))
-		return;
+	अगर (IS_ENABLED(CONFIG_VMAP_STACK))
+		वापस;
 
-	/* interrupt stacks must be in lowmem, we get that for free on ppc32
-	 * as the memblock is limited to lowmem by default */
-	for_each_possible_cpu(i) {
+	/* पूर्णांकerrupt stacks must be in lowmem, we get that क्रम मुक्त on ppc32
+	 * as the memblock is limited to lowmem by शेष */
+	क्रम_each_possible_cpu(i) अणु
 		softirq_ctx[i] = alloc_stack();
 		hardirq_ctx[i] = alloc_stack();
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_VMAP_STACK
-void *emergency_ctx[NR_CPUS] __ro_after_init = {[0] = &init_stack};
+#अगर_घोषित CONFIG_VMAP_STACK
+व्योम *emergency_ctx[NR_CPUS] __ro_after_init = अणु[0] = &init_stackपूर्ण;
 
-void __init emergency_stack_init(void)
-{
-	unsigned int i;
+व्योम __init emergency_stack_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for_each_possible_cpu(i)
+	क्रम_each_possible_cpu(i)
 		emergency_ctx[i] = alloc_stack();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_BOOKE) || defined(CONFIG_40x)
-void __init exc_lvl_early_init(void)
-{
-	unsigned int i, hw_cpu;
+#अगर defined(CONFIG_BOOKE) || defined(CONFIG_40x)
+व्योम __init exc_lvl_early_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i, hw_cpu;
 
-	/* interrupt stacks must be in lowmem, we get that for free on ppc32
+	/* पूर्णांकerrupt stacks must be in lowmem, we get that क्रम मुक्त on ppc32
 	 * as the memblock is limited to lowmem by MEMBLOCK_REAL_LIMIT */
-	for_each_possible_cpu(i) {
-#ifdef CONFIG_SMP
+	क्रम_each_possible_cpu(i) अणु
+#अगर_घोषित CONFIG_SMP
 		hw_cpu = get_hard_smp_processor_id(i);
-#else
+#अन्यथा
 		hw_cpu = 0;
-#endif
+#पूर्ण_अगर
 
 		critirq_ctx[hw_cpu] = alloc_stack();
-#ifdef CONFIG_BOOKE
+#अगर_घोषित CONFIG_BOOKE
 		dbgirq_ctx[hw_cpu] = alloc_stack();
 		mcheckirq_ctx[hw_cpu] = alloc_stack();
-#endif
-	}
-}
-#endif
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-void __init setup_power_save(void)
-{
-#ifdef CONFIG_PPC_BOOK3S_32
-	if (cpu_has_feature(CPU_FTR_CAN_DOZE) ||
+व्योम __init setup_घातer_save(व्योम)
+अणु
+#अगर_घोषित CONFIG_PPC_BOOK3S_32
+	अगर (cpu_has_feature(CPU_FTR_CAN_DOZE) ||
 	    cpu_has_feature(CPU_FTR_CAN_NAP))
-		ppc_md.power_save = ppc6xx_idle;
-#endif
+		ppc_md.घातer_save = ppc6xx_idle;
+#पूर्ण_अगर
 
-#ifdef CONFIG_E500
-	if (cpu_has_feature(CPU_FTR_CAN_DOZE) ||
+#अगर_घोषित CONFIG_E500
+	अगर (cpu_has_feature(CPU_FTR_CAN_DOZE) ||
 	    cpu_has_feature(CPU_FTR_CAN_NAP))
-		ppc_md.power_save = e500_idle;
-#endif
-}
+		ppc_md.घातer_save = e500_idle;
+#पूर्ण_अगर
+पूर्ण
 
-__init void initialize_cache_info(void)
-{
+__init व्योम initialize_cache_info(व्योम)
+अणु
 	/*
-	 * Set cache line size based on type of cpu as a default.
+	 * Set cache line size based on type of cpu as a शेष.
 	 * Systems with OF can look in the properties on the cpu node(s)
-	 * for a possibly more accurate value.
+	 * क्रम a possibly more accurate value.
 	 */
 	dcache_bsize = cur_cpu_spec->dcache_bsize;
 	icache_bsize = cur_cpu_spec->icache_bsize;
-}
+पूर्ण

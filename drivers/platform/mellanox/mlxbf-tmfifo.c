@@ -1,318 +1,319 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Mellanox BlueField SoC TmFifo driver
+ * Mellanox BlueField SoC TmFअगरo driver
  *
  * Copyright (C) 2019 Mellanox Technologies
  */
 
-#include <linux/acpi.h>
-#include <linux/bitfield.h>
-#include <linux/circ_buf.h>
-#include <linux/efi.h>
-#include <linux/irq.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/platform_device.h>
-#include <linux/types.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/types.h>
 
-#include <linux/virtio_config.h>
-#include <linux/virtio_console.h>
-#include <linux/virtio_ids.h>
-#include <linux/virtio_net.h>
-#include <linux/virtio_ring.h>
+#समावेश <linux/virtio_config.h>
+#समावेश <linux/virtio_console.h>
+#समावेश <linux/virtio_ids.h>
+#समावेश <linux/virtio_net.h>
+#समावेश <linux/virtio_ring.h>
 
-#include "mlxbf-tmfifo-regs.h"
+#समावेश "mlxbf-tmfifo-regs.h"
 
 /* Vring size. */
-#define MLXBF_TMFIFO_VRING_SIZE			SZ_1K
+#घोषणा MLXBF_TMFIFO_VRING_SIZE			SZ_1K
 
 /* Console Tx buffer size. */
-#define MLXBF_TMFIFO_CON_TX_BUF_SIZE		SZ_32K
+#घोषणा MLXBF_TMFIFO_CON_TX_BUF_SIZE		SZ_32K
 
 /* Console Tx buffer reserved space. */
-#define MLXBF_TMFIFO_CON_TX_BUF_RSV_SIZE	8
+#घोषणा MLXBF_TMFIFO_CON_TX_BUF_RSV_SIZE	8
 
-/* House-keeping timer interval. */
-#define MLXBF_TMFIFO_TIMER_INTERVAL		(HZ / 10)
+/* House-keeping समयr पूर्णांकerval. */
+#घोषणा MLXBF_TMFIFO_TIMER_INTERVAL		(HZ / 10)
 
 /* Virtual devices sharing the TM FIFO. */
-#define MLXBF_TMFIFO_VDEV_MAX		(VIRTIO_ID_CONSOLE + 1)
+#घोषणा MLXBF_TMFIFO_VDEV_MAX		(VIRTIO_ID_CONSOLE + 1)
 
 /*
- * Reserve 1/16 of TmFifo space, so console messages are not starved by
+ * Reserve 1/16 of TmFअगरo space, so console messages are not starved by
  * the networking traffic.
  */
-#define MLXBF_TMFIFO_RESERVE_RATIO		16
+#घोषणा MLXBF_TMFIFO_RESERVE_RATIO		16
 
-/* Message with data needs at least two words (for header & data). */
-#define MLXBF_TMFIFO_DATA_MIN_WORDS		2
+/* Message with data needs at least two words (क्रम header & data). */
+#घोषणा MLXBF_TMFIFO_DATA_MIN_WORDS		2
 
-struct mlxbf_tmfifo;
+काष्ठा mlxbf_पंचांगfअगरo;
 
 /**
- * mlxbf_tmfifo_vring - Structure of the TmFifo virtual ring
- * @va: virtual address of the ring
+ * mlxbf_पंचांगfअगरo_vring - Structure of the TmFअगरo भव ring
+ * @va: भव address of the ring
  * @dma: dma address of the ring
- * @vq: pointer to the virtio virtqueue
+ * @vq: poपूर्णांकer to the virtio virtqueue
  * @desc: current descriptor of the pending packet
  * @desc_head: head descriptor of the pending packet
  * @cur_len: processed length of the current descriptor
- * @rem_len: remaining length of the pending packet
+ * @rem_len: reमुख्यing length of the pending packet
  * @pkt_len: total length of the pending packet
  * @next_avail: next avail descriptor id
  * @num: vring size (number of descriptors)
  * @align: vring alignment size
  * @index: vring index
  * @vdev_id: vring virtio id (VIRTIO_ID_xxx)
- * @fifo: pointer to the tmfifo structure
+ * @fअगरo: poपूर्णांकer to the पंचांगfअगरo काष्ठाure
  */
-struct mlxbf_tmfifo_vring {
-	void *va;
+काष्ठा mlxbf_पंचांगfअगरo_vring अणु
+	व्योम *va;
 	dma_addr_t dma;
-	struct virtqueue *vq;
-	struct vring_desc *desc;
-	struct vring_desc *desc_head;
-	int cur_len;
-	int rem_len;
+	काष्ठा virtqueue *vq;
+	काष्ठा vring_desc *desc;
+	काष्ठा vring_desc *desc_head;
+	पूर्णांक cur_len;
+	पूर्णांक rem_len;
 	u32 pkt_len;
 	u16 next_avail;
-	int num;
-	int align;
-	int index;
-	int vdev_id;
-	struct mlxbf_tmfifo *fifo;
-};
+	पूर्णांक num;
+	पूर्णांक align;
+	पूर्णांक index;
+	पूर्णांक vdev_id;
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo;
+पूर्ण;
 
 /* Interrupt types. */
-enum {
+क्रमागत अणु
 	MLXBF_TM_RX_LWM_IRQ,
 	MLXBF_TM_RX_HWM_IRQ,
 	MLXBF_TM_TX_LWM_IRQ,
 	MLXBF_TM_TX_HWM_IRQ,
 	MLXBF_TM_MAX_IRQ
-};
+पूर्ण;
 
 /* Ring types (Rx & Tx). */
-enum {
+क्रमागत अणु
 	MLXBF_TMFIFO_VRING_RX,
 	MLXBF_TMFIFO_VRING_TX,
 	MLXBF_TMFIFO_VRING_MAX
-};
+पूर्ण;
 
 /**
- * mlxbf_tmfifo_vdev - Structure of the TmFifo virtual device
+ * mlxbf_पंचांगfअगरo_vdev - Structure of the TmFअगरo भव device
  * @vdev: virtio device, in which the vdev.id.device field has the
- *        VIRTIO_ID_xxx id to distinguish the virtual device.
+ *        VIRTIO_ID_xxx id to distinguish the भव device.
  * @status: status of the device
  * @features: supported features of the device
- * @vrings: array of tmfifo vrings of this device
- * @config.cons: virtual console config -
- *               select if vdev.id.device is VIRTIO_ID_CONSOLE
- * @config.net: virtual network config -
- *              select if vdev.id.device is VIRTIO_ID_NET
- * @tx_buf: tx buffer used to buffer data before writing into the FIFO
+ * @vrings: array of पंचांगfअगरo vrings of this device
+ * @config.cons: भव console config -
+ *               select अगर vdev.id.device is VIRTIO_ID_CONSOLE
+ * @config.net: भव network config -
+ *              select अगर vdev.id.device is VIRTIO_ID_NET
+ * @tx_buf: tx buffer used to buffer data beक्रमe writing पूर्णांकo the FIFO
  */
-struct mlxbf_tmfifo_vdev {
-	struct virtio_device vdev;
+काष्ठा mlxbf_पंचांगfअगरo_vdev अणु
+	काष्ठा virtio_device vdev;
 	u8 status;
 	u64 features;
-	struct mlxbf_tmfifo_vring vrings[MLXBF_TMFIFO_VRING_MAX];
-	union {
-		struct virtio_console_config cons;
-		struct virtio_net_config net;
-	} config;
-	struct circ_buf tx_buf;
-};
+	काष्ठा mlxbf_पंचांगfअगरo_vring vrings[MLXBF_TMFIFO_VRING_MAX];
+	जोड़ अणु
+		काष्ठा virtio_console_config cons;
+		काष्ठा virtio_net_config net;
+	पूर्ण config;
+	काष्ठा circ_buf tx_buf;
+पूर्ण;
 
 /**
- * mlxbf_tmfifo_irq_info - Structure of the interrupt information
- * @fifo: pointer to the tmfifo structure
- * @irq: interrupt number
- * @index: index into the interrupt array
+ * mlxbf_पंचांगfअगरo_irq_info - Structure of the पूर्णांकerrupt inक्रमmation
+ * @fअगरo: poपूर्णांकer to the पंचांगfअगरo काष्ठाure
+ * @irq: पूर्णांकerrupt number
+ * @index: index पूर्णांकo the पूर्णांकerrupt array
  */
-struct mlxbf_tmfifo_irq_info {
-	struct mlxbf_tmfifo *fifo;
-	int irq;
-	int index;
-};
+काष्ठा mlxbf_पंचांगfअगरo_irq_info अणु
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo;
+	पूर्णांक irq;
+	पूर्णांक index;
+पूर्ण;
 
 /**
- * mlxbf_tmfifo - Structure of the TmFifo
- * @vdev: array of the virtual devices running over the TmFifo
- * @lock: lock to protect the TmFifo access
- * @rx_base: mapped register base address for the Rx FIFO
- * @tx_base: mapped register base address for the Tx FIFO
- * @rx_fifo_size: number of entries of the Rx FIFO
- * @tx_fifo_size: number of entries of the Tx FIFO
- * @pend_events: pending bits for deferred events
- * @irq_info: interrupt information
- * @work: work struct for deferred process
- * @timer: background timer
+ * mlxbf_पंचांगfअगरo - Structure of the TmFअगरo
+ * @vdev: array of the भव devices running over the TmFअगरo
+ * @lock: lock to protect the TmFअगरo access
+ * @rx_base: mapped रेजिस्टर base address क्रम the Rx FIFO
+ * @tx_base: mapped रेजिस्टर base address क्रम the Tx FIFO
+ * @rx_fअगरo_size: number of entries of the Rx FIFO
+ * @tx_fअगरo_size: number of entries of the Tx FIFO
+ * @pend_events: pending bits क्रम deferred events
+ * @irq_info: पूर्णांकerrupt inक्रमmation
+ * @work: work काष्ठा क्रम deferred process
+ * @समयr: background समयr
  * @vring: Tx/Rx ring
  * @spin_lock: Tx/Rx spin lock
- * @is_ready: ready flag
+ * @is_पढ़ोy: पढ़ोy flag
  */
-struct mlxbf_tmfifo {
-	struct mlxbf_tmfifo_vdev *vdev[MLXBF_TMFIFO_VDEV_MAX];
-	struct mutex lock;		/* TmFifo lock */
-	void __iomem *rx_base;
-	void __iomem *tx_base;
-	int rx_fifo_size;
-	int tx_fifo_size;
-	unsigned long pend_events;
-	struct mlxbf_tmfifo_irq_info irq_info[MLXBF_TM_MAX_IRQ];
-	struct work_struct work;
-	struct timer_list timer;
-	struct mlxbf_tmfifo_vring *vring[2];
+काष्ठा mlxbf_पंचांगfअगरo अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *vdev[MLXBF_TMFIFO_VDEV_MAX];
+	काष्ठा mutex lock;		/* TmFअगरo lock */
+	व्योम __iomem *rx_base;
+	व्योम __iomem *tx_base;
+	पूर्णांक rx_fअगरo_size;
+	पूर्णांक tx_fअगरo_size;
+	अचिन्हित दीर्घ pend_events;
+	काष्ठा mlxbf_पंचांगfअगरo_irq_info irq_info[MLXBF_TM_MAX_IRQ];
+	काष्ठा work_काष्ठा work;
+	काष्ठा समयr_list समयr;
+	काष्ठा mlxbf_पंचांगfअगरo_vring *vring[2];
 	spinlock_t spin_lock[2];	/* spin lock */
-	bool is_ready;
-};
+	bool is_पढ़ोy;
+पूर्ण;
 
 /**
- * mlxbf_tmfifo_msg_hdr - Structure of the TmFifo message header
+ * mlxbf_पंचांगfअगरo_msg_hdr - Structure of the TmFअगरo message header
  * @type: message type
- * @len: payload length in network byte order. Messages sent into the FIFO
- *       will be read by the other side as data stream in the same byte order.
- *       The length needs to be encoded into network order so both sides
+ * @len: payload length in network byte order. Messages sent पूर्णांकo the FIFO
+ *       will be पढ़ो by the other side as data stream in the same byte order.
+ *       The length needs to be encoded पूर्णांकo network order so both sides
  *       could understand it.
  */
-struct mlxbf_tmfifo_msg_hdr {
+काष्ठा mlxbf_पंचांगfअगरo_msg_hdr अणु
 	u8 type;
 	__be16 len;
 	u8 unused[5];
-} __packed __aligned(sizeof(u64));
+पूर्ण __packed __aligned(माप(u64));
 
 /*
  * Default MAC.
- * This MAC address will be read from EFI persistent variable if configured.
+ * This MAC address will be पढ़ो from EFI persistent variable अगर configured.
  * It can also be reconfigured with standard Linux tools.
  */
-static u8 mlxbf_tmfifo_net_default_mac[ETH_ALEN] = {
+अटल u8 mlxbf_पंचांगfअगरo_net_शेष_mac[ETH_ALEN] = अणु
 	0x00, 0x1A, 0xCA, 0xFF, 0xFF, 0x01
-};
+पूर्ण;
 
 /* EFI variable name of the MAC address. */
-static efi_char16_t mlxbf_tmfifo_efi_name[] = L"RshimMacAddr";
+अटल efi_अक्षर16_t mlxbf_पंचांगfअगरo_efi_name[] = L"RshimMacAddr";
 
 /* Maximum L2 header length. */
-#define MLXBF_TMFIFO_NET_L2_OVERHEAD	36
+#घोषणा MLXBF_TMFIFO_NET_L2_OVERHEAD	36
 
 /* Supported virtio-net features. */
-#define MLXBF_TMFIFO_NET_FEATURES \
+#घोषणा MLXBF_TMFIFO_NET_FEATURES \
 	(BIT_ULL(VIRTIO_NET_F_MTU) | BIT_ULL(VIRTIO_NET_F_STATUS) | \
 	 BIT_ULL(VIRTIO_NET_F_MAC))
 
-#define mlxbf_vdev_to_tmfifo(d) container_of(d, struct mlxbf_tmfifo_vdev, vdev)
+#घोषणा mlxbf_vdev_to_पंचांगfअगरo(d) container_of(d, काष्ठा mlxbf_पंचांगfअगरo_vdev, vdev)
 
 /* Free vrings of the FIFO device. */
-static void mlxbf_tmfifo_free_vrings(struct mlxbf_tmfifo *fifo,
-				     struct mlxbf_tmfifo_vdev *tm_vdev)
-{
-	struct mlxbf_tmfifo_vring *vring;
-	int i, size;
+अटल व्योम mlxbf_पंचांगfअगरo_मुक्त_vrings(काष्ठा mlxbf_पंचांगfअगरo *fअगरo,
+				     काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vring *vring;
+	पूर्णांक i, size;
 
-	for (i = 0; i < ARRAY_SIZE(tm_vdev->vrings); i++) {
-		vring = &tm_vdev->vrings[i];
-		if (vring->va) {
+	क्रम (i = 0; i < ARRAY_SIZE(पंचांग_vdev->vrings); i++) अणु
+		vring = &पंचांग_vdev->vrings[i];
+		अगर (vring->va) अणु
 			size = vring_size(vring->num, vring->align);
-			dma_free_coherent(tm_vdev->vdev.dev.parent, size,
+			dma_मुक्त_coherent(पंचांग_vdev->vdev.dev.parent, size,
 					  vring->va, vring->dma);
-			vring->va = NULL;
-			if (vring->vq) {
+			vring->va = शून्य;
+			अगर (vring->vq) अणु
 				vring_del_virtqueue(vring->vq);
-				vring->vq = NULL;
-			}
-		}
-	}
-}
+				vring->vq = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* Allocate vrings for the FIFO. */
-static int mlxbf_tmfifo_alloc_vrings(struct mlxbf_tmfifo *fifo,
-				     struct mlxbf_tmfifo_vdev *tm_vdev)
-{
-	struct mlxbf_tmfifo_vring *vring;
-	struct device *dev;
+/* Allocate vrings क्रम the FIFO. */
+अटल पूर्णांक mlxbf_पंचांगfअगरo_alloc_vrings(काष्ठा mlxbf_पंचांगfअगरo *fअगरo,
+				     काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vring *vring;
+	काष्ठा device *dev;
 	dma_addr_t dma;
-	int i, size;
-	void *va;
+	पूर्णांक i, size;
+	व्योम *va;
 
-	for (i = 0; i < ARRAY_SIZE(tm_vdev->vrings); i++) {
-		vring = &tm_vdev->vrings[i];
-		vring->fifo = fifo;
+	क्रम (i = 0; i < ARRAY_SIZE(पंचांग_vdev->vrings); i++) अणु
+		vring = &पंचांग_vdev->vrings[i];
+		vring->fअगरo = fअगरo;
 		vring->num = MLXBF_TMFIFO_VRING_SIZE;
 		vring->align = SMP_CACHE_BYTES;
 		vring->index = i;
-		vring->vdev_id = tm_vdev->vdev.id.device;
-		dev = &tm_vdev->vdev.dev;
+		vring->vdev_id = पंचांग_vdev->vdev.id.device;
+		dev = &पंचांग_vdev->vdev.dev;
 
 		size = vring_size(vring->num, vring->align);
 		va = dma_alloc_coherent(dev->parent, size, &dma, GFP_KERNEL);
-		if (!va) {
-			mlxbf_tmfifo_free_vrings(fifo, tm_vdev);
+		अगर (!va) अणु
+			mlxbf_पंचांगfअगरo_मुक्त_vrings(fअगरo, पंचांग_vdev);
 			dev_err(dev->parent, "dma_alloc_coherent failed\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		vring->va = va;
 		vring->dma = dma;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Disable interrupts of the FIFO device. */
-static void mlxbf_tmfifo_disable_irqs(struct mlxbf_tmfifo *fifo)
-{
-	int i, irq;
+/* Disable पूर्णांकerrupts of the FIFO device. */
+अटल व्योम mlxbf_पंचांगfअगरo_disable_irqs(काष्ठा mlxbf_पंचांगfअगरo *fअगरo)
+अणु
+	पूर्णांक i, irq;
 
-	for (i = 0; i < MLXBF_TM_MAX_IRQ; i++) {
-		irq = fifo->irq_info[i].irq;
-		fifo->irq_info[i].irq = 0;
+	क्रम (i = 0; i < MLXBF_TM_MAX_IRQ; i++) अणु
+		irq = fअगरo->irq_info[i].irq;
+		fअगरo->irq_info[i].irq = 0;
 		disable_irq(irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Interrupt handler. */
-static irqreturn_t mlxbf_tmfifo_irq_handler(int irq, void *arg)
-{
-	struct mlxbf_tmfifo_irq_info *irq_info = arg;
+अटल irqवापस_t mlxbf_पंचांगfअगरo_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_irq_info *irq_info = arg;
 
-	if (!test_and_set_bit(irq_info->index, &irq_info->fifo->pend_events))
-		schedule_work(&irq_info->fifo->work);
+	अगर (!test_and_set_bit(irq_info->index, &irq_info->fअगरo->pend_events))
+		schedule_work(&irq_info->fअगरo->work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* Get the next packet descriptor from the vring. */
-static struct vring_desc *
-mlxbf_tmfifo_get_next_desc(struct mlxbf_tmfifo_vring *vring)
-{
-	const struct vring *vr = virtqueue_get_vring(vring->vq);
-	struct virtio_device *vdev = vring->vq->vdev;
-	unsigned int idx, head;
+अटल काष्ठा vring_desc *
+mlxbf_पंचांगfअगरo_get_next_desc(काष्ठा mlxbf_पंचांगfअगरo_vring *vring)
+अणु
+	स्थिर काष्ठा vring *vr = virtqueue_get_vring(vring->vq);
+	काष्ठा virtio_device *vdev = vring->vq->vdev;
+	अचिन्हित पूर्णांक idx, head;
 
-	if (vring->next_avail == virtio16_to_cpu(vdev, vr->avail->idx))
-		return NULL;
+	अगर (vring->next_avail == virtio16_to_cpu(vdev, vr->avail->idx))
+		वापस शून्य;
 
-	/* Make sure 'avail->idx' is visible already. */
+	/* Make sure 'avail->idx' is visible alपढ़ोy. */
 	virtio_rmb(false);
 
 	idx = vring->next_avail % vr->num;
 	head = virtio16_to_cpu(vdev, vr->avail->ring[idx]);
-	if (WARN_ON(head >= vr->num))
-		return NULL;
+	अगर (WARN_ON(head >= vr->num))
+		वापस शून्य;
 
 	vring->next_avail++;
 
-	return &vr->desc[head];
-}
+	वापस &vr->desc[head];
+पूर्ण
 
 /* Release virtio descriptor. */
-static void mlxbf_tmfifo_release_desc(struct mlxbf_tmfifo_vring *vring,
-				      struct vring_desc *desc, u32 len)
-{
-	const struct vring *vr = virtqueue_get_vring(vring->vq);
-	struct virtio_device *vdev = vring->vq->vdev;
+अटल व्योम mlxbf_पंचांगfअगरo_release_desc(काष्ठा mlxbf_पंचांगfअगरo_vring *vring,
+				      काष्ठा vring_desc *desc, u32 len)
+अणु
+	स्थिर काष्ठा vring *vr = virtqueue_get_vring(vring->vq);
+	काष्ठा virtio_device *vdev = vring->vq->vdev;
 	u16 idx, vr_idx;
 
 	vr_idx = virtio16_to_cpu(vdev, vr->used->idx);
@@ -322,976 +323,976 @@ static void mlxbf_tmfifo_release_desc(struct mlxbf_tmfifo_vring *vring,
 
 	/*
 	 * Virtio could poll and check the 'idx' to decide whether the desc is
-	 * done or not. Add a memory barrier here to make sure the update above
-	 * completes before updating the idx.
+	 * करोne or not. Add a memory barrier here to make sure the update above
+	 * completes beक्रमe updating the idx.
 	 */
 	virtio_mb(false);
 	vr->used->idx = cpu_to_virtio16(vdev, vr_idx + 1);
-}
+पूर्ण
 
 /* Get the total length of the descriptor chain. */
-static u32 mlxbf_tmfifo_get_pkt_len(struct mlxbf_tmfifo_vring *vring,
-				    struct vring_desc *desc)
-{
-	const struct vring *vr = virtqueue_get_vring(vring->vq);
-	struct virtio_device *vdev = vring->vq->vdev;
+अटल u32 mlxbf_पंचांगfअगरo_get_pkt_len(काष्ठा mlxbf_पंचांगfअगरo_vring *vring,
+				    काष्ठा vring_desc *desc)
+अणु
+	स्थिर काष्ठा vring *vr = virtqueue_get_vring(vring->vq);
+	काष्ठा virtio_device *vdev = vring->vq->vdev;
 	u32 len = 0, idx;
 
-	while (desc) {
+	जबतक (desc) अणु
 		len += virtio32_to_cpu(vdev, desc->len);
-		if (!(virtio16_to_cpu(vdev, desc->flags) & VRING_DESC_F_NEXT))
-			break;
+		अगर (!(virtio16_to_cpu(vdev, desc->flags) & VRING_DESC_F_NEXT))
+			अवरोध;
 		idx = virtio16_to_cpu(vdev, desc->next);
 		desc = &vr->desc[idx];
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static void mlxbf_tmfifo_release_pending_pkt(struct mlxbf_tmfifo_vring *vring)
-{
-	struct vring_desc *desc_head;
+अटल व्योम mlxbf_पंचांगfअगरo_release_pending_pkt(काष्ठा mlxbf_पंचांगfअगरo_vring *vring)
+अणु
+	काष्ठा vring_desc *desc_head;
 	u32 len = 0;
 
-	if (vring->desc_head) {
+	अगर (vring->desc_head) अणु
 		desc_head = vring->desc_head;
 		len = vring->pkt_len;
-	} else {
-		desc_head = mlxbf_tmfifo_get_next_desc(vring);
-		len = mlxbf_tmfifo_get_pkt_len(vring, desc_head);
-	}
+	पूर्ण अन्यथा अणु
+		desc_head = mlxbf_पंचांगfअगरo_get_next_desc(vring);
+		len = mlxbf_पंचांगfअगरo_get_pkt_len(vring, desc_head);
+	पूर्ण
 
-	if (desc_head)
-		mlxbf_tmfifo_release_desc(vring, desc_head, len);
+	अगर (desc_head)
+		mlxbf_पंचांगfअगरo_release_desc(vring, desc_head, len);
 
 	vring->pkt_len = 0;
-	vring->desc = NULL;
-	vring->desc_head = NULL;
-}
+	vring->desc = शून्य;
+	vring->desc_head = शून्य;
+पूर्ण
 
-static void mlxbf_tmfifo_init_net_desc(struct mlxbf_tmfifo_vring *vring,
-				       struct vring_desc *desc, bool is_rx)
-{
-	struct virtio_device *vdev = vring->vq->vdev;
-	struct virtio_net_hdr *net_hdr;
+अटल व्योम mlxbf_पंचांगfअगरo_init_net_desc(काष्ठा mlxbf_पंचांगfअगरo_vring *vring,
+				       काष्ठा vring_desc *desc, bool is_rx)
+अणु
+	काष्ठा virtio_device *vdev = vring->vq->vdev;
+	काष्ठा virtio_net_hdr *net_hdr;
 
 	net_hdr = phys_to_virt(virtio64_to_cpu(vdev, desc->addr));
-	memset(net_hdr, 0, sizeof(*net_hdr));
-}
+	स_रखो(net_hdr, 0, माप(*net_hdr));
+पूर्ण
 
 /* Get and initialize the next packet. */
-static struct vring_desc *
-mlxbf_tmfifo_get_next_pkt(struct mlxbf_tmfifo_vring *vring, bool is_rx)
-{
-	struct vring_desc *desc;
+अटल काष्ठा vring_desc *
+mlxbf_पंचांगfअगरo_get_next_pkt(काष्ठा mlxbf_पंचांगfअगरo_vring *vring, bool is_rx)
+अणु
+	काष्ठा vring_desc *desc;
 
-	desc = mlxbf_tmfifo_get_next_desc(vring);
-	if (desc && is_rx && vring->vdev_id == VIRTIO_ID_NET)
-		mlxbf_tmfifo_init_net_desc(vring, desc, is_rx);
+	desc = mlxbf_पंचांगfअगरo_get_next_desc(vring);
+	अगर (desc && is_rx && vring->vdev_id == VIRTIO_ID_NET)
+		mlxbf_पंचांगfअगरo_init_net_desc(vring, desc, is_rx);
 
 	vring->desc_head = desc;
 	vring->desc = desc;
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-/* House-keeping timer. */
-static void mlxbf_tmfifo_timer(struct timer_list *t)
-{
-	struct mlxbf_tmfifo *fifo = container_of(t, struct mlxbf_tmfifo, timer);
-	int rx, tx;
+/* House-keeping समयr. */
+अटल व्योम mlxbf_पंचांगfअगरo_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo = container_of(t, काष्ठा mlxbf_पंचांगfअगरo, समयr);
+	पूर्णांक rx, tx;
 
-	rx = !test_and_set_bit(MLXBF_TM_RX_HWM_IRQ, &fifo->pend_events);
-	tx = !test_and_set_bit(MLXBF_TM_TX_LWM_IRQ, &fifo->pend_events);
+	rx = !test_and_set_bit(MLXBF_TM_RX_HWM_IRQ, &fअगरo->pend_events);
+	tx = !test_and_set_bit(MLXBF_TM_TX_LWM_IRQ, &fअगरo->pend_events);
 
-	if (rx || tx)
-		schedule_work(&fifo->work);
+	अगर (rx || tx)
+		schedule_work(&fअगरo->work);
 
-	mod_timer(&fifo->timer, jiffies + MLXBF_TMFIFO_TIMER_INTERVAL);
-}
+	mod_समयr(&fअगरo->समयr, jअगरfies + MLXBF_TMFIFO_TIMER_INTERVAL);
+पूर्ण
 
-/* Copy one console packet into the output buffer. */
-static void mlxbf_tmfifo_console_output_one(struct mlxbf_tmfifo_vdev *cons,
-					    struct mlxbf_tmfifo_vring *vring,
-					    struct vring_desc *desc)
-{
-	const struct vring *vr = virtqueue_get_vring(vring->vq);
-	struct virtio_device *vdev = &cons->vdev;
+/* Copy one console packet पूर्णांकo the output buffer. */
+अटल व्योम mlxbf_पंचांगfअगरo_console_output_one(काष्ठा mlxbf_पंचांगfअगरo_vdev *cons,
+					    काष्ठा mlxbf_पंचांगfअगरo_vring *vring,
+					    काष्ठा vring_desc *desc)
+अणु
+	स्थिर काष्ठा vring *vr = virtqueue_get_vring(vring->vq);
+	काष्ठा virtio_device *vdev = &cons->vdev;
 	u32 len, idx, seg;
-	void *addr;
+	व्योम *addr;
 
-	while (desc) {
+	जबतक (desc) अणु
 		addr = phys_to_virt(virtio64_to_cpu(vdev, desc->addr));
 		len = virtio32_to_cpu(vdev, desc->len);
 
 		seg = CIRC_SPACE_TO_END(cons->tx_buf.head, cons->tx_buf.tail,
 					MLXBF_TMFIFO_CON_TX_BUF_SIZE);
-		if (len <= seg) {
-			memcpy(cons->tx_buf.buf + cons->tx_buf.head, addr, len);
-		} else {
-			memcpy(cons->tx_buf.buf + cons->tx_buf.head, addr, seg);
+		अगर (len <= seg) अणु
+			स_नकल(cons->tx_buf.buf + cons->tx_buf.head, addr, len);
+		पूर्ण अन्यथा अणु
+			स_नकल(cons->tx_buf.buf + cons->tx_buf.head, addr, seg);
 			addr += seg;
-			memcpy(cons->tx_buf.buf, addr, len - seg);
-		}
+			स_नकल(cons->tx_buf.buf, addr, len - seg);
+		पूर्ण
 		cons->tx_buf.head = (cons->tx_buf.head + len) %
 			MLXBF_TMFIFO_CON_TX_BUF_SIZE;
 
-		if (!(virtio16_to_cpu(vdev, desc->flags) & VRING_DESC_F_NEXT))
-			break;
+		अगर (!(virtio16_to_cpu(vdev, desc->flags) & VRING_DESC_F_NEXT))
+			अवरोध;
 		idx = virtio16_to_cpu(vdev, desc->next);
 		desc = &vr->desc[idx];
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Copy console data into the output buffer. */
-static void mlxbf_tmfifo_console_output(struct mlxbf_tmfifo_vdev *cons,
-					struct mlxbf_tmfifo_vring *vring)
-{
-	struct vring_desc *desc;
+/* Copy console data पूर्णांकo the output buffer. */
+अटल व्योम mlxbf_पंचांगfअगरo_console_output(काष्ठा mlxbf_पंचांगfअगरo_vdev *cons,
+					काष्ठा mlxbf_पंचांगfअगरo_vring *vring)
+अणु
+	काष्ठा vring_desc *desc;
 	u32 len, avail;
 
-	desc = mlxbf_tmfifo_get_next_desc(vring);
-	while (desc) {
-		/* Release the packet if not enough space. */
-		len = mlxbf_tmfifo_get_pkt_len(vring, desc);
+	desc = mlxbf_पंचांगfअगरo_get_next_desc(vring);
+	जबतक (desc) अणु
+		/* Release the packet अगर not enough space. */
+		len = mlxbf_पंचांगfअगरo_get_pkt_len(vring, desc);
 		avail = CIRC_SPACE(cons->tx_buf.head, cons->tx_buf.tail,
 				   MLXBF_TMFIFO_CON_TX_BUF_SIZE);
-		if (len + MLXBF_TMFIFO_CON_TX_BUF_RSV_SIZE > avail) {
-			mlxbf_tmfifo_release_desc(vring, desc, len);
-			break;
-		}
+		अगर (len + MLXBF_TMFIFO_CON_TX_BUF_RSV_SIZE > avail) अणु
+			mlxbf_पंचांगfअगरo_release_desc(vring, desc, len);
+			अवरोध;
+		पूर्ण
 
-		mlxbf_tmfifo_console_output_one(cons, vring, desc);
-		mlxbf_tmfifo_release_desc(vring, desc, len);
-		desc = mlxbf_tmfifo_get_next_desc(vring);
-	}
-}
+		mlxbf_पंचांगfअगरo_console_output_one(cons, vring, desc);
+		mlxbf_पंचांगfअगरo_release_desc(vring, desc, len);
+		desc = mlxbf_पंचांगfअगरo_get_next_desc(vring);
+	पूर्ण
+पूर्ण
 
-/* Get the number of available words in Rx FIFO for receiving. */
-static int mlxbf_tmfifo_get_rx_avail(struct mlxbf_tmfifo *fifo)
-{
+/* Get the number of available words in Rx FIFO क्रम receiving. */
+अटल पूर्णांक mlxbf_पंचांगfअगरo_get_rx_avail(काष्ठा mlxbf_पंचांगfअगरo *fअगरo)
+अणु
 	u64 sts;
 
-	sts = readq(fifo->rx_base + MLXBF_TMFIFO_RX_STS);
-	return FIELD_GET(MLXBF_TMFIFO_RX_STS__COUNT_MASK, sts);
-}
+	sts = पढ़ोq(fअगरo->rx_base + MLXBF_TMFIFO_RX_STS);
+	वापस FIELD_GET(MLXBF_TMFIFO_RX_STS__COUNT_MASK, sts);
+पूर्ण
 
-/* Get the number of available words in the TmFifo for sending. */
-static int mlxbf_tmfifo_get_tx_avail(struct mlxbf_tmfifo *fifo, int vdev_id)
-{
-	int tx_reserve;
+/* Get the number of available words in the TmFअगरo क्रम sending. */
+अटल पूर्णांक mlxbf_पंचांगfअगरo_get_tx_avail(काष्ठा mlxbf_पंचांगfअगरo *fअगरo, पूर्णांक vdev_id)
+अणु
+	पूर्णांक tx_reserve;
 	u32 count;
 	u64 sts;
 
-	/* Reserve some room in FIFO for console messages. */
-	if (vdev_id == VIRTIO_ID_NET)
-		tx_reserve = fifo->tx_fifo_size / MLXBF_TMFIFO_RESERVE_RATIO;
-	else
+	/* Reserve some room in FIFO क्रम console messages. */
+	अगर (vdev_id == VIRTIO_ID_NET)
+		tx_reserve = fअगरo->tx_fअगरo_size / MLXBF_TMFIFO_RESERVE_RATIO;
+	अन्यथा
 		tx_reserve = 1;
 
-	sts = readq(fifo->tx_base + MLXBF_TMFIFO_TX_STS);
+	sts = पढ़ोq(fअगरo->tx_base + MLXBF_TMFIFO_TX_STS);
 	count = FIELD_GET(MLXBF_TMFIFO_TX_STS__COUNT_MASK, sts);
-	return fifo->tx_fifo_size - tx_reserve - count;
-}
+	वापस fअगरo->tx_fअगरo_size - tx_reserve - count;
+पूर्ण
 
-/* Console Tx (move data from the output buffer into the TmFifo). */
-static void mlxbf_tmfifo_console_tx(struct mlxbf_tmfifo *fifo, int avail)
-{
-	struct mlxbf_tmfifo_msg_hdr hdr;
-	struct mlxbf_tmfifo_vdev *cons;
-	unsigned long flags;
-	int size, seg;
-	void *addr;
+/* Console Tx (move data from the output buffer पूर्णांकo the TmFअगरo). */
+अटल व्योम mlxbf_पंचांगfअगरo_console_tx(काष्ठा mlxbf_पंचांगfअगरo *fअगरo, पूर्णांक avail)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_msg_hdr hdr;
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *cons;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक size, seg;
+	व्योम *addr;
 	u64 data;
 
-	/* Return if not enough space available. */
-	if (avail < MLXBF_TMFIFO_DATA_MIN_WORDS)
-		return;
+	/* Return अगर not enough space available. */
+	अगर (avail < MLXBF_TMFIFO_DATA_MIN_WORDS)
+		वापस;
 
-	cons = fifo->vdev[VIRTIO_ID_CONSOLE];
-	if (!cons || !cons->tx_buf.buf)
-		return;
+	cons = fअगरo->vdev[VIRTIO_ID_CONSOLE];
+	अगर (!cons || !cons->tx_buf.buf)
+		वापस;
 
-	/* Return if no data to send. */
+	/* Return अगर no data to send. */
 	size = CIRC_CNT(cons->tx_buf.head, cons->tx_buf.tail,
 			MLXBF_TMFIFO_CON_TX_BUF_SIZE);
-	if (size == 0)
-		return;
+	अगर (size == 0)
+		वापस;
 
 	/* Adjust the size to available space. */
-	if (size + sizeof(hdr) > avail * sizeof(u64))
-		size = avail * sizeof(u64) - sizeof(hdr);
+	अगर (size + माप(hdr) > avail * माप(u64))
+		size = avail * माप(u64) - माप(hdr);
 
 	/* Write header. */
 	hdr.type = VIRTIO_ID_CONSOLE;
 	hdr.len = htons(size);
-	writeq(*(u64 *)&hdr, fifo->tx_base + MLXBF_TMFIFO_TX_DATA);
+	ग_लिखोq(*(u64 *)&hdr, fअगरo->tx_base + MLXBF_TMFIFO_TX_DATA);
 
 	/* Use spin-lock to protect the 'cons->tx_buf'. */
-	spin_lock_irqsave(&fifo->spin_lock[0], flags);
+	spin_lock_irqsave(&fअगरo->spin_lock[0], flags);
 
-	while (size > 0) {
+	जबतक (size > 0) अणु
 		addr = cons->tx_buf.buf + cons->tx_buf.tail;
 
 		seg = CIRC_CNT_TO_END(cons->tx_buf.head, cons->tx_buf.tail,
 				      MLXBF_TMFIFO_CON_TX_BUF_SIZE);
-		if (seg >= sizeof(u64)) {
-			memcpy(&data, addr, sizeof(u64));
-		} else {
-			memcpy(&data, addr, seg);
-			memcpy((u8 *)&data + seg, cons->tx_buf.buf,
-			       sizeof(u64) - seg);
-		}
-		writeq(data, fifo->tx_base + MLXBF_TMFIFO_TX_DATA);
+		अगर (seg >= माप(u64)) अणु
+			स_नकल(&data, addr, माप(u64));
+		पूर्ण अन्यथा अणु
+			स_नकल(&data, addr, seg);
+			स_नकल((u8 *)&data + seg, cons->tx_buf.buf,
+			       माप(u64) - seg);
+		पूर्ण
+		ग_लिखोq(data, fअगरo->tx_base + MLXBF_TMFIFO_TX_DATA);
 
-		if (size >= sizeof(u64)) {
-			cons->tx_buf.tail = (cons->tx_buf.tail + sizeof(u64)) %
+		अगर (size >= माप(u64)) अणु
+			cons->tx_buf.tail = (cons->tx_buf.tail + माप(u64)) %
 				MLXBF_TMFIFO_CON_TX_BUF_SIZE;
-			size -= sizeof(u64);
-		} else {
+			size -= माप(u64);
+		पूर्ण अन्यथा अणु
 			cons->tx_buf.tail = (cons->tx_buf.tail + size) %
 				MLXBF_TMFIFO_CON_TX_BUF_SIZE;
 			size = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	spin_unlock_irqrestore(&fifo->spin_lock[0], flags);
-}
+	spin_unlock_irqrestore(&fअगरo->spin_lock[0], flags);
+पूर्ण
 
 /* Rx/Tx one word in the descriptor buffer. */
-static void mlxbf_tmfifo_rxtx_word(struct mlxbf_tmfifo_vring *vring,
-				   struct vring_desc *desc,
-				   bool is_rx, int len)
-{
-	struct virtio_device *vdev = vring->vq->vdev;
-	struct mlxbf_tmfifo *fifo = vring->fifo;
-	void *addr;
+अटल व्योम mlxbf_पंचांगfअगरo_rxtx_word(काष्ठा mlxbf_पंचांगfअगरo_vring *vring,
+				   काष्ठा vring_desc *desc,
+				   bool is_rx, पूर्णांक len)
+अणु
+	काष्ठा virtio_device *vdev = vring->vq->vdev;
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo = vring->fअगरo;
+	व्योम *addr;
 	u64 data;
 
 	/* Get the buffer address of this desc. */
 	addr = phys_to_virt(virtio64_to_cpu(vdev, desc->addr));
 
-	/* Read a word from FIFO for Rx. */
-	if (is_rx)
-		data = readq(fifo->rx_base + MLXBF_TMFIFO_RX_DATA);
+	/* Read a word from FIFO क्रम Rx. */
+	अगर (is_rx)
+		data = पढ़ोq(fअगरo->rx_base + MLXBF_TMFIFO_RX_DATA);
 
-	if (vring->cur_len + sizeof(u64) <= len) {
+	अगर (vring->cur_len + माप(u64) <= len) अणु
 		/* The whole word. */
-		if (is_rx)
-			memcpy(addr + vring->cur_len, &data, sizeof(u64));
-		else
-			memcpy(&data, addr + vring->cur_len, sizeof(u64));
-		vring->cur_len += sizeof(u64);
-	} else {
+		अगर (is_rx)
+			स_नकल(addr + vring->cur_len, &data, माप(u64));
+		अन्यथा
+			स_नकल(&data, addr + vring->cur_len, माप(u64));
+		vring->cur_len += माप(u64);
+	पूर्ण अन्यथा अणु
 		/* Leftover bytes. */
-		if (is_rx)
-			memcpy(addr + vring->cur_len, &data,
+		अगर (is_rx)
+			स_नकल(addr + vring->cur_len, &data,
 			       len - vring->cur_len);
-		else
-			memcpy(&data, addr + vring->cur_len,
+		अन्यथा
+			स_नकल(&data, addr + vring->cur_len,
 			       len - vring->cur_len);
 		vring->cur_len = len;
-	}
+	पूर्ण
 
-	/* Write the word into FIFO for Tx. */
-	if (!is_rx)
-		writeq(data, fifo->tx_base + MLXBF_TMFIFO_TX_DATA);
-}
+	/* Write the word पूर्णांकo FIFO क्रम Tx. */
+	अगर (!is_rx)
+		ग_लिखोq(data, fअगरo->tx_base + MLXBF_TMFIFO_TX_DATA);
+पूर्ण
 
 /*
  * Rx/Tx packet header.
  *
- * In Rx case, the packet might be found to belong to a different vring since
- * the TmFifo is shared by different services. In such case, the 'vring_change'
+ * In Rx हाल, the packet might be found to beदीर्घ to a dअगरferent vring since
+ * the TmFअगरo is shared by dअगरferent services. In such हाल, the 'vring_change'
  * flag is set.
  */
-static void mlxbf_tmfifo_rxtx_header(struct mlxbf_tmfifo_vring *vring,
-				     struct vring_desc *desc,
+अटल व्योम mlxbf_पंचांगfअगरo_rxtx_header(काष्ठा mlxbf_पंचांगfअगरo_vring *vring,
+				     काष्ठा vring_desc *desc,
 				     bool is_rx, bool *vring_change)
-{
-	struct mlxbf_tmfifo *fifo = vring->fifo;
-	struct virtio_net_config *config;
-	struct mlxbf_tmfifo_msg_hdr hdr;
-	int vdev_id, hdr_len;
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo = vring->fअगरo;
+	काष्ठा virtio_net_config *config;
+	काष्ठा mlxbf_पंचांगfअगरo_msg_hdr hdr;
+	पूर्णांक vdev_id, hdr_len;
 
 	/* Read/Write packet header. */
-	if (is_rx) {
+	अगर (is_rx) अणु
 		/* Drain one word from the FIFO. */
-		*(u64 *)&hdr = readq(fifo->rx_base + MLXBF_TMFIFO_RX_DATA);
+		*(u64 *)&hdr = पढ़ोq(fअगरo->rx_base + MLXBF_TMFIFO_RX_DATA);
 
 		/* Skip the length 0 packets (keepalive). */
-		if (hdr.len == 0)
-			return;
+		अगर (hdr.len == 0)
+			वापस;
 
 		/* Check packet type. */
-		if (hdr.type == VIRTIO_ID_NET) {
+		अगर (hdr.type == VIRTIO_ID_NET) अणु
 			vdev_id = VIRTIO_ID_NET;
-			hdr_len = sizeof(struct virtio_net_hdr);
-			config = &fifo->vdev[vdev_id]->config.net;
-			/* A legacy-only interface for now. */
-			if (ntohs(hdr.len) >
+			hdr_len = माप(काष्ठा virtio_net_hdr);
+			config = &fअगरo->vdev[vdev_id]->config.net;
+			/* A legacy-only पूर्णांकerface क्रम now. */
+			अगर (ntohs(hdr.len) >
 			    __virtio16_to_cpu(virtio_legacy_is_little_endian(),
 					      config->mtu) +
 			    MLXBF_TMFIFO_NET_L2_OVERHEAD)
-				return;
-		} else {
+				वापस;
+		पूर्ण अन्यथा अणु
 			vdev_id = VIRTIO_ID_CONSOLE;
 			hdr_len = 0;
-		}
+		पूर्ण
 
 		/*
-		 * Check whether the new packet still belongs to this vring.
+		 * Check whether the new packet still beदीर्घs to this vring.
 		 * If not, update the pkt_len of the new vring.
 		 */
-		if (vdev_id != vring->vdev_id) {
-			struct mlxbf_tmfifo_vdev *tm_dev2 = fifo->vdev[vdev_id];
+		अगर (vdev_id != vring->vdev_id) अणु
+			काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_dev2 = fअगरo->vdev[vdev_id];
 
-			if (!tm_dev2)
-				return;
+			अगर (!पंचांग_dev2)
+				वापस;
 			vring->desc = desc;
-			vring = &tm_dev2->vrings[MLXBF_TMFIFO_VRING_RX];
+			vring = &पंचांग_dev2->vrings[MLXBF_TMFIFO_VRING_RX];
 			*vring_change = true;
-		}
+		पूर्ण
 		vring->pkt_len = ntohs(hdr.len) + hdr_len;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Network virtio has an extra header. */
 		hdr_len = (vring->vdev_id == VIRTIO_ID_NET) ?
-			   sizeof(struct virtio_net_hdr) : 0;
-		vring->pkt_len = mlxbf_tmfifo_get_pkt_len(vring, desc);
+			   माप(काष्ठा virtio_net_hdr) : 0;
+		vring->pkt_len = mlxbf_पंचांगfअगरo_get_pkt_len(vring, desc);
 		hdr.type = (vring->vdev_id == VIRTIO_ID_NET) ?
 			    VIRTIO_ID_NET : VIRTIO_ID_CONSOLE;
 		hdr.len = htons(vring->pkt_len - hdr_len);
-		writeq(*(u64 *)&hdr, fifo->tx_base + MLXBF_TMFIFO_TX_DATA);
-	}
+		ग_लिखोq(*(u64 *)&hdr, fअगरo->tx_base + MLXBF_TMFIFO_TX_DATA);
+	पूर्ण
 
 	vring->cur_len = hdr_len;
 	vring->rem_len = vring->pkt_len;
-	fifo->vring[is_rx] = vring;
-}
+	fअगरo->vring[is_rx] = vring;
+पूर्ण
 
 /*
  * Rx/Tx one descriptor.
  *
  * Return true to indicate more data available.
  */
-static bool mlxbf_tmfifo_rxtx_one_desc(struct mlxbf_tmfifo_vring *vring,
-				       bool is_rx, int *avail)
-{
-	const struct vring *vr = virtqueue_get_vring(vring->vq);
-	struct mlxbf_tmfifo *fifo = vring->fifo;
-	struct virtio_device *vdev;
+अटल bool mlxbf_पंचांगfअगरo_rxtx_one_desc(काष्ठा mlxbf_पंचांगfअगरo_vring *vring,
+				       bool is_rx, पूर्णांक *avail)
+अणु
+	स्थिर काष्ठा vring *vr = virtqueue_get_vring(vring->vq);
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo = vring->fअगरo;
+	काष्ठा virtio_device *vdev;
 	bool vring_change = false;
-	struct vring_desc *desc;
-	unsigned long flags;
+	काष्ठा vring_desc *desc;
+	अचिन्हित दीर्घ flags;
 	u32 len, idx;
 
-	vdev = &fifo->vdev[vring->vdev_id]->vdev;
+	vdev = &fअगरo->vdev[vring->vdev_id]->vdev;
 
 	/* Get the descriptor of the next packet. */
-	if (!vring->desc) {
-		desc = mlxbf_tmfifo_get_next_pkt(vring, is_rx);
-		if (!desc)
-			return false;
-	} else {
+	अगर (!vring->desc) अणु
+		desc = mlxbf_पंचांगfअगरo_get_next_pkt(vring, is_rx);
+		अगर (!desc)
+			वापस false;
+	पूर्ण अन्यथा अणु
 		desc = vring->desc;
-	}
+	पूर्ण
 
 	/* Beginning of a packet. Start to Rx/Tx packet header. */
-	if (vring->pkt_len == 0) {
-		mlxbf_tmfifo_rxtx_header(vring, desc, is_rx, &vring_change);
+	अगर (vring->pkt_len == 0) अणु
+		mlxbf_पंचांगfअगरo_rxtx_header(vring, desc, is_rx, &vring_change);
 		(*avail)--;
 
-		/* Return if new packet is for another ring. */
-		if (vring_change)
-			return false;
-		goto mlxbf_tmfifo_desc_done;
-	}
+		/* Return अगर new packet is क्रम another ring. */
+		अगर (vring_change)
+			वापस false;
+		जाओ mlxbf_पंचांगfअगरo_desc_करोne;
+	पूर्ण
 
 	/* Get the length of this desc. */
 	len = virtio32_to_cpu(vdev, desc->len);
-	if (len > vring->rem_len)
+	अगर (len > vring->rem_len)
 		len = vring->rem_len;
 
-	/* Rx/Tx one word (8 bytes) if not done. */
-	if (vring->cur_len < len) {
-		mlxbf_tmfifo_rxtx_word(vring, desc, is_rx, len);
+	/* Rx/Tx one word (8 bytes) अगर not करोne. */
+	अगर (vring->cur_len < len) अणु
+		mlxbf_पंचांगfअगरo_rxtx_word(vring, desc, is_rx, len);
 		(*avail)--;
-	}
+	पूर्ण
 
-	/* Check again whether it's done. */
-	if (vring->cur_len == len) {
+	/* Check again whether it's करोne. */
+	अगर (vring->cur_len == len) अणु
 		vring->cur_len = 0;
 		vring->rem_len -= len;
 
 		/* Get the next desc on the chain. */
-		if (vring->rem_len > 0 &&
-		    (virtio16_to_cpu(vdev, desc->flags) & VRING_DESC_F_NEXT)) {
+		अगर (vring->rem_len > 0 &&
+		    (virtio16_to_cpu(vdev, desc->flags) & VRING_DESC_F_NEXT)) अणु
 			idx = virtio16_to_cpu(vdev, desc->next);
 			desc = &vr->desc[idx];
-			goto mlxbf_tmfifo_desc_done;
-		}
+			जाओ mlxbf_पंचांगfअगरo_desc_करोne;
+		पूर्ण
 
 		/* Done and release the pending packet. */
-		mlxbf_tmfifo_release_pending_pkt(vring);
-		desc = NULL;
-		fifo->vring[is_rx] = NULL;
+		mlxbf_पंचांगfअगरo_release_pending_pkt(vring);
+		desc = शून्य;
+		fअगरo->vring[is_rx] = शून्य;
 
 		/*
-		 * Make sure the load/store are in order before
-		 * returning back to virtio.
+		 * Make sure the load/store are in order beक्रमe
+		 * वापसing back to virtio.
 		 */
 		virtio_mb(false);
 
-		/* Notify upper layer that packet is done. */
-		spin_lock_irqsave(&fifo->spin_lock[is_rx], flags);
-		vring_interrupt(0, vring->vq);
-		spin_unlock_irqrestore(&fifo->spin_lock[is_rx], flags);
-	}
+		/* Notअगरy upper layer that packet is करोne. */
+		spin_lock_irqsave(&fअगरo->spin_lock[is_rx], flags);
+		vring_पूर्णांकerrupt(0, vring->vq);
+		spin_unlock_irqrestore(&fअगरo->spin_lock[is_rx], flags);
+	पूर्ण
 
-mlxbf_tmfifo_desc_done:
+mlxbf_पंचांगfअगरo_desc_करोne:
 	/* Save the current desc. */
 	vring->desc = desc;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /* Rx & Tx processing of a queue. */
-static void mlxbf_tmfifo_rxtx(struct mlxbf_tmfifo_vring *vring, bool is_rx)
-{
-	int avail = 0, devid = vring->vdev_id;
-	struct mlxbf_tmfifo *fifo;
+अटल व्योम mlxbf_पंचांगfअगरo_rxtx(काष्ठा mlxbf_पंचांगfअगरo_vring *vring, bool is_rx)
+अणु
+	पूर्णांक avail = 0, devid = vring->vdev_id;
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo;
 	bool more;
 
-	fifo = vring->fifo;
+	fअगरo = vring->fअगरo;
 
-	/* Return if vdev is not ready. */
-	if (!fifo->vdev[devid])
-		return;
+	/* Return अगर vdev is not पढ़ोy. */
+	अगर (!fअगरo->vdev[devid])
+		वापस;
 
-	/* Return if another vring is running. */
-	if (fifo->vring[is_rx] && fifo->vring[is_rx] != vring)
-		return;
+	/* Return अगर another vring is running. */
+	अगर (fअगरo->vring[is_rx] && fअगरo->vring[is_rx] != vring)
+		वापस;
 
-	/* Only handle console and network for now. */
-	if (WARN_ON(devid != VIRTIO_ID_NET && devid != VIRTIO_ID_CONSOLE))
-		return;
+	/* Only handle console and network क्रम now. */
+	अगर (WARN_ON(devid != VIRTIO_ID_NET && devid != VIRTIO_ID_CONSOLE))
+		वापस;
 
-	do {
+	करो अणु
 		/* Get available FIFO space. */
-		if (avail == 0) {
-			if (is_rx)
-				avail = mlxbf_tmfifo_get_rx_avail(fifo);
-			else
-				avail = mlxbf_tmfifo_get_tx_avail(fifo, devid);
-			if (avail <= 0)
-				break;
-		}
+		अगर (avail == 0) अणु
+			अगर (is_rx)
+				avail = mlxbf_पंचांगfअगरo_get_rx_avail(fअगरo);
+			अन्यथा
+				avail = mlxbf_पंचांगfअगरo_get_tx_avail(fअगरo, devid);
+			अगर (avail <= 0)
+				अवरोध;
+		पूर्ण
 
 		/* Console output always comes from the Tx buffer. */
-		if (!is_rx && devid == VIRTIO_ID_CONSOLE) {
-			mlxbf_tmfifo_console_tx(fifo, avail);
-			break;
-		}
+		अगर (!is_rx && devid == VIRTIO_ID_CONSOLE) अणु
+			mlxbf_पंचांगfअगरo_console_tx(fअगरo, avail);
+			अवरोध;
+		पूर्ण
 
 		/* Handle one descriptor. */
-		more = mlxbf_tmfifo_rxtx_one_desc(vring, is_rx, &avail);
-	} while (more);
-}
+		more = mlxbf_पंचांगfअगरo_rxtx_one_desc(vring, is_rx, &avail);
+	पूर्ण जबतक (more);
+पूर्ण
 
 /* Handle Rx or Tx queues. */
-static void mlxbf_tmfifo_work_rxtx(struct mlxbf_tmfifo *fifo, int queue_id,
-				   int irq_id, bool is_rx)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev;
-	struct mlxbf_tmfifo_vring *vring;
-	int i;
+अटल व्योम mlxbf_पंचांगfअगरo_work_rxtx(काष्ठा mlxbf_पंचांगfअगरo *fअगरo, पूर्णांक queue_id,
+				   पूर्णांक irq_id, bool is_rx)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev;
+	काष्ठा mlxbf_पंचांगfअगरo_vring *vring;
+	पूर्णांक i;
 
-	if (!test_and_clear_bit(irq_id, &fifo->pend_events) ||
-	    !fifo->irq_info[irq_id].irq)
-		return;
+	अगर (!test_and_clear_bit(irq_id, &fअगरo->pend_events) ||
+	    !fअगरo->irq_info[irq_id].irq)
+		वापस;
 
-	for (i = 0; i < MLXBF_TMFIFO_VDEV_MAX; i++) {
-		tm_vdev = fifo->vdev[i];
-		if (tm_vdev) {
-			vring = &tm_vdev->vrings[queue_id];
-			if (vring->vq)
-				mlxbf_tmfifo_rxtx(vring, is_rx);
-		}
-	}
-}
+	क्रम (i = 0; i < MLXBF_TMFIFO_VDEV_MAX; i++) अणु
+		पंचांग_vdev = fअगरo->vdev[i];
+		अगर (पंचांग_vdev) अणु
+			vring = &पंचांग_vdev->vrings[queue_id];
+			अगर (vring->vq)
+				mlxbf_पंचांगfअगरo_rxtx(vring, is_rx);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* Work handler for Rx and Tx case. */
-static void mlxbf_tmfifo_work_handler(struct work_struct *work)
-{
-	struct mlxbf_tmfifo *fifo;
+/* Work handler क्रम Rx and Tx हाल. */
+अटल व्योम mlxbf_पंचांगfअगरo_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo;
 
-	fifo = container_of(work, struct mlxbf_tmfifo, work);
-	if (!fifo->is_ready)
-		return;
+	fअगरo = container_of(work, काष्ठा mlxbf_पंचांगfअगरo, work);
+	अगर (!fअगरo->is_पढ़ोy)
+		वापस;
 
-	mutex_lock(&fifo->lock);
+	mutex_lock(&fअगरo->lock);
 
-	/* Tx (Send data to the TmFifo). */
-	mlxbf_tmfifo_work_rxtx(fifo, MLXBF_TMFIFO_VRING_TX,
+	/* Tx (Send data to the TmFअगरo). */
+	mlxbf_पंचांगfअगरo_work_rxtx(fअगरo, MLXBF_TMFIFO_VRING_TX,
 			       MLXBF_TM_TX_LWM_IRQ, false);
 
-	/* Rx (Receive data from the TmFifo). */
-	mlxbf_tmfifo_work_rxtx(fifo, MLXBF_TMFIFO_VRING_RX,
+	/* Rx (Receive data from the TmFअगरo). */
+	mlxbf_पंचांगfअगरo_work_rxtx(fअगरo, MLXBF_TMFIFO_VRING_RX,
 			       MLXBF_TM_RX_HWM_IRQ, true);
 
-	mutex_unlock(&fifo->lock);
-}
+	mutex_unlock(&fअगरo->lock);
+पूर्ण
 
-/* The notify function is called when new buffers are posted. */
-static bool mlxbf_tmfifo_virtio_notify(struct virtqueue *vq)
-{
-	struct mlxbf_tmfifo_vring *vring = vq->priv;
-	struct mlxbf_tmfifo_vdev *tm_vdev;
-	struct mlxbf_tmfifo *fifo;
-	unsigned long flags;
+/* The notअगरy function is called when new buffers are posted. */
+अटल bool mlxbf_पंचांगfअगरo_virtio_notअगरy(काष्ठा virtqueue *vq)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vring *vring = vq->priv;
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev;
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo;
+	अचिन्हित दीर्घ flags;
 
-	fifo = vring->fifo;
+	fअगरo = vring->fअगरo;
 
 	/*
-	 * Virtio maintains vrings in pairs, even number ring for Rx
-	 * and odd number ring for Tx.
+	 * Virtio मुख्यtains vrings in pairs, even number ring क्रम Rx
+	 * and odd number ring क्रम Tx.
 	 */
-	if (vring->index & BIT(0)) {
+	अगर (vring->index & BIT(0)) अणु
 		/*
-		 * Console could make blocking call with interrupts disabled.
-		 * In such case, the vring needs to be served right away. For
-		 * other cases, just set the TX LWM bit to start Tx in the
+		 * Console could make blocking call with पूर्णांकerrupts disabled.
+		 * In such हाल, the vring needs to be served right away. For
+		 * other हालs, just set the TX LWM bit to start Tx in the
 		 * worker handler.
 		 */
-		if (vring->vdev_id == VIRTIO_ID_CONSOLE) {
-			spin_lock_irqsave(&fifo->spin_lock[0], flags);
-			tm_vdev = fifo->vdev[VIRTIO_ID_CONSOLE];
-			mlxbf_tmfifo_console_output(tm_vdev, vring);
-			spin_unlock_irqrestore(&fifo->spin_lock[0], flags);
-		} else if (test_and_set_bit(MLXBF_TM_TX_LWM_IRQ,
-					    &fifo->pend_events)) {
-			return true;
-		}
-	} else {
-		if (test_and_set_bit(MLXBF_TM_RX_HWM_IRQ, &fifo->pend_events))
-			return true;
-	}
+		अगर (vring->vdev_id == VIRTIO_ID_CONSOLE) अणु
+			spin_lock_irqsave(&fअगरo->spin_lock[0], flags);
+			पंचांग_vdev = fअगरo->vdev[VIRTIO_ID_CONSOLE];
+			mlxbf_पंचांगfअगरo_console_output(पंचांग_vdev, vring);
+			spin_unlock_irqrestore(&fअगरo->spin_lock[0], flags);
+		पूर्ण अन्यथा अगर (test_and_set_bit(MLXBF_TM_TX_LWM_IRQ,
+					    &fअगरo->pend_events)) अणु
+			वापस true;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (test_and_set_bit(MLXBF_TM_RX_HWM_IRQ, &fअगरo->pend_events))
+			वापस true;
+	पूर्ण
 
-	schedule_work(&fifo->work);
+	schedule_work(&fअगरo->work);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* Get the array of feature bits for this device. */
-static u64 mlxbf_tmfifo_virtio_get_features(struct virtio_device *vdev)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev = mlxbf_vdev_to_tmfifo(vdev);
+/* Get the array of feature bits क्रम this device. */
+अटल u64 mlxbf_पंचांगfअगरo_virtio_get_features(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev = mlxbf_vdev_to_पंचांगfअगरo(vdev);
 
-	return tm_vdev->features;
-}
+	वापस पंचांग_vdev->features;
+पूर्ण
 
 /* Confirm device features to use. */
-static int mlxbf_tmfifo_virtio_finalize_features(struct virtio_device *vdev)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev = mlxbf_vdev_to_tmfifo(vdev);
+अटल पूर्णांक mlxbf_पंचांगfअगरo_virtio_finalize_features(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev = mlxbf_vdev_to_पंचांगfअगरo(vdev);
 
-	tm_vdev->features = vdev->features;
+	पंचांग_vdev->features = vdev->features;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Free virtqueues found by find_vqs(). */
-static void mlxbf_tmfifo_virtio_del_vqs(struct virtio_device *vdev)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev = mlxbf_vdev_to_tmfifo(vdev);
-	struct mlxbf_tmfifo_vring *vring;
-	struct virtqueue *vq;
-	int i;
+अटल व्योम mlxbf_पंचांगfअगरo_virtio_del_vqs(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev = mlxbf_vdev_to_पंचांगfअगरo(vdev);
+	काष्ठा mlxbf_पंचांगfअगरo_vring *vring;
+	काष्ठा virtqueue *vq;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(tm_vdev->vrings); i++) {
-		vring = &tm_vdev->vrings[i];
+	क्रम (i = 0; i < ARRAY_SIZE(पंचांग_vdev->vrings); i++) अणु
+		vring = &पंचांग_vdev->vrings[i];
 
 		/* Release the pending packet. */
-		if (vring->desc)
-			mlxbf_tmfifo_release_pending_pkt(vring);
+		अगर (vring->desc)
+			mlxbf_पंचांगfअगरo_release_pending_pkt(vring);
 		vq = vring->vq;
-		if (vq) {
-			vring->vq = NULL;
+		अगर (vq) अणु
+			vring->vq = शून्य;
 			vring_del_virtqueue(vq);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* Create and initialize the virtual queues. */
-static int mlxbf_tmfifo_virtio_find_vqs(struct virtio_device *vdev,
-					unsigned int nvqs,
-					struct virtqueue *vqs[],
+/* Create and initialize the भव queues. */
+अटल पूर्णांक mlxbf_पंचांगfअगरo_virtio_find_vqs(काष्ठा virtio_device *vdev,
+					अचिन्हित पूर्णांक nvqs,
+					काष्ठा virtqueue *vqs[],
 					vq_callback_t *callbacks[],
-					const char * const names[],
-					const bool *ctx,
-					struct irq_affinity *desc)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev = mlxbf_vdev_to_tmfifo(vdev);
-	struct mlxbf_tmfifo_vring *vring;
-	struct virtqueue *vq;
-	int i, ret, size;
+					स्थिर अक्षर * स्थिर names[],
+					स्थिर bool *ctx,
+					काष्ठा irq_affinity *desc)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev = mlxbf_vdev_to_पंचांगfअगरo(vdev);
+	काष्ठा mlxbf_पंचांगfअगरo_vring *vring;
+	काष्ठा virtqueue *vq;
+	पूर्णांक i, ret, size;
 
-	if (nvqs > ARRAY_SIZE(tm_vdev->vrings))
-		return -EINVAL;
+	अगर (nvqs > ARRAY_SIZE(पंचांग_vdev->vrings))
+		वापस -EINVAL;
 
-	for (i = 0; i < nvqs; ++i) {
-		if (!names[i]) {
+	क्रम (i = 0; i < nvqs; ++i) अणु
+		अगर (!names[i]) अणु
 			ret = -EINVAL;
-			goto error;
-		}
-		vring = &tm_vdev->vrings[i];
+			जाओ error;
+		पूर्ण
+		vring = &पंचांग_vdev->vrings[i];
 
 		/* zero vring */
 		size = vring_size(vring->num, vring->align);
-		memset(vring->va, 0, size);
+		स_रखो(vring->va, 0, size);
 		vq = vring_new_virtqueue(i, vring->num, vring->align, vdev,
 					 false, false, vring->va,
-					 mlxbf_tmfifo_virtio_notify,
+					 mlxbf_पंचांगfअगरo_virtio_notअगरy,
 					 callbacks[i], names[i]);
-		if (!vq) {
+		अगर (!vq) अणु
 			dev_err(&vdev->dev, "vring_new_virtqueue failed\n");
 			ret = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		vqs[i] = vq;
 		vring->vq = vq;
 		vq->priv = vring;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	mlxbf_tmfifo_virtio_del_vqs(vdev);
-	return ret;
-}
+	mlxbf_पंचांगfअगरo_virtio_del_vqs(vdev);
+	वापस ret;
+पूर्ण
 
 /* Read the status byte. */
-static u8 mlxbf_tmfifo_virtio_get_status(struct virtio_device *vdev)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev = mlxbf_vdev_to_tmfifo(vdev);
+अटल u8 mlxbf_पंचांगfअगरo_virtio_get_status(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev = mlxbf_vdev_to_पंचांगfअगरo(vdev);
 
-	return tm_vdev->status;
-}
+	वापस पंचांग_vdev->status;
+पूर्ण
 
 /* Write the status byte. */
-static void mlxbf_tmfifo_virtio_set_status(struct virtio_device *vdev,
+अटल व्योम mlxbf_पंचांगfअगरo_virtio_set_status(काष्ठा virtio_device *vdev,
 					   u8 status)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev = mlxbf_vdev_to_tmfifo(vdev);
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev = mlxbf_vdev_to_पंचांगfअगरo(vdev);
 
-	tm_vdev->status = status;
-}
+	पंचांग_vdev->status = status;
+पूर्ण
 
-/* Reset the device. Not much here for now. */
-static void mlxbf_tmfifo_virtio_reset(struct virtio_device *vdev)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev = mlxbf_vdev_to_tmfifo(vdev);
+/* Reset the device. Not much here क्रम now. */
+अटल व्योम mlxbf_पंचांगfअगरo_virtio_reset(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev = mlxbf_vdev_to_पंचांगfअगरo(vdev);
 
-	tm_vdev->status = 0;
-}
+	पंचांग_vdev->status = 0;
+पूर्ण
 
 /* Read the value of a configuration field. */
-static void mlxbf_tmfifo_virtio_get(struct virtio_device *vdev,
-				    unsigned int offset,
-				    void *buf,
-				    unsigned int len)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev = mlxbf_vdev_to_tmfifo(vdev);
+अटल व्योम mlxbf_पंचांगfअगरo_virtio_get(काष्ठा virtio_device *vdev,
+				    अचिन्हित पूर्णांक offset,
+				    व्योम *buf,
+				    अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev = mlxbf_vdev_to_पंचांगfअगरo(vdev);
 
-	if ((u64)offset + len > sizeof(tm_vdev->config))
-		return;
+	अगर ((u64)offset + len > माप(पंचांग_vdev->config))
+		वापस;
 
-	memcpy(buf, (u8 *)&tm_vdev->config + offset, len);
-}
+	स_नकल(buf, (u8 *)&पंचांग_vdev->config + offset, len);
+पूर्ण
 
 /* Write the value of a configuration field. */
-static void mlxbf_tmfifo_virtio_set(struct virtio_device *vdev,
-				    unsigned int offset,
-				    const void *buf,
-				    unsigned int len)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev = mlxbf_vdev_to_tmfifo(vdev);
+अटल व्योम mlxbf_पंचांगfअगरo_virtio_set(काष्ठा virtio_device *vdev,
+				    अचिन्हित पूर्णांक offset,
+				    स्थिर व्योम *buf,
+				    अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev = mlxbf_vdev_to_पंचांगfअगरo(vdev);
 
-	if ((u64)offset + len > sizeof(tm_vdev->config))
-		return;
+	अगर ((u64)offset + len > माप(पंचांग_vdev->config))
+		वापस;
 
-	memcpy((u8 *)&tm_vdev->config + offset, buf, len);
-}
+	स_नकल((u8 *)&पंचांग_vdev->config + offset, buf, len);
+पूर्ण
 
-static void tmfifo_virtio_dev_release(struct device *device)
-{
-	struct virtio_device *vdev =
-			container_of(device, struct virtio_device, dev);
-	struct mlxbf_tmfifo_vdev *tm_vdev = mlxbf_vdev_to_tmfifo(vdev);
+अटल व्योम पंचांगfअगरo_virtio_dev_release(काष्ठा device *device)
+अणु
+	काष्ठा virtio_device *vdev =
+			container_of(device, काष्ठा virtio_device, dev);
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev = mlxbf_vdev_to_पंचांगfअगरo(vdev);
 
-	kfree(tm_vdev);
-}
+	kमुक्त(पंचांग_vdev);
+पूर्ण
 
 /* Virtio config operations. */
-static const struct virtio_config_ops mlxbf_tmfifo_virtio_config_ops = {
-	.get_features = mlxbf_tmfifo_virtio_get_features,
-	.finalize_features = mlxbf_tmfifo_virtio_finalize_features,
-	.find_vqs = mlxbf_tmfifo_virtio_find_vqs,
-	.del_vqs = mlxbf_tmfifo_virtio_del_vqs,
-	.reset = mlxbf_tmfifo_virtio_reset,
-	.set_status = mlxbf_tmfifo_virtio_set_status,
-	.get_status = mlxbf_tmfifo_virtio_get_status,
-	.get = mlxbf_tmfifo_virtio_get,
-	.set = mlxbf_tmfifo_virtio_set,
-};
+अटल स्थिर काष्ठा virtio_config_ops mlxbf_पंचांगfअगरo_virtio_config_ops = अणु
+	.get_features = mlxbf_पंचांगfअगरo_virtio_get_features,
+	.finalize_features = mlxbf_पंचांगfअगरo_virtio_finalize_features,
+	.find_vqs = mlxbf_पंचांगfअगरo_virtio_find_vqs,
+	.del_vqs = mlxbf_पंचांगfअगरo_virtio_del_vqs,
+	.reset = mlxbf_पंचांगfअगरo_virtio_reset,
+	.set_status = mlxbf_पंचांगfअगरo_virtio_set_status,
+	.get_status = mlxbf_पंचांगfअगरo_virtio_get_status,
+	.get = mlxbf_पंचांगfअगरo_virtio_get,
+	.set = mlxbf_पंचांगfअगरo_virtio_set,
+पूर्ण;
 
-/* Create vdev for the FIFO. */
-static int mlxbf_tmfifo_create_vdev(struct device *dev,
-				    struct mlxbf_tmfifo *fifo,
-				    int vdev_id, u64 features,
-				    void *config, u32 size)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev, *reg_dev = NULL;
-	int ret;
+/* Create vdev क्रम the FIFO. */
+अटल पूर्णांक mlxbf_पंचांगfअगरo_create_vdev(काष्ठा device *dev,
+				    काष्ठा mlxbf_पंचांगfअगरo *fअगरo,
+				    पूर्णांक vdev_id, u64 features,
+				    व्योम *config, u32 size)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev, *reg_dev = शून्य;
+	पूर्णांक ret;
 
-	mutex_lock(&fifo->lock);
+	mutex_lock(&fअगरo->lock);
 
-	tm_vdev = fifo->vdev[vdev_id];
-	if (tm_vdev) {
+	पंचांग_vdev = fअगरo->vdev[vdev_id];
+	अगर (पंचांग_vdev) अणु
 		dev_err(dev, "vdev %d already exists\n", vdev_id);
 		ret = -EEXIST;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	tm_vdev = kzalloc(sizeof(*tm_vdev), GFP_KERNEL);
-	if (!tm_vdev) {
+	पंचांग_vdev = kzalloc(माप(*पंचांग_vdev), GFP_KERNEL);
+	अगर (!पंचांग_vdev) अणु
 		ret = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	tm_vdev->vdev.id.device = vdev_id;
-	tm_vdev->vdev.config = &mlxbf_tmfifo_virtio_config_ops;
-	tm_vdev->vdev.dev.parent = dev;
-	tm_vdev->vdev.dev.release = tmfifo_virtio_dev_release;
-	tm_vdev->features = features;
-	if (config)
-		memcpy(&tm_vdev->config, config, size);
+	पंचांग_vdev->vdev.id.device = vdev_id;
+	पंचांग_vdev->vdev.config = &mlxbf_पंचांगfअगरo_virtio_config_ops;
+	पंचांग_vdev->vdev.dev.parent = dev;
+	पंचांग_vdev->vdev.dev.release = पंचांगfअगरo_virtio_dev_release;
+	पंचांग_vdev->features = features;
+	अगर (config)
+		स_नकल(&पंचांग_vdev->config, config, size);
 
-	if (mlxbf_tmfifo_alloc_vrings(fifo, tm_vdev)) {
+	अगर (mlxbf_पंचांगfअगरo_alloc_vrings(fअगरo, पंचांग_vdev)) अणु
 		dev_err(dev, "unable to allocate vring\n");
 		ret = -ENOMEM;
-		goto vdev_fail;
-	}
+		जाओ vdev_fail;
+	पूर्ण
 
-	/* Allocate an output buffer for the console device. */
-	if (vdev_id == VIRTIO_ID_CONSOLE)
-		tm_vdev->tx_buf.buf = devm_kmalloc(dev,
+	/* Allocate an output buffer क्रम the console device. */
+	अगर (vdev_id == VIRTIO_ID_CONSOLE)
+		पंचांग_vdev->tx_buf.buf = devm_kदो_स्मृति(dev,
 						   MLXBF_TMFIFO_CON_TX_BUF_SIZE,
 						   GFP_KERNEL);
-	fifo->vdev[vdev_id] = tm_vdev;
+	fअगरo->vdev[vdev_id] = पंचांग_vdev;
 
 	/* Register the virtio device. */
-	ret = register_virtio_device(&tm_vdev->vdev);
-	reg_dev = tm_vdev;
-	if (ret) {
+	ret = रेजिस्टर_virtio_device(&पंचांग_vdev->vdev);
+	reg_dev = पंचांग_vdev;
+	अगर (ret) अणु
 		dev_err(dev, "register_virtio_device failed\n");
-		goto vdev_fail;
-	}
+		जाओ vdev_fail;
+	पूर्ण
 
-	mutex_unlock(&fifo->lock);
-	return 0;
+	mutex_unlock(&fअगरo->lock);
+	वापस 0;
 
 vdev_fail:
-	mlxbf_tmfifo_free_vrings(fifo, tm_vdev);
-	fifo->vdev[vdev_id] = NULL;
-	if (reg_dev)
-		put_device(&tm_vdev->vdev.dev);
-	else
-		kfree(tm_vdev);
+	mlxbf_पंचांगfअगरo_मुक्त_vrings(fअगरo, पंचांग_vdev);
+	fअगरo->vdev[vdev_id] = शून्य;
+	अगर (reg_dev)
+		put_device(&पंचांग_vdev->vdev.dev);
+	अन्यथा
+		kमुक्त(पंचांग_vdev);
 fail:
-	mutex_unlock(&fifo->lock);
-	return ret;
-}
+	mutex_unlock(&fअगरo->lock);
+	वापस ret;
+पूर्ण
 
-/* Delete vdev for the FIFO. */
-static int mlxbf_tmfifo_delete_vdev(struct mlxbf_tmfifo *fifo, int vdev_id)
-{
-	struct mlxbf_tmfifo_vdev *tm_vdev;
+/* Delete vdev क्रम the FIFO. */
+अटल पूर्णांक mlxbf_पंचांगfअगरo_delete_vdev(काष्ठा mlxbf_पंचांगfअगरo *fअगरo, पूर्णांक vdev_id)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo_vdev *पंचांग_vdev;
 
-	mutex_lock(&fifo->lock);
+	mutex_lock(&fअगरo->lock);
 
-	/* Unregister vdev. */
-	tm_vdev = fifo->vdev[vdev_id];
-	if (tm_vdev) {
-		unregister_virtio_device(&tm_vdev->vdev);
-		mlxbf_tmfifo_free_vrings(fifo, tm_vdev);
-		fifo->vdev[vdev_id] = NULL;
-	}
+	/* Unरेजिस्टर vdev. */
+	पंचांग_vdev = fअगरo->vdev[vdev_id];
+	अगर (पंचांग_vdev) अणु
+		unरेजिस्टर_virtio_device(&पंचांग_vdev->vdev);
+		mlxbf_पंचांगfअगरo_मुक्त_vrings(fअगरo, पंचांग_vdev);
+		fअगरo->vdev[vdev_id] = शून्य;
+	पूर्ण
 
-	mutex_unlock(&fifo->lock);
+	mutex_unlock(&fअगरo->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Read the configured network MAC address from efi variable. */
-static void mlxbf_tmfifo_get_cfg_mac(u8 *mac)
-{
+अटल व्योम mlxbf_पंचांगfअगरo_get_cfg_mac(u8 *mac)
+अणु
 	efi_guid_t guid = EFI_GLOBAL_VARIABLE_GUID;
-	unsigned long size = ETH_ALEN;
+	अचिन्हित दीर्घ size = ETH_ALEN;
 	u8 buf[ETH_ALEN];
 	efi_status_t rc;
 
-	rc = efi.get_variable(mlxbf_tmfifo_efi_name, &guid, NULL, &size, buf);
-	if (rc == EFI_SUCCESS && size == ETH_ALEN)
+	rc = efi.get_variable(mlxbf_पंचांगfअगरo_efi_name, &guid, शून्य, &size, buf);
+	अगर (rc == EFI_SUCCESS && size == ETH_ALEN)
 		ether_addr_copy(mac, buf);
-	else
-		ether_addr_copy(mac, mlxbf_tmfifo_net_default_mac);
-}
+	अन्यथा
+		ether_addr_copy(mac, mlxbf_पंचांगfअगरo_net_शेष_mac);
+पूर्ण
 
-/* Set TmFifo thresolds which is used to trigger interrupts. */
-static void mlxbf_tmfifo_set_threshold(struct mlxbf_tmfifo *fifo)
-{
+/* Set TmFअगरo thresolds which is used to trigger पूर्णांकerrupts. */
+अटल व्योम mlxbf_पंचांगfअगरo_set_threshold(काष्ठा mlxbf_पंचांगfअगरo *fअगरo)
+अणु
 	u64 ctl;
 
 	/* Get Tx FIFO size and set the low/high watermark. */
-	ctl = readq(fifo->tx_base + MLXBF_TMFIFO_TX_CTL);
-	fifo->tx_fifo_size =
+	ctl = पढ़ोq(fअगरo->tx_base + MLXBF_TMFIFO_TX_CTL);
+	fअगरo->tx_fअगरo_size =
 		FIELD_GET(MLXBF_TMFIFO_TX_CTL__MAX_ENTRIES_MASK, ctl);
 	ctl = (ctl & ~MLXBF_TMFIFO_TX_CTL__LWM_MASK) |
 		FIELD_PREP(MLXBF_TMFIFO_TX_CTL__LWM_MASK,
-			   fifo->tx_fifo_size / 2);
+			   fअगरo->tx_fअगरo_size / 2);
 	ctl = (ctl & ~MLXBF_TMFIFO_TX_CTL__HWM_MASK) |
 		FIELD_PREP(MLXBF_TMFIFO_TX_CTL__HWM_MASK,
-			   fifo->tx_fifo_size - 1);
-	writeq(ctl, fifo->tx_base + MLXBF_TMFIFO_TX_CTL);
+			   fअगरo->tx_fअगरo_size - 1);
+	ग_लिखोq(ctl, fअगरo->tx_base + MLXBF_TMFIFO_TX_CTL);
 
 	/* Get Rx FIFO size and set the low/high watermark. */
-	ctl = readq(fifo->rx_base + MLXBF_TMFIFO_RX_CTL);
-	fifo->rx_fifo_size =
+	ctl = पढ़ोq(fअगरo->rx_base + MLXBF_TMFIFO_RX_CTL);
+	fअगरo->rx_fअगरo_size =
 		FIELD_GET(MLXBF_TMFIFO_RX_CTL__MAX_ENTRIES_MASK, ctl);
 	ctl = (ctl & ~MLXBF_TMFIFO_RX_CTL__LWM_MASK) |
 		FIELD_PREP(MLXBF_TMFIFO_RX_CTL__LWM_MASK, 0);
 	ctl = (ctl & ~MLXBF_TMFIFO_RX_CTL__HWM_MASK) |
 		FIELD_PREP(MLXBF_TMFIFO_RX_CTL__HWM_MASK, 1);
-	writeq(ctl, fifo->rx_base + MLXBF_TMFIFO_RX_CTL);
-}
+	ग_लिखोq(ctl, fअगरo->rx_base + MLXBF_TMFIFO_RX_CTL);
+पूर्ण
 
-static void mlxbf_tmfifo_cleanup(struct mlxbf_tmfifo *fifo)
-{
-	int i;
+अटल व्योम mlxbf_पंचांगfअगरo_cleanup(काष्ठा mlxbf_पंचांगfअगरo *fअगरo)
+अणु
+	पूर्णांक i;
 
-	fifo->is_ready = false;
-	del_timer_sync(&fifo->timer);
-	mlxbf_tmfifo_disable_irqs(fifo);
-	cancel_work_sync(&fifo->work);
-	for (i = 0; i < MLXBF_TMFIFO_VDEV_MAX; i++)
-		mlxbf_tmfifo_delete_vdev(fifo, i);
-}
+	fअगरo->is_पढ़ोy = false;
+	del_समयr_sync(&fअगरo->समयr);
+	mlxbf_पंचांगfअगरo_disable_irqs(fअगरo);
+	cancel_work_sync(&fअगरo->work);
+	क्रम (i = 0; i < MLXBF_TMFIFO_VDEV_MAX; i++)
+		mlxbf_पंचांगfअगरo_delete_vdev(fअगरo, i);
+पूर्ण
 
 /* Probe the TMFIFO. */
-static int mlxbf_tmfifo_probe(struct platform_device *pdev)
-{
-	struct virtio_net_config net_config;
-	struct device *dev = &pdev->dev;
-	struct mlxbf_tmfifo *fifo;
-	int i, rc;
+अटल पूर्णांक mlxbf_पंचांगfअगरo_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा virtio_net_config net_config;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo;
+	पूर्णांक i, rc;
 
-	fifo = devm_kzalloc(dev, sizeof(*fifo), GFP_KERNEL);
-	if (!fifo)
-		return -ENOMEM;
+	fअगरo = devm_kzalloc(dev, माप(*fअगरo), GFP_KERNEL);
+	अगर (!fअगरo)
+		वापस -ENOMEM;
 
-	spin_lock_init(&fifo->spin_lock[0]);
-	spin_lock_init(&fifo->spin_lock[1]);
-	INIT_WORK(&fifo->work, mlxbf_tmfifo_work_handler);
-	mutex_init(&fifo->lock);
+	spin_lock_init(&fअगरo->spin_lock[0]);
+	spin_lock_init(&fअगरo->spin_lock[1]);
+	INIT_WORK(&fअगरo->work, mlxbf_पंचांगfअगरo_work_handler);
+	mutex_init(&fअगरo->lock);
 
 	/* Get the resource of the Rx FIFO. */
-	fifo->rx_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(fifo->rx_base))
-		return PTR_ERR(fifo->rx_base);
+	fअगरo->rx_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(fअगरo->rx_base))
+		वापस PTR_ERR(fअगरo->rx_base);
 
 	/* Get the resource of the Tx FIFO. */
-	fifo->tx_base = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(fifo->tx_base))
-		return PTR_ERR(fifo->tx_base);
+	fअगरo->tx_base = devm_platक्रमm_ioremap_resource(pdev, 1);
+	अगर (IS_ERR(fअगरo->tx_base))
+		वापस PTR_ERR(fअगरo->tx_base);
 
-	platform_set_drvdata(pdev, fifo);
+	platक्रमm_set_drvdata(pdev, fअगरo);
 
-	timer_setup(&fifo->timer, mlxbf_tmfifo_timer, 0);
+	समयr_setup(&fअगरo->समयr, mlxbf_पंचांगfअगरo_समयr, 0);
 
-	for (i = 0; i < MLXBF_TM_MAX_IRQ; i++) {
-		fifo->irq_info[i].index = i;
-		fifo->irq_info[i].fifo = fifo;
-		fifo->irq_info[i].irq = platform_get_irq(pdev, i);
-		rc = devm_request_irq(dev, fifo->irq_info[i].irq,
-				      mlxbf_tmfifo_irq_handler, 0,
-				      "tmfifo", &fifo->irq_info[i]);
-		if (rc) {
+	क्रम (i = 0; i < MLXBF_TM_MAX_IRQ; i++) अणु
+		fअगरo->irq_info[i].index = i;
+		fअगरo->irq_info[i].fअगरo = fअगरo;
+		fअगरo->irq_info[i].irq = platक्रमm_get_irq(pdev, i);
+		rc = devm_request_irq(dev, fअगरo->irq_info[i].irq,
+				      mlxbf_पंचांगfअगरo_irq_handler, 0,
+				      "tmfifo", &fअगरo->irq_info[i]);
+		अगर (rc) अणु
 			dev_err(dev, "devm_request_irq failed\n");
-			fifo->irq_info[i].irq = 0;
-			return rc;
-		}
-	}
+			fअगरo->irq_info[i].irq = 0;
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	mlxbf_tmfifo_set_threshold(fifo);
+	mlxbf_पंचांगfअगरo_set_threshold(fअगरo);
 
 	/* Create the console vdev. */
-	rc = mlxbf_tmfifo_create_vdev(dev, fifo, VIRTIO_ID_CONSOLE, 0, NULL, 0);
-	if (rc)
-		goto fail;
+	rc = mlxbf_पंचांगfअगरo_create_vdev(dev, fअगरo, VIRTIO_ID_CONSOLE, 0, शून्य, 0);
+	अगर (rc)
+		जाओ fail;
 
 	/* Create the network vdev. */
-	memset(&net_config, 0, sizeof(net_config));
+	स_रखो(&net_config, 0, माप(net_config));
 
-	/* A legacy-only interface for now. */
+	/* A legacy-only पूर्णांकerface क्रम now. */
 	net_config.mtu = __cpu_to_virtio16(virtio_legacy_is_little_endian(),
 					   ETH_DATA_LEN);
 	net_config.status = __cpu_to_virtio16(virtio_legacy_is_little_endian(),
 					      VIRTIO_NET_S_LINK_UP);
-	mlxbf_tmfifo_get_cfg_mac(net_config.mac);
-	rc = mlxbf_tmfifo_create_vdev(dev, fifo, VIRTIO_ID_NET,
+	mlxbf_पंचांगfअगरo_get_cfg_mac(net_config.mac);
+	rc = mlxbf_पंचांगfअगरo_create_vdev(dev, fअगरo, VIRTIO_ID_NET,
 				      MLXBF_TMFIFO_NET_FEATURES, &net_config,
-				      sizeof(net_config));
-	if (rc)
-		goto fail;
+				      माप(net_config));
+	अगर (rc)
+		जाओ fail;
 
-	mod_timer(&fifo->timer, jiffies + MLXBF_TMFIFO_TIMER_INTERVAL);
+	mod_समयr(&fअगरo->समयr, jअगरfies + MLXBF_TMFIFO_TIMER_INTERVAL);
 
-	fifo->is_ready = true;
-	return 0;
+	fअगरo->is_पढ़ोy = true;
+	वापस 0;
 
 fail:
-	mlxbf_tmfifo_cleanup(fifo);
-	return rc;
-}
+	mlxbf_पंचांगfअगरo_cleanup(fअगरo);
+	वापस rc;
+पूर्ण
 
-/* Device remove function. */
-static int mlxbf_tmfifo_remove(struct platform_device *pdev)
-{
-	struct mlxbf_tmfifo *fifo = platform_get_drvdata(pdev);
+/* Device हटाओ function. */
+अटल पूर्णांक mlxbf_पंचांगfअगरo_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mlxbf_पंचांगfअगरo *fअगरo = platक्रमm_get_drvdata(pdev);
 
-	mlxbf_tmfifo_cleanup(fifo);
+	mlxbf_पंचांगfअगरo_cleanup(fअगरo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id mlxbf_tmfifo_acpi_match[] = {
-	{ "MLNXBF01", 0 },
-	{}
-};
-MODULE_DEVICE_TABLE(acpi, mlxbf_tmfifo_acpi_match);
+अटल स्थिर काष्ठा acpi_device_id mlxbf_पंचांगfअगरo_acpi_match[] = अणु
+	अणु "MLNXBF01", 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(acpi, mlxbf_पंचांगfअगरo_acpi_match);
 
-static struct platform_driver mlxbf_tmfifo_driver = {
-	.probe = mlxbf_tmfifo_probe,
-	.remove = mlxbf_tmfifo_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver mlxbf_पंचांगfअगरo_driver = अणु
+	.probe = mlxbf_पंचांगfअगरo_probe,
+	.हटाओ = mlxbf_पंचांगfअगरo_हटाओ,
+	.driver = अणु
 		.name = "bf-tmfifo",
-		.acpi_match_table = mlxbf_tmfifo_acpi_match,
-	},
-};
+		.acpi_match_table = mlxbf_पंचांगfअगरo_acpi_match,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(mlxbf_tmfifo_driver);
+module_platक्रमm_driver(mlxbf_पंचांगfअगरo_driver);
 
 MODULE_DESCRIPTION("Mellanox BlueField SoC TmFifo Driver");
 MODULE_LICENSE("GPL v2");

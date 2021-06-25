@@ -1,89 +1,90 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_INET_DIAG_H_
-#define _UAPI_INET_DIAG_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_INET_DIAG_H_
+#घोषणा _UAPI_INET_DIAG_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-/* Just some random number */
-#define TCPDIAG_GETSOCK 18
-#define DCCPDIAG_GETSOCK 19
+/* Just some अक्रमom number */
+#घोषणा TCPDIAG_GETSOCK 18
+#घोषणा DCCPDIAG_GETSOCK 19
 
-#define INET_DIAG_GETSOCK_MAX 24
+#घोषणा INET_DIAG_GETSOCK_MAX 24
 
 /* Socket identity */
-struct inet_diag_sockid {
+काष्ठा inet_diag_sockid अणु
 	__be16	idiag_sport;
 	__be16	idiag_dport;
 	__be32	idiag_src[4];
 	__be32	idiag_dst[4];
-	__u32	idiag_if;
+	__u32	idiag_अगर;
 	__u32	idiag_cookie[2];
-#define INET_DIAG_NOCOOKIE (~0U)
-};
+#घोषणा INET_DIAG_NOCOOKIE (~0U)
+पूर्ण;
 
-/* Request structure */
+/* Request काष्ठाure */
 
-struct inet_diag_req {
+काष्ठा inet_diag_req अणु
 	__u8	idiag_family;		/* Family of addresses. */
 	__u8	idiag_src_len;
 	__u8	idiag_dst_len;
-	__u8	idiag_ext;		/* Query extended information */
+	__u8	idiag_ext;		/* Query extended inक्रमmation */
 
-	struct inet_diag_sockid id;
+	काष्ठा inet_diag_sockid id;
 
 	__u32	idiag_states;		/* States to dump */
 	__u32	idiag_dbs;		/* Tables to dump (NI) */
-};
+पूर्ण;
 
-struct inet_diag_req_v2 {
+काष्ठा inet_diag_req_v2 अणु
 	__u8	sdiag_family;
 	__u8	sdiag_protocol;
 	__u8	idiag_ext;
 	__u8	pad;
 	__u32	idiag_states;
-	struct inet_diag_sockid id;
-};
+	काष्ठा inet_diag_sockid id;
+पूर्ण;
 
 /*
  * SOCK_RAW sockets require the underlied protocol to be
- * additionally specified so we can use @pad member for
- * this, but we can't rename it because userspace programs
+ * additionally specअगरied so we can use @pad member क्रम
+ * this, but we can't नाम it because userspace programs
  * still may depend on this name. Instead lets use another
- * structure definition as an alias for struct
+ * काष्ठाure definition as an alias क्रम काष्ठा
  * @inet_diag_req_v2.
  */
-struct inet_diag_req_raw {
+काष्ठा inet_diag_req_raw अणु
 	__u8	sdiag_family;
 	__u8	sdiag_protocol;
 	__u8	idiag_ext;
 	__u8	sdiag_raw_protocol;
 	__u32	idiag_states;
-	struct inet_diag_sockid id;
-};
+	काष्ठा inet_diag_sockid id;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	INET_DIAG_REQ_NONE,
 	INET_DIAG_REQ_BYTECODE,
 	INET_DIAG_REQ_SK_BPF_STORAGES,
 	INET_DIAG_REQ_PROTOCOL,
 	__INET_DIAG_REQ_MAX,
-};
+पूर्ण;
 
-#define INET_DIAG_REQ_MAX (__INET_DIAG_REQ_MAX - 1)
+#घोषणा INET_DIAG_REQ_MAX (__INET_DIAG_REQ_MAX - 1)
 
 /* Bytecode is sequence of 4 byte commands followed by variable arguments.
- * All the commands identified by "code" are conditional jumps forward:
+ * All the commands identअगरied by "code" are conditional jumps क्रमward:
  * to offset cc+"yes" or to offset cc+"no". "yes" is supposed to be
  * length of the command and its arguments.
  */
  
-struct inet_diag_bc_op {
-	unsigned char	code;
-	unsigned char	yes;
-	unsigned short	no;
-};
+काष्ठा inet_diag_bc_op अणु
+	अचिन्हित अक्षर	code;
+	अचिन्हित अक्षर	yes;
+	अचिन्हित लघु	no;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	INET_DIAG_BC_NOP,
 	INET_DIAG_BC_JMP,
 	INET_DIAG_BC_S_GE,
@@ -93,45 +94,45 @@ enum {
 	INET_DIAG_BC_AUTO,
 	INET_DIAG_BC_S_COND,
 	INET_DIAG_BC_D_COND,
-	INET_DIAG_BC_DEV_COND,   /* u32 ifindex */
+	INET_DIAG_BC_DEV_COND,   /* u32 अगरindex */
 	INET_DIAG_BC_MARK_COND,
 	INET_DIAG_BC_S_EQ,
 	INET_DIAG_BC_D_EQ,
 	INET_DIAG_BC_CGROUP_COND,   /* u64 cgroup v2 ID */
-};
+पूर्ण;
 
-struct inet_diag_hostcond {
+काष्ठा inet_diag_hostcond अणु
 	__u8	family;
 	__u8	prefix_len;
-	int	port;
+	पूर्णांक	port;
 	__be32	addr[0];
-};
+पूर्ण;
 
-struct inet_diag_markcond {
+काष्ठा inet_diag_markcond अणु
 	__u32 mark;
 	__u32 mask;
-};
+पूर्ण;
 
-/* Base info structure. It contains socket identity (addrs/ports/cookie)
- * and, alas, the information shown by netstat. */
-struct inet_diag_msg {
+/* Base info काष्ठाure. It contains socket identity (addrs/ports/cookie)
+ * and, alas, the inक्रमmation shown by netstat. */
+काष्ठा inet_diag_msg अणु
 	__u8	idiag_family;
 	__u8	idiag_state;
-	__u8	idiag_timer;
+	__u8	idiag_समयr;
 	__u8	idiag_retrans;
 
-	struct inet_diag_sockid id;
+	काष्ठा inet_diag_sockid id;
 
 	__u32	idiag_expires;
 	__u32	idiag_rqueue;
 	__u32	idiag_wqueue;
 	__u32	idiag_uid;
 	__u32	idiag_inode;
-};
+पूर्ण;
 
 /* Extensions */
 
-enum {
+क्रमागत अणु
 	INET_DIAG_NONE,
 	INET_DIAG_MEMINFO,
 	INET_DIAG_INFO,
@@ -143,7 +144,7 @@ enum {
 	INET_DIAG_SHUTDOWN,
 
 	/*
-	 * Next extenstions cannot be requested in struct inet_diag_req_v2:
+	 * Next extenstions cannot be requested in काष्ठा inet_diag_req_v2:
 	 * its field idiag_ext has only 8 bits.
 	 */
 
@@ -162,34 +163,34 @@ enum {
 	INET_DIAG_CGROUP_ID,
 	INET_DIAG_SOCKOPT,
 	__INET_DIAG_MAX,
-};
+पूर्ण;
 
-#define INET_DIAG_MAX (__INET_DIAG_MAX - 1)
+#घोषणा INET_DIAG_MAX (__INET_DIAG_MAX - 1)
 
-enum {
+क्रमागत अणु
 	INET_ULP_INFO_UNSPEC,
 	INET_ULP_INFO_NAME,
 	INET_ULP_INFO_TLS,
 	INET_ULP_INFO_MPTCP,
 	__INET_ULP_INFO_MAX,
-};
-#define INET_ULP_INFO_MAX (__INET_ULP_INFO_MAX - 1)
+पूर्ण;
+#घोषणा INET_ULP_INFO_MAX (__INET_ULP_INFO_MAX - 1)
 
 /* INET_DIAG_MEM */
 
-struct inet_diag_meminfo {
+काष्ठा inet_diag_meminfo अणु
 	__u32	idiag_rmem;
 	__u32	idiag_wmem;
 	__u32	idiag_fmem;
-	__u32	idiag_tmem;
-};
+	__u32	idiag_पंचांगem;
+पूर्ण;
 
 /* INET_DIAG_SOCKOPT */
 
-struct inet_diag_sockopt {
+काष्ठा inet_diag_sockopt अणु
 	__u8	recverr:1,
 		is_icsk:1,
-		freebind:1,
+		मुक्तbind:1,
 		hdrincl:1,
 		mc_loop:1,
 		transparent:1,
@@ -199,41 +200,41 @@ struct inet_diag_sockopt {
 		recverr_rfc4884:1,
 		defer_connect:1,
 		unused:5;
-};
+पूर्ण;
 
 /* INET_DIAG_VEGASINFO */
 
-struct tcpvegas_info {
+काष्ठा tcpvegas_info अणु
 	__u32	tcpv_enabled;
 	__u32	tcpv_rttcnt;
 	__u32	tcpv_rtt;
 	__u32	tcpv_minrtt;
-};
+पूर्ण;
 
 /* INET_DIAG_DCTCPINFO */
 
-struct tcp_dctcp_info {
+काष्ठा tcp_dctcp_info अणु
 	__u16	dctcp_enabled;
 	__u16	dctcp_ce_state;
 	__u32	dctcp_alpha;
 	__u32	dctcp_ab_ecn;
 	__u32	dctcp_ab_tot;
-};
+पूर्ण;
 
 /* INET_DIAG_BBRINFO */
 
-struct tcp_bbr_info {
+काष्ठा tcp_bbr_info अणु
 	/* u64 bw: max-filtered BW (app throughput) estimate in Byte per sec: */
 	__u32	bbr_bw_lo;		/* lower 32 bits of bw */
 	__u32	bbr_bw_hi;		/* upper 32 bits of bw */
 	__u32	bbr_min_rtt;		/* min-filtered RTT in uSec */
-	__u32	bbr_pacing_gain;	/* pacing gain shifted left 8 bits */
-	__u32	bbr_cwnd_gain;		/* cwnd gain shifted left 8 bits */
-};
+	__u32	bbr_pacing_gain;	/* pacing gain shअगरted left 8 bits */
+	__u32	bbr_cwnd_gain;		/* cwnd gain shअगरted left 8 bits */
+पूर्ण;
 
-union tcp_cc_info {
-	struct tcpvegas_info	vegas;
-	struct tcp_dctcp_info	dctcp;
-	struct tcp_bbr_info	bbr;
-};
-#endif /* _UAPI_INET_DIAG_H_ */
+जोड़ tcp_cc_info अणु
+	काष्ठा tcpvegas_info	vegas;
+	काष्ठा tcp_dctcp_info	dctcp;
+	काष्ठा tcp_bbr_info	bbr;
+पूर्ण;
+#पूर्ण_अगर /* _UAPI_INET_DIAG_H_ */

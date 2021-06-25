@@ -1,105 +1,106 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2014, Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef DYNACK_H
-#define DYNACK_H
+#अगर_अघोषित DYNACK_H
+#घोषणा DYNACK_H
 
-#define ATH_DYN_BUF	64
+#घोषणा ATH_DYN_BUF	64
 
-struct ath_hw;
-struct ath_node;
+काष्ठा ath_hw;
+काष्ठा ath_node;
 
 /**
- * struct ath_dyn_rxbuf - ACK frame ring buffer
+ * काष्ठा ath_dyn_rxbuf - ACK frame ring buffer
  * @h_rb: ring buffer head
  * @t_rb: ring buffer tail
- * @tstamp: ACK RX timestamp buffer
+ * @tstamp: ACK RX बारtamp buffer
  */
-struct ath_dyn_rxbuf {
+काष्ठा ath_dyn_rxbuf अणु
 	u16 h_rb, t_rb;
 	u32 tstamp[ATH_DYN_BUF];
-};
+पूर्ण;
 
-struct ts_info {
+काष्ठा ts_info अणु
 	u32 tstamp;
 	u32 dur;
-};
+पूर्ण;
 
-struct haddr_pair {
+काष्ठा haddr_pair अणु
 	u8 h_dest[ETH_ALEN];
 	u8 h_src[ETH_ALEN];
-};
+पूर्ण;
 
 /**
- * struct ath_dyn_txbuf - tx frame ring buffer
+ * काष्ठा ath_dyn_txbuf - tx frame ring buffer
  * @h_rb: ring buffer head
  * @t_rb: ring buffer tail
- * @addr: dest/src address pair for a given TX frame
- * @ts: TX frame timestamp buffer
+ * @addr: dest/src address pair क्रम a given TX frame
+ * @ts: TX frame बारtamp buffer
  */
-struct ath_dyn_txbuf {
+काष्ठा ath_dyn_txbuf अणु
 	u16 h_rb, t_rb;
-	struct haddr_pair addr[ATH_DYN_BUF];
-	struct ts_info ts[ATH_DYN_BUF];
-};
+	काष्ठा haddr_pair addr[ATH_DYN_BUF];
+	काष्ठा ts_info ts[ATH_DYN_BUF];
+पूर्ण;
 
 /**
- * struct ath_dynack - dynack processing info
+ * काष्ठा ath_dynack - dynack processing info
  * @enabled: enable dyn ack processing
- * @ackto: current ACK timeout
- * @lto: last ACK timeout computation
+ * @ackto: current ACK समयout
+ * @lto: last ACK समयout computation
  * @nodes: ath_node linked list
  * @qlock: ts queue spinlock
  * @ack_rbf: ACK ts ring buffer
  * @st_rbf: status ts ring buffer
  */
-struct ath_dynack {
+काष्ठा ath_dynack अणु
 	bool enabled;
-	int ackto;
-	unsigned long lto;
+	पूर्णांक ackto;
+	अचिन्हित दीर्घ lto;
 
-	struct list_head nodes;
+	काष्ठा list_head nodes;
 
-	/* protect timestamp queue access */
+	/* protect बारtamp queue access */
 	spinlock_t qlock;
-	struct ath_dyn_rxbuf ack_rbf;
-	struct ath_dyn_txbuf st_rbf;
-};
+	काष्ठा ath_dyn_rxbuf ack_rbf;
+	काष्ठा ath_dyn_txbuf st_rbf;
+पूर्ण;
 
-#if defined(CONFIG_ATH9K_DYNACK)
-void ath_dynack_reset(struct ath_hw *ah);
-void ath_dynack_node_init(struct ath_hw *ah, struct ath_node *an);
-void ath_dynack_node_deinit(struct ath_hw *ah, struct ath_node *an);
-void ath_dynack_init(struct ath_hw *ah);
-void ath_dynack_sample_ack_ts(struct ath_hw *ah, struct sk_buff *skb, u32 ts);
-void ath_dynack_sample_tx_ts(struct ath_hw *ah, struct sk_buff *skb,
-			     struct ath_tx_status *ts,
-			     struct ieee80211_sta *sta);
-#else
-static inline void ath_dynack_init(struct ath_hw *ah) {}
-static inline void ath_dynack_node_init(struct ath_hw *ah,
-					struct ath_node *an) {}
-static inline void ath_dynack_node_deinit(struct ath_hw *ah,
-					  struct ath_node *an) {}
-static inline void ath_dynack_sample_ack_ts(struct ath_hw *ah,
-					    struct sk_buff *skb, u32 ts) {}
-static inline void ath_dynack_sample_tx_ts(struct ath_hw *ah,
-					   struct sk_buff *skb,
-					   struct ath_tx_status *ts,
-					   struct ieee80211_sta *sta) {}
-#endif
+#अगर defined(CONFIG_ATH9K_DYNACK)
+व्योम ath_dynack_reset(काष्ठा ath_hw *ah);
+व्योम ath_dynack_node_init(काष्ठा ath_hw *ah, काष्ठा ath_node *an);
+व्योम ath_dynack_node_deinit(काष्ठा ath_hw *ah, काष्ठा ath_node *an);
+व्योम ath_dynack_init(काष्ठा ath_hw *ah);
+व्योम ath_dynack_sample_ack_ts(काष्ठा ath_hw *ah, काष्ठा sk_buff *skb, u32 ts);
+व्योम ath_dynack_sample_tx_ts(काष्ठा ath_hw *ah, काष्ठा sk_buff *skb,
+			     काष्ठा ath_tx_status *ts,
+			     काष्ठा ieee80211_sta *sta);
+#अन्यथा
+अटल अंतरभूत व्योम ath_dynack_init(काष्ठा ath_hw *ah) अणुपूर्ण
+अटल अंतरभूत व्योम ath_dynack_node_init(काष्ठा ath_hw *ah,
+					काष्ठा ath_node *an) अणुपूर्ण
+अटल अंतरभूत व्योम ath_dynack_node_deinit(काष्ठा ath_hw *ah,
+					  काष्ठा ath_node *an) अणुपूर्ण
+अटल अंतरभूत व्योम ath_dynack_sample_ack_ts(काष्ठा ath_hw *ah,
+					    काष्ठा sk_buff *skb, u32 ts) अणुपूर्ण
+अटल अंतरभूत व्योम ath_dynack_sample_tx_ts(काष्ठा ath_hw *ah,
+					   काष्ठा sk_buff *skb,
+					   काष्ठा ath_tx_status *ts,
+					   काष्ठा ieee80211_sta *sta) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* DYNACK_H */
+#पूर्ण_अगर /* DYNACK_H */

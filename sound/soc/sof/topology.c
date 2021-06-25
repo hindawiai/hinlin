@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // This file is provided under a dual BSD/GPLv2 license.  When using or
-// redistributing this file, you may do so under either license.
+// redistributing this file, you may करो so under either license.
 //
 // Copyright(c) 2018 Intel Corporation. All rights reserved.
 //
-// Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
+// Author: Liam Girdwood <liam.r.girdwood@linux.पूर्णांकel.com>
 //
 
-#include <linux/bits.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/firmware.h>
-#include <linux/workqueue.h>
-#include <sound/tlv.h>
-#include <sound/pcm_params.h>
-#include <uapi/sound/sof/tokens.h>
-#include "sof-priv.h"
-#include "sof-audio.h"
-#include "ops.h"
+#समावेश <linux/bits.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/firmware.h>
+#समावेश <linux/workqueue.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <uapi/sound/sof/tokens.h>
+#समावेश "sof-priv.h"
+#समावेश "sof-audio.h"
+#समावेश "ops.h"
 
-#define COMP_ID_UNASSIGNED		0xffffffff
+#घोषणा COMP_ID_UNASSIGNED		0xffffffff
 /*
  * Constants used in the computation of linear volume gain
- * from dB gain 20th root of 10 in Q1.16 fixed-point notation
+ * from dB gain 20th root of 10 in Q1.16 fixed-poपूर्णांक notation
  */
-#define VOL_TWENTIETH_ROOT_OF_TEN	73533
-/* 40th root of 10 in Q1.16 fixed-point notation*/
-#define VOL_FORTIETH_ROOT_OF_TEN	69419
+#घोषणा VOL_TWENTIETH_ROOT_OF_TEN	73533
+/* 40th root of 10 in Q1.16 fixed-poपूर्णांक notation*/
+#घोषणा VOL_FORTIETH_ROOT_OF_TEN	69419
 /*
  * Volume fractional word length define to 16 sets
- * the volume linear gain value to use Qx.16 format
+ * the volume linear gain value to use Qx.16 क्रमmat
  */
-#define VOLUME_FWL	16
+#घोषणा VOLUME_FWL	16
 /* 0.5 dB step value in topology TLV */
-#define VOL_HALF_DB_STEP	50
-/* Full volume for default values */
-#define VOL_ZERO_DB	BIT(VOLUME_FWL)
+#घोषणा VOL_HALF_DB_STEP	50
+/* Full volume क्रम शेष values */
+#घोषणा VOL_ZERO_DB	BIT(VOLUME_FWL)
 
 /* TLV data items */
-#define TLV_ITEMS	3
-#define TLV_MIN		0
-#define TLV_STEP	1
-#define TLV_MUTE	2
+#घोषणा TLV_ITEMS	3
+#घोषणा TLV_MIN		0
+#घोषणा TLV_STEP	1
+#घोषणा TLV_MUTE	2
 
 /* size of tplg abi in byte */
-#define SOF_TPLG_ABI_SIZE 3
+#घोषणा SOF_TPLG_ABI_SIZE 3
 
-struct sof_widget_data {
-	int ctrl_type;
-	int ipc_cmd;
-	struct sof_abi_hdr *pdata;
-	struct snd_sof_control *control;
-};
+काष्ठा sof_widget_data अणु
+	पूर्णांक ctrl_type;
+	पूर्णांक ipc_cmd;
+	काष्ठा sof_abi_hdr *pdata;
+	काष्ठा snd_sof_control *control;
+पूर्ण;
 
 /* send pcm params ipc */
-static int ipc_pcm_params(struct snd_sof_widget *swidget, int dir)
-{
-	struct sof_ipc_pcm_params_reply ipc_params_reply;
-	struct snd_soc_component *scomp = swidget->scomp;
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct sof_ipc_pcm_params pcm;
-	struct snd_pcm_hw_params *params;
-	struct snd_sof_pcm *spcm;
-	int ret;
+अटल पूर्णांक ipc_pcm_params(काष्ठा snd_sof_widget *swidget, पूर्णांक dir)
+अणु
+	काष्ठा sof_ipc_pcm_params_reply ipc_params_reply;
+	काष्ठा snd_soc_component *scomp = swidget->scomp;
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा sof_ipc_pcm_params pcm;
+	काष्ठा snd_pcm_hw_params *params;
+	काष्ठा snd_sof_pcm *spcm;
+	पूर्णांक ret;
 
-	memset(&pcm, 0, sizeof(pcm));
+	स_रखो(&pcm, 0, माप(pcm));
 
-	/* get runtime PCM params using widget's stream name */
+	/* get runसमय PCM params using widget's stream name */
 	spcm = snd_sof_find_spcm_name(scomp, swidget->widget->sname);
-	if (!spcm) {
+	अगर (!spcm) अणु
 		dev_err(scomp->dev, "error: cannot find PCM for %s\n",
 			swidget->widget->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	params = &spcm->params[dir];
 
 	/* set IPC PCM params */
-	pcm.hdr.size = sizeof(pcm);
+	pcm.hdr.size = माप(pcm);
 	pcm.hdr.cmd = SOF_IPC_GLB_STREAM_MSG | SOF_IPC_STREAM_PCM_PARAMS;
 	pcm.comp_id = swidget->comp_id;
-	pcm.params.hdr.size = sizeof(pcm.params);
+	pcm.params.hdr.size = माप(pcm.params);
 	pcm.params.direction = dir;
 	pcm.params.sample_valid_bytes = params_width(params) >> 3;
 	pcm.params.buffer_fmt = SOF_IPC_BUFFER_INTERLEAVED;
@@ -89,235 +90,235 @@ static int ipc_pcm_params(struct snd_sof_widget *swidget, int dir)
 	pcm.params.channels = params_channels(params);
 	pcm.params.host_period_bytes = params_period_bytes(params);
 
-	/* set format */
-	switch (params_format(params)) {
-	case SNDRV_PCM_FORMAT_S16:
+	/* set क्रमmat */
+	चयन (params_क्रमmat(params)) अणु
+	हाल SNDRV_PCM_FORMAT_S16:
 		pcm.params.frame_fmt = SOF_IPC_FRAME_S16_LE;
-		break;
-	case SNDRV_PCM_FORMAT_S24:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S24:
 		pcm.params.frame_fmt = SOF_IPC_FRAME_S24_4LE;
-		break;
-	case SNDRV_PCM_FORMAT_S32:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S32:
 		pcm.params.frame_fmt = SOF_IPC_FRAME_S32_LE;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* send IPC to the DSP */
-	ret = sof_ipc_tx_message(sdev->ipc, pcm.hdr.cmd, &pcm, sizeof(pcm),
-				 &ipc_params_reply, sizeof(ipc_params_reply));
-	if (ret < 0)
+	ret = sof_ipc_tx_message(sdev->ipc, pcm.hdr.cmd, &pcm, माप(pcm),
+				 &ipc_params_reply, माप(ipc_params_reply));
+	अगर (ret < 0)
 		dev_err(scomp->dev, "error: pcm params failed for %s\n",
 			swidget->widget->name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
  /* send stream trigger ipc */
-static int ipc_trigger(struct snd_sof_widget *swidget, int cmd)
-{
-	struct snd_soc_component *scomp = swidget->scomp;
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct sof_ipc_stream stream;
-	struct sof_ipc_reply reply;
-	int ret;
+अटल पूर्णांक ipc_trigger(काष्ठा snd_sof_widget *swidget, पूर्णांक cmd)
+अणु
+	काष्ठा snd_soc_component *scomp = swidget->scomp;
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा sof_ipc_stream stream;
+	काष्ठा sof_ipc_reply reply;
+	पूर्णांक ret;
 
 	/* set IPC stream params */
-	stream.hdr.size = sizeof(stream);
+	stream.hdr.size = माप(stream);
 	stream.hdr.cmd = SOF_IPC_GLB_STREAM_MSG | cmd;
 	stream.comp_id = swidget->comp_id;
 
 	/* send IPC to the DSP */
 	ret = sof_ipc_tx_message(sdev->ipc, stream.hdr.cmd, &stream,
-				 sizeof(stream), &reply, sizeof(reply));
-	if (ret < 0)
+				 माप(stream), &reply, माप(reply));
+	अगर (ret < 0)
 		dev_err(scomp->dev, "error: failed to trigger %s\n",
 			swidget->widget->name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sof_keyword_dapm_event(struct snd_soc_dapm_widget *w,
-				  struct snd_kcontrol *k, int event)
-{
-	struct snd_sof_widget *swidget = w->dobj.private;
-	struct snd_soc_component *scomp;
-	int stream = SNDRV_PCM_STREAM_CAPTURE;
-	struct snd_sof_pcm *spcm;
-	int ret = 0;
+अटल पूर्णांक sof_keyword_dapm_event(काष्ठा snd_soc_dapm_widget *w,
+				  काष्ठा snd_kcontrol *k, पूर्णांक event)
+अणु
+	काष्ठा snd_sof_widget *swidget = w->करोbj.निजी;
+	काष्ठा snd_soc_component *scomp;
+	पूर्णांक stream = SNDRV_PCM_STREAM_CAPTURE;
+	काष्ठा snd_sof_pcm *spcm;
+	पूर्णांक ret = 0;
 
-	if (!swidget)
-		return 0;
+	अगर (!swidget)
+		वापस 0;
 
 	scomp = swidget->scomp;
 
 	dev_dbg(scomp->dev, "received event %d for widget %s\n",
 		event, w->name);
 
-	/* get runtime PCM params using widget's stream name */
+	/* get runसमय PCM params using widget's stream name */
 	spcm = snd_sof_find_spcm_name(scomp, swidget->widget->sname);
-	if (!spcm) {
+	अगर (!spcm) अणु
 		dev_err(scomp->dev, "error: cannot find PCM for %s\n",
 			swidget->widget->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* process events */
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
-		if (spcm->stream[stream].suspend_ignored) {
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_PRE_PMU:
+		अगर (spcm->stream[stream].suspend_ignored) अणु
 			dev_dbg(scomp->dev, "PRE_PMU event ignored, KWD pipeline is already RUNNING\n");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/* set pcm params */
 		ret = ipc_pcm_params(swidget, stream);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(scomp->dev,
 				"error: failed to set pcm params for widget %s\n",
 				swidget->widget->name);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* start trigger */
 		ret = ipc_trigger(swidget, SOF_IPC_STREAM_TRIG_START);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_err(scomp->dev,
 				"error: failed to trigger widget %s\n",
 				swidget->widget->name);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		if (spcm->stream[stream].suspend_ignored) {
+		अवरोध;
+	हाल SND_SOC_DAPM_POST_PMD:
+		अगर (spcm->stream[stream].suspend_ignored) अणु
 			dev_dbg(scomp->dev, "POST_PMD even ignored, KWD pipeline will remain RUNNING\n");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/* stop trigger */
 		ret = ipc_trigger(swidget, SOF_IPC_STREAM_TRIG_STOP);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_err(scomp->dev,
 				"error: failed to trigger widget %s\n",
 				swidget->widget->name);
 
-		/* pcm free */
+		/* pcm मुक्त */
 		ret = ipc_trigger(swidget, SOF_IPC_STREAM_PCM_FREE);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_err(scomp->dev,
 				"error: failed to trigger widget %s\n",
 				swidget->widget->name);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* event handlers for keyword detect component */
-static const struct snd_soc_tplg_widget_events sof_kwd_events[] = {
-	{SOF_KEYWORD_DETECT_DAPM_EVENT, sof_keyword_dapm_event},
-};
+/* event handlers क्रम keyword detect component */
+अटल स्थिर काष्ठा snd_soc_tplg_widget_events sof_kwd_events[] = अणु
+	अणुSOF_KEYWORD_DETECT_DAPM_EVENT, sof_keyword_dapm_eventपूर्ण,
+पूर्ण;
 
-static inline int get_tlv_data(const int *p, int tlv[TLV_ITEMS])
-{
+अटल अंतरभूत पूर्णांक get_tlv_data(स्थिर पूर्णांक *p, पूर्णांक tlv[TLV_ITEMS])
+अणु
 	/* we only support dB scale TLV type at the moment */
-	if ((int)p[SNDRV_CTL_TLVO_TYPE] != SNDRV_CTL_TLVT_DB_SCALE)
-		return -EINVAL;
+	अगर ((पूर्णांक)p[SNDRV_CTL_TLVO_TYPE] != SNDRV_CTL_TLVT_DB_SCALE)
+		वापस -EINVAL;
 
 	/* min value in topology tlv data is multiplied by 100 */
-	tlv[TLV_MIN] = (int)p[SNDRV_CTL_TLVO_DB_SCALE_MIN] / 100;
+	tlv[TLV_MIN] = (पूर्णांक)p[SNDRV_CTL_TLVO_DB_SCALE_MIN] / 100;
 
 	/* volume steps */
-	tlv[TLV_STEP] = (int)(p[SNDRV_CTL_TLVO_DB_SCALE_MUTE_AND_STEP] &
+	tlv[TLV_STEP] = (पूर्णांक)(p[SNDRV_CTL_TLVO_DB_SCALE_MUTE_AND_STEP] &
 				TLV_DB_SCALE_MASK);
 
 	/* mute ON/OFF */
-	if ((p[SNDRV_CTL_TLVO_DB_SCALE_MUTE_AND_STEP] &
+	अगर ((p[SNDRV_CTL_TLVO_DB_SCALE_MUTE_AND_STEP] &
 		TLV_DB_SCALE_MUTE) == 0)
 		tlv[TLV_MUTE] = 0;
-	else
+	अन्यथा
 		tlv[TLV_MUTE] = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Function to truncate an unsigned 64-bit number
- * by x bits and return 32-bit unsigned number. This
- * function also takes care of rounding while truncating
+ * Function to truncate an अचिन्हित 64-bit number
+ * by x bits and वापस 32-bit अचिन्हित number. This
+ * function also takes care of rounding जबतक truncating
  */
-static inline u32 vol_shift_64(u64 i, u32 x)
-{
-	/* do not truncate more than 32 bits */
-	if (x > 32)
+अटल अंतरभूत u32 vol_shअगरt_64(u64 i, u32 x)
+अणु
+	/* करो not truncate more than 32 bits */
+	अगर (x > 32)
 		x = 32;
 
-	if (x == 0)
-		return (u32)i;
+	अगर (x == 0)
+		वापस (u32)i;
 
-	return (u32)(((i >> (x - 1)) + 1) >> 1);
-}
+	वापस (u32)(((i >> (x - 1)) + 1) >> 1);
+पूर्ण
 
 /*
  * Function to compute a ^ exp where,
- * a is a fractional number represented by a fixed-point
- * integer with a fractional world length of "fwl"
- * exp is an integer
+ * a is a fractional number represented by a fixed-poपूर्णांक
+ * पूर्णांकeger with a fractional world length of "fwl"
+ * exp is an पूर्णांकeger
  * fwl is the fractional word length
  * Return value is a fractional number represented by a
- * fixed-point integer with a fractional word length of "fwl"
+ * fixed-poपूर्णांक पूर्णांकeger with a fractional word length of "fwl"
  */
-static u32 vol_pow32(u32 a, int exp, u32 fwl)
-{
-	int i, iter;
-	u32 power = 1 << fwl;
+अटल u32 vol_घात32(u32 a, पूर्णांक exp, u32 fwl)
+अणु
+	पूर्णांक i, iter;
+	u32 घातer = 1 << fwl;
 	u64 numerator;
 
-	/* if exponent is 0, return 1 */
-	if (exp == 0)
-		return power;
+	/* अगर exponent is 0, वापस 1 */
+	अगर (exp == 0)
+		वापस घातer;
 
 	/* determine the number of iterations based on the exponent */
-	if (exp < 0)
+	अगर (exp < 0)
 		iter = exp * -1;
-	else
+	अन्यथा
 		iter = exp;
 
-	/* mutiply a "iter" times to compute power */
-	for (i = 0; i < iter; i++) {
+	/* mutiply a "iter" बार to compute घातer */
+	क्रम (i = 0; i < iter; i++) अणु
 		/*
-		 * Product of 2 Qx.fwl fixed-point numbers yields a Q2*x.2*fwl
+		 * Product of 2 Qx.fwl fixed-poपूर्णांक numbers yields a Q2*x.2*fwl
 		 * Truncate product back to fwl fractional bits with rounding
 		 */
-		power = vol_shift_64((u64)power * a, fwl);
-	}
+		घातer = vol_shअगरt_64((u64)घातer * a, fwl);
+	पूर्ण
 
-	if (exp > 0) {
-		/* if exp is positive, return the result */
-		return power;
-	}
+	अगर (exp > 0) अणु
+		/* अगर exp is positive, वापस the result */
+		वापस घातer;
+	पूर्ण
 
-	/* if exp is negative, return the multiplicative inverse */
+	/* अगर exp is negative, वापस the multiplicative inverse */
 	numerator = (u64)1 << (fwl << 1);
-	do_div(numerator, power);
+	करो_भाग(numerator, घातer);
 
-	return (u32)numerator;
-}
+	वापस (u32)numerator;
+पूर्ण
 
 /*
  * Function to calculate volume gain from TLV data.
  * This function can only handle gain steps that are multiples of 0.5 dB
  */
-static u32 vol_compute_gain(u32 value, int *tlv)
-{
-	int dB_gain;
+अटल u32 vol_compute_gain(u32 value, पूर्णांक *tlv)
+अणु
+	पूर्णांक dB_gain;
 	u32 linear_gain;
-	int f_step;
+	पूर्णांक f_step;
 
 	/* mute volume */
-	if (value == 0 && tlv[TLV_MUTE])
-		return 0;
+	अगर (value == 0 && tlv[TLV_MUTE])
+		वापस 0;
 
 	/*
 	 * compute dB gain from tlv. tlv_step
@@ -326,501 +327,501 @@ static u32 vol_compute_gain(u32 value, int *tlv)
 	dB_gain = tlv[TLV_MIN] + (value * tlv[TLV_STEP]) / 100;
 
 	/*
-	 * compute linear gain represented by fixed-point
-	 * int with VOLUME_FWL fractional bits
+	 * compute linear gain represented by fixed-poपूर्णांक
+	 * पूर्णांक with VOLUME_FWL fractional bits
 	 */
-	linear_gain = vol_pow32(VOL_TWENTIETH_ROOT_OF_TEN, dB_gain, VOLUME_FWL);
+	linear_gain = vol_घात32(VOL_TWENTIETH_ROOT_OF_TEN, dB_gain, VOLUME_FWL);
 
 	/* extract the fractional part of volume step */
 	f_step = tlv[TLV_STEP] - (tlv[TLV_STEP] / 100);
 
-	/* if volume step is an odd multiple of 0.5 dB */
-	if (f_step == VOL_HALF_DB_STEP && (value & 1))
-		linear_gain = vol_shift_64((u64)linear_gain *
+	/* अगर volume step is an odd multiple of 0.5 dB */
+	अगर (f_step == VOL_HALF_DB_STEP && (value & 1))
+		linear_gain = vol_shअगरt_64((u64)linear_gain *
 						  VOL_FORTIETH_ROOT_OF_TEN,
 						  VOLUME_FWL);
 
-	return linear_gain;
-}
+	वापस linear_gain;
+पूर्ण
 
 /*
- * Set up volume table for kcontrols from tlv data
- * "size" specifies the number of entries in the table
+ * Set up volume table क्रम kcontrols from tlv data
+ * "size" specअगरies the number of entries in the table
  */
-static int set_up_volume_table(struct snd_sof_control *scontrol,
-			       int tlv[TLV_ITEMS], int size)
-{
-	int j;
+अटल पूर्णांक set_up_volume_table(काष्ठा snd_sof_control *scontrol,
+			       पूर्णांक tlv[TLV_ITEMS], पूर्णांक size)
+अणु
+	पूर्णांक j;
 
 	/* init the volume table */
-	scontrol->volume_table = kcalloc(size, sizeof(u32), GFP_KERNEL);
-	if (!scontrol->volume_table)
-		return -ENOMEM;
+	scontrol->volume_table = kसुस्मृति(size, माप(u32), GFP_KERNEL);
+	अगर (!scontrol->volume_table)
+		वापस -ENOMEM;
 
 	/* populate the volume table */
-	for (j = 0; j < size ; j++)
+	क्रम (j = 0; j < size ; j++)
 		scontrol->volume_table[j] = vol_compute_gain(j, tlv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct sof_dai_types {
-	const char *name;
-	enum sof_ipc_dai_type type;
-};
+काष्ठा sof_dai_types अणु
+	स्थिर अक्षर *name;
+	क्रमागत sof_ipc_dai_type type;
+पूर्ण;
 
-static const struct sof_dai_types sof_dais[] = {
-	{"SSP", SOF_DAI_INTEL_SSP},
-	{"HDA", SOF_DAI_INTEL_HDA},
-	{"DMIC", SOF_DAI_INTEL_DMIC},
-	{"ALH", SOF_DAI_INTEL_ALH},
-	{"SAI", SOF_DAI_IMX_SAI},
-	{"ESAI", SOF_DAI_IMX_ESAI},
-};
+अटल स्थिर काष्ठा sof_dai_types sof_dais[] = अणु
+	अणु"SSP", SOF_DAI_INTEL_SSPपूर्ण,
+	अणु"HDA", SOF_DAI_INTEL_HDAपूर्ण,
+	अणु"DMIC", SOF_DAI_INTEL_DMICपूर्ण,
+	अणु"ALH", SOF_DAI_INTEL_ALHपूर्ण,
+	अणु"SAI", SOF_DAI_IMX_SAIपूर्ण,
+	अणु"ESAI", SOF_DAI_IMX_ESAIपूर्ण,
+पूर्ण;
 
-static enum sof_ipc_dai_type find_dai(const char *name)
-{
-	int i;
+अटल क्रमागत sof_ipc_dai_type find_dai(स्थिर अक्षर *name)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(sof_dais); i++) {
-		if (strcmp(name, sof_dais[i].name) == 0)
-			return sof_dais[i].type;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(sof_dais); i++) अणु
+		अगर (म_भेद(name, sof_dais[i].name) == 0)
+			वापस sof_dais[i].type;
+	पूर्ण
 
-	return SOF_DAI_INTEL_NONE;
-}
+	वापस SOF_DAI_INTEL_NONE;
+पूर्ण
 
 /*
- * Supported Frame format types and lookup, add new ones to end of list.
+ * Supported Frame क्रमmat types and lookup, add new ones to end of list.
  */
 
-struct sof_frame_types {
-	const char *name;
-	enum sof_ipc_frame frame;
-};
+काष्ठा sof_frame_types अणु
+	स्थिर अक्षर *name;
+	क्रमागत sof_ipc_frame frame;
+पूर्ण;
 
-static const struct sof_frame_types sof_frames[] = {
-	{"s16le", SOF_IPC_FRAME_S16_LE},
-	{"s24le", SOF_IPC_FRAME_S24_4LE},
-	{"s32le", SOF_IPC_FRAME_S32_LE},
-	{"float", SOF_IPC_FRAME_FLOAT},
-};
+अटल स्थिर काष्ठा sof_frame_types sof_frames[] = अणु
+	अणु"s16le", SOF_IPC_FRAME_S16_LEपूर्ण,
+	अणु"s24le", SOF_IPC_FRAME_S24_4LEपूर्ण,
+	अणु"s32le", SOF_IPC_FRAME_S32_LEपूर्ण,
+	अणु"float", SOF_IPC_FRAME_FLOATपूर्ण,
+पूर्ण;
 
-static enum sof_ipc_frame find_format(const char *name)
-{
-	int i;
+अटल क्रमागत sof_ipc_frame find_क्रमmat(स्थिर अक्षर *name)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(sof_frames); i++) {
-		if (strcmp(name, sof_frames[i].name) == 0)
-			return sof_frames[i].frame;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(sof_frames); i++) अणु
+		अगर (म_भेद(name, sof_frames[i].name) == 0)
+			वापस sof_frames[i].frame;
+	पूर्ण
 
-	/* use s32le if nothing is specified */
-	return SOF_IPC_FRAME_S32_LE;
-}
+	/* use s32le अगर nothing is specअगरied */
+	वापस SOF_IPC_FRAME_S32_LE;
+पूर्ण
 
-struct sof_process_types {
-	const char *name;
-	enum sof_ipc_process_type type;
-	enum sof_comp_type comp_type;
-};
+काष्ठा sof_process_types अणु
+	स्थिर अक्षर *name;
+	क्रमागत sof_ipc_process_type type;
+	क्रमागत sof_comp_type comp_type;
+पूर्ण;
 
-static const struct sof_process_types sof_process[] = {
-	{"EQFIR", SOF_PROCESS_EQFIR, SOF_COMP_EQ_FIR},
-	{"EQIIR", SOF_PROCESS_EQIIR, SOF_COMP_EQ_IIR},
-	{"KEYWORD_DETECT", SOF_PROCESS_KEYWORD_DETECT, SOF_COMP_KEYWORD_DETECT},
-	{"KPB", SOF_PROCESS_KPB, SOF_COMP_KPB},
-	{"CHAN_SELECTOR", SOF_PROCESS_CHAN_SELECTOR, SOF_COMP_SELECTOR},
-	{"MUX", SOF_PROCESS_MUX, SOF_COMP_MUX},
-	{"DEMUX", SOF_PROCESS_DEMUX, SOF_COMP_DEMUX},
-	{"DCBLOCK", SOF_PROCESS_DCBLOCK, SOF_COMP_DCBLOCK},
-	{"SMART_AMP", SOF_PROCESS_SMART_AMP, SOF_COMP_SMART_AMP},
-};
+अटल स्थिर काष्ठा sof_process_types sof_process[] = अणु
+	अणु"EQFIR", SOF_PROCESS_EQFIR, SOF_COMP_EQ_FIRपूर्ण,
+	अणु"EQIIR", SOF_PROCESS_EQIIR, SOF_COMP_EQ_IIRपूर्ण,
+	अणु"KEYWORD_DETECT", SOF_PROCESS_KEYWORD_DETECT, SOF_COMP_KEYWORD_DETECTपूर्ण,
+	अणु"KPB", SOF_PROCESS_KPB, SOF_COMP_KPBपूर्ण,
+	अणु"CHAN_SELECTOR", SOF_PROCESS_CHAN_SELECTOR, SOF_COMP_SELECTORपूर्ण,
+	अणु"MUX", SOF_PROCESS_MUX, SOF_COMP_MUXपूर्ण,
+	अणु"DEMUX", SOF_PROCESS_DEMUX, SOF_COMP_DEMUXपूर्ण,
+	अणु"DCBLOCK", SOF_PROCESS_DCBLOCK, SOF_COMP_DCBLOCKपूर्ण,
+	अणु"SMART_AMP", SOF_PROCESS_SMART_AMP, SOF_COMP_SMART_AMPपूर्ण,
+पूर्ण;
 
-static enum sof_ipc_process_type find_process(const char *name)
-{
-	int i;
+अटल क्रमागत sof_ipc_process_type find_process(स्थिर अक्षर *name)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(sof_process); i++) {
-		if (strcmp(name, sof_process[i].name) == 0)
-			return sof_process[i].type;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(sof_process); i++) अणु
+		अगर (म_भेद(name, sof_process[i].name) == 0)
+			वापस sof_process[i].type;
+	पूर्ण
 
-	return SOF_PROCESS_NONE;
-}
+	वापस SOF_PROCESS_NONE;
+पूर्ण
 
-static enum sof_comp_type find_process_comp_type(enum sof_ipc_process_type type)
-{
-	int i;
+अटल क्रमागत sof_comp_type find_process_comp_type(क्रमागत sof_ipc_process_type type)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(sof_process); i++) {
-		if (sof_process[i].type == type)
-			return sof_process[i].comp_type;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(sof_process); i++) अणु
+		अगर (sof_process[i].type == type)
+			वापस sof_process[i].comp_type;
+	पूर्ण
 
-	return SOF_COMP_NONE;
-}
+	वापस SOF_COMP_NONE;
+पूर्ण
 
 /*
  * Topology Token Parsing.
  * New tokens should be added to headers and parsing tables below.
  */
 
-struct sof_topology_token {
+काष्ठा sof_topology_token अणु
 	u32 token;
 	u32 type;
-	int (*get_token)(void *elem, void *object, u32 offset, u32 size);
+	पूर्णांक (*get_token)(व्योम *elem, व्योम *object, u32 offset, u32 size);
 	u32 offset;
 	u32 size;
-};
+पूर्ण;
 
-static int get_token_u32(void *elem, void *object, u32 offset, u32 size)
-{
-	struct snd_soc_tplg_vendor_value_elem *velem = elem;
+अटल पूर्णांक get_token_u32(व्योम *elem, व्योम *object, u32 offset, u32 size)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_value_elem *velem = elem;
 	u32 *val = (u32 *)((u8 *)object + offset);
 
 	*val = le32_to_cpu(velem->value);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_token_u16(void *elem, void *object, u32 offset, u32 size)
-{
-	struct snd_soc_tplg_vendor_value_elem *velem = elem;
+अटल पूर्णांक get_token_u16(व्योम *elem, व्योम *object, u32 offset, u32 size)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_value_elem *velem = elem;
 	u16 *val = (u16 *)((u8 *)object + offset);
 
 	*val = (u16)le32_to_cpu(velem->value);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_token_uuid(void *elem, void *object, u32 offset, u32 size)
-{
-	struct snd_soc_tplg_vendor_uuid_elem *velem = elem;
+अटल पूर्णांक get_token_uuid(व्योम *elem, व्योम *object, u32 offset, u32 size)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_uuid_elem *velem = elem;
 	u8 *dst = (u8 *)object + offset;
 
-	memcpy(dst, velem->uuid, UUID_SIZE);
+	स_नकल(dst, velem->uuid, UUID_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_token_comp_format(void *elem, void *object, u32 offset, u32 size)
-{
-	struct snd_soc_tplg_vendor_string_elem *velem = elem;
+अटल पूर्णांक get_token_comp_क्रमmat(व्योम *elem, व्योम *object, u32 offset, u32 size)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_string_elem *velem = elem;
 	u32 *val = (u32 *)((u8 *)object + offset);
 
-	*val = find_format(velem->string);
-	return 0;
-}
+	*val = find_क्रमmat(velem->string);
+	वापस 0;
+पूर्ण
 
-static int get_token_dai_type(void *elem, void *object, u32 offset, u32 size)
-{
-	struct snd_soc_tplg_vendor_string_elem *velem = elem;
+अटल पूर्णांक get_token_dai_type(व्योम *elem, व्योम *object, u32 offset, u32 size)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_string_elem *velem = elem;
 	u32 *val = (u32 *)((u8 *)object + offset);
 
 	*val = find_dai(velem->string);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_token_process_type(void *elem, void *object, u32 offset,
+अटल पूर्णांक get_token_process_type(व्योम *elem, व्योम *object, u32 offset,
 				  u32 size)
-{
-	struct snd_soc_tplg_vendor_string_elem *velem = elem;
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_string_elem *velem = elem;
 	u32 *val = (u32 *)((u8 *)object + offset);
 
 	*val = find_process(velem->string);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Buffers */
-static const struct sof_topology_token buffer_tokens[] = {
-	{SOF_TKN_BUF_SIZE, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_buffer, size), 0},
-	{SOF_TKN_BUF_CAPS, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_buffer, caps), 0},
-};
+अटल स्थिर काष्ठा sof_topology_token buffer_tokens[] = अणु
+	अणुSOF_TKN_BUF_SIZE, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_buffer, size), 0पूर्ण,
+	अणुSOF_TKN_BUF_CAPS, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_buffer, caps), 0पूर्ण,
+पूर्ण;
 
 /* DAI */
-static const struct sof_topology_token dai_tokens[] = {
-	{SOF_TKN_DAI_TYPE, SND_SOC_TPLG_TUPLE_TYPE_STRING, get_token_dai_type,
-		offsetof(struct sof_ipc_comp_dai, type), 0},
-	{SOF_TKN_DAI_INDEX, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp_dai, dai_index), 0},
-	{SOF_TKN_DAI_DIRECTION, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp_dai, direction), 0},
-};
+अटल स्थिर काष्ठा sof_topology_token dai_tokens[] = अणु
+	अणुSOF_TKN_DAI_TYPE, SND_SOC_TPLG_TUPLE_TYPE_STRING, get_token_dai_type,
+		दुरत्व(काष्ठा sof_ipc_comp_dai, type), 0पूर्ण,
+	अणुSOF_TKN_DAI_INDEX, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_comp_dai, dai_index), 0पूर्ण,
+	अणुSOF_TKN_DAI_सूचीECTION, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_comp_dai, direction), 0पूर्ण,
+पूर्ण;
 
 /* BE DAI link */
-static const struct sof_topology_token dai_link_tokens[] = {
-	{SOF_TKN_DAI_TYPE, SND_SOC_TPLG_TUPLE_TYPE_STRING, get_token_dai_type,
-		offsetof(struct sof_ipc_dai_config, type), 0},
-	{SOF_TKN_DAI_INDEX, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_config, dai_index), 0},
-};
+अटल स्थिर काष्ठा sof_topology_token dai_link_tokens[] = अणु
+	अणुSOF_TKN_DAI_TYPE, SND_SOC_TPLG_TUPLE_TYPE_STRING, get_token_dai_type,
+		दुरत्व(काष्ठा sof_ipc_dai_config, type), 0पूर्ण,
+	अणुSOF_TKN_DAI_INDEX, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_dai_config, dai_index), 0पूर्ण,
+पूर्ण;
 
 /* scheduling */
-static const struct sof_topology_token sched_tokens[] = {
-	{SOF_TKN_SCHED_PERIOD, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_pipe_new, period), 0},
-	{SOF_TKN_SCHED_PRIORITY, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_pipe_new, priority), 0},
-	{SOF_TKN_SCHED_MIPS, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_pipe_new, period_mips), 0},
-	{SOF_TKN_SCHED_CORE, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_pipe_new, core), 0},
-	{SOF_TKN_SCHED_FRAMES, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_pipe_new, frames_per_sched), 0},
-	{SOF_TKN_SCHED_TIME_DOMAIN, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_pipe_new, time_domain), 0},
-};
+अटल स्थिर काष्ठा sof_topology_token sched_tokens[] = अणु
+	अणुSOF_TKN_SCHED_PERIOD, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_pipe_new, period), 0पूर्ण,
+	अणुSOF_TKN_SCHED_PRIORITY, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_pipe_new, priority), 0पूर्ण,
+	अणुSOF_TKN_SCHED_MIPS, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_pipe_new, period_mips), 0पूर्ण,
+	अणुSOF_TKN_SCHED_CORE, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_pipe_new, core), 0पूर्ण,
+	अणुSOF_TKN_SCHED_FRAMES, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_pipe_new, frames_per_sched), 0पूर्ण,
+	अणुSOF_TKN_SCHED_TIME_DOMAIN, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_pipe_new, समय_करोमुख्य), 0पूर्ण,
+पूर्ण;
 
 /* volume */
-static const struct sof_topology_token volume_tokens[] = {
-	{SOF_TKN_VOLUME_RAMP_STEP_TYPE, SND_SOC_TPLG_TUPLE_TYPE_WORD,
-		get_token_u32, offsetof(struct sof_ipc_comp_volume, ramp), 0},
-	{SOF_TKN_VOLUME_RAMP_STEP_MS,
+अटल स्थिर काष्ठा sof_topology_token volume_tokens[] = अणु
+	अणुSOF_TKN_VOLUME_RAMP_STEP_TYPE, SND_SOC_TPLG_TUPLE_TYPE_WORD,
+		get_token_u32, दुरत्व(काष्ठा sof_ipc_comp_volume, ramp), 0पूर्ण,
+	अणुSOF_TKN_VOLUME_RAMP_STEP_MS,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp_volume, initial_ramp), 0},
-};
+		दुरत्व(काष्ठा sof_ipc_comp_volume, initial_ramp), 0पूर्ण,
+पूर्ण;
 
 /* SRC */
-static const struct sof_topology_token src_tokens[] = {
-	{SOF_TKN_SRC_RATE_IN, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp_src, source_rate), 0},
-	{SOF_TKN_SRC_RATE_OUT, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp_src, sink_rate), 0},
-};
+अटल स्थिर काष्ठा sof_topology_token src_tokens[] = अणु
+	अणुSOF_TKN_SRC_RATE_IN, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_comp_src, source_rate), 0पूर्ण,
+	अणुSOF_TKN_SRC_RATE_OUT, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_comp_src, sink_rate), 0पूर्ण,
+पूर्ण;
 
 /* ASRC */
-static const struct sof_topology_token asrc_tokens[] = {
-	{SOF_TKN_ASRC_RATE_IN, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp_asrc, source_rate), 0},
-	{SOF_TKN_ASRC_RATE_OUT, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp_asrc, sink_rate), 0},
-	{SOF_TKN_ASRC_ASYNCHRONOUS_MODE, SND_SOC_TPLG_TUPLE_TYPE_WORD,
+अटल स्थिर काष्ठा sof_topology_token asrc_tokens[] = अणु
+	अणुSOF_TKN_ASRC_RATE_IN, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_comp_asrc, source_rate), 0पूर्ण,
+	अणुSOF_TKN_ASRC_RATE_OUT, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_comp_asrc, sink_rate), 0पूर्ण,
+	अणुSOF_TKN_ASRC_ASYNCHRONOUS_MODE, SND_SOC_TPLG_TUPLE_TYPE_WORD,
 		get_token_u32,
-		offsetof(struct sof_ipc_comp_asrc, asynchronous_mode), 0},
-	{SOF_TKN_ASRC_OPERATION_MODE, SND_SOC_TPLG_TUPLE_TYPE_WORD,
+		दुरत्व(काष्ठा sof_ipc_comp_asrc, asynchronous_mode), 0पूर्ण,
+	अणुSOF_TKN_ASRC_OPERATION_MODE, SND_SOC_TPLG_TUPLE_TYPE_WORD,
 		get_token_u32,
-		offsetof(struct sof_ipc_comp_asrc, operation_mode), 0},
-};
+		दुरत्व(काष्ठा sof_ipc_comp_asrc, operation_mode), 0पूर्ण,
+पूर्ण;
 
 /* Tone */
-static const struct sof_topology_token tone_tokens[] = {
-};
+अटल स्थिर काष्ठा sof_topology_token tone_tokens[] = अणु
+पूर्ण;
 
 /* EFFECT */
-static const struct sof_topology_token process_tokens[] = {
-	{SOF_TKN_PROCESS_TYPE, SND_SOC_TPLG_TUPLE_TYPE_STRING,
+अटल स्थिर काष्ठा sof_topology_token process_tokens[] = अणु
+	अणुSOF_TKN_PROCESS_TYPE, SND_SOC_TPLG_TUPLE_TYPE_STRING,
 		get_token_process_type,
-		offsetof(struct sof_ipc_comp_process, type), 0},
-};
+		दुरत्व(काष्ठा sof_ipc_comp_process, type), 0पूर्ण,
+पूर्ण;
 
 /* PCM */
-static const struct sof_topology_token pcm_tokens[] = {
-	{SOF_TKN_PCM_DMAC_CONFIG, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp_host, dmac_config), 0},
-};
+अटल स्थिर काष्ठा sof_topology_token pcm_tokens[] = अणु
+	अणुSOF_TKN_PCM_DMAC_CONFIG, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+		दुरत्व(काष्ठा sof_ipc_comp_host, dmac_config), 0पूर्ण,
+पूर्ण;
 
 /* PCM */
-static const struct sof_topology_token stream_tokens[] = {
-	{SOF_TKN_STREAM_PLAYBACK_COMPATIBLE_D0I3,
+अटल स्थिर काष्ठा sof_topology_token stream_tokens[] = अणु
+	अणुSOF_TKN_STREAM_PLAYBACK_COMPATIBLE_D0I3,
 		SND_SOC_TPLG_TUPLE_TYPE_BOOL, get_token_u16,
-		offsetof(struct snd_sof_pcm, stream[0].d0i3_compatible), 0},
-	{SOF_TKN_STREAM_CAPTURE_COMPATIBLE_D0I3,
+		दुरत्व(काष्ठा snd_sof_pcm, stream[0].d0i3_compatible), 0पूर्ण,
+	अणुSOF_TKN_STREAM_CAPTURE_COMPATIBLE_D0I3,
 		SND_SOC_TPLG_TUPLE_TYPE_BOOL, get_token_u16,
-		offsetof(struct snd_sof_pcm, stream[1].d0i3_compatible), 0},
-};
+		दुरत्व(काष्ठा snd_sof_pcm, stream[1].d0i3_compatible), 0पूर्ण,
+पूर्ण;
 
 /* Generic components */
-static const struct sof_topology_token comp_tokens[] = {
-	{SOF_TKN_COMP_PERIOD_SINK_COUNT,
+अटल स्थिर काष्ठा sof_topology_token comp_tokens[] = अणु
+	अणुSOF_TKN_COMP_PERIOD_SINK_COUNT,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp_config, periods_sink), 0},
-	{SOF_TKN_COMP_PERIOD_SOURCE_COUNT,
+		दुरत्व(काष्ठा sof_ipc_comp_config, periods_sink), 0पूर्ण,
+	अणुSOF_TKN_COMP_PERIOD_SOURCE_COUNT,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp_config, periods_source), 0},
-	{SOF_TKN_COMP_FORMAT,
-		SND_SOC_TPLG_TUPLE_TYPE_STRING, get_token_comp_format,
-		offsetof(struct sof_ipc_comp_config, frame_fmt), 0},
-};
+		दुरत्व(काष्ठा sof_ipc_comp_config, periods_source), 0पूर्ण,
+	अणुSOF_TKN_COMP_FORMAT,
+		SND_SOC_TPLG_TUPLE_TYPE_STRING, get_token_comp_क्रमmat,
+		दुरत्व(काष्ठा sof_ipc_comp_config, frame_fmt), 0पूर्ण,
+पूर्ण;
 
 /* SSP */
-static const struct sof_topology_token ssp_tokens[] = {
-	{SOF_TKN_INTEL_SSP_CLKS_CONTROL,
+अटल स्थिर काष्ठा sof_topology_token ssp_tokens[] = अणु
+	अणुSOF_TKN_INTEL_SSP_CLKS_CONTROL,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_ssp_params, clks_control), 0},
-	{SOF_TKN_INTEL_SSP_MCLK_ID,
+		दुरत्व(काष्ठा sof_ipc_dai_ssp_params, clks_control), 0पूर्ण,
+	अणुSOF_TKN_INTEL_SSP_MCLK_ID,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_ssp_params, mclk_id), 0},
-	{SOF_TKN_INTEL_SSP_SAMPLE_BITS, SND_SOC_TPLG_TUPLE_TYPE_WORD,
+		दुरत्व(काष्ठा sof_ipc_dai_ssp_params, mclk_id), 0पूर्ण,
+	अणुSOF_TKN_INTEL_SSP_SAMPLE_BITS, SND_SOC_TPLG_TUPLE_TYPE_WORD,
 		get_token_u32,
-		offsetof(struct sof_ipc_dai_ssp_params, sample_valid_bits), 0},
-	{SOF_TKN_INTEL_SSP_FRAME_PULSE_WIDTH, SND_SOC_TPLG_TUPLE_TYPE_SHORT,
+		दुरत्व(काष्ठा sof_ipc_dai_ssp_params, sample_valid_bits), 0पूर्ण,
+	अणुSOF_TKN_INTEL_SSP_FRAME_PULSE_WIDTH, SND_SOC_TPLG_TUPLE_TYPE_SHORT,
 		get_token_u16,
-		offsetof(struct sof_ipc_dai_ssp_params, frame_pulse_width), 0},
-	{SOF_TKN_INTEL_SSP_QUIRKS, SND_SOC_TPLG_TUPLE_TYPE_WORD,
+		दुरत्व(काष्ठा sof_ipc_dai_ssp_params, frame_pulse_width), 0पूर्ण,
+	अणुSOF_TKN_INTEL_SSP_QUIRKS, SND_SOC_TPLG_TUPLE_TYPE_WORD,
 		get_token_u32,
-		offsetof(struct sof_ipc_dai_ssp_params, quirks), 0},
-	{SOF_TKN_INTEL_SSP_TDM_PADDING_PER_SLOT, SND_SOC_TPLG_TUPLE_TYPE_BOOL,
+		दुरत्व(काष्ठा sof_ipc_dai_ssp_params, quirks), 0पूर्ण,
+	अणुSOF_TKN_INTEL_SSP_TDM_PADDING_PER_SLOT, SND_SOC_TPLG_TUPLE_TYPE_BOOL,
 		get_token_u16,
-		offsetof(struct sof_ipc_dai_ssp_params,
-			 tdm_per_slot_padding_flag), 0},
-	{SOF_TKN_INTEL_SSP_BCLK_DELAY, SND_SOC_TPLG_TUPLE_TYPE_WORD,
+		दुरत्व(काष्ठा sof_ipc_dai_ssp_params,
+			 tdm_per_slot_padding_flag), 0पूर्ण,
+	अणुSOF_TKN_INTEL_SSP_BCLK_DELAY, SND_SOC_TPLG_TUPLE_TYPE_WORD,
 		get_token_u32,
-		offsetof(struct sof_ipc_dai_ssp_params, bclk_delay), 0},
+		दुरत्व(काष्ठा sof_ipc_dai_ssp_params, bclk_delay), 0पूर्ण,
 
-};
+पूर्ण;
 
 /* ALH */
-static const struct sof_topology_token alh_tokens[] = {
-	{SOF_TKN_INTEL_ALH_RATE,
+अटल स्थिर काष्ठा sof_topology_token alh_tokens[] = अणु
+	अणुSOF_TKN_INTEL_ALH_RATE,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_alh_params, rate), 0},
-	{SOF_TKN_INTEL_ALH_CH,
+		दुरत्व(काष्ठा sof_ipc_dai_alh_params, rate), 0पूर्ण,
+	अणुSOF_TKN_INTEL_ALH_CH,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_alh_params, channels), 0},
-};
+		दुरत्व(काष्ठा sof_ipc_dai_alh_params, channels), 0पूर्ण,
+पूर्ण;
 
 /* DMIC */
-static const struct sof_topology_token dmic_tokens[] = {
-	{SOF_TKN_INTEL_DMIC_DRIVER_VERSION,
+अटल स्थिर काष्ठा sof_topology_token dmic_tokens[] = अणु
+	अणुSOF_TKN_INTEL_DMIC_DRIVER_VERSION,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_dmic_params, driver_ipc_version),
-		0},
-	{SOF_TKN_INTEL_DMIC_CLK_MIN,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_params, driver_ipc_version),
+		0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_CLK_MIN,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_dmic_params, pdmclk_min), 0},
-	{SOF_TKN_INTEL_DMIC_CLK_MAX,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_params, pdmclk_min), 0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_CLK_MAX,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_dmic_params, pdmclk_max), 0},
-	{SOF_TKN_INTEL_DMIC_SAMPLE_RATE,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_params, pdmclk_max), 0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_SAMPLE_RATE,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_dmic_params, fifo_fs), 0},
-	{SOF_TKN_INTEL_DMIC_DUTY_MIN,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_params, fअगरo_fs), 0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_DUTY_MIN,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_dmic_params, duty_min), 0},
-	{SOF_TKN_INTEL_DMIC_DUTY_MAX,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_params, duty_min), 0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_DUTY_MAX,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_dmic_params, duty_max), 0},
-	{SOF_TKN_INTEL_DMIC_NUM_PDM_ACTIVE,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_params, duty_max), 0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_NUM_PDM_ACTIVE,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_dmic_params,
-			 num_pdm_active), 0},
-	{SOF_TKN_INTEL_DMIC_FIFO_WORD_LENGTH,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_params,
+			 num_pdm_active), 0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_FIFO_WORD_LENGTH,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_dmic_params, fifo_bits), 0},
-	{SOF_TKN_INTEL_DMIC_UNMUTE_RAMP_TIME_MS,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_params, fअगरo_bits), 0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_UNMUTE_RAMP_TIME_MS,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_dmic_params, unmute_ramp_time), 0},
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_params, unmute_ramp_समय), 0पूर्ण,
 
-};
+पूर्ण;
 
 /* ESAI */
-static const struct sof_topology_token esai_tokens[] = {
-	{SOF_TKN_IMX_ESAI_MCLK_ID,
+अटल स्थिर काष्ठा sof_topology_token esai_tokens[] = अणु
+	अणुSOF_TKN_IMX_ESAI_MCLK_ID,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_esai_params, mclk_id), 0},
-};
+		दुरत्व(काष्ठा sof_ipc_dai_esai_params, mclk_id), 0पूर्ण,
+पूर्ण;
 
 /* SAI */
-static const struct sof_topology_token sai_tokens[] = {
-	{SOF_TKN_IMX_SAI_MCLK_ID,
+अटल स्थिर काष्ठा sof_topology_token sai_tokens[] = अणु
+	अणुSOF_TKN_IMX_SAI_MCLK_ID,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_sai_params, mclk_id), 0},
-};
+		दुरत्व(काष्ठा sof_ipc_dai_sai_params, mclk_id), 0पूर्ण,
+पूर्ण;
 
 /* Core tokens */
-static const struct sof_topology_token core_tokens[] = {
-	{SOF_TKN_COMP_CORE_ID,
+अटल स्थिर काष्ठा sof_topology_token core_tokens[] = अणु
+	अणुSOF_TKN_COMP_CORE_ID,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_comp, core), 0},
-};
+		दुरत्व(काष्ठा sof_ipc_comp, core), 0पूर्ण,
+पूर्ण;
 
 /* Component extended tokens */
-static const struct sof_topology_token comp_ext_tokens[] = {
-	{SOF_TKN_COMP_UUID,
+अटल स्थिर काष्ठा sof_topology_token comp_ext_tokens[] = अणु
+	अणुSOF_TKN_COMP_UUID,
 		SND_SOC_TPLG_TUPLE_TYPE_UUID, get_token_uuid,
-		offsetof(struct sof_ipc_comp_ext, uuid), 0},
-};
+		दुरत्व(काष्ठा sof_ipc_comp_ext, uuid), 0पूर्ण,
+पूर्ण;
 
 /*
  * DMIC PDM Tokens
  * SOF_TKN_INTEL_DMIC_PDM_CTRL_ID should be the first token
- * as it increments the index while parsing the array of pdm tokens
+ * as it increments the index जबतक parsing the array of pdm tokens
  * and determines the correct offset
  */
-static const struct sof_topology_token dmic_pdm_tokens[] = {
-	{SOF_TKN_INTEL_DMIC_PDM_CTRL_ID,
+अटल स्थिर काष्ठा sof_topology_token dmic_pdm_tokens[] = अणु
+	अणुSOF_TKN_INTEL_DMIC_PDM_CTRL_ID,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_dmic_pdm_ctrl, id),
-		0},
-	{SOF_TKN_INTEL_DMIC_PDM_MIC_A_Enable,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_pdm_ctrl, id),
+		0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_PDM_MIC_A_Enable,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_dmic_pdm_ctrl, enable_mic_a),
-		0},
-	{SOF_TKN_INTEL_DMIC_PDM_MIC_B_Enable,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_pdm_ctrl, enable_mic_a),
+		0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_PDM_MIC_B_Enable,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_dmic_pdm_ctrl, enable_mic_b),
-		0},
-	{SOF_TKN_INTEL_DMIC_PDM_POLARITY_A,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_pdm_ctrl, enable_mic_b),
+		0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_PDM_POLARITY_A,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_dmic_pdm_ctrl, polarity_mic_a),
-		0},
-	{SOF_TKN_INTEL_DMIC_PDM_POLARITY_B,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_pdm_ctrl, polarity_mic_a),
+		0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_PDM_POLARITY_B,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_dmic_pdm_ctrl, polarity_mic_b),
-		0},
-	{SOF_TKN_INTEL_DMIC_PDM_CLK_EDGE,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_pdm_ctrl, polarity_mic_b),
+		0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_PDM_CLK_EDGE,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_dmic_pdm_ctrl, clk_edge),
-		0},
-	{SOF_TKN_INTEL_DMIC_PDM_SKEW,
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_pdm_ctrl, clk_edge),
+		0पूर्ण,
+	अणुSOF_TKN_INTEL_DMIC_PDM_SKEW,
 		SND_SOC_TPLG_TUPLE_TYPE_SHORT, get_token_u16,
-		offsetof(struct sof_ipc_dai_dmic_pdm_ctrl, skew),
-		0},
-};
+		दुरत्व(काष्ठा sof_ipc_dai_dmic_pdm_ctrl, skew),
+		0पूर्ण,
+पूर्ण;
 
 /* HDA */
-static const struct sof_topology_token hda_tokens[] = {
-	{SOF_TKN_INTEL_HDA_RATE,
+अटल स्थिर काष्ठा sof_topology_token hda_tokens[] = अणु
+	अणुSOF_TKN_INTEL_HDA_RATE,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_hda_params, rate), 0},
-	{SOF_TKN_INTEL_HDA_CH,
+		दुरत्व(काष्ठा sof_ipc_dai_hda_params, rate), 0पूर्ण,
+	अणुSOF_TKN_INTEL_HDA_CH,
 		SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-		offsetof(struct sof_ipc_dai_hda_params, channels), 0},
-};
+		दुरत्व(काष्ठा sof_ipc_dai_hda_params, channels), 0पूर्ण,
+पूर्ण;
 
 /* Leds */
-static const struct sof_topology_token led_tokens[] = {
-	{SOF_TKN_MUTE_LED_USE, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
-	 offsetof(struct snd_sof_led_control, use_led), 0},
-	{SOF_TKN_MUTE_LED_DIRECTION, SND_SOC_TPLG_TUPLE_TYPE_WORD,
-	 get_token_u32, offsetof(struct snd_sof_led_control, direction), 0},
-};
+अटल स्थिर काष्ठा sof_topology_token led_tokens[] = अणु
+	अणुSOF_TKN_MUTE_LED_USE, SND_SOC_TPLG_TUPLE_TYPE_WORD, get_token_u32,
+	 दुरत्व(काष्ठा snd_sof_led_control, use_led), 0पूर्ण,
+	अणुSOF_TKN_MUTE_LED_सूचीECTION, SND_SOC_TPLG_TUPLE_TYPE_WORD,
+	 get_token_u32, दुरत्व(काष्ठा snd_sof_led_control, direction), 0पूर्ण,
+पूर्ण;
 
-static int sof_parse_uuid_tokens(struct snd_soc_component *scomp,
-				 void *object,
-				 const struct sof_topology_token *tokens,
-				 int count,
-				 struct snd_soc_tplg_vendor_array *array,
-				 size_t offset)
-{
-	struct snd_soc_tplg_vendor_uuid_elem *elem;
-	int found = 0;
-	int i, j;
+अटल पूर्णांक sof_parse_uuid_tokens(काष्ठा snd_soc_component *scomp,
+				 व्योम *object,
+				 स्थिर काष्ठा sof_topology_token *tokens,
+				 पूर्णांक count,
+				 काष्ठा snd_soc_tplg_venकरोr_array *array,
+				 माप_प्रकार offset)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_uuid_elem *elem;
+	पूर्णांक found = 0;
+	पूर्णांक i, j;
 
 	/* parse element by element */
-	for (i = 0; i < le32_to_cpu(array->num_elems); i++) {
+	क्रम (i = 0; i < le32_to_cpu(array->num_elems); i++) अणु
 		elem = &array->uuid[i];
 
-		/* search for token */
-		for (j = 0; j < count; j++) {
+		/* search क्रम token */
+		क्रम (j = 0; j < count; j++) अणु
 			/* match token type */
-			if (tokens[j].type != SND_SOC_TPLG_TUPLE_TYPE_UUID)
-				continue;
+			अगर (tokens[j].type != SND_SOC_TPLG_TUPLE_TYPE_UUID)
+				जारी;
 
 			/* match token id */
-			if (tokens[j].token != le32_to_cpu(elem->token))
-				continue;
+			अगर (tokens[j].token != le32_to_cpu(elem->token))
+				जारी;
 
 			/* matched - now load token */
 			tokens[j].get_token(elem, object,
@@ -828,36 +829,36 @@ static int sof_parse_uuid_tokens(struct snd_soc_component *scomp,
 					    tokens[j].size);
 
 			found++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static int sof_parse_string_tokens(struct snd_soc_component *scomp,
-				   void *object,
-				   const struct sof_topology_token *tokens,
-				   int count,
-				   struct snd_soc_tplg_vendor_array *array,
-				   size_t offset)
-{
-	struct snd_soc_tplg_vendor_string_elem *elem;
-	int found = 0;
-	int i, j;
+अटल पूर्णांक sof_parse_string_tokens(काष्ठा snd_soc_component *scomp,
+				   व्योम *object,
+				   स्थिर काष्ठा sof_topology_token *tokens,
+				   पूर्णांक count,
+				   काष्ठा snd_soc_tplg_venकरोr_array *array,
+				   माप_प्रकार offset)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_string_elem *elem;
+	पूर्णांक found = 0;
+	पूर्णांक i, j;
 
 	/* parse element by element */
-	for (i = 0; i < le32_to_cpu(array->num_elems); i++) {
+	क्रम (i = 0; i < le32_to_cpu(array->num_elems); i++) अणु
 		elem = &array->string[i];
 
-		/* search for token */
-		for (j = 0; j < count; j++) {
+		/* search क्रम token */
+		क्रम (j = 0; j < count; j++) अणु
 			/* match token type */
-			if (tokens[j].type != SND_SOC_TPLG_TUPLE_TYPE_STRING)
-				continue;
+			अगर (tokens[j].type != SND_SOC_TPLG_TUPLE_TYPE_STRING)
+				जारी;
 
 			/* match token id */
-			if (tokens[j].token != le32_to_cpu(elem->token))
-				continue;
+			अगर (tokens[j].token != le32_to_cpu(elem->token))
+				जारी;
 
 			/* matched - now load token */
 			tokens[j].get_token(elem, object,
@@ -865,39 +866,39 @@ static int sof_parse_string_tokens(struct snd_soc_component *scomp,
 					    tokens[j].size);
 
 			found++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static int sof_parse_word_tokens(struct snd_soc_component *scomp,
-				 void *object,
-				 const struct sof_topology_token *tokens,
-				 int count,
-				 struct snd_soc_tplg_vendor_array *array,
-				 size_t offset)
-{
-	struct snd_soc_tplg_vendor_value_elem *elem;
-	int found = 0;
-	int i, j;
+अटल पूर्णांक sof_parse_word_tokens(काष्ठा snd_soc_component *scomp,
+				 व्योम *object,
+				 स्थिर काष्ठा sof_topology_token *tokens,
+				 पूर्णांक count,
+				 काष्ठा snd_soc_tplg_venकरोr_array *array,
+				 माप_प्रकार offset)
+अणु
+	काष्ठा snd_soc_tplg_venकरोr_value_elem *elem;
+	पूर्णांक found = 0;
+	पूर्णांक i, j;
 
 	/* parse element by element */
-	for (i = 0; i < le32_to_cpu(array->num_elems); i++) {
+	क्रम (i = 0; i < le32_to_cpu(array->num_elems); i++) अणु
 		elem = &array->value[i];
 
-		/* search for token */
-		for (j = 0; j < count; j++) {
+		/* search क्रम token */
+		क्रम (j = 0; j < count; j++) अणु
 			/* match token type */
-			if (!(tokens[j].type == SND_SOC_TPLG_TUPLE_TYPE_WORD ||
+			अगर (!(tokens[j].type == SND_SOC_TPLG_TUPLE_TYPE_WORD ||
 			      tokens[j].type == SND_SOC_TPLG_TUPLE_TYPE_SHORT ||
 			      tokens[j].type == SND_SOC_TPLG_TUPLE_TYPE_BYTE ||
 			      tokens[j].type == SND_SOC_TPLG_TUPLE_TYPE_BOOL))
-				continue;
+				जारी;
 
 			/* match token id */
-			if (tokens[j].token != le32_to_cpu(elem->token))
-				continue;
+			अगर (tokens[j].token != le32_to_cpu(elem->token))
+				जारी;
 
 			/* load token */
 			tokens[j].get_token(elem, object,
@@ -905,238 +906,238 @@ static int sof_parse_word_tokens(struct snd_soc_component *scomp,
 					    tokens[j].size);
 
 			found++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
 /**
  * sof_parse_token_sets - Parse multiple sets of tokens
- * @scomp: pointer to soc component
- * @object: target ipc struct for parsed values
+ * @scomp: poपूर्णांकer to soc component
+ * @object: target ipc काष्ठा क्रम parsed values
  * @tokens: token definition array describing what tokens to parse
  * @count: number of tokens in definition array
- * @array: source pointer to consecutive vendor arrays to be parsed
+ * @array: source poपूर्णांकer to consecutive venकरोr arrays to be parsed
  * @priv_size: total size of the consecutive source arrays
  * @sets: number of similar token sets to be parsed, 1 set has count elements
- * @object_size: offset to next target ipc struct with multiple sets
+ * @object_size: offset to next target ipc काष्ठा with multiple sets
  *
- * This function parses multiple sets of tokens in vendor arrays into
- * consecutive ipc structs.
+ * This function parses multiple sets of tokens in venकरोr arrays पूर्णांकo
+ * consecutive ipc काष्ठाs.
  */
-static int sof_parse_token_sets(struct snd_soc_component *scomp,
-				void *object,
-				const struct sof_topology_token *tokens,
-				int count,
-				struct snd_soc_tplg_vendor_array *array,
-				int priv_size, int sets, size_t object_size)
-{
-	size_t offset = 0;
-	int found = 0;
-	int total = 0;
-	int asize;
+अटल पूर्णांक sof_parse_token_sets(काष्ठा snd_soc_component *scomp,
+				व्योम *object,
+				स्थिर काष्ठा sof_topology_token *tokens,
+				पूर्णांक count,
+				काष्ठा snd_soc_tplg_venकरोr_array *array,
+				पूर्णांक priv_size, पूर्णांक sets, माप_प्रकार object_size)
+अणु
+	माप_प्रकार offset = 0;
+	पूर्णांक found = 0;
+	पूर्णांक total = 0;
+	पूर्णांक asize;
 
-	while (priv_size > 0 && total < count * sets) {
+	जबतक (priv_size > 0 && total < count * sets) अणु
 		asize = le32_to_cpu(array->size);
 
 		/* validate asize */
-		if (asize < 0) { /* FIXME: A zero-size array makes no sense */
+		अगर (asize < 0) अणु /* FIXME: A zero-size array makes no sense */
 			dev_err(scomp->dev, "error: invalid array size 0x%x\n",
 				asize);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* make sure there is enough data before parsing */
+		/* make sure there is enough data beक्रमe parsing */
 		priv_size -= asize;
-		if (priv_size < 0) {
+		अगर (priv_size < 0) अणु
 			dev_err(scomp->dev, "error: invalid array size 0x%x\n",
 				asize);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* call correct parser depending on type */
-		switch (le32_to_cpu(array->type)) {
-		case SND_SOC_TPLG_TUPLE_TYPE_UUID:
+		चयन (le32_to_cpu(array->type)) अणु
+		हाल SND_SOC_TPLG_TUPLE_TYPE_UUID:
 			found += sof_parse_uuid_tokens(scomp, object, tokens,
 						       count, array, offset);
-			break;
-		case SND_SOC_TPLG_TUPLE_TYPE_STRING:
+			अवरोध;
+		हाल SND_SOC_TPLG_TUPLE_TYPE_STRING:
 			found += sof_parse_string_tokens(scomp, object, tokens,
 							 count, array, offset);
-			break;
-		case SND_SOC_TPLG_TUPLE_TYPE_BOOL:
-		case SND_SOC_TPLG_TUPLE_TYPE_BYTE:
-		case SND_SOC_TPLG_TUPLE_TYPE_WORD:
-		case SND_SOC_TPLG_TUPLE_TYPE_SHORT:
+			अवरोध;
+		हाल SND_SOC_TPLG_TUPLE_TYPE_BOOL:
+		हाल SND_SOC_TPLG_TUPLE_TYPE_BYTE:
+		हाल SND_SOC_TPLG_TUPLE_TYPE_WORD:
+		हाल SND_SOC_TPLG_TUPLE_TYPE_SHORT:
 			found += sof_parse_word_tokens(scomp, object, tokens,
 						       count, array, offset);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(scomp->dev, "error: unknown token type %d\n",
 				array->type);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* next array */
-		array = (struct snd_soc_tplg_vendor_array *)((u8 *)array
+		array = (काष्ठा snd_soc_tplg_venकरोr_array *)((u8 *)array
 			+ asize);
 
-		/* move to next target struct */
-		if (found >= count) {
+		/* move to next target काष्ठा */
+		अगर (found >= count) अणु
 			offset += object_size;
 			total += found;
 			found = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sof_parse_tokens(struct snd_soc_component *scomp,
-			    void *object,
-			    const struct sof_topology_token *tokens,
-			    int count,
-			    struct snd_soc_tplg_vendor_array *array,
-			    int priv_size)
-{
+अटल पूर्णांक sof_parse_tokens(काष्ठा snd_soc_component *scomp,
+			    व्योम *object,
+			    स्थिर काष्ठा sof_topology_token *tokens,
+			    पूर्णांक count,
+			    काष्ठा snd_soc_tplg_venकरोr_array *array,
+			    पूर्णांक priv_size)
+अणु
 	/*
 	 * sof_parse_tokens is used when topology contains only a single set of
 	 * identical tuples arrays. So additional parameters to
 	 * sof_parse_token_sets are sets = 1 (only 1 set) and
 	 * object_size = 0 (irrelevant).
 	 */
-	return sof_parse_token_sets(scomp, object, tokens, count, array,
+	वापस sof_parse_token_sets(scomp, object, tokens, count, array,
 				    priv_size, 1, 0);
-}
+पूर्ण
 
-static void sof_dbg_comp_config(struct snd_soc_component *scomp,
-				struct sof_ipc_comp_config *config)
-{
+अटल व्योम sof_dbg_comp_config(काष्ठा snd_soc_component *scomp,
+				काष्ठा sof_ipc_comp_config *config)
+अणु
 	dev_dbg(scomp->dev, " config: periods snk %d src %d fmt %d\n",
 		config->periods_sink, config->periods_source,
 		config->frame_fmt);
-}
+पूर्ण
 
 /*
  * Standard Kcontrols.
  */
 
-static int sof_control_load_volume(struct snd_soc_component *scomp,
-				   struct snd_sof_control *scontrol,
-				   struct snd_kcontrol_new *kc,
-				   struct snd_soc_tplg_ctl_hdr *hdr)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_mixer_control *mc =
-		container_of(hdr, struct snd_soc_tplg_mixer_control, hdr);
-	struct sof_ipc_ctrl_data *cdata;
-	int tlv[TLV_ITEMS];
-	unsigned int i;
-	int ret;
+अटल पूर्णांक sof_control_load_volume(काष्ठा snd_soc_component *scomp,
+				   काष्ठा snd_sof_control *scontrol,
+				   काष्ठा snd_kcontrol_new *kc,
+				   काष्ठा snd_soc_tplg_ctl_hdr *hdr)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_mixer_control *mc =
+		container_of(hdr, काष्ठा snd_soc_tplg_mixer_control, hdr);
+	काष्ठा sof_ipc_ctrl_data *cdata;
+	पूर्णांक tlv[TLV_ITEMS];
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	/* validate topology data */
-	if (le32_to_cpu(mc->num_channels) > SND_SOC_TPLG_MAX_CHAN) {
+	अगर (le32_to_cpu(mc->num_channels) > SND_SOC_TPLG_MAX_CHAN) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * If control has more than 2 channels we need to override the info. This is because even if
+	 * If control has more than 2 channels we need to override the info. This is because even अगर
 	 * ASoC layer has defined topology's max channel count to SND_SOC_TPLG_MAX_CHAN = 8, the
 	 * pre-defined dapm control types (and related functions) creating the actual control
 	 * restrict the channels only to mono or stereo.
 	 */
-	if (le32_to_cpu(mc->num_channels) > 2)
+	अगर (le32_to_cpu(mc->num_channels) > 2)
 		kc->info = snd_sof_volume_info;
 
 	/* init the volume get/put data */
-	scontrol->size = struct_size(scontrol->control_data, chanv,
+	scontrol->size = काष्ठा_size(scontrol->control_data, chanv,
 				     le32_to_cpu(mc->num_channels));
 	scontrol->control_data = kzalloc(scontrol->size, GFP_KERNEL);
-	if (!scontrol->control_data) {
+	अगर (!scontrol->control_data) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	scontrol->comp_id = sdev->next_comp_id;
 	scontrol->min_volume_step = le32_to_cpu(mc->min);
 	scontrol->max_volume_step = le32_to_cpu(mc->max);
 	scontrol->num_channels = le32_to_cpu(mc->num_channels);
 
-	/* set cmd for mixer control */
-	if (le32_to_cpu(mc->max) == 1) {
+	/* set cmd क्रम mixer control */
+	अगर (le32_to_cpu(mc->max) == 1) अणु
 		scontrol->cmd = SOF_CTRL_CMD_SWITCH;
-		goto skip;
-	}
+		जाओ skip;
+	पूर्ण
 
 	scontrol->cmd = SOF_CTRL_CMD_VOLUME;
 
 	/* extract tlv data */
-	if (!kc->tlv.p || get_tlv_data(kc->tlv.p, tlv) < 0) {
+	अगर (!kc->tlv.p || get_tlv_data(kc->tlv.p, tlv) < 0) अणु
 		dev_err(scomp->dev, "error: invalid TLV data\n");
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	/* set up volume table */
 	ret = set_up_volume_table(scontrol, tlv, le32_to_cpu(mc->max) + 1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(scomp->dev, "error: setting up volume table\n");
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	/* set default volume values to 0dB in control */
+	/* set शेष volume values to 0dB in control */
 	cdata = scontrol->control_data;
-	for (i = 0; i < scontrol->num_channels; i++) {
+	क्रम (i = 0; i < scontrol->num_channels; i++) अणु
 		cdata->chanv[i].channel = i;
 		cdata->chanv[i].value = VOL_ZERO_DB;
-	}
+	पूर्ण
 
 skip:
-	/* set up possible led control from mixer private data */
+	/* set up possible led control from mixer निजी data */
 	ret = sof_parse_tokens(scomp, &scontrol->led_ctl, led_tokens,
 			       ARRAY_SIZE(led_tokens), mc->priv.array,
 			       le32_to_cpu(mc->priv.size));
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse led tokens failed %d\n",
 			le32_to_cpu(mc->priv.size));
-		goto out_free_table;
-	}
+		जाओ out_मुक्त_table;
+	पूर्ण
 
 	dev_dbg(scomp->dev, "tplg: load kcontrol index %d chans %d\n",
 		scontrol->comp_id, scontrol->num_channels);
 
-	return 0;
+	वापस 0;
 
-out_free_table:
-	if (le32_to_cpu(mc->max) > 1)
-		kfree(scontrol->volume_table);
-out_free:
-	kfree(scontrol->control_data);
+out_मुक्त_table:
+	अगर (le32_to_cpu(mc->max) > 1)
+		kमुक्त(scontrol->volume_table);
+out_मुक्त:
+	kमुक्त(scontrol->control_data);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sof_control_load_enum(struct snd_soc_component *scomp,
-				 struct snd_sof_control *scontrol,
-				 struct snd_kcontrol_new *kc,
-				 struct snd_soc_tplg_ctl_hdr *hdr)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_enum_control *ec =
-		container_of(hdr, struct snd_soc_tplg_enum_control, hdr);
+अटल पूर्णांक sof_control_load_क्रमागत(काष्ठा snd_soc_component *scomp,
+				 काष्ठा snd_sof_control *scontrol,
+				 काष्ठा snd_kcontrol_new *kc,
+				 काष्ठा snd_soc_tplg_ctl_hdr *hdr)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_क्रमागत_control *ec =
+		container_of(hdr, काष्ठा snd_soc_tplg_क्रमागत_control, hdr);
 
 	/* validate topology data */
-	if (le32_to_cpu(ec->num_channels) > SND_SOC_TPLG_MAX_CHAN)
-		return -EINVAL;
+	अगर (le32_to_cpu(ec->num_channels) > SND_SOC_TPLG_MAX_CHAN)
+		वापस -EINVAL;
 
-	/* init the enum get/put data */
-	scontrol->size = struct_size(scontrol->control_data, chanv,
+	/* init the क्रमागत get/put data */
+	scontrol->size = काष्ठा_size(scontrol->control_data, chanv,
 				     le32_to_cpu(ec->num_channels));
 	scontrol->control_data = kzalloc(scontrol->size, GFP_KERNEL);
-	if (!scontrol->control_data)
-		return -ENOMEM;
+	अगर (!scontrol->control_data)
+		वापस -ENOMEM;
 
 	scontrol->comp_id = sdev->next_comp_id;
 	scontrol->num_channels = le32_to_cpu(ec->num_channels);
@@ -1146,45 +1147,45 @@ static int sof_control_load_enum(struct snd_soc_component *scomp,
 	dev_dbg(scomp->dev, "tplg: load kcontrol index %d chans %d comp_id %d\n",
 		scontrol->comp_id, scontrol->num_channels, scontrol->comp_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sof_control_load_bytes(struct snd_soc_component *scomp,
-				  struct snd_sof_control *scontrol,
-				  struct snd_kcontrol_new *kc,
-				  struct snd_soc_tplg_ctl_hdr *hdr)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct sof_ipc_ctrl_data *cdata;
-	struct snd_soc_tplg_bytes_control *control =
-		container_of(hdr, struct snd_soc_tplg_bytes_control, hdr);
-	struct soc_bytes_ext *sbe = (struct soc_bytes_ext *)kc->private_value;
-	size_t max_size = sbe->max;
-	size_t priv_size = le32_to_cpu(control->priv.size);
-	int ret;
+अटल पूर्णांक sof_control_load_bytes(काष्ठा snd_soc_component *scomp,
+				  काष्ठा snd_sof_control *scontrol,
+				  काष्ठा snd_kcontrol_new *kc,
+				  काष्ठा snd_soc_tplg_ctl_hdr *hdr)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा sof_ipc_ctrl_data *cdata;
+	काष्ठा snd_soc_tplg_bytes_control *control =
+		container_of(hdr, काष्ठा snd_soc_tplg_bytes_control, hdr);
+	काष्ठा soc_bytes_ext *sbe = (काष्ठा soc_bytes_ext *)kc->निजी_value;
+	माप_प्रकार max_size = sbe->max;
+	माप_प्रकार priv_size = le32_to_cpu(control->priv.size);
+	पूर्णांक ret;
 
-	if (max_size < sizeof(struct sof_ipc_ctrl_data) ||
-	    max_size < sizeof(struct sof_abi_hdr)) {
+	अगर (max_size < माप(काष्ठा sof_ipc_ctrl_data) ||
+	    max_size < माप(काष्ठा sof_abi_hdr)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* init the get/put bytes data */
-	if (priv_size > max_size - sizeof(struct sof_ipc_ctrl_data)) {
+	अगर (priv_size > max_size - माप(काष्ठा sof_ipc_ctrl_data)) अणु
 		dev_err(scomp->dev, "err: bytes data size %zu exceeds max %zu.\n",
-			priv_size, max_size - sizeof(struct sof_ipc_ctrl_data));
+			priv_size, max_size - माप(काष्ठा sof_ipc_ctrl_data));
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	scontrol->size = sizeof(struct sof_ipc_ctrl_data) + priv_size;
+	scontrol->size = माप(काष्ठा sof_ipc_ctrl_data) + priv_size;
 
 	scontrol->control_data = kzalloc(max_size, GFP_KERNEL);
 	cdata = scontrol->control_data;
-	if (!scontrol->control_data) {
+	अगर (!scontrol->control_data) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	scontrol->comp_id = sdev->next_comp_id;
 	scontrol->cmd = SOF_CTRL_CMD_BINARY;
@@ -1192,301 +1193,301 @@ static int sof_control_load_bytes(struct snd_soc_component *scomp,
 	dev_dbg(scomp->dev, "tplg: load kcontrol index %d chans %d\n",
 		scontrol->comp_id, scontrol->num_channels);
 
-	if (le32_to_cpu(control->priv.size) > 0) {
-		memcpy(cdata->data, control->priv.data,
+	अगर (le32_to_cpu(control->priv.size) > 0) अणु
+		स_नकल(cdata->data, control->priv.data,
 		       le32_to_cpu(control->priv.size));
 
-		if (cdata->data->magic != SOF_ABI_MAGIC) {
+		अगर (cdata->data->magic != SOF_ABI_MAGIC) अणु
 			dev_err(scomp->dev, "error: Wrong ABI magic 0x%08x.\n",
 				cdata->data->magic);
 			ret = -EINVAL;
-			goto out_free;
-		}
-		if (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION,
-						 cdata->data->abi)) {
+			जाओ out_मुक्त;
+		पूर्ण
+		अगर (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION,
+						 cdata->data->abi)) अणु
 			dev_err(scomp->dev,
 				"error: Incompatible ABI version 0x%08x.\n",
 				cdata->data->abi);
 			ret = -EINVAL;
-			goto out_free;
-		}
-		if (cdata->data->size + sizeof(struct sof_abi_hdr) !=
-		    le32_to_cpu(control->priv.size)) {
+			जाओ out_मुक्त;
+		पूर्ण
+		अगर (cdata->data->size + माप(काष्ठा sof_abi_hdr) !=
+		    le32_to_cpu(control->priv.size)) अणु
 			dev_err(scomp->dev,
 				"error: Conflict in bytes vs. priv size.\n");
 			ret = -EINVAL;
-			goto out_free;
-		}
-	}
+			जाओ out_मुक्त;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_free:
-	kfree(scontrol->control_data);
+out_मुक्त:
+	kमुक्त(scontrol->control_data);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* external kcontrol init - used for any driver specific init */
-static int sof_control_load(struct snd_soc_component *scomp, int index,
-			    struct snd_kcontrol_new *kc,
-			    struct snd_soc_tplg_ctl_hdr *hdr)
-{
-	struct soc_mixer_control *sm;
-	struct soc_bytes_ext *sbe;
-	struct soc_enum *se;
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_dobj *dobj;
-	struct snd_sof_control *scontrol;
-	int ret;
+/* बाह्यal kcontrol init - used क्रम any driver specअगरic init */
+अटल पूर्णांक sof_control_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			    काष्ठा snd_kcontrol_new *kc,
+			    काष्ठा snd_soc_tplg_ctl_hdr *hdr)
+अणु
+	काष्ठा soc_mixer_control *sm;
+	काष्ठा soc_bytes_ext *sbe;
+	काष्ठा soc_क्रमागत *se;
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_करोbj *करोbj;
+	काष्ठा snd_sof_control *scontrol;
+	पूर्णांक ret;
 
 	dev_dbg(scomp->dev, "tplg: load control type %d name : %s\n",
 		hdr->type, hdr->name);
 
-	scontrol = kzalloc(sizeof(*scontrol), GFP_KERNEL);
-	if (!scontrol)
-		return -ENOMEM;
+	scontrol = kzalloc(माप(*scontrol), GFP_KERNEL);
+	अगर (!scontrol)
+		वापस -ENOMEM;
 
 	scontrol->scomp = scomp;
 
-	switch (le32_to_cpu(hdr->ops.info)) {
-	case SND_SOC_TPLG_CTL_VOLSW:
-	case SND_SOC_TPLG_CTL_VOLSW_SX:
-	case SND_SOC_TPLG_CTL_VOLSW_XR_SX:
-		sm = (struct soc_mixer_control *)kc->private_value;
-		dobj = &sm->dobj;
+	चयन (le32_to_cpu(hdr->ops.info)) अणु
+	हाल SND_SOC_TPLG_CTL_VOLSW:
+	हाल SND_SOC_TPLG_CTL_VOLSW_SX:
+	हाल SND_SOC_TPLG_CTL_VOLSW_XR_SX:
+		sm = (काष्ठा soc_mixer_control *)kc->निजी_value;
+		करोbj = &sm->करोbj;
 		ret = sof_control_load_volume(scomp, scontrol, kc, hdr);
-		break;
-	case SND_SOC_TPLG_CTL_BYTES:
-		sbe = (struct soc_bytes_ext *)kc->private_value;
-		dobj = &sbe->dobj;
+		अवरोध;
+	हाल SND_SOC_TPLG_CTL_BYTES:
+		sbe = (काष्ठा soc_bytes_ext *)kc->निजी_value;
+		करोbj = &sbe->करोbj;
 		ret = sof_control_load_bytes(scomp, scontrol, kc, hdr);
-		break;
-	case SND_SOC_TPLG_CTL_ENUM:
-	case SND_SOC_TPLG_CTL_ENUM_VALUE:
-		se = (struct soc_enum *)kc->private_value;
-		dobj = &se->dobj;
-		ret = sof_control_load_enum(scomp, scontrol, kc, hdr);
-		break;
-	case SND_SOC_TPLG_CTL_RANGE:
-	case SND_SOC_TPLG_CTL_STROBE:
-	case SND_SOC_TPLG_DAPM_CTL_VOLSW:
-	case SND_SOC_TPLG_DAPM_CTL_ENUM_DOUBLE:
-	case SND_SOC_TPLG_DAPM_CTL_ENUM_VIRT:
-	case SND_SOC_TPLG_DAPM_CTL_ENUM_VALUE:
-	case SND_SOC_TPLG_DAPM_CTL_PIN:
-	default:
+		अवरोध;
+	हाल SND_SOC_TPLG_CTL_ENUM:
+	हाल SND_SOC_TPLG_CTL_ENUM_VALUE:
+		se = (काष्ठा soc_क्रमागत *)kc->निजी_value;
+		करोbj = &se->करोbj;
+		ret = sof_control_load_क्रमागत(scomp, scontrol, kc, hdr);
+		अवरोध;
+	हाल SND_SOC_TPLG_CTL_RANGE:
+	हाल SND_SOC_TPLG_CTL_STROBE:
+	हाल SND_SOC_TPLG_DAPM_CTL_VOLSW:
+	हाल SND_SOC_TPLG_DAPM_CTL_ENUM_DOUBLE:
+	हाल SND_SOC_TPLG_DAPM_CTL_ENUM_VIRT:
+	हाल SND_SOC_TPLG_DAPM_CTL_ENUM_VALUE:
+	हाल SND_SOC_TPLG_DAPM_CTL_PIN:
+	शेष:
 		dev_warn(scomp->dev, "control type not supported %d:%d:%d\n",
 			 hdr->ops.get, hdr->ops.put, hdr->ops.info);
-		kfree(scontrol);
-		return 0;
-	}
+		kमुक्त(scontrol);
+		वापस 0;
+	पूर्ण
 
-	if (ret < 0) {
-		kfree(scontrol);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		kमुक्त(scontrol);
+		वापस ret;
+	पूर्ण
 
 	scontrol->led_ctl.led_value = -1;
 
-	dobj->private = scontrol;
+	करोbj->निजी = scontrol;
 	list_add(&scontrol->list, &sdev->kcontrol_list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sof_control_unload(struct snd_soc_component *scomp,
-			      struct snd_soc_dobj *dobj)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct sof_ipc_free fcomp;
-	struct snd_sof_control *scontrol = dobj->private;
+अटल पूर्णांक sof_control_unload(काष्ठा snd_soc_component *scomp,
+			      काष्ठा snd_soc_करोbj *करोbj)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा sof_ipc_मुक्त fcomp;
+	काष्ठा snd_sof_control *scontrol = करोbj->निजी;
 
 	dev_dbg(scomp->dev, "tplg: unload control name : %s\n", scomp->name);
 
 	fcomp.hdr.cmd = SOF_IPC_GLB_TPLG_MSG | SOF_IPC_TPLG_COMP_FREE;
-	fcomp.hdr.size = sizeof(fcomp);
+	fcomp.hdr.size = माप(fcomp);
 	fcomp.id = scontrol->comp_id;
 
-	kfree(scontrol->control_data);
+	kमुक्त(scontrol->control_data);
 	list_del(&scontrol->list);
-	kfree(scontrol);
+	kमुक्त(scontrol);
 	/* send IPC to the DSP */
-	return sof_ipc_tx_message(sdev->ipc,
-				  fcomp.hdr.cmd, &fcomp, sizeof(fcomp),
-				  NULL, 0);
-}
+	वापस sof_ipc_tx_message(sdev->ipc,
+				  fcomp.hdr.cmd, &fcomp, माप(fcomp),
+				  शून्य, 0);
+पूर्ण
 
 /*
  * DAI Topology
  */
 
-/* Static DSP core power management so far, should be extended in the future */
-static int sof_core_enable(struct snd_sof_dev *sdev, int core)
-{
-	struct sof_ipc_pm_core_config pm_core_config = {
-		.hdr = {
+/* Static DSP core घातer management so far, should be extended in the future */
+अटल पूर्णांक sof_core_enable(काष्ठा snd_sof_dev *sdev, पूर्णांक core)
+अणु
+	काष्ठा sof_ipc_pm_core_config pm_core_config = अणु
+		.hdr = अणु
 			.cmd = SOF_IPC_GLB_PM_MSG | SOF_IPC_PM_CORE_ENABLE,
-			.size = sizeof(pm_core_config),
-		},
+			.size = माप(pm_core_config),
+		पूर्ण,
 		.enable_mask = sdev->enabled_cores_mask | BIT(core),
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (sdev->enabled_cores_mask & BIT(core))
-		return 0;
+	अगर (sdev->enabled_cores_mask & BIT(core))
+		वापस 0;
 
-	/* power up the core if it is host managed */
-	ret = snd_sof_dsp_core_power_up(sdev, BIT(core));
-	if (ret < 0) {
+	/* घातer up the core अगर it is host managed */
+	ret = snd_sof_dsp_core_घातer_up(sdev, BIT(core));
+	अगर (ret < 0) अणु
 		dev_err(sdev->dev, "error: %d powering up core %d\n",
 			ret, core);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Now notify DSP */
+	/* Now notअगरy DSP */
 	ret = sof_ipc_tx_message(sdev->ipc, pm_core_config.hdr.cmd,
-				 &pm_core_config, sizeof(pm_core_config),
-				 &pm_core_config, sizeof(pm_core_config));
-	if (ret < 0) {
+				 &pm_core_config, माप(pm_core_config),
+				 &pm_core_config, माप(pm_core_config));
+	अगर (ret < 0) अणु
 		dev_err(sdev->dev, "error: core %d enable ipc failure %d\n",
 			core, ret);
-		goto err;
-	}
-	return ret;
+		जाओ err;
+	पूर्ण
+	वापस ret;
 err:
-	/* power down core if it is host managed and return the original error if this fails too */
-	if (snd_sof_dsp_core_power_down(sdev, BIT(core)) < 0)
+	/* घातer करोwn core अगर it is host managed and वापस the original error अगर this fails too */
+	अगर (snd_sof_dsp_core_घातer_करोwn(sdev, BIT(core)) < 0)
 		dev_err(sdev->dev, "error: powering down core %d\n", core);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int sof_pipeline_core_enable(struct snd_sof_dev *sdev,
-			     const struct snd_sof_widget *swidget)
-{
-	const struct sof_ipc_pipe_new *pipeline;
-	int ret;
+पूर्णांक sof_pipeline_core_enable(काष्ठा snd_sof_dev *sdev,
+			     स्थिर काष्ठा snd_sof_widget *swidget)
+अणु
+	स्थिर काष्ठा sof_ipc_pipe_new *pipeline;
+	पूर्णांक ret;
 
-	if (swidget->id == snd_soc_dapm_scheduler) {
-		pipeline = swidget->private;
-	} else {
+	अगर (swidget->id == snd_soc_dapm_scheduler) अणु
+		pipeline = swidget->निजी;
+	पूर्ण अन्यथा अणु
 		pipeline = snd_sof_pipeline_find(sdev, swidget->pipeline_id);
-		if (!pipeline)
-			return -ENOENT;
-	}
+		अगर (!pipeline)
+			वापस -ENOENT;
+	पूर्ण
 
 	/* First enable the pipeline core */
 	ret = sof_core_enable(sdev, pipeline->core);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return sof_core_enable(sdev, swidget->core);
-}
+	वापस sof_core_enable(sdev, swidget->core);
+पूर्ण
 
-static int sof_connect_dai_widget(struct snd_soc_component *scomp,
-				  struct snd_soc_dapm_widget *w,
-				  struct snd_soc_tplg_dapm_widget *tw,
-				  struct snd_sof_dai *dai)
-{
-	struct snd_soc_card *card = scomp->card;
-	struct snd_soc_pcm_runtime *rtd;
-	struct snd_soc_dai *cpu_dai;
-	int i;
+अटल पूर्णांक sof_connect_dai_widget(काष्ठा snd_soc_component *scomp,
+				  काष्ठा snd_soc_dapm_widget *w,
+				  काष्ठा snd_soc_tplg_dapm_widget *tw,
+				  काष्ठा snd_sof_dai *dai)
+अणु
+	काष्ठा snd_soc_card *card = scomp->card;
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	काष्ठा snd_soc_dai *cpu_dai;
+	पूर्णांक i;
 
-	list_for_each_entry(rtd, &card->rtd_list, list) {
+	list_क्रम_each_entry(rtd, &card->rtd_list, list) अणु
 		dev_vdbg(scomp->dev, "tplg: check widget: %s stream: %s dai stream: %s\n",
 			 w->name,  w->sname, rtd->dai_link->stream_name);
 
-		if (!w->sname || !rtd->dai_link->stream_name)
-			continue;
+		अगर (!w->sname || !rtd->dai_link->stream_name)
+			जारी;
 
-		/* does stream match DAI link ? */
-		if (strcmp(w->sname, rtd->dai_link->stream_name))
-			continue;
+		/* करोes stream match DAI link ? */
+		अगर (म_भेद(w->sname, rtd->dai_link->stream_name))
+			जारी;
 
-		switch (w->id) {
-		case snd_soc_dapm_dai_out:
-			for_each_rtd_cpu_dais(rtd, i, cpu_dai) {
+		चयन (w->id) अणु
+		हाल snd_soc_dapm_dai_out:
+			क्रम_each_rtd_cpu_dais(rtd, i, cpu_dai) अणु
 				/*
 				 * Please create DAI widget in the right order
 				 * to ensure BE will connect to the right DAI
 				 * widget.
 				 */
-				if (!cpu_dai->capture_widget) {
+				अगर (!cpu_dai->capture_widget) अणु
 					cpu_dai->capture_widget = w;
-					break;
-				}
-			}
-			if (i == rtd->num_cpus) {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (i == rtd->num_cpus) अणु
 				dev_err(scomp->dev, "error: can't find BE for DAI %s\n",
 					w->name);
 
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			dai->name = rtd->dai_link->name;
 			dev_dbg(scomp->dev, "tplg: connected widget %s -> DAI link %s\n",
 				w->name, rtd->dai_link->name);
-			break;
-		case snd_soc_dapm_dai_in:
-			for_each_rtd_cpu_dais(rtd, i, cpu_dai) {
+			अवरोध;
+		हाल snd_soc_dapm_dai_in:
+			क्रम_each_rtd_cpu_dais(rtd, i, cpu_dai) अणु
 				/*
 				 * Please create DAI widget in the right order
 				 * to ensure BE will connect to the right DAI
 				 * widget.
 				 */
-				if (!cpu_dai->playback_widget) {
+				अगर (!cpu_dai->playback_widget) अणु
 					cpu_dai->playback_widget = w;
-					break;
-				}
-			}
-			if (i == rtd->num_cpus) {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (i == rtd->num_cpus) अणु
 				dev_err(scomp->dev, "error: can't find BE for DAI %s\n",
 					w->name);
 
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			dai->name = rtd->dai_link->name;
 			dev_dbg(scomp->dev, "tplg: connected widget %s -> DAI link %s\n",
 				w->name, rtd->dai_link->name);
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* check we have a connection */
-	if (!dai->name) {
+	अगर (!dai->name) अणु
 		dev_err(scomp->dev, "error: can't connect DAI %s stream %s\n",
 			w->name, w->sname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sof_comp_alloc - allocate and initialize buffer for a new component
- * @swidget: pointer to struct snd_sof_widget containing extended data
+ * sof_comp_alloc - allocate and initialize buffer क्रम a new component
+ * @swidget: poपूर्णांकer to काष्ठा snd_sof_widget containing extended data
  * @ipc_size: IPC payload size that will be updated depending on valid
  *  extended data.
- * @index: ID of the pipeline the component belongs to
+ * @index: ID of the pipeline the component beदीर्घs to
  *
- * Return: The pointer to the new allocated component, NULL if failed.
+ * Return: The poपूर्णांकer to the new allocated component, शून्य अगर failed.
  */
-static struct sof_ipc_comp *sof_comp_alloc(struct snd_sof_widget *swidget,
-					   size_t *ipc_size, int index)
-{
-	u8 nil_uuid[SOF_UUID_SIZE] = {0};
-	struct sof_ipc_comp *comp;
-	size_t total_size = *ipc_size;
+अटल काष्ठा sof_ipc_comp *sof_comp_alloc(काष्ठा snd_sof_widget *swidget,
+					   माप_प्रकार *ipc_size, पूर्णांक index)
+अणु
+	u8 nil_uuid[SOF_UUID_SIZE] = अणु0पूर्ण;
+	काष्ठा sof_ipc_comp *comp;
+	माप_प्रकार total_size = *ipc_size;
 
 	/* only non-zero UUID is valid */
-	if (memcmp(&swidget->comp_ext, nil_uuid, SOF_UUID_SIZE))
-		total_size += sizeof(swidget->comp_ext);
+	अगर (स_भेद(&swidget->comp_ext, nil_uuid, SOF_UUID_SIZE))
+		total_size += माप(swidget->comp_ext);
 
 	comp = kzalloc(total_size, GFP_KERNEL);
-	if (!comp)
-		return NULL;
+	अगर (!comp)
+		वापस शून्य;
 
 	/* configure comp new IPC message */
 	comp->hdr.size = total_size;
@@ -1495,100 +1496,100 @@ static struct sof_ipc_comp *sof_comp_alloc(struct snd_sof_widget *swidget,
 	comp->pipeline_id = index;
 	comp->core = swidget->core;
 
-	/* handle the extended data if needed */
-	if (total_size > *ipc_size) {
+	/* handle the extended data अगर needed */
+	अगर (total_size > *ipc_size) अणु
 		/* append extended data to the end of the component */
-		memcpy((u8 *)comp + *ipc_size, &swidget->comp_ext, sizeof(swidget->comp_ext));
-		comp->ext_data_length = sizeof(swidget->comp_ext);
-	}
+		स_नकल((u8 *)comp + *ipc_size, &swidget->comp_ext, माप(swidget->comp_ext));
+		comp->ext_data_length = माप(swidget->comp_ext);
+	पूर्ण
 
-	/* update ipc_size and return */
+	/* update ipc_size and वापस */
 	*ipc_size = total_size;
-	return comp;
-}
+	वापस comp;
+पूर्ण
 
-static int sof_widget_load_dai(struct snd_soc_component *scomp, int index,
-			       struct snd_sof_widget *swidget,
-			       struct snd_soc_tplg_dapm_widget *tw,
-			       struct sof_ipc_comp_reply *r,
-			       struct snd_sof_dai *dai)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_comp_dai *comp_dai;
-	size_t ipc_size = sizeof(*comp_dai);
-	int ret;
+अटल पूर्णांक sof_widget_load_dai(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			       काष्ठा snd_sof_widget *swidget,
+			       काष्ठा snd_soc_tplg_dapm_widget *tw,
+			       काष्ठा sof_ipc_comp_reply *r,
+			       काष्ठा snd_sof_dai *dai)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_comp_dai *comp_dai;
+	माप_प्रकार ipc_size = माप(*comp_dai);
+	पूर्णांक ret;
 
-	comp_dai = (struct sof_ipc_comp_dai *)
+	comp_dai = (काष्ठा sof_ipc_comp_dai *)
 		   sof_comp_alloc(swidget, &ipc_size, index);
-	if (!comp_dai)
-		return -ENOMEM;
+	अगर (!comp_dai)
+		वापस -ENOMEM;
 
 	/* configure dai IPC message */
 	comp_dai->comp.type = SOF_COMP_DAI;
-	comp_dai->config.hdr.size = sizeof(comp_dai->config);
+	comp_dai->config.hdr.size = माप(comp_dai->config);
 
 	ret = sof_parse_tokens(scomp, comp_dai, dai_tokens,
-			       ARRAY_SIZE(dai_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(dai_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse dai tokens failed %d\n",
-			le32_to_cpu(private->size));
-		goto finish;
-	}
+			le32_to_cpu(निजी->size));
+		जाओ finish;
+	पूर्ण
 
 	ret = sof_parse_tokens(scomp, &comp_dai->config, comp_tokens,
-			       ARRAY_SIZE(comp_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(comp_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse dai.cfg tokens failed %d\n",
-			private->size);
-		goto finish;
-	}
+			निजी->size);
+		जाओ finish;
+	पूर्ण
 
 	dev_dbg(scomp->dev, "dai %s: type %d index %d\n",
 		swidget->widget->name, comp_dai->type, comp_dai->dai_index);
 	sof_dbg_comp_config(scomp, &comp_dai->config);
 
 	ret = sof_ipc_tx_message(sdev->ipc, comp_dai->comp.hdr.cmd,
-				 comp_dai, ipc_size, r, sizeof(*r));
+				 comp_dai, ipc_size, r, माप(*r));
 
-	if (ret == 0 && dai) {
+	अगर (ret == 0 && dai) अणु
 		dai->scomp = scomp;
 
 		/*
-		 * copy only the sof_ipc_comp_dai to avoid collapsing
+		 * copy only the sof_ipc_comp_dai to aव्योम collapsing
 		 * the snd_sof_dai, the extended data is kept in the
 		 * snd_sof_widget.
 		 */
-		memcpy(&dai->comp_dai, comp_dai, sizeof(*comp_dai));
-	}
+		स_नकल(&dai->comp_dai, comp_dai, माप(*comp_dai));
+	पूर्ण
 
 finish:
-	kfree(comp_dai);
-	return ret;
-}
+	kमुक्त(comp_dai);
+	वापस ret;
+पूर्ण
 
 /*
  * Buffer topology
  */
 
-static int sof_widget_load_buffer(struct snd_soc_component *scomp, int index,
-				  struct snd_sof_widget *swidget,
-				  struct snd_soc_tplg_dapm_widget *tw,
-				  struct sof_ipc_comp_reply *r)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_buffer *buffer;
-	int ret;
+अटल पूर्णांक sof_widget_load_buffer(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+				  काष्ठा snd_sof_widget *swidget,
+				  काष्ठा snd_soc_tplg_dapm_widget *tw,
+				  काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_buffer *buffer;
+	पूर्णांक ret;
 
-	buffer = kzalloc(sizeof(*buffer), GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+	buffer = kzalloc(माप(*buffer), GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	/* configure dai IPC message */
-	buffer->comp.hdr.size = sizeof(*buffer);
+	buffer->comp.hdr.size = माप(*buffer);
 	buffer->comp.hdr.cmd = SOF_IPC_GLB_TPLG_MSG | SOF_IPC_TPLG_BUFFER_NEW;
 	buffer->comp.id = swidget->comp_id;
 	buffer->comp.type = SOF_COMP_BUFFER;
@@ -1596,157 +1597,157 @@ static int sof_widget_load_buffer(struct snd_soc_component *scomp, int index,
 	buffer->comp.core = swidget->core;
 
 	ret = sof_parse_tokens(scomp, buffer, buffer_tokens,
-			       ARRAY_SIZE(buffer_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(buffer_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse buffer tokens failed %d\n",
-			private->size);
-		kfree(buffer);
-		return ret;
-	}
+			निजी->size);
+		kमुक्त(buffer);
+		वापस ret;
+	पूर्ण
 
 	dev_dbg(scomp->dev, "buffer %s: size %d caps 0x%x\n",
 		swidget->widget->name, buffer->size, buffer->caps);
 
-	swidget->private = buffer;
+	swidget->निजी = buffer;
 
 	ret = sof_ipc_tx_message(sdev->ipc, buffer->comp.hdr.cmd, buffer,
-				 sizeof(*buffer), r, sizeof(*r));
-	if (ret < 0) {
+				 माप(*buffer), r, माप(*r));
+	अगर (ret < 0) अणु
 		dev_err(scomp->dev, "error: buffer %s load failed\n",
 			swidget->widget->name);
-		kfree(buffer);
-	}
+		kमुक्त(buffer);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* bind PCM ID to host component ID */
-static int spcm_bind(struct snd_soc_component *scomp, struct snd_sof_pcm *spcm,
-		     int dir)
-{
-	struct snd_sof_widget *host_widget;
+अटल पूर्णांक spcm_bind(काष्ठा snd_soc_component *scomp, काष्ठा snd_sof_pcm *spcm,
+		     पूर्णांक dir)
+अणु
+	काष्ठा snd_sof_widget *host_widget;
 
 	host_widget = snd_sof_find_swidget_sname(scomp,
 						 spcm->pcm.caps[dir].name,
 						 dir);
-	if (!host_widget) {
+	अगर (!host_widget) अणु
 		dev_err(scomp->dev, "can't find host comp to bind pcm\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spcm->stream[dir].comp_id = host_widget->comp_id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * PCM Topology
  */
 
-static int sof_widget_load_pcm(struct snd_soc_component *scomp, int index,
-			       struct snd_sof_widget *swidget,
-			       enum sof_ipc_stream_direction dir,
-			       struct snd_soc_tplg_dapm_widget *tw,
-			       struct sof_ipc_comp_reply *r)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_comp_host *host;
-	size_t ipc_size = sizeof(*host);
-	int ret;
+अटल पूर्णांक sof_widget_load_pcm(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			       काष्ठा snd_sof_widget *swidget,
+			       क्रमागत sof_ipc_stream_direction dir,
+			       काष्ठा snd_soc_tplg_dapm_widget *tw,
+			       काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_comp_host *host;
+	माप_प्रकार ipc_size = माप(*host);
+	पूर्णांक ret;
 
-	host = (struct sof_ipc_comp_host *)
+	host = (काष्ठा sof_ipc_comp_host *)
 	       sof_comp_alloc(swidget, &ipc_size, index);
-	if (!host)
-		return -ENOMEM;
+	अगर (!host)
+		वापस -ENOMEM;
 
 	/* configure host comp IPC message */
 	host->comp.type = SOF_COMP_HOST;
 	host->direction = dir;
-	host->config.hdr.size = sizeof(host->config);
+	host->config.hdr.size = माप(host->config);
 
 	ret = sof_parse_tokens(scomp, host, pcm_tokens,
-			       ARRAY_SIZE(pcm_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(pcm_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse host tokens failed %d\n",
-			private->size);
-		goto err;
-	}
+			निजी->size);
+		जाओ err;
+	पूर्ण
 
 	ret = sof_parse_tokens(scomp, &host->config, comp_tokens,
-			       ARRAY_SIZE(comp_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(comp_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse host.cfg tokens failed %d\n",
-			le32_to_cpu(private->size));
-		goto err;
-	}
+			le32_to_cpu(निजी->size));
+		जाओ err;
+	पूर्ण
 
 	dev_dbg(scomp->dev, "loaded host %s\n", swidget->widget->name);
 	sof_dbg_comp_config(scomp, &host->config);
 
-	swidget->private = host;
+	swidget->निजी = host;
 
 	ret = sof_ipc_tx_message(sdev->ipc, host->comp.hdr.cmd, host,
-				 ipc_size, r, sizeof(*r));
-	if (ret >= 0)
-		return ret;
+				 ipc_size, r, माप(*r));
+	अगर (ret >= 0)
+		वापस ret;
 err:
-	kfree(host);
-	return ret;
-}
+	kमुक्त(host);
+	वापस ret;
+पूर्ण
 
 /*
  * Pipeline Topology
  */
-int sof_load_pipeline_ipc(struct device *dev,
-			  struct sof_ipc_pipe_new *pipeline,
-			  struct sof_ipc_comp_reply *r)
-{
-	struct snd_sof_dev *sdev = dev_get_drvdata(dev);
-	int ret = sof_core_enable(sdev, pipeline->core);
+पूर्णांक sof_load_pipeline_ipc(काष्ठा device *dev,
+			  काष्ठा sof_ipc_pipe_new *pipeline,
+			  काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_sof_dev *sdev = dev_get_drvdata(dev);
+	पूर्णांक ret = sof_core_enable(sdev, pipeline->core);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = sof_ipc_tx_message(sdev->ipc, pipeline->hdr.cmd, pipeline,
-				 sizeof(*pipeline), r, sizeof(*r));
-	if (ret < 0)
+				 माप(*pipeline), r, माप(*r));
+	अगर (ret < 0)
 		dev_err(dev, "error: load pipeline ipc failure\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sof_widget_load_pipeline(struct snd_soc_component *scomp, int index,
-				    struct snd_sof_widget *swidget,
-				    struct snd_soc_tplg_dapm_widget *tw,
-				    struct sof_ipc_comp_reply *r)
-{
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_pipe_new *pipeline;
-	struct snd_sof_widget *comp_swidget;
-	int ret;
+अटल पूर्णांक sof_widget_load_pipeline(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+				    काष्ठा snd_sof_widget *swidget,
+				    काष्ठा snd_soc_tplg_dapm_widget *tw,
+				    काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_pipe_new *pipeline;
+	काष्ठा snd_sof_widget *comp_swidget;
+	पूर्णांक ret;
 
-	pipeline = kzalloc(sizeof(*pipeline), GFP_KERNEL);
-	if (!pipeline)
-		return -ENOMEM;
+	pipeline = kzalloc(माप(*pipeline), GFP_KERNEL);
+	अगर (!pipeline)
+		वापस -ENOMEM;
 
 	/* configure dai IPC message */
-	pipeline->hdr.size = sizeof(*pipeline);
+	pipeline->hdr.size = माप(*pipeline);
 	pipeline->hdr.cmd = SOF_IPC_GLB_TPLG_MSG | SOF_IPC_TPLG_PIPE_NEW;
 	pipeline->pipeline_id = index;
 	pipeline->comp_id = swidget->comp_id;
 
 	/* component at start of pipeline is our stream id */
 	comp_swidget = snd_sof_find_swidget(scomp, tw->sname);
-	if (!comp_swidget) {
+	अगर (!comp_swidget) अणु
 		dev_err(scomp->dev, "error: widget %s refers to non existent widget %s\n",
 			tw->name, tw->sname);
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	pipeline->sched_id = comp_swidget->comp_id;
 
@@ -1754,294 +1755,294 @@ static int sof_widget_load_pipeline(struct snd_soc_component *scomp, int index,
 		pipeline->pipeline_id, pipeline->comp_id, pipeline->sched_id);
 
 	ret = sof_parse_tokens(scomp, pipeline, sched_tokens,
-			       ARRAY_SIZE(sched_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(sched_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse pipeline tokens failed %d\n",
-			private->size);
-		goto err;
-	}
+			निजी->size);
+		जाओ err;
+	पूर्ण
 
 	dev_dbg(scomp->dev, "pipeline %s: period %d pri %d mips %d core %d frames %d\n",
 		swidget->widget->name, pipeline->period, pipeline->priority,
 		pipeline->period_mips, pipeline->core, pipeline->frames_per_sched);
 
-	swidget->private = pipeline;
+	swidget->निजी = pipeline;
 
-	/* send ipc's to create pipeline comp and power up schedule core */
+	/* send ipc's to create pipeline comp and घातer up schedule core */
 	ret = sof_load_pipeline_ipc(scomp->dev, pipeline, r);
-	if (ret >= 0)
-		return ret;
+	अगर (ret >= 0)
+		वापस ret;
 err:
-	kfree(pipeline);
-	return ret;
-}
+	kमुक्त(pipeline);
+	वापस ret;
+पूर्ण
 
 /*
  * Mixer topology
  */
 
-static int sof_widget_load_mixer(struct snd_soc_component *scomp, int index,
-				 struct snd_sof_widget *swidget,
-				 struct snd_soc_tplg_dapm_widget *tw,
-				 struct sof_ipc_comp_reply *r)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_comp_mixer *mixer;
-	size_t ipc_size = sizeof(*mixer);
-	int ret;
+अटल पूर्णांक sof_widget_load_mixer(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+				 काष्ठा snd_sof_widget *swidget,
+				 काष्ठा snd_soc_tplg_dapm_widget *tw,
+				 काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_comp_mixer *mixer;
+	माप_प्रकार ipc_size = माप(*mixer);
+	पूर्णांक ret;
 
-	mixer = (struct sof_ipc_comp_mixer *)
+	mixer = (काष्ठा sof_ipc_comp_mixer *)
 		sof_comp_alloc(swidget, &ipc_size, index);
-	if (!mixer)
-		return -ENOMEM;
+	अगर (!mixer)
+		वापस -ENOMEM;
 
 	/* configure mixer IPC message */
 	mixer->comp.type = SOF_COMP_MIXER;
-	mixer->config.hdr.size = sizeof(mixer->config);
+	mixer->config.hdr.size = माप(mixer->config);
 
 	ret = sof_parse_tokens(scomp, &mixer->config, comp_tokens,
-			       ARRAY_SIZE(comp_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(comp_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse mixer.cfg tokens failed %d\n",
-			private->size);
-		kfree(mixer);
-		return ret;
-	}
+			निजी->size);
+		kमुक्त(mixer);
+		वापस ret;
+	पूर्ण
 
 	sof_dbg_comp_config(scomp, &mixer->config);
 
-	swidget->private = mixer;
+	swidget->निजी = mixer;
 
 	ret = sof_ipc_tx_message(sdev->ipc, mixer->comp.hdr.cmd, mixer,
-				 ipc_size, r, sizeof(*r));
-	if (ret < 0)
-		kfree(mixer);
+				 ipc_size, r, माप(*r));
+	अगर (ret < 0)
+		kमुक्त(mixer);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Mux topology
  */
-static int sof_widget_load_mux(struct snd_soc_component *scomp, int index,
-			       struct snd_sof_widget *swidget,
-			       struct snd_soc_tplg_dapm_widget *tw,
-			       struct sof_ipc_comp_reply *r)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_comp_mux *mux;
-	size_t ipc_size = sizeof(*mux);
-	int ret;
+अटल पूर्णांक sof_widget_load_mux(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			       काष्ठा snd_sof_widget *swidget,
+			       काष्ठा snd_soc_tplg_dapm_widget *tw,
+			       काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_comp_mux *mux;
+	माप_प्रकार ipc_size = माप(*mux);
+	पूर्णांक ret;
 
-	mux = (struct sof_ipc_comp_mux *)
+	mux = (काष्ठा sof_ipc_comp_mux *)
 	      sof_comp_alloc(swidget, &ipc_size, index);
-	if (!mux)
-		return -ENOMEM;
+	अगर (!mux)
+		वापस -ENOMEM;
 
 	/* configure mux IPC message */
 	mux->comp.type = SOF_COMP_MUX;
-	mux->config.hdr.size = sizeof(mux->config);
+	mux->config.hdr.size = माप(mux->config);
 
 	ret = sof_parse_tokens(scomp, &mux->config, comp_tokens,
-			       ARRAY_SIZE(comp_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(comp_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse mux.cfg tokens failed %d\n",
-			private->size);
-		kfree(mux);
-		return ret;
-	}
+			निजी->size);
+		kमुक्त(mux);
+		वापस ret;
+	पूर्ण
 
 	sof_dbg_comp_config(scomp, &mux->config);
 
-	swidget->private = mux;
+	swidget->निजी = mux;
 
 	ret = sof_ipc_tx_message(sdev->ipc, mux->comp.hdr.cmd, mux,
-				 ipc_size, r, sizeof(*r));
-	if (ret < 0)
-		kfree(mux);
+				 ipc_size, r, माप(*r));
+	अगर (ret < 0)
+		kमुक्त(mux);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * PGA Topology
  */
 
-static int sof_widget_load_pga(struct snd_soc_component *scomp, int index,
-			       struct snd_sof_widget *swidget,
-			       struct snd_soc_tplg_dapm_widget *tw,
-			       struct sof_ipc_comp_reply *r)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_comp_volume *volume;
-	struct snd_sof_control *scontrol;
-	size_t ipc_size = sizeof(*volume);
-	int min_step;
-	int max_step;
-	int ret;
+अटल पूर्णांक sof_widget_load_pga(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			       काष्ठा snd_sof_widget *swidget,
+			       काष्ठा snd_soc_tplg_dapm_widget *tw,
+			       काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_comp_volume *volume;
+	काष्ठा snd_sof_control *scontrol;
+	माप_प्रकार ipc_size = माप(*volume);
+	पूर्णांक min_step;
+	पूर्णांक max_step;
+	पूर्णांक ret;
 
-	volume = (struct sof_ipc_comp_volume *)
+	volume = (काष्ठा sof_ipc_comp_volume *)
 		 sof_comp_alloc(swidget, &ipc_size, index);
-	if (!volume)
-		return -ENOMEM;
+	अगर (!volume)
+		वापस -ENOMEM;
 
-	if (!le32_to_cpu(tw->num_kcontrols)) {
+	अगर (!le32_to_cpu(tw->num_kcontrols)) अणु
 		dev_err(scomp->dev, "error: invalid kcontrol count %d for volume\n",
 			tw->num_kcontrols);
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* configure volume IPC message */
 	volume->comp.type = SOF_COMP_VOLUME;
-	volume->config.hdr.size = sizeof(volume->config);
+	volume->config.hdr.size = माप(volume->config);
 
 	ret = sof_parse_tokens(scomp, volume, volume_tokens,
-			       ARRAY_SIZE(volume_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(volume_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse volume tokens failed %d\n",
-			private->size);
-		goto err;
-	}
+			निजी->size);
+		जाओ err;
+	पूर्ण
 	ret = sof_parse_tokens(scomp, &volume->config, comp_tokens,
-			       ARRAY_SIZE(comp_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(comp_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse volume.cfg tokens failed %d\n",
-			le32_to_cpu(private->size));
-		goto err;
-	}
+			le32_to_cpu(निजी->size));
+		जाओ err;
+	पूर्ण
 
 	sof_dbg_comp_config(scomp, &volume->config);
 
-	swidget->private = volume;
+	swidget->निजी = volume;
 
-	list_for_each_entry(scontrol, &sdev->kcontrol_list, list) {
-		if (scontrol->comp_id == swidget->comp_id &&
-		    scontrol->volume_table) {
+	list_क्रम_each_entry(scontrol, &sdev->kcontrol_list, list) अणु
+		अगर (scontrol->comp_id == swidget->comp_id &&
+		    scontrol->volume_table) अणु
 			min_step = scontrol->min_volume_step;
 			max_step = scontrol->max_volume_step;
 			volume->min_value = scontrol->volume_table[min_step];
 			volume->max_value = scontrol->volume_table[max_step];
 			volume->channels = scontrol->num_channels;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ret = sof_ipc_tx_message(sdev->ipc, volume->comp.hdr.cmd, volume,
-				 ipc_size, r, sizeof(*r));
-	if (ret >= 0)
-		return ret;
+				 ipc_size, r, माप(*r));
+	अगर (ret >= 0)
+		वापस ret;
 err:
-	kfree(volume);
-	return ret;
-}
+	kमुक्त(volume);
+	वापस ret;
+पूर्ण
 
 /*
  * SRC Topology
  */
 
-static int sof_widget_load_src(struct snd_soc_component *scomp, int index,
-			       struct snd_sof_widget *swidget,
-			       struct snd_soc_tplg_dapm_widget *tw,
-			       struct sof_ipc_comp_reply *r)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_comp_src *src;
-	size_t ipc_size = sizeof(*src);
-	int ret;
+अटल पूर्णांक sof_widget_load_src(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			       काष्ठा snd_sof_widget *swidget,
+			       काष्ठा snd_soc_tplg_dapm_widget *tw,
+			       काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_comp_src *src;
+	माप_प्रकार ipc_size = माप(*src);
+	पूर्णांक ret;
 
-	src = (struct sof_ipc_comp_src *)
+	src = (काष्ठा sof_ipc_comp_src *)
 	      sof_comp_alloc(swidget, &ipc_size, index);
-	if (!src)
-		return -ENOMEM;
+	अगर (!src)
+		वापस -ENOMEM;
 
 	/* configure src IPC message */
 	src->comp.type = SOF_COMP_SRC;
-	src->config.hdr.size = sizeof(src->config);
+	src->config.hdr.size = माप(src->config);
 
 	ret = sof_parse_tokens(scomp, src, src_tokens,
-			       ARRAY_SIZE(src_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(src_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse src tokens failed %d\n",
-			private->size);
-		goto err;
-	}
+			निजी->size);
+		जाओ err;
+	पूर्ण
 
 	ret = sof_parse_tokens(scomp, &src->config, comp_tokens,
-			       ARRAY_SIZE(comp_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(comp_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse src.cfg tokens failed %d\n",
-			le32_to_cpu(private->size));
-		goto err;
-	}
+			le32_to_cpu(निजी->size));
+		जाओ err;
+	पूर्ण
 
 	dev_dbg(scomp->dev, "src %s: source rate %d sink rate %d\n",
 		swidget->widget->name, src->source_rate, src->sink_rate);
 	sof_dbg_comp_config(scomp, &src->config);
 
-	swidget->private = src;
+	swidget->निजी = src;
 
 	ret = sof_ipc_tx_message(sdev->ipc, src->comp.hdr.cmd, src,
-				 ipc_size, r, sizeof(*r));
-	if (ret >= 0)
-		return ret;
+				 ipc_size, r, माप(*r));
+	अगर (ret >= 0)
+		वापस ret;
 err:
-	kfree(src);
-	return ret;
-}
+	kमुक्त(src);
+	वापस ret;
+पूर्ण
 
 /*
  * ASRC Topology
  */
 
-static int sof_widget_load_asrc(struct snd_soc_component *scomp, int index,
-				struct snd_sof_widget *swidget,
-				struct snd_soc_tplg_dapm_widget *tw,
-				struct sof_ipc_comp_reply *r)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_comp_asrc *asrc;
-	size_t ipc_size = sizeof(*asrc);
-	int ret;
+अटल पूर्णांक sof_widget_load_asrc(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+				काष्ठा snd_sof_widget *swidget,
+				काष्ठा snd_soc_tplg_dapm_widget *tw,
+				काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_comp_asrc *asrc;
+	माप_प्रकार ipc_size = माप(*asrc);
+	पूर्णांक ret;
 
-	asrc = (struct sof_ipc_comp_asrc *)
+	asrc = (काष्ठा sof_ipc_comp_asrc *)
 	       sof_comp_alloc(swidget, &ipc_size, index);
-	if (!asrc)
-		return -ENOMEM;
+	अगर (!asrc)
+		वापस -ENOMEM;
 
 	/* configure ASRC IPC message */
 	asrc->comp.type = SOF_COMP_ASRC;
-	asrc->config.hdr.size = sizeof(asrc->config);
+	asrc->config.hdr.size = माप(asrc->config);
 
 	ret = sof_parse_tokens(scomp, asrc, asrc_tokens,
-			       ARRAY_SIZE(asrc_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(asrc_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse asrc tokens failed %d\n",
-			private->size);
-		goto err;
-	}
+			निजी->size);
+		जाओ err;
+	पूर्ण
 
 	ret = sof_parse_tokens(scomp, &asrc->config, comp_tokens,
-			       ARRAY_SIZE(comp_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(comp_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse asrc.cfg tokens failed %d\n",
-			le32_to_cpu(private->size));
-		goto err;
-	}
+			le32_to_cpu(निजी->size));
+		जाओ err;
+	पूर्ण
 
 	dev_dbg(scomp->dev, "asrc %s: source rate %d sink rate %d "
 		"asynch %d operation %d\n",
@@ -2049,355 +2050,355 @@ static int sof_widget_load_asrc(struct snd_soc_component *scomp, int index,
 		asrc->asynchronous_mode, asrc->operation_mode);
 	sof_dbg_comp_config(scomp, &asrc->config);
 
-	swidget->private = asrc;
+	swidget->निजी = asrc;
 
 	ret = sof_ipc_tx_message(sdev->ipc, asrc->comp.hdr.cmd, asrc,
-				 ipc_size, r, sizeof(*r));
-	if (ret >= 0)
-		return ret;
+				 ipc_size, r, माप(*r));
+	अगर (ret >= 0)
+		वापस ret;
 err:
-	kfree(asrc);
-	return ret;
-}
+	kमुक्त(asrc);
+	वापस ret;
+पूर्ण
 
 /*
  * Signal Generator Topology
  */
 
-static int sof_widget_load_siggen(struct snd_soc_component *scomp, int index,
-				  struct snd_sof_widget *swidget,
-				  struct snd_soc_tplg_dapm_widget *tw,
-				  struct sof_ipc_comp_reply *r)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_comp_tone *tone;
-	size_t ipc_size = sizeof(*tone);
-	int ret;
+अटल पूर्णांक sof_widget_load_siggen(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+				  काष्ठा snd_sof_widget *swidget,
+				  काष्ठा snd_soc_tplg_dapm_widget *tw,
+				  काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_comp_tone *tone;
+	माप_प्रकार ipc_size = माप(*tone);
+	पूर्णांक ret;
 
-	tone = (struct sof_ipc_comp_tone *)
+	tone = (काष्ठा sof_ipc_comp_tone *)
 	       sof_comp_alloc(swidget, &ipc_size, index);
-	if (!tone)
-		return -ENOMEM;
+	अगर (!tone)
+		वापस -ENOMEM;
 
 	/* configure siggen IPC message */
 	tone->comp.type = SOF_COMP_TONE;
-	tone->config.hdr.size = sizeof(tone->config);
+	tone->config.hdr.size = माप(tone->config);
 
 	ret = sof_parse_tokens(scomp, tone, tone_tokens,
-			       ARRAY_SIZE(tone_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(tone_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse tone tokens failed %d\n",
-			le32_to_cpu(private->size));
-		goto err;
-	}
+			le32_to_cpu(निजी->size));
+		जाओ err;
+	पूर्ण
 
 	ret = sof_parse_tokens(scomp, &tone->config, comp_tokens,
-			       ARRAY_SIZE(comp_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(comp_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse tone.cfg tokens failed %d\n",
-			le32_to_cpu(private->size));
-		goto err;
-	}
+			le32_to_cpu(निजी->size));
+		जाओ err;
+	पूर्ण
 
 	dev_dbg(scomp->dev, "tone %s: frequency %d amplitude %d\n",
 		swidget->widget->name, tone->frequency, tone->amplitude);
 	sof_dbg_comp_config(scomp, &tone->config);
 
-	swidget->private = tone;
+	swidget->निजी = tone;
 
 	ret = sof_ipc_tx_message(sdev->ipc, tone->comp.hdr.cmd, tone,
-				 ipc_size, r, sizeof(*r));
-	if (ret >= 0)
-		return ret;
+				 ipc_size, r, माप(*r));
+	अगर (ret >= 0)
+		वापस ret;
 err:
-	kfree(tone);
-	return ret;
-}
+	kमुक्त(tone);
+	वापस ret;
+पूर्ण
 
-static int sof_get_control_data(struct snd_soc_component *scomp,
-				struct snd_soc_dapm_widget *widget,
-				struct sof_widget_data *wdata,
-				size_t *size)
-{
-	const struct snd_kcontrol_new *kc;
-	struct soc_mixer_control *sm;
-	struct soc_bytes_ext *sbe;
-	struct soc_enum *se;
-	int i;
+अटल पूर्णांक sof_get_control_data(काष्ठा snd_soc_component *scomp,
+				काष्ठा snd_soc_dapm_widget *widget,
+				काष्ठा sof_widget_data *wdata,
+				माप_प्रकार *size)
+अणु
+	स्थिर काष्ठा snd_kcontrol_new *kc;
+	काष्ठा soc_mixer_control *sm;
+	काष्ठा soc_bytes_ext *sbe;
+	काष्ठा soc_क्रमागत *se;
+	पूर्णांक i;
 
 	*size = 0;
 
-	for (i = 0; i < widget->num_kcontrols; i++) {
+	क्रम (i = 0; i < widget->num_kcontrols; i++) अणु
 		kc = &widget->kcontrol_news[i];
 
-		switch (widget->dobj.widget.kcontrol_type) {
-		case SND_SOC_TPLG_TYPE_MIXER:
-			sm = (struct soc_mixer_control *)kc->private_value;
-			wdata[i].control = sm->dobj.private;
-			break;
-		case SND_SOC_TPLG_TYPE_BYTES:
-			sbe = (struct soc_bytes_ext *)kc->private_value;
-			wdata[i].control = sbe->dobj.private;
-			break;
-		case SND_SOC_TPLG_TYPE_ENUM:
-			se = (struct soc_enum *)kc->private_value;
-			wdata[i].control = se->dobj.private;
-			break;
-		default:
+		चयन (widget->करोbj.widget.kcontrol_type) अणु
+		हाल SND_SOC_TPLG_TYPE_MIXER:
+			sm = (काष्ठा soc_mixer_control *)kc->निजी_value;
+			wdata[i].control = sm->करोbj.निजी;
+			अवरोध;
+		हाल SND_SOC_TPLG_TYPE_BYTES:
+			sbe = (काष्ठा soc_bytes_ext *)kc->निजी_value;
+			wdata[i].control = sbe->करोbj.निजी;
+			अवरोध;
+		हाल SND_SOC_TPLG_TYPE_ENUM:
+			se = (काष्ठा soc_क्रमागत *)kc->निजी_value;
+			wdata[i].control = se->करोbj.निजी;
+			अवरोध;
+		शेष:
 			dev_err(scomp->dev, "error: unknown kcontrol type %d in widget %s\n",
-				widget->dobj.widget.kcontrol_type,
+				widget->करोbj.widget.kcontrol_type,
 				widget->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!wdata[i].control) {
+		अगर (!wdata[i].control) अणु
 			dev_err(scomp->dev, "error: no scontrol for widget %s\n",
 				widget->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		wdata[i].pdata = wdata[i].control->control_data->data;
-		if (!wdata[i].pdata)
-			return -EINVAL;
+		अगर (!wdata[i].pdata)
+			वापस -EINVAL;
 
-		/* make sure data is valid - data can be updated at runtime */
-		if (wdata[i].pdata->magic != SOF_ABI_MAGIC)
-			return -EINVAL;
+		/* make sure data is valid - data can be updated at runसमय */
+		अगर (wdata[i].pdata->magic != SOF_ABI_MAGIC)
+			वापस -EINVAL;
 
 		*size += wdata[i].pdata->size;
 
 		/* get data type */
-		switch (wdata[i].control->cmd) {
-		case SOF_CTRL_CMD_VOLUME:
-		case SOF_CTRL_CMD_ENUM:
-		case SOF_CTRL_CMD_SWITCH:
+		चयन (wdata[i].control->cmd) अणु
+		हाल SOF_CTRL_CMD_VOLUME:
+		हाल SOF_CTRL_CMD_ENUM:
+		हाल SOF_CTRL_CMD_SWITCH:
 			wdata[i].ipc_cmd = SOF_IPC_COMP_SET_VALUE;
 			wdata[i].ctrl_type = SOF_CTRL_TYPE_VALUE_CHAN_SET;
-			break;
-		case SOF_CTRL_CMD_BINARY:
+			अवरोध;
+		हाल SOF_CTRL_CMD_BINARY:
 			wdata[i].ipc_cmd = SOF_IPC_COMP_SET_DATA;
 			wdata[i].ctrl_type = SOF_CTRL_TYPE_DATA_SET;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sof_process_load(struct snd_soc_component *scomp, int index,
-			    struct snd_sof_widget *swidget,
-			    struct snd_soc_tplg_dapm_widget *tw,
-			    struct sof_ipc_comp_reply *r,
-			    int type)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_dapm_widget *widget = swidget->widget;
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_comp_process *process;
-	struct sof_widget_data *wdata = NULL;
-	size_t ipc_data_size = 0;
-	size_t ipc_size;
-	int offset = 0;
-	int ret;
-	int i;
+अटल पूर्णांक sof_process_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			    काष्ठा snd_sof_widget *swidget,
+			    काष्ठा snd_soc_tplg_dapm_widget *tw,
+			    काष्ठा sof_ipc_comp_reply *r,
+			    पूर्णांक type)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_dapm_widget *widget = swidget->widget;
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_comp_process *process;
+	काष्ठा sof_widget_data *wdata = शून्य;
+	माप_प्रकार ipc_data_size = 0;
+	माप_प्रकार ipc_size;
+	पूर्णांक offset = 0;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	/* allocate struct for widget control data sizes and types */
-	if (widget->num_kcontrols) {
-		wdata = kcalloc(widget->num_kcontrols,
-				sizeof(*wdata),
+	/* allocate काष्ठा क्रम widget control data sizes and types */
+	अगर (widget->num_kcontrols) अणु
+		wdata = kसुस्मृति(widget->num_kcontrols,
+				माप(*wdata),
 				GFP_KERNEL);
 
-		if (!wdata)
-			return -ENOMEM;
+		अगर (!wdata)
+			वापस -ENOMEM;
 
 		/* get possible component controls and get size of all pdata */
 		ret = sof_get_control_data(scomp, widget, wdata,
 					   &ipc_data_size);
 
-		if (ret < 0)
-			goto out;
-	}
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण
 
-	ipc_size = sizeof(struct sof_ipc_comp_process) + ipc_data_size;
+	ipc_size = माप(काष्ठा sof_ipc_comp_process) + ipc_data_size;
 
 	/* we are exceeding max ipc size, config needs to be sent separately */
-	if (ipc_size > SOF_IPC_MSG_MAX_SIZE) {
+	अगर (ipc_size > SOF_IPC_MSG_MAX_SIZE) अणु
 		ipc_size -= ipc_data_size;
 		ipc_data_size = 0;
-	}
+	पूर्ण
 
-	process = (struct sof_ipc_comp_process *)
+	process = (काष्ठा sof_ipc_comp_process *)
 		  sof_comp_alloc(swidget, &ipc_size, index);
-	if (!process) {
+	अगर (!process) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* configure iir IPC message */
 	process->comp.type = type;
-	process->config.hdr.size = sizeof(process->config);
+	process->config.hdr.size = माप(process->config);
 
 	ret = sof_parse_tokens(scomp, &process->config, comp_tokens,
-			       ARRAY_SIZE(comp_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(comp_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse process.cfg tokens failed %d\n",
-			le32_to_cpu(private->size));
-		goto err;
-	}
+			le32_to_cpu(निजी->size));
+		जाओ err;
+	पूर्ण
 
 	sof_dbg_comp_config(scomp, &process->config);
 
 	/*
-	 * found private data in control, so copy it.
+	 * found निजी data in control, so copy it.
 	 * get possible component controls - get size of all pdata,
-	 * then memcpy with headers
+	 * then स_नकल with headers
 	 */
-	if (ipc_data_size) {
-		for (i = 0; i < widget->num_kcontrols; i++) {
-			memcpy(&process->data + offset,
+	अगर (ipc_data_size) अणु
+		क्रम (i = 0; i < widget->num_kcontrols; i++) अणु
+			स_नकल(&process->data + offset,
 			       wdata[i].pdata->data,
 			       wdata[i].pdata->size);
 			offset += wdata[i].pdata->size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	process->size = ipc_data_size;
-	swidget->private = process;
+	swidget->निजी = process;
 
 	ret = sof_ipc_tx_message(sdev->ipc, process->comp.hdr.cmd, process,
-				 ipc_size, r, sizeof(*r));
+				 ipc_size, r, माप(*r));
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(scomp->dev, "error: create process failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* we sent the data in single message so return */
-	if (ipc_data_size)
-		goto out;
+	/* we sent the data in single message so वापस */
+	अगर (ipc_data_size)
+		जाओ out;
 
 	/* send control data with large message supported method */
-	for (i = 0; i < widget->num_kcontrols; i++) {
-		wdata[i].control->readback_offset = 0;
+	क्रम (i = 0; i < widget->num_kcontrols; i++) अणु
+		wdata[i].control->पढ़ोback_offset = 0;
 		ret = snd_sof_ipc_set_get_comp_data(wdata[i].control,
 						    wdata[i].ipc_cmd,
 						    wdata[i].ctrl_type,
 						    wdata[i].control->cmd,
 						    true);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			dev_err(scomp->dev, "error: send control failed\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 err:
-	if (ret < 0)
-		kfree(process);
+	अगर (ret < 0)
+		kमुक्त(process);
 out:
-	kfree(wdata);
-	return ret;
-}
+	kमुक्त(wdata);
+	वापस ret;
+पूर्ण
 
 /*
  * Processing Component Topology - can be "effect", "codec", or general
  * "processing".
  */
 
-static int sof_widget_load_process(struct snd_soc_component *scomp, int index,
-				   struct snd_sof_widget *swidget,
-				   struct snd_soc_tplg_dapm_widget *tw,
-				   struct sof_ipc_comp_reply *r)
-{
-	struct snd_soc_tplg_private *private = &tw->priv;
-	struct sof_ipc_comp_process config;
-	int ret;
+अटल पूर्णांक sof_widget_load_process(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+				   काष्ठा snd_sof_widget *swidget,
+				   काष्ठा snd_soc_tplg_dapm_widget *tw,
+				   काष्ठा sof_ipc_comp_reply *r)
+अणु
+	काष्ठा snd_soc_tplg_निजी *निजी = &tw->priv;
+	काष्ठा sof_ipc_comp_process config;
+	पूर्णांक ret;
 
 	/* check we have some tokens - we need at least process type */
-	if (le32_to_cpu(private->size) == 0) {
+	अगर (le32_to_cpu(निजी->size) == 0) अणु
 		dev_err(scomp->dev, "error: process tokens not found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 	config.comp.core = swidget->core;
 
 	/* get the process token */
 	ret = sof_parse_tokens(scomp, &config, process_tokens,
-			       ARRAY_SIZE(process_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(process_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse process tokens failed %d\n",
-			le32_to_cpu(private->size));
-		return ret;
-	}
+			le32_to_cpu(निजी->size));
+		वापस ret;
+	पूर्ण
 
-	/* now load process specific data and send IPC */
+	/* now load process specअगरic data and send IPC */
 	ret = sof_process_load(scomp, index, swidget, tw, r,
 			       find_process_comp_type(config.type));
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(scomp->dev, "error: process loading failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sof_widget_bind_event(struct snd_soc_component *scomp,
-				 struct snd_sof_widget *swidget,
+अटल पूर्णांक sof_widget_bind_event(काष्ठा snd_soc_component *scomp,
+				 काष्ठा snd_sof_widget *swidget,
 				 u16 event_type)
-{
-	struct sof_ipc_comp *ipc_comp;
+अणु
+	काष्ठा sof_ipc_comp *ipc_comp;
 
 	/* validate widget event type */
-	switch (event_type) {
-	case SOF_KEYWORD_DETECT_DAPM_EVENT:
+	चयन (event_type) अणु
+	हाल SOF_KEYWORD_DETECT_DAPM_EVENT:
 		/* only KEYWORD_DETECT comps should handle this */
-		if (swidget->id != snd_soc_dapm_effect)
-			break;
+		अगर (swidget->id != snd_soc_dapm_effect)
+			अवरोध;
 
-		ipc_comp = swidget->private;
-		if (ipc_comp && ipc_comp->type != SOF_COMP_KEYWORD_DETECT)
-			break;
+		ipc_comp = swidget->निजी;
+		अगर (ipc_comp && ipc_comp->type != SOF_COMP_KEYWORD_DETECT)
+			अवरोध;
 
 		/* bind event to keyword detect comp */
-		return snd_soc_tplg_widget_bind_event(swidget->widget,
+		वापस snd_soc_tplg_widget_bind_event(swidget->widget,
 						      sof_kwd_events,
 						      ARRAY_SIZE(sof_kwd_events),
 						      event_type);
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	dev_err(scomp->dev,
 		"error: invalid event type %d for widget %s\n",
 		event_type, swidget->widget->name);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-/* external widget init - used for any driver specific init */
-static int sof_widget_ready(struct snd_soc_component *scomp, int index,
-			    struct snd_soc_dapm_widget *w,
-			    struct snd_soc_tplg_dapm_widget *tw)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_sof_widget *swidget;
-	struct snd_sof_dai *dai;
-	struct sof_ipc_comp_reply reply;
-	struct snd_sof_control *scontrol;
-	struct sof_ipc_comp comp = {
+/* बाह्यal widget init - used क्रम any driver specअगरic init */
+अटल पूर्णांक sof_widget_पढ़ोy(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			    काष्ठा snd_soc_dapm_widget *w,
+			    काष्ठा snd_soc_tplg_dapm_widget *tw)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_sof_widget *swidget;
+	काष्ठा snd_sof_dai *dai;
+	काष्ठा sof_ipc_comp_reply reply;
+	काष्ठा snd_sof_control *scontrol;
+	काष्ठा sof_ipc_comp comp = अणु
 		.core = SOF_DSP_PRIMARY_CORE,
-	};
-	int ret = 0;
+	पूर्ण;
+	पूर्णांक ret = 0;
 
-	swidget = kzalloc(sizeof(*swidget), GFP_KERNEL);
-	if (!swidget)
-		return -ENOMEM;
+	swidget = kzalloc(माप(*swidget), GFP_KERNEL);
+	अगर (!swidget)
+		वापस -ENOMEM;
 
 	swidget->scomp = scomp;
 	swidget->widget = w;
@@ -2405,8 +2406,8 @@ static int sof_widget_ready(struct snd_soc_component *scomp, int index,
 	swidget->complete = 0;
 	swidget->id = w->id;
 	swidget->pipeline_id = index;
-	swidget->private = NULL;
-	memset(&reply, 0, sizeof(reply));
+	swidget->निजी = शून्य;
+	स_रखो(&reply, 0, माप(reply));
 
 	dev_dbg(scomp->dev, "tplg: ready widget id %d pipe %d type %d name : %s stream %s\n",
 		swidget->comp_id, index, swidget->id, tw->name,
@@ -2416,280 +2417,280 @@ static int sof_widget_ready(struct snd_soc_component *scomp, int index,
 	ret = sof_parse_tokens(scomp, &comp, core_tokens,
 			       ARRAY_SIZE(core_tokens), tw->priv.array,
 			       le32_to_cpu(tw->priv.size));
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parsing core tokens failed %d\n",
 			ret);
-		kfree(swidget);
-		return ret;
-	}
+		kमुक्त(swidget);
+		वापस ret;
+	पूर्ण
 
 	swidget->core = comp.core;
 
-	/* default is primary core, safe to call for already enabled cores */
+	/* शेष is primary core, safe to call क्रम alपढ़ोy enabled cores */
 	ret = sof_core_enable(sdev, comp.core);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(scomp->dev, "error: enable core: %d\n", ret);
-		kfree(swidget);
-		return ret;
-	}
+		kमुक्त(swidget);
+		वापस ret;
+	पूर्ण
 
 	ret = sof_parse_tokens(scomp, &swidget->comp_ext, comp_ext_tokens,
 			       ARRAY_SIZE(comp_ext_tokens), tw->priv.array,
 			       le32_to_cpu(tw->priv.size));
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parsing comp_ext_tokens failed %d\n",
 			ret);
-		kfree(swidget);
-		return ret;
-	}
+		kमुक्त(swidget);
+		वापस ret;
+	पूर्ण
 
-	/* handle any special case widgets */
-	switch (w->id) {
-	case snd_soc_dapm_dai_in:
-	case snd_soc_dapm_dai_out:
-		dai = kzalloc(sizeof(*dai), GFP_KERNEL);
-		if (!dai) {
-			kfree(swidget);
-			return -ENOMEM;
-		}
+	/* handle any special हाल widमाला_लो */
+	चयन (w->id) अणु
+	हाल snd_soc_dapm_dai_in:
+	हाल snd_soc_dapm_dai_out:
+		dai = kzalloc(माप(*dai), GFP_KERNEL);
+		अगर (!dai) अणु
+			kमुक्त(swidget);
+			वापस -ENOMEM;
+		पूर्ण
 
 		ret = sof_widget_load_dai(scomp, index, swidget, tw, &reply, dai);
-		if (ret == 0) {
+		अगर (ret == 0) अणु
 			sof_connect_dai_widget(scomp, w, tw, dai);
 			list_add(&dai->list, &sdev->dai_list);
-			swidget->private = dai;
-		} else {
-			kfree(dai);
-		}
-		break;
-	case snd_soc_dapm_mixer:
+			swidget->निजी = dai;
+		पूर्ण अन्यथा अणु
+			kमुक्त(dai);
+		पूर्ण
+		अवरोध;
+	हाल snd_soc_dapm_mixer:
 		ret = sof_widget_load_mixer(scomp, index, swidget, tw, &reply);
-		break;
-	case snd_soc_dapm_pga:
+		अवरोध;
+	हाल snd_soc_dapm_pga:
 		ret = sof_widget_load_pga(scomp, index, swidget, tw, &reply);
-		/* Find scontrol for this pga and set readback offset*/
-		list_for_each_entry(scontrol, &sdev->kcontrol_list, list) {
-			if (scontrol->comp_id == swidget->comp_id) {
-				scontrol->readback_offset = reply.offset;
-				break;
-			}
-		}
-		break;
-	case snd_soc_dapm_buffer:
+		/* Find scontrol क्रम this pga and set पढ़ोback offset*/
+		list_क्रम_each_entry(scontrol, &sdev->kcontrol_list, list) अणु
+			अगर (scontrol->comp_id == swidget->comp_id) अणु
+				scontrol->पढ़ोback_offset = reply.offset;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल snd_soc_dapm_buffer:
 		ret = sof_widget_load_buffer(scomp, index, swidget, tw, &reply);
-		break;
-	case snd_soc_dapm_scheduler:
+		अवरोध;
+	हाल snd_soc_dapm_scheduler:
 		ret = sof_widget_load_pipeline(scomp, index, swidget, tw, &reply);
-		break;
-	case snd_soc_dapm_aif_out:
+		अवरोध;
+	हाल snd_soc_dapm_aअगर_out:
 		ret = sof_widget_load_pcm(scomp, index, swidget,
 					  SOF_IPC_STREAM_CAPTURE, tw, &reply);
-		break;
-	case snd_soc_dapm_aif_in:
+		अवरोध;
+	हाल snd_soc_dapm_aअगर_in:
 		ret = sof_widget_load_pcm(scomp, index, swidget,
 					  SOF_IPC_STREAM_PLAYBACK, tw, &reply);
-		break;
-	case snd_soc_dapm_src:
+		अवरोध;
+	हाल snd_soc_dapm_src:
 		ret = sof_widget_load_src(scomp, index, swidget, tw, &reply);
-		break;
-	case snd_soc_dapm_asrc:
+		अवरोध;
+	हाल snd_soc_dapm_asrc:
 		ret = sof_widget_load_asrc(scomp, index, swidget, tw, &reply);
-		break;
-	case snd_soc_dapm_siggen:
+		अवरोध;
+	हाल snd_soc_dapm_siggen:
 		ret = sof_widget_load_siggen(scomp, index, swidget, tw, &reply);
-		break;
-	case snd_soc_dapm_effect:
+		अवरोध;
+	हाल snd_soc_dapm_effect:
 		ret = sof_widget_load_process(scomp, index, swidget, tw, &reply);
-		break;
-	case snd_soc_dapm_mux:
-	case snd_soc_dapm_demux:
+		अवरोध;
+	हाल snd_soc_dapm_mux:
+	हाल snd_soc_dapm_demux:
 		ret = sof_widget_load_mux(scomp, index, swidget, tw, &reply);
-		break;
-	case snd_soc_dapm_switch:
-	case snd_soc_dapm_dai_link:
-	case snd_soc_dapm_kcontrol:
-	default:
+		अवरोध;
+	हाल snd_soc_dapm_चयन:
+	हाल snd_soc_dapm_dai_link:
+	हाल snd_soc_dapm_kcontrol:
+	शेष:
 		dev_dbg(scomp->dev, "widget type %d name %s not handled\n", swidget->id, tw->name);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* check IPC reply */
-	if (ret < 0 || reply.rhdr.error < 0) {
+	अगर (ret < 0 || reply.rhdr.error < 0) अणु
 		dev_err(scomp->dev,
 			"error: DSP failed to add widget id %d type %d name : %s stream %s reply %d\n",
-			tw->shift, swidget->id, tw->name,
+			tw->shअगरt, swidget->id, tw->name,
 			strnlen(tw->sname, SNDRV_CTL_ELEM_ID_NAME_MAXLEN) > 0
 				? tw->sname : "none", reply.rhdr.error);
-		kfree(swidget);
-		return ret;
-	}
+		kमुक्त(swidget);
+		वापस ret;
+	पूर्ण
 
-	/* bind widget to external event */
-	if (tw->event_type) {
+	/* bind widget to बाह्यal event */
+	अगर (tw->event_type) अणु
 		ret = sof_widget_bind_event(scomp, swidget,
 					    le16_to_cpu(tw->event_type));
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(scomp->dev, "error: widget event binding failed\n");
-			kfree(swidget->private);
-			kfree(swidget);
-			return ret;
-		}
-	}
+			kमुक्त(swidget->निजी);
+			kमुक्त(swidget);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	w->dobj.private = swidget;
+	w->करोbj.निजी = swidget;
 	list_add(&swidget->list, &sdev->widget_list);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sof_route_unload(struct snd_soc_component *scomp,
-			    struct snd_soc_dobj *dobj)
-{
-	struct snd_sof_route *sroute;
+अटल पूर्णांक sof_route_unload(काष्ठा snd_soc_component *scomp,
+			    काष्ठा snd_soc_करोbj *करोbj)
+अणु
+	काष्ठा snd_sof_route *sroute;
 
-	sroute = dobj->private;
-	if (!sroute)
-		return 0;
+	sroute = करोbj->निजी;
+	अगर (!sroute)
+		वापस 0;
 
-	/* free sroute and its private data */
-	kfree(sroute->private);
+	/* मुक्त sroute and its निजी data */
+	kमुक्त(sroute->निजी);
 	list_del(&sroute->list);
-	kfree(sroute);
+	kमुक्त(sroute);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sof_widget_unload(struct snd_soc_component *scomp,
-			     struct snd_soc_dobj *dobj)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	const struct snd_kcontrol_new *kc;
-	struct snd_soc_dapm_widget *widget;
-	struct sof_ipc_pipe_new *pipeline;
-	struct snd_sof_control *scontrol;
-	struct snd_sof_widget *swidget;
-	struct soc_mixer_control *sm;
-	struct soc_bytes_ext *sbe;
-	struct snd_sof_dai *dai;
-	struct soc_enum *se;
-	int ret = 0;
-	int i;
+अटल पूर्णांक sof_widget_unload(काष्ठा snd_soc_component *scomp,
+			     काष्ठा snd_soc_करोbj *करोbj)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	स्थिर काष्ठा snd_kcontrol_new *kc;
+	काष्ठा snd_soc_dapm_widget *widget;
+	काष्ठा sof_ipc_pipe_new *pipeline;
+	काष्ठा snd_sof_control *scontrol;
+	काष्ठा snd_sof_widget *swidget;
+	काष्ठा soc_mixer_control *sm;
+	काष्ठा soc_bytes_ext *sbe;
+	काष्ठा snd_sof_dai *dai;
+	काष्ठा soc_क्रमागत *se;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	swidget = dobj->private;
-	if (!swidget)
-		return 0;
+	swidget = करोbj->निजी;
+	अगर (!swidget)
+		वापस 0;
 
 	widget = swidget->widget;
 
-	switch (swidget->id) {
-	case snd_soc_dapm_dai_in:
-	case snd_soc_dapm_dai_out:
-		dai = swidget->private;
+	चयन (swidget->id) अणु
+	हाल snd_soc_dapm_dai_in:
+	हाल snd_soc_dapm_dai_out:
+		dai = swidget->निजी;
 
-		if (dai) {
-			/* free dai config */
-			kfree(dai->dai_config);
+		अगर (dai) अणु
+			/* मुक्त dai config */
+			kमुक्त(dai->dai_config);
 			list_del(&dai->list);
-		}
-		break;
-	case snd_soc_dapm_scheduler:
+		पूर्ण
+		अवरोध;
+	हाल snd_soc_dapm_scheduler:
 
-		/* power down the pipeline schedule core */
-		pipeline = swidget->private;
-		ret = snd_sof_dsp_core_power_down(sdev, 1 << pipeline->core);
-		if (ret < 0)
+		/* घातer करोwn the pipeline schedule core */
+		pipeline = swidget->निजी;
+		ret = snd_sof_dsp_core_घातer_करोwn(sdev, 1 << pipeline->core);
+		अगर (ret < 0)
 			dev_err(scomp->dev, "error: powering down pipeline schedule core %d\n",
 				pipeline->core);
-		break;
-	default:
-		break;
-	}
-	for (i = 0; i < widget->num_kcontrols; i++) {
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	क्रम (i = 0; i < widget->num_kcontrols; i++) अणु
 		kc = &widget->kcontrol_news[i];
-		switch (dobj->widget.kcontrol_type) {
-		case SND_SOC_TPLG_TYPE_MIXER:
-			sm = (struct soc_mixer_control *)kc->private_value;
-			scontrol = sm->dobj.private;
-			if (sm->max > 1)
-				kfree(scontrol->volume_table);
-			break;
-		case SND_SOC_TPLG_TYPE_ENUM:
-			se = (struct soc_enum *)kc->private_value;
-			scontrol = se->dobj.private;
-			break;
-		case SND_SOC_TPLG_TYPE_BYTES:
-			sbe = (struct soc_bytes_ext *)kc->private_value;
-			scontrol = sbe->dobj.private;
-			break;
-		default:
+		चयन (करोbj->widget.kcontrol_type) अणु
+		हाल SND_SOC_TPLG_TYPE_MIXER:
+			sm = (काष्ठा soc_mixer_control *)kc->निजी_value;
+			scontrol = sm->करोbj.निजी;
+			अगर (sm->max > 1)
+				kमुक्त(scontrol->volume_table);
+			अवरोध;
+		हाल SND_SOC_TPLG_TYPE_ENUM:
+			se = (काष्ठा soc_क्रमागत *)kc->निजी_value;
+			scontrol = se->करोbj.निजी;
+			अवरोध;
+		हाल SND_SOC_TPLG_TYPE_BYTES:
+			sbe = (काष्ठा soc_bytes_ext *)kc->निजी_value;
+			scontrol = sbe->करोbj.निजी;
+			अवरोध;
+		शेष:
 			dev_warn(scomp->dev, "unsupported kcontrol_type\n");
-			goto out;
-		}
-		kfree(scontrol->control_data);
+			जाओ out;
+		पूर्ण
+		kमुक्त(scontrol->control_data);
 		list_del(&scontrol->list);
-		kfree(scontrol);
-	}
+		kमुक्त(scontrol);
+	पूर्ण
 
 out:
-	/* free private value */
-	kfree(swidget->private);
+	/* मुक्त निजी value */
+	kमुक्त(swidget->निजी);
 
-	/* remove and free swidget object */
+	/* हटाओ and मुक्त swidget object */
 	list_del(&swidget->list);
-	kfree(swidget);
+	kमुक्त(swidget);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * DAI HW configuration.
  */
 
-/* FE DAI - used for any driver specific init */
-static int sof_dai_load(struct snd_soc_component *scomp, int index,
-			struct snd_soc_dai_driver *dai_drv,
-			struct snd_soc_tplg_pcm *pcm, struct snd_soc_dai *dai)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_stream_caps *caps;
-	struct snd_soc_tplg_private *private = &pcm->priv;
-	struct snd_sof_pcm *spcm;
-	int stream;
-	int ret;
+/* FE DAI - used क्रम any driver specअगरic init */
+अटल पूर्णांक sof_dai_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			काष्ठा snd_soc_dai_driver *dai_drv,
+			काष्ठा snd_soc_tplg_pcm *pcm, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_stream_caps *caps;
+	काष्ठा snd_soc_tplg_निजी *निजी = &pcm->priv;
+	काष्ठा snd_sof_pcm *spcm;
+	पूर्णांक stream;
+	पूर्णांक ret;
 
-	/* nothing to do for BEs atm */
-	if (!pcm)
-		return 0;
+	/* nothing to करो क्रम BEs aपंचांग */
+	अगर (!pcm)
+		वापस 0;
 
-	spcm = kzalloc(sizeof(*spcm), GFP_KERNEL);
-	if (!spcm)
-		return -ENOMEM;
+	spcm = kzalloc(माप(*spcm), GFP_KERNEL);
+	अगर (!spcm)
+		वापस -ENOMEM;
 
 	spcm->scomp = scomp;
 
-	for_each_pcm_streams(stream) {
+	क्रम_each_pcm_streams(stream) अणु
 		spcm->stream[stream].comp_id = COMP_ID_UNASSIGNED;
 		INIT_WORK(&spcm->stream[stream].period_elapsed_work,
 			  snd_sof_pcm_period_elapsed_work);
-	}
+	पूर्ण
 
 	spcm->pcm = *pcm;
 	dev_dbg(scomp->dev, "tplg: load pcm %s\n", pcm->dai_name);
 
-	dai_drv->dobj.private = spcm;
+	dai_drv->करोbj.निजी = spcm;
 	list_add(&spcm->list, &sdev->pcm_list);
 
 	ret = sof_parse_tokens(scomp, spcm, stream_tokens,
-			       ARRAY_SIZE(stream_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret) {
+			       ARRAY_SIZE(stream_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret) अणु
 		dev_err(scomp->dev, "error: parse stream tokens failed %d\n",
-			le32_to_cpu(private->size));
-		return ret;
-	}
+			le32_to_cpu(निजी->size));
+		वापस ret;
+	पूर्ण
 
-	/* do we need to allocate playback PCM DMA pages */
-	if (!spcm->pcm.playback)
-		goto capture;
+	/* करो we need to allocate playback PCM DMA pages */
+	अगर (!spcm->pcm.playback)
+		जाओ capture;
 
 	stream = SNDRV_PCM_STREAM_PLAYBACK;
 
@@ -2701,27 +2702,27 @@ static int sof_dai_load(struct snd_soc_component *scomp, int index,
 	/* allocate playback page table buffer */
 	ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, sdev->dev,
 				  PAGE_SIZE, &spcm->stream[stream].page_table);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(scomp->dev, "error: can't alloc page table for %s %d\n",
 			caps->name, ret);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* bind pcm to host comp */
 	ret = spcm_bind(scomp, spcm, stream);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(scomp->dev,
 			"error: can't bind pcm to host\n");
-		goto free_playback_tables;
-	}
+		जाओ मुक्त_playback_tables;
+	पूर्ण
 
 capture:
 	stream = SNDRV_PCM_STREAM_CAPTURE;
 
-	/* do we need to allocate capture PCM DMA pages */
-	if (!spcm->pcm.capture)
-		return ret;
+	/* करो we need to allocate capture PCM DMA pages */
+	अगर (!spcm->pcm.capture)
+		वापस ret;
 
 	dev_vdbg(scomp->dev, "tplg: pcm %s stream tokens: capture d0i3:%d\n",
 		 spcm->pcm.pcm_name, spcm->stream[stream].d0i3_compatible);
@@ -2731,102 +2732,102 @@ capture:
 	/* allocate capture page table buffer */
 	ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, sdev->dev,
 				  PAGE_SIZE, &spcm->stream[stream].page_table);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(scomp->dev, "error: can't alloc page table for %s %d\n",
 			caps->name, ret);
-		goto free_playback_tables;
-	}
+		जाओ मुक्त_playback_tables;
+	पूर्ण
 
 	/* bind pcm to host comp */
 	ret = spcm_bind(scomp, spcm, stream);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(scomp->dev,
 			"error: can't bind pcm to host\n");
-		snd_dma_free_pages(&spcm->stream[stream].page_table);
-		goto free_playback_tables;
-	}
+		snd_dma_मुक्त_pages(&spcm->stream[stream].page_table);
+		जाओ मुक्त_playback_tables;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
-free_playback_tables:
-	if (spcm->pcm.playback)
-		snd_dma_free_pages(&spcm->stream[SNDRV_PCM_STREAM_PLAYBACK].page_table);
+मुक्त_playback_tables:
+	अगर (spcm->pcm.playback)
+		snd_dma_मुक्त_pages(&spcm->stream[SNDRV_PCM_STREAM_PLAYBACK].page_table);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sof_dai_unload(struct snd_soc_component *scomp,
-			  struct snd_soc_dobj *dobj)
-{
-	struct snd_sof_pcm *spcm = dobj->private;
+अटल पूर्णांक sof_dai_unload(काष्ठा snd_soc_component *scomp,
+			  काष्ठा snd_soc_करोbj *करोbj)
+अणु
+	काष्ठा snd_sof_pcm *spcm = करोbj->निजी;
 
-	/* free PCM DMA pages */
-	if (spcm->pcm.playback)
-		snd_dma_free_pages(&spcm->stream[SNDRV_PCM_STREAM_PLAYBACK].page_table);
+	/* मुक्त PCM DMA pages */
+	अगर (spcm->pcm.playback)
+		snd_dma_मुक्त_pages(&spcm->stream[SNDRV_PCM_STREAM_PLAYBACK].page_table);
 
-	if (spcm->pcm.capture)
-		snd_dma_free_pages(&spcm->stream[SNDRV_PCM_STREAM_CAPTURE].page_table);
+	अगर (spcm->pcm.capture)
+		snd_dma_मुक्त_pages(&spcm->stream[SNDRV_PCM_STREAM_CAPTURE].page_table);
 
-	/* remove from list and free spcm */
+	/* हटाओ from list and मुक्त spcm */
 	list_del(&spcm->list);
-	kfree(spcm);
+	kमुक्त(spcm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sof_dai_set_format(struct snd_soc_tplg_hw_config *hw_config,
-			       struct sof_ipc_dai_config *config)
-{
-	/* clock directions wrt codec */
-	if (hw_config->bclk_provider == SND_SOC_TPLG_BCLK_CP) {
+अटल व्योम sof_dai_set_क्रमmat(काष्ठा snd_soc_tplg_hw_config *hw_config,
+			       काष्ठा sof_ipc_dai_config *config)
+अणु
+	/* घड़ी directions wrt codec */
+	अगर (hw_config->bclk_provider == SND_SOC_TPLG_BCLK_CP) अणु
 		/* codec is bclk provider */
-		if (hw_config->fsync_provider == SND_SOC_TPLG_FSYNC_CP)
-			config->format |= SOF_DAI_FMT_CBP_CFP;
-		else
-			config->format |= SOF_DAI_FMT_CBP_CFC;
-	} else {
+		अगर (hw_config->fsync_provider == SND_SOC_TPLG_FSYNC_CP)
+			config->क्रमmat |= SOF_DAI_FMT_CBP_CFP;
+		अन्यथा
+			config->क्रमmat |= SOF_DAI_FMT_CBP_CFC;
+	पूर्ण अन्यथा अणु
 		/* codec is bclk consumer */
-		if (hw_config->fsync_provider == SND_SOC_TPLG_FSYNC_CP)
-			config->format |= SOF_DAI_FMT_CBC_CFP;
-		else
-			config->format |= SOF_DAI_FMT_CBC_CFC;
-	}
+		अगर (hw_config->fsync_provider == SND_SOC_TPLG_FSYNC_CP)
+			config->क्रमmat |= SOF_DAI_FMT_CBC_CFP;
+		अन्यथा
+			config->क्रमmat |= SOF_DAI_FMT_CBC_CFC;
+	पूर्ण
 
-	/* inverted clocks ? */
-	if (hw_config->invert_bclk) {
-		if (hw_config->invert_fsync)
-			config->format |= SOF_DAI_FMT_IB_IF;
-		else
-			config->format |= SOF_DAI_FMT_IB_NF;
-	} else {
-		if (hw_config->invert_fsync)
-			config->format |= SOF_DAI_FMT_NB_IF;
-		else
-			config->format |= SOF_DAI_FMT_NB_NF;
-	}
-}
+	/* inverted घड़ीs ? */
+	अगर (hw_config->invert_bclk) अणु
+		अगर (hw_config->invert_fsync)
+			config->क्रमmat |= SOF_DAI_FMT_IB_IF;
+		अन्यथा
+			config->क्रमmat |= SOF_DAI_FMT_IB_NF;
+	पूर्ण अन्यथा अणु
+		अगर (hw_config->invert_fsync)
+			config->क्रमmat |= SOF_DAI_FMT_NB_IF;
+		अन्यथा
+			config->क्रमmat |= SOF_DAI_FMT_NB_NF;
+	पूर्ण
+पूर्ण
 
 /*
- * Send IPC and set the same config for all DAIs with name matching the link
- * name. Note that the function can only be used for the case that all DAIs
- * have a common DAI config for now.
+ * Send IPC and set the same config क्रम all DAIs with name matching the link
+ * name. Note that the function can only be used क्रम the हाल that all DAIs
+ * have a common DAI config क्रम now.
  */
-static int sof_set_dai_config_multi(struct snd_sof_dev *sdev, u32 size,
-				    struct snd_soc_dai_link *link,
-				    struct sof_ipc_dai_config *config,
-				    int num_conf, int curr_conf)
-{
-	struct snd_sof_dai *dai;
-	int found = 0;
-	int i;
+अटल पूर्णांक sof_set_dai_config_multi(काष्ठा snd_sof_dev *sdev, u32 size,
+				    काष्ठा snd_soc_dai_link *link,
+				    काष्ठा sof_ipc_dai_config *config,
+				    पूर्णांक num_conf, पूर्णांक curr_conf)
+अणु
+	काष्ठा snd_sof_dai *dai;
+	पूर्णांक found = 0;
+	पूर्णांक i;
 
-	list_for_each_entry(dai, &sdev->dai_list, list) {
-		if (!dai->name)
-			continue;
+	list_क्रम_each_entry(dai, &sdev->dai_list, list) अणु
+		अगर (!dai->name)
+			जारी;
 
-		if (strcmp(link->name, dai->name) == 0) {
-			struct sof_ipc_reply reply;
-			int ret;
+		अगर (म_भेद(link->name, dai->name) == 0) अणु
+			काष्ठा sof_ipc_reply reply;
+			पूर्णांक ret;
 
 			/*
 			 * the same dai config will be applied to all DAIs in
@@ -2834,7 +2835,7 @@ static int sof_set_dai_config_multi(struct snd_sof_dev *sdev, u32 size,
 			 * dai config's dai_index match to the component's
 			 * dai_index.
 			 */
-			for (i = 0; i < num_conf; i++)
+			क्रम (i = 0; i < num_conf; i++)
 				config[i].dai_index = dai->comp_dai.dai_index;
 
 			dev_dbg(sdev->dev, "set DAI config for %s index %d\n",
@@ -2843,84 +2844,84 @@ static int sof_set_dai_config_multi(struct snd_sof_dev *sdev, u32 size,
 			ret = sof_ipc_tx_message(sdev->ipc,
 						 config[curr_conf].hdr.cmd,
 						 &config[curr_conf], size,
-						 &reply, sizeof(reply));
+						 &reply, माप(reply));
 
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(sdev->dev,
 					"error: failed to set DAI config for %s index %d\n",
 					dai->name, config[curr_conf].dai_index);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
 			dai->number_configs = num_conf;
 			dai->current_config = curr_conf;
 			dai->dai_config = kmemdup(config, size * num_conf, GFP_KERNEL);
-			if (!dai->dai_config)
-				return -ENOMEM;
+			अगर (!dai->dai_config)
+				वापस -ENOMEM;
 
 			/* set cpu_dai_name */
 			dai->cpu_dai_name = link->cpus->dai_name;
 
 			found = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * machine driver may define a dai link with playback and capture
 	 * dai enabled, but the dai link in topology would support both, one
-	 * or none of them. Here print a warning message to notify user
+	 * or none of them. Here prपूर्णांक a warning message to notअगरy user
 	 */
-	if (!found) {
+	अगर (!found) अणु
 		dev_warn(sdev->dev, "warning: failed to find dai for dai link %s",
 			 link->name);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sof_set_dai_config(struct snd_sof_dev *sdev, u32 size,
-			      struct snd_soc_dai_link *link,
-			      struct sof_ipc_dai_config *config)
-{
-	return sof_set_dai_config_multi(sdev, size, link, config, 1, 0);
-}
+अटल पूर्णांक sof_set_dai_config(काष्ठा snd_sof_dev *sdev, u32 size,
+			      काष्ठा snd_soc_dai_link *link,
+			      काष्ठा sof_ipc_dai_config *config)
+अणु
+	वापस sof_set_dai_config_multi(sdev, size, link, config, 1, 0);
+पूर्ण
 
-static int sof_link_ssp_load(struct snd_soc_component *scomp, int index,
-			     struct snd_soc_dai_link *link,
-			     struct snd_soc_tplg_link_config *cfg,
-			     struct snd_soc_tplg_hw_config *hw_config,
-			     struct sof_ipc_dai_config *config, int curr_conf)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &cfg->priv;
-	int num_conf = le32_to_cpu(cfg->num_hw_configs);
-	u32 size = sizeof(*config);
-	int ret;
-	int i;
+अटल पूर्णांक sof_link_ssp_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			     काष्ठा snd_soc_dai_link *link,
+			     काष्ठा snd_soc_tplg_link_config *cfg,
+			     काष्ठा snd_soc_tplg_hw_config *hw_config,
+			     काष्ठा sof_ipc_dai_config *config, पूर्णांक curr_conf)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &cfg->priv;
+	पूर्णांक num_conf = le32_to_cpu(cfg->num_hw_configs);
+	u32 size = माप(*config);
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	/*
 	 * Parse common data, we should have 1 common data per hw_config.
 	 */
 	ret = sof_parse_token_sets(scomp, &config->ssp, ssp_tokens,
-				   ARRAY_SIZE(ssp_tokens), private->array,
-				   le32_to_cpu(private->size),
+				   ARRAY_SIZE(ssp_tokens), निजी->array,
+				   le32_to_cpu(निजी->size),
 				   num_conf, size);
 
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse ssp tokens failed %d\n",
-			le32_to_cpu(private->size));
-		return ret;
-	}
+			le32_to_cpu(निजी->size));
+		वापस ret;
+	पूर्ण
 
 	/* process all possible hw configs */
-	for (i = 0; i < num_conf; i++) {
+	क्रम (i = 0; i < num_conf; i++) अणु
 
-		/* handle master/slave and inverted clocks */
-		sof_dai_set_format(&hw_config[i], &config[i]);
+		/* handle master/slave and inverted घड़ीs */
+		sof_dai_set_क्रमmat(&hw_config[i], &config[i]);
 
 		config[i].hdr.size = size;
 
-		/* copy differentiating hw configs to ipc structs */
+		/* copy dअगरferentiating hw configs to ipc काष्ठाs */
 		config[i].ssp.mclk_rate = le32_to_cpu(hw_config[i].mclk_rate);
 		config[i].ssp.bclk_rate = le32_to_cpu(hw_config[i].bclk_rate);
 		config[i].ssp.fsync_rate = le32_to_cpu(hw_config[i].fsync_rate);
@@ -2931,61 +2932,61 @@ static int sof_link_ssp_load(struct snd_soc_component *scomp, int index,
 		config[i].ssp.tx_slots = le32_to_cpu(hw_config[i].tx_slots);
 
 		dev_dbg(scomp->dev, "tplg: config SSP%d fmt 0x%x mclk %d bclk %d fclk %d width (%d)%d slots %d mclk id %d quirks %d\n",
-			config[i].dai_index, config[i].format,
+			config[i].dai_index, config[i].क्रमmat,
 			config[i].ssp.mclk_rate, config[i].ssp.bclk_rate,
 			config[i].ssp.fsync_rate, config[i].ssp.sample_valid_bits,
 			config[i].ssp.tdm_slot_width, config[i].ssp.tdm_slots,
 			config[i].ssp.mclk_id, config[i].ssp.quirks);
 
 		/* validate SSP fsync rate and channel count */
-		if (config[i].ssp.fsync_rate < 8000 || config[i].ssp.fsync_rate > 192000) {
+		अगर (config[i].ssp.fsync_rate < 8000 || config[i].ssp.fsync_rate > 192000) अणु
 			dev_err(scomp->dev, "error: invalid fsync rate for SSP%d\n",
 				config[i].dai_index);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (config[i].ssp.tdm_slots < 1 || config[i].ssp.tdm_slots > 8) {
+		अगर (config[i].ssp.tdm_slots < 1 || config[i].ssp.tdm_slots > 8) अणु
 			dev_err(scomp->dev, "error: invalid channel count for SSP%d\n",
 				config[i].dai_index);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* set config for all DAI's with name matching the link name */
+	/* set config क्रम all DAI's with name matching the link name */
 	ret = sof_set_dai_config_multi(sdev, size, link, config, num_conf, curr_conf);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(scomp->dev, "error: failed to save DAI config for SSP%d\n",
 			config->dai_index);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sof_link_sai_load(struct snd_soc_component *scomp, int index,
-			     struct snd_soc_dai_link *link,
-			     struct snd_soc_tplg_link_config *cfg,
-			     struct snd_soc_tplg_hw_config *hw_config,
-			     struct sof_ipc_dai_config *config)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &cfg->priv;
-	u32 size = sizeof(*config);
-	int ret;
+अटल पूर्णांक sof_link_sai_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			     काष्ठा snd_soc_dai_link *link,
+			     काष्ठा snd_soc_tplg_link_config *cfg,
+			     काष्ठा snd_soc_tplg_hw_config *hw_config,
+			     काष्ठा sof_ipc_dai_config *config)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &cfg->priv;
+	u32 size = माप(*config);
+	पूर्णांक ret;
 
-	/* handle master/slave and inverted clocks */
-	sof_dai_set_format(hw_config, config);
+	/* handle master/slave and inverted घड़ीs */
+	sof_dai_set_क्रमmat(hw_config, config);
 
 	/* init IPC */
-	memset(&config->sai, 0, sizeof(struct sof_ipc_dai_sai_params));
+	स_रखो(&config->sai, 0, माप(काष्ठा sof_ipc_dai_sai_params));
 	config->hdr.size = size;
 
 	ret = sof_parse_tokens(scomp, &config->sai, sai_tokens,
-			       ARRAY_SIZE(sai_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(sai_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse sai tokens failed %d\n",
-			le32_to_cpu(private->size));
-		return ret;
-	}
+			le32_to_cpu(निजी->size));
+		वापस ret;
+	पूर्ण
 
 	config->sai.mclk_rate = le32_to_cpu(hw_config->mclk_rate);
 	config->sai.bclk_rate = le32_to_cpu(hw_config->bclk_rate);
@@ -2999,51 +3000,51 @@ static int sof_link_sai_load(struct snd_soc_component *scomp, int index,
 
 	dev_info(scomp->dev,
 		 "tplg: config SAI%d fmt 0x%x mclk %d width %d slots %d mclk id %d\n",
-		config->dai_index, config->format,
+		config->dai_index, config->क्रमmat,
 		config->sai.mclk_rate, config->sai.tdm_slot_width,
 		config->sai.tdm_slots, config->sai.mclk_id);
 
-	if (config->sai.tdm_slots < 1 || config->sai.tdm_slots > 8) {
+	अगर (config->sai.tdm_slots < 1 || config->sai.tdm_slots > 8) अणु
 		dev_err(scomp->dev, "error: invalid channel count for SAI%d\n",
 			config->dai_index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* set config for all DAI's with name matching the link name */
+	/* set config क्रम all DAI's with name matching the link name */
 	ret = sof_set_dai_config(sdev, size, link, config);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(scomp->dev, "error: failed to save DAI config for SAI%d\n",
 			config->dai_index);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sof_link_esai_load(struct snd_soc_component *scomp, int index,
-			      struct snd_soc_dai_link *link,
-			      struct snd_soc_tplg_link_config *cfg,
-			      struct snd_soc_tplg_hw_config *hw_config,
-			      struct sof_ipc_dai_config *config)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &cfg->priv;
-	u32 size = sizeof(*config);
-	int ret;
+अटल पूर्णांक sof_link_esai_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			      काष्ठा snd_soc_dai_link *link,
+			      काष्ठा snd_soc_tplg_link_config *cfg,
+			      काष्ठा snd_soc_tplg_hw_config *hw_config,
+			      काष्ठा sof_ipc_dai_config *config)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &cfg->priv;
+	u32 size = माप(*config);
+	पूर्णांक ret;
 
-	/* handle master/slave and inverted clocks */
-	sof_dai_set_format(hw_config, config);
+	/* handle master/slave and inverted घड़ीs */
+	sof_dai_set_क्रमmat(hw_config, config);
 
 	/* init IPC */
-	memset(&config->esai, 0, sizeof(struct sof_ipc_dai_esai_params));
+	स_रखो(&config->esai, 0, माप(काष्ठा sof_ipc_dai_esai_params));
 	config->hdr.size = size;
 
 	ret = sof_parse_tokens(scomp, &config->esai, esai_tokens,
-			       ARRAY_SIZE(esai_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(esai_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse esai tokens failed %d\n",
-			le32_to_cpu(private->size));
-		return ret;
-	}
+			le32_to_cpu(निजी->size));
+		वापस ret;
+	पूर्ण
 
 	config->esai.mclk_rate = le32_to_cpu(hw_config->mclk_rate);
 	config->esai.bclk_rate = le32_to_cpu(hw_config->bclk_rate);
@@ -3056,63 +3057,63 @@ static int sof_link_esai_load(struct snd_soc_component *scomp, int index,
 
 	dev_info(scomp->dev,
 		 "tplg: config ESAI%d fmt 0x%x mclk %d width %d slots %d mclk id %d\n",
-		config->dai_index, config->format,
+		config->dai_index, config->क्रमmat,
 		config->esai.mclk_rate, config->esai.tdm_slot_width,
 		config->esai.tdm_slots, config->esai.mclk_id);
 
-	if (config->esai.tdm_slots < 1 || config->esai.tdm_slots > 8) {
+	अगर (config->esai.tdm_slots < 1 || config->esai.tdm_slots > 8) अणु
 		dev_err(scomp->dev, "error: invalid channel count for ESAI%d\n",
 			config->dai_index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* set config for all DAI's with name matching the link name */
+	/* set config क्रम all DAI's with name matching the link name */
 	ret = sof_set_dai_config(sdev, size, link, config);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(scomp->dev, "error: failed to save DAI config for ESAI%d\n",
 			config->dai_index);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sof_link_dmic_load(struct snd_soc_component *scomp, int index,
-			      struct snd_soc_dai_link *link,
-			      struct snd_soc_tplg_link_config *cfg,
-			      struct snd_soc_tplg_hw_config *hw_config,
-			      struct sof_ipc_dai_config *config)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &cfg->priv;
-	struct sof_ipc_fw_ready *ready = &sdev->fw_ready;
-	struct sof_ipc_fw_version *v = &ready->version;
-	size_t size = sizeof(*config);
-	int ret, j;
+अटल पूर्णांक sof_link_dmic_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			      काष्ठा snd_soc_dai_link *link,
+			      काष्ठा snd_soc_tplg_link_config *cfg,
+			      काष्ठा snd_soc_tplg_hw_config *hw_config,
+			      काष्ठा sof_ipc_dai_config *config)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &cfg->priv;
+	काष्ठा sof_ipc_fw_पढ़ोy *पढ़ोy = &sdev->fw_पढ़ोy;
+	काष्ठा sof_ipc_fw_version *v = &पढ़ोy->version;
+	माप_प्रकार size = माप(*config);
+	पूर्णांक ret, j;
 
-	/* Ensure the entire DMIC config struct is zeros */
-	memset(&config->dmic, 0, sizeof(struct sof_ipc_dai_dmic_params));
+	/* Ensure the entire DMIC config काष्ठा is zeros */
+	स_रखो(&config->dmic, 0, माप(काष्ठा sof_ipc_dai_dmic_params));
 
 	/* get DMIC tokens */
 	ret = sof_parse_tokens(scomp, &config->dmic, dmic_tokens,
-			       ARRAY_SIZE(dmic_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(dmic_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse dmic tokens failed %d\n",
-			le32_to_cpu(private->size));
-		return ret;
-	}
+			le32_to_cpu(निजी->size));
+		वापस ret;
+	पूर्ण
 
 	/* get DMIC PDM tokens */
 	ret = sof_parse_token_sets(scomp, &config->dmic.pdm[0], dmic_pdm_tokens,
-			       ARRAY_SIZE(dmic_pdm_tokens), private->array,
-			       le32_to_cpu(private->size),
+			       ARRAY_SIZE(dmic_pdm_tokens), निजी->array,
+			       le32_to_cpu(निजी->size),
 			       config->dmic.num_pdm_active,
-			       sizeof(struct sof_ipc_dai_dmic_pdm_ctrl));
+			       माप(काष्ठा sof_ipc_dai_dmic_pdm_ctrl));
 
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse dmic pdm tokens failed %d\n",
-			le32_to_cpu(private->size));
-		return ret;
-	}
+			le32_to_cpu(निजी->size));
+		वापस ret;
+	पूर्ण
 
 	/* set IPC header size */
 	config->hdr.size = size;
@@ -3124,11 +3125,11 @@ static int sof_link_dmic_load(struct snd_soc_component *scomp, int index,
 		config->dmic.pdmclk_min, config->dmic.pdmclk_max,
 		config->dmic.duty_min);
 	dev_dbg(scomp->dev, "duty_max %hd fifo_fs %d num_pdms active %d\n",
-		config->dmic.duty_max, config->dmic.fifo_fs,
+		config->dmic.duty_max, config->dmic.fअगरo_fs,
 		config->dmic.num_pdm_active);
-	dev_dbg(scomp->dev, "fifo word length %hd\n", config->dmic.fifo_bits);
+	dev_dbg(scomp->dev, "fifo word length %hd\n", config->dmic.fअगरo_bits);
 
-	for (j = 0; j < config->dmic.num_pdm_active; j++) {
+	क्रम (j = 0; j < config->dmic.num_pdm_active; j++) अणु
 		dev_dbg(scomp->dev, "pdm %hd mic a %hd mic b %hd\n",
 			config->dmic.pdm[j].id,
 			config->dmic.pdm[j].enable_mic_a,
@@ -3141,134 +3142,134 @@ static int sof_link_dmic_load(struct snd_soc_component *scomp, int index,
 			config->dmic.pdm[j].id,
 			config->dmic.pdm[j].clk_edge,
 			config->dmic.pdm[j].skew);
-	}
+	पूर्ण
 
 	/*
-	 * this takes care of backwards compatible handling of fifo_bits_b.
+	 * this takes care of backwards compatible handling of fअगरo_bits_b.
 	 * It is deprecated since firmware ABI version 3.0.1.
 	 */
-	if (SOF_ABI_VER(v->major, v->minor, v->micro) < SOF_ABI_VER(3, 0, 1))
-		config->dmic.fifo_bits_b = config->dmic.fifo_bits;
+	अगर (SOF_ABI_VER(v->major, v->minor, v->micro) < SOF_ABI_VER(3, 0, 1))
+		config->dmic.fअगरo_bits_b = config->dmic.fअगरo_bits;
 
-	/* set config for all DAI's with name matching the link name */
+	/* set config क्रम all DAI's with name matching the link name */
 	ret = sof_set_dai_config(sdev, size, link, config);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(scomp->dev, "error: failed to save DAI config for DMIC%d\n",
 			config->dai_index);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sof_link_hda_load(struct snd_soc_component *scomp, int index,
-			     struct snd_soc_dai_link *link,
-			     struct snd_soc_tplg_link_config *cfg,
-			     struct snd_soc_tplg_hw_config *hw_config,
-			     struct sof_ipc_dai_config *config)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &cfg->priv;
-	struct snd_soc_dai *dai;
-	u32 size = sizeof(*config);
-	int ret;
+अटल पूर्णांक sof_link_hda_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			     काष्ठा snd_soc_dai_link *link,
+			     काष्ठा snd_soc_tplg_link_config *cfg,
+			     काष्ठा snd_soc_tplg_hw_config *hw_config,
+			     काष्ठा sof_ipc_dai_config *config)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &cfg->priv;
+	काष्ठा snd_soc_dai *dai;
+	u32 size = माप(*config);
+	पूर्णांक ret;
 
 	/* init IPC */
-	memset(&config->hda, 0, sizeof(struct sof_ipc_dai_hda_params));
+	स_रखो(&config->hda, 0, माप(काष्ठा sof_ipc_dai_hda_params));
 	config->hdr.size = size;
 
 	/* get any bespoke DAI tokens */
 	ret = sof_parse_tokens(scomp, &config->hda, hda_tokens,
-			       ARRAY_SIZE(hda_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(hda_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse hda tokens failed %d\n",
-			le32_to_cpu(private->size));
-		return ret;
-	}
+			le32_to_cpu(निजी->size));
+		वापस ret;
+	पूर्ण
 
 	dev_dbg(scomp->dev, "HDA config rate %d channels %d\n",
 		config->hda.rate, config->hda.channels);
 
 	dai = snd_soc_find_dai(link->cpus);
-	if (!dai) {
+	अगर (!dai) अणु
 		dev_err(scomp->dev, "error: failed to find dai %s in %s",
 			link->cpus->dai_name, __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	config->hda.link_dma_ch = DMA_CHAN_INVALID;
 
 	ret = sof_set_dai_config(sdev, size, link, config);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(scomp->dev, "error: failed to process hda dai link %s",
 			link->name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sof_link_alh_load(struct snd_soc_component *scomp, int index,
-			     struct snd_soc_dai_link *link,
-			     struct snd_soc_tplg_link_config *cfg,
-			     struct snd_soc_tplg_hw_config *hw_config,
-			     struct sof_ipc_dai_config *config)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_soc_tplg_private *private = &cfg->priv;
-	u32 size = sizeof(*config);
-	int ret;
+अटल पूर्णांक sof_link_alh_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			     काष्ठा snd_soc_dai_link *link,
+			     काष्ठा snd_soc_tplg_link_config *cfg,
+			     काष्ठा snd_soc_tplg_hw_config *hw_config,
+			     काष्ठा sof_ipc_dai_config *config)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_soc_tplg_निजी *निजी = &cfg->priv;
+	u32 size = माप(*config);
+	पूर्णांक ret;
 
 	ret = sof_parse_tokens(scomp, &config->alh, alh_tokens,
-			       ARRAY_SIZE(alh_tokens), private->array,
-			       le32_to_cpu(private->size));
-	if (ret != 0) {
+			       ARRAY_SIZE(alh_tokens), निजी->array,
+			       le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse alh tokens failed %d\n",
-			le32_to_cpu(private->size));
-		return ret;
-	}
+			le32_to_cpu(निजी->size));
+		वापस ret;
+	पूर्ण
 
 	/* init IPC */
 	config->hdr.size = size;
 
-	/* set config for all DAI's with name matching the link name */
+	/* set config क्रम all DAI's with name matching the link name */
 	ret = sof_set_dai_config(sdev, size, link, config);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(scomp->dev, "error: failed to save DAI config for ALH %d\n",
 			config->dai_index);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* DAI link - used for any driver specific init */
-static int sof_link_load(struct snd_soc_component *scomp, int index,
-			 struct snd_soc_dai_link *link,
-			 struct snd_soc_tplg_link_config *cfg)
-{
-	struct snd_soc_tplg_private *private = &cfg->priv;
-	struct snd_soc_tplg_hw_config *hw_config;
-	struct sof_ipc_dai_config common_config;
-	struct sof_ipc_dai_config *config;
-	int curr_conf;
-	int num_conf;
-	int ret;
-	int i;
+/* DAI link - used क्रम any driver specअगरic init */
+अटल पूर्णांक sof_link_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			 काष्ठा snd_soc_dai_link *link,
+			 काष्ठा snd_soc_tplg_link_config *cfg)
+अणु
+	काष्ठा snd_soc_tplg_निजी *निजी = &cfg->priv;
+	काष्ठा snd_soc_tplg_hw_config *hw_config;
+	काष्ठा sof_ipc_dai_config common_config;
+	काष्ठा sof_ipc_dai_config *config;
+	पूर्णांक curr_conf;
+	पूर्णांक num_conf;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (!link->platforms) {
+	अगर (!link->platक्रमms) अणु
 		dev_err(scomp->dev, "error: no platforms\n");
-		return -EINVAL;
-	}
-	link->platforms->name = dev_name(scomp->dev);
+		वापस -EINVAL;
+	पूर्ण
+	link->platक्रमms->name = dev_name(scomp->dev);
 
 	/*
-	 * Set nonatomic property for FE dai links as their trigger action
+	 * Set nonatomic property क्रम FE dai links as their trigger action
 	 * involves IPC's.
 	 */
-	if (!link->no_pcm) {
+	अगर (!link->no_pcm) अणु
 		link->nonatomic = true;
 
 		/*
-		 * set default trigger order for all links. Exceptions to
+		 * set शेष trigger order क्रम all links. Exceptions to
 		 * the rule will be handled in sof_pcm_dai_link_fixup()
 		 * For playback, the sequence is the following: start FE,
-		 * start BE, stop BE, stop FE; for Capture the sequence is
+		 * start BE, stop BE, stop FE; क्रम Capture the sequence is
 		 * inverted start BE, start FE, stop FE, stop BE
 		 */
 		link->trigger[SNDRV_PCM_STREAM_PLAYBACK] =
@@ -3276,127 +3277,127 @@ static int sof_link_load(struct snd_soc_component *scomp, int index,
 		link->trigger[SNDRV_PCM_STREAM_CAPTURE] =
 					SND_SOC_DPCM_TRIGGER_POST;
 
-		/* nothing more to do for FE dai links */
-		return 0;
-	}
+		/* nothing more to करो क्रम FE dai links */
+		वापस 0;
+	पूर्ण
 
 	/* check we have some tokens - we need at least DAI type */
-	if (le32_to_cpu(private->size) == 0) {
+	अगर (le32_to_cpu(निजी->size) == 0) अणु
 		dev_err(scomp->dev, "error: expected tokens for DAI, none found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&common_config, 0, sizeof(common_config));
+	स_रखो(&common_config, 0, माप(common_config));
 
 	/* get any common DAI tokens */
 	ret = sof_parse_tokens(scomp, &common_config, dai_link_tokens, ARRAY_SIZE(dai_link_tokens),
-			       private->array, le32_to_cpu(private->size));
-	if (ret != 0) {
+			       निजी->array, le32_to_cpu(निजी->size));
+	अगर (ret != 0) अणु
 		dev_err(scomp->dev, "error: parse link tokens failed %d\n",
-			le32_to_cpu(private->size));
-		return ret;
-	}
+			le32_to_cpu(निजी->size));
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * DAI links are expected to have at least 1 hw_config.
-	 * But some older topologies might have no hw_config for HDA dai links.
+	 * But some older topologies might have no hw_config क्रम HDA dai links.
 	 */
 	hw_config = cfg->hw_config;
 	num_conf = le32_to_cpu(cfg->num_hw_configs);
-	if (!num_conf) {
-		if (common_config.type != SOF_DAI_INTEL_HDA) {
+	अगर (!num_conf) अणु
+		अगर (common_config.type != SOF_DAI_INTEL_HDA) अणु
 			dev_err(scomp->dev, "error: unexpected DAI config count %d!\n",
 				le32_to_cpu(cfg->num_hw_configs));
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		num_conf = 1;
 		curr_conf = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(scomp->dev, "tplg: %d hw_configs found, default id: %d!\n",
-			cfg->num_hw_configs, le32_to_cpu(cfg->default_hw_config_id));
+			cfg->num_hw_configs, le32_to_cpu(cfg->शेष_hw_config_id));
 
-		for (curr_conf = 0; curr_conf < num_conf; curr_conf++) {
-			if (hw_config[curr_conf].id == cfg->default_hw_config_id)
-				break;
-		}
+		क्रम (curr_conf = 0; curr_conf < num_conf; curr_conf++) अणु
+			अगर (hw_config[curr_conf].id == cfg->शेष_hw_config_id)
+				अवरोध;
+		पूर्ण
 
-		if (curr_conf == num_conf) {
+		अगर (curr_conf == num_conf) अणु
 			dev_err(scomp->dev, "error: default hw_config id: %d not found!\n",
-				le32_to_cpu(cfg->default_hw_config_id));
-			return -EINVAL;
-		}
-	}
+				le32_to_cpu(cfg->शेष_hw_config_id));
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* Reserve memory for all hw configs, eventually freed by widget */
-	config = kcalloc(num_conf, sizeof(*config), GFP_KERNEL);
-	if (!config)
-		return -ENOMEM;
+	/* Reserve memory क्रम all hw configs, eventually मुक्तd by widget */
+	config = kसुस्मृति(num_conf, माप(*config), GFP_KERNEL);
+	अगर (!config)
+		वापस -ENOMEM;
 
-	/* Copy common data to all config ipc structs */
-	for (i = 0; i < num_conf; i++) {
+	/* Copy common data to all config ipc काष्ठाs */
+	क्रम (i = 0; i < num_conf; i++) अणु
 		config[i].hdr.cmd = SOF_IPC_GLB_DAI_MSG | SOF_IPC_DAI_CONFIG;
-		config[i].format = hw_config[i].fmt;
+		config[i].क्रमmat = hw_config[i].fmt;
 		config[i].type = common_config.type;
 		config[i].dai_index = common_config.dai_index;
-	}
+	पूर्ण
 
-	/* now load DAI specific data and send IPC - type comes from token */
-	switch (common_config.type) {
-	case SOF_DAI_INTEL_SSP:
+	/* now load DAI specअगरic data and send IPC - type comes from token */
+	चयन (common_config.type) अणु
+	हाल SOF_DAI_INTEL_SSP:
 		ret = sof_link_ssp_load(scomp, index, link, cfg, hw_config, config, curr_conf);
-		break;
-	case SOF_DAI_INTEL_DMIC:
+		अवरोध;
+	हाल SOF_DAI_INTEL_DMIC:
 		ret = sof_link_dmic_load(scomp, index, link, cfg, hw_config + curr_conf, config);
-		break;
-	case SOF_DAI_INTEL_HDA:
+		अवरोध;
+	हाल SOF_DAI_INTEL_HDA:
 		ret = sof_link_hda_load(scomp, index, link, cfg, hw_config + curr_conf, config);
-		break;
-	case SOF_DAI_INTEL_ALH:
+		अवरोध;
+	हाल SOF_DAI_INTEL_ALH:
 		ret = sof_link_alh_load(scomp, index, link, cfg, hw_config + curr_conf, config);
-		break;
-	case SOF_DAI_IMX_SAI:
+		अवरोध;
+	हाल SOF_DAI_IMX_SAI:
 		ret = sof_link_sai_load(scomp, index, link, cfg, hw_config + curr_conf, config);
-		break;
-	case SOF_DAI_IMX_ESAI:
+		अवरोध;
+	हाल SOF_DAI_IMX_ESAI:
 		ret = sof_link_esai_load(scomp, index, link, cfg, hw_config + curr_conf, config);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(scomp->dev, "error: invalid DAI type %d\n", common_config.type);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	kfree(config);
+	kमुक्त(config);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* DAI link - used for any driver specific init */
-static int sof_route_load(struct snd_soc_component *scomp, int index,
-			  struct snd_soc_dapm_route *route)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct sof_ipc_pipe_comp_connect *connect;
-	struct snd_sof_widget *source_swidget, *sink_swidget;
-	struct snd_soc_dobj *dobj = &route->dobj;
-	struct snd_sof_route *sroute;
-	struct sof_ipc_reply reply;
-	int ret = 0;
+/* DAI link - used क्रम any driver specअगरic init */
+अटल पूर्णांक sof_route_load(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			  काष्ठा snd_soc_dapm_route *route)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा sof_ipc_pipe_comp_connect *connect;
+	काष्ठा snd_sof_widget *source_swidget, *sink_swidget;
+	काष्ठा snd_soc_करोbj *करोbj = &route->करोbj;
+	काष्ठा snd_sof_route *sroute;
+	काष्ठा sof_ipc_reply reply;
+	पूर्णांक ret = 0;
 
-	/* allocate memory for sroute and connect */
-	sroute = kzalloc(sizeof(*sroute), GFP_KERNEL);
-	if (!sroute)
-		return -ENOMEM;
+	/* allocate memory क्रम sroute and connect */
+	sroute = kzalloc(माप(*sroute), GFP_KERNEL);
+	अगर (!sroute)
+		वापस -ENOMEM;
 
 	sroute->scomp = scomp;
 
-	connect = kzalloc(sizeof(*connect), GFP_KERNEL);
-	if (!connect) {
-		kfree(sroute);
-		return -ENOMEM;
-	}
+	connect = kzalloc(माप(*connect), GFP_KERNEL);
+	अगर (!connect) अणु
+		kमुक्त(sroute);
+		वापस -ENOMEM;
+	पूर्ण
 
-	connect->hdr.size = sizeof(*connect);
+	connect->hdr.size = माप(*connect);
 	connect->hdr.cmd = SOF_IPC_GLB_TPLG_MSG | SOF_IPC_TPLG_COMP_CONNECT;
 
 	dev_dbg(scomp->dev, "sink %s control %s source %s\n",
@@ -3404,211 +3405,211 @@ static int sof_route_load(struct snd_soc_component *scomp, int index,
 		route->source);
 
 	/* source component */
-	source_swidget = snd_sof_find_swidget(scomp, (char *)route->source);
-	if (!source_swidget) {
+	source_swidget = snd_sof_find_swidget(scomp, (अक्षर *)route->source);
+	अगर (!source_swidget) अणु
 		dev_err(scomp->dev, "error: source %s not found\n",
 			route->source);
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
-	 * Virtual widgets of type output/out_drv may be added in topology
-	 * for compatibility. These are not handled by the FW.
-	 * So, don't send routes whose source/sink widget is of such types
+	 * Virtual widमाला_लो of type output/out_drv may be added in topology
+	 * क्रम compatibility. These are not handled by the FW.
+	 * So, करोn't send routes whose source/sink widget is of such types
 	 * to the DSP.
 	 */
-	if (source_swidget->id == snd_soc_dapm_out_drv ||
+	अगर (source_swidget->id == snd_soc_dapm_out_drv ||
 	    source_swidget->id == snd_soc_dapm_output)
-		goto err;
+		जाओ err;
 
 	connect->source_id = source_swidget->comp_id;
 
 	/* sink component */
-	sink_swidget = snd_sof_find_swidget(scomp, (char *)route->sink);
-	if (!sink_swidget) {
+	sink_swidget = snd_sof_find_swidget(scomp, (अक्षर *)route->sink);
+	अगर (!sink_swidget) अणु
 		dev_err(scomp->dev, "error: sink %s not found\n",
 			route->sink);
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
 	 * Don't send routes whose sink widget is of type
 	 * output or out_drv to the DSP
 	 */
-	if (sink_swidget->id == snd_soc_dapm_out_drv ||
+	अगर (sink_swidget->id == snd_soc_dapm_out_drv ||
 	    sink_swidget->id == snd_soc_dapm_output)
-		goto err;
+		जाओ err;
 
 	connect->sink_id = sink_swidget->comp_id;
 
 	/*
-	 * For virtual routes, both sink and source are not
+	 * For भव routes, both sink and source are not
 	 * buffer. Since only buffer linked to component is supported by
 	 * FW, others are reported as error, add check in route function,
-	 * do not send it to FW when both source and sink are not buffer
+	 * करो not send it to FW when both source and sink are not buffer
 	 */
-	if (source_swidget->id != snd_soc_dapm_buffer &&
-	    sink_swidget->id != snd_soc_dapm_buffer) {
+	अगर (source_swidget->id != snd_soc_dapm_buffer &&
+	    sink_swidget->id != snd_soc_dapm_buffer) अणु
 		dev_dbg(scomp->dev, "warning: neither Linked source component %s nor sink component %s is of buffer type, ignoring link\n",
 			route->source, route->sink);
-		goto err;
-	} else {
+		जाओ err;
+	पूर्ण अन्यथा अणु
 		ret = sof_ipc_tx_message(sdev->ipc,
 					 connect->hdr.cmd,
-					 connect, sizeof(*connect),
-					 &reply, sizeof(reply));
+					 connect, माप(*connect),
+					 &reply, माप(reply));
 
-		/* check IPC return value */
-		if (ret < 0) {
+		/* check IPC वापस value */
+		अगर (ret < 0) अणु
 			dev_err(scomp->dev, "error: failed to add route sink %s control %s source %s\n",
 				route->sink,
 				route->control ? route->control : "none",
 				route->source);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		/* check IPC reply */
-		if (reply.error < 0) {
+		अगर (reply.error < 0) अणु
 			dev_err(scomp->dev, "error: DSP failed to add route sink %s control %s source %s result %d\n",
 				route->sink,
 				route->control ? route->control : "none",
 				route->source, reply.error);
 			ret = reply.error;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		sroute->route = route;
-		dobj->private = sroute;
-		sroute->private = connect;
+		करोbj->निजी = sroute;
+		sroute->निजी = connect;
 
 		/* add route to route list */
 		list_add(&sroute->list, &sdev->route_list);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 err:
-	kfree(connect);
-	kfree(sroute);
-	return ret;
-}
+	kमुक्त(connect);
+	kमुक्त(sroute);
+	वापस ret;
+पूर्ण
 
 /* Function to set the initial value of SOF kcontrols.
  * The value will be stored in scontrol->control_data
  */
-static int snd_sof_cache_kcontrol_val(struct snd_soc_component *scomp)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_sof_control *scontrol = NULL;
-	int ipc_cmd, ctrl_type;
-	int ret = 0;
+अटल पूर्णांक snd_sof_cache_kcontrol_val(काष्ठा snd_soc_component *scomp)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_sof_control *scontrol = शून्य;
+	पूर्णांक ipc_cmd, ctrl_type;
+	पूर्णांक ret = 0;
 
-	list_for_each_entry(scontrol, &sdev->kcontrol_list, list) {
+	list_क्रम_each_entry(scontrol, &sdev->kcontrol_list, list) अणु
 
-		/* notify DSP of kcontrol values */
-		switch (scontrol->cmd) {
-		case SOF_CTRL_CMD_VOLUME:
-		case SOF_CTRL_CMD_ENUM:
-		case SOF_CTRL_CMD_SWITCH:
+		/* notअगरy DSP of kcontrol values */
+		चयन (scontrol->cmd) अणु
+		हाल SOF_CTRL_CMD_VOLUME:
+		हाल SOF_CTRL_CMD_ENUM:
+		हाल SOF_CTRL_CMD_SWITCH:
 			ipc_cmd = SOF_IPC_COMP_GET_VALUE;
 			ctrl_type = SOF_CTRL_TYPE_VALUE_CHAN_GET;
-			break;
-		case SOF_CTRL_CMD_BINARY:
+			अवरोध;
+		हाल SOF_CTRL_CMD_BINARY:
 			ipc_cmd = SOF_IPC_COMP_GET_DATA;
 			ctrl_type = SOF_CTRL_TYPE_DATA_GET;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(scomp->dev,
 				"error: Invalid scontrol->cmd: %d\n",
 				scontrol->cmd);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ret = snd_sof_ipc_set_get_comp_data(scontrol,
 						    ipc_cmd, ctrl_type,
 						    scontrol->cmd,
 						    false);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(scomp->dev,
 				 "error: kcontrol value get for widget: %d\n",
 				 scontrol->comp_id);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int snd_sof_complete_pipeline(struct device *dev,
-			      struct snd_sof_widget *swidget)
-{
-	struct snd_sof_dev *sdev = dev_get_drvdata(dev);
-	struct sof_ipc_pipe_ready ready;
-	struct sof_ipc_reply reply;
-	int ret;
+पूर्णांक snd_sof_complete_pipeline(काष्ठा device *dev,
+			      काष्ठा snd_sof_widget *swidget)
+अणु
+	काष्ठा snd_sof_dev *sdev = dev_get_drvdata(dev);
+	काष्ठा sof_ipc_pipe_पढ़ोy पढ़ोy;
+	काष्ठा sof_ipc_reply reply;
+	पूर्णांक ret;
 
 	dev_dbg(dev, "tplg: complete pipeline %s id %d\n",
 		swidget->widget->name, swidget->comp_id);
 
-	memset(&ready, 0, sizeof(ready));
-	ready.hdr.size = sizeof(ready);
-	ready.hdr.cmd = SOF_IPC_GLB_TPLG_MSG | SOF_IPC_TPLG_PIPE_COMPLETE;
-	ready.comp_id = swidget->comp_id;
+	स_रखो(&पढ़ोy, 0, माप(पढ़ोy));
+	पढ़ोy.hdr.size = माप(पढ़ोy);
+	पढ़ोy.hdr.cmd = SOF_IPC_GLB_TPLG_MSG | SOF_IPC_TPLG_PIPE_COMPLETE;
+	पढ़ोy.comp_id = swidget->comp_id;
 
 	ret = sof_ipc_tx_message(sdev->ipc,
-				 ready.hdr.cmd, &ready, sizeof(ready), &reply,
-				 sizeof(reply));
-	if (ret < 0)
-		return ret;
-	return 1;
-}
+				 पढ़ोy.hdr.cmd, &पढ़ोy, माप(पढ़ोy), &reply,
+				 माप(reply));
+	अगर (ret < 0)
+		वापस ret;
+	वापस 1;
+पूर्ण
 
 /* completion - called at completion of firmware loading */
-static void sof_complete(struct snd_soc_component *scomp)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct snd_sof_widget *swidget;
+अटल व्योम sof_complete(काष्ठा snd_soc_component *scomp)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा snd_sof_widget *swidget;
 
-	/* some widget types require completion notificattion */
-	list_for_each_entry(swidget, &sdev->widget_list, list) {
-		if (swidget->complete)
-			continue;
+	/* some widget types require completion notअगरicattion */
+	list_क्रम_each_entry(swidget, &sdev->widget_list, list) अणु
+		अगर (swidget->complete)
+			जारी;
 
-		switch (swidget->id) {
-		case snd_soc_dapm_scheduler:
+		चयन (swidget->id) अणु
+		हाल snd_soc_dapm_scheduler:
 			swidget->complete =
 				snd_sof_complete_pipeline(scomp->dev, swidget);
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/*
-	 * cache initial values of SOF kcontrols by reading DSP value over
+	 * cache initial values of SOF kcontrols by पढ़ोing DSP value over
 	 * IPC. It may be overwritten by alsa-mixer after booting up
 	 */
 	snd_sof_cache_kcontrol_val(scomp);
-}
+पूर्ण
 
-/* manifest - optional to inform component of manifest */
-static int sof_manifest(struct snd_soc_component *scomp, int index,
-			struct snd_soc_tplg_manifest *man)
-{
+/* manअगरest - optional to inक्रमm component of manअगरest */
+अटल पूर्णांक sof_manअगरest(काष्ठा snd_soc_component *scomp, पूर्णांक index,
+			काष्ठा snd_soc_tplg_manअगरest *man)
+अणु
 	u32 size;
 	u32 abi_version;
 
 	size = le32_to_cpu(man->priv.size);
 
 	/* backward compatible with tplg without ABI info */
-	if (!size) {
+	अगर (!size) अणु
 		dev_dbg(scomp->dev, "No topology ABI info\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (size != SOF_TPLG_ABI_SIZE) {
+	अगर (size != SOF_TPLG_ABI_SIZE) अणु
 		dev_err(scomp->dev, "error: invalid topology ABI size\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_info(scomp->dev,
 		 "Topology: ABI %d:%d:%d Kernel ABI %d:%d:%d\n",
@@ -3620,97 +3621,97 @@ static int sof_manifest(struct snd_soc_component *scomp, int index,
 				  man->priv.data[1],
 				  man->priv.data[2]);
 
-	if (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION, abi_version)) {
+	अगर (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION, abi_version)) अणु
 		dev_err(scomp->dev, "error: incompatible topology ABI version\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (SOF_ABI_VERSION_MINOR(abi_version) > SOF_ABI_MINOR) {
-		if (!IS_ENABLED(CONFIG_SND_SOC_SOF_STRICT_ABI_CHECKS)) {
+	अगर (SOF_ABI_VERSION_MINOR(abi_version) > SOF_ABI_MINOR) अणु
+		अगर (!IS_ENABLED(CONFIG_SND_SOC_SOF_STRICT_ABI_CHECKS)) अणु
 			dev_warn(scomp->dev, "warn: topology ABI is more recent than kernel\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(scomp->dev, "error: topology ABI is more recent than kernel\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* vendor specific kcontrol handlers available for binding */
-static const struct snd_soc_tplg_kcontrol_ops sof_io_ops[] = {
-	{SOF_TPLG_KCTL_VOL_ID, snd_sof_volume_get, snd_sof_volume_put},
-	{SOF_TPLG_KCTL_BYTES_ID, snd_sof_bytes_get, snd_sof_bytes_put},
-	{SOF_TPLG_KCTL_ENUM_ID, snd_sof_enum_get, snd_sof_enum_put},
-	{SOF_TPLG_KCTL_SWITCH_ID, snd_sof_switch_get, snd_sof_switch_put},
-};
+/* venकरोr specअगरic kcontrol handlers available क्रम binding */
+अटल स्थिर काष्ठा snd_soc_tplg_kcontrol_ops sof_io_ops[] = अणु
+	अणुSOF_TPLG_KCTL_VOL_ID, snd_sof_volume_get, snd_sof_volume_putपूर्ण,
+	अणुSOF_TPLG_KCTL_BYTES_ID, snd_sof_bytes_get, snd_sof_bytes_putपूर्ण,
+	अणुSOF_TPLG_KCTL_ENUM_ID, snd_sof_क्रमागत_get, snd_sof_क्रमागत_putपूर्ण,
+	अणुSOF_TPLG_KCTL_SWITCH_ID, snd_sof_चयन_get, snd_sof_चयन_putपूर्ण,
+पूर्ण;
 
-/* vendor specific bytes ext handlers available for binding */
-static const struct snd_soc_tplg_bytes_ext_ops sof_bytes_ext_ops[] = {
-	{SOF_TPLG_KCTL_BYTES_ID, snd_sof_bytes_ext_get, snd_sof_bytes_ext_put},
-	{SOF_TPLG_KCTL_BYTES_VOLATILE_RO, snd_sof_bytes_ext_volatile_get},
-};
+/* venकरोr specअगरic bytes ext handlers available क्रम binding */
+अटल स्थिर काष्ठा snd_soc_tplg_bytes_ext_ops sof_bytes_ext_ops[] = अणु
+	अणुSOF_TPLG_KCTL_BYTES_ID, snd_sof_bytes_ext_get, snd_sof_bytes_ext_putपूर्ण,
+	अणुSOF_TPLG_KCTL_BYTES_VOLATILE_RO, snd_sof_bytes_ext_अस्थिर_getपूर्ण,
+पूर्ण;
 
-static struct snd_soc_tplg_ops sof_tplg_ops = {
-	/* external kcontrol init - used for any driver specific init */
+अटल काष्ठा snd_soc_tplg_ops sof_tplg_ops = अणु
+	/* बाह्यal kcontrol init - used क्रम any driver specअगरic init */
 	.control_load	= sof_control_load,
 	.control_unload	= sof_control_unload,
 
-	/* external kcontrol init - used for any driver specific init */
+	/* बाह्यal kcontrol init - used क्रम any driver specअगरic init */
 	.dapm_route_load	= sof_route_load,
 	.dapm_route_unload	= sof_route_unload,
 
-	/* external widget init - used for any driver specific init */
+	/* बाह्यal widget init - used क्रम any driver specअगरic init */
 	/* .widget_load is not currently used */
-	.widget_ready	= sof_widget_ready,
+	.widget_पढ़ोy	= sof_widget_पढ़ोy,
 	.widget_unload	= sof_widget_unload,
 
-	/* FE DAI - used for any driver specific init */
+	/* FE DAI - used क्रम any driver specअगरic init */
 	.dai_load	= sof_dai_load,
 	.dai_unload	= sof_dai_unload,
 
-	/* DAI link - used for any driver specific init */
+	/* DAI link - used क्रम any driver specअगरic init */
 	.link_load	= sof_link_load,
 
 	/* completion - called at completion of firmware loading */
 	.complete	= sof_complete,
 
-	/* manifest - optional to inform component of manifest */
-	.manifest	= sof_manifest,
+	/* manअगरest - optional to inक्रमm component of manअगरest */
+	.manअगरest	= sof_manअगरest,
 
-	/* vendor specific kcontrol handlers available for binding */
+	/* venकरोr specअगरic kcontrol handlers available क्रम binding */
 	.io_ops		= sof_io_ops,
 	.io_ops_count	= ARRAY_SIZE(sof_io_ops),
 
-	/* vendor specific bytes ext handlers available for binding */
+	/* venकरोr specअगरic bytes ext handlers available क्रम binding */
 	.bytes_ext_ops	= sof_bytes_ext_ops,
 	.bytes_ext_ops_count	= ARRAY_SIZE(sof_bytes_ext_ops),
-};
+पूर्ण;
 
-int snd_sof_load_topology(struct snd_soc_component *scomp, const char *file)
-{
-	const struct firmware *fw;
-	int ret;
+पूर्णांक snd_sof_load_topology(काष्ठा snd_soc_component *scomp, स्थिर अक्षर *file)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	पूर्णांक ret;
 
 	dev_dbg(scomp->dev, "loading topology:%s\n", file);
 
 	ret = request_firmware(&fw, file, scomp->dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(scomp->dev, "error: tplg request firmware %s failed err: %d\n",
 			file, ret);
 		dev_err(scomp->dev,
 			"you may need to download the firmware from https://github.com/thesofproject/sof-bin/\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = snd_soc_tplg_component_load(scomp, &sof_tplg_ops, fw);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(scomp->dev, "error: tplg component load failed %d\n",
 			ret);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	release_firmware(fw);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(snd_sof_load_topology);

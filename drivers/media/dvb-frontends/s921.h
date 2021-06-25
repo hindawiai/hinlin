@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *   Sharp s921 driver
  *
  *   Copyright (C) 2009 Mauro Carvalho Chehab
- *   Copyright (C) 2009 Douglas Landgraf <dougsland@redhat.com>
+ *   Copyright (C) 2009 Douglas Landgraf <करोugsland@redhat.com>
  */
 
-#ifndef S921_H
-#define S921_H
+#अगर_अघोषित S921_H
+#घोषणा S921_H
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-struct s921_config {
+काष्ठा s921_config अणु
 	/* the demodulator's i2c address */
 	u8 demod_address;
-};
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_S921)
-extern struct dvb_frontend *s921_attach(const struct s921_config *config,
-					   struct i2c_adapter *i2c);
-extern struct i2c_adapter *s921_get_tuner_i2c_adapter(struct dvb_frontend *);
-#else
-static inline struct dvb_frontend *s921_attach(
-	const struct s921_config *config, struct i2c_adapter *i2c)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-static inline struct i2c_adapter *
-	s921_get_tuner_i2c_adapter(struct dvb_frontend *fe)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+#अगर IS_REACHABLE(CONFIG_DVB_S921)
+बाह्य काष्ठा dvb_frontend *s921_attach(स्थिर काष्ठा s921_config *config,
+					   काष्ठा i2c_adapter *i2c);
+बाह्य काष्ठा i2c_adapter *s921_get_tuner_i2c_adapter(काष्ठा dvb_frontend *);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *s921_attach(
+	स्थिर काष्ठा s921_config *config, काष्ठा i2c_adapter *i2c)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत काष्ठा i2c_adapter *
+	s921_get_tuner_i2c_adapter(काष्ठा dvb_frontend *fe)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* S921_H */
+#पूर्ण_अगर /* S921_H */

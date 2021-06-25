@@ -1,192 +1,193 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Address translation interface via ACPI DSM.
+ * Address translation पूर्णांकerface via ACPI DSM.
  * Copyright (C) 2018 Intel Corporation
  *
- * Specification for this interface is available at:
+ * Specअगरication क्रम this पूर्णांकerface is available at:
  *
- *	https://cdrdv2.intel.com/v1/dl/getContent/603354
+ *	https://cdrdv2.पूर्णांकel.com/v1/dl/getContent/603354
  */
 
-#include <linux/acpi.h>
-#include <linux/adxl.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/adxl.h>
 
-#define ADXL_REVISION			0x1
-#define ADXL_IDX_GET_ADDR_PARAMS	0x1
-#define ADXL_IDX_FORWARD_TRANSLATE	0x2
-#define ACPI_ADXL_PATH			"\\_SB.ADXL"
+#घोषणा ADXL_REVISION			0x1
+#घोषणा ADXL_IDX_GET_ADDR_PARAMS	0x1
+#घोषणा ADXL_IDX_FORWARD_TRANSLATE	0x2
+#घोषणा ACPI_ADXL_PATH			"\\_SB.ADXL"
 
 /*
- * The specification doesn't provide a limit on how many
+ * The specअगरication करोesn't provide a limit on how many
  * components are in a memory address. But since we allocate
  * memory based on the number the BIOS tells us, we should
  * defend against insane values.
  */
-#define ADXL_MAX_COMPONENTS		500
+#घोषणा ADXL_MAX_COMPONENTS		500
 
-#undef pr_fmt
-#define pr_fmt(fmt) "ADXL: " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) "ADXL: " fmt
 
-static acpi_handle handle;
-static union acpi_object *params;
-static const guid_t adxl_guid =
+अटल acpi_handle handle;
+अटल जोड़ acpi_object *params;
+अटल स्थिर guid_t adxl_guid =
 	GUID_INIT(0xAA3C050A, 0x7EA4, 0x4C1F,
 		  0xAF, 0xDA, 0x12, 0x67, 0xDF, 0xD3, 0xD4, 0x8D);
 
-static int adxl_count;
-static char **adxl_component_names;
+अटल पूर्णांक adxl_count;
+अटल अक्षर **adxl_component_names;
 
-static union acpi_object *adxl_dsm(int cmd, union acpi_object argv[])
-{
-	union acpi_object *obj, *o;
+अटल जोड़ acpi_object *adxl_dsm(पूर्णांक cmd, जोड़ acpi_object argv[])
+अणु
+	जोड़ acpi_object *obj, *o;
 
 	obj = acpi_evaluate_dsm_typed(handle, &adxl_guid, ADXL_REVISION,
 				      cmd, argv, ACPI_TYPE_PACKAGE);
-	if (!obj) {
+	अगर (!obj) अणु
 		pr_info("DSM call failed for cmd=%d\n", cmd);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (obj->package.count != 2) {
+	अगर (obj->package.count != 2) अणु
 		pr_info("Bad pkg count %d\n", obj->package.count);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	o = obj->package.elements;
-	if (o->type != ACPI_TYPE_INTEGER) {
+	अगर (o->type != ACPI_TYPE_INTEGER) अणु
 		pr_info("Bad 1st element type %d\n", o->type);
-		goto err;
-	}
-	if (o->integer.value) {
-		pr_info("Bad ret val %llu\n", o->integer.value);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
+	अगर (o->पूर्णांकeger.value) अणु
+		pr_info("Bad ret val %llu\n", o->पूर्णांकeger.value);
+		जाओ err;
+	पूर्ण
 
 	o = obj->package.elements + 1;
-	if (o->type != ACPI_TYPE_PACKAGE) {
+	अगर (o->type != ACPI_TYPE_PACKAGE) अणु
 		pr_info("Bad 2nd element type %d\n", o->type);
-		goto err;
-	}
-	return obj;
+		जाओ err;
+	पूर्ण
+	वापस obj;
 
 err:
 	ACPI_FREE(obj);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * adxl_get_component_names - get list of memory component names
- * Returns NULL terminated list of string names
+ * Returns शून्य terminated list of string names
  *
- * Give the caller a pointer to the list of memory component names
- * e.g. { "SystemAddress", "ProcessorSocketId", "ChannelId", ... NULL }
+ * Give the caller a poपूर्णांकer to the list of memory component names
+ * e.g. अणु "SystemAddress", "ProcessorSocketId", "ChannelId", ... शून्य पूर्ण
  * Caller should count how many strings in order to allocate a buffer
- * for the return from adxl_decode().
+ * क्रम the वापस from adxl_decode().
  */
-const char * const *adxl_get_component_names(void)
-{
-	return (const char * const *)adxl_component_names;
-}
+स्थिर अक्षर * स्थिर *adxl_get_component_names(व्योम)
+अणु
+	वापस (स्थिर अक्षर * स्थिर *)adxl_component_names;
+पूर्ण
 EXPORT_SYMBOL_GPL(adxl_get_component_names);
 
 /**
- * adxl_decode - ask BIOS to decode a system address to memory address
+ * adxl_decode - ask BIOS to decode a प्रणाली address to memory address
  * @addr: the address to decode
- * @component_values: pointer to array of values for each component
+ * @component_values: poपूर्णांकer to array of values क्रम each component
  * Returns 0 on success, negative error code otherwise
  *
- * The index of each value returned in the array matches the index of
- * each component name returned by adxl_get_component_names().
- * Components that are not defined for this address translation (e.g.
- * mirror channel number for a non-mirrored address) are set to ~0ull.
+ * The index of each value वापसed in the array matches the index of
+ * each component name वापसed by adxl_get_component_names().
+ * Components that are not defined क्रम this address translation (e.g.
+ * mirror channel number क्रम a non-mirrored address) are set to ~0ull.
  */
-int adxl_decode(u64 addr, u64 component_values[])
-{
-	union acpi_object argv4[2], *results, *r;
-	int i, cnt;
+पूर्णांक adxl_decode(u64 addr, u64 component_values[])
+अणु
+	जोड़ acpi_object argv4[2], *results, *r;
+	पूर्णांक i, cnt;
 
-	if (!adxl_component_names)
-		return -EOPNOTSUPP;
+	अगर (!adxl_component_names)
+		वापस -EOPNOTSUPP;
 
 	argv4[0].type = ACPI_TYPE_PACKAGE;
 	argv4[0].package.count = 1;
 	argv4[0].package.elements = &argv4[1];
-	argv4[1].integer.type = ACPI_TYPE_INTEGER;
-	argv4[1].integer.value = addr;
+	argv4[1].पूर्णांकeger.type = ACPI_TYPE_INTEGER;
+	argv4[1].पूर्णांकeger.value = addr;
 
 	results = adxl_dsm(ADXL_IDX_FORWARD_TRANSLATE, argv4);
-	if (!results)
-		return -EINVAL;
+	अगर (!results)
+		वापस -EINVAL;
 
 	r = results->package.elements + 1;
 	cnt = r->package.count;
-	if (cnt != adxl_count) {
+	अगर (cnt != adxl_count) अणु
 		ACPI_FREE(results);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	r = r->package.elements;
 
-	for (i = 0; i < cnt; i++)
-		component_values[i] = r[i].integer.value;
+	क्रम (i = 0; i < cnt; i++)
+		component_values[i] = r[i].पूर्णांकeger.value;
 
 	ACPI_FREE(results);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(adxl_decode);
 
-static int __init adxl_init(void)
-{
-	char *path = ACPI_ADXL_PATH;
-	union acpi_object *p;
+अटल पूर्णांक __init adxl_init(व्योम)
+अणु
+	अक्षर *path = ACPI_ADXL_PATH;
+	जोड़ acpi_object *p;
 	acpi_status status;
-	int i;
+	पूर्णांक i;
 
-	status = acpi_get_handle(NULL, path, &handle);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_get_handle(शून्य, path, &handle);
+	अगर (ACPI_FAILURE(status)) अणु
 		pr_debug("No ACPI handle for path %s\n", path);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!acpi_has_method(handle, "_DSM")) {
+	अगर (!acpi_has_method(handle, "_DSM")) अणु
 		pr_info("No DSM method\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!acpi_check_dsm(handle, &adxl_guid, ADXL_REVISION,
+	अगर (!acpi_check_dsm(handle, &adxl_guid, ADXL_REVISION,
 			    ADXL_IDX_GET_ADDR_PARAMS |
-			    ADXL_IDX_FORWARD_TRANSLATE)) {
+			    ADXL_IDX_FORWARD_TRANSLATE)) अणु
 		pr_info("DSM method does not support forward translate\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	params = adxl_dsm(ADXL_IDX_GET_ADDR_PARAMS, NULL);
-	if (!params) {
+	params = adxl_dsm(ADXL_IDX_GET_ADDR_PARAMS, शून्य);
+	अगर (!params) अणु
 		pr_info("Failed to get component names\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	p = params->package.elements + 1;
 	adxl_count = p->package.count;
-	if (adxl_count > ADXL_MAX_COMPONENTS) {
+	अगर (adxl_count > ADXL_MAX_COMPONENTS) अणु
 		pr_info("Insane number of address component names %d\n", adxl_count);
 		ACPI_FREE(params);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	p = p->package.elements;
 
 	/*
-	 * Allocate one extra for NULL termination.
+	 * Allocate one extra क्रम शून्य termination.
 	 */
-	adxl_component_names = kcalloc(adxl_count + 1, sizeof(char *), GFP_KERNEL);
-	if (!adxl_component_names) {
+	adxl_component_names = kसुस्मृति(adxl_count + 1, माप(अक्षर *), GFP_KERNEL);
+	अगर (!adxl_component_names) अणु
 		ACPI_FREE(params);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < adxl_count; i++)
-		adxl_component_names[i] = p[i].string.pointer;
+	क्रम (i = 0; i < adxl_count; i++)
+		adxl_component_names[i] = p[i].string.poपूर्णांकer;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(adxl_init);

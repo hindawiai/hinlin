@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
  * HP i8042-based System Device Controller driver.
  *
  * Copyright (c) 2001 Brian S. Julin
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    without modअगरication.
+ * 2. The name of the author may not be used to enकरोrse or promote products
+ *    derived from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL").
@@ -20,7 +21,7 @@
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -28,75 +29,75 @@
  *
  * References:
  * System Device Controller Microprocessor Firmware Theory of Operation
- *      for Part Number 1820-4784 Revision B.  Dwg No. A-1820-4784-2
- * Helge Deller's original hilkbd.c port for PA-RISC.
+ *      क्रम Part Number 1820-4784 Revision B.  Dwg No. A-1820-4784-2
+ * Helge Deller's original hilkbd.c port क्रम PA-RISC.
  *
  *
  * Driver theory of operation:
  *
- * hp_sdc_put does all writing to the SDC.  ISR can run on a different
- * CPU than hp_sdc_put, but only one CPU runs hp_sdc_put at a time
+ * hp_sdc_put करोes all writing to the SDC.  ISR can run on a dअगरferent
+ * CPU than hp_sdc_put, but only one CPU runs hp_sdc_put at a समय
  * (it cannot really benefit from SMP anyway.)  A tasket fit this perfectly.
  *
- * All data coming back from the SDC is sent via interrupt and can be read
+ * All data coming back from the SDC is sent via पूर्णांकerrupt and can be पढ़ो
  * fully in the ISR, so there are no latency/throughput problems there.
- * The problem is with output, due to the slow clock speed of the SDC
- * compared to the CPU.  This should not be too horrible most of the time,
- * but if used with HIL devices that support the multibyte transfer command,
+ * The problem is with output, due to the slow घड़ी speed of the SDC
+ * compared to the CPU.  This should not be too horrible most of the समय,
+ * but अगर used with HIL devices that support the multibyte transfer command,
  * keeping outbound throughput flowing at the 6500KBps that the HIL is
- * capable of is more than can be done at HZ=100.
+ * capable of is more than can be करोne at HZ=100.
  *
- * Busy polling for IBF clear wastes CPU cycles and bus cycles.  hp_sdc.ibf
- * is set to 0 when the IBF flag in the status register has cleared.  ISR
- * may do this, and may also access the parts of queued transactions related
- * to reading data back from the SDC, but otherwise will not touch the
- * hp_sdc state. Whenever a register is written hp_sdc.ibf is set to 1.
+ * Busy polling क्रम IBF clear wastes CPU cycles and bus cycles.  hp_sdc.ibf
+ * is set to 0 when the IBF flag in the status रेजिस्टर has cleared.  ISR
+ * may करो this, and may also access the parts of queued transactions related
+ * to पढ़ोing data back from the SDC, but otherwise will not touch the
+ * hp_sdc state. Whenever a रेजिस्टर is written hp_sdc.ibf is set to 1.
  *
- * The i8042 write index and the values in the 4-byte input buffer
+ * The i8042 ग_लिखो index and the values in the 4-byte input buffer
  * starting at 0x70 are kept track of in hp_sdc.wi, and .r7[], respectively,
  * to minimize the amount of IO needed to the SDC.  However these values
- * do not need to be locked since they are only ever accessed by hp_sdc_put.
+ * करो not need to be locked since they are only ever accessed by hp_sdc_put.
  *
- * A timer task schedules the tasklet once per second just to make
- * sure it doesn't freeze up and to allow for bad reads to time out.
+ * A समयr task schedules the tasklet once per second just to make
+ * sure it करोesn't मुक्तze up and to allow क्रम bad पढ़ोs to समय out.
  */
 
-#include <linux/hp_sdc.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/ioport.h>
-#include <linux/time.h>
-#include <linux/semaphore.h>
-#include <linux/slab.h>
-#include <linux/hil.h>
-#include <asm/io.h>
+#समावेश <linux/hp_sdc.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hil.h>
+#समावेश <यंत्र/पन.स>
 
-/* Machine-specific abstraction */
+/* Machine-specअगरic असलtraction */
 
-#if defined(__hppa__)
-# include <asm/parisc-device.h>
-# define sdc_readb(p)		gsc_readb(p)
-# define sdc_writeb(v,p)	gsc_writeb((v),(p))
-#elif defined(__mc68000__)
-#include <linux/uaccess.h>
-# define sdc_readb(p)		in_8(p)
-# define sdc_writeb(v,p)	out_8((p),(v))
-#else
+#अगर defined(__hppa__)
+# include <यंत्र/parisc-device.h>
+# define sdc_पढ़ोb(p)		gsc_पढ़ोb(p)
+# define sdc_ग_लिखोb(v,p)	gsc_ग_लिखोb((v),(p))
+#या_अगर defined(__mc68000__)
+#समावेश <linux/uaccess.h>
+# define sdc_पढ़ोb(p)		in_8(p)
+# define sdc_ग_लिखोb(v,p)	out_8((p),(v))
+#अन्यथा
 # error "HIL is not supported on this platform"
-#endif
+#पूर्ण_अगर
 
-#define PREFIX "HP SDC: "
+#घोषणा PREFIX "HP SDC: "
 
 MODULE_AUTHOR("Brian S. Julin <bri@calyx.com>");
 MODULE_DESCRIPTION("HP i8042-based SDC Driver");
 MODULE_LICENSE("Dual BSD/GPL");
 
-EXPORT_SYMBOL(hp_sdc_request_timer_irq);
+EXPORT_SYMBOL(hp_sdc_request_समयr_irq);
 EXPORT_SYMBOL(hp_sdc_request_hil_irq);
 EXPORT_SYMBOL(hp_sdc_request_cooked_irq);
 
-EXPORT_SYMBOL(hp_sdc_release_timer_irq);
+EXPORT_SYMBOL(hp_sdc_release_समयr_irq);
 EXPORT_SYMBOL(hp_sdc_release_hil_irq);
 EXPORT_SYMBOL(hp_sdc_release_cooked_irq);
 
@@ -104,743 +105,743 @@ EXPORT_SYMBOL(__hp_sdc_enqueue_transaction);
 EXPORT_SYMBOL(hp_sdc_enqueue_transaction);
 EXPORT_SYMBOL(hp_sdc_dequeue_transaction);
 
-static bool hp_sdc_disabled;
+अटल bool hp_sdc_disabled;
 module_param_named(no_hpsdc, hp_sdc_disabled, bool, 0);
 MODULE_PARM_DESC(no_hpsdc, "Do not enable HP SDC driver.");
 
-static hp_i8042_sdc	hp_sdc;	/* All driver state is kept in here. */
+अटल hp_i8042_sdc	hp_sdc;	/* All driver state is kept in here. */
 
-/*************** primitives for use in any context *********************/
-static inline uint8_t hp_sdc_status_in8(void)
-{
-	uint8_t status;
-	unsigned long flags;
+/*************** primitives क्रम use in any context *********************/
+अटल अंतरभूत uपूर्णांक8_t hp_sdc_status_in8(व्योम)
+अणु
+	uपूर्णांक8_t status;
+	अचिन्हित दीर्घ flags;
 
-	write_lock_irqsave(&hp_sdc.ibf_lock, flags);
-	status = sdc_readb(hp_sdc.status_io);
-	if (!(status & HP_SDC_STATUS_IBF))
+	ग_लिखो_lock_irqsave(&hp_sdc.ibf_lock, flags);
+	status = sdc_पढ़ोb(hp_sdc.status_io);
+	अगर (!(status & HP_SDC_STATUS_IBF))
 		hp_sdc.ibf = 0;
-	write_unlock_irqrestore(&hp_sdc.ibf_lock, flags);
+	ग_लिखो_unlock_irqrestore(&hp_sdc.ibf_lock, flags);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static inline uint8_t hp_sdc_data_in8(void)
-{
-	return sdc_readb(hp_sdc.data_io);
-}
+अटल अंतरभूत uपूर्णांक8_t hp_sdc_data_in8(व्योम)
+अणु
+	वापस sdc_पढ़ोb(hp_sdc.data_io);
+पूर्ण
 
-static inline void hp_sdc_status_out8(uint8_t val)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम hp_sdc_status_out8(uपूर्णांक8_t val)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	write_lock_irqsave(&hp_sdc.ibf_lock, flags);
+	ग_लिखो_lock_irqsave(&hp_sdc.ibf_lock, flags);
 	hp_sdc.ibf = 1;
-	if ((val & 0xf0) == 0xe0)
+	अगर ((val & 0xf0) == 0xe0)
 		hp_sdc.wi = 0xff;
-	sdc_writeb(val, hp_sdc.status_io);
-	write_unlock_irqrestore(&hp_sdc.ibf_lock, flags);
-}
+	sdc_ग_लिखोb(val, hp_sdc.status_io);
+	ग_लिखो_unlock_irqrestore(&hp_sdc.ibf_lock, flags);
+पूर्ण
 
-static inline void hp_sdc_data_out8(uint8_t val)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम hp_sdc_data_out8(uपूर्णांक8_t val)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	write_lock_irqsave(&hp_sdc.ibf_lock, flags);
+	ग_लिखो_lock_irqsave(&hp_sdc.ibf_lock, flags);
 	hp_sdc.ibf = 1;
-	sdc_writeb(val, hp_sdc.data_io);
-	write_unlock_irqrestore(&hp_sdc.ibf_lock, flags);
-}
+	sdc_ग_लिखोb(val, hp_sdc.data_io);
+	ग_लिखो_unlock_irqrestore(&hp_sdc.ibf_lock, flags);
+पूर्ण
 
 /*	Care must be taken to only invoke hp_sdc_spin_ibf when
- *	absolutely needed, or in rarely invoked subroutines.
- *	Not only does it waste CPU cycles, it also wastes bus cycles.
+ *	असलolutely needed, or in rarely invoked subroutines.
+ *	Not only करोes it waste CPU cycles, it also wastes bus cycles.
  */
-static inline void hp_sdc_spin_ibf(void)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम hp_sdc_spin_ibf(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 	rwlock_t *lock;
 
 	lock = &hp_sdc.ibf_lock;
 
-	read_lock_irqsave(lock, flags);
-	if (!hp_sdc.ibf) {
-		read_unlock_irqrestore(lock, flags);
-		return;
-	}
-	read_unlock(lock);
-	write_lock(lock);
-	while (sdc_readb(hp_sdc.status_io) & HP_SDC_STATUS_IBF)
-		{ }
+	पढ़ो_lock_irqsave(lock, flags);
+	अगर (!hp_sdc.ibf) अणु
+		पढ़ो_unlock_irqrestore(lock, flags);
+		वापस;
+	पूर्ण
+	पढ़ो_unlock(lock);
+	ग_लिखो_lock(lock);
+	जबतक (sdc_पढ़ोb(hp_sdc.status_io) & HP_SDC_STATUS_IBF)
+		अणु पूर्ण
 	hp_sdc.ibf = 0;
-	write_unlock_irqrestore(lock, flags);
-}
+	ग_लिखो_unlock_irqrestore(lock, flags);
+पूर्ण
 
 
 /************************ Interrupt context functions ************************/
-static void hp_sdc_take(int irq, void *dev_id, uint8_t status, uint8_t data)
-{
+अटल व्योम hp_sdc_take(पूर्णांक irq, व्योम *dev_id, uपूर्णांक8_t status, uपूर्णांक8_t data)
+अणु
 	hp_sdc_transaction *curr;
 
-	read_lock(&hp_sdc.rtq_lock);
-	if (hp_sdc.rcurr < 0) {
-		read_unlock(&hp_sdc.rtq_lock);
-		return;
-	}
+	पढ़ो_lock(&hp_sdc.rtq_lock);
+	अगर (hp_sdc.rcurr < 0) अणु
+		पढ़ो_unlock(&hp_sdc.rtq_lock);
+		वापस;
+	पूर्ण
 	curr = hp_sdc.tq[hp_sdc.rcurr];
-	read_unlock(&hp_sdc.rtq_lock);
+	पढ़ो_unlock(&hp_sdc.rtq_lock);
 
 	curr->seq[curr->idx++] = status;
 	curr->seq[curr->idx++] = data;
 	hp_sdc.rqty -= 2;
-	hp_sdc.rtime = ktime_get();
+	hp_sdc.rसमय = kसमय_get();
 
-	if (hp_sdc.rqty <= 0) {
+	अगर (hp_sdc.rqty <= 0) अणु
 		/* All data has been gathered. */
-		if (curr->seq[curr->actidx] & HP_SDC_ACT_SEMAPHORE)
-			if (curr->act.semaphore)
+		अगर (curr->seq[curr->actidx] & HP_SDC_ACT_SEMAPHORE)
+			अगर (curr->act.semaphore)
 				up(curr->act.semaphore);
 
-		if (curr->seq[curr->actidx] & HP_SDC_ACT_CALLBACK)
-			if (curr->act.irqhook)
+		अगर (curr->seq[curr->actidx] & HP_SDC_ACT_CALLBACK)
+			अगर (curr->act.irqhook)
 				curr->act.irqhook(irq, dev_id, status, data);
 
 		curr->actidx = curr->idx;
 		curr->idx++;
 		/* Return control of this transaction */
-		write_lock(&hp_sdc.rtq_lock);
+		ग_लिखो_lock(&hp_sdc.rtq_lock);
 		hp_sdc.rcurr = -1;
 		hp_sdc.rqty = 0;
-		write_unlock(&hp_sdc.rtq_lock);
+		ग_लिखो_unlock(&hp_sdc.rtq_lock);
 		tasklet_schedule(&hp_sdc.task);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t hp_sdc_isr(int irq, void *dev_id)
-{
-	uint8_t status, data;
+अटल irqवापस_t hp_sdc_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	uपूर्णांक8_t status, data;
 
 	status = hp_sdc_status_in8();
 	/* Read data unconditionally to advance i8042. */
 	data =   hp_sdc_data_in8();
 
 	/* For now we are ignoring these until we get the SDC to behave. */
-	if (((status & 0xf1) == 0x51) && data == 0x82)
-		return IRQ_HANDLED;
+	अगर (((status & 0xf1) == 0x51) && data == 0x82)
+		वापस IRQ_HANDLED;
 
-	switch (status & HP_SDC_STATUS_IRQMASK) {
-	case 0: /* This case is not documented. */
-		break;
+	चयन (status & HP_SDC_STATUS_IRQMASK) अणु
+	हाल 0: /* This हाल is not करोcumented. */
+		अवरोध;
 
-	case HP_SDC_STATUS_USERTIMER:
-	case HP_SDC_STATUS_PERIODIC:
-	case HP_SDC_STATUS_TIMER:
-		read_lock(&hp_sdc.hook_lock);
-		if (hp_sdc.timer != NULL)
-			hp_sdc.timer(irq, dev_id, status, data);
-		read_unlock(&hp_sdc.hook_lock);
-		break;
+	हाल HP_SDC_STATUS_USERTIMER:
+	हाल HP_SDC_STATUS_PERIODIC:
+	हाल HP_SDC_STATUS_TIMER:
+		पढ़ो_lock(&hp_sdc.hook_lock);
+		अगर (hp_sdc.समयr != शून्य)
+			hp_sdc.समयr(irq, dev_id, status, data);
+		पढ़ो_unlock(&hp_sdc.hook_lock);
+		अवरोध;
 
-	case HP_SDC_STATUS_REG:
+	हाल HP_SDC_STATUS_REG:
 		hp_sdc_take(irq, dev_id, status, data);
-		break;
+		अवरोध;
 
-	case HP_SDC_STATUS_HILCMD:
-	case HP_SDC_STATUS_HILDATA:
-		read_lock(&hp_sdc.hook_lock);
-		if (hp_sdc.hil != NULL)
+	हाल HP_SDC_STATUS_HILCMD:
+	हाल HP_SDC_STATUS_HILDATA:
+		पढ़ो_lock(&hp_sdc.hook_lock);
+		अगर (hp_sdc.hil != शून्य)
 			hp_sdc.hil(irq, dev_id, status, data);
-		read_unlock(&hp_sdc.hook_lock);
-		break;
+		पढ़ो_unlock(&hp_sdc.hook_lock);
+		अवरोध;
 
-	case HP_SDC_STATUS_PUP:
-		read_lock(&hp_sdc.hook_lock);
-		if (hp_sdc.pup != NULL)
+	हाल HP_SDC_STATUS_PUP:
+		पढ़ो_lock(&hp_sdc.hook_lock);
+		अगर (hp_sdc.pup != शून्य)
 			hp_sdc.pup(irq, dev_id, status, data);
-		else
-			printk(KERN_INFO PREFIX "HP SDC reports successful PUP.\n");
-		read_unlock(&hp_sdc.hook_lock);
-		break;
+		अन्यथा
+			prपूर्णांकk(KERN_INFO PREFIX "HP SDC reports successful PUP.\n");
+		पढ़ो_unlock(&hp_sdc.hook_lock);
+		अवरोध;
 
-	default:
-		read_lock(&hp_sdc.hook_lock);
-		if (hp_sdc.cooked != NULL)
+	शेष:
+		पढ़ो_lock(&hp_sdc.hook_lock);
+		अगर (hp_sdc.cooked != शून्य)
 			hp_sdc.cooked(irq, dev_id, status, data);
-		read_unlock(&hp_sdc.hook_lock);
-		break;
-	}
+		पढ़ो_unlock(&hp_sdc.hook_lock);
+		अवरोध;
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-static irqreturn_t hp_sdc_nmisr(int irq, void *dev_id)
-{
-	int status;
+अटल irqवापस_t hp_sdc_nmisr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	पूर्णांक status;
 
 	status = hp_sdc_status_in8();
-	printk(KERN_WARNING PREFIX "NMI !\n");
+	prपूर्णांकk(KERN_WARNING PREFIX "NMI !\n");
 
-#if 0
-	if (status & HP_SDC_NMISTATUS_FHS) {
-		read_lock(&hp_sdc.hook_lock);
-		if (hp_sdc.timer != NULL)
-			hp_sdc.timer(irq, dev_id, status, 0);
-		read_unlock(&hp_sdc.hook_lock);
-	} else {
-		/* TODO: pass this on to the HIL handler, or do SAK here? */
-		printk(KERN_WARNING PREFIX "HIL NMI\n");
-	}
-#endif
+#अगर 0
+	अगर (status & HP_SDC_NMISTATUS_FHS) अणु
+		पढ़ो_lock(&hp_sdc.hook_lock);
+		अगर (hp_sdc.समयr != शून्य)
+			hp_sdc.समयr(irq, dev_id, status, 0);
+		पढ़ो_unlock(&hp_sdc.hook_lock);
+	पूर्ण अन्यथा अणु
+		/* TODO: pass this on to the HIL handler, or करो SAK here? */
+		prपूर्णांकk(KERN_WARNING PREFIX "HIL NMI\n");
+	पूर्ण
+#पूर्ण_अगर
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
 /***************** Kernel (tasklet) context functions ****************/
 
-unsigned long hp_sdc_put(void);
+अचिन्हित दीर्घ hp_sdc_put(व्योम);
 
-static void hp_sdc_tasklet(unsigned long foo)
-{
-	write_lock_irq(&hp_sdc.rtq_lock);
+अटल व्योम hp_sdc_tasklet(अचिन्हित दीर्घ foo)
+अणु
+	ग_लिखो_lock_irq(&hp_sdc.rtq_lock);
 
-	if (hp_sdc.rcurr >= 0) {
-		ktime_t now = ktime_get();
+	अगर (hp_sdc.rcurr >= 0) अणु
+		kसमय_प्रकार now = kसमय_get();
 
-		if (ktime_after(now, ktime_add_us(hp_sdc.rtime,
-						  HP_SDC_MAX_REG_DELAY))) {
+		अगर (kसमय_after(now, kसमय_add_us(hp_sdc.rसमय,
+						  HP_SDC_MAX_REG_DELAY))) अणु
 			hp_sdc_transaction *curr;
-			uint8_t tmp;
+			uपूर्णांक8_t पंचांगp;
 
 			curr = hp_sdc.tq[hp_sdc.rcurr];
 			/* If this turns out to be a normal failure mode
 			 * we'll need to figure out a way to communicate
 			 * it back to the application. and be less verbose.
 			 */
-			printk(KERN_WARNING PREFIX "read timeout (%lldus)!\n",
-			       ktime_us_delta(now, hp_sdc.rtime));
+			prपूर्णांकk(KERN_WARNING PREFIX "read timeout (%lldus)!\n",
+			       kसमय_us_delta(now, hp_sdc.rसमय));
 			curr->idx += hp_sdc.rqty;
 			hp_sdc.rqty = 0;
-			tmp = curr->seq[curr->actidx];
+			पंचांगp = curr->seq[curr->actidx];
 			curr->seq[curr->actidx] |= HP_SDC_ACT_DEAD;
-			if (tmp & HP_SDC_ACT_SEMAPHORE)
-				if (curr->act.semaphore)
+			अगर (पंचांगp & HP_SDC_ACT_SEMAPHORE)
+				अगर (curr->act.semaphore)
 					up(curr->act.semaphore);
 
-			if (tmp & HP_SDC_ACT_CALLBACK) {
+			अगर (पंचांगp & HP_SDC_ACT_CALLBACK) अणु
 				/* Note this means that irqhooks may be called
 				 * in tasklet/bh context.
 				 */
-				if (curr->act.irqhook)
-					curr->act.irqhook(0, NULL, 0, 0);
-			}
+				अगर (curr->act.irqhook)
+					curr->act.irqhook(0, शून्य, 0, 0);
+			पूर्ण
 
 			curr->actidx = curr->idx;
 			curr->idx++;
 			hp_sdc.rcurr = -1;
-		}
-	}
-	write_unlock_irq(&hp_sdc.rtq_lock);
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock_irq(&hp_sdc.rtq_lock);
 	hp_sdc_put();
-}
+पूर्ण
 
-unsigned long hp_sdc_put(void)
-{
+अचिन्हित दीर्घ hp_sdc_put(व्योम)
+अणु
 	hp_sdc_transaction *curr;
-	uint8_t act;
-	int idx, curridx;
+	uपूर्णांक8_t act;
+	पूर्णांक idx, curridx;
 
-	int limit = 0;
+	पूर्णांक limit = 0;
 
-	write_lock(&hp_sdc.lock);
+	ग_लिखो_lock(&hp_sdc.lock);
 
-	/* If i8042 buffers are full, we cannot do anything that
+	/* If i8042 buffers are full, we cannot करो anything that
 	   requires output, so we skip to the administrativa. */
-	if (hp_sdc.ibf) {
+	अगर (hp_sdc.ibf) अणु
 		hp_sdc_status_in8();
-		if (hp_sdc.ibf)
-			goto finish;
-	}
+		अगर (hp_sdc.ibf)
+			जाओ finish;
+	पूर्ण
 
  anew:
-	/* See if we are in the middle of a sequence. */
-	if (hp_sdc.wcurr < 0)
+	/* See अगर we are in the middle of a sequence. */
+	अगर (hp_sdc.wcurr < 0)
 		hp_sdc.wcurr = 0;
-	read_lock_irq(&hp_sdc.rtq_lock);
-	if (hp_sdc.rcurr == hp_sdc.wcurr)
+	पढ़ो_lock_irq(&hp_sdc.rtq_lock);
+	अगर (hp_sdc.rcurr == hp_sdc.wcurr)
 		hp_sdc.wcurr++;
-	read_unlock_irq(&hp_sdc.rtq_lock);
-	if (hp_sdc.wcurr >= HP_SDC_QUEUE_LEN)
+	पढ़ो_unlock_irq(&hp_sdc.rtq_lock);
+	अगर (hp_sdc.wcurr >= HP_SDC_QUEUE_LEN)
 		hp_sdc.wcurr = 0;
 	curridx = hp_sdc.wcurr;
 
-	if (hp_sdc.tq[curridx] != NULL)
-		goto start;
+	अगर (hp_sdc.tq[curridx] != शून्य)
+		जाओ start;
 
-	while (++curridx != hp_sdc.wcurr) {
-		if (curridx >= HP_SDC_QUEUE_LEN) {
+	जबतक (++curridx != hp_sdc.wcurr) अणु
+		अगर (curridx >= HP_SDC_QUEUE_LEN) अणु
 			curridx = -1; /* Wrap to top */
-			continue;
-		}
-		read_lock_irq(&hp_sdc.rtq_lock);
-		if (hp_sdc.rcurr == curridx) {
-			read_unlock_irq(&hp_sdc.rtq_lock);
-			continue;
-		}
-		read_unlock_irq(&hp_sdc.rtq_lock);
-		if (hp_sdc.tq[curridx] != NULL)
-			break; /* Found one. */
-	}
-	if (curridx == hp_sdc.wcurr) { /* There's nothing queued to do. */
+			जारी;
+		पूर्ण
+		पढ़ो_lock_irq(&hp_sdc.rtq_lock);
+		अगर (hp_sdc.rcurr == curridx) अणु
+			पढ़ो_unlock_irq(&hp_sdc.rtq_lock);
+			जारी;
+		पूर्ण
+		पढ़ो_unlock_irq(&hp_sdc.rtq_lock);
+		अगर (hp_sdc.tq[curridx] != शून्य)
+			अवरोध; /* Found one. */
+	पूर्ण
+	अगर (curridx == hp_sdc.wcurr) अणु /* There's nothing queued to करो. */
 		curridx = -1;
-	}
+	पूर्ण
 	hp_sdc.wcurr = curridx;
 
  start:
 
-	/* Check to see if the interrupt mask needs to be set. */
-	if (hp_sdc.set_im) {
+	/* Check to see अगर the पूर्णांकerrupt mask needs to be set. */
+	अगर (hp_sdc.set_im) अणु
 		hp_sdc_status_out8(hp_sdc.im | HP_SDC_CMD_SET_IM);
 		hp_sdc.set_im = 0;
-		goto finish;
-	}
+		जाओ finish;
+	पूर्ण
 
-	if (hp_sdc.wcurr == -1)
-		goto done;
+	अगर (hp_sdc.wcurr == -1)
+		जाओ करोne;
 
 	curr = hp_sdc.tq[curridx];
 	idx = curr->actidx;
 
-	if (curr->actidx >= curr->endidx) {
-		hp_sdc.tq[curridx] = NULL;
+	अगर (curr->actidx >= curr->endidx) अणु
+		hp_sdc.tq[curridx] = शून्य;
 		/* Interleave outbound data between the transactions. */
 		hp_sdc.wcurr++;
-		if (hp_sdc.wcurr >= HP_SDC_QUEUE_LEN)
+		अगर (hp_sdc.wcurr >= HP_SDC_QUEUE_LEN)
 			hp_sdc.wcurr = 0;
-		goto finish;
-	}
+		जाओ finish;
+	पूर्ण
 
 	act = curr->seq[idx];
 	idx++;
 
-	if (curr->idx >= curr->endidx) {
-		if (act & HP_SDC_ACT_DEALLOC)
-			kfree(curr);
-		hp_sdc.tq[curridx] = NULL;
+	अगर (curr->idx >= curr->endidx) अणु
+		अगर (act & HP_SDC_ACT_DEALLOC)
+			kमुक्त(curr);
+		hp_sdc.tq[curridx] = शून्य;
 		/* Interleave outbound data between the transactions. */
 		hp_sdc.wcurr++;
-		if (hp_sdc.wcurr >= HP_SDC_QUEUE_LEN)
+		अगर (hp_sdc.wcurr >= HP_SDC_QUEUE_LEN)
 			hp_sdc.wcurr = 0;
-		goto finish;
-	}
+		जाओ finish;
+	पूर्ण
 
-	while (act & HP_SDC_ACT_PRECMD) {
-		if (curr->idx != idx) {
+	जबतक (act & HP_SDC_ACT_PRECMD) अणु
+		अगर (curr->idx != idx) अणु
 			idx++;
 			act &= ~HP_SDC_ACT_PRECMD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		hp_sdc_status_out8(curr->seq[idx]);
 		curr->idx++;
 		/* act finished? */
-		if ((act & HP_SDC_ACT_DURING) == HP_SDC_ACT_PRECMD)
-			goto actdone;
-		/* skip quantity field if data-out sequence follows. */
-		if (act & HP_SDC_ACT_DATAOUT)
+		अगर ((act & HP_SDC_ACT_DURING) == HP_SDC_ACT_PRECMD)
+			जाओ actकरोne;
+		/* skip quantity field अगर data-out sequence follows. */
+		अगर (act & HP_SDC_ACT_DATAOUT)
 			curr->idx++;
-		goto finish;
-	}
-	if (act & HP_SDC_ACT_DATAOUT) {
-		int qty;
+		जाओ finish;
+	पूर्ण
+	अगर (act & HP_SDC_ACT_DATAOUT) अणु
+		पूर्णांक qty;
 
 		qty = curr->seq[idx];
 		idx++;
-		if (curr->idx - idx < qty) {
+		अगर (curr->idx - idx < qty) अणु
 			hp_sdc_data_out8(curr->seq[curr->idx]);
 			curr->idx++;
 			/* act finished? */
-			if (curr->idx - idx >= qty &&
+			अगर (curr->idx - idx >= qty &&
 			    (act & HP_SDC_ACT_DURING) == HP_SDC_ACT_DATAOUT)
-				goto actdone;
-			goto finish;
-		}
+				जाओ actकरोne;
+			जाओ finish;
+		पूर्ण
 		idx += qty;
 		act &= ~HP_SDC_ACT_DATAOUT;
-	} else
-	    while (act & HP_SDC_ACT_DATAREG) {
-		int mask;
-		uint8_t w7[4];
+	पूर्ण अन्यथा
+	    जबतक (act & HP_SDC_ACT_DATAREG) अणु
+		पूर्णांक mask;
+		uपूर्णांक8_t w7[4];
 
 		mask = curr->seq[idx];
-		if (idx != curr->idx) {
+		अगर (idx != curr->idx) अणु
 			idx++;
 			idx += !!(mask & 1);
 			idx += !!(mask & 2);
 			idx += !!(mask & 4);
 			idx += !!(mask & 8);
 			act &= ~HP_SDC_ACT_DATAREG;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		w7[0] = (mask & 1) ? curr->seq[++idx] : hp_sdc.r7[0];
 		w7[1] = (mask & 2) ? curr->seq[++idx] : hp_sdc.r7[1];
 		w7[2] = (mask & 4) ? curr->seq[++idx] : hp_sdc.r7[2];
 		w7[3] = (mask & 8) ? curr->seq[++idx] : hp_sdc.r7[3];
 
-		if (hp_sdc.wi > 0x73 || hp_sdc.wi < 0x70 ||
-		    w7[hp_sdc.wi - 0x70] == hp_sdc.r7[hp_sdc.wi - 0x70]) {
-			int i = 0;
+		अगर (hp_sdc.wi > 0x73 || hp_sdc.wi < 0x70 ||
+		    w7[hp_sdc.wi - 0x70] == hp_sdc.r7[hp_sdc.wi - 0x70]) अणु
+			पूर्णांक i = 0;
 
-			/* Need to point the write index register */
-			while (i < 4 && w7[i] == hp_sdc.r7[i])
+			/* Need to poपूर्णांक the ग_लिखो index रेजिस्टर */
+			जबतक (i < 4 && w7[i] == hp_sdc.r7[i])
 				i++;
 
-			if (i < 4) {
+			अगर (i < 4) अणु
 				hp_sdc_status_out8(HP_SDC_CMD_SET_D0 + i);
 				hp_sdc.wi = 0x70 + i;
-				goto finish;
-			}
+				जाओ finish;
+			पूर्ण
 
 			idx++;
-			if ((act & HP_SDC_ACT_DURING) == HP_SDC_ACT_DATAREG)
-				goto actdone;
+			अगर ((act & HP_SDC_ACT_DURING) == HP_SDC_ACT_DATAREG)
+				जाओ actकरोne;
 
 			curr->idx = idx;
 			act &= ~HP_SDC_ACT_DATAREG;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		hp_sdc_data_out8(w7[hp_sdc.wi - 0x70]);
 		hp_sdc.r7[hp_sdc.wi - 0x70] = w7[hp_sdc.wi - 0x70];
-		hp_sdc.wi++; /* write index register autoincrements */
-		{
-			int i = 0;
+		hp_sdc.wi++; /* ग_लिखो index रेजिस्टर स्वतःincrements */
+		अणु
+			पूर्णांक i = 0;
 
-			while ((i < 4) && w7[i] == hp_sdc.r7[i])
+			जबतक ((i < 4) && w7[i] == hp_sdc.r7[i])
 				i++;
-			if (i >= 4) {
+			अगर (i >= 4) अणु
 				curr->idx = idx + 1;
-				if ((act & HP_SDC_ACT_DURING) ==
+				अगर ((act & HP_SDC_ACT_DURING) ==
 				    HP_SDC_ACT_DATAREG)
-					goto actdone;
-			}
-		}
-		goto finish;
-	}
-	/* We don't go any further in the command if there is a pending read,
-	   because we don't want interleaved results. */
-	read_lock_irq(&hp_sdc.rtq_lock);
-	if (hp_sdc.rcurr >= 0) {
-		read_unlock_irq(&hp_sdc.rtq_lock);
-		goto finish;
-	}
-	read_unlock_irq(&hp_sdc.rtq_lock);
+					जाओ actकरोne;
+			पूर्ण
+		पूर्ण
+		जाओ finish;
+	पूर्ण
+	/* We करोn't go any further in the command अगर there is a pending पढ़ो,
+	   because we करोn't want पूर्णांकerleaved results. */
+	पढ़ो_lock_irq(&hp_sdc.rtq_lock);
+	अगर (hp_sdc.rcurr >= 0) अणु
+		पढ़ो_unlock_irq(&hp_sdc.rtq_lock);
+		जाओ finish;
+	पूर्ण
+	पढ़ो_unlock_irq(&hp_sdc.rtq_lock);
 
 
-	if (act & HP_SDC_ACT_POSTCMD) {
-		uint8_t postcmd;
+	अगर (act & HP_SDC_ACT_POSTCMD) अणु
+		uपूर्णांक8_t postcmd;
 
-		/* curr->idx should == idx at this point. */
+		/* curr->idx should == idx at this poपूर्णांक. */
 		postcmd = curr->seq[idx];
 		curr->idx++;
-		if (act & HP_SDC_ACT_DATAIN) {
+		अगर (act & HP_SDC_ACT_DATAIN) अणु
 
-			/* Start a new read */
+			/* Start a new पढ़ो */
 			hp_sdc.rqty = curr->seq[curr->idx];
-			hp_sdc.rtime = ktime_get();
+			hp_sdc.rसमय = kसमय_get();
 			curr->idx++;
-			/* Still need to lock here in case of spurious irq. */
-			write_lock_irq(&hp_sdc.rtq_lock);
+			/* Still need to lock here in हाल of spurious irq. */
+			ग_लिखो_lock_irq(&hp_sdc.rtq_lock);
 			hp_sdc.rcurr = curridx;
-			write_unlock_irq(&hp_sdc.rtq_lock);
+			ग_लिखो_unlock_irq(&hp_sdc.rtq_lock);
 			hp_sdc_status_out8(postcmd);
-			goto finish;
-		}
+			जाओ finish;
+		पूर्ण
 		hp_sdc_status_out8(postcmd);
-		goto actdone;
-	}
+		जाओ actकरोne;
+	पूर्ण
 
- actdone:
-	if (act & HP_SDC_ACT_SEMAPHORE)
+ actकरोne:
+	अगर (act & HP_SDC_ACT_SEMAPHORE)
 		up(curr->act.semaphore);
-	else if (act & HP_SDC_ACT_CALLBACK)
-		curr->act.irqhook(0,NULL,0,0);
+	अन्यथा अगर (act & HP_SDC_ACT_CALLBACK)
+		curr->act.irqhook(0,शून्य,0,0);
 
-	if (curr->idx >= curr->endidx) { /* This transaction is over. */
-		if (act & HP_SDC_ACT_DEALLOC)
-			kfree(curr);
-		hp_sdc.tq[curridx] = NULL;
-	} else {
+	अगर (curr->idx >= curr->endidx) अणु /* This transaction is over. */
+		अगर (act & HP_SDC_ACT_DEALLOC)
+			kमुक्त(curr);
+		hp_sdc.tq[curridx] = शून्य;
+	पूर्ण अन्यथा अणु
 		curr->actidx = idx + 1;
 		curr->idx = idx + 2;
-	}
+	पूर्ण
 	/* Interleave outbound data between the transactions. */
 	hp_sdc.wcurr++;
-	if (hp_sdc.wcurr >= HP_SDC_QUEUE_LEN)
+	अगर (hp_sdc.wcurr >= HP_SDC_QUEUE_LEN)
 		hp_sdc.wcurr = 0;
 
  finish:
 	/* If by some quirk IBF has cleared and our ISR has run to
-	   see that that has happened, do it all again. */
-	if (!hp_sdc.ibf && limit++ < 20)
-		goto anew;
+	   see that that has happened, करो it all again. */
+	अगर (!hp_sdc.ibf && limit++ < 20)
+		जाओ anew;
 
- done:
-	if (hp_sdc.wcurr >= 0)
+ करोne:
+	अगर (hp_sdc.wcurr >= 0)
 		tasklet_schedule(&hp_sdc.task);
-	write_unlock(&hp_sdc.lock);
+	ग_लिखो_unlock(&hp_sdc.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /******* Functions called in either user or kernel context ****/
-int __hp_sdc_enqueue_transaction(hp_sdc_transaction *this)
-{
-	int i;
+पूर्णांक __hp_sdc_enqueue_transaction(hp_sdc_transaction *this)
+अणु
+	पूर्णांक i;
 
-	if (this == NULL) {
+	अगर (this == शून्य) अणु
 		BUG();
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Can't have same transaction on queue twice */
-	for (i = 0; i < HP_SDC_QUEUE_LEN; i++)
-		if (hp_sdc.tq[i] == this)
-			goto fail;
+	क्रम (i = 0; i < HP_SDC_QUEUE_LEN; i++)
+		अगर (hp_sdc.tq[i] == this)
+			जाओ fail;
 
 	this->actidx = 0;
 	this->idx = 1;
 
-	/* Search for empty slot */
-	for (i = 0; i < HP_SDC_QUEUE_LEN; i++)
-		if (hp_sdc.tq[i] == NULL) {
+	/* Search क्रम empty slot */
+	क्रम (i = 0; i < HP_SDC_QUEUE_LEN; i++)
+		अगर (hp_sdc.tq[i] == शून्य) अणु
 			hp_sdc.tq[i] = this;
 			tasklet_schedule(&hp_sdc.task);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-	printk(KERN_WARNING PREFIX "No free slot to add transaction.\n");
-	return -EBUSY;
+	prपूर्णांकk(KERN_WARNING PREFIX "No free slot to add transaction.\n");
+	वापस -EBUSY;
 
  fail:
-	printk(KERN_WARNING PREFIX "Transaction add failed: transaction already queued?\n");
-	return -EINVAL;
-}
+	prपूर्णांकk(KERN_WARNING PREFIX "Transaction add failed: transaction already queued?\n");
+	वापस -EINVAL;
+पूर्ण
 
-int hp_sdc_enqueue_transaction(hp_sdc_transaction *this) {
-	unsigned long flags;
-	int ret;
+पूर्णांक hp_sdc_enqueue_transaction(hp_sdc_transaction *this) अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	write_lock_irqsave(&hp_sdc.lock, flags);
+	ग_लिखो_lock_irqsave(&hp_sdc.lock, flags);
 	ret = __hp_sdc_enqueue_transaction(this);
-	write_unlock_irqrestore(&hp_sdc.lock,flags);
+	ग_लिखो_unlock_irqrestore(&hp_sdc.lock,flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int hp_sdc_dequeue_transaction(hp_sdc_transaction *this)
-{
-	unsigned long flags;
-	int i;
+पूर्णांक hp_sdc_dequeue_transaction(hp_sdc_transaction *this)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	write_lock_irqsave(&hp_sdc.lock, flags);
+	ग_लिखो_lock_irqsave(&hp_sdc.lock, flags);
 
-	/* TODO: don't remove it if it's not done. */
+	/* TODO: करोn't remove it if it's not करोne. */
 
-	for (i = 0; i < HP_SDC_QUEUE_LEN; i++)
-		if (hp_sdc.tq[i] == this)
-			hp_sdc.tq[i] = NULL;
+	क्रम (i = 0; i < HP_SDC_QUEUE_LEN; i++)
+		अगर (hp_sdc.tq[i] == this)
+			hp_sdc.tq[i] = शून्य;
 
-	write_unlock_irqrestore(&hp_sdc.lock, flags);
-	return 0;
-}
+	ग_लिखो_unlock_irqrestore(&hp_sdc.lock, flags);
+	वापस 0;
+पूर्ण
 
 
 
 /********************** User context functions **************************/
-int hp_sdc_request_timer_irq(hp_sdc_irqhook *callback)
-{
-	if (callback == NULL || hp_sdc.dev == NULL)
-		return -EINVAL;
+पूर्णांक hp_sdc_request_समयr_irq(hp_sdc_irqhook *callback)
+अणु
+	अगर (callback == शून्य || hp_sdc.dev == शून्य)
+		वापस -EINVAL;
 
-	write_lock_irq(&hp_sdc.hook_lock);
-	if (hp_sdc.timer != NULL) {
-		write_unlock_irq(&hp_sdc.hook_lock);
-		return -EBUSY;
-	}
+	ग_लिखो_lock_irq(&hp_sdc.hook_lock);
+	अगर (hp_sdc.समयr != शून्य) अणु
+		ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
+		वापस -EBUSY;
+	पूर्ण
 
-	hp_sdc.timer = callback;
-	/* Enable interrupts from the timers */
+	hp_sdc.समयr = callback;
+	/* Enable पूर्णांकerrupts from the समयrs */
 	hp_sdc.im &= ~HP_SDC_IM_FH;
         hp_sdc.im &= ~HP_SDC_IM_PT;
 	hp_sdc.im &= ~HP_SDC_IM_TIMERS;
 	hp_sdc.set_im = 1;
-	write_unlock_irq(&hp_sdc.hook_lock);
+	ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
 
 	tasklet_schedule(&hp_sdc.task);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hp_sdc_request_hil_irq(hp_sdc_irqhook *callback)
-{
-	if (callback == NULL || hp_sdc.dev == NULL)
-		return -EINVAL;
+पूर्णांक hp_sdc_request_hil_irq(hp_sdc_irqhook *callback)
+अणु
+	अगर (callback == शून्य || hp_sdc.dev == शून्य)
+		वापस -EINVAL;
 
-	write_lock_irq(&hp_sdc.hook_lock);
-	if (hp_sdc.hil != NULL) {
-		write_unlock_irq(&hp_sdc.hook_lock);
-		return -EBUSY;
-	}
+	ग_लिखो_lock_irq(&hp_sdc.hook_lock);
+	अगर (hp_sdc.hil != शून्य) अणु
+		ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
+		वापस -EBUSY;
+	पूर्ण
 
 	hp_sdc.hil = callback;
 	hp_sdc.im &= ~(HP_SDC_IM_HIL | HP_SDC_IM_RESET);
 	hp_sdc.set_im = 1;
-	write_unlock_irq(&hp_sdc.hook_lock);
+	ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
 
 	tasklet_schedule(&hp_sdc.task);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hp_sdc_request_cooked_irq(hp_sdc_irqhook *callback)
-{
-	if (callback == NULL || hp_sdc.dev == NULL)
-		return -EINVAL;
+पूर्णांक hp_sdc_request_cooked_irq(hp_sdc_irqhook *callback)
+अणु
+	अगर (callback == शून्य || hp_sdc.dev == शून्य)
+		वापस -EINVAL;
 
-	write_lock_irq(&hp_sdc.hook_lock);
-	if (hp_sdc.cooked != NULL) {
-		write_unlock_irq(&hp_sdc.hook_lock);
-		return -EBUSY;
-	}
+	ग_लिखो_lock_irq(&hp_sdc.hook_lock);
+	अगर (hp_sdc.cooked != शून्य) अणु
+		ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
+		वापस -EBUSY;
+	पूर्ण
 
-	/* Enable interrupts from the HIL MLC */
+	/* Enable पूर्णांकerrupts from the HIL MLC */
 	hp_sdc.cooked = callback;
 	hp_sdc.im &= ~(HP_SDC_IM_HIL | HP_SDC_IM_RESET);
 	hp_sdc.set_im = 1;
-	write_unlock_irq(&hp_sdc.hook_lock);
+	ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
 
 	tasklet_schedule(&hp_sdc.task);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hp_sdc_release_timer_irq(hp_sdc_irqhook *callback)
-{
-	write_lock_irq(&hp_sdc.hook_lock);
-	if ((callback != hp_sdc.timer) ||
-	    (hp_sdc.timer == NULL)) {
-		write_unlock_irq(&hp_sdc.hook_lock);
-		return -EINVAL;
-	}
+पूर्णांक hp_sdc_release_समयr_irq(hp_sdc_irqhook *callback)
+अणु
+	ग_लिखो_lock_irq(&hp_sdc.hook_lock);
+	अगर ((callback != hp_sdc.समयr) ||
+	    (hp_sdc.समयr == शून्य)) अणु
+		ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Disable interrupts from the timers */
-	hp_sdc.timer = NULL;
+	/* Disable पूर्णांकerrupts from the समयrs */
+	hp_sdc.समयr = शून्य;
 	hp_sdc.im |= HP_SDC_IM_TIMERS;
 	hp_sdc.im |= HP_SDC_IM_FH;
 	hp_sdc.im |= HP_SDC_IM_PT;
 	hp_sdc.set_im = 1;
-	write_unlock_irq(&hp_sdc.hook_lock);
+	ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
 	tasklet_schedule(&hp_sdc.task);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hp_sdc_release_hil_irq(hp_sdc_irqhook *callback)
-{
-	write_lock_irq(&hp_sdc.hook_lock);
-	if ((callback != hp_sdc.hil) ||
-	    (hp_sdc.hil == NULL)) {
-		write_unlock_irq(&hp_sdc.hook_lock);
-		return -EINVAL;
-	}
+पूर्णांक hp_sdc_release_hil_irq(hp_sdc_irqhook *callback)
+अणु
+	ग_लिखो_lock_irq(&hp_sdc.hook_lock);
+	अगर ((callback != hp_sdc.hil) ||
+	    (hp_sdc.hil == शून्य)) अणु
+		ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
+		वापस -EINVAL;
+	पूर्ण
 
-	hp_sdc.hil = NULL;
-	/* Disable interrupts from HIL only if there is no cooked driver. */
-	if(hp_sdc.cooked == NULL) {
+	hp_sdc.hil = शून्य;
+	/* Disable पूर्णांकerrupts from HIL only अगर there is no cooked driver. */
+	अगर(hp_sdc.cooked == शून्य) अणु
 		hp_sdc.im |= (HP_SDC_IM_HIL | HP_SDC_IM_RESET);
 		hp_sdc.set_im = 1;
-	}
-	write_unlock_irq(&hp_sdc.hook_lock);
+	पूर्ण
+	ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
 	tasklet_schedule(&hp_sdc.task);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hp_sdc_release_cooked_irq(hp_sdc_irqhook *callback)
-{
-	write_lock_irq(&hp_sdc.hook_lock);
-	if ((callback != hp_sdc.cooked) ||
-	    (hp_sdc.cooked == NULL)) {
-		write_unlock_irq(&hp_sdc.hook_lock);
-		return -EINVAL;
-	}
+पूर्णांक hp_sdc_release_cooked_irq(hp_sdc_irqhook *callback)
+अणु
+	ग_लिखो_lock_irq(&hp_sdc.hook_lock);
+	अगर ((callback != hp_sdc.cooked) ||
+	    (hp_sdc.cooked == शून्य)) अणु
+		ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
+		वापस -EINVAL;
+	पूर्ण
 
-	hp_sdc.cooked = NULL;
-	/* Disable interrupts from HIL only if there is no raw HIL driver. */
-	if(hp_sdc.hil == NULL) {
+	hp_sdc.cooked = शून्य;
+	/* Disable पूर्णांकerrupts from HIL only अगर there is no raw HIL driver. */
+	अगर(hp_sdc.hil == शून्य) अणु
 		hp_sdc.im |= (HP_SDC_IM_HIL | HP_SDC_IM_RESET);
 		hp_sdc.set_im = 1;
-	}
-	write_unlock_irq(&hp_sdc.hook_lock);
+	पूर्ण
+	ग_लिखो_unlock_irq(&hp_sdc.hook_lock);
 	tasklet_schedule(&hp_sdc.task);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/************************* Keepalive timer task *********************/
+/************************* Keepalive समयr task *********************/
 
-static void hp_sdc_kicker(struct timer_list *unused)
-{
+अटल व्योम hp_sdc_kicker(काष्ठा समयr_list *unused)
+अणु
 	tasklet_schedule(&hp_sdc.task);
 	/* Re-insert the periodic task. */
-	mod_timer(&hp_sdc.kicker, jiffies + HZ);
-}
+	mod_समयr(&hp_sdc.kicker, jअगरfies + HZ);
+पूर्ण
 
 /************************** Module Initialization ***************************/
 
-#if defined(__hppa__)
+#अगर defined(__hppa__)
 
-static const struct parisc_device_id hp_sdc_tbl[] __initconst = {
-	{
+अटल स्थिर काष्ठा parisc_device_id hp_sdc_tbl[] __initस्थिर = अणु
+	अणु
 		.hw_type =	HPHW_FIO,
 		.hversion_rev =	HVERSION_REV_ANY_ID,
 		.hversion =	HVERSION_ANY_ID,
 		.sversion =	0x73,
-	 },
-	{ 0, }
-};
+	 पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(parisc, hp_sdc_tbl);
 
-static int __init hp_sdc_init_hppa(struct parisc_device *d);
-static struct delayed_work moduleloader_work;
+अटल पूर्णांक __init hp_sdc_init_hppa(काष्ठा parisc_device *d);
+अटल काष्ठा delayed_work moduleloader_work;
 
-static struct parisc_driver hp_sdc_driver __refdata = {
+अटल काष्ठा parisc_driver hp_sdc_driver __refdata = अणु
 	.name =		"hp_sdc",
 	.id_table =	hp_sdc_tbl,
 	.probe =	hp_sdc_init_hppa,
-};
+पूर्ण;
 
-#endif /* __hppa__ */
+#पूर्ण_अगर /* __hppa__ */
 
-static int __init hp_sdc_init(void)
-{
-	char *errstr;
+अटल पूर्णांक __init hp_sdc_init(व्योम)
+अणु
+	अक्षर *errstr;
 	hp_sdc_transaction t_sync;
-	uint8_t ts_sync[6];
-	struct semaphore s_sync;
+	uपूर्णांक8_t ts_sync[6];
+	काष्ठा semaphore s_sync;
 
 	rwlock_init(&hp_sdc.lock);
 	rwlock_init(&hp_sdc.ibf_lock);
 	rwlock_init(&hp_sdc.rtq_lock);
 	rwlock_init(&hp_sdc.hook_lock);
 
-	hp_sdc.timer		= NULL;
-	hp_sdc.hil		= NULL;
-	hp_sdc.pup		= NULL;
-	hp_sdc.cooked		= NULL;
+	hp_sdc.समयr		= शून्य;
+	hp_sdc.hil		= शून्य;
+	hp_sdc.pup		= शून्य;
+	hp_sdc.cooked		= शून्य;
 	hp_sdc.im		= HP_SDC_IM_MASK;  /* Mask maskable irqs */
 	hp_sdc.set_im		= 1;
 	hp_sdc.wi		= 0xff;
@@ -850,7 +851,7 @@ static int __init hp_sdc_init(void)
 	hp_sdc.r7[3]		= 0xff;
 	hp_sdc.ibf		= 1;
 
-	memset(&hp_sdc.tq, 0, sizeof(hp_sdc.tq));
+	स_रखो(&hp_sdc.tq, 0, माप(hp_sdc.tq));
 
 	hp_sdc.wcurr		= -1;
         hp_sdc.rcurr		= -1;
@@ -859,30 +860,30 @@ static int __init hp_sdc_init(void)
 	hp_sdc.dev_err = -ENODEV;
 
 	errstr = "IO not found for";
-	if (!hp_sdc.base_io)
-		goto err0;
+	अगर (!hp_sdc.base_io)
+		जाओ err0;
 
 	errstr = "IRQ not found for";
-	if (!hp_sdc.irq)
-		goto err0;
+	अगर (!hp_sdc.irq)
+		जाओ err0;
 
 	hp_sdc.dev_err = -EBUSY;
 
-#if defined(__hppa__)
+#अगर defined(__hppa__)
 	errstr = "IO not available for";
-        if (request_region(hp_sdc.data_io, 2, hp_sdc_driver.name))
-		goto err0;
-#endif
+        अगर (request_region(hp_sdc.data_io, 2, hp_sdc_driver.name))
+		जाओ err0;
+#पूर्ण_अगर
 
 	errstr = "IRQ not available for";
-	if (request_irq(hp_sdc.irq, &hp_sdc_isr, IRQF_SHARED,
+	अगर (request_irq(hp_sdc.irq, &hp_sdc_isr, IRQF_SHARED,
 			"HP SDC", &hp_sdc))
-		goto err1;
+		जाओ err1;
 
 	errstr = "NMI not available for";
-	if (request_irq(hp_sdc.nmi, &hp_sdc_nmisr, IRQF_SHARED,
+	अगर (request_irq(hp_sdc.nmi, &hp_sdc_nmisr, IRQF_SHARED,
 			"HP SDC NMI", &hp_sdc))
-		goto err2;
+		जाओ err2;
 
 	pr_info(PREFIX "HP SDC at 0x%08lx, IRQ %d (NMI IRQ %d)\n",
 	       hp_sdc.base_io, hp_sdc.irq, hp_sdc.nmi);
@@ -892,7 +893,7 @@ static int __init hp_sdc_init(void)
 
 	tasklet_init(&hp_sdc.task, hp_sdc_tasklet, 0);
 
-	/* Sync the output buffer registers, thus scheduling hp_sdc_tasklet. */
+	/* Sync the output buffer रेजिस्टरs, thus scheduling hp_sdc_tasklet. */
 	t_sync.actidx	= 0;
 	t_sync.idx	= 1;
 	t_sync.endidx	= 6;
@@ -903,42 +904,42 @@ static int __init hp_sdc_init(void)
 	t_sync.act.semaphore = &s_sync;
 	sema_init(&s_sync, 0);
 	hp_sdc_enqueue_transaction(&t_sync);
-	down(&s_sync); /* Wait for t_sync to complete */
+	करोwn(&s_sync); /* Wait क्रम t_sync to complete */
 
 	/* Create the keepalive task */
-	timer_setup(&hp_sdc.kicker, hp_sdc_kicker, 0);
-	hp_sdc.kicker.expires = jiffies + HZ;
-	add_timer(&hp_sdc.kicker);
+	समयr_setup(&hp_sdc.kicker, hp_sdc_kicker, 0);
+	hp_sdc.kicker.expires = jअगरfies + HZ;
+	add_समयr(&hp_sdc.kicker);
 
 	hp_sdc.dev_err = 0;
-	return 0;
+	वापस 0;
  err2:
-	free_irq(hp_sdc.irq, &hp_sdc);
+	मुक्त_irq(hp_sdc.irq, &hp_sdc);
  err1:
 	release_region(hp_sdc.data_io, 2);
  err0:
-	printk(KERN_WARNING PREFIX ": %s SDC IO=0x%p IRQ=0x%x NMI=0x%x\n",
-		errstr, (void *)hp_sdc.base_io, hp_sdc.irq, hp_sdc.nmi);
-	hp_sdc.dev = NULL;
+	prपूर्णांकk(KERN_WARNING PREFIX ": %s SDC IO=0x%p IRQ=0x%x NMI=0x%x\n",
+		errstr, (व्योम *)hp_sdc.base_io, hp_sdc.irq, hp_sdc.nmi);
+	hp_sdc.dev = शून्य;
 
-	return hp_sdc.dev_err;
-}
+	वापस hp_sdc.dev_err;
+पूर्ण
 
-#if defined(__hppa__)
+#अगर defined(__hppa__)
 
-static void request_module_delayed(struct work_struct *work)
-{
+अटल व्योम request_module_delayed(काष्ठा work_काष्ठा *work)
+अणु
 	request_module("hp_sdc_mlc");
-}
+पूर्ण
 
-static int __init hp_sdc_init_hppa(struct parisc_device *d)
-{
-	int ret;
+अटल पूर्णांक __init hp_sdc_init_hppa(काष्ठा parisc_device *d)
+अणु
+	पूर्णांक ret;
 
-	if (!d)
-		return 1;
-	if (hp_sdc.dev != NULL)
-		return 1;	/* We only expect one SDC */
+	अगर (!d)
+		वापस 1;
+	अगर (hp_sdc.dev != शून्य)
+		वापस 1;	/* We only expect one SDC */
 
 	hp_sdc.dev		= d;
 	hp_sdc.irq		= d->irq;
@@ -950,85 +951,85 @@ static int __init hp_sdc_init_hppa(struct parisc_device *d)
 	INIT_DELAYED_WORK(&moduleloader_work, request_module_delayed);
 
 	ret = hp_sdc_init();
-	/* after successful initialization give SDC some time to settle
+	/* after successful initialization give SDC some समय to settle
 	 * and then load the hp_sdc_mlc upper layer driver */
-	if (!ret)
+	अगर (!ret)
 		schedule_delayed_work(&moduleloader_work,
-			msecs_to_jiffies(2000));
+			msecs_to_jअगरfies(2000));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif /* __hppa__ */
+#पूर्ण_अगर /* __hppa__ */
 
-static void hp_sdc_exit(void)
-{
-	/* do nothing if we don't have a SDC */
-	if (!hp_sdc.dev)
-		return;
+अटल व्योम hp_sdc_निकास(व्योम)
+अणु
+	/* करो nothing अगर we करोn't have a SDC */
+	अगर (!hp_sdc.dev)
+		वापस;
 
-	write_lock_irq(&hp_sdc.lock);
+	ग_लिखो_lock_irq(&hp_sdc.lock);
 
 	/* Turn off all maskable "sub-function" irq's. */
 	hp_sdc_spin_ibf();
-	sdc_writeb(HP_SDC_CMD_SET_IM | HP_SDC_IM_MASK, hp_sdc.status_io);
+	sdc_ग_लिखोb(HP_SDC_CMD_SET_IM | HP_SDC_IM_MASK, hp_sdc.status_io);
 
 	/* Wait until we know this has been processed by the i8042 */
 	hp_sdc_spin_ibf();
 
-	free_irq(hp_sdc.nmi, &hp_sdc);
-	free_irq(hp_sdc.irq, &hp_sdc);
-	write_unlock_irq(&hp_sdc.lock);
+	मुक्त_irq(hp_sdc.nmi, &hp_sdc);
+	मुक्त_irq(hp_sdc.irq, &hp_sdc);
+	ग_लिखो_unlock_irq(&hp_sdc.lock);
 
-	del_timer_sync(&hp_sdc.kicker);
+	del_समयr_sync(&hp_sdc.kicker);
 
-	tasklet_kill(&hp_sdc.task);
+	tasklet_समाप्त(&hp_sdc.task);
 
-#if defined(__hppa__)
+#अगर defined(__hppa__)
 	cancel_delayed_work_sync(&moduleloader_work);
-	if (unregister_parisc_driver(&hp_sdc_driver))
-		printk(KERN_WARNING PREFIX "Error unregistering HP SDC");
-#endif
-}
+	अगर (unरेजिस्टर_parisc_driver(&hp_sdc_driver))
+		prपूर्णांकk(KERN_WARNING PREFIX "Error unregistering HP SDC");
+#पूर्ण_अगर
+पूर्ण
 
-static int __init hp_sdc_register(void)
-{
+अटल पूर्णांक __init hp_sdc_रेजिस्टर(व्योम)
+अणु
 	hp_sdc_transaction tq_init;
-	uint8_t tq_init_seq[5];
-	struct semaphore tq_init_sem;
-#if defined(__mc68000__)
-	unsigned char i;
-#endif
+	uपूर्णांक8_t tq_init_seq[5];
+	काष्ठा semaphore tq_init_sem;
+#अगर defined(__mc68000__)
+	अचिन्हित अक्षर i;
+#पूर्ण_अगर
 
-	if (hp_sdc_disabled) {
-		printk(KERN_WARNING PREFIX "HP SDC driver disabled by no_hpsdc=1.\n");
-		return -ENODEV;
-	}
+	अगर (hp_sdc_disabled) अणु
+		prपूर्णांकk(KERN_WARNING PREFIX "HP SDC driver disabled by no_hpsdc=1.\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	hp_sdc.dev = NULL;
+	hp_sdc.dev = शून्य;
 	hp_sdc.dev_err = 0;
-#if defined(__hppa__)
-	if (register_parisc_driver(&hp_sdc_driver)) {
-		printk(KERN_WARNING PREFIX "Error registering SDC with system bus tree.\n");
-		return -ENODEV;
-	}
-#elif defined(__mc68000__)
-	if (!MACH_IS_HP300)
-	    return -ENODEV;
+#अगर defined(__hppa__)
+	अगर (रेजिस्टर_parisc_driver(&hp_sdc_driver)) अणु
+		prपूर्णांकk(KERN_WARNING PREFIX "Error registering SDC with system bus tree.\n");
+		वापस -ENODEV;
+	पूर्ण
+#या_अगर defined(__mc68000__)
+	अगर (!MACH_IS_HP300)
+	    वापस -ENODEV;
 
 	hp_sdc.irq	 = 1;
 	hp_sdc.nmi	 = 7;
-	hp_sdc.base_io	 = (unsigned long) 0xf0428000;
-	hp_sdc.data_io	 = (unsigned long) hp_sdc.base_io + 1;
-	hp_sdc.status_io = (unsigned long) hp_sdc.base_io + 3;
-	if (!copy_from_kernel_nofault(&i, (unsigned char *)hp_sdc.data_io, 1))
-		hp_sdc.dev = (void *)1;
+	hp_sdc.base_io	 = (अचिन्हित दीर्घ) 0xf0428000;
+	hp_sdc.data_io	 = (अचिन्हित दीर्घ) hp_sdc.base_io + 1;
+	hp_sdc.status_io = (अचिन्हित दीर्घ) hp_sdc.base_io + 3;
+	अगर (!copy_from_kernel_nofault(&i, (अचिन्हित अक्षर *)hp_sdc.data_io, 1))
+		hp_sdc.dev = (व्योम *)1;
 	hp_sdc.dev_err   = hp_sdc_init();
-#endif
-	if (hp_sdc.dev == NULL) {
-		printk(KERN_WARNING PREFIX "No SDC found.\n");
-		return hp_sdc.dev_err;
-	}
+#पूर्ण_अगर
+	अगर (hp_sdc.dev == शून्य) अणु
+		prपूर्णांकk(KERN_WARNING PREFIX "No SDC found.\n");
+		वापस hp_sdc.dev_err;
+	पूर्ण
 
 	sema_init(&tq_init_sem, 0);
 
@@ -1047,37 +1048,37 @@ static int __init hp_sdc_register(void)
 
 	hp_sdc_enqueue_transaction(&tq_init);
 
-	down(&tq_init_sem);
+	करोwn(&tq_init_sem);
 	up(&tq_init_sem);
 
-	if ((tq_init_seq[0] & HP_SDC_ACT_DEAD) == HP_SDC_ACT_DEAD) {
-		printk(KERN_WARNING PREFIX "Error reading config byte.\n");
-		hp_sdc_exit();
-		return -ENODEV;
-	}
+	अगर ((tq_init_seq[0] & HP_SDC_ACT_DEAD) == HP_SDC_ACT_DEAD) अणु
+		prपूर्णांकk(KERN_WARNING PREFIX "Error reading config byte.\n");
+		hp_sdc_निकास();
+		वापस -ENODEV;
+	पूर्ण
 	hp_sdc.r11 = tq_init_seq[4];
-	if (hp_sdc.r11 & HP_SDC_CFG_NEW) {
-		const char *str;
-		printk(KERN_INFO PREFIX "New style SDC\n");
+	अगर (hp_sdc.r11 & HP_SDC_CFG_NEW) अणु
+		स्थिर अक्षर *str;
+		prपूर्णांकk(KERN_INFO PREFIX "New style SDC\n");
 		tq_init_seq[1] = HP_SDC_CMD_READ_XTD;
 		tq_init.actidx		= 0;
 		tq_init.idx		= 1;
-		down(&tq_init_sem);
+		करोwn(&tq_init_sem);
 		hp_sdc_enqueue_transaction(&tq_init);
-		down(&tq_init_sem);
+		करोwn(&tq_init_sem);
 		up(&tq_init_sem);
-		if ((tq_init_seq[0] & HP_SDC_ACT_DEAD) == HP_SDC_ACT_DEAD) {
-			printk(KERN_WARNING PREFIX "Error reading extended config byte.\n");
-			return -ENODEV;
-		}
+		अगर ((tq_init_seq[0] & HP_SDC_ACT_DEAD) == HP_SDC_ACT_DEAD) अणु
+			prपूर्णांकk(KERN_WARNING PREFIX "Error reading extended config byte.\n");
+			वापस -ENODEV;
+		पूर्ण
 		hp_sdc.r7e = tq_init_seq[4];
 		HP_SDC_XTD_REV_STRINGS(hp_sdc.r7e & HP_SDC_XTD_REV, str)
-		printk(KERN_INFO PREFIX "Revision: %s\n", str);
-		if (hp_sdc.r7e & HP_SDC_XTD_BEEPER)
-			printk(KERN_INFO PREFIX "TI SN76494 beeper present\n");
-		if (hp_sdc.r7e & HP_SDC_XTD_BBRTC)
-			printk(KERN_INFO PREFIX "OKI MSM-58321 BBRTC present\n");
-		printk(KERN_INFO PREFIX "Spunking the self test register to force PUP "
+		prपूर्णांकk(KERN_INFO PREFIX "Revision: %s\n", str);
+		अगर (hp_sdc.r7e & HP_SDC_XTD_BEEPER)
+			prपूर्णांकk(KERN_INFO PREFIX "TI SN76494 beeper present\n");
+		अगर (hp_sdc.r7e & HP_SDC_XTD_BBRTC)
+			prपूर्णांकk(KERN_INFO PREFIX "OKI MSM-58321 BBRTC present\n");
+		prपूर्णांकk(KERN_INFO PREFIX "Spunking the self test register to force PUP "
 		       "on next firmware reset.\n");
 		tq_init_seq[0] = HP_SDC_ACT_PRECMD |
 			HP_SDC_ACT_DATAOUT | HP_SDC_ACT_SEMAPHORE;
@@ -1087,33 +1088,33 @@ static int __init hp_sdc_register(void)
 		tq_init.actidx		= 0;
 		tq_init.idx		= 1;
 		tq_init.endidx		= 4;
-		down(&tq_init_sem);
+		करोwn(&tq_init_sem);
 		hp_sdc_enqueue_transaction(&tq_init);
-		down(&tq_init_sem);
+		करोwn(&tq_init_sem);
 		up(&tq_init_sem);
-	} else
-		printk(KERN_INFO PREFIX "Old style SDC (1820-%s).\n",
+	पूर्ण अन्यथा
+		prपूर्णांकk(KERN_INFO PREFIX "Old style SDC (1820-%s).\n",
 		       (hp_sdc.r11 & HP_SDC_CFG_REV) ? "3300" : "2564/3087");
 
-        return 0;
-}
+        वापस 0;
+पूर्ण
 
-module_init(hp_sdc_register);
-module_exit(hp_sdc_exit);
+module_init(hp_sdc_रेजिस्टर);
+module_निकास(hp_sdc_निकास);
 
 /* Timing notes:  These measurements taken on my 64MHz 7100-LC (715/64)
- *                                              cycles cycles-adj    time
+ *                                              cycles cycles-adj    समय
  * between two consecutive mfctl(16)'s:              4        n/a    63ns
  * hp_sdc_spin_ibf when idle:                      119        115   1.7us
- * gsc_writeb status register:                      83         79   1.2us
+ * gsc_ग_लिखोb status रेजिस्टर:                      83         79   1.2us
  * IBF to clear after sending SET_IM:             6204       6006    93us
  * IBF to clear after sending LOAD_RT:            4467       4352    68us
  * IBF to clear after sending two LOAD_RTs:      18974      18859   295us
- * READ_T1, read status/data, IRQ, call handler: 35564        n/a   556us
- * cmd to ~IBF READ_T1 2nd time right after:   5158403        n/a    81ms
- * between IRQ received and ~IBF for above:    2578877        n/a    40ms
+ * READ_T1, पढ़ो status/data, IRQ, call handler: 35564        n/a   556us
+ * cmd to ~IBF READ_T1 2nd समय right after:   5158403        n/a    81ms
+ * between IRQ received and ~IBF क्रम above:    2578877        n/a    40ms
  *
- * Performance stats after a run of this module configuring HIL and
+ * Perक्रमmance stats after a run of this module configuring HIL and
  * receiving a few mouse events:
  *
  * status in8  282508 cycles 7128 calls

@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include <stdbool.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
+#समावेश <stdbool.h>
 
-#ifdef ENABLE_ATOMICS_TESTS
+#अगर_घोषित ENABLE_ATOMICS_TESTS
 bool skip_tests __attribute((__section__(".data"))) = false;
-#else
+#अन्यथा
 bool skip_tests = true;
-#endif
+#पूर्ण_अगर
 
 SEC("fentry/bpf_fentry_test1")
-int BPF_PROG(sub, int x)
-{
-#ifdef ENABLE_ATOMICS_TESTS
-	int a = 0;
-	int b = __sync_fetch_and_add(&a, 1);
-	/* b is certainly 0 here. Can the verifier tell? */
-	while (b)
-		continue;
-#endif
-	return 0;
-}
+पूर्णांक BPF_PROG(sub, पूर्णांक x)
+अणु
+#अगर_घोषित ENABLE_ATOMICS_TESTS
+	पूर्णांक a = 0;
+	पूर्णांक b = __sync_fetch_and_add(&a, 1);
+	/* b is certainly 0 here. Can the verअगरier tell? */
+	जबतक (b)
+		जारी;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण

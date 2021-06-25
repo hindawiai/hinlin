@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifdef CONFIG_SCHED_AUTOGROUP
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_घोषित CONFIG_SCHED_AUTOGROUP
 
-struct autogroup {
+काष्ठा स्वतःgroup अणु
 	/*
-	 * Reference doesn't mean how many threads attach to this
-	 * autogroup now. It just stands for the number of tasks
-	 * which could use this autogroup.
+	 * Reference करोesn't mean how many thपढ़ोs attach to this
+	 * स्वतःgroup now. It just stands क्रम the number of tasks
+	 * which could use this स्वतःgroup.
 	 */
-	struct kref		kref;
-	struct task_group	*tg;
-	struct rw_semaphore	lock;
-	unsigned long		id;
-	int			nice;
-};
+	काष्ठा kref		kref;
+	काष्ठा task_group	*tg;
+	काष्ठा rw_semaphore	lock;
+	अचिन्हित दीर्घ		id;
+	पूर्णांक			nice;
+पूर्ण;
 
-extern void autogroup_init(struct task_struct *init_task);
-extern void autogroup_free(struct task_group *tg);
+बाह्य व्योम स्वतःgroup_init(काष्ठा task_काष्ठा *init_task);
+बाह्य व्योम स्वतःgroup_मुक्त(काष्ठा task_group *tg);
 
-static inline bool task_group_is_autogroup(struct task_group *tg)
-{
-	return !!tg->autogroup;
-}
+अटल अंतरभूत bool task_group_is_स्वतःgroup(काष्ठा task_group *tg)
+अणु
+	वापस !!tg->स्वतःgroup;
+पूर्ण
 
-extern bool task_wants_autogroup(struct task_struct *p, struct task_group *tg);
+बाह्य bool task_wants_स्वतःgroup(काष्ठा task_काष्ठा *p, काष्ठा task_group *tg);
 
-static inline struct task_group *
-autogroup_task_group(struct task_struct *p, struct task_group *tg)
-{
-	int enabled = READ_ONCE(sysctl_sched_autogroup_enabled);
+अटल अंतरभूत काष्ठा task_group *
+स्वतःgroup_task_group(काष्ठा task_काष्ठा *p, काष्ठा task_group *tg)
+अणु
+	पूर्णांक enabled = READ_ONCE(sysctl_sched_स्वतःgroup_enabled);
 
-	if (enabled && task_wants_autogroup(p, tg))
-		return p->signal->autogroup->tg;
+	अगर (enabled && task_wants_स्वतःgroup(p, tg))
+		वापस p->संकेत->स्वतःgroup->tg;
 
-	return tg;
-}
+	वापस tg;
+पूर्ण
 
-extern int autogroup_path(struct task_group *tg, char *buf, int buflen);
+बाह्य पूर्णांक स्वतःgroup_path(काष्ठा task_group *tg, अक्षर *buf, पूर्णांक buflen);
 
-#else /* !CONFIG_SCHED_AUTOGROUP */
+#अन्यथा /* !CONFIG_SCHED_AUTOGROUP */
 
-static inline void autogroup_init(struct task_struct *init_task) {  }
-static inline void autogroup_free(struct task_group *tg) { }
-static inline bool task_group_is_autogroup(struct task_group *tg)
-{
-	return 0;
-}
+अटल अंतरभूत व्योम स्वतःgroup_init(काष्ठा task_काष्ठा *init_task) अणु  पूर्ण
+अटल अंतरभूत व्योम स्वतःgroup_मुक्त(काष्ठा task_group *tg) अणु पूर्ण
+अटल अंतरभूत bool task_group_is_स्वतःgroup(काष्ठा task_group *tg)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct task_group *
-autogroup_task_group(struct task_struct *p, struct task_group *tg)
-{
-	return tg;
-}
+अटल अंतरभूत काष्ठा task_group *
+स्वतःgroup_task_group(काष्ठा task_काष्ठा *p, काष्ठा task_group *tg)
+अणु
+	वापस tg;
+पूर्ण
 
-static inline int autogroup_path(struct task_group *tg, char *buf, int buflen)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक स्वतःgroup_path(काष्ठा task_group *tg, अक्षर *buf, पूर्णांक buflen)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_SCHED_AUTOGROUP */
+#पूर्ण_अगर /* CONFIG_SCHED_AUTOGROUP */

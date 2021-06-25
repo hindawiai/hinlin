@@ -1,571 +1,572 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Clocksource driver for the synthetic counter and timers
+ * Clocksource driver क्रम the synthetic counter and समयrs
  * provided by the Hyper-V hypervisor to guest VMs, as described
  * in the Hyper-V Top Level Functional Spec (TLFS). This driver
- * is instruction set architecture independent.
+ * is inकाष्ठाion set architecture independent.
  *
  * Copyright (C) 2019, Microsoft, Inc.
  *
  * Author:  Michael Kelley <mikelley@microsoft.com>
  */
 
-#include <linux/percpu.h>
-#include <linux/cpumask.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/sched_clock.h>
-#include <linux/mm.h>
-#include <linux/cpuhotplug.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/acpi.h>
-#include <clocksource/hyperv_timer.h>
-#include <asm/hyperv-tlfs.h>
-#include <asm/mshyperv.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/cpuhotplug.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/acpi.h>
+#समावेश <घड़ीsource/hyperv_समयr.h>
+#समावेश <यंत्र/hyperv-tlfs.h>
+#समावेश <यंत्र/mshyperv.h>
 
-static struct clock_event_device __percpu *hv_clock_event;
-static u64 hv_sched_clock_offset __ro_after_init;
+अटल काष्ठा घड़ी_event_device __percpu *hv_घड़ी_event;
+अटल u64 hv_sched_घड़ी_offset __ro_after_init;
 
 /*
- * If false, we're using the old mechanism for stimer0 interrupts
+ * If false, we're using the old mechanism क्रम sसमयr0 पूर्णांकerrupts
  * where it sends a VMbus message when it expires. The old
  * mechanism is used when running on older versions of Hyper-V
- * that don't support Direct Mode. While Hyper-V provides
- * four stimer's per CPU, Linux uses only stimer0.
+ * that करोn't support Direct Mode. While Hyper-V provides
+ * four sसमयr's per CPU, Linux uses only sसमयr0.
  *
- * Because Direct Mode does not require processing a VMbus
- * message, stimer interrupts can be enabled earlier in the
- * process of booting a CPU, and consistent with when timer
- * interrupts are enabled for other clocksource drivers.
- * However, for legacy versions of Hyper-V when Direct Mode
- * is not enabled, setting up stimer interrupts must be
+ * Because Direct Mode करोes not require processing a VMbus
+ * message, sसमयr पूर्णांकerrupts can be enabled earlier in the
+ * process of booting a CPU, and consistent with when समयr
+ * पूर्णांकerrupts are enabled क्रम other घड़ीsource drivers.
+ * However, क्रम legacy versions of Hyper-V when Direct Mode
+ * is not enabled, setting up sसमयr पूर्णांकerrupts must be
  * delayed until VMbus is initialized and can process the
- * interrupt message.
+ * पूर्णांकerrupt message.
  */
-static bool direct_mode_enabled;
+अटल bool direct_mode_enabled;
 
-static int stimer0_irq = -1;
-static int stimer0_message_sint;
-static DEFINE_PER_CPU(long, stimer0_evt);
+अटल पूर्णांक sसमयr0_irq = -1;
+अटल पूर्णांक sसमयr0_message_sपूर्णांक;
+अटल DEFINE_PER_CPU(दीर्घ, sसमयr0_evt);
 
 /*
- * Common code for stimer0 interrupts coming via Direct Mode or
+ * Common code क्रम sसमयr0 पूर्णांकerrupts coming via Direct Mode or
  * as a VMbus message.
  */
-void hv_stimer0_isr(void)
-{
-	struct clock_event_device *ce;
+व्योम hv_sसमयr0_isr(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *ce;
 
-	ce = this_cpu_ptr(hv_clock_event);
+	ce = this_cpu_ptr(hv_घड़ी_event);
 	ce->event_handler(ce);
-}
-EXPORT_SYMBOL_GPL(hv_stimer0_isr);
+पूर्ण
+EXPORT_SYMBOL_GPL(hv_sसमयr0_isr);
 
 /*
- * stimer0 interrupt handler for architectures that support
- * per-cpu interrupts, which also implies Direct Mode.
+ * sसमयr0 पूर्णांकerrupt handler क्रम architectures that support
+ * per-cpu पूर्णांकerrupts, which also implies Direct Mode.
  */
-static irqreturn_t hv_stimer0_percpu_isr(int irq, void *dev_id)
-{
-	hv_stimer0_isr();
-	return IRQ_HANDLED;
-}
+अटल irqवापस_t hv_sसमयr0_percpu_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	hv_sसमयr0_isr();
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int hv_ce_set_next_event(unsigned long delta,
-				struct clock_event_device *evt)
-{
+अटल पूर्णांक hv_ce_set_next_event(अचिन्हित दीर्घ delta,
+				काष्ठा घड़ी_event_device *evt)
+अणु
 	u64 current_tick;
 
-	current_tick = hv_read_reference_counter();
+	current_tick = hv_पढ़ो_reference_counter();
 	current_tick += delta;
-	hv_set_register(HV_REGISTER_STIMER0_COUNT, current_tick);
-	return 0;
-}
+	hv_set_रेजिस्टर(HV_REGISTER_STIMER0_COUNT, current_tick);
+	वापस 0;
+पूर्ण
 
-static int hv_ce_shutdown(struct clock_event_device *evt)
-{
-	hv_set_register(HV_REGISTER_STIMER0_COUNT, 0);
-	hv_set_register(HV_REGISTER_STIMER0_CONFIG, 0);
-	if (direct_mode_enabled && stimer0_irq >= 0)
-		disable_percpu_irq(stimer0_irq);
+अटल पूर्णांक hv_ce_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	hv_set_रेजिस्टर(HV_REGISTER_STIMER0_COUNT, 0);
+	hv_set_रेजिस्टर(HV_REGISTER_STIMER0_CONFIG, 0);
+	अगर (direct_mode_enabled && sसमयr0_irq >= 0)
+		disable_percpu_irq(sसमयr0_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hv_ce_set_oneshot(struct clock_event_device *evt)
-{
-	union hv_stimer_config timer_cfg;
+अटल पूर्णांक hv_ce_set_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	जोड़ hv_sसमयr_config समयr_cfg;
 
-	timer_cfg.as_uint64 = 0;
-	timer_cfg.enable = 1;
-	timer_cfg.auto_enable = 1;
-	if (direct_mode_enabled) {
+	समयr_cfg.as_uपूर्णांक64 = 0;
+	समयr_cfg.enable = 1;
+	समयr_cfg.स्वतः_enable = 1;
+	अगर (direct_mode_enabled) अणु
 		/*
-		 * When it expires, the timer will directly interrupt
-		 * on the specified hardware vector/IRQ.
+		 * When it expires, the समयr will directly पूर्णांकerrupt
+		 * on the specअगरied hardware vector/IRQ.
 		 */
-		timer_cfg.direct_mode = 1;
-		timer_cfg.apic_vector = HYPERV_STIMER0_VECTOR;
-		if (stimer0_irq >= 0)
-			enable_percpu_irq(stimer0_irq, IRQ_TYPE_NONE);
-	} else {
+		समयr_cfg.direct_mode = 1;
+		समयr_cfg.apic_vector = HYPERV_STIMER0_VECTOR;
+		अगर (sसमयr0_irq >= 0)
+			enable_percpu_irq(sसमयr0_irq, IRQ_TYPE_NONE);
+	पूर्ण अन्यथा अणु
 		/*
-		 * When it expires, the timer will generate a VMbus message,
-		 * to be handled by the normal VMbus interrupt handler.
+		 * When it expires, the समयr will generate a VMbus message,
+		 * to be handled by the normal VMbus पूर्णांकerrupt handler.
 		 */
-		timer_cfg.direct_mode = 0;
-		timer_cfg.sintx = stimer0_message_sint;
-	}
-	hv_set_register(HV_REGISTER_STIMER0_CONFIG, timer_cfg.as_uint64);
-	return 0;
-}
+		समयr_cfg.direct_mode = 0;
+		समयr_cfg.sपूर्णांकx = sसमयr0_message_sपूर्णांक;
+	पूर्ण
+	hv_set_रेजिस्टर(HV_REGISTER_STIMER0_CONFIG, समयr_cfg.as_uपूर्णांक64);
+	वापस 0;
+पूर्ण
 
 /*
- * hv_stimer_init - Per-cpu initialization of the clockevent
+ * hv_sसमयr_init - Per-cpu initialization of the घड़ीevent
  */
-static int hv_stimer_init(unsigned int cpu)
-{
-	struct clock_event_device *ce;
+अटल पूर्णांक hv_sसमयr_init(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा घड़ी_event_device *ce;
 
-	if (!hv_clock_event)
-		return 0;
+	अगर (!hv_घड़ी_event)
+		वापस 0;
 
-	ce = per_cpu_ptr(hv_clock_event, cpu);
+	ce = per_cpu_ptr(hv_घड़ी_event, cpu);
 	ce->name = "Hyper-V clockevent";
 	ce->features = CLOCK_EVT_FEAT_ONESHOT;
 	ce->cpumask = cpumask_of(cpu);
 	ce->rating = 1000;
-	ce->set_state_shutdown = hv_ce_shutdown;
+	ce->set_state_shutकरोwn = hv_ce_shutकरोwn;
 	ce->set_state_oneshot = hv_ce_set_oneshot;
 	ce->set_next_event = hv_ce_set_next_event;
 
-	clockevents_config_and_register(ce,
+	घड़ीevents_config_and_रेजिस्टर(ce,
 					HV_CLOCK_HZ,
 					HV_MIN_DELTA_TICKS,
 					HV_MAX_MAX_DELTA_TICKS);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * hv_stimer_cleanup - Per-cpu cleanup of the clockevent
+ * hv_sसमयr_cleanup - Per-cpu cleanup of the घड़ीevent
  */
-int hv_stimer_cleanup(unsigned int cpu)
-{
-	struct clock_event_device *ce;
+पूर्णांक hv_sसमयr_cleanup(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा घड़ी_event_device *ce;
 
-	if (!hv_clock_event)
-		return 0;
+	अगर (!hv_घड़ी_event)
+		वापस 0;
 
 	/*
-	 * In the legacy case where Direct Mode is not enabled
-	 * (which can only be on x86/64), stimer cleanup happens
+	 * In the legacy हाल where Direct Mode is not enabled
+	 * (which can only be on x86/64), sसमयr cleanup happens
 	 * relatively early in the CPU offlining process. We
-	 * must unbind the stimer-based clockevent device so
-	 * that the LAPIC timer can take over until clockevents
-	 * are no longer needed in the offlining process. Note
-	 * that clockevents_unbind_device() eventually calls
-	 * hv_ce_shutdown().
+	 * must unbind the sसमयr-based घड़ीevent device so
+	 * that the LAPIC समयr can take over until घड़ीevents
+	 * are no दीर्घer needed in the offlining process. Note
+	 * that घड़ीevents_unbind_device() eventually calls
+	 * hv_ce_shutकरोwn().
 	 *
-	 * The unbind should not be done when Direct Mode is
+	 * The unbind should not be करोne when Direct Mode is
 	 * enabled because we may be on an architecture where
-	 * there are no other clockevent devices to fallback to.
+	 * there are no other घड़ीevent devices to fallback to.
 	 */
-	ce = per_cpu_ptr(hv_clock_event, cpu);
-	if (direct_mode_enabled)
-		hv_ce_shutdown(ce);
-	else
-		clockevents_unbind_device(ce, cpu);
+	ce = per_cpu_ptr(hv_घड़ी_event, cpu);
+	अगर (direct_mode_enabled)
+		hv_ce_shutकरोwn(ce);
+	अन्यथा
+		घड़ीevents_unbind_device(ce, cpu);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(hv_stimer_cleanup);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(hv_sसमयr_cleanup);
 
 /*
- * These placeholders are overridden by arch specific code on
- * architectures that need special setup of the stimer0 IRQ because
- * they don't support per-cpu IRQs (such as x86/x64).
+ * These placeholders are overridden by arch specअगरic code on
+ * architectures that need special setup of the sसमयr0 IRQ because
+ * they करोn't support per-cpu IRQs (such as x86/x64).
  */
-void __weak hv_setup_stimer0_handler(void (*handler)(void))
-{
-};
+व्योम __weak hv_setup_sसमयr0_handler(व्योम (*handler)(व्योम))
+अणु
+पूर्ण;
 
-void __weak hv_remove_stimer0_handler(void)
-{
-};
+व्योम __weak hv_हटाओ_sसमयr0_handler(व्योम)
+अणु
+पूर्ण;
 
 /* Called only on architectures with per-cpu IRQs (i.e., not x86/x64) */
-static int hv_setup_stimer0_irq(void)
-{
-	int ret;
+अटल पूर्णांक hv_setup_sसमयr0_irq(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = acpi_register_gsi(NULL, HYPERV_STIMER0_VECTOR,
+	ret = acpi_रेजिस्टर_gsi(शून्य, HYPERV_STIMER0_VECTOR,
 			ACPI_EDGE_SENSITIVE, ACPI_ACTIVE_HIGH);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("Can't register Hyper-V stimer0 GSI. Error %d", ret);
-		return ret;
-	}
-	stimer0_irq = ret;
+		वापस ret;
+	पूर्ण
+	sसमयr0_irq = ret;
 
-	ret = request_percpu_irq(stimer0_irq, hv_stimer0_percpu_isr,
-		"Hyper-V stimer0", &stimer0_evt);
-	if (ret) {
+	ret = request_percpu_irq(sसमयr0_irq, hv_sसमयr0_percpu_isr,
+		"Hyper-V stimer0", &sसमयr0_evt);
+	अगर (ret) अणु
 		pr_err("Can't request Hyper-V stimer0 IRQ %d. Error %d",
-			stimer0_irq, ret);
-		acpi_unregister_gsi(stimer0_irq);
-		stimer0_irq = -1;
-	}
-	return ret;
-}
+			sसमयr0_irq, ret);
+		acpi_unरेजिस्टर_gsi(sसमयr0_irq);
+		sसमयr0_irq = -1;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void hv_remove_stimer0_irq(void)
-{
-	if (stimer0_irq == -1) {
-		hv_remove_stimer0_handler();
-	} else {
-		free_percpu_irq(stimer0_irq, &stimer0_evt);
-		acpi_unregister_gsi(stimer0_irq);
-		stimer0_irq = -1;
-	}
-}
+अटल व्योम hv_हटाओ_sसमयr0_irq(व्योम)
+अणु
+	अगर (sसमयr0_irq == -1) अणु
+		hv_हटाओ_sसमयr0_handler();
+	पूर्ण अन्यथा अणु
+		मुक्त_percpu_irq(sसमयr0_irq, &sसमयr0_evt);
+		acpi_unरेजिस्टर_gsi(sसमयr0_irq);
+		sसमयr0_irq = -1;
+	पूर्ण
+पूर्ण
 
-/* hv_stimer_alloc - Global initialization of the clockevent and stimer0 */
-int hv_stimer_alloc(bool have_percpu_irqs)
-{
-	int ret;
+/* hv_sसमयr_alloc - Global initialization of the घड़ीevent and sसमयr0 */
+पूर्णांक hv_sसमयr_alloc(bool have_percpu_irqs)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * Synthetic timers are always available except on old versions of
-	 * Hyper-V on x86.  In that case, return as error as Linux will use a
-	 * clockevent based on emulated LAPIC timer hardware.
+	 * Synthetic समयrs are always available except on old versions of
+	 * Hyper-V on x86.  In that हाल, वापस as error as Linux will use a
+	 * घड़ीevent based on emulated LAPIC समयr hardware.
 	 */
-	if (!(ms_hyperv.features & HV_MSR_SYNTIMER_AVAILABLE))
-		return -EINVAL;
+	अगर (!(ms_hyperv.features & HV_MSR_SYNTIMER_AVAILABLE))
+		वापस -EINVAL;
 
-	hv_clock_event = alloc_percpu(struct clock_event_device);
-	if (!hv_clock_event)
-		return -ENOMEM;
+	hv_घड़ी_event = alloc_percpu(काष्ठा घड़ी_event_device);
+	अगर (!hv_घड़ी_event)
+		वापस -ENOMEM;
 
 	direct_mode_enabled = ms_hyperv.misc_features &
-			HV_STIMER_DIRECT_MODE_AVAILABLE;
+			HV_STIMER_सूचीECT_MODE_AVAILABLE;
 
 	/*
-	 * If Direct Mode isn't enabled, the remainder of the initialization
-	 * is done later by hv_stimer_legacy_init()
+	 * If Direct Mode isn't enabled, the reमुख्यder of the initialization
+	 * is करोne later by hv_sसमयr_legacy_init()
 	 */
-	if (!direct_mode_enabled)
-		return 0;
+	अगर (!direct_mode_enabled)
+		वापस 0;
 
-	if (have_percpu_irqs) {
-		ret = hv_setup_stimer0_irq();
-		if (ret)
-			goto free_clock_event;
-	} else {
-		hv_setup_stimer0_handler(hv_stimer0_isr);
-	}
+	अगर (have_percpu_irqs) अणु
+		ret = hv_setup_sसमयr0_irq();
+		अगर (ret)
+			जाओ मुक्त_घड़ी_event;
+	पूर्ण अन्यथा अणु
+		hv_setup_sसमयr0_handler(hv_sसमयr0_isr);
+	पूर्ण
 
 	/*
-	 * Since we are in Direct Mode, stimer initialization
-	 * can be done now with a CPUHP value in the same range
-	 * as other clockevent devices.
+	 * Since we are in Direct Mode, sसमयr initialization
+	 * can be करोne now with a CPUHP value in the same range
+	 * as other घड़ीevent devices.
 	 */
 	ret = cpuhp_setup_state(CPUHP_AP_HYPERV_TIMER_STARTING,
 			"clockevents/hyperv/stimer:starting",
-			hv_stimer_init, hv_stimer_cleanup);
-	if (ret < 0) {
-		hv_remove_stimer0_irq();
-		goto free_clock_event;
-	}
-	return ret;
+			hv_sसमयr_init, hv_sसमयr_cleanup);
+	अगर (ret < 0) अणु
+		hv_हटाओ_sसमयr0_irq();
+		जाओ मुक्त_घड़ी_event;
+	पूर्ण
+	वापस ret;
 
-free_clock_event:
-	free_percpu(hv_clock_event);
-	hv_clock_event = NULL;
-	return ret;
-}
-EXPORT_SYMBOL_GPL(hv_stimer_alloc);
+मुक्त_घड़ी_event:
+	मुक्त_percpu(hv_घड़ी_event);
+	hv_घड़ी_event = शून्य;
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(hv_sसमयr_alloc);
 
 /*
- * hv_stimer_legacy_init -- Called from the VMbus driver to handle
- * the case when Direct Mode is not enabled, and the stimer
+ * hv_sसमयr_legacy_init -- Called from the VMbus driver to handle
+ * the हाल when Direct Mode is not enabled, and the sसमयr
  * must be initialized late in the CPU onlining process.
  *
  */
-void hv_stimer_legacy_init(unsigned int cpu, int sint)
-{
-	if (direct_mode_enabled)
-		return;
+व्योम hv_sसमयr_legacy_init(अचिन्हित पूर्णांक cpu, पूर्णांक sपूर्णांक)
+अणु
+	अगर (direct_mode_enabled)
+		वापस;
 
 	/*
-	 * This function gets called by each vCPU, so setting the
-	 * global stimer_message_sint value each time is conceptually
+	 * This function माला_लो called by each vCPU, so setting the
+	 * global sसमयr_message_sपूर्णांक value each समय is conceptually
 	 * not ideal, but the value passed in is always the same and
-	 * it avoids introducing yet another interface into this
-	 * clocksource driver just to set the sint in the legacy case.
+	 * it aव्योमs पूर्णांकroducing yet another पूर्णांकerface पूर्णांकo this
+	 * घड़ीsource driver just to set the sपूर्णांक in the legacy हाल.
 	 */
-	stimer0_message_sint = sint;
-	(void)hv_stimer_init(cpu);
-}
-EXPORT_SYMBOL_GPL(hv_stimer_legacy_init);
+	sसमयr0_message_sपूर्णांक = sपूर्णांक;
+	(व्योम)hv_sसमयr_init(cpu);
+पूर्ण
+EXPORT_SYMBOL_GPL(hv_sसमयr_legacy_init);
 
 /*
- * hv_stimer_legacy_cleanup -- Called from the VMbus driver to
- * handle the case when Direct Mode is not enabled, and the
- * stimer must be cleaned up early in the CPU offlining
+ * hv_sसमयr_legacy_cleanup -- Called from the VMbus driver to
+ * handle the हाल when Direct Mode is not enabled, and the
+ * sसमयr must be cleaned up early in the CPU offlining
  * process.
  */
-void hv_stimer_legacy_cleanup(unsigned int cpu)
-{
-	if (direct_mode_enabled)
-		return;
-	(void)hv_stimer_cleanup(cpu);
-}
-EXPORT_SYMBOL_GPL(hv_stimer_legacy_cleanup);
+व्योम hv_sसमयr_legacy_cleanup(अचिन्हित पूर्णांक cpu)
+अणु
+	अगर (direct_mode_enabled)
+		वापस;
+	(व्योम)hv_sसमयr_cleanup(cpu);
+पूर्ण
+EXPORT_SYMBOL_GPL(hv_sसमयr_legacy_cleanup);
 
 /*
- * Do a global cleanup of clockevents for the cases of kexec and
- * vmbus exit
+ * Do a global cleanup of घड़ीevents क्रम the हालs of kexec and
+ * vmbus निकास
  */
-void hv_stimer_global_cleanup(void)
-{
-	int	cpu;
+व्योम hv_sसमयr_global_cleanup(व्योम)
+अणु
+	पूर्णांक	cpu;
 
 	/*
-	 * hv_stime_legacy_cleanup() will stop the stimer if Direct
-	 * Mode is not enabled, and fallback to the LAPIC timer.
+	 * hv_sसमय_legacy_cleanup() will stop the sसमयr अगर Direct
+	 * Mode is not enabled, and fallback to the LAPIC समयr.
 	 */
-	for_each_present_cpu(cpu) {
-		hv_stimer_legacy_cleanup(cpu);
-	}
+	क्रम_each_present_cpu(cpu) अणु
+		hv_sसमयr_legacy_cleanup(cpu);
+	पूर्ण
 
-	if (!hv_clock_event)
-		return;
+	अगर (!hv_घड़ी_event)
+		वापस;
 
-	if (direct_mode_enabled) {
-		cpuhp_remove_state(CPUHP_AP_HYPERV_TIMER_STARTING);
-		hv_remove_stimer0_irq();
-		stimer0_irq = -1;
-	}
-	free_percpu(hv_clock_event);
-	hv_clock_event = NULL;
+	अगर (direct_mode_enabled) अणु
+		cpuhp_हटाओ_state(CPUHP_AP_HYPERV_TIMER_STARTING);
+		hv_हटाओ_sसमयr0_irq();
+		sसमयr0_irq = -1;
+	पूर्ण
+	मुक्त_percpu(hv_घड़ी_event);
+	hv_घड़ी_event = शून्य;
 
-}
-EXPORT_SYMBOL_GPL(hv_stimer_global_cleanup);
+पूर्ण
+EXPORT_SYMBOL_GPL(hv_sसमयr_global_cleanup);
 
 /*
- * Code and definitions for the Hyper-V clocksources.  Two
- * clocksources are defined: one that reads the Hyper-V defined MSR, and
+ * Code and definitions क्रम the Hyper-V घड़ीsources.  Two
+ * घड़ीsources are defined: one that पढ़ोs the Hyper-V defined MSR, and
  * the other that uses the TSC reference page feature as defined in the
- * TLFS.  The MSR version is for compatibility with old versions of
+ * TLFS.  The MSR version is क्रम compatibility with old versions of
  * Hyper-V and 32-bit x86.  The TSC reference page version is preferred.
  */
 
-u64 (*hv_read_reference_counter)(void);
-EXPORT_SYMBOL_GPL(hv_read_reference_counter);
+u64 (*hv_पढ़ो_reference_counter)(व्योम);
+EXPORT_SYMBOL_GPL(hv_पढ़ो_reference_counter);
 
-static union {
-	struct ms_hyperv_tsc_page page;
+अटल जोड़ अणु
+	काष्ठा ms_hyperv_tsc_page page;
 	u8 reserved[PAGE_SIZE];
-} tsc_pg __aligned(PAGE_SIZE);
+पूर्ण tsc_pg __aligned(PAGE_SIZE);
 
-struct ms_hyperv_tsc_page *hv_get_tsc_page(void)
-{
-	return &tsc_pg.page;
-}
+काष्ठा ms_hyperv_tsc_page *hv_get_tsc_page(व्योम)
+अणु
+	वापस &tsc_pg.page;
+पूर्ण
 EXPORT_SYMBOL_GPL(hv_get_tsc_page);
 
-static u64 notrace read_hv_clock_tsc(void)
-{
-	u64 current_tick = hv_read_tsc_page(hv_get_tsc_page());
+अटल u64 notrace पढ़ो_hv_घड़ी_प्रकारsc(व्योम)
+अणु
+	u64 current_tick = hv_पढ़ो_tsc_page(hv_get_tsc_page());
 
-	if (current_tick == U64_MAX)
-		current_tick = hv_get_register(HV_REGISTER_TIME_REF_COUNT);
+	अगर (current_tick == U64_MAX)
+		current_tick = hv_get_रेजिस्टर(HV_REGISTER_TIME_REF_COUNT);
 
-	return current_tick;
-}
+	वापस current_tick;
+पूर्ण
 
-static u64 notrace read_hv_clock_tsc_cs(struct clocksource *arg)
-{
-	return read_hv_clock_tsc();
-}
+अटल u64 notrace पढ़ो_hv_घड़ी_प्रकारsc_cs(काष्ठा घड़ीsource *arg)
+अणु
+	वापस पढ़ो_hv_घड़ी_प्रकारsc();
+पूर्ण
 
-static u64 notrace read_hv_sched_clock_tsc(void)
-{
-	return (read_hv_clock_tsc() - hv_sched_clock_offset) *
+अटल u64 notrace पढ़ो_hv_sched_घड़ी_प्रकारsc(व्योम)
+अणु
+	वापस (पढ़ो_hv_घड़ी_प्रकारsc() - hv_sched_घड़ी_offset) *
 		(NSEC_PER_SEC / HV_CLOCK_HZ);
-}
+पूर्ण
 
-static void suspend_hv_clock_tsc(struct clocksource *arg)
-{
+अटल व्योम suspend_hv_घड़ी_प्रकारsc(काष्ठा घड़ीsource *arg)
+अणु
 	u64 tsc_msr;
 
 	/* Disable the TSC page */
-	tsc_msr = hv_get_register(HV_REGISTER_REFERENCE_TSC);
+	tsc_msr = hv_get_रेजिस्टर(HV_REGISTER_REFERENCE_TSC);
 	tsc_msr &= ~BIT_ULL(0);
-	hv_set_register(HV_REGISTER_REFERENCE_TSC, tsc_msr);
-}
+	hv_set_रेजिस्टर(HV_REGISTER_REFERENCE_TSC, tsc_msr);
+पूर्ण
 
 
-static void resume_hv_clock_tsc(struct clocksource *arg)
-{
+अटल व्योम resume_hv_घड़ी_प्रकारsc(काष्ठा घड़ीsource *arg)
+अणु
 	phys_addr_t phys_addr = virt_to_phys(&tsc_pg);
 	u64 tsc_msr;
 
 	/* Re-enable the TSC page */
-	tsc_msr = hv_get_register(HV_REGISTER_REFERENCE_TSC);
+	tsc_msr = hv_get_रेजिस्टर(HV_REGISTER_REFERENCE_TSC);
 	tsc_msr &= GENMASK_ULL(11, 0);
 	tsc_msr |= BIT_ULL(0) | (u64)phys_addr;
-	hv_set_register(HV_REGISTER_REFERENCE_TSC, tsc_msr);
-}
+	hv_set_रेजिस्टर(HV_REGISTER_REFERENCE_TSC, tsc_msr);
+पूर्ण
 
-#ifdef HAVE_VDSO_CLOCKMODE_HVCLOCK
-static int hv_cs_enable(struct clocksource *cs)
-{
-	vclocks_set_used(VDSO_CLOCKMODE_HVCLOCK);
-	return 0;
-}
-#endif
+#अगर_घोषित HAVE_VDSO_CLOCKMODE_HVCLOCK
+अटल पूर्णांक hv_cs_enable(काष्ठा घड़ीsource *cs)
+अणु
+	vघड़ीs_set_used(VDSO_CLOCKMODE_HVCLOCK);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static struct clocksource hyperv_cs_tsc = {
+अटल काष्ठा घड़ीsource hyperv_cs_tsc = अणु
 	.name	= "hyperv_clocksource_tsc_page",
 	.rating	= 500,
-	.read	= read_hv_clock_tsc_cs,
+	.पढ़ो	= पढ़ो_hv_घड़ी_प्रकारsc_cs,
 	.mask	= CLOCKSOURCE_MASK(64),
 	.flags	= CLOCK_SOURCE_IS_CONTINUOUS,
-	.suspend= suspend_hv_clock_tsc,
-	.resume	= resume_hv_clock_tsc,
-#ifdef HAVE_VDSO_CLOCKMODE_HVCLOCK
+	.suspend= suspend_hv_घड़ी_प्रकारsc,
+	.resume	= resume_hv_घड़ी_प्रकारsc,
+#अगर_घोषित HAVE_VDSO_CLOCKMODE_HVCLOCK
 	.enable = hv_cs_enable,
-	.vdso_clock_mode = VDSO_CLOCKMODE_HVCLOCK,
-#else
-	.vdso_clock_mode = VDSO_CLOCKMODE_NONE,
-#endif
-};
+	.vdso_घड़ी_mode = VDSO_CLOCKMODE_HVCLOCK,
+#अन्यथा
+	.vdso_घड़ी_mode = VDSO_CLOCKMODE_NONE,
+#पूर्ण_अगर
+पूर्ण;
 
-static u64 notrace read_hv_clock_msr(void)
-{
+अटल u64 notrace पढ़ो_hv_घड़ी_msr(व्योम)
+अणु
 	/*
 	 * Read the partition counter to get the current tick count. This count
 	 * is set to 0 when the partition is created and is incremented in
 	 * 100 nanosecond units.
 	 */
-	return hv_get_register(HV_REGISTER_TIME_REF_COUNT);
-}
+	वापस hv_get_रेजिस्टर(HV_REGISTER_TIME_REF_COUNT);
+पूर्ण
 
-static u64 notrace read_hv_clock_msr_cs(struct clocksource *arg)
-{
-	return read_hv_clock_msr();
-}
+अटल u64 notrace पढ़ो_hv_घड़ी_msr_cs(काष्ठा घड़ीsource *arg)
+अणु
+	वापस पढ़ो_hv_घड़ी_msr();
+पूर्ण
 
-static u64 notrace read_hv_sched_clock_msr(void)
-{
-	return (read_hv_clock_msr() - hv_sched_clock_offset) *
+अटल u64 notrace पढ़ो_hv_sched_घड़ी_msr(व्योम)
+अणु
+	वापस (पढ़ो_hv_घड़ी_msr() - hv_sched_घड़ी_offset) *
 		(NSEC_PER_SEC / HV_CLOCK_HZ);
-}
+पूर्ण
 
-static struct clocksource hyperv_cs_msr = {
+अटल काष्ठा घड़ीsource hyperv_cs_msr = अणु
 	.name	= "hyperv_clocksource_msr",
 	.rating	= 500,
-	.read	= read_hv_clock_msr_cs,
+	.पढ़ो	= पढ़ो_hv_घड़ी_msr_cs,
 	.mask	= CLOCKSOURCE_MASK(64),
 	.flags	= CLOCK_SOURCE_IS_CONTINUOUS,
-};
+पूर्ण;
 
 /*
- * Reference to pv_ops must be inline so objtool
+ * Reference to pv_ops must be अंतरभूत so objtool
  * detection of noinstr violations can work correctly.
  */
-#ifdef CONFIG_GENERIC_SCHED_CLOCK
-static __always_inline void hv_setup_sched_clock(void *sched_clock)
-{
+#अगर_घोषित CONFIG_GENERIC_SCHED_CLOCK
+अटल __always_अंतरभूत व्योम hv_setup_sched_घड़ी(व्योम *sched_घड़ी)
+अणु
 	/*
-	 * We're on an architecture with generic sched clock (not x86/x64).
-	 * The Hyper-V sched clock read function returns nanoseconds, not
-	 * the normal 100ns units of the Hyper-V synthetic clock.
+	 * We're on an architecture with generic sched घड़ी (not x86/x64).
+	 * The Hyper-V sched घड़ी पढ़ो function वापसs nanoseconds, not
+	 * the normal 100ns units of the Hyper-V synthetic घड़ी.
 	 */
-	sched_clock_register(sched_clock, 64, NSEC_PER_SEC);
-}
-#elif defined CONFIG_PARAVIRT
-static __always_inline void hv_setup_sched_clock(void *sched_clock)
-{
+	sched_घड़ी_रेजिस्टर(sched_घड़ी, 64, NSEC_PER_SEC);
+पूर्ण
+#या_अगर defined CONFIG_PARAVIRT
+अटल __always_अंतरभूत व्योम hv_setup_sched_घड़ी(व्योम *sched_घड़ी)
+अणु
 	/* We're on x86/x64 *and* using PV ops */
-	paravirt_set_sched_clock(sched_clock);
-}
-#else /* !CONFIG_GENERIC_SCHED_CLOCK && !CONFIG_PARAVIRT */
-static __always_inline void hv_setup_sched_clock(void *sched_clock) {}
-#endif /* CONFIG_GENERIC_SCHED_CLOCK */
+	paravirt_set_sched_घड़ी(sched_घड़ी);
+पूर्ण
+#अन्यथा /* !CONFIG_GENERIC_SCHED_CLOCK && !CONFIG_PARAVIRT */
+अटल __always_अंतरभूत व्योम hv_setup_sched_घड़ी(व्योम *sched_घड़ी) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_GENERIC_SCHED_CLOCK */
 
-static bool __init hv_init_tsc_clocksource(void)
-{
+अटल bool __init hv_init_tsc_घड़ीsource(व्योम)
+अणु
 	u64		tsc_msr;
 	phys_addr_t	phys_addr;
 
-	if (!(ms_hyperv.features & HV_MSR_REFERENCE_TSC_AVAILABLE))
-		return false;
+	अगर (!(ms_hyperv.features & HV_MSR_REFERENCE_TSC_AVAILABLE))
+		वापस false;
 
-	if (hv_root_partition)
-		return false;
+	अगर (hv_root_partition)
+		वापस false;
 
 	/*
-	 * If Hyper-V offers TSC_INVARIANT, then the virtualized TSC correctly
+	 * If Hyper-V offers TSC_INVARIANT, then the भवized TSC correctly
 	 * handles frequency and offset changes due to live migration,
-	 * pause/resume, and other VM management operations.  So lower the
+	 * छोड़ो/resume, and other VM management operations.  So lower the
 	 * Hyper-V Reference TSC rating, causing the generic TSC to be used.
 	 * TSC_INVARIANT is not offered on ARM64, so the Hyper-V Reference
-	 * TSC will be preferred over the virtualized ARM64 arch counter.
-	 * While the Hyper-V MSR clocksource won't be used since the
-	 * Reference TSC clocksource is present, change its rating as
-	 * well for consistency.
+	 * TSC will be preferred over the भवized ARM64 arch counter.
+	 * While the Hyper-V MSR घड़ीsource won't be used since the
+	 * Reference TSC घड़ीsource is present, change its rating as
+	 * well क्रम consistency.
 	 */
-	if (ms_hyperv.features & HV_ACCESS_TSC_INVARIANT) {
+	अगर (ms_hyperv.features & HV_ACCESS_TSC_INVARIANT) अणु
 		hyperv_cs_tsc.rating = 250;
 		hyperv_cs_msr.rating = 250;
-	}
+	पूर्ण
 
-	hv_read_reference_counter = read_hv_clock_tsc;
+	hv_पढ़ो_reference_counter = पढ़ो_hv_घड़ी_प्रकारsc;
 	phys_addr = virt_to_phys(hv_get_tsc_page());
 
 	/*
-	 * The Hyper-V TLFS specifies to preserve the value of reserved
-	 * bits in registers. So read the existing value, preserve the
+	 * The Hyper-V TLFS specअगरies to preserve the value of reserved
+	 * bits in रेजिस्टरs. So पढ़ो the existing value, preserve the
 	 * low order 12 bits, and add in the guest physical address
-	 * (which already has at least the low 12 bits set to zero since
+	 * (which alपढ़ोy has at least the low 12 bits set to zero since
 	 * it is page aligned). Also set the "enable" bit, which is bit 0.
 	 */
-	tsc_msr = hv_get_register(HV_REGISTER_REFERENCE_TSC);
+	tsc_msr = hv_get_रेजिस्टर(HV_REGISTER_REFERENCE_TSC);
 	tsc_msr &= GENMASK_ULL(11, 0);
 	tsc_msr = tsc_msr | 0x1 | (u64)phys_addr;
-	hv_set_register(HV_REGISTER_REFERENCE_TSC, tsc_msr);
+	hv_set_रेजिस्टर(HV_REGISTER_REFERENCE_TSC, tsc_msr);
 
-	clocksource_register_hz(&hyperv_cs_tsc, NSEC_PER_SEC/100);
+	घड़ीsource_रेजिस्टर_hz(&hyperv_cs_tsc, NSEC_PER_SEC/100);
 
-	hv_sched_clock_offset = hv_read_reference_counter();
-	hv_setup_sched_clock(read_hv_sched_clock_tsc);
+	hv_sched_घड़ी_offset = hv_पढ़ो_reference_counter();
+	hv_setup_sched_घड़ी(पढ़ो_hv_sched_घड़ी_प्रकारsc);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void __init hv_init_clocksource(void)
-{
+व्योम __init hv_init_घड़ीsource(व्योम)
+अणु
 	/*
-	 * Try to set up the TSC page clocksource. If it succeeds, we're
-	 * done. Otherwise, set up the MSR clocksource.  At least one of
+	 * Try to set up the TSC page घड़ीsource. If it succeeds, we're
+	 * करोne. Otherwise, set up the MSR घड़ीsource.  At least one of
 	 * these will always be available except on very old versions of
-	 * Hyper-V on x86.  In that case we won't have a Hyper-V
-	 * clocksource, but Linux will still run with a clocksource based
-	 * on the emulated PIT or LAPIC timer.
+	 * Hyper-V on x86.  In that हाल we won't have a Hyper-V
+	 * घड़ीsource, but Linux will still run with a घड़ीsource based
+	 * on the emulated PIT or LAPIC समयr.
 	 */
-	if (hv_init_tsc_clocksource())
-		return;
+	अगर (hv_init_tsc_घड़ीsource())
+		वापस;
 
-	if (!(ms_hyperv.features & HV_MSR_TIME_REF_COUNT_AVAILABLE))
-		return;
+	अगर (!(ms_hyperv.features & HV_MSR_TIME_REF_COUNT_AVAILABLE))
+		वापस;
 
-	hv_read_reference_counter = read_hv_clock_msr;
-	clocksource_register_hz(&hyperv_cs_msr, NSEC_PER_SEC/100);
+	hv_पढ़ो_reference_counter = पढ़ो_hv_घड़ी_msr;
+	घड़ीsource_रेजिस्टर_hz(&hyperv_cs_msr, NSEC_PER_SEC/100);
 
-	hv_sched_clock_offset = hv_read_reference_counter();
-	hv_setup_sched_clock(read_hv_sched_clock_msr);
-}
-EXPORT_SYMBOL_GPL(hv_init_clocksource);
+	hv_sched_घड़ी_offset = hv_पढ़ो_reference_counter();
+	hv_setup_sched_घड़ी(पढ़ो_hv_sched_घड़ी_msr);
+पूर्ण
+EXPORT_SYMBOL_GPL(hv_init_घड़ीsource);

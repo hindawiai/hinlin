@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Driver for Altera Partial Reconfiguration IP Core
+ * Driver क्रम Altera Partial Reconfiguration IP Core
  *
  * Copyright (C) 2016 Intel Corporation
  *
  * Based on socfpga-a10.c Copyright (C) 2015-2016 Altera Corporation
- *  by Alan Tull <atull@opensource.altera.com>
+ *  by Alan Tull <atull@खोलोsource.altera.com>
  */
 
-#ifndef _ALT_PR_IP_CORE_H
-#define _ALT_PR_IP_CORE_H
-#include <linux/io.h>
+#अगर_अघोषित _ALT_PR_IP_CORE_H
+#घोषणा _ALT_PR_IP_CORE_H
+#समावेश <linux/पन.स>
 
-int alt_pr_register(struct device *dev, void __iomem *reg_base);
-void alt_pr_unregister(struct device *dev);
+पूर्णांक alt_pr_रेजिस्टर(काष्ठा device *dev, व्योम __iomem *reg_base);
+व्योम alt_pr_unरेजिस्टर(काष्ठा device *dev);
 
-#endif /* _ALT_PR_IP_CORE_H */
+#पूर्ण_अगर /* _ALT_PR_IP_CORE_H */

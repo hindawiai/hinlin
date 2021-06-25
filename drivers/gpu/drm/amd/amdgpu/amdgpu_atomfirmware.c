@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,62 +22,62 @@
  *
  */
 
-#include <drm/amdgpu_drm.h>
-#include "amdgpu.h"
-#include "atomfirmware.h"
-#include "amdgpu_atomfirmware.h"
-#include "atom.h"
-#include "atombios.h"
-#include "soc15_hw_ip.h"
+#समावेश <drm/amdgpu_drm.h>
+#समावेश "amdgpu.h"
+#समावेश "atomfirmware.h"
+#समावेश "amdgpu_atomfirmware.h"
+#समावेश "atom.h"
+#समावेश "atombios.h"
+#समावेश "soc15_hw_ip.h"
 
-bool amdgpu_atomfirmware_gpu_supports_virtualization(struct amdgpu_device *adev)
-{
-	int index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+bool amdgpu_atomfirmware_gpu_supports_भवization(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 						firmwareinfo);
-	uint16_t data_offset;
+	uपूर्णांक16_t data_offset;
 
-	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, NULL,
-					  NULL, NULL, &data_offset)) {
-		struct atom_firmware_info_v3_1 *firmware_info =
-			(struct atom_firmware_info_v3_1 *)(adev->mode_info.atom_context->bios +
+	अगर (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, शून्य,
+					  शून्य, शून्य, &data_offset)) अणु
+		काष्ठा atom_firmware_info_v3_1 *firmware_info =
+			(काष्ठा atom_firmware_info_v3_1 *)(adev->mode_info.atom_context->bios +
 							   data_offset);
 
-		if (le32_to_cpu(firmware_info->firmware_capability) &
+		अगर (le32_to_cpu(firmware_info->firmware_capability) &
 		    ATOM_FIRMWARE_CAP_GPU_VIRTUALIZATION)
-			return true;
-	}
-	return false;
-}
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-void amdgpu_atomfirmware_scratch_regs_init(struct amdgpu_device *adev)
-{
-	int index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+व्योम amdgpu_atomfirmware_scratch_regs_init(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 						firmwareinfo);
-	uint16_t data_offset;
+	uपूर्णांक16_t data_offset;
 
-	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, NULL,
-					  NULL, NULL, &data_offset)) {
-		struct atom_firmware_info_v3_1 *firmware_info =
-			(struct atom_firmware_info_v3_1 *)(adev->mode_info.atom_context->bios +
+	अगर (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, शून्य,
+					  शून्य, शून्य, &data_offset)) अणु
+		काष्ठा atom_firmware_info_v3_1 *firmware_info =
+			(काष्ठा atom_firmware_info_v3_1 *)(adev->mode_info.atom_context->bios +
 							   data_offset);
 
 		adev->bios_scratch_reg_offset =
 			le32_to_cpu(firmware_info->bios_scratch_reg_startaddr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int amdgpu_atomfirmware_allocate_fb_scratch(struct amdgpu_device *adev)
-{
-	struct atom_context *ctx = adev->mode_info.atom_context;
-	int index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+पूर्णांक amdgpu_atomfirmware_allocate_fb_scratch(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा atom_context *ctx = adev->mode_info.atom_context;
+	पूर्णांक index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 						vram_usagebyfirmware);
-	struct vram_usagebyfirmware_v2_1 *firmware_usage;
-	uint32_t start_addr, size;
-	uint16_t data_offset;
-	int usage_bytes = 0;
+	काष्ठा vram_usagebyfirmware_v2_1 *firmware_usage;
+	uपूर्णांक32_t start_addr, size;
+	uपूर्णांक16_t data_offset;
+	पूर्णांक usage_bytes = 0;
 
-	if (amdgpu_atom_parse_data_header(ctx, index, NULL, NULL, NULL, &data_offset)) {
-		firmware_usage = (struct vram_usagebyfirmware_v2_1 *)(ctx->bios + data_offset);
+	अगर (amdgpu_atom_parse_data_header(ctx, index, शून्य, शून्य, शून्य, &data_offset)) अणु
+		firmware_usage = (काष्ठा vram_usagebyfirmware_v2_1 *)(ctx->bios + data_offset);
 		DRM_DEBUG("atom firmware requested %08x %dkb fw %dkb drv\n",
 			  le32_to_cpu(firmware_usage->start_address_in_kb),
 			  le16_to_cpu(firmware_usage->used_by_firmware_in_kb),
@@ -85,599 +86,599 @@ int amdgpu_atomfirmware_allocate_fb_scratch(struct amdgpu_device *adev)
 		start_addr = le32_to_cpu(firmware_usage->start_address_in_kb);
 		size = le16_to_cpu(firmware_usage->used_by_firmware_in_kb);
 
-		if ((uint32_t)(start_addr & ATOM_VRAM_OPERATION_FLAGS_MASK) ==
-			(uint32_t)(ATOM_VRAM_BLOCK_SRIOV_MSG_SHARE_RESERVATION <<
-			ATOM_VRAM_OPERATION_FLAGS_SHIFT)) {
-			/* Firmware request VRAM reservation for SR-IOV */
+		अगर ((uपूर्णांक32_t)(start_addr & ATOM_VRAM_OPERATION_FLAGS_MASK) ==
+			(uपूर्णांक32_t)(ATOM_VRAM_BLOCK_SRIOV_MSG_SHARE_RESERVATION <<
+			ATOM_VRAM_OPERATION_FLAGS_SHIFT)) अणु
+			/* Firmware request VRAM reservation क्रम SR-IOV */
 			adev->mman.fw_vram_usage_start_offset = (start_addr &
 				(~ATOM_VRAM_OPERATION_FLAGS_MASK)) << 10;
 			adev->mman.fw_vram_usage_size = size << 10;
-			/* Use the default scratch size */
+			/* Use the शेष scratch size */
 			usage_bytes = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			usage_bytes = le16_to_cpu(firmware_usage->used_by_driver_in_kb) << 10;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ctx->scratch_size_bytes = 0;
-	if (usage_bytes == 0)
+	अगर (usage_bytes == 0)
 		usage_bytes = 20 * 1024;
 	/* allocate some scratch memory */
 	ctx->scratch = kzalloc(usage_bytes, GFP_KERNEL);
-	if (!ctx->scratch)
-		return -ENOMEM;
+	अगर (!ctx->scratch)
+		वापस -ENOMEM;
 	ctx->scratch_size_bytes = usage_bytes;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-union igp_info {
-	struct atom_integrated_system_info_v1_11 v11;
-	struct atom_integrated_system_info_v1_12 v12;
-	struct atom_integrated_system_info_v2_1 v21;
-};
+जोड़ igp_info अणु
+	काष्ठा atom_पूर्णांकegrated_प्रणाली_info_v1_11 v11;
+	काष्ठा atom_पूर्णांकegrated_प्रणाली_info_v1_12 v12;
+	काष्ठा atom_पूर्णांकegrated_प्रणाली_info_v2_1 v21;
+पूर्ण;
 
-union umc_info {
-	struct atom_umc_info_v3_1 v31;
-	struct atom_umc_info_v3_2 v32;
-	struct atom_umc_info_v3_3 v33;
-};
+जोड़ umc_info अणु
+	काष्ठा atom_umc_info_v3_1 v31;
+	काष्ठा atom_umc_info_v3_2 v32;
+	काष्ठा atom_umc_info_v3_3 v33;
+पूर्ण;
 
-union vram_info {
-	struct atom_vram_info_header_v2_3 v23;
-	struct atom_vram_info_header_v2_4 v24;
-	struct atom_vram_info_header_v2_5 v25;
-	struct atom_vram_info_header_v2_6 v26;
-};
+जोड़ vram_info अणु
+	काष्ठा atom_vram_info_header_v2_3 v23;
+	काष्ठा atom_vram_info_header_v2_4 v24;
+	काष्ठा atom_vram_info_header_v2_5 v25;
+	काष्ठा atom_vram_info_header_v2_6 v26;
+पूर्ण;
 
-union vram_module {
-	struct atom_vram_module_v9 v9;
-	struct atom_vram_module_v10 v10;
-	struct atom_vram_module_v11 v11;
-};
+जोड़ vram_module अणु
+	काष्ठा atom_vram_module_v9 v9;
+	काष्ठा atom_vram_module_v10 v10;
+	काष्ठा atom_vram_module_v11 v11;
+पूर्ण;
 
-static int convert_atom_mem_type_to_vram_type(struct amdgpu_device *adev,
-					      int atom_mem_type)
-{
-	int vram_type;
+अटल पूर्णांक convert_atom_mem_type_to_vram_type(काष्ठा amdgpu_device *adev,
+					      पूर्णांक atom_mem_type)
+अणु
+	पूर्णांक vram_type;
 
-	if (adev->flags & AMD_IS_APU) {
-		switch (atom_mem_type) {
-		case Ddr2MemType:
-		case LpDdr2MemType:
+	अगर (adev->flags & AMD_IS_APU) अणु
+		चयन (atom_mem_type) अणु
+		हाल Ddr2MemType:
+		हाल LpDdr2MemType:
 			vram_type = AMDGPU_VRAM_TYPE_DDR2;
-			break;
-		case Ddr3MemType:
-		case LpDdr3MemType:
+			अवरोध;
+		हाल Ddr3MemType:
+		हाल LpDdr3MemType:
 			vram_type = AMDGPU_VRAM_TYPE_DDR3;
-			break;
-		case Ddr4MemType:
-		case LpDdr4MemType:
+			अवरोध;
+		हाल Ddr4MemType:
+		हाल LpDdr4MemType:
 			vram_type = AMDGPU_VRAM_TYPE_DDR4;
-			break;
-		case Ddr5MemType:
-		case LpDdr5MemType:
+			अवरोध;
+		हाल Ddr5MemType:
+		हाल LpDdr5MemType:
 			vram_type = AMDGPU_VRAM_TYPE_DDR5;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			vram_type = AMDGPU_VRAM_TYPE_UNKNOWN;
-			break;
-		}
-	} else {
-		switch (atom_mem_type) {
-		case ATOM_DGPU_VRAM_TYPE_GDDR5:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (atom_mem_type) अणु
+		हाल ATOM_DGPU_VRAM_TYPE_GDDR5:
 			vram_type = AMDGPU_VRAM_TYPE_GDDR5;
-			break;
-		case ATOM_DGPU_VRAM_TYPE_HBM2:
-		case ATOM_DGPU_VRAM_TYPE_HBM2E:
+			अवरोध;
+		हाल ATOM_DGPU_VRAM_TYPE_HBM2:
+		हाल ATOM_DGPU_VRAM_TYPE_HBM2E:
 			vram_type = AMDGPU_VRAM_TYPE_HBM;
-			break;
-		case ATOM_DGPU_VRAM_TYPE_GDDR6:
+			अवरोध;
+		हाल ATOM_DGPU_VRAM_TYPE_GDDR6:
 			vram_type = AMDGPU_VRAM_TYPE_GDDR6;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			vram_type = AMDGPU_VRAM_TYPE_UNKNOWN;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return vram_type;
-}
+	वापस vram_type;
+पूर्ण
 
 
-int
-amdgpu_atomfirmware_get_vram_info(struct amdgpu_device *adev,
-				  int *vram_width, int *vram_type,
-				  int *vram_vendor)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	int index, i = 0;
+पूर्णांक
+amdgpu_atomfirmware_get_vram_info(काष्ठा amdgpu_device *adev,
+				  पूर्णांक *vram_width, पूर्णांक *vram_type,
+				  पूर्णांक *vram_venकरोr)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	पूर्णांक index, i = 0;
 	u16 data_offset, size;
-	union igp_info *igp_info;
-	union vram_info *vram_info;
-	union vram_module *vram_module;
+	जोड़ igp_info *igp_info;
+	जोड़ vram_info *vram_info;
+	जोड़ vram_module *vram_module;
 	u8 frev, crev;
 	u8 mem_type;
-	u8 mem_vendor;
+	u8 mem_venकरोr;
 	u32 mem_channel_number;
 	u32 mem_channel_width;
 	u32 module_id;
 
-	if (adev->flags & AMD_IS_APU)
-		index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
-						    integratedsysteminfo);
-	else
-		index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	अगर (adev->flags & AMD_IS_APU)
+		index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
+						    पूर्णांकegratedप्रणालीinfo);
+	अन्यथा
+		index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 						    vram_info);
 
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context,
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context,
 					  index, &size,
-					  &frev, &crev, &data_offset)) {
-		if (adev->flags & AMD_IS_APU) {
-			igp_info = (union igp_info *)
+					  &frev, &crev, &data_offset)) अणु
+		अगर (adev->flags & AMD_IS_APU) अणु
+			igp_info = (जोड़ igp_info *)
 				(mode_info->atom_context->bios + data_offset);
-			switch (frev) {
-			case 1:
-				switch (crev) {
-				case 11:
-				case 12:
+			चयन (frev) अणु
+			हाल 1:
+				चयन (crev) अणु
+				हाल 11:
+				हाल 12:
 					mem_channel_number = igp_info->v11.umachannelnumber;
-					if (!mem_channel_number)
+					अगर (!mem_channel_number)
 						mem_channel_number = 1;
 					/* channel width is 64 */
-					if (vram_width)
+					अगर (vram_width)
 						*vram_width = mem_channel_number * 64;
 					mem_type = igp_info->v11.memorytype;
-					if (vram_type)
+					अगर (vram_type)
 						*vram_type = convert_atom_mem_type_to_vram_type(adev, mem_type);
-					break;
-				default:
-					return -EINVAL;
-				}
-				break;
-			case 2:
-				switch (crev) {
-				case 1:
-				case 2:
+					अवरोध;
+				शेष:
+					वापस -EINVAL;
+				पूर्ण
+				अवरोध;
+			हाल 2:
+				चयन (crev) अणु
+				हाल 1:
+				हाल 2:
 					mem_channel_number = igp_info->v21.umachannelnumber;
-					if (!mem_channel_number)
+					अगर (!mem_channel_number)
 						mem_channel_number = 1;
 					/* channel width is 64 */
-					if (vram_width)
+					अगर (vram_width)
 						*vram_width = mem_channel_number * 64;
 					mem_type = igp_info->v21.memorytype;
-					if (vram_type)
+					अगर (vram_type)
 						*vram_type = convert_atom_mem_type_to_vram_type(adev, mem_type);
-					break;
-				default:
-					return -EINVAL;
-				}
-				break;
-			default:
-				return -EINVAL;
-			}
-		} else {
-			vram_info = (union vram_info *)
+					अवरोध;
+				शेष:
+					वापस -EINVAL;
+				पूर्ण
+				अवरोध;
+			शेष:
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			vram_info = (जोड़ vram_info *)
 				(mode_info->atom_context->bios + data_offset);
 			module_id = (RREG32(adev->bios_scratch_reg_offset + 4) & 0x00ff0000) >> 16;
-			switch (crev) {
-			case 3:
-				if (module_id > vram_info->v23.vram_module_num)
+			चयन (crev) अणु
+			हाल 3:
+				अगर (module_id > vram_info->v23.vram_module_num)
 					module_id = 0;
-				vram_module = (union vram_module *)vram_info->v23.vram_module;
-				while (i < module_id) {
-					vram_module = (union vram_module *)
+				vram_module = (जोड़ vram_module *)vram_info->v23.vram_module;
+				जबतक (i < module_id) अणु
+					vram_module = (जोड़ vram_module *)
 						((u8 *)vram_module + vram_module->v9.vram_module_size);
 					i++;
-				}
+				पूर्ण
 				mem_type = vram_module->v9.memory_type;
-				if (vram_type)
+				अगर (vram_type)
 					*vram_type = convert_atom_mem_type_to_vram_type(adev, mem_type);
 				mem_channel_number = vram_module->v9.channel_num;
 				mem_channel_width = vram_module->v9.channel_width;
-				if (vram_width)
+				अगर (vram_width)
 					*vram_width = mem_channel_number * (1 << mem_channel_width);
-				mem_vendor = (vram_module->v9.vender_rev_id) & 0xF;
-				if (vram_vendor)
-					*vram_vendor = mem_vendor;
-				break;
-			case 4:
-				if (module_id > vram_info->v24.vram_module_num)
+				mem_venकरोr = (vram_module->v9.vender_rev_id) & 0xF;
+				अगर (vram_venकरोr)
+					*vram_venकरोr = mem_venकरोr;
+				अवरोध;
+			हाल 4:
+				अगर (module_id > vram_info->v24.vram_module_num)
 					module_id = 0;
-				vram_module = (union vram_module *)vram_info->v24.vram_module;
-				while (i < module_id) {
-					vram_module = (union vram_module *)
+				vram_module = (जोड़ vram_module *)vram_info->v24.vram_module;
+				जबतक (i < module_id) अणु
+					vram_module = (जोड़ vram_module *)
 						((u8 *)vram_module + vram_module->v10.vram_module_size);
 					i++;
-				}
+				पूर्ण
 				mem_type = vram_module->v10.memory_type;
-				if (vram_type)
+				अगर (vram_type)
 					*vram_type = convert_atom_mem_type_to_vram_type(adev, mem_type);
 				mem_channel_number = vram_module->v10.channel_num;
 				mem_channel_width = vram_module->v10.channel_width;
-				if (vram_width)
+				अगर (vram_width)
 					*vram_width = mem_channel_number * (1 << mem_channel_width);
-				mem_vendor = (vram_module->v10.vender_rev_id) & 0xF;
-				if (vram_vendor)
-					*vram_vendor = mem_vendor;
-				break;
-			case 5:
-				if (module_id > vram_info->v25.vram_module_num)
+				mem_venकरोr = (vram_module->v10.vender_rev_id) & 0xF;
+				अगर (vram_venकरोr)
+					*vram_venकरोr = mem_venकरोr;
+				अवरोध;
+			हाल 5:
+				अगर (module_id > vram_info->v25.vram_module_num)
 					module_id = 0;
-				vram_module = (union vram_module *)vram_info->v25.vram_module;
-				while (i < module_id) {
-					vram_module = (union vram_module *)
+				vram_module = (जोड़ vram_module *)vram_info->v25.vram_module;
+				जबतक (i < module_id) अणु
+					vram_module = (जोड़ vram_module *)
 						((u8 *)vram_module + vram_module->v11.vram_module_size);
 					i++;
-				}
+				पूर्ण
 				mem_type = vram_module->v11.memory_type;
-				if (vram_type)
+				अगर (vram_type)
 					*vram_type = convert_atom_mem_type_to_vram_type(adev, mem_type);
 				mem_channel_number = vram_module->v11.channel_num;
 				mem_channel_width = vram_module->v11.channel_width;
-				if (vram_width)
+				अगर (vram_width)
 					*vram_width = mem_channel_number * (1 << mem_channel_width);
-				mem_vendor = (vram_module->v11.vender_rev_id) & 0xF;
-				if (vram_vendor)
-					*vram_vendor = mem_vendor;
-				break;
-			case 6:
-				if (module_id > vram_info->v26.vram_module_num)
+				mem_venकरोr = (vram_module->v11.vender_rev_id) & 0xF;
+				अगर (vram_venकरोr)
+					*vram_venकरोr = mem_venकरोr;
+				अवरोध;
+			हाल 6:
+				अगर (module_id > vram_info->v26.vram_module_num)
 					module_id = 0;
-				vram_module = (union vram_module *)vram_info->v26.vram_module;
-				while (i < module_id) {
-					vram_module = (union vram_module *)
+				vram_module = (जोड़ vram_module *)vram_info->v26.vram_module;
+				जबतक (i < module_id) अणु
+					vram_module = (जोड़ vram_module *)
 						((u8 *)vram_module + vram_module->v9.vram_module_size);
 					i++;
-				}
+				पूर्ण
 				mem_type = vram_module->v9.memory_type;
-				if (vram_type)
+				अगर (vram_type)
 					*vram_type = convert_atom_mem_type_to_vram_type(adev, mem_type);
 				mem_channel_number = vram_module->v9.channel_num;
 				mem_channel_width = vram_module->v9.channel_width;
-				if (vram_width)
+				अगर (vram_width)
 					*vram_width = mem_channel_number * (1 << mem_channel_width);
-				mem_vendor = (vram_module->v9.vender_rev_id) & 0xF;
-				if (vram_vendor)
-					*vram_vendor = mem_vendor;
-				break;
-			default:
-				return -EINVAL;
-			}
-		}
+				mem_venकरोr = (vram_module->v9.vender_rev_id) & 0xF;
+				अगर (vram_venकरोr)
+					*vram_venकरोr = mem_venकरोr;
+				अवरोध;
+			शेष:
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Return true if vbios enabled ecc by default, if umc info table is available
- * or false if ecc is not enabled or umc info table is not available
+ * Return true अगर vbios enabled ecc by शेष, अगर umc info table is available
+ * or false अगर ecc is not enabled or umc info table is not available
  */
-bool amdgpu_atomfirmware_mem_ecc_supported(struct amdgpu_device *adev)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	int index;
+bool amdgpu_atomfirmware_mem_ecc_supported(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	पूर्णांक index;
 	u16 data_offset, size;
-	union umc_info *umc_info;
+	जोड़ umc_info *umc_info;
 	u8 frev, crev;
-	bool ecc_default_enabled = false;
+	bool ecc_शेष_enabled = false;
 	u8 umc_config;
 	u32 umc_config1;
 
-	index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 			umc_info);
 
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context,
-				index, &size, &frev, &crev, &data_offset)) {
-		if (frev == 3) {
-			umc_info = (union umc_info *)
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context,
+				index, &size, &frev, &crev, &data_offset)) अणु
+		अगर (frev == 3) अणु
+			umc_info = (जोड़ umc_info *)
 				(mode_info->atom_context->bios + data_offset);
-			switch (crev) {
-			case 1:
+			चयन (crev) अणु
+			हाल 1:
 				umc_config = le32_to_cpu(umc_info->v31.umc_config);
-				ecc_default_enabled =
+				ecc_शेष_enabled =
 					(umc_config & UMC_CONFIG__DEFAULT_MEM_ECC_ENABLE) ? true : false;
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				umc_config = le32_to_cpu(umc_info->v32.umc_config);
-				ecc_default_enabled =
+				ecc_शेष_enabled =
 					(umc_config & UMC_CONFIG__DEFAULT_MEM_ECC_ENABLE) ? true : false;
-				break;
-			case 3:
+				अवरोध;
+			हाल 3:
 				umc_config = le32_to_cpu(umc_info->v33.umc_config);
 				umc_config1 = le32_to_cpu(umc_info->v33.umc_config1);
-				ecc_default_enabled =
+				ecc_शेष_enabled =
 					((umc_config & UMC_CONFIG__DEFAULT_MEM_ECC_ENABLE) ||
 					 (umc_config1 & UMC_CONFIG1__ENABLE_ECC_CAPABLE)) ? true : false;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				/* unsupported crev */
-				return false;
-			}
-		}
-	}
+				वापस false;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ecc_default_enabled;
-}
+	वापस ecc_शेष_enabled;
+पूर्ण
 
-union firmware_info {
-	struct atom_firmware_info_v3_1 v31;
-	struct atom_firmware_info_v3_2 v32;
-	struct atom_firmware_info_v3_3 v33;
-	struct atom_firmware_info_v3_4 v34;
-};
+जोड़ firmware_info अणु
+	काष्ठा atom_firmware_info_v3_1 v31;
+	काष्ठा atom_firmware_info_v3_2 v32;
+	काष्ठा atom_firmware_info_v3_3 v33;
+	काष्ठा atom_firmware_info_v3_4 v34;
+पूर्ण;
 
 /*
- * Return true if vbios supports sram ecc or false if not
+ * Return true अगर vbios supports sram ecc or false अगर not
  */
-bool amdgpu_atomfirmware_sram_ecc_supported(struct amdgpu_device *adev)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	int index;
+bool amdgpu_atomfirmware_sram_ecc_supported(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	पूर्णांक index;
 	u16 data_offset, size;
-	union firmware_info *firmware_info;
+	जोड़ firmware_info *firmware_info;
 	u8 frev, crev;
 	bool sram_ecc_supported = false;
 
-	index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 			firmwareinfo);
 
-	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context,
-				index, &size, &frev, &crev, &data_offset)) {
+	अगर (amdgpu_atom_parse_data_header(adev->mode_info.atom_context,
+				index, &size, &frev, &crev, &data_offset)) अणु
 		/* support firmware_info 3.1 + */
-		if ((frev == 3 && crev >=1) || (frev > 3)) {
-			firmware_info = (union firmware_info *)
+		अगर ((frev == 3 && crev >=1) || (frev > 3)) अणु
+			firmware_info = (जोड़ firmware_info *)
 				(mode_info->atom_context->bios + data_offset);
 			sram_ecc_supported =
 				(le32_to_cpu(firmware_info->v31.firmware_capability) &
 				 ATOM_FIRMWARE_CAP_SRAM_ECC) ? true : false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return sram_ecc_supported;
-}
+	वापस sram_ecc_supported;
+पूर्ण
 
-union smu_info {
-	struct atom_smu_info_v3_1 v31;
-};
+जोड़ smu_info अणु
+	काष्ठा atom_smu_info_v3_1 v31;
+पूर्ण;
 
-int amdgpu_atomfirmware_get_clock_info(struct amdgpu_device *adev)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	struct amdgpu_pll *spll = &adev->clock.spll;
-	struct amdgpu_pll *mpll = &adev->clock.mpll;
-	uint8_t frev, crev;
-	uint16_t data_offset;
-	int ret = -EINVAL, index;
+पूर्णांक amdgpu_atomfirmware_get_घड़ी_info(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	काष्ठा amdgpu_pll *spll = &adev->घड़ी.spll;
+	काष्ठा amdgpu_pll *mpll = &adev->घड़ी.mpll;
+	uपूर्णांक8_t frev, crev;
+	uपूर्णांक16_t data_offset;
+	पूर्णांक ret = -EINVAL, index;
 
-	index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 					    firmwareinfo);
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
-				   &frev, &crev, &data_offset)) {
-		union firmware_info *firmware_info =
-			(union firmware_info *)(mode_info->atom_context->bios +
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context, index, शून्य,
+				   &frev, &crev, &data_offset)) अणु
+		जोड़ firmware_info *firmware_info =
+			(जोड़ firmware_info *)(mode_info->atom_context->bios +
 						data_offset);
 
-		adev->clock.default_sclk =
+		adev->घड़ी.शेष_sclk =
 			le32_to_cpu(firmware_info->v31.bootup_sclk_in10khz);
-		adev->clock.default_mclk =
+		adev->घड़ी.शेष_mclk =
 			le32_to_cpu(firmware_info->v31.bootup_mclk_in10khz);
 
-		adev->pm.current_sclk = adev->clock.default_sclk;
-		adev->pm.current_mclk = adev->clock.default_mclk;
+		adev->pm.current_sclk = adev->घड़ी.शेष_sclk;
+		adev->pm.current_mclk = adev->घड़ी.शेष_mclk;
 
-		/* not technically a clock, but... */
+		/* not technically a घड़ी, but... */
 		adev->mode_info.firmware_flags =
 			le32_to_cpu(firmware_info->v31.firmware_capability);
 
 		ret = 0;
-	}
+	पूर्ण
 
-	index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 					    smu_info);
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
-				   &frev, &crev, &data_offset)) {
-		union smu_info *smu_info =
-			(union smu_info *)(mode_info->atom_context->bios +
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context, index, शून्य,
+				   &frev, &crev, &data_offset)) अणु
+		जोड़ smu_info *smu_info =
+			(जोड़ smu_info *)(mode_info->atom_context->bios +
 					   data_offset);
 
-		/* system clock */
+		/* प्रणाली घड़ी */
 		spll->reference_freq = le32_to_cpu(smu_info->v31.core_refclk_10khz);
 
-		spll->reference_div = 0;
-		spll->min_post_div = 1;
-		spll->max_post_div = 1;
-		spll->min_ref_div = 2;
-		spll->max_ref_div = 0xff;
-		spll->min_feedback_div = 4;
-		spll->max_feedback_div = 0xff;
+		spll->reference_भाग = 0;
+		spll->min_post_भाग = 1;
+		spll->max_post_भाग = 1;
+		spll->min_ref_भाग = 2;
+		spll->max_ref_भाग = 0xff;
+		spll->min_feedback_भाग = 4;
+		spll->max_feedback_भाग = 0xff;
 		spll->best_vco = 0;
 
 		ret = 0;
-	}
+	पूर्ण
 
-	index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 					    umc_info);
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
-				   &frev, &crev, &data_offset)) {
-		union umc_info *umc_info =
-			(union umc_info *)(mode_info->atom_context->bios +
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context, index, शून्य,
+				   &frev, &crev, &data_offset)) अणु
+		जोड़ umc_info *umc_info =
+			(जोड़ umc_info *)(mode_info->atom_context->bios +
 					   data_offset);
 
-		/* memory clock */
+		/* memory घड़ी */
 		mpll->reference_freq = le32_to_cpu(umc_info->v31.mem_refclk_10khz);
 
-		mpll->reference_div = 0;
-		mpll->min_post_div = 1;
-		mpll->max_post_div = 1;
-		mpll->min_ref_div = 2;
-		mpll->max_ref_div = 0xff;
-		mpll->min_feedback_div = 4;
-		mpll->max_feedback_div = 0xff;
+		mpll->reference_भाग = 0;
+		mpll->min_post_भाग = 1;
+		mpll->max_post_भाग = 1;
+		mpll->min_ref_भाग = 2;
+		mpll->max_ref_भाग = 0xff;
+		mpll->min_feedback_भाग = 4;
+		mpll->max_feedback_भाग = 0xff;
 		mpll->best_vco = 0;
 
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-union gfx_info {
-	struct atom_gfx_info_v2_4 v24;
-	struct atom_gfx_info_v2_7 v27;
-};
+जोड़ gfx_info अणु
+	काष्ठा atom_gfx_info_v2_4 v24;
+	काष्ठा atom_gfx_info_v2_7 v27;
+पूर्ण;
 
-int amdgpu_atomfirmware_get_gfx_info(struct amdgpu_device *adev)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	int index;
-	uint8_t frev, crev;
-	uint16_t data_offset;
+पूर्णांक amdgpu_atomfirmware_get_gfx_info(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	पूर्णांक index;
+	uपूर्णांक8_t frev, crev;
+	uपूर्णांक16_t data_offset;
 
-	index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 					    gfx_info);
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
-				   &frev, &crev, &data_offset)) {
-		union gfx_info *gfx_info = (union gfx_info *)
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context, index, शून्य,
+				   &frev, &crev, &data_offset)) अणु
+		जोड़ gfx_info *gfx_info = (जोड़ gfx_info *)
 			(mode_info->atom_context->bios + data_offset);
-		switch (crev) {
-		case 4:
+		चयन (crev) अणु
+		हाल 4:
 			adev->gfx.config.max_shader_engines = gfx_info->v24.max_shader_engines;
 			adev->gfx.config.max_cu_per_sh = gfx_info->v24.max_cu_per_sh;
 			adev->gfx.config.max_sh_per_se = gfx_info->v24.max_sh_per_se;
 			adev->gfx.config.max_backends_per_se = gfx_info->v24.max_backends_per_se;
 			adev->gfx.config.max_texture_channel_caches = gfx_info->v24.max_texture_channel_caches;
 			adev->gfx.config.max_gprs = le16_to_cpu(gfx_info->v24.gc_num_gprs);
-			adev->gfx.config.max_gs_threads = gfx_info->v24.gc_num_max_gs_thds;
+			adev->gfx.config.max_gs_thपढ़ोs = gfx_info->v24.gc_num_max_gs_thds;
 			adev->gfx.config.gs_vgt_table_depth = gfx_info->v24.gc_gs_table_depth;
 			adev->gfx.config.gs_prim_buffer_depth =
 				le16_to_cpu(gfx_info->v24.gc_gsprim_buff_depth);
-			adev->gfx.config.double_offchip_lds_buf =
-				gfx_info->v24.gc_double_offchip_lds_buffer;
+			adev->gfx.config.द्विगुन_offchip_lds_buf =
+				gfx_info->v24.gc_द्विगुन_offchip_lds_buffer;
 			adev->gfx.cu_info.wave_front_size = le16_to_cpu(gfx_info->v24.gc_wave_size);
 			adev->gfx.cu_info.max_waves_per_simd = le16_to_cpu(gfx_info->v24.gc_max_waves_per_simd);
 			adev->gfx.cu_info.max_scratch_slots_per_cu = gfx_info->v24.gc_max_scratch_slots_per_cu;
 			adev->gfx.cu_info.lds_size = le16_to_cpu(gfx_info->v24.gc_lds_size);
-			return 0;
-		case 7:
+			वापस 0;
+		हाल 7:
 			adev->gfx.config.max_shader_engines = gfx_info->v27.max_shader_engines;
 			adev->gfx.config.max_cu_per_sh = gfx_info->v27.max_cu_per_sh;
 			adev->gfx.config.max_sh_per_se = gfx_info->v27.max_sh_per_se;
 			adev->gfx.config.max_backends_per_se = gfx_info->v27.max_backends_per_se;
 			adev->gfx.config.max_texture_channel_caches = gfx_info->v27.max_texture_channel_caches;
 			adev->gfx.config.max_gprs = le16_to_cpu(gfx_info->v27.gc_num_gprs);
-			adev->gfx.config.max_gs_threads = gfx_info->v27.gc_num_max_gs_thds;
+			adev->gfx.config.max_gs_thपढ़ोs = gfx_info->v27.gc_num_max_gs_thds;
 			adev->gfx.config.gs_vgt_table_depth = gfx_info->v27.gc_gs_table_depth;
 			adev->gfx.config.gs_prim_buffer_depth = le16_to_cpu(gfx_info->v27.gc_gsprim_buff_depth);
-			adev->gfx.config.double_offchip_lds_buf = gfx_info->v27.gc_double_offchip_lds_buffer;
+			adev->gfx.config.द्विगुन_offchip_lds_buf = gfx_info->v27.gc_द्विगुन_offchip_lds_buffer;
 			adev->gfx.cu_info.wave_front_size = le16_to_cpu(gfx_info->v27.gc_wave_size);
 			adev->gfx.cu_info.max_waves_per_simd = le16_to_cpu(gfx_info->v27.gc_max_waves_per_simd);
 			adev->gfx.cu_info.max_scratch_slots_per_cu = gfx_info->v27.gc_max_scratch_slots_per_cu;
 			adev->gfx.cu_info.lds_size = le16_to_cpu(gfx_info->v27.gc_lds_size);
-			return 0;
-		default:
-			return -EINVAL;
-		}
+			वापस 0;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
 /*
- * Check if VBIOS supports GDDR6 training data save/restore
+ * Check अगर VBIOS supports GDDR6 training data save/restore
  */
-static bool gddr6_mem_train_vbios_support(struct amdgpu_device *adev)
-{
-	uint16_t data_offset;
-	int index;
+अटल bool gddr6_mem_train_vbios_support(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक16_t data_offset;
+	पूर्णांक index;
 
-	index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 					    firmwareinfo);
-	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, NULL,
-					  NULL, NULL, &data_offset)) {
-		struct atom_firmware_info_v3_1 *firmware_info =
-			(struct atom_firmware_info_v3_1 *)(adev->mode_info.atom_context->bios +
+	अगर (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, शून्य,
+					  शून्य, शून्य, &data_offset)) अणु
+		काष्ठा atom_firmware_info_v3_1 *firmware_info =
+			(काष्ठा atom_firmware_info_v3_1 *)(adev->mode_info.atom_context->bios +
 							   data_offset);
 
 		DRM_DEBUG("atom firmware capability:0x%08x.\n",
 			  le32_to_cpu(firmware_info->firmware_capability));
 
-		if (le32_to_cpu(firmware_info->firmware_capability) &
+		अगर (le32_to_cpu(firmware_info->firmware_capability) &
 		    ATOM_FIRMWARE_CAP_ENABLE_2STAGE_BIST_TRAINING)
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int amdgpu_mem_train_support(struct amdgpu_device *adev)
-{
-	int ret;
-	uint32_t major, minor, revision, hw_v;
+पूर्णांक amdgpu_mem_train_support(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक ret;
+	uपूर्णांक32_t major, minor, revision, hw_v;
 
-	if (gddr6_mem_train_vbios_support(adev)) {
+	अगर (gddr6_mem_train_vbios_support(adev)) अणु
 		amdgpu_discovery_get_ip_version(adev, MP0_HWID, &major, &minor, &revision);
 		hw_v = HW_REV(major, minor, revision);
 		/*
-		 * treat 0 revision as a special case since register for MP0 and MMHUB is missing
-		 * for some Navi10 A0, preventing driver from discovering the hwip information since
+		 * treat 0 revision as a special हाल since रेजिस्टर क्रम MP0 and MMHUB is missing
+		 * क्रम some Navi10 A0, preventing driver from discovering the hwip inक्रमmation since
 		 * none of the functions will be initialized, it should not cause any problems
 		 */
-		switch (hw_v) {
-		case HW_REV(11, 0, 0):
-		case HW_REV(11, 0, 5):
-		case HW_REV(11, 0, 7):
-		case HW_REV(11, 0, 11):
-		case HW_REV(11, 0, 12):
+		चयन (hw_v) अणु
+		हाल HW_REV(11, 0, 0):
+		हाल HW_REV(11, 0, 5):
+		हाल HW_REV(11, 0, 7):
+		हाल HW_REV(11, 0, 11):
+		हाल HW_REV(11, 0, 12):
 			ret = 1;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DRM_ERROR("memory training vbios supports but psp hw(%08x)"
 				  " doesn't support!\n", hw_v);
 			ret = -1;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = 0;
 		hw_v = -1;
-	}
+	पूर्ण
 
 
 	DRM_DEBUG("mp0 hw_v %08x, ret:%d.\n", hw_v, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int amdgpu_atomfirmware_get_fw_reserved_fb_size(struct amdgpu_device *adev)
-{
-	struct atom_context *ctx = adev->mode_info.atom_context;
-	union firmware_info *firmware_info;
-	int index;
+पूर्णांक amdgpu_atomfirmware_get_fw_reserved_fb_size(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा atom_context *ctx = adev->mode_info.atom_context;
+	जोड़ firmware_info *firmware_info;
+	पूर्णांक index;
 	u16 data_offset, size;
 	u8 frev, crev;
-	int fw_reserved_fb_size;
+	पूर्णांक fw_reserved_fb_size;
 
-	index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 			firmwareinfo);
 
-	if (!amdgpu_atom_parse_data_header(ctx, index, &size,
+	अगर (!amdgpu_atom_parse_data_header(ctx, index, &size,
 				&frev, &crev, &data_offset))
 		/* fail to parse data_header */
-		return 0;
+		वापस 0;
 
-	firmware_info = (union firmware_info *)(ctx->bios + data_offset);
+	firmware_info = (जोड़ firmware_info *)(ctx->bios + data_offset);
 
-	if (frev !=3)
-		return -EINVAL;
+	अगर (frev !=3)
+		वापस -EINVAL;
 
-	switch (crev) {
-	case 4:
+	चयन (crev) अणु
+	हाल 4:
 		fw_reserved_fb_size =
 			(firmware_info->v34.fw_reserved_size_in_kb << 10);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fw_reserved_fb_size = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return fw_reserved_fb_size;
-}
+	वापस fw_reserved_fb_size;
+पूर्ण

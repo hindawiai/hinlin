@@ -1,109 +1,110 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Generic UP xchg and cmpxchg using interrupt disablement.  Does not
+ * Generic UP xchg and cmpxchg using पूर्णांकerrupt disablement.  Does not
  * support SMP.
  */
 
-#ifndef __ASM_GENERIC_CMPXCHG_H
-#define __ASM_GENERIC_CMPXCHG_H
+#अगर_अघोषित __ASM_GENERIC_CMPXCHG_H
+#घोषणा __ASM_GENERIC_CMPXCHG_H
 
-#ifdef CONFIG_SMP
-#error "Cannot use generic cmpxchg on SMP"
-#endif
+#अगर_घोषित CONFIG_SMP
+#त्रुटि "Cannot use generic cmpxchg on SMP"
+#पूर्ण_अगर
 
-#include <linux/types.h>
-#include <linux/irqflags.h>
+#समावेश <linux/types.h>
+#समावेश <linux/irqflags.h>
 
-#ifndef xchg
+#अगर_अघोषित xchg
 
 /*
- * This function doesn't exist, so you'll get a linker error if
- * something tries to do an invalidly-sized xchg().
+ * This function करोesn't exist, so you'll get a linker error अगर
+ * something tries to करो an invalidly-sized xchg().
  */
-extern void __xchg_called_with_bad_pointer(void);
+बाह्य व्योम __xchg_called_with_bad_poपूर्णांकer(व्योम);
 
-static inline
-unsigned long __xchg(unsigned long x, volatile void *ptr, int size)
-{
-	unsigned long ret, flags;
+अटल अंतरभूत
+अचिन्हित दीर्घ __xchg(अचिन्हित दीर्घ x, अस्थिर व्योम *ptr, पूर्णांक size)
+अणु
+	अचिन्हित दीर्घ ret, flags;
 
-	switch (size) {
-	case 1:
-#ifdef __xchg_u8
-		return __xchg_u8(x, ptr);
-#else
+	चयन (size) अणु
+	हाल 1:
+#अगर_घोषित __xchg_u8
+		वापस __xchg_u8(x, ptr);
+#अन्यथा
 		local_irq_save(flags);
-		ret = *(volatile u8 *)ptr;
-		*(volatile u8 *)ptr = x;
+		ret = *(अस्थिर u8 *)ptr;
+		*(अस्थिर u8 *)ptr = x;
 		local_irq_restore(flags);
-		return ret;
-#endif /* __xchg_u8 */
+		वापस ret;
+#पूर्ण_अगर /* __xchg_u8 */
 
-	case 2:
-#ifdef __xchg_u16
-		return __xchg_u16(x, ptr);
-#else
+	हाल 2:
+#अगर_घोषित __xchg_u16
+		वापस __xchg_u16(x, ptr);
+#अन्यथा
 		local_irq_save(flags);
-		ret = *(volatile u16 *)ptr;
-		*(volatile u16 *)ptr = x;
+		ret = *(अस्थिर u16 *)ptr;
+		*(अस्थिर u16 *)ptr = x;
 		local_irq_restore(flags);
-		return ret;
-#endif /* __xchg_u16 */
+		वापस ret;
+#पूर्ण_अगर /* __xchg_u16 */
 
-	case 4:
-#ifdef __xchg_u32
-		return __xchg_u32(x, ptr);
-#else
+	हाल 4:
+#अगर_घोषित __xchg_u32
+		वापस __xchg_u32(x, ptr);
+#अन्यथा
 		local_irq_save(flags);
-		ret = *(volatile u32 *)ptr;
-		*(volatile u32 *)ptr = x;
+		ret = *(अस्थिर u32 *)ptr;
+		*(अस्थिर u32 *)ptr = x;
 		local_irq_restore(flags);
-		return ret;
-#endif /* __xchg_u32 */
+		वापस ret;
+#पूर्ण_अगर /* __xchg_u32 */
 
-#ifdef CONFIG_64BIT
-	case 8:
-#ifdef __xchg_u64
-		return __xchg_u64(x, ptr);
-#else
+#अगर_घोषित CONFIG_64BIT
+	हाल 8:
+#अगर_घोषित __xchg_u64
+		वापस __xchg_u64(x, ptr);
+#अन्यथा
 		local_irq_save(flags);
-		ret = *(volatile u64 *)ptr;
-		*(volatile u64 *)ptr = x;
+		ret = *(अस्थिर u64 *)ptr;
+		*(अस्थिर u64 *)ptr = x;
 		local_irq_restore(flags);
-		return ret;
-#endif /* __xchg_u64 */
-#endif /* CONFIG_64BIT */
+		वापस ret;
+#पूर्ण_अगर /* __xchg_u64 */
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-	default:
-		__xchg_called_with_bad_pointer();
-		return x;
-	}
-}
+	शेष:
+		__xchg_called_with_bad_poपूर्णांकer();
+		वापस x;
+	पूर्ण
+पूर्ण
 
-#define xchg(ptr, x) ({							\
+#घोषणा xchg(ptr, x) (अणु							\
 	((__typeof__(*(ptr)))						\
-		__xchg((unsigned long)(x), (ptr), sizeof(*(ptr))));	\
-})
+		__xchg((अचिन्हित दीर्घ)(x), (ptr), माप(*(ptr))));	\
+पूर्ण)
 
-#endif /* xchg */
+#पूर्ण_अगर /* xchg */
 
 /*
  * Atomic compare and exchange.
  */
-#include <asm-generic/cmpxchg-local.h>
+#समावेश <यंत्र-generic/cmpxchg-local.h>
 
-#ifndef cmpxchg_local
-#define cmpxchg_local(ptr, o, n) ({					       \
-	((__typeof__(*(ptr)))__cmpxchg_local_generic((ptr), (unsigned long)(o),\
-			(unsigned long)(n), sizeof(*(ptr))));		       \
-})
-#endif
+#अगर_अघोषित cmpxchg_local
+#घोषणा cmpxchg_local(ptr, o, n) (अणु					       \
+	((__typeof__(*(ptr)))__cmpxchg_local_generic((ptr), (अचिन्हित दीर्घ)(o),\
+			(अचिन्हित दीर्घ)(n), माप(*(ptr))));		       \
+पूर्ण)
+#पूर्ण_अगर
 
-#ifndef cmpxchg64_local
-#define cmpxchg64_local(ptr, o, n) __cmpxchg64_local_generic((ptr), (o), (n))
-#endif
+#अगर_अघोषित cmpxchg64_local
+#घोषणा cmpxchg64_local(ptr, o, n) __cmpxchg64_local_generic((ptr), (o), (n))
+#पूर्ण_अगर
 
-#define cmpxchg(ptr, o, n)	cmpxchg_local((ptr), (o), (n))
-#define cmpxchg64(ptr, o, n)	cmpxchg64_local((ptr), (o), (n))
+#घोषणा cmpxchg(ptr, o, n)	cmpxchg_local((ptr), (o), (n))
+#घोषणा cmpxchg64(ptr, o, n)	cmpxchg64_local((ptr), (o), (n))
 
-#endif /* __ASM_GENERIC_CMPXCHG_H */
+#पूर्ण_अगर /* __ASM_GENERIC_CMPXCHG_H */

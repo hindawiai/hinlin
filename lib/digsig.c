@@ -1,188 +1,189 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Nokia Corporation
  * Copyright (C) 2011 Intel Corporation
  *
  * Author:
  * Dmitry Kasatkin <dmitry.kasatkin@nokia.com>
- *                 <dmitry.kasatkin@intel.com>
+ *                 <dmitry.kasatkin@पूर्णांकel.com>
  *
  * File: sign.c
- *	implements signature (RSA) verification
+ *	implements signature (RSA) verअगरication
  *	pkcs decoding is based on LibTomCrypt code
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/key.h>
-#include <linux/crypto.h>
-#include <crypto/hash.h>
-#include <crypto/sha1.h>
-#include <keys/user-type.h>
-#include <linux/mpi.h>
-#include <linux/digsig.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/key.h>
+#समावेश <linux/crypto.h>
+#समावेश <crypto/hash.h>
+#समावेश <crypto/sha1.h>
+#समावेश <keys/user-type.h>
+#समावेश <linux/mpi.h>
+#समावेश <linux/digsig.h>
 
-static struct crypto_shash *shash;
+अटल काष्ठा crypto_shash *shash;
 
-static const char *pkcs_1_v1_5_decode_emsa(const unsigned char *msg,
-						unsigned long  msglen,
-						unsigned long  modulus_bitlen,
-						unsigned long *outlen)
-{
-	unsigned long modulus_len, ps_len, i;
+अटल स्थिर अक्षर *pkcs_1_v1_5_decode_emsa(स्थिर अचिन्हित अक्षर *msg,
+						अचिन्हित दीर्घ  msglen,
+						अचिन्हित दीर्घ  modulus_bitlen,
+						अचिन्हित दीर्घ *outlen)
+अणु
+	अचिन्हित दीर्घ modulus_len, ps_len, i;
 
 	modulus_len = (modulus_bitlen >> 3) + (modulus_bitlen & 7 ? 1 : 0);
 
 	/* test message size */
-	if ((msglen > modulus_len) || (modulus_len < 11))
-		return NULL;
+	अगर ((msglen > modulus_len) || (modulus_len < 11))
+		वापस शून्य;
 
 	/* separate encoded message */
-	if (msg[0] != 0x00 || msg[1] != 0x01)
-		return NULL;
+	अगर (msg[0] != 0x00 || msg[1] != 0x01)
+		वापस शून्य;
 
-	for (i = 2; i < modulus_len - 1; i++)
-		if (msg[i] != 0xFF)
-			break;
+	क्रम (i = 2; i < modulus_len - 1; i++)
+		अगर (msg[i] != 0xFF)
+			अवरोध;
 
 	/* separator check */
-	if (msg[i] != 0)
+	अगर (msg[i] != 0)
 		/* There was no octet with hexadecimal value 0x00
 		to separate ps from m. */
-		return NULL;
+		वापस शून्य;
 
 	ps_len = i - 2;
 
 	*outlen = (msglen - (2 + ps_len + 1));
 
-	return msg + 2 + ps_len + 1;
-}
+	वापस msg + 2 + ps_len + 1;
+पूर्ण
 
 /*
- * RSA Signature verification with public key
+ * RSA Signature verअगरication with खुला key
  */
-static int digsig_verify_rsa(struct key *key,
-		    const char *sig, int siglen,
-		       const char *h, int hlen)
-{
-	int err = -EINVAL;
-	unsigned long len;
-	unsigned long mlen, mblen;
-	unsigned nret, l;
-	int head, i;
-	unsigned char *out1 = NULL;
-	const char *m;
-	MPI in = NULL, res = NULL, pkey[2];
-	uint8_t *p, *datap;
-	const uint8_t *endp;
-	const struct user_key_payload *ukp;
-	struct pubkey_hdr *pkh;
+अटल पूर्णांक digsig_verअगरy_rsa(काष्ठा key *key,
+		    स्थिर अक्षर *sig, पूर्णांक siglen,
+		       स्थिर अक्षर *h, पूर्णांक hlen)
+अणु
+	पूर्णांक err = -EINVAL;
+	अचिन्हित दीर्घ len;
+	अचिन्हित दीर्घ mlen, mblen;
+	अचिन्हित nret, l;
+	पूर्णांक head, i;
+	अचिन्हित अक्षर *out1 = शून्य;
+	स्थिर अक्षर *m;
+	MPI in = शून्य, res = शून्य, pkey[2];
+	uपूर्णांक8_t *p, *datap;
+	स्थिर uपूर्णांक8_t *endp;
+	स्थिर काष्ठा user_key_payload *ukp;
+	काष्ठा pubkey_hdr *pkh;
 
-	down_read(&key->sem);
+	करोwn_पढ़ो(&key->sem);
 	ukp = user_key_payload_locked(key);
 
-	if (!ukp) {
-		/* key was revoked before we acquired its semaphore */
+	अगर (!ukp) अणु
+		/* key was revoked beक्रमe we acquired its semaphore */
 		err = -EKEYREVOKED;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	if (ukp->datalen < sizeof(*pkh))
-		goto err1;
+	अगर (ukp->datalen < माप(*pkh))
+		जाओ err1;
 
-	pkh = (struct pubkey_hdr *)ukp->data;
+	pkh = (काष्ठा pubkey_hdr *)ukp->data;
 
-	if (pkh->version != 1)
-		goto err1;
+	अगर (pkh->version != 1)
+		जाओ err1;
 
-	if (pkh->algo != PUBKEY_ALGO_RSA)
-		goto err1;
+	अगर (pkh->algo != PUBKEY_ALGO_RSA)
+		जाओ err1;
 
-	if (pkh->nmpi != 2)
-		goto err1;
+	अगर (pkh->nmpi != 2)
+		जाओ err1;
 
 	datap = pkh->mpi;
 	endp = ukp->data + ukp->datalen;
 
-	for (i = 0; i < pkh->nmpi; i++) {
-		unsigned int remaining = endp - datap;
-		pkey[i] = mpi_read_from_buffer(datap, &remaining);
-		if (IS_ERR(pkey[i])) {
+	क्रम (i = 0; i < pkh->nmpi; i++) अणु
+		अचिन्हित पूर्णांक reमुख्यing = endp - datap;
+		pkey[i] = mpi_पढ़ो_from_buffer(datap, &reमुख्यing);
+		अगर (IS_ERR(pkey[i])) अणु
 			err = PTR_ERR(pkey[i]);
-			goto err;
-		}
-		datap += remaining;
-	}
+			जाओ err;
+		पूर्ण
+		datap += reमुख्यing;
+	पूर्ण
 
 	mblen = mpi_get_nbits(pkey[0]);
 	mlen = DIV_ROUND_UP(mblen, 8);
 
-	if (mlen == 0) {
+	अगर (mlen == 0) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	err = -ENOMEM;
 
 	out1 = kzalloc(mlen, GFP_KERNEL);
-	if (!out1)
-		goto err;
+	अगर (!out1)
+		जाओ err;
 
 	nret = siglen;
-	in = mpi_read_from_buffer(sig, &nret);
-	if (IS_ERR(in)) {
+	in = mpi_पढ़ो_from_buffer(sig, &nret);
+	अगर (IS_ERR(in)) अणु
 		err = PTR_ERR(in);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	res = mpi_alloc(mpi_get_nlimbs(in) * 2);
-	if (!res)
-		goto err;
+	अगर (!res)
+		जाओ err;
 
-	err = mpi_powm(res, in, pkey[1], pkey[0]);
-	if (err)
-		goto err;
+	err = mpi_घातm(res, in, pkey[1], pkey[0]);
+	अगर (err)
+		जाओ err;
 
-	if (mpi_get_nlimbs(res) * BYTES_PER_MPI_LIMB > mlen) {
+	अगर (mpi_get_nlimbs(res) * BYTES_PER_MPI_LIMB > mlen) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	p = mpi_get_buffer(res, &l, NULL);
-	if (!p) {
+	p = mpi_get_buffer(res, &l, शून्य);
+	अगर (!p) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	len = mlen;
 	head = len - l;
-	memset(out1, 0, head);
-	memcpy(out1 + head, p, l);
+	स_रखो(out1, 0, head);
+	स_नकल(out1 + head, p, l);
 
-	kfree(p);
+	kमुक्त(p);
 
 	m = pkcs_1_v1_5_decode_emsa(out1, len, mblen, &len);
 
-	if (!m || len != hlen || memcmp(m, h, hlen))
+	अगर (!m || len != hlen || स_भेद(m, h, hlen))
 		err = -EINVAL;
 
 err:
-	mpi_free(in);
-	mpi_free(res);
-	kfree(out1);
-	while (--i >= 0)
-		mpi_free(pkey[i]);
+	mpi_मुक्त(in);
+	mpi_मुक्त(res);
+	kमुक्त(out1);
+	जबतक (--i >= 0)
+		mpi_मुक्त(pkey[i]);
 err1:
-	up_read(&key->sem);
+	up_पढ़ो(&key->sem);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * digsig_verify() - digital signature verification with public key
+ * digsig_verअगरy() - digital signature verअगरication with खुला key
  * @keyring:	keyring to search key in
  * @sig:	digital signature
  * @siglen:	length of the signature
@@ -191,89 +192,89 @@ err1:
  *
  * Returns 0 on success, -EINVAL otherwise
  *
- * Verifies data integrity against digital signature.
+ * Verअगरies data पूर्णांकegrity against digital signature.
  * Currently only RSA is supported.
- * Normally hash of the content is used as a data for this function.
+ * Normally hash of the content is used as a data क्रम this function.
  *
  */
-int digsig_verify(struct key *keyring, const char *sig, int siglen,
-						const char *data, int datalen)
-{
-	int err = -ENOMEM;
-	struct signature_hdr *sh = (struct signature_hdr *)sig;
-	struct shash_desc *desc = NULL;
-	unsigned char hash[SHA1_DIGEST_SIZE];
-	struct key *key;
-	char name[20];
+पूर्णांक digsig_verअगरy(काष्ठा key *keyring, स्थिर अक्षर *sig, पूर्णांक siglen,
+						स्थिर अक्षर *data, पूर्णांक datalen)
+अणु
+	पूर्णांक err = -ENOMEM;
+	काष्ठा signature_hdr *sh = (काष्ठा signature_hdr *)sig;
+	काष्ठा shash_desc *desc = शून्य;
+	अचिन्हित अक्षर hash[SHA1_DIGEST_SIZE];
+	काष्ठा key *key;
+	अक्षर name[20];
 
-	if (siglen < sizeof(*sh) + 2)
-		return -EINVAL;
+	अगर (siglen < माप(*sh) + 2)
+		वापस -EINVAL;
 
-	if (sh->algo != PUBKEY_ALGO_RSA)
-		return -ENOTSUPP;
+	अगर (sh->algo != PUBKEY_ALGO_RSA)
+		वापस -ENOTSUPP;
 
-	sprintf(name, "%llX", __be64_to_cpup((uint64_t *)sh->keyid));
+	प्र_लिखो(name, "%llX", __be64_to_cpup((uपूर्णांक64_t *)sh->keyid));
 
-	if (keyring) {
-		/* search in specific keyring */
+	अगर (keyring) अणु
+		/* search in specअगरic keyring */
 		key_ref_t kref;
 		kref = keyring_search(make_key_ref(keyring, 1UL),
 				      &key_type_user, name, true);
-		if (IS_ERR(kref))
+		अगर (IS_ERR(kref))
 			key = ERR_CAST(kref);
-		else
+		अन्यथा
 			key = key_ref_to_ptr(kref);
-	} else {
-		key = request_key(&key_type_user, name, NULL);
-	}
-	if (IS_ERR(key)) {
+	पूर्ण अन्यथा अणु
+		key = request_key(&key_type_user, name, शून्य);
+	पूर्ण
+	अगर (IS_ERR(key)) अणु
 		pr_err("key not found, id: %s\n", name);
-		return PTR_ERR(key);
-	}
+		वापस PTR_ERR(key);
+	पूर्ण
 
-	desc = kzalloc(sizeof(*desc) + crypto_shash_descsize(shash),
+	desc = kzalloc(माप(*desc) + crypto_shash_descsize(shash),
 		       GFP_KERNEL);
-	if (!desc)
-		goto err;
+	अगर (!desc)
+		जाओ err;
 
 	desc->tfm = shash;
 
 	crypto_shash_init(desc);
 	crypto_shash_update(desc, data, datalen);
-	crypto_shash_update(desc, sig, sizeof(*sh));
+	crypto_shash_update(desc, sig, माप(*sh));
 	crypto_shash_final(desc, hash);
 
-	kfree(desc);
+	kमुक्त(desc);
 
 	/* pass signature mpis address */
-	err = digsig_verify_rsa(key, sig + sizeof(*sh), siglen - sizeof(*sh),
-			     hash, sizeof(hash));
+	err = digsig_verअगरy_rsa(key, sig + माप(*sh), siglen - माप(*sh),
+			     hash, माप(hash));
 
 err:
 	key_put(key);
 
-	return err ? -EINVAL : 0;
-}
-EXPORT_SYMBOL_GPL(digsig_verify);
+	वापस err ? -EINVAL : 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(digsig_verअगरy);
 
-static int __init digsig_init(void)
-{
+अटल पूर्णांक __init digsig_init(व्योम)
+अणु
 	shash = crypto_alloc_shash("sha1", 0, 0);
-	if (IS_ERR(shash)) {
+	अगर (IS_ERR(shash)) अणु
 		pr_err("shash allocation failed\n");
-		return  PTR_ERR(shash);
-	}
+		वापस  PTR_ERR(shash);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static void __exit digsig_cleanup(void)
-{
-	crypto_free_shash(shash);
-}
+अटल व्योम __निकास digsig_cleanup(व्योम)
+अणु
+	crypto_मुक्त_shash(shash);
+पूर्ण
 
 module_init(digsig_init);
-module_exit(digsig_cleanup);
+module_निकास(digsig_cleanup);
 
 MODULE_LICENSE("GPL");

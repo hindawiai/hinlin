@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/firmware.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/पन.स>
 
-#include "io.h"
+#समावेश "io.h"
 
-static inline void byte0_out(unsigned char data);
-static inline void byte1_out(unsigned char data);
-static inline void xl_cclk_b(int32_t i);
+अटल अंतरभूत व्योम byte0_out(अचिन्हित अक्षर data);
+अटल अंतरभूत व्योम byte1_out(अचिन्हित अक्षर data);
+अटल अंतरभूत व्योम xl_cclk_b(पूर्णांक32_t i);
 
-/* Assert and Deassert CCLK */
-void xl_shift_cclk(int count)
-{
-	int i;
+/* Assert and Deनिश्चित CCLK */
+व्योम xl_shअगरt_cclk(पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		xl_cclk_b(1);
 		xl_cclk_b(0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int xl_supported_prog_bus_width(enum wbus bus_bytes)
-{
-	switch (bus_bytes) {
-	case bus_1byte:
-		break;
-	case bus_2byte:
-		break;
-	default:
+पूर्णांक xl_supported_prog_bus_width(क्रमागत wbus bus_bytes)
+अणु
+	चयन (bus_bytes) अणु
+	हाल bus_1byte:
+		अवरोध;
+	हाल bus_2byte:
+		अवरोध;
+	शेष:
 		pr_err("unsupported program bus width %d\n", bus_bytes);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Serialize byte and clock each bit on target's DIN and CCLK pins */
-void xl_shift_bytes_out(enum wbus bus_byte, unsigned char *pdata)
-{
+/* Serialize byte and घड़ी each bit on target's DIN and CCLK pins */
+व्योम xl_shअगरt_bytes_out(क्रमागत wbus bus_byte, अचिन्हित अक्षर *pdata)
+अणु
 	/*
 	 * supports 1 and 2 bytes programming mode
 	 */
-	if (likely(bus_byte == bus_2byte))
+	अगर (likely(bus_byte == bus_2byte))
 		byte0_out(pdata[0]);
 
 	byte1_out(pdata[1]);
-	xl_shift_cclk(1);
-}
+	xl_shअगरt_cclk(1);
+पूर्ण
 
 /*
- * generic bit swap for xilinx SYSTEMMAP FPGA programming
+ * generic bit swap क्रम xilinx SYSTEMMAP FPGA programming
  */
-void xl_program_b(int32_t i)
-{
-}
+व्योम xl_program_b(पूर्णांक32_t i)
+अणु
+पूर्ण
 
-void xl_rdwr_b(int32_t i)
-{
-}
+व्योम xl_rdwr_b(पूर्णांक32_t i)
+अणु
+पूर्ण
 
-void xl_csi_b(int32_t i)
-{
-}
+व्योम xl_csi_b(पूर्णांक32_t i)
+अणु
+पूर्ण
 
-int xl_get_init_b(void)
-{
-	return -1;
-}
+पूर्णांक xl_get_init_b(व्योम)
+अणु
+	वापस -1;
+पूर्ण
 
-int xl_get_done_b(void)
-{
-	return -1;
-}
+पूर्णांक xl_get_करोne_b(व्योम)
+अणु
+	वापस -1;
+पूर्ण
 
-static inline void byte0_out(unsigned char data)
-{
-}
+अटल अंतरभूत व्योम byte0_out(अचिन्हित अक्षर data)
+अणु
+पूर्ण
 
-static inline void byte1_out(unsigned char data)
-{
-}
+अटल अंतरभूत व्योम byte1_out(अचिन्हित अक्षर data)
+अणु
+पूर्ण
 
-static inline void xl_cclk_b(int32_t i)
-{
-}
+अटल अंतरभूत व्योम xl_cclk_b(पूर्णांक32_t i)
+अणु
+पूर्ण
 
 /*
- * configurable per device type for different I/O config
+ * configurable per device type क्रम dअगरferent I/O config
  */
-int xl_init_io(void)
-{
-	return -1;
-}
+पूर्णांक xl_init_io(व्योम)
+अणु
+	वापस -1;
+पूर्ण

@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_ARM64_XEN_EVENTS_H
-#define _ASM_ARM64_XEN_EVENTS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_ARM64_XEN_EVENTS_H
+#घोषणा _ASM_ARM64_XEN_EVENTS_H
 
-#include <asm/ptrace.h>
-#include <asm/atomic.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/atomic.h>
 
-enum ipi_vector {
+क्रमागत ipi_vector अणु
 	XEN_PLACEHOLDER_VECTOR,
 
 	/* Xen IPIs go here */
 	XEN_NR_IPIS,
-};
+पूर्ण;
 
-static inline int xen_irqs_disabled(struct pt_regs *regs)
-{
-	return !interrupts_enabled(regs);
-}
+अटल अंतरभूत पूर्णांक xen_irqs_disabled(काष्ठा pt_regs *regs)
+अणु
+	वापस !पूर्णांकerrupts_enabled(regs);
+पूर्ण
 
-#define xchg_xen_ulong(ptr, val) xchg((ptr), (val))
+#घोषणा xchg_xen_uदीर्घ(ptr, val) xchg((ptr), (val))
 
-/* Rebind event channel is supported by default */
-static inline bool xen_support_evtchn_rebind(void)
-{
-	return true;
-}
+/* Rebind event channel is supported by शेष */
+अटल अंतरभूत bool xen_support_evtchn_rebind(व्योम)
+अणु
+	वापस true;
+पूर्ण
 
-#endif /* _ASM_ARM64_XEN_EVENTS_H */
+#पूर्ण_अगर /* _ASM_ARM64_XEN_EVENTS_H */

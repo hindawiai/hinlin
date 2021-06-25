@@ -1,89 +1,90 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2018 Solarflare Communications Inc.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
-#include "net_driver.h"
-#include "efx.h"
-#include "nic_common.h"
-#include "tx_common.h"
+#समावेश "net_driver.h"
+#समावेश "efx.h"
+#समावेश "nic_common.h"
+#समावेश "tx_common.h"
 
-static unsigned int efx_tx_cb_page_count(struct efx_tx_queue *tx_queue)
-{
-	return DIV_ROUND_UP(tx_queue->ptr_mask + 1,
+अटल अचिन्हित पूर्णांक efx_tx_cb_page_count(काष्ठा efx_tx_queue *tx_queue)
+अणु
+	वापस DIV_ROUND_UP(tx_queue->ptr_mask + 1,
 			    PAGE_SIZE >> EFX_TX_CB_ORDER);
-}
+पूर्ण
 
-int efx_probe_tx_queue(struct efx_tx_queue *tx_queue)
-{
-	struct efx_nic *efx = tx_queue->efx;
-	unsigned int entries;
-	int rc;
+पूर्णांक efx_probe_tx_queue(काष्ठा efx_tx_queue *tx_queue)
+अणु
+	काष्ठा efx_nic *efx = tx_queue->efx;
+	अचिन्हित पूर्णांक entries;
+	पूर्णांक rc;
 
-	/* Create the smallest power-of-two aligned ring */
-	entries = max(roundup_pow_of_two(efx->txq_entries), EFX_MIN_DMAQ_SIZE);
+	/* Create the smallest घातer-of-two aligned ring */
+	entries = max(roundup_घात_of_two(efx->txq_entries), EFX_MIN_DMAQ_SIZE);
 	EFX_WARN_ON_PARANOID(entries > EFX_MAX_DMAQ_SIZE);
 	tx_queue->ptr_mask = entries - 1;
 
-	netif_dbg(efx, probe, efx->net_dev,
+	netअगर_dbg(efx, probe, efx->net_dev,
 		  "creating TX queue %d size %#x mask %#x\n",
 		  tx_queue->queue, efx->txq_entries, tx_queue->ptr_mask);
 
 	/* Allocate software ring */
-	tx_queue->buffer = kcalloc(entries, sizeof(*tx_queue->buffer),
+	tx_queue->buffer = kसुस्मृति(entries, माप(*tx_queue->buffer),
 				   GFP_KERNEL);
-	if (!tx_queue->buffer)
-		return -ENOMEM;
+	अगर (!tx_queue->buffer)
+		वापस -ENOMEM;
 
-	tx_queue->cb_page = kcalloc(efx_tx_cb_page_count(tx_queue),
-				    sizeof(tx_queue->cb_page[0]), GFP_KERNEL);
-	if (!tx_queue->cb_page) {
+	tx_queue->cb_page = kसुस्मृति(efx_tx_cb_page_count(tx_queue),
+				    माप(tx_queue->cb_page[0]), GFP_KERNEL);
+	अगर (!tx_queue->cb_page) अणु
 		rc = -ENOMEM;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	/* Allocate hardware ring, determine TXQ type */
 	rc = efx_nic_probe_tx(tx_queue);
-	if (rc)
-		goto fail2;
+	अगर (rc)
+		जाओ fail2;
 
 	tx_queue->channel->tx_queue_by_type[tx_queue->type] = tx_queue;
-	return 0;
+	वापस 0;
 
 fail2:
-	kfree(tx_queue->cb_page);
-	tx_queue->cb_page = NULL;
+	kमुक्त(tx_queue->cb_page);
+	tx_queue->cb_page = शून्य;
 fail1:
-	kfree(tx_queue->buffer);
-	tx_queue->buffer = NULL;
-	return rc;
-}
+	kमुक्त(tx_queue->buffer);
+	tx_queue->buffer = शून्य;
+	वापस rc;
+पूर्ण
 
-void efx_init_tx_queue(struct efx_tx_queue *tx_queue)
-{
-	struct efx_nic *efx = tx_queue->efx;
+व्योम efx_init_tx_queue(काष्ठा efx_tx_queue *tx_queue)
+अणु
+	काष्ठा efx_nic *efx = tx_queue->efx;
 
-	netif_dbg(efx, drv, efx->net_dev,
+	netअगर_dbg(efx, drv, efx->net_dev,
 		  "initialising TX queue %d\n", tx_queue->queue);
 
 	tx_queue->insert_count = 0;
-	tx_queue->notify_count = 0;
-	tx_queue->write_count = 0;
-	tx_queue->packet_write_count = 0;
-	tx_queue->old_write_count = 0;
-	tx_queue->read_count = 0;
-	tx_queue->old_read_count = 0;
-	tx_queue->empty_read_count = 0 | EFX_EMPTY_COUNT_VALID;
+	tx_queue->notअगरy_count = 0;
+	tx_queue->ग_लिखो_count = 0;
+	tx_queue->packet_ग_लिखो_count = 0;
+	tx_queue->old_ग_लिखो_count = 0;
+	tx_queue->पढ़ो_count = 0;
+	tx_queue->old_पढ़ो_count = 0;
+	tx_queue->empty_पढ़ो_count = 0 | EFX_EMPTY_COUNT_VALID;
 	tx_queue->xmit_pending = false;
-	tx_queue->timestamping = (efx_ptp_use_mac_tx_timestamps(efx) &&
+	tx_queue->बारtamping = (efx_ptp_use_mac_tx_बारtamps(efx) &&
 				  tx_queue->channel == efx_ptp_channel(efx));
-	tx_queue->completed_timestamp_major = 0;
-	tx_queue->completed_timestamp_minor = 0;
+	tx_queue->completed_बारtamp_major = 0;
+	tx_queue->completed_बारtamp_minor = 0;
 
 	tx_queue->xdp_tx = efx_channel_is_xdp_tx(tx_queue->channel);
 	tx_queue->tso_version = 0;
@@ -92,154 +93,154 @@ void efx_init_tx_queue(struct efx_tx_queue *tx_queue)
 	efx_nic_init_tx(tx_queue);
 
 	tx_queue->initialised = true;
-}
+पूर्ण
 
-void efx_fini_tx_queue(struct efx_tx_queue *tx_queue)
-{
-	struct efx_tx_buffer *buffer;
+व्योम efx_fini_tx_queue(काष्ठा efx_tx_queue *tx_queue)
+अणु
+	काष्ठा efx_tx_buffer *buffer;
 
-	netif_dbg(tx_queue->efx, drv, tx_queue->efx->net_dev,
+	netअगर_dbg(tx_queue->efx, drv, tx_queue->efx->net_dev,
 		  "shutting down TX queue %d\n", tx_queue->queue);
 
-	if (!tx_queue->buffer)
-		return;
+	अगर (!tx_queue->buffer)
+		वापस;
 
 	/* Free any buffers left in the ring */
-	while (tx_queue->read_count != tx_queue->write_count) {
-		unsigned int pkts_compl = 0, bytes_compl = 0;
+	जबतक (tx_queue->पढ़ो_count != tx_queue->ग_लिखो_count) अणु
+		अचिन्हित पूर्णांक pkts_compl = 0, bytes_compl = 0;
 
-		buffer = &tx_queue->buffer[tx_queue->read_count & tx_queue->ptr_mask];
+		buffer = &tx_queue->buffer[tx_queue->पढ़ो_count & tx_queue->ptr_mask];
 		efx_dequeue_buffer(tx_queue, buffer, &pkts_compl, &bytes_compl);
 
-		++tx_queue->read_count;
-	}
+		++tx_queue->पढ़ो_count;
+	पूर्ण
 	tx_queue->xmit_pending = false;
 	netdev_tx_reset_queue(tx_queue->core_txq);
-}
+पूर्ण
 
-void efx_remove_tx_queue(struct efx_tx_queue *tx_queue)
-{
-	int i;
+व्योम efx_हटाओ_tx_queue(काष्ठा efx_tx_queue *tx_queue)
+अणु
+	पूर्णांक i;
 
-	if (!tx_queue->buffer)
-		return;
+	अगर (!tx_queue->buffer)
+		वापस;
 
-	netif_dbg(tx_queue->efx, drv, tx_queue->efx->net_dev,
+	netअगर_dbg(tx_queue->efx, drv, tx_queue->efx->net_dev,
 		  "destroying TX queue %d\n", tx_queue->queue);
-	efx_nic_remove_tx(tx_queue);
+	efx_nic_हटाओ_tx(tx_queue);
 
-	if (tx_queue->cb_page) {
-		for (i = 0; i < efx_tx_cb_page_count(tx_queue); i++)
-			efx_nic_free_buffer(tx_queue->efx,
+	अगर (tx_queue->cb_page) अणु
+		क्रम (i = 0; i < efx_tx_cb_page_count(tx_queue); i++)
+			efx_nic_मुक्त_buffer(tx_queue->efx,
 					    &tx_queue->cb_page[i]);
-		kfree(tx_queue->cb_page);
-		tx_queue->cb_page = NULL;
-	}
+		kमुक्त(tx_queue->cb_page);
+		tx_queue->cb_page = शून्य;
+	पूर्ण
 
-	kfree(tx_queue->buffer);
-	tx_queue->buffer = NULL;
-	tx_queue->channel->tx_queue_by_type[tx_queue->type] = NULL;
-}
+	kमुक्त(tx_queue->buffer);
+	tx_queue->buffer = शून्य;
+	tx_queue->channel->tx_queue_by_type[tx_queue->type] = शून्य;
+पूर्ण
 
-void efx_dequeue_buffer(struct efx_tx_queue *tx_queue,
-			struct efx_tx_buffer *buffer,
-			unsigned int *pkts_compl,
-			unsigned int *bytes_compl)
-{
-	if (buffer->unmap_len) {
-		struct device *dma_dev = &tx_queue->efx->pci_dev->dev;
+व्योम efx_dequeue_buffer(काष्ठा efx_tx_queue *tx_queue,
+			काष्ठा efx_tx_buffer *buffer,
+			अचिन्हित पूर्णांक *pkts_compl,
+			अचिन्हित पूर्णांक *bytes_compl)
+अणु
+	अगर (buffer->unmap_len) अणु
+		काष्ठा device *dma_dev = &tx_queue->efx->pci_dev->dev;
 		dma_addr_t unmap_addr = buffer->dma_addr - buffer->dma_offset;
 
-		if (buffer->flags & EFX_TX_BUF_MAP_SINGLE)
+		अगर (buffer->flags & EFX_TX_BUF_MAP_SINGLE)
 			dma_unmap_single(dma_dev, unmap_addr, buffer->unmap_len,
 					 DMA_TO_DEVICE);
-		else
+		अन्यथा
 			dma_unmap_page(dma_dev, unmap_addr, buffer->unmap_len,
 				       DMA_TO_DEVICE);
 		buffer->unmap_len = 0;
-	}
+	पूर्ण
 
-	if (buffer->flags & EFX_TX_BUF_SKB) {
-		struct sk_buff *skb = (struct sk_buff *)buffer->skb;
+	अगर (buffer->flags & EFX_TX_BUF_SKB) अणु
+		काष्ठा sk_buff *skb = (काष्ठा sk_buff *)buffer->skb;
 
 		EFX_WARN_ON_PARANOID(!pkts_compl || !bytes_compl);
 		(*pkts_compl)++;
 		(*bytes_compl) += skb->len;
-		if (tx_queue->timestamping &&
-		    (tx_queue->completed_timestamp_major ||
-		     tx_queue->completed_timestamp_minor)) {
-			struct skb_shared_hwtstamps hwtstamp;
+		अगर (tx_queue->बारtamping &&
+		    (tx_queue->completed_बारtamp_major ||
+		     tx_queue->completed_बारtamp_minor)) अणु
+			काष्ठा skb_shared_hwtstamps hwtstamp;
 
 			hwtstamp.hwtstamp =
-				efx_ptp_nic_to_kernel_time(tx_queue);
+				efx_ptp_nic_to_kernel_समय(tx_queue);
 			skb_tstamp_tx(skb, &hwtstamp);
 
-			tx_queue->completed_timestamp_major = 0;
-			tx_queue->completed_timestamp_minor = 0;
-		}
-		dev_consume_skb_any((struct sk_buff *)buffer->skb);
-		netif_vdbg(tx_queue->efx, tx_done, tx_queue->efx->net_dev,
+			tx_queue->completed_बारtamp_major = 0;
+			tx_queue->completed_बारtamp_minor = 0;
+		पूर्ण
+		dev_consume_skb_any((काष्ठा sk_buff *)buffer->skb);
+		netअगर_vdbg(tx_queue->efx, tx_करोne, tx_queue->efx->net_dev,
 			   "TX queue %d transmission id %x complete\n",
-			   tx_queue->queue, tx_queue->read_count);
-	} else if (buffer->flags & EFX_TX_BUF_XDP) {
-		xdp_return_frame_rx_napi(buffer->xdpf);
-	}
+			   tx_queue->queue, tx_queue->पढ़ो_count);
+	पूर्ण अन्यथा अगर (buffer->flags & EFX_TX_BUF_XDP) अणु
+		xdp_वापस_frame_rx_napi(buffer->xdpf);
+	पूर्ण
 
 	buffer->len = 0;
 	buffer->flags = 0;
-}
+पूर्ण
 
 /* Remove packets from the TX queue
  *
- * This removes packets from the TX queue, up to and including the
- * specified index.
+ * This हटाओs packets from the TX queue, up to and including the
+ * specअगरied index.
  */
-static void efx_dequeue_buffers(struct efx_tx_queue *tx_queue,
-				unsigned int index,
-				unsigned int *pkts_compl,
-				unsigned int *bytes_compl)
-{
-	struct efx_nic *efx = tx_queue->efx;
-	unsigned int stop_index, read_ptr;
+अटल व्योम efx_dequeue_buffers(काष्ठा efx_tx_queue *tx_queue,
+				अचिन्हित पूर्णांक index,
+				अचिन्हित पूर्णांक *pkts_compl,
+				अचिन्हित पूर्णांक *bytes_compl)
+अणु
+	काष्ठा efx_nic *efx = tx_queue->efx;
+	अचिन्हित पूर्णांक stop_index, पढ़ो_ptr;
 
 	stop_index = (index + 1) & tx_queue->ptr_mask;
-	read_ptr = tx_queue->read_count & tx_queue->ptr_mask;
+	पढ़ो_ptr = tx_queue->पढ़ो_count & tx_queue->ptr_mask;
 
-	while (read_ptr != stop_index) {
-		struct efx_tx_buffer *buffer = &tx_queue->buffer[read_ptr];
+	जबतक (पढ़ो_ptr != stop_index) अणु
+		काष्ठा efx_tx_buffer *buffer = &tx_queue->buffer[पढ़ो_ptr];
 
-		if (!efx_tx_buffer_in_use(buffer)) {
-			netif_err(efx, tx_err, efx->net_dev,
+		अगर (!efx_tx_buffer_in_use(buffer)) अणु
+			netअगर_err(efx, tx_err, efx->net_dev,
 				  "TX queue %d spurious TX completion id %d\n",
-				  tx_queue->queue, read_ptr);
+				  tx_queue->queue, पढ़ो_ptr);
 			efx_schedule_reset(efx, RESET_TYPE_TX_SKIP);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		efx_dequeue_buffer(tx_queue, buffer, pkts_compl, bytes_compl);
 
-		++tx_queue->read_count;
-		read_ptr = tx_queue->read_count & tx_queue->ptr_mask;
-	}
-}
+		++tx_queue->पढ़ो_count;
+		पढ़ो_ptr = tx_queue->पढ़ो_count & tx_queue->ptr_mask;
+	पूर्ण
+पूर्ण
 
-void efx_xmit_done_check_empty(struct efx_tx_queue *tx_queue)
-{
-	if ((int)(tx_queue->read_count - tx_queue->old_write_count) >= 0) {
-		tx_queue->old_write_count = READ_ONCE(tx_queue->write_count);
-		if (tx_queue->read_count == tx_queue->old_write_count) {
-			/* Ensure that read_count is flushed. */
+व्योम efx_xmit_करोne_check_empty(काष्ठा efx_tx_queue *tx_queue)
+अणु
+	अगर ((पूर्णांक)(tx_queue->पढ़ो_count - tx_queue->old_ग_लिखो_count) >= 0) अणु
+		tx_queue->old_ग_लिखो_count = READ_ONCE(tx_queue->ग_लिखो_count);
+		अगर (tx_queue->पढ़ो_count == tx_queue->old_ग_लिखो_count) अणु
+			/* Ensure that पढ़ो_count is flushed. */
 			smp_mb();
-			tx_queue->empty_read_count =
-				tx_queue->read_count | EFX_EMPTY_COUNT_VALID;
-		}
-	}
-}
+			tx_queue->empty_पढ़ो_count =
+				tx_queue->पढ़ो_count | EFX_EMPTY_COUNT_VALID;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void efx_xmit_done(struct efx_tx_queue *tx_queue, unsigned int index)
-{
-	unsigned int fill_level, pkts_compl = 0, bytes_compl = 0;
-	struct efx_nic *efx = tx_queue->efx;
+व्योम efx_xmit_करोne(काष्ठा efx_tx_queue *tx_queue, अचिन्हित पूर्णांक index)
+अणु
+	अचिन्हित पूर्णांक fill_level, pkts_compl = 0, bytes_compl = 0;
+	काष्ठा efx_nic *efx = tx_queue->efx;
 
 	EFX_WARN_ON_ONCE_PARANOID(index > tx_queue->ptr_mask);
 
@@ -247,57 +248,57 @@ void efx_xmit_done(struct efx_tx_queue *tx_queue, unsigned int index)
 	tx_queue->pkts_compl += pkts_compl;
 	tx_queue->bytes_compl += bytes_compl;
 
-	if (pkts_compl > 1)
+	अगर (pkts_compl > 1)
 		++tx_queue->merge_events;
 
-	/* See if we need to restart the netif queue.  This memory
-	 * barrier ensures that we write read_count (inside
-	 * efx_dequeue_buffers()) before reading the queue status.
+	/* See अगर we need to restart the netअगर queue.  This memory
+	 * barrier ensures that we ग_लिखो पढ़ो_count (inside
+	 * efx_dequeue_buffers()) beक्रमe पढ़ोing the queue status.
 	 */
 	smp_mb();
-	if (unlikely(netif_tx_queue_stopped(tx_queue->core_txq)) &&
+	अगर (unlikely(netअगर_tx_queue_stopped(tx_queue->core_txq)) &&
 	    likely(efx->port_enabled) &&
-	    likely(netif_device_present(efx->net_dev))) {
+	    likely(netअगर_device_present(efx->net_dev))) अणु
 		fill_level = efx_channel_tx_fill_level(tx_queue->channel);
-		if (fill_level <= efx->txq_wake_thresh)
-			netif_tx_wake_queue(tx_queue->core_txq);
-	}
+		अगर (fill_level <= efx->txq_wake_thresh)
+			netअगर_tx_wake_queue(tx_queue->core_txq);
+	पूर्ण
 
-	efx_xmit_done_check_empty(tx_queue);
-}
+	efx_xmit_करोne_check_empty(tx_queue);
+पूर्ण
 
-/* Remove buffers put into a tx_queue for the current packet.
+/* Remove buffers put पूर्णांकo a tx_queue क्रम the current packet.
  * None of the buffers must have an skb attached.
  */
-void efx_enqueue_unwind(struct efx_tx_queue *tx_queue,
-			unsigned int insert_count)
-{
-	struct efx_tx_buffer *buffer;
-	unsigned int bytes_compl = 0;
-	unsigned int pkts_compl = 0;
+व्योम efx_enqueue_unwind(काष्ठा efx_tx_queue *tx_queue,
+			अचिन्हित पूर्णांक insert_count)
+अणु
+	काष्ठा efx_tx_buffer *buffer;
+	अचिन्हित पूर्णांक bytes_compl = 0;
+	अचिन्हित पूर्णांक pkts_compl = 0;
 
-	/* Work backwards until we hit the original insert pointer value */
-	while (tx_queue->insert_count != insert_count) {
+	/* Work backwards until we hit the original insert poपूर्णांकer value */
+	जबतक (tx_queue->insert_count != insert_count) अणु
 		--tx_queue->insert_count;
 		buffer = __efx_tx_queue_get_insert_buffer(tx_queue);
 		efx_dequeue_buffer(tx_queue, buffer, &pkts_compl, &bytes_compl);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct efx_tx_buffer *efx_tx_map_chunk(struct efx_tx_queue *tx_queue,
-				       dma_addr_t dma_addr, size_t len)
-{
-	const struct efx_nic_type *nic_type = tx_queue->efx->type;
-	struct efx_tx_buffer *buffer;
-	unsigned int dma_len;
+काष्ठा efx_tx_buffer *efx_tx_map_chunk(काष्ठा efx_tx_queue *tx_queue,
+				       dma_addr_t dma_addr, माप_प्रकार len)
+अणु
+	स्थिर काष्ठा efx_nic_type *nic_type = tx_queue->efx->type;
+	काष्ठा efx_tx_buffer *buffer;
+	अचिन्हित पूर्णांक dma_len;
 
 	/* Map the fragment taking account of NIC-dependent DMA limits. */
-	do {
+	करो अणु
 		buffer = efx_tx_queue_get_insert_buffer(tx_queue);
 
-		if (nic_type->tx_limit_len)
+		अगर (nic_type->tx_limit_len)
 			dma_len = nic_type->tx_limit_len(tx_queue, dma_addr, len);
-		else
+		अन्यथा
 			dma_len = len;
 
 		buffer->len = dma_len;
@@ -306,35 +307,35 @@ struct efx_tx_buffer *efx_tx_map_chunk(struct efx_tx_queue *tx_queue,
 		len -= dma_len;
 		dma_addr += dma_len;
 		++tx_queue->insert_count;
-	} while (len);
+	पूर्ण जबतक (len);
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-int efx_tx_tso_header_length(struct sk_buff *skb)
-{
-	size_t header_len;
+पूर्णांक efx_tx_tso_header_length(काष्ठा sk_buff *skb)
+अणु
+	माप_प्रकार header_len;
 
-	if (skb->encapsulation)
+	अगर (skb->encapsulation)
 		header_len = skb_inner_transport_header(skb) -
 				skb->data +
-				(inner_tcp_hdr(skb)->doff << 2u);
-	else
+				(inner_tcp_hdr(skb)->करोff << 2u);
+	अन्यथा
 		header_len = skb_transport_header(skb) - skb->data +
-				(tcp_hdr(skb)->doff << 2u);
-	return header_len;
-}
+				(tcp_hdr(skb)->करोff << 2u);
+	वापस header_len;
+पूर्ण
 
-/* Map all data from an SKB for DMA and create descriptors on the queue. */
-int efx_tx_map_data(struct efx_tx_queue *tx_queue, struct sk_buff *skb,
-		    unsigned int segment_count)
-{
-	struct efx_nic *efx = tx_queue->efx;
-	struct device *dma_dev = &efx->pci_dev->dev;
-	unsigned int frag_index, nr_frags;
+/* Map all data from an SKB क्रम DMA and create descriptors on the queue. */
+पूर्णांक efx_tx_map_data(काष्ठा efx_tx_queue *tx_queue, काष्ठा sk_buff *skb,
+		    अचिन्हित पूर्णांक segment_count)
+अणु
+	काष्ठा efx_nic *efx = tx_queue->efx;
+	काष्ठा device *dma_dev = &efx->pci_dev->dev;
+	अचिन्हित पूर्णांक frag_index, nr_frags;
 	dma_addr_t dma_addr, unmap_addr;
-	unsigned short dma_flags;
-	size_t len, unmap_len;
+	अचिन्हित लघु dma_flags;
+	माप_प्रकार len, unmap_len;
 
 	nr_frags = skb_shinfo(skb)->nr_frags;
 	frag_index = 0;
@@ -346,45 +347,45 @@ int efx_tx_map_data(struct efx_tx_queue *tx_queue, struct sk_buff *skb,
 	unmap_len = len;
 	unmap_addr = dma_addr;
 
-	if (unlikely(dma_mapping_error(dma_dev, dma_addr)))
-		return -EIO;
+	अगर (unlikely(dma_mapping_error(dma_dev, dma_addr)))
+		वापस -EIO;
 
-	if (segment_count) {
+	अगर (segment_count) अणु
 		/* For TSO we need to put the header in to a separate
-		 * descriptor. Map this separately if necessary.
+		 * descriptor. Map this separately अगर necessary.
 		 */
-		size_t header_len = efx_tx_tso_header_length(skb);
+		माप_प्रकार header_len = efx_tx_tso_header_length(skb);
 
-		if (header_len != len) {
-			tx_queue->tso_long_headers++;
+		अगर (header_len != len) अणु
+			tx_queue->tso_दीर्घ_headers++;
 			efx_tx_map_chunk(tx_queue, dma_addr, header_len);
 			len -= header_len;
 			dma_addr += header_len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Add descriptors for each fragment. */
-	do {
-		struct efx_tx_buffer *buffer;
+	/* Add descriptors क्रम each fragment. */
+	करो अणु
+		काष्ठा efx_tx_buffer *buffer;
 		skb_frag_t *fragment;
 
 		buffer = efx_tx_map_chunk(tx_queue, dma_addr, len);
 
-		/* The final descriptor for a fragment is responsible for
+		/* The final descriptor क्रम a fragment is responsible क्रम
 		 * unmapping the whole fragment.
 		 */
 		buffer->flags = EFX_TX_BUF_CONT | dma_flags;
 		buffer->unmap_len = unmap_len;
 		buffer->dma_offset = buffer->dma_addr - unmap_addr;
 
-		if (frag_index >= nr_frags) {
-			/* Store SKB details with the final buffer for
+		अगर (frag_index >= nr_frags) अणु
+			/* Store SKB details with the final buffer क्रम
 			 * the completion.
 			 */
 			buffer->skb = skb;
 			buffer->flags = EFX_TX_BUF_SKB | dma_flags;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/* Move on to the next fragment. */
 		fragment = &skb_shinfo(skb)->frags[frag_index++];
@@ -395,53 +396,53 @@ int efx_tx_map_data(struct efx_tx_queue *tx_queue, struct sk_buff *skb,
 		unmap_len = len;
 		unmap_addr = dma_addr;
 
-		if (unlikely(dma_mapping_error(dma_dev, dma_addr)))
-			return -EIO;
-	} while (1);
-}
+		अगर (unlikely(dma_mapping_error(dma_dev, dma_addr)))
+			वापस -EIO;
+	पूर्ण जबतक (1);
+पूर्ण
 
-unsigned int efx_tx_max_skb_descs(struct efx_nic *efx)
-{
-	/* Header and payload descriptor for each output segment, plus
-	 * one for every input fragment boundary within a segment
+अचिन्हित पूर्णांक efx_tx_max_skb_descs(काष्ठा efx_nic *efx)
+अणु
+	/* Header and payload descriptor क्रम each output segment, plus
+	 * one क्रम every input fragment boundary within a segment
 	 */
-	unsigned int max_descs = EFX_TSO_MAX_SEGS * 2 + MAX_SKB_FRAGS;
+	अचिन्हित पूर्णांक max_descs = EFX_TSO_MAX_SEGS * 2 + MAX_SKB_FRAGS;
 
-	/* Possibly one more per segment for option descriptors */
-	if (efx_nic_rev(efx) >= EFX_REV_HUNT_A0)
+	/* Possibly one more per segment क्रम option descriptors */
+	अगर (efx_nic_rev(efx) >= EFX_REV_HUNT_A0)
 		max_descs += EFX_TSO_MAX_SEGS;
 
-	/* Possibly more for PCIe page boundaries within input fragments */
-	if (PAGE_SIZE > EFX_PAGE_SIZE)
-		max_descs += max_t(unsigned int, MAX_SKB_FRAGS,
+	/* Possibly more क्रम PCIe page boundaries within input fragments */
+	अगर (PAGE_SIZE > EFX_PAGE_SIZE)
+		max_descs += max_t(अचिन्हित पूर्णांक, MAX_SKB_FRAGS,
 				   DIV_ROUND_UP(GSO_MAX_SIZE, EFX_PAGE_SIZE));
 
-	return max_descs;
-}
+	वापस max_descs;
+पूर्ण
 
 /*
  * Fallback to software TSO.
  *
- * This is used if we are unable to send a GSO packet through hardware TSO.
+ * This is used अगर we are unable to send a GSO packet through hardware TSO.
  * This should only ever happen due to per-queue restrictions - unsupported
  * packets should first be filtered by the feature flags.
  *
  * Returns 0 on success, error code otherwise.
  */
-int efx_tx_tso_fallback(struct efx_tx_queue *tx_queue, struct sk_buff *skb)
-{
-	struct sk_buff *segments, *next;
+पूर्णांक efx_tx_tso_fallback(काष्ठा efx_tx_queue *tx_queue, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *segments, *next;
 
 	segments = skb_gso_segment(skb, 0);
-	if (IS_ERR(segments))
-		return PTR_ERR(segments);
+	अगर (IS_ERR(segments))
+		वापस PTR_ERR(segments);
 
 	dev_consume_skb_any(skb);
 
-	skb_list_walk_safe(segments, skb, next) {
+	skb_list_walk_safe(segments, skb, next) अणु
 		skb_mark_not_on_list(skb);
 		efx_enqueue_skb(tx_queue, skb);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

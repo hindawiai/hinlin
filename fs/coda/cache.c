@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Cache operations for Coda.
+ * Cache operations क्रम Coda.
  * For Linux 2.1: (C) 1997 Carnegie Mellon University
  * For Linux 2.3: (C) 2000 Carnegie Mellon University
  *
@@ -8,70 +9,70 @@
  * to the Coda project http://www.coda.cs.cmu.edu/ <coda@cs.cmu.edu>.
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/time.h>
-#include <linux/fs.h>
-#include <linux/stat.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
-#include <linux/string.h>
-#include <linux/list.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/list.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
 
-#include <linux/coda.h>
-#include "coda_psdev.h"
-#include "coda_linux.h"
-#include "coda_cache.h"
+#समावेश <linux/coda.h>
+#समावेश "coda_psdev.h"
+#समावेश "coda_linux.h"
+#समावेश "coda_cache.h"
 
-static atomic_t permission_epoch = ATOMIC_INIT(0);
+अटल atomic_t permission_epoch = ATOMIC_INIT(0);
 
 /* replace or extend an acl cache hit */
-void coda_cache_enter(struct inode *inode, int mask)
-{
-	struct coda_inode_info *cii = ITOC(inode);
+व्योम coda_cache_enter(काष्ठा inode *inode, पूर्णांक mask)
+अणु
+	काष्ठा coda_inode_info *cii = ITOC(inode);
 
 	spin_lock(&cii->c_lock);
-	cii->c_cached_epoch = atomic_read(&permission_epoch);
-	if (!uid_eq(cii->c_uid, current_fsuid())) {
+	cii->c_cached_epoch = atomic_पढ़ो(&permission_epoch);
+	अगर (!uid_eq(cii->c_uid, current_fsuid())) अणु
 		cii->c_uid = current_fsuid();
                 cii->c_cached_perm = mask;
-        } else
+        पूर्ण अन्यथा
                 cii->c_cached_perm |= mask;
 	spin_unlock(&cii->c_lock);
-}
+पूर्ण
 
-/* remove cached acl from an inode */
-void coda_cache_clear_inode(struct inode *inode)
-{
-	struct coda_inode_info *cii = ITOC(inode);
+/* हटाओ cached acl from an inode */
+व्योम coda_cache_clear_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा coda_inode_info *cii = ITOC(inode);
 	spin_lock(&cii->c_lock);
-	cii->c_cached_epoch = atomic_read(&permission_epoch) - 1;
+	cii->c_cached_epoch = atomic_पढ़ो(&permission_epoch) - 1;
 	spin_unlock(&cii->c_lock);
-}
+पूर्ण
 
-/* remove all acl caches */
-void coda_cache_clear_all(struct super_block *sb)
-{
+/* हटाओ all acl caches */
+व्योम coda_cache_clear_all(काष्ठा super_block *sb)
+अणु
 	atomic_inc(&permission_epoch);
-}
+पूर्ण
 
 
-/* check if the mask has been matched against the acl already */
-int coda_cache_check(struct inode *inode, int mask)
-{
-	struct coda_inode_info *cii = ITOC(inode);
-	int hit;
+/* check अगर the mask has been matched against the acl alपढ़ोy */
+पूर्णांक coda_cache_check(काष्ठा inode *inode, पूर्णांक mask)
+अणु
+	काष्ठा coda_inode_info *cii = ITOC(inode);
+	पूर्णांक hit;
 	
 	spin_lock(&cii->c_lock);
 	hit = (mask & cii->c_cached_perm) == mask &&
 	    uid_eq(cii->c_uid, current_fsuid()) &&
-	    cii->c_cached_epoch == atomic_read(&permission_epoch);
+	    cii->c_cached_epoch == atomic_पढ़ो(&permission_epoch);
 	spin_unlock(&cii->c_lock);
 
-	return hit;
-}
+	वापस hit;
+पूर्ण
 
 
 /* Purging dentries and children */
@@ -80,40 +81,40 @@ int coda_cache_check(struct inode *inode, int mask)
    zapped later.
 
    The flags are detected by:
-   - coda_dentry_revalidate (for lookups) if the flag is C_PURGE
-   - coda_dentry_delete: to remove dentry from the cache when d_count
+   - coda_dentry_revalidate (क्रम lookups) अगर the flag is C_PURGE
+   - coda_dentry_delete: to हटाओ dentry from the cache when d_count
      falls to zero
-   - an inode method coda_revalidate (for attributes) if the 
+   - an inode method coda_revalidate (क्रम attributes) अगर the 
      flag is C_VATTR
 */
 
-/* this won't do any harm: just flag all children */
-static void coda_flag_children(struct dentry *parent, int flag)
-{
-	struct dentry *de;
+/* this won't करो any harm: just flag all children */
+अटल व्योम coda_flag_children(काष्ठा dentry *parent, पूर्णांक flag)
+अणु
+	काष्ठा dentry *de;
 
 	spin_lock(&parent->d_lock);
-	list_for_each_entry(de, &parent->d_subdirs, d_child) {
-		/* don't know what to do with negative dentries */
-		if (d_inode(de) ) 
+	list_क्रम_each_entry(de, &parent->d_subdirs, d_child) अणु
+		/* करोn't know what to करो with negative dentries */
+		अगर (d_inode(de) ) 
 			coda_flag_inode(d_inode(de), flag);
-	}
+	पूर्ण
 	spin_unlock(&parent->d_lock);
-	return; 
-}
+	वापस; 
+पूर्ण
 
-void coda_flag_inode_children(struct inode *inode, int flag)
-{
-	struct dentry *alias_de;
+व्योम coda_flag_inode_children(काष्ठा inode *inode, पूर्णांक flag)
+अणु
+	काष्ठा dentry *alias_de;
 
-	if ( !inode || !S_ISDIR(inode->i_mode)) 
-		return; 
+	अगर ( !inode || !S_ISसूची(inode->i_mode)) 
+		वापस; 
 
 	alias_de = d_find_alias(inode);
-	if (!alias_de)
-		return;
+	अगर (!alias_de)
+		वापस;
 	coda_flag_children(alias_de, flag);
 	shrink_dcache_parent(alias_de);
 	dput(alias_de);
-}
+पूर्ण
 

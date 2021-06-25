@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,67 +20,67 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "gf100.h"
-#include "ctxgf100.h"
+#समावेश "gf100.h"
+#समावेश "ctxgf100.h"
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-static void
-tu102_gr_init_fecs_exceptions(struct gf100_gr *gr)
-{
+अटल व्योम
+tu102_gr_init_fecs_exceptions(काष्ठा gf100_gr *gr)
+अणु
 	nvkm_wr32(gr->base.engine.subdev.device, 0x409c24, 0x006f0002);
-}
+पूर्ण
 
-static void
-tu102_gr_init_fs(struct gf100_gr *gr)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
-	int sm;
+अटल व्योम
+tu102_gr_init_fs(काष्ठा gf100_gr *gr)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+	पूर्णांक sm;
 
 	gp100_grctx_generate_smid_config(gr);
 	gk104_grctx_generate_gpc_tpc_nr(gr);
 
-	for (sm = 0; sm < gr->sm_nr; sm++) {
+	क्रम (sm = 0; sm < gr->sm_nr; sm++) अणु
 		nvkm_wr32(device, GPC_UNIT(gr->sm[sm].gpc, 0x0c10 +
 					   gr->sm[sm].tpc * 4), sm);
-	}
+	पूर्ण
 
 	gm200_grctx_generate_dist_skip_table(gr);
 	gf100_gr_init_num_tpc_per_gpc(gr, true, true);
-}
+पूर्ण
 
-static void
-tu102_gr_init_zcull(struct gf100_gr *gr)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
-	const u32 magicgpc918 = DIV_ROUND_UP(0x00800000, gr->tpc_total);
-	const u8 tile_nr = ALIGN(gr->tpc_total, 64);
-	u8 bank[GPC_MAX] = {}, gpc, i, j;
+अटल व्योम
+tu102_gr_init_zcull(काष्ठा gf100_gr *gr)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+	स्थिर u32 magicgpc918 = DIV_ROUND_UP(0x00800000, gr->tpc_total);
+	स्थिर u8 tile_nr = ALIGN(gr->tpc_total, 64);
+	u8 bank[GPC_MAX] = अणुपूर्ण, gpc, i, j;
 	u32 data;
 
-	for (i = 0; i < tile_nr; i += 8) {
-		for (data = 0, j = 0; j < 8 && i + j < gr->tpc_total; j++) {
+	क्रम (i = 0; i < tile_nr; i += 8) अणु
+		क्रम (data = 0, j = 0; j < 8 && i + j < gr->tpc_total; j++) अणु
 			data |= bank[gr->tile[i + j]] << (j * 4);
 			bank[gr->tile[i + j]]++;
-		}
+		पूर्ण
 		nvkm_wr32(device, GPC_BCAST(0x0980 + ((i / 8) * 4)), data);
-	}
+	पूर्ण
 
-	for (gpc = 0; gpc < gr->gpc_nr; gpc++) {
+	क्रम (gpc = 0; gpc < gr->gpc_nr; gpc++) अणु
 		nvkm_wr32(device, GPC_UNIT(gpc, 0x0914),
 			  gr->screen_tile_row_offset << 8 | gr->tpc_nr[gpc]);
 		nvkm_wr32(device, GPC_UNIT(gpc, 0x0910), 0x00040000 |
 							 gr->tpc_total);
 		nvkm_wr32(device, GPC_UNIT(gpc, 0x0918), magicgpc918);
-	}
+	पूर्ण
 
 	nvkm_wr32(device, GPC_BCAST(0x3fd4), magicgpc918);
-}
+पूर्ण
 
-static void
-tu102_gr_init_gpc_mmu(struct gf100_gr *gr)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
+अटल व्योम
+tu102_gr_init_gpc_mmu(काष्ठा gf100_gr *gr)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
 
 	nvkm_wr32(device, 0x418880, nvkm_rd32(device, 0x100c80) & 0xf8001fff);
 	nvkm_wr32(device, 0x418890, 0x00000000);
@@ -88,10 +89,10 @@ tu102_gr_init_gpc_mmu(struct gf100_gr *gr)
 	nvkm_wr32(device, 0x4188b4, nvkm_rd32(device, 0x100cc8));
 	nvkm_wr32(device, 0x4188b8, nvkm_rd32(device, 0x100ccc));
 	nvkm_wr32(device, 0x4188b0, nvkm_rd32(device, 0x100cc4));
-}
+पूर्ण
 
-static const struct gf100_gr_func
-tu102_gr = {
+अटल स्थिर काष्ठा gf100_gr_func
+tu102_gr = अणु
 	.oneinit_tiles = gm200_gr_oneinit_tiles,
 	.oneinit_sm_id = gm200_gr_oneinit_sm_id,
 	.init = gf100_gr_init,
@@ -116,14 +117,14 @@ tu102_gr = {
 	.ppc_nr = 3,
 	.grctx = &tu102_grctx,
 	.zbc = &gp102_gr_zbc,
-	.sclass = {
-		{ -1, -1, FERMI_TWOD_A },
-		{ -1, -1, KEPLER_INLINE_TO_MEMORY_B },
-		{ -1, -1, TURING_A, &gf100_fermi },
-		{ -1, -1, TURING_COMPUTE_A },
-		{}
-	}
-};
+	.sclass = अणु
+		अणु -1, -1, FERMI_TWOD_A पूर्ण,
+		अणु -1, -1, KEPLER_INLINE_TO_MEMORY_B पूर्ण,
+		अणु -1, -1, TURING_A, &gf100_fermi पूर्ण,
+		अणु -1, -1, TURING_COMPUTE_A पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
 MODULE_FIRMWARE("nvidia/tu102/gr/fecs_bl.bin");
 MODULE_FIRMWARE("nvidia/tu102/gr/fecs_inst.bin");
@@ -190,15 +191,15 @@ MODULE_FIRMWARE("nvidia/tu116/gr/sw_nonctx.bin");
 MODULE_FIRMWARE("nvidia/tu116/gr/sw_bundle_init.bin");
 MODULE_FIRMWARE("nvidia/tu116/gr/sw_method_init.bin");
 
-static const struct gf100_gr_fwif
-tu102_gr_fwif[] = {
-	{  0, gm200_gr_load, &tu102_gr, &gp108_gr_fecs_acr, &gp108_gr_gpccs_acr },
-	{ -1, gm200_gr_nofw },
-	{}
-};
+अटल स्थिर काष्ठा gf100_gr_fwअगर
+tu102_gr_fwअगर[] = अणु
+	अणु  0, gm200_gr_load, &tu102_gr, &gp108_gr_fecs_acr, &gp108_gr_gpccs_acr पूर्ण,
+	अणु -1, gm200_gr_nofw पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-tu102_gr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_gr **pgr)
-{
-	return gf100_gr_new_(tu102_gr_fwif, device, type, inst, pgr);
-}
+पूर्णांक
+tu102_gr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gr **pgr)
+अणु
+	वापस gf100_gr_new_(tu102_gr_fwअगर, device, type, inst, pgr);
+पूर्ण

@@ -1,210 +1,211 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2018 HiSilicon Technologies Co., Ltd.
  */
 
-#include <linux/clk.h>
-#include <linux/mfd/syscon.h>
-#include <linux/mmc/host.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include "dw_mmc.h"
-#include "dw_mmc-pltfm.h"
+#समावेश "dw_mmc.h"
+#समावेश "dw_mmc-pltfm.h"
 
-#define ALL_INT_CLR		0x1ffff
+#घोषणा ALL_INT_CLR		0x1ffff
 
-struct hi3798cv200_priv {
-	struct clk *sample_clk;
-	struct clk *drive_clk;
-};
+काष्ठा hi3798cv200_priv अणु
+	काष्ठा clk *sample_clk;
+	काष्ठा clk *drive_clk;
+पूर्ण;
 
-static unsigned long dw_mci_hi3798cv200_caps[] = {
+अटल अचिन्हित दीर्घ dw_mci_hi3798cv200_caps[] = अणु
 	MMC_CAP_CMD23,
 	MMC_CAP_CMD23,
 	MMC_CAP_CMD23
-};
+पूर्ण;
 
-static void dw_mci_hi3798cv200_set_ios(struct dw_mci *host, struct mmc_ios *ios)
-{
-	struct hi3798cv200_priv *priv = host->priv;
+अटल व्योम dw_mci_hi3798cv200_set_ios(काष्ठा dw_mci *host, काष्ठा mmc_ios *ios)
+अणु
+	काष्ठा hi3798cv200_priv *priv = host->priv;
 	u32 val;
 
-	val = mci_readl(host, UHS_REG);
-	if (ios->timing == MMC_TIMING_MMC_DDR52 ||
+	val = mci_पढ़ोl(host, UHS_REG);
+	अगर (ios->timing == MMC_TIMING_MMC_DDR52 ||
 	    ios->timing == MMC_TIMING_UHS_DDR50)
 		val |= SDMMC_UHS_DDR;
-	else
+	अन्यथा
 		val &= ~SDMMC_UHS_DDR;
-	mci_writel(host, UHS_REG, val);
+	mci_ग_लिखोl(host, UHS_REG, val);
 
-	val = mci_readl(host, ENABLE_SHIFT);
-	if (ios->timing == MMC_TIMING_MMC_DDR52)
+	val = mci_पढ़ोl(host, ENABLE_SHIFT);
+	अगर (ios->timing == MMC_TIMING_MMC_DDR52)
 		val |= SDMMC_ENABLE_PHASE;
-	else
+	अन्यथा
 		val &= ~SDMMC_ENABLE_PHASE;
-	mci_writel(host, ENABLE_SHIFT, val);
+	mci_ग_लिखोl(host, ENABLE_SHIFT, val);
 
-	val = mci_readl(host, DDR_REG);
-	if (ios->timing == MMC_TIMING_MMC_HS400)
+	val = mci_पढ़ोl(host, DDR_REG);
+	अगर (ios->timing == MMC_TIMING_MMC_HS400)
 		val |= SDMMC_DDR_HS400;
-	else
+	अन्यथा
 		val &= ~SDMMC_DDR_HS400;
-	mci_writel(host, DDR_REG, val);
+	mci_ग_लिखोl(host, DDR_REG, val);
 
-	if (ios->timing == MMC_TIMING_MMC_HS ||
+	अगर (ios->timing == MMC_TIMING_MMC_HS ||
 	    ios->timing == MMC_TIMING_LEGACY)
 		clk_set_phase(priv->drive_clk, 180);
-	else if (ios->timing == MMC_TIMING_MMC_HS200)
+	अन्यथा अगर (ios->timing == MMC_TIMING_MMC_HS200)
 		clk_set_phase(priv->drive_clk, 135);
-}
+पूर्ण
 
-static int dw_mci_hi3798cv200_execute_tuning(struct dw_mci_slot *slot,
+अटल पूर्णांक dw_mci_hi3798cv200_execute_tuning(काष्ठा dw_mci_slot *slot,
 					     u32 opcode)
-{
-	static const int degrees[] = { 0, 45, 90, 135, 180, 225, 270, 315 };
-	struct dw_mci *host = slot->host;
-	struct hi3798cv200_priv *priv = host->priv;
-	int raise_point = -1, fall_point = -1;
-	int err, prev_err = -1;
-	int found = 0;
-	int i;
+अणु
+	अटल स्थिर पूर्णांक degrees[] = अणु 0, 45, 90, 135, 180, 225, 270, 315 पूर्ण;
+	काष्ठा dw_mci *host = slot->host;
+	काष्ठा hi3798cv200_priv *priv = host->priv;
+	पूर्णांक उठाओ_poपूर्णांक = -1, fall_poपूर्णांक = -1;
+	पूर्णांक err, prev_err = -1;
+	पूर्णांक found = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(degrees); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(degrees); i++) अणु
 		clk_set_phase(priv->sample_clk, degrees[i]);
-		mci_writel(host, RINTSTS, ALL_INT_CLR);
+		mci_ग_लिखोl(host, RINTSTS, ALL_INT_CLR);
 
-		err = mmc_send_tuning(slot->mmc, opcode, NULL);
-		if (!err)
+		err = mmc_send_tuning(slot->mmc, opcode, शून्य);
+		अगर (!err)
 			found = 1;
 
-		if (i > 0) {
-			if (err && !prev_err)
-				fall_point = i - 1;
-			if (!err && prev_err)
-				raise_point = i;
-		}
+		अगर (i > 0) अणु
+			अगर (err && !prev_err)
+				fall_poपूर्णांक = i - 1;
+			अगर (!err && prev_err)
+				उठाओ_poपूर्णांक = i;
+		पूर्ण
 
-		if (raise_point != -1 && fall_point != -1)
-			goto tuning_out;
+		अगर (उठाओ_poपूर्णांक != -1 && fall_poपूर्णांक != -1)
+			जाओ tuning_out;
 
 		prev_err = err;
 		err = 0;
-	}
+	पूर्ण
 
 tuning_out:
-	if (found) {
-		if (raise_point == -1)
-			raise_point = 0;
-		if (fall_point == -1)
-			fall_point = ARRAY_SIZE(degrees) - 1;
-		if (fall_point < raise_point) {
-			if ((raise_point + fall_point) >
+	अगर (found) अणु
+		अगर (उठाओ_poपूर्णांक == -1)
+			उठाओ_poपूर्णांक = 0;
+		अगर (fall_poपूर्णांक == -1)
+			fall_poपूर्णांक = ARRAY_SIZE(degrees) - 1;
+		अगर (fall_poपूर्णांक < उठाओ_poपूर्णांक) अणु
+			अगर ((उठाओ_poपूर्णांक + fall_poपूर्णांक) >
 			    (ARRAY_SIZE(degrees) - 1))
-				i = fall_point / 2;
-			else
-				i = (raise_point + ARRAY_SIZE(degrees) - 1) / 2;
-		} else {
-			i = (raise_point + fall_point) / 2;
-		}
+				i = fall_poपूर्णांक / 2;
+			अन्यथा
+				i = (उठाओ_poपूर्णांक + ARRAY_SIZE(degrees) - 1) / 2;
+		पूर्ण अन्यथा अणु
+			i = (उठाओ_poपूर्णांक + fall_poपूर्णांक) / 2;
+		पूर्ण
 
 		clk_set_phase(priv->sample_clk, degrees[i]);
 		dev_dbg(host->dev, "Tuning clk_sample[%d, %d], set[%d]\n",
-			raise_point, fall_point, degrees[i]);
-	} else {
+			उठाओ_poपूर्णांक, fall_poपूर्णांक, degrees[i]);
+	पूर्ण अन्यथा अणु
 		dev_err(host->dev, "No valid clk_sample shift! use default\n");
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	mci_writel(host, RINTSTS, ALL_INT_CLR);
-	return err;
-}
+	mci_ग_लिखोl(host, RINTSTS, ALL_INT_CLR);
+	वापस err;
+पूर्ण
 
-static int dw_mci_hi3798cv200_init(struct dw_mci *host)
-{
-	struct hi3798cv200_priv *priv;
-	int ret;
+अटल पूर्णांक dw_mci_hi3798cv200_init(काष्ठा dw_mci *host)
+अणु
+	काष्ठा hi3798cv200_priv *priv;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(host->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(host->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->sample_clk = devm_clk_get(host->dev, "ciu-sample");
-	if (IS_ERR(priv->sample_clk)) {
+	अगर (IS_ERR(priv->sample_clk)) अणु
 		dev_err(host->dev, "failed to get ciu-sample clock\n");
-		return PTR_ERR(priv->sample_clk);
-	}
+		वापस PTR_ERR(priv->sample_clk);
+	पूर्ण
 
 	priv->drive_clk = devm_clk_get(host->dev, "ciu-drive");
-	if (IS_ERR(priv->drive_clk)) {
+	अगर (IS_ERR(priv->drive_clk)) अणु
 		dev_err(host->dev, "failed to get ciu-drive clock\n");
-		return PTR_ERR(priv->drive_clk);
-	}
+		वापस PTR_ERR(priv->drive_clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(priv->sample_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(host->dev, "failed to enable ciu-sample clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(priv->drive_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(host->dev, "failed to enable ciu-drive clock\n");
-		goto disable_sample_clk;
-	}
+		जाओ disable_sample_clk;
+	पूर्ण
 
 	host->priv = priv;
-	return 0;
+	वापस 0;
 
 disable_sample_clk:
 	clk_disable_unprepare(priv->sample_clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dw_mci_drv_data hi3798cv200_data = {
+अटल स्थिर काष्ठा dw_mci_drv_data hi3798cv200_data = अणु
 	.caps = dw_mci_hi3798cv200_caps,
 	.num_caps = ARRAY_SIZE(dw_mci_hi3798cv200_caps),
 	.init = dw_mci_hi3798cv200_init,
 	.set_ios = dw_mci_hi3798cv200_set_ios,
 	.execute_tuning = dw_mci_hi3798cv200_execute_tuning,
-};
+पूर्ण;
 
-static int dw_mci_hi3798cv200_probe(struct platform_device *pdev)
-{
-	return dw_mci_pltfm_register(pdev, &hi3798cv200_data);
-}
+अटल पूर्णांक dw_mci_hi3798cv200_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस dw_mci_pltfm_रेजिस्टर(pdev, &hi3798cv200_data);
+पूर्ण
 
-static int dw_mci_hi3798cv200_remove(struct platform_device *pdev)
-{
-	struct dw_mci *host = platform_get_drvdata(pdev);
-	struct hi3798cv200_priv *priv = host->priv;
+अटल पूर्णांक dw_mci_hi3798cv200_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dw_mci *host = platक्रमm_get_drvdata(pdev);
+	काष्ठा hi3798cv200_priv *priv = host->priv;
 
 	clk_disable_unprepare(priv->drive_clk);
 	clk_disable_unprepare(priv->sample_clk);
 
-	return dw_mci_pltfm_remove(pdev);
-}
+	वापस dw_mci_pltfm_हटाओ(pdev);
+पूर्ण
 
-static const struct of_device_id dw_mci_hi3798cv200_match[] = {
-	{ .compatible = "hisilicon,hi3798cv200-dw-mshc", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id dw_mci_hi3798cv200_match[] = अणु
+	अणु .compatible = "hisilicon,hi3798cv200-dw-mshc", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, dw_mci_hi3798cv200_match);
-static struct platform_driver dw_mci_hi3798cv200_driver = {
+अटल काष्ठा platक्रमm_driver dw_mci_hi3798cv200_driver = अणु
 	.probe = dw_mci_hi3798cv200_probe,
-	.remove = dw_mci_hi3798cv200_remove,
-	.driver = {
+	.हटाओ = dw_mci_hi3798cv200_हटाओ,
+	.driver = अणु
 		.name = "dwmmc_hi3798cv200",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.of_match_table = dw_mci_hi3798cv200_match,
-	},
-};
-module_platform_driver(dw_mci_hi3798cv200_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(dw_mci_hi3798cv200_driver);
 
 MODULE_DESCRIPTION("HiSilicon Hi3798CV200 Specific DW-MSHC Driver Extension");
 MODULE_LICENSE("GPL v2");

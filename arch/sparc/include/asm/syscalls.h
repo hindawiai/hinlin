@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC64_SYSCALLS_H
-#define _SPARC64_SYSCALLS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC64_SYSCALLS_H
+#घोषणा _SPARC64_SYSCALLS_H
 
-struct pt_regs;
+काष्ठा pt_regs;
 
-asmlinkage long sparc_fork(struct pt_regs *regs);
-asmlinkage long sparc_vfork(struct pt_regs *regs);
-asmlinkage long sparc_clone(struct pt_regs *regs);
+यंत्रlinkage दीर्घ sparc_विभाजन(काष्ठा pt_regs *regs);
+यंत्रlinkage दीर्घ sparc_vविभाजन(काष्ठा pt_regs *regs);
+यंत्रlinkage दीर्घ sparc_clone(काष्ठा pt_regs *regs);
 
-#endif /* _SPARC64_SYSCALLS_H */
+#पूर्ण_अगर /* _SPARC64_SYSCALLS_H */

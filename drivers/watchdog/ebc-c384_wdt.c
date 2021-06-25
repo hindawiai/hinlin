@@ -1,140 +1,141 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Watchdog timer driver for the WinSystems EBC-C384
+ * Watchकरोg समयr driver क्रम the WinSystems EBC-C384
  * Copyright (C) 2016 William Breathitt Gray
  */
-#include <linux/device.h>
-#include <linux/dmi.h>
-#include <linux/errno.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/isa.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/watchdog.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/isa.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/watchकरोg.h>
 
-#define MODULE_NAME		"ebc-c384_wdt"
-#define WATCHDOG_TIMEOUT	60
+#घोषणा MODULE_NAME		"ebc-c384_wdt"
+#घोषणा WATCHDOG_TIMEOUT	60
 /*
- * The timeout value in minutes must fit in a single byte when sent to the
- * watchdog timer; the maximum timeout possible is 15300 (255 * 60) seconds.
+ * The समयout value in minutes must fit in a single byte when sent to the
+ * watchकरोg समयr; the maximum समयout possible is 15300 (255 * 60) seconds.
  */
-#define WATCHDOG_MAX_TIMEOUT	15300
-#define BASE_ADDR		0x564
-#define ADDR_EXTENT		5
-#define CFG_ADDR		(BASE_ADDR + 1)
-#define PET_ADDR		(BASE_ADDR + 2)
+#घोषणा WATCHDOG_MAX_TIMEOUT	15300
+#घोषणा BASE_ADDR		0x564
+#घोषणा ADDR_EXTENT		5
+#घोषणा CFG_ADDR		(BASE_ADDR + 1)
+#घोषणा PET_ADDR		(BASE_ADDR + 2)
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 	__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static unsigned timeout;
-module_param(timeout, uint, 0);
-MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds (default="
+अटल अचिन्हित समयout;
+module_param(समयout, uपूर्णांक, 0);
+MODULE_PARM_DESC(समयout, "Watchdog timeout in seconds (default="
 	__MODULE_STRING(WATCHDOG_TIMEOUT) ")");
 
-static int ebc_c384_wdt_start(struct watchdog_device *wdev)
-{
-	unsigned t = wdev->timeout;
+अटल पूर्णांक ebc_c384_wdt_start(काष्ठा watchकरोg_device *wdev)
+अणु
+	अचिन्हित t = wdev->समयout;
 
-	/* resolution is in minutes for timeouts greater than 255 seconds */
-	if (t > 255)
+	/* resolution is in minutes क्रम समयouts greater than 255 seconds */
+	अगर (t > 255)
 		t = DIV_ROUND_UP(t, 60);
 
 	outb(t, PET_ADDR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ebc_c384_wdt_stop(struct watchdog_device *wdev)
-{
+अटल पूर्णांक ebc_c384_wdt_stop(काष्ठा watchकरोg_device *wdev)
+अणु
 	outb(0x00, PET_ADDR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ebc_c384_wdt_set_timeout(struct watchdog_device *wdev, unsigned t)
-{
-	/* resolution is in minutes for timeouts greater than 255 seconds */
-	if (t > 255) {
+अटल पूर्णांक ebc_c384_wdt_set_समयout(काष्ठा watchकरोg_device *wdev, अचिन्हित t)
+अणु
+	/* resolution is in minutes क्रम समयouts greater than 255 seconds */
+	अगर (t > 255) अणु
 		/* round second resolution up to minute granularity */
-		wdev->timeout = roundup(t, 60);
+		wdev->समयout = roundup(t, 60);
 
-		/* set watchdog timer for minutes */
+		/* set watchकरोg समयr क्रम minutes */
 		outb(0x00, CFG_ADDR);
-	} else {
-		wdev->timeout = t;
+	पूर्ण अन्यथा अणु
+		wdev->समयout = t;
 
-		/* set watchdog timer for seconds */
+		/* set watchकरोg समयr क्रम seconds */
 		outb(0x80, CFG_ADDR);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_ops ebc_c384_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops ebc_c384_wdt_ops = अणु
 	.start = ebc_c384_wdt_start,
 	.stop = ebc_c384_wdt_stop,
-	.set_timeout = ebc_c384_wdt_set_timeout
-};
+	.set_समयout = ebc_c384_wdt_set_समयout
+पूर्ण;
 
-static const struct watchdog_info ebc_c384_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info ebc_c384_wdt_info = अणु
 	.options = WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE | WDIOF_SETTIMEOUT,
 	.identity = MODULE_NAME
-};
+पूर्ण;
 
-static int ebc_c384_wdt_probe(struct device *dev, unsigned int id)
-{
-	struct watchdog_device *wdd;
+अटल पूर्णांक ebc_c384_wdt_probe(काष्ठा device *dev, अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा watchकरोg_device *wdd;
 
-	if (!devm_request_region(dev, BASE_ADDR, ADDR_EXTENT, dev_name(dev))) {
+	अगर (!devm_request_region(dev, BASE_ADDR, ADDR_EXTENT, dev_name(dev))) अणु
 		dev_err(dev, "Unable to lock port addresses (0x%X-0x%X)\n",
 			BASE_ADDR, BASE_ADDR + ADDR_EXTENT);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	wdd = devm_kzalloc(dev, sizeof(*wdd), GFP_KERNEL);
-	if (!wdd)
-		return -ENOMEM;
+	wdd = devm_kzalloc(dev, माप(*wdd), GFP_KERNEL);
+	अगर (!wdd)
+		वापस -ENOMEM;
 
 	wdd->info = &ebc_c384_wdt_info;
 	wdd->ops = &ebc_c384_wdt_ops;
-	wdd->timeout = WATCHDOG_TIMEOUT;
-	wdd->min_timeout = 1;
-	wdd->max_timeout = WATCHDOG_MAX_TIMEOUT;
+	wdd->समयout = WATCHDOG_TIMEOUT;
+	wdd->min_समयout = 1;
+	wdd->max_समयout = WATCHDOG_MAX_TIMEOUT;
 
-	watchdog_set_nowayout(wdd, nowayout);
-	watchdog_init_timeout(wdd, timeout, dev);
+	watchकरोg_set_nowayout(wdd, nowayout);
+	watchकरोg_init_समयout(wdd, समयout, dev);
 
-	return devm_watchdog_register_device(dev, wdd);
-}
+	वापस devm_watchकरोg_रेजिस्टर_device(dev, wdd);
+पूर्ण
 
-static struct isa_driver ebc_c384_wdt_driver = {
+अटल काष्ठा isa_driver ebc_c384_wdt_driver = अणु
 	.probe = ebc_c384_wdt_probe,
-	.driver = {
+	.driver = अणु
 		.name = MODULE_NAME
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init ebc_c384_wdt_init(void)
-{
-	if (!dmi_match(DMI_BOARD_NAME, "EBC-C384 SBC"))
-		return -ENODEV;
+अटल पूर्णांक __init ebc_c384_wdt_init(व्योम)
+अणु
+	अगर (!dmi_match(DMI_BOARD_NAME, "EBC-C384 SBC"))
+		वापस -ENODEV;
 
-	return isa_register_driver(&ebc_c384_wdt_driver, 1);
-}
+	वापस isa_रेजिस्टर_driver(&ebc_c384_wdt_driver, 1);
+पूर्ण
 
-static void __exit ebc_c384_wdt_exit(void)
-{
-	isa_unregister_driver(&ebc_c384_wdt_driver);
-}
+अटल व्योम __निकास ebc_c384_wdt_निकास(व्योम)
+अणु
+	isa_unरेजिस्टर_driver(&ebc_c384_wdt_driver);
+पूर्ण
 
 module_init(ebc_c384_wdt_init);
-module_exit(ebc_c384_wdt_exit);
+module_निकास(ebc_c384_wdt_निकास);
 
 MODULE_AUTHOR("William Breathitt Gray <vilhelm.gray@gmail.com>");
 MODULE_DESCRIPTION("WinSystems EBC-C384 watchdog timer driver");

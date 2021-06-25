@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Information: wlanfae <wlanfae@realtek.com>
+ * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
  */
-#include <linux/bitops.h>
-#include "rtl_core.h"
-#include "r8192E_hw.h"
-#include "r8192E_phyreg.h"
-#include "r8190P_rtl8256.h"
-#include "r8192E_phy.h"
-#include "rtl_dm.h"
+#समावेश <linux/bitops.h>
+#समावेश "rtl_core.h"
+#समावेश "r8192E_hw.h"
+#समावेश "r8192E_phyreg.h"
+#समावेश "r8190P_rtl8256.h"
+#समावेश "r8192E_phy.h"
+#समावेश "rtl_dm.h"
 
-#include "r8192E_hwimg.h"
+#समावेश "r8192E_hwimg.h"
 
-static u32 RF_CHANNEL_TABLE_ZEBRA[] = {
+अटल u32 RF_CHANNEL_TABLE_ZEBRA[] = अणु
 	0,
 	0x085c,
 	0x08dc,
@@ -30,83 +31,83 @@ static u32 RF_CHANNEL_TABLE_ZEBRA[] = {
 	0x0ddc,
 	0x0e5c,
 	0x0f72,
-};
+पूर्ण;
 
 /*************************Define local function prototype**********************/
 
-static u32 _rtl92e_phy_rf_fw_read(struct net_device *dev,
-				  enum rf90_radio_path eRFPath, u32 Offset);
-static void _rtl92e_phy_rf_fw_write(struct net_device *dev,
-				    enum rf90_radio_path eRFPath, u32 Offset,
+अटल u32 _rtl92e_phy_rf_fw_पढ़ो(काष्ठा net_device *dev,
+				  क्रमागत rf90_radio_path eRFPath, u32 Offset);
+अटल व्योम _rtl92e_phy_rf_fw_ग_लिखो(काष्ठा net_device *dev,
+				    क्रमागत rf90_radio_path eRFPath, u32 Offset,
 				    u32 Data);
 
-static u32 _rtl92e_calculate_bit_shift(u32 dwBitMask)
-{
-	if (!dwBitMask)
-		return 32;
-	return ffs(dwBitMask) - 1;
-}
+अटल u32 _rtl92e_calculate_bit_shअगरt(u32 dwBitMask)
+अणु
+	अगर (!dwBitMask)
+		वापस 32;
+	वापस ffs(dwBitMask) - 1;
+पूर्ण
 
-u8 rtl92e_is_legal_rf_path(struct net_device *dev, u32 eRFPath)
-{
+u8 rtl92e_is_legal_rf_path(काष्ठा net_device *dev, u32 eRFPath)
+अणु
 	u8 ret = 1;
-	struct r8192_priv *priv = rtllib_priv(dev);
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
-	if (priv->rf_type == RF_2T4R)
+	अगर (priv->rf_type == RF_2T4R)
 		ret = 0;
-	else if (priv->rf_type == RF_1T2R) {
-		if (eRFPath == RF90_PATH_A || eRFPath == RF90_PATH_B)
+	अन्यथा अगर (priv->rf_type == RF_1T2R) अणु
+		अगर (eRFPath == RF90_PATH_A || eRFPath == RF90_PATH_B)
 			ret = 1;
-		else if (eRFPath == RF90_PATH_C || eRFPath == RF90_PATH_D)
+		अन्यथा अगर (eRFPath == RF90_PATH_C || eRFPath == RF90_PATH_D)
 			ret = 0;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void rtl92e_set_bb_reg(struct net_device *dev, u32 dwRegAddr, u32 dwBitMask,
+व्योम rtl92e_set_bb_reg(काष्ठा net_device *dev, u32 dwRegAddr, u32 dwBitMask,
 		       u32 dwData)
-{
+अणु
 
-	u32 OriginalValue, BitShift, NewValue;
+	u32 OriginalValue, BitShअगरt, NewValue;
 
-	if (dwBitMask != bMaskDWord) {
-		OriginalValue = rtl92e_readl(dev, dwRegAddr);
-		BitShift = _rtl92e_calculate_bit_shift(dwBitMask);
-		NewValue = (OriginalValue & ~dwBitMask) | (dwData << BitShift);
-		rtl92e_writel(dev, dwRegAddr, NewValue);
-	} else
-		rtl92e_writel(dev, dwRegAddr, dwData);
-}
+	अगर (dwBitMask != bMaskDWord) अणु
+		OriginalValue = rtl92e_पढ़ोl(dev, dwRegAddr);
+		BitShअगरt = _rtl92e_calculate_bit_shअगरt(dwBitMask);
+		NewValue = (OriginalValue & ~dwBitMask) | (dwData << BitShअगरt);
+		rtl92e_ग_लिखोl(dev, dwRegAddr, NewValue);
+	पूर्ण अन्यथा
+		rtl92e_ग_लिखोl(dev, dwRegAddr, dwData);
+पूर्ण
 
-u32 rtl92e_get_bb_reg(struct net_device *dev, u32 dwRegAddr, u32 dwBitMask)
-{
-	u32 OriginalValue, BitShift;
+u32 rtl92e_get_bb_reg(काष्ठा net_device *dev, u32 dwRegAddr, u32 dwBitMask)
+अणु
+	u32 OriginalValue, BitShअगरt;
 
-	OriginalValue = rtl92e_readl(dev, dwRegAddr);
-	BitShift = _rtl92e_calculate_bit_shift(dwBitMask);
+	OriginalValue = rtl92e_पढ़ोl(dev, dwRegAddr);
+	BitShअगरt = _rtl92e_calculate_bit_shअगरt(dwBitMask);
 
-	return (OriginalValue & dwBitMask) >> BitShift;
-}
+	वापस (OriginalValue & dwBitMask) >> BitShअगरt;
+पूर्ण
 
-static u32 _rtl92e_phy_rf_read(struct net_device *dev,
-			       enum rf90_radio_path eRFPath, u32 Offset)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+अटल u32 _rtl92e_phy_rf_पढ़ो(काष्ठा net_device *dev,
+			       क्रमागत rf90_radio_path eRFPath, u32 Offset)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 	u32 ret = 0;
 	u32 NewOffset = 0;
-	struct bb_reg_definition *pPhyReg = &priv->PHYRegDef[eRFPath];
+	काष्ठा bb_reg_definition *pPhyReg = &priv->PHYRegDef[eRFPath];
 
 	Offset &= 0x3f;
 
-	if (priv->rf_chip == RF_8256) {
+	अगर (priv->rf_chip == RF_8256) अणु
 		rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter4, 0xf00, 0x0);
-		if (Offset >= 31) {
+		अगर (Offset >= 31) अणु
 			priv->RfReg0Value[eRFPath] |= 0x140;
 			rtl92e_set_bb_reg(dev, pPhyReg->rf3wireOffset,
 					  bMaskDWord,
 					  (priv->RfReg0Value[eRFPath]<<16));
 			NewOffset = Offset - 30;
-		} else if (Offset >= 16) {
+		पूर्ण अन्यथा अगर (Offset >= 16) अणु
 			priv->RfReg0Value[eRFPath] |= 0x100;
 			priv->RfReg0Value[eRFPath] &= (~0x40);
 			rtl92e_set_bb_reg(dev, pPhyReg->rf3wireOffset,
@@ -114,13 +115,13 @@ static u32 _rtl92e_phy_rf_read(struct net_device *dev,
 					  (priv->RfReg0Value[eRFPath]<<16));
 
 			NewOffset = Offset - 15;
-		} else
+		पूर्ण अन्यथा
 			NewOffset = Offset;
-	} else {
+	पूर्ण अन्यथा अणु
 		RT_TRACE((COMP_PHY|COMP_ERR),
 			 "check RF type here, need to be 8256\n");
 		NewOffset = Offset;
-	}
+	पूर्ण
 	rtl92e_set_bb_reg(dev, pPhyReg->rfHSSIPara2, bLSSIReadAddress,
 			  NewOffset);
 	rtl92e_set_bb_reg(dev, pPhyReg->rfHSSIPara2,  bLSSIReadEdge, 0x0);
@@ -131,229 +132,229 @@ static u32 _rtl92e_phy_rf_read(struct net_device *dev,
 	ret = rtl92e_get_bb_reg(dev, pPhyReg->rfLSSIReadBack,
 				bLSSIReadBackData);
 
-	if (priv->rf_chip == RF_8256) {
+	अगर (priv->rf_chip == RF_8256) अणु
 		priv->RfReg0Value[eRFPath] &= 0xebf;
 
 		rtl92e_set_bb_reg(dev, pPhyReg->rf3wireOffset, bMaskDWord,
 				  (priv->RfReg0Value[eRFPath] << 16));
 
 		rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter4, 0x300, 0x3);
-	}
+	पूर्ण
 
 
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static void _rtl92e_phy_rf_write(struct net_device *dev,
-				 enum rf90_radio_path eRFPath, u32 Offset,
+अटल व्योम _rtl92e_phy_rf_ग_लिखो(काष्ठा net_device *dev,
+				 क्रमागत rf90_radio_path eRFPath, u32 Offset,
 				 u32 Data)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 	u32 DataAndAddr = 0, NewOffset = 0;
-	struct bb_reg_definition *pPhyReg = &priv->PHYRegDef[eRFPath];
+	काष्ठा bb_reg_definition *pPhyReg = &priv->PHYRegDef[eRFPath];
 
 	Offset &= 0x3f;
-	if (priv->rf_chip == RF_8256) {
+	अगर (priv->rf_chip == RF_8256) अणु
 		rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter4, 0xf00, 0x0);
 
-		if (Offset >= 31) {
+		अगर (Offset >= 31) अणु
 			priv->RfReg0Value[eRFPath] |= 0x140;
 			rtl92e_set_bb_reg(dev, pPhyReg->rf3wireOffset,
 					  bMaskDWord,
 					  (priv->RfReg0Value[eRFPath] << 16));
 			NewOffset = Offset - 30;
-		} else if (Offset >= 16) {
+		पूर्ण अन्यथा अगर (Offset >= 16) अणु
 			priv->RfReg0Value[eRFPath] |= 0x100;
 			priv->RfReg0Value[eRFPath] &= (~0x40);
 			rtl92e_set_bb_reg(dev, pPhyReg->rf3wireOffset,
 					  bMaskDWord,
 					  (priv->RfReg0Value[eRFPath] << 16));
 			NewOffset = Offset - 15;
-		} else
+		पूर्ण अन्यथा
 			NewOffset = Offset;
-	} else {
+	पूर्ण अन्यथा अणु
 		RT_TRACE((COMP_PHY|COMP_ERR),
 			 "check RF type here, need to be 8256\n");
 		NewOffset = Offset;
-	}
+	पूर्ण
 
 	DataAndAddr = (NewOffset & 0x3f) | (Data << 16);
 
 	rtl92e_set_bb_reg(dev, pPhyReg->rf3wireOffset, bMaskDWord, DataAndAddr);
 
-	if (Offset == 0x0)
+	अगर (Offset == 0x0)
 		priv->RfReg0Value[eRFPath] = Data;
 
-	if (priv->rf_chip == RF_8256) {
-		if (Offset != 0) {
+	अगर (priv->rf_chip == RF_8256) अणु
+		अगर (Offset != 0) अणु
 			priv->RfReg0Value[eRFPath] &= 0xebf;
 			rtl92e_set_bb_reg(dev, pPhyReg->rf3wireOffset,
 					  bMaskDWord,
 					  (priv->RfReg0Value[eRFPath] << 16));
-		}
+		पूर्ण
 		rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter4, 0x300, 0x3);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void rtl92e_set_rf_reg(struct net_device *dev, enum rf90_radio_path eRFPath,
+व्योम rtl92e_set_rf_reg(काष्ठा net_device *dev, क्रमागत rf90_radio_path eRFPath,
 		       u32 RegAddr, u32 BitMask, u32 Data)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
-	u32 Original_Value, BitShift, New_Value;
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+	u32 Original_Value, BitShअगरt, New_Value;
 
-	if (!rtl92e_is_legal_rf_path(dev, eRFPath))
-		return;
-	if (priv->rtllib->eRFPowerState != eRfOn && !priv->being_init_adapter)
-		return;
+	अगर (!rtl92e_is_legal_rf_path(dev, eRFPath))
+		वापस;
+	अगर (priv->rtllib->eRFPowerState != eRfOn && !priv->being_init_adapter)
+		वापस;
 
 	RT_TRACE(COMP_PHY, "FW RF CTRL is not ready now\n");
-	if (priv->Rf_Mode == RF_OP_By_FW) {
-		if (BitMask != bMask12Bits) {
-			Original_Value = _rtl92e_phy_rf_fw_read(dev, eRFPath,
+	अगर (priv->Rf_Mode == RF_OP_By_FW) अणु
+		अगर (BitMask != bMask12Bits) अणु
+			Original_Value = _rtl92e_phy_rf_fw_पढ़ो(dev, eRFPath,
 								RegAddr);
-			BitShift =  _rtl92e_calculate_bit_shift(BitMask);
-			New_Value = (Original_Value & ~BitMask) | (Data << BitShift);
+			BitShअगरt =  _rtl92e_calculate_bit_shअगरt(BitMask);
+			New_Value = (Original_Value & ~BitMask) | (Data << BitShअगरt);
 
-			_rtl92e_phy_rf_fw_write(dev, eRFPath, RegAddr,
+			_rtl92e_phy_rf_fw_ग_लिखो(dev, eRFPath, RegAddr,
 						New_Value);
-		} else
-			_rtl92e_phy_rf_fw_write(dev, eRFPath, RegAddr, Data);
+		पूर्ण अन्यथा
+			_rtl92e_phy_rf_fw_ग_लिखो(dev, eRFPath, RegAddr, Data);
 		udelay(200);
 
-	} else {
-		if (BitMask != bMask12Bits) {
-			Original_Value = _rtl92e_phy_rf_read(dev, eRFPath,
+	पूर्ण अन्यथा अणु
+		अगर (BitMask != bMask12Bits) अणु
+			Original_Value = _rtl92e_phy_rf_पढ़ो(dev, eRFPath,
 							     RegAddr);
-			BitShift =  _rtl92e_calculate_bit_shift(BitMask);
-			New_Value = (Original_Value & ~BitMask) | (Data << BitShift);
+			BitShअगरt =  _rtl92e_calculate_bit_shअगरt(BitMask);
+			New_Value = (Original_Value & ~BitMask) | (Data << BitShअगरt);
 
-			_rtl92e_phy_rf_write(dev, eRFPath, RegAddr, New_Value);
-		} else
-			_rtl92e_phy_rf_write(dev, eRFPath, RegAddr, Data);
-	}
-}
+			_rtl92e_phy_rf_ग_लिखो(dev, eRFPath, RegAddr, New_Value);
+		पूर्ण अन्यथा
+			_rtl92e_phy_rf_ग_लिखो(dev, eRFPath, RegAddr, Data);
+	पूर्ण
+पूर्ण
 
-u32 rtl92e_get_rf_reg(struct net_device *dev, enum rf90_radio_path eRFPath,
+u32 rtl92e_get_rf_reg(काष्ठा net_device *dev, क्रमागत rf90_radio_path eRFPath,
 		      u32 RegAddr, u32 BitMask)
-{
-	u32 Original_Value, Readback_Value, BitShift;
-	struct r8192_priv *priv = rtllib_priv(dev);
+अणु
+	u32 Original_Value, Readback_Value, BitShअगरt;
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
-	if (!rtl92e_is_legal_rf_path(dev, eRFPath))
-		return 0;
-	if (priv->rtllib->eRFPowerState != eRfOn && !priv->being_init_adapter)
-		return	0;
+	अगर (!rtl92e_is_legal_rf_path(dev, eRFPath))
+		वापस 0;
+	अगर (priv->rtllib->eRFPowerState != eRfOn && !priv->being_init_adapter)
+		वापस	0;
 	mutex_lock(&priv->rf_mutex);
-	if (priv->Rf_Mode == RF_OP_By_FW) {
-		Original_Value = _rtl92e_phy_rf_fw_read(dev, eRFPath, RegAddr);
+	अगर (priv->Rf_Mode == RF_OP_By_FW) अणु
+		Original_Value = _rtl92e_phy_rf_fw_पढ़ो(dev, eRFPath, RegAddr);
 		udelay(200);
-	} else {
-		Original_Value = _rtl92e_phy_rf_read(dev, eRFPath, RegAddr);
-	}
-	BitShift =  _rtl92e_calculate_bit_shift(BitMask);
-	Readback_Value = (Original_Value & BitMask) >> BitShift;
+	पूर्ण अन्यथा अणु
+		Original_Value = _rtl92e_phy_rf_पढ़ो(dev, eRFPath, RegAddr);
+	पूर्ण
+	BitShअगरt =  _rtl92e_calculate_bit_shअगरt(BitMask);
+	Readback_Value = (Original_Value & BitMask) >> BitShअगरt;
 	mutex_unlock(&priv->rf_mutex);
-	return Readback_Value;
-}
+	वापस Readback_Value;
+पूर्ण
 
-static u32 _rtl92e_phy_rf_fw_read(struct net_device *dev,
-				  enum rf90_radio_path eRFPath, u32 Offset)
-{
+अटल u32 _rtl92e_phy_rf_fw_पढ़ो(काष्ठा net_device *dev,
+				  क्रमागत rf90_radio_path eRFPath, u32 Offset)
+अणु
 	u32		Data = 0;
-	u8		time = 0;
+	u8		समय = 0;
 
 	Data |= ((Offset & 0xFF) << 12);
 	Data |= ((eRFPath & 0x3) << 20);
 	Data |= 0x80000000;
-	while (rtl92e_readl(dev, QPNR) & 0x80000000) {
-		if (time++ < 100)
+	जबतक (rtl92e_पढ़ोl(dev, QPNR) & 0x80000000) अणु
+		अगर (समय++ < 100)
 			udelay(10);
-		else
-			break;
-	}
-	rtl92e_writel(dev, QPNR, Data);
-	while (rtl92e_readl(dev, QPNR) & 0x80000000) {
-		if (time++ < 100)
+		अन्यथा
+			अवरोध;
+	पूर्ण
+	rtl92e_ग_लिखोl(dev, QPNR, Data);
+	जबतक (rtl92e_पढ़ोl(dev, QPNR) & 0x80000000) अणु
+		अगर (समय++ < 100)
 			udelay(10);
-		else
-			return 0;
-	}
-	return rtl92e_readl(dev, RF_DATA);
+		अन्यथा
+			वापस 0;
+	पूर्ण
+	वापस rtl92e_पढ़ोl(dev, RF_DATA);
 
-}
+पूर्ण
 
-static void _rtl92e_phy_rf_fw_write(struct net_device *dev,
-				    enum rf90_radio_path eRFPath, u32 Offset,
+अटल व्योम _rtl92e_phy_rf_fw_ग_लिखो(काष्ठा net_device *dev,
+				    क्रमागत rf90_radio_path eRFPath, u32 Offset,
 				    u32 Data)
-{
-	u8	time = 0;
+अणु
+	u8	समय = 0;
 
 	Data |= ((Offset & 0xFF) << 12);
 	Data |= ((eRFPath & 0x3) << 20);
 	Data |= 0x400000;
 	Data |= 0x80000000;
 
-	while (rtl92e_readl(dev, QPNR) & 0x80000000) {
-		if (time++ < 100)
+	जबतक (rtl92e_पढ़ोl(dev, QPNR) & 0x80000000) अणु
+		अगर (समय++ < 100)
 			udelay(10);
-		else
-			break;
-	}
-	rtl92e_writel(dev, QPNR, Data);
+		अन्यथा
+			अवरोध;
+	पूर्ण
+	rtl92e_ग_लिखोl(dev, QPNR, Data);
 
-}
+पूर्ण
 
 
-void rtl92e_config_mac(struct net_device *dev)
-{
+व्योम rtl92e_config_mac(काष्ठा net_device *dev)
+अणु
 	u32 dwArrayLen = 0, i = 0;
-	u32 *pdwArray = NULL;
-	struct r8192_priv *priv = rtllib_priv(dev);
+	u32 *pdwArray = शून्य;
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
-	if (priv->bTXPowerDataReadFromEEPORM) {
+	अगर (priv->bTXPowerDataReadFromEEPORM) अणु
 		RT_TRACE(COMP_PHY, "Rtl819XMACPHY_Array_PG\n");
 		dwArrayLen = MACPHY_Array_PGLength;
 		pdwArray = Rtl819XMACPHY_Array_PG;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		RT_TRACE(COMP_PHY, "Read rtl819XMACPHY_Array\n");
 		dwArrayLen = MACPHY_ArrayLength;
 		pdwArray = Rtl819XMACPHY_Array;
-	}
-	for (i = 0; i < dwArrayLen; i += 3) {
+	पूर्ण
+	क्रम (i = 0; i < dwArrayLen; i += 3) अणु
 		RT_TRACE(COMP_DBG,
 			 "The Rtl8190MACPHY_Array[0] is %x Rtl8190MACPHY_Array[1] is %x Rtl8190MACPHY_Array[2] is %x\n",
 			 pdwArray[i], pdwArray[i+1], pdwArray[i+2]);
-		if (pdwArray[i] == 0x318)
+		अगर (pdwArray[i] == 0x318)
 			pdwArray[i+2] = 0x00000800;
 		rtl92e_set_bb_reg(dev, pdwArray[i], pdwArray[i+1],
 				  pdwArray[i+2]);
-	}
-	return;
+	पूर्ण
+	वापस;
 
-}
+पूर्ण
 
-static void _rtl92e_phy_config_bb(struct net_device *dev, u8 ConfigType)
-{
-	int i;
-	u32 *Rtl819XPHY_REGArray_Table = NULL;
-	u32 *Rtl819XAGCTAB_Array_Table = NULL;
+अटल व्योम _rtl92e_phy_config_bb(काष्ठा net_device *dev, u8 ConfigType)
+अणु
+	पूर्णांक i;
+	u32 *Rtl819XPHY_REGArray_Table = शून्य;
+	u32 *Rtl819XAGCTAB_Array_Table = शून्य;
 	u16 AGCTAB_ArrayLen, PHY_REGArrayLen = 0;
-	struct r8192_priv *priv = rtllib_priv(dev);
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
 	AGCTAB_ArrayLen = AGCTAB_ArrayLength;
 	Rtl819XAGCTAB_Array_Table = Rtl819XAGCTAB_Array;
-	if (priv->rf_type == RF_2T4R) {
+	अगर (priv->rf_type == RF_2T4R) अणु
 		PHY_REGArrayLen = PHY_REGArrayLength;
 		Rtl819XPHY_REGArray_Table = Rtl819XPHY_REGArray;
-	} else if (priv->rf_type == RF_1T2R) {
+	पूर्ण अन्यथा अगर (priv->rf_type == RF_1T2R) अणु
 		PHY_REGArrayLen = PHY_REG_1T2RArrayLength;
 		Rtl819XPHY_REGArray_Table = Rtl819XPHY_REG_1T2RArray;
-	}
+	पूर्ण
 
-	if (ConfigType == BaseBand_Config_PHY_REG) {
-		for (i = 0; i < PHY_REGArrayLen; i += 2) {
+	अगर (ConfigType == BaseBand_Config_PHY_REG) अणु
+		क्रम (i = 0; i < PHY_REGArrayLen; i += 2) अणु
 			rtl92e_set_bb_reg(dev, Rtl819XPHY_REGArray_Table[i],
 					  bMaskDWord,
 					  Rtl819XPHY_REGArray_Table[i+1]);
@@ -361,9 +362,9 @@ static void _rtl92e_phy_config_bb(struct net_device *dev, u8 ConfigType)
 				 "i: %x, The Rtl819xUsbPHY_REGArray[0] is %x Rtl819xUsbPHY_REGArray[1] is %x\n",
 				 i, Rtl819XPHY_REGArray_Table[i],
 				 Rtl819XPHY_REGArray_Table[i+1]);
-		}
-	} else if (ConfigType == BaseBand_Config_AGC_TAB) {
-		for (i = 0; i < AGCTAB_ArrayLen; i += 2) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (ConfigType == BaseBand_Config_AGC_TAB) अणु
+		क्रम (i = 0; i < AGCTAB_ArrayLen; i += 2) अणु
 			rtl92e_set_bb_reg(dev, Rtl819XAGCTAB_Array_Table[i],
 					  bMaskDWord,
 					  Rtl819XAGCTAB_Array_Table[i+1]);
@@ -371,33 +372,33 @@ static void _rtl92e_phy_config_bb(struct net_device *dev, u8 ConfigType)
 				 "i:%x, The rtl819XAGCTAB_Array[0] is %x rtl819XAGCTAB_Array[1] is %x\n",
 				 i, Rtl819XAGCTAB_Array_Table[i],
 				 Rtl819XAGCTAB_Array_Table[i+1]);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void _rtl92e_init_bb_rf_reg_def(struct net_device *dev)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+अटल व्योम _rtl92e_init_bb_rf_reg_def(काष्ठा net_device *dev)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
-	priv->PHYRegDef[RF90_PATH_A].rfintfs = rFPGA0_XAB_RFInterfaceSW;
-	priv->PHYRegDef[RF90_PATH_B].rfintfs = rFPGA0_XAB_RFInterfaceSW;
-	priv->PHYRegDef[RF90_PATH_C].rfintfs = rFPGA0_XCD_RFInterfaceSW;
-	priv->PHYRegDef[RF90_PATH_D].rfintfs = rFPGA0_XCD_RFInterfaceSW;
+	priv->PHYRegDef[RF90_PATH_A].rfपूर्णांकfs = rFPGA0_XAB_RFInterfaceSW;
+	priv->PHYRegDef[RF90_PATH_B].rfपूर्णांकfs = rFPGA0_XAB_RFInterfaceSW;
+	priv->PHYRegDef[RF90_PATH_C].rfपूर्णांकfs = rFPGA0_XCD_RFInterfaceSW;
+	priv->PHYRegDef[RF90_PATH_D].rfपूर्णांकfs = rFPGA0_XCD_RFInterfaceSW;
 
-	priv->PHYRegDef[RF90_PATH_A].rfintfi = rFPGA0_XAB_RFInterfaceRB;
-	priv->PHYRegDef[RF90_PATH_B].rfintfi = rFPGA0_XAB_RFInterfaceRB;
-	priv->PHYRegDef[RF90_PATH_C].rfintfi = rFPGA0_XCD_RFInterfaceRB;
-	priv->PHYRegDef[RF90_PATH_D].rfintfi = rFPGA0_XCD_RFInterfaceRB;
+	priv->PHYRegDef[RF90_PATH_A].rfपूर्णांकfi = rFPGA0_XAB_RFInterfaceRB;
+	priv->PHYRegDef[RF90_PATH_B].rfपूर्णांकfi = rFPGA0_XAB_RFInterfaceRB;
+	priv->PHYRegDef[RF90_PATH_C].rfपूर्णांकfi = rFPGA0_XCD_RFInterfaceRB;
+	priv->PHYRegDef[RF90_PATH_D].rfपूर्णांकfi = rFPGA0_XCD_RFInterfaceRB;
 
-	priv->PHYRegDef[RF90_PATH_A].rfintfo = rFPGA0_XA_RFInterfaceOE;
-	priv->PHYRegDef[RF90_PATH_B].rfintfo = rFPGA0_XB_RFInterfaceOE;
-	priv->PHYRegDef[RF90_PATH_C].rfintfo = rFPGA0_XC_RFInterfaceOE;
-	priv->PHYRegDef[RF90_PATH_D].rfintfo = rFPGA0_XD_RFInterfaceOE;
+	priv->PHYRegDef[RF90_PATH_A].rfपूर्णांकfo = rFPGA0_XA_RFInterfaceOE;
+	priv->PHYRegDef[RF90_PATH_B].rfपूर्णांकfo = rFPGA0_XB_RFInterfaceOE;
+	priv->PHYRegDef[RF90_PATH_C].rfपूर्णांकfo = rFPGA0_XC_RFInterfaceOE;
+	priv->PHYRegDef[RF90_PATH_D].rfपूर्णांकfo = rFPGA0_XD_RFInterfaceOE;
 
-	priv->PHYRegDef[RF90_PATH_A].rfintfe = rFPGA0_XA_RFInterfaceOE;
-	priv->PHYRegDef[RF90_PATH_B].rfintfe = rFPGA0_XB_RFInterfaceOE;
-	priv->PHYRegDef[RF90_PATH_C].rfintfe = rFPGA0_XC_RFInterfaceOE;
-	priv->PHYRegDef[RF90_PATH_D].rfintfe = rFPGA0_XD_RFInterfaceOE;
+	priv->PHYRegDef[RF90_PATH_A].rfपूर्णांकfe = rFPGA0_XA_RFInterfaceOE;
+	priv->PHYRegDef[RF90_PATH_B].rfपूर्णांकfe = rFPGA0_XB_RFInterfaceOE;
+	priv->PHYRegDef[RF90_PATH_C].rfपूर्णांकfe = rFPGA0_XC_RFInterfaceOE;
+	priv->PHYRegDef[RF90_PATH_D].rfपूर्णांकfe = rFPGA0_XD_RFInterfaceOE;
 
 	priv->PHYRegDef[RF90_PATH_A].rf3wireOffset = rFPGA0_XA_LSSIParameter;
 	priv->PHYRegDef[RF90_PATH_B].rf3wireOffset = rFPGA0_XB_LSSIParameter;
@@ -464,15 +465,15 @@ static void _rtl92e_init_bb_rf_reg_def(struct net_device *dev)
 	priv->PHYRegDef[RF90_PATH_C].rfLSSIReadBack = rFPGA0_XC_LSSIReadBack;
 	priv->PHYRegDef[RF90_PATH_D].rfLSSIReadBack = rFPGA0_XD_LSSIReadBack;
 
-}
+पूर्ण
 
-bool rtl92e_check_bb_and_rf(struct net_device *dev, enum hw90_block CheckBlock,
-			    enum rf90_radio_path eRFPath)
-{
+bool rtl92e_check_bb_and_rf(काष्ठा net_device *dev, क्रमागत hw90_block CheckBlock,
+			    क्रमागत rf90_radio_path eRFPath)
+अणु
 	bool ret = true;
 	u32 i, CheckTimes = 4, dwRegRead = 0;
 	u32 WriteAddr[4];
-	u32 WriteData[] = {0xfffff027, 0xaa55a02f, 0x00000027, 0x55aa502f};
+	u32 WriteData[] = अणु0xfffff027, 0xaa55a02f, 0x00000027, 0x55aa502fपूर्ण;
 
 	WriteAddr[HW90_BLOCK_MAC] = 0x100;
 	WriteAddr[HW90_BLOCK_PHY0] = 0x900;
@@ -481,22 +482,22 @@ bool rtl92e_check_bb_and_rf(struct net_device *dev, enum hw90_block CheckBlock,
 	RT_TRACE(COMP_PHY, "=======>%s(), CheckBlock:%d\n", __func__,
 		 CheckBlock);
 
-	if (CheckBlock == HW90_BLOCK_MAC) {
+	अगर (CheckBlock == HW90_BLOCK_MAC) अणु
 		netdev_warn(dev, "%s(): No checks available for MAC block.\n",
 			    __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < CheckTimes; i++) {
-		switch (CheckBlock) {
-		case HW90_BLOCK_PHY0:
-		case HW90_BLOCK_PHY1:
-			rtl92e_writel(dev, WriteAddr[CheckBlock],
+	क्रम (i = 0; i < CheckTimes; i++) अणु
+		चयन (CheckBlock) अणु
+		हाल HW90_BLOCK_PHY0:
+		हाल HW90_BLOCK_PHY1:
+			rtl92e_ग_लिखोl(dev, WriteAddr[CheckBlock],
 				      WriteData[i]);
-			dwRegRead = rtl92e_readl(dev, WriteAddr[CheckBlock]);
-			break;
+			dwRegRead = rtl92e_पढ़ोl(dev, WriteAddr[CheckBlock]);
+			अवरोध;
 
-		case HW90_BLOCK_RF:
+		हाल HW90_BLOCK_RF:
 			WriteData[i] &= 0xfff;
 			rtl92e_set_rf_reg(dev, eRFPath,
 					  WriteAddr[HW90_BLOCK_RF],
@@ -506,63 +507,63 @@ bool rtl92e_check_bb_and_rf(struct net_device *dev, enum hw90_block CheckBlock,
 						      WriteAddr[HW90_BLOCK_RF],
 						      bMaskDWord);
 			mdelay(10);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			ret = false;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 
-		if (dwRegRead != WriteData[i]) {
+		अगर (dwRegRead != WriteData[i]) अणु
 			netdev_warn(dev, "%s(): Check failed.\n", __func__);
 			ret = false;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool _rtl92e_bb_config_para_file(struct net_device *dev)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+अटल bool _rtl92e_bb_config_para_file(काष्ठा net_device *dev)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 	bool rtStatus = true;
 	u8 bRegValue = 0, eCheckItem = 0;
 	u32 dwRegValue = 0;
 
-	bRegValue = rtl92e_readb(dev, BB_GLOBAL_RESET);
-	rtl92e_writeb(dev, BB_GLOBAL_RESET, (bRegValue|BB_GLOBAL_RESET_BIT));
+	bRegValue = rtl92e_पढ़ोb(dev, BB_GLOBAL_RESET);
+	rtl92e_ग_लिखोb(dev, BB_GLOBAL_RESET, (bRegValue|BB_GLOBAL_RESET_BIT));
 
-	dwRegValue = rtl92e_readl(dev, CPU_GEN);
-	rtl92e_writel(dev, CPU_GEN, (dwRegValue&(~CPU_GEN_BB_RST)));
+	dwRegValue = rtl92e_पढ़ोl(dev, CPU_GEN);
+	rtl92e_ग_लिखोl(dev, CPU_GEN, (dwRegValue&(~CPU_GEN_BB_RST)));
 
-	for (eCheckItem = (enum hw90_block)HW90_BLOCK_PHY0;
-	     eCheckItem <= HW90_BLOCK_PHY1; eCheckItem++) {
+	क्रम (eCheckItem = (क्रमागत hw90_block)HW90_BLOCK_PHY0;
+	     eCheckItem <= HW90_BLOCK_PHY1; eCheckItem++) अणु
 		rtStatus  = rtl92e_check_bb_and_rf(dev,
-						   (enum hw90_block)eCheckItem,
-						   (enum rf90_radio_path)0);
-		if (!rtStatus) {
+						   (क्रमागत hw90_block)eCheckItem,
+						   (क्रमागत rf90_radio_path)0);
+		अगर (!rtStatus) अणु
 			RT_TRACE((COMP_ERR | COMP_PHY),
 				 "rtl92e_config_rf():Check PHY%d Fail!!\n",
 				 eCheckItem-1);
-			return rtStatus;
-		}
-	}
+			वापस rtStatus;
+		पूर्ण
+	पूर्ण
 	rtl92e_set_bb_reg(dev, rFPGA0_RFMOD, bCCKEn|bOFDMEn, 0x0);
 	_rtl92e_phy_config_bb(dev, BaseBand_Config_PHY_REG);
 
-	dwRegValue = rtl92e_readl(dev, CPU_GEN);
-	rtl92e_writel(dev, CPU_GEN, (dwRegValue|CPU_GEN_BB_RST));
+	dwRegValue = rtl92e_पढ़ोl(dev, CPU_GEN);
+	rtl92e_ग_लिखोl(dev, CPU_GEN, (dwRegValue|CPU_GEN_BB_RST));
 
 	_rtl92e_phy_config_bb(dev, BaseBand_Config_AGC_TAB);
 
-	if (priv->IC_Cut  > VERSION_8190_BD) {
-		if (priv->rf_type == RF_2T4R)
-			dwRegValue = priv->AntennaTxPwDiff[2]<<8 |
-				      priv->AntennaTxPwDiff[1]<<4 |
-				      priv->AntennaTxPwDiff[0];
-		else
+	अगर (priv->IC_Cut  > VERSION_8190_BD) अणु
+		अगर (priv->rf_type == RF_2T4R)
+			dwRegValue = priv->AntennaTxPwDअगरf[2]<<8 |
+				      priv->AntennaTxPwDअगरf[1]<<4 |
+				      priv->AntennaTxPwDअगरf[0];
+		अन्यथा
 			dwRegValue = 0x0;
 		rtl92e_set_bb_reg(dev, rFPGA0_TxGainStage,
 				  (bXBTxAGC|bXCTxAGC|bXDTxAGC), dwRegValue);
@@ -571,227 +572,227 @@ static bool _rtl92e_bb_config_para_file(struct net_device *dev)
 		dwRegValue = priv->CrystalCap;
 		rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter1, bXtalCap92x,
 				  dwRegValue);
-	}
+	पूर्ण
 
-	return rtStatus;
-}
-bool rtl92e_config_bb(struct net_device *dev)
-{
+	वापस rtStatus;
+पूर्ण
+bool rtl92e_config_bb(काष्ठा net_device *dev)
+अणु
 	_rtl92e_init_bb_rf_reg_def(dev);
-	return _rtl92e_bb_config_para_file(dev);
-}
+	वापस _rtl92e_bb_config_para_file(dev);
+पूर्ण
 
-void rtl92e_get_tx_power(struct net_device *dev)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+व्योम rtl92e_get_tx_घातer(काष्ठा net_device *dev)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
 	priv->MCSTxPowerLevelOriginalOffset[0] =
-		rtl92e_readl(dev, rTxAGC_Rate18_06);
+		rtl92e_पढ़ोl(dev, rTxAGC_Rate18_06);
 	priv->MCSTxPowerLevelOriginalOffset[1] =
-		rtl92e_readl(dev, rTxAGC_Rate54_24);
+		rtl92e_पढ़ोl(dev, rTxAGC_Rate54_24);
 	priv->MCSTxPowerLevelOriginalOffset[2] =
-		rtl92e_readl(dev, rTxAGC_Mcs03_Mcs00);
+		rtl92e_पढ़ोl(dev, rTxAGC_Mcs03_Mcs00);
 	priv->MCSTxPowerLevelOriginalOffset[3] =
-		rtl92e_readl(dev, rTxAGC_Mcs07_Mcs04);
+		rtl92e_पढ़ोl(dev, rTxAGC_Mcs07_Mcs04);
 	priv->MCSTxPowerLevelOriginalOffset[4] =
-		rtl92e_readl(dev, rTxAGC_Mcs11_Mcs08);
+		rtl92e_पढ़ोl(dev, rTxAGC_Mcs11_Mcs08);
 	priv->MCSTxPowerLevelOriginalOffset[5] =
-		rtl92e_readl(dev, rTxAGC_Mcs15_Mcs12);
+		rtl92e_पढ़ोl(dev, rTxAGC_Mcs15_Mcs12);
 
-	priv->DefaultInitialGain[0] = rtl92e_readb(dev, rOFDM0_XAAGCCore1);
-	priv->DefaultInitialGain[1] = rtl92e_readb(dev, rOFDM0_XBAGCCore1);
-	priv->DefaultInitialGain[2] = rtl92e_readb(dev, rOFDM0_XCAGCCore1);
-	priv->DefaultInitialGain[3] = rtl92e_readb(dev, rOFDM0_XDAGCCore1);
+	priv->DefaultInitialGain[0] = rtl92e_पढ़ोb(dev, rOFDM0_XAAGCCore1);
+	priv->DefaultInitialGain[1] = rtl92e_पढ़ोb(dev, rOFDM0_XBAGCCore1);
+	priv->DefaultInitialGain[2] = rtl92e_पढ़ोb(dev, rOFDM0_XCAGCCore1);
+	priv->DefaultInitialGain[3] = rtl92e_पढ़ोb(dev, rOFDM0_XDAGCCore1);
 	RT_TRACE(COMP_INIT,
 		 "Default initial gain (c50=0x%x, c58=0x%x, c60=0x%x, c68=0x%x)\n",
 		 priv->DefaultInitialGain[0], priv->DefaultInitialGain[1],
 		 priv->DefaultInitialGain[2], priv->DefaultInitialGain[3]);
 
-	priv->framesync = rtl92e_readb(dev, rOFDM0_RxDetector3);
-	priv->framesyncC34 = rtl92e_readl(dev, rOFDM0_RxDetector2);
+	priv->framesync = rtl92e_पढ़ोb(dev, rOFDM0_RxDetector3);
+	priv->framesyncC34 = rtl92e_पढ़ोl(dev, rOFDM0_RxDetector2);
 	RT_TRACE(COMP_INIT, "Default framesync (0x%x) = 0x%x\n",
 		rOFDM0_RxDetector3, priv->framesync);
-	priv->SifsTime = rtl92e_readw(dev, SIFS);
-}
+	priv->SअगरsTime = rtl92e_पढ़ोw(dev, SIFS);
+पूर्ण
 
-void rtl92e_set_tx_power(struct net_device *dev, u8 channel)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
-	u8	powerlevel = 0, powerlevelOFDM24G = 0;
-	s8	ant_pwr_diff;
+व्योम rtl92e_set_tx_घातer(काष्ठा net_device *dev, u8 channel)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+	u8	घातerlevel = 0, घातerlevelOFDM24G = 0;
+	s8	ant_pwr_dअगरf;
 	u32	u4RegValue;
 
-	if (priv->epromtype == EEPROM_93C46) {
-		powerlevel = priv->TxPowerLevelCCK[channel-1];
-		powerlevelOFDM24G = priv->TxPowerLevelOFDM24G[channel-1];
-	} else if (priv->epromtype == EEPROM_93C56) {
-		if (priv->rf_type == RF_1T2R) {
-			powerlevel = priv->TxPowerLevelCCK_C[channel-1];
-			powerlevelOFDM24G = priv->TxPowerLevelOFDM24G_C[channel-1];
-		} else if (priv->rf_type == RF_2T4R) {
-			powerlevel = priv->TxPowerLevelCCK_A[channel-1];
-			powerlevelOFDM24G = priv->TxPowerLevelOFDM24G_A[channel-1];
+	अगर (priv->epromtype == EEPROM_93C46) अणु
+		घातerlevel = priv->TxPowerLevelCCK[channel-1];
+		घातerlevelOFDM24G = priv->TxPowerLevelOFDM24G[channel-1];
+	पूर्ण अन्यथा अगर (priv->epromtype == EEPROM_93C56) अणु
+		अगर (priv->rf_type == RF_1T2R) अणु
+			घातerlevel = priv->TxPowerLevelCCK_C[channel-1];
+			घातerlevelOFDM24G = priv->TxPowerLevelOFDM24G_C[channel-1];
+		पूर्ण अन्यथा अगर (priv->rf_type == RF_2T4R) अणु
+			घातerlevel = priv->TxPowerLevelCCK_A[channel-1];
+			घातerlevelOFDM24G = priv->TxPowerLevelOFDM24G_A[channel-1];
 
-			ant_pwr_diff = priv->TxPowerLevelOFDM24G_C[channel-1]
+			ant_pwr_dअगरf = priv->TxPowerLevelOFDM24G_C[channel-1]
 				       - priv->TxPowerLevelOFDM24G_A[channel-1];
 
-			priv->RF_C_TxPwDiff = ant_pwr_diff;
+			priv->RF_C_TxPwDअगरf = ant_pwr_dअगरf;
 
-			ant_pwr_diff &= 0xf;
+			ant_pwr_dअगरf &= 0xf;
 
-			priv->AntennaTxPwDiff[2] = 0;
-			priv->AntennaTxPwDiff[1] = (u8)(ant_pwr_diff);
-			priv->AntennaTxPwDiff[0] = 0;
+			priv->AntennaTxPwDअगरf[2] = 0;
+			priv->AntennaTxPwDअगरf[1] = (u8)(ant_pwr_dअगरf);
+			priv->AntennaTxPwDअगरf[0] = 0;
 
-			u4RegValue = priv->AntennaTxPwDiff[2]<<8 |
-				      priv->AntennaTxPwDiff[1]<<4 |
-				      priv->AntennaTxPwDiff[0];
+			u4RegValue = priv->AntennaTxPwDअगरf[2]<<8 |
+				      priv->AntennaTxPwDअगरf[1]<<4 |
+				      priv->AntennaTxPwDअगरf[0];
 
 			rtl92e_set_bb_reg(dev, rFPGA0_TxGainStage,
 					  (bXBTxAGC|bXCTxAGC|bXDTxAGC),
 					  u4RegValue);
-		}
-	}
-	switch (priv->rf_chip) {
-	case RF_8225:
-		break;
-	case RF_8256:
-		rtl92e_set_cck_tx_power(dev, powerlevel);
-		rtl92e_set_ofdm_tx_power(dev, powerlevelOFDM24G);
-		break;
-	case RF_8258:
-		break;
-	default:
+		पूर्ण
+	पूर्ण
+	चयन (priv->rf_chip) अणु
+	हाल RF_8225:
+		अवरोध;
+	हाल RF_8256:
+		rtl92e_set_cck_tx_घातer(dev, घातerlevel);
+		rtl92e_set_ofdm_tx_घातer(dev, घातerlevelOFDM24G);
+		अवरोध;
+	हाल RF_8258:
+		अवरोध;
+	शेष:
 		netdev_err(dev, "Invalid RF Chip ID.\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-bool rtl92e_config_phy(struct net_device *dev)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+bool rtl92e_config_phy(काष्ठा net_device *dev)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 	bool rtStatus = true;
 
-	switch (priv->rf_chip) {
-	case RF_8225:
-		break;
-	case RF_8256:
+	चयन (priv->rf_chip) अणु
+	हाल RF_8225:
+		अवरोध;
+	हाल RF_8256:
 		rtStatus = rtl92e_config_rf(dev);
-		break;
+		अवरोध;
 
-	case RF_8258:
-		break;
-	case RF_PSEUDO_11N:
-		break;
+	हाल RF_8258:
+		अवरोध;
+	हाल RF_PSEUDO_11N:
+		अवरोध;
 
-	default:
+	शेष:
 		netdev_err(dev, "Invalid RF Chip ID.\n");
-		break;
-	}
-	return rtStatus;
-}
+		अवरोध;
+	पूर्ण
+	वापस rtStatus;
+पूर्ण
 
-u8 rtl92e_config_rf_path(struct net_device *dev, enum rf90_radio_path eRFPath)
-{
+u8 rtl92e_config_rf_path(काष्ठा net_device *dev, क्रमागत rf90_radio_path eRFPath)
+अणु
 
-	int i;
+	पूर्णांक i;
 
-	switch (eRFPath) {
-	case RF90_PATH_A:
-		for (i = 0; i < RadioA_ArrayLength; i += 2) {
-			if (Rtl819XRadioA_Array[i] == 0xfe) {
+	चयन (eRFPath) अणु
+	हाल RF90_PATH_A:
+		क्रम (i = 0; i < RadioA_ArrayLength; i += 2) अणु
+			अगर (Rtl819XRadioA_Array[i] == 0xfe) अणु
 				msleep(100);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			rtl92e_set_rf_reg(dev, eRFPath, Rtl819XRadioA_Array[i],
 					  bMask12Bits,
 					  Rtl819XRadioA_Array[i+1]);
 
-		}
-		break;
-	case RF90_PATH_B:
-		for (i = 0; i < RadioB_ArrayLength; i += 2) {
-			if (Rtl819XRadioB_Array[i] == 0xfe) {
+		पूर्ण
+		अवरोध;
+	हाल RF90_PATH_B:
+		क्रम (i = 0; i < RadioB_ArrayLength; i += 2) अणु
+			अगर (Rtl819XRadioB_Array[i] == 0xfe) अणु
 				msleep(100);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			rtl92e_set_rf_reg(dev, eRFPath, Rtl819XRadioB_Array[i],
 					  bMask12Bits,
 					  Rtl819XRadioB_Array[i+1]);
 
-		}
-		break;
-	case RF90_PATH_C:
-		for (i = 0; i < RadioC_ArrayLength; i += 2) {
-			if (Rtl819XRadioC_Array[i] == 0xfe) {
+		पूर्ण
+		अवरोध;
+	हाल RF90_PATH_C:
+		क्रम (i = 0; i < RadioC_ArrayLength; i += 2) अणु
+			अगर (Rtl819XRadioC_Array[i] == 0xfe) अणु
 				msleep(100);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			rtl92e_set_rf_reg(dev, eRFPath, Rtl819XRadioC_Array[i],
 					  bMask12Bits,
 					  Rtl819XRadioC_Array[i+1]);
 
-		}
-		break;
-	case RF90_PATH_D:
-		for (i = 0; i < RadioD_ArrayLength; i += 2) {
-			if (Rtl819XRadioD_Array[i] == 0xfe) {
+		पूर्ण
+		अवरोध;
+	हाल RF90_PATH_D:
+		क्रम (i = 0; i < RadioD_ArrayLength; i += 2) अणु
+			अगर (Rtl819XRadioD_Array[i] == 0xfe) अणु
 				msleep(100);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			rtl92e_set_rf_reg(dev, eRFPath, Rtl819XRadioD_Array[i],
 					  bMask12Bits,
 					  Rtl819XRadioD_Array[i+1]);
 
-		}
-		break;
-	default:
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static void _rtl92e_set_tx_power_level(struct net_device *dev, u8 channel)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
-	u8	powerlevel = priv->TxPowerLevelCCK[channel-1];
-	u8	powerlevelOFDM24G = priv->TxPowerLevelOFDM24G[channel-1];
+अटल व्योम _rtl92e_set_tx_घातer_level(काष्ठा net_device *dev, u8 channel)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+	u8	घातerlevel = priv->TxPowerLevelCCK[channel-1];
+	u8	घातerlevelOFDM24G = priv->TxPowerLevelOFDM24G[channel-1];
 
-	switch (priv->rf_chip) {
-	case RF_8225:
-		break;
+	चयन (priv->rf_chip) अणु
+	हाल RF_8225:
+		अवरोध;
 
-	case RF_8256:
-		rtl92e_set_cck_tx_power(dev, powerlevel);
-		rtl92e_set_ofdm_tx_power(dev, powerlevelOFDM24G);
-		break;
+	हाल RF_8256:
+		rtl92e_set_cck_tx_घातer(dev, घातerlevel);
+		rtl92e_set_ofdm_tx_घातer(dev, घातerlevelOFDM24G);
+		अवरोध;
 
-	case RF_8258:
-		break;
-	default:
+	हाल RF_8258:
+		अवरोध;
+	शेष:
 		netdev_warn(dev, "%s(): Invalid RF Chip ID\n", __func__);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static u8 _rtl92e_phy_set_sw_chnl_cmd_array(struct net_device *dev,
-					    struct sw_chnl_cmd *CmdTable,
+अटल u8 _rtl92e_phy_set_sw_chnl_cmd_array(काष्ठा net_device *dev,
+					    काष्ठा sw_chnl_cmd *CmdTable,
 					    u32 CmdTableIdx, u32 CmdTableSz,
-					    enum sw_chnl_cmd_id CmdID,
+					    क्रमागत sw_chnl_cmd_id CmdID,
 					    u32 Para1, u32 Para2, u32 msDelay)
-{
-	struct sw_chnl_cmd *pCmd;
+अणु
+	काष्ठा sw_chnl_cmd *pCmd;
 
-	if (CmdTable == NULL) {
+	अगर (CmdTable == शून्य) अणु
 		netdev_err(dev, "%s(): CmdTable cannot be NULL.\n", __func__);
-		return false;
-	}
-	if (CmdTableIdx >= CmdTableSz) {
+		वापस false;
+	पूर्ण
+	अगर (CmdTableIdx >= CmdTableSz) अणु
 		netdev_err(dev, "%s(): Invalid index requested.\n", __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	pCmd = CmdTable + CmdTableIdx;
 	pCmd->CmdID = CmdID;
@@ -799,29 +800,29 @@ static u8 _rtl92e_phy_set_sw_chnl_cmd_array(struct net_device *dev,
 	pCmd->Para2 = Para2;
 	pCmd->msDelay = msDelay;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static u8 _rtl92e_phy_switch_channel_step(struct net_device *dev, u8 channel,
+अटल u8 _rtl92e_phy_चयन_channel_step(काष्ठा net_device *dev, u8 channel,
 					  u8 *stage, u8 *step, u32 *delay)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
-	struct rtllib_device *ieee = priv->rtllib;
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+	काष्ठा rtllib_device *ieee = priv->rtllib;
 	u32					PreCommonCmdCnt;
 	u32					PostCommonCmdCnt;
 	u32					RfDependCmdCnt;
-	struct sw_chnl_cmd *CurrentCmd = NULL;
+	काष्ठा sw_chnl_cmd *CurrentCmd = शून्य;
 	u8		eRFPath;
 
 	RT_TRACE(COMP_TRACE, "====>%s()====stage:%d, step:%d, channel:%d\n",
 		  __func__, *stage, *step, channel);
 
-	if (!rtllib_legal_channel(priv->rtllib, channel)) {
+	अगर (!rtllib_legal_channel(priv->rtllib, channel)) अणु
 		netdev_err(dev, "Invalid channel requested: %d\n", channel);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	{
+	अणु
 		PreCommonCmdCnt = 0;
 		_rtl92e_phy_set_sw_chnl_cmd_array(dev, ieee->PreCommonCmd,
 						  PreCommonCmdCnt++,
@@ -841,14 +842,14 @@ static u8 _rtl92e_phy_switch_channel_step(struct net_device *dev, u8 channel,
 						  0, 0, 0);
 
 		RfDependCmdCnt = 0;
-		switch (priv->rf_chip) {
-		case RF_8225:
-			if (!(channel >= 1 && channel <= 14)) {
+		चयन (priv->rf_chip) अणु
+		हाल RF_8225:
+			अगर (!(channel >= 1 && channel <= 14)) अणु
 				netdev_err(dev,
 					   "Invalid channel requested for 8225: %d\n",
 					   channel);
-				return false;
-			}
+				वापस false;
+			पूर्ण
 			_rtl92e_phy_set_sw_chnl_cmd_array(dev,
 							  ieee->RfDependCmd,
 							  RfDependCmdCnt++,
@@ -862,15 +863,15 @@ static u8 _rtl92e_phy_switch_channel_step(struct net_device *dev, u8 channel,
 							  RfDependCmdCnt++,
 							  MAX_RFDEPENDCMD_CNT,
 							  CmdID_End, 0, 0, 0);
-			break;
+			अवरोध;
 
-		case RF_8256:
-			if (!(channel >= 1 && channel <= 14)) {
+		हाल RF_8256:
+			अगर (!(channel >= 1 && channel <= 14)) अणु
 				netdev_err(dev,
 					   "Invalid channel requested for 8256: %d\n",
 					   channel);
-				return false;
-			}
+				वापस false;
+			पूर्ण
 			_rtl92e_phy_set_sw_chnl_cmd_array(dev,
 							  ieee->RfDependCmd,
 							  RfDependCmdCnt++,
@@ -883,153 +884,153 @@ static u8 _rtl92e_phy_switch_channel_step(struct net_device *dev, u8 channel,
 							  RfDependCmdCnt++,
 							  MAX_RFDEPENDCMD_CNT,
 							  CmdID_End, 0, 0, 0);
-			break;
+			अवरोध;
 
-		case RF_8258:
-			break;
+		हाल RF_8258:
+			अवरोध;
 
-		default:
+		शेष:
 			netdev_warn(dev, "Unknown RF Chip ID\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 
-		do {
-			switch (*stage) {
-			case 0:
+		करो अणु
+			चयन (*stage) अणु
+			हाल 0:
 				CurrentCmd = &ieee->PreCommonCmd[*step];
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				CurrentCmd = &ieee->RfDependCmd[*step];
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				CurrentCmd = &ieee->PostCommonCmd[*step];
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (CurrentCmd && CurrentCmd->CmdID == CmdID_End) {
-				if ((*stage) == 2)
-					return true;
+			अगर (CurrentCmd && CurrentCmd->CmdID == CmdID_End) अणु
+				अगर ((*stage) == 2)
+					वापस true;
 				(*stage)++;
 				(*step) = 0;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (!CurrentCmd)
-				continue;
-			switch (CurrentCmd->CmdID) {
-			case CmdID_SetTxPowerLevel:
-				if (priv->IC_Cut > (u8)VERSION_8190_BD)
-					_rtl92e_set_tx_power_level(dev,
+			अगर (!CurrentCmd)
+				जारी;
+			चयन (CurrentCmd->CmdID) अणु
+			हाल CmdID_SetTxPowerLevel:
+				अगर (priv->IC_Cut > (u8)VERSION_8190_BD)
+					_rtl92e_set_tx_घातer_level(dev,
 								   channel);
-				break;
-			case CmdID_WritePortUlong:
-				rtl92e_writel(dev, CurrentCmd->Para1,
+				अवरोध;
+			हाल CmdID_WritePortUदीर्घ:
+				rtl92e_ग_लिखोl(dev, CurrentCmd->Para1,
 					      CurrentCmd->Para2);
-				break;
-			case CmdID_WritePortUshort:
-				rtl92e_writew(dev, CurrentCmd->Para1,
+				अवरोध;
+			हाल CmdID_WritePortUलघु:
+				rtl92e_ग_लिखोw(dev, CurrentCmd->Para1,
 					      (u16)CurrentCmd->Para2);
-				break;
-			case CmdID_WritePortUchar:
-				rtl92e_writeb(dev, CurrentCmd->Para1,
+				अवरोध;
+			हाल CmdID_WritePortUअक्षर:
+				rtl92e_ग_लिखोb(dev, CurrentCmd->Para1,
 					      (u8)CurrentCmd->Para2);
-				break;
-			case CmdID_RF_WriteReg:
-				for (eRFPath = 0; eRFPath <
+				अवरोध;
+			हाल CmdID_RF_WriteReg:
+				क्रम (eRFPath = 0; eRFPath <
 				     priv->NumTotalRFPath; eRFPath++)
 					rtl92e_set_rf_reg(dev,
-						 (enum rf90_radio_path)eRFPath,
+						 (क्रमागत rf90_radio_path)eRFPath,
 						 CurrentCmd->Para1, bMask12Bits,
 						 CurrentCmd->Para2<<7);
-				break;
-			default:
-				break;
-			}
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
 
-			break;
-		} while (true);
-	} /*for (Number of RF paths)*/
+			अवरोध;
+		पूर्ण जबतक (true);
+	पूर्ण /*क्रम (Number of RF paths)*/
 
 	(*delay) = CurrentCmd->msDelay;
 	(*step)++;
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void _rtl92e_phy_switch_channel(struct net_device *dev, u8 channel)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+अटल व्योम _rtl92e_phy_चयन_channel(काष्ठा net_device *dev, u8 channel)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 	u32 delay = 0;
 
-	while (!_rtl92e_phy_switch_channel_step(dev, channel,
+	जबतक (!_rtl92e_phy_चयन_channel_step(dev, channel,
 						&priv->SwChnlStage,
-						&priv->SwChnlStep, &delay)) {
-		if (delay > 0)
+						&priv->SwChnlStep, &delay)) अणु
+		अगर (delay > 0)
 			msleep(delay);
-		if (!priv->up)
-			break;
-	}
-}
+		अगर (!priv->up)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static void _rtl92e_phy_switch_channel_work_item(struct net_device *dev)
-{
+अटल व्योम _rtl92e_phy_चयन_channel_work_item(काष्ठा net_device *dev)
+अणु
 
-	struct r8192_priv *priv = rtllib_priv(dev);
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
 	RT_TRACE(COMP_TRACE, "==> SwChnlCallback819xUsbWorkItem()\n");
 
 	RT_TRACE(COMP_TRACE, "=====>--%s(), set chan:%d, priv:%p\n", __func__,
 		 priv->chan, priv);
 
-	_rtl92e_phy_switch_channel(dev, priv->chan);
+	_rtl92e_phy_चयन_channel(dev, priv->chan);
 
 	RT_TRACE(COMP_TRACE, "<== SwChnlCallback819xUsbWorkItem()\n");
-}
+पूर्ण
 
-u8 rtl92e_set_channel(struct net_device *dev, u8 channel)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+u8 rtl92e_set_channel(काष्ठा net_device *dev, u8 channel)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
 	RT_TRACE(COMP_PHY, "=====>%s()\n", __func__);
-	if (!priv->up) {
+	अगर (!priv->up) अणु
 		netdev_err(dev, "%s(): Driver is not initialized\n", __func__);
-		return false;
-	}
-	if (priv->SwChnlInProgress)
-		return false;
+		वापस false;
+	पूर्ण
+	अगर (priv->SwChnlInProgress)
+		वापस false;
 
 
-	switch (priv->rtllib->mode) {
-	case WIRELESS_MODE_A:
-	case WIRELESS_MODE_N_5G:
-		if (channel <= 14) {
+	चयन (priv->rtllib->mode) अणु
+	हाल WIRELESS_MODE_A:
+	हाल WIRELESS_MODE_N_5G:
+		अगर (channel <= 14) अणु
 			netdev_warn(dev,
 				    "Channel %d not available in 802.11a.\n",
 				    channel);
-			return false;
-		}
-		break;
-	case WIRELESS_MODE_B:
-		if (channel > 14) {
+			वापस false;
+		पूर्ण
+		अवरोध;
+	हाल WIRELESS_MODE_B:
+		अगर (channel > 14) अणु
 			netdev_warn(dev,
 				    "Channel %d not available in 802.11b.\n",
 				    channel);
-			return false;
-		}
-		break;
-	case WIRELESS_MODE_G:
-	case WIRELESS_MODE_N_24G:
-		if (channel > 14) {
+			वापस false;
+		पूर्ण
+		अवरोध;
+	हाल WIRELESS_MODE_G:
+	हाल WIRELESS_MODE_N_24G:
+		अगर (channel > 14) अणु
 			netdev_warn(dev,
 				    "Channel %d not available in 802.11g.\n",
 				    channel);
-			return false;
-		}
-		break;
-	}
+			वापस false;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	priv->SwChnlInProgress = true;
-	if (channel == 0)
+	अगर (channel == 0)
 		channel = 1;
 
 	priv->chan = channel;
@@ -1037,121 +1038,121 @@ u8 rtl92e_set_channel(struct net_device *dev, u8 channel)
 	priv->SwChnlStage = 0;
 	priv->SwChnlStep = 0;
 
-	if (priv->up)
-		_rtl92e_phy_switch_channel_work_item(dev);
+	अगर (priv->up)
+		_rtl92e_phy_चयन_channel_work_item(dev);
 	priv->SwChnlInProgress = false;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void _rtl92e_cck_tx_power_track_bw_switch_tssi(struct net_device *dev)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+अटल व्योम _rtl92e_cck_tx_घातer_track_bw_चयन_tssi(काष्ठा net_device *dev)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
-	switch (priv->CurrentChannelBW) {
-	case HT_CHANNEL_WIDTH_20:
+	चयन (priv->CurrentChannelBW) अणु
+	हाल HT_CHANNEL_WIDTH_20:
 		priv->CCKPresentAttentuation =
-			priv->CCKPresentAttentuation_20Mdefault +
-			    priv->CCKPresentAttentuation_difference;
+			priv->CCKPresentAttentuation_20Mशेष +
+			    priv->CCKPresentAttentuation_dअगरference;
 
-		if (priv->CCKPresentAttentuation >
+		अगर (priv->CCKPresentAttentuation >
 		    (CCKTxBBGainTableLength-1))
 			priv->CCKPresentAttentuation =
 					 CCKTxBBGainTableLength-1;
-		if (priv->CCKPresentAttentuation < 0)
+		अगर (priv->CCKPresentAttentuation < 0)
 			priv->CCKPresentAttentuation = 0;
 
 		RT_TRACE(COMP_POWER_TRACKING,
 			 "20M, priv->CCKPresentAttentuation = %d\n",
 			 priv->CCKPresentAttentuation);
 
-		if (priv->rtllib->current_network.channel == 14 &&
-		    !priv->bcck_in_ch14) {
+		अगर (priv->rtllib->current_network.channel == 14 &&
+		    !priv->bcck_in_ch14) अणु
 			priv->bcck_in_ch14 = true;
-			rtl92e_dm_cck_txpower_adjust(dev, priv->bcck_in_ch14);
-		} else if (priv->rtllib->current_network.channel !=
-			   14 && priv->bcck_in_ch14) {
+			rtl92e_dm_cck_txघातer_adjust(dev, priv->bcck_in_ch14);
+		पूर्ण अन्यथा अगर (priv->rtllib->current_network.channel !=
+			   14 && priv->bcck_in_ch14) अणु
 			priv->bcck_in_ch14 = false;
-			rtl92e_dm_cck_txpower_adjust(dev, priv->bcck_in_ch14);
-		} else {
-			rtl92e_dm_cck_txpower_adjust(dev, priv->bcck_in_ch14);
-		}
-		break;
+			rtl92e_dm_cck_txघातer_adjust(dev, priv->bcck_in_ch14);
+		पूर्ण अन्यथा अणु
+			rtl92e_dm_cck_txघातer_adjust(dev, priv->bcck_in_ch14);
+		पूर्ण
+		अवरोध;
 
-	case HT_CHANNEL_WIDTH_20_40:
+	हाल HT_CHANNEL_WIDTH_20_40:
 		priv->CCKPresentAttentuation =
-			priv->CCKPresentAttentuation_40Mdefault +
-			priv->CCKPresentAttentuation_difference;
+			priv->CCKPresentAttentuation_40Mशेष +
+			priv->CCKPresentAttentuation_dअगरference;
 
 		RT_TRACE(COMP_POWER_TRACKING,
 			 "40M, priv->CCKPresentAttentuation = %d\n",
 			 priv->CCKPresentAttentuation);
-		if (priv->CCKPresentAttentuation >
+		अगर (priv->CCKPresentAttentuation >
 		    (CCKTxBBGainTableLength - 1))
 			priv->CCKPresentAttentuation =
 					 CCKTxBBGainTableLength-1;
-		if (priv->CCKPresentAttentuation < 0)
+		अगर (priv->CCKPresentAttentuation < 0)
 			priv->CCKPresentAttentuation = 0;
 
-		if (priv->rtllib->current_network.channel == 14 &&
-		    !priv->bcck_in_ch14) {
+		अगर (priv->rtllib->current_network.channel == 14 &&
+		    !priv->bcck_in_ch14) अणु
 			priv->bcck_in_ch14 = true;
-			rtl92e_dm_cck_txpower_adjust(dev, priv->bcck_in_ch14);
-		} else if (priv->rtllib->current_network.channel != 14
-			   && priv->bcck_in_ch14) {
+			rtl92e_dm_cck_txघातer_adjust(dev, priv->bcck_in_ch14);
+		पूर्ण अन्यथा अगर (priv->rtllib->current_network.channel != 14
+			   && priv->bcck_in_ch14) अणु
 			priv->bcck_in_ch14 = false;
-			rtl92e_dm_cck_txpower_adjust(dev, priv->bcck_in_ch14);
-		} else {
-			rtl92e_dm_cck_txpower_adjust(dev, priv->bcck_in_ch14);
-		}
-		break;
-	}
-}
+			rtl92e_dm_cck_txघातer_adjust(dev, priv->bcck_in_ch14);
+		पूर्ण अन्यथा अणु
+			rtl92e_dm_cck_txघातer_adjust(dev, priv->bcck_in_ch14);
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void _rtl92e_cck_tx_power_track_bw_switch_thermal(struct net_device *dev)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+अटल व्योम _rtl92e_cck_tx_घातer_track_bw_चयन_thermal(काष्ठा net_device *dev)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
-	if (priv->rtllib->current_network.channel == 14 &&
+	अगर (priv->rtllib->current_network.channel == 14 &&
 	    !priv->bcck_in_ch14)
 		priv->bcck_in_ch14 = true;
-	else if (priv->rtllib->current_network.channel != 14 &&
+	अन्यथा अगर (priv->rtllib->current_network.channel != 14 &&
 		 priv->bcck_in_ch14)
 		priv->bcck_in_ch14 = false;
 
-	switch (priv->CurrentChannelBW) {
-	case HT_CHANNEL_WIDTH_20:
-		if (priv->Record_CCK_20Mindex == 0)
+	चयन (priv->CurrentChannelBW) अणु
+	हाल HT_CHANNEL_WIDTH_20:
+		अगर (priv->Record_CCK_20Mindex == 0)
 			priv->Record_CCK_20Mindex = 6;
 		priv->CCK_index = priv->Record_CCK_20Mindex;
 		RT_TRACE(COMP_POWER_TRACKING,
 			 "20MHz, %s,CCK_index = %d\n", __func__,
 			 priv->CCK_index);
-	break;
+	अवरोध;
 
-	case HT_CHANNEL_WIDTH_20_40:
+	हाल HT_CHANNEL_WIDTH_20_40:
 		priv->CCK_index = priv->Record_CCK_40Mindex;
 		RT_TRACE(COMP_POWER_TRACKING,
 			 "40MHz, %s, CCK_index = %d\n", __func__,
 			 priv->CCK_index);
-	break;
-	}
-	rtl92e_dm_cck_txpower_adjust(dev, priv->bcck_in_ch14);
-}
+	अवरोध;
+	पूर्ण
+	rtl92e_dm_cck_txघातer_adjust(dev, priv->bcck_in_ch14);
+पूर्ण
 
-static void _rtl92e_cck_tx_power_track_bw_switch(struct net_device *dev)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+अटल व्योम _rtl92e_cck_tx_घातer_track_bw_चयन(काष्ठा net_device *dev)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
-	if (priv->IC_Cut >= IC_VersionCut_D)
-		_rtl92e_cck_tx_power_track_bw_switch_tssi(dev);
-	else
-		_rtl92e_cck_tx_power_track_bw_switch_thermal(dev);
-}
+	अगर (priv->IC_Cut >= IC_VersionCut_D)
+		_rtl92e_cck_tx_घातer_track_bw_चयन_tssi(dev);
+	अन्यथा
+		_rtl92e_cck_tx_घातer_track_bw_चयन_thermal(dev);
+पूर्ण
 
-static void _rtl92e_set_bw_mode_work_item(struct net_device *dev)
-{
+अटल व्योम _rtl92e_set_bw_mode_work_item(काष्ठा net_device *dev)
+अणु
 
-	struct r8192_priv *priv = rtllib_priv(dev);
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 	u8 regBwOpMode;
 
 	RT_TRACE(COMP_SWBW,
@@ -1160,60 +1161,60 @@ static void _rtl92e_set_bw_mode_work_item(struct net_device *dev)
 			 "20MHz" : "40MHz");
 
 
-	if (priv->rf_chip == RF_PSEUDO_11N) {
+	अगर (priv->rf_chip == RF_PSEUDO_11N) अणु
 		priv->SetBWModeInProgress = false;
-		return;
-	}
-	if (!priv->up) {
+		वापस;
+	पूर्ण
+	अगर (!priv->up) अणु
 		netdev_err(dev, "%s(): Driver is not initialized\n", __func__);
-		return;
-	}
-	regBwOpMode = rtl92e_readb(dev, BW_OPMODE);
+		वापस;
+	पूर्ण
+	regBwOpMode = rtl92e_पढ़ोb(dev, BW_OPMODE);
 
-	switch (priv->CurrentChannelBW) {
-	case HT_CHANNEL_WIDTH_20:
+	चयन (priv->CurrentChannelBW) अणु
+	हाल HT_CHANNEL_WIDTH_20:
 		regBwOpMode |= BW_OPMODE_20MHZ;
-		rtl92e_writeb(dev, BW_OPMODE, regBwOpMode);
-		break;
+		rtl92e_ग_लिखोb(dev, BW_OPMODE, regBwOpMode);
+		अवरोध;
 
-	case HT_CHANNEL_WIDTH_20_40:
+	हाल HT_CHANNEL_WIDTH_20_40:
 		regBwOpMode &= ~BW_OPMODE_20MHZ;
-		rtl92e_writeb(dev, BW_OPMODE, regBwOpMode);
-		break;
+		rtl92e_ग_लिखोb(dev, BW_OPMODE, regBwOpMode);
+		अवरोध;
 
-	default:
+	शेष:
 		netdev_err(dev, "%s(): unknown Bandwidth: %#X\n", __func__,
 			   priv->CurrentChannelBW);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (priv->CurrentChannelBW) {
-	case HT_CHANNEL_WIDTH_20:
+	चयन (priv->CurrentChannelBW) अणु
+	हाल HT_CHANNEL_WIDTH_20:
 		rtl92e_set_bb_reg(dev, rFPGA0_RFMOD, bRFMOD, 0x0);
 		rtl92e_set_bb_reg(dev, rFPGA1_RFMOD, bRFMOD, 0x0);
 
-		if (!priv->btxpower_tracking) {
-			rtl92e_writel(dev, rCCK0_TxFilter1, 0x1a1b0000);
-			rtl92e_writel(dev, rCCK0_TxFilter2, 0x090e1317);
-			rtl92e_writel(dev, rCCK0_DebugPort, 0x00000204);
-		} else {
-			_rtl92e_cck_tx_power_track_bw_switch(dev);
-		}
+		अगर (!priv->btxघातer_tracking) अणु
+			rtl92e_ग_लिखोl(dev, rCCK0_TxFilter1, 0x1a1b0000);
+			rtl92e_ग_लिखोl(dev, rCCK0_TxFilter2, 0x090e1317);
+			rtl92e_ग_लिखोl(dev, rCCK0_DebugPort, 0x00000204);
+		पूर्ण अन्यथा अणु
+			_rtl92e_cck_tx_घातer_track_bw_चयन(dev);
+		पूर्ण
 
 		rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter1, 0x00100000, 1);
 
-		break;
-	case HT_CHANNEL_WIDTH_20_40:
+		अवरोध;
+	हाल HT_CHANNEL_WIDTH_20_40:
 		rtl92e_set_bb_reg(dev, rFPGA0_RFMOD, bRFMOD, 0x1);
 		rtl92e_set_bb_reg(dev, rFPGA1_RFMOD, bRFMOD, 0x1);
 
-		if (!priv->btxpower_tracking) {
-			rtl92e_writel(dev, rCCK0_TxFilter1, 0x35360000);
-			rtl92e_writel(dev, rCCK0_TxFilter2, 0x121c252e);
-			rtl92e_writel(dev, rCCK0_DebugPort, 0x00000409);
-		} else {
-			_rtl92e_cck_tx_power_track_bw_switch(dev);
-		}
+		अगर (!priv->btxघातer_tracking) अणु
+			rtl92e_ग_लिखोl(dev, rCCK0_TxFilter1, 0x35360000);
+			rtl92e_ग_लिखोl(dev, rCCK0_TxFilter2, 0x121c252e);
+			rtl92e_ग_लिखोl(dev, rCCK0_DebugPort, 0x00000409);
+		पूर्ण अन्यथा अणु
+			_rtl92e_cck_tx_घातer_track_bw_चयन(dev);
+		पूर्ण
 
 		rtl92e_set_bb_reg(dev, rCCK0_System, bCCKSideBand,
 				  (priv->nCur40MhzPrimeSC>>1));
@@ -1221,81 +1222,81 @@ static void _rtl92e_set_bw_mode_work_item(struct net_device *dev)
 				  priv->nCur40MhzPrimeSC);
 
 		rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter1, 0x00100000, 0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_err(dev, "%s(): unknown Bandwidth: %#X\n", __func__,
 			   priv->CurrentChannelBW);
-		break;
+		अवरोध;
 
-	}
+	पूर्ण
 
-	switch (priv->rf_chip) {
-	case RF_8225:
-		break;
+	चयन (priv->rf_chip) अणु
+	हाल RF_8225:
+		अवरोध;
 
-	case RF_8256:
+	हाल RF_8256:
 		rtl92e_set_bandwidth(dev, priv->CurrentChannelBW);
-		break;
+		अवरोध;
 
-	case RF_8258:
-		break;
+	हाल RF_8258:
+		अवरोध;
 
-	case RF_PSEUDO_11N:
-		break;
+	हाल RF_PSEUDO_11N:
+		अवरोध;
 
-	default:
+	शेष:
 		netdev_info(dev, "%s(): Unknown RFChipID: %d\n", __func__,
 			    priv->rf_chip);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	atomic_dec(&(priv->rtllib->atm_swbw));
+	atomic_dec(&(priv->rtllib->aपंचांग_swbw));
 	priv->SetBWModeInProgress = false;
 
 	RT_TRACE(COMP_SWBW, "<==SetBWMode819xUsb()");
-}
+पूर्ण
 
-void rtl92e_set_bw_mode(struct net_device *dev, enum ht_channel_width Bandwidth,
-			enum ht_extchnl_offset Offset)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+व्योम rtl92e_set_bw_mode(काष्ठा net_device *dev, क्रमागत ht_channel_width Bandwidth,
+			क्रमागत ht_extchnl_offset Offset)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
 
-	if (priv->SetBWModeInProgress)
-		return;
+	अगर (priv->SetBWModeInProgress)
+		वापस;
 
-	atomic_inc(&(priv->rtllib->atm_swbw));
+	atomic_inc(&(priv->rtllib->aपंचांग_swbw));
 	priv->SetBWModeInProgress = true;
 
 	priv->CurrentChannelBW = Bandwidth;
 
-	if (Offset == HT_EXTCHNL_OFFSET_LOWER)
+	अगर (Offset == HT_EXTCHNL_OFFSET_LOWER)
 		priv->nCur40MhzPrimeSC = HAL_PRIME_CHNL_OFFSET_UPPER;
-	else if (Offset == HT_EXTCHNL_OFFSET_UPPER)
+	अन्यथा अगर (Offset == HT_EXTCHNL_OFFSET_UPPER)
 		priv->nCur40MhzPrimeSC = HAL_PRIME_CHNL_OFFSET_LOWER;
-	else
+	अन्यथा
 		priv->nCur40MhzPrimeSC = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
 
 	_rtl92e_set_bw_mode_work_item(dev);
 
-}
+पूर्ण
 
-void rtl92e_init_gain(struct net_device *dev, u8 Operation)
-{
-#define SCAN_RX_INITIAL_GAIN	0x17
-#define POWER_DETECTION_TH	0x08
-	struct r8192_priv *priv = rtllib_priv(dev);
+व्योम rtl92e_init_gain(काष्ठा net_device *dev, u8 Operation)
+अणु
+#घोषणा SCAN_RX_INITIAL_GAIN	0x17
+#घोषणा POWER_DETECTION_TH	0x08
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 	u32 BitMask;
 	u8 initial_gain;
 
-	if (priv->up) {
-		switch (Operation) {
-		case IG_Backup:
+	अगर (priv->up) अणु
+		चयन (Operation) अणु
+		हाल IG_Backup:
 			RT_TRACE(COMP_SCAN,
 				 "IG_Backup, backup the initial gain.\n");
 			initial_gain = SCAN_RX_INITIAL_GAIN;
 			BitMask = bMaskByte0;
-			if (dm_digtable.dig_algorithm ==
+			अगर (dm_digtable.dig_algorithm ==
 			    DIG_ALGO_BY_FALSE_ALARM)
 				rtl92e_set_bb_reg(dev, UFWP, bMaskByte1, 0x8);
 			priv->initgain_backup.xaagccore1 =
@@ -1332,19 +1333,19 @@ void rtl92e_init_gain(struct net_device *dev, u8 Operation)
 
 			RT_TRACE(COMP_SCAN, "Write scan initial gain = 0x%x\n",
 				 initial_gain);
-			rtl92e_writeb(dev, rOFDM0_XAAGCCore1, initial_gain);
-			rtl92e_writeb(dev, rOFDM0_XBAGCCore1, initial_gain);
-			rtl92e_writeb(dev, rOFDM0_XCAGCCore1, initial_gain);
-			rtl92e_writeb(dev, rOFDM0_XDAGCCore1, initial_gain);
+			rtl92e_ग_लिखोb(dev, rOFDM0_XAAGCCore1, initial_gain);
+			rtl92e_ग_लिखोb(dev, rOFDM0_XBAGCCore1, initial_gain);
+			rtl92e_ग_लिखोb(dev, rOFDM0_XCAGCCore1, initial_gain);
+			rtl92e_ग_लिखोb(dev, rOFDM0_XDAGCCore1, initial_gain);
 			RT_TRACE(COMP_SCAN, "Write scan 0xa0a = 0x%x\n",
 				 POWER_DETECTION_TH);
-			rtl92e_writeb(dev, 0xa0a, POWER_DETECTION_TH);
-			break;
-		case IG_Restore:
+			rtl92e_ग_लिखोb(dev, 0xa0a, POWER_DETECTION_TH);
+			अवरोध;
+		हाल IG_Restore:
 			RT_TRACE(COMP_SCAN,
 				 "IG_Restore, restore the initial gain.\n");
 			BitMask = 0x7f;
-			if (dm_digtable.dig_algorithm ==
+			अगर (dm_digtable.dig_algorithm ==
 			    DIG_ALGO_BY_FALSE_ALARM)
 				rtl92e_set_bb_reg(dev, UFWP, bMaskByte1, 0x8);
 
@@ -1376,22 +1377,22 @@ void rtl92e_init_gain(struct net_device *dev, u8 Operation)
 				 "Scan BBInitialGainRestore 0xa0a is %x\n",
 				 priv->initgain_backup.cca);
 
-			rtl92e_set_tx_power(dev,
+			rtl92e_set_tx_घातer(dev,
 					 priv->rtllib->current_network.channel);
 
-			if (dm_digtable.dig_algorithm ==
+			अगर (dm_digtable.dig_algorithm ==
 			    DIG_ALGO_BY_FALSE_ALARM)
 				rtl92e_set_bb_reg(dev, UFWP, bMaskByte1, 0x1);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			RT_TRACE(COMP_SCAN, "Unknown IG Operation.\n");
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void rtl92e_set_rf_off(struct net_device *dev)
-{
+व्योम rtl92e_set_rf_off(काष्ठा net_device *dev)
+अणु
 
 	rtl92e_set_bb_reg(dev, rFPGA0_XA_RFInterfaceOE, BIT4, 0x0);
 	rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter4, 0x300, 0x0);
@@ -1400,53 +1401,53 @@ void rtl92e_set_rf_off(struct net_device *dev)
 	rtl92e_set_bb_reg(dev, rOFDM1_TRxPathEnable, 0xf, 0x0);
 	rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter1, 0x60, 0x0);
 	rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter1, 0x4, 0x0);
-	rtl92e_writeb(dev, ANAPAR_FOR_8192PciE, 0x07);
+	rtl92e_ग_लिखोb(dev, ANAPAR_FOR_8192PciE, 0x07);
 
-}
+पूर्ण
 
-static bool _rtl92e_set_rf_power_state(struct net_device *dev,
-				       enum rt_rf_power_state eRFPowerState)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
-	struct rt_pwr_save_ctrl *pPSC = (struct rt_pwr_save_ctrl *)
+अटल bool _rtl92e_set_rf_घातer_state(काष्ठा net_device *dev,
+				       क्रमागत rt_rf_घातer_state eRFPowerState)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
+	काष्ठा rt_pwr_save_ctrl *pPSC = (काष्ठा rt_pwr_save_ctrl *)
 					(&(priv->rtllib->PowerSaveControl));
 	bool bResult = true;
 	u8	i = 0, QueueID = 0;
-	struct rtl8192_tx_ring  *ring = NULL;
+	काष्ठा rtl8192_tx_ring  *ring = शून्य;
 
-	if (priv->SetRFPowerStateInProgress)
-		return false;
+	अगर (priv->SetRFPowerStateInProgress)
+		वापस false;
 	RT_TRACE(COMP_PS, "===========> %s!\n", __func__);
 	priv->SetRFPowerStateInProgress = true;
 
-	switch (priv->rf_chip) {
-	case RF_8256:
-		switch (eRFPowerState) {
-		case eRfOn:
+	चयन (priv->rf_chip) अणु
+	हाल RF_8256:
+		चयन (eRFPowerState) अणु
+		हाल eRfOn:
 			RT_TRACE(COMP_PS, "%s eRfOn!\n", __func__);
-			if ((priv->rtllib->eRFPowerState == eRfOff) &&
-			     RT_IN_PS_LEVEL(pPSC, RT_RF_OFF_LEVL_HALT_NIC)) {
+			अगर ((priv->rtllib->eRFPowerState == eRfOff) &&
+			     RT_IN_PS_LEVEL(pPSC, RT_RF_OFF_LEVL_HALT_NIC)) अणु
 				bool rtstatus;
 				u32 InitilizeCount = 3;
 
-				do {
+				करो अणु
 					InitilizeCount--;
 					priv->RegRfOff = false;
 					rtstatus = rtl92e_enable_nic(dev);
-				} while (!rtstatus && (InitilizeCount > 0));
+				पूर्ण जबतक (!rtstatus && (InitilizeCount > 0));
 
-				if (!rtstatus) {
+				अगर (!rtstatus) अणु
 					netdev_err(dev,
 						   "%s(): Failed to initialize Adapter.\n",
 						   __func__);
 					priv->SetRFPowerStateInProgress = false;
-					return false;
-				}
+					वापस false;
+				पूर्ण
 
 				RT_CLEAR_PS_LEVEL(pPSC,
 						  RT_RF_OFF_LEVL_HALT_NIC);
-			} else {
-				rtl92e_writeb(dev, ANAPAR, 0x37);
+			पूर्ण अन्यथा अणु
+				rtl92e_ग_लिखोb(dev, ANAPAR, 0x37);
 				mdelay(1);
 				rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter1,
 						 0x4, 0x1);
@@ -1465,148 +1466,148 @@ static bool _rtl92e_set_rf_power_state(struct net_device *dev,
 				rtl92e_set_bb_reg(dev, rFPGA0_AnalogParameter1,
 						  0x60, 0x3);
 
-			}
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case eRfSleep:
-			if (priv->rtllib->eRFPowerState == eRfOff)
-				break;
+		हाल eRfSleep:
+			अगर (priv->rtllib->eRFPowerState == eRfOff)
+				अवरोध;
 
 
-			for (QueueID = 0, i = 0; QueueID < MAX_TX_QUEUE; ) {
+			क्रम (QueueID = 0, i = 0; QueueID < MAX_TX_QUEUE; ) अणु
 				ring = &priv->tx_ring[QueueID];
 
-				if (skb_queue_len(&ring->queue) == 0) {
+				अगर (skb_queue_len(&ring->queue) == 0) अणु
 					QueueID++;
-					continue;
-				} else {
+					जारी;
+				पूर्ण अन्यथा अणु
 					RT_TRACE((COMP_POWER|COMP_RF),
 						 "eRf Off/Sleep: %d times TcbBusyQueue[%d] !=0 before doze!\n",
 						 (i+1), QueueID);
 					udelay(10);
 					i++;
-				}
+				पूर्ण
 
-				if (i >= MAX_DOZE_WAITING_TIMES_9x) {
+				अगर (i >= MAX_DOZE_WAITING_TIMES_9x) अणु
 					RT_TRACE(COMP_POWER, "\n\n\n TimeOut!! %s: eRfOff: %d times TcbBusyQueue[%d] != 0 !!!\n",
 						 __func__, MAX_DOZE_WAITING_TIMES_9x, QueueID);
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 			rtl92e_set_rf_off(dev);
-			break;
+			अवरोध;
 
-		case eRfOff:
+		हाल eRfOff:
 			RT_TRACE(COMP_PS, "%s eRfOff/Sleep !\n", __func__);
 
-			for (QueueID = 0, i = 0; QueueID < MAX_TX_QUEUE; ) {
+			क्रम (QueueID = 0, i = 0; QueueID < MAX_TX_QUEUE; ) अणु
 				ring = &priv->tx_ring[QueueID];
 
-				if (skb_queue_len(&ring->queue) == 0) {
+				अगर (skb_queue_len(&ring->queue) == 0) अणु
 					QueueID++;
-					continue;
-				} else {
+					जारी;
+				पूर्ण अन्यथा अणु
 					RT_TRACE(COMP_POWER,
 						 "eRf Off/Sleep: %d times TcbBusyQueue[%d] !=0 before doze!\n",
 						 (i+1), QueueID);
 					udelay(10);
 					i++;
-				}
+				पूर्ण
 
-				if (i >= MAX_DOZE_WAITING_TIMES_9x) {
+				अगर (i >= MAX_DOZE_WAITING_TIMES_9x) अणु
 					RT_TRACE(COMP_POWER,
 						 "\n\n\n SetZebra: RFPowerState8185B(): eRfOff: %d times TcbBusyQueue[%d] != 0 !!!\n",
 						 MAX_DOZE_WAITING_TIMES_9x,
 						 QueueID);
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
-			if (pPSC->RegRfPsLevel & RT_RF_OFF_LEVL_HALT_NIC &&
-			    !RT_IN_PS_LEVEL(pPSC, RT_RF_OFF_LEVL_HALT_NIC)) {
+			अगर (pPSC->RegRfPsLevel & RT_RF_OFF_LEVL_HALT_NIC &&
+			    !RT_IN_PS_LEVEL(pPSC, RT_RF_OFF_LEVL_HALT_NIC)) अणु
 				rtl92e_disable_nic(dev);
 				RT_SET_PS_LEVEL(pPSC, RT_RF_OFF_LEVL_HALT_NIC);
-			} else if (!(pPSC->RegRfPsLevel &
-				   RT_RF_OFF_LEVL_HALT_NIC)) {
+			पूर्ण अन्यथा अगर (!(pPSC->RegRfPsLevel &
+				   RT_RF_OFF_LEVL_HALT_NIC)) अणु
 				rtl92e_set_rf_off(dev);
-			}
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			bResult = false;
 			netdev_warn(dev,
 				    "%s(): Unknown state requested: 0x%X.\n",
 				    __func__, eRFPowerState);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		netdev_warn(dev, "%s(): Unknown RF type\n", __func__);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (bResult) {
+	अगर (bResult) अणु
 		priv->rtllib->eRFPowerState = eRFPowerState;
 
-		switch (priv->rf_chip) {
-		case RF_8256:
-			break;
+		चयन (priv->rf_chip) अणु
+		हाल RF_8256:
+			अवरोध;
 
-		default:
+		शेष:
 			netdev_warn(dev, "%s(): Unknown RF type\n", __func__);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	priv->SetRFPowerStateInProgress = false;
 	RT_TRACE(COMP_PS, "<=========== %s bResult = %d!\n", __func__, bResult);
-	return bResult;
-}
+	वापस bResult;
+पूर्ण
 
-bool rtl92e_set_rf_power_state(struct net_device *dev,
-			       enum rt_rf_power_state eRFPowerState)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+bool rtl92e_set_rf_घातer_state(काष्ठा net_device *dev,
+			       क्रमागत rt_rf_घातer_state eRFPowerState)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
 	bool bResult = false;
 
 	RT_TRACE(COMP_PS,
 		 "---------> %s: eRFPowerState(%d)\n", __func__, eRFPowerState);
-	if (eRFPowerState == priv->rtllib->eRFPowerState &&
-	    priv->bHwRfOffAction == 0) {
+	अगर (eRFPowerState == priv->rtllib->eRFPowerState &&
+	    priv->bHwRfOffAction == 0) अणु
 		RT_TRACE(COMP_PS, "<--------- %s: discard the request for eRFPowerState(%d) is the same.\n",
 			 __func__, eRFPowerState);
-		return bResult;
-	}
+		वापस bResult;
+	पूर्ण
 
-	bResult = _rtl92e_set_rf_power_state(dev, eRFPowerState);
+	bResult = _rtl92e_set_rf_घातer_state(dev, eRFPowerState);
 
 	RT_TRACE(COMP_PS, "<--------- %s: bResult(%d)\n", __func__, bResult);
 
-	return bResult;
-}
+	वापस bResult;
+पूर्ण
 
-void rtl92e_scan_op_backup(struct net_device *dev, u8 Operation)
-{
-	struct r8192_priv *priv = rtllib_priv(dev);
+व्योम rtl92e_scan_op_backup(काष्ठा net_device *dev, u8 Operation)
+अणु
+	काष्ठा r8192_priv *priv = rtllib_priv(dev);
 
-	if (priv->up) {
-		switch (Operation) {
-		case SCAN_OPT_BACKUP:
+	अगर (priv->up) अणु
+		चयन (Operation) अणु
+		हाल SCAN_OPT_BACKUP:
 			priv->rtllib->InitialGainHandler(dev, IG_Backup);
-			break;
+			अवरोध;
 
-		case SCAN_OPT_RESTORE:
+		हाल SCAN_OPT_RESTORE:
 			priv->rtllib->InitialGainHandler(dev, IG_Restore);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			RT_TRACE(COMP_SCAN, "Unknown Scan Backup Operation.\n");
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण

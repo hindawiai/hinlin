@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * vsp1_sru.c  --  R-Car VSP1 Super Resolution Unit
  *
  * Copyright (C) 2013 Renesas Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
 
-#include <linux/device.h>
-#include <linux/gfp.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gfp.h>
 
-#include <media/v4l2-subdev.h>
+#समावेश <media/v4l2-subdev.h>
 
-#include "vsp1.h"
-#include "vsp1_dl.h"
-#include "vsp1_pipe.h"
-#include "vsp1_sru.h"
+#समावेश "vsp1.h"
+#समावेश "vsp1_dl.h"
+#समावेश "vsp1_pipe.h"
+#समावेश "vsp1_sru.h"
 
-#define SRU_MIN_SIZE				4U
-#define SRU_MAX_SIZE				8190U
+#घोषणा SRU_MIN_SIZE				4U
+#घोषणा SRU_MAX_SIZE				8190U
 
 /* -----------------------------------------------------------------------------
  * Device Access
  */
 
-static inline void vsp1_sru_write(struct vsp1_sru *sru,
-				  struct vsp1_dl_body *dlb, u32 reg, u32 data)
-{
-	vsp1_dl_body_write(dlb, reg, data);
-}
+अटल अंतरभूत व्योम vsp1_sru_ग_लिखो(काष्ठा vsp1_sru *sru,
+				  काष्ठा vsp1_dl_body *dlb, u32 reg, u32 data)
+अणु
+	vsp1_dl_body_ग_लिखो(dlb, reg, data);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Controls
  */
 
-#define V4L2_CID_VSP1_SRU_INTENSITY		(V4L2_CID_USER_BASE | 0x1001)
+#घोषणा V4L2_CID_VSP1_SRU_INTENSITY		(V4L2_CID_USER_BASE | 0x1001)
 
-struct vsp1_sru_param {
+काष्ठा vsp1_sru_param अणु
 	u32 ctrl0;
 	u32 ctrl2;
-};
+पूर्ण;
 
-#define VI6_SRU_CTRL0_PARAMS(p0, p1)			\
+#घोषणा VI6_SRU_CTRL0_PARAMS(p0, p1)			\
 	(((p0) << VI6_SRU_CTRL0_PARAM0_SHIFT) |		\
 	 ((p1) << VI6_SRU_CTRL0_PARAM1_SHIFT))
 
-#define VI6_SRU_CTRL2_PARAMS(p6, p7, p8)		\
+#घोषणा VI6_SRU_CTRL2_PARAMS(p6, p7, p8)		\
 	(((p6) << VI6_SRU_CTRL2_PARAM6_SHIFT) |		\
 	 ((p7) << VI6_SRU_CTRL2_PARAM7_SHIFT) |		\
 	 ((p8) << VI6_SRU_CTRL2_PARAM8_SHIFT))
 
-static const struct vsp1_sru_param vsp1_sru_params[] = {
-	{
+अटल स्थिर काष्ठा vsp1_sru_param vsp1_sru_params[] = अणु
+	अणु
 		.ctrl0 = VI6_SRU_CTRL0_PARAMS(256, 4) | VI6_SRU_CTRL0_EN,
 		.ctrl2 = VI6_SRU_CTRL2_PARAMS(24, 40, 255),
-	}, {
+	पूर्ण, अणु
 		.ctrl0 = VI6_SRU_CTRL0_PARAMS(256, 4) | VI6_SRU_CTRL0_EN,
 		.ctrl2 = VI6_SRU_CTRL2_PARAMS(8, 16, 255),
-	}, {
+	पूर्ण, अणु
 		.ctrl0 = VI6_SRU_CTRL0_PARAMS(384, 5) | VI6_SRU_CTRL0_EN,
 		.ctrl2 = VI6_SRU_CTRL2_PARAMS(36, 60, 255),
-	}, {
+	पूर्ण, अणु
 		.ctrl0 = VI6_SRU_CTRL0_PARAMS(384, 5) | VI6_SRU_CTRL0_EN,
 		.ctrl2 = VI6_SRU_CTRL2_PARAMS(12, 27, 255),
-	}, {
+	पूर्ण, अणु
 		.ctrl0 = VI6_SRU_CTRL0_PARAMS(511, 6) | VI6_SRU_CTRL0_EN,
 		.ctrl2 = VI6_SRU_CTRL2_PARAMS(48, 80, 255),
-	}, {
+	पूर्ण, अणु
 		.ctrl0 = VI6_SRU_CTRL0_PARAMS(511, 6) | VI6_SRU_CTRL0_EN,
 		.ctrl2 = VI6_SRU_CTRL2_PARAMS(16, 36, 255),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int sru_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct vsp1_sru *sru =
-		container_of(ctrl->handler, struct vsp1_sru, ctrls);
+अटल पूर्णांक sru_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा vsp1_sru *sru =
+		container_of(ctrl->handler, काष्ठा vsp1_sru, ctrls);
 
-	switch (ctrl->id) {
-	case V4L2_CID_VSP1_SRU_INTENSITY:
-		sru->intensity = ctrl->val;
-		break;
-	}
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_VSP1_SRU_INTENSITY:
+		sru->पूर्णांकensity = ctrl->val;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ctrl_ops sru_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops sru_ctrl_ops = अणु
 	.s_ctrl = sru_s_ctrl,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config sru_intensity_control = {
+अटल स्थिर काष्ठा v4l2_ctrl_config sru_पूर्णांकensity_control = अणु
 	.ops = &sru_ctrl_ops,
 	.id = V4L2_CID_VSP1_SRU_INTENSITY,
 	.name = "Intensity",
@@ -99,296 +100,296 @@ static const struct v4l2_ctrl_config sru_intensity_control = {
 	.max = 6,
 	.def = 1,
 	.step = 1,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * V4L2 Subdevice Operations
  */
 
-static int sru_enum_mbus_code(struct v4l2_subdev *subdev,
-			      struct v4l2_subdev_pad_config *cfg,
-			      struct v4l2_subdev_mbus_code_enum *code)
-{
-	static const unsigned int codes[] = {
+अटल पूर्णांक sru_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
+			      काष्ठा v4l2_subdev_pad_config *cfg,
+			      काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
+अणु
+	अटल स्थिर अचिन्हित पूर्णांक codes[] = अणु
 		MEDIA_BUS_FMT_ARGB8888_1X32,
 		MEDIA_BUS_FMT_AYUV8_1X32,
-	};
+	पूर्ण;
 
-	return vsp1_subdev_enum_mbus_code(subdev, cfg, code, codes,
+	वापस vsp1_subdev_क्रमागत_mbus_code(subdev, cfg, code, codes,
 					  ARRAY_SIZE(codes));
-}
+पूर्ण
 
-static int sru_enum_frame_size(struct v4l2_subdev *subdev,
-			       struct v4l2_subdev_pad_config *cfg,
-			       struct v4l2_subdev_frame_size_enum *fse)
-{
-	struct vsp1_sru *sru = to_sru(subdev);
-	struct v4l2_subdev_pad_config *config;
-	struct v4l2_mbus_framefmt *format;
-	int ret = 0;
+अटल पूर्णांक sru_क्रमागत_frame_size(काष्ठा v4l2_subdev *subdev,
+			       काष्ठा v4l2_subdev_pad_config *cfg,
+			       काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
+अणु
+	काष्ठा vsp1_sru *sru = to_sru(subdev);
+	काष्ठा v4l2_subdev_pad_config *config;
+	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+	पूर्णांक ret = 0;
 
 	config = vsp1_entity_get_pad_config(&sru->entity, cfg, fse->which);
-	if (!config)
-		return -EINVAL;
+	अगर (!config)
+		वापस -EINVAL;
 
-	format = vsp1_entity_get_pad_format(&sru->entity, config, SRU_PAD_SINK);
+	क्रमmat = vsp1_entity_get_pad_क्रमmat(&sru->entity, config, SRU_PAD_SINK);
 
 	mutex_lock(&sru->entity.lock);
 
-	if (fse->index || fse->code != format->code) {
+	अगर (fse->index || fse->code != क्रमmat->code) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (fse->pad == SRU_PAD_SINK) {
+	अगर (fse->pad == SRU_PAD_SINK) अणु
 		fse->min_width = SRU_MIN_SIZE;
 		fse->max_width = SRU_MAX_SIZE;
 		fse->min_height = SRU_MIN_SIZE;
 		fse->max_height = SRU_MAX_SIZE;
-	} else {
-		fse->min_width = format->width;
-		fse->min_height = format->height;
-		if (format->width <= SRU_MAX_SIZE / 2 &&
-		    format->height <= SRU_MAX_SIZE / 2) {
-			fse->max_width = format->width * 2;
-			fse->max_height = format->height * 2;
-		} else {
-			fse->max_width = format->width;
-			fse->max_height = format->height;
-		}
-	}
+	पूर्ण अन्यथा अणु
+		fse->min_width = क्रमmat->width;
+		fse->min_height = क्रमmat->height;
+		अगर (क्रमmat->width <= SRU_MAX_SIZE / 2 &&
+		    क्रमmat->height <= SRU_MAX_SIZE / 2) अणु
+			fse->max_width = क्रमmat->width * 2;
+			fse->max_height = क्रमmat->height * 2;
+		पूर्ण अन्यथा अणु
+			fse->max_width = क्रमmat->width;
+			fse->max_height = क्रमmat->height;
+		पूर्ण
+	पूर्ण
 
-done:
+करोne:
 	mutex_unlock(&sru->entity.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sru_try_format(struct vsp1_sru *sru,
-			   struct v4l2_subdev_pad_config *config,
-			   unsigned int pad, struct v4l2_mbus_framefmt *fmt)
-{
-	struct v4l2_mbus_framefmt *format;
-	unsigned int input_area;
-	unsigned int output_area;
+अटल व्योम sru_try_क्रमmat(काष्ठा vsp1_sru *sru,
+			   काष्ठा v4l2_subdev_pad_config *config,
+			   अचिन्हित पूर्णांक pad, काष्ठा v4l2_mbus_framefmt *fmt)
+अणु
+	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+	अचिन्हित पूर्णांक input_area;
+	अचिन्हित पूर्णांक output_area;
 
-	switch (pad) {
-	case SRU_PAD_SINK:
-		/* Default to YUV if the requested format is not supported. */
-		if (fmt->code != MEDIA_BUS_FMT_ARGB8888_1X32 &&
+	चयन (pad) अणु
+	हाल SRU_PAD_SINK:
+		/* Default to YUV अगर the requested क्रमmat is not supported. */
+		अगर (fmt->code != MEDIA_BUS_FMT_ARGB8888_1X32 &&
 		    fmt->code != MEDIA_BUS_FMT_AYUV8_1X32)
 			fmt->code = MEDIA_BUS_FMT_AYUV8_1X32;
 
 		fmt->width = clamp(fmt->width, SRU_MIN_SIZE, SRU_MAX_SIZE);
 		fmt->height = clamp(fmt->height, SRU_MIN_SIZE, SRU_MAX_SIZE);
-		break;
+		अवरोध;
 
-	case SRU_PAD_SOURCE:
-		/* The SRU can't perform format conversion. */
-		format = vsp1_entity_get_pad_format(&sru->entity, config,
+	हाल SRU_PAD_SOURCE:
+		/* The SRU can't perक्रमm क्रमmat conversion. */
+		क्रमmat = vsp1_entity_get_pad_क्रमmat(&sru->entity, config,
 						    SRU_PAD_SINK);
-		fmt->code = format->code;
+		fmt->code = क्रमmat->code;
 
 		/*
 		 * We can upscale by 2 in both direction, but not independently.
-		 * Compare the input and output rectangles areas (avoiding
-		 * integer overflows on the output): if the requested output
+		 * Compare the input and output rectangles areas (aव्योमing
+		 * पूर्णांकeger overflows on the output): अगर the requested output
 		 * area is larger than 1.5^2 the input area upscale by two,
-		 * otherwise don't scale.
+		 * otherwise करोn't scale.
 		 */
-		input_area = format->width * format->height;
+		input_area = क्रमmat->width * क्रमmat->height;
 		output_area = min(fmt->width, SRU_MAX_SIZE)
 			    * min(fmt->height, SRU_MAX_SIZE);
 
-		if (fmt->width <= SRU_MAX_SIZE / 2 &&
+		अगर (fmt->width <= SRU_MAX_SIZE / 2 &&
 		    fmt->height <= SRU_MAX_SIZE / 2 &&
-		    output_area > input_area * 9 / 4) {
-			fmt->width = format->width * 2;
-			fmt->height = format->height * 2;
-		} else {
-			fmt->width = format->width;
-			fmt->height = format->height;
-		}
-		break;
-	}
+		    output_area > input_area * 9 / 4) अणु
+			fmt->width = क्रमmat->width * 2;
+			fmt->height = क्रमmat->height * 2;
+		पूर्ण अन्यथा अणु
+			fmt->width = क्रमmat->width;
+			fmt->height = क्रमmat->height;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	fmt->field = V4L2_FIELD_NONE;
 	fmt->colorspace = V4L2_COLORSPACE_SRGB;
-}
+पूर्ण
 
-static int sru_set_format(struct v4l2_subdev *subdev,
-			  struct v4l2_subdev_pad_config *cfg,
-			  struct v4l2_subdev_format *fmt)
-{
-	struct vsp1_sru *sru = to_sru(subdev);
-	struct v4l2_subdev_pad_config *config;
-	struct v4l2_mbus_framefmt *format;
-	int ret = 0;
+अटल पूर्णांक sru_set_क्रमmat(काष्ठा v4l2_subdev *subdev,
+			  काष्ठा v4l2_subdev_pad_config *cfg,
+			  काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा vsp1_sru *sru = to_sru(subdev);
+	काष्ठा v4l2_subdev_pad_config *config;
+	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&sru->entity.lock);
 
 	config = vsp1_entity_get_pad_config(&sru->entity, cfg, fmt->which);
-	if (!config) {
+	अगर (!config) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	sru_try_format(sru, config, fmt->pad, &fmt->format);
+	sru_try_क्रमmat(sru, config, fmt->pad, &fmt->क्रमmat);
 
-	format = vsp1_entity_get_pad_format(&sru->entity, config, fmt->pad);
-	*format = fmt->format;
+	क्रमmat = vsp1_entity_get_pad_क्रमmat(&sru->entity, config, fmt->pad);
+	*क्रमmat = fmt->क्रमmat;
 
-	if (fmt->pad == SRU_PAD_SINK) {
-		/* Propagate the format to the source pad. */
-		format = vsp1_entity_get_pad_format(&sru->entity, config,
+	अगर (fmt->pad == SRU_PAD_SINK) अणु
+		/* Propagate the क्रमmat to the source pad. */
+		क्रमmat = vsp1_entity_get_pad_क्रमmat(&sru->entity, config,
 						    SRU_PAD_SOURCE);
-		*format = fmt->format;
+		*क्रमmat = fmt->क्रमmat;
 
-		sru_try_format(sru, config, SRU_PAD_SOURCE, format);
-	}
+		sru_try_क्रमmat(sru, config, SRU_PAD_SOURCE, क्रमmat);
+	पूर्ण
 
-done:
+करोne:
 	mutex_unlock(&sru->entity.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_subdev_pad_ops sru_pad_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops sru_pad_ops = अणु
 	.init_cfg = vsp1_entity_init_cfg,
-	.enum_mbus_code = sru_enum_mbus_code,
-	.enum_frame_size = sru_enum_frame_size,
-	.get_fmt = vsp1_subdev_get_pad_format,
-	.set_fmt = sru_set_format,
-};
+	.क्रमागत_mbus_code = sru_क्रमागत_mbus_code,
+	.क्रमागत_frame_size = sru_क्रमागत_frame_size,
+	.get_fmt = vsp1_subdev_get_pad_क्रमmat,
+	.set_fmt = sru_set_क्रमmat,
+पूर्ण;
 
-static const struct v4l2_subdev_ops sru_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops sru_ops = अणु
 	.pad    = &sru_pad_ops,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * VSP1 Entity Operations
  */
 
-static void sru_configure_stream(struct vsp1_entity *entity,
-				 struct vsp1_pipeline *pipe,
-				 struct vsp1_dl_list *dl,
-				 struct vsp1_dl_body *dlb)
-{
-	const struct vsp1_sru_param *param;
-	struct vsp1_sru *sru = to_sru(&entity->subdev);
-	struct v4l2_mbus_framefmt *input;
-	struct v4l2_mbus_framefmt *output;
+अटल व्योम sru_configure_stream(काष्ठा vsp1_entity *entity,
+				 काष्ठा vsp1_pipeline *pipe,
+				 काष्ठा vsp1_dl_list *dl,
+				 काष्ठा vsp1_dl_body *dlb)
+अणु
+	स्थिर काष्ठा vsp1_sru_param *param;
+	काष्ठा vsp1_sru *sru = to_sru(&entity->subdev);
+	काष्ठा v4l2_mbus_framefmt *input;
+	काष्ठा v4l2_mbus_framefmt *output;
 	u32 ctrl0;
 
-	input = vsp1_entity_get_pad_format(&sru->entity, sru->entity.config,
+	input = vsp1_entity_get_pad_क्रमmat(&sru->entity, sru->entity.config,
 					   SRU_PAD_SINK);
-	output = vsp1_entity_get_pad_format(&sru->entity, sru->entity.config,
+	output = vsp1_entity_get_pad_क्रमmat(&sru->entity, sru->entity.config,
 					    SRU_PAD_SOURCE);
 
-	if (input->code == MEDIA_BUS_FMT_ARGB8888_1X32)
+	अगर (input->code == MEDIA_BUS_FMT_ARGB8888_1X32)
 		ctrl0 = VI6_SRU_CTRL0_PARAM2 | VI6_SRU_CTRL0_PARAM3
 		      | VI6_SRU_CTRL0_PARAM4;
-	else
+	अन्यथा
 		ctrl0 = VI6_SRU_CTRL0_PARAM3;
 
-	if (input->width != output->width)
+	अगर (input->width != output->width)
 		ctrl0 |= VI6_SRU_CTRL0_MODE_UPSCALE;
 
-	param = &vsp1_sru_params[sru->intensity - 1];
+	param = &vsp1_sru_params[sru->पूर्णांकensity - 1];
 
 	ctrl0 |= param->ctrl0;
 
-	vsp1_sru_write(sru, dlb, VI6_SRU_CTRL0, ctrl0);
-	vsp1_sru_write(sru, dlb, VI6_SRU_CTRL1, VI6_SRU_CTRL1_PARAM5);
-	vsp1_sru_write(sru, dlb, VI6_SRU_CTRL2, param->ctrl2);
-}
+	vsp1_sru_ग_लिखो(sru, dlb, VI6_SRU_CTRL0, ctrl0);
+	vsp1_sru_ग_लिखो(sru, dlb, VI6_SRU_CTRL1, VI6_SRU_CTRL1_PARAM5);
+	vsp1_sru_ग_लिखो(sru, dlb, VI6_SRU_CTRL2, param->ctrl2);
+पूर्ण
 
-static unsigned int sru_max_width(struct vsp1_entity *entity,
-				  struct vsp1_pipeline *pipe)
-{
-	struct vsp1_sru *sru = to_sru(&entity->subdev);
-	struct v4l2_mbus_framefmt *input;
-	struct v4l2_mbus_framefmt *output;
+अटल अचिन्हित पूर्णांक sru_max_width(काष्ठा vsp1_entity *entity,
+				  काष्ठा vsp1_pipeline *pipe)
+अणु
+	काष्ठा vsp1_sru *sru = to_sru(&entity->subdev);
+	काष्ठा v4l2_mbus_framefmt *input;
+	काष्ठा v4l2_mbus_framefmt *output;
 
-	input = vsp1_entity_get_pad_format(&sru->entity, sru->entity.config,
+	input = vsp1_entity_get_pad_क्रमmat(&sru->entity, sru->entity.config,
 					   SRU_PAD_SINK);
-	output = vsp1_entity_get_pad_format(&sru->entity, sru->entity.config,
+	output = vsp1_entity_get_pad_क्रमmat(&sru->entity, sru->entity.config,
 					    SRU_PAD_SOURCE);
 
 	/*
 	 * The maximum input width of the SRU is 288 input pixels, but 32
-	 * pixels are reserved to support overlapping partition windows when
+	 * pixels are reserved to support overlapping partition winकरोws when
 	 * scaling.
 	 */
-	if (input->width != output->width)
-		return 512;
-	else
-		return 256;
-}
+	अगर (input->width != output->width)
+		वापस 512;
+	अन्यथा
+		वापस 256;
+पूर्ण
 
-static void sru_partition(struct vsp1_entity *entity,
-			  struct vsp1_pipeline *pipe,
-			  struct vsp1_partition *partition,
-			  unsigned int partition_idx,
-			  struct vsp1_partition_window *window)
-{
-	struct vsp1_sru *sru = to_sru(&entity->subdev);
-	struct v4l2_mbus_framefmt *input;
-	struct v4l2_mbus_framefmt *output;
+अटल व्योम sru_partition(काष्ठा vsp1_entity *entity,
+			  काष्ठा vsp1_pipeline *pipe,
+			  काष्ठा vsp1_partition *partition,
+			  अचिन्हित पूर्णांक partition_idx,
+			  काष्ठा vsp1_partition_winकरोw *winकरोw)
+अणु
+	काष्ठा vsp1_sru *sru = to_sru(&entity->subdev);
+	काष्ठा v4l2_mbus_framefmt *input;
+	काष्ठा v4l2_mbus_framefmt *output;
 
-	input = vsp1_entity_get_pad_format(&sru->entity, sru->entity.config,
+	input = vsp1_entity_get_pad_क्रमmat(&sru->entity, sru->entity.config,
 					   SRU_PAD_SINK);
-	output = vsp1_entity_get_pad_format(&sru->entity, sru->entity.config,
+	output = vsp1_entity_get_pad_क्रमmat(&sru->entity, sru->entity.config,
 					    SRU_PAD_SOURCE);
 
-	/* Adapt if SRUx2 is enabled. */
-	if (input->width != output->width) {
-		window->width /= 2;
-		window->left /= 2;
-	}
+	/* Adapt अगर SRUx2 is enabled. */
+	अगर (input->width != output->width) अणु
+		winकरोw->width /= 2;
+		winकरोw->left /= 2;
+	पूर्ण
 
-	partition->sru = *window;
-}
+	partition->sru = *winकरोw;
+पूर्ण
 
-static const struct vsp1_entity_operations sru_entity_ops = {
+अटल स्थिर काष्ठा vsp1_entity_operations sru_entity_ops = अणु
 	.configure_stream = sru_configure_stream,
 	.max_width = sru_max_width,
 	.partition = sru_partition,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * Initialization and Cleanup
  */
 
-struct vsp1_sru *vsp1_sru_create(struct vsp1_device *vsp1)
-{
-	struct vsp1_sru *sru;
-	int ret;
+काष्ठा vsp1_sru *vsp1_sru_create(काष्ठा vsp1_device *vsp1)
+अणु
+	काष्ठा vsp1_sru *sru;
+	पूर्णांक ret;
 
-	sru = devm_kzalloc(vsp1->dev, sizeof(*sru), GFP_KERNEL);
-	if (sru == NULL)
-		return ERR_PTR(-ENOMEM);
+	sru = devm_kzalloc(vsp1->dev, माप(*sru), GFP_KERNEL);
+	अगर (sru == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
 	sru->entity.ops = &sru_entity_ops;
 	sru->entity.type = VSP1_ENTITY_SRU;
 
 	ret = vsp1_entity_init(vsp1, &sru->entity, "sru", 2, &sru_ops,
 			       MEDIA_ENT_F_PROC_VIDEO_SCALER);
-	if (ret < 0)
-		return ERR_PTR(ret);
+	अगर (ret < 0)
+		वापस ERR_PTR(ret);
 
 	/* Initialize the control handler. */
 	v4l2_ctrl_handler_init(&sru->ctrls, 1);
-	v4l2_ctrl_new_custom(&sru->ctrls, &sru_intensity_control, NULL);
+	v4l2_ctrl_new_custom(&sru->ctrls, &sru_पूर्णांकensity_control, शून्य);
 
-	sru->intensity = 1;
+	sru->पूर्णांकensity = 1;
 
 	sru->entity.subdev.ctrl_handler = &sru->ctrls;
 
-	if (sru->ctrls.error) {
+	अगर (sru->ctrls.error) अणु
 		dev_err(vsp1->dev, "sru: failed to initialize controls\n");
 		ret = sru->ctrls.error;
 		vsp1_entity_destroy(&sru->entity);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return sru;
-}
+	वापस sru;
+पूर्ण

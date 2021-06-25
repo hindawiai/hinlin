@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/mm.h>
-#include <linux/smp.h>
-#include <linux/sched.h>
-#include <asm/sbi.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/sbi.h>
 
-void flush_tlb_all(void)
-{
-	sbi_remote_sfence_vma(NULL, 0, -1);
-}
+व्योम flush_tlb_all(व्योम)
+अणु
+	sbi_remote_sfence_vma(शून्य, 0, -1);
+पूर्ण
 
 /*
  * This function must not be called with cmask being null.
- * Kernel may panic if cmask is NULL.
+ * Kernel may panic अगर cmask is शून्य.
  */
-static void __sbi_tlb_flush_range(struct cpumask *cmask, unsigned long start,
-				  unsigned long size)
-{
-	struct cpumask hmask;
-	unsigned int cpuid;
+अटल व्योम __sbi_tlb_flush_range(काष्ठा cpumask *cmask, अचिन्हित दीर्घ start,
+				  अचिन्हित दीर्घ size)
+अणु
+	काष्ठा cpumask hmask;
+	अचिन्हित पूर्णांक cpuid;
 
-	if (cpumask_empty(cmask))
-		return;
+	अगर (cpumask_empty(cmask))
+		वापस;
 
 	cpuid = get_cpu();
 
-	if (cpumask_any_but(cmask, cpuid) >= nr_cpu_ids) {
+	अगर (cpumask_any_but(cmask, cpuid) >= nr_cpu_ids) अणु
 		/* local cpu is the only cpu present in cpumask */
-		if (size <= PAGE_SIZE)
+		अगर (size <= PAGE_SIZE)
 			local_flush_tlb_page(start);
-		else
+		अन्यथा
 			local_flush_tlb_all();
-	} else {
+	पूर्ण अन्यथा अणु
 		riscv_cpuid_to_hartid_mask(cmask, &hmask);
 		sbi_remote_sfence_vma(cpumask_bits(&hmask), start, size);
-	}
+	पूर्ण
 
 	put_cpu();
-}
+पूर्ण
 
-void flush_tlb_mm(struct mm_struct *mm)
-{
+व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
 	__sbi_tlb_flush_range(mm_cpumask(mm), 0, -1);
-}
+पूर्ण
 
-void flush_tlb_page(struct vm_area_struct *vma, unsigned long addr)
-{
+व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr)
+अणु
 	__sbi_tlb_flush_range(mm_cpumask(vma->vm_mm), addr, PAGE_SIZE);
-}
+पूर्ण
 
-void flush_tlb_range(struct vm_area_struct *vma, unsigned long start,
-		     unsigned long end)
-{
+व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+		     अचिन्हित दीर्घ end)
+अणु
 	__sbi_tlb_flush_range(mm_cpumask(vma->vm_mm), start, end - start);
-}
+पूर्ण

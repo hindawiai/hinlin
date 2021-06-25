@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Broadcom BCM590xx PMU
  *
@@ -6,24 +7,24 @@
  * Author: Matt Porter <mporter@linaro.org>
  */
 
-#ifndef __LINUX_MFD_BCM590XX_H
-#define __LINUX_MFD_BCM590XX_H
+#अगर_अघोषित __LINUX_MFD_BCM590XX_H
+#घोषणा __LINUX_MFD_BCM590XX_H
 
-#include <linux/device.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
+#समावेश <linux/device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
 
-/* max register address */
-#define BCM590XX_MAX_REGISTER_PRI	0xe7
-#define BCM590XX_MAX_REGISTER_SEC	0xf0
+/* max रेजिस्टर address */
+#घोषणा BCM590XX_MAX_REGISTER_PRI	0xe7
+#घोषणा BCM590XX_MAX_REGISTER_SEC	0xf0
 
-struct bcm590xx {
-	struct device *dev;
-	struct i2c_client *i2c_pri;
-	struct i2c_client *i2c_sec;
-	struct regmap *regmap_pri;
-	struct regmap *regmap_sec;
-	unsigned int id;
-};
+काष्ठा bcm590xx अणु
+	काष्ठा device *dev;
+	काष्ठा i2c_client *i2c_pri;
+	काष्ठा i2c_client *i2c_sec;
+	काष्ठा regmap *regmap_pri;
+	काष्ठा regmap *regmap_sec;
+	अचिन्हित पूर्णांक id;
+पूर्ण;
 
-#endif /*  __LINUX_MFD_BCM590XX_H */
+#पूर्ण_अगर /*  __LINUX_MFD_BCM590XX_H */

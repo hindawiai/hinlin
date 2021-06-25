@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
- *		Definitions for the FDDI handlers.
+ *		Definitions क्रम the FDDI handlers.
  *
  * Version:	@(#)fddidevice.h	1.0.0	08/12/96
  *
@@ -15,14 +16,14 @@
  *			Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
  *			Alan Cox, <gw4pts@gw4pts.ampr.org>
  */
-#ifndef _LINUX_FDDIDEVICE_H
-#define _LINUX_FDDIDEVICE_H
+#अगर_अघोषित _LINUX_FDDIDEVICE_H
+#घोषणा _LINUX_FDDIDEVICE_H
 
-#include <linux/if_fddi.h>
+#समावेश <linux/अगर_fddi.h>
 
-#ifdef __KERNEL__
-__be16 fddi_type_trans(struct sk_buff *skb, struct net_device *dev);
-struct net_device *alloc_fddidev(int sizeof_priv);
-#endif
+#अगर_घोषित __KERNEL__
+__be16 fddi_type_trans(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
+काष्ठा net_device *alloc_fddidev(पूर्णांक माप_priv);
+#पूर्ण_अगर
 
-#endif	/* _LINUX_FDDIDEVICE_H */
+#पूर्ण_अगर	/* _LINUX_FDDIDEVICE_H */

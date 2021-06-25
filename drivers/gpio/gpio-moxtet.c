@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Turris Mox Moxtet GPIO expander
  *
- *  Copyright (C) 2018 Marek Behún <kabel@kernel.org>
+ *  Copyright (C) 2018 Marek Behथजn <kabel@kernel.org>
  */
 
-#include <linux/bitops.h>
-#include <linux/gpio/driver.h>
-#include <linux/moxtet.h>
-#include <linux/module.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/moxtet.h>
+#समावेश <linux/module.h>
 
-#define MOXTET_GPIO_NGPIOS	12
-#define MOXTET_GPIO_INPUTS	4
+#घोषणा MOXTET_GPIO_NGPIOS	12
+#घोषणा MOXTET_GPIO_INPUTS	4
 
-struct moxtet_gpio_desc {
+काष्ठा moxtet_gpio_desc अणु
 	u16 in_mask;
 	u16 out_mask;
-};
+पूर्ण;
 
-static const struct moxtet_gpio_desc descs[] = {
-	[TURRIS_MOX_MODULE_SFP] = {
+अटल स्थिर काष्ठा moxtet_gpio_desc descs[] = अणु
+	[TURRIS_MOX_MODULE_SFP] = अणु
 		.in_mask = GENMASK(2, 0),
 		.out_mask = GENMASK(5, 4),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct moxtet_gpio_chip {
-	struct device			*dev;
-	struct gpio_chip		gpio_chip;
-	const struct moxtet_gpio_desc	*desc;
-};
+काष्ठा moxtet_gpio_chip अणु
+	काष्ठा device			*dev;
+	काष्ठा gpio_chip		gpio_chip;
+	स्थिर काष्ठा moxtet_gpio_desc	*desc;
+पूर्ण;
 
-static int moxtet_gpio_get_value(struct gpio_chip *gc, unsigned int offset)
-{
-	struct moxtet_gpio_chip *chip = gpiochip_get_data(gc);
-	int ret;
+अटल पूर्णांक moxtet_gpio_get_value(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा moxtet_gpio_chip *chip = gpiochip_get_data(gc);
+	पूर्णांक ret;
 
-	if (chip->desc->in_mask & BIT(offset)) {
-		ret = moxtet_device_read(chip->dev);
-	} else if (chip->desc->out_mask & BIT(offset)) {
+	अगर (chip->desc->in_mask & BIT(offset)) अणु
+		ret = moxtet_device_पढ़ो(chip->dev);
+	पूर्ण अन्यथा अगर (chip->desc->out_mask & BIT(offset)) अणु
 		ret = moxtet_device_written(chip->dev);
-		if (ret >= 0)
+		अगर (ret >= 0)
 			ret <<= MOXTET_GPIO_INPUTS;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return !!(ret & BIT(offset));
-}
+	वापस !!(ret & BIT(offset));
+पूर्ण
 
-static void moxtet_gpio_set_value(struct gpio_chip *gc, unsigned int offset,
-				  int val)
-{
-	struct moxtet_gpio_chip *chip = gpiochip_get_data(gc);
-	int state;
+अटल व्योम moxtet_gpio_set_value(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset,
+				  पूर्णांक val)
+अणु
+	काष्ठा moxtet_gpio_chip *chip = gpiochip_get_data(gc);
+	पूर्णांक state;
 
 	state = moxtet_device_written(chip->dev);
-	if (state < 0)
-		return;
+	अगर (state < 0)
+		वापस;
 
 	offset -= MOXTET_GPIO_INPUTS;
 
-	if (val)
+	अगर (val)
 		state |= BIT(offset);
-	else
+	अन्यथा
 		state &= ~BIT(offset);
 
-	moxtet_device_write(chip->dev, state);
-}
+	moxtet_device_ग_लिखो(chip->dev, state);
+पूर्ण
 
-static int moxtet_gpio_get_direction(struct gpio_chip *gc, unsigned int offset)
-{
-	struct moxtet_gpio_chip *chip = gpiochip_get_data(gc);
+अटल पूर्णांक moxtet_gpio_get_direction(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा moxtet_gpio_chip *chip = gpiochip_get_data(gc);
 
 	/* All lines are hard wired to be either input or output, not both. */
-	if (chip->desc->in_mask & BIT(offset))
-		return GPIO_LINE_DIRECTION_IN;
-	else if (chip->desc->out_mask & BIT(offset))
-		return GPIO_LINE_DIRECTION_OUT;
-	else
-		return -EINVAL;
-}
+	अगर (chip->desc->in_mask & BIT(offset))
+		वापस GPIO_LINE_सूचीECTION_IN;
+	अन्यथा अगर (chip->desc->out_mask & BIT(offset))
+		वापस GPIO_LINE_सूचीECTION_OUT;
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static int moxtet_gpio_direction_input(struct gpio_chip *gc,
-				       unsigned int offset)
-{
-	struct moxtet_gpio_chip *chip = gpiochip_get_data(gc);
+अटल पूर्णांक moxtet_gpio_direction_input(काष्ठा gpio_chip *gc,
+				       अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा moxtet_gpio_chip *chip = gpiochip_get_data(gc);
 
-	if (chip->desc->in_mask & BIT(offset))
-		return 0;
-	else if (chip->desc->out_mask & BIT(offset))
-		return -ENOTSUPP;
-	else
-		return -EINVAL;
-}
+	अगर (chip->desc->in_mask & BIT(offset))
+		वापस 0;
+	अन्यथा अगर (chip->desc->out_mask & BIT(offset))
+		वापस -ENOTSUPP;
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static int moxtet_gpio_direction_output(struct gpio_chip *gc,
-					unsigned int offset, int val)
-{
-	struct moxtet_gpio_chip *chip = gpiochip_get_data(gc);
+अटल पूर्णांक moxtet_gpio_direction_output(काष्ठा gpio_chip *gc,
+					अचिन्हित पूर्णांक offset, पूर्णांक val)
+अणु
+	काष्ठा moxtet_gpio_chip *chip = gpiochip_get_data(gc);
 
-	if (chip->desc->out_mask & BIT(offset))
+	अगर (chip->desc->out_mask & BIT(offset))
 		moxtet_gpio_set_value(gc, offset, val);
-	else if (chip->desc->in_mask & BIT(offset))
-		return -ENOTSUPP;
-	else
-		return -EINVAL;
+	अन्यथा अगर (chip->desc->in_mask & BIT(offset))
+		वापस -ENOTSUPP;
+	अन्यथा
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int moxtet_gpio_probe(struct device *dev)
-{
-	struct moxtet_gpio_chip *chip;
-	struct device_node *nc = dev->of_node;
-	int id;
+अटल पूर्णांक moxtet_gpio_probe(काष्ठा device *dev)
+अणु
+	काष्ठा moxtet_gpio_chip *chip;
+	काष्ठा device_node *nc = dev->of_node;
+	पूर्णांक id;
 
 	id = to_moxtet_device(dev)->id;
 
-	if (id >= ARRAY_SIZE(descs)) {
+	अगर (id >= ARRAY_SIZE(descs)) अणु
 		dev_err(dev, "%pOF Moxtet device id 0x%x is not supported by gpio-moxtet driver\n",
 			nc, id);
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(dev, माप(*chip), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
 	chip->dev = dev;
 	chip->gpio_chip.parent = dev;
@@ -150,28 +151,28 @@ static int moxtet_gpio_probe(struct device *dev)
 	chip->gpio_chip.can_sleep = true;
 	chip->gpio_chip.owner = THIS_MODULE;
 
-	return devm_gpiochip_add_data(dev, &chip->gpio_chip, chip);
-}
+	वापस devm_gpiochip_add_data(dev, &chip->gpio_chip, chip);
+पूर्ण
 
-static const struct of_device_id moxtet_gpio_dt_ids[] = {
-	{ .compatible = "cznic,moxtet-gpio", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id moxtet_gpio_dt_ids[] = अणु
+	अणु .compatible = "cznic,moxtet-gpio", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, moxtet_gpio_dt_ids);
 
-static const enum turris_mox_module_id moxtet_gpio_module_table[] = {
+अटल स्थिर क्रमागत turris_mox_module_id moxtet_gpio_module_table[] = अणु
 	TURRIS_MOX_MODULE_SFP,
 	0,
-};
+पूर्ण;
 
-static struct moxtet_driver moxtet_gpio_driver = {
-	.driver = {
+अटल काष्ठा moxtet_driver moxtet_gpio_driver = अणु
+	.driver = अणु
 		.name		= "moxtet-gpio",
 		.of_match_table	= moxtet_gpio_dt_ids,
 		.probe		= moxtet_gpio_probe,
-	},
+	पूर्ण,
 	.id_table = moxtet_gpio_module_table,
-};
+पूर्ण;
 module_moxtet_driver(moxtet_gpio_driver);
 
 MODULE_AUTHOR("Marek Behun <kabel@kernel.org>");

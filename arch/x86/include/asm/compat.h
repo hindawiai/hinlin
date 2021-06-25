@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_COMPAT_H
-#define _ASM_X86_COMPAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_COMPAT_H
+#घोषणा _ASM_X86_COMPAT_H
 
 /*
- * Architecture specific compatibility types
+ * Architecture specअगरic compatibility types
  */
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <asm/processor.h>
-#include <asm/user32.h>
-#include <asm/unistd.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/user32.h>
+#समावेश <यंत्र/unistd.h>
 
-#include <asm-generic/compat.h>
+#समावेश <यंत्र-generic/compat.h>
 
-#define COMPAT_USER_HZ		100
-#define COMPAT_UTS_MACHINE	"i686\0\0"
+#घोषणा COMPAT_USER_HZ		100
+#घोषणा COMPAT_UTS_MACHINE	"i686\0\0"
 
-typedef u16		__compat_uid_t;
-typedef u16		__compat_gid_t;
-typedef u32		__compat_uid32_t;
-typedef u32		__compat_gid32_t;
-typedef u16		compat_mode_t;
-typedef u16		compat_dev_t;
-typedef u16		compat_nlink_t;
-typedef u16		compat_ipc_pid_t;
-typedef u32		compat_caddr_t;
-typedef __kernel_fsid_t	compat_fsid_t;
+प्रकार u16		__compat_uid_t;
+प्रकार u16		__compat_gid_t;
+प्रकार u32		__compat_uid32_t;
+प्रकार u32		__compat_gid32_t;
+प्रकार u16		compat_mode_t;
+प्रकार u16		compat_dev_t;
+प्रकार u16		compat_nlink_t;
+प्रकार u16		compat_ipc_pid_t;
+प्रकार u32		compat_caddr_t;
+प्रकार __kernel_fsid_t	compat_fsid_t;
 
-struct compat_stat {
+काष्ठा compat_stat अणु
 	compat_dev_t	st_dev;
 	u16		__pad1;
 	compat_ino_t	st_ino;
@@ -41,171 +42,171 @@ struct compat_stat {
 	u32		st_size;
 	u32		st_blksize;
 	u32		st_blocks;
-	u32		st_atime;
-	u32		st_atime_nsec;
-	u32		st_mtime;
-	u32		st_mtime_nsec;
-	u32		st_ctime;
-	u32		st_ctime_nsec;
+	u32		st_aसमय;
+	u32		st_aसमय_nsec;
+	u32		st_mसमय;
+	u32		st_mसमय_nsec;
+	u32		st_स_समय;
+	u32		st_स_समय_nsec;
 	u32		__unused4;
 	u32		__unused5;
-};
+पूर्ण;
 
-struct compat_flock {
-	short		l_type;
-	short		l_whence;
+काष्ठा compat_flock अणु
+	लघु		l_type;
+	लघु		l_whence;
 	compat_off_t	l_start;
 	compat_off_t	l_len;
 	compat_pid_t	l_pid;
-};
+पूर्ण;
 
-#define F_GETLK64	12	/*  using 'struct flock64' */
-#define F_SETLK64	13
-#define F_SETLKW64	14
+#घोषणा F_GETLK64	12	/*  using 'struct flock64' */
+#घोषणा F_SETLK64	13
+#घोषणा F_SETLKW64	14
 
 /*
- * IA32 uses 4 byte alignment for 64 bit quantities,
- * so we need to pack this structure.
+ * IA32 uses 4 byte alignment क्रम 64 bit quantities,
+ * so we need to pack this काष्ठाure.
  */
-struct compat_flock64 {
-	short		l_type;
-	short		l_whence;
+काष्ठा compat_flock64 अणु
+	लघु		l_type;
+	लघु		l_whence;
 	compat_loff_t	l_start;
 	compat_loff_t	l_len;
 	compat_pid_t	l_pid;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct compat_statfs {
-	int		f_type;
-	int		f_bsize;
-	int		f_blocks;
-	int		f_bfree;
-	int		f_bavail;
-	int		f_files;
-	int		f_ffree;
+काष्ठा compat_statfs अणु
+	पूर्णांक		f_type;
+	पूर्णांक		f_bsize;
+	पूर्णांक		f_blocks;
+	पूर्णांक		f_bमुक्त;
+	पूर्णांक		f_bavail;
+	पूर्णांक		f_files;
+	पूर्णांक		f_fमुक्त;
 	compat_fsid_t	f_fsid;
-	int		f_namelen;	/* SunOS ignores this field. */
-	int		f_frsize;
-	int		f_flags;
-	int		f_spare[4];
-};
+	पूर्णांक		f_namelen;	/* SunOS ignores this field. */
+	पूर्णांक		f_frsize;
+	पूर्णांक		f_flags;
+	पूर्णांक		f_spare[4];
+पूर्ण;
 
-#define COMPAT_RLIM_INFINITY		0xffffffff
+#घोषणा COMPAT_RLIM_अनन्त		0xffffffff
 
-typedef u32		compat_old_sigset_t;	/* at least 32 bits */
+प्रकार u32		compat_old_sigset_t;	/* at least 32 bits */
 
-#define _COMPAT_NSIG		64
-#define _COMPAT_NSIG_BPW	32
+#घोषणा _COMPAT_NSIG		64
+#घोषणा _COMPAT_NSIG_BPW	32
 
-typedef u32               compat_sigset_word;
+प्रकार u32               compat_sigset_word;
 
-#define COMPAT_OFF_T_MAX	0x7fffffff
+#घोषणा COMPAT_OFF_T_MAX	0x7fffffff
 
-struct compat_ipc64_perm {
+काष्ठा compat_ipc64_perm अणु
 	compat_key_t key;
 	__compat_uid32_t uid;
 	__compat_gid32_t gid;
 	__compat_uid32_t cuid;
 	__compat_gid32_t cgid;
-	unsigned short mode;
-	unsigned short __pad1;
-	unsigned short seq;
-	unsigned short __pad2;
-	compat_ulong_t unused1;
-	compat_ulong_t unused2;
-};
+	अचिन्हित लघु mode;
+	अचिन्हित लघु __pad1;
+	अचिन्हित लघु seq;
+	अचिन्हित लघु __pad2;
+	compat_uदीर्घ_t unused1;
+	compat_uदीर्घ_t unused2;
+पूर्ण;
 
-struct compat_semid64_ds {
-	struct compat_ipc64_perm sem_perm;
-	compat_ulong_t sem_otime;
-	compat_ulong_t sem_otime_high;
-	compat_ulong_t sem_ctime;
-	compat_ulong_t sem_ctime_high;
-	compat_ulong_t sem_nsems;
-	compat_ulong_t __unused3;
-	compat_ulong_t __unused4;
-};
+काष्ठा compat_semid64_ds अणु
+	काष्ठा compat_ipc64_perm sem_perm;
+	compat_uदीर्घ_t sem_oसमय;
+	compat_uदीर्घ_t sem_oसमय_high;
+	compat_uदीर्घ_t sem_स_समय;
+	compat_uदीर्घ_t sem_स_समय_high;
+	compat_uदीर्घ_t sem_nsems;
+	compat_uदीर्घ_t __unused3;
+	compat_uदीर्घ_t __unused4;
+पूर्ण;
 
-struct compat_msqid64_ds {
-	struct compat_ipc64_perm msg_perm;
-	compat_ulong_t msg_stime;
-	compat_ulong_t msg_stime_high;
-	compat_ulong_t msg_rtime;
-	compat_ulong_t msg_rtime_high;
-	compat_ulong_t msg_ctime;
-	compat_ulong_t msg_ctime_high;
-	compat_ulong_t msg_cbytes;
-	compat_ulong_t msg_qnum;
-	compat_ulong_t msg_qbytes;
+काष्ठा compat_msqid64_ds अणु
+	काष्ठा compat_ipc64_perm msg_perm;
+	compat_uदीर्घ_t msg_sसमय;
+	compat_uदीर्घ_t msg_sसमय_high;
+	compat_uदीर्घ_t msg_rसमय;
+	compat_uदीर्घ_t msg_rसमय_high;
+	compat_uदीर्घ_t msg_स_समय;
+	compat_uदीर्घ_t msg_स_समय_high;
+	compat_uदीर्घ_t msg_cbytes;
+	compat_uदीर्घ_t msg_qnum;
+	compat_uदीर्घ_t msg_qbytes;
 	compat_pid_t   msg_lspid;
 	compat_pid_t   msg_lrpid;
-	compat_ulong_t __unused4;
-	compat_ulong_t __unused5;
-};
+	compat_uदीर्घ_t __unused4;
+	compat_uदीर्घ_t __unused5;
+पूर्ण;
 
-struct compat_shmid64_ds {
-	struct compat_ipc64_perm shm_perm;
-	compat_size_t  shm_segsz;
-	compat_ulong_t shm_atime;
-	compat_ulong_t shm_atime_high;
-	compat_ulong_t shm_dtime;
-	compat_ulong_t shm_dtime_high;
-	compat_ulong_t shm_ctime;
-	compat_ulong_t shm_ctime_high;
+काष्ठा compat_shmid64_ds अणु
+	काष्ठा compat_ipc64_perm shm_perm;
+	compat_माप_प्रकार  shm_segsz;
+	compat_uदीर्घ_t shm_aसमय;
+	compat_uदीर्घ_t shm_aसमय_high;
+	compat_uदीर्घ_t shm_dसमय;
+	compat_uदीर्घ_t shm_dसमय_high;
+	compat_uदीर्घ_t shm_स_समय;
+	compat_uदीर्घ_t shm_स_समय_high;
 	compat_pid_t   shm_cpid;
 	compat_pid_t   shm_lpid;
-	compat_ulong_t shm_nattch;
-	compat_ulong_t __unused4;
-	compat_ulong_t __unused5;
-};
+	compat_uदीर्घ_t shm_nattch;
+	compat_uदीर्घ_t __unused4;
+	compat_uदीर्घ_t __unused5;
+पूर्ण;
 
-#ifdef CONFIG_X86_X32_ABI
-#define COMPAT_USE_64BIT_TIME \
+#अगर_घोषित CONFIG_X86_X32_ABI
+#घोषणा COMPAT_USE_64BIT_TIME \
 	(!!(task_pt_regs(current)->orig_ax & __X32_SYSCALL_BIT))
-#endif
+#पूर्ण_अगर
 
-static inline void __user *arch_compat_alloc_user_space(long len)
-{
+अटल अंतरभूत व्योम __user *arch_compat_alloc_user_space(दीर्घ len)
+अणु
 	compat_uptr_t sp = task_pt_regs(current)->sp;
 
 	/*
-	 * -128 for the x32 ABI redzone.  For IA32, it is not strictly
+	 * -128 क्रम the x32 ABI redzone.  For IA32, it is not strictly
 	 * necessary, but not harmful.
 	 */
 	sp -= 128;
 
-	return (void __user *)round_down(sp - len, 16);
-}
+	वापस (व्योम __user *)round_करोwn(sp - len, 16);
+पूर्ण
 
-static inline bool in_x32_syscall(void)
-{
-#ifdef CONFIG_X86_X32_ABI
-	if (task_pt_regs(current)->orig_ax & __X32_SYSCALL_BIT)
-		return true;
-#endif
-	return false;
-}
+अटल अंतरभूत bool in_x32_syscall(व्योम)
+अणु
+#अगर_घोषित CONFIG_X86_X32_ABI
+	अगर (task_pt_regs(current)->orig_ax & __X32_SYSCALL_BIT)
+		वापस true;
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
 
-static inline bool in_32bit_syscall(void)
-{
-	return in_ia32_syscall() || in_x32_syscall();
-}
+अटल अंतरभूत bool in_32bit_syscall(व्योम)
+अणु
+	वापस in_ia32_syscall() || in_x32_syscall();
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static inline bool in_compat_syscall(void)
-{
-	return in_32bit_syscall();
-}
-#define in_compat_syscall in_compat_syscall	/* override the generic impl */
-#define compat_need_64bit_alignment_fixup in_ia32_syscall
-#endif
+#अगर_घोषित CONFIG_COMPAT
+अटल अंतरभूत bool in_compat_syscall(व्योम)
+अणु
+	वापस in_32bit_syscall();
+पूर्ण
+#घोषणा in_compat_syscall in_compat_syscall	/* override the generic impl */
+#घोषणा compat_need_64bit_alignment_fixup in_ia32_syscall
+#पूर्ण_अगर
 
-struct compat_siginfo;
+काष्ठा compat_siginfo;
 
-#ifdef CONFIG_X86_X32_ABI
-int copy_siginfo_to_user32(struct compat_siginfo __user *to,
-		const kernel_siginfo_t *from);
-#define copy_siginfo_to_user32 copy_siginfo_to_user32
-#endif /* CONFIG_X86_X32_ABI */
+#अगर_घोषित CONFIG_X86_X32_ABI
+पूर्णांक copy_siginfo_to_user32(काष्ठा compat_siginfo __user *to,
+		स्थिर kernel_siginfo_t *from);
+#घोषणा copy_siginfo_to_user32 copy_siginfo_to_user32
+#पूर्ण_अगर /* CONFIG_X86_X32_ABI */
 
-#endif /* _ASM_X86_COMPAT_H */
+#पूर्ण_अगर /* _ASM_X86_COMPAT_H */

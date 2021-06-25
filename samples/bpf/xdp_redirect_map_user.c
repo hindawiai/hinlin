@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2017 Covalent IO, Inc. http://covalent.io
  */
-#include <linux/bpf.h>
-#include <linux/if_link.h>
-#include <assert.h>
-#include <errno.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <net/if.h>
-#include <unistd.h>
-#include <libgen.h>
-#include <sys/resource.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/अगर_link.h>
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
+#समावेश <net/अगर.h>
+#समावेश <unistd.h>
+#समावेश <libgen.h>
+#समावेश <sys/resource.h>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/types.h>
+#समावेश <sys/socket.h>
+#समावेश <netinet/in.h>
 
-#include "bpf_util.h"
-#include <bpf/bpf.h>
-#include <bpf/libbpf.h>
+#समावेश "bpf_util.h"
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/libbpf.h>
 
-static int ifindex_in;
-static int ifindex_out;
-static bool ifindex_out_xdp_dummy_attached = true;
-static bool xdp_devmap_attached;
-static __u32 prog_id;
-static __u32 dummy_prog_id;
+अटल पूर्णांक अगरindex_in;
+अटल पूर्णांक अगरindex_out;
+अटल bool अगरindex_out_xdp_dummy_attached = true;
+अटल bool xdp_devmap_attached;
+अटल __u32 prog_id;
+अटल __u32 dummy_prog_id;
 
-static __u32 xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
-static int rxcnt_map_fd;
+अटल __u32 xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
+अटल पूर्णांक rxcnt_map_fd;
 
-static void int_exit(int sig)
-{
+अटल व्योम पूर्णांक_निकास(पूर्णांक sig)
+अणु
 	__u32 curr_prog_id = 0;
 
-	if (bpf_get_link_xdp_id(ifindex_in, &curr_prog_id, xdp_flags)) {
-		printf("bpf_get_link_xdp_id failed\n");
-		exit(1);
-	}
-	if (prog_id == curr_prog_id)
-		bpf_set_link_xdp_fd(ifindex_in, -1, xdp_flags);
-	else if (!curr_prog_id)
-		printf("couldn't find a prog id on iface IN\n");
-	else
-		printf("program on iface IN changed, not removing\n");
+	अगर (bpf_get_link_xdp_id(अगरindex_in, &curr_prog_id, xdp_flags)) अणु
+		म_लिखो("bpf_get_link_xdp_id failed\n");
+		निकास(1);
+	पूर्ण
+	अगर (prog_id == curr_prog_id)
+		bpf_set_link_xdp_fd(अगरindex_in, -1, xdp_flags);
+	अन्यथा अगर (!curr_prog_id)
+		म_लिखो("couldn't find a prog id on iface IN\n");
+	अन्यथा
+		म_लिखो("program on iface IN changed, not removing\n");
 
-	if (ifindex_out_xdp_dummy_attached) {
+	अगर (अगरindex_out_xdp_dummy_attached) अणु
 		curr_prog_id = 0;
-		if (bpf_get_link_xdp_id(ifindex_out, &curr_prog_id,
-					xdp_flags)) {
-			printf("bpf_get_link_xdp_id failed\n");
-			exit(1);
-		}
-		if (dummy_prog_id == curr_prog_id)
-			bpf_set_link_xdp_fd(ifindex_out, -1, xdp_flags);
-		else if (!curr_prog_id)
-			printf("couldn't find a prog id on iface OUT\n");
-		else
-			printf("program on iface OUT changed, not removing\n");
-	}
-	exit(0);
-}
+		अगर (bpf_get_link_xdp_id(अगरindex_out, &curr_prog_id,
+					xdp_flags)) अणु
+			म_लिखो("bpf_get_link_xdp_id failed\n");
+			निकास(1);
+		पूर्ण
+		अगर (dummy_prog_id == curr_prog_id)
+			bpf_set_link_xdp_fd(अगरindex_out, -1, xdp_flags);
+		अन्यथा अगर (!curr_prog_id)
+			म_लिखो("couldn't find a prog id on iface OUT\n");
+		अन्यथा
+			म_लिखो("program on iface OUT changed, not removing\n");
+	पूर्ण
+	निकास(0);
+पूर्ण
 
-static void poll_stats(int interval, int ifindex)
-{
-	unsigned int nr_cpus = bpf_num_possible_cpus();
+अटल व्योम poll_stats(पूर्णांक पूर्णांकerval, पूर्णांक अगरindex)
+अणु
+	अचिन्हित पूर्णांक nr_cpus = bpf_num_possible_cpus();
 	__u64 values[nr_cpus], prev[nr_cpus];
 
-	memset(prev, 0, sizeof(prev));
+	स_रखो(prev, 0, माप(prev));
 
-	while (1) {
+	जबतक (1) अणु
 		__u64 sum = 0;
 		__u32 key = 0;
-		int i;
+		पूर्णांक i;
 
-		sleep(interval);
-		assert(bpf_map_lookup_elem(rxcnt_map_fd, &key, values) == 0);
-		for (i = 0; i < nr_cpus; i++)
+		sleep(पूर्णांकerval);
+		निश्चित(bpf_map_lookup_elem(rxcnt_map_fd, &key, values) == 0);
+		क्रम (i = 0; i < nr_cpus; i++)
 			sum += (values[i] - prev[i]);
-		if (sum)
-			printf("ifindex %i: %10llu pkt/s\n",
-			       ifindex, sum / interval);
-		memcpy(prev, values, sizeof(values));
-	}
-}
+		अगर (sum)
+			म_लिखो("ifindex %i: %10llu pkt/s\n",
+			       अगरindex, sum / पूर्णांकerval);
+		स_नकल(prev, values, माप(values));
+	पूर्ण
+पूर्ण
 
-static int get_mac_addr(unsigned int ifindex_out, void *mac_addr)
-{
-	char ifname[IF_NAMESIZE];
-	struct ifreq ifr;
-	int fd, ret = -1;
+अटल पूर्णांक get_mac_addr(अचिन्हित पूर्णांक अगरindex_out, व्योम *mac_addr)
+अणु
+	अक्षर अगरname[IF_NAMESIZE];
+	काष्ठा अगरreq अगरr;
+	पूर्णांक fd, ret = -1;
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (fd < 0)
-		return ret;
+	अगर (fd < 0)
+		वापस ret;
 
-	if (!if_indextoname(ifindex_out, ifname))
-		goto err_out;
+	अगर (!अगर_indextoname(अगरindex_out, अगरname))
+		जाओ err_out;
 
-	strcpy(ifr.ifr_name, ifname);
+	म_नकल(अगरr.अगरr_name, अगरname);
 
-	if (ioctl(fd, SIOCGIFHWADDR, &ifr) != 0)
-		goto err_out;
+	अगर (ioctl(fd, SIOCGIFHWADDR, &अगरr) != 0)
+		जाओ err_out;
 
-	memcpy(mac_addr, ifr.ifr_hwaddr.sa_data, 6 * sizeof(char));
+	स_नकल(mac_addr, अगरr.अगरr_hwaddr.sa_data, 6 * माप(अक्षर));
 	ret = 0;
 
 err_out:
-	close(fd);
-	return ret;
-}
+	बंद(fd);
+	वापस ret;
+पूर्ण
 
-static void usage(const char *prog)
-{
-	fprintf(stderr,
+अटल व्योम usage(स्थिर अक्षर *prog)
+अणु
+	ख_लिखो(मानक_त्रुटि,
 		"usage: %s [OPTS] <IFNAME|IFINDEX>_IN <IFNAME|IFINDEX>_OUT\n\n"
 		"OPTS:\n"
 		"    -S    use skb-mode\n"
@@ -124,165 +125,165 @@ static void usage(const char *prog)
 		"    -F    force loading prog\n"
 		"    -X    load xdp program on egress\n",
 		prog);
-}
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	struct bpf_prog_load_attr prog_load_attr = {
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा bpf_prog_load_attr prog_load_attr = अणु
 		.prog_type	= BPF_PROG_TYPE_UNSPEC,
-	};
-	struct bpf_program *prog, *dummy_prog, *devmap_prog;
-	int prog_fd, dummy_prog_fd, devmap_prog_fd = 0;
-	int tx_port_map_fd, tx_mac_map_fd;
-	struct bpf_devmap_val devmap_val;
-	struct bpf_prog_info info = {};
-	__u32 info_len = sizeof(info);
-	const char *optstr = "FSNX";
-	struct bpf_object *obj;
-	int ret, opt, key = 0;
-	char filename[256];
+	पूर्ण;
+	काष्ठा bpf_program *prog, *dummy_prog, *devmap_prog;
+	पूर्णांक prog_fd, dummy_prog_fd, devmap_prog_fd = 0;
+	पूर्णांक tx_port_map_fd, tx_mac_map_fd;
+	काष्ठा bpf_devmap_val devmap_val;
+	काष्ठा bpf_prog_info info = अणुपूर्ण;
+	__u32 info_len = माप(info);
+	स्थिर अक्षर *optstr = "FSNX";
+	काष्ठा bpf_object *obj;
+	पूर्णांक ret, opt, key = 0;
+	अक्षर filename[256];
 
-	while ((opt = getopt(argc, argv, optstr)) != -1) {
-		switch (opt) {
-		case 'S':
+	जबतक ((opt = getopt(argc, argv, optstr)) != -1) अणु
+		चयन (opt) अणु
+		हाल 'S':
 			xdp_flags |= XDP_FLAGS_SKB_MODE;
-			break;
-		case 'N':
-			/* default, set below */
-			break;
-		case 'F':
+			अवरोध;
+		हाल 'N':
+			/* शेष, set below */
+			अवरोध;
+		हाल 'F':
 			xdp_flags &= ~XDP_FLAGS_UPDATE_IF_NOEXIST;
-			break;
-		case 'X':
+			अवरोध;
+		हाल 'X':
 			xdp_devmap_attached = true;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			usage(basename(argv[0]));
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	if (!(xdp_flags & XDP_FLAGS_SKB_MODE)) {
+	अगर (!(xdp_flags & XDP_FLAGS_SKB_MODE)) अणु
 		xdp_flags |= XDP_FLAGS_DRV_MODE;
-	} else if (xdp_devmap_attached) {
-		printf("Load xdp program on egress with SKB mode not supported yet\n");
-		return 1;
-	}
+	पूर्ण अन्यथा अगर (xdp_devmap_attached) अणु
+		म_लिखो("Load xdp program on egress with SKB mode not supported yet\n");
+		वापस 1;
+	पूर्ण
 
-	if (optind == argc) {
-		printf("usage: %s <IFNAME|IFINDEX>_IN <IFNAME|IFINDEX>_OUT\n", argv[0]);
-		return 1;
-	}
+	अगर (optind == argc) अणु
+		म_लिखो("usage: %s <IFNAME|IFINDEX>_IN <IFNAME|IFINDEX>_OUT\n", argv[0]);
+		वापस 1;
+	पूर्ण
 
-	ifindex_in = if_nametoindex(argv[optind]);
-	if (!ifindex_in)
-		ifindex_in = strtoul(argv[optind], NULL, 0);
+	अगरindex_in = अगर_nametoindex(argv[optind]);
+	अगर (!अगरindex_in)
+		अगरindex_in = म_से_अदीर्घ(argv[optind], शून्य, 0);
 
-	ifindex_out = if_nametoindex(argv[optind + 1]);
-	if (!ifindex_out)
-		ifindex_out = strtoul(argv[optind + 1], NULL, 0);
+	अगरindex_out = अगर_nametoindex(argv[optind + 1]);
+	अगर (!अगरindex_out)
+		अगरindex_out = म_से_अदीर्घ(argv[optind + 1], शून्य, 0);
 
-	printf("input: %d output: %d\n", ifindex_in, ifindex_out);
+	म_लिखो("input: %d output: %d\n", अगरindex_in, अगरindex_out);
 
-	snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
+	snम_लिखो(filename, माप(filename), "%s_kern.o", argv[0]);
 	prog_load_attr.file = filename;
 
-	if (bpf_prog_load_xattr(&prog_load_attr, &obj, &prog_fd))
-		return 1;
+	अगर (bpf_prog_load_xattr(&prog_load_attr, &obj, &prog_fd))
+		वापस 1;
 
-	if (xdp_flags & XDP_FLAGS_SKB_MODE) {
+	अगर (xdp_flags & XDP_FLAGS_SKB_MODE) अणु
 		prog = bpf_object__find_program_by_name(obj, "xdp_redirect_map_general");
 		tx_port_map_fd = bpf_object__find_map_fd_by_name(obj, "tx_port_general");
-	} else {
+	पूर्ण अन्यथा अणु
 		prog = bpf_object__find_program_by_name(obj, "xdp_redirect_map_native");
 		tx_port_map_fd = bpf_object__find_map_fd_by_name(obj, "tx_port_native");
-	}
+	पूर्ण
 	dummy_prog = bpf_object__find_program_by_name(obj, "xdp_redirect_dummy_prog");
-	if (!prog || dummy_prog < 0 || tx_port_map_fd < 0) {
-		printf("finding prog/dummy_prog/tx_port_map in obj file failed\n");
-		goto out;
-	}
+	अगर (!prog || dummy_prog < 0 || tx_port_map_fd < 0) अणु
+		म_लिखो("finding prog/dummy_prog/tx_port_map in obj file failed\n");
+		जाओ out;
+	पूर्ण
 	prog_fd = bpf_program__fd(prog);
 	dummy_prog_fd = bpf_program__fd(dummy_prog);
-	if (prog_fd < 0 || dummy_prog_fd < 0 || tx_port_map_fd < 0) {
-		printf("bpf_prog_load_xattr: %s\n", strerror(errno));
-		return 1;
-	}
+	अगर (prog_fd < 0 || dummy_prog_fd < 0 || tx_port_map_fd < 0) अणु
+		म_लिखो("bpf_prog_load_xattr: %s\n", म_त्रुटि(त्रुटि_सं));
+		वापस 1;
+	पूर्ण
 
 	tx_mac_map_fd = bpf_object__find_map_fd_by_name(obj, "tx_mac");
 	rxcnt_map_fd = bpf_object__find_map_fd_by_name(obj, "rxcnt");
-	if (tx_mac_map_fd < 0 || rxcnt_map_fd < 0) {
-		printf("bpf_object__find_map_fd_by_name failed\n");
-		return 1;
-	}
+	अगर (tx_mac_map_fd < 0 || rxcnt_map_fd < 0) अणु
+		म_लिखो("bpf_object__find_map_fd_by_name failed\n");
+		वापस 1;
+	पूर्ण
 
-	if (bpf_set_link_xdp_fd(ifindex_in, prog_fd, xdp_flags) < 0) {
-		printf("ERROR: link set xdp fd failed on %d\n", ifindex_in);
-		return 1;
-	}
+	अगर (bpf_set_link_xdp_fd(अगरindex_in, prog_fd, xdp_flags) < 0) अणु
+		म_लिखो("ERROR: link set xdp fd failed on %d\n", अगरindex_in);
+		वापस 1;
+	पूर्ण
 
 	ret = bpf_obj_get_info_by_fd(prog_fd, &info, &info_len);
-	if (ret) {
-		printf("can't get prog info - %s\n", strerror(errno));
-		return ret;
-	}
+	अगर (ret) अणु
+		म_लिखो("can't get prog info - %s\n", म_त्रुटि(त्रुटि_सं));
+		वापस ret;
+	पूर्ण
 	prog_id = info.id;
 
 	/* Loading dummy XDP prog on out-device */
-	if (bpf_set_link_xdp_fd(ifindex_out, dummy_prog_fd,
-			    (xdp_flags | XDP_FLAGS_UPDATE_IF_NOEXIST)) < 0) {
-		printf("WARN: link set xdp fd failed on %d\n", ifindex_out);
-		ifindex_out_xdp_dummy_attached = false;
-	}
+	अगर (bpf_set_link_xdp_fd(अगरindex_out, dummy_prog_fd,
+			    (xdp_flags | XDP_FLAGS_UPDATE_IF_NOEXIST)) < 0) अणु
+		म_लिखो("WARN: link set xdp fd failed on %d\n", अगरindex_out);
+		अगरindex_out_xdp_dummy_attached = false;
+	पूर्ण
 
-	memset(&info, 0, sizeof(info));
+	स_रखो(&info, 0, माप(info));
 	ret = bpf_obj_get_info_by_fd(dummy_prog_fd, &info, &info_len);
-	if (ret) {
-		printf("can't get prog info - %s\n", strerror(errno));
-		return ret;
-	}
+	अगर (ret) अणु
+		म_लिखो("can't get prog info - %s\n", म_त्रुटि(त्रुटि_सं));
+		वापस ret;
+	पूर्ण
 	dummy_prog_id = info.id;
 
 	/* Load 2nd xdp prog on egress. */
-	if (xdp_devmap_attached) {
-		unsigned char mac_addr[6];
+	अगर (xdp_devmap_attached) अणु
+		अचिन्हित अक्षर mac_addr[6];
 
 		devmap_prog = bpf_object__find_program_by_name(obj, "xdp_redirect_map_egress");
-		if (!devmap_prog) {
-			printf("finding devmap_prog in obj file failed\n");
-			goto out;
-		}
+		अगर (!devmap_prog) अणु
+			म_लिखो("finding devmap_prog in obj file failed\n");
+			जाओ out;
+		पूर्ण
 		devmap_prog_fd = bpf_program__fd(devmap_prog);
-		if (devmap_prog_fd < 0) {
-			printf("finding devmap_prog fd failed\n");
-			goto out;
-		}
+		अगर (devmap_prog_fd < 0) अणु
+			म_लिखो("finding devmap_prog fd failed\n");
+			जाओ out;
+		पूर्ण
 
-		if (get_mac_addr(ifindex_out, mac_addr) < 0) {
-			printf("get interface %d mac failed\n", ifindex_out);
-			goto out;
-		}
+		अगर (get_mac_addr(अगरindex_out, mac_addr) < 0) अणु
+			म_लिखो("get interface %d mac failed\n", अगरindex_out);
+			जाओ out;
+		पूर्ण
 
 		ret = bpf_map_update_elem(tx_mac_map_fd, &key, mac_addr, 0);
-		if (ret) {
-			perror("bpf_update_elem tx_mac_map_fd");
-			goto out;
-		}
-	}
+		अगर (ret) अणु
+			लिखो_त्रुटि("bpf_update_elem tx_mac_map_fd");
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	signal(SIGINT, int_exit);
-	signal(SIGTERM, int_exit);
+	संकेत(संक_विघ्न, पूर्णांक_निकास);
+	संकेत(संक_इति, पूर्णांक_निकास);
 
-	devmap_val.ifindex = ifindex_out;
+	devmap_val.अगरindex = अगरindex_out;
 	devmap_val.bpf_prog.fd = devmap_prog_fd;
 	ret = bpf_map_update_elem(tx_port_map_fd, &key, &devmap_val, 0);
-	if (ret) {
-		perror("bpf_update_elem");
-		goto out;
-	}
+	अगर (ret) अणु
+		लिखो_त्रुटि("bpf_update_elem");
+		जाओ out;
+	पूर्ण
 
-	poll_stats(2, ifindex_out);
+	poll_stats(2, अगरindex_out);
 
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण

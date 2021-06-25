@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  (C) 2010,2011       Thomas Renninger <trenn@suse.de>, Novell Inc.
  *
@@ -6,182 +7,182 @@
  *  kernel git repo): subcommand builtins and param parsing.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sched.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/utsname.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <sched.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/utsname.h>
 
-#include "builtin.h"
-#include "helpers/helpers.h"
-#include "helpers/bitmask.h"
+#समावेश "builtin.h"
+#समावेश "helpers/helpers.h"
+#समावेश "helpers/bitmask.h"
 
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+#घोषणा ARRAY_SIZE(x) (माप(x)/माप(x[0]))
 
-static int cmd_help(int argc, const char **argv);
+अटल पूर्णांक cmd_help(पूर्णांक argc, स्थिर अक्षर **argv);
 
-/* Global cpu_info object available for all binaries
+/* Global cpu_info object available क्रम all binaries
  * Info only retrieved from CPU 0
  *
  * Values will be zero/unknown on non X86 archs
  */
-struct cpupower_cpu_info cpupower_cpu_info;
-int run_as_root;
-int base_cpu;
+काष्ठा cpuघातer_cpu_info cpuघातer_cpu_info;
+पूर्णांक run_as_root;
+पूर्णांक base_cpu;
 /* Affected cpus chosen by -c/--cpu param */
-struct bitmask *cpus_chosen;
-struct bitmask *online_cpus;
-struct bitmask *offline_cpus;
+काष्ठा biपंचांगask *cpus_chosen;
+काष्ठा biपंचांगask *online_cpus;
+काष्ठा biपंचांगask *offline_cpus;
 
-#ifdef DEBUG
-int be_verbose;
-#endif
+#अगर_घोषित DEBUG
+पूर्णांक be_verbose;
+#पूर्ण_अगर
 
-static void print_help(void);
+अटल व्योम prपूर्णांक_help(व्योम);
 
-struct cmd_struct {
-	const char *cmd;
-	int (*main)(int, const char **);
-	int needs_root;
-};
+काष्ठा cmd_काष्ठा अणु
+	स्थिर अक्षर *cmd;
+	पूर्णांक (*मुख्य)(पूर्णांक, स्थिर अक्षर **);
+	पूर्णांक needs_root;
+पूर्ण;
 
-static struct cmd_struct commands[] = {
-	{ "frequency-info",	cmd_freq_info,	0	},
-	{ "frequency-set",	cmd_freq_set,	1	},
-	{ "idle-info",		cmd_idle_info,	0	},
-	{ "idle-set",		cmd_idle_set,	1	},
-	{ "set",		cmd_set,	1	},
-	{ "info",		cmd_info,	0	},
-	{ "monitor",		cmd_monitor,	0	},
-	{ "help",		cmd_help,	0	},
-	/*	{ "bench",	cmd_bench,	1	}, */
-};
+अटल काष्ठा cmd_काष्ठा commands[] = अणु
+	अणु "frequency-info",	cmd_freq_info,	0	पूर्ण,
+	अणु "frequency-set",	cmd_freq_set,	1	पूर्ण,
+	अणु "idle-info",		cmd_idle_info,	0	पूर्ण,
+	अणु "idle-set",		cmd_idle_set,	1	पूर्ण,
+	अणु "set",		cmd_set,	1	पूर्ण,
+	अणु "info",		cmd_info,	0	पूर्ण,
+	अणु "monitor",		cmd_monitor,	0	पूर्ण,
+	अणु "help",		cmd_help,	0	पूर्ण,
+	/*	अणु "bench",	cmd_bench,	1	पूर्ण, */
+पूर्ण;
 
-static void print_help(void)
-{
-	unsigned int i;
+अटल व्योम prपूर्णांक_help(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-#ifdef DEBUG
-	printf(_("Usage:\tcpupower [-d|--debug] [-c|--cpu cpulist ] <command> [<args>]\n"));
-#else
-	printf(_("Usage:\tcpupower [-c|--cpu cpulist ] <command> [<args>]\n"));
-#endif
-	printf(_("Supported commands are:\n"));
-	for (i = 0; i < ARRAY_SIZE(commands); i++)
-		printf("\t%s\n", commands[i].cmd);
-	printf(_("\nNot all commands can make use of the -c cpulist option.\n"));
-	printf(_("\nUse 'cpupower help <command>' for getting help for above commands.\n"));
-}
+#अगर_घोषित DEBUG
+	म_लिखो(_("Usage:\tcpupower [-d|--debug] [-c|--cpu cpulist ] <command> [<args>]\n"));
+#अन्यथा
+	म_लिखो(_("Usage:\tcpupower [-c|--cpu cpulist ] <command> [<args>]\n"));
+#पूर्ण_अगर
+	म_लिखो(_("Supported commands are:\n"));
+	क्रम (i = 0; i < ARRAY_SIZE(commands); i++)
+		म_लिखो("\t%s\n", commands[i].cmd);
+	म_लिखो(_("\nNot all commands can make use of the -c cpulist option.\n"));
+	म_लिखो(_("\nUse 'cpupower help <command>' for getting help for above commands.\n"));
+पूर्ण
 
-static int print_man_page(const char *subpage)
-{
-	int len;
-	char *page;
+अटल पूर्णांक prपूर्णांक_man_page(स्थिर अक्षर *subpage)
+अणु
+	पूर्णांक len;
+	अक्षर *page;
 
-	len = 10; /* enough for "cpupower-" */
-	if (subpage != NULL)
-		len += strlen(subpage);
+	len = 10; /* enough क्रम "cpupower-" */
+	अगर (subpage != शून्य)
+		len += म_माप(subpage);
 
-	page = malloc(len);
-	if (!page)
-		return -ENOMEM;
+	page = दो_स्मृति(len);
+	अगर (!page)
+		वापस -ENOMEM;
 
-	sprintf(page, "cpupower");
-	if ((subpage != NULL) && strcmp(subpage, "help")) {
-		strcat(page, "-");
-		strcat(page, subpage);
-	}
+	प्र_लिखो(page, "cpupower");
+	अगर ((subpage != शून्य) && म_भेद(subpage, "help")) अणु
+		म_जोड़ो(page, "-");
+		म_जोड़ो(page, subpage);
+	पूर्ण
 
-	execlp("man", "man", page, NULL);
+	execlp("man", "man", page, शून्य);
 
 	/* should not be reached */
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int cmd_help(int argc, const char **argv)
-{
-	if (argc > 1) {
-		print_man_page(argv[1]); /* exits within execlp() */
-		return EXIT_FAILURE;
-	}
+अटल पूर्णांक cmd_help(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अगर (argc > 1) अणु
+		prपूर्णांक_man_page(argv[1]); /* निकासs within execlp() */
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	print_help();
-	return EXIT_SUCCESS;
-}
+	prपूर्णांक_help();
+	वापस निकास_सफल;
+पूर्ण
 
-static void print_version(void)
-{
-	printf(PACKAGE " " VERSION "\n");
-	printf(_("Report errors and bugs to %s, please.\n"), PACKAGE_BUGREPORT);
-}
+अटल व्योम prपूर्णांक_version(व्योम)
+अणु
+	म_लिखो(PACKAGE " " VERSION "\n");
+	म_लिखो(_("Report errors and bugs to %s, please.\n"), PACKAGE_BUGREPORT);
+पूर्ण
 
-static void handle_options(int *argc, const char ***argv)
-{
-	int ret, x, new_argc = 0;
+अटल व्योम handle_options(पूर्णांक *argc, स्थिर अक्षर ***argv)
+अणु
+	पूर्णांक ret, x, new_argc = 0;
 
-	if (*argc < 1)
-		return;
+	अगर (*argc < 1)
+		वापस;
 
-	for (x = 0;  x < *argc && ((*argv)[x])[0] == '-'; x++) {
-		const char *param = (*argv)[x];
-		if (!strcmp(param, "-h") || !strcmp(param, "--help")) {
-			print_help();
-			exit(EXIT_SUCCESS);
-		} else if (!strcmp(param, "-c") || !strcmp(param, "--cpu")) {
-			if (*argc < 2) {
-				print_help();
-				exit(EXIT_FAILURE);
-			}
-			if (!strcmp((*argv)[x+1], "all"))
-				bitmask_setall(cpus_chosen);
-			else {
-				ret = bitmask_parselist(
+	क्रम (x = 0;  x < *argc && ((*argv)[x])[0] == '-'; x++) अणु
+		स्थिर अक्षर *param = (*argv)[x];
+		अगर (!म_भेद(param, "-h") || !म_भेद(param, "--help")) अणु
+			prपूर्णांक_help();
+			निकास(निकास_सफल);
+		पूर्ण अन्यथा अगर (!म_भेद(param, "-c") || !म_भेद(param, "--cpu")) अणु
+			अगर (*argc < 2) अणु
+				prपूर्णांक_help();
+				निकास(निकास_त्रुटि);
+			पूर्ण
+			अगर (!म_भेद((*argv)[x+1], "all"))
+				biपंचांगask_setall(cpus_chosen);
+			अन्यथा अणु
+				ret = biपंचांगask_parselist(
 						(*argv)[x+1], cpus_chosen);
-				if (ret < 0) {
-					fprintf(stderr, _("Error parsing cpu "
+				अगर (ret < 0) अणु
+					ख_लिखो(मानक_त्रुटि, _("Error parsing cpu "
 							  "list\n"));
-					exit(EXIT_FAILURE);
-				}
-			}
+					निकास(निकास_त्रुटि);
+				पूर्ण
+			पूर्ण
 			x += 1;
-			/* Cut out param: cpupower -c 1 info -> cpupower info */
+			/* Cut out param: cpuघातer -c 1 info -> cpuघातer info */
 			new_argc += 2;
-			continue;
-		} else if (!strcmp(param, "-v") ||
-			!strcmp(param, "--version")) {
-			print_version();
-			exit(EXIT_SUCCESS);
-#ifdef DEBUG
-		} else if (!strcmp(param, "-d") || !strcmp(param, "--debug")) {
+			जारी;
+		पूर्ण अन्यथा अगर (!म_भेद(param, "-v") ||
+			!म_भेद(param, "--version")) अणु
+			prपूर्णांक_version();
+			निकास(निकास_सफल);
+#अगर_घोषित DEBUG
+		पूर्ण अन्यथा अगर (!म_भेद(param, "-d") || !म_भेद(param, "--debug")) अणु
 			be_verbose = 1;
 			new_argc++;
-			continue;
-#endif
-		} else {
-			fprintf(stderr, "Unknown option: %s\n", param);
-			print_help();
-			exit(EXIT_FAILURE);
-		}
-	}
+			जारी;
+#पूर्ण_अगर
+		पूर्ण अन्यथा अणु
+			ख_लिखो(मानक_त्रुटि, "Unknown option: %s\n", param);
+			prपूर्णांक_help();
+			निकास(निकास_त्रुटि);
+		पूर्ण
+	पूर्ण
 	*argc -= new_argc;
 	*argv += new_argc;
-}
+पूर्ण
 
-int main(int argc, const char *argv[])
-{
-	const char *cmd;
-	unsigned int i, ret;
-	struct stat statbuf;
-	struct utsname uts;
-	char pathname[32];
+पूर्णांक मुख्य(पूर्णांक argc, स्थिर अक्षर *argv[])
+अणु
+	स्थिर अक्षर *cmd;
+	अचिन्हित पूर्णांक i, ret;
+	काष्ठा stat statbuf;
+	काष्ठा utsname uts;
+	अक्षर pathname[32];
 
-	cpus_chosen = bitmask_alloc(sysconf(_SC_NPROCESSORS_CONF));
-	online_cpus = bitmask_alloc(sysconf(_SC_NPROCESSORS_CONF));
-	offline_cpus = bitmask_alloc(sysconf(_SC_NPROCESSORS_CONF));
+	cpus_chosen = biपंचांगask_alloc(sysconf(_SC_NPROCESSORS_CONF));
+	online_cpus = biपंचांगask_alloc(sysconf(_SC_NPROCESSORS_CONF));
+	offline_cpus = biपंचांगask_alloc(sysconf(_SC_NPROCESSORS_CONF));
 
 	argc--;
 	argv += 1;
@@ -190,56 +191,56 @@ int main(int argc, const char *argv[])
 
 	cmd = argv[0];
 
-	if (argc < 1) {
-		print_help();
-		return EXIT_FAILURE;
-	}
+	अगर (argc < 1) अणु
+		prपूर्णांक_help();
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	setlocale(LC_ALL, "");
-	textdomain(PACKAGE);
+	रखो_क्षेत्र(LC_ALL, "");
+	textकरोमुख्य(PACKAGE);
 
-	/* Turn "perf cmd --help" into "perf help cmd" */
-	if (argc > 1 && !strcmp(argv[1], "--help")) {
+	/* Turn "perf cmd --help" पूर्णांकo "perf help cmd" */
+	अगर (argc > 1 && !म_भेद(argv[1], "--help")) अणु
 		argv[1] = argv[0];
 		argv[0] = cmd = "help";
-	}
+	पूर्ण
 
-	base_cpu = sched_getcpu();
-	if (base_cpu < 0) {
-		fprintf(stderr, _("No valid cpus found.\n"));
-		return EXIT_FAILURE;
-	}
+	base_cpu = sched_अ_लोpu();
+	अगर (base_cpu < 0) अणु
+		ख_लिखो(मानक_त्रुटि, _("No valid cpus found.\n"));
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	get_cpu_info(&cpupower_cpu_info);
+	get_cpu_info(&cpuघातer_cpu_info);
 	run_as_root = !geteuid();
-	if (run_as_root) {
+	अगर (run_as_root) अणु
 		ret = uname(&uts);
-		sprintf(pathname, "/dev/cpu/%d/msr", base_cpu);
-		if (!ret && !strcmp(uts.machine, "x86_64") &&
-		    stat(pathname, &statbuf) != 0) {
-			if (system("modprobe msr") == -1)
-	fprintf(stderr, _("MSR access not available.\n"));
-		}
-	}
+		प्र_लिखो(pathname, "/dev/cpu/%d/msr", base_cpu);
+		अगर (!ret && !म_भेद(uts.machine, "x86_64") &&
+		    stat(pathname, &statbuf) != 0) अणु
+			अगर (प्रणाली("modprobe msr") == -1)
+	ख_लिखो(मानक_त्रुटि, _("MSR access not available.\n"));
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(commands); i++) {
-		struct cmd_struct *p = commands + i;
-		if (strcmp(p->cmd, cmd))
-			continue;
-		if (!run_as_root && p->needs_root) {
-			fprintf(stderr, _("Subcommand %s needs root "
+	क्रम (i = 0; i < ARRAY_SIZE(commands); i++) अणु
+		काष्ठा cmd_काष्ठा *p = commands + i;
+		अगर (म_भेद(p->cmd, cmd))
+			जारी;
+		अगर (!run_as_root && p->needs_root) अणु
+			ख_लिखो(मानक_त्रुटि, _("Subcommand %s needs root "
 					  "privileges\n"), cmd);
-			return EXIT_FAILURE;
-		}
-		ret = p->main(argc, argv);
-		if (cpus_chosen)
-			bitmask_free(cpus_chosen);
-		if (online_cpus)
-			bitmask_free(online_cpus);
-		if (offline_cpus)
-			bitmask_free(offline_cpus);
-		return ret;
-	}
-	print_help();
-	return EXIT_FAILURE;
-}
+			वापस निकास_त्रुटि;
+		पूर्ण
+		ret = p->मुख्य(argc, argv);
+		अगर (cpus_chosen)
+			biपंचांगask_मुक्त(cpus_chosen);
+		अगर (online_cpus)
+			biपंचांगask_मुक्त(online_cpus);
+		अगर (offline_cpus)
+			biपंचांगask_मुक्त(offline_cpus);
+		वापस ret;
+	पूर्ण
+	prपूर्णांक_help();
+	वापस निकास_त्रुटि;
+पूर्ण

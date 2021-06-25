@@ -1,39 +1,40 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2010 Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2004 Microtronix Datacom Ltd.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License. See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#ifndef _ASM_NIOS2_ENTRY_H
-#define _ASM_NIOS2_ENTRY_H
+#अगर_अघोषित _ASM_NIOS2_ENTRY_H
+#घोषणा _ASM_NIOS2_ENTRY_H
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
-#include <asm/processor.h>
-#include <asm/registers.h>
-#include <asm/asm-offsets.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/रेजिस्टरs.h>
+#समावेश <यंत्र/यंत्र-offsets.h>
 
 /*
- * Standard Nios2 interrupt entry and exit macros.
- * Must be called with interrupts disabled.
+ * Standard Nios2 पूर्णांकerrupt entry and निकास macros.
+ * Must be called with पूर्णांकerrupts disabled.
  */
 .macro SAVE_ALL
 	rdctl	r24, estatus
 	andi	r24, r24, ESTATUS_EU
-	beq	r24, r0, 1f /* In supervisor mode, already on kernel stack */
+	beq	r24, r0, 1f /* In supervisor mode, alपढ़ोy on kernel stack */
 
-	movia	r24, _current_thread	/* Switch to current kernel stack */
-	ldw	r24, 0(r24)		/* using the thread_info */
+	movia	r24, _current_thपढ़ो	/* Switch to current kernel stack */
+	ldw	r24, 0(r24)		/* using the thपढ़ो_info */
 	addi	r24, r24, THREAD_SIZE-PT_REGS_SIZE
-	stw	sp, PT_SP(r24)		/* Save user stack before changing */
+	stw	sp, PT_SP(r24)		/* Save user stack beक्रमe changing */
 	mov	sp, r24
 	br	2f
 
 1 :	mov	r24, sp
-	addi	sp, sp, -PT_REGS_SIZE	/* Backup the kernel stack pointer */
+	addi	sp, sp, -PT_REGS_SIZE	/* Backup the kernel stack poपूर्णांकer */
 	stw	r24, PT_SP(sp)
 2 :	stw	r1, PT_R1(sp)
 	stw	r2, PT_R2(sp)
@@ -62,7 +63,7 @@
 .endm
 
 .macro RESTORE_ALL
-	ldw	r1, PT_R1(sp)		/* Restore registers */
+	ldw	r1, PT_R1(sp)		/* Restore रेजिस्टरs */
 	ldw	r2, PT_R2(sp)
 	ldw	r3, PT_R3(sp)
 	ldw	r4, PT_R4(sp)
@@ -116,5 +117,5 @@
 	addi	sp, sp, SWITCH_STACK_SIZE
 .endm
 
-#endif /* __ASSEMBLY__ */
-#endif /* _ASM_NIOS2_ENTRY_H */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* _ASM_NIOS2_ENTRY_H */

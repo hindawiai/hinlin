@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#include "bpf_iter.h"
-#include <bpf/bpf_helpers.h>
+#समावेश "bpf_iter.h"
+#समावेश <bpf/bpf_helpers.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
 SEC("iter/task")
-int dump_task(struct bpf_iter__task *ctx)
-{
-	struct seq_file *seq = ctx->meta->seq;
-	struct task_struct *task = ctx->task;
-	int tgid;
+पूर्णांक dump_task(काष्ठा bpf_iter__task *ctx)
+अणु
+	काष्ठा seq_file *seq = ctx->meta->seq;
+	काष्ठा task_काष्ठा *task = ctx->task;
+	पूर्णांक tgid;
 
 	tgid = task->tgid;
-	bpf_seq_write(seq, &tgid, sizeof(tgid));
-	return 0;
-}
+	bpf_seq_ग_लिखो(seq, &tgid, माप(tgid));
+	वापस 0;
+पूर्ण

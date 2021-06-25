@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *   ALSA driver for ICEnsemble ICE1712 (Envy24)
+ *   ALSA driver क्रम ICEnsemble ICE1712 (Envy24)
  *
- *   AK4524 / AK4528 / AK4529 / AK4355 / AK4381 interface
+ *   AK4524 / AK4528 / AK4529 / AK4355 / AK4381 पूर्णांकerface
  *
  *	Copyright (c) 2000 Jaroslav Kysela <perex@perex.cz>
  */      
 
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/initval.h>
-#include "ice1712.h"
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश "ice1712.h"
 
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("ICEnsemble ICE17xx <-> AK4xxx AD/DA chip interface");
 MODULE_LICENSE("GPL");
 
-static void snd_ice1712_akm4xxx_lock(struct snd_akm4xxx *ak, int chip)
-{
-	struct snd_ice1712 *ice = ak->private_data[0];
+अटल व्योम snd_ice1712_akm4xxx_lock(काष्ठा snd_akm4xxx *ak, पूर्णांक chip)
+अणु
+	काष्ठा snd_ice1712 *ice = ak->निजी_data[0];
 
 	snd_ice1712_save_gpio_status(ice);
-}
+पूर्ण
 
-static void snd_ice1712_akm4xxx_unlock(struct snd_akm4xxx *ak, int chip)
-{
-	struct snd_ice1712 *ice = ak->private_data[0];
+अटल व्योम snd_ice1712_akm4xxx_unlock(काष्ठा snd_akm4xxx *ak, पूर्णांक chip)
+अणु
+	काष्ठा snd_ice1712 *ice = ak->निजी_data[0];
 
 	snd_ice1712_restore_gpio_status(ice);
-}
+पूर्ण
 
 /*
- * write AK4xxx register
+ * ग_लिखो AK4xxx रेजिस्टर
  */
-static void snd_ice1712_akm4xxx_write(struct snd_akm4xxx *ak, int chip,
-				      unsigned char addr, unsigned char data)
-{
-	unsigned int tmp;
-	int idx;
-	unsigned int addrdata;
-	struct snd_ak4xxx_private *priv = (void *)ak->private_value[0];
-	struct snd_ice1712 *ice = ak->private_data[0];
+अटल व्योम snd_ice1712_akm4xxx_ग_लिखो(काष्ठा snd_akm4xxx *ak, पूर्णांक chip,
+				      अचिन्हित अक्षर addr, अचिन्हित अक्षर data)
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
+	पूर्णांक idx;
+	अचिन्हित पूर्णांक addrdata;
+	काष्ठा snd_ak4xxx_निजी *priv = (व्योम *)ak->निजी_value[0];
+	काष्ठा snd_ice1712 *ice = ak->निजी_data[0];
 
-	if (snd_BUG_ON(chip < 0 || chip >= 4))
-		return;
+	अगर (snd_BUG_ON(chip < 0 || chip >= 4))
+		वापस;
 
-	tmp = snd_ice1712_gpio_read(ice);
-	tmp |= priv->add_flags;
-	tmp &= ~priv->mask_flags;
-	if (priv->cs_mask == priv->cs_addr) {
-		if (priv->cif) {
-			tmp |= priv->cs_mask; /* start without chip select */
-		}  else {
-			tmp &= ~priv->cs_mask; /* chip select low */
-			snd_ice1712_gpio_write(ice, tmp);
+	पंचांगp = snd_ice1712_gpio_पढ़ो(ice);
+	पंचांगp |= priv->add_flags;
+	पंचांगp &= ~priv->mask_flags;
+	अगर (priv->cs_mask == priv->cs_addr) अणु
+		अगर (priv->cअगर) अणु
+			पंचांगp |= priv->cs_mask; /* start without chip select */
+		पूर्ण  अन्यथा अणु
+			पंचांगp &= ~priv->cs_mask; /* chip select low */
+			snd_ice1712_gpio_ग_लिखो(ice, पंचांगp);
 			udelay(1);
-		}
-	} else {
-		/* doesn't handle cf=1 yet */
-		tmp &= ~priv->cs_mask;
-		tmp |= priv->cs_addr;
-		snd_ice1712_gpio_write(ice, tmp);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* करोesn't handle cf=1 yet */
+		पंचांगp &= ~priv->cs_mask;
+		पंचांगp |= priv->cs_addr;
+		snd_ice1712_gpio_ग_लिखो(ice, पंचांगp);
 		udelay(1);
-	}
+	पूर्ण
 
 	/* build I2C address + data byte */
 	addrdata = (priv->caddr << 6) | 0x20 | (addr & 0x1f);
 	addrdata = (addrdata << 8) | data;
-	for (idx = 15; idx >= 0; idx--) {
-		/* drop clock */
-		tmp &= ~priv->clk_mask;
-		snd_ice1712_gpio_write(ice, tmp);
+	क्रम (idx = 15; idx >= 0; idx--) अणु
+		/* drop घड़ी */
+		पंचांगp &= ~priv->clk_mask;
+		snd_ice1712_gpio_ग_लिखो(ice, पंचांगp);
 		udelay(1);
 		/* set data */
-		if (addrdata & (1 << idx))
-			tmp |= priv->data_mask;
-		else
-			tmp &= ~priv->data_mask;
-		snd_ice1712_gpio_write(ice, tmp);
+		अगर (addrdata & (1 << idx))
+			पंचांगp |= priv->data_mask;
+		अन्यथा
+			पंचांगp &= ~priv->data_mask;
+		snd_ice1712_gpio_ग_लिखो(ice, पंचांगp);
 		udelay(1);
-		/* raise clock */
-		tmp |= priv->clk_mask;
-		snd_ice1712_gpio_write(ice, tmp);
+		/* उठाओ घड़ी */
+		पंचांगp |= priv->clk_mask;
+		snd_ice1712_gpio_ग_लिखो(ice, पंचांगp);
 		udelay(1);
-	}
+	पूर्ण
 
-	if (priv->cs_mask == priv->cs_addr) {
-		if (priv->cif) {
-			/* assert a cs pulse to trigger */
-			tmp &= ~priv->cs_mask;
-			snd_ice1712_gpio_write(ice, tmp);
+	अगर (priv->cs_mask == priv->cs_addr) अणु
+		अगर (priv->cअगर) अणु
+			/* निश्चित a cs pulse to trigger */
+			पंचांगp &= ~priv->cs_mask;
+			snd_ice1712_gpio_ग_लिखो(ice, पंचांगp);
 			udelay(1);
-		}
-		tmp |= priv->cs_mask; /* chip select high to trigger */
-	} else {
-		tmp &= ~priv->cs_mask;
-		tmp |= priv->cs_none; /* deselect address */
-	}
-	snd_ice1712_gpio_write(ice, tmp);
+		पूर्ण
+		पंचांगp |= priv->cs_mask; /* chip select high to trigger */
+	पूर्ण अन्यथा अणु
+		पंचांगp &= ~priv->cs_mask;
+		पंचांगp |= priv->cs_none; /* deselect address */
+	पूर्ण
+	snd_ice1712_gpio_ग_लिखो(ice, पंचांगp);
 	udelay(1);
-}
+पूर्ण
 
 /*
- * initialize the struct snd_akm4xxx record with the template
+ * initialize the काष्ठा snd_akm4xxx record with the ढाँचा
  */
-int snd_ice1712_akm4xxx_init(struct snd_akm4xxx *ak, const struct snd_akm4xxx *temp,
-			     const struct snd_ak4xxx_private *_priv, struct snd_ice1712 *ice)
-{
-	struct snd_ak4xxx_private *priv;
+पूर्णांक snd_ice1712_akm4xxx_init(काष्ठा snd_akm4xxx *ak, स्थिर काष्ठा snd_akm4xxx *temp,
+			     स्थिर काष्ठा snd_ak4xxx_निजी *_priv, काष्ठा snd_ice1712 *ice)
+अणु
+	काष्ठा snd_ak4xxx_निजी *priv;
 
-	if (_priv != NULL) {
-		priv = kmalloc(sizeof(*priv), GFP_KERNEL);
-		if (priv == NULL)
-			return -ENOMEM;
+	अगर (_priv != शून्य) अणु
+		priv = kदो_स्मृति(माप(*priv), GFP_KERNEL);
+		अगर (priv == शून्य)
+			वापस -ENOMEM;
 		*priv = *_priv;
-	} else {
-		priv = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		priv = शून्य;
+	पूर्ण
 	*ak = *temp;
 	ak->card = ice->card;
-        ak->private_value[0] = (unsigned long)priv;
-	ak->private_data[0] = ice;
-	if (ak->ops.lock == NULL)
+        ak->निजी_value[0] = (अचिन्हित दीर्घ)priv;
+	ak->निजी_data[0] = ice;
+	अगर (ak->ops.lock == शून्य)
 		ak->ops.lock = snd_ice1712_akm4xxx_lock;
-	if (ak->ops.unlock == NULL)
+	अगर (ak->ops.unlock == शून्य)
 		ak->ops.unlock = snd_ice1712_akm4xxx_unlock;
-	if (ak->ops.write == NULL)
-		ak->ops.write = snd_ice1712_akm4xxx_write;
+	अगर (ak->ops.ग_लिखो == शून्य)
+		ak->ops.ग_लिखो = snd_ice1712_akm4xxx_ग_लिखो;
 	snd_akm4xxx_init(ak);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void snd_ice1712_akm4xxx_free(struct snd_ice1712 *ice)
-{
-	unsigned int akidx;
-	if (ice->akm == NULL)
-		return;
-	for (akidx = 0; akidx < ice->akm_codecs; akidx++) {
-		struct snd_akm4xxx *ak = &ice->akm[akidx];
-		kfree((void*)ak->private_value[0]);
-	}
-	kfree(ice->akm);
-}
+व्योम snd_ice1712_akm4xxx_मुक्त(काष्ठा snd_ice1712 *ice)
+अणु
+	अचिन्हित पूर्णांक akidx;
+	अगर (ice->akm == शून्य)
+		वापस;
+	क्रम (akidx = 0; akidx < ice->akm_codecs; akidx++) अणु
+		काष्ठा snd_akm4xxx *ak = &ice->akm[akidx];
+		kमुक्त((व्योम*)ak->निजी_value[0]);
+	पूर्ण
+	kमुक्त(ice->akm);
+पूर्ण
 
 /*
  * build AK4xxx controls
  */
-int snd_ice1712_akm4xxx_build_controls(struct snd_ice1712 *ice)
-{
-	unsigned int akidx;
-	int err;
+पूर्णांक snd_ice1712_akm4xxx_build_controls(काष्ठा snd_ice1712 *ice)
+अणु
+	अचिन्हित पूर्णांक akidx;
+	पूर्णांक err;
 
-	for (akidx = 0; akidx < ice->akm_codecs; akidx++) {
-		struct snd_akm4xxx *ak = &ice->akm[akidx];
+	क्रम (akidx = 0; akidx < ice->akm_codecs; akidx++) अणु
+		काष्ठा snd_akm4xxx *ak = &ice->akm[akidx];
 		err = snd_akm4xxx_build_controls(ak);
-		if (err < 0)
-			return err;
-	}
-	return 0;
-}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(snd_ice1712_akm4xxx_init);
-EXPORT_SYMBOL(snd_ice1712_akm4xxx_free);
+EXPORT_SYMBOL(snd_ice1712_akm4xxx_मुक्त);
 EXPORT_SYMBOL(snd_ice1712_akm4xxx_build_controls);

@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Scatterlist Cryptographic API.
  *
- * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
+ * Copyright (c) 2002 James Morris <jmorris@पूर्णांकercode.com.au>
  * Copyright (c) 2002 David S. Miller (davem@redhat.com)
- * Copyright (c) 2005 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2005 Herbert Xu <herbert@gonकरोr.apana.org.au>
  *
  * Portions derived from Cryptoapi, by Alexander Kjeldaas <astor@fast.no>
- * and Nettle, by Niels Möller.
+ * and Nettle, by Niels Mथघller.
  */
 
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/kmod.h>
-#include <linux/module.h>
-#include <linux/param.h>
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/completion.h>
-#include "internal.h"
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/module.h>
+#समावेश <linux/param.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/completion.h>
+#समावेश "internal.h"
 
 LIST_HEAD(crypto_alg_list);
 EXPORT_SYMBOL_GPL(crypto_alg_list);
@@ -30,85 +31,85 @@ EXPORT_SYMBOL_GPL(crypto_alg_sem);
 BLOCKING_NOTIFIER_HEAD(crypto_chain);
 EXPORT_SYMBOL_GPL(crypto_chain);
 
-static struct crypto_alg *crypto_larval_wait(struct crypto_alg *alg);
+अटल काष्ठा crypto_alg *crypto_larval_रुको(काष्ठा crypto_alg *alg);
 
-struct crypto_alg *crypto_mod_get(struct crypto_alg *alg)
-{
-	return try_module_get(alg->cra_module) ? crypto_alg_get(alg) : NULL;
-}
+काष्ठा crypto_alg *crypto_mod_get(काष्ठा crypto_alg *alg)
+अणु
+	वापस try_module_get(alg->cra_module) ? crypto_alg_get(alg) : शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_mod_get);
 
-void crypto_mod_put(struct crypto_alg *alg)
-{
-	struct module *module = alg->cra_module;
+व्योम crypto_mod_put(काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा module *module = alg->cra_module;
 
 	crypto_alg_put(alg);
 	module_put(module);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_mod_put);
 
-static inline int crypto_is_test_larval(struct crypto_larval *larval)
-{
-	return larval->alg.cra_driver_name[0];
-}
+अटल अंतरभूत पूर्णांक crypto_is_test_larval(काष्ठा crypto_larval *larval)
+अणु
+	वापस larval->alg.cra_driver_name[0];
+पूर्ण
 
-static struct crypto_alg *__crypto_alg_lookup(const char *name, u32 type,
+अटल काष्ठा crypto_alg *__crypto_alg_lookup(स्थिर अक्षर *name, u32 type,
 					      u32 mask)
-{
-	struct crypto_alg *q, *alg = NULL;
-	int best = -2;
+अणु
+	काष्ठा crypto_alg *q, *alg = शून्य;
+	पूर्णांक best = -2;
 
-	list_for_each_entry(q, &crypto_alg_list, cra_list) {
-		int exact, fuzzy;
+	list_क्रम_each_entry(q, &crypto_alg_list, cra_list) अणु
+		पूर्णांक exact, fuzzy;
 
-		if (crypto_is_moribund(q))
-			continue;
+		अगर (crypto_is_moribund(q))
+			जारी;
 
-		if ((q->cra_flags ^ type) & mask)
-			continue;
+		अगर ((q->cra_flags ^ type) & mask)
+			जारी;
 
-		if (crypto_is_larval(q) &&
-		    !crypto_is_test_larval((struct crypto_larval *)q) &&
-		    ((struct crypto_larval *)q)->mask != mask)
-			continue;
+		अगर (crypto_is_larval(q) &&
+		    !crypto_is_test_larval((काष्ठा crypto_larval *)q) &&
+		    ((काष्ठा crypto_larval *)q)->mask != mask)
+			जारी;
 
-		exact = !strcmp(q->cra_driver_name, name);
-		fuzzy = !strcmp(q->cra_name, name);
-		if (!exact && !(fuzzy && q->cra_priority > best))
-			continue;
+		exact = !म_भेद(q->cra_driver_name, name);
+		fuzzy = !म_भेद(q->cra_name, name);
+		अगर (!exact && !(fuzzy && q->cra_priority > best))
+			जारी;
 
-		if (unlikely(!crypto_mod_get(q)))
-			continue;
+		अगर (unlikely(!crypto_mod_get(q)))
+			जारी;
 
 		best = q->cra_priority;
-		if (alg)
+		अगर (alg)
 			crypto_mod_put(alg);
 		alg = q;
 
-		if (exact)
-			break;
-	}
+		अगर (exact)
+			अवरोध;
+	पूर्ण
 
-	return alg;
-}
+	वापस alg;
+पूर्ण
 
-static void crypto_larval_destroy(struct crypto_alg *alg)
-{
-	struct crypto_larval *larval = (void *)alg;
+अटल व्योम crypto_larval_destroy(काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा crypto_larval *larval = (व्योम *)alg;
 
 	BUG_ON(!crypto_is_larval(alg));
-	if (!IS_ERR_OR_NULL(larval->adult))
+	अगर (!IS_ERR_OR_शून्य(larval->adult))
 		crypto_mod_put(larval->adult);
-	kfree(larval);
-}
+	kमुक्त(larval);
+पूर्ण
 
-struct crypto_larval *crypto_larval_alloc(const char *name, u32 type, u32 mask)
-{
-	struct crypto_larval *larval;
+काष्ठा crypto_larval *crypto_larval_alloc(स्थिर अक्षर *name, u32 type, u32 mask)
+अणु
+	काष्ठा crypto_larval *larval;
 
-	larval = kzalloc(sizeof(*larval), GFP_KERNEL);
-	if (!larval)
-		return ERR_PTR(-ENOMEM);
+	larval = kzalloc(माप(*larval), GFP_KERNEL);
+	अगर (!larval)
+		वापस ERR_PTR(-ENOMEM);
 
 	larval->mask = mask;
 	larval->alg.cra_flags = CRYPTO_ALG_LARVAL | type;
@@ -118,488 +119,488 @@ struct crypto_larval *crypto_larval_alloc(const char *name, u32 type, u32 mask)
 	strlcpy(larval->alg.cra_name, name, CRYPTO_MAX_ALG_NAME);
 	init_completion(&larval->completion);
 
-	return larval;
-}
+	वापस larval;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_larval_alloc);
 
-static struct crypto_alg *crypto_larval_add(const char *name, u32 type,
+अटल काष्ठा crypto_alg *crypto_larval_add(स्थिर अक्षर *name, u32 type,
 					    u32 mask)
-{
-	struct crypto_alg *alg;
-	struct crypto_larval *larval;
+अणु
+	काष्ठा crypto_alg *alg;
+	काष्ठा crypto_larval *larval;
 
 	larval = crypto_larval_alloc(name, type, mask);
-	if (IS_ERR(larval))
-		return ERR_CAST(larval);
+	अगर (IS_ERR(larval))
+		वापस ERR_CAST(larval);
 
 	refcount_set(&larval->alg.cra_refcnt, 2);
 
-	down_write(&crypto_alg_sem);
+	करोwn_ग_लिखो(&crypto_alg_sem);
 	alg = __crypto_alg_lookup(name, type, mask);
-	if (!alg) {
+	अगर (!alg) अणु
 		alg = &larval->alg;
 		list_add(&alg->cra_list, &crypto_alg_list);
-	}
-	up_write(&crypto_alg_sem);
+	पूर्ण
+	up_ग_लिखो(&crypto_alg_sem);
 
-	if (alg != &larval->alg) {
-		kfree(larval);
-		if (crypto_is_larval(alg))
-			alg = crypto_larval_wait(alg);
-	}
+	अगर (alg != &larval->alg) अणु
+		kमुक्त(larval);
+		अगर (crypto_is_larval(alg))
+			alg = crypto_larval_रुको(alg);
+	पूर्ण
 
-	return alg;
-}
+	वापस alg;
+पूर्ण
 
-void crypto_larval_kill(struct crypto_alg *alg)
-{
-	struct crypto_larval *larval = (void *)alg;
+व्योम crypto_larval_समाप्त(काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा crypto_larval *larval = (व्योम *)alg;
 
-	down_write(&crypto_alg_sem);
+	करोwn_ग_लिखो(&crypto_alg_sem);
 	list_del(&alg->cra_list);
-	up_write(&crypto_alg_sem);
+	up_ग_लिखो(&crypto_alg_sem);
 	complete_all(&larval->completion);
 	crypto_alg_put(alg);
-}
-EXPORT_SYMBOL_GPL(crypto_larval_kill);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_larval_समाप्त);
 
-static struct crypto_alg *crypto_larval_wait(struct crypto_alg *alg)
-{
-	struct crypto_larval *larval = (void *)alg;
-	long timeout;
+अटल काष्ठा crypto_alg *crypto_larval_रुको(काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा crypto_larval *larval = (व्योम *)alg;
+	दीर्घ समयout;
 
-	timeout = wait_for_completion_killable_timeout(
+	समयout = रुको_क्रम_completion_समाप्तable_समयout(
 		&larval->completion, 60 * HZ);
 
 	alg = larval->adult;
-	if (timeout < 0)
+	अगर (समयout < 0)
 		alg = ERR_PTR(-EINTR);
-	else if (!timeout)
+	अन्यथा अगर (!समयout)
 		alg = ERR_PTR(-ETIMEDOUT);
-	else if (!alg)
+	अन्यथा अगर (!alg)
 		alg = ERR_PTR(-ENOENT);
-	else if (IS_ERR(alg))
+	अन्यथा अगर (IS_ERR(alg))
 		;
-	else if (crypto_is_test_larval(larval) &&
+	अन्यथा अगर (crypto_is_test_larval(larval) &&
 		 !(alg->cra_flags & CRYPTO_ALG_TESTED))
 		alg = ERR_PTR(-EAGAIN);
-	else if (!crypto_mod_get(alg))
+	अन्यथा अगर (!crypto_mod_get(alg))
 		alg = ERR_PTR(-EAGAIN);
 	crypto_mod_put(&larval->alg);
 
-	return alg;
-}
+	वापस alg;
+पूर्ण
 
-static struct crypto_alg *crypto_alg_lookup(const char *name, u32 type,
+अटल काष्ठा crypto_alg *crypto_alg_lookup(स्थिर अक्षर *name, u32 type,
 					    u32 mask)
-{
-	struct crypto_alg *alg;
+अणु
+	काष्ठा crypto_alg *alg;
 	u32 test = 0;
 
-	if (!((type | mask) & CRYPTO_ALG_TESTED))
+	अगर (!((type | mask) & CRYPTO_ALG_TESTED))
 		test |= CRYPTO_ALG_TESTED;
 
-	down_read(&crypto_alg_sem);
+	करोwn_पढ़ो(&crypto_alg_sem);
 	alg = __crypto_alg_lookup(name, type | test, mask | test);
-	if (!alg && test) {
+	अगर (!alg && test) अणु
 		alg = __crypto_alg_lookup(name, type, mask);
-		if (alg && !crypto_is_larval(alg)) {
+		अगर (alg && !crypto_is_larval(alg)) अणु
 			/* Test failed */
 			crypto_mod_put(alg);
 			alg = ERR_PTR(-ELIBBAD);
-		}
-	}
-	up_read(&crypto_alg_sem);
+		पूर्ण
+	पूर्ण
+	up_पढ़ो(&crypto_alg_sem);
 
-	return alg;
-}
+	वापस alg;
+पूर्ण
 
-static struct crypto_alg *crypto_larval_lookup(const char *name, u32 type,
+अटल काष्ठा crypto_alg *crypto_larval_lookup(स्थिर अक्षर *name, u32 type,
 					       u32 mask)
-{
-	struct crypto_alg *alg;
+अणु
+	काष्ठा crypto_alg *alg;
 
-	if (!name)
-		return ERR_PTR(-ENOENT);
+	अगर (!name)
+		वापस ERR_PTR(-ENOENT);
 
 	type &= ~(CRYPTO_ALG_LARVAL | CRYPTO_ALG_DEAD);
 	mask &= ~(CRYPTO_ALG_LARVAL | CRYPTO_ALG_DEAD);
 
 	alg = crypto_alg_lookup(name, type, mask);
-	if (!alg && !(mask & CRYPTO_NOLOAD)) {
+	अगर (!alg && !(mask & CRYPTO_NOLOAD)) अणु
 		request_module("crypto-%s", name);
 
-		if (!((type ^ CRYPTO_ALG_NEED_FALLBACK) & mask &
+		अगर (!((type ^ CRYPTO_ALG_NEED_FALLBACK) & mask &
 		      CRYPTO_ALG_NEED_FALLBACK))
 			request_module("crypto-%s-all", name);
 
 		alg = crypto_alg_lookup(name, type, mask);
-	}
+	पूर्ण
 
-	if (!IS_ERR_OR_NULL(alg) && crypto_is_larval(alg))
-		alg = crypto_larval_wait(alg);
-	else if (!alg)
+	अगर (!IS_ERR_OR_शून्य(alg) && crypto_is_larval(alg))
+		alg = crypto_larval_रुको(alg);
+	अन्यथा अगर (!alg)
 		alg = crypto_larval_add(name, type, mask);
 
-	return alg;
-}
+	वापस alg;
+पूर्ण
 
-int crypto_probing_notify(unsigned long val, void *v)
-{
-	int ok;
+पूर्णांक crypto_probing_notअगरy(अचिन्हित दीर्घ val, व्योम *v)
+अणु
+	पूर्णांक ok;
 
-	ok = blocking_notifier_call_chain(&crypto_chain, val, v);
-	if (ok == NOTIFY_DONE) {
+	ok = blocking_notअगरier_call_chain(&crypto_chain, val, v);
+	अगर (ok == NOTIFY_DONE) अणु
 		request_module("cryptomgr");
-		ok = blocking_notifier_call_chain(&crypto_chain, val, v);
-	}
+		ok = blocking_notअगरier_call_chain(&crypto_chain, val, v);
+	पूर्ण
 
-	return ok;
-}
-EXPORT_SYMBOL_GPL(crypto_probing_notify);
+	वापस ok;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_probing_notअगरy);
 
-struct crypto_alg *crypto_alg_mod_lookup(const char *name, u32 type, u32 mask)
-{
-	struct crypto_alg *alg;
-	struct crypto_alg *larval;
-	int ok;
+काष्ठा crypto_alg *crypto_alg_mod_lookup(स्थिर अक्षर *name, u32 type, u32 mask)
+अणु
+	काष्ठा crypto_alg *alg;
+	काष्ठा crypto_alg *larval;
+	पूर्णांक ok;
 
 	/*
-	 * If the internal flag is set for a cipher, require a caller to
-	 * to invoke the cipher with the internal flag to use that cipher.
-	 * Also, if a caller wants to allocate a cipher that may or may
-	 * not be an internal cipher, use type | CRYPTO_ALG_INTERNAL and
+	 * If the पूर्णांकernal flag is set क्रम a cipher, require a caller to
+	 * to invoke the cipher with the पूर्णांकernal flag to use that cipher.
+	 * Also, अगर a caller wants to allocate a cipher that may or may
+	 * not be an पूर्णांकernal cipher, use type | CRYPTO_ALG_INTERNAL and
 	 * !(mask & CRYPTO_ALG_INTERNAL).
 	 */
-	if (!((type | mask) & CRYPTO_ALG_INTERNAL))
+	अगर (!((type | mask) & CRYPTO_ALG_INTERNAL))
 		mask |= CRYPTO_ALG_INTERNAL;
 
 	larval = crypto_larval_lookup(name, type, mask);
-	if (IS_ERR(larval) || !crypto_is_larval(larval))
-		return larval;
+	अगर (IS_ERR(larval) || !crypto_is_larval(larval))
+		वापस larval;
 
-	ok = crypto_probing_notify(CRYPTO_MSG_ALG_REQUEST, larval);
+	ok = crypto_probing_notअगरy(CRYPTO_MSG_ALG_REQUEST, larval);
 
-	if (ok == NOTIFY_STOP)
-		alg = crypto_larval_wait(larval);
-	else {
+	अगर (ok == NOTIFY_STOP)
+		alg = crypto_larval_रुको(larval);
+	अन्यथा अणु
 		crypto_mod_put(larval);
 		alg = ERR_PTR(-ENOENT);
-	}
-	crypto_larval_kill(larval);
-	return alg;
-}
+	पूर्ण
+	crypto_larval_समाप्त(larval);
+	वापस alg;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_alg_mod_lookup);
 
-static int crypto_init_ops(struct crypto_tfm *tfm, u32 type, u32 mask)
-{
-	const struct crypto_type *type_obj = tfm->__crt_alg->cra_type;
+अटल पूर्णांक crypto_init_ops(काष्ठा crypto_tfm *tfm, u32 type, u32 mask)
+अणु
+	स्थिर काष्ठा crypto_type *type_obj = tfm->__crt_alg->cra_type;
 
-	if (type_obj)
-		return type_obj->init(tfm, type, mask);
-	return 0;
-}
+	अगर (type_obj)
+		वापस type_obj->init(tfm, type, mask);
+	वापस 0;
+पूर्ण
 
-static void crypto_exit_ops(struct crypto_tfm *tfm)
-{
-	const struct crypto_type *type = tfm->__crt_alg->cra_type;
+अटल व्योम crypto_निकास_ops(काष्ठा crypto_tfm *tfm)
+अणु
+	स्थिर काष्ठा crypto_type *type = tfm->__crt_alg->cra_type;
 
-	if (type && tfm->exit)
-		tfm->exit(tfm);
-}
+	अगर (type && tfm->निकास)
+		tfm->निकास(tfm);
+पूर्ण
 
-static unsigned int crypto_ctxsize(struct crypto_alg *alg, u32 type, u32 mask)
-{
-	const struct crypto_type *type_obj = alg->cra_type;
-	unsigned int len;
+अटल अचिन्हित पूर्णांक crypto_ctxsize(काष्ठा crypto_alg *alg, u32 type, u32 mask)
+अणु
+	स्थिर काष्ठा crypto_type *type_obj = alg->cra_type;
+	अचिन्हित पूर्णांक len;
 
 	len = alg->cra_alignmask & ~(crypto_tfm_ctx_alignment() - 1);
-	if (type_obj)
-		return len + type_obj->ctxsize(alg, type, mask);
+	अगर (type_obj)
+		वापस len + type_obj->ctxsize(alg, type, mask);
 
-	switch (alg->cra_flags & CRYPTO_ALG_TYPE_MASK) {
-	default:
+	चयन (alg->cra_flags & CRYPTO_ALG_TYPE_MASK) अणु
+	शेष:
 		BUG();
 
-	case CRYPTO_ALG_TYPE_CIPHER:
+	हाल CRYPTO_ALG_TYPE_CIPHER:
 		len += crypto_cipher_ctxsize(alg);
-		break;
+		अवरोध;
 
-	case CRYPTO_ALG_TYPE_COMPRESS:
+	हाल CRYPTO_ALG_TYPE_COMPRESS:
 		len += crypto_compress_ctxsize(alg);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-void crypto_shoot_alg(struct crypto_alg *alg)
-{
-	down_write(&crypto_alg_sem);
+व्योम crypto_shoot_alg(काष्ठा crypto_alg *alg)
+अणु
+	करोwn_ग_लिखो(&crypto_alg_sem);
 	alg->cra_flags |= CRYPTO_ALG_DYING;
-	up_write(&crypto_alg_sem);
-}
+	up_ग_लिखो(&crypto_alg_sem);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_shoot_alg);
 
-struct crypto_tfm *__crypto_alloc_tfm(struct crypto_alg *alg, u32 type,
+काष्ठा crypto_tfm *__crypto_alloc_tfm(काष्ठा crypto_alg *alg, u32 type,
 				      u32 mask)
-{
-	struct crypto_tfm *tfm = NULL;
-	unsigned int tfm_size;
-	int err = -ENOMEM;
+अणु
+	काष्ठा crypto_tfm *tfm = शून्य;
+	अचिन्हित पूर्णांक tfm_size;
+	पूर्णांक err = -ENOMEM;
 
-	tfm_size = sizeof(*tfm) + crypto_ctxsize(alg, type, mask);
+	tfm_size = माप(*tfm) + crypto_ctxsize(alg, type, mask);
 	tfm = kzalloc(tfm_size, GFP_KERNEL);
-	if (tfm == NULL)
-		goto out_err;
+	अगर (tfm == शून्य)
+		जाओ out_err;
 
 	tfm->__crt_alg = alg;
 
 	err = crypto_init_ops(tfm, type, mask);
-	if (err)
-		goto out_free_tfm;
+	अगर (err)
+		जाओ out_मुक्त_tfm;
 
-	if (!tfm->exit && alg->cra_init && (err = alg->cra_init(tfm)))
-		goto cra_init_failed;
+	अगर (!tfm->निकास && alg->cra_init && (err = alg->cra_init(tfm)))
+		जाओ cra_init_failed;
 
-	goto out;
+	जाओ out;
 
 cra_init_failed:
-	crypto_exit_ops(tfm);
-out_free_tfm:
-	if (err == -EAGAIN)
+	crypto_निकास_ops(tfm);
+out_मुक्त_tfm:
+	अगर (err == -EAGAIN)
 		crypto_shoot_alg(alg);
-	kfree(tfm);
+	kमुक्त(tfm);
 out_err:
 	tfm = ERR_PTR(err);
 out:
-	return tfm;
-}
+	वापस tfm;
+पूर्ण
 EXPORT_SYMBOL_GPL(__crypto_alloc_tfm);
 
 /*
- *	crypto_alloc_base - Locate algorithm and allocate transform
+ *	crypto_alloc_base - Locate algorithm and allocate transक्रमm
  *	@alg_name: Name of algorithm
  *	@type: Type of algorithm
- *	@mask: Mask for type comparison
+ *	@mask: Mask क्रम type comparison
  *
  *	This function should not be used by new algorithm types.
  *	Please use crypto_alloc_tfm instead.
  *
- *	crypto_alloc_base() will first attempt to locate an already loaded
+ *	crypto_alloc_base() will first attempt to locate an alपढ़ोy loaded
  *	algorithm.  If that fails and the kernel supports dynamically loadable
  *	modules, it will then attempt to load a module of the same name or
  *	alias.  If that fails it will send a query to any loaded crypto manager
- *	to construct an algorithm on the fly.  A refcount is grabbed on the
- *	algorithm which is then associated with the new transform.
+ *	to स्थिरruct an algorithm on the fly.  A refcount is grabbed on the
+ *	algorithm which is then associated with the new transक्रमm.
  *
- *	The returned transform is of a non-determinate type.  Most people
- *	should use one of the more specific allocation functions such as
+ *	The वापसed transक्रमm is of a non-determinate type.  Most people
+ *	should use one of the more specअगरic allocation functions such as
  *	crypto_alloc_skcipher().
  *
- *	In case of error the return value is an error pointer.
+ *	In हाल of error the वापस value is an error poपूर्णांकer.
  */
-struct crypto_tfm *crypto_alloc_base(const char *alg_name, u32 type, u32 mask)
-{
-	struct crypto_tfm *tfm;
-	int err;
+काष्ठा crypto_tfm *crypto_alloc_base(स्थिर अक्षर *alg_name, u32 type, u32 mask)
+अणु
+	काष्ठा crypto_tfm *tfm;
+	पूर्णांक err;
 
-	for (;;) {
-		struct crypto_alg *alg;
+	क्रम (;;) अणु
+		काष्ठा crypto_alg *alg;
 
 		alg = crypto_alg_mod_lookup(alg_name, type, mask);
-		if (IS_ERR(alg)) {
+		अगर (IS_ERR(alg)) अणु
 			err = PTR_ERR(alg);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		tfm = __crypto_alloc_tfm(alg, type, mask);
-		if (!IS_ERR(tfm))
-			return tfm;
+		अगर (!IS_ERR(tfm))
+			वापस tfm;
 
 		crypto_mod_put(alg);
 		err = PTR_ERR(tfm);
 
 err:
-		if (err != -EAGAIN)
-			break;
-		if (fatal_signal_pending(current)) {
+		अगर (err != -EAGAIN)
+			अवरोध;
+		अगर (fatal_संकेत_pending(current)) अणु
 			err = -EINTR;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_alloc_base);
 
-void *crypto_create_tfm_node(struct crypto_alg *alg,
-			const struct crypto_type *frontend,
-			int node)
-{
-	char *mem;
-	struct crypto_tfm *tfm = NULL;
-	unsigned int tfmsize;
-	unsigned int total;
-	int err = -ENOMEM;
+व्योम *crypto_create_tfm_node(काष्ठा crypto_alg *alg,
+			स्थिर काष्ठा crypto_type *frontend,
+			पूर्णांक node)
+अणु
+	अक्षर *mem;
+	काष्ठा crypto_tfm *tfm = शून्य;
+	अचिन्हित पूर्णांक tfmsize;
+	अचिन्हित पूर्णांक total;
+	पूर्णांक err = -ENOMEM;
 
 	tfmsize = frontend->tfmsize;
-	total = tfmsize + sizeof(*tfm) + frontend->extsize(alg);
+	total = tfmsize + माप(*tfm) + frontend->extsize(alg);
 
 	mem = kzalloc_node(total, GFP_KERNEL, node);
-	if (mem == NULL)
-		goto out_err;
+	अगर (mem == शून्य)
+		जाओ out_err;
 
-	tfm = (struct crypto_tfm *)(mem + tfmsize);
+	tfm = (काष्ठा crypto_tfm *)(mem + tfmsize);
 	tfm->__crt_alg = alg;
 	tfm->node = node;
 
 	err = frontend->init_tfm(tfm);
-	if (err)
-		goto out_free_tfm;
+	अगर (err)
+		जाओ out_मुक्त_tfm;
 
-	if (!tfm->exit && alg->cra_init && (err = alg->cra_init(tfm)))
-		goto cra_init_failed;
+	अगर (!tfm->निकास && alg->cra_init && (err = alg->cra_init(tfm)))
+		जाओ cra_init_failed;
 
-	goto out;
+	जाओ out;
 
 cra_init_failed:
-	crypto_exit_ops(tfm);
-out_free_tfm:
-	if (err == -EAGAIN)
+	crypto_निकास_ops(tfm);
+out_मुक्त_tfm:
+	अगर (err == -EAGAIN)
 		crypto_shoot_alg(alg);
-	kfree(mem);
+	kमुक्त(mem);
 out_err:
 	mem = ERR_PTR(err);
 out:
-	return mem;
-}
+	वापस mem;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_create_tfm_node);
 
-struct crypto_alg *crypto_find_alg(const char *alg_name,
-				   const struct crypto_type *frontend,
+काष्ठा crypto_alg *crypto_find_alg(स्थिर अक्षर *alg_name,
+				   स्थिर काष्ठा crypto_type *frontend,
 				   u32 type, u32 mask)
-{
-	if (frontend) {
+अणु
+	अगर (frontend) अणु
 		type &= frontend->maskclear;
 		mask &= frontend->maskclear;
 		type |= frontend->type;
 		mask |= frontend->maskset;
-	}
+	पूर्ण
 
-	return crypto_alg_mod_lookup(alg_name, type, mask);
-}
+	वापस crypto_alg_mod_lookup(alg_name, type, mask);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_find_alg);
 
 /*
- *	crypto_alloc_tfm_node - Locate algorithm and allocate transform
+ *	crypto_alloc_tfm_node - Locate algorithm and allocate transक्रमm
  *	@alg_name: Name of algorithm
  *	@frontend: Frontend algorithm type
  *	@type: Type of algorithm
- *	@mask: Mask for type comparison
- *	@node: NUMA node in which users desire to put requests, if node is
+ *	@mask: Mask क्रम type comparison
+ *	@node: NUMA node in which users desire to put requests, अगर node is
  *		NUMA_NO_NODE, it means users have no special requirement.
  *
- *	crypto_alloc_tfm() will first attempt to locate an already loaded
+ *	crypto_alloc_tfm() will first attempt to locate an alपढ़ोy loaded
  *	algorithm.  If that fails and the kernel supports dynamically loadable
  *	modules, it will then attempt to load a module of the same name or
  *	alias.  If that fails it will send a query to any loaded crypto manager
- *	to construct an algorithm on the fly.  A refcount is grabbed on the
- *	algorithm which is then associated with the new transform.
+ *	to स्थिरruct an algorithm on the fly.  A refcount is grabbed on the
+ *	algorithm which is then associated with the new transक्रमm.
  *
- *	The returned transform is of a non-determinate type.  Most people
- *	should use one of the more specific allocation functions such as
+ *	The वापसed transक्रमm is of a non-determinate type.  Most people
+ *	should use one of the more specअगरic allocation functions such as
  *	crypto_alloc_skcipher().
  *
- *	In case of error the return value is an error pointer.
+ *	In हाल of error the वापस value is an error poपूर्णांकer.
  */
 
-void *crypto_alloc_tfm_node(const char *alg_name,
-		       const struct crypto_type *frontend, u32 type, u32 mask,
-		       int node)
-{
-	void *tfm;
-	int err;
+व्योम *crypto_alloc_tfm_node(स्थिर अक्षर *alg_name,
+		       स्थिर काष्ठा crypto_type *frontend, u32 type, u32 mask,
+		       पूर्णांक node)
+अणु
+	व्योम *tfm;
+	पूर्णांक err;
 
-	for (;;) {
-		struct crypto_alg *alg;
+	क्रम (;;) अणु
+		काष्ठा crypto_alg *alg;
 
 		alg = crypto_find_alg(alg_name, frontend, type, mask);
-		if (IS_ERR(alg)) {
+		अगर (IS_ERR(alg)) अणु
 			err = PTR_ERR(alg);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		tfm = crypto_create_tfm_node(alg, frontend, node);
-		if (!IS_ERR(tfm))
-			return tfm;
+		अगर (!IS_ERR(tfm))
+			वापस tfm;
 
 		crypto_mod_put(alg);
 		err = PTR_ERR(tfm);
 
 err:
-		if (err != -EAGAIN)
-			break;
-		if (fatal_signal_pending(current)) {
+		अगर (err != -EAGAIN)
+			अवरोध;
+		अगर (fatal_संकेत_pending(current)) अणु
 			err = -EINTR;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_alloc_tfm_node);
 
 /*
- *	crypto_destroy_tfm - Free crypto transform
+ *	crypto_destroy_tfm - Free crypto transक्रमm
  *	@mem: Start of tfm slab
- *	@tfm: Transform to free
+ *	@tfm: Transक्रमm to मुक्त
  *
- *	This function frees up the transform and any associated resources,
+ *	This function मुक्तs up the transक्रमm and any associated resources,
  *	then drops the refcount on the associated algorithm.
  */
-void crypto_destroy_tfm(void *mem, struct crypto_tfm *tfm)
-{
-	struct crypto_alg *alg;
+व्योम crypto_destroy_tfm(व्योम *mem, काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा crypto_alg *alg;
 
-	if (IS_ERR_OR_NULL(mem))
-		return;
+	अगर (IS_ERR_OR_शून्य(mem))
+		वापस;
 
 	alg = tfm->__crt_alg;
 
-	if (!tfm->exit && alg->cra_exit)
-		alg->cra_exit(tfm);
-	crypto_exit_ops(tfm);
+	अगर (!tfm->निकास && alg->cra_निकास)
+		alg->cra_निकास(tfm);
+	crypto_निकास_ops(tfm);
 	crypto_mod_put(alg);
-	kfree_sensitive(mem);
-}
+	kमुक्त_sensitive(mem);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_destroy_tfm);
 
-int crypto_has_alg(const char *name, u32 type, u32 mask)
-{
-	int ret = 0;
-	struct crypto_alg *alg = crypto_alg_mod_lookup(name, type, mask);
+पूर्णांक crypto_has_alg(स्थिर अक्षर *name, u32 type, u32 mask)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा crypto_alg *alg = crypto_alg_mod_lookup(name, type, mask);
 
-	if (!IS_ERR(alg)) {
+	अगर (!IS_ERR(alg)) अणु
 		crypto_mod_put(alg);
 		ret = 1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_has_alg);
 
-void crypto_req_done(struct crypto_async_request *req, int err)
-{
-	struct crypto_wait *wait = req->data;
+व्योम crypto_req_करोne(काष्ठा crypto_async_request *req, पूर्णांक err)
+अणु
+	काष्ठा crypto_रुको *रुको = req->data;
 
-	if (err == -EINPROGRESS)
-		return;
+	अगर (err == -EINPROGRESS)
+		वापस;
 
-	wait->err = err;
-	complete(&wait->completion);
-}
-EXPORT_SYMBOL_GPL(crypto_req_done);
+	रुको->err = err;
+	complete(&रुको->completion);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_req_करोne);
 
 MODULE_DESCRIPTION("Cryptographic core API");
 MODULE_LICENSE("GPL");

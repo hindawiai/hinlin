@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <libelf.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <libelf.h>
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	Elf *elf = elf_begin(0, ELF_C_READ, 0);
 
-	return (long)elf;
-}
+	वापस (दीर्घ)elf;
+पूर्ण

@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MPL-1.1)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MPL-1.1)
 /* src/prism2/driver/prism2sta.c
  *
- * Implements the station functionality for prism2
+ * Implements the station functionality क्रम prism2
  *
  * Copyright (C) 1999 AbsoluteValue Systems, Inc.  All Rights Reserved.
  * --------------------------------------------------------------------
@@ -15,17 +16,17 @@
  *
  *   Software distributed under the License is distributed on an "AS
  *   IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- *   implied. See the License for the specific language governing
+ *   implied. See the License क्रम the specअगरic language governing
  *   rights and limitations under the License.
  *
  *   Alternatively, the contents of this file may be used under the
  *   terms of the GNU Public License version 2 (the "GPL"), in which
- *   case the provisions of the GPL are applicable instead of the
+ *   हाल the provisions of the GPL are applicable instead of the
  *   above.  If you wish to allow the use of your version of this file
  *   only under the terms of the GPL and not to allow others to use
  *   your version of this file under the MPL, indicate your decision
  *   by deleting the provisions above and replace them with the notice
- *   and other provisions required by the GPL.  If you do not delete
+ *   and other provisions required by the GPL.  If you करो not delete
  *   the provisions above, a recipient may use your version of this
  *   file under either the MPL or the GPL.
  *
@@ -45,104 +46,104 @@
  *
  * --------------------------------------------------------------------
  *
- * This file implements the module and linux pcmcia routines for the
+ * This file implements the module and linux pcmcia routines क्रम the
  * prism2 driver.
  *
  * --------------------------------------------------------------------
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/wireless.h>
-#include <linux/netdevice.h>
-#include <linux/workqueue.h>
-#include <linux/byteorder/generic.h>
-#include <linux/etherdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/wireless.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/byteorder/generic.h>
+#समावेश <linux/etherdevice.h>
 
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <asm/byteorder.h>
-#include <linux/if_arp.h>
-#include <linux/if_ether.h>
-#include <linux/bitops.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/bitops.h>
 
-#include "p80211types.h"
-#include "p80211hdr.h"
-#include "p80211mgmt.h"
-#include "p80211conv.h"
-#include "p80211msg.h"
-#include "p80211netdev.h"
-#include "p80211req.h"
-#include "p80211metadef.h"
-#include "p80211metastruct.h"
-#include "hfa384x.h"
-#include "prism2mgmt.h"
+#समावेश "p80211types.h"
+#समावेश "p80211hdr.h"
+#समावेश "p80211mgmt.h"
+#समावेश "p80211conv.h"
+#समावेश "p80211msg.h"
+#समावेश "p80211netdev.h"
+#समावेश "p80211req.h"
+#समावेश "p80211metadef.h"
+#समावेश "p80211metastruct.h"
+#समावेश "hfa384x.h"
+#समावेश "prism2mgmt.h"
 
-static char *dev_info = "prism2_usb";
-static struct wlandevice *create_wlan(void);
+अटल अक्षर *dev_info = "prism2_usb";
+अटल काष्ठा wlandevice *create_wlan(व्योम);
 
-int prism2_reset_holdtime = 30;	/* Reset hold time in ms */
-int prism2_reset_settletime = 100;	/* Reset settle time in ms */
+पूर्णांक prism2_reset_holdसमय = 30;	/* Reset hold समय in ms */
+पूर्णांक prism2_reset_settleसमय = 100;	/* Reset settle समय in ms */
 
-static int prism2_doreset;	/* Do a reset at init? */
+अटल पूर्णांक prism2_करोreset;	/* Do a reset at init? */
 
-module_param(prism2_doreset, int, 0644);
-MODULE_PARM_DESC(prism2_doreset, "Issue a reset on initialization");
+module_param(prism2_करोreset, पूर्णांक, 0644);
+MODULE_PARM_DESC(prism2_करोreset, "Issue a reset on initialization");
 
-module_param(prism2_reset_holdtime, int, 0644);
-MODULE_PARM_DESC(prism2_reset_holdtime, "reset hold time in ms");
-module_param(prism2_reset_settletime, int, 0644);
-MODULE_PARM_DESC(prism2_reset_settletime, "reset settle time in ms");
+module_param(prism2_reset_holdसमय, पूर्णांक, 0644);
+MODULE_PARM_DESC(prism2_reset_holdसमय, "reset hold time in ms");
+module_param(prism2_reset_settleसमय, पूर्णांक, 0644);
+MODULE_PARM_DESC(prism2_reset_settleसमय, "reset settle time in ms");
 
 MODULE_LICENSE("Dual MPL/GPL");
 
-static int prism2sta_open(struct wlandevice *wlandev);
-static int prism2sta_close(struct wlandevice *wlandev);
-static void prism2sta_reset(struct wlandevice *wlandev);
-static int prism2sta_txframe(struct wlandevice *wlandev, struct sk_buff *skb,
-			     union p80211_hdr *p80211_hdr,
-			     struct p80211_metawep *p80211_wep);
-static int prism2sta_mlmerequest(struct wlandevice *wlandev,
-				 struct p80211msg *msg);
-static int prism2sta_getcardinfo(struct wlandevice *wlandev);
-static int prism2sta_globalsetup(struct wlandevice *wlandev);
-static int prism2sta_setmulticast(struct wlandevice *wlandev,
-				  struct net_device *dev);
+अटल पूर्णांक prism2sta_खोलो(काष्ठा wlandevice *wlandev);
+अटल पूर्णांक prism2sta_बंद(काष्ठा wlandevice *wlandev);
+अटल व्योम prism2sta_reset(काष्ठा wlandevice *wlandev);
+अटल पूर्णांक prism2sta_txframe(काष्ठा wlandevice *wlandev, काष्ठा sk_buff *skb,
+			     जोड़ p80211_hdr *p80211_hdr,
+			     काष्ठा p80211_metawep *p80211_wep);
+अटल पूर्णांक prism2sta_mlmerequest(काष्ठा wlandevice *wlandev,
+				 काष्ठा p80211msg *msg);
+अटल पूर्णांक prism2sta_अ_लोardinfo(काष्ठा wlandevice *wlandev);
+अटल पूर्णांक prism2sta_globalsetup(काष्ठा wlandevice *wlandev);
+अटल पूर्णांक prism2sta_seपंचांगulticast(काष्ठा wlandevice *wlandev,
+				  काष्ठा net_device *dev);
 
-static void prism2sta_inf_handover(struct wlandevice *wlandev,
-				   struct hfa384x_inf_frame *inf);
-static void prism2sta_inf_tallies(struct wlandevice *wlandev,
-				  struct hfa384x_inf_frame *inf);
-static void prism2sta_inf_hostscanresults(struct wlandevice *wlandev,
-					  struct hfa384x_inf_frame *inf);
-static void prism2sta_inf_scanresults(struct wlandevice *wlandev,
-				      struct hfa384x_inf_frame *inf);
-static void prism2sta_inf_chinforesults(struct wlandevice *wlandev,
-					struct hfa384x_inf_frame *inf);
-static void prism2sta_inf_linkstatus(struct wlandevice *wlandev,
-				     struct hfa384x_inf_frame *inf);
-static void prism2sta_inf_assocstatus(struct wlandevice *wlandev,
-				      struct hfa384x_inf_frame *inf);
-static void prism2sta_inf_authreq(struct wlandevice *wlandev,
-				  struct hfa384x_inf_frame *inf);
-static void prism2sta_inf_authreq_defer(struct wlandevice *wlandev,
-					struct hfa384x_inf_frame *inf);
-static void prism2sta_inf_psusercnt(struct wlandevice *wlandev,
-				    struct hfa384x_inf_frame *inf);
+अटल व्योम prism2sta_inf_hanकरोver(काष्ठा wlandevice *wlandev,
+				   काष्ठा hfa384x_inf_frame *inf);
+अटल व्योम prism2sta_inf_tallies(काष्ठा wlandevice *wlandev,
+				  काष्ठा hfa384x_inf_frame *inf);
+अटल व्योम prism2sta_inf_hostscanresults(काष्ठा wlandevice *wlandev,
+					  काष्ठा hfa384x_inf_frame *inf);
+अटल व्योम prism2sta_inf_scanresults(काष्ठा wlandevice *wlandev,
+				      काष्ठा hfa384x_inf_frame *inf);
+अटल व्योम prism2sta_inf_chinक्रमesults(काष्ठा wlandevice *wlandev,
+					काष्ठा hfa384x_inf_frame *inf);
+अटल व्योम prism2sta_inf_linkstatus(काष्ठा wlandevice *wlandev,
+				     काष्ठा hfa384x_inf_frame *inf);
+अटल व्योम prism2sta_inf_assocstatus(काष्ठा wlandevice *wlandev,
+				      काष्ठा hfa384x_inf_frame *inf);
+अटल व्योम prism2sta_inf_authreq(काष्ठा wlandevice *wlandev,
+				  काष्ठा hfa384x_inf_frame *inf);
+अटल व्योम prism2sta_inf_authreq_defer(काष्ठा wlandevice *wlandev,
+					काष्ठा hfa384x_inf_frame *inf);
+अटल व्योम prism2sta_inf_psusercnt(काष्ठा wlandevice *wlandev,
+				    काष्ठा hfa384x_inf_frame *inf);
 
 /*
- * prism2sta_open
+ * prism2sta_खोलो
  *
- * WLAN device open method.  Called from p80211netdev when kernel
- * device open (start) method is called in response to the
+ * WLAN device खोलो method.  Called from p80211netdev when kernel
+ * device खोलो (start) method is called in response to the
  * SIOCSIIFFLAGS ioctl changing the flags bit IFF_UP
  * from clear to set.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *
  * Returns:
  *	0	success
@@ -152,31 +153,31 @@ static void prism2sta_inf_psusercnt(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	process thread
+ *	process thपढ़ो
  */
-static int prism2sta_open(struct wlandevice *wlandev)
-{
-	/* We don't currently have to do anything else.
+अटल पूर्णांक prism2sta_खोलो(काष्ठा wlandevice *wlandev)
+अणु
+	/* We करोn't currently have to करो anything अन्यथा.
 	 * The setup of the MAC should be subsequently completed via
 	 * the mlme commands.
-	 * Higher layers know we're ready from dev->start==1 and
+	 * Higher layers know we're पढ़ोy from dev->start==1 and
 	 * dev->tbusy==0.  Our rx path knows to pass up received/
 	 * frames because of dev->flags&IFF_UP is true.
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * prism2sta_close
+ * prism2sta_बंद
  *
- * WLAN device close method.  Called from p80211netdev when kernel
- * device close method is called in response to the
+ * WLAN device बंद method.  Called from p80211netdev when kernel
+ * device बंद method is called in response to the
  * SIOCSIIFFLAGS ioctl changing the flags bit IFF_UP
  * from set to clear.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *
  * Returns:
  *	0	success
@@ -186,18 +187,18 @@ static int prism2sta_open(struct wlandevice *wlandev)
  * Side effects:
  *
  * Call context:
- *	process thread
+ *	process thपढ़ो
  */
-static int prism2sta_close(struct wlandevice *wlandev)
-{
-	/* We don't currently have to do anything else.
-	 * Higher layers know we're not ready from dev->start==0 and
+अटल पूर्णांक prism2sta_बंद(काष्ठा wlandevice *wlandev)
+अणु
+	/* We करोn't currently have to करो anything अन्यथा.
+	 * Higher layers know we're not पढ़ोy from dev->start==0 and
 	 * dev->tbusy==1.  Our rx path knows to not pass up received
 	 * frames because of dev->flags&IFF_UP is false.
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * prism2sta_reset
@@ -205,7 +206,7 @@ static int prism2sta_close(struct wlandevice *wlandev)
  * Currently not implemented.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	none
  *
  * Returns:
@@ -214,22 +215,22 @@ static int prism2sta_close(struct wlandevice *wlandev)
  * Side effects:
  *
  * Call context:
- *	process thread
+ *	process thपढ़ो
  */
-static void prism2sta_reset(struct wlandevice *wlandev)
-{
-}
+अटल व्योम prism2sta_reset(काष्ठा wlandevice *wlandev)
+अणु
+पूर्ण
 
 /*
  * prism2sta_txframe
  *
- * Takes a frame from p80211 and queues it for transmission.
+ * Takes a frame from p80211 and queues it क्रम transmission.
  *
  * Arguments:
- *	wlandev		wlan device structure
- *	pb		packet buffer struct.  Contains an 802.11
+ *	wlandev		wlan device काष्ठाure
+ *	pb		packet buffer काष्ठा.  Contains an 802.11
  *			data frame.
- *       p80211_hdr      points to the 802.11 header for the packet.
+ *       p80211_hdr      poपूर्णांकs to the 802.11 header क्रम the packet.
  * Returns:
  *	0		Success and more buffs available
  *	1		Success but no more buffs
@@ -239,130 +240,130 @@ static void prism2sta_reset(struct wlandevice *wlandev)
  * Side effects:
  *
  * Call context:
- *	process thread
+ *	process thपढ़ो
  */
-static int prism2sta_txframe(struct wlandevice *wlandev, struct sk_buff *skb,
-			     union p80211_hdr *p80211_hdr,
-			     struct p80211_metawep *p80211_wep)
-{
-	struct hfa384x *hw = wlandev->priv;
+अटल पूर्णांक prism2sta_txframe(काष्ठा wlandevice *wlandev, काष्ठा sk_buff *skb,
+			     जोड़ p80211_hdr *p80211_hdr,
+			     काष्ठा p80211_metawep *p80211_wep)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
 
 	/* If necessary, set the 802.11 WEP bit */
-	if ((wlandev->hostwep & (HOSTWEP_PRIVACYINVOKED | HOSTWEP_ENCRYPT)) ==
-	    HOSTWEP_PRIVACYINVOKED) {
+	अगर ((wlandev->hostwep & (HOSTWEP_PRIVACYINVOKED | HOSTWEP_ENCRYPT)) ==
+	    HOSTWEP_PRIVACYINVOKED) अणु
 		p80211_hdr->a3.fc |= cpu_to_le16(WLAN_SET_FC_ISWEP(1));
-	}
+	पूर्ण
 
-	return hfa384x_drvr_txframe(hw, skb, p80211_hdr, p80211_wep);
-}
+	वापस hfa384x_drvr_txframe(hw, skb, p80211_hdr, p80211_wep);
+पूर्ण
 
 /*
  * prism2sta_mlmerequest
  *
- * wlan command message handler.  All we do here is pass the message
+ * wlan command message handler.  All we करो here is pass the message
  * over to the prism2sta_mgmt_handler.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msg		wlan command message
  * Returns:
  *	0		success
  *	<0		successful acceptance of message, but we're
- *			waiting for an async process to finish before
- *			we're done with the msg.  When the asynch
- *			process is done, we'll call the p80211
+ *			रुकोing क्रम an async process to finish beक्रमe
+ *			we're करोne with the msg.  When the asynch
+ *			process is करोne, we'll call the p80211
  *			function p80211req_confirm() .
- *	>0		An error occurred while we were handling
+ *	>0		An error occurred जबतक we were handling
  *			the message.
  *
  * Side effects:
  *
  * Call context:
- *	process thread
+ *	process thपढ़ो
  */
-static int prism2sta_mlmerequest(struct wlandevice *wlandev,
-				 struct p80211msg *msg)
-{
-	struct hfa384x *hw = wlandev->priv;
+अटल पूर्णांक prism2sta_mlmerequest(काष्ठा wlandevice *wlandev,
+				 काष्ठा p80211msg *msg)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
 
-	int result = 0;
+	पूर्णांक result = 0;
 
-	switch (msg->msgcode) {
-	case DIDMSG_DOT11REQ_MIBGET:
+	चयन (msg->msgcode) अणु
+	हाल DIDMSG_DOT11REQ_MIBGET:
 		pr_debug("Received mibget request\n");
 		result = prism2mgmt_mibset_mibget(wlandev, msg);
-		break;
-	case DIDMSG_DOT11REQ_MIBSET:
+		अवरोध;
+	हाल DIDMSG_DOT11REQ_MIBSET:
 		pr_debug("Received mibset request\n");
 		result = prism2mgmt_mibset_mibget(wlandev, msg);
-		break;
-	case DIDMSG_DOT11REQ_SCAN:
+		अवरोध;
+	हाल DIDMSG_DOT11REQ_SCAN:
 		pr_debug("Received scan request\n");
 		result = prism2mgmt_scan(wlandev, msg);
-		break;
-	case DIDMSG_DOT11REQ_SCAN_RESULTS:
+		अवरोध;
+	हाल DIDMSG_DOT11REQ_SCAN_RESULTS:
 		pr_debug("Received scan_results request\n");
 		result = prism2mgmt_scan_results(wlandev, msg);
-		break;
-	case DIDMSG_DOT11REQ_START:
+		अवरोध;
+	हाल DIDMSG_DOT11REQ_START:
 		pr_debug("Received mlme start request\n");
 		result = prism2mgmt_start(wlandev, msg);
-		break;
+		अवरोध;
 		/*
-		 * Prism2 specific messages
+		 * Prism2 specअगरic messages
 		 */
-	case DIDMSG_P2REQ_READPDA:
+	हाल DIDMSG_P2REQ_READPDA:
 		pr_debug("Received mlme readpda request\n");
-		result = prism2mgmt_readpda(wlandev, msg);
-		break;
-	case DIDMSG_P2REQ_RAMDL_STATE:
+		result = prism2mgmt_पढ़ोpda(wlandev, msg);
+		अवरोध;
+	हाल DIDMSG_P2REQ_RAMDL_STATE:
 		pr_debug("Received mlme ramdl_state request\n");
 		result = prism2mgmt_ramdl_state(wlandev, msg);
-		break;
-	case DIDMSG_P2REQ_RAMDL_WRITE:
+		अवरोध;
+	हाल DIDMSG_P2REQ_RAMDL_WRITE:
 		pr_debug("Received mlme ramdl_write request\n");
-		result = prism2mgmt_ramdl_write(wlandev, msg);
-		break;
-	case DIDMSG_P2REQ_FLASHDL_STATE:
+		result = prism2mgmt_ramdl_ग_लिखो(wlandev, msg);
+		अवरोध;
+	हाल DIDMSG_P2REQ_FLASHDL_STATE:
 		pr_debug("Received mlme flashdl_state request\n");
 		result = prism2mgmt_flashdl_state(wlandev, msg);
-		break;
-	case DIDMSG_P2REQ_FLASHDL_WRITE:
+		अवरोध;
+	हाल DIDMSG_P2REQ_FLASHDL_WRITE:
 		pr_debug("Received mlme flashdl_write request\n");
-		result = prism2mgmt_flashdl_write(wlandev, msg);
-		break;
+		result = prism2mgmt_flashdl_ग_लिखो(wlandev, msg);
+		अवरोध;
 		/*
-		 * Linux specific messages
+		 * Linux specअगरic messages
 		 */
-	case DIDMSG_LNXREQ_HOSTWEP:
-		break;		/* ignore me. */
-	case DIDMSG_LNXREQ_IFSTATE: {
-		struct p80211msg_lnxreq_ifstate *ifstatemsg;
+	हाल DIDMSG_LNXREQ_HOSTWEP:
+		अवरोध;		/* ignore me. */
+	हाल DIDMSG_LNXREQ_IFSTATE: अणु
+		काष्ठा p80211msg_lnxreq_अगरstate *अगरstatemsg;
 
 		pr_debug("Received mlme ifstate request\n");
-		ifstatemsg = (struct p80211msg_lnxreq_ifstate *)msg;
-		result = prism2sta_ifstate(wlandev,
-					   ifstatemsg->ifstate.data);
-		ifstatemsg->resultcode.status =
+		अगरstatemsg = (काष्ठा p80211msg_lnxreq_अगरstate *)msg;
+		result = prism2sta_अगरstate(wlandev,
+					   अगरstatemsg->अगरstate.data);
+		अगरstatemsg->resultcode.status =
 			P80211ENUM_msgitem_status_data_ok;
-		ifstatemsg->resultcode.data = result;
+		अगरstatemsg->resultcode.data = result;
 		result = 0;
-		break;
-	}
-	case DIDMSG_LNXREQ_WLANSNIFF:
+		अवरोध;
+	पूर्ण
+	हाल DIDMSG_LNXREQ_WLANSNIFF:
 		pr_debug("Received mlme wlansniff request\n");
-		result = prism2mgmt_wlansniff(wlandev, msg);
-		break;
-	case DIDMSG_LNXREQ_AUTOJOIN:
+		result = prism2mgmt_wlansnअगरf(wlandev, msg);
+		अवरोध;
+	हाल DIDMSG_LNXREQ_AUTOJOIN:
 		pr_debug("Received mlme autojoin request\n");
-		result = prism2mgmt_autojoin(wlandev, msg);
-		break;
-	case DIDMSG_LNXREQ_COMMSQUALITY: {
-		struct p80211msg_lnxreq_commsquality *qualmsg;
+		result = prism2mgmt_स्वतःjoin(wlandev, msg);
+		अवरोध;
+	हाल DIDMSG_LNXREQ_COMMSQUALITY: अणु
+		काष्ठा p80211msg_lnxreq_commsquality *qualmsg;
 
 		pr_debug("Received commsquality request\n");
 
-		qualmsg = (struct p80211msg_lnxreq_commsquality *)msg;
+		qualmsg = (काष्ठा p80211msg_lnxreq_commsquality *)msg;
 
 		qualmsg->link.status = P80211ENUM_msgitem_status_data_ok;
 		qualmsg->level.status = P80211ENUM_msgitem_status_data_ok;
@@ -373,28 +374,28 @@ static int prism2sta_mlmerequest(struct wlandevice *wlandev,
 		qualmsg->noise.data = le16_to_cpu(hw->qual.anl_curr_fc);
 		qualmsg->txrate.data = hw->txrate;
 
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		netdev_warn(wlandev->netdev,
 			    "Unknown mgmt request message 0x%08x",
 			    msg->msgcode);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
- * prism2sta_ifstate
+ * prism2sta_अगरstate
  *
- * Interface state.  This is the primary WLAN interface enable/disable
+ * Interface state.  This is the primary WLAN पूर्णांकerface enable/disable
  * handler.  Following the driver/load/deviceprobe sequence, this
- * function must be called with a state of "enable" before any other
+ * function must be called with a state of "enable" beक्रमe any other
  * commands will be accepted.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	msgp		ptr to msg buffer
  *
  * Returns:
@@ -403,171 +404,171 @@ static int prism2sta_mlmerequest(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	process thread  (usually)
- *	interrupt
+ *	process thपढ़ो  (usually)
+ *	पूर्णांकerrupt
  */
-u32 prism2sta_ifstate(struct wlandevice *wlandev, u32 ifstate)
-{
-	struct hfa384x *hw = wlandev->priv;
+u32 prism2sta_अगरstate(काष्ठा wlandevice *wlandev, u32 अगरstate)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
 	u32 result;
 
 	result = P80211ENUM_resultcode_implementation_failure;
 
 	pr_debug("Current MSD state(%d), requesting(%d)\n",
-		 wlandev->msdstate, ifstate);
-	switch (ifstate) {
-	case P80211ENUM_ifstate_fwload:
-		switch (wlandev->msdstate) {
-		case WLAN_MSD_HWPRESENT:
+		 wlandev->msdstate, अगरstate);
+	चयन (अगरstate) अणु
+	हाल P80211ENUM_अगरstate_fwload:
+		चयन (wlandev->msdstate) अणु
+		हाल WLAN_MSD_HWPRESENT:
 			wlandev->msdstate = WLAN_MSD_FWLOAD_PENDING;
 			/*
 			 * Initialize the device+driver sufficiently
-			 * for firmware loading.
+			 * क्रम firmware loading.
 			 */
 			result = hfa384x_drvr_start(hw);
-			if (result) {
+			अगर (result) अणु
 				netdev_err(wlandev->netdev,
 					   "hfa384x_drvr_start() failed,result=%d\n",
-					   (int)result);
+					   (पूर्णांक)result);
 				result =
 				 P80211ENUM_resultcode_implementation_failure;
 				wlandev->msdstate = WLAN_MSD_HWPRESENT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			wlandev->msdstate = WLAN_MSD_FWLOAD;
 			result = P80211ENUM_resultcode_success;
-			break;
-		case WLAN_MSD_FWLOAD:
+			अवरोध;
+		हाल WLAN_MSD_FWLOAD:
 			hfa384x_cmd_initialize(hw);
 			result = P80211ENUM_resultcode_success;
-			break;
-		case WLAN_MSD_RUNNING:
+			अवरोध;
+		हाल WLAN_MSD_RUNNING:
 			netdev_warn(wlandev->netdev,
 				    "Cannot enter fwload state from enable state, you must disable first.\n");
 			result = P80211ENUM_resultcode_invalid_parameters;
-			break;
-		case WLAN_MSD_HWFAIL:
-		default:
+			अवरोध;
+		हाल WLAN_MSD_HWFAIL:
+		शेष:
 			/* probe() had a problem or the msdstate contains
-			 * an unrecognized value, there's nothing we can do.
+			 * an unrecognized value, there's nothing we can करो.
 			 */
 			result = P80211ENUM_resultcode_implementation_failure;
-			break;
-		}
-		break;
-	case P80211ENUM_ifstate_enable:
-		switch (wlandev->msdstate) {
-		case WLAN_MSD_HWPRESENT:
-		case WLAN_MSD_FWLOAD:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल P80211ENUM_अगरstate_enable:
+		चयन (wlandev->msdstate) अणु
+		हाल WLAN_MSD_HWPRESENT:
+		हाल WLAN_MSD_FWLOAD:
 			wlandev->msdstate = WLAN_MSD_RUNNING_PENDING;
-			/* Initialize the device+driver for full
+			/* Initialize the device+driver क्रम full
 			 * operation. Note that this might me an FWLOAD
-			 * to RUNNING transition so we must not do a chip
+			 * to RUNNING transition so we must not करो a chip
 			 * or board level reset.  Note that on failure,
 			 * the MSD state is set to HWPRESENT because we
 			 * can't make any assumptions about the state
 			 * of the hardware or a previous firmware load.
 			 */
 			result = hfa384x_drvr_start(hw);
-			if (result) {
+			अगर (result) अणु
 				netdev_err(wlandev->netdev,
 					   "hfa384x_drvr_start() failed,result=%d\n",
-					   (int)result);
+					   (पूर्णांक)result);
 				result =
 				  P80211ENUM_resultcode_implementation_failure;
 				wlandev->msdstate = WLAN_MSD_HWPRESENT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			result = prism2sta_getcardinfo(wlandev);
-			if (result) {
+			result = prism2sta_अ_लोardinfo(wlandev);
+			अगर (result) अणु
 				netdev_err(wlandev->netdev,
 					   "prism2sta_getcardinfo() failed,result=%d\n",
-					   (int)result);
+					   (पूर्णांक)result);
 				result =
 				  P80211ENUM_resultcode_implementation_failure;
 				hfa384x_drvr_stop(hw);
 				wlandev->msdstate = WLAN_MSD_HWPRESENT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			result = prism2sta_globalsetup(wlandev);
-			if (result) {
+			अगर (result) अणु
 				netdev_err(wlandev->netdev,
 					   "prism2sta_globalsetup() failed,result=%d\n",
-					   (int)result);
+					   (पूर्णांक)result);
 				result =
 				  P80211ENUM_resultcode_implementation_failure;
 				hfa384x_drvr_stop(hw);
 				wlandev->msdstate = WLAN_MSD_HWPRESENT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			wlandev->msdstate = WLAN_MSD_RUNNING;
 			hw->join_ap = 0;
 			hw->join_retries = 60;
 			result = P80211ENUM_resultcode_success;
-			break;
-		case WLAN_MSD_RUNNING:
-			/* Do nothing, we're already in this state. */
+			अवरोध;
+		हाल WLAN_MSD_RUNNING:
+			/* Do nothing, we're alपढ़ोy in this state. */
 			result = P80211ENUM_resultcode_success;
-			break;
-		case WLAN_MSD_HWFAIL:
-		default:
+			अवरोध;
+		हाल WLAN_MSD_HWFAIL:
+		शेष:
 			/* probe() had a problem or the msdstate contains
-			 * an unrecognized value, there's nothing we can do.
+			 * an unrecognized value, there's nothing we can करो.
 			 */
 			result = P80211ENUM_resultcode_implementation_failure;
-			break;
-		}
-		break;
-	case P80211ENUM_ifstate_disable:
-		switch (wlandev->msdstate) {
-		case WLAN_MSD_HWPRESENT:
-			/* Do nothing, we're already in this state. */
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल P80211ENUM_अगरstate_disable:
+		चयन (wlandev->msdstate) अणु
+		हाल WLAN_MSD_HWPRESENT:
+			/* Do nothing, we're alपढ़ोy in this state. */
 			result = P80211ENUM_resultcode_success;
-			break;
-		case WLAN_MSD_FWLOAD:
-		case WLAN_MSD_RUNNING:
+			अवरोध;
+		हाल WLAN_MSD_FWLOAD:
+		हाल WLAN_MSD_RUNNING:
 			wlandev->msdstate = WLAN_MSD_HWPRESENT_PENDING;
 			/*
-			 * TODO: Shut down the MAC completely. Here a chip
-			 * or board level reset is probably called for.
+			 * TODO: Shut करोwn the MAC completely. Here a chip
+			 * or board level reset is probably called क्रम.
 			 * After a "disable" _all_ results are lost, even
 			 * those from a fwload.
 			 */
-			if (!wlandev->hwremoved)
-				netif_carrier_off(wlandev->netdev);
+			अगर (!wlandev->hwहटाओd)
+				netअगर_carrier_off(wlandev->netdev);
 
 			hfa384x_drvr_stop(hw);
 
 			wlandev->macmode = WLAN_MACMODE_NONE;
 			wlandev->msdstate = WLAN_MSD_HWPRESENT;
 			result = P80211ENUM_resultcode_success;
-			break;
-		case WLAN_MSD_HWFAIL:
-		default:
+			अवरोध;
+		हाल WLAN_MSD_HWFAIL:
+		शेष:
 			/* probe() had a problem or the msdstate contains
-			 * an unrecognized value, there's nothing we can do.
+			 * an unrecognized value, there's nothing we can करो.
 			 */
 			result = P80211ENUM_resultcode_implementation_failure;
-			break;
-		}
-		break;
-	default:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
 		result = P80211ENUM_resultcode_invalid_parameters;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
- * prism2sta_getcardinfo
+ * prism2sta_अ_लोardinfo
  *
- * Collect the NICID, firmware version and any other identifiers
- * we'd like to have in host-side data structures.
+ * Collect the NICID, firmware version and any other identअगरiers
+ * we'd like to have in host-side data काष्ठाures.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *
  * Returns:
  *	0	success
@@ -579,23 +580,23 @@ u32 prism2sta_ifstate(struct wlandevice *wlandev, u32 ifstate)
  * Call context:
  *	Either.
  */
-static int prism2sta_getcardinfo(struct wlandevice *wlandev)
-{
-	int result = 0;
-	struct hfa384x *hw = wlandev->priv;
+अटल पूर्णांक prism2sta_अ_लोardinfo(काष्ठा wlandevice *wlandev)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा hfa384x *hw = wlandev->priv;
 	u16 temp;
 	u8 snum[HFA384x_RID_NICSERIALNUMBER_LEN];
 
 	/* Collect version and compatibility info */
 	/*  Some are critical, some are not */
 	/* NIC identity */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_NICIDENTITY,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_NICIDENTITY,
 					&hw->ident_nic,
-					sizeof(struct hfa384x_compident));
-	if (result) {
+					माप(काष्ठा hfa384x_compident));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve NICIDENTITY\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* get all the nic id fields in host byte order */
 	le16_to_cpus(&hw->ident_nic.id);
@@ -608,15 +609,15 @@ static int prism2sta_getcardinfo(struct wlandevice *wlandev)
 		    hw->ident_nic.minor, hw->ident_nic.variant);
 
 	/* Primary f/w identity */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_PRIIDENTITY,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_PRIIDENTITY,
 					&hw->ident_pri_fw,
-					sizeof(struct hfa384x_compident));
-	if (result) {
+					माप(काष्ठा hfa384x_compident));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve PRIIDENTITY\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	/* get all the private fw id fields in host byte order */
+	/* get all the निजी fw id fields in host byte order */
 	le16_to_cpus(&hw->ident_pri_fw.id);
 	le16_to_cpus(&hw->ident_pri_fw.variant);
 	le16_to_cpus(&hw->ident_pri_fw.major);
@@ -627,20 +628,20 @@ static int prism2sta_getcardinfo(struct wlandevice *wlandev)
 		    hw->ident_pri_fw.minor, hw->ident_pri_fw.variant);
 
 	/* Station (Secondary?) f/w identity */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_STAIDENTITY,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_STAIDENTITY,
 					&hw->ident_sta_fw,
-					sizeof(struct hfa384x_compident));
-	if (result) {
+					माप(काष्ठा hfa384x_compident));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve STAIDENTITY\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	if (hw->ident_nic.id < 0x8000) {
+	अगर (hw->ident_nic.id < 0x8000) अणु
 		netdev_err(wlandev->netdev,
 			   "FATAL: Card is not an Intersil Prism2/2.5/3\n");
 		result = -1;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* get all the station fw id fields in host byte order */
 	le16_to_cpus(&hw->ident_sta_fw.id);
@@ -652,30 +653,30 @@ static int prism2sta_getcardinfo(struct wlandevice *wlandev)
 	hw->mm_mods = hw->ident_sta_fw.variant & GENMASK(15, 14);
 	hw->ident_sta_fw.variant &= ~((u16)GENMASK(15, 14));
 
-	if (hw->ident_sta_fw.id == 0x1f) {
+	अगर (hw->ident_sta_fw.id == 0x1f) अणु
 		netdev_info(wlandev->netdev,
 			    "ident: sta f/w: id=0x%02x %d.%d.%d\n",
 			    hw->ident_sta_fw.id, hw->ident_sta_fw.major,
 			    hw->ident_sta_fw.minor, hw->ident_sta_fw.variant);
-	} else {
+	पूर्ण अन्यथा अणु
 		netdev_info(wlandev->netdev,
 			    "ident:  ap f/w: id=0x%02x %d.%d.%d\n",
 			    hw->ident_sta_fw.id, hw->ident_sta_fw.major,
 			    hw->ident_sta_fw.minor, hw->ident_sta_fw.variant);
 		netdev_err(wlandev->netdev, "Unsupported Tertiary AP firmware loaded!\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* Compatibility range, Modem supplier */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_MFISUPRANGE,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_MFISUPRANGE,
 					&hw->cap_sup_mfi,
-					sizeof(struct hfa384x_caplevel));
-	if (result) {
+					माप(काष्ठा hfa384x_caplevel));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve MFISUPRANGE\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	/* get all the Compatibility range, modem interface supplier
+	/* get all the Compatibility range, modem पूर्णांकerface supplier
 	 * fields in byte order
 	 */
 	le16_to_cpus(&hw->cap_sup_mfi.role);
@@ -691,15 +692,15 @@ static int prism2sta_getcardinfo(struct wlandevice *wlandev)
 		    hw->cap_sup_mfi.top);
 
 	/* Compatibility range, Controller supplier */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_CFISUPRANGE,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_CFISUPRANGE,
 					&hw->cap_sup_cfi,
-					sizeof(struct hfa384x_caplevel));
-	if (result) {
+					माप(काष्ठा hfa384x_caplevel));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve CFISUPRANGE\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	/* get all the Compatibility range, controller interface supplier
+	/* get all the Compatibility range, controller पूर्णांकerface supplier
 	 * fields in byte order
 	 */
 	le16_to_cpus(&hw->cap_sup_cfi.role);
@@ -715,13 +716,13 @@ static int prism2sta_getcardinfo(struct wlandevice *wlandev)
 		    hw->cap_sup_cfi.top);
 
 	/* Compatibility range, Primary f/w supplier */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_PRISUPRANGE,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_PRISUPRANGE,
 					&hw->cap_sup_pri,
-					sizeof(struct hfa384x_caplevel));
-	if (result) {
+					माप(काष्ठा hfa384x_caplevel));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve PRISUPRANGE\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* get all the Compatibility range, primary firmware supplier
 	 * fields in byte order
@@ -739,13 +740,13 @@ static int prism2sta_getcardinfo(struct wlandevice *wlandev)
 		    hw->cap_sup_pri.top);
 
 	/* Compatibility range, Station f/w supplier */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_STASUPRANGE,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_STASUPRANGE,
 					&hw->cap_sup_sta,
-					sizeof(struct hfa384x_caplevel));
-	if (result) {
+					माप(काष्ठा hfa384x_caplevel));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve STASUPRANGE\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* get all the Compatibility range, station firmware supplier
 	 * fields in byte order
@@ -756,28 +757,28 @@ static int prism2sta_getcardinfo(struct wlandevice *wlandev)
 	le16_to_cpus(&hw->cap_sup_sta.bottom);
 	le16_to_cpus(&hw->cap_sup_sta.top);
 
-	if (hw->cap_sup_sta.id == 0x04) {
+	अगर (hw->cap_sup_sta.id == 0x04) अणु
 		netdev_info(wlandev->netdev,
 			    "STA:SUP:role=0x%02x:id=0x%02x:var=0x%02x:b/t=%d/%d\n",
 			    hw->cap_sup_sta.role, hw->cap_sup_sta.id,
 			    hw->cap_sup_sta.variant, hw->cap_sup_sta.bottom,
 			    hw->cap_sup_sta.top);
-	} else {
+	पूर्ण अन्यथा अणु
 		netdev_info(wlandev->netdev,
 			    "AP:SUP:role=0x%02x:id=0x%02x:var=0x%02x:b/t=%d/%d\n",
 			    hw->cap_sup_sta.role, hw->cap_sup_sta.id,
 			    hw->cap_sup_sta.variant, hw->cap_sup_sta.bottom,
 			    hw->cap_sup_sta.top);
-	}
+	पूर्ण
 
 	/* Compatibility range, primary f/w actor, CFI supplier */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_PRI_CFIACTRANGES,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_PRI_CFIACTRANGES,
 					&hw->cap_act_pri_cfi,
-					sizeof(struct hfa384x_caplevel));
-	if (result) {
+					माप(काष्ठा hfa384x_caplevel));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve PRI_CFIACTRANGES\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* get all the Compatibility range, primary f/w actor, CFI supplier
 	 * fields in byte order
@@ -795,13 +796,13 @@ static int prism2sta_getcardinfo(struct wlandevice *wlandev)
 		    hw->cap_act_pri_cfi.top);
 
 	/* Compatibility range, sta f/w actor, CFI supplier */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_STA_CFIACTRANGES,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_STA_CFIACTRANGES,
 					&hw->cap_act_sta_cfi,
-					sizeof(struct hfa384x_caplevel));
-	if (result) {
+					माप(काष्ठा hfa384x_caplevel));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve STA_CFIACTRANGES\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* get all the Compatibility range, station f/w actor, CFI supplier
 	 * fields in byte order
@@ -819,13 +820,13 @@ static int prism2sta_getcardinfo(struct wlandevice *wlandev)
 		    hw->cap_act_sta_cfi.top);
 
 	/* Compatibility range, sta f/w actor, MFI supplier */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_STA_MFIACTRANGES,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_STA_MFIACTRANGES,
 					&hw->cap_act_sta_mfi,
-					sizeof(struct hfa384x_caplevel));
-	if (result) {
+					माप(काष्ठा hfa384x_caplevel));
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve STA_MFIACTRANGES\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* get all the Compatibility range, station f/w actor, MFI supplier
 	 * fields in byte order
@@ -843,52 +844,52 @@ static int prism2sta_getcardinfo(struct wlandevice *wlandev)
 		    hw->cap_act_sta_mfi.top);
 
 	/* Serial Number */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_NICSERIALNUMBER,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_NICSERIALNUMBER,
 					snum, HFA384x_RID_NICSERIALNUMBER_LEN);
-	if (!result) {
+	अगर (!result) अणु
 		netdev_info(wlandev->netdev, "Prism2 card SN: %*pE\n",
 			    HFA384x_RID_NICSERIALNUMBER_LEN, snum);
-	} else {
+	पूर्ण अन्यथा अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve Prism2 Card SN\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/* Collect the MAC address */
-	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_CNFOWNMACADDR,
+	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_CNFOWNMACADDR,
 					wlandev->netdev->dev_addr, ETH_ALEN);
-	if (result != 0) {
+	अगर (result != 0) अणु
 		netdev_err(wlandev->netdev, "Failed to retrieve mac address\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	/* short preamble is always implemented */
+	/* लघु preamble is always implemented */
 	wlandev->nsdcaps |= P80211_NSDCAP_SHORT_PREAMBLE;
 
-	/* find out if hardware wep is implemented */
-	hfa384x_drvr_getconfig16(hw, HFA384x_RID_PRIVACYOPTIMP, &temp);
-	if (temp)
+	/* find out अगर hardware wep is implemented */
+	hfa384x_drvr_अ_लोonfig16(hw, HFA384x_RID_PRIVACYOPTIMP, &temp);
+	अगर (temp)
 		wlandev->nsdcaps |= P80211_NSDCAP_HARDWAREWEP;
 
-	/* get the dBm Scaling constant */
-	hfa384x_drvr_getconfig16(hw, HFA384x_RID_CNFDBMADJUST, &temp);
+	/* get the dBm Scaling स्थिरant */
+	hfa384x_drvr_अ_लोonfig16(hw, HFA384x_RID_CNFDBMADJUST, &temp);
 	hw->dbmadjust = temp;
 
-	/* Only enable scan by default on newer firmware */
-	if (HFA384x_FIRMWARE_VERSION(hw->ident_sta_fw.major,
+	/* Only enable scan by शेष on newer firmware */
+	अगर (HFA384x_FIRMWARE_VERSION(hw->ident_sta_fw.major,
 				     hw->ident_sta_fw.minor,
 				     hw->ident_sta_fw.variant) <
-	    HFA384x_FIRMWARE_VERSION(1, 5, 5)) {
+	    HFA384x_FIRMWARE_VERSION(1, 5, 5)) अणु
 		wlandev->nsdcaps |= P80211_NSDCAP_NOSCAN;
-	}
+	पूर्ण
 
-	/* TODO: Set any internally managed config items */
+	/* TODO: Set any पूर्णांकernally managed config items */
 
-	goto done;
+	जाओ करोne;
 failed:
 	netdev_err(wlandev->netdev, "Failed, result=%d\n", result);
-done:
-	return result;
-}
+करोne:
+	वापस result;
+पूर्ण
 
 /*
  * prism2sta_globalsetup
@@ -896,7 +897,7 @@ done:
  * Set any global RIDs that we want to set at device activation.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *
  * Returns:
  *	0	success
@@ -906,49 +907,49 @@ done:
  * Side effects:
  *
  * Call context:
- *	process thread
+ *	process thपढ़ो
  */
-static int prism2sta_globalsetup(struct wlandevice *wlandev)
-{
-	struct hfa384x *hw = wlandev->priv;
+अटल पूर्णांक prism2sta_globalsetup(काष्ठा wlandevice *wlandev)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
 
 	/* Set the maximum frame size */
-	return hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFMAXDATALEN,
+	वापस hfa384x_drvr_setconfig16(hw, HFA384x_RID_CNFMAXDATALEN,
 					WLAN_DATA_MAXLEN);
-}
+पूर्ण
 
-static int prism2sta_setmulticast(struct wlandevice *wlandev,
-				  struct net_device *dev)
-{
-	int result = 0;
-	struct hfa384x *hw = wlandev->priv;
+अटल पूर्णांक prism2sta_seपंचांगulticast(काष्ठा wlandevice *wlandev,
+				  काष्ठा net_device *dev)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा hfa384x *hw = wlandev->priv;
 
 	u16 promisc;
 
-	/* If we're not ready, what's the point? */
-	if (hw->state != HFA384x_STATE_RUNNING)
-		goto exit;
+	/* If we're not ready, what's the poपूर्णांक? */
+	अगर (hw->state != HFA384x_STATE_RUNNING)
+		जाओ निकास;
 
-	if ((dev->flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
+	अगर ((dev->flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
 		promisc = P80211ENUM_truth_true;
-	else
+	अन्यथा
 		promisc = P80211ENUM_truth_false;
 
 	result =
 	    hfa384x_drvr_setconfig16_async(hw, HFA384x_RID_PROMISCMODE,
 					   promisc);
-exit:
-	return result;
-}
+निकास:
+	वापस result;
+पूर्ण
 
 /*
- * prism2sta_inf_handover
+ * prism2sta_inf_hanकरोver
  *
- * Handles the receipt of a Handover info frame. Should only be present
+ * Handles the receipt of a Hanकरोver info frame. Should only be present
  * in APs only.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	inf		ptr to info frame (contents in hfa384x order)
  *
  * Returns:
@@ -957,13 +958,13 @@ exit:
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-static void prism2sta_inf_handover(struct wlandevice *wlandev,
-				   struct hfa384x_inf_frame *inf)
-{
+अटल व्योम prism2sta_inf_hanकरोver(काष्ठा wlandevice *wlandev,
+				   काष्ठा hfa384x_inf_frame *inf)
+अणु
 	pr_debug("received infoframe:HANDOVER (unhandled)\n");
-}
+पूर्ण
 
 /*
  * prism2sta_inf_tallies
@@ -971,7 +972,7 @@ static void prism2sta_inf_handover(struct wlandevice *wlandev,
  * Handles the receipt of a CommTallies info frame.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	inf		ptr to info frame (contents in hfa384x order)
  *
  * Returns:
@@ -980,36 +981,36 @@ static void prism2sta_inf_handover(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-static void prism2sta_inf_tallies(struct wlandevice *wlandev,
-				  struct hfa384x_inf_frame *inf)
-{
-	struct hfa384x *hw = wlandev->priv;
+अटल व्योम prism2sta_inf_tallies(काष्ठा wlandevice *wlandev,
+				  काष्ठा hfa384x_inf_frame *inf)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
 	__le16 *src16;
 	u32 *dst;
 	__le32 *src32;
-	int i;
-	int cnt;
+	पूर्णांक i;
+	पूर्णांक cnt;
 
 	/*
-	 * Determine if these are 16-bit or 32-bit tallies, based on the
+	 * Determine अगर these are 16-bit or 32-bit tallies, based on the
 	 * record length of the info record.
 	 */
 
-	cnt = sizeof(struct hfa384x_comm_tallies_32) / sizeof(u32);
-	if (inf->framelen > 22) {
+	cnt = माप(काष्ठा hfa384x_comm_tallies_32) / माप(u32);
+	अगर (inf->framelen > 22) अणु
 		dst = (u32 *)&hw->tallies;
 		src32 = (__le32 *)&inf->info.commtallies32;
-		for (i = 0; i < cnt; i++, dst++, src32++)
+		क्रम (i = 0; i < cnt; i++, dst++, src32++)
 			*dst += le32_to_cpu(*src32);
-	} else {
+	पूर्ण अन्यथा अणु
 		dst = (u32 *)&hw->tallies;
 		src16 = (__le16 *)&inf->info.commtallies16;
-		for (i = 0; i < cnt; i++, dst++, src16++)
+		क्रम (i = 0; i < cnt; i++, dst++, src16++)
 			*dst += le16_to_cpu(*src16);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * prism2sta_inf_scanresults
@@ -1017,7 +1018,7 @@ static void prism2sta_inf_tallies(struct wlandevice *wlandev,
  * Handles the receipt of a Scan Results info frame.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	inf		ptr to info frame (contents in hfa384x order)
  *
  * Returns:
@@ -1026,45 +1027,45 @@ static void prism2sta_inf_tallies(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-static void prism2sta_inf_scanresults(struct wlandevice *wlandev,
-				      struct hfa384x_inf_frame *inf)
-{
-	struct hfa384x *hw = wlandev->priv;
-	int nbss;
-	struct hfa384x_scan_result *sr = &inf->info.scanresult;
-	int i;
-	struct hfa384x_join_request_data joinreq;
-	int result;
+अटल व्योम prism2sta_inf_scanresults(काष्ठा wlandevice *wlandev,
+				      काष्ठा hfa384x_inf_frame *inf)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	पूर्णांक nbss;
+	काष्ठा hfa384x_scan_result *sr = &inf->info.scanresult;
+	पूर्णांक i;
+	काष्ठा hfa384x_join_request_data joinreq;
+	पूर्णांक result;
 
 	/* Get the number of results, first in bytes, then in results */
-	nbss = (inf->framelen * sizeof(u16)) -
-	    sizeof(inf->infotype) - sizeof(inf->info.scanresult.scanreason);
-	nbss /= sizeof(struct hfa384x_scan_result_sub);
+	nbss = (inf->framelen * माप(u16)) -
+	    माप(inf->infotype) - माप(inf->info.scanresult.scanreason);
+	nbss /= माप(काष्ठा hfa384x_scan_result_sub);
 
-	/* Print em */
+	/* Prपूर्णांक em */
 	pr_debug("rx scanresults, reason=%d, nbss=%d:\n",
 		 inf->info.scanresult.scanreason, nbss);
-	for (i = 0; i < nbss; i++) {
+	क्रम (i = 0; i < nbss; i++) अणु
 		pr_debug("chid=%d anl=%d sl=%d bcnint=%d\n",
 			 sr->result[i].chid,
 			 sr->result[i].anl,
-			 sr->result[i].sl, sr->result[i].bcnint);
+			 sr->result[i].sl, sr->result[i].bcnपूर्णांक);
 		pr_debug("  capinfo=0x%04x proberesp_rate=%d\n",
 			 sr->result[i].capinfo, sr->result[i].proberesp_rate);
-	}
+	पूर्ण
 	/* issue a join request */
 	joinreq.channel = sr->result[0].chid;
-	memcpy(joinreq.bssid, sr->result[0].bssid, WLAN_BSSID_LEN);
+	स_नकल(joinreq.bssid, sr->result[0].bssid, WLAN_BSSID_LEN);
 	result = hfa384x_drvr_setconfig(hw,
 					HFA384x_RID_JOINREQUEST,
 					&joinreq, HFA384x_RID_JOINREQUEST_LEN);
-	if (result) {
+	अगर (result) अणु
 		netdev_err(wlandev->netdev, "setconfig(joinreq) failed, result=%d\n",
 			   result);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * prism2sta_inf_hostscanresults
@@ -1072,7 +1073,7 @@ static void prism2sta_inf_scanresults(struct wlandevice *wlandev,
  * Handles the receipt of a Scan Results info frame.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	inf		ptr to info frame (contents in hfa384x order)
  *
  * Returns:
@@ -1081,39 +1082,39 @@ static void prism2sta_inf_scanresults(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-static void prism2sta_inf_hostscanresults(struct wlandevice *wlandev,
-					  struct hfa384x_inf_frame *inf)
-{
-	struct hfa384x *hw = wlandev->priv;
-	int nbss;
+अटल व्योम prism2sta_inf_hostscanresults(काष्ठा wlandevice *wlandev,
+					  काष्ठा hfa384x_inf_frame *inf)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	पूर्णांक nbss;
 
 	nbss = (inf->framelen - 3) / 32;
 	pr_debug("Received %d hostscan results\n", nbss);
 
-	if (nbss > 32)
+	अगर (nbss > 32)
 		nbss = 32;
 
-	kfree(hw->scanresults);
+	kमुक्त(hw->scanresults);
 
-	hw->scanresults = kmemdup(inf, sizeof(*inf), GFP_ATOMIC);
+	hw->scanresults = kmemdup(inf, माप(*inf), GFP_ATOMIC);
 
-	if (nbss == 0)
+	अगर (nbss == 0)
 		nbss = -1;
 
-	/* Notify/wake the sleeping caller. */
-	hw->scanflag = nbss;
-	wake_up_interruptible(&hw->cmdq);
-};
+	/* Notअगरy/wake the sleeping caller. */
+	hw->म_पूछोlag = nbss;
+	wake_up_पूर्णांकerruptible(&hw->cmdq);
+पूर्ण;
 
 /*
- * prism2sta_inf_chinforesults
+ * prism2sta_inf_chinक्रमesults
  *
  * Handles the receipt of a Channel Info Results info frame.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	inf		ptr to info frame (contents in hfa384x order)
  *
  * Returns:
@@ -1122,92 +1123,92 @@ static void prism2sta_inf_hostscanresults(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-static void prism2sta_inf_chinforesults(struct wlandevice *wlandev,
-					struct hfa384x_inf_frame *inf)
-{
-	struct hfa384x *hw = wlandev->priv;
-	unsigned int i, n;
+अटल व्योम prism2sta_inf_chinक्रमesults(काष्ठा wlandevice *wlandev,
+					काष्ठा hfa384x_inf_frame *inf)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	अचिन्हित पूर्णांक i, n;
 
 	hw->channel_info.results.scanchannels =
-	    inf->info.chinforesult.scanchannels;
+	    inf->info.chinक्रमesult.scanchannels;
 
-	for (i = 0, n = 0; i < HFA384x_CHINFORESULT_MAX; i++) {
-		struct hfa384x_ch_info_result_sub *result;
-		struct hfa384x_ch_info_result_sub *chinforesult;
-		int chan;
+	क्रम (i = 0, n = 0; i < HFA384x_CHINFORESULT_MAX; i++) अणु
+		काष्ठा hfa384x_ch_info_result_sub *result;
+		काष्ठा hfa384x_ch_info_result_sub *chinक्रमesult;
+		पूर्णांक chan;
 
-		if (!(hw->channel_info.results.scanchannels & (1 << i)))
-			continue;
+		अगर (!(hw->channel_info.results.scanchannels & (1 << i)))
+			जारी;
 
-		result = &inf->info.chinforesult.result[n];
+		result = &inf->info.chinक्रमesult.result[n];
 		chan = result->chid - 1;
 
-		if (chan < 0 || chan >= HFA384x_CHINFORESULT_MAX)
-			continue;
+		अगर (chan < 0 || chan >= HFA384x_CHINFORESULT_MAX)
+			जारी;
 
-		chinforesult = &hw->channel_info.results.result[chan];
-		chinforesult->chid = chan;
-		chinforesult->anl = result->anl;
-		chinforesult->pnl = result->pnl;
-		chinforesult->active = result->active;
+		chinक्रमesult = &hw->channel_info.results.result[chan];
+		chinक्रमesult->chid = chan;
+		chinक्रमesult->anl = result->anl;
+		chinक्रमesult->pnl = result->pnl;
+		chinक्रमesult->active = result->active;
 
 		pr_debug("chinfo: channel %d, %s level (avg/peak)=%d/%d dB, pcf %d\n",
 			 chan + 1,
-			 (chinforesult->active & HFA384x_CHINFORESULT_BSSACTIVE)
+			 (chinक्रमesult->active & HFA384x_CHINFORESULT_BSSACTIVE)
 				? "signal" : "noise",
-			 chinforesult->anl, chinforesult->pnl,
-			 (chinforesult->active & HFA384x_CHINFORESULT_PCFACTIVE)
+			 chinक्रमesult->anl, chinक्रमesult->pnl,
+			 (chinक्रमesult->active & HFA384x_CHINFORESULT_PCFACTIVE)
 				? 1 : 0);
 		n++;
-	}
-	atomic_set(&hw->channel_info.done, 2);
+	पूर्ण
+	atomic_set(&hw->channel_info.करोne, 2);
 
 	hw->channel_info.count = n;
-}
+पूर्ण
 
-void prism2sta_processing_defer(struct work_struct *data)
-{
-	struct hfa384x *hw = container_of(data, struct hfa384x, link_bh);
-	struct wlandevice *wlandev = hw->wlandev;
-	struct hfa384x_bytestr32 ssid;
-	int result;
+व्योम prism2sta_processing_defer(काष्ठा work_काष्ठा *data)
+अणु
+	काष्ठा hfa384x *hw = container_of(data, काष्ठा hfa384x, link_bh);
+	काष्ठा wlandevice *wlandev = hw->wlandev;
+	काष्ठा hfa384x_bytestr32 ssid;
+	पूर्णांक result;
 
 	/* First let's process the auth frames */
-	{
-		struct sk_buff *skb;
-		struct hfa384x_inf_frame *inf;
+	अणु
+		काष्ठा sk_buff *skb;
+		काष्ठा hfa384x_inf_frame *inf;
 
-		while ((skb = skb_dequeue(&hw->authq))) {
-			inf = (struct hfa384x_inf_frame *)skb->data;
+		जबतक ((skb = skb_dequeue(&hw->authq))) अणु
+			inf = (काष्ठा hfa384x_inf_frame *)skb->data;
 			prism2sta_inf_authreq_defer(wlandev, inf);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Now let's handle the linkstatus stuff */
-	if (hw->link_status == hw->link_status_new)
-		return;
+	अगर (hw->link_status == hw->link_status_new)
+		वापस;
 
 	hw->link_status = hw->link_status_new;
 
-	switch (hw->link_status) {
-	case HFA384x_LINK_NOTCONNECTED:
+	चयन (hw->link_status) अणु
+	हाल HFA384x_LINK_NOTCONNECTED:
 		/* I'm currently assuming that this is the initial link
 		 * state.  It should only be possible immediately
 		 * following an Enable command.
 		 * Response:
 		 * Block Transmits, Ignore receives of data frames
 		 */
-		netif_carrier_off(wlandev->netdev);
+		netअगर_carrier_off(wlandev->netdev);
 
 		netdev_info(wlandev->netdev, "linkstatus=NOTCONNECTED (unhandled)\n");
-		break;
+		अवरोध;
 
-	case HFA384x_LINK_CONNECTED:
+	हाल HFA384x_LINK_CONNECTED:
 		/* This one indicates a successful scan/join/auth/assoc.
 		 * When we have the full MLME complement, this event will
-		 * signify successful completion of both mlme_authenticate
+		 * signअगरy successful completion of both mlme_authenticate
 		 * and mlme_associate.  State management will get a little
 		 * ugly here.
 		 * Response:
@@ -1215,17 +1216,17 @@ void prism2sta_processing_defer(struct work_struct *data)
 		 * Enable Transmits, Receives and pass up data frames
 		 */
 
-		netif_carrier_on(wlandev->netdev);
+		netअगर_carrier_on(wlandev->netdev);
 
-		/* If we are joining a specific AP, set our
+		/* If we are joining a specअगरic AP, set our
 		 * state and reset retries
 		 */
-		if (hw->join_ap == 1)
+		अगर (hw->join_ap == 1)
 			hw->join_ap = 2;
 		hw->join_retries = 60;
 
 		/* Don't call this in monitor mode */
-		if (wlandev->netdev->type == ARPHRD_ETHER) {
+		अगर (wlandev->netdev->type == ARPHRD_ETHER) अणु
 			u16 portstatus;
 
 			netdev_info(wlandev->netdev, "linkstatus=CONNECTED\n");
@@ -1233,52 +1234,52 @@ void prism2sta_processing_defer(struct work_struct *data)
 			/* For non-usb devices, we can use the sync versions */
 			/* Collect the BSSID, and set state to allow tx */
 
-			result = hfa384x_drvr_getconfig(hw,
+			result = hfa384x_drvr_अ_लोonfig(hw,
 							HFA384x_RID_CURRENTBSSID,
 							wlandev->bssid,
 							WLAN_BSSID_LEN);
-			if (result) {
+			अगर (result) अणु
 				pr_debug
 				    ("getconfig(0x%02x) failed, result = %d\n",
 				     HFA384x_RID_CURRENTBSSID, result);
-				return;
-			}
+				वापस;
+			पूर्ण
 
-			result = hfa384x_drvr_getconfig(hw,
+			result = hfa384x_drvr_अ_लोonfig(hw,
 							HFA384x_RID_CURRENTSSID,
-							&ssid, sizeof(ssid));
-			if (result) {
+							&ssid, माप(ssid));
+			अगर (result) अणु
 				pr_debug
 				    ("getconfig(0x%02x) failed, result = %d\n",
 				     HFA384x_RID_CURRENTSSID, result);
-				return;
-			}
-			prism2mgmt_bytestr2pstr((struct hfa384x_bytestr *)&ssid,
-						(struct p80211pstrd *)&wlandev->ssid);
+				वापस;
+			पूर्ण
+			prism2mgmt_bytestr2pstr((काष्ठा hfa384x_bytestr *)&ssid,
+						(काष्ठा p80211pstrd *)&wlandev->ssid);
 
 			/* Collect the port status */
-			result = hfa384x_drvr_getconfig16(hw,
+			result = hfa384x_drvr_अ_लोonfig16(hw,
 							  HFA384x_RID_PORTSTATUS,
 							  &portstatus);
-			if (result) {
+			अगर (result) अणु
 				pr_debug
 				    ("getconfig(0x%02x) failed, result = %d\n",
 				     HFA384x_RID_PORTSTATUS, result);
-				return;
-			}
+				वापस;
+			पूर्ण
 			wlandev->macmode =
 			    (portstatus == HFA384x_PSTATUS_CONN_IBSS) ?
 			    WLAN_MACMODE_IBSS_STA : WLAN_MACMODE_ESS_STA;
 
-			/* signal back up to cfg80211 layer */
+			/* संकेत back up to cfg80211 layer */
 			prism2_connect_result(wlandev, P80211ENUM_truth_false);
 
 			/* Get the ball rolling on the comms quality stuff */
 			prism2sta_commsqual_defer(&hw->commsqual_bh);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case HFA384x_LINK_DISCONNECTED:
+	हाल HFA384x_LINK_DISCONNECTED:
 		/* This one indicates that our association is gone.  We've
 		 * lost connection with the AP and/or been disassociated.
 		 * This indicates that the MAC has completely cleared it's
@@ -1288,26 +1289,26 @@ void prism2sta_processing_defer(struct work_struct *data)
 		 * Indicate Deauthentication
 		 * Block Transmits, Ignore receives of data frames
 		 */
-		if (wlandev->netdev->type == ARPHRD_ETHER)
+		अगर (wlandev->netdev->type == ARPHRD_ETHER)
 			netdev_info(wlandev->netdev,
 				    "linkstatus=DISCONNECTED (unhandled)\n");
 		wlandev->macmode = WLAN_MACMODE_NONE;
 
-		netif_carrier_off(wlandev->netdev);
+		netअगर_carrier_off(wlandev->netdev);
 
-		/* signal back up to cfg80211 layer */
+		/* संकेत back up to cfg80211 layer */
 		prism2_disconnected(wlandev);
 
-		break;
+		अवरोध;
 
-	case HFA384x_LINK_AP_CHANGE:
+	हाल HFA384x_LINK_AP_CHANGE:
 		/* This one indicates that the MAC has decided to and
 		 * successfully completed a change to another AP.  We
 		 * should probably implement a reassociation indication
 		 * in response to this one.  I'm thinking that the
-		 * p80211 layer needs to be notified in case of
+		 * p80211 layer needs to be notअगरied in हाल of
 		 * buffering/queueing issues.  User mode also needs to be
-		 * notified so that any BSS dependent elements can be
+		 * notअगरied so that any BSS dependent elements can be
 		 * updated.
 		 * associated state.  We * should send a deauth indication
 		 * (implying disassoc) up * to the MLME.
@@ -1317,38 +1318,38 @@ void prism2sta_processing_defer(struct work_struct *data)
 		 */
 		netdev_info(wlandev->netdev, "linkstatus=AP_CHANGE\n");
 
-		result = hfa384x_drvr_getconfig(hw,
+		result = hfa384x_drvr_अ_लोonfig(hw,
 						HFA384x_RID_CURRENTBSSID,
 						wlandev->bssid, WLAN_BSSID_LEN);
-		if (result) {
+		अगर (result) अणु
 			pr_debug("getconfig(0x%02x) failed, result = %d\n",
 				 HFA384x_RID_CURRENTBSSID, result);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		result = hfa384x_drvr_getconfig(hw,
+		result = hfa384x_drvr_अ_लोonfig(hw,
 						HFA384x_RID_CURRENTSSID,
-						&ssid, sizeof(ssid));
-		if (result) {
+						&ssid, माप(ssid));
+		अगर (result) अणु
 			pr_debug("getconfig(0x%02x) failed, result = %d\n",
 				 HFA384x_RID_CURRENTSSID, result);
-			return;
-		}
-		prism2mgmt_bytestr2pstr((struct hfa384x_bytestr *)&ssid,
-					(struct p80211pstrd *)&wlandev->ssid);
+			वापस;
+		पूर्ण
+		prism2mgmt_bytestr2pstr((काष्ठा hfa384x_bytestr *)&ssid,
+					(काष्ठा p80211pstrd *)&wlandev->ssid);
 
 		hw->link_status = HFA384x_LINK_CONNECTED;
-		netif_carrier_on(wlandev->netdev);
+		netअगर_carrier_on(wlandev->netdev);
 
-		/* signal back up to cfg80211 layer */
+		/* संकेत back up to cfg80211 layer */
 		prism2_roamed(wlandev);
 
-		break;
+		अवरोध;
 
-	case HFA384x_LINK_AP_OUTOFRANGE:
+	हाल HFA384x_LINK_AP_OUTOFRANGE:
 		/* This one indicates that the MAC has decided that the
 		 * AP is out of range, but hasn't found a better candidate
-		 * so the MAC maintains its "associated" state in case
+		 * so the MAC मुख्यtains its "associated" state in हाल
 		 * we get back in range.  We should block transmits and
 		 * receives in this state.  Do we need an indication here?
 		 * Probably not since a polling user-mode element would
@@ -1359,13 +1360,13 @@ void prism2sta_processing_defer(struct work_struct *data)
 		 */
 		netdev_info(wlandev->netdev, "linkstatus=AP_OUTOFRANGE (unhandled)\n");
 
-		netif_carrier_off(wlandev->netdev);
+		netअगर_carrier_off(wlandev->netdev);
 
-		break;
+		अवरोध;
 
-	case HFA384x_LINK_AP_INRANGE:
+	हाल HFA384x_LINK_AP_INRANGE:
 		/* This one indicates that the MAC has decided that the
-		 * AP is back in range.  We continue working with our
+		 * AP is back in range.  We जारी working with our
 		 * existing association.
 		 * Response:
 		 * Enable Transmits, Receives and pass up data frames
@@ -1373,21 +1374,21 @@ void prism2sta_processing_defer(struct work_struct *data)
 		netdev_info(wlandev->netdev, "linkstatus=AP_INRANGE\n");
 
 		hw->link_status = HFA384x_LINK_CONNECTED;
-		netif_carrier_on(wlandev->netdev);
+		netअगर_carrier_on(wlandev->netdev);
 
-		break;
+		अवरोध;
 
-	case HFA384x_LINK_ASSOCFAIL:
+	हाल HFA384x_LINK_ASSOCFAIL:
 		/* This one is actually a peer to CONNECTED.  We've
-		 * requested a join for a given SSID and optionally BSSID.
+		 * requested a join क्रम a given SSID and optionally BSSID.
 		 * We can use this one to indicate authentication and
 		 * association failures.  The trick is going to be
-		 * 1) identifying the failure, and 2) state management.
+		 * 1) identअगरying the failure, and 2) state management.
 		 * Response:
 		 * Disable Transmits, Ignore receives of data frames
 		 */
-		if (hw->join_ap && --hw->join_retries > 0) {
-			struct hfa384x_join_request_data joinreq;
+		अगर (hw->join_ap && --hw->join_retries > 0) अणु
+			काष्ठा hfa384x_join_request_data joinreq;
 
 			joinreq = hw->joinreq;
 			/* Send the join request */
@@ -1397,26 +1398,26 @@ void prism2sta_processing_defer(struct work_struct *data)
 					       HFA384x_RID_JOINREQUEST_LEN);
 			netdev_info(wlandev->netdev,
 				    "linkstatus=ASSOCFAIL (re-submitting join)\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			netdev_info(wlandev->netdev, "linkstatus=ASSOCFAIL (unhandled)\n");
-		}
+		पूर्ण
 
-		netif_carrier_off(wlandev->netdev);
+		netअगर_carrier_off(wlandev->netdev);
 
-		/* signal back up to cfg80211 layer */
+		/* संकेत back up to cfg80211 layer */
 		prism2_connect_result(wlandev, P80211ENUM_truth_true);
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* This is bad, IO port problems? */
 		netdev_warn(wlandev->netdev,
 			    "unknown linkstatus=0x%02x\n", hw->link_status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	wlandev->linkstatus = (hw->link_status == HFA384x_LINK_CONNECTED);
-}
+पूर्ण
 
 /*
  * prism2sta_inf_linkstatus
@@ -1424,7 +1425,7 @@ void prism2sta_processing_defer(struct work_struct *data)
  * Handles the receipt of a Link Status info frame.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	inf		ptr to info frame (contents in hfa384x order)
  *
  * Returns:
@@ -1433,17 +1434,17 @@ void prism2sta_processing_defer(struct work_struct *data)
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-static void prism2sta_inf_linkstatus(struct wlandevice *wlandev,
-				     struct hfa384x_inf_frame *inf)
-{
-	struct hfa384x *hw = wlandev->priv;
+अटल व्योम prism2sta_inf_linkstatus(काष्ठा wlandevice *wlandev,
+				     काष्ठा hfa384x_inf_frame *inf)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
 
 	hw->link_status_new = le16_to_cpu(inf->info.linkstatus.linkstatus);
 
 	schedule_work(&hw->link_bh);
-}
+पूर्ण
 
 /*
  * prism2sta_inf_assocstatus
@@ -1452,7 +1453,7 @@ static void prism2sta_inf_linkstatus(struct wlandevice *wlandev,
  * be present in APs only.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	inf		ptr to info frame (contents in hfa384x order)
  *
  * Returns:
@@ -1461,49 +1462,49 @@ static void prism2sta_inf_linkstatus(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-static void prism2sta_inf_assocstatus(struct wlandevice *wlandev,
-				      struct hfa384x_inf_frame *inf)
-{
-	struct hfa384x *hw = wlandev->priv;
-	struct hfa384x_assoc_status rec;
-	int i;
+अटल व्योम prism2sta_inf_assocstatus(काष्ठा wlandevice *wlandev,
+				      काष्ठा hfa384x_inf_frame *inf)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा hfa384x_assoc_status rec;
+	पूर्णांक i;
 
-	memcpy(&rec, &inf->info.assocstatus, sizeof(rec));
+	स_नकल(&rec, &inf->info.assocstatus, माप(rec));
 	le16_to_cpus(&rec.assocstatus);
 	le16_to_cpus(&rec.reason);
 
 	/*
 	 * Find the address in the list of authenticated stations.
 	 * If it wasn't found, then this address has not been previously
-	 * authenticated and something weird has happened if this is
+	 * authenticated and something weird has happened अगर this is
 	 * anything other than an "authentication failed" message.
-	 * If the address was found, then set the "associated" flag for
+	 * If the address was found, then set the "associated" flag क्रम
 	 * that station, based on whether the station is associating or
 	 * losing its association.  Something weird has also happened
-	 * if we find the address in the list of authenticated stations
+	 * अगर we find the address in the list of authenticated stations
 	 * but we are getting an "authentication failed" message.
 	 */
 
-	for (i = 0; i < hw->authlist.cnt; i++)
-		if (ether_addr_equal(rec.sta_addr, hw->authlist.addr[i]))
-			break;
+	क्रम (i = 0; i < hw->authlist.cnt; i++)
+		अगर (ether_addr_equal(rec.sta_addr, hw->authlist.addr[i]))
+			अवरोध;
 
-	if (i >= hw->authlist.cnt) {
-		if (rec.assocstatus != HFA384x_ASSOCSTATUS_AUTHFAIL)
+	अगर (i >= hw->authlist.cnt) अणु
+		अगर (rec.assocstatus != HFA384x_ASSOCSTATUS_AUTHFAIL)
 			netdev_warn(wlandev->netdev,
 				    "assocstatus info frame received for non-authenticated station.\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		hw->authlist.assoc[i] =
 		    (rec.assocstatus == HFA384x_ASSOCSTATUS_STAASSOC ||
 		     rec.assocstatus == HFA384x_ASSOCSTATUS_REASSOC);
 
-		if (rec.assocstatus == HFA384x_ASSOCSTATUS_AUTHFAIL)
+		अगर (rec.assocstatus == HFA384x_ASSOCSTATUS_AUTHFAIL)
 			netdev_warn(wlandev->netdev,
 				    "authfail assocstatus info frame received for authenticated station.\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * prism2sta_inf_authreq
@@ -1512,7 +1513,7 @@ static void prism2sta_inf_assocstatus(struct wlandevice *wlandev,
  * be present in APs only.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	inf		ptr to info frame (contents in hfa384x order)
  *
  * Returns:
@@ -1521,35 +1522,35 @@ static void prism2sta_inf_assocstatus(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  *
  */
-static void prism2sta_inf_authreq(struct wlandevice *wlandev,
-				  struct hfa384x_inf_frame *inf)
-{
-	struct hfa384x *hw = wlandev->priv;
-	struct sk_buff *skb;
+अटल व्योम prism2sta_inf_authreq(काष्ठा wlandevice *wlandev,
+				  काष्ठा hfa384x_inf_frame *inf)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा sk_buff *skb;
 
-	skb = dev_alloc_skb(sizeof(*inf));
-	if (skb) {
-		skb_put(skb, sizeof(*inf));
-		memcpy(skb->data, inf, sizeof(*inf));
+	skb = dev_alloc_skb(माप(*inf));
+	अगर (skb) अणु
+		skb_put(skb, माप(*inf));
+		स_नकल(skb->data, inf, माप(*inf));
 		skb_queue_tail(&hw->authq, skb);
 		schedule_work(&hw->link_bh);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void prism2sta_inf_authreq_defer(struct wlandevice *wlandev,
-					struct hfa384x_inf_frame *inf)
-{
-	struct hfa384x *hw = wlandev->priv;
-	struct hfa384x_authenticate_station_data rec;
+अटल व्योम prism2sta_inf_authreq_defer(काष्ठा wlandevice *wlandev,
+					काष्ठा hfa384x_inf_frame *inf)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
+	काष्ठा hfa384x_authenticate_station_data rec;
 
-	int i, added, result, cnt;
+	पूर्णांक i, added, result, cnt;
 	u8 *addr;
 
 	/*
-	 * Build the AuthenticateStation record.  Initialize it for denying
+	 * Build the AuthenticateStation record.  Initialize it क्रम denying
 	 * authentication.
 	 */
 
@@ -1560,138 +1561,138 @@ static void prism2sta_inf_authreq_defer(struct wlandevice *wlandev,
 	 * Authenticate based on the access mode.
 	 */
 
-	switch (hw->accessmode) {
-	case WLAN_ACCESS_NONE:
+	चयन (hw->accessmode) अणु
+	हाल WLAN_ACCESS_NONE:
 
 		/*
-		 * Deny all new authentications.  However, if a station
+		 * Deny all new authentications.  However, अगर a station
 		 * is ALREADY authenticated, then accept it.
 		 */
 
-		for (i = 0; i < hw->authlist.cnt; i++)
-			if (ether_addr_equal(rec.address,
-					     hw->authlist.addr[i])) {
+		क्रम (i = 0; i < hw->authlist.cnt; i++)
+			अगर (ether_addr_equal(rec.address,
+					     hw->authlist.addr[i])) अणु
 				rec.status = cpu_to_le16(P80211ENUM_status_successful);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		break;
+		अवरोध;
 
-	case WLAN_ACCESS_ALL:
+	हाल WLAN_ACCESS_ALL:
 
 		/*
 		 * Allow all authentications.
 		 */
 
 		rec.status = cpu_to_le16(P80211ENUM_status_successful);
-		break;
+		अवरोध;
 
-	case WLAN_ACCESS_ALLOW:
+	हाल WLAN_ACCESS_ALLOW:
 
 		/*
-		 * Only allow the authentication if the MAC address
+		 * Only allow the authentication अगर the MAC address
 		 * is in the list of allowed addresses.
 		 *
-		 * Since this is the interrupt handler, we may be here
-		 * while the access list is in the middle of being
+		 * Since this is the पूर्णांकerrupt handler, we may be here
+		 * जबतक the access list is in the middle of being
 		 * updated.  Choose the list which is currently okay.
-		 * See "prism2mib_priv_accessallow()" for details.
+		 * See "prism2mib_priv_accessallow()" क्रम details.
 		 */
 
-		if (hw->allow.modify == 0) {
+		अगर (hw->allow.modअगरy == 0) अणु
 			cnt = hw->allow.cnt;
 			addr = hw->allow.addr[0];
-		} else {
+		पूर्ण अन्यथा अणु
 			cnt = hw->allow.cnt1;
 			addr = hw->allow.addr1[0];
-		}
+		पूर्ण
 
-		for (i = 0; i < cnt; i++, addr += ETH_ALEN)
-			if (ether_addr_equal(rec.address, addr)) {
+		क्रम (i = 0; i < cnt; i++, addr += ETH_ALEN)
+			अगर (ether_addr_equal(rec.address, addr)) अणु
 				rec.status = cpu_to_le16(P80211ENUM_status_successful);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		break;
+		अवरोध;
 
-	case WLAN_ACCESS_DENY:
+	हाल WLAN_ACCESS_DENY:
 
 		/*
 		 * Allow the authentication UNLESS the MAC address is
 		 * in the list of denied addresses.
 		 *
-		 * Since this is the interrupt handler, we may be here
-		 * while the access list is in the middle of being
+		 * Since this is the पूर्णांकerrupt handler, we may be here
+		 * जबतक the access list is in the middle of being
 		 * updated.  Choose the list which is currently okay.
-		 * See "prism2mib_priv_accessdeny()" for details.
+		 * See "prism2mib_priv_accessdeny()" क्रम details.
 		 */
 
-		if (hw->deny.modify == 0) {
+		अगर (hw->deny.modअगरy == 0) अणु
 			cnt = hw->deny.cnt;
 			addr = hw->deny.addr[0];
-		} else {
+		पूर्ण अन्यथा अणु
 			cnt = hw->deny.cnt1;
 			addr = hw->deny.addr1[0];
-		}
+		पूर्ण
 
 		rec.status = cpu_to_le16(P80211ENUM_status_successful);
 
-		for (i = 0; i < cnt; i++, addr += ETH_ALEN)
-			if (ether_addr_equal(rec.address, addr)) {
+		क्रम (i = 0; i < cnt; i++, addr += ETH_ALEN)
+			अगर (ether_addr_equal(rec.address, addr)) अणु
 				rec.status = cpu_to_le16(P80211ENUM_status_unspec_failure);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * If the authentication is okay, then add the MAC address to the
-	 * list of authenticated stations.  Don't add the address if it
-	 * is already in the list. (802.11b does not seem to disallow
+	 * list of authenticated stations.  Don't add the address अगर it
+	 * is alपढ़ोy in the list. (802.11b करोes not seem to disallow
 	 * a station from issuing an authentication request when the
-	 * station is already authenticated. Does this sort of thing
-	 * ever happen?  We might as well do the check just in case.)
+	 * station is alपढ़ोy authenticated. Does this sort of thing
+	 * ever happen?  We might as well करो the check just in हाल.)
 	 */
 
 	added = 0;
 
-	if (rec.status == cpu_to_le16(P80211ENUM_status_successful)) {
-		for (i = 0; i < hw->authlist.cnt; i++)
-			if (ether_addr_equal(rec.address,
+	अगर (rec.status == cpu_to_le16(P80211ENUM_status_successful)) अणु
+		क्रम (i = 0; i < hw->authlist.cnt; i++)
+			अगर (ether_addr_equal(rec.address,
 					     hw->authlist.addr[i]))
-				break;
+				अवरोध;
 
-		if (i >= hw->authlist.cnt) {
-			if (hw->authlist.cnt >= WLAN_AUTH_MAX) {
+		अगर (i >= hw->authlist.cnt) अणु
+			अगर (hw->authlist.cnt >= WLAN_AUTH_MAX) अणु
 				rec.status = cpu_to_le16(P80211ENUM_status_ap_full);
-			} else {
+			पूर्ण अन्यथा अणु
 				ether_addr_copy(hw->authlist.addr[hw->authlist.cnt],
 						rec.address);
 				hw->authlist.cnt++;
 				added = 1;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Send back the results of the authentication.  If this doesn't work,
-	 * then make sure to remove the address from the authenticated list if
+	 * Send back the results of the authentication.  If this करोesn't work,
+	 * then make sure to हटाओ the address from the authenticated list अगर
 	 * it was added.
 	 */
 
 	rec.algorithm = inf->info.authreq.algorithm;
 
 	result = hfa384x_drvr_setconfig(hw, HFA384x_RID_AUTHENTICATESTA,
-					&rec, sizeof(rec));
-	if (result) {
-		if (added)
+					&rec, माप(rec));
+	अगर (result) अणु
+		अगर (added)
 			hw->authlist.cnt--;
 		netdev_err(wlandev->netdev,
 			   "setconfig(authenticatestation) failed, result=%d\n",
 			   result);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * prism2sta_inf_psusercnt
@@ -1700,7 +1701,7 @@ static void prism2sta_inf_authreq_defer(struct wlandevice *wlandev,
  * be present in APs only.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	inf		ptr to info frame (contents in hfa384x order)
  *
  * Returns:
@@ -1709,15 +1710,15 @@ static void prism2sta_inf_authreq_defer(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-static void prism2sta_inf_psusercnt(struct wlandevice *wlandev,
-				    struct hfa384x_inf_frame *inf)
-{
-	struct hfa384x *hw = wlandev->priv;
+अटल व्योम prism2sta_inf_psusercnt(काष्ठा wlandevice *wlandev,
+				    काष्ठा hfa384x_inf_frame *inf)
+अणु
+	काष्ठा hfa384x *hw = wlandev->priv;
 
 	hw->psusercount = le16_to_cpu(inf->info.psusercnt.usercnt);
-}
+पूर्ण
 
 /*
  * prism2sta_ev_info
@@ -1725,7 +1726,7 @@ static void prism2sta_inf_psusercnt(struct wlandevice *wlandev,
  * Handles the Info event.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	inf		ptr to a generic info frame
  *
  * Returns:
@@ -1734,56 +1735,56 @@ static void prism2sta_inf_psusercnt(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-void prism2sta_ev_info(struct wlandevice *wlandev,
-		       struct hfa384x_inf_frame *inf)
-{
+व्योम prism2sta_ev_info(काष्ठा wlandevice *wlandev,
+		       काष्ठा hfa384x_inf_frame *inf)
+अणु
 	le16_to_cpus(&inf->infotype);
 	/* Dispatch */
-	switch (inf->infotype) {
-	case HFA384x_IT_HANDOVERADDR:
-		prism2sta_inf_handover(wlandev, inf);
-		break;
-	case HFA384x_IT_COMMTALLIES:
+	चयन (inf->infotype) अणु
+	हाल HFA384x_IT_HANDOVERADDR:
+		prism2sta_inf_hanकरोver(wlandev, inf);
+		अवरोध;
+	हाल HFA384x_IT_COMMTALLIES:
 		prism2sta_inf_tallies(wlandev, inf);
-		break;
-	case HFA384x_IT_HOSTSCANRESULTS:
+		अवरोध;
+	हाल HFA384x_IT_HOSTSCANRESULTS:
 		prism2sta_inf_hostscanresults(wlandev, inf);
-		break;
-	case HFA384x_IT_SCANRESULTS:
+		अवरोध;
+	हाल HFA384x_IT_SCANRESULTS:
 		prism2sta_inf_scanresults(wlandev, inf);
-		break;
-	case HFA384x_IT_CHINFORESULTS:
-		prism2sta_inf_chinforesults(wlandev, inf);
-		break;
-	case HFA384x_IT_LINKSTATUS:
+		अवरोध;
+	हाल HFA384x_IT_CHINFORESULTS:
+		prism2sta_inf_chinक्रमesults(wlandev, inf);
+		अवरोध;
+	हाल HFA384x_IT_LINKSTATUS:
 		prism2sta_inf_linkstatus(wlandev, inf);
-		break;
-	case HFA384x_IT_ASSOCSTATUS:
+		अवरोध;
+	हाल HFA384x_IT_ASSOCSTATUS:
 		prism2sta_inf_assocstatus(wlandev, inf);
-		break;
-	case HFA384x_IT_AUTHREQ:
+		अवरोध;
+	हाल HFA384x_IT_AUTHREQ:
 		prism2sta_inf_authreq(wlandev, inf);
-		break;
-	case HFA384x_IT_PSUSERCNT:
+		अवरोध;
+	हाल HFA384x_IT_PSUSERCNT:
 		prism2sta_inf_psusercnt(wlandev, inf);
-		break;
-	case HFA384x_IT_KEYIDCHANGED:
+		अवरोध;
+	हाल HFA384x_IT_KEYIDCHANGED:
 		netdev_warn(wlandev->netdev, "Unhandled IT_KEYIDCHANGED\n");
-		break;
-	case HFA384x_IT_ASSOCREQ:
+		अवरोध;
+	हाल HFA384x_IT_ASSOCREQ:
 		netdev_warn(wlandev->netdev, "Unhandled IT_ASSOCREQ\n");
-		break;
-	case HFA384x_IT_MICFAILURE:
+		अवरोध;
+	हाल HFA384x_IT_MICFAILURE:
 		netdev_warn(wlandev->netdev, "Unhandled IT_MICFAILURE\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_warn(wlandev->netdev,
 			    "Unknown info type=0x%02x\n", inf->infotype);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * prism2sta_ev_txexc
@@ -1793,7 +1794,7 @@ void prism2sta_ev_info(struct wlandevice *wlandev,
  * not get transmitted.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	status		tx frame status word
  *
  * Returns:
@@ -1802,12 +1803,12 @@ void prism2sta_ev_info(struct wlandevice *wlandev,
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-void prism2sta_ev_txexc(struct wlandevice *wlandev, u16 status)
-{
+व्योम prism2sta_ev_txexc(काष्ठा wlandevice *wlandev, u16 status)
+अणु
 	pr_debug("TxExc status=0x%x.\n", status);
-}
+पूर्ण
 
 /*
  * prism2sta_ev_tx
@@ -1815,7 +1816,7 @@ void prism2sta_ev_txexc(struct wlandevice *wlandev, u16 status)
  * Handles the Tx event.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *	status		tx frame status word
  * Returns:
  *	nothing
@@ -1823,14 +1824,14 @@ void prism2sta_ev_txexc(struct wlandevice *wlandev, u16 status)
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-void prism2sta_ev_tx(struct wlandevice *wlandev, u16 status)
-{
+व्योम prism2sta_ev_tx(काष्ठा wlandevice *wlandev, u16 status)
+अणु
 	pr_debug("Tx Complete, status=0x%04x\n", status);
 	/* update linux network stats */
 	wlandev->netdev->stats.tx_packets++;
-}
+पूर्ण
 
 /*
  * prism2sta_ev_alloc
@@ -1838,7 +1839,7 @@ void prism2sta_ev_tx(struct wlandevice *wlandev, u16 status)
  * Handles the Alloc event.
  *
  * Arguments:
- *	wlandev		wlan device structure
+ *	wlandev		wlan device काष्ठाure
  *
  * Returns:
  *	nothing
@@ -1846,158 +1847,158 @@ void prism2sta_ev_tx(struct wlandevice *wlandev, u16 status)
  * Side effects:
  *
  * Call context:
- *	interrupt
+ *	पूर्णांकerrupt
  */
-void prism2sta_ev_alloc(struct wlandevice *wlandev)
-{
-	netif_wake_queue(wlandev->netdev);
-}
+व्योम prism2sta_ev_alloc(काष्ठा wlandevice *wlandev)
+अणु
+	netअगर_wake_queue(wlandev->netdev);
+पूर्ण
 
 /*
  * create_wlan
  *
- * Called at module init time.  This creates the struct wlandevice structure
+ * Called at module init समय.  This creates the काष्ठा wlandevice काष्ठाure
  * and initializes it with relevant bits.
  *
  * Arguments:
  *	none
  *
  * Returns:
- *	the created struct wlandevice structure.
+ *	the created काष्ठा wlandevice काष्ठाure.
  *
  * Side effects:
- *	also allocates the priv/hw structures.
+ *	also allocates the priv/hw काष्ठाures.
  *
  * Call context:
- *	process thread
+ *	process thपढ़ो
  *
  */
-static struct wlandevice *create_wlan(void)
-{
-	struct wlandevice *wlandev = NULL;
-	struct hfa384x *hw = NULL;
+अटल काष्ठा wlandevice *create_wlan(व्योम)
+अणु
+	काष्ठा wlandevice *wlandev = शून्य;
+	काष्ठा hfa384x *hw = शून्य;
 
-	/* Alloc our structures */
-	wlandev = kzalloc(sizeof(*wlandev), GFP_KERNEL);
-	hw = kzalloc(sizeof(*hw), GFP_KERNEL);
+	/* Alloc our काष्ठाures */
+	wlandev = kzalloc(माप(*wlandev), GFP_KERNEL);
+	hw = kzalloc(माप(*hw), GFP_KERNEL);
 
-	if (!wlandev || !hw) {
-		kfree(wlandev);
-		kfree(hw);
-		return NULL;
-	}
+	अगर (!wlandev || !hw) अणु
+		kमुक्त(wlandev);
+		kमुक्त(hw);
+		वापस शून्य;
+	पूर्ण
 
 	/* Initialize the network device object. */
 	wlandev->nsdname = dev_info;
 	wlandev->msdstate = WLAN_MSD_HWPRESENT_PENDING;
 	wlandev->priv = hw;
-	wlandev->open = prism2sta_open;
-	wlandev->close = prism2sta_close;
+	wlandev->खोलो = prism2sta_खोलो;
+	wlandev->बंद = prism2sta_बंद;
 	wlandev->reset = prism2sta_reset;
 	wlandev->txframe = prism2sta_txframe;
 	wlandev->mlmerequest = prism2sta_mlmerequest;
-	wlandev->set_multicast_list = prism2sta_setmulticast;
-	wlandev->tx_timeout = hfa384x_tx_timeout;
+	wlandev->set_multicast_list = prism2sta_seपंचांगulticast;
+	wlandev->tx_समयout = hfa384x_tx_समयout;
 
 	wlandev->nsdcaps = P80211_NSDCAP_HWFRAGMENT | P80211_NSDCAP_AUTOJOIN;
 
-	/* Initialize the device private data structure. */
-	hw->dot11_desired_bss_type = 1;
+	/* Initialize the device निजी data काष्ठाure. */
+	hw->करोt11_desired_bss_type = 1;
 
-	return wlandev;
-}
+	वापस wlandev;
+पूर्ण
 
-void prism2sta_commsqual_defer(struct work_struct *data)
-{
-	struct hfa384x *hw = container_of(data, struct hfa384x, commsqual_bh);
-	struct wlandevice *wlandev = hw->wlandev;
-	struct hfa384x_bytestr32 ssid;
-	struct p80211msg_dot11req_mibget msg;
-	struct p80211item_uint32 *mibitem = (struct p80211item_uint32 *)
+व्योम prism2sta_commsqual_defer(काष्ठा work_काष्ठा *data)
+अणु
+	काष्ठा hfa384x *hw = container_of(data, काष्ठा hfa384x, commsqual_bh);
+	काष्ठा wlandevice *wlandev = hw->wlandev;
+	काष्ठा hfa384x_bytestr32 ssid;
+	काष्ठा p80211msg_करोt11req_mibget msg;
+	काष्ठा p80211item_uपूर्णांक32 *mibitem = (काष्ठा p80211item_uपूर्णांक32 *)
 						&msg.mibattribute.data;
-	int result = 0;
+	पूर्णांक result = 0;
 
-	if (hw->wlandev->hwremoved)
-		return;
+	अगर (hw->wlandev->hwहटाओd)
+		वापस;
 
-	/* we don't care if we're in AP mode */
-	if ((wlandev->macmode == WLAN_MACMODE_NONE) ||
-	    (wlandev->macmode == WLAN_MACMODE_ESS_AP)) {
-		return;
-	}
+	/* we करोn't care if we're in AP mode */
+	अगर ((wlandev->macmode == WLAN_MACMODE_NONE) ||
+	    (wlandev->macmode == WLAN_MACMODE_ESS_AP)) अणु
+		वापस;
+	पूर्ण
 
 	/* It only makes sense to poll these in non-IBSS */
-	if (wlandev->macmode != WLAN_MACMODE_IBSS_STA) {
-		result = hfa384x_drvr_getconfig(hw, HFA384x_RID_DBMCOMMSQUALITY,
+	अगर (wlandev->macmode != WLAN_MACMODE_IBSS_STA) अणु
+		result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_DBMCOMMSQUALITY,
 						&hw->qual, HFA384x_RID_DBMCOMMSQUALITY_LEN);
 
-		if (result) {
+		अगर (result) अणु
 			netdev_err(wlandev->netdev, "error fetching commsqual\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		pr_debug("commsqual %d %d %d\n",
 			 le16_to_cpu(hw->qual.cq_curr_bss),
 			 le16_to_cpu(hw->qual.asl_curr_bss),
 			 le16_to_cpu(hw->qual.anl_curr_fc));
-	}
+	पूर्ण
 
-	/* Get the signal rate */
+	/* Get the संकेत rate */
 	msg.msgcode = DIDMSG_DOT11REQ_MIBGET;
 	mibitem->did = DIDMIB_P2_MAC_CURRENTTXRATE;
-	result = p80211req_dorequest(wlandev, (u8 *)&msg);
+	result = p80211req_करोrequest(wlandev, (u8 *)&msg);
 
-	if (result) {
+	अगर (result) अणु
 		pr_debug("get signal rate failed, result = %d\n",
 			 result);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (mibitem->data) {
-	case HFA384x_RATEBIT_1:
+	चयन (mibitem->data) अणु
+	हाल HFA384x_RATEBIT_1:
 		hw->txrate = 10;
-		break;
-	case HFA384x_RATEBIT_2:
+		अवरोध;
+	हाल HFA384x_RATEBIT_2:
 		hw->txrate = 20;
-		break;
-	case HFA384x_RATEBIT_5dot5:
+		अवरोध;
+	हाल HFA384x_RATEBIT_5करोt5:
 		hw->txrate = 55;
-		break;
-	case HFA384x_RATEBIT_11:
+		अवरोध;
+	हाल HFA384x_RATEBIT_11:
 		hw->txrate = 110;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_debug("Bad ratebit (%d)\n", mibitem->data);
-	}
+	पूर्ण
 
 	/* Lastly, we need to make sure the BSSID didn't change on us */
-	result = hfa384x_drvr_getconfig(hw,
+	result = hfa384x_drvr_अ_लोonfig(hw,
 					HFA384x_RID_CURRENTBSSID,
 					wlandev->bssid, WLAN_BSSID_LEN);
-	if (result) {
+	अगर (result) अणु
 		pr_debug("getconfig(0x%02x) failed, result = %d\n",
 			 HFA384x_RID_CURRENTBSSID, result);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	result = hfa384x_drvr_getconfig(hw,
+	result = hfa384x_drvr_अ_लोonfig(hw,
 					HFA384x_RID_CURRENTSSID,
-					&ssid, sizeof(ssid));
-	if (result) {
+					&ssid, माप(ssid));
+	अगर (result) अणु
 		pr_debug("getconfig(0x%02x) failed, result = %d\n",
 			 HFA384x_RID_CURRENTSSID, result);
-		return;
-	}
-	prism2mgmt_bytestr2pstr((struct hfa384x_bytestr *)&ssid,
-				(struct p80211pstrd *)&wlandev->ssid);
+		वापस;
+	पूर्ण
+	prism2mgmt_bytestr2pstr((काष्ठा hfa384x_bytestr *)&ssid,
+				(काष्ठा p80211pstrd *)&wlandev->ssid);
 
-	/* Reschedule timer */
-	mod_timer(&hw->commsqual_timer, jiffies + HZ);
-}
+	/* Reschedule समयr */
+	mod_समयr(&hw->commsqual_समयr, jअगरfies + HZ);
+पूर्ण
 
-void prism2sta_commsqual_timer(struct timer_list *t)
-{
-	struct hfa384x *hw = from_timer(hw, t, commsqual_timer);
+व्योम prism2sta_commsqual_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा hfa384x *hw = from_समयr(hw, t, commsqual_समयr);
 
 	schedule_work(&hw->commsqual_bh);
-}
+पूर्ण

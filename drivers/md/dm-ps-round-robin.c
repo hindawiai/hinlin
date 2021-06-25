@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2003 Sistina Software.
  * Copyright (C) 2004-2005 Red Hat, Inc. All rights reserved.
@@ -9,138 +10,138 @@
  * Round-robin path selector.
  */
 
-#include <linux/device-mapper.h>
+#समावेश <linux/device-mapper.h>
 
-#include "dm-path-selector.h"
+#समावेश "dm-path-selector.h"
 
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#define DM_MSG_PREFIX "multipath round-robin"
-#define RR_MIN_IO     1
-#define RR_VERSION    "1.2.0"
+#घोषणा DM_MSG_PREFIX "multipath round-robin"
+#घोषणा RR_MIN_IO     1
+#घोषणा RR_VERSION    "1.2.0"
 
 /*-----------------------------------------------------------------
  * Path-handling code, paths are held in lists
  *---------------------------------------------------------------*/
-struct path_info {
-	struct list_head list;
-	struct dm_path *path;
-	unsigned repeat_count;
-};
+काष्ठा path_info अणु
+	काष्ठा list_head list;
+	काष्ठा dm_path *path;
+	अचिन्हित repeat_count;
+पूर्ण;
 
-static void free_paths(struct list_head *paths)
-{
-	struct path_info *pi, *next;
+अटल व्योम मुक्त_paths(काष्ठा list_head *paths)
+अणु
+	काष्ठा path_info *pi, *next;
 
-	list_for_each_entry_safe(pi, next, paths, list) {
+	list_क्रम_each_entry_safe(pi, next, paths, list) अणु
 		list_del(&pi->list);
-		kfree(pi);
-	}
-}
+		kमुक्त(pi);
+	पूर्ण
+पूर्ण
 
 /*-----------------------------------------------------------------
  * Round-robin selector
  *---------------------------------------------------------------*/
 
-struct selector {
-	struct list_head valid_paths;
-	struct list_head invalid_paths;
+काष्ठा selector अणु
+	काष्ठा list_head valid_paths;
+	काष्ठा list_head invalid_paths;
 	spinlock_t lock;
-};
+पूर्ण;
 
-static struct selector *alloc_selector(void)
-{
-	struct selector *s = kmalloc(sizeof(*s), GFP_KERNEL);
+अटल काष्ठा selector *alloc_selector(व्योम)
+अणु
+	काष्ठा selector *s = kदो_स्मृति(माप(*s), GFP_KERNEL);
 
-	if (s) {
+	अगर (s) अणु
 		INIT_LIST_HEAD(&s->valid_paths);
 		INIT_LIST_HEAD(&s->invalid_paths);
 		spin_lock_init(&s->lock);
-	}
+	पूर्ण
 
-	return s;
-}
+	वापस s;
+पूर्ण
 
-static int rr_create(struct path_selector *ps, unsigned argc, char **argv)
-{
-	struct selector *s;
+अटल पूर्णांक rr_create(काष्ठा path_selector *ps, अचिन्हित argc, अक्षर **argv)
+अणु
+	काष्ठा selector *s;
 
 	s = alloc_selector();
-	if (!s)
-		return -ENOMEM;
+	अगर (!s)
+		वापस -ENOMEM;
 
 	ps->context = s;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rr_destroy(struct path_selector *ps)
-{
-	struct selector *s = ps->context;
+अटल व्योम rr_destroy(काष्ठा path_selector *ps)
+अणु
+	काष्ठा selector *s = ps->context;
 
-	free_paths(&s->valid_paths);
-	free_paths(&s->invalid_paths);
-	kfree(s);
-	ps->context = NULL;
-}
+	मुक्त_paths(&s->valid_paths);
+	मुक्त_paths(&s->invalid_paths);
+	kमुक्त(s);
+	ps->context = शून्य;
+पूर्ण
 
-static int rr_status(struct path_selector *ps, struct dm_path *path,
-		     status_type_t type, char *result, unsigned int maxlen)
-{
-	struct path_info *pi;
-	int sz = 0;
+अटल पूर्णांक rr_status(काष्ठा path_selector *ps, काष्ठा dm_path *path,
+		     status_type_t type, अक्षर *result, अचिन्हित पूर्णांक maxlen)
+अणु
+	काष्ठा path_info *pi;
+	पूर्णांक sz = 0;
 
-	if (!path)
+	अगर (!path)
 		DMEMIT("0 ");
-	else {
-		switch(type) {
-		case STATUSTYPE_INFO:
-			break;
-		case STATUSTYPE_TABLE:
+	अन्यथा अणु
+		चयन(type) अणु
+		हाल STATUSTYPE_INFO:
+			अवरोध;
+		हाल STATUSTYPE_TABLE:
 			pi = path->pscontext;
 			DMEMIT("%u ", pi->repeat_count);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return sz;
-}
+	वापस sz;
+पूर्ण
 
 /*
- * Called during initialisation to register each path with an
+ * Called during initialisation to रेजिस्टर each path with an
  * optional repeat_count.
  */
-static int rr_add_path(struct path_selector *ps, struct dm_path *path,
-		       int argc, char **argv, char **error)
-{
-	struct selector *s = ps->context;
-	struct path_info *pi;
-	unsigned repeat_count = RR_MIN_IO;
-	char dummy;
-	unsigned long flags;
+अटल पूर्णांक rr_add_path(काष्ठा path_selector *ps, काष्ठा dm_path *path,
+		       पूर्णांक argc, अक्षर **argv, अक्षर **error)
+अणु
+	काष्ठा selector *s = ps->context;
+	काष्ठा path_info *pi;
+	अचिन्हित repeat_count = RR_MIN_IO;
+	अक्षर dummy;
+	अचिन्हित दीर्घ flags;
 
-	if (argc > 1) {
+	अगर (argc > 1) अणु
 		*error = "round-robin ps: incorrect number of arguments";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* First path argument is number of I/Os before switching path */
-	if ((argc == 1) && (sscanf(argv[0], "%u%c", &repeat_count, &dummy) != 1)) {
+	/* First path argument is number of I/Os beक्रमe चयनing path */
+	अगर ((argc == 1) && (माला_पूछो(argv[0], "%u%c", &repeat_count, &dummy) != 1)) अणु
 		*error = "round-robin ps: invalid repeat count";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (repeat_count > 1) {
+	अगर (repeat_count > 1) अणु
 		DMWARN_LIMIT("repeat_count > 1 is deprecated, using 1 instead");
 		repeat_count = 1;
-	}
+	पूर्ण
 
 	/* allocate the path */
-	pi = kmalloc(sizeof(*pi), GFP_KERNEL);
-	if (!pi) {
+	pi = kदो_स्मृति(माप(*pi), GFP_KERNEL);
+	अगर (!pi) अणु
 		*error = "round-robin ps: Error allocating path context";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pi->path = path;
 	pi->repeat_count = repeat_count;
@@ -151,50 +152,50 @@ static int rr_add_path(struct path_selector *ps, struct dm_path *path,
 	list_add_tail(&pi->list, &s->valid_paths);
 	spin_unlock_irqrestore(&s->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rr_fail_path(struct path_selector *ps, struct dm_path *p)
-{
-	unsigned long flags;
-	struct selector *s = ps->context;
-	struct path_info *pi = p->pscontext;
+अटल व्योम rr_fail_path(काष्ठा path_selector *ps, काष्ठा dm_path *p)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा selector *s = ps->context;
+	काष्ठा path_info *pi = p->pscontext;
 
 	spin_lock_irqsave(&s->lock, flags);
 	list_move(&pi->list, &s->invalid_paths);
 	spin_unlock_irqrestore(&s->lock, flags);
-}
+पूर्ण
 
-static int rr_reinstate_path(struct path_selector *ps, struct dm_path *p)
-{
-	unsigned long flags;
-	struct selector *s = ps->context;
-	struct path_info *pi = p->pscontext;
+अटल पूर्णांक rr_reinstate_path(काष्ठा path_selector *ps, काष्ठा dm_path *p)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा selector *s = ps->context;
+	काष्ठा path_info *pi = p->pscontext;
 
 	spin_lock_irqsave(&s->lock, flags);
 	list_move(&pi->list, &s->valid_paths);
 	spin_unlock_irqrestore(&s->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dm_path *rr_select_path(struct path_selector *ps, size_t nr_bytes)
-{
-	unsigned long flags;
-	struct selector *s = ps->context;
-	struct path_info *pi = NULL;
+अटल काष्ठा dm_path *rr_select_path(काष्ठा path_selector *ps, माप_प्रकार nr_bytes)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा selector *s = ps->context;
+	काष्ठा path_info *pi = शून्य;
 
 	spin_lock_irqsave(&s->lock, flags);
-	if (!list_empty(&s->valid_paths)) {
-		pi = list_entry(s->valid_paths.next, struct path_info, list);
+	अगर (!list_empty(&s->valid_paths)) अणु
+		pi = list_entry(s->valid_paths.next, काष्ठा path_info, list);
 		list_move_tail(&pi->list, &s->valid_paths);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&s->lock, flags);
 
-	return pi ? pi->path : NULL;
-}
+	वापस pi ? pi->path : शून्य;
+पूर्ण
 
-static struct path_selector_type rr_ps = {
+अटल काष्ठा path_selector_type rr_ps = अणु
 	.name = "round-robin",
 	.module = THIS_MODULE,
 	.table_args = 1,
@@ -206,30 +207,30 @@ static struct path_selector_type rr_ps = {
 	.fail_path = rr_fail_path,
 	.reinstate_path = rr_reinstate_path,
 	.select_path = rr_select_path,
-};
+पूर्ण;
 
-static int __init dm_rr_init(void)
-{
-	int r = dm_register_path_selector(&rr_ps);
+अटल पूर्णांक __init dm_rr_init(व्योम)
+अणु
+	पूर्णांक r = dm_रेजिस्टर_path_selector(&rr_ps);
 
-	if (r < 0)
+	अगर (r < 0)
 		DMERR("register failed %d", r);
 
 	DMINFO("version " RR_VERSION " loaded");
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void __exit dm_rr_exit(void)
-{
-	int r = dm_unregister_path_selector(&rr_ps);
+अटल व्योम __निकास dm_rr_निकास(व्योम)
+अणु
+	पूर्णांक r = dm_unरेजिस्टर_path_selector(&rr_ps);
 
-	if (r < 0)
+	अगर (r < 0)
 		DMERR("unregister failed %d", r);
-}
+पूर्ण
 
 module_init(dm_rr_init);
-module_exit(dm_rr_exit);
+module_निकास(dm_rr_निकास);
 
 MODULE_DESCRIPTION(DM_NAME " round-robin multipath path selector");
 MODULE_AUTHOR("Sistina Software <dm-devel@redhat.com>");

@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2012-2019 ARM Limited (or its affiliates). */
 
-/* \file cc_request_mgr.h
+/* \पile cc_request_mgr.h
  * Request Manager
  */
 
-#ifndef __REQUEST_MGR_H__
-#define __REQUEST_MGR_H__
+#अगर_अघोषित __REQUEST_MGR_H__
+#घोषणा __REQUEST_MGR_H__
 
-#include "cc_hw_queue_defs.h"
+#समावेश "cc_hw_queue_defs.h"
 
-int cc_req_mgr_init(struct cc_drvdata *drvdata);
+पूर्णांक cc_req_mgr_init(काष्ठा cc_drvdata *drvdata);
 
 /**
  * cc_send_request() - Enqueue caller request to crypto hardware.
@@ -24,19 +25,19 @@ int cc_req_mgr_init(struct cc_drvdata *drvdata);
  * Return:
  * Returns -EINPROGRESS or error
  */
-int cc_send_request(struct cc_drvdata *drvdata, struct cc_crypto_req *cc_req,
-		    struct cc_hw_desc *desc, unsigned int len,
-		    struct crypto_async_request *req);
+पूर्णांक cc_send_request(काष्ठा cc_drvdata *drvdata, काष्ठा cc_crypto_req *cc_req,
+		    काष्ठा cc_hw_desc *desc, अचिन्हित पूर्णांक len,
+		    काष्ठा crypto_async_request *req);
 
-int cc_send_sync_request(struct cc_drvdata *drvdata,
-			 struct cc_crypto_req *cc_req, struct cc_hw_desc *desc,
-			 unsigned int len);
+पूर्णांक cc_send_sync_request(काष्ठा cc_drvdata *drvdata,
+			 काष्ठा cc_crypto_req *cc_req, काष्ठा cc_hw_desc *desc,
+			 अचिन्हित पूर्णांक len);
 
-int send_request_init(struct cc_drvdata *drvdata, struct cc_hw_desc *desc,
-		      unsigned int len);
+पूर्णांक send_request_init(काष्ठा cc_drvdata *drvdata, काष्ठा cc_hw_desc *desc,
+		      अचिन्हित पूर्णांक len);
 
-void complete_request(struct cc_drvdata *drvdata);
+व्योम complete_request(काष्ठा cc_drvdata *drvdata);
 
-void cc_req_mgr_fini(struct cc_drvdata *drvdata);
+व्योम cc_req_mgr_fini(काष्ठा cc_drvdata *drvdata);
 
-#endif /*__REQUEST_MGR_H__*/
+#पूर्ण_अगर /*__REQUEST_MGR_H__*/

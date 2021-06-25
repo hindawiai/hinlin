@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __HID_LG4FF_H
-#define __HID_LG4FF_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __HID_LG4FF_H
+#घोषणा __HID_LG4FF_H
 
-#ifdef CONFIG_LOGIWHEELS_FF
-extern int lg4ff_no_autoswitch; /* From hid-lg.c */
+#अगर_घोषित CONFIG_LOGIWHEELS_FF
+बाह्य पूर्णांक lg4ff_no_स्वतःचयन; /* From hid-lg.c */
 
-int lg4ff_adjust_input_event(struct hid_device *hid, struct hid_field *field,
-			     struct hid_usage *usage, s32 value, struct lg_drv_data *drv_data);
-int lg4ff_raw_event(struct hid_device *hdev, struct hid_report *report,
-		u8 *rd, int size, struct lg_drv_data *drv_data);
-int lg4ff_init(struct hid_device *hdev);
-int lg4ff_deinit(struct hid_device *hdev);
-#else
-static inline int lg4ff_adjust_input_event(struct hid_device *hid, struct hid_field *field,
-					   struct hid_usage *usage, s32 value, struct lg_drv_data *drv_data) { return 0; }
-static inline int lg4ff_raw_event(struct hid_device *hdev, struct hid_report *report,
-		u8 *rd, int size, struct lg_drv_data *drv_data) { return 0; }
-static inline int lg4ff_init(struct hid_device *hdev) { return -1; }
-static inline int lg4ff_deinit(struct hid_device *hdev) { return -1; }
-#endif
+पूर्णांक lg4ff_adjust_input_event(काष्ठा hid_device *hid, काष्ठा hid_field *field,
+			     काष्ठा hid_usage *usage, s32 value, काष्ठा lg_drv_data *drv_data);
+पूर्णांक lg4ff_raw_event(काष्ठा hid_device *hdev, काष्ठा hid_report *report,
+		u8 *rd, पूर्णांक size, काष्ठा lg_drv_data *drv_data);
+पूर्णांक lg4ff_init(काष्ठा hid_device *hdev);
+पूर्णांक lg4ff_deinit(काष्ठा hid_device *hdev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक lg4ff_adjust_input_event(काष्ठा hid_device *hid, काष्ठा hid_field *field,
+					   काष्ठा hid_usage *usage, s32 value, काष्ठा lg_drv_data *drv_data) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक lg4ff_raw_event(काष्ठा hid_device *hdev, काष्ठा hid_report *report,
+		u8 *rd, पूर्णांक size, काष्ठा lg_drv_data *drv_data) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक lg4ff_init(काष्ठा hid_device *hdev) अणु वापस -1; पूर्ण
+अटल अंतरभूत पूर्णांक lg4ff_deinit(काष्ठा hid_device *hdev) अणु वापस -1; पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

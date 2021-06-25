@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * linux/sound/rt5665.h -- Platform data for RT5665
+ * linux/sound/rt5665.h -- Platक्रमm data क्रम RT5665
  *
  * Copyright 2016 Realtek Microelectronics
  */
 
-#ifndef __LINUX_SND_RT5665_H
-#define __LINUX_SND_RT5665_H
+#अगर_अघोषित __LINUX_SND_RT5665_H
+#घोषणा __LINUX_SND_RT5665_H
 
-enum rt5665_dmic1_data_pin {
-	RT5665_DMIC1_NULL,
+क्रमागत rt5665_dmic1_data_pin अणु
+	RT5665_DMIC1_शून्य,
 	RT5665_DMIC1_DATA_GPIO4,
 	RT5665_DMIC1_DATA_IN2N,
-};
+पूर्ण;
 
-enum rt5665_dmic2_data_pin {
-	RT5665_DMIC2_NULL,
+क्रमागत rt5665_dmic2_data_pin अणु
+	RT5665_DMIC2_शून्य,
 	RT5665_DMIC2_DATA_GPIO5,
 	RT5665_DMIC2_DATA_IN2P,
-};
+पूर्ण;
 
-enum rt5665_jd_src {
-	RT5665_JD_NULL,
+क्रमागत rt5665_jd_src अणु
+	RT5665_JD_शून्य,
 	RT5665_JD1,
-};
+पूर्ण;
 
-struct rt5665_platform_data {
-	bool in1_diff;
-	bool in2_diff;
-	bool in3_diff;
-	bool in4_diff;
+काष्ठा rt5665_platक्रमm_data अणु
+	bool in1_dअगरf;
+	bool in2_dअगरf;
+	bool in3_dअगरf;
+	bool in4_dअगरf;
 
-	int ldo1_en; /* GPIO for LDO1_EN */
+	पूर्णांक lकरो1_en; /* GPIO क्रम LDO1_EN */
 
-	enum rt5665_dmic1_data_pin dmic1_data_pin;
-	enum rt5665_dmic2_data_pin dmic2_data_pin;
-	enum rt5665_jd_src jd_src;
+	क्रमागत rt5665_dmic1_data_pin dmic1_data_pin;
+	क्रमागत rt5665_dmic2_data_pin dmic2_data_pin;
+	क्रमागत rt5665_jd_src jd_src;
 
-	unsigned int sar_hs_type;
-};
+	अचिन्हित पूर्णांक sar_hs_type;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 

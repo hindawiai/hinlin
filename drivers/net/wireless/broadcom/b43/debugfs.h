@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef B43_DEBUGFS_H_
-#define B43_DEBUGFS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित B43_DEBUGFS_H_
+#घोषणा B43_DEBUGFS_H_
 
-struct b43_wldev;
-struct b43_txstatus;
+काष्ठा b43_wldev;
+काष्ठा b43_txstatus;
 
-enum b43_dyndbg {		/* Dynamic debugging features */
+क्रमागत b43_dyndbg अणु		/* Dynamic debugging features */
 	B43_DBG_XMITPOWER,
 	B43_DBG_DMAOVERFLOW,
 	B43_DBG_DMAVERBOSE,
@@ -16,97 +17,97 @@ enum b43_dyndbg {		/* Dynamic debugging features */
 	B43_DBG_KEYS,
 	B43_DBG_VERBOSESTATS,
 	__B43_NR_DYNDBG,
-};
+पूर्ण;
 
-#ifdef CONFIG_B43_DEBUG
+#अगर_घोषित CONFIG_B43_DEBUG
 
-struct dentry;
+काष्ठा dentry;
 
-#define B43_NR_LOGGED_TXSTATUS	100
+#घोषणा B43_NR_LOGGED_TXSTATUS	100
 
-struct b43_txstatus_log {
-	/* This structure is protected by wl->mutex */
+काष्ठा b43_txstatus_log अणु
+	/* This काष्ठाure is रक्षित by wl->mutex */
 
-	struct b43_txstatus *log;
-	int end;
-};
+	काष्ठा b43_txstatus *log;
+	पूर्णांक end;
+पूर्ण;
 
-struct b43_dfs_file {
-	struct dentry *dentry;
-	char *buffer;
-	size_t data_len;
-};
+काष्ठा b43_dfs_file अणु
+	काष्ठा dentry *dentry;
+	अक्षर *buffer;
+	माप_प्रकार data_len;
+पूर्ण;
 
-struct b43_dfsentry {
-	struct b43_wldev *dev;
-	struct dentry *subdir;
+काष्ठा b43_dfsentry अणु
+	काष्ठा b43_wldev *dev;
+	काष्ठा dentry *subdir;
 
-	struct b43_dfs_file file_shm16read;
-	struct b43_dfs_file file_shm16write;
-	struct b43_dfs_file file_shm32read;
-	struct b43_dfs_file file_shm32write;
-	struct b43_dfs_file file_mmio16read;
-	struct b43_dfs_file file_mmio16write;
-	struct b43_dfs_file file_mmio32read;
-	struct b43_dfs_file file_mmio32write;
-	struct b43_dfs_file file_txstat;
-	struct b43_dfs_file file_txpower_g;
-	struct b43_dfs_file file_restart;
-	struct b43_dfs_file file_loctls;
+	काष्ठा b43_dfs_file file_shm16पढ़ो;
+	काष्ठा b43_dfs_file file_shm16ग_लिखो;
+	काष्ठा b43_dfs_file file_shm32पढ़ो;
+	काष्ठा b43_dfs_file file_shm32ग_लिखो;
+	काष्ठा b43_dfs_file file_mmio16पढ़ो;
+	काष्ठा b43_dfs_file file_mmio16ग_लिखो;
+	काष्ठा b43_dfs_file file_mmio32पढ़ो;
+	काष्ठा b43_dfs_file file_mmio32ग_लिखो;
+	काष्ठा b43_dfs_file file_txstat;
+	काष्ठा b43_dfs_file file_txघातer_g;
+	काष्ठा b43_dfs_file file_restart;
+	काष्ठा b43_dfs_file file_loctls;
 
-	struct b43_txstatus_log txstatlog;
+	काष्ठा b43_txstatus_log txstatlog;
 
-	/* The cached address for the next mmio16read file read */
-	u16 mmio16read_next;
-	/* The cached address for the next mmio32read file read */
-	u16 mmio32read_next;
+	/* The cached address क्रम the next mmio16पढ़ो file पढ़ो */
+	u16 mmio16पढ़ो_next;
+	/* The cached address क्रम the next mmio32पढ़ो file पढ़ो */
+	u16 mmio32पढ़ो_next;
 
-	/* The cached address for the next shm16read file read */
-	u32 shm16read_routing_next;
-	u32 shm16read_addr_next;
-	/* The cached address for the next shm32read file read */
-	u32 shm32read_routing_next;
-	u32 shm32read_addr_next;
+	/* The cached address क्रम the next shm16पढ़ो file पढ़ो */
+	u32 shm16पढ़ो_routing_next;
+	u32 shm16पढ़ो_addr_next;
+	/* The cached address क्रम the next shm32पढ़ो file पढ़ो */
+	u32 shm32पढ़ो_routing_next;
+	u32 shm32पढ़ो_addr_next;
 
-	/* Enabled/Disabled list for the dynamic debugging features. */
+	/* Enabled/Disabled list क्रम the dynamic debugging features. */
 	bool dyn_debug[__B43_NR_DYNDBG];
-	/* Dentries for the dynamic debugging entries. */
-	struct dentry *dyn_debug_dentries[__B43_NR_DYNDBG];
-};
+	/* Dentries क्रम the dynamic debugging entries. */
+	काष्ठा dentry *dyn_debug_dentries[__B43_NR_DYNDBG];
+पूर्ण;
 
-bool b43_debug(struct b43_wldev *dev, enum b43_dyndbg feature);
+bool b43_debug(काष्ठा b43_wldev *dev, क्रमागत b43_dyndbg feature);
 
-void b43_debugfs_init(void);
-void b43_debugfs_exit(void);
-void b43_debugfs_add_device(struct b43_wldev *dev);
-void b43_debugfs_remove_device(struct b43_wldev *dev);
-void b43_debugfs_log_txstat(struct b43_wldev *dev,
-			    const struct b43_txstatus *status);
+व्योम b43_debugfs_init(व्योम);
+व्योम b43_debugfs_निकास(व्योम);
+व्योम b43_debugfs_add_device(काष्ठा b43_wldev *dev);
+व्योम b43_debugfs_हटाओ_device(काष्ठा b43_wldev *dev);
+व्योम b43_debugfs_log_txstat(काष्ठा b43_wldev *dev,
+			    स्थिर काष्ठा b43_txstatus *status);
 
-#else /* CONFIG_B43_DEBUG */
+#अन्यथा /* CONFIG_B43_DEBUG */
 
-static inline bool b43_debug(struct b43_wldev *dev, enum b43_dyndbg feature)
-{
-	return false;
-}
+अटल अंतरभूत bool b43_debug(काष्ठा b43_wldev *dev, क्रमागत b43_dyndbg feature)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void b43_debugfs_init(void)
-{
-}
-static inline void b43_debugfs_exit(void)
-{
-}
-static inline void b43_debugfs_add_device(struct b43_wldev *dev)
-{
-}
-static inline void b43_debugfs_remove_device(struct b43_wldev *dev)
-{
-}
-static inline void b43_debugfs_log_txstat(struct b43_wldev *dev,
-					  const struct b43_txstatus *status)
-{
-}
+अटल अंतरभूत व्योम b43_debugfs_init(व्योम)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम b43_debugfs_निकास(व्योम)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम b43_debugfs_add_device(काष्ठा b43_wldev *dev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम b43_debugfs_हटाओ_device(काष्ठा b43_wldev *dev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम b43_debugfs_log_txstat(काष्ठा b43_wldev *dev,
+					  स्थिर काष्ठा b43_txstatus *status)
+अणु
+पूर्ण
 
-#endif /* CONFIG_B43_DEBUG */
+#पूर्ण_अगर /* CONFIG_B43_DEBUG */
 
-#endif /* B43_DEBUGFS_H_ */
+#पूर्ण_अगर /* B43_DEBUGFS_H_ */

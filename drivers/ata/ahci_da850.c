@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * DaVinci DA850 AHCI SATA platform driver
+ * DaVinci DA850 AHCI SATA platक्रमm driver
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pm.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/libata.h>
-#include <linux/ahci_platform.h>
-#include "ahci.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/libata.h>
+#समावेश <linux/ahci_platक्रमm.h>
+#समावेश "ahci.h"
 
-#define DRV_NAME		"ahci_da850"
-#define HARDRESET_RETRIES	5
+#घोषणा DRV_NAME		"ahci_da850"
+#घोषणा HARDRESET_RETRIES	5
 
 /* SATA PHY Control Register offset from AHCI base */
-#define SATA_P0PHYCR_REG	0x178
+#घोषणा SATA_P0PHYCR_REG	0x178
 
-#define SATA_PHY_MPY(x)		((x) << 0)
-#define SATA_PHY_LOS(x)		((x) << 6)
-#define SATA_PHY_RXCDR(x)	((x) << 10)
-#define SATA_PHY_RXEQ(x)	((x) << 13)
-#define SATA_PHY_TXSWING(x)	((x) << 19)
-#define SATA_PHY_ENPLL(x)	((x) << 31)
+#घोषणा SATA_PHY_MPY(x)		((x) << 0)
+#घोषणा SATA_PHY_LOS(x)		((x) << 6)
+#घोषणा SATA_PHY_RXCDR(x)	((x) << 10)
+#घोषणा SATA_PHY_RXEQ(x)	((x) << 13)
+#घोषणा SATA_PHY_TXSWING(x)	((x) << 19)
+#घोषणा SATA_PHY_ENPLL(x)	((x) << 31)
 
-static void da850_sata_init(struct device *dev, void __iomem *pwrdn_reg,
-			    void __iomem *ahci_base, u32 mpy)
-{
-	unsigned int val;
+अटल व्योम da850_sata_init(काष्ठा device *dev, व्योम __iomem *pwrdn_reg,
+			    व्योम __iomem *ahci_base, u32 mpy)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	/* Enable SATA clock receiver */
-	val = readl(pwrdn_reg);
+	/* Enable SATA घड़ी receiver */
+	val = पढ़ोl(pwrdn_reg);
 	val &= ~BIT(0);
-	writel(val, pwrdn_reg);
+	ग_लिखोl(val, pwrdn_reg);
 
 	val = SATA_PHY_MPY(mpy) | SATA_PHY_LOS(1) | SATA_PHY_RXCDR(4) |
 	      SATA_PHY_RXEQ(1) | SATA_PHY_TXSWING(3) | SATA_PHY_ENPLL(1);
 
-	writel(val, ahci_base + SATA_P0PHYCR_REG);
-}
+	ग_लिखोl(val, ahci_base + SATA_P0PHYCR_REG);
+पूर्ण
 
-static u32 ahci_da850_calculate_mpy(unsigned long refclk_rate)
-{
+अटल u32 ahci_da850_calculate_mpy(अचिन्हित दीर्घ refclk_rate)
+अणु
 	u32 pll_output = 1500000000, needed;
 
 	/*
 	 * We need to determine the value of the multiplier (MPY) bits.
-	 * In order to include the 12.5 multiplier we need to first divide
+	 * In order to include the 12.5 multiplier we need to first भागide
 	 * the refclk rate by ten.
 	 *
-	 * __div64_32() turned out to be unreliable, sometimes returning
+	 * __भाग64_32() turned out to be unreliable, someबार वापसing
 	 * false results.
 	 */
 	WARN((refclk_rate % 10) != 0, "refclk must be divisible by 10");
@@ -59,202 +60,202 @@ static u32 ahci_da850_calculate_mpy(unsigned long refclk_rate)
 	/*
 	 * What we have now is (multiplier * 10).
 	 *
-	 * Let's determine the actual register value we need to write.
+	 * Let's determine the actual रेजिस्टर value we need to ग_लिखो.
 	 */
 
-	switch (needed) {
-	case 50:
-		return 0x1;
-	case 60:
-		return 0x2;
-	case 80:
-		return 0x4;
-	case 100:
-		return 0x5;
-	case 120:
-		return 0x6;
-	case 125:
-		return 0x7;
-	case 150:
-		return 0x8;
-	case 200:
-		return 0x9;
-	case 250:
-		return 0xa;
-	default:
+	चयन (needed) अणु
+	हाल 50:
+		वापस 0x1;
+	हाल 60:
+		वापस 0x2;
+	हाल 80:
+		वापस 0x4;
+	हाल 100:
+		वापस 0x5;
+	हाल 120:
+		वापस 0x6;
+	हाल 125:
+		वापस 0x7;
+	हाल 150:
+		वापस 0x8;
+	हाल 200:
+		वापस 0x9;
+	हाल 250:
+		वापस 0xa;
+	शेष:
 		/*
-		 * We should have divided evenly - if not, return an invalid
+		 * We should have भागided evenly - अगर not, वापस an invalid
 		 * value.
 		 */
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int ahci_da850_softreset(struct ata_link *link,
-				unsigned int *class, unsigned long deadline)
-{
-	int pmp, ret;
+अटल पूर्णांक ahci_da850_softreset(काष्ठा ata_link *link,
+				अचिन्हित पूर्णांक *class, अचिन्हित दीर्घ deadline)
+अणु
+	पूर्णांक pmp, ret;
 
 	pmp = sata_srst_pmp(link);
 
 	/*
-	 * There's an issue with the SATA controller on da850 SoCs: if we
+	 * There's an issue with the SATA controller on da850 SoCs: अगर we
 	 * enable Port Multiplier support, but the drive is connected directly
-	 * to the board, it can't be detected. As a workaround: if PMP is
-	 * enabled, we first call ahci_do_softreset() and pass it the result of
+	 * to the board, it can't be detected. As a workaround: अगर PMP is
+	 * enabled, we first call ahci_करो_softreset() and pass it the result of
 	 * sata_srst_pmp(). If this call fails, we retry with pmp = 0.
 	 */
-	ret = ahci_do_softreset(link, class, pmp, deadline, ahci_check_ready);
-	if (pmp && ret == -EBUSY)
-		return ahci_do_softreset(link, class, 0,
-					 deadline, ahci_check_ready);
+	ret = ahci_करो_softreset(link, class, pmp, deadline, ahci_check_पढ़ोy);
+	अगर (pmp && ret == -EBUSY)
+		वापस ahci_करो_softreset(link, class, 0,
+					 deadline, ahci_check_पढ़ोy);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ahci_da850_hardreset(struct ata_link *link,
-				unsigned int *class, unsigned long deadline)
-{
-	int ret, retry = HARDRESET_RETRIES;
+अटल पूर्णांक ahci_da850_hardreset(काष्ठा ata_link *link,
+				अचिन्हित पूर्णांक *class, अचिन्हित दीर्घ deadline)
+अणु
+	पूर्णांक ret, retry = HARDRESET_RETRIES;
 	bool online;
 
 	/*
 	 * In order to correctly service the LCD controller of the da850 SoC,
-	 * we increased the PLL0 frequency to 456MHz from the default 300MHz.
+	 * we increased the PLL0 frequency to 456MHz from the शेष 300MHz.
 	 *
 	 * This made the SATA controller unstable and the hardreset operation
-	 * does not always succeed the first time. Before really giving up to
-	 * bring up the link, retry the reset a couple times.
+	 * करोes not always succeed the first समय. Beक्रमe really giving up to
+	 * bring up the link, retry the reset a couple बार.
 	 */
-	do {
-		ret = ahci_do_hardreset(link, class, deadline, &online);
-		if (online)
-			return ret;
-	} while (retry--);
+	करो अणु
+		ret = ahci_करो_hardreset(link, class, deadline, &online);
+		अगर (online)
+			वापस ret;
+	पूर्ण जबतक (retry--);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct ata_port_operations ahci_da850_port_ops = {
-	.inherits = &ahci_platform_ops,
+अटल काष्ठा ata_port_operations ahci_da850_port_ops = अणु
+	.inherits = &ahci_platक्रमm_ops,
 	.softreset = ahci_da850_softreset,
 	/*
-	 * No need to override .pmp_softreset - it's only used for actual
+	 * No need to override .pmp_softreset - it's only used क्रम actual
 	 * PMP-enabled ports.
 	 */
 	.hardreset = ahci_da850_hardreset,
 	.pmp_hardreset = ahci_da850_hardreset,
-};
+पूर्ण;
 
-static const struct ata_port_info ahci_da850_port_info = {
+अटल स्थिर काष्ठा ata_port_info ahci_da850_port_info = अणु
 	.flags		= AHCI_FLAG_COMMON,
 	.pio_mask	= ATA_PIO4,
 	.udma_mask	= ATA_UDMA6,
 	.port_ops	= &ahci_da850_port_ops,
-};
+पूर्ण;
 
-static struct scsi_host_template ahci_platform_sht = {
+अटल काष्ठा scsi_host_ढाँचा ahci_platक्रमm_sht = अणु
 	AHCI_SHT(DRV_NAME),
-};
+पूर्ण;
 
-static int ahci_da850_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct ahci_host_priv *hpriv;
-	void __iomem *pwrdn_reg;
-	struct resource *res;
-	struct clk *clk;
+अटल पूर्णांक ahci_da850_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा ahci_host_priv *hpriv;
+	व्योम __iomem *pwrdn_reg;
+	काष्ठा resource *res;
+	काष्ठा clk *clk;
 	u32 mpy;
-	int rc;
+	पूर्णांक rc;
 
-	hpriv = ahci_platform_get_resources(pdev, 0);
-	if (IS_ERR(hpriv))
-		return PTR_ERR(hpriv);
+	hpriv = ahci_platक्रमm_get_resources(pdev, 0);
+	अगर (IS_ERR(hpriv))
+		वापस PTR_ERR(hpriv);
 
 	/*
-	 * Internally ahci_platform_get_resources() calls clk_get(dev, NULL)
-	 * when trying to obtain the functional clock. This SATA controller
-	 * uses two clocks for which we specify two connection ids. If we don't
-	 * have the functional clock at this point - call clk_get() again with
+	 * Internally ahci_platक्रमm_get_resources() calls clk_get(dev, शून्य)
+	 * when trying to obtain the functional घड़ी. This SATA controller
+	 * uses two घड़ीs क्रम which we specअगरy two connection ids. If we करोn't
+	 * have the functional घड़ी at this poपूर्णांक - call clk_get() again with
 	 * con_id = "fck".
 	 */
-	if (!hpriv->clks[0]) {
+	अगर (!hpriv->clks[0]) अणु
 		clk = clk_get(dev, "fck");
-		if (IS_ERR(clk))
-			return PTR_ERR(clk);
+		अगर (IS_ERR(clk))
+			वापस PTR_ERR(clk);
 
 		hpriv->clks[0] = clk;
-	}
+	पूर्ण
 
 	/*
-	 * The second clock used by ahci-da850 is the external REFCLK. If we
+	 * The second घड़ी used by ahci-da850 is the बाह्यal REFCLK. If we
 	 * didn't get it from ahci_platform_get_resources(), let's try to
-	 * specify the con_id in clk_get().
+	 * specअगरy the con_id in clk_get().
 	 */
-	if (!hpriv->clks[1]) {
+	अगर (!hpriv->clks[1]) अणु
 		clk = clk_get(dev, "refclk");
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			dev_err(dev, "unable to obtain the reference clock");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		hpriv->clks[1] = clk;
-	}
+	पूर्ण
 
 	mpy = ahci_da850_calculate_mpy(clk_get_rate(hpriv->clks[1]));
-	if (mpy == 0) {
+	अगर (mpy == 0) अणु
 		dev_err(dev, "invalid REFCLK multiplier value: 0x%x", mpy);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	rc = ahci_platform_enable_resources(hpriv);
-	if (rc)
-		return rc;
+	rc = ahci_platक्रमm_enable_resources(hpriv);
+	अगर (rc)
+		वापस rc;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	अगर (!res) अणु
 		rc = -ENODEV;
-		goto disable_resources;
-	}
+		जाओ disable_resources;
+	पूर्ण
 
 	pwrdn_reg = devm_ioremap(dev, res->start, resource_size(res));
-	if (!pwrdn_reg) {
+	अगर (!pwrdn_reg) अणु
 		rc = -ENOMEM;
-		goto disable_resources;
-	}
+		जाओ disable_resources;
+	पूर्ण
 
 	da850_sata_init(dev, pwrdn_reg, hpriv->mmio, mpy);
 
-	rc = ahci_platform_init_host(pdev, hpriv, &ahci_da850_port_info,
-				     &ahci_platform_sht);
-	if (rc)
-		goto disable_resources;
+	rc = ahci_platक्रमm_init_host(pdev, hpriv, &ahci_da850_port_info,
+				     &ahci_platक्रमm_sht);
+	अगर (rc)
+		जाओ disable_resources;
 
-	return 0;
+	वापस 0;
 disable_resources:
-	ahci_platform_disable_resources(hpriv);
-	return rc;
-}
+	ahci_platक्रमm_disable_resources(hpriv);
+	वापस rc;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(ahci_da850_pm_ops, ahci_platform_suspend,
-			 ahci_platform_resume);
+अटल SIMPLE_DEV_PM_OPS(ahci_da850_pm_ops, ahci_platक्रमm_suspend,
+			 ahci_platक्रमm_resume);
 
-static const struct of_device_id ahci_da850_of_match[] = {
-	{ .compatible = "ti,da850-ahci", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id ahci_da850_of_match[] = अणु
+	अणु .compatible = "ti,da850-ahci", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ahci_da850_of_match);
 
-static struct platform_driver ahci_da850_driver = {
+अटल काष्ठा platक्रमm_driver ahci_da850_driver = अणु
 	.probe = ahci_da850_probe,
-	.remove = ata_platform_remove_one,
-	.driver = {
+	.हटाओ = ata_platक्रमm_हटाओ_one,
+	.driver = अणु
 		.name = DRV_NAME,
 		.of_match_table = ahci_da850_of_match,
 		.pm = &ahci_da850_pm_ops,
-	},
-};
-module_platform_driver(ahci_da850_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(ahci_da850_driver);
 
 MODULE_DESCRIPTION("DaVinci DA850 AHCI SATA platform driver");
 MODULE_AUTHOR("Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>");

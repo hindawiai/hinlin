@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Melfas MMS114/MMS136/MMS152 touchscreen device driver
 //
 // Copyright (c) 2012 Samsung Electronics Co., Ltd.
 // Author: Joonyoung Shim <jy0922.shim@samsung.com>
 
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/i2c.h>
-#include <linux/input/mt.h>
-#include <linux/input/touchscreen.h>
-#include <linux/interrupt.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/input/touchscreen.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
 
-/* Write only registers */
-#define MMS114_MODE_CONTROL		0x01
-#define MMS114_OPERATION_MODE_MASK	0xE
-#define MMS114_ACTIVE			BIT(1)
+/* Write only रेजिस्टरs */
+#घोषणा MMS114_MODE_CONTROL		0x01
+#घोषणा MMS114_OPERATION_MODE_MASK	0xE
+#घोषणा MMS114_ACTIVE			BIT(1)
 
-#define MMS114_XY_RESOLUTION_H		0x02
-#define MMS114_X_RESOLUTION		0x03
-#define MMS114_Y_RESOLUTION		0x04
-#define MMS114_CONTACT_THRESHOLD	0x05
-#define MMS114_MOVING_THRESHOLD		0x06
+#घोषणा MMS114_XY_RESOLUTION_H		0x02
+#घोषणा MMS114_X_RESOLUTION		0x03
+#घोषणा MMS114_Y_RESOLUTION		0x04
+#घोषणा MMS114_CONTACT_THRESHOLD	0x05
+#घोषणा MMS114_MOVING_THRESHOLD		0x06
 
-/* Read only registers */
-#define MMS114_PACKET_SIZE		0x0F
-#define MMS114_INFORMATION		0x10
-#define MMS114_TSP_REV			0xF0
+/* Read only रेजिस्टरs */
+#घोषणा MMS114_PACKET_SIZE		0x0F
+#घोषणा MMS114_INFORMATION		0x10
+#घोषणा MMS114_TSP_REV			0xF0
 
-#define MMS152_FW_REV			0xE1
-#define MMS152_COMPAT_GROUP		0xF2
+#घोषणा MMS152_FW_REV			0xE1
+#घोषणा MMS152_COMPAT_GROUP		0xF2
 
-/* Minimum delay time is 50us between stop and start signal of i2c */
-#define MMS114_I2C_DELAY		50
+/* Minimum delay समय is 50us between stop and start संकेत of i2c */
+#घोषणा MMS114_I2C_DELAY		50
 
-/* 200ms needs after power on */
-#define MMS114_POWERON_DELAY		200
+/* 200ms needs after घातer on */
+#घोषणा MMS114_POWERON_DELAY		200
 
-/* Touchscreen absolute values */
-#define MMS114_MAX_AREA			0xff
+/* Touchscreen असलolute values */
+#घोषणा MMS114_MAX_AREA			0xff
 
-#define MMS114_MAX_TOUCH		10
-#define MMS114_EVENT_SIZE		8
-#define MMS136_EVENT_SIZE		6
+#घोषणा MMS114_MAX_TOUCH		10
+#घोषणा MMS114_EVENT_SIZE		8
+#घोषणा MMS136_EVENT_SIZE		6
 
 /* Touch type */
-#define MMS114_TYPE_NONE		0
-#define MMS114_TYPE_TOUCHSCREEN		1
-#define MMS114_TYPE_TOUCHKEY		2
+#घोषणा MMS114_TYPE_NONE		0
+#घोषणा MMS114_TYPE_TOUCHSCREEN		1
+#घोषणा MMS114_TYPE_TOUCHKEY		2
 
-enum mms_type {
+क्रमागत mms_type अणु
 	TYPE_MMS114	= 114,
 	TYPE_MMS136	= 136,
 	TYPE_MMS152	= 152,
 	TYPE_MMS345L	= 345,
-};
+पूर्ण;
 
-struct mms114_data {
-	struct i2c_client	*client;
-	struct input_dev	*input_dev;
-	struct regulator	*core_reg;
-	struct regulator	*io_reg;
-	struct touchscreen_properties props;
-	enum mms_type		type;
-	unsigned int		contact_threshold;
-	unsigned int		moving_threshold;
+काष्ठा mms114_data अणु
+	काष्ठा i2c_client	*client;
+	काष्ठा input_dev	*input_dev;
+	काष्ठा regulator	*core_reg;
+	काष्ठा regulator	*io_reg;
+	काष्ठा touchscreen_properties props;
+	क्रमागत mms_type		type;
+	अचिन्हित पूर्णांक		contact_threshold;
+	अचिन्हित पूर्णांक		moving_threshold;
 
-	/* Use cache data for mode control register(write only) */
+	/* Use cache data क्रम mode control रेजिस्टर(ग_लिखो only) */
 	u8			cache_mode_control;
-};
+पूर्ण;
 
-struct mms114_touch {
+काष्ठा mms114_touch अणु
 	u8 id:4, reserved_bit4:1, type:2, pressed:1;
 	u8 x_hi:4, y_hi:4;
 	u8 x_lo;
@@ -81,20 +82,20 @@ struct mms114_touch {
 	u8 width;
 	u8 strength;
 	u8 reserved[2];
-} __packed;
+पूर्ण __packed;
 
-static int __mms114_read_reg(struct mms114_data *data, unsigned int reg,
-			     unsigned int len, u8 *val)
-{
-	struct i2c_client *client = data->client;
-	struct i2c_msg xfer[2];
+अटल पूर्णांक __mms114_पढ़ो_reg(काष्ठा mms114_data *data, अचिन्हित पूर्णांक reg,
+			     अचिन्हित पूर्णांक len, u8 *val)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	काष्ठा i2c_msg xfer[2];
 	u8 buf = reg & 0xff;
-	int error;
+	पूर्णांक error;
 
-	if (reg <= MMS114_MODE_CONTROL && reg + len > MMS114_MODE_CONTROL)
+	अगर (reg <= MMS114_MODE_CONTROL && reg + len > MMS114_MODE_CONTROL)
 		BUG();
 
-	/* Write register */
+	/* Write रेजिस्टर */
 	xfer[0].addr = client->addr;
 	xfer[0].flags = client->flags & I2C_M_TEN;
 	xfer[0].len = 1;
@@ -107,69 +108,69 @@ static int __mms114_read_reg(struct mms114_data *data, unsigned int reg,
 	xfer[1].buf = val;
 
 	error = i2c_transfer(client->adapter, xfer, 2);
-	if (error != 2) {
+	अगर (error != 2) अणु
 		dev_err(&client->dev,
 			"%s: i2c transfer failed (%d)\n", __func__, error);
-		return error < 0 ? error : -EIO;
-	}
+		वापस error < 0 ? error : -EIO;
+	पूर्ण
 	udelay(MMS114_I2C_DELAY);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mms114_read_reg(struct mms114_data *data, unsigned int reg)
-{
+अटल पूर्णांक mms114_पढ़ो_reg(काष्ठा mms114_data *data, अचिन्हित पूर्णांक reg)
+अणु
 	u8 val;
-	int error;
+	पूर्णांक error;
 
-	if (reg == MMS114_MODE_CONTROL)
-		return data->cache_mode_control;
+	अगर (reg == MMS114_MODE_CONTROL)
+		वापस data->cache_mode_control;
 
-	error = __mms114_read_reg(data, reg, 1, &val);
-	return error < 0 ? error : val;
-}
+	error = __mms114_पढ़ो_reg(data, reg, 1, &val);
+	वापस error < 0 ? error : val;
+पूर्ण
 
-static int mms114_write_reg(struct mms114_data *data, unsigned int reg,
-			    unsigned int val)
-{
-	struct i2c_client *client = data->client;
+अटल पूर्णांक mms114_ग_लिखो_reg(काष्ठा mms114_data *data, अचिन्हित पूर्णांक reg,
+			    अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा i2c_client *client = data->client;
 	u8 buf[2];
-	int error;
+	पूर्णांक error;
 
 	buf[0] = reg & 0xff;
 	buf[1] = val & 0xff;
 
 	error = i2c_master_send(client, buf, 2);
-	if (error != 2) {
+	अगर (error != 2) अणु
 		dev_err(&client->dev,
 			"%s: i2c send failed (%d)\n", __func__, error);
-		return error < 0 ? error : -EIO;
-	}
+		वापस error < 0 ? error : -EIO;
+	पूर्ण
 	udelay(MMS114_I2C_DELAY);
 
-	if (reg == MMS114_MODE_CONTROL)
+	अगर (reg == MMS114_MODE_CONTROL)
 		data->cache_mode_control = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mms114_process_mt(struct mms114_data *data, struct mms114_touch *touch)
-{
-	struct i2c_client *client = data->client;
-	struct input_dev *input_dev = data->input_dev;
-	unsigned int id;
-	unsigned int x;
-	unsigned int y;
+अटल व्योम mms114_process_mt(काष्ठा mms114_data *data, काष्ठा mms114_touch *touch)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	काष्ठा input_dev *input_dev = data->input_dev;
+	अचिन्हित पूर्णांक id;
+	अचिन्हित पूर्णांक x;
+	अचिन्हित पूर्णांक y;
 
-	if (touch->id > MMS114_MAX_TOUCH) {
+	अगर (touch->id > MMS114_MAX_TOUCH) अणु
 		dev_err(&client->dev, "Wrong touch id (%d)\n", touch->id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (touch->type != MMS114_TYPE_TOUCHSCREEN) {
+	अगर (touch->type != MMS114_TYPE_TOUCHSCREEN) अणु
 		dev_err(&client->dev, "Wrong touch type (%d)\n", touch->type);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	id = touch->id - 1;
 	x = touch->x_lo | touch->x_hi << 8;
@@ -183,462 +184,462 @@ static void mms114_process_mt(struct mms114_data *data, struct mms114_touch *tou
 	input_mt_slot(input_dev, id);
 	input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, touch->pressed);
 
-	if (touch->pressed) {
+	अगर (touch->pressed) अणु
 		touchscreen_report_pos(input_dev, &data->props, x, y, true);
-		input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, touch->width);
-		input_report_abs(input_dev, ABS_MT_PRESSURE, touch->strength);
-	}
-}
+		input_report_असल(input_dev, ABS_MT_TOUCH_MAJOR, touch->width);
+		input_report_असल(input_dev, ABS_MT_PRESSURE, touch->strength);
+	पूर्ण
+पूर्ण
 
-static irqreturn_t mms114_interrupt(int irq, void *dev_id)
-{
-	struct mms114_data *data = dev_id;
-	struct input_dev *input_dev = data->input_dev;
-	struct mms114_touch touch[MMS114_MAX_TOUCH];
-	int packet_size;
-	int touch_size;
-	int index;
-	int error;
+अटल irqवापस_t mms114_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mms114_data *data = dev_id;
+	काष्ठा input_dev *input_dev = data->input_dev;
+	काष्ठा mms114_touch touch[MMS114_MAX_TOUCH];
+	पूर्णांक packet_size;
+	पूर्णांक touch_size;
+	पूर्णांक index;
+	पूर्णांक error;
 
 	mutex_lock(&input_dev->mutex);
-	if (!input_device_enabled(input_dev)) {
+	अगर (!input_device_enabled(input_dev)) अणु
 		mutex_unlock(&input_dev->mutex);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	mutex_unlock(&input_dev->mutex);
 
-	packet_size = mms114_read_reg(data, MMS114_PACKET_SIZE);
-	if (packet_size <= 0)
-		goto out;
+	packet_size = mms114_पढ़ो_reg(data, MMS114_PACKET_SIZE);
+	अगर (packet_size <= 0)
+		जाओ out;
 
-	/* MMS136 has slightly different event size */
-	if (data->type == TYPE_MMS136)
+	/* MMS136 has slightly dअगरferent event size */
+	अगर (data->type == TYPE_MMS136)
 		touch_size = packet_size / MMS136_EVENT_SIZE;
-	else
+	अन्यथा
 		touch_size = packet_size / MMS114_EVENT_SIZE;
 
-	error = __mms114_read_reg(data, MMS114_INFORMATION, packet_size,
+	error = __mms114_पढ़ो_reg(data, MMS114_INFORMATION, packet_size,
 			(u8 *)touch);
-	if (error < 0)
-		goto out;
+	अगर (error < 0)
+		जाओ out;
 
-	for (index = 0; index < touch_size; index++)
+	क्रम (index = 0; index < touch_size; index++)
 		mms114_process_mt(data, touch + index);
 
-	input_mt_report_pointer_emulation(data->input_dev, true);
+	input_mt_report_poपूर्णांकer_emulation(data->input_dev, true);
 	input_sync(data->input_dev);
 
 out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mms114_set_active(struct mms114_data *data, bool active)
-{
-	int val;
+अटल पूर्णांक mms114_set_active(काष्ठा mms114_data *data, bool active)
+अणु
+	पूर्णांक val;
 
-	val = mms114_read_reg(data, MMS114_MODE_CONTROL);
-	if (val < 0)
-		return val;
+	val = mms114_पढ़ो_reg(data, MMS114_MODE_CONTROL);
+	अगर (val < 0)
+		वापस val;
 
 	val &= ~MMS114_OPERATION_MODE_MASK;
 
 	/* If active is false, sleep mode */
-	if (active)
+	अगर (active)
 		val |= MMS114_ACTIVE;
 
-	return mms114_write_reg(data, MMS114_MODE_CONTROL, val);
-}
+	वापस mms114_ग_लिखो_reg(data, MMS114_MODE_CONTROL, val);
+पूर्ण
 
-static int mms114_get_version(struct mms114_data *data)
-{
-	struct device *dev = &data->client->dev;
+अटल पूर्णांक mms114_get_version(काष्ठा mms114_data *data)
+अणु
+	काष्ठा device *dev = &data->client->dev;
 	u8 buf[6];
-	int group;
-	int error;
+	पूर्णांक group;
+	पूर्णांक error;
 
-	switch (data->type) {
-	case TYPE_MMS345L:
-		error = __mms114_read_reg(data, MMS152_FW_REV, 3, buf);
-		if (error)
-			return error;
+	चयन (data->type) अणु
+	हाल TYPE_MMS345L:
+		error = __mms114_पढ़ो_reg(data, MMS152_FW_REV, 3, buf);
+		अगर (error)
+			वापस error;
 
 		dev_info(dev, "TSP FW Rev: bootloader 0x%x / core 0x%x / config 0x%x\n",
 			 buf[0], buf[1], buf[2]);
-		break;
+		अवरोध;
 
-	case TYPE_MMS152:
-		error = __mms114_read_reg(data, MMS152_FW_REV, 3, buf);
-		if (error)
-			return error;
+	हाल TYPE_MMS152:
+		error = __mms114_पढ़ो_reg(data, MMS152_FW_REV, 3, buf);
+		अगर (error)
+			वापस error;
 
-		group = i2c_smbus_read_byte_data(data->client,
+		group = i2c_smbus_पढ़ो_byte_data(data->client,
 						  MMS152_COMPAT_GROUP);
-		if (group < 0)
-			return group;
+		अगर (group < 0)
+			वापस group;
 
 		dev_info(dev, "TSP FW Rev: bootloader 0x%x / core 0x%x / config 0x%x, Compat group: %c\n",
 			 buf[0], buf[1], buf[2], group);
-		break;
+		अवरोध;
 
-	case TYPE_MMS114:
-	case TYPE_MMS136:
-		error = __mms114_read_reg(data, MMS114_TSP_REV, 6, buf);
-		if (error)
-			return error;
+	हाल TYPE_MMS114:
+	हाल TYPE_MMS136:
+		error = __mms114_पढ़ो_reg(data, MMS114_TSP_REV, 6, buf);
+		अगर (error)
+			वापस error;
 
 		dev_info(dev, "TSP Rev: 0x%x, HW Rev: 0x%x, Firmware Ver: 0x%x\n",
 			 buf[0], buf[1], buf[3]);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mms114_setup_regs(struct mms114_data *data)
-{
-	const struct touchscreen_properties *props = &data->props;
-	int val;
-	int error;
+अटल पूर्णांक mms114_setup_regs(काष्ठा mms114_data *data)
+अणु
+	स्थिर काष्ठा touchscreen_properties *props = &data->props;
+	पूर्णांक val;
+	पूर्णांक error;
 
 	error = mms114_get_version(data);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
-	/* Only MMS114 and MMS136 have configuration and power on registers */
-	if (data->type != TYPE_MMS114 && data->type != TYPE_MMS136)
-		return 0;
+	/* Only MMS114 and MMS136 have configuration and घातer on रेजिस्टरs */
+	अगर (data->type != TYPE_MMS114 && data->type != TYPE_MMS136)
+		वापस 0;
 
 	error = mms114_set_active(data, true);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
 	val = (props->max_x >> 8) & 0xf;
 	val |= ((props->max_y >> 8) & 0xf) << 4;
-	error = mms114_write_reg(data, MMS114_XY_RESOLUTION_H, val);
-	if (error < 0)
-		return error;
+	error = mms114_ग_लिखो_reg(data, MMS114_XY_RESOLUTION_H, val);
+	अगर (error < 0)
+		वापस error;
 
 	val = props->max_x & 0xff;
-	error = mms114_write_reg(data, MMS114_X_RESOLUTION, val);
-	if (error < 0)
-		return error;
+	error = mms114_ग_लिखो_reg(data, MMS114_X_RESOLUTION, val);
+	अगर (error < 0)
+		वापस error;
 
 	val = props->max_x & 0xff;
-	error = mms114_write_reg(data, MMS114_Y_RESOLUTION, val);
-	if (error < 0)
-		return error;
+	error = mms114_ग_लिखो_reg(data, MMS114_Y_RESOLUTION, val);
+	अगर (error < 0)
+		वापस error;
 
-	if (data->contact_threshold) {
-		error = mms114_write_reg(data, MMS114_CONTACT_THRESHOLD,
+	अगर (data->contact_threshold) अणु
+		error = mms114_ग_लिखो_reg(data, MMS114_CONTACT_THRESHOLD,
 				data->contact_threshold);
-		if (error < 0)
-			return error;
-	}
+		अगर (error < 0)
+			वापस error;
+	पूर्ण
 
-	if (data->moving_threshold) {
-		error = mms114_write_reg(data, MMS114_MOVING_THRESHOLD,
+	अगर (data->moving_threshold) अणु
+		error = mms114_ग_लिखो_reg(data, MMS114_MOVING_THRESHOLD,
 				data->moving_threshold);
-		if (error < 0)
-			return error;
-	}
+		अगर (error < 0)
+			वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mms114_start(struct mms114_data *data)
-{
-	struct i2c_client *client = data->client;
-	int error;
+अटल पूर्णांक mms114_start(काष्ठा mms114_data *data)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक error;
 
 	error = regulator_enable(data->core_reg);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "Failed to enable avdd: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = regulator_enable(data->io_reg);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "Failed to enable vdd: %d\n", error);
 		regulator_disable(data->core_reg);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	msleep(MMS114_POWERON_DELAY);
 
 	error = mms114_setup_regs(data);
-	if (error < 0) {
+	अगर (error < 0) अणु
 		regulator_disable(data->io_reg);
 		regulator_disable(data->core_reg);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	enable_irq(client->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mms114_stop(struct mms114_data *data)
-{
-	struct i2c_client *client = data->client;
-	int error;
+अटल व्योम mms114_stop(काष्ठा mms114_data *data)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक error;
 
 	disable_irq(client->irq);
 
 	error = regulator_disable(data->io_reg);
-	if (error)
+	अगर (error)
 		dev_warn(&client->dev, "Failed to disable vdd: %d\n", error);
 
 	error = regulator_disable(data->core_reg);
-	if (error)
+	अगर (error)
 		dev_warn(&client->dev, "Failed to disable avdd: %d\n", error);
-}
+पूर्ण
 
-static int mms114_input_open(struct input_dev *dev)
-{
-	struct mms114_data *data = input_get_drvdata(dev);
+अटल पूर्णांक mms114_input_खोलो(काष्ठा input_dev *dev)
+अणु
+	काष्ठा mms114_data *data = input_get_drvdata(dev);
 
-	return mms114_start(data);
-}
+	वापस mms114_start(data);
+पूर्ण
 
-static void mms114_input_close(struct input_dev *dev)
-{
-	struct mms114_data *data = input_get_drvdata(dev);
+अटल व्योम mms114_input_बंद(काष्ठा input_dev *dev)
+अणु
+	काष्ठा mms114_data *data = input_get_drvdata(dev);
 
 	mms114_stop(data);
-}
+पूर्ण
 
-static int mms114_parse_legacy_bindings(struct mms114_data *data)
-{
-	struct device *dev = &data->client->dev;
-	struct touchscreen_properties *props = &data->props;
+अटल पूर्णांक mms114_parse_legacy_bindings(काष्ठा mms114_data *data)
+अणु
+	काष्ठा device *dev = &data->client->dev;
+	काष्ठा touchscreen_properties *props = &data->props;
 
-	if (device_property_read_u32(dev, "x-size", &props->max_x)) {
+	अगर (device_property_पढ़ो_u32(dev, "x-size", &props->max_x)) अणु
 		dev_dbg(dev, "failed to get legacy x-size property\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (device_property_read_u32(dev, "y-size", &props->max_y)) {
+	अगर (device_property_पढ़ो_u32(dev, "y-size", &props->max_y)) अणु
 		dev_dbg(dev, "failed to get legacy y-size property\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	device_property_read_u32(dev, "contact-threshold",
+	device_property_पढ़ो_u32(dev, "contact-threshold",
 				&data->contact_threshold);
-	device_property_read_u32(dev, "moving-threshold",
+	device_property_पढ़ो_u32(dev, "moving-threshold",
 				&data->moving_threshold);
 
-	if (device_property_read_bool(dev, "x-invert"))
+	अगर (device_property_पढ़ो_bool(dev, "x-invert"))
 		props->invert_x = true;
-	if (device_property_read_bool(dev, "y-invert"))
+	अगर (device_property_पढ़ो_bool(dev, "y-invert"))
 		props->invert_y = true;
 
 	props->swap_x_y = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mms114_probe(struct i2c_client *client,
-				  const struct i2c_device_id *id)
-{
-	struct mms114_data *data;
-	struct input_dev *input_dev;
-	const void *match_data;
-	int error;
+अटल पूर्णांक mms114_probe(काष्ठा i2c_client *client,
+				  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा mms114_data *data;
+	काष्ठा input_dev *input_dev;
+	स्थिर व्योम *match_data;
+	पूर्णांक error;
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
 		dev_err(&client->dev, "Not supported I2C adapter\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	data = devm_kzalloc(&client->dev, sizeof(struct mms114_data),
+	data = devm_kzalloc(&client->dev, माप(काष्ठा mms114_data),
 			    GFP_KERNEL);
 	input_dev = devm_input_allocate_device(&client->dev);
-	if (!data || !input_dev) {
+	अगर (!data || !input_dev) अणु
 		dev_err(&client->dev, "Failed to allocate memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	data->client = client;
 	data->input_dev = input_dev;
 
 	match_data = device_get_match_data(&client->dev);
-	if (!match_data)
-		return -EINVAL;
+	अगर (!match_data)
+		वापस -EINVAL;
 
-	data->type = (enum mms_type)match_data;
+	data->type = (क्रमागत mms_type)match_data;
 
 	input_set_capability(input_dev, EV_ABS, ABS_MT_POSITION_X);
 	input_set_capability(input_dev, EV_ABS, ABS_MT_POSITION_Y);
-	input_set_abs_params(input_dev, ABS_MT_PRESSURE, 0, 255, 0, 0);
-	input_set_abs_params(input_dev, ABS_MT_TOUCH_MAJOR,
+	input_set_असल_params(input_dev, ABS_MT_PRESSURE, 0, 255, 0, 0);
+	input_set_असल_params(input_dev, ABS_MT_TOUCH_MAJOR,
 			     0, MMS114_MAX_AREA, 0, 0);
 
 	touchscreen_parse_properties(input_dev, true, &data->props);
-	if (!data->props.max_x || !data->props.max_y) {
+	अगर (!data->props.max_x || !data->props.max_y) अणु
 		dev_dbg(&client->dev,
 			"missing X/Y size properties, trying legacy bindings\n");
 		error = mms114_parse_legacy_bindings(data);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
-		input_set_abs_params(input_dev, ABS_MT_POSITION_X,
+		input_set_असल_params(input_dev, ABS_MT_POSITION_X,
 				     0, data->props.max_x, 0, 0);
-		input_set_abs_params(input_dev, ABS_MT_POSITION_Y,
+		input_set_असल_params(input_dev, ABS_MT_POSITION_Y,
 				     0, data->props.max_y, 0, 0);
-	}
+	पूर्ण
 
-	if (data->type == TYPE_MMS114 || data->type == TYPE_MMS136) {
+	अगर (data->type == TYPE_MMS114 || data->type == TYPE_MMS136) अणु
 		/*
 		 * The firmware handles movement and pressure fuzz, so
-		 * don't duplicate that in software.
+		 * करोn't duplicate that in software.
 		 */
-		data->moving_threshold = input_abs_get_fuzz(input_dev,
+		data->moving_threshold = input_असल_get_fuzz(input_dev,
 							    ABS_MT_POSITION_X);
-		data->contact_threshold = input_abs_get_fuzz(input_dev,
+		data->contact_threshold = input_असल_get_fuzz(input_dev,
 							     ABS_MT_PRESSURE);
-		input_abs_set_fuzz(input_dev, ABS_MT_POSITION_X, 0);
-		input_abs_set_fuzz(input_dev, ABS_MT_POSITION_Y, 0);
-		input_abs_set_fuzz(input_dev, ABS_MT_PRESSURE, 0);
-	}
+		input_असल_set_fuzz(input_dev, ABS_MT_POSITION_X, 0);
+		input_असल_set_fuzz(input_dev, ABS_MT_POSITION_Y, 0);
+		input_असल_set_fuzz(input_dev, ABS_MT_PRESSURE, 0);
+	पूर्ण
 
-	input_dev->name = devm_kasprintf(&client->dev, GFP_KERNEL,
+	input_dev->name = devm_kaप्र_लिखो(&client->dev, GFP_KERNEL,
 					 "MELFAS MMS%d Touchscreen",
 					 data->type);
-	if (!input_dev->name)
-		return -ENOMEM;
+	अगर (!input_dev->name)
+		वापस -ENOMEM;
 
 	input_dev->id.bustype = BUS_I2C;
 	input_dev->dev.parent = &client->dev;
-	input_dev->open = mms114_input_open;
-	input_dev->close = mms114_input_close;
+	input_dev->खोलो = mms114_input_खोलो;
+	input_dev->बंद = mms114_input_बंद;
 
 	error = input_mt_init_slots(input_dev, MMS114_MAX_TOUCH,
-				    INPUT_MT_DIRECT);
-	if (error)
-		return error;
+				    INPUT_MT_सूचीECT);
+	अगर (error)
+		वापस error;
 
 	input_set_drvdata(input_dev, data);
 	i2c_set_clientdata(client, data);
 
 	data->core_reg = devm_regulator_get(&client->dev, "avdd");
-	if (IS_ERR(data->core_reg)) {
+	अगर (IS_ERR(data->core_reg)) अणु
 		error = PTR_ERR(data->core_reg);
 		dev_err(&client->dev,
 			"Unable to get the Core regulator (%d)\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	data->io_reg = devm_regulator_get(&client->dev, "vdd");
-	if (IS_ERR(data->io_reg)) {
+	अगर (IS_ERR(data->io_reg)) अणु
 		error = PTR_ERR(data->io_reg);
 		dev_err(&client->dev,
 			"Unable to get the IO regulator (%d)\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = devm_request_threaded_irq(&client->dev, client->irq,
-					  NULL, mms114_interrupt,
+	error = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+					  शून्य, mms114_पूर्णांकerrupt,
 					  IRQF_ONESHOT | IRQF_NO_AUTOEN,
 					  dev_name(&client->dev), data);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "Failed to register interrupt\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(data->input_dev);
-	if (error) {
+	error = input_रेजिस्टर_device(data->input_dev);
+	अगर (error) अणु
 		dev_err(&client->dev, "Failed to register input device\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused mms114_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct mms114_data *data = i2c_get_clientdata(client);
-	struct input_dev *input_dev = data->input_dev;
-	int id;
+अटल पूर्णांक __maybe_unused mms114_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा mms114_data *data = i2c_get_clientdata(client);
+	काष्ठा input_dev *input_dev = data->input_dev;
+	पूर्णांक id;
 
 	/* Release all touch */
-	for (id = 0; id < MMS114_MAX_TOUCH; id++) {
+	क्रम (id = 0; id < MMS114_MAX_TOUCH; id++) अणु
 		input_mt_slot(input_dev, id);
 		input_mt_report_slot_inactive(input_dev);
-	}
+	पूर्ण
 
-	input_mt_report_pointer_emulation(input_dev, true);
+	input_mt_report_poपूर्णांकer_emulation(input_dev, true);
 	input_sync(input_dev);
 
 	mutex_lock(&input_dev->mutex);
-	if (input_device_enabled(input_dev))
+	अगर (input_device_enabled(input_dev))
 		mms114_stop(data);
 	mutex_unlock(&input_dev->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused mms114_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct mms114_data *data = i2c_get_clientdata(client);
-	struct input_dev *input_dev = data->input_dev;
-	int error;
+अटल पूर्णांक __maybe_unused mms114_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा mms114_data *data = i2c_get_clientdata(client);
+	काष्ठा input_dev *input_dev = data->input_dev;
+	पूर्णांक error;
 
 	mutex_lock(&input_dev->mutex);
-	if (input_device_enabled(input_dev)) {
+	अगर (input_device_enabled(input_dev)) अणु
 		error = mms114_start(data);
-		if (error < 0) {
+		अगर (error < 0) अणु
 			mutex_unlock(&input_dev->mutex);
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&input_dev->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(mms114_pm_ops, mms114_suspend, mms114_resume);
+अटल SIMPLE_DEV_PM_OPS(mms114_pm_ops, mms114_suspend, mms114_resume);
 
-static const struct i2c_device_id mms114_id[] = {
-	{ "mms114", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id mms114_id[] = अणु
+	अणु "mms114", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, mms114_id);
 
-#ifdef CONFIG_OF
-static const struct of_device_id mms114_dt_match[] = {
-	{
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id mms114_dt_match[] = अणु
+	अणु
 		.compatible = "melfas,mms114",
-		.data = (void *)TYPE_MMS114,
-	}, {
+		.data = (व्योम *)TYPE_MMS114,
+	पूर्ण, अणु
 		.compatible = "melfas,mms136",
-		.data = (void *)TYPE_MMS136,
-	}, {
+		.data = (व्योम *)TYPE_MMS136,
+	पूर्ण, अणु
 		.compatible = "melfas,mms152",
-		.data = (void *)TYPE_MMS152,
-	}, {
+		.data = (व्योम *)TYPE_MMS152,
+	पूर्ण, अणु
 		.compatible = "melfas,mms345l",
-		.data = (void *)TYPE_MMS345L,
-	},
-	{ }
-};
+		.data = (व्योम *)TYPE_MMS345L,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mms114_dt_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver mms114_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver mms114_driver = अणु
+	.driver = अणु
 		.name	= "mms114",
 		.pm	= &mms114_pm_ops,
 		.of_match_table = of_match_ptr(mms114_dt_match),
-	},
+	पूर्ण,
 	.probe		= mms114_probe,
 	.id_table	= mms114_id,
-};
+पूर्ण;
 
 module_i2c_driver(mms114_driver);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Joonyoung Shim <jy0922.shim@samsung.com>");
 MODULE_DESCRIPTION("MELFAS mms114 Touchscreen driver");
 MODULE_LICENSE("GPL v2");

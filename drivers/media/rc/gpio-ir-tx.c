@@ -1,89 +1,90 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Sean Young <sean@mess.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/gpio/consumer.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <media/rc-core.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <media/rc-core.h>
 
-#define DRIVER_NAME	"gpio-ir-tx"
-#define DEVICE_NAME	"GPIO IR Bit Banging Transmitter"
+#घोषणा DRIVER_NAME	"gpio-ir-tx"
+#घोषणा DEVICE_NAME	"GPIO IR Bit Banging Transmitter"
 
-struct gpio_ir {
-	struct gpio_desc *gpio;
-	unsigned int carrier;
-	unsigned int duty_cycle;
-};
+काष्ठा gpio_ir अणु
+	काष्ठा gpio_desc *gpio;
+	अचिन्हित पूर्णांक carrier;
+	अचिन्हित पूर्णांक duty_cycle;
+पूर्ण;
 
-static const struct of_device_id gpio_ir_tx_of_match[] = {
-	{ .compatible = "gpio-ir-tx", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id gpio_ir_tx_of_match[] = अणु
+	अणु .compatible = "gpio-ir-tx", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, gpio_ir_tx_of_match);
 
-static int gpio_ir_tx_set_duty_cycle(struct rc_dev *dev, u32 duty_cycle)
-{
-	struct gpio_ir *gpio_ir = dev->priv;
+अटल पूर्णांक gpio_ir_tx_set_duty_cycle(काष्ठा rc_dev *dev, u32 duty_cycle)
+अणु
+	काष्ठा gpio_ir *gpio_ir = dev->priv;
 
 	gpio_ir->duty_cycle = duty_cycle;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpio_ir_tx_set_carrier(struct rc_dev *dev, u32 carrier)
-{
-	struct gpio_ir *gpio_ir = dev->priv;
+अटल पूर्णांक gpio_ir_tx_set_carrier(काष्ठा rc_dev *dev, u32 carrier)
+अणु
+	काष्ठा gpio_ir *gpio_ir = dev->priv;
 
-	if (carrier > 500000)
-		return -EINVAL;
+	अगर (carrier > 500000)
+		वापस -EINVAL;
 
 	gpio_ir->carrier = carrier;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gpio_ir_tx_unmodulated(struct gpio_ir *gpio_ir, uint *txbuf,
-				   uint count)
-{
-	ktime_t edge;
+अटल व्योम gpio_ir_tx_unmodulated(काष्ठा gpio_ir *gpio_ir, uपूर्णांक *txbuf,
+				   uपूर्णांक count)
+अणु
+	kसमय_प्रकार edge;
 	s32 delta;
-	int i;
+	पूर्णांक i;
 
 	local_irq_disable();
 
-	edge = ktime_get();
+	edge = kसमय_get();
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		gpiod_set_value(gpio_ir->gpio, !(i % 2));
 
-		edge = ktime_add_us(edge, txbuf[i]);
-		delta = ktime_us_delta(edge, ktime_get());
-		if (delta > 0)
+		edge = kसमय_add_us(edge, txbuf[i]);
+		delta = kसमय_us_delta(edge, kसमय_get());
+		अगर (delta > 0)
 			udelay(delta);
-	}
+	पूर्ण
 
 	gpiod_set_value(gpio_ir->gpio, 0);
-}
+पूर्ण
 
-static void gpio_ir_tx_modulated(struct gpio_ir *gpio_ir, uint *txbuf,
-				 uint count)
-{
-	ktime_t edge;
+अटल व्योम gpio_ir_tx_modulated(काष्ठा gpio_ir *gpio_ir, uपूर्णांक *txbuf,
+				 uपूर्णांक count)
+अणु
+	kसमय_प्रकार edge;
 	/*
 	 * delta should never exceed 0.5 seconds (IR_MAX_DURATION) and on
-	 * m68k ndelay(s64) does not compile; so use s32 rather than s64.
+	 * m68k ndelay(s64) करोes not compile; so use s32 rather than s64.
 	 */
 	s32 delta;
-	int i;
-	unsigned int pulse, space;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक pulse, space;
 
-	/* Ensure the dividend fits into 32 bit */
+	/* Ensure the भागidend fits पूर्णांकo 32 bit */
 	pulse = DIV_ROUND_CLOSEST(gpio_ir->duty_cycle * (NSEC_PER_SEC / 100),
 				  gpio_ir->carrier);
 	space = DIV_ROUND_CLOSEST((100 - gpio_ir->duty_cycle) *
@@ -91,76 +92,76 @@ static void gpio_ir_tx_modulated(struct gpio_ir *gpio_ir, uint *txbuf,
 
 	local_irq_disable();
 
-	edge = ktime_get();
+	edge = kसमय_get();
 
-	for (i = 0; i < count; i++) {
-		if (i % 2) {
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (i % 2) अणु
 			// space
-			edge = ktime_add_us(edge, txbuf[i]);
-			delta = ktime_us_delta(edge, ktime_get());
-			if (delta > 0)
+			edge = kसमय_add_us(edge, txbuf[i]);
+			delta = kसमय_us_delta(edge, kसमय_get());
+			अगर (delta > 0)
 				udelay(delta);
-		} else {
+		पूर्ण अन्यथा अणु
 			// pulse
-			ktime_t last = ktime_add_us(edge, txbuf[i]);
+			kसमय_प्रकार last = kसमय_add_us(edge, txbuf[i]);
 
-			while (ktime_before(ktime_get(), last)) {
+			जबतक (kसमय_beक्रमe(kसमय_get(), last)) अणु
 				gpiod_set_value(gpio_ir->gpio, 1);
-				edge = ktime_add_ns(edge, pulse);
-				delta = ktime_to_ns(ktime_sub(edge,
-							      ktime_get()));
-				if (delta > 0)
+				edge = kसमय_add_ns(edge, pulse);
+				delta = kसमय_प्रकारo_ns(kसमय_sub(edge,
+							      kसमय_get()));
+				अगर (delta > 0)
 					ndelay(delta);
 				gpiod_set_value(gpio_ir->gpio, 0);
-				edge = ktime_add_ns(edge, space);
-				delta = ktime_to_ns(ktime_sub(edge,
-							      ktime_get()));
-				if (delta > 0)
+				edge = kसमय_add_ns(edge, space);
+				delta = kसमय_प्रकारo_ns(kसमय_sub(edge,
+							      kसमय_get()));
+				अगर (delta > 0)
 					ndelay(delta);
-			}
+			पूर्ण
 
 			edge = last;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int gpio_ir_tx(struct rc_dev *dev, unsigned int *txbuf,
-		      unsigned int count)
-{
-	struct gpio_ir *gpio_ir = dev->priv;
-	unsigned long flags;
+अटल पूर्णांक gpio_ir_tx(काष्ठा rc_dev *dev, अचिन्हित पूर्णांक *txbuf,
+		      अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा gpio_ir *gpio_ir = dev->priv;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	if (gpio_ir->carrier)
+	अगर (gpio_ir->carrier)
 		gpio_ir_tx_modulated(gpio_ir, txbuf, count);
-	else
+	अन्यथा
 		gpio_ir_tx_unmodulated(gpio_ir, txbuf, count);
 	local_irq_restore(flags);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int gpio_ir_tx_probe(struct platform_device *pdev)
-{
-	struct gpio_ir *gpio_ir;
-	struct rc_dev *rcdev;
-	int rc;
+अटल पूर्णांक gpio_ir_tx_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gpio_ir *gpio_ir;
+	काष्ठा rc_dev *rcdev;
+	पूर्णांक rc;
 
-	gpio_ir = devm_kmalloc(&pdev->dev, sizeof(*gpio_ir), GFP_KERNEL);
-	if (!gpio_ir)
-		return -ENOMEM;
+	gpio_ir = devm_kदो_स्मृति(&pdev->dev, माप(*gpio_ir), GFP_KERNEL);
+	अगर (!gpio_ir)
+		वापस -ENOMEM;
 
 	rcdev = devm_rc_allocate_device(&pdev->dev, RC_DRIVER_IR_RAW_TX);
-	if (!rcdev)
-		return -ENOMEM;
+	अगर (!rcdev)
+		वापस -ENOMEM;
 
-	gpio_ir->gpio = devm_gpiod_get(&pdev->dev, NULL, GPIOD_OUT_LOW);
-	if (IS_ERR(gpio_ir->gpio)) {
-		if (PTR_ERR(gpio_ir->gpio) != -EPROBE_DEFER)
+	gpio_ir->gpio = devm_gpiod_get(&pdev->dev, शून्य, GPIOD_OUT_LOW);
+	अगर (IS_ERR(gpio_ir->gpio)) अणु
+		अगर (PTR_ERR(gpio_ir->gpio) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Failed to get gpio (%ld)\n",
 				PTR_ERR(gpio_ir->gpio));
-		return PTR_ERR(gpio_ir->gpio);
-	}
+		वापस PTR_ERR(gpio_ir->gpio);
+	पूर्ण
 
 	rcdev->priv = gpio_ir;
 	rcdev->driver_name = DRIVER_NAME;
@@ -172,21 +173,21 @@ static int gpio_ir_tx_probe(struct platform_device *pdev)
 	gpio_ir->carrier = 38000;
 	gpio_ir->duty_cycle = 50;
 
-	rc = devm_rc_register_device(&pdev->dev, rcdev);
-	if (rc < 0)
+	rc = devm_rc_रेजिस्टर_device(&pdev->dev, rcdev);
+	अगर (rc < 0)
 		dev_err(&pdev->dev, "failed to register rc device\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct platform_driver gpio_ir_tx_driver = {
+अटल काष्ठा platक्रमm_driver gpio_ir_tx_driver = अणु
 	.probe	= gpio_ir_tx_probe,
-	.driver = {
+	.driver = अणु
 		.name	= DRIVER_NAME,
 		.of_match_table = of_match_ptr(gpio_ir_tx_of_match),
-	},
-};
-module_platform_driver(gpio_ir_tx_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(gpio_ir_tx_driver);
 
 MODULE_DESCRIPTION("GPIO IR Bit Banging Transmitter");
 MODULE_AUTHOR("Sean Young <sean@mess.org>");

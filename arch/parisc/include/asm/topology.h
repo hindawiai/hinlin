@@ -1,36 +1,37 @@
-#ifndef _ASM_PARISC_TOPOLOGY_H
-#define _ASM_PARISC_TOPOLOGY_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_PARISC_TOPOLOGY_H
+#घोषणा _ASM_PARISC_TOPOLOGY_H
 
-#ifdef CONFIG_PARISC_CPU_TOPOLOGY
+#अगर_घोषित CONFIG_PARISC_CPU_TOPOLOGY
 
-#include <linux/cpumask.h>
+#समावेश <linux/cpumask.h>
 
-struct cputopo_parisc {
-	int thread_id;
-	int core_id;
-	int socket_id;
-	cpumask_t thread_sibling;
+काष्ठा cputopo_parisc अणु
+	पूर्णांक thपढ़ो_id;
+	पूर्णांक core_id;
+	पूर्णांक socket_id;
+	cpumask_t thपढ़ो_sibling;
 	cpumask_t core_sibling;
-};
+पूर्ण;
 
-extern struct cputopo_parisc cpu_topology[NR_CPUS];
+बाह्य काष्ठा cputopo_parisc cpu_topology[NR_CPUS];
 
-#define topology_physical_package_id(cpu)	(cpu_topology[cpu].socket_id)
-#define topology_core_id(cpu)		(cpu_topology[cpu].core_id)
-#define topology_core_cpumask(cpu)	(&cpu_topology[cpu].core_sibling)
-#define topology_sibling_cpumask(cpu)	(&cpu_topology[cpu].thread_sibling)
+#घोषणा topology_physical_package_id(cpu)	(cpu_topology[cpu].socket_id)
+#घोषणा topology_core_id(cpu)		(cpu_topology[cpu].core_id)
+#घोषणा topology_core_cpumask(cpu)	(&cpu_topology[cpu].core_sibling)
+#घोषणा topology_sibling_cpumask(cpu)	(&cpu_topology[cpu].thपढ़ो_sibling)
 
-void init_cpu_topology(void);
-void store_cpu_topology(unsigned int cpuid);
-const struct cpumask *cpu_coregroup_mask(int cpu);
+व्योम init_cpu_topology(व्योम);
+व्योम store_cpu_topology(अचिन्हित पूर्णांक cpuid);
+स्थिर काष्ठा cpumask *cpu_coregroup_mask(पूर्णांक cpu);
 
-#else
+#अन्यथा
 
-static inline void init_cpu_topology(void) { }
-static inline void store_cpu_topology(unsigned int cpuid) { }
+अटल अंतरभूत व्योम init_cpu_topology(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम store_cpu_topology(अचिन्हित पूर्णांक cpuid) अणु पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#include <asm-generic/topology.h>
+#समावेश <यंत्र-generic/topology.h>
 
-#endif /* _ASM_ARM_TOPOLOGY_H */
+#पूर्ण_अगर /* _ASM_ARM_TOPOLOGY_H */

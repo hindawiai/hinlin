@@ -1,622 +1,623 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/delay.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/delay.h>
 
-#include "dsi_phy.h"
-#include "dsi.xml.h"
+#समावेश "dsi_phy.h"
+#समावेश "dsi.xml.h"
 
 /*
- * DSI PLL 28nm (8960/A family) - clock diagram (eg: DSI1):
+ * DSI PLL 28nm (8960/A family) - घड़ी diagram (eg: DSI1):
  *
  *
  *                        +------+
- *  dsi1vco_clk ----o-----| DIV1 |---dsi1pllbit (not exposed as clock)
+ *  dsi1vco_clk ----o-----| DIV1 |---dsi1pllbit (not exposed as घड़ी)
  *  F * byte_clk    |     +------+
- *                  | bit clock divider (F / 8)
+ *                  | bit घड़ी भागider (F / 8)
  *                  |
  *                  |     +------+
  *                  o-----| DIV2 |---dsi0pllbyte---o---> To byte RCG
  *                  |     +------+                 | (sets parent rate)
- *                  | byte clock divider (F)       |
+ *                  | byte घड़ी भागider (F)       |
  *                  |                              |
  *                  |                              o---> To esc RCG
- *                  |                                (doesn't set parent rate)
+ *                  |                                (करोesn't set parent rate)
  *                  |
  *                  |     +------+
  *                  o-----| DIV3 |----dsi0pll------o---> To dsi RCG
  *                        +------+                 | (sets parent rate)
- *                  dsi clock divider (F * magic)  |
+ *                  dsi घड़ी भागider (F * magic)  |
  *                                                 |
  *                                                 o---> To pixel rcg
- *                                                  (doesn't set parent rate)
+ *                                                  (करोesn't set parent rate)
  */
 
-#define POLL_MAX_READS		8000
-#define POLL_TIMEOUT_US		1
+#घोषणा POLL_MAX_READS		8000
+#घोषणा POLL_TIMEOUT_US		1
 
-#define VCO_REF_CLK_RATE	27000000
-#define VCO_MIN_RATE		600000000
-#define VCO_MAX_RATE		1200000000
+#घोषणा VCO_REF_CLK_RATE	27000000
+#घोषणा VCO_MIN_RATE		600000000
+#घोषणा VCO_MAX_RATE		1200000000
 
-#define VCO_PREF_DIV_RATIO	27
+#घोषणा VCO_PREF_DIV_RATIO	27
 
-struct pll_28nm_cached_state {
-	unsigned long vco_rate;
-	u8 postdiv3;
-	u8 postdiv2;
-	u8 postdiv1;
-};
+काष्ठा pll_28nm_cached_state अणु
+	अचिन्हित दीर्घ vco_rate;
+	u8 postभाग3;
+	u8 postभाग2;
+	u8 postभाग1;
+पूर्ण;
 
-struct clk_bytediv {
-	struct clk_hw hw;
-	void __iomem *reg;
-};
+काष्ठा clk_byteभाग अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *reg;
+पूर्ण;
 
-struct dsi_pll_28nm {
-	struct clk_hw clk_hw;
+काष्ठा dsi_pll_28nm अणु
+	काष्ठा clk_hw clk_hw;
 
-	struct msm_dsi_phy *phy;
+	काष्ठा msm_dsi_phy *phy;
 
-	struct pll_28nm_cached_state cached_state;
-};
+	काष्ठा pll_28nm_cached_state cached_state;
+पूर्ण;
 
-#define to_pll_28nm(x)	container_of(x, struct dsi_pll_28nm, clk_hw)
+#घोषणा to_pll_28nm(x)	container_of(x, काष्ठा dsi_pll_28nm, clk_hw)
 
-static bool pll_28nm_poll_for_ready(struct dsi_pll_28nm *pll_28nm,
-				    int nb_tries, int timeout_us)
-{
+अटल bool pll_28nm_poll_क्रम_पढ़ोy(काष्ठा dsi_pll_28nm *pll_28nm,
+				    पूर्णांक nb_tries, पूर्णांक समयout_us)
+अणु
 	bool pll_locked = false;
 	u32 val;
 
-	while (nb_tries--) {
-		val = dsi_phy_read(pll_28nm->phy->pll_base + REG_DSI_28nm_8960_PHY_PLL_RDY);
+	जबतक (nb_tries--) अणु
+		val = dsi_phy_पढ़ो(pll_28nm->phy->pll_base + REG_DSI_28nm_8960_PHY_PLL_RDY);
 		pll_locked = !!(val & DSI_28nm_8960_PHY_PLL_RDY_PLL_RDY);
 
-		if (pll_locked)
-			break;
+		अगर (pll_locked)
+			अवरोध;
 
-		udelay(timeout_us);
-	}
+		udelay(समयout_us);
+	पूर्ण
 	DBG("DSI PLL is %slocked", pll_locked ? "" : "*not* ");
 
-	return pll_locked;
-}
+	वापस pll_locked;
+पूर्ण
 
 /*
  * Clock Callbacks
  */
-static int dsi_pll_28nm_clk_set_rate(struct clk_hw *hw, unsigned long rate,
-				     unsigned long parent_rate)
-{
-	struct dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
-	void __iomem *base = pll_28nm->phy->pll_base;
-	u32 val, temp, fb_divider;
+अटल पूर्णांक dsi_pll_28nm_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
+	व्योम __iomem *base = pll_28nm->phy->pll_base;
+	u32 val, temp, fb_भागider;
 
 	DBG("rate=%lu, parent's=%lu", rate, parent_rate);
 
 	temp = rate / 10;
 	val = VCO_REF_CLK_RATE / 10;
-	fb_divider = (temp * VCO_PREF_DIV_RATIO) / val;
-	fb_divider = fb_divider / 2 - 1;
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_1,
-			fb_divider & 0xff);
+	fb_भागider = (temp * VCO_PREF_DIV_RATIO) / val;
+	fb_भागider = fb_भागider / 2 - 1;
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_1,
+			fb_भागider & 0xff);
 
-	val = dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_2);
+	val = dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_2);
 
-	val |= (fb_divider >> 8) & 0x07;
+	val |= (fb_भागider >> 8) & 0x07;
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_2,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_2,
 			val);
 
-	val = dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_3);
+	val = dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_3);
 
 	val |= (VCO_PREF_DIV_RATIO - 1) & 0x3f;
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_3,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_3,
 			val);
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_6,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_6,
 			0xf);
 
-	val = dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8);
+	val = dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8);
 	val |= 0x7 << 4;
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8,
 			val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_pll_28nm_clk_is_enabled(struct clk_hw *hw)
-{
-	struct dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
+अटल पूर्णांक dsi_pll_28nm_clk_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
 
-	return pll_28nm_poll_for_ready(pll_28nm, POLL_MAX_READS,
+	वापस pll_28nm_poll_क्रम_पढ़ोy(pll_28nm, POLL_MAX_READS,
 					POLL_TIMEOUT_US);
-}
+पूर्ण
 
-static unsigned long dsi_pll_28nm_clk_recalc_rate(struct clk_hw *hw,
-						  unsigned long parent_rate)
-{
-	struct dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
-	void __iomem *base = pll_28nm->phy->pll_base;
-	unsigned long vco_rate;
-	u32 status, fb_divider, temp, ref_divider;
+अटल अचिन्हित दीर्घ dsi_pll_28nm_clk_recalc_rate(काष्ठा clk_hw *hw,
+						  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
+	व्योम __iomem *base = pll_28nm->phy->pll_base;
+	अचिन्हित दीर्घ vco_rate;
+	u32 status, fb_भागider, temp, ref_भागider;
 
 	VERB("parent_rate=%lu", parent_rate);
 
-	status = dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_0);
+	status = dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_0);
 
-	if (status & DSI_28nm_8960_PHY_PLL_CTRL_0_ENABLE) {
-		fb_divider = dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_1);
-		fb_divider &= 0xff;
-		temp = dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_2) & 0x07;
-		fb_divider = (temp << 8) | fb_divider;
-		fb_divider += 1;
+	अगर (status & DSI_28nm_8960_PHY_PLL_CTRL_0_ENABLE) अणु
+		fb_भागider = dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_1);
+		fb_भागider &= 0xff;
+		temp = dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_2) & 0x07;
+		fb_भागider = (temp << 8) | fb_भागider;
+		fb_भागider += 1;
 
-		ref_divider = dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_3);
-		ref_divider &= 0x3f;
-		ref_divider += 1;
+		ref_भागider = dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_3);
+		ref_भागider &= 0x3f;
+		ref_भागider += 1;
 
 		/* multiply by 2 */
-		vco_rate = (parent_rate / ref_divider) * fb_divider * 2;
-	} else {
+		vco_rate = (parent_rate / ref_भागider) * fb_भागider * 2;
+	पूर्ण अन्यथा अणु
 		vco_rate = 0;
-	}
+	पूर्ण
 
 	DBG("returning vco rate = %lu", vco_rate);
 
-	return vco_rate;
-}
+	वापस vco_rate;
+पूर्ण
 
-static int dsi_pll_28nm_vco_prepare(struct clk_hw *hw)
-{
-	struct dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
-	struct device *dev = &pll_28nm->phy->pdev->dev;
-	void __iomem *base = pll_28nm->phy->pll_base;
+अटल पूर्णांक dsi_pll_28nm_vco_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
+	काष्ठा device *dev = &pll_28nm->phy->pdev->dev;
+	व्योम __iomem *base = pll_28nm->phy->pll_base;
 	bool locked;
-	unsigned int bit_div, byte_div;
-	int max_reads = 1000, timeout_us = 100;
+	अचिन्हित पूर्णांक bit_भाग, byte_भाग;
+	पूर्णांक max_पढ़ोs = 1000, समयout_us = 100;
 	u32 val;
 
 	DBG("id=%d", pll_28nm->phy->id);
 
-	if (unlikely(pll_28nm->phy->pll_on))
-		return 0;
+	अगर (unlikely(pll_28nm->phy->pll_on))
+		वापस 0;
 
 	/*
-	 * before enabling the PLL, configure the bit clock divider since we
-	 * don't expose it as a clock to the outside world
-	 * 1: read back the byte clock divider that should already be set
-	 * 2: divide by 8 to get bit clock divider
-	 * 3: write it to POSTDIV1
+	 * beक्रमe enabling the PLL, configure the bit घड़ी भागider since we
+	 * करोn't expose it as a घड़ी to the outside world
+	 * 1: पढ़ो back the byte घड़ी भागider that should alपढ़ोy be set
+	 * 2: भागide by 8 to get bit घड़ी भागider
+	 * 3: ग_लिखो it to POSTDIV1
 	 */
-	val = dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_9);
-	byte_div = val + 1;
-	bit_div = byte_div / 8;
+	val = dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_9);
+	byte_भाग = val + 1;
+	bit_भाग = byte_भाग / 8;
 
-	val = dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8);
+	val = dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8);
 	val &= ~0xf;
-	val |= (bit_div - 1);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8, val);
+	val |= (bit_भाग - 1);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8, val);
 
 	/* enable the PLL */
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_0,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_0,
 			DSI_28nm_8960_PHY_PLL_CTRL_0_ENABLE);
 
-	locked = pll_28nm_poll_for_ready(pll_28nm, max_reads, timeout_us);
+	locked = pll_28nm_poll_क्रम_पढ़ोy(pll_28nm, max_पढ़ोs, समयout_us);
 
-	if (unlikely(!locked)) {
+	अगर (unlikely(!locked)) अणु
 		DRM_DEV_ERROR(dev, "DSI PLL lock failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	DBG("DSI PLL lock success");
 	pll_28nm->phy->pll_on = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_pll_28nm_vco_unprepare(struct clk_hw *hw)
-{
-	struct dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
+अटल व्योम dsi_pll_28nm_vco_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
 
 	DBG("id=%d", pll_28nm->phy->id);
 
-	if (unlikely(!pll_28nm->phy->pll_on))
-		return;
+	अगर (unlikely(!pll_28nm->phy->pll_on))
+		वापस;
 
-	dsi_phy_write(pll_28nm->phy->pll_base + REG_DSI_28nm_8960_PHY_PLL_CTRL_0, 0x00);
+	dsi_phy_ग_लिखो(pll_28nm->phy->pll_base + REG_DSI_28nm_8960_PHY_PLL_CTRL_0, 0x00);
 
 	pll_28nm->phy->pll_on = false;
-}
+पूर्ण
 
-static long dsi_pll_28nm_clk_round_rate(struct clk_hw *hw,
-		unsigned long rate, unsigned long *parent_rate)
-{
-	struct dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
+अटल दीर्घ dsi_pll_28nm_clk_round_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ rate, अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
 
-	if      (rate < pll_28nm->phy->cfg->min_pll_rate)
-		return  pll_28nm->phy->cfg->min_pll_rate;
-	else if (rate > pll_28nm->phy->cfg->max_pll_rate)
-		return  pll_28nm->phy->cfg->max_pll_rate;
-	else
-		return rate;
-}
+	अगर      (rate < pll_28nm->phy->cfg->min_pll_rate)
+		वापस  pll_28nm->phy->cfg->min_pll_rate;
+	अन्यथा अगर (rate > pll_28nm->phy->cfg->max_pll_rate)
+		वापस  pll_28nm->phy->cfg->max_pll_rate;
+	अन्यथा
+		वापस rate;
+पूर्ण
 
-static const struct clk_ops clk_ops_dsi_pll_28nm_vco = {
+अटल स्थिर काष्ठा clk_ops clk_ops_dsi_pll_28nm_vco = अणु
 	.round_rate = dsi_pll_28nm_clk_round_rate,
 	.set_rate = dsi_pll_28nm_clk_set_rate,
 	.recalc_rate = dsi_pll_28nm_clk_recalc_rate,
 	.prepare = dsi_pll_28nm_vco_prepare,
 	.unprepare = dsi_pll_28nm_vco_unprepare,
 	.is_enabled = dsi_pll_28nm_clk_is_enabled,
-};
+पूर्ण;
 
 /*
- * Custom byte clock divier clk_ops
+ * Custom byte घड़ी भागier clk_ops
  *
- * This clock is the entry point to configuring the PLL. The user (dsi host)
- * will set this clock's rate to the desired byte clock rate. The VCO lock
- * frequency is a multiple of the byte clock rate. The multiplication factor
- * (shown as F in the diagram above) is a function of the byte clock rate.
+ * This घड़ी is the entry poपूर्णांक to configuring the PLL. The user (dsi host)
+ * will set this घड़ी's rate to the desired byte घड़ी rate. The VCO lock
+ * frequency is a multiple of the byte घड़ी rate. The multiplication factor
+ * (shown as F in the diagram above) is a function of the byte घड़ी rate.
  *
- * This custom divider clock ensures that its parent (VCO) is set to the
- * desired rate, and that the byte clock postdivider (POSTDIV2) is configured
+ * This custom भागider घड़ी ensures that its parent (VCO) is set to the
+ * desired rate, and that the byte घड़ी postभागider (POSTDIV2) is configured
  * accordingly
  */
-#define to_clk_bytediv(_hw) container_of(_hw, struct clk_bytediv, hw)
+#घोषणा to_clk_byteभाग(_hw) container_of(_hw, काष्ठा clk_byteभाग, hw)
 
-static unsigned long clk_bytediv_recalc_rate(struct clk_hw *hw,
-		unsigned long parent_rate)
-{
-	struct clk_bytediv *bytediv = to_clk_bytediv(hw);
-	unsigned int div;
+अटल अचिन्हित दीर्घ clk_byteभाग_recalc_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_byteभाग *byteभाग = to_clk_byteभाग(hw);
+	अचिन्हित पूर्णांक भाग;
 
-	div = dsi_phy_read(bytediv->reg) & 0xff;
+	भाग = dsi_phy_पढ़ो(byteभाग->reg) & 0xff;
 
-	return parent_rate / (div + 1);
-}
+	वापस parent_rate / (भाग + 1);
+पूर्ण
 
-/* find multiplication factor(wrt byte clock) at which the VCO should be set */
-static unsigned int get_vco_mul_factor(unsigned long byte_clk_rate)
-{
-	unsigned long bit_mhz;
+/* find multiplication factor(wrt byte घड़ी) at which the VCO should be set */
+अटल अचिन्हित पूर्णांक get_vco_mul_factor(अचिन्हित दीर्घ byte_clk_rate)
+अणु
+	अचिन्हित दीर्घ bit_mhz;
 
-	/* convert to bit clock in Mhz */
+	/* convert to bit घड़ी in Mhz */
 	bit_mhz = (byte_clk_rate * 8) / 1000000;
 
-	if (bit_mhz < 125)
-		return 64;
-	else if (bit_mhz < 250)
-		return 32;
-	else if (bit_mhz < 600)
-		return 16;
-	else
-		return 8;
-}
+	अगर (bit_mhz < 125)
+		वापस 64;
+	अन्यथा अगर (bit_mhz < 250)
+		वापस 32;
+	अन्यथा अगर (bit_mhz < 600)
+		वापस 16;
+	अन्यथा
+		वापस 8;
+पूर्ण
 
-static long clk_bytediv_round_rate(struct clk_hw *hw, unsigned long rate,
-				   unsigned long *prate)
-{
-	unsigned long best_parent;
-	unsigned int factor;
+अटल दीर्घ clk_byteभाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				   अचिन्हित दीर्घ *prate)
+अणु
+	अचिन्हित दीर्घ best_parent;
+	अचिन्हित पूर्णांक factor;
 
 	factor = get_vco_mul_factor(rate);
 
 	best_parent = rate * factor;
 	*prate = clk_hw_round_rate(clk_hw_get_parent(hw), best_parent);
 
-	return *prate / factor;
-}
+	वापस *prate / factor;
+पूर्ण
 
-static int clk_bytediv_set_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long parent_rate)
-{
-	struct clk_bytediv *bytediv = to_clk_bytediv(hw);
+अटल पूर्णांक clk_byteभाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_byteभाग *byteभाग = to_clk_byteभाग(hw);
 	u32 val;
-	unsigned int factor;
+	अचिन्हित पूर्णांक factor;
 
 	factor = get_vco_mul_factor(rate);
 
-	val = dsi_phy_read(bytediv->reg);
+	val = dsi_phy_पढ़ो(byteभाग->reg);
 	val |= (factor - 1) & 0xff;
-	dsi_phy_write(bytediv->reg, val);
+	dsi_phy_ग_लिखो(byteभाग->reg, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Our special byte clock divider ops */
-static const struct clk_ops clk_bytediv_ops = {
-	.round_rate = clk_bytediv_round_rate,
-	.set_rate = clk_bytediv_set_rate,
-	.recalc_rate = clk_bytediv_recalc_rate,
-};
+/* Our special byte घड़ी भागider ops */
+अटल स्थिर काष्ठा clk_ops clk_byteभाग_ops = अणु
+	.round_rate = clk_byteभाग_round_rate,
+	.set_rate = clk_byteभाग_set_rate,
+	.recalc_rate = clk_byteभाग_recalc_rate,
+पूर्ण;
 
 /*
  * PLL Callbacks
  */
-static void dsi_28nm_pll_save_state(struct msm_dsi_phy *phy)
-{
-	struct dsi_pll_28nm *pll_28nm = to_pll_28nm(phy->vco_hw);
-	struct pll_28nm_cached_state *cached_state = &pll_28nm->cached_state;
-	void __iomem *base = pll_28nm->phy->pll_base;
+अटल व्योम dsi_28nm_pll_save_state(काष्ठा msm_dsi_phy *phy)
+अणु
+	काष्ठा dsi_pll_28nm *pll_28nm = to_pll_28nm(phy->vco_hw);
+	काष्ठा pll_28nm_cached_state *cached_state = &pll_28nm->cached_state;
+	व्योम __iomem *base = pll_28nm->phy->pll_base;
 
-	cached_state->postdiv3 =
-			dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_10);
-	cached_state->postdiv2 =
-			dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_9);
-	cached_state->postdiv1 =
-			dsi_phy_read(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8);
+	cached_state->postभाग3 =
+			dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_10);
+	cached_state->postभाग2 =
+			dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_9);
+	cached_state->postभाग1 =
+			dsi_phy_पढ़ो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8);
 
 	cached_state->vco_rate = clk_hw_get_rate(phy->vco_hw);
-}
+पूर्ण
 
-static int dsi_28nm_pll_restore_state(struct msm_dsi_phy *phy)
-{
-	struct dsi_pll_28nm *pll_28nm = to_pll_28nm(phy->vco_hw);
-	struct pll_28nm_cached_state *cached_state = &pll_28nm->cached_state;
-	void __iomem *base = pll_28nm->phy->pll_base;
-	int ret;
+अटल पूर्णांक dsi_28nm_pll_restore_state(काष्ठा msm_dsi_phy *phy)
+अणु
+	काष्ठा dsi_pll_28nm *pll_28nm = to_pll_28nm(phy->vco_hw);
+	काष्ठा pll_28nm_cached_state *cached_state = &pll_28nm->cached_state;
+	व्योम __iomem *base = pll_28nm->phy->pll_base;
+	पूर्णांक ret;
 
 	ret = dsi_pll_28nm_clk_set_rate(phy->vco_hw,
 					cached_state->vco_rate, 0);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(&pll_28nm->phy->pdev->dev,
 			"restore vco rate failed. ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_10,
-			cached_state->postdiv3);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_9,
-			cached_state->postdiv2);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8,
-			cached_state->postdiv1);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_10,
+			cached_state->postभाग3);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_9,
+			cached_state->postभाग2);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_PLL_CTRL_8,
+			cached_state->postभाग1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pll_28nm_register(struct dsi_pll_28nm *pll_28nm, struct clk_hw **provided_clocks)
-{
-	char *clk_name, *parent_name, *vco_name;
-	struct clk_init_data vco_init = {
-		.parent_names = (const char *[]){ "pxo" },
+अटल पूर्णांक pll_28nm_रेजिस्टर(काष्ठा dsi_pll_28nm *pll_28nm, काष्ठा clk_hw **provided_घड़ीs)
+अणु
+	अक्षर *clk_name, *parent_name, *vco_name;
+	काष्ठा clk_init_data vco_init = अणु
+		.parent_names = (स्थिर अक्षर *[])अणु "pxo" पूर्ण,
 		.num_parents = 1,
 		.flags = CLK_IGNORE_UNUSED,
 		.ops = &clk_ops_dsi_pll_28nm_vco,
-	};
-	struct device *dev = &pll_28nm->phy->pdev->dev;
-	struct clk_hw *hw;
-	struct clk_bytediv *bytediv;
-	struct clk_init_data bytediv_init = { };
-	int ret;
+	पूर्ण;
+	काष्ठा device *dev = &pll_28nm->phy->pdev->dev;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_byteभाग *byteभाग;
+	काष्ठा clk_init_data byteभाग_init = अणु पूर्ण;
+	पूर्णांक ret;
 
 	DBG("%d", pll_28nm->phy->id);
 
-	bytediv = devm_kzalloc(dev, sizeof(*bytediv), GFP_KERNEL);
-	if (!bytediv)
-		return -ENOMEM;
+	byteभाग = devm_kzalloc(dev, माप(*byteभाग), GFP_KERNEL);
+	अगर (!byteभाग)
+		वापस -ENOMEM;
 
 	vco_name = devm_kzalloc(dev, 32, GFP_KERNEL);
-	if (!vco_name)
-		return -ENOMEM;
+	अगर (!vco_name)
+		वापस -ENOMEM;
 
 	parent_name = devm_kzalloc(dev, 32, GFP_KERNEL);
-	if (!parent_name)
-		return -ENOMEM;
+	अगर (!parent_name)
+		वापस -ENOMEM;
 
 	clk_name = devm_kzalloc(dev, 32, GFP_KERNEL);
-	if (!clk_name)
-		return -ENOMEM;
+	अगर (!clk_name)
+		वापस -ENOMEM;
 
-	snprintf(vco_name, 32, "dsi%dvco_clk", pll_28nm->phy->id);
+	snम_लिखो(vco_name, 32, "dsi%dvco_clk", pll_28nm->phy->id);
 	vco_init.name = vco_name;
 
 	pll_28nm->clk_hw.init = &vco_init;
 
-	ret = devm_clk_hw_register(dev, &pll_28nm->clk_hw);
-	if (ret)
-		return ret;
+	ret = devm_clk_hw_रेजिस्टर(dev, &pll_28nm->clk_hw);
+	अगर (ret)
+		वापस ret;
 
-	/* prepare and register bytediv */
-	bytediv->hw.init = &bytediv_init;
-	bytediv->reg = pll_28nm->phy->pll_base + REG_DSI_28nm_8960_PHY_PLL_CTRL_9;
+	/* prepare and रेजिस्टर byteभाग */
+	byteभाग->hw.init = &byteभाग_init;
+	byteभाग->reg = pll_28nm->phy->pll_base + REG_DSI_28nm_8960_PHY_PLL_CTRL_9;
 
-	snprintf(parent_name, 32, "dsi%dvco_clk", pll_28nm->phy->id);
-	snprintf(clk_name, 32, "dsi%dpllbyte", pll_28nm->phy->id);
+	snम_लिखो(parent_name, 32, "dsi%dvco_clk", pll_28nm->phy->id);
+	snम_लिखो(clk_name, 32, "dsi%dpllbyte", pll_28nm->phy->id);
 
-	bytediv_init.name = clk_name;
-	bytediv_init.ops = &clk_bytediv_ops;
-	bytediv_init.flags = CLK_SET_RATE_PARENT;
-	bytediv_init.parent_names = (const char * const *) &parent_name;
-	bytediv_init.num_parents = 1;
+	byteभाग_init.name = clk_name;
+	byteभाग_init.ops = &clk_byteभाग_ops;
+	byteभाग_init.flags = CLK_SET_RATE_PARENT;
+	byteभाग_init.parent_names = (स्थिर अक्षर * स्थिर *) &parent_name;
+	byteभाग_init.num_parents = 1;
 
 	/* DIV2 */
-	ret = devm_clk_hw_register(dev, &bytediv->hw);
-	if (ret)
-		return ret;
-	provided_clocks[DSI_BYTE_PLL_CLK] = &bytediv->hw;
+	ret = devm_clk_hw_रेजिस्टर(dev, &byteभाग->hw);
+	अगर (ret)
+		वापस ret;
+	provided_घड़ीs[DSI_BYTE_PLL_CLK] = &byteभाग->hw;
 
-	snprintf(clk_name, 32, "dsi%dpll", pll_28nm->phy->id);
+	snम_लिखो(clk_name, 32, "dsi%dpll", pll_28nm->phy->id);
 	/* DIV3 */
-	hw = devm_clk_hw_register_divider(dev, clk_name,
+	hw = devm_clk_hw_रेजिस्टर_भागider(dev, clk_name,
 				parent_name, 0, pll_28nm->phy->pll_base +
 				REG_DSI_28nm_8960_PHY_PLL_CTRL_10,
-				0, 8, 0, NULL);
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
-	provided_clocks[DSI_PIXEL_PLL_CLK] = hw;
+				0, 8, 0, शून्य);
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
+	provided_घड़ीs[DSI_PIXEL_PLL_CLK] = hw;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_pll_28nm_8960_init(struct msm_dsi_phy *phy)
-{
-	struct platform_device *pdev = phy->pdev;
-	struct dsi_pll_28nm *pll_28nm;
-	int ret;
+अटल पूर्णांक dsi_pll_28nm_8960_init(काष्ठा msm_dsi_phy *phy)
+अणु
+	काष्ठा platक्रमm_device *pdev = phy->pdev;
+	काष्ठा dsi_pll_28nm *pll_28nm;
+	पूर्णांक ret;
 
-	if (!pdev)
-		return -ENODEV;
+	अगर (!pdev)
+		वापस -ENODEV;
 
-	pll_28nm = devm_kzalloc(&pdev->dev, sizeof(*pll_28nm), GFP_KERNEL);
-	if (!pll_28nm)
-		return -ENOMEM;
+	pll_28nm = devm_kzalloc(&pdev->dev, माप(*pll_28nm), GFP_KERNEL);
+	अगर (!pll_28nm)
+		वापस -ENOMEM;
 
 	pll_28nm->phy = phy;
 
-	ret = pll_28nm_register(pll_28nm, phy->provided_clocks->hws);
-	if (ret) {
+	ret = pll_28nm_रेजिस्टर(pll_28nm, phy->provided_घड़ीs->hws);
+	अगर (ret) अणु
 		DRM_DEV_ERROR(&pdev->dev, "failed to register PLL: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	phy->vco_hw = &pll_28nm->clk_hw;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_28nm_dphy_set_timing(struct msm_dsi_phy *phy,
-		struct msm_dsi_dphy_timing *timing)
-{
-	void __iomem *base = phy->base;
+अटल व्योम dsi_28nm_dphy_set_timing(काष्ठा msm_dsi_phy *phy,
+		काष्ठा msm_dsi_dphy_timing *timing)
+अणु
+	व्योम __iomem *base = phy->base;
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_0,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_0,
 		DSI_28nm_8960_PHY_TIMING_CTRL_0_CLK_ZERO(timing->clk_zero));
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_1,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_1,
 		DSI_28nm_8960_PHY_TIMING_CTRL_1_CLK_TRAIL(timing->clk_trail));
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_2,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_2,
 		DSI_28nm_8960_PHY_TIMING_CTRL_2_CLK_PREPARE(timing->clk_prepare));
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_3, 0x0);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_4,
-		DSI_28nm_8960_PHY_TIMING_CTRL_4_HS_EXIT(timing->hs_exit));
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_5,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_3, 0x0);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_4,
+		DSI_28nm_8960_PHY_TIMING_CTRL_4_HS_EXIT(timing->hs_निकास));
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_5,
 		DSI_28nm_8960_PHY_TIMING_CTRL_5_HS_ZERO(timing->hs_zero));
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_6,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_6,
 		DSI_28nm_8960_PHY_TIMING_CTRL_6_HS_PREPARE(timing->hs_prepare));
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_7,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_7,
 		DSI_28nm_8960_PHY_TIMING_CTRL_7_HS_TRAIL(timing->hs_trail));
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_8,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_8,
 		DSI_28nm_8960_PHY_TIMING_CTRL_8_HS_RQST(timing->hs_rqst));
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_9,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_9,
 		DSI_28nm_8960_PHY_TIMING_CTRL_9_TA_GO(timing->ta_go) |
 		DSI_28nm_8960_PHY_TIMING_CTRL_9_TA_SURE(timing->ta_sure));
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_10,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_10,
 		DSI_28nm_8960_PHY_TIMING_CTRL_10_TA_GET(timing->ta_get));
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_11,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_TIMING_CTRL_11,
 		DSI_28nm_8960_PHY_TIMING_CTRL_11_TRIG3_CMD(0));
-}
+पूर्ण
 
-static void dsi_28nm_phy_regulator_init(struct msm_dsi_phy *phy)
-{
-	void __iomem *base = phy->reg_base;
+अटल व्योम dsi_28nm_phy_regulator_init(काष्ठा msm_dsi_phy *phy)
+अणु
+	व्योम __iomem *base = phy->reg_base;
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_0, 0x3);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_1, 1);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_2, 1);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_3, 0);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_4,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_0, 0x3);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_1, 1);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_2, 1);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_3, 0);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_4,
 		0x100);
-}
+पूर्ण
 
-static void dsi_28nm_phy_regulator_ctrl(struct msm_dsi_phy *phy)
-{
-	void __iomem *base = phy->reg_base;
+अटल व्योम dsi_28nm_phy_regulator_ctrl(काष्ठा msm_dsi_phy *phy)
+अणु
+	व्योम __iomem *base = phy->reg_base;
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_0, 0x3);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_1, 0xa);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_2, 0x4);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_3, 0x0);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_4, 0x20);
-}
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_0, 0x3);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_1, 0xa);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_2, 0x4);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_3, 0x0);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CTRL_4, 0x20);
+पूर्ण
 
-static void dsi_28nm_phy_calibration(struct msm_dsi_phy *phy)
-{
-	void __iomem *base = phy->reg_base;
+अटल व्योम dsi_28nm_phy_calibration(काष्ठा msm_dsi_phy *phy)
+अणु
+	व्योम __iomem *base = phy->reg_base;
 	u32 status;
-	int i = 5000;
+	पूर्णांक i = 5000;
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CAL_PWR_CFG,
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_REGULATOR_CAL_PWR_CFG,
 			0x3);
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_CAL_SW_CFG_2, 0x0);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_CFG_1, 0x5a);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_CFG_3, 0x10);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_CFG_4, 0x1);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_CFG_0, 0x1);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_CAL_SW_CFG_2, 0x0);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_CFG_1, 0x5a);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_CFG_3, 0x10);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_CFG_4, 0x1);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_CFG_0, 0x1);
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_TRIGGER, 0x1);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_TRIGGER, 0x1);
 	usleep_range(5000, 6000);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_TRIGGER, 0x0);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_MISC_CAL_HW_TRIGGER, 0x0);
 
-	do {
-		status = dsi_phy_read(base +
+	करो अणु
+		status = dsi_phy_पढ़ो(base +
 				REG_DSI_28nm_8960_PHY_MISC_CAL_STATUS);
 
-		if (!(status & DSI_28nm_8960_PHY_MISC_CAL_STATUS_CAL_BUSY))
-			break;
+		अगर (!(status & DSI_28nm_8960_PHY_MISC_CAL_STATUS_CAL_BUSY))
+			अवरोध;
 
 		udelay(1);
-	} while (--i > 0);
-}
+	पूर्ण जबतक (--i > 0);
+पूर्ण
 
-static void dsi_28nm_phy_lane_config(struct msm_dsi_phy *phy)
-{
-	void __iomem *base = phy->base;
-	int i;
+अटल व्योम dsi_28nm_phy_lane_config(काष्ठा msm_dsi_phy *phy)
+अणु
+	व्योम __iomem *base = phy->base;
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++) {
-		dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LN_CFG_0(i), 0x80);
-		dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LN_CFG_1(i), 0x45);
-		dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LN_CFG_2(i), 0x00);
-		dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LN_TEST_DATAPATH(i),
+	क्रम (i = 0; i < 4; i++) अणु
+		dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LN_CFG_0(i), 0x80);
+		dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LN_CFG_1(i), 0x45);
+		dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LN_CFG_2(i), 0x00);
+		dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LN_TEST_DATAPATH(i),
 			0x00);
-		dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LN_TEST_STR_0(i),
+		dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LN_TEST_STR_0(i),
 			0x01);
-		dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LN_TEST_STR_1(i),
+		dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LN_TEST_STR_1(i),
 			0x66);
-	}
+	पूर्ण
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LNCK_CFG_0, 0x40);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LNCK_CFG_1, 0x67);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LNCK_CFG_2, 0x0);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LNCK_TEST_DATAPATH, 0x0);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LNCK_TEST_STR0, 0x1);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LNCK_TEST_STR1, 0x88);
-}
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LNCK_CFG_0, 0x40);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LNCK_CFG_1, 0x67);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LNCK_CFG_2, 0x0);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LNCK_TEST_DATAPATH, 0x0);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LNCK_TEST_STR0, 0x1);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LNCK_TEST_STR1, 0x88);
+पूर्ण
 
-static int dsi_28nm_phy_enable(struct msm_dsi_phy *phy,
-				struct msm_dsi_phy_clk_request *clk_req)
-{
-	struct msm_dsi_dphy_timing *timing = &phy->timing;
-	void __iomem *base = phy->base;
+अटल पूर्णांक dsi_28nm_phy_enable(काष्ठा msm_dsi_phy *phy,
+				काष्ठा msm_dsi_phy_clk_request *clk_req)
+अणु
+	काष्ठा msm_dsi_dphy_timing *timing = &phy->timing;
+	व्योम __iomem *base = phy->base;
 
 	DBG("");
 
-	if (msm_dsi_dphy_timing_calc(timing, clk_req)) {
+	अगर (msm_dsi_dphy_timing_calc(timing, clk_req)) अणु
 		DRM_DEV_ERROR(&phy->pdev->dev,
 			"%s: D-PHY timing calculation failed\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dsi_28nm_phy_regulator_init(phy);
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_LDO_CTRL, 0x04);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_LDO_CTRL, 0x04);
 
 	/* strength control */
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_STRENGTH_0, 0xff);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_STRENGTH_1, 0x00);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_STRENGTH_2, 0x06);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_STRENGTH_0, 0xff);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_STRENGTH_1, 0x00);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_STRENGTH_2, 0x06);
 
 	/* phy ctrl */
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_CTRL_0, 0x5f);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_CTRL_1, 0x00);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_CTRL_2, 0x00);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_CTRL_3, 0x10);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_CTRL_0, 0x5f);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_CTRL_1, 0x00);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_CTRL_2, 0x00);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_CTRL_3, 0x10);
 
 	dsi_28nm_phy_regulator_ctrl(phy);
 
@@ -624,44 +625,44 @@ static int dsi_28nm_phy_enable(struct msm_dsi_phy *phy,
 
 	dsi_28nm_phy_lane_config(phy);
 
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_BIST_CTRL_4, 0x0f);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_BIST_CTRL_1, 0x03);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_BIST_CTRL_0, 0x03);
-	dsi_phy_write(base + REG_DSI_28nm_8960_PHY_BIST_CTRL_4, 0x0);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_BIST_CTRL_4, 0x0f);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_BIST_CTRL_1, 0x03);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_BIST_CTRL_0, 0x03);
+	dsi_phy_ग_लिखो(base + REG_DSI_28nm_8960_PHY_BIST_CTRL_4, 0x0);
 
 	dsi_28nm_dphy_set_timing(phy, timing);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_28nm_phy_disable(struct msm_dsi_phy *phy)
-{
-	dsi_phy_write(phy->base + REG_DSI_28nm_8960_PHY_CTRL_0, 0x0);
+अटल व्योम dsi_28nm_phy_disable(काष्ठा msm_dsi_phy *phy)
+अणु
+	dsi_phy_ग_लिखो(phy->base + REG_DSI_28nm_8960_PHY_CTRL_0, 0x0);
 
 	/*
-	 * Wait for the registers writes to complete in order to
+	 * Wait क्रम the रेजिस्टरs ग_लिखोs to complete in order to
 	 * ensure that the phy is completely disabled
 	 */
 	wmb();
-}
+पूर्ण
 
-const struct msm_dsi_phy_cfg dsi_phy_28nm_8960_cfgs = {
+स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_28nm_8960_cfgs = अणु
 	.has_phy_regulator = true,
-	.reg_cfg = {
+	.reg_cfg = अणु
 		.num = 1,
-		.regs = {
-			{"vddio", 100000, 100},	/* 1.8 V */
-		},
-	},
-	.ops = {
+		.regs = अणु
+			अणु"vddio", 100000, 100पूर्ण,	/* 1.8 V */
+		पूर्ण,
+	पूर्ण,
+	.ops = अणु
 		.enable = dsi_28nm_phy_enable,
 		.disable = dsi_28nm_phy_disable,
 		.pll_init = dsi_pll_28nm_8960_init,
 		.save_pll_state = dsi_28nm_pll_save_state,
 		.restore_pll_state = dsi_28nm_pll_restore_state,
-	},
+	पूर्ण,
 	.min_pll_rate = VCO_MIN_RATE,
 	.max_pll_rate = VCO_MAX_RATE,
-	.io_start = { 0x4700300, 0x5800300 },
+	.io_start = अणु 0x4700300, 0x5800300 पूर्ण,
 	.num_dsi_phy = 2,
-};
+पूर्ण;

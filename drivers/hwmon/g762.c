@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * g762 - Driver for the Global Mixed-mode Technology Inc. fan speed
+ * g762 - Driver क्रम the Global Mixed-mode Technology Inc. fan speed
  *        PWM controller chips from G762 family, i.e. G762 and G763
  *
  * Copyright (C) 2013, Arnaud EBALARD <arno@natisbad.org>
  *
- * This work is based on a basic version for 2.6.31 kernel developed
- * by Olivier Mouchet for LaCie. Updates and correction have been
- * performed to run on recent kernels. Additional features, like the
- * ability to configure various characteristics via .dts file or
+ * This work is based on a basic version क्रम 2.6.31 kernel developed
+ * by Olivier Mouchet क्रम LaCie. Updates and correction have been
+ * perक्रमmed to run on recent kernels. Additional features, like the
+ * ability to configure various अक्षरacteristics via .dts file or
  * board init file have been added. Detailed datasheet on which this
  * development is based is available here:
  *
@@ -27,126 +28,126 @@
  *       http://www.gmt.com.tw/product/datasheet/EDS-762_3.pdf
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/jiffies.h>
-#include <linux/i2c.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
-#include <linux/kernel.h>
-#include <linux/clk.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_data/g762.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_data/g762.h>
 
-#define DRVNAME "g762"
+#घोषणा DRVNAME "g762"
 
-static const struct i2c_device_id g762_id[] = {
-	{ "g762", 0 },
-	{ "g763", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id g762_id[] = अणु
+	अणु "g762", 0 पूर्ण,
+	अणु "g763", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, g762_id);
 
-enum g762_regs {
+क्रमागत g762_regs अणु
 	G762_REG_SET_CNT  = 0x00,
 	G762_REG_ACT_CNT  = 0x01,
 	G762_REG_FAN_STA  = 0x02,
 	G762_REG_SET_OUT  = 0x03,
 	G762_REG_FAN_CMD1 = 0x04,
 	G762_REG_FAN_CMD2 = 0x05,
-};
+पूर्ण;
 
-/* Config register bits */
-#define G762_REG_FAN_CMD1_DET_FAN_FAIL  0x80 /* enable fan_fail signal */
-#define G762_REG_FAN_CMD1_DET_FAN_OOC   0x40 /* enable fan_out_of_control */
-#define G762_REG_FAN_CMD1_OUT_MODE      0x20 /* out mode: PWM or DC */
-#define G762_REG_FAN_CMD1_FAN_MODE      0x10 /* fan mode: closed/open-loop */
-#define G762_REG_FAN_CMD1_CLK_DIV_ID1   0x08 /* clock divisor value */
-#define G762_REG_FAN_CMD1_CLK_DIV_ID0   0x04
-#define G762_REG_FAN_CMD1_PWM_POLARITY  0x02 /* PWM polarity */
-#define G762_REG_FAN_CMD1_PULSE_PER_REV 0x01 /* pulse per fan revolution */
+/* Config रेजिस्टर bits */
+#घोषणा G762_REG_FAN_CMD1_DET_FAN_FAIL  0x80 /* enable fan_fail संकेत */
+#घोषणा G762_REG_FAN_CMD1_DET_FAN_OOC   0x40 /* enable fan_out_of_control */
+#घोषणा G762_REG_FAN_CMD1_OUT_MODE      0x20 /* out mode: PWM or DC */
+#घोषणा G762_REG_FAN_CMD1_FAN_MODE      0x10 /* fan mode: बंदd/खोलो-loop */
+#घोषणा G762_REG_FAN_CMD1_CLK_DIV_ID1   0x08 /* घड़ी भागisor value */
+#घोषणा G762_REG_FAN_CMD1_CLK_DIV_ID0   0x04
+#घोषणा G762_REG_FAN_CMD1_PWM_POLARITY  0x02 /* PWM polarity */
+#घोषणा G762_REG_FAN_CMD1_PULSE_PER_REV 0x01 /* pulse per fan revolution */
 
-#define G762_REG_FAN_CMD2_GEAR_MODE_1   0x08 /* fan gear mode */
-#define G762_REG_FAN_CMD2_GEAR_MODE_0   0x04
-#define G762_REG_FAN_CMD2_FAN_STARTV_1  0x02 /* fan startup voltage */
-#define G762_REG_FAN_CMD2_FAN_STARTV_0  0x01
+#घोषणा G762_REG_FAN_CMD2_GEAR_MODE_1   0x08 /* fan gear mode */
+#घोषणा G762_REG_FAN_CMD2_GEAR_MODE_0   0x04
+#घोषणा G762_REG_FAN_CMD2_FAN_STARTV_1  0x02 /* fan startup voltage */
+#घोषणा G762_REG_FAN_CMD2_FAN_STARTV_0  0x01
 
-#define G762_REG_FAN_STA_FAIL           0x02 /* fan fail */
-#define G762_REG_FAN_STA_OOC            0x01 /* fan out of control */
+#घोषणा G762_REG_FAN_STA_FAIL           0x02 /* fan fail */
+#घोषणा G762_REG_FAN_STA_OOC            0x01 /* fan out of control */
 
-/* Config register values */
-#define G762_OUT_MODE_PWM            1
-#define G762_OUT_MODE_DC             0
+/* Config रेजिस्टर values */
+#घोषणा G762_OUT_MODE_PWM            1
+#घोषणा G762_OUT_MODE_DC             0
 
-#define G762_FAN_MODE_CLOSED_LOOP    2
-#define G762_FAN_MODE_OPEN_LOOP      1
+#घोषणा G762_FAN_MODE_CLOSED_LOOP    2
+#घोषणा G762_FAN_MODE_OPEN_LOOP      1
 
-#define G762_PWM_POLARITY_NEGATIVE   1
-#define G762_PWM_POLARITY_POSITIVE   0
+#घोषणा G762_PWM_POLARITY_NEGATIVE   1
+#घोषणा G762_PWM_POLARITY_POSITIVE   0
 
-/* Register data is read (and cached) at most once per second. */
-#define G762_UPDATE_INTERVAL    HZ
+/* Register data is पढ़ो (and cached) at most once per second. */
+#घोषणा G762_UPDATE_INTERVAL    HZ
 
 /*
  * Extract pulse count per fan revolution value (2 or 4) from given
- * FAN_CMD1 register value.
+ * FAN_CMD1 रेजिस्टर value.
  */
-#define G762_PULSE_FROM_REG(reg) \
+#घोषणा G762_PULSE_FROM_REG(reg) \
 	((((reg) & G762_REG_FAN_CMD1_PULSE_PER_REV) + 1) << 1)
 
 /*
- * Extract fan clock divisor (1, 2, 4 or 8) from given FAN_CMD1
- * register value.
+ * Extract fan घड़ी भागisor (1, 2, 4 or 8) from given FAN_CMD1
+ * रेजिस्टर value.
  */
-#define G762_CLKDIV_FROM_REG(reg) \
+#घोषणा G762_CLKDIV_FROM_REG(reg) \
 	(1 << (((reg) & (G762_REG_FAN_CMD1_CLK_DIV_ID0 |	\
 			 G762_REG_FAN_CMD1_CLK_DIV_ID1)) >> 2))
 
 /*
  * Extract fan gear mode multiplier value (0, 2 or 4) from given
- * FAN_CMD2 register value.
+ * FAN_CMD2 रेजिस्टर value.
  */
-#define G762_GEARMULT_FROM_REG(reg) \
+#घोषणा G762_GEARMULT_FROM_REG(reg) \
 	(1 << (((reg) & (G762_REG_FAN_CMD2_GEAR_MODE_0 |	\
 			 G762_REG_FAN_CMD2_GEAR_MODE_1)) >> 2))
 
-struct g762_data {
-	struct i2c_client *client;
-	struct clk *clk;
+काष्ठा g762_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा clk *clk;
 
 	/* update mutex */
-	struct mutex update_lock;
+	काष्ठा mutex update_lock;
 
-	/* board specific parameters. */
+	/* board specअगरic parameters. */
 	u32 clk_freq;
 
-	/* g762 register cache */
+	/* g762 रेजिस्टर cache */
 	bool valid;
-	unsigned long last_updated; /* in jiffies */
+	अचिन्हित दीर्घ last_updated; /* in jअगरfies */
 
-	u8 set_cnt;  /* controls fan rotation speed in closed-loop mode */
+	u8 set_cnt;  /* controls fan rotation speed in बंदd-loop mode */
 	u8 act_cnt;  /* provides access to current fan RPM value */
 	u8 fan_sta;  /* bit 0: set when actual fan speed is more than
 		      *        25% outside requested fan speed
 		      * bit 1: set when no transition occurs on fan
-		      *        pin for 0.7s
+		      *        pin क्रम 0.7s
 		      */
-	u8 set_out;  /* controls fan rotation speed in open-loop mode */
+	u8 set_out;  /* controls fan rotation speed in खोलो-loop mode */
 	u8 fan_cmd1; /*   0: FG_PLS_ID0 FG pulses count per revolution
 		      *      0: 2 counts per revolution
 		      *      1: 4 counts per revolution
 		      *   1: PWM_POLARITY 1: negative_duty
 		      *                   0: positive_duty
 		      * 2,3: [FG_CLOCK_ID0, FG_CLK_ID1]
-		      *         00: Divide fan clock by 1
-		      *         01: Divide fan clock by 2
-		      *         10: Divide fan clock by 4
-		      *         11: Divide fan clock by 8
-		      *   4: FAN_MODE 1:closed-loop, 0:open-loop
+		      *         00: Divide fan घड़ी by 1
+		      *         01: Divide fan घड़ी by 2
+		      *         10: Divide fan घड़ी by 4
+		      *         11: Divide fan घड़ी by 8
+		      *   4: FAN_MODE 1:बंदd-loop, 0:खोलो-loop
 		      *   5: OUT_MODE 1:PWM, 0:DC
 		      *   6: DET_FAN_OOC enable "fan ooc" status
 		      *   7: DET_FAN_FAIL enable "fan fail" status
@@ -158,470 +159,470 @@ struct g762_data {
 		      *         10: multiplier = 4
 		      *   4: Mask ALERT# (g763 only)
 		      */
-};
+पूर्ण;
 
 /*
- * Convert count value from fan controller register (FAN_SET_CNT) into fan
- * speed RPM value. Note that the datasheet documents a basic formula;
- * influence of additional parameters (fan clock divisor, fan gear mode)
+ * Convert count value from fan controller रेजिस्टर (FAN_SET_CNT) पूर्णांकo fan
+ * speed RPM value. Note that the datasheet करोcuments a basic क्रमmula;
+ * influence of additional parameters (fan घड़ी भागisor, fan gear mode)
  * have been infered from examples in the datasheet and tests.
  */
-static inline unsigned int rpm_from_cnt(u8 cnt, u32 clk_freq, u16 p,
-					u8 clk_div, u8 gear_mult)
-{
-	if (cnt == 0xff)  /* setting cnt to 255 stops the fan */
-		return 0;
+अटल अंतरभूत अचिन्हित पूर्णांक rpm_from_cnt(u8 cnt, u32 clk_freq, u16 p,
+					u8 clk_भाग, u8 gear_mult)
+अणु
+	अगर (cnt == 0xff)  /* setting cnt to 255 stops the fan */
+		वापस 0;
 
-	return (clk_freq * 30 * gear_mult) / ((cnt ? cnt : 1) * p * clk_div);
-}
+	वापस (clk_freq * 30 * gear_mult) / ((cnt ? cnt : 1) * p * clk_भाग);
+पूर्ण
 
 /*
- * Convert fan RPM value from sysfs into count value for fan controller
- * register (FAN_SET_CNT).
+ * Convert fan RPM value from sysfs पूर्णांकo count value क्रम fan controller
+ * रेजिस्टर (FAN_SET_CNT).
  */
-static inline unsigned char cnt_from_rpm(unsigned long rpm, u32 clk_freq, u16 p,
-					 u8 clk_div, u8 gear_mult)
-{
-	unsigned long f1 = clk_freq * 30 * gear_mult;
-	unsigned long f2 = p * clk_div;
+अटल अंतरभूत अचिन्हित अक्षर cnt_from_rpm(अचिन्हित दीर्घ rpm, u32 clk_freq, u16 p,
+					 u8 clk_भाग, u8 gear_mult)
+अणु
+	अचिन्हित दीर्घ f1 = clk_freq * 30 * gear_mult;
+	अचिन्हित दीर्घ f2 = p * clk_भाग;
 
-	if (!rpm)	/* to stop the fan, set cnt to 255 */
-		return 0xff;
+	अगर (!rpm)	/* to stop the fan, set cnt to 255 */
+		वापस 0xff;
 
-	rpm = clamp_val(rpm, f1 / (255 * f2), ULONG_MAX / f2);
-	return DIV_ROUND_CLOSEST(f1, rpm * f2);
-}
+	rpm = clamp_val(rpm, f1 / (255 * f2), अच_दीर्घ_उच्च / f2);
+	वापस DIV_ROUND_CLOSEST(f1, rpm * f2);
+पूर्ण
 
-/* helper to grab and cache data, at most one time per second */
-static struct g762_data *g762_update_client(struct device *dev)
-{
-	struct g762_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
-	int ret = 0;
+/* helper to grab and cache data, at most one समय per second */
+अटल काष्ठा g762_data *g762_update_client(काष्ठा device *dev)
+अणु
+	काष्ठा g762_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&data->update_lock);
-	if (time_before(jiffies, data->last_updated + G762_UPDATE_INTERVAL) &&
+	अगर (समय_beक्रमe(jअगरfies, data->last_updated + G762_UPDATE_INTERVAL) &&
 	    likely(data->valid))
-		goto out;
+		जाओ out;
 
-	ret = i2c_smbus_read_byte_data(client, G762_REG_SET_CNT);
-	if (ret < 0)
-		goto out;
+	ret = i2c_smbus_पढ़ो_byte_data(client, G762_REG_SET_CNT);
+	अगर (ret < 0)
+		जाओ out;
 	data->set_cnt = ret;
 
-	ret = i2c_smbus_read_byte_data(client, G762_REG_ACT_CNT);
-	if (ret < 0)
-		goto out;
+	ret = i2c_smbus_पढ़ो_byte_data(client, G762_REG_ACT_CNT);
+	अगर (ret < 0)
+		जाओ out;
 	data->act_cnt = ret;
 
-	ret = i2c_smbus_read_byte_data(client, G762_REG_FAN_STA);
-	if (ret < 0)
-		goto out;
+	ret = i2c_smbus_पढ़ो_byte_data(client, G762_REG_FAN_STA);
+	अगर (ret < 0)
+		जाओ out;
 	data->fan_sta = ret;
 
-	ret = i2c_smbus_read_byte_data(client, G762_REG_SET_OUT);
-	if (ret < 0)
-		goto out;
+	ret = i2c_smbus_पढ़ो_byte_data(client, G762_REG_SET_OUT);
+	अगर (ret < 0)
+		जाओ out;
 	data->set_out = ret;
 
-	ret = i2c_smbus_read_byte_data(client, G762_REG_FAN_CMD1);
-	if (ret < 0)
-		goto out;
+	ret = i2c_smbus_पढ़ो_byte_data(client, G762_REG_FAN_CMD1);
+	अगर (ret < 0)
+		जाओ out;
 	data->fan_cmd1 = ret;
 
-	ret = i2c_smbus_read_byte_data(client, G762_REG_FAN_CMD2);
-	if (ret < 0)
-		goto out;
+	ret = i2c_smbus_पढ़ो_byte_data(client, G762_REG_FAN_CMD2);
+	अगर (ret < 0)
+		जाओ out;
 	data->fan_cmd2 = ret;
 
-	data->last_updated = jiffies;
+	data->last_updated = jअगरfies;
 	data->valid = true;
  out:
 	mutex_unlock(&data->update_lock);
 
-	if (ret < 0) /* upon error, encode it in return value */
+	अगर (ret < 0) /* upon error, encode it in वापस value */
 		data = ERR_PTR(ret);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-/* helpers for writing hardware parameters */
+/* helpers क्रम writing hardware parameters */
 
 /*
- * Set input clock frequency received on CLK pin of the chip. Accepted values
- * are between 0 and 0xffffff. If zero is given, then default frequency
- * (32,768Hz) is used. Note that clock frequency is a characteristic of the
- * system but an internal parameter, i.e. value is not passed to the device.
+ * Set input घड़ी frequency received on CLK pin of the chip. Accepted values
+ * are between 0 and 0xffffff. If zero is given, then शेष frequency
+ * (32,768Hz) is used. Note that घड़ी frequency is a अक्षरacteristic of the
+ * प्रणाली but an पूर्णांकernal parameter, i.e. value is not passed to the device.
  */
-static int do_set_clk_freq(struct device *dev, unsigned long val)
-{
-	struct g762_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक करो_set_clk_freq(काष्ठा device *dev, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा g762_data *data = dev_get_drvdata(dev);
 
-	if (val > 0xffffff)
-		return -EINVAL;
-	if (!val)
+	अगर (val > 0xffffff)
+		वापस -EINVAL;
+	अगर (!val)
 		val = 32768;
 
 	data->clk_freq = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Set pwm mode. Accepts either 0 (PWM mode) or 1 (DC mode) */
-static int do_set_pwm_mode(struct device *dev, unsigned long val)
-{
-	struct g762_data *data = g762_update_client(dev);
-	int ret;
+अटल पूर्णांक करो_set_pwm_mode(काष्ठा device *dev, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
+	पूर्णांक ret;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	mutex_lock(&data->update_lock);
-	switch (val) {
-	case G762_OUT_MODE_PWM:
+	चयन (val) अणु
+	हाल G762_OUT_MODE_PWM:
 		data->fan_cmd1 |=  G762_REG_FAN_CMD1_OUT_MODE;
-		break;
-	case G762_OUT_MODE_DC:
+		अवरोध;
+	हाल G762_OUT_MODE_DC:
 		data->fan_cmd1 &= ~G762_REG_FAN_CMD1_OUT_MODE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto out;
-	}
-	ret = i2c_smbus_write_byte_data(data->client, G762_REG_FAN_CMD1,
+		जाओ out;
+	पूर्ण
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, G762_REG_FAN_CMD1,
 					data->fan_cmd1);
 	data->valid = false;
  out:
 	mutex_unlock(&data->update_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Set fan clock divisor. Accepts either 1, 2, 4 or 8. */
-static int do_set_fan_div(struct device *dev, unsigned long val)
-{
-	struct g762_data *data = g762_update_client(dev);
-	int ret;
+/* Set fan घड़ी भागisor. Accepts either 1, 2, 4 or 8. */
+अटल पूर्णांक करो_set_fan_भाग(काष्ठा device *dev, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
+	पूर्णांक ret;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	mutex_lock(&data->update_lock);
-	switch (val) {
-	case 1:
+	चयन (val) अणु
+	हाल 1:
 		data->fan_cmd1 &= ~G762_REG_FAN_CMD1_CLK_DIV_ID0;
 		data->fan_cmd1 &= ~G762_REG_FAN_CMD1_CLK_DIV_ID1;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		data->fan_cmd1 |=  G762_REG_FAN_CMD1_CLK_DIV_ID0;
 		data->fan_cmd1 &= ~G762_REG_FAN_CMD1_CLK_DIV_ID1;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		data->fan_cmd1 &= ~G762_REG_FAN_CMD1_CLK_DIV_ID0;
 		data->fan_cmd1 |=  G762_REG_FAN_CMD1_CLK_DIV_ID1;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		data->fan_cmd1 |=  G762_REG_FAN_CMD1_CLK_DIV_ID0;
 		data->fan_cmd1 |=  G762_REG_FAN_CMD1_CLK_DIV_ID1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto out;
-	}
-	ret = i2c_smbus_write_byte_data(data->client, G762_REG_FAN_CMD1,
+		जाओ out;
+	पूर्ण
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, G762_REG_FAN_CMD1,
 					data->fan_cmd1);
 	data->valid = false;
  out:
 	mutex_unlock(&data->update_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Set fan gear mode. Accepts either 0, 1 or 2. */
-static int do_set_fan_gear_mode(struct device *dev, unsigned long val)
-{
-	struct g762_data *data = g762_update_client(dev);
-	int ret;
+अटल पूर्णांक करो_set_fan_gear_mode(काष्ठा device *dev, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
+	पूर्णांक ret;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	mutex_lock(&data->update_lock);
-	switch (val) {
-	case 0:
+	चयन (val) अणु
+	हाल 0:
 		data->fan_cmd2 &= ~G762_REG_FAN_CMD2_GEAR_MODE_0;
 		data->fan_cmd2 &= ~G762_REG_FAN_CMD2_GEAR_MODE_1;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		data->fan_cmd2 |=  G762_REG_FAN_CMD2_GEAR_MODE_0;
 		data->fan_cmd2 &= ~G762_REG_FAN_CMD2_GEAR_MODE_1;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		data->fan_cmd2 &= ~G762_REG_FAN_CMD2_GEAR_MODE_0;
 		data->fan_cmd2 |=  G762_REG_FAN_CMD2_GEAR_MODE_1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto out;
-	}
-	ret = i2c_smbus_write_byte_data(data->client, G762_REG_FAN_CMD2,
+		जाओ out;
+	पूर्ण
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, G762_REG_FAN_CMD2,
 					data->fan_cmd2);
 	data->valid = false;
  out:
 	mutex_unlock(&data->update_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Set number of fan pulses per revolution. Accepts either 2 or 4. */
-static int do_set_fan_pulses(struct device *dev, unsigned long val)
-{
-	struct g762_data *data = g762_update_client(dev);
-	int ret;
+अटल पूर्णांक करो_set_fan_pulses(काष्ठा device *dev, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
+	पूर्णांक ret;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	mutex_lock(&data->update_lock);
-	switch (val) {
-	case 2:
+	चयन (val) अणु
+	हाल 2:
 		data->fan_cmd1 &= ~G762_REG_FAN_CMD1_PULSE_PER_REV;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		data->fan_cmd1 |=  G762_REG_FAN_CMD1_PULSE_PER_REV;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto out;
-	}
-	ret = i2c_smbus_write_byte_data(data->client, G762_REG_FAN_CMD1,
+		जाओ out;
+	पूर्ण
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, G762_REG_FAN_CMD1,
 					data->fan_cmd1);
 	data->valid = false;
  out:
 	mutex_unlock(&data->update_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Set fan mode. Accepts either 1 (open-loop) or 2 (closed-loop). */
-static int do_set_pwm_enable(struct device *dev, unsigned long val)
-{
-	struct g762_data *data = g762_update_client(dev);
-	int ret;
+/* Set fan mode. Accepts either 1 (खोलो-loop) or 2 (बंदd-loop). */
+अटल पूर्णांक करो_set_pwm_enable(काष्ठा device *dev, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
+	पूर्णांक ret;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	mutex_lock(&data->update_lock);
-	switch (val) {
-	case G762_FAN_MODE_CLOSED_LOOP:
+	चयन (val) अणु
+	हाल G762_FAN_MODE_CLOSED_LOOP:
 		data->fan_cmd1 |=  G762_REG_FAN_CMD1_FAN_MODE;
-		break;
-	case G762_FAN_MODE_OPEN_LOOP:
+		अवरोध;
+	हाल G762_FAN_MODE_OPEN_LOOP:
 		data->fan_cmd1 &= ~G762_REG_FAN_CMD1_FAN_MODE;
 		/*
-		 * BUG FIX: if SET_CNT register value is 255 then, for some
+		 * BUG FIX: अगर SET_CNT रेजिस्टर value is 255 then, क्रम some
 		 * unknown reason, fan will not rotate as expected, no matter
-		 * the value of SET_OUT (to be specific, this seems to happen
+		 * the value of SET_OUT (to be specअगरic, this seems to happen
 		 * only in PWM mode). To workaround this bug, we give SET_CNT
-		 * value of 254 if it is 255 when switching to open-loop.
+		 * value of 254 अगर it is 255 when चयनing to खोलो-loop.
 		 */
-		if (data->set_cnt == 0xff)
-			i2c_smbus_write_byte_data(data->client,
+		अगर (data->set_cnt == 0xff)
+			i2c_smbus_ग_लिखो_byte_data(data->client,
 						  G762_REG_SET_CNT, 254);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = i2c_smbus_write_byte_data(data->client, G762_REG_FAN_CMD1,
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, G762_REG_FAN_CMD1,
 					data->fan_cmd1);
 	data->valid = false;
  out:
 	mutex_unlock(&data->update_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Set PWM polarity. Accepts either 0 (positive duty) or 1 (negative duty) */
-static int do_set_pwm_polarity(struct device *dev, unsigned long val)
-{
-	struct g762_data *data = g762_update_client(dev);
-	int ret;
+अटल पूर्णांक करो_set_pwm_polarity(काष्ठा device *dev, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
+	पूर्णांक ret;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	mutex_lock(&data->update_lock);
-	switch (val) {
-	case G762_PWM_POLARITY_POSITIVE:
+	चयन (val) अणु
+	हाल G762_PWM_POLARITY_POSITIVE:
 		data->fan_cmd1 &= ~G762_REG_FAN_CMD1_PWM_POLARITY;
-		break;
-	case G762_PWM_POLARITY_NEGATIVE:
+		अवरोध;
+	हाल G762_PWM_POLARITY_NEGATIVE:
 		data->fan_cmd1 |=  G762_REG_FAN_CMD1_PWM_POLARITY;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto out;
-	}
-	ret = i2c_smbus_write_byte_data(data->client, G762_REG_FAN_CMD1,
+		जाओ out;
+	पूर्ण
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, G762_REG_FAN_CMD1,
 					data->fan_cmd1);
 	data->valid = false;
  out:
 	mutex_unlock(&data->update_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Set pwm value. Accepts values between 0 (stops the fan) and
- * 255 (full speed). This only makes sense in open-loop mode.
+ * 255 (full speed). This only makes sense in खोलो-loop mode.
  */
-static int do_set_pwm(struct device *dev, unsigned long val)
-{
-	struct g762_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
-	int ret;
+अटल पूर्णांक करो_set_pwm(काष्ठा device *dev, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा g762_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक ret;
 
-	if (val > 255)
-		return -EINVAL;
+	अगर (val > 255)
+		वापस -EINVAL;
 
 	mutex_lock(&data->update_lock);
-	ret = i2c_smbus_write_byte_data(client, G762_REG_SET_OUT, val);
+	ret = i2c_smbus_ग_लिखो_byte_data(client, G762_REG_SET_OUT, val);
 	data->valid = false;
 	mutex_unlock(&data->update_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Set fan RPM value. Can be called both in closed and open-loop mode
- * but effect will only be seen after closed-loop mode is configured.
+ * Set fan RPM value. Can be called both in बंदd and खोलो-loop mode
+ * but effect will only be seen after बंदd-loop mode is configured.
  */
-static int do_set_fan_target(struct device *dev, unsigned long val)
-{
-	struct g762_data *data = g762_update_client(dev);
-	int ret;
+अटल पूर्णांक करो_set_fan_target(काष्ठा device *dev, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
+	पूर्णांक ret;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	mutex_lock(&data->update_lock);
 	data->set_cnt = cnt_from_rpm(val, data->clk_freq,
 				     G762_PULSE_FROM_REG(data->fan_cmd1),
 				     G762_CLKDIV_FROM_REG(data->fan_cmd1),
 				     G762_GEARMULT_FROM_REG(data->fan_cmd2));
-	ret = i2c_smbus_write_byte_data(data->client, G762_REG_SET_CNT,
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, G762_REG_SET_CNT,
 					data->set_cnt);
 	data->valid = false;
 	mutex_unlock(&data->update_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Set fan startup voltage. Accepted values are either 0, 1, 2 or 3. */
-static int do_set_fan_startv(struct device *dev, unsigned long val)
-{
-	struct g762_data *data = g762_update_client(dev);
-	int ret;
+अटल पूर्णांक करो_set_fan_startv(काष्ठा device *dev, अचिन्हित दीर्घ val)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
+	पूर्णांक ret;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	mutex_lock(&data->update_lock);
-	switch (val) {
-	case 0:
+	चयन (val) अणु
+	हाल 0:
 		data->fan_cmd2 &= ~G762_REG_FAN_CMD2_FAN_STARTV_0;
 		data->fan_cmd2 &= ~G762_REG_FAN_CMD2_FAN_STARTV_1;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		data->fan_cmd2 |=  G762_REG_FAN_CMD2_FAN_STARTV_0;
 		data->fan_cmd2 &= ~G762_REG_FAN_CMD2_FAN_STARTV_1;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		data->fan_cmd2 &= ~G762_REG_FAN_CMD2_FAN_STARTV_0;
 		data->fan_cmd2 |=  G762_REG_FAN_CMD2_FAN_STARTV_1;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		data->fan_cmd2 |=  G762_REG_FAN_CMD2_FAN_STARTV_0;
 		data->fan_cmd2 |=  G762_REG_FAN_CMD2_FAN_STARTV_1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto out;
-	}
-	ret = i2c_smbus_write_byte_data(data->client, G762_REG_FAN_CMD2,
+		जाओ out;
+	पूर्ण
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, G762_REG_FAN_CMD2,
 					data->fan_cmd2);
 	data->valid = false;
  out:
 	mutex_unlock(&data->update_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Helper to import hardware characteristics from .dts file and push
+ * Helper to import hardware अक्षरacteristics from .dts file and push
  * those to the chip.
  */
 
-#ifdef CONFIG_OF
-static const struct of_device_id g762_dt_match[] = {
-	{ .compatible = "gmt,g762" },
-	{ .compatible = "gmt,g763" },
-	{ },
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id g762_dt_match[] = अणु
+	अणु .compatible = "gmt,g762" पूर्ण,
+	अणु .compatible = "gmt,g763" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, g762_dt_match);
 
 /*
- * Grab clock (a required property), enable it, get (fixed) clock frequency
- * and store it. Note: upon success, clock has been prepared and enabled; it
+ * Grab घड़ी (a required property), enable it, get (fixed) घड़ी frequency
+ * and store it. Note: upon success, घड़ी has been prepared and enabled; it
  * must later be unprepared and disabled (e.g. during module unloading) by a
- * call to g762_of_clock_disable(). Note that a reference to clock is kept
- * in our private data structure to be used in this function.
+ * call to g762_of_घड़ी_disable(). Note that a reference to घड़ी is kept
+ * in our निजी data काष्ठाure to be used in this function.
  */
-static void g762_of_clock_disable(void *data)
-{
-	struct g762_data *g762 = data;
+अटल व्योम g762_of_घड़ी_disable(व्योम *data)
+अणु
+	काष्ठा g762_data *g762 = data;
 
 	clk_disable_unprepare(g762->clk);
 	clk_put(g762->clk);
-}
+पूर्ण
 
-static int g762_of_clock_enable(struct i2c_client *client)
-{
-	struct g762_data *data;
-	unsigned long clk_freq;
-	struct clk *clk;
-	int ret;
+अटल पूर्णांक g762_of_घड़ी_enable(काष्ठा i2c_client *client)
+अणु
+	काष्ठा g762_data *data;
+	अचिन्हित दीर्घ clk_freq;
+	काष्ठा clk *clk;
+	पूर्णांक ret;
 
-	if (!client->dev.of_node)
-		return 0;
+	अगर (!client->dev.of_node)
+		वापस 0;
 
 	clk = of_clk_get(client->dev.of_node, 0);
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		dev_err(&client->dev, "failed to get clock\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "failed to enable clock\n");
-		goto clk_put;
-	}
+		जाओ clk_put;
+	पूर्ण
 
 	clk_freq = clk_get_rate(clk);
-	ret = do_set_clk_freq(&client->dev, clk_freq);
-	if (ret) {
+	ret = करो_set_clk_freq(&client->dev, clk_freq);
+	अगर (ret) अणु
 		dev_err(&client->dev, "invalid clock freq %lu\n", clk_freq);
-		goto clk_unprep;
-	}
+		जाओ clk_unprep;
+	पूर्ण
 
 	data = i2c_get_clientdata(client);
 	data->clk = clk;
 
-	devm_add_action(&client->dev, g762_of_clock_disable, data);
-	return 0;
+	devm_add_action(&client->dev, g762_of_घड़ी_disable, data);
+	वापस 0;
 
  clk_unprep:
 	clk_disable_unprepare(clk);
@@ -629,309 +630,309 @@ static int g762_of_clock_enable(struct i2c_client *client)
  clk_put:
 	clk_put(clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int g762_of_prop_import_one(struct i2c_client *client,
-				   const char *pname,
-				   int (*psetter)(struct device *dev,
-						  unsigned long val))
-{
-	int ret;
+अटल पूर्णांक g762_of_prop_import_one(काष्ठा i2c_client *client,
+				   स्थिर अक्षर *pname,
+				   पूर्णांक (*psetter)(काष्ठा device *dev,
+						  अचिन्हित दीर्घ val))
+अणु
+	पूर्णांक ret;
 	u32 pval;
 
-	if (of_property_read_u32(client->dev.of_node, pname, &pval))
-		return 0;
+	अगर (of_property_पढ़ो_u32(client->dev.of_node, pname, &pval))
+		वापस 0;
 
 	dev_dbg(&client->dev, "found %s (%d)\n", pname, pval);
 	ret = (*psetter)(&client->dev, pval);
-	if (ret)
+	अगर (ret)
 		dev_err(&client->dev, "unable to set %s (%d)\n", pname, pval);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int g762_of_prop_import(struct i2c_client *client)
-{
-	int ret;
+अटल पूर्णांक g762_of_prop_import(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक ret;
 
-	if (!client->dev.of_node)
-		return 0;
+	अगर (!client->dev.of_node)
+		वापस 0;
 
 	ret = g762_of_prop_import_one(client, "fan_gear_mode",
-				      do_set_fan_gear_mode);
-	if (ret)
-		return ret;
+				      करो_set_fan_gear_mode);
+	अगर (ret)
+		वापस ret;
 
 	ret = g762_of_prop_import_one(client, "pwm_polarity",
-				      do_set_pwm_polarity);
-	if (ret)
-		return ret;
+				      करो_set_pwm_polarity);
+	अगर (ret)
+		वापस ret;
 
-	return g762_of_prop_import_one(client, "fan_startv",
-				       do_set_fan_startv);
-}
+	वापस g762_of_prop_import_one(client, "fan_startv",
+				       करो_set_fan_startv);
+पूर्ण
 
-#else
-static int g762_of_prop_import(struct i2c_client *client)
-{
-	return 0;
-}
+#अन्यथा
+अटल पूर्णांक g762_of_prop_import(काष्ठा i2c_client *client)
+अणु
+	वापस 0;
+पूर्ण
 
-static int g762_of_clock_enable(struct i2c_client *client)
-{
-	return 0;
-}
-#endif
+अटल पूर्णांक g762_of_घड़ी_enable(काष्ठा i2c_client *client)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Helper to import hardware characteristics from .dts file and push
+ * Helper to import hardware अक्षरacteristics from .dts file and push
  * those to the chip.
  */
 
-static int g762_pdata_prop_import(struct i2c_client *client)
-{
-	struct g762_platform_data *pdata = dev_get_platdata(&client->dev);
-	int ret;
+अटल पूर्णांक g762_pdata_prop_import(काष्ठा i2c_client *client)
+अणु
+	काष्ठा g762_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
+	पूर्णांक ret;
 
-	if (!pdata)
-		return 0;
+	अगर (!pdata)
+		वापस 0;
 
-	ret = do_set_fan_gear_mode(&client->dev, pdata->fan_gear_mode);
-	if (ret)
-		return ret;
+	ret = करो_set_fan_gear_mode(&client->dev, pdata->fan_gear_mode);
+	अगर (ret)
+		वापस ret;
 
-	ret = do_set_pwm_polarity(&client->dev, pdata->pwm_polarity);
-	if (ret)
-		return ret;
+	ret = करो_set_pwm_polarity(&client->dev, pdata->pwm_polarity);
+	अगर (ret)
+		वापस ret;
 
-	ret = do_set_fan_startv(&client->dev, pdata->fan_startv);
-	if (ret)
-		return ret;
+	ret = करो_set_fan_startv(&client->dev, pdata->fan_startv);
+	अगर (ret)
+		वापस ret;
 
-	return do_set_clk_freq(&client->dev, pdata->clk_freq);
-}
+	वापस करो_set_clk_freq(&client->dev, pdata->clk_freq);
+पूर्ण
 
 /*
  * sysfs attributes
  */
 
 /*
- * Read function for fan1_input sysfs file. Return current fan RPM value, or
- * 0 if fan is out of control.
+ * Read function क्रम fan1_input sysfs file. Return current fan RPM value, or
+ * 0 अगर fan is out of control.
  */
-static ssize_t fan1_input_show(struct device *dev,
-			       struct device_attribute *da, char *buf)
-{
-	struct g762_data *data = g762_update_client(dev);
-	unsigned int rpm = 0;
+अटल sमाप_प्रकार fan1_input_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
+	अचिन्हित पूर्णांक rpm = 0;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	mutex_lock(&data->update_lock);
 	/* reverse logic: fan out of control reporting is enabled low */
-	if (data->fan_sta & G762_REG_FAN_STA_OOC) {
+	अगर (data->fan_sta & G762_REG_FAN_STA_OOC) अणु
 		rpm = rpm_from_cnt(data->act_cnt, data->clk_freq,
 				   G762_PULSE_FROM_REG(data->fan_cmd1),
 				   G762_CLKDIV_FROM_REG(data->fan_cmd1),
 				   G762_GEARMULT_FROM_REG(data->fan_cmd2));
-	}
+	पूर्ण
 	mutex_unlock(&data->update_lock);
 
-	return sprintf(buf, "%u\n", rpm);
-}
+	वापस प्र_लिखो(buf, "%u\n", rpm);
+पूर्ण
 
 /*
- * Read and write functions for pwm1_mode sysfs file. Get and set fan speed
+ * Read and ग_लिखो functions क्रम pwm1_mode sysfs file. Get and set fan speed
  * control mode i.e. PWM (1) or DC (0).
  */
-static ssize_t pwm1_mode_show(struct device *dev, struct device_attribute *da,
-			      char *buf)
-{
-	struct g762_data *data = g762_update_client(dev);
+अटल sमाप_प्रकार pwm1_mode_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			      अक्षर *buf)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	return sprintf(buf, "%d\n",
+	वापस प्र_लिखो(buf, "%d\n",
 		       !!(data->fan_cmd1 & G762_REG_FAN_CMD1_OUT_MODE));
-}
+पूर्ण
 
-static ssize_t pwm1_mode_store(struct device *dev,
-			       struct device_attribute *da, const char *buf,
-			       size_t count)
-{
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार pwm1_mode_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *da, स्थिर अक्षर *buf,
+			       माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 10, &val))
+		वापस -EINVAL;
 
-	ret = do_set_pwm_mode(dev, val);
-	if (ret < 0)
-		return ret;
+	ret = करो_set_pwm_mode(dev, val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * Read and write functions for fan1_div sysfs file. Get and set fan
+ * Read and ग_लिखो functions क्रम fan1_भाग sysfs file. Get and set fan
  * controller prescaler value
  */
-static ssize_t fan1_div_show(struct device *dev, struct device_attribute *da,
-			     char *buf)
-{
-	struct g762_data *data = g762_update_client(dev);
+अटल sमाप_प्रकार fan1_भाग_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			     अक्षर *buf)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	return sprintf(buf, "%d\n", G762_CLKDIV_FROM_REG(data->fan_cmd1));
-}
+	वापस प्र_लिखो(buf, "%d\n", G762_CLKDIV_FROM_REG(data->fan_cmd1));
+पूर्ण
 
-static ssize_t fan1_div_store(struct device *dev, struct device_attribute *da,
-			      const char *buf, size_t count)
-{
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार fan1_भाग_store(काष्ठा device *dev, काष्ठा device_attribute *da,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 10, &val))
+		वापस -EINVAL;
 
-	ret = do_set_fan_div(dev, val);
-	if (ret < 0)
-		return ret;
+	ret = करो_set_fan_भाग(dev, val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * Read and write functions for fan1_pulses sysfs file. Get and set number
+ * Read and ग_लिखो functions क्रम fan1_pulses sysfs file. Get and set number
  * of tachometer pulses per fan revolution.
  */
-static ssize_t fan1_pulses_show(struct device *dev,
-				struct device_attribute *da, char *buf)
-{
-	struct g762_data *data = g762_update_client(dev);
+अटल sमाप_प्रकार fan1_pulses_show(काष्ठा device *dev,
+				काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	return sprintf(buf, "%d\n", G762_PULSE_FROM_REG(data->fan_cmd1));
-}
+	वापस प्र_लिखो(buf, "%d\n", G762_PULSE_FROM_REG(data->fan_cmd1));
+पूर्ण
 
-static ssize_t fan1_pulses_store(struct device *dev,
-				 struct device_attribute *da, const char *buf,
-				 size_t count)
-{
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार fan1_pulses_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *da, स्थिर अक्षर *buf,
+				 माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 10, &val))
+		वापस -EINVAL;
 
-	ret = do_set_fan_pulses(dev, val);
-	if (ret < 0)
-		return ret;
+	ret = करो_set_fan_pulses(dev, val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * Read and write functions for pwm1_enable. Get and set fan speed control mode
- * (i.e. closed or open-loop).
+ * Read and ग_लिखो functions क्रम pwm1_enable. Get and set fan speed control mode
+ * (i.e. बंदd or खोलो-loop).
  *
- * Following documentation about hwmon's sysfs interface, a pwm1_enable node
+ * Following करोcumentation about hwmon's sysfs पूर्णांकerface, a pwm1_enable node
  * should accept the following:
  *
  *  0 : no fan speed control (i.e. fan at full speed)
- *  1 : manual fan speed control enabled (use pwm[1-*]) (open-loop)
- *  2+: automatic fan speed control enabled (use fan[1-*]_target) (closed-loop)
+ *  1 : manual fan speed control enabled (use pwm[1-*]) (खोलो-loop)
+ *  2+: स्वतःmatic fan speed control enabled (use fan[1-*]_target) (बंदd-loop)
  *
- * but we do not accept 0 as this mode is not natively supported by the chip
- * and it is not emulated by g762 driver. -EINVAL is returned in this case.
+ * but we करो not accept 0 as this mode is not natively supported by the chip
+ * and it is not emulated by g762 driver. -EINVAL is वापसed in this हाल.
  */
-static ssize_t pwm1_enable_show(struct device *dev,
-				struct device_attribute *da, char *buf)
-{
-	struct g762_data *data = g762_update_client(dev);
+अटल sमाप_प्रकार pwm1_enable_show(काष्ठा device *dev,
+				काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	return sprintf(buf, "%d\n",
+	वापस प्र_लिखो(buf, "%d\n",
 		       (!!(data->fan_cmd1 & G762_REG_FAN_CMD1_FAN_MODE)) + 1);
-}
+पूर्ण
 
-static ssize_t pwm1_enable_store(struct device *dev,
-				 struct device_attribute *da, const char *buf,
-				 size_t count)
-{
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार pwm1_enable_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *da, स्थिर अक्षर *buf,
+				 माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 10, &val))
+		वापस -EINVAL;
 
-	ret = do_set_pwm_enable(dev, val);
-	if (ret < 0)
-		return ret;
+	ret = करो_set_pwm_enable(dev, val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * Read and write functions for pwm1 sysfs file. Get and set pwm value
- * (which affects fan speed) in open-loop mode. 0 stops the fan and 255
+ * Read and ग_लिखो functions क्रम pwm1 sysfs file. Get and set pwm value
+ * (which affects fan speed) in खोलो-loop mode. 0 stops the fan and 255
  * makes it run at full speed.
  */
-static ssize_t pwm1_show(struct device *dev, struct device_attribute *da,
-			 char *buf)
-{
-	struct g762_data *data = g762_update_client(dev);
+अटल sमाप_प्रकार pwm1_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			 अक्षर *buf)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	return sprintf(buf, "%d\n", data->set_out);
-}
+	वापस प्र_लिखो(buf, "%d\n", data->set_out);
+पूर्ण
 
-static ssize_t pwm1_store(struct device *dev, struct device_attribute *da,
-			  const char *buf, size_t count)
-{
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार pwm1_store(काष्ठा device *dev, काष्ठा device_attribute *da,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 10, &val))
+		वापस -EINVAL;
 
-	ret = do_set_pwm(dev, val);
-	if (ret < 0)
-		return ret;
+	ret = करो_set_pwm(dev, val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * Read and write function for fan1_target sysfs file. Get/set the fan speed in
- * closed-loop mode. Speed is given as a RPM value; then the chip will regulate
+ * Read and ग_लिखो function क्रम fan1_target sysfs file. Get/set the fan speed in
+ * बंदd-loop mode. Speed is given as a RPM value; then the chip will regulate
  * the fan speed using pulses from fan tachometer.
  *
  * Refer to rpm_from_cnt() implementation above to get info about count number
  * calculation.
  *
- * Also note that due to rounding errors it is possible that you don't read
+ * Also note that due to rounding errors it is possible that you करोn't पढ़ो
  * back exactly the value you have set.
  */
-static ssize_t fan1_target_show(struct device *dev,
-				struct device_attribute *da, char *buf)
-{
-	struct g762_data *data = g762_update_client(dev);
-	unsigned int rpm;
+अटल sमाप_प्रकार fan1_target_show(काष्ठा device *dev,
+				काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
+	अचिन्हित पूर्णांक rpm;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	mutex_lock(&data->update_lock);
 	rpm = rpm_from_cnt(data->set_cnt, data->clk_freq,
@@ -940,113 +941,113 @@ static ssize_t fan1_target_show(struct device *dev,
 			   G762_GEARMULT_FROM_REG(data->fan_cmd2));
 	mutex_unlock(&data->update_lock);
 
-	return sprintf(buf, "%u\n", rpm);
-}
+	वापस प्र_लिखो(buf, "%u\n", rpm);
+पूर्ण
 
-static ssize_t fan1_target_store(struct device *dev,
-				 struct device_attribute *da, const char *buf,
-				 size_t count)
-{
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार fan1_target_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *da, स्थिर अक्षर *buf,
+				 माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 10, &val))
+		वापस -EINVAL;
 
-	ret = do_set_fan_target(dev, val);
-	if (ret < 0)
-		return ret;
+	ret = करो_set_fan_target(dev, val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-/* read function for fan1_fault sysfs file. */
-static ssize_t fan1_fault_show(struct device *dev, struct device_attribute *da,
-			       char *buf)
-{
-	struct g762_data *data = g762_update_client(dev);
+/* पढ़ो function क्रम fan1_fault sysfs file. */
+अटल sमाप_प्रकार fan1_fault_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			       अक्षर *buf)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	return sprintf(buf, "%u\n", !!(data->fan_sta & G762_REG_FAN_STA_FAIL));
-}
+	वापस प्र_लिखो(buf, "%u\n", !!(data->fan_sta & G762_REG_FAN_STA_FAIL));
+पूर्ण
 
 /*
- * read function for fan1_alarm sysfs file. Note that OOC condition is
+ * पढ़ो function क्रम fan1_alarm sysfs file. Note that OOC condition is
  * enabled low
  */
-static ssize_t fan1_alarm_show(struct device *dev,
-			       struct device_attribute *da, char *buf)
-{
-	struct g762_data *data = g762_update_client(dev);
+अटल sमाप_प्रकार fan1_alarm_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	return sprintf(buf, "%u\n", !(data->fan_sta & G762_REG_FAN_STA_OOC));
-}
+	वापस प्र_लिखो(buf, "%u\n", !(data->fan_sta & G762_REG_FAN_STA_OOC));
+पूर्ण
 
-static DEVICE_ATTR_RW(pwm1);
-static DEVICE_ATTR_RW(pwm1_mode);
-static DEVICE_ATTR_RW(pwm1_enable);
-static DEVICE_ATTR_RO(fan1_input);
-static DEVICE_ATTR_RO(fan1_alarm);
-static DEVICE_ATTR_RO(fan1_fault);
-static DEVICE_ATTR_RW(fan1_target);
-static DEVICE_ATTR_RW(fan1_div);
-static DEVICE_ATTR_RW(fan1_pulses);
+अटल DEVICE_ATTR_RW(pwm1);
+अटल DEVICE_ATTR_RW(pwm1_mode);
+अटल DEVICE_ATTR_RW(pwm1_enable);
+अटल DEVICE_ATTR_RO(fan1_input);
+अटल DEVICE_ATTR_RO(fan1_alarm);
+अटल DEVICE_ATTR_RO(fan1_fault);
+अटल DEVICE_ATTR_RW(fan1_target);
+अटल DEVICE_ATTR_RW(fan1_भाग);
+अटल DEVICE_ATTR_RW(fan1_pulses);
 
 /* Driver data */
-static struct attribute *g762_attrs[] = {
+अटल काष्ठा attribute *g762_attrs[] = अणु
 	&dev_attr_fan1_input.attr,
 	&dev_attr_fan1_alarm.attr,
 	&dev_attr_fan1_fault.attr,
 	&dev_attr_fan1_target.attr,
-	&dev_attr_fan1_div.attr,
+	&dev_attr_fan1_भाग.attr,
 	&dev_attr_fan1_pulses.attr,
 	&dev_attr_pwm1.attr,
 	&dev_attr_pwm1_mode.attr,
 	&dev_attr_pwm1_enable.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 ATTRIBUTE_GROUPS(g762);
 
 /*
  * Enable both fan failure detection and fan out of control protection. The
- * function does not protect change/access to data structure; it must thus
+ * function करोes not protect change/access to data काष्ठाure; it must thus
  * only be called during initialization.
  */
-static inline int g762_fan_init(struct device *dev)
-{
-	struct g762_data *data = g762_update_client(dev);
+अटल अंतरभूत पूर्णांक g762_fan_init(काष्ठा device *dev)
+अणु
+	काष्ठा g762_data *data = g762_update_client(dev);
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	data->fan_cmd1 |= G762_REG_FAN_CMD1_DET_FAN_FAIL;
 	data->fan_cmd1 |= G762_REG_FAN_CMD1_DET_FAN_OOC;
 	data->valid = false;
 
-	return i2c_smbus_write_byte_data(data->client, G762_REG_FAN_CMD1,
+	वापस i2c_smbus_ग_लिखो_byte_data(data->client, G762_REG_FAN_CMD1,
 					 data->fan_cmd1);
-}
+पूर्ण
 
-static int g762_probe(struct i2c_client *client)
-{
-	struct device *dev = &client->dev;
-	struct device *hwmon_dev;
-	struct g762_data *data;
-	int ret;
+अटल पूर्णांक g762_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा device *hwmon_dev;
+	काष्ठा g762_data *data;
+	पूर्णांक ret;
 
-	if (!i2c_check_functionality(client->adapter,
+	अगर (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_BYTE_DATA))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	data = devm_kzalloc(dev, sizeof(struct g762_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(काष्ठा g762_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, data);
 	data->client = client;
@@ -1054,34 +1055,34 @@ static int g762_probe(struct i2c_client *client)
 
 	/* Enable fan failure detection and fan out of control protection */
 	ret = g762_fan_init(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Get configuration via DT ... */
-	ret = g762_of_clock_enable(client);
-	if (ret)
-		return ret;
+	ret = g762_of_घड़ी_enable(client);
+	अगर (ret)
+		वापस ret;
 	ret = g762_of_prop_import(client);
-	if (ret)
-		return ret;
-	/* ... or platform_data */
+	अगर (ret)
+		वापस ret;
+	/* ... or platक्रमm_data */
 	ret = g762_pdata_prop_import(client);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	hwmon_dev = devm_hwmon_device_register_with_groups(dev, client->name,
+	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(dev, client->name,
 							    data, g762_groups);
-	return PTR_ERR_OR_ZERO(hwmon_dev);
-}
+	वापस PTR_ERR_OR_ZERO(hwmon_dev);
+पूर्ण
 
-static struct i2c_driver g762_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver g762_driver = अणु
+	.driver = अणु
 		.name = DRVNAME,
 		.of_match_table = of_match_ptr(g762_dt_match),
-	},
+	पूर्ण,
 	.probe_new = g762_probe,
 	.id_table = g762_id,
-};
+पूर्ण;
 
 module_i2c_driver(g762_driver);
 

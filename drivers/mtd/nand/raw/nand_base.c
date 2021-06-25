@@ -1,2540 +1,2541 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Overview:
- *   This is the generic MTD driver for NAND flash devices. It should be
- *   capable of working with almost all NAND chips currently available.
+ *   This is the generic MTD driver क्रम न_अंकD flash devices. It should be
+ *   capable of working with almost all न_अंकD chips currently available.
  *
- *	Additional technical information is available on
- *	http://www.linux-mtd.infradead.org/doc/nand.html
+ *	Additional technical inक्रमmation is available on
+ *	http://www.linux-mtd.infradead.org/करोc/nand.hपंचांगl
  *
  *  Copyright (C) 2000 Steven J. Hill (sjhill@realitydiluted.com)
  *		  2002-2006 Thomas Gleixner (tglx@linutronix.de)
  *
  *  Credits:
- *	David Woodhouse for adding multichip support
+ *	David Woodhouse क्रम adding multichip support
  *
- *	Aleph One Ltd. and Toby Churchill Ltd. for supporting the
- *	rework for 2K page size chips
+ *	Aleph One Ltd. and Toby Churchill Ltd. क्रम supporting the
+ *	rework क्रम 2K page size chips
  *
  *  TODO:
- *	Enable cached programming for 2k page size chips
- *	Check, if mtd->ecctype should be set to MTD_ECC_HW
- *	if we have HW ECC support.
+ *	Enable cached programming क्रम 2k page size chips
+ *	Check, अगर mtd->ecctype should be set to MTD_ECC_HW
+ *	अगर we have HW ECC support.
  *	BBT table is not serialized, has to be fixed
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/nand.h>
-#include <linux/mtd/nand-ecc-sw-hamming.h>
-#include <linux/mtd/nand-ecc-sw-bch.h>
-#include <linux/interrupt.h>
-#include <linux/bitops.h>
-#include <linux/io.h>
-#include <linux/mtd/partitions.h>
-#include <linux/of.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/nand.h>
+#समावेश <linux/mtd/nand-ecc-sw-hamming.h>
+#समावेश <linux/mtd/nand-ecc-sw-bch.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/of.h>
+#समावेश <linux/gpio/consumer.h>
 
-#include "internals.h"
+#समावेश "internals.h"
 
-static int nand_pairing_dist3_get_info(struct mtd_info *mtd, int page,
-				       struct mtd_pairing_info *info)
-{
-	int lastpage = (mtd->erasesize / mtd->writesize) - 1;
-	int dist = 3;
+अटल पूर्णांक nand_pairing_dist3_get_info(काष्ठा mtd_info *mtd, पूर्णांक page,
+				       काष्ठा mtd_pairing_info *info)
+अणु
+	पूर्णांक lastpage = (mtd->erasesize / mtd->ग_लिखोsize) - 1;
+	पूर्णांक dist = 3;
 
-	if (page == lastpage)
+	अगर (page == lastpage)
 		dist = 2;
 
-	if (!page || (page & 1)) {
+	अगर (!page || (page & 1)) अणु
 		info->group = 0;
 		info->pair = (page + 1) / 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		info->group = 1;
 		info->pair = (page + 1 - dist) / 2;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nand_pairing_dist3_get_wunit(struct mtd_info *mtd,
-					const struct mtd_pairing_info *info)
-{
-	int lastpair = ((mtd->erasesize / mtd->writesize) - 1) / 2;
-	int page = info->pair * 2;
-	int dist = 3;
+अटल पूर्णांक nand_pairing_dist3_get_wunit(काष्ठा mtd_info *mtd,
+					स्थिर काष्ठा mtd_pairing_info *info)
+अणु
+	पूर्णांक lastpair = ((mtd->erasesize / mtd->ग_लिखोsize) - 1) / 2;
+	पूर्णांक page = info->pair * 2;
+	पूर्णांक dist = 3;
 
-	if (!info->group && !info->pair)
-		return 0;
+	अगर (!info->group && !info->pair)
+		वापस 0;
 
-	if (info->pair == lastpair && info->group)
+	अगर (info->pair == lastpair && info->group)
 		dist = 2;
 
-	if (!info->group)
+	अगर (!info->group)
 		page--;
-	else if (info->pair)
+	अन्यथा अगर (info->pair)
 		page += dist - 1;
 
-	if (page >= mtd->erasesize / mtd->writesize)
-		return -EINVAL;
+	अगर (page >= mtd->erasesize / mtd->ग_लिखोsize)
+		वापस -EINVAL;
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
-const struct mtd_pairing_scheme dist3_pairing_scheme = {
+स्थिर काष्ठा mtd_pairing_scheme dist3_pairing_scheme = अणु
 	.ngroups = 2,
 	.get_info = nand_pairing_dist3_get_info,
 	.get_wunit = nand_pairing_dist3_get_wunit,
-};
+पूर्ण;
 
-static int check_offs_len(struct nand_chip *chip, loff_t ofs, uint64_t len)
-{
-	int ret = 0;
+अटल पूर्णांक check_offs_len(काष्ठा nand_chip *chip, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	पूर्णांक ret = 0;
 
 	/* Start address must align on block boundary */
-	if (ofs & ((1ULL << chip->phys_erase_shift) - 1)) {
+	अगर (ofs & ((1ULL << chip->phys_erase_shअगरt) - 1)) अणु
 		pr_debug("%s: unaligned address\n", __func__);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	/* Length must align on block boundary */
-	if (len & ((1ULL << chip->phys_erase_shift) - 1)) {
+	अगर (len & ((1ULL << chip->phys_erase_shअगरt) - 1)) अणु
 		pr_debug("%s: length not block aligned\n", __func__);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * nand_extract_bits - Copy unaligned bits from one buffer to another one
  * @dst: destination buffer
  * @dst_off: bit offset at which the writing starts
  * @src: source buffer
- * @src_off: bit offset at which the reading starts
+ * @src_off: bit offset at which the पढ़ोing starts
  * @nbits: number of bits to copy from @src to @dst
  *
  * Copy bits from one memory region to another (overlap authorized).
  */
-void nand_extract_bits(u8 *dst, unsigned int dst_off, const u8 *src,
-		       unsigned int src_off, unsigned int nbits)
-{
-	unsigned int tmp, n;
+व्योम nand_extract_bits(u8 *dst, अचिन्हित पूर्णांक dst_off, स्थिर u8 *src,
+		       अचिन्हित पूर्णांक src_off, अचिन्हित पूर्णांक nbits)
+अणु
+	अचिन्हित पूर्णांक पंचांगp, n;
 
 	dst += dst_off / 8;
 	dst_off %= 8;
 	src += src_off / 8;
 	src_off %= 8;
 
-	while (nbits) {
+	जबतक (nbits) अणु
 		n = min3(8 - dst_off, 8 - src_off, nbits);
 
-		tmp = (*src >> src_off) & GENMASK(n - 1, 0);
+		पंचांगp = (*src >> src_off) & GENMASK(n - 1, 0);
 		*dst &= ~GENMASK(n - 1 + dst_off, dst_off);
-		*dst |= tmp << dst_off;
+		*dst |= पंचांगp << dst_off;
 
 		dst_off += n;
-		if (dst_off >= 8) {
+		अगर (dst_off >= 8) अणु
 			dst++;
 			dst_off -= 8;
-		}
+		पूर्ण
 
 		src_off += n;
-		if (src_off >= 8) {
+		अगर (src_off >= 8) अणु
 			src++;
 			src_off -= 8;
-		}
+		पूर्ण
 
 		nbits -= n;
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_extract_bits);
 
 /**
- * nand_select_target() - Select a NAND target (A.K.A. die)
- * @chip: NAND chip object
+ * nand_select_target() - Select a न_अंकD target (A.K.A. die)
+ * @chip: न_अंकD chip object
  * @cs: the CS line to select. Note that this CS id is always from the chip
  *	PoV, not the controller one
  *
- * Select a NAND target so that further operations executed on @chip go to the
- * selected NAND target.
+ * Select a न_अंकD target so that further operations executed on @chip go to the
+ * selected न_अंकD target.
  */
-void nand_select_target(struct nand_chip *chip, unsigned int cs)
-{
+व्योम nand_select_target(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक cs)
+अणु
 	/*
-	 * cs should always lie between 0 and nanddev_ntargets(), when that's
-	 * not the case it's a bug and the caller should be fixed.
+	 * cs should always lie between 0 and nanddev_ntarमाला_लो(), when that's
+	 * not the हाल it's a bug and the caller should be fixed.
 	 */
-	if (WARN_ON(cs > nanddev_ntargets(&chip->base)))
-		return;
+	अगर (WARN_ON(cs > nanddev_ntarमाला_लो(&chip->base)))
+		वापस;
 
 	chip->cur_cs = cs;
 
-	if (chip->legacy.select_chip)
+	अगर (chip->legacy.select_chip)
 		chip->legacy.select_chip(chip, cs);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_select_target);
 
 /**
  * nand_deselect_target() - Deselect the currently selected target
- * @chip: NAND chip object
+ * @chip: न_अंकD chip object
  *
- * Deselect the currently selected NAND target. The result of operations
+ * Deselect the currently selected न_अंकD target. The result of operations
  * executed on @chip after the target has been deselected is undefined.
  */
-void nand_deselect_target(struct nand_chip *chip)
-{
-	if (chip->legacy.select_chip)
+व्योम nand_deselect_target(काष्ठा nand_chip *chip)
+अणु
+	अगर (chip->legacy.select_chip)
 		chip->legacy.select_chip(chip, -1);
 
 	chip->cur_cs = -1;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_deselect_target);
 
 /**
  * nand_release_device - [GENERIC] release chip
- * @chip: NAND chip object
+ * @chip: न_अंकD chip object
  *
- * Release chip lock and wake up anyone waiting on the device.
+ * Release chip lock and wake up anyone रुकोing on the device.
  */
-static void nand_release_device(struct nand_chip *chip)
-{
+अटल व्योम nand_release_device(काष्ठा nand_chip *chip)
+अणु
 	/* Release the controller and the chip */
 	mutex_unlock(&chip->controller->lock);
 	mutex_unlock(&chip->lock);
-}
+पूर्ण
 
 /**
- * nand_bbm_get_next_page - Get the next page for bad block markers
- * @chip: NAND chip object
- * @page: First page to start checking for bad block marker usage
+ * nand_bbm_get_next_page - Get the next page क्रम bad block markers
+ * @chip: न_अंकD chip object
+ * @page: First page to start checking क्रम bad block marker usage
  *
- * Returns an integer that corresponds to the page offset within a block, for
+ * Returns an पूर्णांकeger that corresponds to the page offset within a block, क्रम
  * a page that is used to store bad block markers. If no more pages are
- * available, -EINVAL is returned.
+ * available, -EINVAL is वापसed.
  */
-int nand_bbm_get_next_page(struct nand_chip *chip, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int last_page = ((mtd->erasesize - mtd->writesize) >>
-			 chip->page_shift) & chip->pagemask;
-	unsigned int bbm_flags = NAND_BBM_FIRSTPAGE | NAND_BBM_SECONDPAGE
-		| NAND_BBM_LASTPAGE;
+पूर्णांक nand_bbm_get_next_page(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक last_page = ((mtd->erasesize - mtd->ग_लिखोsize) >>
+			 chip->page_shअगरt) & chip->pagemask;
+	अचिन्हित पूर्णांक bbm_flags = न_अंकD_BBM_FIRSTPAGE | न_अंकD_BBM_SECONDPAGE
+		| न_अंकD_BBM_LASTPAGE;
 
-	if (page == 0 && !(chip->options & bbm_flags))
-		return 0;
-	if (page == 0 && chip->options & NAND_BBM_FIRSTPAGE)
-		return 0;
-	if (page <= 1 && chip->options & NAND_BBM_SECONDPAGE)
-		return 1;
-	if (page <= last_page && chip->options & NAND_BBM_LASTPAGE)
-		return last_page;
+	अगर (page == 0 && !(chip->options & bbm_flags))
+		वापस 0;
+	अगर (page == 0 && chip->options & न_अंकD_BBM_FIRSTPAGE)
+		वापस 0;
+	अगर (page <= 1 && chip->options & न_अंकD_BBM_SECONDPAGE)
+		वापस 1;
+	अगर (page <= last_page && chip->options & न_अंकD_BBM_LASTPAGE)
+		वापस last_page;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * nand_block_bad - [DEFAULT] Read bad block marker from the chip
- * @chip: NAND chip object
+ * @chip: न_अंकD chip object
  * @ofs: offset from device start
  *
- * Check, if the block is bad.
+ * Check, अगर the block is bad.
  */
-static int nand_block_bad(struct nand_chip *chip, loff_t ofs)
-{
-	int first_page, page_offset;
-	int res;
+अटल पूर्णांक nand_block_bad(काष्ठा nand_chip *chip, loff_t ofs)
+अणु
+	पूर्णांक first_page, page_offset;
+	पूर्णांक res;
 	u8 bad;
 
-	first_page = (int)(ofs >> chip->page_shift) & chip->pagemask;
+	first_page = (पूर्णांक)(ofs >> chip->page_shअगरt) & chip->pagemask;
 	page_offset = nand_bbm_get_next_page(chip, 0);
 
-	while (page_offset >= 0) {
-		res = chip->ecc.read_oob(chip, first_page + page_offset);
-		if (res < 0)
-			return res;
+	जबतक (page_offset >= 0) अणु
+		res = chip->ecc.पढ़ो_oob(chip, first_page + page_offset);
+		अगर (res < 0)
+			वापस res;
 
 		bad = chip->oob_poi[chip->badblockpos];
 
-		if (likely(chip->badblockbits == 8))
+		अगर (likely(chip->badblockbits == 8))
 			res = bad != 0xFF;
-		else
+		अन्यथा
 			res = hweight8(bad) < chip->badblockbits;
-		if (res)
-			return res;
+		अगर (res)
+			वापस res;
 
 		page_offset = nand_bbm_get_next_page(chip, page_offset + 1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nand_region_is_secured() - Check if the region is secured
- * @chip: NAND chip object
+ * nand_region_is_secured() - Check अगर the region is secured
+ * @chip: न_अंकD chip object
  * @offset: Offset of the region to check
  * @size: Size of the region to check
  *
- * Checks if the region is secured by comparing the offset and size with the
- * list of secure regions obtained from DT. Returns true if the region is
- * secured else false.
+ * Checks अगर the region is secured by comparing the offset and size with the
+ * list of secure regions obtained from DT. Returns true अगर the region is
+ * secured अन्यथा false.
  */
-static bool nand_region_is_secured(struct nand_chip *chip, loff_t offset, u64 size)
-{
-	int i;
+अटल bool nand_region_is_secured(काष्ठा nand_chip *chip, loff_t offset, u64 size)
+अणु
+	पूर्णांक i;
 
-	/* Skip touching the secure regions if present */
-	for (i = 0; i < chip->nr_secure_regions; i++) {
-		const struct nand_secure_region *region = &chip->secure_regions[i];
+	/* Skip touching the secure regions अगर present */
+	क्रम (i = 0; i < chip->nr_secure_regions; i++) अणु
+		स्थिर काष्ठा nand_secure_region *region = &chip->secure_regions[i];
 
-		if (offset + size <= region->offset ||
+		अगर (offset + size <= region->offset ||
 		    offset >= region->offset + region->size)
-			continue;
+			जारी;
 
 		pr_debug("%s: Region 0x%llx - 0x%llx is secured!",
 			 __func__, offset, offset + size);
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int nand_isbad_bbm(struct nand_chip *chip, loff_t ofs)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+अटल पूर्णांक nand_isbad_bbm(काष्ठा nand_chip *chip, loff_t ofs)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	if (chip->options & NAND_NO_BBM_QUIRK)
-		return 0;
+	अगर (chip->options & न_अंकD_NO_BBM_QUIRK)
+		वापस 0;
 
-	/* Check if the region is secured */
-	if (nand_region_is_secured(chip, ofs, mtd->erasesize))
-		return -EIO;
+	/* Check अगर the region is secured */
+	अगर (nand_region_is_secured(chip, ofs, mtd->erasesize))
+		वापस -EIO;
 
-	if (chip->legacy.block_bad)
-		return chip->legacy.block_bad(chip, ofs);
+	अगर (chip->legacy.block_bad)
+		वापस chip->legacy.block_bad(chip, ofs);
 
-	return nand_block_bad(chip, ofs);
-}
+	वापस nand_block_bad(chip, ofs);
+पूर्ण
 
 /**
- * nand_get_device - [GENERIC] Get chip for selected access
- * @chip: NAND chip structure
+ * nand_get_device - [GENERIC] Get chip क्रम selected access
+ * @chip: न_अंकD chip काष्ठाure
  *
- * Lock the device and its controller for exclusive access
+ * Lock the device and its controller क्रम exclusive access
  *
- * Return: -EBUSY if the chip has been suspended, 0 otherwise
+ * Return: -EBUSY अगर the chip has been suspended, 0 otherwise
  */
-static int nand_get_device(struct nand_chip *chip)
-{
+अटल पूर्णांक nand_get_device(काष्ठा nand_chip *chip)
+अणु
 	mutex_lock(&chip->lock);
-	if (chip->suspended) {
+	अगर (chip->suspended) अणु
 		mutex_unlock(&chip->lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	mutex_lock(&chip->controller->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nand_check_wp - [GENERIC] check if the chip is write protected
- * @chip: NAND chip object
+ * nand_check_wp - [GENERIC] check अगर the chip is ग_लिखो रक्षित
+ * @chip: न_अंकD chip object
  *
- * Check, if the device is write protected. The function expects, that the
- * device is already selected.
+ * Check, अगर the device is ग_लिखो रक्षित. The function expects, that the
+ * device is alपढ़ोy selected.
  */
-static int nand_check_wp(struct nand_chip *chip)
-{
+अटल पूर्णांक nand_check_wp(काष्ठा nand_chip *chip)
+अणु
 	u8 status;
-	int ret;
+	पूर्णांक ret;
 
 	/* Broken xD cards report WP despite being writable */
-	if (chip->options & NAND_BROKEN_XD)
-		return 0;
+	अगर (chip->options & न_अंकD_BROKEN_XD)
+		वापस 0;
 
 	/* Check the WP bit */
 	ret = nand_status_op(chip, &status);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return status & NAND_STATUS_WP ? 0 : 1;
-}
+	वापस status & न_अंकD_STATUS_WP ? 0 : 1;
+पूर्ण
 
 /**
  * nand_fill_oob - [INTERN] Transfer client buffer to oob
- * @chip: NAND chip object
+ * @chip: न_अंकD chip object
  * @oob: oob data buffer
- * @len: oob data write length
- * @ops: oob ops structure
+ * @len: oob data ग_लिखो length
+ * @ops: oob ops काष्ठाure
  */
-static uint8_t *nand_fill_oob(struct nand_chip *chip, uint8_t *oob, size_t len,
-			      struct mtd_oob_ops *ops)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int ret;
+अटल uपूर्णांक8_t *nand_fill_oob(काष्ठा nand_chip *chip, uपूर्णांक8_t *oob, माप_प्रकार len,
+			      काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक ret;
 
 	/*
-	 * Initialise to all 0xFF, to avoid the possibility of left over OOB
-	 * data from a previous OOB read.
+	 * Initialise to all 0xFF, to aव्योम the possibility of left over OOB
+	 * data from a previous OOB पढ़ो.
 	 */
-	memset(chip->oob_poi, 0xff, mtd->oobsize);
+	स_रखो(chip->oob_poi, 0xff, mtd->oobsize);
 
-	switch (ops->mode) {
+	चयन (ops->mode) अणु
 
-	case MTD_OPS_PLACE_OOB:
-	case MTD_OPS_RAW:
-		memcpy(chip->oob_poi + ops->ooboffs, oob, len);
-		return oob + len;
+	हाल MTD_OPS_PLACE_OOB:
+	हाल MTD_OPS_RAW:
+		स_नकल(chip->oob_poi + ops->ooboffs, oob, len);
+		वापस oob + len;
 
-	case MTD_OPS_AUTO_OOB:
+	हाल MTD_OPS_AUTO_OOB:
 		ret = mtd_ooblayout_set_databytes(mtd, oob, chip->oob_poi,
 						  ops->ooboffs, len);
 		BUG_ON(ret);
-		return oob + len;
+		वापस oob + len;
 
-	default:
+	शेष:
 		BUG();
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * nand_do_write_oob - [MTD Interface] NAND write out-of-band
- * @chip: NAND chip object
- * @to: offset to write to
- * @ops: oob operation description structure
+ * nand_करो_ग_लिखो_oob - [MTD Interface] न_अंकD ग_लिखो out-of-band
+ * @chip: न_अंकD chip object
+ * @to: offset to ग_लिखो to
+ * @ops: oob operation description काष्ठाure
  *
- * NAND write out-of-band.
+ * न_अंकD ग_लिखो out-of-band.
  */
-static int nand_do_write_oob(struct nand_chip *chip, loff_t to,
-			     struct mtd_oob_ops *ops)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int chipnr, page, status, len, ret;
+अटल पूर्णांक nand_करो_ग_लिखो_oob(काष्ठा nand_chip *chip, loff_t to,
+			     काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक chipnr, page, status, len, ret;
 
 	pr_debug("%s: to = 0x%08x, len = %i\n",
-			 __func__, (unsigned int)to, (int)ops->ooblen);
+			 __func__, (अचिन्हित पूर्णांक)to, (पूर्णांक)ops->ooblen);
 
 	len = mtd_oobavail(mtd, ops);
 
-	/* Do not allow write past end of page */
-	if ((ops->ooboffs + ops->ooblen) > len) {
+	/* Do not allow ग_लिखो past end of page */
+	अगर ((ops->ooboffs + ops->ooblen) > len) अणु
 		pr_debug("%s: attempt to write past end of page\n",
 				__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check if the region is secured */
-	if (nand_region_is_secured(chip, to, ops->ooblen))
-		return -EIO;
+	/* Check अगर the region is secured */
+	अगर (nand_region_is_secured(chip, to, ops->ooblen))
+		वापस -EIO;
 
-	chipnr = (int)(to >> chip->chip_shift);
+	chipnr = (पूर्णांक)(to >> chip->chip_shअगरt);
 
 	/*
 	 * Reset the chip. Some chips (like the Toshiba TC5832DC found in one
 	 * of my DiskOnChip 2000 test units) will clear the whole data page too
-	 * if we don't do this. I have no clue why, but I seem to have 'fixed'
-	 * it in the doc2000 driver in August 1999.  dwmw2.
+	 * अगर we करोn't do this. I have no clue why, but I seem to have 'fixed'
+	 * it in the करोc2000 driver in August 1999.  dwmw2.
 	 */
 	ret = nand_reset(chip, chipnr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	nand_select_target(chip, chipnr);
 
-	/* Shift to get page */
-	page = (int)(to >> chip->page_shift);
+	/* Shअगरt to get page */
+	page = (पूर्णांक)(to >> chip->page_shअगरt);
 
-	/* Check, if it is write protected */
-	if (nand_check_wp(chip)) {
+	/* Check, अगर it is ग_लिखो रक्षित */
+	अगर (nand_check_wp(chip)) अणु
 		nand_deselect_target(chip);
-		return -EROFS;
-	}
+		वापस -EROFS;
+	पूर्ण
 
-	/* Invalidate the page cache, if we write to the cached page */
-	if (page == chip->pagecache.page)
+	/* Invalidate the page cache, अगर we ग_लिखो to the cached page */
+	अगर (page == chip->pagecache.page)
 		chip->pagecache.page = -1;
 
 	nand_fill_oob(chip, ops->oobbuf, ops->ooblen, ops);
 
-	if (ops->mode == MTD_OPS_RAW)
-		status = chip->ecc.write_oob_raw(chip, page & chip->pagemask);
-	else
-		status = chip->ecc.write_oob(chip, page & chip->pagemask);
+	अगर (ops->mode == MTD_OPS_RAW)
+		status = chip->ecc.ग_लिखो_oob_raw(chip, page & chip->pagemask);
+	अन्यथा
+		status = chip->ecc.ग_लिखो_oob(chip, page & chip->pagemask);
 
 	nand_deselect_target(chip);
 
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	ops->oobretlen = ops->ooblen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nand_default_block_markbad - [DEFAULT] mark a block bad via bad block marker
- * @chip: NAND chip object
+ * nand_शेष_block_markbad - [DEFAULT] mark a block bad via bad block marker
+ * @chip: न_अंकD chip object
  * @ofs: offset from device start
  *
- * This is the default implementation, which can be overridden by a hardware
- * specific driver. It provides the details for writing a bad block marker to a
+ * This is the शेष implementation, which can be overridden by a hardware
+ * specअगरic driver. It provides the details क्रम writing a bad block marker to a
  * block.
  */
-static int nand_default_block_markbad(struct nand_chip *chip, loff_t ofs)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct mtd_oob_ops ops;
-	uint8_t buf[2] = { 0, 0 };
-	int ret = 0, res, page_offset;
+अटल पूर्णांक nand_शेष_block_markbad(काष्ठा nand_chip *chip, loff_t ofs)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा mtd_oob_ops ops;
+	uपूर्णांक8_t buf[2] = अणु 0, 0 पूर्ण;
+	पूर्णांक ret = 0, res, page_offset;
 
-	memset(&ops, 0, sizeof(ops));
+	स_रखो(&ops, 0, माप(ops));
 	ops.oobbuf = buf;
 	ops.ooboffs = chip->badblockpos;
-	if (chip->options & NAND_BUSWIDTH_16) {
+	अगर (chip->options & न_अंकD_BUSWIDTH_16) अणु
 		ops.ooboffs &= ~0x01;
 		ops.len = ops.ooblen = 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		ops.len = ops.ooblen = 1;
-	}
+	पूर्ण
 	ops.mode = MTD_OPS_PLACE_OOB;
 
 	page_offset = nand_bbm_get_next_page(chip, 0);
 
-	while (page_offset >= 0) {
-		res = nand_do_write_oob(chip,
-					ofs + (page_offset * mtd->writesize),
+	जबतक (page_offset >= 0) अणु
+		res = nand_करो_ग_लिखो_oob(chip,
+					ofs + (page_offset * mtd->ग_लिखोsize),
 					&ops);
 
-		if (!ret)
+		अगर (!ret)
 			ret = res;
 
 		page_offset = nand_bbm_get_next_page(chip, page_offset + 1);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * nand_markbad_bbm - mark a block by updating the BBM
- * @chip: NAND chip object
+ * @chip: न_अंकD chip object
  * @ofs: offset of the block to mark bad
  */
-int nand_markbad_bbm(struct nand_chip *chip, loff_t ofs)
-{
-	if (chip->legacy.block_markbad)
-		return chip->legacy.block_markbad(chip, ofs);
+पूर्णांक nand_markbad_bbm(काष्ठा nand_chip *chip, loff_t ofs)
+अणु
+	अगर (chip->legacy.block_markbad)
+		वापस chip->legacy.block_markbad(chip, ofs);
 
-	return nand_default_block_markbad(chip, ofs);
-}
+	वापस nand_शेष_block_markbad(chip, ofs);
+पूर्ण
 
 /**
  * nand_block_markbad_lowlevel - mark a block bad
- * @chip: NAND chip object
+ * @chip: न_अंकD chip object
  * @ofs: offset from device start
  *
- * This function performs the generic NAND bad block marking steps (i.e., bad
+ * This function perक्रमms the generic न_अंकD bad block marking steps (i.e., bad
  * block table(s) and/or marker(s)). We only allow the hardware driver to
- * specify how to write bad block markers to OOB (chip->legacy.block_markbad).
+ * specअगरy how to ग_लिखो bad block markers to OOB (chip->legacy.block_markbad).
  *
  * We try operations in the following order:
  *
  *  (1) erase the affected block, to allow OOB marker to be written cleanly
- *  (2) write bad block marker to OOB area of affected block (unless flag
- *      NAND_BBT_NO_OOB_BBM is present)
+ *  (2) ग_लिखो bad block marker to OOB area of affected block (unless flag
+ *      न_अंकD_BBT_NO_OOB_BBM is present)
  *  (3) update the BBT
  *
  * Note that we retain the first error encountered in (2) or (3), finish the
  * procedures, and dump the error in the end.
 */
-static int nand_block_markbad_lowlevel(struct nand_chip *chip, loff_t ofs)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int res, ret = 0;
+अटल पूर्णांक nand_block_markbad_lowlevel(काष्ठा nand_chip *chip, loff_t ofs)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक res, ret = 0;
 
-	if (!(chip->bbt_options & NAND_BBT_NO_OOB_BBM)) {
-		struct erase_info einfo;
+	अगर (!(chip->bbt_options & न_अंकD_BBT_NO_OOB_BBM)) अणु
+		काष्ठा erase_info einfo;
 
-		/* Attempt erase before marking OOB */
-		memset(&einfo, 0, sizeof(einfo));
+		/* Attempt erase beक्रमe marking OOB */
+		स_रखो(&einfo, 0, माप(einfo));
 		einfo.addr = ofs;
-		einfo.len = 1ULL << chip->phys_erase_shift;
+		einfo.len = 1ULL << chip->phys_erase_shअगरt;
 		nand_erase_nand(chip, &einfo, 0);
 
 		/* Write bad block marker to OOB */
 		ret = nand_get_device(chip);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = nand_markbad_bbm(chip, ofs);
 		nand_release_device(chip);
-	}
+	पूर्ण
 
 	/* Mark block bad in BBT */
-	if (chip->bbt) {
+	अगर (chip->bbt) अणु
 		res = nand_markbad_bbt(chip, ofs);
-		if (!ret)
+		अगर (!ret)
 			ret = res;
-	}
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		mtd->ecc_stats.badblocks++;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nand_block_isreserved - [GENERIC] Check if a block is marked reserved.
- * @mtd: MTD device structure
+ * nand_block_isreserved - [GENERIC] Check अगर a block is marked reserved.
+ * @mtd: MTD device काष्ठाure
  * @ofs: offset from device start
  *
- * Check if the block is marked as reserved.
+ * Check अगर the block is marked as reserved.
  */
-static int nand_block_isreserved(struct mtd_info *mtd, loff_t ofs)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
+अटल पूर्णांक nand_block_isreserved(काष्ठा mtd_info *mtd, loff_t ofs)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
 
-	if (!chip->bbt)
-		return 0;
+	अगर (!chip->bbt)
+		वापस 0;
 	/* Return info from the table */
-	return nand_isreserved_bbt(chip, ofs);
-}
+	वापस nand_isreserved_bbt(chip, ofs);
+पूर्ण
 
 /**
- * nand_block_checkbad - [GENERIC] Check if a block is marked bad
- * @chip: NAND chip object
+ * nand_block_checkbad - [GENERIC] Check अगर a block is marked bad
+ * @chip: न_अंकD chip object
  * @ofs: offset from device start
- * @allowbbt: 1, if its allowed to access the bbt area
+ * @allowbbt: 1, अगर its allowed to access the bbt area
  *
- * Check, if the block is bad. Either by reading the bad block table or
+ * Check, अगर the block is bad. Either by पढ़ोing the bad block table or
  * calling of the scan function.
  */
-static int nand_block_checkbad(struct nand_chip *chip, loff_t ofs, int allowbbt)
-{
+अटल पूर्णांक nand_block_checkbad(काष्ठा nand_chip *chip, loff_t ofs, पूर्णांक allowbbt)
+अणु
 	/* Return info from the table */
-	if (chip->bbt)
-		return nand_isbad_bbt(chip, ofs, allowbbt);
+	अगर (chip->bbt)
+		वापस nand_isbad_bbt(chip, ofs, allowbbt);
 
-	return nand_isbad_bbm(chip, ofs);
-}
+	वापस nand_isbad_bbm(chip, ofs);
+पूर्ण
 
 /**
- * nand_soft_waitrdy - Poll STATUS reg until RDY bit is set to 1
- * @chip: NAND chip structure
- * @timeout_ms: Timeout in ms
+ * nand_soft_रुकोrdy - Poll STATUS reg until RDY bit is set to 1
+ * @chip: न_अंकD chip काष्ठाure
+ * @समयout_ms: Timeout in ms
  *
- * Poll the STATUS register using ->exec_op() until the RDY bit becomes 1.
- * If that does not happen whitin the specified timeout, -ETIMEDOUT is
- * returned.
+ * Poll the STATUS रेजिस्टर using ->exec_op() until the RDY bit becomes 1.
+ * If that करोes not happen whitin the specअगरied समयout, -ETIMEDOUT is
+ * वापसed.
  *
- * This helper is intended to be used when the controller does not have access
- * to the NAND R/B pin.
+ * This helper is पूर्णांकended to be used when the controller करोes not have access
+ * to the न_अंकD R/B pin.
  *
  * Be aware that calling this helper from an ->exec_op() implementation means
  * ->exec_op() must be re-entrant.
  *
- * Return 0 if the NAND chip is ready, a negative error otherwise.
+ * Return 0 अगर the न_अंकD chip is पढ़ोy, a negative error otherwise.
  */
-int nand_soft_waitrdy(struct nand_chip *chip, unsigned long timeout_ms)
-{
-	const struct nand_sdr_timings *timings;
+पूर्णांक nand_soft_रुकोrdy(काष्ठा nand_chip *chip, अचिन्हित दीर्घ समयout_ms)
+अणु
+	स्थिर काष्ठा nand_sdr_timings *timings;
 	u8 status = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!nand_has_exec_op(chip))
-		return -ENOTSUPP;
+	अगर (!nand_has_exec_op(chip))
+		वापस -ENOTSUPP;
 
-	/* Wait tWB before polling the STATUS reg. */
-	timings = nand_get_sdr_timings(nand_get_interface_config(chip));
+	/* Wait tWB beक्रमe polling the STATUS reg. */
+	timings = nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
 	ndelay(PSEC_TO_NSEC(timings->tWB_max));
 
-	ret = nand_status_op(chip, NULL);
-	if (ret)
-		return ret;
+	ret = nand_status_op(chip, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * +1 below is necessary because if we are now in the last fraction
-	 * of jiffy and msecs_to_jiffies is 1 then we will wait only that
-	 * small jiffy fraction - possibly leading to false timeout
+	 * +1 below is necessary because अगर we are now in the last fraction
+	 * of jअगरfy and msecs_to_jअगरfies is 1 then we will रुको only that
+	 * small jअगरfy fraction - possibly leading to false समयout
 	 */
-	timeout_ms = jiffies + msecs_to_jiffies(timeout_ms) + 1;
-	do {
-		ret = nand_read_data_op(chip, &status, sizeof(status), true,
+	समयout_ms = jअगरfies + msecs_to_jअगरfies(समयout_ms) + 1;
+	करो अणु
+		ret = nand_पढ़ो_data_op(chip, &status, माप(status), true,
 					false);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
-		if (status & NAND_STATUS_READY)
-			break;
+		अगर (status & न_अंकD_STATUS_READY)
+			अवरोध;
 
 		/*
-		 * Typical lowest execution time for a tR on most NANDs is 10us,
-		 * use this as polling delay before doing something smarter (ie.
-		 * deriving a delay from the timeout value, timeout_ms/ratio).
+		 * Typical lowest execution समय क्रम a tR on most न_अंकDs is 10us,
+		 * use this as polling delay beक्रमe करोing something smarter (ie.
+		 * deriving a delay from the समयout value, समयout_ms/ratio).
 		 */
 		udelay(10);
-	} while	(time_before(jiffies, timeout_ms));
+	पूर्ण जबतक	(समय_beक्रमe(jअगरfies, समयout_ms));
 
 	/*
-	 * We have to exit READ_STATUS mode in order to read real data on the
-	 * bus in case the WAITRDY instruction is preceding a DATA_IN
-	 * instruction.
+	 * We have to निकास READ_STATUS mode in order to पढ़ो real data on the
+	 * bus in हाल the WAITRDY inकाष्ठाion is preceding a DATA_IN
+	 * inकाष्ठाion.
 	 */
-	nand_exit_status_op(chip);
+	nand_निकास_status_op(chip);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return status & NAND_STATUS_READY ? 0 : -ETIMEDOUT;
-};
-EXPORT_SYMBOL_GPL(nand_soft_waitrdy);
+	वापस status & न_अंकD_STATUS_READY ? 0 : -ETIMEDOUT;
+पूर्ण;
+EXPORT_SYMBOL_GPL(nand_soft_रुकोrdy);
 
 /**
- * nand_gpio_waitrdy - Poll R/B GPIO pin until ready
- * @chip: NAND chip structure
+ * nand_gpio_रुकोrdy - Poll R/B GPIO pin until पढ़ोy
+ * @chip: न_अंकD chip काष्ठाure
  * @gpiod: GPIO descriptor of R/B pin
- * @timeout_ms: Timeout in ms
+ * @समयout_ms: Timeout in ms
  *
- * Poll the R/B GPIO pin until it becomes ready. If that does not happen
- * whitin the specified timeout, -ETIMEDOUT is returned.
+ * Poll the R/B GPIO pin until it becomes पढ़ोy. If that करोes not happen
+ * whitin the specअगरied समयout, -ETIMEDOUT is वापसed.
  *
- * This helper is intended to be used when the controller has access to the
- * NAND R/B pin over GPIO.
+ * This helper is पूर्णांकended to be used when the controller has access to the
+ * न_अंकD R/B pin over GPIO.
  *
- * Return 0 if the R/B pin indicates chip is ready, a negative error otherwise.
+ * Return 0 अगर the R/B pin indicates chip is पढ़ोy, a negative error otherwise.
  */
-int nand_gpio_waitrdy(struct nand_chip *chip, struct gpio_desc *gpiod,
-		      unsigned long timeout_ms)
-{
+पूर्णांक nand_gpio_रुकोrdy(काष्ठा nand_chip *chip, काष्ठा gpio_desc *gpiod,
+		      अचिन्हित दीर्घ समयout_ms)
+अणु
 
 	/*
-	 * Wait until R/B pin indicates chip is ready or timeout occurs.
-	 * +1 below is necessary because if we are now in the last fraction
-	 * of jiffy and msecs_to_jiffies is 1 then we will wait only that
-	 * small jiffy fraction - possibly leading to false timeout.
+	 * Wait until R/B pin indicates chip is पढ़ोy or समयout occurs.
+	 * +1 below is necessary because अगर we are now in the last fraction
+	 * of jअगरfy and msecs_to_jअगरfies is 1 then we will रुको only that
+	 * small jअगरfy fraction - possibly leading to false समयout.
 	 */
-	timeout_ms = jiffies + msecs_to_jiffies(timeout_ms) + 1;
-	do {
-		if (gpiod_get_value_cansleep(gpiod))
-			return 0;
+	समयout_ms = jअगरfies + msecs_to_jअगरfies(समयout_ms) + 1;
+	करो अणु
+		अगर (gpiod_get_value_cansleep(gpiod))
+			वापस 0;
 
 		cond_resched();
-	} while	(time_before(jiffies, timeout_ms));
+	पूर्ण जबतक	(समय_beक्रमe(jअगरfies, समयout_ms));
 
-	return gpiod_get_value_cansleep(gpiod) ? 0 : -ETIMEDOUT;
-};
-EXPORT_SYMBOL_GPL(nand_gpio_waitrdy);
+	वापस gpiod_get_value_cansleep(gpiod) ? 0 : -ETIMEDOUT;
+पूर्ण;
+EXPORT_SYMBOL_GPL(nand_gpio_रुकोrdy);
 
 /**
- * panic_nand_wait - [GENERIC] wait until the command is done
- * @chip: NAND chip structure
- * @timeo: timeout
+ * panic_nand_रुको - [GENERIC] रुको until the command is करोne
+ * @chip: न_अंकD chip काष्ठाure
+ * @समयo: समयout
  *
- * Wait for command done. This is a helper function for nand_wait used when
- * we are in interrupt context. May happen when in panic and trying to write
- * an oops through mtdoops.
+ * Wait क्रम command करोne. This is a helper function क्रम nand_रुको used when
+ * we are in पूर्णांकerrupt context. May happen when in panic and trying to ग_लिखो
+ * an oops through mtकरोops.
  */
-void panic_nand_wait(struct nand_chip *chip, unsigned long timeo)
-{
-	int i;
-	for (i = 0; i < timeo; i++) {
-		if (chip->legacy.dev_ready) {
-			if (chip->legacy.dev_ready(chip))
-				break;
-		} else {
-			int ret;
+व्योम panic_nand_रुको(काष्ठा nand_chip *chip, अचिन्हित दीर्घ समयo)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < समयo; i++) अणु
+		अगर (chip->legacy.dev_पढ़ोy) अणु
+			अगर (chip->legacy.dev_पढ़ोy(chip))
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			पूर्णांक ret;
 			u8 status;
 
-			ret = nand_read_data_op(chip, &status, sizeof(status),
+			ret = nand_पढ़ो_data_op(chip, &status, माप(status),
 						true, false);
-			if (ret)
-				return;
+			अगर (ret)
+				वापस;
 
-			if (status & NAND_STATUS_READY)
-				break;
-		}
+			अगर (status & न_अंकD_STATUS_READY)
+				अवरोध;
+		पूर्ण
 		mdelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool nand_supports_get_features(struct nand_chip *chip, int addr)
-{
-	return (chip->parameters.supports_set_get_features &&
+अटल bool nand_supports_get_features(काष्ठा nand_chip *chip, पूर्णांक addr)
+अणु
+	वापस (chip->parameters.supports_set_get_features &&
 		test_bit(addr, chip->parameters.get_feature_list));
-}
+पूर्ण
 
-static bool nand_supports_set_features(struct nand_chip *chip, int addr)
-{
-	return (chip->parameters.supports_set_get_features &&
+अटल bool nand_supports_set_features(काष्ठा nand_chip *chip, पूर्णांक addr)
+अणु
+	वापस (chip->parameters.supports_set_get_features &&
 		test_bit(addr, chip->parameters.set_feature_list));
-}
+पूर्ण
 
 /**
- * nand_reset_interface - Reset data interface and timings
- * @chip: The NAND chip
+ * nand_reset_पूर्णांकerface - Reset data पूर्णांकerface and timings
+ * @chip: The न_अंकD chip
  * @chipnr: Internal die id
  *
- * Reset the Data interface and timings to ONFI mode 0.
+ * Reset the Data पूर्णांकerface and timings to ONFI mode 0.
  *
- * Returns 0 for success or negative error code otherwise.
+ * Returns 0 क्रम success or negative error code otherwise.
  */
-static int nand_reset_interface(struct nand_chip *chip, int chipnr)
-{
-	const struct nand_controller_ops *ops = chip->controller->ops;
-	int ret;
+अटल पूर्णांक nand_reset_पूर्णांकerface(काष्ठा nand_chip *chip, पूर्णांक chipnr)
+अणु
+	स्थिर काष्ठा nand_controller_ops *ops = chip->controller->ops;
+	पूर्णांक ret;
 
-	if (!nand_controller_can_setup_interface(chip))
-		return 0;
+	अगर (!nand_controller_can_setup_पूर्णांकerface(chip))
+		वापस 0;
 
 	/*
-	 * The ONFI specification says:
+	 * The ONFI specअगरication says:
 	 * "
 	 * To transition from NV-DDR or NV-DDR2 to the SDR data
-	 * interface, the host shall use the Reset (FFh) command
+	 * पूर्णांकerface, the host shall use the Reset (FFh) command
 	 * using SDR timing mode 0. A device in any timing mode is
 	 * required to recognize Reset (FFh) command issued in SDR
 	 * timing mode 0.
 	 * "
 	 *
-	 * Configure the data interface in SDR mode and set the
+	 * Configure the data पूर्णांकerface in SDR mode and set the
 	 * timings to timing mode 0.
 	 */
 
-	chip->current_interface_config = nand_get_reset_interface_config();
-	ret = ops->setup_interface(chip, chipnr,
-				   chip->current_interface_config);
-	if (ret)
+	chip->current_पूर्णांकerface_config = nand_get_reset_पूर्णांकerface_config();
+	ret = ops->setup_पूर्णांकerface(chip, chipnr,
+				   chip->current_पूर्णांकerface_config);
+	अगर (ret)
 		pr_err("Failed to configure data interface to SDR timing mode 0\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nand_setup_interface - Setup the best data interface and timings
- * @chip: The NAND chip
+ * nand_setup_पूर्णांकerface - Setup the best data पूर्णांकerface and timings
+ * @chip: The न_अंकD chip
  * @chipnr: Internal die id
  *
- * Configure what has been reported to be the best data interface and NAND
+ * Configure what has been reported to be the best data पूर्णांकerface and न_अंकD
  * timings supported by the chip and the driver.
  *
- * Returns 0 for success or negative error code otherwise.
+ * Returns 0 क्रम success or negative error code otherwise.
  */
-static int nand_setup_interface(struct nand_chip *chip, int chipnr)
-{
-	const struct nand_controller_ops *ops = chip->controller->ops;
-	u8 tmode_param[ONFI_SUBFEATURE_PARAM_LEN] = { };
-	int ret;
+अटल पूर्णांक nand_setup_पूर्णांकerface(काष्ठा nand_chip *chip, पूर्णांक chipnr)
+अणु
+	स्थिर काष्ठा nand_controller_ops *ops = chip->controller->ops;
+	u8 पंचांगode_param[ONFI_SUBFEATURE_PARAM_LEN] = अणु पूर्ण;
+	पूर्णांक ret;
 
-	if (!nand_controller_can_setup_interface(chip))
-		return 0;
+	अगर (!nand_controller_can_setup_पूर्णांकerface(chip))
+		वापस 0;
 
 	/*
-	 * A nand_reset_interface() put both the NAND chip and the NAND
-	 * controller in timings mode 0. If the default mode for this chip is
-	 * also 0, no need to proceed to the change again. Plus, at probe time,
-	 * nand_setup_interface() uses ->set/get_features() which would
+	 * A nand_reset_पूर्णांकerface() put both the न_अंकD chip and the न_अंकD
+	 * controller in timings mode 0. If the शेष mode क्रम this chip is
+	 * also 0, no need to proceed to the change again. Plus, at probe समय,
+	 * nand_setup_पूर्णांकerface() uses ->set/get_features() which would
 	 * fail anyway as the parameter page is not available yet.
 	 */
-	if (!chip->best_interface_config)
-		return 0;
+	अगर (!chip->best_पूर्णांकerface_config)
+		वापस 0;
 
-	tmode_param[0] = chip->best_interface_config->timings.mode;
+	पंचांगode_param[0] = chip->best_पूर्णांकerface_config->timings.mode;
 
-	/* Change the mode on the chip side (if supported by the NAND chip) */
-	if (nand_supports_set_features(chip, ONFI_FEATURE_ADDR_TIMING_MODE)) {
+	/* Change the mode on the chip side (अगर supported by the न_अंकD chip) */
+	अगर (nand_supports_set_features(chip, ONFI_FEATURE_ADDR_TIMING_MODE)) अणु
 		nand_select_target(chip, chipnr);
 		ret = nand_set_features(chip, ONFI_FEATURE_ADDR_TIMING_MODE,
-					tmode_param);
+					पंचांगode_param);
 		nand_deselect_target(chip);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* Change the mode on the controller side */
-	ret = ops->setup_interface(chip, chipnr, chip->best_interface_config);
-	if (ret)
-		return ret;
+	ret = ops->setup_पूर्णांकerface(chip, chipnr, chip->best_पूर्णांकerface_config);
+	अगर (ret)
+		वापस ret;
 
-	/* Check the mode has been accepted by the chip, if supported */
-	if (!nand_supports_get_features(chip, ONFI_FEATURE_ADDR_TIMING_MODE))
-		goto update_interface_config;
+	/* Check the mode has been accepted by the chip, अगर supported */
+	अगर (!nand_supports_get_features(chip, ONFI_FEATURE_ADDR_TIMING_MODE))
+		जाओ update_पूर्णांकerface_config;
 
-	memset(tmode_param, 0, ONFI_SUBFEATURE_PARAM_LEN);
+	स_रखो(पंचांगode_param, 0, ONFI_SUBFEATURE_PARAM_LEN);
 	nand_select_target(chip, chipnr);
 	ret = nand_get_features(chip, ONFI_FEATURE_ADDR_TIMING_MODE,
-				tmode_param);
+				पंचांगode_param);
 	nand_deselect_target(chip);
-	if (ret)
-		goto err_reset_chip;
+	अगर (ret)
+		जाओ err_reset_chip;
 
-	if (tmode_param[0] != chip->best_interface_config->timings.mode) {
+	अगर (पंचांगode_param[0] != chip->best_पूर्णांकerface_config->timings.mode) अणु
 		pr_warn("timing mode %d not acknowledged by the NAND chip\n",
-			chip->best_interface_config->timings.mode);
-		goto err_reset_chip;
-	}
+			chip->best_पूर्णांकerface_config->timings.mode);
+		जाओ err_reset_chip;
+	पूर्ण
 
-update_interface_config:
-	chip->current_interface_config = chip->best_interface_config;
+update_पूर्णांकerface_config:
+	chip->current_पूर्णांकerface_config = chip->best_पूर्णांकerface_config;
 
-	return 0;
+	वापस 0;
 
 err_reset_chip:
 	/*
-	 * Fallback to mode 0 if the chip explicitly did not ack the chosen
+	 * Fallback to mode 0 अगर the chip explicitly did not ack the chosen
 	 * timing mode.
 	 */
-	nand_reset_interface(chip, chipnr);
+	nand_reset_पूर्णांकerface(chip, chipnr);
 	nand_select_target(chip, chipnr);
 	nand_reset_op(chip);
 	nand_deselect_target(chip);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * nand_choose_best_sdr_timings - Pick up the best SDR timings that both the
- *                                NAND controller and the NAND chip support
- * @chip: the NAND chip
- * @iface: the interface configuration (can eventually be updated)
- * @spec_timings: specific timings, when not fitting the ONFI specification
+ *                                न_अंकD controller and the न_अंकD chip support
+ * @chip: the न_अंकD chip
+ * @अगरace: the पूर्णांकerface configuration (can eventually be updated)
+ * @spec_timings: specअगरic timings, when not fitting the ONFI specअगरication
  *
- * If specific timings are provided, use them. Otherwise, retrieve supported
- * timing modes from ONFI information.
+ * If specअगरic timings are provided, use them. Otherwise, retrieve supported
+ * timing modes from ONFI inक्रमmation.
  */
-int nand_choose_best_sdr_timings(struct nand_chip *chip,
-				 struct nand_interface_config *iface,
-				 struct nand_sdr_timings *spec_timings)
-{
-	const struct nand_controller_ops *ops = chip->controller->ops;
-	int best_mode = 0, mode, ret;
+पूर्णांक nand_choose_best_sdr_timings(काष्ठा nand_chip *chip,
+				 काष्ठा nand_पूर्णांकerface_config *अगरace,
+				 काष्ठा nand_sdr_timings *spec_timings)
+अणु
+	स्थिर काष्ठा nand_controller_ops *ops = chip->controller->ops;
+	पूर्णांक best_mode = 0, mode, ret;
 
-	iface->type = NAND_SDR_IFACE;
+	अगरace->type = न_अंकD_SDR_IFACE;
 
-	if (spec_timings) {
-		iface->timings.sdr = *spec_timings;
-		iface->timings.mode = onfi_find_closest_sdr_mode(spec_timings);
+	अगर (spec_timings) अणु
+		अगरace->timings.sdr = *spec_timings;
+		अगरace->timings.mode = onfi_find_बंदst_sdr_mode(spec_timings);
 
-		/* Verify the controller supports the requested interface */
-		ret = ops->setup_interface(chip, NAND_DATA_IFACE_CHECK_ONLY,
-					   iface);
-		if (!ret) {
-			chip->best_interface_config = iface;
-			return ret;
-		}
+		/* Verअगरy the controller supports the requested पूर्णांकerface */
+		ret = ops->setup_पूर्णांकerface(chip, न_अंकD_DATA_IFACE_CHECK_ONLY,
+					   अगरace);
+		अगर (!ret) अणु
+			chip->best_पूर्णांकerface_config = अगरace;
+			वापस ret;
+		पूर्ण
 
 		/* Fallback to slower modes */
-		best_mode = iface->timings.mode;
-	} else if (chip->parameters.onfi) {
+		best_mode = अगरace->timings.mode;
+	पूर्ण अन्यथा अगर (chip->parameters.onfi) अणु
 		best_mode = fls(chip->parameters.onfi->async_timing_mode) - 1;
-	}
+	पूर्ण
 
-	for (mode = best_mode; mode >= 0; mode--) {
-		onfi_fill_interface_config(chip, iface, NAND_SDR_IFACE, mode);
+	क्रम (mode = best_mode; mode >= 0; mode--) अणु
+		onfi_fill_पूर्णांकerface_config(chip, अगरace, न_अंकD_SDR_IFACE, mode);
 
-		ret = ops->setup_interface(chip, NAND_DATA_IFACE_CHECK_ONLY,
-					   iface);
-		if (!ret)
-			break;
-	}
+		ret = ops->setup_पूर्णांकerface(chip, न_अंकD_DATA_IFACE_CHECK_ONLY,
+					   अगरace);
+		अगर (!ret)
+			अवरोध;
+	पूर्ण
 
-	chip->best_interface_config = iface;
+	chip->best_पूर्णांकerface_config = अगरace;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nand_choose_interface_config - find the best data interface and timings
- * @chip: The NAND chip
+ * nand_choose_पूर्णांकerface_config - find the best data पूर्णांकerface and timings
+ * @chip: The न_अंकD chip
  *
- * Find the best data interface and NAND timings supported by the chip
- * and the driver. Eventually let the NAND manufacturer driver propose his own
+ * Find the best data पूर्णांकerface and न_अंकD timings supported by the chip
+ * and the driver. Eventually let the न_अंकD manufacturer driver propose his own
  * set of timings.
  *
- * After this function nand_chip->interface_config is initialized with the best
+ * After this function nand_chip->पूर्णांकerface_config is initialized with the best
  * timing mode available.
  *
- * Returns 0 for success or negative error code otherwise.
+ * Returns 0 क्रम success or negative error code otherwise.
  */
-static int nand_choose_interface_config(struct nand_chip *chip)
-{
-	struct nand_interface_config *iface;
-	int ret;
+अटल पूर्णांक nand_choose_पूर्णांकerface_config(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_पूर्णांकerface_config *अगरace;
+	पूर्णांक ret;
 
-	if (!nand_controller_can_setup_interface(chip))
-		return 0;
+	अगर (!nand_controller_can_setup_पूर्णांकerface(chip))
+		वापस 0;
 
-	iface = kzalloc(sizeof(*iface), GFP_KERNEL);
-	if (!iface)
-		return -ENOMEM;
+	अगरace = kzalloc(माप(*अगरace), GFP_KERNEL);
+	अगर (!अगरace)
+		वापस -ENOMEM;
 
-	if (chip->ops.choose_interface_config)
-		ret = chip->ops.choose_interface_config(chip, iface);
-	else
-		ret = nand_choose_best_sdr_timings(chip, iface, NULL);
+	अगर (chip->ops.choose_पूर्णांकerface_config)
+		ret = chip->ops.choose_पूर्णांकerface_config(chip, अगरace);
+	अन्यथा
+		ret = nand_choose_best_sdr_timings(chip, अगरace, शून्य);
 
-	if (ret)
-		kfree(iface);
+	अगर (ret)
+		kमुक्त(अगरace);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * nand_fill_column_cycles - fill the column cycles of an address
- * @chip: The NAND chip
+ * @chip: The न_अंकD chip
  * @addrs: Array of address cycles to fill
  * @offset_in_page: The offset in the page
  *
  * Fills the first or the first two bytes of the @addrs field depending
- * on the NAND bus width and the page size.
+ * on the न_अंकD bus width and the page size.
  *
  * Returns the number of cycles needed to encode the column, or a negative
- * error code in case one of the arguments is invalid.
+ * error code in हाल one of the arguments is invalid.
  */
-static int nand_fill_column_cycles(struct nand_chip *chip, u8 *addrs,
-				   unsigned int offset_in_page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+अटल पूर्णांक nand_fill_column_cycles(काष्ठा nand_chip *chip, u8 *addrs,
+				   अचिन्हित पूर्णांक offset_in_page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
 	/* Make sure the offset is less than the actual page size. */
-	if (offset_in_page > mtd->writesize + mtd->oobsize)
-		return -EINVAL;
+	अगर (offset_in_page > mtd->ग_लिखोsize + mtd->oobsize)
+		वापस -EINVAL;
 
 	/*
-	 * On small page NANDs, there's a dedicated command to access the OOB
+	 * On small page न_अंकDs, there's a dedicated command to access the OOB
 	 * area, and the column address is relative to the start of the OOB
 	 * area, not the start of the page. Asjust the address accordingly.
 	 */
-	if (mtd->writesize <= 512 && offset_in_page >= mtd->writesize)
-		offset_in_page -= mtd->writesize;
+	अगर (mtd->ग_लिखोsize <= 512 && offset_in_page >= mtd->ग_लिखोsize)
+		offset_in_page -= mtd->ग_लिखोsize;
 
 	/*
-	 * The offset in page is expressed in bytes, if the NAND bus is 16-bit
-	 * wide, then it must be divided by 2.
+	 * The offset in page is expressed in bytes, अगर the न_अंकD bus is 16-bit
+	 * wide, then it must be भागided by 2.
 	 */
-	if (chip->options & NAND_BUSWIDTH_16) {
-		if (WARN_ON(offset_in_page % 2))
-			return -EINVAL;
+	अगर (chip->options & न_अंकD_BUSWIDTH_16) अणु
+		अगर (WARN_ON(offset_in_page % 2))
+			वापस -EINVAL;
 
 		offset_in_page /= 2;
-	}
+	पूर्ण
 
 	addrs[0] = offset_in_page;
 
 	/*
-	 * Small page NANDs use 1 cycle for the columns, while large page NANDs
+	 * Small page न_अंकDs use 1 cycle क्रम the columns, जबतक large page न_अंकDs
 	 * need 2
 	 */
-	if (mtd->writesize <= 512)
-		return 1;
+	अगर (mtd->ग_लिखोsize <= 512)
+		वापस 1;
 
 	addrs[1] = offset_in_page >> 8;
 
-	return 2;
-}
+	वापस 2;
+पूर्ण
 
-static int nand_sp_exec_read_page_op(struct nand_chip *chip, unsigned int page,
-				     unsigned int offset_in_page, void *buf,
-				     unsigned int len)
-{
-	const struct nand_sdr_timings *sdr =
-		nand_get_sdr_timings(nand_get_interface_config(chip));
-	struct mtd_info *mtd = nand_to_mtd(chip);
+अटल पूर्णांक nand_sp_exec_पढ़ो_page_op(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक page,
+				     अचिन्हित पूर्णांक offset_in_page, व्योम *buf,
+				     अचिन्हित पूर्णांक len)
+अणु
+	स्थिर काष्ठा nand_sdr_timings *sdr =
+		nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 	u8 addrs[4];
-	struct nand_op_instr instrs[] = {
-		NAND_OP_CMD(NAND_CMD_READ0, 0),
-		NAND_OP_ADDR(3, addrs, PSEC_TO_NSEC(sdr->tWB_max)),
-		NAND_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tR_max),
+	काष्ठा nand_op_instr instrs[] = अणु
+		न_अंकD_OP_CMD(न_अंकD_CMD_READ0, 0),
+		न_अंकD_OP_ADDR(3, addrs, PSEC_TO_NSEC(sdr->tWB_max)),
+		न_अंकD_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tR_max),
 				 PSEC_TO_NSEC(sdr->tRR_min)),
-		NAND_OP_DATA_IN(len, buf, 0),
-	};
-	struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
-	int ret;
+		न_अंकD_OP_DATA_IN(len, buf, 0),
+	पूर्ण;
+	काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
+	पूर्णांक ret;
 
-	/* Drop the DATA_IN instruction if len is set to 0. */
-	if (!len)
+	/* Drop the DATA_IN inकाष्ठाion अगर len is set to 0. */
+	अगर (!len)
 		op.ninstrs--;
 
-	if (offset_in_page >= mtd->writesize)
-		instrs[0].ctx.cmd.opcode = NAND_CMD_READOOB;
-	else if (offset_in_page >= 256 &&
-		 !(chip->options & NAND_BUSWIDTH_16))
-		instrs[0].ctx.cmd.opcode = NAND_CMD_READ1;
+	अगर (offset_in_page >= mtd->ग_लिखोsize)
+		instrs[0].ctx.cmd.opcode = न_अंकD_CMD_READOOB;
+	अन्यथा अगर (offset_in_page >= 256 &&
+		 !(chip->options & न_अंकD_BUSWIDTH_16))
+		instrs[0].ctx.cmd.opcode = न_अंकD_CMD_READ1;
 
 	ret = nand_fill_column_cycles(chip, addrs, offset_in_page);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	addrs[1] = page;
 	addrs[2] = page >> 8;
 
-	if (chip->options & NAND_ROW_ADDR_3) {
+	अगर (chip->options & न_अंकD_ROW_ADDR_3) अणु
 		addrs[3] = page >> 16;
 		instrs[1].ctx.addr.naddrs++;
-	}
+	पूर्ण
 
-	return nand_exec_op(chip, &op);
-}
+	वापस nand_exec_op(chip, &op);
+पूर्ण
 
-static int nand_lp_exec_read_page_op(struct nand_chip *chip, unsigned int page,
-				     unsigned int offset_in_page, void *buf,
-				     unsigned int len)
-{
-	const struct nand_sdr_timings *sdr =
-		nand_get_sdr_timings(nand_get_interface_config(chip));
+अटल पूर्णांक nand_lp_exec_पढ़ो_page_op(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक page,
+				     अचिन्हित पूर्णांक offset_in_page, व्योम *buf,
+				     अचिन्हित पूर्णांक len)
+अणु
+	स्थिर काष्ठा nand_sdr_timings *sdr =
+		nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
 	u8 addrs[5];
-	struct nand_op_instr instrs[] = {
-		NAND_OP_CMD(NAND_CMD_READ0, 0),
-		NAND_OP_ADDR(4, addrs, 0),
-		NAND_OP_CMD(NAND_CMD_READSTART, PSEC_TO_NSEC(sdr->tWB_max)),
-		NAND_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tR_max),
+	काष्ठा nand_op_instr instrs[] = अणु
+		न_अंकD_OP_CMD(न_अंकD_CMD_READ0, 0),
+		न_अंकD_OP_ADDR(4, addrs, 0),
+		न_अंकD_OP_CMD(न_अंकD_CMD_READSTART, PSEC_TO_NSEC(sdr->tWB_max)),
+		न_अंकD_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tR_max),
 				 PSEC_TO_NSEC(sdr->tRR_min)),
-		NAND_OP_DATA_IN(len, buf, 0),
-	};
-	struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
-	int ret;
+		न_अंकD_OP_DATA_IN(len, buf, 0),
+	पूर्ण;
+	काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
+	पूर्णांक ret;
 
-	/* Drop the DATA_IN instruction if len is set to 0. */
-	if (!len)
+	/* Drop the DATA_IN inकाष्ठाion अगर len is set to 0. */
+	अगर (!len)
 		op.ninstrs--;
 
 	ret = nand_fill_column_cycles(chip, addrs, offset_in_page);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	addrs[2] = page;
 	addrs[3] = page >> 8;
 
-	if (chip->options & NAND_ROW_ADDR_3) {
+	अगर (chip->options & न_अंकD_ROW_ADDR_3) अणु
 		addrs[4] = page >> 16;
 		instrs[1].ctx.addr.naddrs++;
-	}
+	पूर्ण
 
-	return nand_exec_op(chip, &op);
-}
+	वापस nand_exec_op(chip, &op);
+पूर्ण
 
 /**
- * nand_read_page_op - Do a READ PAGE operation
- * @chip: The NAND chip
- * @page: page to read
+ * nand_पढ़ो_page_op - Do a READ PAGE operation
+ * @chip: The न_अंकD chip
+ * @page: page to पढ़ो
  * @offset_in_page: offset within the page
  * @buf: buffer used to store the data
  * @len: length of the buffer
  *
  * This function issues a READ PAGE operation.
- * This function does not select/unselect the CS line.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_read_page_op(struct nand_chip *chip, unsigned int page,
-		      unsigned int offset_in_page, void *buf, unsigned int len)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+पूर्णांक nand_पढ़ो_page_op(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक page,
+		      अचिन्हित पूर्णांक offset_in_page, व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	if (len && !buf)
-		return -EINVAL;
+	अगर (len && !buf)
+		वापस -EINVAL;
 
-	if (offset_in_page + len > mtd->writesize + mtd->oobsize)
-		return -EINVAL;
+	अगर (offset_in_page + len > mtd->ग_लिखोsize + mtd->oobsize)
+		वापस -EINVAL;
 
-	if (nand_has_exec_op(chip)) {
-		if (mtd->writesize > 512)
-			return nand_lp_exec_read_page_op(chip, page,
+	अगर (nand_has_exec_op(chip)) अणु
+		अगर (mtd->ग_लिखोsize > 512)
+			वापस nand_lp_exec_पढ़ो_page_op(chip, page,
 							 offset_in_page, buf,
 							 len);
 
-		return nand_sp_exec_read_page_op(chip, page, offset_in_page,
+		वापस nand_sp_exec_पढ़ो_page_op(chip, page, offset_in_page,
 						 buf, len);
-	}
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_READ0, offset_in_page, page);
-	if (len)
-		chip->legacy.read_buf(chip, buf, len);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_READ0, offset_in_page, page);
+	अगर (len)
+		chip->legacy.पढ़ो_buf(chip, buf, len);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nand_read_page_op);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(nand_पढ़ो_page_op);
 
 /**
- * nand_read_param_page_op - Do a READ PARAMETER PAGE operation
- * @chip: The NAND chip
- * @page: parameter page to read
+ * nand_पढ़ो_param_page_op - Do a READ PARAMETER PAGE operation
+ * @chip: The न_अंकD chip
+ * @page: parameter page to पढ़ो
  * @buf: buffer used to store the data
  * @len: length of the buffer
  *
  * This function issues a READ PARAMETER PAGE operation.
- * This function does not select/unselect the CS line.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_read_param_page_op(struct nand_chip *chip, u8 page, void *buf,
-			    unsigned int len)
-{
-	unsigned int i;
+पूर्णांक nand_पढ़ो_param_page_op(काष्ठा nand_chip *chip, u8 page, व्योम *buf,
+			    अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक i;
 	u8 *p = buf;
 
-	if (len && !buf)
-		return -EINVAL;
+	अगर (len && !buf)
+		वापस -EINVAL;
 
-	if (nand_has_exec_op(chip)) {
-		const struct nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_interface_config(chip));
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_PARAM, 0),
-			NAND_OP_ADDR(1, &page, PSEC_TO_NSEC(sdr->tWB_max)),
-			NAND_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tR_max),
+	अगर (nand_has_exec_op(chip)) अणु
+		स्थिर काष्ठा nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_PARAM, 0),
+			न_अंकD_OP_ADDR(1, &page, PSEC_TO_NSEC(sdr->tWB_max)),
+			न_अंकD_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tR_max),
 					 PSEC_TO_NSEC(sdr->tRR_min)),
-			NAND_OP_8BIT_DATA_IN(len, buf, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+			न_अंकD_OP_8BIT_DATA_IN(len, buf, 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		/* Drop the DATA_IN instruction if len is set to 0. */
-		if (!len)
+		/* Drop the DATA_IN inकाष्ठाion अगर len is set to 0. */
+		अगर (!len)
 			op.ninstrs--;
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_PARAM, page, -1);
-	for (i = 0; i < len; i++)
-		p[i] = chip->legacy.read_byte(chip);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_PARAM, page, -1);
+	क्रम (i = 0; i < len; i++)
+		p[i] = chip->legacy.पढ़ो_byte(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nand_change_read_column_op - Do a CHANGE READ COLUMN operation
- * @chip: The NAND chip
+ * nand_change_पढ़ो_column_op - Do a CHANGE READ COLUMN operation
+ * @chip: The न_अंकD chip
  * @offset_in_page: offset within the page
  * @buf: buffer used to store the data
  * @len: length of the buffer
- * @force_8bit: force 8-bit bus access
+ * @क्रमce_8bit: क्रमce 8-bit bus access
  *
  * This function issues a CHANGE READ COLUMN operation.
- * This function does not select/unselect the CS line.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_change_read_column_op(struct nand_chip *chip,
-			       unsigned int offset_in_page, void *buf,
-			       unsigned int len, bool force_8bit)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+पूर्णांक nand_change_पढ़ो_column_op(काष्ठा nand_chip *chip,
+			       अचिन्हित पूर्णांक offset_in_page, व्योम *buf,
+			       अचिन्हित पूर्णांक len, bool क्रमce_8bit)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	if (len && !buf)
-		return -EINVAL;
+	अगर (len && !buf)
+		वापस -EINVAL;
 
-	if (offset_in_page + len > mtd->writesize + mtd->oobsize)
-		return -EINVAL;
+	अगर (offset_in_page + len > mtd->ग_लिखोsize + mtd->oobsize)
+		वापस -EINVAL;
 
-	/* Small page NANDs do not support column change. */
-	if (mtd->writesize <= 512)
-		return -ENOTSUPP;
+	/* Small page न_अंकDs करो not support column change. */
+	अगर (mtd->ग_लिखोsize <= 512)
+		वापस -ENOTSUPP;
 
-	if (nand_has_exec_op(chip)) {
-		const struct nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_interface_config(chip));
-		u8 addrs[2] = {};
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_RNDOUT, 0),
-			NAND_OP_ADDR(2, addrs, 0),
-			NAND_OP_CMD(NAND_CMD_RNDOUTSTART,
+	अगर (nand_has_exec_op(chip)) अणु
+		स्थिर काष्ठा nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+		u8 addrs[2] = अणुपूर्ण;
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_RNDOUT, 0),
+			न_अंकD_OP_ADDR(2, addrs, 0),
+			न_अंकD_OP_CMD(न_अंकD_CMD_RNDOUTSTART,
 				    PSEC_TO_NSEC(sdr->tCCS_min)),
-			NAND_OP_DATA_IN(len, buf, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
-		int ret;
+			न_अंकD_OP_DATA_IN(len, buf, 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
+		पूर्णांक ret;
 
 		ret = nand_fill_column_cycles(chip, addrs, offset_in_page);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		/* Drop the DATA_IN instruction if len is set to 0. */
-		if (!len)
+		/* Drop the DATA_IN inकाष्ठाion अगर len is set to 0. */
+		अगर (!len)
 			op.ninstrs--;
 
-		instrs[3].ctx.data.force_8bit = force_8bit;
+		instrs[3].ctx.data.क्रमce_8bit = क्रमce_8bit;
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_RNDOUT, offset_in_page, -1);
-	if (len)
-		chip->legacy.read_buf(chip, buf, len);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_RNDOUT, offset_in_page, -1);
+	अगर (len)
+		chip->legacy.पढ़ो_buf(chip, buf, len);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nand_change_read_column_op);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(nand_change_पढ़ो_column_op);
 
 /**
- * nand_read_oob_op - Do a READ OOB operation
- * @chip: The NAND chip
- * @page: page to read
+ * nand_पढ़ो_oob_op - Do a READ OOB operation
+ * @chip: The न_अंकD chip
+ * @page: page to पढ़ो
  * @offset_in_oob: offset within the OOB area
  * @buf: buffer used to store the data
  * @len: length of the buffer
  *
  * This function issues a READ OOB operation.
- * This function does not select/unselect the CS line.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_read_oob_op(struct nand_chip *chip, unsigned int page,
-		     unsigned int offset_in_oob, void *buf, unsigned int len)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+पूर्णांक nand_पढ़ो_oob_op(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक page,
+		     अचिन्हित पूर्णांक offset_in_oob, व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	if (len && !buf)
-		return -EINVAL;
+	अगर (len && !buf)
+		वापस -EINVAL;
 
-	if (offset_in_oob + len > mtd->oobsize)
-		return -EINVAL;
+	अगर (offset_in_oob + len > mtd->oobsize)
+		वापस -EINVAL;
 
-	if (nand_has_exec_op(chip))
-		return nand_read_page_op(chip, page,
-					 mtd->writesize + offset_in_oob,
+	अगर (nand_has_exec_op(chip))
+		वापस nand_पढ़ो_page_op(chip, page,
+					 mtd->ग_लिखोsize + offset_in_oob,
 					 buf, len);
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_READOOB, offset_in_oob, page);
-	if (len)
-		chip->legacy.read_buf(chip, buf, len);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_READOOB, offset_in_oob, page);
+	अगर (len)
+		chip->legacy.पढ़ो_buf(chip, buf, len);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nand_read_oob_op);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(nand_पढ़ो_oob_op);
 
-static int nand_exec_prog_page_op(struct nand_chip *chip, unsigned int page,
-				  unsigned int offset_in_page, const void *buf,
-				  unsigned int len, bool prog)
-{
-	const struct nand_sdr_timings *sdr =
-		nand_get_sdr_timings(nand_get_interface_config(chip));
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	u8 addrs[5] = {};
-	struct nand_op_instr instrs[] = {
+अटल पूर्णांक nand_exec_prog_page_op(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक page,
+				  अचिन्हित पूर्णांक offset_in_page, स्थिर व्योम *buf,
+				  अचिन्हित पूर्णांक len, bool prog)
+अणु
+	स्थिर काष्ठा nand_sdr_timings *sdr =
+		nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	u8 addrs[5] = अणुपूर्ण;
+	काष्ठा nand_op_instr instrs[] = अणु
 		/*
-		 * The first instruction will be dropped if we're dealing
-		 * with a large page NAND and adjusted if we're dealing
-		 * with a small page NAND and the page offset is > 255.
+		 * The first inकाष्ठाion will be dropped अगर we're dealing
+		 * with a large page न_अंकD and adjusted अगर we're dealing
+		 * with a small page न_अंकD and the page offset is > 255.
 		 */
-		NAND_OP_CMD(NAND_CMD_READ0, 0),
-		NAND_OP_CMD(NAND_CMD_SEQIN, 0),
-		NAND_OP_ADDR(0, addrs, PSEC_TO_NSEC(sdr->tADL_min)),
-		NAND_OP_DATA_OUT(len, buf, 0),
-		NAND_OP_CMD(NAND_CMD_PAGEPROG, PSEC_TO_NSEC(sdr->tWB_max)),
-		NAND_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tPROG_max), 0),
-	};
-	struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
-	int naddrs = nand_fill_column_cycles(chip, addrs, offset_in_page);
+		न_अंकD_OP_CMD(न_अंकD_CMD_READ0, 0),
+		न_अंकD_OP_CMD(न_अंकD_CMD_SEQIN, 0),
+		न_अंकD_OP_ADDR(0, addrs, PSEC_TO_NSEC(sdr->tADL_min)),
+		न_अंकD_OP_DATA_OUT(len, buf, 0),
+		न_अंकD_OP_CMD(न_अंकD_CMD_PAGEPROG, PSEC_TO_NSEC(sdr->tWB_max)),
+		न_अंकD_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tPROG_max), 0),
+	पूर्ण;
+	काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
+	पूर्णांक naddrs = nand_fill_column_cycles(chip, addrs, offset_in_page);
 
-	if (naddrs < 0)
-		return naddrs;
+	अगर (naddrs < 0)
+		वापस naddrs;
 
 	addrs[naddrs++] = page;
 	addrs[naddrs++] = page >> 8;
-	if (chip->options & NAND_ROW_ADDR_3)
+	अगर (chip->options & न_अंकD_ROW_ADDR_3)
 		addrs[naddrs++] = page >> 16;
 
 	instrs[2].ctx.addr.naddrs = naddrs;
 
-	/* Drop the last two instructions if we're not programming the page. */
-	if (!prog) {
+	/* Drop the last two inकाष्ठाions अगर we're not programming the page. */
+	अगर (!prog) अणु
 		op.ninstrs -= 2;
-		/* Also drop the DATA_OUT instruction if empty. */
-		if (!len)
+		/* Also drop the DATA_OUT inकाष्ठाion अगर empty. */
+		अगर (!len)
 			op.ninstrs--;
-	}
+	पूर्ण
 
-	if (mtd->writesize <= 512) {
+	अगर (mtd->ग_लिखोsize <= 512) अणु
 		/*
 		 * Small pages need some more tweaking: we have to adjust the
-		 * first instruction depending on the page offset we're trying
+		 * first inकाष्ठाion depending on the page offset we're trying
 		 * to access.
 		 */
-		if (offset_in_page >= mtd->writesize)
-			instrs[0].ctx.cmd.opcode = NAND_CMD_READOOB;
-		else if (offset_in_page >= 256 &&
-			 !(chip->options & NAND_BUSWIDTH_16))
-			instrs[0].ctx.cmd.opcode = NAND_CMD_READ1;
-	} else {
+		अगर (offset_in_page >= mtd->ग_लिखोsize)
+			instrs[0].ctx.cmd.opcode = न_अंकD_CMD_READOOB;
+		अन्यथा अगर (offset_in_page >= 256 &&
+			 !(chip->options & न_अंकD_BUSWIDTH_16))
+			instrs[0].ctx.cmd.opcode = न_अंकD_CMD_READ1;
+	पूर्ण अन्यथा अणु
 		/*
-		 * Drop the first command if we're dealing with a large page
-		 * NAND.
+		 * Drop the first command अगर we're dealing with a large page
+		 * न_अंकD.
 		 */
 		op.instrs++;
 		op.ninstrs--;
-	}
+	पूर्ण
 
-	return nand_exec_op(chip, &op);
-}
+	वापस nand_exec_op(chip, &op);
+पूर्ण
 
 /**
  * nand_prog_page_begin_op - starts a PROG PAGE operation
- * @chip: The NAND chip
- * @page: page to write
+ * @chip: The न_अंकD chip
+ * @page: page to ग_लिखो
  * @offset_in_page: offset within the page
- * @buf: buffer containing the data to write to the page
+ * @buf: buffer containing the data to ग_लिखो to the page
  * @len: length of the buffer
  *
  * This function issues the first half of a PROG PAGE operation.
- * This function does not select/unselect the CS line.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_prog_page_begin_op(struct nand_chip *chip, unsigned int page,
-			    unsigned int offset_in_page, const void *buf,
-			    unsigned int len)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+पूर्णांक nand_prog_page_begin_op(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक page,
+			    अचिन्हित पूर्णांक offset_in_page, स्थिर व्योम *buf,
+			    अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	if (len && !buf)
-		return -EINVAL;
+	अगर (len && !buf)
+		वापस -EINVAL;
 
-	if (offset_in_page + len > mtd->writesize + mtd->oobsize)
-		return -EINVAL;
+	अगर (offset_in_page + len > mtd->ग_लिखोsize + mtd->oobsize)
+		वापस -EINVAL;
 
-	if (nand_has_exec_op(chip))
-		return nand_exec_prog_page_op(chip, page, offset_in_page, buf,
+	अगर (nand_has_exec_op(chip))
+		वापस nand_exec_prog_page_op(chip, page, offset_in_page, buf,
 					      len, false);
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_SEQIN, offset_in_page, page);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_SEQIN, offset_in_page, page);
 
-	if (buf)
-		chip->legacy.write_buf(chip, buf, len);
+	अगर (buf)
+		chip->legacy.ग_लिखो_buf(chip, buf, len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_prog_page_begin_op);
 
 /**
  * nand_prog_page_end_op - ends a PROG PAGE operation
- * @chip: The NAND chip
+ * @chip: The न_अंकD chip
  *
  * This function issues the second half of a PROG PAGE operation.
- * This function does not select/unselect the CS line.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_prog_page_end_op(struct nand_chip *chip)
-{
-	int ret;
+पूर्णांक nand_prog_page_end_op(काष्ठा nand_chip *chip)
+अणु
+	पूर्णांक ret;
 	u8 status;
 
-	if (nand_has_exec_op(chip)) {
-		const struct nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_interface_config(chip));
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_PAGEPROG,
+	अगर (nand_has_exec_op(chip)) अणु
+		स्थिर काष्ठा nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_PAGEPROG,
 				    PSEC_TO_NSEC(sdr->tWB_max)),
-			NAND_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tPROG_max), 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+			न_अंकD_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tPROG_max), 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
 		ret = nand_exec_op(chip, &op);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = nand_status_op(chip, &status);
-		if (ret)
-			return ret;
-	} else {
-		chip->legacy.cmdfunc(chip, NAND_CMD_PAGEPROG, -1, -1);
-		ret = chip->legacy.waitfunc(chip);
-		if (ret < 0)
-			return ret;
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		chip->legacy.cmdfunc(chip, न_अंकD_CMD_PAGEPROG, -1, -1);
+		ret = chip->legacy.रुकोfunc(chip);
+		अगर (ret < 0)
+			वापस ret;
 
 		status = ret;
-	}
+	पूर्ण
 
-	if (status & NAND_STATUS_FAIL)
-		return -EIO;
+	अगर (status & न_अंकD_STATUS_FAIL)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_prog_page_end_op);
 
 /**
  * nand_prog_page_op - Do a full PROG PAGE operation
- * @chip: The NAND chip
- * @page: page to write
+ * @chip: The न_अंकD chip
+ * @page: page to ग_लिखो
  * @offset_in_page: offset within the page
- * @buf: buffer containing the data to write to the page
+ * @buf: buffer containing the data to ग_लिखो to the page
  * @len: length of the buffer
  *
  * This function issues a full PROG PAGE operation.
- * This function does not select/unselect the CS line.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_prog_page_op(struct nand_chip *chip, unsigned int page,
-		      unsigned int offset_in_page, const void *buf,
-		      unsigned int len)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+पूर्णांक nand_prog_page_op(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक page,
+		      अचिन्हित पूर्णांक offset_in_page, स्थिर व्योम *buf,
+		      अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 	u8 status;
-	int ret;
+	पूर्णांक ret;
 
-	if (!len || !buf)
-		return -EINVAL;
+	अगर (!len || !buf)
+		वापस -EINVAL;
 
-	if (offset_in_page + len > mtd->writesize + mtd->oobsize)
-		return -EINVAL;
+	अगर (offset_in_page + len > mtd->ग_लिखोsize + mtd->oobsize)
+		वापस -EINVAL;
 
-	if (nand_has_exec_op(chip)) {
+	अगर (nand_has_exec_op(chip)) अणु
 		ret = nand_exec_prog_page_op(chip, page, offset_in_page, buf,
 						len, true);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = nand_status_op(chip, &status);
-		if (ret)
-			return ret;
-	} else {
-		chip->legacy.cmdfunc(chip, NAND_CMD_SEQIN, offset_in_page,
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		chip->legacy.cmdfunc(chip, न_अंकD_CMD_SEQIN, offset_in_page,
 				     page);
-		chip->legacy.write_buf(chip, buf, len);
-		chip->legacy.cmdfunc(chip, NAND_CMD_PAGEPROG, -1, -1);
-		ret = chip->legacy.waitfunc(chip);
-		if (ret < 0)
-			return ret;
+		chip->legacy.ग_लिखो_buf(chip, buf, len);
+		chip->legacy.cmdfunc(chip, न_अंकD_CMD_PAGEPROG, -1, -1);
+		ret = chip->legacy.रुकोfunc(chip);
+		अगर (ret < 0)
+			वापस ret;
 
 		status = ret;
-	}
+	पूर्ण
 
-	if (status & NAND_STATUS_FAIL)
-		return -EIO;
+	अगर (status & न_अंकD_STATUS_FAIL)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_prog_page_op);
 
 /**
- * nand_change_write_column_op - Do a CHANGE WRITE COLUMN operation
- * @chip: The NAND chip
+ * nand_change_ग_लिखो_column_op - Do a CHANGE WRITE COLUMN operation
+ * @chip: The न_अंकD chip
  * @offset_in_page: offset within the page
- * @buf: buffer containing the data to send to the NAND
+ * @buf: buffer containing the data to send to the न_अंकD
  * @len: length of the buffer
- * @force_8bit: force 8-bit bus access
+ * @क्रमce_8bit: क्रमce 8-bit bus access
  *
  * This function issues a CHANGE WRITE COLUMN operation.
- * This function does not select/unselect the CS line.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_change_write_column_op(struct nand_chip *chip,
-				unsigned int offset_in_page,
-				const void *buf, unsigned int len,
-				bool force_8bit)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+पूर्णांक nand_change_ग_लिखो_column_op(काष्ठा nand_chip *chip,
+				अचिन्हित पूर्णांक offset_in_page,
+				स्थिर व्योम *buf, अचिन्हित पूर्णांक len,
+				bool क्रमce_8bit)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	if (len && !buf)
-		return -EINVAL;
+	अगर (len && !buf)
+		वापस -EINVAL;
 
-	if (offset_in_page + len > mtd->writesize + mtd->oobsize)
-		return -EINVAL;
+	अगर (offset_in_page + len > mtd->ग_लिखोsize + mtd->oobsize)
+		वापस -EINVAL;
 
-	/* Small page NANDs do not support column change. */
-	if (mtd->writesize <= 512)
-		return -ENOTSUPP;
+	/* Small page न_अंकDs करो not support column change. */
+	अगर (mtd->ग_लिखोsize <= 512)
+		वापस -ENOTSUPP;
 
-	if (nand_has_exec_op(chip)) {
-		const struct nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_interface_config(chip));
+	अगर (nand_has_exec_op(chip)) अणु
+		स्थिर काष्ठा nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
 		u8 addrs[2];
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_RNDIN, 0),
-			NAND_OP_ADDR(2, addrs, PSEC_TO_NSEC(sdr->tCCS_min)),
-			NAND_OP_DATA_OUT(len, buf, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
-		int ret;
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_RNDIN, 0),
+			न_अंकD_OP_ADDR(2, addrs, PSEC_TO_NSEC(sdr->tCCS_min)),
+			न_अंकD_OP_DATA_OUT(len, buf, 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
+		पूर्णांक ret;
 
 		ret = nand_fill_column_cycles(chip, addrs, offset_in_page);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		instrs[2].ctx.data.force_8bit = force_8bit;
+		instrs[2].ctx.data.क्रमce_8bit = क्रमce_8bit;
 
-		/* Drop the DATA_OUT instruction if len is set to 0. */
-		if (!len)
+		/* Drop the DATA_OUT inकाष्ठाion अगर len is set to 0. */
+		अगर (!len)
 			op.ninstrs--;
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_RNDIN, offset_in_page, -1);
-	if (len)
-		chip->legacy.write_buf(chip, buf, len);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_RNDIN, offset_in_page, -1);
+	अगर (len)
+		chip->legacy.ग_लिखो_buf(chip, buf, len);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nand_change_write_column_op);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(nand_change_ग_लिखो_column_op);
 
 /**
- * nand_readid_op - Do a READID operation
- * @chip: The NAND chip
+ * nand_पढ़ोid_op - Do a READID operation
+ * @chip: The न_अंकD chip
  * @addr: address cycle to pass after the READID command
  * @buf: buffer used to store the ID
  * @len: length of the buffer
  *
- * This function sends a READID command and reads back the ID returned by the
- * NAND.
- * This function does not select/unselect the CS line.
+ * This function sends a READID command and पढ़ोs back the ID वापसed by the
+ * न_अंकD.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_readid_op(struct nand_chip *chip, u8 addr, void *buf,
-		   unsigned int len)
-{
-	unsigned int i;
+पूर्णांक nand_पढ़ोid_op(काष्ठा nand_chip *chip, u8 addr, व्योम *buf,
+		   अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक i;
 	u8 *id = buf;
 
-	if (len && !buf)
-		return -EINVAL;
+	अगर (len && !buf)
+		वापस -EINVAL;
 
-	if (nand_has_exec_op(chip)) {
-		const struct nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_interface_config(chip));
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_READID, 0),
-			NAND_OP_ADDR(1, &addr, PSEC_TO_NSEC(sdr->tADL_min)),
-			NAND_OP_8BIT_DATA_IN(len, buf, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+	अगर (nand_has_exec_op(chip)) अणु
+		स्थिर काष्ठा nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_READID, 0),
+			न_अंकD_OP_ADDR(1, &addr, PSEC_TO_NSEC(sdr->tADL_min)),
+			न_अंकD_OP_8BIT_DATA_IN(len, buf, 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		/* Drop the DATA_IN instruction if len is set to 0. */
-		if (!len)
+		/* Drop the DATA_IN inकाष्ठाion अगर len is set to 0. */
+		अगर (!len)
 			op.ninstrs--;
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_READID, addr, -1);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_READID, addr, -1);
 
-	for (i = 0; i < len; i++)
-		id[i] = chip->legacy.read_byte(chip);
+	क्रम (i = 0; i < len; i++)
+		id[i] = chip->legacy.पढ़ो_byte(chip);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nand_readid_op);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(nand_पढ़ोid_op);
 
 /**
  * nand_status_op - Do a STATUS operation
- * @chip: The NAND chip
- * @status: out variable to store the NAND status
+ * @chip: The न_अंकD chip
+ * @status: out variable to store the न_अंकD status
  *
- * This function sends a STATUS command and reads back the status returned by
- * the NAND.
- * This function does not select/unselect the CS line.
+ * This function sends a STATUS command and पढ़ोs back the status वापसed by
+ * the न_अंकD.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_status_op(struct nand_chip *chip, u8 *status)
-{
-	if (nand_has_exec_op(chip)) {
-		const struct nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_interface_config(chip));
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_STATUS,
+पूर्णांक nand_status_op(काष्ठा nand_chip *chip, u8 *status)
+अणु
+	अगर (nand_has_exec_op(chip)) अणु
+		स्थिर काष्ठा nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_STATUS,
 				    PSEC_TO_NSEC(sdr->tADL_min)),
-			NAND_OP_8BIT_DATA_IN(1, status, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+			न_अंकD_OP_8BIT_DATA_IN(1, status, 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		if (!status)
+		अगर (!status)
 			op.ninstrs--;
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_STATUS, -1, -1);
-	if (status)
-		*status = chip->legacy.read_byte(chip);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_STATUS, -1, -1);
+	अगर (status)
+		*status = chip->legacy.पढ़ो_byte(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_status_op);
 
 /**
- * nand_exit_status_op - Exit a STATUS operation
- * @chip: The NAND chip
+ * nand_निकास_status_op - Exit a STATUS operation
+ * @chip: The न_अंकD chip
  *
  * This function sends a READ0 command to cancel the effect of the STATUS
- * command to avoid reading only the status until a new read command is sent.
+ * command to aव्योम पढ़ोing only the status until a new पढ़ो command is sent.
  *
- * This function does not select/unselect the CS line.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_exit_status_op(struct nand_chip *chip)
-{
-	if (nand_has_exec_op(chip)) {
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_READ0, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+पूर्णांक nand_निकास_status_op(काष्ठा nand_chip *chip)
+अणु
+	अगर (nand_has_exec_op(chip)) अणु
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_READ0, 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_READ0, -1, -1);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_READ0, -1, -1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * nand_erase_op - Do an erase operation
- * @chip: The NAND chip
+ * @chip: The न_अंकD chip
  * @eraseblock: block to erase
  *
- * This function sends an ERASE command and waits for the NAND to be ready
- * before returning.
- * This function does not select/unselect the CS line.
+ * This function sends an ERASE command and रुकोs क्रम the न_अंकD to be पढ़ोy
+ * beक्रमe वापसing.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_erase_op(struct nand_chip *chip, unsigned int eraseblock)
-{
-	unsigned int page = eraseblock <<
-			    (chip->phys_erase_shift - chip->page_shift);
-	int ret;
+पूर्णांक nand_erase_op(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक eraseblock)
+अणु
+	अचिन्हित पूर्णांक page = eraseblock <<
+			    (chip->phys_erase_shअगरt - chip->page_shअगरt);
+	पूर्णांक ret;
 	u8 status;
 
-	if (nand_has_exec_op(chip)) {
-		const struct nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_interface_config(chip));
-		u8 addrs[3] = {	page, page >> 8, page >> 16 };
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_ERASE1, 0),
-			NAND_OP_ADDR(2, addrs, 0),
-			NAND_OP_CMD(NAND_CMD_ERASE2,
+	अगर (nand_has_exec_op(chip)) अणु
+		स्थिर काष्ठा nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+		u8 addrs[3] = अणु	page, page >> 8, page >> 16 पूर्ण;
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_ERASE1, 0),
+			न_अंकD_OP_ADDR(2, addrs, 0),
+			न_अंकD_OP_CMD(न_अंकD_CMD_ERASE2,
 				    PSEC_TO_MSEC(sdr->tWB_max)),
-			NAND_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tBERS_max), 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+			न_अंकD_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tBERS_max), 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		if (chip->options & NAND_ROW_ADDR_3)
+		अगर (chip->options & न_अंकD_ROW_ADDR_3)
 			instrs[1].ctx.addr.naddrs++;
 
 		ret = nand_exec_op(chip, &op);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = nand_status_op(chip, &status);
-		if (ret)
-			return ret;
-	} else {
-		chip->legacy.cmdfunc(chip, NAND_CMD_ERASE1, -1, page);
-		chip->legacy.cmdfunc(chip, NAND_CMD_ERASE2, -1, -1);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		chip->legacy.cmdfunc(chip, न_अंकD_CMD_ERASE1, -1, page);
+		chip->legacy.cmdfunc(chip, न_अंकD_CMD_ERASE2, -1, -1);
 
-		ret = chip->legacy.waitfunc(chip);
-		if (ret < 0)
-			return ret;
+		ret = chip->legacy.रुकोfunc(chip);
+		अगर (ret < 0)
+			वापस ret;
 
 		status = ret;
-	}
+	पूर्ण
 
-	if (status & NAND_STATUS_FAIL)
-		return -EIO;
+	अगर (status & न_अंकD_STATUS_FAIL)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_erase_op);
 
 /**
  * nand_set_features_op - Do a SET FEATURES operation
- * @chip: The NAND chip
+ * @chip: The न_अंकD chip
  * @feature: feature id
  * @data: 4 bytes of data
  *
- * This function sends a SET FEATURES command and waits for the NAND to be
- * ready before returning.
- * This function does not select/unselect the CS line.
+ * This function sends a SET FEATURES command and रुकोs क्रम the न_अंकD to be
+ * पढ़ोy beक्रमe वापसing.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-static int nand_set_features_op(struct nand_chip *chip, u8 feature,
-				const void *data)
-{
-	const u8 *params = data;
-	int i, ret;
+अटल पूर्णांक nand_set_features_op(काष्ठा nand_chip *chip, u8 feature,
+				स्थिर व्योम *data)
+अणु
+	स्थिर u8 *params = data;
+	पूर्णांक i, ret;
 
-	if (nand_has_exec_op(chip)) {
-		const struct nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_interface_config(chip));
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_SET_FEATURES, 0),
-			NAND_OP_ADDR(1, &feature, PSEC_TO_NSEC(sdr->tADL_min)),
-			NAND_OP_8BIT_DATA_OUT(ONFI_SUBFEATURE_PARAM_LEN, data,
+	अगर (nand_has_exec_op(chip)) अणु
+		स्थिर काष्ठा nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_SET_FEATURES, 0),
+			न_अंकD_OP_ADDR(1, &feature, PSEC_TO_NSEC(sdr->tADL_min)),
+			न_अंकD_OP_8BIT_DATA_OUT(ONFI_SUBFEATURE_PARAM_LEN, data,
 					      PSEC_TO_NSEC(sdr->tWB_max)),
-			NAND_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tFEAT_max), 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+			न_अंकD_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tFEAT_max), 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_SET_FEATURES, feature, -1);
-	for (i = 0; i < ONFI_SUBFEATURE_PARAM_LEN; ++i)
-		chip->legacy.write_byte(chip, params[i]);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_SET_FEATURES, feature, -1);
+	क्रम (i = 0; i < ONFI_SUBFEATURE_PARAM_LEN; ++i)
+		chip->legacy.ग_लिखो_byte(chip, params[i]);
 
-	ret = chip->legacy.waitfunc(chip);
-	if (ret < 0)
-		return ret;
+	ret = chip->legacy.रुकोfunc(chip);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret & NAND_STATUS_FAIL)
-		return -EIO;
+	अगर (ret & न_अंकD_STATUS_FAIL)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * nand_get_features_op - Do a GET FEATURES operation
- * @chip: The NAND chip
+ * @chip: The न_अंकD chip
  * @feature: feature id
  * @data: 4 bytes of data
  *
- * This function sends a GET FEATURES command and waits for the NAND to be
- * ready before returning.
- * This function does not select/unselect the CS line.
+ * This function sends a GET FEATURES command and रुकोs क्रम the न_अंकD to be
+ * पढ़ोy beक्रमe वापसing.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-static int nand_get_features_op(struct nand_chip *chip, u8 feature,
-				void *data)
-{
+अटल पूर्णांक nand_get_features_op(काष्ठा nand_chip *chip, u8 feature,
+				व्योम *data)
+अणु
 	u8 *params = data;
-	int i;
+	पूर्णांक i;
 
-	if (nand_has_exec_op(chip)) {
-		const struct nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_interface_config(chip));
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_GET_FEATURES, 0),
-			NAND_OP_ADDR(1, &feature, PSEC_TO_NSEC(sdr->tWB_max)),
-			NAND_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tFEAT_max),
+	अगर (nand_has_exec_op(chip)) अणु
+		स्थिर काष्ठा nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_GET_FEATURES, 0),
+			न_अंकD_OP_ADDR(1, &feature, PSEC_TO_NSEC(sdr->tWB_max)),
+			न_अंकD_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tFEAT_max),
 					 PSEC_TO_NSEC(sdr->tRR_min)),
-			NAND_OP_8BIT_DATA_IN(ONFI_SUBFEATURE_PARAM_LEN,
+			न_अंकD_OP_8BIT_DATA_IN(ONFI_SUBFEATURE_PARAM_LEN,
 					     data, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_GET_FEATURES, feature, -1);
-	for (i = 0; i < ONFI_SUBFEATURE_PARAM_LEN; ++i)
-		params[i] = chip->legacy.read_byte(chip);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_GET_FEATURES, feature, -1);
+	क्रम (i = 0; i < ONFI_SUBFEATURE_PARAM_LEN; ++i)
+		params[i] = chip->legacy.पढ़ो_byte(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nand_wait_rdy_op(struct nand_chip *chip, unsigned int timeout_ms,
-			    unsigned int delay_ns)
-{
-	if (nand_has_exec_op(chip)) {
-		struct nand_op_instr instrs[] = {
-			NAND_OP_WAIT_RDY(PSEC_TO_MSEC(timeout_ms),
+अटल पूर्णांक nand_रुको_rdy_op(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक समयout_ms,
+			    अचिन्हित पूर्णांक delay_ns)
+अणु
+	अगर (nand_has_exec_op(chip)) अणु
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_WAIT_RDY(PSEC_TO_MSEC(समयout_ms),
 					 PSEC_TO_NSEC(delay_ns)),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	/* Apply delay or wait for ready/busy pin */
-	if (!chip->legacy.dev_ready)
+	/* Apply delay or रुको क्रम पढ़ोy/busy pin */
+	अगर (!chip->legacy.dev_पढ़ोy)
 		udelay(chip->legacy.chip_delay);
-	else
-		nand_wait_ready(chip);
+	अन्यथा
+		nand_रुको_पढ़ोy(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * nand_reset_op - Do a reset operation
- * @chip: The NAND chip
+ * @chip: The न_अंकD chip
  *
- * This function sends a RESET command and waits for the NAND to be ready
- * before returning.
- * This function does not select/unselect the CS line.
+ * This function sends a RESET command and रुकोs क्रम the न_अंकD to be पढ़ोy
+ * beक्रमe वापसing.
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_reset_op(struct nand_chip *chip)
-{
-	if (nand_has_exec_op(chip)) {
-		const struct nand_sdr_timings *sdr =
-			nand_get_sdr_timings(nand_get_interface_config(chip));
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(NAND_CMD_RESET, PSEC_TO_NSEC(sdr->tWB_max)),
-			NAND_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tRST_max), 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+पूर्णांक nand_reset_op(काष्ठा nand_chip *chip)
+अणु
+	अगर (nand_has_exec_op(chip)) अणु
+		स्थिर काष्ठा nand_sdr_timings *sdr =
+			nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(न_अंकD_CMD_RESET, PSEC_TO_NSEC(sdr->tWB_max)),
+			न_अंकD_OP_WAIT_RDY(PSEC_TO_MSEC(sdr->tRST_max), 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_RESET, -1, -1);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_RESET, -1, -1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_reset_op);
 
 /**
- * nand_read_data_op - Read data from the NAND
- * @chip: The NAND chip
+ * nand_पढ़ो_data_op - Read data from the न_अंकD
+ * @chip: The न_अंकD chip
  * @buf: buffer used to store the data
  * @len: length of the buffer
- * @force_8bit: force 8-bit bus access
- * @check_only: do not actually run the command, only checks if the
+ * @क्रमce_8bit: क्रमce 8-bit bus access
+ * @check_only: करो not actually run the command, only checks अगर the
  *              controller driver supports it
  *
- * This function does a raw data read on the bus. Usually used after launching
- * another NAND operation like nand_read_page_op().
- * This function does not select/unselect the CS line.
+ * This function करोes a raw data पढ़ो on the bus. Usually used after launching
+ * another न_अंकD operation like nand_पढ़ो_page_op().
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_read_data_op(struct nand_chip *chip, void *buf, unsigned int len,
-		      bool force_8bit, bool check_only)
-{
-	if (!len || !buf)
-		return -EINVAL;
+पूर्णांक nand_पढ़ो_data_op(काष्ठा nand_chip *chip, व्योम *buf, अचिन्हित पूर्णांक len,
+		      bool क्रमce_8bit, bool check_only)
+अणु
+	अगर (!len || !buf)
+		वापस -EINVAL;
 
-	if (nand_has_exec_op(chip)) {
-		struct nand_op_instr instrs[] = {
-			NAND_OP_DATA_IN(len, buf, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+	अगर (nand_has_exec_op(chip)) अणु
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_DATA_IN(len, buf, 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		instrs[0].ctx.data.force_8bit = force_8bit;
+		instrs[0].ctx.data.क्रमce_8bit = क्रमce_8bit;
 
-		if (check_only)
-			return nand_check_op(chip, &op);
+		अगर (check_only)
+			वापस nand_check_op(chip, &op);
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	if (check_only)
-		return 0;
+	अगर (check_only)
+		वापस 0;
 
-	if (force_8bit) {
+	अगर (क्रमce_8bit) अणु
 		u8 *p = buf;
-		unsigned int i;
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; i < len; i++)
-			p[i] = chip->legacy.read_byte(chip);
-	} else {
-		chip->legacy.read_buf(chip, buf, len);
-	}
+		क्रम (i = 0; i < len; i++)
+			p[i] = chip->legacy.पढ़ो_byte(chip);
+	पूर्ण अन्यथा अणु
+		chip->legacy.पढ़ो_buf(chip, buf, len);
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nand_read_data_op);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(nand_पढ़ो_data_op);
 
 /**
- * nand_write_data_op - Write data from the NAND
- * @chip: The NAND chip
+ * nand_ग_लिखो_data_op - Write data from the न_अंकD
+ * @chip: The न_अंकD chip
  * @buf: buffer containing the data to send on the bus
  * @len: length of the buffer
- * @force_8bit: force 8-bit bus access
+ * @क्रमce_8bit: क्रमce 8-bit bus access
  *
- * This function does a raw data write on the bus. Usually used after launching
- * another NAND operation like nand_write_page_begin_op().
- * This function does not select/unselect the CS line.
+ * This function करोes a raw data ग_लिखो on the bus. Usually used after launching
+ * another न_अंकD operation like nand_ग_लिखो_page_begin_op().
+ * This function करोes not select/unselect the CS line.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_write_data_op(struct nand_chip *chip, const void *buf,
-		       unsigned int len, bool force_8bit)
-{
-	if (!len || !buf)
-		return -EINVAL;
+पूर्णांक nand_ग_लिखो_data_op(काष्ठा nand_chip *chip, स्थिर व्योम *buf,
+		       अचिन्हित पूर्णांक len, bool क्रमce_8bit)
+अणु
+	अगर (!len || !buf)
+		वापस -EINVAL;
 
-	if (nand_has_exec_op(chip)) {
-		struct nand_op_instr instrs[] = {
-			NAND_OP_DATA_OUT(len, buf, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+	अगर (nand_has_exec_op(chip)) अणु
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_DATA_OUT(len, buf, 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		instrs[0].ctx.data.force_8bit = force_8bit;
+		instrs[0].ctx.data.क्रमce_8bit = क्रमce_8bit;
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	if (force_8bit) {
-		const u8 *p = buf;
-		unsigned int i;
+	अगर (क्रमce_8bit) अणु
+		स्थिर u8 *p = buf;
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; i < len; i++)
-			chip->legacy.write_byte(chip, p[i]);
-	} else {
-		chip->legacy.write_buf(chip, buf, len);
-	}
+		क्रम (i = 0; i < len; i++)
+			chip->legacy.ग_लिखो_byte(chip, p[i]);
+	पूर्ण अन्यथा अणु
+		chip->legacy.ग_लिखो_buf(chip, buf, len);
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nand_write_data_op);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(nand_ग_लिखो_data_op);
 
 /**
- * struct nand_op_parser_ctx - Context used by the parser
- * @instrs: array of all the instructions that must be addressed
+ * काष्ठा nand_op_parser_ctx - Context used by the parser
+ * @instrs: array of all the inकाष्ठाions that must be addressed
  * @ninstrs: length of the @instrs array
- * @subop: Sub-operation to be passed to the NAND controller
+ * @subop: Sub-operation to be passed to the न_अंकD controller
  *
- * This structure is used by the core to split NAND operations into
- * sub-operations that can be handled by the NAND controller.
+ * This काष्ठाure is used by the core to split न_अंकD operations पूर्णांकo
+ * sub-operations that can be handled by the न_अंकD controller.
  */
-struct nand_op_parser_ctx {
-	const struct nand_op_instr *instrs;
-	unsigned int ninstrs;
-	struct nand_subop subop;
-};
+काष्ठा nand_op_parser_ctx अणु
+	स्थिर काष्ठा nand_op_instr *instrs;
+	अचिन्हित पूर्णांक ninstrs;
+	काष्ठा nand_subop subop;
+पूर्ण;
 
 /**
- * nand_op_parser_must_split_instr - Checks if an instruction must be split
+ * nand_op_parser_must_split_instr - Checks अगर an inकाष्ठाion must be split
  * @pat: the parser pattern element that matches @instr
- * @instr: pointer to the instruction to check
- * @start_offset: this is an in/out parameter. If @instr has already been
+ * @instr: poपूर्णांकer to the inकाष्ठाion to check
+ * @start_offset: this is an in/out parameter. If @instr has alपढ़ोy been
  *		  split, then @start_offset is the offset from which to start
  *		  (either an address cycle or an offset in the data buffer).
- *		  Conversely, if the function returns true (ie. instr must be
- *		  split), this parameter is updated to point to the first
+ *		  Conversely, अगर the function वापसs true (ie. instr must be
+ *		  split), this parameter is updated to poपूर्णांक to the first
  *		  data/address cycle that has not been taken care of.
  *
- * Some NAND controllers are limited and cannot send X address cycles with a
- * unique operation, or cannot read/write more than Y bytes at the same time.
- * In this case, split the instruction that does not fit in a single
- * controller-operation into two or more chunks.
+ * Some न_अंकD controllers are limited and cannot send X address cycles with a
+ * unique operation, or cannot पढ़ो/ग_लिखो more than Y bytes at the same समय.
+ * In this हाल, split the inकाष्ठाion that करोes not fit in a single
+ * controller-operation पूर्णांकo two or more chunks.
  *
- * Returns true if the instruction must be split, false otherwise.
+ * Returns true अगर the inकाष्ठाion must be split, false otherwise.
  * The @start_offset parameter is also updated to the offset at which the next
- * bundle of instruction must start (if an address or a data instruction).
+ * bundle of inकाष्ठाion must start (अगर an address or a data inकाष्ठाion).
  */
-static bool
-nand_op_parser_must_split_instr(const struct nand_op_parser_pattern_elem *pat,
-				const struct nand_op_instr *instr,
-				unsigned int *start_offset)
-{
-	switch (pat->type) {
-	case NAND_OP_ADDR_INSTR:
-		if (!pat->ctx.addr.maxcycles)
-			break;
+अटल bool
+nand_op_parser_must_split_instr(स्थिर काष्ठा nand_op_parser_pattern_elem *pat,
+				स्थिर काष्ठा nand_op_instr *instr,
+				अचिन्हित पूर्णांक *start_offset)
+अणु
+	चयन (pat->type) अणु
+	हाल न_अंकD_OP_ADDR_INSTR:
+		अगर (!pat->ctx.addr.maxcycles)
+			अवरोध;
 
-		if (instr->ctx.addr.naddrs - *start_offset >
-		    pat->ctx.addr.maxcycles) {
+		अगर (instr->ctx.addr.naddrs - *start_offset >
+		    pat->ctx.addr.maxcycles) अणु
 			*start_offset += pat->ctx.addr.maxcycles;
-			return true;
-		}
-		break;
+			वापस true;
+		पूर्ण
+		अवरोध;
 
-	case NAND_OP_DATA_IN_INSTR:
-	case NAND_OP_DATA_OUT_INSTR:
-		if (!pat->ctx.data.maxlen)
-			break;
+	हाल न_अंकD_OP_DATA_IN_INSTR:
+	हाल न_अंकD_OP_DATA_OUT_INSTR:
+		अगर (!pat->ctx.data.maxlen)
+			अवरोध;
 
-		if (instr->ctx.data.len - *start_offset >
-		    pat->ctx.data.maxlen) {
+		अगर (instr->ctx.data.len - *start_offset >
+		    pat->ctx.data.maxlen) अणु
 			*start_offset += pat->ctx.data.maxlen;
-			return true;
-		}
-		break;
+			वापस true;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * nand_op_parser_match_pat - Checks if a pattern matches the instructions
- *			      remaining in the parser context
+ * nand_op_parser_match_pat - Checks अगर a pattern matches the inकाष्ठाions
+ *			      reमुख्यing in the parser context
  * @pat: the pattern to test
- * @ctx: the parser context structure to match with the pattern @pat
+ * @ctx: the parser context काष्ठाure to match with the pattern @pat
  *
- * Check if @pat matches the set or a sub-set of instructions remaining in @ctx.
- * Returns true if this is the case, false ortherwise. When true is returned,
- * @ctx->subop is updated with the set of instructions to be passed to the
+ * Check अगर @pat matches the set or a sub-set of inकाष्ठाions reमुख्यing in @ctx.
+ * Returns true अगर this is the हाल, false ortherwise. When true is वापसed,
+ * @ctx->subop is updated with the set of inकाष्ठाions to be passed to the
  * controller driver.
  */
-static bool
-nand_op_parser_match_pat(const struct nand_op_parser_pattern *pat,
-			 struct nand_op_parser_ctx *ctx)
-{
-	unsigned int instr_offset = ctx->subop.first_instr_start_off;
-	const struct nand_op_instr *end = ctx->instrs + ctx->ninstrs;
-	const struct nand_op_instr *instr = ctx->subop.instrs;
-	unsigned int i, ninstrs;
+अटल bool
+nand_op_parser_match_pat(स्थिर काष्ठा nand_op_parser_pattern *pat,
+			 काष्ठा nand_op_parser_ctx *ctx)
+अणु
+	अचिन्हित पूर्णांक instr_offset = ctx->subop.first_instr_start_off;
+	स्थिर काष्ठा nand_op_instr *end = ctx->instrs + ctx->ninstrs;
+	स्थिर काष्ठा nand_op_instr *instr = ctx->subop.instrs;
+	अचिन्हित पूर्णांक i, ninstrs;
 
-	for (i = 0, ninstrs = 0; i < pat->nelems && instr < end; i++) {
+	क्रम (i = 0, ninstrs = 0; i < pat->nelems && instr < end; i++) अणु
 		/*
-		 * The pattern instruction does not match the operation
-		 * instruction. If the instruction is marked optional in the
-		 * pattern definition, we skip the pattern element and continue
+		 * The pattern inकाष्ठाion करोes not match the operation
+		 * inकाष्ठाion. If the inकाष्ठाion is marked optional in the
+		 * pattern definition, we skip the pattern element and जारी
 		 * to the next one. If the element is mandatory, there's no
-		 * match and we can return false directly.
+		 * match and we can वापस false directly.
 		 */
-		if (instr->type != pat->elems[i].type) {
-			if (!pat->elems[i].optional)
-				return false;
+		अगर (instr->type != pat->elems[i].type) अणु
+			अगर (!pat->elems[i].optional)
+				वापस false;
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * Now check the pattern element constraints. If the pattern is
-		 * not able to handle the whole instruction in a single step,
+		 * Now check the pattern element स्थिरraपूर्णांकs. If the pattern is
+		 * not able to handle the whole inकाष्ठाion in a single step,
 		 * we have to split it.
-		 * The last_instr_end_off value comes back updated to point to
-		 * the position where we have to split the instruction (the
+		 * The last_instr_end_off value comes back updated to poपूर्णांक to
+		 * the position where we have to split the inकाष्ठाion (the
 		 * start of the next subop chunk).
 		 */
-		if (nand_op_parser_must_split_instr(&pat->elems[i], instr,
-						    &instr_offset)) {
+		अगर (nand_op_parser_must_split_instr(&pat->elems[i], instr,
+						    &instr_offset)) अणु
 			ninstrs++;
 			i++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		instr++;
 		ninstrs++;
 		instr_offset = 0;
-	}
+	पूर्ण
 
 	/*
-	 * This can happen if all instructions of a pattern are optional.
-	 * Still, if there's not at least one instruction handled by this
-	 * pattern, this is not a match, and we should try the next one (if
+	 * This can happen अगर all inकाष्ठाions of a pattern are optional.
+	 * Still, अगर there's not at least one inकाष्ठाion handled by this
+	 * pattern, this is not a match, and we should try the next one (अगर
 	 * any).
 	 */
-	if (!ninstrs)
-		return false;
+	अगर (!ninstrs)
+		वापस false;
 
 	/*
-	 * We had a match on the pattern head, but the pattern may be longer
-	 * than the instructions we're asked to execute. We need to make sure
+	 * We had a match on the pattern head, but the pattern may be दीर्घer
+	 * than the inकाष्ठाions we're asked to execute. We need to make sure
 	 * there's no mandatory elements in the pattern tail.
 	 */
-	for (; i < pat->nelems; i++) {
-		if (!pat->elems[i].optional)
-			return false;
-	}
+	क्रम (; i < pat->nelems; i++) अणु
+		अगर (!pat->elems[i].optional)
+			वापस false;
+	पूर्ण
 
 	/*
-	 * We have a match: update the subop structure accordingly and return
+	 * We have a match: update the subop काष्ठाure accordingly and वापस
 	 * true.
 	 */
 	ctx->subop.ninstrs = ninstrs;
 	ctx->subop.last_instr_end_off = instr_offset;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DYNAMIC_DEBUG) || defined(DEBUG)
-static void nand_op_parser_trace(const struct nand_op_parser_ctx *ctx)
-{
-	const struct nand_op_instr *instr;
-	char *prefix = "      ";
-	unsigned int i;
+#अगर IS_ENABLED(CONFIG_DYNAMIC_DEBUG) || defined(DEBUG)
+अटल व्योम nand_op_parser_trace(स्थिर काष्ठा nand_op_parser_ctx *ctx)
+अणु
+	स्थिर काष्ठा nand_op_instr *instr;
+	अक्षर *prefix = "      ";
+	अचिन्हित पूर्णांक i;
 
 	pr_debug("executing subop (CS%d):\n", ctx->subop.cs);
 
-	for (i = 0; i < ctx->ninstrs; i++) {
+	क्रम (i = 0; i < ctx->ninstrs; i++) अणु
 		instr = &ctx->instrs[i];
 
-		if (instr == &ctx->subop.instrs[0])
+		अगर (instr == &ctx->subop.instrs[0])
 			prefix = "    ->";
 
 		nand_op_trace(prefix, instr);
 
-		if (instr == &ctx->subop.instrs[ctx->subop.ninstrs - 1])
+		अगर (instr == &ctx->subop.instrs[ctx->subop.ninstrs - 1])
 			prefix = "      ";
-	}
-}
-#else
-static void nand_op_parser_trace(const struct nand_op_parser_ctx *ctx)
-{
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल व्योम nand_op_parser_trace(स्थिर काष्ठा nand_op_parser_ctx *ctx)
+अणु
 	/* NOP */
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int nand_op_parser_cmp_ctx(const struct nand_op_parser_ctx *a,
-				  const struct nand_op_parser_ctx *b)
-{
-	if (a->subop.ninstrs < b->subop.ninstrs)
-		return -1;
-	else if (a->subop.ninstrs > b->subop.ninstrs)
-		return 1;
+अटल पूर्णांक nand_op_parser_cmp_ctx(स्थिर काष्ठा nand_op_parser_ctx *a,
+				  स्थिर काष्ठा nand_op_parser_ctx *b)
+अणु
+	अगर (a->subop.ninstrs < b->subop.ninstrs)
+		वापस -1;
+	अन्यथा अगर (a->subop.ninstrs > b->subop.ninstrs)
+		वापस 1;
 
-	if (a->subop.last_instr_end_off < b->subop.last_instr_end_off)
-		return -1;
-	else if (a->subop.last_instr_end_off > b->subop.last_instr_end_off)
-		return 1;
+	अगर (a->subop.last_instr_end_off < b->subop.last_instr_end_off)
+		वापस -1;
+	अन्यथा अगर (a->subop.last_instr_end_off > b->subop.last_instr_end_off)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * nand_op_parser_exec_op - exec_op parser
- * @chip: the NAND chip
+ * @chip: the न_अंकD chip
  * @parser: patterns description provided by the controller driver
- * @op: the NAND operation to address
- * @check_only: when true, the function only checks if @op can be handled but
- *		does not execute the operation
+ * @op: the न_अंकD operation to address
+ * @check_only: when true, the function only checks अगर @op can be handled but
+ *		करोes not execute the operation
  *
- * Helper function designed to ease integration of NAND controller drivers that
- * only support a limited set of instruction sequences. The supported sequences
- * are described in @parser, and the framework takes care of splitting @op into
- * multiple sub-operations (if required) and pass them back to the ->exec()
- * callback of the matching pattern if @check_only is set to false.
+ * Helper function deचिन्हित to ease पूर्णांकegration of न_अंकD controller drivers that
+ * only support a limited set of inकाष्ठाion sequences. The supported sequences
+ * are described in @parser, and the framework takes care of splitting @op पूर्णांकo
+ * multiple sub-operations (अगर required) and pass them back to the ->exec()
+ * callback of the matching pattern अगर @check_only is set to false.
  *
- * NAND controller drivers should call this function from their own ->exec_op()
+ * न_अंकD controller drivers should call this function from their own ->exec_op()
  * implementation.
  *
  * Returns 0 on success, a negative error code otherwise. A failure can be
  * caused by an unsupported operation (none of the supported patterns is able
- * to handle the requested operation), or an error returned by one of the
+ * to handle the requested operation), or an error वापसed by one of the
  * matching pattern->exec() hook.
  */
-int nand_op_parser_exec_op(struct nand_chip *chip,
-			   const struct nand_op_parser *parser,
-			   const struct nand_operation *op, bool check_only)
-{
-	struct nand_op_parser_ctx ctx = {
+पूर्णांक nand_op_parser_exec_op(काष्ठा nand_chip *chip,
+			   स्थिर काष्ठा nand_op_parser *parser,
+			   स्थिर काष्ठा nand_operation *op, bool check_only)
+अणु
+	काष्ठा nand_op_parser_ctx ctx = अणु
 		.subop.cs = op->cs,
 		.subop.instrs = op->instrs,
 		.instrs = op->instrs,
 		.ninstrs = op->ninstrs,
-	};
-	unsigned int i;
+	पूर्ण;
+	अचिन्हित पूर्णांक i;
 
-	while (ctx.subop.instrs < op->instrs + op->ninstrs) {
-		const struct nand_op_parser_pattern *pattern;
-		struct nand_op_parser_ctx best_ctx;
-		int ret, best_pattern = -1;
+	जबतक (ctx.subop.instrs < op->instrs + op->ninstrs) अणु
+		स्थिर काष्ठा nand_op_parser_pattern *pattern;
+		काष्ठा nand_op_parser_ctx best_ctx;
+		पूर्णांक ret, best_pattern = -1;
 
-		for (i = 0; i < parser->npatterns; i++) {
-			struct nand_op_parser_ctx test_ctx = ctx;
+		क्रम (i = 0; i < parser->npatterns; i++) अणु
+			काष्ठा nand_op_parser_ctx test_ctx = ctx;
 
 			pattern = &parser->patterns[i];
-			if (!nand_op_parser_match_pat(pattern, &test_ctx))
-				continue;
+			अगर (!nand_op_parser_match_pat(pattern, &test_ctx))
+				जारी;
 
-			if (best_pattern >= 0 &&
+			अगर (best_pattern >= 0 &&
 			    nand_op_parser_cmp_ctx(&test_ctx, &best_ctx) <= 0)
-				continue;
+				जारी;
 
 			best_pattern = i;
 			best_ctx = test_ctx;
-		}
+		पूर्ण
 
-		if (best_pattern < 0) {
+		अगर (best_pattern < 0) अणु
 			pr_debug("->exec_op() parser: pattern not found!\n");
-			return -ENOTSUPP;
-		}
+			वापस -ENOTSUPP;
+		पूर्ण
 
 		ctx = best_ctx;
 		nand_op_parser_trace(&ctx);
 
-		if (!check_only) {
+		अगर (!check_only) अणु
 			pattern = &parser->patterns[best_pattern];
 			ret = pattern->exec(chip, &ctx.subop);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
 		/*
-		 * Update the context structure by pointing to the start of the
+		 * Update the context काष्ठाure by poपूर्णांकing to the start of the
 		 * next subop.
 		 */
 		ctx.subop.instrs = ctx.subop.instrs + ctx.subop.ninstrs;
-		if (ctx.subop.last_instr_end_off)
+		अगर (ctx.subop.last_instr_end_off)
 			ctx.subop.instrs -= 1;
 
 		ctx.subop.first_instr_start_off = ctx.subop.last_instr_end_off;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_op_parser_exec_op);
 
-static bool nand_instr_is_data(const struct nand_op_instr *instr)
-{
-	return instr && (instr->type == NAND_OP_DATA_IN_INSTR ||
-			 instr->type == NAND_OP_DATA_OUT_INSTR);
-}
+अटल bool nand_instr_is_data(स्थिर काष्ठा nand_op_instr *instr)
+अणु
+	वापस instr && (instr->type == न_अंकD_OP_DATA_IN_INSTR ||
+			 instr->type == न_अंकD_OP_DATA_OUT_INSTR);
+पूर्ण
 
-static bool nand_subop_instr_is_valid(const struct nand_subop *subop,
-				      unsigned int instr_idx)
-{
-	return subop && instr_idx < subop->ninstrs;
-}
+अटल bool nand_subop_instr_is_valid(स्थिर काष्ठा nand_subop *subop,
+				      अचिन्हित पूर्णांक instr_idx)
+अणु
+	वापस subop && instr_idx < subop->ninstrs;
+पूर्ण
 
-static unsigned int nand_subop_get_start_off(const struct nand_subop *subop,
-					     unsigned int instr_idx)
-{
-	if (instr_idx)
-		return 0;
+अटल अचिन्हित पूर्णांक nand_subop_get_start_off(स्थिर काष्ठा nand_subop *subop,
+					     अचिन्हित पूर्णांक instr_idx)
+अणु
+	अगर (instr_idx)
+		वापस 0;
 
-	return subop->first_instr_start_off;
-}
+	वापस subop->first_instr_start_off;
+पूर्ण
 
 /**
  * nand_subop_get_addr_start_off - Get the start offset in an address array
  * @subop: The entire sub-operation
- * @instr_idx: Index of the instruction inside the sub-operation
+ * @instr_idx: Index of the inकाष्ठाion inside the sub-operation
  *
  * During driver development, one could be tempted to directly use the
- * ->addr.addrs field of address instructions. This is wrong as address
- * instructions might be split.
+ * ->addr.addrs field of address inकाष्ठाions. This is wrong as address
+ * inकाष्ठाions might be split.
  *
- * Given an address instruction, returns the offset of the first cycle to issue.
+ * Given an address inकाष्ठाion, वापसs the offset of the first cycle to issue.
  */
-unsigned int nand_subop_get_addr_start_off(const struct nand_subop *subop,
-					   unsigned int instr_idx)
-{
-	if (WARN_ON(!nand_subop_instr_is_valid(subop, instr_idx) ||
-		    subop->instrs[instr_idx].type != NAND_OP_ADDR_INSTR))
-		return 0;
+अचिन्हित पूर्णांक nand_subop_get_addr_start_off(स्थिर काष्ठा nand_subop *subop,
+					   अचिन्हित पूर्णांक instr_idx)
+अणु
+	अगर (WARN_ON(!nand_subop_instr_is_valid(subop, instr_idx) ||
+		    subop->instrs[instr_idx].type != न_अंकD_OP_ADDR_INSTR))
+		वापस 0;
 
-	return nand_subop_get_start_off(subop, instr_idx);
-}
+	वापस nand_subop_get_start_off(subop, instr_idx);
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_subop_get_addr_start_off);
 
 /**
- * nand_subop_get_num_addr_cyc - Get the remaining address cycles to assert
+ * nand_subop_get_num_addr_cyc - Get the reमुख्यing address cycles to निश्चित
  * @subop: The entire sub-operation
- * @instr_idx: Index of the instruction inside the sub-operation
+ * @instr_idx: Index of the inकाष्ठाion inside the sub-operation
  *
  * During driver development, one could be tempted to directly use the
- * ->addr->naddrs field of a data instruction. This is wrong as instructions
+ * ->addr->naddrs field of a data inकाष्ठाion. This is wrong as inकाष्ठाions
  * might be split.
  *
- * Given an address instruction, returns the number of address cycle to issue.
+ * Given an address inकाष्ठाion, वापसs the number of address cycle to issue.
  */
-unsigned int nand_subop_get_num_addr_cyc(const struct nand_subop *subop,
-					 unsigned int instr_idx)
-{
-	int start_off, end_off;
+अचिन्हित पूर्णांक nand_subop_get_num_addr_cyc(स्थिर काष्ठा nand_subop *subop,
+					 अचिन्हित पूर्णांक instr_idx)
+अणु
+	पूर्णांक start_off, end_off;
 
-	if (WARN_ON(!nand_subop_instr_is_valid(subop, instr_idx) ||
-		    subop->instrs[instr_idx].type != NAND_OP_ADDR_INSTR))
-		return 0;
+	अगर (WARN_ON(!nand_subop_instr_is_valid(subop, instr_idx) ||
+		    subop->instrs[instr_idx].type != न_अंकD_OP_ADDR_INSTR))
+		वापस 0;
 
 	start_off = nand_subop_get_addr_start_off(subop, instr_idx);
 
-	if (instr_idx == subop->ninstrs - 1 &&
+	अगर (instr_idx == subop->ninstrs - 1 &&
 	    subop->last_instr_end_off)
 		end_off = subop->last_instr_end_off;
-	else
+	अन्यथा
 		end_off = subop->instrs[instr_idx].ctx.addr.naddrs;
 
-	return end_off - start_off;
-}
+	वापस end_off - start_off;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_subop_get_num_addr_cyc);
 
 /**
  * nand_subop_get_data_start_off - Get the start offset in a data array
  * @subop: The entire sub-operation
- * @instr_idx: Index of the instruction inside the sub-operation
+ * @instr_idx: Index of the inकाष्ठाion inside the sub-operation
  *
  * During driver development, one could be tempted to directly use the
- * ->data->buf.{in,out} field of data instructions. This is wrong as data
- * instructions might be split.
+ * ->data->buf.अणुin,outपूर्ण field of data inकाष्ठाions. This is wrong as data
+ * inकाष्ठाions might be split.
  *
- * Given a data instruction, returns the offset to start from.
+ * Given a data inकाष्ठाion, वापसs the offset to start from.
  */
-unsigned int nand_subop_get_data_start_off(const struct nand_subop *subop,
-					   unsigned int instr_idx)
-{
-	if (WARN_ON(!nand_subop_instr_is_valid(subop, instr_idx) ||
+अचिन्हित पूर्णांक nand_subop_get_data_start_off(स्थिर काष्ठा nand_subop *subop,
+					   अचिन्हित पूर्णांक instr_idx)
+अणु
+	अगर (WARN_ON(!nand_subop_instr_is_valid(subop, instr_idx) ||
 		    !nand_instr_is_data(&subop->instrs[instr_idx])))
-		return 0;
+		वापस 0;
 
-	return nand_subop_get_start_off(subop, instr_idx);
-}
+	वापस nand_subop_get_start_off(subop, instr_idx);
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_subop_get_data_start_off);
 
 /**
  * nand_subop_get_data_len - Get the number of bytes to retrieve
  * @subop: The entire sub-operation
- * @instr_idx: Index of the instruction inside the sub-operation
+ * @instr_idx: Index of the inकाष्ठाion inside the sub-operation
  *
  * During driver development, one could be tempted to directly use the
- * ->data->len field of a data instruction. This is wrong as data instructions
+ * ->data->len field of a data inकाष्ठाion. This is wrong as data inकाष्ठाions
  * might be split.
  *
  * Returns the length of the chunk of data to send/receive.
  */
-unsigned int nand_subop_get_data_len(const struct nand_subop *subop,
-				     unsigned int instr_idx)
-{
-	int start_off = 0, end_off;
+अचिन्हित पूर्णांक nand_subop_get_data_len(स्थिर काष्ठा nand_subop *subop,
+				     अचिन्हित पूर्णांक instr_idx)
+अणु
+	पूर्णांक start_off = 0, end_off;
 
-	if (WARN_ON(!nand_subop_instr_is_valid(subop, instr_idx) ||
+	अगर (WARN_ON(!nand_subop_instr_is_valid(subop, instr_idx) ||
 		    !nand_instr_is_data(&subop->instrs[instr_idx])))
-		return 0;
+		वापस 0;
 
 	start_off = nand_subop_get_data_start_off(subop, instr_idx);
 
-	if (instr_idx == subop->ninstrs - 1 &&
+	अगर (instr_idx == subop->ninstrs - 1 &&
 	    subop->last_instr_end_off)
 		end_off = subop->last_instr_end_off;
-	else
+	अन्यथा
 		end_off = subop->instrs[instr_idx].ctx.data.len;
 
-	return end_off - start_off;
-}
+	वापस end_off - start_off;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_subop_get_data_len);
 
 /**
- * nand_reset - Reset and initialize a NAND device
- * @chip: The NAND chip
+ * nand_reset - Reset and initialize a न_अंकD device
+ * @chip: The न_अंकD chip
  * @chipnr: Internal die id
  *
- * Save the timings data structure, then apply SDR timings mode 0 (see
- * nand_reset_interface for details), do the reset operation, and apply
+ * Save the timings data काष्ठाure, then apply SDR timings mode 0 (see
+ * nand_reset_पूर्णांकerface क्रम details), करो the reset operation, and apply
  * back the previous timings.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int nand_reset(struct nand_chip *chip, int chipnr)
-{
-	int ret;
+पूर्णांक nand_reset(काष्ठा nand_chip *chip, पूर्णांक chipnr)
+अणु
+	पूर्णांक ret;
 
-	ret = nand_reset_interface(chip, chipnr);
-	if (ret)
-		return ret;
+	ret = nand_reset_पूर्णांकerface(chip, chipnr);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * The CS line has to be released before we can apply the new NAND
-	 * interface settings, hence this weird nand_select_target()
+	 * The CS line has to be released beक्रमe we can apply the new न_अंकD
+	 * पूर्णांकerface settings, hence this weird nand_select_target()
 	 * nand_deselect_target() dance.
 	 */
 	nand_select_target(chip, chipnr);
 	ret = nand_reset_op(chip);
 	nand_deselect_target(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = nand_setup_interface(chip, chipnr);
-	if (ret)
-		return ret;
+	ret = nand_setup_पूर्णांकerface(chip, chipnr);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_reset);
 
 /**
- * nand_get_features - wrapper to perform a GET_FEATURE
- * @chip: NAND chip info structure
+ * nand_get_features - wrapper to perक्रमm a GET_FEATURE
+ * @chip: न_अंकD chip info काष्ठाure
  * @addr: feature address
  * @subfeature_param: the subfeature parameters, a four bytes array
  *
- * Returns 0 for success, a negative error otherwise. Returns -ENOTSUPP if the
+ * Returns 0 क्रम success, a negative error otherwise. Returns -ENOTSUPP अगर the
  * operation cannot be handled.
  */
-int nand_get_features(struct nand_chip *chip, int addr,
+पूर्णांक nand_get_features(काष्ठा nand_chip *chip, पूर्णांक addr,
 		      u8 *subfeature_param)
-{
-	if (!nand_supports_get_features(chip, addr))
-		return -ENOTSUPP;
+अणु
+	अगर (!nand_supports_get_features(chip, addr))
+		वापस -ENOTSUPP;
 
-	if (chip->legacy.get_features)
-		return chip->legacy.get_features(chip, addr, subfeature_param);
+	अगर (chip->legacy.get_features)
+		वापस chip->legacy.get_features(chip, addr, subfeature_param);
 
-	return nand_get_features_op(chip, addr, subfeature_param);
-}
+	वापस nand_get_features_op(chip, addr, subfeature_param);
+पूर्ण
 
 /**
- * nand_set_features - wrapper to perform a SET_FEATURE
- * @chip: NAND chip info structure
+ * nand_set_features - wrapper to perक्रमm a SET_FEATURE
+ * @chip: न_अंकD chip info काष्ठाure
  * @addr: feature address
  * @subfeature_param: the subfeature parameters, a four bytes array
  *
- * Returns 0 for success, a negative error otherwise. Returns -ENOTSUPP if the
+ * Returns 0 क्रम success, a negative error otherwise. Returns -ENOTSUPP अगर the
  * operation cannot be handled.
  */
-int nand_set_features(struct nand_chip *chip, int addr,
+पूर्णांक nand_set_features(काष्ठा nand_chip *chip, पूर्णांक addr,
 		      u8 *subfeature_param)
-{
-	if (!nand_supports_set_features(chip, addr))
-		return -ENOTSUPP;
+अणु
+	अगर (!nand_supports_set_features(chip, addr))
+		वापस -ENOTSUPP;
 
-	if (chip->legacy.set_features)
-		return chip->legacy.set_features(chip, addr, subfeature_param);
+	अगर (chip->legacy.set_features)
+		वापस chip->legacy.set_features(chip, addr, subfeature_param);
 
-	return nand_set_features_op(chip, addr, subfeature_param);
-}
+	वापस nand_set_features_op(chip, addr, subfeature_param);
+पूर्ण
 
 /**
- * nand_check_erased_buf - check if a buffer contains (almost) only 0xff data
+ * nand_check_erased_buf - check अगर a buffer contains (almost) only 0xff data
  * @buf: buffer to test
  * @len: buffer length
  * @bitflips_threshold: maximum number of bitflips
  *
- * Check if a buffer contains only 0xff, which means the underlying region
- * has been erased and is ready to be programmed.
- * The bitflips_threshold specify the maximum number of bitflips before
+ * Check अगर a buffer contains only 0xff, which means the underlying region
+ * has been erased and is पढ़ोy to be programmed.
+ * The bitflips_threshold specअगरy the maximum number of bitflips beक्रमe
  * considering the region is not erased.
  * Note: The logic of this function has been extracted from the memweight
- * implementation, except that nand_check_erased_buf function exit before
- * testing the whole buffer if the number of bitflips exceed the
+ * implementation, except that nand_check_erased_buf function निकास beक्रमe
+ * testing the whole buffer अगर the number of bitflips exceed the
  * bitflips_threshold value.
  *
  * Returns a positive number of bitflips less than or equal to
- * bitflips_threshold, or -ERROR_CODE for bitflips in excess of the
+ * bitflips_threshold, or -ERROR_CODE क्रम bitflips in excess of the
  * threshold.
  */
-static int nand_check_erased_buf(void *buf, int len, int bitflips_threshold)
-{
-	const unsigned char *bitmap = buf;
-	int bitflips = 0;
-	int weight;
+अटल पूर्णांक nand_check_erased_buf(व्योम *buf, पूर्णांक len, पूर्णांक bitflips_threshold)
+अणु
+	स्थिर अचिन्हित अक्षर *biपंचांगap = buf;
+	पूर्णांक bitflips = 0;
+	पूर्णांक weight;
 
-	for (; len && ((uintptr_t)bitmap) % sizeof(long);
-	     len--, bitmap++) {
-		weight = hweight8(*bitmap);
+	क्रम (; len && ((uपूर्णांकptr_t)biपंचांगap) % माप(दीर्घ);
+	     len--, biपंचांगap++) अणु
+		weight = hweight8(*biपंचांगap);
 		bitflips += BITS_PER_BYTE - weight;
-		if (unlikely(bitflips > bitflips_threshold))
-			return -EBADMSG;
-	}
+		अगर (unlikely(bitflips > bitflips_threshold))
+			वापस -EBADMSG;
+	पूर्ण
 
-	for (; len >= sizeof(long);
-	     len -= sizeof(long), bitmap += sizeof(long)) {
-		unsigned long d = *((unsigned long *)bitmap);
-		if (d == ~0UL)
-			continue;
-		weight = hweight_long(d);
+	क्रम (; len >= माप(दीर्घ);
+	     len -= माप(दीर्घ), biपंचांगap += माप(दीर्घ)) अणु
+		अचिन्हित दीर्घ d = *((अचिन्हित दीर्घ *)biपंचांगap);
+		अगर (d == ~0UL)
+			जारी;
+		weight = hweight_दीर्घ(d);
 		bitflips += BITS_PER_LONG - weight;
-		if (unlikely(bitflips > bitflips_threshold))
-			return -EBADMSG;
-	}
+		अगर (unlikely(bitflips > bitflips_threshold))
+			वापस -EBADMSG;
+	पूर्ण
 
-	for (; len > 0; len--, bitmap++) {
-		weight = hweight8(*bitmap);
+	क्रम (; len > 0; len--, biपंचांगap++) अणु
+		weight = hweight8(*biपंचांगap);
 		bitflips += BITS_PER_BYTE - weight;
-		if (unlikely(bitflips > bitflips_threshold))
-			return -EBADMSG;
-	}
+		अगर (unlikely(bitflips > bitflips_threshold))
+			वापस -EBADMSG;
+	पूर्ण
 
-	return bitflips;
-}
+	वापस bitflips;
+पूर्ण
 
 /**
- * nand_check_erased_ecc_chunk - check if an ECC chunk contains (almost) only
+ * nand_check_erased_ecc_chunk - check अगर an ECC chunk contains (almost) only
  *				 0xff data
  * @data: data buffer to test
  * @datalen: data length
@@ -2544,292 +2545,292 @@ static int nand_check_erased_buf(void *buf, int len, int bitflips_threshold)
  * @extraooblen: extra OOB length
  * @bitflips_threshold: maximum number of bitflips
  *
- * Check if a data buffer and its associated ECC and OOB data contains only
+ * Check अगर a data buffer and its associated ECC and OOB data contains only
  * 0xff pattern, which means the underlying region has been erased and is
- * ready to be programmed.
- * The bitflips_threshold specify the maximum number of bitflips before
+ * पढ़ोy to be programmed.
+ * The bitflips_threshold specअगरy the maximum number of bitflips beक्रमe
  * considering the region as not erased.
  *
  * Note:
  * 1/ ECC algorithms are working on pre-defined block sizes which are usually
- *    different from the NAND page size. When fixing bitflips, ECC engines will
- *    report the number of errors per chunk, and the NAND core infrastructure
- *    expect you to return the maximum number of bitflips for the whole page.
+ *    dअगरferent from the न_अंकD page size. When fixing bitflips, ECC engines will
+ *    report the number of errors per chunk, and the न_अंकD core infraकाष्ठाure
+ *    expect you to वापस the maximum number of bitflips क्रम the whole page.
  *    This is why you should always use this function on a single chunk and
  *    not on the whole page. After checking each chunk you should update your
  *    max_bitflips value accordingly.
- * 2/ When checking for bitflips in erased pages you should not only check
+ * 2/ When checking क्रम bitflips in erased pages you should not only check
  *    the payload data but also their associated ECC data, because a user might
- *    have programmed almost all bits to 1 but a few. In this case, we
+ *    have programmed almost all bits to 1 but a few. In this हाल, we
  *    shouldn't consider the chunk as erased, and checking ECC bytes prevent
- *    this case.
- * 3/ The extraoob argument is optional, and should be used if some of your OOB
- *    data are protected by the ECC engine.
- *    It could also be used if you support subpages and want to attach some
+ *    this हाल.
+ * 3/ The extraoob argument is optional, and should be used अगर some of your OOB
+ *    data are रक्षित by the ECC engine.
+ *    It could also be used अगर you support subpages and want to attach some
  *    extra OOB data to an ECC chunk.
  *
  * Returns a positive number of bitflips less than or equal to
- * bitflips_threshold, or -ERROR_CODE for bitflips in excess of the
- * threshold. In case of success, the passed buffers are filled with 0xff.
+ * bitflips_threshold, or -ERROR_CODE क्रम bitflips in excess of the
+ * threshold. In हाल of success, the passed buffers are filled with 0xff.
  */
-int nand_check_erased_ecc_chunk(void *data, int datalen,
-				void *ecc, int ecclen,
-				void *extraoob, int extraooblen,
-				int bitflips_threshold)
-{
-	int data_bitflips = 0, ecc_bitflips = 0, extraoob_bitflips = 0;
+पूर्णांक nand_check_erased_ecc_chunk(व्योम *data, पूर्णांक datalen,
+				व्योम *ecc, पूर्णांक ecclen,
+				व्योम *extraoob, पूर्णांक extraooblen,
+				पूर्णांक bitflips_threshold)
+अणु
+	पूर्णांक data_bitflips = 0, ecc_bitflips = 0, extraoob_bitflips = 0;
 
 	data_bitflips = nand_check_erased_buf(data, datalen,
 					      bitflips_threshold);
-	if (data_bitflips < 0)
-		return data_bitflips;
+	अगर (data_bitflips < 0)
+		वापस data_bitflips;
 
 	bitflips_threshold -= data_bitflips;
 
 	ecc_bitflips = nand_check_erased_buf(ecc, ecclen, bitflips_threshold);
-	if (ecc_bitflips < 0)
-		return ecc_bitflips;
+	अगर (ecc_bitflips < 0)
+		वापस ecc_bitflips;
 
 	bitflips_threshold -= ecc_bitflips;
 
 	extraoob_bitflips = nand_check_erased_buf(extraoob, extraooblen,
 						  bitflips_threshold);
-	if (extraoob_bitflips < 0)
-		return extraoob_bitflips;
+	अगर (extraoob_bitflips < 0)
+		वापस extraoob_bitflips;
 
-	if (data_bitflips)
-		memset(data, 0xff, datalen);
+	अगर (data_bitflips)
+		स_रखो(data, 0xff, datalen);
 
-	if (ecc_bitflips)
-		memset(ecc, 0xff, ecclen);
+	अगर (ecc_bitflips)
+		स_रखो(ecc, 0xff, ecclen);
 
-	if (extraoob_bitflips)
-		memset(extraoob, 0xff, extraooblen);
+	अगर (extraoob_bitflips)
+		स_रखो(extraoob, 0xff, extraooblen);
 
-	return data_bitflips + ecc_bitflips + extraoob_bitflips;
-}
+	वापस data_bitflips + ecc_bitflips + extraoob_bitflips;
+पूर्ण
 EXPORT_SYMBOL(nand_check_erased_ecc_chunk);
 
 /**
- * nand_read_page_raw_notsupp - dummy read raw page function
- * @chip: nand chip info structure
- * @buf: buffer to store read data
- * @oob_required: caller requires OOB data read to chip->oob_poi
- * @page: page number to read
+ * nand_पढ़ो_page_raw_notsupp - dummy पढ़ो raw page function
+ * @chip: nand chip info काष्ठाure
+ * @buf: buffer to store पढ़ो data
+ * @oob_required: caller requires OOB data पढ़ो to chip->oob_poi
+ * @page: page number to पढ़ो
  *
  * Returns -ENOTSUPP unconditionally.
  */
-int nand_read_page_raw_notsupp(struct nand_chip *chip, u8 *buf,
-			       int oob_required, int page)
-{
-	return -ENOTSUPP;
-}
+पूर्णांक nand_पढ़ो_page_raw_notsupp(काष्ठा nand_chip *chip, u8 *buf,
+			       पूर्णांक oob_required, पूर्णांक page)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
 /**
- * nand_read_page_raw - [INTERN] read raw page data without ecc
- * @chip: nand chip info structure
- * @buf: buffer to store read data
- * @oob_required: caller requires OOB data read to chip->oob_poi
- * @page: page number to read
+ * nand_पढ़ो_page_raw - [INTERN] पढ़ो raw page data without ecc
+ * @chip: nand chip info काष्ठाure
+ * @buf: buffer to store पढ़ो data
+ * @oob_required: caller requires OOB data पढ़ो to chip->oob_poi
+ * @page: page number to पढ़ो
  *
- * Not for syndrome calculating ECC controllers, which use a special oob layout.
+ * Not क्रम syndrome calculating ECC controllers, which use a special oob layout.
  */
-int nand_read_page_raw(struct nand_chip *chip, uint8_t *buf, int oob_required,
-		       int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int ret;
+पूर्णांक nand_पढ़ो_page_raw(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf, पूर्णांक oob_required,
+		       पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक ret;
 
-	ret = nand_read_page_op(chip, page, 0, buf, mtd->writesize);
-	if (ret)
-		return ret;
+	ret = nand_पढ़ो_page_op(chip, page, 0, buf, mtd->ग_लिखोsize);
+	अगर (ret)
+		वापस ret;
 
-	if (oob_required) {
-		ret = nand_read_data_op(chip, chip->oob_poi, mtd->oobsize,
+	अगर (oob_required) अणु
+		ret = nand_पढ़ो_data_op(chip, chip->oob_poi, mtd->oobsize,
 					false, false);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(nand_read_page_raw);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(nand_पढ़ो_page_raw);
 
 /**
- * nand_monolithic_read_page_raw - Monolithic page read in raw mode
- * @chip: NAND chip info structure
- * @buf: buffer to store read data
- * @oob_required: caller requires OOB data read to chip->oob_poi
- * @page: page number to read
+ * nand_monolithic_पढ़ो_page_raw - Monolithic page पढ़ो in raw mode
+ * @chip: न_अंकD chip info काष्ठाure
+ * @buf: buffer to store पढ़ो data
+ * @oob_required: caller requires OOB data पढ़ो to chip->oob_poi
+ * @page: page number to पढ़ो
  *
- * This is a raw page read, ie. without any error detection/correction.
- * Monolithic means we are requesting all the relevant data (main plus
- * eventually OOB) to be loaded in the NAND cache and sent over the
- * bus (from the NAND chip to the NAND controller) in a single
- * operation. This is an alternative to nand_read_page_raw(), which
- * first reads the main data, and if the OOB data is requested too,
- * then reads more data on the bus.
+ * This is a raw page पढ़ो, ie. without any error detection/correction.
+ * Monolithic means we are requesting all the relevant data (मुख्य plus
+ * eventually OOB) to be loaded in the न_अंकD cache and sent over the
+ * bus (from the न_अंकD chip to the न_अंकD controller) in a single
+ * operation. This is an alternative to nand_पढ़ो_page_raw(), which
+ * first पढ़ोs the मुख्य data, and अगर the OOB data is requested too,
+ * then पढ़ोs more data on the bus.
  */
-int nand_monolithic_read_page_raw(struct nand_chip *chip, u8 *buf,
-				  int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	unsigned int size = mtd->writesize;
-	u8 *read_buf = buf;
-	int ret;
+पूर्णांक nand_monolithic_पढ़ो_page_raw(काष्ठा nand_chip *chip, u8 *buf,
+				  पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	अचिन्हित पूर्णांक size = mtd->ग_लिखोsize;
+	u8 *पढ़ो_buf = buf;
+	पूर्णांक ret;
 
-	if (oob_required) {
+	अगर (oob_required) अणु
 		size += mtd->oobsize;
 
-		if (buf != chip->data_buf)
-			read_buf = nand_get_data_buf(chip);
-	}
+		अगर (buf != chip->data_buf)
+			पढ़ो_buf = nand_get_data_buf(chip);
+	पूर्ण
 
-	ret = nand_read_page_op(chip, page, 0, read_buf, size);
-	if (ret)
-		return ret;
+	ret = nand_पढ़ो_page_op(chip, page, 0, पढ़ो_buf, size);
+	अगर (ret)
+		वापस ret;
 
-	if (buf != chip->data_buf)
-		memcpy(buf, read_buf, mtd->writesize);
+	अगर (buf != chip->data_buf)
+		स_नकल(buf, पढ़ो_buf, mtd->ग_लिखोsize);
 
-	return 0;
-}
-EXPORT_SYMBOL(nand_monolithic_read_page_raw);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(nand_monolithic_पढ़ो_page_raw);
 
 /**
- * nand_read_page_raw_syndrome - [INTERN] read raw page data without ecc
- * @chip: nand chip info structure
- * @buf: buffer to store read data
- * @oob_required: caller requires OOB data read to chip->oob_poi
- * @page: page number to read
+ * nand_पढ़ो_page_raw_syndrome - [INTERN] पढ़ो raw page data without ecc
+ * @chip: nand chip info काष्ठाure
+ * @buf: buffer to store पढ़ो data
+ * @oob_required: caller requires OOB data पढ़ो to chip->oob_poi
+ * @page: page number to पढ़ो
  *
  * We need a special oob layout and handling even when OOB isn't used.
  */
-static int nand_read_page_raw_syndrome(struct nand_chip *chip, uint8_t *buf,
-				       int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int eccsize = chip->ecc.size;
-	int eccbytes = chip->ecc.bytes;
-	uint8_t *oob = chip->oob_poi;
-	int steps, size, ret;
+अटल पूर्णांक nand_पढ़ो_page_raw_syndrome(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
+				       पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक eccsize = chip->ecc.size;
+	पूर्णांक eccbytes = chip->ecc.bytes;
+	uपूर्णांक8_t *oob = chip->oob_poi;
+	पूर्णांक steps, size, ret;
 
-	ret = nand_read_page_op(chip, page, 0, NULL, 0);
-	if (ret)
-		return ret;
+	ret = nand_पढ़ो_page_op(chip, page, 0, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	for (steps = chip->ecc.steps; steps > 0; steps--) {
-		ret = nand_read_data_op(chip, buf, eccsize, false, false);
-		if (ret)
-			return ret;
+	क्रम (steps = chip->ecc.steps; steps > 0; steps--) अणु
+		ret = nand_पढ़ो_data_op(chip, buf, eccsize, false, false);
+		अगर (ret)
+			वापस ret;
 
 		buf += eccsize;
 
-		if (chip->ecc.prepad) {
-			ret = nand_read_data_op(chip, oob, chip->ecc.prepad,
+		अगर (chip->ecc.prepad) अणु
+			ret = nand_पढ़ो_data_op(chip, oob, chip->ecc.prepad,
 						false, false);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			oob += chip->ecc.prepad;
-		}
+		पूर्ण
 
-		ret = nand_read_data_op(chip, oob, eccbytes, false, false);
-		if (ret)
-			return ret;
+		ret = nand_पढ़ो_data_op(chip, oob, eccbytes, false, false);
+		अगर (ret)
+			वापस ret;
 
 		oob += eccbytes;
 
-		if (chip->ecc.postpad) {
-			ret = nand_read_data_op(chip, oob, chip->ecc.postpad,
+		अगर (chip->ecc.postpad) अणु
+			ret = nand_पढ़ो_data_op(chip, oob, chip->ecc.postpad,
 						false, false);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			oob += chip->ecc.postpad;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	size = mtd->oobsize - (oob - chip->oob_poi);
-	if (size) {
-		ret = nand_read_data_op(chip, oob, size, false, false);
-		if (ret)
-			return ret;
-	}
+	अगर (size) अणु
+		ret = nand_पढ़ो_data_op(chip, oob, size, false, false);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nand_read_page_swecc - [REPLACEABLE] software ECC based page read function
- * @chip: nand chip info structure
- * @buf: buffer to store read data
- * @oob_required: caller requires OOB data read to chip->oob_poi
- * @page: page number to read
+ * nand_पढ़ो_page_swecc - [REPLACEABLE] software ECC based page पढ़ो function
+ * @chip: nand chip info काष्ठाure
+ * @buf: buffer to store पढ़ो data
+ * @oob_required: caller requires OOB data पढ़ो to chip->oob_poi
+ * @page: page number to पढ़ो
  */
-static int nand_read_page_swecc(struct nand_chip *chip, uint8_t *buf,
-				int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int i, eccsize = chip->ecc.size, ret;
-	int eccbytes = chip->ecc.bytes;
-	int eccsteps = chip->ecc.steps;
-	uint8_t *p = buf;
-	uint8_t *ecc_calc = chip->ecc.calc_buf;
-	uint8_t *ecc_code = chip->ecc.code_buf;
-	unsigned int max_bitflips = 0;
+अटल पूर्णांक nand_पढ़ो_page_swecc(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
+				पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक i, eccsize = chip->ecc.size, ret;
+	पूर्णांक eccbytes = chip->ecc.bytes;
+	पूर्णांक eccsteps = chip->ecc.steps;
+	uपूर्णांक8_t *p = buf;
+	uपूर्णांक8_t *ecc_calc = chip->ecc.calc_buf;
+	uपूर्णांक8_t *ecc_code = chip->ecc.code_buf;
+	अचिन्हित पूर्णांक max_bitflips = 0;
 
-	chip->ecc.read_page_raw(chip, buf, 1, page);
+	chip->ecc.पढ़ो_page_raw(chip, buf, 1, page);
 
-	for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize)
+	क्रम (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize)
 		chip->ecc.calculate(chip, p, &ecc_calc[i]);
 
 	ret = mtd_ooblayout_get_eccbytes(mtd, ecc_code, chip->oob_poi, 0,
 					 chip->ecc.total);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	eccsteps = chip->ecc.steps;
 	p = buf;
 
-	for (i = 0 ; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
-		int stat;
+	क्रम (i = 0 ; eccsteps; eccsteps--, i += eccbytes, p += eccsize) अणु
+		पूर्णांक stat;
 
 		stat = chip->ecc.correct(chip, p, &ecc_code[i], &ecc_calc[i]);
-		if (stat < 0) {
+		अगर (stat < 0) अणु
 			mtd->ecc_stats.failed++;
-		} else {
+		पूर्ण अन्यथा अणु
 			mtd->ecc_stats.corrected += stat;
-			max_bitflips = max_t(unsigned int, max_bitflips, stat);
-		}
-	}
-	return max_bitflips;
-}
+			max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips, stat);
+		पूर्ण
+	पूर्ण
+	वापस max_bitflips;
+पूर्ण
 
 /**
- * nand_read_subpage - [REPLACEABLE] ECC based sub-page read function
- * @chip: nand chip info structure
+ * nand_पढ़ो_subpage - [REPLACEABLE] ECC based sub-page पढ़ो function
+ * @chip: nand chip info काष्ठाure
  * @data_offs: offset of requested data within the page
- * @readlen: data length
- * @bufpoi: buffer to store read data
- * @page: page number to read
+ * @पढ़ोlen: data length
+ * @bufpoi: buffer to store पढ़ो data
+ * @page: page number to पढ़ो
  */
-static int nand_read_subpage(struct nand_chip *chip, uint32_t data_offs,
-			     uint32_t readlen, uint8_t *bufpoi, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int start_step, end_step, num_steps, ret;
-	uint8_t *p;
-	int data_col_addr, i, gaps = 0;
-	int datafrag_len, eccfrag_len, aligned_len, aligned_pos;
-	int busw = (chip->options & NAND_BUSWIDTH_16) ? 2 : 1;
-	int index, section = 0;
-	unsigned int max_bitflips = 0;
-	struct mtd_oob_region oobregion = { };
+अटल पूर्णांक nand_पढ़ो_subpage(काष्ठा nand_chip *chip, uपूर्णांक32_t data_offs,
+			     uपूर्णांक32_t पढ़ोlen, uपूर्णांक8_t *bufpoi, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक start_step, end_step, num_steps, ret;
+	uपूर्णांक8_t *p;
+	पूर्णांक data_col_addr, i, gaps = 0;
+	पूर्णांक datafrag_len, eccfrag_len, aligned_len, aligned_pos;
+	पूर्णांक busw = (chip->options & न_अंकD_BUSWIDTH_16) ? 2 : 1;
+	पूर्णांक index, section = 0;
+	अचिन्हित पूर्णांक max_bitflips = 0;
+	काष्ठा mtd_oob_region oobregion = अणु पूर्ण;
 
 	/* Column address within the page aligned to ECC size (256bytes) */
 	start_step = data_offs / chip->ecc.size;
-	end_step = (data_offs + readlen - 1) / chip->ecc.size;
+	end_step = (data_offs + पढ़ोlen - 1) / chip->ecc.size;
 	num_steps = end_step - start_step + 1;
 	index = start_step * chip->ecc.bytes;
 
@@ -2838,1516 +2839,1516 @@ static int nand_read_subpage(struct nand_chip *chip, uint32_t data_offs,
 	eccfrag_len = num_steps * chip->ecc.bytes;
 
 	data_col_addr = start_step * chip->ecc.size;
-	/* If we read not a page aligned data */
+	/* If we पढ़ो not a page aligned data */
 	p = bufpoi + data_col_addr;
-	ret = nand_read_page_op(chip, page, data_col_addr, p, datafrag_len);
-	if (ret)
-		return ret;
+	ret = nand_पढ़ो_page_op(chip, page, data_col_addr, p, datafrag_len);
+	अगर (ret)
+		वापस ret;
 
 	/* Calculate ECC */
-	for (i = 0; i < eccfrag_len ; i += chip->ecc.bytes, p += chip->ecc.size)
+	क्रम (i = 0; i < eccfrag_len ; i += chip->ecc.bytes, p += chip->ecc.size)
 		chip->ecc.calculate(chip, p, &chip->ecc.calc_buf[i]);
 
 	/*
-	 * The performance is faster if we position offsets according to
+	 * The perक्रमmance is faster अगर we position offsets according to
 	 * ecc.pos. Let's make sure that there are no gaps in ECC positions.
 	 */
 	ret = mtd_ooblayout_find_eccregion(mtd, index, &section, &oobregion);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (oobregion.length < eccfrag_len)
+	अगर (oobregion.length < eccfrag_len)
 		gaps = 1;
 
-	if (gaps) {
-		ret = nand_change_read_column_op(chip, mtd->writesize,
+	अगर (gaps) अणु
+		ret = nand_change_पढ़ो_column_op(chip, mtd->ग_लिखोsize,
 						 chip->oob_poi, mtd->oobsize,
 						 false);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		/*
-		 * Send the command to read the particular ECC bytes take care
-		 * about buswidth alignment in read_buf.
+		 * Send the command to पढ़ो the particular ECC bytes take care
+		 * about buswidth alignment in पढ़ो_buf.
 		 */
 		aligned_pos = oobregion.offset & ~(busw - 1);
 		aligned_len = eccfrag_len;
-		if (oobregion.offset & (busw - 1))
+		अगर (oobregion.offset & (busw - 1))
 			aligned_len++;
-		if ((oobregion.offset + (num_steps * chip->ecc.bytes)) &
+		अगर ((oobregion.offset + (num_steps * chip->ecc.bytes)) &
 		    (busw - 1))
 			aligned_len++;
 
-		ret = nand_change_read_column_op(chip,
-						 mtd->writesize + aligned_pos,
+		ret = nand_change_पढ़ो_column_op(chip,
+						 mtd->ग_लिखोsize + aligned_pos,
 						 &chip->oob_poi[aligned_pos],
 						 aligned_len, false);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = mtd_ooblayout_get_eccbytes(mtd, chip->ecc.code_buf,
 					 chip->oob_poi, index, eccfrag_len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	p = bufpoi + data_col_addr;
-	for (i = 0; i < eccfrag_len ; i += chip->ecc.bytes, p += chip->ecc.size) {
-		int stat;
+	क्रम (i = 0; i < eccfrag_len ; i += chip->ecc.bytes, p += chip->ecc.size) अणु
+		पूर्णांक stat;
 
 		stat = chip->ecc.correct(chip, p, &chip->ecc.code_buf[i],
 					 &chip->ecc.calc_buf[i]);
-		if (stat == -EBADMSG &&
-		    (chip->ecc.options & NAND_ECC_GENERIC_ERASED_CHECK)) {
-			/* check for empty pages with bitflips */
+		अगर (stat == -EBADMSG &&
+		    (chip->ecc.options & न_अंकD_ECC_GENERIC_ERASED_CHECK)) अणु
+			/* check क्रम empty pages with bitflips */
 			stat = nand_check_erased_ecc_chunk(p, chip->ecc.size,
 						&chip->ecc.code_buf[i],
 						chip->ecc.bytes,
-						NULL, 0,
+						शून्य, 0,
 						chip->ecc.strength);
-		}
+		पूर्ण
 
-		if (stat < 0) {
+		अगर (stat < 0) अणु
 			mtd->ecc_stats.failed++;
-		} else {
+		पूर्ण अन्यथा अणु
 			mtd->ecc_stats.corrected += stat;
-			max_bitflips = max_t(unsigned int, max_bitflips, stat);
-		}
-	}
-	return max_bitflips;
-}
+			max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips, stat);
+		पूर्ण
+	पूर्ण
+	वापस max_bitflips;
+पूर्ण
 
 /**
- * nand_read_page_hwecc - [REPLACEABLE] hardware ECC based page read function
- * @chip: nand chip info structure
- * @buf: buffer to store read data
- * @oob_required: caller requires OOB data read to chip->oob_poi
- * @page: page number to read
+ * nand_पढ़ो_page_hwecc - [REPLACEABLE] hardware ECC based page पढ़ो function
+ * @chip: nand chip info काष्ठाure
+ * @buf: buffer to store पढ़ो data
+ * @oob_required: caller requires OOB data पढ़ो to chip->oob_poi
+ * @page: page number to पढ़ो
  *
- * Not for syndrome calculating ECC controllers which need a special oob layout.
+ * Not क्रम syndrome calculating ECC controllers which need a special oob layout.
  */
-static int nand_read_page_hwecc(struct nand_chip *chip, uint8_t *buf,
-				int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int i, eccsize = chip->ecc.size, ret;
-	int eccbytes = chip->ecc.bytes;
-	int eccsteps = chip->ecc.steps;
-	uint8_t *p = buf;
-	uint8_t *ecc_calc = chip->ecc.calc_buf;
-	uint8_t *ecc_code = chip->ecc.code_buf;
-	unsigned int max_bitflips = 0;
+अटल पूर्णांक nand_पढ़ो_page_hwecc(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
+				पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक i, eccsize = chip->ecc.size, ret;
+	पूर्णांक eccbytes = chip->ecc.bytes;
+	पूर्णांक eccsteps = chip->ecc.steps;
+	uपूर्णांक8_t *p = buf;
+	uपूर्णांक8_t *ecc_calc = chip->ecc.calc_buf;
+	uपूर्णांक8_t *ecc_code = chip->ecc.code_buf;
+	अचिन्हित पूर्णांक max_bitflips = 0;
 
-	ret = nand_read_page_op(chip, page, 0, NULL, 0);
-	if (ret)
-		return ret;
+	ret = nand_पढ़ो_page_op(chip, page, 0, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
-		chip->ecc.hwctl(chip, NAND_ECC_READ);
+	क्रम (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) अणु
+		chip->ecc.hwctl(chip, न_अंकD_ECC_READ);
 
-		ret = nand_read_data_op(chip, p, eccsize, false, false);
-		if (ret)
-			return ret;
+		ret = nand_पढ़ो_data_op(chip, p, eccsize, false, false);
+		अगर (ret)
+			वापस ret;
 
 		chip->ecc.calculate(chip, p, &ecc_calc[i]);
-	}
+	पूर्ण
 
-	ret = nand_read_data_op(chip, chip->oob_poi, mtd->oobsize, false,
+	ret = nand_पढ़ो_data_op(chip, chip->oob_poi, mtd->oobsize, false,
 				false);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = mtd_ooblayout_get_eccbytes(mtd, ecc_code, chip->oob_poi, 0,
 					 chip->ecc.total);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	eccsteps = chip->ecc.steps;
 	p = buf;
 
-	for (i = 0 ; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
-		int stat;
+	क्रम (i = 0 ; eccsteps; eccsteps--, i += eccbytes, p += eccsize) अणु
+		पूर्णांक stat;
 
 		stat = chip->ecc.correct(chip, p, &ecc_code[i], &ecc_calc[i]);
-		if (stat == -EBADMSG &&
-		    (chip->ecc.options & NAND_ECC_GENERIC_ERASED_CHECK)) {
-			/* check for empty pages with bitflips */
+		अगर (stat == -EBADMSG &&
+		    (chip->ecc.options & न_अंकD_ECC_GENERIC_ERASED_CHECK)) अणु
+			/* check क्रम empty pages with bitflips */
 			stat = nand_check_erased_ecc_chunk(p, eccsize,
 						&ecc_code[i], eccbytes,
-						NULL, 0,
+						शून्य, 0,
 						chip->ecc.strength);
-		}
+		पूर्ण
 
-		if (stat < 0) {
+		अगर (stat < 0) अणु
 			mtd->ecc_stats.failed++;
-		} else {
+		पूर्ण अन्यथा अणु
 			mtd->ecc_stats.corrected += stat;
-			max_bitflips = max_t(unsigned int, max_bitflips, stat);
-		}
-	}
-	return max_bitflips;
-}
+			max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips, stat);
+		पूर्ण
+	पूर्ण
+	वापस max_bitflips;
+पूर्ण
 
 /**
- * nand_read_page_syndrome - [REPLACEABLE] hardware ECC syndrome based page read
- * @chip: nand chip info structure
- * @buf: buffer to store read data
- * @oob_required: caller requires OOB data read to chip->oob_poi
- * @page: page number to read
+ * nand_पढ़ो_page_syndrome - [REPLACEABLE] hardware ECC syndrome based page पढ़ो
+ * @chip: nand chip info काष्ठाure
+ * @buf: buffer to store पढ़ो data
+ * @oob_required: caller requires OOB data पढ़ो to chip->oob_poi
+ * @page: page number to पढ़ो
  *
- * The hw generator calculates the error syndrome automatically. Therefore we
+ * The hw generator calculates the error syndrome स्वतःmatically. Thereक्रमe we
  * need a special oob layout and handling.
  */
-static int nand_read_page_syndrome(struct nand_chip *chip, uint8_t *buf,
-				   int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int ret, i, eccsize = chip->ecc.size;
-	int eccbytes = chip->ecc.bytes;
-	int eccsteps = chip->ecc.steps;
-	int eccpadbytes = eccbytes + chip->ecc.prepad + chip->ecc.postpad;
-	uint8_t *p = buf;
-	uint8_t *oob = chip->oob_poi;
-	unsigned int max_bitflips = 0;
+अटल पूर्णांक nand_पढ़ो_page_syndrome(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
+				   पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक ret, i, eccsize = chip->ecc.size;
+	पूर्णांक eccbytes = chip->ecc.bytes;
+	पूर्णांक eccsteps = chip->ecc.steps;
+	पूर्णांक eccpadbytes = eccbytes + chip->ecc.prepad + chip->ecc.postpad;
+	uपूर्णांक8_t *p = buf;
+	uपूर्णांक8_t *oob = chip->oob_poi;
+	अचिन्हित पूर्णांक max_bitflips = 0;
 
-	ret = nand_read_page_op(chip, page, 0, NULL, 0);
-	if (ret)
-		return ret;
+	ret = nand_पढ़ो_page_op(chip, page, 0, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
-		int stat;
+	क्रम (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) अणु
+		पूर्णांक stat;
 
-		chip->ecc.hwctl(chip, NAND_ECC_READ);
+		chip->ecc.hwctl(chip, न_अंकD_ECC_READ);
 
-		ret = nand_read_data_op(chip, p, eccsize, false, false);
-		if (ret)
-			return ret;
+		ret = nand_पढ़ो_data_op(chip, p, eccsize, false, false);
+		अगर (ret)
+			वापस ret;
 
-		if (chip->ecc.prepad) {
-			ret = nand_read_data_op(chip, oob, chip->ecc.prepad,
+		अगर (chip->ecc.prepad) अणु
+			ret = nand_पढ़ो_data_op(chip, oob, chip->ecc.prepad,
 						false, false);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			oob += chip->ecc.prepad;
-		}
+		पूर्ण
 
-		chip->ecc.hwctl(chip, NAND_ECC_READSYN);
+		chip->ecc.hwctl(chip, न_अंकD_ECC_READSYN);
 
-		ret = nand_read_data_op(chip, oob, eccbytes, false, false);
-		if (ret)
-			return ret;
+		ret = nand_पढ़ो_data_op(chip, oob, eccbytes, false, false);
+		अगर (ret)
+			वापस ret;
 
-		stat = chip->ecc.correct(chip, p, oob, NULL);
+		stat = chip->ecc.correct(chip, p, oob, शून्य);
 
 		oob += eccbytes;
 
-		if (chip->ecc.postpad) {
-			ret = nand_read_data_op(chip, oob, chip->ecc.postpad,
+		अगर (chip->ecc.postpad) अणु
+			ret = nand_पढ़ो_data_op(chip, oob, chip->ecc.postpad,
 						false, false);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			oob += chip->ecc.postpad;
-		}
+		पूर्ण
 
-		if (stat == -EBADMSG &&
-		    (chip->ecc.options & NAND_ECC_GENERIC_ERASED_CHECK)) {
-			/* check for empty pages with bitflips */
+		अगर (stat == -EBADMSG &&
+		    (chip->ecc.options & न_अंकD_ECC_GENERIC_ERASED_CHECK)) अणु
+			/* check क्रम empty pages with bitflips */
 			stat = nand_check_erased_ecc_chunk(p, chip->ecc.size,
 							   oob - eccpadbytes,
 							   eccpadbytes,
-							   NULL, 0,
+							   शून्य, 0,
 							   chip->ecc.strength);
-		}
+		पूर्ण
 
-		if (stat < 0) {
+		अगर (stat < 0) अणु
 			mtd->ecc_stats.failed++;
-		} else {
+		पूर्ण अन्यथा अणु
 			mtd->ecc_stats.corrected += stat;
-			max_bitflips = max_t(unsigned int, max_bitflips, stat);
-		}
-	}
+			max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips, stat);
+		पूर्ण
+	पूर्ण
 
-	/* Calculate remaining oob bytes */
+	/* Calculate reमुख्यing oob bytes */
 	i = mtd->oobsize - (oob - chip->oob_poi);
-	if (i) {
-		ret = nand_read_data_op(chip, oob, i, false, false);
-		if (ret)
-			return ret;
-	}
+	अगर (i) अणु
+		ret = nand_पढ़ो_data_op(chip, oob, i, false, false);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return max_bitflips;
-}
+	वापस max_bitflips;
+पूर्ण
 
 /**
  * nand_transfer_oob - [INTERN] Transfer oob to client buffer
- * @chip: NAND chip object
+ * @chip: न_अंकD chip object
  * @oob: oob destination address
- * @ops: oob ops structure
+ * @ops: oob ops काष्ठाure
  * @len: size of oob to transfer
  */
-static uint8_t *nand_transfer_oob(struct nand_chip *chip, uint8_t *oob,
-				  struct mtd_oob_ops *ops, size_t len)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int ret;
+अटल uपूर्णांक8_t *nand_transfer_oob(काष्ठा nand_chip *chip, uपूर्णांक8_t *oob,
+				  काष्ठा mtd_oob_ops *ops, माप_प्रकार len)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक ret;
 
-	switch (ops->mode) {
+	चयन (ops->mode) अणु
 
-	case MTD_OPS_PLACE_OOB:
-	case MTD_OPS_RAW:
-		memcpy(oob, chip->oob_poi + ops->ooboffs, len);
-		return oob + len;
+	हाल MTD_OPS_PLACE_OOB:
+	हाल MTD_OPS_RAW:
+		स_नकल(oob, chip->oob_poi + ops->ooboffs, len);
+		वापस oob + len;
 
-	case MTD_OPS_AUTO_OOB:
+	हाल MTD_OPS_AUTO_OOB:
 		ret = mtd_ooblayout_get_databytes(mtd, oob, chip->oob_poi,
 						  ops->ooboffs, len);
 		BUG_ON(ret);
-		return oob + len;
+		वापस oob + len;
 
-	default:
+	शेष:
 		BUG();
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * nand_setup_read_retry - [INTERN] Set the READ RETRY mode
- * @chip: NAND chip object
+ * nand_setup_पढ़ो_retry - [INTERN] Set the READ RETRY mode
+ * @chip: न_अंकD chip object
  * @retry_mode: the retry mode to use
  *
- * Some vendors supply a special command to shift the Vt threshold, to be used
+ * Some venकरोrs supply a special command to shअगरt the Vt threshold, to be used
  * when there are too many bitflips in a page (i.e., ECC error). After setting
- * a new threshold, the host should retry reading the page.
+ * a new threshold, the host should retry पढ़ोing the page.
  */
-static int nand_setup_read_retry(struct nand_chip *chip, int retry_mode)
-{
+अटल पूर्णांक nand_setup_पढ़ो_retry(काष्ठा nand_chip *chip, पूर्णांक retry_mode)
+अणु
 	pr_debug("setting READ RETRY mode %d\n", retry_mode);
 
-	if (retry_mode >= chip->read_retries)
-		return -EINVAL;
+	अगर (retry_mode >= chip->पढ़ो_retries)
+		वापस -EINVAL;
 
-	if (!chip->ops.setup_read_retry)
-		return -EOPNOTSUPP;
+	अगर (!chip->ops.setup_पढ़ो_retry)
+		वापस -EOPNOTSUPP;
 
-	return chip->ops.setup_read_retry(chip, retry_mode);
-}
+	वापस chip->ops.setup_पढ़ो_retry(chip, retry_mode);
+पूर्ण
 
-static void nand_wait_readrdy(struct nand_chip *chip)
-{
-	const struct nand_sdr_timings *sdr;
+अटल व्योम nand_रुको_पढ़ोrdy(काष्ठा nand_chip *chip)
+अणु
+	स्थिर काष्ठा nand_sdr_timings *sdr;
 
-	if (!(chip->options & NAND_NEED_READRDY))
-		return;
+	अगर (!(chip->options & न_अंकD_NEED_READRDY))
+		वापस;
 
-	sdr = nand_get_sdr_timings(nand_get_interface_config(chip));
-	WARN_ON(nand_wait_rdy_op(chip, PSEC_TO_MSEC(sdr->tR_max), 0));
-}
+	sdr = nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+	WARN_ON(nand_रुको_rdy_op(chip, PSEC_TO_MSEC(sdr->tR_max), 0));
+पूर्ण
 
 /**
- * nand_do_read_ops - [INTERN] Read data with ECC
- * @chip: NAND chip object
- * @from: offset to read from
- * @ops: oob ops structure
+ * nand_करो_पढ़ो_ops - [INTERN] Read data with ECC
+ * @chip: न_अंकD chip object
+ * @from: offset to पढ़ो from
+ * @ops: oob ops काष्ठाure
  *
  * Internal function. Called with chip held.
  */
-static int nand_do_read_ops(struct nand_chip *chip, loff_t from,
-			    struct mtd_oob_ops *ops)
-{
-	int chipnr, page, realpage, col, bytes, aligned, oob_required;
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int ret = 0;
-	uint32_t readlen = ops->len;
-	uint32_t oobreadlen = ops->ooblen;
-	uint32_t max_oobsize = mtd_oobavail(mtd, ops);
+अटल पूर्णांक nand_करो_पढ़ो_ops(काष्ठा nand_chip *chip, loff_t from,
+			    काष्ठा mtd_oob_ops *ops)
+अणु
+	पूर्णांक chipnr, page, realpage, col, bytes, aligned, oob_required;
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t पढ़ोlen = ops->len;
+	uपूर्णांक32_t oobपढ़ोlen = ops->ooblen;
+	uपूर्णांक32_t max_oobsize = mtd_oobavail(mtd, ops);
 
-	uint8_t *bufpoi, *oob, *buf;
-	int use_bounce_buf;
-	unsigned int max_bitflips = 0;
-	int retry_mode = 0;
+	uपूर्णांक8_t *bufpoi, *oob, *buf;
+	पूर्णांक use_bounce_buf;
+	अचिन्हित पूर्णांक max_bitflips = 0;
+	पूर्णांक retry_mode = 0;
 	bool ecc_fail = false;
 
-	/* Check if the region is secured */
-	if (nand_region_is_secured(chip, from, readlen))
-		return -EIO;
+	/* Check अगर the region is secured */
+	अगर (nand_region_is_secured(chip, from, पढ़ोlen))
+		वापस -EIO;
 
-	chipnr = (int)(from >> chip->chip_shift);
+	chipnr = (पूर्णांक)(from >> chip->chip_shअगरt);
 	nand_select_target(chip, chipnr);
 
-	realpage = (int)(from >> chip->page_shift);
+	realpage = (पूर्णांक)(from >> chip->page_shअगरt);
 	page = realpage & chip->pagemask;
 
-	col = (int)(from & (mtd->writesize - 1));
+	col = (पूर्णांक)(from & (mtd->ग_लिखोsize - 1));
 
 	buf = ops->datbuf;
 	oob = ops->oobbuf;
 	oob_required = oob ? 1 : 0;
 
-	while (1) {
-		struct mtd_ecc_stats ecc_stats = mtd->ecc_stats;
+	जबतक (1) अणु
+		काष्ठा mtd_ecc_stats ecc_stats = mtd->ecc_stats;
 
-		bytes = min(mtd->writesize - col, readlen);
-		aligned = (bytes == mtd->writesize);
+		bytes = min(mtd->ग_लिखोsize - col, पढ़ोlen);
+		aligned = (bytes == mtd->ग_लिखोsize);
 
-		if (!aligned)
+		अगर (!aligned)
 			use_bounce_buf = 1;
-		else if (chip->options & NAND_USES_DMA)
+		अन्यथा अगर (chip->options & न_अंकD_USES_DMA)
 			use_bounce_buf = !virt_addr_valid(buf) ||
-					 !IS_ALIGNED((unsigned long)buf,
+					 !IS_ALIGNED((अचिन्हित दीर्घ)buf,
 						     chip->buf_align);
-		else
+		अन्यथा
 			use_bounce_buf = 0;
 
 		/* Is the current page in the buffer? */
-		if (realpage != chip->pagecache.page || oob) {
+		अगर (realpage != chip->pagecache.page || oob) अणु
 			bufpoi = use_bounce_buf ? chip->data_buf : buf;
 
-			if (use_bounce_buf && aligned)
+			अगर (use_bounce_buf && aligned)
 				pr_debug("%s: using read bounce buffer for buf@%p\n",
 						 __func__, buf);
 
-read_retry:
+पढ़ो_retry:
 			/*
-			 * Now read the page into the buffer.  Absent an error,
-			 * the read methods return max bitflips per ecc step.
+			 * Now पढ़ो the page पूर्णांकo the buffer.  Absent an error,
+			 * the पढ़ो methods वापस max bitflips per ecc step.
 			 */
-			if (unlikely(ops->mode == MTD_OPS_RAW))
-				ret = chip->ecc.read_page_raw(chip, bufpoi,
+			अगर (unlikely(ops->mode == MTD_OPS_RAW))
+				ret = chip->ecc.पढ़ो_page_raw(chip, bufpoi,
 							      oob_required,
 							      page);
-			else if (!aligned && NAND_HAS_SUBPAGE_READ(chip) &&
+			अन्यथा अगर (!aligned && न_अंकD_HAS_SUBPAGE_READ(chip) &&
 				 !oob)
-				ret = chip->ecc.read_subpage(chip, col, bytes,
+				ret = chip->ecc.पढ़ो_subpage(chip, col, bytes,
 							     bufpoi, page);
-			else
-				ret = chip->ecc.read_page(chip, bufpoi,
+			अन्यथा
+				ret = chip->ecc.पढ़ो_page(chip, bufpoi,
 							  oob_required, page);
-			if (ret < 0) {
-				if (use_bounce_buf)
+			अगर (ret < 0) अणु
+				अगर (use_bounce_buf)
 					/* Invalidate page cache */
 					chip->pagecache.page = -1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/*
-			 * Copy back the data in the initial buffer when reading
+			 * Copy back the data in the initial buffer when पढ़ोing
 			 * partial pages or when a bounce buffer is required.
 			 */
-			if (use_bounce_buf) {
-				if (!NAND_HAS_SUBPAGE_READ(chip) && !oob &&
+			अगर (use_bounce_buf) अणु
+				अगर (!न_अंकD_HAS_SUBPAGE_READ(chip) && !oob &&
 				    !(mtd->ecc_stats.failed - ecc_stats.failed) &&
-				    (ops->mode != MTD_OPS_RAW)) {
+				    (ops->mode != MTD_OPS_RAW)) अणु
 					chip->pagecache.page = realpage;
 					chip->pagecache.bitflips = ret;
-				} else {
+				पूर्ण अन्यथा अणु
 					/* Invalidate page cache */
 					chip->pagecache.page = -1;
-				}
-				memcpy(buf, bufpoi + col, bytes);
-			}
+				पूर्ण
+				स_नकल(buf, bufpoi + col, bytes);
+			पूर्ण
 
-			if (unlikely(oob)) {
-				int toread = min(oobreadlen, max_oobsize);
+			अगर (unlikely(oob)) अणु
+				पूर्णांक toपढ़ो = min(oobपढ़ोlen, max_oobsize);
 
-				if (toread) {
+				अगर (toपढ़ो) अणु
 					oob = nand_transfer_oob(chip, oob, ops,
-								toread);
-					oobreadlen -= toread;
-				}
-			}
+								toपढ़ो);
+					oobपढ़ोlen -= toपढ़ो;
+				पूर्ण
+			पूर्ण
 
-			nand_wait_readrdy(chip);
+			nand_रुको_पढ़ोrdy(chip);
 
-			if (mtd->ecc_stats.failed - ecc_stats.failed) {
-				if (retry_mode + 1 < chip->read_retries) {
+			अगर (mtd->ecc_stats.failed - ecc_stats.failed) अणु
+				अगर (retry_mode + 1 < chip->पढ़ो_retries) अणु
 					retry_mode++;
-					ret = nand_setup_read_retry(chip,
+					ret = nand_setup_पढ़ो_retry(chip,
 							retry_mode);
-					if (ret < 0)
-						break;
+					अगर (ret < 0)
+						अवरोध;
 
 					/* Reset ecc_stats; retry */
 					mtd->ecc_stats = ecc_stats;
-					goto read_retry;
-				} else {
+					जाओ पढ़ो_retry;
+				पूर्ण अन्यथा अणु
 					/* No more retry modes; real failure */
 					ecc_fail = true;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
 			buf += bytes;
-			max_bitflips = max_t(unsigned int, max_bitflips, ret);
-		} else {
-			memcpy(buf, chip->data_buf + col, bytes);
+			max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips, ret);
+		पूर्ण अन्यथा अणु
+			स_नकल(buf, chip->data_buf + col, bytes);
 			buf += bytes;
-			max_bitflips = max_t(unsigned int, max_bitflips,
+			max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips,
 					     chip->pagecache.bitflips);
-		}
+		पूर्ण
 
-		readlen -= bytes;
+		पढ़ोlen -= bytes;
 
 		/* Reset to retry mode 0 */
-		if (retry_mode) {
-			ret = nand_setup_read_retry(chip, 0);
-			if (ret < 0)
-				break;
+		अगर (retry_mode) अणु
+			ret = nand_setup_पढ़ो_retry(chip, 0);
+			अगर (ret < 0)
+				अवरोध;
 			retry_mode = 0;
-		}
+		पूर्ण
 
-		if (!readlen)
-			break;
+		अगर (!पढ़ोlen)
+			अवरोध;
 
-		/* For subsequent reads align to page boundary */
+		/* For subsequent पढ़ोs align to page boundary */
 		col = 0;
 		/* Increment page address */
 		realpage++;
 
 		page = realpage & chip->pagemask;
-		/* Check, if we cross a chip boundary */
-		if (!page) {
+		/* Check, अगर we cross a chip boundary */
+		अगर (!page) अणु
 			chipnr++;
 			nand_deselect_target(chip);
 			nand_select_target(chip, chipnr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	nand_deselect_target(chip);
 
-	ops->retlen = ops->len - (size_t) readlen;
-	if (oob)
-		ops->oobretlen = ops->ooblen - oobreadlen;
+	ops->retlen = ops->len - (माप_प्रकार) पढ़ोlen;
+	अगर (oob)
+		ops->oobretlen = ops->ooblen - oobपढ़ोlen;
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ecc_fail)
-		return -EBADMSG;
+	अगर (ecc_fail)
+		वापस -EBADMSG;
 
-	return max_bitflips;
-}
+	वापस max_bitflips;
+पूर्ण
 
 /**
- * nand_read_oob_std - [REPLACEABLE] the most common OOB data read function
- * @chip: nand chip info structure
- * @page: page number to read
+ * nand_पढ़ो_oob_std - [REPLACEABLE] the most common OOB data पढ़ो function
+ * @chip: nand chip info काष्ठाure
+ * @page: page number to पढ़ो
  */
-int nand_read_oob_std(struct nand_chip *chip, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+पूर्णांक nand_पढ़ो_oob_std(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	return nand_read_oob_op(chip, page, 0, chip->oob_poi, mtd->oobsize);
-}
-EXPORT_SYMBOL(nand_read_oob_std);
+	वापस nand_पढ़ो_oob_op(chip, page, 0, chip->oob_poi, mtd->oobsize);
+पूर्ण
+EXPORT_SYMBOL(nand_पढ़ो_oob_std);
 
 /**
- * nand_read_oob_syndrome - [REPLACEABLE] OOB data read function for HW ECC
+ * nand_पढ़ो_oob_syndrome - [REPLACEABLE] OOB data पढ़ो function क्रम HW ECC
  *			    with syndromes
- * @chip: nand chip info structure
- * @page: page number to read
+ * @chip: nand chip info काष्ठाure
+ * @page: page number to पढ़ो
  */
-static int nand_read_oob_syndrome(struct nand_chip *chip, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int length = mtd->oobsize;
-	int chunk = chip->ecc.bytes + chip->ecc.prepad + chip->ecc.postpad;
-	int eccsize = chip->ecc.size;
-	uint8_t *bufpoi = chip->oob_poi;
-	int i, toread, sndrnd = 0, pos, ret;
+अटल पूर्णांक nand_पढ़ो_oob_syndrome(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक length = mtd->oobsize;
+	पूर्णांक chunk = chip->ecc.bytes + chip->ecc.prepad + chip->ecc.postpad;
+	पूर्णांक eccsize = chip->ecc.size;
+	uपूर्णांक8_t *bufpoi = chip->oob_poi;
+	पूर्णांक i, toपढ़ो, sndrnd = 0, pos, ret;
 
-	ret = nand_read_page_op(chip, page, chip->ecc.size, NULL, 0);
-	if (ret)
-		return ret;
+	ret = nand_पढ़ो_page_op(chip, page, chip->ecc.size, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < chip->ecc.steps; i++) {
-		if (sndrnd) {
-			int ret;
+	क्रम (i = 0; i < chip->ecc.steps; i++) अणु
+		अगर (sndrnd) अणु
+			पूर्णांक ret;
 
 			pos = eccsize + i * (eccsize + chunk);
-			if (mtd->writesize > 512)
-				ret = nand_change_read_column_op(chip, pos,
-								 NULL, 0,
+			अगर (mtd->ग_लिखोsize > 512)
+				ret = nand_change_पढ़ो_column_op(chip, pos,
+								 शून्य, 0,
 								 false);
-			else
-				ret = nand_read_page_op(chip, page, pos, NULL,
+			अन्यथा
+				ret = nand_पढ़ो_page_op(chip, page, pos, शून्य,
 							0);
 
-			if (ret)
-				return ret;
-		} else
+			अगर (ret)
+				वापस ret;
+		पूर्ण अन्यथा
 			sndrnd = 1;
-		toread = min_t(int, length, chunk);
+		toपढ़ो = min_t(पूर्णांक, length, chunk);
 
-		ret = nand_read_data_op(chip, bufpoi, toread, false, false);
-		if (ret)
-			return ret;
+		ret = nand_पढ़ो_data_op(chip, bufpoi, toपढ़ो, false, false);
+		अगर (ret)
+			वापस ret;
 
-		bufpoi += toread;
-		length -= toread;
-	}
-	if (length > 0) {
-		ret = nand_read_data_op(chip, bufpoi, length, false, false);
-		if (ret)
-			return ret;
-	}
+		bufpoi += toपढ़ो;
+		length -= toपढ़ो;
+	पूर्ण
+	अगर (length > 0) अणु
+		ret = nand_पढ़ो_data_op(chip, bufpoi, length, false, false);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nand_write_oob_std - [REPLACEABLE] the most common OOB data write function
- * @chip: nand chip info structure
- * @page: page number to write
+ * nand_ग_लिखो_oob_std - [REPLACEABLE] the most common OOB data ग_लिखो function
+ * @chip: nand chip info काष्ठाure
+ * @page: page number to ग_लिखो
  */
-int nand_write_oob_std(struct nand_chip *chip, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+पूर्णांक nand_ग_लिखो_oob_std(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	return nand_prog_page_op(chip, page, mtd->writesize, chip->oob_poi,
+	वापस nand_prog_page_op(chip, page, mtd->ग_लिखोsize, chip->oob_poi,
 				 mtd->oobsize);
-}
-EXPORT_SYMBOL(nand_write_oob_std);
+पूर्ण
+EXPORT_SYMBOL(nand_ग_लिखो_oob_std);
 
 /**
- * nand_write_oob_syndrome - [REPLACEABLE] OOB data write function for HW ECC
- *			     with syndrome - only for large page flash
- * @chip: nand chip info structure
- * @page: page number to write
+ * nand_ग_लिखो_oob_syndrome - [REPLACEABLE] OOB data ग_लिखो function क्रम HW ECC
+ *			     with syndrome - only क्रम large page flash
+ * @chip: nand chip info काष्ठाure
+ * @page: page number to ग_लिखो
  */
-static int nand_write_oob_syndrome(struct nand_chip *chip, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int chunk = chip->ecc.bytes + chip->ecc.prepad + chip->ecc.postpad;
-	int eccsize = chip->ecc.size, length = mtd->oobsize;
-	int ret, i, len, pos, sndcmd = 0, steps = chip->ecc.steps;
-	const uint8_t *bufpoi = chip->oob_poi;
+अटल पूर्णांक nand_ग_लिखो_oob_syndrome(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक chunk = chip->ecc.bytes + chip->ecc.prepad + chip->ecc.postpad;
+	पूर्णांक eccsize = chip->ecc.size, length = mtd->oobsize;
+	पूर्णांक ret, i, len, pos, sndcmd = 0, steps = chip->ecc.steps;
+	स्थिर uपूर्णांक8_t *bufpoi = chip->oob_poi;
 
 	/*
 	 * data-ecc-data-ecc ... ecc-oob
 	 * or
 	 * data-pad-ecc-pad-data-pad .... ecc-pad-oob
 	 */
-	if (!chip->ecc.prepad && !chip->ecc.postpad) {
+	अगर (!chip->ecc.prepad && !chip->ecc.postpad) अणु
 		pos = steps * (eccsize + chunk);
 		steps = 0;
-	} else
+	पूर्ण अन्यथा
 		pos = eccsize;
 
-	ret = nand_prog_page_begin_op(chip, page, pos, NULL, 0);
-	if (ret)
-		return ret;
+	ret = nand_prog_page_begin_op(chip, page, pos, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < steps; i++) {
-		if (sndcmd) {
-			if (mtd->writesize <= 512) {
-				uint32_t fill = 0xFFFFFFFF;
+	क्रम (i = 0; i < steps; i++) अणु
+		अगर (sndcmd) अणु
+			अगर (mtd->ग_लिखोsize <= 512) अणु
+				uपूर्णांक32_t fill = 0xFFFFFFFF;
 
 				len = eccsize;
-				while (len > 0) {
-					int num = min_t(int, len, 4);
+				जबतक (len > 0) अणु
+					पूर्णांक num = min_t(पूर्णांक, len, 4);
 
-					ret = nand_write_data_op(chip, &fill,
+					ret = nand_ग_लिखो_data_op(chip, &fill,
 								 num, false);
-					if (ret)
-						return ret;
+					अगर (ret)
+						वापस ret;
 
 					len -= num;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				pos = eccsize + i * (eccsize + chunk);
-				ret = nand_change_write_column_op(chip, pos,
-								  NULL, 0,
+				ret = nand_change_ग_लिखो_column_op(chip, pos,
+								  शून्य, 0,
 								  false);
-				if (ret)
-					return ret;
-			}
-		} else
+				अगर (ret)
+					वापस ret;
+			पूर्ण
+		पूर्ण अन्यथा
 			sndcmd = 1;
-		len = min_t(int, length, chunk);
+		len = min_t(पूर्णांक, length, chunk);
 
-		ret = nand_write_data_op(chip, bufpoi, len, false);
-		if (ret)
-			return ret;
+		ret = nand_ग_लिखो_data_op(chip, bufpoi, len, false);
+		अगर (ret)
+			वापस ret;
 
 		bufpoi += len;
 		length -= len;
-	}
-	if (length > 0) {
-		ret = nand_write_data_op(chip, bufpoi, length, false);
-		if (ret)
-			return ret;
-	}
+	पूर्ण
+	अगर (length > 0) अणु
+		ret = nand_ग_लिखो_data_op(chip, bufpoi, length, false);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return nand_prog_page_end_op(chip);
-}
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
 
 /**
- * nand_do_read_oob - [INTERN] NAND read out-of-band
- * @chip: NAND chip object
- * @from: offset to read from
- * @ops: oob operations description structure
+ * nand_करो_पढ़ो_oob - [INTERN] न_अंकD पढ़ो out-of-band
+ * @chip: न_अंकD chip object
+ * @from: offset to पढ़ो from
+ * @ops: oob operations description काष्ठाure
  *
- * NAND read out-of-band data from the spare area.
+ * न_अंकD पढ़ो out-of-band data from the spare area.
  */
-static int nand_do_read_oob(struct nand_chip *chip, loff_t from,
-			    struct mtd_oob_ops *ops)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	unsigned int max_bitflips = 0;
-	int page, realpage, chipnr;
-	struct mtd_ecc_stats stats;
-	int readlen = ops->ooblen;
-	int len;
-	uint8_t *buf = ops->oobbuf;
-	int ret = 0;
+अटल पूर्णांक nand_करो_पढ़ो_oob(काष्ठा nand_chip *chip, loff_t from,
+			    काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	अचिन्हित पूर्णांक max_bitflips = 0;
+	पूर्णांक page, realpage, chipnr;
+	काष्ठा mtd_ecc_stats stats;
+	पूर्णांक पढ़ोlen = ops->ooblen;
+	पूर्णांक len;
+	uपूर्णांक8_t *buf = ops->oobbuf;
+	पूर्णांक ret = 0;
 
 	pr_debug("%s: from = 0x%08Lx, len = %i\n",
-			__func__, (unsigned long long)from, readlen);
+			__func__, (अचिन्हित दीर्घ दीर्घ)from, पढ़ोlen);
 
-	/* Check if the region is secured */
-	if (nand_region_is_secured(chip, from, readlen))
-		return -EIO;
+	/* Check अगर the region is secured */
+	अगर (nand_region_is_secured(chip, from, पढ़ोlen))
+		वापस -EIO;
 
 	stats = mtd->ecc_stats;
 
 	len = mtd_oobavail(mtd, ops);
 
-	chipnr = (int)(from >> chip->chip_shift);
+	chipnr = (पूर्णांक)(from >> chip->chip_shअगरt);
 	nand_select_target(chip, chipnr);
 
-	/* Shift to get page */
-	realpage = (int)(from >> chip->page_shift);
+	/* Shअगरt to get page */
+	realpage = (पूर्णांक)(from >> chip->page_shअगरt);
 	page = realpage & chip->pagemask;
 
-	while (1) {
-		if (ops->mode == MTD_OPS_RAW)
-			ret = chip->ecc.read_oob_raw(chip, page);
-		else
-			ret = chip->ecc.read_oob(chip, page);
+	जबतक (1) अणु
+		अगर (ops->mode == MTD_OPS_RAW)
+			ret = chip->ecc.पढ़ो_oob_raw(chip, page);
+		अन्यथा
+			ret = chip->ecc.पढ़ो_oob(chip, page);
 
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
-		len = min(len, readlen);
+		len = min(len, पढ़ोlen);
 		buf = nand_transfer_oob(chip, buf, ops, len);
 
-		nand_wait_readrdy(chip);
+		nand_रुको_पढ़ोrdy(chip);
 
-		max_bitflips = max_t(unsigned int, max_bitflips, ret);
+		max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips, ret);
 
-		readlen -= len;
-		if (!readlen)
-			break;
+		पढ़ोlen -= len;
+		अगर (!पढ़ोlen)
+			अवरोध;
 
 		/* Increment page address */
 		realpage++;
 
 		page = realpage & chip->pagemask;
-		/* Check, if we cross a chip boundary */
-		if (!page) {
+		/* Check, अगर we cross a chip boundary */
+		अगर (!page) अणु
 			chipnr++;
 			nand_deselect_target(chip);
 			nand_select_target(chip, chipnr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	nand_deselect_target(chip);
 
-	ops->oobretlen = ops->ooblen - readlen;
+	ops->oobretlen = ops->ooblen - पढ़ोlen;
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (mtd->ecc_stats.failed - stats.failed)
-		return -EBADMSG;
+	अगर (mtd->ecc_stats.failed - stats.failed)
+		वापस -EBADMSG;
 
-	return max_bitflips;
-}
+	वापस max_bitflips;
+पूर्ण
 
 /**
- * nand_read_oob - [MTD Interface] NAND read data and/or out-of-band
- * @mtd: MTD device structure
- * @from: offset to read from
- * @ops: oob operation description structure
+ * nand_पढ़ो_oob - [MTD Interface] न_अंकD पढ़ो data and/or out-of-band
+ * @mtd: MTD device काष्ठाure
+ * @from: offset to पढ़ो from
+ * @ops: oob operation description काष्ठाure
  *
- * NAND read data and/or out-of-band data.
+ * न_अंकD पढ़ो data and/or out-of-band data.
  */
-static int nand_read_oob(struct mtd_info *mtd, loff_t from,
-			 struct mtd_oob_ops *ops)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	int ret;
+अटल पूर्णांक nand_पढ़ो_oob(काष्ठा mtd_info *mtd, loff_t from,
+			 काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	पूर्णांक ret;
 
 	ops->retlen = 0;
 
-	if (ops->mode != MTD_OPS_PLACE_OOB &&
+	अगर (ops->mode != MTD_OPS_PLACE_OOB &&
 	    ops->mode != MTD_OPS_AUTO_OOB &&
 	    ops->mode != MTD_OPS_RAW)
-		return -ENOTSUPP;
+		वापस -ENOTSUPP;
 
 	ret = nand_get_device(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!ops->datbuf)
-		ret = nand_do_read_oob(chip, from, ops);
-	else
-		ret = nand_do_read_ops(chip, from, ops);
+	अगर (!ops->datbuf)
+		ret = nand_करो_पढ़ो_oob(chip, from, ops);
+	अन्यथा
+		ret = nand_करो_पढ़ो_ops(chip, from, ops);
 
 	nand_release_device(chip);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nand_write_page_raw_notsupp - dummy raw page write function
- * @chip: nand chip info structure
+ * nand_ग_लिखो_page_raw_notsupp - dummy raw page ग_लिखो function
+ * @chip: nand chip info काष्ठाure
  * @buf: data buffer
- * @oob_required: must write chip->oob_poi to OOB
- * @page: page number to write
+ * @oob_required: must ग_लिखो chip->oob_poi to OOB
+ * @page: page number to ग_लिखो
  *
  * Returns -ENOTSUPP unconditionally.
  */
-int nand_write_page_raw_notsupp(struct nand_chip *chip, const u8 *buf,
-				int oob_required, int page)
-{
-	return -ENOTSUPP;
-}
+पूर्णांक nand_ग_लिखो_page_raw_notsupp(काष्ठा nand_chip *chip, स्थिर u8 *buf,
+				पूर्णांक oob_required, पूर्णांक page)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
 /**
- * nand_write_page_raw - [INTERN] raw page write function
- * @chip: nand chip info structure
+ * nand_ग_लिखो_page_raw - [INTERN] raw page ग_लिखो function
+ * @chip: nand chip info काष्ठाure
  * @buf: data buffer
- * @oob_required: must write chip->oob_poi to OOB
- * @page: page number to write
+ * @oob_required: must ग_लिखो chip->oob_poi to OOB
+ * @page: page number to ग_लिखो
  *
- * Not for syndrome calculating ECC controllers, which use a special oob layout.
+ * Not क्रम syndrome calculating ECC controllers, which use a special oob layout.
  */
-int nand_write_page_raw(struct nand_chip *chip, const uint8_t *buf,
-			int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int ret;
+पूर्णांक nand_ग_लिखो_page_raw(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
+			पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक ret;
 
-	ret = nand_prog_page_begin_op(chip, page, 0, buf, mtd->writesize);
-	if (ret)
-		return ret;
+	ret = nand_prog_page_begin_op(chip, page, 0, buf, mtd->ग_लिखोsize);
+	अगर (ret)
+		वापस ret;
 
-	if (oob_required) {
-		ret = nand_write_data_op(chip, chip->oob_poi, mtd->oobsize,
+	अगर (oob_required) अणु
+		ret = nand_ग_लिखो_data_op(chip, chip->oob_poi, mtd->oobsize,
 					 false);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return nand_prog_page_end_op(chip);
-}
-EXPORT_SYMBOL(nand_write_page_raw);
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
+EXPORT_SYMBOL(nand_ग_लिखो_page_raw);
 
 /**
- * nand_monolithic_write_page_raw - Monolithic page write in raw mode
- * @chip: NAND chip info structure
- * @buf: data buffer to write
- * @oob_required: must write chip->oob_poi to OOB
- * @page: page number to write
+ * nand_monolithic_ग_लिखो_page_raw - Monolithic page ग_लिखो in raw mode
+ * @chip: न_अंकD chip info काष्ठाure
+ * @buf: data buffer to ग_लिखो
+ * @oob_required: must ग_लिखो chip->oob_poi to OOB
+ * @page: page number to ग_लिखो
  *
- * This is a raw page write, ie. without any error detection/correction.
- * Monolithic means we are requesting all the relevant data (main plus
+ * This is a raw page ग_लिखो, ie. without any error detection/correction.
+ * Monolithic means we are requesting all the relevant data (मुख्य plus
  * eventually OOB) to be sent over the bus and effectively programmed
- * into the NAND chip arrays in a single operation. This is an
- * alternative to nand_write_page_raw(), which first sends the main
+ * पूर्णांकo the न_अंकD chip arrays in a single operation. This is an
+ * alternative to nand_ग_लिखो_page_raw(), which first sends the मुख्य
  * data, then eventually send the OOB data by latching more data
- * cycles on the NAND bus, and finally sends the program command to
- * synchronyze the NAND chip cache.
+ * cycles on the न_अंकD bus, and finally sends the program command to
+ * synchronyze the न_अंकD chip cache.
  */
-int nand_monolithic_write_page_raw(struct nand_chip *chip, const u8 *buf,
-				   int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	unsigned int size = mtd->writesize;
-	u8 *write_buf = (u8 *)buf;
+पूर्णांक nand_monolithic_ग_लिखो_page_raw(काष्ठा nand_chip *chip, स्थिर u8 *buf,
+				   पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	अचिन्हित पूर्णांक size = mtd->ग_लिखोsize;
+	u8 *ग_लिखो_buf = (u8 *)buf;
 
-	if (oob_required) {
+	अगर (oob_required) अणु
 		size += mtd->oobsize;
 
-		if (buf != chip->data_buf) {
-			write_buf = nand_get_data_buf(chip);
-			memcpy(write_buf, buf, mtd->writesize);
-		}
-	}
+		अगर (buf != chip->data_buf) अणु
+			ग_लिखो_buf = nand_get_data_buf(chip);
+			स_नकल(ग_लिखो_buf, buf, mtd->ग_लिखोsize);
+		पूर्ण
+	पूर्ण
 
-	return nand_prog_page_op(chip, page, 0, write_buf, size);
-}
-EXPORT_SYMBOL(nand_monolithic_write_page_raw);
+	वापस nand_prog_page_op(chip, page, 0, ग_लिखो_buf, size);
+पूर्ण
+EXPORT_SYMBOL(nand_monolithic_ग_लिखो_page_raw);
 
 /**
- * nand_write_page_raw_syndrome - [INTERN] raw page write function
- * @chip: nand chip info structure
+ * nand_ग_लिखो_page_raw_syndrome - [INTERN] raw page ग_लिखो function
+ * @chip: nand chip info काष्ठाure
  * @buf: data buffer
- * @oob_required: must write chip->oob_poi to OOB
- * @page: page number to write
+ * @oob_required: must ग_लिखो chip->oob_poi to OOB
+ * @page: page number to ग_लिखो
  *
  * We need a special oob layout and handling even when ECC isn't checked.
  */
-static int nand_write_page_raw_syndrome(struct nand_chip *chip,
-					const uint8_t *buf, int oob_required,
-					int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int eccsize = chip->ecc.size;
-	int eccbytes = chip->ecc.bytes;
-	uint8_t *oob = chip->oob_poi;
-	int steps, size, ret;
+अटल पूर्णांक nand_ग_लिखो_page_raw_syndrome(काष्ठा nand_chip *chip,
+					स्थिर uपूर्णांक8_t *buf, पूर्णांक oob_required,
+					पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक eccsize = chip->ecc.size;
+	पूर्णांक eccbytes = chip->ecc.bytes;
+	uपूर्णांक8_t *oob = chip->oob_poi;
+	पूर्णांक steps, size, ret;
 
-	ret = nand_prog_page_begin_op(chip, page, 0, NULL, 0);
-	if (ret)
-		return ret;
+	ret = nand_prog_page_begin_op(chip, page, 0, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	for (steps = chip->ecc.steps; steps > 0; steps--) {
-		ret = nand_write_data_op(chip, buf, eccsize, false);
-		if (ret)
-			return ret;
+	क्रम (steps = chip->ecc.steps; steps > 0; steps--) अणु
+		ret = nand_ग_लिखो_data_op(chip, buf, eccsize, false);
+		अगर (ret)
+			वापस ret;
 
 		buf += eccsize;
 
-		if (chip->ecc.prepad) {
-			ret = nand_write_data_op(chip, oob, chip->ecc.prepad,
+		अगर (chip->ecc.prepad) अणु
+			ret = nand_ग_लिखो_data_op(chip, oob, chip->ecc.prepad,
 						 false);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			oob += chip->ecc.prepad;
-		}
+		पूर्ण
 
-		ret = nand_write_data_op(chip, oob, eccbytes, false);
-		if (ret)
-			return ret;
+		ret = nand_ग_लिखो_data_op(chip, oob, eccbytes, false);
+		अगर (ret)
+			वापस ret;
 
 		oob += eccbytes;
 
-		if (chip->ecc.postpad) {
-			ret = nand_write_data_op(chip, oob, chip->ecc.postpad,
+		अगर (chip->ecc.postpad) अणु
+			ret = nand_ग_लिखो_data_op(chip, oob, chip->ecc.postpad,
 						 false);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			oob += chip->ecc.postpad;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	size = mtd->oobsize - (oob - chip->oob_poi);
-	if (size) {
-		ret = nand_write_data_op(chip, oob, size, false);
-		if (ret)
-			return ret;
-	}
+	अगर (size) अणु
+		ret = nand_ग_लिखो_data_op(chip, oob, size, false);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return nand_prog_page_end_op(chip);
-}
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
 /**
- * nand_write_page_swecc - [REPLACEABLE] software ECC based page write function
- * @chip: nand chip info structure
+ * nand_ग_लिखो_page_swecc - [REPLACEABLE] software ECC based page ग_लिखो function
+ * @chip: nand chip info काष्ठाure
  * @buf: data buffer
- * @oob_required: must write chip->oob_poi to OOB
- * @page: page number to write
+ * @oob_required: must ग_लिखो chip->oob_poi to OOB
+ * @page: page number to ग_लिखो
  */
-static int nand_write_page_swecc(struct nand_chip *chip, const uint8_t *buf,
-				 int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int i, eccsize = chip->ecc.size, ret;
-	int eccbytes = chip->ecc.bytes;
-	int eccsteps = chip->ecc.steps;
-	uint8_t *ecc_calc = chip->ecc.calc_buf;
-	const uint8_t *p = buf;
+अटल पूर्णांक nand_ग_लिखो_page_swecc(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
+				 पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक i, eccsize = chip->ecc.size, ret;
+	पूर्णांक eccbytes = chip->ecc.bytes;
+	पूर्णांक eccsteps = chip->ecc.steps;
+	uपूर्णांक8_t *ecc_calc = chip->ecc.calc_buf;
+	स्थिर uपूर्णांक8_t *p = buf;
 
 	/* Software ECC calculation */
-	for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize)
+	क्रम (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize)
 		chip->ecc.calculate(chip, p, &ecc_calc[i]);
 
 	ret = mtd_ooblayout_set_eccbytes(mtd, ecc_calc, chip->oob_poi, 0,
 					 chip->ecc.total);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return chip->ecc.write_page_raw(chip, buf, 1, page);
-}
+	वापस chip->ecc.ग_लिखो_page_raw(chip, buf, 1, page);
+पूर्ण
 
 /**
- * nand_write_page_hwecc - [REPLACEABLE] hardware ECC based page write function
- * @chip: nand chip info structure
+ * nand_ग_लिखो_page_hwecc - [REPLACEABLE] hardware ECC based page ग_लिखो function
+ * @chip: nand chip info काष्ठाure
  * @buf: data buffer
- * @oob_required: must write chip->oob_poi to OOB
- * @page: page number to write
+ * @oob_required: must ग_लिखो chip->oob_poi to OOB
+ * @page: page number to ग_लिखो
  */
-static int nand_write_page_hwecc(struct nand_chip *chip, const uint8_t *buf,
-				 int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int i, eccsize = chip->ecc.size, ret;
-	int eccbytes = chip->ecc.bytes;
-	int eccsteps = chip->ecc.steps;
-	uint8_t *ecc_calc = chip->ecc.calc_buf;
-	const uint8_t *p = buf;
+अटल पूर्णांक nand_ग_लिखो_page_hwecc(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
+				 पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक i, eccsize = chip->ecc.size, ret;
+	पूर्णांक eccbytes = chip->ecc.bytes;
+	पूर्णांक eccsteps = chip->ecc.steps;
+	uपूर्णांक8_t *ecc_calc = chip->ecc.calc_buf;
+	स्थिर uपूर्णांक8_t *p = buf;
 
-	ret = nand_prog_page_begin_op(chip, page, 0, NULL, 0);
-	if (ret)
-		return ret;
+	ret = nand_prog_page_begin_op(chip, page, 0, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
-		chip->ecc.hwctl(chip, NAND_ECC_WRITE);
+	क्रम (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) अणु
+		chip->ecc.hwctl(chip, न_अंकD_ECC_WRITE);
 
-		ret = nand_write_data_op(chip, p, eccsize, false);
-		if (ret)
-			return ret;
+		ret = nand_ग_लिखो_data_op(chip, p, eccsize, false);
+		अगर (ret)
+			वापस ret;
 
 		chip->ecc.calculate(chip, p, &ecc_calc[i]);
-	}
+	पूर्ण
 
 	ret = mtd_ooblayout_set_eccbytes(mtd, ecc_calc, chip->oob_poi, 0,
 					 chip->ecc.total);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = nand_write_data_op(chip, chip->oob_poi, mtd->oobsize, false);
-	if (ret)
-		return ret;
+	ret = nand_ग_लिखो_data_op(chip, chip->oob_poi, mtd->oobsize, false);
+	अगर (ret)
+		वापस ret;
 
-	return nand_prog_page_end_op(chip);
-}
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
 
 
 /**
- * nand_write_subpage_hwecc - [REPLACEABLE] hardware ECC based subpage write
- * @chip:	nand chip info structure
+ * nand_ग_लिखो_subpage_hwecc - [REPLACEABLE] hardware ECC based subpage ग_लिखो
+ * @chip:	nand chip info काष्ठाure
  * @offset:	column address of subpage within the page
  * @data_len:	data length
  * @buf:	data buffer
- * @oob_required: must write chip->oob_poi to OOB
- * @page: page number to write
+ * @oob_required: must ग_लिखो chip->oob_poi to OOB
+ * @page: page number to ग_लिखो
  */
-static int nand_write_subpage_hwecc(struct nand_chip *chip, uint32_t offset,
-				    uint32_t data_len, const uint8_t *buf,
-				    int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	uint8_t *oob_buf  = chip->oob_poi;
-	uint8_t *ecc_calc = chip->ecc.calc_buf;
-	int ecc_size      = chip->ecc.size;
-	int ecc_bytes     = chip->ecc.bytes;
-	int ecc_steps     = chip->ecc.steps;
-	uint32_t start_step = offset / ecc_size;
-	uint32_t end_step   = (offset + data_len - 1) / ecc_size;
-	int oob_bytes       = mtd->oobsize / ecc_steps;
-	int step, ret;
+अटल पूर्णांक nand_ग_लिखो_subpage_hwecc(काष्ठा nand_chip *chip, uपूर्णांक32_t offset,
+				    uपूर्णांक32_t data_len, स्थिर uपूर्णांक8_t *buf,
+				    पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	uपूर्णांक8_t *oob_buf  = chip->oob_poi;
+	uपूर्णांक8_t *ecc_calc = chip->ecc.calc_buf;
+	पूर्णांक ecc_size      = chip->ecc.size;
+	पूर्णांक ecc_bytes     = chip->ecc.bytes;
+	पूर्णांक ecc_steps     = chip->ecc.steps;
+	uपूर्णांक32_t start_step = offset / ecc_size;
+	uपूर्णांक32_t end_step   = (offset + data_len - 1) / ecc_size;
+	पूर्णांक oob_bytes       = mtd->oobsize / ecc_steps;
+	पूर्णांक step, ret;
 
-	ret = nand_prog_page_begin_op(chip, page, 0, NULL, 0);
-	if (ret)
-		return ret;
+	ret = nand_prog_page_begin_op(chip, page, 0, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	for (step = 0; step < ecc_steps; step++) {
-		/* configure controller for WRITE access */
-		chip->ecc.hwctl(chip, NAND_ECC_WRITE);
+	क्रम (step = 0; step < ecc_steps; step++) अणु
+		/* configure controller क्रम WRITE access */
+		chip->ecc.hwctl(chip, न_अंकD_ECC_WRITE);
 
-		/* write data (untouched subpages already masked by 0xFF) */
-		ret = nand_write_data_op(chip, buf, ecc_size, false);
-		if (ret)
-			return ret;
+		/* ग_लिखो data (untouched subpages alपढ़ोy masked by 0xFF) */
+		ret = nand_ग_लिखो_data_op(chip, buf, ecc_size, false);
+		अगर (ret)
+			वापस ret;
 
 		/* mask ECC of un-touched subpages by padding 0xFF */
-		if ((step < start_step) || (step > end_step))
-			memset(ecc_calc, 0xff, ecc_bytes);
-		else
+		अगर ((step < start_step) || (step > end_step))
+			स_रखो(ecc_calc, 0xff, ecc_bytes);
+		अन्यथा
 			chip->ecc.calculate(chip, buf, ecc_calc);
 
 		/* mask OOB of un-touched subpages by padding 0xFF */
-		/* if oob_required, preserve OOB metadata of written subpage */
-		if (!oob_required || (step < start_step) || (step > end_step))
-			memset(oob_buf, 0xff, oob_bytes);
+		/* अगर oob_required, preserve OOB metadata of written subpage */
+		अगर (!oob_required || (step < start_step) || (step > end_step))
+			स_रखो(oob_buf, 0xff, oob_bytes);
 
 		buf += ecc_size;
 		ecc_calc += ecc_bytes;
 		oob_buf  += oob_bytes;
-	}
+	पूर्ण
 
-	/* copy calculated ECC for whole page to chip->buffer->oob */
-	/* this include masked-value(0xFF) for unwritten subpages */
+	/* copy calculated ECC क्रम whole page to chip->buffer->oob */
+	/* this include masked-value(0xFF) क्रम unwritten subpages */
 	ecc_calc = chip->ecc.calc_buf;
 	ret = mtd_ooblayout_set_eccbytes(mtd, ecc_calc, chip->oob_poi, 0,
 					 chip->ecc.total);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* write OOB buffer to NAND device */
-	ret = nand_write_data_op(chip, chip->oob_poi, mtd->oobsize, false);
-	if (ret)
-		return ret;
+	/* ग_लिखो OOB buffer to न_अंकD device */
+	ret = nand_ग_लिखो_data_op(chip, chip->oob_poi, mtd->oobsize, false);
+	अगर (ret)
+		वापस ret;
 
-	return nand_prog_page_end_op(chip);
-}
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
 
 
 /**
- * nand_write_page_syndrome - [REPLACEABLE] hardware ECC syndrome based page write
- * @chip: nand chip info structure
+ * nand_ग_लिखो_page_syndrome - [REPLACEABLE] hardware ECC syndrome based page ग_लिखो
+ * @chip: nand chip info काष्ठाure
  * @buf: data buffer
- * @oob_required: must write chip->oob_poi to OOB
- * @page: page number to write
+ * @oob_required: must ग_लिखो chip->oob_poi to OOB
+ * @page: page number to ग_लिखो
  *
- * The hw generator calculates the error syndrome automatically. Therefore we
+ * The hw generator calculates the error syndrome स्वतःmatically. Thereक्रमe we
  * need a special oob layout and handling.
  */
-static int nand_write_page_syndrome(struct nand_chip *chip, const uint8_t *buf,
-				    int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int i, eccsize = chip->ecc.size;
-	int eccbytes = chip->ecc.bytes;
-	int eccsteps = chip->ecc.steps;
-	const uint8_t *p = buf;
-	uint8_t *oob = chip->oob_poi;
-	int ret;
+अटल पूर्णांक nand_ग_लिखो_page_syndrome(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
+				    पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक i, eccsize = chip->ecc.size;
+	पूर्णांक eccbytes = chip->ecc.bytes;
+	पूर्णांक eccsteps = chip->ecc.steps;
+	स्थिर uपूर्णांक8_t *p = buf;
+	uपूर्णांक8_t *oob = chip->oob_poi;
+	पूर्णांक ret;
 
-	ret = nand_prog_page_begin_op(chip, page, 0, NULL, 0);
-	if (ret)
-		return ret;
+	ret = nand_prog_page_begin_op(chip, page, 0, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
-		chip->ecc.hwctl(chip, NAND_ECC_WRITE);
+	क्रम (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) अणु
+		chip->ecc.hwctl(chip, न_अंकD_ECC_WRITE);
 
-		ret = nand_write_data_op(chip, p, eccsize, false);
-		if (ret)
-			return ret;
+		ret = nand_ग_लिखो_data_op(chip, p, eccsize, false);
+		अगर (ret)
+			वापस ret;
 
-		if (chip->ecc.prepad) {
-			ret = nand_write_data_op(chip, oob, chip->ecc.prepad,
+		अगर (chip->ecc.prepad) अणु
+			ret = nand_ग_लिखो_data_op(chip, oob, chip->ecc.prepad,
 						 false);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			oob += chip->ecc.prepad;
-		}
+		पूर्ण
 
 		chip->ecc.calculate(chip, p, oob);
 
-		ret = nand_write_data_op(chip, oob, eccbytes, false);
-		if (ret)
-			return ret;
+		ret = nand_ग_लिखो_data_op(chip, oob, eccbytes, false);
+		अगर (ret)
+			वापस ret;
 
 		oob += eccbytes;
 
-		if (chip->ecc.postpad) {
-			ret = nand_write_data_op(chip, oob, chip->ecc.postpad,
+		अगर (chip->ecc.postpad) अणु
+			ret = nand_ग_लिखो_data_op(chip, oob, chip->ecc.postpad,
 						 false);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			oob += chip->ecc.postpad;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Calculate remaining oob bytes */
+	/* Calculate reमुख्यing oob bytes */
 	i = mtd->oobsize - (oob - chip->oob_poi);
-	if (i) {
-		ret = nand_write_data_op(chip, oob, i, false);
-		if (ret)
-			return ret;
-	}
+	अगर (i) अणु
+		ret = nand_ग_लिखो_data_op(chip, oob, i, false);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return nand_prog_page_end_op(chip);
-}
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
 
 /**
- * nand_write_page - write one page
- * @chip: NAND chip descriptor
+ * nand_ग_लिखो_page - ग_लिखो one page
+ * @chip: न_अंकD chip descriptor
  * @offset: address offset within the page
  * @data_len: length of actual data to be written
- * @buf: the data to write
- * @oob_required: must write chip->oob_poi to OOB
- * @page: page number to write
- * @raw: use _raw version of write_page
+ * @buf: the data to ग_लिखो
+ * @oob_required: must ग_लिखो chip->oob_poi to OOB
+ * @page: page number to ग_लिखो
+ * @raw: use _raw version of ग_लिखो_page
  */
-static int nand_write_page(struct nand_chip *chip, uint32_t offset,
-			   int data_len, const uint8_t *buf, int oob_required,
-			   int page, int raw)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int status, subpage;
+अटल पूर्णांक nand_ग_लिखो_page(काष्ठा nand_chip *chip, uपूर्णांक32_t offset,
+			   पूर्णांक data_len, स्थिर uपूर्णांक8_t *buf, पूर्णांक oob_required,
+			   पूर्णांक page, पूर्णांक raw)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक status, subpage;
 
-	if (!(chip->options & NAND_NO_SUBPAGE_WRITE) &&
-		chip->ecc.write_subpage)
-		subpage = offset || (data_len < mtd->writesize);
-	else
+	अगर (!(chip->options & न_अंकD_NO_SUBPAGE_WRITE) &&
+		chip->ecc.ग_लिखो_subpage)
+		subpage = offset || (data_len < mtd->ग_लिखोsize);
+	अन्यथा
 		subpage = 0;
 
-	if (unlikely(raw))
-		status = chip->ecc.write_page_raw(chip, buf, oob_required,
+	अगर (unlikely(raw))
+		status = chip->ecc.ग_लिखो_page_raw(chip, buf, oob_required,
 						  page);
-	else if (subpage)
-		status = chip->ecc.write_subpage(chip, offset, data_len, buf,
+	अन्यथा अगर (subpage)
+		status = chip->ecc.ग_लिखो_subpage(chip, offset, data_len, buf,
 						 oob_required, page);
-	else
-		status = chip->ecc.write_page(chip, buf, oob_required, page);
+	अन्यथा
+		status = chip->ecc.ग_लिखो_page(chip, buf, oob_required, page);
 
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define NOTALIGNED(x)	((x & (chip->subpagesize - 1)) != 0)
+#घोषणा NOTALIGNED(x)	((x & (chip->subpagesize - 1)) != 0)
 
 /**
- * nand_do_write_ops - [INTERN] NAND write with ECC
- * @chip: NAND chip object
- * @to: offset to write to
- * @ops: oob operations description structure
+ * nand_करो_ग_लिखो_ops - [INTERN] न_अंकD ग_लिखो with ECC
+ * @chip: न_अंकD chip object
+ * @to: offset to ग_लिखो to
+ * @ops: oob operations description काष्ठाure
  *
- * NAND write with ECC.
+ * न_अंकD ग_लिखो with ECC.
  */
-static int nand_do_write_ops(struct nand_chip *chip, loff_t to,
-			     struct mtd_oob_ops *ops)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int chipnr, realpage, page, column;
-	uint32_t writelen = ops->len;
+अटल पूर्णांक nand_करो_ग_लिखो_ops(काष्ठा nand_chip *chip, loff_t to,
+			     काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक chipnr, realpage, page, column;
+	uपूर्णांक32_t ग_लिखोlen = ops->len;
 
-	uint32_t oobwritelen = ops->ooblen;
-	uint32_t oobmaxlen = mtd_oobavail(mtd, ops);
+	uपूर्णांक32_t oobग_लिखोlen = ops->ooblen;
+	uपूर्णांक32_t oobmaxlen = mtd_oobavail(mtd, ops);
 
-	uint8_t *oob = ops->oobbuf;
-	uint8_t *buf = ops->datbuf;
-	int ret;
-	int oob_required = oob ? 1 : 0;
+	uपूर्णांक8_t *oob = ops->oobbuf;
+	uपूर्णांक8_t *buf = ops->datbuf;
+	पूर्णांक ret;
+	पूर्णांक oob_required = oob ? 1 : 0;
 
 	ops->retlen = 0;
-	if (!writelen)
-		return 0;
+	अगर (!ग_लिखोlen)
+		वापस 0;
 
-	/* Reject writes, which are not page aligned */
-	if (NOTALIGNED(to) || NOTALIGNED(ops->len)) {
+	/* Reject ग_लिखोs, which are not page aligned */
+	अगर (NOTALIGNED(to) || NOTALIGNED(ops->len)) अणु
 		pr_notice("%s: attempt to write non page aligned data\n",
 			   __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check if the region is secured */
-	if (nand_region_is_secured(chip, to, writelen))
-		return -EIO;
+	/* Check अगर the region is secured */
+	अगर (nand_region_is_secured(chip, to, ग_लिखोlen))
+		वापस -EIO;
 
-	column = to & (mtd->writesize - 1);
+	column = to & (mtd->ग_लिखोsize - 1);
 
-	chipnr = (int)(to >> chip->chip_shift);
+	chipnr = (पूर्णांक)(to >> chip->chip_shअगरt);
 	nand_select_target(chip, chipnr);
 
-	/* Check, if it is write protected */
-	if (nand_check_wp(chip)) {
+	/* Check, अगर it is ग_लिखो रक्षित */
+	अगर (nand_check_wp(chip)) अणु
 		ret = -EIO;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	realpage = (int)(to >> chip->page_shift);
+	realpage = (पूर्णांक)(to >> chip->page_shअगरt);
 	page = realpage & chip->pagemask;
 
-	/* Invalidate the page cache, when we write to the cached page */
-	if (to <= ((loff_t)chip->pagecache.page << chip->page_shift) &&
-	    ((loff_t)chip->pagecache.page << chip->page_shift) < (to + ops->len))
+	/* Invalidate the page cache, when we ग_लिखो to the cached page */
+	अगर (to <= ((loff_t)chip->pagecache.page << chip->page_shअगरt) &&
+	    ((loff_t)chip->pagecache.page << chip->page_shअगरt) < (to + ops->len))
 		chip->pagecache.page = -1;
 
-	/* Don't allow multipage oob writes with offset */
-	if (oob && ops->ooboffs && (ops->ooboffs + ops->ooblen > oobmaxlen)) {
+	/* Don't allow multipage oob ग_लिखोs with offset */
+	अगर (oob && ops->ooboffs && (ops->ooboffs + ops->ooblen > oobmaxlen)) अणु
 		ret = -EINVAL;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	while (1) {
-		int bytes = mtd->writesize;
-		uint8_t *wbuf = buf;
-		int use_bounce_buf;
-		int part_pagewr = (column || writelen < mtd->writesize);
+	जबतक (1) अणु
+		पूर्णांक bytes = mtd->ग_लिखोsize;
+		uपूर्णांक8_t *wbuf = buf;
+		पूर्णांक use_bounce_buf;
+		पूर्णांक part_pagewr = (column || ग_लिखोlen < mtd->ग_लिखोsize);
 
-		if (part_pagewr)
+		अगर (part_pagewr)
 			use_bounce_buf = 1;
-		else if (chip->options & NAND_USES_DMA)
+		अन्यथा अगर (chip->options & न_अंकD_USES_DMA)
 			use_bounce_buf = !virt_addr_valid(buf) ||
-					 !IS_ALIGNED((unsigned long)buf,
+					 !IS_ALIGNED((अचिन्हित दीर्घ)buf,
 						     chip->buf_align);
-		else
+		अन्यथा
 			use_bounce_buf = 0;
 
 		/*
-		 * Copy the data from the initial buffer when doing partial page
-		 * writes or when a bounce buffer is required.
+		 * Copy the data from the initial buffer when करोing partial page
+		 * ग_लिखोs or when a bounce buffer is required.
 		 */
-		if (use_bounce_buf) {
+		अगर (use_bounce_buf) अणु
 			pr_debug("%s: using write bounce buffer for buf@%p\n",
 					 __func__, buf);
-			if (part_pagewr)
-				bytes = min_t(int, bytes - column, writelen);
+			अगर (part_pagewr)
+				bytes = min_t(पूर्णांक, bytes - column, ग_लिखोlen);
 			wbuf = nand_get_data_buf(chip);
-			memset(wbuf, 0xff, mtd->writesize);
-			memcpy(&wbuf[column], buf, bytes);
-		}
+			स_रखो(wbuf, 0xff, mtd->ग_लिखोsize);
+			स_नकल(&wbuf[column], buf, bytes);
+		पूर्ण
 
-		if (unlikely(oob)) {
-			size_t len = min(oobwritelen, oobmaxlen);
+		अगर (unlikely(oob)) अणु
+			माप_प्रकार len = min(oobग_लिखोlen, oobmaxlen);
 			oob = nand_fill_oob(chip, oob, len, ops);
-			oobwritelen -= len;
-		} else {
+			oobग_लिखोlen -= len;
+		पूर्ण अन्यथा अणु
 			/* We still need to erase leftover OOB data */
-			memset(chip->oob_poi, 0xff, mtd->oobsize);
-		}
+			स_रखो(chip->oob_poi, 0xff, mtd->oobsize);
+		पूर्ण
 
-		ret = nand_write_page(chip, column, bytes, wbuf,
+		ret = nand_ग_लिखो_page(chip, column, bytes, wbuf,
 				      oob_required, page,
 				      (ops->mode == MTD_OPS_RAW));
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
-		writelen -= bytes;
-		if (!writelen)
-			break;
+		ग_लिखोlen -= bytes;
+		अगर (!ग_लिखोlen)
+			अवरोध;
 
 		column = 0;
 		buf += bytes;
 		realpage++;
 
 		page = realpage & chip->pagemask;
-		/* Check, if we cross a chip boundary */
-		if (!page) {
+		/* Check, अगर we cross a chip boundary */
+		अगर (!page) अणु
 			chipnr++;
 			nand_deselect_target(chip);
 			nand_select_target(chip, chipnr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ops->retlen = ops->len - writelen;
-	if (unlikely(oob))
+	ops->retlen = ops->len - ग_लिखोlen;
+	अगर (unlikely(oob))
 		ops->oobretlen = ops->ooblen;
 
 err_out:
 	nand_deselect_target(chip);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * panic_nand_write - [MTD Interface] NAND write with ECC
- * @mtd: MTD device structure
- * @to: offset to write to
- * @len: number of bytes to write
- * @retlen: pointer to variable to store the number of written bytes
- * @buf: the data to write
+ * panic_nand_ग_लिखो - [MTD Interface] न_अंकD ग_लिखो with ECC
+ * @mtd: MTD device काष्ठाure
+ * @to: offset to ग_लिखो to
+ * @len: number of bytes to ग_लिखो
+ * @retlen: poपूर्णांकer to variable to store the number of written bytes
+ * @buf: the data to ग_लिखो
  *
- * NAND write with ECC. Used when performing writes in interrupt context, this
- * may for example be called by mtdoops when writing an oops while in panic.
+ * न_अंकD ग_लिखो with ECC. Used when perक्रमming ग_लिखोs in पूर्णांकerrupt context, this
+ * may क्रम example be called by mtकरोops when writing an oops जबतक in panic.
  */
-static int panic_nand_write(struct mtd_info *mtd, loff_t to, size_t len,
-			    size_t *retlen, const uint8_t *buf)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	int chipnr = (int)(to >> chip->chip_shift);
-	struct mtd_oob_ops ops;
-	int ret;
+अटल पूर्णांक panic_nand_ग_लिखो(काष्ठा mtd_info *mtd, loff_t to, माप_प्रकार len,
+			    माप_प्रकार *retlen, स्थिर uपूर्णांक8_t *buf)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	पूर्णांक chipnr = (पूर्णांक)(to >> chip->chip_shअगरt);
+	काष्ठा mtd_oob_ops ops;
+	पूर्णांक ret;
 
 	nand_select_target(chip, chipnr);
 
-	/* Wait for the device to get ready */
-	panic_nand_wait(chip, 400);
+	/* Wait क्रम the device to get पढ़ोy */
+	panic_nand_रुको(chip, 400);
 
-	memset(&ops, 0, sizeof(ops));
+	स_रखो(&ops, 0, माप(ops));
 	ops.len = len;
-	ops.datbuf = (uint8_t *)buf;
+	ops.datbuf = (uपूर्णांक8_t *)buf;
 	ops.mode = MTD_OPS_PLACE_OOB;
 
-	ret = nand_do_write_ops(chip, to, &ops);
+	ret = nand_करो_ग_लिखो_ops(chip, to, &ops);
 
 	*retlen = ops.retlen;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nand_write_oob - [MTD Interface] NAND write data and/or out-of-band
- * @mtd: MTD device structure
- * @to: offset to write to
- * @ops: oob operation description structure
+ * nand_ग_लिखो_oob - [MTD Interface] न_अंकD ग_लिखो data and/or out-of-band
+ * @mtd: MTD device काष्ठाure
+ * @to: offset to ग_लिखो to
+ * @ops: oob operation description काष्ठाure
  */
-static int nand_write_oob(struct mtd_info *mtd, loff_t to,
-			  struct mtd_oob_ops *ops)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	int ret;
+अटल पूर्णांक nand_ग_लिखो_oob(काष्ठा mtd_info *mtd, loff_t to,
+			  काष्ठा mtd_oob_ops *ops)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	पूर्णांक ret;
 
 	ops->retlen = 0;
 
 	ret = nand_get_device(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (ops->mode) {
-	case MTD_OPS_PLACE_OOB:
-	case MTD_OPS_AUTO_OOB:
-	case MTD_OPS_RAW:
-		break;
+	चयन (ops->mode) अणु
+	हाल MTD_OPS_PLACE_OOB:
+	हाल MTD_OPS_AUTO_OOB:
+	हाल MTD_OPS_RAW:
+		अवरोध;
 
-	default:
-		goto out;
-	}
+	शेष:
+		जाओ out;
+	पूर्ण
 
-	if (!ops->datbuf)
-		ret = nand_do_write_oob(chip, to, ops);
-	else
-		ret = nand_do_write_ops(chip, to, ops);
+	अगर (!ops->datbuf)
+		ret = nand_करो_ग_लिखो_oob(chip, to, ops);
+	अन्यथा
+		ret = nand_करो_ग_लिखो_ops(chip, to, ops);
 
 out:
 	nand_release_device(chip);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * nand_erase - [MTD Interface] erase block(s)
- * @mtd: MTD device structure
- * @instr: erase instruction
+ * @mtd: MTD device काष्ठाure
+ * @instr: erase inकाष्ठाion
  *
  * Erase one ore more blocks.
  */
-static int nand_erase(struct mtd_info *mtd, struct erase_info *instr)
-{
-	return nand_erase_nand(mtd_to_nand(mtd), instr, 0);
-}
+अटल पूर्णांक nand_erase(काष्ठा mtd_info *mtd, काष्ठा erase_info *instr)
+अणु
+	वापस nand_erase_nand(mtd_to_nand(mtd), instr, 0);
+पूर्ण
 
 /**
  * nand_erase_nand - [INTERN] erase block(s)
- * @chip: NAND chip object
- * @instr: erase instruction
+ * @chip: न_अंकD chip object
+ * @instr: erase inकाष्ठाion
  * @allowbbt: allow erasing the bbt area
  *
  * Erase one ore more blocks.
  */
-int nand_erase_nand(struct nand_chip *chip, struct erase_info *instr,
-		    int allowbbt)
-{
-	int page, pages_per_block, ret, chipnr;
+पूर्णांक nand_erase_nand(काष्ठा nand_chip *chip, काष्ठा erase_info *instr,
+		    पूर्णांक allowbbt)
+अणु
+	पूर्णांक page, pages_per_block, ret, chipnr;
 	loff_t len;
 
 	pr_debug("%s: start = 0x%012llx, len = %llu\n",
-			__func__, (unsigned long long)instr->addr,
-			(unsigned long long)instr->len);
+			__func__, (अचिन्हित दीर्घ दीर्घ)instr->addr,
+			(अचिन्हित दीर्घ दीर्घ)instr->len);
 
-	if (check_offs_len(chip, instr->addr, instr->len))
-		return -EINVAL;
+	अगर (check_offs_len(chip, instr->addr, instr->len))
+		वापस -EINVAL;
 
-	/* Check if the region is secured */
-	if (nand_region_is_secured(chip, instr->addr, instr->len))
-		return -EIO;
+	/* Check अगर the region is secured */
+	अगर (nand_region_is_secured(chip, instr->addr, instr->len))
+		वापस -EIO;
 
-	/* Grab the lock and see if the device is available */
+	/* Grab the lock and see अगर the device is available */
 	ret = nand_get_device(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Shift to get first page */
-	page = (int)(instr->addr >> chip->page_shift);
-	chipnr = (int)(instr->addr >> chip->chip_shift);
+	/* Shअगरt to get first page */
+	page = (पूर्णांक)(instr->addr >> chip->page_shअगरt);
+	chipnr = (पूर्णांक)(instr->addr >> chip->chip_shअगरt);
 
 	/* Calculate pages in each block */
-	pages_per_block = 1 << (chip->phys_erase_shift - chip->page_shift);
+	pages_per_block = 1 << (chip->phys_erase_shअगरt - chip->page_shअगरt);
 
-	/* Select the NAND device */
+	/* Select the न_अंकD device */
 	nand_select_target(chip, chipnr);
 
-	/* Check, if it is write protected */
-	if (nand_check_wp(chip)) {
+	/* Check, अगर it is ग_लिखो रक्षित */
+	अगर (nand_check_wp(chip)) अणु
 		pr_debug("%s: device is write protected!\n",
 				__func__);
 		ret = -EIO;
-		goto erase_exit;
-	}
+		जाओ erase_निकास;
+	पूर्ण
 
 	/* Loop through the pages */
 	len = instr->len;
 
-	while (len) {
-		/* Check if we have a bad block, we do not erase bad blocks! */
-		if (nand_block_checkbad(chip, ((loff_t) page) <<
-					chip->page_shift, allowbbt)) {
+	जबतक (len) अणु
+		/* Check अगर we have a bad block, we करो not erase bad blocks! */
+		अगर (nand_block_checkbad(chip, ((loff_t) page) <<
+					chip->page_shअगरt, allowbbt)) अणु
 			pr_warn("%s: attempt to erase a bad block at page 0x%08x\n",
 				    __func__, page);
 			ret = -EIO;
-			goto erase_exit;
-		}
+			जाओ erase_निकास;
+		पूर्ण
 
 		/*
-		 * Invalidate the page cache, if we erase the block which
+		 * Invalidate the page cache, अगर we erase the block which
 		 * contains the current cached page.
 		 */
-		if (page <= chip->pagecache.page && chip->pagecache.page <
+		अगर (page <= chip->pagecache.page && chip->pagecache.page <
 		    (page + pages_per_block))
 			chip->pagecache.page = -1;
 
 		ret = nand_erase_op(chip, (page & chip->pagemask) >>
-				    (chip->phys_erase_shift - chip->page_shift));
-		if (ret) {
+				    (chip->phys_erase_shअगरt - chip->page_shअगरt));
+		अगर (ret) अणु
 			pr_debug("%s: failed erase, page 0x%08x\n",
 					__func__, page);
 			instr->fail_addr =
-				((loff_t)page << chip->page_shift);
-			goto erase_exit;
-		}
+				((loff_t)page << chip->page_shअगरt);
+			जाओ erase_निकास;
+		पूर्ण
 
 		/* Increment page address and decrement length */
-		len -= (1ULL << chip->phys_erase_shift);
+		len -= (1ULL << chip->phys_erase_shअगरt);
 		page += pages_per_block;
 
-		/* Check, if we cross a chip boundary */
-		if (len && !(page & chip->pagemask)) {
+		/* Check, अगर we cross a chip boundary */
+		अगर (len && !(page & chip->pagemask)) अणु
 			chipnr++;
 			nand_deselect_target(chip);
 			nand_select_target(chip, chipnr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
-erase_exit:
+erase_निकास:
 
-	/* Deselect and wake up anyone waiting on the device */
+	/* Deselect and wake up anyone रुकोing on the device */
 	nand_deselect_target(chip);
 	nand_release_device(chip);
 
 	/* Return more or less happy */
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * nand_sync - [MTD Interface] sync
- * @mtd: MTD device structure
+ * @mtd: MTD device काष्ठाure
  *
- * Sync is actually a wait for chip ready function.
+ * Sync is actually a रुको क्रम chip पढ़ोy function.
  */
-static void nand_sync(struct mtd_info *mtd)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
+अटल व्योम nand_sync(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
 
 	pr_debug("%s: called\n", __func__);
 
-	/* Grab the lock and see if the device is available */
+	/* Grab the lock and see अगर the device is available */
 	WARN_ON(nand_get_device(chip));
 	/* Release it and go back */
 	nand_release_device(chip);
-}
+पूर्ण
 
 /**
- * nand_block_isbad - [MTD Interface] Check if block at offset is bad
- * @mtd: MTD device structure
+ * nand_block_isbad - [MTD Interface] Check अगर block at offset is bad
+ * @mtd: MTD device काष्ठाure
  * @offs: offset relative to mtd start
  */
-static int nand_block_isbad(struct mtd_info *mtd, loff_t offs)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	int chipnr = (int)(offs >> chip->chip_shift);
-	int ret;
+अटल पूर्णांक nand_block_isbad(काष्ठा mtd_info *mtd, loff_t offs)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	पूर्णांक chipnr = (पूर्णांक)(offs >> chip->chip_shअगरt);
+	पूर्णांक ret;
 
-	/* Select the NAND device */
+	/* Select the न_अंकD device */
 	ret = nand_get_device(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	nand_select_target(chip, chipnr);
 
@@ -4356,224 +4357,224 @@ static int nand_block_isbad(struct mtd_info *mtd, loff_t offs)
 	nand_deselect_target(chip);
 	nand_release_device(chip);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * nand_block_markbad - [MTD Interface] Mark block at the given offset as bad
- * @mtd: MTD device structure
+ * @mtd: MTD device काष्ठाure
  * @ofs: offset relative to mtd start
  */
-static int nand_block_markbad(struct mtd_info *mtd, loff_t ofs)
-{
-	int ret;
+अटल पूर्णांक nand_block_markbad(काष्ठा mtd_info *mtd, loff_t ofs)
+अणु
+	पूर्णांक ret;
 
 	ret = nand_block_isbad(mtd, ofs);
-	if (ret) {
-		/* If it was bad already, return success and do nothing */
-		if (ret > 0)
-			return 0;
-		return ret;
-	}
+	अगर (ret) अणु
+		/* If it was bad alपढ़ोy, वापस success and करो nothing */
+		अगर (ret > 0)
+			वापस 0;
+		वापस ret;
+	पूर्ण
 
-	return nand_block_markbad_lowlevel(mtd_to_nand(mtd), ofs);
-}
+	वापस nand_block_markbad_lowlevel(mtd_to_nand(mtd), ofs);
+पूर्ण
 
 /**
- * nand_suspend - [MTD Interface] Suspend the NAND flash
- * @mtd: MTD device structure
+ * nand_suspend - [MTD Interface] Suspend the न_अंकD flash
+ * @mtd: MTD device काष्ठाure
  *
- * Returns 0 for success or negative error code otherwise.
+ * Returns 0 क्रम success or negative error code otherwise.
  */
-static int nand_suspend(struct mtd_info *mtd)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	int ret = 0;
+अटल पूर्णांक nand_suspend(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&chip->lock);
-	if (chip->ops.suspend)
+	अगर (chip->ops.suspend)
 		ret = chip->ops.suspend(chip);
-	if (!ret)
+	अगर (!ret)
 		chip->suspended = 1;
 	mutex_unlock(&chip->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nand_resume - [MTD Interface] Resume the NAND flash
- * @mtd: MTD device structure
+ * nand_resume - [MTD Interface] Resume the न_अंकD flash
+ * @mtd: MTD device काष्ठाure
  */
-static void nand_resume(struct mtd_info *mtd)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
+अटल व्योम nand_resume(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
 
 	mutex_lock(&chip->lock);
-	if (chip->suspended) {
-		if (chip->ops.resume)
+	अगर (chip->suspended) अणु
+		अगर (chip->ops.resume)
 			chip->ops.resume(chip);
 		chip->suspended = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("%s called for a chip which is not in suspended state\n",
 			__func__);
-	}
+	पूर्ण
 	mutex_unlock(&chip->lock);
-}
+पूर्ण
 
 /**
- * nand_shutdown - [MTD Interface] Finish the current NAND operation and
+ * nand_shutकरोwn - [MTD Interface] Finish the current न_अंकD operation and
  *                 prevent further operations
- * @mtd: MTD device structure
+ * @mtd: MTD device काष्ठाure
  */
-static void nand_shutdown(struct mtd_info *mtd)
-{
+अटल व्योम nand_shutकरोwn(काष्ठा mtd_info *mtd)
+अणु
 	nand_suspend(mtd);
-}
+पूर्ण
 
 /**
- * nand_lock - [MTD Interface] Lock the NAND flash
- * @mtd: MTD device structure
+ * nand_lock - [MTD Interface] Lock the न_अंकD flash
+ * @mtd: MTD device काष्ठाure
  * @ofs: offset byte address
  * @len: number of bytes to lock (must be a multiple of block/page size)
  */
-static int nand_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
+अटल पूर्णांक nand_lock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
 
-	if (!chip->ops.lock_area)
-		return -ENOTSUPP;
+	अगर (!chip->ops.lock_area)
+		वापस -ENOTSUPP;
 
-	return chip->ops.lock_area(chip, ofs, len);
-}
+	वापस chip->ops.lock_area(chip, ofs, len);
+पूर्ण
 
 /**
- * nand_unlock - [MTD Interface] Unlock the NAND flash
- * @mtd: MTD device structure
+ * nand_unlock - [MTD Interface] Unlock the न_अंकD flash
+ * @mtd: MTD device काष्ठाure
  * @ofs: offset byte address
  * @len: number of bytes to unlock (must be a multiple of block/page size)
  */
-static int nand_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
+अटल पूर्णांक nand_unlock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
 
-	if (!chip->ops.unlock_area)
-		return -ENOTSUPP;
+	अगर (!chip->ops.unlock_area)
+		वापस -ENOTSUPP;
 
-	return chip->ops.unlock_area(chip, ofs, len);
-}
+	वापस chip->ops.unlock_area(chip, ofs, len);
+पूर्ण
 
-/* Set default functions */
-static void nand_set_defaults(struct nand_chip *chip)
-{
+/* Set शेष functions */
+अटल व्योम nand_set_शेषs(काष्ठा nand_chip *chip)
+अणु
 	/* If no controller is provided, use the dummy, legacy one. */
-	if (!chip->controller) {
+	अगर (!chip->controller) अणु
 		chip->controller = &chip->legacy.dummy_controller;
 		nand_controller_init(chip->controller);
-	}
+	पूर्ण
 
-	nand_legacy_set_defaults(chip);
+	nand_legacy_set_शेषs(chip);
 
-	if (!chip->buf_align)
+	अगर (!chip->buf_align)
 		chip->buf_align = 1;
-}
+पूर्ण
 
-/* Sanitize ONFI strings so we can safely print them */
-void sanitize_string(uint8_t *s, size_t len)
-{
-	ssize_t i;
+/* Sanitize ONFI strings so we can safely prपूर्णांक them */
+व्योम sanitize_string(uपूर्णांक8_t *s, माप_प्रकार len)
+अणु
+	sमाप_प्रकार i;
 
 	/* Null terminate */
 	s[len - 1] = 0;
 
-	/* Remove non printable chars */
-	for (i = 0; i < len - 1; i++) {
-		if (s[i] < ' ' || s[i] > 127)
+	/* Remove non prपूर्णांकable अक्षरs */
+	क्रम (i = 0; i < len - 1; i++) अणु
+		अगर (s[i] < ' ' || s[i] > 127)
 			s[i] = '?';
-	}
+	पूर्ण
 
 	/* Remove trailing spaces */
 	strim(s);
-}
+पूर्ण
 
 /*
- * nand_id_has_period - Check if an ID string has a given wraparound period
+ * nand_id_has_period - Check अगर an ID string has a given wraparound period
  * @id_data: the ID string
  * @arrlen: the length of the @id_data array
  * @period: the period of repitition
  *
- * Check if an ID string is repeated within a given sequence of bytes at
- * specific repetition interval period (e.g., {0x20,0x01,0x7F,0x20} has a
- * period of 3). This is a helper function for nand_id_len(). Returns non-zero
- * if the repetition has a period of @period; otherwise, returns zero.
+ * Check अगर an ID string is repeated within a given sequence of bytes at
+ * specअगरic repetition पूर्णांकerval period (e.g., अणु0x20,0x01,0x7F,0x20पूर्ण has a
+ * period of 3). This is a helper function क्रम nand_id_len(). Returns non-zero
+ * अगर the repetition has a period of @period; otherwise, वापसs zero.
  */
-static int nand_id_has_period(u8 *id_data, int arrlen, int period)
-{
-	int i, j;
-	for (i = 0; i < period; i++)
-		for (j = i + period; j < arrlen; j += period)
-			if (id_data[i] != id_data[j])
-				return 0;
-	return 1;
-}
+अटल पूर्णांक nand_id_has_period(u8 *id_data, पूर्णांक arrlen, पूर्णांक period)
+अणु
+	पूर्णांक i, j;
+	क्रम (i = 0; i < period; i++)
+		क्रम (j = i + period; j < arrlen; j += period)
+			अगर (id_data[i] != id_data[j])
+				वापस 0;
+	वापस 1;
+पूर्ण
 
 /*
- * nand_id_len - Get the length of an ID string returned by CMD_READID
+ * nand_id_len - Get the length of an ID string वापसed by CMD_READID
  * @id_data: the ID string
  * @arrlen: the length of the @id_data array
 
  * Returns the length of the ID string, according to known wraparound/trailing
- * zero patterns. If no pattern exists, returns the length of the array.
+ * zero patterns. If no pattern exists, वापसs the length of the array.
  */
-static int nand_id_len(u8 *id_data, int arrlen)
-{
-	int last_nonzero, period;
+अटल पूर्णांक nand_id_len(u8 *id_data, पूर्णांक arrlen)
+अणु
+	पूर्णांक last_nonzero, period;
 
 	/* Find last non-zero byte */
-	for (last_nonzero = arrlen - 1; last_nonzero >= 0; last_nonzero--)
-		if (id_data[last_nonzero])
-			break;
+	क्रम (last_nonzero = arrlen - 1; last_nonzero >= 0; last_nonzero--)
+		अगर (id_data[last_nonzero])
+			अवरोध;
 
 	/* All zeros */
-	if (last_nonzero < 0)
-		return 0;
+	अगर (last_nonzero < 0)
+		वापस 0;
 
 	/* Calculate wraparound period */
-	for (period = 1; period < arrlen; period++)
-		if (nand_id_has_period(id_data, arrlen, period))
-			break;
+	क्रम (period = 1; period < arrlen; period++)
+		अगर (nand_id_has_period(id_data, arrlen, period))
+			अवरोध;
 
 	/* There's a repeated pattern */
-	if (period < arrlen)
-		return period;
+	अगर (period < arrlen)
+		वापस period;
 
 	/* There are trailing zeros */
-	if (last_nonzero < arrlen - 1)
-		return last_nonzero + 1;
+	अगर (last_nonzero < arrlen - 1)
+		वापस last_nonzero + 1;
 
 	/* No pattern detected */
-	return arrlen;
-}
+	वापस arrlen;
+पूर्ण
 
 /* Extract the bits of per cell from the 3rd byte of the extended ID */
-static int nand_get_bits_per_cell(u8 cellinfo)
-{
-	int bits;
+अटल पूर्णांक nand_get_bits_per_cell(u8 cellinfo)
+अणु
+	पूर्णांक bits;
 
-	bits = cellinfo & NAND_CI_CELLTYPE_MSK;
-	bits >>= NAND_CI_CELLTYPE_SHIFT;
-	return bits + 1;
-}
+	bits = cellinfo & न_अंकD_CI_CELLTYPE_MSK;
+	bits >>= न_अंकD_CI_CELLTYPE_SHIFT;
+	वापस bits + 1;
+पूर्ण
 
 /*
- * Many new NAND share similar device ID codes, which represent the size of the
+ * Many new न_अंकD share similar device ID codes, which represent the size of the
  * chip. The rest of the parameters must be decoded according to generic or
- * manufacturer-specific "extended ID" decoding patterns.
+ * manufacturer-specअगरic "extended ID" decoding patterns.
  */
-void nand_decode_ext_id(struct nand_chip *chip)
-{
-	struct nand_memory_organization *memorg;
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int extid;
+व्योम nand_decode_ext_id(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_memory_organization *memorg;
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक extid;
 	u8 *id_data = chip->id.data;
 
 	memorg = nanddev_get_memorg(&chip->base);
@@ -4585,10 +4586,10 @@ void nand_decode_ext_id(struct nand_chip *chip)
 
 	/* Calc pagesize */
 	memorg->pagesize = 1024 << (extid & 0x03);
-	mtd->writesize = memorg->pagesize;
+	mtd->ग_लिखोsize = memorg->pagesize;
 	extid >>= 2;
 	/* Calc oobsize */
-	memorg->oobsize = (8 << (extid & 0x01)) * (mtd->writesize >> 9);
+	memorg->oobsize = (8 << (extid & 0x01)) * (mtd->ग_लिखोsize >> 9);
 	mtd->oobsize = memorg->oobsize;
 	extid >>= 2;
 	/* Calc blocksize. Blocksize is multiples of 64KiB */
@@ -4596,70 +4597,70 @@ void nand_decode_ext_id(struct nand_chip *chip)
 				       memorg->pagesize;
 	mtd->erasesize = (64 * 1024) << (extid & 0x03);
 	extid >>= 2;
-	/* Get buswidth information */
-	if (extid & 0x1)
-		chip->options |= NAND_BUSWIDTH_16;
-}
+	/* Get buswidth inक्रमmation */
+	अगर (extid & 0x1)
+		chip->options |= न_अंकD_BUSWIDTH_16;
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_decode_ext_id);
 
 /*
  * Old devices have chip data hardcoded in the device ID table. nand_decode_id
- * decodes a matching ID table entry and assigns the MTD size parameters for
+ * decodes a matching ID table entry and assigns the MTD size parameters क्रम
  * the chip.
  */
-static void nand_decode_id(struct nand_chip *chip, struct nand_flash_dev *type)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct nand_memory_organization *memorg;
+अटल व्योम nand_decode_id(काष्ठा nand_chip *chip, काष्ठा nand_flash_dev *type)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा nand_memory_organization *memorg;
 
 	memorg = nanddev_get_memorg(&chip->base);
 
 	memorg->pages_per_eraseblock = type->erasesize / type->pagesize;
 	mtd->erasesize = type->erasesize;
 	memorg->pagesize = type->pagesize;
-	mtd->writesize = memorg->pagesize;
+	mtd->ग_लिखोsize = memorg->pagesize;
 	memorg->oobsize = memorg->pagesize / 32;
 	mtd->oobsize = memorg->oobsize;
 
-	/* All legacy ID NAND are small-page, SLC */
+	/* All legacy ID न_अंकD are small-page, SLC */
 	memorg->bits_per_cell = 1;
-}
+पूर्ण
 
 /*
  * Set the bad block marker/indicator (BBM/BBI) patterns according to some
  * heuristic patterns using various detected parameters (e.g., manufacturer,
- * page size, cell-type information).
+ * page size, cell-type inक्रमmation).
  */
-static void nand_decode_bbm_options(struct nand_chip *chip)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+अटल व्योम nand_decode_bbm_options(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
 	/* Set the bad block position */
-	if (mtd->writesize > 512 || (chip->options & NAND_BUSWIDTH_16))
-		chip->badblockpos = NAND_BBM_POS_LARGE;
-	else
-		chip->badblockpos = NAND_BBM_POS_SMALL;
-}
+	अगर (mtd->ग_लिखोsize > 512 || (chip->options & न_अंकD_BUSWIDTH_16))
+		chip->badblockpos = न_अंकD_BBM_POS_LARGE;
+	अन्यथा
+		chip->badblockpos = न_अंकD_BBM_POS_SMALL;
+पूर्ण
 
-static inline bool is_full_id_nand(struct nand_flash_dev *type)
-{
-	return type->id_len;
-}
+अटल अंतरभूत bool is_full_id_nand(काष्ठा nand_flash_dev *type)
+अणु
+	वापस type->id_len;
+पूर्ण
 
-static bool find_full_id_nand(struct nand_chip *chip,
-			      struct nand_flash_dev *type)
-{
-	struct nand_device *base = &chip->base;
-	struct nand_ecc_props requirements;
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct nand_memory_organization *memorg;
+अटल bool find_full_id_nand(काष्ठा nand_chip *chip,
+			      काष्ठा nand_flash_dev *type)
+अणु
+	काष्ठा nand_device *base = &chip->base;
+	काष्ठा nand_ecc_props requirements;
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा nand_memory_organization *memorg;
 	u8 *id_data = chip->id.data;
 
 	memorg = nanddev_get_memorg(&chip->base);
 
-	if (!strncmp(type->id, id_data, type->id_len)) {
+	अगर (!म_भेदन(type->id, id_data, type->id_len)) अणु
 		memorg->pagesize = type->pagesize;
-		mtd->writesize = memorg->pagesize;
+		mtd->ग_लिखोsize = memorg->pagesize;
 		memorg->pages_per_eraseblock = type->erasesize /
 					       type->pagesize;
 		mtd->erasesize = type->erasesize;
@@ -4672,95 +4673,95 @@ static bool find_full_id_nand(struct nand_chip *chip,
 					   memorg->pagesize *
 					   memorg->pages_per_eraseblock);
 		chip->options |= type->options;
-		requirements.strength = NAND_ECC_STRENGTH(type);
-		requirements.step_size = NAND_ECC_STEP(type);
+		requirements.strength = न_अंकD_ECC_STRENGTH(type);
+		requirements.step_size = न_अंकD_ECC_STEP(type);
 		nanddev_set_ecc_requirements(base, &requirements);
 
 		chip->parameters.model = kstrdup(type->name, GFP_KERNEL);
-		if (!chip->parameters.model)
-			return false;
+		अगर (!chip->parameters.model)
+			वापस false;
 
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
- * Manufacturer detection. Only used when the NAND is not ONFI or JEDEC
- * compliant and does not have a full-id or legacy-id entry in the nand_ids
+ * Manufacturer detection. Only used when the न_अंकD is not ONFI or JEDEC
+ * compliant and करोes not have a full-id or legacy-id entry in the nand_ids
  * table.
  */
-static void nand_manufacturer_detect(struct nand_chip *chip)
-{
+अटल व्योम nand_manufacturer_detect(काष्ठा nand_chip *chip)
+अणु
 	/*
-	 * Try manufacturer detection if available and use
+	 * Try manufacturer detection अगर available and use
 	 * nand_decode_ext_id() otherwise.
 	 */
-	if (chip->manufacturer.desc && chip->manufacturer.desc->ops &&
-	    chip->manufacturer.desc->ops->detect) {
-		struct nand_memory_organization *memorg;
+	अगर (chip->manufacturer.desc && chip->manufacturer.desc->ops &&
+	    chip->manufacturer.desc->ops->detect) अणु
+		काष्ठा nand_memory_organization *memorg;
 
 		memorg = nanddev_get_memorg(&chip->base);
 
 		/* The 3rd id byte holds MLC / multichip data */
 		memorg->bits_per_cell = nand_get_bits_per_cell(chip->id.data[2]);
 		chip->manufacturer.desc->ops->detect(chip);
-	} else {
+	पूर्ण अन्यथा अणु
 		nand_decode_ext_id(chip);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Manufacturer initialization. This function is called for all NANDs including
+ * Manufacturer initialization. This function is called क्रम all न_अंकDs including
  * ONFI and JEDEC compliant ones.
- * Manufacturer drivers should put all their specific initialization code in
+ * Manufacturer drivers should put all their specअगरic initialization code in
  * their ->init() hook.
  */
-static int nand_manufacturer_init(struct nand_chip *chip)
-{
-	if (!chip->manufacturer.desc || !chip->manufacturer.desc->ops ||
+अटल पूर्णांक nand_manufacturer_init(काष्ठा nand_chip *chip)
+अणु
+	अगर (!chip->manufacturer.desc || !chip->manufacturer.desc->ops ||
 	    !chip->manufacturer.desc->ops->init)
-		return 0;
+		वापस 0;
 
-	return chip->manufacturer.desc->ops->init(chip);
-}
+	वापस chip->manufacturer.desc->ops->init(chip);
+पूर्ण
 
 /*
- * Manufacturer cleanup. This function is called for all NANDs including
+ * Manufacturer cleanup. This function is called क्रम all न_अंकDs including
  * ONFI and JEDEC compliant ones.
- * Manufacturer drivers should put all their specific cleanup code in their
+ * Manufacturer drivers should put all their specअगरic cleanup code in their
  * ->cleanup() hook.
  */
-static void nand_manufacturer_cleanup(struct nand_chip *chip)
-{
-	/* Release manufacturer private data */
-	if (chip->manufacturer.desc && chip->manufacturer.desc->ops &&
+अटल व्योम nand_manufacturer_cleanup(काष्ठा nand_chip *chip)
+अणु
+	/* Release manufacturer निजी data */
+	अगर (chip->manufacturer.desc && chip->manufacturer.desc->ops &&
 	    chip->manufacturer.desc->ops->cleanup)
 		chip->manufacturer.desc->ops->cleanup(chip);
-}
+पूर्ण
 
-static const char *
-nand_manufacturer_name(const struct nand_manufacturer_desc *manufacturer_desc)
-{
-	return manufacturer_desc ? manufacturer_desc->name : "Unknown";
-}
+अटल स्थिर अक्षर *
+nand_manufacturer_name(स्थिर काष्ठा nand_manufacturer_desc *manufacturer_desc)
+अणु
+	वापस manufacturer_desc ? manufacturer_desc->name : "Unknown";
+पूर्ण
 
 /*
- * Get the flash and manufacturer id and lookup if the type is supported.
+ * Get the flash and manufacturer id and lookup अगर the type is supported.
  */
-static int nand_detect(struct nand_chip *chip, struct nand_flash_dev *type)
-{
-	const struct nand_manufacturer_desc *manufacturer_desc;
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct nand_memory_organization *memorg;
-	int busw, ret;
+अटल पूर्णांक nand_detect(काष्ठा nand_chip *chip, काष्ठा nand_flash_dev *type)
+अणु
+	स्थिर काष्ठा nand_manufacturer_desc *manufacturer_desc;
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा nand_memory_organization *memorg;
+	पूर्णांक busw, ret;
 	u8 *id_data = chip->id.data;
 	u8 maf_id, dev_id;
-	u64 targetsize;
+	u64 tarमाला_लोize;
 
 	/*
 	 * Let's start by initializing memorg fields that might be left
-	 * unassigned by the ID-based detection logic.
+	 * unasचिन्हित by the ID-based detection logic.
 	 */
 	memorg = nanddev_get_memorg(&chip->base);
 	memorg->planes_per_lun = 1;
@@ -4768,101 +4769,101 @@ static int nand_detect(struct nand_chip *chip, struct nand_flash_dev *type)
 
 	/*
 	 * Reset the chip, required by some chips (e.g. Micron MT29FxGxxxxx)
-	 * after power-up.
+	 * after घातer-up.
 	 */
 	ret = nand_reset(chip, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Select the device */
 	nand_select_target(chip, 0);
 
-	/* Send the command for reading device ID */
-	ret = nand_readid_op(chip, 0, id_data, 2);
-	if (ret)
-		return ret;
+	/* Send the command क्रम पढ़ोing device ID */
+	ret = nand_पढ़ोid_op(chip, 0, id_data, 2);
+	अगर (ret)
+		वापस ret;
 
 	/* Read manufacturer and device IDs */
 	maf_id = id_data[0];
 	dev_id = id_data[1];
 
 	/*
-	 * Try again to make sure, as some systems the bus-hold or other
-	 * interface concerns can cause random data which looks like a
-	 * possibly credible NAND flash to appear. If the two results do
+	 * Try again to make sure, as some प्रणालीs the bus-hold or other
+	 * पूर्णांकerface concerns can cause अक्रमom data which looks like a
+	 * possibly credible न_अंकD flash to appear. If the two results करो
 	 * not match, ignore the device completely.
 	 */
 
 	/* Read entire ID string */
-	ret = nand_readid_op(chip, 0, id_data, sizeof(chip->id.data));
-	if (ret)
-		return ret;
+	ret = nand_पढ़ोid_op(chip, 0, id_data, माप(chip->id.data));
+	अगर (ret)
+		वापस ret;
 
-	if (id_data[0] != maf_id || id_data[1] != dev_id) {
+	अगर (id_data[0] != maf_id || id_data[1] != dev_id) अणु
 		pr_info("second ID read did not match %02x,%02x against %02x,%02x\n",
 			maf_id, dev_id, id_data[0], id_data[1]);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	chip->id.len = nand_id_len(id_data, ARRAY_SIZE(chip->id.data));
 
-	/* Try to identify manufacturer */
+	/* Try to identअगरy manufacturer */
 	manufacturer_desc = nand_get_manufacturer_desc(maf_id);
 	chip->manufacturer.desc = manufacturer_desc;
 
-	if (!type)
+	अगर (!type)
 		type = nand_flash_ids;
 
 	/*
-	 * Save the NAND_BUSWIDTH_16 flag before letting auto-detection logic
+	 * Save the न_अंकD_BUSWIDTH_16 flag beक्रमe letting स्वतः-detection logic
 	 * override it.
-	 * This is required to make sure initial NAND bus width set by the
-	 * NAND controller driver is coherent with the real NAND bus width
-	 * (extracted by auto-detection code).
+	 * This is required to make sure initial न_अंकD bus width set by the
+	 * न_अंकD controller driver is coherent with the real न_अंकD bus width
+	 * (extracted by स्वतः-detection code).
 	 */
-	busw = chip->options & NAND_BUSWIDTH_16;
+	busw = chip->options & न_अंकD_BUSWIDTH_16;
 
 	/*
-	 * The flag is only set (never cleared), reset it to its default value
-	 * before starting auto-detection.
+	 * The flag is only set (never cleared), reset it to its शेष value
+	 * beक्रमe starting स्वतः-detection.
 	 */
-	chip->options &= ~NAND_BUSWIDTH_16;
+	chip->options &= ~न_अंकD_BUSWIDTH_16;
 
-	for (; type->name != NULL; type++) {
-		if (is_full_id_nand(type)) {
-			if (find_full_id_nand(chip, type))
-				goto ident_done;
-		} else if (dev_id == type->dev_id) {
-			break;
-		}
-	}
+	क्रम (; type->name != शून्य; type++) अणु
+		अगर (is_full_id_nand(type)) अणु
+			अगर (find_full_id_nand(chip, type))
+				जाओ ident_करोne;
+		पूर्ण अन्यथा अगर (dev_id == type->dev_id) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!type->name || !type->pagesize) {
-		/* Check if the chip is ONFI compliant */
+	अगर (!type->name || !type->pagesize) अणु
+		/* Check अगर the chip is ONFI compliant */
 		ret = nand_onfi_detect(chip);
-		if (ret < 0)
-			return ret;
-		else if (ret)
-			goto ident_done;
+		अगर (ret < 0)
+			वापस ret;
+		अन्यथा अगर (ret)
+			जाओ ident_करोne;
 
-		/* Check if the chip is JEDEC compliant */
+		/* Check अगर the chip is JEDEC compliant */
 		ret = nand_jedec_detect(chip);
-		if (ret < 0)
-			return ret;
-		else if (ret)
-			goto ident_done;
-	}
+		अगर (ret < 0)
+			वापस ret;
+		अन्यथा अगर (ret)
+			जाओ ident_करोne;
+	पूर्ण
 
-	if (!type->name)
-		return -ENODEV;
+	अगर (!type->name)
+		वापस -ENODEV;
 
 	chip->parameters.model = kstrdup(type->name, GFP_KERNEL);
-	if (!chip->parameters.model)
-		return -ENOMEM;
+	अगर (!chip->parameters.model)
+		वापस -ENOMEM;
 
-	if (!type->pagesize)
+	अगर (!type->pagesize)
 		nand_manufacturer_detect(chip);
-	else
+	अन्यथा
 		nand_decode_id(chip, type);
 
 	/* Get chip options */
@@ -4873,16 +4874,16 @@ static int nand_detect(struct nand_chip *chip, struct nand_flash_dev *type)
 					   memorg->pagesize *
 					   memorg->pages_per_eraseblock);
 
-ident_done:
-	if (!mtd->name)
+ident_करोne:
+	अगर (!mtd->name)
 		mtd->name = chip->parameters.model;
 
-	if (chip->options & NAND_BUSWIDTH_AUTO) {
-		WARN_ON(busw & NAND_BUSWIDTH_16);
-		nand_set_defaults(chip);
-	} else if (busw != (chip->options & NAND_BUSWIDTH_16)) {
+	अगर (chip->options & न_अंकD_BUSWIDTH_AUTO) अणु
+		WARN_ON(busw & न_अंकD_BUSWIDTH_16);
+		nand_set_शेषs(chip);
+	पूर्ण अन्यथा अगर (busw != (chip->options & न_अंकD_BUSWIDTH_16)) अणु
 		/*
-		 * Check, if buswidth is correct. Hardware drivers should set
+		 * Check, अगर buswidth is correct. Hardware drivers should set
 		 * chip correct!
 		 */
 		pr_info("device found, Manufacturer ID: 0x%02x, Chip ID: 0x%02x\n",
@@ -4890,31 +4891,31 @@ ident_done:
 		pr_info("%s %s\n", nand_manufacturer_name(manufacturer_desc),
 			mtd->name);
 		pr_warn("bus width %d instead of %d bits\n", busw ? 16 : 8,
-			(chip->options & NAND_BUSWIDTH_16) ? 16 : 8);
+			(chip->options & न_अंकD_BUSWIDTH_16) ? 16 : 8);
 		ret = -EINVAL;
 
-		goto free_detect_allocation;
-	}
+		जाओ मुक्त_detect_allocation;
+	पूर्ण
 
 	nand_decode_bbm_options(chip);
 
-	/* Calculate the address shift from the page size */
-	chip->page_shift = ffs(mtd->writesize) - 1;
+	/* Calculate the address shअगरt from the page size */
+	chip->page_shअगरt = ffs(mtd->ग_लिखोsize) - 1;
 	/* Convert chipsize to number of pages per chip -1 */
-	targetsize = nanddev_target_size(&chip->base);
-	chip->pagemask = (targetsize >> chip->page_shift) - 1;
+	tarमाला_लोize = nanddev_target_size(&chip->base);
+	chip->pagemask = (tarमाला_लोize >> chip->page_shअगरt) - 1;
 
-	chip->bbt_erase_shift = chip->phys_erase_shift =
+	chip->bbt_erase_shअगरt = chip->phys_erase_shअगरt =
 		ffs(mtd->erasesize) - 1;
-	if (targetsize & 0xffffffff)
-		chip->chip_shift = ffs((unsigned)targetsize) - 1;
-	else {
-		chip->chip_shift = ffs((unsigned)(targetsize >> 32));
-		chip->chip_shift += 32 - 1;
-	}
+	अगर (tarमाला_लोize & 0xffffffff)
+		chip->chip_shअगरt = ffs((अचिन्हित)tarमाला_लोize) - 1;
+	अन्यथा अणु
+		chip->chip_shअगरt = ffs((अचिन्हित)(tarमाला_लोize >> 32));
+		chip->chip_shअगरt += 32 - 1;
+	पूर्ण
 
-	if (chip->chip_shift - chip->page_shift > 16)
-		chip->options |= NAND_ROW_ADDR_3;
+	अगर (chip->chip_shअगरt - chip->page_shअगरt > 16)
+		chip->options |= न_अंकD_ROW_ADDR_3;
 
 	chip->badblockbits = 8;
 
@@ -4925,225 +4926,225 @@ ident_done:
 	pr_info("%s %s\n", nand_manufacturer_name(manufacturer_desc),
 		chip->parameters.model);
 	pr_info("%d MiB, %s, erase size: %d KiB, page size: %d, OOB size: %d\n",
-		(int)(targetsize >> 20), nand_is_slc(chip) ? "SLC" : "MLC",
-		mtd->erasesize >> 10, mtd->writesize, mtd->oobsize);
-	return 0;
+		(पूर्णांक)(tarमाला_लोize >> 20), nand_is_slc(chip) ? "SLC" : "MLC",
+		mtd->erasesize >> 10, mtd->ग_लिखोsize, mtd->oobsize);
+	वापस 0;
 
-free_detect_allocation:
-	kfree(chip->parameters.model);
+मुक्त_detect_allocation:
+	kमुक्त(chip->parameters.model);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum nand_ecc_engine_type
-of_get_rawnand_ecc_engine_type_legacy(struct device_node *np)
-{
-	enum nand_ecc_legacy_mode {
-		NAND_ECC_INVALID,
-		NAND_ECC_NONE,
-		NAND_ECC_SOFT,
-		NAND_ECC_SOFT_BCH,
-		NAND_ECC_HW,
-		NAND_ECC_HW_SYNDROME,
-		NAND_ECC_ON_DIE,
-	};
-	const char * const nand_ecc_legacy_modes[] = {
-		[NAND_ECC_NONE]		= "none",
-		[NAND_ECC_SOFT]		= "soft",
-		[NAND_ECC_SOFT_BCH]	= "soft_bch",
-		[NAND_ECC_HW]		= "hw",
-		[NAND_ECC_HW_SYNDROME]	= "hw_syndrome",
-		[NAND_ECC_ON_DIE]	= "on-die",
-	};
-	enum nand_ecc_legacy_mode eng_type;
-	const char *pm;
-	int err;
+अटल क्रमागत nand_ecc_engine_type
+of_get_rawnand_ecc_engine_type_legacy(काष्ठा device_node *np)
+अणु
+	क्रमागत nand_ecc_legacy_mode अणु
+		न_अंकD_ECC_INVALID,
+		न_अंकD_ECC_NONE,
+		न_अंकD_ECC_SOFT,
+		न_अंकD_ECC_SOFT_BCH,
+		न_अंकD_ECC_HW,
+		न_अंकD_ECC_HW_SYNDROME,
+		न_अंकD_ECC_ON_DIE,
+	पूर्ण;
+	स्थिर अक्षर * स्थिर nand_ecc_legacy_modes[] = अणु
+		[न_अंकD_ECC_NONE]		= "none",
+		[न_अंकD_ECC_SOFT]		= "soft",
+		[न_अंकD_ECC_SOFT_BCH]	= "soft_bch",
+		[न_अंकD_ECC_HW]		= "hw",
+		[न_अंकD_ECC_HW_SYNDROME]	= "hw_syndrome",
+		[न_अंकD_ECC_ON_DIE]	= "on-die",
+	पूर्ण;
+	क्रमागत nand_ecc_legacy_mode eng_type;
+	स्थिर अक्षर *pm;
+	पूर्णांक err;
 
-	err = of_property_read_string(np, "nand-ecc-mode", &pm);
-	if (err)
-		return NAND_ECC_ENGINE_TYPE_INVALID;
+	err = of_property_पढ़ो_string(np, "nand-ecc-mode", &pm);
+	अगर (err)
+		वापस न_अंकD_ECC_ENGINE_TYPE_INVALID;
 
-	for (eng_type = NAND_ECC_NONE;
-	     eng_type < ARRAY_SIZE(nand_ecc_legacy_modes); eng_type++) {
-		if (!strcasecmp(pm, nand_ecc_legacy_modes[eng_type])) {
-			switch (eng_type) {
-			case NAND_ECC_NONE:
-				return NAND_ECC_ENGINE_TYPE_NONE;
-			case NAND_ECC_SOFT:
-			case NAND_ECC_SOFT_BCH:
-				return NAND_ECC_ENGINE_TYPE_SOFT;
-			case NAND_ECC_HW:
-			case NAND_ECC_HW_SYNDROME:
-				return NAND_ECC_ENGINE_TYPE_ON_HOST;
-			case NAND_ECC_ON_DIE:
-				return NAND_ECC_ENGINE_TYPE_ON_DIE;
-			default:
-				break;
-			}
-		}
-	}
+	क्रम (eng_type = न_अंकD_ECC_NONE;
+	     eng_type < ARRAY_SIZE(nand_ecc_legacy_modes); eng_type++) अणु
+		अगर (!strहालcmp(pm, nand_ecc_legacy_modes[eng_type])) अणु
+			चयन (eng_type) अणु
+			हाल न_अंकD_ECC_NONE:
+				वापस न_अंकD_ECC_ENGINE_TYPE_NONE;
+			हाल न_अंकD_ECC_SOFT:
+			हाल न_अंकD_ECC_SOFT_BCH:
+				वापस न_अंकD_ECC_ENGINE_TYPE_SOFT;
+			हाल न_अंकD_ECC_HW:
+			हाल न_अंकD_ECC_HW_SYNDROME:
+				वापस न_अंकD_ECC_ENGINE_TYPE_ON_HOST;
+			हाल न_अंकD_ECC_ON_DIE:
+				वापस न_अंकD_ECC_ENGINE_TYPE_ON_DIE;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return NAND_ECC_ENGINE_TYPE_INVALID;
-}
+	वापस न_अंकD_ECC_ENGINE_TYPE_INVALID;
+पूर्ण
 
-static enum nand_ecc_placement
-of_get_rawnand_ecc_placement_legacy(struct device_node *np)
-{
-	const char *pm;
-	int err;
+अटल क्रमागत nand_ecc_placement
+of_get_rawnand_ecc_placement_legacy(काष्ठा device_node *np)
+अणु
+	स्थिर अक्षर *pm;
+	पूर्णांक err;
 
-	err = of_property_read_string(np, "nand-ecc-mode", &pm);
-	if (!err) {
-		if (!strcasecmp(pm, "hw_syndrome"))
-			return NAND_ECC_PLACEMENT_INTERLEAVED;
-	}
+	err = of_property_पढ़ो_string(np, "nand-ecc-mode", &pm);
+	अगर (!err) अणु
+		अगर (!strहालcmp(pm, "hw_syndrome"))
+			वापस न_अंकD_ECC_PLACEMENT_INTERLEAVED;
+	पूर्ण
 
-	return NAND_ECC_PLACEMENT_UNKNOWN;
-}
+	वापस न_अंकD_ECC_PLACEMENT_UNKNOWN;
+पूर्ण
 
-static enum nand_ecc_algo of_get_rawnand_ecc_algo_legacy(struct device_node *np)
-{
-	const char *pm;
-	int err;
+अटल क्रमागत nand_ecc_algo of_get_rawnand_ecc_algo_legacy(काष्ठा device_node *np)
+अणु
+	स्थिर अक्षर *pm;
+	पूर्णांक err;
 
-	err = of_property_read_string(np, "nand-ecc-mode", &pm);
-	if (!err) {
-		if (!strcasecmp(pm, "soft"))
-			return NAND_ECC_ALGO_HAMMING;
-		else if (!strcasecmp(pm, "soft_bch"))
-			return NAND_ECC_ALGO_BCH;
-	}
+	err = of_property_पढ़ो_string(np, "nand-ecc-mode", &pm);
+	अगर (!err) अणु
+		अगर (!strहालcmp(pm, "soft"))
+			वापस न_अंकD_ECC_ALGO_HAMMING;
+		अन्यथा अगर (!strहालcmp(pm, "soft_bch"))
+			वापस न_अंकD_ECC_ALGO_BCH;
+	पूर्ण
 
-	return NAND_ECC_ALGO_UNKNOWN;
-}
+	वापस न_अंकD_ECC_ALGO_UNKNOWN;
+पूर्ण
 
-static void of_get_nand_ecc_legacy_user_config(struct nand_chip *chip)
-{
-	struct device_node *dn = nand_get_flash_node(chip);
-	struct nand_ecc_props *user_conf = &chip->base.ecc.user_conf;
+अटल व्योम of_get_nand_ecc_legacy_user_config(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा device_node *dn = nand_get_flash_node(chip);
+	काष्ठा nand_ecc_props *user_conf = &chip->base.ecc.user_conf;
 
-	if (user_conf->engine_type == NAND_ECC_ENGINE_TYPE_INVALID)
+	अगर (user_conf->engine_type == न_अंकD_ECC_ENGINE_TYPE_INVALID)
 		user_conf->engine_type = of_get_rawnand_ecc_engine_type_legacy(dn);
 
-	if (user_conf->algo == NAND_ECC_ALGO_UNKNOWN)
+	अगर (user_conf->algo == न_अंकD_ECC_ALGO_UNKNOWN)
 		user_conf->algo = of_get_rawnand_ecc_algo_legacy(dn);
 
-	if (user_conf->placement == NAND_ECC_PLACEMENT_UNKNOWN)
+	अगर (user_conf->placement == न_अंकD_ECC_PLACEMENT_UNKNOWN)
 		user_conf->placement = of_get_rawnand_ecc_placement_legacy(dn);
-}
+पूर्ण
 
-static int of_get_nand_bus_width(struct device_node *np)
-{
+अटल पूर्णांक of_get_nand_bus_width(काष्ठा device_node *np)
+अणु
 	u32 val;
 
-	if (of_property_read_u32(np, "nand-bus-width", &val))
-		return 8;
+	अगर (of_property_पढ़ो_u32(np, "nand-bus-width", &val))
+		वापस 8;
 
-	switch (val) {
-	case 8:
-	case 16:
-		return val;
-	default:
-		return -EIO;
-	}
-}
+	चयन (val) अणु
+	हाल 8:
+	हाल 16:
+		वापस val;
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
-static bool of_get_nand_on_flash_bbt(struct device_node *np)
-{
-	return of_property_read_bool(np, "nand-on-flash-bbt");
-}
+अटल bool of_get_nand_on_flash_bbt(काष्ठा device_node *np)
+अणु
+	वापस of_property_पढ़ो_bool(np, "nand-on-flash-bbt");
+पूर्ण
 
-static int of_get_nand_secure_regions(struct nand_chip *chip)
-{
-	struct device_node *dn = nand_get_flash_node(chip);
-	int nr_elem, i, j;
+अटल पूर्णांक of_get_nand_secure_regions(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा device_node *dn = nand_get_flash_node(chip);
+	पूर्णांक nr_elem, i, j;
 
-	nr_elem = of_property_count_elems_of_size(dn, "secure-regions", sizeof(u64));
-	if (!nr_elem)
-		return 0;
+	nr_elem = of_property_count_elems_of_size(dn, "secure-regions", माप(u64));
+	अगर (!nr_elem)
+		वापस 0;
 
 	chip->nr_secure_regions = nr_elem / 2;
-	chip->secure_regions = kcalloc(chip->nr_secure_regions, sizeof(*chip->secure_regions),
+	chip->secure_regions = kसुस्मृति(chip->nr_secure_regions, माप(*chip->secure_regions),
 				       GFP_KERNEL);
-	if (!chip->secure_regions)
-		return -ENOMEM;
+	अगर (!chip->secure_regions)
+		वापस -ENOMEM;
 
-	for (i = 0, j = 0; i < chip->nr_secure_regions; i++, j += 2) {
-		of_property_read_u64_index(dn, "secure-regions", j,
+	क्रम (i = 0, j = 0; i < chip->nr_secure_regions; i++, j += 2) अणु
+		of_property_पढ़ो_u64_index(dn, "secure-regions", j,
 					   &chip->secure_regions[i].offset);
-		of_property_read_u64_index(dn, "secure-regions", j + 1,
+		of_property_पढ़ो_u64_index(dn, "secure-regions", j + 1,
 					   &chip->secure_regions[i].size);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rawnand_dt_init(struct nand_chip *chip)
-{
-	struct nand_device *nand = mtd_to_nanddev(nand_to_mtd(chip));
-	struct device_node *dn = nand_get_flash_node(chip);
+अटल पूर्णांक rawnand_dt_init(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_device *nand = mtd_to_nanddev(nand_to_mtd(chip));
+	काष्ठा device_node *dn = nand_get_flash_node(chip);
 
-	if (!dn)
-		return 0;
+	अगर (!dn)
+		वापस 0;
 
-	if (of_get_nand_bus_width(dn) == 16)
-		chip->options |= NAND_BUSWIDTH_16;
+	अगर (of_get_nand_bus_width(dn) == 16)
+		chip->options |= न_अंकD_BUSWIDTH_16;
 
-	if (of_property_read_bool(dn, "nand-is-boot-medium"))
-		chip->options |= NAND_IS_BOOT_MEDIUM;
+	अगर (of_property_पढ़ो_bool(dn, "nand-is-boot-medium"))
+		chip->options |= न_अंकD_IS_BOOT_MEDIUM;
 
-	if (of_get_nand_on_flash_bbt(dn))
-		chip->bbt_options |= NAND_BBT_USE_FLASH;
+	अगर (of_get_nand_on_flash_bbt(dn))
+		chip->bbt_options |= न_अंकD_BBT_USE_FLASH;
 
 	of_get_nand_ecc_user_config(nand);
 	of_get_nand_ecc_legacy_user_config(chip);
 
 	/*
-	 * If neither the user nor the NAND controller have requested a specific
-	 * ECC engine type, we will default to NAND_ECC_ENGINE_TYPE_ON_HOST.
+	 * If neither the user nor the न_अंकD controller have requested a specअगरic
+	 * ECC engine type, we will शेष to न_अंकD_ECC_ENGINE_TYPE_ON_HOST.
 	 */
-	nand->ecc.defaults.engine_type = NAND_ECC_ENGINE_TYPE_ON_HOST;
+	nand->ecc.शेषs.engine_type = न_अंकD_ECC_ENGINE_TYPE_ON_HOST;
 
 	/*
 	 * Use the user requested engine type, unless there is none, in this
-	 * case default to the NAND controller choice, otherwise fallback to
-	 * the raw NAND default one.
+	 * हाल शेष to the न_अंकD controller choice, otherwise fallback to
+	 * the raw न_अंकD शेष one.
 	 */
-	if (nand->ecc.user_conf.engine_type != NAND_ECC_ENGINE_TYPE_INVALID)
+	अगर (nand->ecc.user_conf.engine_type != न_अंकD_ECC_ENGINE_TYPE_INVALID)
 		chip->ecc.engine_type = nand->ecc.user_conf.engine_type;
-	if (chip->ecc.engine_type == NAND_ECC_ENGINE_TYPE_INVALID)
-		chip->ecc.engine_type = nand->ecc.defaults.engine_type;
+	अगर (chip->ecc.engine_type == न_अंकD_ECC_ENGINE_TYPE_INVALID)
+		chip->ecc.engine_type = nand->ecc.शेषs.engine_type;
 
 	chip->ecc.placement = nand->ecc.user_conf.placement;
 	chip->ecc.algo = nand->ecc.user_conf.algo;
 	chip->ecc.strength = nand->ecc.user_conf.strength;
 	chip->ecc.size = nand->ecc.user_conf.step_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nand_scan_ident - Scan for the NAND device
- * @chip: NAND chip object
- * @maxchips: number of chips to scan for
- * @table: alternative NAND ID table
+ * nand_scan_ident - Scan क्रम the न_अंकD device
+ * @chip: न_अंकD chip object
+ * @maxchips: number of chips to scan क्रम
+ * @table: alternative न_अंकD ID table
  *
- * This is the first phase of the normal nand_scan() function. It reads the
+ * This is the first phase of the normal nand_scan() function. It पढ़ोs the
  * flash ID and sets up MTD fields accordingly.
  *
  * This helper used to be called directly from controller drivers that needed
- * to tweak some ECC-related parameters before nand_scan_tail(). This separation
+ * to tweak some ECC-related parameters beक्रमe nand_scan_tail(). This separation
  * prevented dynamic allocations during this phase which was unconvenient and
- * as been banned for the benefit of the ->init_ecc()/cleanup_ecc() hooks.
+ * as been banned क्रम the benefit of the ->init_ecc()/cleanup_ecc() hooks.
  */
-static int nand_scan_ident(struct nand_chip *chip, unsigned int maxchips,
-			   struct nand_flash_dev *table)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct nand_memory_organization *memorg;
-	int nand_maf_id, nand_dev_id;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक nand_scan_ident(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक maxchips,
+			   काष्ठा nand_flash_dev *table)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा nand_memory_organization *memorg;
+	पूर्णांक nand_maf_id, nand_dev_id;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	memorg = nanddev_get_memorg(&chip->base);
 
@@ -5152,94 +5153,94 @@ static int nand_scan_ident(struct nand_chip *chip, unsigned int maxchips,
 
 	mutex_init(&chip->lock);
 
-	/* Enforce the right timings for reset/detection */
-	chip->current_interface_config = nand_get_reset_interface_config();
+	/* Enक्रमce the right timings क्रम reset/detection */
+	chip->current_पूर्णांकerface_config = nand_get_reset_पूर्णांकerface_config();
 
 	ret = rawnand_dt_init(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!mtd->name && mtd->dev.parent)
+	अगर (!mtd->name && mtd->dev.parent)
 		mtd->name = dev_name(mtd->dev.parent);
 
-	/* Set the default functions */
-	nand_set_defaults(chip);
+	/* Set the शेष functions */
+	nand_set_शेषs(chip);
 
 	ret = nand_legacy_check_hooks(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memorg->ntargets = maxchips;
+	memorg->ntarमाला_लो = maxchips;
 
 	/* Read the flash type */
 	ret = nand_detect(chip, table);
-	if (ret) {
-		if (!(chip->options & NAND_SCAN_SILENT_NODEV))
+	अगर (ret) अणु
+		अगर (!(chip->options & न_अंकD_SCAN_SILENT_NODEV))
 			pr_warn("No NAND device found\n");
 		nand_deselect_target(chip);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	nand_maf_id = chip->id.data[0];
 	nand_dev_id = chip->id.data[1];
 
 	nand_deselect_target(chip);
 
-	/* Check for a chip array */
-	for (i = 1; i < maxchips; i++) {
+	/* Check क्रम a chip array */
+	क्रम (i = 1; i < maxchips; i++) अणु
 		u8 id[2];
 
-		/* See comment in nand_get_flash_type for reset */
+		/* See comment in nand_get_flash_type क्रम reset */
 		ret = nand_reset(chip, i);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		nand_select_target(chip, i);
-		/* Send the command for reading device ID */
-		ret = nand_readid_op(chip, 0, id, sizeof(id));
-		if (ret)
-			break;
+		/* Send the command क्रम पढ़ोing device ID */
+		ret = nand_पढ़ोid_op(chip, 0, id, माप(id));
+		अगर (ret)
+			अवरोध;
 		/* Read manufacturer and device IDs */
-		if (nand_maf_id != id[0] || nand_dev_id != id[1]) {
+		अगर (nand_maf_id != id[0] || nand_dev_id != id[1]) अणु
 			nand_deselect_target(chip);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		nand_deselect_target(chip);
-	}
-	if (i > 1)
+	पूर्ण
+	अगर (i > 1)
 		pr_info("%d chips detected\n", i);
 
-	/* Store the number of chips and calc total size for mtd */
-	memorg->ntargets = i;
+	/* Store the number of chips and calc total size क्रम mtd */
+	memorg->ntarमाला_लो = i;
 	mtd->size = i * nanddev_target_size(&chip->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nand_scan_ident_cleanup(struct nand_chip *chip)
-{
-	kfree(chip->parameters.model);
-	kfree(chip->parameters.onfi);
-}
+अटल व्योम nand_scan_ident_cleanup(काष्ठा nand_chip *chip)
+अणु
+	kमुक्त(chip->parameters.model);
+	kमुक्त(chip->parameters.onfi);
+पूर्ण
 
-int rawnand_sw_hamming_init(struct nand_chip *chip)
-{
-	struct nand_ecc_sw_hamming_conf *engine_conf;
-	struct nand_device *base = &chip->base;
-	int ret;
+पूर्णांक rawnand_sw_hamming_init(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_ecc_sw_hamming_conf *engine_conf;
+	काष्ठा nand_device *base = &chip->base;
+	पूर्णांक ret;
 
-	base->ecc.user_conf.engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
-	base->ecc.user_conf.algo = NAND_ECC_ALGO_HAMMING;
+	base->ecc.user_conf.engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
+	base->ecc.user_conf.algo = न_अंकD_ECC_ALGO_HAMMING;
 	base->ecc.user_conf.strength = chip->ecc.strength;
 	base->ecc.user_conf.step_size = chip->ecc.size;
 
 	ret = nand_ecc_sw_hamming_init_ctx(base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	engine_conf = base->ecc.ctx.priv;
 
-	if (chip->ecc.options & NAND_ECC_SOFT_HAMMING_SM_ORDER)
+	अगर (chip->ecc.options & न_अंकD_ECC_SOFT_HAMMING_SM_ORDER)
 		engine_conf->sm_order = true;
 
 	chip->ecc.size = base->ecc.ctx.conf.step_size;
@@ -5248,53 +5249,53 @@ int rawnand_sw_hamming_init(struct nand_chip *chip)
 	chip->ecc.steps = nanddev_get_ecc_nsteps(base);
 	chip->ecc.bytes = base->ecc.ctx.total / nanddev_get_ecc_nsteps(base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rawnand_sw_hamming_init);
 
-int rawnand_sw_hamming_calculate(struct nand_chip *chip,
-				 const unsigned char *buf,
-				 unsigned char *code)
-{
-	struct nand_device *base = &chip->base;
+पूर्णांक rawnand_sw_hamming_calculate(काष्ठा nand_chip *chip,
+				 स्थिर अचिन्हित अक्षर *buf,
+				 अचिन्हित अक्षर *code)
+अणु
+	काष्ठा nand_device *base = &chip->base;
 
-	return nand_ecc_sw_hamming_calculate(base, buf, code);
-}
+	वापस nand_ecc_sw_hamming_calculate(base, buf, code);
+पूर्ण
 EXPORT_SYMBOL(rawnand_sw_hamming_calculate);
 
-int rawnand_sw_hamming_correct(struct nand_chip *chip,
-			       unsigned char *buf,
-			       unsigned char *read_ecc,
-			       unsigned char *calc_ecc)
-{
-	struct nand_device *base = &chip->base;
+पूर्णांक rawnand_sw_hamming_correct(काष्ठा nand_chip *chip,
+			       अचिन्हित अक्षर *buf,
+			       अचिन्हित अक्षर *पढ़ो_ecc,
+			       अचिन्हित अक्षर *calc_ecc)
+अणु
+	काष्ठा nand_device *base = &chip->base;
 
-	return nand_ecc_sw_hamming_correct(base, buf, read_ecc, calc_ecc);
-}
+	वापस nand_ecc_sw_hamming_correct(base, buf, पढ़ो_ecc, calc_ecc);
+पूर्ण
 EXPORT_SYMBOL(rawnand_sw_hamming_correct);
 
-void rawnand_sw_hamming_cleanup(struct nand_chip *chip)
-{
-	struct nand_device *base = &chip->base;
+व्योम rawnand_sw_hamming_cleanup(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_device *base = &chip->base;
 
 	nand_ecc_sw_hamming_cleanup_ctx(base);
-}
+पूर्ण
 EXPORT_SYMBOL(rawnand_sw_hamming_cleanup);
 
-int rawnand_sw_bch_init(struct nand_chip *chip)
-{
-	struct nand_device *base = &chip->base;
-	const struct nand_ecc_props *ecc_conf = nanddev_get_ecc_conf(base);
-	int ret;
+पूर्णांक rawnand_sw_bch_init(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_device *base = &chip->base;
+	स्थिर काष्ठा nand_ecc_props *ecc_conf = nanddev_get_ecc_conf(base);
+	पूर्णांक ret;
 
-	base->ecc.user_conf.engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
-	base->ecc.user_conf.algo = NAND_ECC_ALGO_BCH;
+	base->ecc.user_conf.engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
+	base->ecc.user_conf.algo = न_अंकD_ECC_ALGO_BCH;
 	base->ecc.user_conf.step_size = chip->ecc.size;
 	base->ecc.user_conf.strength = chip->ecc.strength;
 
 	ret = nand_ecc_sw_bch_init_ctx(base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	chip->ecc.size = ecc_conf->step_size;
 	chip->ecc.strength = ecc_conf->strength;
@@ -5302,263 +5303,263 @@ int rawnand_sw_bch_init(struct nand_chip *chip)
 	chip->ecc.steps = nanddev_get_ecc_nsteps(base);
 	chip->ecc.bytes = base->ecc.ctx.total / nanddev_get_ecc_nsteps(base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rawnand_sw_bch_init);
 
-static int rawnand_sw_bch_calculate(struct nand_chip *chip,
-				    const unsigned char *buf,
-				    unsigned char *code)
-{
-	struct nand_device *base = &chip->base;
+अटल पूर्णांक rawnand_sw_bch_calculate(काष्ठा nand_chip *chip,
+				    स्थिर अचिन्हित अक्षर *buf,
+				    अचिन्हित अक्षर *code)
+अणु
+	काष्ठा nand_device *base = &chip->base;
 
-	return nand_ecc_sw_bch_calculate(base, buf, code);
-}
+	वापस nand_ecc_sw_bch_calculate(base, buf, code);
+पूर्ण
 
-int rawnand_sw_bch_correct(struct nand_chip *chip, unsigned char *buf,
-			   unsigned char *read_ecc, unsigned char *calc_ecc)
-{
-	struct nand_device *base = &chip->base;
+पूर्णांक rawnand_sw_bch_correct(काष्ठा nand_chip *chip, अचिन्हित अक्षर *buf,
+			   अचिन्हित अक्षर *पढ़ो_ecc, अचिन्हित अक्षर *calc_ecc)
+अणु
+	काष्ठा nand_device *base = &chip->base;
 
-	return nand_ecc_sw_bch_correct(base, buf, read_ecc, calc_ecc);
-}
+	वापस nand_ecc_sw_bch_correct(base, buf, पढ़ो_ecc, calc_ecc);
+पूर्ण
 EXPORT_SYMBOL(rawnand_sw_bch_correct);
 
-void rawnand_sw_bch_cleanup(struct nand_chip *chip)
-{
-	struct nand_device *base = &chip->base;
+व्योम rawnand_sw_bch_cleanup(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_device *base = &chip->base;
 
 	nand_ecc_sw_bch_cleanup_ctx(base);
-}
+पूर्ण
 EXPORT_SYMBOL(rawnand_sw_bch_cleanup);
 
-static int nand_set_ecc_on_host_ops(struct nand_chip *chip)
-{
-	struct nand_ecc_ctrl *ecc = &chip->ecc;
+अटल पूर्णांक nand_set_ecc_on_host_ops(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_ecc_ctrl *ecc = &chip->ecc;
 
-	switch (ecc->placement) {
-	case NAND_ECC_PLACEMENT_UNKNOWN:
-	case NAND_ECC_PLACEMENT_OOB:
-		/* Use standard hwecc read page function? */
-		if (!ecc->read_page)
-			ecc->read_page = nand_read_page_hwecc;
-		if (!ecc->write_page)
-			ecc->write_page = nand_write_page_hwecc;
-		if (!ecc->read_page_raw)
-			ecc->read_page_raw = nand_read_page_raw;
-		if (!ecc->write_page_raw)
-			ecc->write_page_raw = nand_write_page_raw;
-		if (!ecc->read_oob)
-			ecc->read_oob = nand_read_oob_std;
-		if (!ecc->write_oob)
-			ecc->write_oob = nand_write_oob_std;
-		if (!ecc->read_subpage)
-			ecc->read_subpage = nand_read_subpage;
-		if (!ecc->write_subpage && ecc->hwctl && ecc->calculate)
-			ecc->write_subpage = nand_write_subpage_hwecc;
+	चयन (ecc->placement) अणु
+	हाल न_अंकD_ECC_PLACEMENT_UNKNOWN:
+	हाल न_अंकD_ECC_PLACEMENT_OOB:
+		/* Use standard hwecc पढ़ो page function? */
+		अगर (!ecc->पढ़ो_page)
+			ecc->पढ़ो_page = nand_पढ़ो_page_hwecc;
+		अगर (!ecc->ग_लिखो_page)
+			ecc->ग_लिखो_page = nand_ग_लिखो_page_hwecc;
+		अगर (!ecc->पढ़ो_page_raw)
+			ecc->पढ़ो_page_raw = nand_पढ़ो_page_raw;
+		अगर (!ecc->ग_लिखो_page_raw)
+			ecc->ग_लिखो_page_raw = nand_ग_लिखो_page_raw;
+		अगर (!ecc->पढ़ो_oob)
+			ecc->पढ़ो_oob = nand_पढ़ो_oob_std;
+		अगर (!ecc->ग_लिखो_oob)
+			ecc->ग_लिखो_oob = nand_ग_लिखो_oob_std;
+		अगर (!ecc->पढ़ो_subpage)
+			ecc->पढ़ो_subpage = nand_पढ़ो_subpage;
+		अगर (!ecc->ग_लिखो_subpage && ecc->hwctl && ecc->calculate)
+			ecc->ग_लिखो_subpage = nand_ग_लिखो_subpage_hwecc;
 		fallthrough;
 
-	case NAND_ECC_PLACEMENT_INTERLEAVED:
-		if ((!ecc->calculate || !ecc->correct || !ecc->hwctl) &&
-		    (!ecc->read_page ||
-		     ecc->read_page == nand_read_page_hwecc ||
-		     !ecc->write_page ||
-		     ecc->write_page == nand_write_page_hwecc)) {
+	हाल न_अंकD_ECC_PLACEMENT_INTERLEAVED:
+		अगर ((!ecc->calculate || !ecc->correct || !ecc->hwctl) &&
+		    (!ecc->पढ़ो_page ||
+		     ecc->पढ़ो_page == nand_पढ़ो_page_hwecc ||
+		     !ecc->ग_लिखो_page ||
+		     ecc->ग_लिखो_page == nand_ग_लिखो_page_hwecc)) अणु
 			WARN(1, "No ECC functions supplied; hardware ECC not possible\n");
-			return -EINVAL;
-		}
-		/* Use standard syndrome read/write page function? */
-		if (!ecc->read_page)
-			ecc->read_page = nand_read_page_syndrome;
-		if (!ecc->write_page)
-			ecc->write_page = nand_write_page_syndrome;
-		if (!ecc->read_page_raw)
-			ecc->read_page_raw = nand_read_page_raw_syndrome;
-		if (!ecc->write_page_raw)
-			ecc->write_page_raw = nand_write_page_raw_syndrome;
-		if (!ecc->read_oob)
-			ecc->read_oob = nand_read_oob_syndrome;
-		if (!ecc->write_oob)
-			ecc->write_oob = nand_write_oob_syndrome;
-		break;
+			वापस -EINVAL;
+		पूर्ण
+		/* Use standard syndrome पढ़ो/ग_लिखो page function? */
+		अगर (!ecc->पढ़ो_page)
+			ecc->पढ़ो_page = nand_पढ़ो_page_syndrome;
+		अगर (!ecc->ग_लिखो_page)
+			ecc->ग_लिखो_page = nand_ग_लिखो_page_syndrome;
+		अगर (!ecc->पढ़ो_page_raw)
+			ecc->पढ़ो_page_raw = nand_पढ़ो_page_raw_syndrome;
+		अगर (!ecc->ग_लिखो_page_raw)
+			ecc->ग_लिखो_page_raw = nand_ग_लिखो_page_raw_syndrome;
+		अगर (!ecc->पढ़ो_oob)
+			ecc->पढ़ो_oob = nand_पढ़ो_oob_syndrome;
+		अगर (!ecc->ग_लिखो_oob)
+			ecc->ग_लिखो_oob = nand_ग_लिखो_oob_syndrome;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_warn("Invalid NAND_ECC_PLACEMENT %d\n",
 			ecc->placement);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nand_set_ecc_soft_ops(struct nand_chip *chip)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct nand_device *nanddev = mtd_to_nanddev(mtd);
-	struct nand_ecc_ctrl *ecc = &chip->ecc;
-	int ret;
+अटल पूर्णांक nand_set_ecc_soft_ops(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा nand_device *nanddev = mtd_to_nanddev(mtd);
+	काष्ठा nand_ecc_ctrl *ecc = &chip->ecc;
+	पूर्णांक ret;
 
-	if (WARN_ON(ecc->engine_type != NAND_ECC_ENGINE_TYPE_SOFT))
-		return -EINVAL;
+	अगर (WARN_ON(ecc->engine_type != न_अंकD_ECC_ENGINE_TYPE_SOFT))
+		वापस -EINVAL;
 
-	switch (ecc->algo) {
-	case NAND_ECC_ALGO_HAMMING:
+	चयन (ecc->algo) अणु
+	हाल न_अंकD_ECC_ALGO_HAMMING:
 		ecc->calculate = rawnand_sw_hamming_calculate;
 		ecc->correct = rawnand_sw_hamming_correct;
-		ecc->read_page = nand_read_page_swecc;
-		ecc->read_subpage = nand_read_subpage;
-		ecc->write_page = nand_write_page_swecc;
-		if (!ecc->read_page_raw)
-			ecc->read_page_raw = nand_read_page_raw;
-		if (!ecc->write_page_raw)
-			ecc->write_page_raw = nand_write_page_raw;
-		ecc->read_oob = nand_read_oob_std;
-		ecc->write_oob = nand_write_oob_std;
-		if (!ecc->size)
+		ecc->पढ़ो_page = nand_पढ़ो_page_swecc;
+		ecc->पढ़ो_subpage = nand_पढ़ो_subpage;
+		ecc->ग_लिखो_page = nand_ग_लिखो_page_swecc;
+		अगर (!ecc->पढ़ो_page_raw)
+			ecc->पढ़ो_page_raw = nand_पढ़ो_page_raw;
+		अगर (!ecc->ग_लिखो_page_raw)
+			ecc->ग_लिखो_page_raw = nand_ग_लिखो_page_raw;
+		ecc->पढ़ो_oob = nand_पढ़ो_oob_std;
+		ecc->ग_लिखो_oob = nand_ग_लिखो_oob_std;
+		अगर (!ecc->size)
 			ecc->size = 256;
 		ecc->bytes = 3;
 		ecc->strength = 1;
 
-		if (IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_HAMMING_SMC))
-			ecc->options |= NAND_ECC_SOFT_HAMMING_SM_ORDER;
+		अगर (IS_ENABLED(CONFIG_MTD_न_अंकD_ECC_SW_HAMMING_SMC))
+			ecc->options |= न_अंकD_ECC_SOFT_HAMMING_SM_ORDER;
 
 		ret = rawnand_sw_hamming_init(chip);
-		if (ret) {
+		अगर (ret) अणु
 			WARN(1, "Hamming ECC initialization failed!\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		return 0;
-	case NAND_ECC_ALGO_BCH:
-		if (!IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_BCH)) {
+		वापस 0;
+	हाल न_अंकD_ECC_ALGO_BCH:
+		अगर (!IS_ENABLED(CONFIG_MTD_न_अंकD_ECC_SW_BCH)) अणु
 			WARN(1, "CONFIG_MTD_NAND_ECC_SW_BCH not enabled\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ecc->calculate = rawnand_sw_bch_calculate;
 		ecc->correct = rawnand_sw_bch_correct;
-		ecc->read_page = nand_read_page_swecc;
-		ecc->read_subpage = nand_read_subpage;
-		ecc->write_page = nand_write_page_swecc;
-		if (!ecc->read_page_raw)
-			ecc->read_page_raw = nand_read_page_raw;
-		if (!ecc->write_page_raw)
-			ecc->write_page_raw = nand_write_page_raw;
-		ecc->read_oob = nand_read_oob_std;
-		ecc->write_oob = nand_write_oob_std;
+		ecc->पढ़ो_page = nand_पढ़ो_page_swecc;
+		ecc->पढ़ो_subpage = nand_पढ़ो_subpage;
+		ecc->ग_लिखो_page = nand_ग_लिखो_page_swecc;
+		अगर (!ecc->पढ़ो_page_raw)
+			ecc->पढ़ो_page_raw = nand_पढ़ो_page_raw;
+		अगर (!ecc->ग_लिखो_page_raw)
+			ecc->ग_लिखो_page_raw = nand_ग_लिखो_page_raw;
+		ecc->पढ़ो_oob = nand_पढ़ो_oob_std;
+		ecc->ग_लिखो_oob = nand_ग_लिखो_oob_std;
 
 		/*
-		 * We can only maximize ECC config when the default layout is
-		 * used, otherwise we don't know how many bytes can really be
+		 * We can only maximize ECC config when the शेष layout is
+		 * used, otherwise we करोn't know how many bytes can really be
 		 * used.
 		 */
-		if (nanddev->ecc.user_conf.flags & NAND_ECC_MAXIMIZE_STRENGTH &&
+		अगर (nanddev->ecc.user_conf.flags & न_अंकD_ECC_MAXIMIZE_STRENGTH &&
 		    mtd->ooblayout != nand_get_large_page_ooblayout())
-			nanddev->ecc.user_conf.flags &= ~NAND_ECC_MAXIMIZE_STRENGTH;
+			nanddev->ecc.user_conf.flags &= ~न_अंकD_ECC_MAXIMIZE_STRENGTH;
 
 		ret = rawnand_sw_bch_init(chip);
-		if (ret) {
+		अगर (ret) अणु
 			WARN(1, "BCH ECC initialization failed!\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		return 0;
-	default:
+		वापस 0;
+	शेष:
 		WARN(1, "Unsupported ECC algorithm!\n");
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /**
  * nand_check_ecc_caps - check the sanity of preset ECC settings
- * @chip: nand chip info structure
- * @caps: ECC caps info structure
+ * @chip: nand chip info काष्ठाure
+ * @caps: ECC caps info काष्ठाure
  * @oobavail: OOB size that the ECC engine can use
  *
- * When ECC step size and strength are already set, check if they are supported
+ * When ECC step size and strength are alपढ़ोy set, check अगर they are supported
  * by the controller and the calculated ECC bytes fit within the chip's OOB.
  * On success, the calculated ECC bytes is set.
  */
-static int
-nand_check_ecc_caps(struct nand_chip *chip,
-		    const struct nand_ecc_caps *caps, int oobavail)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	const struct nand_ecc_step_info *stepinfo;
-	int preset_step = chip->ecc.size;
-	int preset_strength = chip->ecc.strength;
-	int ecc_bytes, nsteps = mtd->writesize / preset_step;
-	int i, j;
+अटल पूर्णांक
+nand_check_ecc_caps(काष्ठा nand_chip *chip,
+		    स्थिर काष्ठा nand_ecc_caps *caps, पूर्णांक oobavail)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	स्थिर काष्ठा nand_ecc_step_info *stepinfo;
+	पूर्णांक preset_step = chip->ecc.size;
+	पूर्णांक preset_strength = chip->ecc.strength;
+	पूर्णांक ecc_bytes, nsteps = mtd->ग_लिखोsize / preset_step;
+	पूर्णांक i, j;
 
-	for (i = 0; i < caps->nstepinfos; i++) {
+	क्रम (i = 0; i < caps->nstepinfos; i++) अणु
 		stepinfo = &caps->stepinfos[i];
 
-		if (stepinfo->stepsize != preset_step)
-			continue;
+		अगर (stepinfo->stepsize != preset_step)
+			जारी;
 
-		for (j = 0; j < stepinfo->nstrengths; j++) {
-			if (stepinfo->strengths[j] != preset_strength)
-				continue;
+		क्रम (j = 0; j < stepinfo->nstrengths; j++) अणु
+			अगर (stepinfo->strengths[j] != preset_strength)
+				जारी;
 
 			ecc_bytes = caps->calc_ecc_bytes(preset_step,
 							 preset_strength);
-			if (WARN_ON_ONCE(ecc_bytes < 0))
-				return ecc_bytes;
+			अगर (WARN_ON_ONCE(ecc_bytes < 0))
+				वापस ecc_bytes;
 
-			if (ecc_bytes * nsteps > oobavail) {
+			अगर (ecc_bytes * nsteps > oobavail) अणु
 				pr_err("ECC (step, strength) = (%d, %d) does not fit in OOB",
 				       preset_step, preset_strength);
-				return -ENOSPC;
-			}
+				वापस -ENOSPC;
+			पूर्ण
 
 			chip->ecc.bytes = ecc_bytes;
 
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	pr_err("ECC (step, strength) = (%d, %d) not supported on this controller",
 	       preset_step, preset_strength);
 
-	return -ENOTSUPP;
-}
+	वापस -ENOTSUPP;
+पूर्ण
 
 /**
  * nand_match_ecc_req - meet the chip's requirement with least ECC bytes
- * @chip: nand chip info structure
- * @caps: ECC engine caps info structure
+ * @chip: nand chip info काष्ठाure
+ * @caps: ECC engine caps info काष्ठाure
  * @oobavail: OOB size that the ECC engine can use
  *
  * If a chip's ECC requirement is provided, try to meet it with the least
- * number of ECC bytes (i.e. with the largest number of OOB-free bytes).
+ * number of ECC bytes (i.e. with the largest number of OOB-मुक्त bytes).
  * On success, the chosen ECC settings are set.
  */
-static int
-nand_match_ecc_req(struct nand_chip *chip,
-		   const struct nand_ecc_caps *caps, int oobavail)
-{
-	const struct nand_ecc_props *requirements =
+अटल पूर्णांक
+nand_match_ecc_req(काष्ठा nand_chip *chip,
+		   स्थिर काष्ठा nand_ecc_caps *caps, पूर्णांक oobavail)
+अणु
+	स्थिर काष्ठा nand_ecc_props *requirements =
 		nanddev_get_ecc_requirements(&chip->base);
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	const struct nand_ecc_step_info *stepinfo;
-	int req_step = requirements->step_size;
-	int req_strength = requirements->strength;
-	int req_corr, step_size, strength, nsteps, ecc_bytes, ecc_bytes_total;
-	int best_step, best_strength, best_ecc_bytes;
-	int best_ecc_bytes_total = INT_MAX;
-	int i, j;
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	स्थिर काष्ठा nand_ecc_step_info *stepinfo;
+	पूर्णांक req_step = requirements->step_size;
+	पूर्णांक req_strength = requirements->strength;
+	पूर्णांक req_corr, step_size, strength, nsteps, ecc_bytes, ecc_bytes_total;
+	पूर्णांक best_step, best_strength, best_ecc_bytes;
+	पूर्णांक best_ecc_bytes_total = पूर्णांक_उच्च;
+	पूर्णांक i, j;
 
-	/* No information provided by the NAND chip */
-	if (!req_step || !req_strength)
-		return -ENOTSUPP;
+	/* No inक्रमmation provided by the न_अंकD chip */
+	अगर (!req_step || !req_strength)
+		वापस -ENOTSUPP;
 
 	/* number of correctable bits the chip requires in a page */
-	req_corr = mtd->writesize / req_step * req_strength;
+	req_corr = mtd->ग_लिखोsize / req_step * req_strength;
 
-	for (i = 0; i < caps->nstepinfos; i++) {
+	क्रम (i = 0; i < caps->nstepinfos; i++) अणु
 		stepinfo = &caps->stepinfos[i];
 		step_size = stepinfo->stepsize;
 
-		for (j = 0; j < stepinfo->nstrengths; j++) {
+		क्रम (j = 0; j < stepinfo->nstrengths; j++) अणु
 			strength = stepinfo->strengths[j];
 
 			/*
@@ -5566,89 +5567,89 @@ nand_match_ecc_req(struct nand_chip *chip,
 			 * chip's requirement, it is not easy to compare the
 			 * resulted reliability.
 			 */
-			if (step_size < req_step && strength < req_strength)
-				continue;
+			अगर (step_size < req_step && strength < req_strength)
+				जारी;
 
-			if (mtd->writesize % step_size)
-				continue;
+			अगर (mtd->ग_लिखोsize % step_size)
+				जारी;
 
-			nsteps = mtd->writesize / step_size;
+			nsteps = mtd->ग_लिखोsize / step_size;
 
 			ecc_bytes = caps->calc_ecc_bytes(step_size, strength);
-			if (WARN_ON_ONCE(ecc_bytes < 0))
-				continue;
+			अगर (WARN_ON_ONCE(ecc_bytes < 0))
+				जारी;
 			ecc_bytes_total = ecc_bytes * nsteps;
 
-			if (ecc_bytes_total > oobavail ||
+			अगर (ecc_bytes_total > oobavail ||
 			    strength * nsteps < req_corr)
-				continue;
+				जारी;
 
 			/*
 			 * We assume the best is to meet the chip's requrement
 			 * with the least number of ECC bytes.
 			 */
-			if (ecc_bytes_total < best_ecc_bytes_total) {
+			अगर (ecc_bytes_total < best_ecc_bytes_total) अणु
 				best_ecc_bytes_total = ecc_bytes_total;
 				best_step = step_size;
 				best_strength = strength;
 				best_ecc_bytes = ecc_bytes;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (best_ecc_bytes_total == INT_MAX)
-		return -ENOTSUPP;
+	अगर (best_ecc_bytes_total == पूर्णांक_उच्च)
+		वापस -ENOTSUPP;
 
 	chip->ecc.size = best_step;
 	chip->ecc.strength = best_strength;
 	chip->ecc.bytes = best_ecc_bytes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * nand_maximize_ecc - choose the max ECC strength available
- * @chip: nand chip info structure
- * @caps: ECC engine caps info structure
+ * @chip: nand chip info काष्ठाure
+ * @caps: ECC engine caps info काष्ठाure
  * @oobavail: OOB size that the ECC engine can use
  *
  * Choose the max ECC strength that is supported on the controller, and can fit
  * within the chip's OOB.  On success, the chosen ECC settings are set.
  */
-static int
-nand_maximize_ecc(struct nand_chip *chip,
-		  const struct nand_ecc_caps *caps, int oobavail)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	const struct nand_ecc_step_info *stepinfo;
-	int step_size, strength, nsteps, ecc_bytes, corr;
-	int best_corr = 0;
-	int best_step = 0;
-	int best_strength, best_ecc_bytes;
-	int i, j;
+अटल पूर्णांक
+nand_maximize_ecc(काष्ठा nand_chip *chip,
+		  स्थिर काष्ठा nand_ecc_caps *caps, पूर्णांक oobavail)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	स्थिर काष्ठा nand_ecc_step_info *stepinfo;
+	पूर्णांक step_size, strength, nsteps, ecc_bytes, corr;
+	पूर्णांक best_corr = 0;
+	पूर्णांक best_step = 0;
+	पूर्णांक best_strength, best_ecc_bytes;
+	पूर्णांक i, j;
 
-	for (i = 0; i < caps->nstepinfos; i++) {
+	क्रम (i = 0; i < caps->nstepinfos; i++) अणु
 		stepinfo = &caps->stepinfos[i];
 		step_size = stepinfo->stepsize;
 
-		/* If chip->ecc.size is already set, respect it */
-		if (chip->ecc.size && step_size != chip->ecc.size)
-			continue;
+		/* If chip->ecc.size is alपढ़ोy set, respect it */
+		अगर (chip->ecc.size && step_size != chip->ecc.size)
+			जारी;
 
-		for (j = 0; j < stepinfo->nstrengths; j++) {
+		क्रम (j = 0; j < stepinfo->nstrengths; j++) अणु
 			strength = stepinfo->strengths[j];
 
-			if (mtd->writesize % step_size)
-				continue;
+			अगर (mtd->ग_लिखोsize % step_size)
+				जारी;
 
-			nsteps = mtd->writesize / step_size;
+			nsteps = mtd->ग_लिखोsize / step_size;
 
 			ecc_bytes = caps->calc_ecc_bytes(step_size, strength);
-			if (WARN_ON_ONCE(ecc_bytes < 0))
-				continue;
+			अगर (WARN_ON_ONCE(ecc_bytes < 0))
+				जारी;
 
-			if (ecc_bytes * nsteps > oobavail)
-				continue;
+			अगर (ecc_bytes * nsteps > oobavail)
+				जारी;
 
 			corr = strength * nsteps;
 
@@ -5656,410 +5657,410 @@ nand_maximize_ecc(struct nand_chip *chip,
 			 * If the number of correctable bits is the same,
 			 * bigger step_size has more reliability.
 			 */
-			if (corr > best_corr ||
-			    (corr == best_corr && step_size > best_step)) {
+			अगर (corr > best_corr ||
+			    (corr == best_corr && step_size > best_step)) अणु
 				best_corr = corr;
 				best_step = step_size;
 				best_strength = strength;
 				best_ecc_bytes = ecc_bytes;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!best_corr)
-		return -ENOTSUPP;
+	अगर (!best_corr)
+		वापस -ENOTSUPP;
 
 	chip->ecc.size = best_step;
 	chip->ecc.strength = best_strength;
 	chip->ecc.bytes = best_ecc_bytes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * nand_ecc_choose_conf - Set the ECC strength and ECC step size
- * @chip: nand chip info structure
- * @caps: ECC engine caps info structure
+ * @chip: nand chip info काष्ठाure
+ * @caps: ECC engine caps info काष्ठाure
  * @oobavail: OOB size that the ECC engine can use
  *
  * Choose the ECC configuration according to following logic.
  *
- * 1. If both ECC step size and ECC strength are already set (usually by DT)
- *    then check if it is supported by this controller.
+ * 1. If both ECC step size and ECC strength are alपढ़ोy set (usually by DT)
+ *    then check अगर it is supported by this controller.
  * 2. If the user provided the nand-ecc-maximize property, then select maximum
  *    ECC strength.
- * 3. Otherwise, try to match the ECC step size and ECC strength closest
+ * 3. Otherwise, try to match the ECC step size and ECC strength बंदst
  *    to the chip's requirement. If available OOB size can't fit the chip
  *    requirement then fallback to the maximum ECC step size and ECC strength.
  *
  * On success, the chosen ECC settings are set.
  */
-int nand_ecc_choose_conf(struct nand_chip *chip,
-			 const struct nand_ecc_caps *caps, int oobavail)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct nand_device *nanddev = mtd_to_nanddev(mtd);
+पूर्णांक nand_ecc_choose_conf(काष्ठा nand_chip *chip,
+			 स्थिर काष्ठा nand_ecc_caps *caps, पूर्णांक oobavail)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा nand_device *nanddev = mtd_to_nanddev(mtd);
 
-	if (WARN_ON(oobavail < 0 || oobavail > mtd->oobsize))
-		return -EINVAL;
+	अगर (WARN_ON(oobavail < 0 || oobavail > mtd->oobsize))
+		वापस -EINVAL;
 
-	if (chip->ecc.size && chip->ecc.strength)
-		return nand_check_ecc_caps(chip, caps, oobavail);
+	अगर (chip->ecc.size && chip->ecc.strength)
+		वापस nand_check_ecc_caps(chip, caps, oobavail);
 
-	if (nanddev->ecc.user_conf.flags & NAND_ECC_MAXIMIZE_STRENGTH)
-		return nand_maximize_ecc(chip, caps, oobavail);
+	अगर (nanddev->ecc.user_conf.flags & न_अंकD_ECC_MAXIMIZE_STRENGTH)
+		वापस nand_maximize_ecc(chip, caps, oobavail);
 
-	if (!nand_match_ecc_req(chip, caps, oobavail))
-		return 0;
+	अगर (!nand_match_ecc_req(chip, caps, oobavail))
+		वापस 0;
 
-	return nand_maximize_ecc(chip, caps, oobavail);
-}
+	वापस nand_maximize_ecc(chip, caps, oobavail);
+पूर्ण
 EXPORT_SYMBOL_GPL(nand_ecc_choose_conf);
 
-static int rawnand_erase(struct nand_device *nand, const struct nand_pos *pos)
-{
-	struct nand_chip *chip = container_of(nand, struct nand_chip,
+अटल पूर्णांक rawnand_erase(काष्ठा nand_device *nand, स्थिर काष्ठा nand_pos *pos)
+अणु
+	काष्ठा nand_chip *chip = container_of(nand, काष्ठा nand_chip,
 					      base);
-	unsigned int eb = nanddev_pos_to_row(nand, pos);
-	int ret;
+	अचिन्हित पूर्णांक eb = nanddev_pos_to_row(nand, pos);
+	पूर्णांक ret;
 
-	eb >>= nand->rowconv.eraseblock_addr_shift;
+	eb >>= nand->rowconv.eraseblock_addr_shअगरt;
 
 	nand_select_target(chip, pos->target);
 	ret = nand_erase_op(chip, eb);
 	nand_deselect_target(chip);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rawnand_markbad(struct nand_device *nand,
-			   const struct nand_pos *pos)
-{
-	struct nand_chip *chip = container_of(nand, struct nand_chip,
+अटल पूर्णांक rawnand_markbad(काष्ठा nand_device *nand,
+			   स्थिर काष्ठा nand_pos *pos)
+अणु
+	काष्ठा nand_chip *chip = container_of(nand, काष्ठा nand_chip,
 					      base);
 
-	return nand_markbad_bbm(chip, nanddev_pos_to_offs(nand, pos));
-}
+	वापस nand_markbad_bbm(chip, nanddev_pos_to_offs(nand, pos));
+पूर्ण
 
-static bool rawnand_isbad(struct nand_device *nand, const struct nand_pos *pos)
-{
-	struct nand_chip *chip = container_of(nand, struct nand_chip,
+अटल bool rawnand_isbad(काष्ठा nand_device *nand, स्थिर काष्ठा nand_pos *pos)
+अणु
+	काष्ठा nand_chip *chip = container_of(nand, काष्ठा nand_chip,
 					      base);
-	int ret;
+	पूर्णांक ret;
 
 	nand_select_target(chip, pos->target);
 	ret = nand_isbad_bbm(chip, nanddev_pos_to_offs(nand, pos));
 	nand_deselect_target(chip);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nand_ops rawnand_ops = {
+अटल स्थिर काष्ठा nand_ops rawnand_ops = अणु
 	.erase = rawnand_erase,
 	.markbad = rawnand_markbad,
 	.isbad = rawnand_isbad,
-};
+पूर्ण;
 
 /**
- * nand_scan_tail - Scan for the NAND device
- * @chip: NAND chip object
+ * nand_scan_tail - Scan क्रम the न_अंकD device
+ * @chip: न_अंकD chip object
  *
  * This is the second phase of the normal nand_scan() function. It fills out
- * all the uninitialized function pointers with the defaults and scans for a
- * bad block table if appropriate.
+ * all the uninitialized function poपूर्णांकers with the शेषs and scans क्रम a
+ * bad block table अगर appropriate.
  */
-static int nand_scan_tail(struct nand_chip *chip)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct nand_ecc_ctrl *ecc = &chip->ecc;
-	int ret, i;
+अटल पूर्णांक nand_scan_tail(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा nand_ecc_ctrl *ecc = &chip->ecc;
+	पूर्णांक ret, i;
 
 	/* New bad blocks should be marked in OOB, flash-based BBT, or both */
-	if (WARN_ON((chip->bbt_options & NAND_BBT_NO_OOB_BBM) &&
-		   !(chip->bbt_options & NAND_BBT_USE_FLASH))) {
-		return -EINVAL;
-	}
+	अगर (WARN_ON((chip->bbt_options & न_अंकD_BBT_NO_OOB_BBM) &&
+		   !(chip->bbt_options & न_अंकD_BBT_USE_FLASH))) अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	chip->data_buf = kmalloc(mtd->writesize + mtd->oobsize, GFP_KERNEL);
-	if (!chip->data_buf)
-		return -ENOMEM;
+	chip->data_buf = kदो_स्मृति(mtd->ग_लिखोsize + mtd->oobsize, GFP_KERNEL);
+	अगर (!chip->data_buf)
+		वापस -ENOMEM;
 
 	/*
-	 * FIXME: some NAND manufacturer drivers expect the first die to be
+	 * FIXME: some न_अंकD manufacturer drivers expect the first die to be
 	 * selected when manufacturer->init() is called. They should be fixed
-	 * to explictly select the relevant die when interacting with the NAND
+	 * to explictly select the relevant die when पूर्णांकeracting with the न_अंकD
 	 * chip.
 	 */
 	nand_select_target(chip, 0);
 	ret = nand_manufacturer_init(chip);
 	nand_deselect_target(chip);
-	if (ret)
-		goto err_free_buf;
+	अगर (ret)
+		जाओ err_मुक्त_buf;
 
-	/* Set the internal oob buffer location, just after the page data */
-	chip->oob_poi = chip->data_buf + mtd->writesize;
+	/* Set the पूर्णांकernal oob buffer location, just after the page data */
+	chip->oob_poi = chip->data_buf + mtd->ग_लिखोsize;
 
 	/*
-	 * If no default placement scheme is given, select an appropriate one.
+	 * If no शेष placement scheme is given, select an appropriate one.
 	 */
-	if (!mtd->ooblayout &&
-	    !(ecc->engine_type == NAND_ECC_ENGINE_TYPE_SOFT &&
-	      ecc->algo == NAND_ECC_ALGO_BCH) &&
-	    !(ecc->engine_type == NAND_ECC_ENGINE_TYPE_SOFT &&
-	      ecc->algo == NAND_ECC_ALGO_HAMMING)) {
-		switch (mtd->oobsize) {
-		case 8:
-		case 16:
+	अगर (!mtd->ooblayout &&
+	    !(ecc->engine_type == न_अंकD_ECC_ENGINE_TYPE_SOFT &&
+	      ecc->algo == न_अंकD_ECC_ALGO_BCH) &&
+	    !(ecc->engine_type == न_अंकD_ECC_ENGINE_TYPE_SOFT &&
+	      ecc->algo == न_अंकD_ECC_ALGO_HAMMING)) अणु
+		चयन (mtd->oobsize) अणु
+		हाल 8:
+		हाल 16:
 			mtd_set_ooblayout(mtd, nand_get_small_page_ooblayout());
-			break;
-		case 64:
-		case 128:
+			अवरोध;
+		हाल 64:
+		हाल 128:
 			mtd_set_ooblayout(mtd,
 					  nand_get_large_page_hamming_ooblayout());
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
-			 * Expose the whole OOB area to users if ECC_NONE
-			 * is passed. We could do that for all kind of
+			 * Expose the whole OOB area to users अगर ECC_NONE
+			 * is passed. We could करो that क्रम all kind of
 			 * ->oobsize, but we must keep the old large/small
-			 * page with ECC layout when ->oobsize <= 128 for
+			 * page with ECC layout when ->oobsize <= 128 क्रम
 			 * compatibility reasons.
 			 */
-			if (ecc->engine_type == NAND_ECC_ENGINE_TYPE_NONE) {
+			अगर (ecc->engine_type == न_अंकD_ECC_ENGINE_TYPE_NONE) अणु
 				mtd_set_ooblayout(mtd,
 						  nand_get_large_page_ooblayout());
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			WARN(1, "No oob scheme defined for oobsize %d\n",
 				mtd->oobsize);
 			ret = -EINVAL;
-			goto err_nand_manuf_cleanup;
-		}
-	}
+			जाओ err_nand_manuf_cleanup;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Check ECC mode, default to software if 3byte/512byte hardware ECC is
+	 * Check ECC mode, शेष to software अगर 3byte/512byte hardware ECC is
 	 * selected and we have 256 byte pagesize fallback to software ECC
 	 */
 
-	switch (ecc->engine_type) {
-	case NAND_ECC_ENGINE_TYPE_ON_HOST:
+	चयन (ecc->engine_type) अणु
+	हाल न_अंकD_ECC_ENGINE_TYPE_ON_HOST:
 		ret = nand_set_ecc_on_host_ops(chip);
-		if (ret)
-			goto err_nand_manuf_cleanup;
+		अगर (ret)
+			जाओ err_nand_manuf_cleanup;
 
-		if (mtd->writesize >= ecc->size) {
-			if (!ecc->strength) {
+		अगर (mtd->ग_लिखोsize >= ecc->size) अणु
+			अगर (!ecc->strength) अणु
 				WARN(1, "Driver must set ecc.strength when using hardware ECC\n");
 				ret = -EINVAL;
-				goto err_nand_manuf_cleanup;
-			}
-			break;
-		}
+				जाओ err_nand_manuf_cleanup;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 		pr_warn("%d byte HW ECC not possible on %d byte page size, fallback to SW ECC\n",
-			ecc->size, mtd->writesize);
-		ecc->engine_type = NAND_ECC_ENGINE_TYPE_SOFT;
-		ecc->algo = NAND_ECC_ALGO_HAMMING;
+			ecc->size, mtd->ग_लिखोsize);
+		ecc->engine_type = न_अंकD_ECC_ENGINE_TYPE_SOFT;
+		ecc->algo = न_अंकD_ECC_ALGO_HAMMING;
 		fallthrough;
 
-	case NAND_ECC_ENGINE_TYPE_SOFT:
+	हाल न_अंकD_ECC_ENGINE_TYPE_SOFT:
 		ret = nand_set_ecc_soft_ops(chip);
-		if (ret)
-			goto err_nand_manuf_cleanup;
-		break;
+		अगर (ret)
+			जाओ err_nand_manuf_cleanup;
+		अवरोध;
 
-	case NAND_ECC_ENGINE_TYPE_ON_DIE:
-		if (!ecc->read_page || !ecc->write_page) {
+	हाल न_अंकD_ECC_ENGINE_TYPE_ON_DIE:
+		अगर (!ecc->पढ़ो_page || !ecc->ग_लिखो_page) अणु
 			WARN(1, "No ECC functions supplied; on-die ECC not possible\n");
 			ret = -EINVAL;
-			goto err_nand_manuf_cleanup;
-		}
-		if (!ecc->read_oob)
-			ecc->read_oob = nand_read_oob_std;
-		if (!ecc->write_oob)
-			ecc->write_oob = nand_write_oob_std;
-		break;
+			जाओ err_nand_manuf_cleanup;
+		पूर्ण
+		अगर (!ecc->पढ़ो_oob)
+			ecc->पढ़ो_oob = nand_पढ़ो_oob_std;
+		अगर (!ecc->ग_लिखो_oob)
+			ecc->ग_लिखो_oob = nand_ग_लिखो_oob_std;
+		अवरोध;
 
-	case NAND_ECC_ENGINE_TYPE_NONE:
+	हाल न_अंकD_ECC_ENGINE_TYPE_NONE:
 		pr_warn("NAND_ECC_ENGINE_TYPE_NONE selected by board driver. This is not recommended!\n");
-		ecc->read_page = nand_read_page_raw;
-		ecc->write_page = nand_write_page_raw;
-		ecc->read_oob = nand_read_oob_std;
-		ecc->read_page_raw = nand_read_page_raw;
-		ecc->write_page_raw = nand_write_page_raw;
-		ecc->write_oob = nand_write_oob_std;
-		ecc->size = mtd->writesize;
+		ecc->पढ़ो_page = nand_पढ़ो_page_raw;
+		ecc->ग_लिखो_page = nand_ग_लिखो_page_raw;
+		ecc->पढ़ो_oob = nand_पढ़ो_oob_std;
+		ecc->पढ़ो_page_raw = nand_पढ़ो_page_raw;
+		ecc->ग_लिखो_page_raw = nand_ग_लिखो_page_raw;
+		ecc->ग_लिखो_oob = nand_ग_लिखो_oob_std;
+		ecc->size = mtd->ग_लिखोsize;
 		ecc->bytes = 0;
 		ecc->strength = 0;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		WARN(1, "Invalid NAND_ECC_MODE %d\n", ecc->engine_type);
 		ret = -EINVAL;
-		goto err_nand_manuf_cleanup;
-	}
+		जाओ err_nand_manuf_cleanup;
+	पूर्ण
 
-	if (ecc->correct || ecc->calculate) {
-		ecc->calc_buf = kmalloc(mtd->oobsize, GFP_KERNEL);
-		ecc->code_buf = kmalloc(mtd->oobsize, GFP_KERNEL);
-		if (!ecc->calc_buf || !ecc->code_buf) {
+	अगर (ecc->correct || ecc->calculate) अणु
+		ecc->calc_buf = kदो_स्मृति(mtd->oobsize, GFP_KERNEL);
+		ecc->code_buf = kदो_स्मृति(mtd->oobsize, GFP_KERNEL);
+		अगर (!ecc->calc_buf || !ecc->code_buf) अणु
 			ret = -ENOMEM;
-			goto err_nand_manuf_cleanup;
-		}
-	}
+			जाओ err_nand_manuf_cleanup;
+		पूर्ण
+	पूर्ण
 
-	/* For many systems, the standard OOB write also works for raw */
-	if (!ecc->read_oob_raw)
-		ecc->read_oob_raw = ecc->read_oob;
-	if (!ecc->write_oob_raw)
-		ecc->write_oob_raw = ecc->write_oob;
+	/* For many प्रणालीs, the standard OOB ग_लिखो also works क्रम raw */
+	अगर (!ecc->पढ़ो_oob_raw)
+		ecc->पढ़ो_oob_raw = ecc->पढ़ो_oob;
+	अगर (!ecc->ग_लिखो_oob_raw)
+		ecc->ग_लिखो_oob_raw = ecc->ग_लिखो_oob;
 
 	/* propagate ecc info to mtd_info */
 	mtd->ecc_strength = ecc->strength;
 	mtd->ecc_step_size = ecc->size;
 
 	/*
-	 * Set the number of read / write steps for one page depending on ECC
+	 * Set the number of पढ़ो / ग_लिखो steps क्रम one page depending on ECC
 	 * mode.
 	 */
-	if (!ecc->steps)
-		ecc->steps = mtd->writesize / ecc->size;
-	if (ecc->steps * ecc->size != mtd->writesize) {
+	अगर (!ecc->steps)
+		ecc->steps = mtd->ग_लिखोsize / ecc->size;
+	अगर (ecc->steps * ecc->size != mtd->ग_लिखोsize) अणु
 		WARN(1, "Invalid ECC parameters\n");
 		ret = -EINVAL;
-		goto err_nand_manuf_cleanup;
-	}
+		जाओ err_nand_manuf_cleanup;
+	पूर्ण
 
-	if (!ecc->total) {
+	अगर (!ecc->total) अणु
 		ecc->total = ecc->steps * ecc->bytes;
 		chip->base.ecc.ctx.total = ecc->total;
-	}
+	पूर्ण
 
-	if (ecc->total > mtd->oobsize) {
+	अगर (ecc->total > mtd->oobsize) अणु
 		WARN(1, "Total number of ECC bytes exceeded oobsize\n");
 		ret = -EINVAL;
-		goto err_nand_manuf_cleanup;
-	}
+		जाओ err_nand_manuf_cleanup;
+	पूर्ण
 
 	/*
-	 * The number of bytes available for a client to place data into
+	 * The number of bytes available क्रम a client to place data पूर्णांकo
 	 * the out of band area.
 	 */
-	ret = mtd_ooblayout_count_freebytes(mtd);
-	if (ret < 0)
+	ret = mtd_ooblayout_count_मुक्तbytes(mtd);
+	अगर (ret < 0)
 		ret = 0;
 
 	mtd->oobavail = ret;
 
-	/* ECC sanity check: warn if it's too weak */
-	if (!nand_ecc_is_strong_enough(&chip->base))
+	/* ECC sanity check: warn अगर it's too weak */
+	अगर (!nand_ecc_is_strong_enough(&chip->base))
 		pr_warn("WARNING: %s: the ECC used on your system (%db/%dB) is too weak compared to the one required by the NAND chip (%db/%dB)\n",
 			mtd->name, chip->ecc.strength, chip->ecc.size,
 			nanddev_get_ecc_requirements(&chip->base)->strength,
 			nanddev_get_ecc_requirements(&chip->base)->step_size);
 
-	/* Allow subpage writes up to ecc.steps. Not possible for MLC flash */
-	if (!(chip->options & NAND_NO_SUBPAGE_WRITE) && nand_is_slc(chip)) {
-		switch (ecc->steps) {
-		case 2:
+	/* Allow subpage ग_लिखोs up to ecc.steps. Not possible क्रम MLC flash */
+	अगर (!(chip->options & न_अंकD_NO_SUBPAGE_WRITE) && nand_is_slc(chip)) अणु
+		चयन (ecc->steps) अणु
+		हाल 2:
 			mtd->subpage_sft = 1;
-			break;
-		case 4:
-		case 8:
-		case 16:
+			अवरोध;
+		हाल 4:
+		हाल 8:
+		हाल 16:
 			mtd->subpage_sft = 2;
-			break;
-		}
-	}
-	chip->subpagesize = mtd->writesize >> mtd->subpage_sft;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	chip->subpagesize = mtd->ग_लिखोsize >> mtd->subpage_sft;
 
 	/* Invalidate the pagebuffer reference */
 	chip->pagecache.page = -1;
 
-	/* Large page NAND with SOFT_ECC should support subpage reads */
-	switch (ecc->engine_type) {
-	case NAND_ECC_ENGINE_TYPE_SOFT:
-		if (chip->page_shift > 9)
-			chip->options |= NAND_SUBPAGE_READ;
-		break;
+	/* Large page न_अंकD with SOFT_ECC should support subpage पढ़ोs */
+	चयन (ecc->engine_type) अणु
+	हाल न_अंकD_ECC_ENGINE_TYPE_SOFT:
+		अगर (chip->page_shअगरt > 9)
+			chip->options |= न_अंकD_SUBPAGE_READ;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	ret = nanddev_init(&chip->base, &rawnand_ops, mtd->owner);
-	if (ret)
-		goto err_nand_manuf_cleanup;
+	अगर (ret)
+		जाओ err_nand_manuf_cleanup;
 
-	/* Adjust the MTD_CAP_ flags when NAND_ROM is set. */
-	if (chip->options & NAND_ROM)
+	/* Adjust the MTD_CAP_ flags when न_अंकD_ROM is set. */
+	अगर (chip->options & न_अंकD_ROM)
 		mtd->flags = MTD_CAP_ROM;
 
-	/* Fill in remaining MTD driver data */
+	/* Fill in reमुख्यing MTD driver data */
 	mtd->_erase = nand_erase;
-	mtd->_point = NULL;
-	mtd->_unpoint = NULL;
-	mtd->_panic_write = panic_nand_write;
-	mtd->_read_oob = nand_read_oob;
-	mtd->_write_oob = nand_write_oob;
+	mtd->_poपूर्णांक = शून्य;
+	mtd->_unpoपूर्णांक = शून्य;
+	mtd->_panic_ग_लिखो = panic_nand_ग_लिखो;
+	mtd->_पढ़ो_oob = nand_पढ़ो_oob;
+	mtd->_ग_लिखो_oob = nand_ग_लिखो_oob;
 	mtd->_sync = nand_sync;
 	mtd->_lock = nand_lock;
 	mtd->_unlock = nand_unlock;
 	mtd->_suspend = nand_suspend;
 	mtd->_resume = nand_resume;
-	mtd->_reboot = nand_shutdown;
+	mtd->_reboot = nand_shutकरोwn;
 	mtd->_block_isreserved = nand_block_isreserved;
 	mtd->_block_isbad = nand_block_isbad;
 	mtd->_block_markbad = nand_block_markbad;
 	mtd->_max_bad_blocks = nanddev_mtd_max_bad_blocks;
 
 	/*
-	 * Initialize bitflip_threshold to its default prior scan_bbt() call.
-	 * scan_bbt() might invoke mtd_read(), thus bitflip_threshold must be
+	 * Initialize bitflip_threshold to its शेष prior scan_bbt() call.
+	 * scan_bbt() might invoke mtd_पढ़ो(), thus bitflip_threshold must be
 	 * properly set.
 	 */
-	if (!mtd->bitflip_threshold)
+	अगर (!mtd->bitflip_threshold)
 		mtd->bitflip_threshold = DIV_ROUND_UP(mtd->ecc_strength * 3, 4);
 
-	/* Find the fastest data interface for this chip */
-	ret = nand_choose_interface_config(chip);
-	if (ret)
-		goto err_nanddev_cleanup;
+	/* Find the fastest data पूर्णांकerface क्रम this chip */
+	ret = nand_choose_पूर्णांकerface_config(chip);
+	अगर (ret)
+		जाओ err_nanddev_cleanup;
 
 	/* Enter fastest possible mode on all dies. */
-	for (i = 0; i < nanddev_ntargets(&chip->base); i++) {
-		ret = nand_setup_interface(chip, i);
-		if (ret)
-			goto err_free_interface_config;
-	}
+	क्रम (i = 0; i < nanddev_ntarमाला_लो(&chip->base); i++) अणु
+		ret = nand_setup_पूर्णांकerface(chip, i);
+		अगर (ret)
+			जाओ err_मुक्त_पूर्णांकerface_config;
+	पूर्ण
 
 	/*
-	 * Look for secure regions in the NAND chip. These regions are supposed
-	 * to be protected by a secure element like Trustzone. So the read/write
-	 * accesses to these regions will be blocked in the runtime by this
+	 * Look क्रम secure regions in the न_अंकD chip. These regions are supposed
+	 * to be रक्षित by a secure element like Trustzone. So the पढ़ो/ग_लिखो
+	 * accesses to these regions will be blocked in the runसमय by this
 	 * driver.
 	 */
 	ret = of_get_nand_secure_regions(chip);
-	if (ret)
-		goto err_free_interface_config;
+	अगर (ret)
+		जाओ err_मुक्त_पूर्णांकerface_config;
 
-	/* Check, if we should skip the bad block table scan */
-	if (chip->options & NAND_SKIP_BBTSCAN)
-		return 0;
+	/* Check, अगर we should skip the bad block table scan */
+	अगर (chip->options & न_अंकD_SKIP_BBTSCAN)
+		वापस 0;
 
 	/* Build bad block table */
 	ret = nand_create_bbt(chip);
-	if (ret)
-		goto err_free_secure_regions;
+	अगर (ret)
+		जाओ err_मुक्त_secure_regions;
 
-	return 0;
+	वापस 0;
 
-err_free_secure_regions:
-	kfree(chip->secure_regions);
+err_मुक्त_secure_regions:
+	kमुक्त(chip->secure_regions);
 
-err_free_interface_config:
-	kfree(chip->best_interface_config);
+err_मुक्त_पूर्णांकerface_config:
+	kमुक्त(chip->best_पूर्णांकerface_config);
 
 err_nanddev_cleanup:
 	nanddev_cleanup(&chip->base);
@@ -6067,110 +6068,110 @@ err_nanddev_cleanup:
 err_nand_manuf_cleanup:
 	nand_manufacturer_cleanup(chip);
 
-err_free_buf:
-	kfree(chip->data_buf);
-	kfree(ecc->code_buf);
-	kfree(ecc->calc_buf);
+err_मुक्त_buf:
+	kमुक्त(chip->data_buf);
+	kमुक्त(ecc->code_buf);
+	kमुक्त(ecc->calc_buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nand_attach(struct nand_chip *chip)
-{
-	if (chip->controller->ops && chip->controller->ops->attach_chip)
-		return chip->controller->ops->attach_chip(chip);
+अटल पूर्णांक nand_attach(काष्ठा nand_chip *chip)
+अणु
+	अगर (chip->controller->ops && chip->controller->ops->attach_chip)
+		वापस chip->controller->ops->attach_chip(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nand_detach(struct nand_chip *chip)
-{
-	if (chip->controller->ops && chip->controller->ops->detach_chip)
+अटल व्योम nand_detach(काष्ठा nand_chip *chip)
+अणु
+	अगर (chip->controller->ops && chip->controller->ops->detach_chip)
 		chip->controller->ops->detach_chip(chip);
-}
+पूर्ण
 
 /**
- * nand_scan_with_ids - [NAND Interface] Scan for the NAND device
- * @chip: NAND chip object
- * @maxchips: number of chips to scan for.
+ * nand_scan_with_ids - [न_अंकD Interface] Scan क्रम the न_अंकD device
+ * @chip: न_अंकD chip object
+ * @maxchips: number of chips to scan क्रम.
  * @ids: optional flash IDs table
  *
- * This fills out all the uninitialized function pointers with the defaults.
- * The flash ID is read and the mtd/chip structures are filled with the
+ * This fills out all the uninitialized function poपूर्णांकers with the शेषs.
+ * The flash ID is पढ़ो and the mtd/chip काष्ठाures are filled with the
  * appropriate values.
  */
-int nand_scan_with_ids(struct nand_chip *chip, unsigned int maxchips,
-		       struct nand_flash_dev *ids)
-{
-	int ret;
+पूर्णांक nand_scan_with_ids(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक maxchips,
+		       काष्ठा nand_flash_dev *ids)
+अणु
+	पूर्णांक ret;
 
-	if (!maxchips)
-		return -EINVAL;
+	अगर (!maxchips)
+		वापस -EINVAL;
 
 	ret = nand_scan_ident(chip, maxchips, ids);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = nand_attach(chip);
-	if (ret)
-		goto cleanup_ident;
+	अगर (ret)
+		जाओ cleanup_ident;
 
 	ret = nand_scan_tail(chip);
-	if (ret)
-		goto detach_chip;
+	अगर (ret)
+		जाओ detach_chip;
 
-	return 0;
+	वापस 0;
 
 detach_chip:
 	nand_detach(chip);
 cleanup_ident:
 	nand_scan_ident_cleanup(chip);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(nand_scan_with_ids);
 
 /**
- * nand_cleanup - [NAND Interface] Free resources held by the NAND device
- * @chip: NAND chip object
+ * nand_cleanup - [न_अंकD Interface] Free resources held by the न_अंकD device
+ * @chip: न_अंकD chip object
  */
-void nand_cleanup(struct nand_chip *chip)
-{
-	if (chip->ecc.engine_type == NAND_ECC_ENGINE_TYPE_SOFT) {
-		if (chip->ecc.algo == NAND_ECC_ALGO_HAMMING)
+व्योम nand_cleanup(काष्ठा nand_chip *chip)
+अणु
+	अगर (chip->ecc.engine_type == न_अंकD_ECC_ENGINE_TYPE_SOFT) अणु
+		अगर (chip->ecc.algo == न_अंकD_ECC_ALGO_HAMMING)
 			rawnand_sw_hamming_cleanup(chip);
-		else if (chip->ecc.algo == NAND_ECC_ALGO_BCH)
+		अन्यथा अगर (chip->ecc.algo == न_अंकD_ECC_ALGO_BCH)
 			rawnand_sw_bch_cleanup(chip);
-	}
+	पूर्ण
 
 	nanddev_cleanup(&chip->base);
 
 	/* Free secure regions data */
-	kfree(chip->secure_regions);
+	kमुक्त(chip->secure_regions);
 
 	/* Free bad block table memory */
-	kfree(chip->bbt);
-	kfree(chip->data_buf);
-	kfree(chip->ecc.code_buf);
-	kfree(chip->ecc.calc_buf);
+	kमुक्त(chip->bbt);
+	kमुक्त(chip->data_buf);
+	kमुक्त(chip->ecc.code_buf);
+	kमुक्त(chip->ecc.calc_buf);
 
 	/* Free bad block descriptor memory */
-	if (chip->badblock_pattern && chip->badblock_pattern->options
-			& NAND_BBT_DYNAMICSTRUCT)
-		kfree(chip->badblock_pattern);
+	अगर (chip->badblock_pattern && chip->badblock_pattern->options
+			& न_अंकD_BBT_DYNAMICSTRUCT)
+		kमुक्त(chip->badblock_pattern);
 
-	/* Free the data interface */
-	kfree(chip->best_interface_config);
+	/* Free the data पूर्णांकerface */
+	kमुक्त(chip->best_पूर्णांकerface_config);
 
 	/* Free manufacturer priv data. */
 	nand_manufacturer_cleanup(chip);
 
-	/* Free controller specific allocations after chip identification */
+	/* Free controller specअगरic allocations after chip identअगरication */
 	nand_detach(chip);
 
-	/* Free identification phase allocations */
+	/* Free identअगरication phase allocations */
 	nand_scan_ident_cleanup(chip);
-}
+पूर्ण
 
 EXPORT_SYMBOL_GPL(nand_cleanup);
 

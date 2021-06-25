@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * MDEV driver
  *
@@ -7,109 +8,109 @@
  *             Kirti Wankhede <kwankhede@nvidia.com>
  */
 
-#include <linux/device.h>
-#include <linux/iommu.h>
-#include <linux/mdev.h>
+#समावेश <linux/device.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/mdev.h>
 
-#include "mdev_private.h"
+#समावेश "mdev_private.h"
 
-static int mdev_attach_iommu(struct mdev_device *mdev)
-{
-	int ret;
-	struct iommu_group *group;
+अटल पूर्णांक mdev_attach_iommu(काष्ठा mdev_device *mdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा iommu_group *group;
 
 	group = iommu_group_alloc();
-	if (IS_ERR(group))
-		return PTR_ERR(group);
+	अगर (IS_ERR(group))
+		वापस PTR_ERR(group);
 
 	ret = iommu_group_add_device(group, &mdev->dev);
-	if (!ret)
+	अगर (!ret)
 		dev_info(&mdev->dev, "MDEV: group_id = %d\n",
 			 iommu_group_id(group));
 
 	iommu_group_put(group);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mdev_detach_iommu(struct mdev_device *mdev)
-{
-	iommu_group_remove_device(&mdev->dev);
+अटल व्योम mdev_detach_iommu(काष्ठा mdev_device *mdev)
+अणु
+	iommu_group_हटाओ_device(&mdev->dev);
 	dev_info(&mdev->dev, "MDEV: detaching iommu\n");
-}
+पूर्ण
 
-static int mdev_probe(struct device *dev)
-{
-	struct mdev_driver *drv =
-		container_of(dev->driver, struct mdev_driver, driver);
-	struct mdev_device *mdev = to_mdev_device(dev);
-	int ret;
+अटल पूर्णांक mdev_probe(काष्ठा device *dev)
+अणु
+	काष्ठा mdev_driver *drv =
+		container_of(dev->driver, काष्ठा mdev_driver, driver);
+	काष्ठा mdev_device *mdev = to_mdev_device(dev);
+	पूर्णांक ret;
 
 	ret = mdev_attach_iommu(mdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (drv->probe) {
+	अगर (drv->probe) अणु
 		ret = drv->probe(mdev);
-		if (ret)
+		अगर (ret)
 			mdev_detach_iommu(mdev);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mdev_remove(struct device *dev)
-{
-	struct mdev_driver *drv =
-		container_of(dev->driver, struct mdev_driver, driver);
-	struct mdev_device *mdev = to_mdev_device(dev);
+अटल पूर्णांक mdev_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा mdev_driver *drv =
+		container_of(dev->driver, काष्ठा mdev_driver, driver);
+	काष्ठा mdev_device *mdev = to_mdev_device(dev);
 
-	if (drv->remove)
-		drv->remove(mdev);
+	अगर (drv->हटाओ)
+		drv->हटाओ(mdev);
 
 	mdev_detach_iommu(mdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct bus_type mdev_bus_type = {
+काष्ठा bus_type mdev_bus_type = अणु
 	.name		= "mdev",
 	.probe		= mdev_probe,
-	.remove		= mdev_remove,
-};
+	.हटाओ		= mdev_हटाओ,
+पूर्ण;
 EXPORT_SYMBOL_GPL(mdev_bus_type);
 
 /**
- * mdev_register_driver - register a new MDEV driver
- * @drv: the driver to register
+ * mdev_रेजिस्टर_driver - रेजिस्टर a new MDEV driver
+ * @drv: the driver to रेजिस्टर
  *
  * Returns a negative value on error, otherwise 0.
  **/
-int mdev_register_driver(struct mdev_driver *drv)
-{
+पूर्णांक mdev_रेजिस्टर_driver(काष्ठा mdev_driver *drv)
+अणु
 	/* initialize common driver fields */
 	drv->driver.bus = &mdev_bus_type;
 
-	/* register with core */
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL(mdev_register_driver);
+	/* रेजिस्टर with core */
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(mdev_रेजिस्टर_driver);
 
 /*
- * mdev_unregister_driver - unregister MDEV driver
- * @drv: the driver to unregister
+ * mdev_unरेजिस्टर_driver - unरेजिस्टर MDEV driver
+ * @drv: the driver to unरेजिस्टर
  */
-void mdev_unregister_driver(struct mdev_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL(mdev_unregister_driver);
+व्योम mdev_unरेजिस्टर_driver(काष्ठा mdev_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(mdev_unरेजिस्टर_driver);
 
-int mdev_bus_register(void)
-{
-	return bus_register(&mdev_bus_type);
-}
+पूर्णांक mdev_bus_रेजिस्टर(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&mdev_bus_type);
+पूर्ण
 
-void mdev_bus_unregister(void)
-{
-	bus_unregister(&mdev_bus_type);
-}
+व्योम mdev_bus_unरेजिस्टर(व्योम)
+अणु
+	bus_unरेजिस्टर(&mdev_bus_type);
+पूर्ण

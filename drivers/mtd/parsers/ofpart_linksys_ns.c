@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2021 Rafał Miłecki <rafal@milecki.pl>
+ * Copyright (C) 2021 Rafaध Miधecki <rafal@milecki.pl>
  */
 
-#include <linux/bcm47xx_nvram.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
+#समावेश <linux/bcm47xx_nvram.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
 
-#include "ofpart_linksys_ns.h"
+#समावेश "ofpart_linksys_ns.h"
 
-#define NVRAM_BOOT_PART		"bootpartition"
+#घोषणा NVRAM_BOOT_PART		"bootpartition"
 
-static int ofpart_linksys_ns_bootpartition(void)
-{
-	char buf[4];
-	int bootpartition;
+अटल पूर्णांक ofpart_linksys_ns_bootpartition(व्योम)
+अणु
+	अक्षर buf[4];
+	पूर्णांक bootpartition;
 
 	/* Check CFE environment variable */
-	if (bcm47xx_nvram_getenv(NVRAM_BOOT_PART, buf, sizeof(buf)) > 0) {
-		if (!kstrtoint(buf, 0, &bootpartition))
-			return bootpartition;
+	अगर (bcm47xx_nvram_दो_पर्या(NVRAM_BOOT_PART, buf, माप(buf)) > 0) अणु
+		अगर (!kstrtoपूर्णांक(buf, 0, &bootpartition))
+			वापस bootpartition;
 		pr_warn("Failed to parse %s value \"%s\"\n", NVRAM_BOOT_PART,
 			buf);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_warn("Failed to get NVRAM \"%s\"\n", NVRAM_BOOT_PART);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int linksys_ns_partitions_post_parse(struct mtd_info *mtd,
-				     struct mtd_partition *parts,
-				     int nr_parts)
-{
-	int bootpartition = ofpart_linksys_ns_bootpartition();
-	int trx_idx = 0;
-	int i;
+पूर्णांक linksys_ns_partitions_post_parse(काष्ठा mtd_info *mtd,
+				     काष्ठा mtd_partition *parts,
+				     पूर्णांक nr_parts)
+अणु
+	पूर्णांक bootpartition = ofpart_linksys_ns_bootpartition();
+	पूर्णांक trx_idx = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < nr_parts; i++) {
-		if (of_device_is_compatible(parts[i].of_node, "linksys,ns-firmware")) {
-			if (trx_idx++ == bootpartition)
+	क्रम (i = 0; i < nr_parts; i++) अणु
+		अगर (of_device_is_compatible(parts[i].of_node, "linksys,ns-firmware")) अणु
+			अगर (trx_idx++ == bootpartition)
 				parts[i].name = "firmware";
-			else
+			अन्यथा
 				parts[i].name = "backup";
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

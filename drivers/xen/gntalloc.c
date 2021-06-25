@@ -1,22 +1,23 @@
+<शैली गुरु>
 /******************************************************************************
  * gntalloc.c
  *
- * Device for creating grant references (in user-space) that may be shared
- * with other domains.
+ * Device क्रम creating grant references (in user-space) that may be shared
+ * with other करोमुख्यs.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 /*
  * This driver exists to allow userspace programs in Linux to allocate kernel
- * memory that will later be shared with another domain.  Without this device,
+ * memory that will later be shared with another करोमुख्य.  Without this device,
  * Linux userspace programs cannot create grant references.
  *
  * How this stuff works:
@@ -24,12 +25,12 @@
  *   Y -> mapping the grant from X
  *
  *   1. X uses the gntalloc device to allocate a page of kernel memory, P.
- *   2. X creates an entry in the grant table that says domid(Y) can access P.
- *      This is done without a hypercall unless the grant table needs expansion.
- *   3. X gives the grant reference identifier, GREF, to Y.
- *   4. Y maps the page, either directly into kernel memory for use in a backend
- *      driver, or via a the gntdev device to map into the address space of an
- *      application running in Y. This is the first point at which Xen does any
+ *   2. X creates an entry in the grant table that says करोmid(Y) can access P.
+ *      This is करोne without a hypercall unless the grant table needs expansion.
+ *   3. X gives the grant reference identअगरier, GREF, to Y.
+ *   4. Y maps the page, either directly पूर्णांकo kernel memory क्रम use in a backend
+ *      driver, or via a the gntdev device to map पूर्णांकo the address space of an
+ *      application running in Y. This is the first poपूर्णांक at which Xen करोes any
  *      tracking of the page.
  *   5. A program in X mmap()s a segment of the gntalloc device that corresponds
  *      to the shared page, and can now communicate with Y over the shared page.
@@ -38,119 +39,119 @@
  * NOTE TO USERSPACE LIBRARIES:
  *   The grant allocation and mmap()ing are, naturally, two separate operations.
  *   You set up the sharing by calling the create ioctl() and then the mmap().
- *   Teardown requires munmap() and either close() or ioctl().
+ *   Tearकरोwn requires munmap() and either बंद() or ioctl().
  *
- * WARNING: Since Xen does not allow a guest to forcibly end the use of a grant
+ * WARNING: Since Xen करोes not allow a guest to क्रमcibly end the use of a grant
  * reference, this device can be used to consume kernel memory by leaving grant
- * references mapped by another domain when an application exits. Therefore,
+ * references mapped by another करोमुख्य when an application निकासs. Thereक्रमe,
  * there is a global limit on the number of pages that can be allocated. When
- * all references to the page are unmapped, it will be freed during the next
+ * all references to the page are unmapped, it will be मुक्तd during the next
  * grant operation.
  */
 
-#define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
-#include <linux/atomic.h>
-#include <linux/module.h>
-#include <linux/miscdevice.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/device.h>
-#include <linux/mm.h>
-#include <linux/uaccess.h>
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/highmem.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/highस्मृति.स>
 
-#include <xen/xen.h>
-#include <xen/page.h>
-#include <xen/grant_table.h>
-#include <xen/gntalloc.h>
-#include <xen/events.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/page.h>
+#समावेश <xen/grant_table.h>
+#समावेश <xen/gntभाग.स>
+#समावेश <xen/events.h>
 
-static int limit = 1024;
-module_param(limit, int, 0644);
+अटल पूर्णांक limit = 1024;
+module_param(limit, पूर्णांक, 0644);
 MODULE_PARM_DESC(limit, "Maximum number of grants that may be allocated by "
 		"the gntalloc device");
 
-static LIST_HEAD(gref_list);
-static DEFINE_MUTEX(gref_mutex);
-static int gref_size;
+अटल LIST_HEAD(gref_list);
+अटल DEFINE_MUTEX(gref_mutex);
+अटल पूर्णांक gref_size;
 
-struct notify_info {
-	uint16_t pgoff:12;    /* Bits 0-11: Offset of the byte to clear */
-	uint16_t flags:2;     /* Bits 12-13: Unmap notification flags */
-	int event;            /* Port (event channel) to notify */
-};
+काष्ठा notअगरy_info अणु
+	uपूर्णांक16_t pgoff:12;    /* Bits 0-11: Offset of the byte to clear */
+	uपूर्णांक16_t flags:2;     /* Bits 12-13: Unmap notअगरication flags */
+	पूर्णांक event;            /* Port (event channel) to notअगरy */
+पूर्ण;
 
 /* Metadata on a grant reference. */
-struct gntalloc_gref {
-	struct list_head next_gref;  /* list entry gref_list */
-	struct list_head next_file;  /* list entry file->list, if open */
-	struct page *page;	     /* The shared page */
-	uint64_t file_index;         /* File offset for mmap() */
-	unsigned int users;          /* Use count - when zero, waiting on Xen */
+काष्ठा gntalloc_gref अणु
+	काष्ठा list_head next_gref;  /* list entry gref_list */
+	काष्ठा list_head next_file;  /* list entry file->list, अगर खोलो */
+	काष्ठा page *page;	     /* The shared page */
+	uपूर्णांक64_t file_index;         /* File offset क्रम mmap() */
+	अचिन्हित पूर्णांक users;          /* Use count - when zero, रुकोing on Xen */
 	grant_ref_t gref_id;         /* The grant reference number */
-	struct notify_info notify;   /* Unmap notification */
-};
+	काष्ठा notअगरy_info notअगरy;   /* Unmap notअगरication */
+पूर्ण;
 
-struct gntalloc_file_private_data {
-	struct list_head list;
-	uint64_t index;
-};
+काष्ठा gntalloc_file_निजी_data अणु
+	काष्ठा list_head list;
+	uपूर्णांक64_t index;
+पूर्ण;
 
-struct gntalloc_vma_private_data {
-	struct gntalloc_gref *gref;
-	int users;
-	int count;
-};
+काष्ठा gntalloc_vma_निजी_data अणु
+	काष्ठा gntalloc_gref *gref;
+	पूर्णांक users;
+	पूर्णांक count;
+पूर्ण;
 
-static void __del_gref(struct gntalloc_gref *gref);
+अटल व्योम __del_gref(काष्ठा gntalloc_gref *gref);
 
-static void do_cleanup(void)
-{
-	struct gntalloc_gref *gref, *n;
-	list_for_each_entry_safe(gref, n, &gref_list, next_gref) {
-		if (!gref->users)
+अटल व्योम करो_cleanup(व्योम)
+अणु
+	काष्ठा gntalloc_gref *gref, *n;
+	list_क्रम_each_entry_safe(gref, n, &gref_list, next_gref) अणु
+		अगर (!gref->users)
 			__del_gref(gref);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int add_grefs(struct ioctl_gntalloc_alloc_gref *op,
-	uint32_t *gref_ids, struct gntalloc_file_private_data *priv)
-{
-	int i, rc, readonly;
+अटल पूर्णांक add_grefs(काष्ठा ioctl_gntalloc_alloc_gref *op,
+	uपूर्णांक32_t *gref_ids, काष्ठा gntalloc_file_निजी_data *priv)
+अणु
+	पूर्णांक i, rc, पढ़ोonly;
 	LIST_HEAD(queue_gref);
 	LIST_HEAD(queue_file);
-	struct gntalloc_gref *gref, *next;
+	काष्ठा gntalloc_gref *gref, *next;
 
-	readonly = !(op->flags & GNTALLOC_FLAG_WRITABLE);
-	for (i = 0; i < op->count; i++) {
-		gref = kzalloc(sizeof(*gref), GFP_KERNEL);
-		if (!gref) {
+	पढ़ोonly = !(op->flags & GNTALLOC_FLAG_WRITABLE);
+	क्रम (i = 0; i < op->count; i++) अणु
+		gref = kzalloc(माप(*gref), GFP_KERNEL);
+		अगर (!gref) अणु
 			rc = -ENOMEM;
-			goto undo;
-		}
+			जाओ unकरो;
+		पूर्ण
 		list_add_tail(&gref->next_gref, &queue_gref);
 		list_add_tail(&gref->next_file, &queue_file);
 		gref->users = 1;
 		gref->file_index = op->index + i * PAGE_SIZE;
 		gref->page = alloc_page(GFP_KERNEL|__GFP_ZERO);
-		if (!gref->page) {
+		अगर (!gref->page) अणु
 			rc = -ENOMEM;
-			goto undo;
-		}
+			जाओ unकरो;
+		पूर्ण
 
-		/* Grant foreign access to the page. */
-		rc = gnttab_grant_foreign_access(op->domid,
+		/* Grant क्रमeign access to the page. */
+		rc = gnttab_grant_क्रमeign_access(op->करोmid,
 						 xen_page_to_gfn(gref->page),
-						 readonly);
-		if (rc < 0)
-			goto undo;
+						 पढ़ोonly);
+		अगर (rc < 0)
+			जाओ unकरो;
 		gref_ids[i] = gref->gref_id = rc;
-	}
+	पूर्ण
 
 	/* Add to gref lists. */
 	mutex_lock(&gref_mutex);
@@ -158,241 +159,241 @@ static int add_grefs(struct ioctl_gntalloc_alloc_gref *op,
 	list_splice_tail(&queue_file, &priv->list);
 	mutex_unlock(&gref_mutex);
 
-	return 0;
+	वापस 0;
 
-undo:
+unकरो:
 	mutex_lock(&gref_mutex);
 	gref_size -= (op->count - i);
 
-	list_for_each_entry_safe(gref, next, &queue_file, next_file) {
+	list_क्रम_each_entry_safe(gref, next, &queue_file, next_file) अणु
 		list_del(&gref->next_file);
 		__del_gref(gref);
-	}
+	पूर्ण
 
-	/* It's possible for the target domain to map the just-allocated grant
-	 * references by blindly guessing their IDs; if this is done, then
+	/* It's possible क्रम the target करोमुख्य to map the just-allocated grant
+	 * references by blindly guessing their IDs; अगर this is करोne, then
 	 * __del_gref will leave them in the queue_gref list. They need to be
-	 * added to the global list so that we can free them when they are no
-	 * longer referenced.
+	 * added to the global list so that we can मुक्त them when they are no
+	 * दीर्घer referenced.
 	 */
-	if (unlikely(!list_empty(&queue_gref)))
+	अगर (unlikely(!list_empty(&queue_gref)))
 		list_splice_tail(&queue_gref, &gref_list);
 	mutex_unlock(&gref_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __del_gref(struct gntalloc_gref *gref)
-{
-	if (gref->notify.flags & UNMAP_NOTIFY_CLEAR_BYTE) {
-		uint8_t *tmp = kmap(gref->page);
-		tmp[gref->notify.pgoff] = 0;
+अटल व्योम __del_gref(काष्ठा gntalloc_gref *gref)
+अणु
+	अगर (gref->notअगरy.flags & UNMAP_NOTIFY_CLEAR_BYTE) अणु
+		uपूर्णांक8_t *पंचांगp = kmap(gref->page);
+		पंचांगp[gref->notअगरy.pgoff] = 0;
 		kunmap(gref->page);
-	}
-	if (gref->notify.flags & UNMAP_NOTIFY_SEND_EVENT) {
-		notify_remote_via_evtchn(gref->notify.event);
-		evtchn_put(gref->notify.event);
-	}
+	पूर्ण
+	अगर (gref->notअगरy.flags & UNMAP_NOTIFY_SEND_EVENT) अणु
+		notअगरy_remote_via_evtchn(gref->notअगरy.event);
+		evtchn_put(gref->notअगरy.event);
+	पूर्ण
 
-	gref->notify.flags = 0;
+	gref->notअगरy.flags = 0;
 
-	if (gref->gref_id) {
-		if (gnttab_query_foreign_access(gref->gref_id))
-			return;
+	अगर (gref->gref_id) अणु
+		अगर (gnttab_query_क्रमeign_access(gref->gref_id))
+			वापस;
 
-		if (!gnttab_end_foreign_access_ref(gref->gref_id, 0))
-			return;
+		अगर (!gnttab_end_क्रमeign_access_ref(gref->gref_id, 0))
+			वापस;
 
-		gnttab_free_grant_reference(gref->gref_id);
-	}
+		gnttab_मुक्त_grant_reference(gref->gref_id);
+	पूर्ण
 
 	gref_size--;
 	list_del(&gref->next_gref);
 
-	if (gref->page)
-		__free_page(gref->page);
+	अगर (gref->page)
+		__मुक्त_page(gref->page);
 
-	kfree(gref);
-}
+	kमुक्त(gref);
+पूर्ण
 
-/* finds contiguous grant references in a file, returns the first */
-static struct gntalloc_gref *find_grefs(struct gntalloc_file_private_data *priv,
-		uint64_t index, uint32_t count)
-{
-	struct gntalloc_gref *rv = NULL, *gref;
-	list_for_each_entry(gref, &priv->list, next_file) {
-		if (gref->file_index == index && !rv)
+/* finds contiguous grant references in a file, वापसs the first */
+अटल काष्ठा gntalloc_gref *find_grefs(काष्ठा gntalloc_file_निजी_data *priv,
+		uपूर्णांक64_t index, uपूर्णांक32_t count)
+अणु
+	काष्ठा gntalloc_gref *rv = शून्य, *gref;
+	list_क्रम_each_entry(gref, &priv->list, next_file) अणु
+		अगर (gref->file_index == index && !rv)
 			rv = gref;
-		if (rv) {
-			if (gref->file_index != index)
-				return NULL;
+		अगर (rv) अणु
+			अगर (gref->file_index != index)
+				वापस शून्य;
 			index += PAGE_SIZE;
 			count--;
-			if (count == 0)
-				return rv;
-		}
-	}
-	return NULL;
-}
+			अगर (count == 0)
+				वापस rv;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * -------------------------------------
  *  File operations.
  * -------------------------------------
  */
-static int gntalloc_open(struct inode *inode, struct file *filp)
-{
-	struct gntalloc_file_private_data *priv;
+अटल पूर्णांक gntalloc_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा gntalloc_file_निजी_data *priv;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		goto out_nomem;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		जाओ out_nomem;
 	INIT_LIST_HEAD(&priv->list);
 
-	filp->private_data = priv;
+	filp->निजी_data = priv;
 
 	pr_debug("%s: priv %p\n", __func__, priv);
 
-	return 0;
+	वापस 0;
 
 out_nomem:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int gntalloc_release(struct inode *inode, struct file *filp)
-{
-	struct gntalloc_file_private_data *priv = filp->private_data;
-	struct gntalloc_gref *gref;
+अटल पूर्णांक gntalloc_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा gntalloc_file_निजी_data *priv = filp->निजी_data;
+	काष्ठा gntalloc_gref *gref;
 
 	pr_debug("%s: priv %p\n", __func__, priv);
 
 	mutex_lock(&gref_mutex);
-	while (!list_empty(&priv->list)) {
+	जबतक (!list_empty(&priv->list)) अणु
 		gref = list_entry(priv->list.next,
-			struct gntalloc_gref, next_file);
+			काष्ठा gntalloc_gref, next_file);
 		list_del(&gref->next_file);
 		gref->users--;
-		if (gref->users == 0)
+		अगर (gref->users == 0)
 			__del_gref(gref);
-	}
-	kfree(priv);
+	पूर्ण
+	kमुक्त(priv);
 	mutex_unlock(&gref_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long gntalloc_ioctl_alloc(struct gntalloc_file_private_data *priv,
-		struct ioctl_gntalloc_alloc_gref __user *arg)
-{
-	int rc = 0;
-	struct ioctl_gntalloc_alloc_gref op;
-	uint32_t *gref_ids;
+अटल दीर्घ gntalloc_ioctl_alloc(काष्ठा gntalloc_file_निजी_data *priv,
+		काष्ठा ioctl_gntalloc_alloc_gref __user *arg)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा ioctl_gntalloc_alloc_gref op;
+	uपूर्णांक32_t *gref_ids;
 
 	pr_debug("%s: priv %p\n", __func__, priv);
 
-	if (copy_from_user(&op, arg, sizeof(op))) {
+	अगर (copy_from_user(&op, arg, माप(op))) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	gref_ids = kcalloc(op.count, sizeof(gref_ids[0]), GFP_KERNEL);
-	if (!gref_ids) {
+	gref_ids = kसुस्मृति(op.count, माप(gref_ids[0]), GFP_KERNEL);
+	अगर (!gref_ids) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mutex_lock(&gref_mutex);
 	/* Clean up pages that were at zero (local) users but were still mapped
-	 * by remote domains. Since those pages count towards the limit that we
-	 * are about to enforce, removing them here is a good idea.
+	 * by remote करोमुख्यs. Since those pages count towards the limit that we
+	 * are about to enक्रमce, removing them here is a good idea.
 	 */
-	do_cleanup();
-	if (gref_size + op.count > limit) {
+	करो_cleanup();
+	अगर (gref_size + op.count > limit) अणु
 		mutex_unlock(&gref_mutex);
 		rc = -ENOSPC;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 	gref_size += op.count;
 	op.index = priv->index;
 	priv->index += op.count * PAGE_SIZE;
 	mutex_unlock(&gref_mutex);
 
 	rc = add_grefs(&op, gref_ids, priv);
-	if (rc < 0)
-		goto out_free;
+	अगर (rc < 0)
+		जाओ out_मुक्त;
 
 	/* Once we finish add_grefs, it is unsafe to touch the new reference,
-	 * since it is possible for a concurrent ioctl to remove it (by guessing
-	 * its index). If the userspace application doesn't provide valid memory
-	 * to write the IDs to, then it will need to close the file in order to
-	 * release - which it will do by segfaulting when it tries to access the
-	 * IDs to close them.
+	 * since it is possible क्रम a concurrent ioctl to हटाओ it (by guessing
+	 * its index). If the userspace application करोesn't provide valid memory
+	 * to ग_लिखो the IDs to, then it will need to बंद the file in order to
+	 * release - which it will करो by segfaulting when it tries to access the
+	 * IDs to बंद them.
 	 */
-	if (copy_to_user(arg, &op, sizeof(op))) {
+	अगर (copy_to_user(arg, &op, माप(op))) अणु
 		rc = -EFAULT;
-		goto out_free;
-	}
-	if (copy_to_user(arg->gref_ids, gref_ids,
-			sizeof(gref_ids[0]) * op.count)) {
+		जाओ out_मुक्त;
+	पूर्ण
+	अगर (copy_to_user(arg->gref_ids, gref_ids,
+			माप(gref_ids[0]) * op.count)) अणु
 		rc = -EFAULT;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-out_free:
-	kfree(gref_ids);
+out_मुक्त:
+	kमुक्त(gref_ids);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static long gntalloc_ioctl_dealloc(struct gntalloc_file_private_data *priv,
-		void __user *arg)
-{
-	int i, rc = 0;
-	struct ioctl_gntalloc_dealloc_gref op;
-	struct gntalloc_gref *gref, *n;
+अटल दीर्घ gntalloc_ioctl_dealloc(काष्ठा gntalloc_file_निजी_data *priv,
+		व्योम __user *arg)
+अणु
+	पूर्णांक i, rc = 0;
+	काष्ठा ioctl_gntalloc_dealloc_gref op;
+	काष्ठा gntalloc_gref *gref, *n;
 
 	pr_debug("%s: priv %p\n", __func__, priv);
 
-	if (copy_from_user(&op, arg, sizeof(op))) {
+	अगर (copy_from_user(&op, arg, माप(op))) अणु
 		rc = -EFAULT;
-		goto dealloc_grant_out;
-	}
+		जाओ dealloc_grant_out;
+	पूर्ण
 
 	mutex_lock(&gref_mutex);
 	gref = find_grefs(priv, op.index, op.count);
-	if (gref) {
+	अगर (gref) अणु
 		/* Remove from the file list only, and decrease reference count.
-		 * The later call to do_cleanup() will remove from gref_list and
-		 * free the memory if the pages aren't mapped anywhere.
+		 * The later call to करो_cleanup() will हटाओ from gref_list and
+		 * मुक्त the memory अगर the pages aren't mapped anywhere.
 		 */
-		for (i = 0; i < op.count; i++) {
+		क्रम (i = 0; i < op.count; i++) अणु
 			n = list_entry(gref->next_file.next,
-				struct gntalloc_gref, next_file);
+				काष्ठा gntalloc_gref, next_file);
 			list_del(&gref->next_file);
 			gref->users--;
 			gref = n;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rc = -EINVAL;
-	}
+	पूर्ण
 
-	do_cleanup();
+	करो_cleanup();
 
 	mutex_unlock(&gref_mutex);
 dealloc_grant_out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static long gntalloc_ioctl_unmap_notify(struct gntalloc_file_private_data *priv,
-		void __user *arg)
-{
-	struct ioctl_gntalloc_unmap_notify op;
-	struct gntalloc_gref *gref;
-	uint64_t index;
-	int pgoff;
-	int rc;
+अटल दीर्घ gntalloc_ioctl_unmap_notअगरy(काष्ठा gntalloc_file_निजी_data *priv,
+		व्योम __user *arg)
+अणु
+	काष्ठा ioctl_gntalloc_unmap_notअगरy op;
+	काष्ठा gntalloc_gref *gref;
+	uपूर्णांक64_t index;
+	पूर्णांक pgoff;
+	पूर्णांक rc;
 
-	if (copy_from_user(&op, arg, sizeof(op)))
-		return -EFAULT;
+	अगर (copy_from_user(&op, arg, माप(op)))
+		वापस -EFAULT;
 
 	index = op.index & ~(PAGE_SIZE - 1);
 	pgoff = op.index & (PAGE_SIZE - 1);
@@ -400,124 +401,124 @@ static long gntalloc_ioctl_unmap_notify(struct gntalloc_file_private_data *priv,
 	mutex_lock(&gref_mutex);
 
 	gref = find_grefs(priv, index, 1);
-	if (!gref) {
+	अगर (!gref) अणु
 		rc = -ENOENT;
-		goto unlock_out;
-	}
+		जाओ unlock_out;
+	पूर्ण
 
-	if (op.action & ~(UNMAP_NOTIFY_CLEAR_BYTE|UNMAP_NOTIFY_SEND_EVENT)) {
+	अगर (op.action & ~(UNMAP_NOTIFY_CLEAR_BYTE|UNMAP_NOTIFY_SEND_EVENT)) अणु
 		rc = -EINVAL;
-		goto unlock_out;
-	}
+		जाओ unlock_out;
+	पूर्ण
 
 	/* We need to grab a reference to the event channel we are going to use
-	 * to send the notify before releasing the reference we may already have
-	 * (if someone has called this ioctl twice). This is required so that
-	 * it is possible to change the clear_byte part of the notification
+	 * to send the notअगरy beक्रमe releasing the reference we may alपढ़ोy have
+	 * (अगर someone has called this ioctl twice). This is required so that
+	 * it is possible to change the clear_byte part of the notअगरication
 	 * without disturbing the event channel part, which may now be the last
 	 * reference to that event channel.
 	 */
-	if (op.action & UNMAP_NOTIFY_SEND_EVENT) {
-		if (evtchn_get(op.event_channel_port)) {
+	अगर (op.action & UNMAP_NOTIFY_SEND_EVENT) अणु
+		अगर (evtchn_get(op.event_channel_port)) अणु
 			rc = -EINVAL;
-			goto unlock_out;
-		}
-	}
+			जाओ unlock_out;
+		पूर्ण
+	पूर्ण
 
-	if (gref->notify.flags & UNMAP_NOTIFY_SEND_EVENT)
-		evtchn_put(gref->notify.event);
+	अगर (gref->notअगरy.flags & UNMAP_NOTIFY_SEND_EVENT)
+		evtchn_put(gref->notअगरy.event);
 
-	gref->notify.flags = op.action;
-	gref->notify.pgoff = pgoff;
-	gref->notify.event = op.event_channel_port;
+	gref->notअगरy.flags = op.action;
+	gref->notअगरy.pgoff = pgoff;
+	gref->notअगरy.event = op.event_channel_port;
 	rc = 0;
 
  unlock_out:
 	mutex_unlock(&gref_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static long gntalloc_ioctl(struct file *filp, unsigned int cmd,
-		unsigned long arg)
-{
-	struct gntalloc_file_private_data *priv = filp->private_data;
+अटल दीर्घ gntalloc_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
+		अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा gntalloc_file_निजी_data *priv = filp->निजी_data;
 
-	switch (cmd) {
-	case IOCTL_GNTALLOC_ALLOC_GREF:
-		return gntalloc_ioctl_alloc(priv, (void __user *)arg);
+	चयन (cmd) अणु
+	हाल IOCTL_GNTALLOC_ALLOC_GREF:
+		वापस gntalloc_ioctl_alloc(priv, (व्योम __user *)arg);
 
-	case IOCTL_GNTALLOC_DEALLOC_GREF:
-		return gntalloc_ioctl_dealloc(priv, (void __user *)arg);
+	हाल IOCTL_GNTALLOC_DEALLOC_GREF:
+		वापस gntalloc_ioctl_dealloc(priv, (व्योम __user *)arg);
 
-	case IOCTL_GNTALLOC_SET_UNMAP_NOTIFY:
-		return gntalloc_ioctl_unmap_notify(priv, (void __user *)arg);
+	हाल IOCTL_GNTALLOC_SET_UNMAP_NOTIFY:
+		वापस gntalloc_ioctl_unmap_notअगरy(priv, (व्योम __user *)arg);
 
-	default:
-		return -ENOIOCTLCMD;
-	}
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gntalloc_vma_open(struct vm_area_struct *vma)
-{
-	struct gntalloc_vma_private_data *priv = vma->vm_private_data;
+अटल व्योम gntalloc_vma_खोलो(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा gntalloc_vma_निजी_data *priv = vma->vm_निजी_data;
 
-	if (!priv)
-		return;
+	अगर (!priv)
+		वापस;
 
 	mutex_lock(&gref_mutex);
 	priv->users++;
 	mutex_unlock(&gref_mutex);
-}
+पूर्ण
 
-static void gntalloc_vma_close(struct vm_area_struct *vma)
-{
-	struct gntalloc_vma_private_data *priv = vma->vm_private_data;
-	struct gntalloc_gref *gref, *next;
-	int i;
+अटल व्योम gntalloc_vma_बंद(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा gntalloc_vma_निजी_data *priv = vma->vm_निजी_data;
+	काष्ठा gntalloc_gref *gref, *next;
+	पूर्णांक i;
 
-	if (!priv)
-		return;
+	अगर (!priv)
+		वापस;
 
 	mutex_lock(&gref_mutex);
 	priv->users--;
-	if (priv->users == 0) {
+	अगर (priv->users == 0) अणु
 		gref = priv->gref;
-		for (i = 0; i < priv->count; i++) {
+		क्रम (i = 0; i < priv->count; i++) अणु
 			gref->users--;
 			next = list_entry(gref->next_gref.next,
-					  struct gntalloc_gref, next_gref);
-			if (gref->users == 0)
+					  काष्ठा gntalloc_gref, next_gref);
+			अगर (gref->users == 0)
 				__del_gref(gref);
 			gref = next;
-		}
-		kfree(priv);
-	}
+		पूर्ण
+		kमुक्त(priv);
+	पूर्ण
 	mutex_unlock(&gref_mutex);
-}
+पूर्ण
 
-static const struct vm_operations_struct gntalloc_vmops = {
-	.open = gntalloc_vma_open,
-	.close = gntalloc_vma_close,
-};
+अटल स्थिर काष्ठा vm_operations_काष्ठा gntalloc_vmops = अणु
+	.खोलो = gntalloc_vma_खोलो,
+	.बंद = gntalloc_vma_बंद,
+पूर्ण;
 
-static int gntalloc_mmap(struct file *filp, struct vm_area_struct *vma)
-{
-	struct gntalloc_file_private_data *priv = filp->private_data;
-	struct gntalloc_vma_private_data *vm_priv;
-	struct gntalloc_gref *gref;
-	int count = vma_pages(vma);
-	int rv, i;
+अटल पूर्णांक gntalloc_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा gntalloc_file_निजी_data *priv = filp->निजी_data;
+	काष्ठा gntalloc_vma_निजी_data *vm_priv;
+	काष्ठा gntalloc_gref *gref;
+	पूर्णांक count = vma_pages(vma);
+	पूर्णांक rv, i;
 
-	if (!(vma->vm_flags & VM_SHARED)) {
+	अगर (!(vma->vm_flags & VM_SHARED)) अणु
 		pr_err("%s: Mapping must be shared\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	vm_priv = kmalloc(sizeof(*vm_priv), GFP_KERNEL);
-	if (!vm_priv)
-		return -ENOMEM;
+	vm_priv = kदो_स्मृति(माप(*vm_priv), GFP_KERNEL);
+	अगर (!vm_priv)
+		वापस -ENOMEM;
 
 	mutex_lock(&gref_mutex);
 
@@ -525,86 +526,86 @@ static int gntalloc_mmap(struct file *filp, struct vm_area_struct *vma)
 		       priv, vm_priv, vma->vm_pgoff, count);
 
 	gref = find_grefs(priv, vma->vm_pgoff << PAGE_SHIFT, count);
-	if (gref == NULL) {
+	अगर (gref == शून्य) अणु
 		rv = -ENOENT;
 		pr_debug("%s: Could not find grant reference",
 				__func__);
-		kfree(vm_priv);
-		goto out_unlock;
-	}
+		kमुक्त(vm_priv);
+		जाओ out_unlock;
+	पूर्ण
 
 	vm_priv->gref = gref;
 	vm_priv->users = 1;
 	vm_priv->count = count;
 
-	vma->vm_private_data = vm_priv;
+	vma->vm_निजी_data = vm_priv;
 
 	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
 
 	vma->vm_ops = &gntalloc_vmops;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		gref->users++;
 		rv = vm_insert_page(vma, vma->vm_start + i * PAGE_SIZE,
 				gref->page);
-		if (rv)
-			goto out_unlock;
+		अगर (rv)
+			जाओ out_unlock;
 
 		gref = list_entry(gref->next_file.next,
-				struct gntalloc_gref, next_file);
-	}
+				काष्ठा gntalloc_gref, next_file);
+	पूर्ण
 	rv = 0;
 
 out_unlock:
 	mutex_unlock(&gref_mutex);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static const struct file_operations gntalloc_fops = {
+अटल स्थिर काष्ठा file_operations gntalloc_fops = अणु
 	.owner = THIS_MODULE,
-	.open = gntalloc_open,
+	.खोलो = gntalloc_खोलो,
 	.release = gntalloc_release,
 	.unlocked_ioctl = gntalloc_ioctl,
 	.mmap = gntalloc_mmap
-};
+पूर्ण;
 
 /*
  * -------------------------------------
- * Module creation/destruction.
+ * Module creation/deकाष्ठाion.
  * -------------------------------------
  */
-static struct miscdevice gntalloc_miscdev = {
+अटल काष्ठा miscdevice gntalloc_miscdev = अणु
 	.minor	= MISC_DYNAMIC_MINOR,
 	.name	= "xen/gntalloc",
 	.fops	= &gntalloc_fops,
-};
+पूर्ण;
 
-static int __init gntalloc_init(void)
-{
-	int err;
+अटल पूर्णांक __init gntalloc_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	if (!xen_domain())
-		return -ENODEV;
+	अगर (!xen_करोमुख्य())
+		वापस -ENODEV;
 
-	err = misc_register(&gntalloc_miscdev);
-	if (err != 0) {
+	err = misc_रेजिस्टर(&gntalloc_miscdev);
+	अगर (err != 0) अणु
 		pr_err("Could not register misc gntalloc device\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	pr_debug("Created grant allocation device at %d,%d\n",
 			MISC_MAJOR, gntalloc_miscdev.minor);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit gntalloc_exit(void)
-{
-	misc_deregister(&gntalloc_miscdev);
-}
+अटल व्योम __निकास gntalloc_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&gntalloc_miscdev);
+पूर्ण
 
 module_init(gntalloc_init);
-module_exit(gntalloc_exit);
+module_निकास(gntalloc_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Carter Weatherly <carter.weatherly@jhuapl.edu>, "

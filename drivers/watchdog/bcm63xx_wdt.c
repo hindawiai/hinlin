@@ -1,312 +1,313 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *  Broadcom BCM63xx SoC watchdog driver
+ *  Broadcom BCM63xx SoC watchकरोg driver
  *
  *  Copyright (C) 2007, Miguel Gaio <miguel.gaio@efixo.com>
- *  Copyright (C) 2008, Florian Fainelli <florian@openwrt.org>
+ *  Copyright (C) 2008, Florian Fainelli <florian@खोलोwrt.org>
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/bitops.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/miscdevice.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/uaccess.h>
-#include <linux/watchdog.h>
-#include <linux/timer.h>
-#include <linux/jiffies.h>
-#include <linux/interrupt.h>
-#include <linux/ptrace.h>
-#include <linux/resource.h>
-#include <linux/platform_device.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/resource.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <bcm63xx_cpu.h>
-#include <bcm63xx_io.h>
-#include <bcm63xx_regs.h>
-#include <bcm63xx_timer.h>
+#समावेश <bcm63xx_cpu.h>
+#समावेश <bcm63xx_पन.स>
+#समावेश <bcm63xx_regs.h>
+#समावेश <bcm63xx_समयr.h>
 
-#define PFX KBUILD_MODNAME
+#घोषणा PFX KBUILD_MODNAME
 
-#define WDT_HZ		50000000 /* Fclk */
-#define WDT_DEFAULT_TIME	30      /* seconds */
-#define WDT_MAX_TIME		256     /* seconds */
+#घोषणा WDT_HZ		50000000 /* Fclk */
+#घोषणा WDT_DEFAULT_TIME	30      /* seconds */
+#घोषणा WDT_MAX_TIME		256     /* seconds */
 
-static struct {
-	void __iomem *regs;
-	struct timer_list timer;
-	unsigned long inuse;
+अटल काष्ठा अणु
+	व्योम __iomem *regs;
+	काष्ठा समयr_list समयr;
+	अचिन्हित दीर्घ inuse;
 	atomic_t ticks;
-} bcm63xx_wdt_device;
+पूर्ण bcm63xx_wdt_device;
 
-static int expect_close;
+अटल पूर्णांक expect_बंद;
 
-static int wdt_time = WDT_DEFAULT_TIME;
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल पूर्णांक wdt_समय = WDT_DEFAULT_TIME;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 	__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
 /* HW functions */
-static void bcm63xx_wdt_hw_start(void)
-{
-	bcm_writel(0xfffffffe, bcm63xx_wdt_device.regs + WDT_DEFVAL_REG);
-	bcm_writel(WDT_START_1, bcm63xx_wdt_device.regs + WDT_CTL_REG);
-	bcm_writel(WDT_START_2, bcm63xx_wdt_device.regs + WDT_CTL_REG);
-}
+अटल व्योम bcm63xx_wdt_hw_start(व्योम)
+अणु
+	bcm_ग_लिखोl(0xfffffffe, bcm63xx_wdt_device.regs + WDT_DEFVAL_REG);
+	bcm_ग_लिखोl(WDT_START_1, bcm63xx_wdt_device.regs + WDT_CTL_REG);
+	bcm_ग_लिखोl(WDT_START_2, bcm63xx_wdt_device.regs + WDT_CTL_REG);
+पूर्ण
 
-static void bcm63xx_wdt_hw_stop(void)
-{
-	bcm_writel(WDT_STOP_1, bcm63xx_wdt_device.regs + WDT_CTL_REG);
-	bcm_writel(WDT_STOP_2, bcm63xx_wdt_device.regs + WDT_CTL_REG);
-}
+अटल व्योम bcm63xx_wdt_hw_stop(व्योम)
+अणु
+	bcm_ग_लिखोl(WDT_STOP_1, bcm63xx_wdt_device.regs + WDT_CTL_REG);
+	bcm_ग_लिखोl(WDT_STOP_2, bcm63xx_wdt_device.regs + WDT_CTL_REG);
+पूर्ण
 
-static void bcm63xx_wdt_isr(void *data)
-{
-	struct pt_regs *regs = get_irq_regs();
+अटल व्योम bcm63xx_wdt_isr(व्योम *data)
+अणु
+	काष्ठा pt_regs *regs = get_irq_regs();
 
 	die(PFX " fire", regs);
-}
+पूर्ण
 
-static void bcm63xx_timer_tick(struct timer_list *unused)
-{
-	if (!atomic_dec_and_test(&bcm63xx_wdt_device.ticks)) {
+अटल व्योम bcm63xx_समयr_tick(काष्ठा समयr_list *unused)
+अणु
+	अगर (!atomic_dec_and_test(&bcm63xx_wdt_device.ticks)) अणु
 		bcm63xx_wdt_hw_start();
-		mod_timer(&bcm63xx_wdt_device.timer, jiffies + HZ);
-	} else
+		mod_समयr(&bcm63xx_wdt_device.समयr, jअगरfies + HZ);
+	पूर्ण अन्यथा
 		pr_crit("watchdog will restart system\n");
-}
+पूर्ण
 
-static void bcm63xx_wdt_pet(void)
-{
-	atomic_set(&bcm63xx_wdt_device.ticks, wdt_time);
-}
+अटल व्योम bcm63xx_wdt_pet(व्योम)
+अणु
+	atomic_set(&bcm63xx_wdt_device.ticks, wdt_समय);
+पूर्ण
 
-static void bcm63xx_wdt_start(void)
-{
+अटल व्योम bcm63xx_wdt_start(व्योम)
+अणु
 	bcm63xx_wdt_pet();
-	bcm63xx_timer_tick(0);
-}
+	bcm63xx_समयr_tick(0);
+पूर्ण
 
-static void bcm63xx_wdt_pause(void)
-{
-	del_timer_sync(&bcm63xx_wdt_device.timer);
+अटल व्योम bcm63xx_wdt_छोड़ो(व्योम)
+अणु
+	del_समयr_sync(&bcm63xx_wdt_device.समयr);
 	bcm63xx_wdt_hw_stop();
-}
+पूर्ण
 
-static int bcm63xx_wdt_settimeout(int new_time)
-{
-	if ((new_time <= 0) || (new_time > WDT_MAX_TIME))
-		return -EINVAL;
+अटल पूर्णांक bcm63xx_wdt_समय_रखोout(पूर्णांक new_समय)
+अणु
+	अगर ((new_समय <= 0) || (new_समय > WDT_MAX_TIME))
+		वापस -EINVAL;
 
-	wdt_time = new_time;
+	wdt_समय = new_समय;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm63xx_wdt_open(struct inode *inode, struct file *file)
-{
-	if (test_and_set_bit(0, &bcm63xx_wdt_device.inuse))
-		return -EBUSY;
+अटल पूर्णांक bcm63xx_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_and_set_bit(0, &bcm63xx_wdt_device.inuse))
+		वापस -EBUSY;
 
 	bcm63xx_wdt_start();
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int bcm63xx_wdt_release(struct inode *inode, struct file *file)
-{
-	if (expect_close == 42)
-		bcm63xx_wdt_pause();
-	else {
+अटल पूर्णांक bcm63xx_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (expect_बंद == 42)
+		bcm63xx_wdt_छोड़ो();
+	अन्यथा अणु
 		pr_crit("Unexpected close, not stopping watchdog!\n");
 		bcm63xx_wdt_start();
-	}
+	पूर्ण
 	clear_bit(0, &bcm63xx_wdt_device.inuse);
-	expect_close = 0;
-	return 0;
-}
+	expect_बंद = 0;
+	वापस 0;
+पूर्ण
 
-static ssize_t bcm63xx_wdt_write(struct file *file, const char *data,
-				size_t len, loff_t *ppos)
-{
-	if (len) {
-		if (!nowayout) {
-			size_t i;
+अटल sमाप_प्रकार bcm63xx_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर *data,
+				माप_प्रकार len, loff_t *ppos)
+अणु
+	अगर (len) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
 
-			/* In case it was set long ago */
-			expect_close = 0;
+			/* In हाल it was set दीर्घ ago */
+			expect_बंद = 0;
 
-			for (i = 0; i != len; i++) {
-				char c;
-				if (get_user(c, data + i))
-					return -EFAULT;
-				if (c == 'V')
-					expect_close = 42;
-			}
-		}
+			क्रम (i = 0; i != len; i++) अणु
+				अक्षर c;
+				अगर (get_user(c, data + i))
+					वापस -EFAULT;
+				अगर (c == 'V')
+					expect_बंद = 42;
+			पूर्ण
+		पूर्ण
 		bcm63xx_wdt_pet();
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static struct watchdog_info bcm63xx_wdt_info = {
+अटल काष्ठा watchकरोg_info bcm63xx_wdt_info = अणु
 	.identity       = PFX,
 	.options        = WDIOF_SETTIMEOUT |
 				WDIOF_KEEPALIVEPING |
 				WDIOF_MAGICCLOSE,
-};
+पूर्ण;
 
 
-static long bcm63xx_wdt_ioctl(struct file *file, unsigned int cmd,
-				unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	int new_value, retval = -EINVAL;
+अटल दीर्घ bcm63xx_wdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+				अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	पूर्णांक new_value, retval = -EINVAL;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		return copy_to_user(argp, &bcm63xx_wdt_info,
-			sizeof(bcm63xx_wdt_info)) ? -EFAULT : 0;
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		वापस copy_to_user(argp, &bcm63xx_wdt_info,
+			माप(bcm63xx_wdt_info)) ? -EFAULT : 0;
 
-	case WDIOC_GETSTATUS:
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(0, p);
+	हाल WDIOC_GETSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(0, p);
 
-	case WDIOC_SETOPTIONS:
-		if (get_user(new_value, p))
-			return -EFAULT;
+	हाल WDIOC_SETOPTIONS:
+		अगर (get_user(new_value, p))
+			वापस -EFAULT;
 
-		if (new_value & WDIOS_DISABLECARD) {
-			bcm63xx_wdt_pause();
+		अगर (new_value & WDIOS_DISABLECARD) अणु
+			bcm63xx_wdt_छोड़ो();
 			retval = 0;
-		}
-		if (new_value & WDIOS_ENABLECARD) {
+		पूर्ण
+		अगर (new_value & WDIOS_ENABLECARD) अणु
 			bcm63xx_wdt_start();
 			retval = 0;
-		}
+		पूर्ण
 
-		return retval;
+		वापस retval;
 
-	case WDIOC_KEEPALIVE:
+	हाल WDIOC_KEEPALIVE:
 		bcm63xx_wdt_pet();
-		return 0;
+		वापस 0;
 
-	case WDIOC_SETTIMEOUT:
-		if (get_user(new_value, p))
-			return -EFAULT;
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(new_value, p))
+			वापस -EFAULT;
 
-		if (bcm63xx_wdt_settimeout(new_value))
-			return -EINVAL;
+		अगर (bcm63xx_wdt_समय_रखोout(new_value))
+			वापस -EINVAL;
 
 		bcm63xx_wdt_pet();
 
-	case WDIOC_GETTIMEOUT:
-		return put_user(wdt_time, p);
+	हाल WDIOC_GETTIMEOUT:
+		वापस put_user(wdt_समय, p);
 
-	default:
-		return -ENOTTY;
+	शेष:
+		वापस -ENOTTY;
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct file_operations bcm63xx_wdt_fops = {
+अटल स्थिर काष्ठा file_operations bcm63xx_wdt_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.write		= bcm63xx_wdt_write,
+	.ग_लिखो		= bcm63xx_wdt_ग_लिखो,
 	.unlocked_ioctl	= bcm63xx_wdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= bcm63xx_wdt_open,
+	.खोलो		= bcm63xx_wdt_खोलो,
 	.release	= bcm63xx_wdt_release,
-};
+पूर्ण;
 
-static struct miscdevice bcm63xx_wdt_miscdev = {
+अटल काष्ठा miscdevice bcm63xx_wdt_miscdev = अणु
 	.minor	= WATCHDOG_MINOR,
 	.name	= "watchdog",
 	.fops	= &bcm63xx_wdt_fops,
-};
+पूर्ण;
 
 
-static int bcm63xx_wdt_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct resource *r;
+अटल पूर्णांक bcm63xx_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा resource *r;
 
-	timer_setup(&bcm63xx_wdt_device.timer, bcm63xx_timer_tick, 0);
+	समयr_setup(&bcm63xx_wdt_device.समयr, bcm63xx_समयr_tick, 0);
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!r) {
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!r) अणु
 		dev_err(&pdev->dev, "failed to get resources\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	bcm63xx_wdt_device.regs = devm_ioremap(&pdev->dev, r->start,
 							resource_size(r));
-	if (!bcm63xx_wdt_device.regs) {
+	अगर (!bcm63xx_wdt_device.regs) अणु
 		dev_err(&pdev->dev, "failed to remap I/O resources\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	ret = bcm63xx_timer_register(TIMER_WDT_ID, bcm63xx_wdt_isr, NULL);
-	if (ret < 0) {
+	ret = bcm63xx_समयr_रेजिस्टर(TIMER_WDT_ID, bcm63xx_wdt_isr, शून्य);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to register wdt timer isr\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (bcm63xx_wdt_settimeout(wdt_time)) {
-		bcm63xx_wdt_settimeout(WDT_DEFAULT_TIME);
+	अगर (bcm63xx_wdt_समय_रखोout(wdt_समय)) अणु
+		bcm63xx_wdt_समय_रखोout(WDT_DEFAULT_TIME);
 		dev_info(&pdev->dev,
 			": wdt_time value must be 1 <= wdt_time <= 256, using %d\n",
-			wdt_time);
-	}
+			wdt_समय);
+	पूर्ण
 
-	ret = misc_register(&bcm63xx_wdt_miscdev);
-	if (ret < 0) {
+	ret = misc_रेजिस्टर(&bcm63xx_wdt_miscdev);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to register watchdog device\n");
-		goto unregister_timer;
-	}
+		जाओ unरेजिस्टर_समयr;
+	पूर्ण
 
 	dev_info(&pdev->dev, " started, timer margin: %d sec\n",
 						WDT_DEFAULT_TIME);
 
-	return 0;
+	वापस 0;
 
-unregister_timer:
-	bcm63xx_timer_unregister(TIMER_WDT_ID);
-	return ret;
-}
+unरेजिस्टर_समयr:
+	bcm63xx_समयr_unरेजिस्टर(TIMER_WDT_ID);
+	वापस ret;
+पूर्ण
 
-static int bcm63xx_wdt_remove(struct platform_device *pdev)
-{
-	if (!nowayout)
-		bcm63xx_wdt_pause();
+अटल पूर्णांक bcm63xx_wdt_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (!nowayout)
+		bcm63xx_wdt_छोड़ो();
 
-	misc_deregister(&bcm63xx_wdt_miscdev);
-	bcm63xx_timer_unregister(TIMER_WDT_ID);
-	return 0;
-}
+	misc_deरेजिस्टर(&bcm63xx_wdt_miscdev);
+	bcm63xx_समयr_unरेजिस्टर(TIMER_WDT_ID);
+	वापस 0;
+पूर्ण
 
-static void bcm63xx_wdt_shutdown(struct platform_device *pdev)
-{
-	bcm63xx_wdt_pause();
-}
+अटल व्योम bcm63xx_wdt_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	bcm63xx_wdt_छोड़ो();
+पूर्ण
 
-static struct platform_driver bcm63xx_wdt_driver = {
+अटल काष्ठा platक्रमm_driver bcm63xx_wdt_driver = अणु
 	.probe	= bcm63xx_wdt_probe,
-	.remove = bcm63xx_wdt_remove,
-	.shutdown = bcm63xx_wdt_shutdown,
-	.driver = {
+	.हटाओ = bcm63xx_wdt_हटाओ,
+	.shutकरोwn = bcm63xx_wdt_shutकरोwn,
+	.driver = अणु
 		.name = "bcm63xx-wdt",
-	}
-};
+	पूर्ण
+पूर्ण;
 
-module_platform_driver(bcm63xx_wdt_driver);
+module_platक्रमm_driver(bcm63xx_wdt_driver);
 
 MODULE_AUTHOR("Miguel Gaio <miguel.gaio@efixo.com>");
 MODULE_AUTHOR("Florian Fainelli <florian@openwrt.org>");

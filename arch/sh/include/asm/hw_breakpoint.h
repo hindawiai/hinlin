@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_HW_BREAKPOINT_H
-#define __ASM_SH_HW_BREAKPOINT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_HW_BREAKPOINT_H
+#घोषणा __ASM_SH_HW_BREAKPOINT_H
 
-#include <uapi/asm/hw_breakpoint.h>
+#समावेश <uapi/यंत्र/hw_अवरोधpoपूर्णांक.h>
 
-#define __ARCH_HW_BREAKPOINT_H
+#घोषणा __ARCH_HW_BREAKPOINT_H
 
-#include <linux/kdebug.h>
-#include <linux/types.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/types.h>
 
-struct arch_hw_breakpoint {
-	unsigned long	address;
+काष्ठा arch_hw_अवरोधpoपूर्णांक अणु
+	अचिन्हित दीर्घ	address;
 	u16		len;
 	u16		type;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SH_BREAKPOINT_READ	= (1 << 1),
 	SH_BREAKPOINT_WRITE	= (1 << 2),
 	SH_BREAKPOINT_RW	= SH_BREAKPOINT_READ | SH_BREAKPOINT_WRITE,
@@ -24,50 +25,50 @@ enum {
 	SH_BREAKPOINT_LEN_2	= (1 << 13),
 	SH_BREAKPOINT_LEN_4	= SH_BREAKPOINT_LEN_1 | SH_BREAKPOINT_LEN_2,
 	SH_BREAKPOINT_LEN_8	= (1 << 14),
-};
+पूर्ण;
 
-struct sh_ubc {
-	const char	*name;
-	unsigned int	num_events;
-	unsigned int	trap_nr;
-	void		(*enable)(struct arch_hw_breakpoint *, int);
-	void		(*disable)(struct arch_hw_breakpoint *, int);
-	void		(*enable_all)(unsigned long);
-	void		(*disable_all)(void);
-	unsigned long	(*active_mask)(void);
-	unsigned long	(*triggered_mask)(void);
-	void		(*clear_triggered_mask)(unsigned long);
-	struct clk	*clk;	/* optional interface clock / MSTP bit */
-};
+काष्ठा sh_ubc अणु
+	स्थिर अक्षर	*name;
+	अचिन्हित पूर्णांक	num_events;
+	अचिन्हित पूर्णांक	trap_nr;
+	व्योम		(*enable)(काष्ठा arch_hw_अवरोधpoपूर्णांक *, पूर्णांक);
+	व्योम		(*disable)(काष्ठा arch_hw_अवरोधpoपूर्णांक *, पूर्णांक);
+	व्योम		(*enable_all)(अचिन्हित दीर्घ);
+	व्योम		(*disable_all)(व्योम);
+	अचिन्हित दीर्घ	(*active_mask)(व्योम);
+	अचिन्हित दीर्घ	(*triggered_mask)(व्योम);
+	व्योम		(*clear_triggered_mask)(अचिन्हित दीर्घ);
+	काष्ठा clk	*clk;	/* optional पूर्णांकerface घड़ी / MSTP bit */
+पूर्ण;
 
-struct perf_event_attr;
-struct perf_event;
-struct task_struct;
-struct pmu;
+काष्ठा perf_event_attr;
+काष्ठा perf_event;
+काष्ठा task_काष्ठा;
+काष्ठा pmu;
 
 /* Maximum number of UBC channels */
-#define HBP_NUM		2
+#घोषणा HBP_NUM		2
 
-static inline int hw_breakpoint_slots(int type)
-{
-	return HBP_NUM;
-}
+अटल अंतरभूत पूर्णांक hw_अवरोधpoपूर्णांक_slots(पूर्णांक type)
+अणु
+	वापस HBP_NUM;
+पूर्ण
 
-/* arch/sh/kernel/hw_breakpoint.c */
-extern int arch_check_bp_in_kernelspace(struct arch_hw_breakpoint *hw);
-extern int hw_breakpoint_arch_parse(struct perf_event *bp,
-				    const struct perf_event_attr *attr,
-				    struct arch_hw_breakpoint *hw);
-extern int hw_breakpoint_exceptions_notify(struct notifier_block *unused,
-					   unsigned long val, void *data);
+/* arch/sh/kernel/hw_अवरोधpoपूर्णांक.c */
+बाह्य पूर्णांक arch_check_bp_in_kernelspace(काष्ठा arch_hw_अवरोधpoपूर्णांक *hw);
+बाह्य पूर्णांक hw_अवरोधpoपूर्णांक_arch_parse(काष्ठा perf_event *bp,
+				    स्थिर काष्ठा perf_event_attr *attr,
+				    काष्ठा arch_hw_अवरोधpoपूर्णांक *hw);
+बाह्य पूर्णांक hw_अवरोधpoपूर्णांक_exceptions_notअगरy(काष्ठा notअगरier_block *unused,
+					   अचिन्हित दीर्घ val, व्योम *data);
 
-int arch_install_hw_breakpoint(struct perf_event *bp);
-void arch_uninstall_hw_breakpoint(struct perf_event *bp);
-void hw_breakpoint_pmu_read(struct perf_event *bp);
+पूर्णांक arch_install_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
+व्योम arch_uninstall_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
+व्योम hw_अवरोधpoपूर्णांक_pmu_पढ़ो(काष्ठा perf_event *bp);
 
-extern void arch_fill_perf_breakpoint(struct perf_event *bp);
-extern int register_sh_ubc(struct sh_ubc *);
+बाह्य व्योम arch_fill_perf_अवरोधpoपूर्णांक(काष्ठा perf_event *bp);
+बाह्य पूर्णांक रेजिस्टर_sh_ubc(काष्ठा sh_ubc *);
 
-extern struct pmu perf_ops_bp;
+बाह्य काष्ठा pmu perf_ops_bp;
 
-#endif /* __ASM_SH_HW_BREAKPOINT_H */
+#पूर्ण_अगर /* __ASM_SH_HW_BREAKPOINT_H */

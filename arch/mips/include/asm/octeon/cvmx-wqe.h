@@ -1,3 +1,4 @@
+<शैली गुरु>
 /***********************license start***************
  * Author: Cavium Networks
  *
@@ -6,82 +7,82 @@
  *
  * Copyright (c) 2003-2008 Cavium Networks
  *
- * This file is free software; you can redistribute it and/or modify
+ * This file is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License for more
+ * NONINFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this file; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * aदीर्घ with this file; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA
  * or visit http://www.gnu.org/licenses/.
  *
- * This file may also be available under a different license from Cavium.
- * Contact Cavium Networks for more information
+ * This file may also be available under a dअगरferent license from Cavium.
+ * Contact Cavium Networks क्रम more inक्रमmation
  ***********************license end**************************************/
 
 /**
  *
- * This header file defines the work queue entry (wqe) data structure.
- * Since this is a commonly used structure that depends on structures
+ * This header file defines the work queue entry (wqe) data काष्ठाure.
+ * Since this is a commonly used काष्ठाure that depends on काष्ठाures
  * from several hardware blocks, those definitions have been placed
- * in this file to create a single point of definition of the wqe
- * format.
- * Data structures are still named according to the block that they
+ * in this file to create a single poपूर्णांक of definition of the wqe
+ * क्रमmat.
+ * Data काष्ठाures are still named according to the block that they
  * relate to.
  *
  */
 
-#ifndef __CVMX_WQE_H__
-#define __CVMX_WQE_H__
+#अगर_अघोषित __CVMX_WQE_H__
+#घोषणा __CVMX_WQE_H__
 
-#include <asm/octeon/cvmx-packet.h>
+#समावेश <यंत्र/octeon/cvmx-packet.h>
 
 
-#define OCT_TAG_TYPE_STRING(x)						\
+#घोषणा OCT_TAG_TYPE_STRING(x)						\
 	(((x) == CVMX_POW_TAG_TYPE_ORDERED) ?  "ORDERED" :		\
 		(((x) == CVMX_POW_TAG_TYPE_ATOMIC) ?  "ATOMIC" :	\
-			(((x) == CVMX_POW_TAG_TYPE_NULL) ?  "NULL" :	\
+			(((x) == CVMX_POW_TAG_TYPE_शून्य) ?  "NULL" :	\
 				"NULL_NULL")))
 
 /**
  * HW decode / err_code in work queue entry
  */
-typedef union {
-	uint64_t u64;
+प्रकार जोड़ अणु
+	uपूर्णांक64_t u64;
 
-	/* Use this struct if the hardware determines that the packet is IP */
-	struct {
-#ifdef __BIG_ENDIAN_BITFIELD
+	/* Use this काष्ठा अगर the hardware determines that the packet is IP */
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
 		/* HW sets this to the number of buffers used by this packet */
-		uint64_t bufs:8;
+		uपूर्णांक64_t bufs:8;
 		/* HW sets to the number of L2 bytes prior to the IP */
-		uint64_t ip_offset:8;
-		/* set to 1 if we found DSA/VLAN in the L2 */
-		uint64_t vlan_valid:1;
-		/* Set to 1 if the DSA/VLAN tag is stacked */
-		uint64_t vlan_stacked:1;
-		uint64_t unassigned:1;
+		uपूर्णांक64_t ip_offset:8;
+		/* set to 1 अगर we found DSA/VLAN in the L2 */
+		uपूर्णांक64_t vlan_valid:1;
+		/* Set to 1 अगर the DSA/VLAN tag is stacked */
+		uपूर्णांक64_t vlan_stacked:1;
+		uपूर्णांक64_t unasचिन्हित:1;
 		/* HW sets to the DSA/VLAN CFI flag (valid when vlan_valid) */
-		uint64_t vlan_cfi:1;
+		uपूर्णांक64_t vlan_cfi:1;
 		/* HW sets to the DSA/VLAN_ID field (valid when vlan_valid) */
-		uint64_t vlan_id:12;
-		/* Ring Identifier (if PCIe). Requires PIP_GBL_CTL[RING_EN]=1 */
-		uint64_t pr:4;
-		uint64_t unassigned2:8;
+		uपूर्णांक64_t vlan_id:12;
+		/* Ring Identअगरier (अगर PCIe). Requires PIP_GBL_CTL[RING_EN]=1 */
+		uपूर्णांक64_t pr:4;
+		uपूर्णांक64_t unasचिन्हित2:8;
 		/* the packet needs to be decompressed */
-		uint64_t dec_ipcomp:1;
+		uपूर्णांक64_t dec_ipcomp:1;
 		/* the packet is either TCP or UDP */
-		uint64_t tcp_or_udp:1;
+		uपूर्णांक64_t tcp_or_udp:1;
 		/* the packet needs to be decrypted (ESP or AH) */
-		uint64_t dec_ipsec:1;
+		uपूर्णांक64_t dec_ipsec:1;
 		/* the packet is IPv6 */
-		uint64_t is_v6:1;
+		uपूर्णांक64_t is_v6:1;
 
 		/*
 		 * (rcv_error, not_IP, IP_exc, is_frag, L4_error,
@@ -89,20 +90,20 @@ typedef union {
 		 */
 
 		/*
-		 * reserved for software use, hardware will clear on
+		 * reserved क्रम software use, hardware will clear on
 		 * packet creation.
 		 */
-		uint64_t software:1;
+		uपूर्णांक64_t software:1;
 		/* exceptional conditions below */
-		/* the receive interface hardware detected an L4 error
-		 * (only applies if !is_frag) (only applies if
+		/* the receive पूर्णांकerface hardware detected an L4 error
+		 * (only applies अगर !is_frag) (only applies अगर
 		 * !rcv_error && !not_IP && !IP_exc && !is_frag)
 		 * failure indicated in err_code below, decode:
 		 *
-		 * - 1 = Malformed L4
+		 * - 1 = Malक्रमmed L4
 		 * - 2 = L4 Checksum Error: the L4 checksum value is
 		 * - 3 = UDP Length Error: The UDP length field would
-		 *	 make the UDP data longer than what remains in
+		 *	 make the UDP data दीर्घer than what reमुख्यs in
 		 *	 the IP packet (as defined by the IP header
 		 *	 length field).
 		 * - 4 = Bad L4 Port: either the source or destination
@@ -120,227 +121,227 @@ typedef union {
 		 * - 13 = TCP SYN FIN: the packet is TCP and both SYN
 		 *	  and FIN are set.
 		 */
-		uint64_t L4_error:1;
-		/* set if the packet is a fragment */
-		uint64_t is_frag:1;
-		/* the receive interface hardware detected an IP error
-		 * / exception (only applies if !rcv_error && !not_IP)
+		uपूर्णांक64_t L4_error:1;
+		/* set अगर the packet is a fragment */
+		uपूर्णांक64_t is_frag:1;
+		/* the receive पूर्णांकerface hardware detected an IP error
+		 * / exception (only applies अगर !rcv_error && !not_IP)
 		 * failure indicated in err_code below, decode:
 		 *
 		 * - 1 = Not IP: the IP version field is neither 4 nor
 		 *	 6.
 		 * - 2 = IPv4 Header Checksum Error: the IPv4 header
 		 *	 has a checksum violation.
-		 * - 3 = IP Malformed Header: the packet is not long
+		 * - 3 = IP Malक्रमmed Header: the packet is not दीर्घ
 		 *	 enough to contain the IP header.
-		 * - 4 = IP Malformed: the packet is not long enough
+		 * - 4 = IP Malक्रमmed: the packet is not दीर्घ enough
 		 *	 to contain the bytes indicated by the IP
 		 *	 header. Pad is allowed.
 		 * - 5 = IP TTL Hop: the IPv4 TTL field or the IPv6
 		 *	 Hop Count field are zero.
 		 * - 6 = IP Options
 		 */
-		uint64_t IP_exc:1;
+		uपूर्णांक64_t IP_exc:1;
 		/*
-		 * Set if the hardware determined that the packet is a
+		 * Set अगर the hardware determined that the packet is a
 		 * broadcast.
 		 */
-		uint64_t is_bcast:1;
+		uपूर्णांक64_t is_bcast:1;
 		/*
-		 * St if the hardware determined that the packet is a
+		 * St अगर the hardware determined that the packet is a
 		 * multi-cast.
 		 */
-		uint64_t is_mcast:1;
+		uपूर्णांक64_t is_mcast:1;
 		/*
-		 * Set if the packet may not be IP (must be zero in
-		 * this case).
+		 * Set अगर the packet may not be IP (must be zero in
+		 * this हाल).
 		 */
-		uint64_t not_IP:1;
+		uपूर्णांक64_t not_IP:1;
 		/*
-		 * The receive interface hardware detected a receive
-		 * error (must be zero in this case).
+		 * The receive पूर्णांकerface hardware detected a receive
+		 * error (must be zero in this हाल).
 		 */
-		uint64_t rcv_error:1;
+		uपूर्णांक64_t rcv_error:1;
 		/* lower err_code = first-level descriptor of the
 		 * work */
-		/* zero for packet submitted by hardware that isn't on
+		/* zero क्रम packet submitted by hardware that isn't on
 		 * the slow path */
 		/* type is cvmx_pip_err_t */
-		uint64_t err_code:8;
-#else
-	        uint64_t err_code:8;
-	        uint64_t rcv_error:1;
-	        uint64_t not_IP:1;
-	        uint64_t is_mcast:1;
-	        uint64_t is_bcast:1;
-	        uint64_t IP_exc:1;
-	        uint64_t is_frag:1;
-	        uint64_t L4_error:1;
-	        uint64_t software:1;
-	        uint64_t is_v6:1;
-	        uint64_t dec_ipsec:1;
-	        uint64_t tcp_or_udp:1;
-	        uint64_t dec_ipcomp:1;
-	        uint64_t unassigned2:4;
-	        uint64_t unassigned2a:4;
-	        uint64_t pr:4;
-	        uint64_t vlan_id:12;
-	        uint64_t vlan_cfi:1;
-	        uint64_t unassigned:1;
-	        uint64_t vlan_stacked:1;
-	        uint64_t vlan_valid:1;
-	        uint64_t ip_offset:8;
-	        uint64_t bufs:8;
-#endif
-	} s;
-	struct {
-#ifdef __BIG_ENDIAN_BITFIELD
-		uint64_t bufs:8;
-		uint64_t ip_offset:8;
-		uint64_t vlan_valid:1;
-		uint64_t vlan_stacked:1;
-		uint64_t unassigned:1;
-		uint64_t vlan_cfi:1;
-		uint64_t vlan_id:12;
-		uint64_t port:12;		/* MAC/PIP port number. */
-		uint64_t dec_ipcomp:1;
-		uint64_t tcp_or_udp:1;
-		uint64_t dec_ipsec:1;
-		uint64_t is_v6:1;
-		uint64_t software:1;
-		uint64_t L4_error:1;
-		uint64_t is_frag:1;
-		uint64_t IP_exc:1;
-		uint64_t is_bcast:1;
-		uint64_t is_mcast:1;
-		uint64_t not_IP:1;
-		uint64_t rcv_error:1;
-		uint64_t err_code:8;
-#else
-		uint64_t err_code:8;
-		uint64_t rcv_error:1;
-		uint64_t not_IP:1;
-		uint64_t is_mcast:1;
-		uint64_t is_bcast:1;
-		uint64_t IP_exc:1;
-		uint64_t is_frag:1;
-		uint64_t L4_error:1;
-		uint64_t software:1;
-		uint64_t is_v6:1;
-		uint64_t dec_ipsec:1;
-		uint64_t tcp_or_udp:1;
-		uint64_t dec_ipcomp:1;
-		uint64_t port:12;
-		uint64_t vlan_id:12;
-		uint64_t vlan_cfi:1;
-		uint64_t unassigned:1;
-		uint64_t vlan_stacked:1;
-		uint64_t vlan_valid:1;
-		uint64_t ip_offset:8;
-		uint64_t bufs:8;
-#endif
-	} s_cn68xx;
+		uपूर्णांक64_t err_code:8;
+#अन्यथा
+	        uपूर्णांक64_t err_code:8;
+	        uपूर्णांक64_t rcv_error:1;
+	        uपूर्णांक64_t not_IP:1;
+	        uपूर्णांक64_t is_mcast:1;
+	        uपूर्णांक64_t is_bcast:1;
+	        uपूर्णांक64_t IP_exc:1;
+	        uपूर्णांक64_t is_frag:1;
+	        uपूर्णांक64_t L4_error:1;
+	        uपूर्णांक64_t software:1;
+	        uपूर्णांक64_t is_v6:1;
+	        uपूर्णांक64_t dec_ipsec:1;
+	        uपूर्णांक64_t tcp_or_udp:1;
+	        uपूर्णांक64_t dec_ipcomp:1;
+	        uपूर्णांक64_t unasचिन्हित2:4;
+	        uपूर्णांक64_t unasचिन्हित2a:4;
+	        uपूर्णांक64_t pr:4;
+	        uपूर्णांक64_t vlan_id:12;
+	        uपूर्णांक64_t vlan_cfi:1;
+	        uपूर्णांक64_t unasचिन्हित:1;
+	        uपूर्णांक64_t vlan_stacked:1;
+	        uपूर्णांक64_t vlan_valid:1;
+	        uपूर्णांक64_t ip_offset:8;
+	        uपूर्णांक64_t bufs:8;
+#पूर्ण_अगर
+	पूर्ण s;
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
+		uपूर्णांक64_t bufs:8;
+		uपूर्णांक64_t ip_offset:8;
+		uपूर्णांक64_t vlan_valid:1;
+		uपूर्णांक64_t vlan_stacked:1;
+		uपूर्णांक64_t unasचिन्हित:1;
+		uपूर्णांक64_t vlan_cfi:1;
+		uपूर्णांक64_t vlan_id:12;
+		uपूर्णांक64_t port:12;		/* MAC/PIP port number. */
+		uपूर्णांक64_t dec_ipcomp:1;
+		uपूर्णांक64_t tcp_or_udp:1;
+		uपूर्णांक64_t dec_ipsec:1;
+		uपूर्णांक64_t is_v6:1;
+		uपूर्णांक64_t software:1;
+		uपूर्णांक64_t L4_error:1;
+		uपूर्णांक64_t is_frag:1;
+		uपूर्णांक64_t IP_exc:1;
+		uपूर्णांक64_t is_bcast:1;
+		uपूर्णांक64_t is_mcast:1;
+		uपूर्णांक64_t not_IP:1;
+		uपूर्णांक64_t rcv_error:1;
+		uपूर्णांक64_t err_code:8;
+#अन्यथा
+		uपूर्णांक64_t err_code:8;
+		uपूर्णांक64_t rcv_error:1;
+		uपूर्णांक64_t not_IP:1;
+		uपूर्णांक64_t is_mcast:1;
+		uपूर्णांक64_t is_bcast:1;
+		uपूर्णांक64_t IP_exc:1;
+		uपूर्णांक64_t is_frag:1;
+		uपूर्णांक64_t L4_error:1;
+		uपूर्णांक64_t software:1;
+		uपूर्णांक64_t is_v6:1;
+		uपूर्णांक64_t dec_ipsec:1;
+		uपूर्णांक64_t tcp_or_udp:1;
+		uपूर्णांक64_t dec_ipcomp:1;
+		uपूर्णांक64_t port:12;
+		uपूर्णांक64_t vlan_id:12;
+		uपूर्णांक64_t vlan_cfi:1;
+		uपूर्णांक64_t unasचिन्हित:1;
+		uपूर्णांक64_t vlan_stacked:1;
+		uपूर्णांक64_t vlan_valid:1;
+		uपूर्णांक64_t ip_offset:8;
+		uपूर्णांक64_t bufs:8;
+#पूर्ण_अगर
+	पूर्ण s_cn68xx;
 
 	/* use this to get at the 16 vlan bits */
-	struct {
-#ifdef __BIG_ENDIAN_BITFIELD
-		uint64_t unused1:16;
-		uint64_t vlan:16;
-		uint64_t unused2:32;
-#else
-	        uint64_t unused2:32;
-	        uint64_t vlan:16;
-	        uint64_t unused1:16;
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
+		uपूर्णांक64_t unused1:16;
+		uपूर्णांक64_t vlan:16;
+		uपूर्णांक64_t unused2:32;
+#अन्यथा
+	        uपूर्णांक64_t unused2:32;
+	        uपूर्णांक64_t vlan:16;
+	        uपूर्णांक64_t unused1:16;
 
-#endif
-	} svlan;
+#पूर्ण_अगर
+	पूर्ण svlan;
 
 	/*
-	 * use this struct if the hardware could not determine that
+	 * use this काष्ठा अगर the hardware could not determine that
 	 * the packet is ip.
 	 */
-	struct {
-#ifdef __BIG_ENDIAN_BITFIELD
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
 		/*
 		 * HW sets this to the number of buffers used by this
 		 * packet.
 		 */
-		uint64_t bufs:8;
-		uint64_t unused:8;
-		/* set to 1 if we found DSA/VLAN in the L2 */
-		uint64_t vlan_valid:1;
-		/* Set to 1 if the DSA/VLAN tag is stacked */
-		uint64_t vlan_stacked:1;
-		uint64_t unassigned:1;
+		uपूर्णांक64_t bufs:8;
+		uपूर्णांक64_t unused:8;
+		/* set to 1 अगर we found DSA/VLAN in the L2 */
+		uपूर्णांक64_t vlan_valid:1;
+		/* Set to 1 अगर the DSA/VLAN tag is stacked */
+		uपूर्णांक64_t vlan_stacked:1;
+		uपूर्णांक64_t unasचिन्हित:1;
 		/*
 		 * HW sets to the DSA/VLAN CFI flag (valid when
 		 * vlan_valid)
 		 */
-		uint64_t vlan_cfi:1;
+		uपूर्णांक64_t vlan_cfi:1;
 		/*
 		 * HW sets to the DSA/VLAN_ID field (valid when
 		 * vlan_valid).
 		 */
-		uint64_t vlan_id:12;
+		uपूर्णांक64_t vlan_id:12;
 		/*
-		 * Ring Identifier (if PCIe). Requires
+		 * Ring Identअगरier (अगर PCIe). Requires
 		 * PIP_GBL_CTL[RING_EN]=1
 		 */
-		uint64_t pr:4;
-		uint64_t unassigned2:12;
+		uपूर्णांक64_t pr:4;
+		uपूर्णांक64_t unasचिन्हित2:12;
 		/*
-		 * reserved for software use, hardware will clear on
+		 * reserved क्रम software use, hardware will clear on
 		 * packet creation.
 		 */
-		uint64_t software:1;
-		uint64_t unassigned3:1;
+		uपूर्णांक64_t software:1;
+		uपूर्णांक64_t unasचिन्हित3:1;
 		/*
-		 * set if the hardware determined that the packet is
+		 * set अगर the hardware determined that the packet is
 		 * rarp.
 		 */
-		uint64_t is_rarp:1;
+		uपूर्णांक64_t is_rarp:1;
 		/*
-		 * set if the hardware determined that the packet is
+		 * set अगर the hardware determined that the packet is
 		 * arp
 		 */
-		uint64_t is_arp:1;
+		uपूर्णांक64_t is_arp:1;
 		/*
-		 * set if the hardware determined that the packet is a
+		 * set अगर the hardware determined that the packet is a
 		 * broadcast.
 		 */
-		uint64_t is_bcast:1;
+		uपूर्णांक64_t is_bcast:1;
 		/*
-		 * set if the hardware determined that the packet is a
+		 * set अगर the hardware determined that the packet is a
 		 * multi-cast
 		 */
-		uint64_t is_mcast:1;
+		uपूर्णांक64_t is_mcast:1;
 		/*
-		 * set if the packet may not be IP (must be one in
-		 * this case)
+		 * set अगर the packet may not be IP (must be one in
+		 * this हाल)
 		 */
-		uint64_t not_IP:1;
-		/* The receive interface hardware detected a receive
+		uपूर्णांक64_t not_IP:1;
+		/* The receive पूर्णांकerface hardware detected a receive
 		 * error.  Failure indicated in err_code below,
 		 * decode:
 		 *
 		 * - 1 = partial error: a packet was partially
-		 *	 received, but internal buffering / bandwidth
+		 *	 received, but पूर्णांकernal buffering / bandwidth
 		 *	 was not adequate to receive the entire
 		 *	 packet.
 		 * - 2 = jabber error: the RGMII packet was too large
 		 *	 and is truncated.
-		 * - 3 = overrun error: the RGMII packet is longer
+		 * - 3 = overrun error: the RGMII packet is दीर्घer
 		 *	 than allowed and had an FCS error.
-		 * - 4 = oversize error: the RGMII packet is longer
+		 * - 4 = oversize error: the RGMII packet is दीर्घer
 		 *	 than allowed.
 		 * - 5 = alignment error: the RGMII packet is not an
-		 *	 integer number of bytes
+		 *	 पूर्णांकeger number of bytes
 		 *	 and had an FCS error (100M and 10M only).
-		 * - 6 = fragment error: the RGMII packet is shorter
+		 * - 6 = fragment error: the RGMII packet is लघुer
 		 *	 than allowed and had an FCS error.
 		 * - 7 = GMX FCS error: the RGMII packet had an FCS
 		 *	 error.
-		 * - 8 = undersize error: the RGMII packet is shorter
+		 * - 8 = undersize error: the RGMII packet is लघुer
 		 *	 than allowed.
 		 * - 9 = extend error: the RGMII packet had an extend
 		 *	 error.
@@ -362,204 +363,204 @@ typedef union {
 		 * - 16 = FCS error: a SPI4.2 packet had an FCS error.
 		 * - 17 = Skip error: a packet was not large enough to
 		 *	  cover the skipped bytes.
-		 * - 18 = L2 header malformed: the packet is not long
+		 * - 18 = L2 header malक्रमmed: the packet is not दीर्घ
 		 *	  enough to contain the L2.
 		 */
 
-		uint64_t rcv_error:1;
+		uपूर्णांक64_t rcv_error:1;
 		/*
 		 * lower err_code = first-level descriptor of the
 		 * work
 		 */
 		/*
-		 * zero for packet submitted by hardware that isn't on
+		 * zero क्रम packet submitted by hardware that isn't on
 		 * the slow path
 		 */
-		/* type is cvmx_pip_err_t (union, so can't use directly */
-		uint64_t err_code:8;
-#else
-	        uint64_t err_code:8;
-	        uint64_t rcv_error:1;
-	        uint64_t not_IP:1;
-	        uint64_t is_mcast:1;
-	        uint64_t is_bcast:1;
-	        uint64_t is_arp:1;
-	        uint64_t is_rarp:1;
-	        uint64_t unassigned3:1;
-	        uint64_t software:1;
-	        uint64_t unassigned2:4;
-	        uint64_t unassigned2a:8;
-	        uint64_t pr:4;
-	        uint64_t vlan_id:12;
-	        uint64_t vlan_cfi:1;
-	        uint64_t unassigned:1;
-	        uint64_t vlan_stacked:1;
-	        uint64_t vlan_valid:1;
-	        uint64_t unused:8;
-	        uint64_t bufs:8;
-#endif
-	} snoip;
+		/* type is cvmx_pip_err_t (जोड़, so can't use directly */
+		uपूर्णांक64_t err_code:8;
+#अन्यथा
+	        uपूर्णांक64_t err_code:8;
+	        uपूर्णांक64_t rcv_error:1;
+	        uपूर्णांक64_t not_IP:1;
+	        uपूर्णांक64_t is_mcast:1;
+	        uपूर्णांक64_t is_bcast:1;
+	        uपूर्णांक64_t is_arp:1;
+	        uपूर्णांक64_t is_rarp:1;
+	        uपूर्णांक64_t unasचिन्हित3:1;
+	        uपूर्णांक64_t software:1;
+	        uपूर्णांक64_t unasचिन्हित2:4;
+	        uपूर्णांक64_t unasचिन्हित2a:8;
+	        uपूर्णांक64_t pr:4;
+	        uपूर्णांक64_t vlan_id:12;
+	        uपूर्णांक64_t vlan_cfi:1;
+	        uपूर्णांक64_t unasचिन्हित:1;
+	        uपूर्णांक64_t vlan_stacked:1;
+	        uपूर्णांक64_t vlan_valid:1;
+	        uपूर्णांक64_t unused:8;
+	        uपूर्णांक64_t bufs:8;
+#पूर्ण_अगर
+	पूर्ण snoip;
 
-} cvmx_pip_wqe_word2;
+पूर्ण cvmx_pip_wqe_word2;
 
-union cvmx_pip_wqe_word0 {
-	struct {
-#ifdef __BIG_ENDIAN_BITFIELD
+जोड़ cvmx_pip_wqe_word0 अणु
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
 		/**
 		 * raw chksum result generated by the HW
 		 */
-		uint16_t hw_chksum;
+		uपूर्णांक16_t hw_chksum;
 		/**
-		 * Field unused by hardware - available for software
+		 * Field unused by hardware - available क्रम software
 		 */
-		uint8_t unused;
+		uपूर्णांक8_t unused;
 		/**
-		 * Next pointer used by hardware for list maintenance.
-		 * May be written/read by HW before the work queue
+		 * Next poपूर्णांकer used by hardware क्रम list मुख्यtenance.
+		 * May be written/पढ़ो by HW beक्रमe the work queue
 		 * entry is scheduled to a PP (Only 36 bits used in
 		 * Octeon 1)
 		 */
-		uint64_t next_ptr:40;
-#else
-		uint64_t next_ptr:40;
-		uint8_t unused;
-		uint16_t hw_chksum;
-#endif
-	} cn38xx;
-	struct {
-#ifdef __BIG_ENDIAN_BITFIELD
-		uint64_t l4ptr:8;       /* 56..63 */
-		uint64_t unused0:8;     /* 48..55 */
-		uint64_t l3ptr:8;       /* 40..47 */
-		uint64_t l2ptr:8;       /* 32..39 */
-		uint64_t unused1:18;    /* 14..31 */
-		uint64_t bpid:6;        /* 8..13 */
-		uint64_t unused2:2;     /* 6..7 */
-		uint64_t pknd:6;        /* 0..5 */
-#else
-		uint64_t pknd:6;        /* 0..5 */
-		uint64_t unused2:2;     /* 6..7 */
-		uint64_t bpid:6;        /* 8..13 */
-		uint64_t unused1:18;    /* 14..31 */
-		uint64_t l2ptr:8;       /* 32..39 */
-		uint64_t l3ptr:8;       /* 40..47 */
-		uint64_t unused0:8;     /* 48..55 */
-		uint64_t l4ptr:8;       /* 56..63 */
-#endif
-	} cn68xx;
-};
+		uपूर्णांक64_t next_ptr:40;
+#अन्यथा
+		uपूर्णांक64_t next_ptr:40;
+		uपूर्णांक8_t unused;
+		uपूर्णांक16_t hw_chksum;
+#पूर्ण_अगर
+	पूर्ण cn38xx;
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
+		uपूर्णांक64_t l4ptr:8;       /* 56..63 */
+		uपूर्णांक64_t unused0:8;     /* 48..55 */
+		uपूर्णांक64_t l3ptr:8;       /* 40..47 */
+		uपूर्णांक64_t l2ptr:8;       /* 32..39 */
+		uपूर्णांक64_t unused1:18;    /* 14..31 */
+		uपूर्णांक64_t bpid:6;        /* 8..13 */
+		uपूर्णांक64_t unused2:2;     /* 6..7 */
+		uपूर्णांक64_t pknd:6;        /* 0..5 */
+#अन्यथा
+		uपूर्णांक64_t pknd:6;        /* 0..5 */
+		uपूर्णांक64_t unused2:2;     /* 6..7 */
+		uपूर्णांक64_t bpid:6;        /* 8..13 */
+		uपूर्णांक64_t unused1:18;    /* 14..31 */
+		uपूर्णांक64_t l2ptr:8;       /* 32..39 */
+		uपूर्णांक64_t l3ptr:8;       /* 40..47 */
+		uपूर्णांक64_t unused0:8;     /* 48..55 */
+		uपूर्णांक64_t l4ptr:8;       /* 56..63 */
+#पूर्ण_अगर
+	पूर्ण cn68xx;
+पूर्ण;
 
-union cvmx_wqe_word0 {
-	uint64_t u64;
-	union cvmx_pip_wqe_word0 pip;
-};
+जोड़ cvmx_wqe_word0 अणु
+	uपूर्णांक64_t u64;
+	जोड़ cvmx_pip_wqe_word0 pip;
+पूर्ण;
 
-union cvmx_wqe_word1 {
-	uint64_t u64;
-	struct {
-#ifdef __BIG_ENDIAN_BITFIELD
-		uint64_t len:16;
-		uint64_t varies:14;
+जोड़ cvmx_wqe_word1 अणु
+	uपूर्णांक64_t u64;
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
+		uपूर्णांक64_t len:16;
+		uपूर्णांक64_t varies:14;
 		/**
-		 * the type of the tag (ORDERED, ATOMIC, NULL)
+		 * the type of the tag (ORDERED, ATOMIC, शून्य)
 		 */
-		uint64_t tag_type:2;
-		uint64_t tag:32;
-#else
-		uint64_t tag:32;
-		uint64_t tag_type:2;
-		uint64_t varies:14;
-		uint64_t len:16;
-#endif
-	};
-	struct {
-#ifdef __BIG_ENDIAN_BITFIELD
-		uint64_t len:16;
-		uint64_t zero_0:1;
+		uपूर्णांक64_t tag_type:2;
+		uपूर्णांक64_t tag:32;
+#अन्यथा
+		uपूर्णांक64_t tag:32;
+		uपूर्णांक64_t tag_type:2;
+		uपूर्णांक64_t varies:14;
+		uपूर्णांक64_t len:16;
+#पूर्ण_अगर
+	पूर्ण;
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
+		uपूर्णांक64_t len:16;
+		uपूर्णांक64_t zero_0:1;
 		/**
 		 * HW sets this to what it thought the priority of
 		 * the input packet was
 		 */
-		uint64_t qos:3;
+		uपूर्णांक64_t qos:3;
 
-		uint64_t zero_1:1;
+		uपूर्णांक64_t zero_1:1;
 		/**
 		 * the group that the work queue entry will be scheduled to
 		 */
-		uint64_t grp:6;
-		uint64_t zero_2:3;
-		uint64_t tag_type:2;
-		uint64_t tag:32;
-#else
-		uint64_t tag:32;
-		uint64_t tag_type:2;
-		uint64_t zero_2:3;
-		uint64_t grp:6;
-		uint64_t zero_1:1;
-		uint64_t qos:3;
-		uint64_t zero_0:1;
-		uint64_t len:16;
-#endif
-	} cn68xx;
-	struct {
-#ifdef __BIG_ENDIAN_BITFIELD
+		uपूर्णांक64_t grp:6;
+		uपूर्णांक64_t zero_2:3;
+		uपूर्णांक64_t tag_type:2;
+		uपूर्णांक64_t tag:32;
+#अन्यथा
+		uपूर्णांक64_t tag:32;
+		uपूर्णांक64_t tag_type:2;
+		uपूर्णांक64_t zero_2:3;
+		uपूर्णांक64_t grp:6;
+		uपूर्णांक64_t zero_1:1;
+		uपूर्णांक64_t qos:3;
+		uपूर्णांक64_t zero_0:1;
+		uपूर्णांक64_t len:16;
+#पूर्ण_अगर
+	पूर्ण cn68xx;
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
 		/**
 		 * HW sets to the total number of bytes in the packet
 		 */
-		uint64_t len:16;
+		uपूर्णांक64_t len:16;
 		/**
 		 * HW sets this to input physical port
 		 */
-		uint64_t ipprt:6;
+		uपूर्णांक64_t ipprt:6;
 
 		/**
 		 * HW sets this to what it thought the priority of
 		 * the input packet was
 		 */
-		uint64_t qos:3;
+		uपूर्णांक64_t qos:3;
 
 		/**
 		 * the group that the work queue entry will be scheduled to
 		 */
-		uint64_t grp:4;
+		uपूर्णांक64_t grp:4;
 		/**
-		 * the type of the tag (ORDERED, ATOMIC, NULL)
+		 * the type of the tag (ORDERED, ATOMIC, शून्य)
 		 */
-		uint64_t tag_type:3;
+		uपूर्णांक64_t tag_type:3;
 		/**
 		 * the synchronization/ordering tag
 		 */
-		uint64_t tag:32;
-#else
-		uint64_t tag:32;
-		uint64_t tag_type:2;
-		uint64_t zero_2:1;
-		uint64_t grp:4;
-		uint64_t qos:3;
-		uint64_t ipprt:6;
-		uint64_t len:16;
-#endif
-	} cn38xx;
-};
+		uपूर्णांक64_t tag:32;
+#अन्यथा
+		uपूर्णांक64_t tag:32;
+		uपूर्णांक64_t tag_type:2;
+		uपूर्णांक64_t zero_2:1;
+		uपूर्णांक64_t grp:4;
+		uपूर्णांक64_t qos:3;
+		uपूर्णांक64_t ipprt:6;
+		uपूर्णांक64_t len:16;
+#पूर्ण_अगर
+	पूर्ण cn38xx;
+पूर्ण;
 
 /**
- * Work queue entry format
+ * Work queue entry क्रमmat
  *
  * must be 8-byte aligned
  */
-struct cvmx_wqe {
+काष्ठा cvmx_wqe अणु
 
     /*****************************************************************
      * WORD 0
      *	HW WRITE: the following 64 bits are filled by HW when a packet arrives
      */
-	union cvmx_wqe_word0 word0;
+	जोड़ cvmx_wqe_word0 word0;
 
     /*****************************************************************
      * WORD 1
      *	HW WRITE: the following 64 bits are filled by HW when a packet arrives
      */
-	union cvmx_wqe_word1 word1;
+	जोड़ cvmx_wqe_word1 word1;
 
     /**
      * WORD 2 HW WRITE: the following 64-bits are filled in by
@@ -569,9 +570,9 @@ struct cvmx_wqe {
 	cvmx_pip_wqe_word2 word2;
 
     /**
-     * Pointer to the first segment of the packet.
+     * Poपूर्णांकer to the first segment of the packet.
      */
-	union cvmx_buf_ptr packet_ptr;
+	जोड़ cvmx_buf_ptr packet_ptr;
 
     /**
      *	 HW WRITE: octeon will fill in a programmable amount from the
@@ -579,12 +580,12 @@ struct cvmx_wqe {
      *		   needed to fill the work queue entry to 128 bytes
      *
      *	 If the packet is recognized to be IP, the hardware starts
-     *	 (except that the IPv4 header is padded for appropriate
+     *	 (except that the IPv4 header is padded क्रम appropriate
      *	 alignment) writing here where the IP header starts.  If the
      *	 packet is not recognized to be IP, the hardware starts
      *	 writing the beginning of the packet here.
      */
-	uint8_t packet_data[96];
+	uपूर्णांक8_t packet_data[96];
 
     /**
      * If desired, SW can make the work Q entry any length. For the
@@ -593,66 +594,66 @@ struct cvmx_wqe {
      *
      */
 
-} CVMX_CACHE_LINE_ALIGNED;
+पूर्ण CVMX_CACHE_LINE_ALIGNED;
 
-static inline int cvmx_wqe_get_port(struct cvmx_wqe *work)
-{
-	int port;
+अटल अंतरभूत पूर्णांक cvmx_wqe_get_port(काष्ठा cvmx_wqe *work)
+अणु
+	पूर्णांक port;
 
-	if (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
+	अगर (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
 		port = work->word2.s_cn68xx.port;
-	else
+	अन्यथा
 		port = work->word1.cn38xx.ipprt;
 
-	return port;
-}
+	वापस port;
+पूर्ण
 
-static inline void cvmx_wqe_set_port(struct cvmx_wqe *work, int port)
-{
-	if (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
+अटल अंतरभूत व्योम cvmx_wqe_set_port(काष्ठा cvmx_wqe *work, पूर्णांक port)
+अणु
+	अगर (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
 		work->word2.s_cn68xx.port = port;
-	else
+	अन्यथा
 		work->word1.cn38xx.ipprt = port;
-}
+पूर्ण
 
-static inline int cvmx_wqe_get_grp(struct cvmx_wqe *work)
-{
-	int grp;
+अटल अंतरभूत पूर्णांक cvmx_wqe_get_grp(काष्ठा cvmx_wqe *work)
+अणु
+	पूर्णांक grp;
 
-	if (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
+	अगर (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
 		grp = work->word1.cn68xx.grp;
-	else
+	अन्यथा
 		grp = work->word1.cn38xx.grp;
 
-	return grp;
-}
+	वापस grp;
+पूर्ण
 
-static inline void cvmx_wqe_set_grp(struct cvmx_wqe *work, int grp)
-{
-	if (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
+अटल अंतरभूत व्योम cvmx_wqe_set_grp(काष्ठा cvmx_wqe *work, पूर्णांक grp)
+अणु
+	अगर (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
 		work->word1.cn68xx.grp = grp;
-	else
+	अन्यथा
 		work->word1.cn38xx.grp = grp;
-}
+पूर्ण
 
-static inline int cvmx_wqe_get_qos(struct cvmx_wqe *work)
-{
-	int qos;
+अटल अंतरभूत पूर्णांक cvmx_wqe_get_qos(काष्ठा cvmx_wqe *work)
+अणु
+	पूर्णांक qos;
 
-	if (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
+	अगर (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
 		qos = work->word1.cn68xx.qos;
-	else
+	अन्यथा
 		qos = work->word1.cn38xx.qos;
 
-	return qos;
-}
+	वापस qos;
+पूर्ण
 
-static inline void cvmx_wqe_set_qos(struct cvmx_wqe *work, int qos)
-{
-	if (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
+अटल अंतरभूत व्योम cvmx_wqe_set_qos(काष्ठा cvmx_wqe *work, पूर्णांक qos)
+अणु
+	अगर (octeon_has_feature(OCTEON_FEATURE_CN68XX_WQE))
 		work->word1.cn68xx.qos = qos;
-	else
+	अन्यथा
 		work->word1.cn38xx.qos = qos;
-}
+पूर्ण
 
-#endif /* __CVMX_WQE_H__ */
+#पूर्ण_अगर /* __CVMX_WQE_H__ */

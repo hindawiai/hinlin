@@ -1,118 +1,119 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#include "mock_dmabuf.h"
+#समावेश "mock_dmabuf.h"
 
-static struct sg_table *mock_map_dma_buf(struct dma_buf_attachment *attachment,
-					 enum dma_data_direction dir)
-{
-	struct mock_dmabuf *mock = to_mock(attachment->dmabuf);
-	struct sg_table *st;
-	struct scatterlist *sg;
-	int i, err;
+अटल काष्ठा sg_table *mock_map_dma_buf(काष्ठा dma_buf_attachment *attachment,
+					 क्रमागत dma_data_direction dir)
+अणु
+	काष्ठा mock_dmabuf *mock = to_mock(attachment->dmabuf);
+	काष्ठा sg_table *st;
+	काष्ठा scatterlist *sg;
+	पूर्णांक i, err;
 
-	st = kmalloc(sizeof(*st), GFP_KERNEL);
-	if (!st)
-		return ERR_PTR(-ENOMEM);
+	st = kदो_स्मृति(माप(*st), GFP_KERNEL);
+	अगर (!st)
+		वापस ERR_PTR(-ENOMEM);
 
 	err = sg_alloc_table(st, mock->npages, GFP_KERNEL);
-	if (err)
-		goto err_free;
+	अगर (err)
+		जाओ err_मुक्त;
 
 	sg = st->sgl;
-	for (i = 0; i < mock->npages; i++) {
+	क्रम (i = 0; i < mock->npages; i++) अणु
 		sg_set_page(sg, mock->pages[i], PAGE_SIZE, 0);
 		sg = sg_next(sg);
-	}
+	पूर्ण
 
 	err = dma_map_sgtable(attachment->dev, st, dir, 0);
-	if (err)
-		goto err_st;
+	अगर (err)
+		जाओ err_st;
 
-	return st;
+	वापस st;
 
 err_st:
-	sg_free_table(st);
-err_free:
-	kfree(st);
-	return ERR_PTR(err);
-}
+	sg_मुक्त_table(st);
+err_मुक्त:
+	kमुक्त(st);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void mock_unmap_dma_buf(struct dma_buf_attachment *attachment,
-			       struct sg_table *st,
-			       enum dma_data_direction dir)
-{
+अटल व्योम mock_unmap_dma_buf(काष्ठा dma_buf_attachment *attachment,
+			       काष्ठा sg_table *st,
+			       क्रमागत dma_data_direction dir)
+अणु
 	dma_unmap_sgtable(attachment->dev, st, dir, 0);
-	sg_free_table(st);
-	kfree(st);
-}
+	sg_मुक्त_table(st);
+	kमुक्त(st);
+पूर्ण
 
-static void mock_dmabuf_release(struct dma_buf *dma_buf)
-{
-	struct mock_dmabuf *mock = to_mock(dma_buf);
-	int i;
+अटल व्योम mock_dmabuf_release(काष्ठा dma_buf *dma_buf)
+अणु
+	काष्ठा mock_dmabuf *mock = to_mock(dma_buf);
+	पूर्णांक i;
 
-	for (i = 0; i < mock->npages; i++)
+	क्रम (i = 0; i < mock->npages; i++)
 		put_page(mock->pages[i]);
 
-	kfree(mock);
-}
+	kमुक्त(mock);
+पूर्ण
 
-static int mock_dmabuf_vmap(struct dma_buf *dma_buf, struct dma_buf_map *map)
-{
-	struct mock_dmabuf *mock = to_mock(dma_buf);
-	void *vaddr;
+अटल पूर्णांक mock_dmabuf_vmap(काष्ठा dma_buf *dma_buf, काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा mock_dmabuf *mock = to_mock(dma_buf);
+	व्योम *vaddr;
 
 	vaddr = vm_map_ram(mock->pages, mock->npages, 0);
-	if (!vaddr)
-		return -ENOMEM;
+	अगर (!vaddr)
+		वापस -ENOMEM;
 	dma_buf_map_set_vaddr(map, vaddr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mock_dmabuf_vunmap(struct dma_buf *dma_buf, struct dma_buf_map *map)
-{
-	struct mock_dmabuf *mock = to_mock(dma_buf);
+अटल व्योम mock_dmabuf_vunmap(काष्ठा dma_buf *dma_buf, काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा mock_dmabuf *mock = to_mock(dma_buf);
 
 	vm_unmap_ram(map->vaddr, mock->npages);
-}
+पूर्ण
 
-static int mock_dmabuf_mmap(struct dma_buf *dma_buf, struct vm_area_struct *vma)
-{
-	return -ENODEV;
-}
+अटल पूर्णांक mock_dmabuf_mmap(काष्ठा dma_buf *dma_buf, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static const struct dma_buf_ops mock_dmabuf_ops =  {
+अटल स्थिर काष्ठा dma_buf_ops mock_dmabuf_ops =  अणु
 	.map_dma_buf = mock_map_dma_buf,
 	.unmap_dma_buf = mock_unmap_dma_buf,
 	.release = mock_dmabuf_release,
 	.mmap = mock_dmabuf_mmap,
 	.vmap = mock_dmabuf_vmap,
 	.vunmap = mock_dmabuf_vunmap,
-};
+पूर्ण;
 
-static struct dma_buf *mock_dmabuf(int npages)
-{
-	struct mock_dmabuf *mock;
+अटल काष्ठा dma_buf *mock_dmabuf(पूर्णांक npages)
+अणु
+	काष्ठा mock_dmabuf *mock;
 	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
-	struct dma_buf *dmabuf;
-	int i;
+	काष्ठा dma_buf *dmabuf;
+	पूर्णांक i;
 
-	mock = kmalloc(sizeof(*mock) + npages * sizeof(struct page *),
+	mock = kदो_स्मृति(माप(*mock) + npages * माप(काष्ठा page *),
 		       GFP_KERNEL);
-	if (!mock)
-		return ERR_PTR(-ENOMEM);
+	अगर (!mock)
+		वापस ERR_PTR(-ENOMEM);
 
 	mock->npages = npages;
-	for (i = 0; i < npages; i++) {
+	क्रम (i = 0; i < npages; i++) अणु
 		mock->pages[i] = alloc_page(GFP_KERNEL);
-		if (!mock->pages[i])
-			goto err;
-	}
+		अगर (!mock->pages[i])
+			जाओ err;
+	पूर्ण
 
 	exp_info.ops = &mock_dmabuf_ops;
 	exp_info.size = npages * PAGE_SIZE;
@@ -120,14 +121,14 @@ static struct dma_buf *mock_dmabuf(int npages)
 	exp_info.priv = mock;
 
 	dmabuf = dma_buf_export(&exp_info);
-	if (IS_ERR(dmabuf))
-		goto err;
+	अगर (IS_ERR(dmabuf))
+		जाओ err;
 
-	return dmabuf;
+	वापस dmabuf;
 
 err:
-	while (i--)
+	जबतक (i--)
 		put_page(mock->pages[i]);
-	kfree(mock);
-	return ERR_PTR(-ENOMEM);
-}
+	kमुक्त(mock);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * ccw based virtio transport
  *
@@ -7,449 +8,449 @@
  *    Author(s): Cornelia Huck <cornelia.huck@de.ibm.com>
  */
 
-#include <linux/kernel_stat.h>
-#include <linux/init.h>
-#include <linux/memblock.h>
-#include <linux/err.h>
-#include <linux/virtio.h>
-#include <linux/virtio_config.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/virtio_ring.h>
-#include <linux/pfn.h>
-#include <linux/async.h>
-#include <linux/wait.h>
-#include <linux/list.h>
-#include <linux/bitops.h>
-#include <linux/moduleparam.h>
-#include <linux/io.h>
-#include <linux/kvm_para.h>
-#include <linux/notifier.h>
-#include <asm/diag.h>
-#include <asm/setup.h>
-#include <asm/irq.h>
-#include <asm/cio.h>
-#include <asm/ccwdev.h>
-#include <asm/virtio-ccw.h>
-#include <asm/isc.h>
-#include <asm/airq.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/err.h>
+#समावेश <linux/virtपन.स>
+#समावेश <linux/virtio_config.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/virtio_ring.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/async.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/list.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kvm_para.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <यंत्र/diag.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/cपन.स>
+#समावेश <यंत्र/ccwdev.h>
+#समावेश <यंत्र/virtio-ccw.h>
+#समावेश <यंत्र/isc.h>
+#समावेश <यंत्र/airq.h>
 
 /*
  * virtio related functions
  */
 
-struct vq_config_block {
+काष्ठा vq_config_block अणु
 	__u16 index;
 	__u16 num;
-} __packed;
+पूर्ण __packed;
 
-#define VIRTIO_CCW_CONFIG_SIZE 0x100
-/* same as PCI config space size, should be enough for all drivers */
+#घोषणा VIRTIO_CCW_CONFIG_SIZE 0x100
+/* same as PCI config space size, should be enough क्रम all drivers */
 
-struct vcdev_dma_area {
-	unsigned long indicators;
-	unsigned long indicators2;
-	struct vq_config_block config_block;
+काष्ठा vcdev_dma_area अणु
+	अचिन्हित दीर्घ indicators;
+	अचिन्हित दीर्घ indicators2;
+	काष्ठा vq_config_block config_block;
 	__u8 status;
-};
+पूर्ण;
 
-struct virtio_ccw_device {
-	struct virtio_device vdev;
+काष्ठा virtio_ccw_device अणु
+	काष्ठा virtio_device vdev;
 	__u8 config[VIRTIO_CCW_CONFIG_SIZE];
-	struct ccw_device *cdev;
+	काष्ठा ccw_device *cdev;
 	__u32 curr_io;
-	int err;
-	unsigned int revision; /* Transport revision */
-	wait_queue_head_t wait_q;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक revision; /* Transport revision */
+	रुको_queue_head_t रुको_q;
 	spinlock_t lock;
-	struct mutex io_lock; /* Serializes I/O requests */
-	struct list_head virtqueues;
-	bool is_thinint;
+	काष्ठा mutex io_lock; /* Serializes I/O requests */
+	काष्ठा list_head virtqueues;
+	bool is_thinपूर्णांक;
 	bool going_away;
 	bool device_lost;
-	unsigned int config_ready;
-	void *airq_info;
-	struct vcdev_dma_area *dma_area;
-};
+	अचिन्हित पूर्णांक config_पढ़ोy;
+	व्योम *airq_info;
+	काष्ठा vcdev_dma_area *dma_area;
+पूर्ण;
 
-static inline unsigned long *indicators(struct virtio_ccw_device *vcdev)
-{
-	return &vcdev->dma_area->indicators;
-}
+अटल अंतरभूत अचिन्हित दीर्घ *indicators(काष्ठा virtio_ccw_device *vcdev)
+अणु
+	वापस &vcdev->dma_area->indicators;
+पूर्ण
 
-static inline unsigned long *indicators2(struct virtio_ccw_device *vcdev)
-{
-	return &vcdev->dma_area->indicators2;
-}
+अटल अंतरभूत अचिन्हित दीर्घ *indicators2(काष्ठा virtio_ccw_device *vcdev)
+अणु
+	वापस &vcdev->dma_area->indicators2;
+पूर्ण
 
-struct vq_info_block_legacy {
+काष्ठा vq_info_block_legacy अणु
 	__u64 queue;
 	__u32 align;
 	__u16 index;
 	__u16 num;
-} __packed;
+पूर्ण __packed;
 
-struct vq_info_block {
+काष्ठा vq_info_block अणु
 	__u64 desc;
 	__u32 res0;
 	__u16 index;
 	__u16 num;
 	__u64 avail;
 	__u64 used;
-} __packed;
+पूर्ण __packed;
 
-struct virtio_feature_desc {
+काष्ठा virtio_feature_desc अणु
 	__le32 features;
 	__u8 index;
-} __packed;
+पूर्ण __packed;
 
-struct virtio_thinint_area {
-	unsigned long summary_indicator;
-	unsigned long indicator;
+काष्ठा virtio_thinपूर्णांक_area अणु
+	अचिन्हित दीर्घ summary_indicator;
+	अचिन्हित दीर्घ indicator;
 	u64 bit_nr;
 	u8 isc;
-} __packed;
+पूर्ण __packed;
 
-struct virtio_rev_info {
+काष्ठा virtio_rev_info अणु
 	__u16 revision;
 	__u16 length;
 	__u8 data[];
-};
+पूर्ण;
 
 /* the highest virtio-ccw revision we support */
-#define VIRTIO_CCW_REV_MAX 2
+#घोषणा VIRTIO_CCW_REV_MAX 2
 
-struct virtio_ccw_vq_info {
-	struct virtqueue *vq;
-	int num;
-	union {
-		struct vq_info_block s;
-		struct vq_info_block_legacy l;
-	} *info_block;
-	int bit_nr;
-	struct list_head node;
-	long cookie;
-};
+काष्ठा virtio_ccw_vq_info अणु
+	काष्ठा virtqueue *vq;
+	पूर्णांक num;
+	जोड़ अणु
+		काष्ठा vq_info_block s;
+		काष्ठा vq_info_block_legacy l;
+	पूर्ण *info_block;
+	पूर्णांक bit_nr;
+	काष्ठा list_head node;
+	दीर्घ cookie;
+पूर्ण;
 
-#define VIRTIO_AIRQ_ISC IO_SCH_ISC /* inherit from subchannel */
+#घोषणा VIRTIO_AIRQ_ISC IO_SCH_ISC /* inherit from subchannel */
 
-#define VIRTIO_IV_BITS (L1_CACHE_BYTES * 8)
-#define MAX_AIRQ_AREAS 20
+#घोषणा VIRTIO_IV_BITS (L1_CACHE_BYTES * 8)
+#घोषणा MAX_AIRQ_AREAS 20
 
-static int virtio_ccw_use_airq = 1;
+अटल पूर्णांक virtio_ccw_use_airq = 1;
 
-struct airq_info {
+काष्ठा airq_info अणु
 	rwlock_t lock;
 	u8 summary_indicator_idx;
-	struct airq_struct airq;
-	struct airq_iv *aiv;
-};
-static struct airq_info *airq_areas[MAX_AIRQ_AREAS];
-static DEFINE_MUTEX(airq_areas_lock);
+	काष्ठा airq_काष्ठा airq;
+	काष्ठा airq_iv *aiv;
+पूर्ण;
+अटल काष्ठा airq_info *airq_areas[MAX_AIRQ_AREAS];
+अटल DEFINE_MUTEX(airq_areas_lock);
 
-static u8 *summary_indicators;
+अटल u8 *summary_indicators;
 
-static inline u8 *get_summary_indicator(struct airq_info *info)
-{
-	return summary_indicators + info->summary_indicator_idx;
-}
+अटल अंतरभूत u8 *get_summary_indicator(काष्ठा airq_info *info)
+अणु
+	वापस summary_indicators + info->summary_indicator_idx;
+पूर्ण
 
-#define CCW_CMD_SET_VQ 0x13
-#define CCW_CMD_VDEV_RESET 0x33
-#define CCW_CMD_SET_IND 0x43
-#define CCW_CMD_SET_CONF_IND 0x53
-#define CCW_CMD_READ_FEAT 0x12
-#define CCW_CMD_WRITE_FEAT 0x11
-#define CCW_CMD_READ_CONF 0x22
-#define CCW_CMD_WRITE_CONF 0x21
-#define CCW_CMD_WRITE_STATUS 0x31
-#define CCW_CMD_READ_VQ_CONF 0x32
-#define CCW_CMD_READ_STATUS 0x72
-#define CCW_CMD_SET_IND_ADAPTER 0x73
-#define CCW_CMD_SET_VIRTIO_REV 0x83
+#घोषणा CCW_CMD_SET_VQ 0x13
+#घोषणा CCW_CMD_VDEV_RESET 0x33
+#घोषणा CCW_CMD_SET_IND 0x43
+#घोषणा CCW_CMD_SET_CONF_IND 0x53
+#घोषणा CCW_CMD_READ_FEAT 0x12
+#घोषणा CCW_CMD_WRITE_FEAT 0x11
+#घोषणा CCW_CMD_READ_CONF 0x22
+#घोषणा CCW_CMD_WRITE_CONF 0x21
+#घोषणा CCW_CMD_WRITE_STATUS 0x31
+#घोषणा CCW_CMD_READ_VQ_CONF 0x32
+#घोषणा CCW_CMD_READ_STATUS 0x72
+#घोषणा CCW_CMD_SET_IND_ADAPTER 0x73
+#घोषणा CCW_CMD_SET_VIRTIO_REV 0x83
 
-#define VIRTIO_CCW_DOING_SET_VQ 0x00010000
-#define VIRTIO_CCW_DOING_RESET 0x00040000
-#define VIRTIO_CCW_DOING_READ_FEAT 0x00080000
-#define VIRTIO_CCW_DOING_WRITE_FEAT 0x00100000
-#define VIRTIO_CCW_DOING_READ_CONFIG 0x00200000
-#define VIRTIO_CCW_DOING_WRITE_CONFIG 0x00400000
-#define VIRTIO_CCW_DOING_WRITE_STATUS 0x00800000
-#define VIRTIO_CCW_DOING_SET_IND 0x01000000
-#define VIRTIO_CCW_DOING_READ_VQ_CONF 0x02000000
-#define VIRTIO_CCW_DOING_SET_CONF_IND 0x04000000
-#define VIRTIO_CCW_DOING_SET_IND_ADAPTER 0x08000000
-#define VIRTIO_CCW_DOING_SET_VIRTIO_REV 0x10000000
-#define VIRTIO_CCW_DOING_READ_STATUS 0x20000000
-#define VIRTIO_CCW_INTPARM_MASK 0xffff0000
+#घोषणा VIRTIO_CCW_DOING_SET_VQ 0x00010000
+#घोषणा VIRTIO_CCW_DOING_RESET 0x00040000
+#घोषणा VIRTIO_CCW_DOING_READ_FEAT 0x00080000
+#घोषणा VIRTIO_CCW_DOING_WRITE_FEAT 0x00100000
+#घोषणा VIRTIO_CCW_DOING_READ_CONFIG 0x00200000
+#घोषणा VIRTIO_CCW_DOING_WRITE_CONFIG 0x00400000
+#घोषणा VIRTIO_CCW_DOING_WRITE_STATUS 0x00800000
+#घोषणा VIRTIO_CCW_DOING_SET_IND 0x01000000
+#घोषणा VIRTIO_CCW_DOING_READ_VQ_CONF 0x02000000
+#घोषणा VIRTIO_CCW_DOING_SET_CONF_IND 0x04000000
+#घोषणा VIRTIO_CCW_DOING_SET_IND_ADAPTER 0x08000000
+#घोषणा VIRTIO_CCW_DOING_SET_VIRTIO_REV 0x10000000
+#घोषणा VIRTIO_CCW_DOING_READ_STATUS 0x20000000
+#घोषणा VIRTIO_CCW_INTPARM_MASK 0xffff0000
 
-static struct virtio_ccw_device *to_vc_device(struct virtio_device *vdev)
-{
-	return container_of(vdev, struct virtio_ccw_device, vdev);
-}
+अटल काष्ठा virtio_ccw_device *to_vc_device(काष्ठा virtio_device *vdev)
+अणु
+	वापस container_of(vdev, काष्ठा virtio_ccw_device, vdev);
+पूर्ण
 
-static void drop_airq_indicator(struct virtqueue *vq, struct airq_info *info)
-{
-	unsigned long i, flags;
+अटल व्योम drop_airq_indicator(काष्ठा virtqueue *vq, काष्ठा airq_info *info)
+अणु
+	अचिन्हित दीर्घ i, flags;
 
-	write_lock_irqsave(&info->lock, flags);
-	for (i = 0; i < airq_iv_end(info->aiv); i++) {
-		if (vq == (void *)airq_iv_get_ptr(info->aiv, i)) {
-			airq_iv_free_bit(info->aiv, i);
+	ग_लिखो_lock_irqsave(&info->lock, flags);
+	क्रम (i = 0; i < airq_iv_end(info->aiv); i++) अणु
+		अगर (vq == (व्योम *)airq_iv_get_ptr(info->aiv, i)) अणु
+			airq_iv_मुक्त_bit(info->aiv, i);
 			airq_iv_set_ptr(info->aiv, i, 0);
-			break;
-		}
-	}
-	write_unlock_irqrestore(&info->lock, flags);
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock_irqrestore(&info->lock, flags);
+पूर्ण
 
-static void virtio_airq_handler(struct airq_struct *airq, bool floating)
-{
-	struct airq_info *info = container_of(airq, struct airq_info, airq);
-	unsigned long ai;
+अटल व्योम virtio_airq_handler(काष्ठा airq_काष्ठा *airq, bool भग्नing)
+अणु
+	काष्ठा airq_info *info = container_of(airq, काष्ठा airq_info, airq);
+	अचिन्हित दीर्घ ai;
 
 	inc_irq_stat(IRQIO_VAI);
-	read_lock(&info->lock);
+	पढ़ो_lock(&info->lock);
 	/* Walk through indicators field, summary indicator active. */
-	for (ai = 0;;) {
+	क्रम (ai = 0;;) अणु
 		ai = airq_iv_scan(info->aiv, ai, airq_iv_end(info->aiv));
-		if (ai == -1UL)
-			break;
-		vring_interrupt(0, (void *)airq_iv_get_ptr(info->aiv, ai));
-	}
+		अगर (ai == -1UL)
+			अवरोध;
+		vring_पूर्णांकerrupt(0, (व्योम *)airq_iv_get_ptr(info->aiv, ai));
+	पूर्ण
 	*(get_summary_indicator(info)) = 0;
 	smp_wmb();
 	/* Walk through indicators field, summary indicator not active. */
-	for (ai = 0;;) {
+	क्रम (ai = 0;;) अणु
 		ai = airq_iv_scan(info->aiv, ai, airq_iv_end(info->aiv));
-		if (ai == -1UL)
-			break;
-		vring_interrupt(0, (void *)airq_iv_get_ptr(info->aiv, ai));
-	}
-	read_unlock(&info->lock);
-}
+		अगर (ai == -1UL)
+			अवरोध;
+		vring_पूर्णांकerrupt(0, (व्योम *)airq_iv_get_ptr(info->aiv, ai));
+	पूर्ण
+	पढ़ो_unlock(&info->lock);
+पूर्ण
 
-static struct airq_info *new_airq_info(int index)
-{
-	struct airq_info *info;
-	int rc;
+अटल काष्ठा airq_info *new_airq_info(पूर्णांक index)
+अणु
+	काष्ठा airq_info *info;
+	पूर्णांक rc;
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return NULL;
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस शून्य;
 	rwlock_init(&info->lock);
 	info->aiv = airq_iv_create(VIRTIO_IV_BITS, AIRQ_IV_ALLOC | AIRQ_IV_PTR
 				   | AIRQ_IV_CACHELINE);
-	if (!info->aiv) {
-		kfree(info);
-		return NULL;
-	}
+	अगर (!info->aiv) अणु
+		kमुक्त(info);
+		वापस शून्य;
+	पूर्ण
 	info->airq.handler = virtio_airq_handler;
 	info->summary_indicator_idx = index;
 	info->airq.lsi_ptr = get_summary_indicator(info);
 	info->airq.lsi_mask = 0xff;
 	info->airq.isc = VIRTIO_AIRQ_ISC;
-	rc = register_adapter_interrupt(&info->airq);
-	if (rc) {
+	rc = रेजिस्टर_adapter_पूर्णांकerrupt(&info->airq);
+	अगर (rc) अणु
 		airq_iv_release(info->aiv);
-		kfree(info);
-		return NULL;
-	}
-	return info;
-}
+		kमुक्त(info);
+		वापस शून्य;
+	पूर्ण
+	वापस info;
+पूर्ण
 
-static unsigned long get_airq_indicator(struct virtqueue *vqs[], int nvqs,
-					u64 *first, void **airq_info)
-{
-	int i, j;
-	struct airq_info *info;
-	unsigned long indicator_addr = 0;
-	unsigned long bit, flags;
+अटल अचिन्हित दीर्घ get_airq_indicator(काष्ठा virtqueue *vqs[], पूर्णांक nvqs,
+					u64 *first, व्योम **airq_info)
+अणु
+	पूर्णांक i, j;
+	काष्ठा airq_info *info;
+	अचिन्हित दीर्घ indicator_addr = 0;
+	अचिन्हित दीर्घ bit, flags;
 
-	for (i = 0; i < MAX_AIRQ_AREAS && !indicator_addr; i++) {
+	क्रम (i = 0; i < MAX_AIRQ_AREAS && !indicator_addr; i++) अणु
 		mutex_lock(&airq_areas_lock);
-		if (!airq_areas[i])
+		अगर (!airq_areas[i])
 			airq_areas[i] = new_airq_info(i);
 		info = airq_areas[i];
 		mutex_unlock(&airq_areas_lock);
-		if (!info)
-			return 0;
-		write_lock_irqsave(&info->lock, flags);
+		अगर (!info)
+			वापस 0;
+		ग_लिखो_lock_irqsave(&info->lock, flags);
 		bit = airq_iv_alloc(info->aiv, nvqs);
-		if (bit == -1UL) {
+		अगर (bit == -1UL) अणु
 			/* Not enough vacancies. */
-			write_unlock_irqrestore(&info->lock, flags);
-			continue;
-		}
+			ग_लिखो_unlock_irqrestore(&info->lock, flags);
+			जारी;
+		पूर्ण
 		*first = bit;
 		*airq_info = info;
-		indicator_addr = (unsigned long)info->aiv->vector;
-		for (j = 0; j < nvqs; j++) {
+		indicator_addr = (अचिन्हित दीर्घ)info->aiv->vector;
+		क्रम (j = 0; j < nvqs; j++) अणु
 			airq_iv_set_ptr(info->aiv, bit + j,
-					(unsigned long)vqs[j]);
-		}
-		write_unlock_irqrestore(&info->lock, flags);
-	}
-	return indicator_addr;
-}
+					(अचिन्हित दीर्घ)vqs[j]);
+		पूर्ण
+		ग_लिखो_unlock_irqrestore(&info->lock, flags);
+	पूर्ण
+	वापस indicator_addr;
+पूर्ण
 
-static void virtio_ccw_drop_indicators(struct virtio_ccw_device *vcdev)
-{
-	struct virtio_ccw_vq_info *info;
+अटल व्योम virtio_ccw_drop_indicators(काष्ठा virtio_ccw_device *vcdev)
+अणु
+	काष्ठा virtio_ccw_vq_info *info;
 
-	if (!vcdev->airq_info)
-		return;
-	list_for_each_entry(info, &vcdev->virtqueues, node)
+	अगर (!vcdev->airq_info)
+		वापस;
+	list_क्रम_each_entry(info, &vcdev->virtqueues, node)
 		drop_airq_indicator(info->vq, vcdev->airq_info);
-}
+पूर्ण
 
-static int doing_io(struct virtio_ccw_device *vcdev, __u32 flag)
-{
-	unsigned long flags;
+अटल पूर्णांक करोing_io(काष्ठा virtio_ccw_device *vcdev, __u32 flag)
+अणु
+	अचिन्हित दीर्घ flags;
 	__u32 ret;
 
 	spin_lock_irqsave(get_ccwdev_lock(vcdev->cdev), flags);
-	if (vcdev->err)
+	अगर (vcdev->err)
 		ret = 0;
-	else
+	अन्यथा
 		ret = vcdev->curr_io & flag;
 	spin_unlock_irqrestore(get_ccwdev_lock(vcdev->cdev), flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ccw_io_helper(struct virtio_ccw_device *vcdev,
-			 struct ccw1 *ccw, __u32 intparm)
-{
-	int ret;
-	unsigned long flags;
-	int flag = intparm & VIRTIO_CCW_INTPARM_MASK;
+अटल पूर्णांक ccw_io_helper(काष्ठा virtio_ccw_device *vcdev,
+			 काष्ठा ccw1 *ccw, __u32 पूर्णांकparm)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक flag = पूर्णांकparm & VIRTIO_CCW_INTPARM_MASK;
 
 	mutex_lock(&vcdev->io_lock);
-	do {
+	करो अणु
 		spin_lock_irqsave(get_ccwdev_lock(vcdev->cdev), flags);
-		ret = ccw_device_start(vcdev->cdev, ccw, intparm, 0, 0);
-		if (!ret) {
-			if (!vcdev->curr_io)
+		ret = ccw_device_start(vcdev->cdev, ccw, पूर्णांकparm, 0, 0);
+		अगर (!ret) अणु
+			अगर (!vcdev->curr_io)
 				vcdev->err = 0;
 			vcdev->curr_io |= flag;
-		}
+		पूर्ण
 		spin_unlock_irqrestore(get_ccwdev_lock(vcdev->cdev), flags);
 		cpu_relax();
-	} while (ret == -EBUSY);
-	wait_event(vcdev->wait_q, doing_io(vcdev, flag) == 0);
+	पूर्ण जबतक (ret == -EBUSY);
+	रुको_event(vcdev->रुको_q, करोing_io(vcdev, flag) == 0);
 	ret = ret ? ret : vcdev->err;
 	mutex_unlock(&vcdev->io_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void virtio_ccw_drop_indicator(struct virtio_ccw_device *vcdev,
-				      struct ccw1 *ccw)
-{
-	int ret;
-	unsigned long *indicatorp = NULL;
-	struct virtio_thinint_area *thinint_area = NULL;
-	struct airq_info *airq_info = vcdev->airq_info;
+अटल व्योम virtio_ccw_drop_indicator(काष्ठा virtio_ccw_device *vcdev,
+				      काष्ठा ccw1 *ccw)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ *indicatorp = शून्य;
+	काष्ठा virtio_thinपूर्णांक_area *thinपूर्णांक_area = शून्य;
+	काष्ठा airq_info *airq_info = vcdev->airq_info;
 
-	if (vcdev->is_thinint) {
-		thinint_area = ccw_device_dma_zalloc(vcdev->cdev,
-						     sizeof(*thinint_area));
-		if (!thinint_area)
-			return;
-		thinint_area->summary_indicator =
-			(unsigned long) get_summary_indicator(airq_info);
-		thinint_area->isc = VIRTIO_AIRQ_ISC;
+	अगर (vcdev->is_thinपूर्णांक) अणु
+		thinपूर्णांक_area = ccw_device_dma_zalloc(vcdev->cdev,
+						     माप(*thinपूर्णांक_area));
+		अगर (!thinपूर्णांक_area)
+			वापस;
+		thinपूर्णांक_area->summary_indicator =
+			(अचिन्हित दीर्घ) get_summary_indicator(airq_info);
+		thinपूर्णांक_area->isc = VIRTIO_AIRQ_ISC;
 		ccw->cmd_code = CCW_CMD_SET_IND_ADAPTER;
-		ccw->count = sizeof(*thinint_area);
-		ccw->cda = (__u32)(unsigned long) thinint_area;
-	} else {
+		ccw->count = माप(*thinपूर्णांक_area);
+		ccw->cda = (__u32)(अचिन्हित दीर्घ) thinपूर्णांक_area;
+	पूर्ण अन्यथा अणु
 		/* payload is the address of the indicators */
 		indicatorp = ccw_device_dma_zalloc(vcdev->cdev,
-						   sizeof(indicators(vcdev)));
-		if (!indicatorp)
-			return;
+						   माप(indicators(vcdev)));
+		अगर (!indicatorp)
+			वापस;
 		*indicatorp = 0;
 		ccw->cmd_code = CCW_CMD_SET_IND;
-		ccw->count = sizeof(indicators(vcdev));
-		ccw->cda = (__u32)(unsigned long) indicatorp;
-	}
-	/* Deregister indicators from host. */
+		ccw->count = माप(indicators(vcdev));
+		ccw->cda = (__u32)(अचिन्हित दीर्घ) indicatorp;
+	पूर्ण
+	/* Deरेजिस्टर indicators from host. */
 	*indicators(vcdev) = 0;
 	ccw->flags = 0;
 	ret = ccw_io_helper(vcdev, ccw,
-			    vcdev->is_thinint ?
+			    vcdev->is_thinपूर्णांक ?
 			    VIRTIO_CCW_DOING_SET_IND_ADAPTER :
 			    VIRTIO_CCW_DOING_SET_IND);
-	if (ret && (ret != -ENODEV))
+	अगर (ret && (ret != -ENODEV))
 		dev_info(&vcdev->cdev->dev,
 			 "Failed to deregister indicators (%d)\n", ret);
-	else if (vcdev->is_thinint)
+	अन्यथा अगर (vcdev->is_thinपूर्णांक)
 		virtio_ccw_drop_indicators(vcdev);
-	ccw_device_dma_free(vcdev->cdev, indicatorp, sizeof(indicators(vcdev)));
-	ccw_device_dma_free(vcdev->cdev, thinint_area, sizeof(*thinint_area));
-}
+	ccw_device_dma_मुक्त(vcdev->cdev, indicatorp, माप(indicators(vcdev)));
+	ccw_device_dma_मुक्त(vcdev->cdev, thinपूर्णांक_area, माप(*thinपूर्णांक_area));
+पूर्ण
 
-static inline long __do_kvm_notify(struct subchannel_id schid,
-				   unsigned long queue_index,
-				   long cookie)
-{
-	register unsigned long __nr asm("1") = KVM_S390_VIRTIO_CCW_NOTIFY;
-	register struct subchannel_id __schid asm("2") = schid;
-	register unsigned long __index asm("3") = queue_index;
-	register long __rc asm("2");
-	register long __cookie asm("4") = cookie;
+अटल अंतरभूत दीर्घ __करो_kvm_notअगरy(काष्ठा subchannel_id schid,
+				   अचिन्हित दीर्घ queue_index,
+				   दीर्घ cookie)
+अणु
+	रेजिस्टर अचिन्हित दीर्घ __nr यंत्र("1") = KVM_S390_VIRTIO_CCW_NOTIFY;
+	रेजिस्टर काष्ठा subchannel_id __schid यंत्र("2") = schid;
+	रेजिस्टर अचिन्हित दीर्घ __index यंत्र("3") = queue_index;
+	रेजिस्टर दीर्घ __rc यंत्र("2");
+	रेजिस्टर दीर्घ __cookie यंत्र("4") = cookie;
 
-	asm volatile ("diag 2,4,0x500\n"
+	यंत्र अस्थिर ("diag 2,4,0x500\n"
 		      : "=d" (__rc) : "d" (__nr), "d" (__schid), "d" (__index),
 		      "d"(__cookie)
 		      : "memory", "cc");
-	return __rc;
-}
+	वापस __rc;
+पूर्ण
 
-static inline long do_kvm_notify(struct subchannel_id schid,
-				 unsigned long queue_index,
-				 long cookie)
-{
+अटल अंतरभूत दीर्घ करो_kvm_notअगरy(काष्ठा subchannel_id schid,
+				 अचिन्हित दीर्घ queue_index,
+				 दीर्घ cookie)
+अणु
 	diag_stat_inc(DIAG_STAT_X500);
-	return __do_kvm_notify(schid, queue_index, cookie);
-}
+	वापस __करो_kvm_notअगरy(schid, queue_index, cookie);
+पूर्ण
 
-static bool virtio_ccw_kvm_notify(struct virtqueue *vq)
-{
-	struct virtio_ccw_vq_info *info = vq->priv;
-	struct virtio_ccw_device *vcdev;
-	struct subchannel_id schid;
+अटल bool virtio_ccw_kvm_notअगरy(काष्ठा virtqueue *vq)
+अणु
+	काष्ठा virtio_ccw_vq_info *info = vq->priv;
+	काष्ठा virtio_ccw_device *vcdev;
+	काष्ठा subchannel_id schid;
 
 	vcdev = to_vc_device(info->vq->vdev);
 	ccw_device_get_schid(vcdev->cdev, &schid);
-	info->cookie = do_kvm_notify(schid, vq->index, info->cookie);
-	if (info->cookie < 0)
-		return false;
-	return true;
-}
+	info->cookie = करो_kvm_notअगरy(schid, vq->index, info->cookie);
+	अगर (info->cookie < 0)
+		वापस false;
+	वापस true;
+पूर्ण
 
-static int virtio_ccw_read_vq_conf(struct virtio_ccw_device *vcdev,
-				   struct ccw1 *ccw, int index)
-{
-	int ret;
+अटल पूर्णांक virtio_ccw_पढ़ो_vq_conf(काष्ठा virtio_ccw_device *vcdev,
+				   काष्ठा ccw1 *ccw, पूर्णांक index)
+अणु
+	पूर्णांक ret;
 
 	vcdev->dma_area->config_block.index = index;
 	ccw->cmd_code = CCW_CMD_READ_VQ_CONF;
 	ccw->flags = 0;
-	ccw->count = sizeof(struct vq_config_block);
-	ccw->cda = (__u32)(unsigned long)(&vcdev->dma_area->config_block);
+	ccw->count = माप(काष्ठा vq_config_block);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)(&vcdev->dma_area->config_block);
 	ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_READ_VQ_CONF);
-	if (ret)
-		return ret;
-	return vcdev->dma_area->config_block.num ?: -ENOENT;
-}
+	अगर (ret)
+		वापस ret;
+	वापस vcdev->dma_area->config_block.num ?: -ENOENT;
+पूर्ण
 
-static void virtio_ccw_del_vq(struct virtqueue *vq, struct ccw1 *ccw)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vq->vdev);
-	struct virtio_ccw_vq_info *info = vq->priv;
-	unsigned long flags;
-	int ret;
-	unsigned int index = vq->index;
+अटल व्योम virtio_ccw_del_vq(काष्ठा virtqueue *vq, काष्ठा ccw1 *ccw)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vq->vdev);
+	काष्ठा virtio_ccw_vq_info *info = vq->priv;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक index = vq->index;
 
 	/* Remove from our list. */
 	spin_lock_irqsave(&vcdev->lock, flags);
@@ -457,127 +458,127 @@ static void virtio_ccw_del_vq(struct virtqueue *vq, struct ccw1 *ccw)
 	spin_unlock_irqrestore(&vcdev->lock, flags);
 
 	/* Release from host. */
-	if (vcdev->revision == 0) {
+	अगर (vcdev->revision == 0) अणु
 		info->info_block->l.queue = 0;
 		info->info_block->l.align = 0;
 		info->info_block->l.index = index;
 		info->info_block->l.num = 0;
-		ccw->count = sizeof(info->info_block->l);
-	} else {
+		ccw->count = माप(info->info_block->l);
+	पूर्ण अन्यथा अणु
 		info->info_block->s.desc = 0;
 		info->info_block->s.index = index;
 		info->info_block->s.num = 0;
 		info->info_block->s.avail = 0;
 		info->info_block->s.used = 0;
-		ccw->count = sizeof(info->info_block->s);
-	}
+		ccw->count = माप(info->info_block->s);
+	पूर्ण
 	ccw->cmd_code = CCW_CMD_SET_VQ;
 	ccw->flags = 0;
-	ccw->cda = (__u32)(unsigned long)(info->info_block);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)(info->info_block);
 	ret = ccw_io_helper(vcdev, ccw,
 			    VIRTIO_CCW_DOING_SET_VQ | index);
 	/*
 	 * -ENODEV isn't considered an error: The device is gone anyway.
 	 * This may happen on device detach.
 	 */
-	if (ret && (ret != -ENODEV))
+	अगर (ret && (ret != -ENODEV))
 		dev_warn(&vq->vdev->dev, "Error %d while deleting queue %d\n",
 			 ret, index);
 
 	vring_del_virtqueue(vq);
-	ccw_device_dma_free(vcdev->cdev, info->info_block,
-			    sizeof(*info->info_block));
-	kfree(info);
-}
+	ccw_device_dma_मुक्त(vcdev->cdev, info->info_block,
+			    माप(*info->info_block));
+	kमुक्त(info);
+पूर्ण
 
-static void virtio_ccw_del_vqs(struct virtio_device *vdev)
-{
-	struct virtqueue *vq, *n;
-	struct ccw1 *ccw;
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
+अटल व्योम virtio_ccw_del_vqs(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtqueue *vq, *n;
+	काष्ठा ccw1 *ccw;
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
 
-	ccw = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*ccw));
-	if (!ccw)
-		return;
+	ccw = ccw_device_dma_zalloc(vcdev->cdev, माप(*ccw));
+	अगर (!ccw)
+		वापस;
 
 	virtio_ccw_drop_indicator(vcdev, ccw);
 
-	list_for_each_entry_safe(vq, n, &vdev->vqs, list)
+	list_क्रम_each_entry_safe(vq, n, &vdev->vqs, list)
 		virtio_ccw_del_vq(vq, ccw);
 
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
-}
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
+पूर्ण
 
-static struct virtqueue *virtio_ccw_setup_vq(struct virtio_device *vdev,
-					     int i, vq_callback_t *callback,
-					     const char *name, bool ctx,
-					     struct ccw1 *ccw)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
-	int err;
-	struct virtqueue *vq = NULL;
-	struct virtio_ccw_vq_info *info;
+अटल काष्ठा virtqueue *virtio_ccw_setup_vq(काष्ठा virtio_device *vdev,
+					     पूर्णांक i, vq_callback_t *callback,
+					     स्थिर अक्षर *name, bool ctx,
+					     काष्ठा ccw1 *ccw)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
+	पूर्णांक err;
+	काष्ठा virtqueue *vq = शून्य;
+	काष्ठा virtio_ccw_vq_info *info;
 	u64 queue;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	bool may_reduce;
 
 	/* Allocate queue. */
-	info = kzalloc(sizeof(struct virtio_ccw_vq_info), GFP_KERNEL);
-	if (!info) {
+	info = kzalloc(माप(काष्ठा virtio_ccw_vq_info), GFP_KERNEL);
+	अगर (!info) अणु
 		dev_warn(&vcdev->cdev->dev, "no info\n");
 		err = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 	info->info_block = ccw_device_dma_zalloc(vcdev->cdev,
-						 sizeof(*info->info_block));
-	if (!info->info_block) {
+						 माप(*info->info_block));
+	अगर (!info->info_block) अणु
 		dev_warn(&vcdev->cdev->dev, "no info block\n");
 		err = -ENOMEM;
-		goto out_err;
-	}
-	info->num = virtio_ccw_read_vq_conf(vcdev, ccw, i);
-	if (info->num < 0) {
+		जाओ out_err;
+	पूर्ण
+	info->num = virtio_ccw_पढ़ो_vq_conf(vcdev, ccw, i);
+	अगर (info->num < 0) अणु
 		err = info->num;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 	may_reduce = vcdev->revision > 0;
 	vq = vring_create_virtqueue(i, info->num, KVM_VIRTIO_CCW_RING_ALIGN,
 				    vdev, true, may_reduce, ctx,
-				    virtio_ccw_kvm_notify, callback, name);
+				    virtio_ccw_kvm_notअगरy, callback, name);
 
-	if (!vq) {
-		/* For now, we fail if we can't get the requested size. */
+	अगर (!vq) अणु
+		/* For now, we fail अगर we can't get the requested size. */
 		dev_warn(&vcdev->cdev->dev, "no vq\n");
 		err = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 	/* it may have been reduced */
 	info->num = virtqueue_get_vring_size(vq);
 
 	/* Register it with the host. */
 	queue = virtqueue_get_desc_addr(vq);
-	if (vcdev->revision == 0) {
+	अगर (vcdev->revision == 0) अणु
 		info->info_block->l.queue = queue;
 		info->info_block->l.align = KVM_VIRTIO_CCW_RING_ALIGN;
 		info->info_block->l.index = i;
 		info->info_block->l.num = info->num;
-		ccw->count = sizeof(info->info_block->l);
-	} else {
+		ccw->count = माप(info->info_block->l);
+	पूर्ण अन्यथा अणु
 		info->info_block->s.desc = queue;
 		info->info_block->s.index = i;
 		info->info_block->s.num = info->num;
 		info->info_block->s.avail = (__u64)virtqueue_get_avail_addr(vq);
 		info->info_block->s.used = (__u64)virtqueue_get_used_addr(vq);
-		ccw->count = sizeof(info->info_block->s);
-	}
+		ccw->count = माप(info->info_block->s);
+	पूर्ण
 	ccw->cmd_code = CCW_CMD_SET_VQ;
 	ccw->flags = 0;
-	ccw->cda = (__u32)(unsigned long)(info->info_block);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)(info->info_block);
 	err = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_SET_VQ | i);
-	if (err) {
+	अगर (err) अणु
 		dev_warn(&vcdev->cdev->dev, "SET_VQ failed\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	info->vq = vq;
 	vq->priv = info;
@@ -587,159 +588,159 @@ static struct virtqueue *virtio_ccw_setup_vq(struct virtio_device *vdev,
 	list_add(&info->node, &vcdev->virtqueues);
 	spin_unlock_irqrestore(&vcdev->lock, flags);
 
-	return vq;
+	वापस vq;
 
 out_err:
-	if (vq)
+	अगर (vq)
 		vring_del_virtqueue(vq);
-	if (info) {
-		ccw_device_dma_free(vcdev->cdev, info->info_block,
-				    sizeof(*info->info_block));
-	}
-	kfree(info);
-	return ERR_PTR(err);
-}
+	अगर (info) अणु
+		ccw_device_dma_मुक्त(vcdev->cdev, info->info_block,
+				    माप(*info->info_block));
+	पूर्ण
+	kमुक्त(info);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static int virtio_ccw_register_adapter_ind(struct virtio_ccw_device *vcdev,
-					   struct virtqueue *vqs[], int nvqs,
-					   struct ccw1 *ccw)
-{
-	int ret;
-	struct virtio_thinint_area *thinint_area = NULL;
-	struct airq_info *info;
+अटल पूर्णांक virtio_ccw_रेजिस्टर_adapter_ind(काष्ठा virtio_ccw_device *vcdev,
+					   काष्ठा virtqueue *vqs[], पूर्णांक nvqs,
+					   काष्ठा ccw1 *ccw)
+अणु
+	पूर्णांक ret;
+	काष्ठा virtio_thinपूर्णांक_area *thinपूर्णांक_area = शून्य;
+	काष्ठा airq_info *info;
 
-	thinint_area = ccw_device_dma_zalloc(vcdev->cdev,
-					     sizeof(*thinint_area));
-	if (!thinint_area) {
+	thinपूर्णांक_area = ccw_device_dma_zalloc(vcdev->cdev,
+					     माप(*thinपूर्णांक_area));
+	अगर (!thinपूर्णांक_area) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/* Try to get an indicator. */
-	thinint_area->indicator = get_airq_indicator(vqs, nvqs,
-						     &thinint_area->bit_nr,
+	thinपूर्णांक_area->indicator = get_airq_indicator(vqs, nvqs,
+						     &thinपूर्णांक_area->bit_nr,
 						     &vcdev->airq_info);
-	if (!thinint_area->indicator) {
+	अगर (!thinपूर्णांक_area->indicator) अणु
 		ret = -ENOSPC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	info = vcdev->airq_info;
-	thinint_area->summary_indicator =
-		(unsigned long) get_summary_indicator(info);
-	thinint_area->isc = VIRTIO_AIRQ_ISC;
+	thinपूर्णांक_area->summary_indicator =
+		(अचिन्हित दीर्घ) get_summary_indicator(info);
+	thinपूर्णांक_area->isc = VIRTIO_AIRQ_ISC;
 	ccw->cmd_code = CCW_CMD_SET_IND_ADAPTER;
 	ccw->flags = CCW_FLAG_SLI;
-	ccw->count = sizeof(*thinint_area);
-	ccw->cda = (__u32)(unsigned long)thinint_area;
+	ccw->count = माप(*thinपूर्णांक_area);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)thinपूर्णांक_area;
 	ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_SET_IND_ADAPTER);
-	if (ret) {
-		if (ret == -EOPNOTSUPP) {
+	अगर (ret) अणु
+		अगर (ret == -EOPNOTSUPP) अणु
 			/*
-			 * The host does not support adapter interrupts
-			 * for virtio-ccw, stop trying.
+			 * The host करोes not support adapter पूर्णांकerrupts
+			 * क्रम virtio-ccw, stop trying.
 			 */
 			virtio_ccw_use_airq = 0;
 			pr_info("Adapter interrupts unsupported on host\n");
-		} else
+		पूर्ण अन्यथा
 			dev_warn(&vcdev->cdev->dev,
 				 "enabling adapter interrupts = %d\n", ret);
 		virtio_ccw_drop_indicators(vcdev);
-	}
+	पूर्ण
 out:
-	ccw_device_dma_free(vcdev->cdev, thinint_area, sizeof(*thinint_area));
-	return ret;
-}
+	ccw_device_dma_मुक्त(vcdev->cdev, thinपूर्णांक_area, माप(*thinपूर्णांक_area));
+	वापस ret;
+पूर्ण
 
-static int virtio_ccw_find_vqs(struct virtio_device *vdev, unsigned nvqs,
-			       struct virtqueue *vqs[],
+अटल पूर्णांक virtio_ccw_find_vqs(काष्ठा virtio_device *vdev, अचिन्हित nvqs,
+			       काष्ठा virtqueue *vqs[],
 			       vq_callback_t *callbacks[],
-			       const char * const names[],
-			       const bool *ctx,
-			       struct irq_affinity *desc)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
-	unsigned long *indicatorp = NULL;
-	int ret, i, queue_idx = 0;
-	struct ccw1 *ccw;
+			       स्थिर अक्षर * स्थिर names[],
+			       स्थिर bool *ctx,
+			       काष्ठा irq_affinity *desc)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
+	अचिन्हित दीर्घ *indicatorp = शून्य;
+	पूर्णांक ret, i, queue_idx = 0;
+	काष्ठा ccw1 *ccw;
 
-	ccw = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*ccw));
-	if (!ccw)
-		return -ENOMEM;
+	ccw = ccw_device_dma_zalloc(vcdev->cdev, माप(*ccw));
+	अगर (!ccw)
+		वापस -ENOMEM;
 
-	for (i = 0; i < nvqs; ++i) {
-		if (!names[i]) {
-			vqs[i] = NULL;
-			continue;
-		}
+	क्रम (i = 0; i < nvqs; ++i) अणु
+		अगर (!names[i]) अणु
+			vqs[i] = शून्य;
+			जारी;
+		पूर्ण
 
 		vqs[i] = virtio_ccw_setup_vq(vdev, queue_idx++, callbacks[i],
 					     names[i], ctx ? ctx[i] : false,
 					     ccw);
-		if (IS_ERR(vqs[i])) {
+		अगर (IS_ERR(vqs[i])) अणु
 			ret = PTR_ERR(vqs[i]);
-			vqs[i] = NULL;
-			goto out;
-		}
-	}
+			vqs[i] = शून्य;
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	ret = -ENOMEM;
 	/*
 	 * We need a data area under 2G to communicate. Our payload is
 	 * the address of the indicators.
 	*/
 	indicatorp = ccw_device_dma_zalloc(vcdev->cdev,
-					   sizeof(indicators(vcdev)));
-	if (!indicatorp)
-		goto out;
-	*indicatorp = (unsigned long) indicators(vcdev);
-	if (vcdev->is_thinint) {
-		ret = virtio_ccw_register_adapter_ind(vcdev, vqs, nvqs, ccw);
-		if (ret)
-			/* no error, just fall back to legacy interrupts */
-			vcdev->is_thinint = false;
-	}
-	if (!vcdev->is_thinint) {
+					   माप(indicators(vcdev)));
+	अगर (!indicatorp)
+		जाओ out;
+	*indicatorp = (अचिन्हित दीर्घ) indicators(vcdev);
+	अगर (vcdev->is_thinपूर्णांक) अणु
+		ret = virtio_ccw_रेजिस्टर_adapter_ind(vcdev, vqs, nvqs, ccw);
+		अगर (ret)
+			/* no error, just fall back to legacy पूर्णांकerrupts */
+			vcdev->is_thinपूर्णांक = false;
+	पूर्ण
+	अगर (!vcdev->is_thinपूर्णांक) अणु
 		/* Register queue indicators with host. */
 		*indicators(vcdev) = 0;
 		ccw->cmd_code = CCW_CMD_SET_IND;
 		ccw->flags = 0;
-		ccw->count = sizeof(indicators(vcdev));
-		ccw->cda = (__u32)(unsigned long) indicatorp;
+		ccw->count = माप(indicators(vcdev));
+		ccw->cda = (__u32)(अचिन्हित दीर्घ) indicatorp;
 		ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_SET_IND);
-		if (ret)
-			goto out;
-	}
-	/* Register indicators2 with host for config changes */
-	*indicatorp = (unsigned long) indicators2(vcdev);
+		अगर (ret)
+			जाओ out;
+	पूर्ण
+	/* Register indicators2 with host क्रम config changes */
+	*indicatorp = (अचिन्हित दीर्घ) indicators2(vcdev);
 	*indicators2(vcdev) = 0;
 	ccw->cmd_code = CCW_CMD_SET_CONF_IND;
 	ccw->flags = 0;
-	ccw->count = sizeof(indicators2(vcdev));
-	ccw->cda = (__u32)(unsigned long) indicatorp;
+	ccw->count = माप(indicators2(vcdev));
+	ccw->cda = (__u32)(अचिन्हित दीर्घ) indicatorp;
 	ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_SET_CONF_IND);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (indicatorp)
-		ccw_device_dma_free(vcdev->cdev, indicatorp,
-				    sizeof(indicators(vcdev)));
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
-	return 0;
+	अगर (indicatorp)
+		ccw_device_dma_मुक्त(vcdev->cdev, indicatorp,
+				    माप(indicators(vcdev)));
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
+	वापस 0;
 out:
-	if (indicatorp)
-		ccw_device_dma_free(vcdev->cdev, indicatorp,
-				    sizeof(indicators(vcdev)));
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
+	अगर (indicatorp)
+		ccw_device_dma_मुक्त(vcdev->cdev, indicatorp,
+				    माप(indicators(vcdev)));
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
 	virtio_ccw_del_vqs(vdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void virtio_ccw_reset(struct virtio_device *vdev)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
-	struct ccw1 *ccw;
+अटल व्योम virtio_ccw_reset(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
+	काष्ठा ccw1 *ccw;
 
-	ccw = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*ccw));
-	if (!ccw)
-		return;
+	ccw = ccw_device_dma_zalloc(vcdev->cdev, माप(*ccw));
+	अगर (!ccw)
+		वापस;
 
 	/* Zero status bits. */
 	vcdev->dma_area->status = 0;
@@ -750,89 +751,89 @@ static void virtio_ccw_reset(struct virtio_device *vdev)
 	ccw->count = 0;
 	ccw->cda = 0;
 	ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_RESET);
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
-}
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
+पूर्ण
 
-static u64 virtio_ccw_get_features(struct virtio_device *vdev)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
-	struct virtio_feature_desc *features;
-	int ret;
+अटल u64 virtio_ccw_get_features(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
+	काष्ठा virtio_feature_desc *features;
+	पूर्णांक ret;
 	u64 rc;
-	struct ccw1 *ccw;
+	काष्ठा ccw1 *ccw;
 
-	ccw = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*ccw));
-	if (!ccw)
-		return 0;
+	ccw = ccw_device_dma_zalloc(vcdev->cdev, माप(*ccw));
+	अगर (!ccw)
+		वापस 0;
 
-	features = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*features));
-	if (!features) {
+	features = ccw_device_dma_zalloc(vcdev->cdev, माप(*features));
+	अगर (!features) अणु
 		rc = 0;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 	/* Read the feature bits from the host. */
 	features->index = 0;
 	ccw->cmd_code = CCW_CMD_READ_FEAT;
 	ccw->flags = 0;
-	ccw->count = sizeof(*features);
-	ccw->cda = (__u32)(unsigned long)features;
+	ccw->count = माप(*features);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)features;
 	ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_READ_FEAT);
-	if (ret) {
+	अगर (ret) अणु
 		rc = 0;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	rc = le32_to_cpu(features->features);
 
-	if (vcdev->revision == 0)
-		goto out_free;
+	अगर (vcdev->revision == 0)
+		जाओ out_मुक्त;
 
 	/* Read second half of the feature bits from the host. */
 	features->index = 1;
 	ccw->cmd_code = CCW_CMD_READ_FEAT;
 	ccw->flags = 0;
-	ccw->count = sizeof(*features);
-	ccw->cda = (__u32)(unsigned long)features;
+	ccw->count = माप(*features);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)features;
 	ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_READ_FEAT);
-	if (ret == 0)
+	अगर (ret == 0)
 		rc |= (u64)le32_to_cpu(features->features) << 32;
 
-out_free:
-	ccw_device_dma_free(vcdev->cdev, features, sizeof(*features));
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
-	return rc;
-}
+out_मुक्त:
+	ccw_device_dma_मुक्त(vcdev->cdev, features, माप(*features));
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
+	वापस rc;
+पूर्ण
 
-static void ccw_transport_features(struct virtio_device *vdev)
-{
+अटल व्योम ccw_transport_features(काष्ठा virtio_device *vdev)
+अणु
 	/*
-	 * Currently nothing to do here.
+	 * Currently nothing to करो here.
 	 */
-}
+पूर्ण
 
-static int virtio_ccw_finalize_features(struct virtio_device *vdev)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
-	struct virtio_feature_desc *features;
-	struct ccw1 *ccw;
-	int ret;
+अटल पूर्णांक virtio_ccw_finalize_features(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
+	काष्ठा virtio_feature_desc *features;
+	काष्ठा ccw1 *ccw;
+	पूर्णांक ret;
 
-	if (vcdev->revision >= 1 &&
-	    !__virtio_test_bit(vdev, VIRTIO_F_VERSION_1)) {
+	अगर (vcdev->revision >= 1 &&
+	    !__virtio_test_bit(vdev, VIRTIO_F_VERSION_1)) अणु
 		dev_err(&vdev->dev, "virtio: device uses revision 1 "
 			"but does not have VIRTIO_F_VERSION_1\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ccw = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*ccw));
-	if (!ccw)
-		return -ENOMEM;
+	ccw = ccw_device_dma_zalloc(vcdev->cdev, माप(*ccw));
+	अगर (!ccw)
+		वापस -ENOMEM;
 
-	features = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*features));
-	if (!features) {
+	features = ccw_device_dma_zalloc(vcdev->cdev, माप(*features));
+	अगर (!features) अणु
 		ret = -ENOMEM;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 	/* Give virtio_ring a chance to accept features. */
 	vring_transport_features(vdev);
 
@@ -844,169 +845,169 @@ static int virtio_ccw_finalize_features(struct virtio_device *vdev)
 	/* Write the first half of the feature bits to the host. */
 	ccw->cmd_code = CCW_CMD_WRITE_FEAT;
 	ccw->flags = 0;
-	ccw->count = sizeof(*features);
-	ccw->cda = (__u32)(unsigned long)features;
+	ccw->count = माप(*features);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)features;
 	ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_WRITE_FEAT);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	if (vcdev->revision == 0)
-		goto out_free;
+	अगर (vcdev->revision == 0)
+		जाओ out_मुक्त;
 
 	features->index = 1;
 	features->features = cpu_to_le32(vdev->features >> 32);
 	/* Write the second half of the feature bits to the host. */
 	ccw->cmd_code = CCW_CMD_WRITE_FEAT;
 	ccw->flags = 0;
-	ccw->count = sizeof(*features);
-	ccw->cda = (__u32)(unsigned long)features;
+	ccw->count = माप(*features);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)features;
 	ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_WRITE_FEAT);
 
-out_free:
-	ccw_device_dma_free(vcdev->cdev, features, sizeof(*features));
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
+out_मुक्त:
+	ccw_device_dma_मुक्त(vcdev->cdev, features, माप(*features));
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void virtio_ccw_get_config(struct virtio_device *vdev,
-				  unsigned int offset, void *buf, unsigned len)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
-	int ret;
-	struct ccw1 *ccw;
-	void *config_area;
-	unsigned long flags;
+अटल व्योम virtio_ccw_get_config(काष्ठा virtio_device *vdev,
+				  अचिन्हित पूर्णांक offset, व्योम *buf, अचिन्हित len)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
+	पूर्णांक ret;
+	काष्ठा ccw1 *ccw;
+	व्योम *config_area;
+	अचिन्हित दीर्घ flags;
 
-	ccw = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*ccw));
-	if (!ccw)
-		return;
+	ccw = ccw_device_dma_zalloc(vcdev->cdev, माप(*ccw));
+	अगर (!ccw)
+		वापस;
 
 	config_area = ccw_device_dma_zalloc(vcdev->cdev,
 					    VIRTIO_CCW_CONFIG_SIZE);
-	if (!config_area)
-		goto out_free;
+	अगर (!config_area)
+		जाओ out_मुक्त;
 
 	/* Read the config area from the host. */
 	ccw->cmd_code = CCW_CMD_READ_CONF;
 	ccw->flags = 0;
 	ccw->count = offset + len;
-	ccw->cda = (__u32)(unsigned long)config_area;
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)config_area;
 	ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_READ_CONFIG);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	spin_lock_irqsave(&vcdev->lock, flags);
-	memcpy(vcdev->config, config_area, offset + len);
-	if (vcdev->config_ready < offset + len)
-		vcdev->config_ready = offset + len;
+	स_नकल(vcdev->config, config_area, offset + len);
+	अगर (vcdev->config_पढ़ोy < offset + len)
+		vcdev->config_पढ़ोy = offset + len;
 	spin_unlock_irqrestore(&vcdev->lock, flags);
-	if (buf)
-		memcpy(buf, config_area + offset, len);
+	अगर (buf)
+		स_नकल(buf, config_area + offset, len);
 
-out_free:
-	ccw_device_dma_free(vcdev->cdev, config_area, VIRTIO_CCW_CONFIG_SIZE);
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
-}
+out_मुक्त:
+	ccw_device_dma_मुक्त(vcdev->cdev, config_area, VIRTIO_CCW_CONFIG_SIZE);
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
+पूर्ण
 
-static void virtio_ccw_set_config(struct virtio_device *vdev,
-				  unsigned int offset, const void *buf,
-				  unsigned len)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
-	struct ccw1 *ccw;
-	void *config_area;
-	unsigned long flags;
+अटल व्योम virtio_ccw_set_config(काष्ठा virtio_device *vdev,
+				  अचिन्हित पूर्णांक offset, स्थिर व्योम *buf,
+				  अचिन्हित len)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
+	काष्ठा ccw1 *ccw;
+	व्योम *config_area;
+	अचिन्हित दीर्घ flags;
 
-	ccw = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*ccw));
-	if (!ccw)
-		return;
+	ccw = ccw_device_dma_zalloc(vcdev->cdev, माप(*ccw));
+	अगर (!ccw)
+		वापस;
 
 	config_area = ccw_device_dma_zalloc(vcdev->cdev,
 					    VIRTIO_CCW_CONFIG_SIZE);
-	if (!config_area)
-		goto out_free;
+	अगर (!config_area)
+		जाओ out_मुक्त;
 
-	/* Make sure we don't overwrite fields. */
-	if (vcdev->config_ready < offset)
-		virtio_ccw_get_config(vdev, 0, NULL, offset);
+	/* Make sure we करोn't overग_लिखो fields. */
+	अगर (vcdev->config_पढ़ोy < offset)
+		virtio_ccw_get_config(vdev, 0, शून्य, offset);
 	spin_lock_irqsave(&vcdev->lock, flags);
-	memcpy(&vcdev->config[offset], buf, len);
+	स_नकल(&vcdev->config[offset], buf, len);
 	/* Write the config area to the host. */
-	memcpy(config_area, vcdev->config, sizeof(vcdev->config));
+	स_नकल(config_area, vcdev->config, माप(vcdev->config));
 	spin_unlock_irqrestore(&vcdev->lock, flags);
 	ccw->cmd_code = CCW_CMD_WRITE_CONF;
 	ccw->flags = 0;
 	ccw->count = offset + len;
-	ccw->cda = (__u32)(unsigned long)config_area;
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)config_area;
 	ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_WRITE_CONFIG);
 
-out_free:
-	ccw_device_dma_free(vcdev->cdev, config_area, VIRTIO_CCW_CONFIG_SIZE);
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
-}
+out_मुक्त:
+	ccw_device_dma_मुक्त(vcdev->cdev, config_area, VIRTIO_CCW_CONFIG_SIZE);
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
+पूर्ण
 
-static u8 virtio_ccw_get_status(struct virtio_device *vdev)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
+अटल u8 virtio_ccw_get_status(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
 	u8 old_status = vcdev->dma_area->status;
-	struct ccw1 *ccw;
+	काष्ठा ccw1 *ccw;
 
-	if (vcdev->revision < 2)
-		return vcdev->dma_area->status;
+	अगर (vcdev->revision < 2)
+		वापस vcdev->dma_area->status;
 
-	ccw = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*ccw));
-	if (!ccw)
-		return old_status;
+	ccw = ccw_device_dma_zalloc(vcdev->cdev, माप(*ccw));
+	अगर (!ccw)
+		वापस old_status;
 
 	ccw->cmd_code = CCW_CMD_READ_STATUS;
 	ccw->flags = 0;
-	ccw->count = sizeof(vcdev->dma_area->status);
-	ccw->cda = (__u32)(unsigned long)&vcdev->dma_area->status;
+	ccw->count = माप(vcdev->dma_area->status);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)&vcdev->dma_area->status;
 	ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_READ_STATUS);
 /*
- * If the channel program failed (should only happen if the device
+ * If the channel program failed (should only happen अगर the device
  * was hotunplugged, and then we clean up via the machine check
  * handler anyway), vcdev->dma_area->status was not overwritten and we just
- * return the old status, which is fine.
+ * वापस the old status, which is fine.
 */
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
 
-	return vcdev->dma_area->status;
-}
+	वापस vcdev->dma_area->status;
+पूर्ण
 
-static void virtio_ccw_set_status(struct virtio_device *vdev, u8 status)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
+अटल व्योम virtio_ccw_set_status(काष्ठा virtio_device *vdev, u8 status)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
 	u8 old_status = vcdev->dma_area->status;
-	struct ccw1 *ccw;
-	int ret;
+	काष्ठा ccw1 *ccw;
+	पूर्णांक ret;
 
-	ccw = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*ccw));
-	if (!ccw)
-		return;
+	ccw = ccw_device_dma_zalloc(vcdev->cdev, माप(*ccw));
+	अगर (!ccw)
+		वापस;
 
 	/* Write the status to the host. */
 	vcdev->dma_area->status = status;
 	ccw->cmd_code = CCW_CMD_WRITE_STATUS;
 	ccw->flags = 0;
-	ccw->count = sizeof(status);
-	ccw->cda = (__u32)(unsigned long)&vcdev->dma_area->status;
+	ccw->count = माप(status);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)&vcdev->dma_area->status;
 	ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_WRITE_STATUS);
 	/* Write failed? We assume status is unchanged. */
-	if (ret)
+	अगर (ret)
 		vcdev->dma_area->status = old_status;
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
-}
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
+पूर्ण
 
-static const char *virtio_ccw_bus_name(struct virtio_device *vdev)
-{
-	struct virtio_ccw_device *vcdev = to_vc_device(vdev);
+अटल स्थिर अक्षर *virtio_ccw_bus_name(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(vdev);
 
-	return dev_name(&vcdev->cdev->dev);
-}
+	वापस dev_name(&vcdev->cdev->dev);
+पूर्ण
 
-static const struct virtio_config_ops virtio_ccw_config_ops = {
+अटल स्थिर काष्ठा virtio_config_ops virtio_ccw_config_ops = अणु
 	.get_features = virtio_ccw_get_features,
 	.finalize_features = virtio_ccw_finalize_features,
 	.get = virtio_ccw_get_config,
@@ -1017,293 +1018,293 @@ static const struct virtio_config_ops virtio_ccw_config_ops = {
 	.find_vqs = virtio_ccw_find_vqs,
 	.del_vqs = virtio_ccw_del_vqs,
 	.bus_name = virtio_ccw_bus_name,
-};
+पूर्ण;
 
 
 /*
  * ccw bus driver related functions
  */
 
-static void virtio_ccw_release_dev(struct device *_d)
-{
-	struct virtio_device *dev = dev_to_virtio(_d);
-	struct virtio_ccw_device *vcdev = to_vc_device(dev);
+अटल व्योम virtio_ccw_release_dev(काष्ठा device *_d)
+अणु
+	काष्ठा virtio_device *dev = dev_to_virtio(_d);
+	काष्ठा virtio_ccw_device *vcdev = to_vc_device(dev);
 
-	ccw_device_dma_free(vcdev->cdev, vcdev->dma_area,
-			    sizeof(*vcdev->dma_area));
-	kfree(vcdev);
-}
+	ccw_device_dma_मुक्त(vcdev->cdev, vcdev->dma_area,
+			    माप(*vcdev->dma_area));
+	kमुक्त(vcdev);
+पूर्ण
 
-static int irb_is_error(struct irb *irb)
-{
-	if (scsw_cstat(&irb->scsw) != 0)
-		return 1;
-	if (scsw_dstat(&irb->scsw) & ~(DEV_STAT_CHN_END | DEV_STAT_DEV_END))
-		return 1;
-	if (scsw_cc(&irb->scsw) != 0)
-		return 1;
-	return 0;
-}
+अटल पूर्णांक irb_is_error(काष्ठा irb *irb)
+अणु
+	अगर (scsw_cstat(&irb->scsw) != 0)
+		वापस 1;
+	अगर (scsw_dstat(&irb->scsw) & ~(DEV_STAT_CHN_END | DEV_STAT_DEV_END))
+		वापस 1;
+	अगर (scsw_cc(&irb->scsw) != 0)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static struct virtqueue *virtio_ccw_vq_by_ind(struct virtio_ccw_device *vcdev,
-					      int index)
-{
-	struct virtio_ccw_vq_info *info;
-	unsigned long flags;
-	struct virtqueue *vq;
+अटल काष्ठा virtqueue *virtio_ccw_vq_by_ind(काष्ठा virtio_ccw_device *vcdev,
+					      पूर्णांक index)
+अणु
+	काष्ठा virtio_ccw_vq_info *info;
+	अचिन्हित दीर्घ flags;
+	काष्ठा virtqueue *vq;
 
-	vq = NULL;
+	vq = शून्य;
 	spin_lock_irqsave(&vcdev->lock, flags);
-	list_for_each_entry(info, &vcdev->virtqueues, node) {
-		if (info->vq->index == index) {
+	list_क्रम_each_entry(info, &vcdev->virtqueues, node) अणु
+		अगर (info->vq->index == index) अणु
 			vq = info->vq;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&vcdev->lock, flags);
-	return vq;
-}
+	वापस vq;
+पूर्ण
 
-static void virtio_ccw_check_activity(struct virtio_ccw_device *vcdev,
+अटल व्योम virtio_ccw_check_activity(काष्ठा virtio_ccw_device *vcdev,
 				      __u32 activity)
-{
-	if (vcdev->curr_io & activity) {
-		switch (activity) {
-		case VIRTIO_CCW_DOING_READ_FEAT:
-		case VIRTIO_CCW_DOING_WRITE_FEAT:
-		case VIRTIO_CCW_DOING_READ_CONFIG:
-		case VIRTIO_CCW_DOING_WRITE_CONFIG:
-		case VIRTIO_CCW_DOING_WRITE_STATUS:
-		case VIRTIO_CCW_DOING_READ_STATUS:
-		case VIRTIO_CCW_DOING_SET_VQ:
-		case VIRTIO_CCW_DOING_SET_IND:
-		case VIRTIO_CCW_DOING_SET_CONF_IND:
-		case VIRTIO_CCW_DOING_RESET:
-		case VIRTIO_CCW_DOING_READ_VQ_CONF:
-		case VIRTIO_CCW_DOING_SET_IND_ADAPTER:
-		case VIRTIO_CCW_DOING_SET_VIRTIO_REV:
+अणु
+	अगर (vcdev->curr_io & activity) अणु
+		चयन (activity) अणु
+		हाल VIRTIO_CCW_DOING_READ_FEAT:
+		हाल VIRTIO_CCW_DOING_WRITE_FEAT:
+		हाल VIRTIO_CCW_DOING_READ_CONFIG:
+		हाल VIRTIO_CCW_DOING_WRITE_CONFIG:
+		हाल VIRTIO_CCW_DOING_WRITE_STATUS:
+		हाल VIRTIO_CCW_DOING_READ_STATUS:
+		हाल VIRTIO_CCW_DOING_SET_VQ:
+		हाल VIRTIO_CCW_DOING_SET_IND:
+		हाल VIRTIO_CCW_DOING_SET_CONF_IND:
+		हाल VIRTIO_CCW_DOING_RESET:
+		हाल VIRTIO_CCW_DOING_READ_VQ_CONF:
+		हाल VIRTIO_CCW_DOING_SET_IND_ADAPTER:
+		हाल VIRTIO_CCW_DOING_SET_VIRTIO_REV:
 			vcdev->curr_io &= ~activity;
-			wake_up(&vcdev->wait_q);
-			break;
-		default:
-			/* don't know what to do... */
+			wake_up(&vcdev->रुको_q);
+			अवरोध;
+		शेष:
+			/* करोn't know what to करो... */
 			dev_warn(&vcdev->cdev->dev,
 				 "Suspicious activity '%08x'\n", activity);
 			WARN_ON(1);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void virtio_ccw_int_handler(struct ccw_device *cdev,
-				   unsigned long intparm,
-				   struct irb *irb)
-{
-	__u32 activity = intparm & VIRTIO_CCW_INTPARM_MASK;
-	struct virtio_ccw_device *vcdev = dev_get_drvdata(&cdev->dev);
-	int i;
-	struct virtqueue *vq;
+अटल व्योम virtio_ccw_पूर्णांक_handler(काष्ठा ccw_device *cdev,
+				   अचिन्हित दीर्घ पूर्णांकparm,
+				   काष्ठा irb *irb)
+अणु
+	__u32 activity = पूर्णांकparm & VIRTIO_CCW_INTPARM_MASK;
+	काष्ठा virtio_ccw_device *vcdev = dev_get_drvdata(&cdev->dev);
+	पूर्णांक i;
+	काष्ठा virtqueue *vq;
 
-	if (!vcdev)
-		return;
-	if (IS_ERR(irb)) {
+	अगर (!vcdev)
+		वापस;
+	अगर (IS_ERR(irb)) अणु
 		vcdev->err = PTR_ERR(irb);
 		virtio_ccw_check_activity(vcdev, activity);
 		/* Don't poke around indicators, something's wrong. */
-		return;
-	}
-	/* Check if it's a notification from the host. */
-	if ((intparm == 0) &&
+		वापस;
+	पूर्ण
+	/* Check अगर it's a notअगरication from the host. */
+	अगर ((पूर्णांकparm == 0) &&
 	    (scsw_stctl(&irb->scsw) ==
-	     (SCSW_STCTL_ALERT_STATUS | SCSW_STCTL_STATUS_PEND))) {
+	     (SCSW_STCTL_ALERT_STATUS | SCSW_STCTL_STATUS_PEND))) अणु
 		/* OK */
-	}
-	if (irb_is_error(irb)) {
+	पूर्ण
+	अगर (irb_is_error(irb)) अणु
 		/* Command reject? */
-		if ((scsw_dstat(&irb->scsw) & DEV_STAT_UNIT_CHECK) &&
+		अगर ((scsw_dstat(&irb->scsw) & DEV_STAT_UNIT_CHECK) &&
 		    (irb->ecw[0] & SNS0_CMD_REJECT))
 			vcdev->err = -EOPNOTSUPP;
-		else
-			/* Map everything else to -EIO. */
+		अन्यथा
+			/* Map everything अन्यथा to -EIO. */
 			vcdev->err = -EIO;
-	}
+	पूर्ण
 	virtio_ccw_check_activity(vcdev, activity);
-	for_each_set_bit(i, indicators(vcdev),
-			 sizeof(*indicators(vcdev)) * BITS_PER_BYTE) {
-		/* The bit clear must happen before the vring kick. */
+	क्रम_each_set_bit(i, indicators(vcdev),
+			 माप(*indicators(vcdev)) * BITS_PER_BYTE) अणु
+		/* The bit clear must happen beक्रमe the vring kick. */
 		clear_bit(i, indicators(vcdev));
 		barrier();
 		vq = virtio_ccw_vq_by_ind(vcdev, i);
-		vring_interrupt(0, vq);
-	}
-	if (test_bit(0, indicators2(vcdev))) {
+		vring_पूर्णांकerrupt(0, vq);
+	पूर्ण
+	अगर (test_bit(0, indicators2(vcdev))) अणु
 		virtio_config_changed(&vcdev->vdev);
 		clear_bit(0, indicators2(vcdev));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * We usually want to autoonline all devices, but give the admin
+ * We usually want to स्वतःonline all devices, but give the admin
  * a way to exempt devices from this.
  */
-#define __DEV_WORDS ((__MAX_SUBCHANNEL + (8*sizeof(long) - 1)) / \
-		     (8*sizeof(long)))
-static unsigned long devs_no_auto[__MAX_SSID + 1][__DEV_WORDS];
+#घोषणा __DEV_WORDS ((__MAX_SUBCHANNEL + (8*माप(दीर्घ) - 1)) / \
+		     (8*माप(दीर्घ)))
+अटल अचिन्हित दीर्घ devs_no_स्वतः[__MAX_SSID + 1][__DEV_WORDS];
 
-static char *no_auto = "";
+अटल अक्षर *no_स्वतः = "";
 
-module_param(no_auto, charp, 0444);
-MODULE_PARM_DESC(no_auto, "list of ccw bus id ranges not to be auto-onlined");
+module_param(no_स्वतः, अक्षरp, 0444);
+MODULE_PARM_DESC(no_स्वतः, "list of ccw bus id ranges not to be auto-onlined");
 
-static int virtio_ccw_check_autoonline(struct ccw_device *cdev)
-{
-	struct ccw_dev_id id;
+अटल पूर्णांक virtio_ccw_check_स्वतःonline(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा ccw_dev_id id;
 
 	ccw_device_get_id(cdev, &id);
-	if (test_bit(id.devno, devs_no_auto[id.ssid]))
-		return 0;
-	return 1;
-}
+	अगर (test_bit(id.devno, devs_no_स्वतः[id.ssid]))
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-static void virtio_ccw_auto_online(void *data, async_cookie_t cookie)
-{
-	struct ccw_device *cdev = data;
-	int ret;
+अटल व्योम virtio_ccw_स्वतः_online(व्योम *data, async_cookie_t cookie)
+अणु
+	काष्ठा ccw_device *cdev = data;
+	पूर्णांक ret;
 
 	ret = ccw_device_set_online(cdev);
-	if (ret)
+	अगर (ret)
 		dev_warn(&cdev->dev, "Failed to set online: %d\n", ret);
-}
+पूर्ण
 
-static int virtio_ccw_probe(struct ccw_device *cdev)
-{
-	cdev->handler = virtio_ccw_int_handler;
+अटल पूर्णांक virtio_ccw_probe(काष्ठा ccw_device *cdev)
+अणु
+	cdev->handler = virtio_ccw_पूर्णांक_handler;
 
-	if (virtio_ccw_check_autoonline(cdev))
-		async_schedule(virtio_ccw_auto_online, cdev);
-	return 0;
-}
+	अगर (virtio_ccw_check_स्वतःonline(cdev))
+		async_schedule(virtio_ccw_स्वतः_online, cdev);
+	वापस 0;
+पूर्ण
 
-static struct virtio_ccw_device *virtio_grab_drvdata(struct ccw_device *cdev)
-{
-	unsigned long flags;
-	struct virtio_ccw_device *vcdev;
+अटल काष्ठा virtio_ccw_device *virtio_grab_drvdata(काष्ठा ccw_device *cdev)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा virtio_ccw_device *vcdev;
 
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
 	vcdev = dev_get_drvdata(&cdev->dev);
-	if (!vcdev || vcdev->going_away) {
+	अगर (!vcdev || vcdev->going_away) अणु
 		spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	vcdev->going_away = true;
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-	return vcdev;
-}
+	वापस vcdev;
+पूर्ण
 
-static void virtio_ccw_remove(struct ccw_device *cdev)
-{
-	unsigned long flags;
-	struct virtio_ccw_device *vcdev = virtio_grab_drvdata(cdev);
+अटल व्योम virtio_ccw_हटाओ(काष्ठा ccw_device *cdev)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा virtio_ccw_device *vcdev = virtio_grab_drvdata(cdev);
 
-	if (vcdev && cdev->online) {
-		if (vcdev->device_lost)
-			virtio_break_device(&vcdev->vdev);
-		unregister_virtio_device(&vcdev->vdev);
+	अगर (vcdev && cdev->online) अणु
+		अगर (vcdev->device_lost)
+			virtio_अवरोध_device(&vcdev->vdev);
+		unरेजिस्टर_virtio_device(&vcdev->vdev);
 		spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
-		dev_set_drvdata(&cdev->dev, NULL);
+		dev_set_drvdata(&cdev->dev, शून्य);
 		spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-	}
-	cdev->handler = NULL;
-}
+	पूर्ण
+	cdev->handler = शून्य;
+पूर्ण
 
-static int virtio_ccw_offline(struct ccw_device *cdev)
-{
-	unsigned long flags;
-	struct virtio_ccw_device *vcdev = virtio_grab_drvdata(cdev);
+अटल पूर्णांक virtio_ccw_offline(काष्ठा ccw_device *cdev)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा virtio_ccw_device *vcdev = virtio_grab_drvdata(cdev);
 
-	if (!vcdev)
-		return 0;
-	if (vcdev->device_lost)
-		virtio_break_device(&vcdev->vdev);
-	unregister_virtio_device(&vcdev->vdev);
+	अगर (!vcdev)
+		वापस 0;
+	अगर (vcdev->device_lost)
+		virtio_अवरोध_device(&vcdev->vdev);
+	unरेजिस्टर_virtio_device(&vcdev->vdev);
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
-	dev_set_drvdata(&cdev->dev, NULL);
+	dev_set_drvdata(&cdev->dev, शून्य);
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int virtio_ccw_set_transport_rev(struct virtio_ccw_device *vcdev)
-{
-	struct virtio_rev_info *rev;
-	struct ccw1 *ccw;
-	int ret;
+अटल पूर्णांक virtio_ccw_set_transport_rev(काष्ठा virtio_ccw_device *vcdev)
+अणु
+	काष्ठा virtio_rev_info *rev;
+	काष्ठा ccw1 *ccw;
+	पूर्णांक ret;
 
-	ccw = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*ccw));
-	if (!ccw)
-		return -ENOMEM;
-	rev = ccw_device_dma_zalloc(vcdev->cdev, sizeof(*rev));
-	if (!rev) {
-		ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
-		return -ENOMEM;
-	}
+	ccw = ccw_device_dma_zalloc(vcdev->cdev, माप(*ccw));
+	अगर (!ccw)
+		वापस -ENOMEM;
+	rev = ccw_device_dma_zalloc(vcdev->cdev, माप(*rev));
+	अगर (!rev) अणु
+		ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Set transport revision */
 	ccw->cmd_code = CCW_CMD_SET_VIRTIO_REV;
 	ccw->flags = 0;
-	ccw->count = sizeof(*rev);
-	ccw->cda = (__u32)(unsigned long)rev;
+	ccw->count = माप(*rev);
+	ccw->cda = (__u32)(अचिन्हित दीर्घ)rev;
 
 	vcdev->revision = VIRTIO_CCW_REV_MAX;
-	do {
+	करो अणु
 		rev->revision = vcdev->revision;
 		/* none of our supported revisions carry payload */
 		rev->length = 0;
 		ret = ccw_io_helper(vcdev, ccw,
 				    VIRTIO_CCW_DOING_SET_VIRTIO_REV);
-		if (ret == -EOPNOTSUPP) {
-			if (vcdev->revision == 0)
+		अगर (ret == -EOPNOTSUPP) अणु
+			अगर (vcdev->revision == 0)
 				/*
-				 * The host device does not support setting
+				 * The host device करोes not support setting
 				 * the revision: let's operate it in legacy
 				 * mode.
 				 */
 				ret = 0;
-			else
+			अन्यथा
 				vcdev->revision--;
-		}
-	} while (ret == -EOPNOTSUPP);
+		पूर्ण
+	पूर्ण जबतक (ret == -EOPNOTSUPP);
 
-	ccw_device_dma_free(vcdev->cdev, ccw, sizeof(*ccw));
-	ccw_device_dma_free(vcdev->cdev, rev, sizeof(*rev));
-	return ret;
-}
+	ccw_device_dma_मुक्त(vcdev->cdev, ccw, माप(*ccw));
+	ccw_device_dma_मुक्त(vcdev->cdev, rev, माप(*rev));
+	वापस ret;
+पूर्ण
 
-static int virtio_ccw_online(struct ccw_device *cdev)
-{
-	int ret;
-	struct virtio_ccw_device *vcdev;
-	unsigned long flags;
+अटल पूर्णांक virtio_ccw_online(काष्ठा ccw_device *cdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा virtio_ccw_device *vcdev;
+	अचिन्हित दीर्घ flags;
 
-	vcdev = kzalloc(sizeof(*vcdev), GFP_KERNEL);
-	if (!vcdev) {
+	vcdev = kzalloc(माप(*vcdev), GFP_KERNEL);
+	अगर (!vcdev) अणु
 		dev_warn(&cdev->dev, "Could not get memory for virtio\n");
 		ret = -ENOMEM;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 	vcdev->vdev.dev.parent = &cdev->dev;
 	vcdev->cdev = cdev;
 	vcdev->dma_area = ccw_device_dma_zalloc(vcdev->cdev,
-						sizeof(*vcdev->dma_area));
-	if (!vcdev->dma_area) {
+						माप(*vcdev->dma_area));
+	अगर (!vcdev->dma_area) अणु
 		ret = -ENOMEM;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	vcdev->is_thinint = virtio_ccw_use_airq; /* at least try */
+	vcdev->is_thinपूर्णांक = virtio_ccw_use_airq; /* at least try */
 
 	vcdev->vdev.dev.release = virtio_ccw_release_dev;
 	vcdev->vdev.config = &virtio_ccw_config_ops;
-	init_waitqueue_head(&vcdev->wait_q);
+	init_रुकोqueue_head(&vcdev->रुको_q);
 	INIT_LIST_HEAD(&vcdev->virtqueues);
 	spin_lock_init(&vcdev->lock);
 	mutex_init(&vcdev->io_lock);
@@ -1311,184 +1312,184 @@ static int virtio_ccw_online(struct ccw_device *cdev)
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
 	dev_set_drvdata(&cdev->dev, vcdev);
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-	vcdev->vdev.id.vendor = cdev->id.cu_type;
+	vcdev->vdev.id.venकरोr = cdev->id.cu_type;
 	vcdev->vdev.id.device = cdev->id.cu_model;
 
 	ret = virtio_ccw_set_transport_rev(vcdev);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	ret = register_virtio_device(&vcdev->vdev);
-	if (ret) {
+	ret = रेजिस्टर_virtio_device(&vcdev->vdev);
+	अगर (ret) अणु
 		dev_warn(&cdev->dev, "Failed to register virtio device: %d\n",
 			 ret);
-		goto out_put;
-	}
-	return 0;
+		जाओ out_put;
+	पूर्ण
+	वापस 0;
 out_put:
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
-	dev_set_drvdata(&cdev->dev, NULL);
+	dev_set_drvdata(&cdev->dev, शून्य);
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
 	put_device(&vcdev->vdev.dev);
-	return ret;
-out_free:
-	if (vcdev) {
-		ccw_device_dma_free(vcdev->cdev, vcdev->dma_area,
-				    sizeof(*vcdev->dma_area));
-	}
-	kfree(vcdev);
-	return ret;
-}
+	वापस ret;
+out_मुक्त:
+	अगर (vcdev) अणु
+		ccw_device_dma_मुक्त(vcdev->cdev, vcdev->dma_area,
+				    माप(*vcdev->dma_area));
+	पूर्ण
+	kमुक्त(vcdev);
+	वापस ret;
+पूर्ण
 
-static int virtio_ccw_cio_notify(struct ccw_device *cdev, int event)
-{
-	int rc;
-	struct virtio_ccw_device *vcdev = dev_get_drvdata(&cdev->dev);
+अटल पूर्णांक virtio_ccw_cio_notअगरy(काष्ठा ccw_device *cdev, पूर्णांक event)
+अणु
+	पूर्णांक rc;
+	काष्ठा virtio_ccw_device *vcdev = dev_get_drvdata(&cdev->dev);
 
 	/*
 	 * Make sure vcdev is set
-	 * i.e. set_offline/remove callback not already running
+	 * i.e. set_offline/हटाओ callback not alपढ़ोy running
 	 */
-	if (!vcdev)
-		return NOTIFY_DONE;
+	अगर (!vcdev)
+		वापस NOTIFY_DONE;
 
-	switch (event) {
-	case CIO_GONE:
+	चयन (event) अणु
+	हाल CIO_GONE:
 		vcdev->device_lost = true;
 		rc = NOTIFY_DONE;
-		break;
-	case CIO_OPER:
+		अवरोध;
+	हाल CIO_OPER:
 		rc = NOTIFY_OK;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = NOTIFY_DONE;
-		break;
-	}
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static struct ccw_device_id virtio_ids[] = {
-	{ CCW_DEVICE(0x3832, 0) },
-	{},
-};
+अटल काष्ठा ccw_device_id virtio_ids[] = अणु
+	अणु CCW_DEVICE(0x3832, 0) पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct ccw_driver virtio_ccw_driver = {
-	.driver = {
+अटल काष्ठा ccw_driver virtio_ccw_driver = अणु
+	.driver = अणु
 		.owner = THIS_MODULE,
 		.name = "virtio_ccw",
-	},
+	पूर्ण,
 	.ids = virtio_ids,
 	.probe = virtio_ccw_probe,
-	.remove = virtio_ccw_remove,
+	.हटाओ = virtio_ccw_हटाओ,
 	.set_offline = virtio_ccw_offline,
 	.set_online = virtio_ccw_online,
-	.notify = virtio_ccw_cio_notify,
-	.int_class = IRQIO_VIR,
-};
+	.notअगरy = virtio_ccw_cio_notअगरy,
+	.पूर्णांक_class = IRQIO_VIR,
+पूर्ण;
 
-static int __init pure_hex(char **cp, unsigned int *val, int min_digit,
-			   int max_digit, int max_val)
-{
-	int diff;
+अटल पूर्णांक __init pure_hex(अक्षर **cp, अचिन्हित पूर्णांक *val, पूर्णांक min_digit,
+			   पूर्णांक max_digit, पूर्णांक max_val)
+अणु
+	पूर्णांक dअगरf;
 
-	diff = 0;
+	dअगरf = 0;
 	*val = 0;
 
-	while (diff <= max_digit) {
-		int value = hex_to_bin(**cp);
+	जबतक (dअगरf <= max_digit) अणु
+		पूर्णांक value = hex_to_bin(**cp);
 
-		if (value < 0)
-			break;
+		अगर (value < 0)
+			अवरोध;
 		*val = *val * 16 + value;
 		(*cp)++;
-		diff++;
-	}
+		dअगरf++;
+	पूर्ण
 
-	if ((diff < min_digit) || (diff > max_digit) || (*val > max_val))
-		return 1;
+	अगर ((dअगरf < min_digit) || (dअगरf > max_digit) || (*val > max_val))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init parse_busid(char *str, unsigned int *cssid,
-			      unsigned int *ssid, unsigned int *devno)
-{
-	char *str_work;
-	int rc, ret;
+अटल पूर्णांक __init parse_busid(अक्षर *str, अचिन्हित पूर्णांक *cssid,
+			      अचिन्हित पूर्णांक *ssid, अचिन्हित पूर्णांक *devno)
+अणु
+	अक्षर *str_work;
+	पूर्णांक rc, ret;
 
 	rc = 1;
 
-	if (*str == '\0')
-		goto out;
+	अगर (*str == '\0')
+		जाओ out;
 
 	str_work = str;
 	ret = pure_hex(&str_work, cssid, 1, 2, __MAX_CSSID);
-	if (ret || (str_work[0] != '.'))
-		goto out;
+	अगर (ret || (str_work[0] != '.'))
+		जाओ out;
 	str_work++;
 	ret = pure_hex(&str_work, ssid, 1, 1, __MAX_SSID);
-	if (ret || (str_work[0] != '.'))
-		goto out;
+	अगर (ret || (str_work[0] != '.'))
+		जाओ out;
 	str_work++;
 	ret = pure_hex(&str_work, devno, 4, 4, __MAX_SUBCHANNEL);
-	if (ret || (str_work[0] != '\0'))
-		goto out;
+	अगर (ret || (str_work[0] != '\0'))
+		जाओ out;
 
 	rc = 0;
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __init no_auto_parse(void)
-{
-	unsigned int from_cssid, to_cssid, from_ssid, to_ssid, from, to;
-	char *parm, *str;
-	int rc;
+अटल व्योम __init no_स्वतः_parse(व्योम)
+अणु
+	अचिन्हित पूर्णांक from_cssid, to_cssid, from_ssid, to_ssid, from, to;
+	अक्षर *parm, *str;
+	पूर्णांक rc;
 
-	str = no_auto;
-	while ((parm = strsep(&str, ","))) {
+	str = no_स्वतः;
+	जबतक ((parm = strsep(&str, ","))) अणु
 		rc = parse_busid(strsep(&parm, "-"), &from_cssid,
 				 &from_ssid, &from);
-		if (rc)
-			continue;
-		if (parm != NULL) {
+		अगर (rc)
+			जारी;
+		अगर (parm != शून्य) अणु
 			rc = parse_busid(parm, &to_cssid,
 					 &to_ssid, &to);
-			if ((from_ssid > to_ssid) ||
+			अगर ((from_ssid > to_ssid) ||
 			    ((from_ssid == to_ssid) && (from > to)))
 				rc = -EINVAL;
-		} else {
+		पूर्ण अन्यथा अणु
 			to_cssid = from_cssid;
 			to_ssid = from_ssid;
 			to = from;
-		}
-		if (rc)
-			continue;
-		while ((from_ssid < to_ssid) ||
-		       ((from_ssid == to_ssid) && (from <= to))) {
-			set_bit(from, devs_no_auto[from_ssid]);
+		पूर्ण
+		अगर (rc)
+			जारी;
+		जबतक ((from_ssid < to_ssid) ||
+		       ((from_ssid == to_ssid) && (from <= to))) अणु
+			set_bit(from, devs_no_स्वतः[from_ssid]);
 			from++;
-			if (from > __MAX_SUBCHANNEL) {
+			अगर (from > __MAX_SUBCHANNEL) अणु
 				from_ssid++;
 				from = 0;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int __init virtio_ccw_init(void)
-{
-	int rc;
+अटल पूर्णांक __init virtio_ccw_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	/* parse no_auto string before we do anything further */
-	no_auto_parse();
+	/* parse no_स्वतः string beक्रमe we करो anything further */
+	no_स्वतः_parse();
 
 	summary_indicators = cio_dma_zalloc(MAX_AIRQ_AREAS);
-	if (!summary_indicators)
-		return -ENOMEM;
-	rc = ccw_driver_register(&virtio_ccw_driver);
-	if (rc)
-		cio_dma_free(summary_indicators, MAX_AIRQ_AREAS);
-	return rc;
-}
+	अगर (!summary_indicators)
+		वापस -ENOMEM;
+	rc = ccw_driver_रेजिस्टर(&virtio_ccw_driver);
+	अगर (rc)
+		cio_dma_मुक्त(summary_indicators, MAX_AIRQ_AREAS);
+	वापस rc;
+पूर्ण
 device_initcall(virtio_ccw_init);

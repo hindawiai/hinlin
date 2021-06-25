@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -10,23 +11,23 @@
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  */
 
-#ifndef __ASM_OPENRISC_TIMEX_H
-#define __ASM_OPENRISC_TIMEX_H
+#अगर_अघोषित __ASM_OPENRISC_TIMEX_H
+#घोषणा __ASM_OPENRISC_TIMEX_H
 
-#define get_cycles get_cycles
+#घोषणा get_cycles get_cycles
 
-#include <asm-generic/timex.h>
-#include <asm/spr.h>
-#include <asm/spr_defs.h>
+#समावेश <यंत्र-generic/समयx.h>
+#समावेश <यंत्र/spr.h>
+#समावेश <यंत्र/spr_defs.h>
 
-static inline cycles_t get_cycles(void)
-{
-	return mfspr(SPR_TTCR);
-}
+अटल अंतरभूत cycles_t get_cycles(व्योम)
+अणु
+	वापस mfspr(SPR_TTCR);
+पूर्ण
 
 /* This isn't really used any more */
-#define CLOCK_TICK_RATE 1000
+#घोषणा CLOCK_TICK_RATE 1000
 
-#define ARCH_HAS_READ_CURRENT_TIMER
+#घोषणा ARCH_HAS_READ_CURRENT_TIMER
 
-#endif
+#पूर्ण_अगर

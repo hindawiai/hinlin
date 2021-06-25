@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * comedi/drivers/dt2815.c
- * Hardware driver for Data Translation DT2815
+ * Hardware driver क्रम Data Translation DT2815
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1999 Anders Blomdell <anders.blomdell@control.lth.se>
@@ -13,7 +14,7 @@
  * Status: mostly complete, untested
  * Devices: [Data Translation] DT2815 (dt2815)
  *
- * I'm not sure anyone has ever tested this board.  If you have information
+ * I'm not sure anyone has ever tested this board.  If you have inक्रमmation
  * contrary, please update.
  *
  * Configuration options:
@@ -42,76 +43,76 @@
  * [12] - Analog output 7 range configuration (same options)
  */
 
-#include <linux/module.h>
-#include "../comedidev.h"
+#समावेश <linux/module.h>
+#समावेश "../comedidev.h"
 
-#include <linux/delay.h>
+#समावेश <linux/delay.h>
 
-#define DT2815_DATA 0
-#define DT2815_STATUS 1
+#घोषणा DT2815_DATA 0
+#घोषणा DT2815_STATUS 1
 
-struct dt2815_private {
-	const struct comedi_lrange *range_type_list[8];
-	unsigned int ao_readback[8];
-};
+काष्ठा dt2815_निजी अणु
+	स्थिर काष्ठा comedi_lrange *range_type_list[8];
+	अचिन्हित पूर्णांक ao_पढ़ोback[8];
+पूर्ण;
 
-static int dt2815_ao_status(struct comedi_device *dev,
-			    struct comedi_subdevice *s,
-			    struct comedi_insn *insn,
-			    unsigned long context)
-{
-	unsigned int status;
+अटल पूर्णांक dt2815_ao_status(काष्ठा comedi_device *dev,
+			    काष्ठा comedi_subdevice *s,
+			    काष्ठा comedi_insn *insn,
+			    अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित पूर्णांक status;
 
 	status = inb(dev->iobase + DT2815_STATUS);
-	if (status == context)
-		return 0;
-	return -EBUSY;
-}
+	अगर (status == context)
+		वापस 0;
+	वापस -EBUSY;
+पूर्ण
 
-static int dt2815_ao_insn_read(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn, unsigned int *data)
-{
-	struct dt2815_private *devpriv = dev->private;
-	int i;
-	int chan = CR_CHAN(insn->chanspec);
+अटल पूर्णांक dt2815_ao_insn_पढ़ो(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा dt2815_निजी *devpriv = dev->निजी;
+	पूर्णांक i;
+	पूर्णांक chan = CR_CHAN(insn->chanspec);
 
-	for (i = 0; i < insn->n; i++)
-		data[i] = devpriv->ao_readback[chan];
+	क्रम (i = 0; i < insn->n; i++)
+		data[i] = devpriv->ao_पढ़ोback[chan];
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int dt2815_ao_insn(struct comedi_device *dev, struct comedi_subdevice *s,
-			  struct comedi_insn *insn, unsigned int *data)
-{
-	struct dt2815_private *devpriv = dev->private;
-	int i;
-	int chan = CR_CHAN(insn->chanspec);
-	unsigned int lo, hi;
-	int ret;
+अटल पूर्णांक dt2815_ao_insn(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
+			  काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा dt2815_निजी *devpriv = dev->निजी;
+	पूर्णांक i;
+	पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक lo, hi;
+	पूर्णांक ret;
 
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		/* FIXME: lo bit 0 chooses voltage output or current output */
 		lo = ((data[i] & 0x0f) << 4) | (chan << 1) | 0x01;
 		hi = (data[i] & 0xff0) >> 4;
 
-		ret = comedi_timeout(dev, s, insn, dt2815_ao_status, 0x00);
-		if (ret)
-			return ret;
+		ret = comedi_समयout(dev, s, insn, dt2815_ao_status, 0x00);
+		अगर (ret)
+			वापस ret;
 
 		outb(lo, dev->iobase + DT2815_DATA);
 
-		ret = comedi_timeout(dev, s, insn, dt2815_ao_status, 0x10);
-		if (ret)
-			return ret;
+		ret = comedi_समयout(dev, s, insn, dt2815_ao_status, 0x10);
+		अगर (ret)
+			वापस ret;
 
 		outb(hi, dev->iobase + DT2815_DATA);
 
-		devpriv->ao_readback[chan] = data[i];
-	}
-	return i;
-}
+		devpriv->ao_पढ़ोback[chan] = data[i];
+	पूर्ण
+	वापस i;
+पूर्ण
 
 /*
  * options[0]   Board base address
@@ -137,25 +138,25 @@ static int dt2815_ao_insn(struct comedi_device *dev, struct comedi_subdevice *s,
  *		1 == current
  */
 
-static int dt2815_attach(struct comedi_device *dev, struct comedi_devconfig *it)
-{
-	struct dt2815_private *devpriv;
-	struct comedi_subdevice *s;
-	int i;
-	const struct comedi_lrange *current_range_type, *voltage_range_type;
-	int ret;
+अटल पूर्णांक dt2815_attach(काष्ठा comedi_device *dev, काष्ठा comedi_devconfig *it)
+अणु
+	काष्ठा dt2815_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक i;
+	स्थिर काष्ठा comedi_lrange *current_range_type, *voltage_range_type;
+	पूर्णांक ret;
 
 	ret = comedi_request_region(dev, it->options[0], 0x2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = comedi_alloc_subdevices(dev, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	s = &dev->subdevices[0];
 	/* ao subdevice */
@@ -163,53 +164,53 @@ static int dt2815_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	s->subdev_flags = SDF_WRITABLE;
 	s->maxdata = 0xfff;
 	s->n_chan = 8;
-	s->insn_write = dt2815_ao_insn;
-	s->insn_read = dt2815_ao_insn_read;
+	s->insn_ग_लिखो = dt2815_ao_insn;
+	s->insn_पढ़ो = dt2815_ao_insn_पढ़ो;
 	s->range_table_list = devpriv->range_type_list;
 
 	current_range_type = (it->options[3])
 	    ? &range_4_20mA : &range_0_32mA;
 	voltage_range_type = (it->options[2])
 	    ? &range_bipolar5 : &range_unipolar5;
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		devpriv->range_type_list[i] = (it->options[5 + i])
 		    ? current_range_type : voltage_range_type;
-	}
+	पूर्ण
 
 	/* Init the 2815 */
 	outb(0x00, dev->iobase + DT2815_STATUS);
-	for (i = 0; i < 100; i++) {
+	क्रम (i = 0; i < 100; i++) अणु
 		/* This is incredibly slow (approx 20 ms) */
-		unsigned int status;
+		अचिन्हित पूर्णांक status;
 
 		usleep_range(1000, 3000);
 		status = inb(dev->iobase + DT2815_STATUS);
-		if (status == 4) {
-			unsigned int program;
+		अगर (status == 4) अणु
+			अचिन्हित पूर्णांक program;
 
 			program = (it->options[4] & 0x3) << 3 | 0x7;
 			outb(program, dev->iobase + DT2815_DATA);
 			dev_dbg(dev->class_dev, "program: 0x%x (@t=%d)\n",
 				program, i);
-			break;
-		} else if (status != 0x00) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (status != 0x00) अणु
 			dev_dbg(dev->class_dev,
 				"unexpected status 0x%x (@t=%d)\n",
 				status, i);
-			if (status & 0x60)
+			अगर (status & 0x60)
 				outb(0x00, dev->iobase + DT2815_STATUS);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct comedi_driver dt2815_driver = {
+अटल काष्ठा comedi_driver dt2815_driver = अणु
 	.driver_name	= "dt2815",
 	.module		= THIS_MODULE,
 	.attach		= dt2815_attach,
 	.detach		= comedi_legacy_detach,
-};
+पूर्ण;
 module_comedi_driver(dt2815_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

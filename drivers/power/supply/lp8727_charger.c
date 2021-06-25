@@ -1,565 +1,566 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for LP8727 Micro/Mini USB IC with integrated charger
+ * Driver क्रम LP8727 Micro/Mini USB IC with पूर्णांकegrated अक्षरger
  *
  *			Copyright (C) 2011 Texas Instruments
  *			Copyright (C) 2011 National Semiconductor
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/i2c.h>
-#include <linux/power_supply.h>
-#include <linux/platform_data/lp8727.h>
-#include <linux/of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/platक्रमm_data/lp8727.h>
+#समावेश <linux/of.h>
 
-#define LP8788_NUM_INTREGS	2
-#define DEFAULT_DEBOUNCE_MSEC	270
+#घोषणा LP8788_NUM_INTREGS	2
+#घोषणा DEFAULT_DEBOUNCE_MSEC	270
 
 /* Registers */
-#define LP8727_CTRL1		0x1
-#define LP8727_CTRL2		0x2
-#define LP8727_SWCTRL		0x3
-#define LP8727_INT1		0x4
-#define LP8727_INT2		0x5
-#define LP8727_STATUS1		0x6
-#define LP8727_STATUS2		0x7
-#define LP8727_CHGCTRL2		0x9
+#घोषणा LP8727_CTRL1		0x1
+#घोषणा LP8727_CTRL2		0x2
+#घोषणा LP8727_SWCTRL		0x3
+#घोषणा LP8727_INT1		0x4
+#घोषणा LP8727_INT2		0x5
+#घोषणा LP8727_STATUS1		0x6
+#घोषणा LP8727_STATUS2		0x7
+#घोषणा LP8727_CHGCTRL2		0x9
 
-/* CTRL1 register */
-#define LP8727_CP_EN		BIT(0)
-#define LP8727_ADC_EN		BIT(1)
-#define LP8727_ID200_EN		BIT(4)
+/* CTRL1 रेजिस्टर */
+#घोषणा LP8727_CP_EN		BIT(0)
+#घोषणा LP8727_ADC_EN		BIT(1)
+#घोषणा LP8727_ID200_EN		BIT(4)
 
-/* CTRL2 register */
-#define LP8727_CHGDET_EN	BIT(1)
-#define LP8727_INT_EN		BIT(6)
+/* CTRL2 रेजिस्टर */
+#घोषणा LP8727_CHGDET_EN	BIT(1)
+#घोषणा LP8727_INT_EN		BIT(6)
 
-/* SWCTRL register */
-#define LP8727_SW_DM1_DM	(0x0 << 0)
-#define LP8727_SW_DM1_HiZ	(0x7 << 0)
-#define LP8727_SW_DP2_DP	(0x0 << 3)
-#define LP8727_SW_DP2_HiZ	(0x7 << 3)
+/* SWCTRL रेजिस्टर */
+#घोषणा LP8727_SW_DM1_DM	(0x0 << 0)
+#घोषणा LP8727_SW_DM1_HiZ	(0x7 << 0)
+#घोषणा LP8727_SW_DP2_DP	(0x0 << 3)
+#घोषणा LP8727_SW_DP2_HiZ	(0x7 << 3)
 
-/* INT1 register */
-#define LP8727_IDNO		(0xF << 0)
-#define LP8727_VBUS		BIT(4)
+/* INT1 रेजिस्टर */
+#घोषणा LP8727_IDNO		(0xF << 0)
+#घोषणा LP8727_VBUS		BIT(4)
 
-/* STATUS1 register */
-#define LP8727_CHGSTAT		(3 << 4)
-#define LP8727_CHPORT		BIT(6)
-#define LP8727_DCPORT		BIT(7)
-#define LP8727_STAT_EOC		0x30
+/* STATUS1 रेजिस्टर */
+#घोषणा LP8727_CHGSTAT		(3 << 4)
+#घोषणा LP8727_CHPORT		BIT(6)
+#घोषणा LP8727_DCPORT		BIT(7)
+#घोषणा LP8727_STAT_EOC		0x30
 
-/* STATUS2 register */
-#define LP8727_TEMP_STAT	(3 << 5)
-#define LP8727_TEMP_SHIFT	5
+/* STATUS2 रेजिस्टर */
+#घोषणा LP8727_TEMP_STAT	(3 << 5)
+#घोषणा LP8727_TEMP_SHIFT	5
 
-/* CHGCTRL2 register */
-#define LP8727_ICHG_SHIFT	4
+/* CHGCTRL2 रेजिस्टर */
+#घोषणा LP8727_ICHG_SHIFT	4
 
-enum lp8727_dev_id {
+क्रमागत lp8727_dev_id अणु
 	LP8727_ID_NONE,
 	LP8727_ID_TA,
 	LP8727_ID_DEDICATED_CHG,
 	LP8727_ID_USB_CHG,
 	LP8727_ID_USB_DS,
 	LP8727_ID_MAX,
-};
+पूर्ण;
 
-enum lp8727_die_temp {
+क्रमागत lp8727_die_temp अणु
 	LP8788_TEMP_75C,
 	LP8788_TEMP_95C,
 	LP8788_TEMP_115C,
 	LP8788_TEMP_135C,
-};
+पूर्ण;
 
-struct lp8727_psy {
-	struct power_supply *ac;
-	struct power_supply *usb;
-	struct power_supply *batt;
-};
+काष्ठा lp8727_psy अणु
+	काष्ठा घातer_supply *ac;
+	काष्ठा घातer_supply *usb;
+	काष्ठा घातer_supply *batt;
+पूर्ण;
 
-struct lp8727_chg {
-	struct device *dev;
-	struct i2c_client *client;
-	struct mutex xfer_lock;
-	struct lp8727_psy *psy;
-	struct lp8727_platform_data *pdata;
+काष्ठा lp8727_chg अणु
+	काष्ठा device *dev;
+	काष्ठा i2c_client *client;
+	काष्ठा mutex xfer_lock;
+	काष्ठा lp8727_psy *psy;
+	काष्ठा lp8727_platक्रमm_data *pdata;
 
 	/* Charger Data */
-	enum lp8727_dev_id devid;
-	struct lp8727_chg_param *chg_param;
+	क्रमागत lp8727_dev_id devid;
+	काष्ठा lp8727_chg_param *chg_param;
 
 	/* Interrupt Handling */
-	int irq;
-	struct delayed_work work;
-	unsigned long debounce_jiffies;
-};
+	पूर्णांक irq;
+	काष्ठा delayed_work work;
+	अचिन्हित दीर्घ debounce_jअगरfies;
+पूर्ण;
 
-static int lp8727_read_bytes(struct lp8727_chg *pchg, u8 reg, u8 *data, u8 len)
-{
+अटल पूर्णांक lp8727_पढ़ो_bytes(काष्ठा lp8727_chg *pchg, u8 reg, u8 *data, u8 len)
+अणु
 	s32 ret;
 
 	mutex_lock(&pchg->xfer_lock);
-	ret = i2c_smbus_read_i2c_block_data(pchg->client, reg, len, data);
+	ret = i2c_smbus_पढ़ो_i2c_block_data(pchg->client, reg, len, data);
 	mutex_unlock(&pchg->xfer_lock);
 
-	return (ret != len) ? -EIO : 0;
-}
+	वापस (ret != len) ? -EIO : 0;
+पूर्ण
 
-static inline int lp8727_read_byte(struct lp8727_chg *pchg, u8 reg, u8 *data)
-{
-	return lp8727_read_bytes(pchg, reg, data, 1);
-}
+अटल अंतरभूत पूर्णांक lp8727_पढ़ो_byte(काष्ठा lp8727_chg *pchg, u8 reg, u8 *data)
+अणु
+	वापस lp8727_पढ़ो_bytes(pchg, reg, data, 1);
+पूर्ण
 
-static int lp8727_write_byte(struct lp8727_chg *pchg, u8 reg, u8 data)
-{
-	int ret;
+अटल पूर्णांक lp8727_ग_लिखो_byte(काष्ठा lp8727_chg *pchg, u8 reg, u8 data)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&pchg->xfer_lock);
-	ret = i2c_smbus_write_byte_data(pchg->client, reg, data);
+	ret = i2c_smbus_ग_लिखो_byte_data(pchg->client, reg, data);
 	mutex_unlock(&pchg->xfer_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool lp8727_is_charger_attached(const char *name, int id)
-{
-	if (!strcmp(name, "ac"))
-		return id == LP8727_ID_TA || id == LP8727_ID_DEDICATED_CHG;
-	else if (!strcmp(name, "usb"))
-		return id == LP8727_ID_USB_CHG;
+अटल bool lp8727_is_अक्षरger_attached(स्थिर अक्षर *name, पूर्णांक id)
+अणु
+	अगर (!म_भेद(name, "ac"))
+		वापस id == LP8727_ID_TA || id == LP8727_ID_DEDICATED_CHG;
+	अन्यथा अगर (!म_भेद(name, "usb"))
+		वापस id == LP8727_ID_USB_CHG;
 
-	return id >= LP8727_ID_TA && id <= LP8727_ID_USB_CHG;
-}
+	वापस id >= LP8727_ID_TA && id <= LP8727_ID_USB_CHG;
+पूर्ण
 
-static int lp8727_init_device(struct lp8727_chg *pchg)
-{
+अटल पूर्णांक lp8727_init_device(काष्ठा lp8727_chg *pchg)
+अणु
 	u8 val;
-	int ret;
-	u8 intstat[LP8788_NUM_INTREGS];
+	पूर्णांक ret;
+	u8 पूर्णांकstat[LP8788_NUM_INTREGS];
 
-	/* clear interrupts */
-	ret = lp8727_read_bytes(pchg, LP8727_INT1, intstat, LP8788_NUM_INTREGS);
-	if (ret)
-		return ret;
+	/* clear पूर्णांकerrupts */
+	ret = lp8727_पढ़ो_bytes(pchg, LP8727_INT1, पूर्णांकstat, LP8788_NUM_INTREGS);
+	अगर (ret)
+		वापस ret;
 
 	val = LP8727_ID200_EN | LP8727_ADC_EN | LP8727_CP_EN;
-	ret = lp8727_write_byte(pchg, LP8727_CTRL1, val);
-	if (ret)
-		return ret;
+	ret = lp8727_ग_लिखो_byte(pchg, LP8727_CTRL1, val);
+	अगर (ret)
+		वापस ret;
 
 	val = LP8727_INT_EN | LP8727_CHGDET_EN;
-	return lp8727_write_byte(pchg, LP8727_CTRL2, val);
-}
+	वापस lp8727_ग_लिखो_byte(pchg, LP8727_CTRL2, val);
+पूर्ण
 
-static int lp8727_is_dedicated_charger(struct lp8727_chg *pchg)
-{
+अटल पूर्णांक lp8727_is_dedicated_अक्षरger(काष्ठा lp8727_chg *pchg)
+अणु
 	u8 val;
 
-	lp8727_read_byte(pchg, LP8727_STATUS1, &val);
-	return val & LP8727_DCPORT;
-}
+	lp8727_पढ़ो_byte(pchg, LP8727_STATUS1, &val);
+	वापस val & LP8727_DCPORT;
+पूर्ण
 
-static int lp8727_is_usb_charger(struct lp8727_chg *pchg)
-{
+अटल पूर्णांक lp8727_is_usb_अक्षरger(काष्ठा lp8727_chg *pchg)
+अणु
 	u8 val;
 
-	lp8727_read_byte(pchg, LP8727_STATUS1, &val);
-	return val & LP8727_CHPORT;
-}
+	lp8727_पढ़ो_byte(pchg, LP8727_STATUS1, &val);
+	वापस val & LP8727_CHPORT;
+पूर्ण
 
-static inline void lp8727_ctrl_switch(struct lp8727_chg *pchg, u8 sw)
-{
-	lp8727_write_byte(pchg, LP8727_SWCTRL, sw);
-}
+अटल अंतरभूत व्योम lp8727_ctrl_चयन(काष्ठा lp8727_chg *pchg, u8 sw)
+अणु
+	lp8727_ग_लिखो_byte(pchg, LP8727_SWCTRL, sw);
+पूर्ण
 
-static void lp8727_id_detection(struct lp8727_chg *pchg, u8 id, int vbusin)
-{
-	struct lp8727_platform_data *pdata = pchg->pdata;
+अटल व्योम lp8727_id_detection(काष्ठा lp8727_chg *pchg, u8 id, पूर्णांक vbusin)
+अणु
+	काष्ठा lp8727_platक्रमm_data *pdata = pchg->pdata;
 	u8 devid = LP8727_ID_NONE;
 	u8 swctrl = LP8727_SW_DM1_HiZ | LP8727_SW_DP2_HiZ;
 
-	switch (id) {
-	case 0x5:
+	चयन (id) अणु
+	हाल 0x5:
 		devid = LP8727_ID_TA;
-		pchg->chg_param = pdata ? pdata->ac : NULL;
-		break;
-	case 0xB:
-		if (lp8727_is_dedicated_charger(pchg)) {
-			pchg->chg_param = pdata ? pdata->ac : NULL;
+		pchg->chg_param = pdata ? pdata->ac : शून्य;
+		अवरोध;
+	हाल 0xB:
+		अगर (lp8727_is_dedicated_अक्षरger(pchg)) अणु
+			pchg->chg_param = pdata ? pdata->ac : शून्य;
 			devid = LP8727_ID_DEDICATED_CHG;
-		} else if (lp8727_is_usb_charger(pchg)) {
-			pchg->chg_param = pdata ? pdata->usb : NULL;
+		पूर्ण अन्यथा अगर (lp8727_is_usb_अक्षरger(pchg)) अणु
+			pchg->chg_param = pdata ? pdata->usb : शून्य;
 			devid = LP8727_ID_USB_CHG;
 			swctrl = LP8727_SW_DM1_DM | LP8727_SW_DP2_DP;
-		} else if (vbusin) {
+		पूर्ण अन्यथा अगर (vbusin) अणु
 			devid = LP8727_ID_USB_DS;
 			swctrl = LP8727_SW_DM1_DM | LP8727_SW_DP2_DP;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		devid = LP8727_ID_NONE;
-		pchg->chg_param = NULL;
-		break;
-	}
+		pchg->chg_param = शून्य;
+		अवरोध;
+	पूर्ण
 
 	pchg->devid = devid;
-	lp8727_ctrl_switch(pchg, swctrl);
-}
+	lp8727_ctrl_चयन(pchg, swctrl);
+पूर्ण
 
-static void lp8727_enable_chgdet(struct lp8727_chg *pchg)
-{
+अटल व्योम lp8727_enable_chgdet(काष्ठा lp8727_chg *pchg)
+अणु
 	u8 val;
 
-	lp8727_read_byte(pchg, LP8727_CTRL2, &val);
+	lp8727_पढ़ो_byte(pchg, LP8727_CTRL2, &val);
 	val |= LP8727_CHGDET_EN;
-	lp8727_write_byte(pchg, LP8727_CTRL2, val);
-}
+	lp8727_ग_लिखो_byte(pchg, LP8727_CTRL2, val);
+पूर्ण
 
-static void lp8727_delayed_func(struct work_struct *_work)
-{
-	struct lp8727_chg *pchg = container_of(_work, struct lp8727_chg,
+अटल व्योम lp8727_delayed_func(काष्ठा work_काष्ठा *_work)
+अणु
+	काष्ठा lp8727_chg *pchg = container_of(_work, काष्ठा lp8727_chg,
 						work.work);
-	u8 intstat[LP8788_NUM_INTREGS];
+	u8 पूर्णांकstat[LP8788_NUM_INTREGS];
 	u8 idno;
 	u8 vbus;
 
-	if (lp8727_read_bytes(pchg, LP8727_INT1, intstat, LP8788_NUM_INTREGS)) {
+	अगर (lp8727_पढ़ो_bytes(pchg, LP8727_INT1, पूर्णांकstat, LP8788_NUM_INTREGS)) अणु
 		dev_err(pchg->dev, "can not read INT registers\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	idno = intstat[0] & LP8727_IDNO;
-	vbus = intstat[0] & LP8727_VBUS;
+	idno = पूर्णांकstat[0] & LP8727_IDNO;
+	vbus = पूर्णांकstat[0] & LP8727_VBUS;
 
 	lp8727_id_detection(pchg, idno, vbus);
 	lp8727_enable_chgdet(pchg);
 
-	power_supply_changed(pchg->psy->ac);
-	power_supply_changed(pchg->psy->usb);
-	power_supply_changed(pchg->psy->batt);
-}
+	घातer_supply_changed(pchg->psy->ac);
+	घातer_supply_changed(pchg->psy->usb);
+	घातer_supply_changed(pchg->psy->batt);
+पूर्ण
 
-static irqreturn_t lp8727_isr_func(int irq, void *ptr)
-{
-	struct lp8727_chg *pchg = ptr;
+अटल irqवापस_t lp8727_isr_func(पूर्णांक irq, व्योम *ptr)
+अणु
+	काष्ठा lp8727_chg *pchg = ptr;
 
-	schedule_delayed_work(&pchg->work, pchg->debounce_jiffies);
-	return IRQ_HANDLED;
-}
+	schedule_delayed_work(&pchg->work, pchg->debounce_jअगरfies);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int lp8727_setup_irq(struct lp8727_chg *pchg)
-{
-	int ret;
-	int irq = pchg->client->irq;
-	unsigned delay_msec = pchg->pdata ? pchg->pdata->debounce_msec :
+अटल पूर्णांक lp8727_setup_irq(काष्ठा lp8727_chg *pchg)
+अणु
+	पूर्णांक ret;
+	पूर्णांक irq = pchg->client->irq;
+	अचिन्हित delay_msec = pchg->pdata ? pchg->pdata->debounce_msec :
 						DEFAULT_DEBOUNCE_MSEC;
 
 	INIT_DELAYED_WORK(&pchg->work, lp8727_delayed_func);
 
-	if (irq <= 0) {
+	अगर (irq <= 0) अणु
 		dev_warn(pchg->dev, "invalid irq number: %d\n", irq);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ret = request_threaded_irq(irq,	NULL, lp8727_isr_func,
+	ret = request_thपढ़ोed_irq(irq,	शून्य, lp8727_isr_func,
 				IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 				"lp8727_irq", pchg);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pchg->irq = irq;
-	pchg->debounce_jiffies = msecs_to_jiffies(delay_msec);
+	pchg->debounce_jअगरfies = msecs_to_jअगरfies(delay_msec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lp8727_release_irq(struct lp8727_chg *pchg)
-{
+अटल व्योम lp8727_release_irq(काष्ठा lp8727_chg *pchg)
+अणु
 	cancel_delayed_work_sync(&pchg->work);
 
-	if (pchg->irq)
-		free_irq(pchg->irq, pchg);
-}
+	अगर (pchg->irq)
+		मुक्त_irq(pchg->irq, pchg);
+पूर्ण
 
-static enum power_supply_property lp8727_charger_prop[] = {
+अटल क्रमागत घातer_supply_property lp8727_अक्षरger_prop[] = अणु
 	POWER_SUPPLY_PROP_ONLINE,
-};
+पूर्ण;
 
-static enum power_supply_property lp8727_battery_prop[] = {
+अटल क्रमागत घातer_supply_property lp8727_battery_prop[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CAPACITY,
 	POWER_SUPPLY_PROP_TEMP,
-};
+पूर्ण;
 
-static char *battery_supplied_to[] = {
+अटल अक्षर *battery_supplied_to[] = अणु
 	"main_batt",
-};
+पूर्ण;
 
-static int lp8727_charger_get_property(struct power_supply *psy,
-				       enum power_supply_property psp,
-				       union power_supply_propval *val)
-{
-	struct lp8727_chg *pchg = dev_get_drvdata(psy->dev.parent);
+अटल पूर्णांक lp8727_अक्षरger_get_property(काष्ठा घातer_supply *psy,
+				       क्रमागत घातer_supply_property psp,
+				       जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा lp8727_chg *pchg = dev_get_drvdata(psy->dev.parent);
 
-	if (psp != POWER_SUPPLY_PROP_ONLINE)
-		return -EINVAL;
+	अगर (psp != POWER_SUPPLY_PROP_ONLINE)
+		वापस -EINVAL;
 
-	val->intval = lp8727_is_charger_attached(psy->desc->name, pchg->devid);
+	val->पूर्णांकval = lp8727_is_अक्षरger_attached(psy->desc->name, pchg->devid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool lp8727_is_high_temperature(enum lp8727_die_temp temp)
-{
-	switch (temp) {
-	case LP8788_TEMP_95C:
-	case LP8788_TEMP_115C:
-	case LP8788_TEMP_135C:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool lp8727_is_high_temperature(क्रमागत lp8727_die_temp temp)
+अणु
+	चयन (temp) अणु
+	हाल LP8788_TEMP_95C:
+	हाल LP8788_TEMP_115C:
+	हाल LP8788_TEMP_135C:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int lp8727_battery_get_property(struct power_supply *psy,
-				       enum power_supply_property psp,
-				       union power_supply_propval *val)
-{
-	struct lp8727_chg *pchg = dev_get_drvdata(psy->dev.parent);
-	struct lp8727_platform_data *pdata = pchg->pdata;
-	enum lp8727_die_temp temp;
-	u8 read;
+अटल पूर्णांक lp8727_battery_get_property(काष्ठा घातer_supply *psy,
+				       क्रमागत घातer_supply_property psp,
+				       जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा lp8727_chg *pchg = dev_get_drvdata(psy->dev.parent);
+	काष्ठा lp8727_platक्रमm_data *pdata = pchg->pdata;
+	क्रमागत lp8727_die_temp temp;
+	u8 पढ़ो;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		if (!lp8727_is_charger_attached(psy->desc->name, pchg->devid)) {
-			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
-			return 0;
-		}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		अगर (!lp8727_is_अक्षरger_attached(psy->desc->name, pchg->devid)) अणु
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
+			वापस 0;
+		पूर्ण
 
-		lp8727_read_byte(pchg, LP8727_STATUS1, &read);
+		lp8727_पढ़ो_byte(pchg, LP8727_STATUS1, &पढ़ो);
 
-		val->intval = (read & LP8727_CHGSTAT) == LP8727_STAT_EOC ?
+		val->पूर्णांकval = (पढ़ो & LP8727_CHGSTAT) == LP8727_STAT_EOC ?
 				POWER_SUPPLY_STATUS_FULL :
 				POWER_SUPPLY_STATUS_CHARGING;
-		break;
-	case POWER_SUPPLY_PROP_HEALTH:
-		lp8727_read_byte(pchg, LP8727_STATUS2, &read);
-		temp = (read & LP8727_TEMP_STAT) >> LP8727_TEMP_SHIFT;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_HEALTH:
+		lp8727_पढ़ो_byte(pchg, LP8727_STATUS2, &पढ़ो);
+		temp = (पढ़ो & LP8727_TEMP_STAT) >> LP8727_TEMP_SHIFT;
 
-		val->intval = lp8727_is_high_temperature(temp) ?
+		val->पूर्णांकval = lp8727_is_high_temperature(temp) ?
 			POWER_SUPPLY_HEALTH_OVERHEAT :
 			POWER_SUPPLY_HEALTH_GOOD;
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		if (!pdata)
-			return -EINVAL;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		अगर (!pdata)
+			वापस -EINVAL;
 
-		if (pdata->get_batt_present)
-			val->intval = pdata->get_batt_present();
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		if (!pdata)
-			return -EINVAL;
+		अगर (pdata->get_batt_present)
+			val->पूर्णांकval = pdata->get_batt_present();
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		अगर (!pdata)
+			वापस -EINVAL;
 
-		if (pdata->get_batt_level)
-			val->intval = pdata->get_batt_level();
-		break;
-	case POWER_SUPPLY_PROP_CAPACITY:
-		if (!pdata)
-			return -EINVAL;
+		अगर (pdata->get_batt_level)
+			val->पूर्णांकval = pdata->get_batt_level();
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CAPACITY:
+		अगर (!pdata)
+			वापस -EINVAL;
 
-		if (pdata->get_batt_capacity)
-			val->intval = pdata->get_batt_capacity();
-		break;
-	case POWER_SUPPLY_PROP_TEMP:
-		if (!pdata)
-			return -EINVAL;
+		अगर (pdata->get_batt_capacity)
+			val->पूर्णांकval = pdata->get_batt_capacity();
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TEMP:
+		अगर (!pdata)
+			वापस -EINVAL;
 
-		if (pdata->get_batt_temp)
-			val->intval = pdata->get_batt_temp();
-		break;
-	default:
-		break;
-	}
+		अगर (pdata->get_batt_temp)
+			val->पूर्णांकval = pdata->get_batt_temp();
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lp8727_charger_changed(struct power_supply *psy)
-{
-	struct lp8727_chg *pchg = dev_get_drvdata(psy->dev.parent);
+अटल व्योम lp8727_अक्षरger_changed(काष्ठा घातer_supply *psy)
+अणु
+	काष्ठा lp8727_chg *pchg = dev_get_drvdata(psy->dev.parent);
 	u8 eoc_level;
 	u8 ichg;
 	u8 val;
 
-	/* skip if no charger exists */
-	if (!lp8727_is_charger_attached(psy->desc->name, pchg->devid))
-		return;
+	/* skip अगर no अक्षरger exists */
+	अगर (!lp8727_is_अक्षरger_attached(psy->desc->name, pchg->devid))
+		वापस;
 
-	/* update charging parameters */
-	if (pchg->chg_param) {
+	/* update अक्षरging parameters */
+	अगर (pchg->chg_param) अणु
 		eoc_level = pchg->chg_param->eoc_level;
 		ichg = pchg->chg_param->ichg;
 		val = (ichg << LP8727_ICHG_SHIFT) | eoc_level;
-		lp8727_write_byte(pchg, LP8727_CHGCTRL2, val);
-	}
-}
+		lp8727_ग_लिखो_byte(pchg, LP8727_CHGCTRL2, val);
+	पूर्ण
+पूर्ण
 
-static const struct power_supply_desc lp8727_ac_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc lp8727_ac_desc = अणु
 	.name			= "ac",
 	.type			= POWER_SUPPLY_TYPE_MAINS,
-	.properties		= lp8727_charger_prop,
-	.num_properties		= ARRAY_SIZE(lp8727_charger_prop),
-	.get_property		= lp8727_charger_get_property,
-};
+	.properties		= lp8727_अक्षरger_prop,
+	.num_properties		= ARRAY_SIZE(lp8727_अक्षरger_prop),
+	.get_property		= lp8727_अक्षरger_get_property,
+पूर्ण;
 
-static const struct power_supply_desc lp8727_usb_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc lp8727_usb_desc = अणु
 	.name			= "usb",
 	.type			= POWER_SUPPLY_TYPE_USB,
-	.properties		= lp8727_charger_prop,
-	.num_properties		= ARRAY_SIZE(lp8727_charger_prop),
-	.get_property		= lp8727_charger_get_property,
-};
+	.properties		= lp8727_अक्षरger_prop,
+	.num_properties		= ARRAY_SIZE(lp8727_अक्षरger_prop),
+	.get_property		= lp8727_अक्षरger_get_property,
+पूर्ण;
 
-static const struct power_supply_desc lp8727_batt_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc lp8727_batt_desc = अणु
 	.name			= "main_batt",
 	.type			= POWER_SUPPLY_TYPE_BATTERY,
 	.properties		= lp8727_battery_prop,
 	.num_properties		= ARRAY_SIZE(lp8727_battery_prop),
 	.get_property		= lp8727_battery_get_property,
-	.external_power_changed	= lp8727_charger_changed,
-};
+	.बाह्यal_घातer_changed	= lp8727_अक्षरger_changed,
+पूर्ण;
 
-static int lp8727_register_psy(struct lp8727_chg *pchg)
-{
-	struct power_supply_config psy_cfg = {}; /* Only for ac and usb */
-	struct lp8727_psy *psy;
+अटल पूर्णांक lp8727_रेजिस्टर_psy(काष्ठा lp8727_chg *pchg)
+अणु
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण; /* Only क्रम ac and usb */
+	काष्ठा lp8727_psy *psy;
 
-	psy = devm_kzalloc(pchg->dev, sizeof(*psy), GFP_KERNEL);
-	if (!psy)
-		return -ENOMEM;
+	psy = devm_kzalloc(pchg->dev, माप(*psy), GFP_KERNEL);
+	अगर (!psy)
+		वापस -ENOMEM;
 
 	pchg->psy = psy;
 
 	psy_cfg.supplied_to = battery_supplied_to;
 	psy_cfg.num_supplicants = ARRAY_SIZE(battery_supplied_to);
 
-	psy->ac = power_supply_register(pchg->dev, &lp8727_ac_desc, &psy_cfg);
-	if (IS_ERR(psy->ac))
-		goto err_psy_ac;
+	psy->ac = घातer_supply_रेजिस्टर(pchg->dev, &lp8727_ac_desc, &psy_cfg);
+	अगर (IS_ERR(psy->ac))
+		जाओ err_psy_ac;
 
-	psy->usb = power_supply_register(pchg->dev, &lp8727_usb_desc,
+	psy->usb = घातer_supply_रेजिस्टर(pchg->dev, &lp8727_usb_desc,
 					 &psy_cfg);
-	if (IS_ERR(psy->usb))
-		goto err_psy_usb;
+	अगर (IS_ERR(psy->usb))
+		जाओ err_psy_usb;
 
-	psy->batt = power_supply_register(pchg->dev, &lp8727_batt_desc, NULL);
-	if (IS_ERR(psy->batt))
-		goto err_psy_batt;
+	psy->batt = घातer_supply_रेजिस्टर(pchg->dev, &lp8727_batt_desc, शून्य);
+	अगर (IS_ERR(psy->batt))
+		जाओ err_psy_batt;
 
-	return 0;
+	वापस 0;
 
 err_psy_batt:
-	power_supply_unregister(psy->usb);
+	घातer_supply_unरेजिस्टर(psy->usb);
 err_psy_usb:
-	power_supply_unregister(psy->ac);
+	घातer_supply_unरेजिस्टर(psy->ac);
 err_psy_ac:
-	return -EPERM;
-}
+	वापस -EPERM;
+पूर्ण
 
-static void lp8727_unregister_psy(struct lp8727_chg *pchg)
-{
-	struct lp8727_psy *psy = pchg->psy;
+अटल व्योम lp8727_unरेजिस्टर_psy(काष्ठा lp8727_chg *pchg)
+अणु
+	काष्ठा lp8727_psy *psy = pchg->psy;
 
-	if (!psy)
-		return;
+	अगर (!psy)
+		वापस;
 
-	power_supply_unregister(psy->ac);
-	power_supply_unregister(psy->usb);
-	power_supply_unregister(psy->batt);
-}
+	घातer_supply_unरेजिस्टर(psy->ac);
+	घातer_supply_unरेजिस्टर(psy->usb);
+	घातer_supply_unरेजिस्टर(psy->batt);
+पूर्ण
 
-#ifdef CONFIG_OF
-static struct lp8727_chg_param
-*lp8727_parse_charge_pdata(struct device *dev, struct device_node *np)
-{
-	struct lp8727_chg_param *param;
+#अगर_घोषित CONFIG_OF
+अटल काष्ठा lp8727_chg_param
+*lp8727_parse_अक्षरge_pdata(काष्ठा device *dev, काष्ठा device_node *np)
+अणु
+	काष्ठा lp8727_chg_param *param;
 
-	param = devm_kzalloc(dev, sizeof(*param), GFP_KERNEL);
-	if (!param)
-		goto out;
+	param = devm_kzalloc(dev, माप(*param), GFP_KERNEL);
+	अगर (!param)
+		जाओ out;
 
-	of_property_read_u8(np, "eoc-level", (u8 *)&param->eoc_level);
-	of_property_read_u8(np, "charging-current", (u8 *)&param->ichg);
+	of_property_पढ़ो_u8(np, "eoc-level", (u8 *)&param->eoc_level);
+	of_property_पढ़ो_u8(np, "charging-current", (u8 *)&param->ichg);
 out:
-	return param;
-}
+	वापस param;
+पूर्ण
 
-static struct lp8727_platform_data *lp8727_parse_dt(struct device *dev)
-{
-	struct device_node *np = dev->of_node;
-	struct device_node *child;
-	struct lp8727_platform_data *pdata;
-	const char *type;
+अटल काष्ठा lp8727_platक्रमm_data *lp8727_parse_dt(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा device_node *child;
+	काष्ठा lp8727_platक्रमm_data *pdata;
+	स्थिर अक्षर *type;
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस ERR_PTR(-ENOMEM);
 
-	of_property_read_u32(np, "debounce-ms", &pdata->debounce_msec);
+	of_property_पढ़ो_u32(np, "debounce-ms", &pdata->debounce_msec);
 
-	/* If charging parameter is not defined, just skip parsing the dt */
-	if (of_get_child_count(np) == 0)
-		return pdata;
+	/* If अक्षरging parameter is not defined, just skip parsing the dt */
+	अगर (of_get_child_count(np) == 0)
+		वापस pdata;
 
-	for_each_child_of_node(np, child) {
-		of_property_read_string(child, "charger-type", &type);
+	क्रम_each_child_of_node(np, child) अणु
+		of_property_पढ़ो_string(child, "charger-type", &type);
 
-		if (!strcmp(type, "ac"))
-			pdata->ac = lp8727_parse_charge_pdata(dev, child);
+		अगर (!म_भेद(type, "ac"))
+			pdata->ac = lp8727_parse_अक्षरge_pdata(dev, child);
 
-		if (!strcmp(type, "usb"))
-			pdata->usb = lp8727_parse_charge_pdata(dev, child);
-	}
+		अगर (!म_भेद(type, "usb"))
+			pdata->usb = lp8727_parse_अक्षरge_pdata(dev, child);
+	पूर्ण
 
-	return pdata;
-}
-#else
-static struct lp8727_platform_data *lp8727_parse_dt(struct device *dev)
-{
-	return NULL;
-}
-#endif
+	वापस pdata;
+पूर्ण
+#अन्यथा
+अटल काष्ठा lp8727_platक्रमm_data *lp8727_parse_dt(काष्ठा device *dev)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static int lp8727_probe(struct i2c_client *cl, const struct i2c_device_id *id)
-{
-	struct lp8727_chg *pchg;
-	struct lp8727_platform_data *pdata;
-	int ret;
+अटल पूर्णांक lp8727_probe(काष्ठा i2c_client *cl, स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा lp8727_chg *pchg;
+	काष्ठा lp8727_platक्रमm_data *pdata;
+	पूर्णांक ret;
 
-	if (!i2c_check_functionality(cl->adapter, I2C_FUNC_SMBUS_I2C_BLOCK))
-		return -EIO;
+	अगर (!i2c_check_functionality(cl->adapter, I2C_FUNC_SMBUS_I2C_BLOCK))
+		वापस -EIO;
 
-	if (cl->dev.of_node) {
+	अगर (cl->dev.of_node) अणु
 		pdata = lp8727_parse_dt(&cl->dev);
-		if (IS_ERR(pdata))
-			return PTR_ERR(pdata);
-	} else {
+		अगर (IS_ERR(pdata))
+			वापस PTR_ERR(pdata);
+	पूर्ण अन्यथा अणु
 		pdata = dev_get_platdata(&cl->dev);
-	}
+	पूर्ण
 
-	pchg = devm_kzalloc(&cl->dev, sizeof(*pchg), GFP_KERNEL);
-	if (!pchg)
-		return -ENOMEM;
+	pchg = devm_kzalloc(&cl->dev, माप(*pchg), GFP_KERNEL);
+	अगर (!pchg)
+		वापस -ENOMEM;
 
 	pchg->client = cl;
 	pchg->dev = &cl->dev;
@@ -569,57 +570,57 @@ static int lp8727_probe(struct i2c_client *cl, const struct i2c_device_id *id)
 	mutex_init(&pchg->xfer_lock);
 
 	ret = lp8727_init_device(pchg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pchg->dev, "i2c communication err: %d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = lp8727_register_psy(pchg);
-	if (ret) {
+	ret = lp8727_रेजिस्टर_psy(pchg);
+	अगर (ret) अणु
 		dev_err(pchg->dev, "power supplies register err: %d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = lp8727_setup_irq(pchg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pchg->dev, "irq handler err: %d", ret);
-		lp8727_unregister_psy(pchg);
-		return ret;
-	}
+		lp8727_unरेजिस्टर_psy(pchg);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8727_remove(struct i2c_client *cl)
-{
-	struct lp8727_chg *pchg = i2c_get_clientdata(cl);
+अटल पूर्णांक lp8727_हटाओ(काष्ठा i2c_client *cl)
+अणु
+	काष्ठा lp8727_chg *pchg = i2c_get_clientdata(cl);
 
 	lp8727_release_irq(pchg);
-	lp8727_unregister_psy(pchg);
-	return 0;
-}
+	lp8727_unरेजिस्टर_psy(pchg);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id lp8727_dt_ids[] = {
-	{ .compatible = "ti,lp8727", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id lp8727_dt_ids[] = अणु
+	अणु .compatible = "ti,lp8727", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, lp8727_dt_ids);
 
-static const struct i2c_device_id lp8727_ids[] = {
-	{"lp8727", 0},
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id lp8727_ids[] = अणु
+	अणु"lp8727", 0पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, lp8727_ids);
 
-static struct i2c_driver lp8727_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver lp8727_driver = अणु
+	.driver = अणु
 		   .name = "lp8727",
 		   .of_match_table = of_match_ptr(lp8727_dt_ids),
-		   },
+		   पूर्ण,
 	.probe = lp8727_probe,
-	.remove = lp8727_remove,
+	.हटाओ = lp8727_हटाओ,
 	.id_table = lp8727_ids,
-};
+पूर्ण;
 module_i2c_driver(lp8727_driver);
 
 MODULE_DESCRIPTION("TI/National Semiconductor LP8727 charger driver");

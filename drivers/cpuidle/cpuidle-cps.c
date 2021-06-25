@@ -1,178 +1,179 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2014 Imagination Technologies
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
-#include <linux/cpu_pm.h>
-#include <linux/cpuidle.h>
-#include <linux/init.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/init.h>
 
-#include <asm/idle.h>
-#include <asm/pm-cps.h>
+#समावेश <यंत्र/idle.h>
+#समावेश <यंत्र/pm-cps.h>
 
 /* Enumeration of the various idle states this driver may enter */
-enum cps_idle_state {
-	STATE_WAIT = 0,		/* MIPS wait instruction, coherent */
-	STATE_NC_WAIT,		/* MIPS wait instruction, non-coherent */
-	STATE_CLOCK_GATED,	/* Core clock gated */
-	STATE_POWER_GATED,	/* Core power gated */
+क्रमागत cps_idle_state अणु
+	STATE_WAIT = 0,		/* MIPS रुको inकाष्ठाion, coherent */
+	STATE_NC_WAIT,		/* MIPS रुको inकाष्ठाion, non-coherent */
+	STATE_CLOCK_GATED,	/* Core घड़ी gated */
+	STATE_POWER_GATED,	/* Core घातer gated */
 	STATE_COUNT
-};
+पूर्ण;
 
-static int cps_nc_enter(struct cpuidle_device *dev,
-			struct cpuidle_driver *drv, int index)
-{
-	enum cps_pm_state pm_state;
-	int err;
+अटल पूर्णांक cps_nc_enter(काष्ठा cpuidle_device *dev,
+			काष्ठा cpuidle_driver *drv, पूर्णांक index)
+अणु
+	क्रमागत cps_pm_state pm_state;
+	पूर्णांक err;
 
 	/*
-	 * At least one core must remain powered up & clocked in order for the
-	 * system to have any hope of functioning.
+	 * At least one core must reमुख्य घातered up & घड़ीed in order क्रम the
+	 * प्रणाली to have any hope of functioning.
 	 *
-	 * TODO: don't treat core 0 specially, just prevent the final core
-	 * TODO: remap interrupt affinity temporarily
+	 * TODO: करोn't treat core 0 specially, just prevent the final core
+	 * TODO: remap पूर्णांकerrupt affinity temporarily
 	 */
-	if (cpus_are_siblings(0, dev->cpu) && (index > STATE_NC_WAIT))
+	अगर (cpus_are_siblings(0, dev->cpu) && (index > STATE_NC_WAIT))
 		index = STATE_NC_WAIT;
 
 	/* Select the appropriate cps_pm_state */
-	switch (index) {
-	case STATE_NC_WAIT:
+	चयन (index) अणु
+	हाल STATE_NC_WAIT:
 		pm_state = CPS_PM_NC_WAIT;
-		break;
-	case STATE_CLOCK_GATED:
+		अवरोध;
+	हाल STATE_CLOCK_GATED:
 		pm_state = CPS_PM_CLOCK_GATED;
-		break;
-	case STATE_POWER_GATED:
+		अवरोध;
+	हाल STATE_POWER_GATED:
 		pm_state = CPS_PM_POWER_GATED;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Notify listeners the CPU is about to power down */
-	if ((pm_state == CPS_PM_POWER_GATED) && cpu_pm_enter())
-		return -EINTR;
+	/* Notअगरy listeners the CPU is about to घातer करोwn */
+	अगर ((pm_state == CPS_PM_POWER_GATED) && cpu_pm_enter())
+		वापस -EINTR;
 
 	/* Enter that state */
 	err = cps_pm_enter_state(pm_state);
 
-	/* Notify listeners the CPU is back up */
-	if (pm_state == CPS_PM_POWER_GATED)
-		cpu_pm_exit();
+	/* Notअगरy listeners the CPU is back up */
+	अगर (pm_state == CPS_PM_POWER_GATED)
+		cpu_pm_निकास();
 
-	return err ?: index;
-}
+	वापस err ?: index;
+पूर्ण
 
-static struct cpuidle_driver cps_driver = {
+अटल काष्ठा cpuidle_driver cps_driver = अणु
 	.name			= "cpc_cpuidle",
 	.owner			= THIS_MODULE,
-	.states = {
+	.states = अणु
 		[STATE_WAIT] = MIPS_CPUIDLE_WAIT_STATE,
-		[STATE_NC_WAIT] = {
+		[STATE_NC_WAIT] = अणु
 			.enter	= cps_nc_enter,
-			.exit_latency		= 200,
+			.निकास_latency		= 200,
 			.target_residency	= 450,
 			.name	= "nc-wait",
 			.desc	= "non-coherent MIPS wait",
-		},
-		[STATE_CLOCK_GATED] = {
+		पूर्ण,
+		[STATE_CLOCK_GATED] = अणु
 			.enter	= cps_nc_enter,
-			.exit_latency		= 300,
+			.निकास_latency		= 300,
 			.target_residency	= 700,
 			.flags	= CPUIDLE_FLAG_TIMER_STOP,
 			.name	= "clock-gated",
 			.desc	= "core clock gated",
-		},
-		[STATE_POWER_GATED] = {
+		पूर्ण,
+		[STATE_POWER_GATED] = अणु
 			.enter	= cps_nc_enter,
-			.exit_latency		= 600,
+			.निकास_latency		= 600,
 			.target_residency	= 1000,
 			.flags	= CPUIDLE_FLAG_TIMER_STOP,
 			.name	= "power-gated",
 			.desc	= "core power gated",
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.state_count		= STATE_COUNT,
 	.safe_state_index	= 0,
-};
+पूर्ण;
 
-static void __init cps_cpuidle_unregister(void)
-{
-	int cpu;
-	struct cpuidle_device *device;
+अटल व्योम __init cps_cpuidle_unरेजिस्टर(व्योम)
+अणु
+	पूर्णांक cpu;
+	काष्ठा cpuidle_device *device;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		device = &per_cpu(cpuidle_dev, cpu);
-		cpuidle_unregister_device(device);
-	}
+		cpuidle_unरेजिस्टर_device(device);
+	पूर्ण
 
-	cpuidle_unregister_driver(&cps_driver);
-}
+	cpuidle_unरेजिस्टर_driver(&cps_driver);
+पूर्ण
 
-static int __init cps_cpuidle_init(void)
-{
-	int err, cpu, i;
-	struct cpuidle_device *device;
+अटल पूर्णांक __init cps_cpuidle_init(व्योम)
+अणु
+	पूर्णांक err, cpu, i;
+	काष्ठा cpuidle_device *device;
 
 	/* Detect supported states */
-	if (!cps_pm_support_state(CPS_PM_POWER_GATED))
+	अगर (!cps_pm_support_state(CPS_PM_POWER_GATED))
 		cps_driver.state_count = STATE_CLOCK_GATED + 1;
-	if (!cps_pm_support_state(CPS_PM_CLOCK_GATED))
+	अगर (!cps_pm_support_state(CPS_PM_CLOCK_GATED))
 		cps_driver.state_count = STATE_NC_WAIT + 1;
-	if (!cps_pm_support_state(CPS_PM_NC_WAIT))
+	अगर (!cps_pm_support_state(CPS_PM_NC_WAIT))
 		cps_driver.state_count = STATE_WAIT + 1;
 
-	/* Inform the user if some states are unavailable */
-	if (cps_driver.state_count < STATE_COUNT) {
+	/* Inक्रमm the user अगर some states are unavailable */
+	अगर (cps_driver.state_count < STATE_COUNT) अणु
 		pr_info("cpuidle-cps: limited to ");
-		switch (cps_driver.state_count - 1) {
-		case STATE_WAIT:
+		चयन (cps_driver.state_count - 1) अणु
+		हाल STATE_WAIT:
 			pr_cont("coherent wait\n");
-			break;
-		case STATE_NC_WAIT:
+			अवरोध;
+		हाल STATE_NC_WAIT:
 			pr_cont("non-coherent wait\n");
-			break;
-		case STATE_CLOCK_GATED:
+			अवरोध;
+		हाल STATE_CLOCK_GATED:
 			pr_cont("clock gating\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Set the coupled flag on the appropriate states if this system
+	 * Set the coupled flag on the appropriate states अगर this प्रणाली
 	 * requires it.
 	 */
-	if (coupled_coherence)
-		for (i = STATE_NC_WAIT; i < cps_driver.state_count; i++)
+	अगर (coupled_coherence)
+		क्रम (i = STATE_NC_WAIT; i < cps_driver.state_count; i++)
 			cps_driver.states[i].flags |= CPUIDLE_FLAG_COUPLED;
 
-	err = cpuidle_register_driver(&cps_driver);
-	if (err) {
+	err = cpuidle_रेजिस्टर_driver(&cps_driver);
+	अगर (err) अणु
 		pr_err("Failed to register CPS cpuidle driver\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		device = &per_cpu(cpuidle_dev, cpu);
 		device->cpu = cpu;
-#ifdef CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED
+#अगर_घोषित CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED
 		cpumask_copy(&device->coupled_cpus, &cpu_sibling_map[cpu]);
-#endif
+#पूर्ण_अगर
 
-		err = cpuidle_register_device(device);
-		if (err) {
+		err = cpuidle_रेजिस्टर_device(device);
+		अगर (err) अणु
 			pr_err("Failed to register CPU%d cpuidle device\n",
 			       cpu);
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_out:
-	cps_cpuidle_unregister();
-	return err;
-}
+	cps_cpuidle_unरेजिस्टर();
+	वापस err;
+पूर्ण
 device_initcall(cps_cpuidle_init);

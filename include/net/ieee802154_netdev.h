@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * An interface between IEEE802.15.4 device and rest of the kernel.
+ * An पूर्णांकerface between IEEE802.15.4 device and rest of the kernel.
  *
  * Copyright (C) 2007-2012 Siemens AG
  *
@@ -12,50 +13,50 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
-#ifndef IEEE802154_NETDEVICE_H
-#define IEEE802154_NETDEVICE_H
+#अगर_अघोषित IEEE802154_NETDEVICE_H
+#घोषणा IEEE802154_NETDEVICE_H
 
-#include <net/af_ieee802154.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/ieee802154.h>
+#समावेश <net/af_ieee802154.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ieee802154.h>
 
-#include <net/cfg802154.h>
+#समावेश <net/cfg802154.h>
 
-struct ieee802154_sechdr {
-#if defined(__LITTLE_ENDIAN_BITFIELD)
+काष्ठा ieee802154_sechdr अणु
+#अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u8 level:3,
 	   key_id_mode:2,
 	   reserved:3;
-#elif defined(__BIG_ENDIAN_BITFIELD)
+#या_अगर defined(__BIG_ENDIAN_BITFIELD)
 	u8 reserved:3,
 	   key_id_mode:2,
 	   level:3;
-#else
-#error	"Please fix <asm/byteorder.h>"
-#endif
+#अन्यथा
+#त्रुटि	"Please fix <asm/byteorder.h>"
+#पूर्ण_अगर
 	u8 key_id;
 	__le32 frame_counter;
-	union {
-		__le32 short_src;
+	जोड़ अणु
+		__le32 लघु_src;
 		__le64 extended_src;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-struct ieee802154_hdr_fc {
-#if defined(__LITTLE_ENDIAN_BITFIELD)
+काष्ठा ieee802154_hdr_fc अणु
+#अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u16 type:3,
 	    security_enabled:1,
 	    frame_pending:1,
 	    ack_request:1,
-	    intra_pan:1,
+	    पूर्णांकra_pan:1,
 	    reserved:3,
 	    dest_addr_mode:2,
 	    version:2,
 	    source_addr_mode:2;
-#elif defined(__BIG_ENDIAN_BITFIELD)
+#या_अगर defined(__BIG_ENDIAN_BITFIELD)
 	u16 reserved:1,
-	    intra_pan:1,
+	    पूर्णांकra_pan:1,
 	    ack_request:1,
 	    frame_pending:1,
 	    security_enabled:1,
@@ -64,144 +65,144 @@ struct ieee802154_hdr_fc {
 	    version:2,
 	    dest_addr_mode:2,
 	    reserved2:2;
-#else
-#error	"Please fix <asm/byteorder.h>"
-#endif
-};
+#अन्यथा
+#त्रुटि	"Please fix <asm/byteorder.h>"
+#पूर्ण_अगर
+पूर्ण;
 
-struct ieee802154_hdr {
-	struct ieee802154_hdr_fc fc;
+काष्ठा ieee802154_hdr अणु
+	काष्ठा ieee802154_hdr_fc fc;
 	u8 seq;
-	struct ieee802154_addr source;
-	struct ieee802154_addr dest;
-	struct ieee802154_sechdr sec;
-};
+	काष्ठा ieee802154_addr source;
+	काष्ठा ieee802154_addr dest;
+	काष्ठा ieee802154_sechdr sec;
+पूर्ण;
 
 /* pushes hdr onto the skb. fields of hdr->fc that can be calculated from
  * the contents of hdr will be, and the actual value of those bits in
  * hdr->fc will be ignored. this includes the INTRA_PAN bit and the frame
- * version, if SECEN is set.
+ * version, अगर SECEN is set.
  */
-int ieee802154_hdr_push(struct sk_buff *skb, struct ieee802154_hdr *hdr);
+पूर्णांक ieee802154_hdr_push(काष्ठा sk_buff *skb, काष्ठा ieee802154_hdr *hdr);
 
 /* pulls the entire 802.15.4 header off of the skb, including the security
- * header, and performs pan id decompression
+ * header, and perक्रमms pan id decompression
  */
-int ieee802154_hdr_pull(struct sk_buff *skb, struct ieee802154_hdr *hdr);
+पूर्णांक ieee802154_hdr_pull(काष्ठा sk_buff *skb, काष्ठा ieee802154_hdr *hdr);
 
 /* parses the frame control, sequence number of address fields in a given skb
- * and stores them into hdr, performing pan id decompression and length checks
- * to be suitable for use in header_ops.parse
+ * and stores them पूर्णांकo hdr, perक्रमming pan id decompression and length checks
+ * to be suitable क्रम use in header_ops.parse
  */
-int ieee802154_hdr_peek_addrs(const struct sk_buff *skb,
-			      struct ieee802154_hdr *hdr);
+पूर्णांक ieee802154_hdr_peek_addrs(स्थिर काष्ठा sk_buff *skb,
+			      काष्ठा ieee802154_hdr *hdr);
 
-/* parses the full 802.15.4 header a given skb and stores them into hdr,
- * performing pan id decompression and length checks to be suitable for use in
+/* parses the full 802.15.4 header a given skb and stores them पूर्णांकo hdr,
+ * perक्रमming pan id decompression and length checks to be suitable क्रम use in
  * header_ops.parse
  */
-int ieee802154_hdr_peek(const struct sk_buff *skb, struct ieee802154_hdr *hdr);
+पूर्णांक ieee802154_hdr_peek(स्थिर काष्ठा sk_buff *skb, काष्ठा ieee802154_hdr *hdr);
 
-int ieee802154_max_payload(const struct ieee802154_hdr *hdr);
+पूर्णांक ieee802154_max_payload(स्थिर काष्ठा ieee802154_hdr *hdr);
 
-static inline int
-ieee802154_sechdr_authtag_len(const struct ieee802154_sechdr *sec)
-{
-	switch (sec->level) {
-	case IEEE802154_SCF_SECLEVEL_MIC32:
-	case IEEE802154_SCF_SECLEVEL_ENC_MIC32:
-		return 4;
-	case IEEE802154_SCF_SECLEVEL_MIC64:
-	case IEEE802154_SCF_SECLEVEL_ENC_MIC64:
-		return 8;
-	case IEEE802154_SCF_SECLEVEL_MIC128:
-	case IEEE802154_SCF_SECLEVEL_ENC_MIC128:
-		return 16;
-	case IEEE802154_SCF_SECLEVEL_NONE:
-	case IEEE802154_SCF_SECLEVEL_ENC:
-	default:
-		return 0;
-	}
-}
+अटल अंतरभूत पूर्णांक
+ieee802154_sechdr_authtag_len(स्थिर काष्ठा ieee802154_sechdr *sec)
+अणु
+	चयन (sec->level) अणु
+	हाल IEEE802154_SCF_SECLEVEL_MIC32:
+	हाल IEEE802154_SCF_SECLEVEL_ENC_MIC32:
+		वापस 4;
+	हाल IEEE802154_SCF_SECLEVEL_MIC64:
+	हाल IEEE802154_SCF_SECLEVEL_ENC_MIC64:
+		वापस 8;
+	हाल IEEE802154_SCF_SECLEVEL_MIC128:
+	हाल IEEE802154_SCF_SECLEVEL_ENC_MIC128:
+		वापस 16;
+	हाल IEEE802154_SCF_SECLEVEL_NONE:
+	हाल IEEE802154_SCF_SECLEVEL_ENC:
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline int ieee802154_hdr_length(struct sk_buff *skb)
-{
-	struct ieee802154_hdr hdr;
-	int len = ieee802154_hdr_pull(skb, &hdr);
+अटल अंतरभूत पूर्णांक ieee802154_hdr_length(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee802154_hdr hdr;
+	पूर्णांक len = ieee802154_hdr_pull(skb, &hdr);
 
-	if (len > 0)
+	अगर (len > 0)
 		skb_push(skb, len);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static inline bool ieee802154_addr_equal(const struct ieee802154_addr *a1,
-					 const struct ieee802154_addr *a2)
-{
-	if (a1->pan_id != a2->pan_id || a1->mode != a2->mode)
-		return false;
+अटल अंतरभूत bool ieee802154_addr_equal(स्थिर काष्ठा ieee802154_addr *a1,
+					 स्थिर काष्ठा ieee802154_addr *a2)
+अणु
+	अगर (a1->pan_id != a2->pan_id || a1->mode != a2->mode)
+		वापस false;
 
-	if ((a1->mode == IEEE802154_ADDR_LONG &&
+	अगर ((a1->mode == IEEE802154_ADDR_LONG &&
 	     a1->extended_addr != a2->extended_addr) ||
 	    (a1->mode == IEEE802154_ADDR_SHORT &&
-	     a1->short_addr != a2->short_addr))
-		return false;
+	     a1->लघु_addr != a2->लघु_addr))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline __le64 ieee802154_devaddr_from_raw(const void *raw)
-{
+अटल अंतरभूत __le64 ieee802154_devaddr_from_raw(स्थिर व्योम *raw)
+अणु
 	u64 temp;
 
-	memcpy(&temp, raw, IEEE802154_ADDR_LEN);
-	return (__force __le64)swab64(temp);
-}
+	स_नकल(&temp, raw, IEEE802154_ADDR_LEN);
+	वापस (__क्रमce __le64)swab64(temp);
+पूर्ण
 
-static inline void ieee802154_devaddr_to_raw(void *raw, __le64 addr)
-{
-	u64 temp = swab64((__force u64)addr);
+अटल अंतरभूत व्योम ieee802154_devaddr_to_raw(व्योम *raw, __le64 addr)
+अणु
+	u64 temp = swab64((__क्रमce u64)addr);
 
-	memcpy(raw, &temp, IEEE802154_ADDR_LEN);
-}
+	स_नकल(raw, &temp, IEEE802154_ADDR_LEN);
+पूर्ण
 
-static inline void ieee802154_addr_from_sa(struct ieee802154_addr *a,
-					   const struct ieee802154_addr_sa *sa)
-{
+अटल अंतरभूत व्योम ieee802154_addr_from_sa(काष्ठा ieee802154_addr *a,
+					   स्थिर काष्ठा ieee802154_addr_sa *sa)
+अणु
 	a->mode = sa->addr_type;
 	a->pan_id = cpu_to_le16(sa->pan_id);
 
-	switch (a->mode) {
-	case IEEE802154_ADDR_SHORT:
-		a->short_addr = cpu_to_le16(sa->short_addr);
-		break;
-	case IEEE802154_ADDR_LONG:
+	चयन (a->mode) अणु
+	हाल IEEE802154_ADDR_SHORT:
+		a->लघु_addr = cpu_to_le16(sa->लघु_addr);
+		अवरोध;
+	हाल IEEE802154_ADDR_LONG:
 		a->extended_addr = ieee802154_devaddr_from_raw(sa->hwaddr);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static inline void ieee802154_addr_to_sa(struct ieee802154_addr_sa *sa,
-					 const struct ieee802154_addr *a)
-{
+अटल अंतरभूत व्योम ieee802154_addr_to_sa(काष्ठा ieee802154_addr_sa *sa,
+					 स्थिर काष्ठा ieee802154_addr *a)
+अणु
 	sa->addr_type = a->mode;
 	sa->pan_id = le16_to_cpu(a->pan_id);
 
-	switch (a->mode) {
-	case IEEE802154_ADDR_SHORT:
-		sa->short_addr = le16_to_cpu(a->short_addr);
-		break;
-	case IEEE802154_ADDR_LONG:
+	चयन (a->mode) अणु
+	हाल IEEE802154_ADDR_SHORT:
+		sa->लघु_addr = le16_to_cpu(a->लघु_addr);
+		अवरोध;
+	हाल IEEE802154_ADDR_LONG:
 		ieee802154_devaddr_to_raw(sa->hwaddr, a->extended_addr);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * A control block of skb passed between the ARPHRD_IEEE802154 device
  * and other stack parts.
  */
-struct ieee802154_mac_cb {
+काष्ठा ieee802154_mac_cb अणु
 	u8 lqi;
 	u8 type;
 	bool ackreq;
@@ -209,51 +210,51 @@ struct ieee802154_mac_cb {
 	bool secen_override;
 	u8 seclevel;
 	bool seclevel_override;
-	struct ieee802154_addr source;
-	struct ieee802154_addr dest;
-};
+	काष्ठा ieee802154_addr source;
+	काष्ठा ieee802154_addr dest;
+पूर्ण;
 
-static inline struct ieee802154_mac_cb *mac_cb(struct sk_buff *skb)
-{
-	return (struct ieee802154_mac_cb *)skb->cb;
-}
+अटल अंतरभूत काष्ठा ieee802154_mac_cb *mac_cb(काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा ieee802154_mac_cb *)skb->cb;
+पूर्ण
 
-static inline struct ieee802154_mac_cb *mac_cb_init(struct sk_buff *skb)
-{
-	BUILD_BUG_ON(sizeof(struct ieee802154_mac_cb) > sizeof(skb->cb));
+अटल अंतरभूत काष्ठा ieee802154_mac_cb *mac_cb_init(काष्ठा sk_buff *skb)
+अणु
+	BUILD_BUG_ON(माप(काष्ठा ieee802154_mac_cb) > माप(skb->cb));
 
-	memset(skb->cb, 0, sizeof(struct ieee802154_mac_cb));
-	return mac_cb(skb);
-}
+	स_रखो(skb->cb, 0, माप(काष्ठा ieee802154_mac_cb));
+	वापस mac_cb(skb);
+पूर्ण
 
-enum {
+क्रमागत अणु
 	IEEE802154_LLSEC_DEVKEY_IGNORE,
 	IEEE802154_LLSEC_DEVKEY_RESTRICT,
 	IEEE802154_LLSEC_DEVKEY_RECORD,
 
 	__IEEE802154_LLSEC_DEVKEY_MAX,
-};
+पूर्ण;
 
-#define IEEE802154_MAC_SCAN_ED		0
-#define IEEE802154_MAC_SCAN_ACTIVE	1
-#define IEEE802154_MAC_SCAN_PASSIVE	2
-#define IEEE802154_MAC_SCAN_ORPHAN	3
+#घोषणा IEEE802154_MAC_SCAN_ED		0
+#घोषणा IEEE802154_MAC_SCAN_ACTIVE	1
+#घोषणा IEEE802154_MAC_SCAN_PASSIVE	2
+#घोषणा IEEE802154_MAC_SCAN_ORPHAN	3
 
-struct ieee802154_mac_params {
-	s8 transmit_power;
+काष्ठा ieee802154_mac_params अणु
+	s8 transmit_घातer;
 	u8 min_be;
 	u8 max_be;
 	u8 csma_retries;
 	s8 frame_retries;
 
 	bool lbt;
-	struct wpan_phy_cca cca;
+	काष्ठा wpan_phy_cca cca;
 	s32 cca_ed_level;
-};
+पूर्ण;
 
-struct wpan_phy;
+काष्ठा wpan_phy;
 
-enum {
+क्रमागत अणु
 	IEEE802154_LLSEC_PARAM_ENABLED		= BIT(0),
 	IEEE802154_LLSEC_PARAM_FRAME_COUNTER	= BIT(1),
 	IEEE802154_LLSEC_PARAM_OUT_LEVEL	= BIT(2),
@@ -263,79 +264,79 @@ enum {
 	IEEE802154_LLSEC_PARAM_HWADDR		= BIT(6),
 	IEEE802154_LLSEC_PARAM_COORD_HWADDR	= BIT(7),
 	IEEE802154_LLSEC_PARAM_COORD_SHORTADDR	= BIT(8),
-};
+पूर्ण;
 
-struct ieee802154_llsec_ops {
-	int (*get_params)(struct net_device *dev,
-			  struct ieee802154_llsec_params *params);
-	int (*set_params)(struct net_device *dev,
-			  const struct ieee802154_llsec_params *params,
-			  int changed);
+काष्ठा ieee802154_llsec_ops अणु
+	पूर्णांक (*get_params)(काष्ठा net_device *dev,
+			  काष्ठा ieee802154_llsec_params *params);
+	पूर्णांक (*set_params)(काष्ठा net_device *dev,
+			  स्थिर काष्ठा ieee802154_llsec_params *params,
+			  पूर्णांक changed);
 
-	int (*add_key)(struct net_device *dev,
-		       const struct ieee802154_llsec_key_id *id,
-		       const struct ieee802154_llsec_key *key);
-	int (*del_key)(struct net_device *dev,
-		       const struct ieee802154_llsec_key_id *id);
+	पूर्णांक (*add_key)(काष्ठा net_device *dev,
+		       स्थिर काष्ठा ieee802154_llsec_key_id *id,
+		       स्थिर काष्ठा ieee802154_llsec_key *key);
+	पूर्णांक (*del_key)(काष्ठा net_device *dev,
+		       स्थिर काष्ठा ieee802154_llsec_key_id *id);
 
-	int (*add_dev)(struct net_device *dev,
-		       const struct ieee802154_llsec_device *llsec_dev);
-	int (*del_dev)(struct net_device *dev, __le64 dev_addr);
+	पूर्णांक (*add_dev)(काष्ठा net_device *dev,
+		       स्थिर काष्ठा ieee802154_llsec_device *llsec_dev);
+	पूर्णांक (*del_dev)(काष्ठा net_device *dev, __le64 dev_addr);
 
-	int (*add_devkey)(struct net_device *dev,
+	पूर्णांक (*add_devkey)(काष्ठा net_device *dev,
 			  __le64 device_addr,
-			  const struct ieee802154_llsec_device_key *key);
-	int (*del_devkey)(struct net_device *dev,
+			  स्थिर काष्ठा ieee802154_llsec_device_key *key);
+	पूर्णांक (*del_devkey)(काष्ठा net_device *dev,
 			  __le64 device_addr,
-			  const struct ieee802154_llsec_device_key *key);
+			  स्थिर काष्ठा ieee802154_llsec_device_key *key);
 
-	int (*add_seclevel)(struct net_device *dev,
-			    const struct ieee802154_llsec_seclevel *sl);
-	int (*del_seclevel)(struct net_device *dev,
-			    const struct ieee802154_llsec_seclevel *sl);
+	पूर्णांक (*add_seclevel)(काष्ठा net_device *dev,
+			    स्थिर काष्ठा ieee802154_llsec_seclevel *sl);
+	पूर्णांक (*del_seclevel)(काष्ठा net_device *dev,
+			    स्थिर काष्ठा ieee802154_llsec_seclevel *sl);
 
-	void (*lock_table)(struct net_device *dev);
-	void (*get_table)(struct net_device *dev,
-			  struct ieee802154_llsec_table **t);
-	void (*unlock_table)(struct net_device *dev);
-};
+	व्योम (*lock_table)(काष्ठा net_device *dev);
+	व्योम (*get_table)(काष्ठा net_device *dev,
+			  काष्ठा ieee802154_llsec_table **t);
+	व्योम (*unlock_table)(काष्ठा net_device *dev);
+पूर्ण;
 /*
  * This should be located at net_device->ml_priv
  *
- * get_phy should increment the reference counting on returned phy.
+ * get_phy should increment the reference counting on वापसed phy.
  * Use wpan_wpy_put to put that reference.
  */
-struct ieee802154_mlme_ops {
-	/* The following fields are optional (can be NULL). */
+काष्ठा ieee802154_mlme_ops अणु
+	/* The following fields are optional (can be शून्य). */
 
-	int (*assoc_req)(struct net_device *dev,
-			struct ieee802154_addr *addr,
+	पूर्णांक (*assoc_req)(काष्ठा net_device *dev,
+			काष्ठा ieee802154_addr *addr,
 			u8 channel, u8 page, u8 cap);
-	int (*assoc_resp)(struct net_device *dev,
-			struct ieee802154_addr *addr,
-			__le16 short_addr, u8 status);
-	int (*disassoc_req)(struct net_device *dev,
-			struct ieee802154_addr *addr,
+	पूर्णांक (*assoc_resp)(काष्ठा net_device *dev,
+			काष्ठा ieee802154_addr *addr,
+			__le16 लघु_addr, u8 status);
+	पूर्णांक (*disassoc_req)(काष्ठा net_device *dev,
+			काष्ठा ieee802154_addr *addr,
 			u8 reason);
-	int (*start_req)(struct net_device *dev,
-			struct ieee802154_addr *addr,
+	पूर्णांक (*start_req)(काष्ठा net_device *dev,
+			काष्ठा ieee802154_addr *addr,
 			u8 channel, u8 page, u8 bcn_ord, u8 sf_ord,
 			u8 pan_coord, u8 blx, u8 coord_realign);
-	int (*scan_req)(struct net_device *dev,
+	पूर्णांक (*scan_req)(काष्ठा net_device *dev,
 			u8 type, u32 channels, u8 page, u8 duration);
 
-	int (*set_mac_params)(struct net_device *dev,
-			      const struct ieee802154_mac_params *params);
-	void (*get_mac_params)(struct net_device *dev,
-			       struct ieee802154_mac_params *params);
+	पूर्णांक (*set_mac_params)(काष्ठा net_device *dev,
+			      स्थिर काष्ठा ieee802154_mac_params *params);
+	व्योम (*get_mac_params)(काष्ठा net_device *dev,
+			       काष्ठा ieee802154_mac_params *params);
 
-	const struct ieee802154_llsec_ops *llsec;
-};
+	स्थिर काष्ठा ieee802154_llsec_ops *llsec;
+पूर्ण;
 
-static inline struct ieee802154_mlme_ops *
-ieee802154_mlme_ops(const struct net_device *dev)
-{
-	return dev->ml_priv;
-}
+अटल अंतरभूत काष्ठा ieee802154_mlme_ops *
+ieee802154_mlme_ops(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस dev->ml_priv;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

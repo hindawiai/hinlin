@@ -1,146 +1,147 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Media driver for Freescale i.MX5/6 SOC
+ * Media driver क्रम Freescale i.MX5/6 SOC
  *
- * Adds the IPU internal subdevices and the media links between them.
+ * Adds the IPU पूर्णांकernal subdevices and the media links between them.
  *
  * Copyright (c) 2016 Mentor Graphics Inc.
  */
-#include <linux/platform_device.h>
-#include "imx-media.h"
+#समावेश <linux/platक्रमm_device.h>
+#समावेश "imx-media.h"
 
-/* max pads per internal-sd */
-#define MAX_INTERNAL_PADS   8
-/* max links per internal-sd pad */
-#define MAX_INTERNAL_LINKS  8
+/* max pads per पूर्णांकernal-sd */
+#घोषणा MAX_INTERNAL_PADS   8
+/* max links per पूर्णांकernal-sd pad */
+#घोषणा MAX_INTERNAL_LINKS  8
 
-struct internal_subdev;
+काष्ठा पूर्णांकernal_subdev;
 
-struct internal_link {
-	int remote;
-	int local_pad;
-	int remote_pad;
-};
+काष्ठा पूर्णांकernal_link अणु
+	पूर्णांक remote;
+	पूर्णांक local_pad;
+	पूर्णांक remote_pad;
+पूर्ण;
 
-struct internal_pad {
-	int num_links;
-	struct internal_link link[MAX_INTERNAL_LINKS];
-};
+काष्ठा पूर्णांकernal_pad अणु
+	पूर्णांक num_links;
+	काष्ठा पूर्णांकernal_link link[MAX_INTERNAL_LINKS];
+पूर्ण;
 
-struct internal_subdev {
+काष्ठा पूर्णांकernal_subdev अणु
 	u32 grp_id;
-	struct internal_pad pad[MAX_INTERNAL_PADS];
+	काष्ठा पूर्णांकernal_pad pad[MAX_INTERNAL_PADS];
 
-	struct v4l2_subdev * (*sync_register)(struct v4l2_device *v4l2_dev,
-					      struct device *ipu_dev,
-					      struct ipu_soc *ipu,
+	काष्ठा v4l2_subdev * (*sync_रेजिस्टर)(काष्ठा v4l2_device *v4l2_dev,
+					      काष्ठा device *ipu_dev,
+					      काष्ठा ipu_soc *ipu,
 					      u32 grp_id);
-	int (*sync_unregister)(struct v4l2_subdev *sd);
-};
+	पूर्णांक (*sync_unरेजिस्टर)(काष्ठा v4l2_subdev *sd);
+पूर्ण;
 
-static const struct internal_subdev int_subdev[NUM_IPU_SUBDEVS] = {
-	[IPU_CSI0] = {
+अटल स्थिर काष्ठा पूर्णांकernal_subdev पूर्णांक_subdev[NUM_IPU_SUBDEVS] = अणु
+	[IPU_CSI0] = अणु
 		.grp_id = IMX_MEDIA_GRP_ID_IPU_CSI0,
-		.pad[CSI_SRC_PAD_DIRECT] = {
+		.pad[CSI_SRC_PAD_सूचीECT] = अणु
 			.num_links = 2,
-			.link = {
-				{
-					.local_pad = CSI_SRC_PAD_DIRECT,
+			.link = अणु
+				अणु
+					.local_pad = CSI_SRC_PAD_सूचीECT,
 					.remote = IPU_IC_PRP,
 					.remote_pad = PRP_SINK_PAD,
-				}, {
-					.local_pad = CSI_SRC_PAD_DIRECT,
+				पूर्ण, अणु
+					.local_pad = CSI_SRC_PAD_सूचीECT,
 					.remote = IPU_VDIC,
-					.remote_pad = VDIC_SINK_PAD_DIRECT,
-				},
-			},
-		},
-	},
+					.remote_pad = VDIC_SINK_PAD_सूचीECT,
+				पूर्ण,
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
 
-	[IPU_CSI1] = {
+	[IPU_CSI1] = अणु
 		.grp_id = IMX_MEDIA_GRP_ID_IPU_CSI1,
-		.pad[CSI_SRC_PAD_DIRECT] = {
+		.pad[CSI_SRC_PAD_सूचीECT] = अणु
 			.num_links = 2,
-			.link = {
-				{
-					.local_pad = CSI_SRC_PAD_DIRECT,
+			.link = अणु
+				अणु
+					.local_pad = CSI_SRC_PAD_सूचीECT,
 					.remote = IPU_IC_PRP,
 					.remote_pad = PRP_SINK_PAD,
-				}, {
-					.local_pad = CSI_SRC_PAD_DIRECT,
+				पूर्ण, अणु
+					.local_pad = CSI_SRC_PAD_सूचीECT,
 					.remote = IPU_VDIC,
-					.remote_pad = VDIC_SINK_PAD_DIRECT,
-				},
-			},
-		},
-	},
+					.remote_pad = VDIC_SINK_PAD_सूचीECT,
+				पूर्ण,
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
 
-	[IPU_VDIC] = {
+	[IPU_VDIC] = अणु
 		.grp_id = IMX_MEDIA_GRP_ID_IPU_VDIC,
-		.sync_register = imx_media_vdic_register,
-		.sync_unregister = imx_media_vdic_unregister,
-		.pad[VDIC_SRC_PAD_DIRECT] = {
+		.sync_रेजिस्टर = imx_media_vdic_रेजिस्टर,
+		.sync_unरेजिस्टर = imx_media_vdic_unरेजिस्टर,
+		.pad[VDIC_SRC_PAD_सूचीECT] = अणु
 			.num_links = 1,
-			.link = {
-				{
-					.local_pad = VDIC_SRC_PAD_DIRECT,
+			.link = अणु
+				अणु
+					.local_pad = VDIC_SRC_PAD_सूचीECT,
 					.remote = IPU_IC_PRP,
 					.remote_pad = PRP_SINK_PAD,
-				},
-			},
-		},
-	},
+				पूर्ण,
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
 
-	[IPU_IC_PRP] = {
+	[IPU_IC_PRP] = अणु
 		.grp_id = IMX_MEDIA_GRP_ID_IPU_IC_PRP,
-		.sync_register = imx_media_ic_register,
-		.sync_unregister = imx_media_ic_unregister,
-		.pad[PRP_SRC_PAD_PRPENC] = {
+		.sync_रेजिस्टर = imx_media_ic_रेजिस्टर,
+		.sync_unरेजिस्टर = imx_media_ic_unरेजिस्टर,
+		.pad[PRP_SRC_PAD_PRPENC] = अणु
 			.num_links = 1,
-			.link = {
-				{
+			.link = अणु
+				अणु
 					.local_pad = PRP_SRC_PAD_PRPENC,
 					.remote = IPU_IC_PRPENC,
 					.remote_pad = PRPENCVF_SINK_PAD,
-				},
-			},
-		},
-		.pad[PRP_SRC_PAD_PRPVF] = {
+				पूर्ण,
+			पूर्ण,
+		पूर्ण,
+		.pad[PRP_SRC_PAD_PRPVF] = अणु
 			.num_links = 1,
-			.link = {
-				{
+			.link = अणु
+				अणु
 					.local_pad = PRP_SRC_PAD_PRPVF,
 					.remote = IPU_IC_PRPVF,
 					.remote_pad = PRPENCVF_SINK_PAD,
-				},
-			},
-		},
-	},
+				पूर्ण,
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
 
-	[IPU_IC_PRPENC] = {
+	[IPU_IC_PRPENC] = अणु
 		.grp_id = IMX_MEDIA_GRP_ID_IPU_IC_PRPENC,
-		.sync_register = imx_media_ic_register,
-		.sync_unregister = imx_media_ic_unregister,
-	},
+		.sync_रेजिस्टर = imx_media_ic_रेजिस्टर,
+		.sync_unरेजिस्टर = imx_media_ic_unरेजिस्टर,
+	पूर्ण,
 
-	[IPU_IC_PRPVF] = {
+	[IPU_IC_PRPVF] = अणु
 		.grp_id = IMX_MEDIA_GRP_ID_IPU_IC_PRPVF,
-		.sync_register = imx_media_ic_register,
-		.sync_unregister = imx_media_ic_unregister,
-	},
-};
+		.sync_रेजिस्टर = imx_media_ic_रेजिस्टर,
+		.sync_unरेजिस्टर = imx_media_ic_unरेजिस्टर,
+	पूर्ण,
+पूर्ण;
 
-static int create_internal_link(struct imx_media_dev *imxmd,
-				struct v4l2_subdev *src,
-				struct v4l2_subdev *sink,
-				const struct internal_link *link)
-{
-	int ret;
+अटल पूर्णांक create_पूर्णांकernal_link(काष्ठा imx_media_dev *imxmd,
+				काष्ठा v4l2_subdev *src,
+				काष्ठा v4l2_subdev *sink,
+				स्थिर काष्ठा पूर्णांकernal_link *link)
+अणु
+	पूर्णांक ret;
 
-	/* skip if this link already created */
-	if (media_entity_find_link(&src->entity.pads[link->local_pad],
+	/* skip अगर this link alपढ़ोy created */
+	अगर (media_entity_find_link(&src->entity.pads[link->local_pad],
 				   &sink->entity.pads[link->remote_pad]))
-		return 0;
+		वापस 0;
 
 	dev_dbg(imxmd->md.dev, "%s:%d -> %s:%d\n",
 		src->name, link->local_pad,
@@ -148,159 +149,159 @@ static int create_internal_link(struct imx_media_dev *imxmd,
 
 	ret = media_create_pad_link(&src->entity, link->local_pad,
 				    &sink->entity, link->remote_pad, 0);
-	if (ret)
+	अगर (ret)
 		v4l2_err(&imxmd->v4l2_dev, "%s failed: %d\n", __func__, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int create_ipu_internal_links(struct imx_media_dev *imxmd,
-				     const struct internal_subdev *intsd,
-				     struct v4l2_subdev *sd,
-				     int ipu_id)
-{
-	const struct internal_pad *intpad;
-	const struct internal_link *link;
-	struct media_pad *pad;
-	int i, j, ret;
+अटल पूर्णांक create_ipu_पूर्णांकernal_links(काष्ठा imx_media_dev *imxmd,
+				     स्थिर काष्ठा पूर्णांकernal_subdev *पूर्णांकsd,
+				     काष्ठा v4l2_subdev *sd,
+				     पूर्णांक ipu_id)
+अणु
+	स्थिर काष्ठा पूर्णांकernal_pad *पूर्णांकpad;
+	स्थिर काष्ठा पूर्णांकernal_link *link;
+	काष्ठा media_pad *pad;
+	पूर्णांक i, j, ret;
 
 	/* create the source->sink links */
-	for (i = 0; i < sd->entity.num_pads; i++) {
-		intpad = &intsd->pad[i];
+	क्रम (i = 0; i < sd->entity.num_pads; i++) अणु
+		पूर्णांकpad = &पूर्णांकsd->pad[i];
 		pad = &sd->entity.pads[i];
 
-		if (!(pad->flags & MEDIA_PAD_FL_SOURCE))
-			continue;
+		अगर (!(pad->flags & MEDIA_PAD_FL_SOURCE))
+			जारी;
 
-		for (j = 0; j < intpad->num_links; j++) {
-			struct v4l2_subdev *sink;
+		क्रम (j = 0; j < पूर्णांकpad->num_links; j++) अणु
+			काष्ठा v4l2_subdev *sink;
 
-			link = &intpad->link[j];
+			link = &पूर्णांकpad->link[j];
 			sink = imxmd->sync_sd[ipu_id][link->remote];
 
-			ret = create_internal_link(imxmd, sd, sink, link);
-			if (ret)
-				return ret;
-		}
-	}
+			ret = create_पूर्णांकernal_link(imxmd, sd, sink, link);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int imx_media_register_ipu_internal_subdevs(struct imx_media_dev *imxmd,
-					    struct v4l2_subdev *csi)
-{
-	struct device *ipu_dev = csi->dev->parent;
-	const struct internal_subdev *intsd;
-	struct v4l2_subdev *sd;
-	struct ipu_soc *ipu;
-	int i, ipu_id, ret;
+पूर्णांक imx_media_रेजिस्टर_ipu_पूर्णांकernal_subdevs(काष्ठा imx_media_dev *imxmd,
+					    काष्ठा v4l2_subdev *csi)
+अणु
+	काष्ठा device *ipu_dev = csi->dev->parent;
+	स्थिर काष्ठा पूर्णांकernal_subdev *पूर्णांकsd;
+	काष्ठा v4l2_subdev *sd;
+	काष्ठा ipu_soc *ipu;
+	पूर्णांक i, ipu_id, ret;
 
 	ipu = dev_get_drvdata(ipu_dev);
-	if (!ipu) {
+	अगर (!ipu) अणु
 		v4l2_err(&imxmd->v4l2_dev, "invalid IPU device!\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ipu_id = ipu_get_num(ipu);
-	if (ipu_id > 1) {
+	अगर (ipu_id > 1) अणु
 		v4l2_err(&imxmd->v4l2_dev, "invalid IPU id %d!\n", ipu_id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	mutex_lock(&imxmd->mutex);
 
 	/* record this IPU */
-	if (!imxmd->ipu[ipu_id])
+	अगर (!imxmd->ipu[ipu_id])
 		imxmd->ipu[ipu_id] = ipu;
 
-	/* register the synchronous subdevs */
-	for (i = 0; i < NUM_IPU_SUBDEVS; i++) {
-		intsd = &int_subdev[i];
+	/* रेजिस्टर the synchronous subdevs */
+	क्रम (i = 0; i < NUM_IPU_SUBDEVS; i++) अणु
+		पूर्णांकsd = &पूर्णांक_subdev[i];
 
 		sd = imxmd->sync_sd[ipu_id][i];
 
 		/*
-		 * skip if this sync subdev already registered or its
+		 * skip अगर this sync subdev alपढ़ोy रेजिस्टरed or its
 		 * not a sync subdev (one of the CSIs)
 		 */
-		if (sd || !intsd->sync_register)
-			continue;
+		अगर (sd || !पूर्णांकsd->sync_रेजिस्टर)
+			जारी;
 
 		mutex_unlock(&imxmd->mutex);
-		sd = intsd->sync_register(&imxmd->v4l2_dev, ipu_dev, ipu,
-					  intsd->grp_id);
+		sd = पूर्णांकsd->sync_रेजिस्टर(&imxmd->v4l2_dev, ipu_dev, ipu,
+					  पूर्णांकsd->grp_id);
 		mutex_lock(&imxmd->mutex);
-		if (IS_ERR(sd)) {
+		अगर (IS_ERR(sd)) अणु
 			ret = PTR_ERR(sd);
-			goto err_unwind;
-		}
+			जाओ err_unwind;
+		पूर्ण
 
 		imxmd->sync_sd[ipu_id][i] = sd;
-	}
+	पूर्ण
 
 	/*
-	 * all the sync subdevs are registered, create the media links
+	 * all the sync subdevs are रेजिस्टरed, create the media links
 	 * between them.
 	 */
-	for (i = 0; i < NUM_IPU_SUBDEVS; i++) {
-		intsd = &int_subdev[i];
+	क्रम (i = 0; i < NUM_IPU_SUBDEVS; i++) अणु
+		पूर्णांकsd = &पूर्णांक_subdev[i];
 
-		if (intsd->grp_id == csi->grp_id) {
+		अगर (पूर्णांकsd->grp_id == csi->grp_id) अणु
 			sd = csi;
-		} else {
+		पूर्ण अन्यथा अणु
 			sd = imxmd->sync_sd[ipu_id][i];
-			if (!sd)
-				continue;
-		}
+			अगर (!sd)
+				जारी;
+		पूर्ण
 
-		ret = create_ipu_internal_links(imxmd, intsd, sd, ipu_id);
-		if (ret) {
+		ret = create_ipu_पूर्णांकernal_links(imxmd, पूर्णांकsd, sd, ipu_id);
+		अगर (ret) अणु
 			mutex_unlock(&imxmd->mutex);
-			imx_media_unregister_ipu_internal_subdevs(imxmd);
-			return ret;
-		}
-	}
+			imx_media_unरेजिस्टर_ipu_पूर्णांकernal_subdevs(imxmd);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&imxmd->mutex);
-	return 0;
+	वापस 0;
 
 err_unwind:
-	while (--i >= 0) {
-		intsd = &int_subdev[i];
+	जबतक (--i >= 0) अणु
+		पूर्णांकsd = &पूर्णांक_subdev[i];
 		sd = imxmd->sync_sd[ipu_id][i];
-		if (!sd || !intsd->sync_unregister)
-			continue;
+		अगर (!sd || !पूर्णांकsd->sync_unरेजिस्टर)
+			जारी;
 		mutex_unlock(&imxmd->mutex);
-		intsd->sync_unregister(sd);
+		पूर्णांकsd->sync_unरेजिस्टर(sd);
 		mutex_lock(&imxmd->mutex);
-	}
+	पूर्ण
 
 	mutex_unlock(&imxmd->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void imx_media_unregister_ipu_internal_subdevs(struct imx_media_dev *imxmd)
-{
-	const struct internal_subdev *intsd;
-	struct v4l2_subdev *sd;
-	int i, j;
+व्योम imx_media_unरेजिस्टर_ipu_पूर्णांकernal_subdevs(काष्ठा imx_media_dev *imxmd)
+अणु
+	स्थिर काष्ठा पूर्णांकernal_subdev *पूर्णांकsd;
+	काष्ठा v4l2_subdev *sd;
+	पूर्णांक i, j;
 
 	mutex_lock(&imxmd->mutex);
 
-	for (i = 0; i < 2; i++) {
-		for (j = 0; j < NUM_IPU_SUBDEVS; j++) {
-			intsd = &int_subdev[j];
+	क्रम (i = 0; i < 2; i++) अणु
+		क्रम (j = 0; j < NUM_IPU_SUBDEVS; j++) अणु
+			पूर्णांकsd = &पूर्णांक_subdev[j];
 			sd = imxmd->sync_sd[i][j];
 
-			if (!sd || !intsd->sync_unregister)
-				continue;
+			अगर (!sd || !पूर्णांकsd->sync_unरेजिस्टर)
+				जारी;
 
 			mutex_unlock(&imxmd->mutex);
-			intsd->sync_unregister(sd);
+			पूर्णांकsd->sync_unरेजिस्टर(sd);
 			mutex_lock(&imxmd->mutex);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&imxmd->mutex);
-}
+पूर्ण

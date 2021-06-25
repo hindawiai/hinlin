@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XTENSA_UNISTD_H
-#define _XTENSA_UNISTD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XTENSA_UNISTD_H
+#घोषणा _XTENSA_UNISTD_H
 
-#define __ARCH_WANT_SYS_CLONE
-#define __ARCH_WANT_SYS_CLONE3
-#include <uapi/asm/unistd.h>
+#घोषणा __ARCH_WANT_SYS_CLONE
+#घोषणा __ARCH_WANT_SYS_CLONE3
+#समावेश <uapi/यंत्र/unistd.h>
 
-#define __ARCH_WANT_NEW_STAT
-#define __ARCH_WANT_STAT64
-#define __ARCH_WANT_SYS_UTIME32
-#define __ARCH_WANT_SYS_GETPGRP
+#घोषणा __ARCH_WANT_NEW_STAT
+#घोषणा __ARCH_WANT_STAT64
+#घोषणा __ARCH_WANT_SYS_UTIME32
+#घोषणा __ARCH_WANT_SYS_GETPGRP
 
-#define NR_syscalls				__NR_syscalls
+#घोषणा NR_syscalls				__NR_syscalls
 
-#endif /* _XTENSA_UNISTD_H */
+#पूर्ण_अगर /* _XTENSA_UNISTD_H */

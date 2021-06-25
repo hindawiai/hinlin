@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_TLBFLUSH_H
-#define _ASM_X86_TLBFLUSH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_TLBFLUSH_H
+#घोषणा _ASM_X86_TLBFLUSH_H
 
-#include <linux/mm.h>
-#include <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
 
-#include <asm/processor.h>
-#include <asm/cpufeature.h>
-#include <asm/special_insns.h>
-#include <asm/smp.h>
-#include <asm/invpcid.h>
-#include <asm/pti.h>
-#include <asm/processor-flags.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/special_insns.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/invpcid.h>
+#समावेश <यंत्र/pti.h>
+#समावेश <यंत्र/processor-flags.h>
 
-void __flush_tlb_all(void);
+व्योम __flush_tlb_all(व्योम);
 
-#define TLB_FLUSH_ALL	-1UL
+#घोषणा TLB_FLUSH_ALL	-1UL
 
-void cr4_update_irqsoff(unsigned long set, unsigned long clear);
-unsigned long cr4_read_shadow(void);
+व्योम cr4_update_irqsoff(अचिन्हित दीर्घ set, अचिन्हित दीर्घ clear);
+अचिन्हित दीर्घ cr4_पढ़ो_shaकरोw(व्योम);
 
 /* Set in this cpu's CR4. */
-static inline void cr4_set_bits_irqsoff(unsigned long mask)
-{
+अटल अंतरभूत व्योम cr4_set_bits_irqsoff(अचिन्हित दीर्घ mask)
+अणु
 	cr4_update_irqsoff(mask, 0);
-}
+पूर्ण
 
 /* Clear in this cpu's CR4. */
-static inline void cr4_clear_bits_irqsoff(unsigned long mask)
-{
+अटल अंतरभूत व्योम cr4_clear_bits_irqsoff(अचिन्हित दीर्घ mask)
+अणु
 	cr4_update_irqsoff(0, mask);
-}
+पूर्ण
 
 /* Set in this cpu's CR4. */
-static inline void cr4_set_bits(unsigned long mask)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम cr4_set_bits(अचिन्हित दीर्घ mask)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	cr4_set_bits_irqsoff(mask);
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /* Clear in this cpu's CR4. */
-static inline void cr4_clear_bits(unsigned long mask)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम cr4_clear_bits(अचिन्हित दीर्घ mask)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	cr4_clear_bits_irqsoff(mask);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-#ifndef MODULE
+#अगर_अघोषित MODULE
 /*
- * 6 because 6 should be plenty and struct tlb_state will fit in two cache
+ * 6 because 6 should be plenty and काष्ठा tlb_state will fit in two cache
  * lines.
  */
-#define TLB_NR_DYN_ASIDS	6
+#घोषणा TLB_NR_DYN_ASIDS	6
 
-struct tlb_context {
+काष्ठा tlb_context अणु
 	u64 ctx_id;
 	u64 tlb_gen;
-};
+पूर्ण;
 
-struct tlb_state {
+काष्ठा tlb_state अणु
 	/*
-	 * cpu_tlbstate.loaded_mm should match CR3 whenever interrupts
+	 * cpu_tlbstate.loaded_mm should match CR3 whenever पूर्णांकerrupts
 	 * are on.  This means that it may not match current->active_mm,
 	 * which will contain the previous user mm when we're in lazy TLB
-	 * mode even if we've already switched back to swapper_pg_dir.
+	 * mode even अगर we've alपढ़ोy चयनed back to swapper_pg_dir.
 	 *
-	 * During switch_mm_irqs_off(), loaded_mm will be set to
-	 * LOADED_MM_SWITCHING during the brief interrupts-off window
+	 * During चयन_mm_irqs_off(), loaded_mm will be set to
+	 * LOADED_MM_SWITCHING during the brief पूर्णांकerrupts-off winकरोw
 	 * when CR3 and loaded_mm would otherwise be inconsistent.  This
-	 * is for nmi_uaccess_okay()'s benefit.
+	 * is क्रम nmi_uaccess_okay()'s benefit.
 	 */
-	struct mm_struct *loaded_mm;
+	काष्ठा mm_काष्ठा *loaded_mm;
 
-#define LOADED_MM_SWITCHING ((struct mm_struct *)1UL)
+#घोषणा LOADED_MM_SWITCHING ((काष्ठा mm_काष्ठा *)1UL)
 
-	/* Last user mm for optimizing IBPB */
-	union {
-		struct mm_struct	*last_user_mm;
-		unsigned long		last_user_mm_ibpb;
-	};
+	/* Last user mm क्रम optimizing IBPB */
+	जोड़ अणु
+		काष्ठा mm_काष्ठा	*last_user_mm;
+		अचिन्हित दीर्घ		last_user_mm_ibpb;
+	पूर्ण;
 
 	u16 loaded_mm_asid;
 	u16 next_asid;
@@ -93,50 +94,50 @@ struct tlb_state {
 	 * If set we changed the page tables in such a way that we
 	 * needed an invalidation of all contexts (aka. PCIDs / ASIDs).
 	 * This tells us to go invalidate all the non-loaded ctxs[]
-	 * on the next context switch.
+	 * on the next context चयन.
 	 *
-	 * The current ctx was kept up-to-date as it ran and does not
+	 * The current ctx was kept up-to-date as it ran and करोes not
 	 * need to be invalidated.
 	 */
 	bool invalidate_other;
 
 	/*
 	 * Mask that contains TLB_NR_DYN_ASIDS+1 bits to indicate
-	 * the corresponding user PCID needs a flush next time we
-	 * switch to it; see SWITCH_TO_USER_CR3.
+	 * the corresponding user PCID needs a flush next समय we
+	 * चयन to it; see SWITCH_TO_USER_CR3.
 	 */
-	unsigned short user_pcid_flush_mask;
+	अचिन्हित लघु user_pcid_flush_mask;
 
 	/*
-	 * Access to this CR4 shadow and to H/W CR4 is protected by
-	 * disabling interrupts when modifying either one.
+	 * Access to this CR4 shaकरोw and to H/W CR4 is रक्षित by
+	 * disabling पूर्णांकerrupts when modअगरying either one.
 	 */
-	unsigned long cr4;
+	अचिन्हित दीर्घ cr4;
 
 	/*
 	 * This is a list of all contexts that might exist in the TLB.
 	 * There is one per ASID that we use, and the ASID (what the
-	 * CPU calls PCID) is the index into ctxts.
+	 * CPU calls PCID) is the index पूर्णांकo ctxts.
 	 *
 	 * For each context, ctx_id indicates which mm the TLB's user
 	 * entries came from.  As an invariant, the TLB will never
 	 * contain entries that are out-of-date as when that mm reached
 	 * the tlb_gen in the list.
 	 *
-	 * To be clear, this means that it's legal for the TLB code to
+	 * To be clear, this means that it's legal क्रम the TLB code to
 	 * flush the TLB without updating tlb_gen.  This can happen
-	 * (for now, at least) due to paravirt remote flushes.
+	 * (क्रम now, at least) due to paravirt remote flushes.
 	 *
 	 * NB: context 0 is a bit special, since it's also used by
 	 * various bits of init code.  This is fine -- code that
 	 * isn't aware of PCID will end up harmlessly flushing
 	 * context 0.
 	 */
-	struct tlb_context ctxs[TLB_NR_DYN_ASIDS];
-};
-DECLARE_PER_CPU_ALIGNED(struct tlb_state, cpu_tlbstate);
+	काष्ठा tlb_context ctxs[TLB_NR_DYN_ASIDS];
+पूर्ण;
+DECLARE_PER_CPU_ALIGNED(काष्ठा tlb_state, cpu_tlbstate);
 
-struct tlb_state_shared {
+काष्ठा tlb_state_shared अणु
 	/*
 	 * We can be in one of several states:
 	 *
@@ -149,32 +150,32 @@ struct tlb_state_shared {
 	 *  - Lazily using a real mm.  loaded_mm != &init_mm, our bit
 	 *    is set in mm_cpumask(loaded_mm), but is_lazy == true.
 	 *    We're heuristically guessing that the CR3 load we
-	 *    skipped more than makes up for the overhead added by
+	 *    skipped more than makes up क्रम the overhead added by
 	 *    lazy mode.
 	 */
 	bool is_lazy;
-};
-DECLARE_PER_CPU_SHARED_ALIGNED(struct tlb_state_shared, cpu_tlbstate_shared);
+पूर्ण;
+DECLARE_PER_CPU_SHARED_ALIGNED(काष्ठा tlb_state_shared, cpu_tlbstate_shared);
 
-bool nmi_uaccess_okay(void);
-#define nmi_uaccess_okay nmi_uaccess_okay
+bool nmi_uaccess_okay(व्योम);
+#घोषणा nmi_uaccess_okay nmi_uaccess_okay
 
-/* Initialize cr4 shadow for this CPU. */
-static inline void cr4_init_shadow(void)
-{
-	this_cpu_write(cpu_tlbstate.cr4, __read_cr4());
-}
+/* Initialize cr4 shaकरोw क्रम this CPU. */
+अटल अंतरभूत व्योम cr4_init_shaकरोw(व्योम)
+अणु
+	this_cpu_ग_लिखो(cpu_tlbstate.cr4, __पढ़ो_cr4());
+पूर्ण
 
-extern unsigned long mmu_cr4_features;
-extern u32 *trampoline_cr4_features;
+बाह्य अचिन्हित दीर्घ mmu_cr4_features;
+बाह्य u32 *trampoline_cr4_features;
 
-extern void initialize_tlbstate_and_flush(void);
+बाह्य व्योम initialize_tlbstate_and_flush(व्योम);
 
 /*
  * TLB flushing:
  *
  *  - flush_tlb_all() flushes all processes TLBs
- *  - flush_tlb_mm(mm) flushes the specified mm context TLB's
+ *  - flush_tlb_mm(mm) flushes the specअगरied mm context TLB's
  *  - flush_tlb_page(vma, vmaddr) flushes one page
  *  - flush_tlb_range(vma, start, end) flushes a range of pages
  *  - flush_tlb_kernel_range(start, end) flushes a range of kernel pages
@@ -183,7 +184,7 @@ extern void initialize_tlbstate_and_flush(void);
  * ..but the i386 has somewhat limited tlb flushing capabilities,
  * and page-granular flushes are available only on i486 and up.
  */
-struct flush_tlb_info {
+काष्ठा flush_tlb_info अणु
 	/*
 	 * We support several kinds of flushes.
 	 *
@@ -197,68 +198,68 @@ struct flush_tlb_info {
 	 *   .new_tlb_gen are entirely contained in the indicated range.
 	 *
 	 * - Fully flush all mms whose tlb_gens have been updated.  .mm
-	 *   will be NULL, .end will be TLB_FLUSH_ALL, and .new_tlb_gen
+	 *   will be शून्य, .end will be TLB_FLUSH_ALL, and .new_tlb_gen
 	 *   will be zero.
 	 */
-	struct mm_struct	*mm;
-	unsigned long		start;
-	unsigned long		end;
+	काष्ठा mm_काष्ठा	*mm;
+	अचिन्हित दीर्घ		start;
+	अचिन्हित दीर्घ		end;
 	u64			new_tlb_gen;
-	unsigned int		initiating_cpu;
-	u8			stride_shift;
-	u8			freed_tables;
-};
+	अचिन्हित पूर्णांक		initiating_cpu;
+	u8			stride_shअगरt;
+	u8			मुक्तd_tables;
+पूर्ण;
 
-void flush_tlb_local(void);
-void flush_tlb_one_user(unsigned long addr);
-void flush_tlb_one_kernel(unsigned long addr);
-void flush_tlb_multi(const struct cpumask *cpumask,
-		      const struct flush_tlb_info *info);
+व्योम flush_tlb_local(व्योम);
+व्योम flush_tlb_one_user(अचिन्हित दीर्घ addr);
+व्योम flush_tlb_one_kernel(अचिन्हित दीर्घ addr);
+व्योम flush_tlb_multi(स्थिर काष्ठा cpumask *cpumask,
+		      स्थिर काष्ठा flush_tlb_info *info);
 
-#ifdef CONFIG_PARAVIRT
-#include <asm/paravirt.h>
-#endif
+#अगर_घोषित CONFIG_PARAVIRT
+#समावेश <यंत्र/paravirt.h>
+#पूर्ण_अगर
 
-#define flush_tlb_mm(mm)						\
+#घोषणा flush_tlb_mm(mm)						\
 		flush_tlb_mm_range(mm, 0UL, TLB_FLUSH_ALL, 0UL, true)
 
-#define flush_tlb_range(vma, start, end)				\
+#घोषणा flush_tlb_range(vma, start, end)				\
 	flush_tlb_mm_range((vma)->vm_mm, start, end,			\
 			   ((vma)->vm_flags & VM_HUGETLB)		\
-				? huge_page_shift(hstate_vma(vma))	\
+				? huge_page_shअगरt(hstate_vma(vma))	\
 				: PAGE_SHIFT, false)
 
-extern void flush_tlb_all(void);
-extern void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
-				unsigned long end, unsigned int stride_shift,
-				bool freed_tables);
-extern void flush_tlb_kernel_range(unsigned long start, unsigned long end);
+बाह्य व्योम flush_tlb_all(व्योम);
+बाह्य व्योम flush_tlb_mm_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start,
+				अचिन्हित दीर्घ end, अचिन्हित पूर्णांक stride_shअगरt,
+				bool मुक्तd_tables);
+बाह्य व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
 
-static inline void flush_tlb_page(struct vm_area_struct *vma, unsigned long a)
-{
+अटल अंतरभूत व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ a)
+अणु
 	flush_tlb_mm_range(vma->vm_mm, a, a + PAGE_SIZE, PAGE_SHIFT, false);
-}
+पूर्ण
 
-static inline u64 inc_mm_tlb_gen(struct mm_struct *mm)
-{
+अटल अंतरभूत u64 inc_mm_tlb_gen(काष्ठा mm_काष्ठा *mm)
+अणु
 	/*
 	 * Bump the generation count.  This also serves as a full barrier
-	 * that synchronizes with switch_mm(): callers are required to order
-	 * their read of mm_cpumask after their writes to the paging
-	 * structures.
+	 * that synchronizes with चयन_mm(): callers are required to order
+	 * their पढ़ो of mm_cpumask after their ग_लिखोs to the paging
+	 * काष्ठाures.
 	 */
-	return atomic64_inc_return(&mm->context.tlb_gen);
-}
+	वापस atomic64_inc_वापस(&mm->context.tlb_gen);
+पूर्ण
 
-static inline void arch_tlbbatch_add_mm(struct arch_tlbflush_unmap_batch *batch,
-					struct mm_struct *mm)
-{
+अटल अंतरभूत व्योम arch_tlbbatch_add_mm(काष्ठा arch_tlbflush_unmap_batch *batch,
+					काष्ठा mm_काष्ठा *mm)
+अणु
 	inc_mm_tlb_gen(mm);
 	cpumask_or(&batch->cpumask, &batch->cpumask, mm_cpumask(mm));
-}
+पूर्ण
 
-extern void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch);
+बाह्य व्योम arch_tlbbatch_flush(काष्ठा arch_tlbflush_unmap_batch *batch);
 
-#endif /* !MODULE */
+#पूर्ण_अगर /* !MODULE */
 
-#endif /* _ASM_X86_TLBFLUSH_H */
+#पूर्ण_अगर /* _ASM_X86_TLBFLUSH_H */

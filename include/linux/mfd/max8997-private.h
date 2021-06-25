@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * max8997-private.h - Voltage regulator driver for the Maxim 8997
+ * max8997-निजी.h - Voltage regulator driver क्रम the Maxim 8997
  *
  *  Copyright (C) 2010 Samsung Electrnoics
  *  MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
-#ifndef __LINUX_MFD_MAX8997_PRIV_H
-#define __LINUX_MFD_MAX8997_PRIV_H
+#अगर_अघोषित __LINUX_MFD_MAX8997_PRIV_H
+#घोषणा __LINUX_MFD_MAX8997_PRIV_H
 
-#include <linux/i2c.h>
-#include <linux/export.h>
-#include <linux/irqdomain.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/export.h>
+#समावेश <linux/irqकरोमुख्य.h>
 
-#define MAX8997_REG_INVALID	(0xff)
+#घोषणा MAX8997_REG_INVALID	(0xff)
 
-enum max8997_pmic_reg {
+क्रमागत max8997_pmic_reg अणु
 	MAX8997_REG_PMIC_ID0	= 0x00,
 	MAX8997_REG_PMIC_ID1	= 0x01,
 	MAX8997_REG_INTSRC	= 0x02,
@@ -107,7 +108,7 @@ enum max8997_pmic_reg {
 	MAX8997_REG_LBCNFG2	= 0x5f,
 	MAX8997_REG_BBCCTRL	= 0x60,
 
-	MAX8997_REG_FLASH1_CUR	= 0x63, /* 0x63 ~ 0x6e for FLASH */
+	MAX8997_REG_FLASH1_CUR	= 0x63, /* 0x63 ~ 0x6e क्रम FLASH */
 	MAX8997_REG_FLASH2_CUR	= 0x64,
 	MAX8997_REG_MOVIE_CUR	= 0x65,
 	MAX8997_REG_GSMB_CUR	= 0x66,
@@ -159,9 +160,9 @@ enum max8997_pmic_reg {
 	MAX8997_REG_DVSOKTIMER5	= 0x9a,
 
 	MAX8997_REG_PMIC_END	= 0x9b,
-};
+पूर्ण;
 
-enum max8997_muic_reg {
+क्रमागत max8997_muic_reg अणु
 	MAX8997_MUIC_REG_ID		= 0x0,
 	MAX8997_MUIC_REG_INT1		= 0x1,
 	MAX8997_MUIC_REG_INT2		= 0x2,
@@ -179,73 +180,73 @@ enum max8997_muic_reg {
 	MAX8997_MUIC_REG_CONTROL3	= 0xe,
 
 	MAX8997_MUIC_REG_END		= 0xf,
-};
+पूर्ण;
 
-/* MAX8997-MUIC STATUS1 register */
-#define STATUS1_ADC_SHIFT		0
-#define STATUS1_ADCLOW_SHIFT		5
-#define STATUS1_ADCERR_SHIFT		6
-#define STATUS1_ADC_MASK		(0x1f << STATUS1_ADC_SHIFT)
-#define STATUS1_ADCLOW_MASK		(0x1 << STATUS1_ADCLOW_SHIFT)
-#define STATUS1_ADCERR_MASK		(0x1 << STATUS1_ADCERR_SHIFT)
+/* MAX8997-MUIC STATUS1 रेजिस्टर */
+#घोषणा STATUS1_ADC_SHIFT		0
+#घोषणा STATUS1_ADCLOW_SHIFT		5
+#घोषणा STATUS1_ADCERR_SHIFT		6
+#घोषणा STATUS1_ADC_MASK		(0x1f << STATUS1_ADC_SHIFT)
+#घोषणा STATUS1_ADCLOW_MASK		(0x1 << STATUS1_ADCLOW_SHIFT)
+#घोषणा STATUS1_ADCERR_MASK		(0x1 << STATUS1_ADCERR_SHIFT)
 
-/* MAX8997-MUIC STATUS2 register */
-#define STATUS2_CHGTYP_SHIFT		0
-#define STATUS2_CHGDETRUN_SHIFT		3
-#define STATUS2_DCDTMR_SHIFT		4
-#define STATUS2_DBCHG_SHIFT		5
-#define STATUS2_VBVOLT_SHIFT		6
-#define STATUS2_CHGTYP_MASK		(0x7 << STATUS2_CHGTYP_SHIFT)
-#define STATUS2_CHGDETRUN_MASK		(0x1 << STATUS2_CHGDETRUN_SHIFT)
-#define STATUS2_DCDTMR_MASK		(0x1 << STATUS2_DCDTMR_SHIFT)
-#define STATUS2_DBCHG_MASK		(0x1 << STATUS2_DBCHG_SHIFT)
-#define STATUS2_VBVOLT_MASK		(0x1 << STATUS2_VBVOLT_SHIFT)
+/* MAX8997-MUIC STATUS2 रेजिस्टर */
+#घोषणा STATUS2_CHGTYP_SHIFT		0
+#घोषणा STATUS2_CHGDETRUN_SHIFT		3
+#घोषणा STATUS2_DCDTMR_SHIFT		4
+#घोषणा STATUS2_DBCHG_SHIFT		5
+#घोषणा STATUS2_VBVOLT_SHIFT		6
+#घोषणा STATUS2_CHGTYP_MASK		(0x7 << STATUS2_CHGTYP_SHIFT)
+#घोषणा STATUS2_CHGDETRUN_MASK		(0x1 << STATUS2_CHGDETRUN_SHIFT)
+#घोषणा STATUS2_DCDTMR_MASK		(0x1 << STATUS2_DCDTMR_SHIFT)
+#घोषणा STATUS2_DBCHG_MASK		(0x1 << STATUS2_DBCHG_SHIFT)
+#घोषणा STATUS2_VBVOLT_MASK		(0x1 << STATUS2_VBVOLT_SHIFT)
 
-/* MAX8997-MUIC STATUS3 register */
-#define STATUS3_OVP_SHIFT		2
-#define STATUS3_OVP_MASK		(0x1 << STATUS3_OVP_SHIFT)
+/* MAX8997-MUIC STATUS3 रेजिस्टर */
+#घोषणा STATUS3_OVP_SHIFT		2
+#घोषणा STATUS3_OVP_MASK		(0x1 << STATUS3_OVP_SHIFT)
 
-/* MAX8997-MUIC CONTROL1 register */
-#define COMN1SW_SHIFT			0
-#define COMP2SW_SHIFT			3
-#define COMN1SW_MASK			(0x7 << COMN1SW_SHIFT)
-#define COMP2SW_MASK			(0x7 << COMP2SW_SHIFT)
-#define COMP_SW_MASK		(COMP2SW_MASK | COMN1SW_MASK)
+/* MAX8997-MUIC CONTROL1 रेजिस्टर */
+#घोषणा COMN1SW_SHIFT			0
+#घोषणा COMP2SW_SHIFT			3
+#घोषणा COMN1SW_MASK			(0x7 << COMN1SW_SHIFT)
+#घोषणा COMP2SW_MASK			(0x7 << COMP2SW_SHIFT)
+#घोषणा COMP_SW_MASK		(COMP2SW_MASK | COMN1SW_MASK)
 
-#define CONTROL1_SW_USB			((1 << COMP2SW_SHIFT) \
+#घोषणा CONTROL1_SW_USB			((1 << COMP2SW_SHIFT) \
 						| (1 << COMN1SW_SHIFT))
-#define CONTROL1_SW_AUDIO		((2 << COMP2SW_SHIFT) \
+#घोषणा CONTROL1_SW_AUDIO		((2 << COMP2SW_SHIFT) \
 						| (2 << COMN1SW_SHIFT))
-#define CONTROL1_SW_UART		((3 << COMP2SW_SHIFT) \
+#घोषणा CONTROL1_SW_UART		((3 << COMP2SW_SHIFT) \
 						| (3 << COMN1SW_SHIFT))
-#define CONTROL1_SW_OPEN		((0 << COMP2SW_SHIFT) \
+#घोषणा CONTROL1_SW_OPEN		((0 << COMP2SW_SHIFT) \
 						| (0 << COMN1SW_SHIFT))
 
-#define CONTROL2_LOWPWR_SHIFT		(0)
-#define CONTROL2_ADCEN_SHIFT		(1)
-#define CONTROL2_CPEN_SHIFT		(2)
-#define CONTROL2_SFOUTASRT_SHIFT	(3)
-#define CONTROL2_SFOUTORD_SHIFT		(4)
-#define CONTROL2_ACCDET_SHIFT		(5)
-#define CONTROL2_USBCPINT_SHIFT		(6)
-#define CONTROL2_RCPS_SHIFT		(7)
-#define CONTROL2_LOWPWR_MASK		(0x1 << CONTROL2_LOWPWR_SHIFT)
-#define CONTROL2_ADCEN_MASK		(0x1 << CONTROL2_ADCEN_SHIFT)
-#define CONTROL2_CPEN_MASK		(0x1 << CONTROL2_CPEN_SHIFT)
-#define CONTROL2_SFOUTASRT_MASK		(0x1 << CONTROL2_SFOUTASRT_SHIFT)
-#define CONTROL2_SFOUTORD_MASK		(0x1 << CONTROL2_SFOUTORD_SHIFT)
-#define CONTROL2_ACCDET_MASK		(0x1 << CONTROL2_ACCDET_SHIFT)
-#define CONTROL2_USBCPINT_MASK		(0x1 << CONTROL2_USBCPINT_SHIFT)
-#define CONTROL2_RCPS_MASK		(0x1 << CONTROL2_RCPS_SHIFT)
+#घोषणा CONTROL2_LOWPWR_SHIFT		(0)
+#घोषणा CONTROL2_ADCEN_SHIFT		(1)
+#घोषणा CONTROL2_CPEN_SHIFT		(2)
+#घोषणा CONTROL2_SFOUTASRT_SHIFT	(3)
+#घोषणा CONTROL2_SFOUTORD_SHIFT		(4)
+#घोषणा CONTROL2_ACCDET_SHIFT		(5)
+#घोषणा CONTROL2_USBCPINT_SHIFT		(6)
+#घोषणा CONTROL2_RCPS_SHIFT		(7)
+#घोषणा CONTROL2_LOWPWR_MASK		(0x1 << CONTROL2_LOWPWR_SHIFT)
+#घोषणा CONTROL2_ADCEN_MASK		(0x1 << CONTROL2_ADCEN_SHIFT)
+#घोषणा CONTROL2_CPEN_MASK		(0x1 << CONTROL2_CPEN_SHIFT)
+#घोषणा CONTROL2_SFOUTASRT_MASK		(0x1 << CONTROL2_SFOUTASRT_SHIFT)
+#घोषणा CONTROL2_SFOUTORD_MASK		(0x1 << CONTROL2_SFOUTORD_SHIFT)
+#घोषणा CONTROL2_ACCDET_MASK		(0x1 << CONTROL2_ACCDET_SHIFT)
+#घोषणा CONTROL2_USBCPINT_MASK		(0x1 << CONTROL2_USBCPINT_SHIFT)
+#घोषणा CONTROL2_RCPS_MASK		(0x1 << CONTROL2_RCPS_SHIFT)
 
-#define CONTROL3_JIGSET_SHIFT		(0)
-#define CONTROL3_BTLDSET_SHIFT		(2)
-#define CONTROL3_ADCDBSET_SHIFT		(4)
-#define CONTROL3_JIGSET_MASK		(0x3 << CONTROL3_JIGSET_SHIFT)
-#define CONTROL3_BTLDSET_MASK		(0x3 << CONTROL3_BTLDSET_SHIFT)
-#define CONTROL3_ADCDBSET_MASK		(0x3 << CONTROL3_ADCDBSET_SHIFT)
+#घोषणा CONTROL3_JIGSET_SHIFT		(0)
+#घोषणा CONTROL3_BTLDSET_SHIFT		(2)
+#घोषणा CONTROL3_ADCDBSET_SHIFT		(4)
+#घोषणा CONTROL3_JIGSET_MASK		(0x3 << CONTROL3_JIGSET_SHIFT)
+#घोषणा CONTROL3_BTLDSET_MASK		(0x3 << CONTROL3_BTLDSET_SHIFT)
+#घोषणा CONTROL3_ADCDBSET_MASK		(0x3 << CONTROL3_ADCDBSET_SHIFT)
 
-enum max8997_haptic_reg {
+क्रमागत max8997_haptic_reg अणु
 	MAX8997_HAPTIC_REG_GENERAL	= 0x00,
 	MAX8997_HAPTIC_REG_CONF1	= 0x01,
 	MAX8997_HAPTIC_REG_CONF2	= 0x02,
@@ -265,10 +266,10 @@ enum max8997_haptic_reg {
 	MAX8997_HAPTIC_REG_MTR_REV	= 0x10,
 
 	MAX8997_HAPTIC_REG_END		= 0x11,
-};
+पूर्ण;
 
 /* slave addr = 0x0c: using "2nd part" of rev4 datasheet */
-enum max8997_rtc_reg {
+क्रमागत max8997_rtc_reg अणु
 	MAX8997_RTC_CTRLMASK		= 0x02,
 	MAX8997_RTC_CTRL		= 0x03,
 	MAX8997_RTC_UPDATE1		= 0x04,
@@ -296,9 +297,9 @@ enum max8997_rtc_reg {
 	MAX8997_RTC_ALARM2_MONTH	= 0x22,
 	MAX8997_RTC_ALARM2_YEAR		= 0x23,
 	MAX8997_RTC_ALARM2_DAY_OF_MONTH	= 0x24,
-};
+पूर्ण;
 
-enum max8997_irq_source {
+क्रमागत max8997_irq_source अणु
 	PMIC_INT1 = 0,
 	PMIC_INT2,
 	PMIC_INT3,
@@ -316,9 +317,9 @@ enum max8997_irq_source {
 	FLASH_STATUS, /* Not implemented */
 
 	MAX8997_IRQ_GROUP_NR,
-};
+पूर्ण;
 
-enum max8997_irq {
+क्रमागत max8997_irq अणु
 	MAX8997_PMICIRQ_PWRONR,
 	MAX8997_PMICIRQ_PWRONF,
 	MAX8997_PMICIRQ_PWRON1SEC,
@@ -362,56 +363,56 @@ enum max8997_irq {
 	MAX8997_MUICIRQ_OVP,
 
 	MAX8997_IRQ_NR,
-};
+पूर्ण;
 
-#define MAX8997_NUM_GPIO	12
-struct max8997_dev {
-	struct device *dev;
-	struct max8997_platform_data *pdata;
-	struct i2c_client *i2c; /* 0xcc / PMIC, Battery Control, and FLASH */
-	struct i2c_client *rtc; /* slave addr 0x0c */
-	struct i2c_client *haptic; /* slave addr 0x90 */
-	struct i2c_client *muic; /* slave addr 0x4a */
-	struct mutex iolock;
+#घोषणा MAX8997_NUM_GPIO	12
+काष्ठा max8997_dev अणु
+	काष्ठा device *dev;
+	काष्ठा max8997_platक्रमm_data *pdata;
+	काष्ठा i2c_client *i2c; /* 0xcc / PMIC, Battery Control, and FLASH */
+	काष्ठा i2c_client *rtc; /* slave addr 0x0c */
+	काष्ठा i2c_client *haptic; /* slave addr 0x90 */
+	काष्ठा i2c_client *muic; /* slave addr 0x4a */
+	काष्ठा mutex iolock;
 
-	unsigned long type;
-	struct platform_device *battery; /* battery control (not fuel gauge) */
+	अचिन्हित दीर्घ type;
+	काष्ठा platक्रमm_device *battery; /* battery control (not fuel gauge) */
 
-	int irq;
-	int ono;
-	struct irq_domain *irq_domain;
-	struct mutex irqlock;
-	int irq_masks_cur[MAX8997_IRQ_GROUP_NR];
-	int irq_masks_cache[MAX8997_IRQ_GROUP_NR];
+	पूर्णांक irq;
+	पूर्णांक ono;
+	काष्ठा irq_करोमुख्य *irq_करोमुख्य;
+	काष्ठा mutex irqlock;
+	पूर्णांक irq_masks_cur[MAX8997_IRQ_GROUP_NR];
+	पूर्णांक irq_masks_cache[MAX8997_IRQ_GROUP_NR];
 
 	/* For hibernation */
 	u8 reg_dump[MAX8997_REG_PMIC_END + MAX8997_MUIC_REG_END +
 		MAX8997_HAPTIC_REG_END];
 
 	bool gpio_status[MAX8997_NUM_GPIO];
-};
+पूर्ण;
 
-enum max8997_types {
+क्रमागत max8997_types अणु
 	TYPE_MAX8997,
 	TYPE_MAX8966,
-};
+पूर्ण;
 
-extern int max8997_irq_init(struct max8997_dev *max8997);
-extern void max8997_irq_exit(struct max8997_dev *max8997);
-extern int max8997_irq_resume(struct max8997_dev *max8997);
+बाह्य पूर्णांक max8997_irq_init(काष्ठा max8997_dev *max8997);
+बाह्य व्योम max8997_irq_निकास(काष्ठा max8997_dev *max8997);
+बाह्य पूर्णांक max8997_irq_resume(काष्ठा max8997_dev *max8997);
 
-extern int max8997_read_reg(struct i2c_client *i2c, u8 reg, u8 *dest);
-extern int max8997_bulk_read(struct i2c_client *i2c, u8 reg, int count,
+बाह्य पूर्णांक max8997_पढ़ो_reg(काष्ठा i2c_client *i2c, u8 reg, u8 *dest);
+बाह्य पूर्णांक max8997_bulk_पढ़ो(काष्ठा i2c_client *i2c, u8 reg, पूर्णांक count,
 				u8 *buf);
-extern int max8997_write_reg(struct i2c_client *i2c, u8 reg, u8 value);
-extern int max8997_bulk_write(struct i2c_client *i2c, u8 reg, int count,
+बाह्य पूर्णांक max8997_ग_लिखो_reg(काष्ठा i2c_client *i2c, u8 reg, u8 value);
+बाह्य पूर्णांक max8997_bulk_ग_लिखो(काष्ठा i2c_client *i2c, u8 reg, पूर्णांक count,
 				u8 *buf);
-extern int max8997_update_reg(struct i2c_client *i2c, u8 reg, u8 val, u8 mask);
+बाह्य पूर्णांक max8997_update_reg(काष्ठा i2c_client *i2c, u8 reg, u8 val, u8 mask);
 
-#define MAX8997_GPIO_INT_BOTH	(0x3 << 4)
-#define MAX8997_GPIO_INT_RISE	(0x2 << 4)
-#define MAX8997_GPIO_INT_FALL	(0x1 << 4)
+#घोषणा MAX8997_GPIO_INT_BOTH	(0x3 << 4)
+#घोषणा MAX8997_GPIO_INT_RISE	(0x2 << 4)
+#घोषणा MAX8997_GPIO_INT_FALL	(0x1 << 4)
 
-#define MAX8997_GPIO_INT_MASK	(0x3 << 4)
-#define MAX8997_GPIO_DATA_MASK	(0x1 << 2)
-#endif /*  __LINUX_MFD_MAX8997_PRIV_H */
+#घोषणा MAX8997_GPIO_INT_MASK	(0x3 << 4)
+#घोषणा MAX8997_GPIO_DATA_MASK	(0x1 << 2)
+#पूर्ण_अगर /*  __LINUX_MFD_MAX8997_PRIV_H */

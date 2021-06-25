@@ -1,209 +1,210 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2016 Facebook
  */
-#include "percpu_freelist.h"
+#समावेश "percpu_freelist.h"
 
-int pcpu_freelist_init(struct pcpu_freelist *s)
-{
-	int cpu;
+पूर्णांक pcpu_मुक्तlist_init(काष्ठा pcpu_मुक्तlist *s)
+अणु
+	पूर्णांक cpu;
 
-	s->freelist = alloc_percpu(struct pcpu_freelist_head);
-	if (!s->freelist)
-		return -ENOMEM;
+	s->मुक्तlist = alloc_percpu(काष्ठा pcpu_मुक्तlist_head);
+	अगर (!s->मुक्तlist)
+		वापस -ENOMEM;
 
-	for_each_possible_cpu(cpu) {
-		struct pcpu_freelist_head *head = per_cpu_ptr(s->freelist, cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा pcpu_मुक्तlist_head *head = per_cpu_ptr(s->मुक्तlist, cpu);
 
 		raw_spin_lock_init(&head->lock);
-		head->first = NULL;
-	}
+		head->first = शून्य;
+	पूर्ण
 	raw_spin_lock_init(&s->extralist.lock);
-	s->extralist.first = NULL;
-	return 0;
-}
+	s->extralist.first = शून्य;
+	वापस 0;
+पूर्ण
 
-void pcpu_freelist_destroy(struct pcpu_freelist *s)
-{
-	free_percpu(s->freelist);
-}
+व्योम pcpu_मुक्तlist_destroy(काष्ठा pcpu_मुक्तlist *s)
+अणु
+	मुक्त_percpu(s->मुक्तlist);
+पूर्ण
 
-static inline void pcpu_freelist_push_node(struct pcpu_freelist_head *head,
-					   struct pcpu_freelist_node *node)
-{
+अटल अंतरभूत व्योम pcpu_मुक्तlist_push_node(काष्ठा pcpu_मुक्तlist_head *head,
+					   काष्ठा pcpu_मुक्तlist_node *node)
+अणु
 	node->next = head->first;
 	head->first = node;
-}
+पूर्ण
 
-static inline void ___pcpu_freelist_push(struct pcpu_freelist_head *head,
-					 struct pcpu_freelist_node *node)
-{
+अटल अंतरभूत व्योम ___pcpu_मुक्तlist_push(काष्ठा pcpu_मुक्तlist_head *head,
+					 काष्ठा pcpu_मुक्तlist_node *node)
+अणु
 	raw_spin_lock(&head->lock);
-	pcpu_freelist_push_node(head, node);
+	pcpu_मुक्तlist_push_node(head, node);
 	raw_spin_unlock(&head->lock);
-}
+पूर्ण
 
-static inline bool pcpu_freelist_try_push_extra(struct pcpu_freelist *s,
-						struct pcpu_freelist_node *node)
-{
-	if (!raw_spin_trylock(&s->extralist.lock))
-		return false;
+अटल अंतरभूत bool pcpu_मुक्तlist_try_push_extra(काष्ठा pcpu_मुक्तlist *s,
+						काष्ठा pcpu_मुक्तlist_node *node)
+अणु
+	अगर (!raw_spin_trylock(&s->extralist.lock))
+		वापस false;
 
-	pcpu_freelist_push_node(&s->extralist, node);
+	pcpu_मुक्तlist_push_node(&s->extralist, node);
 	raw_spin_unlock(&s->extralist.lock);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline void ___pcpu_freelist_push_nmi(struct pcpu_freelist *s,
-					     struct pcpu_freelist_node *node)
-{
-	int cpu, orig_cpu;
+अटल अंतरभूत व्योम ___pcpu_मुक्तlist_push_nmi(काष्ठा pcpu_मुक्तlist *s,
+					     काष्ठा pcpu_मुक्तlist_node *node)
+अणु
+	पूर्णांक cpu, orig_cpu;
 
 	orig_cpu = cpu = raw_smp_processor_id();
-	while (1) {
-		struct pcpu_freelist_head *head;
+	जबतक (1) अणु
+		काष्ठा pcpu_मुक्तlist_head *head;
 
-		head = per_cpu_ptr(s->freelist, cpu);
-		if (raw_spin_trylock(&head->lock)) {
-			pcpu_freelist_push_node(head, node);
+		head = per_cpu_ptr(s->मुक्तlist, cpu);
+		अगर (raw_spin_trylock(&head->lock)) अणु
+			pcpu_मुक्तlist_push_node(head, node);
 			raw_spin_unlock(&head->lock);
-			return;
-		}
+			वापस;
+		पूर्ण
 		cpu = cpumask_next(cpu, cpu_possible_mask);
-		if (cpu >= nr_cpu_ids)
+		अगर (cpu >= nr_cpu_ids)
 			cpu = 0;
 
 		/* cannot lock any per cpu lock, try extralist */
-		if (cpu == orig_cpu &&
-		    pcpu_freelist_try_push_extra(s, node))
-			return;
-	}
-}
+		अगर (cpu == orig_cpu &&
+		    pcpu_मुक्तlist_try_push_extra(s, node))
+			वापस;
+	पूर्ण
+पूर्ण
 
-void __pcpu_freelist_push(struct pcpu_freelist *s,
-			struct pcpu_freelist_node *node)
-{
-	if (in_nmi())
-		___pcpu_freelist_push_nmi(s, node);
-	else
-		___pcpu_freelist_push(this_cpu_ptr(s->freelist), node);
-}
+व्योम __pcpu_मुक्तlist_push(काष्ठा pcpu_मुक्तlist *s,
+			काष्ठा pcpu_मुक्तlist_node *node)
+अणु
+	अगर (in_nmi())
+		___pcpu_मुक्तlist_push_nmi(s, node);
+	अन्यथा
+		___pcpu_मुक्तlist_push(this_cpu_ptr(s->मुक्तlist), node);
+पूर्ण
 
-void pcpu_freelist_push(struct pcpu_freelist *s,
-			struct pcpu_freelist_node *node)
-{
-	unsigned long flags;
+व्योम pcpu_मुक्तlist_push(काष्ठा pcpu_मुक्तlist *s,
+			काष्ठा pcpu_मुक्तlist_node *node)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	__pcpu_freelist_push(s, node);
+	__pcpu_मुक्तlist_push(s, node);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-void pcpu_freelist_populate(struct pcpu_freelist *s, void *buf, u32 elem_size,
+व्योम pcpu_मुक्तlist_populate(काष्ठा pcpu_मुक्तlist *s, व्योम *buf, u32 elem_size,
 			    u32 nr_elems)
-{
-	struct pcpu_freelist_head *head;
-	int i, cpu, pcpu_entries;
+अणु
+	काष्ठा pcpu_मुक्तlist_head *head;
+	पूर्णांक i, cpu, pcpu_entries;
 
 	pcpu_entries = nr_elems / num_possible_cpus() + 1;
 	i = 0;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 again:
-		head = per_cpu_ptr(s->freelist, cpu);
+		head = per_cpu_ptr(s->मुक्तlist, cpu);
 		/* No locking required as this is not visible yet. */
-		pcpu_freelist_push_node(head, buf);
+		pcpu_मुक्तlist_push_node(head, buf);
 		i++;
 		buf += elem_size;
-		if (i == nr_elems)
-			break;
-		if (i % pcpu_entries)
-			goto again;
-	}
-}
+		अगर (i == nr_elems)
+			अवरोध;
+		अगर (i % pcpu_entries)
+			जाओ again;
+	पूर्ण
+पूर्ण
 
-static struct pcpu_freelist_node *___pcpu_freelist_pop(struct pcpu_freelist *s)
-{
-	struct pcpu_freelist_head *head;
-	struct pcpu_freelist_node *node;
-	int orig_cpu, cpu;
+अटल काष्ठा pcpu_मुक्तlist_node *___pcpu_मुक्तlist_pop(काष्ठा pcpu_मुक्तlist *s)
+अणु
+	काष्ठा pcpu_मुक्तlist_head *head;
+	काष्ठा pcpu_मुक्तlist_node *node;
+	पूर्णांक orig_cpu, cpu;
 
 	orig_cpu = cpu = raw_smp_processor_id();
-	while (1) {
-		head = per_cpu_ptr(s->freelist, cpu);
+	जबतक (1) अणु
+		head = per_cpu_ptr(s->मुक्तlist, cpu);
 		raw_spin_lock(&head->lock);
 		node = head->first;
-		if (node) {
+		अगर (node) अणु
 			head->first = node->next;
 			raw_spin_unlock(&head->lock);
-			return node;
-		}
+			वापस node;
+		पूर्ण
 		raw_spin_unlock(&head->lock);
 		cpu = cpumask_next(cpu, cpu_possible_mask);
-		if (cpu >= nr_cpu_ids)
+		अगर (cpu >= nr_cpu_ids)
 			cpu = 0;
-		if (cpu == orig_cpu)
-			break;
-	}
+		अगर (cpu == orig_cpu)
+			अवरोध;
+	पूर्ण
 
 	/* per cpu lists are all empty, try extralist */
 	raw_spin_lock(&s->extralist.lock);
 	node = s->extralist.first;
-	if (node)
+	अगर (node)
 		s->extralist.first = node->next;
 	raw_spin_unlock(&s->extralist.lock);
-	return node;
-}
+	वापस node;
+पूर्ण
 
-static struct pcpu_freelist_node *
-___pcpu_freelist_pop_nmi(struct pcpu_freelist *s)
-{
-	struct pcpu_freelist_head *head;
-	struct pcpu_freelist_node *node;
-	int orig_cpu, cpu;
+अटल काष्ठा pcpu_मुक्तlist_node *
+___pcpu_मुक्तlist_pop_nmi(काष्ठा pcpu_मुक्तlist *s)
+अणु
+	काष्ठा pcpu_मुक्तlist_head *head;
+	काष्ठा pcpu_मुक्तlist_node *node;
+	पूर्णांक orig_cpu, cpu;
 
 	orig_cpu = cpu = raw_smp_processor_id();
-	while (1) {
-		head = per_cpu_ptr(s->freelist, cpu);
-		if (raw_spin_trylock(&head->lock)) {
+	जबतक (1) अणु
+		head = per_cpu_ptr(s->मुक्तlist, cpu);
+		अगर (raw_spin_trylock(&head->lock)) अणु
 			node = head->first;
-			if (node) {
+			अगर (node) अणु
 				head->first = node->next;
 				raw_spin_unlock(&head->lock);
-				return node;
-			}
+				वापस node;
+			पूर्ण
 			raw_spin_unlock(&head->lock);
-		}
+		पूर्ण
 		cpu = cpumask_next(cpu, cpu_possible_mask);
-		if (cpu >= nr_cpu_ids)
+		अगर (cpu >= nr_cpu_ids)
 			cpu = 0;
-		if (cpu == orig_cpu)
-			break;
-	}
+		अगर (cpu == orig_cpu)
+			अवरोध;
+	पूर्ण
 
 	/* cannot pop from per cpu lists, try extralist */
-	if (!raw_spin_trylock(&s->extralist.lock))
-		return NULL;
+	अगर (!raw_spin_trylock(&s->extralist.lock))
+		वापस शून्य;
 	node = s->extralist.first;
-	if (node)
+	अगर (node)
 		s->extralist.first = node->next;
 	raw_spin_unlock(&s->extralist.lock);
-	return node;
-}
+	वापस node;
+पूर्ण
 
-struct pcpu_freelist_node *__pcpu_freelist_pop(struct pcpu_freelist *s)
-{
-	if (in_nmi())
-		return ___pcpu_freelist_pop_nmi(s);
-	return ___pcpu_freelist_pop(s);
-}
+काष्ठा pcpu_मुक्तlist_node *__pcpu_मुक्तlist_pop(काष्ठा pcpu_मुक्तlist *s)
+अणु
+	अगर (in_nmi())
+		वापस ___pcpu_मुक्तlist_pop_nmi(s);
+	वापस ___pcpu_मुक्तlist_pop(s);
+पूर्ण
 
-struct pcpu_freelist_node *pcpu_freelist_pop(struct pcpu_freelist *s)
-{
-	struct pcpu_freelist_node *ret;
-	unsigned long flags;
+काष्ठा pcpu_मुक्तlist_node *pcpu_मुक्तlist_pop(काष्ठा pcpu_मुक्तlist *s)
+अणु
+	काष्ठा pcpu_मुक्तlist_node *ret;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	ret = __pcpu_freelist_pop(s);
+	ret = __pcpu_मुक्तlist_pop(s);
 	local_irq_restore(flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण

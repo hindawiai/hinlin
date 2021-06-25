@@ -1,223 +1,224 @@
-#include <uapi/linux/bpf.h>
-#include <uapi/linux/in.h>
-#include <uapi/linux/if.h>
-#include <uapi/linux/if_ether.h>
-#include <uapi/linux/ip.h>
-#include <uapi/linux/ipv6.h>
-#include <uapi/linux/if_tunnel.h>
-#include <bpf/bpf_helpers.h>
-#include "bpf_legacy.h"
-#define IP_MF		0x2000
-#define IP_OFFSET	0x1FFF
+<शैली गुरु>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <uapi/linux/in.h>
+#समावेश <uapi/linux/अगर.h>
+#समावेश <uapi/linux/अगर_ether.h>
+#समावेश <uapi/linux/ip.h>
+#समावेश <uapi/linux/ipv6.h>
+#समावेश <uapi/linux/अगर_tunnel.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश "bpf_legacy.h"
+#घोषणा IP_MF		0x2000
+#घोषणा IP_OFFSET	0x1FFF
 
-struct vlan_hdr {
+काष्ठा vlan_hdr अणु
 	__be16 h_vlan_TCI;
 	__be16 h_vlan_encapsulated_proto;
-};
+पूर्ण;
 
-struct flow_key_record {
+काष्ठा flow_key_record अणु
 	__be32 src;
 	__be32 dst;
-	union {
+	जोड़ अणु
 		__be32 ports;
 		__be16 port16[2];
-	};
+	पूर्ण;
 	__u16 thoff;
 	__u8 ip_proto;
-};
+पूर्ण;
 
-static inline int proto_ports_offset(__u64 proto)
-{
-	switch (proto) {
-	case IPPROTO_TCP:
-	case IPPROTO_UDP:
-	case IPPROTO_DCCP:
-	case IPPROTO_ESP:
-	case IPPROTO_SCTP:
-	case IPPROTO_UDPLITE:
-		return 0;
-	case IPPROTO_AH:
-		return 4;
-	default:
-		return 0;
-	}
-}
+अटल अंतरभूत पूर्णांक proto_ports_offset(__u64 proto)
+अणु
+	चयन (proto) अणु
+	हाल IPPROTO_TCP:
+	हाल IPPROTO_UDP:
+	हाल IPPROTO_DCCP:
+	हाल IPPROTO_ESP:
+	हाल IPPROTO_SCTP:
+	हाल IPPROTO_UDPLITE:
+		वापस 0;
+	हाल IPPROTO_AH:
+		वापस 4;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline int ip_is_fragment(struct __sk_buff *ctx, __u64 nhoff)
-{
-	return load_half(ctx, nhoff + offsetof(struct iphdr, frag_off))
+अटल अंतरभूत पूर्णांक ip_is_fragment(काष्ठा __sk_buff *ctx, __u64 nhoff)
+अणु
+	वापस load_half(ctx, nhoff + दुरत्व(काष्ठा iphdr, frag_off))
 		& (IP_MF | IP_OFFSET);
-}
+पूर्ण
 
-static inline __u32 ipv6_addr_hash(struct __sk_buff *ctx, __u64 off)
-{
+अटल अंतरभूत __u32 ipv6_addr_hash(काष्ठा __sk_buff *ctx, __u64 off)
+अणु
 	__u64 w0 = load_word(ctx, off);
 	__u64 w1 = load_word(ctx, off + 4);
 	__u64 w2 = load_word(ctx, off + 8);
 	__u64 w3 = load_word(ctx, off + 12);
 
-	return (__u32)(w0 ^ w1 ^ w2 ^ w3);
-}
+	वापस (__u32)(w0 ^ w1 ^ w2 ^ w3);
+पूर्ण
 
-static inline __u64 parse_ip(struct __sk_buff *skb, __u64 nhoff, __u64 *ip_proto,
-			     struct flow_key_record *flow)
-{
+अटल अंतरभूत __u64 parse_ip(काष्ठा __sk_buff *skb, __u64 nhoff, __u64 *ip_proto,
+			     काष्ठा flow_key_record *flow)
+अणु
 	__u64 verlen;
 
-	if (unlikely(ip_is_fragment(skb, nhoff)))
+	अगर (unlikely(ip_is_fragment(skb, nhoff)))
 		*ip_proto = 0;
-	else
-		*ip_proto = load_byte(skb, nhoff + offsetof(struct iphdr, protocol));
+	अन्यथा
+		*ip_proto = load_byte(skb, nhoff + दुरत्व(काष्ठा iphdr, protocol));
 
-	if (*ip_proto != IPPROTO_GRE) {
-		flow->src = load_word(skb, nhoff + offsetof(struct iphdr, saddr));
-		flow->dst = load_word(skb, nhoff + offsetof(struct iphdr, daddr));
-	}
+	अगर (*ip_proto != IPPROTO_GRE) अणु
+		flow->src = load_word(skb, nhoff + दुरत्व(काष्ठा iphdr, saddr));
+		flow->dst = load_word(skb, nhoff + दुरत्व(काष्ठा iphdr, daddr));
+	पूर्ण
 
-	verlen = load_byte(skb, nhoff + 0/*offsetof(struct iphdr, ihl)*/);
-	if (likely(verlen == 0x45))
+	verlen = load_byte(skb, nhoff + 0/*दुरत्व(काष्ठा iphdr, ihl)*/);
+	अगर (likely(verlen == 0x45))
 		nhoff += 20;
-	else
+	अन्यथा
 		nhoff += (verlen & 0xF) << 2;
 
-	return nhoff;
-}
+	वापस nhoff;
+पूर्ण
 
-static inline __u64 parse_ipv6(struct __sk_buff *skb, __u64 nhoff, __u64 *ip_proto,
-			       struct flow_key_record *flow)
-{
+अटल अंतरभूत __u64 parse_ipv6(काष्ठा __sk_buff *skb, __u64 nhoff, __u64 *ip_proto,
+			       काष्ठा flow_key_record *flow)
+अणु
 	*ip_proto = load_byte(skb,
-			      nhoff + offsetof(struct ipv6hdr, nexthdr));
+			      nhoff + दुरत्व(काष्ठा ipv6hdr, nexthdr));
 	flow->src = ipv6_addr_hash(skb,
-				   nhoff + offsetof(struct ipv6hdr, saddr));
+				   nhoff + दुरत्व(काष्ठा ipv6hdr, saddr));
 	flow->dst = ipv6_addr_hash(skb,
-				   nhoff + offsetof(struct ipv6hdr, daddr));
-	nhoff += sizeof(struct ipv6hdr);
+				   nhoff + दुरत्व(काष्ठा ipv6hdr, daddr));
+	nhoff += माप(काष्ठा ipv6hdr);
 
-	return nhoff;
-}
+	वापस nhoff;
+पूर्ण
 
-static inline bool flow_dissector(struct __sk_buff *skb,
-				  struct flow_key_record *flow)
-{
+अटल अंतरभूत bool flow_dissector(काष्ठा __sk_buff *skb,
+				  काष्ठा flow_key_record *flow)
+अणु
 	__u64 nhoff = ETH_HLEN;
 	__u64 ip_proto;
 	__u64 proto = load_half(skb, 12);
-	int poff;
+	पूर्णांक poff;
 
-	if (proto == ETH_P_8021AD) {
-		proto = load_half(skb, nhoff + offsetof(struct vlan_hdr,
+	अगर (proto == ETH_P_8021AD) अणु
+		proto = load_half(skb, nhoff + दुरत्व(काष्ठा vlan_hdr,
 							h_vlan_encapsulated_proto));
-		nhoff += sizeof(struct vlan_hdr);
-	}
+		nhoff += माप(काष्ठा vlan_hdr);
+	पूर्ण
 
-	if (proto == ETH_P_8021Q) {
-		proto = load_half(skb, nhoff + offsetof(struct vlan_hdr,
+	अगर (proto == ETH_P_8021Q) अणु
+		proto = load_half(skb, nhoff + दुरत्व(काष्ठा vlan_hdr,
 							h_vlan_encapsulated_proto));
-		nhoff += sizeof(struct vlan_hdr);
-	}
+		nhoff += माप(काष्ठा vlan_hdr);
+	पूर्ण
 
-	if (likely(proto == ETH_P_IP))
+	अगर (likely(proto == ETH_P_IP))
 		nhoff = parse_ip(skb, nhoff, &ip_proto, flow);
-	else if (proto == ETH_P_IPV6)
+	अन्यथा अगर (proto == ETH_P_IPV6)
 		nhoff = parse_ipv6(skb, nhoff, &ip_proto, flow);
-	else
-		return false;
+	अन्यथा
+		वापस false;
 
-	switch (ip_proto) {
-	case IPPROTO_GRE: {
-		struct gre_hdr {
+	चयन (ip_proto) अणु
+	हाल IPPROTO_GRE: अणु
+		काष्ठा gre_hdr अणु
 			__be16 flags;
 			__be16 proto;
-		};
+		पूर्ण;
 
 		__u64 gre_flags = load_half(skb,
-					    nhoff + offsetof(struct gre_hdr, flags));
+					    nhoff + दुरत्व(काष्ठा gre_hdr, flags));
 		__u64 gre_proto = load_half(skb,
-					    nhoff + offsetof(struct gre_hdr, proto));
+					    nhoff + दुरत्व(काष्ठा gre_hdr, proto));
 
-		if (gre_flags & (GRE_VERSION|GRE_ROUTING))
-			break;
+		अगर (gre_flags & (GRE_VERSION|GRE_ROUTING))
+			अवरोध;
 
 		proto = gre_proto;
 		nhoff += 4;
-		if (gre_flags & GRE_CSUM)
+		अगर (gre_flags & GRE_CSUM)
 			nhoff += 4;
-		if (gre_flags & GRE_KEY)
+		अगर (gre_flags & GRE_KEY)
 			nhoff += 4;
-		if (gre_flags & GRE_SEQ)
+		अगर (gre_flags & GRE_SEQ)
 			nhoff += 4;
 
-		if (proto == ETH_P_8021Q) {
+		अगर (proto == ETH_P_8021Q) अणु
 			proto = load_half(skb,
-					  nhoff + offsetof(struct vlan_hdr,
+					  nhoff + दुरत्व(काष्ठा vlan_hdr,
 							   h_vlan_encapsulated_proto));
-			nhoff += sizeof(struct vlan_hdr);
-		}
+			nhoff += माप(काष्ठा vlan_hdr);
+		पूर्ण
 
-		if (proto == ETH_P_IP)
+		अगर (proto == ETH_P_IP)
 			nhoff = parse_ip(skb, nhoff, &ip_proto, flow);
-		else if (proto == ETH_P_IPV6)
+		अन्यथा अगर (proto == ETH_P_IPV6)
 			nhoff = parse_ipv6(skb, nhoff, &ip_proto, flow);
-		else
-			return false;
-		break;
-	}
-	case IPPROTO_IPIP:
+		अन्यथा
+			वापस false;
+		अवरोध;
+	पूर्ण
+	हाल IPPROTO_IPIP:
 		nhoff = parse_ip(skb, nhoff, &ip_proto, flow);
-		break;
-	case IPPROTO_IPV6:
+		अवरोध;
+	हाल IPPROTO_IPV6:
 		nhoff = parse_ipv6(skb, nhoff, &ip_proto, flow);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	flow->ip_proto = ip_proto;
 	poff = proto_ports_offset(ip_proto);
-	if (poff >= 0) {
+	अगर (poff >= 0) अणु
 		nhoff += poff;
 		flow->ports = load_word(skb, nhoff);
-	}
+	पूर्ण
 
 	flow->thoff = (__u16) nhoff;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-struct pair {
-	long packets;
-	long bytes;
-};
+काष्ठा pair अणु
+	दीर्घ packets;
+	दीर्घ bytes;
+पूर्ण;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
 	__type(key, __be32);
-	__type(value, struct pair);
-	__uint(max_entries, 1024);
-} hash_map SEC(".maps");
+	__type(value, काष्ठा pair);
+	__uपूर्णांक(max_entries, 1024);
+पूर्ण hash_map SEC(".maps");
 
 SEC("socket2")
-int bpf_prog2(struct __sk_buff *skb)
-{
-	struct flow_key_record flow = {};
-	struct pair *value;
+पूर्णांक bpf_prog2(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा flow_key_record flow = अणुपूर्ण;
+	काष्ठा pair *value;
 	u32 key;
 
-	if (!flow_dissector(skb, &flow))
-		return 0;
+	अगर (!flow_dissector(skb, &flow))
+		वापस 0;
 
 	key = flow.dst;
 	value = bpf_map_lookup_elem(&hash_map, &key);
-	if (value) {
+	अगर (value) अणु
 		__sync_fetch_and_add(&value->packets, 1);
 		__sync_fetch_and_add(&value->bytes, skb->len);
-	} else {
-		struct pair val = {1, skb->len};
+	पूर्ण अन्यथा अणु
+		काष्ठा pair val = अणु1, skb->lenपूर्ण;
 
 		bpf_map_update_elem(&hash_map, &key, &val, BPF_ANY);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

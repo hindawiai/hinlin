@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,406 +22,406 @@
  *
  */
 
-#include <linux/slab.h>
-#include <linux/list.h>
-#include "kfd_device_queue_manager.h"
-#include "kfd_priv.h"
-#include "kfd_kernel_queue.h"
-#include "amdgpu_amdkfd.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश "kfd_device_queue_manager.h"
+#समावेश "kfd_priv.h"
+#समावेश "kfd_kernel_queue.h"
+#समावेश "amdgpu_amdkfd.h"
 
-static inline struct process_queue_node *get_queue_by_qid(
-			struct process_queue_manager *pqm, unsigned int qid)
-{
-	struct process_queue_node *pqn;
+अटल अंतरभूत काष्ठा process_queue_node *get_queue_by_qid(
+			काष्ठा process_queue_manager *pqm, अचिन्हित पूर्णांक qid)
+अणु
+	काष्ठा process_queue_node *pqn;
 
-	list_for_each_entry(pqn, &pqm->queues, process_queue_list) {
-		if ((pqn->q && pqn->q->properties.queue_id == qid) ||
+	list_क्रम_each_entry(pqn, &pqm->queues, process_queue_list) अणु
+		अगर ((pqn->q && pqn->q->properties.queue_id == qid) ||
 		    (pqn->kq && pqn->kq->queue->properties.queue_id == qid))
-			return pqn;
-	}
+			वापस pqn;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int find_available_queue_slot(struct process_queue_manager *pqm,
-					unsigned int *qid)
-{
-	unsigned long found;
+अटल पूर्णांक find_available_queue_slot(काष्ठा process_queue_manager *pqm,
+					अचिन्हित पूर्णांक *qid)
+अणु
+	अचिन्हित दीर्घ found;
 
-	found = find_first_zero_bit(pqm->queue_slot_bitmap,
+	found = find_first_zero_bit(pqm->queue_slot_biपंचांगap,
 			KFD_MAX_NUM_OF_QUEUES_PER_PROCESS);
 
 	pr_debug("The new slot id %lu\n", found);
 
-	if (found >= KFD_MAX_NUM_OF_QUEUES_PER_PROCESS) {
+	अगर (found >= KFD_MAX_NUM_OF_QUEUES_PER_PROCESS) अणु
 		pr_info("Cannot open more queues for process with pasid 0x%x\n",
 				pqm->process->pasid);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	set_bit(found, pqm->queue_slot_bitmap);
+	set_bit(found, pqm->queue_slot_biपंचांगap);
 	*qid = found;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kfd_process_dequeue_from_device(struct kfd_process_device *pdd)
-{
-	struct kfd_dev *dev = pdd->dev;
+व्योम kfd_process_dequeue_from_device(काष्ठा kfd_process_device *pdd)
+अणु
+	काष्ठा kfd_dev *dev = pdd->dev;
 
-	if (pdd->already_dequeued)
-		return;
+	अगर (pdd->alपढ़ोy_dequeued)
+		वापस;
 
 	dev->dqm->ops.process_termination(dev->dqm, &pdd->qpd);
-	pdd->already_dequeued = true;
-}
+	pdd->alपढ़ोy_dequeued = true;
+पूर्ण
 
-int pqm_set_gws(struct process_queue_manager *pqm, unsigned int qid,
-			void *gws)
-{
-	struct kfd_dev *dev = NULL;
-	struct process_queue_node *pqn;
-	struct kfd_process_device *pdd;
-	struct kgd_mem *mem = NULL;
-	int ret;
+पूर्णांक pqm_set_gws(काष्ठा process_queue_manager *pqm, अचिन्हित पूर्णांक qid,
+			व्योम *gws)
+अणु
+	काष्ठा kfd_dev *dev = शून्य;
+	काष्ठा process_queue_node *pqn;
+	काष्ठा kfd_process_device *pdd;
+	काष्ठा kgd_mem *mem = शून्य;
+	पूर्णांक ret;
 
 	pqn = get_queue_by_qid(pqm, qid);
-	if (!pqn) {
+	अगर (!pqn) अणु
 		pr_err("Queue id does not match any known queue\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pqn->q)
+	अगर (pqn->q)
 		dev = pqn->q->device;
-	if (WARN_ON(!dev))
-		return -ENODEV;
+	अगर (WARN_ON(!dev))
+		वापस -ENODEV;
 
 	pdd = kfd_get_process_device_data(dev, pqm->process);
-	if (!pdd) {
+	अगर (!pdd) अणु
 		pr_err("Process device data doesn't exist\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Only allow one queue per process can have GWS assigned */
-	if (gws && pdd->qpd.num_gws)
-		return -EBUSY;
+	/* Only allow one queue per process can have GWS asचिन्हित */
+	अगर (gws && pdd->qpd.num_gws)
+		वापस -EBUSY;
 
-	if (!gws && pdd->qpd.num_gws == 0)
-		return -EINVAL;
+	अगर (!gws && pdd->qpd.num_gws == 0)
+		वापस -EINVAL;
 
-	if (gws)
+	अगर (gws)
 		ret = amdgpu_amdkfd_add_gws_to_process(pdd->process->kgd_process_info,
 			gws, &mem);
-	else
-		ret = amdgpu_amdkfd_remove_gws_from_process(pdd->process->kgd_process_info,
+	अन्यथा
+		ret = amdgpu_amdkfd_हटाओ_gws_from_process(pdd->process->kgd_process_info,
 			pqn->q->gws);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	pqn->q->gws = mem;
 	pdd->qpd.num_gws = gws ? amdgpu_amdkfd_get_num_gws(dev->kgd) : 0;
 
-	return pqn->q->device->dqm->ops.update_queue(pqn->q->device->dqm,
+	वापस pqn->q->device->dqm->ops.update_queue(pqn->q->device->dqm,
 							pqn->q);
-}
+पूर्ण
 
-void kfd_process_dequeue_from_all_devices(struct kfd_process *p)
-{
-	int i;
+व्योम kfd_process_dequeue_from_all_devices(काष्ठा kfd_process *p)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < p->n_pdds; i++)
+	क्रम (i = 0; i < p->n_pdds; i++)
 		kfd_process_dequeue_from_device(p->pdds[i]);
-}
+पूर्ण
 
-int pqm_init(struct process_queue_manager *pqm, struct kfd_process *p)
-{
+पूर्णांक pqm_init(काष्ठा process_queue_manager *pqm, काष्ठा kfd_process *p)
+अणु
 	INIT_LIST_HEAD(&pqm->queues);
-	pqm->queue_slot_bitmap =
+	pqm->queue_slot_biपंचांगap =
 			kzalloc(DIV_ROUND_UP(KFD_MAX_NUM_OF_QUEUES_PER_PROCESS,
 					BITS_PER_BYTE), GFP_KERNEL);
-	if (!pqm->queue_slot_bitmap)
-		return -ENOMEM;
+	अगर (!pqm->queue_slot_biपंचांगap)
+		वापस -ENOMEM;
 	pqm->process = p;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pqm_uninit(struct process_queue_manager *pqm)
-{
-	struct process_queue_node *pqn, *next;
+व्योम pqm_uninit(काष्ठा process_queue_manager *pqm)
+अणु
+	काष्ठा process_queue_node *pqn, *next;
 
-	list_for_each_entry_safe(pqn, next, &pqm->queues, process_queue_list) {
-		if (pqn->q && pqn->q->gws)
-			amdgpu_amdkfd_remove_gws_from_process(pqm->process->kgd_process_info,
+	list_क्रम_each_entry_safe(pqn, next, &pqm->queues, process_queue_list) अणु
+		अगर (pqn->q && pqn->q->gws)
+			amdgpu_amdkfd_हटाओ_gws_from_process(pqm->process->kgd_process_info,
 				pqn->q->gws);
 		uninit_queue(pqn->q);
 		list_del(&pqn->process_queue_list);
-		kfree(pqn);
-	}
+		kमुक्त(pqn);
+	पूर्ण
 
-	kfree(pqm->queue_slot_bitmap);
-	pqm->queue_slot_bitmap = NULL;
-}
+	kमुक्त(pqm->queue_slot_biपंचांगap);
+	pqm->queue_slot_biपंचांगap = शून्य;
+पूर्ण
 
-static int init_user_queue(struct process_queue_manager *pqm,
-				struct kfd_dev *dev, struct queue **q,
-				struct queue_properties *q_properties,
-				struct file *f, unsigned int qid)
-{
-	int retval;
+अटल पूर्णांक init_user_queue(काष्ठा process_queue_manager *pqm,
+				काष्ठा kfd_dev *dev, काष्ठा queue **q,
+				काष्ठा queue_properties *q_properties,
+				काष्ठा file *f, अचिन्हित पूर्णांक qid)
+अणु
+	पूर्णांक retval;
 
 	/* Doorbell initialized in user space*/
-	q_properties->doorbell_ptr = NULL;
+	q_properties->करोorbell_ptr = शून्य;
 
 	/* let DQM handle it*/
 	q_properties->vmid = 0;
 	q_properties->queue_id = qid;
 
 	retval = init_queue(q, q_properties);
-	if (retval != 0)
-		return retval;
+	अगर (retval != 0)
+		वापस retval;
 
 	(*q)->device = dev;
 	(*q)->process = pqm->process;
 
 	pr_debug("PQM After init queue");
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-int pqm_create_queue(struct process_queue_manager *pqm,
-			    struct kfd_dev *dev,
-			    struct file *f,
-			    struct queue_properties *properties,
-			    unsigned int *qid,
-			    uint32_t *p_doorbell_offset_in_process)
-{
-	int retval;
-	struct kfd_process_device *pdd;
-	struct queue *q;
-	struct process_queue_node *pqn;
-	struct kernel_queue *kq;
-	enum kfd_queue_type type = properties->type;
-	unsigned int max_queues = 127; /* HWS limit */
+पूर्णांक pqm_create_queue(काष्ठा process_queue_manager *pqm,
+			    काष्ठा kfd_dev *dev,
+			    काष्ठा file *f,
+			    काष्ठा queue_properties *properties,
+			    अचिन्हित पूर्णांक *qid,
+			    uपूर्णांक32_t *p_करोorbell_offset_in_process)
+अणु
+	पूर्णांक retval;
+	काष्ठा kfd_process_device *pdd;
+	काष्ठा queue *q;
+	काष्ठा process_queue_node *pqn;
+	काष्ठा kernel_queue *kq;
+	क्रमागत kfd_queue_type type = properties->type;
+	अचिन्हित पूर्णांक max_queues = 127; /* HWS limit */
 
-	q = NULL;
-	kq = NULL;
+	q = शून्य;
+	kq = शून्य;
 
 	pdd = kfd_get_process_device_data(dev, pqm->process);
-	if (!pdd) {
+	अगर (!pdd) अणु
 		pr_err("Process device data doesn't exist\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/*
-	 * for debug process, verify that it is within the static queues limit
+	 * क्रम debug process, verअगरy that it is within the अटल queues limit
 	 * currently limit is set to half of the total avail HQD slots
 	 * If we are just about to create DIQ, the is_debug flag is not set yet
 	 * Hence we also check the type as well
 	 */
-	if ((pdd->qpd.is_debug) || (type == KFD_QUEUE_TYPE_DIQ))
+	अगर ((pdd->qpd.is_debug) || (type == KFD_QUEUE_TYPE_DIQ))
 		max_queues = dev->device_info->max_no_of_hqd/2;
 
-	if (pdd->qpd.queue_count >= max_queues)
-		return -ENOSPC;
+	अगर (pdd->qpd.queue_count >= max_queues)
+		वापस -ENOSPC;
 
 	retval = find_available_queue_slot(pqm, qid);
-	if (retval != 0)
-		return retval;
+	अगर (retval != 0)
+		वापस retval;
 
-	if (list_empty(&pdd->qpd.queues_list) &&
+	अगर (list_empty(&pdd->qpd.queues_list) &&
 	    list_empty(&pdd->qpd.priv_queue_list))
-		dev->dqm->ops.register_process(dev->dqm, &pdd->qpd);
+		dev->dqm->ops.रेजिस्टर_process(dev->dqm, &pdd->qpd);
 
-	pqn = kzalloc(sizeof(*pqn), GFP_KERNEL);
-	if (!pqn) {
+	pqn = kzalloc(माप(*pqn), GFP_KERNEL);
+	अगर (!pqn) अणु
 		retval = -ENOMEM;
-		goto err_allocate_pqn;
-	}
+		जाओ err_allocate_pqn;
+	पूर्ण
 
-	switch (type) {
-	case KFD_QUEUE_TYPE_SDMA:
-	case KFD_QUEUE_TYPE_SDMA_XGMI:
-		/* SDMA queues are always allocated statically no matter
-		 * which scheduler mode is used. We also do not need to
+	चयन (type) अणु
+	हाल KFD_QUEUE_TYPE_SDMA:
+	हाल KFD_QUEUE_TYPE_SDMA_XGMI:
+		/* SDMA queues are always allocated अटलally no matter
+		 * which scheduler mode is used. We also करो not need to
 		 * check whether a SDMA queue can be allocated here, because
 		 * allocate_sdma_queue() in create_queue() has the
 		 * corresponding check logic.
 		 */
 		retval = init_user_queue(pqm, dev, &q, properties, f, *qid);
-		if (retval != 0)
-			goto err_create_queue;
+		अगर (retval != 0)
+			जाओ err_create_queue;
 		pqn->q = q;
-		pqn->kq = NULL;
+		pqn->kq = शून्य;
 		retval = dev->dqm->ops.create_queue(dev->dqm, q, &pdd->qpd);
-		print_queue(q);
-		break;
+		prपूर्णांक_queue(q);
+		अवरोध;
 
-	case KFD_QUEUE_TYPE_COMPUTE:
-		/* check if there is over subscription */
-		if ((dev->dqm->sched_policy ==
+	हाल KFD_QUEUE_TYPE_COMPUTE:
+		/* check अगर there is over subscription */
+		अगर ((dev->dqm->sched_policy ==
 		     KFD_SCHED_POLICY_HWS_NO_OVERSUBSCRIPTION) &&
 		((dev->dqm->processes_count >= dev->vm_info.vmid_num_kfd) ||
-		(dev->dqm->active_queue_count >= get_cp_queues_num(dev->dqm)))) {
+		(dev->dqm->active_queue_count >= get_cp_queues_num(dev->dqm)))) अणु
 			pr_debug("Over-subscription is not allowed when amdkfd.sched_policy == 1\n");
 			retval = -EPERM;
-			goto err_create_queue;
-		}
+			जाओ err_create_queue;
+		पूर्ण
 
 		retval = init_user_queue(pqm, dev, &q, properties, f, *qid);
-		if (retval != 0)
-			goto err_create_queue;
+		अगर (retval != 0)
+			जाओ err_create_queue;
 		pqn->q = q;
-		pqn->kq = NULL;
+		pqn->kq = शून्य;
 		retval = dev->dqm->ops.create_queue(dev->dqm, q, &pdd->qpd);
-		print_queue(q);
-		break;
-	case KFD_QUEUE_TYPE_DIQ:
+		prपूर्णांक_queue(q);
+		अवरोध;
+	हाल KFD_QUEUE_TYPE_DIQ:
 		kq = kernel_queue_init(dev, KFD_QUEUE_TYPE_DIQ);
-		if (!kq) {
+		अगर (!kq) अणु
 			retval = -ENOMEM;
-			goto err_create_queue;
-		}
+			जाओ err_create_queue;
+		पूर्ण
 		kq->queue->properties.queue_id = *qid;
 		pqn->kq = kq;
-		pqn->q = NULL;
+		pqn->q = शून्य;
 		retval = dev->dqm->ops.create_kernel_queue(dev->dqm,
 							kq, &pdd->qpd);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "Invalid queue type %d", type);
 		retval = -EINVAL;
-	}
+	पूर्ण
 
-	if (retval != 0) {
+	अगर (retval != 0) अणु
 		pr_err("Pasid 0x%x DQM create queue type %d failed. ret %d\n",
 			pqm->process->pasid, type, retval);
-		goto err_create_queue;
-	}
+		जाओ err_create_queue;
+	पूर्ण
 
-	if (q && p_doorbell_offset_in_process)
-		/* Return the doorbell offset within the doorbell page
+	अगर (q && p_करोorbell_offset_in_process)
+		/* Return the करोorbell offset within the करोorbell page
 		 * to the caller so it can be passed up to user mode
 		 * (in bytes).
-		 * There are always 1024 doorbells per process, so in case
-		 * of 8-byte doorbells, there are two doorbell pages per
+		 * There are always 1024 करोorbells per process, so in हाल
+		 * of 8-byte करोorbells, there are two करोorbell pages per
 		 * process.
 		 */
-		*p_doorbell_offset_in_process =
-			(q->properties.doorbell_off * sizeof(uint32_t)) &
-			(kfd_doorbell_process_slice(dev) - 1);
+		*p_करोorbell_offset_in_process =
+			(q->properties.करोorbell_off * माप(uपूर्णांक32_t)) &
+			(kfd_करोorbell_process_slice(dev) - 1);
 
 	pr_debug("PQM After DQM create queue\n");
 
 	list_add(&pqn->process_queue_list, &pqm->queues);
 
-	if (q) {
+	अगर (q) अणु
 		pr_debug("PQM done creating queue\n");
 		kfd_procfs_add_queue(q);
-		print_queue_properties(&q->properties);
-	}
+		prपूर्णांक_queue_properties(&q->properties);
+	पूर्ण
 
-	return retval;
+	वापस retval;
 
 err_create_queue:
 	uninit_queue(q);
-	if (kq)
+	अगर (kq)
 		kernel_queue_uninit(kq, false);
-	kfree(pqn);
+	kमुक्त(pqn);
 err_allocate_pqn:
-	/* check if queues list is empty unregister process from device */
-	clear_bit(*qid, pqm->queue_slot_bitmap);
-	if (list_empty(&pdd->qpd.queues_list) &&
+	/* check अगर queues list is empty unरेजिस्टर process from device */
+	clear_bit(*qid, pqm->queue_slot_biपंचांगap);
+	अगर (list_empty(&pdd->qpd.queues_list) &&
 	    list_empty(&pdd->qpd.priv_queue_list))
-		dev->dqm->ops.unregister_process(dev->dqm, &pdd->qpd);
-	return retval;
-}
+		dev->dqm->ops.unरेजिस्टर_process(dev->dqm, &pdd->qpd);
+	वापस retval;
+पूर्ण
 
-int pqm_destroy_queue(struct process_queue_manager *pqm, unsigned int qid)
-{
-	struct process_queue_node *pqn;
-	struct kfd_process_device *pdd;
-	struct device_queue_manager *dqm;
-	struct kfd_dev *dev;
-	int retval;
+पूर्णांक pqm_destroy_queue(काष्ठा process_queue_manager *pqm, अचिन्हित पूर्णांक qid)
+अणु
+	काष्ठा process_queue_node *pqn;
+	काष्ठा kfd_process_device *pdd;
+	काष्ठा device_queue_manager *dqm;
+	काष्ठा kfd_dev *dev;
+	पूर्णांक retval;
 
-	dqm = NULL;
+	dqm = शून्य;
 
 	retval = 0;
 
 	pqn = get_queue_by_qid(pqm, qid);
-	if (!pqn) {
+	अगर (!pqn) अणु
 		pr_err("Queue id does not match any known queue\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dev = NULL;
-	if (pqn->kq)
+	dev = शून्य;
+	अगर (pqn->kq)
 		dev = pqn->kq->dev;
-	if (pqn->q)
+	अगर (pqn->q)
 		dev = pqn->q->device;
-	if (WARN_ON(!dev))
-		return -ENODEV;
+	अगर (WARN_ON(!dev))
+		वापस -ENODEV;
 
 	pdd = kfd_get_process_device_data(dev, pqm->process);
-	if (!pdd) {
+	अगर (!pdd) अणु
 		pr_err("Process device data doesn't exist\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (pqn->kq) {
+	अगर (pqn->kq) अणु
 		/* destroy kernel queue (DIQ) */
 		dqm = pqn->kq->dev->dqm;
 		dqm->ops.destroy_kernel_queue(dqm, pqn->kq, &pdd->qpd);
 		kernel_queue_uninit(pqn->kq, false);
-	}
+	पूर्ण
 
-	if (pqn->q) {
+	अगर (pqn->q) अणु
 		kfd_procfs_del_queue(pqn->q);
 		dqm = pqn->q->device->dqm;
 		retval = dqm->ops.destroy_queue(dqm, &pdd->qpd, pqn->q);
-		if (retval) {
+		अगर (retval) अणु
 			pr_err("Pasid 0x%x destroy queue %d failed, ret %d\n",
 				pqm->process->pasid,
 				pqn->q->properties.queue_id, retval);
-			if (retval != -ETIME)
-				goto err_destroy_queue;
-		}
+			अगर (retval != -ETIME)
+				जाओ err_destroy_queue;
+		पूर्ण
 
-		if (pqn->q->gws) {
-			amdgpu_amdkfd_remove_gws_from_process(pqm->process->kgd_process_info,
+		अगर (pqn->q->gws) अणु
+			amdgpu_amdkfd_हटाओ_gws_from_process(pqm->process->kgd_process_info,
 				pqn->q->gws);
 			pdd->qpd.num_gws = 0;
-		}
+		पूर्ण
 
-		kfree(pqn->q->properties.cu_mask);
-		pqn->q->properties.cu_mask = NULL;
+		kमुक्त(pqn->q->properties.cu_mask);
+		pqn->q->properties.cu_mask = शून्य;
 		uninit_queue(pqn->q);
-	}
+	पूर्ण
 
 	list_del(&pqn->process_queue_list);
-	kfree(pqn);
-	clear_bit(qid, pqm->queue_slot_bitmap);
+	kमुक्त(pqn);
+	clear_bit(qid, pqm->queue_slot_biपंचांगap);
 
-	if (list_empty(&pdd->qpd.queues_list) &&
+	अगर (list_empty(&pdd->qpd.queues_list) &&
 	    list_empty(&pdd->qpd.priv_queue_list))
-		dqm->ops.unregister_process(dqm, &pdd->qpd);
+		dqm->ops.unरेजिस्टर_process(dqm, &pdd->qpd);
 
 err_destroy_queue:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-int pqm_update_queue(struct process_queue_manager *pqm, unsigned int qid,
-			struct queue_properties *p)
-{
-	int retval;
-	struct process_queue_node *pqn;
+पूर्णांक pqm_update_queue(काष्ठा process_queue_manager *pqm, अचिन्हित पूर्णांक qid,
+			काष्ठा queue_properties *p)
+अणु
+	पूर्णांक retval;
+	काष्ठा process_queue_node *pqn;
 
 	pqn = get_queue_by_qid(pqm, qid);
-	if (!pqn) {
+	अगर (!pqn) अणु
 		pr_debug("No queue %d exists for update operation\n", qid);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	pqn->q->properties.queue_address = p->queue_address;
 	pqn->q->properties.queue_size = p->queue_size;
@@ -429,144 +430,144 @@ int pqm_update_queue(struct process_queue_manager *pqm, unsigned int qid,
 
 	retval = pqn->q->device->dqm->ops.update_queue(pqn->q->device->dqm,
 							pqn->q);
-	if (retval != 0)
-		return retval;
+	अगर (retval != 0)
+		वापस retval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int pqm_set_cu_mask(struct process_queue_manager *pqm, unsigned int qid,
-			struct queue_properties *p)
-{
-	int retval;
-	struct process_queue_node *pqn;
+पूर्णांक pqm_set_cu_mask(काष्ठा process_queue_manager *pqm, अचिन्हित पूर्णांक qid,
+			काष्ठा queue_properties *p)
+अणु
+	पूर्णांक retval;
+	काष्ठा process_queue_node *pqn;
 
 	pqn = get_queue_by_qid(pqm, qid);
-	if (!pqn) {
+	अगर (!pqn) अणु
 		pr_debug("No queue %d exists for update operation\n", qid);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	/* Free the old CU mask memory if it is already allocated, then
-	 * allocate memory for the new CU mask.
+	/* Free the old CU mask memory अगर it is alपढ़ोy allocated, then
+	 * allocate memory क्रम the new CU mask.
 	 */
-	kfree(pqn->q->properties.cu_mask);
+	kमुक्त(pqn->q->properties.cu_mask);
 
 	pqn->q->properties.cu_mask_count = p->cu_mask_count;
 	pqn->q->properties.cu_mask = p->cu_mask;
 
 	retval = pqn->q->device->dqm->ops.update_queue(pqn->q->device->dqm,
 							pqn->q);
-	if (retval != 0)
-		return retval;
+	अगर (retval != 0)
+		वापस retval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct kernel_queue *pqm_get_kernel_queue(
-					struct process_queue_manager *pqm,
-					unsigned int qid)
-{
-	struct process_queue_node *pqn;
-
-	pqn = get_queue_by_qid(pqm, qid);
-	if (pqn && pqn->kq)
-		return pqn->kq;
-
-	return NULL;
-}
-
-struct queue *pqm_get_user_queue(struct process_queue_manager *pqm,
-					unsigned int qid)
-{
-	struct process_queue_node *pqn;
+काष्ठा kernel_queue *pqm_get_kernel_queue(
+					काष्ठा process_queue_manager *pqm,
+					अचिन्हित पूर्णांक qid)
+अणु
+	काष्ठा process_queue_node *pqn;
 
 	pqn = get_queue_by_qid(pqm, qid);
-	return pqn ? pqn->q : NULL;
-}
+	अगर (pqn && pqn->kq)
+		वापस pqn->kq;
 
-int pqm_get_wave_state(struct process_queue_manager *pqm,
-		       unsigned int qid,
-		       void __user *ctl_stack,
+	वापस शून्य;
+पूर्ण
+
+काष्ठा queue *pqm_get_user_queue(काष्ठा process_queue_manager *pqm,
+					अचिन्हित पूर्णांक qid)
+अणु
+	काष्ठा process_queue_node *pqn;
+
+	pqn = get_queue_by_qid(pqm, qid);
+	वापस pqn ? pqn->q : शून्य;
+पूर्ण
+
+पूर्णांक pqm_get_wave_state(काष्ठा process_queue_manager *pqm,
+		       अचिन्हित पूर्णांक qid,
+		       व्योम __user *ctl_stack,
 		       u32 *ctl_stack_used_size,
 		       u32 *save_area_used_size)
-{
-	struct process_queue_node *pqn;
+अणु
+	काष्ठा process_queue_node *pqn;
 
 	pqn = get_queue_by_qid(pqm, qid);
-	if (!pqn) {
+	अगर (!pqn) अणु
 		pr_debug("amdkfd: No queue %d exists for operation\n",
 			 qid);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return pqn->q->device->dqm->ops.get_wave_state(pqn->q->device->dqm,
+	वापस pqn->q->device->dqm->ops.get_wave_state(pqn->q->device->dqm,
 						       pqn->q,
 						       ctl_stack,
 						       ctl_stack_used_size,
 						       save_area_used_size);
-}
+पूर्ण
 
-#if defined(CONFIG_DEBUG_FS)
+#अगर defined(CONFIG_DEBUG_FS)
 
-int pqm_debugfs_mqds(struct seq_file *m, void *data)
-{
-	struct process_queue_manager *pqm = data;
-	struct process_queue_node *pqn;
-	struct queue *q;
-	enum KFD_MQD_TYPE mqd_type;
-	struct mqd_manager *mqd_mgr;
-	int r = 0;
+पूर्णांक pqm_debugfs_mqds(काष्ठा seq_file *m, व्योम *data)
+अणु
+	काष्ठा process_queue_manager *pqm = data;
+	काष्ठा process_queue_node *pqn;
+	काष्ठा queue *q;
+	क्रमागत KFD_MQD_TYPE mqd_type;
+	काष्ठा mqd_manager *mqd_mgr;
+	पूर्णांक r = 0;
 
-	list_for_each_entry(pqn, &pqm->queues, process_queue_list) {
-		if (pqn->q) {
+	list_क्रम_each_entry(pqn, &pqm->queues, process_queue_list) अणु
+		अगर (pqn->q) अणु
 			q = pqn->q;
-			switch (q->properties.type) {
-			case KFD_QUEUE_TYPE_SDMA:
-			case KFD_QUEUE_TYPE_SDMA_XGMI:
-				seq_printf(m, "  SDMA queue on device %x\n",
+			चयन (q->properties.type) अणु
+			हाल KFD_QUEUE_TYPE_SDMA:
+			हाल KFD_QUEUE_TYPE_SDMA_XGMI:
+				seq_म_लिखो(m, "  SDMA queue on device %x\n",
 					   q->device->id);
 				mqd_type = KFD_MQD_TYPE_SDMA;
-				break;
-			case KFD_QUEUE_TYPE_COMPUTE:
-				seq_printf(m, "  Compute queue on device %x\n",
+				अवरोध;
+			हाल KFD_QUEUE_TYPE_COMPUTE:
+				seq_म_लिखो(m, "  Compute queue on device %x\n",
 					   q->device->id);
 				mqd_type = KFD_MQD_TYPE_CP;
-				break;
-			default:
-				seq_printf(m,
+				अवरोध;
+			शेष:
+				seq_म_लिखो(m,
 				"  Bad user queue type %d on device %x\n",
 					   q->properties.type, q->device->id);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			mqd_mgr = q->device->dqm->mqd_mgrs[mqd_type];
-		} else if (pqn->kq) {
+		पूर्ण अन्यथा अगर (pqn->kq) अणु
 			q = pqn->kq->queue;
 			mqd_mgr = pqn->kq->mqd_mgr;
-			switch (q->properties.type) {
-			case KFD_QUEUE_TYPE_DIQ:
-				seq_printf(m, "  DIQ on device %x\n",
+			चयन (q->properties.type) अणु
+			हाल KFD_QUEUE_TYPE_DIQ:
+				seq_म_लिखो(m, "  DIQ on device %x\n",
 					   pqn->kq->dev->id);
-				break;
-			default:
-				seq_printf(m,
+				अवरोध;
+			शेष:
+				seq_म_लिखो(m,
 				"  Bad kernel queue type %d on device %x\n",
 					   q->properties.type,
 					   pqn->kq->dev->id);
-				continue;
-			}
-		} else {
-			seq_printf(m,
+				जारी;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			seq_म_लिखो(m,
 		"  Weird: Queue node with neither kernel nor user queue\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		r = mqd_mgr->debugfs_show_mqd(m, q->mqd);
-		if (r != 0)
-			break;
-	}
+		अगर (r != 0)
+			अवरोध;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

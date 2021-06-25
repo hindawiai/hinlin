@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: rsmisc - Miscellaneous resource descriptors
  *
  ******************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acresrc.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acresrc.h"
 
-#define _COMPONENT          ACPI_RESOURCES
+#घोषणा _COMPONENT          ACPI_RESOURCES
 ACPI_MODULE_NAME("rsmisc")
-#define INIT_RESOURCE_TYPE(i)       i->resource_offset
-#define INIT_RESOURCE_LENGTH(i)     i->aml_offset
-#define INIT_TABLE_LENGTH(i)        i->value
-#define COMPARE_OPCODE(i)           i->resource_offset
-#define COMPARE_TARGET(i)           i->aml_offset
-#define COMPARE_VALUE(i)            i->value
+#घोषणा INIT_RESOURCE_TYPE(i)       i->resource_offset
+#घोषणा INIT_RESOURCE_LENGTH(i)     i->aml_offset
+#घोषणा INIT_TABLE_LENGTH(i)        i->value
+#घोषणा COMPARE_OPCODE(i)           i->resource_offset
+#घोषणा COMPARE_TARGET(i)           i->aml_offset
+#घोषणा COMPARE_VALUE(i)            i->value
 /*******************************************************************************
  *
  * FUNCTION:    acpi_rs_convert_aml_to_resource
  *
- * PARAMETERS:  resource            - Pointer to the resource descriptor
- *              aml                 - Where the AML descriptor is returned
- *              info                - Pointer to appropriate conversion table
+ * PARAMETERS:  resource            - Poपूर्णांकer to the resource descriptor
+ *              aml                 - Where the AML descriptor is वापसed
+ *              info                - Poपूर्णांकer to appropriate conversion table
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Convert an external AML resource descriptor to the corresponding
- *              internal resource descriptor
+ * DESCRIPTION: Convert an बाह्यal AML resource descriptor to the corresponding
+ *              पूर्णांकernal resource descriptor
  *
  ******************************************************************************/
 acpi_status
-acpi_rs_convert_aml_to_resource(struct acpi_resource *resource,
-				union aml_resource *aml,
-				struct acpi_rsconvert_info *info)
-{
+acpi_rs_convert_aml_to_resource(काष्ठा acpi_resource *resource,
+				जोड़ aml_resource *aml,
+				काष्ठा acpi_rsconvert_info *info)
+अणु
 	acpi_rs_length aml_resource_length;
-	void *source;
-	void *destination;
-	char *target;
+	व्योम *source;
+	व्योम *destination;
+	अक्षर *target;
 	u8 count;
 	u8 flags_mode = FALSE;
 	u16 item_count = 0;
@@ -47,20 +48,20 @@ acpi_rs_convert_aml_to_resource(struct acpi_resource *resource,
 
 	ACPI_FUNCTION_TRACE(rs_convert_aml_to_resource);
 
-	if (!info) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (!info) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
-	if (((acpi_size)resource) & 0x3) {
+	अगर (((acpi_size)resource) & 0x3) अणु
 
-		/* Each internal resource struct is expected to be 32-bit aligned */
+		/* Each पूर्णांकernal resource काष्ठा is expected to be 32-bit aligned */
 
 		ACPI_WARNING((AE_INFO,
 			      "Misaligned resource pointer (get): %p Type 0x%2.2X Length %u",
 			      resource, resource->type, resource->length));
-	}
+	पूर्ण
 
-	/* Extract the resource Length field (does not include header length) */
+	/* Extract the resource Length field (करोes not include header length) */
 
 	aml_resource_length = acpi_ut_get_resource_length(aml);
 
@@ -69,220 +70,220 @@ acpi_rs_convert_aml_to_resource(struct acpi_resource *resource,
 	 * table length (# of table entries)
 	 */
 	count = INIT_TABLE_LENGTH(info);
-	while (count) {
-		target = NULL;
+	जबतक (count) अणु
+		target = शून्य;
 
 		/*
-		 * Source is the external AML byte stream buffer,
-		 * destination is the internal resource descriptor
+		 * Source is the बाह्यal AML byte stream buffer,
+		 * destination is the पूर्णांकernal resource descriptor
 		 */
-		source = ACPI_ADD_PTR(void, aml, info->aml_offset);
+		source = ACPI_ADD_PTR(व्योम, aml, info->aml_offset);
 		destination =
-		    ACPI_ADD_PTR(void, resource, info->resource_offset);
+		    ACPI_ADD_PTR(व्योम, resource, info->resource_offset);
 
-		switch (info->opcode) {
-		case ACPI_RSC_INITGET:
+		चयन (info->opcode) अणु
+		हाल ACPI_RSC_INITGET:
 			/*
 			 * Get the resource type and the initial (minimum) length
 			 */
-			memset(resource, 0, INIT_RESOURCE_LENGTH(info));
+			स_रखो(resource, 0, INIT_RESOURCE_LENGTH(info));
 			resource->type = INIT_RESOURCE_TYPE(info);
 			resource->length = INIT_RESOURCE_LENGTH(info);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_INITSET:
-			break;
+		हाल ACPI_RSC_INITSET:
+			अवरोध;
 
-		case ACPI_RSC_FLAGINIT:
+		हाल ACPI_RSC_FLAGINIT:
 
 			flags_mode = TRUE;
-			break;
+			अवरोध;
 
-		case ACPI_RSC_1BITFLAG:
+		हाल ACPI_RSC_1BITFLAG:
 			/*
-			 * Mask and shift the flag bit
+			 * Mask and shअगरt the flag bit
 			 */
 			ACPI_SET8(destination,
 				  ((ACPI_GET8(source) >> info->value) & 0x01));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_2BITFLAG:
+		हाल ACPI_RSC_2BITFLAG:
 			/*
-			 * Mask and shift the flag bits
+			 * Mask and shअगरt the flag bits
 			 */
 			ACPI_SET8(destination,
 				  ((ACPI_GET8(source) >> info->value) & 0x03));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_3BITFLAG:
+		हाल ACPI_RSC_3BITFLAG:
 			/*
-			 * Mask and shift the flag bits
+			 * Mask and shअगरt the flag bits
 			 */
 			ACPI_SET8(destination,
 				  ((ACPI_GET8(source) >> info->value) & 0x07));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_6BITFLAG:
+		हाल ACPI_RSC_6BITFLAG:
 			/*
-			 * Mask and shift the flag bits
+			 * Mask and shअगरt the flag bits
 			 */
 			ACPI_SET8(destination,
 				  ((ACPI_GET8(source) >> info->value) & 0x3F));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT:
+		हाल ACPI_RSC_COUNT:
 
 			item_count = ACPI_GET8(source);
 			ACPI_SET8(destination, item_count);
 
 			resource->length = resource->length +
 			    (info->value * (item_count - 1));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT16:
+		हाल ACPI_RSC_COUNT16:
 
 			item_count = aml_resource_length;
 			ACPI_SET16(destination, item_count);
 
 			resource->length = resource->length +
 			    (info->value * (item_count - 1));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT_GPIO_PIN:
+		हाल ACPI_RSC_COUNT_GPIO_PIN:
 
-			target = ACPI_ADD_PTR(void, aml, info->value);
+			target = ACPI_ADD_PTR(व्योम, aml, info->value);
 			item_count = ACPI_GET16(target) - ACPI_GET16(source);
 
 			resource->length = resource->length + item_count;
 			item_count = item_count / 2;
 			ACPI_SET16(destination, item_count);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT_GPIO_VEN:
+		हाल ACPI_RSC_COUNT_GPIO_VEN:
 
 			item_count = ACPI_GET8(source);
 			ACPI_SET8(destination, item_count);
 
 			resource->length =
 			    resource->length + (info->value * item_count);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT_GPIO_RES:
+		हाल ACPI_RSC_COUNT_GPIO_RES:
 			/*
-			 * Vendor data is optional (length/offset may both be zero)
-			 * Examine vendor data length field first
+			 * Venकरोr data is optional (length/offset may both be zero)
+			 * Examine venकरोr data length field first
 			 */
-			target = ACPI_ADD_PTR(void, aml, (info->value + 2));
-			if (ACPI_GET16(target)) {
+			target = ACPI_ADD_PTR(व्योम, aml, (info->value + 2));
+			अगर (ACPI_GET16(target)) अणु
 
-				/* Use vendor offset to get resource source length */
+				/* Use venकरोr offset to get resource source length */
 
-				target = ACPI_ADD_PTR(void, aml, info->value);
+				target = ACPI_ADD_PTR(व्योम, aml, info->value);
 				item_count =
 				    ACPI_GET16(target) - ACPI_GET16(source);
-			} else {
-				/* No vendor data to worry about */
+			पूर्ण अन्यथा अणु
+				/* No venकरोr data to worry about */
 
 				item_count = aml->large_header.resource_length +
-				    sizeof(struct aml_resource_large_header) -
+				    माप(काष्ठा aml_resource_large_header) -
 				    ACPI_GET16(source);
-			}
+			पूर्ण
 
 			resource->length = resource->length + item_count;
 			ACPI_SET16(destination, item_count);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT_SERIAL_VEN:
+		हाल ACPI_RSC_COUNT_SERIAL_VEN:
 
 			item_count = ACPI_GET16(source) - info->value;
 
 			resource->length = resource->length + item_count;
 			ACPI_SET16(destination, item_count);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT_SERIAL_RES:
+		हाल ACPI_RSC_COUNT_SERIAL_RES:
 
 			item_count = (aml_resource_length +
-				      sizeof(struct aml_resource_large_header))
+				      माप(काष्ठा aml_resource_large_header))
 			    - ACPI_GET16(source) - info->value;
 
 			resource->length = resource->length + item_count;
 			ACPI_SET16(destination, item_count);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_LENGTH:
+		हाल ACPI_RSC_LENGTH:
 
 			resource->length = resource->length + info->value;
-			break;
+			अवरोध;
 
-		case ACPI_RSC_MOVE8:
-		case ACPI_RSC_MOVE16:
-		case ACPI_RSC_MOVE32:
-		case ACPI_RSC_MOVE64:
+		हाल ACPI_RSC_MOVE8:
+		हाल ACPI_RSC_MOVE16:
+		हाल ACPI_RSC_MOVE32:
+		हाल ACPI_RSC_MOVE64:
 			/*
 			 * Raw data move. Use the Info value field unless item_count has
 			 * been previously initialized via a COUNT opcode
 			 */
-			if (info->value) {
+			अगर (info->value) अणु
 				item_count = info->value;
-			}
+			पूर्ण
 			acpi_rs_move_data(destination, source, item_count,
 					  info->opcode);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_MOVE_GPIO_PIN:
+		हाल ACPI_RSC_MOVE_GPIO_PIN:
 
-			/* Generate and set the PIN data pointer */
+			/* Generate and set the PIN data poपूर्णांकer */
 
-			target = (char *)ACPI_ADD_PTR(void, resource,
+			target = (अक्षर *)ACPI_ADD_PTR(व्योम, resource,
 						      (resource->length -
 						       item_count * 2));
 			*(u16 **)destination = ACPI_CAST_PTR(u16, target);
 
 			/* Copy the PIN data */
 
-			source = ACPI_ADD_PTR(void, aml, ACPI_GET16(source));
+			source = ACPI_ADD_PTR(व्योम, aml, ACPI_GET16(source));
 			acpi_rs_move_data(target, source, item_count,
 					  info->opcode);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_MOVE_GPIO_RES:
+		हाल ACPI_RSC_MOVE_GPIO_RES:
 
-			/* Generate and set the resource_source string pointer */
+			/* Generate and set the resource_source string poपूर्णांकer */
 
-			target = (char *)ACPI_ADD_PTR(void, resource,
+			target = (अक्षर *)ACPI_ADD_PTR(व्योम, resource,
 						      (resource->length -
 						       item_count));
 			*(u8 **)destination = ACPI_CAST_PTR(u8, target);
 
 			/* Copy the resource_source string */
 
-			source = ACPI_ADD_PTR(void, aml, ACPI_GET16(source));
+			source = ACPI_ADD_PTR(व्योम, aml, ACPI_GET16(source));
 			acpi_rs_move_data(target, source, item_count,
 					  info->opcode);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_MOVE_SERIAL_VEN:
+		हाल ACPI_RSC_MOVE_SERIAL_VEN:
 
-			/* Generate and set the Vendor Data pointer */
+			/* Generate and set the Venकरोr Data poपूर्णांकer */
 
-			target = (char *)ACPI_ADD_PTR(void, resource,
+			target = (अक्षर *)ACPI_ADD_PTR(व्योम, resource,
 						      (resource->length -
 						       item_count));
 			*(u8 **)destination = ACPI_CAST_PTR(u8, target);
 
-			/* Copy the Vendor Data */
+			/* Copy the Venकरोr Data */
 
-			source = ACPI_ADD_PTR(void, aml, info->value);
+			source = ACPI_ADD_PTR(व्योम, aml, info->value);
 			acpi_rs_move_data(target, source, item_count,
 					  info->opcode);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_MOVE_SERIAL_RES:
+		हाल ACPI_RSC_MOVE_SERIAL_RES:
 
-			/* Generate and set the resource_source string pointer */
+			/* Generate and set the resource_source string poपूर्णांकer */
 
-			target = (char *)ACPI_ADD_PTR(void, resource,
+			target = (अक्षर *)ACPI_ADD_PTR(व्योम, resource,
 						      (resource->length -
 						       item_count));
 			*(u8 **)destination = ACPI_CAST_PTR(u8, target);
@@ -290,49 +291,49 @@ acpi_rs_convert_aml_to_resource(struct acpi_resource *resource,
 			/* Copy the resource_source string */
 
 			source =
-			    ACPI_ADD_PTR(void, aml,
+			    ACPI_ADD_PTR(व्योम, aml,
 					 (ACPI_GET16(source) + info->value));
 			acpi_rs_move_data(target, source, item_count,
 					  info->opcode);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_SET8:
+		हाल ACPI_RSC_SET8:
 
-			memset(destination, info->aml_offset, info->value);
-			break;
+			स_रखो(destination, info->aml_offset, info->value);
+			अवरोध;
 
-		case ACPI_RSC_DATA8:
+		हाल ACPI_RSC_DATA8:
 
-			target = ACPI_ADD_PTR(char, resource, info->value);
-			memcpy(destination, source, ACPI_GET16(target));
-			break;
+			target = ACPI_ADD_PTR(अक्षर, resource, info->value);
+			स_नकल(destination, source, ACPI_GET16(target));
+			अवरोध;
 
-		case ACPI_RSC_ADDRESS:
+		हाल ACPI_RSC_ADDRESS:
 			/*
-			 * Common handler for address descriptor flags
+			 * Common handler क्रम address descriptor flags
 			 */
-			if (!acpi_rs_get_address_common(resource, aml)) {
-				return_ACPI_STATUS
+			अगर (!acpi_rs_get_address_common(resource, aml)) अणु
+				वापस_ACPI_STATUS
 				    (AE_AML_INVALID_RESOURCE_TYPE);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case ACPI_RSC_SOURCE:
+		हाल ACPI_RSC_SOURCE:
 			/*
 			 * Optional resource_source (Index and String)
 			 */
 			resource->length +=
 			    acpi_rs_get_resource_source(aml_resource_length,
 							info->value,
-							destination, aml, NULL);
-			break;
+							destination, aml, शून्य);
+			अवरोध;
 
-		case ACPI_RSC_SOURCEX:
+		हाल ACPI_RSC_SOURCEX:
 			/*
 			 * Optional resource_source (Index and String). This is the more
-			 * complicated case used by the Interrupt() macro
+			 * complicated हाल used by the Interrupt() macro
 			 */
-			target = ACPI_ADD_PTR(char, resource,
+			target = ACPI_ADD_PTR(अक्षर, resource,
 					      info->aml_offset +
 					      (item_count * 4));
 
@@ -340,114 +341,114 @@ acpi_rs_convert_aml_to_resource(struct acpi_resource *resource,
 			    acpi_rs_get_resource_source(aml_resource_length,
 							(acpi_rs_length)
 							(((item_count -
-							   1) * sizeof(u32)) +
+							   1) * माप(u32)) +
 							 info->value),
 							destination, aml,
 							target);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_BITMASK:
+		हाल ACPI_RSC_BITMASK:
 			/*
-			 * 8-bit encoded bitmask (DMA macro)
+			 * 8-bit encoded biपंचांगask (DMA macro)
 			 */
 			item_count =
-			    acpi_rs_decode_bitmask(ACPI_GET8(source),
+			    acpi_rs_decode_biपंचांगask(ACPI_GET8(source),
 						   destination);
-			if (item_count) {
+			अगर (item_count) अणु
 				resource->length += (item_count - 1);
-			}
+			पूर्ण
 
-			target = ACPI_ADD_PTR(char, resource, info->value);
+			target = ACPI_ADD_PTR(अक्षर, resource, info->value);
 			ACPI_SET8(target, item_count);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_BITMASK16:
+		हाल ACPI_RSC_BITMASK16:
 			/*
-			 * 16-bit encoded bitmask (IRQ macro)
+			 * 16-bit encoded biपंचांगask (IRQ macro)
 			 */
 			ACPI_MOVE_16_TO_16(&temp16, source);
 
 			item_count =
-			    acpi_rs_decode_bitmask(temp16, destination);
-			if (item_count) {
+			    acpi_rs_decode_biपंचांगask(temp16, destination);
+			अगर (item_count) अणु
 				resource->length += (item_count - 1);
-			}
+			पूर्ण
 
-			target = ACPI_ADD_PTR(char, resource, info->value);
+			target = ACPI_ADD_PTR(अक्षर, resource, info->value);
 			ACPI_SET8(target, item_count);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_EXIT_NE:
+		हाल ACPI_RSC_EXIT_NE:
 			/*
-			 * control - Exit conversion if not equal
+			 * control - Exit conversion अगर not equal
 			 */
-			switch (info->resource_offset) {
-			case ACPI_RSC_COMPARE_AML_LENGTH:
+			चयन (info->resource_offset) अणु
+			हाल ACPI_RSC_COMPARE_AML_LENGTH:
 
-				if (aml_resource_length != info->value) {
-					goto exit;
-				}
-				break;
+				अगर (aml_resource_length != info->value) अणु
+					जाओ निकास;
+				पूर्ण
+				अवरोध;
 
-			case ACPI_RSC_COMPARE_VALUE:
+			हाल ACPI_RSC_COMPARE_VALUE:
 
-				if (ACPI_GET8(source) != info->value) {
-					goto exit;
-				}
-				break;
+				अगर (ACPI_GET8(source) != info->value) अणु
+					जाओ निकास;
+				पूर्ण
+				अवरोध;
 
-			default:
+			शेष:
 
 				ACPI_ERROR((AE_INFO,
 					    "Invalid conversion sub-opcode"));
-				return_ACPI_STATUS(AE_BAD_PARAMETER);
-			}
-			break;
+				वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+			पूर्ण
+			अवरोध;
 
-		default:
+		शेष:
 
 			ACPI_ERROR((AE_INFO, "Invalid conversion opcode"));
-			return_ACPI_STATUS(AE_BAD_PARAMETER);
-		}
+			वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+		पूर्ण
 
 		count--;
 		info++;
-	}
+	पूर्ण
 
-exit:
-	if (!flags_mode) {
+निकास:
+	अगर (!flags_mode) अणु
 
-		/* Round the resource struct length up to the next boundary (32 or 64) */
+		/* Round the resource काष्ठा length up to the next boundary (32 or 64) */
 
 		resource->length = (u32)
 		    ACPI_ROUND_UP_TO_NATIVE_WORD(resource->length);
-	}
-	return_ACPI_STATUS(AE_OK);
-}
+	पूर्ण
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_rs_convert_resource_to_aml
  *
- * PARAMETERS:  resource            - Pointer to the resource descriptor
- *              aml                 - Where the AML descriptor is returned
- *              info                - Pointer to appropriate conversion table
+ * PARAMETERS:  resource            - Poपूर्णांकer to the resource descriptor
+ *              aml                 - Where the AML descriptor is वापसed
+ *              info                - Poपूर्णांकer to appropriate conversion table
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Convert an internal resource descriptor to the corresponding
- *              external AML resource descriptor.
+ * DESCRIPTION: Convert an पूर्णांकernal resource descriptor to the corresponding
+ *              बाह्यal AML resource descriptor.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_rs_convert_resource_to_aml(struct acpi_resource *resource,
-				union aml_resource *aml,
-				struct acpi_rsconvert_info *info)
-{
-	void *source = NULL;
-	void *destination;
-	char *target;
+acpi_rs_convert_resource_to_aml(काष्ठा acpi_resource *resource,
+				जोड़ aml_resource *aml,
+				काष्ठा acpi_rsconvert_info *info)
+अणु
+	व्योम *source = शून्य;
+	व्योम *destination;
+	अक्षर *target;
 	acpi_rsdesc_size aml_length = 0;
 	u8 count;
 	u16 temp16 = 0;
@@ -455,9 +456,9 @@ acpi_rs_convert_resource_to_aml(struct acpi_resource *resource,
 
 	ACPI_FUNCTION_TRACE(rs_convert_resource_to_aml);
 
-	if (!info) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (!info) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	/*
 	 * First table entry must be ACPI_RSC_INITxxx and must contain the
@@ -465,97 +466,97 @@ acpi_rs_convert_resource_to_aml(struct acpi_resource *resource,
 	 */
 	count = INIT_TABLE_LENGTH(info);
 
-	while (count) {
+	जबतक (count) अणु
 		/*
-		 * Source is the internal resource descriptor,
-		 * destination is the external AML byte stream buffer
+		 * Source is the पूर्णांकernal resource descriptor,
+		 * destination is the बाह्यal AML byte stream buffer
 		 */
-		source = ACPI_ADD_PTR(void, resource, info->resource_offset);
-		destination = ACPI_ADD_PTR(void, aml, info->aml_offset);
+		source = ACPI_ADD_PTR(व्योम, resource, info->resource_offset);
+		destination = ACPI_ADD_PTR(व्योम, aml, info->aml_offset);
 
-		switch (info->opcode) {
-		case ACPI_RSC_INITSET:
+		चयन (info->opcode) अणु
+		हाल ACPI_RSC_INITSET:
 
-			memset(aml, 0, INIT_RESOURCE_LENGTH(info));
+			स_रखो(aml, 0, INIT_RESOURCE_LENGTH(info));
 			aml_length = INIT_RESOURCE_LENGTH(info);
 			acpi_rs_set_resource_header(INIT_RESOURCE_TYPE(info),
 						    aml_length, aml);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_INITGET:
-			break;
+		हाल ACPI_RSC_INITGET:
+			अवरोध;
 
-		case ACPI_RSC_FLAGINIT:
+		हाल ACPI_RSC_FLAGINIT:
 			/*
 			 * Clear the flag byte
 			 */
 			ACPI_SET8(destination, 0);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_1BITFLAG:
+		हाल ACPI_RSC_1BITFLAG:
 			/*
-			 * Mask and shift the flag bit
+			 * Mask and shअगरt the flag bit
 			 */
 			ACPI_SET_BIT(*ACPI_CAST8(destination), (u8)
 				     ((ACPI_GET8(source) & 0x01) << info->
 				      value));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_2BITFLAG:
+		हाल ACPI_RSC_2BITFLAG:
 			/*
-			 * Mask and shift the flag bits
+			 * Mask and shअगरt the flag bits
 			 */
 			ACPI_SET_BIT(*ACPI_CAST8(destination), (u8)
 				     ((ACPI_GET8(source) & 0x03) << info->
 				      value));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_3BITFLAG:
+		हाल ACPI_RSC_3BITFLAG:
 			/*
-			 * Mask and shift the flag bits
+			 * Mask and shअगरt the flag bits
 			 */
 			ACPI_SET_BIT(*ACPI_CAST8(destination), (u8)
 				     ((ACPI_GET8(source) & 0x07) << info->
 				      value));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_6BITFLAG:
+		हाल ACPI_RSC_6BITFLAG:
 			/*
-			 * Mask and shift the flag bits
+			 * Mask and shअगरt the flag bits
 			 */
 			ACPI_SET_BIT(*ACPI_CAST8(destination), (u8)
 				     ((ACPI_GET8(source) & 0x3F) << info->
 				      value));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT:
+		हाल ACPI_RSC_COUNT:
 
 			item_count = ACPI_GET8(source);
 			ACPI_SET8(destination, item_count);
 
 			aml_length = (u16)
 			    (aml_length + (info->value * (item_count - 1)));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT16:
+		हाल ACPI_RSC_COUNT16:
 
 			item_count = ACPI_GET16(source);
 			aml_length = (u16) (aml_length + item_count);
 			acpi_rs_set_resource_length(aml_length, aml);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT_GPIO_PIN:
+		हाल ACPI_RSC_COUNT_GPIO_PIN:
 
 			item_count = ACPI_GET16(source);
 			ACPI_SET16(destination, aml_length);
 
 			aml_length = (u16)(aml_length + item_count * 2);
-			target = ACPI_ADD_PTR(void, aml, info->value);
+			target = ACPI_ADD_PTR(व्योम, aml, info->value);
 			ACPI_SET16(target, aml_length);
 			acpi_rs_set_resource_length(aml_length, aml);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT_GPIO_VEN:
+		हाल ACPI_RSC_COUNT_GPIO_VEN:
 
 			item_count = ACPI_GET16(source);
 			ACPI_SET16(destination, item_count);
@@ -563,109 +564,109 @@ acpi_rs_convert_resource_to_aml(struct acpi_resource *resource,
 			aml_length =
 			    (u16)(aml_length + (info->value * item_count));
 			acpi_rs_set_resource_length(aml_length, aml);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT_GPIO_RES:
+		हाल ACPI_RSC_COUNT_GPIO_RES:
 
 			/* Set resource source string length */
 
 			item_count = ACPI_GET16(source);
 			ACPI_SET16(destination, aml_length);
 
-			/* Compute offset for the Vendor Data */
+			/* Compute offset क्रम the Venकरोr Data */
 
 			aml_length = (u16)(aml_length + item_count);
-			target = ACPI_ADD_PTR(void, aml, info->value);
+			target = ACPI_ADD_PTR(व्योम, aml, info->value);
 
-			/* Set vendor offset only if there is vendor data */
+			/* Set venकरोr offset only अगर there is venकरोr data */
 
 			ACPI_SET16(target, aml_length);
 
 			acpi_rs_set_resource_length(aml_length, aml);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT_SERIAL_VEN:
+		हाल ACPI_RSC_COUNT_SERIAL_VEN:
 
 			item_count = ACPI_GET16(source);
 			ACPI_SET16(destination, item_count + info->value);
 			aml_length = (u16)(aml_length + item_count);
 			acpi_rs_set_resource_length(aml_length, aml);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_COUNT_SERIAL_RES:
+		हाल ACPI_RSC_COUNT_SERIAL_RES:
 
 			item_count = ACPI_GET16(source);
 			aml_length = (u16)(aml_length + item_count);
 			acpi_rs_set_resource_length(aml_length, aml);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_LENGTH:
+		हाल ACPI_RSC_LENGTH:
 
 			acpi_rs_set_resource_length(info->value, aml);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_MOVE8:
-		case ACPI_RSC_MOVE16:
-		case ACPI_RSC_MOVE32:
-		case ACPI_RSC_MOVE64:
+		हाल ACPI_RSC_MOVE8:
+		हाल ACPI_RSC_MOVE16:
+		हाल ACPI_RSC_MOVE32:
+		हाल ACPI_RSC_MOVE64:
 
-			if (info->value) {
+			अगर (info->value) अणु
 				item_count = info->value;
-			}
+			पूर्ण
 			acpi_rs_move_data(destination, source, item_count,
 					  info->opcode);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_MOVE_GPIO_PIN:
+		हाल ACPI_RSC_MOVE_GPIO_PIN:
 
-			destination = (char *)ACPI_ADD_PTR(void, aml,
+			destination = (अक्षर *)ACPI_ADD_PTR(व्योम, aml,
 							   ACPI_GET16
 							   (destination));
 			source = *(u16 **)source;
 			acpi_rs_move_data(destination, source, item_count,
 					  info->opcode);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_MOVE_GPIO_RES:
+		हाल ACPI_RSC_MOVE_GPIO_RES:
 
-			/* Used for both resource_source string and vendor_data */
+			/* Used क्रम both resource_source string and venकरोr_data */
 
-			destination = (char *)ACPI_ADD_PTR(void, aml,
+			destination = (अक्षर *)ACPI_ADD_PTR(व्योम, aml,
 							   ACPI_GET16
 							   (destination));
 			source = *(u8 **)source;
 			acpi_rs_move_data(destination, source, item_count,
 					  info->opcode);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_MOVE_SERIAL_VEN:
+		हाल ACPI_RSC_MOVE_SERIAL_VEN:
 
-			destination = (char *)ACPI_ADD_PTR(void, aml,
+			destination = (अक्षर *)ACPI_ADD_PTR(व्योम, aml,
 							   (aml_length -
 							    item_count));
 			source = *(u8 **)source;
 			acpi_rs_move_data(destination, source, item_count,
 					  info->opcode);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_MOVE_SERIAL_RES:
+		हाल ACPI_RSC_MOVE_SERIAL_RES:
 
-			destination = (char *)ACPI_ADD_PTR(void, aml,
+			destination = (अक्षर *)ACPI_ADD_PTR(व्योम, aml,
 							   (aml_length -
 							    item_count));
 			source = *(u8 **)source;
 			acpi_rs_move_data(destination, source, item_count,
 					  info->opcode);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_ADDRESS:
+		हाल ACPI_RSC_ADDRESS:
 
-			/* Set the Resource Type, General Flags, and Type-Specific Flags */
+			/* Set the Resource Type, General Flags, and Type-Specअगरic Flags */
 
 			acpi_rs_set_address_common(aml, resource);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_SOURCEX:
+		हाल ACPI_RSC_SOURCEX:
 			/*
 			 * Optional resource_source (Index and String)
 			 */
@@ -674,131 +675,131 @@ acpi_rs_convert_resource_to_aml(struct acpi_resource *resource,
 							(acpi_rs_length)
 							aml_length, source);
 			acpi_rs_set_resource_length(aml_length, aml);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_SOURCE:
+		हाल ACPI_RSC_SOURCE:
 			/*
 			 * Optional resource_source (Index and String). This is the more
-			 * complicated case used by the Interrupt() macro
+			 * complicated हाल used by the Interrupt() macro
 			 */
 			aml_length =
 			    acpi_rs_set_resource_source(aml, info->value,
 							source);
 			acpi_rs_set_resource_length(aml_length, aml);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_BITMASK:
+		हाल ACPI_RSC_BITMASK:
 			/*
-			 * 8-bit encoded bitmask (DMA macro)
+			 * 8-bit encoded biपंचांगask (DMA macro)
 			 */
 			ACPI_SET8(destination,
-				  acpi_rs_encode_bitmask(source,
+				  acpi_rs_encode_biपंचांगask(source,
 							 *ACPI_ADD_PTR(u8,
 								       resource,
 								       info->
 								       value)));
-			break;
+			अवरोध;
 
-		case ACPI_RSC_BITMASK16:
+		हाल ACPI_RSC_BITMASK16:
 			/*
-			 * 16-bit encoded bitmask (IRQ macro)
+			 * 16-bit encoded biपंचांगask (IRQ macro)
 			 */
 			temp16 =
-			    acpi_rs_encode_bitmask(source,
+			    acpi_rs_encode_biपंचांगask(source,
 						   *ACPI_ADD_PTR(u8, resource,
 								 info->value));
 			ACPI_MOVE_16_TO_16(destination, &temp16);
-			break;
+			अवरोध;
 
-		case ACPI_RSC_EXIT_LE:
+		हाल ACPI_RSC_EXIT_LE:
 			/*
-			 * control - Exit conversion if less than or equal
+			 * control - Exit conversion अगर less than or equal
 			 */
-			if (item_count <= info->value) {
-				goto exit;
-			}
-			break;
+			अगर (item_count <= info->value) अणु
+				जाओ निकास;
+			पूर्ण
+			अवरोध;
 
-		case ACPI_RSC_EXIT_NE:
+		हाल ACPI_RSC_EXIT_NE:
 			/*
-			 * control - Exit conversion if not equal
+			 * control - Exit conversion अगर not equal
 			 */
-			switch (COMPARE_OPCODE(info)) {
-			case ACPI_RSC_COMPARE_VALUE:
+			चयन (COMPARE_OPCODE(info)) अणु
+			हाल ACPI_RSC_COMPARE_VALUE:
 
-				if (*ACPI_ADD_PTR(u8, resource,
+				अगर (*ACPI_ADD_PTR(u8, resource,
 						  COMPARE_TARGET(info)) !=
-				    COMPARE_VALUE(info)) {
-					goto exit;
-				}
-				break;
+				    COMPARE_VALUE(info)) अणु
+					जाओ निकास;
+				पूर्ण
+				अवरोध;
 
-			default:
+			शेष:
 
 				ACPI_ERROR((AE_INFO,
 					    "Invalid conversion sub-opcode"));
-				return_ACPI_STATUS(AE_BAD_PARAMETER);
-			}
-			break;
+				वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+			पूर्ण
+			अवरोध;
 
-		case ACPI_RSC_EXIT_EQ:
+		हाल ACPI_RSC_EXIT_EQ:
 			/*
-			 * control - Exit conversion if equal
+			 * control - Exit conversion अगर equal
 			 */
-			if (*ACPI_ADD_PTR(u8, resource,
+			अगर (*ACPI_ADD_PTR(u8, resource,
 					  COMPARE_TARGET(info)) ==
-			    COMPARE_VALUE(info)) {
-				goto exit;
-			}
-			break;
+			    COMPARE_VALUE(info)) अणु
+				जाओ निकास;
+			पूर्ण
+			अवरोध;
 
-		default:
+		शेष:
 
 			ACPI_ERROR((AE_INFO, "Invalid conversion opcode"));
-			return_ACPI_STATUS(AE_BAD_PARAMETER);
-		}
+			वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+		पूर्ण
 
 		count--;
 		info++;
-	}
+	पूर्ण
 
-exit:
-	return_ACPI_STATUS(AE_OK);
-}
+निकास:
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
-#if 0
+#अगर 0
 /* Previous resource validations */
 
-if (aml->ext_address64.revision_ID != AML_RESOURCE_EXTENDED_ADDRESS_REVISION) {
-	return_ACPI_STATUS(AE_SUPPORT);
-}
+अगर (aml->ext_address64.revision_ID != AML_RESOURCE_EXTENDED_ADDRESS_REVISION) अणु
+	वापस_ACPI_STATUS(AE_SUPPORT);
+पूर्ण
 
-if (resource->data.start_dpf.performance_robustness >= 3) {
-	return_ACPI_STATUS(AE_AML_BAD_RESOURCE_VALUE);
-}
+अगर (resource->data.start_dpf.perक्रमmance_robustness >= 3) अणु
+	वापस_ACPI_STATUS(AE_AML_BAD_RESOURCE_VALUE);
+पूर्ण
 
-if (((aml->irq.flags & 0x09) == 0x00) || ((aml->irq.flags & 0x09) == 0x09)) {
+अगर (((aml->irq.flags & 0x09) == 0x00) || ((aml->irq.flags & 0x09) == 0x09)) अणु
 	/*
 	 * Only [active_high, edge_sensitive] or [active_low, level_sensitive]
-	 * polarity/trigger interrupts are allowed (ACPI spec, section
+	 * polarity/trigger पूर्णांकerrupts are allowed (ACPI spec, section
 	 * "IRQ Format"), so 0x00 and 0x09 are illegal.
 	 */
 	ACPI_ERROR((AE_INFO,
 		    "Invalid interrupt polarity/trigger in resource list, 0x%X",
 		    aml->irq.flags));
-	return_ACPI_STATUS(AE_BAD_DATA);
-}
+	वापस_ACPI_STATUS(AE_BAD_DATA);
+पूर्ण
 
-resource->data.extended_irq.interrupt_count = temp8;
-if (temp8 < 1) {
+resource->data.extended_irq.पूर्णांकerrupt_count = temp8;
+अगर (temp8 < 1) अणु
 
 	/* Must have at least one IRQ */
 
-	return_ACPI_STATUS(AE_AML_BAD_RESOURCE_LENGTH);
-}
+	वापस_ACPI_STATUS(AE_AML_BAD_RESOURCE_LENGTH);
+पूर्ण
 
-if (resource->data.dma.transfer == 0x03) {
+अगर (resource->data.dma.transfer == 0x03) अणु
 	ACPI_ERROR((AE_INFO, "Invalid DMA.Transfer preference (3)"));
-	return_ACPI_STATUS(AE_BAD_DATA);
-}
-#endif
+	वापस_ACPI_STATUS(AE_BAD_DATA);
+पूर्ण
+#पूर्ण_अगर

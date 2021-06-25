@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <byteswap.h>
-#include <elf.h>
-#include <endian.h>
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <byteswap.h>
+#समावेश <elf.h>
+#समावेश <endian.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
 
-#ifdef be32toh
-/* If libc provides [bl]e{32,64}toh() then we'll use them */
-#elif BYTE_ORDER == LITTLE_ENDIAN
+#अगर_घोषित be32toh
+/* If libc provides [bl]eअणु32,64पूर्णtoh() then we'll use them */
+#या_अगर BYTE_ORDER == LITTLE_ENDIAN
 # define be32toh(x)	bswap_32(x)
 # define le32toh(x)	(x)
 # define be64toh(x)	bswap_64(x)
 # define le64toh(x)	(x)
-#elif BYTE_ORDER == BIG_ENDIAN
+#या_अगर BYTE_ORDER == BIG_ENDIAN
 # define be32toh(x)	(x)
 # define le32toh(x)	bswap_32(x)
 # define be64toh(x)	(x)
 # define le64toh(x)	bswap_64(x)
-#endif
+#पूर्ण_अगर
 
-__attribute__((noreturn))
-static void die(const char *msg)
-{
-	fputs(msg, stderr);
-	exit(EXIT_FAILURE);
-}
+__attribute__((noवापस))
+अटल व्योम die(स्थिर अक्षर *msg)
+अणु
+	ख_माला_दो(msg, मानक_त्रुटि);
+	निकास(निकास_त्रुटि);
+पूर्ण
 
-int main(int argc, const char *argv[])
-{
-	uint64_t entry;
-	size_t nread;
-	FILE *file;
-	union {
+पूर्णांक मुख्य(पूर्णांक argc, स्थिर अक्षर *argv[])
+अणु
+	uपूर्णांक64_t entry;
+	माप_प्रकार nपढ़ो;
+	खाता *file;
+	जोड़ अणु
 		Elf32_Ehdr ehdr32;
 		Elf64_Ehdr ehdr64;
-	} hdr;
+	पूर्ण hdr;
 
-	if (argc != 2)
+	अगर (argc != 2)
 		die("Usage: elf-entry <elf-file>\n");
 
-	file = fopen(argv[1], "r");
-	if (!file) {
-		perror("Unable to open input file");
-		return EXIT_FAILURE;
-	}
+	file = ख_खोलो(argv[1], "r");
+	अगर (!file) अणु
+		लिखो_त्रुटि("Unable to open input file");
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	nread = fread(&hdr, 1, sizeof(hdr), file);
-	if (nread != sizeof(hdr)) {
-		perror("Unable to read input file");
-		fclose(file);
-		return EXIT_FAILURE;
-	}
+	nपढ़ो = ख_पढ़ो(&hdr, 1, माप(hdr), file);
+	अगर (nपढ़ो != माप(hdr)) अणु
+		लिखो_त्रुटि("Unable to read input file");
+		ख_बंद(file);
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	if (memcmp(hdr.ehdr32.e_ident, ELFMAG, SELFMAG)) {
-		fclose(file);
+	अगर (स_भेद(hdr.ehdr32.e_ident, ELFMAG, SELFMAG)) अणु
+		ख_बंद(file);
 		die("Input is not an ELF\n");
-	}
+	पूर्ण
 
-	switch (hdr.ehdr32.e_ident[EI_CLASS]) {
-	case ELFCLASS32:
-		switch (hdr.ehdr32.e_ident[EI_DATA]) {
-		case ELFDATA2LSB:
+	चयन (hdr.ehdr32.e_ident[EI_CLASS]) अणु
+	हाल ELFCLASS32:
+		चयन (hdr.ehdr32.e_ident[EI_DATA]) अणु
+		हाल ELFDATA2LSB:
 			entry = le32toh(hdr.ehdr32.e_entry);
-			break;
-		case ELFDATA2MSB:
+			अवरोध;
+		हाल ELFDATA2MSB:
 			entry = be32toh(hdr.ehdr32.e_entry);
-			break;
-		default:
-			fclose(file);
+			अवरोध;
+		शेष:
+			ख_बंद(file);
 			die("Invalid ELF encoding\n");
-		}
+		पूर्ण
 
-		/* Sign extend to form a canonical address */
-		entry = (int64_t)(int32_t)entry;
-		break;
+		/* Sign extend to क्रमm a canonical address */
+		entry = (पूर्णांक64_t)(पूर्णांक32_t)entry;
+		अवरोध;
 
-	case ELFCLASS64:
-		switch (hdr.ehdr32.e_ident[EI_DATA]) {
-		case ELFDATA2LSB:
+	हाल ELFCLASS64:
+		चयन (hdr.ehdr32.e_ident[EI_DATA]) अणु
+		हाल ELFDATA2LSB:
 			entry = le64toh(hdr.ehdr64.e_entry);
-			break;
-		case ELFDATA2MSB:
+			अवरोध;
+		हाल ELFDATA2MSB:
 			entry = be64toh(hdr.ehdr64.e_entry);
-			break;
-		default:
-			fclose(file);
+			अवरोध;
+		शेष:
+			ख_बंद(file);
 			die("Invalid ELF encoding\n");
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		fclose(file);
+	शेष:
+		ख_बंद(file);
 		die("Invalid ELF class\n");
-	}
+	पूर्ण
 
-	printf("0x%016" PRIx64 "\n", entry);
-	fclose(file);
-	return EXIT_SUCCESS;
-}
+	म_लिखो("0x%016" PRIx64 "\n", entry);
+	ख_बंद(file);
+	वापस निकास_सफल;
+पूर्ण

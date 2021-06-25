@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
 /*
- * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
+ * hcd_पूर्णांकr.c - DesignWare HS OTG Controller host-mode पूर्णांकerrupt handling
  *
  * Copyright (C) 2004-2013 Synopsys, Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. Redistributions in binary form must reproduce the above copyright
+ *    without modअगरication.
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. The names of the above-listed copyright holders may not be used
- *    to endorse or promote products derived from this software without
- *    specific prior written permission.
+ *    to enकरोrse or promote products derived from this software without
+ *    specअगरic prior written permission.
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") as published by the Free Software
@@ -26,7 +27,7 @@
  * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -36,119 +37,119 @@
  */
 
 /*
- * This file contains the interrupt handlers for Host mode
+ * This file contains the पूर्णांकerrupt handlers क्रम Host mode
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
 
-#include <linux/usb/hcd.h>
-#include <linux/usb/ch11.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <linux/usb/ch11.h>
 
-#include "core.h"
-#include "hcd.h"
+#समावेश "core.h"
+#समावेश "hcd.h"
 
 /*
- * If we get this many NAKs on a split transaction we'll slow down
+ * If we get this many NAKs on a split transaction we'll slow करोwn
  * retransmission.  A 1 here means delay after the first NAK.
  */
-#define DWC2_NAKS_BEFORE_DELAY		3
+#घोषणा DWC2_NAKS_BEFORE_DELAY		3
 
-/* This function is for debug only */
-static void dwc2_track_missed_sofs(struct dwc2_hsotg *hsotg)
-{
+/* This function is क्रम debug only */
+अटल व्योम dwc2_track_missed_sofs(काष्ठा dwc2_hsotg *hsotg)
+अणु
 	u16 curr_frame_number = hsotg->frame_number;
 	u16 expected = dwc2_frame_num_inc(hsotg->last_frame_num, 1);
 
-	if (expected != curr_frame_number)
+	अगर (expected != curr_frame_number)
 		dwc2_sch_vdbg(hsotg, "MISSED SOF %04x != %04x\n",
 			      expected, curr_frame_number);
 
-#ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
-	if (hsotg->frame_num_idx < FRAME_NUM_ARRAY_SIZE) {
-		if (expected != curr_frame_number) {
+#अगर_घोषित CONFIG_USB_DWC2_TRACK_MISSED_SOFS
+	अगर (hsotg->frame_num_idx < FRAME_NUM_ARRAY_SIZE) अणु
+		अगर (expected != curr_frame_number) अणु
 			hsotg->frame_num_array[hsotg->frame_num_idx] =
 					curr_frame_number;
 			hsotg->last_frame_num_array[hsotg->frame_num_idx] =
 					hsotg->last_frame_num;
 			hsotg->frame_num_idx++;
-		}
-	} else if (!hsotg->dumped_frame_num_array) {
-		int i;
+		पूर्ण
+	पूर्ण अन्यथा अगर (!hsotg->dumped_frame_num_array) अणु
+		पूर्णांक i;
 
 		dev_info(hsotg->dev, "Frame     Last Frame\n");
 		dev_info(hsotg->dev, "-----     ----------\n");
-		for (i = 0; i < FRAME_NUM_ARRAY_SIZE; i++) {
+		क्रम (i = 0; i < FRAME_NUM_ARRAY_SIZE; i++) अणु
 			dev_info(hsotg->dev, "0x%04x    0x%04x\n",
 				 hsotg->frame_num_array[i],
 				 hsotg->last_frame_num_array[i]);
-		}
+		पूर्ण
 		hsotg->dumped_frame_num_array = 1;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	hsotg->last_frame_num = curr_frame_number;
-}
+पूर्ण
 
-static void dwc2_hc_handle_tt_clear(struct dwc2_hsotg *hsotg,
-				    struct dwc2_host_chan *chan,
-				    struct dwc2_qtd *qtd)
-{
-	struct usb_device *root_hub = dwc2_hsotg_to_hcd(hsotg)->self.root_hub;
-	struct urb *usb_urb;
+अटल व्योम dwc2_hc_handle_tt_clear(काष्ठा dwc2_hsotg *hsotg,
+				    काष्ठा dwc2_host_chan *chan,
+				    काष्ठा dwc2_qtd *qtd)
+अणु
+	काष्ठा usb_device *root_hub = dwc2_hsotg_to_hcd(hsotg)->self.root_hub;
+	काष्ठा urb *usb_urb;
 
-	if (!chan->qh)
-		return;
+	अगर (!chan->qh)
+		वापस;
 
-	if (chan->qh->dev_speed == USB_SPEED_HIGH)
-		return;
+	अगर (chan->qh->dev_speed == USB_SPEED_HIGH)
+		वापस;
 
-	if (!qtd->urb)
-		return;
+	अगर (!qtd->urb)
+		वापस;
 
 	usb_urb = qtd->urb->priv;
-	if (!usb_urb || !usb_urb->dev || !usb_urb->dev->tt)
-		return;
+	अगर (!usb_urb || !usb_urb->dev || !usb_urb->dev->tt)
+		वापस;
 
 	/*
-	 * The root hub doesn't really have a TT, but Linux thinks it
-	 * does because how could you have a "high speed hub" that
+	 * The root hub करोesn't really have a TT, but Linux thinks it
+	 * करोes because how could you have a "high speed hub" that
 	 * directly talks directly to low speed devices without a TT?
 	 * It's all lies.  Lies, I tell you.
 	 */
-	if (usb_urb->dev->tt->hub == root_hub)
-		return;
+	अगर (usb_urb->dev->tt->hub == root_hub)
+		वापस;
 
-	if (qtd->urb->status != -EPIPE && qtd->urb->status != -EREMOTEIO) {
+	अगर (qtd->urb->status != -EPIPE && qtd->urb->status != -EREMOTEIO) अणु
 		chan->qh->tt_buffer_dirty = 1;
-		if (usb_hub_clear_tt_buffer(usb_urb))
+		अगर (usb_hub_clear_tt_buffer(usb_urb))
 			/* Clear failed; let's hope things work anyway */
 			chan->qh->tt_buffer_dirty = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Handles the start-of-frame interrupt in host mode. Non-periodic
- * transactions may be queued to the DWC_otg controller for the current
+ * Handles the start-of-frame पूर्णांकerrupt in host mode. Non-periodic
+ * transactions may be queued to the DWC_otg controller क्रम the current
  * (micro)frame. Periodic transactions may be queued to the controller
- * for the next (micro)frame.
+ * क्रम the next (micro)frame.
  */
-static void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
-{
-	struct list_head *qh_entry;
-	struct dwc2_qh *qh;
-	enum dwc2_transaction_type tr_type;
+अटल व्योम dwc2_sof_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg)
+अणु
+	काष्ठा list_head *qh_entry;
+	काष्ठा dwc2_qh *qh;
+	क्रमागत dwc2_transaction_type tr_type;
 
-	/* Clear interrupt */
-	dwc2_writel(hsotg, GINTSTS_SOF, GINTSTS);
+	/* Clear पूर्णांकerrupt */
+	dwc2_ग_लिखोl(hsotg, GINTSTS_SOF, GINTSTS);
 
-#ifdef DEBUG_SOF
+#अगर_घोषित DEBUG_SOF
 	dev_vdbg(hsotg->dev, "--Start of Frame Interrupt--\n");
-#endif
+#पूर्ण_अगर
 
 	hsotg->frame_number = dwc2_hcd_get_frame_number(hsotg);
 
@@ -156,115 +157,115 @@ static void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 
 	/* Determine whether any periodic QHs should be executed */
 	qh_entry = hsotg->periodic_sched_inactive.next;
-	while (qh_entry != &hsotg->periodic_sched_inactive) {
-		qh = list_entry(qh_entry, struct dwc2_qh, qh_list_entry);
+	जबतक (qh_entry != &hsotg->periodic_sched_inactive) अणु
+		qh = list_entry(qh_entry, काष्ठा dwc2_qh, qh_list_entry);
 		qh_entry = qh_entry->next;
-		if (dwc2_frame_num_le(qh->next_active_frame,
-				      hsotg->frame_number)) {
+		अगर (dwc2_frame_num_le(qh->next_active_frame,
+				      hsotg->frame_number)) अणु
 			dwc2_sch_vdbg(hsotg, "QH=%p ready fn=%04x, nxt=%04x\n",
 				      qh, hsotg->frame_number,
 				      qh->next_active_frame);
 
 			/*
-			 * Move QH to the ready list to be executed next
+			 * Move QH to the पढ़ोy list to be executed next
 			 * (micro)frame
 			 */
 			list_move_tail(&qh->qh_list_entry,
-				       &hsotg->periodic_sched_ready);
-		}
-	}
+				       &hsotg->periodic_sched_पढ़ोy);
+		पूर्ण
+	पूर्ण
 	tr_type = dwc2_hcd_select_transactions(hsotg);
-	if (tr_type != DWC2_TRANSACTION_NONE)
+	अगर (tr_type != DWC2_TRANSACTION_NONE)
 		dwc2_hcd_queue_transactions(hsotg, tr_type);
-}
+पूर्ण
 
 /*
  * Handles the Rx FIFO Level Interrupt, which indicates that there is
  * at least one packet in the Rx FIFO. The packets are moved from the FIFO to
- * memory if the DWC_otg controller is operating in Slave mode.
+ * memory अगर the DWC_otg controller is operating in Slave mode.
  */
-static void dwc2_rx_fifo_level_intr(struct dwc2_hsotg *hsotg)
-{
+अटल व्योम dwc2_rx_fअगरo_level_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg)
+अणु
 	u32 grxsts, chnum, bcnt, dpid, pktsts;
-	struct dwc2_host_chan *chan;
+	काष्ठा dwc2_host_chan *chan;
 
-	if (dbg_perio())
+	अगर (dbg_perio())
 		dev_vdbg(hsotg->dev, "--RxFIFO Level Interrupt--\n");
 
-	grxsts = dwc2_readl(hsotg, GRXSTSP);
+	grxsts = dwc2_पढ़ोl(hsotg, GRXSTSP);
 	chnum = (grxsts & GRXSTS_HCHNUM_MASK) >> GRXSTS_HCHNUM_SHIFT;
 	chan = hsotg->hc_ptr_array[chnum];
-	if (!chan) {
+	अगर (!chan) अणु
 		dev_err(hsotg->dev, "Unable to get corresponding channel\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bcnt = (grxsts & GRXSTS_BYTECNT_MASK) >> GRXSTS_BYTECNT_SHIFT;
 	dpid = (grxsts & GRXSTS_DPID_MASK) >> GRXSTS_DPID_SHIFT;
 	pktsts = (grxsts & GRXSTS_PKTSTS_MASK) >> GRXSTS_PKTSTS_SHIFT;
 
 	/* Packet Status */
-	if (dbg_perio()) {
+	अगर (dbg_perio()) अणु
 		dev_vdbg(hsotg->dev, "    Ch num = %d\n", chnum);
 		dev_vdbg(hsotg->dev, "    Count = %d\n", bcnt);
 		dev_vdbg(hsotg->dev, "    DPID = %d, chan.dpid = %d\n", dpid,
 			 chan->data_pid_start);
 		dev_vdbg(hsotg->dev, "    PStatus = %d\n", pktsts);
-	}
+	पूर्ण
 
-	switch (pktsts) {
-	case GRXSTS_PKTSTS_HCHIN:
-		/* Read the data into the host buffer */
-		if (bcnt > 0) {
-			dwc2_read_packet(hsotg, chan->xfer_buf, bcnt);
+	चयन (pktsts) अणु
+	हाल GRXSTS_PKTSTS_HCHIN:
+		/* Read the data पूर्णांकo the host buffer */
+		अगर (bcnt > 0) अणु
+			dwc2_पढ़ो_packet(hsotg, chan->xfer_buf, bcnt);
 
-			/* Update the HC fields for the next packet received */
+			/* Update the HC fields क्रम the next packet received */
 			chan->xfer_count += bcnt;
 			chan->xfer_buf += bcnt;
-		}
-		break;
-	case GRXSTS_PKTSTS_HCHIN_XFER_COMP:
-	case GRXSTS_PKTSTS_DATATOGGLEERR:
-	case GRXSTS_PKTSTS_HCHHALTED:
-		/* Handled in interrupt, just ignore data */
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	हाल GRXSTS_PKTSTS_HCHIN_XFER_COMP:
+	हाल GRXSTS_PKTSTS_DATATOGGLEERR:
+	हाल GRXSTS_PKTSTS_HCHHALTED:
+		/* Handled in पूर्णांकerrupt, just ignore data */
+		अवरोध;
+	शेष:
 		dev_err(hsotg->dev,
 			"RxFIFO Level Interrupt: Unknown status %d\n", pktsts);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * This interrupt occurs when the non-periodic Tx FIFO is half-empty. More
- * data packets may be written to the FIFO for OUT transfers. More requests
- * may be written to the non-periodic request queue for IN transfers. This
- * interrupt is enabled only in Slave mode.
+ * This पूर्णांकerrupt occurs when the non-periodic Tx FIFO is half-empty. More
+ * data packets may be written to the FIFO क्रम OUT transfers. More requests
+ * may be written to the non-periodic request queue क्रम IN transfers. This
+ * पूर्णांकerrupt is enabled only in Slave mode.
  */
-static void dwc2_np_tx_fifo_empty_intr(struct dwc2_hsotg *hsotg)
-{
+अटल व्योम dwc2_np_tx_fअगरo_empty_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg)
+अणु
 	dev_vdbg(hsotg->dev, "--Non-Periodic TxFIFO Empty Interrupt--\n");
 	dwc2_hcd_queue_transactions(hsotg, DWC2_TRANSACTION_NON_PERIODIC);
-}
+पूर्ण
 
 /*
- * This interrupt occurs when the periodic Tx FIFO is half-empty. More data
- * packets may be written to the FIFO for OUT transfers. More requests may be
- * written to the periodic request queue for IN transfers. This interrupt is
+ * This पूर्णांकerrupt occurs when the periodic Tx FIFO is half-empty. More data
+ * packets may be written to the FIFO क्रम OUT transfers. More requests may be
+ * written to the periodic request queue क्रम IN transfers. This पूर्णांकerrupt is
  * enabled only in Slave mode.
  */
-static void dwc2_perio_tx_fifo_empty_intr(struct dwc2_hsotg *hsotg)
-{
-	if (dbg_perio())
+अटल व्योम dwc2_perio_tx_fअगरo_empty_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg)
+अणु
+	अगर (dbg_perio())
 		dev_vdbg(hsotg->dev, "--Periodic TxFIFO Empty Interrupt--\n");
 	dwc2_hcd_queue_transactions(hsotg, DWC2_TRANSACTION_PERIODIC);
-}
+पूर्ण
 
-static void dwc2_hprt0_enable(struct dwc2_hsotg *hsotg, u32 hprt0,
-			      u32 *hprt0_modify)
-{
-	struct dwc2_core_params *params = &hsotg->params;
-	int do_reset = 0;
+अटल व्योम dwc2_hprt0_enable(काष्ठा dwc2_hsotg *hsotg, u32 hprt0,
+			      u32 *hprt0_modअगरy)
+अणु
+	काष्ठा dwc2_core_params *params = &hsotg->params;
+	पूर्णांक करो_reset = 0;
 	u32 usbcfg;
 	u32 prtspd;
 	u32 hcfg;
@@ -273,108 +274,108 @@ static void dwc2_hprt0_enable(struct dwc2_hsotg *hsotg, u32 hprt0,
 
 	dev_vdbg(hsotg->dev, "%s(%p)\n", __func__, hsotg);
 
-	/* Every time when port enables calculate HFIR.FrInterval */
-	hfir = dwc2_readl(hsotg, HFIR);
+	/* Every समय when port enables calculate HFIR.FrInterval */
+	hfir = dwc2_पढ़ोl(hsotg, HFIR);
 	hfir &= ~HFIR_FRINT_MASK;
-	hfir |= dwc2_calc_frame_interval(hsotg) << HFIR_FRINT_SHIFT &
+	hfir |= dwc2_calc_frame_पूर्णांकerval(hsotg) << HFIR_FRINT_SHIFT &
 		HFIR_FRINT_MASK;
-	dwc2_writel(hsotg, hfir, HFIR);
+	dwc2_ग_लिखोl(hsotg, hfir, HFIR);
 
-	/* Check if we need to adjust the PHY clock speed for low power */
-	if (!params->host_support_fs_ls_low_power) {
+	/* Check अगर we need to adjust the PHY घड़ी speed क्रम low घातer */
+	अगर (!params->host_support_fs_ls_low_घातer) अणु
 		/* Port has been enabled, set the reset change flag */
 		hsotg->flags.b.port_reset_change = 1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	usbcfg = dwc2_readl(hsotg, GUSBCFG);
+	usbcfg = dwc2_पढ़ोl(hsotg, GUSBCFG);
 	prtspd = (hprt0 & HPRT0_SPD_MASK) >> HPRT0_SPD_SHIFT;
 
-	if (prtspd == HPRT0_SPD_LOW_SPEED || prtspd == HPRT0_SPD_FULL_SPEED) {
-		/* Low power */
-		if (!(usbcfg & GUSBCFG_PHY_LP_CLK_SEL)) {
-			/* Set PHY low power clock select for FS/LS devices */
+	अगर (prtspd == HPRT0_SPD_LOW_SPEED || prtspd == HPRT0_SPD_FULL_SPEED) अणु
+		/* Low घातer */
+		अगर (!(usbcfg & GUSBCFG_PHY_LP_CLK_SEL)) अणु
+			/* Set PHY low घातer घड़ी select क्रम FS/LS devices */
 			usbcfg |= GUSBCFG_PHY_LP_CLK_SEL;
-			dwc2_writel(hsotg, usbcfg, GUSBCFG);
-			do_reset = 1;
-		}
+			dwc2_ग_लिखोl(hsotg, usbcfg, GUSBCFG);
+			करो_reset = 1;
+		पूर्ण
 
-		hcfg = dwc2_readl(hsotg, HCFG);
+		hcfg = dwc2_पढ़ोl(hsotg, HCFG);
 		fslspclksel = (hcfg & HCFG_FSLSPCLKSEL_MASK) >>
 			      HCFG_FSLSPCLKSEL_SHIFT;
 
-		if (prtspd == HPRT0_SPD_LOW_SPEED &&
-		    params->host_ls_low_power_phy_clk) {
+		अगर (prtspd == HPRT0_SPD_LOW_SPEED &&
+		    params->host_ls_low_घातer_phy_clk) अणु
 			/* 6 MHZ */
 			dev_vdbg(hsotg->dev,
 				 "FS_PHY programming HCFG to 6 MHz\n");
-			if (fslspclksel != HCFG_FSLSPCLKSEL_6_MHZ) {
+			अगर (fslspclksel != HCFG_FSLSPCLKSEL_6_MHZ) अणु
 				fslspclksel = HCFG_FSLSPCLKSEL_6_MHZ;
 				hcfg &= ~HCFG_FSLSPCLKSEL_MASK;
 				hcfg |= fslspclksel << HCFG_FSLSPCLKSEL_SHIFT;
-				dwc2_writel(hsotg, hcfg, HCFG);
-				do_reset = 1;
-			}
-		} else {
+				dwc2_ग_लिखोl(hsotg, hcfg, HCFG);
+				करो_reset = 1;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* 48 MHZ */
 			dev_vdbg(hsotg->dev,
 				 "FS_PHY programming HCFG to 48 MHz\n");
-			if (fslspclksel != HCFG_FSLSPCLKSEL_48_MHZ) {
+			अगर (fslspclksel != HCFG_FSLSPCLKSEL_48_MHZ) अणु
 				fslspclksel = HCFG_FSLSPCLKSEL_48_MHZ;
 				hcfg &= ~HCFG_FSLSPCLKSEL_MASK;
 				hcfg |= fslspclksel << HCFG_FSLSPCLKSEL_SHIFT;
-				dwc2_writel(hsotg, hcfg, HCFG);
-				do_reset = 1;
-			}
-		}
-	} else {
-		/* Not low power */
-		if (usbcfg & GUSBCFG_PHY_LP_CLK_SEL) {
+				dwc2_ग_लिखोl(hsotg, hcfg, HCFG);
+				करो_reset = 1;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Not low घातer */
+		अगर (usbcfg & GUSBCFG_PHY_LP_CLK_SEL) अणु
 			usbcfg &= ~GUSBCFG_PHY_LP_CLK_SEL;
-			dwc2_writel(hsotg, usbcfg, GUSBCFG);
-			do_reset = 1;
-		}
-	}
+			dwc2_ग_लिखोl(hsotg, usbcfg, GUSBCFG);
+			करो_reset = 1;
+		पूर्ण
+	पूर्ण
 
-	if (do_reset) {
-		*hprt0_modify |= HPRT0_RST;
-		dwc2_writel(hsotg, *hprt0_modify, HPRT0);
+	अगर (करो_reset) अणु
+		*hprt0_modअगरy |= HPRT0_RST;
+		dwc2_ग_लिखोl(hsotg, *hprt0_modअगरy, HPRT0);
 		queue_delayed_work(hsotg->wq_otg, &hsotg->reset_work,
-				   msecs_to_jiffies(60));
-	} else {
+				   msecs_to_jअगरfies(60));
+	पूर्ण अन्यथा अणु
 		/* Port has been enabled, set the reset change flag */
 		hsotg->flags.b.port_reset_change = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * There are multiple conditions that can cause a port interrupt. This function
- * determines which interrupt conditions have occurred and handles them
+ * There are multiple conditions that can cause a port पूर्णांकerrupt. This function
+ * determines which पूर्णांकerrupt conditions have occurred and handles them
  * appropriately.
  */
-static void dwc2_port_intr(struct dwc2_hsotg *hsotg)
-{
+अटल व्योम dwc2_port_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg)
+अणु
 	u32 hprt0;
-	u32 hprt0_modify;
+	u32 hprt0_modअगरy;
 
 	dev_vdbg(hsotg->dev, "--Port Interrupt--\n");
 
-	hprt0 = dwc2_readl(hsotg, HPRT0);
-	hprt0_modify = hprt0;
+	hprt0 = dwc2_पढ़ोl(hsotg, HPRT0);
+	hprt0_modअगरy = hprt0;
 
 	/*
-	 * Clear appropriate bits in HPRT0 to clear the interrupt bit in
+	 * Clear appropriate bits in HPRT0 to clear the पूर्णांकerrupt bit in
 	 * GINTSTS
 	 */
-	hprt0_modify &= ~(HPRT0_ENA | HPRT0_CONNDET | HPRT0_ENACHG |
+	hprt0_modअगरy &= ~(HPRT0_ENA | HPRT0_CONNDET | HPRT0_ENACHG |
 			  HPRT0_OVRCURRCHG);
 
 	/*
 	 * Port Connect Detected
-	 * Set flag and clear if detected
+	 * Set flag and clear अगर detected
 	 */
-	if (hprt0 & HPRT0_CONNDET) {
-		dwc2_writel(hsotg, hprt0_modify | HPRT0_CONNDET, HPRT0);
+	अगर (hprt0 & HPRT0_CONNDET) अणु
+		dwc2_ग_लिखोl(hsotg, hprt0_modअगरy | HPRT0_CONNDET, HPRT0);
 
 		dev_vdbg(hsotg->dev,
 			 "--Port Interrupt HPRT0=0x%08x Port Connect Detected--\n",
@@ -382,101 +383,101 @@ static void dwc2_port_intr(struct dwc2_hsotg *hsotg)
 		dwc2_hcd_connect(hsotg);
 
 		/*
-		 * The Hub driver asserts a reset when it sees port connect
+		 * The Hub driver निश्चितs a reset when it sees port connect
 		 * status change flag
 		 */
-	}
+	पूर्ण
 
 	/*
 	 * Port Enable Changed
-	 * Clear if detected - Set internal flag if disabled
+	 * Clear अगर detected - Set पूर्णांकernal flag अगर disabled
 	 */
-	if (hprt0 & HPRT0_ENACHG) {
-		dwc2_writel(hsotg, hprt0_modify | HPRT0_ENACHG, HPRT0);
+	अगर (hprt0 & HPRT0_ENACHG) अणु
+		dwc2_ग_लिखोl(hsotg, hprt0_modअगरy | HPRT0_ENACHG, HPRT0);
 		dev_vdbg(hsotg->dev,
 			 "  --Port Interrupt HPRT0=0x%08x Port Enable Changed (now %d)--\n",
 			 hprt0, !!(hprt0 & HPRT0_ENA));
-		if (hprt0 & HPRT0_ENA) {
+		अगर (hprt0 & HPRT0_ENA) अणु
 			hsotg->new_connection = true;
-			dwc2_hprt0_enable(hsotg, hprt0, &hprt0_modify);
-		} else {
+			dwc2_hprt0_enable(hsotg, hprt0, &hprt0_modअगरy);
+		पूर्ण अन्यथा अणु
 			hsotg->flags.b.port_enable_change = 1;
-			if (hsotg->params.dma_desc_fs_enable) {
+			अगर (hsotg->params.dma_desc_fs_enable) अणु
 				u32 hcfg;
 
 				hsotg->params.dma_desc_enable = false;
 				hsotg->new_connection = false;
-				hcfg = dwc2_readl(hsotg, HCFG);
+				hcfg = dwc2_पढ़ोl(hsotg, HCFG);
 				hcfg &= ~HCFG_DESCDMA;
-				dwc2_writel(hsotg, hcfg, HCFG);
-			}
-		}
-	}
+				dwc2_ग_लिखोl(hsotg, hcfg, HCFG);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Overcurrent Change Interrupt */
-	if (hprt0 & HPRT0_OVRCURRCHG) {
-		dwc2_writel(hsotg, hprt0_modify | HPRT0_OVRCURRCHG,
+	अगर (hprt0 & HPRT0_OVRCURRCHG) अणु
+		dwc2_ग_लिखोl(hsotg, hprt0_modअगरy | HPRT0_OVRCURRCHG,
 			    HPRT0);
 		dev_vdbg(hsotg->dev,
 			 "  --Port Interrupt HPRT0=0x%08x Port Overcurrent Changed--\n",
 			 hprt0);
 		hsotg->flags.b.port_over_current_change = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Gets the actual length of a transfer after the transfer halts. halt_status
- * holds the reason for the halt.
+ * holds the reason क्रम the halt.
  *
- * For IN transfers where halt_status is DWC2_HC_XFER_COMPLETE, *short_read
- * is set to 1 upon return if less than the requested number of bytes were
- * transferred. short_read may also be NULL on entry, in which case it remains
+ * For IN transfers where halt_status is DWC2_HC_XFER_COMPLETE, *लघु_पढ़ो
+ * is set to 1 upon वापस अगर less than the requested number of bytes were
+ * transferred. लघु_पढ़ो may also be शून्य on entry, in which हाल it reमुख्यs
  * unchanged.
  */
-static u32 dwc2_get_actual_xfer_length(struct dwc2_hsotg *hsotg,
-				       struct dwc2_host_chan *chan, int chnum,
-				       struct dwc2_qtd *qtd,
-				       enum dwc2_halt_status halt_status,
-				       int *short_read)
-{
+अटल u32 dwc2_get_actual_xfer_length(काष्ठा dwc2_hsotg *hsotg,
+				       काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				       काष्ठा dwc2_qtd *qtd,
+				       क्रमागत dwc2_halt_status halt_status,
+				       पूर्णांक *लघु_पढ़ो)
+अणु
 	u32 hctsiz, count, length;
 
-	hctsiz = dwc2_readl(hsotg, HCTSIZ(chnum));
+	hctsiz = dwc2_पढ़ोl(hsotg, HCTSIZ(chnum));
 
-	if (halt_status == DWC2_HC_XFER_COMPLETE) {
-		if (chan->ep_is_in) {
+	अगर (halt_status == DWC2_HC_XFER_COMPLETE) अणु
+		अगर (chan->ep_is_in) अणु
 			count = (hctsiz & TSIZ_XFERSIZE_MASK) >>
 				TSIZ_XFERSIZE_SHIFT;
 			length = chan->xfer_len - count;
-			if (short_read)
-				*short_read = (count != 0);
-		} else if (chan->qh->do_split) {
+			अगर (लघु_पढ़ो)
+				*लघु_पढ़ो = (count != 0);
+		पूर्ण अन्यथा अगर (chan->qh->करो_split) अणु
 			length = qtd->ssplit_out_xfer_count;
-		} else {
+		पूर्ण अन्यथा अणु
 			length = chan->xfer_len;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * Must use the hctsiz.pktcnt field to determine how much data
 		 * has been transferred. This field reflects the number of
 		 * packets that have been transferred via the USB. This is
-		 * always an integral number of packets if the transfer was
-		 * halted before its normal completion. (Can't use the
+		 * always an पूर्णांकegral number of packets अगर the transfer was
+		 * halted beक्रमe its normal completion. (Can't use the
 		 * hctsiz.xfersize field because that reflects the number of
 		 * bytes transferred via the AHB, not the USB).
 		 */
 		count = (hctsiz & TSIZ_PKTCNT_MASK) >> TSIZ_PKTCNT_SHIFT;
 		length = (chan->start_pkt_count - count) * chan->max_packet;
-	}
+	पूर्ण
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
 /**
  * dwc2_update_urb_state() - Updates the state of the URB after a Transfer
- * Complete interrupt on the host channel. Updates the actual_length field
+ * Complete पूर्णांकerrupt on the host channel. Updates the actual_length field
  * of the URB based on the number of bytes transferred via the host channel.
- * Sets the URB status if the data transfer is finished.
+ * Sets the URB status अगर the data transfer is finished.
  *
  * @hsotg: Programming view of the DWC_otg controller
  * @chan: Programming view of host channel
@@ -484,41 +485,41 @@ static u32 dwc2_get_actual_xfer_length(struct dwc2_hsotg *hsotg,
  * @urb: Processing URB
  * @qtd: Queue transfer descriptor
  *
- * Return: 1 if the data transfer specified by the URB is completely finished,
+ * Return: 1 अगर the data transfer specअगरied by the URB is completely finished,
  * 0 otherwise
  */
-static int dwc2_update_urb_state(struct dwc2_hsotg *hsotg,
-				 struct dwc2_host_chan *chan, int chnum,
-				 struct dwc2_hcd_urb *urb,
-				 struct dwc2_qtd *qtd)
-{
+अटल पूर्णांक dwc2_update_urb_state(काष्ठा dwc2_hsotg *hsotg,
+				 काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				 काष्ठा dwc2_hcd_urb *urb,
+				 काष्ठा dwc2_qtd *qtd)
+अणु
 	u32 hctsiz;
-	int xfer_done = 0;
-	int short_read = 0;
-	int xfer_length = dwc2_get_actual_xfer_length(hsotg, chan, chnum, qtd,
+	पूर्णांक xfer_करोne = 0;
+	पूर्णांक लघु_पढ़ो = 0;
+	पूर्णांक xfer_length = dwc2_get_actual_xfer_length(hsotg, chan, chnum, qtd,
 						      DWC2_HC_XFER_COMPLETE,
-						      &short_read);
+						      &लघु_पढ़ो);
 
-	if (urb->actual_length + xfer_length > urb->length) {
+	अगर (urb->actual_length + xfer_length > urb->length) अणु
 		dev_dbg(hsotg->dev, "%s(): trimming xfer length\n", __func__);
 		xfer_length = urb->length - urb->actual_length;
-	}
+	पूर्ण
 
 	dev_vdbg(hsotg->dev, "urb->actual_length=%d xfer_length=%d\n",
 		 urb->actual_length, xfer_length);
 	urb->actual_length += xfer_length;
 
-	if (xfer_length && chan->ep_type == USB_ENDPOINT_XFER_BULK &&
+	अगर (xfer_length && chan->ep_type == USB_ENDPOINT_XFER_BULK &&
 	    (urb->flags & URB_SEND_ZERO_PACKET) &&
 	    urb->actual_length >= urb->length &&
-	    !(urb->length % chan->max_packet)) {
-		xfer_done = 0;
-	} else if (short_read || urb->actual_length >= urb->length) {
-		xfer_done = 1;
+	    !(urb->length % chan->max_packet)) अणु
+		xfer_करोne = 0;
+	पूर्ण अन्यथा अगर (लघु_पढ़ो || urb->actual_length >= urb->length) अणु
+		xfer_करोne = 1;
 		urb->status = 0;
-	}
+	पूर्ण
 
-	hctsiz = dwc2_readl(hsotg, HCTSIZ(chnum));
+	hctsiz = dwc2_पढ़ोl(hsotg, HCTSIZ(chnum));
 	dev_vdbg(hsotg->dev, "DWC_otg: %s: %s, channel %d\n",
 		 __func__, (chan->ep_is_in ? "IN" : "OUT"), chnum);
 	dev_vdbg(hsotg->dev, "  chan->xfer_len %d\n", chan->xfer_len);
@@ -526,666 +527,666 @@ static int dwc2_update_urb_state(struct dwc2_hsotg *hsotg,
 		 (hctsiz & TSIZ_XFERSIZE_MASK) >> TSIZ_XFERSIZE_SHIFT);
 	dev_vdbg(hsotg->dev, "  urb->transfer_buffer_length %d\n", urb->length);
 	dev_vdbg(hsotg->dev, "  urb->actual_length %d\n", urb->actual_length);
-	dev_vdbg(hsotg->dev, "  short_read %d, xfer_done %d\n", short_read,
-		 xfer_done);
+	dev_vdbg(hsotg->dev, "  short_read %d, xfer_done %d\n", लघु_पढ़ो,
+		 xfer_करोne);
 
-	return xfer_done;
-}
+	वापस xfer_करोne;
+पूर्ण
 
 /*
- * Save the starting data toggle for the next transfer. The data toggle is
- * saved in the QH for non-control transfers and it's saved in the QTD for
+ * Save the starting data toggle क्रम the next transfer. The data toggle is
+ * saved in the QH क्रम non-control transfers and it's saved in the QTD क्रम
  * control transfers.
  */
-void dwc2_hcd_save_data_toggle(struct dwc2_hsotg *hsotg,
-			       struct dwc2_host_chan *chan, int chnum,
-			       struct dwc2_qtd *qtd)
-{
-	u32 hctsiz = dwc2_readl(hsotg, HCTSIZ(chnum));
+व्योम dwc2_hcd_save_data_toggle(काष्ठा dwc2_hsotg *hsotg,
+			       काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+			       काष्ठा dwc2_qtd *qtd)
+अणु
+	u32 hctsiz = dwc2_पढ़ोl(hsotg, HCTSIZ(chnum));
 	u32 pid = (hctsiz & TSIZ_SC_MC_PID_MASK) >> TSIZ_SC_MC_PID_SHIFT;
 
-	if (chan->ep_type != USB_ENDPOINT_XFER_CONTROL) {
-		if (WARN(!chan || !chan->qh,
+	अगर (chan->ep_type != USB_ENDPOINT_XFER_CONTROL) अणु
+		अगर (WARN(!chan || !chan->qh,
 			 "chan->qh must be specified for non-control eps\n"))
-			return;
+			वापस;
 
-		if (pid == TSIZ_SC_MC_PID_DATA0)
+		अगर (pid == TSIZ_SC_MC_PID_DATA0)
 			chan->qh->data_toggle = DWC2_HC_PID_DATA0;
-		else
+		अन्यथा
 			chan->qh->data_toggle = DWC2_HC_PID_DATA1;
-	} else {
-		if (WARN(!qtd,
+	पूर्ण अन्यथा अणु
+		अगर (WARN(!qtd,
 			 "qtd must be specified for control eps\n"))
-			return;
+			वापस;
 
-		if (pid == TSIZ_SC_MC_PID_DATA0)
+		अगर (pid == TSIZ_SC_MC_PID_DATA0)
 			qtd->data_toggle = DWC2_HC_PID_DATA0;
-		else
+		अन्यथा
 			qtd->data_toggle = DWC2_HC_PID_DATA1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * dwc2_update_isoc_urb_state() - Updates the state of an Isochronous URB when
- * the transfer is stopped for any reason. The fields of the current entry in
+ * the transfer is stopped क्रम any reason. The fields of the current entry in
  * the frame descriptor array are set based on the transfer state and the input
- * halt_status. Completes the Isochronous URB if all the URB frames have been
+ * halt_status. Completes the Isochronous URB अगर all the URB frames have been
  * completed.
  *
  * @hsotg: Programming view of the DWC_otg controller
  * @chan: Programming view of host channel
  * @chnum: Channel number
- * @halt_status: Reason for halting a host channel
+ * @halt_status: Reason क्रम halting a host channel
  * @qtd: Queue transfer descriptor
  *
- * Return: DWC2_HC_XFER_COMPLETE if there are more frames remaining to be
- * transferred in the URB. Otherwise return DWC2_HC_XFER_URB_COMPLETE.
+ * Return: DWC2_HC_XFER_COMPLETE अगर there are more frames reमुख्यing to be
+ * transferred in the URB. Otherwise वापस DWC2_HC_XFER_URB_COMPLETE.
  */
-static enum dwc2_halt_status dwc2_update_isoc_urb_state(
-		struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan,
-		int chnum, struct dwc2_qtd *qtd,
-		enum dwc2_halt_status halt_status)
-{
-	struct dwc2_hcd_iso_packet_desc *frame_desc;
-	struct dwc2_hcd_urb *urb = qtd->urb;
+अटल क्रमागत dwc2_halt_status dwc2_update_isoc_urb_state(
+		काष्ठा dwc2_hsotg *hsotg, काष्ठा dwc2_host_chan *chan,
+		पूर्णांक chnum, काष्ठा dwc2_qtd *qtd,
+		क्रमागत dwc2_halt_status halt_status)
+अणु
+	काष्ठा dwc2_hcd_iso_packet_desc *frame_desc;
+	काष्ठा dwc2_hcd_urb *urb = qtd->urb;
 
-	if (!urb)
-		return DWC2_HC_XFER_NO_HALT_STATUS;
+	अगर (!urb)
+		वापस DWC2_HC_XFER_NO_HALT_STATUS;
 
 	frame_desc = &urb->iso_descs[qtd->isoc_frame_index];
 
-	switch (halt_status) {
-	case DWC2_HC_XFER_COMPLETE:
+	चयन (halt_status) अणु
+	हाल DWC2_HC_XFER_COMPLETE:
 		frame_desc->status = 0;
 		frame_desc->actual_length = dwc2_get_actual_xfer_length(hsotg,
-					chan, chnum, qtd, halt_status, NULL);
-		break;
-	case DWC2_HC_XFER_FRAME_OVERRUN:
+					chan, chnum, qtd, halt_status, शून्य);
+		अवरोध;
+	हाल DWC2_HC_XFER_FRAME_OVERRUN:
 		urb->error_count++;
-		if (chan->ep_is_in)
+		अगर (chan->ep_is_in)
 			frame_desc->status = -ENOSR;
-		else
+		अन्यथा
 			frame_desc->status = -ECOMM;
 		frame_desc->actual_length = 0;
-		break;
-	case DWC2_HC_XFER_BABBLE_ERR:
+		अवरोध;
+	हाल DWC2_HC_XFER_BABBLE_ERR:
 		urb->error_count++;
 		frame_desc->status = -EOVERFLOW;
-		/* Don't need to update actual_length in this case */
-		break;
-	case DWC2_HC_XFER_XACT_ERR:
+		/* Don't need to update actual_length in this हाल */
+		अवरोध;
+	हाल DWC2_HC_XFER_XACT_ERR:
 		urb->error_count++;
 		frame_desc->status = -EPROTO;
 		frame_desc->actual_length = dwc2_get_actual_xfer_length(hsotg,
-					chan, chnum, qtd, halt_status, NULL);
+					chan, chnum, qtd, halt_status, शून्य);
 
 		/* Skip whole frame */
-		if (chan->qh->do_split &&
+		अगर (chan->qh->करो_split &&
 		    chan->ep_type == USB_ENDPOINT_XFER_ISOC && chan->ep_is_in &&
-		    hsotg->params.host_dma) {
+		    hsotg->params.host_dma) अणु
 			qtd->complete_split = 0;
 			qtd->isoc_split_offset = 0;
-		}
+		पूर्ण
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(hsotg->dev, "Unhandled halt_status (%d)\n",
 			halt_status);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (++qtd->isoc_frame_index == urb->packet_count) {
+	अगर (++qtd->isoc_frame_index == urb->packet_count) अणु
 		/*
-		 * urb->status is not used for isoc transfers. The individual
+		 * urb->status is not used क्रम isoc transfers. The inभागidual
 		 * frame_desc statuses are used instead.
 		 */
 		dwc2_host_complete(hsotg, qtd, 0);
 		halt_status = DWC2_HC_XFER_URB_COMPLETE;
-	} else {
+	पूर्ण अन्यथा अणु
 		halt_status = DWC2_HC_XFER_COMPLETE;
-	}
+	पूर्ण
 
-	return halt_status;
-}
+	वापस halt_status;
+पूर्ण
 
 /*
- * Frees the first QTD in the QH's list if free_qtd is 1. For non-periodic
- * QHs, removes the QH from the active non-periodic schedule. If any QTDs are
+ * Frees the first QTD in the QH's list अगर मुक्त_qtd is 1. For non-periodic
+ * QHs, हटाओs the QH from the active non-periodic schedule. If any QTDs are
  * still linked to the QH, the QH is added to the end of the inactive
- * non-periodic schedule. For periodic QHs, removes the QH from the periodic
- * schedule if no more QTDs are linked to the QH.
+ * non-periodic schedule. For periodic QHs, हटाओs the QH from the periodic
+ * schedule अगर no more QTDs are linked to the QH.
  */
-static void dwc2_deactivate_qh(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
-			       int free_qtd)
-{
-	int continue_split = 0;
-	struct dwc2_qtd *qtd;
+अटल व्योम dwc2_deactivate_qh(काष्ठा dwc2_hsotg *hsotg, काष्ठा dwc2_qh *qh,
+			       पूर्णांक मुक्त_qtd)
+अणु
+	पूर्णांक जारी_split = 0;
+	काष्ठा dwc2_qtd *qtd;
 
-	if (dbg_qh(qh))
+	अगर (dbg_qh(qh))
 		dev_vdbg(hsotg->dev, "  %s(%p,%p,%d)\n", __func__,
-			 hsotg, qh, free_qtd);
+			 hsotg, qh, मुक्त_qtd);
 
-	if (list_empty(&qh->qtd_list)) {
+	अगर (list_empty(&qh->qtd_list)) अणु
 		dev_dbg(hsotg->dev, "## QTD list empty ##\n");
-		goto no_qtd;
-	}
+		जाओ no_qtd;
+	पूर्ण
 
-	qtd = list_first_entry(&qh->qtd_list, struct dwc2_qtd, qtd_list_entry);
+	qtd = list_first_entry(&qh->qtd_list, काष्ठा dwc2_qtd, qtd_list_entry);
 
-	if (qtd->complete_split)
-		continue_split = 1;
-	else if (qtd->isoc_split_pos == DWC2_HCSPLT_XACTPOS_MID ||
+	अगर (qtd->complete_split)
+		जारी_split = 1;
+	अन्यथा अगर (qtd->isoc_split_pos == DWC2_HCSPLT_XACTPOS_MID ||
 		 qtd->isoc_split_pos == DWC2_HCSPLT_XACTPOS_END)
-		continue_split = 1;
+		जारी_split = 1;
 
-	if (free_qtd) {
-		dwc2_hcd_qtd_unlink_and_free(hsotg, qtd, qh);
-		continue_split = 0;
-	}
+	अगर (मुक्त_qtd) अणु
+		dwc2_hcd_qtd_unlink_and_मुक्त(hsotg, qtd, qh);
+		जारी_split = 0;
+	पूर्ण
 
 no_qtd:
-	qh->channel = NULL;
-	dwc2_hcd_qh_deactivate(hsotg, qh, continue_split);
-}
+	qh->channel = शून्य;
+	dwc2_hcd_qh_deactivate(hsotg, qh, जारी_split);
+पूर्ण
 
 /**
- * dwc2_release_channel() - Releases a host channel for use by other transfers
+ * dwc2_release_channel() - Releases a host channel क्रम use by other transfers
  *
- * @hsotg:       The HCD state structure
+ * @hsotg:       The HCD state काष्ठाure
  * @chan:        The host channel to release
  * @qtd:         The QTD associated with the host channel. This QTD may be
- *               freed if the transfer is complete or an error has occurred.
+ *               मुक्तd अगर the transfer is complete or an error has occurred.
  * @halt_status: Reason the channel is being released. This status
  *               determines the actions taken by this function.
  *
  * Also attempts to select and queue more transactions since at least one host
  * channel is available.
  */
-static void dwc2_release_channel(struct dwc2_hsotg *hsotg,
-				 struct dwc2_host_chan *chan,
-				 struct dwc2_qtd *qtd,
-				 enum dwc2_halt_status halt_status)
-{
-	enum dwc2_transaction_type tr_type;
-	u32 haintmsk;
-	int free_qtd = 0;
+अटल व्योम dwc2_release_channel(काष्ठा dwc2_hsotg *hsotg,
+				 काष्ठा dwc2_host_chan *chan,
+				 काष्ठा dwc2_qtd *qtd,
+				 क्रमागत dwc2_halt_status halt_status)
+अणु
+	क्रमागत dwc2_transaction_type tr_type;
+	u32 haपूर्णांकmsk;
+	पूर्णांक मुक्त_qtd = 0;
 
-	if (dbg_hc(chan))
+	अगर (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "  %s: channel %d, halt_status %d\n",
 			 __func__, chan->hc_num, halt_status);
 
-	switch (halt_status) {
-	case DWC2_HC_XFER_URB_COMPLETE:
-		free_qtd = 1;
-		break;
-	case DWC2_HC_XFER_AHB_ERR:
-	case DWC2_HC_XFER_STALL:
-	case DWC2_HC_XFER_BABBLE_ERR:
-		free_qtd = 1;
-		break;
-	case DWC2_HC_XFER_XACT_ERR:
-		if (qtd && qtd->error_count >= 3) {
+	चयन (halt_status) अणु
+	हाल DWC2_HC_XFER_URB_COMPLETE:
+		मुक्त_qtd = 1;
+		अवरोध;
+	हाल DWC2_HC_XFER_AHB_ERR:
+	हाल DWC2_HC_XFER_STALL:
+	हाल DWC2_HC_XFER_BABBLE_ERR:
+		मुक्त_qtd = 1;
+		अवरोध;
+	हाल DWC2_HC_XFER_XACT_ERR:
+		अगर (qtd && qtd->error_count >= 3) अणु
 			dev_vdbg(hsotg->dev,
 				 "  Complete URB with transaction error\n");
-			free_qtd = 1;
+			मुक्त_qtd = 1;
 			dwc2_host_complete(hsotg, qtd, -EPROTO);
-		}
-		break;
-	case DWC2_HC_XFER_URB_DEQUEUE:
+		पूर्ण
+		अवरोध;
+	हाल DWC2_HC_XFER_URB_DEQUEUE:
 		/*
-		 * The QTD has already been removed and the QH has been
-		 * deactivated. Don't want to do anything except release the
+		 * The QTD has alपढ़ोy been हटाओd and the QH has been
+		 * deactivated. Don't want to करो anything except release the
 		 * host channel and try to queue more transfers.
 		 */
-		goto cleanup;
-	case DWC2_HC_XFER_PERIODIC_INCOMPLETE:
+		जाओ cleanup;
+	हाल DWC2_HC_XFER_PERIODIC_INCOMPLETE:
 		dev_vdbg(hsotg->dev, "  Complete URB with I/O error\n");
-		free_qtd = 1;
+		मुक्त_qtd = 1;
 		dwc2_host_complete(hsotg, qtd, -EIO);
-		break;
-	case DWC2_HC_XFER_NO_HALT_STATUS:
-	default:
-		break;
-	}
+		अवरोध;
+	हाल DWC2_HC_XFER_NO_HALT_STATUS:
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	dwc2_deactivate_qh(hsotg, chan->qh, free_qtd);
+	dwc2_deactivate_qh(hsotg, chan->qh, मुक्त_qtd);
 
 cleanup:
 	/*
-	 * Release the host channel for use by other transfers. The cleanup
-	 * function clears the channel interrupt enables and conditions, so
-	 * there's no need to clear the Channel Halted interrupt separately.
+	 * Release the host channel क्रम use by other transfers. The cleanup
+	 * function clears the channel पूर्णांकerrupt enables and conditions, so
+	 * there's no need to clear the Channel Halted पूर्णांकerrupt separately.
 	 */
-	if (!list_empty(&chan->hc_list_entry))
+	अगर (!list_empty(&chan->hc_list_entry))
 		list_del(&chan->hc_list_entry);
 	dwc2_hc_cleanup(hsotg, chan);
-	list_add_tail(&chan->hc_list_entry, &hsotg->free_hc_list);
+	list_add_tail(&chan->hc_list_entry, &hsotg->मुक्त_hc_list);
 
-	if (hsotg->params.uframe_sched) {
+	अगर (hsotg->params.uframe_sched) अणु
 		hsotg->available_host_channels++;
-	} else {
-		switch (chan->ep_type) {
-		case USB_ENDPOINT_XFER_CONTROL:
-		case USB_ENDPOINT_XFER_BULK:
+	पूर्ण अन्यथा अणु
+		चयन (chan->ep_type) अणु
+		हाल USB_ENDPOINT_XFER_CONTROL:
+		हाल USB_ENDPOINT_XFER_BULK:
 			hsotg->non_periodic_channels--;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
-			 * Don't release reservations for periodic channels
-			 * here. That's done when a periodic transfer is
-			 * descheduled (i.e. when the QH is removed from the
+			 * Don't release reservations क्रम periodic channels
+			 * here. That's करोne when a periodic transfer is
+			 * descheduled (i.e. when the QH is हटाओd from the
 			 * periodic schedule).
 			 */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	haintmsk = dwc2_readl(hsotg, HAINTMSK);
-	haintmsk &= ~(1 << chan->hc_num);
-	dwc2_writel(hsotg, haintmsk, HAINTMSK);
+	haपूर्णांकmsk = dwc2_पढ़ोl(hsotg, HAINTMSK);
+	haपूर्णांकmsk &= ~(1 << chan->hc_num);
+	dwc2_ग_लिखोl(hsotg, haपूर्णांकmsk, HAINTMSK);
 
-	/* Try to queue more transfers now that there's a free channel */
+	/* Try to queue more transfers now that there's a मुक्त channel */
 	tr_type = dwc2_hcd_select_transactions(hsotg);
-	if (tr_type != DWC2_TRANSACTION_NONE)
+	अगर (tr_type != DWC2_TRANSACTION_NONE)
 		dwc2_hcd_queue_transactions(hsotg, tr_type);
-}
+पूर्ण
 
 /*
  * Halts a host channel. If the channel cannot be halted immediately because
  * the request queue is full, this function ensures that the FIFO empty
- * interrupt for the appropriate queue is enabled so that the halt request can
+ * पूर्णांकerrupt क्रम the appropriate queue is enabled so that the halt request can
  * be queued when there is space in the request queue.
  *
- * This function may also be called in DMA mode. In that case, the channel is
- * simply released since the core always halts the channel automatically in
+ * This function may also be called in DMA mode. In that हाल, the channel is
+ * simply released since the core always halts the channel स्वतःmatically in
  * DMA mode.
  */
-static void dwc2_halt_channel(struct dwc2_hsotg *hsotg,
-			      struct dwc2_host_chan *chan, struct dwc2_qtd *qtd,
-			      enum dwc2_halt_status halt_status)
-{
-	if (dbg_hc(chan))
+अटल व्योम dwc2_halt_channel(काष्ठा dwc2_hsotg *hsotg,
+			      काष्ठा dwc2_host_chan *chan, काष्ठा dwc2_qtd *qtd,
+			      क्रमागत dwc2_halt_status halt_status)
+अणु
+	अगर (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
-	if (hsotg->params.host_dma) {
-		if (dbg_hc(chan))
+	अगर (hsotg->params.host_dma) अणु
+		अगर (dbg_hc(chan))
 			dev_vdbg(hsotg->dev, "DMA enabled\n");
 		dwc2_release_channel(hsotg, chan, qtd, halt_status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Slave mode processing */
 	dwc2_hc_halt(hsotg, chan, halt_status);
 
-	if (chan->halt_on_queue) {
-		u32 gintmsk;
+	अगर (chan->halt_on_queue) अणु
+		u32 gपूर्णांकmsk;
 
 		dev_vdbg(hsotg->dev, "Halt on queue\n");
-		if (chan->ep_type == USB_ENDPOINT_XFER_CONTROL ||
-		    chan->ep_type == USB_ENDPOINT_XFER_BULK) {
+		अगर (chan->ep_type == USB_ENDPOINT_XFER_CONTROL ||
+		    chan->ep_type == USB_ENDPOINT_XFER_BULK) अणु
 			dev_vdbg(hsotg->dev, "control/bulk\n");
 			/*
-			 * Make sure the Non-periodic Tx FIFO empty interrupt
+			 * Make sure the Non-periodic Tx FIFO empty पूर्णांकerrupt
 			 * is enabled so that the non-periodic schedule will
 			 * be processed
 			 */
-			gintmsk = dwc2_readl(hsotg, GINTMSK);
-			gintmsk |= GINTSTS_NPTXFEMP;
-			dwc2_writel(hsotg, gintmsk, GINTMSK);
-		} else {
+			gपूर्णांकmsk = dwc2_पढ़ोl(hsotg, GINTMSK);
+			gपूर्णांकmsk |= GINTSTS_NPTXFEMP;
+			dwc2_ग_लिखोl(hsotg, gपूर्णांकmsk, GINTMSK);
+		पूर्ण अन्यथा अणु
 			dev_vdbg(hsotg->dev, "isoc/intr\n");
 			/*
 			 * Move the QH from the periodic queued schedule to
-			 * the periodic assigned schedule. This allows the
+			 * the periodic asचिन्हित schedule. This allows the
 			 * halt to be queued when the periodic schedule is
 			 * processed.
 			 */
 			list_move_tail(&chan->qh->qh_list_entry,
-				       &hsotg->periodic_sched_assigned);
+				       &hsotg->periodic_sched_asचिन्हित);
 
 			/*
-			 * Make sure the Periodic Tx FIFO Empty interrupt is
+			 * Make sure the Periodic Tx FIFO Empty पूर्णांकerrupt is
 			 * enabled so that the periodic schedule will be
 			 * processed
 			 */
-			gintmsk = dwc2_readl(hsotg, GINTMSK);
-			gintmsk |= GINTSTS_PTXFEMP;
-			dwc2_writel(hsotg, gintmsk, GINTMSK);
-		}
-	}
-}
+			gपूर्णांकmsk = dwc2_पढ़ोl(hsotg, GINTMSK);
+			gपूर्णांकmsk |= GINTSTS_PTXFEMP;
+			dwc2_ग_लिखोl(hsotg, gपूर्णांकmsk, GINTMSK);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Performs common cleanup for non-periodic transfers after a Transfer
- * Complete interrupt. This function should be called after any endpoint type
- * specific handling is finished to release the host channel.
+ * Perक्रमms common cleanup क्रम non-periodic transfers after a Transfer
+ * Complete पूर्णांकerrupt. This function should be called after any endpoपूर्णांक type
+ * specअगरic handling is finished to release the host channel.
  */
-static void dwc2_complete_non_periodic_xfer(struct dwc2_hsotg *hsotg,
-					    struct dwc2_host_chan *chan,
-					    int chnum, struct dwc2_qtd *qtd,
-					    enum dwc2_halt_status halt_status)
-{
+अटल व्योम dwc2_complete_non_periodic_xfer(काष्ठा dwc2_hsotg *hsotg,
+					    काष्ठा dwc2_host_chan *chan,
+					    पूर्णांक chnum, काष्ठा dwc2_qtd *qtd,
+					    क्रमागत dwc2_halt_status halt_status)
+अणु
 	dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
 	qtd->error_count = 0;
 
-	if (chan->hcint & HCINTMSK_NYET) {
+	अगर (chan->hcपूर्णांक & HCINTMSK_NYET) अणु
 		/*
 		 * Got a NYET on the last transaction of the transfer. This
-		 * means that the endpoint should be in the PING state at the
+		 * means that the endpoपूर्णांक should be in the PING state at the
 		 * beginning of the next transfer.
 		 */
 		dev_vdbg(hsotg->dev, "got NYET\n");
 		chan->qh->ping_state = 1;
-	}
+	पूर्ण
 
 	/*
-	 * Always halt and release the host channel to make it available for
-	 * more transfers. There may still be more phases for a control
-	 * transfer or more data packets for a bulk transfer at this point,
-	 * but the host channel is still halted. A channel will be reassigned
+	 * Always halt and release the host channel to make it available क्रम
+	 * more transfers. There may still be more phases क्रम a control
+	 * transfer or more data packets क्रम a bulk transfer at this poपूर्णांक,
+	 * but the host channel is still halted. A channel will be reasचिन्हित
 	 * to the transfer when the non-periodic schedule is processed after
 	 * the channel is released. This allows transactions to be queued
 	 * properly via dwc2_hcd_queue_transactions, which also enables the
-	 * Tx FIFO Empty interrupt if necessary.
+	 * Tx FIFO Empty पूर्णांकerrupt अगर necessary.
 	 */
-	if (chan->ep_is_in) {
+	अगर (chan->ep_is_in) अणु
 		/*
 		 * IN transfers in Slave mode require an explicit disable to
 		 * halt the channel. (In DMA mode, this call simply releases
 		 * the channel.)
 		 */
 		dwc2_halt_channel(hsotg, chan, qtd, halt_status);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * The channel is automatically disabled by the core for OUT
+		 * The channel is स्वतःmatically disabled by the core क्रम OUT
 		 * transfers in Slave mode
 		 */
 		dwc2_release_channel(hsotg, chan, qtd, halt_status);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Performs common cleanup for periodic transfers after a Transfer Complete
- * interrupt. This function should be called after any endpoint type specific
+ * Perक्रमms common cleanup क्रम periodic transfers after a Transfer Complete
+ * पूर्णांकerrupt. This function should be called after any endpoपूर्णांक type specअगरic
  * handling is finished to release the host channel.
  */
-static void dwc2_complete_periodic_xfer(struct dwc2_hsotg *hsotg,
-					struct dwc2_host_chan *chan, int chnum,
-					struct dwc2_qtd *qtd,
-					enum dwc2_halt_status halt_status)
-{
-	u32 hctsiz = dwc2_readl(hsotg, HCTSIZ(chnum));
+अटल व्योम dwc2_complete_periodic_xfer(काष्ठा dwc2_hsotg *hsotg,
+					काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+					काष्ठा dwc2_qtd *qtd,
+					क्रमागत dwc2_halt_status halt_status)
+अणु
+	u32 hctsiz = dwc2_पढ़ोl(hsotg, HCTSIZ(chnum));
 
 	qtd->error_count = 0;
 
-	if (!chan->ep_is_in || (hctsiz & TSIZ_PKTCNT_MASK) == 0)
-		/* Core halts channel in these cases */
+	अगर (!chan->ep_is_in || (hctsiz & TSIZ_PKTCNT_MASK) == 0)
+		/* Core halts channel in these हालs */
 		dwc2_release_channel(hsotg, chan, qtd, halt_status);
-	else
+	अन्यथा
 		/* Flush any outstanding requests from the Tx queue */
 		dwc2_halt_channel(hsotg, chan, qtd, halt_status);
-}
+पूर्ण
 
-static int dwc2_xfercomp_isoc_split_in(struct dwc2_hsotg *hsotg,
-				       struct dwc2_host_chan *chan, int chnum,
-				       struct dwc2_qtd *qtd)
-{
-	struct dwc2_hcd_iso_packet_desc *frame_desc;
+अटल पूर्णांक dwc2_xfercomp_isoc_split_in(काष्ठा dwc2_hsotg *hsotg,
+				       काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				       काष्ठा dwc2_qtd *qtd)
+अणु
+	काष्ठा dwc2_hcd_iso_packet_desc *frame_desc;
 	u32 len;
 	u32 hctsiz;
 	u32 pid;
 
-	if (!qtd->urb)
-		return 0;
+	अगर (!qtd->urb)
+		वापस 0;
 
 	frame_desc = &qtd->urb->iso_descs[qtd->isoc_frame_index];
 	len = dwc2_get_actual_xfer_length(hsotg, chan, chnum, qtd,
-					  DWC2_HC_XFER_COMPLETE, NULL);
-	if (!len && !qtd->isoc_split_offset) {
+					  DWC2_HC_XFER_COMPLETE, शून्य);
+	अगर (!len && !qtd->isoc_split_offset) अणु
 		qtd->complete_split = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	frame_desc->actual_length += len;
 
-	if (chan->align_buf) {
+	अगर (chan->align_buf) अणु
 		dev_vdbg(hsotg->dev, "non-aligned buffer\n");
 		dma_unmap_single(hsotg->dev, chan->qh->dw_align_buf_dma,
 				 DWC2_KMEM_UNALIGNED_BUF_SIZE, DMA_FROM_DEVICE);
-		memcpy(qtd->urb->buf + (chan->xfer_dma - qtd->urb->dma),
+		स_नकल(qtd->urb->buf + (chan->xfer_dma - qtd->urb->dma),
 		       chan->qh->dw_align_buf, len);
-	}
+	पूर्ण
 
 	qtd->isoc_split_offset += len;
 
-	hctsiz = dwc2_readl(hsotg, HCTSIZ(chnum));
+	hctsiz = dwc2_पढ़ोl(hsotg, HCTSIZ(chnum));
 	pid = (hctsiz & TSIZ_SC_MC_PID_MASK) >> TSIZ_SC_MC_PID_SHIFT;
 
-	if (frame_desc->actual_length >= frame_desc->length || pid == 0) {
+	अगर (frame_desc->actual_length >= frame_desc->length || pid == 0) अणु
 		frame_desc->status = 0;
 		qtd->isoc_frame_index++;
 		qtd->complete_split = 0;
 		qtd->isoc_split_offset = 0;
-	}
+	पूर्ण
 
-	if (qtd->isoc_frame_index == qtd->urb->packet_count) {
+	अगर (qtd->isoc_frame_index == qtd->urb->packet_count) अणु
 		dwc2_host_complete(hsotg, qtd, 0);
 		dwc2_release_channel(hsotg, chan, qtd,
 				     DWC2_HC_XFER_URB_COMPLETE);
-	} else {
+	पूर्ण अन्यथा अणु
 		dwc2_release_channel(hsotg, chan, qtd,
 				     DWC2_HC_XFER_NO_HALT_STATUS);
-	}
+	पूर्ण
 
-	return 1;	/* Indicates that channel released */
-}
+	वापस 1;	/* Indicates that channel released */
+पूर्ण
 
 /*
- * Handles a host channel Transfer Complete interrupt. This handler may be
+ * Handles a host channel Transfer Complete पूर्णांकerrupt. This handler may be
  * called in either DMA mode or Slave mode.
  */
-static void dwc2_hc_xfercomp_intr(struct dwc2_hsotg *hsotg,
-				  struct dwc2_host_chan *chan, int chnum,
-				  struct dwc2_qtd *qtd)
-{
-	struct dwc2_hcd_urb *urb = qtd->urb;
-	enum dwc2_halt_status halt_status = DWC2_HC_XFER_COMPLETE;
-	int pipe_type;
-	int urb_xfer_done;
+अटल व्योम dwc2_hc_xfercomp_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+				  काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				  काष्ठा dwc2_qtd *qtd)
+अणु
+	काष्ठा dwc2_hcd_urb *urb = qtd->urb;
+	क्रमागत dwc2_halt_status halt_status = DWC2_HC_XFER_COMPLETE;
+	पूर्णांक pipe_type;
+	पूर्णांक urb_xfer_करोne;
 
-	if (dbg_hc(chan))
+	अगर (dbg_hc(chan))
 		dev_vdbg(hsotg->dev,
 			 "--Host Channel %d Interrupt: Transfer Complete--\n",
 			 chnum);
 
-	if (!urb)
-		goto handle_xfercomp_done;
+	अगर (!urb)
+		जाओ handle_xfercomp_करोne;
 
 	pipe_type = dwc2_hcd_get_pipe_type(&urb->pipe_info);
 
-	if (hsotg->params.dma_desc_enable) {
+	अगर (hsotg->params.dma_desc_enable) अणु
 		dwc2_hcd_complete_xfer_ddma(hsotg, chan, chnum, halt_status);
-		if (pipe_type == USB_ENDPOINT_XFER_ISOC)
-			/* Do not disable the interrupt, just clear it */
-			return;
-		goto handle_xfercomp_done;
-	}
+		अगर (pipe_type == USB_ENDPOINT_XFER_ISOC)
+			/* Do not disable the पूर्णांकerrupt, just clear it */
+			वापस;
+		जाओ handle_xfercomp_करोne;
+	पूर्ण
 
 	/* Handle xfer complete on CSPLIT */
-	if (chan->qh->do_split) {
-		if (chan->ep_type == USB_ENDPOINT_XFER_ISOC && chan->ep_is_in &&
-		    hsotg->params.host_dma) {
-			if (qtd->complete_split &&
+	अगर (chan->qh->करो_split) अणु
+		अगर (chan->ep_type == USB_ENDPOINT_XFER_ISOC && chan->ep_is_in &&
+		    hsotg->params.host_dma) अणु
+			अगर (qtd->complete_split &&
 			    dwc2_xfercomp_isoc_split_in(hsotg, chan, chnum,
 							qtd))
-				goto handle_xfercomp_done;
-		} else {
+				जाओ handle_xfercomp_करोne;
+		पूर्ण अन्यथा अणु
 			qtd->complete_split = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Update the QTD and URB states */
-	switch (pipe_type) {
-	case USB_ENDPOINT_XFER_CONTROL:
-		switch (qtd->control_phase) {
-		case DWC2_CONTROL_SETUP:
-			if (urb->length > 0)
+	चयन (pipe_type) अणु
+	हाल USB_ENDPOINT_XFER_CONTROL:
+		चयन (qtd->control_phase) अणु
+		हाल DWC2_CONTROL_SETUP:
+			अगर (urb->length > 0)
 				qtd->control_phase = DWC2_CONTROL_DATA;
-			else
+			अन्यथा
 				qtd->control_phase = DWC2_CONTROL_STATUS;
 			dev_vdbg(hsotg->dev,
 				 "  Control setup transaction done\n");
 			halt_status = DWC2_HC_XFER_COMPLETE;
-			break;
-		case DWC2_CONTROL_DATA:
-			urb_xfer_done = dwc2_update_urb_state(hsotg, chan,
+			अवरोध;
+		हाल DWC2_CONTROL_DATA:
+			urb_xfer_करोne = dwc2_update_urb_state(hsotg, chan,
 							      chnum, urb, qtd);
-			if (urb_xfer_done) {
+			अगर (urb_xfer_करोne) अणु
 				qtd->control_phase = DWC2_CONTROL_STATUS;
 				dev_vdbg(hsotg->dev,
 					 "  Control data transfer done\n");
-			} else {
+			पूर्ण अन्यथा अणु
 				dwc2_hcd_save_data_toggle(hsotg, chan, chnum,
 							  qtd);
-			}
+			पूर्ण
 			halt_status = DWC2_HC_XFER_COMPLETE;
-			break;
-		case DWC2_CONTROL_STATUS:
+			अवरोध;
+		हाल DWC2_CONTROL_STATUS:
 			dev_vdbg(hsotg->dev, "  Control transfer complete\n");
-			if (urb->status == -EINPROGRESS)
+			अगर (urb->status == -EINPROGRESS)
 				urb->status = 0;
 			dwc2_host_complete(hsotg, qtd, urb->status);
 			halt_status = DWC2_HC_XFER_URB_COMPLETE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dwc2_complete_non_periodic_xfer(hsotg, chan, chnum, qtd,
 						halt_status);
-		break;
-	case USB_ENDPOINT_XFER_BULK:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_BULK:
 		dev_vdbg(hsotg->dev, "  Bulk transfer complete\n");
-		urb_xfer_done = dwc2_update_urb_state(hsotg, chan, chnum, urb,
+		urb_xfer_करोne = dwc2_update_urb_state(hsotg, chan, chnum, urb,
 						      qtd);
-		if (urb_xfer_done) {
+		अगर (urb_xfer_करोne) अणु
 			dwc2_host_complete(hsotg, qtd, urb->status);
 			halt_status = DWC2_HC_XFER_URB_COMPLETE;
-		} else {
+		पूर्ण अन्यथा अणु
 			halt_status = DWC2_HC_XFER_COMPLETE;
-		}
+		पूर्ण
 
 		dwc2_hcd_save_data_toggle(hsotg, chan, chnum, qtd);
 		dwc2_complete_non_periodic_xfer(hsotg, chan, chnum, qtd,
 						halt_status);
-		break;
-	case USB_ENDPOINT_XFER_INT:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		dev_vdbg(hsotg->dev, "  Interrupt transfer complete\n");
-		urb_xfer_done = dwc2_update_urb_state(hsotg, chan, chnum, urb,
+		urb_xfer_करोne = dwc2_update_urb_state(hsotg, chan, chnum, urb,
 						      qtd);
 
 		/*
-		 * Interrupt URB is done on the first transfer complete
-		 * interrupt
+		 * Interrupt URB is करोne on the first transfer complete
+		 * पूर्णांकerrupt
 		 */
-		if (urb_xfer_done) {
+		अगर (urb_xfer_करोne) अणु
 			dwc2_host_complete(hsotg, qtd, urb->status);
 			halt_status = DWC2_HC_XFER_URB_COMPLETE;
-		} else {
+		पूर्ण अन्यथा अणु
 			halt_status = DWC2_HC_XFER_COMPLETE;
-		}
+		पूर्ण
 
 		dwc2_hcd_save_data_toggle(hsotg, chan, chnum, qtd);
 		dwc2_complete_periodic_xfer(hsotg, chan, chnum, qtd,
 					    halt_status);
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
-		if (dbg_perio())
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
+		अगर (dbg_perio())
 			dev_vdbg(hsotg->dev, "  Isochronous transfer complete\n");
-		if (qtd->isoc_split_pos == DWC2_HCSPLT_XACTPOS_ALL)
+		अगर (qtd->isoc_split_pos == DWC2_HCSPLT_XACTPOS_ALL)
 			halt_status = dwc2_update_isoc_urb_state(hsotg, chan,
 							chnum, qtd,
 							DWC2_HC_XFER_COMPLETE);
 		dwc2_complete_periodic_xfer(hsotg, chan, chnum, qtd,
 					    halt_status);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-handle_xfercomp_done:
-	disable_hc_int(hsotg, chnum, HCINTMSK_XFERCOMPL);
-}
+handle_xfercomp_करोne:
+	disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_XFERCOMPL);
+पूर्ण
 
 /*
- * Handles a host channel STALL interrupt. This handler may be called in
+ * Handles a host channel STALL पूर्णांकerrupt. This handler may be called in
  * either DMA mode or Slave mode.
  */
-static void dwc2_hc_stall_intr(struct dwc2_hsotg *hsotg,
-			       struct dwc2_host_chan *chan, int chnum,
-			       struct dwc2_qtd *qtd)
-{
-	struct dwc2_hcd_urb *urb = qtd->urb;
-	int pipe_type;
+अटल व्योम dwc2_hc_stall_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+			       काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+			       काष्ठा dwc2_qtd *qtd)
+अणु
+	काष्ठा dwc2_hcd_urb *urb = qtd->urb;
+	पूर्णांक pipe_type;
 
 	dev_dbg(hsotg->dev, "--Host Channel %d Interrupt: STALL Received--\n",
 		chnum);
 
-	if (hsotg->params.dma_desc_enable) {
+	अगर (hsotg->params.dma_desc_enable) अणु
 		dwc2_hcd_complete_xfer_ddma(hsotg, chan, chnum,
 					    DWC2_HC_XFER_STALL);
-		goto handle_stall_done;
-	}
+		जाओ handle_stall_करोne;
+	पूर्ण
 
-	if (!urb)
-		goto handle_stall_halt;
+	अगर (!urb)
+		जाओ handle_stall_halt;
 
 	pipe_type = dwc2_hcd_get_pipe_type(&urb->pipe_info);
 
-	if (pipe_type == USB_ENDPOINT_XFER_CONTROL)
+	अगर (pipe_type == USB_ENDPOINT_XFER_CONTROL)
 		dwc2_host_complete(hsotg, qtd, -EPIPE);
 
-	if (pipe_type == USB_ENDPOINT_XFER_BULK ||
-	    pipe_type == USB_ENDPOINT_XFER_INT) {
+	अगर (pipe_type == USB_ENDPOINT_XFER_BULK ||
+	    pipe_type == USB_ENDPOINT_XFER_INT) अणु
 		dwc2_host_complete(hsotg, qtd, -EPIPE);
 		/*
-		 * USB protocol requires resetting the data toggle for bulk
-		 * and interrupt endpoints when a CLEAR_FEATURE(ENDPOINT_HALT)
-		 * setup command is issued to the endpoint. Anticipate the
+		 * USB protocol requires resetting the data toggle क्रम bulk
+		 * and पूर्णांकerrupt endpoपूर्णांकs when a CLEAR_FEATURE(ENDPOINT_HALT)
+		 * setup command is issued to the endpoपूर्णांक. Anticipate the
 		 * CLEAR_FEATURE command since a STALL has occurred and reset
 		 * the data toggle now.
 		 */
 		chan->qh->data_toggle = 0;
-	}
+	पूर्ण
 
 handle_stall_halt:
 	dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_STALL);
 
-handle_stall_done:
-	disable_hc_int(hsotg, chnum, HCINTMSK_STALL);
-}
+handle_stall_करोne:
+	disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_STALL);
+पूर्ण
 
 /*
  * Updates the state of the URB when a transfer has been stopped due to an
- * abnormal condition before the transfer completes. Modifies the
+ * abnormal condition beक्रमe the transfer completes. Modअगरies the
  * actual_length field of the URB to reflect the number of bytes that have
  * actually been transferred via the host channel.
  */
-static void dwc2_update_urb_state_abn(struct dwc2_hsotg *hsotg,
-				      struct dwc2_host_chan *chan, int chnum,
-				      struct dwc2_hcd_urb *urb,
-				      struct dwc2_qtd *qtd,
-				      enum dwc2_halt_status halt_status)
-{
+अटल व्योम dwc2_update_urb_state_abn(काष्ठा dwc2_hsotg *hsotg,
+				      काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				      काष्ठा dwc2_hcd_urb *urb,
+				      काष्ठा dwc2_qtd *qtd,
+				      क्रमागत dwc2_halt_status halt_status)
+अणु
 	u32 xfer_length = dwc2_get_actual_xfer_length(hsotg, chan, chnum,
-						      qtd, halt_status, NULL);
+						      qtd, halt_status, शून्य);
 	u32 hctsiz;
 
-	if (urb->actual_length + xfer_length > urb->length) {
+	अगर (urb->actual_length + xfer_length > urb->length) अणु
 		dev_warn(hsotg->dev, "%s(): trimming xfer length\n", __func__);
 		xfer_length = urb->length - urb->actual_length;
-	}
+	पूर्ण
 
 	urb->actual_length += xfer_length;
 
-	hctsiz = dwc2_readl(hsotg, HCTSIZ(chnum));
+	hctsiz = dwc2_पढ़ोl(hsotg, HCTSIZ(chnum));
 	dev_vdbg(hsotg->dev, "DWC_otg: %s: %s, channel %d\n",
 		 __func__, (chan->ep_is_in ? "IN" : "OUT"), chnum);
 	dev_vdbg(hsotg->dev, "  chan->start_pkt_count %d\n",
@@ -1199,149 +1200,149 @@ static void dwc2_update_urb_state_abn(struct dwc2_hsotg *hsotg,
 		 urb->actual_length);
 	dev_vdbg(hsotg->dev, "  urb->transfer_buffer_length %d\n",
 		 urb->length);
-}
+पूर्ण
 
 /*
- * Handles a host channel NAK interrupt. This handler may be called in either
+ * Handles a host channel NAK पूर्णांकerrupt. This handler may be called in either
  * DMA mode or Slave mode.
  */
-static void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
-			     struct dwc2_host_chan *chan, int chnum,
-			     struct dwc2_qtd *qtd)
-{
-	if (!qtd) {
+अटल व्योम dwc2_hc_nak_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+			     काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+			     काष्ठा dwc2_qtd *qtd)
+अणु
+	अगर (!qtd) अणु
 		dev_dbg(hsotg->dev, "%s: qtd is NULL\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!qtd->urb) {
+	अगर (!qtd->urb) अणु
 		dev_dbg(hsotg->dev, "%s: qtd->urb is NULL\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (dbg_hc(chan))
+	अगर (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "--Host Channel %d Interrupt: NAK Received--\n",
 			 chnum);
 
 	/*
-	 * Handle NAK for IN/OUT SSPLIT/CSPLIT transfers, bulk, control, and
-	 * interrupt. Re-start the SSPLIT transfer.
+	 * Handle NAK क्रम IN/OUT SSPLIT/CSPLIT transfers, bulk, control, and
+	 * पूर्णांकerrupt. Re-start the SSPLIT transfer.
 	 *
-	 * Normally for non-periodic transfers we'll retry right away, but to
-	 * avoid interrupt storms we'll wait before retrying if we've got
+	 * Normally क्रम non-periodic transfers we'll retry right away, but to
+	 * aव्योम पूर्णांकerrupt storms we'll wait before retrying if we've got
 	 * several NAKs. If we didn't do this we'd retry directly from the
-	 * interrupt handler and could end up quickly getting another
-	 * interrupt (another NAK), which we'd retry. Note that we do not
-	 * delay retries for IN parts of control requests, as those are expected
-	 * to complete fairly quickly, and if we delay them we risk confusing
+	 * पूर्णांकerrupt handler and could end up quickly getting another
+	 * पूर्णांकerrupt (another NAK), which we'd retry. Note that we करो not
+	 * delay retries क्रम IN parts of control requests, as those are expected
+	 * to complete fairly quickly, and अगर we delay them we risk confusing
 	 * the device and cause it issue STALL.
 	 *
-	 * Note that in DMA mode software only gets involved to re-send NAKed
-	 * transfers for split transactions, so we only need to apply this
+	 * Note that in DMA mode software only माला_लो involved to re-send NAKed
+	 * transfers क्रम split transactions, so we only need to apply this
 	 * delaying logic when handling splits. In non-DMA mode presumably we
-	 * might want a similar delay if someone can demonstrate this problem
+	 * might want a similar delay अगर someone can demonstrate this problem
 	 * affects that code path too.
 	 */
-	if (chan->do_split) {
-		if (chan->complete_split)
+	अगर (chan->करो_split) अणु
+		अगर (chan->complete_split)
 			qtd->error_count = 0;
 		qtd->complete_split = 0;
 		qtd->num_naks++;
-		qtd->qh->want_wait = qtd->num_naks >= DWC2_NAKS_BEFORE_DELAY &&
+		qtd->qh->want_रुको = qtd->num_naks >= DWC2_NAKS_BEFORE_DELAY &&
 				!(chan->ep_type == USB_ENDPOINT_XFER_CONTROL &&
 				  chan->ep_is_in);
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_NAK);
-		goto handle_nak_done;
-	}
+		जाओ handle_nak_करोne;
+	पूर्ण
 
-	switch (dwc2_hcd_get_pipe_type(&qtd->urb->pipe_info)) {
-	case USB_ENDPOINT_XFER_CONTROL:
-	case USB_ENDPOINT_XFER_BULK:
-		if (hsotg->params.host_dma && chan->ep_is_in) {
+	चयन (dwc2_hcd_get_pipe_type(&qtd->urb->pipe_info)) अणु
+	हाल USB_ENDPOINT_XFER_CONTROL:
+	हाल USB_ENDPOINT_XFER_BULK:
+		अगर (hsotg->params.host_dma && chan->ep_is_in) अणु
 			/*
-			 * NAK interrupts are enabled on bulk/control IN
-			 * transfers in DMA mode for the sole purpose of
+			 * NAK पूर्णांकerrupts are enabled on bulk/control IN
+			 * transfers in DMA mode क्रम the sole purpose of
 			 * resetting the error count after a transaction error
-			 * occurs. The core will continue transferring data.
+			 * occurs. The core will जारी transferring data.
 			 */
 			qtd->error_count = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * NAK interrupts normally occur during OUT transfers in DMA
+		 * NAK पूर्णांकerrupts normally occur during OUT transfers in DMA
 		 * or Slave mode. For IN transfers, more requests will be
 		 * queued as request queue space is available.
 		 */
 		qtd->error_count = 0;
 
-		if (!chan->qh->ping_state) {
+		अगर (!chan->qh->ping_state) अणु
 			dwc2_update_urb_state_abn(hsotg, chan, chnum, qtd->urb,
 						  qtd, DWC2_HC_XFER_NAK);
 			dwc2_hcd_save_data_toggle(hsotg, chan, chnum, qtd);
 
-			if (chan->speed == USB_SPEED_HIGH)
+			अगर (chan->speed == USB_SPEED_HIGH)
 				chan->qh->ping_state = 1;
-		}
+		पूर्ण
 
 		/*
 		 * Halt the channel so the transfer can be re-started from
-		 * the appropriate point or the PING protocol will
-		 * start/continue
+		 * the appropriate poपूर्णांक or the PING protocol will
+		 * start/जारी
 		 */
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_NAK);
-		break;
-	case USB_ENDPOINT_XFER_INT:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		qtd->error_count = 0;
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_NAK);
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
-		/* Should never get called for isochronous transfers */
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
+		/* Should never get called क्रम isochronous transfers */
 		dev_err(hsotg->dev, "NACK interrupt for ISOC transfer\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-handle_nak_done:
-	disable_hc_int(hsotg, chnum, HCINTMSK_NAK);
-}
+handle_nak_करोne:
+	disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_NAK);
+पूर्ण
 
 /*
- * Handles a host channel ACK interrupt. This interrupt is enabled when
- * performing the PING protocol in Slave mode, when errors occur during
+ * Handles a host channel ACK पूर्णांकerrupt. This पूर्णांकerrupt is enabled when
+ * perक्रमming the PING protocol in Slave mode, when errors occur during
  * either Slave mode or DMA mode, and during Start Split transactions.
  */
-static void dwc2_hc_ack_intr(struct dwc2_hsotg *hsotg,
-			     struct dwc2_host_chan *chan, int chnum,
-			     struct dwc2_qtd *qtd)
-{
-	struct dwc2_hcd_iso_packet_desc *frame_desc;
+अटल व्योम dwc2_hc_ack_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+			     काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+			     काष्ठा dwc2_qtd *qtd)
+अणु
+	काष्ठा dwc2_hcd_iso_packet_desc *frame_desc;
 
-	if (dbg_hc(chan))
+	अगर (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "--Host Channel %d Interrupt: ACK Received--\n",
 			 chnum);
 
-	if (chan->do_split) {
+	अगर (chan->करो_split) अणु
 		/* Handle ACK on SSPLIT. ACK should not occur in CSPLIT. */
-		if (!chan->ep_is_in &&
+		अगर (!chan->ep_is_in &&
 		    chan->data_pid_start != DWC2_HC_PID_SETUP)
 			qtd->ssplit_out_xfer_count = chan->xfer_len;
 
-		if (chan->ep_type != USB_ENDPOINT_XFER_ISOC || chan->ep_is_in) {
+		अगर (chan->ep_type != USB_ENDPOINT_XFER_ISOC || chan->ep_is_in) अणु
 			qtd->complete_split = 1;
 			dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_ACK);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* ISOC OUT */
-			switch (chan->xact_pos) {
-			case DWC2_HCSPLT_XACTPOS_ALL:
-				break;
-			case DWC2_HCSPLT_XACTPOS_END:
+			चयन (chan->xact_pos) अणु
+			हाल DWC2_HCSPLT_XACTPOS_ALL:
+				अवरोध;
+			हाल DWC2_HCSPLT_XACTPOS_END:
 				qtd->isoc_split_pos = DWC2_HCSPLT_XACTPOS_ALL;
 				qtd->isoc_split_offset = 0;
-				break;
-			case DWC2_HCSPLT_XACTPOS_BEGIN:
-			case DWC2_HCSPLT_XACTPOS_MID:
+				अवरोध;
+			हाल DWC2_HCSPLT_XACTPOS_BEGIN:
+			हाल DWC2_HCSPLT_XACTPOS_MID:
 				/*
-				 * For BEGIN or MID, calculate the length for
+				 * For BEGIN or MID, calculate the length क्रम
 				 * the next microframe to determine the correct
 				 * SSPLIT token, either MID or END
 				 */
@@ -1349,148 +1350,148 @@ static void dwc2_hc_ack_intr(struct dwc2_hsotg *hsotg,
 						qtd->isoc_frame_index];
 				qtd->isoc_split_offset += 188;
 
-				if (frame_desc->length - qtd->isoc_split_offset
+				अगर (frame_desc->length - qtd->isoc_split_offset
 							<= 188)
 					qtd->isoc_split_pos =
 							DWC2_HCSPLT_XACTPOS_END;
-				else
+				अन्यथा
 					qtd->isoc_split_pos =
 							DWC2_HCSPLT_XACTPOS_MID;
-				break;
-			}
-		}
-	} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		qtd->error_count = 0;
 
-		if (chan->qh->ping_state) {
+		अगर (chan->qh->ping_state) अणु
 			chan->qh->ping_state = 0;
 			/*
 			 * Halt the channel so the transfer can be re-started
-			 * from the appropriate point. This only happens in
+			 * from the appropriate poपूर्णांक. This only happens in
 			 * Slave mode. In DMA mode, the ping_state is cleared
 			 * when the transfer is started because the core
-			 * automatically executes the PING, then the transfer.
+			 * स्वतःmatically executes the PING, then the transfer.
 			 */
 			dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_ACK);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If the ACK occurred when _not_ in the PING state, let the channel
-	 * continue transferring data after clearing the error count
+	 * जारी transferring data after clearing the error count
 	 */
-	disable_hc_int(hsotg, chnum, HCINTMSK_ACK);
-}
+	disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_ACK);
+पूर्ण
 
 /*
- * Handles a host channel NYET interrupt. This interrupt should only occur on
- * Bulk and Control OUT endpoints and for complete split transactions. If a
- * NYET occurs at the same time as a Transfer Complete interrupt, it is
- * handled in the xfercomp interrupt handler, not here. This handler may be
+ * Handles a host channel NYET पूर्णांकerrupt. This पूर्णांकerrupt should only occur on
+ * Bulk and Control OUT endpoपूर्णांकs and क्रम complete split transactions. If a
+ * NYET occurs at the same समय as a Transfer Complete पूर्णांकerrupt, it is
+ * handled in the xfercomp पूर्णांकerrupt handler, not here. This handler may be
  * called in either DMA mode or Slave mode.
  */
-static void dwc2_hc_nyet_intr(struct dwc2_hsotg *hsotg,
-			      struct dwc2_host_chan *chan, int chnum,
-			      struct dwc2_qtd *qtd)
-{
-	if (dbg_hc(chan))
+अटल व्योम dwc2_hc_nyet_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+			      काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+			      काष्ठा dwc2_qtd *qtd)
+अणु
+	अगर (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "--Host Channel %d Interrupt: NYET Received--\n",
 			 chnum);
 
 	/*
 	 * NYET on CSPLIT
-	 * re-do the CSPLIT immediately on non-periodic
+	 * re-करो the CSPLIT immediately on non-periodic
 	 */
-	if (chan->do_split && chan->complete_split) {
-		if (chan->ep_is_in && chan->ep_type == USB_ENDPOINT_XFER_ISOC &&
-		    hsotg->params.host_dma) {
+	अगर (chan->करो_split && chan->complete_split) अणु
+		अगर (chan->ep_is_in && chan->ep_type == USB_ENDPOINT_XFER_ISOC &&
+		    hsotg->params.host_dma) अणु
 			qtd->complete_split = 0;
 			qtd->isoc_split_offset = 0;
 			qtd->isoc_frame_index++;
-			if (qtd->urb &&
-			    qtd->isoc_frame_index == qtd->urb->packet_count) {
+			अगर (qtd->urb &&
+			    qtd->isoc_frame_index == qtd->urb->packet_count) अणु
 				dwc2_host_complete(hsotg, qtd, 0);
 				dwc2_release_channel(hsotg, chan, qtd,
 						     DWC2_HC_XFER_URB_COMPLETE);
-			} else {
+			पूर्ण अन्यथा अणु
 				dwc2_release_channel(hsotg, chan, qtd,
 						DWC2_HC_XFER_NO_HALT_STATUS);
-			}
-			goto handle_nyet_done;
-		}
+			पूर्ण
+			जाओ handle_nyet_करोne;
+		पूर्ण
 
-		if (chan->ep_type == USB_ENDPOINT_XFER_INT ||
-		    chan->ep_type == USB_ENDPOINT_XFER_ISOC) {
-			struct dwc2_qh *qh = chan->qh;
+		अगर (chan->ep_type == USB_ENDPOINT_XFER_INT ||
+		    chan->ep_type == USB_ENDPOINT_XFER_ISOC) अणु
+			काष्ठा dwc2_qh *qh = chan->qh;
 			bool past_end;
 
-			if (!hsotg->params.uframe_sched) {
-				int frnum = dwc2_hcd_get_frame_number(hsotg);
+			अगर (!hsotg->params.uframe_sched) अणु
+				पूर्णांक frnum = dwc2_hcd_get_frame_number(hsotg);
 
 				/* Don't have num_hs_transfers; simple logic */
 				past_end = dwc2_full_frame_num(frnum) !=
 				     dwc2_full_frame_num(qh->next_active_frame);
-			} else {
-				int end_frnum;
+			पूर्ण अन्यथा अणु
+				पूर्णांक end_frnum;
 
 				/*
 				 * Figure out the end frame based on
 				 * schedule.
 				 *
-				 * We don't want to go on trying again
-				 * and again forever. Let's stop when
-				 * we've done all the transfers that
+				 * We करोn't want to go on trying again
+				 * and again क्रमever. Let's stop when
+				 * we've करोne all the transfers that
 				 * were scheduled.
 				 *
 				 * We're going to be comparing
 				 * start_active_frame and
 				 * next_active_frame, both of which
-				 * are 1 before the time the packet
+				 * are 1 beक्रमe the समय the packet
 				 * goes on the wire, so that cancels
-				 * out. Basically if had 1 transfer
-				 * and we saw 1 NYET then we're done.
-				 * We're getting a NYET here so if
+				 * out. Basically अगर had 1 transfer
+				 * and we saw 1 NYET then we're करोne.
+				 * We're getting a NYET here so अगर
 				 * next >= (start + num_transfers)
-				 * we're done. The complexity is that
-				 * for all but ISOC_OUT we skip one
+				 * we're करोne. The complनिकासy is that
+				 * क्रम all but ISOC_OUT we skip one
 				 * slot.
 				 */
 				end_frnum = dwc2_frame_num_inc(
 					qh->start_active_frame,
 					qh->num_hs_transfers);
 
-				if (qh->ep_type != USB_ENDPOINT_XFER_ISOC ||
+				अगर (qh->ep_type != USB_ENDPOINT_XFER_ISOC ||
 				    qh->ep_is_in)
 					end_frnum =
 					       dwc2_frame_num_inc(end_frnum, 1);
 
 				past_end = dwc2_frame_num_le(
 					end_frnum, qh->next_active_frame);
-			}
+			पूर्ण
 
-			if (past_end) {
+			अगर (past_end) अणु
 				/* Treat this as a transaction error. */
-#if 0
+#अगर 0
 				/*
-				 * Todo: Fix system performance so this can
+				 * Toकरो: Fix प्रणाली perक्रमmance so this can
 				 * be treated as an error. Right now complete
 				 * splits cannot be scheduled precisely enough
-				 * due to other system activity, so this error
+				 * due to other प्रणाली activity, so this error
 				 * occurs regularly in Slave mode.
 				 */
 				qtd->error_count++;
-#endif
+#पूर्ण_अगर
 				qtd->complete_split = 0;
 				dwc2_halt_channel(hsotg, chan, qtd,
 						  DWC2_HC_XFER_XACT_ERR);
-				/* Todo: add support for isoc release */
-				goto handle_nyet_done;
-			}
-		}
+				/* Toकरो: add support क्रम isoc release */
+				जाओ handle_nyet_करोne;
+			पूर्ण
+		पूर्ण
 
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_NYET);
-		goto handle_nyet_done;
-	}
+		जाओ handle_nyet_करोne;
+	पूर्ण
 
 	chan->qh->ping_state = 1;
 	qtd->error_count = 0;
@@ -1505,55 +1506,55 @@ static void dwc2_hc_nyet_intr(struct dwc2_hsotg *hsotg,
 	 */
 	dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_NYET);
 
-handle_nyet_done:
-	disable_hc_int(hsotg, chnum, HCINTMSK_NYET);
-}
+handle_nyet_करोne:
+	disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_NYET);
+पूर्ण
 
 /*
- * Handles a host channel babble interrupt. This handler may be called in
+ * Handles a host channel babble पूर्णांकerrupt. This handler may be called in
  * either DMA mode or Slave mode.
  */
-static void dwc2_hc_babble_intr(struct dwc2_hsotg *hsotg,
-				struct dwc2_host_chan *chan, int chnum,
-				struct dwc2_qtd *qtd)
-{
+अटल व्योम dwc2_hc_babble_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+				काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				काष्ठा dwc2_qtd *qtd)
+अणु
 	dev_dbg(hsotg->dev, "--Host Channel %d Interrupt: Babble Error--\n",
 		chnum);
 
 	dwc2_hc_handle_tt_clear(hsotg, chan, qtd);
 
-	if (hsotg->params.dma_desc_enable) {
+	अगर (hsotg->params.dma_desc_enable) अणु
 		dwc2_hcd_complete_xfer_ddma(hsotg, chan, chnum,
 					    DWC2_HC_XFER_BABBLE_ERR);
-		goto disable_int;
-	}
+		जाओ disable_पूर्णांक;
+	पूर्ण
 
-	if (chan->ep_type != USB_ENDPOINT_XFER_ISOC) {
+	अगर (chan->ep_type != USB_ENDPOINT_XFER_ISOC) अणु
 		dwc2_host_complete(hsotg, qtd, -EOVERFLOW);
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_BABBLE_ERR);
-	} else {
-		enum dwc2_halt_status halt_status;
+	पूर्ण अन्यथा अणु
+		क्रमागत dwc2_halt_status halt_status;
 
 		halt_status = dwc2_update_isoc_urb_state(hsotg, chan, chnum,
 						qtd, DWC2_HC_XFER_BABBLE_ERR);
 		dwc2_halt_channel(hsotg, chan, qtd, halt_status);
-	}
+	पूर्ण
 
-disable_int:
-	disable_hc_int(hsotg, chnum, HCINTMSK_BBLERR);
-}
+disable_पूर्णांक:
+	disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_BBLERR);
+पूर्ण
 
 /*
- * Handles a host channel AHB error interrupt. This handler is only called in
+ * Handles a host channel AHB error पूर्णांकerrupt. This handler is only called in
  * DMA mode.
  */
-static void dwc2_hc_ahberr_intr(struct dwc2_hsotg *hsotg,
-				struct dwc2_host_chan *chan, int chnum,
-				struct dwc2_qtd *qtd)
-{
-	struct dwc2_hcd_urb *urb = qtd->urb;
-	char *pipetype, *speed;
-	u32 hcchar;
+अटल व्योम dwc2_hc_ahberr_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+				काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				काष्ठा dwc2_qtd *qtd)
+अणु
+	काष्ठा dwc2_hcd_urb *urb = qtd->urb;
+	अक्षर *pipetype, *speed;
+	u32 hcअक्षर;
 	u32 hcsplt;
 	u32 hctsiz;
 	u32 hc_dma;
@@ -1561,18 +1562,18 @@ static void dwc2_hc_ahberr_intr(struct dwc2_hsotg *hsotg,
 	dev_dbg(hsotg->dev, "--Host Channel %d Interrupt: AHB Error--\n",
 		chnum);
 
-	if (!urb)
-		goto handle_ahberr_halt;
+	अगर (!urb)
+		जाओ handle_ahberr_halt;
 
 	dwc2_hc_handle_tt_clear(hsotg, chan, qtd);
 
-	hcchar = dwc2_readl(hsotg, HCCHAR(chnum));
-	hcsplt = dwc2_readl(hsotg, HCSPLT(chnum));
-	hctsiz = dwc2_readl(hsotg, HCTSIZ(chnum));
-	hc_dma = dwc2_readl(hsotg, HCDMA(chnum));
+	hcअक्षर = dwc2_पढ़ोl(hsotg, HCCHAR(chnum));
+	hcsplt = dwc2_पढ़ोl(hsotg, HCSPLT(chnum));
+	hctsiz = dwc2_पढ़ोl(hsotg, HCTSIZ(chnum));
+	hc_dma = dwc2_पढ़ोl(hsotg, HCDMA(chnum));
 
 	dev_err(hsotg->dev, "AHB ERROR, Channel %d\n", chnum);
-	dev_err(hsotg->dev, "  hcchar 0x%08x, hcsplt 0x%08x\n", hcchar, hcsplt);
+	dev_err(hsotg->dev, "  hcchar 0x%08x, hcsplt 0x%08x\n", hcअक्षर, hcsplt);
 	dev_err(hsotg->dev, "  hctsiz 0x%08x, hc_dma 0x%08x\n", hctsiz, hc_dma);
 	dev_err(hsotg->dev, "  Device address: %d\n",
 		dwc2_hcd_get_dev_addr(&urb->pipe_info));
@@ -1580,40 +1581,40 @@ static void dwc2_hc_ahberr_intr(struct dwc2_hsotg *hsotg,
 		dwc2_hcd_get_ep_num(&urb->pipe_info),
 		dwc2_hcd_is_pipe_in(&urb->pipe_info) ? "IN" : "OUT");
 
-	switch (dwc2_hcd_get_pipe_type(&urb->pipe_info)) {
-	case USB_ENDPOINT_XFER_CONTROL:
+	चयन (dwc2_hcd_get_pipe_type(&urb->pipe_info)) अणु
+	हाल USB_ENDPOINT_XFER_CONTROL:
 		pipetype = "CONTROL";
-		break;
-	case USB_ENDPOINT_XFER_BULK:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_BULK:
 		pipetype = "BULK";
-		break;
-	case USB_ENDPOINT_XFER_INT:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		pipetype = "INTERRUPT";
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
 		pipetype = "ISOCHRONOUS";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pipetype = "UNKNOWN";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dev_err(hsotg->dev, "  Endpoint type: %s\n", pipetype);
 
-	switch (chan->speed) {
-	case USB_SPEED_HIGH:
+	चयन (chan->speed) अणु
+	हाल USB_SPEED_HIGH:
 		speed = "HIGH";
-		break;
-	case USB_SPEED_FULL:
+		अवरोध;
+	हाल USB_SPEED_FULL:
 		speed = "FULL";
-		break;
-	case USB_SPEED_LOW:
+		अवरोध;
+	हाल USB_SPEED_LOW:
 		speed = "LOW";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		speed = "UNKNOWN";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dev_err(hsotg->dev, "  Speed: %s\n", speed);
 
@@ -1622,333 +1623,333 @@ static void dwc2_hc_ahberr_intr(struct dwc2_hsotg *hsotg,
 		dwc2_hcd_get_maxp_mult(&urb->pipe_info));
 	dev_err(hsotg->dev, "  Data buffer length: %d\n", urb->length);
 	dev_err(hsotg->dev, "  Transfer buffer: %p, Transfer DMA: %08lx\n",
-		urb->buf, (unsigned long)urb->dma);
+		urb->buf, (अचिन्हित दीर्घ)urb->dma);
 	dev_err(hsotg->dev, "  Setup buffer: %p, Setup DMA: %08lx\n",
-		urb->setup_packet, (unsigned long)urb->setup_dma);
-	dev_err(hsotg->dev, "  Interval: %d\n", urb->interval);
+		urb->setup_packet, (अचिन्हित दीर्घ)urb->setup_dma);
+	dev_err(hsotg->dev, "  Interval: %d\n", urb->पूर्णांकerval);
 
-	/* Core halts the channel for Descriptor DMA mode */
-	if (hsotg->params.dma_desc_enable) {
+	/* Core halts the channel क्रम Descriptor DMA mode */
+	अगर (hsotg->params.dma_desc_enable) अणु
 		dwc2_hcd_complete_xfer_ddma(hsotg, chan, chnum,
 					    DWC2_HC_XFER_AHB_ERR);
-		goto handle_ahberr_done;
-	}
+		जाओ handle_ahberr_करोne;
+	पूर्ण
 
 	dwc2_host_complete(hsotg, qtd, -EIO);
 
 handle_ahberr_halt:
 	/*
 	 * Force a channel halt. Don't call dwc2_halt_channel because that won't
-	 * write to the HCCHARn register in DMA mode to force the halt.
+	 * ग_लिखो to the HCCHARn रेजिस्टर in DMA mode to क्रमce the halt.
 	 */
 	dwc2_hc_halt(hsotg, chan, DWC2_HC_XFER_AHB_ERR);
 
-handle_ahberr_done:
-	disable_hc_int(hsotg, chnum, HCINTMSK_AHBERR);
-}
+handle_ahberr_करोne:
+	disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_AHBERR);
+पूर्ण
 
 /*
- * Handles a host channel transaction error interrupt. This handler may be
+ * Handles a host channel transaction error पूर्णांकerrupt. This handler may be
  * called in either DMA mode or Slave mode.
  */
-static void dwc2_hc_xacterr_intr(struct dwc2_hsotg *hsotg,
-				 struct dwc2_host_chan *chan, int chnum,
-				 struct dwc2_qtd *qtd)
-{
+अटल व्योम dwc2_hc_xacterr_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+				 काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				 काष्ठा dwc2_qtd *qtd)
+अणु
 	dev_dbg(hsotg->dev,
 		"--Host Channel %d Interrupt: Transaction Error--\n", chnum);
 
 	dwc2_hc_handle_tt_clear(hsotg, chan, qtd);
 
-	if (hsotg->params.dma_desc_enable) {
+	अगर (hsotg->params.dma_desc_enable) अणु
 		dwc2_hcd_complete_xfer_ddma(hsotg, chan, chnum,
 					    DWC2_HC_XFER_XACT_ERR);
-		goto handle_xacterr_done;
-	}
+		जाओ handle_xacterr_करोne;
+	पूर्ण
 
-	switch (dwc2_hcd_get_pipe_type(&qtd->urb->pipe_info)) {
-	case USB_ENDPOINT_XFER_CONTROL:
-	case USB_ENDPOINT_XFER_BULK:
+	चयन (dwc2_hcd_get_pipe_type(&qtd->urb->pipe_info)) अणु
+	हाल USB_ENDPOINT_XFER_CONTROL:
+	हाल USB_ENDPOINT_XFER_BULK:
 		qtd->error_count++;
-		if (!chan->qh->ping_state) {
+		अगर (!chan->qh->ping_state) अणु
 			dwc2_update_urb_state_abn(hsotg, chan, chnum, qtd->urb,
 						  qtd, DWC2_HC_XFER_XACT_ERR);
 			dwc2_hcd_save_data_toggle(hsotg, chan, chnum, qtd);
-			if (!chan->ep_is_in && chan->speed == USB_SPEED_HIGH)
+			अगर (!chan->ep_is_in && chan->speed == USB_SPEED_HIGH)
 				chan->qh->ping_state = 1;
-		}
+		पूर्ण
 
 		/*
 		 * Halt the channel so the transfer can be re-started from
-		 * the appropriate point or the PING protocol will start
+		 * the appropriate poपूर्णांक or the PING protocol will start
 		 */
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_XACT_ERR);
-		break;
-	case USB_ENDPOINT_XFER_INT:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		qtd->error_count++;
-		if (chan->do_split && chan->complete_split)
+		अगर (chan->करो_split && chan->complete_split)
 			qtd->complete_split = 0;
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_XACT_ERR);
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
-		{
-			enum dwc2_halt_status halt_status;
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
+		अणु
+			क्रमागत dwc2_halt_status halt_status;
 
 			halt_status = dwc2_update_isoc_urb_state(hsotg, chan,
 					 chnum, qtd, DWC2_HC_XFER_XACT_ERR);
 			dwc2_halt_channel(hsotg, chan, qtd, halt_status);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-handle_xacterr_done:
-	disable_hc_int(hsotg, chnum, HCINTMSK_XACTERR);
-}
+handle_xacterr_करोne:
+	disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_XACTERR);
+पूर्ण
 
 /*
- * Handles a host channel frame overrun interrupt. This handler may be called
+ * Handles a host channel frame overrun पूर्णांकerrupt. This handler may be called
  * in either DMA mode or Slave mode.
  */
-static void dwc2_hc_frmovrun_intr(struct dwc2_hsotg *hsotg,
-				  struct dwc2_host_chan *chan, int chnum,
-				  struct dwc2_qtd *qtd)
-{
-	enum dwc2_halt_status halt_status;
+अटल व्योम dwc2_hc_frmovrun_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+				  काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				  काष्ठा dwc2_qtd *qtd)
+अणु
+	क्रमागत dwc2_halt_status halt_status;
 
-	if (dbg_hc(chan))
+	अगर (dbg_hc(chan))
 		dev_dbg(hsotg->dev, "--Host Channel %d Interrupt: Frame Overrun--\n",
 			chnum);
 
 	dwc2_hc_handle_tt_clear(hsotg, chan, qtd);
 
-	switch (dwc2_hcd_get_pipe_type(&qtd->urb->pipe_info)) {
-	case USB_ENDPOINT_XFER_CONTROL:
-	case USB_ENDPOINT_XFER_BULK:
-		break;
-	case USB_ENDPOINT_XFER_INT:
+	चयन (dwc2_hcd_get_pipe_type(&qtd->urb->pipe_info)) अणु
+	हाल USB_ENDPOINT_XFER_CONTROL:
+	हाल USB_ENDPOINT_XFER_BULK:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_FRAME_OVERRUN);
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
 		halt_status = dwc2_update_isoc_urb_state(hsotg, chan, chnum,
 					qtd, DWC2_HC_XFER_FRAME_OVERRUN);
 		dwc2_halt_channel(hsotg, chan, qtd, halt_status);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	disable_hc_int(hsotg, chnum, HCINTMSK_FRMOVRUN);
-}
+	disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_FRMOVRUN);
+पूर्ण
 
 /*
- * Handles a host channel data toggle error interrupt. This handler may be
+ * Handles a host channel data toggle error पूर्णांकerrupt. This handler may be
  * called in either DMA mode or Slave mode.
  */
-static void dwc2_hc_datatglerr_intr(struct dwc2_hsotg *hsotg,
-				    struct dwc2_host_chan *chan, int chnum,
-				    struct dwc2_qtd *qtd)
-{
+अटल व्योम dwc2_hc_datatglerr_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+				    काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				    काष्ठा dwc2_qtd *qtd)
+अणु
 	dev_dbg(hsotg->dev,
 		"--Host Channel %d Interrupt: Data Toggle Error--\n", chnum);
 
-	if (chan->ep_is_in)
+	अगर (chan->ep_is_in)
 		qtd->error_count = 0;
-	else
+	अन्यथा
 		dev_err(hsotg->dev,
 			"Data Toggle Error on OUT transfer, channel %d\n",
 			chnum);
 
 	dwc2_hc_handle_tt_clear(hsotg, chan, qtd);
-	disable_hc_int(hsotg, chnum, HCINTMSK_DATATGLERR);
-}
+	disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_DATATGLERR);
+पूर्ण
 
 /*
  * For debug only. It checks that a valid halt status is set and that
  * HCCHARn.chdis is clear. If there's a problem, corrective action is
  * taken and a warning is issued.
  *
- * Return: true if halt status is ok, false otherwise
+ * Return: true अगर halt status is ok, false otherwise
  */
-static bool dwc2_halt_status_ok(struct dwc2_hsotg *hsotg,
-				struct dwc2_host_chan *chan, int chnum,
-				struct dwc2_qtd *qtd)
-{
-#ifdef DEBUG
-	u32 hcchar;
+अटल bool dwc2_halt_status_ok(काष्ठा dwc2_hsotg *hsotg,
+				काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				काष्ठा dwc2_qtd *qtd)
+अणु
+#अगर_घोषित DEBUG
+	u32 hcअक्षर;
 	u32 hctsiz;
-	u32 hcintmsk;
+	u32 hcपूर्णांकmsk;
 	u32 hcsplt;
 
-	if (chan->halt_status == DWC2_HC_XFER_NO_HALT_STATUS) {
+	अगर (chan->halt_status == DWC2_HC_XFER_NO_HALT_STATUS) अणु
 		/*
 		 * This code is here only as a check. This condition should
-		 * never happen. Ignore the halt if it does occur.
+		 * never happen. Ignore the halt अगर it करोes occur.
 		 */
-		hcchar = dwc2_readl(hsotg, HCCHAR(chnum));
-		hctsiz = dwc2_readl(hsotg, HCTSIZ(chnum));
-		hcintmsk = dwc2_readl(hsotg, HCINTMSK(chnum));
-		hcsplt = dwc2_readl(hsotg, HCSPLT(chnum));
+		hcअक्षर = dwc2_पढ़ोl(hsotg, HCCHAR(chnum));
+		hctsiz = dwc2_पढ़ोl(hsotg, HCTSIZ(chnum));
+		hcपूर्णांकmsk = dwc2_पढ़ोl(hsotg, HCINTMSK(chnum));
+		hcsplt = dwc2_पढ़ोl(hsotg, HCSPLT(chnum));
 		dev_dbg(hsotg->dev,
 			"%s: chan->halt_status DWC2_HC_XFER_NO_HALT_STATUS,\n",
 			 __func__);
 		dev_dbg(hsotg->dev,
 			"channel %d, hcchar 0x%08x, hctsiz 0x%08x,\n",
-			chnum, hcchar, hctsiz);
+			chnum, hcअक्षर, hctsiz);
 		dev_dbg(hsotg->dev,
 			"hcint 0x%08x, hcintmsk 0x%08x, hcsplt 0x%08x,\n",
-			chan->hcint, hcintmsk, hcsplt);
-		if (qtd)
+			chan->hcपूर्णांक, hcपूर्णांकmsk, hcsplt);
+		अगर (qtd)
 			dev_dbg(hsotg->dev, "qtd->complete_split %d\n",
 				qtd->complete_split);
 		dev_warn(hsotg->dev,
 			 "%s: no halt status, channel %d, ignoring interrupt\n",
 			 __func__, chnum);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/*
-	 * This code is here only as a check. hcchar.chdis should never be set
-	 * when the halt interrupt occurs. Halt the channel again if it does
+	 * This code is here only as a check. hcअक्षर.chdis should never be set
+	 * when the halt पूर्णांकerrupt occurs. Halt the channel again अगर it करोes
 	 * occur.
 	 */
-	hcchar = dwc2_readl(hsotg, HCCHAR(chnum));
-	if (hcchar & HCCHAR_CHDIS) {
+	hcअक्षर = dwc2_पढ़ोl(hsotg, HCCHAR(chnum));
+	अगर (hcअक्षर & HCCHAR_CHDIS) अणु
 		dev_warn(hsotg->dev,
 			 "%s: hcchar.chdis set unexpectedly, hcchar 0x%08x, trying to halt again\n",
-			 __func__, hcchar);
+			 __func__, hcअक्षर);
 		chan->halt_pending = 0;
 		dwc2_halt_channel(hsotg, chan, qtd, chan->halt_status);
-		return false;
-	}
-#endif
+		वापस false;
+	पूर्ण
+#पूर्ण_अगर
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Handles a host Channel Halted interrupt in DMA mode. This handler
+ * Handles a host Channel Halted पूर्णांकerrupt in DMA mode. This handler
  * determines the reason the channel halted and proceeds accordingly.
  */
-static void dwc2_hc_chhltd_intr_dma(struct dwc2_hsotg *hsotg,
-				    struct dwc2_host_chan *chan, int chnum,
-				    struct dwc2_qtd *qtd)
-{
-	u32 hcintmsk;
-	int out_nak_enh = 0;
+अटल व्योम dwc2_hc_chhltd_पूर्णांकr_dma(काष्ठा dwc2_hsotg *hsotg,
+				    काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				    काष्ठा dwc2_qtd *qtd)
+अणु
+	u32 hcपूर्णांकmsk;
+	पूर्णांक out_nak_enh = 0;
 
-	if (dbg_hc(chan))
+	अगर (dbg_hc(chan))
 		dev_vdbg(hsotg->dev,
 			 "--Host Channel %d Interrupt: DMA Channel Halted--\n",
 			 chnum);
 
 	/*
-	 * For core with OUT NAK enhancement, the flow for high-speed
-	 * CONTROL/BULK OUT is handled a little differently
+	 * For core with OUT NAK enhancement, the flow क्रम high-speed
+	 * CONTROL/BULK OUT is handled a little dअगरferently
 	 */
-	if (hsotg->hw_params.snpsid >= DWC2_CORE_REV_2_71a) {
-		if (chan->speed == USB_SPEED_HIGH && !chan->ep_is_in &&
+	अगर (hsotg->hw_params.snpsid >= DWC2_CORE_REV_2_71a) अणु
+		अगर (chan->speed == USB_SPEED_HIGH && !chan->ep_is_in &&
 		    (chan->ep_type == USB_ENDPOINT_XFER_CONTROL ||
-		     chan->ep_type == USB_ENDPOINT_XFER_BULK)) {
+		     chan->ep_type == USB_ENDPOINT_XFER_BULK)) अणु
 			out_nak_enh = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (chan->halt_status == DWC2_HC_XFER_URB_DEQUEUE ||
+	अगर (chan->halt_status == DWC2_HC_XFER_URB_DEQUEUE ||
 	    (chan->halt_status == DWC2_HC_XFER_AHB_ERR &&
-	     !hsotg->params.dma_desc_enable)) {
-		if (hsotg->params.dma_desc_enable)
+	     !hsotg->params.dma_desc_enable)) अणु
+		अगर (hsotg->params.dma_desc_enable)
 			dwc2_hcd_complete_xfer_ddma(hsotg, chan, chnum,
 						    chan->halt_status);
-		else
+		अन्यथा
 			/*
 			 * Just release the channel. A dequeue can happen on a
-			 * transfer timeout. In the case of an AHB Error, the
-			 * channel was forced to halt because there's no way to
+			 * transfer समयout. In the हाल of an AHB Error, the
+			 * channel was क्रमced to halt because there's no way to
 			 * gracefully recover.
 			 */
 			dwc2_release_channel(hsotg, chan, qtd,
 					     chan->halt_status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	hcintmsk = dwc2_readl(hsotg, HCINTMSK(chnum));
+	hcपूर्णांकmsk = dwc2_पढ़ोl(hsotg, HCINTMSK(chnum));
 
-	if (chan->hcint & HCINTMSK_XFERCOMPL) {
+	अगर (chan->hcपूर्णांक & HCINTMSK_XFERCOMPL) अणु
 		/*
-		 * Todo: This is here because of a possible hardware bug. Spec
+		 * Toकरो: This is here because of a possible hardware bug. Spec
 		 * says that on SPLIT-ISOC OUT transfers in DMA mode that a HALT
-		 * interrupt w/ACK bit set should occur, but I only see the
+		 * पूर्णांकerrupt w/ACK bit set should occur, but I only see the
 		 * XFERCOMP bit, even with it masked out. This is a workaround
-		 * for that behavior. Should fix this when hardware is fixed.
+		 * क्रम that behavior. Should fix this when hardware is fixed.
 		 */
-		if (chan->ep_type == USB_ENDPOINT_XFER_ISOC && !chan->ep_is_in)
-			dwc2_hc_ack_intr(hsotg, chan, chnum, qtd);
-		dwc2_hc_xfercomp_intr(hsotg, chan, chnum, qtd);
-	} else if (chan->hcint & HCINTMSK_STALL) {
-		dwc2_hc_stall_intr(hsotg, chan, chnum, qtd);
-	} else if ((chan->hcint & HCINTMSK_XACTERR) &&
-		   !hsotg->params.dma_desc_enable) {
-		if (out_nak_enh) {
-			if (chan->hcint &
-			    (HCINTMSK_NYET | HCINTMSK_NAK | HCINTMSK_ACK)) {
+		अगर (chan->ep_type == USB_ENDPOINT_XFER_ISOC && !chan->ep_is_in)
+			dwc2_hc_ack_पूर्णांकr(hsotg, chan, chnum, qtd);
+		dwc2_hc_xfercomp_पूर्णांकr(hsotg, chan, chnum, qtd);
+	पूर्ण अन्यथा अगर (chan->hcपूर्णांक & HCINTMSK_STALL) अणु
+		dwc2_hc_stall_पूर्णांकr(hsotg, chan, chnum, qtd);
+	पूर्ण अन्यथा अगर ((chan->hcपूर्णांक & HCINTMSK_XACTERR) &&
+		   !hsotg->params.dma_desc_enable) अणु
+		अगर (out_nak_enh) अणु
+			अगर (chan->hcपूर्णांक &
+			    (HCINTMSK_NYET | HCINTMSK_NAK | HCINTMSK_ACK)) अणु
 				dev_vdbg(hsotg->dev,
 					 "XactErr with NYET/NAK/ACK\n");
 				qtd->error_count = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_vdbg(hsotg->dev,
 					 "XactErr without NYET/NAK/ACK\n");
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * Must handle xacterr before nak or ack. Could get a xacterr
-		 * at the same time as either of these on a BULK/CONTROL OUT
+		 * Must handle xacterr beक्रमe nak or ack. Could get a xacterr
+		 * at the same समय as either of these on a BULK/CONTROL OUT
 		 * that started with a PING. The xacterr takes precedence.
 		 */
-		dwc2_hc_xacterr_intr(hsotg, chan, chnum, qtd);
-	} else if ((chan->hcint & HCINTMSK_XCS_XACT) &&
-		   hsotg->params.dma_desc_enable) {
-		dwc2_hc_xacterr_intr(hsotg, chan, chnum, qtd);
-	} else if ((chan->hcint & HCINTMSK_AHBERR) &&
-		   hsotg->params.dma_desc_enable) {
-		dwc2_hc_ahberr_intr(hsotg, chan, chnum, qtd);
-	} else if (chan->hcint & HCINTMSK_BBLERR) {
-		dwc2_hc_babble_intr(hsotg, chan, chnum, qtd);
-	} else if (chan->hcint & HCINTMSK_FRMOVRUN) {
-		dwc2_hc_frmovrun_intr(hsotg, chan, chnum, qtd);
-	} else if (!out_nak_enh) {
-		if (chan->hcint & HCINTMSK_NYET) {
+		dwc2_hc_xacterr_पूर्णांकr(hsotg, chan, chnum, qtd);
+	पूर्ण अन्यथा अगर ((chan->hcपूर्णांक & HCINTMSK_XCS_XACT) &&
+		   hsotg->params.dma_desc_enable) अणु
+		dwc2_hc_xacterr_पूर्णांकr(hsotg, chan, chnum, qtd);
+	पूर्ण अन्यथा अगर ((chan->hcपूर्णांक & HCINTMSK_AHBERR) &&
+		   hsotg->params.dma_desc_enable) अणु
+		dwc2_hc_ahberr_पूर्णांकr(hsotg, chan, chnum, qtd);
+	पूर्ण अन्यथा अगर (chan->hcपूर्णांक & HCINTMSK_BBLERR) अणु
+		dwc2_hc_babble_पूर्णांकr(hsotg, chan, chnum, qtd);
+	पूर्ण अन्यथा अगर (chan->hcपूर्णांक & HCINTMSK_FRMOVRUN) अणु
+		dwc2_hc_frmovrun_पूर्णांकr(hsotg, chan, chnum, qtd);
+	पूर्ण अन्यथा अगर (!out_nak_enh) अणु
+		अगर (chan->hcपूर्णांक & HCINTMSK_NYET) अणु
 			/*
-			 * Must handle nyet before nak or ack. Could get a nyet
-			 * at the same time as either of those on a BULK/CONTROL
+			 * Must handle nyet beक्रमe nak or ack. Could get a nyet
+			 * at the same समय as either of those on a BULK/CONTROL
 			 * OUT that started with a PING. The nyet takes
 			 * precedence.
 			 */
-			dwc2_hc_nyet_intr(hsotg, chan, chnum, qtd);
-		} else if ((chan->hcint & HCINTMSK_NAK) &&
-			   !(hcintmsk & HCINTMSK_NAK)) {
+			dwc2_hc_nyet_पूर्णांकr(hsotg, chan, chnum, qtd);
+		पूर्ण अन्यथा अगर ((chan->hcपूर्णांक & HCINTMSK_NAK) &&
+			   !(hcपूर्णांकmsk & HCINTMSK_NAK)) अणु
 			/*
 			 * If nak is not masked, it's because a non-split IN
-			 * transfer is in an error state. In that case, the nak
-			 * is handled by the nak interrupt handler, not here.
-			 * Handle nak here for BULK/CONTROL OUT transfers, which
-			 * halt on a NAK to allow rewinding the buffer pointer.
+			 * transfer is in an error state. In that हाल, the nak
+			 * is handled by the nak पूर्णांकerrupt handler, not here.
+			 * Handle nak here क्रम BULK/CONTROL OUT transfers, which
+			 * halt on a NAK to allow शुरुआतing the buffer poपूर्णांकer.
 			 */
-			dwc2_hc_nak_intr(hsotg, chan, chnum, qtd);
-		} else if ((chan->hcint & HCINTMSK_ACK) &&
-			   !(hcintmsk & HCINTMSK_ACK)) {
+			dwc2_hc_nak_पूर्णांकr(hsotg, chan, chnum, qtd);
+		पूर्ण अन्यथा अगर ((chan->hcपूर्णांक & HCINTMSK_ACK) &&
+			   !(hcपूर्णांकmsk & HCINTMSK_ACK)) अणु
 			/*
 			 * If ack is not masked, it's because a non-split IN
-			 * transfer is in an error state. In that case, the ack
-			 * is handled by the ack interrupt handler, not here.
-			 * Handle ack here for split transfers. Start splits
+			 * transfer is in an error state. In that हाल, the ack
+			 * is handled by the ack पूर्णांकerrupt handler, not here.
+			 * Handle ack here क्रम split transfers. Start splits
 			 * halt on ACK.
 			 */
-			dwc2_hc_ack_intr(hsotg, chan, chnum, qtd);
-		} else {
-			if (chan->ep_type == USB_ENDPOINT_XFER_INT ||
-			    chan->ep_type == USB_ENDPOINT_XFER_ISOC) {
+			dwc2_hc_ack_पूर्णांकr(hsotg, chan, chnum, qtd);
+		पूर्ण अन्यथा अणु
+			अगर (chan->ep_type == USB_ENDPOINT_XFER_INT ||
+			    chan->ep_type == USB_ENDPOINT_XFER_ISOC) अणु
 				/*
 				 * A periodic transfer halted with no other
-				 * channel interrupts set. Assume it was halted
+				 * channel पूर्णांकerrupts set. Assume it was halted
 				 * by the core because it could not be completed
 				 * in its scheduled (micro)frame.
 				 */
@@ -1957,21 +1958,21 @@ static void dwc2_hc_chhltd_intr_dma(struct dwc2_hsotg *hsotg,
 					__func__, chnum);
 				dwc2_halt_channel(hsotg, chan, qtd,
 					DWC2_HC_XFER_PERIODIC_INCOMPLETE);
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_err(hsotg->dev,
 					"%s: Channel %d - ChHltd set, but reason is unknown\n",
 					__func__, chnum);
 				dev_err(hsotg->dev,
 					"hcint 0x%08x, intsts 0x%08x\n",
-					chan->hcint,
-					dwc2_readl(hsotg, GINTSTS));
-				goto error;
-			}
-		}
-	} else {
+					chan->hcपूर्णांक,
+					dwc2_पढ़ोl(hsotg, GINTSTS));
+				जाओ error;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_info(hsotg->dev,
 			 "NYET/NAK/ACK/other in non-error case, 0x%08x\n",
-			 chan->hcint);
+			 chan->hcपूर्णांक);
 error:
 		/* Failthrough: use 3-strikes rule */
 		qtd->error_count++;
@@ -1980,126 +1981,126 @@ error:
 		/*
 		 * We can get here after a completed transaction
 		 * (urb->actual_length >= urb->length) which was not reported
-		 * as completed. If that is the case, and we do not abort
+		 * as completed. If that is the हाल, and we करो not पात
 		 * the transfer, a transfer of size 0 will be enqueued
 		 * subsequently. If urb->actual_length is not DMA-aligned,
-		 * the buffer will then point to an unaligned address, and
+		 * the buffer will then poपूर्णांक to an unaligned address, and
 		 * the resulting behavior is undefined. Bail out in that
 		 * situation.
 		 */
-		if (qtd->urb->actual_length >= qtd->urb->length)
+		अगर (qtd->urb->actual_length >= qtd->urb->length)
 			qtd->error_count = 3;
 		dwc2_hcd_save_data_toggle(hsotg, chan, chnum, qtd);
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_XACT_ERR);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Handles a host channel Channel Halted interrupt
+ * Handles a host channel Channel Halted पूर्णांकerrupt
  *
- * In slave mode, this handler is called only when the driver specifically
- * requests a halt. This occurs during handling other host channel interrupts
+ * In slave mode, this handler is called only when the driver specअगरically
+ * requests a halt. This occurs during handling other host channel पूर्णांकerrupts
  * (e.g. nak, xacterr, stall, nyet, etc.).
  *
- * In DMA mode, this is the interrupt that occurs when the core has finished
- * processing a transfer on a channel. Other host channel interrupts (except
+ * In DMA mode, this is the पूर्णांकerrupt that occurs when the core has finished
+ * processing a transfer on a channel. Other host channel पूर्णांकerrupts (except
  * ahberr) are disabled in DMA mode.
  */
-static void dwc2_hc_chhltd_intr(struct dwc2_hsotg *hsotg,
-				struct dwc2_host_chan *chan, int chnum,
-				struct dwc2_qtd *qtd)
-{
-	if (dbg_hc(chan))
+अटल व्योम dwc2_hc_chhltd_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg,
+				काष्ठा dwc2_host_chan *chan, पूर्णांक chnum,
+				काष्ठा dwc2_qtd *qtd)
+अणु
+	अगर (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "--Host Channel %d Interrupt: Channel Halted--\n",
 			 chnum);
 
-	if (hsotg->params.host_dma) {
-		dwc2_hc_chhltd_intr_dma(hsotg, chan, chnum, qtd);
-	} else {
-		if (!dwc2_halt_status_ok(hsotg, chan, chnum, qtd))
-			return;
+	अगर (hsotg->params.host_dma) अणु
+		dwc2_hc_chhltd_पूर्णांकr_dma(hsotg, chan, chnum, qtd);
+	पूर्ण अन्यथा अणु
+		अगर (!dwc2_halt_status_ok(hsotg, chan, chnum, qtd))
+			वापस;
 		dwc2_release_channel(hsotg, chan, qtd, chan->halt_status);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Check if the given qtd is still the top of the list (and thus valid).
+ * Check अगर the given qtd is still the top of the list (and thus valid).
  *
- * If dwc2_hcd_qtd_unlink_and_free() has been called since we grabbed
- * the qtd from the top of the list, this will return false (otherwise true).
+ * If dwc2_hcd_qtd_unlink_and_मुक्त() has been called since we grabbed
+ * the qtd from the top of the list, this will वापस false (otherwise true).
  */
-static bool dwc2_check_qtd_still_ok(struct dwc2_qtd *qtd, struct dwc2_qh *qh)
-{
-	struct dwc2_qtd *cur_head;
+अटल bool dwc2_check_qtd_still_ok(काष्ठा dwc2_qtd *qtd, काष्ठा dwc2_qh *qh)
+अणु
+	काष्ठा dwc2_qtd *cur_head;
 
-	if (!qh)
-		return false;
+	अगर (!qh)
+		वापस false;
 
-	cur_head = list_first_entry(&qh->qtd_list, struct dwc2_qtd,
+	cur_head = list_first_entry(&qh->qtd_list, काष्ठा dwc2_qtd,
 				    qtd_list_entry);
-	return (cur_head == qtd);
-}
+	वापस (cur_head == qtd);
+पूर्ण
 
-/* Handles interrupt for a specific Host Channel */
-static void dwc2_hc_n_intr(struct dwc2_hsotg *hsotg, int chnum)
-{
-	struct dwc2_qtd *qtd;
-	struct dwc2_host_chan *chan;
-	u32 hcint, hcintmsk;
+/* Handles पूर्णांकerrupt क्रम a specअगरic Host Channel */
+अटल व्योम dwc2_hc_n_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg, पूर्णांक chnum)
+अणु
+	काष्ठा dwc2_qtd *qtd;
+	काष्ठा dwc2_host_chan *chan;
+	u32 hcपूर्णांक, hcपूर्णांकmsk;
 
 	chan = hsotg->hc_ptr_array[chnum];
 
-	hcint = dwc2_readl(hsotg, HCINT(chnum));
-	hcintmsk = dwc2_readl(hsotg, HCINTMSK(chnum));
-	if (!chan) {
+	hcपूर्णांक = dwc2_पढ़ोl(hsotg, HCINT(chnum));
+	hcपूर्णांकmsk = dwc2_पढ़ोl(hsotg, HCINTMSK(chnum));
+	अगर (!chan) अणु
 		dev_err(hsotg->dev, "## hc_ptr_array for channel is NULL ##\n");
-		dwc2_writel(hsotg, hcint, HCINT(chnum));
-		return;
-	}
+		dwc2_ग_लिखोl(hsotg, hcपूर्णांक, HCINT(chnum));
+		वापस;
+	पूर्ण
 
-	if (dbg_hc(chan)) {
+	अगर (dbg_hc(chan)) अणु
 		dev_vdbg(hsotg->dev, "--Host Channel Interrupt--, Channel %d\n",
 			 chnum);
 		dev_vdbg(hsotg->dev,
 			 "  hcint 0x%08x, hcintmsk 0x%08x, hcint&hcintmsk 0x%08x\n",
-			 hcint, hcintmsk, hcint & hcintmsk);
-	}
+			 hcपूर्णांक, hcपूर्णांकmsk, hcपूर्णांक & hcपूर्णांकmsk);
+	पूर्ण
 
-	dwc2_writel(hsotg, hcint, HCINT(chnum));
+	dwc2_ग_लिखोl(hsotg, hcपूर्णांक, HCINT(chnum));
 
 	/*
-	 * If we got an interrupt after someone called
-	 * dwc2_hcd_endpoint_disable() we don't want to crash below
+	 * If we got an पूर्णांकerrupt after someone called
+	 * dwc2_hcd_endpoपूर्णांक_disable() we करोn't want to crash below
 	 */
-	if (!chan->qh) {
+	अगर (!chan->qh) अणु
 		dev_warn(hsotg->dev, "Interrupt on disabled channel\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	chan->hcint = hcint;
-	hcint &= hcintmsk;
+	chan->hcपूर्णांक = hcपूर्णांक;
+	hcपूर्णांक &= hcपूर्णांकmsk;
 
 	/*
 	 * If the channel was halted due to a dequeue, the qtd list might
 	 * be empty or at least the first entry will not be the active qtd.
-	 * In this case, take a shortcut and just release the channel.
+	 * In this हाल, take a लघुcut and just release the channel.
 	 */
-	if (chan->halt_status == DWC2_HC_XFER_URB_DEQUEUE) {
+	अगर (chan->halt_status == DWC2_HC_XFER_URB_DEQUEUE) अणु
 		/*
 		 * If the channel was halted, this should be the only
-		 * interrupt unmasked
+		 * पूर्णांकerrupt unmasked
 		 */
-		WARN_ON(hcint != HCINTMSK_CHHLTD);
-		if (hsotg->params.dma_desc_enable)
+		WARN_ON(hcपूर्णांक != HCINTMSK_CHHLTD);
+		अगर (hsotg->params.dma_desc_enable)
 			dwc2_hcd_complete_xfer_ddma(hsotg, chan, chnum,
 						    chan->halt_status);
-		else
-			dwc2_release_channel(hsotg, chan, NULL,
+		अन्यथा
+			dwc2_release_channel(hsotg, chan, शून्य,
 					     chan->halt_status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (list_empty(&chan->qh->qtd_list)) {
+	अगर (list_empty(&chan->qh->qtd_list)) अणु
 		/*
 		 * TODO: Will this ever happen with the
 		 * DWC2_HC_XFER_URB_DEQUEUE handling above?
@@ -2108,188 +2109,188 @@ static void dwc2_hc_n_intr(struct dwc2_hsotg *hsotg, int chnum)
 			chnum);
 		dev_dbg(hsotg->dev,
 			"  hcint 0x%08x, hcintmsk 0x%08x, hcint&hcintmsk 0x%08x\n",
-			chan->hcint, hcintmsk, hcint);
+			chan->hcपूर्णांक, hcपूर्णांकmsk, hcपूर्णांक);
 		chan->halt_status = DWC2_HC_XFER_NO_HALT_STATUS;
-		disable_hc_int(hsotg, chnum, HCINTMSK_CHHLTD);
-		chan->hcint = 0;
-		return;
-	}
+		disable_hc_पूर्णांक(hsotg, chnum, HCINTMSK_CHHLTD);
+		chan->hcपूर्णांक = 0;
+		वापस;
+	पूर्ण
 
-	qtd = list_first_entry(&chan->qh->qtd_list, struct dwc2_qtd,
+	qtd = list_first_entry(&chan->qh->qtd_list, काष्ठा dwc2_qtd,
 			       qtd_list_entry);
 
-	if (!hsotg->params.host_dma) {
-		if ((hcint & HCINTMSK_CHHLTD) && hcint != HCINTMSK_CHHLTD)
-			hcint &= ~HCINTMSK_CHHLTD;
-	}
+	अगर (!hsotg->params.host_dma) अणु
+		अगर ((hcपूर्णांक & HCINTMSK_CHHLTD) && hcपूर्णांक != HCINTMSK_CHHLTD)
+			hcपूर्णांक &= ~HCINTMSK_CHHLTD;
+	पूर्ण
 
-	if (hcint & HCINTMSK_XFERCOMPL) {
-		dwc2_hc_xfercomp_intr(hsotg, chan, chnum, qtd);
+	अगर (hcपूर्णांक & HCINTMSK_XFERCOMPL) अणु
+		dwc2_hc_xfercomp_पूर्णांकr(hsotg, chan, chnum, qtd);
 		/*
-		 * If NYET occurred at same time as Xfer Complete, the NYET is
-		 * handled by the Xfer Complete interrupt handler. Don't want
-		 * to call the NYET interrupt handler in this case.
+		 * If NYET occurred at same समय as Xfer Complete, the NYET is
+		 * handled by the Xfer Complete पूर्णांकerrupt handler. Don't want
+		 * to call the NYET पूर्णांकerrupt handler in this हाल.
 		 */
-		hcint &= ~HCINTMSK_NYET;
-	}
+		hcपूर्णांक &= ~HCINTMSK_NYET;
+	पूर्ण
 
-	if (hcint & HCINTMSK_CHHLTD) {
-		dwc2_hc_chhltd_intr(hsotg, chan, chnum, qtd);
-		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
-			goto exit;
-	}
-	if (hcint & HCINTMSK_AHBERR) {
-		dwc2_hc_ahberr_intr(hsotg, chan, chnum, qtd);
-		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
-			goto exit;
-	}
-	if (hcint & HCINTMSK_STALL) {
-		dwc2_hc_stall_intr(hsotg, chan, chnum, qtd);
-		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
-			goto exit;
-	}
-	if (hcint & HCINTMSK_NAK) {
-		dwc2_hc_nak_intr(hsotg, chan, chnum, qtd);
-		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
-			goto exit;
-	}
-	if (hcint & HCINTMSK_ACK) {
-		dwc2_hc_ack_intr(hsotg, chan, chnum, qtd);
-		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
-			goto exit;
-	}
-	if (hcint & HCINTMSK_NYET) {
-		dwc2_hc_nyet_intr(hsotg, chan, chnum, qtd);
-		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
-			goto exit;
-	}
-	if (hcint & HCINTMSK_XACTERR) {
-		dwc2_hc_xacterr_intr(hsotg, chan, chnum, qtd);
-		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
-			goto exit;
-	}
-	if (hcint & HCINTMSK_BBLERR) {
-		dwc2_hc_babble_intr(hsotg, chan, chnum, qtd);
-		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
-			goto exit;
-	}
-	if (hcint & HCINTMSK_FRMOVRUN) {
-		dwc2_hc_frmovrun_intr(hsotg, chan, chnum, qtd);
-		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
-			goto exit;
-	}
-	if (hcint & HCINTMSK_DATATGLERR) {
-		dwc2_hc_datatglerr_intr(hsotg, chan, chnum, qtd);
-		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
-			goto exit;
-	}
+	अगर (hcपूर्णांक & HCINTMSK_CHHLTD) अणु
+		dwc2_hc_chhltd_पूर्णांकr(hsotg, chan, chnum, qtd);
+		अगर (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			जाओ निकास;
+	पूर्ण
+	अगर (hcपूर्णांक & HCINTMSK_AHBERR) अणु
+		dwc2_hc_ahberr_पूर्णांकr(hsotg, chan, chnum, qtd);
+		अगर (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			जाओ निकास;
+	पूर्ण
+	अगर (hcपूर्णांक & HCINTMSK_STALL) अणु
+		dwc2_hc_stall_पूर्णांकr(hsotg, chan, chnum, qtd);
+		अगर (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			जाओ निकास;
+	पूर्ण
+	अगर (hcपूर्णांक & HCINTMSK_NAK) अणु
+		dwc2_hc_nak_पूर्णांकr(hsotg, chan, chnum, qtd);
+		अगर (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			जाओ निकास;
+	पूर्ण
+	अगर (hcपूर्णांक & HCINTMSK_ACK) अणु
+		dwc2_hc_ack_पूर्णांकr(hsotg, chan, chnum, qtd);
+		अगर (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			जाओ निकास;
+	पूर्ण
+	अगर (hcपूर्णांक & HCINTMSK_NYET) अणु
+		dwc2_hc_nyet_पूर्णांकr(hsotg, chan, chnum, qtd);
+		अगर (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			जाओ निकास;
+	पूर्ण
+	अगर (hcपूर्णांक & HCINTMSK_XACTERR) अणु
+		dwc2_hc_xacterr_पूर्णांकr(hsotg, chan, chnum, qtd);
+		अगर (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			जाओ निकास;
+	पूर्ण
+	अगर (hcपूर्णांक & HCINTMSK_BBLERR) अणु
+		dwc2_hc_babble_पूर्णांकr(hsotg, chan, chnum, qtd);
+		अगर (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			जाओ निकास;
+	पूर्ण
+	अगर (hcपूर्णांक & HCINTMSK_FRMOVRUN) अणु
+		dwc2_hc_frmovrun_पूर्णांकr(hsotg, chan, chnum, qtd);
+		अगर (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			जाओ निकास;
+	पूर्ण
+	अगर (hcपूर्णांक & HCINTMSK_DATATGLERR) अणु
+		dwc2_hc_datatglerr_पूर्णांकr(hsotg, chan, chnum, qtd);
+		अगर (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			जाओ निकास;
+	पूर्ण
 
-exit:
-	chan->hcint = 0;
-}
+निकास:
+	chan->hcपूर्णांक = 0;
+पूर्ण
 
 /*
- * This interrupt indicates that one or more host channels has a pending
- * interrupt. There are multiple conditions that can cause each host channel
- * interrupt. This function determines which conditions have occurred for each
- * host channel interrupt and handles them appropriately.
+ * This पूर्णांकerrupt indicates that one or more host channels has a pending
+ * पूर्णांकerrupt. There are multiple conditions that can cause each host channel
+ * पूर्णांकerrupt. This function determines which conditions have occurred क्रम each
+ * host channel पूर्णांकerrupt and handles them appropriately.
  */
-static void dwc2_hc_intr(struct dwc2_hsotg *hsotg)
-{
-	u32 haint;
-	int i;
-	struct dwc2_host_chan *chan, *chan_tmp;
+अटल व्योम dwc2_hc_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg)
+अणु
+	u32 haपूर्णांक;
+	पूर्णांक i;
+	काष्ठा dwc2_host_chan *chan, *chan_पंचांगp;
 
-	haint = dwc2_readl(hsotg, HAINT);
-	if (dbg_perio()) {
+	haपूर्णांक = dwc2_पढ़ोl(hsotg, HAINT);
+	अगर (dbg_perio()) अणु
 		dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
-		dev_vdbg(hsotg->dev, "HAINT=%08x\n", haint);
-	}
+		dev_vdbg(hsotg->dev, "HAINT=%08x\n", haपूर्णांक);
+	पूर्ण
 
 	/*
 	 * According to USB 2.0 spec section 11.18.8, a host must
-	 * issue complete-split transactions in a microframe for a
-	 * set of full-/low-speed endpoints in the same relative
-	 * order as the start-splits were issued in a microframe for.
+	 * issue complete-split transactions in a microframe क्रम a
+	 * set of full-/low-speed endpoपूर्णांकs in the same relative
+	 * order as the start-splits were issued in a microframe क्रम.
 	 */
-	list_for_each_entry_safe(chan, chan_tmp, &hsotg->split_order,
-				 split_order_list_entry) {
-		int hc_num = chan->hc_num;
+	list_क्रम_each_entry_safe(chan, chan_पंचांगp, &hsotg->split_order,
+				 split_order_list_entry) अणु
+		पूर्णांक hc_num = chan->hc_num;
 
-		if (haint & (1 << hc_num)) {
-			dwc2_hc_n_intr(hsotg, hc_num);
-			haint &= ~(1 << hc_num);
-		}
-	}
+		अगर (haपूर्णांक & (1 << hc_num)) अणु
+			dwc2_hc_n_पूर्णांकr(hsotg, hc_num);
+			haपूर्णांक &= ~(1 << hc_num);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < hsotg->params.host_channels; i++) {
-		if (haint & (1 << i))
-			dwc2_hc_n_intr(hsotg, i);
-	}
-}
+	क्रम (i = 0; i < hsotg->params.host_channels; i++) अणु
+		अगर (haपूर्णांक & (1 << i))
+			dwc2_hc_n_पूर्णांकr(hsotg, i);
+	पूर्ण
+पूर्ण
 
-/* This function handles interrupts for the HCD */
-irqreturn_t dwc2_handle_hcd_intr(struct dwc2_hsotg *hsotg)
-{
-	u32 gintsts, dbg_gintsts;
-	irqreturn_t retval = IRQ_NONE;
+/* This function handles पूर्णांकerrupts क्रम the HCD */
+irqवापस_t dwc2_handle_hcd_पूर्णांकr(काष्ठा dwc2_hsotg *hsotg)
+अणु
+	u32 gपूर्णांकsts, dbg_gपूर्णांकsts;
+	irqवापस_t retval = IRQ_NONE;
 
-	if (!dwc2_is_controller_alive(hsotg)) {
+	अगर (!dwc2_is_controller_alive(hsotg)) अणु
 		dev_warn(hsotg->dev, "Controller is dead\n");
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	spin_lock(&hsotg->lock);
 
-	/* Check if HOST Mode */
-	if (dwc2_is_host_mode(hsotg)) {
-		gintsts = dwc2_read_core_intr(hsotg);
-		if (!gintsts) {
+	/* Check अगर HOST Mode */
+	अगर (dwc2_is_host_mode(hsotg)) अणु
+		gपूर्णांकsts = dwc2_पढ़ो_core_पूर्णांकr(hsotg);
+		अगर (!gपूर्णांकsts) अणु
 			spin_unlock(&hsotg->lock);
-			return retval;
-		}
+			वापस retval;
+		पूर्ण
 
 		retval = IRQ_HANDLED;
 
-		dbg_gintsts = gintsts;
-#ifndef DEBUG_SOF
-		dbg_gintsts &= ~GINTSTS_SOF;
-#endif
-		if (!dbg_perio())
-			dbg_gintsts &= ~(GINTSTS_HCHINT | GINTSTS_RXFLVL |
+		dbg_gपूर्णांकsts = gपूर्णांकsts;
+#अगर_अघोषित DEBUG_SOF
+		dbg_gपूर्णांकsts &= ~GINTSTS_SOF;
+#पूर्ण_अगर
+		अगर (!dbg_perio())
+			dbg_gपूर्णांकsts &= ~(GINTSTS_HCHINT | GINTSTS_RXFLVL |
 					 GINTSTS_PTXFEMP);
 
-		/* Only print if there are any non-suppressed interrupts left */
-		if (dbg_gintsts)
+		/* Only prपूर्णांक अगर there are any non-suppressed पूर्णांकerrupts left */
+		अगर (dbg_gपूर्णांकsts)
 			dev_vdbg(hsotg->dev,
 				 "DWC OTG HCD Interrupt Detected gintsts&gintmsk=0x%08x\n",
-				 gintsts);
+				 gपूर्णांकsts);
 
-		if (gintsts & GINTSTS_SOF)
-			dwc2_sof_intr(hsotg);
-		if (gintsts & GINTSTS_RXFLVL)
-			dwc2_rx_fifo_level_intr(hsotg);
-		if (gintsts & GINTSTS_NPTXFEMP)
-			dwc2_np_tx_fifo_empty_intr(hsotg);
-		if (gintsts & GINTSTS_PRTINT)
-			dwc2_port_intr(hsotg);
-		if (gintsts & GINTSTS_HCHINT)
-			dwc2_hc_intr(hsotg);
-		if (gintsts & GINTSTS_PTXFEMP)
-			dwc2_perio_tx_fifo_empty_intr(hsotg);
+		अगर (gपूर्णांकsts & GINTSTS_SOF)
+			dwc2_sof_पूर्णांकr(hsotg);
+		अगर (gपूर्णांकsts & GINTSTS_RXFLVL)
+			dwc2_rx_fअगरo_level_पूर्णांकr(hsotg);
+		अगर (gपूर्णांकsts & GINTSTS_NPTXFEMP)
+			dwc2_np_tx_fअगरo_empty_पूर्णांकr(hsotg);
+		अगर (gपूर्णांकsts & GINTSTS_PRTINT)
+			dwc2_port_पूर्णांकr(hsotg);
+		अगर (gपूर्णांकsts & GINTSTS_HCHINT)
+			dwc2_hc_पूर्णांकr(hsotg);
+		अगर (gपूर्णांकsts & GINTSTS_PTXFEMP)
+			dwc2_perio_tx_fअगरo_empty_पूर्णांकr(hsotg);
 
-		if (dbg_gintsts) {
+		अगर (dbg_gपूर्णांकsts) अणु
 			dev_vdbg(hsotg->dev,
 				 "DWC OTG HCD Finished Servicing Interrupts\n");
 			dev_vdbg(hsotg->dev,
 				 "DWC OTG HCD gintsts=0x%08x gintmsk=0x%08x\n",
-				 dwc2_readl(hsotg, GINTSTS),
-				 dwc2_readl(hsotg, GINTMSK));
-		}
-	}
+				 dwc2_पढ़ोl(hsotg, GINTSTS),
+				 dwc2_पढ़ोl(hsotg, GINTMSK));
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&hsotg->lock);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण

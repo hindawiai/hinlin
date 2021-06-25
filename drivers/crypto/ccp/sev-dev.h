@@ -1,63 +1,64 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * AMD Platform Security Processor (PSP) interface driver
+ * AMD Platक्रमm Security Processor (PSP) पूर्णांकerface driver
  *
  * Copyright (C) 2017-2019 Advanced Micro Devices, Inc.
  *
  * Author: Brijesh Singh <brijesh.singh@amd.com>
  */
 
-#ifndef __SEV_DEV_H__
-#define __SEV_DEV_H__
+#अगर_अघोषित __SEV_DEV_H__
+#घोषणा __SEV_DEV_H__
 
-#include <linux/device.h>
-#include <linux/spinlock.h>
-#include <linux/mutex.h>
-#include <linux/list.h>
-#include <linux/wait.h>
-#include <linux/dmapool.h>
-#include <linux/hw_random.h>
-#include <linux/bitops.h>
-#include <linux/interrupt.h>
-#include <linux/irqreturn.h>
-#include <linux/dmaengine.h>
-#include <linux/psp-sev.h>
-#include <linux/miscdevice.h>
-#include <linux/capability.h>
+#समावेश <linux/device.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/list.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/psp-sev.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/capability.h>
 
-#define SEV_CMD_COMPLETE		BIT(1)
-#define SEV_CMDRESP_CMD_SHIFT		16
-#define SEV_CMDRESP_IOC			BIT(0)
+#घोषणा SEV_CMD_COMPLETE		BIT(1)
+#घोषणा SEV_CMDRESP_CMD_SHIFT		16
+#घोषणा SEV_CMDRESP_IOC			BIT(0)
 
-struct sev_misc_dev {
-	struct kref refcount;
-	struct miscdevice misc;
-};
+काष्ठा sev_misc_dev अणु
+	काष्ठा kref refcount;
+	काष्ठा miscdevice misc;
+पूर्ण;
 
-struct sev_device {
-	struct device *dev;
-	struct psp_device *psp;
+काष्ठा sev_device अणु
+	काष्ठा device *dev;
+	काष्ठा psp_device *psp;
 
-	void __iomem *io_regs;
+	व्योम __iomem *io_regs;
 
-	struct sev_vdata *vdata;
+	काष्ठा sev_vdata *vdata;
 
-	int state;
-	unsigned int int_rcvd;
-	wait_queue_head_t int_queue;
-	struct sev_misc_dev *misc;
+	पूर्णांक state;
+	अचिन्हित पूर्णांक पूर्णांक_rcvd;
+	रुको_queue_head_t पूर्णांक_queue;
+	काष्ठा sev_misc_dev *misc;
 
 	u8 api_major;
 	u8 api_minor;
 	u8 build;
 
-	void *cmd_buf;
-};
+	व्योम *cmd_buf;
+पूर्ण;
 
-int sev_dev_init(struct psp_device *psp);
-void sev_dev_destroy(struct psp_device *psp);
+पूर्णांक sev_dev_init(काष्ठा psp_device *psp);
+व्योम sev_dev_destroy(काष्ठा psp_device *psp);
 
-void sev_pci_init(void);
-void sev_pci_exit(void);
+व्योम sev_pci_init(व्योम);
+व्योम sev_pci_निकास(व्योम);
 
-#endif /* __SEV_DEV_H */
+#पूर्ण_अगर /* __SEV_DEV_H */

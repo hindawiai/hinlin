@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * kexec.h for kexec
- * Created by <nschichan@corp.free.fr> on Thu Oct 12 14:59:34 2006
+ * kexec.h क्रम kexec
+ * Created by <nschichan@corp.मुक्त.fr> on Thu Oct 12 14:59:34 2006
  */
 
-#ifndef _MIPS_KEXEC
+#अगर_अघोषित _MIPS_KEXEC
 # define _MIPS_KEXEC
 
-#include <asm/stacktrace.h>
+#समावेश <यंत्र/stacktrace.h>
 
 /* Maximum physical address we can use pages from */
-#define KEXEC_SOURCE_MEMORY_LIMIT (-1UL)
+#घोषणा KEXEC_SOURCE_MEMORY_LIMIT (-1UL)
 /* Maximum address we can reach in physical address mode */
-#define KEXEC_DESTINATION_MEMORY_LIMIT (-1UL)
- /* Maximum address we can use for the control code buffer */
-#define KEXEC_CONTROL_MEMORY_LIMIT (-1UL)
-/* Reserve 3*4096 bytes for board-specific info */
-#define KEXEC_CONTROL_PAGE_SIZE (4096 + 3*4096)
+#घोषणा KEXEC_DESTINATION_MEMORY_LIMIT (-1UL)
+ /* Maximum address we can use क्रम the control code buffer */
+#घोषणा KEXEC_CONTROL_MEMORY_LIMIT (-1UL)
+/* Reserve 3*4096 bytes क्रम board-specअगरic info */
+#घोषणा KEXEC_CONTROL_PAGE_SIZE (4096 + 3*4096)
 
 /* The native architecture */
-#define KEXEC_ARCH KEXEC_ARCH_MIPS
-#define MAX_NOTE_BYTES 1024
+#घोषणा KEXEC_ARCH KEXEC_ARCH_MIPS
+#घोषणा MAX_NOTE_BYTES 1024
 
-static inline void crash_setup_regs(struct pt_regs *newregs,
-				    struct pt_regs *oldregs)
-{
-	if (oldregs)
-		memcpy(newregs, oldregs, sizeof(*newregs));
-	else
+अटल अंतरभूत व्योम crash_setup_regs(काष्ठा pt_regs *newregs,
+				    काष्ठा pt_regs *oldregs)
+अणु
+	अगर (oldregs)
+		स_नकल(newregs, oldregs, माप(*newregs));
+	अन्यथा
 		prepare_frametrace(newregs);
-}
+पूर्ण
 
-#ifdef CONFIG_KEXEC
-struct kimage;
-extern unsigned long kexec_args[4];
-extern int (*_machine_kexec_prepare)(struct kimage *);
-extern void (*_machine_kexec_shutdown)(void);
-extern void (*_machine_crash_shutdown)(struct pt_regs *regs);
-void default_machine_crash_shutdown(struct pt_regs *regs);
-void kexec_nonboot_cpu_jump(void);
-void kexec_reboot(void);
-#ifdef CONFIG_SMP
-extern const unsigned char kexec_smp_wait[];
-extern unsigned long secondary_kexec_args[4];
-extern atomic_t kexec_ready_to_reboot;
-extern void (*_crash_smp_send_stop)(void);
-#endif
-#endif
+#अगर_घोषित CONFIG_KEXEC
+काष्ठा kimage;
+बाह्य अचिन्हित दीर्घ kexec_args[4];
+बाह्य पूर्णांक (*_machine_kexec_prepare)(काष्ठा kimage *);
+बाह्य व्योम (*_machine_kexec_shutकरोwn)(व्योम);
+बाह्य व्योम (*_machine_crash_shutकरोwn)(काष्ठा pt_regs *regs);
+व्योम शेष_machine_crash_shutकरोwn(काष्ठा pt_regs *regs);
+व्योम kexec_nonboot_cpu_jump(व्योम);
+व्योम kexec_reboot(व्योम);
+#अगर_घोषित CONFIG_SMP
+बाह्य स्थिर अचिन्हित अक्षर kexec_smp_रुको[];
+बाह्य अचिन्हित दीर्घ secondary_kexec_args[4];
+बाह्य atomic_t kexec_पढ़ोy_to_reboot;
+बाह्य व्योम (*_crash_smp_send_stop)(व्योम);
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#endif /* !_MIPS_KEXEC */
+#पूर्ण_अगर /* !_MIPS_KEXEC */

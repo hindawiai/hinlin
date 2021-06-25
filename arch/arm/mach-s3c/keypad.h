@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Samsung Platform - Keypad platform data definitions
+ * Samsung Platक्रमm - Keypad platक्रमm data definitions
  *
  * Copyright (C) 2010 Samsung Electronics Co.Ltd
  * Author: Joonyoung Shim <jy0922.shim@samsung.com>
  */
 
-#ifndef __PLAT_SAMSUNG_KEYPAD_H
-#define __PLAT_SAMSUNG_KEYPAD_H
+#अगर_अघोषित __PLAT_SAMSUNG_KEYPAD_H
+#घोषणा __PLAT_SAMSUNG_KEYPAD_H
 
-#include <linux/input/samsung-keypad.h>
+#समावेश <linux/input/samsung-keypad.h>
 
 /**
- * samsung_keypad_set_platdata - Set platform data for Samsung Keypad device.
- * @pd: Platform data to register to device.
+ * samsung_keypad_set_platdata - Set platक्रमm data क्रम Samsung Keypad device.
+ * @pd: Platक्रमm data to रेजिस्टर to device.
  *
- * Register the given platform data for use with Samsung Keypad device.
- * The call will copy the platform data, so the board definitions can
- * make the structure itself __initdata.
+ * Register the given platक्रमm data क्रम use with Samsung Keypad device.
+ * The call will copy the platक्रमm data, so the board definitions can
+ * make the काष्ठाure itself __initdata.
  */
-extern void samsung_keypad_set_platdata(struct samsung_keypad_platdata *pd);
+बाह्य व्योम samsung_keypad_set_platdata(काष्ठा samsung_keypad_platdata *pd);
 
 /* defined by architecture to configure gpio. */
-extern void samsung_keypad_cfg_gpio(unsigned int rows, unsigned int cols);
+बाह्य व्योम samsung_keypad_cfg_gpio(अचिन्हित पूर्णांक rows, अचिन्हित पूर्णांक cols);
 
-#endif /* __PLAT_SAMSUNG_KEYPAD_H */
+#पूर्ण_अगर /* __PLAT_SAMSUNG_KEYPAD_H */

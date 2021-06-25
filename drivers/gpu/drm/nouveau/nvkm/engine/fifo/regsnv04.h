@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NV04_FIFO_REGS_H__
-#define __NV04_FIFO_REGS_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NV04_FIFO_REGS_H__
+#घोषणा __NV04_FIFO_REGS_H__
 
-#define NV04_PFIFO_DELAY_0                                 0x00002040
-#define NV04_PFIFO_DMA_TIMESLICE                           0x00002044
-#define NV04_PFIFO_NEXT_CHANNEL                            0x00002050
-#define NV03_PFIFO_INTR_0                                  0x00002100
-#define NV03_PFIFO_INTR_EN_0                               0x00002140
+#घोषणा NV04_PFIFO_DELAY_0                                 0x00002040
+#घोषणा NV04_PFIFO_DMA_TIMESLICE                           0x00002044
+#घोषणा NV04_PFIFO_NEXT_CHANNEL                            0x00002050
+#घोषणा NV03_PFIFO_INTR_0                                  0x00002100
+#घोषणा NV03_PFIFO_INTR_EN_0                               0x00002140
 #    define NV_PFIFO_INTR_CACHE_ERROR                          (1<<0)
 #    define NV_PFIFO_INTR_RUNOUT                               (1<<4)
 #    define NV_PFIFO_INTR_RUNOUT_OVERFLOW                      (1<<8)
@@ -14,34 +15,34 @@
 #    define NV_PFIFO_INTR_DMA_PT                              (1<<16)
 #    define NV_PFIFO_INTR_SEMAPHORE                           (1<<20)
 #    define NV_PFIFO_INTR_ACQUIRE_TIMEOUT                     (1<<24)
-#define NV03_PFIFO_RAMHT                                   0x00002210
-#define NV03_PFIFO_RAMFC                                   0x00002214
-#define NV03_PFIFO_RAMRO                                   0x00002218
-#define NV40_PFIFO_RAMFC                                   0x00002220
-#define NV03_PFIFO_CACHES                                  0x00002500
-#define NV04_PFIFO_MODE                                    0x00002504
-#define NV04_PFIFO_DMA                                     0x00002508
-#define NV04_PFIFO_SIZE                                    0x0000250c
-#define NV50_PFIFO_CTX_TABLE(c)                        (0x2600+(c)*4)
-#define NV50_PFIFO_CTX_TABLE__SIZE                                128
-#define NV50_PFIFO_CTX_TABLE_CHANNEL_ENABLED                  (1<<31)
-#define NV50_PFIFO_CTX_TABLE_UNK30_BAD                        (1<<30)
-#define NV50_PFIFO_CTX_TABLE_INSTANCE_MASK_G80             0x0FFFFFFF
-#define NV50_PFIFO_CTX_TABLE_INSTANCE_MASK_G84             0x00FFFFFF
-#define NV03_PFIFO_CACHE0_PUSH0                            0x00003000
-#define NV03_PFIFO_CACHE0_PULL0                            0x00003040
-#define NV04_PFIFO_CACHE0_PULL0                            0x00003050
-#define NV04_PFIFO_CACHE0_PULL1                            0x00003054
-#define NV03_PFIFO_CACHE1_PUSH0                            0x00003200
-#define NV03_PFIFO_CACHE1_PUSH1                            0x00003204
-#define NV03_PFIFO_CACHE1_PUSH1_DMA                            (1<<8)
-#define NV40_PFIFO_CACHE1_PUSH1_DMA                           (1<<16)
-#define NV03_PFIFO_CACHE1_PUSH1_CHID_MASK                  0x0000000f
-#define NV10_PFIFO_CACHE1_PUSH1_CHID_MASK                  0x0000001f
-#define NV50_PFIFO_CACHE1_PUSH1_CHID_MASK                  0x0000007f
-#define NV03_PFIFO_CACHE1_PUT                              0x00003210
-#define NV04_PFIFO_CACHE1_DMA_PUSH                         0x00003220
-#define NV04_PFIFO_CACHE1_DMA_FETCH                        0x00003224
+#घोषणा NV03_PFIFO_RAMHT                                   0x00002210
+#घोषणा NV03_PFIFO_RAMFC                                   0x00002214
+#घोषणा NV03_PFIFO_RAMRO                                   0x00002218
+#घोषणा NV40_PFIFO_RAMFC                                   0x00002220
+#घोषणा NV03_PFIFO_CACHES                                  0x00002500
+#घोषणा NV04_PFIFO_MODE                                    0x00002504
+#घोषणा NV04_PFIFO_DMA                                     0x00002508
+#घोषणा NV04_PFIFO_SIZE                                    0x0000250c
+#घोषणा NV50_PFIFO_CTX_TABLE(c)                        (0x2600+(c)*4)
+#घोषणा NV50_PFIFO_CTX_TABLE__SIZE                                128
+#घोषणा NV50_PFIFO_CTX_TABLE_CHANNEL_ENABLED                  (1<<31)
+#घोषणा NV50_PFIFO_CTX_TABLE_UNK30_BAD                        (1<<30)
+#घोषणा NV50_PFIFO_CTX_TABLE_INSTANCE_MASK_G80             0x0FFFFFFF
+#घोषणा NV50_PFIFO_CTX_TABLE_INSTANCE_MASK_G84             0x00FFFFFF
+#घोषणा NV03_PFIFO_CACHE0_PUSH0                            0x00003000
+#घोषणा NV03_PFIFO_CACHE0_PULL0                            0x00003040
+#घोषणा NV04_PFIFO_CACHE0_PULL0                            0x00003050
+#घोषणा NV04_PFIFO_CACHE0_PULL1                            0x00003054
+#घोषणा NV03_PFIFO_CACHE1_PUSH0                            0x00003200
+#घोषणा NV03_PFIFO_CACHE1_PUSH1                            0x00003204
+#घोषणा NV03_PFIFO_CACHE1_PUSH1_DMA                            (1<<8)
+#घोषणा NV40_PFIFO_CACHE1_PUSH1_DMA                           (1<<16)
+#घोषणा NV03_PFIFO_CACHE1_PUSH1_CHID_MASK                  0x0000000f
+#घोषणा NV10_PFIFO_CACHE1_PUSH1_CHID_MASK                  0x0000001f
+#घोषणा NV50_PFIFO_CACHE1_PUSH1_CHID_MASK                  0x0000007f
+#घोषणा NV03_PFIFO_CACHE1_PUT                              0x00003210
+#घोषणा NV04_PFIFO_CACHE1_DMA_PUSH                         0x00003220
+#घोषणा NV04_PFIFO_CACHE1_DMA_FETCH                        0x00003224
 #    define NV_PFIFO_CACHE1_DMA_FETCH_TRIG_8_BYTES         0x00000000
 #    define NV_PFIFO_CACHE1_DMA_FETCH_TRIG_16_BYTES        0x00000008
 #    define NV_PFIFO_CACHE1_DMA_FETCH_TRIG_24_BYTES        0x00000010
@@ -103,31 +104,31 @@
 #    define NV_PFIFO_CACHE1_ENDIAN                         0x80000000
 #    define NV_PFIFO_CACHE1_LITTLE_ENDIAN                  0x7FFFFFFF
 #    define NV_PFIFO_CACHE1_BIG_ENDIAN                     0x80000000
-#define NV04_PFIFO_CACHE1_DMA_STATE                        0x00003228
-#define NV04_PFIFO_CACHE1_DMA_INSTANCE                     0x0000322c
-#define NV04_PFIFO_CACHE1_DMA_CTL                          0x00003230
-#define NV04_PFIFO_CACHE1_DMA_PUT                          0x00003240
-#define NV04_PFIFO_CACHE1_DMA_GET                          0x00003244
-#define NV10_PFIFO_CACHE1_REF_CNT                          0x00003248
-#define NV10_PFIFO_CACHE1_DMA_SUBROUTINE                   0x0000324C
-#define NV03_PFIFO_CACHE1_PULL0                            0x00003240
-#define NV04_PFIFO_CACHE1_PULL0                            0x00003250
+#घोषणा NV04_PFIFO_CACHE1_DMA_STATE                        0x00003228
+#घोषणा NV04_PFIFO_CACHE1_DMA_INSTANCE                     0x0000322c
+#घोषणा NV04_PFIFO_CACHE1_DMA_CTL                          0x00003230
+#घोषणा NV04_PFIFO_CACHE1_DMA_PUT                          0x00003240
+#घोषणा NV04_PFIFO_CACHE1_DMA_GET                          0x00003244
+#घोषणा NV10_PFIFO_CACHE1_REF_CNT                          0x00003248
+#घोषणा NV10_PFIFO_CACHE1_DMA_SUBROUTINE                   0x0000324C
+#घोषणा NV03_PFIFO_CACHE1_PULL0                            0x00003240
+#घोषणा NV04_PFIFO_CACHE1_PULL0                            0x00003250
 #    define NV04_PFIFO_CACHE1_PULL0_HASH_FAILED            0x00000010
 #    define NV04_PFIFO_CACHE1_PULL0_HASH_BUSY              0x00001000
-#define NV03_PFIFO_CACHE1_PULL1                            0x00003250
-#define NV04_PFIFO_CACHE1_PULL1                            0x00003254
-#define NV04_PFIFO_CACHE1_HASH                             0x00003258
-#define NV10_PFIFO_CACHE1_ACQUIRE_TIMEOUT                  0x00003260
-#define NV10_PFIFO_CACHE1_ACQUIRE_TIMESTAMP                0x00003264
-#define NV10_PFIFO_CACHE1_ACQUIRE_VALUE                    0x00003268
-#define NV10_PFIFO_CACHE1_SEMAPHORE                        0x0000326C
-#define NV03_PFIFO_CACHE1_GET                              0x00003270
-#define NV04_PFIFO_CACHE1_ENGINE                           0x00003280
-#define NV04_PFIFO_CACHE1_DMA_DCOUNT                       0x000032A0
-#define NV40_PFIFO_GRCTX_INSTANCE                          0x000032E0
-#define NV40_PFIFO_UNK32E4                                 0x000032E4
-#define NV04_PFIFO_CACHE1_METHOD(i)                (0x00003800+(i*8))
-#define NV04_PFIFO_CACHE1_DATA(i)                  (0x00003804+(i*8))
-#define NV40_PFIFO_CACHE1_METHOD(i)                (0x00090000+(i*8))
-#define NV40_PFIFO_CACHE1_DATA(i)                  (0x00090004+(i*8))
-#endif
+#घोषणा NV03_PFIFO_CACHE1_PULL1                            0x00003250
+#घोषणा NV04_PFIFO_CACHE1_PULL1                            0x00003254
+#घोषणा NV04_PFIFO_CACHE1_HASH                             0x00003258
+#घोषणा NV10_PFIFO_CACHE1_ACQUIRE_TIMEOUT                  0x00003260
+#घोषणा NV10_PFIFO_CACHE1_ACQUIRE_TIMESTAMP                0x00003264
+#घोषणा NV10_PFIFO_CACHE1_ACQUIRE_VALUE                    0x00003268
+#घोषणा NV10_PFIFO_CACHE1_SEMAPHORE                        0x0000326C
+#घोषणा NV03_PFIFO_CACHE1_GET                              0x00003270
+#घोषणा NV04_PFIFO_CACHE1_ENGINE                           0x00003280
+#घोषणा NV04_PFIFO_CACHE1_DMA_DCOUNT                       0x000032A0
+#घोषणा NV40_PFIFO_GRCTX_INSTANCE                          0x000032E0
+#घोषणा NV40_PFIFO_UNK32E4                                 0x000032E4
+#घोषणा NV04_PFIFO_CACHE1_METHOD(i)                (0x00003800+(i*8))
+#घोषणा NV04_PFIFO_CACHE1_DATA(i)                  (0x00003804+(i*8))
+#घोषणा NV40_PFIFO_CACHE1_METHOD(i)                (0x00090000+(i*8))
+#घोषणा NV40_PFIFO_CACHE1_DATA(i)                  (0x00090004+(i*8))
+#पूर्ण_अगर

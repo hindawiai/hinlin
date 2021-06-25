@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#define KMSG_COMPONENT "IPVS"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#घोषणा KMSG_COMPONENT "IPVS"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
 
-#include <net/ip_vs.h>
-#include <net/netfilter/nf_conntrack.h>
-#include <linux/netfilter/nf_conntrack_sip.h>
+#समावेश <net/ip_vs.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <linux/netfilter/nf_conntrack_sip.h>
 
-#ifdef CONFIG_IP_VS_DEBUG
-static const char *ip_vs_dbg_callid(char *buf, size_t buf_len,
-				    const char *callid, size_t callid_len,
-				    int *idx)
-{
-	size_t max_len = 64;
-	size_t len = min3(max_len, callid_len, buf_len - *idx - 1);
-	memcpy(buf + *idx, callid, len);
+#अगर_घोषित CONFIG_IP_VS_DEBUG
+अटल स्थिर अक्षर *ip_vs_dbg_callid(अक्षर *buf, माप_प्रकार buf_len,
+				    स्थिर अक्षर *callid, माप_प्रकार callid_len,
+				    पूर्णांक *idx)
+अणु
+	माप_प्रकार max_len = 64;
+	माप_प्रकार len = min3(max_len, callid_len, buf_len - *idx - 1);
+	स_नकल(buf + *idx, callid, len);
 	buf[*idx+len] = '\0';
 	*idx += len + 1;
-	return buf + *idx - len;
-}
+	वापस buf + *idx - len;
+पूर्ण
 
-#define IP_VS_DEBUG_CALLID(callid, len)					\
-	ip_vs_dbg_callid(ip_vs_dbg_buf, sizeof(ip_vs_dbg_buf),		\
+#घोषणा IP_VS_DEBUG_CALLID(callid, len)					\
+	ip_vs_dbg_callid(ip_vs_dbg_buf, माप(ip_vs_dbg_buf),		\
 			 callid, len, &ip_vs_dbg_idx)
-#endif
+#पूर्ण_अगर
 
-static int get_callid(const char *dptr, unsigned int dataoff,
-		      unsigned int datalen,
-		      unsigned int *matchoff, unsigned int *matchlen)
-{
+अटल पूर्णांक get_callid(स्थिर अक्षर *dptr, अचिन्हित पूर्णांक dataoff,
+		      अचिन्हित पूर्णांक datalen,
+		      अचिन्हित पूर्णांक *matchoff, अचिन्हित पूर्णांक *matchlen)
+अणु
 	/* Find callid */
-	while (1) {
-		int ret = ct_sip_get_header(NULL, dptr, dataoff, datalen,
+	जबतक (1) अणु
+		पूर्णांक ret = ct_sip_get_header(शून्य, dptr, dataoff, datalen,
 					    SIP_HDR_CALL_ID, matchoff,
 					    matchlen);
-		if (ret > 0)
-			break;
-		if (!ret)
-			return -EINVAL;
+		अगर (ret > 0)
+			अवरोध;
+		अगर (!ret)
+			वापस -EINVAL;
 		dataoff += *matchoff;
-	}
+	पूर्ण
 
 	/* Too large is useless */
-	if (*matchlen > IP_VS_PEDATA_MAXLEN)
-		return -EINVAL;
+	अगर (*matchlen > IP_VS_PEDATA_MAXLEN)
+		वापस -EINVAL;
 
 	/* SIP headers are always followed by a line terminator */
-	if (*matchoff + *matchlen == datalen)
-		return -EINVAL;
+	अगर (*matchoff + *matchlen == datalen)
+		वापस -EINVAL;
 
 	/* RFC 2543 allows lines to be terminated with CR, LF or CRLF,
 	 * RFC 3261 allows only CRLF, we support both. */
-	if (*(dptr + *matchoff + *matchlen) != '\r' &&
+	अगर (*(dptr + *matchoff + *matchlen) != '\r' &&
 	    *(dptr + *matchoff + *matchlen) != '\n')
-		return -EINVAL;
+		वापस -EINVAL;
 
 	IP_VS_DBG_BUF(9, "SIP callid %s (%d bytes)\n",
 		      IP_VS_DEBUG_CALLID(dptr + *matchoff, *matchlen),
 		      *matchlen);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ip_vs_sip_fill_param(struct ip_vs_conn_param *p, struct sk_buff *skb)
-{
-	struct ip_vs_iphdr iph;
-	unsigned int dataoff, datalen, matchoff, matchlen;
-	const char *dptr;
-	int retc;
+अटल पूर्णांक
+ip_vs_sip_fill_param(काष्ठा ip_vs_conn_param *p, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ip_vs_iphdr iph;
+	अचिन्हित पूर्णांक dataoff, datalen, matchoff, matchlen;
+	स्थिर अक्षर *dptr;
+	पूर्णांक retc;
 
 	retc = ip_vs_fill_iph_skb(p->af, skb, false, &iph);
 
 	/* Only useful with UDP */
-	if (!retc || iph.protocol != IPPROTO_UDP)
-		return -EINVAL;
-	/* todo: IPv6 fragments:
-	 *       I think this only should be done for the first fragment. /HS
+	अगर (!retc || iph.protocol != IPPROTO_UDP)
+		वापस -EINVAL;
+	/* toकरो: IPv6 fragments:
+	 *       I think this only should be करोne क्रम the first fragment. /HS
 	 */
-	dataoff = iph.len + sizeof(struct udphdr);
+	dataoff = iph.len + माप(काष्ठा udphdr);
 
-	if (dataoff >= skb->len)
-		return -EINVAL;
+	अगर (dataoff >= skb->len)
+		वापस -EINVAL;
 	retc = skb_linearize(skb);
-	if (retc < 0)
-		return retc;
+	अगर (retc < 0)
+		वापस retc;
 	dptr = skb->data + dataoff;
 	datalen = skb->len - dataoff;
 
-	if (get_callid(dptr, 0, datalen, &matchoff, &matchlen))
-		return -EINVAL;
+	अगर (get_callid(dptr, 0, datalen, &matchoff, &matchlen))
+		वापस -EINVAL;
 
 	/* N.B: pe_data is only set on success,
-	 * this allows fallback to the default persistence logic on failure
+	 * this allows fallback to the शेष persistence logic on failure
 	 */
 	p->pe_data = kmemdup(dptr + matchoff, matchlen, GFP_ATOMIC);
-	if (!p->pe_data)
-		return -ENOMEM;
+	अगर (!p->pe_data)
+		वापस -ENOMEM;
 
 	p->pe_data_len = matchlen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool ip_vs_sip_ct_match(const struct ip_vs_conn_param *p,
-				  struct ip_vs_conn *ct)
+अटल bool ip_vs_sip_ct_match(स्थिर काष्ठा ip_vs_conn_param *p,
+				  काष्ठा ip_vs_conn *ct)
 
-{
+अणु
 	bool ret = false;
 
-	if (ct->af == p->af &&
+	अगर (ct->af == p->af &&
 	    ip_vs_addr_equal(p->af, p->caddr, &ct->caddr) &&
-	    /* protocol should only be IPPROTO_IP if
+	    /* protocol should only be IPPROTO_IP अगर
 	     * d_addr is a fwmark */
 	    ip_vs_addr_equal(p->protocol == IPPROTO_IP ? AF_UNSPEC : p->af,
 			     p->vaddr, &ct->vaddr) &&
@@ -120,7 +121,7 @@ static bool ip_vs_sip_ct_match(const struct ip_vs_conn_param *p,
 	    ct->flags & IP_VS_CONN_F_TEMPLATE &&
 	    ct->protocol == p->protocol &&
 	    ct->pe_data && ct->pe_data_len == p->pe_data_len &&
-	    !memcmp(ct->pe_data, p->pe_data, p->pe_data_len))
+	    !स_भेद(ct->pe_data, p->pe_data, p->pe_data_len))
 		ret = true;
 
 	IP_VS_DBG_BUF(9, "SIP template match %s %s->%s:%d %s\n",
@@ -129,37 +130,37 @@ static bool ip_vs_sip_ct_match(const struct ip_vs_conn_param *p,
 		      IP_VS_DBG_ADDR(p->af, p->vaddr), ntohs(p->vport),
 		      ret ? "hit" : "not hit");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 ip_vs_sip_hashkey_raw(const struct ip_vs_conn_param *p,
+अटल u32 ip_vs_sip_hashkey_raw(स्थिर काष्ठा ip_vs_conn_param *p,
 				 u32 initval, bool inverse)
-{
-	return jhash(p->pe_data, p->pe_data_len, initval);
-}
+अणु
+	वापस jhash(p->pe_data, p->pe_data_len, initval);
+पूर्ण
 
-static int ip_vs_sip_show_pe_data(const struct ip_vs_conn *cp, char *buf)
-{
-	memcpy(buf, cp->pe_data, cp->pe_data_len);
-	return cp->pe_data_len;
-}
+अटल पूर्णांक ip_vs_sip_show_pe_data(स्थिर काष्ठा ip_vs_conn *cp, अक्षर *buf)
+अणु
+	स_नकल(buf, cp->pe_data, cp->pe_data_len);
+	वापस cp->pe_data_len;
+पूर्ण
 
-static struct ip_vs_conn *
-ip_vs_sip_conn_out(struct ip_vs_service *svc,
-		   struct ip_vs_dest *dest,
-		   struct sk_buff *skb,
-		   const struct ip_vs_iphdr *iph,
+अटल काष्ठा ip_vs_conn *
+ip_vs_sip_conn_out(काष्ठा ip_vs_service *svc,
+		   काष्ठा ip_vs_dest *dest,
+		   काष्ठा sk_buff *skb,
+		   स्थिर काष्ठा ip_vs_iphdr *iph,
 		   __be16 dport,
 		   __be16 cport)
-{
-	if (likely(iph->protocol == IPPROTO_UDP))
-		return ip_vs_new_conn_out(svc, dest, skb, iph, dport, cport);
+अणु
+	अगर (likely(iph->protocol == IPPROTO_UDP))
+		वापस ip_vs_new_conn_out(svc, dest, skb, iph, dport, cport);
 	/* currently no need to handle other than UDP */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct ip_vs_pe ip_vs_sip_pe =
-{
+अटल काष्ठा ip_vs_pe ip_vs_sip_pe =
+अणु
 	.name =			"sip",
 	.refcnt =		ATOMIC_INIT(0),
 	.module =		THIS_MODULE,
@@ -169,19 +170,19 @@ static struct ip_vs_pe ip_vs_sip_pe =
 	.hashkey_raw =		ip_vs_sip_hashkey_raw,
 	.show_pe_data =		ip_vs_sip_show_pe_data,
 	.conn_out =		ip_vs_sip_conn_out,
-};
+पूर्ण;
 
-static int __init ip_vs_sip_init(void)
-{
-	return register_ip_vs_pe(&ip_vs_sip_pe);
-}
+अटल पूर्णांक __init ip_vs_sip_init(व्योम)
+अणु
+	वापस रेजिस्टर_ip_vs_pe(&ip_vs_sip_pe);
+पूर्ण
 
-static void __exit ip_vs_sip_cleanup(void)
-{
-	unregister_ip_vs_pe(&ip_vs_sip_pe);
+अटल व्योम __निकास ip_vs_sip_cleanup(व्योम)
+अणु
+	unरेजिस्टर_ip_vs_pe(&ip_vs_sip_pe);
 	synchronize_rcu();
-}
+पूर्ण
 
 module_init(ip_vs_sip_init);
-module_exit(ip_vs_sip_cleanup);
+module_निकास(ip_vs_sip_cleanup);
 MODULE_LICENSE("GPL");

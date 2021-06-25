@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kbuild.h>
-#include <linux/mod_devicetable.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kbuild.h>
+#समावेश <linux/mod_devicetable.h>
 
-#define DEVID(devid) DEFINE(SIZE_##devid, sizeof(struct devid))
-#define DEVID_FIELD(devid, field) \
-	DEFINE(OFF_##devid##_##field, offsetof(struct devid, field))
+#घोषणा DEVID(devid) DEFINE(SIZE_##devid, माप(काष्ठा devid))
+#घोषणा DEVID_FIELD(devid, field) \
+	DEFINE(OFF_##devid##_##field, दुरत्व(काष्ठा devid, field))
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	DEVID(usb_device_id);
 	DEVID_FIELD(usb_device_id, match_flags);
-	DEVID_FIELD(usb_device_id, idVendor);
+	DEVID_FIELD(usb_device_id, idVenकरोr);
 	DEVID_FIELD(usb_device_id, idProduct);
 	DEVID_FIELD(usb_device_id, bcdDevice_lo);
 	DEVID_FIELD(usb_device_id, bcdDevice_hi);
@@ -25,20 +26,20 @@ int main(void)
 	DEVID(hid_device_id);
 	DEVID_FIELD(hid_device_id, bus);
 	DEVID_FIELD(hid_device_id, group);
-	DEVID_FIELD(hid_device_id, vendor);
+	DEVID_FIELD(hid_device_id, venकरोr);
 	DEVID_FIELD(hid_device_id, product);
 
 	DEVID(ieee1394_device_id);
 	DEVID_FIELD(ieee1394_device_id, match_flags);
-	DEVID_FIELD(ieee1394_device_id, vendor_id);
+	DEVID_FIELD(ieee1394_device_id, venकरोr_id);
 	DEVID_FIELD(ieee1394_device_id, model_id);
-	DEVID_FIELD(ieee1394_device_id, specifier_id);
+	DEVID_FIELD(ieee1394_device_id, specअगरier_id);
 	DEVID_FIELD(ieee1394_device_id, version);
 
 	DEVID(pci_device_id);
-	DEVID_FIELD(pci_device_id, vendor);
+	DEVID_FIELD(pci_device_id, venकरोr);
 	DEVID_FIELD(pci_device_id, device);
-	DEVID_FIELD(pci_device_id, subvendor);
+	DEVID_FIELD(pci_device_id, subvenकरोr);
 	DEVID_FIELD(pci_device_id, subdevice);
 	DEVID_FIELD(pci_device_id, class);
 	DEVID_FIELD(pci_device_id, class_mask);
@@ -94,13 +95,13 @@ int main(void)
 	DEVID(input_device_id);
 	DEVID_FIELD(input_device_id, flags);
 	DEVID_FIELD(input_device_id, bustype);
-	DEVID_FIELD(input_device_id, vendor);
+	DEVID_FIELD(input_device_id, venकरोr);
 	DEVID_FIELD(input_device_id, product);
 	DEVID_FIELD(input_device_id, version);
 	DEVID_FIELD(input_device_id, evbit);
 	DEVID_FIELD(input_device_id, keybit);
 	DEVID_FIELD(input_device_id, relbit);
-	DEVID_FIELD(input_device_id, absbit);
+	DEVID_FIELD(input_device_id, असलbit);
 	DEVID_FIELD(input_device_id, mscbit);
 	DEVID_FIELD(input_device_id, ledbit);
 	DEVID_FIELD(input_device_id, sndbit);
@@ -118,11 +119,11 @@ int main(void)
 
 	DEVID(sdio_device_id);
 	DEVID_FIELD(sdio_device_id, class);
-	DEVID_FIELD(sdio_device_id, vendor);
+	DEVID_FIELD(sdio_device_id, venकरोr);
 	DEVID_FIELD(sdio_device_id, device);
 
 	DEVID(ssb_device_id);
-	DEVID_FIELD(ssb_device_id, vendor);
+	DEVID_FIELD(ssb_device_id, venकरोr);
 	DEVID_FIELD(ssb_device_id, coreid);
 	DEVID_FIELD(ssb_device_id, revision);
 
@@ -134,7 +135,7 @@ int main(void)
 
 	DEVID(virtio_device_id);
 	DEVID_FIELD(virtio_device_id, device);
-	DEVID_FIELD(virtio_device_id, vendor);
+	DEVID_FIELD(virtio_device_id, venकरोr);
 
 	DEVID(hv_vmbus_device_id);
 	DEVID_FIELD(hv_vmbus_device_id, guid);
@@ -155,11 +156,11 @@ int main(void)
 	DEVID(spi_device_id);
 	DEVID_FIELD(spi_device_id, name);
 
-	DEVID(dmi_system_id);
-	DEVID_FIELD(dmi_system_id, matches);
+	DEVID(dmi_प्रणाली_id);
+	DEVID_FIELD(dmi_प्रणाली_id, matches);
 
-	DEVID(platform_device_id);
-	DEVID_FIELD(platform_device_id, name);
+	DEVID(platक्रमm_device_id);
+	DEVID_FIELD(platक्रमm_device_id, name);
 
 	DEVID(mdio_device_id);
 	DEVID_FIELD(mdio_device_id, phy_id);
@@ -169,12 +170,12 @@ int main(void)
 	DEVID_FIELD(zorro_device_id, id);
 
 	DEVID(isapnp_device_id);
-	DEVID_FIELD(isapnp_device_id, vendor);
+	DEVID_FIELD(isapnp_device_id, venकरोr);
 	DEVID_FIELD(isapnp_device_id, function);
 
 	DEVID(ipack_device_id);
-	DEVID_FIELD(ipack_device_id, format);
-	DEVID_FIELD(ipack_device_id, vendor);
+	DEVID_FIELD(ipack_device_id, क्रमmat);
+	DEVID_FIELD(ipack_device_id, venकरोr);
 	DEVID_FIELD(ipack_device_id, device);
 
 	DEVID(amba_id);
@@ -188,7 +189,7 @@ int main(void)
 	DEVID_FIELD(x86_cpu_id, feature);
 	DEVID_FIELD(x86_cpu_id, family);
 	DEVID_FIELD(x86_cpu_id, model);
-	DEVID_FIELD(x86_cpu_id, vendor);
+	DEVID_FIELD(x86_cpu_id, venकरोr);
 
 	DEVID(cpu_feature);
 	DEVID_FIELD(cpu_feature, feature);
@@ -201,15 +202,15 @@ int main(void)
 	DEVID(rio_device_id);
 	DEVID_FIELD(rio_device_id, did);
 	DEVID_FIELD(rio_device_id, vid);
-	DEVID_FIELD(rio_device_id, asm_did);
-	DEVID_FIELD(rio_device_id, asm_vid);
+	DEVID_FIELD(rio_device_id, यंत्र_did);
+	DEVID_FIELD(rio_device_id, यंत्र_vid);
 
 	DEVID(ulpi_device_id);
-	DEVID_FIELD(ulpi_device_id, vendor);
+	DEVID_FIELD(ulpi_device_id, venकरोr);
 	DEVID_FIELD(ulpi_device_id, product);
 
 	DEVID(hda_device_id);
-	DEVID_FIELD(hda_device_id, vendor_id);
+	DEVID_FIELD(hda_device_id, venकरोr_id);
 	DEVID_FIELD(hda_device_id, rev_id);
 	DEVID_FIELD(hda_device_id, api_version);
 
@@ -220,7 +221,7 @@ int main(void)
 	DEVID_FIELD(sdw_device_id, class_id);
 
 	DEVID(fsl_mc_device_id);
-	DEVID_FIELD(fsl_mc_device_id, vendor);
+	DEVID_FIELD(fsl_mc_device_id, venकरोr);
 	DEVID_FIELD(fsl_mc_device_id, obj_type);
 
 	DEVID(tb_service_id);
@@ -248,7 +249,7 @@ int main(void)
 
 	DEVID(ssam_device_id);
 	DEVID_FIELD(ssam_device_id, match_flags);
-	DEVID_FIELD(ssam_device_id, domain);
+	DEVID_FIELD(ssam_device_id, करोमुख्य);
 	DEVID_FIELD(ssam_device_id, category);
 	DEVID_FIELD(ssam_device_id, target);
 	DEVID_FIELD(ssam_device_id, instance);
@@ -258,5 +259,5 @@ int main(void)
 	DEVID_FIELD(dfl_device_id, type);
 	DEVID_FIELD(dfl_device_id, feature_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

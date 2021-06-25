@@ -1,90 +1,91 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ak4535.c  --  AK4535 ALSA Soc Audio driver
  *
  * Copyright 2005 Openedhand Ltd.
  *
- * Author: Richard Purdie <richard@openedhand.com>
+ * Author: Riअक्षरd Purdie <riअक्षरd@खोलोedhand.com>
  *
  * Based on wm8753.c by Liam Girdwood
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/initval.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/initval.h>
 
-#include "ak4535.h"
+#समावेश "ak4535.h"
 
-/* codec private data */
-struct ak4535_priv {
-	struct regmap *regmap;
-	unsigned int sysclk;
-};
+/* codec निजी data */
+काष्ठा ak4535_priv अणु
+	काष्ठा regmap *regmap;
+	अचिन्हित पूर्णांक sysclk;
+पूर्ण;
 
 /*
- * ak4535 register cache
+ * ak4535 रेजिस्टर cache
  */
-static const struct reg_default ak4535_reg_defaults[] = {
-	{ 0, 0x00 },
-	{ 1, 0x80 },
-	{ 2, 0x00 },
-	{ 3, 0x03 },
-	{ 4, 0x02 },
-	{ 5, 0x00 },
-	{ 6, 0x11 },
-	{ 7, 0x01 },
-	{ 8, 0x00 },
-	{ 9, 0x40 },
-	{ 10, 0x36 },
-	{ 11, 0x10 },
-	{ 12, 0x00 },
-	{ 13, 0x00 },
-	{ 14, 0x57 },
-};
+अटल स्थिर काष्ठा reg_शेष ak4535_reg_शेषs[] = अणु
+	अणु 0, 0x00 पूर्ण,
+	अणु 1, 0x80 पूर्ण,
+	अणु 2, 0x00 पूर्ण,
+	अणु 3, 0x03 पूर्ण,
+	अणु 4, 0x02 पूर्ण,
+	अणु 5, 0x00 पूर्ण,
+	अणु 6, 0x11 पूर्ण,
+	अणु 7, 0x01 पूर्ण,
+	अणु 8, 0x00 पूर्ण,
+	अणु 9, 0x40 पूर्ण,
+	अणु 10, 0x36 पूर्ण,
+	अणु 11, 0x10 पूर्ण,
+	अणु 12, 0x00 पूर्ण,
+	अणु 13, 0x00 पूर्ण,
+	अणु 14, 0x57 पूर्ण,
+पूर्ण;
 
-static bool ak4535_volatile(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case AK4535_STATUS:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool ak4535_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल AK4535_STATUS:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const char *ak4535_mono_gain[] = {"+6dB", "-17dB"};
-static const char *ak4535_mono_out[] = {"(L + R)/2", "Hi-Z"};
-static const char *ak4535_hp_out[] = {"Stereo", "Mono"};
-static const char *ak4535_deemp[] = {"44.1kHz", "Off", "48kHz", "32kHz"};
-static const char *ak4535_mic_select[] = {"Internal", "External"};
+अटल स्थिर अक्षर *ak4535_mono_gain[] = अणु"+6dB", "-17dB"पूर्ण;
+अटल स्थिर अक्षर *ak4535_mono_out[] = अणु"(L + R)/2", "Hi-Z"पूर्ण;
+अटल स्थिर अक्षर *ak4535_hp_out[] = अणु"Stereo", "Mono"पूर्ण;
+अटल स्थिर अक्षर *ak4535_deemp[] = अणु"44.1kHz", "Off", "48kHz", "32kHz"पूर्ण;
+अटल स्थिर अक्षर *ak4535_mic_select[] = अणु"Internal", "External"पूर्ण;
 
-static const struct soc_enum ak4535_enum[] = {
+अटल स्थिर काष्ठा soc_क्रमागत ak4535_क्रमागत[] = अणु
 	SOC_ENUM_SINGLE(AK4535_SIG1, 7, 2, ak4535_mono_gain),
 	SOC_ENUM_SINGLE(AK4535_SIG1, 6, 2, ak4535_mono_out),
 	SOC_ENUM_SINGLE(AK4535_MODE2, 2, 2, ak4535_hp_out),
 	SOC_ENUM_SINGLE(AK4535_DAC, 0, 4, ak4535_deemp),
 	SOC_ENUM_SINGLE(AK4535_MIC, 1, 2, ak4535_mic_select),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new ak4535_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new ak4535_snd_controls[] = अणु
 	SOC_SINGLE("ALC2 Switch", AK4535_SIG1, 1, 1, 0),
-	SOC_ENUM("Mono 1 Output", ak4535_enum[1]),
-	SOC_ENUM("Mono 1 Gain", ak4535_enum[0]),
-	SOC_ENUM("Headphone Output", ak4535_enum[2]),
-	SOC_ENUM("Playback Deemphasis", ak4535_enum[3]),
+	SOC_ENUM("Mono 1 Output", ak4535_क्रमागत[1]),
+	SOC_ENUM("Mono 1 Gain", ak4535_क्रमागत[0]),
+	SOC_ENUM("Headphone Output", ak4535_क्रमागत[2]),
+	SOC_ENUM("Playback Deemphasis", ak4535_क्रमागत[3]),
 	SOC_SINGLE("Bass Volume", AK4535_DAC, 2, 3, 0),
 	SOC_SINGLE("Mic Boost (+20dB) Switch", AK4535_MIC, 0, 1, 0),
-	SOC_ENUM("Mic Select", ak4535_enum[4]),
+	SOC_ENUM("Mic Select", ak4535_क्रमागत[4]),
 	SOC_SINGLE("ALC Operation Time", AK4535_TIMER, 0, 3, 0),
 	SOC_SINGLE("ALC Recovery Time", AK4535_TIMER, 2, 3, 0),
 	SOC_SINGLE("ALC ZC Time", AK4535_TIMER, 4, 3, 0),
@@ -96,49 +97,49 @@ static const struct snd_kcontrol_new ak4535_snd_controls[] = {
 	SOC_SINGLE("Right Playback Volume", AK4535_RATT, 0, 127, 1),
 	SOC_SINGLE("AUX Bypass Volume", AK4535_VOL, 0, 15, 0),
 	SOC_SINGLE("Mic Sidetone Volume", AK4535_VOL, 4, 7, 0),
-};
+पूर्ण;
 
 /* Mono 1 Mixer */
-static const struct snd_kcontrol_new ak4535_mono1_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new ak4535_mono1_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Mic Sidetone Switch", AK4535_SIG1, 4, 1, 0),
 	SOC_DAPM_SINGLE("Mono Playback Switch", AK4535_SIG1, 5, 1, 0),
-};
+पूर्ण;
 
 /* Stereo Mixer */
-static const struct snd_kcontrol_new ak4535_stereo_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new ak4535_stereo_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Mic Sidetone Switch", AK4535_SIG2, 4, 1, 0),
 	SOC_DAPM_SINGLE("Playback Switch", AK4535_SIG2, 7, 1, 0),
 	SOC_DAPM_SINGLE("Aux Bypass Switch", AK4535_SIG2, 5, 1, 0),
-};
+पूर्ण;
 
 /* Input Mixer */
-static const struct snd_kcontrol_new ak4535_input_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new ak4535_input_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Mic Capture Switch", AK4535_MIC, 2, 1, 0),
 	SOC_DAPM_SINGLE("Aux Capture Switch", AK4535_MIC, 5, 1, 0),
-};
+पूर्ण;
 
 /* Input mux */
-static const struct snd_kcontrol_new ak4535_input_mux_control =
-	SOC_DAPM_ENUM("Input Select", ak4535_enum[4]);
+अटल स्थिर काष्ठा snd_kcontrol_new ak4535_input_mux_control =
+	SOC_DAPM_ENUM("Input Select", ak4535_क्रमागत[4]);
 
-/* HP L switch */
-static const struct snd_kcontrol_new ak4535_hpl_control =
+/* HP L चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new ak4535_hpl_control =
 	SOC_DAPM_SINGLE("Switch", AK4535_SIG2, 1, 1, 1);
 
-/* HP R switch */
-static const struct snd_kcontrol_new ak4535_hpr_control =
+/* HP R चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new ak4535_hpr_control =
 	SOC_DAPM_SINGLE("Switch", AK4535_SIG2, 0, 1, 1);
 
-/* mono 2 switch */
-static const struct snd_kcontrol_new ak4535_mono2_control =
+/* mono 2 चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new ak4535_mono2_control =
 	SOC_DAPM_SINGLE("Switch", AK4535_SIG1, 0, 1, 0);
 
-/* Line out switch */
-static const struct snd_kcontrol_new ak4535_line_control =
+/* Line out चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new ak4535_line_control =
 	SOC_DAPM_SINGLE("Switch", AK4535_SIG2, 6, 1, 0);
 
-/* ak4535 dapm widgets */
-static const struct snd_soc_dapm_widget ak4535_dapm_widgets[] = {
+/* ak4535 dapm widमाला_लो */
+अटल स्थिर काष्ठा snd_soc_dapm_widget ak4535_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_MIXER("Stereo Mixer", SND_SOC_NOPM, 0, 0,
 		&ak4535_stereo_mixer_controls[0],
 		ARRAY_SIZE(ak4535_stereo_mixer_controls)),
@@ -153,8 +154,8 @@ static const struct snd_soc_dapm_widget ak4535_dapm_widgets[] = {
 	SND_SOC_DAPM_DAC("DAC", "Playback", AK4535_PM2, 0, 0),
 	SND_SOC_DAPM_SWITCH("Mono 2 Enable", SND_SOC_NOPM, 0, 0,
 		&ak4535_mono2_control),
-	/* speaker powersave bit */
-	SND_SOC_DAPM_PGA("Speaker Enable", AK4535_MODE2, 0, 0, NULL, 0),
+	/* speaker घातersave bit */
+	SND_SOC_DAPM_PGA("Speaker Enable", AK4535_MODE2, 0, 0, शून्य, 0),
 	SND_SOC_DAPM_SWITCH("Line Out Enable", SND_SOC_NOPM, 0, 0,
 		&ak4535_line_control),
 	SND_SOC_DAPM_SWITCH("Left HP Enable", SND_SOC_NOPM, 0, 0,
@@ -171,13 +172,13 @@ static const struct snd_soc_dapm_widget ak4535_dapm_widgets[] = {
 	SND_SOC_DAPM_OUTPUT("MOUT2"),
 	SND_SOC_DAPM_OUTPUT("MICOUT"),
 	SND_SOC_DAPM_ADC("ADC", "Capture", AK4535_PM1, 0, 0),
-	SND_SOC_DAPM_PGA("Spk Amp", AK4535_PM2, 3, 0, NULL, 0),
-	SND_SOC_DAPM_PGA("HP R Amp", AK4535_PM2, 1, 0, NULL, 0),
-	SND_SOC_DAPM_PGA("HP L Amp", AK4535_PM2, 2, 0, NULL, 0),
-	SND_SOC_DAPM_PGA("Mic", AK4535_PM1, 1, 0, NULL, 0),
-	SND_SOC_DAPM_PGA("Line Out", AK4535_PM1, 4, 0, NULL, 0),
-	SND_SOC_DAPM_PGA("Mono Out", AK4535_PM1, 3, 0, NULL, 0),
-	SND_SOC_DAPM_PGA("AUX In", AK4535_PM1, 2, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("Spk Amp", AK4535_PM2, 3, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA("HP R Amp", AK4535_PM2, 1, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA("HP L Amp", AK4535_PM2, 2, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA("Mic", AK4535_PM1, 1, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA("Line Out", AK4535_PM1, 4, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA("Mono Out", AK4535_PM1, 3, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA("AUX In", AK4535_PM1, 2, 0, शून्य, 0),
 
 	SND_SOC_DAPM_MICBIAS("Mic Int Bias", AK4535_MIC, 3, 0),
 	SND_SOC_DAPM_MICBIAS("Mic Ext Bias", AK4535_MIC, 4, 0),
@@ -186,264 +187,264 @@ static const struct snd_soc_dapm_widget ak4535_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("AUX"),
 	SND_SOC_DAPM_INPUT("MIN"),
 	SND_SOC_DAPM_INPUT("AIN"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route ak4535_audio_map[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route ak4535_audio_map[] = अणु
 	/*stereo mixer */
-	{"Stereo Mixer", "Playback Switch", "DAC"},
-	{"Stereo Mixer", "Mic Sidetone Switch", "Mic"},
-	{"Stereo Mixer", "Aux Bypass Switch", "AUX In"},
+	अणु"Stereo Mixer", "Playback Switch", "DAC"पूर्ण,
+	अणु"Stereo Mixer", "Mic Sidetone Switch", "Mic"पूर्ण,
+	अणु"Stereo Mixer", "Aux Bypass Switch", "AUX In"पूर्ण,
 
 	/* mono1 mixer */
-	{"Mono1 Mixer", "Mic Sidetone Switch", "Mic"},
-	{"Mono1 Mixer", "Mono Playback Switch", "DAC"},
+	अणु"Mono1 Mixer", "Mic Sidetone Switch", "Mic"पूर्ण,
+	अणु"Mono1 Mixer", "Mono Playback Switch", "DAC"पूर्ण,
 
 	/* Mic */
-	{"Mic", NULL, "AIN"},
-	{"Input Mux", "Internal", "Mic Int Bias"},
-	{"Input Mux", "External", "Mic Ext Bias"},
-	{"Mic Int Bias", NULL, "MICIN"},
-	{"Mic Ext Bias", NULL, "MICEXT"},
-	{"MICOUT", NULL, "Input Mux"},
+	अणु"Mic", शून्य, "AIN"पूर्ण,
+	अणु"Input Mux", "Internal", "Mic Int Bias"पूर्ण,
+	अणु"Input Mux", "External", "Mic Ext Bias"पूर्ण,
+	अणु"Mic Int Bias", शून्य, "MICIN"पूर्ण,
+	अणु"Mic Ext Bias", शून्य, "MICEXT"पूर्ण,
+	अणु"MICOUT", शून्य, "Input Mux"पूर्ण,
 
 	/* line out */
-	{"LOUT", NULL, "Line Out Enable"},
-	{"ROUT", NULL, "Line Out Enable"},
-	{"Line Out Enable", "Switch", "Line Out"},
-	{"Line Out", NULL, "Stereo Mixer"},
+	अणु"LOUT", शून्य, "Line Out Enable"पूर्ण,
+	अणु"ROUT", शून्य, "Line Out Enable"पूर्ण,
+	अणु"Line Out Enable", "Switch", "Line Out"पूर्ण,
+	अणु"Line Out", शून्य, "Stereo Mixer"पूर्ण,
 
 	/* mono1 out */
-	{"MOUT1", NULL, "Mono Out"},
-	{"Mono Out", NULL, "Mono1 Mixer"},
+	अणु"MOUT1", शून्य, "Mono Out"पूर्ण,
+	अणु"Mono Out", शून्य, "Mono1 Mixer"पूर्ण,
 
 	/* left HP */
-	{"HPL", NULL, "Left HP Enable"},
-	{"Left HP Enable", "Switch", "HP L Amp"},
-	{"HP L Amp", NULL, "Stereo Mixer"},
+	अणु"HPL", शून्य, "Left HP Enable"पूर्ण,
+	अणु"Left HP Enable", "Switch", "HP L Amp"पूर्ण,
+	अणु"HP L Amp", शून्य, "Stereo Mixer"पूर्ण,
 
 	/* right HP */
-	{"HPR", NULL, "Right HP Enable"},
-	{"Right HP Enable", "Switch", "HP R Amp"},
-	{"HP R Amp", NULL, "Stereo Mixer"},
+	अणु"HPR", शून्य, "Right HP Enable"पूर्ण,
+	अणु"Right HP Enable", "Switch", "HP R Amp"पूर्ण,
+	अणु"HP R Amp", शून्य, "Stereo Mixer"पूर्ण,
 
 	/* speaker */
-	{"SPP", NULL, "Speaker Enable"},
-	{"SPN", NULL, "Speaker Enable"},
-	{"Speaker Enable", "Switch", "Spk Amp"},
-	{"Spk Amp", NULL, "MIN"},
+	अणु"SPP", शून्य, "Speaker Enable"पूर्ण,
+	अणु"SPN", शून्य, "Speaker Enable"पूर्ण,
+	अणु"Speaker Enable", "Switch", "Spk Amp"पूर्ण,
+	अणु"Spk Amp", शून्य, "MIN"पूर्ण,
 
 	/* mono 2 */
-	{"MOUT2", NULL, "Mono 2 Enable"},
-	{"Mono 2 Enable", "Switch", "Stereo Mixer"},
+	अणु"MOUT2", शून्य, "Mono 2 Enable"पूर्ण,
+	अणु"Mono 2 Enable", "Switch", "Stereo Mixer"पूर्ण,
 
 	/* Aux In */
-	{"Aux In", NULL, "AUX"},
+	अणु"Aux In", शून्य, "AUX"पूर्ण,
 
 	/* ADC */
-	{"ADC", NULL, "Input Mixer"},
-	{"Input Mixer", "Mic Capture Switch", "Mic"},
-	{"Input Mixer", "Aux Capture Switch", "Aux In"},
-};
+	अणु"ADC", शून्य, "Input Mixer"पूर्ण,
+	अणु"Input Mixer", "Mic Capture Switch", "Mic"पूर्ण,
+	अणु"Input Mixer", "Aux Capture Switch", "Aux In"पूर्ण,
+पूर्ण;
 
-static int ak4535_set_dai_sysclk(struct snd_soc_dai *codec_dai,
-	int clk_id, unsigned int freq, int dir)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct ak4535_priv *ak4535 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक ak4535_set_dai_sysclk(काष्ठा snd_soc_dai *codec_dai,
+	पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा ak4535_priv *ak4535 = snd_soc_component_get_drvdata(component);
 
 	ak4535->sysclk = freq;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4535_hw_params(struct snd_pcm_substream *substream,
-			    struct snd_pcm_hw_params *params,
-			    struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct ak4535_priv *ak4535 = snd_soc_component_get_drvdata(component);
-	u8 mode2 = snd_soc_component_read(component, AK4535_MODE2) & ~(0x3 << 5);
-	int rate = params_rate(params), fs = 256;
+अटल पूर्णांक ak4535_hw_params(काष्ठा snd_pcm_substream *substream,
+			    काष्ठा snd_pcm_hw_params *params,
+			    काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा ak4535_priv *ak4535 = snd_soc_component_get_drvdata(component);
+	u8 mode2 = snd_soc_component_पढ़ो(component, AK4535_MODE2) & ~(0x3 << 5);
+	पूर्णांक rate = params_rate(params), fs = 256;
 
-	if (rate)
+	अगर (rate)
 		fs = ak4535->sysclk / rate;
 
 	/* set fs */
-	switch (fs) {
-	case 1024:
+	चयन (fs) अणु
+	हाल 1024:
 		mode2 |= (0x2 << 5);
-		break;
-	case 512:
+		अवरोध;
+	हाल 512:
 		mode2 |= (0x1 << 5);
-		break;
-	case 256:
-		break;
-	}
+		अवरोध;
+	हाल 256:
+		अवरोध;
+	पूर्ण
 
 	/* set rate */
-	snd_soc_component_write(component, AK4535_MODE2, mode2);
-	return 0;
-}
+	snd_soc_component_ग_लिखो(component, AK4535_MODE2, mode2);
+	वापस 0;
+पूर्ण
 
-static int ak4535_set_dai_fmt(struct snd_soc_dai *codec_dai,
-		unsigned int fmt)
-{
-	struct snd_soc_component *component = codec_dai->component;
+अटल पूर्णांक ak4535_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai,
+		अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
 	u8 mode1 = 0;
 
-	/* interface format */
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+	/* पूर्णांकerface क्रमmat */
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		mode1 = 0x0002;
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		mode1 = 0x0001;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* use 32 fs for BCLK to save power */
+	/* use 32 fs क्रम BCLK to save घातer */
 	mode1 |= 0x4;
 
-	snd_soc_component_write(component, AK4535_MODE1, mode1);
-	return 0;
-}
+	snd_soc_component_ग_लिखो(component, AK4535_MODE1, mode1);
+	वापस 0;
+पूर्ण
 
-static int ak4535_mute(struct snd_soc_dai *dai, int mute, int direction)
-{
-	struct snd_soc_component *component = dai->component;
-	u16 mute_reg = snd_soc_component_read(component, AK4535_DAC);
+अटल पूर्णांक ak4535_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	u16 mute_reg = snd_soc_component_पढ़ो(component, AK4535_DAC);
 
-	if (!mute)
-		snd_soc_component_write(component, AK4535_DAC, mute_reg & ~0x20);
-	else
-		snd_soc_component_write(component, AK4535_DAC, mute_reg | 0x20);
-	return 0;
-}
+	अगर (!mute)
+		snd_soc_component_ग_लिखो(component, AK4535_DAC, mute_reg & ~0x20);
+	अन्यथा
+		snd_soc_component_ग_लिखो(component, AK4535_DAC, mute_reg | 0x20);
+	वापस 0;
+पूर्ण
 
-static int ak4535_set_bias_level(struct snd_soc_component *component,
-	enum snd_soc_bias_level level)
-{
-	switch (level) {
-	case SND_SOC_BIAS_ON:
+अटल पूर्णांक ak4535_set_bias_level(काष्ठा snd_soc_component *component,
+	क्रमागत snd_soc_bias_level level)
+अणु
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
 		snd_soc_component_update_bits(component, AK4535_DAC, 0x20, 0);
-		break;
-	case SND_SOC_BIAS_PREPARE:
+		अवरोध;
+	हाल SND_SOC_BIAS_PREPARE:
 		snd_soc_component_update_bits(component, AK4535_DAC, 0x20, 0x20);
-		break;
-	case SND_SOC_BIAS_STANDBY:
+		अवरोध;
+	हाल SND_SOC_BIAS_STANDBY:
 		snd_soc_component_update_bits(component, AK4535_PM1, 0x80, 0x80);
 		snd_soc_component_update_bits(component, AK4535_PM2, 0x80, 0);
-		break;
-	case SND_SOC_BIAS_OFF:
+		अवरोध;
+	हाल SND_SOC_BIAS_OFF:
 		snd_soc_component_update_bits(component, AK4535_PM1, 0x80, 0);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define AK4535_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |\
+#घोषणा AK4535_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |\
 		SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_22050 |\
 		SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000)
 
-static const struct snd_soc_dai_ops ak4535_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops ak4535_dai_ops = अणु
 	.hw_params	= ak4535_hw_params,
 	.set_fmt	= ak4535_set_dai_fmt,
 	.mute_stream	= ak4535_mute,
 	.set_sysclk	= ak4535_set_dai_sysclk,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver ak4535_dai = {
+अटल काष्ठा snd_soc_dai_driver ak4535_dai = अणु
 	.name = "ak4535-hifi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = AK4535_RATES,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE,},
-	.capture = {
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,पूर्ण,
+	.capture = अणु
 		.stream_name = "Capture",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = AK4535_RATES,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE,},
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,पूर्ण,
 	.ops = &ak4535_dai_ops,
-};
+पूर्ण;
 
-static int ak4535_resume(struct snd_soc_component *component)
-{
+अटल पूर्णांक ak4535_resume(काष्ठा snd_soc_component *component)
+अणु
 	snd_soc_component_cache_sync(component);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regmap_config ak4535_regmap = {
+अटल स्थिर काष्ठा regmap_config ak4535_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = AK4535_STATUS,
-	.volatile_reg = ak4535_volatile,
+	.max_रेजिस्टर = AK4535_STATUS,
+	.अस्थिर_reg = ak4535_अस्थिर,
 
 	.cache_type = REGCACHE_RBTREE,
-	.reg_defaults = ak4535_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(ak4535_reg_defaults),
-};
+	.reg_शेषs = ak4535_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(ak4535_reg_शेषs),
+पूर्ण;
 
-static const struct snd_soc_component_driver soc_component_dev_ak4535 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_ak4535 = अणु
 	.resume			= ak4535_resume,
 	.set_bias_level		= ak4535_set_bias_level,
 	.controls		= ak4535_snd_controls,
 	.num_controls		= ARRAY_SIZE(ak4535_snd_controls),
-	.dapm_widgets		= ak4535_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(ak4535_dapm_widgets),
+	.dapm_widमाला_लो		= ak4535_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(ak4535_dapm_widमाला_लो),
 	.dapm_routes		= ak4535_audio_map,
 	.num_dapm_routes	= ARRAY_SIZE(ak4535_audio_map),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static int ak4535_i2c_probe(struct i2c_client *i2c,
-			    const struct i2c_device_id *id)
-{
-	struct ak4535_priv *ak4535;
-	int ret;
+अटल पूर्णांक ak4535_i2c_probe(काष्ठा i2c_client *i2c,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा ak4535_priv *ak4535;
+	पूर्णांक ret;
 
-	ak4535 = devm_kzalloc(&i2c->dev, sizeof(struct ak4535_priv),
+	ak4535 = devm_kzalloc(&i2c->dev, माप(काष्ठा ak4535_priv),
 			      GFP_KERNEL);
-	if (ak4535 == NULL)
-		return -ENOMEM;
+	अगर (ak4535 == शून्य)
+		वापस -ENOMEM;
 
 	ak4535->regmap = devm_regmap_init_i2c(i2c, &ak4535_regmap);
-	if (IS_ERR(ak4535->regmap)) {
+	अगर (IS_ERR(ak4535->regmap)) अणु
 		ret = PTR_ERR(ak4535->regmap);
 		dev_err(&i2c->dev, "Failed to init regmap: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	i2c_set_clientdata(i2c, ak4535);
 
-	ret = devm_snd_soc_register_component(&i2c->dev,
+	ret = devm_snd_soc_रेजिस्टर_component(&i2c->dev,
 			&soc_component_dev_ak4535, &ak4535_dai, 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct i2c_device_id ak4535_i2c_id[] = {
-	{ "ak4535", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id ak4535_i2c_id[] = अणु
+	अणु "ak4535", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ak4535_i2c_id);
 
-static struct i2c_driver ak4535_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ak4535_i2c_driver = अणु
+	.driver = अणु
 		.name = "ak4535",
-	},
+	पूर्ण,
 	.probe =    ak4535_i2c_probe,
 	.id_table = ak4535_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(ak4535_i2c_driver);
 

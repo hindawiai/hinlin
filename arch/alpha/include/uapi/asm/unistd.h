@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_ALPHA_UNISTD_H
-#define _UAPI_ALPHA_UNISTD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_ALPHA_UNISTD_H
+#घोषणा _UAPI_ALPHA_UNISTD_H
 
-/* These are traditionally the names linux-alpha uses for
- * the two otherwise generic system calls */
-#define __NR_umount	__NR_umount2
-#define __NR_osf_shmat	__NR_shmat
+/* These are traditionally the names linux-alpha uses क्रम
+ * the two otherwise generic प्रणाली calls */
+#घोषणा __NR_umount	__NR_umount2
+#घोषणा __NR_osf_shmat	__NR_shmat
 
-/* These return an extra value but can be used as aliases */
-#define __NR_getpid	__NR_getxpid
-#define __NR_getuid	__NR_getxuid
-#define __NR_getgid	__NR_getxgid
+/* These वापस an extra value but can be used as aliases */
+#घोषणा __NR_getpid	__NR_getxpid
+#घोषणा __NR_getuid	__NR_getxuid
+#घोषणा __NR_getgid	__NR_getxgid
 
-#include <asm/unistd_32.h>
+#समावेश <यंत्र/unistd_32.h>
 
-#endif /* _UAPI_ALPHA_UNISTD_H */
+#पूर्ण_अगर /* _UAPI_ALPHA_UNISTD_H */

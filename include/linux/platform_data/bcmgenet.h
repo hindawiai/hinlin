@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_PLATFORM_DATA_BCMGENET_H__
-#define __LINUX_PLATFORM_DATA_BCMGENET_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_PLATFORM_DATA_BCMGENET_H__
+#घोषणा __LINUX_PLATFORM_DATA_BCMGENET_H__
 
-#include <linux/types.h>
-#include <linux/if_ether.h>
-#include <linux/phy.h>
+#समावेश <linux/types.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/phy.h>
 
-struct bcmgenet_platform_data {
+काष्ठा bcmgenet_platक्रमm_data अणु
 	bool		mdio_enabled;
-	phy_interface_t	phy_interface;
-	int		phy_address;
-	int		phy_speed;
-	int		phy_duplex;
+	phy_पूर्णांकerface_t	phy_पूर्णांकerface;
+	पूर्णांक		phy_address;
+	पूर्णांक		phy_speed;
+	पूर्णांक		phy_duplex;
 	u8		mac_address[ETH_ALEN];
-	int		genet_version;
-};
+	पूर्णांक		genet_version;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

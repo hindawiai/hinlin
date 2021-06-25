@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PVRUSB2_DVB_H__
-#define __PVRUSB2_DVB_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PVRUSB2_DVB_H__
+#घोषणा __PVRUSB2_DVB_H__
 
-#include <media/dvb_frontend.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_net.h>
-#include <media/dmxdev.h>
-#include "pvrusb2-context.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_net.h>
+#समावेश <media/dmxdev.h>
+#समावेश "pvrusb2-context.h"
 
-#define PVR2_DVB_BUFFER_COUNT 32
-#define PVR2_DVB_BUFFER_SIZE PAGE_ALIGN(0x4000)
+#घोषणा PVR2_DVB_BUFFER_COUNT 32
+#घोषणा PVR2_DVB_BUFFER_SIZE PAGE_ALIGN(0x4000)
 
-struct pvr2_dvb_adapter {
-	struct pvr2_channel	channel;
+काष्ठा pvr2_dvb_adapter अणु
+	काष्ठा pvr2_channel	channel;
 
-	struct dvb_adapter	dvb_adap;
-	struct dmxdev		dmxdev;
-	struct dvb_demux	demux;
-	struct dvb_net		dvb_net;
-	struct dvb_frontend	*fe[2];
+	काष्ठा dvb_adapter	dvb_adap;
+	काष्ठा dmxdev		dmxdev;
+	काष्ठा dvb_demux	demux;
+	काष्ठा dvb_net		dvb_net;
+	काष्ठा dvb_frontend	*fe[2];
 
-	struct i2c_client	*i2c_client_demod[2];
-	struct i2c_client	*i2c_client_tuner;
+	काष्ठा i2c_client	*i2c_client_demod[2];
+	काष्ठा i2c_client	*i2c_client_tuner;
 
-	int			feedcount;
-	int			max_feed_count;
+	पूर्णांक			feedcount;
+	पूर्णांक			max_feed_count;
 
-	struct task_struct	*thread;
-	struct mutex		lock;
+	काष्ठा task_काष्ठा	*thपढ़ो;
+	काष्ठा mutex		lock;
 
-	unsigned int		stream_run:1;
+	अचिन्हित पूर्णांक		stream_run:1;
 
-	wait_queue_head_t	buffer_wait_data;
-	char			*buffer_storage[PVR2_DVB_BUFFER_COUNT];
-};
+	रुको_queue_head_t	buffer_रुको_data;
+	अक्षर			*buffer_storage[PVR2_DVB_BUFFER_COUNT];
+पूर्ण;
 
-struct pvr2_dvb_props {
-	int (*frontend_attach) (struct pvr2_dvb_adapter *);
-	int (*tuner_attach) (struct pvr2_dvb_adapter *);
-};
+काष्ठा pvr2_dvb_props अणु
+	पूर्णांक (*frontend_attach) (काष्ठा pvr2_dvb_adapter *);
+	पूर्णांक (*tuner_attach) (काष्ठा pvr2_dvb_adapter *);
+पूर्ण;
 
-struct pvr2_dvb_adapter *pvr2_dvb_create(struct pvr2_context *pvr);
+काष्ठा pvr2_dvb_adapter *pvr2_dvb_create(काष्ठा pvr2_context *pvr);
 
-#endif /* __PVRUSB2_DVB_H__ */
+#पूर्ण_अगर /* __PVRUSB2_DVB_H__ */

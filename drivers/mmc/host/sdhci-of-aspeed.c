@@ -1,191 +1,192 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Copyright (C) 2019 ASPEED Technology Inc. */
 /* Copyright (C) 2019 IBM Corp. */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/math64.h>
-#include <linux/mmc/host.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/spinlock.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/math64.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/spinlock.h>
 
-#include "sdhci-pltfm.h"
+#समावेश "sdhci-pltfm.h"
 
-#define ASPEED_SDC_INFO			0x00
-#define   ASPEED_SDC_S1_MMC8		BIT(25)
-#define   ASPEED_SDC_S0_MMC8		BIT(24)
-#define ASPEED_SDC_PHASE		0xf4
-#define   ASPEED_SDC_S1_PHASE_IN	GENMASK(25, 21)
-#define   ASPEED_SDC_S0_PHASE_IN	GENMASK(20, 16)
-#define   ASPEED_SDC_S1_PHASE_OUT	GENMASK(15, 11)
-#define   ASPEED_SDC_S1_PHASE_IN_EN	BIT(10)
-#define   ASPEED_SDC_S1_PHASE_OUT_EN	GENMASK(9, 8)
-#define   ASPEED_SDC_S0_PHASE_OUT	GENMASK(7, 3)
-#define   ASPEED_SDC_S0_PHASE_IN_EN	BIT(2)
-#define   ASPEED_SDC_S0_PHASE_OUT_EN	GENMASK(1, 0)
-#define   ASPEED_SDC_PHASE_MAX		31
+#घोषणा ASPEED_SDC_INFO			0x00
+#घोषणा   ASPEED_SDC_S1_MMC8		BIT(25)
+#घोषणा   ASPEED_SDC_S0_MMC8		BIT(24)
+#घोषणा ASPEED_SDC_PHASE		0xf4
+#घोषणा   ASPEED_SDC_S1_PHASE_IN	GENMASK(25, 21)
+#घोषणा   ASPEED_SDC_S0_PHASE_IN	GENMASK(20, 16)
+#घोषणा   ASPEED_SDC_S1_PHASE_OUT	GENMASK(15, 11)
+#घोषणा   ASPEED_SDC_S1_PHASE_IN_EN	BIT(10)
+#घोषणा   ASPEED_SDC_S1_PHASE_OUT_EN	GENMASK(9, 8)
+#घोषणा   ASPEED_SDC_S0_PHASE_OUT	GENMASK(7, 3)
+#घोषणा   ASPEED_SDC_S0_PHASE_IN_EN	BIT(2)
+#घोषणा   ASPEED_SDC_S0_PHASE_OUT_EN	GENMASK(1, 0)
+#घोषणा   ASPEED_SDC_PHASE_MAX		31
 
-struct aspeed_sdc {
-	struct clk *clk;
-	struct resource *res;
+काष्ठा aspeed_sdc अणु
+	काष्ठा clk *clk;
+	काष्ठा resource *res;
 
 	spinlock_t lock;
-	void __iomem *regs;
-};
+	व्योम __iomem *regs;
+पूर्ण;
 
-struct aspeed_sdhci_tap_param {
+काष्ठा aspeed_sdhci_tap_param अणु
 	bool valid;
 
-#define ASPEED_SDHCI_TAP_PARAM_INVERT_CLK	BIT(4)
+#घोषणा ASPEED_SDHCI_TAP_PARAM_INVERT_CLK	BIT(4)
 	u8 in;
 	u8 out;
-};
+पूर्ण;
 
-struct aspeed_sdhci_tap_desc {
+काष्ठा aspeed_sdhci_tap_desc अणु
 	u32 tap_mask;
 	u32 enable_mask;
 	u8 enable_value;
-};
+पूर्ण;
 
-struct aspeed_sdhci_phase_desc {
-	struct aspeed_sdhci_tap_desc in;
-	struct aspeed_sdhci_tap_desc out;
-};
+काष्ठा aspeed_sdhci_phase_desc अणु
+	काष्ठा aspeed_sdhci_tap_desc in;
+	काष्ठा aspeed_sdhci_tap_desc out;
+पूर्ण;
 
-struct aspeed_sdhci_pdata {
-	unsigned int clk_div_start;
-	const struct aspeed_sdhci_phase_desc *phase_desc;
-	size_t nr_phase_descs;
-};
+काष्ठा aspeed_sdhci_pdata अणु
+	अचिन्हित पूर्णांक clk_भाग_start;
+	स्थिर काष्ठा aspeed_sdhci_phase_desc *phase_desc;
+	माप_प्रकार nr_phase_descs;
+पूर्ण;
 
-struct aspeed_sdhci {
-	const struct aspeed_sdhci_pdata *pdata;
-	struct aspeed_sdc *parent;
+काष्ठा aspeed_sdhci अणु
+	स्थिर काष्ठा aspeed_sdhci_pdata *pdata;
+	काष्ठा aspeed_sdc *parent;
 	u32 width_mask;
-	struct mmc_clk_phase_map phase_map;
-	const struct aspeed_sdhci_phase_desc *phase_desc;
-};
+	काष्ठा mmc_clk_phase_map phase_map;
+	स्थिर काष्ठा aspeed_sdhci_phase_desc *phase_desc;
+पूर्ण;
 
-static void aspeed_sdc_configure_8bit_mode(struct aspeed_sdc *sdc,
-					   struct aspeed_sdhci *sdhci,
+अटल व्योम aspeed_sdc_configure_8bit_mode(काष्ठा aspeed_sdc *sdc,
+					   काष्ठा aspeed_sdhci *sdhci,
 					   bool bus8)
-{
+अणु
 	u32 info;
 
 	/* Set/clear 8 bit mode */
 	spin_lock(&sdc->lock);
-	info = readl(sdc->regs + ASPEED_SDC_INFO);
-	if (bus8)
+	info = पढ़ोl(sdc->regs + ASPEED_SDC_INFO);
+	अगर (bus8)
 		info |= sdhci->width_mask;
-	else
+	अन्यथा
 		info &= ~sdhci->width_mask;
-	writel(info, sdc->regs + ASPEED_SDC_INFO);
+	ग_लिखोl(info, sdc->regs + ASPEED_SDC_INFO);
 	spin_unlock(&sdc->lock);
-}
+पूर्ण
 
-static u32
-aspeed_sdc_set_phase_tap(const struct aspeed_sdhci_tap_desc *desc,
+अटल u32
+aspeed_sdc_set_phase_tap(स्थिर काष्ठा aspeed_sdhci_tap_desc *desc,
 			 u8 tap, bool enable, u32 reg)
-{
+अणु
 	reg &= ~(desc->enable_mask | desc->tap_mask);
-	if (enable) {
+	अगर (enable) अणु
 		reg |= tap << __ffs(desc->tap_mask);
 		reg |= desc->enable_value << __ffs(desc->enable_mask);
-	}
+	पूर्ण
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-static void
-aspeed_sdc_set_phase_taps(struct aspeed_sdc *sdc,
-			  const struct aspeed_sdhci_phase_desc *desc,
-			  const struct aspeed_sdhci_tap_param *taps)
-{
+अटल व्योम
+aspeed_sdc_set_phase_taps(काष्ठा aspeed_sdc *sdc,
+			  स्थिर काष्ठा aspeed_sdhci_phase_desc *desc,
+			  स्थिर काष्ठा aspeed_sdhci_tap_param *taps)
+अणु
 	u32 reg;
 
 	spin_lock(&sdc->lock);
-	reg = readl(sdc->regs + ASPEED_SDC_PHASE);
+	reg = पढ़ोl(sdc->regs + ASPEED_SDC_PHASE);
 
 	reg = aspeed_sdc_set_phase_tap(&desc->in, taps->in, taps->valid, reg);
 	reg = aspeed_sdc_set_phase_tap(&desc->out, taps->out, taps->valid, reg);
 
-	writel(reg, sdc->regs + ASPEED_SDC_PHASE);
+	ग_लिखोl(reg, sdc->regs + ASPEED_SDC_PHASE);
 	spin_unlock(&sdc->lock);
-}
+पूर्ण
 
-#define PICOSECONDS_PER_SECOND		1000000000000ULL
-#define ASPEED_SDHCI_NR_TAPS		15
-/* Measured value with *handwave* environmentals and static loading */
-#define ASPEED_SDHCI_MAX_TAP_DELAY_PS	1253
-static int aspeed_sdhci_phase_to_tap(struct device *dev, unsigned long rate_hz,
-				     int phase_deg)
-{
+#घोषणा PICOSECONDS_PER_SECOND		1000000000000ULL
+#घोषणा ASPEED_SDHCI_NR_TAPS		15
+/* Measured value with *handwave* environmentals and अटल loading */
+#घोषणा ASPEED_SDHCI_MAX_TAP_DELAY_PS	1253
+अटल पूर्णांक aspeed_sdhci_phase_to_tap(काष्ठा device *dev, अचिन्हित दीर्घ rate_hz,
+				     पूर्णांक phase_deg)
+अणु
 	u64 phase_period_ps;
 	u64 prop_delay_ps;
 	u64 clk_period_ps;
-	unsigned int tap;
+	अचिन्हित पूर्णांक tap;
 	u8 inverted;
 
 	phase_deg %= 360;
 
-	if (phase_deg >= 180) {
+	अगर (phase_deg >= 180) अणु
 		inverted = ASPEED_SDHCI_TAP_PARAM_INVERT_CLK;
 		phase_deg -= 180;
 		dev_dbg(dev,
 			"Inverting clock to reduce phase correction from %d to %d degrees\n",
 			phase_deg + 180, phase_deg);
-	} else {
+	पूर्ण अन्यथा अणु
 		inverted = 0;
-	}
+	पूर्ण
 
 	prop_delay_ps = ASPEED_SDHCI_MAX_TAP_DELAY_PS / ASPEED_SDHCI_NR_TAPS;
-	clk_period_ps = div_u64(PICOSECONDS_PER_SECOND, (u64)rate_hz);
-	phase_period_ps = div_u64((u64)phase_deg * clk_period_ps, 360ULL);
+	clk_period_ps = भाग_u64(PICOSECONDS_PER_SECOND, (u64)rate_hz);
+	phase_period_ps = भाग_u64((u64)phase_deg * clk_period_ps, 360ULL);
 
-	tap = div_u64(phase_period_ps, prop_delay_ps);
-	if (tap > ASPEED_SDHCI_NR_TAPS) {
+	tap = भाग_u64(phase_period_ps, prop_delay_ps);
+	अगर (tap > ASPEED_SDHCI_NR_TAPS) अणु
 		dev_warn(dev,
 			 "Requested out of range phase tap %d for %d degrees of phase compensation at %luHz, clamping to tap %d\n",
 			 tap, phase_deg, rate_hz, ASPEED_SDHCI_NR_TAPS);
 		tap = ASPEED_SDHCI_NR_TAPS;
-	}
+	पूर्ण
 
-	return inverted | tap;
-}
+	वापस inverted | tap;
+पूर्ण
 
-static void
-aspeed_sdhci_phases_to_taps(struct device *dev, unsigned long rate,
-			    const struct mmc_clk_phase *phases,
-			    struct aspeed_sdhci_tap_param *taps)
-{
+अटल व्योम
+aspeed_sdhci_phases_to_taps(काष्ठा device *dev, अचिन्हित दीर्घ rate,
+			    स्थिर काष्ठा mmc_clk_phase *phases,
+			    काष्ठा aspeed_sdhci_tap_param *taps)
+अणु
 	taps->valid = phases->valid;
 
-	if (!phases->valid)
-		return;
+	अगर (!phases->valid)
+		वापस;
 
 	taps->in = aspeed_sdhci_phase_to_tap(dev, rate, phases->in_deg);
 	taps->out = aspeed_sdhci_phase_to_tap(dev, rate, phases->out_deg);
-}
+पूर्ण
 
-static void
-aspeed_sdhci_configure_phase(struct sdhci_host *host, unsigned long rate)
-{
-	struct aspeed_sdhci_tap_param _taps = {0}, *taps = &_taps;
-	struct mmc_clk_phase *params;
-	struct aspeed_sdhci *sdhci;
-	struct device *dev;
+अटल व्योम
+aspeed_sdhci_configure_phase(काष्ठा sdhci_host *host, अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा aspeed_sdhci_tap_param _taps = अणु0पूर्ण, *taps = &_taps;
+	काष्ठा mmc_clk_phase *params;
+	काष्ठा aspeed_sdhci *sdhci;
+	काष्ठा device *dev;
 
 	dev = mmc_dev(host->mmc);
 	sdhci = sdhci_pltfm_priv(sdhci_priv(host));
 
-	if (!sdhci->phase_desc)
-		return;
+	अगर (!sdhci->phase_desc)
+		वापस;
 
 	params = &sdhci->phase_map.phase[host->timing];
 	aspeed_sdhci_phases_to_taps(dev, rate, params, taps);
@@ -195,14 +196,14 @@ aspeed_sdhci_configure_phase(struct sdhci_host *host, unsigned long rate)
 		taps->in & ASPEED_SDHCI_NR_TAPS,
 		taps->out & ASPEED_SDHCI_NR_TAPS,
 		params->in_deg, params->out_deg, rate, host->timing);
-}
+पूर्ण
 
-static void aspeed_sdhci_set_clock(struct sdhci_host *host, unsigned int clock)
-{
-	struct sdhci_pltfm_host *pltfm_host;
-	unsigned long parent, bus;
-	struct aspeed_sdhci *sdhci;
-	int div;
+अटल व्योम aspeed_sdhci_set_घड़ी(काष्ठा sdhci_host *host, अचिन्हित पूर्णांक घड़ी)
+अणु
+	काष्ठा sdhci_pltfm_host *pltfm_host;
+	अचिन्हित दीर्घ parent, bus;
+	काष्ठा aspeed_sdhci *sdhci;
+	पूर्णांक भाग;
 	u16 clk;
 
 	pltfm_host = sdhci_priv(host);
@@ -210,13 +211,13 @@ static void aspeed_sdhci_set_clock(struct sdhci_host *host, unsigned int clock)
 
 	parent = clk_get_rate(pltfm_host->clk);
 
-	sdhci_writew(host, 0, SDHCI_CLOCK_CONTROL);
+	sdhci_ग_लिखोw(host, 0, SDHCI_CLOCK_CONTROL);
 
-	if (clock == 0)
-		return;
+	अगर (घड़ी == 0)
+		वापस;
 
-	if (WARN_ON(clock > host->max_clk))
-		clock = host->max_clk;
+	अगर (WARN_ON(घड़ी > host->max_clk))
+		घड़ी = host->max_clk;
 
 	/*
 	 * Regarding the AST2600:
@@ -230,38 +231,38 @@ static void aspeed_sdhci_set_clock(struct sdhci_host *host, unsigned int clock)
 	 * If you keep EMMC12C[7:6] = 0 and EMMC12C[15:8] as one-hot,
 	 * 0x1/0x2/0x4/etc, you will find it is compatible to AST2400 or AST2500
 	 *
-	 * Keep the one-hot behaviour for backwards compatibility except for
+	 * Keep the one-hot behaviour क्रम backwards compatibility except क्रम
 	 * supporting the value 0 in (EMMC12C[7:6], EMMC12C[15:8]), and capture
-	 * the 0-value capability in clk_div_start.
+	 * the 0-value capability in clk_भाग_start.
 	 */
-	for (div = sdhci->pdata->clk_div_start; div < 256; div *= 2) {
-		bus = parent / div;
-		if (bus <= clock)
-			break;
-	}
+	क्रम (भाग = sdhci->pdata->clk_भाग_start; भाग < 256; भाग *= 2) अणु
+		bus = parent / भाग;
+		अगर (bus <= घड़ी)
+			अवरोध;
+	पूर्ण
 
-	div >>= 1;
+	भाग >>= 1;
 
-	clk = div << SDHCI_DIVIDER_SHIFT;
+	clk = भाग << SDHCI_DIVIDER_SHIFT;
 
 	aspeed_sdhci_configure_phase(host, bus);
 
 	sdhci_enable_clk(host, clk);
-}
+पूर्ण
 
-static unsigned int aspeed_sdhci_get_max_clock(struct sdhci_host *host)
-{
-	if (host->mmc->f_max)
-		return host->mmc->f_max;
+अटल अचिन्हित पूर्णांक aspeed_sdhci_get_max_घड़ी(काष्ठा sdhci_host *host)
+अणु
+	अगर (host->mmc->f_max)
+		वापस host->mmc->f_max;
 
-	return sdhci_pltfm_clk_get_max_clock(host);
-}
+	वापस sdhci_pltfm_clk_get_max_घड़ी(host);
+पूर्ण
 
-static void aspeed_sdhci_set_bus_width(struct sdhci_host *host, int width)
-{
-	struct sdhci_pltfm_host *pltfm_priv;
-	struct aspeed_sdhci *aspeed_sdhci;
-	struct aspeed_sdc *aspeed_sdc;
+अटल व्योम aspeed_sdhci_set_bus_width(काष्ठा sdhci_host *host, पूर्णांक width)
+अणु
+	काष्ठा sdhci_pltfm_host *pltfm_priv;
+	काष्ठा aspeed_sdhci *aspeed_sdhci;
+	काष्ठा aspeed_sdc *aspeed_sdc;
 	u8 ctrl;
 
 	pltfm_priv = sdhci_priv(host);
@@ -273,98 +274,98 @@ static void aspeed_sdhci_set_bus_width(struct sdhci_host *host, int width)
 				       width == MMC_BUS_WIDTH_8);
 
 	/* Set/clear 1 or 4 bit mode */
-	ctrl = sdhci_readb(host, SDHCI_HOST_CONTROL);
-	if (width == MMC_BUS_WIDTH_4)
+	ctrl = sdhci_पढ़ोb(host, SDHCI_HOST_CONTROL);
+	अगर (width == MMC_BUS_WIDTH_4)
 		ctrl |= SDHCI_CTRL_4BITBUS;
-	else
+	अन्यथा
 		ctrl &= ~SDHCI_CTRL_4BITBUS;
-	sdhci_writeb(host, ctrl, SDHCI_HOST_CONTROL);
-}
+	sdhci_ग_लिखोb(host, ctrl, SDHCI_HOST_CONTROL);
+पूर्ण
 
-static u32 aspeed_sdhci_readl(struct sdhci_host *host, int reg)
-{
-	u32 val = readl(host->ioaddr + reg);
+अटल u32 aspeed_sdhci_पढ़ोl(काष्ठा sdhci_host *host, पूर्णांक reg)
+अणु
+	u32 val = पढ़ोl(host->ioaddr + reg);
 
-	if (unlikely(reg == SDHCI_PRESENT_STATE) &&
+	अगर (unlikely(reg == SDHCI_PRESENT_STATE) &&
 	    (host->mmc->caps2 & MMC_CAP2_CD_ACTIVE_HIGH))
 		val ^= SDHCI_CARD_PRESENT;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static const struct sdhci_ops aspeed_sdhci_ops = {
-	.read_l = aspeed_sdhci_readl,
-	.set_clock = aspeed_sdhci_set_clock,
-	.get_max_clock = aspeed_sdhci_get_max_clock,
+अटल स्थिर काष्ठा sdhci_ops aspeed_sdhci_ops = अणु
+	.पढ़ो_l = aspeed_sdhci_पढ़ोl,
+	.set_घड़ी = aspeed_sdhci_set_घड़ी,
+	.get_max_घड़ी = aspeed_sdhci_get_max_घड़ी,
 	.set_bus_width = aspeed_sdhci_set_bus_width,
-	.get_timeout_clock = sdhci_pltfm_clk_get_max_clock,
+	.get_समयout_घड़ी = sdhci_pltfm_clk_get_max_घड़ी,
 	.reset = sdhci_reset,
-	.set_uhs_signaling = sdhci_set_uhs_signaling,
-};
+	.set_uhs_संकेतing = sdhci_set_uhs_संकेतing,
+पूर्ण;
 
-static const struct sdhci_pltfm_data aspeed_sdhci_pdata = {
+अटल स्थिर काष्ठा sdhci_pltfm_data aspeed_sdhci_pdata = अणु
 	.ops = &aspeed_sdhci_ops,
 	.quirks = SDHCI_QUIRK_CAP_CLOCK_BASE_BROKEN,
-};
+पूर्ण;
 
-static inline int aspeed_sdhci_calculate_slot(struct aspeed_sdhci *dev,
-					      struct resource *res)
-{
-	resource_size_t delta;
+अटल अंतरभूत पूर्णांक aspeed_sdhci_calculate_slot(काष्ठा aspeed_sdhci *dev,
+					      काष्ठा resource *res)
+अणु
+	resource_माप_प्रकार delta;
 
-	if (!res || resource_type(res) != IORESOURCE_MEM)
-		return -EINVAL;
+	अगर (!res || resource_type(res) != IORESOURCE_MEM)
+		वापस -EINVAL;
 
-	if (res->start < dev->parent->res->start)
-		return -EINVAL;
+	अगर (res->start < dev->parent->res->start)
+		वापस -EINVAL;
 
 	delta = res->start - dev->parent->res->start;
-	if (delta & (0x100 - 1))
-		return -EINVAL;
+	अगर (delta & (0x100 - 1))
+		वापस -EINVAL;
 
-	return (delta / 0x100) - 1;
-}
+	वापस (delta / 0x100) - 1;
+पूर्ण
 
-static int aspeed_sdhci_probe(struct platform_device *pdev)
-{
-	const struct aspeed_sdhci_pdata *aspeed_pdata;
-	struct sdhci_pltfm_host *pltfm_host;
-	struct aspeed_sdhci *dev;
-	struct sdhci_host *host;
-	struct resource *res;
-	int slot;
-	int ret;
+अटल पूर्णांक aspeed_sdhci_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा aspeed_sdhci_pdata *aspeed_pdata;
+	काष्ठा sdhci_pltfm_host *pltfm_host;
+	काष्ठा aspeed_sdhci *dev;
+	काष्ठा sdhci_host *host;
+	काष्ठा resource *res;
+	पूर्णांक slot;
+	पूर्णांक ret;
 
 	aspeed_pdata = of_device_get_match_data(&pdev->dev);
-	if (!aspeed_pdata) {
+	अगर (!aspeed_pdata) अणु
 		dev_err(&pdev->dev, "Missing platform configuration data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	host = sdhci_pltfm_init(pdev, &aspeed_sdhci_pdata, sizeof(*dev));
-	if (IS_ERR(host))
-		return PTR_ERR(host);
+	host = sdhci_pltfm_init(pdev, &aspeed_sdhci_pdata, माप(*dev));
+	अगर (IS_ERR(host))
+		वापस PTR_ERR(host);
 
 	pltfm_host = sdhci_priv(host);
 	dev = sdhci_pltfm_priv(pltfm_host);
 	dev->pdata = aspeed_pdata;
 	dev->parent = dev_get_drvdata(pdev->dev.parent);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	slot = aspeed_sdhci_calculate_slot(dev, res);
 
-	if (slot < 0)
-		return slot;
-	else if (slot >= 2)
-		return -EINVAL;
+	अगर (slot < 0)
+		वापस slot;
+	अन्यथा अगर (slot >= 2)
+		वापस -EINVAL;
 
-	if (slot < dev->pdata->nr_phase_descs) {
+	अगर (slot < dev->pdata->nr_phase_descs) अणु
 		dev->phase_desc = &dev->pdata->phase_desc[slot];
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_info(&pdev->dev,
 			 "Phase control not supported for slot %d\n", slot);
-		dev->phase_desc = NULL;
-	}
+		dev->phase_desc = शून्य;
+	पूर्ण
 
 	dev->width_mask = !slot ? ASPEED_SDC_S0_MMC8 : ASPEED_SDC_S1_MMC8;
 
@@ -372,248 +373,248 @@ static int aspeed_sdhci_probe(struct platform_device *pdev)
 
 	sdhci_get_of_property(pdev);
 
-	pltfm_host->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(pltfm_host->clk))
-		return PTR_ERR(pltfm_host->clk);
+	pltfm_host->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(pltfm_host->clk))
+		वापस PTR_ERR(pltfm_host->clk);
 
 	ret = clk_prepare_enable(pltfm_host->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Unable to enable SDIO clock\n");
-		goto err_pltfm_free;
-	}
+		जाओ err_pltfm_मुक्त;
+	पूर्ण
 
 	ret = mmc_of_parse(host->mmc);
-	if (ret)
-		goto err_sdhci_add;
+	अगर (ret)
+		जाओ err_sdhci_add;
 
-	if (dev->phase_desc)
+	अगर (dev->phase_desc)
 		mmc_of_parse_clk_phase(host->mmc, &dev->phase_map);
 
 	ret = sdhci_add_host(host);
-	if (ret)
-		goto err_sdhci_add;
+	अगर (ret)
+		जाओ err_sdhci_add;
 
-	return 0;
+	वापस 0;
 
 err_sdhci_add:
 	clk_disable_unprepare(pltfm_host->clk);
-err_pltfm_free:
-	sdhci_pltfm_free(pdev);
-	return ret;
-}
+err_pltfm_मुक्त:
+	sdhci_pltfm_मुक्त(pdev);
+	वापस ret;
+पूर्ण
 
-static int aspeed_sdhci_remove(struct platform_device *pdev)
-{
-	struct sdhci_pltfm_host *pltfm_host;
-	struct sdhci_host *host;
-	int dead = 0;
+अटल पूर्णांक aspeed_sdhci_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sdhci_pltfm_host *pltfm_host;
+	काष्ठा sdhci_host *host;
+	पूर्णांक dead = 0;
 
-	host = platform_get_drvdata(pdev);
+	host = platक्रमm_get_drvdata(pdev);
 	pltfm_host = sdhci_priv(host);
 
-	sdhci_remove_host(host, dead);
+	sdhci_हटाओ_host(host, dead);
 
 	clk_disable_unprepare(pltfm_host->clk);
 
-	sdhci_pltfm_free(pdev);
+	sdhci_pltfm_मुक्त(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct aspeed_sdhci_pdata ast2400_sdhci_pdata = {
-	.clk_div_start = 2,
-};
+अटल स्थिर काष्ठा aspeed_sdhci_pdata ast2400_sdhci_pdata = अणु
+	.clk_भाग_start = 2,
+पूर्ण;
 
-static const struct aspeed_sdhci_phase_desc ast2600_sdhci_phase[] = {
+अटल स्थिर काष्ठा aspeed_sdhci_phase_desc ast2600_sdhci_phase[] = अणु
 	/* SDHCI/Slot 0 */
-	[0] = {
-		.in = {
+	[0] = अणु
+		.in = अणु
 			.tap_mask = ASPEED_SDC_S0_PHASE_IN,
 			.enable_mask = ASPEED_SDC_S0_PHASE_IN_EN,
 			.enable_value = 1,
-		},
-		.out = {
+		पूर्ण,
+		.out = अणु
 			.tap_mask = ASPEED_SDC_S0_PHASE_OUT,
 			.enable_mask = ASPEED_SDC_S0_PHASE_OUT_EN,
 			.enable_value = 3,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	/* SDHCI/Slot 1 */
-	[1] = {
-		.in = {
+	[1] = अणु
+		.in = अणु
 			.tap_mask = ASPEED_SDC_S1_PHASE_IN,
 			.enable_mask = ASPEED_SDC_S1_PHASE_IN_EN,
 			.enable_value = 1,
-		},
-		.out = {
+		पूर्ण,
+		.out = अणु
 			.tap_mask = ASPEED_SDC_S1_PHASE_OUT,
 			.enable_mask = ASPEED_SDC_S1_PHASE_OUT_EN,
 			.enable_value = 3,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct aspeed_sdhci_pdata ast2600_sdhci_pdata = {
-	.clk_div_start = 1,
+अटल स्थिर काष्ठा aspeed_sdhci_pdata ast2600_sdhci_pdata = अणु
+	.clk_भाग_start = 1,
 	.phase_desc = ast2600_sdhci_phase,
 	.nr_phase_descs = ARRAY_SIZE(ast2600_sdhci_phase),
-};
+पूर्ण;
 
-static const struct of_device_id aspeed_sdhci_of_match[] = {
-	{ .compatible = "aspeed,ast2400-sdhci", .data = &ast2400_sdhci_pdata, },
-	{ .compatible = "aspeed,ast2500-sdhci", .data = &ast2400_sdhci_pdata, },
-	{ .compatible = "aspeed,ast2600-sdhci", .data = &ast2600_sdhci_pdata, },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id aspeed_sdhci_of_match[] = अणु
+	अणु .compatible = "aspeed,ast2400-sdhci", .data = &ast2400_sdhci_pdata, पूर्ण,
+	अणु .compatible = "aspeed,ast2500-sdhci", .data = &ast2400_sdhci_pdata, पूर्ण,
+	अणु .compatible = "aspeed,ast2600-sdhci", .data = &ast2600_sdhci_pdata, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver aspeed_sdhci_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver aspeed_sdhci_driver = अणु
+	.driver		= अणु
 		.name	= "sdhci-aspeed",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.of_match_table = aspeed_sdhci_of_match,
-	},
+	पूर्ण,
 	.probe		= aspeed_sdhci_probe,
-	.remove		= aspeed_sdhci_remove,
-};
+	.हटाओ		= aspeed_sdhci_हटाओ,
+पूर्ण;
 
-static int aspeed_sdc_probe(struct platform_device *pdev)
+अटल पूर्णांक aspeed_sdc_probe(काष्ठा platक्रमm_device *pdev)
 
-{
-	struct device_node *parent, *child;
-	struct aspeed_sdc *sdc;
-	int ret;
+अणु
+	काष्ठा device_node *parent, *child;
+	काष्ठा aspeed_sdc *sdc;
+	पूर्णांक ret;
 
-	sdc = devm_kzalloc(&pdev->dev, sizeof(*sdc), GFP_KERNEL);
-	if (!sdc)
-		return -ENOMEM;
+	sdc = devm_kzalloc(&pdev->dev, माप(*sdc), GFP_KERNEL);
+	अगर (!sdc)
+		वापस -ENOMEM;
 
 	spin_lock_init(&sdc->lock);
 
-	sdc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(sdc->clk))
-		return PTR_ERR(sdc->clk);
+	sdc->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(sdc->clk))
+		वापस PTR_ERR(sdc->clk);
 
 	ret = clk_prepare_enable(sdc->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Unable to enable SDCLK\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	sdc->res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	sdc->res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	sdc->regs = devm_ioremap_resource(&pdev->dev, sdc->res);
-	if (IS_ERR(sdc->regs)) {
+	अगर (IS_ERR(sdc->regs)) अणु
 		ret = PTR_ERR(sdc->regs);
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
 	dev_set_drvdata(&pdev->dev, sdc);
 
 	parent = pdev->dev.of_node;
-	for_each_available_child_of_node(parent, child) {
-		struct platform_device *cpdev;
+	क्रम_each_available_child_of_node(parent, child) अणु
+		काष्ठा platक्रमm_device *cpdev;
 
-		cpdev = of_platform_device_create(child, NULL, &pdev->dev);
-		if (!cpdev) {
+		cpdev = of_platक्रमm_device_create(child, शून्य, &pdev->dev);
+		अगर (!cpdev) अणु
 			of_node_put(child);
 			ret = -ENODEV;
-			goto err_clk;
-		}
-	}
+			जाओ err_clk;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_clk:
 	clk_disable_unprepare(sdc->clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int aspeed_sdc_remove(struct platform_device *pdev)
-{
-	struct aspeed_sdc *sdc = dev_get_drvdata(&pdev->dev);
+अटल पूर्णांक aspeed_sdc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aspeed_sdc *sdc = dev_get_drvdata(&pdev->dev);
 
 	clk_disable_unprepare(sdc->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id aspeed_sdc_of_match[] = {
-	{ .compatible = "aspeed,ast2400-sd-controller", },
-	{ .compatible = "aspeed,ast2500-sd-controller", },
-	{ .compatible = "aspeed,ast2600-sd-controller", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id aspeed_sdc_of_match[] = अणु
+	अणु .compatible = "aspeed,ast2400-sd-controller", पूर्ण,
+	अणु .compatible = "aspeed,ast2500-sd-controller", पूर्ण,
+	अणु .compatible = "aspeed,ast2600-sd-controller", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, aspeed_sdc_of_match);
 
-static struct platform_driver aspeed_sdc_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver aspeed_sdc_driver = अणु
+	.driver		= अणु
 		.name	= "sd-controller-aspeed",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.pm	= &sdhci_pltfm_pmops,
 		.of_match_table = aspeed_sdc_of_match,
-	},
+	पूर्ण,
 	.probe		= aspeed_sdc_probe,
-	.remove		= aspeed_sdc_remove,
-};
+	.हटाओ		= aspeed_sdc_हटाओ,
+पूर्ण;
 
-#if defined(CONFIG_MMC_SDHCI_OF_ASPEED_TEST)
-#include "sdhci-of-aspeed-test.c"
+#अगर defined(CONFIG_MMC_SDHCI_OF_ASPEED_TEST)
+#समावेश "sdhci-of-aspeed-test.c"
 
-static inline int aspeed_sdc_tests_init(void)
-{
-	return __kunit_test_suites_init(aspeed_sdc_test_suites);
-}
+अटल अंतरभूत पूर्णांक aspeed_sdc_tests_init(व्योम)
+अणु
+	वापस __kunit_test_suites_init(aspeed_sdc_test_suites);
+पूर्ण
 
-static inline void aspeed_sdc_tests_exit(void)
-{
-	__kunit_test_suites_exit(aspeed_sdc_test_suites);
-}
-#else
-static inline int aspeed_sdc_tests_init(void)
-{
-	return 0;
-}
+अटल अंतरभूत व्योम aspeed_sdc_tests_निकास(व्योम)
+अणु
+	__kunit_test_suites_निकास(aspeed_sdc_test_suites);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक aspeed_sdc_tests_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void aspeed_sdc_tests_exit(void)
-{
-}
-#endif
+अटल अंतरभूत व्योम aspeed_sdc_tests_निकास(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int __init aspeed_sdc_init(void)
-{
-	int rc;
+अटल पूर्णांक __init aspeed_sdc_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = platform_driver_register(&aspeed_sdhci_driver);
-	if (rc < 0)
-		return rc;
+	rc = platक्रमm_driver_रेजिस्टर(&aspeed_sdhci_driver);
+	अगर (rc < 0)
+		वापस rc;
 
-	rc = platform_driver_register(&aspeed_sdc_driver);
-	if (rc < 0)
-		goto cleanup_sdhci;
+	rc = platक्रमm_driver_रेजिस्टर(&aspeed_sdc_driver);
+	अगर (rc < 0)
+		जाओ cleanup_sdhci;
 
 	rc = aspeed_sdc_tests_init();
-	if (rc < 0) {
-		platform_driver_unregister(&aspeed_sdc_driver);
-		goto cleanup_sdhci;
-	}
+	अगर (rc < 0) अणु
+		platक्रमm_driver_unरेजिस्टर(&aspeed_sdc_driver);
+		जाओ cleanup_sdhci;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup_sdhci:
-	platform_driver_unregister(&aspeed_sdhci_driver);
+	platक्रमm_driver_unरेजिस्टर(&aspeed_sdhci_driver);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 module_init(aspeed_sdc_init);
 
-static void __exit aspeed_sdc_exit(void)
-{
-	aspeed_sdc_tests_exit();
+अटल व्योम __निकास aspeed_sdc_निकास(व्योम)
+अणु
+	aspeed_sdc_tests_निकास();
 
-	platform_driver_unregister(&aspeed_sdc_driver);
-	platform_driver_unregister(&aspeed_sdhci_driver);
-}
-module_exit(aspeed_sdc_exit);
+	platक्रमm_driver_unरेजिस्टर(&aspeed_sdc_driver);
+	platक्रमm_driver_unरेजिस्टर(&aspeed_sdhci_driver);
+पूर्ण
+module_निकास(aspeed_sdc_निकास);
 
 MODULE_DESCRIPTION("Driver for the ASPEED SD/SDIO/SDHCI Controllers");
 MODULE_AUTHOR("Ryan Chen <ryan_chen@aspeedtech.com>");

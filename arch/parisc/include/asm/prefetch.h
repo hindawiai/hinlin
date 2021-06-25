@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * include/asm-parisc/prefetch.h
+ * include/यंत्र-parisc/prefetch.h
  *
- * PA 2.0 defines data prefetch instructions on page 6-11 of the Kane book.
- * In addition, many implementations do hardware prefetching of both
- * instructions and data.
+ * PA 2.0 defines data prefetch inकाष्ठाions on page 6-11 of the Kane book.
+ * In addition, many implementations करो hardware prefetching of both
+ * inकाष्ठाions and data.
  *
  * PA7300LC (page 14-4 of the ERS) also implements prefetching by a load
  * to gr0 but not in a way that Linux can use.  If the load would cause an
- * interruption (eg due to prefetching 0), it is suppressed on PA2.0
+ * पूर्णांकerruption (eg due to prefetching 0), it is suppressed on PA2.0
  * processors, but not on 7300LC.
  *
  */
 
-#ifndef __ASM_PARISC_PREFETCH_H
-#define __ASM_PARISC_PREFETCH_H
+#अगर_अघोषित __ASM_PARISC_PREFETCH_H
+#घोषणा __ASM_PARISC_PREFETCH_H
 
-#ifndef __ASSEMBLY__
-#ifdef CONFIG_PREFETCH
+#अगर_अघोषित __ASSEMBLY__
+#अगर_घोषित CONFIG_PREFETCH
 
-#define ARCH_HAS_PREFETCH
-static inline void prefetch(const void *addr)
-{
-	__asm__(
-#ifndef CONFIG_PA20
-		/* Need to avoid prefetch of NULL on PA7300LC */
+#घोषणा ARCH_HAS_PREFETCH
+अटल अंतरभूत व्योम prefetch(स्थिर व्योम *addr)
+अणु
+	__यंत्र__(
+#अगर_अघोषित CONFIG_PA20
+		/* Need to aव्योम prefetch of शून्य on PA7300LC */
 		"	extrw,u,= %0,31,32,%%r0\n"
-#endif
+#पूर्ण_अगर
 		"	ldw 0(%0), %%r0" : : "r" (addr));
-}
+पूर्ण
 
 /* LDD is a PA2.0 addition. */
-#ifdef CONFIG_PA20
-#define ARCH_HAS_PREFETCHW
-static inline void prefetchw(const void *addr)
-{
-	__asm__("ldd 0(%0), %%r0" : : "r" (addr));
-}
-#endif /* CONFIG_PA20 */
+#अगर_घोषित CONFIG_PA20
+#घोषणा ARCH_HAS_PREFETCHW
+अटल अंतरभूत व्योम prefetchw(स्थिर व्योम *addr)
+अणु
+	__यंत्र__("ldd 0(%0), %%r0" : : "r" (addr));
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PA20 */
 
-#endif /* CONFIG_PREFETCH */
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* CONFIG_PREFETCH */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* __ASM_PARISC_PROCESSOR_H */
+#पूर्ण_अगर /* __ASM_PARISC_PROCESSOR_H */

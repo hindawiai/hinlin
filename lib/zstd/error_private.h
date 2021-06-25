@@ -1,3 +1,4 @@
+<शैली गुरु>
 /**
  * Copyright (c) 2016-present, Yann Collet, Facebook, Inc.
  * All rights reserved.
@@ -7,47 +8,47 @@
  * An additional grant of patent rights can be found in the PATENTS file in the
  * same directory.
  *
- * This program is free software; you can redistribute it and/or modify it under
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it under
  * the terms of the GNU General Public License version 2 as published by the
  * Free Software Foundation. This program is dual-licensed; you may select
  * either version 2 of the GNU General Public License ("GPL") or BSD license
  * ("BSD").
  */
 
-/* Note : this module is expected to remain private, do not expose it */
+/* Note : this module is expected to reमुख्य निजी, करो not expose it */
 
-#ifndef ERROR_H_MODULE
-#define ERROR_H_MODULE
+#अगर_अघोषित ERROR_H_MODULE
+#घोषणा ERROR_H_MODULE
 
 /* ****************************************
 *  Dependencies
 ******************************************/
-#include <linux/types.h> /* size_t */
-#include <linux/zstd.h>  /* enum list */
+#समावेश <linux/types.h> /* माप_प्रकार */
+#समावेश <linux/zstd.h>  /* क्रमागत list */
 
 /* ****************************************
-*  Compiler-specific
+*  Compiler-specअगरic
 ******************************************/
-#define ERR_STATIC static __attribute__((unused))
+#घोषणा ERR_STATIC अटल __attribute__((unused))
 
 /*-****************************************
-*  Customization (error_public.h)
+*  Customization (error_खुला.h)
 ******************************************/
-typedef ZSTD_ErrorCode ERR_enum;
-#define PREFIX(name) ZSTD_error_##name
+प्रकार ZSTD_ErrorCode ERR_क्रमागत;
+#घोषणा PREFIX(name) ZSTD_error_##name
 
 /*-****************************************
 *  Error codes handling
 ******************************************/
-#define ERROR(name) ((size_t)-PREFIX(name))
+#घोषणा ERROR(name) ((माप_प्रकार)-PREFIX(name))
 
-ERR_STATIC unsigned ERR_isError(size_t code) { return (code > ERROR(maxCode)); }
+ERR_STATIC अचिन्हित ERR_isError(माप_प्रकार code) अणु वापस (code > ERROR(maxCode)); पूर्ण
 
-ERR_STATIC ERR_enum ERR_getErrorCode(size_t code)
-{
-	if (!ERR_isError(code))
-		return (ERR_enum)0;
-	return (ERR_enum)(0 - code);
-}
+ERR_STATIC ERR_क्रमागत ERR_getErrorCode(माप_प्रकार code)
+अणु
+	अगर (!ERR_isError(code))
+		वापस (ERR_क्रमागत)0;
+	वापस (ERR_क्रमागत)(0 - code);
+पूर्ण
 
-#endif /* ERROR_H_MODULE */
+#पूर्ण_अगर /* ERROR_H_MODULE */

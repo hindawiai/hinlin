@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__uint(max_entries, 2);
-	__type(key, struct bigelement);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__uपूर्णांक(max_entries, 2);
+	__type(key, काष्ठा bigelement);
 	__type(value, __u32);
-} hash_map SEC(".maps");
+पूर्ण hash_map SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-	__uint(max_entries, 1);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uपूर्णांक(max_entries, 1);
 	__type(key, __u32);
-	__type(value, struct bigelement);
-} key_map SEC(".maps");
+	__type(value, काष्ठा bigelement);
+पूर्ण key_map SEC(".maps");
 
-struct bigelement {
-	int a;
-	char b[4096];
-	long long c;
-};
+काष्ठा bigelement अणु
+	पूर्णांक a;
+	अक्षर b[4096];
+	दीर्घ दीर्घ c;
+पूर्ण;
 
 SEC("raw_tracepoint/sys_enter")
-int bpf_hash_large_key_test(void *ctx)
-{
-	int zero = 0, err = 1, value = 42;
-	struct bigelement *key;
+पूर्णांक bpf_hash_large_key_test(व्योम *ctx)
+अणु
+	पूर्णांक zero = 0, err = 1, value = 42;
+	काष्ठा bigelement *key;
 
 	key = bpf_map_lookup_elem(&key_map, &zero);
-	if (!key)
-		return 0;
+	अगर (!key)
+		वापस 0;
 
 	key->c = 1;
-	if (bpf_map_update_elem(&hash_map, key, &value, BPF_ANY))
-		return 0;
+	अगर (bpf_map_update_elem(&hash_map, key, &value, BPF_ANY))
+		वापस 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

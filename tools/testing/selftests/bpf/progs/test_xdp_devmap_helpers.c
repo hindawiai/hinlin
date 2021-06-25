@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* fails to load without expected_attach_type = BPF_XDP_DEVMAP
- * because of access to egress_ifindex
+ * because of access to egress_अगरindex
  */
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
 SEC("xdp_dm_log")
-int xdpdm_devlog(struct xdp_md *ctx)
-{
-	char fmt[] = "devmap redirect: dev %u -> dev %u len %u\n";
-	void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
-	unsigned int len = data_end - data;
+पूर्णांक xdpdm_devlog(काष्ठा xdp_md *ctx)
+अणु
+	अक्षर fmt[] = "devmap redirect: dev %u -> dev %u len %u\n";
+	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
+	अचिन्हित पूर्णांक len = data_end - data;
 
-	bpf_trace_printk(fmt, sizeof(fmt),
-			 ctx->ingress_ifindex, ctx->egress_ifindex, len);
+	bpf_trace_prपूर्णांकk(fmt, माप(fmt),
+			 ctx->ingress_अगरindex, ctx->egress_अगरindex, len);
 
-	return XDP_PASS;
-}
+	वापस XDP_PASS;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

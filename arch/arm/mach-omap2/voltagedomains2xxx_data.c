@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * OMAP3 voltage domain data
+ * OMAP3 voltage करोमुख्य data
  *
  * Copyright (C) 2011 Texas Instruments, Inc.
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
 
-#include "voltage.h"
+#समावेश "voltage.h"
 
-static struct voltagedomain omap2_voltdm_core = {
+अटल काष्ठा voltageकरोमुख्य omap2_voltdm_core = अणु
 	.name = "core",
-};
+पूर्ण;
 
-static struct voltagedomain omap2_voltdm_wkup = {
+अटल काष्ठा voltageकरोमुख्य omap2_voltdm_wkup = अणु
 	.name = "wakeup",
-};
+पूर्ण;
 
-static struct voltagedomain *voltagedomains_omap2[] __initdata = {
+अटल काष्ठा voltageकरोमुख्य *voltageकरोमुख्यs_omap2[] __initdata = अणु
 	&omap2_voltdm_core,
 	&omap2_voltdm_wkup,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-void __init omap2xxx_voltagedomains_init(void)
-{
-	voltdm_init(voltagedomains_omap2);
-}
+व्योम __init omap2xxx_voltageकरोमुख्यs_init(व्योम)
+अणु
+	voltdm_init(voltageकरोमुख्यs_omap2);
+पूर्ण

@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (C) 2020 Xiphera Ltd. */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/hw_random.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
 
-#define CONTROL_REG			0x00000000
-#define STATUS_REG			0x00000004
-#define RAND_REG			0x00000000
+#घोषणा CONTROL_REG			0x00000000
+#घोषणा STATUS_REG			0x00000004
+#घोषणा RAND_REG			0x00000000
 
-#define HOST_TO_TRNG_RESET		0x00000001
-#define HOST_TO_TRNG_RELEASE_RESET	0x00000002
-#define HOST_TO_TRNG_ENABLE		0x80000000
-#define HOST_TO_TRNG_ZEROIZE		0x80000004
-#define HOST_TO_TRNG_ACK_ZEROIZE	0x80000008
-#define HOST_TO_TRNG_READ		0x8000000F
+#घोषणा HOST_TO_TRNG_RESET		0x00000001
+#घोषणा HOST_TO_TRNG_RELEASE_RESET	0x00000002
+#घोषणा HOST_TO_TRNG_ENABLE		0x80000000
+#घोषणा HOST_TO_TRNG_ZEROIZE		0x80000004
+#घोषणा HOST_TO_TRNG_ACK_ZEROIZE	0x80000008
+#घोषणा HOST_TO_TRNG_READ		0x8000000F
 
 /* trng statuses */
-#define TRNG_ACK_RESET			0x000000AC
-#define TRNG_SUCCESSFUL_STARTUP		0x00000057
-#define TRNG_FAILED_STARTUP		0x000000FA
-#define TRNG_NEW_RAND_AVAILABLE		0x000000ED
+#घोषणा TRNG_ACK_RESET			0x000000AC
+#घोषणा TRNG_SUCCESSFUL_STARTUP		0x00000057
+#घोषणा TRNG_FAILED_STARTUP		0x000000FA
+#घोषणा TRNG_NEW_RAND_AVAILABLE		0x000000ED
 
-struct xiphera_trng {
-	void __iomem *mem;
-	struct hwrng rng;
-};
+काष्ठा xiphera_trng अणु
+	व्योम __iomem *mem;
+	काष्ठा hwrng rng;
+पूर्ण;
 
-static int xiphera_trng_read(struct hwrng *rng, void *buf, size_t max, bool wait)
-{
-	struct xiphera_trng *trng = container_of(rng, struct xiphera_trng, rng);
-	int ret = 0;
+अटल पूर्णांक xiphera_trng_पढ़ो(काष्ठा hwrng *rng, व्योम *buf, माप_प्रकार max, bool रुको)
+अणु
+	काष्ठा xiphera_trng *trng = container_of(rng, काष्ठा xiphera_trng, rng);
+	पूर्णांक ret = 0;
 
-	while (max >= sizeof(u32)) {
-		/* check for data */
-		if (readl(trng->mem + STATUS_REG) == TRNG_NEW_RAND_AVAILABLE) {
-			*(u32 *)buf = readl(trng->mem + RAND_REG);
+	जबतक (max >= माप(u32)) अणु
+		/* check क्रम data */
+		अगर (पढ़ोl(trng->mem + STATUS_REG) == TRNG_NEW_RAND_AVAILABLE) अणु
+			*(u32 *)buf = पढ़ोl(trng->mem + RAND_REG);
 			/*
-			 * Inform the trng of the read
-			 * and re-enable it to produce a new random number
+			 * Inक्रमm the trng of the पढ़ो
+			 * and re-enable it to produce a new अक्रमom number
 			 */
-			writel(HOST_TO_TRNG_READ, trng->mem + CONTROL_REG);
-			writel(HOST_TO_TRNG_ENABLE, trng->mem + CONTROL_REG);
-			ret += sizeof(u32);
-			buf += sizeof(u32);
-			max -= sizeof(u32);
-		} else {
-			break;
-		}
-	}
-	return ret;
-}
+			ग_लिखोl(HOST_TO_TRNG_READ, trng->mem + CONTROL_REG);
+			ग_लिखोl(HOST_TO_TRNG_ENABLE, trng->mem + CONTROL_REG);
+			ret += माप(u32);
+			buf += माप(u32);
+			max -= माप(u32);
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int xiphera_trng_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct xiphera_trng *trng;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक xiphera_trng_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा xiphera_trng *trng;
+	काष्ठा device *dev = &pdev->dev;
 
-	trng = devm_kzalloc(dev, sizeof(*trng), GFP_KERNEL);
-	if (!trng)
-		return -ENOMEM;
+	trng = devm_kzalloc(dev, माप(*trng), GFP_KERNEL);
+	अगर (!trng)
+		वापस -ENOMEM;
 
-	trng->mem = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(trng->mem))
-		return PTR_ERR(trng->mem);
+	trng->mem = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(trng->mem))
+		वापस PTR_ERR(trng->mem);
 
 	/*
-	 * the trng needs to be reset first which might not happen in time,
+	 * the trng needs to be reset first which might not happen in समय,
 	 * hence we incorporate a small delay to ensure proper behaviour
 	 */
-	writel(HOST_TO_TRNG_RESET, trng->mem + CONTROL_REG);
+	ग_लिखोl(HOST_TO_TRNG_RESET, trng->mem + CONTROL_REG);
 	usleep_range(100, 200);
 
-	if (readl(trng->mem + STATUS_REG) != TRNG_ACK_RESET) {
+	अगर (पढ़ोl(trng->mem + STATUS_REG) != TRNG_ACK_RESET) अणु
 		/*
-		 * there is a small chance the trng is just not ready yet,
-		 * so we try one more time. If the second time fails, we give up
+		 * there is a small chance the trng is just not पढ़ोy yet,
+		 * so we try one more समय. If the second समय fails, we give up
 		 */
 		usleep_range(100, 200);
-		if (readl(trng->mem + STATUS_REG) != TRNG_ACK_RESET) {
+		अगर (पढ़ोl(trng->mem + STATUS_REG) != TRNG_ACK_RESET) अणु
 			dev_err(dev, "failed to reset the trng ip\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * once again, to ensure proper behaviour we sleep
-	 * for a while after zeroizing the trng
+	 * क्रम a जबतक after zeroizing the trng
 	 */
-	writel(HOST_TO_TRNG_RELEASE_RESET, trng->mem + CONTROL_REG);
-	writel(HOST_TO_TRNG_ENABLE, trng->mem + CONTROL_REG);
-	writel(HOST_TO_TRNG_ZEROIZE, trng->mem + CONTROL_REG);
+	ग_लिखोl(HOST_TO_TRNG_RELEASE_RESET, trng->mem + CONTROL_REG);
+	ग_लिखोl(HOST_TO_TRNG_ENABLE, trng->mem + CONTROL_REG);
+	ग_लिखोl(HOST_TO_TRNG_ZEROIZE, trng->mem + CONTROL_REG);
 	msleep(20);
 
-	if (readl(trng->mem + STATUS_REG) != TRNG_SUCCESSFUL_STARTUP) {
-		/* diagnose the reason for the failure */
-		if (readl(trng->mem + STATUS_REG) == TRNG_FAILED_STARTUP) {
+	अगर (पढ़ोl(trng->mem + STATUS_REG) != TRNG_SUCCESSFUL_STARTUP) अणु
+		/* diagnose the reason क्रम the failure */
+		अगर (पढ़ोl(trng->mem + STATUS_REG) == TRNG_FAILED_STARTUP) अणु
 			dev_err(dev, "trng ip startup-tests failed\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 		dev_err(dev, "startup-tests yielded no response\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	writel(HOST_TO_TRNG_ACK_ZEROIZE, trng->mem + CONTROL_REG);
+	ग_लिखोl(HOST_TO_TRNG_ACK_ZEROIZE, trng->mem + CONTROL_REG);
 
 	trng->rng.name = pdev->name;
-	trng->rng.read = xiphera_trng_read;
+	trng->rng.पढ़ो = xiphera_trng_पढ़ो;
 	trng->rng.quality = 900;
 
-	ret = devm_hwrng_register(dev, &trng->rng);
-	if (ret) {
+	ret = devm_hwrng_रेजिस्टर(dev, &trng->rng);
+	अगर (ret) अणु
 		dev_err(dev, "failed to register rng device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, trng);
+	platक्रमm_set_drvdata(pdev, trng);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id xiphera_trng_of_match[] = {
-	{ .compatible = "xiphera,xip8001b-trng", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id xiphera_trng_of_match[] = अणु
+	अणु .compatible = "xiphera,xip8001b-trng", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, xiphera_trng_of_match);
 
-static struct platform_driver xiphera_trng_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver xiphera_trng_driver = अणु
+	.driver = अणु
 		.name = "xiphera-trng",
 		.of_match_table	= xiphera_trng_of_match,
-	},
+	पूर्ण,
 	.probe = xiphera_trng_probe,
-};
+पूर्ण;
 
-module_platform_driver(xiphera_trng_driver);
+module_platक्रमm_driver(xiphera_trng_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Atte Tommiska");

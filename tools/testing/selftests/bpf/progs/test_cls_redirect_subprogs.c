@@ -1,2 +1,3 @@
-#define SUBPROGS
-#include "test_cls_redirect.c"
+<शैली गुरु>
+#घोषणा SUBPROGS
+#समावेश "test_cls_redirect.c"

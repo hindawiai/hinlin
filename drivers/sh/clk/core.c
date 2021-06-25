@@ -1,624 +1,625 @@
+<शैली गुरु>
 /*
- * SuperH clock framework
+ * SuperH घड़ी framework
  *
  *  Copyright (C) 2005 - 2010  Paul Mundt
  *
- * This clock framework is derived from the OMAP version by:
+ * This घड़ी framework is derived from the OMAP version by:
  *
  *	Copyright (C) 2004 - 2008 Nokia Corporation
  *	Written by Tuukka Tikkanen <tuukka.tikkanen@elektrobit.com>
  *
- *  Modified for omap shared clock framework by Tony Lindgren <tony@atomide.com>
+ *  Modअगरied क्रम omap shared घड़ी framework by Tony Lindgren <tony@atomide.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#define pr_fmt(fmt) "clock: " fmt
+#घोषणा pr_fmt(fmt) "clock: " fmt
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/list.h>
-#include <linux/syscore_ops.h>
-#include <linux/seq_file.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/cpufreq.h>
-#include <linux/clk.h>
-#include <linux/sh_clk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/list.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/sh_clk.h>
 
-static LIST_HEAD(clock_list);
-static DEFINE_SPINLOCK(clock_lock);
-static DEFINE_MUTEX(clock_list_sem);
+अटल LIST_HEAD(घड़ी_list);
+अटल DEFINE_SPINLOCK(घड़ी_lock);
+अटल DEFINE_MUTEX(घड़ी_list_sem);
 
-/* clock disable operations are not passed on to hardware during boot */
-static int allow_disable;
+/* घड़ी disable operations are not passed on to hardware during boot */
+अटल पूर्णांक allow_disable;
 
-void clk_rate_table_build(struct clk *clk,
-			  struct cpufreq_frequency_table *freq_table,
-			  int nr_freqs,
-			  struct clk_div_mult_table *src_table,
-			  unsigned long *bitmap)
-{
-	unsigned long mult, div;
-	unsigned long freq;
-	int i;
+व्योम clk_rate_table_build(काष्ठा clk *clk,
+			  काष्ठा cpufreq_frequency_table *freq_table,
+			  पूर्णांक nr_freqs,
+			  काष्ठा clk_भाग_mult_table *src_table,
+			  अचिन्हित दीर्घ *biपंचांगap)
+अणु
+	अचिन्हित दीर्घ mult, भाग;
+	अचिन्हित दीर्घ freq;
+	पूर्णांक i;
 
 	clk->nr_freqs = nr_freqs;
 
-	for (i = 0; i < nr_freqs; i++) {
-		div = 1;
+	क्रम (i = 0; i < nr_freqs; i++) अणु
+		भाग = 1;
 		mult = 1;
 
-		if (src_table->divisors && i < src_table->nr_divisors)
-			div = src_table->divisors[i];
+		अगर (src_table->भागisors && i < src_table->nr_भागisors)
+			भाग = src_table->भागisors[i];
 
-		if (src_table->multipliers && i < src_table->nr_multipliers)
+		अगर (src_table->multipliers && i < src_table->nr_multipliers)
 			mult = src_table->multipliers[i];
 
-		if (!div || !mult || (bitmap && !test_bit(i, bitmap)))
+		अगर (!भाग || !mult || (biपंचांगap && !test_bit(i, biपंचांगap)))
 			freq = CPUFREQ_ENTRY_INVALID;
-		else
-			freq = clk->parent->rate * mult / div;
+		अन्यथा
+			freq = clk->parent->rate * mult / भाग;
 
 		freq_table[i].driver_data = i;
 		freq_table[i].frequency = freq;
-	}
+	पूर्ण
 
 	/* Termination entry */
 	freq_table[i].driver_data = i;
 	freq_table[i].frequency = CPUFREQ_TABLE_END;
-}
+पूर्ण
 
-struct clk_rate_round_data;
+काष्ठा clk_rate_round_data;
 
-struct clk_rate_round_data {
-	unsigned long rate;
-	unsigned int min, max;
-	long (*func)(unsigned int, struct clk_rate_round_data *);
-	void *arg;
-};
+काष्ठा clk_rate_round_data अणु
+	अचिन्हित दीर्घ rate;
+	अचिन्हित पूर्णांक min, max;
+	दीर्घ (*func)(अचिन्हित पूर्णांक, काष्ठा clk_rate_round_data *);
+	व्योम *arg;
+पूर्ण;
 
-#define for_each_frequency(pos, r, freq)			\
-	for (pos = r->min, freq = r->func(pos, r);		\
+#घोषणा क्रम_each_frequency(pos, r, freq)			\
+	क्रम (pos = r->min, freq = r->func(pos, r);		\
 	     pos <= r->max; pos++, freq = r->func(pos, r))	\
-		if (unlikely(freq == 0))			\
+		अगर (unlikely(freq == 0))			\
 			;					\
-		else
+		अन्यथा
 
-static long clk_rate_round_helper(struct clk_rate_round_data *rounder)
-{
-	unsigned long rate_error, rate_error_prev = ~0UL;
-	unsigned long highest, lowest, freq;
-	long rate_best_fit = -ENOENT;
-	int i;
+अटल दीर्घ clk_rate_round_helper(काष्ठा clk_rate_round_data *rounder)
+अणु
+	अचिन्हित दीर्घ rate_error, rate_error_prev = ~0UL;
+	अचिन्हित दीर्घ highest, lowest, freq;
+	दीर्घ rate_best_fit = -ENOENT;
+	पूर्णांक i;
 
 	highest = 0;
 	lowest = ~0UL;
 
-	for_each_frequency(i, rounder, freq) {
-		if (freq > highest)
+	क्रम_each_frequency(i, rounder, freq) अणु
+		अगर (freq > highest)
 			highest = freq;
-		if (freq < lowest)
+		अगर (freq < lowest)
 			lowest = freq;
 
-		rate_error = abs(freq - rounder->rate);
-		if (rate_error < rate_error_prev) {
+		rate_error = असल(freq - rounder->rate);
+		अगर (rate_error < rate_error_prev) अणु
 			rate_best_fit = freq;
 			rate_error_prev = rate_error;
-		}
+		पूर्ण
 
-		if (rate_error == 0)
-			break;
-	}
+		अगर (rate_error == 0)
+			अवरोध;
+	पूर्ण
 
-	if (rounder->rate >= highest)
+	अगर (rounder->rate >= highest)
 		rate_best_fit = highest;
-	if (rounder->rate <= lowest)
+	अगर (rounder->rate <= lowest)
 		rate_best_fit = lowest;
 
-	return rate_best_fit;
-}
+	वापस rate_best_fit;
+पूर्ण
 
-static long clk_rate_table_iter(unsigned int pos,
-				struct clk_rate_round_data *rounder)
-{
-	struct cpufreq_frequency_table *freq_table = rounder->arg;
-	unsigned long freq = freq_table[pos].frequency;
+अटल दीर्घ clk_rate_table_iter(अचिन्हित पूर्णांक pos,
+				काष्ठा clk_rate_round_data *rounder)
+अणु
+	काष्ठा cpufreq_frequency_table *freq_table = rounder->arg;
+	अचिन्हित दीर्घ freq = freq_table[pos].frequency;
 
-	if (freq == CPUFREQ_ENTRY_INVALID)
+	अगर (freq == CPUFREQ_ENTRY_INVALID)
 		freq = 0;
 
-	return freq;
-}
+	वापस freq;
+पूर्ण
 
-long clk_rate_table_round(struct clk *clk,
-			  struct cpufreq_frequency_table *freq_table,
-			  unsigned long rate)
-{
-	struct clk_rate_round_data table_round = {
+दीर्घ clk_rate_table_round(काष्ठा clk *clk,
+			  काष्ठा cpufreq_frequency_table *freq_table,
+			  अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk_rate_round_data table_round = अणु
 		.min	= 0,
 		.max	= clk->nr_freqs - 1,
 		.func	= clk_rate_table_iter,
 		.arg	= freq_table,
 		.rate	= rate,
-	};
+	पूर्ण;
 
-	if (clk->nr_freqs < 1)
-		return -ENOSYS;
+	अगर (clk->nr_freqs < 1)
+		वापस -ENOSYS;
 
-	return clk_rate_round_helper(&table_round);
-}
+	वापस clk_rate_round_helper(&table_round);
+पूर्ण
 
-static long clk_rate_div_range_iter(unsigned int pos,
-				    struct clk_rate_round_data *rounder)
-{
-	return clk_get_rate(rounder->arg) / pos;
-}
+अटल दीर्घ clk_rate_भाग_range_iter(अचिन्हित पूर्णांक pos,
+				    काष्ठा clk_rate_round_data *rounder)
+अणु
+	वापस clk_get_rate(rounder->arg) / pos;
+पूर्ण
 
-long clk_rate_div_range_round(struct clk *clk, unsigned int div_min,
-			      unsigned int div_max, unsigned long rate)
-{
-	struct clk_rate_round_data div_range_round = {
-		.min	= div_min,
-		.max	= div_max,
-		.func	= clk_rate_div_range_iter,
+दीर्घ clk_rate_भाग_range_round(काष्ठा clk *clk, अचिन्हित पूर्णांक भाग_min,
+			      अचिन्हित पूर्णांक भाग_max, अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk_rate_round_data भाग_range_round = अणु
+		.min	= भाग_min,
+		.max	= भाग_max,
+		.func	= clk_rate_भाग_range_iter,
 		.arg	= clk_get_parent(clk),
 		.rate	= rate,
-	};
+	पूर्ण;
 
-	return clk_rate_round_helper(&div_range_round);
-}
+	वापस clk_rate_round_helper(&भाग_range_round);
+पूर्ण
 
-static long clk_rate_mult_range_iter(unsigned int pos,
-				      struct clk_rate_round_data *rounder)
-{
-	return clk_get_rate(rounder->arg) * pos;
-}
+अटल दीर्घ clk_rate_mult_range_iter(अचिन्हित पूर्णांक pos,
+				      काष्ठा clk_rate_round_data *rounder)
+अणु
+	वापस clk_get_rate(rounder->arg) * pos;
+पूर्ण
 
-long clk_rate_mult_range_round(struct clk *clk, unsigned int mult_min,
-			       unsigned int mult_max, unsigned long rate)
-{
-	struct clk_rate_round_data mult_range_round = {
+दीर्घ clk_rate_mult_range_round(काष्ठा clk *clk, अचिन्हित पूर्णांक mult_min,
+			       अचिन्हित पूर्णांक mult_max, अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk_rate_round_data mult_range_round = अणु
 		.min	= mult_min,
 		.max	= mult_max,
 		.func	= clk_rate_mult_range_iter,
 		.arg	= clk_get_parent(clk),
 		.rate	= rate,
-	};
+	पूर्ण;
 
-	return clk_rate_round_helper(&mult_range_round);
-}
+	वापस clk_rate_round_helper(&mult_range_round);
+पूर्ण
 
-int clk_rate_table_find(struct clk *clk,
-			struct cpufreq_frequency_table *freq_table,
-			unsigned long rate)
-{
-	struct cpufreq_frequency_table *pos;
-	int idx;
+पूर्णांक clk_rate_table_find(काष्ठा clk *clk,
+			काष्ठा cpufreq_frequency_table *freq_table,
+			अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा cpufreq_frequency_table *pos;
+	पूर्णांक idx;
 
-	cpufreq_for_each_valid_entry_idx(pos, freq_table, idx)
-		if (pos->frequency == rate)
-			return idx;
+	cpufreq_क्रम_each_valid_entry_idx(pos, freq_table, idx)
+		अगर (pos->frequency == rate)
+			वापस idx;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-/* Used for clocks that always have same value as the parent clock */
-unsigned long followparent_recalc(struct clk *clk)
-{
-	return clk->parent ? clk->parent->rate : 0;
-}
+/* Used क्रम घड़ीs that always have same value as the parent घड़ी */
+अचिन्हित दीर्घ followparent_recalc(काष्ठा clk *clk)
+अणु
+	वापस clk->parent ? clk->parent->rate : 0;
+पूर्ण
 
-int clk_reparent(struct clk *child, struct clk *parent)
-{
+पूर्णांक clk_reparent(काष्ठा clk *child, काष्ठा clk *parent)
+अणु
 	list_del_init(&child->sibling);
-	if (parent)
+	अगर (parent)
 		list_add(&child->sibling, &parent->children);
 	child->parent = parent;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Propagate rate to children */
-void propagate_rate(struct clk *tclk)
-{
-	struct clk *clkp;
+व्योम propagate_rate(काष्ठा clk *tclk)
+अणु
+	काष्ठा clk *clkp;
 
-	list_for_each_entry(clkp, &tclk->children, sibling) {
-		if (clkp->ops && clkp->ops->recalc)
+	list_क्रम_each_entry(clkp, &tclk->children, sibling) अणु
+		अगर (clkp->ops && clkp->ops->recalc)
 			clkp->rate = clkp->ops->recalc(clkp);
 
 		propagate_rate(clkp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __clk_disable(struct clk *clk)
-{
-	if (WARN(!clk->usecount, "Trying to disable clock %p with 0 usecount\n",
+अटल व्योम __clk_disable(काष्ठा clk *clk)
+अणु
+	अगर (WARN(!clk->usecount, "Trying to disable clock %p with 0 usecount\n",
 		 clk))
-		return;
+		वापस;
 
-	if (!(--clk->usecount)) {
-		if (likely(allow_disable && clk->ops && clk->ops->disable))
+	अगर (!(--clk->usecount)) अणु
+		अगर (likely(allow_disable && clk->ops && clk->ops->disable))
 			clk->ops->disable(clk);
-		if (likely(clk->parent))
+		अगर (likely(clk->parent))
 			__clk_disable(clk->parent);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void clk_disable(struct clk *clk)
-{
-	unsigned long flags;
+व्योम clk_disable(काष्ठा clk *clk)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!clk)
-		return;
+	अगर (!clk)
+		वापस;
 
-	spin_lock_irqsave(&clock_lock, flags);
+	spin_lock_irqsave(&घड़ी_lock, flags);
 	__clk_disable(clk);
-	spin_unlock_irqrestore(&clock_lock, flags);
-}
+	spin_unlock_irqrestore(&घड़ी_lock, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_disable);
 
-static int __clk_enable(struct clk *clk)
-{
-	int ret = 0;
+अटल पूर्णांक __clk_enable(काष्ठा clk *clk)
+अणु
+	पूर्णांक ret = 0;
 
-	if (clk->usecount++ == 0) {
-		if (clk->parent) {
+	अगर (clk->usecount++ == 0) अणु
+		अगर (clk->parent) अणु
 			ret = __clk_enable(clk->parent);
-			if (unlikely(ret))
-				goto err;
-		}
+			अगर (unlikely(ret))
+				जाओ err;
+		पूर्ण
 
-		if (clk->ops && clk->ops->enable) {
+		अगर (clk->ops && clk->ops->enable) अणु
 			ret = clk->ops->enable(clk);
-			if (ret) {
-				if (clk->parent)
+			अगर (ret) अणु
+				अगर (clk->parent)
 					__clk_disable(clk->parent);
-				goto err;
-			}
-		}
-	}
+				जाओ err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
+	वापस ret;
 err:
 	clk->usecount--;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int clk_enable(struct clk *clk)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक clk_enable(काष्ठा clk *clk)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (!clk)
-		return -EINVAL;
+	अगर (!clk)
+		वापस -EINVAL;
 
-	spin_lock_irqsave(&clock_lock, flags);
+	spin_lock_irqsave(&घड़ी_lock, flags);
 	ret = __clk_enable(clk);
-	spin_unlock_irqrestore(&clock_lock, flags);
+	spin_unlock_irqrestore(&घड़ी_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_enable);
 
-static LIST_HEAD(root_clks);
+अटल LIST_HEAD(root_clks);
 
 /**
- * recalculate_root_clocks - recalculate and propagate all root clocks
+ * recalculate_root_घड़ीs - recalculate and propagate all root घड़ीs
  *
- * Recalculates all root clocks (clocks with no parent), which if the
- * clock's .recalc is set correctly, should also propagate their rates.
+ * Recalculates all root घड़ीs (घड़ीs with no parent), which अगर the
+ * घड़ी's .recalc is set correctly, should also propagate their rates.
  * Called at init.
  */
-void recalculate_root_clocks(void)
-{
-	struct clk *clkp;
+व्योम recalculate_root_घड़ीs(व्योम)
+अणु
+	काष्ठा clk *clkp;
 
-	list_for_each_entry(clkp, &root_clks, sibling) {
-		if (clkp->ops && clkp->ops->recalc)
+	list_क्रम_each_entry(clkp, &root_clks, sibling) अणु
+		अगर (clkp->ops && clkp->ops->recalc)
 			clkp->rate = clkp->ops->recalc(clkp);
 		propagate_rate(clkp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct clk_mapping dummy_mapping;
+अटल काष्ठा clk_mapping dummy_mapping;
 
-static struct clk *lookup_root_clock(struct clk *clk)
-{
-	while (clk->parent)
+अटल काष्ठा clk *lookup_root_घड़ी(काष्ठा clk *clk)
+अणु
+	जबतक (clk->parent)
 		clk = clk->parent;
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
-static int clk_establish_mapping(struct clk *clk)
-{
-	struct clk_mapping *mapping = clk->mapping;
+अटल पूर्णांक clk_establish_mapping(काष्ठा clk *clk)
+अणु
+	काष्ठा clk_mapping *mapping = clk->mapping;
 
 	/*
 	 * Propagate mappings.
 	 */
-	if (!mapping) {
-		struct clk *clkp;
+	अगर (!mapping) अणु
+		काष्ठा clk *clkp;
 
 		/*
-		 * dummy mapping for root clocks with no specified ranges
+		 * dummy mapping क्रम root घड़ीs with no specअगरied ranges
 		 */
-		if (!clk->parent) {
+		अगर (!clk->parent) अणु
 			clk->mapping = &dummy_mapping;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/*
-		 * If we're on a child clock and it provides no mapping of its
-		 * own, inherit the mapping from its root clock.
+		 * If we're on a child घड़ी and it provides no mapping of its
+		 * own, inherit the mapping from its root घड़ी.
 		 */
-		clkp = lookup_root_clock(clk);
+		clkp = lookup_root_घड़ी(clk);
 		mapping = clkp->mapping;
 		BUG_ON(!mapping);
-	}
+	पूर्ण
 
 	/*
 	 * Establish initial mapping.
 	 */
-	if (!mapping->base && mapping->phys) {
+	अगर (!mapping->base && mapping->phys) अणु
 		kref_init(&mapping->ref);
 
 		mapping->base = ioremap(mapping->phys, mapping->len);
-		if (unlikely(!mapping->base))
-			return -ENXIO;
-	} else if (mapping->base) {
+		अगर (unlikely(!mapping->base))
+			वापस -ENXIO;
+	पूर्ण अन्यथा अगर (mapping->base) अणु
 		/*
-		 * Bump the refcount for an existing mapping
+		 * Bump the refcount क्रम an existing mapping
 		 */
 		kref_get(&mapping->ref);
-	}
+	पूर्ण
 
 	clk->mapping = mapping;
 out:
 	clk->mapped_reg = clk->mapping->base;
 	clk->mapped_reg += (phys_addr_t)clk->enable_reg - clk->mapping->phys;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_destroy_mapping(struct kref *kref)
-{
-	struct clk_mapping *mapping;
+अटल व्योम clk_destroy_mapping(काष्ठा kref *kref)
+अणु
+	काष्ठा clk_mapping *mapping;
 
-	mapping = container_of(kref, struct clk_mapping, ref);
+	mapping = container_of(kref, काष्ठा clk_mapping, ref);
 
 	iounmap(mapping->base);
-}
+पूर्ण
 
-static void clk_teardown_mapping(struct clk *clk)
-{
-	struct clk_mapping *mapping = clk->mapping;
+अटल व्योम clk_tearकरोwn_mapping(काष्ठा clk *clk)
+अणु
+	काष्ठा clk_mapping *mapping = clk->mapping;
 
-	/* Nothing to do */
-	if (mapping == &dummy_mapping)
-		goto out;
+	/* Nothing to करो */
+	अगर (mapping == &dummy_mapping)
+		जाओ out;
 
 	kref_put(&mapping->ref, clk_destroy_mapping);
-	clk->mapping = NULL;
+	clk->mapping = शून्य;
 out:
-	clk->mapped_reg = NULL;
-}
+	clk->mapped_reg = शून्य;
+पूर्ण
 
-int clk_register(struct clk *clk)
-{
-	int ret;
+पूर्णांक clk_रेजिस्टर(काष्ठा clk *clk)
+अणु
+	पूर्णांक ret;
 
-	if (IS_ERR_OR_NULL(clk))
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(clk))
+		वापस -EINVAL;
 
 	/*
-	 * trap out already registered clocks
+	 * trap out alपढ़ोy रेजिस्टरed घड़ीs
 	 */
-	if (clk->node.next || clk->node.prev)
-		return 0;
+	अगर (clk->node.next || clk->node.prev)
+		वापस 0;
 
-	mutex_lock(&clock_list_sem);
+	mutex_lock(&घड़ी_list_sem);
 
 	INIT_LIST_HEAD(&clk->children);
 	clk->usecount = 0;
 
 	ret = clk_establish_mapping(clk);
-	if (unlikely(ret))
-		goto out_unlock;
+	अगर (unlikely(ret))
+		जाओ out_unlock;
 
-	if (clk->parent)
+	अगर (clk->parent)
 		list_add(&clk->sibling, &clk->parent->children);
-	else
+	अन्यथा
 		list_add(&clk->sibling, &root_clks);
 
-	list_add(&clk->node, &clock_list);
+	list_add(&clk->node, &घड़ी_list);
 
-#ifdef CONFIG_SH_CLK_CPG_LEGACY
-	if (clk->ops && clk->ops->init)
+#अगर_घोषित CONFIG_SH_CLK_CPG_LEGACY
+	अगर (clk->ops && clk->ops->init)
 		clk->ops->init(clk);
-#endif
+#पूर्ण_अगर
 
 out_unlock:
-	mutex_unlock(&clock_list_sem);
+	mutex_unlock(&घड़ी_list_sem);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(clk_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(clk_रेजिस्टर);
 
-void clk_unregister(struct clk *clk)
-{
-	mutex_lock(&clock_list_sem);
+व्योम clk_unरेजिस्टर(काष्ठा clk *clk)
+अणु
+	mutex_lock(&घड़ी_list_sem);
 	list_del(&clk->sibling);
 	list_del(&clk->node);
-	clk_teardown_mapping(clk);
-	mutex_unlock(&clock_list_sem);
-}
-EXPORT_SYMBOL_GPL(clk_unregister);
+	clk_tearकरोwn_mapping(clk);
+	mutex_unlock(&घड़ी_list_sem);
+पूर्ण
+EXPORT_SYMBOL_GPL(clk_unरेजिस्टर);
 
-void clk_enable_init_clocks(void)
-{
-	struct clk *clkp;
+व्योम clk_enable_init_घड़ीs(व्योम)
+अणु
+	काष्ठा clk *clkp;
 
-	list_for_each_entry(clkp, &clock_list, node)
-		if (clkp->flags & CLK_ENABLE_ON_INIT)
+	list_क्रम_each_entry(clkp, &घड़ी_list, node)
+		अगर (clkp->flags & CLK_ENABLE_ON_INIT)
 			clk_enable(clkp);
-}
+पूर्ण
 
-unsigned long clk_get_rate(struct clk *clk)
-{
-	if (!clk)
-		return 0;
+अचिन्हित दीर्घ clk_get_rate(काष्ठा clk *clk)
+अणु
+	अगर (!clk)
+		वापस 0;
 
-	return clk->rate;
-}
+	वापस clk->rate;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_get_rate);
 
-int clk_set_rate(struct clk *clk, unsigned long rate)
-{
-	int ret = -EOPNOTSUPP;
-	unsigned long flags;
+पूर्णांक clk_set_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	पूर्णांक ret = -EOPNOTSUPP;
+	अचिन्हित दीर्घ flags;
 
-	if (!clk)
-		return 0;
+	अगर (!clk)
+		वापस 0;
 
-	spin_lock_irqsave(&clock_lock, flags);
+	spin_lock_irqsave(&घड़ी_lock, flags);
 
-	if (likely(clk->ops && clk->ops->set_rate)) {
+	अगर (likely(clk->ops && clk->ops->set_rate)) अणु
 		ret = clk->ops->set_rate(clk, rate);
-		if (ret != 0)
-			goto out_unlock;
-	} else {
+		अगर (ret != 0)
+			जाओ out_unlock;
+	पूर्ण अन्यथा अणु
 		clk->rate = rate;
 		ret = 0;
-	}
+	पूर्ण
 
-	if (clk->ops && clk->ops->recalc)
+	अगर (clk->ops && clk->ops->recalc)
 		clk->rate = clk->ops->recalc(clk);
 
 	propagate_rate(clk);
 
 out_unlock:
-	spin_unlock_irqrestore(&clock_lock, flags);
+	spin_unlock_irqrestore(&घड़ी_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_set_rate);
 
-int clk_set_parent(struct clk *clk, struct clk *parent)
-{
-	unsigned long flags;
-	int ret = -EINVAL;
+पूर्णांक clk_set_parent(काष्ठा clk *clk, काष्ठा clk *parent)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = -EINVAL;
 
-	if (!parent || !clk)
-		return ret;
-	if (clk->parent == parent)
-		return 0;
+	अगर (!parent || !clk)
+		वापस ret;
+	अगर (clk->parent == parent)
+		वापस 0;
 
-	spin_lock_irqsave(&clock_lock, flags);
-	if (clk->usecount == 0) {
-		if (clk->ops->set_parent)
+	spin_lock_irqsave(&घड़ी_lock, flags);
+	अगर (clk->usecount == 0) अणु
+		अगर (clk->ops->set_parent)
 			ret = clk->ops->set_parent(clk, parent);
-		else
+		अन्यथा
 			ret = clk_reparent(clk, parent);
 
-		if (ret == 0) {
-			if (clk->ops->recalc)
+		अगर (ret == 0) अणु
+			अगर (clk->ops->recalc)
 				clk->rate = clk->ops->recalc(clk);
 			pr_debug("set parent of %p to %p (new rate %ld)\n",
 				 clk, clk->parent, clk->rate);
 			propagate_rate(clk);
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		ret = -EBUSY;
-	spin_unlock_irqrestore(&clock_lock, flags);
+	spin_unlock_irqrestore(&घड़ी_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_set_parent);
 
-struct clk *clk_get_parent(struct clk *clk)
-{
-	if (!clk)
-		return NULL;
+काष्ठा clk *clk_get_parent(काष्ठा clk *clk)
+अणु
+	अगर (!clk)
+		वापस शून्य;
 
-	return clk->parent;
-}
+	वापस clk->parent;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_get_parent);
 
-long clk_round_rate(struct clk *clk, unsigned long rate)
-{
-	if (!clk)
-		return 0;
+दीर्घ clk_round_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	अगर (!clk)
+		वापस 0;
 
-	if (likely(clk->ops && clk->ops->round_rate)) {
-		unsigned long flags, rounded;
+	अगर (likely(clk->ops && clk->ops->round_rate)) अणु
+		अचिन्हित दीर्घ flags, rounded;
 
-		spin_lock_irqsave(&clock_lock, flags);
+		spin_lock_irqsave(&घड़ी_lock, flags);
 		rounded = clk->ops->round_rate(clk, rate);
-		spin_unlock_irqrestore(&clock_lock, flags);
+		spin_unlock_irqrestore(&घड़ी_lock, flags);
 
-		return rounded;
-	}
+		वापस rounded;
+	पूर्ण
 
-	return clk_get_rate(clk);
-}
+	वापस clk_get_rate(clk);
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_round_rate);
 
-#ifdef CONFIG_PM
-static void clks_core_resume(void)
-{
-	struct clk *clkp;
+#अगर_घोषित CONFIG_PM
+अटल व्योम clks_core_resume(व्योम)
+अणु
+	काष्ठा clk *clkp;
 
-	list_for_each_entry(clkp, &clock_list, node) {
-		if (likely(clkp->usecount && clkp->ops)) {
-			unsigned long rate = clkp->rate;
+	list_क्रम_each_entry(clkp, &घड़ी_list, node) अणु
+		अगर (likely(clkp->usecount && clkp->ops)) अणु
+			अचिन्हित दीर्घ rate = clkp->rate;
 
-			if (likely(clkp->ops->set_parent))
+			अगर (likely(clkp->ops->set_parent))
 				clkp->ops->set_parent(clkp,
 					clkp->parent);
-			if (likely(clkp->ops->set_rate))
+			अगर (likely(clkp->ops->set_rate))
 				clkp->ops->set_rate(clkp, rate);
-			else if (likely(clkp->ops->recalc))
+			अन्यथा अगर (likely(clkp->ops->recalc))
 				clkp->rate = clkp->ops->recalc(clkp);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static struct syscore_ops clks_syscore_ops = {
+अटल काष्ठा syscore_ops clks_syscore_ops = अणु
 	.resume = clks_core_resume,
-};
+पूर्ण;
 
-static int __init clk_syscore_init(void)
-{
-	register_syscore_ops(&clks_syscore_ops);
+अटल पूर्णांक __init clk_syscore_init(व्योम)
+अणु
+	रेजिस्टर_syscore_ops(&clks_syscore_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(clk_syscore_init);
-#endif
+#पूर्ण_अगर
 
-static int __init clk_late_init(void)
-{
-	unsigned long flags;
-	struct clk *clk;
+अटल पूर्णांक __init clk_late_init(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा clk *clk;
 
-	/* disable all clocks with zero use count */
-	mutex_lock(&clock_list_sem);
-	spin_lock_irqsave(&clock_lock, flags);
+	/* disable all घड़ीs with zero use count */
+	mutex_lock(&घड़ी_list_sem);
+	spin_lock_irqsave(&घड़ी_lock, flags);
 
-	list_for_each_entry(clk, &clock_list, node)
-		if (!clk->usecount && clk->ops && clk->ops->disable)
+	list_क्रम_each_entry(clk, &घड़ी_list, node)
+		अगर (!clk->usecount && clk->ops && clk->ops->disable)
 			clk->ops->disable(clk);
 
-	/* from now on allow clock disable operations */
+	/* from now on allow घड़ी disable operations */
 	allow_disable = 1;
 
-	spin_unlock_irqrestore(&clock_lock, flags);
-	mutex_unlock(&clock_list_sem);
-	return 0;
-}
+	spin_unlock_irqrestore(&घड़ी_lock, flags);
+	mutex_unlock(&घड़ी_list_sem);
+	वापस 0;
+पूर्ण
 late_initcall(clk_late_init);

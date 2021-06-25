@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/drivers/mmc/core/mmc.c
  *
@@ -7,75 +8,75 @@
  *  MMCv4 support Copyright (C) 2006 Philip Langdale, All Rights Reserved.
  */
 
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/stat.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/pm_runसमय.स>
 
-#include <linux/mmc/host.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/mmc.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/mmc.h>
 
-#include "core.h"
-#include "card.h"
-#include "host.h"
-#include "bus.h"
-#include "mmc_ops.h"
-#include "quirks.h"
-#include "sd_ops.h"
-#include "pwrseq.h"
+#समावेश "core.h"
+#समावेश "card.h"
+#समावेश "host.h"
+#समावेश "bus.h"
+#समावेश "mmc_ops.h"
+#समावेश "quirks.h"
+#समावेश "sd_ops.h"
+#समावेश "pwrseq.h"
 
-#define DEFAULT_CMD6_TIMEOUT_MS	500
-#define MIN_CACHE_EN_TIMEOUT_MS 1600
+#घोषणा DEFAULT_CMD6_TIMEOUT_MS	500
+#घोषणा MIN_CACHE_EN_TIMEOUT_MS 1600
 
-static const unsigned int tran_exp[] = {
+अटल स्थिर अचिन्हित पूर्णांक tran_exp[] = अणु
 	10000,		100000,		1000000,	10000000,
 	0,		0,		0,		0
-};
+पूर्ण;
 
-static const unsigned char tran_mant[] = {
+अटल स्थिर अचिन्हित अक्षर tran_mant[] = अणु
 	0,	10,	12,	13,	15,	20,	25,	30,
 	35,	40,	45,	50,	55,	60,	70,	80,
-};
+पूर्ण;
 
-static const unsigned int taac_exp[] = {
+अटल स्थिर अचिन्हित पूर्णांक taac_exp[] = अणु
 	1,	10,	100,	1000,	10000,	100000,	1000000, 10000000,
-};
+पूर्ण;
 
-static const unsigned int taac_mant[] = {
+अटल स्थिर अचिन्हित पूर्णांक taac_mant[] = अणु
 	0,	10,	12,	13,	15,	20,	25,	30,
 	35,	40,	45,	50,	55,	60,	70,	80,
-};
+पूर्ण;
 
-#define UNSTUFF_BITS(resp,start,size)					\
-	({								\
-		const int __size = size;				\
-		const u32 __mask = (__size < 32 ? 1 << __size : 0) - 1;	\
-		const int __off = 3 - ((start) / 32);			\
-		const int __shft = (start) & 31;			\
+#घोषणा UNSTUFF_BITS(resp,start,size)					\
+	(अणु								\
+		स्थिर पूर्णांक __size = size;				\
+		स्थिर u32 __mask = (__size < 32 ? 1 << __size : 0) - 1;	\
+		स्थिर पूर्णांक __off = 3 - ((start) / 32);			\
+		स्थिर पूर्णांक __shft = (start) & 31;			\
 		u32 __res;						\
 									\
 		__res = resp[__off] >> __shft;				\
-		if (__size + __shft > 32)				\
+		अगर (__size + __shft > 32)				\
 			__res |= resp[__off-1] << ((32 - __shft) % 32);	\
 		__res & __mask;						\
-	})
+	पूर्ण)
 
 /*
- * Given the decoded CSD structure, decode the raw CID to our CID structure.
+ * Given the decoded CSD काष्ठाure, decode the raw CID to our CID काष्ठाure.
  */
-static int mmc_decode_cid(struct mmc_card *card)
-{
+अटल पूर्णांक mmc_decode_cid(काष्ठा mmc_card *card)
+अणु
 	u32 *resp = card->raw_cid;
 
 	/*
-	 * The selection of the format here is based upon published
+	 * The selection of the क्रमmat here is based upon published
 	 * specs from sandisk and from what people have reported.
 	 */
-	switch (card->csd.mmca_vsn) {
-	case 0: /* MMC v1.0 - v1.2 */
-	case 1: /* MMC v1.4 */
+	चयन (card->csd.mmca_vsn) अणु
+	हाल 0: /* MMC v1.0 - v1.2 */
+	हाल 1: /* MMC v1.4 */
 		card->cid.manfid	= UNSTUFF_BITS(resp, 104, 24);
 		card->cid.prod_name[0]	= UNSTUFF_BITS(resp, 96, 8);
 		card->cid.prod_name[1]	= UNSTUFF_BITS(resp, 88, 8);
@@ -89,11 +90,11 @@ static int mmc_decode_cid(struct mmc_card *card)
 		card->cid.serial	= UNSTUFF_BITS(resp, 16, 24);
 		card->cid.month		= UNSTUFF_BITS(resp, 12, 4);
 		card->cid.year		= UNSTUFF_BITS(resp, 8, 4) + 1997;
-		break;
+		अवरोध;
 
-	case 2: /* MMC v2.0 - v2.2 */
-	case 3: /* MMC v3.1 - v3.3 */
-	case 4: /* MMC v4 */
+	हाल 2: /* MMC v2.0 - v2.2 */
+	हाल 3: /* MMC v3.1 - v3.3 */
+	हाल 4: /* MMC v4 */
 		card->cid.manfid	= UNSTUFF_BITS(resp, 120, 8);
 		card->cid.oemid		= UNSTUFF_BITS(resp, 104, 16);
 		card->cid.prod_name[0]	= UNSTUFF_BITS(resp, 96, 8);
@@ -106,47 +107,47 @@ static int mmc_decode_cid(struct mmc_card *card)
 		card->cid.serial	= UNSTUFF_BITS(resp, 16, 32);
 		card->cid.month		= UNSTUFF_BITS(resp, 12, 4);
 		card->cid.year		= UNSTUFF_BITS(resp, 8, 4) + 1997;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_err("%s: card has unknown MMCA version %d\n",
 			mmc_hostname(card->host), card->csd.mmca_vsn);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mmc_set_erase_size(struct mmc_card *card)
-{
-	if (card->ext_csd.erase_group_def & 1)
+अटल व्योम mmc_set_erase_size(काष्ठा mmc_card *card)
+अणु
+	अगर (card->ext_csd.erase_group_def & 1)
 		card->erase_size = card->ext_csd.hc_erase_size;
-	else
+	अन्यथा
 		card->erase_size = card->csd.erase_size;
 
 	mmc_init_erase(card);
-}
+पूर्ण
 
 /*
- * Given a 128-bit response, decode to our card CSD structure.
+ * Given a 128-bit response, decode to our card CSD काष्ठाure.
  */
-static int mmc_decode_csd(struct mmc_card *card)
-{
-	struct mmc_csd *csd = &card->csd;
-	unsigned int e, m, a, b;
+अटल पूर्णांक mmc_decode_csd(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_csd *csd = &card->csd;
+	अचिन्हित पूर्णांक e, m, a, b;
 	u32 *resp = card->raw_csd;
 
 	/*
-	 * We only understand CSD structure v1.1 and v1.2.
-	 * v1.2 has extra information in bits 15, 11 and 10.
+	 * We only understand CSD काष्ठाure v1.1 and v1.2.
+	 * v1.2 has extra inक्रमmation in bits 15, 11 and 10.
 	 * We also support eMMC v4.4 & v4.41.
 	 */
-	csd->structure = UNSTUFF_BITS(resp, 126, 2);
-	if (csd->structure == 0) {
+	csd->काष्ठाure = UNSTUFF_BITS(resp, 126, 2);
+	अगर (csd->काष्ठाure == 0) अणु
 		pr_err("%s: unrecognised CSD structure version %d\n",
-			mmc_hostname(card->host), csd->structure);
-		return -EINVAL;
-	}
+			mmc_hostname(card->host), csd->काष्ठाure);
+		वापस -EINVAL;
+	पूर्ण
 
 	csd->mmca_vsn	 = UNSTUFF_BITS(resp, 122, 4);
 	m = UNSTUFF_BITS(resp, 115, 4);
@@ -163,82 +164,82 @@ static int mmc_decode_csd(struct mmc_card *card)
 	m = UNSTUFF_BITS(resp, 62, 12);
 	csd->capacity	  = (1 + m) << (e + 2);
 
-	csd->read_blkbits = UNSTUFF_BITS(resp, 80, 4);
-	csd->read_partial = UNSTUFF_BITS(resp, 79, 1);
-	csd->write_misalign = UNSTUFF_BITS(resp, 78, 1);
-	csd->read_misalign = UNSTUFF_BITS(resp, 77, 1);
+	csd->पढ़ो_blkbits = UNSTUFF_BITS(resp, 80, 4);
+	csd->पढ़ो_partial = UNSTUFF_BITS(resp, 79, 1);
+	csd->ग_लिखो_misalign = UNSTUFF_BITS(resp, 78, 1);
+	csd->पढ़ो_misalign = UNSTUFF_BITS(resp, 77, 1);
 	csd->dsr_imp = UNSTUFF_BITS(resp, 76, 1);
 	csd->r2w_factor = UNSTUFF_BITS(resp, 26, 3);
-	csd->write_blkbits = UNSTUFF_BITS(resp, 22, 4);
-	csd->write_partial = UNSTUFF_BITS(resp, 21, 1);
+	csd->ग_लिखो_blkbits = UNSTUFF_BITS(resp, 22, 4);
+	csd->ग_लिखो_partial = UNSTUFF_BITS(resp, 21, 1);
 
-	if (csd->write_blkbits >= 9) {
+	अगर (csd->ग_लिखो_blkbits >= 9) अणु
 		a = UNSTUFF_BITS(resp, 42, 5);
 		b = UNSTUFF_BITS(resp, 37, 5);
 		csd->erase_size = (a + 1) * (b + 1);
-		csd->erase_size <<= csd->write_blkbits - 9;
-	}
+		csd->erase_size <<= csd->ग_लिखो_blkbits - 9;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mmc_select_card_type(struct mmc_card *card)
-{
-	struct mmc_host *host = card->host;
+अटल व्योम mmc_select_card_type(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host *host = card->host;
 	u8 card_type = card->ext_csd.raw_card_type;
 	u32 caps = host->caps, caps2 = host->caps2;
-	unsigned int hs_max_dtr = 0, hs200_max_dtr = 0;
-	unsigned int avail_type = 0;
+	अचिन्हित पूर्णांक hs_max_dtr = 0, hs200_max_dtr = 0;
+	अचिन्हित पूर्णांक avail_type = 0;
 
-	if (caps & MMC_CAP_MMC_HIGHSPEED &&
-	    card_type & EXT_CSD_CARD_TYPE_HS_26) {
+	अगर (caps & MMC_CAP_MMC_HIGHSPEED &&
+	    card_type & EXT_CSD_CARD_TYPE_HS_26) अणु
 		hs_max_dtr = MMC_HIGH_26_MAX_DTR;
 		avail_type |= EXT_CSD_CARD_TYPE_HS_26;
-	}
+	पूर्ण
 
-	if (caps & MMC_CAP_MMC_HIGHSPEED &&
-	    card_type & EXT_CSD_CARD_TYPE_HS_52) {
+	अगर (caps & MMC_CAP_MMC_HIGHSPEED &&
+	    card_type & EXT_CSD_CARD_TYPE_HS_52) अणु
 		hs_max_dtr = MMC_HIGH_52_MAX_DTR;
 		avail_type |= EXT_CSD_CARD_TYPE_HS_52;
-	}
+	पूर्ण
 
-	if (caps & (MMC_CAP_1_8V_DDR | MMC_CAP_3_3V_DDR) &&
-	    card_type & EXT_CSD_CARD_TYPE_DDR_1_8V) {
+	अगर (caps & (MMC_CAP_1_8V_DDR | MMC_CAP_3_3V_DDR) &&
+	    card_type & EXT_CSD_CARD_TYPE_DDR_1_8V) अणु
 		hs_max_dtr = MMC_HIGH_DDR_MAX_DTR;
 		avail_type |= EXT_CSD_CARD_TYPE_DDR_1_8V;
-	}
+	पूर्ण
 
-	if (caps & MMC_CAP_1_2V_DDR &&
-	    card_type & EXT_CSD_CARD_TYPE_DDR_1_2V) {
+	अगर (caps & MMC_CAP_1_2V_DDR &&
+	    card_type & EXT_CSD_CARD_TYPE_DDR_1_2V) अणु
 		hs_max_dtr = MMC_HIGH_DDR_MAX_DTR;
 		avail_type |= EXT_CSD_CARD_TYPE_DDR_1_2V;
-	}
+	पूर्ण
 
-	if (caps2 & MMC_CAP2_HS200_1_8V_SDR &&
-	    card_type & EXT_CSD_CARD_TYPE_HS200_1_8V) {
+	अगर (caps2 & MMC_CAP2_HS200_1_8V_SDR &&
+	    card_type & EXT_CSD_CARD_TYPE_HS200_1_8V) अणु
 		hs200_max_dtr = MMC_HS200_MAX_DTR;
 		avail_type |= EXT_CSD_CARD_TYPE_HS200_1_8V;
-	}
+	पूर्ण
 
-	if (caps2 & MMC_CAP2_HS200_1_2V_SDR &&
-	    card_type & EXT_CSD_CARD_TYPE_HS200_1_2V) {
+	अगर (caps2 & MMC_CAP2_HS200_1_2V_SDR &&
+	    card_type & EXT_CSD_CARD_TYPE_HS200_1_2V) अणु
 		hs200_max_dtr = MMC_HS200_MAX_DTR;
 		avail_type |= EXT_CSD_CARD_TYPE_HS200_1_2V;
-	}
+	पूर्ण
 
-	if (caps2 & MMC_CAP2_HS400_1_8V &&
-	    card_type & EXT_CSD_CARD_TYPE_HS400_1_8V) {
+	अगर (caps2 & MMC_CAP2_HS400_1_8V &&
+	    card_type & EXT_CSD_CARD_TYPE_HS400_1_8V) अणु
 		hs200_max_dtr = MMC_HS200_MAX_DTR;
 		avail_type |= EXT_CSD_CARD_TYPE_HS400_1_8V;
-	}
+	पूर्ण
 
-	if (caps2 & MMC_CAP2_HS400_1_2V &&
-	    card_type & EXT_CSD_CARD_TYPE_HS400_1_2V) {
+	अगर (caps2 & MMC_CAP2_HS400_1_2V &&
+	    card_type & EXT_CSD_CARD_TYPE_HS400_1_2V) अणु
 		hs200_max_dtr = MMC_HS200_MAX_DTR;
 		avail_type |= EXT_CSD_CARD_TYPE_HS400_1_2V;
-	}
+	पूर्ण
 
-	if ((caps2 & MMC_CAP2_HS400_ES) &&
+	अगर ((caps2 & MMC_CAP2_HS400_ES) &&
 	    card->ext_csd.strobe_support &&
 	    (avail_type & EXT_CSD_CARD_TYPE_HS400))
 		avail_type |= EXT_CSD_CARD_TYPE_HS400ES;
@@ -246,14 +247,14 @@ static void mmc_select_card_type(struct mmc_card *card)
 	card->ext_csd.hs_max_dtr = hs_max_dtr;
 	card->ext_csd.hs200_max_dtr = hs200_max_dtr;
 	card->mmc_avail_type = avail_type;
-}
+पूर्ण
 
-static void mmc_manage_enhanced_area(struct mmc_card *card, u8 *ext_csd)
-{
+अटल व्योम mmc_manage_enhanced_area(काष्ठा mmc_card *card, u8 *ext_csd)
+अणु
 	u8 hc_erase_grp_sz, hc_wp_grp_sz;
 
 	/*
-	 * Disable these attributes by default
+	 * Disable these attributes by शेष
 	 */
 	card->ext_csd.enhanced_area_offset = -EINVAL;
 	card->ext_csd.enhanced_area_size = -EINVAL;
@@ -261,11 +262,11 @@ static void mmc_manage_enhanced_area(struct mmc_card *card, u8 *ext_csd)
 	/*
 	 * Enhanced area feature support -- check whether the eMMC
 	 * card has the Enhanced area enabled.  If so, export enhanced
-	 * area offset and size to user by adding sysfs interface.
+	 * area offset and size to user by adding sysfs पूर्णांकerface.
 	 */
-	if ((ext_csd[EXT_CSD_PARTITION_SUPPORT] & 0x2) &&
-	    (ext_csd[EXT_CSD_PARTITION_ATTRIBUTE] & 0x1)) {
-		if (card->ext_csd.partition_setting_completed) {
+	अगर ((ext_csd[EXT_CSD_PARTITION_SUPPORT] & 0x2) &&
+	    (ext_csd[EXT_CSD_PARTITION_ATTRIBUTE] & 0x1)) अणु
+		अगर (card->ext_csd.partition_setting_completed) अणु
 			hc_erase_grp_sz =
 				ext_csd[EXT_CSD_HC_ERASE_GRP_SIZE];
 			hc_wp_grp_sz =
@@ -275,11 +276,11 @@ static void mmc_manage_enhanced_area(struct mmc_card *card, u8 *ext_csd)
 			 * calculate the enhanced data area offset, in bytes
 			 */
 			card->ext_csd.enhanced_area_offset =
-				(((unsigned long long)ext_csd[139]) << 24) +
-				(((unsigned long long)ext_csd[138]) << 16) +
-				(((unsigned long long)ext_csd[137]) << 8) +
-				(((unsigned long long)ext_csd[136]));
-			if (mmc_card_blockaddr(card))
+				(((अचिन्हित दीर्घ दीर्घ)ext_csd[139]) << 24) +
+				(((अचिन्हित दीर्घ दीर्घ)ext_csd[138]) << 16) +
+				(((अचिन्हित दीर्घ दीर्घ)ext_csd[137]) << 8) +
+				(((अचिन्हित दीर्घ दीर्घ)ext_csd[136]));
+			अगर (mmc_card_blockaddr(card))
 				card->ext_csd.enhanced_area_offset <<= 9;
 			/*
 			 * calculate the enhanced data area size, in kilobytes
@@ -288,30 +289,30 @@ static void mmc_manage_enhanced_area(struct mmc_card *card, u8 *ext_csd)
 				(ext_csd[142] << 16) + (ext_csd[141] << 8) +
 				ext_csd[140];
 			card->ext_csd.enhanced_area_size *=
-				(size_t)(hc_erase_grp_sz * hc_wp_grp_sz);
+				(माप_प्रकार)(hc_erase_grp_sz * hc_wp_grp_sz);
 			card->ext_csd.enhanced_area_size <<= 9;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_warn("%s: defines enhanced area without partition setting complete\n",
 				mmc_hostname(card->host));
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void mmc_part_add(struct mmc_card *card, u64 size,
-			 unsigned int part_cfg, char *name, int idx, bool ro,
-			 int area_type)
-{
+अटल व्योम mmc_part_add(काष्ठा mmc_card *card, u64 size,
+			 अचिन्हित पूर्णांक part_cfg, अक्षर *name, पूर्णांक idx, bool ro,
+			 पूर्णांक area_type)
+अणु
 	card->part[card->nr_parts].size = size;
 	card->part[card->nr_parts].part_cfg = part_cfg;
-	sprintf(card->part[card->nr_parts].name, name, idx);
-	card->part[card->nr_parts].force_ro = ro;
+	प्र_लिखो(card->part[card->nr_parts].name, name, idx);
+	card->part[card->nr_parts].क्रमce_ro = ro;
 	card->part[card->nr_parts].area_type = area_type;
 	card->nr_parts++;
-}
+पूर्ण
 
-static void mmc_manage_gp_partitions(struct mmc_card *card, u8 *ext_csd)
-{
-	int idx;
+अटल व्योम mmc_manage_gp_partitions(काष्ठा mmc_card *card, u8 *ext_csd)
+अणु
+	पूर्णांक idx;
 	u8 hc_erase_grp_sz, hc_wp_grp_sz;
 	u64 part_size;
 
@@ -320,23 +321,23 @@ static void mmc_manage_gp_partitions(struct mmc_card *card, u8 *ext_csd)
 	 * If ext_csd has the size of general purpose partitions,
 	 * set size, part_cfg, partition name in mmc_part.
 	 */
-	if (ext_csd[EXT_CSD_PARTITION_SUPPORT] &
-	    EXT_CSD_PART_SUPPORT_PART_EN) {
+	अगर (ext_csd[EXT_CSD_PARTITION_SUPPORT] &
+	    EXT_CSD_PART_SUPPORT_PART_EN) अणु
 		hc_erase_grp_sz =
 			ext_csd[EXT_CSD_HC_ERASE_GRP_SIZE];
 		hc_wp_grp_sz =
 			ext_csd[EXT_CSD_HC_WP_GRP_SIZE];
 
-		for (idx = 0; idx < MMC_NUM_GP_PARTITION; idx++) {
-			if (!ext_csd[EXT_CSD_GP_SIZE_MULT + idx * 3] &&
+		क्रम (idx = 0; idx < MMC_NUM_GP_PARTITION; idx++) अणु
+			अगर (!ext_csd[EXT_CSD_GP_SIZE_MULT + idx * 3] &&
 			    !ext_csd[EXT_CSD_GP_SIZE_MULT + idx * 3 + 1] &&
 			    !ext_csd[EXT_CSD_GP_SIZE_MULT + idx * 3 + 2])
-				continue;
-			if (card->ext_csd.partition_setting_completed == 0) {
+				जारी;
+			अगर (card->ext_csd.partition_setting_completed == 0) अणु
 				pr_warn("%s: has partition size defined without partition complete\n",
 					mmc_hostname(card->host));
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			part_size =
 				(ext_csd[EXT_CSD_GP_SIZE_MULT + idx * 3 + 2]
 				<< 16) +
@@ -348,43 +349,43 @@ static void mmc_manage_gp_partitions(struct mmc_card *card, u8 *ext_csd)
 				EXT_CSD_PART_CONFIG_ACC_GP0 + idx,
 				"gp%d", idx, false,
 				MMC_BLK_DATA_AREA_GP);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* Minimum partition switch timeout in milliseconds */
-#define MMC_MIN_PART_SWITCH_TIME	300
+/* Minimum partition चयन समयout in milliseconds */
+#घोषणा MMC_MIN_PART_SWITCH_TIME	300
 
 /*
  * Decode extended CSD.
  */
-static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
-{
-	int err = 0, idx;
+अटल पूर्णांक mmc_decode_ext_csd(काष्ठा mmc_card *card, u8 *ext_csd)
+अणु
+	पूर्णांक err = 0, idx;
 	u64 part_size;
-	struct device_node *np;
+	काष्ठा device_node *np;
 	bool broken_hpi = false;
 
-	/* Version is coded in the CSD_STRUCTURE byte in the EXT_CSD register */
-	card->ext_csd.raw_ext_csd_structure = ext_csd[EXT_CSD_STRUCTURE];
-	if (card->csd.structure == 3) {
-		if (card->ext_csd.raw_ext_csd_structure > 2) {
+	/* Version is coded in the CSD_STRUCTURE byte in the EXT_CSD रेजिस्टर */
+	card->ext_csd.raw_ext_csd_काष्ठाure = ext_csd[EXT_CSD_STRUCTURE];
+	अगर (card->csd.काष्ठाure == 3) अणु
+		अगर (card->ext_csd.raw_ext_csd_काष्ठाure > 2) अणु
 			pr_err("%s: unrecognised EXT_CSD structure "
 				"version %d\n", mmc_hostname(card->host),
-					card->ext_csd.raw_ext_csd_structure);
+					card->ext_csd.raw_ext_csd_काष्ठाure);
 			err = -EINVAL;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	np = mmc_of_find_child_device(card->host, 0);
-	if (np && of_device_is_compatible(np, "mmc-card"))
-		broken_hpi = of_property_read_bool(np, "broken-hpi");
+	अगर (np && of_device_is_compatible(np, "mmc-card"))
+		broken_hpi = of_property_पढ़ो_bool(np, "broken-hpi");
 	of_node_put(np);
 
 	/*
-	 * The EXT_CSD format is meant to be forward compatible. As long
-	 * as CSD_STRUCTURE does not change, all values for EXT_CSD_REV
+	 * The EXT_CSD क्रमmat is meant to be क्रमward compatible. As दीर्घ
+	 * as CSD_STRUCTURE करोes not change, all values क्रम EXT_CSD_REV
 	 * are authorized, see JEDEC JESD84-B50 section B.8.
 	 */
 	card->ext_csd.rev = ext_csd[EXT_CSD_REV];
@@ -396,7 +397,7 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 	card->ext_csd.raw_sectors[1] = ext_csd[EXT_CSD_SEC_CNT + 1];
 	card->ext_csd.raw_sectors[2] = ext_csd[EXT_CSD_SEC_CNT + 2];
 	card->ext_csd.raw_sectors[3] = ext_csd[EXT_CSD_SEC_CNT + 3];
-	if (card->ext_csd.rev >= 2) {
+	अगर (card->ext_csd.rev >= 2) अणु
 		card->ext_csd.sectors =
 			ext_csd[EXT_CSD_SEC_CNT + 0] << 0 |
 			ext_csd[EXT_CSD_SEC_CNT + 1] << 8 |
@@ -404,33 +405,33 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 			ext_csd[EXT_CSD_SEC_CNT + 3] << 24;
 
 		/* Cards with density > 2GiB are sector addressed */
-		if (card->ext_csd.sectors > (2u * 1024 * 1024 * 1024) / 512)
+		अगर (card->ext_csd.sectors > (2u * 1024 * 1024 * 1024) / 512)
 			mmc_card_set_blockaddr(card);
-	}
+	पूर्ण
 
 	card->ext_csd.strobe_support = ext_csd[EXT_CSD_STROBE_SUPPORT];
 	card->ext_csd.raw_card_type = ext_csd[EXT_CSD_CARD_TYPE];
 	mmc_select_card_type(card);
 
-	card->ext_csd.raw_s_a_timeout = ext_csd[EXT_CSD_S_A_TIMEOUT];
-	card->ext_csd.raw_erase_timeout_mult =
+	card->ext_csd.raw_s_a_समयout = ext_csd[EXT_CSD_S_A_TIMEOUT];
+	card->ext_csd.raw_erase_समयout_mult =
 		ext_csd[EXT_CSD_ERASE_TIMEOUT_MULT];
 	card->ext_csd.raw_hc_erase_grp_size =
 		ext_csd[EXT_CSD_HC_ERASE_GRP_SIZE];
-	if (card->ext_csd.rev >= 3) {
-		u8 sa_shift = ext_csd[EXT_CSD_S_A_TIMEOUT];
+	अगर (card->ext_csd.rev >= 3) अणु
+		u8 sa_shअगरt = ext_csd[EXT_CSD_S_A_TIMEOUT];
 		card->ext_csd.part_config = ext_csd[EXT_CSD_PART_CONFIG];
 
 		/* EXT_CSD value is in units of 10ms, but we store in ms */
-		card->ext_csd.part_time = 10 * ext_csd[EXT_CSD_PART_SWITCH_TIME];
+		card->ext_csd.part_समय = 10 * ext_csd[EXT_CSD_PART_SWITCH_TIME];
 
-		/* Sleep / awake timeout in 100ns units */
-		if (sa_shift > 0 && sa_shift <= 0x17)
-			card->ext_csd.sa_timeout =
+		/* Sleep / awake समयout in 100ns units */
+		अगर (sa_shअगरt > 0 && sa_shअगरt <= 0x17)
+			card->ext_csd.sa_समयout =
 					1 << ext_csd[EXT_CSD_S_A_TIMEOUT];
 		card->ext_csd.erase_group_def =
 			ext_csd[EXT_CSD_ERASE_GROUP_DEF];
-		card->ext_csd.hc_erase_timeout = 300 *
+		card->ext_csd.hc_erase_समयout = 300 *
 			ext_csd[EXT_CSD_ERASE_TIMEOUT_MULT];
 		card->ext_csd.hc_erase_size =
 			ext_csd[EXT_CSD_HC_ERASE_GRP_SIZE] << 10;
@@ -441,16 +442,16 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 		 * There are two boot regions of equal size, defined in
 		 * multiples of 128K.
 		 */
-		if (ext_csd[EXT_CSD_BOOT_MULT] && mmc_boot_partition_access(card->host)) {
-			for (idx = 0; idx < MMC_NUM_BOOT_PARTITION; idx++) {
+		अगर (ext_csd[EXT_CSD_BOOT_MULT] && mmc_boot_partition_access(card->host)) अणु
+			क्रम (idx = 0; idx < MMC_NUM_BOOT_PARTITION; idx++) अणु
 				part_size = ext_csd[EXT_CSD_BOOT_MULT] << 17;
 				mmc_part_add(card, part_size,
 					EXT_CSD_PART_CONFIG_ACC_BOOT0 + idx,
 					"boot%d", idx, true,
 					MMC_BLK_DATA_AREA_BOOT);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	card->ext_csd.raw_hc_erase_gap_size =
 		ext_csd[EXT_CSD_HC_WP_GRP_SIZE];
@@ -464,11 +465,11 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 		ext_csd[EXT_CSD_TRIM_MULT];
 	card->ext_csd.raw_partition_support = ext_csd[EXT_CSD_PARTITION_SUPPORT];
 	card->ext_csd.raw_driver_strength = ext_csd[EXT_CSD_DRIVER_STRENGTH];
-	if (card->ext_csd.rev >= 4) {
-		if (ext_csd[EXT_CSD_PARTITION_SETTING_COMPLETED] &
+	अगर (card->ext_csd.rev >= 4) अणु
+		अगर (ext_csd[EXT_CSD_PARTITION_SETTING_COMPLETED] &
 		    EXT_CSD_PART_SETTING_COMPLETED)
 			card->ext_csd.partition_setting_completed = 1;
-		else
+		अन्यथा
 			card->ext_csd.partition_setting_completed = 0;
 
 		mmc_manage_enhanced_area(card, ext_csd);
@@ -481,18 +482,18 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 			ext_csd[EXT_CSD_SEC_ERASE_MULT];
 		card->ext_csd.sec_feature_support =
 			ext_csd[EXT_CSD_SEC_FEATURE_SUPPORT];
-		card->ext_csd.trim_timeout = 300 *
+		card->ext_csd.trim_समयout = 300 *
 			ext_csd[EXT_CSD_TRIM_MULT];
 
 		/*
-		 * Note that the call to mmc_part_add above defaults to read
-		 * only. If this default assumption is changed, the call must
-		 * take into account the value of boot_locked below.
+		 * Note that the call to mmc_part_add above शेषs to पढ़ो
+		 * only. If this शेष assumption is changed, the call must
+		 * take पूर्णांकo account the value of boot_locked below.
 		 */
 		card->ext_csd.boot_ro_lock = ext_csd[EXT_CSD_BOOT_WP];
 		card->ext_csd.boot_ro_lockable = true;
 
-		/* Save power class values */
+		/* Save घातer class values */
 		card->ext_csd.raw_pwr_cl_52_195 =
 			ext_csd[EXT_CSD_PWR_CL_52_195];
 		card->ext_csd.raw_pwr_cl_26_195 =
@@ -511,47 +512,47 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 			ext_csd[EXT_CSD_PWR_CL_DDR_52_360];
 		card->ext_csd.raw_pwr_cl_ddr_200_360 =
 			ext_csd[EXT_CSD_PWR_CL_DDR_200_360];
-	}
+	पूर्ण
 
-	if (card->ext_csd.rev >= 5) {
+	अगर (card->ext_csd.rev >= 5) अणु
 		/* Adjust production date as per JEDEC JESD84-B451 */
-		if (card->cid.year < 2010)
+		अगर (card->cid.year < 2010)
 			card->cid.year += 16;
 
 		/* check whether the eMMC card supports BKOPS */
-		if (ext_csd[EXT_CSD_BKOPS_SUPPORT] & 0x1) {
+		अगर (ext_csd[EXT_CSD_BKOPS_SUPPORT] & 0x1) अणु
 			card->ext_csd.bkops = 1;
 			card->ext_csd.man_bkops_en =
 					(ext_csd[EXT_CSD_BKOPS_EN] &
 						EXT_CSD_MANUAL_BKOPS_MASK);
 			card->ext_csd.raw_bkops_status =
 				ext_csd[EXT_CSD_BKOPS_STATUS];
-			if (card->ext_csd.man_bkops_en)
+			अगर (card->ext_csd.man_bkops_en)
 				pr_debug("%s: MAN_BKOPS_EN bit is set\n",
 					mmc_hostname(card->host));
-			card->ext_csd.auto_bkops_en =
+			card->ext_csd.स्वतः_bkops_en =
 					(ext_csd[EXT_CSD_BKOPS_EN] &
 						EXT_CSD_AUTO_BKOPS_MASK);
-			if (card->ext_csd.auto_bkops_en)
+			अगर (card->ext_csd.स्वतः_bkops_en)
 				pr_debug("%s: AUTO_BKOPS_EN bit is set\n",
 					mmc_hostname(card->host));
-		}
+		पूर्ण
 
 		/* check whether the eMMC card supports HPI */
-		if (!mmc_card_broken_hpi(card) &&
-		    !broken_hpi && (ext_csd[EXT_CSD_HPI_FEATURES] & 0x1)) {
+		अगर (!mmc_card_broken_hpi(card) &&
+		    !broken_hpi && (ext_csd[EXT_CSD_HPI_FEATURES] & 0x1)) अणु
 			card->ext_csd.hpi = 1;
-			if (ext_csd[EXT_CSD_HPI_FEATURES] & 0x2)
+			अगर (ext_csd[EXT_CSD_HPI_FEATURES] & 0x2)
 				card->ext_csd.hpi_cmd =	MMC_STOP_TRANSMISSION;
-			else
+			अन्यथा
 				card->ext_csd.hpi_cmd = MMC_SEND_STATUS;
 			/*
-			 * Indicate the maximum timeout to close
-			 * a command interrupted by HPI
+			 * Indicate the maximum समयout to बंद
+			 * a command पूर्णांकerrupted by HPI
 			 */
-			card->ext_csd.out_of_int_time =
+			card->ext_csd.out_of_पूर्णांक_समय =
 				ext_csd[EXT_CSD_OUT_OF_INTERRUPT_TIME] * 10;
-		}
+		पूर्ण
 
 		card->ext_csd.rel_param = ext_csd[EXT_CSD_WR_REL_PARAM];
 		card->ext_csd.rst_n_function = ext_csd[EXT_CSD_RST_N_FUNCTION];
@@ -560,28 +561,28 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 		 * RPMB regions are defined in multiples of 128K.
 		 */
 		card->ext_csd.raw_rpmb_size_mult = ext_csd[EXT_CSD_RPMB_MULT];
-		if (ext_csd[EXT_CSD_RPMB_MULT] && mmc_host_cmd23(card->host)) {
+		अगर (ext_csd[EXT_CSD_RPMB_MULT] && mmc_host_cmd23(card->host)) अणु
 			mmc_part_add(card, ext_csd[EXT_CSD_RPMB_MULT] << 17,
 				EXT_CSD_PART_CONFIG_ACC_RPMB,
 				"rpmb", 0, false,
 				MMC_BLK_DATA_AREA_RPMB);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	card->ext_csd.raw_erased_mem_count = ext_csd[EXT_CSD_ERASED_MEM_CONT];
-	if (ext_csd[EXT_CSD_ERASED_MEM_CONT])
+	अगर (ext_csd[EXT_CSD_ERASED_MEM_CONT])
 		card->erased_byte = 0xFF;
-	else
+	अन्यथा
 		card->erased_byte = 0x0;
 
 	/* eMMC v4.5 or later */
-	card->ext_csd.generic_cmd6_time = DEFAULT_CMD6_TIMEOUT_MS;
-	if (card->ext_csd.rev >= 6) {
+	card->ext_csd.generic_cmd6_समय = DEFAULT_CMD6_TIMEOUT_MS;
+	अगर (card->ext_csd.rev >= 6) अणु
 		card->ext_csd.feature_support |= MMC_DISCARD_FEATURE;
 
-		card->ext_csd.generic_cmd6_time = 10 *
+		card->ext_csd.generic_cmd6_समय = 10 *
 			ext_csd[EXT_CSD_GENERIC_CMD6_TIME];
-		card->ext_csd.power_off_longtime = 10 *
+		card->ext_csd.घातer_off_दीर्घसमय = 10 *
 			ext_csd[EXT_CSD_POWER_OFF_LONG_TIME];
 
 		card->ext_csd.cache_size =
@@ -590,144 +591,144 @@ static int mmc_decode_ext_csd(struct mmc_card *card, u8 *ext_csd)
 			ext_csd[EXT_CSD_CACHE_SIZE + 2] << 16 |
 			ext_csd[EXT_CSD_CACHE_SIZE + 3] << 24;
 
-		if (ext_csd[EXT_CSD_DATA_SECTOR_SIZE] == 1)
+		अगर (ext_csd[EXT_CSD_DATA_SECTOR_SIZE] == 1)
 			card->ext_csd.data_sector_size = 4096;
-		else
+		अन्यथा
 			card->ext_csd.data_sector_size = 512;
 
-		if ((ext_csd[EXT_CSD_DATA_TAG_SUPPORT] & 1) &&
-		    (ext_csd[EXT_CSD_TAG_UNIT_SIZE] <= 8)) {
+		अगर ((ext_csd[EXT_CSD_DATA_TAG_SUPPORT] & 1) &&
+		    (ext_csd[EXT_CSD_TAG_UNIT_SIZE] <= 8)) अणु
 			card->ext_csd.data_tag_unit_size =
-			((unsigned int) 1 << ext_csd[EXT_CSD_TAG_UNIT_SIZE]) *
+			((अचिन्हित पूर्णांक) 1 << ext_csd[EXT_CSD_TAG_UNIT_SIZE]) *
 			(card->ext_csd.data_sector_size);
-		} else {
+		पूर्ण अन्यथा अणु
 			card->ext_csd.data_tag_unit_size = 0;
-		}
+		पूर्ण
 
-		card->ext_csd.max_packed_writes =
+		card->ext_csd.max_packed_ग_लिखोs =
 			ext_csd[EXT_CSD_MAX_PACKED_WRITES];
-		card->ext_csd.max_packed_reads =
+		card->ext_csd.max_packed_पढ़ोs =
 			ext_csd[EXT_CSD_MAX_PACKED_READS];
-	} else {
+	पूर्ण अन्यथा अणु
 		card->ext_csd.data_sector_size = 512;
-	}
+	पूर्ण
 
 	/*
-	 * GENERIC_CMD6_TIME is to be used "unless a specific timeout is defined
-	 * when accessing a specific field", so use it here if there is no
+	 * GENERIC_CMD6_TIME is to be used "unless a specअगरic समयout is defined
+	 * when accessing a specअगरic field", so use it here अगर there is no
 	 * PARTITION_SWITCH_TIME.
 	 */
-	if (!card->ext_csd.part_time)
-		card->ext_csd.part_time = card->ext_csd.generic_cmd6_time;
+	अगर (!card->ext_csd.part_समय)
+		card->ext_csd.part_समय = card->ext_csd.generic_cmd6_समय;
 	/* Some eMMC set the value too low so set a minimum */
-	if (card->ext_csd.part_time < MMC_MIN_PART_SWITCH_TIME)
-		card->ext_csd.part_time = MMC_MIN_PART_SWITCH_TIME;
+	अगर (card->ext_csd.part_समय < MMC_MIN_PART_SWITCH_TIME)
+		card->ext_csd.part_समय = MMC_MIN_PART_SWITCH_TIME;
 
 	/* eMMC v5 or later */
-	if (card->ext_csd.rev >= 7) {
-		memcpy(card->ext_csd.fwrev, &ext_csd[EXT_CSD_FIRMWARE_VERSION],
+	अगर (card->ext_csd.rev >= 7) अणु
+		स_नकल(card->ext_csd.fwrev, &ext_csd[EXT_CSD_FIRMWARE_VERSION],
 		       MMC_FIRMWARE_LEN);
 		card->ext_csd.ffu_capable =
 			(ext_csd[EXT_CSD_SUPPORTED_MODE] & 0x1) &&
 			!(ext_csd[EXT_CSD_FW_CONFIG] & 0x1);
 
 		card->ext_csd.pre_eol_info = ext_csd[EXT_CSD_PRE_EOL_INFO];
-		card->ext_csd.device_life_time_est_typ_a =
+		card->ext_csd.device_lअगरe_समय_est_typ_a =
 			ext_csd[EXT_CSD_DEVICE_LIFE_TIME_EST_TYP_A];
-		card->ext_csd.device_life_time_est_typ_b =
+		card->ext_csd.device_lअगरe_समय_est_typ_b =
 			ext_csd[EXT_CSD_DEVICE_LIFE_TIME_EST_TYP_B];
-	}
+	पूर्ण
 
 	/* eMMC v5.1 or later */
-	if (card->ext_csd.rev >= 8) {
+	अगर (card->ext_csd.rev >= 8) अणु
 		card->ext_csd.cmdq_support = ext_csd[EXT_CSD_CMDQ_SUPPORT] &
 					     EXT_CSD_CMDQ_SUPPORTED;
 		card->ext_csd.cmdq_depth = (ext_csd[EXT_CSD_CMDQ_DEPTH] &
 					    EXT_CSD_CMDQ_DEPTH_MASK) + 1;
 		/* Exclude inefficiently small queue depths */
-		if (card->ext_csd.cmdq_depth <= 2) {
+		अगर (card->ext_csd.cmdq_depth <= 2) अणु
 			card->ext_csd.cmdq_support = false;
 			card->ext_csd.cmdq_depth = 0;
-		}
-		if (card->ext_csd.cmdq_support) {
+		पूर्ण
+		अगर (card->ext_csd.cmdq_support) अणु
 			pr_debug("%s: Command Queue supported depth %u\n",
 				 mmc_hostname(card->host),
 				 card->ext_csd.cmdq_depth);
-		}
+		पूर्ण
 		card->ext_csd.enhanced_rpmb_supported =
 					(card->ext_csd.rel_param &
 					 EXT_CSD_WR_REL_PARAM_EN_RPMB_REL_WR);
-	}
+	पूर्ण
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_read_ext_csd(struct mmc_card *card)
-{
+अटल पूर्णांक mmc_पढ़ो_ext_csd(काष्ठा mmc_card *card)
+अणु
 	u8 *ext_csd;
-	int err;
+	पूर्णांक err;
 
-	if (!mmc_can_ext_csd(card))
-		return 0;
+	अगर (!mmc_can_ext_csd(card))
+		वापस 0;
 
 	err = mmc_get_ext_csd(card, &ext_csd);
-	if (err) {
-		/* If the host or the card can't do the switch,
+	अगर (err) अणु
+		/* If the host or the card can't करो the चयन,
 		 * fail more gracefully. */
-		if ((err != -EINVAL)
+		अगर ((err != -EINVAL)
 		 && (err != -ENOSYS)
 		 && (err != -EFAULT))
-			return err;
+			वापस err;
 
 		/*
 		 * High capacity cards should have this "magic" size
 		 * stored in their CSD.
 		 */
-		if (card->csd.capacity == (4096 * 512)) {
+		अगर (card->csd.capacity == (4096 * 512)) अणु
 			pr_err("%s: unable to read EXT_CSD on a possible high capacity card. Card will be ignored.\n",
 				mmc_hostname(card->host));
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_warn("%s: unable to read EXT_CSD, performance might suffer\n",
 				mmc_hostname(card->host));
 			err = 0;
-		}
+		पूर्ण
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = mmc_decode_ext_csd(card, ext_csd);
-	kfree(ext_csd);
-	return err;
-}
+	kमुक्त(ext_csd);
+	वापस err;
+पूर्ण
 
-static int mmc_compare_ext_csds(struct mmc_card *card, unsigned bus_width)
-{
+अटल पूर्णांक mmc_compare_ext_csds(काष्ठा mmc_card *card, अचिन्हित bus_width)
+अणु
 	u8 *bw_ext_csd;
-	int err;
+	पूर्णांक err;
 
-	if (bus_width == MMC_BUS_WIDTH_1)
-		return 0;
+	अगर (bus_width == MMC_BUS_WIDTH_1)
+		वापस 0;
 
 	err = mmc_get_ext_csd(card, &bw_ext_csd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* only compare read only fields */
+	/* only compare पढ़ो only fields */
 	err = !((card->ext_csd.raw_partition_support ==
 			bw_ext_csd[EXT_CSD_PARTITION_SUPPORT]) &&
 		(card->ext_csd.raw_erased_mem_count ==
 			bw_ext_csd[EXT_CSD_ERASED_MEM_CONT]) &&
 		(card->ext_csd.rev ==
 			bw_ext_csd[EXT_CSD_REV]) &&
-		(card->ext_csd.raw_ext_csd_structure ==
+		(card->ext_csd.raw_ext_csd_काष्ठाure ==
 			bw_ext_csd[EXT_CSD_STRUCTURE]) &&
 		(card->ext_csd.raw_card_type ==
 			bw_ext_csd[EXT_CSD_CARD_TYPE]) &&
-		(card->ext_csd.raw_s_a_timeout ==
+		(card->ext_csd.raw_s_a_समयout ==
 			bw_ext_csd[EXT_CSD_S_A_TIMEOUT]) &&
 		(card->ext_csd.raw_hc_erase_gap_size ==
 			bw_ext_csd[EXT_CSD_HC_WP_GRP_SIZE]) &&
-		(card->ext_csd.raw_erase_timeout_mult ==
+		(card->ext_csd.raw_erase_समयout_mult ==
 			bw_ext_csd[EXT_CSD_ERASE_TIMEOUT_MULT]) &&
 		(card->ext_csd.raw_hc_erase_grp_size ==
 			bw_ext_csd[EXT_CSD_HC_ERASE_GRP_SIZE]) &&
@@ -766,12 +767,12 @@ static int mmc_compare_ext_csds(struct mmc_card *card, unsigned bus_width)
 		(card->ext_csd.raw_pwr_cl_ddr_200_360 ==
 			bw_ext_csd[EXT_CSD_PWR_CL_DDR_200_360]));
 
-	if (err)
+	अगर (err)
 		err = -EINVAL;
 
-	kfree(bw_ext_csd);
-	return err;
-}
+	kमुक्त(bw_ext_csd);
+	वापस err;
+पूर्ण
 
 MMC_DEV_ATTR(cid, "%08x%08x%08x%08x\n", card->raw_cid[0], card->raw_cid[1],
 	card->raw_cid[2], card->raw_cid[3]);
@@ -788,9 +789,9 @@ MMC_DEV_ATTR(oemid, "0x%04x\n", card->cid.oemid);
 MMC_DEV_ATTR(prv, "0x%x\n", card->cid.prv);
 MMC_DEV_ATTR(rev, "0x%x\n", card->ext_csd.rev);
 MMC_DEV_ATTR(pre_eol_info, "0x%02x\n", card->ext_csd.pre_eol_info);
-MMC_DEV_ATTR(life_time, "0x%02x 0x%02x\n",
-	card->ext_csd.device_life_time_est_typ_a,
-	card->ext_csd.device_life_time_est_typ_b);
+MMC_DEV_ATTR(lअगरe_समय, "0x%02x 0x%02x\n",
+	card->ext_csd.device_lअगरe_समय_est_typ_a,
+	card->ext_csd.device_lअगरe_समय_est_typ_b);
 MMC_DEV_ATTR(serial, "0x%08x\n", card->cid.serial);
 MMC_DEV_ATTR(enhanced_area_offset, "%llu\n",
 		card->ext_csd.enhanced_area_offset);
@@ -803,39 +804,39 @@ MMC_DEV_ATTR(ocr, "0x%08x\n", card->ocr);
 MMC_DEV_ATTR(rca, "0x%04x\n", card->rca);
 MMC_DEV_ATTR(cmdq_en, "%d\n", card->ext_csd.cmdq_en);
 
-static ssize_t mmc_fwrev_show(struct device *dev,
-			      struct device_attribute *attr,
-			      char *buf)
-{
-	struct mmc_card *card = mmc_dev_to_card(dev);
+अटल sमाप_प्रकार mmc_fwrev_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
 
-	if (card->ext_csd.rev < 7) {
-		return sprintf(buf, "0x%x\n", card->cid.fwrev);
-	} else {
-		return sprintf(buf, "0x%*phN\n", MMC_FIRMWARE_LEN,
+	अगर (card->ext_csd.rev < 7) अणु
+		वापस प्र_लिखो(buf, "0x%x\n", card->cid.fwrev);
+	पूर्ण अन्यथा अणु
+		वापस प्र_लिखो(buf, "0x%*phN\n", MMC_FIRMWARE_LEN,
 			       card->ext_csd.fwrev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static DEVICE_ATTR(fwrev, S_IRUGO, mmc_fwrev_show, NULL);
+अटल DEVICE_ATTR(fwrev, S_IRUGO, mmc_fwrev_show, शून्य);
 
-static ssize_t mmc_dsr_show(struct device *dev,
-			    struct device_attribute *attr,
-			    char *buf)
-{
-	struct mmc_card *card = mmc_dev_to_card(dev);
-	struct mmc_host *host = card->host;
+अटल sमाप_प्रकार mmc_dsr_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
+	काष्ठा mmc_host *host = card->host;
 
-	if (card->csd.dsr_imp && host->dsr_req)
-		return sprintf(buf, "0x%x\n", host->dsr);
-	else
-		/* return default DSR value */
-		return sprintf(buf, "0x%x\n", 0x404);
-}
+	अगर (card->csd.dsr_imp && host->dsr_req)
+		वापस प्र_लिखो(buf, "0x%x\n", host->dsr);
+	अन्यथा
+		/* वापस शेष DSR value */
+		वापस प्र_लिखो(buf, "0x%x\n", 0x404);
+पूर्ण
 
-static DEVICE_ATTR(dsr, S_IRUGO, mmc_dsr_show, NULL);
+अटल DEVICE_ATTR(dsr, S_IRUGO, mmc_dsr_show, शून्य);
 
-static struct attribute *mmc_std_attrs[] = {
+अटल काष्ठा attribute *mmc_std_attrs[] = अणु
 	&dev_attr_cid.attr,
 	&dev_attr_csd.attr,
 	&dev_attr_date.attr,
@@ -850,7 +851,7 @@ static struct attribute *mmc_std_attrs[] = {
 	&dev_attr_prv.attr,
 	&dev_attr_rev.attr,
 	&dev_attr_pre_eol_info.attr,
-	&dev_attr_life_time.attr,
+	&dev_attr_lअगरe_समय.attr,
 	&dev_attr_serial.attr,
 	&dev_attr_enhanced_area_offset.attr,
 	&dev_attr_enhanced_area_size.attr,
@@ -861,857 +862,857 @@ static struct attribute *mmc_std_attrs[] = {
 	&dev_attr_rca.attr,
 	&dev_attr_dsr.attr,
 	&dev_attr_cmdq_en.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(mmc_std);
 
-static struct device_type mmc_type = {
+अटल काष्ठा device_type mmc_type = अणु
 	.groups = mmc_std_groups,
-};
+पूर्ण;
 
 /*
- * Select the PowerClass for the current bus width
- * If power class is defined for 4/8 bit bus in the
- * extended CSD register, select it by executing the
- * mmc_switch command.
+ * Select the PowerClass क्रम the current bus width
+ * If घातer class is defined क्रम 4/8 bit bus in the
+ * extended CSD रेजिस्टर, select it by executing the
+ * mmc_चयन command.
  */
-static int __mmc_select_powerclass(struct mmc_card *card,
-				   unsigned int bus_width)
-{
-	struct mmc_host *host = card->host;
-	struct mmc_ext_csd *ext_csd = &card->ext_csd;
-	unsigned int pwrclass_val = 0;
-	int err = 0;
+अटल पूर्णांक __mmc_select_घातerclass(काष्ठा mmc_card *card,
+				   अचिन्हित पूर्णांक bus_width)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	काष्ठा mmc_ext_csd *ext_csd = &card->ext_csd;
+	अचिन्हित पूर्णांक pwrclass_val = 0;
+	पूर्णांक err = 0;
 
-	switch (1 << host->ios.vdd) {
-	case MMC_VDD_165_195:
-		if (host->ios.clock <= MMC_HIGH_26_MAX_DTR)
+	चयन (1 << host->ios.vdd) अणु
+	हाल MMC_VDD_165_195:
+		अगर (host->ios.घड़ी <= MMC_HIGH_26_MAX_DTR)
 			pwrclass_val = ext_csd->raw_pwr_cl_26_195;
-		else if (host->ios.clock <= MMC_HIGH_52_MAX_DTR)
+		अन्यथा अगर (host->ios.घड़ी <= MMC_HIGH_52_MAX_DTR)
 			pwrclass_val = (bus_width <= EXT_CSD_BUS_WIDTH_8) ?
 				ext_csd->raw_pwr_cl_52_195 :
 				ext_csd->raw_pwr_cl_ddr_52_195;
-		else if (host->ios.clock <= MMC_HS200_MAX_DTR)
+		अन्यथा अगर (host->ios.घड़ी <= MMC_HS200_MAX_DTR)
 			pwrclass_val = ext_csd->raw_pwr_cl_200_195;
-		break;
-	case MMC_VDD_27_28:
-	case MMC_VDD_28_29:
-	case MMC_VDD_29_30:
-	case MMC_VDD_30_31:
-	case MMC_VDD_31_32:
-	case MMC_VDD_32_33:
-	case MMC_VDD_33_34:
-	case MMC_VDD_34_35:
-	case MMC_VDD_35_36:
-		if (host->ios.clock <= MMC_HIGH_26_MAX_DTR)
+		अवरोध;
+	हाल MMC_VDD_27_28:
+	हाल MMC_VDD_28_29:
+	हाल MMC_VDD_29_30:
+	हाल MMC_VDD_30_31:
+	हाल MMC_VDD_31_32:
+	हाल MMC_VDD_32_33:
+	हाल MMC_VDD_33_34:
+	हाल MMC_VDD_34_35:
+	हाल MMC_VDD_35_36:
+		अगर (host->ios.घड़ी <= MMC_HIGH_26_MAX_DTR)
 			pwrclass_val = ext_csd->raw_pwr_cl_26_360;
-		else if (host->ios.clock <= MMC_HIGH_52_MAX_DTR)
+		अन्यथा अगर (host->ios.घड़ी <= MMC_HIGH_52_MAX_DTR)
 			pwrclass_val = (bus_width <= EXT_CSD_BUS_WIDTH_8) ?
 				ext_csd->raw_pwr_cl_52_360 :
 				ext_csd->raw_pwr_cl_ddr_52_360;
-		else if (host->ios.clock <= MMC_HS200_MAX_DTR)
+		अन्यथा अगर (host->ios.घड़ी <= MMC_HS200_MAX_DTR)
 			pwrclass_val = (bus_width == EXT_CSD_DDR_BUS_WIDTH_8) ?
 				ext_csd->raw_pwr_cl_ddr_200_360 :
 				ext_csd->raw_pwr_cl_200_360;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_warn("%s: Voltage range not supported for power class\n",
 			mmc_hostname(host));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (bus_width & (EXT_CSD_BUS_WIDTH_8 | EXT_CSD_DDR_BUS_WIDTH_8))
+	अगर (bus_width & (EXT_CSD_BUS_WIDTH_8 | EXT_CSD_DDR_BUS_WIDTH_8))
 		pwrclass_val = (pwrclass_val & EXT_CSD_PWR_CL_8BIT_MASK) >>
 				EXT_CSD_PWR_CL_8BIT_SHIFT;
-	else
+	अन्यथा
 		pwrclass_val = (pwrclass_val & EXT_CSD_PWR_CL_4BIT_MASK) >>
 				EXT_CSD_PWR_CL_4BIT_SHIFT;
 
-	/* If the power class is different from the default value */
-	if (pwrclass_val > 0) {
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	/* If the घातer class is dअगरferent from the शेष value */
+	अगर (pwrclass_val > 0) अणु
+		err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 				 EXT_CSD_POWER_CLASS,
 				 pwrclass_val,
-				 card->ext_csd.generic_cmd6_time);
-	}
+				 card->ext_csd.generic_cmd6_समय);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_select_powerclass(struct mmc_card *card)
-{
-	struct mmc_host *host = card->host;
+अटल पूर्णांक mmc_select_घातerclass(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host *host = card->host;
 	u32 bus_width, ext_csd_bits;
-	int err, ddr;
+	पूर्णांक err, ddr;
 
-	/* Power class selection is supported for versions >= 4.0 */
-	if (!mmc_can_ext_csd(card))
-		return 0;
+	/* Power class selection is supported क्रम versions >= 4.0 */
+	अगर (!mmc_can_ext_csd(card))
+		वापस 0;
 
 	bus_width = host->ios.bus_width;
-	/* Power class values are defined only for 4/8 bit bus */
-	if (bus_width == MMC_BUS_WIDTH_1)
-		return 0;
+	/* Power class values are defined only क्रम 4/8 bit bus */
+	अगर (bus_width == MMC_BUS_WIDTH_1)
+		वापस 0;
 
 	ddr = card->mmc_avail_type & EXT_CSD_CARD_TYPE_DDR_52;
-	if (ddr)
+	अगर (ddr)
 		ext_csd_bits = (bus_width == MMC_BUS_WIDTH_8) ?
 			EXT_CSD_DDR_BUS_WIDTH_8 : EXT_CSD_DDR_BUS_WIDTH_4;
-	else
+	अन्यथा
 		ext_csd_bits = (bus_width == MMC_BUS_WIDTH_8) ?
 			EXT_CSD_BUS_WIDTH_8 :  EXT_CSD_BUS_WIDTH_4;
 
-	err = __mmc_select_powerclass(card, ext_csd_bits);
-	if (err)
+	err = __mmc_select_घातerclass(card, ext_csd_bits);
+	अगर (err)
 		pr_warn("%s: power class selection to bus width %d ddr %d failed\n",
 			mmc_hostname(host), 1 << bus_width, ddr);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Set the bus speed for the selected speed mode.
+ * Set the bus speed क्रम the selected speed mode.
  */
-static void mmc_set_bus_speed(struct mmc_card *card)
-{
-	unsigned int max_dtr = (unsigned int)-1;
+अटल व्योम mmc_set_bus_speed(काष्ठा mmc_card *card)
+अणु
+	अचिन्हित पूर्णांक max_dtr = (अचिन्हित पूर्णांक)-1;
 
-	if ((mmc_card_hs200(card) || mmc_card_hs400(card)) &&
+	अगर ((mmc_card_hs200(card) || mmc_card_hs400(card)) &&
 	     max_dtr > card->ext_csd.hs200_max_dtr)
 		max_dtr = card->ext_csd.hs200_max_dtr;
-	else if (mmc_card_hs(card) && max_dtr > card->ext_csd.hs_max_dtr)
+	अन्यथा अगर (mmc_card_hs(card) && max_dtr > card->ext_csd.hs_max_dtr)
 		max_dtr = card->ext_csd.hs_max_dtr;
-	else if (max_dtr > card->csd.max_dtr)
+	अन्यथा अगर (max_dtr > card->csd.max_dtr)
 		max_dtr = card->csd.max_dtr;
 
-	mmc_set_clock(card->host, max_dtr);
-}
+	mmc_set_घड़ी(card->host, max_dtr);
+पूर्ण
 
 /*
  * Select the bus width amoung 4-bit and 8-bit(SDR).
- * If the bus width is changed successfully, return the selected width value.
- * Zero is returned instead of error value if the wide width is not supported.
+ * If the bus width is changed successfully, वापस the selected width value.
+ * Zero is वापसed instead of error value अगर the wide width is not supported.
  */
-static int mmc_select_bus_width(struct mmc_card *card)
-{
-	static unsigned ext_csd_bits[] = {
+अटल पूर्णांक mmc_select_bus_width(काष्ठा mmc_card *card)
+अणु
+	अटल अचिन्हित ext_csd_bits[] = अणु
 		EXT_CSD_BUS_WIDTH_8,
 		EXT_CSD_BUS_WIDTH_4,
-	};
-	static unsigned bus_widths[] = {
+	पूर्ण;
+	अटल अचिन्हित bus_widths[] = अणु
 		MMC_BUS_WIDTH_8,
 		MMC_BUS_WIDTH_4,
-	};
-	struct mmc_host *host = card->host;
-	unsigned idx, bus_width = 0;
-	int err = 0;
+	पूर्ण;
+	काष्ठा mmc_host *host = card->host;
+	अचिन्हित idx, bus_width = 0;
+	पूर्णांक err = 0;
 
-	if (!mmc_can_ext_csd(card) ||
+	अगर (!mmc_can_ext_csd(card) ||
 	    !(host->caps & (MMC_CAP_4_BIT_DATA | MMC_CAP_8_BIT_DATA)))
-		return 0;
+		वापस 0;
 
 	idx = (host->caps & MMC_CAP_8_BIT_DATA) ? 0 : 1;
 
 	/*
-	 * Unlike SD, MMC cards dont have a configuration register to notify
-	 * supported bus width. So bus test command should be run to identify
+	 * Unlike SD, MMC cards करोnt have a configuration रेजिस्टर to notअगरy
+	 * supported bus width. So bus test command should be run to identअगरy
 	 * the supported bus width or compare the ext csd values of current
-	 * bus width and ext csd values of 1 bit mode read earlier.
+	 * bus width and ext csd values of 1 bit mode पढ़ो earlier.
 	 */
-	for (; idx < ARRAY_SIZE(bus_widths); idx++) {
+	क्रम (; idx < ARRAY_SIZE(bus_widths); idx++) अणु
 		/*
-		 * Host is capable of 8bit transfer, then switch
+		 * Host is capable of 8bit transfer, then चयन
 		 * the device to work in 8bit transfer mode. If the
-		 * mmc switch command returns error then switch to
+		 * mmc चयन command वापसs error then चयन to
 		 * 4bit transfer mode. On success set the corresponding
 		 * bus width on the host.
 		 */
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+		err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 				 EXT_CSD_BUS_WIDTH,
 				 ext_csd_bits[idx],
-				 card->ext_csd.generic_cmd6_time);
-		if (err)
-			continue;
+				 card->ext_csd.generic_cmd6_समय);
+		अगर (err)
+			जारी;
 
 		bus_width = bus_widths[idx];
 		mmc_set_bus_width(host, bus_width);
 
 		/*
 		 * If controller can't handle bus width test,
-		 * compare ext_csd previously read in 1 bit mode
+		 * compare ext_csd previously पढ़ो in 1 bit mode
 		 * against ext_csd at new bus width
 		 */
-		if (!(host->caps & MMC_CAP_BUS_WIDTH_TEST))
+		अगर (!(host->caps & MMC_CAP_BUS_WIDTH_TEST))
 			err = mmc_compare_ext_csds(card, bus_width);
-		else
+		अन्यथा
 			err = mmc_bus_test(card, bus_width);
 
-		if (!err) {
+		अगर (!err) अणु
 			err = bus_width;
-			break;
-		} else {
+			अवरोध;
+		पूर्ण अन्यथा अणु
 			pr_warn("%s: switch to bus width %d failed\n",
 				mmc_hostname(host), 1 << bus_width);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Switch to the high-speed mode
  */
-static int mmc_select_hs(struct mmc_card *card)
-{
-	int err;
+अटल पूर्णांक mmc_select_hs(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक err;
 
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 			   EXT_CSD_HS_TIMING, EXT_CSD_TIMING_HS,
-			   card->ext_csd.generic_cmd6_time, MMC_TIMING_MMC_HS,
+			   card->ext_csd.generic_cmd6_समय, MMC_TIMING_MMC_HS,
 			   true, true, MMC_CMD_RETRIES);
-	if (err)
+	अगर (err)
 		pr_warn("%s: switch to high-speed failed, err:%d\n",
 			mmc_hostname(card->host), err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Activate wide bus and DDR if supported.
+ * Activate wide bus and DDR अगर supported.
  */
-static int mmc_select_hs_ddr(struct mmc_card *card)
-{
-	struct mmc_host *host = card->host;
+अटल पूर्णांक mmc_select_hs_ddr(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host *host = card->host;
 	u32 bus_width, ext_csd_bits;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (!(card->mmc_avail_type & EXT_CSD_CARD_TYPE_DDR_52))
-		return 0;
+	अगर (!(card->mmc_avail_type & EXT_CSD_CARD_TYPE_DDR_52))
+		वापस 0;
 
 	bus_width = host->ios.bus_width;
-	if (bus_width == MMC_BUS_WIDTH_1)
-		return 0;
+	अगर (bus_width == MMC_BUS_WIDTH_1)
+		वापस 0;
 
 	ext_csd_bits = (bus_width == MMC_BUS_WIDTH_8) ?
 		EXT_CSD_DDR_BUS_WIDTH_8 : EXT_CSD_DDR_BUS_WIDTH_4;
 
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 			   EXT_CSD_BUS_WIDTH,
 			   ext_csd_bits,
-			   card->ext_csd.generic_cmd6_time,
+			   card->ext_csd.generic_cmd6_समय,
 			   MMC_TIMING_MMC_DDR52,
 			   true, true, MMC_CMD_RETRIES);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: switch to bus width %d ddr failed\n",
 			mmc_hostname(host), 1 << bus_width);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/*
 	 * eMMC cards can support 3.3V to 1.2V i/o (vccq)
-	 * signaling.
+	 * संकेतing.
 	 *
 	 * EXT_CSD_CARD_TYPE_DDR_1_8V means 3.3V or 1.8V vccq.
 	 *
 	 * 1.8V vccq at 3.3V core voltage (vcc) is not required
-	 * in the JEDEC spec for DDR.
+	 * in the JEDEC spec क्रम DDR.
 	 *
 	 * Even (e)MMC card can support 3.3v to 1.2v vccq, but not all
 	 * host controller can support this, like some of the SDHCI
 	 * controller which connect to an eMMC device. Some of these
-	 * host controller still needs to use 1.8v vccq for supporting
+	 * host controller still needs to use 1.8v vccq क्रम supporting
 	 * DDR mode.
 	 *
 	 * So the sequence will be:
-	 * if (host and device can both support 1.2v IO)
+	 * अगर (host and device can both support 1.2v IO)
 	 *	use 1.2v IO;
-	 * else if (host and device can both support 1.8v IO)
+	 * अन्यथा अगर (host and device can both support 1.8v IO)
 	 *	use 1.8v IO;
-	 * so if host and device can only support 3.3v IO, this is the
+	 * so अगर host and device can only support 3.3v IO, this is the
 	 * last choice.
 	 *
 	 * WARNING: eMMC rules are NOT the same as SD DDR
 	 */
-	if (card->mmc_avail_type & EXT_CSD_CARD_TYPE_DDR_1_2V) {
-		err = mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_120);
-		if (!err)
-			return 0;
-	}
+	अगर (card->mmc_avail_type & EXT_CSD_CARD_TYPE_DDR_1_2V) अणु
+		err = mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_120);
+		अगर (!err)
+			वापस 0;
+	पूर्ण
 
-	if (card->mmc_avail_type & EXT_CSD_CARD_TYPE_DDR_1_8V &&
+	अगर (card->mmc_avail_type & EXT_CSD_CARD_TYPE_DDR_1_8V &&
 	    host->caps & MMC_CAP_1_8V_DDR)
-		err = mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_180);
+		err = mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_180);
 
-	/* make sure vccq is 3.3v after switching disaster */
-	if (err)
-		err = mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_330);
+	/* make sure vccq is 3.3v after चयनing disaster */
+	अगर (err)
+		err = mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_330);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_select_hs400(struct mmc_card *card)
-{
-	struct mmc_host *host = card->host;
-	unsigned int max_dtr;
-	int err = 0;
+अटल पूर्णांक mmc_select_hs400(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	अचिन्हित पूर्णांक max_dtr;
+	पूर्णांक err = 0;
 	u8 val;
 
 	/*
 	 * HS400 mode requires 8-bit bus width
 	 */
-	if (!(card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS400 &&
+	अगर (!(card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS400 &&
 	      host->ios.bus_width == MMC_BUS_WIDTH_8))
-		return 0;
+		वापस 0;
 
 	/* Switch card to HS mode */
 	val = EXT_CSD_TIMING_HS;
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 			   EXT_CSD_HS_TIMING, val,
-			   card->ext_csd.generic_cmd6_time, 0,
+			   card->ext_csd.generic_cmd6_समय, 0,
 			   false, true, MMC_CMD_RETRIES);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: switch to high-speed from hs200 failed, err:%d\n",
 			mmc_hostname(host), err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* Prepare host to downgrade to HS timing */
-	if (host->ops->hs400_downgrade)
-		host->ops->hs400_downgrade(host);
+	/* Prepare host to करोwngrade to HS timing */
+	अगर (host->ops->hs400_करोwngrade)
+		host->ops->hs400_करोwngrade(host);
 
 	/* Set host controller to HS timing */
 	mmc_set_timing(host, MMC_TIMING_MMC_HS);
 
 	/* Reduce frequency to HS frequency */
 	max_dtr = card->ext_csd.hs_max_dtr;
-	mmc_set_clock(host, max_dtr);
+	mmc_set_घड़ी(host, max_dtr);
 
-	err = mmc_switch_status(card, true);
-	if (err)
-		goto out_err;
+	err = mmc_चयन_status(card, true);
+	अगर (err)
+		जाओ out_err;
 
-	if (host->ops->hs400_prepare_ddr)
+	अगर (host->ops->hs400_prepare_ddr)
 		host->ops->hs400_prepare_ddr(host);
 
 	/* Switch card to DDR */
-	err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 			 EXT_CSD_BUS_WIDTH,
 			 EXT_CSD_DDR_BUS_WIDTH_8,
-			 card->ext_csd.generic_cmd6_time);
-	if (err) {
+			 card->ext_csd.generic_cmd6_समय);
+	अगर (err) अणु
 		pr_err("%s: switch to bus width for hs400 failed, err:%d\n",
 			mmc_hostname(host), err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Switch card to HS400 */
 	val = EXT_CSD_TIMING_HS400 |
 	      card->drive_strength << EXT_CSD_DRV_STR_SHIFT;
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 			   EXT_CSD_HS_TIMING, val,
-			   card->ext_csd.generic_cmd6_time, 0,
+			   card->ext_csd.generic_cmd6_समय, 0,
 			   false, true, MMC_CMD_RETRIES);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: switch to hs400 failed, err:%d\n",
 			 mmc_hostname(host), err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Set host controller to HS400 timing and frequency */
 	mmc_set_timing(host, MMC_TIMING_MMC_HS400);
 	mmc_set_bus_speed(card);
 
-	if (host->ops->hs400_complete)
+	अगर (host->ops->hs400_complete)
 		host->ops->hs400_complete(host);
 
-	err = mmc_switch_status(card, true);
-	if (err)
-		goto out_err;
+	err = mmc_चयन_status(card, true);
+	अगर (err)
+		जाओ out_err;
 
-	return 0;
+	वापस 0;
 
 out_err:
 	pr_err("%s: %s failed, error %d\n", mmc_hostname(card->host),
 	       __func__, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mmc_hs200_to_hs400(struct mmc_card *card)
-{
-	return mmc_select_hs400(card);
-}
+पूर्णांक mmc_hs200_to_hs400(काष्ठा mmc_card *card)
+अणु
+	वापस mmc_select_hs400(card);
+पूर्ण
 
-int mmc_hs400_to_hs200(struct mmc_card *card)
-{
-	struct mmc_host *host = card->host;
-	unsigned int max_dtr;
-	int err;
+पूर्णांक mmc_hs400_to_hs200(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	अचिन्हित पूर्णांक max_dtr;
+	पूर्णांक err;
 	u8 val;
 
 	/* Reduce frequency to HS */
 	max_dtr = card->ext_csd.hs_max_dtr;
-	mmc_set_clock(host, max_dtr);
+	mmc_set_घड़ी(host, max_dtr);
 
 	/* Switch HS400 to HS DDR */
 	val = EXT_CSD_TIMING_HS;
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING,
-			   val, card->ext_csd.generic_cmd6_time, 0,
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING,
+			   val, card->ext_csd.generic_cmd6_समय, 0,
 			   false, true, MMC_CMD_RETRIES);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
-	if (host->ops->hs400_downgrade)
-		host->ops->hs400_downgrade(host);
+	अगर (host->ops->hs400_करोwngrade)
+		host->ops->hs400_करोwngrade(host);
 
 	mmc_set_timing(host, MMC_TIMING_MMC_DDR52);
 
-	err = mmc_switch_status(card, true);
-	if (err)
-		goto out_err;
+	err = mmc_चयन_status(card, true);
+	अगर (err)
+		जाओ out_err;
 
 	/* Switch HS DDR to HS */
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BUS_WIDTH,
-			   EXT_CSD_BUS_WIDTH_8, card->ext_csd.generic_cmd6_time,
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BUS_WIDTH,
+			   EXT_CSD_BUS_WIDTH_8, card->ext_csd.generic_cmd6_समय,
 			   0, false, true, MMC_CMD_RETRIES);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
 	mmc_set_timing(host, MMC_TIMING_MMC_HS);
 
-	err = mmc_switch_status(card, true);
-	if (err)
-		goto out_err;
+	err = mmc_चयन_status(card, true);
+	अगर (err)
+		जाओ out_err;
 
 	/* Switch HS to HS200 */
 	val = EXT_CSD_TIMING_HS200 |
 	      card->drive_strength << EXT_CSD_DRV_STR_SHIFT;
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING,
-			   val, card->ext_csd.generic_cmd6_time, 0,
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING,
+			   val, card->ext_csd.generic_cmd6_समय, 0,
 			   false, true, MMC_CMD_RETRIES);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
 	mmc_set_timing(host, MMC_TIMING_MMC_HS200);
 
 	/*
-	 * For HS200, CRC errors are not a reliable way to know the switch
+	 * For HS200, CRC errors are not a reliable way to know the चयन
 	 * failed. If there really is a problem, we would expect tuning will
 	 * fail and the result ends up the same.
 	 */
-	err = mmc_switch_status(card, false);
-	if (err)
-		goto out_err;
+	err = mmc_चयन_status(card, false);
+	अगर (err)
+		जाओ out_err;
 
 	mmc_set_bus_speed(card);
 
-	/* Prepare tuning for HS400 mode. */
-	if (host->ops->prepare_hs400_tuning)
+	/* Prepare tuning क्रम HS400 mode. */
+	अगर (host->ops->prepare_hs400_tuning)
 		host->ops->prepare_hs400_tuning(host, &host->ios);
 
-	return 0;
+	वापस 0;
 
 out_err:
 	pr_err("%s: %s failed, error %d\n", mmc_hostname(card->host),
 	       __func__, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mmc_select_driver_type(struct mmc_card *card)
-{
-	int card_drv_type, drive_strength, drv_type = 0;
-	int fixed_drv_type = card->host->fixed_drv_type;
+अटल व्योम mmc_select_driver_type(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक card_drv_type, drive_strength, drv_type = 0;
+	पूर्णांक fixed_drv_type = card->host->fixed_drv_type;
 
 	card_drv_type = card->ext_csd.raw_driver_strength |
 			mmc_driver_type_mask(0);
 
-	if (fixed_drv_type >= 0)
+	अगर (fixed_drv_type >= 0)
 		drive_strength = card_drv_type & mmc_driver_type_mask(fixed_drv_type)
 				 ? fixed_drv_type : 0;
-	else
+	अन्यथा
 		drive_strength = mmc_select_drive_strength(card,
 							   card->ext_csd.hs200_max_dtr,
 							   card_drv_type, &drv_type);
 
 	card->drive_strength = drive_strength;
 
-	if (drv_type)
+	अगर (drv_type)
 		mmc_set_driver_type(card->host, drv_type);
-}
+पूर्ण
 
-static int mmc_select_hs400es(struct mmc_card *card)
-{
-	struct mmc_host *host = card->host;
-	int err = -EINVAL;
+अटल पूर्णांक mmc_select_hs400es(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	पूर्णांक err = -EINVAL;
 	u8 val;
 
-	if (!(host->caps & MMC_CAP_8_BIT_DATA)) {
+	अगर (!(host->caps & MMC_CAP_8_BIT_DATA)) अणु
 		err = -ENOTSUPP;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	if (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS400_1_2V)
-		err = mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_120);
+	अगर (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS400_1_2V)
+		err = mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_120);
 
-	if (err && card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS400_1_8V)
-		err = mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_180);
+	अगर (err && card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS400_1_8V)
+		err = mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_180);
 
-	/* If fails try again during next card power cycle */
-	if (err)
-		goto out_err;
+	/* If fails try again during next card घातer cycle */
+	अगर (err)
+		जाओ out_err;
 
 	err = mmc_select_bus_width(card);
-	if (err != MMC_BUS_WIDTH_8) {
+	अगर (err != MMC_BUS_WIDTH_8) अणु
 		pr_err("%s: switch to 8bit bus width failed, err:%d\n",
 			mmc_hostname(host), err);
 		err = err < 0 ? err : -ENOTSUPP;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* Switch card to HS mode */
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 			   EXT_CSD_HS_TIMING, EXT_CSD_TIMING_HS,
-			   card->ext_csd.generic_cmd6_time, 0,
+			   card->ext_csd.generic_cmd6_समय, 0,
 			   false, true, MMC_CMD_RETRIES);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: switch to hs for hs400es failed, err:%d\n",
 			mmc_hostname(host), err);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	mmc_set_timing(host, MMC_TIMING_MMC_HS);
-	err = mmc_switch_status(card, true);
-	if (err)
-		goto out_err;
+	err = mmc_चयन_status(card, true);
+	अगर (err)
+		जाओ out_err;
 
-	mmc_set_clock(host, card->ext_csd.hs_max_dtr);
+	mmc_set_घड़ी(host, card->ext_csd.hs_max_dtr);
 
 	/* Switch card to DDR with strobe bit */
 	val = EXT_CSD_DDR_BUS_WIDTH_8 | EXT_CSD_BUS_WIDTH_STROBE;
-	err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 			 EXT_CSD_BUS_WIDTH,
 			 val,
-			 card->ext_csd.generic_cmd6_time);
-	if (err) {
+			 card->ext_csd.generic_cmd6_समय);
+	अगर (err) अणु
 		pr_err("%s: switch to bus width for hs400es failed, err:%d\n",
 			mmc_hostname(host), err);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	mmc_select_driver_type(card);
 
 	/* Switch card to HS400 */
 	val = EXT_CSD_TIMING_HS400 |
 	      card->drive_strength << EXT_CSD_DRV_STR_SHIFT;
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 			   EXT_CSD_HS_TIMING, val,
-			   card->ext_csd.generic_cmd6_time, 0,
+			   card->ext_csd.generic_cmd6_समय, 0,
 			   false, true, MMC_CMD_RETRIES);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: switch to hs400es failed, err:%d\n",
 			mmc_hostname(host), err);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* Set host controller to HS400 timing and frequency */
 	mmc_set_timing(host, MMC_TIMING_MMC_HS400);
 
 	/* Controller enable enhanced strobe function */
 	host->ios.enhanced_strobe = true;
-	if (host->ops->hs400_enhanced_strobe)
+	अगर (host->ops->hs400_enhanced_strobe)
 		host->ops->hs400_enhanced_strobe(host, &host->ios);
 
-	err = mmc_switch_status(card, true);
-	if (err)
-		goto out_err;
+	err = mmc_चयन_status(card, true);
+	अगर (err)
+		जाओ out_err;
 
-	return 0;
+	वापस 0;
 
 out_err:
 	pr_err("%s: %s failed, error %d\n", mmc_hostname(card->host),
 	       __func__, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * For device supporting HS200 mode, the following sequence
- * should be done before executing the tuning process.
+ * should be करोne beक्रमe executing the tuning process.
  * 1. set the desired bus width(4-bit or 8-bit, 1-bit is not supported)
- * 2. switch to HS200 mode
- * 3. set the clock to > 52Mhz and <=200MHz
+ * 2. चयन to HS200 mode
+ * 3. set the घड़ी to > 52Mhz and <=200MHz
  */
-static int mmc_select_hs200(struct mmc_card *card)
-{
-	struct mmc_host *host = card->host;
-	unsigned int old_timing, old_signal_voltage;
-	int err = -EINVAL;
+अटल पूर्णांक mmc_select_hs200(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	अचिन्हित पूर्णांक old_timing, old_संकेत_voltage;
+	पूर्णांक err = -EINVAL;
 	u8 val;
 
-	old_signal_voltage = host->ios.signal_voltage;
-	if (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS200_1_2V)
-		err = mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_120);
+	old_संकेत_voltage = host->ios.संकेत_voltage;
+	अगर (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS200_1_2V)
+		err = mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_120);
 
-	if (err && card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS200_1_8V)
-		err = mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_180);
+	अगर (err && card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS200_1_8V)
+		err = mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_180);
 
-	/* If fails try again during next card power cycle */
-	if (err)
-		return err;
+	/* If fails try again during next card घातer cycle */
+	अगर (err)
+		वापस err;
 
 	mmc_select_driver_type(card);
 
 	/*
 	 * Set the bus width(4 or 8) with host's support and
-	 * switch to HS200 mode if bus width is set successfully.
+	 * चयन to HS200 mode अगर bus width is set successfully.
 	 */
 	err = mmc_select_bus_width(card);
-	if (err > 0) {
+	अगर (err > 0) अणु
 		val = EXT_CSD_TIMING_HS200 |
 		      card->drive_strength << EXT_CSD_DRV_STR_SHIFT;
-		err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+		err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 				   EXT_CSD_HS_TIMING, val,
-				   card->ext_csd.generic_cmd6_time, 0,
+				   card->ext_csd.generic_cmd6_समय, 0,
 				   false, true, MMC_CMD_RETRIES);
-		if (err)
-			goto err;
+		अगर (err)
+			जाओ err;
 		old_timing = host->ios.timing;
 		mmc_set_timing(host, MMC_TIMING_MMC_HS200);
 
 		/*
 		 * For HS200, CRC errors are not a reliable way to know the
-		 * switch failed. If there really is a problem, we would expect
+		 * चयन failed. If there really is a problem, we would expect
 		 * tuning will fail and the result ends up the same.
 		 */
-		err = mmc_switch_status(card, false);
+		err = mmc_चयन_status(card, false);
 
 		/*
-		 * mmc_select_timing() assumes timing has not changed if
-		 * it is a switch error.
+		 * mmc_select_timing() assumes timing has not changed अगर
+		 * it is a चयन error.
 		 */
-		if (err == -EBADMSG)
+		अगर (err == -EBADMSG)
 			mmc_set_timing(host, old_timing);
-	}
+	पूर्ण
 err:
-	if (err) {
-		/* fall back to the old signal voltage, if fails report error */
-		if (mmc_set_signal_voltage(host, old_signal_voltage))
+	अगर (err) अणु
+		/* fall back to the old संकेत voltage, अगर fails report error */
+		अगर (mmc_set_संकेत_voltage(host, old_संकेत_voltage))
 			err = -EIO;
 
 		pr_err("%s: %s failed, error %d\n", mmc_hostname(card->host),
 		       __func__, err);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /*
- * Activate High Speed, HS200 or HS400ES mode if supported.
+ * Activate High Speed, HS200 or HS400ES mode अगर supported.
  */
-static int mmc_select_timing(struct mmc_card *card)
-{
-	int err = 0;
+अटल पूर्णांक mmc_select_timing(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक err = 0;
 
-	if (!mmc_can_ext_csd(card))
-		goto bus_speed;
+	अगर (!mmc_can_ext_csd(card))
+		जाओ bus_speed;
 
-	if (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS400ES)
+	अगर (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS400ES)
 		err = mmc_select_hs400es(card);
-	else if (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS200)
+	अन्यथा अगर (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS200)
 		err = mmc_select_hs200(card);
-	else if (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS)
+	अन्यथा अगर (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS)
 		err = mmc_select_hs(card);
 
-	if (err && err != -EBADMSG)
-		return err;
+	अगर (err && err != -EBADMSG)
+		वापस err;
 
 bus_speed:
 	/*
 	 * Set the bus speed to the selected bus timing.
-	 * If timing is not selected, backward compatible is the default.
+	 * If timing is not selected, backward compatible is the शेष.
 	 */
 	mmc_set_bus_speed(card);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Execute tuning sequence to seek the proper bus operating
- * conditions for HS200 and HS400, which sends CMD21 to the device.
+ * conditions क्रम HS200 and HS400, which sends CMD21 to the device.
  */
-static int mmc_hs200_tuning(struct mmc_card *card)
-{
-	struct mmc_host *host = card->host;
+अटल पूर्णांक mmc_hs200_tuning(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host *host = card->host;
 
 	/*
 	 * Timing should be adjusted to the HS400 target
-	 * operation frequency for tuning process
+	 * operation frequency क्रम tuning process
 	 */
-	if (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS400 &&
+	अगर (card->mmc_avail_type & EXT_CSD_CARD_TYPE_HS400 &&
 	    host->ios.bus_width == MMC_BUS_WIDTH_8)
-		if (host->ops->prepare_hs400_tuning)
+		अगर (host->ops->prepare_hs400_tuning)
 			host->ops->prepare_hs400_tuning(host, &host->ios);
 
-	return mmc_execute_tuning(card);
-}
+	वापस mmc_execute_tuning(card);
+पूर्ण
 
 /*
  * Handle the detection and initialisation of a card.
  *
- * In the case of a resume, "oldcard" will contain the card
+ * In the हाल of a resume, "oldcard" will contain the card
  * we're trying to reinitialise.
  */
-static int mmc_init_card(struct mmc_host *host, u32 ocr,
-	struct mmc_card *oldcard)
-{
-	struct mmc_card *card;
-	int err;
+अटल पूर्णांक mmc_init_card(काष्ठा mmc_host *host, u32 ocr,
+	काष्ठा mmc_card *oldcard)
+अणु
+	काष्ठा mmc_card *card;
+	पूर्णांक err;
 	u32 cid[4];
 	u32 rocr;
 
 	WARN_ON(!host->claimed);
 
-	/* Set correct bus mode for MMC before attempting init */
-	if (!mmc_host_is_spi(host))
+	/* Set correct bus mode क्रम MMC beक्रमe attempting init */
+	अगर (!mmc_host_is_spi(host))
 		mmc_set_bus_mode(host, MMC_BUSMODE_OPENDRAIN);
 
 	/*
 	 * Since we're changing the OCR value, we seem to
 	 * need to tell some cards to go back to the idle
-	 * state.  We wait 1ms to give cards time to
+	 * state.  We रुको 1ms to give cards समय to
 	 * respond.
-	 * mmc_go_idle is needed for eMMC that are asleep
+	 * mmc_go_idle is needed क्रम eMMC that are asleep
 	 */
 	mmc_go_idle(host);
 
 	/* The extra bit indicates that we support high capacity */
 	err = mmc_send_op_cond(host, ocr | (1 << 30), &rocr);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
 	/*
 	 * For SPI, enable CRC as appropriate.
 	 */
-	if (mmc_host_is_spi(host)) {
+	अगर (mmc_host_is_spi(host)) अणु
 		err = mmc_spi_set_crc(host, use_spi_crc);
-		if (err)
-			goto err;
-	}
+		अगर (err)
+			जाओ err;
+	पूर्ण
 
 	/*
 	 * Fetch CID from card.
 	 */
 	err = mmc_send_cid(host, cid);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
-	if (oldcard) {
-		if (memcmp(cid, oldcard->raw_cid, sizeof(cid)) != 0) {
+	अगर (oldcard) अणु
+		अगर (स_भेद(cid, oldcard->raw_cid, माप(cid)) != 0) अणु
 			pr_debug("%s: Perhaps the card was replaced\n",
 				mmc_hostname(host));
 			err = -ENOENT;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		card = oldcard;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Allocate card structure.
+		 * Allocate card काष्ठाure.
 		 */
 		card = mmc_alloc_card(host, &mmc_type);
-		if (IS_ERR(card)) {
+		अगर (IS_ERR(card)) अणु
 			err = PTR_ERR(card);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		card->ocr = ocr;
 		card->type = MMC_TYPE_MMC;
 		card->rca = 1;
-		memcpy(card->raw_cid, cid, sizeof(card->raw_cid));
-	}
+		स_नकल(card->raw_cid, cid, माप(card->raw_cid));
+	पूर्ण
 
 	/*
 	 * Call the optional HC's init_card function to handle quirks.
 	 */
-	if (host->ops->init_card)
+	अगर (host->ops->init_card)
 		host->ops->init_card(host, card);
 
 	/*
-	 * For native busses:  set card RCA and quit open drain mode.
+	 * For native busses:  set card RCA and quit खोलो drain mode.
 	 */
-	if (!mmc_host_is_spi(host)) {
+	अगर (!mmc_host_is_spi(host)) अणु
 		err = mmc_set_relative_addr(card);
-		if (err)
-			goto free_card;
+		अगर (err)
+			जाओ मुक्त_card;
 
 		mmc_set_bus_mode(host, MMC_BUSMODE_PUSHPULL);
-	}
+	पूर्ण
 
-	if (!oldcard) {
+	अगर (!oldcard) अणु
 		/*
 		 * Fetch CSD from card.
 		 */
 		err = mmc_send_csd(card, card->raw_csd);
-		if (err)
-			goto free_card;
+		अगर (err)
+			जाओ मुक्त_card;
 
 		err = mmc_decode_csd(card);
-		if (err)
-			goto free_card;
+		अगर (err)
+			जाओ मुक्त_card;
 		err = mmc_decode_cid(card);
-		if (err)
-			goto free_card;
-	}
+		अगर (err)
+			जाओ मुक्त_card;
+	पूर्ण
 
 	/*
-	 * handling only for cards supporting DSR and hosts requesting
+	 * handling only क्रम cards supporting DSR and hosts requesting
 	 * DSR configuration
 	 */
-	if (card->csd.dsr_imp && host->dsr_req)
+	अगर (card->csd.dsr_imp && host->dsr_req)
 		mmc_set_dsr(host);
 
 	/*
 	 * Select card, as all following commands rely on that.
 	 */
-	if (!mmc_host_is_spi(host)) {
+	अगर (!mmc_host_is_spi(host)) अणु
 		err = mmc_select_card(card);
-		if (err)
-			goto free_card;
-	}
+		अगर (err)
+			जाओ मुक्त_card;
+	पूर्ण
 
-	if (!oldcard) {
+	अगर (!oldcard) अणु
 		/* Read extended CSD. */
-		err = mmc_read_ext_csd(card);
-		if (err)
-			goto free_card;
+		err = mmc_पढ़ो_ext_csd(card);
+		अगर (err)
+			जाओ मुक्त_card;
 
 		/*
-		 * If doing byte addressing, check if required to do sector
-		 * addressing.  Handle the case of <2GB cards needing sector
+		 * If करोing byte addressing, check अगर required to करो sector
+		 * addressing.  Handle the हाल of <2GB cards needing sector
 		 * addressing.  See section 8.1 JEDEC Standard JED84-A441;
-		 * ocr register has bit 30 set for sector addressing.
+		 * ocr रेजिस्टर has bit 30 set क्रम sector addressing.
 		 */
-		if (rocr & BIT(30))
+		अगर (rocr & BIT(30))
 			mmc_card_set_blockaddr(card);
 
 		/* Erase size depends on CSD and Extended CSD */
 		mmc_set_erase_size(card);
-	}
+	पूर्ण
 
-	/* Enable ERASE_GRP_DEF. This bit is lost after a reset or power off. */
-	if (card->ext_csd.rev >= 3) {
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	/* Enable ERASE_GRP_DEF. This bit is lost after a reset or घातer off. */
+	अगर (card->ext_csd.rev >= 3) अणु
+		err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 				 EXT_CSD_ERASE_GROUP_DEF, 1,
-				 card->ext_csd.generic_cmd6_time);
+				 card->ext_csd.generic_cmd6_समय);
 
-		if (err && err != -EBADMSG)
-			goto free_card;
+		अगर (err && err != -EBADMSG)
+			जाओ मुक्त_card;
 
-		if (err) {
+		अगर (err) अणु
 			/*
 			 * Just disable enhanced area off & sz
 			 * will try to enable ERASE_GROUP_DEF
-			 * during next time reinit
+			 * during next समय reinit
 			 */
 			card->ext_csd.enhanced_area_offset = -EINVAL;
 			card->ext_csd.enhanced_area_size = -EINVAL;
-		} else {
+		पूर्ण अन्यथा अणु
 			card->ext_csd.erase_group_def = 1;
 			/*
 			 * enable ERASE_GRP_DEF successfully.
@@ -1719,569 +1720,569 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 			 * here need to reset erase size
 			 */
 			mmc_set_erase_size(card);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Ensure eMMC user default partition is enabled
+	 * Ensure eMMC user शेष partition is enabled
 	 */
-	if (card->ext_csd.part_config & EXT_CSD_PART_CONFIG_ACC_MASK) {
+	अगर (card->ext_csd.part_config & EXT_CSD_PART_CONFIG_ACC_MASK) अणु
 		card->ext_csd.part_config &= ~EXT_CSD_PART_CONFIG_ACC_MASK;
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_PART_CONFIG,
+		err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_PART_CONFIG,
 				 card->ext_csd.part_config,
-				 card->ext_csd.part_time);
-		if (err && err != -EBADMSG)
-			goto free_card;
-	}
+				 card->ext_csd.part_समय);
+		अगर (err && err != -EBADMSG)
+			जाओ मुक्त_card;
+	पूर्ण
 
 	/*
-	 * Enable power_off_notification byte in the ext_csd register
+	 * Enable घातer_off_notअगरication byte in the ext_csd रेजिस्टर
 	 */
-	if (card->ext_csd.rev >= 6) {
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	अगर (card->ext_csd.rev >= 6) अणु
+		err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 				 EXT_CSD_POWER_OFF_NOTIFICATION,
 				 EXT_CSD_POWER_ON,
-				 card->ext_csd.generic_cmd6_time);
-		if (err && err != -EBADMSG)
-			goto free_card;
+				 card->ext_csd.generic_cmd6_समय);
+		अगर (err && err != -EBADMSG)
+			जाओ मुक्त_card;
 
 		/*
 		 * The err can be -EBADMSG or 0,
-		 * so check for success and update the flag
+		 * so check क्रम success and update the flag
 		 */
-		if (!err)
-			card->ext_csd.power_off_notification = EXT_CSD_POWER_ON;
-	}
+		अगर (!err)
+			card->ext_csd.घातer_off_notअगरication = EXT_CSD_POWER_ON;
+	पूर्ण
 
 	/* set erase_arg */
-	if (mmc_can_discard(card))
+	अगर (mmc_can_discard(card))
 		card->erase_arg = MMC_DISCARD_ARG;
-	else if (mmc_can_trim(card))
+	अन्यथा अगर (mmc_can_trim(card))
 		card->erase_arg = MMC_TRIM_ARG;
-	else
+	अन्यथा
 		card->erase_arg = MMC_ERASE_ARG;
 
 	/*
-	 * Select timing interface
+	 * Select timing पूर्णांकerface
 	 */
 	err = mmc_select_timing(card);
-	if (err)
-		goto free_card;
+	अगर (err)
+		जाओ मुक्त_card;
 
-	if (mmc_card_hs200(card)) {
-		host->doing_init_tune = 1;
+	अगर (mmc_card_hs200(card)) अणु
+		host->करोing_init_tune = 1;
 
 		err = mmc_hs200_tuning(card);
-		if (!err)
+		अगर (!err)
 			err = mmc_select_hs400(card);
 
-		host->doing_init_tune = 0;
+		host->करोing_init_tune = 0;
 
-		if (err)
-			goto free_card;
+		अगर (err)
+			जाओ मुक्त_card;
 
-	} else if (!mmc_card_hs400es(card)) {
+	पूर्ण अन्यथा अगर (!mmc_card_hs400es(card)) अणु
 		/* Select the desired bus width optionally */
 		err = mmc_select_bus_width(card);
-		if (err > 0 && mmc_card_hs(card)) {
+		अगर (err > 0 && mmc_card_hs(card)) अणु
 			err = mmc_select_hs_ddr(card);
-			if (err)
-				goto free_card;
-		}
-	}
+			अगर (err)
+				जाओ मुक्त_card;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Choose the power class with selected bus interface
+	 * Choose the घातer class with selected bus पूर्णांकerface
 	 */
-	mmc_select_powerclass(card);
+	mmc_select_घातerclass(card);
 
 	/*
-	 * Enable HPI feature (if supported)
+	 * Enable HPI feature (अगर supported)
 	 */
-	if (card->ext_csd.hpi) {
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	अगर (card->ext_csd.hpi) अणु
+		err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 				EXT_CSD_HPI_MGMT, 1,
-				card->ext_csd.generic_cmd6_time);
-		if (err && err != -EBADMSG)
-			goto free_card;
-		if (err) {
+				card->ext_csd.generic_cmd6_समय);
+		अगर (err && err != -EBADMSG)
+			जाओ मुक्त_card;
+		अगर (err) अणु
 			pr_warn("%s: Enabling HPI failed\n",
 				mmc_hostname(card->host));
 			card->ext_csd.hpi_en = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			card->ext_csd.hpi_en = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If cache size is higher than 0, this indicates the existence of cache
 	 * and it can be turned on. Note that some eMMCs from Micron has been
-	 * reported to need ~800 ms timeout, while enabling the cache after
-	 * sudden power failure tests. Let's extend the timeout to a minimum of
-	 * DEFAULT_CACHE_EN_TIMEOUT_MS and do it for all cards.
+	 * reported to need ~800 ms समयout, जबतक enabling the cache after
+	 * sudden घातer failure tests. Let's extend the समयout to a minimum of
+	 * DEFAULT_CACHE_EN_TIMEOUT_MS and करो it क्रम all cards.
 	 */
-	if (card->ext_csd.cache_size > 0) {
-		unsigned int timeout_ms = MIN_CACHE_EN_TIMEOUT_MS;
+	अगर (card->ext_csd.cache_size > 0) अणु
+		अचिन्हित पूर्णांक समयout_ms = MIN_CACHE_EN_TIMEOUT_MS;
 
-		timeout_ms = max(card->ext_csd.generic_cmd6_time, timeout_ms);
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
-				EXT_CSD_CACHE_CTRL, 1, timeout_ms);
-		if (err && err != -EBADMSG)
-			goto free_card;
+		समयout_ms = max(card->ext_csd.generic_cmd6_समय, समयout_ms);
+		err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
+				EXT_CSD_CACHE_CTRL, 1, समयout_ms);
+		अगर (err && err != -EBADMSG)
+			जाओ मुक्त_card;
 
 		/*
-		 * Only if no error, cache is turned on successfully.
+		 * Only अगर no error, cache is turned on successfully.
 		 */
-		if (err) {
+		अगर (err) अणु
 			pr_warn("%s: Cache is supported, but failed to turn on (%d)\n",
 				mmc_hostname(card->host), err);
 			card->ext_csd.cache_ctrl = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			card->ext_csd.cache_ctrl = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Enable Command Queue if supported. Note that Packed Commands cannot
+	 * Enable Command Queue अगर supported. Note that Packed Commands cannot
 	 * be used with Command Queue.
 	 */
 	card->ext_csd.cmdq_en = false;
-	if (card->ext_csd.cmdq_support && host->caps2 & MMC_CAP2_CQE) {
+	अगर (card->ext_csd.cmdq_support && host->caps2 & MMC_CAP2_CQE) अणु
 		err = mmc_cmdq_enable(card);
-		if (err && err != -EBADMSG)
-			goto free_card;
-		if (err) {
+		अगर (err && err != -EBADMSG)
+			जाओ मुक्त_card;
+		अगर (err) अणु
 			pr_warn("%s: Enabling CMDQ failed\n",
 				mmc_hostname(card->host));
 			card->ext_csd.cmdq_support = false;
 			card->ext_csd.cmdq_depth = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
-	 * In some cases (e.g. RPMB or mmc_test), the Command Queue must be
-	 * disabled for a time, so a flag is needed to indicate to re-enable the
+	 * In some हालs (e.g. RPMB or mmc_test), the Command Queue must be
+	 * disabled क्रम a समय, so a flag is needed to indicate to re-enable the
 	 * Command Queue.
 	 */
 	card->reenable_cmdq = card->ext_csd.cmdq_en;
 
-	if (host->cqe_ops && !host->cqe_enabled) {
+	अगर (host->cqe_ops && !host->cqe_enabled) अणु
 		err = host->cqe_ops->cqe_enable(host, card);
-		if (!err) {
+		अगर (!err) अणु
 			host->cqe_enabled = true;
 
-			if (card->ext_csd.cmdq_en) {
+			अगर (card->ext_csd.cmdq_en) अणु
 				pr_info("%s: Command Queue Engine enabled\n",
 					mmc_hostname(host));
-			} else {
+			पूर्ण अन्यथा अणु
 				host->hsq_enabled = true;
 				pr_info("%s: Host Software Queue enabled\n",
 					mmc_hostname(host));
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (host->caps2 & MMC_CAP2_AVOID_3_3V &&
-	    host->ios.signal_voltage == MMC_SIGNAL_VOLTAGE_330) {
+	अगर (host->caps2 & MMC_CAP2_AVOID_3_3V &&
+	    host->ios.संकेत_voltage == MMC_SIGNAL_VOLTAGE_330) अणु
 		pr_err("%s: Host failed to negotiate down from 3.3V\n",
 			mmc_hostname(host));
 		err = -EINVAL;
-		goto free_card;
-	}
+		जाओ मुक्त_card;
+	पूर्ण
 
-	if (!oldcard)
+	अगर (!oldcard)
 		host->card = card;
 
-	return 0;
+	वापस 0;
 
-free_card:
-	if (!oldcard)
-		mmc_remove_card(card);
+मुक्त_card:
+	अगर (!oldcard)
+		mmc_हटाओ_card(card);
 err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_can_sleep(struct mmc_card *card)
-{
-	return card->ext_csd.rev >= 3;
-}
+अटल पूर्णांक mmc_can_sleep(काष्ठा mmc_card *card)
+अणु
+	वापस card->ext_csd.rev >= 3;
+पूर्ण
 
-static int mmc_sleep(struct mmc_host *host)
-{
-	struct mmc_command cmd = {};
-	struct mmc_card *card = host->card;
-	unsigned int timeout_ms = DIV_ROUND_UP(card->ext_csd.sa_timeout, 10000);
-	int err;
+अटल पूर्णांक mmc_sleep(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	काष्ठा mmc_card *card = host->card;
+	अचिन्हित पूर्णांक समयout_ms = DIV_ROUND_UP(card->ext_csd.sa_समयout, 10000);
+	पूर्णांक err;
 
-	/* Re-tuning can't be done once the card is deselected */
+	/* Re-tuning can't be करोne once the card is deselected */
 	mmc_retune_hold(host);
 
 	err = mmc_deselect_cards(host);
-	if (err)
-		goto out_release;
+	अगर (err)
+		जाओ out_release;
 
 	cmd.opcode = MMC_SLEEP_AWAKE;
 	cmd.arg = card->rca << 16;
 	cmd.arg |= 1 << 15;
 
 	/*
-	 * If the max_busy_timeout of the host is specified, validate it against
-	 * the sleep cmd timeout. A failure means we need to prevent the host
-	 * from doing hw busy detection, which is done by converting to a R1
+	 * If the max_busy_समयout of the host is specअगरied, validate it against
+	 * the sleep cmd समयout. A failure means we need to prevent the host
+	 * from करोing hw busy detection, which is करोne by converting to a R1
 	 * response instead of a R1B. Note, some hosts requires R1B, which also
 	 * means they are on their own when it comes to deal with the busy
-	 * timeout.
+	 * समयout.
 	 */
-	if (!(host->caps & MMC_CAP_NEED_RSP_BUSY) && host->max_busy_timeout &&
-	    (timeout_ms > host->max_busy_timeout)) {
+	अगर (!(host->caps & MMC_CAP_NEED_RSP_BUSY) && host->max_busy_समयout &&
+	    (समयout_ms > host->max_busy_समयout)) अणु
 		cmd.flags = MMC_RSP_R1 | MMC_CMD_AC;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd.flags = MMC_RSP_R1B | MMC_CMD_AC;
-		cmd.busy_timeout = timeout_ms;
-	}
+		cmd.busy_समयout = समयout_ms;
+	पूर्ण
 
-	err = mmc_wait_for_cmd(host, &cmd, 0);
-	if (err)
-		goto out_release;
+	err = mmc_रुको_क्रम_cmd(host, &cmd, 0);
+	अगर (err)
+		जाओ out_release;
 
 	/*
-	 * If the host does not wait while the card signals busy, then we will
-	 * will have to wait the sleep/awake timeout.  Note, we cannot use the
+	 * If the host करोes not रुको जबतक the card संकेतs busy, then we will
+	 * will have to रुको the sleep/awake समयout.  Note, we cannot use the
 	 * SEND_STATUS command to poll the status because that command (and most
-	 * others) is invalid while the card sleeps.
+	 * others) is invalid जबतक the card sleeps.
 	 */
-	if (!cmd.busy_timeout || !(host->caps & MMC_CAP_WAIT_WHILE_BUSY))
-		mmc_delay(timeout_ms);
+	अगर (!cmd.busy_समयout || !(host->caps & MMC_CAP_WAIT_WHILE_BUSY))
+		mmc_delay(समयout_ms);
 
 out_release:
 	mmc_retune_release(host);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_can_poweroff_notify(const struct mmc_card *card)
-{
-	return card &&
+अटल पूर्णांक mmc_can_घातeroff_notअगरy(स्थिर काष्ठा mmc_card *card)
+अणु
+	वापस card &&
 		mmc_card_mmc(card) &&
-		(card->ext_csd.power_off_notification == EXT_CSD_POWER_ON);
-}
+		(card->ext_csd.घातer_off_notअगरication == EXT_CSD_POWER_ON);
+पूर्ण
 
-static int mmc_poweroff_notify(struct mmc_card *card, unsigned int notify_type)
-{
-	unsigned int timeout = card->ext_csd.generic_cmd6_time;
-	int err;
+अटल पूर्णांक mmc_घातeroff_notअगरy(काष्ठा mmc_card *card, अचिन्हित पूर्णांक notअगरy_type)
+अणु
+	अचिन्हित पूर्णांक समयout = card->ext_csd.generic_cmd6_समय;
+	पूर्णांक err;
 
-	/* Use EXT_CSD_POWER_OFF_SHORT as default notification type. */
-	if (notify_type == EXT_CSD_POWER_OFF_LONG)
-		timeout = card->ext_csd.power_off_longtime;
+	/* Use EXT_CSD_POWER_OFF_SHORT as शेष notअगरication type. */
+	अगर (notअगरy_type == EXT_CSD_POWER_OFF_LONG)
+		समयout = card->ext_csd.घातer_off_दीर्घसमय;
 
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 			EXT_CSD_POWER_OFF_NOTIFICATION,
-			notify_type, timeout, 0, false, false, MMC_CMD_RETRIES);
-	if (err)
+			notअगरy_type, समयout, 0, false, false, MMC_CMD_RETRIES);
+	अगर (err)
 		pr_err("%s: Power Off Notification timed out, %u\n",
-		       mmc_hostname(card->host), timeout);
+		       mmc_hostname(card->host), समयout);
 
-	/* Disable the power off notification after the switch operation. */
-	card->ext_csd.power_off_notification = EXT_CSD_NO_POWER_NOTIFICATION;
+	/* Disable the घातer off notअगरication after the चयन operation. */
+	card->ext_csd.घातer_off_notअगरication = EXT_CSD_NO_POWER_NOTIFICATION;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Host is being removed. Free up the current card.
+ * Host is being हटाओd. Free up the current card.
  */
-static void mmc_remove(struct mmc_host *host)
-{
-	mmc_remove_card(host->card);
-	host->card = NULL;
-}
+अटल व्योम mmc_हटाओ(काष्ठा mmc_host *host)
+अणु
+	mmc_हटाओ_card(host->card);
+	host->card = शून्य;
+पूर्ण
 
 /*
  * Card detection - card is alive.
  */
-static int mmc_alive(struct mmc_host *host)
-{
-	return mmc_send_status(host->card, NULL);
-}
+अटल पूर्णांक mmc_alive(काष्ठा mmc_host *host)
+अणु
+	वापस mmc_send_status(host->card, शून्य);
+पूर्ण
 
 /*
  * Card detection callback from host.
  */
-static void mmc_detect(struct mmc_host *host)
-{
-	int err;
+अटल व्योम mmc_detect(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err;
 
-	mmc_get_card(host->card, NULL);
+	mmc_get_card(host->card, शून्य);
 
 	/*
-	 * Just check if our card has been removed.
+	 * Just check अगर our card has been हटाओd.
 	 */
-	err = _mmc_detect_card_removed(host);
+	err = _mmc_detect_card_हटाओd(host);
 
-	mmc_put_card(host->card, NULL);
+	mmc_put_card(host->card, शून्य);
 
-	if (err) {
-		mmc_remove(host);
+	अगर (err) अणु
+		mmc_हटाओ(host);
 
 		mmc_claim_host(host);
 		mmc_detach_bus(host);
-		mmc_power_off(host);
+		mmc_घातer_off(host);
 		mmc_release_host(host);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool _mmc_cache_enabled(struct mmc_host *host)
-{
-	return host->card->ext_csd.cache_size > 0 &&
+अटल bool _mmc_cache_enabled(काष्ठा mmc_host *host)
+अणु
+	वापस host->card->ext_csd.cache_size > 0 &&
 	       host->card->ext_csd.cache_ctrl & 1;
-}
+पूर्ण
 
-static int _mmc_suspend(struct mmc_host *host, bool is_suspend)
-{
-	int err = 0;
-	unsigned int notify_type = is_suspend ? EXT_CSD_POWER_OFF_SHORT :
+अटल पूर्णांक _mmc_suspend(काष्ठा mmc_host *host, bool is_suspend)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित पूर्णांक notअगरy_type = is_suspend ? EXT_CSD_POWER_OFF_SHORT :
 					EXT_CSD_POWER_OFF_LONG;
 
 	mmc_claim_host(host);
 
-	if (mmc_card_suspended(host->card))
-		goto out;
+	अगर (mmc_card_suspended(host->card))
+		जाओ out;
 
 	err = mmc_flush_cache(host->card);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (mmc_can_poweroff_notify(host->card) &&
+	अगर (mmc_can_घातeroff_notअगरy(host->card) &&
 	    ((host->caps2 & MMC_CAP2_FULL_PWR_CYCLE) || !is_suspend ||
 	     (host->caps2 & MMC_CAP2_FULL_PWR_CYCLE_IN_SUSPEND)))
-		err = mmc_poweroff_notify(host->card, notify_type);
-	else if (mmc_can_sleep(host->card))
+		err = mmc_घातeroff_notअगरy(host->card, notअगरy_type);
+	अन्यथा अगर (mmc_can_sleep(host->card))
 		err = mmc_sleep(host);
-	else if (!mmc_host_is_spi(host))
+	अन्यथा अगर (!mmc_host_is_spi(host))
 		err = mmc_deselect_cards(host);
 
-	if (!err) {
-		mmc_power_off(host);
+	अगर (!err) अणु
+		mmc_घातer_off(host);
 		mmc_card_set_suspended(host->card);
-	}
+	पूर्ण
 out:
 	mmc_release_host(host);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Suspend callback
  */
-static int mmc_suspend(struct mmc_host *host)
-{
-	int err;
+अटल पूर्णांक mmc_suspend(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err;
 
 	err = _mmc_suspend(host, true);
-	if (!err) {
-		pm_runtime_disable(&host->card->dev);
-		pm_runtime_set_suspended(&host->card->dev);
-	}
+	अगर (!err) अणु
+		pm_runसमय_disable(&host->card->dev);
+		pm_runसमय_set_suspended(&host->card->dev);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * This function tries to determine if the same card is still present
- * and, if so, restore all state to it.
+ * This function tries to determine अगर the same card is still present
+ * and, अगर so, restore all state to it.
  */
-static int _mmc_resume(struct mmc_host *host)
-{
-	int err = 0;
+अटल पूर्णांक _mmc_resume(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err = 0;
 
 	mmc_claim_host(host);
 
-	if (!mmc_card_suspended(host->card))
-		goto out;
+	अगर (!mmc_card_suspended(host->card))
+		जाओ out;
 
-	mmc_power_up(host, host->card->ocr);
+	mmc_घातer_up(host, host->card->ocr);
 	err = mmc_init_card(host, host->card->ocr, host->card);
 	mmc_card_clr_suspended(host->card);
 
 out:
 	mmc_release_host(host);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Shutdown callback
+ * Shutकरोwn callback
  */
-static int mmc_shutdown(struct mmc_host *host)
-{
-	int err = 0;
+अटल पूर्णांक mmc_shutकरोwn(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err = 0;
 
 	/*
-	 * In a specific case for poweroff notify, we need to resume the card
-	 * before we can shutdown it properly.
+	 * In a specअगरic हाल क्रम घातeroff notअगरy, we need to resume the card
+	 * beक्रमe we can shutकरोwn it properly.
 	 */
-	if (mmc_can_poweroff_notify(host->card) &&
+	अगर (mmc_can_घातeroff_notअगरy(host->card) &&
 		!(host->caps2 & MMC_CAP2_FULL_PWR_CYCLE))
 		err = _mmc_resume(host);
 
-	if (!err)
+	अगर (!err)
 		err = _mmc_suspend(host, false);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Callback for resume.
+ * Callback क्रम resume.
  */
-static int mmc_resume(struct mmc_host *host)
-{
-	pm_runtime_enable(&host->card->dev);
-	return 0;
-}
+अटल पूर्णांक mmc_resume(काष्ठा mmc_host *host)
+अणु
+	pm_runसमय_enable(&host->card->dev);
+	वापस 0;
+पूर्ण
 
 /*
- * Callback for runtime_suspend.
+ * Callback क्रम runसमय_suspend.
  */
-static int mmc_runtime_suspend(struct mmc_host *host)
-{
-	int err;
+अटल पूर्णांक mmc_runसमय_suspend(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err;
 
-	if (!(host->caps & MMC_CAP_AGGRESSIVE_PM))
-		return 0;
+	अगर (!(host->caps & MMC_CAP_AGGRESSIVE_PM))
+		वापस 0;
 
 	err = _mmc_suspend(host, true);
-	if (err)
+	अगर (err)
 		pr_err("%s: error %d doing aggressive suspend\n",
 			mmc_hostname(host), err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Callback for runtime_resume.
+ * Callback क्रम runसमय_resume.
  */
-static int mmc_runtime_resume(struct mmc_host *host)
-{
-	int err;
+अटल पूर्णांक mmc_runसमय_resume(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err;
 
 	err = _mmc_resume(host);
-	if (err && err != -ENOMEDIUM)
+	अगर (err && err != -ENOMEDIUM)
 		pr_err("%s: error %d doing runtime resume\n",
 			mmc_hostname(host), err);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mmc_can_reset(struct mmc_card *card)
-{
+अटल पूर्णांक mmc_can_reset(काष्ठा mmc_card *card)
+अणु
 	u8 rst_n_function;
 
 	rst_n_function = card->ext_csd.rst_n_function;
-	if ((rst_n_function & EXT_CSD_RST_N_EN_MASK) != EXT_CSD_RST_N_ENABLED)
-		return 0;
-	return 1;
-}
+	अगर ((rst_n_function & EXT_CSD_RST_N_EN_MASK) != EXT_CSD_RST_N_ENABLED)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-static int _mmc_hw_reset(struct mmc_host *host)
-{
-	struct mmc_card *card = host->card;
+अटल पूर्णांक _mmc_hw_reset(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_card *card = host->card;
 
 	/*
-	 * In the case of recovery, we can't expect flushing the cache to work
+	 * In the हाल of recovery, we can't expect flushing the cache to work
 	 * always, but we have a go and ignore errors.
 	 */
 	mmc_flush_cache(host->card);
 
-	if ((host->caps & MMC_CAP_HW_RESET) && host->ops->hw_reset &&
-	     mmc_can_reset(card)) {
-		/* If the card accept RST_n signal, send it. */
-		mmc_set_clock(host, host->f_init);
+	अगर ((host->caps & MMC_CAP_HW_RESET) && host->ops->hw_reset &&
+	     mmc_can_reset(card)) अणु
+		/* If the card accept RST_n संकेत, send it. */
+		mmc_set_घड़ी(host, host->f_init);
 		host->ops->hw_reset(host);
 		/* Set initial state and call mmc_set_ios */
 		mmc_set_initial_state(host);
-	} else {
-		/* Do a brute force power cycle */
-		mmc_power_cycle(host, card->ocr);
+	पूर्ण अन्यथा अणु
+		/* Do a brute क्रमce घातer cycle */
+		mmc_घातer_cycle(host, card->ocr);
 		mmc_pwrseq_reset(host);
-	}
-	return mmc_init_card(host, card->ocr, card);
-}
+	पूर्ण
+	वापस mmc_init_card(host, card->ocr, card);
+पूर्ण
 
-static const struct mmc_bus_ops mmc_ops = {
-	.remove = mmc_remove,
+अटल स्थिर काष्ठा mmc_bus_ops mmc_ops = अणु
+	.हटाओ = mmc_हटाओ,
 	.detect = mmc_detect,
 	.suspend = mmc_suspend,
 	.resume = mmc_resume,
-	.runtime_suspend = mmc_runtime_suspend,
-	.runtime_resume = mmc_runtime_resume,
+	.runसमय_suspend = mmc_runसमय_suspend,
+	.runसमय_resume = mmc_runसमय_resume,
 	.alive = mmc_alive,
-	.shutdown = mmc_shutdown,
+	.shutकरोwn = mmc_shutकरोwn,
 	.hw_reset = _mmc_hw_reset,
 	.cache_enabled = _mmc_cache_enabled,
-};
+पूर्ण;
 
 /*
- * Starting point for MMC card init.
+ * Starting poपूर्णांक क्रम MMC card init.
  */
-int mmc_attach_mmc(struct mmc_host *host)
-{
-	int err;
+पूर्णांक mmc_attach_mmc(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err;
 	u32 ocr, rocr;
 
 	WARN_ON(!host->claimed);
 
-	/* Set correct bus mode for MMC before attempting attach */
-	if (!mmc_host_is_spi(host))
+	/* Set correct bus mode क्रम MMC beक्रमe attempting attach */
+	अगर (!mmc_host_is_spi(host))
 		mmc_set_bus_mode(host, MMC_BUSMODE_OPENDRAIN);
 
 	err = mmc_send_op_cond(host, 0, &ocr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mmc_attach_bus(host, &mmc_ops);
-	if (host->ocr_avail_mmc)
+	अगर (host->ocr_avail_mmc)
 		host->ocr_avail = host->ocr_avail_mmc;
 
 	/*
-	 * We need to get OCR a different way for SPI.
+	 * We need to get OCR a dअगरferent way क्रम SPI.
 	 */
-	if (mmc_host_is_spi(host)) {
-		err = mmc_spi_read_ocr(host, 1, &ocr);
-		if (err)
-			goto err;
-	}
+	अगर (mmc_host_is_spi(host)) अणु
+		err = mmc_spi_पढ़ो_ocr(host, 1, &ocr);
+		अगर (err)
+			जाओ err;
+	पूर्ण
 
 	rocr = mmc_select_voltage(host, ocr);
 
 	/*
 	 * Can we support the voltage of the card?
 	 */
-	if (!rocr) {
+	अगर (!rocr) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
 	 * Detect and init the card.
 	 */
-	err = mmc_init_card(host, rocr, NULL);
-	if (err)
-		goto err;
+	err = mmc_init_card(host, rocr, शून्य);
+	अगर (err)
+		जाओ err;
 
 	mmc_release_host(host);
 	err = mmc_add_card(host->card);
-	if (err)
-		goto remove_card;
+	अगर (err)
+		जाओ हटाओ_card;
 
 	mmc_claim_host(host);
-	return 0;
+	वापस 0;
 
-remove_card:
-	mmc_remove_card(host->card);
+हटाओ_card:
+	mmc_हटाओ_card(host->card);
 	mmc_claim_host(host);
-	host->card = NULL;
+	host->card = शून्य;
 err:
 	mmc_detach_bus(host);
 
 	pr_err("%s: error %d whilst initialising MMC card\n",
 		mmc_hostname(host), err);
 
-	return err;
-}
+	वापस err;
+पूर्ण

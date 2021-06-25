@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,77 +21,77 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __AMDGPU_IDS_H__
-#define __AMDGPU_IDS_H__
+#अगर_अघोषित __AMDGPU_IDS_H__
+#घोषणा __AMDGPU_IDS_H__
 
-#include <linux/types.h>
-#include <linux/mutex.h>
-#include <linux/list.h>
-#include <linux/dma-fence.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/list.h>
+#समावेश <linux/dma-fence.h>
 
-#include "amdgpu_sync.h"
+#समावेश "amdgpu_sync.h"
 
 /* maximum number of VMIDs */
-#define AMDGPU_NUM_VMID	16
+#घोषणा AMDGPU_NUM_VMID	16
 
-struct amdgpu_device;
-struct amdgpu_vm;
-struct amdgpu_ring;
-struct amdgpu_sync;
-struct amdgpu_job;
+काष्ठा amdgpu_device;
+काष्ठा amdgpu_vm;
+काष्ठा amdgpu_ring;
+काष्ठा amdgpu_sync;
+काष्ठा amdgpu_job;
 
-struct amdgpu_vmid {
-	struct list_head	list;
-	struct amdgpu_sync	active;
-	struct dma_fence	*last_flush;
-	uint64_t		owner;
+काष्ठा amdgpu_vmid अणु
+	काष्ठा list_head	list;
+	काष्ठा amdgpu_sync	active;
+	काष्ठा dma_fence	*last_flush;
+	uपूर्णांक64_t		owner;
 
-	uint64_t		pd_gpu_addr;
+	uपूर्णांक64_t		pd_gpu_addr;
 	/* last flushed PD/PT update */
-	struct dma_fence	*flushed_updates;
+	काष्ठा dma_fence	*flushed_updates;
 
-	uint32_t                current_gpu_reset_count;
+	uपूर्णांक32_t                current_gpu_reset_count;
 
-	uint32_t		gds_base;
-	uint32_t		gds_size;
-	uint32_t		gws_base;
-	uint32_t		gws_size;
-	uint32_t		oa_base;
-	uint32_t		oa_size;
+	uपूर्णांक32_t		gds_base;
+	uपूर्णांक32_t		gds_size;
+	uपूर्णांक32_t		gws_base;
+	uपूर्णांक32_t		gws_size;
+	uपूर्णांक32_t		oa_base;
+	uपूर्णांक32_t		oa_size;
 
-	unsigned		pasid;
-	struct dma_fence	*pasid_mapping;
-};
+	अचिन्हित		pasid;
+	काष्ठा dma_fence	*pasid_mapping;
+पूर्ण;
 
-struct amdgpu_vmid_mgr {
-	struct mutex		lock;
-	unsigned		num_ids;
-	struct list_head	ids_lru;
-	struct amdgpu_vmid	ids[AMDGPU_NUM_VMID];
+काष्ठा amdgpu_vmid_mgr अणु
+	काष्ठा mutex		lock;
+	अचिन्हित		num_ids;
+	काष्ठा list_head	ids_lru;
+	काष्ठा amdgpu_vmid	ids[AMDGPU_NUM_VMID];
 	atomic_t		reserved_vmid_num;
-};
+पूर्ण;
 
-int amdgpu_pasid_alloc(unsigned int bits);
-void amdgpu_pasid_free(u32 pasid);
-void amdgpu_pasid_free_delayed(struct dma_resv *resv,
+पूर्णांक amdgpu_pasid_alloc(अचिन्हित पूर्णांक bits);
+व्योम amdgpu_pasid_मुक्त(u32 pasid);
+व्योम amdgpu_pasid_मुक्त_delayed(काष्ठा dma_resv *resv,
 			       u32 pasid);
 
-bool amdgpu_vmid_had_gpu_reset(struct amdgpu_device *adev,
-			       struct amdgpu_vmid *id);
-int amdgpu_vmid_alloc_reserved(struct amdgpu_device *adev,
-			       struct amdgpu_vm *vm,
-			       unsigned vmhub);
-void amdgpu_vmid_free_reserved(struct amdgpu_device *adev,
-			       struct amdgpu_vm *vm,
-			       unsigned vmhub);
-int amdgpu_vmid_grab(struct amdgpu_vm *vm, struct amdgpu_ring *ring,
-		     struct amdgpu_sync *sync, struct dma_fence *fence,
-		     struct amdgpu_job *job);
-void amdgpu_vmid_reset(struct amdgpu_device *adev, unsigned vmhub,
-		       unsigned vmid);
-void amdgpu_vmid_reset_all(struct amdgpu_device *adev);
+bool amdgpu_vmid_had_gpu_reset(काष्ठा amdgpu_device *adev,
+			       काष्ठा amdgpu_vmid *id);
+पूर्णांक amdgpu_vmid_alloc_reserved(काष्ठा amdgpu_device *adev,
+			       काष्ठा amdgpu_vm *vm,
+			       अचिन्हित vmhub);
+व्योम amdgpu_vmid_मुक्त_reserved(काष्ठा amdgpu_device *adev,
+			       काष्ठा amdgpu_vm *vm,
+			       अचिन्हित vmhub);
+पूर्णांक amdgpu_vmid_grab(काष्ठा amdgpu_vm *vm, काष्ठा amdgpu_ring *ring,
+		     काष्ठा amdgpu_sync *sync, काष्ठा dma_fence *fence,
+		     काष्ठा amdgpu_job *job);
+व्योम amdgpu_vmid_reset(काष्ठा amdgpu_device *adev, अचिन्हित vmhub,
+		       अचिन्हित vmid);
+व्योम amdgpu_vmid_reset_all(काष्ठा amdgpu_device *adev);
 
-void amdgpu_vmid_mgr_init(struct amdgpu_device *adev);
-void amdgpu_vmid_mgr_fini(struct amdgpu_device *adev);
+व्योम amdgpu_vmid_mgr_init(काष्ठा amdgpu_device *adev);
+व्योम amdgpu_vmid_mgr_fini(काष्ठा amdgpu_device *adev);
 
-#endif
+#पूर्ण_अगर

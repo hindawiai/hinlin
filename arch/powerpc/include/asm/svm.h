@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * SVM helper functions
  *
  * Copyright 2018 Anshuman Khandual, IBM Corporation.
  */
 
-#ifndef _ASM_POWERPC_SVM_H
-#define _ASM_POWERPC_SVM_H
+#अगर_अघोषित _ASM_POWERPC_SVM_H
+#घोषणा _ASM_POWERPC_SVM_H
 
-#ifdef CONFIG_PPC_SVM
+#अगर_घोषित CONFIG_PPC_SVM
 
-static inline bool is_secure_guest(void)
-{
-	return mfmsr() & MSR_S;
-}
+अटल अंतरभूत bool is_secure_guest(व्योम)
+अणु
+	वापस mfmsr() & MSR_S;
+पूर्ण
 
-void __init svm_swiotlb_init(void);
+व्योम __init svm_swiotlb_init(व्योम);
 
-void dtl_cache_ctor(void *addr);
-#define get_dtl_cache_ctor()	(is_secure_guest() ? dtl_cache_ctor : NULL)
+व्योम dtl_cache_ctor(व्योम *addr);
+#घोषणा get_dtl_cache_ctor()	(is_secure_guest() ? dtl_cache_ctor : शून्य)
 
-#else /* CONFIG_PPC_SVM */
+#अन्यथा /* CONFIG_PPC_SVM */
 
-static inline bool is_secure_guest(void)
-{
-	return false;
-}
+अटल अंतरभूत bool is_secure_guest(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void svm_swiotlb_init(void) {}
+अटल अंतरभूत व्योम svm_swiotlb_init(व्योम) अणुपूर्ण
 
-#define get_dtl_cache_ctor() NULL
+#घोषणा get_dtl_cache_ctor() शून्य
 
-#endif /* CONFIG_PPC_SVM */
-#endif /* _ASM_POWERPC_SVM_H */
+#पूर्ण_अगर /* CONFIG_PPC_SVM */
+#पूर्ण_अगर /* _ASM_POWERPC_SVM_H */

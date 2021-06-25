@@ -1,586 +1,587 @@
-// SPDX-License-Identifier: GPL-2.0+
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <linux/hw_breakpoint.h>
-#include <linux/perf_event.h>
-#include <asm/unistd.h>
-#include <sys/ptrace.h>
-#include <sys/wait.h>
-#include "ptrace.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
+#समावेश <linux/perf_event.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <sys/ptrace.h>
+#समावेश <sys/रुको.h>
+#समावेश "ptrace.h"
 
-char data[16];
+अक्षर data[16];
 
 /* Overlapping address range */
-volatile __u64 *ptrace_data1 = (__u64 *)&data[0];
-volatile __u64 *perf_data1 = (__u64 *)&data[4];
+अस्थिर __u64 *ptrace_data1 = (__u64 *)&data[0];
+अस्थिर __u64 *perf_data1 = (__u64 *)&data[4];
 
 /* Non-overlapping address range */
-volatile __u64 *ptrace_data2 = (__u64 *)&data[0];
-volatile __u64 *perf_data2 = (__u64 *)&data[8];
+अस्थिर __u64 *ptrace_data2 = (__u64 *)&data[0];
+अस्थिर __u64 *perf_data2 = (__u64 *)&data[8];
 
-static unsigned long pid_max_addr(void)
-{
-	FILE *fp;
-	char *line, *c;
-	char addr[100];
-	size_t len = 0;
+अटल अचिन्हित दीर्घ pid_max_addr(व्योम)
+अणु
+	खाता *fp;
+	अक्षर *line, *c;
+	अक्षर addr[100];
+	माप_प्रकार len = 0;
 
-	fp = fopen("/proc/kallsyms", "r");
-	if (!fp) {
-		printf("Failed to read /proc/kallsyms. Exiting..\n");
-		exit(EXIT_FAILURE);
-	}
+	fp = ख_खोलो("/proc/kallsyms", "r");
+	अगर (!fp) अणु
+		म_लिखो("Failed to read /proc/kallsyms. Exiting..\n");
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	while (getline(&line, &len, fp) != -1) {
-		if (!strstr(line, "pid_max") || strstr(line, "pid_max_max") ||
-		    strstr(line, "pid_max_min"))
-			continue;
+	जबतक (getline(&line, &len, fp) != -1) अणु
+		अगर (!म_माला(line, "pid_max") || म_माला(line, "pid_max_max") ||
+		    म_माला(line, "pid_max_min"))
+			जारी;
 
-		strncpy(addr, line, len < 100 ? len : 100);
-		c = strchr(addr, ' ');
+		म_नकलन(addr, line, len < 100 ? len : 100);
+		c = म_अक्षर(addr, ' ');
 		*c = '\0';
-		return strtoul(addr, &c, 16);
-	}
-	fclose(fp);
-	printf("Could not find pix_max. Exiting..\n");
-	exit(EXIT_FAILURE);
-	return -1;
-}
+		वापस म_से_अदीर्घ(addr, &c, 16);
+	पूर्ण
+	ख_बंद(fp);
+	म_लिखो("Could not find pix_max. Exiting..\n");
+	निकास(निकास_त्रुटि);
+	वापस -1;
+पूर्ण
 
-static void perf_user_event_attr_set(struct perf_event_attr *attr, __u64 addr, __u64 len)
-{
-	memset(attr, 0, sizeof(struct perf_event_attr));
+अटल व्योम perf_user_event_attr_set(काष्ठा perf_event_attr *attr, __u64 addr, __u64 len)
+अणु
+	स_रखो(attr, 0, माप(काष्ठा perf_event_attr));
 	attr->type           = PERF_TYPE_BREAKPOINT;
-	attr->size           = sizeof(struct perf_event_attr);
+	attr->size           = माप(काष्ठा perf_event_attr);
 	attr->bp_type        = HW_BREAKPOINT_R;
 	attr->bp_addr        = addr;
 	attr->bp_len         = len;
 	attr->exclude_kernel = 1;
 	attr->exclude_hv     = 1;
-}
+पूर्ण
 
-static void perf_kernel_event_attr_set(struct perf_event_attr *attr)
-{
-	memset(attr, 0, sizeof(struct perf_event_attr));
+अटल व्योम perf_kernel_event_attr_set(काष्ठा perf_event_attr *attr)
+अणु
+	स_रखो(attr, 0, माप(काष्ठा perf_event_attr));
 	attr->type           = PERF_TYPE_BREAKPOINT;
-	attr->size           = sizeof(struct perf_event_attr);
+	attr->size           = माप(काष्ठा perf_event_attr);
 	attr->bp_type        = HW_BREAKPOINT_R;
 	attr->bp_addr        = pid_max_addr();
-	attr->bp_len         = sizeof(unsigned long);
+	attr->bp_len         = माप(अचिन्हित दीर्घ);
 	attr->exclude_user   = 1;
 	attr->exclude_hv     = 1;
-}
+पूर्ण
 
-static int perf_cpu_event_open(int cpu, __u64 addr, __u64 len)
-{
-	struct perf_event_attr attr;
-
-	perf_user_event_attr_set(&attr, addr, len);
-	return syscall(__NR_perf_event_open, &attr, -1, cpu, -1, 0);
-}
-
-static int perf_thread_event_open(pid_t child_pid, __u64 addr, __u64 len)
-{
-	struct perf_event_attr attr;
+अटल पूर्णांक perf_cpu_event_खोलो(पूर्णांक cpu, __u64 addr, __u64 len)
+अणु
+	काष्ठा perf_event_attr attr;
 
 	perf_user_event_attr_set(&attr, addr, len);
-	return syscall(__NR_perf_event_open, &attr, child_pid, -1, -1, 0);
-}
+	वापस syscall(__NR_perf_event_खोलो, &attr, -1, cpu, -1, 0);
+पूर्ण
 
-static int perf_thread_cpu_event_open(pid_t child_pid, int cpu, __u64 addr, __u64 len)
-{
-	struct perf_event_attr attr;
+अटल पूर्णांक perf_thपढ़ो_event_खोलो(pid_t child_pid, __u64 addr, __u64 len)
+अणु
+	काष्ठा perf_event_attr attr;
 
 	perf_user_event_attr_set(&attr, addr, len);
-	return syscall(__NR_perf_event_open, &attr, child_pid, cpu, -1, 0);
-}
+	वापस syscall(__NR_perf_event_खोलो, &attr, child_pid, -1, -1, 0);
+पूर्ण
 
-static int perf_thread_kernel_event_open(pid_t child_pid)
-{
-	struct perf_event_attr attr;
+अटल पूर्णांक perf_thपढ़ो_cpu_event_खोलो(pid_t child_pid, पूर्णांक cpu, __u64 addr, __u64 len)
+अणु
+	काष्ठा perf_event_attr attr;
+
+	perf_user_event_attr_set(&attr, addr, len);
+	वापस syscall(__NR_perf_event_खोलो, &attr, child_pid, cpu, -1, 0);
+पूर्ण
+
+अटल पूर्णांक perf_thपढ़ो_kernel_event_खोलो(pid_t child_pid)
+अणु
+	काष्ठा perf_event_attr attr;
 
 	perf_kernel_event_attr_set(&attr);
-	return syscall(__NR_perf_event_open, &attr, child_pid, -1, -1, 0);
-}
+	वापस syscall(__NR_perf_event_खोलो, &attr, child_pid, -1, -1, 0);
+पूर्ण
 
-static int perf_cpu_kernel_event_open(int cpu)
-{
-	struct perf_event_attr attr;
+अटल पूर्णांक perf_cpu_kernel_event_खोलो(पूर्णांक cpu)
+अणु
+	काष्ठा perf_event_attr attr;
 
 	perf_kernel_event_attr_set(&attr);
-	return syscall(__NR_perf_event_open, &attr, -1, cpu, -1, 0);
-}
+	वापस syscall(__NR_perf_event_खोलो, &attr, -1, cpu, -1, 0);
+पूर्ण
 
-static int child(void)
-{
-	int ret;
+अटल पूर्णांक child(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = ptrace(PTRACE_TRACEME, 0, NULL, 0);
-	if (ret) {
-		printf("Error: PTRACE_TRACEME failed\n");
-		return 0;
-	}
-	kill(getpid(), SIGUSR1); /* --> parent (SIGUSR1) */
+	ret = ptrace(PTRACE_TRACEME, 0, शून्य, 0);
+	अगर (ret) अणु
+		म_लिखो("Error: PTRACE_TRACEME failed\n");
+		वापस 0;
+	पूर्ण
+	समाप्त(getpid(), SIGUSR1); /* --> parent (SIGUSR1) */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ptrace_ppc_hw_breakpoint(struct ppc_hw_breakpoint *info, int type,
-				     __u64 addr, int len)
-{
+अटल व्योम ptrace_ppc_hw_अवरोधpoपूर्णांक(काष्ठा ppc_hw_अवरोधpoपूर्णांक *info, पूर्णांक type,
+				     __u64 addr, पूर्णांक len)
+अणु
 	info->version = 1;
 	info->trigger_type = type;
 	info->condition_mode = PPC_BREAKPOINT_CONDITION_NONE;
 	info->addr = addr;
 	info->addr2 = addr + len;
 	info->condition_value = 0;
-	if (!len)
+	अगर (!len)
 		info->addr_mode = PPC_BREAKPOINT_MODE_EXACT;
-	else
+	अन्यथा
 		info->addr_mode = PPC_BREAKPOINT_MODE_RANGE_INCLUSIVE;
-}
+पूर्ण
 
-static int ptrace_open(pid_t child_pid, __u64 wp_addr, int len)
-{
-	struct ppc_hw_breakpoint info;
+अटल पूर्णांक ptrace_खोलो(pid_t child_pid, __u64 wp_addr, पूर्णांक len)
+अणु
+	काष्ठा ppc_hw_अवरोधpoपूर्णांक info;
 
-	ptrace_ppc_hw_breakpoint(&info, PPC_BREAKPOINT_TRIGGER_RW, wp_addr, len);
-	return ptrace(PPC_PTRACE_SETHWDEBUG, child_pid, 0, &info);
-}
+	ptrace_ppc_hw_अवरोधpoपूर्णांक(&info, PPC_BREAKPOINT_TRIGGER_RW, wp_addr, len);
+	वापस ptrace(PPC_PTRACE_SETHWDEBUG, child_pid, 0, &info);
+पूर्ण
 
-static int test1(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
+अटल पूर्णांक test1(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread event by ptrace)
-	 *	if (existing cpu event by perf)
-	 *		if (addr range overlaps)
+	 * अगर (new per thपढ़ो event by ptrace)
+	 *	अगर (existing cpu event by perf)
+	 *		अगर (addr range overlaps)
 	 *			fail;
 	 */
 
-	perf_fd = perf_cpu_event_open(0, (__u64)perf_data1, sizeof(*perf_data1));
-	if (perf_fd < 0)
-		return -1;
+	perf_fd = perf_cpu_event_खोलो(0, (__u64)perf_data1, माप(*perf_data1));
+	अगर (perf_fd < 0)
+		वापस -1;
 
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data1, sizeof(*ptrace_data1));
-	if (ptrace_fd > 0 || errno != ENOSPC)
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data1, माप(*ptrace_data1));
+	अगर (ptrace_fd > 0 || त्रुटि_सं != ENOSPC)
 		ret = -1;
 
-	close(perf_fd);
-	return ret;
-}
+	बंद(perf_fd);
+	वापस ret;
+पूर्ण
 
-static int test2(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
+अटल पूर्णांक test2(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread event by ptrace)
-	 *	if (existing cpu event by perf)
-	 *		if (addr range does not overlaps)
+	 * अगर (new per thपढ़ो event by ptrace)
+	 *	अगर (existing cpu event by perf)
+	 *		अगर (addr range करोes not overlaps)
 	 *			allow;
 	 */
 
-	perf_fd = perf_cpu_event_open(0, (__u64)perf_data2, sizeof(*perf_data2));
-	if (perf_fd < 0)
-		return -1;
+	perf_fd = perf_cpu_event_खोलो(0, (__u64)perf_data2, माप(*perf_data2));
+	अगर (perf_fd < 0)
+		वापस -1;
 
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data2, sizeof(*ptrace_data2));
-	if (ptrace_fd < 0) {
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data2, माप(*ptrace_data2));
+	अगर (ptrace_fd < 0) अणु
 		ret = -1;
-		goto perf_close;
-	}
+		जाओ perf_बंद;
+	पूर्ण
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
 
-perf_close:
-	close(perf_fd);
-	return ret;
-}
+perf_बंद:
+	बंद(perf_fd);
+	वापस ret;
+पूर्ण
 
-static int test3(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
-
-	/* Test:
-	 * if (new per thread event by ptrace)
-	 *	if (existing thread event by perf on the same thread)
-	 *		if (addr range overlaps)
-	 *			fail;
-	 */
-	perf_fd = perf_thread_event_open(child_pid, (__u64)perf_data1,
-					 sizeof(*perf_data1));
-	if (perf_fd < 0)
-		return -1;
-
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data1, sizeof(*ptrace_data1));
-	if (ptrace_fd > 0 || errno != ENOSPC)
-		ret = -1;
-
-	close(perf_fd);
-	return ret;
-}
-
-static int test4(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
+अटल पूर्णांक test3(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread event by ptrace)
-	 *	if (existing thread event by perf on the same thread)
-	 *		if (addr range does not overlaps)
+	 * अगर (new per thपढ़ो event by ptrace)
+	 *	अगर (existing thपढ़ो event by perf on the same thपढ़ो)
+	 *		अगर (addr range overlaps)
 	 *			fail;
 	 */
-	perf_fd = perf_thread_event_open(child_pid, (__u64)perf_data2,
-					 sizeof(*perf_data2));
-	if (perf_fd < 0)
-		return -1;
+	perf_fd = perf_thपढ़ो_event_खोलो(child_pid, (__u64)perf_data1,
+					 माप(*perf_data1));
+	अगर (perf_fd < 0)
+		वापस -1;
 
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data2, sizeof(*ptrace_data2));
-	if (ptrace_fd < 0) {
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data1, माप(*ptrace_data1));
+	अगर (ptrace_fd > 0 || त्रुटि_सं != ENOSPC)
 		ret = -1;
-		goto perf_close;
-	}
+
+	बंद(perf_fd);
+	वापस ret;
+पूर्ण
+
+अटल पूर्णांक test4(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
+
+	/* Test:
+	 * अगर (new per thपढ़ो event by ptrace)
+	 *	अगर (existing thपढ़ो event by perf on the same thपढ़ो)
+	 *		अगर (addr range करोes not overlaps)
+	 *			fail;
+	 */
+	perf_fd = perf_thपढ़ो_event_खोलो(child_pid, (__u64)perf_data2,
+					 माप(*perf_data2));
+	अगर (perf_fd < 0)
+		वापस -1;
+
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data2, माप(*ptrace_data2));
+	अगर (ptrace_fd < 0) अणु
+		ret = -1;
+		जाओ perf_बंद;
+	पूर्ण
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
 
-perf_close:
-	close(perf_fd);
-	return ret;
-}
+perf_बंद:
+	बंद(perf_fd);
+	वापस ret;
+पूर्ण
 
-static int test5(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int cpid;
-	int ret = 0;
+अटल पूर्णांक test5(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक cpid;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread event by ptrace)
-	 *	if (existing thread event by perf on the different thread)
+	 * अगर (new per thपढ़ो event by ptrace)
+	 *	अगर (existing thपढ़ो event by perf on the dअगरferent thपढ़ो)
 	 *		allow;
 	 */
-	cpid = fork();
-	if (!cpid) {
+	cpid = विभाजन();
+	अगर (!cpid) अणु
 		/* Temporary Child */
-		pause();
-		exit(EXIT_SUCCESS);
-	}
+		छोड़ो();
+		निकास(निकास_सफल);
+	पूर्ण
 
-	perf_fd = perf_thread_event_open(cpid, (__u64)perf_data1, sizeof(*perf_data1));
-	if (perf_fd < 0) {
+	perf_fd = perf_thपढ़ो_event_खोलो(cpid, (__u64)perf_data1, माप(*perf_data1));
+	अगर (perf_fd < 0) अणु
 		ret = -1;
-		goto kill_child;
-	}
+		जाओ समाप्त_child;
+	पूर्ण
 
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data1, sizeof(*ptrace_data1));
-	if (ptrace_fd < 0) {
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data1, माप(*ptrace_data1));
+	अगर (ptrace_fd < 0) अणु
 		ret = -1;
-		goto perf_close;
-	}
+		जाओ perf_बंद;
+	पूर्ण
 
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
-perf_close:
-	close(perf_fd);
-kill_child:
-	kill(cpid, SIGINT);
-	return ret;
-}
+perf_बंद:
+	बंद(perf_fd);
+समाप्त_child:
+	समाप्त(cpid, संक_विघ्न);
+	वापस ret;
+पूर्ण
 
-static int test6(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
+अटल पूर्णांक test6(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread kernel event by perf)
-	 *	if (existing thread event by ptrace on the same thread)
+	 * अगर (new per thपढ़ो kernel event by perf)
+	 *	अगर (existing thपढ़ो event by ptrace on the same thपढ़ो)
 	 *		allow;
 	 * -- OR --
-	 * if (new per cpu kernel event by perf)
-	 *	if (existing thread event by ptrace)
+	 * अगर (new per cpu kernel event by perf)
+	 *	अगर (existing thपढ़ो event by ptrace)
 	 *		allow;
 	 */
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data1, sizeof(*ptrace_data1));
-	if (ptrace_fd < 0)
-		return -1;
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data1, माप(*ptrace_data1));
+	अगर (ptrace_fd < 0)
+		वापस -1;
 
-	perf_fd = perf_thread_kernel_event_open(child_pid);
-	if (perf_fd < 0) {
+	perf_fd = perf_thपढ़ो_kernel_event_खोलो(child_pid);
+	अगर (perf_fd < 0) अणु
 		ret = -1;
-		goto ptrace_close;
-	}
-	close(perf_fd);
+		जाओ ptrace_बंद;
+	पूर्ण
+	बंद(perf_fd);
 
-	perf_fd = perf_cpu_kernel_event_open(0);
-	if (perf_fd < 0) {
+	perf_fd = perf_cpu_kernel_event_खोलो(0);
+	अगर (perf_fd < 0) अणु
 		ret = -1;
-		goto ptrace_close;
-	}
-	close(perf_fd);
+		जाओ ptrace_बंद;
+	पूर्ण
+	बंद(perf_fd);
 
-ptrace_close:
+ptrace_बंद:
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test7(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
+अटल पूर्णांक test7(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread event by perf)
-	 *	if (existing thread event by ptrace on the same thread)
-	 *		if (addr range overlaps)
+	 * अगर (new per thपढ़ो event by perf)
+	 *	अगर (existing thपढ़ो event by ptrace on the same thपढ़ो)
+	 *		अगर (addr range overlaps)
 	 *			fail;
 	 */
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data1, sizeof(*ptrace_data1));
-	if (ptrace_fd < 0)
-		return -1;
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data1, माप(*ptrace_data1));
+	अगर (ptrace_fd < 0)
+		वापस -1;
 
-	perf_fd = perf_thread_event_open(child_pid, (__u64)perf_data1,
-					 sizeof(*perf_data1));
-	if (perf_fd > 0 || errno != ENOSPC)
+	perf_fd = perf_thपढ़ो_event_खोलो(child_pid, (__u64)perf_data1,
+					 माप(*perf_data1));
+	अगर (perf_fd > 0 || त्रुटि_सं != ENOSPC)
 		ret = -1;
 
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test8(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
+अटल पूर्णांक test8(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread event by perf)
-	 *	if (existing thread event by ptrace on the same thread)
-	 *		if (addr range does not overlaps)
+	 * अगर (new per thपढ़ो event by perf)
+	 *	अगर (existing thपढ़ो event by ptrace on the same thपढ़ो)
+	 *		अगर (addr range करोes not overlaps)
 	 *			allow;
 	 */
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data2, sizeof(*ptrace_data2));
-	if (ptrace_fd < 0)
-		return -1;
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data2, माप(*ptrace_data2));
+	अगर (ptrace_fd < 0)
+		वापस -1;
 
-	perf_fd = perf_thread_event_open(child_pid, (__u64)perf_data2,
-					 sizeof(*perf_data2));
-	if (perf_fd < 0) {
+	perf_fd = perf_thपढ़ो_event_खोलो(child_pid, (__u64)perf_data2,
+					 माप(*perf_data2));
+	अगर (perf_fd < 0) अणु
 		ret = -1;
-		goto ptrace_close;
-	}
-	close(perf_fd);
+		जाओ ptrace_बंद;
+	पूर्ण
+	बंद(perf_fd);
 
-ptrace_close:
+ptrace_बंद:
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test9(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int cpid;
-	int ret = 0;
+अटल पूर्णांक test9(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक cpid;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread event by perf)
-	 *	if (existing thread event by ptrace on the other thread)
+	 * अगर (new per thपढ़ो event by perf)
+	 *	अगर (existing thपढ़ो event by ptrace on the other thपढ़ो)
 	 *		allow;
 	 */
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data1, sizeof(*ptrace_data1));
-	if (ptrace_fd < 0)
-		return -1;
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data1, माप(*ptrace_data1));
+	अगर (ptrace_fd < 0)
+		वापस -1;
 
-	cpid = fork();
-	if (!cpid) {
+	cpid = विभाजन();
+	अगर (!cpid) अणु
 		/* Temporary Child */
-		pause();
-		exit(EXIT_SUCCESS);
-	}
+		छोड़ो();
+		निकास(निकास_सफल);
+	पूर्ण
 
-	perf_fd = perf_thread_event_open(cpid, (__u64)perf_data1, sizeof(*perf_data1));
-	if (perf_fd < 0) {
+	perf_fd = perf_thपढ़ो_event_खोलो(cpid, (__u64)perf_data1, माप(*perf_data1));
+	अगर (perf_fd < 0) अणु
 		ret = -1;
-		goto kill_child;
-	}
-	close(perf_fd);
+		जाओ समाप्त_child;
+	पूर्ण
+	बंद(perf_fd);
 
-kill_child:
-	kill(cpid, SIGINT);
+समाप्त_child:
+	समाप्त(cpid, संक_विघ्न);
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test10(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
+अटल पूर्णांक test10(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per cpu event by perf)
-	 *	if (existing thread event by ptrace on the same thread)
-	 *		if (addr range overlaps)
+	 * अगर (new per cpu event by perf)
+	 *	अगर (existing thपढ़ो event by ptrace on the same thपढ़ो)
+	 *		अगर (addr range overlaps)
 	 *			fail;
 	 */
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data1, sizeof(*ptrace_data1));
-	if (ptrace_fd < 0)
-		return -1;
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data1, माप(*ptrace_data1));
+	अगर (ptrace_fd < 0)
+		वापस -1;
 
-	perf_fd = perf_cpu_event_open(0, (__u64)perf_data1, sizeof(*perf_data1));
-	if (perf_fd > 0 || errno != ENOSPC)
+	perf_fd = perf_cpu_event_खोलो(0, (__u64)perf_data1, माप(*perf_data1));
+	अगर (perf_fd > 0 || त्रुटि_सं != ENOSPC)
 		ret = -1;
 
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test11(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
+अटल पूर्णांक test11(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per cpu event by perf)
-	 *	if (existing thread event by ptrace on the same thread)
-	 *		if (addr range does not overlap)
+	 * अगर (new per cpu event by perf)
+	 *	अगर (existing thपढ़ो event by ptrace on the same thपढ़ो)
+	 *		अगर (addr range करोes not overlap)
 	 *			allow;
 	 */
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data2, sizeof(*ptrace_data2));
-	if (ptrace_fd < 0)
-		return -1;
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data2, माप(*ptrace_data2));
+	अगर (ptrace_fd < 0)
+		वापस -1;
 
-	perf_fd = perf_cpu_event_open(0, (__u64)perf_data2, sizeof(*perf_data2));
-	if (perf_fd < 0) {
+	perf_fd = perf_cpu_event_खोलो(0, (__u64)perf_data2, माप(*perf_data2));
+	अगर (perf_fd < 0) अणु
 		ret = -1;
-		goto ptrace_close;
-	}
-	close(perf_fd);
+		जाओ ptrace_बंद;
+	पूर्ण
+	बंद(perf_fd);
 
-ptrace_close:
+ptrace_बंद:
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test12(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
+अटल पूर्णांक test12(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread and per cpu event by perf)
-	 *	if (existing thread event by ptrace on the same thread)
-	 *		if (addr range overlaps)
+	 * अगर (new per thपढ़ो and per cpu event by perf)
+	 *	अगर (existing thपढ़ो event by ptrace on the same thपढ़ो)
+	 *		अगर (addr range overlaps)
 	 *			fail;
 	 */
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data1, sizeof(*ptrace_data1));
-	if (ptrace_fd < 0)
-		return -1;
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data1, माप(*ptrace_data1));
+	अगर (ptrace_fd < 0)
+		वापस -1;
 
-	perf_fd = perf_thread_cpu_event_open(child_pid, 0, (__u64)perf_data1, sizeof(*perf_data1));
-	if (perf_fd > 0 || errno != ENOSPC)
+	perf_fd = perf_thपढ़ो_cpu_event_खोलो(child_pid, 0, (__u64)perf_data1, माप(*perf_data1));
+	अगर (perf_fd > 0 || त्रुटि_सं != ENOSPC)
 		ret = -1;
 
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test13(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int ret = 0;
+अटल पूर्णांक test13(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread and per cpu event by perf)
-	 *	if (existing thread event by ptrace on the same thread)
-	 *		if (addr range does not overlap)
+	 * अगर (new per thपढ़ो and per cpu event by perf)
+	 *	अगर (existing thपढ़ो event by ptrace on the same thपढ़ो)
+	 *		अगर (addr range करोes not overlap)
 	 *			allow;
 	 */
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data2, sizeof(*ptrace_data2));
-	if (ptrace_fd < 0)
-		return -1;
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data2, माप(*ptrace_data2));
+	अगर (ptrace_fd < 0)
+		वापस -1;
 
-	perf_fd = perf_thread_cpu_event_open(child_pid, 0, (__u64)perf_data2, sizeof(*perf_data2));
-	if (perf_fd < 0) {
+	perf_fd = perf_thपढ़ो_cpu_event_खोलो(child_pid, 0, (__u64)perf_data2, माप(*perf_data2));
+	अगर (perf_fd < 0) अणु
 		ret = -1;
-		goto ptrace_close;
-	}
-	close(perf_fd);
+		जाओ ptrace_बंद;
+	पूर्ण
+	बंद(perf_fd);
 
-ptrace_close:
+ptrace_बंद:
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test14(pid_t child_pid)
-{
-	int perf_fd;
-	int ptrace_fd;
-	int cpid;
-	int ret = 0;
+अटल पूर्णांक test14(pid_t child_pid)
+अणु
+	पूर्णांक perf_fd;
+	पूर्णांक ptrace_fd;
+	पूर्णांक cpid;
+	पूर्णांक ret = 0;
 
 	/* Test:
-	 * if (new per thread and per cpu event by perf)
-	 *	if (existing thread event by ptrace on the other thread)
+	 * अगर (new per thपढ़ो and per cpu event by perf)
+	 *	अगर (existing thपढ़ो event by ptrace on the other thपढ़ो)
 	 *		allow;
 	 */
-	ptrace_fd = ptrace_open(child_pid, (__u64)ptrace_data1, sizeof(*ptrace_data1));
-	if (ptrace_fd < 0)
-		return -1;
+	ptrace_fd = ptrace_खोलो(child_pid, (__u64)ptrace_data1, माप(*ptrace_data1));
+	अगर (ptrace_fd < 0)
+		वापस -1;
 
-	cpid = fork();
-	if (!cpid) {
+	cpid = विभाजन();
+	अगर (!cpid) अणु
 		/* Temporary Child */
-		pause();
-		exit(EXIT_SUCCESS);
-	}
+		छोड़ो();
+		निकास(निकास_सफल);
+	पूर्ण
 
-	perf_fd = perf_thread_cpu_event_open(cpid, 0, (__u64)perf_data1,
-					     sizeof(*perf_data1));
-	if (perf_fd < 0) {
+	perf_fd = perf_thपढ़ो_cpu_event_खोलो(cpid, 0, (__u64)perf_data1,
+					     माप(*perf_data1));
+	अगर (perf_fd < 0) अणु
 		ret = -1;
-		goto kill_child;
-	}
-	close(perf_fd);
+		जाओ समाप्त_child;
+	पूर्ण
+	बंद(perf_fd);
 
-kill_child:
-	kill(cpid, SIGINT);
+समाप्त_child:
+	समाप्त(cpid, संक_विघ्न);
 	ptrace(PPC_PTRACE_DELHWDEBUG, child_pid, 0, ptrace_fd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int do_test(const char *msg, int (*fun)(pid_t arg), pid_t arg)
-{
-	int ret;
+अटल पूर्णांक करो_test(स्थिर अक्षर *msg, पूर्णांक (*fun)(pid_t arg), pid_t arg)
+अणु
+	पूर्णांक ret;
 
 	ret = fun(arg);
-	if (ret)
-		printf("%s: Error\n", msg);
-	else
-		printf("%s: Ok\n", msg);
-	return ret;
-}
+	अगर (ret)
+		म_लिखो("%s: Error\n", msg);
+	अन्यथा
+		म_लिखो("%s: Ok\n", msg);
+	वापस ret;
+पूर्ण
 
-char *desc[14] = {
+अक्षर *desc[14] = अणु
 	"perf cpu event -> ptrace thread event (Overlapping)",
 	"perf cpu event -> ptrace thread event (Non-overlapping)",
 	"perf thread event -> ptrace same thread event (Overlapping)",
@@ -595,65 +596,65 @@ char *desc[14] = {
 	"ptrace thread event -> perf same thread & cpu event (Overlapping)",
 	"ptrace thread event -> perf same thread & cpu event (Non-overlapping)",
 	"ptrace thread event -> perf other thread & cpu event",
-};
+पूर्ण;
 
-static int test(pid_t child_pid)
-{
-	int ret = TEST_PASS;
+अटल पूर्णांक test(pid_t child_pid)
+अणु
+	पूर्णांक ret = TEST_PASS;
 
-	ret |= do_test(desc[0], test1, child_pid);
-	ret |= do_test(desc[1], test2, child_pid);
-	ret |= do_test(desc[2], test3, child_pid);
-	ret |= do_test(desc[3], test4, child_pid);
-	ret |= do_test(desc[4], test5, child_pid);
-	ret |= do_test(desc[5], test6, child_pid);
-	ret |= do_test(desc[6], test7, child_pid);
-	ret |= do_test(desc[7], test8, child_pid);
-	ret |= do_test(desc[8], test9, child_pid);
-	ret |= do_test(desc[9], test10, child_pid);
-	ret |= do_test(desc[10], test11, child_pid);
-	ret |= do_test(desc[11], test12, child_pid);
-	ret |= do_test(desc[12], test13, child_pid);
-	ret |= do_test(desc[13], test14, child_pid);
+	ret |= करो_test(desc[0], test1, child_pid);
+	ret |= करो_test(desc[1], test2, child_pid);
+	ret |= करो_test(desc[2], test3, child_pid);
+	ret |= करो_test(desc[3], test4, child_pid);
+	ret |= करो_test(desc[4], test5, child_pid);
+	ret |= करो_test(desc[5], test6, child_pid);
+	ret |= करो_test(desc[6], test7, child_pid);
+	ret |= करो_test(desc[7], test8, child_pid);
+	ret |= करो_test(desc[8], test9, child_pid);
+	ret |= करो_test(desc[9], test10, child_pid);
+	ret |= करो_test(desc[10], test11, child_pid);
+	ret |= करो_test(desc[11], test12, child_pid);
+	ret |= करो_test(desc[12], test13, child_pid);
+	ret |= करो_test(desc[13], test14, child_pid);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void get_dbginfo(pid_t child_pid, struct ppc_debug_info *dbginfo)
-{
-	if (ptrace(PPC_PTRACE_GETHWDBGINFO, child_pid, NULL, dbginfo)) {
-		perror("Can't get breakpoint info");
-		exit(-1);
-	}
-}
+अटल व्योम get_dbginfo(pid_t child_pid, काष्ठा ppc_debug_info *dbginfo)
+अणु
+	अगर (ptrace(PPC_PTRACE_GETHWDBGINFO, child_pid, शून्य, dbginfo)) अणु
+		लिखो_त्रुटि("Can't get breakpoint info");
+		निकास(-1);
+	पूर्ण
+पूर्ण
 
-static int ptrace_perf_hwbreak(void)
-{
-	int ret;
+अटल पूर्णांक ptrace_perf_hwअवरोध(व्योम)
+अणु
+	पूर्णांक ret;
 	pid_t child_pid;
-	struct ppc_debug_info dbginfo;
+	काष्ठा ppc_debug_info dbginfo;
 
-	child_pid = fork();
-	if (!child_pid)
-		return child();
+	child_pid = विभाजन();
+	अगर (!child_pid)
+		वापस child();
 
 	/* parent */
-	wait(NULL); /* <-- child (SIGUSR1) */
+	रुको(शून्य); /* <-- child (SIGUSR1) */
 
 	get_dbginfo(child_pid, &dbginfo);
 	SKIP_IF(dbginfo.num_data_bps <= 1);
 
-	ret = perf_cpu_event_open(0, (__u64)perf_data1, sizeof(*perf_data1));
+	ret = perf_cpu_event_खोलो(0, (__u64)perf_data1, माप(*perf_data1));
 	SKIP_IF(ret < 0);
-	close(ret);
+	बंद(ret);
 
 	ret = test(child_pid);
 
-	ptrace(PTRACE_CONT, child_pid, NULL, 0);
-	return ret;
-}
+	ptrace(PTRACE_CONT, child_pid, शून्य, 0);
+	वापस ret;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	return test_harness(ptrace_perf_hwbreak, "ptrace-perf-hwbreak");
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	वापस test_harness(ptrace_perf_hwअवरोध, "ptrace-perf-hwbreak");
+पूर्ण

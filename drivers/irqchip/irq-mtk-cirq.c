@@ -1,192 +1,193 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016 MediaTek Inc.
  * Author: Youlin.Pei <youlin.pei@mediatek.com>
  */
 
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/irqdomain.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/of_address.h>
-#include <linux/slab.h>
-#include <linux/syscore_ops.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/syscore_ops.h>
 
-#define CIRQ_ACK	0x40
-#define CIRQ_MASK_SET	0xc0
-#define CIRQ_MASK_CLR	0x100
-#define CIRQ_SENS_SET	0x180
-#define CIRQ_SENS_CLR	0x1c0
-#define CIRQ_POL_SET	0x240
-#define CIRQ_POL_CLR	0x280
-#define CIRQ_CONTROL	0x300
+#घोषणा CIRQ_ACK	0x40
+#घोषणा CIRQ_MASK_SET	0xc0
+#घोषणा CIRQ_MASK_CLR	0x100
+#घोषणा CIRQ_SENS_SET	0x180
+#घोषणा CIRQ_SENS_CLR	0x1c0
+#घोषणा CIRQ_POL_SET	0x240
+#घोषणा CIRQ_POL_CLR	0x280
+#घोषणा CIRQ_CONTROL	0x300
 
-#define CIRQ_EN	0x1
-#define CIRQ_EDGE	0x2
-#define CIRQ_FLUSH	0x4
+#घोषणा CIRQ_EN	0x1
+#घोषणा CIRQ_EDGE	0x2
+#घोषणा CIRQ_FLUSH	0x4
 
-struct mtk_cirq_chip_data {
-	void __iomem *base;
-	unsigned int ext_irq_start;
-	unsigned int ext_irq_end;
-	struct irq_domain *domain;
-};
+काष्ठा mtk_cirq_chip_data अणु
+	व्योम __iomem *base;
+	अचिन्हित पूर्णांक ext_irq_start;
+	अचिन्हित पूर्णांक ext_irq_end;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+पूर्ण;
 
-static struct mtk_cirq_chip_data *cirq_data;
+अटल काष्ठा mtk_cirq_chip_data *cirq_data;
 
-static void mtk_cirq_write_mask(struct irq_data *data, unsigned int offset)
-{
-	struct mtk_cirq_chip_data *chip_data = data->chip_data;
-	unsigned int cirq_num = data->hwirq;
+अटल व्योम mtk_cirq_ग_लिखो_mask(काष्ठा irq_data *data, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा mtk_cirq_chip_data *chip_data = data->chip_data;
+	अचिन्हित पूर्णांक cirq_num = data->hwirq;
 	u32 mask = 1 << (cirq_num % 32);
 
-	writel_relaxed(mask, chip_data->base + offset + (cirq_num / 32) * 4);
-}
+	ग_लिखोl_relaxed(mask, chip_data->base + offset + (cirq_num / 32) * 4);
+पूर्ण
 
-static void mtk_cirq_mask(struct irq_data *data)
-{
-	mtk_cirq_write_mask(data, CIRQ_MASK_SET);
+अटल व्योम mtk_cirq_mask(काष्ठा irq_data *data)
+अणु
+	mtk_cirq_ग_लिखो_mask(data, CIRQ_MASK_SET);
 	irq_chip_mask_parent(data);
-}
+पूर्ण
 
-static void mtk_cirq_unmask(struct irq_data *data)
-{
-	mtk_cirq_write_mask(data, CIRQ_MASK_CLR);
+अटल व्योम mtk_cirq_unmask(काष्ठा irq_data *data)
+अणु
+	mtk_cirq_ग_लिखो_mask(data, CIRQ_MASK_CLR);
 	irq_chip_unmask_parent(data);
-}
+पूर्ण
 
-static int mtk_cirq_set_type(struct irq_data *data, unsigned int type)
-{
-	int ret;
+अटल पूर्णांक mtk_cirq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
+अणु
+	पूर्णांक ret;
 
-	switch (type & IRQ_TYPE_SENSE_MASK) {
-	case IRQ_TYPE_EDGE_FALLING:
-		mtk_cirq_write_mask(data, CIRQ_POL_CLR);
-		mtk_cirq_write_mask(data, CIRQ_SENS_CLR);
-		break;
-	case IRQ_TYPE_EDGE_RISING:
-		mtk_cirq_write_mask(data, CIRQ_POL_SET);
-		mtk_cirq_write_mask(data, CIRQ_SENS_CLR);
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
-		mtk_cirq_write_mask(data, CIRQ_POL_CLR);
-		mtk_cirq_write_mask(data, CIRQ_SENS_SET);
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
-		mtk_cirq_write_mask(data, CIRQ_POL_SET);
-		mtk_cirq_write_mask(data, CIRQ_SENS_SET);
-		break;
-	default:
-		break;
-	}
+	चयन (type & IRQ_TYPE_SENSE_MASK) अणु
+	हाल IRQ_TYPE_EDGE_FALLING:
+		mtk_cirq_ग_लिखो_mask(data, CIRQ_POL_CLR);
+		mtk_cirq_ग_लिखो_mask(data, CIRQ_SENS_CLR);
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_RISING:
+		mtk_cirq_ग_लिखो_mask(data, CIRQ_POL_SET);
+		mtk_cirq_ग_लिखो_mask(data, CIRQ_SENS_CLR);
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
+		mtk_cirq_ग_लिखो_mask(data, CIRQ_POL_CLR);
+		mtk_cirq_ग_लिखो_mask(data, CIRQ_SENS_SET);
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
+		mtk_cirq_ग_लिखो_mask(data, CIRQ_POL_SET);
+		mtk_cirq_ग_लिखो_mask(data, CIRQ_SENS_SET);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	data = data->parent_data;
 	ret = data->chip->irq_set_type(data, type);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct irq_chip mtk_cirq_chip = {
+अटल काष्ठा irq_chip mtk_cirq_chip = अणु
 	.name			= "MT_CIRQ",
 	.irq_mask		= mtk_cirq_mask,
 	.irq_unmask		= mtk_cirq_unmask,
 	.irq_eoi		= irq_chip_eoi_parent,
 	.irq_set_type		= mtk_cirq_set_type,
 	.irq_retrigger		= irq_chip_retrigger_hierarchy,
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	.irq_set_affinity	= irq_chip_set_affinity_parent,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int mtk_cirq_domain_translate(struct irq_domain *d,
-				     struct irq_fwspec *fwspec,
-				     unsigned long *hwirq,
-				     unsigned int *type)
-{
-	if (is_of_node(fwspec->fwnode)) {
-		if (fwspec->param_count != 3)
-			return -EINVAL;
+अटल पूर्णांक mtk_cirq_करोमुख्य_translate(काष्ठा irq_करोमुख्य *d,
+				     काष्ठा irq_fwspec *fwspec,
+				     अचिन्हित दीर्घ *hwirq,
+				     अचिन्हित पूर्णांक *type)
+अणु
+	अगर (is_of_node(fwspec->fwnode)) अणु
+		अगर (fwspec->param_count != 3)
+			वापस -EINVAL;
 
-		/* No PPI should point to this domain */
-		if (fwspec->param[0] != 0)
-			return -EINVAL;
+		/* No PPI should poपूर्णांक to this करोमुख्य */
+		अगर (fwspec->param[0] != 0)
+			वापस -EINVAL;
 
 		/* cirq support irq number check */
-		if (fwspec->param[1] < cirq_data->ext_irq_start ||
+		अगर (fwspec->param[1] < cirq_data->ext_irq_start ||
 		    fwspec->param[1] > cirq_data->ext_irq_end)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		*hwirq = fwspec->param[1] - cirq_data->ext_irq_start;
 		*type = fwspec->param[2] & IRQ_TYPE_SENSE_MASK;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int mtk_cirq_domain_alloc(struct irq_domain *domain, unsigned int virq,
-				 unsigned int nr_irqs, void *arg)
-{
-	int ret;
+अटल पूर्णांक mtk_cirq_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+				 अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
+अणु
+	पूर्णांक ret;
 	irq_hw_number_t hwirq;
-	unsigned int type;
-	struct irq_fwspec *fwspec = arg;
-	struct irq_fwspec parent_fwspec = *fwspec;
+	अचिन्हित पूर्णांक type;
+	काष्ठा irq_fwspec *fwspec = arg;
+	काष्ठा irq_fwspec parent_fwspec = *fwspec;
 
-	ret = mtk_cirq_domain_translate(domain, fwspec, &hwirq, &type);
-	if (ret)
-		return ret;
+	ret = mtk_cirq_करोमुख्य_translate(करोमुख्य, fwspec, &hwirq, &type);
+	अगर (ret)
+		वापस ret;
 
-	if (WARN_ON(nr_irqs != 1))
-		return -EINVAL;
+	अगर (WARN_ON(nr_irqs != 1))
+		वापस -EINVAL;
 
-	irq_domain_set_hwirq_and_chip(domain, virq, hwirq,
+	irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq, hwirq,
 				      &mtk_cirq_chip,
-				      domain->host_data);
+				      करोमुख्य->host_data);
 
-	parent_fwspec.fwnode = domain->parent->fwnode;
-	return irq_domain_alloc_irqs_parent(domain, virq, nr_irqs,
+	parent_fwspec.fwnode = करोमुख्य->parent->fwnode;
+	वापस irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, nr_irqs,
 					    &parent_fwspec);
-}
+पूर्ण
 
-static const struct irq_domain_ops cirq_domain_ops = {
-	.translate	= mtk_cirq_domain_translate,
-	.alloc		= mtk_cirq_domain_alloc,
-	.free		= irq_domain_free_irqs_common,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops cirq_करोमुख्य_ops = अणु
+	.translate	= mtk_cirq_करोमुख्य_translate,
+	.alloc		= mtk_cirq_करोमुख्य_alloc,
+	.मुक्त		= irq_करोमुख्य_मुक्त_irqs_common,
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
-static int mtk_cirq_suspend(void)
-{
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mtk_cirq_suspend(व्योम)
+अणु
 	u32 value, mask;
-	unsigned int irq, hwirq_num;
+	अचिन्हित पूर्णांक irq, hwirq_num;
 	bool pending, masked;
-	int i, pendret, maskret;
+	पूर्णांक i, pendret, maskret;
 
 	/*
-	 * When external interrupts happened, CIRQ will record the status
+	 * When बाह्यal पूर्णांकerrupts happened, CIRQ will record the status
 	 * even CIRQ is not enabled. When execute flush command, CIRQ will
-	 * resend the signals according to the status. So if don't clear the
-	 * status, CIRQ will resend the wrong signals.
+	 * resend the संकेतs according to the status. So अगर करोn't clear the
+	 * status, CIRQ will resend the wrong संकेतs.
 	 *
-	 * arch_suspend_disable_irqs() will be called before CIRQ suspend
-	 * callback. If clear all the status simply, the external interrupts
+	 * arch_suspend_disable_irqs() will be called beक्रमe CIRQ suspend
+	 * callback. If clear all the status simply, the बाह्यal पूर्णांकerrupts
 	 * which happened between arch_suspend_disable_irqs and CIRQ suspend
-	 * callback will be lost. Using following steps to avoid this issue;
+	 * callback will be lost. Using following steps to aव्योम this issue;
 	 *
-	 * - Iterate over all the CIRQ supported interrupts;
-	 * - For each interrupt, inspect its pending and masked status at GIC
+	 * - Iterate over all the CIRQ supported पूर्णांकerrupts;
+	 * - For each पूर्णांकerrupt, inspect its pending and masked status at GIC
 	 *   level;
 	 * - If pending and unmasked, it happened between
-	 *   arch_suspend_disable_irqs and CIRQ suspend callback, don't ACK
+	 *   arch_suspend_disable_irqs and CIRQ suspend callback, करोn't ACK
 	 *   it. Otherwise, ACK it.
 	 */
 	hwirq_num = cirq_data->ext_irq_end - cirq_data->ext_irq_start + 1;
-	for (i = 0; i < hwirq_num; i++) {
-		irq = irq_find_mapping(cirq_data->domain, i);
-		if (irq) {
+	क्रम (i = 0; i < hwirq_num; i++) अणु
+		irq = irq_find_mapping(cirq_data->करोमुख्य, i);
+		अगर (irq) अणु
 			pendret = irq_get_irqchip_state(irq,
 							IRQCHIP_STATE_PENDING,
 							&pending);
@@ -195,104 +196,104 @@ static int mtk_cirq_suspend(void)
 							IRQCHIP_STATE_MASKED,
 							&masked);
 
-			if (pendret == 0 && maskret == 0 &&
+			अगर (pendret == 0 && maskret == 0 &&
 			    (pending && !masked))
-				continue;
-		}
+				जारी;
+		पूर्ण
 
 		mask = 1 << (i % 32);
-		writel_relaxed(mask, cirq_data->base + CIRQ_ACK + (i / 32) * 4);
-	}
+		ग_लिखोl_relaxed(mask, cirq_data->base + CIRQ_ACK + (i / 32) * 4);
+	पूर्ण
 
-	/* set edge_only mode, record edge-triggerd interrupts */
+	/* set edge_only mode, record edge-triggerd पूर्णांकerrupts */
 	/* enable cirq */
-	value = readl_relaxed(cirq_data->base + CIRQ_CONTROL);
+	value = पढ़ोl_relaxed(cirq_data->base + CIRQ_CONTROL);
 	value |= (CIRQ_EDGE | CIRQ_EN);
-	writel_relaxed(value, cirq_data->base + CIRQ_CONTROL);
+	ग_लिखोl_relaxed(value, cirq_data->base + CIRQ_CONTROL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_cirq_resume(void)
-{
+अटल व्योम mtk_cirq_resume(व्योम)
+अणु
 	u32 value;
 
-	/* flush recorded interrupts, will send signals to parent controller */
-	value = readl_relaxed(cirq_data->base + CIRQ_CONTROL);
-	writel_relaxed(value | CIRQ_FLUSH, cirq_data->base + CIRQ_CONTROL);
+	/* flush recorded पूर्णांकerrupts, will send संकेतs to parent controller */
+	value = पढ़ोl_relaxed(cirq_data->base + CIRQ_CONTROL);
+	ग_लिखोl_relaxed(value | CIRQ_FLUSH, cirq_data->base + CIRQ_CONTROL);
 
 	/* disable cirq */
-	value = readl_relaxed(cirq_data->base + CIRQ_CONTROL);
+	value = पढ़ोl_relaxed(cirq_data->base + CIRQ_CONTROL);
 	value &= ~(CIRQ_EDGE | CIRQ_EN);
-	writel_relaxed(value, cirq_data->base + CIRQ_CONTROL);
-}
+	ग_लिखोl_relaxed(value, cirq_data->base + CIRQ_CONTROL);
+पूर्ण
 
-static struct syscore_ops mtk_cirq_syscore_ops = {
+अटल काष्ठा syscore_ops mtk_cirq_syscore_ops = अणु
 	.suspend	= mtk_cirq_suspend,
 	.resume		= mtk_cirq_resume,
-};
+पूर्ण;
 
-static void mtk_cirq_syscore_init(void)
-{
-	register_syscore_ops(&mtk_cirq_syscore_ops);
-}
-#else
-static inline void mtk_cirq_syscore_init(void) {}
-#endif
+अटल व्योम mtk_cirq_syscore_init(व्योम)
+अणु
+	रेजिस्टर_syscore_ops(&mtk_cirq_syscore_ops);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम mtk_cirq_syscore_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-static int __init mtk_cirq_of_init(struct device_node *node,
-				   struct device_node *parent)
-{
-	struct irq_domain *domain, *domain_parent;
-	unsigned int irq_num;
-	int ret;
+अटल पूर्णांक __init mtk_cirq_of_init(काष्ठा device_node *node,
+				   काष्ठा device_node *parent)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य, *करोमुख्य_parent;
+	अचिन्हित पूर्णांक irq_num;
+	पूर्णांक ret;
 
-	domain_parent = irq_find_host(parent);
-	if (!domain_parent) {
+	करोमुख्य_parent = irq_find_host(parent);
+	अगर (!करोमुख्य_parent) अणु
 		pr_err("mtk_cirq: interrupt-parent not found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	cirq_data = kzalloc(sizeof(*cirq_data), GFP_KERNEL);
-	if (!cirq_data)
-		return -ENOMEM;
+	cirq_data = kzalloc(माप(*cirq_data), GFP_KERNEL);
+	अगर (!cirq_data)
+		वापस -ENOMEM;
 
 	cirq_data->base = of_iomap(node, 0);
-	if (!cirq_data->base) {
+	अगर (!cirq_data->base) अणु
 		pr_err("mtk_cirq: unable to map cirq register\n");
 		ret = -ENXIO;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	ret = of_property_read_u32_index(node, "mediatek,ext-irq-range", 0,
+	ret = of_property_पढ़ो_u32_index(node, "mediatek,ext-irq-range", 0,
 					 &cirq_data->ext_irq_start);
-	if (ret)
-		goto out_unmap;
+	अगर (ret)
+		जाओ out_unmap;
 
-	ret = of_property_read_u32_index(node, "mediatek,ext-irq-range", 1,
+	ret = of_property_पढ़ो_u32_index(node, "mediatek,ext-irq-range", 1,
 					 &cirq_data->ext_irq_end);
-	if (ret)
-		goto out_unmap;
+	अगर (ret)
+		जाओ out_unmap;
 
 	irq_num = cirq_data->ext_irq_end - cirq_data->ext_irq_start + 1;
-	domain = irq_domain_add_hierarchy(domain_parent, 0,
+	करोमुख्य = irq_करोमुख्य_add_hierarchy(करोमुख्य_parent, 0,
 					  irq_num, node,
-					  &cirq_domain_ops, cirq_data);
-	if (!domain) {
+					  &cirq_करोमुख्य_ops, cirq_data);
+	अगर (!करोमुख्य) अणु
 		ret = -ENOMEM;
-		goto out_unmap;
-	}
-	cirq_data->domain = domain;
+		जाओ out_unmap;
+	पूर्ण
+	cirq_data->करोमुख्य = करोमुख्य;
 
 	mtk_cirq_syscore_init();
 
-	return 0;
+	वापस 0;
 
 out_unmap:
 	iounmap(cirq_data->base);
-out_free:
-	kfree(cirq_data);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(cirq_data);
+	वापस ret;
+पूर्ण
 
 IRQCHIP_DECLARE(mtk_cirq, "mediatek,mtk-cirq", mtk_cirq_of_init);

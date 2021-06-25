@@ -1,259 +1,260 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * dvb_frontend.c: DVB frontend tuning interface/thread
+ * dvb_frontend.c: DVB frontend tuning पूर्णांकerface/thपढ़ो
  *
  * Copyright (C) 1999-2001 Ralph  Metzler
  *			   Marcus Metzler
  *			   Holger Waechtler
- *				      for convergence integrated media GmbH
+ *				      क्रम convergence पूर्णांकegrated media GmbH
  *
- * Copyright (C) 2004 Andrew de Quincey (tuning thread cleanup)
+ * Copyright (C) 2004 Andrew de Quincey (tuning thपढ़ो cleanup)
  */
 
 /* Enables DVBv3 compatibility bits at the headers */
-#define __DVB_CORE__
+#घोषणा __DVB_CORE__
 
-#define pr_fmt(fmt) "dvb_frontend: " fmt
+#घोषणा pr_fmt(fmt) "dvb_frontend: " fmt
 
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/sched/signal.h>
-#include <linux/wait.h>
-#include <linux/slab.h>
-#include <linux/poll.h>
-#include <linux/semaphore.h>
-#include <linux/module.h>
-#include <linux/list.h>
-#include <linux/freezer.h>
-#include <linux/jiffies.h>
-#include <linux/kthread.h>
-#include <linux/ktime.h>
-#include <linux/compat.h>
-#include <asm/processor.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/module.h>
+#समावेश <linux/list.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/compat.h>
+#समावेश <यंत्र/processor.h>
 
-#include <media/dvb_frontend.h>
-#include <media/dvbdev.h>
-#include <linux/dvb/version.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvbdev.h>
+#समावेश <linux/dvb/version.h>
 
-static int dvb_frontend_debug;
-static int dvb_shutdown_timeout;
-static int dvb_force_auto_inversion;
-static int dvb_override_tune_delay;
-static int dvb_powerdown_on_sleep = 1;
-static int dvb_mfe_wait_time = 5;
+अटल पूर्णांक dvb_frontend_debug;
+अटल पूर्णांक dvb_shutकरोwn_समयout;
+अटल पूर्णांक dvb_क्रमce_स्वतः_inversion;
+अटल पूर्णांक dvb_override_tune_delay;
+अटल पूर्णांक dvb_घातerकरोwn_on_sleep = 1;
+अटल पूर्णांक dvb_mfe_रुको_समय = 5;
 
-module_param_named(frontend_debug, dvb_frontend_debug, int, 0644);
+module_param_named(frontend_debug, dvb_frontend_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(frontend_debug, "Turn on/off frontend core debugging (default:off).");
-module_param(dvb_shutdown_timeout, int, 0644);
-MODULE_PARM_DESC(dvb_shutdown_timeout, "wait <shutdown_timeout> seconds after close() before suspending hardware");
-module_param(dvb_force_auto_inversion, int, 0644);
-MODULE_PARM_DESC(dvb_force_auto_inversion, "0: normal (default), 1: INVERSION_AUTO forced always");
-module_param(dvb_override_tune_delay, int, 0644);
+module_param(dvb_shutकरोwn_समयout, पूर्णांक, 0644);
+MODULE_PARM_DESC(dvb_shutकरोwn_समयout, "wait <shutdown_timeout> seconds after close() before suspending hardware");
+module_param(dvb_क्रमce_स्वतः_inversion, पूर्णांक, 0644);
+MODULE_PARM_DESC(dvb_क्रमce_स्वतः_inversion, "0: normal (default), 1: INVERSION_AUTO forced always");
+module_param(dvb_override_tune_delay, पूर्णांक, 0644);
 MODULE_PARM_DESC(dvb_override_tune_delay, "0: normal (default), >0 => delay in milliseconds to wait for lock after a tune attempt");
-module_param(dvb_powerdown_on_sleep, int, 0644);
-MODULE_PARM_DESC(dvb_powerdown_on_sleep, "0: do not power down, 1: turn LNB voltage off on sleep (default)");
-module_param(dvb_mfe_wait_time, int, 0644);
-MODULE_PARM_DESC(dvb_mfe_wait_time, "Wait up to <mfe_wait_time> seconds on open() for multi-frontend to become available (default:5 seconds)");
+module_param(dvb_घातerकरोwn_on_sleep, पूर्णांक, 0644);
+MODULE_PARM_DESC(dvb_घातerकरोwn_on_sleep, "0: do not power down, 1: turn LNB voltage off on sleep (default)");
+module_param(dvb_mfe_रुको_समय, पूर्णांक, 0644);
+MODULE_PARM_DESC(dvb_mfe_रुको_समय, "Wait up to <mfe_wait_time> seconds on open() for multi-frontend to become available (default:5 seconds)");
 
-#define dprintk(fmt, arg...) \
-	printk(KERN_DEBUG pr_fmt("%s: " fmt), __func__, ##arg)
+#घोषणा dprपूर्णांकk(fmt, arg...) \
+	prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt), __func__, ##arg)
 
-#define FESTATE_IDLE 1
-#define FESTATE_RETUNE 2
-#define FESTATE_TUNING_FAST 4
-#define FESTATE_TUNING_SLOW 8
-#define FESTATE_TUNED 16
-#define FESTATE_ZIGZAG_FAST 32
-#define FESTATE_ZIGZAG_SLOW 64
-#define FESTATE_DISEQC 128
-#define FESTATE_ERROR 256
-#define FESTATE_WAITFORLOCK (FESTATE_TUNING_FAST | FESTATE_TUNING_SLOW | FESTATE_ZIGZAG_FAST | FESTATE_ZIGZAG_SLOW | FESTATE_DISEQC)
-#define FESTATE_SEARCHING_FAST (FESTATE_TUNING_FAST | FESTATE_ZIGZAG_FAST)
-#define FESTATE_SEARCHING_SLOW (FESTATE_TUNING_SLOW | FESTATE_ZIGZAG_SLOW)
-#define FESTATE_LOSTLOCK (FESTATE_ZIGZAG_FAST | FESTATE_ZIGZAG_SLOW)
+#घोषणा FESTATE_IDLE 1
+#घोषणा FESTATE_RETUNE 2
+#घोषणा FESTATE_TUNING_FAST 4
+#घोषणा FESTATE_TUNING_SLOW 8
+#घोषणा FESTATE_TUNED 16
+#घोषणा FESTATE_ZIGZAG_FAST 32
+#घोषणा FESTATE_ZIGZAG_SLOW 64
+#घोषणा FESTATE_DISEQC 128
+#घोषणा FESTATE_ERROR 256
+#घोषणा FESTATE_WAITFORLOCK (FESTATE_TUNING_FAST | FESTATE_TUNING_SLOW | FESTATE_ZIGZAG_FAST | FESTATE_ZIGZAG_SLOW | FESTATE_DISEQC)
+#घोषणा FESTATE_SEARCHING_FAST (FESTATE_TUNING_FAST | FESTATE_ZIGZAG_FAST)
+#घोषणा FESTATE_SEARCHING_SLOW (FESTATE_TUNING_SLOW | FESTATE_ZIGZAG_SLOW)
+#घोषणा FESTATE_LOSTLOCK (FESTATE_ZIGZAG_FAST | FESTATE_ZIGZAG_SLOW)
 
 /*
  * FESTATE_IDLE. No tuning parameters have been supplied and the loop is idling.
- * FESTATE_RETUNE. Parameters have been supplied, but we have not yet performed the first tune.
+ * FESTATE_RETUNE. Parameters have been supplied, but we have not yet perक्रमmed the first tune.
  * FESTATE_TUNING_FAST. Tuning parameters have been supplied and fast zigzag scan is in progress.
  * FESTATE_TUNING_SLOW. Tuning parameters have been supplied. Fast zigzag failed, so we're trying again, but slower.
  * FESTATE_TUNED. The frontend has successfully locked on.
  * FESTATE_ZIGZAG_FAST. The lock has been lost, and a fast zigzag has been initiated to try and regain it.
  * FESTATE_ZIGZAG_SLOW. The lock has been lost. Fast zigzag has been failed, so we're trying again, but slower.
  * FESTATE_DISEQC. A DISEQC command has just been issued.
- * FESTATE_WAITFORLOCK. When we're waiting for a lock.
- * FESTATE_SEARCHING_FAST. When we're searching for a signal using a fast zigzag scan.
- * FESTATE_SEARCHING_SLOW. When we're searching for a signal using a slow zigzag scan.
+ * FESTATE_WAITFORLOCK. When we're रुकोing क्रम a lock.
+ * FESTATE_SEARCHING_FAST. When we're searching क्रम a संकेत using a fast zigzag scan.
+ * FESTATE_SEARCHING_SLOW. When we're searching क्रम a संकेत using a slow zigzag scan.
  * FESTATE_LOSTLOCK. When the lock has been lost, and we're searching it again.
  */
 
-static DEFINE_MUTEX(frontend_mutex);
+अटल DEFINE_MUTEX(frontend_mutex);
 
-struct dvb_frontend_private {
-	/* thread/frontend values */
-	struct dvb_device *dvbdev;
-	struct dvb_frontend_parameters parameters_out;
-	struct dvb_fe_events events;
-	struct semaphore sem;
-	struct list_head list_head;
-	wait_queue_head_t wait_queue;
-	struct task_struct *thread;
-	unsigned long release_jiffies;
-	unsigned int wakeup;
-	enum fe_status status;
-	unsigned long tune_mode_flags;
-	unsigned int delay;
-	unsigned int reinitialise;
-	int tone;
-	int voltage;
+काष्ठा dvb_frontend_निजी अणु
+	/* thपढ़ो/frontend values */
+	काष्ठा dvb_device *dvbdev;
+	काष्ठा dvb_frontend_parameters parameters_out;
+	काष्ठा dvb_fe_events events;
+	काष्ठा semaphore sem;
+	काष्ठा list_head list_head;
+	रुको_queue_head_t रुको_queue;
+	काष्ठा task_काष्ठा *thपढ़ो;
+	अचिन्हित दीर्घ release_jअगरfies;
+	अचिन्हित पूर्णांक wakeup;
+	क्रमागत fe_status status;
+	अचिन्हित दीर्घ tune_mode_flags;
+	अचिन्हित पूर्णांक delay;
+	अचिन्हित पूर्णांक reinitialise;
+	पूर्णांक tone;
+	पूर्णांक voltage;
 
 	/* swzigzag values */
-	unsigned int state;
-	unsigned int bending;
-	int lnb_drift;
-	unsigned int inversion;
-	unsigned int auto_step;
-	unsigned int auto_sub_step;
-	unsigned int started_auto_step;
-	unsigned int min_delay;
-	unsigned int max_drift;
-	unsigned int step_size;
-	int quality;
-	unsigned int check_wrapped;
-	enum dvbfe_search algo_status;
+	अचिन्हित पूर्णांक state;
+	अचिन्हित पूर्णांक bending;
+	पूर्णांक lnb_drअगरt;
+	अचिन्हित पूर्णांक inversion;
+	अचिन्हित पूर्णांक स्वतः_step;
+	अचिन्हित पूर्णांक स्वतः_sub_step;
+	अचिन्हित पूर्णांक started_स्वतः_step;
+	अचिन्हित पूर्णांक min_delay;
+	अचिन्हित पूर्णांक max_drअगरt;
+	अचिन्हित पूर्णांक step_size;
+	पूर्णांक quality;
+	अचिन्हित पूर्णांक check_wrapped;
+	क्रमागत dvbfe_search algo_status;
 
-#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
-	struct media_pipeline pipe;
-#endif
-};
+#अगर defined(CONFIG_MEDIA_CONTROLLER_DVB)
+	काष्ठा media_pipeline pipe;
+#पूर्ण_अगर
+पूर्ण;
 
-static void dvb_frontend_invoke_release(struct dvb_frontend *fe,
-					void (*release)(struct dvb_frontend *fe));
+अटल व्योम dvb_frontend_invoke_release(काष्ठा dvb_frontend *fe,
+					व्योम (*release)(काष्ठा dvb_frontend *fe));
 
-static void __dvb_frontend_free(struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+अटल व्योम __dvb_frontend_मुक्त(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
 
-	if (fepriv)
-		dvb_free_device(fepriv->dvbdev);
+	अगर (fepriv)
+		dvb_मुक्त_device(fepriv->dvbdev);
 
 	dvb_frontend_invoke_release(fe, fe->ops.release);
 
-	kfree(fepriv);
-}
+	kमुक्त(fepriv);
+पूर्ण
 
-static void dvb_frontend_free(struct kref *ref)
-{
-	struct dvb_frontend *fe =
-		container_of(ref, struct dvb_frontend, refcount);
+अटल व्योम dvb_frontend_मुक्त(काष्ठा kref *ref)
+अणु
+	काष्ठा dvb_frontend *fe =
+		container_of(ref, काष्ठा dvb_frontend, refcount);
 
-	__dvb_frontend_free(fe);
-}
+	__dvb_frontend_मुक्त(fe);
+पूर्ण
 
-static void dvb_frontend_put(struct dvb_frontend *fe)
-{
-	/* call detach before dropping the reference count */
-	if (fe->ops.detach)
+अटल व्योम dvb_frontend_put(काष्ठा dvb_frontend *fe)
+अणु
+	/* call detach beक्रमe dropping the reference count */
+	अगर (fe->ops.detach)
 		fe->ops.detach(fe);
 	/*
-	 * Check if the frontend was registered, as otherwise
+	 * Check अगर the frontend was रेजिस्टरed, as otherwise
 	 * kref was not initialized yet.
 	 */
-	if (fe->frontend_priv)
-		kref_put(&fe->refcount, dvb_frontend_free);
-	else
-		__dvb_frontend_free(fe);
-}
+	अगर (fe->frontend_priv)
+		kref_put(&fe->refcount, dvb_frontend_मुक्त);
+	अन्यथा
+		__dvb_frontend_मुक्त(fe);
+पूर्ण
 
-static void dvb_frontend_get(struct dvb_frontend *fe)
-{
+अटल व्योम dvb_frontend_get(काष्ठा dvb_frontend *fe)
+अणु
 	kref_get(&fe->refcount);
-}
+पूर्ण
 
-static void dvb_frontend_wakeup(struct dvb_frontend *fe);
-static int dtv_get_frontend(struct dvb_frontend *fe,
-			    struct dtv_frontend_properties *c,
-			    struct dvb_frontend_parameters *p_out);
-static int
-dtv_property_legacy_params_sync(struct dvb_frontend *fe,
-				const struct dtv_frontend_properties *c,
-				struct dvb_frontend_parameters *p);
+अटल व्योम dvb_frontend_wakeup(काष्ठा dvb_frontend *fe);
+अटल पूर्णांक dtv_get_frontend(काष्ठा dvb_frontend *fe,
+			    काष्ठा dtv_frontend_properties *c,
+			    काष्ठा dvb_frontend_parameters *p_out);
+अटल पूर्णांक
+dtv_property_legacy_params_sync(काष्ठा dvb_frontend *fe,
+				स्थिर काष्ठा dtv_frontend_properties *c,
+				काष्ठा dvb_frontend_parameters *p);
 
-static bool has_get_frontend(struct dvb_frontend *fe)
-{
-	return fe->ops.get_frontend;
-}
+अटल bool has_get_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	वापस fe->ops.get_frontend;
+पूर्ण
 
 /*
- * Due to DVBv3 API calls, a delivery system should be mapped into one of
- * the 4 DVBv3 delivery systems (FE_QPSK, FE_QAM, FE_OFDM or FE_ATSC),
+ * Due to DVBv3 API calls, a delivery प्रणाली should be mapped पूर्णांकo one of
+ * the 4 DVBv3 delivery प्रणालीs (FE_QPSK, FE_QAM, FE_OFDM or FE_ATSC),
  * otherwise, a DVBv3 call will fail.
  */
-enum dvbv3_emulation_type {
+क्रमागत dvbv3_emulation_type अणु
 	DVBV3_UNKNOWN,
 	DVBV3_QPSK,
 	DVBV3_QAM,
 	DVBV3_OFDM,
 	DVBV3_ATSC,
-};
+पूर्ण;
 
-static enum dvbv3_emulation_type dvbv3_type(u32 delivery_system)
-{
-	switch (delivery_system) {
-	case SYS_DVBC_ANNEX_A:
-	case SYS_DVBC_ANNEX_C:
-		return DVBV3_QAM;
-	case SYS_DVBS:
-	case SYS_DVBS2:
-	case SYS_TURBO:
-	case SYS_ISDBS:
-	case SYS_DSS:
-		return DVBV3_QPSK;
-	case SYS_DVBT:
-	case SYS_DVBT2:
-	case SYS_ISDBT:
-	case SYS_DTMB:
-		return DVBV3_OFDM;
-	case SYS_ATSC:
-	case SYS_ATSCMH:
-	case SYS_DVBC_ANNEX_B:
-		return DVBV3_ATSC;
-	case SYS_UNDEFINED:
-	case SYS_ISDBC:
-	case SYS_DVBH:
-	case SYS_DAB:
-	default:
+अटल क्रमागत dvbv3_emulation_type dvbv3_type(u32 delivery_प्रणाली)
+अणु
+	चयन (delivery_प्रणाली) अणु
+	हाल SYS_DVBC_ANNEX_A:
+	हाल SYS_DVBC_ANNEX_C:
+		वापस DVBV3_QAM;
+	हाल SYS_DVBS:
+	हाल SYS_DVBS2:
+	हाल SYS_TURBO:
+	हाल SYS_ISDBS:
+	हाल SYS_DSS:
+		वापस DVBV3_QPSK;
+	हाल SYS_DVBT:
+	हाल SYS_DVBT2:
+	हाल SYS_ISDBT:
+	हाल SYS_DTMB:
+		वापस DVBV3_OFDM;
+	हाल SYS_ATSC:
+	हाल SYS_ATSCMH:
+	हाल SYS_DVBC_ANNEX_B:
+		वापस DVBV3_ATSC;
+	हाल SYS_UNDEFINED:
+	हाल SYS_ISDBC:
+	हाल SYS_DVBH:
+	हाल SYS_DAB:
+	शेष:
 		/*
 		 * Doesn't know how to emulate those types and/or
 		 * there's no frontend driver from this type yet
 		 * with some emulation code, so, we're not sure yet how
 		 * to handle them, or they're not compatible with a DVBv3 call.
 		 */
-		return DVBV3_UNKNOWN;
-	}
-}
+		वापस DVBV3_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static void dvb_frontend_add_event(struct dvb_frontend *fe,
-				   enum fe_status status)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	struct dvb_fe_events *events = &fepriv->events;
-	struct dvb_frontend_event *e;
-	int wp;
+अटल व्योम dvb_frontend_add_event(काष्ठा dvb_frontend *fe,
+				   क्रमागत fe_status status)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	काष्ठा dvb_fe_events *events = &fepriv->events;
+	काष्ठा dvb_frontend_event *e;
+	पूर्णांक wp;
 
 	dev_dbg(fe->dvb->device, "%s:\n", __func__);
 
-	if ((status & FE_HAS_LOCK) && has_get_frontend(fe))
+	अगर ((status & FE_HAS_LOCK) && has_get_frontend(fe))
 		dtv_get_frontend(fe, c, &fepriv->parameters_out);
 
 	mutex_lock(&events->mtx);
 
 	wp = (events->eventw + 1) % MAX_EVENT;
-	if (wp == events->eventr) {
+	अगर (wp == events->eventr) अणु
 		events->overflow = 1;
 		events->eventr = (events->eventr + 1) % MAX_EVENT;
-	}
+	पूर्ण
 
 	e = &events->events[events->eventw];
 	e->status = status;
@@ -263,396 +264,396 @@ static void dvb_frontend_add_event(struct dvb_frontend *fe,
 
 	mutex_unlock(&events->mtx);
 
-	wake_up_interruptible(&events->wait_queue);
-}
+	wake_up_पूर्णांकerruptible(&events->रुको_queue);
+पूर्ण
 
-static int dvb_frontend_test_event(struct dvb_frontend_private *fepriv,
-				   struct dvb_fe_events *events)
-{
-	int ret;
+अटल पूर्णांक dvb_frontend_test_event(काष्ठा dvb_frontend_निजी *fepriv,
+				   काष्ठा dvb_fe_events *events)
+अणु
+	पूर्णांक ret;
 
 	up(&fepriv->sem);
 	ret = events->eventw != events->eventr;
-	down(&fepriv->sem);
+	करोwn(&fepriv->sem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dvb_frontend_get_event(struct dvb_frontend *fe,
-				  struct dvb_frontend_event *event, int flags)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct dvb_fe_events *events = &fepriv->events;
+अटल पूर्णांक dvb_frontend_get_event(काष्ठा dvb_frontend *fe,
+				  काष्ठा dvb_frontend_event *event, पूर्णांक flags)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा dvb_fe_events *events = &fepriv->events;
 
 	dev_dbg(fe->dvb->device, "%s:\n", __func__);
 
-	if (events->overflow) {
+	अगर (events->overflow) अणु
 		events->overflow = 0;
-		return -EOVERFLOW;
-	}
+		वापस -EOVERFLOW;
+	पूर्ण
 
-	if (events->eventw == events->eventr) {
-		int ret;
+	अगर (events->eventw == events->eventr) अणु
+		पूर्णांक ret;
 
-		if (flags & O_NONBLOCK)
-			return -EWOULDBLOCK;
+		अगर (flags & O_NONBLOCK)
+			वापस -EWOULDBLOCK;
 
-		ret = wait_event_interruptible(events->wait_queue,
+		ret = रुको_event_पूर्णांकerruptible(events->रुको_queue,
 					       dvb_frontend_test_event(fepriv, events));
 
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	mutex_lock(&events->mtx);
 	*event = events->events[events->eventr];
 	events->eventr = (events->eventr + 1) % MAX_EVENT;
 	mutex_unlock(&events->mtx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dvb_frontend_clear_events(struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct dvb_fe_events *events = &fepriv->events;
+अटल व्योम dvb_frontend_clear_events(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा dvb_fe_events *events = &fepriv->events;
 
 	mutex_lock(&events->mtx);
 	events->eventr = events->eventw;
 	mutex_unlock(&events->mtx);
-}
+पूर्ण
 
-static void dvb_frontend_init(struct dvb_frontend *fe)
-{
+अटल व्योम dvb_frontend_init(काष्ठा dvb_frontend *fe)
+अणु
 	dev_dbg(fe->dvb->device,
 		"%s: initialising adapter %i frontend %i (%s)...\n",
 		__func__, fe->dvb->num, fe->id, fe->ops.info.name);
 
-	if (fe->ops.init)
+	अगर (fe->ops.init)
 		fe->ops.init(fe);
-	if (fe->ops.tuner_ops.init) {
-		if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.tuner_ops.init) अणु
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 1);
 		fe->ops.tuner_ops.init(fe);
-		if (fe->ops.i2c_gate_ctrl)
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void dvb_frontend_reinitialise(struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+व्योम dvb_frontend_reinitialise(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
 
 	fepriv->reinitialise = 1;
 	dvb_frontend_wakeup(fe);
-}
+पूर्ण
 EXPORT_SYMBOL(dvb_frontend_reinitialise);
 
-static void dvb_frontend_swzigzag_update_delay(struct dvb_frontend_private *fepriv, int locked)
-{
-	int q2;
-	struct dvb_frontend *fe = fepriv->dvbdev->priv;
+अटल व्योम dvb_frontend_swzigzag_update_delay(काष्ठा dvb_frontend_निजी *fepriv, पूर्णांक locked)
+अणु
+	पूर्णांक q2;
+	काष्ठा dvb_frontend *fe = fepriv->dvbdev->priv;
 
 	dev_dbg(fe->dvb->device, "%s:\n", __func__);
 
-	if (locked)
+	अगर (locked)
 		(fepriv->quality) = (fepriv->quality * 220 + 36 * 256) / 256;
-	else
+	अन्यथा
 		(fepriv->quality) = (fepriv->quality * 220 + 0) / 256;
 
 	q2 = fepriv->quality - 128;
 	q2 *= q2;
 
 	fepriv->delay = fepriv->min_delay + q2 * HZ / (128 * 128);
-}
+पूर्ण
 
 /**
- * dvb_frontend_swzigzag_autotune - Performs automatic twiddling of frontend
+ * dvb_frontend_swzigzag_स्वतःtune - Perक्रमms स्वतःmatic twiddling of frontend
  *	parameters.
  *
  * @fe: The frontend concerned.
- * @check_wrapped: Checks if an iteration has completed.
+ * @check_wrapped: Checks अगर an iteration has completed.
  *		   DO NOT SET ON THE FIRST ATTEMPT.
  *
- * return: Number of complete iterations that have been performed.
+ * वापस: Number of complete iterations that have been perक्रमmed.
  */
-static int dvb_frontend_swzigzag_autotune(struct dvb_frontend *fe, int check_wrapped)
-{
-	int autoinversion;
-	int ready = 0;
-	int fe_set_err = 0;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache, tmp;
-	int original_inversion = c->inversion;
+अटल पूर्णांक dvb_frontend_swzigzag_स्वतःtune(काष्ठा dvb_frontend *fe, पूर्णांक check_wrapped)
+अणु
+	पूर्णांक स्वतःinversion;
+	पूर्णांक पढ़ोy = 0;
+	पूर्णांक fe_set_err = 0;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache, पंचांगp;
+	पूर्णांक original_inversion = c->inversion;
 	u32 original_frequency = c->frequency;
 
-	/* are we using autoinversion? */
-	autoinversion = ((!(fe->ops.info.caps & FE_CAN_INVERSION_AUTO)) &&
+	/* are we using स्वतःinversion? */
+	स्वतःinversion = ((!(fe->ops.info.caps & FE_CAN_INVERSION_AUTO)) &&
 			 (c->inversion == INVERSION_AUTO));
 
 	/* setup parameters correctly */
-	while (!ready) {
-		/* calculate the lnb_drift */
-		fepriv->lnb_drift = fepriv->auto_step * fepriv->step_size;
+	जबतक (!पढ़ोy) अणु
+		/* calculate the lnb_drअगरt */
+		fepriv->lnb_drअगरt = fepriv->स्वतः_step * fepriv->step_size;
 
-		/* wrap the auto_step if we've exceeded the maximum drift */
-		if (fepriv->lnb_drift > fepriv->max_drift) {
-			fepriv->auto_step = 0;
-			fepriv->auto_sub_step = 0;
-			fepriv->lnb_drift = 0;
-		}
+		/* wrap the स्वतः_step अगर we've exceeded the maximum drअगरt */
+		अगर (fepriv->lnb_drअगरt > fepriv->max_drअगरt) अणु
+			fepriv->स्वतः_step = 0;
+			fepriv->स्वतः_sub_step = 0;
+			fepriv->lnb_drअगरt = 0;
+		पूर्ण
 
-		/* perform inversion and +/- zigzag */
-		switch (fepriv->auto_sub_step) {
-		case 0:
-			/* try with the current inversion and current drift setting */
-			ready = 1;
-			break;
+		/* perक्रमm inversion and +/- zigzag */
+		चयन (fepriv->स्वतः_sub_step) अणु
+		हाल 0:
+			/* try with the current inversion and current drअगरt setting */
+			पढ़ोy = 1;
+			अवरोध;
 
-		case 1:
-			if (!autoinversion) break;
-
-			fepriv->inversion = (fepriv->inversion == INVERSION_OFF) ? INVERSION_ON : INVERSION_OFF;
-			ready = 1;
-			break;
-
-		case 2:
-			if (fepriv->lnb_drift == 0) break;
-
-			fepriv->lnb_drift = -fepriv->lnb_drift;
-			ready = 1;
-			break;
-
-		case 3:
-			if (fepriv->lnb_drift == 0) break;
-			if (!autoinversion) break;
+		हाल 1:
+			अगर (!स्वतःinversion) अवरोध;
 
 			fepriv->inversion = (fepriv->inversion == INVERSION_OFF) ? INVERSION_ON : INVERSION_OFF;
-			fepriv->lnb_drift = -fepriv->lnb_drift;
-			ready = 1;
-			break;
+			पढ़ोy = 1;
+			अवरोध;
 
-		default:
-			fepriv->auto_step++;
-			fepriv->auto_sub_step = -1; /* it'll be incremented to 0 in a moment */
-			break;
-		}
+		हाल 2:
+			अगर (fepriv->lnb_drअगरt == 0) अवरोध;
 
-		if (!ready) fepriv->auto_sub_step++;
-	}
+			fepriv->lnb_drअगरt = -fepriv->lnb_drअगरt;
+			पढ़ोy = 1;
+			अवरोध;
 
-	/* if this attempt would hit where we started, indicate a complete
+		हाल 3:
+			अगर (fepriv->lnb_drअगरt == 0) अवरोध;
+			अगर (!स्वतःinversion) अवरोध;
+
+			fepriv->inversion = (fepriv->inversion == INVERSION_OFF) ? INVERSION_ON : INVERSION_OFF;
+			fepriv->lnb_drअगरt = -fepriv->lnb_drअगरt;
+			पढ़ोy = 1;
+			अवरोध;
+
+		शेष:
+			fepriv->स्वतः_step++;
+			fepriv->स्वतः_sub_step = -1; /* it'll be incremented to 0 in a moment */
+			अवरोध;
+		पूर्ण
+
+		अगर (!पढ़ोy) fepriv->स्वतः_sub_step++;
+	पूर्ण
+
+	/* अगर this attempt would hit where we started, indicate a complete
 	 * iteration has occurred */
-	if ((fepriv->auto_step == fepriv->started_auto_step) &&
-	    (fepriv->auto_sub_step == 0) && check_wrapped) {
-		return 1;
-	}
+	अगर ((fepriv->स्वतः_step == fepriv->started_स्वतः_step) &&
+	    (fepriv->स्वतः_sub_step == 0) && check_wrapped) अणु
+		वापस 1;
+	पूर्ण
 
 	dev_dbg(fe->dvb->device,
 		"%s: drift:%i inversion:%i auto_step:%i auto_sub_step:%i started_auto_step:%i\n",
-		__func__, fepriv->lnb_drift, fepriv->inversion,
-		fepriv->auto_step, fepriv->auto_sub_step,
-		fepriv->started_auto_step);
+		__func__, fepriv->lnb_drअगरt, fepriv->inversion,
+		fepriv->स्वतः_step, fepriv->स्वतः_sub_step,
+		fepriv->started_स्वतः_step);
 
 	/* set the frontend itself */
-	c->frequency += fepriv->lnb_drift;
-	if (autoinversion)
+	c->frequency += fepriv->lnb_drअगरt;
+	अगर (स्वतःinversion)
 		c->inversion = fepriv->inversion;
-	tmp = *c;
-	if (fe->ops.set_frontend)
+	पंचांगp = *c;
+	अगर (fe->ops.set_frontend)
 		fe_set_err = fe->ops.set_frontend(fe);
-	*c = tmp;
-	if (fe_set_err < 0) {
+	*c = पंचांगp;
+	अगर (fe_set_err < 0) अणु
 		fepriv->state = FESTATE_ERROR;
-		return fe_set_err;
-	}
+		वापस fe_set_err;
+	पूर्ण
 
 	c->frequency = original_frequency;
 	c->inversion = original_inversion;
 
-	fepriv->auto_sub_step++;
-	return 0;
-}
+	fepriv->स्वतः_sub_step++;
+	वापस 0;
+पूर्ण
 
-static void dvb_frontend_swzigzag(struct dvb_frontend *fe)
-{
-	enum fe_status s = FE_NONE;
-	int retval = 0;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache, tmp;
+अटल व्योम dvb_frontend_swzigzag(काष्ठा dvb_frontend *fe)
+अणु
+	क्रमागत fe_status s = FE_NONE;
+	पूर्णांक retval = 0;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache, पंचांगp;
 
-	if (fepriv->max_drift)
+	अगर (fepriv->max_drअगरt)
 		dev_warn_once(fe->dvb->device,
 			      "Frontend requested software zigzag, but didn't set the frequency step size\n");
 
-	/* if we've got no parameters, just keep idling */
-	if (fepriv->state & FESTATE_IDLE) {
+	/* अगर we've got no parameters, just keep idling */
+	अगर (fepriv->state & FESTATE_IDLE) अणु
 		fepriv->delay = 3 * HZ;
 		fepriv->quality = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* in SCAN mode, we just set the frontend when asked and leave it alone */
-	if (fepriv->tune_mode_flags & FE_TUNE_MODE_ONESHOT) {
-		if (fepriv->state & FESTATE_RETUNE) {
-			tmp = *c;
-			if (fe->ops.set_frontend)
+	अगर (fepriv->tune_mode_flags & FE_TUNE_MODE_ONESHOT) अणु
+		अगर (fepriv->state & FESTATE_RETUNE) अणु
+			पंचांगp = *c;
+			अगर (fe->ops.set_frontend)
 				retval = fe->ops.set_frontend(fe);
-			*c = tmp;
-			if (retval < 0)
+			*c = पंचांगp;
+			अगर (retval < 0)
 				fepriv->state = FESTATE_ERROR;
-			else
+			अन्यथा
 				fepriv->state = FESTATE_TUNED;
-		}
+		पूर्ण
 		fepriv->delay = 3 * HZ;
 		fepriv->quality = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* get the frontend status */
-	if (fepriv->state & FESTATE_RETUNE) {
+	अगर (fepriv->state & FESTATE_RETUNE) अणु
 		s = 0;
-	} else {
-		if (fe->ops.read_status)
-			fe->ops.read_status(fe, &s);
-		if (s != fepriv->status) {
+	पूर्ण अन्यथा अणु
+		अगर (fe->ops.पढ़ो_status)
+			fe->ops.पढ़ो_status(fe, &s);
+		अगर (s != fepriv->status) अणु
 			dvb_frontend_add_event(fe, s);
 			fepriv->status = s;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* if we're not tuned, and we have a lock, move to the TUNED state */
-	if ((fepriv->state & FESTATE_WAITFORLOCK) && (s & FE_HAS_LOCK)) {
+	/* अगर we're not tuned, and we have a lock, move to the TUNED state */
+	अगर ((fepriv->state & FESTATE_WAITFORLOCK) && (s & FE_HAS_LOCK)) अणु
 		dvb_frontend_swzigzag_update_delay(fepriv, s & FE_HAS_LOCK);
 		fepriv->state = FESTATE_TUNED;
 
-		/* if we're tuned, then we have determined the correct inversion */
-		if ((!(fe->ops.info.caps & FE_CAN_INVERSION_AUTO)) &&
-		    (c->inversion == INVERSION_AUTO)) {
+		/* अगर we're tuned, then we have determined the correct inversion */
+		अगर ((!(fe->ops.info.caps & FE_CAN_INVERSION_AUTO)) &&
+		    (c->inversion == INVERSION_AUTO)) अणु
 			c->inversion = fepriv->inversion;
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	/* if we are tuned already, check we're still locked */
-	if (fepriv->state & FESTATE_TUNED) {
+	/* अगर we are tuned alपढ़ोy, check we're still locked */
+	अगर (fepriv->state & FESTATE_TUNED) अणु
 		dvb_frontend_swzigzag_update_delay(fepriv, s & FE_HAS_LOCK);
 
 		/* we're tuned, and the lock is still good... */
-		if (s & FE_HAS_LOCK) {
-			return;
-		} else { /* if we _WERE_ tuned, but now don't have a lock */
+		अगर (s & FE_HAS_LOCK) अणु
+			वापस;
+		पूर्ण अन्यथा अणु /* अगर we _WERE_ tuned, but now करोn't have a lock */
 			fepriv->state = FESTATE_ZIGZAG_FAST;
-			fepriv->started_auto_step = fepriv->auto_step;
+			fepriv->started_स्वतः_step = fepriv->स्वतः_step;
 			fepriv->check_wrapped = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* don't actually do anything if we're in the LOSTLOCK state,
-	 * the frontend is set to FE_CAN_RECOVER, and the max_drift is 0 */
-	if ((fepriv->state & FESTATE_LOSTLOCK) &&
-	    (fe->ops.info.caps & FE_CAN_RECOVER) && (fepriv->max_drift == 0)) {
+	/* करोn't actually do anything if we're in the LOSTLOCK state,
+	 * the frontend is set to FE_CAN_RECOVER, and the max_drअगरt is 0 */
+	अगर ((fepriv->state & FESTATE_LOSTLOCK) &&
+	    (fe->ops.info.caps & FE_CAN_RECOVER) && (fepriv->max_drअगरt == 0)) अणु
 		dvb_frontend_swzigzag_update_delay(fepriv, s & FE_HAS_LOCK);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* don't do anything if we're in the DISEQC state, since this
+	/* करोn't do anything if we're in the DISEQC state, since this
 	 * might be someone with a motorized dish controlled by DISEQC.
 	 * If its actually a re-tune, there will be a SET_FRONTEND soon enough.	*/
-	if (fepriv->state & FESTATE_DISEQC) {
+	अगर (fepriv->state & FESTATE_DISEQC) अणु
 		dvb_frontend_swzigzag_update_delay(fepriv, s & FE_HAS_LOCK);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* if we're in the RETUNE state, set everything up for a brand
+	/* अगर we're in the RETUNE state, set everything up क्रम a bअक्रम
 	 * new scan, keeping the current inversion setting, as the next
 	 * tune is _very_ likely to require the same */
-	if (fepriv->state & FESTATE_RETUNE) {
-		fepriv->lnb_drift = 0;
-		fepriv->auto_step = 0;
-		fepriv->auto_sub_step = 0;
-		fepriv->started_auto_step = 0;
+	अगर (fepriv->state & FESTATE_RETUNE) अणु
+		fepriv->lnb_drअगरt = 0;
+		fepriv->स्वतः_step = 0;
+		fepriv->स्वतः_sub_step = 0;
+		fepriv->started_स्वतः_step = 0;
 		fepriv->check_wrapped = 0;
-	}
+	पूर्ण
 
 	/* fast zigzag. */
-	if ((fepriv->state & FESTATE_SEARCHING_FAST) || (fepriv->state & FESTATE_RETUNE)) {
+	अगर ((fepriv->state & FESTATE_SEARCHING_FAST) || (fepriv->state & FESTATE_RETUNE)) अणु
 		fepriv->delay = fepriv->min_delay;
 
-		/* perform a tune */
-		retval = dvb_frontend_swzigzag_autotune(fe,
+		/* perक्रमm a tune */
+		retval = dvb_frontend_swzigzag_स्वतःtune(fe,
 							fepriv->check_wrapped);
-		if (retval < 0) {
-			return;
-		} else if (retval) {
-			/* OK, if we've run out of trials at the fast speed.
-			 * Drop back to slow for the _next_ attempt */
+		अगर (retval < 0) अणु
+			वापस;
+		पूर्ण अन्यथा अगर (retval) अणु
+			/* OK, अगर we've run out of trials at the fast speed.
+			 * Drop back to slow क्रम the _next_ attempt */
 			fepriv->state = FESTATE_SEARCHING_SLOW;
-			fepriv->started_auto_step = fepriv->auto_step;
-			return;
-		}
+			fepriv->started_स्वतः_step = fepriv->स्वतः_step;
+			वापस;
+		पूर्ण
 		fepriv->check_wrapped = 1;
 
-		/* if we've just re-tuned, enter the ZIGZAG_FAST state.
-		 * This ensures we cannot return from an
-		 * FE_SET_FRONTEND ioctl before the first frontend tune
+		/* अगर we've just re-tuned, enter the ZIGZAG_FAST state.
+		 * This ensures we cannot वापस from an
+		 * FE_SET_FRONTEND ioctl beक्रमe the first frontend tune
 		 * occurs */
-		if (fepriv->state & FESTATE_RETUNE) {
+		अगर (fepriv->state & FESTATE_RETUNE) अणु
 			fepriv->state = FESTATE_TUNING_FAST;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* slow zigzag */
-	if (fepriv->state & FESTATE_SEARCHING_SLOW) {
+	अगर (fepriv->state & FESTATE_SEARCHING_SLOW) अणु
 		dvb_frontend_swzigzag_update_delay(fepriv, s & FE_HAS_LOCK);
 
-		/* Note: don't bother checking for wrapping; we stay in this
+		/* Note: करोn't bother checking क्रम wrapping; we stay in this
 		 * state until we get a lock */
-		dvb_frontend_swzigzag_autotune(fe, 0);
-	}
-}
+		dvb_frontend_swzigzag_स्वतःtune(fe, 0);
+	पूर्ण
+पूर्ण
 
-static int dvb_frontend_is_exiting(struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+अटल पूर्णांक dvb_frontend_is_निकासing(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
 
-	if (fe->exit != DVB_FE_NO_EXIT)
-		return 1;
+	अगर (fe->निकास != DVB_FE_NO_EXIT)
+		वापस 1;
 
-	if (fepriv->dvbdev->writers == 1)
-		if (time_after_eq(jiffies, fepriv->release_jiffies +
-				  dvb_shutdown_timeout * HZ))
-			return 1;
+	अगर (fepriv->dvbdev->ग_लिखोrs == 1)
+		अगर (समय_after_eq(jअगरfies, fepriv->release_jअगरfies +
+				  dvb_shutकरोwn_समयout * HZ))
+			वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_frontend_should_wakeup(struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+अटल पूर्णांक dvb_frontend_should_wakeup(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
 
-	if (fepriv->wakeup) {
+	अगर (fepriv->wakeup) अणु
 		fepriv->wakeup = 0;
-		return 1;
-	}
-	return dvb_frontend_is_exiting(fe);
-}
+		वापस 1;
+	पूर्ण
+	वापस dvb_frontend_is_निकासing(fe);
+पूर्ण
 
-static void dvb_frontend_wakeup(struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+अटल व्योम dvb_frontend_wakeup(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
 
 	fepriv->wakeup = 1;
-	wake_up_interruptible(&fepriv->wait_queue);
-}
+	wake_up_पूर्णांकerruptible(&fepriv->रुको_queue);
+पूर्ण
 
-static int dvb_frontend_thread(void *data)
-{
-	struct dvb_frontend *fe = data;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	enum fe_status s = FE_NONE;
-	enum dvbfe_algo algo;
+अटल पूर्णांक dvb_frontend_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा dvb_frontend *fe = data;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	क्रमागत fe_status s = FE_NONE;
+	क्रमागत dvbfe_algo algo;
 	bool re_tune = false;
 	bool semheld = false;
 
@@ -667,232 +668,232 @@ static int dvb_frontend_thread(void *data)
 
 	dvb_frontend_init(fe);
 
-	set_freezable();
-	while (1) {
-		up(&fepriv->sem);	    /* is locked when we enter the thread... */
+	set_मुक्तzable();
+	जबतक (1) अणु
+		up(&fepriv->sem);	    /* is locked when we enter the thपढ़ो... */
 restart:
-		wait_event_interruptible_timeout(fepriv->wait_queue,
+		रुको_event_पूर्णांकerruptible_समयout(fepriv->रुको_queue,
 						 dvb_frontend_should_wakeup(fe) ||
-						 kthread_should_stop() ||
-						 freezing(current),
+						 kthपढ़ो_should_stop() ||
+						 मुक्तzing(current),
 			fepriv->delay);
 
-		if (kthread_should_stop() || dvb_frontend_is_exiting(fe)) {
-			/* got signal or quitting */
-			if (!down_interruptible(&fepriv->sem))
+		अगर (kthपढ़ो_should_stop() || dvb_frontend_is_निकासing(fe)) अणु
+			/* got संकेत or quitting */
+			अगर (!करोwn_पूर्णांकerruptible(&fepriv->sem))
 				semheld = true;
-			fe->exit = DVB_FE_NORMAL_EXIT;
-			break;
-		}
+			fe->निकास = DVB_FE_NORMAL_EXIT;
+			अवरोध;
+		पूर्ण
 
-		if (try_to_freeze())
-			goto restart;
+		अगर (try_to_मुक्तze())
+			जाओ restart;
 
-		if (down_interruptible(&fepriv->sem))
-			break;
+		अगर (करोwn_पूर्णांकerruptible(&fepriv->sem))
+			अवरोध;
 
-		if (fepriv->reinitialise) {
+		अगर (fepriv->reinitialise) अणु
 			dvb_frontend_init(fe);
-			if (fe->ops.set_tone && fepriv->tone != -1)
+			अगर (fe->ops.set_tone && fepriv->tone != -1)
 				fe->ops.set_tone(fe, fepriv->tone);
-			if (fe->ops.set_voltage && fepriv->voltage != -1)
+			अगर (fe->ops.set_voltage && fepriv->voltage != -1)
 				fe->ops.set_voltage(fe, fepriv->voltage);
 			fepriv->reinitialise = 0;
-		}
+		पूर्ण
 
-		/* do an iteration of the tuning loop */
-		if (fe->ops.get_frontend_algo) {
+		/* करो an iteration of the tuning loop */
+		अगर (fe->ops.get_frontend_algo) अणु
 			algo = fe->ops.get_frontend_algo(fe);
-			switch (algo) {
-			case DVBFE_ALGO_HW:
+			चयन (algo) अणु
+			हाल DVBFE_ALGO_HW:
 				dev_dbg(fe->dvb->device, "%s: Frontend ALGO = DVBFE_ALGO_HW\n", __func__);
 
-				if (fepriv->state & FESTATE_RETUNE) {
+				अगर (fepriv->state & FESTATE_RETUNE) अणु
 					dev_dbg(fe->dvb->device, "%s: Retune requested, FESTATE_RETUNE\n", __func__);
 					re_tune = true;
 					fepriv->state = FESTATE_TUNED;
-				} else {
+				पूर्ण अन्यथा अणु
 					re_tune = false;
-				}
+				पूर्ण
 
-				if (fe->ops.tune)
+				अगर (fe->ops.tune)
 					fe->ops.tune(fe, re_tune, fepriv->tune_mode_flags, &fepriv->delay, &s);
 
-				if (s != fepriv->status && !(fepriv->tune_mode_flags & FE_TUNE_MODE_ONESHOT)) {
+				अगर (s != fepriv->status && !(fepriv->tune_mode_flags & FE_TUNE_MODE_ONESHOT)) अणु
 					dev_dbg(fe->dvb->device, "%s: state changed, adding current state\n", __func__);
 					dvb_frontend_add_event(fe, s);
 					fepriv->status = s;
-				}
-				break;
-			case DVBFE_ALGO_SW:
+				पूर्ण
+				अवरोध;
+			हाल DVBFE_ALGO_SW:
 				dev_dbg(fe->dvb->device, "%s: Frontend ALGO = DVBFE_ALGO_SW\n", __func__);
 				dvb_frontend_swzigzag(fe);
-				break;
-			case DVBFE_ALGO_CUSTOM:
+				अवरोध;
+			हाल DVBFE_ALGO_CUSTOM:
 				dev_dbg(fe->dvb->device, "%s: Frontend ALGO = DVBFE_ALGO_CUSTOM, state=%d\n", __func__, fepriv->state);
-				if (fepriv->state & FESTATE_RETUNE) {
+				अगर (fepriv->state & FESTATE_RETUNE) अणु
 					dev_dbg(fe->dvb->device, "%s: Retune requested, FESTAT_RETUNE\n", __func__);
 					fepriv->state = FESTATE_TUNED;
-				}
-				/* Case where we are going to search for a carrier
-				 * User asked us to retune again for some reason, possibly
+				पूर्ण
+				/* Case where we are going to search क्रम a carrier
+				 * User asked us to retune again क्रम some reason, possibly
 				 * requesting a search with a new set of parameters
 				 */
-				if (fepriv->algo_status & DVBFE_ALGO_SEARCH_AGAIN) {
-					if (fe->ops.search) {
+				अगर (fepriv->algo_status & DVBFE_ALGO_SEARCH_AGAIN) अणु
+					अगर (fe->ops.search) अणु
 						fepriv->algo_status = fe->ops.search(fe);
-						/* We did do a search as was requested, the flags are
+						/* We did करो a search as was requested, the flags are
 						 * now unset as well and has the flags wrt to search.
 						 */
-					} else {
+					पूर्ण अन्यथा अणु
 						fepriv->algo_status &= ~DVBFE_ALGO_SEARCH_AGAIN;
-					}
-				}
-				/* Track the carrier if the search was successful */
-				if (fepriv->algo_status != DVBFE_ALGO_SEARCH_SUCCESS) {
+					पूर्ण
+				पूर्ण
+				/* Track the carrier अगर the search was successful */
+				अगर (fepriv->algo_status != DVBFE_ALGO_SEARCH_SUCCESS) अणु
 					fepriv->algo_status |= DVBFE_ALGO_SEARCH_AGAIN;
 					fepriv->delay = HZ / 2;
-				}
+				पूर्ण
 				dtv_property_legacy_params_sync(fe, c, &fepriv->parameters_out);
-				fe->ops.read_status(fe, &s);
-				if (s != fepriv->status) {
+				fe->ops.पढ़ो_status(fe, &s);
+				अगर (s != fepriv->status) अणु
 					dvb_frontend_add_event(fe, s); /* update event list */
 					fepriv->status = s;
-					if (!(s & FE_HAS_LOCK)) {
+					अगर (!(s & FE_HAS_LOCK)) अणु
 						fepriv->delay = HZ / 10;
 						fepriv->algo_status |= DVBFE_ALGO_SEARCH_AGAIN;
-					} else {
+					पूर्ण अन्यथा अणु
 						fepriv->delay = 60 * HZ;
-					}
-				}
-				break;
-			default:
+					पूर्ण
+				पूर्ण
+				अवरोध;
+			शेष:
 				dev_dbg(fe->dvb->device, "%s: UNDEFINED ALGO !\n", __func__);
-				break;
-			}
-		} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			dvb_frontend_swzigzag(fe);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (dvb_powerdown_on_sleep) {
-		if (fe->ops.set_voltage)
+	अगर (dvb_घातerकरोwn_on_sleep) अणु
+		अगर (fe->ops.set_voltage)
 			fe->ops.set_voltage(fe, SEC_VOLTAGE_OFF);
-		if (fe->ops.tuner_ops.sleep) {
-			if (fe->ops.i2c_gate_ctrl)
+		अगर (fe->ops.tuner_ops.sleep) अणु
+			अगर (fe->ops.i2c_gate_ctrl)
 				fe->ops.i2c_gate_ctrl(fe, 1);
 			fe->ops.tuner_ops.sleep(fe);
-			if (fe->ops.i2c_gate_ctrl)
+			अगर (fe->ops.i2c_gate_ctrl)
 				fe->ops.i2c_gate_ctrl(fe, 0);
-		}
-		if (fe->ops.sleep)
+		पूर्ण
+		अगर (fe->ops.sleep)
 			fe->ops.sleep(fe);
-	}
+	पूर्ण
 
-	fepriv->thread = NULL;
-	if (kthread_should_stop())
-		fe->exit = DVB_FE_DEVICE_REMOVED;
-	else
-		fe->exit = DVB_FE_NO_EXIT;
+	fepriv->thपढ़ो = शून्य;
+	अगर (kthपढ़ो_should_stop())
+		fe->निकास = DVB_FE_DEVICE_REMOVED;
+	अन्यथा
+		fe->निकास = DVB_FE_NO_EXIT;
 	mb();
 
-	if (semheld)
+	अगर (semheld)
 		up(&fepriv->sem);
 	dvb_frontend_wakeup(fe);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dvb_frontend_stop(struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+अटल व्योम dvb_frontend_stop(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
 
 	dev_dbg(fe->dvb->device, "%s:\n", __func__);
 
-	if (fe->exit != DVB_FE_DEVICE_REMOVED)
-		fe->exit = DVB_FE_NORMAL_EXIT;
+	अगर (fe->निकास != DVB_FE_DEVICE_REMOVED)
+		fe->निकास = DVB_FE_NORMAL_EXIT;
 	mb();
 
-	if (!fepriv->thread)
-		return;
+	अगर (!fepriv->thपढ़ो)
+		वापस;
 
-	kthread_stop(fepriv->thread);
+	kthपढ़ो_stop(fepriv->thपढ़ो);
 
 	sema_init(&fepriv->sem, 1);
 	fepriv->state = FESTATE_IDLE;
 
-	/* paranoia check in case a signal arrived */
-	if (fepriv->thread)
+	/* paranoia check in हाल a संकेत arrived */
+	अगर (fepriv->thपढ़ो)
 		dev_warn(fe->dvb->device,
 			 "dvb_frontend_stop: warning: thread %p won't exit\n",
-			 fepriv->thread);
-}
+			 fepriv->thपढ़ो);
+पूर्ण
 
 /*
- * Sleep for the amount of time given by add_usec parameter
+ * Sleep क्रम the amount of समय given by add_usec parameter
  *
  * This needs to be as precise as possible, as it affects the detection of
- * the dish tone command at the satellite subsystem. The precision is improved
- * by using a scheduled msleep followed by udelay for the remainder.
+ * the dish tone command at the satellite subप्रणाली. The precision is improved
+ * by using a scheduled msleep followed by udelay क्रम the reमुख्यder.
  */
-void dvb_frontend_sleep_until(ktime_t *waketime, u32 add_usec)
-{
+व्योम dvb_frontend_sleep_until(kसमय_प्रकार *wakeसमय, u32 add_usec)
+अणु
 	s32 delta;
 
-	*waketime = ktime_add_us(*waketime, add_usec);
-	delta = ktime_us_delta(ktime_get_boottime(), *waketime);
-	if (delta > 2500) {
+	*wakeसमय = kसमय_add_us(*wakeसमय, add_usec);
+	delta = kसमय_us_delta(kसमय_get_bootसमय(), *wakeसमय);
+	अगर (delta > 2500) अणु
 		msleep((delta - 1500) / 1000);
-		delta = ktime_us_delta(ktime_get_boottime(), *waketime);
-	}
-	if (delta > 0)
+		delta = kसमय_us_delta(kसमय_get_bootसमय(), *wakeसमय);
+	पूर्ण
+	अगर (delta > 0)
 		udelay(delta);
-}
+पूर्ण
 EXPORT_SYMBOL(dvb_frontend_sleep_until);
 
-static int dvb_frontend_start(struct dvb_frontend *fe)
-{
-	int ret;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct task_struct *fe_thread;
+अटल पूर्णांक dvb_frontend_start(काष्ठा dvb_frontend *fe)
+अणु
+	पूर्णांक ret;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा task_काष्ठा *fe_thपढ़ो;
 
 	dev_dbg(fe->dvb->device, "%s:\n", __func__);
 
-	if (fepriv->thread) {
-		if (fe->exit == DVB_FE_NO_EXIT)
-			return 0;
-		else
+	अगर (fepriv->thपढ़ो) अणु
+		अगर (fe->निकास == DVB_FE_NO_EXIT)
+			वापस 0;
+		अन्यथा
 			dvb_frontend_stop(fe);
-	}
+	पूर्ण
 
-	if (signal_pending(current))
-		return -EINTR;
-	if (down_interruptible(&fepriv->sem))
-		return -EINTR;
+	अगर (संकेत_pending(current))
+		वापस -EINTR;
+	अगर (करोwn_पूर्णांकerruptible(&fepriv->sem))
+		वापस -EINTR;
 
 	fepriv->state = FESTATE_IDLE;
-	fe->exit = DVB_FE_NO_EXIT;
-	fepriv->thread = NULL;
+	fe->निकास = DVB_FE_NO_EXIT;
+	fepriv->thपढ़ो = शून्य;
 	mb();
 
-	fe_thread = kthread_run(dvb_frontend_thread, fe,
+	fe_thपढ़ो = kthपढ़ो_run(dvb_frontend_thपढ़ो, fe,
 				"kdvb-ad-%i-fe-%i", fe->dvb->num, fe->id);
-	if (IS_ERR(fe_thread)) {
-		ret = PTR_ERR(fe_thread);
+	अगर (IS_ERR(fe_thपढ़ो)) अणु
+		ret = PTR_ERR(fe_thपढ़ो);
 		dev_warn(fe->dvb->device,
 			 "dvb_frontend_start: failed to start kthread (%d)\n",
 			 ret);
 		up(&fepriv->sem);
-		return ret;
-	}
-	fepriv->thread = fe_thread;
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	fepriv->thपढ़ो = fe_thपढ़ो;
+	वापस 0;
+पूर्ण
 
-static void dvb_frontend_get_frequency_limits(struct dvb_frontend *fe,
+अटल व्योम dvb_frontend_get_frequency_limits(काष्ठा dvb_frontend *fe,
 					      u32 *freq_min, u32 *freq_max,
 					      u32 *tolerance)
-{
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अणु
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u32 tuner_min = fe->ops.tuner_ops.info.frequency_min_hz;
 	u32 tuner_max = fe->ops.tuner_ops.info.frequency_max_hz;
 	u32 frontend_min = fe->ops.info.frequency_min_hz;
@@ -900,14 +901,14 @@ static void dvb_frontend_get_frequency_limits(struct dvb_frontend *fe,
 
 	*freq_min = max(frontend_min, tuner_min);
 
-	if (frontend_max == 0)
+	अगर (frontend_max == 0)
 		*freq_max = tuner_max;
-	else if (tuner_max == 0)
+	अन्यथा अगर (tuner_max == 0)
 		*freq_max = frontend_max;
-	else
+	अन्यथा
 		*freq_max = min(frontend_max, tuner_max);
 
-	if (*freq_min == 0 || *freq_max == 0)
+	अगर (*freq_min == 0 || *freq_max == 0)
 		dev_warn(fe->dvb->device,
 			 "DVB: adapter %i frontend %u frequency limits undefined - fix the driver\n",
 			 fe->dvb->num, fe->id);
@@ -915,103 +916,103 @@ static void dvb_frontend_get_frequency_limits(struct dvb_frontend *fe,
 	dev_dbg(fe->dvb->device, "frequency interval: tuner: %u...%u, frontend: %u...%u",
 		tuner_min, tuner_max, frontend_min, frontend_max);
 
-	/* If the standard is for satellite, convert frequencies to kHz */
-	switch (c->delivery_system) {
-	case SYS_DVBS:
-	case SYS_DVBS2:
-	case SYS_TURBO:
-	case SYS_ISDBS:
+	/* If the standard is क्रम satellite, convert frequencies to kHz */
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_DVBS:
+	हाल SYS_DVBS2:
+	हाल SYS_TURBO:
+	हाल SYS_ISDBS:
 		*freq_min /= kHz;
 		*freq_max /= kHz;
-		if (tolerance)
+		अगर (tolerance)
 			*tolerance = fe->ops.info.frequency_tolerance_hz / kHz;
 
-		break;
-	default:
-		if (tolerance)
+		अवरोध;
+	शेष:
+		अगर (tolerance)
 			*tolerance = fe->ops.info.frequency_tolerance_hz;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static u32 dvb_frontend_get_stepsize(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल u32 dvb_frontend_get_stepsize(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u32 fe_step = fe->ops.info.frequency_stepsize_hz;
 	u32 tuner_step = fe->ops.tuner_ops.info.frequency_step_hz;
 	u32 step = max(fe_step, tuner_step);
 
-	switch (c->delivery_system) {
-	case SYS_DVBS:
-	case SYS_DVBS2:
-	case SYS_TURBO:
-	case SYS_ISDBS:
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_DVBS:
+	हाल SYS_DVBS2:
+	हाल SYS_TURBO:
+	हाल SYS_ISDBS:
 		step /= kHz;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return step;
-}
+	वापस step;
+पूर्ण
 
-static int dvb_frontend_check_parameters(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक dvb_frontend_check_parameters(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u32 freq_min;
 	u32 freq_max;
 
 	/* range check: frequency */
-	dvb_frontend_get_frequency_limits(fe, &freq_min, &freq_max, NULL);
-	if ((freq_min && c->frequency < freq_min) ||
-	    (freq_max && c->frequency > freq_max)) {
+	dvb_frontend_get_frequency_limits(fe, &freq_min, &freq_max, शून्य);
+	अगर ((freq_min && c->frequency < freq_min) ||
+	    (freq_max && c->frequency > freq_max)) अणु
 		dev_warn(fe->dvb->device, "DVB: adapter %i frontend %i frequency %u out of range (%u..%u)\n",
 			 fe->dvb->num, fe->id, c->frequency,
 			 freq_min, freq_max);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* range check: symbol rate */
-	switch (c->delivery_system) {
-	case SYS_DVBS:
-	case SYS_DVBS2:
-	case SYS_TURBO:
-	case SYS_DVBC_ANNEX_A:
-	case SYS_DVBC_ANNEX_C:
-		if ((fe->ops.info.symbol_rate_min &&
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_DVBS:
+	हाल SYS_DVBS2:
+	हाल SYS_TURBO:
+	हाल SYS_DVBC_ANNEX_A:
+	हाल SYS_DVBC_ANNEX_C:
+		अगर ((fe->ops.info.symbol_rate_min &&
 		     c->symbol_rate < fe->ops.info.symbol_rate_min) ||
 		    (fe->ops.info.symbol_rate_max &&
-		     c->symbol_rate > fe->ops.info.symbol_rate_max)) {
+		     c->symbol_rate > fe->ops.info.symbol_rate_max)) अणु
 			dev_warn(fe->dvb->device, "DVB: adapter %i frontend %i symbol rate %u out of range (%u..%u)\n",
 				 fe->dvb->num, fe->id, c->symbol_rate,
 				 fe->ops.info.symbol_rate_min,
 				 fe->ops.info.symbol_rate_max);
-			return -EINVAL;
-		}
-		break;
-	default:
-		break;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_frontend_clear_cache(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	int i;
+अटल पूर्णांक dvb_frontend_clear_cache(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	पूर्णांक i;
 	u32 delsys;
 
-	delsys = c->delivery_system;
-	memset(c, 0, offsetof(struct dtv_frontend_properties, strength));
-	c->delivery_system = delsys;
+	delsys = c->delivery_प्रणाली;
+	स_रखो(c, 0, दुरत्व(काष्ठा dtv_frontend_properties, strength));
+	c->delivery_प्रणाली = delsys;
 
 	dev_dbg(fe->dvb->device, "%s: Clearing cache for delivery system %d\n",
-		__func__, c->delivery_system);
+		__func__, c->delivery_प्रणाली);
 
 	c->transmission_mode = TRANSMISSION_MODE_AUTO;
 	c->bandwidth_hz = 0;	/* AUTO */
-	c->guard_interval = GUARD_INTERVAL_AUTO;
+	c->guard_पूर्णांकerval = GUARD_INTERVAL_AUTO;
 	c->hierarchy = HIERARCHY_AUTO;
 	c->symbol_rate = 0;
 	c->code_rate_HP = FEC_AUTO;
@@ -1028,51 +1029,51 @@ static int dvb_frontend_clear_cache(struct dvb_frontend *fe)
 	c->isdbt_sb_segment_idx = 0;
 	c->isdbt_sb_segment_count = 0;
 	c->isdbt_layer_enabled = 7;	/* All layers (A,B,C) */
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		c->layer[i].fec = FEC_AUTO;
 		c->layer[i].modulation = QAM_AUTO;
-		c->layer[i].interleaving = 0;
+		c->layer[i].पूर्णांकerleaving = 0;
 		c->layer[i].segment_count = 0;
-	}
+	पूर्ण
 
 	c->stream_id = NO_STREAM_ID_FILTER;
-	c->scrambling_sequence_index = 0;/* default sequence */
+	c->scrambling_sequence_index = 0;/* शेष sequence */
 
-	switch (c->delivery_system) {
-	case SYS_DVBS:
-	case SYS_DVBS2:
-	case SYS_TURBO:
-		c->modulation = QPSK;   /* implied for DVB-S in legacy API */
-		c->rolloff = ROLLOFF_35;/* implied for DVB-S */
-		break;
-	case SYS_ATSC:
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_DVBS:
+	हाल SYS_DVBS2:
+	हाल SYS_TURBO:
+		c->modulation = QPSK;   /* implied क्रम DVB-S in legacy API */
+		c->rolloff = ROLLOFF_35;/* implied क्रम DVB-S */
+		अवरोध;
+	हाल SYS_ATSC:
 		c->modulation = VSB_8;
-		break;
-	case SYS_ISDBS:
+		अवरोध;
+	हाल SYS_ISDBS:
 		c->symbol_rate = 28860000;
 		c->rolloff = ROLLOFF_35;
 		c->bandwidth_hz = c->symbol_rate / 100 * 135;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		c->modulation = QAM_AUTO;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	c->lna = LNA_AUTO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define _DTV_CMD(n, s, b) \
-[n] = { \
+#घोषणा _DTV_CMD(n, s, b) \
+[n] = अणु \
 	.name = #n, \
 	.cmd  = n, \
 	.set  = s,\
 	.buffer = b \
-}
+पूर्ण
 
-struct dtv_cmds_h {
-	char	*name;		/* A display name for debugging purposes */
+काष्ठा dtv_cmds_h अणु
+	अक्षर	*name;		/* A display name क्रम debugging purposes */
 
 	__u32	cmd;		/* A unique ID */
 
@@ -1080,9 +1081,9 @@ struct dtv_cmds_h {
 	__u32	set:1;		/* Either a set or get property */
 	__u32	buffer:1;	/* Does this property use the buffer? */
 	__u32	reserved:30;	/* Align */
-};
+पूर्ण;
 
-static struct dtv_cmds_h dtv_cmds[DTV_MAX_COMMAND + 1] = {
+अटल काष्ठा dtv_cmds_h dtv_cmds[DTV_MAX_COMMAND + 1] = अणु
 	_DTV_CMD(DTV_TUNE, 1, 0),
 	_DTV_CMD(DTV_CLEAR, 1, 0),
 
@@ -1162,411 +1163,411 @@ static struct dtv_cmds_h dtv_cmds[DTV_MAX_COMMAND + 1] = {
 	_DTV_CMD(DTV_STAT_POST_TOTAL_BIT_COUNT, 0, 0),
 	_DTV_CMD(DTV_STAT_ERROR_BLOCK_COUNT, 0, 0),
 	_DTV_CMD(DTV_STAT_TOTAL_BLOCK_COUNT, 0, 0),
-};
+पूर्ण;
 
-/* Synchronise the legacy tuning parameters into the cache, so that demodulator
+/* Synchronise the legacy tuning parameters पूर्णांकo the cache, so that demodulator
  * drivers can use a single set_frontend tuning function, regardless of whether
- * it's being used for the legacy or new API, reducing code and complexity.
+ * it's being used क्रम the legacy or new API, reducing code and complनिकासy.
  */
-static int dtv_property_cache_sync(struct dvb_frontend *fe,
-				   struct dtv_frontend_properties *c,
-				   const struct dvb_frontend_parameters *p)
-{
+अटल पूर्णांक dtv_property_cache_sync(काष्ठा dvb_frontend *fe,
+				   काष्ठा dtv_frontend_properties *c,
+				   स्थिर काष्ठा dvb_frontend_parameters *p)
+अणु
 	c->frequency = p->frequency;
 	c->inversion = p->inversion;
 
-	switch (dvbv3_type(c->delivery_system)) {
-	case DVBV3_QPSK:
+	चयन (dvbv3_type(c->delivery_प्रणाली)) अणु
+	हाल DVBV3_QPSK:
 		dev_dbg(fe->dvb->device, "%s: Preparing QPSK req\n", __func__);
 		c->symbol_rate = p->u.qpsk.symbol_rate;
 		c->fec_inner = p->u.qpsk.fec_inner;
-		break;
-	case DVBV3_QAM:
+		अवरोध;
+	हाल DVBV3_QAM:
 		dev_dbg(fe->dvb->device, "%s: Preparing QAM req\n", __func__);
 		c->symbol_rate = p->u.qam.symbol_rate;
 		c->fec_inner = p->u.qam.fec_inner;
 		c->modulation = p->u.qam.modulation;
-		break;
-	case DVBV3_OFDM:
+		अवरोध;
+	हाल DVBV3_OFDM:
 		dev_dbg(fe->dvb->device, "%s: Preparing OFDM req\n", __func__);
 
-		switch (p->u.ofdm.bandwidth) {
-		case BANDWIDTH_10_MHZ:
+		चयन (p->u.ofdm.bandwidth) अणु
+		हाल BANDWIDTH_10_MHZ:
 			c->bandwidth_hz = 10000000;
-			break;
-		case BANDWIDTH_8_MHZ:
+			अवरोध;
+		हाल BANDWIDTH_8_MHZ:
 			c->bandwidth_hz = 8000000;
-			break;
-		case BANDWIDTH_7_MHZ:
+			अवरोध;
+		हाल BANDWIDTH_7_MHZ:
 			c->bandwidth_hz = 7000000;
-			break;
-		case BANDWIDTH_6_MHZ:
+			अवरोध;
+		हाल BANDWIDTH_6_MHZ:
 			c->bandwidth_hz = 6000000;
-			break;
-		case BANDWIDTH_5_MHZ:
+			अवरोध;
+		हाल BANDWIDTH_5_MHZ:
 			c->bandwidth_hz = 5000000;
-			break;
-		case BANDWIDTH_1_712_MHZ:
+			अवरोध;
+		हाल BANDWIDTH_1_712_MHZ:
 			c->bandwidth_hz = 1712000;
-			break;
-		case BANDWIDTH_AUTO:
+			अवरोध;
+		हाल BANDWIDTH_AUTO:
 			c->bandwidth_hz = 0;
-		}
+		पूर्ण
 
 		c->code_rate_HP = p->u.ofdm.code_rate_HP;
 		c->code_rate_LP = p->u.ofdm.code_rate_LP;
-		c->modulation = p->u.ofdm.constellation;
+		c->modulation = p->u.ofdm.स्थिरellation;
 		c->transmission_mode = p->u.ofdm.transmission_mode;
-		c->guard_interval = p->u.ofdm.guard_interval;
-		c->hierarchy = p->u.ofdm.hierarchy_information;
-		break;
-	case DVBV3_ATSC:
+		c->guard_पूर्णांकerval = p->u.ofdm.guard_पूर्णांकerval;
+		c->hierarchy = p->u.ofdm.hierarchy_inक्रमmation;
+		अवरोध;
+	हाल DVBV3_ATSC:
 		dev_dbg(fe->dvb->device, "%s: Preparing ATSC req\n", __func__);
 		c->modulation = p->u.vsb.modulation;
-		if (c->delivery_system == SYS_ATSCMH)
-			break;
-		if ((c->modulation == VSB_8) || (c->modulation == VSB_16))
-			c->delivery_system = SYS_ATSC;
-		else
-			c->delivery_system = SYS_DVBC_ANNEX_B;
-		break;
-	case DVBV3_UNKNOWN:
+		अगर (c->delivery_प्रणाली == SYS_ATSCMH)
+			अवरोध;
+		अगर ((c->modulation == VSB_8) || (c->modulation == VSB_16))
+			c->delivery_प्रणाली = SYS_ATSC;
+		अन्यथा
+			c->delivery_प्रणाली = SYS_DVBC_ANNEX_B;
+		अवरोध;
+	हाल DVBV3_UNKNOWN:
 		dev_err(fe->dvb->device,
 			"%s: doesn't know how to handle a DVBv3 call to delivery system %i\n",
-			__func__, c->delivery_system);
-		return -EINVAL;
-	}
+			__func__, c->delivery_प्रणाली);
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Ensure the cached values are set correctly in the frontend
- * legacy tuning structures, for the advanced tuning API.
+ * legacy tuning काष्ठाures, क्रम the advanced tuning API.
  */
-static int
-dtv_property_legacy_params_sync(struct dvb_frontend *fe,
-				const struct dtv_frontend_properties *c,
-				struct dvb_frontend_parameters *p)
-{
+अटल पूर्णांक
+dtv_property_legacy_params_sync(काष्ठा dvb_frontend *fe,
+				स्थिर काष्ठा dtv_frontend_properties *c,
+				काष्ठा dvb_frontend_parameters *p)
+अणु
 	p->frequency = c->frequency;
 	p->inversion = c->inversion;
 
-	switch (dvbv3_type(c->delivery_system)) {
-	case DVBV3_UNKNOWN:
+	चयन (dvbv3_type(c->delivery_प्रणाली)) अणु
+	हाल DVBV3_UNKNOWN:
 		dev_err(fe->dvb->device,
 			"%s: doesn't know how to handle a DVBv3 call to delivery system %i\n",
-			__func__, c->delivery_system);
-		return -EINVAL;
-	case DVBV3_QPSK:
+			__func__, c->delivery_प्रणाली);
+		वापस -EINVAL;
+	हाल DVBV3_QPSK:
 		dev_dbg(fe->dvb->device, "%s: Preparing QPSK req\n", __func__);
 		p->u.qpsk.symbol_rate = c->symbol_rate;
 		p->u.qpsk.fec_inner = c->fec_inner;
-		break;
-	case DVBV3_QAM:
+		अवरोध;
+	हाल DVBV3_QAM:
 		dev_dbg(fe->dvb->device, "%s: Preparing QAM req\n", __func__);
 		p->u.qam.symbol_rate = c->symbol_rate;
 		p->u.qam.fec_inner = c->fec_inner;
 		p->u.qam.modulation = c->modulation;
-		break;
-	case DVBV3_OFDM:
+		अवरोध;
+	हाल DVBV3_OFDM:
 		dev_dbg(fe->dvb->device, "%s: Preparing OFDM req\n", __func__);
-		switch (c->bandwidth_hz) {
-		case 10000000:
+		चयन (c->bandwidth_hz) अणु
+		हाल 10000000:
 			p->u.ofdm.bandwidth = BANDWIDTH_10_MHZ;
-			break;
-		case 8000000:
+			अवरोध;
+		हाल 8000000:
 			p->u.ofdm.bandwidth = BANDWIDTH_8_MHZ;
-			break;
-		case 7000000:
+			अवरोध;
+		हाल 7000000:
 			p->u.ofdm.bandwidth = BANDWIDTH_7_MHZ;
-			break;
-		case 6000000:
+			अवरोध;
+		हाल 6000000:
 			p->u.ofdm.bandwidth = BANDWIDTH_6_MHZ;
-			break;
-		case 5000000:
+			अवरोध;
+		हाल 5000000:
 			p->u.ofdm.bandwidth = BANDWIDTH_5_MHZ;
-			break;
-		case 1712000:
+			अवरोध;
+		हाल 1712000:
 			p->u.ofdm.bandwidth = BANDWIDTH_1_712_MHZ;
-			break;
-		case 0:
-		default:
+			अवरोध;
+		हाल 0:
+		शेष:
 			p->u.ofdm.bandwidth = BANDWIDTH_AUTO;
-		}
+		पूर्ण
 		p->u.ofdm.code_rate_HP = c->code_rate_HP;
 		p->u.ofdm.code_rate_LP = c->code_rate_LP;
-		p->u.ofdm.constellation = c->modulation;
+		p->u.ofdm.स्थिरellation = c->modulation;
 		p->u.ofdm.transmission_mode = c->transmission_mode;
-		p->u.ofdm.guard_interval = c->guard_interval;
-		p->u.ofdm.hierarchy_information = c->hierarchy;
-		break;
-	case DVBV3_ATSC:
+		p->u.ofdm.guard_पूर्णांकerval = c->guard_पूर्णांकerval;
+		p->u.ofdm.hierarchy_inक्रमmation = c->hierarchy;
+		अवरोध;
+	हाल DVBV3_ATSC:
 		dev_dbg(fe->dvb->device, "%s: Preparing VSB req\n", __func__);
 		p->u.vsb.modulation = c->modulation;
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * dtv_get_frontend - calls a callback for retrieving DTV parameters
- * @fe:		struct dvb_frontend pointer
- * @c:		struct dtv_frontend_properties pointer (DVBv5 cache)
- * @p_out:	struct dvb_frontend_parameters pointer (DVBv3 FE struct)
+ * dtv_get_frontend - calls a callback क्रम retrieving DTV parameters
+ * @fe:		काष्ठा dvb_frontend poपूर्णांकer
+ * @c:		काष्ठा dtv_frontend_properties poपूर्णांकer (DVBv5 cache)
+ * @p_out:	काष्ठा dvb_frontend_parameters poपूर्णांकer (DVBv3 FE काष्ठा)
  *
  * This routine calls either the DVBv3 or DVBv5 get_frontend call.
- * If c is not null, it will update the DVBv5 cache struct pointed by it.
- * If p_out is not null, it will update the DVBv3 params pointed by it.
+ * If c is not null, it will update the DVBv5 cache काष्ठा poपूर्णांकed by it.
+ * If p_out is not null, it will update the DVBv3 params poपूर्णांकed by it.
  */
-static int dtv_get_frontend(struct dvb_frontend *fe,
-			    struct dtv_frontend_properties *c,
-			    struct dvb_frontend_parameters *p_out)
-{
-	int r;
+अटल पूर्णांक dtv_get_frontend(काष्ठा dvb_frontend *fe,
+			    काष्ठा dtv_frontend_properties *c,
+			    काष्ठा dvb_frontend_parameters *p_out)
+अणु
+	पूर्णांक r;
 
-	if (fe->ops.get_frontend) {
+	अगर (fe->ops.get_frontend) अणु
 		r = fe->ops.get_frontend(fe, c);
-		if (unlikely(r < 0))
-			return r;
-		if (p_out)
+		अगर (unlikely(r < 0))
+			वापस r;
+		अगर (p_out)
 			dtv_property_legacy_params_sync(fe, c, p_out);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* As everything is in cache, get_frontend fops are always supported */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_frontend_handle_ioctl(struct file *file,
-				     unsigned int cmd, void *parg);
+अटल पूर्णांक dvb_frontend_handle_ioctl(काष्ठा file *file,
+				     अचिन्हित पूर्णांक cmd, व्योम *parg);
 
-static int dtv_property_process_get(struct dvb_frontend *fe,
-				    const struct dtv_frontend_properties *c,
-				    struct dtv_property *tvp,
-				    struct file *file)
-{
-	int ncaps;
+अटल पूर्णांक dtv_property_process_get(काष्ठा dvb_frontend *fe,
+				    स्थिर काष्ठा dtv_frontend_properties *c,
+				    काष्ठा dtv_property *tvp,
+				    काष्ठा file *file)
+अणु
+	पूर्णांक ncaps;
 
-	switch (tvp->cmd) {
-	case DTV_ENUM_DELSYS:
+	चयन (tvp->cmd) अणु
+	हाल DTV_ENUM_DELSYS:
 		ncaps = 0;
-		while (ncaps < MAX_DELSYS && fe->ops.delsys[ncaps]) {
+		जबतक (ncaps < MAX_DELSYS && fe->ops.delsys[ncaps]) अणु
 			tvp->u.buffer.data[ncaps] = fe->ops.delsys[ncaps];
 			ncaps++;
-		}
+		पूर्ण
 		tvp->u.buffer.len = ncaps;
-		break;
-	case DTV_FREQUENCY:
+		अवरोध;
+	हाल DTV_FREQUENCY:
 		tvp->u.data = c->frequency;
-		break;
-	case DTV_MODULATION:
+		अवरोध;
+	हाल DTV_MODULATION:
 		tvp->u.data = c->modulation;
-		break;
-	case DTV_BANDWIDTH_HZ:
+		अवरोध;
+	हाल DTV_BANDWIDTH_HZ:
 		tvp->u.data = c->bandwidth_hz;
-		break;
-	case DTV_INVERSION:
+		अवरोध;
+	हाल DTV_INVERSION:
 		tvp->u.data = c->inversion;
-		break;
-	case DTV_SYMBOL_RATE:
+		अवरोध;
+	हाल DTV_SYMBOL_RATE:
 		tvp->u.data = c->symbol_rate;
-		break;
-	case DTV_INNER_FEC:
+		अवरोध;
+	हाल DTV_INNER_FEC:
 		tvp->u.data = c->fec_inner;
-		break;
-	case DTV_PILOT:
+		अवरोध;
+	हाल DTV_PILOT:
 		tvp->u.data = c->pilot;
-		break;
-	case DTV_ROLLOFF:
+		अवरोध;
+	हाल DTV_ROLLOFF:
 		tvp->u.data = c->rolloff;
-		break;
-	case DTV_DELIVERY_SYSTEM:
-		tvp->u.data = c->delivery_system;
-		break;
-	case DTV_VOLTAGE:
+		अवरोध;
+	हाल DTV_DELIVERY_SYSTEM:
+		tvp->u.data = c->delivery_प्रणाली;
+		अवरोध;
+	हाल DTV_VOLTAGE:
 		tvp->u.data = c->voltage;
-		break;
-	case DTV_TONE:
+		अवरोध;
+	हाल DTV_TONE:
 		tvp->u.data = c->sectone;
-		break;
-	case DTV_API_VERSION:
+		अवरोध;
+	हाल DTV_API_VERSION:
 		tvp->u.data = (DVB_API_VERSION << 8) | DVB_API_VERSION_MINOR;
-		break;
-	case DTV_CODE_RATE_HP:
+		अवरोध;
+	हाल DTV_CODE_RATE_HP:
 		tvp->u.data = c->code_rate_HP;
-		break;
-	case DTV_CODE_RATE_LP:
+		अवरोध;
+	हाल DTV_CODE_RATE_LP:
 		tvp->u.data = c->code_rate_LP;
-		break;
-	case DTV_GUARD_INTERVAL:
-		tvp->u.data = c->guard_interval;
-		break;
-	case DTV_TRANSMISSION_MODE:
+		अवरोध;
+	हाल DTV_GUARD_INTERVAL:
+		tvp->u.data = c->guard_पूर्णांकerval;
+		अवरोध;
+	हाल DTV_TRANSMISSION_MODE:
 		tvp->u.data = c->transmission_mode;
-		break;
-	case DTV_HIERARCHY:
+		अवरोध;
+	हाल DTV_HIERARCHY:
 		tvp->u.data = c->hierarchy;
-		break;
-	case DTV_INTERLEAVING:
-		tvp->u.data = c->interleaving;
-		break;
+		अवरोध;
+	हाल DTV_INTERLEAVING:
+		tvp->u.data = c->पूर्णांकerleaving;
+		अवरोध;
 
 	/* ISDB-T Support here */
-	case DTV_ISDBT_PARTIAL_RECEPTION:
+	हाल DTV_ISDBT_PARTIAL_RECEPTION:
 		tvp->u.data = c->isdbt_partial_reception;
-		break;
-	case DTV_ISDBT_SOUND_BROADCASTING:
+		अवरोध;
+	हाल DTV_ISDBT_SOUND_BROADCASTING:
 		tvp->u.data = c->isdbt_sb_mode;
-		break;
-	case DTV_ISDBT_SB_SUBCHANNEL_ID:
+		अवरोध;
+	हाल DTV_ISDBT_SB_SUBCHANNEL_ID:
 		tvp->u.data = c->isdbt_sb_subchannel;
-		break;
-	case DTV_ISDBT_SB_SEGMENT_IDX:
+		अवरोध;
+	हाल DTV_ISDBT_SB_SEGMENT_IDX:
 		tvp->u.data = c->isdbt_sb_segment_idx;
-		break;
-	case DTV_ISDBT_SB_SEGMENT_COUNT:
+		अवरोध;
+	हाल DTV_ISDBT_SB_SEGMENT_COUNT:
 		tvp->u.data = c->isdbt_sb_segment_count;
-		break;
-	case DTV_ISDBT_LAYER_ENABLED:
+		अवरोध;
+	हाल DTV_ISDBT_LAYER_ENABLED:
 		tvp->u.data = c->isdbt_layer_enabled;
-		break;
-	case DTV_ISDBT_LAYERA_FEC:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERA_FEC:
 		tvp->u.data = c->layer[0].fec;
-		break;
-	case DTV_ISDBT_LAYERA_MODULATION:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERA_MODULATION:
 		tvp->u.data = c->layer[0].modulation;
-		break;
-	case DTV_ISDBT_LAYERA_SEGMENT_COUNT:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERA_SEGMENT_COUNT:
 		tvp->u.data = c->layer[0].segment_count;
-		break;
-	case DTV_ISDBT_LAYERA_TIME_INTERLEAVING:
-		tvp->u.data = c->layer[0].interleaving;
-		break;
-	case DTV_ISDBT_LAYERB_FEC:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERA_TIME_INTERLEAVING:
+		tvp->u.data = c->layer[0].पूर्णांकerleaving;
+		अवरोध;
+	हाल DTV_ISDBT_LAYERB_FEC:
 		tvp->u.data = c->layer[1].fec;
-		break;
-	case DTV_ISDBT_LAYERB_MODULATION:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERB_MODULATION:
 		tvp->u.data = c->layer[1].modulation;
-		break;
-	case DTV_ISDBT_LAYERB_SEGMENT_COUNT:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERB_SEGMENT_COUNT:
 		tvp->u.data = c->layer[1].segment_count;
-		break;
-	case DTV_ISDBT_LAYERB_TIME_INTERLEAVING:
-		tvp->u.data = c->layer[1].interleaving;
-		break;
-	case DTV_ISDBT_LAYERC_FEC:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERB_TIME_INTERLEAVING:
+		tvp->u.data = c->layer[1].पूर्णांकerleaving;
+		अवरोध;
+	हाल DTV_ISDBT_LAYERC_FEC:
 		tvp->u.data = c->layer[2].fec;
-		break;
-	case DTV_ISDBT_LAYERC_MODULATION:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERC_MODULATION:
 		tvp->u.data = c->layer[2].modulation;
-		break;
-	case DTV_ISDBT_LAYERC_SEGMENT_COUNT:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERC_SEGMENT_COUNT:
 		tvp->u.data = c->layer[2].segment_count;
-		break;
-	case DTV_ISDBT_LAYERC_TIME_INTERLEAVING:
-		tvp->u.data = c->layer[2].interleaving;
-		break;
+		अवरोध;
+	हाल DTV_ISDBT_LAYERC_TIME_INTERLEAVING:
+		tvp->u.data = c->layer[2].पूर्णांकerleaving;
+		अवरोध;
 
 	/* Multistream support */
-	case DTV_STREAM_ID:
-	case DTV_DVBT2_PLP_ID_LEGACY:
+	हाल DTV_STREAM_ID:
+	हाल DTV_DVBT2_PLP_ID_LEGACY:
 		tvp->u.data = c->stream_id;
-		break;
+		अवरोध;
 
 	/* Physical layer scrambling support */
-	case DTV_SCRAMBLING_SEQUENCE_INDEX:
+	हाल DTV_SCRAMBLING_SEQUENCE_INDEX:
 		tvp->u.data = c->scrambling_sequence_index;
-		break;
+		अवरोध;
 
 	/* ATSC-MH */
-	case DTV_ATSCMH_FIC_VER:
+	हाल DTV_ATSCMH_FIC_VER:
 		tvp->u.data = fe->dtv_property_cache.atscmh_fic_ver;
-		break;
-	case DTV_ATSCMH_PARADE_ID:
+		अवरोध;
+	हाल DTV_ATSCMH_PARADE_ID:
 		tvp->u.data = fe->dtv_property_cache.atscmh_parade_id;
-		break;
-	case DTV_ATSCMH_NOG:
+		अवरोध;
+	हाल DTV_ATSCMH_NOG:
 		tvp->u.data = fe->dtv_property_cache.atscmh_nog;
-		break;
-	case DTV_ATSCMH_TNOG:
+		अवरोध;
+	हाल DTV_ATSCMH_TNOG:
 		tvp->u.data = fe->dtv_property_cache.atscmh_tnog;
-		break;
-	case DTV_ATSCMH_SGN:
+		अवरोध;
+	हाल DTV_ATSCMH_SGN:
 		tvp->u.data = fe->dtv_property_cache.atscmh_sgn;
-		break;
-	case DTV_ATSCMH_PRC:
+		अवरोध;
+	हाल DTV_ATSCMH_PRC:
 		tvp->u.data = fe->dtv_property_cache.atscmh_prc;
-		break;
-	case DTV_ATSCMH_RS_FRAME_MODE:
+		अवरोध;
+	हाल DTV_ATSCMH_RS_FRAME_MODE:
 		tvp->u.data = fe->dtv_property_cache.atscmh_rs_frame_mode;
-		break;
-	case DTV_ATSCMH_RS_FRAME_ENSEMBLE:
+		अवरोध;
+	हाल DTV_ATSCMH_RS_FRAME_ENSEMBLE:
 		tvp->u.data = fe->dtv_property_cache.atscmh_rs_frame_ensemble;
-		break;
-	case DTV_ATSCMH_RS_CODE_MODE_PRI:
+		अवरोध;
+	हाल DTV_ATSCMH_RS_CODE_MODE_PRI:
 		tvp->u.data = fe->dtv_property_cache.atscmh_rs_code_mode_pri;
-		break;
-	case DTV_ATSCMH_RS_CODE_MODE_SEC:
+		अवरोध;
+	हाल DTV_ATSCMH_RS_CODE_MODE_SEC:
 		tvp->u.data = fe->dtv_property_cache.atscmh_rs_code_mode_sec;
-		break;
-	case DTV_ATSCMH_SCCC_BLOCK_MODE:
+		अवरोध;
+	हाल DTV_ATSCMH_SCCC_BLOCK_MODE:
 		tvp->u.data = fe->dtv_property_cache.atscmh_sccc_block_mode;
-		break;
-	case DTV_ATSCMH_SCCC_CODE_MODE_A:
+		अवरोध;
+	हाल DTV_ATSCMH_SCCC_CODE_MODE_A:
 		tvp->u.data = fe->dtv_property_cache.atscmh_sccc_code_mode_a;
-		break;
-	case DTV_ATSCMH_SCCC_CODE_MODE_B:
+		अवरोध;
+	हाल DTV_ATSCMH_SCCC_CODE_MODE_B:
 		tvp->u.data = fe->dtv_property_cache.atscmh_sccc_code_mode_b;
-		break;
-	case DTV_ATSCMH_SCCC_CODE_MODE_C:
+		अवरोध;
+	हाल DTV_ATSCMH_SCCC_CODE_MODE_C:
 		tvp->u.data = fe->dtv_property_cache.atscmh_sccc_code_mode_c;
-		break;
-	case DTV_ATSCMH_SCCC_CODE_MODE_D:
+		अवरोध;
+	हाल DTV_ATSCMH_SCCC_CODE_MODE_D:
 		tvp->u.data = fe->dtv_property_cache.atscmh_sccc_code_mode_d;
-		break;
+		अवरोध;
 
-	case DTV_LNA:
+	हाल DTV_LNA:
 		tvp->u.data = c->lna;
-		break;
+		अवरोध;
 
 	/* Fill quality measures */
-	case DTV_STAT_SIGNAL_STRENGTH:
+	हाल DTV_STAT_SIGNAL_STRENGTH:
 		tvp->u.st = c->strength;
-		break;
-	case DTV_STAT_CNR:
+		अवरोध;
+	हाल DTV_STAT_CNR:
 		tvp->u.st = c->cnr;
-		break;
-	case DTV_STAT_PRE_ERROR_BIT_COUNT:
+		अवरोध;
+	हाल DTV_STAT_PRE_ERROR_BIT_COUNT:
 		tvp->u.st = c->pre_bit_error;
-		break;
-	case DTV_STAT_PRE_TOTAL_BIT_COUNT:
+		अवरोध;
+	हाल DTV_STAT_PRE_TOTAL_BIT_COUNT:
 		tvp->u.st = c->pre_bit_count;
-		break;
-	case DTV_STAT_POST_ERROR_BIT_COUNT:
+		अवरोध;
+	हाल DTV_STAT_POST_ERROR_BIT_COUNT:
 		tvp->u.st = c->post_bit_error;
-		break;
-	case DTV_STAT_POST_TOTAL_BIT_COUNT:
+		अवरोध;
+	हाल DTV_STAT_POST_TOTAL_BIT_COUNT:
 		tvp->u.st = c->post_bit_count;
-		break;
-	case DTV_STAT_ERROR_BLOCK_COUNT:
+		अवरोध;
+	हाल DTV_STAT_ERROR_BLOCK_COUNT:
 		tvp->u.st = c->block_error;
-		break;
-	case DTV_STAT_TOTAL_BLOCK_COUNT:
+		अवरोध;
+	हाल DTV_STAT_TOTAL_BLOCK_COUNT:
 		tvp->u.st = c->block_count;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(fe->dvb->device,
 			"%s: FE property %d doesn't exist\n",
 			__func__, tvp->cmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!dtv_cmds[tvp->cmd].buffer)
+	अगर (!dtv_cmds[tvp->cmd].buffer)
 		dev_dbg(fe->dvb->device,
 			"%s: GET cmd 0x%08x (%s) = 0x%08x\n",
 			__func__, tvp->cmd, dtv_cmds[tvp->cmd].name,
 			tvp->u.data);
-	else
+	अन्यथा
 		dev_dbg(fe->dvb->device,
 			"%s: GET cmd 0x%08x (%s) len %d: %*ph\n",
 			__func__,
@@ -1574,43 +1575,43 @@ static int dtv_property_process_get(struct dvb_frontend *fe,
 			tvp->u.buffer.len,
 			tvp->u.buffer.len, tvp->u.buffer.data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dtv_set_frontend(struct dvb_frontend *fe);
+अटल पूर्णांक dtv_set_frontend(काष्ठा dvb_frontend *fe);
 
-static bool is_dvbv3_delsys(u32 delsys)
-{
-	return (delsys == SYS_DVBT) || (delsys == SYS_DVBC_ANNEX_A) ||
+अटल bool is_dvbv3_delsys(u32 delsys)
+अणु
+	वापस (delsys == SYS_DVBT) || (delsys == SYS_DVBC_ANNEX_A) ||
 	       (delsys == SYS_DVBS) || (delsys == SYS_ATSC);
-}
+पूर्ण
 
 /**
- * emulate_delivery_system - emulate a DVBv5 delivery system with a DVBv3 type
- * @fe:			struct frontend;
- * @delsys:			DVBv5 type that will be used for emulation
+ * emulate_delivery_प्रणाली - emulate a DVBv5 delivery प्रणाली with a DVBv3 type
+ * @fe:			काष्ठा frontend;
+ * @delsys:			DVBv5 type that will be used क्रम emulation
  *
- * Provides emulation for delivery systems that are compatible with the old
- * DVBv3 call. Among its usages, it provices support for ISDB-T, and allows
- * using a DVB-S2 only frontend just like it were a DVB-S, if the frontend
+ * Provides emulation क्रम delivery प्रणालीs that are compatible with the old
+ * DVBv3 call. Among its usages, it provices support क्रम ISDB-T, and allows
+ * using a DVB-S2 only frontend just like it were a DVB-S, अगर the frontend
  * parameters are compatible with DVB-S spec.
  */
-static int emulate_delivery_system(struct dvb_frontend *fe, u32 delsys)
-{
-	int i;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक emulate_delivery_प्रणाली(काष्ठा dvb_frontend *fe, u32 delsys)
+अणु
+	पूर्णांक i;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 
-	c->delivery_system = delsys;
+	c->delivery_प्रणाली = delsys;
 
 	/*
-	 * If the call is for ISDB-T, put it into full-seg, auto mode, TV
+	 * If the call is क्रम ISDB-T, put it पूर्णांकo full-seg, स्वतः mode, TV
 	 */
-	if (c->delivery_system == SYS_ISDBT) {
+	अगर (c->delivery_प्रणाली == SYS_ISDBT) अणु
 		dev_dbg(fe->dvb->device,
 			"%s: Using defaults for SYS_ISDBT\n",
 			__func__);
 
-		if (!c->bandwidth_hz)
+		अगर (!c->bandwidth_hz)
 			c->bandwidth_hz = 6000000;
 
 		c->isdbt_partial_reception = 0;
@@ -1619,267 +1620,267 @@ static int emulate_delivery_system(struct dvb_frontend *fe, u32 delsys)
 		c->isdbt_sb_segment_idx = 0;
 		c->isdbt_sb_segment_count = 0;
 		c->isdbt_layer_enabled = 7;
-		for (i = 0; i < 3; i++) {
+		क्रम (i = 0; i < 3; i++) अणु
 			c->layer[i].fec = FEC_AUTO;
 			c->layer[i].modulation = QAM_AUTO;
-			c->layer[i].interleaving = 0;
+			c->layer[i].पूर्णांकerleaving = 0;
 			c->layer[i].segment_count = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	dev_dbg(fe->dvb->device, "%s: change delivery system on cache to %d\n",
-		__func__, c->delivery_system);
+		__func__, c->delivery_प्रणाली);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * dvbv5_set_delivery_system - Sets the delivery system for a DVBv5 API call
- * @fe:			frontend struct
- * @desired_system:	delivery system requested by the user
+ * dvbv5_set_delivery_प्रणाली - Sets the delivery प्रणाली क्रम a DVBv5 API call
+ * @fe:			frontend काष्ठा
+ * @desired_प्रणाली:	delivery प्रणाली requested by the user
  *
- * A DVBv5 call know what's the desired system it wants. So, set it.
+ * A DVBv5 call know what's the desired प्रणाली it wants. So, set it.
  *
  * There are, however, a few known issues with early DVBv5 applications that
  * are also handled by this logic:
  *
- * 1) Some early apps use SYS_UNDEFINED as the desired delivery system.
- *    This is an API violation, but, as we don't want to break userspace,
- *    convert it to the first supported delivery system.
- * 2) Some apps might be using a DVBv5 call in a wrong way, passing, for
+ * 1) Some early apps use SYS_UNDEFINED as the desired delivery प्रणाली.
+ *    This is an API violation, but, as we करोn't want to अवरोध userspace,
+ *    convert it to the first supported delivery प्रणाली.
+ * 2) Some apps might be using a DVBv5 call in a wrong way, passing, क्रम
  *    example, SYS_DVBT instead of SYS_ISDBT. This is because early usage of
  *    ISDB-T provided backward compat with DVB-T.
  */
-static int dvbv5_set_delivery_system(struct dvb_frontend *fe,
-				     u32 desired_system)
-{
-	int ncaps;
+अटल पूर्णांक dvbv5_set_delivery_प्रणाली(काष्ठा dvb_frontend *fe,
+				     u32 desired_प्रणाली)
+अणु
+	पूर्णांक ncaps;
 	u32 delsys = SYS_UNDEFINED;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	enum dvbv3_emulation_type type;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	क्रमागत dvbv3_emulation_type type;
 
 	/*
 	 * It was reported that some old DVBv5 applications were
-	 * filling delivery_system with SYS_UNDEFINED. If this happens,
+	 * filling delivery_प्रणाली with SYS_UNDEFINED. If this happens,
 	 * assume that the application wants to use the first supported
-	 * delivery system.
+	 * delivery प्रणाली.
 	 */
-	if (desired_system == SYS_UNDEFINED)
-		desired_system = fe->ops.delsys[0];
+	अगर (desired_प्रणाली == SYS_UNDEFINED)
+		desired_प्रणाली = fe->ops.delsys[0];
 
 	/*
 	 * This is a DVBv5 call. So, it likely knows the supported
-	 * delivery systems. So, check if the desired delivery system is
+	 * delivery प्रणालीs. So, check अगर the desired delivery प्रणाली is
 	 * supported
 	 */
 	ncaps = 0;
-	while (ncaps < MAX_DELSYS && fe->ops.delsys[ncaps]) {
-		if (fe->ops.delsys[ncaps] == desired_system) {
-			c->delivery_system = desired_system;
+	जबतक (ncaps < MAX_DELSYS && fe->ops.delsys[ncaps]) अणु
+		अगर (fe->ops.delsys[ncaps] == desired_प्रणाली) अणु
+			c->delivery_प्रणाली = desired_प्रणाली;
 			dev_dbg(fe->dvb->device,
 				"%s: Changing delivery system to %d\n",
-				__func__, desired_system);
-			return 0;
-		}
+				__func__, desired_प्रणाली);
+			वापस 0;
+		पूर्ण
 		ncaps++;
-	}
+	पूर्ण
 
 	/*
-	 * The requested delivery system isn't supported. Maybe userspace
-	 * is requesting a DVBv3 compatible delivery system.
+	 * The requested delivery प्रणाली isn't supported. Maybe userspace
+	 * is requesting a DVBv3 compatible delivery प्रणाली.
 	 *
-	 * The emulation only works if the desired system is one of the
-	 * delivery systems supported by DVBv3 API
+	 * The emulation only works अगर the desired प्रणाली is one of the
+	 * delivery प्रणालीs supported by DVBv3 API
 	 */
-	if (!is_dvbv3_delsys(desired_system)) {
+	अगर (!is_dvbv3_delsys(desired_प्रणाली)) अणु
 		dev_dbg(fe->dvb->device,
 			"%s: Delivery system %d not supported.\n",
-			__func__, desired_system);
-		return -EINVAL;
-	}
+			__func__, desired_प्रणाली);
+		वापस -EINVAL;
+	पूर्ण
 
-	type = dvbv3_type(desired_system);
+	type = dvbv3_type(desired_प्रणाली);
 
 	/*
-	* Get the last non-DVBv3 delivery system that has the same type
-	* of the desired system
+	* Get the last non-DVBv3 delivery प्रणाली that has the same type
+	* of the desired प्रणाली
 	*/
 	ncaps = 0;
-	while (ncaps < MAX_DELSYS && fe->ops.delsys[ncaps]) {
-		if (dvbv3_type(fe->ops.delsys[ncaps]) == type)
+	जबतक (ncaps < MAX_DELSYS && fe->ops.delsys[ncaps]) अणु
+		अगर (dvbv3_type(fe->ops.delsys[ncaps]) == type)
 			delsys = fe->ops.delsys[ncaps];
 		ncaps++;
-	}
+	पूर्ण
 
-	/* There's nothing compatible with the desired delivery system */
-	if (delsys == SYS_UNDEFINED) {
+	/* There's nothing compatible with the desired delivery प्रणाली */
+	अगर (delsys == SYS_UNDEFINED) अणु
 		dev_dbg(fe->dvb->device,
 			"%s: Delivery system %d not supported on emulation mode.\n",
-			__func__, desired_system);
-		return -EINVAL;
-	}
+			__func__, desired_प्रणाली);
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(fe->dvb->device,
 		"%s: Using delivery system %d emulated as if it were %d\n",
-		__func__, delsys, desired_system);
+		__func__, delsys, desired_प्रणाली);
 
-	return emulate_delivery_system(fe, desired_system);
-}
+	वापस emulate_delivery_प्रणाली(fe, desired_प्रणाली);
+पूर्ण
 
 /**
- * dvbv3_set_delivery_system - Sets the delivery system for a DVBv3 API call
- * @fe:	frontend struct
+ * dvbv3_set_delivery_प्रणाली - Sets the delivery प्रणाली क्रम a DVBv3 API call
+ * @fe:	frontend काष्ठा
  *
- * A DVBv3 call doesn't know what's the desired system it wants. It also
- * doesn't allow to switch between different types. Due to that, userspace
+ * A DVBv3 call करोesn't know what's the desired प्रणाली it wants. It also
+ * करोesn't allow to चयन between dअगरferent types. Due to that, userspace
  * should use DVBv5 instead.
- * However, in order to avoid breaking userspace API, limited backward
+ * However, in order to aव्योम अवरोधing userspace API, limited backward
  * compatibility support is provided.
  *
- * There are some delivery systems that are incompatible with DVBv3 calls.
+ * There are some delivery प्रणालीs that are incompatible with DVBv3 calls.
  *
- * This routine should work fine for frontends that support just one delivery
- * system.
+ * This routine should work fine क्रम frontends that support just one delivery
+ * प्रणाली.
  *
  * For frontends that support multiple frontends:
- * 1) It defaults to use the first supported delivery system. There's an
- *    userspace application that allows changing it at runtime;
+ * 1) It शेषs to use the first supported delivery प्रणाली. There's an
+ *    userspace application that allows changing it at runसमय;
  *
- * 2) If the current delivery system is not compatible with DVBv3, it gets
+ * 2) If the current delivery प्रणाली is not compatible with DVBv3, it माला_लो
  *    the first one that it is compatible.
  *
- * NOTE: in order for this to work with applications like Kaffeine that
- *	uses a DVBv5 call for DVB-S2 and a DVBv3 call to go back to
+ * NOTE: in order क्रम this to work with applications like Kaffeine that
+ *	uses a DVBv5 call क्रम DVB-S2 and a DVBv3 call to go back to
  *	DVB-S, drivers that support both DVB-S and DVB-S2 should have the
- *	SYS_DVBS entry before the SYS_DVBS2, otherwise it won't switch back
+ *	SYS_DVBS entry beक्रमe the SYS_DVBS2, otherwise it won't चयन back
  *	to DVB-S.
  */
-static int dvbv3_set_delivery_system(struct dvb_frontend *fe)
-{
-	int ncaps;
+अटल पूर्णांक dvbv3_set_delivery_प्रणाली(काष्ठा dvb_frontend *fe)
+अणु
+	पूर्णांक ncaps;
 	u32 delsys = SYS_UNDEFINED;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 
-	/* If not set yet, defaults to the first supported delivery system */
-	if (c->delivery_system == SYS_UNDEFINED)
-		c->delivery_system = fe->ops.delsys[0];
+	/* If not set yet, शेषs to the first supported delivery प्रणाली */
+	अगर (c->delivery_प्रणाली == SYS_UNDEFINED)
+		c->delivery_प्रणाली = fe->ops.delsys[0];
 
 	/*
-	 * Trivial case: just use the current one, if it already a DVBv3
-	 * delivery system
+	 * Trivial हाल: just use the current one, अगर it alपढ़ोy a DVBv3
+	 * delivery प्रणाली
 	 */
-	if (is_dvbv3_delsys(c->delivery_system)) {
+	अगर (is_dvbv3_delsys(c->delivery_प्रणाली)) अणु
 		dev_dbg(fe->dvb->device,
 			"%s: Using delivery system to %d\n",
-			__func__, c->delivery_system);
-		return 0;
-	}
+			__func__, c->delivery_प्रणाली);
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * Seek for the first delivery system that it is compatible with a
+	 * Seek क्रम the first delivery प्रणाली that it is compatible with a
 	 * DVBv3 standard
 	 */
 	ncaps = 0;
-	while (ncaps < MAX_DELSYS && fe->ops.delsys[ncaps]) {
-		if (dvbv3_type(fe->ops.delsys[ncaps]) != DVBV3_UNKNOWN) {
+	जबतक (ncaps < MAX_DELSYS && fe->ops.delsys[ncaps]) अणु
+		अगर (dvbv3_type(fe->ops.delsys[ncaps]) != DVBV3_UNKNOWN) अणु
 			delsys = fe->ops.delsys[ncaps];
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ncaps++;
-	}
-	if (delsys == SYS_UNDEFINED) {
+	पूर्ण
+	अगर (delsys == SYS_UNDEFINED) अणु
 		dev_dbg(fe->dvb->device,
 			"%s: Couldn't find a delivery system that works with FE_SET_FRONTEND\n",
 			__func__);
-		return -EINVAL;
-	}
-	return emulate_delivery_system(fe, delsys);
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस emulate_delivery_प्रणाली(fe, delsys);
+पूर्ण
 
-static void prepare_tuning_algo_parameters(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct dvb_frontend_tune_settings fetunesettings = { 0 };
+अटल व्योम prepare_tuning_algo_parameters(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा dvb_frontend_tune_settings fetunesettings = अणु 0 पूर्ण;
 
-	/* get frontend-specific tuning settings */
-	if (fe->ops.get_tune_settings && (fe->ops.get_tune_settings(fe, &fetunesettings) == 0)) {
+	/* get frontend-specअगरic tuning settings */
+	अगर (fe->ops.get_tune_settings && (fe->ops.get_tune_settings(fe, &fetunesettings) == 0)) अणु
 		fepriv->min_delay = (fetunesettings.min_delay_ms * HZ) / 1000;
-		fepriv->max_drift = fetunesettings.max_drift;
+		fepriv->max_drअगरt = fetunesettings.max_drअगरt;
 		fepriv->step_size = fetunesettings.step_size;
-	} else {
-		/* default values */
-		switch (c->delivery_system) {
-		case SYS_DVBS:
-		case SYS_DVBS2:
-		case SYS_ISDBS:
-		case SYS_TURBO:
-		case SYS_DVBC_ANNEX_A:
-		case SYS_DVBC_ANNEX_C:
+	पूर्ण अन्यथा अणु
+		/* शेष values */
+		चयन (c->delivery_प्रणाली) अणु
+		हाल SYS_DVBS:
+		हाल SYS_DVBS2:
+		हाल SYS_ISDBS:
+		हाल SYS_TURBO:
+		हाल SYS_DVBC_ANNEX_A:
+		हाल SYS_DVBC_ANNEX_C:
 			fepriv->min_delay = HZ / 20;
 			fepriv->step_size = c->symbol_rate / 16000;
-			fepriv->max_drift = c->symbol_rate / 2000;
-			break;
-		case SYS_DVBT:
-		case SYS_DVBT2:
-		case SYS_ISDBT:
-		case SYS_DTMB:
+			fepriv->max_drअगरt = c->symbol_rate / 2000;
+			अवरोध;
+		हाल SYS_DVBT:
+		हाल SYS_DVBT2:
+		हाल SYS_ISDBT:
+		हाल SYS_DTMB:
 			fepriv->min_delay = HZ / 20;
 			fepriv->step_size = dvb_frontend_get_stepsize(fe) * 2;
-			fepriv->max_drift = fepriv->step_size + 1;
-			break;
-		default:
+			fepriv->max_drअगरt = fepriv->step_size + 1;
+			अवरोध;
+		शेष:
 			/*
-			 * FIXME: This sounds wrong! if freqency_stepsize is
+			 * FIXME: This sounds wrong! अगर freqency_stepsize is
 			 * defined by the frontend, why not use it???
 			 */
 			fepriv->min_delay = HZ / 20;
 			fepriv->step_size = 0; /* no zigzag */
-			fepriv->max_drift = 0;
-			break;
-		}
-	}
-	if (dvb_override_tune_delay > 0)
+			fepriv->max_drअगरt = 0;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (dvb_override_tune_delay > 0)
 		fepriv->min_delay = (dvb_override_tune_delay * HZ) / 1000;
-}
+पूर्ण
 
 /**
  * dtv_property_process_set -  Sets a single DTV property
- * @fe:		Pointer to &struct dvb_frontend
- * @file:	Pointer to &struct file
+ * @fe:		Poपूर्णांकer to &काष्ठा dvb_frontend
+ * @file:	Poपूर्णांकer to &काष्ठा file
  * @cmd:	Digital TV command
- * @data:	An unsigned 32-bits number
+ * @data:	An अचिन्हित 32-bits number
  *
  * This routine assigns the property
  * value to the corresponding member of
- * &struct dtv_frontend_properties
+ * &काष्ठा dtv_frontend_properties
  *
  * Returns:
- * Zero on success, negative errno on failure.
+ * Zero on success, negative त्रुटि_सं on failure.
  */
-static int dtv_property_process_set(struct dvb_frontend *fe,
-				    struct file *file,
+अटल पूर्णांक dtv_property_process_set(काष्ठा dvb_frontend *fe,
+				    काष्ठा file *file,
 				    u32 cmd, u32 data)
-{
-	int r = 0;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अणु
+	पूर्णांक r = 0;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 
 	/** Dump DTV command name and value*/
-	if (!cmd || cmd > DTV_MAX_COMMAND)
+	अगर (!cmd || cmd > DTV_MAX_COMMAND)
 		dev_warn(fe->dvb->device, "%s: SET cmd 0x%08x undefined\n",
 			 __func__, cmd);
-	else
+	अन्यथा
 		dev_dbg(fe->dvb->device,
 			"%s: SET cmd 0x%08x (%s) to 0x%08x\n",
 			__func__, cmd, dtv_cmds[cmd].name, data);
-	switch (cmd) {
-	case DTV_CLEAR:
+	चयन (cmd) अणु
+	हाल DTV_CLEAR:
 		/*
-		 * Reset a cache of data specific to the frontend here. This does
+		 * Reset a cache of data specअगरic to the frontend here. This करोes
 		 * not effect hardware.
 		 */
 		dvb_frontend_clear_cache(fe);
-		break;
-	case DTV_TUNE:
+		अवरोध;
+	हाल DTV_TUNE:
 		/*
 		 * Use the cached Digital TV properties to tune the
 		 * frontend
@@ -1889,247 +1890,247 @@ static int dtv_property_process_set(struct dvb_frontend *fe,
 			__func__);
 
 		r = dtv_set_frontend(fe);
-		break;
-	case DTV_FREQUENCY:
+		अवरोध;
+	हाल DTV_FREQUENCY:
 		c->frequency = data;
-		break;
-	case DTV_MODULATION:
+		अवरोध;
+	हाल DTV_MODULATION:
 		c->modulation = data;
-		break;
-	case DTV_BANDWIDTH_HZ:
+		अवरोध;
+	हाल DTV_BANDWIDTH_HZ:
 		c->bandwidth_hz = data;
-		break;
-	case DTV_INVERSION:
+		अवरोध;
+	हाल DTV_INVERSION:
 		c->inversion = data;
-		break;
-	case DTV_SYMBOL_RATE:
+		अवरोध;
+	हाल DTV_SYMBOL_RATE:
 		c->symbol_rate = data;
-		break;
-	case DTV_INNER_FEC:
+		अवरोध;
+	हाल DTV_INNER_FEC:
 		c->fec_inner = data;
-		break;
-	case DTV_PILOT:
+		अवरोध;
+	हाल DTV_PILOT:
 		c->pilot = data;
-		break;
-	case DTV_ROLLOFF:
+		अवरोध;
+	हाल DTV_ROLLOFF:
 		c->rolloff = data;
-		break;
-	case DTV_DELIVERY_SYSTEM:
-		r = dvbv5_set_delivery_system(fe, data);
-		break;
-	case DTV_VOLTAGE:
+		अवरोध;
+	हाल DTV_DELIVERY_SYSTEM:
+		r = dvbv5_set_delivery_प्रणाली(fe, data);
+		अवरोध;
+	हाल DTV_VOLTAGE:
 		c->voltage = data;
 		r = dvb_frontend_handle_ioctl(file, FE_SET_VOLTAGE,
-					      (void *)c->voltage);
-		break;
-	case DTV_TONE:
+					      (व्योम *)c->voltage);
+		अवरोध;
+	हाल DTV_TONE:
 		c->sectone = data;
 		r = dvb_frontend_handle_ioctl(file, FE_SET_TONE,
-					      (void *)c->sectone);
-		break;
-	case DTV_CODE_RATE_HP:
+					      (व्योम *)c->sectone);
+		अवरोध;
+	हाल DTV_CODE_RATE_HP:
 		c->code_rate_HP = data;
-		break;
-	case DTV_CODE_RATE_LP:
+		अवरोध;
+	हाल DTV_CODE_RATE_LP:
 		c->code_rate_LP = data;
-		break;
-	case DTV_GUARD_INTERVAL:
-		c->guard_interval = data;
-		break;
-	case DTV_TRANSMISSION_MODE:
+		अवरोध;
+	हाल DTV_GUARD_INTERVAL:
+		c->guard_पूर्णांकerval = data;
+		अवरोध;
+	हाल DTV_TRANSMISSION_MODE:
 		c->transmission_mode = data;
-		break;
-	case DTV_HIERARCHY:
+		अवरोध;
+	हाल DTV_HIERARCHY:
 		c->hierarchy = data;
-		break;
-	case DTV_INTERLEAVING:
-		c->interleaving = data;
-		break;
+		अवरोध;
+	हाल DTV_INTERLEAVING:
+		c->पूर्णांकerleaving = data;
+		अवरोध;
 
 	/* ISDB-T Support here */
-	case DTV_ISDBT_PARTIAL_RECEPTION:
+	हाल DTV_ISDBT_PARTIAL_RECEPTION:
 		c->isdbt_partial_reception = data;
-		break;
-	case DTV_ISDBT_SOUND_BROADCASTING:
+		अवरोध;
+	हाल DTV_ISDBT_SOUND_BROADCASTING:
 		c->isdbt_sb_mode = data;
-		break;
-	case DTV_ISDBT_SB_SUBCHANNEL_ID:
+		अवरोध;
+	हाल DTV_ISDBT_SB_SUBCHANNEL_ID:
 		c->isdbt_sb_subchannel = data;
-		break;
-	case DTV_ISDBT_SB_SEGMENT_IDX:
+		अवरोध;
+	हाल DTV_ISDBT_SB_SEGMENT_IDX:
 		c->isdbt_sb_segment_idx = data;
-		break;
-	case DTV_ISDBT_SB_SEGMENT_COUNT:
+		अवरोध;
+	हाल DTV_ISDBT_SB_SEGMENT_COUNT:
 		c->isdbt_sb_segment_count = data;
-		break;
-	case DTV_ISDBT_LAYER_ENABLED:
+		अवरोध;
+	हाल DTV_ISDBT_LAYER_ENABLED:
 		c->isdbt_layer_enabled = data;
-		break;
-	case DTV_ISDBT_LAYERA_FEC:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERA_FEC:
 		c->layer[0].fec = data;
-		break;
-	case DTV_ISDBT_LAYERA_MODULATION:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERA_MODULATION:
 		c->layer[0].modulation = data;
-		break;
-	case DTV_ISDBT_LAYERA_SEGMENT_COUNT:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERA_SEGMENT_COUNT:
 		c->layer[0].segment_count = data;
-		break;
-	case DTV_ISDBT_LAYERA_TIME_INTERLEAVING:
-		c->layer[0].interleaving = data;
-		break;
-	case DTV_ISDBT_LAYERB_FEC:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERA_TIME_INTERLEAVING:
+		c->layer[0].पूर्णांकerleaving = data;
+		अवरोध;
+	हाल DTV_ISDBT_LAYERB_FEC:
 		c->layer[1].fec = data;
-		break;
-	case DTV_ISDBT_LAYERB_MODULATION:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERB_MODULATION:
 		c->layer[1].modulation = data;
-		break;
-	case DTV_ISDBT_LAYERB_SEGMENT_COUNT:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERB_SEGMENT_COUNT:
 		c->layer[1].segment_count = data;
-		break;
-	case DTV_ISDBT_LAYERB_TIME_INTERLEAVING:
-		c->layer[1].interleaving = data;
-		break;
-	case DTV_ISDBT_LAYERC_FEC:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERB_TIME_INTERLEAVING:
+		c->layer[1].पूर्णांकerleaving = data;
+		अवरोध;
+	हाल DTV_ISDBT_LAYERC_FEC:
 		c->layer[2].fec = data;
-		break;
-	case DTV_ISDBT_LAYERC_MODULATION:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERC_MODULATION:
 		c->layer[2].modulation = data;
-		break;
-	case DTV_ISDBT_LAYERC_SEGMENT_COUNT:
+		अवरोध;
+	हाल DTV_ISDBT_LAYERC_SEGMENT_COUNT:
 		c->layer[2].segment_count = data;
-		break;
-	case DTV_ISDBT_LAYERC_TIME_INTERLEAVING:
-		c->layer[2].interleaving = data;
-		break;
+		अवरोध;
+	हाल DTV_ISDBT_LAYERC_TIME_INTERLEAVING:
+		c->layer[2].पूर्णांकerleaving = data;
+		अवरोध;
 
 	/* Multistream support */
-	case DTV_STREAM_ID:
-	case DTV_DVBT2_PLP_ID_LEGACY:
+	हाल DTV_STREAM_ID:
+	हाल DTV_DVBT2_PLP_ID_LEGACY:
 		c->stream_id = data;
-		break;
+		अवरोध;
 
 	/* Physical layer scrambling support */
-	case DTV_SCRAMBLING_SEQUENCE_INDEX:
+	हाल DTV_SCRAMBLING_SEQUENCE_INDEX:
 		c->scrambling_sequence_index = data;
-		break;
+		अवरोध;
 
 	/* ATSC-MH */
-	case DTV_ATSCMH_PARADE_ID:
+	हाल DTV_ATSCMH_PARADE_ID:
 		fe->dtv_property_cache.atscmh_parade_id = data;
-		break;
-	case DTV_ATSCMH_RS_FRAME_ENSEMBLE:
+		अवरोध;
+	हाल DTV_ATSCMH_RS_FRAME_ENSEMBLE:
 		fe->dtv_property_cache.atscmh_rs_frame_ensemble = data;
-		break;
+		अवरोध;
 
-	case DTV_LNA:
+	हाल DTV_LNA:
 		c->lna = data;
-		if (fe->ops.set_lna)
+		अगर (fe->ops.set_lna)
 			r = fe->ops.set_lna(fe);
-		if (r < 0)
+		अगर (r < 0)
 			c->lna = LNA_AUTO;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dvb_frontend_do_ioctl(struct file *file, unsigned int cmd,
-				 void *parg)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct dvb_frontend *fe = dvbdev->priv;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	int err;
+अटल पूर्णांक dvb_frontend_करो_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+				 व्योम *parg)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा dvb_frontend *fe = dvbdev->priv;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	पूर्णांक err;
 
 	dev_dbg(fe->dvb->device, "%s: (%d)\n", __func__, _IOC_NR(cmd));
-	if (down_interruptible(&fepriv->sem))
-		return -ERESTARTSYS;
+	अगर (करोwn_पूर्णांकerruptible(&fepriv->sem))
+		वापस -ERESTARTSYS;
 
-	if (fe->exit != DVB_FE_NO_EXIT) {
+	अगर (fe->निकास != DVB_FE_NO_EXIT) अणु
 		up(&fepriv->sem);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
-	 * If the frontend is opened in read-only mode, only the ioctls
-	 * that don't interfere with the tune logic should be accepted.
-	 * That allows an external application to monitor the DVB QoS and
+	 * If the frontend is खोलोed in पढ़ो-only mode, only the ioctls
+	 * that करोn't पूर्णांकerfere with the tune logic should be accepted.
+	 * That allows an बाह्यal application to monitor the DVB QoS and
 	 * statistics parameters.
 	 *
-	 * That matches all _IOR() ioctls, except for two special cases:
+	 * That matches all _IOR() ioctls, except क्रम two special हालs:
 	 *   - FE_GET_EVENT is part of the tuning logic on a DVB application;
 	 *   - FE_DISEQC_RECV_SLAVE_REPLY is part of DiSEqC 2.0
 	 *     setup
-	 * So, those two ioctls should also return -EPERM, as otherwise
-	 * reading from them would interfere with a DVB tune application
+	 * So, those two ioctls should also वापस -EPERM, as otherwise
+	 * पढ़ोing from them would पूर्णांकerfere with a DVB tune application
 	 */
-	if ((file->f_flags & O_ACCMODE) == O_RDONLY
-	    && (_IOC_DIR(cmd) != _IOC_READ
+	अगर ((file->f_flags & O_ACCMODE) == O_RDONLY
+	    && (_IOC_सूची(cmd) != _IOC_READ
 		|| cmd == FE_GET_EVENT
-		|| cmd == FE_DISEQC_RECV_SLAVE_REPLY)) {
+		|| cmd == FE_DISEQC_RECV_SLAVE_REPLY)) अणु
 		up(&fepriv->sem);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	err = dvb_frontend_handle_ioctl(file, cmd, parg);
 
 	up(&fepriv->sem);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static long dvb_frontend_ioctl(struct file *file, unsigned int cmd,
-			       unsigned long arg)
-{
-	struct dvb_device *dvbdev = file->private_data;
+अटल दीर्घ dvb_frontend_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			       अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
 
-	if (!dvbdev)
-		return -ENODEV;
+	अगर (!dvbdev)
+		वापस -ENODEV;
 
-	return dvb_usercopy(file, cmd, arg, dvb_frontend_do_ioctl);
-}
+	वापस dvb_usercopy(file, cmd, arg, dvb_frontend_करो_ioctl);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-struct compat_dtv_property {
+#अगर_घोषित CONFIG_COMPAT
+काष्ठा compat_dtv_property अणु
 	__u32 cmd;
 	__u32 reserved[3];
-	union {
+	जोड़ अणु
 		__u32 data;
-		struct dtv_fe_stats st;
-		struct {
+		काष्ठा dtv_fe_stats st;
+		काष्ठा अणु
 			__u8 data[32];
 			__u32 len;
 			__u32 reserved1[3];
 			compat_uptr_t reserved2;
-		} buffer;
-	} u;
-	int result;
-} __attribute__ ((packed));
+		पूर्ण buffer;
+	पूर्ण u;
+	पूर्णांक result;
+पूर्ण __attribute__ ((packed));
 
-struct compat_dtv_properties {
+काष्ठा compat_dtv_properties अणु
 	__u32 num;
 	compat_uptr_t props;
-};
+पूर्ण;
 
-#define COMPAT_FE_SET_PROPERTY	   _IOW('o', 82, struct compat_dtv_properties)
-#define COMPAT_FE_GET_PROPERTY	   _IOR('o', 83, struct compat_dtv_properties)
+#घोषणा COMPAT_FE_SET_PROPERTY	   _IOW('o', 82, काष्ठा compat_dtv_properties)
+#घोषणा COMPAT_FE_GET_PROPERTY	   _IOR('o', 83, काष्ठा compat_dtv_properties)
 
-static int dvb_frontend_handle_compat_ioctl(struct file *file, unsigned int cmd,
-					    unsigned long arg)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct dvb_frontend *fe = dvbdev->priv;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	int i, err = 0;
+अटल पूर्णांक dvb_frontend_handle_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+					    अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा dvb_frontend *fe = dvbdev->priv;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	पूर्णांक i, err = 0;
 
-	if (cmd == COMPAT_FE_SET_PROPERTY) {
-		struct compat_dtv_properties prop, *tvps = NULL;
-		struct compat_dtv_property *tvp = NULL;
+	अगर (cmd == COMPAT_FE_SET_PROPERTY) अणु
+		काष्ठा compat_dtv_properties prop, *tvps = शून्य;
+		काष्ठा compat_dtv_property *tvp = शून्य;
 
-		if (copy_from_user(&prop, compat_ptr(arg), sizeof(prop)))
-			return -EFAULT;
+		अगर (copy_from_user(&prop, compat_ptr(arg), माप(prop)))
+			वापस -EFAULT;
 
 		tvps = &prop;
 
@@ -2137,30 +2138,30 @@ static int dvb_frontend_handle_compat_ioctl(struct file *file, unsigned int cmd,
 		 * Put an arbitrary limit on the number of messages that can
 		 * be sent at once
 		 */
-		if (!tvps->num || (tvps->num > DTV_IOCTL_MAX_MSGS))
-			return -EINVAL;
+		अगर (!tvps->num || (tvps->num > DTV_IOCTL_MAX_MSGS))
+			वापस -EINVAL;
 
-		tvp = memdup_user(compat_ptr(tvps->props), tvps->num * sizeof(*tvp));
-		if (IS_ERR(tvp))
-			return PTR_ERR(tvp);
+		tvp = memdup_user(compat_ptr(tvps->props), tvps->num * माप(*tvp));
+		अगर (IS_ERR(tvp))
+			वापस PTR_ERR(tvp);
 
-		for (i = 0; i < tvps->num; i++) {
+		क्रम (i = 0; i < tvps->num; i++) अणु
 			err = dtv_property_process_set(fe, file,
 						       (tvp + i)->cmd,
 						       (tvp + i)->u.data);
-			if (err < 0) {
-				kfree(tvp);
-				return err;
-			}
-		}
-		kfree(tvp);
-	} else if (cmd == COMPAT_FE_GET_PROPERTY) {
-		struct compat_dtv_properties prop, *tvps = NULL;
-		struct compat_dtv_property *tvp = NULL;
-		struct dtv_frontend_properties getp = fe->dtv_property_cache;
+			अगर (err < 0) अणु
+				kमुक्त(tvp);
+				वापस err;
+			पूर्ण
+		पूर्ण
+		kमुक्त(tvp);
+	पूर्ण अन्यथा अगर (cmd == COMPAT_FE_GET_PROPERTY) अणु
+		काष्ठा compat_dtv_properties prop, *tvps = शून्य;
+		काष्ठा compat_dtv_property *tvp = शून्य;
+		काष्ठा dtv_frontend_properties getp = fe->dtv_property_cache;
 
-		if (copy_from_user(&prop, compat_ptr(arg), sizeof(prop)))
-			return -EFAULT;
+		अगर (copy_from_user(&prop, compat_ptr(arg), माप(prop)))
+			वापस -EFAULT;
 
 		tvps = &prop;
 
@@ -2168,76 +2169,76 @@ static int dvb_frontend_handle_compat_ioctl(struct file *file, unsigned int cmd,
 		 * Put an arbitrary limit on the number of messages that can
 		 * be sent at once
 		 */
-		if (!tvps->num || (tvps->num > DTV_IOCTL_MAX_MSGS))
-			return -EINVAL;
+		अगर (!tvps->num || (tvps->num > DTV_IOCTL_MAX_MSGS))
+			वापस -EINVAL;
 
-		tvp = memdup_user(compat_ptr(tvps->props), tvps->num * sizeof(*tvp));
-		if (IS_ERR(tvp))
-			return PTR_ERR(tvp);
+		tvp = memdup_user(compat_ptr(tvps->props), tvps->num * माप(*tvp));
+		अगर (IS_ERR(tvp))
+			वापस PTR_ERR(tvp);
 
 		/*
 		 * Let's use our own copy of property cache, in order to
-		 * avoid mangling with DTV zigzag logic, as drivers might
-		 * return crap, if they don't check if the data is available
-		 * before updating the properties cache.
+		 * aव्योम mangling with DTV zigzag logic, as drivers might
+		 * वापस crap, अगर they करोn't check अगर the data is available
+		 * beक्रमe updating the properties cache.
 		 */
-		if (fepriv->state != FESTATE_IDLE) {
-			err = dtv_get_frontend(fe, &getp, NULL);
-			if (err < 0) {
-				kfree(tvp);
-				return err;
-			}
-		}
-		for (i = 0; i < tvps->num; i++) {
+		अगर (fepriv->state != FESTATE_IDLE) अणु
+			err = dtv_get_frontend(fe, &getp, शून्य);
+			अगर (err < 0) अणु
+				kमुक्त(tvp);
+				वापस err;
+			पूर्ण
+		पूर्ण
+		क्रम (i = 0; i < tvps->num; i++) अणु
 			err = dtv_property_process_get(
-			    fe, &getp, (struct dtv_property *)(tvp + i), file);
-			if (err < 0) {
-				kfree(tvp);
-				return err;
-			}
-		}
+			    fe, &getp, (काष्ठा dtv_property *)(tvp + i), file);
+			अगर (err < 0) अणु
+				kमुक्त(tvp);
+				वापस err;
+			पूर्ण
+		पूर्ण
 
-		if (copy_to_user((void __user *)compat_ptr(tvps->props), tvp,
-				 tvps->num * sizeof(struct compat_dtv_property))) {
-			kfree(tvp);
-			return -EFAULT;
-		}
-		kfree(tvp);
-	}
+		अगर (copy_to_user((व्योम __user *)compat_ptr(tvps->props), tvp,
+				 tvps->num * माप(काष्ठा compat_dtv_property))) अणु
+			kमुक्त(tvp);
+			वापस -EFAULT;
+		पूर्ण
+		kमुक्त(tvp);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static long dvb_frontend_compat_ioctl(struct file *file, unsigned int cmd,
-				      unsigned long arg)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct dvb_frontend *fe = dvbdev->priv;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	int err;
+अटल दीर्घ dvb_frontend_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+				      अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा dvb_frontend *fe = dvbdev->priv;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	पूर्णांक err;
 
-	if (cmd == COMPAT_FE_SET_PROPERTY || cmd == COMPAT_FE_GET_PROPERTY) {
-		if (down_interruptible(&fepriv->sem))
-			return -ERESTARTSYS;
+	अगर (cmd == COMPAT_FE_SET_PROPERTY || cmd == COMPAT_FE_GET_PROPERTY) अणु
+		अगर (करोwn_पूर्णांकerruptible(&fepriv->sem))
+			वापस -ERESTARTSYS;
 
 		err = dvb_frontend_handle_compat_ioctl(file, cmd, arg);
 
 		up(&fepriv->sem);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return dvb_frontend_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
-}
-#endif
+	वापस dvb_frontend_ioctl(file, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
+पूर्ण
+#पूर्ण_अगर
 
-static int dtv_set_frontend(struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक dtv_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 	u32 rolloff = 0;
 
-	if (dvb_frontend_check_parameters(fe) < 0)
-		return -EINVAL;
+	अगर (dvb_frontend_check_parameters(fe) < 0)
+		वापस -EINVAL;
 
 	/*
 	 * Initialize output parameters to match the values given by
@@ -2247,68 +2248,68 @@ static int dtv_set_frontend(struct dvb_frontend *fe)
 	dtv_property_legacy_params_sync(fe, c, &fepriv->parameters_out);
 
 	/*
-	 * Be sure that the bandwidth will be filled for all
-	 * non-satellite systems, as tuners need to know what
+	 * Be sure that the bandwidth will be filled क्रम all
+	 * non-satellite प्रणालीs, as tuners need to know what
 	 * low pass/Nyquist half filter should be applied, in
-	 * order to avoid inter-channel noise.
+	 * order to aव्योम पूर्णांकer-channel noise.
 	 *
-	 * ISDB-T and DVB-T/T2 already sets bandwidth.
-	 * ATSC and DVB-C don't set, so, the core should fill it.
+	 * ISDB-T and DVB-T/T2 alपढ़ोy sets bandwidth.
+	 * ATSC and DVB-C करोn't set, so, the core should fill it.
 	 *
 	 * On DVB-C Annex A and C, the bandwidth is a function of
-	 * the roll-off and symbol rate. Annex B defines different
+	 * the roll-off and symbol rate. Annex B defines dअगरferent
 	 * roll-off factors depending on the modulation. Fortunately,
 	 * Annex B is only used with 6MHz, so there's no need to
 	 * calculate it.
 	 *
 	 * While not officially supported, a side effect of handling it at
 	 * the cache level is that a program could retrieve the bandwidth
-	 * via DTV_BANDWIDTH_HZ, which may be useful for test programs.
+	 * via DTV_BANDWIDTH_HZ, which may be useful क्रम test programs.
 	 */
-	switch (c->delivery_system) {
-	case SYS_ATSC:
-	case SYS_DVBC_ANNEX_B:
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_ATSC:
+	हाल SYS_DVBC_ANNEX_B:
 		c->bandwidth_hz = 6000000;
-		break;
-	case SYS_DVBC_ANNEX_A:
+		अवरोध;
+	हाल SYS_DVBC_ANNEX_A:
 		rolloff = 115;
-		break;
-	case SYS_DVBC_ANNEX_C:
+		अवरोध;
+	हाल SYS_DVBC_ANNEX_C:
 		rolloff = 113;
-		break;
-	case SYS_DVBS:
-	case SYS_TURBO:
-	case SYS_ISDBS:
+		अवरोध;
+	हाल SYS_DVBS:
+	हाल SYS_TURBO:
+	हाल SYS_ISDBS:
 		rolloff = 135;
-		break;
-	case SYS_DVBS2:
-		switch (c->rolloff) {
-		case ROLLOFF_20:
+		अवरोध;
+	हाल SYS_DVBS2:
+		चयन (c->rolloff) अणु
+		हाल ROLLOFF_20:
 			rolloff = 120;
-			break;
-		case ROLLOFF_25:
+			अवरोध;
+		हाल ROLLOFF_25:
 			rolloff = 125;
-			break;
-		default:
-		case ROLLOFF_35:
+			अवरोध;
+		शेष:
+		हाल ROLLOFF_35:
 			rolloff = 135;
-		}
-		break;
-	default:
-		break;
-	}
-	if (rolloff)
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	अगर (rolloff)
 		c->bandwidth_hz = mult_frac(c->symbol_rate, rolloff, 100);
 
-	/* force auto frequency inversion if requested */
-	if (dvb_force_auto_inversion)
+	/* क्रमce स्वतः frequency inversion अगर requested */
+	अगर (dvb_क्रमce_स्वतः_inversion)
 		c->inversion = INVERSION_AUTO;
 
 	/*
 	 * without hierarchical coding code_rate_LP is irrelevant,
 	 * so we tolerate the otherwise invalid FEC_NONE setting
 	 */
-	if (c->hierarchy == HIERARCHY_NONE && c->code_rate_LP == FEC_NONE)
+	अगर (c->hierarchy == HIERARCHY_NONE && c->code_rate_LP == FEC_NONE)
 		c->code_rate_LP = FEC_AUTO;
 
 	prepare_tuning_algo_parameters(fe);
@@ -2323,18 +2324,18 @@ static int dtv_set_frontend(struct dvb_frontend *fe)
 	dvb_frontend_wakeup(fe);
 	fepriv->status = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_get_property(struct dvb_frontend *fe, struct file *file,
-			    struct dtv_properties *tvps)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct dtv_property *tvp = NULL;
-	struct dtv_frontend_properties getp;
-	int i, err;
+अटल पूर्णांक dvb_get_property(काष्ठा dvb_frontend *fe, काष्ठा file *file,
+			    काष्ठा dtv_properties *tvps)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा dtv_property *tvp = शून्य;
+	काष्ठा dtv_frontend_properties getp;
+	पूर्णांक i, err;
 
-	memcpy(&getp, &fe->dtv_property_cache, sizeof(getp));
+	स_नकल(&getp, &fe->dtv_property_cache, माप(getp));
 
 	dev_dbg(fe->dvb->device, "%s: properties.num = %d\n",
 		__func__, tvps->num);
@@ -2345,74 +2346,74 @@ static int dvb_get_property(struct dvb_frontend *fe, struct file *file,
 	 * Put an arbitrary limit on the number of messages that can
 	 * be sent at once
 	 */
-	if (!tvps->num || tvps->num > DTV_IOCTL_MAX_MSGS)
-		return -EINVAL;
+	अगर (!tvps->num || tvps->num > DTV_IOCTL_MAX_MSGS)
+		वापस -EINVAL;
 
-	tvp = memdup_user((void __user *)tvps->props, tvps->num * sizeof(*tvp));
-	if (IS_ERR(tvp))
-		return PTR_ERR(tvp);
+	tvp = memdup_user((व्योम __user *)tvps->props, tvps->num * माप(*tvp));
+	अगर (IS_ERR(tvp))
+		वापस PTR_ERR(tvp);
 
 	/*
 	 * Let's use our own copy of property cache, in order to
-	 * avoid mangling with DTV zigzag logic, as drivers might
-	 * return crap, if they don't check if the data is available
-	 * before updating the properties cache.
+	 * aव्योम mangling with DTV zigzag logic, as drivers might
+	 * वापस crap, अगर they करोn't check अगर the data is available
+	 * beक्रमe updating the properties cache.
 	 */
-	if (fepriv->state != FESTATE_IDLE) {
-		err = dtv_get_frontend(fe, &getp, NULL);
-		if (err < 0)
-			goto out;
-	}
-	for (i = 0; i < tvps->num; i++) {
+	अगर (fepriv->state != FESTATE_IDLE) अणु
+		err = dtv_get_frontend(fe, &getp, शून्य);
+		अगर (err < 0)
+			जाओ out;
+	पूर्ण
+	क्रम (i = 0; i < tvps->num; i++) अणु
 		err = dtv_property_process_get(fe, &getp,
 					       tvp + i, file);
-		if (err < 0)
-			goto out;
-	}
+		अगर (err < 0)
+			जाओ out;
+	पूर्ण
 
-	if (copy_to_user((void __user *)tvps->props, tvp,
-			 tvps->num * sizeof(struct dtv_property))) {
+	अगर (copy_to_user((व्योम __user *)tvps->props, tvp,
+			 tvps->num * माप(काष्ठा dtv_property))) अणु
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = 0;
 out:
-	kfree(tvp);
-	return err;
-}
+	kमुक्त(tvp);
+	वापस err;
+पूर्ण
 
-static int dvb_get_frontend(struct dvb_frontend *fe,
-			    struct dvb_frontend_parameters *p_out)
-{
-	struct dtv_frontend_properties getp;
+अटल पूर्णांक dvb_get_frontend(काष्ठा dvb_frontend *fe,
+			    काष्ठा dvb_frontend_parameters *p_out)
+अणु
+	काष्ठा dtv_frontend_properties getp;
 
 	/*
 	 * Let's use our own copy of property cache, in order to
-	 * avoid mangling with DTV zigzag logic, as drivers might
-	 * return crap, if they don't check if the data is available
-	 * before updating the properties cache.
+	 * aव्योम mangling with DTV zigzag logic, as drivers might
+	 * वापस crap, अगर they करोn't check अगर the data is available
+	 * beक्रमe updating the properties cache.
 	 */
-	memcpy(&getp, &fe->dtv_property_cache, sizeof(getp));
+	स_नकल(&getp, &fe->dtv_property_cache, माप(getp));
 
-	return dtv_get_frontend(fe, &getp, p_out);
-}
+	वापस dtv_get_frontend(fe, &getp, p_out);
+पूर्ण
 
-static int dvb_frontend_handle_ioctl(struct file *file,
-				     unsigned int cmd, void *parg)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct dvb_frontend *fe = dvbdev->priv;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	int i, err = -ENOTSUPP;
+अटल पूर्णांक dvb_frontend_handle_ioctl(काष्ठा file *file,
+				     अचिन्हित पूर्णांक cmd, व्योम *parg)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा dvb_frontend *fe = dvbdev->priv;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	पूर्णांक i, err = -ENOTSUPP;
 
 	dev_dbg(fe->dvb->device, "%s:\n", __func__);
 
-	switch (cmd) {
-	case FE_SET_PROPERTY: {
-		struct dtv_properties *tvps = parg;
-		struct dtv_property *tvp = NULL;
+	चयन (cmd) अणु
+	हाल FE_SET_PROPERTY: अणु
+		काष्ठा dtv_properties *tvps = parg;
+		काष्ठा dtv_property *tvp = शून्य;
 
 		dev_dbg(fe->dvb->device, "%s: properties.num = %d\n",
 			__func__, tvps->num);
@@ -2423,35 +2424,35 @@ static int dvb_frontend_handle_ioctl(struct file *file,
 		 * Put an arbitrary limit on the number of messages that can
 		 * be sent at once
 		 */
-		if (!tvps->num || (tvps->num > DTV_IOCTL_MAX_MSGS))
-			return -EINVAL;
+		अगर (!tvps->num || (tvps->num > DTV_IOCTL_MAX_MSGS))
+			वापस -EINVAL;
 
-		tvp = memdup_user((void __user *)tvps->props, tvps->num * sizeof(*tvp));
-		if (IS_ERR(tvp))
-			return PTR_ERR(tvp);
+		tvp = memdup_user((व्योम __user *)tvps->props, tvps->num * माप(*tvp));
+		अगर (IS_ERR(tvp))
+			वापस PTR_ERR(tvp);
 
-		for (i = 0; i < tvps->num; i++) {
+		क्रम (i = 0; i < tvps->num; i++) अणु
 			err = dtv_property_process_set(fe, file,
 						       (tvp + i)->cmd,
 						       (tvp + i)->u.data);
-			if (err < 0) {
-				kfree(tvp);
-				return err;
-			}
-		}
-		kfree(tvp);
+			अगर (err < 0) अणु
+				kमुक्त(tvp);
+				वापस err;
+			पूर्ण
+		पूर्ण
+		kमुक्त(tvp);
 		err = 0;
-		break;
-	}
-	case FE_GET_PROPERTY:
+		अवरोध;
+	पूर्ण
+	हाल FE_GET_PROPERTY:
 		err = dvb_get_property(fe, file, parg);
-		break;
+		अवरोध;
 
-	case FE_GET_INFO: {
-		struct dvb_frontend_info *info = parg;
-		memset(info, 0, sizeof(*info));
+	हाल FE_GET_INFO: अणु
+		काष्ठा dvb_frontend_info *info = parg;
+		स_रखो(info, 0, माप(*info));
 
-		strscpy(info->name, fe->ops.info.name, sizeof(info->name));
+		strscpy(info->name, fe->ops.info.name, माप(info->name));
 		info->symbol_rate_min = fe->ops.info.symbol_rate_min;
 		info->symbol_rate_max = fe->ops.info.symbol_rate_max;
 		info->symbol_rate_tolerance = fe->ops.info.symbol_rate_tolerance;
@@ -2462,542 +2463,542 @@ static int dvb_frontend_handle_ioctl(struct file *file,
 						  &info->frequency_tolerance);
 
 		/*
-		 * Associate the 4 delivery systems supported by DVBv3
+		 * Associate the 4 delivery प्रणालीs supported by DVBv3
 		 * API with their DVBv5 counterpart. For the other standards,
-		 * use the closest type, assuming that it would hopefully
+		 * use the बंदst type, assuming that it would hopefully
 		 * work with a DVBv3 application.
 		 * It should be noticed that, on multi-frontend devices with
-		 * different types (terrestrial and cable, for example),
+		 * dअगरferent types (terrestrial and cable, क्रम example),
 		 * a pure DVBv3 application won't be able to use all delivery
-		 * systems. Yet, changing the DVBv5 cache to the other delivery
-		 * system should be enough for making it work.
+		 * प्रणालीs. Yet, changing the DVBv5 cache to the other delivery
+		 * प्रणाली should be enough क्रम making it work.
 		 */
-		switch (dvbv3_type(c->delivery_system)) {
-		case DVBV3_QPSK:
+		चयन (dvbv3_type(c->delivery_प्रणाली)) अणु
+		हाल DVBV3_QPSK:
 			info->type = FE_QPSK;
-			break;
-		case DVBV3_ATSC:
+			अवरोध;
+		हाल DVBV3_ATSC:
 			info->type = FE_ATSC;
-			break;
-		case DVBV3_QAM:
+			अवरोध;
+		हाल DVBV3_QAM:
 			info->type = FE_QAM;
-			break;
-		case DVBV3_OFDM:
+			अवरोध;
+		हाल DVBV3_OFDM:
 			info->type = FE_OFDM;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(fe->dvb->device,
 				"%s: doesn't know how to handle a DVBv3 call to delivery system %i\n",
-				__func__, c->delivery_system);
+				__func__, c->delivery_प्रणाली);
 			info->type = FE_OFDM;
-		}
+		पूर्ण
 		dev_dbg(fe->dvb->device, "%s: current delivery system on cache: %d, V3 type: %d\n",
-			__func__, c->delivery_system, info->type);
+			__func__, c->delivery_प्रणाली, info->type);
 
 		/* Set CAN_INVERSION_AUTO bit on in other than oneshot mode */
-		if (!(fepriv->tune_mode_flags & FE_TUNE_MODE_ONESHOT))
+		अगर (!(fepriv->tune_mode_flags & FE_TUNE_MODE_ONESHOT))
 			info->caps |= FE_CAN_INVERSION_AUTO;
 		err = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case FE_READ_STATUS: {
-		enum fe_status *status = parg;
+	हाल FE_READ_STATUS: अणु
+		क्रमागत fe_status *status = parg;
 
-		/* if retune was requested but hasn't occurred yet, prevent
-		 * that user get signal state from previous tuning */
-		if (fepriv->state == FESTATE_RETUNE ||
-		    fepriv->state == FESTATE_ERROR) {
+		/* अगर retune was requested but hasn't occurred yet, prevent
+		 * that user get संकेत state from previous tuning */
+		अगर (fepriv->state == FESTATE_RETUNE ||
+		    fepriv->state == FESTATE_ERROR) अणु
 			err = 0;
 			*status = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (fe->ops.read_status)
-			err = fe->ops.read_status(fe, status);
-		break;
-	}
+		अगर (fe->ops.पढ़ो_status)
+			err = fe->ops.पढ़ो_status(fe, status);
+		अवरोध;
+	पूर्ण
 
-	case FE_DISEQC_RESET_OVERLOAD:
-		if (fe->ops.diseqc_reset_overload) {
+	हाल FE_DISEQC_RESET_OVERLOAD:
+		अगर (fe->ops.diseqc_reset_overload) अणु
 			err = fe->ops.diseqc_reset_overload(fe);
 			fepriv->state = FESTATE_DISEQC;
 			fepriv->status = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FE_DISEQC_SEND_MASTER_CMD:
-		if (fe->ops.diseqc_send_master_cmd) {
-			struct dvb_diseqc_master_cmd *cmd = parg;
+	हाल FE_DISEQC_SEND_MASTER_CMD:
+		अगर (fe->ops.diseqc_send_master_cmd) अणु
+			काष्ठा dvb_diseqc_master_cmd *cmd = parg;
 
-			if (cmd->msg_len > sizeof(cmd->msg)) {
+			अगर (cmd->msg_len > माप(cmd->msg)) अणु
 				err = -EINVAL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			err = fe->ops.diseqc_send_master_cmd(fe, cmd);
 			fepriv->state = FESTATE_DISEQC;
 			fepriv->status = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FE_DISEQC_SEND_BURST:
-		if (fe->ops.diseqc_send_burst) {
+	हाल FE_DISEQC_SEND_BURST:
+		अगर (fe->ops.diseqc_send_burst) अणु
 			err = fe->ops.diseqc_send_burst(fe,
-						(enum fe_sec_mini_cmd)parg);
+						(क्रमागत fe_sec_mini_cmd)parg);
 			fepriv->state = FESTATE_DISEQC;
 			fepriv->status = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FE_SET_TONE:
-		if (fe->ops.set_tone) {
+	हाल FE_SET_TONE:
+		अगर (fe->ops.set_tone) अणु
 			err = fe->ops.set_tone(fe,
-					       (enum fe_sec_tone_mode)parg);
-			fepriv->tone = (enum fe_sec_tone_mode)parg;
+					       (क्रमागत fe_sec_tone_mode)parg);
+			fepriv->tone = (क्रमागत fe_sec_tone_mode)parg;
 			fepriv->state = FESTATE_DISEQC;
 			fepriv->status = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FE_SET_VOLTAGE:
-		if (fe->ops.set_voltage) {
+	हाल FE_SET_VOLTAGE:
+		अगर (fe->ops.set_voltage) अणु
 			err = fe->ops.set_voltage(fe,
-						  (enum fe_sec_voltage)parg);
-			fepriv->voltage = (enum fe_sec_voltage)parg;
+						  (क्रमागत fe_sec_voltage)parg);
+			fepriv->voltage = (क्रमागत fe_sec_voltage)parg;
 			fepriv->state = FESTATE_DISEQC;
 			fepriv->status = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FE_DISEQC_RECV_SLAVE_REPLY:
-		if (fe->ops.diseqc_recv_slave_reply)
+	हाल FE_DISEQC_RECV_SLAVE_REPLY:
+		अगर (fe->ops.diseqc_recv_slave_reply)
 			err = fe->ops.diseqc_recv_slave_reply(fe, parg);
-		break;
+		अवरोध;
 
-	case FE_ENABLE_HIGH_LNB_VOLTAGE:
-		if (fe->ops.enable_high_lnb_voltage)
-			err = fe->ops.enable_high_lnb_voltage(fe, (long)parg);
-		break;
+	हाल FE_ENABLE_HIGH_LNB_VOLTAGE:
+		अगर (fe->ops.enable_high_lnb_voltage)
+			err = fe->ops.enable_high_lnb_voltage(fe, (दीर्घ)parg);
+		अवरोध;
 
-	case FE_SET_FRONTEND_TUNE_MODE:
-		fepriv->tune_mode_flags = (unsigned long)parg;
+	हाल FE_SET_FRONTEND_TUNE_MODE:
+		fepriv->tune_mode_flags = (अचिन्हित दीर्घ)parg;
 		err = 0;
-		break;
+		अवरोध;
 	/* DEPRECATED dish control ioctls */
 
-	case FE_DISHNETWORK_SEND_LEGACY_CMD:
-		if (fe->ops.dishnetwork_send_legacy_command) {
+	हाल FE_DISHNETWORK_SEND_LEGACY_CMD:
+		अगर (fe->ops.dishnetwork_send_legacy_command) अणु
 			err = fe->ops.dishnetwork_send_legacy_command(fe,
-							 (unsigned long)parg);
+							 (अचिन्हित दीर्घ)parg);
 			fepriv->state = FESTATE_DISEQC;
 			fepriv->status = 0;
-		} else if (fe->ops.set_voltage) {
+		पूर्ण अन्यथा अगर (fe->ops.set_voltage) अणु
 			/*
 			 * NOTE: This is a fallback condition.  Some frontends
-			 * (stv0299 for instance) take longer than 8msec to
-			 * respond to a set_voltage command.  Those switches
-			 * need custom routines to switch properly.  For all
+			 * (stv0299 क्रम instance) take दीर्घer than 8msec to
+			 * respond to a set_voltage command.  Those चयनes
+			 * need custom routines to चयन properly.  For all
 			 * other frontends, the following should work ok.
-			 * Dish network legacy switches (as used by Dish500)
+			 * Dish network legacy चयनes (as used by Dish500)
 			 * are controlled by sending 9-bit command words
 			 * spaced 8msec apart.
-			 * the actual command word is switch/port dependent
+			 * the actual command word is चयन/port dependent
 			 * so it is up to the userspace application to send
 			 * the right command.
 			 * The command must always start with a '0' after
-			 * initialization, so parg is 8 bits and does not
+			 * initialization, so parg is 8 bits and करोes not
 			 * include the initialization or start bit
 			 */
-			unsigned long swcmd = ((unsigned long)parg) << 1;
-			ktime_t nexttime;
-			ktime_t tv[10];
-			int i;
+			अचिन्हित दीर्घ swcmd = ((अचिन्हित दीर्घ)parg) << 1;
+			kसमय_प्रकार nextसमय;
+			kसमय_प्रकार tv[10];
+			पूर्णांक i;
 			u8 last = 1;
 
-			if (dvb_frontend_debug)
-				dprintk("switch command: 0x%04lx\n",
+			अगर (dvb_frontend_debug)
+				dprपूर्णांकk("switch command: 0x%04lx\n",
 					swcmd);
-			nexttime = ktime_get_boottime();
-			if (dvb_frontend_debug)
-				tv[0] = nexttime;
-			/* before sending a command, initialize by sending
-			 * a 32ms 18V to the switch
+			nextसमय = kसमय_get_bootसमय();
+			अगर (dvb_frontend_debug)
+				tv[0] = nextसमय;
+			/* beक्रमe sending a command, initialize by sending
+			 * a 32ms 18V to the चयन
 			 */
 			fe->ops.set_voltage(fe, SEC_VOLTAGE_18);
-			dvb_frontend_sleep_until(&nexttime, 32000);
+			dvb_frontend_sleep_until(&nextसमय, 32000);
 
-			for (i = 0; i < 9; i++) {
-				if (dvb_frontend_debug)
-					tv[i + 1] = ktime_get_boottime();
-				if ((swcmd & 0x01) != last) {
+			क्रम (i = 0; i < 9; i++) अणु
+				अगर (dvb_frontend_debug)
+					tv[i + 1] = kसमय_get_bootसमय();
+				अगर ((swcmd & 0x01) != last) अणु
 					/* set voltage to (last ? 13V : 18V) */
 					fe->ops.set_voltage(fe, (last) ? SEC_VOLTAGE_13 : SEC_VOLTAGE_18);
 					last = (last) ? 0 : 1;
-				}
+				पूर्ण
 				swcmd = swcmd >> 1;
-				if (i != 8)
-					dvb_frontend_sleep_until(&nexttime, 8000);
-			}
-			if (dvb_frontend_debug) {
-				dprintk("(adapter %d): switch delay (should be 32k followed by all 8k)\n",
+				अगर (i != 8)
+					dvb_frontend_sleep_until(&nextसमय, 8000);
+			पूर्ण
+			अगर (dvb_frontend_debug) अणु
+				dprपूर्णांकk("(adapter %d): switch delay (should be 32k followed by all 8k)\n",
 					fe->dvb->num);
-				for (i = 1; i < 10; i++)
+				क्रम (i = 1; i < 10; i++)
 					pr_info("%d: %d\n", i,
-						(int)ktime_us_delta(tv[i], tv[i - 1]));
-			}
+						(पूर्णांक)kसमय_us_delta(tv[i], tv[i - 1]));
+			पूर्ण
 			err = 0;
 			fepriv->state = FESTATE_DISEQC;
 			fepriv->status = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
 	/* DEPRECATED statistics ioctls */
 
-	case FE_READ_BER:
-		if (fe->ops.read_ber) {
-			if (fepriv->thread)
-				err = fe->ops.read_ber(fe, parg);
-			else
+	हाल FE_READ_BER:
+		अगर (fe->ops.पढ़ो_ber) अणु
+			अगर (fepriv->thपढ़ो)
+				err = fe->ops.पढ़ो_ber(fe, parg);
+			अन्यथा
 				err = -EAGAIN;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FE_READ_SIGNAL_STRENGTH:
-		if (fe->ops.read_signal_strength) {
-			if (fepriv->thread)
-				err = fe->ops.read_signal_strength(fe, parg);
-			else
+	हाल FE_READ_SIGNAL_STRENGTH:
+		अगर (fe->ops.पढ़ो_संकेत_strength) अणु
+			अगर (fepriv->thपढ़ो)
+				err = fe->ops.पढ़ो_संकेत_strength(fe, parg);
+			अन्यथा
 				err = -EAGAIN;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FE_READ_SNR:
-		if (fe->ops.read_snr) {
-			if (fepriv->thread)
-				err = fe->ops.read_snr(fe, parg);
-			else
+	हाल FE_READ_SNR:
+		अगर (fe->ops.पढ़ो_snr) अणु
+			अगर (fepriv->thपढ़ो)
+				err = fe->ops.पढ़ो_snr(fe, parg);
+			अन्यथा
 				err = -EAGAIN;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FE_READ_UNCORRECTED_BLOCKS:
-		if (fe->ops.read_ucblocks) {
-			if (fepriv->thread)
-				err = fe->ops.read_ucblocks(fe, parg);
-			else
+	हाल FE_READ_UNCORRECTED_BLOCKS:
+		अगर (fe->ops.पढ़ो_ucblocks) अणु
+			अगर (fepriv->thपढ़ो)
+				err = fe->ops.पढ़ो_ucblocks(fe, parg);
+			अन्यथा
 				err = -EAGAIN;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
 	/* DEPRECATED DVBv3 ioctls */
 
-	case FE_SET_FRONTEND:
-		err = dvbv3_set_delivery_system(fe);
-		if (err)
-			break;
+	हाल FE_SET_FRONTEND:
+		err = dvbv3_set_delivery_प्रणाली(fe);
+		अगर (err)
+			अवरोध;
 
 		err = dtv_property_cache_sync(fe, c, parg);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 		err = dtv_set_frontend(fe);
-		break;
+		अवरोध;
 
-	case FE_GET_EVENT:
+	हाल FE_GET_EVENT:
 		err = dvb_frontend_get_event(fe, parg, file->f_flags);
-		break;
+		अवरोध;
 
-	case FE_GET_FRONTEND:
+	हाल FE_GET_FRONTEND:
 		err = dvb_get_frontend(fe, parg);
-		break;
+		अवरोध;
 
-	default:
-		return -ENOTSUPP;
-	} /* switch */
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण /* चयन */
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static __poll_t dvb_frontend_poll(struct file *file, struct poll_table_struct *wait)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct dvb_frontend *fe = dvbdev->priv;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+अटल __poll_t dvb_frontend_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *रुको)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा dvb_frontend *fe = dvbdev->priv;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
 
 	dev_dbg_ratelimited(fe->dvb->device, "%s:\n", __func__);
 
-	poll_wait(file, &fepriv->events.wait_queue, wait);
+	poll_रुको(file, &fepriv->events.रुको_queue, रुको);
 
-	if (fepriv->events.eventw != fepriv->events.eventr)
-		return (EPOLLIN | EPOLLRDNORM | EPOLLPRI);
+	अगर (fepriv->events.eventw != fepriv->events.eventr)
+		वापस (EPOLLIN | EPOLLRDNORM | EPOLLPRI);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_frontend_open(struct inode *inode, struct file *file)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct dvb_frontend *fe = dvbdev->priv;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	struct dvb_adapter *adapter = fe->dvb;
-	int ret;
+अटल पूर्णांक dvb_frontend_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा dvb_frontend *fe = dvbdev->priv;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	काष्ठा dvb_adapter *adapter = fe->dvb;
+	पूर्णांक ret;
 
 	dev_dbg(fe->dvb->device, "%s:\n", __func__);
-	if (fe->exit == DVB_FE_DEVICE_REMOVED)
-		return -ENODEV;
+	अगर (fe->निकास == DVB_FE_DEVICE_REMOVED)
+		वापस -ENODEV;
 
-	if (adapter->mfe_shared) {
+	अगर (adapter->mfe_shared) अणु
 		mutex_lock(&adapter->mfe_lock);
 
-		if (!adapter->mfe_dvbdev)
+		अगर (!adapter->mfe_dvbdev)
 			adapter->mfe_dvbdev = dvbdev;
 
-		else if (adapter->mfe_dvbdev != dvbdev) {
-			struct dvb_device
+		अन्यथा अगर (adapter->mfe_dvbdev != dvbdev) अणु
+			काष्ठा dvb_device
 				*mfedev = adapter->mfe_dvbdev;
-			struct dvb_frontend
+			काष्ठा dvb_frontend
 				*mfe = mfedev->priv;
-			struct dvb_frontend_private
+			काष्ठा dvb_frontend_निजी
 				*mfepriv = mfe->frontend_priv;
-			int mferetry = (dvb_mfe_wait_time << 1);
+			पूर्णांक mferetry = (dvb_mfe_रुको_समय << 1);
 
 			mutex_unlock(&adapter->mfe_lock);
-			while (mferetry-- && (mfedev->users != -1 ||
-					      mfepriv->thread)) {
-				if (msleep_interruptible(500)) {
-					if (signal_pending(current))
-						return -EINTR;
-				}
-			}
+			जबतक (mferetry-- && (mfedev->users != -1 ||
+					      mfepriv->thपढ़ो)) अणु
+				अगर (msleep_पूर्णांकerruptible(500)) अणु
+					अगर (संकेत_pending(current))
+						वापस -EINTR;
+				पूर्ण
+			पूर्ण
 
 			mutex_lock(&adapter->mfe_lock);
-			if (adapter->mfe_dvbdev != dvbdev) {
+			अगर (adapter->mfe_dvbdev != dvbdev) अणु
 				mfedev = adapter->mfe_dvbdev;
 				mfe = mfedev->priv;
 				mfepriv = mfe->frontend_priv;
-				if (mfedev->users != -1 ||
-				    mfepriv->thread) {
+				अगर (mfedev->users != -1 ||
+				    mfepriv->thपढ़ो) अणु
 					mutex_unlock(&adapter->mfe_lock);
-					return -EBUSY;
-				}
+					वापस -EBUSY;
+				पूर्ण
 				adapter->mfe_dvbdev = dvbdev;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (dvbdev->users == -1 && fe->ops.ts_bus_ctrl) {
-		if ((ret = fe->ops.ts_bus_ctrl(fe, 1)) < 0)
-			goto err0;
+	अगर (dvbdev->users == -1 && fe->ops.ts_bus_ctrl) अणु
+		अगर ((ret = fe->ops.ts_bus_ctrl(fe, 1)) < 0)
+			जाओ err0;
 
-		/* If we took control of the bus, we need to force
+		/* If we took control of the bus, we need to क्रमce
 		   reinitialization.  This is because many ts_bus_ctrl()
-		   functions strobe the RESET pin on the demod, and if the
-		   frontend thread already exists then the dvb_init() routine
-		   won't get called (which is what usually does initial
-		   register configuration). */
+		   functions strobe the RESET pin on the demod, and अगर the
+		   frontend thपढ़ो alपढ़ोy exists then the dvb_init() routine
+		   won't get called (which is what usually करोes initial
+		   रेजिस्टर configuration). */
 		fepriv->reinitialise = 1;
-	}
+	पूर्ण
 
-	if ((ret = dvb_generic_open(inode, file)) < 0)
-		goto err1;
+	अगर ((ret = dvb_generic_खोलो(inode, file)) < 0)
+		जाओ err1;
 
-	if ((file->f_flags & O_ACCMODE) != O_RDONLY) {
-		/* normal tune mode when opened R/W */
+	अगर ((file->f_flags & O_ACCMODE) != O_RDONLY) अणु
+		/* normal tune mode when खोलोed R/W */
 		fepriv->tune_mode_flags &= ~FE_TUNE_MODE_ONESHOT;
 		fepriv->tone = -1;
 		fepriv->voltage = -1;
 
-#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER_DVB
 		mutex_lock(&fe->dvb->mdev_lock);
-		if (fe->dvb->mdev) {
+		अगर (fe->dvb->mdev) अणु
 			mutex_lock(&fe->dvb->mdev->graph_mutex);
-			if (fe->dvb->mdev->enable_source)
+			अगर (fe->dvb->mdev->enable_source)
 				ret = fe->dvb->mdev->enable_source(
 							   dvbdev->entity,
 							   &fepriv->pipe);
 			mutex_unlock(&fe->dvb->mdev->graph_mutex);
-			if (ret) {
+			अगर (ret) अणु
 				mutex_unlock(&fe->dvb->mdev_lock);
 				dev_err(fe->dvb->device,
 					"Tuner is busy. Error %d\n", ret);
-				goto err2;
-			}
-		}
+				जाओ err2;
+			पूर्ण
+		पूर्ण
 		mutex_unlock(&fe->dvb->mdev_lock);
-#endif
+#पूर्ण_अगर
 		ret = dvb_frontend_start(fe);
-		if (ret)
-			goto err3;
+		अगर (ret)
+			जाओ err3;
 
 		/*  empty event queue */
 		fepriv->events.eventr = fepriv->events.eventw = 0;
-	}
+	पूर्ण
 
 	dvb_frontend_get(fe);
 
-	if (adapter->mfe_shared)
+	अगर (adapter->mfe_shared)
 		mutex_unlock(&adapter->mfe_lock);
-	return ret;
+	वापस ret;
 
 err3:
-#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER_DVB
 	mutex_lock(&fe->dvb->mdev_lock);
-	if (fe->dvb->mdev) {
+	अगर (fe->dvb->mdev) अणु
 		mutex_lock(&fe->dvb->mdev->graph_mutex);
-		if (fe->dvb->mdev->disable_source)
+		अगर (fe->dvb->mdev->disable_source)
 			fe->dvb->mdev->disable_source(dvbdev->entity);
 		mutex_unlock(&fe->dvb->mdev->graph_mutex);
-	}
+	पूर्ण
 	mutex_unlock(&fe->dvb->mdev_lock);
 err2:
-#endif
+#पूर्ण_अगर
 	dvb_generic_release(inode, file);
 err1:
-	if (dvbdev->users == -1 && fe->ops.ts_bus_ctrl)
+	अगर (dvbdev->users == -1 && fe->ops.ts_bus_ctrl)
 		fe->ops.ts_bus_ctrl(fe, 0);
 err0:
-	if (adapter->mfe_shared)
+	अगर (adapter->mfe_shared)
 		mutex_unlock(&adapter->mfe_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dvb_frontend_release(struct inode *inode, struct file *file)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct dvb_frontend *fe = dvbdev->priv;
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	int ret;
+अटल पूर्णांक dvb_frontend_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा dvb_frontend *fe = dvbdev->priv;
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	पूर्णांक ret;
 
 	dev_dbg(fe->dvb->device, "%s:\n", __func__);
 
-	if ((file->f_flags & O_ACCMODE) != O_RDONLY) {
-		fepriv->release_jiffies = jiffies;
+	अगर ((file->f_flags & O_ACCMODE) != O_RDONLY) अणु
+		fepriv->release_jअगरfies = jअगरfies;
 		mb();
-	}
+	पूर्ण
 
 	ret = dvb_generic_release(inode, file);
 
-	if (dvbdev->users == -1) {
-		wake_up(&fepriv->wait_queue);
-#ifdef CONFIG_MEDIA_CONTROLLER_DVB
+	अगर (dvbdev->users == -1) अणु
+		wake_up(&fepriv->रुको_queue);
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER_DVB
 		mutex_lock(&fe->dvb->mdev_lock);
-		if (fe->dvb->mdev) {
+		अगर (fe->dvb->mdev) अणु
 			mutex_lock(&fe->dvb->mdev->graph_mutex);
-			if (fe->dvb->mdev->disable_source)
+			अगर (fe->dvb->mdev->disable_source)
 				fe->dvb->mdev->disable_source(dvbdev->entity);
 			mutex_unlock(&fe->dvb->mdev->graph_mutex);
-		}
+		पूर्ण
 		mutex_unlock(&fe->dvb->mdev_lock);
-#endif
-		if (fe->exit != DVB_FE_NO_EXIT)
-			wake_up(&dvbdev->wait_queue);
-		if (fe->ops.ts_bus_ctrl)
+#पूर्ण_अगर
+		अगर (fe->निकास != DVB_FE_NO_EXIT)
+			wake_up(&dvbdev->रुको_queue);
+		अगर (fe->ops.ts_bus_ctrl)
 			fe->ops.ts_bus_ctrl(fe, 0);
-	}
+	पूर्ण
 
 	dvb_frontend_put(fe);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations dvb_frontend_fops = {
+अटल स्थिर काष्ठा file_operations dvb_frontend_fops = अणु
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= dvb_frontend_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= dvb_frontend_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.poll		= dvb_frontend_poll,
-	.open		= dvb_frontend_open,
+	.खोलो		= dvb_frontend_खोलो,
 	.release	= dvb_frontend_release,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-int dvb_frontend_suspend(struct dvb_frontend *fe)
-{
-	int ret = 0;
+पूर्णांक dvb_frontend_suspend(काष्ठा dvb_frontend *fe)
+अणु
+	पूर्णांक ret = 0;
 
 	dev_dbg(fe->dvb->device, "%s: adap=%d fe=%d\n", __func__, fe->dvb->num,
 		fe->id);
 
-	if (fe->ops.tuner_ops.suspend)
+	अगर (fe->ops.tuner_ops.suspend)
 		ret = fe->ops.tuner_ops.suspend(fe);
-	else if (fe->ops.tuner_ops.sleep)
+	अन्यथा अगर (fe->ops.tuner_ops.sleep)
 		ret = fe->ops.tuner_ops.sleep(fe);
 
-	if (fe->ops.sleep)
+	अगर (fe->ops.sleep)
 		ret = fe->ops.sleep(fe);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(dvb_frontend_suspend);
 
-int dvb_frontend_resume(struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
-	int ret = 0;
+पूर्णांक dvb_frontend_resume(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
+	पूर्णांक ret = 0;
 
 	dev_dbg(fe->dvb->device, "%s: adap=%d fe=%d\n", __func__, fe->dvb->num,
 		fe->id);
 
-	fe->exit = DVB_FE_DEVICE_RESUME;
-	if (fe->ops.init)
+	fe->निकास = DVB_FE_DEVICE_RESUME;
+	अगर (fe->ops.init)
 		ret = fe->ops.init(fe);
 
-	if (fe->ops.tuner_ops.resume)
+	अगर (fe->ops.tuner_ops.resume)
 		ret = fe->ops.tuner_ops.resume(fe);
-	else if (fe->ops.tuner_ops.init)
+	अन्यथा अगर (fe->ops.tuner_ops.init)
 		ret = fe->ops.tuner_ops.init(fe);
 
-	if (fe->ops.set_tone && fepriv->tone != -1)
+	अगर (fe->ops.set_tone && fepriv->tone != -1)
 		fe->ops.set_tone(fe, fepriv->tone);
-	if (fe->ops.set_voltage && fepriv->voltage != -1)
+	अगर (fe->ops.set_voltage && fepriv->voltage != -1)
 		fe->ops.set_voltage(fe, fepriv->voltage);
 
-	fe->exit = DVB_FE_NO_EXIT;
+	fe->निकास = DVB_FE_NO_EXIT;
 	fepriv->state = FESTATE_RETUNE;
 	dvb_frontend_wakeup(fe);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(dvb_frontend_resume);
 
-int dvb_register_frontend(struct dvb_adapter *dvb,
-			  struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv;
-	const struct dvb_device dvbdev_template = {
+पूर्णांक dvb_रेजिस्टर_frontend(काष्ठा dvb_adapter *dvb,
+			  काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv;
+	स्थिर काष्ठा dvb_device dvbdev_ढाँचा = अणु
 		.users = ~0,
-		.writers = 1,
-		.readers = (~0) - 1,
+		.ग_लिखोrs = 1,
+		.पढ़ोers = (~0) - 1,
 		.fops = &dvb_frontend_fops,
-#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
+#अगर defined(CONFIG_MEDIA_CONTROLLER_DVB)
 		.name = fe->ops.info.name,
-#endif
-	};
+#पूर्ण_अगर
+	पूर्ण;
 
 	dev_dbg(dvb->device, "%s:\n", __func__);
 
-	if (mutex_lock_interruptible(&frontend_mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&frontend_mutex))
+		वापस -ERESTARTSYS;
 
-	fe->frontend_priv = kzalloc(sizeof(struct dvb_frontend_private), GFP_KERNEL);
-	if (!fe->frontend_priv) {
+	fe->frontend_priv = kzalloc(माप(काष्ठा dvb_frontend_निजी), GFP_KERNEL);
+	अगर (!fe->frontend_priv) अणु
 		mutex_unlock(&frontend_mutex);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	fepriv = fe->frontend_priv;
 
 	kref_init(&fe->refcount);
 
 	/*
 	 * After initialization, there need to be two references: one
-	 * for dvb_unregister_frontend(), and another one for
+	 * क्रम dvb_unरेजिस्टर_frontend(), and another one क्रम
 	 * dvb_frontend_detach().
 	 */
 	dvb_frontend_get(fe);
 
 	sema_init(&fepriv->sem, 1);
-	init_waitqueue_head(&fepriv->wait_queue);
-	init_waitqueue_head(&fepriv->events.wait_queue);
+	init_रुकोqueue_head(&fepriv->रुको_queue);
+	init_रुकोqueue_head(&fepriv->events.रुको_queue);
 	mutex_init(&fepriv->events.mtx);
 	fe->dvb = dvb;
 	fepriv->inversion = INVERSION_OFF;
@@ -3006,55 +3007,55 @@ int dvb_register_frontend(struct dvb_adapter *dvb,
 		 "DVB: registering adapter %i frontend %i (%s)...\n",
 		 fe->dvb->num, fe->id, fe->ops.info.name);
 
-	dvb_register_device(fe->dvb, &fepriv->dvbdev, &dvbdev_template,
+	dvb_रेजिस्टर_device(fe->dvb, &fepriv->dvbdev, &dvbdev_ढाँचा,
 			    fe, DVB_DEVICE_FRONTEND, 0);
 
 	/*
 	 * Initialize the cache to the proper values according with the
-	 * first supported delivery system (ops->delsys[0])
+	 * first supported delivery प्रणाली (ops->delsys[0])
 	 */
 
-	fe->dtv_property_cache.delivery_system = fe->ops.delsys[0];
+	fe->dtv_property_cache.delivery_प्रणाली = fe->ops.delsys[0];
 	dvb_frontend_clear_cache(fe);
 
 	mutex_unlock(&frontend_mutex);
-	return 0;
-}
-EXPORT_SYMBOL(dvb_register_frontend);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(dvb_रेजिस्टर_frontend);
 
-int dvb_unregister_frontend(struct dvb_frontend *fe)
-{
-	struct dvb_frontend_private *fepriv = fe->frontend_priv;
+पूर्णांक dvb_unरेजिस्टर_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dvb_frontend_निजी *fepriv = fe->frontend_priv;
 
 	dev_dbg(fe->dvb->device, "%s:\n", __func__);
 
 	mutex_lock(&frontend_mutex);
 	dvb_frontend_stop(fe);
-	dvb_remove_device(fepriv->dvbdev);
+	dvb_हटाओ_device(fepriv->dvbdev);
 
 	/* fe is invalid now */
 	mutex_unlock(&frontend_mutex);
 	dvb_frontend_put(fe);
-	return 0;
-}
-EXPORT_SYMBOL(dvb_unregister_frontend);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(dvb_unरेजिस्टर_frontend);
 
-static void dvb_frontend_invoke_release(struct dvb_frontend *fe,
-					void (*release)(struct dvb_frontend *fe))
-{
-	if (release) {
+अटल व्योम dvb_frontend_invoke_release(काष्ठा dvb_frontend *fe,
+					व्योम (*release)(काष्ठा dvb_frontend *fe))
+अणु
+	अगर (release) अणु
 		release(fe);
-#ifdef CONFIG_MEDIA_ATTACH
+#अगर_घोषित CONFIG_MEDIA_ATTACH
 		dvb_detach(release);
-#endif
-	}
-}
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-void dvb_frontend_detach(struct dvb_frontend *fe)
-{
+व्योम dvb_frontend_detach(काष्ठा dvb_frontend *fe)
+अणु
 	dvb_frontend_invoke_release(fe, fe->ops.release_sec);
 	dvb_frontend_invoke_release(fe, fe->ops.tuner_ops.release);
 	dvb_frontend_invoke_release(fe, fe->ops.analog_ops.release);
 	dvb_frontend_put(fe);
-}
+पूर्ण
 EXPORT_SYMBOL(dvb_frontend_detach);

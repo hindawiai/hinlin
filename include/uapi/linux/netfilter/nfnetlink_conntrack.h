@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _IPCONNTRACK_NETLINK_H
-#define _IPCONNTRACK_NETLINK_H
-#include <linux/netfilter/nfnetlink.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _IPCONNTRACK_NETLINK_H
+#घोषणा _IPCONNTRACK_NETLINK_H
+#समावेश <linux/netfilter/nfnetlink.h>
 
-enum cntl_msg_types {
+क्रमागत cntl_msg_types अणु
 	IPCTNL_MSG_CT_NEW,
 	IPCTNL_MSG_CT_GET,
 	IPCTNL_MSG_CT_DELETE,
@@ -14,19 +15,19 @@ enum cntl_msg_types {
 	IPCTNL_MSG_CT_GET_UNCONFIRMED,
 
 	IPCTNL_MSG_MAX
-};
+पूर्ण;
 
-enum ctnl_exp_msg_types {
+क्रमागत ctnl_exp_msg_types अणु
 	IPCTNL_MSG_EXP_NEW,
 	IPCTNL_MSG_EXP_GET,
 	IPCTNL_MSG_EXP_DELETE,
 	IPCTNL_MSG_EXP_GET_STATS_CPU,
 
 	IPCTNL_MSG_EXP_MAX
-};
+पूर्ण;
 
 
-enum ctattr_type {
+क्रमागत ctattr_type अणु
 	CTA_UNSPEC,
 	CTA_TUPLE_ORIG,
 	CTA_TUPLE_REPLY,
@@ -34,7 +35,7 @@ enum ctattr_type {
 	CTA_PROTOINFO,
 	CTA_HELP,
 	CTA_NAT_SRC,
-#define CTA_NAT	CTA_NAT_SRC	/* backwards compatibility */
+#घोषणा CTA_NAT	CTA_NAT_SRC	/* backwards compatibility */
 	CTA_TIMEOUT,
 	CTA_MARK,
 	CTA_COUNTERS_ORIG,
@@ -57,29 +58,29 @@ enum ctattr_type {
 	CTA_SYNPROXY,
 	CTA_FILTER,
 	__CTA_MAX
-};
-#define CTA_MAX (__CTA_MAX - 1)
+पूर्ण;
+#घोषणा CTA_MAX (__CTA_MAX - 1)
 
-enum ctattr_tuple {
+क्रमागत ctattr_tuple अणु
 	CTA_TUPLE_UNSPEC,
 	CTA_TUPLE_IP,
 	CTA_TUPLE_PROTO,
 	CTA_TUPLE_ZONE,
 	__CTA_TUPLE_MAX
-};
-#define CTA_TUPLE_MAX (__CTA_TUPLE_MAX - 1)
+पूर्ण;
+#घोषणा CTA_TUPLE_MAX (__CTA_TUPLE_MAX - 1)
 
-enum ctattr_ip {
+क्रमागत ctattr_ip अणु
 	CTA_IP_UNSPEC,
 	CTA_IP_V4_SRC,
 	CTA_IP_V4_DST,
 	CTA_IP_V6_SRC,
 	CTA_IP_V6_DST,
 	__CTA_IP_MAX
-};
-#define CTA_IP_MAX (__CTA_IP_MAX - 1)
+पूर्ण;
+#घोषणा CTA_IP_MAX (__CTA_IP_MAX - 1)
 
-enum ctattr_l4proto {
+क्रमागत ctattr_l4proto अणु
 	CTA_PROTO_UNSPEC,
 	CTA_PROTO_NUM,
 	CTA_PROTO_SRC_PORT,
@@ -91,19 +92,19 @@ enum ctattr_l4proto {
 	CTA_PROTO_ICMPV6_TYPE,
 	CTA_PROTO_ICMPV6_CODE,
 	__CTA_PROTO_MAX
-};
-#define CTA_PROTO_MAX (__CTA_PROTO_MAX - 1)
+पूर्ण;
+#घोषणा CTA_PROTO_MAX (__CTA_PROTO_MAX - 1)
 
-enum ctattr_protoinfo {
+क्रमागत ctattr_protoinfo अणु
 	CTA_PROTOINFO_UNSPEC,
 	CTA_PROTOINFO_TCP,
 	CTA_PROTOINFO_DCCP,
 	CTA_PROTOINFO_SCTP,
 	__CTA_PROTOINFO_MAX
-};
-#define CTA_PROTOINFO_MAX (__CTA_PROTOINFO_MAX - 1)
+पूर्ण;
+#घोषणा CTA_PROTOINFO_MAX (__CTA_PROTOINFO_MAX - 1)
 
-enum ctattr_protoinfo_tcp {
+क्रमागत ctattr_protoinfo_tcp अणु
 	CTA_PROTOINFO_TCP_UNSPEC,
 	CTA_PROTOINFO_TCP_STATE,
 	CTA_PROTOINFO_TCP_WSCALE_ORIGINAL,
@@ -111,29 +112,29 @@ enum ctattr_protoinfo_tcp {
 	CTA_PROTOINFO_TCP_FLAGS_ORIGINAL,
 	CTA_PROTOINFO_TCP_FLAGS_REPLY,
 	__CTA_PROTOINFO_TCP_MAX
-};
-#define CTA_PROTOINFO_TCP_MAX (__CTA_PROTOINFO_TCP_MAX - 1)
+पूर्ण;
+#घोषणा CTA_PROTOINFO_TCP_MAX (__CTA_PROTOINFO_TCP_MAX - 1)
 
-enum ctattr_protoinfo_dccp {
+क्रमागत ctattr_protoinfo_dccp अणु
 	CTA_PROTOINFO_DCCP_UNSPEC,
 	CTA_PROTOINFO_DCCP_STATE,
 	CTA_PROTOINFO_DCCP_ROLE,
 	CTA_PROTOINFO_DCCP_HANDSHAKE_SEQ,
 	CTA_PROTOINFO_DCCP_PAD,
 	__CTA_PROTOINFO_DCCP_MAX,
-};
-#define CTA_PROTOINFO_DCCP_MAX (__CTA_PROTOINFO_DCCP_MAX - 1)
+पूर्ण;
+#घोषणा CTA_PROTOINFO_DCCP_MAX (__CTA_PROTOINFO_DCCP_MAX - 1)
 
-enum ctattr_protoinfo_sctp {
+क्रमागत ctattr_protoinfo_sctp अणु
 	CTA_PROTOINFO_SCTP_UNSPEC,
 	CTA_PROTOINFO_SCTP_STATE,
 	CTA_PROTOINFO_SCTP_VTAG_ORIGINAL,
 	CTA_PROTOINFO_SCTP_VTAG_REPLY,
 	__CTA_PROTOINFO_SCTP_MAX
-};
-#define CTA_PROTOINFO_SCTP_MAX (__CTA_PROTOINFO_SCTP_MAX - 1)
+पूर्ण;
+#घोषणा CTA_PROTOINFO_SCTP_MAX (__CTA_PROTOINFO_SCTP_MAX - 1)
 
-enum ctattr_counters {
+क्रमागत ctattr_counters अणु
 	CTA_COUNTERS_UNSPEC,
 	CTA_COUNTERS_PACKETS,		/* 64bit counters */
 	CTA_COUNTERS_BYTES,		/* 64bit counters */
@@ -141,67 +142,67 @@ enum ctattr_counters {
 	CTA_COUNTERS32_BYTES,		/* old 32bit counters, unused */
 	CTA_COUNTERS_PAD,
 	__CTA_COUNTERS_MAX
-};
-#define CTA_COUNTERS_MAX (__CTA_COUNTERS_MAX - 1)
+पूर्ण;
+#घोषणा CTA_COUNTERS_MAX (__CTA_COUNTERS_MAX - 1)
 
-enum ctattr_tstamp {
+क्रमागत ctattr_tstamp अणु
 	CTA_TIMESTAMP_UNSPEC,
 	CTA_TIMESTAMP_START,
 	CTA_TIMESTAMP_STOP,
 	CTA_TIMESTAMP_PAD,
 	__CTA_TIMESTAMP_MAX
-};
-#define CTA_TIMESTAMP_MAX (__CTA_TIMESTAMP_MAX - 1)
+पूर्ण;
+#घोषणा CTA_TIMESTAMP_MAX (__CTA_TIMESTAMP_MAX - 1)
 
-enum ctattr_nat {
+क्रमागत ctattr_nat अणु
 	CTA_NAT_UNSPEC,
 	CTA_NAT_V4_MINIP,
-#define CTA_NAT_MINIP CTA_NAT_V4_MINIP
+#घोषणा CTA_NAT_MINIP CTA_NAT_V4_MINIP
 	CTA_NAT_V4_MAXIP,
-#define CTA_NAT_MAXIP CTA_NAT_V4_MAXIP
+#घोषणा CTA_NAT_MAXIP CTA_NAT_V4_MAXIP
 	CTA_NAT_PROTO,
 	CTA_NAT_V6_MINIP,
 	CTA_NAT_V6_MAXIP,
 	__CTA_NAT_MAX
-};
-#define CTA_NAT_MAX (__CTA_NAT_MAX - 1)
+पूर्ण;
+#घोषणा CTA_NAT_MAX (__CTA_NAT_MAX - 1)
 
-enum ctattr_protonat {
+क्रमागत ctattr_protonat अणु
 	CTA_PROTONAT_UNSPEC,
 	CTA_PROTONAT_PORT_MIN,
 	CTA_PROTONAT_PORT_MAX,
 	__CTA_PROTONAT_MAX
-};
-#define CTA_PROTONAT_MAX (__CTA_PROTONAT_MAX - 1)
+पूर्ण;
+#घोषणा CTA_PROTONAT_MAX (__CTA_PROTONAT_MAX - 1)
 
-enum ctattr_seqadj {
+क्रमागत ctattr_seqadj अणु
 	CTA_SEQADJ_UNSPEC,
 	CTA_SEQADJ_CORRECTION_POS,
 	CTA_SEQADJ_OFFSET_BEFORE,
 	CTA_SEQADJ_OFFSET_AFTER,
 	__CTA_SEQADJ_MAX
-};
-#define CTA_SEQADJ_MAX (__CTA_SEQADJ_MAX - 1)
+पूर्ण;
+#घोषणा CTA_SEQADJ_MAX (__CTA_SEQADJ_MAX - 1)
 
-enum ctattr_natseq {
+क्रमागत ctattr_natseq अणु
 	CTA_NAT_SEQ_UNSPEC,
 	CTA_NAT_SEQ_CORRECTION_POS,
 	CTA_NAT_SEQ_OFFSET_BEFORE,
 	CTA_NAT_SEQ_OFFSET_AFTER,
 	__CTA_NAT_SEQ_MAX
-};
-#define CTA_NAT_SEQ_MAX (__CTA_NAT_SEQ_MAX - 1)
+पूर्ण;
+#घोषणा CTA_NAT_SEQ_MAX (__CTA_NAT_SEQ_MAX - 1)
 
-enum ctattr_synproxy {
+क्रमागत ctattr_synproxy अणु
 	CTA_SYNPROXY_UNSPEC,
 	CTA_SYNPROXY_ISN,
 	CTA_SYNPROXY_ITS,
 	CTA_SYNPROXY_TSOFF,
 	__CTA_SYNPROXY_MAX,
-};
-#define CTA_SYNPROXY_MAX (__CTA_SYNPROXY_MAX - 1)
+पूर्ण;
+#घोषणा CTA_SYNPROXY_MAX (__CTA_SYNPROXY_MAX - 1)
 
-enum ctattr_expect {
+क्रमागत ctattr_expect अणु
 	CTA_EXPECT_UNSPEC,
 	CTA_EXPECT_MASTER,
 	CTA_EXPECT_TUPLE,
@@ -215,41 +216,41 @@ enum ctattr_expect {
 	CTA_EXPECT_NAT,
 	CTA_EXPECT_FN,
 	__CTA_EXPECT_MAX
-};
-#define CTA_EXPECT_MAX (__CTA_EXPECT_MAX - 1)
+पूर्ण;
+#घोषणा CTA_EXPECT_MAX (__CTA_EXPECT_MAX - 1)
 
-enum ctattr_expect_nat {
+क्रमागत ctattr_expect_nat अणु
 	CTA_EXPECT_NAT_UNSPEC,
-	CTA_EXPECT_NAT_DIR,
+	CTA_EXPECT_NAT_सूची,
 	CTA_EXPECT_NAT_TUPLE,
 	__CTA_EXPECT_NAT_MAX
-};
-#define CTA_EXPECT_NAT_MAX (__CTA_EXPECT_NAT_MAX - 1)
+पूर्ण;
+#घोषणा CTA_EXPECT_NAT_MAX (__CTA_EXPECT_NAT_MAX - 1)
 
-enum ctattr_help {
+क्रमागत ctattr_help अणु
 	CTA_HELP_UNSPEC,
 	CTA_HELP_NAME,
 	CTA_HELP_INFO,
 	__CTA_HELP_MAX
-};
-#define CTA_HELP_MAX (__CTA_HELP_MAX - 1)
+पूर्ण;
+#घोषणा CTA_HELP_MAX (__CTA_HELP_MAX - 1)
 
-enum ctattr_secctx {
+क्रमागत ctattr_secctx अणु
 	CTA_SECCTX_UNSPEC,
 	CTA_SECCTX_NAME,
 	__CTA_SECCTX_MAX
-};
-#define CTA_SECCTX_MAX (__CTA_SECCTX_MAX - 1)
+पूर्ण;
+#घोषणा CTA_SECCTX_MAX (__CTA_SECCTX_MAX - 1)
 
-enum ctattr_stats_cpu {
+क्रमागत ctattr_stats_cpu अणु
 	CTA_STATS_UNSPEC,
-	CTA_STATS_SEARCHED,	/* no longer used */
+	CTA_STATS_SEARCHED,	/* no दीर्घer used */
 	CTA_STATS_FOUND,
-	CTA_STATS_NEW,		/* no longer used */
+	CTA_STATS_NEW,		/* no दीर्घer used */
 	CTA_STATS_INVALID,
-	CTA_STATS_IGNORE,	/* no longer used */
-	CTA_STATS_DELETE,	/* no longer used */
-	CTA_STATS_DELETE_LIST,	/* no longer used */
+	CTA_STATS_IGNORE,	/* no दीर्घer used */
+	CTA_STATS_DELETE,	/* no दीर्घer used */
+	CTA_STATS_DELETE_LIST,	/* no दीर्घer used */
 	CTA_STATS_INSERT,
 	CTA_STATS_INSERT_FAILED,
 	CTA_STATS_DROP,
@@ -258,32 +259,32 @@ enum ctattr_stats_cpu {
 	CTA_STATS_SEARCH_RESTART,
 	CTA_STATS_CLASH_RESOLVE,
 	__CTA_STATS_MAX,
-};
-#define CTA_STATS_MAX (__CTA_STATS_MAX - 1)
+पूर्ण;
+#घोषणा CTA_STATS_MAX (__CTA_STATS_MAX - 1)
 
-enum ctattr_stats_global {
+क्रमागत ctattr_stats_global अणु
 	CTA_STATS_GLOBAL_UNSPEC,
 	CTA_STATS_GLOBAL_ENTRIES,
 	CTA_STATS_GLOBAL_MAX_ENTRIES,
 	__CTA_STATS_GLOBAL_MAX,
-};
-#define CTA_STATS_GLOBAL_MAX (__CTA_STATS_GLOBAL_MAX - 1)
+पूर्ण;
+#घोषणा CTA_STATS_GLOBAL_MAX (__CTA_STATS_GLOBAL_MAX - 1)
 
-enum ctattr_expect_stats {
+क्रमागत ctattr_expect_stats अणु
 	CTA_STATS_EXP_UNSPEC,
 	CTA_STATS_EXP_NEW,
 	CTA_STATS_EXP_CREATE,
 	CTA_STATS_EXP_DELETE,
 	__CTA_STATS_EXP_MAX,
-};
-#define CTA_STATS_EXP_MAX (__CTA_STATS_EXP_MAX - 1)
+पूर्ण;
+#घोषणा CTA_STATS_EXP_MAX (__CTA_STATS_EXP_MAX - 1)
 
-enum ctattr_filter {
+क्रमागत ctattr_filter अणु
 	CTA_FILTER_UNSPEC,
 	CTA_FILTER_ORIG_FLAGS,
 	CTA_FILTER_REPLY_FLAGS,
 	__CTA_FILTER_MAX
-};
-#define CTA_FILTER_MAX (__CTA_FILTER_MAX - 1)
+पूर्ण;
+#घोषणा CTA_FILTER_MAX (__CTA_FILTER_MAX - 1)
 
-#endif /* _IPCONNTRACK_NETLINK_H */
+#पूर्ण_अगर /* _IPCONNTRACK_NETLINK_H */

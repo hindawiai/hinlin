@@ -1,48 +1,49 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file "COPYING" in the main directory of this
- * archive for more details.
+ * Public License.  See the file "COPYING" in the मुख्य directory of this
+ * archive क्रम more details.
  *
  * Copyright (C) 2000 - 2001 by Kanoj Sarcar (kanoj@sgi.com)
  * Copyright (C) 2000 - 2001 by Silicon Graphics, Inc.
  */
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/topology.h>
-#include <linux/nodemask.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/topology.h>
+#समावेश <linux/nodemask.h>
 
-#include <asm/page.h>
-#include <asm/processor.h>
-#include <asm/ptrace.h>
-#include <asm/sn/agent.h>
-#include <asm/sn/arch.h>
-#include <asm/sn/gda.h>
-#include <asm/sn/intr.h>
-#include <asm/sn/klconfig.h>
-#include <asm/sn/launch.h>
-#include <asm/sn/mapped_kernel.h>
-#include <asm/sn/types.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/sn/agent.h>
+#समावेश <यंत्र/sn/arch.h>
+#समावेश <यंत्र/sn/gda.h>
+#समावेश <यंत्र/sn/पूर्णांकr.h>
+#समावेश <यंत्र/sn/klconfig.h>
+#समावेश <यंत्र/sn/launch.h>
+#समावेश <यंत्र/sn/mapped_kernel.h>
+#समावेश <यंत्र/sn/types.h>
 
-#include "ip27-common.h"
+#समावेश "ip27-common.h"
 
-static int node_scan_cpus(nasid_t nasid, int highest)
-{
-	static int cpus_found;
+अटल पूर्णांक node_scan_cpus(nasid_t nasid, पूर्णांक highest)
+अणु
+	अटल पूर्णांक cpus_found;
 	lboard_t *brd;
 	klcpu_t *acpu;
 	cpuid_t cpuid;
 
 	brd = find_lboard((lboard_t *)KL_CONFIG_INFO(nasid), KLTYPE_IP27);
 
-	do {
+	करो अणु
 		acpu = (klcpu_t *)find_first_component(brd, KLSTRUCT_CPU);
-		while (acpu) {
+		जबतक (acpu) अणु
 			cpuid = acpu->cpu_info.virtid;
-			/* Only let it join in if it's marked enabled */
-			if ((acpu->cpu_info.flags & KLINFO_ENABLE) &&
-			    (cpus_found != NR_CPUS)) {
-				if (cpuid > highest)
+			/* Only let it join in अगर it's marked enabled */
+			अगर ((acpu->cpu_info.flags & KLINFO_ENABLE) &&
+			    (cpus_found != NR_CPUS)) अणु
+				अगर (cpuid > highest)
 					highest = cpuid;
 				set_cpu_possible(cpuid, true);
 				cputonasid(cpus_found) = nasid;
@@ -50,134 +51,134 @@ static int node_scan_cpus(nasid_t nasid, int highest)
 				sn_cpu_info[cpus_found].p_speed =
 							acpu->cpu_speed;
 				cpus_found++;
-			}
+			पूर्ण
 			acpu = (klcpu_t *)find_component(brd, (klinfo_t *)acpu,
 								KLSTRUCT_CPU);
-		}
+		पूर्ण
 		brd = KLCF_NEXT(brd);
-		if (!brd)
-			break;
+		अगर (!brd)
+			अवरोध;
 
 		brd = find_lboard(brd, KLTYPE_IP27);
-	} while (brd);
+	पूर्ण जबतक (brd);
 
-	return highest;
-}
+	वापस highest;
+पूर्ण
 
-void cpu_node_probe(void)
-{
-	int i, highest = 0;
+व्योम cpu_node_probe(व्योम)
+अणु
+	पूर्णांक i, highest = 0;
 	gda_t *gdap = GDA;
 
 	nodes_clear(node_online_map);
-	for (i = 0; i < MAX_NUMNODES; i++) {
+	क्रम (i = 0; i < MAX_NUMNODES; i++) अणु
 		nasid_t nasid = gdap->g_nasidtable[i];
-		if (nasid == INVALID_NASID)
-			break;
+		अगर (nasid == INVALID_NASID)
+			अवरोध;
 		node_set_online(nasid);
 		highest = node_scan_cpus(nasid, highest);
-	}
+	पूर्ण
 
-	printk("Discovered %d cpus on %d nodes\n", highest + 1, num_online_nodes());
-}
+	prपूर्णांकk("Discovered %d cpus on %d nodes\n", highest + 1, num_online_nodes());
+पूर्ण
 
-static __init void intr_clear_all(nasid_t nasid)
-{
-	int i;
+अटल __init व्योम पूर्णांकr_clear_all(nasid_t nasid)
+अणु
+	पूर्णांक i;
 
 	REMOTE_HUB_S(nasid, PI_INT_MASK0_A, 0);
 	REMOTE_HUB_S(nasid, PI_INT_MASK0_B, 0);
 	REMOTE_HUB_S(nasid, PI_INT_MASK1_A, 0);
 	REMOTE_HUB_S(nasid, PI_INT_MASK1_B, 0);
 
-	for (i = 0; i < 128; i++)
+	क्रम (i = 0; i < 128; i++)
 		REMOTE_HUB_CLR_INTR(nasid, i);
-}
+पूर्ण
 
-static void ip27_send_ipi_single(int destid, unsigned int action)
-{
-	int irq;
+अटल व्योम ip27_send_ipi_single(पूर्णांक destid, अचिन्हित पूर्णांक action)
+अणु
+	पूर्णांक irq;
 
-	switch (action) {
-	case SMP_RESCHEDULE_YOURSELF:
+	चयन (action) अणु
+	हाल SMP_RESCHEDULE_YOURSELF:
 		irq = CPU_RESCHED_A_IRQ;
-		break;
-	case SMP_CALL_FUNCTION:
+		अवरोध;
+	हाल SMP_CALL_FUNCTION:
 		irq = CPU_CALL_A_IRQ;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		panic("sendintr");
-	}
+	पूर्ण
 
 	irq += cputoslice(destid);
 
 	/*
-	 * Set the interrupt bit associated with the CPU we want to
-	 * send the interrupt to.
+	 * Set the पूर्णांकerrupt bit associated with the CPU we want to
+	 * send the पूर्णांकerrupt to.
 	 */
 	REMOTE_HUB_SEND_INTR(cpu_to_node(destid), irq);
-}
+पूर्ण
 
-static void ip27_send_ipi_mask(const struct cpumask *mask, unsigned int action)
-{
-	unsigned int i;
+अटल व्योम ip27_send_ipi_mask(स्थिर काष्ठा cpumask *mask, अचिन्हित पूर्णांक action)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for_each_cpu(i, mask)
+	क्रम_each_cpu(i, mask)
 		ip27_send_ipi_single(i, action);
-}
+पूर्ण
 
-static void ip27_init_cpu(void)
-{
+अटल व्योम ip27_init_cpu(व्योम)
+अणु
 	per_cpu_init();
-}
+पूर्ण
 
-static void ip27_smp_finish(void)
-{
-	hub_rt_clock_event_init();
+अटल व्योम ip27_smp_finish(व्योम)
+अणु
+	hub_rt_घड़ी_event_init();
 	local_irq_enable();
-}
+पूर्ण
 
 /*
- * Launch a slave into smp_bootstrap().	 It doesn't take an argument, and we
+ * Launch a slave पूर्णांकo smp_bootstrap().	 It करोesn't take an argument, and we
  * set sp to the kernel stack of the newly created idle process, gp to the proc
- * struct so that current_thread_info() will work.
+ * काष्ठा so that current_thपढ़ो_info() will work.
  */
-static int ip27_boot_secondary(int cpu, struct task_struct *idle)
-{
-	unsigned long gp = (unsigned long)task_thread_info(idle);
-	unsigned long sp = __KSTK_TOS(idle);
+अटल पूर्णांक ip27_boot_secondary(पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	अचिन्हित दीर्घ gp = (अचिन्हित दीर्घ)task_thपढ़ो_info(idle);
+	अचिन्हित दीर्घ sp = __KSTK_TOS(idle);
 
 	LAUNCH_SLAVE(cputonasid(cpu), cputoslice(cpu),
 		(launch_proc_t)MAPPED_KERN_RW_TO_K0(smp_bootstrap),
-		0, (void *) sp, (void *) gp);
-	return 0;
-}
+		0, (व्योम *) sp, (व्योम *) gp);
+	वापस 0;
+पूर्ण
 
-static void __init ip27_smp_setup(void)
-{
+अटल व्योम __init ip27_smp_setup(व्योम)
+अणु
 	nasid_t nasid;
 
-	for_each_online_node(nasid) {
-		if (nasid == 0)
-			continue;
-		intr_clear_all(nasid);
-	}
+	क्रम_each_online_node(nasid) अणु
+		अगर (nasid == 0)
+			जारी;
+		पूर्णांकr_clear_all(nasid);
+	पूर्ण
 
 	replicate_kernel_text();
 
 	/*
-	 * PROM sets up system, that boot cpu is always first CPU on nasid 0
+	 * PROM sets up प्रणाली, that boot cpu is always first CPU on nasid 0
 	 */
 	cputonasid(0) = 0;
 	cputoslice(0) = LOCAL_HUB_L(PI_CPU_NUM);
-}
+पूर्ण
 
-static void __init ip27_prepare_cpus(unsigned int max_cpus)
-{
-	/* We already did everything necessary earlier */
-}
+अटल व्योम __init ip27_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	/* We alपढ़ोy did everything necessary earlier */
+पूर्ण
 
-const struct plat_smp_ops ip27_smp_ops = {
+स्थिर काष्ठा plat_smp_ops ip27_smp_ops = अणु
 	.send_ipi_single	= ip27_send_ipi_single,
 	.send_ipi_mask		= ip27_send_ipi_mask,
 	.init_secondary		= ip27_init_cpu,
@@ -186,4 +187,4 @@ const struct plat_smp_ops ip27_smp_ops = {
 	.smp_setup		= ip27_smp_setup,
 	.prepare_cpus		= ip27_prepare_cpus,
 	.prepare_boot_cpu	= ip27_init_cpu,
-};
+पूर्ण;

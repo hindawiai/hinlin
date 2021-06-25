@@ -1,35 +1,36 @@
+<शैली गुरु>
 /*
- *  linux/drivers/scsi/esas2r/esas2r_int.c
- *      esas2r interrupt handling
+ *  linux/drivers/scsi/esas2r/esas2r_पूर्णांक.c
+ *      esas2r पूर्णांकerrupt handling
  *
  *  Copyright (c) 2001-2013 ATTO Technology, Inc.
  *  (mailto:linuxdrivers@attotech.com)
  */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is मुक्त software; you can redistribute it and/or modअगरy
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  GNU General Public License क्रम more details.
  *
  *  NO WARRANTY
  *  THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
  *  CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
  *  LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
  *  MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
- *  solely responsible for determining the appropriateness of using and
+ *  solely responsible क्रम determining the appropriateness of using and
  *  distributing the Program and assumes all risks associated with its
  *  exercise of rights under this Agreement, including but not limited to
  *  the risks and costs of program errors, damage to or loss of data,
- *  programs or equipment, and unavailability or interruption of operations.
+ *  programs or equipment, and unavailability or पूर्णांकerruption of operations.
  *
  *  DISCLAIMER OF LIABILITY
  *  NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
- *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  *  DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
  *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
  *  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -37,179 +38,179 @@
  *  HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
+ *  aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
-#include "esas2r.h"
+#समावेश "esas2r.h"
 
 /* Local function prototypes */
-static void esas2r_doorbell_interrupt(struct esas2r_adapter *a, u32 doorbell);
-static void esas2r_get_outbound_responses(struct esas2r_adapter *a);
-static void esas2r_process_bus_reset(struct esas2r_adapter *a);
+अटल व्योम esas2r_करोorbell_पूर्णांकerrupt(काष्ठा esas2r_adapter *a, u32 करोorbell);
+अटल व्योम esas2r_get_outbound_responses(काष्ठा esas2r_adapter *a);
+अटल व्योम esas2r_process_bus_reset(काष्ठा esas2r_adapter *a);
 
 /*
- * Poll the adapter for interrupts and service them.
- * This function handles both legacy interrupts and MSI.
+ * Poll the adapter क्रम पूर्णांकerrupts and service them.
+ * This function handles both legacy पूर्णांकerrupts and MSI.
  */
-void esas2r_polled_interrupt(struct esas2r_adapter *a)
-{
-	u32 intstat;
-	u32 doorbell;
+व्योम esas2r_polled_पूर्णांकerrupt(काष्ठा esas2r_adapter *a)
+अणु
+	u32 पूर्णांकstat;
+	u32 करोorbell;
 
-	esas2r_disable_chip_interrupts(a);
+	esas2r_disable_chip_पूर्णांकerrupts(a);
 
-	intstat = esas2r_read_register_dword(a, MU_INT_STATUS_OUT);
+	पूर्णांकstat = esas2r_पढ़ो_रेजिस्टर_dword(a, MU_INT_STATUS_OUT);
 
-	if (intstat & MU_INTSTAT_POST_OUT) {
-		/* clear the interrupt */
+	अगर (पूर्णांकstat & MU_INTSTAT_POST_OUT) अणु
+		/* clear the पूर्णांकerrupt */
 
-		esas2r_write_register_dword(a, MU_OUT_LIST_INT_STAT,
+		esas2r_ग_लिखो_रेजिस्टर_dword(a, MU_OUT_LIST_INT_STAT,
 					    MU_OLIS_INT);
-		esas2r_flush_register_dword(a, MU_OUT_LIST_INT_STAT);
+		esas2r_flush_रेजिस्टर_dword(a, MU_OUT_LIST_INT_STAT);
 
 		esas2r_get_outbound_responses(a);
-	}
+	पूर्ण
 
-	if (intstat & MU_INTSTAT_DRBL) {
-		doorbell = esas2r_read_register_dword(a, MU_DOORBELL_OUT);
-		if (doorbell != 0)
-			esas2r_doorbell_interrupt(a, doorbell);
-	}
+	अगर (पूर्णांकstat & MU_INTSTAT_DRBL) अणु
+		करोorbell = esas2r_पढ़ो_रेजिस्टर_dword(a, MU_DOORBELL_OUT);
+		अगर (करोorbell != 0)
+			esas2r_करोorbell_पूर्णांकerrupt(a, करोorbell);
+	पूर्ण
 
-	esas2r_enable_chip_interrupts(a);
+	esas2r_enable_chip_पूर्णांकerrupts(a);
 
-	if (atomic_read(&a->disable_cnt) == 0)
-		esas2r_do_deferred_processes(a);
-}
+	अगर (atomic_पढ़ो(&a->disable_cnt) == 0)
+		esas2r_करो_deferred_processes(a);
+पूर्ण
 
 /*
- * Legacy and MSI interrupt handlers.  Note that the legacy interrupt handler
+ * Legacy and MSI पूर्णांकerrupt handlers.  Note that the legacy पूर्णांकerrupt handler
  * schedules a TASKLET to process events, whereas the MSI handler just
- * processes interrupt events directly.
+ * processes पूर्णांकerrupt events directly.
  */
-irqreturn_t esas2r_interrupt(int irq, void *dev_id)
-{
-	struct esas2r_adapter *a = (struct esas2r_adapter *)dev_id;
+irqवापस_t esas2r_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा esas2r_adapter *a = (काष्ठा esas2r_adapter *)dev_id;
 
-	if (!esas2r_adapter_interrupt_pending(a))
-		return IRQ_NONE;
+	अगर (!esas2r_adapter_पूर्णांकerrupt_pending(a))
+		वापस IRQ_NONE;
 
 	set_bit(AF2_INT_PENDING, &a->flags2);
 	esas2r_schedule_tasklet(a);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void esas2r_adapter_interrupt(struct esas2r_adapter *a)
-{
-	u32 doorbell;
+व्योम esas2r_adapter_पूर्णांकerrupt(काष्ठा esas2r_adapter *a)
+अणु
+	u32 करोorbell;
 
-	if (likely(a->int_stat & MU_INTSTAT_POST_OUT)) {
-		/* clear the interrupt */
-		esas2r_write_register_dword(a, MU_OUT_LIST_INT_STAT,
+	अगर (likely(a->पूर्णांक_stat & MU_INTSTAT_POST_OUT)) अणु
+		/* clear the पूर्णांकerrupt */
+		esas2r_ग_लिखो_रेजिस्टर_dword(a, MU_OUT_LIST_INT_STAT,
 					    MU_OLIS_INT);
-		esas2r_flush_register_dword(a, MU_OUT_LIST_INT_STAT);
+		esas2r_flush_रेजिस्टर_dword(a, MU_OUT_LIST_INT_STAT);
 		esas2r_get_outbound_responses(a);
-	}
+	पूर्ण
 
-	if (unlikely(a->int_stat & MU_INTSTAT_DRBL)) {
-		doorbell = esas2r_read_register_dword(a, MU_DOORBELL_OUT);
-		if (doorbell != 0)
-			esas2r_doorbell_interrupt(a, doorbell);
-	}
+	अगर (unlikely(a->पूर्णांक_stat & MU_INTSTAT_DRBL)) अणु
+		करोorbell = esas2r_पढ़ो_रेजिस्टर_dword(a, MU_DOORBELL_OUT);
+		अगर (करोorbell != 0)
+			esas2r_करोorbell_पूर्णांकerrupt(a, करोorbell);
+	पूर्ण
 
-	a->int_mask = ESAS2R_INT_STS_MASK;
+	a->पूर्णांक_mask = ESAS2R_INT_STS_MASK;
 
-	esas2r_enable_chip_interrupts(a);
+	esas2r_enable_chip_पूर्णांकerrupts(a);
 
-	if (likely(atomic_read(&a->disable_cnt) == 0))
-		esas2r_do_deferred_processes(a);
-}
+	अगर (likely(atomic_पढ़ो(&a->disable_cnt) == 0))
+		esas2r_करो_deferred_processes(a);
+पूर्ण
 
-irqreturn_t esas2r_msi_interrupt(int irq, void *dev_id)
-{
-	struct esas2r_adapter *a = (struct esas2r_adapter *)dev_id;
-	u32 intstat;
-	u32 doorbell;
+irqवापस_t esas2r_msi_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा esas2r_adapter *a = (काष्ठा esas2r_adapter *)dev_id;
+	u32 पूर्णांकstat;
+	u32 करोorbell;
 
-	intstat = esas2r_read_register_dword(a, MU_INT_STATUS_OUT);
+	पूर्णांकstat = esas2r_पढ़ो_रेजिस्टर_dword(a, MU_INT_STATUS_OUT);
 
-	if (likely(intstat & MU_INTSTAT_POST_OUT)) {
-		/* clear the interrupt */
+	अगर (likely(पूर्णांकstat & MU_INTSTAT_POST_OUT)) अणु
+		/* clear the पूर्णांकerrupt */
 
-		esas2r_write_register_dword(a, MU_OUT_LIST_INT_STAT,
+		esas2r_ग_लिखो_रेजिस्टर_dword(a, MU_OUT_LIST_INT_STAT,
 					    MU_OLIS_INT);
-		esas2r_flush_register_dword(a, MU_OUT_LIST_INT_STAT);
+		esas2r_flush_रेजिस्टर_dword(a, MU_OUT_LIST_INT_STAT);
 
 		esas2r_get_outbound_responses(a);
-	}
+	पूर्ण
 
-	if (unlikely(intstat & MU_INTSTAT_DRBL)) {
-		doorbell = esas2r_read_register_dword(a, MU_DOORBELL_OUT);
-		if (doorbell != 0)
-			esas2r_doorbell_interrupt(a, doorbell);
-	}
+	अगर (unlikely(पूर्णांकstat & MU_INTSTAT_DRBL)) अणु
+		करोorbell = esas2r_पढ़ो_रेजिस्टर_dword(a, MU_DOORBELL_OUT);
+		अगर (करोorbell != 0)
+			esas2r_करोorbell_पूर्णांकerrupt(a, करोorbell);
+	पूर्ण
 
 	/*
-	 * Work around a chip bug and force a new MSI to be sent if one is
+	 * Work around a chip bug and क्रमce a new MSI to be sent अगर one is
 	 * still pending.
 	 */
-	esas2r_disable_chip_interrupts(a);
-	esas2r_enable_chip_interrupts(a);
+	esas2r_disable_chip_पूर्णांकerrupts(a);
+	esas2r_enable_chip_पूर्णांकerrupts(a);
 
-	if (likely(atomic_read(&a->disable_cnt) == 0))
-		esas2r_do_deferred_processes(a);
+	अगर (likely(atomic_पढ़ो(&a->disable_cnt) == 0))
+		esas2r_करो_deferred_processes(a);
 
-	esas2r_do_tasklet_tasks(a);
+	esas2r_करो_tasklet_tasks(a);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 
 
-static void esas2r_handle_outbound_rsp_err(struct esas2r_adapter *a,
-					   struct esas2r_request *rq,
-					   struct atto_vda_ob_rsp *rsp)
-{
+अटल व्योम esas2r_handle_outbound_rsp_err(काष्ठा esas2r_adapter *a,
+					   काष्ठा esas2r_request *rq,
+					   काष्ठा atto_vda_ob_rsp *rsp)
+अणु
 
 	/*
-	 * For I/O requests, only copy the response if an error
-	 * occurred and setup a callback to do error processing.
+	 * For I/O requests, only copy the response अगर an error
+	 * occurred and setup a callback to करो error processing.
 	 */
-	if (unlikely(rq->req_stat != RS_SUCCESS)) {
-		memcpy(&rq->func_rsp, &rsp->func_rsp, sizeof(rsp->func_rsp));
+	अगर (unlikely(rq->req_stat != RS_SUCCESS)) अणु
+		स_नकल(&rq->func_rsp, &rsp->func_rsp, माप(rsp->func_rsp));
 
-		if (rq->req_stat == RS_ABORTED) {
-			if (rq->timeout > RQ_MAX_TIMEOUT)
+		अगर (rq->req_stat == RS_ABORTED) अणु
+			अगर (rq->समयout > RQ_MAX_TIMEOUT)
 				rq->req_stat = RS_TIMEOUT;
-		} else if (rq->req_stat == RS_SCSI_ERROR) {
+		पूर्ण अन्यथा अगर (rq->req_stat == RS_SCSI_ERROR) अणु
 			u8 scsistatus = rq->func_rsp.scsi_rsp.scsi_stat;
 
 			esas2r_trace("scsistatus: %x", scsistatus);
 
 			/* Any of these are a good result. */
-			if (scsistatus == SAM_STAT_GOOD || scsistatus ==
+			अगर (scsistatus == SAM_STAT_GOOD || scsistatus ==
 			    SAM_STAT_CONDITION_MET || scsistatus ==
 			    SAM_STAT_INTERMEDIATE || scsistatus ==
-			    SAM_STAT_INTERMEDIATE_CONDITION_MET) {
+			    SAM_STAT_INTERMEDIATE_CONDITION_MET) अणु
 				rq->req_stat = RS_SUCCESS;
 				rq->func_rsp.scsi_rsp.scsi_stat =
 					SAM_STAT_GOOD;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void esas2r_get_outbound_responses(struct esas2r_adapter *a)
-{
-	struct atto_vda_ob_rsp *rsp;
+अटल व्योम esas2r_get_outbound_responses(काष्ठा esas2r_adapter *a)
+अणु
+	काष्ठा atto_vda_ob_rsp *rsp;
 	u32 rspput_ptr;
 	u32 rspget_ptr;
-	struct esas2r_request *rq;
+	काष्ठा esas2r_request *rq;
 	u32 handle;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	LIST_HEAD(comp_list);
 
@@ -217,54 +218,54 @@ static void esas2r_get_outbound_responses(struct esas2r_adapter *a)
 
 	spin_lock_irqsave(&a->queue_lock, flags);
 
-	/* Get the outbound limit and pointers */
+	/* Get the outbound limit and poपूर्णांकers */
 	rspput_ptr = le32_to_cpu(*a->outbound_copy) & MU_OLC_WRT_PTR;
-	rspget_ptr = a->last_read;
+	rspget_ptr = a->last_पढ़ो;
 
 	esas2r_trace("rspput_ptr: %x, rspget_ptr: %x", rspput_ptr, rspget_ptr);
 
-	/* If we don't have anything to process, get out */
-	if (unlikely(rspget_ptr == rspput_ptr)) {
+	/* If we करोn't have anything to process, get out */
+	अगर (unlikely(rspget_ptr == rspput_ptr)) अणु
 		spin_unlock_irqrestore(&a->queue_lock, flags);
-		esas2r_trace_exit();
-		return;
-	}
+		esas2r_trace_निकास();
+		वापस;
+	पूर्ण
 
 	/* Make sure the firmware is healthy */
-	if (unlikely(rspput_ptr >= a->list_size)) {
+	अगर (unlikely(rspput_ptr >= a->list_size)) अणु
 		spin_unlock_irqrestore(&a->queue_lock, flags);
 		esas2r_bugon();
 		esas2r_local_reset_adapter(a);
-		esas2r_trace_exit();
-		return;
-	}
+		esas2r_trace_निकास();
+		वापस;
+	पूर्ण
 
-	do {
+	करो अणु
 		rspget_ptr++;
 
-		if (rspget_ptr >= a->list_size)
+		अगर (rspget_ptr >= a->list_size)
 			rspget_ptr = 0;
 
-		rsp = (struct atto_vda_ob_rsp *)a->outbound_list_md.virt_addr
+		rsp = (काष्ठा atto_vda_ob_rsp *)a->outbound_list_md.virt_addr
 		      + rspget_ptr;
 
 		handle = rsp->handle;
 
-		/* Verify the handle range */
-		if (unlikely(LOWORD(handle) == 0
+		/* Verअगरy the handle range */
+		अगर (unlikely(LOWORD(handle) == 0
 			     || LOWORD(handle) > num_requests +
-			     num_ae_requests + 1)) {
+			     num_ae_requests + 1)) अणु
 			esas2r_bugon();
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Get the request for this handle */
+		/* Get the request क्रम this handle */
 		rq = a->req_table[LOWORD(handle)];
 
-		if (unlikely(rq == NULL || rq->vrq->scsi.handle != handle)) {
+		अगर (unlikely(rq == शून्य || rq->vrq->scsi.handle != handle)) अणु
 			esas2r_bugon();
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		list_del(&rq->req_list);
 
@@ -275,92 +276,92 @@ static void esas2r_get_outbound_responses(struct esas2r_adapter *a)
 		esas2r_trace("rq: %p", rq);
 		esas2r_trace("req_status: %x", rq->req_stat);
 
-		if (likely(rq->vrq->scsi.function == VDA_FUNC_SCSI)) {
+		अगर (likely(rq->vrq->scsi.function == VDA_FUNC_SCSI)) अणु
 			esas2r_handle_outbound_rsp_err(a, rq, rsp);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * Copy the outbound completion struct for non-I/O
+			 * Copy the outbound completion काष्ठा क्रम non-I/O
 			 * requests.
 			 */
-			memcpy(&rq->func_rsp, &rsp->func_rsp,
-			       sizeof(rsp->func_rsp));
-		}
+			स_नकल(&rq->func_rsp, &rsp->func_rsp,
+			       माप(rsp->func_rsp));
+		पूर्ण
 
-		/* Queue the request for completion. */
+		/* Queue the request क्रम completion. */
 		list_add_tail(&rq->comp_list, &comp_list);
 
-	} while (rspget_ptr != rspput_ptr);
+	पूर्ण जबतक (rspget_ptr != rspput_ptr);
 
-	a->last_read = rspget_ptr;
+	a->last_पढ़ो = rspget_ptr;
 	spin_unlock_irqrestore(&a->queue_lock, flags);
 
 	esas2r_comp_list_drain(a, &comp_list);
-	esas2r_trace_exit();
-}
+	esas2r_trace_निकास();
+पूर्ण
 
 /*
- * Perform all deferred processes for the adapter.  Deferred
- * processes can only be done while the current interrupt
- * disable_cnt for the adapter is zero.
+ * Perक्रमm all deferred processes क्रम the adapter.  Deferred
+ * processes can only be करोne जबतक the current पूर्णांकerrupt
+ * disable_cnt क्रम the adapter is zero.
  */
-void esas2r_do_deferred_processes(struct esas2r_adapter *a)
-{
-	int startreqs = 2;
-	struct esas2r_request *rq;
-	unsigned long flags;
+व्योम esas2r_करो_deferred_processes(काष्ठा esas2r_adapter *a)
+अणु
+	पूर्णांक startreqs = 2;
+	काष्ठा esas2r_request *rq;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * startreqs is used to control starting requests
 	 * that are on the deferred queue
-	 *  = 0 - do not start any requests
+	 *  = 0 - करो not start any requests
 	 *  = 1 - can start discovery requests
 	 *  = 2 - can start any request
 	 */
 
-	if (test_bit(AF_CHPRST_PENDING, &a->flags) ||
+	अगर (test_bit(AF_CHPRST_PENDING, &a->flags) ||
 	    test_bit(AF_FLASHING, &a->flags))
 		startreqs = 0;
-	else if (test_bit(AF_DISC_PENDING, &a->flags))
+	अन्यथा अगर (test_bit(AF_DISC_PENDING, &a->flags))
 		startreqs = 1;
 
 	atomic_inc(&a->disable_cnt);
 
 	/* Clear off the completed list to be processed later. */
 
-	if (esas2r_is_tasklet_pending(a)) {
+	अगर (esas2r_is_tasklet_pending(a)) अणु
 		esas2r_schedule_tasklet(a);
 
 		startreqs = 0;
-	}
+	पूर्ण
 
 	/*
 	 * If we can start requests then traverse the defer queue
-	 * looking for requests to start or complete
+	 * looking क्रम requests to start or complete
 	 */
-	if (startreqs && !list_empty(&a->defer_list)) {
+	अगर (startreqs && !list_empty(&a->defer_list)) अणु
 		LIST_HEAD(comp_list);
-		struct list_head *element, *next;
+		काष्ठा list_head *element, *next;
 
 		spin_lock_irqsave(&a->queue_lock, flags);
 
-		list_for_each_safe(element, next, &a->defer_list) {
-			rq = list_entry(element, struct esas2r_request,
+		list_क्रम_each_safe(element, next, &a->defer_list) अणु
+			rq = list_entry(element, काष्ठा esas2r_request,
 					req_list);
 
-			if (rq->req_stat != RS_PENDING) {
+			अगर (rq->req_stat != RS_PENDING) अणु
 				list_del(element);
 				list_add_tail(&rq->comp_list, &comp_list);
-			}
+			पूर्ण
 			/*
 			 * Process discovery and OS requests separately.  We
 			 * can't hold up discovery requests when discovery is
-			 * pending.  In general, there may be different sets of
-			 * conditions for starting different types of requests.
+			 * pending.  In general, there may be dअगरferent sets of
+			 * conditions क्रम starting dअगरferent types of requests.
 			 */
-			else if (rq->req_type == RT_DISC_REQ) {
+			अन्यथा अगर (rq->req_type == RT_DISC_REQ) अणु
 				list_del(element);
 				esas2r_disc_local_start_request(a, rq);
-			} else if (startreqs == 2) {
+			पूर्ण अन्यथा अगर (startreqs == 2) अणु
 				list_del(element);
 				esas2r_local_start_request(a, rq);
 
@@ -368,86 +369,86 @@ void esas2r_do_deferred_processes(struct esas2r_adapter *a)
 				 * Flashing could have been set by last local
 				 * start
 				 */
-				if (test_bit(AF_FLASHING, &a->flags))
-					break;
-			}
-		}
+				अगर (test_bit(AF_FLASHING, &a->flags))
+					अवरोध;
+			पूर्ण
+		पूर्ण
 
 		spin_unlock_irqrestore(&a->queue_lock, flags);
 		esas2r_comp_list_drain(a, &comp_list);
-	}
+	पूर्ण
 
 	atomic_dec(&a->disable_cnt);
-}
+पूर्ण
 
 /*
  * Process an adapter reset (or one that is about to happen)
  * by making sure all outstanding requests are completed that
- * haven't been already.
+ * haven't been alपढ़ोy.
  */
-void esas2r_process_adapter_reset(struct esas2r_adapter *a)
-{
-	struct esas2r_request *rq = &a->general_req;
-	unsigned long flags;
-	struct esas2r_disc_context *dc;
+व्योम esas2r_process_adapter_reset(काष्ठा esas2r_adapter *a)
+अणु
+	काष्ठा esas2r_request *rq = &a->general_req;
+	अचिन्हित दीर्घ flags;
+	काष्ठा esas2r_disc_context *dc;
 
 	LIST_HEAD(comp_list);
-	struct list_head *element;
+	काष्ठा list_head *element;
 
 	esas2r_trace_enter();
 
 	spin_lock_irqsave(&a->queue_lock, flags);
 
-	/* abort the active discovery, if any.   */
+	/* पात the active discovery, अगर any.   */
 
-	if (rq->interrupt_cx) {
-		dc = (struct esas2r_disc_context *)rq->interrupt_cx;
+	अगर (rq->पूर्णांकerrupt_cx) अणु
+		dc = (काष्ठा esas2r_disc_context *)rq->पूर्णांकerrupt_cx;
 
 		dc->disc_evt = 0;
 
 		clear_bit(AF_DISC_IN_PROG, &a->flags);
-	}
+	पूर्ण
 
 	/*
-	 * just clear the interrupt callback for now.  it will be dequeued if
-	 * and when we find it on the active queue and we don't want the
-	 * callback called.  also set the dummy completion callback in case we
-	 * were doing an I/O request.
+	 * just clear the पूर्णांकerrupt callback क्रम now.  it will be dequeued अगर
+	 * and when we find it on the active queue and we करोn't want the
+	 * callback called.  also set the dummy completion callback in हाल we
+	 * were करोing an I/O request.
 	 */
 
-	rq->interrupt_cx = NULL;
-	rq->interrupt_cb = NULL;
+	rq->पूर्णांकerrupt_cx = शून्य;
+	rq->पूर्णांकerrupt_cb = शून्य;
 
 	rq->comp_cb = esas2r_dummy_complete;
 
-	/* Reset the read and write pointers */
+	/* Reset the पढ़ो and ग_लिखो poपूर्णांकers */
 
 	*a->outbound_copy =
-		a->last_write =
-			a->last_read = a->list_size - 1;
+		a->last_ग_लिखो =
+			a->last_पढ़ो = a->list_size - 1;
 
 	set_bit(AF_COMM_LIST_TOGGLE, &a->flags);
 
 	/* Kill all the requests on the active list */
-	list_for_each(element, &a->defer_list) {
-		rq = list_entry(element, struct esas2r_request, req_list);
+	list_क्रम_each(element, &a->defer_list) अणु
+		rq = list_entry(element, काष्ठा esas2r_request, req_list);
 
-		if (rq->req_stat == RS_STARTED)
-			if (esas2r_ioreq_aborted(a, rq, RS_ABORTED))
+		अगर (rq->req_stat == RS_STARTED)
+			अगर (esas2r_ioreq_पातed(a, rq, RS_ABORTED))
 				list_add_tail(&rq->comp_list, &comp_list);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&a->queue_lock, flags);
 	esas2r_comp_list_drain(a, &comp_list);
 	esas2r_process_bus_reset(a);
-	esas2r_trace_exit();
-}
+	esas2r_trace_निकास();
+पूर्ण
 
-static void esas2r_process_bus_reset(struct esas2r_adapter *a)
-{
-	struct esas2r_request *rq;
-	struct list_head *element;
-	unsigned long flags;
+अटल व्योम esas2r_process_bus_reset(काष्ठा esas2r_adapter *a)
+अणु
+	काष्ठा esas2r_request *rq;
+	काष्ठा list_head *element;
+	अचिन्हित दीर्घ flags;
 
 	LIST_HEAD(comp_list);
 
@@ -457,54 +458,54 @@ static void esas2r_process_bus_reset(struct esas2r_adapter *a)
 
 	spin_lock_irqsave(&a->queue_lock, flags);
 
-	/* kill all the requests on the deferred queue */
-	list_for_each(element, &a->defer_list) {
-		rq = list_entry(element, struct esas2r_request, req_list);
-		if (esas2r_ioreq_aborted(a, rq, RS_ABORTED))
+	/* समाप्त all the requests on the deferred queue */
+	list_क्रम_each(element, &a->defer_list) अणु
+		rq = list_entry(element, काष्ठा esas2r_request, req_list);
+		अगर (esas2r_ioreq_पातed(a, rq, RS_ABORTED))
 			list_add_tail(&rq->comp_list, &comp_list);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&a->queue_lock, flags);
 
 	esas2r_comp_list_drain(a, &comp_list);
 
-	if (atomic_read(&a->disable_cnt) == 0)
-		esas2r_do_deferred_processes(a);
+	अगर (atomic_पढ़ो(&a->disable_cnt) == 0)
+		esas2r_करो_deferred_processes(a);
 
 	clear_bit(AF_OS_RESET, &a->flags);
 
-	esas2r_trace_exit();
-}
+	esas2r_trace_निकास();
+पूर्ण
 
-static void esas2r_chip_rst_needed_during_tasklet(struct esas2r_adapter *a)
-{
+अटल व्योम esas2r_chip_rst_needed_during_tasklet(काष्ठा esas2r_adapter *a)
+अणु
 
 	clear_bit(AF_CHPRST_NEEDED, &a->flags);
 	clear_bit(AF_BUSRST_NEEDED, &a->flags);
 	clear_bit(AF_BUSRST_DETECTED, &a->flags);
 	clear_bit(AF_BUSRST_PENDING, &a->flags);
 	/*
-	 * Make sure we don't get attempt more than 3 resets
-	 * when the uptime between resets does not exceed one
+	 * Make sure we करोn't get attempt more than 3 resets
+	 * when the upसमय between resets करोes not exceed one
 	 * minute.  This will stop any situation where there is
 	 * really something wrong with the hardware.  The way
-	 * this works is that we start with uptime ticks at 0.
-	 * Each time we do a reset, we add 20 seconds worth to
-	 * the count.  Each time a timer tick occurs, as long
+	 * this works is that we start with upसमय ticks at 0.
+	 * Each समय we करो a reset, we add 20 seconds worth to
+	 * the count.  Each समय a समयr tick occurs, as दीर्घ
 	 * as a chip reset is not pending, we decrement the
-	 * tick count.  If the uptime ticks ever gets to 60
+	 * tick count.  If the upसमय ticks ever माला_लो to 60
 	 * seconds worth, we disable the adapter from that
-	 * point forward.  Three strikes, you're out.
+	 * poपूर्णांक क्रमward.  Three strikes, you're out.
 	 */
-	if (!esas2r_is_adapter_present(a) || (a->chip_uptime >=
-					      ESAS2R_CHP_UPTIME_MAX)) {
+	अगर (!esas2r_is_adapter_present(a) || (a->chip_upसमय >=
+					      ESAS2R_CHP_UPTIME_MAX)) अणु
 		esas2r_hdebug("*** adapter disabled ***");
 
 		/*
 		 * Ok, some kind of hard failure.  Make sure we
-		 * exit this loop with chip interrupts
-		 * permanently disabled so we don't lock up the
-		 * entire system.  Also flag degraded mode to
+		 * निकास this loop with chip पूर्णांकerrupts
+		 * permanently disabled so we करोn't lock up the
+		 * entire प्रणाली.  Also flag degraded mode to
 		 * prevent the heartbeat from trying to recover.
 		 */
 
@@ -513,131 +514,131 @@ static void esas2r_chip_rst_needed_during_tasklet(struct esas2r_adapter *a)
 		clear_bit(AF_CHPRST_PENDING, &a->flags);
 		clear_bit(AF_DISC_PENDING, &a->flags);
 
-		esas2r_disable_chip_interrupts(a);
-		a->int_mask = 0;
+		esas2r_disable_chip_पूर्णांकerrupts(a);
+		a->पूर्णांक_mask = 0;
 		esas2r_process_adapter_reset(a);
 
 		esas2r_log(ESAS2R_LOG_CRIT,
 			   "Adapter disabled because of hardware failure");
-	} else {
+	पूर्ण अन्यथा अणु
 		bool alrdyrst = test_and_set_bit(AF_CHPRST_STARTED, &a->flags);
 
-		if (!alrdyrst)
+		अगर (!alrdyrst)
 			/*
-			 * Only disable interrupts if this is
+			 * Only disable पूर्णांकerrupts अगर this is
 			 * the first reset attempt.
 			 */
-			esas2r_disable_chip_interrupts(a);
+			esas2r_disable_chip_पूर्णांकerrupts(a);
 
-		if ((test_bit(AF_POWER_MGT, &a->flags)) &&
-		    !test_bit(AF_FIRST_INIT, &a->flags) && !alrdyrst) {
+		अगर ((test_bit(AF_POWER_MGT, &a->flags)) &&
+		    !test_bit(AF_FIRST_INIT, &a->flags) && !alrdyrst) अणु
 			/*
 			 * Don't reset the chip on the first
-			 * deferred power up attempt.
+			 * deferred घातer up attempt.
 			 */
-		} else {
+		पूर्ण अन्यथा अणु
 			esas2r_hdebug("*** resetting chip ***");
 			esas2r_reset_chip(a);
-		}
+		पूर्ण
 
 		/* Kick off the reinitialization */
-		a->chip_uptime += ESAS2R_CHP_UPTIME_CNT;
-		a->chip_init_time = jiffies_to_msecs(jiffies);
-		if (!test_bit(AF_POWER_MGT, &a->flags)) {
+		a->chip_upसमय += ESAS2R_CHP_UPTIME_CNT;
+		a->chip_init_समय = jअगरfies_to_msecs(jअगरfies);
+		अगर (!test_bit(AF_POWER_MGT, &a->flags)) अणु
 			esas2r_process_adapter_reset(a);
 
-			if (!alrdyrst) {
+			अगर (!alrdyrst) अणु
 				/* Remove devices now that I/O is cleaned up. */
 				a->prev_dev_cnt =
 					esas2r_targ_db_get_tgt_cnt(a);
-				esas2r_targ_db_remove_all(a, false);
-			}
-		}
+				esas2r_targ_db_हटाओ_all(a, false);
+			पूर्ण
+		पूर्ण
 
-		a->int_mask = 0;
-	}
-}
+		a->पूर्णांक_mask = 0;
+	पूर्ण
+पूर्ण
 
-static void esas2r_handle_chip_rst_during_tasklet(struct esas2r_adapter *a)
-{
-	while (test_bit(AF_CHPRST_DETECTED, &a->flags)) {
+अटल व्योम esas2r_handle_chip_rst_during_tasklet(काष्ठा esas2r_adapter *a)
+अणु
+	जबतक (test_bit(AF_CHPRST_DETECTED, &a->flags)) अणु
 		/*
 		 * Balance the enable in esas2r_initadapter_hw.
-		 * Esas2r_power_down already took care of it for power
+		 * Esas2r_घातer_करोwn alपढ़ोy took care of it क्रम घातer
 		 * management.
 		 */
-		if (!test_bit(AF_DEGRADED_MODE, &a->flags) &&
+		अगर (!test_bit(AF_DEGRADED_MODE, &a->flags) &&
 		    !test_bit(AF_POWER_MGT, &a->flags))
-			esas2r_disable_chip_interrupts(a);
+			esas2r_disable_chip_पूर्णांकerrupts(a);
 
 		/* Reinitialize the chip. */
 		esas2r_check_adapter(a);
 		esas2r_init_adapter_hw(a, 0);
 
-		if (test_bit(AF_CHPRST_NEEDED, &a->flags))
-			break;
+		अगर (test_bit(AF_CHPRST_NEEDED, &a->flags))
+			अवरोध;
 
-		if (test_bit(AF_POWER_MGT, &a->flags)) {
-			/* Recovery from power management. */
-			if (test_bit(AF_FIRST_INIT, &a->flags)) {
-				/* Chip reset during normal power up */
+		अगर (test_bit(AF_POWER_MGT, &a->flags)) अणु
+			/* Recovery from घातer management. */
+			अगर (test_bit(AF_FIRST_INIT, &a->flags)) अणु
+				/* Chip reset during normal घातer up */
 				esas2r_log(ESAS2R_LOG_CRIT,
 					   "The firmware was reset during a normal power-up sequence");
-			} else {
-				/* Deferred power up complete. */
+			पूर्ण अन्यथा अणु
+				/* Deferred घातer up complete. */
 				clear_bit(AF_POWER_MGT, &a->flags);
 				esas2r_send_reset_ae(a, true);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* Recovery from online chip reset. */
-			if (test_bit(AF_FIRST_INIT, &a->flags)) {
+			अगर (test_bit(AF_FIRST_INIT, &a->flags)) अणु
 				/* Chip reset during driver load */
-			} else {
+			पूर्ण अन्यथा अणु
 				/* Chip reset after driver load */
 				esas2r_send_reset_ae(a, false);
-			}
+			पूर्ण
 
 			esas2r_log(ESAS2R_LOG_CRIT,
 				   "Recovering from a chip reset while the chip was online");
-		}
+		पूर्ण
 
 		clear_bit(AF_CHPRST_STARTED, &a->flags);
-		esas2r_enable_chip_interrupts(a);
+		esas2r_enable_chip_पूर्णांकerrupts(a);
 
 		/*
 		 * Clear this flag last!  this indicates that the chip has been
-		 * reset already during initialization.
+		 * reset alपढ़ोy during initialization.
 		 */
 		clear_bit(AF_CHPRST_DETECTED, &a->flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-/* Perform deferred tasks when chip interrupts are disabled */
-void esas2r_do_tasklet_tasks(struct esas2r_adapter *a)
-{
+/* Perक्रमm deferred tasks when chip पूर्णांकerrupts are disabled */
+व्योम esas2r_करो_tasklet_tasks(काष्ठा esas2r_adapter *a)
+अणु
 
-	if (test_bit(AF_CHPRST_NEEDED, &a->flags) ||
-	    test_bit(AF_CHPRST_DETECTED, &a->flags)) {
-		if (test_bit(AF_CHPRST_NEEDED, &a->flags))
+	अगर (test_bit(AF_CHPRST_NEEDED, &a->flags) ||
+	    test_bit(AF_CHPRST_DETECTED, &a->flags)) अणु
+		अगर (test_bit(AF_CHPRST_NEEDED, &a->flags))
 			esas2r_chip_rst_needed_during_tasklet(a);
 
 		esas2r_handle_chip_rst_during_tasklet(a);
-	}
+	पूर्ण
 
-	if (test_bit(AF_BUSRST_NEEDED, &a->flags)) {
+	अगर (test_bit(AF_BUSRST_NEEDED, &a->flags)) अणु
 		esas2r_hdebug("hard resetting bus");
 
 		clear_bit(AF_BUSRST_NEEDED, &a->flags);
 
-		if (test_bit(AF_FLASHING, &a->flags))
+		अगर (test_bit(AF_FLASHING, &a->flags))
 			set_bit(AF_BUSRST_DETECTED, &a->flags);
-		else
-			esas2r_write_register_dword(a, MU_DOORBELL_IN,
+		अन्यथा
+			esas2r_ग_लिखो_रेजिस्टर_dword(a, MU_DOORBELL_IN,
 						    DRBL_RESET_BUS);
-	}
+	पूर्ण
 
-	if (test_bit(AF_BUSRST_DETECTED, &a->flags)) {
+	अगर (test_bit(AF_BUSRST_DETECTED, &a->flags)) अणु
 		esas2r_process_bus_reset(a);
 
 		esas2r_log_dev(ESAS2R_LOG_WARN,
@@ -650,65 +651,65 @@ void esas2r_do_tasklet_tasks(struct esas2r_adapter *a)
 		clear_bit(AF_BUSRST_PENDING, &a->flags);
 
 		esas2r_log(ESAS2R_LOG_WARN, "Bus reset complete");
-	}
+	पूर्ण
 
-	if (test_bit(AF_PORT_CHANGE, &a->flags)) {
+	अगर (test_bit(AF_PORT_CHANGE, &a->flags)) अणु
 		clear_bit(AF_PORT_CHANGE, &a->flags);
 
 		esas2r_targ_db_report_changes(a);
-	}
+	पूर्ण
 
-	if (atomic_read(&a->disable_cnt) == 0)
-		esas2r_do_deferred_processes(a);
-}
+	अगर (atomic_पढ़ो(&a->disable_cnt) == 0)
+		esas2r_करो_deferred_processes(a);
+पूर्ण
 
-static void esas2r_doorbell_interrupt(struct esas2r_adapter *a, u32 doorbell)
-{
-	if (!(doorbell & DRBL_FORCE_INT)) {
+अटल व्योम esas2r_करोorbell_पूर्णांकerrupt(काष्ठा esas2r_adapter *a, u32 करोorbell)
+अणु
+	अगर (!(करोorbell & DRBL_FORCE_INT)) अणु
 		esas2r_trace_enter();
-		esas2r_trace("doorbell: %x", doorbell);
-	}
+		esas2r_trace("doorbell: %x", करोorbell);
+	पूर्ण
 
-	/* First clear the doorbell bits */
-	esas2r_write_register_dword(a, MU_DOORBELL_OUT, doorbell);
+	/* First clear the करोorbell bits */
+	esas2r_ग_लिखो_रेजिस्टर_dword(a, MU_DOORBELL_OUT, करोorbell);
 
-	if (doorbell & DRBL_RESET_BUS)
+	अगर (करोorbell & DRBL_RESET_BUS)
 		set_bit(AF_BUSRST_DETECTED, &a->flags);
 
-	if (doorbell & DRBL_FORCE_INT)
+	अगर (करोorbell & DRBL_FORCE_INT)
 		clear_bit(AF_HEARTBEAT, &a->flags);
 
-	if (doorbell & DRBL_PANIC_REASON_MASK) {
+	अगर (करोorbell & DRBL_PANIC_REASON_MASK) अणु
 		esas2r_hdebug("*** Firmware Panic ***");
 		esas2r_log(ESAS2R_LOG_CRIT, "The firmware has panicked");
-	}
+	पूर्ण
 
-	if (doorbell & DRBL_FW_RESET) {
+	अगर (करोorbell & DRBL_FW_RESET) अणु
 		set_bit(AF2_COREDUMP_AVAIL, &a->flags2);
 		esas2r_local_reset_adapter(a);
-	}
+	पूर्ण
 
-	if (!(doorbell & DRBL_FORCE_INT)) {
-		esas2r_trace_exit();
-	}
-}
+	अगर (!(करोorbell & DRBL_FORCE_INT)) अणु
+		esas2r_trace_निकास();
+	पूर्ण
+पूर्ण
 
-void esas2r_force_interrupt(struct esas2r_adapter *a)
-{
-	esas2r_write_register_dword(a, MU_DOORBELL_IN, DRBL_FORCE_INT |
+व्योम esas2r_क्रमce_पूर्णांकerrupt(काष्ठा esas2r_adapter *a)
+अणु
+	esas2r_ग_लिखो_रेजिस्टर_dword(a, MU_DOORBELL_IN, DRBL_FORCE_INT |
 				    DRBL_DRV_VER);
-}
+पूर्ण
 
 
-static void esas2r_lun_event(struct esas2r_adapter *a, union atto_vda_ae *ae,
+अटल व्योम esas2r_lun_event(काष्ठा esas2r_adapter *a, जोड़ atto_vda_ae *ae,
 			     u16 target, u32 length)
-{
-	struct esas2r_target *t = a->targetdb + target;
+अणु
+	काष्ठा esas2r_target *t = a->targetdb + target;
 	u32 cplen = length;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (cplen > sizeof(t->lu_event))
-		cplen = sizeof(t->lu_event);
+	अगर (cplen > माप(t->lu_event))
+		cplen = माप(t->lu_event);
 
 	esas2r_trace("ae->lu.dwevent: %x", ae->lu.dwevent);
 	esas2r_trace("ae->lu.bystate: %x", ae->lu.bystate);
@@ -717,50 +718,50 @@ static void esas2r_lun_event(struct esas2r_adapter *a, union atto_vda_ae *ae,
 
 	t->new_target_state = TS_INVALID;
 
-	if (ae->lu.dwevent  & VDAAE_LU_LOST) {
+	अगर (ae->lu.dwevent  & VDAAE_LU_LOST) अणु
 		t->new_target_state = TS_NOT_PRESENT;
-	} else {
-		switch (ae->lu.bystate) {
-		case VDAAE_LU_NOT_PRESENT:
-		case VDAAE_LU_OFFLINE:
-		case VDAAE_LU_DELETED:
-		case VDAAE_LU_FACTORY_DISABLED:
+	पूर्ण अन्यथा अणु
+		चयन (ae->lu.bystate) अणु
+		हाल VDAAE_LU_NOT_PRESENT:
+		हाल VDAAE_LU_OFFLINE:
+		हाल VDAAE_LU_DELETED:
+		हाल VDAAE_LU_FACTORY_DISABLED:
 			t->new_target_state = TS_NOT_PRESENT;
-			break;
+			अवरोध;
 
-		case VDAAE_LU_ONLINE:
-		case VDAAE_LU_DEGRADED:
+		हाल VDAAE_LU_ONLINE:
+		हाल VDAAE_LU_DEGRADED:
 			t->new_target_state = TS_PRESENT;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (t->new_target_state != TS_INVALID) {
-		memcpy(&t->lu_event, &ae->lu, cplen);
+	अगर (t->new_target_state != TS_INVALID) अणु
+		स_नकल(&t->lu_event, &ae->lu, cplen);
 
 		esas2r_disc_queue_event(a, DCDE_DEV_CHANGE);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&a->mem_lock, flags);
-}
+पूर्ण
 
 
 
-void esas2r_ae_complete(struct esas2r_adapter *a, struct esas2r_request *rq)
-{
-	union atto_vda_ae *ae =
-		(union atto_vda_ae *)rq->vda_rsp_data->ae_data.event_data;
+व्योम esas2r_ae_complete(काष्ठा esas2r_adapter *a, काष्ठा esas2r_request *rq)
+अणु
+	जोड़ atto_vda_ae *ae =
+		(जोड़ atto_vda_ae *)rq->vda_rsp_data->ae_data.event_data;
 	u32 length = le32_to_cpu(rq->func_rsp.ae_rsp.length);
-	union atto_vda_ae *last =
-		(union atto_vda_ae *)(rq->vda_rsp_data->ae_data.event_data
+	जोड़ atto_vda_ae *last =
+		(जोड़ atto_vda_ae *)(rq->vda_rsp_data->ae_data.event_data
 				      + length);
 
 	esas2r_trace_enter();
 	esas2r_trace("length: %d", length);
 
-	if (length > sizeof(struct atto_vda_ae_data)
+	अगर (length > माप(काष्ठा atto_vda_ae_data)
 	    || (length & 3) != 0
-	    || length == 0) {
+	    || length == 0) अणु
 		esas2r_log(ESAS2R_LOG_WARN,
 			   "The AE request response length (%p) is too long: %d",
 			   rq, length);
@@ -769,9 +770,9 @@ void esas2r_ae_complete(struct esas2r_adapter *a, struct esas2r_request *rq)
 		esas2r_bugon();
 
 		last = ae;
-	}
+	पूर्ण
 
-	while (ae < last) {
+	जबतक (ae < last) अणु
 		u16 target;
 
 		esas2r_trace("ae: %p", ae);
@@ -779,9 +780,9 @@ void esas2r_ae_complete(struct esas2r_adapter *a, struct esas2r_request *rq)
 
 		length = ae->hdr.bylength;
 
-		if (length > (u32)((u8 *)last - (u8 *)ae)
+		अगर (length > (u32)((u8 *)last - (u8 *)ae)
 		    || (length & 3) != 0
-		    || length == 0) {
+		    || length == 0) अणु
 			esas2r_log(ESAS2R_LOG_CRIT,
 				   "the async event length is invalid (%p): %d",
 				   ae, length);
@@ -789,31 +790,31 @@ void esas2r_ae_complete(struct esas2r_adapter *a, struct esas2r_request *rq)
 			esas2r_hdebug("ae->hdr.length (0x%x) invalid", length);
 			esas2r_bugon();
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		esas2r_nuxi_ae_data(ae);
 
 		esas2r_queue_fw_event(a, fw_event_vda_ae, ae,
-				      sizeof(union atto_vda_ae));
+				      माप(जोड़ atto_vda_ae));
 
-		switch (ae->hdr.bytype) {
-		case VDAAE_HDR_TYPE_RAID:
+		चयन (ae->hdr.bytype) अणु
+		हाल VDAAE_HDR_TYPE_RAID:
 
-			if (ae->raid.dwflags & (VDAAE_GROUP_STATE
+			अगर (ae->raid.dwflags & (VDAAE_GROUP_STATE
 						| VDAAE_RBLD_STATE
 						| VDAAE_MEMBER_CHG
-						| VDAAE_PART_CHG)) {
+						| VDAAE_PART_CHG)) अणु
 				esas2r_log(ESAS2R_LOG_INFO,
 					   "RAID event received - name:%s rebuild_state:%d group_state:%d",
 					   ae->raid.acname,
 					   ae->raid.byrebuild_state,
 					   ae->raid.bygroup_state);
-			}
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case VDAAE_HDR_TYPE_LU:
+		हाल VDAAE_HDR_TYPE_LU:
 			esas2r_log(ESAS2R_LOG_INFO,
 				   "LUN event received: event:%d target_id:%d LUN:%d state:%d",
 				   ae->lu.dwevent,
@@ -823,122 +824,122 @@ void esas2r_ae_complete(struct esas2r_adapter *a, struct esas2r_request *rq)
 
 			target = ae->lu.id.tgtlun.wtarget_id;
 
-			if (target < ESAS2R_MAX_TARGETS)
+			अगर (target < ESAS2R_MAX_TARGETS)
 				esas2r_lun_event(a, ae, target, length);
 
-			break;
+			अवरोध;
 
-		case VDAAE_HDR_TYPE_DISK:
+		हाल VDAAE_HDR_TYPE_DISK:
 			esas2r_log(ESAS2R_LOG_INFO, "Disk event received");
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 
 			/* Silently ignore the rest and let the apps deal with
 			 * them.
 			 */
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ae = (union atto_vda_ae *)((u8 *)ae + length);
-	}
+		ae = (जोड़ atto_vda_ae *)((u8 *)ae + length);
+	पूर्ण
 
 	/* Now requeue it. */
 	esas2r_start_ae_request(a, rq);
-	esas2r_trace_exit();
-}
+	esas2r_trace_निकास();
+पूर्ण
 
-/* Send an asynchronous event for a chip reset or power management. */
-void esas2r_send_reset_ae(struct esas2r_adapter *a, bool pwr_mgt)
-{
-	struct atto_vda_ae_hdr ae;
+/* Send an asynchronous event क्रम a chip reset or घातer management. */
+व्योम esas2r_send_reset_ae(काष्ठा esas2r_adapter *a, bool pwr_mgt)
+अणु
+	काष्ठा atto_vda_ae_hdr ae;
 
-	if (pwr_mgt)
+	अगर (pwr_mgt)
 		ae.bytype = VDAAE_HDR_TYPE_PWRMGT;
-	else
+	अन्यथा
 		ae.bytype = VDAAE_HDR_TYPE_RESET;
 
 	ae.byversion = VDAAE_HDR_VER_0;
 	ae.byflags = 0;
-	ae.bylength = (u8)sizeof(struct atto_vda_ae_hdr);
+	ae.bylength = (u8)माप(काष्ठा atto_vda_ae_hdr);
 
-	if (pwr_mgt) {
+	अगर (pwr_mgt) अणु
 		esas2r_hdebug("*** sending power management AE ***");
-	} else {
+	पूर्ण अन्यथा अणु
 		esas2r_hdebug("*** sending reset AE ***");
-	}
+	पूर्ण
 
 	esas2r_queue_fw_event(a, fw_event_vda_ae, &ae,
-			      sizeof(union atto_vda_ae));
-}
+			      माप(जोड़ atto_vda_ae));
+पूर्ण
 
-void esas2r_dummy_complete(struct esas2r_adapter *a, struct esas2r_request *rq)
-{}
+व्योम esas2r_dummy_complete(काष्ठा esas2r_adapter *a, काष्ठा esas2r_request *rq)
+अणुपूर्ण
 
-static void esas2r_check_req_rsp_sense(struct esas2r_adapter *a,
-				       struct esas2r_request *rq)
-{
+अटल व्योम esas2r_check_req_rsp_sense(काष्ठा esas2r_adapter *a,
+				       काष्ठा esas2r_request *rq)
+अणु
 	u8 snslen, snslen2;
 
 	snslen = snslen2 = rq->func_rsp.scsi_rsp.sense_len;
 
-	if (snslen > rq->sense_len)
+	अगर (snslen > rq->sense_len)
 		snslen = rq->sense_len;
 
-	if (snslen) {
-		if (rq->sense_buf)
-			memcpy(rq->sense_buf, rq->data_buf, snslen);
-		else
+	अगर (snslen) अणु
+		अगर (rq->sense_buf)
+			स_नकल(rq->sense_buf, rq->data_buf, snslen);
+		अन्यथा
 			rq->sense_buf = (u8 *)rq->data_buf;
 
 		/* See about possible sense data */
-		if (snslen2 > 0x0c) {
+		अगर (snslen2 > 0x0c) अणु
 			u8 *s = (u8 *)rq->data_buf;
 
 			esas2r_trace_enter();
 
 			/* Report LUNS data has changed */
-			if (s[0x0c] == 0x3f && s[0x0d] == 0x0E) {
+			अगर (s[0x0c] == 0x3f && s[0x0d] == 0x0E) अणु
 				esas2r_trace("rq->target_id: %d",
 					     rq->target_id);
 				esas2r_target_state_changed(a, rq->target_id,
 							    TS_LUN_CHANGE);
-			}
+			पूर्ण
 
 			esas2r_trace("add_sense_key=%x", s[0x0c]);
 			esas2r_trace("add_sense_qual=%x", s[0x0d]);
-			esas2r_trace_exit();
-		}
-	}
+			esas2r_trace_निकास();
+		पूर्ण
+	पूर्ण
 
 	rq->sense_len = snslen;
-}
+पूर्ण
 
 
-void esas2r_complete_request(struct esas2r_adapter *a,
-			     struct esas2r_request *rq)
-{
-	if (rq->vrq->scsi.function == VDA_FUNC_FLASH
+व्योम esas2r_complete_request(काष्ठा esas2r_adapter *a,
+			     काष्ठा esas2r_request *rq)
+अणु
+	अगर (rq->vrq->scsi.function == VDA_FUNC_FLASH
 	    && rq->vrq->flash.sub_func == VDA_FLASH_COMMIT)
 		clear_bit(AF_FLASHING, &a->flags);
 
-	/* See if we setup a callback to do special processing */
+	/* See अगर we setup a callback to करो special processing */
 
-	if (rq->interrupt_cb) {
-		(*rq->interrupt_cb)(a, rq);
+	अगर (rq->पूर्णांकerrupt_cb) अणु
+		(*rq->पूर्णांकerrupt_cb)(a, rq);
 
-		if (rq->req_stat == RS_PENDING) {
+		अगर (rq->req_stat == RS_PENDING) अणु
 			esas2r_start_request(a, rq);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (likely(rq->vrq->scsi.function == VDA_FUNC_SCSI)
-	    && unlikely(rq->req_stat != RS_SUCCESS)) {
+	अगर (likely(rq->vrq->scsi.function == VDA_FUNC_SCSI)
+	    && unlikely(rq->req_stat != RS_SUCCESS)) अणु
 		esas2r_check_req_rsp_sense(a, rq);
 		esas2r_log_request_failure(a, rq);
-	}
+	पूर्ण
 
 	(*rq->comp_cb)(a, rq);
-}
+पूर्ण

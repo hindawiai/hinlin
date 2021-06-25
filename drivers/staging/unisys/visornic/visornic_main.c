@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2012 - 2015 UNISYS CORPORATION
  * All rights reserved.
  */
 
-/* This driver lives in a spar partition, and registers to ethernet io
+/* This driver lives in a spar partition, and रेजिस्टरs to ethernet io
  * channels from the visorbus driver. It creates netdev devices and
- * forwards transmit to the IO channel and accepts rcvs from the IO
+ * क्रमwards transmit to the IO channel and accepts rcvs from the IO
  * Partition via the IO channel.
  */
 
-#include <linux/debugfs.h>
-#include <linux/etherdevice.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/kthread.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <linux/visorbus.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/visorbus.h>
 
-#include "iochannel.h"
+#समावेश "iochannel.h"
 
-#define VISORNIC_INFINITE_RSP_WAIT 0
+#घोषणा VISORNIC_INFINITE_RSP_WAIT 0
 
-/* MAX_BUF = 64 lines x 32 MAXVNIC x 80 characters
+/* MAX_BUF = 64 lines x 32 MAXVNIC x 80 अक्षरacters
  *         = 163840 bytes
  */
-#define MAX_BUF 163840
-#define NAPI_WEIGHT 64
+#घोषणा MAX_BUF 163840
+#घोषणा NAPI_WEIGHT 64
 
-/* GUIDS for director channel type supported by this driver.  */
-/* {8cd5994d-c58e-11da-95a9-00e08161165f} */
-#define VISOR_VNIC_CHANNEL_GUID \
+/* GUIDS क्रम director channel type supported by this driver.  */
+/* अणु8cd5994d-c58e-11da-95a9-00e08161165fपूर्ण */
+#घोषणा VISOR_VNIC_CHANNEL_GUID \
 	GUID_INIT(0x8cd5994d, 0xc58e, 0x11da, \
 		0x95, 0xa9, 0x0, 0xe0, 0x81, 0x61, 0x16, 0x5f)
-#define VISOR_VNIC_CHANNEL_GUID_STR \
+#घोषणा VISOR_VNIC_CHANNEL_GUID_STR \
 	"8cd5994d-c58e-11da-95a9-00e08161165f"
 
-static struct visor_channeltype_descriptor visornic_channel_types[] = {
+अटल काष्ठा visor_channeltype_descriptor visornic_channel_types[] = अणु
 	/* Note that the only channel type we expect to be reported by the
 	 * bus driver is the VISOR_VNIC channel.
 	 */
-	{ VISOR_VNIC_CHANNEL_GUID, "ultravnic", sizeof(struct channel_header),
-	  VISOR_VNIC_CHANNEL_VERSIONID },
-	{}
-};
+	अणु VISOR_VNIC_CHANNEL_GUID, "ultravnic", माप(काष्ठा channel_header),
+	  VISOR_VNIC_CHANNEL_VERSIONID पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(visorbus, visornic_channel_types);
-/* FIXME XXX: This next line of code must be fixed and removed before
- * acceptance into the 'normal' part of the kernel.  It is only here as a place
- * holder to get module autoloading functionality working for visorbus.  Code
+/* FIXME XXX: This next line of code must be fixed and हटाओd beक्रमe
+ * acceptance पूर्णांकo the 'normal' part of the kernel.  It is only here as a place
+ * holder to get module स्वतःloading functionality working क्रम visorbus.  Code
  * must be added to scripts/mode/file2alias.c, etc., to get this working
  * properly.
  */
 MODULE_ALIAS("visorbus:" VISOR_VNIC_CHANNEL_GUID_STR);
 
-struct chanstat {
-	unsigned long got_rcv;
-	unsigned long got_enbdisack;
-	unsigned long got_xmit_done;
-	unsigned long xmit_fail;
-	unsigned long sent_enbdis;
-	unsigned long sent_promisc;
-	unsigned long sent_post;
-	unsigned long sent_post_failed;
-	unsigned long sent_xmit;
-	unsigned long reject_count;
-	unsigned long extra_rcvbufs_sent;
-};
+काष्ठा chanstat अणु
+	अचिन्हित दीर्घ got_rcv;
+	अचिन्हित दीर्घ got_enbdisack;
+	अचिन्हित दीर्घ got_xmit_करोne;
+	अचिन्हित दीर्घ xmit_fail;
+	अचिन्हित दीर्घ sent_enbdis;
+	अचिन्हित दीर्घ sent_promisc;
+	अचिन्हित दीर्घ sent_post;
+	अचिन्हित दीर्घ sent_post_failed;
+	अचिन्हित दीर्घ sent_xmit;
+	अचिन्हित दीर्घ reject_count;
+	अचिन्हित दीर्घ extra_rcvbufs_sent;
+पूर्ण;
 
-/* struct visornic_devdata
+/* काष्ठा visornic_devdata
  * @enabled:                        0 disabled 1 enabled to receive.
  * @enab_dis_acked:                 NET_RCV_ENABLE/DISABLE acked by IOPART.
- * @struct *dev:
- * @struct *netdev:
- * @struct net_stats:
- * @interrupt_rcvd:
+ * @काष्ठा *dev:
+ * @काष्ठा *netdev:
+ * @काष्ठा net_stats:
+ * @पूर्णांकerrupt_rcvd:
  * @rsp_queue:
- * @struct **rcvbuf:
+ * @काष्ठा **rcvbuf:
  * @incarnation_id:                 incarnation_id lets IOPART know about
  *                                  re-birth.
  * @old_flags:                      flags as they were prior to
@@ -84,31 +85,31 @@ struct chanstat {
  * @num_rcv_bufs:                   number of rcv buffers the vnic will post.
  * @num_rcv_bufs_could_not_alloc:
  * @num_rcvbuf_in_iovm:
- * @alloc_failed_in_if_needed_cnt:
+ * @alloc_failed_in_अगर_needed_cnt:
  * @alloc_failed_in_repost_rtn_cnt:
- * @max_outstanding_net_xmits:      absolute max number of outstanding xmits
+ * @max_outstanding_net_xmits:      असलolute max number of outstanding xmits
  *                                  - should never hit this.
- * @upper_threshold_net_xmits:      high water mark for calling
- *                                  netif_stop_queue().
- * @lower_threshold_net_xmits:      high water mark for calling
- *                                  netif_wake_queue().
- * @struct xmitbufhead:             xmitbufhead - head of the xmit buffer list
+ * @upper_threshold_net_xmits:      high water mark क्रम calling
+ *                                  netअगर_stop_queue().
+ * @lower_threshold_net_xmits:      high water mark क्रम calling
+ *                                  netअगर_wake_queue().
+ * @काष्ठा xmitbufhead:             xmitbufhead - head of the xmit buffer list
  *                                  sent to the IOPART end.
- * @server_down_complete_func:
- * @struct timeout_reset:
- * @struct *cmdrsp_rcv:             cmdrsp_rcv is used for posting/unposting rcv
+ * @server_करोwn_complete_func:
+ * @काष्ठा समयout_reset:
+ * @काष्ठा *cmdrsp_rcv:             cmdrsp_rcv is used क्रम posting/unposting rcv
  *                                  buffers.
- * @struct *xmit_cmdrsp:            xmit_cmdrsp - issues NET_XMIT - only one
- *                                  active xmit at a time.
- * @server_down:                    IOPART is down.
+ * @काष्ठा *xmit_cmdrsp:            xmit_cmdrsp - issues NET_XMIT - only one
+ *                                  active xmit at a समय.
+ * @server_करोwn:                    IOPART is करोwn.
  * @server_change_state:            Processing SERVER_CHANGESTATE msg.
- * @going_away:                     device is being torn down.
- * @struct *eth_debugfs_dir:
- * @interrupts_rcvd:
- * @interrupts_notme:
- * @interrupts_disabled:
+ * @going_away:                     device is being torn करोwn.
+ * @काष्ठा *eth_debugfs_dir:
+ * @पूर्णांकerrupts_rcvd:
+ * @पूर्णांकerrupts_noपंचांगe:
+ * @पूर्णांकerrupts_disabled:
  * @busy_cnt:
- * @priv_lock:                      spinlock to access devdata structures.
+ * @priv_lock:                      spinlock to access devdata काष्ठाures.
  * @flow_control_upper_hits:
  * @flow_control_lower_hits:
  * @n_rcv0:                         # rcvs of 0 buffers.
@@ -118,51 +119,51 @@ struct chanstat {
  * @found_repost_rcvbuf_cnt:        # repost_rcvbuf_cnt.
  * @repost_found_skb_cnt:           # of found the skb.
  * @n_repost_deficit:               # of lost rcv buffers.
- * @bad_rcv_buf:                    # of unknown rcv skb not freed.
+ * @bad_rcv_buf:                    # of unknown rcv skb not मुक्तd.
  * @n_rcv_packets_not_accepted:     # bogs rcv packets.
  * @queuefullmsg_logged:
- * @struct chstat:
- * @struct napi:
- * @struct cmdrsp:
+ * @काष्ठा chstat:
+ * @काष्ठा napi:
+ * @काष्ठा cmdrsp:
  */
-struct visornic_devdata {
-	unsigned short enabled;
-	unsigned short enab_dis_acked;
+काष्ठा visornic_devdata अणु
+	अचिन्हित लघु enabled;
+	अचिन्हित लघु enab_dis_acked;
 
-	struct visor_device *dev;
-	struct net_device *netdev;
-	struct net_device_stats net_stats;
-	atomic_t interrupt_rcvd;
-	wait_queue_head_t rsp_queue;
-	struct sk_buff **rcvbuf;
+	काष्ठा visor_device *dev;
+	काष्ठा net_device *netdev;
+	काष्ठा net_device_stats net_stats;
+	atomic_t पूर्णांकerrupt_rcvd;
+	रुको_queue_head_t rsp_queue;
+	काष्ठा sk_buff **rcvbuf;
 	u64 incarnation_id;
-	unsigned short old_flags;
+	अचिन्हित लघु old_flags;
 	atomic_t usage;
 
-	int num_rcv_bufs;
-	int num_rcv_bufs_could_not_alloc;
+	पूर्णांक num_rcv_bufs;
+	पूर्णांक num_rcv_bufs_could_not_alloc;
 	atomic_t num_rcvbuf_in_iovm;
-	unsigned long alloc_failed_in_if_needed_cnt;
-	unsigned long alloc_failed_in_repost_rtn_cnt;
+	अचिन्हित दीर्घ alloc_failed_in_अगर_needed_cnt;
+	अचिन्हित दीर्घ alloc_failed_in_repost_rtn_cnt;
 
-	unsigned long max_outstanding_net_xmits;
-	unsigned long upper_threshold_net_xmits;
-	unsigned long lower_threshold_net_xmits;
-	struct sk_buff_head xmitbufhead;
+	अचिन्हित दीर्घ max_outstanding_net_xmits;
+	अचिन्हित दीर्घ upper_threshold_net_xmits;
+	अचिन्हित दीर्घ lower_threshold_net_xmits;
+	काष्ठा sk_buff_head xmitbufhead;
 
-	visorbus_state_complete_func server_down_complete_func;
-	struct work_struct timeout_reset;
-	struct uiscmdrsp *cmdrsp_rcv;
-	struct uiscmdrsp *xmit_cmdrsp;
-	bool server_down;
+	visorbus_state_complete_func server_करोwn_complete_func;
+	काष्ठा work_काष्ठा समयout_reset;
+	काष्ठा uiscmdrsp *cmdrsp_rcv;
+	काष्ठा uiscmdrsp *xmit_cmdrsp;
+	bool server_करोwn;
 	bool server_change_state;
 	bool going_away;
-	struct dentry *eth_debugfs_dir;
-	u64 interrupts_rcvd;
-	u64 interrupts_notme;
-	u64 interrupts_disabled;
+	काष्ठा dentry *eth_debugfs_dir;
+	u64 पूर्णांकerrupts_rcvd;
+	u64 पूर्णांकerrupts_noपंचांगe;
+	u64 पूर्णांकerrupts_disabled;
 	u64 busy_cnt;
-	/* spinlock to access devdata structures. */
+	/* spinlock to access devdata काष्ठाures. */
 	spinlock_t priv_lock;
 
 	/* flow control counter */
@@ -170,57 +171,57 @@ struct visornic_devdata {
 	u64 flow_control_lower_hits;
 
 	/* debug counters */
-	unsigned long n_rcv0;
-	unsigned long n_rcv1;
-	unsigned long n_rcv2;
-	unsigned long n_rcvx;
-	unsigned long found_repost_rcvbuf_cnt;
-	unsigned long repost_found_skb_cnt;
-	unsigned long n_repost_deficit;
-	unsigned long bad_rcv_buf;
-	unsigned long n_rcv_packets_not_accepted;
+	अचिन्हित दीर्घ n_rcv0;
+	अचिन्हित दीर्घ n_rcv1;
+	अचिन्हित दीर्घ n_rcv2;
+	अचिन्हित दीर्घ n_rcvx;
+	अचिन्हित दीर्घ found_repost_rcvbuf_cnt;
+	अचिन्हित दीर्घ repost_found_skb_cnt;
+	अचिन्हित दीर्घ n_repost_deficit;
+	अचिन्हित दीर्घ bad_rcv_buf;
+	अचिन्हित दीर्घ n_rcv_packets_not_accepted;
 
-	int queuefullmsg_logged;
-	struct chanstat chstat;
-	struct napi_struct napi;
-	struct uiscmdrsp cmdrsp[SIZEOF_CMDRSP];
-};
+	पूर्णांक queuefullmsg_logged;
+	काष्ठा chanstat chstat;
+	काष्ठा napi_काष्ठा napi;
+	काष्ठा uiscmdrsp cmdrsp[SIZखातापूर्ण_CMDRSP];
+पूर्ण;
 
 /* Returns next non-zero index on success or 0 on failure (i.e. out of room). */
-static u16 add_physinfo_entries(u64 inp_pfn, u16 inp_off, u16 inp_len,
+अटल u16 add_physinfo_entries(u64 inp_pfn, u16 inp_off, u16 inp_len,
 				u16 index, u16 max_pi_arr_entries,
-				struct phys_info pi_arr[])
-{
+				काष्ठा phys_info pi_arr[])
+अणु
 	u16 i, len, firstlen;
 
 	firstlen = PI_PAGE_SIZE - inp_off;
-	if (inp_len <= firstlen) {
+	अगर (inp_len <= firstlen) अणु
 		/* The input entry spans only one page - add as is. */
-		if (index >= max_pi_arr_entries)
-			return 0;
+		अगर (index >= max_pi_arr_entries)
+			वापस 0;
 		pi_arr[index].pi_pfn = inp_pfn;
 		pi_arr[index].pi_off = (u16)inp_off;
 		pi_arr[index].pi_len = (u16)inp_len;
-		return index + 1;
-	}
+		वापस index + 1;
+	पूर्ण
 
 	/* This entry spans multiple pages. */
-	for (len = inp_len, i = 0; len;
-		len -= pi_arr[index + i].pi_len, i++) {
-		if (index + i >= max_pi_arr_entries)
-			return 0;
+	क्रम (len = inp_len, i = 0; len;
+		len -= pi_arr[index + i].pi_len, i++) अणु
+		अगर (index + i >= max_pi_arr_entries)
+			वापस 0;
 		pi_arr[index + i].pi_pfn = inp_pfn + i;
-		if (i == 0) {
+		अगर (i == 0) अणु
 			pi_arr[index].pi_off = inp_off;
 			pi_arr[index].pi_len = firstlen;
-		} else {
+		पूर्ण अन्यथा अणु
 			pi_arr[index + i].pi_off = 0;
 			pi_arr[index + i].pi_len = min_t(u16, len,
 							 PI_PAGE_SIZE);
-		}
-	}
-	return index + i;
-}
+		पूर्ण
+	पूर्ण
+	वापस index + i;
+पूर्ण
 
 /* visor_copy_fragsinfo_from_skb - copy fragment list in the SKB to a phys_info
  *				   array that the IOPART understands
@@ -229,42 +230,42 @@ static u16 add_physinfo_entries(u64 inp_pfn, u16 inp_off, u16 inp_len,
  * @frags_max:	  Max len of frags array.
  * @frags:	  Frags array filled in on output.
  *
- * Return: Positive integer indicating number of entries filled in frags on
- *         success, negative integer on error.
+ * Return: Positive पूर्णांकeger indicating number of entries filled in frags on
+ *         success, negative पूर्णांकeger on error.
  */
-static int visor_copy_fragsinfo_from_skb(struct sk_buff *skb,
-					 unsigned int firstfraglen,
-					 unsigned int frags_max,
-					 struct phys_info frags[])
-{
-	unsigned int count = 0, frag, size, offset = 0, numfrags;
-	unsigned int total_count;
+अटल पूर्णांक visor_copy_fragsinfo_from_skb(काष्ठा sk_buff *skb,
+					 अचिन्हित पूर्णांक firstfraglen,
+					 अचिन्हित पूर्णांक frags_max,
+					 काष्ठा phys_info frags[])
+अणु
+	अचिन्हित पूर्णांक count = 0, frag, size, offset = 0, numfrags;
+	अचिन्हित पूर्णांक total_count;
 
 	numfrags = skb_shinfo(skb)->nr_frags;
 
-	/* Compute the number of fragments this skb has, and if its more than
+	/* Compute the number of fragments this skb has, and अगर its more than
 	 * frag array can hold, linearize the skb
 	 */
 	total_count = numfrags + (firstfraglen / PI_PAGE_SIZE);
-	if (firstfraglen % PI_PAGE_SIZE)
+	अगर (firstfraglen % PI_PAGE_SIZE)
 		total_count++;
 
-	if (total_count > frags_max) {
-		if (skb_linearize(skb))
-			return -EINVAL;
+	अगर (total_count > frags_max) अणु
+		अगर (skb_linearize(skb))
+			वापस -EINVAL;
 		numfrags = skb_shinfo(skb)->nr_frags;
 		firstfraglen = 0;
-	}
+	पूर्ण
 
-	while (firstfraglen) {
-		if (count == frags_max)
-			return -EINVAL;
+	जबतक (firstfraglen) अणु
+		अगर (count == frags_max)
+			वापस -EINVAL;
 
 		frags[count].pi_pfn =
 			page_to_pfn(virt_to_page(skb->data + offset));
 		frags[count].pi_off =
-			(unsigned long)(skb->data + offset) & PI_PAGE_MASK;
-		size = min_t(unsigned int, firstfraglen,
+			(अचिन्हित दीर्घ)(skb->data + offset) & PI_PAGE_MASK;
+		size = min_t(अचिन्हित पूर्णांक, firstfraglen,
 			     PI_PAGE_SIZE - frags[count].pi_off);
 
 		/* can take smallest of firstfraglen (what's left) OR
@@ -274,413 +275,413 @@ static int visor_copy_fragsinfo_from_skb(struct sk_buff *skb,
 		firstfraglen -= size;
 		offset += size;
 		count++;
-	}
-	if (numfrags) {
-		if ((count + numfrags) > frags_max)
-			return -EINVAL;
+	पूर्ण
+	अगर (numfrags) अणु
+		अगर ((count + numfrags) > frags_max)
+			वापस -EINVAL;
 
-		for (frag = 0; frag < numfrags; frag++) {
+		क्रम (frag = 0; frag < numfrags; frag++) अणु
 			count = add_physinfo_entries(page_to_pfn(
 				  skb_frag_page(&skb_shinfo(skb)->frags[frag])),
 				  skb_frag_off(&skb_shinfo(skb)->frags[frag]),
 				  skb_frag_size(&skb_shinfo(skb)->frags[frag]),
 				  count, frags_max, frags);
-			/* add_physinfo_entries only returns
-			 * zero if the frags array is out of room
+			/* add_physinfo_entries only वापसs
+			 * zero अगर the frags array is out of room
 			 * That should never happen because we
-			 * fail above, if count+numfrags > frags_max.
+			 * fail above, अगर count+numfrags > frags_max.
 			 */
-			if (!count)
-				return -EINVAL;
-		}
-	}
-	if (skb_shinfo(skb)->frag_list) {
-		struct sk_buff *skbinlist;
-		int c;
+			अगर (!count)
+				वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	अगर (skb_shinfo(skb)->frag_list) अणु
+		काष्ठा sk_buff *skbinlist;
+		पूर्णांक c;
 
-		for (skbinlist = skb_shinfo(skb)->frag_list; skbinlist;
-		     skbinlist = skbinlist->next) {
+		क्रम (skbinlist = skb_shinfo(skb)->frag_list; skbinlist;
+		     skbinlist = skbinlist->next) अणु
 			c = visor_copy_fragsinfo_from_skb(skbinlist,
 							  skbinlist->len -
 							  skbinlist->data_len,
 							  frags_max - count,
 							  &frags[count]);
-			if (c < 0)
-				return c;
+			अगर (c < 0)
+				वापस c;
 			count += c;
-		}
-	}
-	return count;
-}
+		पूर्ण
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static ssize_t enable_ints_write(struct file *file,
-				 const char __user *buffer,
-				 size_t count, loff_t *ppos)
-{
-	/* Don't want to break ABI here by having a debugfs
-	 * file that no longer exists or is writable, so
+अटल sमाप_प्रकार enable_पूर्णांकs_ग_लिखो(काष्ठा file *file,
+				 स्थिर अक्षर __user *buffer,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	/* Don't want to अवरोध ABI here by having a debugfs
+	 * file that no दीर्घer exists or is writable, so
 	 * lets just make this a vestigual function
 	 */
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations debugfs_enable_ints_fops = {
-	.write = enable_ints_write,
-};
+अटल स्थिर काष्ठा file_operations debugfs_enable_पूर्णांकs_fops = अणु
+	.ग_लिखो = enable_पूर्णांकs_ग_लिखो,
+पूर्ण;
 
-/* visornic_serverdown_complete - pause device following IOPART going down
+/* visornic_serverकरोwn_complete - छोड़ो device following IOPART going करोwn
  * @devdata: Device managed by IOPART.
  *
- * The IO partition has gone down, and we need to do some cleanup for when it
- * comes back. Treat the IO partition as the link being down.
+ * The IO partition has gone करोwn, and we need to करो some cleanup क्रम when it
+ * comes back. Treat the IO partition as the link being करोwn.
  */
-static void visornic_serverdown_complete(struct visornic_devdata *devdata)
-{
-	struct net_device *netdev = devdata->netdev;
+अटल व्योम visornic_serverकरोwn_complete(काष्ठा visornic_devdata *devdata)
+अणु
+	काष्ठा net_device *netdev = devdata->netdev;
 
-	/* Stop polling for interrupts */
-	visorbus_disable_channel_interrupts(devdata->dev);
+	/* Stop polling क्रम पूर्णांकerrupts */
+	visorbus_disable_channel_पूर्णांकerrupts(devdata->dev);
 
 	rtnl_lock();
-	dev_close(netdev);
+	dev_बंद(netdev);
 	rtnl_unlock();
 
 	atomic_set(&devdata->num_rcvbuf_in_iovm, 0);
 	devdata->chstat.sent_xmit = 0;
-	devdata->chstat.got_xmit_done = 0;
+	devdata->chstat.got_xmit_करोne = 0;
 
-	if (devdata->server_down_complete_func)
-		(*devdata->server_down_complete_func)(devdata->dev, 0);
+	अगर (devdata->server_करोwn_complete_func)
+		(*devdata->server_करोwn_complete_func)(devdata->dev, 0);
 
-	devdata->server_down = true;
+	devdata->server_करोwn = true;
 	devdata->server_change_state = false;
-	devdata->server_down_complete_func = NULL;
-}
+	devdata->server_करोwn_complete_func = शून्य;
+पूर्ण
 
-/* visornic_serverdown - Command has notified us that IOPART is down
+/* visornic_serverकरोwn - Command has notअगरied us that IOPART is करोwn
  * @devdata:	   Device managed by IOPART.
  * @complete_func: Function to call when finished.
  *
- * Schedule the work needed to handle the server down request. Make sure we
- * haven't already handled the server change state event.
+ * Schedule the work needed to handle the server करोwn request. Make sure we
+ * haven't alपढ़ोy handled the server change state event.
  *
- * Return: 0 if we scheduled the work, negative integer on error.
+ * Return: 0 अगर we scheduled the work, negative पूर्णांकeger on error.
  */
-static int visornic_serverdown(struct visornic_devdata *devdata,
+अटल पूर्णांक visornic_serverकरोwn(काष्ठा visornic_devdata *devdata,
 			       visorbus_state_complete_func complete_func)
-{
-	unsigned long flags;
-	int err;
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	spin_lock_irqsave(&devdata->priv_lock, flags);
-	if (devdata->server_change_state) {
+	अगर (devdata->server_change_state) अणु
 		dev_dbg(&devdata->dev->device, "%s changing state\n",
 			__func__);
 		err = -EINVAL;
-		goto err_unlock;
-	}
-	if (devdata->server_down) {
+		जाओ err_unlock;
+	पूर्ण
+	अगर (devdata->server_करोwn) अणु
 		dev_dbg(&devdata->dev->device, "%s already down\n",
 			__func__);
 		err = -EINVAL;
-		goto err_unlock;
-	}
-	if (devdata->going_away) {
+		जाओ err_unlock;
+	पूर्ण
+	अगर (devdata->going_away) अणु
 		dev_dbg(&devdata->dev->device,
 			"%s aborting because device removal pending\n",
 			__func__);
 		err = -ENODEV;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 	devdata->server_change_state = true;
-	devdata->server_down_complete_func = complete_func;
+	devdata->server_करोwn_complete_func = complete_func;
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
 
-	visornic_serverdown_complete(devdata);
-	return 0;
+	visornic_serverकरोwn_complete(devdata);
+	वापस 0;
 
 err_unlock:
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* alloc_rcv_buf - alloc rcv buffer to be given to the IO Partition
  * @netdev: Network adapter the rcv bufs are attached too.
  *
  * Create an sk_buff (rcv_buf) that will be passed to the IO Partition
- * so that it can write rcv data into our memory space.
+ * so that it can ग_लिखो rcv data पूर्णांकo our memory space.
  *
- * Return: Pointer to sk_buff.
+ * Return: Poपूर्णांकer to sk_buff.
  */
-static struct sk_buff *alloc_rcv_buf(struct net_device *netdev)
-{
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *alloc_rcv_buf(काष्ठा net_device *netdev)
+अणु
+	काष्ठा sk_buff *skb;
 
-	/* NOTE: the first fragment in each rcv buffer is pointed to by
+	/* NOTE: the first fragment in each rcv buffer is poपूर्णांकed to by
 	 * rcvskb->data. For now all rcv buffers will be RCVPOST_BUF_SIZE
 	 * in length, so the first frag is large enough to hold 1514.
 	 */
 	skb = alloc_skb(RCVPOST_BUF_SIZE, GFP_ATOMIC);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 	skb->dev = netdev;
-	/* current value of mtu doesn't come into play here; large
+	/* current value of mtu करोesn't come पूर्णांकo play here; large
 	 * packets will just end up using multiple rcv buffers all of
 	 * same size.
 	 */
 	skb->len = RCVPOST_BUF_SIZE;
-	/* alloc_skb already zeroes it out for clarification. */
+	/* alloc_skb alपढ़ोy zeroes it out क्रम clarअगरication. */
 	skb->data_len = 0;
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /* post_skb - post a skb to the IO Partition
  * @cmdrsp:  Cmdrsp packet to be send to the IO Partition.
  * @devdata: visornic_devdata to post the skb to.
  * @skb:     Skb to give to the IO partition.
  *
- * Return: 0 on success, negative integer on error.
+ * Return: 0 on success, negative पूर्णांकeger on error.
  */
-static int post_skb(struct uiscmdrsp *cmdrsp, struct visornic_devdata *devdata,
-		    struct sk_buff *skb)
-{
-	int err;
+अटल पूर्णांक post_skb(काष्ठा uiscmdrsp *cmdrsp, काष्ठा visornic_devdata *devdata,
+		    काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err;
 
 	cmdrsp->net.buf = skb;
 	cmdrsp->net.rcvpost.frag.pi_pfn = page_to_pfn(virt_to_page(skb->data));
 	cmdrsp->net.rcvpost.frag.pi_off =
-		(unsigned long)skb->data & PI_PAGE_MASK;
+		(अचिन्हित दीर्घ)skb->data & PI_PAGE_MASK;
 	cmdrsp->net.rcvpost.frag.pi_len = skb->len;
 	cmdrsp->net.rcvpost.unique_num = devdata->incarnation_id;
 
-	if ((cmdrsp->net.rcvpost.frag.pi_off + skb->len) > PI_PAGE_SIZE)
-		return -EINVAL;
+	अगर ((cmdrsp->net.rcvpost.frag.pi_off + skb->len) > PI_PAGE_SIZE)
+		वापस -EINVAL;
 
 	cmdrsp->net.type = NET_RCV_POST;
 	cmdrsp->cmdtype = CMD_NET_TYPE;
-	err = visorchannel_signalinsert(devdata->dev->visorchannel,
+	err = visorchannel_संकेतinsert(devdata->dev->visorchannel,
 					IOCHAN_TO_IOPART,
 					cmdrsp);
-	if (err) {
+	अगर (err) अणु
 		devdata->chstat.sent_post_failed++;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	atomic_inc(&devdata->num_rcvbuf_in_iovm);
 	devdata->chstat.sent_post++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* send_enbdis - Send NET_RCV_ENBDIS to IO Partition
- * @netdev:  Netdevice we are enabling/disabling, used as context return value.
+ * @netdev:  Netdevice we are enabling/disabling, used as context वापस value.
  * @state:   Enable = 1/disable = 0.
  * @devdata: Visornic device we are enabling/disabling.
  *
  * Send the enable/disable message to the IO Partition.
  *
- * Return: 0 on success, negative integer on error.
+ * Return: 0 on success, negative पूर्णांकeger on error.
  */
-static int send_enbdis(struct net_device *netdev, int state,
-		       struct visornic_devdata *devdata)
-{
-	int err;
+अटल पूर्णांक send_enbdis(काष्ठा net_device *netdev, पूर्णांक state,
+		       काष्ठा visornic_devdata *devdata)
+अणु
+	पूर्णांक err;
 
 	devdata->cmdrsp_rcv->net.enbdis.enable = state;
 	devdata->cmdrsp_rcv->net.enbdis.context = netdev;
 	devdata->cmdrsp_rcv->net.type = NET_RCV_ENBDIS;
 	devdata->cmdrsp_rcv->cmdtype = CMD_NET_TYPE;
-	err = visorchannel_signalinsert(devdata->dev->visorchannel,
+	err = visorchannel_संकेतinsert(devdata->dev->visorchannel,
 					IOCHAN_TO_IOPART,
 					devdata->cmdrsp_rcv);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	devdata->chstat.sent_enbdis++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* visornic_disable_with_timeout - disable network adapter
+/* visornic_disable_with_समयout - disable network adapter
  * @netdev:  netdevice to disable.
- * @timeout: Timeout to wait for disable.
+ * @समयout: Timeout to रुको क्रम disable.
  *
- * Disable the network adapter and inform the IO Partition that we are disabled.
+ * Disable the network adapter and inक्रमm the IO Partition that we are disabled.
  * Reclaim memory from rcv bufs.
  *
- * Return: 0 on success, negative integer on failure of IO Partition responding.
+ * Return: 0 on success, negative पूर्णांकeger on failure of IO Partition responding.
  */
-static int visornic_disable_with_timeout(struct net_device *netdev,
-					 const int timeout)
-{
-	struct visornic_devdata *devdata = netdev_priv(netdev);
-	int i;
-	unsigned long flags;
-	int wait = 0;
-	int err;
+अटल पूर्णांक visornic_disable_with_समयout(काष्ठा net_device *netdev,
+					 स्थिर पूर्णांक समयout)
+अणु
+	काष्ठा visornic_devdata *devdata = netdev_priv(netdev);
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक रुको = 0;
+	पूर्णांक err;
 
 	/* send a msg telling the other end we are stopping incoming pkts */
 	spin_lock_irqsave(&devdata->priv_lock, flags);
 	devdata->enabled = 0;
-	/* must wait for ack */
+	/* must रुको क्रम ack */
 	devdata->enab_dis_acked = 0;
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
 
-	/* send disable and wait for ack -- don't hold lock when sending
-	 * disable because if the queue is full, insert might sleep.
-	 * If an error occurs, don't wait for the timeout.
+	/* send disable and रुको क्रम ack -- करोn't hold lock when sending
+	 * disable because अगर the queue is full, insert might sleep.
+	 * If an error occurs, करोn't रुको क्रम the समयout.
 	 */
 	err = send_enbdis(netdev, 0, devdata);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* wait for ack to arrive before we try to free rcv buffers
-	 * NOTE: the other end automatically unposts the rcv buffers
-	 * when it gets a disable.
+	/* रुको क्रम ack to arrive beक्रमe we try to मुक्त rcv buffers
+	 * NOTE: the other end स्वतःmatically unposts the rcv buffers
+	 * when it माला_लो a disable.
 	 */
 	spin_lock_irqsave(&devdata->priv_lock, flags);
-	while ((timeout == VISORNIC_INFINITE_RSP_WAIT) ||
-	       (wait < timeout)) {
-		if (devdata->enab_dis_acked)
-			break;
-		if (devdata->server_down || devdata->server_change_state) {
+	जबतक ((समयout == VISORNIC_INFINITE_RSP_WAIT) ||
+	       (रुको < समयout)) अणु
+		अगर (devdata->enab_dis_acked)
+			अवरोध;
+		अगर (devdata->server_करोwn || devdata->server_change_state) अणु
 			dev_dbg(&netdev->dev, "%s server went away\n",
 				__func__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		set_current_state(TASK_INTERRUPTIBLE);
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
-		wait += schedule_timeout(msecs_to_jiffies(10));
+		रुको += schedule_समयout(msecs_to_jअगरfies(10));
 		spin_lock_irqsave(&devdata->priv_lock, flags);
-	}
+	पूर्ण
 
-	/* Wait for usage to go to 1 (no other users) before freeing
+	/* Wait क्रम usage to go to 1 (no other users) beक्रमe मुक्तing
 	 * rcv buffers
 	 */
-	if (atomic_read(&devdata->usage) > 1) {
-		while (1) {
+	अगर (atomic_पढ़ो(&devdata->usage) > 1) अणु
+		जबतक (1) अणु
 			set_current_state(TASK_INTERRUPTIBLE);
 			spin_unlock_irqrestore(&devdata->priv_lock, flags);
-			schedule_timeout(msecs_to_jiffies(10));
+			schedule_समयout(msecs_to_jअगरfies(10));
 			spin_lock_irqsave(&devdata->priv_lock, flags);
-			if (atomic_read(&devdata->usage))
-				break;
-		}
-	}
+			अगर (atomic_पढ़ो(&devdata->usage))
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	/* we've set enabled to 0, so we can give up the lock. */
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
 
 	/* stop the transmit queue so nothing more can be transmitted */
-	netif_stop_queue(netdev);
+	netअगर_stop_queue(netdev);
 
 	napi_disable(&devdata->napi);
 
 	skb_queue_purge(&devdata->xmitbufhead);
 
-	/* Free rcv buffers - other end has automatically unposed them on
+	/* Free rcv buffers - other end has स्वतःmatically unposed them on
 	 * disable
 	 */
-	for (i = 0; i < devdata->num_rcv_bufs; i++) {
-		if (devdata->rcvbuf[i]) {
-			kfree_skb(devdata->rcvbuf[i]);
-			devdata->rcvbuf[i] = NULL;
-		}
-	}
+	क्रम (i = 0; i < devdata->num_rcv_bufs; i++) अणु
+		अगर (devdata->rcvbuf[i]) अणु
+			kमुक्त_skb(devdata->rcvbuf[i]);
+			devdata->rcvbuf[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* init_rcv_bufs - initialize receive buffs and send them to the IO Partition
- * @netdev:  struct netdevice.
+ * @netdev:  काष्ठा netdevice.
  * @devdata: visornic_devdata.
  *
  * Allocate rcv buffers and post them to the IO Partition.
  *
- * Return: 0 on success, negative integer on failure.
+ * Return: 0 on success, negative पूर्णांकeger on failure.
  */
-static int init_rcv_bufs(struct net_device *netdev,
-			 struct visornic_devdata *devdata)
-{
-	int i, j, count, err;
+अटल पूर्णांक init_rcv_bufs(काष्ठा net_device *netdev,
+			 काष्ठा visornic_devdata *devdata)
+अणु
+	पूर्णांक i, j, count, err;
 
 	/* allocate fixed number of receive buffers to post to uisnic
 	 * post receive buffers after we've allocated a required amount
 	 */
-	for (i = 0; i < devdata->num_rcv_bufs; i++) {
+	क्रम (i = 0; i < devdata->num_rcv_bufs; i++) अणु
 		devdata->rcvbuf[i] = alloc_rcv_buf(netdev);
-		/* if we failed to allocate one let us stop */
-		if (!devdata->rcvbuf[i])
-			break;
-	}
+		/* अगर we failed to allocate one let us stop */
+		अगर (!devdata->rcvbuf[i])
+			अवरोध;
+	पूर्ण
 	/* couldn't even allocate one -- bail out */
-	if (i == 0)
-		return -ENOMEM;
+	अगर (i == 0)
+		वापस -ENOMEM;
 	count = i;
 
 	/* Ensure we can alloc 2/3rd of the requested number of buffers.
 	 * 2/3 is an arbitrary choice; used also in ndis init.c
 	 */
-	if (count < ((2 * devdata->num_rcv_bufs) / 3)) {
-		/* free receive buffers we did alloc and then bail out */
-		for (i = 0; i < count; i++) {
-			kfree_skb(devdata->rcvbuf[i]);
-			devdata->rcvbuf[i] = NULL;
-		}
-		return -ENOMEM;
-	}
+	अगर (count < ((2 * devdata->num_rcv_bufs) / 3)) अणु
+		/* मुक्त receive buffers we did alloc and then bail out */
+		क्रम (i = 0; i < count; i++) अणु
+			kमुक्त_skb(devdata->rcvbuf[i]);
+			devdata->rcvbuf[i] = शून्य;
+		पूर्ण
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* post receive buffers to receive incoming input - without holding
 	 * lock - we've not enabled nor started the queue so there shouldn't
 	 * be any rcv or xmit activity
 	 */
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		err = post_skb(devdata->cmdrsp_rcv, devdata,
 			       devdata->rcvbuf[i]);
-		if (!err)
-			continue;
+		अगर (!err)
+			जारी;
 
 		/* Error handling -
-		 * If we posted at least one skb, we should return success,
-		 * but need to free the resources that we have not successfully
+		 * If we posted at least one skb, we should वापस success,
+		 * but need to मुक्त the resources that we have not successfully
 		 * posted.
 		 */
-		for (j = i; j < count; j++) {
-			kfree_skb(devdata->rcvbuf[j]);
-			devdata->rcvbuf[j] = NULL;
-		}
-		if (i == 0)
-			return err;
-		break;
-	}
+		क्रम (j = i; j < count; j++) अणु
+			kमुक्त_skb(devdata->rcvbuf[j]);
+			devdata->rcvbuf[j] = शून्य;
+		पूर्ण
+		अगर (i == 0)
+			वापस err;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* visornic_enable_with_timeout	- send enable to IO Partition
- * @netdev:  struct net_device.
- * @timeout: Time to wait for the ACK from the enable.
+/* visornic_enable_with_समयout	- send enable to IO Partition
+ * @netdev:  काष्ठा net_device.
+ * @समयout: Time to रुको क्रम the ACK from the enable.
  *
  * Sends enable to IOVM and inits, and posts receive buffers to IOVM. Timeout is
- * defined in msecs (timeout of 0 specifies infinite wait).
+ * defined in msecs (समयout of 0 specअगरies infinite रुको).
  *
- * Return: 0 on success, negative integer on failure.
+ * Return: 0 on success, negative पूर्णांकeger on failure.
  */
-static int visornic_enable_with_timeout(struct net_device *netdev,
-					const int timeout)
-{
-	int err = 0;
-	struct visornic_devdata *devdata = netdev_priv(netdev);
-	unsigned long flags;
-	int wait = 0;
+अटल पूर्णांक visornic_enable_with_समयout(काष्ठा net_device *netdev,
+					स्थिर पूर्णांक समयout)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा visornic_devdata *devdata = netdev_priv(netdev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक रुको = 0;
 
 	napi_enable(&devdata->napi);
 
-	/* NOTE: the other end automatically unposts the rcv buffers when it
-	 * gets a disable.
+	/* NOTE: the other end स्वतःmatically unposts the rcv buffers when it
+	 * माला_लो a disable.
 	 */
 	err = init_rcv_bufs(netdev, devdata);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&netdev->dev,
 			"%s failed to init rcv bufs\n", __func__);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	spin_lock_irqsave(&devdata->priv_lock, flags);
 	devdata->enabled = 1;
@@ -692,184 +693,184 @@ static int visornic_enable_with_timeout(struct net_device *netdev,
 	devdata->n_rcv_packets_not_accepted = 0;
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
 
-	/* send enable and wait for ack -- don't hold lock when sending enable
-	 * because if the queue is full, insert might sleep. If an error
+	/* send enable and रुको क्रम ack -- करोn't hold lock when sending enable
+	 * because अगर the queue is full, insert might sleep. If an error
 	 * occurs error out.
 	 */
 	err = send_enbdis(netdev, 1, devdata);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	spin_lock_irqsave(&devdata->priv_lock, flags);
-	while ((timeout == VISORNIC_INFINITE_RSP_WAIT) ||
-	       (wait < timeout)) {
-		if (devdata->enab_dis_acked)
-			break;
-		if (devdata->server_down || devdata->server_change_state) {
+	जबतक ((समयout == VISORNIC_INFINITE_RSP_WAIT) ||
+	       (रुको < समयout)) अणु
+		अगर (devdata->enab_dis_acked)
+			अवरोध;
+		अगर (devdata->server_करोwn || devdata->server_change_state) अणु
 			dev_dbg(&netdev->dev, "%s server went away\n",
 				__func__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		set_current_state(TASK_INTERRUPTIBLE);
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
-		wait += schedule_timeout(msecs_to_jiffies(10));
+		रुको += schedule_समयout(msecs_to_jअगरfies(10));
 		spin_lock_irqsave(&devdata->priv_lock, flags);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
 
-	if (!devdata->enab_dis_acked) {
+	अगर (!devdata->enab_dis_acked) अणु
 		dev_err(&netdev->dev, "%s missing ACK\n", __func__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	netif_start_queue(netdev);
-	return 0;
-}
+	netअगर_start_queue(netdev);
+	वापस 0;
+पूर्ण
 
-/* visornic_timeout_reset - handle xmit timeout resets
+/* visornic_समयout_reset - handle xmit समयout resets
  * @work: Work item that scheduled the work.
  *
- * Transmit timeouts are typically handled by resetting the device for our
- * virtual NIC; we will send a disable and enable to the IOVM. If it doesn't
- * respond, we will trigger a serverdown.
+ * Transmit समयouts are typically handled by resetting the device क्रम our
+ * भव NIC; we will send a disable and enable to the IOVM. If it करोesn't
+ * respond, we will trigger a serverकरोwn.
  */
-static void visornic_timeout_reset(struct work_struct *work)
-{
-	struct visornic_devdata *devdata;
-	struct net_device *netdev;
-	int response = 0;
+अटल व्योम visornic_समयout_reset(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा visornic_devdata *devdata;
+	काष्ठा net_device *netdev;
+	पूर्णांक response = 0;
 
-	devdata = container_of(work, struct visornic_devdata, timeout_reset);
+	devdata = container_of(work, काष्ठा visornic_devdata, समयout_reset);
 	netdev = devdata->netdev;
 
 	rtnl_lock();
-	if (!netif_running(netdev)) {
+	अगर (!netअगर_running(netdev)) अणु
 		rtnl_unlock();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	response = visornic_disable_with_timeout(netdev,
+	response = visornic_disable_with_समयout(netdev,
 						 VISORNIC_INFINITE_RSP_WAIT);
-	if (response)
-		goto call_serverdown;
+	अगर (response)
+		जाओ call_serverकरोwn;
 
-	response = visornic_enable_with_timeout(netdev,
+	response = visornic_enable_with_समयout(netdev,
 						VISORNIC_INFINITE_RSP_WAIT);
-	if (response)
-		goto call_serverdown;
+	अगर (response)
+		जाओ call_serverकरोwn;
 
 	rtnl_unlock();
 
-	return;
+	वापस;
 
-call_serverdown:
-	visornic_serverdown(devdata, NULL);
+call_serverकरोwn:
+	visornic_serverकरोwn(devdata, शून्य);
 	rtnl_unlock();
-}
+पूर्ण
 
-/* visornic_open - enable the visornic device and mark the queue started
+/* visornic_खोलो - enable the visornic device and mark the queue started
  * @netdev: netdevice to start.
  *
  * Enable the device and start the transmit queue.
  *
  * Return: 0 on success.
  */
-static int visornic_open(struct net_device *netdev)
-{
-	visornic_enable_with_timeout(netdev, VISORNIC_INFINITE_RSP_WAIT);
-	return 0;
-}
+अटल पूर्णांक visornic_खोलो(काष्ठा net_device *netdev)
+अणु
+	visornic_enable_with_समयout(netdev, VISORNIC_INFINITE_RSP_WAIT);
+	वापस 0;
+पूर्ण
 
-/* visornic_close - disables the visornic device and stops the queues
+/* visornic_बंद - disables the visornic device and stops the queues
  * @netdev: netdevice to stop.
  *
  * Disable the device and stop the transmit queue.
  *
  * Return 0 on success.
  */
-static int visornic_close(struct net_device *netdev)
-{
-	visornic_disable_with_timeout(netdev, VISORNIC_INFINITE_RSP_WAIT);
-	return 0;
-}
+अटल पूर्णांक visornic_बंद(काष्ठा net_device *netdev)
+अणु
+	visornic_disable_with_समयout(netdev, VISORNIC_INFINITE_RSP_WAIT);
+	वापस 0;
+पूर्ण
 
 /* devdata_xmits_outstanding - compute outstanding xmits
- * @devdata: visornic_devdata for device
+ * @devdata: visornic_devdata क्रम device
  *
- * Return: Long integer representing the number of outstanding xmits.
+ * Return: Long पूर्णांकeger representing the number of outstanding xmits.
  */
-static unsigned long devdata_xmits_outstanding(struct visornic_devdata *devdata)
-{
-	if (devdata->chstat.sent_xmit >= devdata->chstat.got_xmit_done)
-		return devdata->chstat.sent_xmit -
-			devdata->chstat.got_xmit_done;
-	return (ULONG_MAX - devdata->chstat.got_xmit_done
+अटल अचिन्हित दीर्घ devdata_xmits_outstanding(काष्ठा visornic_devdata *devdata)
+अणु
+	अगर (devdata->chstat.sent_xmit >= devdata->chstat.got_xmit_करोne)
+		वापस devdata->chstat.sent_xmit -
+			devdata->chstat.got_xmit_करोne;
+	वापस (अच_दीर्घ_उच्च - devdata->chstat.got_xmit_करोne
 		+ devdata->chstat.sent_xmit + 1);
-}
+पूर्ण
 
 /* vnic_hit_high_watermark
  * @devdata:	    Indicates visornic device we are checking.
- * @high_watermark: Max num of unacked xmits we will tolerate before we will
+ * @high_watermark: Max num of unacked xmits we will tolerate beक्रमe we will
  *		    start throttling.
  *
- * Return: True iff the number of unacked xmits sent to the IO Partition is >=
+ * Return: True अगरf the number of unacked xmits sent to the IO Partition is >=
  *	   high_watermark. False otherwise.
  */
-static bool vnic_hit_high_watermark(struct visornic_devdata *devdata,
-				    ulong high_watermark)
-{
-	return (devdata_xmits_outstanding(devdata) >= high_watermark);
-}
+अटल bool vnic_hit_high_watermark(काष्ठा visornic_devdata *devdata,
+				    uदीर्घ high_watermark)
+अणु
+	वापस (devdata_xmits_outstanding(devdata) >= high_watermark);
+पूर्ण
 
 /* vnic_hit_low_watermark
  * @devdata:	   Indicates visornic device we are checking.
- * @low_watermark: We will wait until the num of unacked xmits drops to this
- *		   value or lower before we start transmitting again.
+ * @low_watermark: We will रुको until the num of unacked xmits drops to this
+ *		   value or lower beक्रमe we start transmitting again.
  *
- * Return: True iff the number of unacked xmits sent to the IO Partition is <=
+ * Return: True अगरf the number of unacked xmits sent to the IO Partition is <=
  *	   low_watermark.
  */
-static bool vnic_hit_low_watermark(struct visornic_devdata *devdata,
-				   ulong low_watermark)
-{
-	return (devdata_xmits_outstanding(devdata) <= low_watermark);
-}
+अटल bool vnic_hit_low_watermark(काष्ठा visornic_devdata *devdata,
+				   uदीर्घ low_watermark)
+अणु
+	वापस (devdata_xmits_outstanding(devdata) <= low_watermark);
+पूर्ण
 
 /* visornic_xmit - send a packet to the IO Partition
  * @skb:    Packet to be sent.
  * @netdev: Net device the packet is being sent from.
  *
  * Convert the skb to a cmdrsp so the IO Partition can understand it, and send
- * the XMIT command to the IO Partition for processing. This function is
- * protected from concurrent calls by a spinlock xmit_lock in the net_device
- * struct. As soon as the function returns, it can be called again.
+ * the XMIT command to the IO Partition क्रम processing. This function is
+ * रक्षित from concurrent calls by a spinlock xmit_lock in the net_device
+ * काष्ठा. As soon as the function वापसs, it can be called again.
  *
  * Return: NETDEV_TX_OK.
  */
-static netdev_tx_t visornic_xmit(struct sk_buff *skb, struct net_device *netdev)
-{
-	struct visornic_devdata *devdata;
-	int len, firstfraglen, padlen;
-	struct uiscmdrsp *cmdrsp = NULL;
-	unsigned long flags;
-	int err;
+अटल netdev_tx_t visornic_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
+अणु
+	काष्ठा visornic_devdata *devdata;
+	पूर्णांक len, firstfraglen, padlen;
+	काष्ठा uiscmdrsp *cmdrsp = शून्य;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	devdata = netdev_priv(netdev);
 	spin_lock_irqsave(&devdata->priv_lock, flags);
 
-	if (netif_queue_stopped(netdev) || devdata->server_down ||
-	    devdata->server_change_state) {
+	अगर (netअगर_queue_stopped(netdev) || devdata->server_करोwn ||
+	    devdata->server_change_state) अणु
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
 		devdata->busy_cnt++;
 		dev_dbg(&netdev->dev,
 			"%s busy - queue stopped\n", __func__);
-		kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
+		kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	/* sk_buff struct is used to host network data throughout all the
-	 * linux network subsystems
+	/* sk_buff काष्ठा is used to host network data throughout all the
+	 * linux network subप्रणालीs
 	 */
 	len = skb->len;
 
@@ -877,81 +878,81 @@ static netdev_tx_t visornic_xmit(struct sk_buff *skb, struct net_device *netdev)
 	 * skb->data_len is the length of the fragment portion in frags
 	 * skb->len - skb->data_len is size of the 1st fragment in skb->data
 	 * calculate the length of the first fragment that skb->data is
-	 * pointing to
+	 * poपूर्णांकing to
 	 */
 	firstfraglen = skb->len - skb->data_len;
-	if (firstfraglen < ETH_HLEN) {
+	अगर (firstfraglen < ETH_HLEN) अणु
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
 		devdata->busy_cnt++;
 		dev_err(&netdev->dev,
 			"%s busy - first frag too small (%d)\n",
 			__func__, firstfraglen);
-		kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
+		kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	if (len < ETH_MIN_PACKET_SIZE &&
-	    ((skb_end_pointer(skb) - skb->data) >= ETH_MIN_PACKET_SIZE)) {
+	अगर (len < ETH_MIN_PACKET_SIZE &&
+	    ((skb_end_poपूर्णांकer(skb) - skb->data) >= ETH_MIN_PACKET_SIZE)) अणु
 		/* pad the packet out to minimum size */
 		padlen = ETH_MIN_PACKET_SIZE - len;
 		skb_put_zero(skb, padlen);
 		len += padlen;
 		firstfraglen += padlen;
-	}
+	पूर्ण
 
 	cmdrsp = devdata->xmit_cmdrsp;
 	/* clear cmdrsp */
-	memset(cmdrsp, 0, SIZEOF_CMDRSP);
+	स_रखो(cmdrsp, 0, SIZखातापूर्ण_CMDRSP);
 	cmdrsp->net.type = NET_XMIT;
 	cmdrsp->cmdtype = CMD_NET_TYPE;
 
-	/* save the pointer to skb -- we'll need it for completion */
+	/* save the poपूर्णांकer to skb -- we'll need it क्रम completion */
 	cmdrsp->net.buf = skb;
 
-	if (vnic_hit_high_watermark(devdata,
-				    devdata->max_outstanding_net_xmits)) {
-		/* extra NET_XMITs queued over to IOVM - need to wait */
+	अगर (vnic_hit_high_watermark(devdata,
+				    devdata->max_outstanding_net_xmits)) अणु
+		/* extra NET_XMITs queued over to IOVM - need to रुको */
 		devdata->chstat.reject_count++;
-		if (!devdata->queuefullmsg_logged &&
+		अगर (!devdata->queuefullmsg_logged &&
 		    ((devdata->chstat.reject_count & 0x3ff) == 1))
 			devdata->queuefullmsg_logged = 1;
-		netif_stop_queue(netdev);
+		netअगर_stop_queue(netdev);
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
 		devdata->busy_cnt++;
 		dev_dbg(&netdev->dev,
 			"%s busy - waiting for iovm to catch up\n",
 			__func__);
-		kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
-	if (devdata->queuefullmsg_logged)
+		kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
+	अगर (devdata->queuefullmsg_logged)
 		devdata->queuefullmsg_logged = 0;
 
-	if (skb->ip_summed == CHECKSUM_UNNECESSARY) {
+	अगर (skb->ip_summed == CHECKSUM_UNNECESSARY) अणु
 		cmdrsp->net.xmt.lincsum.valid = 1;
 		cmdrsp->net.xmt.lincsum.protocol = skb->protocol;
-		if (skb_transport_header(skb) > skb->data) {
+		अगर (skb_transport_header(skb) > skb->data) अणु
 			cmdrsp->net.xmt.lincsum.hrawoff =
 				skb_transport_header(skb) - skb->data;
 			cmdrsp->net.xmt.lincsum.hrawoff = 1;
-		}
-		if (skb_network_header(skb) > skb->data) {
+		पूर्ण
+		अगर (skb_network_header(skb) > skb->data) अणु
 			cmdrsp->net.xmt.lincsum.nhrawoff =
 				skb_network_header(skb) - skb->data;
 			cmdrsp->net.xmt.lincsum.nhrawoffv = 1;
-		}
+		पूर्ण
 		cmdrsp->net.xmt.lincsum.csum = skb->csum;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmdrsp->net.xmt.lincsum.valid = 0;
-	}
+	पूर्ण
 
 	/* save off the length of the entire data packet */
 	cmdrsp->net.xmt.len = len;
 
-	/* copy ethernet header from first frag into ocmdrsp
-	 * - everything else will be pass in frags & DMA'ed
+	/* copy ethernet header from first frag पूर्णांकo ocmdrsp
+	 * - everything अन्यथा will be pass in frags & DMA'ed
 	 */
-	memcpy(cmdrsp->net.xmt.ethhdr, skb->data, ETH_HLEN);
+	स_नकल(cmdrsp->net.xmt.ethhdr, skb->data, ETH_HLEN);
 
 	/* copy frags info - from skb->data we need to only provide access
 	 * beyond eth header
@@ -960,28 +961,28 @@ static netdev_tx_t visornic_xmit(struct sk_buff *skb, struct net_device *netdev)
 		visor_copy_fragsinfo_from_skb(skb, firstfraglen,
 					      MAX_PHYS_INFO,
 					      cmdrsp->net.xmt.frags);
-	if (cmdrsp->net.xmt.num_frags < 0) {
+	अगर (cmdrsp->net.xmt.num_frags < 0) अणु
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
 		devdata->busy_cnt++;
 		dev_err(&netdev->dev,
 			"%s busy - copy frags failed\n", __func__);
-		kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
+		kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	err = visorchannel_signalinsert(devdata->dev->visorchannel,
+	err = visorchannel_संकेतinsert(devdata->dev->visorchannel,
 					IOCHAN_TO_IOPART, cmdrsp);
-	if (err) {
-		netif_stop_queue(netdev);
+	अगर (err) अणु
+		netअगर_stop_queue(netdev);
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
 		devdata->busy_cnt++;
 		dev_dbg(&netdev->dev,
 			"%s busy - signalinsert failed\n", __func__);
-		kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
+		kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	/* Track the skbs that have been sent to the IOVM for XMIT */
+	/* Track the skbs that have been sent to the IOVM क्रम XMIT */
 	skb_queue_head(&devdata->xmitbufhead, skb);
 
 	/* update xmt stats */
@@ -989,215 +990,215 @@ static netdev_tx_t visornic_xmit(struct sk_buff *skb, struct net_device *netdev)
 	devdata->net_stats.tx_bytes += skb->len;
 	devdata->chstat.sent_xmit++;
 
-	/* check if we have hit the high watermark for netif_stop_queue() */
-	if (vnic_hit_high_watermark(devdata,
-				    devdata->upper_threshold_net_xmits)) {
-		/* extra NET_XMITs queued over to IOVM - need to wait */
-		/* stop queue - call netif_wake_queue() after lower threshold */
-		netif_stop_queue(netdev);
+	/* check अगर we have hit the high watermark क्रम netअगर_stop_queue() */
+	अगर (vnic_hit_high_watermark(devdata,
+				    devdata->upper_threshold_net_xmits)) अणु
+		/* extra NET_XMITs queued over to IOVM - need to रुको */
+		/* stop queue - call netअगर_wake_queue() after lower threshold */
+		netअगर_stop_queue(netdev);
 		dev_dbg(&netdev->dev,
 			"%s busy - invoking iovm flow control\n",
 			__func__);
 		devdata->flow_control_upper_hits++;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
 
-	/* skb will be freed when we get back NET_XMIT_DONE */
-	return NETDEV_TX_OK;
-}
+	/* skb will be मुक्तd when we get back NET_XMIT_DONE */
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-/* visornic_get_stats - returns net_stats of the visornic device
+/* visornic_get_stats - वापसs net_stats of the visornic device
  * @netdev: netdevice.
  *
- * Return: Pointer to the net_device_stats struct for the device.
+ * Return: Poपूर्णांकer to the net_device_stats काष्ठा क्रम the device.
  */
-static struct net_device_stats *visornic_get_stats(struct net_device *netdev)
-{
-	struct visornic_devdata *devdata = netdev_priv(netdev);
+अटल काष्ठा net_device_stats *visornic_get_stats(काष्ठा net_device *netdev)
+अणु
+	काष्ठा visornic_devdata *devdata = netdev_priv(netdev);
 
-	return &devdata->net_stats;
-}
+	वापस &devdata->net_stats;
+पूर्ण
 
 /* visornic_change_mtu - changes mtu of device
  * @netdev: netdevice.
  * @new_mtu: Value of new mtu.
  *
- * The device's MTU cannot be changed by system; it must be changed via a
- * CONTROLVM message. All vnics and pnics in a switch have to have the same MTU
- * for everything to work. Currently not supported.
+ * The device's MTU cannot be changed by प्रणाली; it must be changed via a
+ * CONTROLVM message. All vnics and pnics in a चयन have to have the same MTU
+ * क्रम everything to work. Currently not supported.
  *
  * Return: -EINVAL.
  */
-static int visornic_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक visornic_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
 /* visornic_set_multi - set visornic device flags
  * @netdev: netdevice.
  *
  * The only flag we currently support is IFF_PROMISC.
  */
-static void visornic_set_multi(struct net_device *netdev)
-{
-	struct uiscmdrsp *cmdrsp;
-	struct visornic_devdata *devdata = netdev_priv(netdev);
-	int err = 0;
+अटल व्योम visornic_set_multi(काष्ठा net_device *netdev)
+अणु
+	काष्ठा uiscmdrsp *cmdrsp;
+	काष्ठा visornic_devdata *devdata = netdev_priv(netdev);
+	पूर्णांक err = 0;
 
-	if (devdata->old_flags == netdev->flags)
-		return;
+	अगर (devdata->old_flags == netdev->flags)
+		वापस;
 
-	if ((netdev->flags & IFF_PROMISC) ==
+	अगर ((netdev->flags & IFF_PROMISC) ==
 	    (devdata->old_flags & IFF_PROMISC))
-		goto out_save_flags;
+		जाओ out_save_flags;
 
-	cmdrsp = kmalloc(SIZEOF_CMDRSP, GFP_ATOMIC);
-	if (!cmdrsp)
-		return;
+	cmdrsp = kदो_स्मृति(SIZखातापूर्ण_CMDRSP, GFP_ATOMIC);
+	अगर (!cmdrsp)
+		वापस;
 	cmdrsp->cmdtype = CMD_NET_TYPE;
 	cmdrsp->net.type = NET_RCV_PROMISC;
 	cmdrsp->net.enbdis.context = netdev;
 	cmdrsp->net.enbdis.enable =
 		netdev->flags & IFF_PROMISC;
-	err = visorchannel_signalinsert(devdata->dev->visorchannel,
+	err = visorchannel_संकेतinsert(devdata->dev->visorchannel,
 					IOCHAN_TO_IOPART,
 					cmdrsp);
-	kfree(cmdrsp);
-	if (err)
-		return;
+	kमुक्त(cmdrsp);
+	अगर (err)
+		वापस;
 
 out_save_flags:
 	devdata->old_flags = netdev->flags;
-}
+पूर्ण
 
-/* visornic_xmit_timeout - request to timeout the xmit
+/* visornic_xmit_समयout - request to समयout the xmit
  * @netdev: netdevice.
  *
- * Queue the work and return. Make sure we have not already been informed that
- * the IO Partition is gone; if so, we will have already timed-out the xmits.
+ * Queue the work and वापस. Make sure we have not alपढ़ोy been inक्रमmed that
+ * the IO Partition is gone; अगर so, we will have alपढ़ोy समयd-out the xmits.
  */
-static void visornic_xmit_timeout(struct net_device *netdev, unsigned int txqueue)
-{
-	struct visornic_devdata *devdata = netdev_priv(netdev);
-	unsigned long flags;
+अटल व्योम visornic_xmit_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा visornic_devdata *devdata = netdev_priv(netdev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&devdata->priv_lock, flags);
-	if (devdata->going_away) {
+	अगर (devdata->going_away) अणु
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
 		dev_dbg(&devdata->dev->device,
 			"%s aborting because device removal pending\n",
 			__func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Ensure that a ServerDown message hasn't been received */
-	if (!devdata->enabled ||
-	    (devdata->server_down && !devdata->server_change_state)) {
+	अगर (!devdata->enabled ||
+	    (devdata->server_करोwn && !devdata->server_change_state)) अणु
 		dev_dbg(&netdev->dev, "%s no processing\n",
 			__func__);
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
-		return;
-	}
-	schedule_work(&devdata->timeout_reset);
+		वापस;
+	पूर्ण
+	schedule_work(&devdata->समयout_reset);
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
-}
+पूर्ण
 
-/* repost_return - repost rcv bufs that have come back
- * @cmdrsp: IO channel command struct to post.
- * @devdata: Visornic devdata for the device.
+/* repost_वापस - repost rcv bufs that have come back
+ * @cmdrsp: IO channel command काष्ठा to post.
+ * @devdata: Visornic devdata क्रम the device.
  * @skb: Socket buffer.
  * @netdev: netdevice.
  *
- * Repost rcv buffers that have been returned to us when we are finished
+ * Repost rcv buffers that have been वापसed to us when we are finished
  * with them.
  *
- * Return: 0 for success, negative integer on error.
+ * Return: 0 क्रम success, negative पूर्णांकeger on error.
  */
-static int repost_return(struct uiscmdrsp *cmdrsp,
-			 struct visornic_devdata *devdata,
-			 struct sk_buff *skb, struct net_device *netdev)
-{
-	struct net_pkt_rcv copy;
-	int i = 0, cc, numreposted;
-	int found_skb = 0;
-	int status = 0;
+अटल पूर्णांक repost_वापस(काष्ठा uiscmdrsp *cmdrsp,
+			 काष्ठा visornic_devdata *devdata,
+			 काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
+अणु
+	काष्ठा net_pkt_rcv copy;
+	पूर्णांक i = 0, cc, numreposted;
+	पूर्णांक found_skb = 0;
+	पूर्णांक status = 0;
 
 	copy = cmdrsp->net.rcv;
-	switch (copy.numrcvbufs) {
-	case 0:
+	चयन (copy.numrcvbufs) अणु
+	हाल 0:
 		devdata->n_rcv0++;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		devdata->n_rcv1++;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		devdata->n_rcv2++;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		devdata->n_rcvx++;
-		break;
-	}
-	for (cc = 0, numreposted = 0; cc < copy.numrcvbufs; cc++) {
-		for (i = 0; i < devdata->num_rcv_bufs; i++) {
-			if (devdata->rcvbuf[i] != copy.rcvbuf[cc])
-				continue;
+		अवरोध;
+	पूर्ण
+	क्रम (cc = 0, numreposted = 0; cc < copy.numrcvbufs; cc++) अणु
+		क्रम (i = 0; i < devdata->num_rcv_bufs; i++) अणु
+			अगर (devdata->rcvbuf[i] != copy.rcvbuf[cc])
+				जारी;
 
-			if ((skb) && devdata->rcvbuf[i] == skb) {
+			अगर ((skb) && devdata->rcvbuf[i] == skb) अणु
 				devdata->found_repost_rcvbuf_cnt++;
 				found_skb = 1;
 				devdata->repost_found_skb_cnt++;
-			}
+			पूर्ण
 			devdata->rcvbuf[i] = alloc_rcv_buf(netdev);
-			if (!devdata->rcvbuf[i]) {
+			अगर (!devdata->rcvbuf[i]) अणु
 				devdata->num_rcv_bufs_could_not_alloc++;
 				devdata->alloc_failed_in_repost_rtn_cnt++;
 				status = -ENOMEM;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			status = post_skb(cmdrsp, devdata, devdata->rcvbuf[i]);
-			if (status) {
-				kfree_skb(devdata->rcvbuf[i]);
-				devdata->rcvbuf[i] = NULL;
-				break;
-			}
+			अगर (status) अणु
+				kमुक्त_skb(devdata->rcvbuf[i]);
+				devdata->rcvbuf[i] = शून्य;
+				अवरोध;
+			पूर्ण
 			numreposted++;
-			break;
-		}
-	}
-	if (numreposted != copy.numrcvbufs) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (numreposted != copy.numrcvbufs) अणु
 		devdata->n_repost_deficit++;
 		status = -EINVAL;
-	}
-	if (skb) {
-		if (found_skb) {
-			kfree_skb(skb);
-		} else {
+	पूर्ण
+	अगर (skb) अणु
+		अगर (found_skb) अणु
+			kमुक्त_skb(skb);
+		पूर्ण अन्यथा अणु
 			status = -EINVAL;
 			devdata->bad_rcv_buf++;
-		}
-	}
-	return status;
-}
+		पूर्ण
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /* visornic_rx - handle receive packets coming back from IO Partition
- * @cmdrsp: Receive packet returned from IO Partition.
+ * @cmdrsp: Receive packet वापसed from IO Partition.
  *
  * Got a receive packet back from the IO Partition; handle it and send it up
  * the stack.
 
- * Return: 1 iff an skb was received, otherwise 0.
+ * Return: 1 अगरf an skb was received, otherwise 0.
  */
-static int visornic_rx(struct uiscmdrsp *cmdrsp)
-{
-	struct visornic_devdata *devdata;
-	struct sk_buff *skb, *prev, *curr;
-	struct net_device *netdev;
-	int cc, currsize, off;
-	struct ethhdr *eth;
-	unsigned long flags;
+अटल पूर्णांक visornic_rx(काष्ठा uiscmdrsp *cmdrsp)
+अणु
+	काष्ठा visornic_devdata *devdata;
+	काष्ठा sk_buff *skb, *prev, *curr;
+	काष्ठा net_device *netdev;
+	पूर्णांक cc, currsize, off;
+	काष्ठा ethhdr *eth;
+	अचिन्हित दीर्घ flags;
 
 	/* post new rcv buf to the other end using the cmdrsp we have at hand
-	 * post it without holding lock - but we'll use the signal lock to
+	 * post it without holding lock - but we'll use the संकेत lock to
 	 * synchronize the queue insert the cmdrsp that contains the net.rcv
 	 * is the one we are using to repost, so copy the info we need from it.
 	 */
@@ -1210,112 +1211,112 @@ static int visornic_rx(struct uiscmdrsp *cmdrsp)
 	atomic_dec(&devdata->num_rcvbuf_in_iovm);
 
 	/* set length to how much was ACTUALLY received -
-	 * NOTE: rcv_done_len includes actual length of data rcvd
+	 * NOTE: rcv_करोne_len includes actual length of data rcvd
 	 * including ethhdr
 	 */
-	skb->len = cmdrsp->net.rcv.rcv_done_len;
+	skb->len = cmdrsp->net.rcv.rcv_करोne_len;
 
 	/* update rcv stats - call it with priv_lock held */
 	devdata->net_stats.rx_packets++;
 	devdata->net_stats.rx_bytes += skb->len;
 
-	/* test enabled while holding lock */
-	if (!(devdata->enabled && devdata->enab_dis_acked)) {
-		/* don't process it unless we're in enable mode and until
+	/* test enabled जबतक holding lock */
+	अगर (!(devdata->enabled && devdata->enab_dis_acked)) अणु
+		/* करोn't process it unless we're in enable mode and until
 		 * we've gotten an ACK saying the other end got our RCV enable
 		 */
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
-		repost_return(cmdrsp, devdata, skb, netdev);
-		return 0;
-	}
+		repost_वापस(cmdrsp, devdata, skb, netdev);
+		वापस 0;
+	पूर्ण
 
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
 
 	/* when skb was allocated, skb->dev, skb->data, skb->len and
-	 * skb->data_len were setup. AND, data has already put into the
+	 * skb->data_len were setup. AND, data has alपढ़ोy put पूर्णांकo the
 	 * skb (both first frag and in frags pages)
 	 * NOTE: firstfragslen is the amount of data in skb->data and that
 	 * which is not in nr_frags or frag_list. This is now simply
 	 * RCVPOST_BUF_SIZE. bump tail to show how much data is in
-	 * firstfrag & set data_len to show rest see if we have to chain
+	 * firstfrag & set data_len to show rest see अगर we have to chain
 	 * frag_list.
 	 */
-	/* do PRECAUTIONARY check */
-	if (skb->len > RCVPOST_BUF_SIZE) {
-		if (cmdrsp->net.rcv.numrcvbufs < 2) {
-			if (repost_return(cmdrsp, devdata, skb, netdev) < 0)
+	/* करो PRECAUTIONARY check */
+	अगर (skb->len > RCVPOST_BUF_SIZE) अणु
+		अगर (cmdrsp->net.rcv.numrcvbufs < 2) अणु
+			अगर (repost_वापस(cmdrsp, devdata, skb, netdev) < 0)
 				dev_err(&devdata->netdev->dev,
 					"repost_return failed");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		/* length rcvd is greater than firstfrag in this skb rcv buf  */
 		/* amount in skb->data */
 		skb->tail += RCVPOST_BUF_SIZE;
 		/* amount that will be in frag_list */
 		skb->data_len = skb->len - RCVPOST_BUF_SIZE;
-	} else {
-		/* data fits in this skb - no chaining - do
+	पूर्ण अन्यथा अणु
+		/* data fits in this skb - no chaining - करो
 		 * PRECAUTIONARY check
 		 */
 		/* should be 1 */
-		if (cmdrsp->net.rcv.numrcvbufs != 1) {
-			if (repost_return(cmdrsp, devdata, skb, netdev) < 0)
+		अगर (cmdrsp->net.rcv.numrcvbufs != 1) अणु
+			अगर (repost_वापस(cmdrsp, devdata, skb, netdev) < 0)
 				dev_err(&devdata->netdev->dev,
 					"repost_return failed");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		skb->tail += skb->len;
 		/* nothing rcvd in frag_list */
 		skb->data_len = 0;
-	}
-	off = skb_tail_pointer(skb) - skb->data;
+	पूर्ण
+	off = skb_tail_poपूर्णांकer(skb) - skb->data;
 
 	/* amount we bumped tail by in the head skb
 	 * it is used to calculate the size of each chained skb below
-	 * it is also used to index into bufline to continue the copy
-	 * (for chansocktwopc)
-	 * if necessary chain the rcv skbs together.
+	 * it is also used to index पूर्णांकo bufline to जारी the copy
+	 * (क्रम chansocktwopc)
+	 * अगर necessary chain the rcv skbs together.
 	 * NOTE: index 0 has the same as cmdrsp->net.rcv.skb; we need to
 	 * chain the rest to that one.
-	 * - do PRECAUTIONARY check
+	 * - करो PRECAUTIONARY check
 	 */
-	if (cmdrsp->net.rcv.rcvbuf[0] != skb) {
-		if (repost_return(cmdrsp, devdata, skb, netdev) < 0)
+	अगर (cmdrsp->net.rcv.rcvbuf[0] != skb) अणु
+		अगर (repost_वापस(cmdrsp, devdata, skb, netdev) < 0)
 			dev_err(&devdata->netdev->dev, "repost_return failed");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (cmdrsp->net.rcv.numrcvbufs > 1) {
-		/* chain the various rcv buffers into the skb's frag_list. */
+	अगर (cmdrsp->net.rcv.numrcvbufs > 1) अणु
+		/* chain the various rcv buffers पूर्णांकo the skb's frag_list. */
 		/* Note: off was initialized above  */
-		for (cc = 1, prev = NULL;
-		     cc < cmdrsp->net.rcv.numrcvbufs; cc++) {
-			curr = (struct sk_buff *)cmdrsp->net.rcv.rcvbuf[cc];
-			curr->next = NULL;
+		क्रम (cc = 1, prev = शून्य;
+		     cc < cmdrsp->net.rcv.numrcvbufs; cc++) अणु
+			curr = (काष्ठा sk_buff *)cmdrsp->net.rcv.rcvbuf[cc];
+			curr->next = शून्य;
 			/* start of list- set head */
-			if (!prev)
+			अगर (!prev)
 				skb_shinfo(skb)->frag_list = curr;
-			else
+			अन्यथा
 				prev->next = curr;
 			prev = curr;
 
-			/* should we set skb->len and skb->data_len for each
+			/* should we set skb->len and skb->data_len क्रम each
 			 * buffer being chained??? can't hurt!
 			 */
 			currsize = min(skb->len - off,
-				       (unsigned int)RCVPOST_BUF_SIZE);
+				       (अचिन्हित पूर्णांक)RCVPOST_BUF_SIZE);
 			curr->len = currsize;
 			curr->tail += currsize;
 			curr->data_len = 0;
 			off += currsize;
-		}
-		/* assert skb->len == off */
-		if (skb->len != off) {
+		पूर्ण
+		/* निश्चित skb->len == off */
+		अगर (skb->len != off) अणु
 			netdev_err(devdata->netdev,
 				   "something wrong; skb->len:%d != off:%d\n",
 				   skb->len, off);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* set up packet's protocol type using ethernet header - this
 	 * sets up skb->pkt_type & it also PULLS out the eth header
@@ -1325,755 +1326,755 @@ static int visornic_rx(struct uiscmdrsp *cmdrsp)
 	skb->csum = 0;
 	skb->ip_summed = CHECKSUM_NONE;
 
-	do {
+	करो अणु
 		/* accept all packets */
-		if (netdev->flags & IFF_PROMISC)
-			break;
-		if (skb->pkt_type == PACKET_BROADCAST) {
+		अगर (netdev->flags & IFF_PROMISC)
+			अवरोध;
+		अगर (skb->pkt_type == PACKET_BROADCAST) अणु
 			/* accept all broadcast packets */
-			if (netdev->flags & IFF_BROADCAST)
-				break;
-		} else if (skb->pkt_type == PACKET_MULTICAST) {
-			if ((netdev->flags & IFF_MULTICAST) &&
-			    (netdev_mc_count(netdev))) {
-				struct netdev_hw_addr *ha;
-				int found_mc = 0;
+			अगर (netdev->flags & IFF_BROADCAST)
+				अवरोध;
+		पूर्ण अन्यथा अगर (skb->pkt_type == PACKET_MULTICAST) अणु
+			अगर ((netdev->flags & IFF_MULTICAST) &&
+			    (netdev_mc_count(netdev))) अणु
+				काष्ठा netdev_hw_addr *ha;
+				पूर्णांक found_mc = 0;
 
 				/* only accept multicast packets that we can
 				 * find in our multicast address list
 				 */
-				netdev_for_each_mc_addr(ha, netdev) {
-					if (ether_addr_equal(eth->h_dest,
-							     ha->addr)) {
+				netdev_क्रम_each_mc_addr(ha, netdev) अणु
+					अगर (ether_addr_equal(eth->h_dest,
+							     ha->addr)) अणु
 						found_mc = 1;
-						break;
-					}
-				}
+						अवरोध;
+					पूर्ण
+				पूर्ण
 				/* accept pkt, dest matches a multicast addr */
-				if (found_mc)
-					break;
-			}
+				अगर (found_mc)
+					अवरोध;
+			पूर्ण
 		/* accept packet, h_dest must match vnic  mac address */
-		} else if (skb->pkt_type == PACKET_HOST) {
-			break;
-		} else if (skb->pkt_type == PACKET_OTHERHOST) {
+		पूर्ण अन्यथा अगर (skb->pkt_type == PACKET_HOST) अणु
+			अवरोध;
+		पूर्ण अन्यथा अगर (skb->pkt_type == PACKET_OTHERHOST) अणु
 			/* something is not right */
 			dev_err(&devdata->netdev->dev,
 				"**** FAILED to deliver rcv packet to OS; name:%s Dest:%pM VNIC:%pM\n",
 				netdev->name, eth->h_dest, netdev->dev_addr);
-		}
-		/* drop packet - don't forward it up to OS */
+		पूर्ण
+		/* drop packet - करोn't क्रमward it up to OS */
 		devdata->n_rcv_packets_not_accepted++;
-		repost_return(cmdrsp, devdata, skb, netdev);
-		return 0;
-	} while (0);
+		repost_वापस(cmdrsp, devdata, skb, netdev);
+		वापस 0;
+	पूर्ण जबतक (0);
 
-	netif_receive_skb(skb);
-	/* netif_rx returns various values, but "in practice most drivers
-	 * ignore the return value
+	netअगर_receive_skb(skb);
+	/* netअगर_rx वापसs various values, but "in practice most drivers
+	 * ignore the वापस value
 	 */
 
-	skb = NULL;
-	/* whether the packet got dropped or handled, the skb is freed by
-	 * kernel code, so we shouldn't free it. but we should repost a
+	skb = शून्य;
+	/* whether the packet got dropped or handled, the skb is मुक्तd by
+	 * kernel code, so we shouldn't मुक्त it. but we should repost a
 	 * new rcv buffer.
 	 */
-	repost_return(cmdrsp, devdata, skb, netdev);
-	return 1;
-}
+	repost_वापस(cmdrsp, devdata, skb, netdev);
+	वापस 1;
+पूर्ण
 
-/* devdata_initialize - initialize devdata structure
- * @devdata: visornic_devdata structure to initialize.
- * @dev:     visorbus_device it belongs to.
+/* devdata_initialize - initialize devdata काष्ठाure
+ * @devdata: visornic_devdata काष्ठाure to initialize.
+ * @dev:     visorbus_device it beदीर्घs to.
  *
- * Setup initial values for the visornic, based on channel and default values.
+ * Setup initial values क्रम the visornic, based on channel and शेष values.
  *
- * Return: A pointer to the devdata structure.
+ * Return: A poपूर्णांकer to the devdata काष्ठाure.
  */
-static struct visornic_devdata *devdata_initialize(
-					struct visornic_devdata *devdata,
-					struct visor_device *dev)
-{
+अटल काष्ठा visornic_devdata *devdata_initialize(
+					काष्ठा visornic_devdata *devdata,
+					काष्ठा visor_device *dev)
+अणु
 	devdata->dev = dev;
-	devdata->incarnation_id = get_jiffies_64();
-	return devdata;
-}
+	devdata->incarnation_id = get_jअगरfies_64();
+	वापस devdata;
+पूर्ण
 
-/* devdata_release - free up references in devdata
+/* devdata_release - मुक्त up references in devdata
  * @devdata: Struct to clean up.
  */
-static void devdata_release(struct visornic_devdata *devdata)
-{
-	kfree(devdata->rcvbuf);
-	kfree(devdata->cmdrsp_rcv);
-	kfree(devdata->xmit_cmdrsp);
-}
+अटल व्योम devdata_release(काष्ठा visornic_devdata *devdata)
+अणु
+	kमुक्त(devdata->rcvbuf);
+	kमुक्त(devdata->cmdrsp_rcv);
+	kमुक्त(devdata->xmit_cmdrsp);
+पूर्ण
 
-static const struct net_device_ops visornic_dev_ops = {
-	.ndo_open = visornic_open,
-	.ndo_stop = visornic_close,
-	.ndo_start_xmit = visornic_xmit,
-	.ndo_get_stats = visornic_get_stats,
-	.ndo_change_mtu = visornic_change_mtu,
-	.ndo_tx_timeout = visornic_xmit_timeout,
-	.ndo_set_rx_mode = visornic_set_multi,
-};
+अटल स्थिर काष्ठा net_device_ops visornic_dev_ops = अणु
+	.nकरो_खोलो = visornic_खोलो,
+	.nकरो_stop = visornic_बंद,
+	.nकरो_start_xmit = visornic_xmit,
+	.nकरो_get_stats = visornic_get_stats,
+	.nकरो_change_mtu = visornic_change_mtu,
+	.nकरो_tx_समयout = visornic_xmit_समयout,
+	.nकरो_set_rx_mode = visornic_set_multi,
+पूर्ण;
 
 /* DebugFS code */
-static ssize_t info_debugfs_read(struct file *file, char __user *buf,
-				 size_t len, loff_t *offset)
-{
-	ssize_t bytes_read = 0;
-	int str_pos = 0;
-	struct visornic_devdata *devdata;
-	struct net_device *dev;
-	char *vbuf;
+अटल sमाप_प्रकार info_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार len, loff_t *offset)
+अणु
+	sमाप_प्रकार bytes_पढ़ो = 0;
+	पूर्णांक str_pos = 0;
+	काष्ठा visornic_devdata *devdata;
+	काष्ठा net_device *dev;
+	अक्षर *vbuf;
 
-	if (len > MAX_BUF)
+	अगर (len > MAX_BUF)
 		len = MAX_BUF;
 	vbuf = kzalloc(len, GFP_KERNEL);
-	if (!vbuf)
-		return -ENOMEM;
+	अगर (!vbuf)
+		वापस -ENOMEM;
 
-	/* for each vnic channel dump out channel specific data */
-	rcu_read_lock();
-	for_each_netdev_rcu(current->nsproxy->net_ns, dev) {
-		/* Only consider netdevs that are visornic, and are open */
-		if (dev->netdev_ops != &visornic_dev_ops ||
-		    (!netif_queue_stopped(dev)))
-			continue;
+	/* क्रम each vnic channel dump out channel specअगरic data */
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_rcu(current->nsproxy->net_ns, dev) अणु
+		/* Only consider netdevs that are visornic, and are खोलो */
+		अगर (dev->netdev_ops != &visornic_dev_ops ||
+		    (!netअगर_queue_stopped(dev)))
+			जारी;
 
 		devdata = netdev_priv(dev);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     "netdev = %s (0x%p), MAC Addr %pM\n",
 				     dev->name,
 				     dev,
 				     dev->dev_addr);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     "VisorNic Dev Info = 0x%p\n", devdata);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " num_rcv_bufs = %d\n",
 				     devdata->num_rcv_bufs);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " max_outstanding_next_xmits = %lu\n",
 				    devdata->max_outstanding_net_xmits);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " upper_threshold_net_xmits = %lu\n",
 				     devdata->upper_threshold_net_xmits);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " lower_threshold_net_xmits = %lu\n",
 				     devdata->lower_threshold_net_xmits);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " queuefullmsg_logged = %d\n",
 				     devdata->queuefullmsg_logged);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.got_rcv = %lu\n",
 				     devdata->chstat.got_rcv);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.got_enbdisack = %lu\n",
 				     devdata->chstat.got_enbdisack);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.got_xmit_done = %lu\n",
-				     devdata->chstat.got_xmit_done);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+				     devdata->chstat.got_xmit_करोne);
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.xmit_fail = %lu\n",
 				     devdata->chstat.xmit_fail);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.sent_enbdis = %lu\n",
 				     devdata->chstat.sent_enbdis);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.sent_promisc = %lu\n",
 				     devdata->chstat.sent_promisc);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.sent_post = %lu\n",
 				     devdata->chstat.sent_post);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.sent_post_failed = %lu\n",
 				     devdata->chstat.sent_post_failed);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.sent_xmit = %lu\n",
 				     devdata->chstat.sent_xmit);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.reject_count = %lu\n",
 				     devdata->chstat.reject_count);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " chstat.extra_rcvbufs_sent = %lu\n",
 				     devdata->chstat.extra_rcvbufs_sent);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " n_rcv0 = %lu\n", devdata->n_rcv0);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " n_rcv1 = %lu\n", devdata->n_rcv1);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " n_rcv2 = %lu\n", devdata->n_rcv2);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " n_rcvx = %lu\n", devdata->n_rcvx);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " num_rcvbuf_in_iovm = %d\n",
-				     atomic_read(&devdata->num_rcvbuf_in_iovm));
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+				     atomic_पढ़ो(&devdata->num_rcvbuf_in_iovm));
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " alloc_failed_in_if_needed_cnt = %lu\n",
-				     devdata->alloc_failed_in_if_needed_cnt);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+				     devdata->alloc_failed_in_अगर_needed_cnt);
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " alloc_failed_in_repost_rtn_cnt = %lu\n",
 				     devdata->alloc_failed_in_repost_rtn_cnt);
-		/* str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		/* str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 		 *		     " inner_loop_limit_reached_cnt = %lu\n",
 		 *		     devdata->inner_loop_limit_reached_cnt);
 		 */
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " found_repost_rcvbuf_cnt = %lu\n",
 				     devdata->found_repost_rcvbuf_cnt);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " repost_found_skb_cnt = %lu\n",
 				     devdata->repost_found_skb_cnt);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " n_repost_deficit = %lu\n",
 				     devdata->n_repost_deficit);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " bad_rcv_buf = %lu\n",
 				     devdata->bad_rcv_buf);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " n_rcv_packets_not_accepted = %lu\n",
 				     devdata->n_rcv_packets_not_accepted);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " interrupts_rcvd = %llu\n",
-				     devdata->interrupts_rcvd);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+				     devdata->पूर्णांकerrupts_rcvd);
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " interrupts_notme = %llu\n",
-				     devdata->interrupts_notme);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+				     devdata->पूर्णांकerrupts_noपंचांगe);
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " interrupts_disabled = %llu\n",
-				     devdata->interrupts_disabled);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+				     devdata->पूर्णांकerrupts_disabled);
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " busy_cnt = %llu\n",
 				     devdata->busy_cnt);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " flow_control_upper_hits = %llu\n",
 				     devdata->flow_control_upper_hits);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " flow_control_lower_hits = %llu\n",
 				     devdata->flow_control_lower_hits);
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " netif_queue = %s\n",
-				     netif_queue_stopped(devdata->netdev) ?
+				     netअगर_queue_stopped(devdata->netdev) ?
 				     "stopped" : "running");
-		str_pos += scnprintf(vbuf + str_pos, len - str_pos,
+		str_pos += scnम_लिखो(vbuf + str_pos, len - str_pos,
 				     " xmits_outstanding = %lu\n",
 				     devdata_xmits_outstanding(devdata));
-	}
-	rcu_read_unlock();
-	bytes_read = simple_read_from_buffer(buf, len, offset, vbuf, str_pos);
-	kfree(vbuf);
-	return bytes_read;
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	bytes_पढ़ो = simple_पढ़ो_from_buffer(buf, len, offset, vbuf, str_pos);
+	kमुक्त(vbuf);
+	वापस bytes_पढ़ो;
+पूर्ण
 
-static struct dentry *visornic_debugfs_dir;
-static const struct file_operations debugfs_info_fops = {
-	.read = info_debugfs_read,
-};
+अटल काष्ठा dentry *visornic_debugfs_dir;
+अटल स्थिर काष्ठा file_operations debugfs_info_fops = अणु
+	.पढ़ो = info_debugfs_पढ़ो,
+पूर्ण;
 
-/* send_rcv_posts_if_needed - send receive buffers to the IO Partition.
+/* send_rcv_posts_अगर_needed - send receive buffers to the IO Partition.
  * @devdata: Visornic device.
  */
-static void send_rcv_posts_if_needed(struct visornic_devdata *devdata)
-{
-	int i;
-	struct net_device *netdev;
-	struct uiscmdrsp *cmdrsp = devdata->cmdrsp_rcv;
-	int cur_num_rcv_bufs_to_alloc, rcv_bufs_allocated;
-	int err;
+अटल व्योम send_rcv_posts_अगर_needed(काष्ठा visornic_devdata *devdata)
+अणु
+	पूर्णांक i;
+	काष्ठा net_device *netdev;
+	काष्ठा uiscmdrsp *cmdrsp = devdata->cmdrsp_rcv;
+	पूर्णांक cur_num_rcv_bufs_to_alloc, rcv_bufs_allocated;
+	पूर्णांक err;
 
-	/* don't do this until vnic is marked ready */
-	if (!(devdata->enabled && devdata->enab_dis_acked))
-		return;
+	/* करोn't करो this until vnic is marked पढ़ोy */
+	अगर (!(devdata->enabled && devdata->enab_dis_acked))
+		वापस;
 
 	netdev = devdata->netdev;
 	rcv_bufs_allocated = 0;
-	/* this code is trying to prevent getting stuck here forever,
-	 * but still retry it if you cant allocate them all this time.
+	/* this code is trying to prevent getting stuck here क्रमever,
+	 * but still retry it अगर you cant allocate them all this समय.
 	 */
 	cur_num_rcv_bufs_to_alloc = devdata->num_rcv_bufs_could_not_alloc;
-	while (cur_num_rcv_bufs_to_alloc > 0) {
+	जबतक (cur_num_rcv_bufs_to_alloc > 0) अणु
 		cur_num_rcv_bufs_to_alloc--;
-		for (i = 0; i < devdata->num_rcv_bufs; i++) {
-			if (devdata->rcvbuf[i])
-				continue;
+		क्रम (i = 0; i < devdata->num_rcv_bufs; i++) अणु
+			अगर (devdata->rcvbuf[i])
+				जारी;
 			devdata->rcvbuf[i] = alloc_rcv_buf(netdev);
-			if (!devdata->rcvbuf[i]) {
-				devdata->alloc_failed_in_if_needed_cnt++;
-				break;
-			}
+			अगर (!devdata->rcvbuf[i]) अणु
+				devdata->alloc_failed_in_अगर_needed_cnt++;
+				अवरोध;
+			पूर्ण
 			rcv_bufs_allocated++;
 			err = post_skb(cmdrsp, devdata, devdata->rcvbuf[i]);
-			if (err) {
-				kfree_skb(devdata->rcvbuf[i]);
-				devdata->rcvbuf[i] = NULL;
-				break;
-			}
+			अगर (err) अणु
+				kमुक्त_skb(devdata->rcvbuf[i]);
+				devdata->rcvbuf[i] = शून्य;
+				अवरोध;
+			पूर्ण
 			devdata->chstat.extra_rcvbufs_sent++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	devdata->num_rcv_bufs_could_not_alloc -= rcv_bufs_allocated;
-}
+पूर्ण
 
 /* drain_resp_queue - drains and ignores all messages from the resp queue
  * @cmdrsp:  IO channel command response message.
  * @devdata: Visornic device to drain.
  */
-static void drain_resp_queue(struct uiscmdrsp *cmdrsp,
-			     struct visornic_devdata *devdata)
-{
-	while (!visorchannel_signalremove(devdata->dev->visorchannel,
+अटल व्योम drain_resp_queue(काष्ठा uiscmdrsp *cmdrsp,
+			     काष्ठा visornic_devdata *devdata)
+अणु
+	जबतक (!visorchannel_संकेतहटाओ(devdata->dev->visorchannel,
 					  IOCHAN_FROM_IOPART,
 					  cmdrsp))
 		;
-}
+पूर्ण
 
 /* service_resp_queue - drain the response queue
  * @cmdrsp:  IO channel command response message.
  * @devdata: Visornic device to drain.
- * @rx_work_done:
+ * @rx_work_करोne:
  * @budget:
  *
  * Drain the response queue of any responses from the IO Partition. Process the
  * responses as we get them.
  */
-static void service_resp_queue(struct uiscmdrsp *cmdrsp,
-			       struct visornic_devdata *devdata,
-			       int *rx_work_done, int budget)
-{
-	unsigned long flags;
-	struct net_device *netdev;
+अटल व्योम service_resp_queue(काष्ठा uiscmdrsp *cmdrsp,
+			       काष्ठा visornic_devdata *devdata,
+			       पूर्णांक *rx_work_करोne, पूर्णांक budget)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा net_device *netdev;
 
-	while (*rx_work_done < budget) {
+	जबतक (*rx_work_करोne < budget) अणु
 		/* TODO: CLIENT ACQUIRE -- Don't really need this at the
 		 * moment
 		 */
 		/* queue empty */
-		if (visorchannel_signalremove(devdata->dev->visorchannel,
+		अगर (visorchannel_संकेतहटाओ(devdata->dev->visorchannel,
 					      IOCHAN_FROM_IOPART,
 					      cmdrsp))
-			break;
+			अवरोध;
 
-		switch (cmdrsp->net.type) {
-		case NET_RCV:
+		चयन (cmdrsp->net.type) अणु
+		हाल NET_RCV:
 			devdata->chstat.got_rcv++;
 			/* process incoming packet */
-			*rx_work_done += visornic_rx(cmdrsp);
-			break;
-		case NET_XMIT_DONE:
+			*rx_work_करोne += visornic_rx(cmdrsp);
+			अवरोध;
+		हाल NET_XMIT_DONE:
 			spin_lock_irqsave(&devdata->priv_lock, flags);
-			devdata->chstat.got_xmit_done++;
-			if (cmdrsp->net.xmtdone.xmt_done_result)
+			devdata->chstat.got_xmit_करोne++;
+			अगर (cmdrsp->net.xmtकरोne.xmt_करोne_result)
 				devdata->chstat.xmit_fail++;
-			/* only call queue wake if we stopped it */
-			netdev = ((struct sk_buff *)cmdrsp->net.buf)->dev;
+			/* only call queue wake अगर we stopped it */
+			netdev = ((काष्ठा sk_buff *)cmdrsp->net.buf)->dev;
 			/* ASSERT netdev == vnicinfo->netdev; */
-			if (netdev == devdata->netdev &&
-			    netif_queue_stopped(netdev)) {
-				/* check if we have crossed the lower watermark
-				 * for netif_wake_queue()
+			अगर (netdev == devdata->netdev &&
+			    netअगर_queue_stopped(netdev)) अणु
+				/* check अगर we have crossed the lower watermark
+				 * क्रम netअगर_wake_queue()
 				 */
-				if (vnic_hit_low_watermark
+				अगर (vnic_hit_low_watermark
 				    (devdata,
-				     devdata->lower_threshold_net_xmits)) {
+				     devdata->lower_threshold_net_xmits)) अणु
 					/* enough NET_XMITs completed
-					 * so can restart netif queue
+					 * so can restart netअगर queue
 					 */
-					netif_wake_queue(netdev);
+					netअगर_wake_queue(netdev);
 					devdata->flow_control_lower_hits++;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			skb_unlink(cmdrsp->net.buf, &devdata->xmitbufhead);
 			spin_unlock_irqrestore(&devdata->priv_lock, flags);
-			kfree_skb(cmdrsp->net.buf);
-			break;
-		case NET_RCV_ENBDIS_ACK:
+			kमुक्त_skb(cmdrsp->net.buf);
+			अवरोध;
+		हाल NET_RCV_ENBDIS_ACK:
 			devdata->chstat.got_enbdisack++;
-			netdev = (struct net_device *)
+			netdev = (काष्ठा net_device *)
 			cmdrsp->net.enbdis.context;
 			spin_lock_irqsave(&devdata->priv_lock, flags);
 			devdata->enab_dis_acked = 1;
 			spin_unlock_irqrestore(&devdata->priv_lock, flags);
 
-			if (devdata->server_down &&
-			    devdata->server_change_state) {
-				/* Inform Linux that the link is up */
-				devdata->server_down = false;
+			अगर (devdata->server_करोwn &&
+			    devdata->server_change_state) अणु
+				/* Inक्रमm Linux that the link is up */
+				devdata->server_करोwn = false;
 				devdata->server_change_state = false;
-				netif_wake_queue(netdev);
-				netif_carrier_on(netdev);
-			}
-			break;
-		case NET_CONNECT_STATUS:
+				netअगर_wake_queue(netdev);
+				netअगर_carrier_on(netdev);
+			पूर्ण
+			अवरोध;
+		हाल NET_CONNECT_STATUS:
 			netdev = devdata->netdev;
-			if (cmdrsp->net.enbdis.enable == 1) {
+			अगर (cmdrsp->net.enbdis.enable == 1) अणु
 				spin_lock_irqsave(&devdata->priv_lock, flags);
 				devdata->enabled = cmdrsp->net.enbdis.enable;
 				spin_unlock_irqrestore(&devdata->priv_lock,
 						       flags);
-				netif_wake_queue(netdev);
-				netif_carrier_on(netdev);
-			} else {
-				netif_stop_queue(netdev);
-				netif_carrier_off(netdev);
+				netअगर_wake_queue(netdev);
+				netअगर_carrier_on(netdev);
+			पूर्ण अन्यथा अणु
+				netअगर_stop_queue(netdev);
+				netअगर_carrier_off(netdev);
 				spin_lock_irqsave(&devdata->priv_lock, flags);
 				devdata->enabled = cmdrsp->net.enbdis.enable;
 				spin_unlock_irqrestore(&devdata->priv_lock,
 						       flags);
-			}
-			break;
-		default:
-			break;
-		}
-		/* cmdrsp is now available for reuse  */
-	}
-}
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		/* cmdrsp is now available क्रम reuse  */
+	पूर्ण
+पूर्ण
 
-static int visornic_poll(struct napi_struct *napi, int budget)
-{
-	struct visornic_devdata *devdata = container_of(napi,
-							struct visornic_devdata,
+अटल पूर्णांक visornic_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा visornic_devdata *devdata = container_of(napi,
+							काष्ठा visornic_devdata,
 							napi);
-	int rx_count = 0;
+	पूर्णांक rx_count = 0;
 
-	send_rcv_posts_if_needed(devdata);
+	send_rcv_posts_अगर_needed(devdata);
 	service_resp_queue(devdata->cmdrsp, devdata, &rx_count, budget);
 
 	/* If there aren't any more packets to receive stop the poll */
-	if (rx_count < budget)
-		napi_complete_done(napi, rx_count);
+	अगर (rx_count < budget)
+		napi_complete_करोne(napi, rx_count);
 
-	return rx_count;
-}
+	वापस rx_count;
+पूर्ण
 
-/* visornic_channel_interrupt	- checks the status of the response queue
+/* visornic_channel_पूर्णांकerrupt	- checks the status of the response queue
  *
- * Main function of the vnic_incoming thread. Periodically check the response
- * queue and drain it if needed.
+ * Main function of the vnic_incoming thपढ़ो. Periodically check the response
+ * queue and drain it अगर needed.
  */
-static void visornic_channel_interrupt(struct visor_device *dev)
-{
-	struct visornic_devdata *devdata = dev_get_drvdata(&dev->device);
+अटल व्योम visornic_channel_पूर्णांकerrupt(काष्ठा visor_device *dev)
+अणु
+	काष्ठा visornic_devdata *devdata = dev_get_drvdata(&dev->device);
 
-	if (!devdata)
-		return;
+	अगर (!devdata)
+		वापस;
 
-	if (!visorchannel_signalempty(
+	अगर (!visorchannel_संकेतempty(
 				   devdata->dev->visorchannel,
 				   IOCHAN_FROM_IOPART))
 		napi_schedule(&devdata->napi);
 
-	atomic_set(&devdata->interrupt_rcvd, 0);
+	atomic_set(&devdata->पूर्णांकerrupt_rcvd, 0);
 
-}
+पूर्ण
 
-/* visornic_probe - probe function for visornic devices
+/* visornic_probe - probe function क्रम visornic devices
  * @dev: The visor device discovered.
  *
  * Called when visorbus discovers a visornic device on its bus. It creates a new
  * visornic ethernet adapter.
  *
- * Return: 0 on success, or negative integer on error.
+ * Return: 0 on success, or negative पूर्णांकeger on error.
  */
-static int visornic_probe(struct visor_device *dev)
-{
-	struct visornic_devdata *devdata = NULL;
-	struct net_device *netdev = NULL;
-	int err;
-	int channel_offset = 0;
+अटल पूर्णांक visornic_probe(काष्ठा visor_device *dev)
+अणु
+	काष्ठा visornic_devdata *devdata = शून्य;
+	काष्ठा net_device *netdev = शून्य;
+	पूर्णांक err;
+	पूर्णांक channel_offset = 0;
 	u64 features;
 
-	netdev = alloc_etherdev(sizeof(struct visornic_devdata));
-	if (!netdev) {
+	netdev = alloc_etherdev(माप(काष्ठा visornic_devdata));
+	अगर (!netdev) अणु
 		dev_err(&dev->device,
 			"%s alloc_etherdev failed\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	netdev->netdev_ops = &visornic_dev_ops;
-	netdev->watchdog_timeo = 5 * HZ;
+	netdev->watchकरोg_समयo = 5 * HZ;
 	SET_NETDEV_DEV(netdev, &dev->device);
 
-	/* Get MAC address from channel and read it into the device. */
+	/* Get MAC address from channel and पढ़ो it पूर्णांकo the device. */
 	netdev->addr_len = ETH_ALEN;
-	channel_offset = offsetof(struct visor_io_channel, vnic.macaddr);
-	err = visorbus_read_channel(dev, channel_offset, netdev->dev_addr,
+	channel_offset = दुरत्व(काष्ठा visor_io_channel, vnic.macaddr);
+	err = visorbus_पढ़ो_channel(dev, channel_offset, netdev->dev_addr,
 				    ETH_ALEN);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&dev->device,
 			"%s failed to get mac addr from chan (%d)\n",
 			__func__, err);
-		goto cleanup_netdev;
-	}
+		जाओ cleanup_netdev;
+	पूर्ण
 
 	devdata = devdata_initialize(netdev_priv(netdev), dev);
-	if (!devdata) {
+	अगर (!devdata) अणु
 		dev_err(&dev->device,
 			"%s devdata_initialize failed\n", __func__);
 		err = -ENOMEM;
-		goto cleanup_netdev;
-	}
-	/* don't trust messages laying around in the channel */
+		जाओ cleanup_netdev;
+	पूर्ण
+	/* करोn't trust messages laying around in the channel */
 	drain_resp_queue(devdata->cmdrsp, devdata);
 
 	devdata->netdev = netdev;
 	dev_set_drvdata(&dev->device, devdata);
-	init_waitqueue_head(&devdata->rsp_queue);
+	init_रुकोqueue_head(&devdata->rsp_queue);
 	spin_lock_init(&devdata->priv_lock);
 	/* not yet */
 	devdata->enabled = 0;
 	atomic_set(&devdata->usage, 1);
 
 	/* Setup rcv bufs */
-	channel_offset = offsetof(struct visor_io_channel, vnic.num_rcv_bufs);
-	err = visorbus_read_channel(dev, channel_offset,
+	channel_offset = दुरत्व(काष्ठा visor_io_channel, vnic.num_rcv_bufs);
+	err = visorbus_पढ़ो_channel(dev, channel_offset,
 				    &devdata->num_rcv_bufs, 4);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&dev->device,
 			"%s failed to get #rcv bufs from chan (%d)\n",
 			__func__, err);
-		goto cleanup_netdev;
-	}
+		जाओ cleanup_netdev;
+	पूर्ण
 
-	devdata->rcvbuf = kcalloc(devdata->num_rcv_bufs,
-				  sizeof(struct sk_buff *), GFP_KERNEL);
-	if (!devdata->rcvbuf) {
+	devdata->rcvbuf = kसुस्मृति(devdata->num_rcv_bufs,
+				  माप(काष्ठा sk_buff *), GFP_KERNEL);
+	अगर (!devdata->rcvbuf) अणु
 		err = -ENOMEM;
-		goto cleanup_netdev;
-	}
+		जाओ cleanup_netdev;
+	पूर्ण
 
 	/* set the net_xmit outstanding threshold
-	 * always leave two slots open but you should have 3 at a minimum
+	 * always leave two slots खोलो but you should have 3 at a minimum
 	 * note that max_outstanding_net_xmits must be > 0
 	 */
 	devdata->max_outstanding_net_xmits =
-		max_t(unsigned long, 3, ((devdata->num_rcv_bufs / 3) - 2));
+		max_t(अचिन्हित दीर्घ, 3, ((devdata->num_rcv_bufs / 3) - 2));
 	devdata->upper_threshold_net_xmits =
-		max_t(unsigned long,
+		max_t(अचिन्हित दीर्घ,
 		      2, (devdata->max_outstanding_net_xmits - 1));
 	devdata->lower_threshold_net_xmits =
-		max_t(unsigned long,
+		max_t(अचिन्हित दीर्घ,
 		      1, (devdata->max_outstanding_net_xmits / 2));
 
 	skb_queue_head_init(&devdata->xmitbufhead);
 
 	/* create a cmdrsp we can use to post and unpost rcv buffers */
-	devdata->cmdrsp_rcv = kmalloc(SIZEOF_CMDRSP, GFP_KERNEL);
-	if (!devdata->cmdrsp_rcv) {
+	devdata->cmdrsp_rcv = kदो_स्मृति(SIZखातापूर्ण_CMDRSP, GFP_KERNEL);
+	अगर (!devdata->cmdrsp_rcv) अणु
 		err = -ENOMEM;
-		goto cleanup_rcvbuf;
-	}
-	devdata->xmit_cmdrsp = kmalloc(SIZEOF_CMDRSP, GFP_KERNEL);
-	if (!devdata->xmit_cmdrsp) {
+		जाओ cleanup_rcvbuf;
+	पूर्ण
+	devdata->xmit_cmdrsp = kदो_स्मृति(SIZखातापूर्ण_CMDRSP, GFP_KERNEL);
+	अगर (!devdata->xmit_cmdrsp) अणु
 		err = -ENOMEM;
-		goto cleanup_cmdrsp_rcv;
-	}
-	INIT_WORK(&devdata->timeout_reset, visornic_timeout_reset);
-	devdata->server_down = false;
+		जाओ cleanup_cmdrsp_rcv;
+	पूर्ण
+	INIT_WORK(&devdata->समयout_reset, visornic_समयout_reset);
+	devdata->server_करोwn = false;
 	devdata->server_change_state = false;
 
-	/*set the default mtu */
-	channel_offset = offsetof(struct visor_io_channel, vnic.mtu);
-	err = visorbus_read_channel(dev, channel_offset, &netdev->mtu, 4);
-	if (err) {
+	/*set the शेष mtu */
+	channel_offset = दुरत्व(काष्ठा visor_io_channel, vnic.mtu);
+	err = visorbus_पढ़ो_channel(dev, channel_offset, &netdev->mtu, 4);
+	अगर (err) अणु
 		dev_err(&dev->device,
 			"%s failed to get mtu from chan (%d)\n",
 			__func__, err);
-		goto cleanup_xmit_cmdrsp;
-	}
+		जाओ cleanup_xmit_cmdrsp;
+	पूर्ण
 
-	/* TODO: Setup Interrupt information */
-	/* Let's start our threads to get responses */
-	netif_napi_add(netdev, &devdata->napi, visornic_poll, NAPI_WEIGHT);
+	/* TODO: Setup Interrupt inक्रमmation */
+	/* Let's start our thपढ़ोs to get responses */
+	netअगर_napi_add(netdev, &devdata->napi, visornic_poll, NAPI_WEIGHT);
 
-	channel_offset = offsetof(struct visor_io_channel,
+	channel_offset = दुरत्व(काष्ठा visor_io_channel,
 				  channel_header.features);
-	err = visorbus_read_channel(dev, channel_offset, &features, 8);
-	if (err) {
+	err = visorbus_पढ़ो_channel(dev, channel_offset, &features, 8);
+	अगर (err) अणु
 		dev_err(&dev->device,
 			"%s failed to get features from chan (%d)\n",
 			__func__, err);
-		goto cleanup_napi_add;
-	}
+		जाओ cleanup_napi_add;
+	पूर्ण
 
 	features |= VISOR_CHANNEL_IS_POLLING;
 	features |= VISOR_DRIVER_ENHANCED_RCVBUF_CHECKING;
-	err = visorbus_write_channel(dev, channel_offset, &features, 8);
-	if (err) {
+	err = visorbus_ग_लिखो_channel(dev, channel_offset, &features, 8);
+	अगर (err) अणु
 		dev_err(&dev->device,
 			"%s failed to set features in chan (%d)\n",
 			__func__, err);
-		goto cleanup_napi_add;
-	}
+		जाओ cleanup_napi_add;
+	पूर्ण
 
-	/* Note: Interrupts have to be enable before the while
-	 * loop below because the napi routine is responsible for
+	/* Note: Interrupts have to be enable beक्रमe the जबतक
+	 * loop below because the napi routine is responsible क्रम
 	 * setting enab_dis_acked
 	 */
-	visorbus_enable_channel_interrupts(dev);
+	visorbus_enable_channel_पूर्णांकerrupts(dev);
 
-	err = register_netdev(netdev);
-	if (err) {
+	err = रेजिस्टर_netdev(netdev);
+	अगर (err) अणु
 		dev_err(&dev->device,
 			"%s register_netdev failed (%d)\n", __func__, err);
-		goto cleanup_napi_add;
-	}
+		जाओ cleanup_napi_add;
+	पूर्ण
 
 	/* create debug/sysfs directories */
 	devdata->eth_debugfs_dir = debugfs_create_dir(netdev->name,
 						      visornic_debugfs_dir);
-	if (!devdata->eth_debugfs_dir) {
+	अगर (!devdata->eth_debugfs_dir) अणु
 		dev_err(&dev->device,
 			"%s debugfs_create_dir %s failed\n",
 			__func__, netdev->name);
 		err = -ENOMEM;
-		goto cleanup_register_netdev;
-	}
+		जाओ cleanup_रेजिस्टर_netdev;
+	पूर्ण
 
 	dev_info(&dev->device, "%s success netdev=%s\n",
 		 __func__, netdev->name);
-	return 0;
+	वापस 0;
 
-cleanup_register_netdev:
-	unregister_netdev(netdev);
+cleanup_रेजिस्टर_netdev:
+	unरेजिस्टर_netdev(netdev);
 
 cleanup_napi_add:
-	visorbus_disable_channel_interrupts(dev);
-	netif_napi_del(&devdata->napi);
+	visorbus_disable_channel_पूर्णांकerrupts(dev);
+	netअगर_napi_del(&devdata->napi);
 
 cleanup_xmit_cmdrsp:
-	kfree(devdata->xmit_cmdrsp);
+	kमुक्त(devdata->xmit_cmdrsp);
 
 cleanup_cmdrsp_rcv:
-	kfree(devdata->cmdrsp_rcv);
+	kमुक्त(devdata->cmdrsp_rcv);
 
 cleanup_rcvbuf:
-	kfree(devdata->rcvbuf);
+	kमुक्त(devdata->rcvbuf);
 
 cleanup_netdev:
-	free_netdev(netdev);
-	return err;
-}
+	मुक्त_netdev(netdev);
+	वापस err;
+पूर्ण
 
 /* host_side_disappeared - IO Partition is gone
  * @devdata: Device object.
  *
- * IO partition servicing this device is gone; do cleanup.
+ * IO partition servicing this device is gone; करो cleanup.
  */
-static void host_side_disappeared(struct visornic_devdata *devdata)
-{
-	unsigned long flags;
+अटल व्योम host_side_disappeared(काष्ठा visornic_devdata *devdata)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&devdata->priv_lock, flags);
 	/* indicate device destroyed */
-	devdata->dev = NULL;
+	devdata->dev = शून्य;
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
-}
+पूर्ण
 
-/* visornic_remove - called when visornic dev goes away
- * @dev: Visornic device that is being removed.
+/* visornic_हटाओ - called when visornic dev goes away
+ * @dev: Visornic device that is being हटाओd.
  *
- * Called when DEVICE_DESTROY gets called to remove device.
+ * Called when DEVICE_DESTROY माला_लो called to हटाओ device.
  */
-static void visornic_remove(struct visor_device *dev)
-{
-	struct visornic_devdata *devdata = dev_get_drvdata(&dev->device);
-	struct net_device *netdev;
-	unsigned long flags;
+अटल व्योम visornic_हटाओ(काष्ठा visor_device *dev)
+अणु
+	काष्ठा visornic_devdata *devdata = dev_get_drvdata(&dev->device);
+	काष्ठा net_device *netdev;
+	अचिन्हित दीर्घ flags;
 
-	if (!devdata) {
+	अगर (!devdata) अणु
 		dev_err(&dev->device, "%s no devdata\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_lock_irqsave(&devdata->priv_lock, flags);
-	if (devdata->going_away) {
+	अगर (devdata->going_away) अणु
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
 		dev_err(&dev->device, "%s already being removed\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 	devdata->going_away = true;
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
 	netdev = devdata->netdev;
-	if (!netdev) {
+	अगर (!netdev) अणु
 		dev_err(&dev->device, "%s not net device\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* going_away prevents new items being added to the workqueues */
-	cancel_work_sync(&devdata->timeout_reset);
+	cancel_work_sync(&devdata->समयout_reset);
 
-	debugfs_remove_recursive(devdata->eth_debugfs_dir);
-	/* this will call visornic_close() */
-	unregister_netdev(netdev);
+	debugfs_हटाओ_recursive(devdata->eth_debugfs_dir);
+	/* this will call visornic_बंद() */
+	unरेजिस्टर_netdev(netdev);
 
-	visorbus_disable_channel_interrupts(devdata->dev);
-	netif_napi_del(&devdata->napi);
+	visorbus_disable_channel_पूर्णांकerrupts(devdata->dev);
+	netअगर_napi_del(&devdata->napi);
 
-	dev_set_drvdata(&dev->device, NULL);
+	dev_set_drvdata(&dev->device, शून्य);
 	host_side_disappeared(devdata);
 	devdata_release(devdata);
-	free_netdev(netdev);
-}
+	मुक्त_netdev(netdev);
+पूर्ण
 
-/* visornic_pause - called when IO Part disappears
+/* visornic_छोड़ो - called when IO Part disappears
  * @dev:	   Visornic device that is being serviced.
  * @complete_func: Call when finished.
  *
- * Called when the IO Partition has gone down. Need to free up resources and
- * wait for IO partition to come back. Mark link as down and don't attempt any
- * DMA. When we have freed memory, call the complete_func so that Command knows
- * we are done. If we don't call complete_func, the IO Partition will never
+ * Called when the IO Partition has gone करोwn. Need to मुक्त up resources and
+ * रुको क्रम IO partition to come back. Mark link as करोwn and करोn't attempt any
+ * DMA. When we have मुक्तd memory, call the complete_func so that Command knows
+ * we are करोne. If we करोn't call complete_func, the IO Partition will never
  * come back.
  *
  * Return: 0 on success.
  */
-static int visornic_pause(struct visor_device *dev,
+अटल पूर्णांक visornic_छोड़ो(काष्ठा visor_device *dev,
 			  visorbus_state_complete_func complete_func)
-{
-	struct visornic_devdata *devdata = dev_get_drvdata(&dev->device);
+अणु
+	काष्ठा visornic_devdata *devdata = dev_get_drvdata(&dev->device);
 
-	visornic_serverdown(devdata, complete_func);
-	return 0;
-}
+	visornic_serverकरोwn(devdata, complete_func);
+	वापस 0;
+पूर्ण
 
 /* visornic_resume - called when IO Partition has recovered
  * @dev:	   Visornic device that is being serviced.
  * @compelte_func: Call when finished.
  *
  * Called when the IO partition has recovered. Re-establish connection to the IO
- * Partition and set the link up. Okay to do DMA again.
+ * Partition and set the link up. Okay to करो DMA again.
  *
- * Returns 0 for success, negative integer on error.
+ * Returns 0 क्रम success, negative पूर्णांकeger on error.
  */
-static int visornic_resume(struct visor_device *dev,
+अटल पूर्णांक visornic_resume(काष्ठा visor_device *dev,
 			   visorbus_state_complete_func complete_func)
-{
-	struct visornic_devdata *devdata;
-	struct net_device *netdev;
-	unsigned long flags;
+अणु
+	काष्ठा visornic_devdata *devdata;
+	काष्ठा net_device *netdev;
+	अचिन्हित दीर्घ flags;
 
 	devdata = dev_get_drvdata(&dev->device);
-	if (!devdata) {
+	अगर (!devdata) अणु
 		dev_err(&dev->device, "%s no devdata\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	netdev = devdata->netdev;
 
 	spin_lock_irqsave(&devdata->priv_lock, flags);
-	if (devdata->server_change_state) {
+	अगर (devdata->server_change_state) अणु
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
 		dev_err(&dev->device, "%s server already changing state\n",
 			__func__);
-		return -EINVAL;
-	}
-	if (!devdata->server_down) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!devdata->server_करोwn) अणु
 		spin_unlock_irqrestore(&devdata->priv_lock, flags);
 		dev_err(&dev->device, "%s server not down\n", __func__);
 		complete_func(dev, 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	devdata->server_change_state = true;
 	spin_unlock_irqrestore(&devdata->priv_lock, flags);
 
@@ -2081,68 +2082,68 @@ static int visornic_resume(struct visor_device *dev,
 	 * we can start using the device again.
 	 * TODO: State transitions
 	 */
-	visorbus_enable_channel_interrupts(dev);
+	visorbus_enable_channel_पूर्णांकerrupts(dev);
 
 	rtnl_lock();
-	dev_open(netdev, NULL);
+	dev_खोलो(netdev, शून्य);
 	rtnl_unlock();
 
 	complete_func(dev, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* This is used to tell the visorbus driver which types of visor devices
  * we support, and what functions to call when a visor device that we support
- * is attached or removed.
+ * is attached or हटाओd.
  */
-static struct visor_driver visornic_driver = {
+अटल काष्ठा visor_driver visornic_driver = अणु
 	.name = "visornic",
 	.owner = THIS_MODULE,
 	.channel_types = visornic_channel_types,
 	.probe = visornic_probe,
-	.remove = visornic_remove,
-	.pause = visornic_pause,
+	.हटाओ = visornic_हटाओ,
+	.छोड़ो = visornic_छोड़ो,
 	.resume = visornic_resume,
-	.channel_interrupt = visornic_channel_interrupt,
-};
+	.channel_पूर्णांकerrupt = visornic_channel_पूर्णांकerrupt,
+पूर्ण;
 
 /* visornic_init - init function
  *
- * Init function for the visornic driver. Do initial driver setup and wait
- * for devices.
+ * Init function क्रम the visornic driver. Do initial driver setup and रुको
+ * क्रम devices.
  *
- * Return: 0 on success, negative integer on error.
+ * Return: 0 on success, negative पूर्णांकeger on error.
  */
-static int visornic_init(void)
-{
-	int err;
+अटल पूर्णांक visornic_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	visornic_debugfs_dir = debugfs_create_dir("visornic", NULL);
+	visornic_debugfs_dir = debugfs_create_dir("visornic", शून्य);
 
-	debugfs_create_file("info", 0400, visornic_debugfs_dir, NULL,
+	debugfs_create_file("info", 0400, visornic_debugfs_dir, शून्य,
 			    &debugfs_info_fops);
-	debugfs_create_file("enable_ints", 0200, visornic_debugfs_dir, NULL,
-			    &debugfs_enable_ints_fops);
+	debugfs_create_file("enable_ints", 0200, visornic_debugfs_dir, शून्य,
+			    &debugfs_enable_पूर्णांकs_fops);
 
-	err = visorbus_register_visor_driver(&visornic_driver);
-	if (err)
-		debugfs_remove_recursive(visornic_debugfs_dir);
+	err = visorbus_रेजिस्टर_visor_driver(&visornic_driver);
+	अगर (err)
+		debugfs_हटाओ_recursive(visornic_debugfs_dir);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* visornic_cleanup - driver exit routine
+/* visornic_cleanup - driver निकास routine
  *
- * Unregister driver from the bus and free up memory.
+ * Unरेजिस्टर driver from the bus and मुक्त up memory.
  */
-static void visornic_cleanup(void)
-{
-	visorbus_unregister_visor_driver(&visornic_driver);
-	debugfs_remove_recursive(visornic_debugfs_dir);
-}
+अटल व्योम visornic_cleanup(व्योम)
+अणु
+	visorbus_unरेजिस्टर_visor_driver(&visornic_driver);
+	debugfs_हटाओ_recursive(visornic_debugfs_dir);
+पूर्ण
 
 module_init(visornic_init);
-module_exit(visornic_cleanup);
+module_निकास(visornic_cleanup);
 
 MODULE_AUTHOR("Unisys");
 MODULE_LICENSE("GPL");

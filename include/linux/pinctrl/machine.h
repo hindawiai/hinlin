@@ -1,174 +1,175 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Machine interface for the pinctrl subsystem.
+ * Machine पूर्णांकerface क्रम the pinctrl subप्रणाली.
  *
  * Copyright (C) 2011 ST-Ericsson SA
- * Written on behalf of Linaro for ST-Ericsson
+ * Written on behalf of Linaro क्रम ST-Ericsson
  * Based on bits of regulator core, gpio core and clk core
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
-#ifndef __LINUX_PINCTRL_MACHINE_H
-#define __LINUX_PINCTRL_MACHINE_H
+#अगर_अघोषित __LINUX_PINCTRL_MACHINE_H
+#घोषणा __LINUX_PINCTRL_MACHINE_H
 
-#include <linux/bug.h>
+#समावेश <linux/bug.h>
 
-#include <linux/pinctrl/pinctrl-state.h>
+#समावेश <linux/pinctrl/pinctrl-state.h>
 
-enum pinctrl_map_type {
+क्रमागत pinctrl_map_type अणु
 	PIN_MAP_TYPE_INVALID,
 	PIN_MAP_TYPE_DUMMY_STATE,
 	PIN_MAP_TYPE_MUX_GROUP,
 	PIN_MAP_TYPE_CONFIGS_PIN,
 	PIN_MAP_TYPE_CONFIGS_GROUP,
-};
+पूर्ण;
 
 /**
- * struct pinctrl_map_mux - mapping table content for MAP_TYPE_MUX_GROUP
+ * काष्ठा pinctrl_map_mux - mapping table content क्रम MAP_TYPE_MUX_GROUP
  * @group: the name of the group whose mux function is to be configured. This
- *	field may be left NULL, and the first applicable group for the function
+ *	field may be left शून्य, and the first applicable group क्रम the function
  *	will be used.
- * @function: the mux function to select for the group
+ * @function: the mux function to select क्रम the group
  */
-struct pinctrl_map_mux {
-	const char *group;
-	const char *function;
-};
+काष्ठा pinctrl_map_mux अणु
+	स्थिर अक्षर *group;
+	स्थिर अक्षर *function;
+पूर्ण;
 
 /**
- * struct pinctrl_map_configs - mapping table content for MAP_TYPE_CONFIGS_*
+ * काष्ठा pinctrl_map_configs - mapping table content क्रम MAP_TYPE_CONFIGS_*
  * @group_or_pin: the name of the pin or group whose configuration parameters
  *	are to be configured.
- * @configs: a pointer to an array of config parameters/values to program into
- *	hardware. Each individual pin controller defines the format and meaning
+ * @configs: a poपूर्णांकer to an array of config parameters/values to program पूर्णांकo
+ *	hardware. Each inभागidual pin controller defines the क्रमmat and meaning
  *	of config parameters.
  * @num_configs: the number of entries in array @configs
  */
-struct pinctrl_map_configs {
-	const char *group_or_pin;
-	unsigned long *configs;
-	unsigned num_configs;
-};
+काष्ठा pinctrl_map_configs अणु
+	स्थिर अक्षर *group_or_pin;
+	अचिन्हित दीर्घ *configs;
+	अचिन्हित num_configs;
+पूर्ण;
 
 /**
- * struct pinctrl_map - boards/machines shall provide this map for devices
- * @dev_name: the name of the device using this specific mapping, the name
- *	must be the same as in your struct device*. If this name is set to the
+ * काष्ठा pinctrl_map - boards/machines shall provide this map क्रम devices
+ * @dev_name: the name of the device using this specअगरic mapping, the name
+ *	must be the same as in your काष्ठा device*. If this name is set to the
  *	same name as the pin controllers own dev_name(), the map entry will be
  *	hogged by the driver itself upon registration
- * @name: the name of this specific map entry for the particular machine.
+ * @name: the name of this specअगरic map entry क्रम the particular machine.
  *	This is the parameter passed to pinmux_lookup_state()
  * @type: the type of mapping table entry
- * @ctrl_dev_name: the name of the device controlling this specific mapping,
- *	the name must be the same as in your struct device*. This field is not
- *	used for PIN_MAP_TYPE_DUMMY_STATE
- * @data: Data specific to the mapping type
+ * @ctrl_dev_name: the name of the device controlling this specअगरic mapping,
+ *	the name must be the same as in your काष्ठा device*. This field is not
+ *	used क्रम PIN_MAP_TYPE_DUMMY_STATE
+ * @data: Data specअगरic to the mapping type
  */
-struct pinctrl_map {
-	const char *dev_name;
-	const char *name;
-	enum pinctrl_map_type type;
-	const char *ctrl_dev_name;
-	union {
-		struct pinctrl_map_mux mux;
-		struct pinctrl_map_configs configs;
-	} data;
-};
+काष्ठा pinctrl_map अणु
+	स्थिर अक्षर *dev_name;
+	स्थिर अक्षर *name;
+	क्रमागत pinctrl_map_type type;
+	स्थिर अक्षर *ctrl_dev_name;
+	जोड़ अणु
+		काष्ठा pinctrl_map_mux mux;
+		काष्ठा pinctrl_map_configs configs;
+	पूर्ण data;
+पूर्ण;
 
 /* Convenience macros to create mapping table entries */
 
-#define PIN_MAP_DUMMY_STATE(dev, state) \
-	{								\
+#घोषणा PIN_MAP_DUMMY_STATE(dev, state) \
+	अणु								\
 		.dev_name = dev,					\
 		.name = state,						\
 		.type = PIN_MAP_TYPE_DUMMY_STATE,			\
-	}
+	पूर्ण
 
-#define PIN_MAP_MUX_GROUP(dev, state, pinctrl, grp, func)		\
-	{								\
+#घोषणा PIN_MAP_MUX_GROUP(dev, state, pinctrl, grp, func)		\
+	अणु								\
 		.dev_name = dev,					\
 		.name = state,						\
 		.type = PIN_MAP_TYPE_MUX_GROUP,				\
 		.ctrl_dev_name = pinctrl,				\
-		.data.mux = {						\
+		.data.mux = अणु						\
 			.group = grp,					\
 			.function = func,				\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-#define PIN_MAP_MUX_GROUP_DEFAULT(dev, pinctrl, grp, func)		\
+#घोषणा PIN_MAP_MUX_GROUP_DEFAULT(dev, pinctrl, grp, func)		\
 	PIN_MAP_MUX_GROUP(dev, PINCTRL_STATE_DEFAULT, pinctrl, grp, func)
 
-#define PIN_MAP_MUX_GROUP_HOG(dev, state, grp, func)			\
+#घोषणा PIN_MAP_MUX_GROUP_HOG(dev, state, grp, func)			\
 	PIN_MAP_MUX_GROUP(dev, state, dev, grp, func)
 
-#define PIN_MAP_MUX_GROUP_HOG_DEFAULT(dev, grp, func)			\
+#घोषणा PIN_MAP_MUX_GROUP_HOG_DEFAULT(dev, grp, func)			\
 	PIN_MAP_MUX_GROUP(dev, PINCTRL_STATE_DEFAULT, dev, grp, func)
 
-#define PIN_MAP_CONFIGS_PIN(dev, state, pinctrl, pin, cfgs)		\
-	{								\
+#घोषणा PIN_MAP_CONFIGS_PIN(dev, state, pinctrl, pin, cfgs)		\
+	अणु								\
 		.dev_name = dev,					\
 		.name = state,						\
 		.type = PIN_MAP_TYPE_CONFIGS_PIN,			\
 		.ctrl_dev_name = pinctrl,				\
-		.data.configs = {					\
+		.data.configs = अणु					\
 			.group_or_pin = pin,				\
 			.configs = cfgs,				\
 			.num_configs = ARRAY_SIZE(cfgs),		\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-#define PIN_MAP_CONFIGS_PIN_DEFAULT(dev, pinctrl, pin, cfgs)		\
+#घोषणा PIN_MAP_CONFIGS_PIN_DEFAULT(dev, pinctrl, pin, cfgs)		\
 	PIN_MAP_CONFIGS_PIN(dev, PINCTRL_STATE_DEFAULT, pinctrl, pin, cfgs)
 
-#define PIN_MAP_CONFIGS_PIN_HOG(dev, state, pin, cfgs)			\
+#घोषणा PIN_MAP_CONFIGS_PIN_HOG(dev, state, pin, cfgs)			\
 	PIN_MAP_CONFIGS_PIN(dev, state, dev, pin, cfgs)
 
-#define PIN_MAP_CONFIGS_PIN_HOG_DEFAULT(dev, pin, cfgs)			\
+#घोषणा PIN_MAP_CONFIGS_PIN_HOG_DEFAULT(dev, pin, cfgs)			\
 	PIN_MAP_CONFIGS_PIN(dev, PINCTRL_STATE_DEFAULT, dev, pin, cfgs)
 
-#define PIN_MAP_CONFIGS_GROUP(dev, state, pinctrl, grp, cfgs)		\
-	{								\
+#घोषणा PIN_MAP_CONFIGS_GROUP(dev, state, pinctrl, grp, cfgs)		\
+	अणु								\
 		.dev_name = dev,					\
 		.name = state,						\
 		.type = PIN_MAP_TYPE_CONFIGS_GROUP,			\
 		.ctrl_dev_name = pinctrl,				\
-		.data.configs = {					\
+		.data.configs = अणु					\
 			.group_or_pin = grp,				\
 			.configs = cfgs,				\
 			.num_configs = ARRAY_SIZE(cfgs),		\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-#define PIN_MAP_CONFIGS_GROUP_DEFAULT(dev, pinctrl, grp, cfgs)		\
+#घोषणा PIN_MAP_CONFIGS_GROUP_DEFAULT(dev, pinctrl, grp, cfgs)		\
 	PIN_MAP_CONFIGS_GROUP(dev, PINCTRL_STATE_DEFAULT, pinctrl, grp, cfgs)
 
-#define PIN_MAP_CONFIGS_GROUP_HOG(dev, state, grp, cfgs)		\
+#घोषणा PIN_MAP_CONFIGS_GROUP_HOG(dev, state, grp, cfgs)		\
 	PIN_MAP_CONFIGS_GROUP(dev, state, dev, grp, cfgs)
 
-#define PIN_MAP_CONFIGS_GROUP_HOG_DEFAULT(dev, grp, cfgs)		\
+#घोषणा PIN_MAP_CONFIGS_GROUP_HOG_DEFAULT(dev, grp, cfgs)		\
 	PIN_MAP_CONFIGS_GROUP(dev, PINCTRL_STATE_DEFAULT, dev, grp, cfgs)
 
-#ifdef CONFIG_PINCTRL
+#अगर_घोषित CONFIG_PINCTRL
 
-extern int pinctrl_register_mappings(const struct pinctrl_map *map,
-				unsigned num_maps);
-extern void pinctrl_unregister_mappings(const struct pinctrl_map *map);
-extern void pinctrl_provide_dummies(void);
-#else
+बाह्य पूर्णांक pinctrl_रेजिस्टर_mappings(स्थिर काष्ठा pinctrl_map *map,
+				अचिन्हित num_maps);
+बाह्य व्योम pinctrl_unरेजिस्टर_mappings(स्थिर काष्ठा pinctrl_map *map);
+बाह्य व्योम pinctrl_provide_dummies(व्योम);
+#अन्यथा
 
-static inline int pinctrl_register_mappings(const struct pinctrl_map *map,
-					   unsigned num_maps)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_रेजिस्टर_mappings(स्थिर काष्ठा pinctrl_map *map,
+					   अचिन्हित num_maps)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void pinctrl_unregister_mappings(const struct pinctrl_map *map)
-{
-}
+अटल अंतरभूत व्योम pinctrl_unरेजिस्टर_mappings(स्थिर काष्ठा pinctrl_map *map)
+अणु
+पूर्ण
 
-static inline void pinctrl_provide_dummies(void)
-{
-}
-#endif /* !CONFIG_PINCTRL */
-#endif
+अटल अंतरभूत व्योम pinctrl_provide_dummies(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_PINCTRL */
+#पूर्ण_अगर

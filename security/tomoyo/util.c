@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * security/tomoyo/util.c
  *
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
-#include <linux/slab.h>
-#include <linux/rculist.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rculist.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-/* Lock for protecting policy. */
+/* Lock क्रम protecting policy. */
 DEFINE_MUTEX(tomoyo_policy_lock);
 
 /* Has /sbin/init started? */
@@ -20,31 +21,31 @@ bool tomoyo_policy_loaded;
  * Mapping table from "enum tomoyo_mac_index" to
  * "enum tomoyo_mac_category_index".
  */
-const u8 tomoyo_index2category[TOMOYO_MAX_MAC_INDEX] = {
+स्थिर u8 tomoyo_index2category[TOMOYO_MAX_MAC_INDEX] = अणु
 	/* CONFIG::file group */
-	[TOMOYO_MAC_FILE_EXECUTE]    = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_OPEN]       = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_CREATE]     = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_UNLINK]     = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_GETATTR]    = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_MKDIR]      = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_RMDIR]      = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_MKFIFO]     = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_MKSOCK]     = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_TRUNCATE]   = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_SYMLINK]    = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_MKBLOCK]    = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_MKCHAR]     = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_LINK]       = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_RENAME]     = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_CHMOD]      = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_CHOWN]      = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_CHGRP]      = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_IOCTL]      = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_CHROOT]     = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_MOUNT]      = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_UMOUNT]     = TOMOYO_MAC_CATEGORY_FILE,
-	[TOMOYO_MAC_FILE_PIVOT_ROOT] = TOMOYO_MAC_CATEGORY_FILE,
+	[TOMOYO_MAC_खाता_EXECUTE]    = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_OPEN]       = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_CREATE]     = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_UNLINK]     = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_GETATTR]    = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_MKसूची]      = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_RMसूची]      = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_MKFIFO]     = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_MKSOCK]     = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_TRUNCATE]   = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_SYMLINK]    = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_MKBLOCK]    = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_MKCHAR]     = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_LINK]       = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_RENAME]     = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_CHMOD]      = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_CHOWN]      = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_CHGRP]      = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_IOCTL]      = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_CHROOT]     = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_MOUNT]      = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_UMOUNT]     = TOMOYO_MAC_CATEGORY_खाता,
+	[TOMOYO_MAC_खाता_PIVOT_ROOT] = TOMOYO_MAC_CATEGORY_खाता,
 	/* CONFIG::network group */
 	[TOMOYO_MAC_NETWORK_INET_STREAM_BIND]       =
 	TOMOYO_MAC_CATEGORY_NETWORK,
@@ -78,350 +79,350 @@ const u8 tomoyo_index2category[TOMOYO_MAX_MAC_INDEX] = {
 	TOMOYO_MAC_CATEGORY_NETWORK,
 	/* CONFIG::misc group */
 	[TOMOYO_MAC_ENVIRON]         = TOMOYO_MAC_CATEGORY_MISC,
-};
+पूर्ण;
 
 /**
- * tomoyo_convert_time - Convert time_t to YYYY/MM/DD hh/mm/ss.
+ * tomoyo_convert_समय - Convert समय_प्रकार to YYYY/MM/DD hh/mm/ss.
  *
- * @time:  Seconds since 1970/01/01 00:00:00.
- * @stamp: Pointer to "struct tomoyo_time".
+ * @समय:  Seconds since 1970/01/01 00:00:00.
+ * @stamp: Poपूर्णांकer to "struct tomoyo_time".
  *
  * Returns nothing.
  */
-void tomoyo_convert_time(time64_t time64, struct tomoyo_time *stamp)
-{
-	struct tm tm;
+व्योम tomoyo_convert_समय(समय64_t समय64, काष्ठा tomoyo_समय *stamp)
+अणु
+	काष्ठा पंचांग पंचांग;
 
-	time64_to_tm(time64, 0, &tm);
-	stamp->sec = tm.tm_sec;
-	stamp->min = tm.tm_min;
-	stamp->hour = tm.tm_hour;
-	stamp->day = tm.tm_mday;
-	stamp->month = tm.tm_mon + 1;
-	stamp->year = tm.tm_year + 1900;
-}
+	समय64_to_पंचांग(समय64, 0, &पंचांग);
+	stamp->sec = पंचांग.पंचांग_sec;
+	stamp->min = पंचांग.पंचांग_min;
+	stamp->hour = पंचांग.पंचांग_hour;
+	stamp->day = पंचांग.पंचांग_mday;
+	stamp->month = पंचांग.पंचांग_mon + 1;
+	stamp->year = पंचांग.पंचांग_year + 1900;
+पूर्ण
 
 /**
  * tomoyo_permstr - Find permission keywords.
  *
- * @string: String representation for permissions in foo/bar/buz format.
+ * @string: String representation क्रम permissions in foo/bar/buz क्रमmat.
  * @keyword: Keyword to find from @string/
  *
- * Returns true if @keyword was found in @string, false otherwise.
+ * Returns true अगर @keyword was found in @string, false otherwise.
  *
- * This function assumes that strncmp(w1, w2, strlen(w1)) != 0 if w1 != w2.
+ * This function assumes that म_भेदन(w1, w2, म_माप(w1)) != 0 अगर w1 != w2.
  */
-bool tomoyo_permstr(const char *string, const char *keyword)
-{
-	const char *cp = strstr(string, keyword);
+bool tomoyo_permstr(स्थिर अक्षर *string, स्थिर अक्षर *keyword)
+अणु
+	स्थिर अक्षर *cp = म_माला(string, keyword);
 
-	if (cp)
-		return cp == string || *(cp - 1) == '/';
-	return false;
-}
+	अगर (cp)
+		वापस cp == string || *(cp - 1) == '/';
+	वापस false;
+पूर्ण
 
 /**
- * tomoyo_read_token - Read a word from a line.
+ * tomoyo_पढ़ो_token - Read a word from a line.
  *
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  *
  * Returns a word on success, "" otherwise.
  *
- * To allow the caller to skip NULL check, this function returns "" rather than
- * NULL if there is no more words to read.
+ * To allow the caller to skip शून्य check, this function वापसs "" rather than
+ * शून्य अगर there is no more words to पढ़ो.
  */
-char *tomoyo_read_token(struct tomoyo_acl_param *param)
-{
-	char *pos = param->data;
-	char *del = strchr(pos, ' ');
+अक्षर *tomoyo_पढ़ो_token(काष्ठा tomoyo_acl_param *param)
+अणु
+	अक्षर *pos = param->data;
+	अक्षर *del = म_अक्षर(pos, ' ');
 
-	if (del)
+	अगर (del)
 		*del++ = '\0';
-	else
-		del = pos + strlen(pos);
+	अन्यथा
+		del = pos + म_माप(pos);
 	param->data = del;
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-static bool tomoyo_correct_path2(const char *filename, const size_t len);
+अटल bool tomoyo_correct_path2(स्थिर अक्षर *filename, स्थिर माप_प्रकार len);
 
 /**
- * tomoyo_get_domainname - Read a domainname from a line.
+ * tomoyo_get_करोमुख्यname - Read a करोमुख्यname from a line.
  *
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  *
- * Returns a domainname on success, NULL otherwise.
+ * Returns a करोमुख्यname on success, शून्य otherwise.
  */
-const struct tomoyo_path_info *tomoyo_get_domainname
-(struct tomoyo_acl_param *param)
-{
-	char *start = param->data;
-	char *pos = start;
+स्थिर काष्ठा tomoyo_path_info *tomoyo_get_करोमुख्यname
+(काष्ठा tomoyo_acl_param *param)
+अणु
+	अक्षर *start = param->data;
+	अक्षर *pos = start;
 
-	while (*pos) {
-		if (*pos++ != ' ' ||
-		    tomoyo_correct_path2(pos, strchrnul(pos, ' ') - pos))
-			continue;
+	जबतक (*pos) अणु
+		अगर (*pos++ != ' ' ||
+		    tomoyo_correct_path2(pos, म_अक्षरnul(pos, ' ') - pos))
+			जारी;
 		*(pos - 1) = '\0';
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	param->data = pos;
-	if (tomoyo_correct_domain(start))
-		return tomoyo_get_name(start);
-	return NULL;
-}
+	अगर (tomoyo_correct_करोमुख्य(start))
+		वापस tomoyo_get_name(start);
+	वापस शून्य;
+पूर्ण
 
 /**
- * tomoyo_parse_ulong - Parse an "unsigned long" value.
+ * tomoyo_parse_uदीर्घ - Parse an "unsigned long" value.
  *
- * @result: Pointer to "unsigned long".
- * @str:    Pointer to string to parse.
+ * @result: Poपूर्णांकer to "unsigned long".
+ * @str:    Poपूर्णांकer to string to parse.
  *
  * Returns one of values in "enum tomoyo_value_type".
  *
- * The @src is updated to point the first character after the value
+ * The @src is updated to poपूर्णांक the first अक्षरacter after the value
  * on success.
  */
-u8 tomoyo_parse_ulong(unsigned long *result, char **str)
-{
-	const char *cp = *str;
-	char *ep;
-	int base = 10;
+u8 tomoyo_parse_uदीर्घ(अचिन्हित दीर्घ *result, अक्षर **str)
+अणु
+	स्थिर अक्षर *cp = *str;
+	अक्षर *ep;
+	पूर्णांक base = 10;
 
-	if (*cp == '0') {
-		char c = *(cp + 1);
+	अगर (*cp == '0') अणु
+		अक्षर c = *(cp + 1);
 
-		if (c == 'x' || c == 'X') {
+		अगर (c == 'x' || c == 'X') अणु
 			base = 16;
 			cp += 2;
-		} else if (c >= '0' && c <= '7') {
+		पूर्ण अन्यथा अगर (c >= '0' && c <= '7') अणु
 			base = 8;
 			cp++;
-		}
-	}
-	*result = simple_strtoul(cp, &ep, base);
-	if (cp == ep)
-		return TOMOYO_VALUE_TYPE_INVALID;
+		पूर्ण
+	पूर्ण
+	*result = simple_म_से_अदीर्घ(cp, &ep, base);
+	अगर (cp == ep)
+		वापस TOMOYO_VALUE_TYPE_INVALID;
 	*str = ep;
-	switch (base) {
-	case 16:
-		return TOMOYO_VALUE_TYPE_HEXADECIMAL;
-	case 8:
-		return TOMOYO_VALUE_TYPE_OCTAL;
-	default:
-		return TOMOYO_VALUE_TYPE_DECIMAL;
-	}
-}
+	चयन (base) अणु
+	हाल 16:
+		वापस TOMOYO_VALUE_TYPE_HEXADECIMAL;
+	हाल 8:
+		वापस TOMOYO_VALUE_TYPE_OCTAL;
+	शेष:
+		वापस TOMOYO_VALUE_TYPE_DECIMAL;
+	पूर्ण
+पूर्ण
 
 /**
- * tomoyo_print_ulong - Print an "unsigned long" value.
+ * tomoyo_prपूर्णांक_uदीर्घ - Prपूर्णांक an "unsigned long" value.
  *
- * @buffer:     Pointer to buffer.
+ * @buffer:     Poपूर्णांकer to buffer.
  * @buffer_len: Size of @buffer.
  * @value:      An "unsigned long" value.
  * @type:       Type of @value.
  *
  * Returns nothing.
  */
-void tomoyo_print_ulong(char *buffer, const int buffer_len,
-			const unsigned long value, const u8 type)
-{
-	if (type == TOMOYO_VALUE_TYPE_DECIMAL)
-		snprintf(buffer, buffer_len, "%lu", value);
-	else if (type == TOMOYO_VALUE_TYPE_OCTAL)
-		snprintf(buffer, buffer_len, "0%lo", value);
-	else if (type == TOMOYO_VALUE_TYPE_HEXADECIMAL)
-		snprintf(buffer, buffer_len, "0x%lX", value);
-	else
-		snprintf(buffer, buffer_len, "type(%u)", type);
-}
+व्योम tomoyo_prपूर्णांक_uदीर्घ(अक्षर *buffer, स्थिर पूर्णांक buffer_len,
+			स्थिर अचिन्हित दीर्घ value, स्थिर u8 type)
+अणु
+	अगर (type == TOMOYO_VALUE_TYPE_DECIMAL)
+		snम_लिखो(buffer, buffer_len, "%lu", value);
+	अन्यथा अगर (type == TOMOYO_VALUE_TYPE_OCTAL)
+		snम_लिखो(buffer, buffer_len, "0%lo", value);
+	अन्यथा अगर (type == TOMOYO_VALUE_TYPE_HEXADECIMAL)
+		snम_लिखो(buffer, buffer_len, "0x%lX", value);
+	अन्यथा
+		snम_लिखो(buffer, buffer_len, "type(%u)", type);
+पूर्ण
 
 /**
- * tomoyo_parse_name_union - Parse a tomoyo_name_union.
+ * tomoyo_parse_name_जोड़ - Parse a tomoyo_name_जोड़.
  *
- * @param: Pointer to "struct tomoyo_acl_param".
- * @ptr:   Pointer to "struct tomoyo_name_union".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
+ * @ptr:   Poपूर्णांकer to "struct tomoyo_name_union".
  *
  * Returns true on success, false otherwise.
  */
-bool tomoyo_parse_name_union(struct tomoyo_acl_param *param,
-			     struct tomoyo_name_union *ptr)
-{
-	char *filename;
+bool tomoyo_parse_name_जोड़(काष्ठा tomoyo_acl_param *param,
+			     काष्ठा tomoyo_name_जोड़ *ptr)
+अणु
+	अक्षर *filename;
 
-	if (param->data[0] == '@') {
+	अगर (param->data[0] == '@') अणु
 		param->data++;
 		ptr->group = tomoyo_get_group(param, TOMOYO_PATH_GROUP);
-		return ptr->group != NULL;
-	}
-	filename = tomoyo_read_token(param);
-	if (!tomoyo_correct_word(filename))
-		return false;
+		वापस ptr->group != शून्य;
+	पूर्ण
+	filename = tomoyo_पढ़ो_token(param);
+	अगर (!tomoyo_correct_word(filename))
+		वापस false;
 	ptr->filename = tomoyo_get_name(filename);
-	return ptr->filename != NULL;
-}
+	वापस ptr->filename != शून्य;
+पूर्ण
 
 /**
- * tomoyo_parse_number_union - Parse a tomoyo_number_union.
+ * tomoyo_parse_number_जोड़ - Parse a tomoyo_number_जोड़.
  *
- * @param: Pointer to "struct tomoyo_acl_param".
- * @ptr:   Pointer to "struct tomoyo_number_union".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
+ * @ptr:   Poपूर्णांकer to "struct tomoyo_number_union".
  *
  * Returns true on success, false otherwise.
  */
-bool tomoyo_parse_number_union(struct tomoyo_acl_param *param,
-			       struct tomoyo_number_union *ptr)
-{
-	char *data;
+bool tomoyo_parse_number_जोड़(काष्ठा tomoyo_acl_param *param,
+			       काष्ठा tomoyo_number_जोड़ *ptr)
+अणु
+	अक्षर *data;
 	u8 type;
-	unsigned long v;
+	अचिन्हित दीर्घ v;
 
-	memset(ptr, 0, sizeof(*ptr));
-	if (param->data[0] == '@') {
+	स_रखो(ptr, 0, माप(*ptr));
+	अगर (param->data[0] == '@') अणु
 		param->data++;
 		ptr->group = tomoyo_get_group(param, TOMOYO_NUMBER_GROUP);
-		return ptr->group != NULL;
-	}
-	data = tomoyo_read_token(param);
-	type = tomoyo_parse_ulong(&v, &data);
-	if (type == TOMOYO_VALUE_TYPE_INVALID)
-		return false;
+		वापस ptr->group != शून्य;
+	पूर्ण
+	data = tomoyo_पढ़ो_token(param);
+	type = tomoyo_parse_uदीर्घ(&v, &data);
+	अगर (type == TOMOYO_VALUE_TYPE_INVALID)
+		वापस false;
 	ptr->values[0] = v;
 	ptr->value_type[0] = type;
-	if (!*data) {
+	अगर (!*data) अणु
 		ptr->values[1] = v;
 		ptr->value_type[1] = type;
-		return true;
-	}
-	if (*data++ != '-')
-		return false;
-	type = tomoyo_parse_ulong(&v, &data);
-	if (type == TOMOYO_VALUE_TYPE_INVALID || *data || ptr->values[0] > v)
-		return false;
+		वापस true;
+	पूर्ण
+	अगर (*data++ != '-')
+		वापस false;
+	type = tomoyo_parse_uदीर्घ(&v, &data);
+	अगर (type == TOMOYO_VALUE_TYPE_INVALID || *data || ptr->values[0] > v)
+		वापस false;
 	ptr->values[1] = v;
 	ptr->value_type[1] = type;
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * tomoyo_byte_range - Check whether the string is a \ooo style octal value.
  *
- * @str: Pointer to the string.
+ * @str: Poपूर्णांकer to the string.
  *
- * Returns true if @str is a \ooo style octal value, false otherwise.
+ * Returns true अगर @str is a \ooo style octal value, false otherwise.
  *
- * TOMOYO uses \ooo style representation for 0x01 - 0x20 and 0x7F - 0xFF.
- * This function verifies that \ooo is in valid range.
+ * TOMOYO uses \ooo style representation क्रम 0x01 - 0x20 and 0x7F - 0xFF.
+ * This function verअगरies that \ooo is in valid range.
  */
-static inline bool tomoyo_byte_range(const char *str)
-{
-	return *str >= '0' && *str++ <= '3' &&
+अटल अंतरभूत bool tomoyo_byte_range(स्थिर अक्षर *str)
+अणु
+	वापस *str >= '0' && *str++ <= '3' &&
 		*str >= '0' && *str++ <= '7' &&
 		*str >= '0' && *str <= '7';
-}
+पूर्ण
 
 /**
- * tomoyo_alphabet_char - Check whether the character is an alphabet.
+ * tomoyo_alphabet_अक्षर - Check whether the अक्षरacter is an alphabet.
  *
- * @c: The character to check.
+ * @c: The अक्षरacter to check.
  *
- * Returns true if @c is an alphabet character, false otherwise.
+ * Returns true अगर @c is an alphabet अक्षरacter, false otherwise.
  */
-static inline bool tomoyo_alphabet_char(const char c)
-{
-	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-}
+अटल अंतरभूत bool tomoyo_alphabet_अक्षर(स्थिर अक्षर c)
+अणु
+	वापस (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+पूर्ण
 
 /**
- * tomoyo_make_byte - Make byte value from three octal characters.
+ * tomoyo_make_byte - Make byte value from three octal अक्षरacters.
  *
- * @c1: The first character.
- * @c2: The second character.
- * @c3: The third character.
+ * @c1: The first अक्षरacter.
+ * @c2: The second अक्षरacter.
+ * @c3: The third अक्षरacter.
  *
  * Returns byte value.
  */
-static inline u8 tomoyo_make_byte(const u8 c1, const u8 c2, const u8 c3)
-{
-	return ((c1 - '0') << 6) + ((c2 - '0') << 3) + (c3 - '0');
-}
+अटल अंतरभूत u8 tomoyo_make_byte(स्थिर u8 c1, स्थिर u8 c2, स्थिर u8 c3)
+अणु
+	वापस ((c1 - '0') << 6) + ((c2 - '0') << 3) + (c3 - '0');
+पूर्ण
 
 /**
- * tomoyo_valid - Check whether the character is a valid char.
+ * tomoyo_valid - Check whether the अक्षरacter is a valid अक्षर.
  *
- * @c: The character to check.
+ * @c: The अक्षरacter to check.
  *
- * Returns true if @c is a valid character, false otherwise.
+ * Returns true अगर @c is a valid अक्षरacter, false otherwise.
  */
-static inline bool tomoyo_valid(const unsigned char c)
-{
-	return c > ' ' && c < 127;
-}
+अटल अंतरभूत bool tomoyo_valid(स्थिर अचिन्हित अक्षर c)
+अणु
+	वापस c > ' ' && c < 127;
+पूर्ण
 
 /**
- * tomoyo_invalid - Check whether the character is an invalid char.
+ * tomoyo_invalid - Check whether the अक्षरacter is an invalid अक्षर.
  *
- * @c: The character to check.
+ * @c: The अक्षरacter to check.
  *
- * Returns true if @c is an invalid character, false otherwise.
+ * Returns true अगर @c is an invalid अक्षरacter, false otherwise.
  */
-static inline bool tomoyo_invalid(const unsigned char c)
-{
-	return c && (c <= ' ' || c >= 127);
-}
+अटल अंतरभूत bool tomoyo_invalid(स्थिर अचिन्हित अक्षर c)
+अणु
+	वापस c && (c <= ' ' || c >= 127);
+पूर्ण
 
 /**
  * tomoyo_str_starts - Check whether the given string starts with the given keyword.
  *
- * @src:  Pointer to pointer to the string.
- * @find: Pointer to the keyword.
+ * @src:  Poपूर्णांकer to poपूर्णांकer to the string.
+ * @find: Poपूर्णांकer to the keyword.
  *
- * Returns true if @src starts with @find, false otherwise.
+ * Returns true अगर @src starts with @find, false otherwise.
  *
- * The @src is updated to point the first character after the @find
- * if @src starts with @find.
+ * The @src is updated to poपूर्णांक the first अक्षरacter after the @find
+ * अगर @src starts with @find.
  */
-bool tomoyo_str_starts(char **src, const char *find)
-{
-	const int len = strlen(find);
-	char *tmp = *src;
+bool tomoyo_str_starts(अक्षर **src, स्थिर अक्षर *find)
+अणु
+	स्थिर पूर्णांक len = म_माप(find);
+	अक्षर *पंचांगp = *src;
 
-	if (strncmp(tmp, find, len))
-		return false;
-	tmp += len;
-	*src = tmp;
-	return true;
-}
+	अगर (म_भेदन(पंचांगp, find, len))
+		वापस false;
+	पंचांगp += len;
+	*src = पंचांगp;
+	वापस true;
+पूर्ण
 
 /**
  * tomoyo_normalize_line - Format string.
  *
  * @buffer: The line to normalize.
  *
- * Leading and trailing whitespaces are removed.
- * Multiple whitespaces are packed into single space.
+ * Leading and trailing whitespaces are हटाओd.
+ * Multiple whitespaces are packed पूर्णांकo single space.
  *
  * Returns nothing.
  */
-void tomoyo_normalize_line(unsigned char *buffer)
-{
-	unsigned char *sp = buffer;
-	unsigned char *dp = buffer;
+व्योम tomoyo_normalize_line(अचिन्हित अक्षर *buffer)
+अणु
+	अचिन्हित अक्षर *sp = buffer;
+	अचिन्हित अक्षर *dp = buffer;
 	bool first = true;
 
-	while (tomoyo_invalid(*sp))
+	जबतक (tomoyo_invalid(*sp))
 		sp++;
-	while (*sp) {
-		if (!first)
+	जबतक (*sp) अणु
+		अगर (!first)
 			*dp++ = ' ';
 		first = false;
-		while (tomoyo_valid(*sp))
+		जबतक (tomoyo_valid(*sp))
 			*dp++ = *sp++;
-		while (tomoyo_invalid(*sp))
+		जबतक (tomoyo_invalid(*sp))
 			sp++;
-	}
+	पूर्ण
 	*dp = '\0';
-}
+पूर्ण
 
 /**
  * tomoyo_correct_word2 - Validate a string.
@@ -430,82 +431,82 @@ void tomoyo_normalize_line(unsigned char *buffer)
  * @len:    Length of @string.
  *
  * Check whether the given string follows the naming rules.
- * Returns true if @string follows the naming rules, false otherwise.
+ * Returns true अगर @string follows the naming rules, false otherwise.
  */
-static bool tomoyo_correct_word2(const char *string, size_t len)
-{
+अटल bool tomoyo_correct_word2(स्थिर अक्षर *string, माप_प्रकार len)
+अणु
 	u8 recursion = 20;
-	const char *const start = string;
+	स्थिर अक्षर *स्थिर start = string;
 	bool in_repetition = false;
 
-	if (!len)
-		goto out;
-	while (len--) {
-		unsigned char c = *string++;
+	अगर (!len)
+		जाओ out;
+	जबतक (len--) अणु
+		अचिन्हित अक्षर c = *string++;
 
-		if (c == '\\') {
-			if (!len--)
-				goto out;
+		अगर (c == '\\') अणु
+			अगर (!len--)
+				जाओ out;
 			c = *string++;
-			if (c >= '0' && c <= '3') {
-				unsigned char d;
-				unsigned char e;
+			अगर (c >= '0' && c <= '3') अणु
+				अचिन्हित अक्षर d;
+				अचिन्हित अक्षर e;
 
-				if (!len-- || !len--)
-					goto out;
+				अगर (!len-- || !len--)
+					जाओ out;
 				d = *string++;
 				e = *string++;
-				if (d < '0' || d > '7' || e < '0' || e > '7')
-					goto out;
+				अगर (d < '0' || d > '7' || e < '0' || e > '7')
+					जाओ out;
 				c = tomoyo_make_byte(c, d, e);
-				if (c <= ' ' || c >= 127)
-					continue;
-				goto out;
-			}
-			switch (c) {
-			case '\\':  /* "\\" */
-			case '+':   /* "\+" */
-			case '?':   /* "\?" */
-			case 'x':   /* "\x" */
-			case 'a':   /* "\a" */
-			case '-':   /* "\-" */
-				continue;
-			}
-			if (!recursion--)
-				goto out;
-			switch (c) {
-			case '*':   /* "\*" */
-			case '@':   /* "\@" */
-			case '$':   /* "\$" */
-			case 'X':   /* "\X" */
-			case 'A':   /* "\A" */
-				continue;
-			case '{':   /* "/\{" */
-				if (string - 3 < start || *(string - 3) != '/')
-					goto out;
+				अगर (c <= ' ' || c >= 127)
+					जारी;
+				जाओ out;
+			पूर्ण
+			चयन (c) अणु
+			हाल '\\':  /* "\\" */
+			हाल '+':   /* "\+" */
+			हाल '?':   /* "\?" */
+			हाल 'x':   /* "\x" */
+			हाल 'a':   /* "\a" */
+			हाल '-':   /* "\-" */
+				जारी;
+			पूर्ण
+			अगर (!recursion--)
+				जाओ out;
+			चयन (c) अणु
+			हाल '*':   /* "\*" */
+			हाल '@':   /* "\@" */
+			हाल '$':   /* "\$" */
+			हाल 'X':   /* "\X" */
+			हाल 'A':   /* "\A" */
+				जारी;
+			हाल '{':   /* "/\{" */
+				अगर (string - 3 < start || *(string - 3) != '/')
+					जाओ out;
 				in_repetition = true;
-				continue;
-			case '}':   /* "\}/" */
-				if (*string != '/')
-					goto out;
-				if (!in_repetition)
-					goto out;
+				जारी;
+			हाल '}':   /* "\}/" */
+				अगर (*string != '/')
+					जाओ out;
+				अगर (!in_repetition)
+					जाओ out;
 				in_repetition = false;
-				continue;
-			}
-			goto out;
-		} else if (in_repetition && c == '/') {
-			goto out;
-		} else if (c <= ' ' || c >= 127) {
-			goto out;
-		}
-	}
-	if (in_repetition)
-		goto out;
-	return true;
+				जारी;
+			पूर्ण
+			जाओ out;
+		पूर्ण अन्यथा अगर (in_repetition && c == '/') अणु
+			जाओ out;
+		पूर्ण अन्यथा अगर (c <= ' ' || c >= 127) अणु
+			जाओ out;
+		पूर्ण
+	पूर्ण
+	अगर (in_repetition)
+		जाओ out;
+	वापस true;
  out:
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * tomoyo_correct_word - Validate a string.
@@ -513,12 +514,12 @@ static bool tomoyo_correct_word2(const char *string, size_t len)
  * @string: The string to check.
  *
  * Check whether the given string follows the naming rules.
- * Returns true if @string follows the naming rules, false otherwise.
+ * Returns true अगर @string follows the naming rules, false otherwise.
  */
-bool tomoyo_correct_word(const char *string)
-{
-	return tomoyo_correct_word2(string, strlen(string));
-}
+bool tomoyo_correct_word(स्थिर अक्षर *string)
+अणु
+	वापस tomoyo_correct_word2(string, म_माप(string));
+पूर्ण
 
 /**
  * tomoyo_correct_path2 - Check whether the given pathname follows the naming rules.
@@ -526,15 +527,15 @@ bool tomoyo_correct_word(const char *string)
  * @filename: The pathname to check.
  * @len:      Length of @filename.
  *
- * Returns true if @filename follows the naming rules, false otherwise.
+ * Returns true अगर @filename follows the naming rules, false otherwise.
  */
-static bool tomoyo_correct_path2(const char *filename, const size_t len)
-{
-	const char *cp1 = memchr(filename, '/', len);
-	const char *cp2 = memchr(filename, '.', len);
+अटल bool tomoyo_correct_path2(स्थिर अक्षर *filename, स्थिर माप_प्रकार len)
+अणु
+	स्थिर अक्षर *cp1 = स_प्रथम(filename, '/', len);
+	स्थिर अक्षर *cp2 = स_प्रथम(filename, '.', len);
 
-	return cp1 && (!cp2 || (cp1 < cp2)) && tomoyo_correct_word2(filename, len);
-}
+	वापस cp1 && (!cp2 || (cp1 < cp2)) && tomoyo_correct_word2(filename, len);
+पूर्ण
 
 /**
  * tomoyo_correct_path - Validate a pathname.
@@ -542,306 +543,306 @@ static bool tomoyo_correct_path2(const char *filename, const size_t len)
  * @filename: The pathname to check.
  *
  * Check whether the given pathname follows the naming rules.
- * Returns true if @filename follows the naming rules, false otherwise.
+ * Returns true अगर @filename follows the naming rules, false otherwise.
  */
-bool tomoyo_correct_path(const char *filename)
-{
-	return tomoyo_correct_path2(filename, strlen(filename));
-}
+bool tomoyo_correct_path(स्थिर अक्षर *filename)
+अणु
+	वापस tomoyo_correct_path2(filename, म_माप(filename));
+पूर्ण
 
 /**
- * tomoyo_correct_domain - Check whether the given domainname follows the naming rules.
+ * tomoyo_correct_करोमुख्य - Check whether the given करोमुख्यname follows the naming rules.
  *
- * @domainname: The domainname to check.
+ * @करोमुख्यname: The करोमुख्यname to check.
  *
- * Returns true if @domainname follows the naming rules, false otherwise.
+ * Returns true अगर @करोमुख्यname follows the naming rules, false otherwise.
  */
-bool tomoyo_correct_domain(const unsigned char *domainname)
-{
-	if (!domainname || !tomoyo_domain_def(domainname))
-		return false;
-	domainname = strchr(domainname, ' ');
-	if (!domainname++)
-		return true;
-	while (1) {
-		const unsigned char *cp = strchr(domainname, ' ');
+bool tomoyo_correct_करोमुख्य(स्थिर अचिन्हित अक्षर *करोमुख्यname)
+अणु
+	अगर (!करोमुख्यname || !tomoyo_करोमुख्य_def(करोमुख्यname))
+		वापस false;
+	करोमुख्यname = म_अक्षर(करोमुख्यname, ' ');
+	अगर (!करोमुख्यname++)
+		वापस true;
+	जबतक (1) अणु
+		स्थिर अचिन्हित अक्षर *cp = म_अक्षर(करोमुख्यname, ' ');
 
-		if (!cp)
-			break;
-		if (!tomoyo_correct_path2(domainname, cp - domainname))
-			return false;
-		domainname = cp + 1;
-	}
-	return tomoyo_correct_path(domainname);
-}
+		अगर (!cp)
+			अवरोध;
+		अगर (!tomoyo_correct_path2(करोमुख्यname, cp - करोमुख्यname))
+			वापस false;
+		करोमुख्यname = cp + 1;
+	पूर्ण
+	वापस tomoyo_correct_path(करोमुख्यname);
+पूर्ण
 
 /**
- * tomoyo_domain_def - Check whether the given token can be a domainname.
+ * tomoyo_करोमुख्य_def - Check whether the given token can be a करोमुख्यname.
  *
  * @buffer: The token to check.
  *
- * Returns true if @buffer possibly be a domainname, false otherwise.
+ * Returns true अगर @buffer possibly be a करोमुख्यname, false otherwise.
  */
-bool tomoyo_domain_def(const unsigned char *buffer)
-{
-	const unsigned char *cp;
-	int len;
+bool tomoyo_करोमुख्य_def(स्थिर अचिन्हित अक्षर *buffer)
+अणु
+	स्थिर अचिन्हित अक्षर *cp;
+	पूर्णांक len;
 
-	if (*buffer != '<')
-		return false;
-	cp = strchr(buffer, ' ');
-	if (!cp)
-		len = strlen(buffer);
-	else
+	अगर (*buffer != '<')
+		वापस false;
+	cp = म_अक्षर(buffer, ' ');
+	अगर (!cp)
+		len = म_माप(buffer);
+	अन्यथा
 		len = cp - buffer;
-	if (buffer[len - 1] != '>' ||
+	अगर (buffer[len - 1] != '>' ||
 	    !tomoyo_correct_word2(buffer + 1, len - 2))
-		return false;
-	return true;
-}
+		वापस false;
+	वापस true;
+पूर्ण
 
 /**
- * tomoyo_find_domain - Find a domain by the given name.
+ * tomoyo_find_करोमुख्य - Find a करोमुख्य by the given name.
  *
- * @domainname: The domainname to find.
+ * @करोमुख्यname: The करोमुख्यname to find.
  *
- * Returns pointer to "struct tomoyo_domain_info" if found, NULL otherwise.
+ * Returns poपूर्णांकer to "struct tomoyo_domain_info" अगर found, शून्य otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-struct tomoyo_domain_info *tomoyo_find_domain(const char *domainname)
-{
-	struct tomoyo_domain_info *domain;
-	struct tomoyo_path_info name;
+काष्ठा tomoyo_करोमुख्य_info *tomoyo_find_करोमुख्य(स्थिर अक्षर *करोमुख्यname)
+अणु
+	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य;
+	काष्ठा tomoyo_path_info name;
 
-	name.name = domainname;
+	name.name = करोमुख्यname;
 	tomoyo_fill_path_info(&name);
-	list_for_each_entry_rcu(domain, &tomoyo_domain_list, list,
-				srcu_read_lock_held(&tomoyo_ss)) {
-		if (!domain->is_deleted &&
-		    !tomoyo_pathcmp(&name, domain->domainname))
-			return domain;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry_rcu(करोमुख्य, &tomoyo_करोमुख्य_list, list,
+				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
+		अगर (!करोमुख्य->is_deleted &&
+		    !tomoyo_pathcmp(&name, करोमुख्य->करोमुख्यname))
+			वापस करोमुख्य;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * tomoyo_const_part_length - Evaluate the initial length without a pattern in a token.
+ * tomoyo_स्थिर_part_length - Evaluate the initial length without a pattern in a token.
  *
  * @filename: The string to evaluate.
  *
  * Returns the initial length without a pattern in @filename.
  */
-static int tomoyo_const_part_length(const char *filename)
-{
-	char c;
-	int len = 0;
+अटल पूर्णांक tomoyo_स्थिर_part_length(स्थिर अक्षर *filename)
+अणु
+	अक्षर c;
+	पूर्णांक len = 0;
 
-	if (!filename)
-		return 0;
-	while ((c = *filename++) != '\0') {
-		if (c != '\\') {
+	अगर (!filename)
+		वापस 0;
+	जबतक ((c = *filename++) != '\0') अणु
+		अगर (c != '\\') अणु
 			len++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		c = *filename++;
-		switch (c) {
-		case '\\':  /* "\\" */
+		चयन (c) अणु
+		हाल '\\':  /* "\\" */
 			len += 2;
-			continue;
-		case '0':   /* "\ooo" */
-		case '1':
-		case '2':
-		case '3':
+			जारी;
+		हाल '0':   /* "\ooo" */
+		हाल '1':
+		हाल '2':
+		हाल '3':
 			c = *filename++;
-			if (c < '0' || c > '7')
-				break;
+			अगर (c < '0' || c > '7')
+				अवरोध;
 			c = *filename++;
-			if (c < '0' || c > '7')
-				break;
+			अगर (c < '0' || c > '7')
+				अवरोध;
 			len += 4;
-			continue;
-		}
-		break;
-	}
-	return len;
-}
+			जारी;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस len;
+पूर्ण
 
 /**
  * tomoyo_fill_path_info - Fill in "struct tomoyo_path_info" members.
  *
- * @ptr: Pointer to "struct tomoyo_path_info" to fill in.
+ * @ptr: Poपूर्णांकer to "struct tomoyo_path_info" to fill in.
  *
  * The caller sets "struct tomoyo_path_info"->name.
  */
-void tomoyo_fill_path_info(struct tomoyo_path_info *ptr)
-{
-	const char *name = ptr->name;
-	const int len = strlen(name);
+व्योम tomoyo_fill_path_info(काष्ठा tomoyo_path_info *ptr)
+अणु
+	स्थिर अक्षर *name = ptr->name;
+	स्थिर पूर्णांक len = म_माप(name);
 
-	ptr->const_len = tomoyo_const_part_length(name);
+	ptr->स्थिर_len = tomoyo_स्थिर_part_length(name);
 	ptr->is_dir = len && (name[len - 1] == '/');
-	ptr->is_patterned = (ptr->const_len < len);
-	ptr->hash = full_name_hash(NULL, name, len);
-}
+	ptr->is_patterned = (ptr->स्थिर_len < len);
+	ptr->hash = full_name_hash(शून्य, name, len);
+पूर्ण
 
 /**
- * tomoyo_file_matches_pattern2 - Pattern matching without '/' character and "\-" pattern.
+ * tomoyo_file_matches_pattern2 - Pattern matching without '/' अक्षरacter and "\-" pattern.
  *
  * @filename:     The start of string to check.
  * @filename_end: The end of string to check.
  * @pattern:      The start of pattern to compare.
  * @pattern_end:  The end of pattern to compare.
  *
- * Returns true if @filename matches @pattern, false otherwise.
+ * Returns true अगर @filename matches @pattern, false otherwise.
  */
-static bool tomoyo_file_matches_pattern2(const char *filename,
-					 const char *filename_end,
-					 const char *pattern,
-					 const char *pattern_end)
-{
-	while (filename < filename_end && pattern < pattern_end) {
-		char c;
-		int i;
-		int j;
+अटल bool tomoyo_file_matches_pattern2(स्थिर अक्षर *filename,
+					 स्थिर अक्षर *filename_end,
+					 स्थिर अक्षर *pattern,
+					 स्थिर अक्षर *pattern_end)
+अणु
+	जबतक (filename < filename_end && pattern < pattern_end) अणु
+		अक्षर c;
+		पूर्णांक i;
+		पूर्णांक j;
 
-		if (*pattern != '\\') {
-			if (*filename++ != *pattern++)
-				return false;
-			continue;
-		}
+		अगर (*pattern != '\\') अणु
+			अगर (*filename++ != *pattern++)
+				वापस false;
+			जारी;
+		पूर्ण
 		c = *filename;
 		pattern++;
-		switch (*pattern) {
-		case '?':
-			if (c == '/') {
-				return false;
-			} else if (c == '\\') {
-				if (filename[1] == '\\')
+		चयन (*pattern) अणु
+		हाल '?':
+			अगर (c == '/') अणु
+				वापस false;
+			पूर्ण अन्यथा अगर (c == '\\') अणु
+				अगर (filename[1] == '\\')
 					filename++;
-				else if (tomoyo_byte_range(filename + 1))
+				अन्यथा अगर (tomoyo_byte_range(filename + 1))
 					filename += 3;
-				else
-					return false;
-			}
-			break;
-		case '\\':
-			if (c != '\\')
-				return false;
-			if (*++filename != '\\')
-				return false;
-			break;
-		case '+':
-			if (!isdigit(c))
-				return false;
-			break;
-		case 'x':
-			if (!isxdigit(c))
-				return false;
-			break;
-		case 'a':
-			if (!tomoyo_alphabet_char(c))
-				return false;
-			break;
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-			if (c == '\\' && tomoyo_byte_range(filename + 1)
-			    && strncmp(filename + 1, pattern, 3) == 0) {
+				अन्यथा
+					वापस false;
+			पूर्ण
+			अवरोध;
+		हाल '\\':
+			अगर (c != '\\')
+				वापस false;
+			अगर (*++filename != '\\')
+				वापस false;
+			अवरोध;
+		हाल '+':
+			अगर (!है_अंक(c))
+				वापस false;
+			अवरोध;
+		हाल 'x':
+			अगर (!है_षष्ठादशक(c))
+				वापस false;
+			अवरोध;
+		हाल 'a':
+			अगर (!tomoyo_alphabet_अक्षर(c))
+				वापस false;
+			अवरोध;
+		हाल '0':
+		हाल '1':
+		हाल '2':
+		हाल '3':
+			अगर (c == '\\' && tomoyo_byte_range(filename + 1)
+			    && म_भेदन(filename + 1, pattern, 3) == 0) अणु
 				filename += 3;
 				pattern += 2;
-				break;
-			}
-			return false; /* Not matched. */
-		case '*':
-		case '@':
-			for (i = 0; i <= filename_end - filename; i++) {
-				if (tomoyo_file_matches_pattern2(
+				अवरोध;
+			पूर्ण
+			वापस false; /* Not matched. */
+		हाल '*':
+		हाल '@':
+			क्रम (i = 0; i <= filename_end - filename; i++) अणु
+				अगर (tomoyo_file_matches_pattern2(
 						    filename + i, filename_end,
 						    pattern + 1, pattern_end))
-					return true;
+					वापस true;
 				c = filename[i];
-				if (c == '.' && *pattern == '@')
-					break;
-				if (c != '\\')
-					continue;
-				if (filename[i + 1] == '\\')
+				अगर (c == '.' && *pattern == '@')
+					अवरोध;
+				अगर (c != '\\')
+					जारी;
+				अगर (filename[i + 1] == '\\')
 					i++;
-				else if (tomoyo_byte_range(filename + i + 1))
+				अन्यथा अगर (tomoyo_byte_range(filename + i + 1))
 					i += 3;
-				else
-					break; /* Bad pattern. */
-			}
-			return false; /* Not matched. */
-		default:
+				अन्यथा
+					अवरोध; /* Bad pattern. */
+			पूर्ण
+			वापस false; /* Not matched. */
+		शेष:
 			j = 0;
 			c = *pattern;
-			if (c == '$') {
-				while (isdigit(filename[j]))
+			अगर (c == '$') अणु
+				जबतक (है_अंक(filename[j]))
 					j++;
-			} else if (c == 'X') {
-				while (isxdigit(filename[j]))
+			पूर्ण अन्यथा अगर (c == 'X') अणु
+				जबतक (है_षष्ठादशक(filename[j]))
 					j++;
-			} else if (c == 'A') {
-				while (tomoyo_alphabet_char(filename[j]))
+			पूर्ण अन्यथा अगर (c == 'A') अणु
+				जबतक (tomoyo_alphabet_अक्षर(filename[j]))
 					j++;
-			}
-			for (i = 1; i <= j; i++) {
-				if (tomoyo_file_matches_pattern2(
+			पूर्ण
+			क्रम (i = 1; i <= j; i++) अणु
+				अगर (tomoyo_file_matches_pattern2(
 						    filename + i, filename_end,
 						    pattern + 1, pattern_end))
-					return true;
-			}
-			return false; /* Not matched or bad pattern. */
-		}
+					वापस true;
+			पूर्ण
+			वापस false; /* Not matched or bad pattern. */
+		पूर्ण
 		filename++;
 		pattern++;
-	}
-	while (*pattern == '\\' &&
+	पूर्ण
+	जबतक (*pattern == '\\' &&
 	       (*(pattern + 1) == '*' || *(pattern + 1) == '@'))
 		pattern += 2;
-	return filename == filename_end && pattern == pattern_end;
-}
+	वापस filename == filename_end && pattern == pattern_end;
+पूर्ण
 
 /**
- * tomoyo_file_matches_pattern - Pattern matching without '/' character.
+ * tomoyo_file_matches_pattern - Pattern matching without '/' अक्षरacter.
  *
  * @filename:     The start of string to check.
  * @filename_end: The end of string to check.
  * @pattern:      The start of pattern to compare.
  * @pattern_end:  The end of pattern to compare.
  *
- * Returns true if @filename matches @pattern, false otherwise.
+ * Returns true अगर @filename matches @pattern, false otherwise.
  */
-static bool tomoyo_file_matches_pattern(const char *filename,
-					const char *filename_end,
-					const char *pattern,
-					const char *pattern_end)
-{
-	const char *pattern_start = pattern;
+अटल bool tomoyo_file_matches_pattern(स्थिर अक्षर *filename,
+					स्थिर अक्षर *filename_end,
+					स्थिर अक्षर *pattern,
+					स्थिर अक्षर *pattern_end)
+अणु
+	स्थिर अक्षर *pattern_start = pattern;
 	bool first = true;
 	bool result;
 
-	while (pattern < pattern_end - 1) {
+	जबतक (pattern < pattern_end - 1) अणु
 		/* Split at "\-" pattern. */
-		if (*pattern++ != '\\' || *pattern++ != '-')
-			continue;
+		अगर (*pattern++ != '\\' || *pattern++ != '-')
+			जारी;
 		result = tomoyo_file_matches_pattern2(filename,
 						      filename_end,
 						      pattern_start,
 						      pattern - 2);
-		if (first)
+		अगर (first)
 			result = !result;
-		if (result)
-			return false;
+		अगर (result)
+			वापस false;
 		first = false;
 		pattern_start = pattern;
-	}
+	पूर्ण
 	result = tomoyo_file_matches_pattern2(filename, filename_end,
 					      pattern_start, pattern_end);
-	return first ? result : !result;
-}
+	वापस first ? result : !result;
+पूर्ण
 
 /**
  * tomoyo_path_matches_pattern2 - Do pathname pattern matching.
@@ -849,64 +850,64 @@ static bool tomoyo_file_matches_pattern(const char *filename,
  * @f: The start of string to check.
  * @p: The start of pattern to compare.
  *
- * Returns true if @f matches @p, false otherwise.
+ * Returns true अगर @f matches @p, false otherwise.
  */
-static bool tomoyo_path_matches_pattern2(const char *f, const char *p)
-{
-	const char *f_delimiter;
-	const char *p_delimiter;
+अटल bool tomoyo_path_matches_pattern2(स्थिर अक्षर *f, स्थिर अक्षर *p)
+अणु
+	स्थिर अक्षर *f_delimiter;
+	स्थिर अक्षर *p_delimiter;
 
-	while (*f && *p) {
-		f_delimiter = strchr(f, '/');
-		if (!f_delimiter)
-			f_delimiter = f + strlen(f);
-		p_delimiter = strchr(p, '/');
-		if (!p_delimiter)
-			p_delimiter = p + strlen(p);
-		if (*p == '\\' && *(p + 1) == '{')
-			goto recursive;
-		if (!tomoyo_file_matches_pattern(f, f_delimiter, p,
+	जबतक (*f && *p) अणु
+		f_delimiter = म_अक्षर(f, '/');
+		अगर (!f_delimiter)
+			f_delimiter = f + म_माप(f);
+		p_delimiter = म_अक्षर(p, '/');
+		अगर (!p_delimiter)
+			p_delimiter = p + म_माप(p);
+		अगर (*p == '\\' && *(p + 1) == '{')
+			जाओ recursive;
+		अगर (!tomoyo_file_matches_pattern(f, f_delimiter, p,
 						 p_delimiter))
-			return false;
+			वापस false;
 		f = f_delimiter;
-		if (*f)
+		अगर (*f)
 			f++;
 		p = p_delimiter;
-		if (*p)
+		अगर (*p)
 			p++;
-	}
+	पूर्ण
 	/* Ignore trailing "\*" and "\@" in @pattern. */
-	while (*p == '\\' &&
+	जबतक (*p == '\\' &&
 	       (*(p + 1) == '*' || *(p + 1) == '@'))
 		p += 2;
-	return !*f && !*p;
+	वापस !*f && !*p;
  recursive:
 	/*
-	 * The "\{" pattern is permitted only after '/' character.
+	 * The "\{" pattern is permitted only after '/' अक्षरacter.
 	 * This guarantees that below "*(p - 1)" is safe.
-	 * Also, the "\}" pattern is permitted only before '/' character
-	 * so that "\{" + "\}" pair will not break the "\-" operator.
+	 * Also, the "\}" pattern is permitted only beक्रमe '/' अक्षरacter
+	 * so that "\{" + "\}" pair will not अवरोध the "\-" चालक.
 	 */
-	if (*(p - 1) != '/' || p_delimiter <= p + 3 || *p_delimiter != '/' ||
+	अगर (*(p - 1) != '/' || p_delimiter <= p + 3 || *p_delimiter != '/' ||
 	    *(p_delimiter - 1) != '}' || *(p_delimiter - 2) != '\\')
-		return false; /* Bad pattern. */
-	do {
+		वापस false; /* Bad pattern. */
+	करो अणु
 		/* Compare current component with pattern. */
-		if (!tomoyo_file_matches_pattern(f, f_delimiter, p + 2,
+		अगर (!tomoyo_file_matches_pattern(f, f_delimiter, p + 2,
 						 p_delimiter - 2))
-			break;
+			अवरोध;
 		/* Proceed to next component. */
 		f = f_delimiter;
-		if (!*f)
-			break;
+		अगर (!*f)
+			अवरोध;
 		f++;
 		/* Continue comparison. */
-		if (tomoyo_path_matches_pattern2(f, p_delimiter + 1))
-			return true;
-		f_delimiter = strchr(f, '/');
-	} while (f_delimiter);
-	return false; /* Not matched. */
-}
+		अगर (tomoyo_path_matches_pattern2(f, p_delimiter + 1))
+			वापस true;
+		f_delimiter = म_अक्षर(f, '/');
+	पूर्ण जबतक (f_delimiter);
+	वापस false; /* Not matched. */
+पूर्ण
 
 /**
  * tomoyo_path_matches_pattern - Check whether the given filename matches the given pattern.
@@ -914,196 +915,196 @@ static bool tomoyo_path_matches_pattern2(const char *f, const char *p)
  * @filename: The filename to check.
  * @pattern:  The pattern to compare.
  *
- * Returns true if matches, false otherwise.
+ * Returns true अगर matches, false otherwise.
  *
  * The following patterns are available.
  *   \\     \ itself.
  *   \ooo   Octal representation of a byte.
- *   \*     Zero or more repetitions of characters other than '/'.
- *   \@     Zero or more repetitions of characters other than '/' or '.'.
- *   \?     1 byte character other than '/'.
+ *   \*     Zero or more repetitions of अक्षरacters other than '/'.
+ *   \@     Zero or more repetitions of अक्षरacters other than '/' or '.'.
+ *   \?     1 byte अक्षरacter other than '/'.
  *   \$     One or more repetitions of decimal digits.
  *   \+     1 decimal digit.
  *   \X     One or more repetitions of hexadecimal digits.
- *   \x     1 hexadecimal digit.
- *   \A     One or more repetitions of alphabet characters.
- *   \a     1 alphabet character.
+ *   \ष     1 hexadecimal digit.
+ *   \A     One or more repetitions of alphabet अक्षरacters.
+ *   \च     1 alphabet अक्षरacter.
  *
- *   \-     Subtraction operator.
+ *   \-     Subtraction चालक.
  *
- *   /\{dir\}/   '/' + 'One or more repetitions of dir/' (e.g. /dir/ /dir/dir/
+ *   /\अणुdir\पूर्ण/   '/' + 'One or more repetitions of dir/' (e.g. /dir/ /dir/dir/
  *               /dir/dir/dir/ ).
  */
-bool tomoyo_path_matches_pattern(const struct tomoyo_path_info *filename,
-				 const struct tomoyo_path_info *pattern)
-{
-	const char *f = filename->name;
-	const char *p = pattern->name;
-	const int len = pattern->const_len;
+bool tomoyo_path_matches_pattern(स्थिर काष्ठा tomoyo_path_info *filename,
+				 स्थिर काष्ठा tomoyo_path_info *pattern)
+अणु
+	स्थिर अक्षर *f = filename->name;
+	स्थिर अक्षर *p = pattern->name;
+	स्थिर पूर्णांक len = pattern->स्थिर_len;
 
-	/* If @pattern doesn't contain pattern, I can use strcmp(). */
-	if (!pattern->is_patterned)
-		return !tomoyo_pathcmp(filename, pattern);
+	/* If @pattern करोesn't contain pattern, I can use म_भेद(). */
+	अगर (!pattern->is_patterned)
+		वापस !tomoyo_pathcmp(filename, pattern);
 	/* Don't compare directory and non-directory. */
-	if (filename->is_dir != pattern->is_dir)
-		return false;
+	अगर (filename->is_dir != pattern->is_dir)
+		वापस false;
 	/* Compare the initial length without patterns. */
-	if (strncmp(f, p, len))
-		return false;
+	अगर (म_भेदन(f, p, len))
+		वापस false;
 	f += len;
 	p += len;
-	return tomoyo_path_matches_pattern2(f, p);
-}
+	वापस tomoyo_path_matches_pattern2(f, p);
+पूर्ण
 
 /**
  * tomoyo_get_exe - Get tomoyo_realpath() of current process.
  *
- * Returns the tomoyo_realpath() of current process on success, NULL otherwise.
+ * Returns the tomoyo_realpath() of current process on success, शून्य otherwise.
  *
- * This function uses kzalloc(), so the caller must call kfree()
- * if this function didn't return NULL.
+ * This function uses kzalloc(), so the caller must call kमुक्त()
+ * अगर this function didn't वापस शून्य.
  */
-const char *tomoyo_get_exe(void)
-{
-	struct file *exe_file;
-	const char *cp;
-	struct mm_struct *mm = current->mm;
+स्थिर अक्षर *tomoyo_get_exe(व्योम)
+अणु
+	काष्ठा file *exe_file;
+	स्थिर अक्षर *cp;
+	काष्ठा mm_काष्ठा *mm = current->mm;
 
-	if (!mm)
-		return NULL;
+	अगर (!mm)
+		वापस शून्य;
 	exe_file = get_mm_exe_file(mm);
-	if (!exe_file)
-		return NULL;
+	अगर (!exe_file)
+		वापस शून्य;
 
 	cp = tomoyo_realpath_from_path(&exe_file->f_path);
 	fput(exe_file);
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
 /**
  * tomoyo_get_mode - Get MAC mode.
  *
- * @ns:      Pointer to "struct tomoyo_policy_namespace".
+ * @ns:      Poपूर्णांकer to "struct tomoyo_policy_namespace".
  * @profile: Profile number.
  * @index:   Index number of functionality.
  *
  * Returns mode.
  */
-int tomoyo_get_mode(const struct tomoyo_policy_namespace *ns, const u8 profile,
-		    const u8 index)
-{
+पूर्णांक tomoyo_get_mode(स्थिर काष्ठा tomoyo_policy_namespace *ns, स्थिर u8 profile,
+		    स्थिर u8 index)
+अणु
 	u8 mode;
-	struct tomoyo_profile *p;
+	काष्ठा tomoyo_profile *p;
 
-	if (!tomoyo_policy_loaded)
-		return TOMOYO_CONFIG_DISABLED;
+	अगर (!tomoyo_policy_loaded)
+		वापस TOMOYO_CONFIG_DISABLED;
 	p = tomoyo_profile(ns, profile);
 	mode = p->config[index];
-	if (mode == TOMOYO_CONFIG_USE_DEFAULT)
+	अगर (mode == TOMOYO_CONFIG_USE_DEFAULT)
 		mode = p->config[tomoyo_index2category[index]
 				 + TOMOYO_MAX_MAC_INDEX];
-	if (mode == TOMOYO_CONFIG_USE_DEFAULT)
-		mode = p->default_config;
-	return mode & 3;
-}
+	अगर (mode == TOMOYO_CONFIG_USE_DEFAULT)
+		mode = p->शेष_config;
+	वापस mode & 3;
+पूर्ण
 
 /**
  * tomoyo_init_request_info - Initialize "struct tomoyo_request_info" members.
  *
- * @r:      Pointer to "struct tomoyo_request_info" to initialize.
- * @domain: Pointer to "struct tomoyo_domain_info". NULL for tomoyo_domain().
+ * @r:      Poपूर्णांकer to "struct tomoyo_request_info" to initialize.
+ * @करोमुख्य: Poपूर्णांकer to "struct tomoyo_domain_info". शून्य क्रम tomoyo_करोमुख्य().
  * @index:  Index number of functionality.
  *
  * Returns mode.
  */
-int tomoyo_init_request_info(struct tomoyo_request_info *r,
-			     struct tomoyo_domain_info *domain, const u8 index)
-{
+पूर्णांक tomoyo_init_request_info(काष्ठा tomoyo_request_info *r,
+			     काष्ठा tomoyo_करोमुख्य_info *करोमुख्य, स्थिर u8 index)
+अणु
 	u8 profile;
 
-	memset(r, 0, sizeof(*r));
-	if (!domain)
-		domain = tomoyo_domain();
-	r->domain = domain;
-	profile = domain->profile;
+	स_रखो(r, 0, माप(*r));
+	अगर (!करोमुख्य)
+		करोमुख्य = tomoyo_करोमुख्य();
+	r->करोमुख्य = करोमुख्य;
+	profile = करोमुख्य->profile;
 	r->profile = profile;
 	r->type = index;
-	r->mode = tomoyo_get_mode(domain->ns, profile, index);
-	return r->mode;
-}
+	r->mode = tomoyo_get_mode(करोमुख्य->ns, profile, index);
+	वापस r->mode;
+पूर्ण
 
 /**
- * tomoyo_domain_quota_is_ok - Check for domain's quota.
+ * tomoyo_करोमुख्य_quota_is_ok - Check क्रम करोमुख्य's quota.
  *
- * @r: Pointer to "struct tomoyo_request_info".
+ * @r: Poपूर्णांकer to "struct tomoyo_request_info".
  *
- * Returns true if the domain is not exceeded quota, false otherwise.
+ * Returns true अगर the करोमुख्य is not exceeded quota, false otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-bool tomoyo_domain_quota_is_ok(struct tomoyo_request_info *r)
-{
-	unsigned int count = 0;
-	struct tomoyo_domain_info *domain = r->domain;
-	struct tomoyo_acl_info *ptr;
+bool tomoyo_करोमुख्य_quota_is_ok(काष्ठा tomoyo_request_info *r)
+अणु
+	अचिन्हित पूर्णांक count = 0;
+	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य = r->करोमुख्य;
+	काष्ठा tomoyo_acl_info *ptr;
 
-	if (r->mode != TOMOYO_CONFIG_LEARNING)
-		return false;
-	if (!domain)
-		return true;
-	list_for_each_entry_rcu(ptr, &domain->acl_info_list, list,
-				srcu_read_lock_held(&tomoyo_ss)) {
+	अगर (r->mode != TOMOYO_CONFIG_LEARNING)
+		वापस false;
+	अगर (!करोमुख्य)
+		वापस true;
+	list_क्रम_each_entry_rcu(ptr, &करोमुख्य->acl_info_list, list,
+				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
 		u16 perm;
 		u8 i;
 
-		if (ptr->is_deleted)
-			continue;
+		अगर (ptr->is_deleted)
+			जारी;
 		/*
-		 * Reading perm bitmap might race with tomoyo_merge_*() because
-		 * caller does not hold tomoyo_policy_lock mutex. But exceeding
-		 * max_learning_entry parameter by a few entries does not harm.
+		 * Reading perm biपंचांगap might race with tomoyo_merge_*() because
+		 * caller करोes not hold tomoyo_policy_lock mutex. But exceeding
+		 * max_learning_entry parameter by a few entries करोes not harm.
 		 */
-		switch (ptr->type) {
-		case TOMOYO_TYPE_PATH_ACL:
-			data_race(perm = container_of(ptr, struct tomoyo_path_acl, head)->perm);
-			break;
-		case TOMOYO_TYPE_PATH2_ACL:
-			data_race(perm = container_of(ptr, struct tomoyo_path2_acl, head)->perm);
-			break;
-		case TOMOYO_TYPE_PATH_NUMBER_ACL:
-			data_race(perm = container_of(ptr, struct tomoyo_path_number_acl, head)
+		चयन (ptr->type) अणु
+		हाल TOMOYO_TYPE_PATH_ACL:
+			data_race(perm = container_of(ptr, काष्ठा tomoyo_path_acl, head)->perm);
+			अवरोध;
+		हाल TOMOYO_TYPE_PATH2_ACL:
+			data_race(perm = container_of(ptr, काष्ठा tomoyo_path2_acl, head)->perm);
+			अवरोध;
+		हाल TOMOYO_TYPE_PATH_NUMBER_ACL:
+			data_race(perm = container_of(ptr, काष्ठा tomoyo_path_number_acl, head)
 				  ->perm);
-			break;
-		case TOMOYO_TYPE_MKDEV_ACL:
-			data_race(perm = container_of(ptr, struct tomoyo_mkdev_acl, head)->perm);
-			break;
-		case TOMOYO_TYPE_INET_ACL:
-			data_race(perm = container_of(ptr, struct tomoyo_inet_acl, head)->perm);
-			break;
-		case TOMOYO_TYPE_UNIX_ACL:
-			data_race(perm = container_of(ptr, struct tomoyo_unix_acl, head)->perm);
-			break;
-		case TOMOYO_TYPE_MANUAL_TASK_ACL:
+			अवरोध;
+		हाल TOMOYO_TYPE_MKDEV_ACL:
+			data_race(perm = container_of(ptr, काष्ठा tomoyo_mkdev_acl, head)->perm);
+			अवरोध;
+		हाल TOMOYO_TYPE_INET_ACL:
+			data_race(perm = container_of(ptr, काष्ठा tomoyo_inet_acl, head)->perm);
+			अवरोध;
+		हाल TOMOYO_TYPE_UNIX_ACL:
+			data_race(perm = container_of(ptr, काष्ठा tomoyo_unix_acl, head)->perm);
+			अवरोध;
+		हाल TOMOYO_TYPE_MANUAL_TASK_ACL:
 			perm = 0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			perm = 1;
-		}
-		for (i = 0; i < 16; i++)
-			if (perm & (1 << i))
+		पूर्ण
+		क्रम (i = 0; i < 16; i++)
+			अगर (perm & (1 << i))
 				count++;
-	}
-	if (count < tomoyo_profile(domain->ns, domain->profile)->
+	पूर्ण
+	अगर (count < tomoyo_profile(करोमुख्य->ns, करोमुख्य->profile)->
 	    pref[TOMOYO_PREF_MAX_LEARNING_ENTRY])
-		return true;
-	if (!domain->flags[TOMOYO_DIF_QUOTA_WARNED]) {
-		domain->flags[TOMOYO_DIF_QUOTA_WARNED] = true;
+		वापस true;
+	अगर (!करोमुख्य->flags[TOMOYO_DIF_QUOTA_WARNED]) अणु
+		करोमुख्य->flags[TOMOYO_DIF_QUOTA_WARNED] = true;
 		/* r->granted = false; */
-		tomoyo_write_log(r, "%s", tomoyo_dif[TOMOYO_DIF_QUOTA_WARNED]);
-#ifndef CONFIG_SECURITY_TOMOYO_INSECURE_BUILTIN_SETTING
+		tomoyo_ग_लिखो_log(r, "%s", tomoyo_dअगर[TOMOYO_DIF_QUOTA_WARNED]);
+#अगर_अघोषित CONFIG_SECURITY_TOMOYO_INSECURE_BUILTIN_SETTING
 		pr_warn("WARNING: Domain '%s' has too many ACLs to hold. Stopped learning mode.\n",
-			domain->domainname->name);
-#endif
-	}
-	return false;
-}
+			करोमुख्य->करोमुख्यname->name);
+#पूर्ण_अगर
+	पूर्ण
+	वापस false;
+पूर्ण

@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/libnvdimm.h>
-#include <linux/sched/mm.h>
-#include <linux/vmalloc.h>
-#include <linux/uaccess.h>
-#include <linux/module.h>
-#include <linux/blkdev.h>
-#include <linux/fcntl.h>
-#include <linux/async.h>
-#include <linux/genhd.h>
-#include <linux/ndctl.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/cpu.h>
-#include <linux/fs.h>
-#include <linux/io.h>
-#include <linux/mm.h>
-#include <linux/nd.h>
-#include "nd-core.h"
-#include "nd.h"
-#include "pfn.h"
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/libnvdimm.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/async.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/ndctl.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/nd.h>
+#समावेश "nd-core.h"
+#समावेश "nd.h"
+#समावेश "pfn.h"
 
-int nvdimm_major;
-static int nvdimm_bus_major;
-struct class *nd_class;
-static DEFINE_IDA(nd_ida);
+पूर्णांक nvdimm_major;
+अटल पूर्णांक nvdimm_bus_major;
+काष्ठा class *nd_class;
+अटल DEFINE_IDA(nd_ida);
 
-static int to_nd_device_type(struct device *dev)
-{
-	if (is_nvdimm(dev))
-		return ND_DEVICE_DIMM;
-	else if (is_memory(dev))
-		return ND_DEVICE_REGION_PMEM;
-	else if (is_nd_blk(dev))
-		return ND_DEVICE_REGION_BLK;
-	else if (is_nd_dax(dev))
-		return ND_DEVICE_DAX_PMEM;
-	else if (is_nd_region(dev->parent))
-		return nd_region_to_nstype(to_nd_region(dev->parent));
+अटल पूर्णांक to_nd_device_type(काष्ठा device *dev)
+अणु
+	अगर (is_nvdimm(dev))
+		वापस ND_DEVICE_DIMM;
+	अन्यथा अगर (is_memory(dev))
+		वापस ND_DEVICE_REGION_PMEM;
+	अन्यथा अगर (is_nd_blk(dev))
+		वापस ND_DEVICE_REGION_BLK;
+	अन्यथा अगर (is_nd_dax(dev))
+		वापस ND_DEVICE_DAX_PMEM;
+	अन्यथा अगर (is_nd_region(dev->parent))
+		वापस nd_region_to_nstype(to_nd_region(dev->parent));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nvdimm_bus_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	return add_uevent_var(env, "MODALIAS=" ND_DEVICE_MODALIAS_FMT,
+अटल पूर्णांक nvdimm_bus_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	वापस add_uevent_var(env, "MODALIAS=" ND_DEVICE_MODALIAS_FMT,
 			to_nd_device_type(dev));
-}
+पूर्ण
 
-static struct module *to_bus_provider(struct device *dev)
-{
-	/* pin bus providers while regions are enabled */
-	if (is_nd_region(dev)) {
-		struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+अटल काष्ठा module *to_bus_provider(काष्ठा device *dev)
+अणु
+	/* pin bus providers जबतक regions are enabled */
+	अगर (is_nd_region(dev)) अणु
+		काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
 
-		return nvdimm_bus->nd_desc->module;
-	}
-	return NULL;
-}
+		वापस nvdimm_bus->nd_desc->module;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void nvdimm_bus_probe_start(struct nvdimm_bus *nvdimm_bus)
-{
+अटल व्योम nvdimm_bus_probe_start(काष्ठा nvdimm_bus *nvdimm_bus)
+अणु
 	nvdimm_bus_lock(&nvdimm_bus->dev);
 	nvdimm_bus->probe_active++;
 	nvdimm_bus_unlock(&nvdimm_bus->dev);
-}
+पूर्ण
 
-static void nvdimm_bus_probe_end(struct nvdimm_bus *nvdimm_bus)
-{
+अटल व्योम nvdimm_bus_probe_end(काष्ठा nvdimm_bus *nvdimm_bus)
+अणु
 	nvdimm_bus_lock(&nvdimm_bus->dev);
-	if (--nvdimm_bus->probe_active == 0)
-		wake_up(&nvdimm_bus->wait);
+	अगर (--nvdimm_bus->probe_active == 0)
+		wake_up(&nvdimm_bus->रुको);
 	nvdimm_bus_unlock(&nvdimm_bus->dev);
-}
+पूर्ण
 
-static int nvdimm_bus_probe(struct device *dev)
-{
-	struct nd_device_driver *nd_drv = to_nd_device_driver(dev->driver);
-	struct module *provider = to_bus_provider(dev);
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
-	int rc;
+अटल पूर्णांक nvdimm_bus_probe(काष्ठा device *dev)
+अणु
+	काष्ठा nd_device_driver *nd_drv = to_nd_device_driver(dev->driver);
+	काष्ठा module *provider = to_bus_provider(dev);
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+	पूर्णांक rc;
 
-	if (!try_module_get(provider))
-		return -ENXIO;
+	अगर (!try_module_get(provider))
+		वापस -ENXIO;
 
 	dev_dbg(&nvdimm_bus->dev, "START: %s.probe(%s)\n",
 			dev->driver->name, dev_name(dev));
@@ -95,7 +96,7 @@ static int nvdimm_bus_probe(struct device *dev)
 	rc = nd_drv->probe(dev);
 	debug_nvdimm_unlock(dev);
 
-	if ((rc == 0 || rc == -EOPNOTSUPP) &&
+	अगर ((rc == 0 || rc == -EOPNOTSUPP) &&
 			dev->parent && is_nd_region(dev->parent))
 		nd_region_advance_seeds(to_nd_region(dev->parent), dev);
 	nvdimm_bus_probe_end(nvdimm_bus);
@@ -103,258 +104,258 @@ static int nvdimm_bus_probe(struct device *dev)
 	dev_dbg(&nvdimm_bus->dev, "END: %s.probe(%s) = %d\n", dev->driver->name,
 			dev_name(dev), rc);
 
-	if (rc != 0)
+	अगर (rc != 0)
 		module_put(provider);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nvdimm_bus_remove(struct device *dev)
-{
-	struct nd_device_driver *nd_drv = to_nd_device_driver(dev->driver);
-	struct module *provider = to_bus_provider(dev);
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+अटल पूर्णांक nvdimm_bus_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा nd_device_driver *nd_drv = to_nd_device_driver(dev->driver);
+	काष्ठा module *provider = to_bus_provider(dev);
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
 
-	if (nd_drv->remove) {
+	अगर (nd_drv->हटाओ) अणु
 		debug_nvdimm_lock(dev);
-		nd_drv->remove(dev);
+		nd_drv->हटाओ(dev);
 		debug_nvdimm_unlock(dev);
-	}
+	पूर्ण
 
 	dev_dbg(&nvdimm_bus->dev, "%s.remove(%s)\n", dev->driver->name,
 			dev_name(dev));
 	module_put(provider);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nvdimm_bus_shutdown(struct device *dev)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
-	struct nd_device_driver *nd_drv = NULL;
+अटल व्योम nvdimm_bus_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+	काष्ठा nd_device_driver *nd_drv = शून्य;
 
-	if (dev->driver)
+	अगर (dev->driver)
 		nd_drv = to_nd_device_driver(dev->driver);
 
-	if (nd_drv && nd_drv->shutdown) {
-		nd_drv->shutdown(dev);
+	अगर (nd_drv && nd_drv->shutकरोwn) अणु
+		nd_drv->shutकरोwn(dev);
 		dev_dbg(&nvdimm_bus->dev, "%s.shutdown(%s)\n",
 				dev->driver->name, dev_name(dev));
-	}
-}
+	पूर्ण
+पूर्ण
 
-void nd_device_notify(struct device *dev, enum nvdimm_event event)
-{
+व्योम nd_device_notअगरy(काष्ठा device *dev, क्रमागत nvdimm_event event)
+अणु
 	nd_device_lock(dev);
-	if (dev->driver) {
-		struct nd_device_driver *nd_drv;
+	अगर (dev->driver) अणु
+		काष्ठा nd_device_driver *nd_drv;
 
 		nd_drv = to_nd_device_driver(dev->driver);
-		if (nd_drv->notify)
-			nd_drv->notify(dev, event);
-	}
+		अगर (nd_drv->notअगरy)
+			nd_drv->notअगरy(dev, event);
+	पूर्ण
 	nd_device_unlock(dev);
-}
-EXPORT_SYMBOL(nd_device_notify);
+पूर्ण
+EXPORT_SYMBOL(nd_device_notअगरy);
 
-void nvdimm_region_notify(struct nd_region *nd_region, enum nvdimm_event event)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(&nd_region->dev);
+व्योम nvdimm_region_notअगरy(काष्ठा nd_region *nd_region, क्रमागत nvdimm_event event)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(&nd_region->dev);
 
-	if (!nvdimm_bus)
-		return;
+	अगर (!nvdimm_bus)
+		वापस;
 
-	/* caller is responsible for holding a reference on the device */
-	nd_device_notify(&nd_region->dev, event);
-}
-EXPORT_SYMBOL_GPL(nvdimm_region_notify);
+	/* caller is responsible क्रम holding a reference on the device */
+	nd_device_notअगरy(&nd_region->dev, event);
+पूर्ण
+EXPORT_SYMBOL_GPL(nvdimm_region_notअगरy);
 
-struct clear_badblocks_context {
-	resource_size_t phys, cleared;
-};
+काष्ठा clear_badblocks_context अणु
+	resource_माप_प्रकार phys, cleared;
+पूर्ण;
 
-static int nvdimm_clear_badblocks_region(struct device *dev, void *data)
-{
-	struct clear_badblocks_context *ctx = data;
-	struct nd_region *nd_region;
-	resource_size_t ndr_end;
+अटल पूर्णांक nvdimm_clear_badblocks_region(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा clear_badblocks_context *ctx = data;
+	काष्ठा nd_region *nd_region;
+	resource_माप_प्रकार ndr_end;
 	sector_t sector;
 
 	/* make sure device is a region */
-	if (!is_memory(dev))
-		return 0;
+	अगर (!is_memory(dev))
+		वापस 0;
 
 	nd_region = to_nd_region(dev);
 	ndr_end = nd_region->ndr_start + nd_region->ndr_size - 1;
 
 	/* make sure we are in the region */
-	if (ctx->phys < nd_region->ndr_start
+	अगर (ctx->phys < nd_region->ndr_start
 			|| (ctx->phys + ctx->cleared) > ndr_end)
-		return 0;
+		वापस 0;
 
 	sector = (ctx->phys - nd_region->ndr_start) / 512;
 	badblocks_clear(&nd_region->bb, sector, ctx->cleared / 512);
 
-	if (nd_region->bb_state)
-		sysfs_notify_dirent(nd_region->bb_state);
+	अगर (nd_region->bb_state)
+		sysfs_notअगरy_dirent(nd_region->bb_state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nvdimm_clear_badblocks_regions(struct nvdimm_bus *nvdimm_bus,
+अटल व्योम nvdimm_clear_badblocks_regions(काष्ठा nvdimm_bus *nvdimm_bus,
 		phys_addr_t phys, u64 cleared)
-{
-	struct clear_badblocks_context ctx = {
+अणु
+	काष्ठा clear_badblocks_context ctx = अणु
 		.phys = phys,
 		.cleared = cleared,
-	};
+	पूर्ण;
 
-	device_for_each_child(&nvdimm_bus->dev, &ctx,
+	device_क्रम_each_child(&nvdimm_bus->dev, &ctx,
 			nvdimm_clear_badblocks_region);
-}
+पूर्ण
 
-static void nvdimm_account_cleared_poison(struct nvdimm_bus *nvdimm_bus,
+अटल व्योम nvdimm_account_cleared_poison(काष्ठा nvdimm_bus *nvdimm_bus,
 		phys_addr_t phys, u64 cleared)
-{
-	if (cleared > 0)
-		badrange_forget(&nvdimm_bus->badrange, phys, cleared);
+अणु
+	अगर (cleared > 0)
+		badrange_क्रमget(&nvdimm_bus->badrange, phys, cleared);
 
-	if (cleared > 0 && cleared / 512)
+	अगर (cleared > 0 && cleared / 512)
 		nvdimm_clear_badblocks_regions(nvdimm_bus, phys, cleared);
-}
+पूर्ण
 
-long nvdimm_clear_poison(struct device *dev, phys_addr_t phys,
-		unsigned int len)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
-	struct nvdimm_bus_descriptor *nd_desc;
-	struct nd_cmd_clear_error clear_err;
-	struct nd_cmd_ars_cap ars_cap;
+दीर्घ nvdimm_clear_poison(काष्ठा device *dev, phys_addr_t phys,
+		अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+	काष्ठा nvdimm_bus_descriptor *nd_desc;
+	काष्ठा nd_cmd_clear_error clear_err;
+	काष्ठा nd_cmd_ars_cap ars_cap;
 	u32 clear_err_unit, mask;
-	unsigned int noio_flag;
-	int cmd_rc, rc;
+	अचिन्हित पूर्णांक noio_flag;
+	पूर्णांक cmd_rc, rc;
 
-	if (!nvdimm_bus)
-		return -ENXIO;
+	अगर (!nvdimm_bus)
+		वापस -ENXIO;
 
 	nd_desc = nvdimm_bus->nd_desc;
 	/*
-	 * if ndctl does not exist, it's PMEM_LEGACY and
+	 * अगर ndctl करोes not exist, it's PMEM_LEGACY and
 	 * we want to just pretend everything is handled.
 	 */
-	if (!nd_desc->ndctl)
-		return len;
+	अगर (!nd_desc->ndctl)
+		वापस len;
 
-	memset(&ars_cap, 0, sizeof(ars_cap));
+	स_रखो(&ars_cap, 0, माप(ars_cap));
 	ars_cap.address = phys;
 	ars_cap.length = len;
-	noio_flag = memalloc_noio_save();
-	rc = nd_desc->ndctl(nd_desc, NULL, ND_CMD_ARS_CAP, &ars_cap,
-			sizeof(ars_cap), &cmd_rc);
-	memalloc_noio_restore(noio_flag);
-	if (rc < 0)
-		return rc;
-	if (cmd_rc < 0)
-		return cmd_rc;
+	noio_flag = meदो_स्मृति_noio_save();
+	rc = nd_desc->ndctl(nd_desc, शून्य, ND_CMD_ARS_CAP, &ars_cap,
+			माप(ars_cap), &cmd_rc);
+	meदो_स्मृति_noio_restore(noio_flag);
+	अगर (rc < 0)
+		वापस rc;
+	अगर (cmd_rc < 0)
+		वापस cmd_rc;
 	clear_err_unit = ars_cap.clear_err_unit;
-	if (!clear_err_unit || !is_power_of_2(clear_err_unit))
-		return -ENXIO;
+	अगर (!clear_err_unit || !is_घातer_of_2(clear_err_unit))
+		वापस -ENXIO;
 
 	mask = clear_err_unit - 1;
-	if ((phys | len) & mask)
-		return -ENXIO;
-	memset(&clear_err, 0, sizeof(clear_err));
+	अगर ((phys | len) & mask)
+		वापस -ENXIO;
+	स_रखो(&clear_err, 0, माप(clear_err));
 	clear_err.address = phys;
 	clear_err.length = len;
-	noio_flag = memalloc_noio_save();
-	rc = nd_desc->ndctl(nd_desc, NULL, ND_CMD_CLEAR_ERROR, &clear_err,
-			sizeof(clear_err), &cmd_rc);
-	memalloc_noio_restore(noio_flag);
-	if (rc < 0)
-		return rc;
-	if (cmd_rc < 0)
-		return cmd_rc;
+	noio_flag = meदो_स्मृति_noio_save();
+	rc = nd_desc->ndctl(nd_desc, शून्य, ND_CMD_CLEAR_ERROR, &clear_err,
+			माप(clear_err), &cmd_rc);
+	meदो_स्मृति_noio_restore(noio_flag);
+	अगर (rc < 0)
+		वापस rc;
+	अगर (cmd_rc < 0)
+		वापस cmd_rc;
 
 	nvdimm_account_cleared_poison(nvdimm_bus, phys, clear_err.cleared);
 
-	return clear_err.cleared;
-}
+	वापस clear_err.cleared;
+पूर्ण
 EXPORT_SYMBOL_GPL(nvdimm_clear_poison);
 
-static int nvdimm_bus_match(struct device *dev, struct device_driver *drv);
+अटल पूर्णांक nvdimm_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv);
 
-static struct bus_type nvdimm_bus_type = {
+अटल काष्ठा bus_type nvdimm_bus_type = अणु
 	.name = "nd",
 	.uevent = nvdimm_bus_uevent,
 	.match = nvdimm_bus_match,
 	.probe = nvdimm_bus_probe,
-	.remove = nvdimm_bus_remove,
-	.shutdown = nvdimm_bus_shutdown,
-};
+	.हटाओ = nvdimm_bus_हटाओ,
+	.shutकरोwn = nvdimm_bus_shutकरोwn,
+पूर्ण;
 
-static void nvdimm_bus_release(struct device *dev)
-{
-	struct nvdimm_bus *nvdimm_bus;
+अटल व्योम nvdimm_bus_release(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus;
 
-	nvdimm_bus = container_of(dev, struct nvdimm_bus, dev);
-	ida_simple_remove(&nd_ida, nvdimm_bus->id);
-	kfree(nvdimm_bus);
-}
+	nvdimm_bus = container_of(dev, काष्ठा nvdimm_bus, dev);
+	ida_simple_हटाओ(&nd_ida, nvdimm_bus->id);
+	kमुक्त(nvdimm_bus);
+पूर्ण
 
-static const struct device_type nvdimm_bus_dev_type = {
+अटल स्थिर काष्ठा device_type nvdimm_bus_dev_type = अणु
 	.release = nvdimm_bus_release,
 	.groups = nvdimm_bus_attribute_groups,
-};
+पूर्ण;
 
-bool is_nvdimm_bus(struct device *dev)
-{
-	return dev->type == &nvdimm_bus_dev_type;
-}
+bool is_nvdimm_bus(काष्ठा device *dev)
+अणु
+	वापस dev->type == &nvdimm_bus_dev_type;
+पूर्ण
 
-struct nvdimm_bus *walk_to_nvdimm_bus(struct device *nd_dev)
-{
-	struct device *dev;
+काष्ठा nvdimm_bus *walk_to_nvdimm_bus(काष्ठा device *nd_dev)
+अणु
+	काष्ठा device *dev;
 
-	for (dev = nd_dev; dev; dev = dev->parent)
-		if (is_nvdimm_bus(dev))
-			break;
+	क्रम (dev = nd_dev; dev; dev = dev->parent)
+		अगर (is_nvdimm_bus(dev))
+			अवरोध;
 	dev_WARN_ONCE(nd_dev, !dev, "invalid dev, not on nd bus\n");
-	if (dev)
-		return to_nvdimm_bus(dev);
-	return NULL;
-}
+	अगर (dev)
+		वापस to_nvdimm_bus(dev);
+	वापस शून्य;
+पूर्ण
 
-struct nvdimm_bus *to_nvdimm_bus(struct device *dev)
-{
-	struct nvdimm_bus *nvdimm_bus;
+काष्ठा nvdimm_bus *to_nvdimm_bus(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus;
 
-	nvdimm_bus = container_of(dev, struct nvdimm_bus, dev);
+	nvdimm_bus = container_of(dev, काष्ठा nvdimm_bus, dev);
 	WARN_ON(!is_nvdimm_bus(dev));
-	return nvdimm_bus;
-}
+	वापस nvdimm_bus;
+पूर्ण
 EXPORT_SYMBOL_GPL(to_nvdimm_bus);
 
-struct nvdimm_bus *nvdimm_to_bus(struct nvdimm *nvdimm)
-{
-	return to_nvdimm_bus(nvdimm->dev.parent);
-}
+काष्ठा nvdimm_bus *nvdimm_to_bus(काष्ठा nvdimm *nvdimm)
+अणु
+	वापस to_nvdimm_bus(nvdimm->dev.parent);
+पूर्ण
 EXPORT_SYMBOL_GPL(nvdimm_to_bus);
 
-struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
-		struct nvdimm_bus_descriptor *nd_desc)
-{
-	struct nvdimm_bus *nvdimm_bus;
-	int rc;
+काष्ठा nvdimm_bus *nvdimm_bus_रेजिस्टर(काष्ठा device *parent,
+		काष्ठा nvdimm_bus_descriptor *nd_desc)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus;
+	पूर्णांक rc;
 
-	nvdimm_bus = kzalloc(sizeof(*nvdimm_bus), GFP_KERNEL);
-	if (!nvdimm_bus)
-		return NULL;
+	nvdimm_bus = kzalloc(माप(*nvdimm_bus), GFP_KERNEL);
+	अगर (!nvdimm_bus)
+		वापस शून्य;
 	INIT_LIST_HEAD(&nvdimm_bus->list);
 	INIT_LIST_HEAD(&nvdimm_bus->mapping_list);
-	init_waitqueue_head(&nvdimm_bus->wait);
+	init_रुकोqueue_head(&nvdimm_bus->रुको);
 	nvdimm_bus->id = ida_simple_get(&nd_ida, 0, 0, GFP_KERNEL);
-	if (nvdimm_bus->id < 0) {
-		kfree(nvdimm_bus);
-		return NULL;
-	}
+	अगर (nvdimm_bus->id < 0) अणु
+		kमुक्त(nvdimm_bus);
+		वापस शून्य;
+	पूर्ण
 	mutex_init(&nvdimm_bus->reconfig_mutex);
 	badrange_init(&nvdimm_bus->badrange);
 	nvdimm_bus->nd_desc = nd_desc;
@@ -364,97 +365,97 @@ struct nvdimm_bus *nvdimm_bus_register(struct device *parent,
 	nvdimm_bus->dev.bus = &nvdimm_bus_type;
 	nvdimm_bus->dev.of_node = nd_desc->of_node;
 	dev_set_name(&nvdimm_bus->dev, "ndbus%d", nvdimm_bus->id);
-	rc = device_register(&nvdimm_bus->dev);
-	if (rc) {
+	rc = device_रेजिस्टर(&nvdimm_bus->dev);
+	अगर (rc) अणु
 		dev_dbg(&nvdimm_bus->dev, "registration failed: %d\n", rc);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return nvdimm_bus;
+	वापस nvdimm_bus;
  err:
 	put_device(&nvdimm_bus->dev);
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(nvdimm_bus_register);
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(nvdimm_bus_रेजिस्टर);
 
-void nvdimm_bus_unregister(struct nvdimm_bus *nvdimm_bus)
-{
-	if (!nvdimm_bus)
-		return;
-	device_unregister(&nvdimm_bus->dev);
-}
-EXPORT_SYMBOL_GPL(nvdimm_bus_unregister);
+व्योम nvdimm_bus_unरेजिस्टर(काष्ठा nvdimm_bus *nvdimm_bus)
+अणु
+	अगर (!nvdimm_bus)
+		वापस;
+	device_unरेजिस्टर(&nvdimm_bus->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(nvdimm_bus_unरेजिस्टर);
 
-static int child_unregister(struct device *dev, void *data)
-{
+अटल पूर्णांक child_unरेजिस्टर(काष्ठा device *dev, व्योम *data)
+अणु
 	/*
 	 * the singular ndctl class device per bus needs to be
 	 * "device_destroy"ed, so skip it here
 	 *
-	 * i.e. remove classless children
+	 * i.e. हटाओ classless children
 	 */
-	if (dev->class)
-		return 0;
+	अगर (dev->class)
+		वापस 0;
 
-	if (is_nvdimm(dev)) {
-		struct nvdimm *nvdimm = to_nvdimm(dev);
+	अगर (is_nvdimm(dev)) अणु
+		काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
 		bool dev_put = false;
 
-		/* We are shutting down. Make state frozen artificially. */
+		/* We are shutting करोwn. Make state frozen artअगरicially. */
 		nvdimm_bus_lock(dev);
 		set_bit(NVDIMM_SECURITY_FROZEN, &nvdimm->sec.flags);
-		if (test_and_clear_bit(NDD_WORK_PENDING, &nvdimm->flags))
+		अगर (test_and_clear_bit(NDD_WORK_PENDING, &nvdimm->flags))
 			dev_put = true;
 		nvdimm_bus_unlock(dev);
 		cancel_delayed_work_sync(&nvdimm->dwork);
-		if (dev_put)
+		अगर (dev_put)
 			put_device(dev);
-	}
-	nd_device_unregister(dev, ND_SYNC);
+	पूर्ण
+	nd_device_unरेजिस्टर(dev, ND_SYNC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_badrange_list(struct list_head *badrange_list)
-{
-	struct badrange_entry *bre, *next;
+अटल व्योम मुक्त_badrange_list(काष्ठा list_head *badrange_list)
+अणु
+	काष्ठा badrange_entry *bre, *next;
 
-	list_for_each_entry_safe(bre, next, badrange_list, list) {
+	list_क्रम_each_entry_safe(bre, next, badrange_list, list) अणु
 		list_del(&bre->list);
-		kfree(bre);
-	}
+		kमुक्त(bre);
+	पूर्ण
 	list_del_init(badrange_list);
-}
+पूर्ण
 
-static void nd_bus_remove(struct device *dev)
-{
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+अटल व्योम nd_bus_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
 
 	mutex_lock(&nvdimm_bus_list_mutex);
 	list_del_init(&nvdimm_bus->list);
 	mutex_unlock(&nvdimm_bus_list_mutex);
 
-	wait_event(nvdimm_bus->wait,
-			atomic_read(&nvdimm_bus->ioctl_active) == 0);
+	रुको_event(nvdimm_bus->रुको,
+			atomic_पढ़ो(&nvdimm_bus->ioctl_active) == 0);
 
 	nd_synchronize();
-	device_for_each_child(&nvdimm_bus->dev, NULL, child_unregister);
+	device_क्रम_each_child(&nvdimm_bus->dev, शून्य, child_unरेजिस्टर);
 
 	spin_lock(&nvdimm_bus->badrange.lock);
-	free_badrange_list(&nvdimm_bus->badrange.list);
+	मुक्त_badrange_list(&nvdimm_bus->badrange.list);
 	spin_unlock(&nvdimm_bus->badrange.lock);
 
 	nvdimm_bus_destroy_ndctl(nvdimm_bus);
-}
+पूर्ण
 
-static int nd_bus_probe(struct device *dev)
-{
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	int rc;
+अटल पूर्णांक nd_bus_probe(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	पूर्णांक rc;
 
 	rc = nvdimm_bus_create_ndctl(nvdimm_bus);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	mutex_lock(&nvdimm_bus_list_mutex);
 	list_add_tail(&nvdimm_bus->list, &nvdimm_bus_list);
@@ -463,68 +464,68 @@ static int nd_bus_probe(struct device *dev)
 	/* enable bus provider attributes to look up their local context */
 	dev_set_drvdata(dev, nvdimm_bus->nd_desc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct nd_device_driver nd_bus_driver = {
+अटल काष्ठा nd_device_driver nd_bus_driver = अणु
 	.probe = nd_bus_probe,
-	.remove = nd_bus_remove,
-	.drv = {
+	.हटाओ = nd_bus_हटाओ,
+	.drv = अणु
 		.name = "nd_bus",
 		.suppress_bind_attrs = true,
 		.bus = &nvdimm_bus_type,
 		.owner = THIS_MODULE,
 		.mod_name = KBUILD_MODNAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int nvdimm_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct nd_device_driver *nd_drv = to_nd_device_driver(drv);
+अटल पूर्णांक nvdimm_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा nd_device_driver *nd_drv = to_nd_device_driver(drv);
 
-	if (is_nvdimm_bus(dev) && nd_drv == &nd_bus_driver)
-		return true;
+	अगर (is_nvdimm_bus(dev) && nd_drv == &nd_bus_driver)
+		वापस true;
 
-	return !!test_bit(to_nd_device_type(dev), &nd_drv->type);
-}
+	वापस !!test_bit(to_nd_device_type(dev), &nd_drv->type);
+पूर्ण
 
-static ASYNC_DOMAIN_EXCLUSIVE(nd_async_domain);
+अटल ASYNC_DOMAIN_EXCLUSIVE(nd_async_करोमुख्य);
 
-void nd_synchronize(void)
-{
-	async_synchronize_full_domain(&nd_async_domain);
-}
+व्योम nd_synchronize(व्योम)
+अणु
+	async_synchronize_full_करोमुख्य(&nd_async_करोमुख्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(nd_synchronize);
 
-static void nd_async_device_register(void *d, async_cookie_t cookie)
-{
-	struct device *dev = d;
+अटल व्योम nd_async_device_रेजिस्टर(व्योम *d, async_cookie_t cookie)
+अणु
+	काष्ठा device *dev = d;
 
-	if (device_add(dev) != 0) {
+	अगर (device_add(dev) != 0) अणु
 		dev_err(dev, "%s: failed\n", __func__);
 		put_device(dev);
-	}
+	पूर्ण
 	put_device(dev);
-	if (dev->parent)
+	अगर (dev->parent)
 		put_device(dev->parent);
-}
+पूर्ण
 
-static void nd_async_device_unregister(void *d, async_cookie_t cookie)
-{
-	struct device *dev = d;
+अटल व्योम nd_async_device_unरेजिस्टर(व्योम *d, async_cookie_t cookie)
+अणु
+	काष्ठा device *dev = d;
 
-	/* flush bus operations before delete */
+	/* flush bus operations beक्रमe delete */
 	nvdimm_bus_lock(dev);
 	nvdimm_bus_unlock(dev);
 
-	device_unregister(dev);
+	device_unरेजिस्टर(dev);
 	put_device(dev);
-}
+पूर्ण
 
-void __nd_device_register(struct device *dev)
-{
-	if (!dev)
-		return;
+व्योम __nd_device_रेजिस्टर(काष्ठा device *dev)
+अणु
+	अगर (!dev)
+		वापस;
 
 	/*
 	 * Ensure that region devices always have their NUMA node set as
@@ -532,803 +533,803 @@ void __nd_device_register(struct device *dev)
 	 * any memory associated with the creation and the creation
 	 * itself of the region is associated with the correct node.
 	 */
-	if (is_nd_region(dev))
+	अगर (is_nd_region(dev))
 		set_dev_node(dev, to_nd_region(dev)->numa_node);
 
 	dev->bus = &nvdimm_bus_type;
-	if (dev->parent) {
+	अगर (dev->parent) अणु
 		get_device(dev->parent);
-		if (dev_to_node(dev) == NUMA_NO_NODE)
+		अगर (dev_to_node(dev) == NUMA_NO_NODE)
 			set_dev_node(dev, dev_to_node(dev->parent));
-	}
+	पूर्ण
 	get_device(dev);
 
-	async_schedule_dev_domain(nd_async_device_register, dev,
-				  &nd_async_domain);
-}
+	async_schedule_dev_करोमुख्य(nd_async_device_रेजिस्टर, dev,
+				  &nd_async_करोमुख्य);
+पूर्ण
 
-void nd_device_register(struct device *dev)
-{
+व्योम nd_device_रेजिस्टर(काष्ठा device *dev)
+अणु
 	device_initialize(dev);
-	__nd_device_register(dev);
-}
-EXPORT_SYMBOL(nd_device_register);
+	__nd_device_रेजिस्टर(dev);
+पूर्ण
+EXPORT_SYMBOL(nd_device_रेजिस्टर);
 
-void nd_device_unregister(struct device *dev, enum nd_async_mode mode)
-{
-	bool killed;
+व्योम nd_device_unरेजिस्टर(काष्ठा device *dev, क्रमागत nd_async_mode mode)
+अणु
+	bool समाप्तed;
 
-	switch (mode) {
-	case ND_ASYNC:
+	चयन (mode) अणु
+	हाल ND_ASYNC:
 		/*
-		 * In the async case this is being triggered with the
+		 * In the async हाल this is being triggered with the
 		 * device lock held and the unregistration work needs to
-		 * be moved out of line iff this is thread has won the
+		 * be moved out of line अगरf this is thपढ़ो has won the
 		 * race to schedule the deletion.
 		 */
-		if (!kill_device(dev))
-			return;
+		अगर (!समाप्त_device(dev))
+			वापस;
 
 		get_device(dev);
-		async_schedule_domain(nd_async_device_unregister, dev,
-				&nd_async_domain);
-		break;
-	case ND_SYNC:
+		async_schedule_करोमुख्य(nd_async_device_unरेजिस्टर, dev,
+				&nd_async_करोमुख्य);
+		अवरोध;
+	हाल ND_SYNC:
 		/*
-		 * In the sync case the device is being unregistered due
-		 * to a state change of the parent. Claim the kill state
+		 * In the sync हाल the device is being unरेजिस्टरed due
+		 * to a state change of the parent. Claim the समाप्त state
 		 * to synchronize against other unregistration requests,
-		 * or otherwise let the async path handle it if the
-		 * unregistration was already queued.
+		 * or otherwise let the async path handle it अगर the
+		 * unregistration was alपढ़ोy queued.
 		 */
 		nd_device_lock(dev);
-		killed = kill_device(dev);
+		समाप्तed = समाप्त_device(dev);
 		nd_device_unlock(dev);
 
-		if (!killed)
-			return;
+		अगर (!समाप्तed)
+			वापस;
 
 		nd_synchronize();
-		device_unregister(dev);
-		break;
-	}
-}
-EXPORT_SYMBOL(nd_device_unregister);
+		device_unरेजिस्टर(dev);
+		अवरोध;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(nd_device_unरेजिस्टर);
 
 /**
- * __nd_driver_register() - register a region or a namespace driver
- * @nd_drv: driver to register
- * @owner: automatically set by nd_driver_register() macro
- * @mod_name: automatically set by nd_driver_register() macro
+ * __nd_driver_रेजिस्टर() - रेजिस्टर a region or a namespace driver
+ * @nd_drv: driver to रेजिस्टर
+ * @owner: स्वतःmatically set by nd_driver_रेजिस्टर() macro
+ * @mod_name: स्वतःmatically set by nd_driver_रेजिस्टर() macro
  */
-int __nd_driver_register(struct nd_device_driver *nd_drv, struct module *owner,
-		const char *mod_name)
-{
-	struct device_driver *drv = &nd_drv->drv;
+पूर्णांक __nd_driver_रेजिस्टर(काष्ठा nd_device_driver *nd_drv, काष्ठा module *owner,
+		स्थिर अक्षर *mod_name)
+अणु
+	काष्ठा device_driver *drv = &nd_drv->drv;
 
-	if (!nd_drv->type) {
+	अगर (!nd_drv->type) अणु
 		pr_debug("driver type bitmask not set (%ps)\n",
-				__builtin_return_address(0));
-		return -EINVAL;
-	}
+				__builtin_वापस_address(0));
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!nd_drv->probe) {
+	अगर (!nd_drv->probe) अणु
 		pr_debug("%s ->probe() must be specified\n", mod_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	drv->bus = &nvdimm_bus_type;
 	drv->owner = owner;
 	drv->mod_name = mod_name;
 
-	return driver_register(drv);
-}
-EXPORT_SYMBOL(__nd_driver_register);
+	वापस driver_रेजिस्टर(drv);
+पूर्ण
+EXPORT_SYMBOL(__nd_driver_रेजिस्टर);
 
-void nvdimm_check_and_set_ro(struct gendisk *disk)
-{
-	struct device *dev = disk_to_dev(disk)->parent;
-	struct nd_region *nd_region = to_nd_region(dev->parent);
-	int disk_ro = get_disk_ro(disk);
+व्योम nvdimm_check_and_set_ro(काष्ठा gendisk *disk)
+अणु
+	काष्ठा device *dev = disk_to_dev(disk)->parent;
+	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
+	पूर्णांक disk_ro = get_disk_ro(disk);
 
 	/* catch the disk up with the region ro state */
-	if (disk_ro == nd_region->ro)
-		return;
+	अगर (disk_ro == nd_region->ro)
+		वापस;
 
 	dev_info(dev, "%s read-%s, marking %s read-%s\n",
 		 dev_name(&nd_region->dev), nd_region->ro ? "only" : "write",
 		 disk->disk_name, nd_region->ro ? "only" : "write");
 	set_disk_ro(disk, nd_region->ro);
-}
+पूर्ण
 EXPORT_SYMBOL(nvdimm_check_and_set_ro);
 
-static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	return sprintf(buf, ND_DEVICE_MODALIAS_FMT "\n",
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, ND_DEVICE_MODALIAS_FMT "\n",
 			to_nd_device_type(dev));
-}
-static DEVICE_ATTR_RO(modalias);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static ssize_t devtype_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	return sprintf(buf, "%s\n", dev->type->name);
-}
-static DEVICE_ATTR_RO(devtype);
+अटल sमाप_प्रकार devtype_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", dev->type->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(devtype);
 
-static struct attribute *nd_device_attributes[] = {
+अटल काष्ठा attribute *nd_device_attributes[] = अणु
 	&dev_attr_modalias.attr,
 	&dev_attr_devtype.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*
- * nd_device_attribute_group - generic attributes for all devices on an nd bus
+ * nd_device_attribute_group - generic attributes क्रम all devices on an nd bus
  */
-const struct attribute_group nd_device_attribute_group = {
+स्थिर काष्ठा attribute_group nd_device_attribute_group = अणु
 	.attrs = nd_device_attributes,
-};
+पूर्ण;
 
-static ssize_t numa_node_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", dev_to_node(dev));
-}
-static DEVICE_ATTR_RO(numa_node);
+अटल sमाप_प्रकार numa_node_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", dev_to_node(dev));
+पूर्ण
+अटल DEVICE_ATTR_RO(numa_node);
 
-static int nvdimm_dev_to_target_node(struct device *dev)
-{
-	struct device *parent = dev->parent;
-	struct nd_region *nd_region = NULL;
+अटल पूर्णांक nvdimm_dev_to_target_node(काष्ठा device *dev)
+अणु
+	काष्ठा device *parent = dev->parent;
+	काष्ठा nd_region *nd_region = शून्य;
 
-	if (is_nd_region(dev))
+	अगर (is_nd_region(dev))
 		nd_region = to_nd_region(dev);
-	else if (parent && is_nd_region(parent))
+	अन्यथा अगर (parent && is_nd_region(parent))
 		nd_region = to_nd_region(parent);
 
-	if (!nd_region)
-		return NUMA_NO_NODE;
-	return nd_region->target_node;
-}
+	अगर (!nd_region)
+		वापस NUMA_NO_NODE;
+	वापस nd_region->target_node;
+पूर्ण
 
-static ssize_t target_node_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", nvdimm_dev_to_target_node(dev));
-}
-static DEVICE_ATTR_RO(target_node);
+अटल sमाप_प्रकार target_node_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", nvdimm_dev_to_target_node(dev));
+पूर्ण
+अटल DEVICE_ATTR_RO(target_node);
 
-static struct attribute *nd_numa_attributes[] = {
+अटल काष्ठा attribute *nd_numa_attributes[] = अणु
 	&dev_attr_numa_node.attr,
 	&dev_attr_target_node.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static umode_t nd_numa_attr_visible(struct kobject *kobj, struct attribute *a,
-		int n)
-{
-	struct device *dev = container_of(kobj, typeof(*dev), kobj);
+अटल umode_t nd_numa_attr_visible(काष्ठा kobject *kobj, काष्ठा attribute *a,
+		पूर्णांक n)
+अणु
+	काष्ठा device *dev = container_of(kobj, typeof(*dev), kobj);
 
-	if (!IS_ENABLED(CONFIG_NUMA))
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_NUMA))
+		वापस 0;
 
-	if (a == &dev_attr_target_node.attr &&
+	अगर (a == &dev_attr_target_node.attr &&
 			nvdimm_dev_to_target_node(dev) == NUMA_NO_NODE)
-		return 0;
+		वापस 0;
 
-	return a->mode;
-}
+	वापस a->mode;
+पूर्ण
 
 /*
- * nd_numa_attribute_group - NUMA attributes for all devices on an nd bus
+ * nd_numa_attribute_group - NUMA attributes क्रम all devices on an nd bus
  */
-const struct attribute_group nd_numa_attribute_group = {
+स्थिर काष्ठा attribute_group nd_numa_attribute_group = अणु
 	.attrs = nd_numa_attributes,
 	.is_visible = nd_numa_attr_visible,
-};
+पूर्ण;
 
-int nvdimm_bus_create_ndctl(struct nvdimm_bus *nvdimm_bus)
-{
+पूर्णांक nvdimm_bus_create_ndctl(काष्ठा nvdimm_bus *nvdimm_bus)
+अणु
 	dev_t devt = MKDEV(nvdimm_bus_major, nvdimm_bus->id);
-	struct device *dev;
+	काष्ठा device *dev;
 
 	dev = device_create(nd_class, &nvdimm_bus->dev, devt, nvdimm_bus,
 			"ndctl%d", nvdimm_bus->id);
 
-	if (IS_ERR(dev))
+	अगर (IS_ERR(dev))
 		dev_dbg(&nvdimm_bus->dev, "failed to register ndctl%d: %ld\n",
 				nvdimm_bus->id, PTR_ERR(dev));
-	return PTR_ERR_OR_ZERO(dev);
-}
+	वापस PTR_ERR_OR_ZERO(dev);
+पूर्ण
 
-void nvdimm_bus_destroy_ndctl(struct nvdimm_bus *nvdimm_bus)
-{
+व्योम nvdimm_bus_destroy_ndctl(काष्ठा nvdimm_bus *nvdimm_bus)
+अणु
 	device_destroy(nd_class, MKDEV(nvdimm_bus_major, nvdimm_bus->id));
-}
+पूर्ण
 
-static const struct nd_cmd_desc __nd_cmd_dimm_descs[] = {
-	[ND_CMD_IMPLEMENTED] = { },
-	[ND_CMD_SMART] = {
+अटल स्थिर काष्ठा nd_cmd_desc __nd_cmd_dimm_descs[] = अणु
+	[ND_CMD_IMPLEMENTED] = अणु पूर्ण,
+	[ND_CMD_SMART] = अणु
 		.out_num = 2,
-		.out_sizes = { 4, 128, },
-	},
-	[ND_CMD_SMART_THRESHOLD] = {
+		.out_sizes = अणु 4, 128, पूर्ण,
+	पूर्ण,
+	[ND_CMD_SMART_THRESHOLD] = अणु
 		.out_num = 2,
-		.out_sizes = { 4, 8, },
-	},
-	[ND_CMD_DIMM_FLAGS] = {
+		.out_sizes = अणु 4, 8, पूर्ण,
+	पूर्ण,
+	[ND_CMD_DIMM_FLAGS] = अणु
 		.out_num = 2,
-		.out_sizes = { 4, 4 },
-	},
-	[ND_CMD_GET_CONFIG_SIZE] = {
+		.out_sizes = अणु 4, 4 पूर्ण,
+	पूर्ण,
+	[ND_CMD_GET_CONFIG_SIZE] = अणु
 		.out_num = 3,
-		.out_sizes = { 4, 4, 4, },
-	},
-	[ND_CMD_GET_CONFIG_DATA] = {
+		.out_sizes = अणु 4, 4, 4, पूर्ण,
+	पूर्ण,
+	[ND_CMD_GET_CONFIG_DATA] = अणु
 		.in_num = 2,
-		.in_sizes = { 4, 4, },
+		.in_sizes = अणु 4, 4, पूर्ण,
 		.out_num = 2,
-		.out_sizes = { 4, UINT_MAX, },
-	},
-	[ND_CMD_SET_CONFIG_DATA] = {
+		.out_sizes = अणु 4, अच_पूर्णांक_उच्च, पूर्ण,
+	पूर्ण,
+	[ND_CMD_SET_CONFIG_DATA] = अणु
 		.in_num = 3,
-		.in_sizes = { 4, 4, UINT_MAX, },
+		.in_sizes = अणु 4, 4, अच_पूर्णांक_उच्च, पूर्ण,
 		.out_num = 1,
-		.out_sizes = { 4, },
-	},
-	[ND_CMD_VENDOR] = {
+		.out_sizes = अणु 4, पूर्ण,
+	पूर्ण,
+	[ND_CMD_VENDOR] = अणु
 		.in_num = 3,
-		.in_sizes = { 4, 4, UINT_MAX, },
+		.in_sizes = अणु 4, 4, अच_पूर्णांक_उच्च, पूर्ण,
 		.out_num = 3,
-		.out_sizes = { 4, 4, UINT_MAX, },
-	},
-	[ND_CMD_CALL] = {
+		.out_sizes = अणु 4, 4, अच_पूर्णांक_उच्च, पूर्ण,
+	पूर्ण,
+	[ND_CMD_CALL] = अणु
 		.in_num = 2,
-		.in_sizes = { sizeof(struct nd_cmd_pkg), UINT_MAX, },
+		.in_sizes = अणु माप(काष्ठा nd_cmd_pkg), अच_पूर्णांक_उच्च, पूर्ण,
 		.out_num = 1,
-		.out_sizes = { UINT_MAX, },
-	},
-};
+		.out_sizes = अणु अच_पूर्णांक_उच्च, पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-const struct nd_cmd_desc *nd_cmd_dimm_desc(int cmd)
-{
-	if (cmd < ARRAY_SIZE(__nd_cmd_dimm_descs))
-		return &__nd_cmd_dimm_descs[cmd];
-	return NULL;
-}
+स्थिर काष्ठा nd_cmd_desc *nd_cmd_dimm_desc(पूर्णांक cmd)
+अणु
+	अगर (cmd < ARRAY_SIZE(__nd_cmd_dimm_descs))
+		वापस &__nd_cmd_dimm_descs[cmd];
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(nd_cmd_dimm_desc);
 
-static const struct nd_cmd_desc __nd_cmd_bus_descs[] = {
-	[ND_CMD_IMPLEMENTED] = { },
-	[ND_CMD_ARS_CAP] = {
+अटल स्थिर काष्ठा nd_cmd_desc __nd_cmd_bus_descs[] = अणु
+	[ND_CMD_IMPLEMENTED] = अणु पूर्ण,
+	[ND_CMD_ARS_CAP] = अणु
 		.in_num = 2,
-		.in_sizes = { 8, 8, },
+		.in_sizes = अणु 8, 8, पूर्ण,
 		.out_num = 4,
-		.out_sizes = { 4, 4, 4, 4, },
-	},
-	[ND_CMD_ARS_START] = {
+		.out_sizes = अणु 4, 4, 4, 4, पूर्ण,
+	पूर्ण,
+	[ND_CMD_ARS_START] = अणु
 		.in_num = 5,
-		.in_sizes = { 8, 8, 2, 1, 5, },
+		.in_sizes = अणु 8, 8, 2, 1, 5, पूर्ण,
 		.out_num = 2,
-		.out_sizes = { 4, 4, },
-	},
-	[ND_CMD_ARS_STATUS] = {
+		.out_sizes = अणु 4, 4, पूर्ण,
+	पूर्ण,
+	[ND_CMD_ARS_STATUS] = अणु
 		.out_num = 3,
-		.out_sizes = { 4, 4, UINT_MAX, },
-	},
-	[ND_CMD_CLEAR_ERROR] = {
+		.out_sizes = अणु 4, 4, अच_पूर्णांक_उच्च, पूर्ण,
+	पूर्ण,
+	[ND_CMD_CLEAR_ERROR] = अणु
 		.in_num = 2,
-		.in_sizes = { 8, 8, },
+		.in_sizes = अणु 8, 8, पूर्ण,
 		.out_num = 3,
-		.out_sizes = { 4, 4, 8, },
-	},
-	[ND_CMD_CALL] = {
+		.out_sizes = अणु 4, 4, 8, पूर्ण,
+	पूर्ण,
+	[ND_CMD_CALL] = अणु
 		.in_num = 2,
-		.in_sizes = { sizeof(struct nd_cmd_pkg), UINT_MAX, },
+		.in_sizes = अणु माप(काष्ठा nd_cmd_pkg), अच_पूर्णांक_उच्च, पूर्ण,
 		.out_num = 1,
-		.out_sizes = { UINT_MAX, },
-	},
-};
+		.out_sizes = अणु अच_पूर्णांक_उच्च, पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-const struct nd_cmd_desc *nd_cmd_bus_desc(int cmd)
-{
-	if (cmd < ARRAY_SIZE(__nd_cmd_bus_descs))
-		return &__nd_cmd_bus_descs[cmd];
-	return NULL;
-}
+स्थिर काष्ठा nd_cmd_desc *nd_cmd_bus_desc(पूर्णांक cmd)
+अणु
+	अगर (cmd < ARRAY_SIZE(__nd_cmd_bus_descs))
+		वापस &__nd_cmd_bus_descs[cmd];
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(nd_cmd_bus_desc);
 
-u32 nd_cmd_in_size(struct nvdimm *nvdimm, int cmd,
-		const struct nd_cmd_desc *desc, int idx, void *buf)
-{
-	if (idx >= desc->in_num)
-		return UINT_MAX;
+u32 nd_cmd_in_size(काष्ठा nvdimm *nvdimm, पूर्णांक cmd,
+		स्थिर काष्ठा nd_cmd_desc *desc, पूर्णांक idx, व्योम *buf)
+अणु
+	अगर (idx >= desc->in_num)
+		वापस अच_पूर्णांक_उच्च;
 
-	if (desc->in_sizes[idx] < UINT_MAX)
-		return desc->in_sizes[idx];
+	अगर (desc->in_sizes[idx] < अच_पूर्णांक_उच्च)
+		वापस desc->in_sizes[idx];
 
-	if (nvdimm && cmd == ND_CMD_SET_CONFIG_DATA && idx == 2) {
-		struct nd_cmd_set_config_hdr *hdr = buf;
+	अगर (nvdimm && cmd == ND_CMD_SET_CONFIG_DATA && idx == 2) अणु
+		काष्ठा nd_cmd_set_config_hdr *hdr = buf;
 
-		return hdr->in_length;
-	} else if (nvdimm && cmd == ND_CMD_VENDOR && idx == 2) {
-		struct nd_cmd_vendor_hdr *hdr = buf;
+		वापस hdr->in_length;
+	पूर्ण अन्यथा अगर (nvdimm && cmd == ND_CMD_VENDOR && idx == 2) अणु
+		काष्ठा nd_cmd_venकरोr_hdr *hdr = buf;
 
-		return hdr->in_length;
-	} else if (cmd == ND_CMD_CALL) {
-		struct nd_cmd_pkg *pkg = buf;
+		वापस hdr->in_length;
+	पूर्ण अन्यथा अगर (cmd == ND_CMD_CALL) अणु
+		काष्ठा nd_cmd_pkg *pkg = buf;
 
-		return pkg->nd_size_in;
-	}
+		वापस pkg->nd_size_in;
+	पूर्ण
 
-	return UINT_MAX;
-}
+	वापस अच_पूर्णांक_उच्च;
+पूर्ण
 EXPORT_SYMBOL_GPL(nd_cmd_in_size);
 
-u32 nd_cmd_out_size(struct nvdimm *nvdimm, int cmd,
-		const struct nd_cmd_desc *desc, int idx, const u32 *in_field,
-		const u32 *out_field, unsigned long remainder)
-{
-	if (idx >= desc->out_num)
-		return UINT_MAX;
+u32 nd_cmd_out_size(काष्ठा nvdimm *nvdimm, पूर्णांक cmd,
+		स्थिर काष्ठा nd_cmd_desc *desc, पूर्णांक idx, स्थिर u32 *in_field,
+		स्थिर u32 *out_field, अचिन्हित दीर्घ reमुख्यder)
+अणु
+	अगर (idx >= desc->out_num)
+		वापस अच_पूर्णांक_उच्च;
 
-	if (desc->out_sizes[idx] < UINT_MAX)
-		return desc->out_sizes[idx];
+	अगर (desc->out_sizes[idx] < अच_पूर्णांक_उच्च)
+		वापस desc->out_sizes[idx];
 
-	if (nvdimm && cmd == ND_CMD_GET_CONFIG_DATA && idx == 1)
-		return in_field[1];
-	else if (nvdimm && cmd == ND_CMD_VENDOR && idx == 2)
-		return out_field[1];
-	else if (!nvdimm && cmd == ND_CMD_ARS_STATUS && idx == 2) {
+	अगर (nvdimm && cmd == ND_CMD_GET_CONFIG_DATA && idx == 1)
+		वापस in_field[1];
+	अन्यथा अगर (nvdimm && cmd == ND_CMD_VENDOR && idx == 2)
+		वापस out_field[1];
+	अन्यथा अगर (!nvdimm && cmd == ND_CMD_ARS_STATUS && idx == 2) अणु
 		/*
 		 * Per table 9-276 ARS Data in ACPI 6.1, out_field[1] is
 		 * "Size of Output Buffer in bytes, including this
 		 * field."
 		 */
-		if (out_field[1] < 4)
-			return 0;
+		अगर (out_field[1] < 4)
+			वापस 0;
 		/*
-		 * ACPI 6.1 is ambiguous if 'status' is included in the
+		 * ACPI 6.1 is ambiguous अगर 'status' is included in the
 		 * output size. If we encounter an output size that
-		 * overshoots the remainder by 4 bytes, assume it was
+		 * overshoots the reमुख्यder by 4 bytes, assume it was
 		 * including 'status'.
 		 */
-		if (out_field[1] - 4 == remainder)
-			return remainder;
-		return out_field[1] - 8;
-	} else if (cmd == ND_CMD_CALL) {
-		struct nd_cmd_pkg *pkg = (struct nd_cmd_pkg *) in_field;
+		अगर (out_field[1] - 4 == reमुख्यder)
+			वापस reमुख्यder;
+		वापस out_field[1] - 8;
+	पूर्ण अन्यथा अगर (cmd == ND_CMD_CALL) अणु
+		काष्ठा nd_cmd_pkg *pkg = (काष्ठा nd_cmd_pkg *) in_field;
 
-		return pkg->nd_size_out;
-	}
+		वापस pkg->nd_size_out;
+	पूर्ण
 
 
-	return UINT_MAX;
-}
+	वापस अच_पूर्णांक_उच्च;
+पूर्ण
 EXPORT_SYMBOL_GPL(nd_cmd_out_size);
 
-void wait_nvdimm_bus_probe_idle(struct device *dev)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+व्योम रुको_nvdimm_bus_probe_idle(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
 
-	do {
-		if (nvdimm_bus->probe_active == 0)
-			break;
+	करो अणु
+		अगर (nvdimm_bus->probe_active == 0)
+			अवरोध;
 		nvdimm_bus_unlock(dev);
 		nd_device_unlock(dev);
-		wait_event(nvdimm_bus->wait,
+		रुको_event(nvdimm_bus->रुको,
 				nvdimm_bus->probe_active == 0);
 		nd_device_lock(dev);
 		nvdimm_bus_lock(dev);
-	} while (true);
-}
+	पूर्ण जबतक (true);
+पूर्ण
 
-static int nd_pmem_forget_poison_check(struct device *dev, void *data)
-{
-	struct nd_cmd_clear_error *clear_err =
-		(struct nd_cmd_clear_error *)data;
-	struct nd_btt *nd_btt = is_nd_btt(dev) ? to_nd_btt(dev) : NULL;
-	struct nd_pfn *nd_pfn = is_nd_pfn(dev) ? to_nd_pfn(dev) : NULL;
-	struct nd_dax *nd_dax = is_nd_dax(dev) ? to_nd_dax(dev) : NULL;
-	struct nd_namespace_common *ndns = NULL;
-	struct nd_namespace_io *nsio;
-	resource_size_t offset = 0, end_trunc = 0, start, end, pstart, pend;
+अटल पूर्णांक nd_pmem_क्रमget_poison_check(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा nd_cmd_clear_error *clear_err =
+		(काष्ठा nd_cmd_clear_error *)data;
+	काष्ठा nd_btt *nd_btt = is_nd_btt(dev) ? to_nd_btt(dev) : शून्य;
+	काष्ठा nd_pfn *nd_pfn = is_nd_pfn(dev) ? to_nd_pfn(dev) : शून्य;
+	काष्ठा nd_dax *nd_dax = is_nd_dax(dev) ? to_nd_dax(dev) : शून्य;
+	काष्ठा nd_namespace_common *ndns = शून्य;
+	काष्ठा nd_namespace_io *nsio;
+	resource_माप_प्रकार offset = 0, end_trunc = 0, start, end, pstart, pend;
 
-	if (nd_dax || !dev->driver)
-		return 0;
+	अगर (nd_dax || !dev->driver)
+		वापस 0;
 
 	start = clear_err->address;
 	end = clear_err->address + clear_err->cleared - 1;
 
-	if (nd_btt || nd_pfn || nd_dax) {
-		if (nd_btt)
+	अगर (nd_btt || nd_pfn || nd_dax) अणु
+		अगर (nd_btt)
 			ndns = nd_btt->ndns;
-		else if (nd_pfn)
+		अन्यथा अगर (nd_pfn)
 			ndns = nd_pfn->ndns;
-		else if (nd_dax)
+		अन्यथा अगर (nd_dax)
 			ndns = nd_dax->nd_pfn.ndns;
 
-		if (!ndns)
-			return 0;
-	} else
+		अगर (!ndns)
+			वापस 0;
+	पूर्ण अन्यथा
 		ndns = to_ndns(dev);
 
 	nsio = to_nd_namespace_io(&ndns->dev);
 	pstart = nsio->res.start + offset;
 	pend = nsio->res.end - end_trunc;
 
-	if ((pstart >= start) && (pend <= end))
-		return -EBUSY;
+	अगर ((pstart >= start) && (pend <= end))
+		वापस -EBUSY;
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int nd_ns_forget_poison_check(struct device *dev, void *data)
-{
-	return device_for_each_child(dev, data, nd_pmem_forget_poison_check);
-}
+अटल पूर्णांक nd_ns_क्रमget_poison_check(काष्ठा device *dev, व्योम *data)
+अणु
+	वापस device_क्रम_each_child(dev, data, nd_pmem_क्रमget_poison_check);
+पूर्ण
 
-/* set_config requires an idle interleave set */
-static int nd_cmd_clear_to_send(struct nvdimm_bus *nvdimm_bus,
-		struct nvdimm *nvdimm, unsigned int cmd, void *data)
-{
-	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
+/* set_config requires an idle पूर्णांकerleave set */
+अटल पूर्णांक nd_cmd_clear_to_send(काष्ठा nvdimm_bus *nvdimm_bus,
+		काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक cmd, व्योम *data)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
 
-	/* ask the bus provider if it would like to block this request */
-	if (nd_desc->clear_to_send) {
-		int rc = nd_desc->clear_to_send(nd_desc, nvdimm, cmd, data);
+	/* ask the bus provider अगर it would like to block this request */
+	अगर (nd_desc->clear_to_send) अणु
+		पूर्णांक rc = nd_desc->clear_to_send(nd_desc, nvdimm, cmd, data);
 
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	/* require clear error to go through the pmem driver */
-	if (!nvdimm && cmd == ND_CMD_CLEAR_ERROR)
-		return device_for_each_child(&nvdimm_bus->dev, data,
-				nd_ns_forget_poison_check);
+	अगर (!nvdimm && cmd == ND_CMD_CLEAR_ERROR)
+		वापस device_क्रम_each_child(&nvdimm_bus->dev, data,
+				nd_ns_क्रमget_poison_check);
 
-	if (!nvdimm || cmd != ND_CMD_SET_CONFIG_DATA)
-		return 0;
+	अगर (!nvdimm || cmd != ND_CMD_SET_CONFIG_DATA)
+		वापस 0;
 
-	/* prevent label manipulation while the kernel owns label updates */
-	wait_nvdimm_bus_probe_idle(&nvdimm_bus->dev);
-	if (atomic_read(&nvdimm->busy))
-		return -EBUSY;
-	return 0;
-}
+	/* prevent label manipulation जबतक the kernel owns label updates */
+	रुको_nvdimm_bus_probe_idle(&nvdimm_bus->dev);
+	अगर (atomic_पढ़ो(&nvdimm->busy))
+		वापस -EBUSY;
+	वापस 0;
+पूर्ण
 
-static int __nd_ioctl(struct nvdimm_bus *nvdimm_bus, struct nvdimm *nvdimm,
-		int read_only, unsigned int ioctl_cmd, unsigned long arg)
-{
-	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
-	const struct nd_cmd_desc *desc = NULL;
-	unsigned int cmd = _IOC_NR(ioctl_cmd);
-	struct device *dev = &nvdimm_bus->dev;
-	void __user *p = (void __user *) arg;
-	char *out_env = NULL, *in_env = NULL;
-	const char *cmd_name, *dimm_name;
+अटल पूर्णांक __nd_ioctl(काष्ठा nvdimm_bus *nvdimm_bus, काष्ठा nvdimm *nvdimm,
+		पूर्णांक पढ़ो_only, अचिन्हित पूर्णांक ioctl_cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
+	स्थिर काष्ठा nd_cmd_desc *desc = शून्य;
+	अचिन्हित पूर्णांक cmd = _IOC_NR(ioctl_cmd);
+	काष्ठा device *dev = &nvdimm_bus->dev;
+	व्योम __user *p = (व्योम __user *) arg;
+	अक्षर *out_env = शून्य, *in_env = शून्य;
+	स्थिर अक्षर *cmd_name, *dimm_name;
 	u32 in_len = 0, out_len = 0;
-	unsigned int func = cmd;
-	unsigned long cmd_mask;
-	struct nd_cmd_pkg pkg;
-	int rc, i, cmd_rc;
-	void *buf = NULL;
+	अचिन्हित पूर्णांक func = cmd;
+	अचिन्हित दीर्घ cmd_mask;
+	काष्ठा nd_cmd_pkg pkg;
+	पूर्णांक rc, i, cmd_rc;
+	व्योम *buf = शून्य;
 	u64 buf_len = 0;
 
-	if (nvdimm) {
+	अगर (nvdimm) अणु
 		desc = nd_cmd_dimm_desc(cmd);
 		cmd_name = nvdimm_cmd_name(cmd);
 		cmd_mask = nvdimm->cmd_mask;
 		dimm_name = dev_name(&nvdimm->dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		desc = nd_cmd_bus_desc(cmd);
 		cmd_name = nvdimm_bus_cmd_name(cmd);
 		cmd_mask = nd_desc->cmd_mask;
 		dimm_name = "bus";
-	}
+	पूर्ण
 
 	/* Validate command family support against bus declared support */
-	if (cmd == ND_CMD_CALL) {
-		unsigned long *mask;
+	अगर (cmd == ND_CMD_CALL) अणु
+		अचिन्हित दीर्घ *mask;
 
-		if (copy_from_user(&pkg, p, sizeof(pkg)))
-			return -EFAULT;
+		अगर (copy_from_user(&pkg, p, माप(pkg)))
+			वापस -EFAULT;
 
-		if (nvdimm) {
-			if (pkg.nd_family > NVDIMM_FAMILY_MAX)
-				return -EINVAL;
+		अगर (nvdimm) अणु
+			अगर (pkg.nd_family > NVDIMM_FAMILY_MAX)
+				वापस -EINVAL;
 			mask = &nd_desc->dimm_family_mask;
-		} else {
-			if (pkg.nd_family > NVDIMM_BUS_FAMILY_MAX)
-				return -EINVAL;
+		पूर्ण अन्यथा अणु
+			अगर (pkg.nd_family > NVDIMM_BUS_FAMILY_MAX)
+				वापस -EINVAL;
 			mask = &nd_desc->bus_family_mask;
-		}
+		पूर्ण
 
-		if (!test_bit(pkg.nd_family, mask))
-			return -EINVAL;
-	}
+		अगर (!test_bit(pkg.nd_family, mask))
+			वापस -EINVAL;
+	पूर्ण
 
-	if (!desc ||
+	अगर (!desc ||
 	    (desc->out_num + desc->in_num == 0) ||
 	    cmd > ND_CMD_CALL ||
 	    !test_bit(cmd, &cmd_mask))
-		return -ENOTTY;
+		वापस -ENOTTY;
 
-	/* fail write commands (when read-only) */
-	if (read_only)
-		switch (cmd) {
-		case ND_CMD_VENDOR:
-		case ND_CMD_SET_CONFIG_DATA:
-		case ND_CMD_ARS_START:
-		case ND_CMD_CLEAR_ERROR:
-		case ND_CMD_CALL:
+	/* fail ग_लिखो commands (when पढ़ो-only) */
+	अगर (पढ़ो_only)
+		चयन (cmd) अणु
+		हाल ND_CMD_VENDOR:
+		हाल ND_CMD_SET_CONFIG_DATA:
+		हाल ND_CMD_ARS_START:
+		हाल ND_CMD_CLEAR_ERROR:
+		हाल ND_CMD_CALL:
 			dev_dbg(dev, "'%s' command while read-only.\n",
 					nvdimm ? nvdimm_cmd_name(cmd)
 					: nvdimm_bus_cmd_name(cmd));
-			return -EPERM;
-		default:
-			break;
-		}
+			वापस -EPERM;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 	/* process an input envelope */
 	in_env = kzalloc(ND_CMD_MAX_ENVELOPE, GFP_KERNEL);
-	if (!in_env)
-		return -ENOMEM;
-	for (i = 0; i < desc->in_num; i++) {
+	अगर (!in_env)
+		वापस -ENOMEM;
+	क्रम (i = 0; i < desc->in_num; i++) अणु
 		u32 in_size, copy;
 
 		in_size = nd_cmd_in_size(nvdimm, cmd, desc, i, in_env);
-		if (in_size == UINT_MAX) {
+		अगर (in_size == अच_पूर्णांक_उच्च) अणु
 			dev_err(dev, "%s:%s unknown input size cmd: %s field: %d\n",
 					__func__, dimm_name, cmd_name, i);
 			rc = -ENXIO;
-			goto out;
-		}
-		if (in_len < ND_CMD_MAX_ENVELOPE)
+			जाओ out;
+		पूर्ण
+		अगर (in_len < ND_CMD_MAX_ENVELOPE)
 			copy = min_t(u32, ND_CMD_MAX_ENVELOPE - in_len, in_size);
-		else
+		अन्यथा
 			copy = 0;
-		if (copy && copy_from_user(&in_env[in_len], p + in_len, copy)) {
+		अगर (copy && copy_from_user(&in_env[in_len], p + in_len, copy)) अणु
 			rc = -EFAULT;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		in_len += in_size;
-	}
+	पूर्ण
 
-	if (cmd == ND_CMD_CALL) {
+	अगर (cmd == ND_CMD_CALL) अणु
 		func = pkg.nd_command;
 		dev_dbg(dev, "%s, idx: %llu, in: %u, out: %u, len %llu\n",
 				dimm_name, pkg.nd_command,
 				in_len, out_len, buf_len);
-	}
+	पूर्ण
 
 	/* process an output envelope */
 	out_env = kzalloc(ND_CMD_MAX_ENVELOPE, GFP_KERNEL);
-	if (!out_env) {
+	अगर (!out_env) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < desc->out_num; i++) {
+	क्रम (i = 0; i < desc->out_num; i++) अणु
 		u32 out_size = nd_cmd_out_size(nvdimm, cmd, desc, i,
 				(u32 *) in_env, (u32 *) out_env, 0);
 		u32 copy;
 
-		if (out_size == UINT_MAX) {
+		अगर (out_size == अच_पूर्णांक_उच्च) अणु
 			dev_dbg(dev, "%s unknown output size cmd: %s field: %d\n",
 					dimm_name, cmd_name, i);
 			rc = -EFAULT;
-			goto out;
-		}
-		if (out_len < ND_CMD_MAX_ENVELOPE)
+			जाओ out;
+		पूर्ण
+		अगर (out_len < ND_CMD_MAX_ENVELOPE)
 			copy = min_t(u32, ND_CMD_MAX_ENVELOPE - out_len, out_size);
-		else
+		अन्यथा
 			copy = 0;
-		if (copy && copy_from_user(&out_env[out_len],
-					p + in_len + out_len, copy)) {
+		अगर (copy && copy_from_user(&out_env[out_len],
+					p + in_len + out_len, copy)) अणु
 			rc = -EFAULT;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		out_len += out_size;
-	}
+	पूर्ण
 
 	buf_len = (u64) out_len + (u64) in_len;
-	if (buf_len > ND_IOCTL_MAX_BUFLEN) {
+	अगर (buf_len > ND_IOCTL_MAX_BUFLEN) अणु
 		dev_dbg(dev, "%s cmd: %s buf_len: %llu > %d\n", dimm_name,
 				cmd_name, buf_len, ND_IOCTL_MAX_BUFLEN);
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	buf = vmalloc(buf_len);
-	if (!buf) {
+	buf = vदो_स्मृति(buf_len);
+	अगर (!buf) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (copy_from_user(buf, p, buf_len)) {
+	अगर (copy_from_user(buf, p, buf_len)) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	nd_device_lock(dev);
 	nvdimm_bus_lock(dev);
 	rc = nd_cmd_clear_to_send(nvdimm_bus, nvdimm, func, buf);
-	if (rc)
-		goto out_unlock;
+	अगर (rc)
+		जाओ out_unlock;
 
 	rc = nd_desc->ndctl(nd_desc, nvdimm, cmd, buf, buf_len, &cmd_rc);
-	if (rc < 0)
-		goto out_unlock;
+	अगर (rc < 0)
+		जाओ out_unlock;
 
-	if (!nvdimm && cmd == ND_CMD_CLEAR_ERROR && cmd_rc >= 0) {
-		struct nd_cmd_clear_error *clear_err = buf;
+	अगर (!nvdimm && cmd == ND_CMD_CLEAR_ERROR && cmd_rc >= 0) अणु
+		काष्ठा nd_cmd_clear_error *clear_err = buf;
 
 		nvdimm_account_cleared_poison(nvdimm_bus, clear_err->address,
 				clear_err->cleared);
-	}
+	पूर्ण
 
-	if (copy_to_user(p, buf, buf_len))
+	अगर (copy_to_user(p, buf, buf_len))
 		rc = -EFAULT;
 
 out_unlock:
 	nvdimm_bus_unlock(dev);
 	nd_device_unlock(dev);
 out:
-	kfree(in_env);
-	kfree(out_env);
-	vfree(buf);
-	return rc;
-}
+	kमुक्त(in_env);
+	kमुक्त(out_env);
+	vमुक्त(buf);
+	वापस rc;
+पूर्ण
 
-enum nd_ioctl_mode {
+क्रमागत nd_ioctl_mode अणु
 	BUS_IOCTL,
 	DIMM_IOCTL,
-};
+पूर्ण;
 
-static int match_dimm(struct device *dev, void *data)
-{
-	long id = (long) data;
+अटल पूर्णांक match_dimm(काष्ठा device *dev, व्योम *data)
+अणु
+	दीर्घ id = (दीर्घ) data;
 
-	if (is_nvdimm(dev)) {
-		struct nvdimm *nvdimm = to_nvdimm(dev);
+	अगर (is_nvdimm(dev)) अणु
+		काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
 
-		return nvdimm->id == id;
-	}
+		वापस nvdimm->id == id;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long nd_ioctl(struct file *file, unsigned int cmd, unsigned long arg,
-		enum nd_ioctl_mode mode)
+अटल दीर्घ nd_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg,
+		क्रमागत nd_ioctl_mode mode)
 
-{
-	struct nvdimm_bus *nvdimm_bus, *found = NULL;
-	long id = (long) file->private_data;
-	struct nvdimm *nvdimm = NULL;
-	int rc, ro;
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus, *found = शून्य;
+	दीर्घ id = (दीर्घ) file->निजी_data;
+	काष्ठा nvdimm *nvdimm = शून्य;
+	पूर्णांक rc, ro;
 
 	ro = ((file->f_flags & O_ACCMODE) == O_RDONLY);
 	mutex_lock(&nvdimm_bus_list_mutex);
-	list_for_each_entry(nvdimm_bus, &nvdimm_bus_list, list) {
-		if (mode == DIMM_IOCTL) {
-			struct device *dev;
+	list_क्रम_each_entry(nvdimm_bus, &nvdimm_bus_list, list) अणु
+		अगर (mode == DIMM_IOCTL) अणु
+			काष्ठा device *dev;
 
 			dev = device_find_child(&nvdimm_bus->dev,
-					file->private_data, match_dimm);
-			if (!dev)
-				continue;
+					file->निजी_data, match_dimm);
+			अगर (!dev)
+				जारी;
 			nvdimm = to_nvdimm(dev);
 			found = nvdimm_bus;
-		} else if (nvdimm_bus->id == id) {
+		पूर्ण अन्यथा अगर (nvdimm_bus->id == id) अणु
 			found = nvdimm_bus;
-		}
+		पूर्ण
 
-		if (found) {
+		अगर (found) अणु
 			atomic_inc(&nvdimm_bus->ioctl_active);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&nvdimm_bus_list_mutex);
 
-	if (!found)
-		return -ENXIO;
+	अगर (!found)
+		वापस -ENXIO;
 
 	nvdimm_bus = found;
 	rc = __nd_ioctl(nvdimm_bus, nvdimm, ro, cmd, arg);
 
-	if (nvdimm)
+	अगर (nvdimm)
 		put_device(&nvdimm->dev);
-	if (atomic_dec_and_test(&nvdimm_bus->ioctl_active))
-		wake_up(&nvdimm_bus->wait);
+	अगर (atomic_dec_and_test(&nvdimm_bus->ioctl_active))
+		wake_up(&nvdimm_bus->रुको);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static long bus_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	return nd_ioctl(file, cmd, arg, BUS_IOCTL);
-}
+अटल दीर्घ bus_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस nd_ioctl(file, cmd, arg, BUS_IOCTL);
+पूर्ण
 
-static long dimm_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	return nd_ioctl(file, cmd, arg, DIMM_IOCTL);
-}
+अटल दीर्घ dimm_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस nd_ioctl(file, cmd, arg, DIMM_IOCTL);
+पूर्ण
 
-static int nd_open(struct inode *inode, struct file *file)
-{
-	long minor = iminor(inode);
+अटल पूर्णांक nd_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	दीर्घ minor = iminor(inode);
 
-	file->private_data = (void *) minor;
-	return 0;
-}
+	file->निजी_data = (व्योम *) minor;
+	वापस 0;
+पूर्ण
 
-static const struct file_operations nvdimm_bus_fops = {
+अटल स्थिर काष्ठा file_operations nvdimm_bus_fops = अणु
 	.owner = THIS_MODULE,
-	.open = nd_open,
+	.खोलो = nd_खोलो,
 	.unlocked_ioctl = bus_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-static const struct file_operations nvdimm_fops = {
+अटल स्थिर काष्ठा file_operations nvdimm_fops = अणु
 	.owner = THIS_MODULE,
-	.open = nd_open,
+	.खोलो = nd_खोलो,
 	.unlocked_ioctl = dimm_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-int __init nvdimm_bus_init(void)
-{
-	int rc;
+पूर्णांक __init nvdimm_bus_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = bus_register(&nvdimm_bus_type);
-	if (rc)
-		return rc;
+	rc = bus_रेजिस्टर(&nvdimm_bus_type);
+	अगर (rc)
+		वापस rc;
 
-	rc = register_chrdev(0, "ndctl", &nvdimm_bus_fops);
-	if (rc < 0)
-		goto err_bus_chrdev;
+	rc = रेजिस्टर_chrdev(0, "ndctl", &nvdimm_bus_fops);
+	अगर (rc < 0)
+		जाओ err_bus_chrdev;
 	nvdimm_bus_major = rc;
 
-	rc = register_chrdev(0, "dimmctl", &nvdimm_fops);
-	if (rc < 0)
-		goto err_dimm_chrdev;
+	rc = रेजिस्टर_chrdev(0, "dimmctl", &nvdimm_fops);
+	अगर (rc < 0)
+		जाओ err_dimm_chrdev;
 	nvdimm_major = rc;
 
 	nd_class = class_create(THIS_MODULE, "nd");
-	if (IS_ERR(nd_class)) {
+	अगर (IS_ERR(nd_class)) अणु
 		rc = PTR_ERR(nd_class);
-		goto err_class;
-	}
+		जाओ err_class;
+	पूर्ण
 
-	rc = driver_register(&nd_bus_driver.drv);
-	if (rc)
-		goto err_nd_bus;
+	rc = driver_रेजिस्टर(&nd_bus_driver.drv);
+	अगर (rc)
+		जाओ err_nd_bus;
 
-	return 0;
+	वापस 0;
 
  err_nd_bus:
 	class_destroy(nd_class);
  err_class:
-	unregister_chrdev(nvdimm_major, "dimmctl");
+	unरेजिस्टर_chrdev(nvdimm_major, "dimmctl");
  err_dimm_chrdev:
-	unregister_chrdev(nvdimm_bus_major, "ndctl");
+	unरेजिस्टर_chrdev(nvdimm_bus_major, "ndctl");
  err_bus_chrdev:
-	bus_unregister(&nvdimm_bus_type);
+	bus_unरेजिस्टर(&nvdimm_bus_type);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void nvdimm_bus_exit(void)
-{
-	driver_unregister(&nd_bus_driver.drv);
+व्योम nvdimm_bus_निकास(व्योम)
+अणु
+	driver_unरेजिस्टर(&nd_bus_driver.drv);
 	class_destroy(nd_class);
-	unregister_chrdev(nvdimm_bus_major, "ndctl");
-	unregister_chrdev(nvdimm_major, "dimmctl");
-	bus_unregister(&nvdimm_bus_type);
+	unरेजिस्टर_chrdev(nvdimm_bus_major, "ndctl");
+	unरेजिस्टर_chrdev(nvdimm_major, "dimmctl");
+	bus_unरेजिस्टर(&nvdimm_bus_type);
 	ida_destroy(&nd_ida);
-}
+पूर्ण

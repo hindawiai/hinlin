@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * CMA DebugFS Interface
  *
@@ -6,195 +7,195 @@
  */
 
 
-#include <linux/debugfs.h>
-#include <linux/cma.h>
-#include <linux/list.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/mm_types.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/cma.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm_types.h>
 
-#include "cma.h"
+#समावेश "cma.h"
 
-struct cma_mem {
-	struct hlist_node node;
-	struct page *p;
-	unsigned long n;
-};
+काष्ठा cma_mem अणु
+	काष्ठा hlist_node node;
+	काष्ठा page *p;
+	अचिन्हित दीर्घ n;
+पूर्ण;
 
-static int cma_debugfs_get(void *data, u64 *val)
-{
-	unsigned long *p = data;
+अटल पूर्णांक cma_debugfs_get(व्योम *data, u64 *val)
+अणु
+	अचिन्हित दीर्घ *p = data;
 
 	*val = *p;
 
-	return 0;
-}
-DEFINE_DEBUGFS_ATTRIBUTE(cma_debugfs_fops, cma_debugfs_get, NULL, "%llu\n");
+	वापस 0;
+पूर्ण
+DEFINE_DEBUGFS_ATTRIBUTE(cma_debugfs_fops, cma_debugfs_get, शून्य, "%llu\n");
 
-static int cma_used_get(void *data, u64 *val)
-{
-	struct cma *cma = data;
-	unsigned long used;
+अटल पूर्णांक cma_used_get(व्योम *data, u64 *val)
+अणु
+	काष्ठा cma *cma = data;
+	अचिन्हित दीर्घ used;
 
 	spin_lock_irq(&cma->lock);
-	/* pages counter is smaller than sizeof(int) */
-	used = bitmap_weight(cma->bitmap, (int)cma_bitmap_maxno(cma));
+	/* pages counter is smaller than माप(पूर्णांक) */
+	used = biपंचांगap_weight(cma->biपंचांगap, (पूर्णांक)cma_biपंचांगap_maxno(cma));
 	spin_unlock_irq(&cma->lock);
 	*val = (u64)used << cma->order_per_bit;
 
-	return 0;
-}
-DEFINE_DEBUGFS_ATTRIBUTE(cma_used_fops, cma_used_get, NULL, "%llu\n");
+	वापस 0;
+पूर्ण
+DEFINE_DEBUGFS_ATTRIBUTE(cma_used_fops, cma_used_get, शून्य, "%llu\n");
 
-static int cma_maxchunk_get(void *data, u64 *val)
-{
-	struct cma *cma = data;
-	unsigned long maxchunk = 0;
-	unsigned long start, end = 0;
-	unsigned long bitmap_maxno = cma_bitmap_maxno(cma);
+अटल पूर्णांक cma_maxchunk_get(व्योम *data, u64 *val)
+अणु
+	काष्ठा cma *cma = data;
+	अचिन्हित दीर्घ maxchunk = 0;
+	अचिन्हित दीर्घ start, end = 0;
+	अचिन्हित दीर्घ biपंचांगap_maxno = cma_biपंचांगap_maxno(cma);
 
 	spin_lock_irq(&cma->lock);
-	for (;;) {
-		start = find_next_zero_bit(cma->bitmap, bitmap_maxno, end);
-		if (start >= bitmap_maxno)
-			break;
-		end = find_next_bit(cma->bitmap, bitmap_maxno, start);
+	क्रम (;;) अणु
+		start = find_next_zero_bit(cma->biपंचांगap, biपंचांगap_maxno, end);
+		अगर (start >= biपंचांगap_maxno)
+			अवरोध;
+		end = find_next_bit(cma->biपंचांगap, biपंचांगap_maxno, start);
 		maxchunk = max(end - start, maxchunk);
-	}
+	पूर्ण
 	spin_unlock_irq(&cma->lock);
 	*val = (u64)maxchunk << cma->order_per_bit;
 
-	return 0;
-}
-DEFINE_DEBUGFS_ATTRIBUTE(cma_maxchunk_fops, cma_maxchunk_get, NULL, "%llu\n");
+	वापस 0;
+पूर्ण
+DEFINE_DEBUGFS_ATTRIBUTE(cma_maxchunk_fops, cma_maxchunk_get, शून्य, "%llu\n");
 
-static void cma_add_to_cma_mem_list(struct cma *cma, struct cma_mem *mem)
-{
+अटल व्योम cma_add_to_cma_mem_list(काष्ठा cma *cma, काष्ठा cma_mem *mem)
+अणु
 	spin_lock(&cma->mem_head_lock);
 	hlist_add_head(&mem->node, &cma->mem_head);
 	spin_unlock(&cma->mem_head_lock);
-}
+पूर्ण
 
-static struct cma_mem *cma_get_entry_from_list(struct cma *cma)
-{
-	struct cma_mem *mem = NULL;
+अटल काष्ठा cma_mem *cma_get_entry_from_list(काष्ठा cma *cma)
+अणु
+	काष्ठा cma_mem *mem = शून्य;
 
 	spin_lock(&cma->mem_head_lock);
-	if (!hlist_empty(&cma->mem_head)) {
-		mem = hlist_entry(cma->mem_head.first, struct cma_mem, node);
+	अगर (!hlist_empty(&cma->mem_head)) अणु
+		mem = hlist_entry(cma->mem_head.first, काष्ठा cma_mem, node);
 		hlist_del_init(&mem->node);
-	}
+	पूर्ण
 	spin_unlock(&cma->mem_head_lock);
 
-	return mem;
-}
+	वापस mem;
+पूर्ण
 
-static int cma_free_mem(struct cma *cma, int count)
-{
-	struct cma_mem *mem = NULL;
+अटल पूर्णांक cma_मुक्त_mem(काष्ठा cma *cma, पूर्णांक count)
+अणु
+	काष्ठा cma_mem *mem = शून्य;
 
-	while (count) {
+	जबतक (count) अणु
 		mem = cma_get_entry_from_list(cma);
-		if (mem == NULL)
-			return 0;
+		अगर (mem == शून्य)
+			वापस 0;
 
-		if (mem->n <= count) {
+		अगर (mem->n <= count) अणु
 			cma_release(cma, mem->p, mem->n);
 			count -= mem->n;
-			kfree(mem);
-		} else if (cma->order_per_bit == 0) {
+			kमुक्त(mem);
+		पूर्ण अन्यथा अगर (cma->order_per_bit == 0) अणु
 			cma_release(cma, mem->p, count);
 			mem->p += count;
 			mem->n -= count;
 			count = 0;
 			cma_add_to_cma_mem_list(cma, mem);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_debug("cma: cannot release partial block when order_per_bit != 0\n");
 			cma_add_to_cma_mem_list(cma, mem);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int cma_free_write(void *data, u64 val)
-{
-	int pages = val;
-	struct cma *cma = data;
+अटल पूर्णांक cma_मुक्त_ग_लिखो(व्योम *data, u64 val)
+अणु
+	पूर्णांक pages = val;
+	काष्ठा cma *cma = data;
 
-	return cma_free_mem(cma, pages);
-}
-DEFINE_DEBUGFS_ATTRIBUTE(cma_free_fops, NULL, cma_free_write, "%llu\n");
+	वापस cma_मुक्त_mem(cma, pages);
+पूर्ण
+DEFINE_DEBUGFS_ATTRIBUTE(cma_मुक्त_fops, शून्य, cma_मुक्त_ग_लिखो, "%llu\n");
 
-static int cma_alloc_mem(struct cma *cma, int count)
-{
-	struct cma_mem *mem;
-	struct page *p;
+अटल पूर्णांक cma_alloc_mem(काष्ठा cma *cma, पूर्णांक count)
+अणु
+	काष्ठा cma_mem *mem;
+	काष्ठा page *p;
 
-	mem = kzalloc(sizeof(*mem), GFP_KERNEL);
-	if (!mem)
-		return -ENOMEM;
+	mem = kzalloc(माप(*mem), GFP_KERNEL);
+	अगर (!mem)
+		वापस -ENOMEM;
 
 	p = cma_alloc(cma, count, 0, false);
-	if (!p) {
-		kfree(mem);
-		return -ENOMEM;
-	}
+	अगर (!p) अणु
+		kमुक्त(mem);
+		वापस -ENOMEM;
+	पूर्ण
 
 	mem->p = p;
 	mem->n = count;
 
 	cma_add_to_cma_mem_list(cma, mem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cma_alloc_write(void *data, u64 val)
-{
-	int pages = val;
-	struct cma *cma = data;
+अटल पूर्णांक cma_alloc_ग_लिखो(व्योम *data, u64 val)
+अणु
+	पूर्णांक pages = val;
+	काष्ठा cma *cma = data;
 
-	return cma_alloc_mem(cma, pages);
-}
-DEFINE_DEBUGFS_ATTRIBUTE(cma_alloc_fops, NULL, cma_alloc_write, "%llu\n");
+	वापस cma_alloc_mem(cma, pages);
+पूर्ण
+DEFINE_DEBUGFS_ATTRIBUTE(cma_alloc_fops, शून्य, cma_alloc_ग_लिखो, "%llu\n");
 
-static void cma_debugfs_add_one(struct cma *cma, struct dentry *root_dentry)
-{
-	struct dentry *tmp;
-	char name[16];
+अटल व्योम cma_debugfs_add_one(काष्ठा cma *cma, काष्ठा dentry *root_dentry)
+अणु
+	काष्ठा dentry *पंचांगp;
+	अक्षर name[16];
 
-	scnprintf(name, sizeof(name), "cma-%s", cma->name);
+	scnम_लिखो(name, माप(name), "cma-%s", cma->name);
 
-	tmp = debugfs_create_dir(name, root_dentry);
+	पंचांगp = debugfs_create_dir(name, root_dentry);
 
-	debugfs_create_file("alloc", 0200, tmp, cma, &cma_alloc_fops);
-	debugfs_create_file("free", 0200, tmp, cma, &cma_free_fops);
-	debugfs_create_file("base_pfn", 0444, tmp,
+	debugfs_create_file("alloc", 0200, पंचांगp, cma, &cma_alloc_fops);
+	debugfs_create_file("free", 0200, पंचांगp, cma, &cma_मुक्त_fops);
+	debugfs_create_file("base_pfn", 0444, पंचांगp,
 			    &cma->base_pfn, &cma_debugfs_fops);
-	debugfs_create_file("count", 0444, tmp, &cma->count, &cma_debugfs_fops);
-	debugfs_create_file("order_per_bit", 0444, tmp,
+	debugfs_create_file("count", 0444, पंचांगp, &cma->count, &cma_debugfs_fops);
+	debugfs_create_file("order_per_bit", 0444, पंचांगp,
 			    &cma->order_per_bit, &cma_debugfs_fops);
-	debugfs_create_file("used", 0444, tmp, cma, &cma_used_fops);
-	debugfs_create_file("maxchunk", 0444, tmp, cma, &cma_maxchunk_fops);
+	debugfs_create_file("used", 0444, पंचांगp, cma, &cma_used_fops);
+	debugfs_create_file("maxchunk", 0444, पंचांगp, cma, &cma_maxchunk_fops);
 
-	cma->dfs_bitmap.array = (u32 *)cma->bitmap;
-	cma->dfs_bitmap.n_elements = DIV_ROUND_UP(cma_bitmap_maxno(cma),
-						  BITS_PER_BYTE * sizeof(u32));
-	debugfs_create_u32_array("bitmap", 0444, tmp, &cma->dfs_bitmap);
-}
+	cma->dfs_biपंचांगap.array = (u32 *)cma->biपंचांगap;
+	cma->dfs_biपंचांगap.n_elements = DIV_ROUND_UP(cma_biपंचांगap_maxno(cma),
+						  BITS_PER_BYTE * माप(u32));
+	debugfs_create_u32_array("bitmap", 0444, पंचांगp, &cma->dfs_biपंचांगap);
+पूर्ण
 
-static int __init cma_debugfs_init(void)
-{
-	struct dentry *cma_debugfs_root;
-	int i;
+अटल पूर्णांक __init cma_debugfs_init(व्योम)
+अणु
+	काष्ठा dentry *cma_debugfs_root;
+	पूर्णांक i;
 
-	cma_debugfs_root = debugfs_create_dir("cma", NULL);
+	cma_debugfs_root = debugfs_create_dir("cma", शून्य);
 
-	for (i = 0; i < cma_area_count; i++)
+	क्रम (i = 0; i < cma_area_count; i++)
 		cma_debugfs_add_one(&cma_areas[i], cma_debugfs_root);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 late_initcall(cma_debugfs_init);

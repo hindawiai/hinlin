@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ALPHA_MODULE_H
-#define _ALPHA_MODULE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ALPHA_MODULE_H
+#घोषणा _ALPHA_MODULE_H
 
-#include <asm-generic/module.h>
+#समावेश <यंत्र-generic/module.h>
 
-struct mod_arch_specific
-{
-	unsigned int gotsecindex;
-};
+काष्ठा mod_arch_specअगरic
+अणु
+	अचिन्हित पूर्णांक gotsecindex;
+पूर्ण;
 
-#define ARCH_SHF_SMALL SHF_ALPHA_GPREL
+#घोषणा ARCH_SHF_SMALL SHF_ALPHA_GPREL
 
-#ifdef MODULE
-asm(".section .got,\"aws\",@progbits; .align 3; .previous");
-#endif
+#अगर_घोषित MODULE
+यंत्र(".section .got,\"aws\",@progbits; .align 3; .previous");
+#पूर्ण_अगर
 
-#endif /*_ALPHA_MODULE_H*/
+#पूर्ण_अगर /*_ALPHA_MODULE_H*/

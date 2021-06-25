@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2000, 2001, 2002 Broadcom Corporation
  */
 /*
  * Broadcom Common Firmware Environment (CFE)
  *
- * This file contains declarations for doing callbacks to
+ * This file contains declarations क्रम करोing callbacks to
  * cfe from an application.  It should be the only header
  * needed by the application to use this library
  *
  * Authors:  Mitch Lichtenberg, Chris Demetriou
  */
-#ifndef CFE_API_H
-#define CFE_API_H
+#अगर_अघोषित CFE_API_H
+#घोषणा CFE_API_H
 
-#include <linux/types.h>
-#include <linux/string.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
 
-typedef long intptr_t;
+प्रकार दीर्घ पूर्णांकptr_t;
 
 
 /*
@@ -25,85 +26,85 @@ typedef long intptr_t;
  */
 
 /* Seal indicating CFE's presence, passed to user program. */
-#define CFE_EPTSEAL 0x43464531
+#घोषणा CFE_EPTSEAL 0x43464531
 
-#define CFE_MI_RESERVED 0	/* memory is reserved, do not use */
-#define CFE_MI_AVAILABLE 1	/* memory is available */
+#घोषणा CFE_MI_RESERVED 0	/* memory is reserved, करो not use */
+#घोषणा CFE_MI_AVAILABLE 1	/* memory is available */
 
-#define CFE_FLG_WARMSTART     0x00000001
-#define CFE_FLG_FULL_ARENA    0x00000001
-#define CFE_FLG_ENV_PERMANENT 0x00000001
+#घोषणा CFE_FLG_WARMSTART     0x00000001
+#घोषणा CFE_FLG_FULL_ARENA    0x00000001
+#घोषणा CFE_FLG_ENV_PERMANENT 0x00000001
 
-#define CFE_CPU_CMD_START 1
-#define CFE_CPU_CMD_STOP 0
+#घोषणा CFE_CPU_CMD_START 1
+#घोषणा CFE_CPU_CMD_STOP 0
 
-#define CFE_STDHANDLE_CONSOLE	0
+#घोषणा CFE_STDHANDLE_CONSOLE	0
 
-#define CFE_DEV_NETWORK		1
-#define CFE_DEV_DISK		2
-#define CFE_DEV_FLASH		3
-#define CFE_DEV_SERIAL		4
-#define CFE_DEV_CPU		5
-#define CFE_DEV_NVRAM		6
-#define CFE_DEV_CLOCK		7
-#define CFE_DEV_OTHER		8
-#define CFE_DEV_MASK		0x0F
+#घोषणा CFE_DEV_NETWORK		1
+#घोषणा CFE_DEV_DISK		2
+#घोषणा CFE_DEV_FLASH		3
+#घोषणा CFE_DEV_SERIAL		4
+#घोषणा CFE_DEV_CPU		5
+#घोषणा CFE_DEV_NVRAM		6
+#घोषणा CFE_DEV_CLOCK		7
+#घोषणा CFE_DEV_OTHER		8
+#घोषणा CFE_DEV_MASK		0x0F
 
-#define CFE_CACHE_FLUSH_D	1
-#define CFE_CACHE_INVAL_I	2
-#define CFE_CACHE_INVAL_D	4
-#define CFE_CACHE_INVAL_L2	8
+#घोषणा CFE_CACHE_FLUSH_D	1
+#घोषणा CFE_CACHE_INVAL_I	2
+#घोषणा CFE_CACHE_INVAL_D	4
+#घोषणा CFE_CACHE_INVAL_L2	8
 
-#define CFE_FWI_64BIT		0x00000001
-#define CFE_FWI_32BIT		0x00000002
-#define CFE_FWI_RELOC		0x00000004
-#define CFE_FWI_UNCACHED	0x00000008
-#define CFE_FWI_MULTICPU	0x00000010
-#define CFE_FWI_FUNCSIM		0x00000020
-#define CFE_FWI_RTLSIM		0x00000040
+#घोषणा CFE_FWI_64BIT		0x00000001
+#घोषणा CFE_FWI_32BIT		0x00000002
+#घोषणा CFE_FWI_RELOC		0x00000004
+#घोषणा CFE_FWI_UNCACHED	0x00000008
+#घोषणा CFE_FWI_MULTICPU	0x00000010
+#घोषणा CFE_FWI_FUNCSIM		0x00000020
+#घोषणा CFE_FWI_RTLSIM		0x00000040
 
-typedef struct {
-	int64_t fwi_version;		/* major, minor, eco version */
-	int64_t fwi_totalmem;		/* total installed mem */
-	int64_t fwi_flags;		/* various flags */
-	int64_t fwi_boardid;		/* board ID */
-	int64_t fwi_bootarea_va;	/* VA of boot area */
-	int64_t fwi_bootarea_pa;	/* PA of boot area */
-	int64_t fwi_bootarea_size;	/* size of boot area */
-} cfe_fwinfo_t;
+प्रकार काष्ठा अणु
+	पूर्णांक64_t fwi_version;		/* major, minor, eco version */
+	पूर्णांक64_t fwi_totalmem;		/* total installed mem */
+	पूर्णांक64_t fwi_flags;		/* various flags */
+	पूर्णांक64_t fwi_boardid;		/* board ID */
+	पूर्णांक64_t fwi_bootarea_va;	/* VA of boot area */
+	पूर्णांक64_t fwi_bootarea_pa;	/* PA of boot area */
+	पूर्णांक64_t fwi_bootarea_size;	/* size of boot area */
+पूर्ण cfe_fwinfo_t;
 
-
-/*
- * Defines and prototypes for functions which take no arguments.
- */
-int64_t cfe_getticks(void);
 
 /*
- * Defines and prototypes for the rest of the functions.
+ * Defines and prototypes क्रम functions which take no arguments.
  */
-int cfe_close(int handle);
-int cfe_cpu_start(int cpu, void (*fn) (void), long sp, long gp, long a1);
-int cfe_cpu_stop(int cpu);
-int cfe_enumenv(int idx, char *name, int namelen, char *val, int vallen);
-int cfe_enummem(int idx, int flags, uint64_t * start, uint64_t * length,
-		uint64_t * type);
-int cfe_exit(int warm, int status);
-int cfe_flushcache(int flg);
-int cfe_getdevinfo(char *name);
-int cfe_getenv(char *name, char *dest, int destlen);
-int cfe_getfwinfo(cfe_fwinfo_t * info);
-int cfe_getstdhandle(int flg);
-int cfe_init(uint64_t handle, uint64_t ept);
-int cfe_inpstat(int handle);
-int cfe_ioctl(int handle, unsigned int ioctlnum, unsigned char *buffer,
-	      int length, int *retlen, uint64_t offset);
-int cfe_open(char *name);
-int cfe_read(int handle, unsigned char *buffer, int length);
-int cfe_readblk(int handle, int64_t offset, unsigned char *buffer,
-		int length);
-int cfe_setenv(char *name, char *val);
-int cfe_write(int handle, const char *buffer, int length);
-int cfe_writeblk(int handle, int64_t offset, const char *buffer,
-		 int length);
+पूर्णांक64_t cfe_getticks(व्योम);
 
-#endif				/* CFE_API_H */
+/*
+ * Defines and prototypes क्रम the rest of the functions.
+ */
+पूर्णांक cfe_बंद(पूर्णांक handle);
+पूर्णांक cfe_cpu_start(पूर्णांक cpu, व्योम (*fn) (व्योम), दीर्घ sp, दीर्घ gp, दीर्घ a1);
+पूर्णांक cfe_cpu_stop(पूर्णांक cpu);
+पूर्णांक cfe_क्रमागतenv(पूर्णांक idx, अक्षर *name, पूर्णांक namelen, अक्षर *val, पूर्णांक vallen);
+पूर्णांक cfe_क्रमागतmem(पूर्णांक idx, पूर्णांक flags, uपूर्णांक64_t * start, uपूर्णांक64_t * length,
+		uपूर्णांक64_t * type);
+पूर्णांक cfe_निकास(पूर्णांक warm, पूर्णांक status);
+पूर्णांक cfe_flushcache(पूर्णांक flg);
+पूर्णांक cfe_getdevinfo(अक्षर *name);
+पूर्णांक cfe_दो_पर्या(अक्षर *name, अक्षर *dest, पूर्णांक destlen);
+पूर्णांक cfe_getfwinfo(cfe_fwinfo_t * info);
+पूर्णांक cfe_माला_लोtdhandle(पूर्णांक flg);
+पूर्णांक cfe_init(uपूर्णांक64_t handle, uपूर्णांक64_t ept);
+पूर्णांक cfe_inpstat(पूर्णांक handle);
+पूर्णांक cfe_ioctl(पूर्णांक handle, अचिन्हित पूर्णांक ioctlnum, अचिन्हित अक्षर *buffer,
+	      पूर्णांक length, पूर्णांक *retlen, uपूर्णांक64_t offset);
+पूर्णांक cfe_खोलो(अक्षर *name);
+पूर्णांक cfe_पढ़ो(पूर्णांक handle, अचिन्हित अक्षर *buffer, पूर्णांक length);
+पूर्णांक cfe_पढ़ोblk(पूर्णांक handle, पूर्णांक64_t offset, अचिन्हित अक्षर *buffer,
+		पूर्णांक length);
+पूर्णांक cfe_setenv(अक्षर *name, अक्षर *val);
+पूर्णांक cfe_ग_लिखो(पूर्णांक handle, स्थिर अक्षर *buffer, पूर्णांक length);
+पूर्णांक cfe_ग_लिखोblk(पूर्णांक handle, पूर्णांक64_t offset, स्थिर अक्षर *buffer,
+		 पूर्णांक length);
+
+#पूर्ण_अगर				/* CFE_API_H */

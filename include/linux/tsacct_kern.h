@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * tsacct_kern.h - kernel header for system accounting over taskstats interface
+ * tsacct_kern.h - kernel header क्रम प्रणाली accounting over taskstats पूर्णांकerface
  *
  * Copyright (C) Jay Lan	SGI
  */
 
-#ifndef _LINUX_TSACCT_KERN_H
-#define _LINUX_TSACCT_KERN_H
+#अगर_अघोषित _LINUX_TSACCT_KERN_H
+#घोषणा _LINUX_TSACCT_KERN_H
 
-#include <linux/taskstats.h>
+#समावेश <linux/taskstats.h>
 
-#ifdef CONFIG_TASKSTATS
-extern void bacct_add_tsk(struct user_namespace *user_ns,
-			  struct pid_namespace *pid_ns,
-			  struct taskstats *stats, struct task_struct *tsk);
-#else
-static inline void bacct_add_tsk(struct user_namespace *user_ns,
-				 struct pid_namespace *pid_ns,
-				 struct taskstats *stats, struct task_struct *tsk)
-{}
-#endif /* CONFIG_TASKSTATS */
+#अगर_घोषित CONFIG_TASKSTATS
+बाह्य व्योम bacct_add_tsk(काष्ठा user_namespace *user_ns,
+			  काष्ठा pid_namespace *pid_ns,
+			  काष्ठा taskstats *stats, काष्ठा task_काष्ठा *tsk);
+#अन्यथा
+अटल अंतरभूत व्योम bacct_add_tsk(काष्ठा user_namespace *user_ns,
+				 काष्ठा pid_namespace *pid_ns,
+				 काष्ठा taskstats *stats, काष्ठा task_काष्ठा *tsk)
+अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_TASKSTATS */
 
-#ifdef CONFIG_TASK_XACCT
-extern void xacct_add_tsk(struct taskstats *stats, struct task_struct *p);
-extern void acct_update_integrals(struct task_struct *tsk);
-extern void acct_account_cputime(struct task_struct *tsk);
-extern void acct_clear_integrals(struct task_struct *tsk);
-#else
-static inline void xacct_add_tsk(struct taskstats *stats, struct task_struct *p)
-{}
-static inline void acct_update_integrals(struct task_struct *tsk)
-{}
-static inline void acct_account_cputime(struct task_struct *tsk)
-{}
-static inline void acct_clear_integrals(struct task_struct *tsk)
-{}
-#endif /* CONFIG_TASK_XACCT */
+#अगर_घोषित CONFIG_TASK_XACCT
+बाह्य व्योम xacct_add_tsk(काष्ठा taskstats *stats, काष्ठा task_काष्ठा *p);
+बाह्य व्योम acct_update_पूर्णांकegrals(काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम acct_account_cpuसमय(काष्ठा task_काष्ठा *tsk);
+बाह्य व्योम acct_clear_पूर्णांकegrals(काष्ठा task_काष्ठा *tsk);
+#अन्यथा
+अटल अंतरभूत व्योम xacct_add_tsk(काष्ठा taskstats *stats, काष्ठा task_काष्ठा *p)
+अणुपूर्ण
+अटल अंतरभूत व्योम acct_update_पूर्णांकegrals(काष्ठा task_काष्ठा *tsk)
+अणुपूर्ण
+अटल अंतरभूत व्योम acct_account_cpuसमय(काष्ठा task_काष्ठा *tsk)
+अणुपूर्ण
+अटल अंतरभूत व्योम acct_clear_पूर्णांकegrals(काष्ठा task_काष्ठा *tsk)
+अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_TASK_XACCT */
 
-#endif
+#पूर्ण_अगर
 
 

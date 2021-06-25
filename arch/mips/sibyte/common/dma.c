@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *	DMA support for Broadcom SiByte platforms.
+ *	DMA support क्रम Broadcom SiByte platक्रमms.
  *
  *	Copyright (c) 2018  Maciej W. Rozycki
  */
 
-#include <linux/swiotlb.h>
-#include <asm/bootinfo.h>
+#समावेश <linux/swiotlb.h>
+#समावेश <यंत्र/bootinfo.h>
 
-void __init plat_swiotlb_setup(void)
-{
+व्योम __init plat_swiotlb_setup(व्योम)
+अणु
 	swiotlb_init(1);
-}
+पूर्ण

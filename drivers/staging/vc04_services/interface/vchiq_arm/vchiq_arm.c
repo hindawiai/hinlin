@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (c) 2014 Raspberry Pi (Trading) Ltd. All rights reserved.
  * Copyright (c) 2010-2012 Broadcom. All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/sched/signal.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/cdev.h>
-#include <linux/fs.h>
-#include <linux/device.h>
-#include <linux/mm.h>
-#include <linux/highmem.h>
-#include <linux/pagemap.h>
-#include <linux/bug.h>
-#include <linux/completion.h>
-#include <linux/list.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/compat.h>
-#include <linux/dma-mapping.h>
-#include <linux/rcupdate.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <soc/bcm2835/raspberrypi-firmware.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/cdev.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/list.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <soc/bcm2835/raspberrypi-firmware.h>
 
-#include "vchiq_core.h"
-#include "vchiq_ioctl.h"
-#include "vchiq_arm.h"
-#include "vchiq_debugfs.h"
+#समावेश "vchiq_core.h"
+#समावेश "vchiq_ioctl.h"
+#समावेश "vchiq_arm.h"
+#समावेश "vchiq_debugfs.h"
 
-#define DEVICE_NAME "vchiq"
+#घोषणा DEVICE_NAME "vchiq"
 
-/* Override the default prefix, which would be vchiq_arm (from the filename) */
-#undef MODULE_PARAM_PREFIX
-#define MODULE_PARAM_PREFIX DEVICE_NAME "."
+/* Override the शेष prefix, which would be vchiq_arm (from the filename) */
+#अघोषित MODULE_PARAM_PREFIX
+#घोषणा MODULE_PARAM_PREFIX DEVICE_NAME "."
 
-/* Some per-instance constants */
-#define MAX_COMPLETIONS 128
-#define MAX_SERVICES 64
-#define MAX_ELEMENTS 8
-#define MSG_QUEUE_SIZE 128
+/* Some per-instance स्थिरants */
+#घोषणा MAX_COMPLETIONS 128
+#घोषणा MAX_SERVICES 64
+#घोषणा MAX_ELEMENTS 8
+#घोषणा MSG_QUEUE_SIZE 128
 
-#define KEEPALIVE_VER 1
-#define KEEPALIVE_VER_MIN KEEPALIVE_VER
+#घोषणा KEEPALIVE_VER 1
+#घोषणा KEEPALIVE_VER_MIN KEEPALIVE_VER
 
-/* Run time control of log level, based on KERN_XXX level. */
-int vchiq_arm_log_level = VCHIQ_LOG_DEFAULT;
-int vchiq_susp_log_level = VCHIQ_LOG_ERROR;
+/* Run समय control of log level, based on KERN_XXX level. */
+पूर्णांक vchiq_arm_log_level = VCHIQ_LOG_DEFAULT;
+पूर्णांक vchiq_susp_log_level = VCHIQ_LOG_ERROR;
 
-struct user_service {
-	struct vchiq_service *service;
-	void __user *userdata;
-	struct vchiq_instance *instance;
-	char is_vchi;
-	char dequeue_pending;
-	char close_pending;
-	int message_available_pos;
-	int msg_insert;
-	int msg_remove;
-	struct completion insert_event;
-	struct completion remove_event;
-	struct completion close_event;
-	struct vchiq_header *msg_queue[MSG_QUEUE_SIZE];
-};
+काष्ठा user_service अणु
+	काष्ठा vchiq_service *service;
+	व्योम __user *userdata;
+	काष्ठा vchiq_instance *instance;
+	अक्षर is_vchi;
+	अक्षर dequeue_pending;
+	अक्षर बंद_pending;
+	पूर्णांक message_available_pos;
+	पूर्णांक msg_insert;
+	पूर्णांक msg_हटाओ;
+	काष्ठा completion insert_event;
+	काष्ठा completion हटाओ_event;
+	काष्ठा completion बंद_event;
+	काष्ठा vchiq_header *msg_queue[MSG_QUEUE_SIZE];
+पूर्ण;
 
-struct bulk_waiter_node {
-	struct bulk_waiter bulk_waiter;
-	int pid;
-	struct list_head list;
-};
+काष्ठा bulk_रुकोer_node अणु
+	काष्ठा bulk_रुकोer bulk_रुकोer;
+	पूर्णांक pid;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct vchiq_instance {
-	struct vchiq_state *state;
-	struct vchiq_completion_data_kernel completions[MAX_COMPLETIONS];
-	int completion_insert;
-	int completion_remove;
-	struct completion insert_event;
-	struct completion remove_event;
-	struct mutex completion_mutex;
+काष्ठा vchiq_instance अणु
+	काष्ठा vchiq_state *state;
+	काष्ठा vchiq_completion_data_kernel completions[MAX_COMPLETIONS];
+	पूर्णांक completion_insert;
+	पूर्णांक completion_हटाओ;
+	काष्ठा completion insert_event;
+	काष्ठा completion हटाओ_event;
+	काष्ठा mutex completion_mutex;
 
-	int connected;
-	int closing;
-	int pid;
-	int mark;
-	int use_close_delivered;
-	int trace;
+	पूर्णांक connected;
+	पूर्णांक closing;
+	पूर्णांक pid;
+	पूर्णांक mark;
+	पूर्णांक use_बंद_delivered;
+	पूर्णांक trace;
 
-	struct list_head bulk_waiter_list;
-	struct mutex bulk_waiter_list_mutex;
+	काष्ठा list_head bulk_रुकोer_list;
+	काष्ठा mutex bulk_रुकोer_list_mutex;
 
-	struct vchiq_debugfs_node debugfs_node;
-};
+	काष्ठा vchiq_debugfs_node debugfs_node;
+पूर्ण;
 
-struct dump_context {
-	char __user *buf;
-	size_t actual;
-	size_t space;
+काष्ठा dump_context अणु
+	अक्षर __user *buf;
+	माप_प्रकार actual;
+	माप_प्रकार space;
 	loff_t offset;
-};
+पूर्ण;
 
-static struct cdev    vchiq_cdev;
-static dev_t          vchiq_devid;
-static struct vchiq_state g_state;
-static struct class  *vchiq_class;
-static DEFINE_SPINLOCK(msg_queue_spinlock);
-static struct platform_device *bcm2835_camera;
-static struct platform_device *bcm2835_audio;
+अटल काष्ठा cdev    vchiq_cdev;
+अटल dev_t          vchiq_devid;
+अटल काष्ठा vchiq_state g_state;
+अटल काष्ठा class  *vchiq_class;
+अटल DEFINE_SPINLOCK(msg_queue_spinlock);
+अटल काष्ठा platक्रमm_device *bcm2835_camera;
+अटल काष्ठा platक्रमm_device *bcm2835_audio;
 
-static struct vchiq_drvdata bcm2835_drvdata = {
+अटल काष्ठा vchiq_drvdata bcm2835_drvdata = अणु
 	.cache_line_size = 32,
-};
+पूर्ण;
 
-static struct vchiq_drvdata bcm2836_drvdata = {
+अटल काष्ठा vchiq_drvdata bcm2836_drvdata = अणु
 	.cache_line_size = 64,
-};
+पूर्ण;
 
-static const char *const ioctl_names[] = {
+अटल स्थिर अक्षर *स्थिर ioctl_names[] = अणु
 	"CONNECT",
 	"SHUTDOWN",
 	"CREATE_SERVICE",
@@ -137,57 +138,57 @@ static const char *const ioctl_names[] = {
 	"DUMP_PHYS_MEM",
 	"LIB_VERSION",
 	"CLOSE_DELIVERED"
-};
+पूर्ण;
 
-vchiq_static_assert(ARRAY_SIZE(ioctl_names) ==
+vchiq_अटल_निश्चित(ARRAY_SIZE(ioctl_names) ==
 		    (VCHIQ_IOC_MAX + 1));
 
-static enum vchiq_status
-vchiq_blocking_bulk_transfer(unsigned int handle, void *data,
-	unsigned int size, enum vchiq_bulk_dir dir);
+अटल क्रमागत vchiq_status
+vchiq_blocking_bulk_transfer(अचिन्हित पूर्णांक handle, व्योम *data,
+	अचिन्हित पूर्णांक size, क्रमागत vchiq_bulk_dir dir);
 
-#define VCHIQ_INIT_RETRIES 10
-enum vchiq_status vchiq_initialise(struct vchiq_instance **instance_out)
-{
-	enum vchiq_status status = VCHIQ_ERROR;
-	struct vchiq_state *state;
-	struct vchiq_instance *instance = NULL;
-	int i;
+#घोषणा VCHIQ_INIT_RETRIES 10
+क्रमागत vchiq_status vchiq_initialise(काष्ठा vchiq_instance **instance_out)
+अणु
+	क्रमागत vchiq_status status = VCHIQ_ERROR;
+	काष्ठा vchiq_state *state;
+	काष्ठा vchiq_instance *instance = शून्य;
+	पूर्णांक i;
 
 	vchiq_log_trace(vchiq_core_log_level, "%s called", __func__);
 
 	/*
-	 * VideoCore may not be ready due to boot up timing.
-	 * It may never be ready if kernel and firmware are mismatched,so don't
-	 * block forever.
+	 * VideoCore may not be पढ़ोy due to boot up timing.
+	 * It may never be पढ़ोy अगर kernel and firmware are mismatched,so करोn't
+	 * block क्रमever.
 	 */
-	for (i = 0; i < VCHIQ_INIT_RETRIES; i++) {
+	क्रम (i = 0; i < VCHIQ_INIT_RETRIES; i++) अणु
 		state = vchiq_get_state();
-		if (state)
-			break;
+		अगर (state)
+			अवरोध;
 		usleep_range(500, 600);
-	}
-	if (i == VCHIQ_INIT_RETRIES) {
+	पूर्ण
+	अगर (i == VCHIQ_INIT_RETRIES) अणु
 		vchiq_log_error(vchiq_core_log_level,
 			"%s: videocore not initialized\n", __func__);
-		goto failed;
-	} else if (i > 0) {
+		जाओ failed;
+	पूर्ण अन्यथा अगर (i > 0) अणु
 		vchiq_log_warning(vchiq_core_log_level,
 			"%s: videocore initialized after %d retries\n",
 			__func__, i);
-	}
+	पूर्ण
 
-	instance = kzalloc(sizeof(*instance), GFP_KERNEL);
-	if (!instance) {
+	instance = kzalloc(माप(*instance), GFP_KERNEL);
+	अगर (!instance) अणु
 		vchiq_log_error(vchiq_core_log_level,
 			"%s: error allocating vchiq instance\n", __func__);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	instance->connected = 0;
 	instance->state = state;
-	mutex_init(&instance->bulk_waiter_list_mutex);
-	INIT_LIST_HEAD(&instance->bulk_waiter_list);
+	mutex_init(&instance->bulk_रुकोer_list_mutex);
+	INIT_LIST_HEAD(&instance->bulk_रुकोer_list);
 
 	*instance_out = instance;
 
@@ -197,69 +198,69 @@ failed:
 	vchiq_log_trace(vchiq_core_log_level,
 		"%s(%p): returning %d", __func__, instance, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL(vchiq_initialise);
 
-enum vchiq_status vchiq_shutdown(struct vchiq_instance *instance)
-{
-	enum vchiq_status status;
-	struct vchiq_state *state = instance->state;
+क्रमागत vchiq_status vchiq_shutकरोwn(काष्ठा vchiq_instance *instance)
+अणु
+	क्रमागत vchiq_status status;
+	काष्ठा vchiq_state *state = instance->state;
 
 	vchiq_log_trace(vchiq_core_log_level,
 		"%s(%p) called", __func__, instance);
 
-	if (mutex_lock_killable(&state->mutex))
-		return VCHIQ_RETRY;
+	अगर (mutex_lock_समाप्तable(&state->mutex))
+		वापस VCHIQ_RETRY;
 
 	/* Remove all services */
-	status = vchiq_shutdown_internal(state, instance);
+	status = vchiq_shutकरोwn_पूर्णांकernal(state, instance);
 
 	mutex_unlock(&state->mutex);
 
 	vchiq_log_trace(vchiq_core_log_level,
 		"%s(%p): returning %d", __func__, instance, status);
 
-	if (status == VCHIQ_SUCCESS) {
-		struct bulk_waiter_node *waiter, *next;
+	अगर (status == VCHIQ_SUCCESS) अणु
+		काष्ठा bulk_रुकोer_node *रुकोer, *next;
 
-		list_for_each_entry_safe(waiter, next,
-					 &instance->bulk_waiter_list, list) {
-			list_del(&waiter->list);
+		list_क्रम_each_entry_safe(रुकोer, next,
+					 &instance->bulk_रुकोer_list, list) अणु
+			list_del(&रुकोer->list);
 			vchiq_log_info(vchiq_arm_log_level,
 					"bulk_waiter - cleaned up %pK for pid %d",
-					waiter, waiter->pid);
-			kfree(waiter);
-		}
-		kfree(instance);
-	}
+					रुकोer, रुकोer->pid);
+			kमुक्त(रुकोer);
+		पूर्ण
+		kमुक्त(instance);
+	पूर्ण
 
-	return status;
-}
-EXPORT_SYMBOL(vchiq_shutdown);
+	वापस status;
+पूर्ण
+EXPORT_SYMBOL(vchiq_shutकरोwn);
 
-static int vchiq_is_connected(struct vchiq_instance *instance)
-{
-	return instance->connected;
-}
+अटल पूर्णांक vchiq_is_connected(काष्ठा vchiq_instance *instance)
+अणु
+	वापस instance->connected;
+पूर्ण
 
-enum vchiq_status vchiq_connect(struct vchiq_instance *instance)
-{
-	enum vchiq_status status;
-	struct vchiq_state *state = instance->state;
+क्रमागत vchiq_status vchiq_connect(काष्ठा vchiq_instance *instance)
+अणु
+	क्रमागत vchiq_status status;
+	काष्ठा vchiq_state *state = instance->state;
 
 	vchiq_log_trace(vchiq_core_log_level,
 		"%s(%p) called", __func__, instance);
 
-	if (mutex_lock_killable(&state->mutex)) {
+	अगर (mutex_lock_समाप्तable(&state->mutex)) अणु
 		vchiq_log_trace(vchiq_core_log_level,
 			"%s: call to mutex_lock failed", __func__);
 		status = VCHIQ_RETRY;
-		goto failed;
-	}
-	status = vchiq_connect_internal(state, instance);
+		जाओ failed;
+	पूर्ण
+	status = vchiq_connect_पूर्णांकernal(state, instance);
 
-	if (status == VCHIQ_SUCCESS)
+	अगर (status == VCHIQ_SUCCESS)
 		instance->connected = 1;
 
 	mutex_unlock(&state->mutex);
@@ -268,19 +269,19 @@ failed:
 	vchiq_log_trace(vchiq_core_log_level,
 		"%s(%p): returning %d", __func__, instance, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL(vchiq_connect);
 
-static enum vchiq_status vchiq_add_service(
-	struct vchiq_instance             *instance,
-	const struct vchiq_service_params_kernel *params,
-	unsigned int       *phandle)
-{
-	enum vchiq_status status;
-	struct vchiq_state *state = instance->state;
-	struct vchiq_service *service = NULL;
-	int srvstate;
+अटल क्रमागत vchiq_status vchiq_add_service(
+	काष्ठा vchiq_instance             *instance,
+	स्थिर काष्ठा vchiq_service_params_kernel *params,
+	अचिन्हित पूर्णांक       *phandle)
+अणु
+	क्रमागत vchiq_status status;
+	काष्ठा vchiq_state *state = instance->state;
+	काष्ठा vchiq_service *service = शून्य;
+	पूर्णांक srvstate;
 
 	vchiq_log_trace(vchiq_core_log_level,
 		"%s(%p) called", __func__, instance);
@@ -291,281 +292,281 @@ static enum vchiq_status vchiq_add_service(
 		? VCHIQ_SRVSTATE_LISTENING
 		: VCHIQ_SRVSTATE_HIDDEN;
 
-	service = vchiq_add_service_internal(
+	service = vchiq_add_service_पूर्णांकernal(
 		state,
 		params,
 		srvstate,
 		instance,
-		NULL);
+		शून्य);
 
-	if (service) {
+	अगर (service) अणु
 		*phandle = service->handle;
 		status = VCHIQ_SUCCESS;
-	} else
+	पूर्ण अन्यथा
 		status = VCHIQ_ERROR;
 
 	vchiq_log_trace(vchiq_core_log_level,
 		"%s(%p): returning %d", __func__, instance, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-enum vchiq_status vchiq_open_service(
-	struct vchiq_instance             *instance,
-	const struct vchiq_service_params_kernel *params,
-	unsigned int       *phandle)
-{
-	enum vchiq_status   status = VCHIQ_ERROR;
-	struct vchiq_state   *state = instance->state;
-	struct vchiq_service *service = NULL;
+क्रमागत vchiq_status vchiq_खोलो_service(
+	काष्ठा vchiq_instance             *instance,
+	स्थिर काष्ठा vchiq_service_params_kernel *params,
+	अचिन्हित पूर्णांक       *phandle)
+अणु
+	क्रमागत vchiq_status   status = VCHIQ_ERROR;
+	काष्ठा vchiq_state   *state = instance->state;
+	काष्ठा vchiq_service *service = शून्य;
 
 	vchiq_log_trace(vchiq_core_log_level,
 		"%s(%p) called", __func__, instance);
 
 	*phandle = VCHIQ_SERVICE_HANDLE_INVALID;
 
-	if (!vchiq_is_connected(instance))
-		goto failed;
+	अगर (!vchiq_is_connected(instance))
+		जाओ failed;
 
-	service = vchiq_add_service_internal(state,
+	service = vchiq_add_service_पूर्णांकernal(state,
 		params,
 		VCHIQ_SRVSTATE_OPENING,
 		instance,
-		NULL);
+		शून्य);
 
-	if (service) {
+	अगर (service) अणु
 		*phandle = service->handle;
-		status = vchiq_open_service_internal(service, current->pid);
-		if (status != VCHIQ_SUCCESS) {
-			vchiq_remove_service(service->handle);
+		status = vchiq_खोलो_service_पूर्णांकernal(service, current->pid);
+		अगर (status != VCHIQ_SUCCESS) अणु
+			vchiq_हटाओ_service(service->handle);
 			*phandle = VCHIQ_SERVICE_HANDLE_INVALID;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 failed:
 	vchiq_log_trace(vchiq_core_log_level,
 		"%s(%p): returning %d", __func__, instance, status);
 
-	return status;
-}
-EXPORT_SYMBOL(vchiq_open_service);
+	वापस status;
+पूर्ण
+EXPORT_SYMBOL(vchiq_खोलो_service);
 
-enum vchiq_status
-vchiq_bulk_transmit(unsigned int handle, const void *data,
-	unsigned int size, void *userdata, enum vchiq_bulk_mode mode)
-{
-	enum vchiq_status status;
+क्रमागत vchiq_status
+vchiq_bulk_transmit(अचिन्हित पूर्णांक handle, स्थिर व्योम *data,
+	अचिन्हित पूर्णांक size, व्योम *userdata, क्रमागत vchiq_bulk_mode mode)
+अणु
+	क्रमागत vchiq_status status;
 
-	while (1) {
-		switch (mode) {
-		case VCHIQ_BULK_MODE_NOCALLBACK:
-		case VCHIQ_BULK_MODE_CALLBACK:
+	जबतक (1) अणु
+		चयन (mode) अणु
+		हाल VCHIQ_BULK_MODE_NOCALLBACK:
+		हाल VCHIQ_BULK_MODE_CALLBACK:
 			status = vchiq_bulk_transfer(handle,
-						     (void *)data, NULL,
+						     (व्योम *)data, शून्य,
 						     size, userdata, mode,
 						     VCHIQ_BULK_TRANSMIT);
-			break;
-		case VCHIQ_BULK_MODE_BLOCKING:
+			अवरोध;
+		हाल VCHIQ_BULK_MODE_BLOCKING:
 			status = vchiq_blocking_bulk_transfer(handle,
-				(void *)data, size, VCHIQ_BULK_TRANSMIT);
-			break;
-		default:
-			return VCHIQ_ERROR;
-		}
+				(व्योम *)data, size, VCHIQ_BULK_TRANSMIT);
+			अवरोध;
+		शेष:
+			वापस VCHIQ_ERROR;
+		पूर्ण
 
 		/*
-		 * vchiq_*_bulk_transfer() may return VCHIQ_RETRY, so we need
+		 * vchiq_*_bulk_transfer() may वापस VCHIQ_RETRY, so we need
 		 * to implement a retry mechanism since this function is
 		 * supposed to block until queued
 		 */
-		if (status != VCHIQ_RETRY)
-			break;
+		अगर (status != VCHIQ_RETRY)
+			अवरोध;
 
 		msleep(1);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL(vchiq_bulk_transmit);
 
-enum vchiq_status vchiq_bulk_receive(unsigned int handle, void *data,
-				     unsigned int size, void *userdata,
-				     enum vchiq_bulk_mode mode)
-{
-	enum vchiq_status status;
+क्रमागत vchiq_status vchiq_bulk_receive(अचिन्हित पूर्णांक handle, व्योम *data,
+				     अचिन्हित पूर्णांक size, व्योम *userdata,
+				     क्रमागत vchiq_bulk_mode mode)
+अणु
+	क्रमागत vchiq_status status;
 
-	while (1) {
-		switch (mode) {
-		case VCHIQ_BULK_MODE_NOCALLBACK:
-		case VCHIQ_BULK_MODE_CALLBACK:
-			status = vchiq_bulk_transfer(handle, data, NULL,
+	जबतक (1) अणु
+		चयन (mode) अणु
+		हाल VCHIQ_BULK_MODE_NOCALLBACK:
+		हाल VCHIQ_BULK_MODE_CALLBACK:
+			status = vchiq_bulk_transfer(handle, data, शून्य,
 						     size, userdata,
 						     mode, VCHIQ_BULK_RECEIVE);
-			break;
-		case VCHIQ_BULK_MODE_BLOCKING:
+			अवरोध;
+		हाल VCHIQ_BULK_MODE_BLOCKING:
 			status = vchiq_blocking_bulk_transfer(handle,
-				(void *)data, size, VCHIQ_BULK_RECEIVE);
-			break;
-		default:
-			return VCHIQ_ERROR;
-		}
+				(व्योम *)data, size, VCHIQ_BULK_RECEIVE);
+			अवरोध;
+		शेष:
+			वापस VCHIQ_ERROR;
+		पूर्ण
 
 		/*
-		 * vchiq_*_bulk_transfer() may return VCHIQ_RETRY, so we need
+		 * vchiq_*_bulk_transfer() may वापस VCHIQ_RETRY, so we need
 		 * to implement a retry mechanism since this function is
 		 * supposed to block until queued
 		 */
-		if (status != VCHIQ_RETRY)
-			break;
+		अगर (status != VCHIQ_RETRY)
+			अवरोध;
 
 		msleep(1);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL(vchiq_bulk_receive);
 
-static enum vchiq_status
-vchiq_blocking_bulk_transfer(unsigned int handle, void *data,
-	unsigned int size, enum vchiq_bulk_dir dir)
-{
-	struct vchiq_instance *instance;
-	struct vchiq_service *service;
-	enum vchiq_status status;
-	struct bulk_waiter_node *waiter = NULL;
+अटल क्रमागत vchiq_status
+vchiq_blocking_bulk_transfer(अचिन्हित पूर्णांक handle, व्योम *data,
+	अचिन्हित पूर्णांक size, क्रमागत vchiq_bulk_dir dir)
+अणु
+	काष्ठा vchiq_instance *instance;
+	काष्ठा vchiq_service *service;
+	क्रमागत vchiq_status status;
+	काष्ठा bulk_रुकोer_node *रुकोer = शून्य;
 	bool found = false;
 
 	service = find_service_by_handle(handle);
-	if (!service)
-		return VCHIQ_ERROR;
+	अगर (!service)
+		वापस VCHIQ_ERROR;
 
 	instance = service->instance;
 
 	unlock_service(service);
 
-	mutex_lock(&instance->bulk_waiter_list_mutex);
-	list_for_each_entry(waiter, &instance->bulk_waiter_list, list) {
-		if (waiter->pid == current->pid) {
-			list_del(&waiter->list);
+	mutex_lock(&instance->bulk_रुकोer_list_mutex);
+	list_क्रम_each_entry(रुकोer, &instance->bulk_रुकोer_list, list) अणु
+		अगर (रुकोer->pid == current->pid) अणु
+			list_del(&रुकोer->list);
 			found = true;
-			break;
-		}
-	}
-	mutex_unlock(&instance->bulk_waiter_list_mutex);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	mutex_unlock(&instance->bulk_रुकोer_list_mutex);
 
-	if (found) {
-		struct vchiq_bulk *bulk = waiter->bulk_waiter.bulk;
+	अगर (found) अणु
+		काष्ठा vchiq_bulk *bulk = रुकोer->bulk_रुकोer.bulk;
 
-		if (bulk) {
-			/* This thread has an outstanding bulk transfer. */
-			/* FIXME: why compare a dma address to a pointer? */
-			if ((bulk->data != (dma_addr_t)(uintptr_t)data) ||
-				(bulk->size != size)) {
+		अगर (bulk) अणु
+			/* This thपढ़ो has an outstanding bulk transfer. */
+			/* FIXME: why compare a dma address to a poपूर्णांकer? */
+			अगर ((bulk->data != (dma_addr_t)(uपूर्णांकptr_t)data) ||
+				(bulk->size != size)) अणु
 				/*
 				 * This is not a retry of the previous one.
-				 * Cancel the signal when the transfer completes.
+				 * Cancel the संकेत when the transfer completes.
 				 */
-				spin_lock(&bulk_waiter_spinlock);
-				bulk->userdata = NULL;
-				spin_unlock(&bulk_waiter_spinlock);
-			}
-		}
-	} else {
-		waiter = kzalloc(sizeof(struct bulk_waiter_node), GFP_KERNEL);
-		if (!waiter) {
+				spin_lock(&bulk_रुकोer_spinlock);
+				bulk->userdata = शून्य;
+				spin_unlock(&bulk_रुकोer_spinlock);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		रुकोer = kzalloc(माप(काष्ठा bulk_रुकोer_node), GFP_KERNEL);
+		अगर (!रुकोer) अणु
 			vchiq_log_error(vchiq_core_log_level,
 				"%s - out of memory", __func__);
-			return VCHIQ_ERROR;
-		}
-	}
+			वापस VCHIQ_ERROR;
+		पूर्ण
+	पूर्ण
 
-	status = vchiq_bulk_transfer(handle, data, NULL, size,
-				     &waiter->bulk_waiter,
+	status = vchiq_bulk_transfer(handle, data, शून्य, size,
+				     &रुकोer->bulk_रुकोer,
 				     VCHIQ_BULK_MODE_BLOCKING, dir);
-	if ((status != VCHIQ_RETRY) || fatal_signal_pending(current) ||
-		!waiter->bulk_waiter.bulk) {
-		struct vchiq_bulk *bulk = waiter->bulk_waiter.bulk;
+	अगर ((status != VCHIQ_RETRY) || fatal_संकेत_pending(current) ||
+		!रुकोer->bulk_रुकोer.bulk) अणु
+		काष्ठा vchiq_bulk *bulk = रुकोer->bulk_रुकोer.bulk;
 
-		if (bulk) {
-			/* Cancel the signal when the transfer completes. */
-			spin_lock(&bulk_waiter_spinlock);
-			bulk->userdata = NULL;
-			spin_unlock(&bulk_waiter_spinlock);
-		}
-		kfree(waiter);
-	} else {
-		waiter->pid = current->pid;
-		mutex_lock(&instance->bulk_waiter_list_mutex);
-		list_add(&waiter->list, &instance->bulk_waiter_list);
-		mutex_unlock(&instance->bulk_waiter_list_mutex);
+		अगर (bulk) अणु
+			/* Cancel the संकेत when the transfer completes. */
+			spin_lock(&bulk_रुकोer_spinlock);
+			bulk->userdata = शून्य;
+			spin_unlock(&bulk_रुकोer_spinlock);
+		पूर्ण
+		kमुक्त(रुकोer);
+	पूर्ण अन्यथा अणु
+		रुकोer->pid = current->pid;
+		mutex_lock(&instance->bulk_रुकोer_list_mutex);
+		list_add(&रुकोer->list, &instance->bulk_रुकोer_list);
+		mutex_unlock(&instance->bulk_रुकोer_list_mutex);
 		vchiq_log_info(vchiq_arm_log_level,
 				"saved bulk_waiter %pK for pid %d",
-				waiter, current->pid);
-	}
+				रुकोer, current->pid);
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 /****************************************************************************
  *
  *   add_completion
  *
  ***************************************************************************/
 
-static enum vchiq_status
-add_completion(struct vchiq_instance *instance, enum vchiq_reason reason,
-	       struct vchiq_header *header, struct user_service *user_service,
-	       void *bulk_userdata)
-{
-	struct vchiq_completion_data_kernel *completion;
-	int insert;
+अटल क्रमागत vchiq_status
+add_completion(काष्ठा vchiq_instance *instance, क्रमागत vchiq_reason reason,
+	       काष्ठा vchiq_header *header, काष्ठा user_service *user_service,
+	       व्योम *bulk_userdata)
+अणु
+	काष्ठा vchiq_completion_data_kernel *completion;
+	पूर्णांक insert;
 
 	DEBUG_INITIALISE(g_state.local)
 
 	insert = instance->completion_insert;
-	while ((insert - instance->completion_remove) >= MAX_COMPLETIONS) {
-		/* Out of space - wait for the client */
+	जबतक ((insert - instance->completion_हटाओ) >= MAX_COMPLETIONS) अणु
+		/* Out of space - रुको क्रम the client */
 		DEBUG_TRACE(SERVICE_CALLBACK_LINE);
 		vchiq_log_trace(vchiq_arm_log_level,
 			"%s - completion queue full", __func__);
 		DEBUG_COUNT(COMPLETION_QUEUE_FULL_COUNT);
-		if (wait_for_completion_interruptible(
-					&instance->remove_event)) {
+		अगर (रुको_क्रम_completion_पूर्णांकerruptible(
+					&instance->हटाओ_event)) अणु
 			vchiq_log_info(vchiq_arm_log_level,
 				"service_callback interrupted");
-			return VCHIQ_RETRY;
-		} else if (instance->closing) {
+			वापस VCHIQ_RETRY;
+		पूर्ण अन्यथा अगर (instance->closing) अणु
 			vchiq_log_info(vchiq_arm_log_level,
 				"service_callback closing");
-			return VCHIQ_SUCCESS;
-		}
+			वापस VCHIQ_SUCCESS;
+		पूर्ण
 		DEBUG_TRACE(SERVICE_CALLBACK_LINE);
-	}
+	पूर्ण
 
 	completion = &instance->completions[insert & (MAX_COMPLETIONS - 1)];
 
 	completion->header = header;
 	completion->reason = reason;
-	/* N.B. service_userdata is updated while processing AWAIT_COMPLETION */
+	/* N.B. service_userdata is updated जबतक processing AWAIT_COMPLETION */
 	completion->service_userdata = user_service->service;
 	completion->bulk_userdata = bulk_userdata;
 
-	if (reason == VCHIQ_SERVICE_CLOSED) {
+	अगर (reason == VCHIQ_SERVICE_CLOSED) अणु
 		/*
 		 * Take an extra reference, to be held until
-		 * this CLOSED notification is delivered.
+		 * this CLOSED notअगरication is delivered.
 		 */
 		lock_service(user_service->service);
-		if (instance->use_close_delivered)
-			user_service->close_pending = 1;
-	}
+		अगर (instance->use_बंद_delivered)
+			user_service->बंद_pending = 1;
+	पूर्ण
 
 	/*
-	 * A write barrier is needed here to ensure that the entire completion
-	 * record is written out before the insert point.
+	 * A ग_लिखो barrier is needed here to ensure that the entire completion
+	 * record is written out beक्रमe the insert poपूर्णांक.
 	 */
 	wmb();
 
-	if (reason == VCHIQ_MESSAGE_AVAILABLE)
+	अगर (reason == VCHIQ_MESSAGE_AVAILABLE)
 		user_service->message_available_pos = insert;
 
 	insert++;
@@ -573,8 +574,8 @@ add_completion(struct vchiq_instance *instance, enum vchiq_reason reason,
 
 	complete(&instance->insert_event);
 
-	return VCHIQ_SUCCESS;
-}
+	वापस VCHIQ_SUCCESS;
+पूर्ण
 
 /****************************************************************************
  *
@@ -582,19 +583,19 @@ add_completion(struct vchiq_instance *instance, enum vchiq_reason reason,
  *
  ***************************************************************************/
 
-static enum vchiq_status
-service_callback(enum vchiq_reason reason, struct vchiq_header *header,
-		 unsigned int handle, void *bulk_userdata)
-{
+अटल क्रमागत vchiq_status
+service_callback(क्रमागत vchiq_reason reason, काष्ठा vchiq_header *header,
+		 अचिन्हित पूर्णांक handle, व्योम *bulk_userdata)
+अणु
 	/*
-	 * How do we ensure the callback goes to the right client?
-	 * The service_user data points to a user_service record
-	 * containing the original callback and the user state structure, which
-	 * contains a circular buffer for completion records.
+	 * How करो we ensure the callback goes to the right client?
+	 * The service_user data poपूर्णांकs to a user_service record
+	 * containing the original callback and the user state काष्ठाure, which
+	 * contains a circular buffer क्रम completion records.
 	 */
-	struct user_service *user_service;
-	struct vchiq_service *service;
-	struct vchiq_instance *instance;
+	काष्ठा user_service *user_service;
+	काष्ठा vchiq_service *service;
+	काष्ठा vchiq_instance *instance;
 	bool skip_completion = false;
 
 	DEBUG_INITIALISE(g_state.local)
@@ -603,23 +604,23 @@ service_callback(enum vchiq_reason reason, struct vchiq_header *header,
 
 	service = handle_to_service(handle);
 	BUG_ON(!service);
-	user_service = (struct user_service *)service->base.userdata;
+	user_service = (काष्ठा user_service *)service->base.userdata;
 	instance = user_service->instance;
 
-	if (!instance || instance->closing)
-		return VCHIQ_SUCCESS;
+	अगर (!instance || instance->closing)
+		वापस VCHIQ_SUCCESS;
 
 	vchiq_log_trace(vchiq_arm_log_level,
 		"%s - service %lx(%d,%p), reason %d, header %lx, instance %lx, bulk_userdata %lx",
-		__func__, (unsigned long)user_service,
+		__func__, (अचिन्हित दीर्घ)user_service,
 		service->localport, user_service->userdata,
-		reason, (unsigned long)header,
-		(unsigned long)instance, (unsigned long)bulk_userdata);
+		reason, (अचिन्हित दीर्घ)header,
+		(अचिन्हित दीर्घ)instance, (अचिन्हित दीर्घ)bulk_userdata);
 
-	if (header && user_service->is_vchi) {
+	अगर (header && user_service->is_vchi) अणु
 		spin_lock(&msg_queue_spinlock);
-		while (user_service->msg_insert ==
-			(user_service->msg_remove + MSG_QUEUE_SIZE)) {
+		जबतक (user_service->msg_insert ==
+			(user_service->msg_हटाओ + MSG_QUEUE_SIZE)) अणु
 			spin_unlock(&msg_queue_spinlock);
 			DEBUG_TRACE(SERVICE_CALLBACK_LINE);
 			DEBUG_COUNT(MSG_QUEUE_FULL_COUNT);
@@ -629,532 +630,532 @@ service_callback(enum vchiq_reason reason, struct vchiq_header *header,
 			 * If there is no MESSAGE_AVAILABLE in the completion
 			 * queue, add one
 			 */
-			if ((user_service->message_available_pos -
-				instance->completion_remove) < 0) {
-				enum vchiq_status status;
+			अगर ((user_service->message_available_pos -
+				instance->completion_हटाओ) < 0) अणु
+				क्रमागत vchiq_status status;
 
 				vchiq_log_info(vchiq_arm_log_level,
 					"Inserting extra MESSAGE_AVAILABLE");
 				DEBUG_TRACE(SERVICE_CALLBACK_LINE);
 				status = add_completion(instance, reason,
-					NULL, user_service, bulk_userdata);
-				if (status != VCHIQ_SUCCESS) {
+					शून्य, user_service, bulk_userdata);
+				अगर (status != VCHIQ_SUCCESS) अणु
 					DEBUG_TRACE(SERVICE_CALLBACK_LINE);
-					return status;
-				}
-			}
+					वापस status;
+				पूर्ण
+			पूर्ण
 
 			DEBUG_TRACE(SERVICE_CALLBACK_LINE);
-			if (wait_for_completion_interruptible(
-						&user_service->remove_event)) {
+			अगर (रुको_क्रम_completion_पूर्णांकerruptible(
+						&user_service->हटाओ_event)) अणु
 				vchiq_log_info(vchiq_arm_log_level,
 					"%s interrupted", __func__);
 				DEBUG_TRACE(SERVICE_CALLBACK_LINE);
-				return VCHIQ_RETRY;
-			} else if (instance->closing) {
+				वापस VCHIQ_RETRY;
+			पूर्ण अन्यथा अगर (instance->closing) अणु
 				vchiq_log_info(vchiq_arm_log_level,
 					"%s closing", __func__);
 				DEBUG_TRACE(SERVICE_CALLBACK_LINE);
-				return VCHIQ_ERROR;
-			}
+				वापस VCHIQ_ERROR;
+			पूर्ण
 			DEBUG_TRACE(SERVICE_CALLBACK_LINE);
 			spin_lock(&msg_queue_spinlock);
-		}
+		पूर्ण
 
 		user_service->msg_queue[user_service->msg_insert &
 			(MSG_QUEUE_SIZE - 1)] = header;
 		user_service->msg_insert++;
 
 		/*
-		 * If there is a thread waiting in DEQUEUE_MESSAGE, or if
+		 * If there is a thपढ़ो रुकोing in DEQUEUE_MESSAGE, or अगर
 		 * there is a MESSAGE_AVAILABLE in the completion queue then
 		 * bypass the completion queue.
 		 */
-		if (((user_service->message_available_pos -
-			instance->completion_remove) >= 0) ||
-			user_service->dequeue_pending) {
+		अगर (((user_service->message_available_pos -
+			instance->completion_हटाओ) >= 0) ||
+			user_service->dequeue_pending) अणु
 			user_service->dequeue_pending = 0;
 			skip_completion = true;
-		}
+		पूर्ण
 
 		spin_unlock(&msg_queue_spinlock);
 		complete(&user_service->insert_event);
 
-		header = NULL;
-	}
+		header = शून्य;
+	पूर्ण
 	DEBUG_TRACE(SERVICE_CALLBACK_LINE);
 
-	if (skip_completion)
-		return VCHIQ_SUCCESS;
+	अगर (skip_completion)
+		वापस VCHIQ_SUCCESS;
 
-	return add_completion(instance, reason, header, user_service,
+	वापस add_completion(instance, reason, header, user_service,
 		bulk_userdata);
-}
+पूर्ण
 
 /****************************************************************************
  *
- *   user_service_free
+ *   user_service_मुक्त
  *
  ***************************************************************************/
-static void
-user_service_free(void *userdata)
-{
-	kfree(userdata);
-}
+अटल व्योम
+user_service_मुक्त(व्योम *userdata)
+अणु
+	kमुक्त(userdata);
+पूर्ण
 
 /****************************************************************************
  *
- *   close_delivered
+ *   बंद_delivered
  *
  ***************************************************************************/
-static void close_delivered(struct user_service *user_service)
-{
+अटल व्योम बंद_delivered(काष्ठा user_service *user_service)
+अणु
 	vchiq_log_info(vchiq_arm_log_level,
 		"%s(handle=%x)",
 		__func__, user_service->service->handle);
 
-	if (user_service->close_pending) {
+	अगर (user_service->बंद_pending) अणु
 		/* Allow the underlying service to be culled */
 		unlock_service(user_service->service);
 
-		/* Wake the user-thread blocked in close_ or remove_service */
-		complete(&user_service->close_event);
+		/* Wake the user-thपढ़ो blocked in बंद_ or हटाओ_service */
+		complete(&user_service->बंद_event);
 
-		user_service->close_pending = 0;
-	}
-}
+		user_service->बंद_pending = 0;
+	पूर्ण
+पूर्ण
 
-struct vchiq_io_copy_callback_context {
-	struct vchiq_element *element;
-	size_t element_offset;
-	unsigned long elements_to_go;
-};
+काष्ठा vchiq_io_copy_callback_context अणु
+	काष्ठा vchiq_element *element;
+	माप_प्रकार element_offset;
+	अचिन्हित दीर्घ elements_to_go;
+पूर्ण;
 
-static ssize_t vchiq_ioc_copy_element_data(void *context, void *dest,
-					   size_t offset, size_t maxsize)
-{
-	struct vchiq_io_copy_callback_context *cc = context;
-	size_t total_bytes_copied = 0;
-	size_t bytes_this_round;
+अटल sमाप_प्रकार vchiq_ioc_copy_element_data(व्योम *context, व्योम *dest,
+					   माप_प्रकार offset, माप_प्रकार maxsize)
+अणु
+	काष्ठा vchiq_io_copy_callback_context *cc = context;
+	माप_प्रकार total_bytes_copied = 0;
+	माप_प्रकार bytes_this_round;
 
-	while (total_bytes_copied < maxsize) {
-		if (!cc->elements_to_go)
-			return total_bytes_copied;
+	जबतक (total_bytes_copied < maxsize) अणु
+		अगर (!cc->elements_to_go)
+			वापस total_bytes_copied;
 
-		if (!cc->element->size) {
+		अगर (!cc->element->size) अणु
 			cc->elements_to_go--;
 			cc->element++;
 			cc->element_offset = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		bytes_this_round = min(cc->element->size - cc->element_offset,
 				       maxsize - total_bytes_copied);
 
-		if (copy_from_user(dest + total_bytes_copied,
+		अगर (copy_from_user(dest + total_bytes_copied,
 				  cc->element->data + cc->element_offset,
 				  bytes_this_round))
-			return -EFAULT;
+			वापस -EFAULT;
 
 		cc->element_offset += bytes_this_round;
 		total_bytes_copied += bytes_this_round;
 
-		if (cc->element_offset == cc->element->size) {
+		अगर (cc->element_offset == cc->element->size) अणु
 			cc->elements_to_go--;
 			cc->element++;
 			cc->element_offset = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return maxsize;
-}
+	वापस maxsize;
+पूर्ण
 
 /**************************************************************************
  *
  *   vchiq_ioc_queue_message
  *
  **************************************************************************/
-static int
-vchiq_ioc_queue_message(unsigned int handle,
-			struct vchiq_element *elements,
-			unsigned long count)
-{
-	struct vchiq_io_copy_callback_context context;
-	enum vchiq_status status = VCHIQ_SUCCESS;
-	unsigned long i;
-	size_t total_size = 0;
+अटल पूर्णांक
+vchiq_ioc_queue_message(अचिन्हित पूर्णांक handle,
+			काष्ठा vchiq_element *elements,
+			अचिन्हित दीर्घ count)
+अणु
+	काष्ठा vchiq_io_copy_callback_context context;
+	क्रमागत vchiq_status status = VCHIQ_SUCCESS;
+	अचिन्हित दीर्घ i;
+	माप_प्रकार total_size = 0;
 
 	context.element = elements;
 	context.element_offset = 0;
 	context.elements_to_go = count;
 
-	for (i = 0; i < count; i++) {
-		if (!elements[i].data && elements[i].size != 0)
-			return -EFAULT;
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (!elements[i].data && elements[i].size != 0)
+			वापस -EFAULT;
 
 		total_size += elements[i].size;
-	}
+	पूर्ण
 
 	status = vchiq_queue_message(handle, vchiq_ioc_copy_element_data,
 				     &context, total_size);
 
-	if (status == VCHIQ_ERROR)
-		return -EIO;
-	else if (status == VCHIQ_RETRY)
-		return -EINTR;
-	return 0;
-}
+	अगर (status == VCHIQ_ERROR)
+		वापस -EIO;
+	अन्यथा अगर (status == VCHIQ_RETRY)
+		वापस -EINTR;
+	वापस 0;
+पूर्ण
 
-static int vchiq_ioc_create_service(struct vchiq_instance *instance,
-				    struct vchiq_create_service *args)
-{
-	struct user_service *user_service = NULL;
-	struct vchiq_service *service;
-	enum vchiq_status status = VCHIQ_SUCCESS;
-	struct vchiq_service_params_kernel params;
-	int srvstate;
+अटल पूर्णांक vchiq_ioc_create_service(काष्ठा vchiq_instance *instance,
+				    काष्ठा vchiq_create_service *args)
+अणु
+	काष्ठा user_service *user_service = शून्य;
+	काष्ठा vchiq_service *service;
+	क्रमागत vchiq_status status = VCHIQ_SUCCESS;
+	काष्ठा vchiq_service_params_kernel params;
+	पूर्णांक srvstate;
 
-	user_service = kmalloc(sizeof(*user_service), GFP_KERNEL);
-	if (!user_service)
-		return -ENOMEM;
+	user_service = kदो_स्मृति(माप(*user_service), GFP_KERNEL);
+	अगर (!user_service)
+		वापस -ENOMEM;
 
-	if (args->is_open) {
-		if (!instance->connected) {
-			kfree(user_service);
-			return -ENOTCONN;
-		}
+	अगर (args->is_खोलो) अणु
+		अगर (!instance->connected) अणु
+			kमुक्त(user_service);
+			वापस -ENOTCONN;
+		पूर्ण
 		srvstate = VCHIQ_SRVSTATE_OPENING;
-	} else {
+	पूर्ण अन्यथा अणु
 		srvstate = instance->connected ?
 			 VCHIQ_SRVSTATE_LISTENING : VCHIQ_SRVSTATE_HIDDEN;
-	}
+	पूर्ण
 
-	params = (struct vchiq_service_params_kernel) {
+	params = (काष्ठा vchiq_service_params_kernel) अणु
 		.fourcc   = args->params.fourcc,
 		.callback = service_callback,
 		.userdata = user_service,
 		.version  = args->params.version,
 		.version_min = args->params.version_min,
-	};
-	service = vchiq_add_service_internal(instance->state, &params,
+	पूर्ण;
+	service = vchiq_add_service_पूर्णांकernal(instance->state, &params,
 					     srvstate, instance,
-					     user_service_free);
-	if (!service) {
-		kfree(user_service);
-		return -EEXIST;
-	}
+					     user_service_मुक्त);
+	अगर (!service) अणु
+		kमुक्त(user_service);
+		वापस -EEXIST;
+	पूर्ण
 
 	user_service->service = service;
 	user_service->userdata = args->params.userdata;
 	user_service->instance = instance;
 	user_service->is_vchi = (args->is_vchi != 0);
 	user_service->dequeue_pending = 0;
-	user_service->close_pending = 0;
-	user_service->message_available_pos = instance->completion_remove - 1;
+	user_service->बंद_pending = 0;
+	user_service->message_available_pos = instance->completion_हटाओ - 1;
 	user_service->msg_insert = 0;
-	user_service->msg_remove = 0;
+	user_service->msg_हटाओ = 0;
 	init_completion(&user_service->insert_event);
-	init_completion(&user_service->remove_event);
-	init_completion(&user_service->close_event);
+	init_completion(&user_service->हटाओ_event);
+	init_completion(&user_service->बंद_event);
 
-	if (args->is_open) {
-		status = vchiq_open_service_internal(service, instance->pid);
-		if (status != VCHIQ_SUCCESS) {
-			vchiq_remove_service(service->handle);
-			return (status == VCHIQ_RETRY) ?
+	अगर (args->is_खोलो) अणु
+		status = vchiq_खोलो_service_पूर्णांकernal(service, instance->pid);
+		अगर (status != VCHIQ_SUCCESS) अणु
+			vchiq_हटाओ_service(service->handle);
+			वापस (status == VCHIQ_RETRY) ?
 				-EINTR : -EIO;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	args->handle = service->handle;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vchiq_ioc_dequeue_message(struct vchiq_instance *instance,
-				     struct vchiq_dequeue_message *args)
-{
-	struct user_service *user_service;
-	struct vchiq_service *service;
-	struct vchiq_header *header;
-	int ret;
+अटल पूर्णांक vchiq_ioc_dequeue_message(काष्ठा vchiq_instance *instance,
+				     काष्ठा vchiq_dequeue_message *args)
+अणु
+	काष्ठा user_service *user_service;
+	काष्ठा vchiq_service *service;
+	काष्ठा vchiq_header *header;
+	पूर्णांक ret;
 
 	DEBUG_INITIALISE(g_state.local)
 	DEBUG_TRACE(DEQUEUE_MESSAGE_LINE);
-	service = find_service_for_instance(instance, args->handle);
-	if (!service)
-		return -EINVAL;
+	service = find_service_क्रम_instance(instance, args->handle);
+	अगर (!service)
+		वापस -EINVAL;
 
-	user_service = (struct user_service *)service->base.userdata;
-	if (user_service->is_vchi == 0) {
+	user_service = (काष्ठा user_service *)service->base.userdata;
+	अगर (user_service->is_vchi == 0) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	spin_lock(&msg_queue_spinlock);
-	if (user_service->msg_remove == user_service->msg_insert) {
-		if (!args->blocking) {
+	अगर (user_service->msg_हटाओ == user_service->msg_insert) अणु
+		अगर (!args->blocking) अणु
 			spin_unlock(&msg_queue_spinlock);
 			DEBUG_TRACE(DEQUEUE_MESSAGE_LINE);
 			ret = -EWOULDBLOCK;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		user_service->dequeue_pending = 1;
 		ret = 0;
-		do {
+		करो अणु
 			spin_unlock(&msg_queue_spinlock);
 			DEBUG_TRACE(DEQUEUE_MESSAGE_LINE);
-			if (wait_for_completion_interruptible(
-				&user_service->insert_event)) {
+			अगर (रुको_क्रम_completion_पूर्णांकerruptible(
+				&user_service->insert_event)) अणु
 				vchiq_log_info(vchiq_arm_log_level,
 					"DEQUEUE_MESSAGE interrupted");
 				ret = -EINTR;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			spin_lock(&msg_queue_spinlock);
-		} while (user_service->msg_remove ==
+		पूर्ण जबतक (user_service->msg_हटाओ ==
 			user_service->msg_insert);
 
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	BUG_ON((int)(user_service->msg_insert -
-		user_service->msg_remove) < 0);
+	BUG_ON((पूर्णांक)(user_service->msg_insert -
+		user_service->msg_हटाओ) < 0);
 
-	header = user_service->msg_queue[user_service->msg_remove &
+	header = user_service->msg_queue[user_service->msg_हटाओ &
 		(MSG_QUEUE_SIZE - 1)];
-	user_service->msg_remove++;
+	user_service->msg_हटाओ++;
 	spin_unlock(&msg_queue_spinlock);
 
-	complete(&user_service->remove_event);
-	if (!header) {
+	complete(&user_service->हटाओ_event);
+	अगर (!header) अणु
 		ret = -ENOTCONN;
-	} else if (header->size <= args->bufsize) {
-		/* Copy to user space if msgbuf is not NULL */
-		if (!args->buf || (copy_to_user(args->buf,
-					header->data, header->size) == 0)) {
+	पूर्ण अन्यथा अगर (header->size <= args->bufsize) अणु
+		/* Copy to user space अगर msgbuf is not शून्य */
+		अगर (!args->buf || (copy_to_user(args->buf,
+					header->data, header->size) == 0)) अणु
 			ret = header->size;
 			vchiq_release_message(service->handle, header);
-		} else
+		पूर्ण अन्यथा
 			ret = -EFAULT;
-	} else {
+	पूर्ण अन्यथा अणु
 		vchiq_log_error(vchiq_arm_log_level,
 			"header %pK: bufsize %x < size %x",
 			header, args->bufsize, header->size);
 		WARN(1, "invalid size\n");
 		ret = -EMSGSIZE;
-	}
+	पूर्ण
 	DEBUG_TRACE(DEQUEUE_MESSAGE_LINE);
 out:
 	unlock_service(service);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vchiq_irq_queue_bulk_tx_rx(struct vchiq_instance *instance,
-				      struct vchiq_queue_bulk_transfer *args,
-				      enum vchiq_bulk_dir dir,
-				      enum vchiq_bulk_mode __user *mode)
-{
-	struct vchiq_service *service;
-	struct bulk_waiter_node *waiter = NULL;
+अटल पूर्णांक vchiq_irq_queue_bulk_tx_rx(काष्ठा vchiq_instance *instance,
+				      काष्ठा vchiq_queue_bulk_transfer *args,
+				      क्रमागत vchiq_bulk_dir dir,
+				      क्रमागत vchiq_bulk_mode __user *mode)
+अणु
+	काष्ठा vchiq_service *service;
+	काष्ठा bulk_रुकोer_node *रुकोer = शून्य;
 	bool found = false;
-	void *userdata;
-	int status = 0;
-	int ret;
+	व्योम *userdata;
+	पूर्णांक status = 0;
+	पूर्णांक ret;
 
-	service = find_service_for_instance(instance, args->handle);
-	if (!service)
-		return -EINVAL;
+	service = find_service_क्रम_instance(instance, args->handle);
+	अगर (!service)
+		वापस -EINVAL;
 
-	if (args->mode == VCHIQ_BULK_MODE_BLOCKING) {
-		waiter = kzalloc(sizeof(struct bulk_waiter_node),
+	अगर (args->mode == VCHIQ_BULK_MODE_BLOCKING) अणु
+		रुकोer = kzalloc(माप(काष्ठा bulk_रुकोer_node),
 			GFP_KERNEL);
-		if (!waiter) {
+		अगर (!रुकोer) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		userdata = &waiter->bulk_waiter;
-	} else if (args->mode == VCHIQ_BULK_MODE_WAITING) {
-		mutex_lock(&instance->bulk_waiter_list_mutex);
-		list_for_each_entry(waiter, &instance->bulk_waiter_list,
-				    list) {
-			if (waiter->pid == current->pid) {
-				list_del(&waiter->list);
+		userdata = &रुकोer->bulk_रुकोer;
+	पूर्ण अन्यथा अगर (args->mode == VCHIQ_BULK_MODE_WAITING) अणु
+		mutex_lock(&instance->bulk_रुकोer_list_mutex);
+		list_क्रम_each_entry(रुकोer, &instance->bulk_रुकोer_list,
+				    list) अणु
+			अगर (रुकोer->pid == current->pid) अणु
+				list_del(&रुकोer->list);
 				found = true;
-				break;
-			}
-		}
-		mutex_unlock(&instance->bulk_waiter_list_mutex);
-		if (!found) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		mutex_unlock(&instance->bulk_रुकोer_list_mutex);
+		अगर (!found) अणु
 			vchiq_log_error(vchiq_arm_log_level,
 				"no bulk_waiter found for pid %d",
 				current->pid);
 			ret = -ESRCH;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		vchiq_log_info(vchiq_arm_log_level,
-			"found bulk_waiter %pK for pid %d", waiter,
+			"found bulk_waiter %pK for pid %d", रुकोer,
 			current->pid);
-		userdata = &waiter->bulk_waiter;
-	} else {
+		userdata = &रुकोer->bulk_रुकोer;
+	पूर्ण अन्यथा अणु
 		userdata = args->userdata;
-	}
+	पूर्ण
 
-	status = vchiq_bulk_transfer(args->handle, NULL, args->data, args->size,
+	status = vchiq_bulk_transfer(args->handle, शून्य, args->data, args->size,
 				     userdata, args->mode, dir);
 
-	if (!waiter) {
+	अगर (!रुकोer) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if ((status != VCHIQ_RETRY) || fatal_signal_pending(current) ||
-		!waiter->bulk_waiter.bulk) {
-		if (waiter->bulk_waiter.bulk) {
-			/* Cancel the signal when the transfer completes. */
-			spin_lock(&bulk_waiter_spinlock);
-			waiter->bulk_waiter.bulk->userdata = NULL;
-			spin_unlock(&bulk_waiter_spinlock);
-		}
-		kfree(waiter);
+	अगर ((status != VCHIQ_RETRY) || fatal_संकेत_pending(current) ||
+		!रुकोer->bulk_रुकोer.bulk) अणु
+		अगर (रुकोer->bulk_रुकोer.bulk) अणु
+			/* Cancel the संकेत when the transfer completes. */
+			spin_lock(&bulk_रुकोer_spinlock);
+			रुकोer->bulk_रुकोer.bulk->userdata = शून्य;
+			spin_unlock(&bulk_रुकोer_spinlock);
+		पूर्ण
+		kमुक्त(रुकोer);
 		ret = 0;
-	} else {
-		const enum vchiq_bulk_mode mode_waiting =
+	पूर्ण अन्यथा अणु
+		स्थिर क्रमागत vchiq_bulk_mode mode_रुकोing =
 			VCHIQ_BULK_MODE_WAITING;
-		waiter->pid = current->pid;
-		mutex_lock(&instance->bulk_waiter_list_mutex);
-		list_add(&waiter->list, &instance->bulk_waiter_list);
-		mutex_unlock(&instance->bulk_waiter_list_mutex);
+		रुकोer->pid = current->pid;
+		mutex_lock(&instance->bulk_रुकोer_list_mutex);
+		list_add(&रुकोer->list, &instance->bulk_रुकोer_list);
+		mutex_unlock(&instance->bulk_रुकोer_list_mutex);
 		vchiq_log_info(vchiq_arm_log_level,
 			"saved bulk_waiter %pK for pid %d",
-			waiter, current->pid);
+			रुकोer, current->pid);
 
-		ret = put_user(mode_waiting, mode);
-	}
+		ret = put_user(mode_रुकोing, mode);
+	पूर्ण
 out:
 	unlock_service(service);
-	if (ret)
-		return ret;
-	else if (status == VCHIQ_ERROR)
-		return -EIO;
-	else if (status == VCHIQ_RETRY)
-		return -EINTR;
-	return 0;
-}
+	अगर (ret)
+		वापस ret;
+	अन्यथा अगर (status == VCHIQ_ERROR)
+		वापस -EIO;
+	अन्यथा अगर (status == VCHIQ_RETRY)
+		वापस -EINTR;
+	वापस 0;
+पूर्ण
 
-/* read a user pointer value from an array pointers in user space */
-static inline int vchiq_get_user_ptr(void __user **buf, void __user *ubuf, int index)
-{
-	int ret;
+/* पढ़ो a user poपूर्णांकer value from an array poपूर्णांकers in user space */
+अटल अंतरभूत पूर्णांक vchiq_get_user_ptr(व्योम __user **buf, व्योम __user *ubuf, पूर्णांक index)
+अणु
+	पूर्णांक ret;
 
-	if (in_compat_syscall()) {
+	अगर (in_compat_syscall()) अणु
 		compat_uptr_t ptr32;
 		compat_uptr_t __user *uptr = ubuf;
 		ret = get_user(ptr32, uptr + index);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		*buf = compat_ptr(ptr32);
-	} else {
-		uintptr_t ptr, __user *uptr = ubuf;
+	पूर्ण अन्यथा अणु
+		uपूर्णांकptr_t ptr, __user *uptr = ubuf;
 		ret = get_user(ptr, uptr + index);
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		*buf = (void __user *)ptr;
-	}
+		*buf = (व्योम __user *)ptr;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct vchiq_completion_data32 {
-	enum vchiq_reason reason;
+काष्ठा vchiq_completion_data32 अणु
+	क्रमागत vchiq_reason reason;
 	compat_uptr_t header;
 	compat_uptr_t service_userdata;
 	compat_uptr_t bulk_userdata;
-};
+पूर्ण;
 
-static int vchiq_put_completion(struct vchiq_completion_data __user *buf,
-				struct vchiq_completion_data *completion,
-				int index)
-{
-	struct vchiq_completion_data32 __user *buf32 = (void __user *)buf;
+अटल पूर्णांक vchiq_put_completion(काष्ठा vchiq_completion_data __user *buf,
+				काष्ठा vchiq_completion_data *completion,
+				पूर्णांक index)
+अणु
+	काष्ठा vchiq_completion_data32 __user *buf32 = (व्योम __user *)buf;
 
-	if (in_compat_syscall()) {
-		struct vchiq_completion_data32 tmp = {
+	अगर (in_compat_syscall()) अणु
+		काष्ठा vchiq_completion_data32 पंचांगp = अणु
 			.reason		  = completion->reason,
 			.header		  = ptr_to_compat(completion->header),
 			.service_userdata = ptr_to_compat(completion->service_userdata),
 			.bulk_userdata	  = ptr_to_compat(completion->bulk_userdata),
-		};
-		if (copy_to_user(&buf32[index], &tmp, sizeof(tmp)))
-			return -EFAULT;
-	} else {
-		if (copy_to_user(&buf[index], completion, sizeof(*completion)))
-			return -EFAULT;
-	}
+		पूर्ण;
+		अगर (copy_to_user(&buf32[index], &पंचांगp, माप(पंचांगp)))
+			वापस -EFAULT;
+	पूर्ण अन्यथा अणु
+		अगर (copy_to_user(&buf[index], completion, माप(*completion)))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vchiq_ioc_await_completion(struct vchiq_instance *instance,
-				      struct vchiq_await_completion *args,
-				      int __user *msgbufcountp)
-{
-	int msgbufcount;
-	int remove;
-	int ret;
+अटल पूर्णांक vchiq_ioc_aरुको_completion(काष्ठा vchiq_instance *instance,
+				      काष्ठा vchiq_aरुको_completion *args,
+				      पूर्णांक __user *msgbufcountp)
+अणु
+	पूर्णांक msgbufcount;
+	पूर्णांक हटाओ;
+	पूर्णांक ret;
 
 	DEBUG_INITIALISE(g_state.local)
 
 	DEBUG_TRACE(AWAIT_COMPLETION_LINE);
-	if (!instance->connected) {
-		return -ENOTCONN;
-	}
+	अगर (!instance->connected) अणु
+		वापस -ENOTCONN;
+	पूर्ण
 
 	mutex_lock(&instance->completion_mutex);
 
 	DEBUG_TRACE(AWAIT_COMPLETION_LINE);
-	while ((instance->completion_remove ==
+	जबतक ((instance->completion_हटाओ ==
 		instance->completion_insert)
-		&& !instance->closing) {
-		int rc;
+		&& !instance->closing) अणु
+		पूर्णांक rc;
 
 		DEBUG_TRACE(AWAIT_COMPLETION_LINE);
 		mutex_unlock(&instance->completion_mutex);
-		rc = wait_for_completion_interruptible(
+		rc = रुको_क्रम_completion_पूर्णांकerruptible(
 					&instance->insert_event);
 		mutex_lock(&instance->completion_mutex);
-		if (rc) {
+		अगर (rc) अणु
 			DEBUG_TRACE(AWAIT_COMPLETION_LINE);
 			vchiq_log_info(vchiq_arm_log_level,
 				"AWAIT_COMPLETION interrupted");
 			ret = -EINTR;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	DEBUG_TRACE(AWAIT_COMPLETION_LINE);
 
 	msgbufcount = args->msgbufcount;
-	remove = instance->completion_remove;
+	हटाओ = instance->completion_हटाओ;
 
-	for (ret = 0; ret < args->count; ret++) {
-		struct vchiq_completion_data_kernel *completion;
-		struct vchiq_completion_data user_completion;
-		struct vchiq_service *service;
-		struct user_service *user_service;
-		struct vchiq_header *header;
+	क्रम (ret = 0; ret < args->count; ret++) अणु
+		काष्ठा vchiq_completion_data_kernel *completion;
+		काष्ठा vchiq_completion_data user_completion;
+		काष्ठा vchiq_service *service;
+		काष्ठा user_service *user_service;
+		काष्ठा vchiq_header *header;
 
-		if (remove == instance->completion_insert)
-			break;
+		अगर (हटाओ == instance->completion_insert)
+			अवरोध;
 
 		completion = &instance->completions[
-			remove & (MAX_COMPLETIONS - 1)];
+			हटाओ & (MAX_COMPLETIONS - 1)];
 
 		/*
-		 * A read memory barrier is needed to stop
+		 * A पढ़ो memory barrier is needed to stop
 		 * prefetch of a stale completion record
 		 */
 		rmb();
@@ -1162,105 +1163,105 @@ static int vchiq_ioc_await_completion(struct vchiq_instance *instance,
 		service = completion->service_userdata;
 		user_service = service->base.userdata;
 
-		memset(&user_completion, 0, sizeof(user_completion));
-		user_completion = (struct vchiq_completion_data) {
+		स_रखो(&user_completion, 0, माप(user_completion));
+		user_completion = (काष्ठा vchiq_completion_data) अणु
 			.reason = completion->reason,
 			.service_userdata = user_service->userdata,
-		};
+		पूर्ण;
 
 		header = completion->header;
-		if (header) {
-			void __user *msgbuf;
-			int msglen;
+		अगर (header) अणु
+			व्योम __user *msgbuf;
+			पूर्णांक msglen;
 
-			msglen = header->size + sizeof(struct vchiq_header);
+			msglen = header->size + माप(काष्ठा vchiq_header);
 			/* This must be a VCHIQ-style service */
-			if (args->msgbufsize < msglen) {
+			अगर (args->msgbufsize < msglen) अणु
 				vchiq_log_error(vchiq_arm_log_level,
 					"header %pK: msgbufsize %x < msglen %x",
 					header, args->msgbufsize, msglen);
 				WARN(1, "invalid message size\n");
-				if (ret == 0)
+				अगर (ret == 0)
 					ret = -EMSGSIZE;
-				break;
-			}
-			if (msgbufcount <= 0)
-				/* Stall here for lack of a buffer for the message. */
-				break;
-			/* Get the pointer from user space */
+				अवरोध;
+			पूर्ण
+			अगर (msgbufcount <= 0)
+				/* Stall here क्रम lack of a buffer क्रम the message. */
+				अवरोध;
+			/* Get the poपूर्णांकer from user space */
 			msgbufcount--;
-			if (vchiq_get_user_ptr(&msgbuf, args->msgbufs,
-						msgbufcount)) {
-				if (ret == 0)
+			अगर (vchiq_get_user_ptr(&msgbuf, args->msgbufs,
+						msgbufcount)) अणु
+				अगर (ret == 0)
 					ret = -EFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Copy the message to user space */
-			if (copy_to_user(msgbuf, header, msglen)) {
-				if (ret == 0)
+			अगर (copy_to_user(msgbuf, header, msglen)) अणु
+				अगर (ret == 0)
 					ret = -EFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Now it has been copied, the message can be released. */
 			vchiq_release_message(service->handle, header);
 
-			/* The completion must point to the msgbuf. */
+			/* The completion must poपूर्णांक to the msgbuf. */
 			user_completion.header = msgbuf;
-		}
+		पूर्ण
 
-		if ((completion->reason == VCHIQ_SERVICE_CLOSED) &&
-		    !instance->use_close_delivered)
+		अगर ((completion->reason == VCHIQ_SERVICE_CLOSED) &&
+		    !instance->use_बंद_delivered)
 			unlock_service(service);
 
 		/*
-		 * FIXME: address space mismatch, does bulk_userdata
-		 * actually point to user or kernel memory?
+		 * FIXME: address space mismatch, करोes bulk_userdata
+		 * actually poपूर्णांक to user or kernel memory?
 		 */
 		user_completion.bulk_userdata = completion->bulk_userdata;
 
-		if (vchiq_put_completion(args->buf, &user_completion, ret)) {
-			if (ret == 0)
+		अगर (vchiq_put_completion(args->buf, &user_completion, ret)) अणु
+			अगर (ret == 0)
 				ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * Ensure that the above copy has completed
-		 * before advancing the remove pointer.
+		 * beक्रमe advancing the हटाओ poपूर्णांकer.
 		 */
 		mb();
-		remove++;
-		instance->completion_remove = remove;
-	}
+		हटाओ++;
+		instance->completion_हटाओ = हटाओ;
+	पूर्ण
 
-	if (msgbufcount != args->msgbufcount) {
-		if (put_user(msgbufcount, msgbufcountp))
+	अगर (msgbufcount != args->msgbufcount) अणु
+		अगर (put_user(msgbufcount, msgbufcountp))
 			ret = -EFAULT;
-	}
+	पूर्ण
 out:
-	if (ret)
-		complete(&instance->remove_event);
+	अगर (ret)
+		complete(&instance->हटाओ_event);
 	mutex_unlock(&instance->completion_mutex);
 	DEBUG_TRACE(AWAIT_COMPLETION_LINE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /****************************************************************************
  *
  *   vchiq_ioctl
  *
  ***************************************************************************/
-static long
-vchiq_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct vchiq_instance *instance = file->private_data;
-	enum vchiq_status status = VCHIQ_SUCCESS;
-	struct vchiq_service *service = NULL;
-	long ret = 0;
-	int i, rc;
+अटल दीर्घ
+vchiq_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा vchiq_instance *instance = file->निजी_data;
+	क्रमागत vchiq_status status = VCHIQ_SUCCESS;
+	काष्ठा vchiq_service *service = शून्य;
+	दीर्घ ret = 0;
+	पूर्णांक i, rc;
 
 	vchiq_log_trace(vchiq_arm_log_level,
 		"%s - instance %pK, cmd %s, arg %lx",
@@ -1269,120 +1270,120 @@ vchiq_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		(_IOC_NR(cmd) <= VCHIQ_IOC_MAX)) ?
 		ioctl_names[_IOC_NR(cmd)] : "<invalid>", arg);
 
-	switch (cmd) {
-	case VCHIQ_IOC_SHUTDOWN:
-		if (!instance->connected)
-			break;
+	चयन (cmd) अणु
+	हाल VCHIQ_IOC_SHUTDOWN:
+		अगर (!instance->connected)
+			अवरोध;
 
 		/* Remove all services */
 		i = 0;
-		while ((service = next_service_by_instance(instance->state,
-			instance, &i))) {
-			status = vchiq_remove_service(service->handle);
+		जबतक ((service = next_service_by_instance(instance->state,
+			instance, &i))) अणु
+			status = vchiq_हटाओ_service(service->handle);
 			unlock_service(service);
-			if (status != VCHIQ_SUCCESS)
-				break;
-		}
-		service = NULL;
+			अगर (status != VCHIQ_SUCCESS)
+				अवरोध;
+		पूर्ण
+		service = शून्य;
 
-		if (status == VCHIQ_SUCCESS) {
-			/* Wake the completion thread and ask it to exit */
+		अगर (status == VCHIQ_SUCCESS) अणु
+			/* Wake the completion thपढ़ो and ask it to निकास */
 			instance->closing = 1;
 			complete(&instance->insert_event);
-		}
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case VCHIQ_IOC_CONNECT:
-		if (instance->connected) {
+	हाल VCHIQ_IOC_CONNECT:
+		अगर (instance->connected) अणु
 			ret = -EINVAL;
-			break;
-		}
-		rc = mutex_lock_killable(&instance->state->mutex);
-		if (rc) {
+			अवरोध;
+		पूर्ण
+		rc = mutex_lock_समाप्तable(&instance->state->mutex);
+		अगर (rc) अणु
 			vchiq_log_error(vchiq_arm_log_level,
 				"vchiq: connect: could not lock mutex for state %d: %d",
 				instance->state->id, rc);
 			ret = -EINTR;
-			break;
-		}
-		status = vchiq_connect_internal(instance->state, instance);
+			अवरोध;
+		पूर्ण
+		status = vchiq_connect_पूर्णांकernal(instance->state, instance);
 		mutex_unlock(&instance->state->mutex);
 
-		if (status == VCHIQ_SUCCESS)
+		अगर (status == VCHIQ_SUCCESS)
 			instance->connected = 1;
-		else
+		अन्यथा
 			vchiq_log_error(vchiq_arm_log_level,
 				"vchiq: could not connect: %d", status);
-		break;
+		अवरोध;
 
-	case VCHIQ_IOC_CREATE_SERVICE: {
-		struct vchiq_create_service __user *argp;
-		struct vchiq_create_service args;
+	हाल VCHIQ_IOC_CREATE_SERVICE: अणु
+		काष्ठा vchiq_create_service __user *argp;
+		काष्ठा vchiq_create_service args;
 
-		argp = (void __user *)arg;
-		if (copy_from_user(&args, argp, sizeof(args))) {
+		argp = (व्योम __user *)arg;
+		अगर (copy_from_user(&args, argp, माप(args))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = vchiq_ioc_create_service(instance, &args);
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
-		if (put_user(args.handle, &argp->handle)) {
-			vchiq_remove_service(args.handle);
+		अगर (put_user(args.handle, &argp->handle)) अणु
+			vchiq_हटाओ_service(args.handle);
 			ret = -EFAULT;
-		}
-	} break;
+		पूर्ण
+	पूर्ण अवरोध;
 
-	case VCHIQ_IOC_CLOSE_SERVICE:
-	case VCHIQ_IOC_REMOVE_SERVICE: {
-		unsigned int handle = (unsigned int)arg;
-		struct user_service *user_service;
+	हाल VCHIQ_IOC_CLOSE_SERVICE:
+	हाल VCHIQ_IOC_REMOVE_SERVICE: अणु
+		अचिन्हित पूर्णांक handle = (अचिन्हित पूर्णांक)arg;
+		काष्ठा user_service *user_service;
 
-		service = find_service_for_instance(instance, handle);
-		if (!service) {
+		service = find_service_क्रम_instance(instance, handle);
+		अगर (!service) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		user_service = service->base.userdata;
 
 		/*
-		 * close_pending is false on first entry, and when the
-		 * wait in vchiq_close_service has been interrupted.
+		 * बंद_pending is false on first entry, and when the
+		 * रुको in vchiq_बंद_service has been पूर्णांकerrupted.
 		 */
-		if (!user_service->close_pending) {
+		अगर (!user_service->बंद_pending) अणु
 			status = (cmd == VCHIQ_IOC_CLOSE_SERVICE) ?
-				 vchiq_close_service(service->handle) :
-				 vchiq_remove_service(service->handle);
-			if (status != VCHIQ_SUCCESS)
-				break;
-		}
+				 vchiq_बंद_service(service->handle) :
+				 vchiq_हटाओ_service(service->handle);
+			अगर (status != VCHIQ_SUCCESS)
+				अवरोध;
+		पूर्ण
 
 		/*
-		 * close_pending is true once the underlying service
-		 * has been closed until the client library calls the
-		 * CLOSE_DELIVERED ioctl, signalling close_event.
+		 * बंद_pending is true once the underlying service
+		 * has been बंदd until the client library calls the
+		 * CLOSE_DELIVERED ioctl, संकेतling बंद_event.
 		 */
-		if (user_service->close_pending &&
-			wait_for_completion_interruptible(
-				&user_service->close_event))
+		अगर (user_service->बंद_pending &&
+			रुको_क्रम_completion_पूर्णांकerruptible(
+				&user_service->बंद_event))
 			status = VCHIQ_RETRY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case VCHIQ_IOC_USE_SERVICE:
-	case VCHIQ_IOC_RELEASE_SERVICE:	{
-		unsigned int handle = (unsigned int)arg;
+	हाल VCHIQ_IOC_USE_SERVICE:
+	हाल VCHIQ_IOC_RELEASE_SERVICE:	अणु
+		अचिन्हित पूर्णांक handle = (अचिन्हित पूर्णांक)arg;
 
-		service = find_service_for_instance(instance, handle);
-		if (service) {
+		service = find_service_क्रम_instance(instance, handle);
+		अगर (service) अणु
 			status = (cmd == VCHIQ_IOC_USE_SERVICE)	?
-				vchiq_use_service_internal(service) :
-				vchiq_release_service_internal(service);
-			if (status != VCHIQ_SUCCESS) {
+				vchiq_use_service_पूर्णांकernal(service) :
+				vchiq_release_service_पूर्णांकernal(service);
+			अगर (status != VCHIQ_SUCCESS) अणु
 				vchiq_log_error(vchiq_susp_log_level,
 					"%s: cmd %s returned error %d for service %c%c%c%c:%03d",
 					__func__,
@@ -1394,165 +1395,165 @@ vchiq_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 						service->base.fourcc),
 					service->client_id);
 				ret = -EINVAL;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			ret = -EINVAL;
-	} break;
+	पूर्ण अवरोध;
 
-	case VCHIQ_IOC_QUEUE_MESSAGE: {
-		struct vchiq_queue_message args;
+	हाल VCHIQ_IOC_QUEUE_MESSAGE: अणु
+		काष्ठा vchiq_queue_message args;
 
-		if (copy_from_user(&args, (const void __user *)arg,
-				   sizeof(args))) {
+		अगर (copy_from_user(&args, (स्थिर व्योम __user *)arg,
+				   माप(args))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		service = find_service_for_instance(instance, args.handle);
+		service = find_service_क्रम_instance(instance, args.handle);
 
-		if (service && (args.count <= MAX_ELEMENTS)) {
-			/* Copy elements into kernel space */
-			struct vchiq_element elements[MAX_ELEMENTS];
+		अगर (service && (args.count <= MAX_ELEMENTS)) अणु
+			/* Copy elements पूर्णांकo kernel space */
+			काष्ठा vchiq_element elements[MAX_ELEMENTS];
 
-			if (copy_from_user(elements, args.elements,
-				args.count * sizeof(struct vchiq_element)) == 0)
+			अगर (copy_from_user(elements, args.elements,
+				args.count * माप(काष्ठा vchiq_element)) == 0)
 				ret = vchiq_ioc_queue_message(args.handle, elements,
 							      args.count);
-			else
+			अन्यथा
 				ret = -EFAULT;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = -EINVAL;
-		}
-	} break;
+		पूर्ण
+	पूर्ण अवरोध;
 
-	case VCHIQ_IOC_QUEUE_BULK_TRANSMIT:
-	case VCHIQ_IOC_QUEUE_BULK_RECEIVE: {
-		struct vchiq_queue_bulk_transfer args;
-		struct vchiq_queue_bulk_transfer __user *argp;
+	हाल VCHIQ_IOC_QUEUE_BULK_TRANSMIT:
+	हाल VCHIQ_IOC_QUEUE_BULK_RECEIVE: अणु
+		काष्ठा vchiq_queue_bulk_transfer args;
+		काष्ठा vchiq_queue_bulk_transfer __user *argp;
 
-		enum vchiq_bulk_dir dir =
+		क्रमागत vchiq_bulk_dir dir =
 			(cmd == VCHIQ_IOC_QUEUE_BULK_TRANSMIT) ?
 			VCHIQ_BULK_TRANSMIT : VCHIQ_BULK_RECEIVE;
 
-		argp = (void __user *)arg;
-		if (copy_from_user(&args, argp, sizeof(args))) {
+		argp = (व्योम __user *)arg;
+		अगर (copy_from_user(&args, argp, माप(args))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = vchiq_irq_queue_bulk_tx_rx(instance, &args,
 						 dir, &argp->mode);
-	} break;
+	पूर्ण अवरोध;
 
-	case VCHIQ_IOC_AWAIT_COMPLETION: {
-		struct vchiq_await_completion args;
-		struct vchiq_await_completion __user *argp;
+	हाल VCHIQ_IOC_AWAIT_COMPLETION: अणु
+		काष्ठा vchiq_aरुको_completion args;
+		काष्ठा vchiq_aरुको_completion __user *argp;
 
-		argp = (void __user *)arg;
-		if (copy_from_user(&args, argp, sizeof(args))) {
+		argp = (व्योम __user *)arg;
+		अगर (copy_from_user(&args, argp, माप(args))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ret = vchiq_ioc_await_completion(instance, &args,
+		ret = vchiq_ioc_aरुको_completion(instance, &args,
 						 &argp->msgbufcount);
-	} break;
+	पूर्ण अवरोध;
 
-	case VCHIQ_IOC_DEQUEUE_MESSAGE: {
-		struct vchiq_dequeue_message args;
+	हाल VCHIQ_IOC_DEQUEUE_MESSAGE: अणु
+		काष्ठा vchiq_dequeue_message args;
 
-		if (copy_from_user(&args, (const void __user *)arg,
-				   sizeof(args))) {
+		अगर (copy_from_user(&args, (स्थिर व्योम __user *)arg,
+				   माप(args))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = vchiq_ioc_dequeue_message(instance, &args);
-	} break;
+	पूर्ण अवरोध;
 
-	case VCHIQ_IOC_GET_CLIENT_ID: {
-		unsigned int handle = (unsigned int)arg;
+	हाल VCHIQ_IOC_GET_CLIENT_ID: अणु
+		अचिन्हित पूर्णांक handle = (अचिन्हित पूर्णांक)arg;
 
 		ret = vchiq_get_client_id(handle);
-	} break;
+	पूर्ण अवरोध;
 
-	case VCHIQ_IOC_GET_CONFIG: {
-		struct vchiq_get_config args;
-		struct vchiq_config config;
+	हाल VCHIQ_IOC_GET_CONFIG: अणु
+		काष्ठा vchiq_get_config args;
+		काष्ठा vchiq_config config;
 
-		if (copy_from_user(&args, (const void __user *)arg,
-				   sizeof(args))) {
+		अगर (copy_from_user(&args, (स्थिर व्योम __user *)arg,
+				   माप(args))) अणु
 			ret = -EFAULT;
-			break;
-		}
-		if (args.config_size > sizeof(config)) {
+			अवरोध;
+		पूर्ण
+		अगर (args.config_size > माप(config)) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		vchiq_get_config(&config);
-		if (copy_to_user(args.pconfig, &config, args.config_size)) {
+		अगर (copy_to_user(args.pconfig, &config, args.config_size)) अणु
 			ret = -EFAULT;
-			break;
-		}
-	} break;
+			अवरोध;
+		पूर्ण
+	पूर्ण अवरोध;
 
-	case VCHIQ_IOC_SET_SERVICE_OPTION: {
-		struct vchiq_set_service_option args;
+	हाल VCHIQ_IOC_SET_SERVICE_OPTION: अणु
+		काष्ठा vchiq_set_service_option args;
 
-		if (copy_from_user(&args, (const void __user *)arg,
-				   sizeof(args))) {
+		अगर (copy_from_user(&args, (स्थिर व्योम __user *)arg,
+				   माप(args))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		service = find_service_for_instance(instance, args.handle);
-		if (!service) {
+		service = find_service_क्रम_instance(instance, args.handle);
+		अगर (!service) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		status = vchiq_set_service_option(
 				args.handle, args.option, args.value);
-	} break;
+	पूर्ण अवरोध;
 
-	case VCHIQ_IOC_LIB_VERSION: {
-		unsigned int lib_version = (unsigned int)arg;
+	हाल VCHIQ_IOC_LIB_VERSION: अणु
+		अचिन्हित पूर्णांक lib_version = (अचिन्हित पूर्णांक)arg;
 
-		if (lib_version < VCHIQ_VERSION_MIN)
+		अगर (lib_version < VCHIQ_VERSION_MIN)
 			ret = -EINVAL;
-		else if (lib_version >= VCHIQ_VERSION_CLOSE_DELIVERED)
-			instance->use_close_delivered = 1;
-	} break;
+		अन्यथा अगर (lib_version >= VCHIQ_VERSION_CLOSE_DELIVERED)
+			instance->use_बंद_delivered = 1;
+	पूर्ण अवरोध;
 
-	case VCHIQ_IOC_CLOSE_DELIVERED: {
-		unsigned int handle = (unsigned int)arg;
+	हाल VCHIQ_IOC_CLOSE_DELIVERED: अणु
+		अचिन्हित पूर्णांक handle = (अचिन्हित पूर्णांक)arg;
 
-		service = find_closed_service_for_instance(instance, handle);
-		if (service) {
-			struct user_service *user_service =
-				(struct user_service *)service->base.userdata;
-			close_delivered(user_service);
-		} else
+		service = find_बंदd_service_क्रम_instance(instance, handle);
+		अगर (service) अणु
+			काष्ठा user_service *user_service =
+				(काष्ठा user_service *)service->base.userdata;
+			बंद_delivered(user_service);
+		पूर्ण अन्यथा
 			ret = -EINVAL;
-	} break;
+	पूर्ण अवरोध;
 
-	default:
+	शेष:
 		ret = -ENOTTY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (service)
+	अगर (service)
 		unlock_service(service);
 
-	if (ret == 0) {
-		if (status == VCHIQ_ERROR)
+	अगर (ret == 0) अणु
+		अगर (status == VCHIQ_ERROR)
 			ret = -EIO;
-		else if (status == VCHIQ_RETRY)
+		अन्यथा अगर (status == VCHIQ_RETRY)
 			ret = -EINTR;
-	}
+	पूर्ण
 
-	if ((status == VCHIQ_SUCCESS) && (ret < 0) && (ret != -EINTR) &&
+	अगर ((status == VCHIQ_SUCCESS) && (ret < 0) && (ret != -EINTR) &&
 		(ret != -EWOULDBLOCK))
 		vchiq_log_info(vchiq_arm_log_level,
 			"  ioctl instance %pK, cmd %s -> status %d, %ld",
@@ -1561,7 +1562,7 @@ vchiq_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				ioctl_names[_IOC_NR(cmd)] :
 				"<invalid>",
 			status, ret);
-	else
+	अन्यथा
 		vchiq_log_trace(vchiq_arm_log_level,
 			"  ioctl instance %pK, cmd %s -> status %d, %ld",
 			instance,
@@ -1570,307 +1571,307 @@ vchiq_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				"<invalid>",
 			status, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#if defined(CONFIG_COMPAT)
+#अगर defined(CONFIG_COMPAT)
 
-struct vchiq_service_params32 {
-	int fourcc;
+काष्ठा vchiq_service_params32 अणु
+	पूर्णांक fourcc;
 	compat_uptr_t callback;
 	compat_uptr_t userdata;
-	short version; /* Increment for non-trivial changes */
-	short version_min; /* Update for incompatible changes */
-};
+	लघु version; /* Increment क्रम non-trivial changes */
+	लघु version_min; /* Update क्रम incompatible changes */
+पूर्ण;
 
-struct vchiq_create_service32 {
-	struct vchiq_service_params32 params;
-	int is_open;
-	int is_vchi;
-	unsigned int handle; /* OUT */
-};
+काष्ठा vchiq_create_service32 अणु
+	काष्ठा vchiq_service_params32 params;
+	पूर्णांक is_खोलो;
+	पूर्णांक is_vchi;
+	अचिन्हित पूर्णांक handle; /* OUT */
+पूर्ण;
 
-#define VCHIQ_IOC_CREATE_SERVICE32 \
-	_IOWR(VCHIQ_IOC_MAGIC, 2, struct vchiq_create_service32)
+#घोषणा VCHIQ_IOC_CREATE_SERVICE32 \
+	_IOWR(VCHIQ_IOC_MAGIC, 2, काष्ठा vchiq_create_service32)
 
-static long
+अटल दीर्घ
 vchiq_compat_ioctl_create_service(
-	struct file *file,
-	unsigned int cmd,
-	struct vchiq_create_service32 __user *ptrargs32)
-{
-	struct vchiq_create_service args;
-	struct vchiq_create_service32 args32;
-	long ret;
+	काष्ठा file *file,
+	अचिन्हित पूर्णांक cmd,
+	काष्ठा vchiq_create_service32 __user *ptrargs32)
+अणु
+	काष्ठा vchiq_create_service args;
+	काष्ठा vchiq_create_service32 args32;
+	दीर्घ ret;
 
-	if (copy_from_user(&args32, ptrargs32, sizeof(args32)))
-		return -EFAULT;
+	अगर (copy_from_user(&args32, ptrargs32, माप(args32)))
+		वापस -EFAULT;
 
-	args = (struct vchiq_create_service) {
-		.params = {
+	args = (काष्ठा vchiq_create_service) अणु
+		.params = अणु
 			.fourcc	     = args32.params.fourcc,
 			.callback    = compat_ptr(args32.params.callback),
 			.userdata    = compat_ptr(args32.params.userdata),
 			.version     = args32.params.version,
 			.version_min = args32.params.version_min,
-		},
-		.is_open = args32.is_open,
+		पूर्ण,
+		.is_खोलो = args32.is_खोलो,
 		.is_vchi = args32.is_vchi,
 		.handle  = args32.handle,
-	};
+	पूर्ण;
 
-	ret = vchiq_ioc_create_service(file->private_data, &args);
-	if (ret < 0)
-		return ret;
+	ret = vchiq_ioc_create_service(file->निजी_data, &args);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (put_user(args.handle, &ptrargs32->handle)) {
-		vchiq_remove_service(args.handle);
-		return -EFAULT;
-	}
+	अगर (put_user(args.handle, &ptrargs32->handle)) अणु
+		vchiq_हटाओ_service(args.handle);
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct vchiq_element32 {
+काष्ठा vchiq_element32 अणु
 	compat_uptr_t data;
-	unsigned int size;
-};
+	अचिन्हित पूर्णांक size;
+पूर्ण;
 
-struct vchiq_queue_message32 {
-	unsigned int handle;
-	unsigned int count;
+काष्ठा vchiq_queue_message32 अणु
+	अचिन्हित पूर्णांक handle;
+	अचिन्हित पूर्णांक count;
 	compat_uptr_t elements;
-};
+पूर्ण;
 
-#define VCHIQ_IOC_QUEUE_MESSAGE32 \
-	_IOW(VCHIQ_IOC_MAGIC,  4, struct vchiq_queue_message32)
+#घोषणा VCHIQ_IOC_QUEUE_MESSAGE32 \
+	_IOW(VCHIQ_IOC_MAGIC,  4, काष्ठा vchiq_queue_message32)
 
-static long
-vchiq_compat_ioctl_queue_message(struct file *file,
-				 unsigned int cmd,
-				 struct vchiq_queue_message32 __user *arg)
-{
-	struct vchiq_queue_message args;
-	struct vchiq_queue_message32 args32;
-	struct vchiq_service *service;
-	int ret;
+अटल दीर्घ
+vchiq_compat_ioctl_queue_message(काष्ठा file *file,
+				 अचिन्हित पूर्णांक cmd,
+				 काष्ठा vchiq_queue_message32 __user *arg)
+अणु
+	काष्ठा vchiq_queue_message args;
+	काष्ठा vchiq_queue_message32 args32;
+	काष्ठा vchiq_service *service;
+	पूर्णांक ret;
 
-	if (copy_from_user(&args32, arg, sizeof(args32)))
-		return -EFAULT;
+	अगर (copy_from_user(&args32, arg, माप(args32)))
+		वापस -EFAULT;
 
-	args = (struct vchiq_queue_message) {
+	args = (काष्ठा vchiq_queue_message) अणु
 		.handle   = args32.handle,
 		.count    = args32.count,
 		.elements = compat_ptr(args32.elements),
-	};
+	पूर्ण;
 
-	if (args32.count > MAX_ELEMENTS)
-		return -EINVAL;
+	अगर (args32.count > MAX_ELEMENTS)
+		वापस -EINVAL;
 
-	service = find_service_for_instance(file->private_data, args.handle);
-	if (!service)
-		return -EINVAL;
+	service = find_service_क्रम_instance(file->निजी_data, args.handle);
+	अगर (!service)
+		वापस -EINVAL;
 
-	if (args32.elements && args32.count) {
-		struct vchiq_element32 element32[MAX_ELEMENTS];
-		struct vchiq_element elements[MAX_ELEMENTS];
-		unsigned int count;
+	अगर (args32.elements && args32.count) अणु
+		काष्ठा vchiq_element32 element32[MAX_ELEMENTS];
+		काष्ठा vchiq_element elements[MAX_ELEMENTS];
+		अचिन्हित पूर्णांक count;
 
-		if (copy_from_user(&element32, args.elements,
-				   sizeof(element32))) {
+		अगर (copy_from_user(&element32, args.elements,
+				   माप(element32))) अणु
 			unlock_service(service);
-			return -EFAULT;
-		}
+			वापस -EFAULT;
+		पूर्ण
 
-		for (count = 0; count < args32.count; count++) {
+		क्रम (count = 0; count < args32.count; count++) अणु
 			elements[count].data =
 				compat_ptr(element32[count].data);
 			elements[count].size = element32[count].size;
-		}
+		पूर्ण
 		ret = vchiq_ioc_queue_message(args.handle, elements,
 					      args.count);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 	unlock_service(service);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct vchiq_queue_bulk_transfer32 {
-	unsigned int handle;
+काष्ठा vchiq_queue_bulk_transfer32 अणु
+	अचिन्हित पूर्णांक handle;
 	compat_uptr_t data;
-	unsigned int size;
+	अचिन्हित पूर्णांक size;
 	compat_uptr_t userdata;
-	enum vchiq_bulk_mode mode;
-};
+	क्रमागत vchiq_bulk_mode mode;
+पूर्ण;
 
-#define VCHIQ_IOC_QUEUE_BULK_TRANSMIT32 \
-	_IOWR(VCHIQ_IOC_MAGIC, 5, struct vchiq_queue_bulk_transfer32)
-#define VCHIQ_IOC_QUEUE_BULK_RECEIVE32 \
-	_IOWR(VCHIQ_IOC_MAGIC, 6, struct vchiq_queue_bulk_transfer32)
+#घोषणा VCHIQ_IOC_QUEUE_BULK_TRANSMIT32 \
+	_IOWR(VCHIQ_IOC_MAGIC, 5, काष्ठा vchiq_queue_bulk_transfer32)
+#घोषणा VCHIQ_IOC_QUEUE_BULK_RECEIVE32 \
+	_IOWR(VCHIQ_IOC_MAGIC, 6, काष्ठा vchiq_queue_bulk_transfer32)
 
-static long
-vchiq_compat_ioctl_queue_bulk(struct file *file,
-			      unsigned int cmd,
-			      struct vchiq_queue_bulk_transfer32 __user *argp)
-{
-	struct vchiq_queue_bulk_transfer32 args32;
-	struct vchiq_queue_bulk_transfer args;
-	enum vchiq_bulk_dir dir = (cmd == VCHIQ_IOC_QUEUE_BULK_TRANSMIT32) ?
+अटल दीर्घ
+vchiq_compat_ioctl_queue_bulk(काष्ठा file *file,
+			      अचिन्हित पूर्णांक cmd,
+			      काष्ठा vchiq_queue_bulk_transfer32 __user *argp)
+अणु
+	काष्ठा vchiq_queue_bulk_transfer32 args32;
+	काष्ठा vchiq_queue_bulk_transfer args;
+	क्रमागत vchiq_bulk_dir dir = (cmd == VCHIQ_IOC_QUEUE_BULK_TRANSMIT32) ?
 				  VCHIQ_BULK_TRANSMIT : VCHIQ_BULK_RECEIVE;
 
-	if (copy_from_user(&args32, argp, sizeof(args32)))
-		return -EFAULT;
+	अगर (copy_from_user(&args32, argp, माप(args32)))
+		वापस -EFAULT;
 
-	args = (struct vchiq_queue_bulk_transfer) {
+	args = (काष्ठा vchiq_queue_bulk_transfer) अणु
 		.handle   = args32.handle,
 		.data	  = compat_ptr(args32.data),
 		.size	  = args32.size,
 		.userdata = compat_ptr(args32.userdata),
 		.mode	  = args32.mode,
-	};
+	पूर्ण;
 
-	return vchiq_irq_queue_bulk_tx_rx(file->private_data, &args,
+	वापस vchiq_irq_queue_bulk_tx_rx(file->निजी_data, &args,
 					  dir, &argp->mode);
-}
+पूर्ण
 
-struct vchiq_await_completion32 {
-	unsigned int count;
+काष्ठा vchiq_aरुको_completion32 अणु
+	अचिन्हित पूर्णांक count;
 	compat_uptr_t buf;
-	unsigned int msgbufsize;
-	unsigned int msgbufcount; /* IN/OUT */
+	अचिन्हित पूर्णांक msgbufsize;
+	अचिन्हित पूर्णांक msgbufcount; /* IN/OUT */
 	compat_uptr_t msgbufs;
-};
+पूर्ण;
 
-#define VCHIQ_IOC_AWAIT_COMPLETION32 \
-	_IOWR(VCHIQ_IOC_MAGIC, 7, struct vchiq_await_completion32)
+#घोषणा VCHIQ_IOC_AWAIT_COMPLETION32 \
+	_IOWR(VCHIQ_IOC_MAGIC, 7, काष्ठा vchiq_aरुको_completion32)
 
-static long
-vchiq_compat_ioctl_await_completion(struct file *file,
-				    unsigned int cmd,
-				    struct vchiq_await_completion32 __user *argp)
-{
-	struct vchiq_await_completion args;
-	struct vchiq_await_completion32 args32;
+अटल दीर्घ
+vchiq_compat_ioctl_aरुको_completion(काष्ठा file *file,
+				    अचिन्हित पूर्णांक cmd,
+				    काष्ठा vchiq_aरुको_completion32 __user *argp)
+अणु
+	काष्ठा vchiq_aरुको_completion args;
+	काष्ठा vchiq_aरुको_completion32 args32;
 
-	if (copy_from_user(&args32, argp, sizeof(args32)))
-		return -EFAULT;
+	अगर (copy_from_user(&args32, argp, माप(args32)))
+		वापस -EFAULT;
 
-	args = (struct vchiq_await_completion) {
+	args = (काष्ठा vchiq_aरुको_completion) अणु
 		.count		= args32.count,
 		.buf		= compat_ptr(args32.buf),
 		.msgbufsize	= args32.msgbufsize,
 		.msgbufcount	= args32.msgbufcount,
 		.msgbufs	= compat_ptr(args32.msgbufs),
-	};
+	पूर्ण;
 
-	return vchiq_ioc_await_completion(file->private_data, &args,
+	वापस vchiq_ioc_aरुको_completion(file->निजी_data, &args,
 					  &argp->msgbufcount);
-}
+पूर्ण
 
-struct vchiq_dequeue_message32 {
-	unsigned int handle;
-	int blocking;
-	unsigned int bufsize;
+काष्ठा vchiq_dequeue_message32 अणु
+	अचिन्हित पूर्णांक handle;
+	पूर्णांक blocking;
+	अचिन्हित पूर्णांक bufsize;
 	compat_uptr_t buf;
-};
+पूर्ण;
 
-#define VCHIQ_IOC_DEQUEUE_MESSAGE32 \
-	_IOWR(VCHIQ_IOC_MAGIC, 8, struct vchiq_dequeue_message32)
+#घोषणा VCHIQ_IOC_DEQUEUE_MESSAGE32 \
+	_IOWR(VCHIQ_IOC_MAGIC, 8, काष्ठा vchiq_dequeue_message32)
 
-static long
-vchiq_compat_ioctl_dequeue_message(struct file *file,
-				   unsigned int cmd,
-				   struct vchiq_dequeue_message32 __user *arg)
-{
-	struct vchiq_dequeue_message32 args32;
-	struct vchiq_dequeue_message args;
+अटल दीर्घ
+vchiq_compat_ioctl_dequeue_message(काष्ठा file *file,
+				   अचिन्हित पूर्णांक cmd,
+				   काष्ठा vchiq_dequeue_message32 __user *arg)
+अणु
+	काष्ठा vchiq_dequeue_message32 args32;
+	काष्ठा vchiq_dequeue_message args;
 
-	if (copy_from_user(&args32, arg, sizeof(args32)))
-		return -EFAULT;
+	अगर (copy_from_user(&args32, arg, माप(args32)))
+		वापस -EFAULT;
 
-	args = (struct vchiq_dequeue_message) {
+	args = (काष्ठा vchiq_dequeue_message) अणु
 		.handle		= args32.handle,
 		.blocking	= args32.blocking,
 		.bufsize	= args32.bufsize,
 		.buf		= compat_ptr(args32.buf),
-	};
+	पूर्ण;
 
-	return vchiq_ioc_dequeue_message(file->private_data, &args);
-}
+	वापस vchiq_ioc_dequeue_message(file->निजी_data, &args);
+पूर्ण
 
-struct vchiq_get_config32 {
-	unsigned int config_size;
+काष्ठा vchiq_get_config32 अणु
+	अचिन्हित पूर्णांक config_size;
 	compat_uptr_t pconfig;
-};
+पूर्ण;
 
-#define VCHIQ_IOC_GET_CONFIG32 \
-	_IOWR(VCHIQ_IOC_MAGIC, 10, struct vchiq_get_config32)
+#घोषणा VCHIQ_IOC_GET_CONFIG32 \
+	_IOWR(VCHIQ_IOC_MAGIC, 10, काष्ठा vchiq_get_config32)
 
-static long
-vchiq_compat_ioctl_get_config(struct file *file,
-			      unsigned int cmd,
-			      struct vchiq_get_config32 __user *arg)
-{
-	struct vchiq_get_config32 args32;
-	struct vchiq_config config;
-	void __user *ptr;
+अटल दीर्घ
+vchiq_compat_ioctl_get_config(काष्ठा file *file,
+			      अचिन्हित पूर्णांक cmd,
+			      काष्ठा vchiq_get_config32 __user *arg)
+अणु
+	काष्ठा vchiq_get_config32 args32;
+	काष्ठा vchiq_config config;
+	व्योम __user *ptr;
 
-	if (copy_from_user(&args32, arg, sizeof(args32)))
-		return -EFAULT;
-	if (args32.config_size > sizeof(config))
-		return -EINVAL;
+	अगर (copy_from_user(&args32, arg, माप(args32)))
+		वापस -EFAULT;
+	अगर (args32.config_size > माप(config))
+		वापस -EINVAL;
 
 	vchiq_get_config(&config);
 	ptr = compat_ptr(args32.pconfig);
-	if (copy_to_user(ptr, &config, args32.config_size))
-		return -EFAULT;
+	अगर (copy_to_user(ptr, &config, args32.config_size))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long
-vchiq_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	void __user *argp = compat_ptr(arg);
-	switch (cmd) {
-	case VCHIQ_IOC_CREATE_SERVICE32:
-		return vchiq_compat_ioctl_create_service(file, cmd, argp);
-	case VCHIQ_IOC_QUEUE_MESSAGE32:
-		return vchiq_compat_ioctl_queue_message(file, cmd, argp);
-	case VCHIQ_IOC_QUEUE_BULK_TRANSMIT32:
-	case VCHIQ_IOC_QUEUE_BULK_RECEIVE32:
-		return vchiq_compat_ioctl_queue_bulk(file, cmd, argp);
-	case VCHIQ_IOC_AWAIT_COMPLETION32:
-		return vchiq_compat_ioctl_await_completion(file, cmd, argp);
-	case VCHIQ_IOC_DEQUEUE_MESSAGE32:
-		return vchiq_compat_ioctl_dequeue_message(file, cmd, argp);
-	case VCHIQ_IOC_GET_CONFIG32:
-		return vchiq_compat_ioctl_get_config(file, cmd, argp);
-	default:
-		return vchiq_ioctl(file, cmd, (unsigned long)argp);
-	}
-}
+अटल दीर्घ
+vchiq_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = compat_ptr(arg);
+	चयन (cmd) अणु
+	हाल VCHIQ_IOC_CREATE_SERVICE32:
+		वापस vchiq_compat_ioctl_create_service(file, cmd, argp);
+	हाल VCHIQ_IOC_QUEUE_MESSAGE32:
+		वापस vchiq_compat_ioctl_queue_message(file, cmd, argp);
+	हाल VCHIQ_IOC_QUEUE_BULK_TRANSMIT32:
+	हाल VCHIQ_IOC_QUEUE_BULK_RECEIVE32:
+		वापस vchiq_compat_ioctl_queue_bulk(file, cmd, argp);
+	हाल VCHIQ_IOC_AWAIT_COMPLETION32:
+		वापस vchiq_compat_ioctl_aरुको_completion(file, cmd, argp);
+	हाल VCHIQ_IOC_DEQUEUE_MESSAGE32:
+		वापस vchiq_compat_ioctl_dequeue_message(file, cmd, argp);
+	हाल VCHIQ_IOC_GET_CONFIG32:
+		वापस vchiq_compat_ioctl_get_config(file, cmd, argp);
+	शेष:
+		वापस vchiq_ioctl(file, cmd, (अचिन्हित दीर्घ)argp);
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int vchiq_open(struct inode *inode, struct file *file)
-{
-	struct vchiq_state *state = vchiq_get_state();
-	struct vchiq_instance *instance;
+अटल पूर्णांक vchiq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा vchiq_state *state = vchiq_get_state();
+	काष्ठा vchiq_instance *instance;
 
 	vchiq_log_info(vchiq_arm_log_level, "vchiq_open");
 
-	if (!state) {
+	अगर (!state) अणु
 		vchiq_log_error(vchiq_arm_log_level,
 				"vchiq has no connection to VideoCore");
-		return -ENOTCONN;
-	}
+		वापस -ENOTCONN;
+	पूर्ण
 
-	instance = kzalloc(sizeof(*instance), GFP_KERNEL);
-	if (!instance)
-		return -ENOMEM;
+	instance = kzalloc(माप(*instance), GFP_KERNEL);
+	अगर (!instance)
+		वापस -ENOMEM;
 
 	instance->state = state;
 	instance->pid = current->tgid;
@@ -1878,132 +1879,132 @@ static int vchiq_open(struct inode *inode, struct file *file)
 	vchiq_debugfs_add_instance(instance);
 
 	init_completion(&instance->insert_event);
-	init_completion(&instance->remove_event);
+	init_completion(&instance->हटाओ_event);
 	mutex_init(&instance->completion_mutex);
-	mutex_init(&instance->bulk_waiter_list_mutex);
-	INIT_LIST_HEAD(&instance->bulk_waiter_list);
+	mutex_init(&instance->bulk_रुकोer_list_mutex);
+	INIT_LIST_HEAD(&instance->bulk_रुकोer_list);
 
-	file->private_data = instance;
+	file->निजी_data = instance;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vchiq_release(struct inode *inode, struct file *file)
-{
-	struct vchiq_instance *instance = file->private_data;
-	struct vchiq_state *state = vchiq_get_state();
-	struct vchiq_service *service;
-	int ret = 0;
-	int i;
+अटल पूर्णांक vchiq_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा vchiq_instance *instance = file->निजी_data;
+	काष्ठा vchiq_state *state = vchiq_get_state();
+	काष्ठा vchiq_service *service;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
 	vchiq_log_info(vchiq_arm_log_level, "%s: instance=%lx", __func__,
-		       (unsigned long)instance);
+		       (अचिन्हित दीर्घ)instance);
 
-	if (!state) {
+	अगर (!state) अणु
 		ret = -EPERM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Ensure videocore is awake to allow termination. */
-	vchiq_use_internal(instance->state, NULL, USE_TYPE_VCHIQ);
+	vchiq_use_पूर्णांकernal(instance->state, शून्य, USE_TYPE_VCHIQ);
 
 	mutex_lock(&instance->completion_mutex);
 
-	/* Wake the completion thread and ask it to exit */
+	/* Wake the completion thपढ़ो and ask it to निकास */
 	instance->closing = 1;
 	complete(&instance->insert_event);
 
 	mutex_unlock(&instance->completion_mutex);
 
-	/* Wake the slot handler if the completion queue is full. */
-	complete(&instance->remove_event);
+	/* Wake the slot handler अगर the completion queue is full. */
+	complete(&instance->हटाओ_event);
 
-	/* Mark all services for termination... */
+	/* Mark all services क्रम termination... */
 	i = 0;
-	while ((service = next_service_by_instance(state, instance, &i))) {
-		struct user_service *user_service = service->base.userdata;
+	जबतक ((service = next_service_by_instance(state, instance, &i))) अणु
+		काष्ठा user_service *user_service = service->base.userdata;
 
-		/* Wake the slot handler if the msg queue is full. */
-		complete(&user_service->remove_event);
+		/* Wake the slot handler अगर the msg queue is full. */
+		complete(&user_service->हटाओ_event);
 
-		vchiq_terminate_service_internal(service);
+		vchiq_terminate_service_पूर्णांकernal(service);
 		unlock_service(service);
-	}
+	पूर्ण
 
-	/* ...and wait for them to die */
+	/* ...and रुको क्रम them to die */
 	i = 0;
-	while ((service = next_service_by_instance(state, instance, &i))) {
-		struct user_service *user_service = service->base.userdata;
+	जबतक ((service = next_service_by_instance(state, instance, &i))) अणु
+		काष्ठा user_service *user_service = service->base.userdata;
 
-		wait_for_completion(&service->remove_event);
+		रुको_क्रम_completion(&service->हटाओ_event);
 
 		BUG_ON(service->srvstate != VCHIQ_SRVSTATE_FREE);
 
 		spin_lock(&msg_queue_spinlock);
 
-		while (user_service->msg_remove != user_service->msg_insert) {
-			struct vchiq_header *header;
-			int m = user_service->msg_remove & (MSG_QUEUE_SIZE - 1);
+		जबतक (user_service->msg_हटाओ != user_service->msg_insert) अणु
+			काष्ठा vchiq_header *header;
+			पूर्णांक m = user_service->msg_हटाओ & (MSG_QUEUE_SIZE - 1);
 
 			header = user_service->msg_queue[m];
-			user_service->msg_remove++;
+			user_service->msg_हटाओ++;
 			spin_unlock(&msg_queue_spinlock);
 
-			if (header)
+			अगर (header)
 				vchiq_release_message(service->handle, header);
 			spin_lock(&msg_queue_spinlock);
-		}
+		पूर्ण
 
 		spin_unlock(&msg_queue_spinlock);
 
 		unlock_service(service);
-	}
+	पूर्ण
 
-	/* Release any closed services */
-	while (instance->completion_remove !=
-		instance->completion_insert) {
-		struct vchiq_completion_data_kernel *completion;
-		struct vchiq_service *service;
+	/* Release any बंदd services */
+	जबतक (instance->completion_हटाओ !=
+		instance->completion_insert) अणु
+		काष्ठा vchiq_completion_data_kernel *completion;
+		काष्ठा vchiq_service *service;
 
 		completion = &instance->completions[
-			instance->completion_remove & (MAX_COMPLETIONS - 1)];
+			instance->completion_हटाओ & (MAX_COMPLETIONS - 1)];
 		service = completion->service_userdata;
-		if (completion->reason == VCHIQ_SERVICE_CLOSED) {
-			struct user_service *user_service =
+		अगर (completion->reason == VCHIQ_SERVICE_CLOSED) अणु
+			काष्ठा user_service *user_service =
 							service->base.userdata;
 
-			/* Wake any blocked user-thread */
-			if (instance->use_close_delivered)
-				complete(&user_service->close_event);
+			/* Wake any blocked user-thपढ़ो */
+			अगर (instance->use_बंद_delivered)
+				complete(&user_service->बंद_event);
 			unlock_service(service);
-		}
-		instance->completion_remove++;
-	}
+		पूर्ण
+		instance->completion_हटाओ++;
+	पूर्ण
 
 	/* Release the PEER service count. */
-	vchiq_release_internal(instance->state, NULL);
+	vchiq_release_पूर्णांकernal(instance->state, शून्य);
 
-	{
-		struct bulk_waiter_node *waiter, *next;
+	अणु
+		काष्ठा bulk_रुकोer_node *रुकोer, *next;
 
-		list_for_each_entry_safe(waiter, next,
-					 &instance->bulk_waiter_list, list) {
-			list_del(&waiter->list);
+		list_क्रम_each_entry_safe(रुकोer, next,
+					 &instance->bulk_रुकोer_list, list) अणु
+			list_del(&रुकोer->list);
 			vchiq_log_info(vchiq_arm_log_level,
 				"bulk_waiter - cleaned up %pK for pid %d",
-				waiter, waiter->pid);
-			kfree(waiter);
-		}
-	}
+				रुकोer, रुकोer->pid);
+			kमुक्त(रुकोer);
+		पूर्ण
+	पूर्ण
 
-	vchiq_debugfs_remove_instance(instance);
+	vchiq_debugfs_हटाओ_instance(instance);
 
-	kfree(instance);
-	file->private_data = NULL;
+	kमुक्त(instance);
+	file->निजी_data = शून्य;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /****************************************************************************
  *
@@ -2011,158 +2012,158 @@ out:
  *
  ***************************************************************************/
 
-int vchiq_dump(void *dump_context, const char *str, int len)
-{
-	struct dump_context *context = (struct dump_context *)dump_context;
-	int copy_bytes;
+पूर्णांक vchiq_dump(व्योम *dump_context, स्थिर अक्षर *str, पूर्णांक len)
+अणु
+	काष्ठा dump_context *context = (काष्ठा dump_context *)dump_context;
+	पूर्णांक copy_bytes;
 
-	if (context->actual >= context->space)
-		return 0;
+	अगर (context->actual >= context->space)
+		वापस 0;
 
-	if (context->offset > 0) {
-		int skip_bytes = min_t(int, len, context->offset);
+	अगर (context->offset > 0) अणु
+		पूर्णांक skip_bytes = min_t(पूर्णांक, len, context->offset);
 
 		str += skip_bytes;
 		len -= skip_bytes;
 		context->offset -= skip_bytes;
-		if (context->offset > 0)
-			return 0;
-	}
-	copy_bytes = min_t(int, len, context->space - context->actual);
-	if (copy_bytes == 0)
-		return 0;
-	if (copy_to_user(context->buf + context->actual, str,
+		अगर (context->offset > 0)
+			वापस 0;
+	पूर्ण
+	copy_bytes = min_t(पूर्णांक, len, context->space - context->actual);
+	अगर (copy_bytes == 0)
+		वापस 0;
+	अगर (copy_to_user(context->buf + context->actual, str,
 			 copy_bytes))
-		return -EFAULT;
+		वापस -EFAULT;
 	context->actual += copy_bytes;
 	len -= copy_bytes;
 
 	/*
 	 * If the terminating NUL is included in the length, then it
 	 * marks the end of a line and should be replaced with a
-	 * carriage return.
+	 * carriage वापस.
 	 */
-	if ((len == 0) && (str[copy_bytes - 1] == '\0')) {
-		char cr = '\n';
+	अगर ((len == 0) && (str[copy_bytes - 1] == '\0')) अणु
+		अक्षर cr = '\n';
 
-		if (copy_to_user(context->buf + context->actual - 1,
+		अगर (copy_to_user(context->buf + context->actual - 1,
 				 &cr, 1))
-			return -EFAULT;
-	}
-	return 0;
-}
+			वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /****************************************************************************
  *
- *   vchiq_dump_platform_instance_state
+ *   vchiq_dump_platक्रमm_instance_state
  *
  ***************************************************************************/
 
-int vchiq_dump_platform_instances(void *dump_context)
-{
-	struct vchiq_state *state = vchiq_get_state();
-	char buf[80];
-	int len;
-	int i;
+पूर्णांक vchiq_dump_platक्रमm_instances(व्योम *dump_context)
+अणु
+	काष्ठा vchiq_state *state = vchiq_get_state();
+	अक्षर buf[80];
+	पूर्णांक len;
+	पूर्णांक i;
 
 	/*
 	 * There is no list of instances, so instead scan all services,
 	 * marking those that have been dumped.
 	 */
 
-	rcu_read_lock();
-	for (i = 0; i < state->unused_service; i++) {
-		struct vchiq_service *service;
-		struct vchiq_instance *instance;
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < state->unused_service; i++) अणु
+		काष्ठा vchiq_service *service;
+		काष्ठा vchiq_instance *instance;
 
 		service = rcu_dereference(state->services[i]);
-		if (!service || service->base.callback != service_callback)
-			continue;
+		अगर (!service || service->base.callback != service_callback)
+			जारी;
 
 		instance = service->instance;
-		if (instance)
+		अगर (instance)
 			instance->mark = 0;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	for (i = 0; i < state->unused_service; i++) {
-		struct vchiq_service *service;
-		struct vchiq_instance *instance;
-		int err;
+	क्रम (i = 0; i < state->unused_service; i++) अणु
+		काष्ठा vchiq_service *service;
+		काष्ठा vchiq_instance *instance;
+		पूर्णांक err;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		service = rcu_dereference(state->services[i]);
-		if (!service || service->base.callback != service_callback) {
-			rcu_read_unlock();
-			continue;
-		}
+		अगर (!service || service->base.callback != service_callback) अणु
+			rcu_पढ़ो_unlock();
+			जारी;
+		पूर्ण
 
 		instance = service->instance;
-		if (!instance || instance->mark) {
-			rcu_read_unlock();
-			continue;
-		}
-		rcu_read_unlock();
+		अगर (!instance || instance->mark) अणु
+			rcu_पढ़ो_unlock();
+			जारी;
+		पूर्ण
+		rcu_पढ़ो_unlock();
 
-		len = snprintf(buf, sizeof(buf),
+		len = snम_लिखो(buf, माप(buf),
 			       "Instance %pK: pid %d,%s completions %d/%d",
 			       instance, instance->pid,
 			       instance->connected ? " connected, " :
 			       "",
 			       instance->completion_insert -
-			       instance->completion_remove,
+			       instance->completion_हटाओ,
 			       MAX_COMPLETIONS);
 		err = vchiq_dump(dump_context, buf, len + 1);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		instance->mark = 1;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /****************************************************************************
  *
- *   vchiq_dump_platform_service_state
+ *   vchiq_dump_platक्रमm_service_state
  *
  ***************************************************************************/
 
-int vchiq_dump_platform_service_state(void *dump_context,
-				      struct vchiq_service *service)
-{
-	struct user_service *user_service =
-			(struct user_service *)service->base.userdata;
-	char buf[80];
-	int len;
+पूर्णांक vchiq_dump_platक्रमm_service_state(व्योम *dump_context,
+				      काष्ठा vchiq_service *service)
+अणु
+	काष्ठा user_service *user_service =
+			(काष्ठा user_service *)service->base.userdata;
+	अक्षर buf[80];
+	पूर्णांक len;
 
-	len = scnprintf(buf, sizeof(buf), "  instance %pK", service->instance);
+	len = scnम_लिखो(buf, माप(buf), "  instance %pK", service->instance);
 
-	if ((service->base.callback == service_callback) &&
-		user_service->is_vchi) {
-		len += scnprintf(buf + len, sizeof(buf) - len,
+	अगर ((service->base.callback == service_callback) &&
+		user_service->is_vchi) अणु
+		len += scnम_लिखो(buf + len, माप(buf) - len,
 			", %d/%d messages",
-			user_service->msg_insert - user_service->msg_remove,
+			user_service->msg_insert - user_service->msg_हटाओ,
 			MSG_QUEUE_SIZE);
 
-		if (user_service->dequeue_pending)
-			len += scnprintf(buf + len, sizeof(buf) - len,
+		अगर (user_service->dequeue_pending)
+			len += scnम_लिखो(buf + len, माप(buf) - len,
 				" (dequeue pending)");
-	}
+	पूर्ण
 
-	return vchiq_dump(dump_context, buf, len + 1);
-}
+	वापस vchiq_dump(dump_context, buf, len + 1);
+पूर्ण
 
 /****************************************************************************
  *
- *   vchiq_read
+ *   vchiq_पढ़ो
  *
  ***************************************************************************/
 
-static ssize_t
-vchiq_read(struct file *file, char __user *buf,
-	size_t count, loff_t *ppos)
-{
-	struct dump_context context;
-	int err;
+अटल sमाप_प्रकार
+vchiq_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+	माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा dump_context context;
+	पूर्णांक err;
 
 	context.buf = buf;
 	context.actual = 0;
@@ -2170,144 +2171,144 @@ vchiq_read(struct file *file, char __user *buf,
 	context.offset = *ppos;
 
 	err = vchiq_dump_state(&context, &g_state);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	*ppos += context.actual;
 
-	return context.actual;
-}
+	वापस context.actual;
+पूर्ण
 
-struct vchiq_state *
-vchiq_get_state(void)
-{
+काष्ठा vchiq_state *
+vchiq_get_state(व्योम)
+अणु
 
-	if (!g_state.remote)
-		printk(KERN_ERR "%s: g_state.remote == NULL\n", __func__);
-	else if (g_state.remote->initialised != 1)
-		printk(KERN_NOTICE "%s: g_state.remote->initialised != 1 (%d)\n",
+	अगर (!g_state.remote)
+		prपूर्णांकk(KERN_ERR "%s: g_state.remote == NULL\n", __func__);
+	अन्यथा अगर (g_state.remote->initialised != 1)
+		prपूर्णांकk(KERN_NOTICE "%s: g_state.remote->initialised != 1 (%d)\n",
 			__func__, g_state.remote->initialised);
 
-	return (g_state.remote &&
-		(g_state.remote->initialised == 1)) ? &g_state : NULL;
-}
+	वापस (g_state.remote &&
+		(g_state.remote->initialised == 1)) ? &g_state : शून्य;
+पूर्ण
 
-static const struct file_operations
-vchiq_fops = {
+अटल स्थिर काष्ठा file_operations
+vchiq_fops = अणु
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = vchiq_ioctl,
-#if defined(CONFIG_COMPAT)
+#अगर defined(CONFIG_COMPAT)
 	.compat_ioctl = vchiq_compat_ioctl,
-#endif
-	.open = vchiq_open,
+#पूर्ण_अगर
+	.खोलो = vchiq_खोलो,
 	.release = vchiq_release,
-	.read = vchiq_read
-};
+	.पढ़ो = vchiq_पढ़ो
+पूर्ण;
 
 /*
  * Autosuspend related functionality
  */
 
-static enum vchiq_status
-vchiq_keepalive_vchiq_callback(enum vchiq_reason reason,
-	struct vchiq_header *header,
-	unsigned int service_user,
-	void *bulk_user)
-{
+अटल क्रमागत vchiq_status
+vchiq_keepalive_vchiq_callback(क्रमागत vchiq_reason reason,
+	काष्ठा vchiq_header *header,
+	अचिन्हित पूर्णांक service_user,
+	व्योम *bulk_user)
+अणु
 	vchiq_log_error(vchiq_susp_log_level,
 		"%s callback reason %d", __func__, reason);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-vchiq_keepalive_thread_func(void *v)
-{
-	struct vchiq_state *state = (struct vchiq_state *)v;
-	struct vchiq_arm_state *arm_state = vchiq_platform_get_arm_state(state);
+अटल पूर्णांक
+vchiq_keepalive_thपढ़ो_func(व्योम *v)
+अणु
+	काष्ठा vchiq_state *state = (काष्ठा vchiq_state *)v;
+	काष्ठा vchiq_arm_state *arm_state = vchiq_platक्रमm_get_arm_state(state);
 
-	enum vchiq_status status;
-	struct vchiq_instance *instance;
-	unsigned int ka_handle;
+	क्रमागत vchiq_status status;
+	काष्ठा vchiq_instance *instance;
+	अचिन्हित पूर्णांक ka_handle;
 
-	struct vchiq_service_params_kernel params = {
+	काष्ठा vchiq_service_params_kernel params = अणु
 		.fourcc      = VCHIQ_MAKE_FOURCC('K', 'E', 'E', 'P'),
 		.callback    = vchiq_keepalive_vchiq_callback,
 		.version     = KEEPALIVE_VER,
 		.version_min = KEEPALIVE_VER_MIN
-	};
+	पूर्ण;
 
 	status = vchiq_initialise(&instance);
-	if (status != VCHIQ_SUCCESS) {
+	अगर (status != VCHIQ_SUCCESS) अणु
 		vchiq_log_error(vchiq_susp_log_level,
 			"%s vchiq_initialise failed %d", __func__, status);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	status = vchiq_connect(instance);
-	if (status != VCHIQ_SUCCESS) {
+	अगर (status != VCHIQ_SUCCESS) अणु
 		vchiq_log_error(vchiq_susp_log_level,
 			"%s vchiq_connect failed %d", __func__, status);
-		goto shutdown;
-	}
+		जाओ shutकरोwn;
+	पूर्ण
 
 	status = vchiq_add_service(instance, &params, &ka_handle);
-	if (status != VCHIQ_SUCCESS) {
+	अगर (status != VCHIQ_SUCCESS) अणु
 		vchiq_log_error(vchiq_susp_log_level,
 			"%s vchiq_open_service failed %d", __func__, status);
-		goto shutdown;
-	}
+		जाओ shutकरोwn;
+	पूर्ण
 
-	while (1) {
-		long rc = 0, uc = 0;
+	जबतक (1) अणु
+		दीर्घ rc = 0, uc = 0;
 
-		if (wait_for_completion_interruptible(&arm_state->ka_evt)) {
+		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&arm_state->ka_evt)) अणु
 			vchiq_log_error(vchiq_susp_log_level,
 				"%s interrupted", __func__);
-			flush_signals(current);
-			continue;
-		}
+			flush_संकेतs(current);
+			जारी;
+		पूर्ण
 
 		/*
-		 * read and clear counters.  Do release_count then use_count to
+		 * पढ़ो and clear counters.  Do release_count then use_count to
 		 * prevent getting more releases than uses
 		 */
 		rc = atomic_xchg(&arm_state->ka_release_count, 0);
 		uc = atomic_xchg(&arm_state->ka_use_count, 0);
 
 		/*
-		 * Call use/release service the requisite number of times.
-		 * Process use before release so use counts don't go negative
+		 * Call use/release service the requisite number of बार.
+		 * Process use beक्रमe release so use counts करोn't go negative
 		 */
-		while (uc--) {
+		जबतक (uc--) अणु
 			atomic_inc(&arm_state->ka_use_ack_count);
 			status = vchiq_use_service(ka_handle);
-			if (status != VCHIQ_SUCCESS) {
+			अगर (status != VCHIQ_SUCCESS) अणु
 				vchiq_log_error(vchiq_susp_log_level,
 					"%s vchiq_use_service error %d",
 					__func__, status);
-			}
-		}
-		while (rc--) {
+			पूर्ण
+		पूर्ण
+		जबतक (rc--) अणु
 			status = vchiq_release_service(ka_handle);
-			if (status != VCHIQ_SUCCESS) {
+			अगर (status != VCHIQ_SUCCESS) अणु
 				vchiq_log_error(vchiq_susp_log_level,
 					"%s vchiq_release_service error %d",
 					__func__, status);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-shutdown:
-	vchiq_shutdown(instance);
-exit:
-	return 0;
-}
+shutकरोwn:
+	vchiq_shutकरोwn(instance);
+निकास:
+	वापस 0;
+पूर्ण
 
-enum vchiq_status
-vchiq_arm_init_state(struct vchiq_state *state,
-		     struct vchiq_arm_state *arm_state)
-{
-	if (arm_state) {
+क्रमागत vchiq_status
+vchiq_arm_init_state(काष्ठा vchiq_state *state,
+		     काष्ठा vchiq_arm_state *arm_state)
+अणु
+	अगर (arm_state) अणु
 		rwlock_init(&arm_state->susp_res_lock);
 
 		init_completion(&arm_state->ka_evt);
@@ -2318,42 +2319,42 @@ vchiq_arm_init_state(struct vchiq_state *state,
 		arm_state->state = state;
 		arm_state->first_connect = 0;
 
-	}
-	return VCHIQ_SUCCESS;
-}
+	पूर्ण
+	वापस VCHIQ_SUCCESS;
+पूर्ण
 
-enum vchiq_status
-vchiq_use_internal(struct vchiq_state *state, struct vchiq_service *service,
-		   enum USE_TYPE_E use_type)
-{
-	struct vchiq_arm_state *arm_state = vchiq_platform_get_arm_state(state);
-	enum vchiq_status ret = VCHIQ_SUCCESS;
-	char entity[16];
-	int *entity_uc;
-	int local_uc;
+क्रमागत vchiq_status
+vchiq_use_पूर्णांकernal(काष्ठा vchiq_state *state, काष्ठा vchiq_service *service,
+		   क्रमागत USE_TYPE_E use_type)
+अणु
+	काष्ठा vchiq_arm_state *arm_state = vchiq_platक्रमm_get_arm_state(state);
+	क्रमागत vchiq_status ret = VCHIQ_SUCCESS;
+	अक्षर entity[16];
+	पूर्णांक *entity_uc;
+	पूर्णांक local_uc;
 
-	if (!arm_state) {
+	अगर (!arm_state) अणु
 		ret = VCHIQ_ERROR;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	vchiq_log_trace(vchiq_susp_log_level, "%s", __func__);
 
-	if (use_type == USE_TYPE_VCHIQ) {
-		sprintf(entity, "VCHIQ:   ");
+	अगर (use_type == USE_TYPE_VCHIQ) अणु
+		प्र_लिखो(entity, "VCHIQ:   ");
 		entity_uc = &arm_state->peer_use_count;
-	} else if (service) {
-		sprintf(entity, "%c%c%c%c:%03d",
+	पूर्ण अन्यथा अगर (service) अणु
+		प्र_लिखो(entity, "%c%c%c%c:%03d",
 			VCHIQ_FOURCC_AS_4CHARS(service->base.fourcc),
 			service->client_id);
 		entity_uc = &service->service_use_count;
-	} else {
+	पूर्ण अन्यथा अणु
 		vchiq_log_error(vchiq_susp_log_level, "%s null service ptr", __func__);
 		ret = VCHIQ_ERROR;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	write_lock_bh(&arm_state->susp_res_lock);
+	ग_लिखो_lock_bh(&arm_state->susp_res_lock);
 	local_uc = ++arm_state->videocore_use_count;
 	++(*entity_uc);
 
@@ -2361,61 +2362,61 @@ vchiq_use_internal(struct vchiq_state *state, struct vchiq_service *service,
 		"%s %s count %d, state count %d",
 		__func__, entity, *entity_uc, local_uc);
 
-	write_unlock_bh(&arm_state->susp_res_lock);
+	ग_लिखो_unlock_bh(&arm_state->susp_res_lock);
 
-	if (ret == VCHIQ_SUCCESS) {
-		enum vchiq_status status = VCHIQ_SUCCESS;
-		long ack_cnt = atomic_xchg(&arm_state->ka_use_ack_count, 0);
+	अगर (ret == VCHIQ_SUCCESS) अणु
+		क्रमागत vchiq_status status = VCHIQ_SUCCESS;
+		दीर्घ ack_cnt = atomic_xchg(&arm_state->ka_use_ack_count, 0);
 
-		while (ack_cnt && (status == VCHIQ_SUCCESS)) {
-			/* Send the use notify to videocore */
+		जबतक (ack_cnt && (status == VCHIQ_SUCCESS)) अणु
+			/* Send the use notअगरy to videocore */
 			status = vchiq_send_remote_use_active(state);
-			if (status == VCHIQ_SUCCESS)
+			अगर (status == VCHIQ_SUCCESS)
 				ack_cnt--;
-			else
+			अन्यथा
 				atomic_add(ack_cnt,
 					&arm_state->ka_use_ack_count);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	vchiq_log_trace(vchiq_susp_log_level, "%s exit %d", __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-enum vchiq_status
-vchiq_release_internal(struct vchiq_state *state, struct vchiq_service *service)
-{
-	struct vchiq_arm_state *arm_state = vchiq_platform_get_arm_state(state);
-	enum vchiq_status ret = VCHIQ_SUCCESS;
-	char entity[16];
-	int *entity_uc;
+क्रमागत vchiq_status
+vchiq_release_पूर्णांकernal(काष्ठा vchiq_state *state, काष्ठा vchiq_service *service)
+अणु
+	काष्ठा vchiq_arm_state *arm_state = vchiq_platक्रमm_get_arm_state(state);
+	क्रमागत vchiq_status ret = VCHIQ_SUCCESS;
+	अक्षर entity[16];
+	पूर्णांक *entity_uc;
 
-	if (!arm_state) {
+	अगर (!arm_state) अणु
 		ret = VCHIQ_ERROR;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	vchiq_log_trace(vchiq_susp_log_level, "%s", __func__);
 
-	if (service) {
-		sprintf(entity, "%c%c%c%c:%03d",
+	अगर (service) अणु
+		प्र_लिखो(entity, "%c%c%c%c:%03d",
 			VCHIQ_FOURCC_AS_4CHARS(service->base.fourcc),
 			service->client_id);
 		entity_uc = &service->service_use_count;
-	} else {
-		sprintf(entity, "PEER:   ");
+	पूर्ण अन्यथा अणु
+		प्र_लिखो(entity, "PEER:   ");
 		entity_uc = &arm_state->peer_use_count;
-	}
+	पूर्ण
 
-	write_lock_bh(&arm_state->susp_res_lock);
-	if (!arm_state->videocore_use_count || !(*entity_uc)) {
-		/* Don't use BUG_ON - don't allow user thread to crash kernel */
+	ग_लिखो_lock_bh(&arm_state->susp_res_lock);
+	अगर (!arm_state->videocore_use_count || !(*entity_uc)) अणु
+		/* Don't use BUG_ON - don't allow user thपढ़ो to crash kernel */
 		WARN_ON(!arm_state->videocore_use_count);
 		WARN_ON(!(*entity_uc));
 		ret = VCHIQ_ERROR;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 	--arm_state->videocore_use_count;
 	--(*entity_uc);
 
@@ -2425,345 +2426,345 @@ vchiq_release_internal(struct vchiq_state *state, struct vchiq_service *service)
 		arm_state->videocore_use_count);
 
 unlock:
-	write_unlock_bh(&arm_state->susp_res_lock);
+	ग_लिखो_unlock_bh(&arm_state->susp_res_lock);
 
 out:
 	vchiq_log_trace(vchiq_susp_log_level, "%s exit %d", __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-vchiq_on_remote_use(struct vchiq_state *state)
-{
-	struct vchiq_arm_state *arm_state = vchiq_platform_get_arm_state(state);
+व्योम
+vchiq_on_remote_use(काष्ठा vchiq_state *state)
+अणु
+	काष्ठा vchiq_arm_state *arm_state = vchiq_platक्रमm_get_arm_state(state);
 
 	vchiq_log_trace(vchiq_susp_log_level, "%s", __func__);
 	atomic_inc(&arm_state->ka_use_count);
 	complete(&arm_state->ka_evt);
-}
+पूर्ण
 
-void
-vchiq_on_remote_release(struct vchiq_state *state)
-{
-	struct vchiq_arm_state *arm_state = vchiq_platform_get_arm_state(state);
+व्योम
+vchiq_on_remote_release(काष्ठा vchiq_state *state)
+अणु
+	काष्ठा vchiq_arm_state *arm_state = vchiq_platक्रमm_get_arm_state(state);
 
 	vchiq_log_trace(vchiq_susp_log_level, "%s", __func__);
 	atomic_inc(&arm_state->ka_release_count);
 	complete(&arm_state->ka_evt);
-}
+पूर्ण
 
-enum vchiq_status
-vchiq_use_service_internal(struct vchiq_service *service)
-{
-	return vchiq_use_internal(service->state, service, USE_TYPE_SERVICE);
-}
+क्रमागत vchiq_status
+vchiq_use_service_पूर्णांकernal(काष्ठा vchiq_service *service)
+अणु
+	वापस vchiq_use_पूर्णांकernal(service->state, service, USE_TYPE_SERVICE);
+पूर्ण
 
-enum vchiq_status
-vchiq_release_service_internal(struct vchiq_service *service)
-{
-	return vchiq_release_internal(service->state, service);
-}
+क्रमागत vchiq_status
+vchiq_release_service_पूर्णांकernal(काष्ठा vchiq_service *service)
+अणु
+	वापस vchiq_release_पूर्णांकernal(service->state, service);
+पूर्ण
 
-struct vchiq_debugfs_node *
-vchiq_instance_get_debugfs_node(struct vchiq_instance *instance)
-{
-	return &instance->debugfs_node;
-}
+काष्ठा vchiq_debugfs_node *
+vchiq_instance_get_debugfs_node(काष्ठा vchiq_instance *instance)
+अणु
+	वापस &instance->debugfs_node;
+पूर्ण
 
-int
-vchiq_instance_get_use_count(struct vchiq_instance *instance)
-{
-	struct vchiq_service *service;
-	int use_count = 0, i;
+पूर्णांक
+vchiq_instance_get_use_count(काष्ठा vchiq_instance *instance)
+अणु
+	काष्ठा vchiq_service *service;
+	पूर्णांक use_count = 0, i;
 
 	i = 0;
-	rcu_read_lock();
-	while ((service = __next_service_by_instance(instance->state,
+	rcu_पढ़ो_lock();
+	जबतक ((service = __next_service_by_instance(instance->state,
 						     instance, &i)))
 		use_count += service->service_use_count;
-	rcu_read_unlock();
-	return use_count;
-}
+	rcu_पढ़ो_unlock();
+	वापस use_count;
+पूर्ण
 
-int
-vchiq_instance_get_pid(struct vchiq_instance *instance)
-{
-	return instance->pid;
-}
+पूर्णांक
+vchiq_instance_get_pid(काष्ठा vchiq_instance *instance)
+अणु
+	वापस instance->pid;
+पूर्ण
 
-int
-vchiq_instance_get_trace(struct vchiq_instance *instance)
-{
-	return instance->trace;
-}
+पूर्णांक
+vchiq_instance_get_trace(काष्ठा vchiq_instance *instance)
+अणु
+	वापस instance->trace;
+पूर्ण
 
-void
-vchiq_instance_set_trace(struct vchiq_instance *instance, int trace)
-{
-	struct vchiq_service *service;
-	int i;
+व्योम
+vchiq_instance_set_trace(काष्ठा vchiq_instance *instance, पूर्णांक trace)
+अणु
+	काष्ठा vchiq_service *service;
+	पूर्णांक i;
 
 	i = 0;
-	rcu_read_lock();
-	while ((service = __next_service_by_instance(instance->state,
+	rcu_पढ़ो_lock();
+	जबतक ((service = __next_service_by_instance(instance->state,
 						     instance, &i)))
 		service->trace = trace;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	instance->trace = (trace != 0);
-}
+पूर्ण
 
-enum vchiq_status
-vchiq_use_service(unsigned int handle)
-{
-	enum vchiq_status ret = VCHIQ_ERROR;
-	struct vchiq_service *service = find_service_by_handle(handle);
+क्रमागत vchiq_status
+vchiq_use_service(अचिन्हित पूर्णांक handle)
+अणु
+	क्रमागत vchiq_status ret = VCHIQ_ERROR;
+	काष्ठा vchiq_service *service = find_service_by_handle(handle);
 
-	if (service) {
-		ret = vchiq_use_internal(service->state, service,
+	अगर (service) अणु
+		ret = vchiq_use_पूर्णांकernal(service->state, service,
 				USE_TYPE_SERVICE);
 		unlock_service(service);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(vchiq_use_service);
 
-enum vchiq_status
-vchiq_release_service(unsigned int handle)
-{
-	enum vchiq_status ret = VCHIQ_ERROR;
-	struct vchiq_service *service = find_service_by_handle(handle);
+क्रमागत vchiq_status
+vchiq_release_service(अचिन्हित पूर्णांक handle)
+अणु
+	क्रमागत vchiq_status ret = VCHIQ_ERROR;
+	काष्ठा vchiq_service *service = find_service_by_handle(handle);
 
-	if (service) {
-		ret = vchiq_release_internal(service->state, service);
+	अगर (service) अणु
+		ret = vchiq_release_पूर्णांकernal(service->state, service);
 		unlock_service(service);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(vchiq_release_service);
 
-struct service_data_struct {
-	int fourcc;
-	int clientid;
-	int use_count;
-};
+काष्ठा service_data_काष्ठा अणु
+	पूर्णांक fourcc;
+	पूर्णांक clientid;
+	पूर्णांक use_count;
+पूर्ण;
 
-void
-vchiq_dump_service_use_state(struct vchiq_state *state)
-{
-	struct vchiq_arm_state *arm_state = vchiq_platform_get_arm_state(state);
-	struct service_data_struct *service_data;
-	int i, found = 0;
+व्योम
+vchiq_dump_service_use_state(काष्ठा vchiq_state *state)
+अणु
+	काष्ठा vchiq_arm_state *arm_state = vchiq_platक्रमm_get_arm_state(state);
+	काष्ठा service_data_काष्ठा *service_data;
+	पूर्णांक i, found = 0;
 	/*
 	 * If there's more than 64 services, only dump ones with
 	 * non-zero counts
 	 */
-	int only_nonzero = 0;
-	static const char *nz = "<-- preventing suspend";
+	पूर्णांक only_nonzero = 0;
+	अटल स्थिर अक्षर *nz = "<-- preventing suspend";
 
-	int peer_count;
-	int vc_use_count;
-	int active_services;
+	पूर्णांक peer_count;
+	पूर्णांक vc_use_count;
+	पूर्णांक active_services;
 
-	if (!arm_state)
-		return;
+	अगर (!arm_state)
+		वापस;
 
-	service_data = kmalloc_array(MAX_SERVICES, sizeof(*service_data),
+	service_data = kदो_स्मृति_array(MAX_SERVICES, माप(*service_data),
 				     GFP_KERNEL);
-	if (!service_data)
-		return;
+	अगर (!service_data)
+		वापस;
 
-	read_lock_bh(&arm_state->susp_res_lock);
+	पढ़ो_lock_bh(&arm_state->susp_res_lock);
 	peer_count = arm_state->peer_use_count;
 	vc_use_count = arm_state->videocore_use_count;
 	active_services = state->unused_service;
-	if (active_services > MAX_SERVICES)
+	अगर (active_services > MAX_SERVICES)
 		only_nonzero = 1;
 
-	rcu_read_lock();
-	for (i = 0; i < active_services; i++) {
-		struct vchiq_service *service_ptr =
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < active_services; i++) अणु
+		काष्ठा vchiq_service *service_ptr =
 			rcu_dereference(state->services[i]);
 
-		if (!service_ptr)
-			continue;
+		अगर (!service_ptr)
+			जारी;
 
-		if (only_nonzero && !service_ptr->service_use_count)
-			continue;
+		अगर (only_nonzero && !service_ptr->service_use_count)
+			जारी;
 
-		if (service_ptr->srvstate == VCHIQ_SRVSTATE_FREE)
-			continue;
+		अगर (service_ptr->srvstate == VCHIQ_SRVSTATE_FREE)
+			जारी;
 
 		service_data[found].fourcc = service_ptr->base.fourcc;
 		service_data[found].clientid = service_ptr->client_id;
 		service_data[found].use_count = service_ptr->service_use_count;
 		found++;
-		if (found >= MAX_SERVICES)
-			break;
-	}
-	rcu_read_unlock();
+		अगर (found >= MAX_SERVICES)
+			अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	read_unlock_bh(&arm_state->susp_res_lock);
+	पढ़ो_unlock_bh(&arm_state->susp_res_lock);
 
-	if (only_nonzero)
+	अगर (only_nonzero)
 		vchiq_log_warning(vchiq_susp_log_level, "Too many active "
 			"services (%d).  Only dumping up to first %d services "
 			"with non-zero use-count", active_services, found);
 
-	for (i = 0; i < found; i++) {
+	क्रम (i = 0; i < found; i++) अणु
 		vchiq_log_warning(vchiq_susp_log_level,
 			"----- %c%c%c%c:%d service count %d %s",
 			VCHIQ_FOURCC_AS_4CHARS(service_data[i].fourcc),
 			service_data[i].clientid,
 			service_data[i].use_count,
 			service_data[i].use_count ? nz : "");
-	}
+	पूर्ण
 	vchiq_log_warning(vchiq_susp_log_level,
 		"----- VCHIQ use count count %d", peer_count);
 	vchiq_log_warning(vchiq_susp_log_level,
 		"--- Overall vchiq instance use count %d", vc_use_count);
 
-	kfree(service_data);
-}
+	kमुक्त(service_data);
+पूर्ण
 
-enum vchiq_status
-vchiq_check_service(struct vchiq_service *service)
-{
-	struct vchiq_arm_state *arm_state;
-	enum vchiq_status ret = VCHIQ_ERROR;
+क्रमागत vchiq_status
+vchiq_check_service(काष्ठा vchiq_service *service)
+अणु
+	काष्ठा vchiq_arm_state *arm_state;
+	क्रमागत vchiq_status ret = VCHIQ_ERROR;
 
-	if (!service || !service->state)
-		goto out;
+	अगर (!service || !service->state)
+		जाओ out;
 
 	vchiq_log_trace(vchiq_susp_log_level, "%s", __func__);
 
-	arm_state = vchiq_platform_get_arm_state(service->state);
+	arm_state = vchiq_platक्रमm_get_arm_state(service->state);
 
-	read_lock_bh(&arm_state->susp_res_lock);
-	if (service->service_use_count)
+	पढ़ो_lock_bh(&arm_state->susp_res_lock);
+	अगर (service->service_use_count)
 		ret = VCHIQ_SUCCESS;
-	read_unlock_bh(&arm_state->susp_res_lock);
+	पढ़ो_unlock_bh(&arm_state->susp_res_lock);
 
-	if (ret == VCHIQ_ERROR) {
+	अगर (ret == VCHIQ_ERROR) अणु
 		vchiq_log_error(vchiq_susp_log_level,
 			"%s ERROR - %c%c%c%c:%d service count %d, state count %d", __func__,
 			VCHIQ_FOURCC_AS_4CHARS(service->base.fourcc),
 			service->client_id, service->service_use_count,
 			arm_state->videocore_use_count);
 		vchiq_dump_service_use_state(service->state);
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void vchiq_platform_conn_state_changed(struct vchiq_state *state,
-				       enum vchiq_connstate oldstate,
-				       enum vchiq_connstate newstate)
-{
-	struct vchiq_arm_state *arm_state = vchiq_platform_get_arm_state(state);
-	char threadname[16];
+व्योम vchiq_platक्रमm_conn_state_changed(काष्ठा vchiq_state *state,
+				       क्रमागत vchiq_connstate oldstate,
+				       क्रमागत vchiq_connstate newstate)
+अणु
+	काष्ठा vchiq_arm_state *arm_state = vchiq_platक्रमm_get_arm_state(state);
+	अक्षर thपढ़ोname[16];
 
 	vchiq_log_info(vchiq_susp_log_level, "%d: %s->%s", state->id,
 		get_conn_state_name(oldstate), get_conn_state_name(newstate));
-	if (state->conn_state != VCHIQ_CONNSTATE_CONNECTED)
-		return;
+	अगर (state->conn_state != VCHIQ_CONNSTATE_CONNECTED)
+		वापस;
 
-	write_lock_bh(&arm_state->susp_res_lock);
-	if (arm_state->first_connect) {
-		write_unlock_bh(&arm_state->susp_res_lock);
-		return;
-	}
+	ग_लिखो_lock_bh(&arm_state->susp_res_lock);
+	अगर (arm_state->first_connect) अणु
+		ग_लिखो_unlock_bh(&arm_state->susp_res_lock);
+		वापस;
+	पूर्ण
 
 	arm_state->first_connect = 1;
-	write_unlock_bh(&arm_state->susp_res_lock);
-	snprintf(threadname, sizeof(threadname), "vchiq-keep/%d",
+	ग_लिखो_unlock_bh(&arm_state->susp_res_lock);
+	snम_लिखो(thपढ़ोname, माप(thपढ़ोname), "vchiq-keep/%d",
 		 state->id);
-	arm_state->ka_thread = kthread_create(&vchiq_keepalive_thread_func,
-					      (void *)state,
-					      threadname);
-	if (IS_ERR(arm_state->ka_thread)) {
+	arm_state->ka_thपढ़ो = kthपढ़ो_create(&vchiq_keepalive_thपढ़ो_func,
+					      (व्योम *)state,
+					      thपढ़ोname);
+	अगर (IS_ERR(arm_state->ka_thपढ़ो)) अणु
 		vchiq_log_error(vchiq_susp_log_level,
 				"vchiq: FATAL: couldn't create thread %s",
-				threadname);
-	} else {
-		wake_up_process(arm_state->ka_thread);
-	}
-}
+				thपढ़ोname);
+	पूर्ण अन्यथा अणु
+		wake_up_process(arm_state->ka_thपढ़ो);
+	पूर्ण
+पूर्ण
 
-static const struct of_device_id vchiq_of_match[] = {
-	{ .compatible = "brcm,bcm2835-vchiq", .data = &bcm2835_drvdata },
-	{ .compatible = "brcm,bcm2836-vchiq", .data = &bcm2836_drvdata },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id vchiq_of_match[] = अणु
+	अणु .compatible = "brcm,bcm2835-vchiq", .data = &bcm2835_drvdata पूर्ण,
+	अणु .compatible = "brcm,bcm2836-vchiq", .data = &bcm2836_drvdata पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, vchiq_of_match);
 
-static struct platform_device *
-vchiq_register_child(struct platform_device *pdev, const char *name)
-{
-	struct platform_device_info pdevinfo;
-	struct platform_device *child;
+अटल काष्ठा platक्रमm_device *
+vchiq_रेजिस्टर_child(काष्ठा platक्रमm_device *pdev, स्थिर अक्षर *name)
+अणु
+	काष्ठा platक्रमm_device_info pdevinfo;
+	काष्ठा platक्रमm_device *child;
 
-	memset(&pdevinfo, 0, sizeof(pdevinfo));
+	स_रखो(&pdevinfo, 0, माप(pdevinfo));
 
 	pdevinfo.parent = &pdev->dev;
 	pdevinfo.name = name;
 	pdevinfo.id = PLATFORM_DEVID_NONE;
 	pdevinfo.dma_mask = DMA_BIT_MASK(32);
 
-	child = platform_device_register_full(&pdevinfo);
-	if (IS_ERR(child)) {
+	child = platक्रमm_device_रेजिस्टर_full(&pdevinfo);
+	अगर (IS_ERR(child)) अणु
 		dev_warn(&pdev->dev, "%s not registered\n", name);
-		child = NULL;
-	}
+		child = शून्य;
+	पूर्ण
 
-	return child;
-}
+	वापस child;
+पूर्ण
 
-static int vchiq_probe(struct platform_device *pdev)
-{
-	struct device_node *fw_node;
-	const struct of_device_id *of_id;
-	struct vchiq_drvdata *drvdata;
-	struct device *vchiq_dev;
-	int err;
+अटल पूर्णांक vchiq_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *fw_node;
+	स्थिर काष्ठा of_device_id *of_id;
+	काष्ठा vchiq_drvdata *drvdata;
+	काष्ठा device *vchiq_dev;
+	पूर्णांक err;
 
 	of_id = of_match_node(vchiq_of_match, pdev->dev.of_node);
-	drvdata = (struct vchiq_drvdata *)of_id->data;
-	if (!drvdata)
-		return -EINVAL;
+	drvdata = (काष्ठा vchiq_drvdata *)of_id->data;
+	अगर (!drvdata)
+		वापस -EINVAL;
 
-	fw_node = of_find_compatible_node(NULL, NULL,
+	fw_node = of_find_compatible_node(शून्य, शून्य,
 					  "raspberrypi,bcm2835-firmware");
-	if (!fw_node) {
+	अगर (!fw_node) अणु
 		dev_err(&pdev->dev, "Missing firmware node\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	drvdata->fw = devm_rpi_firmware_get(&pdev->dev, fw_node);
 	of_node_put(fw_node);
-	if (!drvdata->fw)
-		return -EPROBE_DEFER;
+	अगर (!drvdata->fw)
+		वापस -EPROBE_DEFER;
 
-	platform_set_drvdata(pdev, drvdata);
+	platक्रमm_set_drvdata(pdev, drvdata);
 
-	err = vchiq_platform_init(pdev, &g_state);
-	if (err)
-		goto failed_platform_init;
+	err = vchiq_platक्रमm_init(pdev, &g_state);
+	अगर (err)
+		जाओ failed_platक्रमm_init;
 
 	cdev_init(&vchiq_cdev, &vchiq_fops);
 	vchiq_cdev.owner = THIS_MODULE;
 	err = cdev_add(&vchiq_cdev, vchiq_devid, 1);
-	if (err) {
+	अगर (err) अणु
 		vchiq_log_error(vchiq_arm_log_level,
 			"Unable to register device");
-		goto failed_platform_init;
-	}
+		जाओ failed_platक्रमm_init;
+	पूर्ण
 
-	vchiq_dev = device_create(vchiq_class, &pdev->dev, vchiq_devid, NULL,
+	vchiq_dev = device_create(vchiq_class, &pdev->dev, vchiq_devid, शून्य,
 				  "vchiq");
-	if (IS_ERR(vchiq_dev)) {
+	अगर (IS_ERR(vchiq_dev)) अणु
 		err = PTR_ERR(vchiq_dev);
-		goto failed_device_create;
-	}
+		जाओ failed_device_create;
+	पूर्ण
 
 	vchiq_debugfs_init();
 
@@ -2772,79 +2773,79 @@ static int vchiq_probe(struct platform_device *pdev)
 		VCHIQ_VERSION, VCHIQ_VERSION_MIN,
 		MAJOR(vchiq_devid), MINOR(vchiq_devid));
 
-	bcm2835_camera = vchiq_register_child(pdev, "bcm2835-camera");
-	bcm2835_audio = vchiq_register_child(pdev, "bcm2835_audio");
+	bcm2835_camera = vchiq_रेजिस्टर_child(pdev, "bcm2835-camera");
+	bcm2835_audio = vchiq_रेजिस्टर_child(pdev, "bcm2835_audio");
 
-	return 0;
+	वापस 0;
 
 failed_device_create:
 	cdev_del(&vchiq_cdev);
-failed_platform_init:
+failed_platक्रमm_init:
 	vchiq_log_warning(vchiq_arm_log_level, "could not load vchiq");
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int vchiq_remove(struct platform_device *pdev)
-{
-	platform_device_unregister(bcm2835_audio);
-	platform_device_unregister(bcm2835_camera);
+अटल पूर्णांक vchiq_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	platक्रमm_device_unरेजिस्टर(bcm2835_audio);
+	platक्रमm_device_unरेजिस्टर(bcm2835_camera);
 	vchiq_debugfs_deinit();
 	device_destroy(vchiq_class, vchiq_devid);
 	cdev_del(&vchiq_cdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver vchiq_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver vchiq_driver = अणु
+	.driver = अणु
 		.name = "bcm2835_vchiq",
 		.of_match_table = vchiq_of_match,
-	},
+	पूर्ण,
 	.probe = vchiq_probe,
-	.remove = vchiq_remove,
-};
+	.हटाओ = vchiq_हटाओ,
+पूर्ण;
 
-static int __init vchiq_driver_init(void)
-{
-	int ret;
+अटल पूर्णांक __init vchiq_driver_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	vchiq_class = class_create(THIS_MODULE, DEVICE_NAME);
-	if (IS_ERR(vchiq_class)) {
+	अगर (IS_ERR(vchiq_class)) अणु
 		pr_err("Failed to create vchiq class\n");
-		return PTR_ERR(vchiq_class);
-	}
+		वापस PTR_ERR(vchiq_class);
+	पूर्ण
 
 	ret = alloc_chrdev_region(&vchiq_devid, 0, 1, DEVICE_NAME);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Failed to allocate vchiq's chrdev region\n");
-		goto class_destroy;
-	}
+		जाओ class_destroy;
+	पूर्ण
 
-	ret = platform_driver_register(&vchiq_driver);
-	if (ret) {
+	ret = platक्रमm_driver_रेजिस्टर(&vchiq_driver);
+	अगर (ret) अणु
 		pr_err("Failed to register vchiq driver\n");
-		goto region_unregister;
-	}
+		जाओ region_unरेजिस्टर;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-region_unregister:
-	unregister_chrdev_region(vchiq_devid, 1);
+region_unरेजिस्टर:
+	unरेजिस्टर_chrdev_region(vchiq_devid, 1);
 
 class_destroy:
 	class_destroy(vchiq_class);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 module_init(vchiq_driver_init);
 
-static void __exit vchiq_driver_exit(void)
-{
-	platform_driver_unregister(&vchiq_driver);
-	unregister_chrdev_region(vchiq_devid, 1);
+अटल व्योम __निकास vchiq_driver_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&vchiq_driver);
+	unरेजिस्टर_chrdev_region(vchiq_devid, 1);
 	class_destroy(vchiq_class);
-}
-module_exit(vchiq_driver_exit);
+पूर्ण
+module_निकास(vchiq_driver_निकास);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("Videocore VCHIQ driver");

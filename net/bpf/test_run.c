@@ -1,238 +1,239 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2017 Facebook
  */
-#include <linux/bpf.h>
-#include <linux/btf_ids.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/etherdevice.h>
-#include <linux/filter.h>
-#include <linux/sched/signal.h>
-#include <net/bpf_sk_storage.h>
-#include <net/sock.h>
-#include <net/tcp.h>
-#include <net/net_namespace.h>
-#include <linux/error-injection.h>
-#include <linux/smp.h>
-#include <linux/sock_diag.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/btf_ids.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <net/bpf_sk_storage.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp.h>
+#समावेश <net/net_namespace.h>
+#समावेश <linux/error-injection.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/sock_diag.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/bpf_test_run.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/bpf_test_run.h>
 
-struct bpf_test_timer {
-	enum { NO_PREEMPT, NO_MIGRATE } mode;
+काष्ठा bpf_test_समयr अणु
+	क्रमागत अणु NO_PREEMPT, NO_MIGRATE पूर्ण mode;
 	u32 i;
-	u64 time_start, time_spent;
-};
+	u64 समय_start, समय_spent;
+पूर्ण;
 
-static void bpf_test_timer_enter(struct bpf_test_timer *t)
+अटल व्योम bpf_test_समयr_enter(काष्ठा bpf_test_समयr *t)
 	__acquires(rcu)
-{
-	rcu_read_lock();
-	if (t->mode == NO_PREEMPT)
+अणु
+	rcu_पढ़ो_lock();
+	अगर (t->mode == NO_PREEMPT)
 		preempt_disable();
-	else
+	अन्यथा
 		migrate_disable();
 
-	t->time_start = ktime_get_ns();
-}
+	t->समय_start = kसमय_get_ns();
+पूर्ण
 
-static void bpf_test_timer_leave(struct bpf_test_timer *t)
+अटल व्योम bpf_test_समयr_leave(काष्ठा bpf_test_समयr *t)
 	__releases(rcu)
-{
-	t->time_start = 0;
+अणु
+	t->समय_start = 0;
 
-	if (t->mode == NO_PREEMPT)
+	अगर (t->mode == NO_PREEMPT)
 		preempt_enable();
-	else
+	अन्यथा
 		migrate_enable();
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static bool bpf_test_timer_continue(struct bpf_test_timer *t, u32 repeat, int *err, u32 *duration)
+अटल bool bpf_test_समयr_जारी(काष्ठा bpf_test_समयr *t, u32 repeat, पूर्णांक *err, u32 *duration)
 	__must_hold(rcu)
-{
+अणु
 	t->i++;
-	if (t->i >= repeat) {
-		/* We're done. */
-		t->time_spent += ktime_get_ns() - t->time_start;
-		do_div(t->time_spent, t->i);
-		*duration = t->time_spent > U32_MAX ? U32_MAX : (u32)t->time_spent;
+	अगर (t->i >= repeat) अणु
+		/* We're करोne. */
+		t->समय_spent += kसमय_get_ns() - t->समय_start;
+		करो_भाग(t->समय_spent, t->i);
+		*duration = t->समय_spent > U32_MAX ? U32_MAX : (u32)t->समय_spent;
 		*err = 0;
-		goto reset;
-	}
+		जाओ reset;
+	पूर्ण
 
-	if (signal_pending(current)) {
-		/* During iteration: we've been cancelled, abort. */
+	अगर (संकेत_pending(current)) अणु
+		/* During iteration: we've been cancelled, पात. */
 		*err = -EINTR;
-		goto reset;
-	}
+		जाओ reset;
+	पूर्ण
 
-	if (need_resched()) {
+	अगर (need_resched()) अणु
 		/* During iteration: we need to reschedule between runs. */
-		t->time_spent += ktime_get_ns() - t->time_start;
-		bpf_test_timer_leave(t);
+		t->समय_spent += kसमय_get_ns() - t->समय_start;
+		bpf_test_समयr_leave(t);
 		cond_resched();
-		bpf_test_timer_enter(t);
-	}
+		bpf_test_समयr_enter(t);
+	पूर्ण
 
 	/* Do another round. */
-	return true;
+	वापस true;
 
 reset:
 	t->i = 0;
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int bpf_test_run(struct bpf_prog *prog, void *ctx, u32 repeat,
-			u32 *retval, u32 *time, bool xdp)
-{
-	struct bpf_cgroup_storage *storage[MAX_BPF_CGROUP_STORAGE_TYPE] = { NULL };
-	struct bpf_test_timer t = { NO_MIGRATE };
-	enum bpf_cgroup_storage_type stype;
-	int ret;
+अटल पूर्णांक bpf_test_run(काष्ठा bpf_prog *prog, व्योम *ctx, u32 repeat,
+			u32 *retval, u32 *समय, bool xdp)
+अणु
+	काष्ठा bpf_cgroup_storage *storage[MAX_BPF_CGROUP_STORAGE_TYPE] = अणु शून्य पूर्ण;
+	काष्ठा bpf_test_समयr t = अणु NO_MIGRATE पूर्ण;
+	क्रमागत bpf_cgroup_storage_type stype;
+	पूर्णांक ret;
 
-	for_each_cgroup_storage_type(stype) {
+	क्रम_each_cgroup_storage_type(stype) अणु
 		storage[stype] = bpf_cgroup_storage_alloc(prog, stype);
-		if (IS_ERR(storage[stype])) {
-			storage[stype] = NULL;
-			for_each_cgroup_storage_type(stype)
-				bpf_cgroup_storage_free(storage[stype]);
-			return -ENOMEM;
-		}
-	}
+		अगर (IS_ERR(storage[stype])) अणु
+			storage[stype] = शून्य;
+			क्रम_each_cgroup_storage_type(stype)
+				bpf_cgroup_storage_मुक्त(storage[stype]);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	if (!repeat)
+	अगर (!repeat)
 		repeat = 1;
 
-	bpf_test_timer_enter(&t);
-	do {
+	bpf_test_समयr_enter(&t);
+	करो अणु
 		ret = bpf_cgroup_storage_set(storage);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
-		if (xdp)
+		अगर (xdp)
 			*retval = bpf_prog_run_xdp(prog, ctx);
-		else
+		अन्यथा
 			*retval = BPF_PROG_RUN(prog, ctx);
 
 		bpf_cgroup_storage_unset();
-	} while (bpf_test_timer_continue(&t, repeat, &ret, time));
-	bpf_test_timer_leave(&t);
+	पूर्ण जबतक (bpf_test_समयr_जारी(&t, repeat, &ret, समय));
+	bpf_test_समयr_leave(&t);
 
-	for_each_cgroup_storage_type(stype)
-		bpf_cgroup_storage_free(storage[stype]);
+	क्रम_each_cgroup_storage_type(stype)
+		bpf_cgroup_storage_मुक्त(storage[stype]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bpf_test_finish(const union bpf_attr *kattr,
-			   union bpf_attr __user *uattr, const void *data,
+अटल पूर्णांक bpf_test_finish(स्थिर जोड़ bpf_attr *kattr,
+			   जोड़ bpf_attr __user *uattr, स्थिर व्योम *data,
 			   u32 size, u32 retval, u32 duration)
-{
-	void __user *data_out = u64_to_user_ptr(kattr->test.data_out);
-	int err = -EFAULT;
+अणु
+	व्योम __user *data_out = u64_to_user_ptr(kattr->test.data_out);
+	पूर्णांक err = -EFAULT;
 	u32 copy_size = size;
 
-	/* Clamp copy if the user has provided a size hint, but copy the full
-	 * buffer if not to retain old behaviour.
+	/* Clamp copy अगर the user has provided a size hपूर्णांक, but copy the full
+	 * buffer अगर not to retain old behaviour.
 	 */
-	if (kattr->test.data_size_out &&
-	    copy_size > kattr->test.data_size_out) {
+	अगर (kattr->test.data_size_out &&
+	    copy_size > kattr->test.data_size_out) अणु
 		copy_size = kattr->test.data_size_out;
 		err = -ENOSPC;
-	}
+	पूर्ण
 
-	if (data_out && copy_to_user(data_out, data, copy_size))
-		goto out;
-	if (copy_to_user(&uattr->test.data_size_out, &size, sizeof(size)))
-		goto out;
-	if (copy_to_user(&uattr->test.retval, &retval, sizeof(retval)))
-		goto out;
-	if (copy_to_user(&uattr->test.duration, &duration, sizeof(duration)))
-		goto out;
-	if (err != -ENOSPC)
+	अगर (data_out && copy_to_user(data_out, data, copy_size))
+		जाओ out;
+	अगर (copy_to_user(&uattr->test.data_size_out, &size, माप(size)))
+		जाओ out;
+	अगर (copy_to_user(&uattr->test.retval, &retval, माप(retval)))
+		जाओ out;
+	अगर (copy_to_user(&uattr->test.duration, &duration, माप(duration)))
+		जाओ out;
+	अगर (err != -ENOSPC)
 		err = 0;
 out:
 	trace_bpf_test_finish(&err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Integer types of various sizes and pointer combinations cover variety of
+/* Integer types of various sizes and poपूर्णांकer combinations cover variety of
  * architecture dependent calling conventions. 7+ can be supported in the
  * future.
  */
 __diag_push();
 __diag_ignore(GCC, 8, "-Wmissing-prototypes",
 	      "Global functions as their definitions will be in vmlinux BTF");
-int noinline bpf_fentry_test1(int a)
-{
-	return a + 1;
-}
+पूर्णांक noअंतरभूत bpf_fentry_test1(पूर्णांक a)
+अणु
+	वापस a + 1;
+पूर्ण
 
-int noinline bpf_fentry_test2(int a, u64 b)
-{
-	return a + b;
-}
+पूर्णांक noअंतरभूत bpf_fentry_test2(पूर्णांक a, u64 b)
+अणु
+	वापस a + b;
+पूर्ण
 
-int noinline bpf_fentry_test3(char a, int b, u64 c)
-{
-	return a + b + c;
-}
+पूर्णांक noअंतरभूत bpf_fentry_test3(अक्षर a, पूर्णांक b, u64 c)
+अणु
+	वापस a + b + c;
+पूर्ण
 
-int noinline bpf_fentry_test4(void *a, char b, int c, u64 d)
-{
-	return (long)a + b + c + d;
-}
+पूर्णांक noअंतरभूत bpf_fentry_test4(व्योम *a, अक्षर b, पूर्णांक c, u64 d)
+अणु
+	वापस (दीर्घ)a + b + c + d;
+पूर्ण
 
-int noinline bpf_fentry_test5(u64 a, void *b, short c, int d, u64 e)
-{
-	return a + (long)b + c + d + e;
-}
+पूर्णांक noअंतरभूत bpf_fentry_test5(u64 a, व्योम *b, लघु c, पूर्णांक d, u64 e)
+अणु
+	वापस a + (दीर्घ)b + c + d + e;
+पूर्ण
 
-int noinline bpf_fentry_test6(u64 a, void *b, short c, int d, void *e, u64 f)
-{
-	return a + (long)b + c + d + (long)e + f;
-}
+पूर्णांक noअंतरभूत bpf_fentry_test6(u64 a, व्योम *b, लघु c, पूर्णांक d, व्योम *e, u64 f)
+अणु
+	वापस a + (दीर्घ)b + c + d + (दीर्घ)e + f;
+पूर्ण
 
-struct bpf_fentry_test_t {
-	struct bpf_fentry_test_t *a;
-};
+काष्ठा bpf_fentry_test_t अणु
+	काष्ठा bpf_fentry_test_t *a;
+पूर्ण;
 
-int noinline bpf_fentry_test7(struct bpf_fentry_test_t *arg)
-{
-	return (long)arg;
-}
+पूर्णांक noअंतरभूत bpf_fentry_test7(काष्ठा bpf_fentry_test_t *arg)
+अणु
+	वापस (दीर्घ)arg;
+पूर्ण
 
-int noinline bpf_fentry_test8(struct bpf_fentry_test_t *arg)
-{
-	return (long)arg->a;
-}
+पूर्णांक noअंतरभूत bpf_fentry_test8(काष्ठा bpf_fentry_test_t *arg)
+अणु
+	वापस (दीर्घ)arg->a;
+पूर्ण
 
-int noinline bpf_modify_return_test(int a, int *b)
-{
+पूर्णांक noअंतरभूत bpf_modअगरy_वापस_test(पूर्णांक a, पूर्णांक *b)
+अणु
 	*b += 1;
-	return a + *b;
-}
+	वापस a + *b;
+पूर्ण
 
-u64 noinline bpf_kfunc_call_test1(struct sock *sk, u32 a, u64 b, u32 c, u64 d)
-{
-	return a + b + c + d;
-}
+u64 noअंतरभूत bpf_kfunc_call_test1(काष्ठा sock *sk, u32 a, u64 b, u32 c, u64 d)
+अणु
+	वापस a + b + c + d;
+पूर्ण
 
-int noinline bpf_kfunc_call_test2(struct sock *sk, u32 a, u32 b)
-{
-	return a + b;
-}
+पूर्णांक noअंतरभूत bpf_kfunc_call_test2(काष्ठा sock *sk, u32 a, u32 b)
+अणु
+	वापस a + b;
+पूर्ण
 
-struct sock * noinline bpf_kfunc_call_test3(struct sock *sk)
-{
-	return sk;
-}
+काष्ठा sock * noअंतरभूत bpf_kfunc_call_test3(काष्ठा sock *sk)
+अणु
+	वापस sk;
+पूर्ण
 
 __diag_pop();
 
-ALLOW_ERROR_INJECTION(bpf_modify_return_test, ERRNO);
+ALLOW_ERROR_INJECTION(bpf_modअगरy_वापस_test, ERRNO);
 
 BTF_SET_START(test_sk_kfunc_ids)
 BTF_ID(func, bpf_kfunc_call_test1)
@@ -241,214 +242,214 @@ BTF_ID(func, bpf_kfunc_call_test3)
 BTF_SET_END(test_sk_kfunc_ids)
 
 bool bpf_prog_test_check_kfunc_call(u32 kfunc_id)
-{
-	return btf_id_set_contains(&test_sk_kfunc_ids, kfunc_id);
-}
+अणु
+	वापस btf_id_set_contains(&test_sk_kfunc_ids, kfunc_id);
+पूर्ण
 
-static void *bpf_test_init(const union bpf_attr *kattr, u32 size,
+अटल व्योम *bpf_test_init(स्थिर जोड़ bpf_attr *kattr, u32 size,
 			   u32 headroom, u32 tailroom)
-{
-	void __user *data_in = u64_to_user_ptr(kattr->test.data_in);
+अणु
+	व्योम __user *data_in = u64_to_user_ptr(kattr->test.data_in);
 	u32 user_size = kattr->test.data_size_in;
-	void *data;
+	व्योम *data;
 
-	if (size < ETH_HLEN || size > PAGE_SIZE - headroom - tailroom)
-		return ERR_PTR(-EINVAL);
+	अगर (size < ETH_HLEN || size > PAGE_SIZE - headroom - tailroom)
+		वापस ERR_PTR(-EINVAL);
 
-	if (user_size > size)
-		return ERR_PTR(-EMSGSIZE);
+	अगर (user_size > size)
+		वापस ERR_PTR(-EMSGSIZE);
 
 	data = kzalloc(size + headroom + tailroom, GFP_USER);
-	if (!data)
-		return ERR_PTR(-ENOMEM);
+	अगर (!data)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (copy_from_user(data + headroom, data_in, user_size)) {
-		kfree(data);
-		return ERR_PTR(-EFAULT);
-	}
+	अगर (copy_from_user(data + headroom, data_in, user_size)) अणु
+		kमुक्त(data);
+		वापस ERR_PTR(-EFAULT);
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-int bpf_prog_test_run_tracing(struct bpf_prog *prog,
-			      const union bpf_attr *kattr,
-			      union bpf_attr __user *uattr)
-{
-	struct bpf_fentry_test_t arg = {};
+पूर्णांक bpf_prog_test_run_tracing(काष्ठा bpf_prog *prog,
+			      स्थिर जोड़ bpf_attr *kattr,
+			      जोड़ bpf_attr __user *uattr)
+अणु
+	काष्ठा bpf_fentry_test_t arg = अणुपूर्ण;
 	u16 side_effect = 0, ret = 0;
-	int b = 2, err = -EFAULT;
+	पूर्णांक b = 2, err = -EFAULT;
 	u32 retval = 0;
 
-	if (kattr->test.flags || kattr->test.cpu)
-		return -EINVAL;
+	अगर (kattr->test.flags || kattr->test.cpu)
+		वापस -EINVAL;
 
-	switch (prog->expected_attach_type) {
-	case BPF_TRACE_FENTRY:
-	case BPF_TRACE_FEXIT:
-		if (bpf_fentry_test1(1) != 2 ||
+	चयन (prog->expected_attach_type) अणु
+	हाल BPF_TRACE_FENTRY:
+	हाल BPF_TRACE_FEXIT:
+		अगर (bpf_fentry_test1(1) != 2 ||
 		    bpf_fentry_test2(2, 3) != 5 ||
 		    bpf_fentry_test3(4, 5, 6) != 15 ||
-		    bpf_fentry_test4((void *)7, 8, 9, 10) != 34 ||
-		    bpf_fentry_test5(11, (void *)12, 13, 14, 15) != 65 ||
-		    bpf_fentry_test6(16, (void *)17, 18, 19, (void *)20, 21) != 111 ||
-		    bpf_fentry_test7((struct bpf_fentry_test_t *)0) != 0 ||
+		    bpf_fentry_test4((व्योम *)7, 8, 9, 10) != 34 ||
+		    bpf_fentry_test5(11, (व्योम *)12, 13, 14, 15) != 65 ||
+		    bpf_fentry_test6(16, (व्योम *)17, 18, 19, (व्योम *)20, 21) != 111 ||
+		    bpf_fentry_test7((काष्ठा bpf_fentry_test_t *)0) != 0 ||
 		    bpf_fentry_test8(&arg) != 0)
-			goto out;
-		break;
-	case BPF_MODIFY_RETURN:
-		ret = bpf_modify_return_test(1, &b);
-		if (b != 2)
+			जाओ out;
+		अवरोध;
+	हाल BPF_MODIFY_RETURN:
+		ret = bpf_modअगरy_वापस_test(1, &b);
+		अगर (b != 2)
 			side_effect = 1;
-		break;
-	default:
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		जाओ out;
+	पूर्ण
 
 	retval = ((u32)side_effect << 16) | ret;
-	if (copy_to_user(&uattr->test.retval, &retval, sizeof(retval)))
-		goto out;
+	अगर (copy_to_user(&uattr->test.retval, &retval, माप(retval)))
+		जाओ out;
 
 	err = 0;
 out:
 	trace_bpf_test_finish(&err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct bpf_raw_tp_test_run_info {
-	struct bpf_prog *prog;
-	void *ctx;
+काष्ठा bpf_raw_tp_test_run_info अणु
+	काष्ठा bpf_prog *prog;
+	व्योम *ctx;
 	u32 retval;
-};
+पूर्ण;
 
-static void
-__bpf_prog_test_run_raw_tp(void *data)
-{
-	struct bpf_raw_tp_test_run_info *info = data;
+अटल व्योम
+__bpf_prog_test_run_raw_tp(व्योम *data)
+अणु
+	काष्ठा bpf_raw_tp_test_run_info *info = data;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	info->retval = BPF_PROG_RUN(info->prog, info->ctx);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-int bpf_prog_test_run_raw_tp(struct bpf_prog *prog,
-			     const union bpf_attr *kattr,
-			     union bpf_attr __user *uattr)
-{
-	void __user *ctx_in = u64_to_user_ptr(kattr->test.ctx_in);
+पूर्णांक bpf_prog_test_run_raw_tp(काष्ठा bpf_prog *prog,
+			     स्थिर जोड़ bpf_attr *kattr,
+			     जोड़ bpf_attr __user *uattr)
+अणु
+	व्योम __user *ctx_in = u64_to_user_ptr(kattr->test.ctx_in);
 	__u32 ctx_size_in = kattr->test.ctx_size_in;
-	struct bpf_raw_tp_test_run_info info;
-	int cpu = kattr->test.cpu, err = 0;
-	int current_cpu;
+	काष्ठा bpf_raw_tp_test_run_info info;
+	पूर्णांक cpu = kattr->test.cpu, err = 0;
+	पूर्णांक current_cpu;
 
-	/* doesn't support data_in/out, ctx_out, duration, or repeat */
-	if (kattr->test.data_in || kattr->test.data_out ||
+	/* करोesn't support data_in/out, ctx_out, duration, or repeat */
+	अगर (kattr->test.data_in || kattr->test.data_out ||
 	    kattr->test.ctx_out || kattr->test.duration ||
 	    kattr->test.repeat)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (ctx_size_in < prog->aux->max_ctx_offset ||
-	    ctx_size_in > MAX_BPF_FUNC_ARGS * sizeof(u64))
-		return -EINVAL;
+	अगर (ctx_size_in < prog->aux->max_ctx_offset ||
+	    ctx_size_in > MAX_BPF_FUNC_ARGS * माप(u64))
+		वापस -EINVAL;
 
-	if ((kattr->test.flags & BPF_F_TEST_RUN_ON_CPU) == 0 && cpu != 0)
-		return -EINVAL;
+	अगर ((kattr->test.flags & BPF_F_TEST_RUN_ON_CPU) == 0 && cpu != 0)
+		वापस -EINVAL;
 
-	if (ctx_size_in) {
+	अगर (ctx_size_in) अणु
 		info.ctx = kzalloc(ctx_size_in, GFP_USER);
-		if (!info.ctx)
-			return -ENOMEM;
-		if (copy_from_user(info.ctx, ctx_in, ctx_size_in)) {
+		अगर (!info.ctx)
+			वापस -ENOMEM;
+		अगर (copy_from_user(info.ctx, ctx_in, ctx_size_in)) अणु
 			err = -EFAULT;
-			goto out;
-		}
-	} else {
-		info.ctx = NULL;
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		info.ctx = शून्य;
+	पूर्ण
 
 	info.prog = prog;
 
 	current_cpu = get_cpu();
-	if ((kattr->test.flags & BPF_F_TEST_RUN_ON_CPU) == 0 ||
-	    cpu == current_cpu) {
+	अगर ((kattr->test.flags & BPF_F_TEST_RUN_ON_CPU) == 0 ||
+	    cpu == current_cpu) अणु
 		__bpf_prog_test_run_raw_tp(&info);
-	} else if (cpu >= nr_cpu_ids || !cpu_online(cpu)) {
+	पूर्ण अन्यथा अगर (cpu >= nr_cpu_ids || !cpu_online(cpu)) अणु
 		/* smp_call_function_single() also checks cpu_online()
 		 * after csd_lock(). However, since cpu is from user
-		 * space, let's do an extra quick check to filter out
-		 * invalid value before smp_call_function_single().
+		 * space, let's करो an extra quick check to filter out
+		 * invalid value beक्रमe smp_call_function_single().
 		 */
 		err = -ENXIO;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = smp_call_function_single(cpu, __bpf_prog_test_run_raw_tp,
 					       &info, 1);
-	}
+	पूर्ण
 	put_cpu();
 
-	if (!err &&
-	    copy_to_user(&uattr->test.retval, &info.retval, sizeof(u32)))
+	अगर (!err &&
+	    copy_to_user(&uattr->test.retval, &info.retval, माप(u32)))
 		err = -EFAULT;
 
 out:
-	kfree(info.ctx);
-	return err;
-}
+	kमुक्त(info.ctx);
+	वापस err;
+पूर्ण
 
-static void *bpf_ctx_init(const union bpf_attr *kattr, u32 max_size)
-{
-	void __user *data_in = u64_to_user_ptr(kattr->test.ctx_in);
-	void __user *data_out = u64_to_user_ptr(kattr->test.ctx_out);
+अटल व्योम *bpf_ctx_init(स्थिर जोड़ bpf_attr *kattr, u32 max_size)
+अणु
+	व्योम __user *data_in = u64_to_user_ptr(kattr->test.ctx_in);
+	व्योम __user *data_out = u64_to_user_ptr(kattr->test.ctx_out);
 	u32 size = kattr->test.ctx_size_in;
-	void *data;
-	int err;
+	व्योम *data;
+	पूर्णांक err;
 
-	if (!data_in && !data_out)
-		return NULL;
+	अगर (!data_in && !data_out)
+		वापस शून्य;
 
 	data = kzalloc(max_size, GFP_USER);
-	if (!data)
-		return ERR_PTR(-ENOMEM);
+	अगर (!data)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (data_in) {
+	अगर (data_in) अणु
 		err = bpf_check_uarg_tail_zero(data_in, max_size, size);
-		if (err) {
-			kfree(data);
-			return ERR_PTR(err);
-		}
+		अगर (err) अणु
+			kमुक्त(data);
+			वापस ERR_PTR(err);
+		पूर्ण
 
 		size = min_t(u32, max_size, size);
-		if (copy_from_user(data, data_in, size)) {
-			kfree(data);
-			return ERR_PTR(-EFAULT);
-		}
-	}
-	return data;
-}
+		अगर (copy_from_user(data, data_in, size)) अणु
+			kमुक्त(data);
+			वापस ERR_PTR(-EFAULT);
+		पूर्ण
+	पूर्ण
+	वापस data;
+पूर्ण
 
-static int bpf_ctx_finish(const union bpf_attr *kattr,
-			  union bpf_attr __user *uattr, const void *data,
+अटल पूर्णांक bpf_ctx_finish(स्थिर जोड़ bpf_attr *kattr,
+			  जोड़ bpf_attr __user *uattr, स्थिर व्योम *data,
 			  u32 size)
-{
-	void __user *data_out = u64_to_user_ptr(kattr->test.ctx_out);
-	int err = -EFAULT;
+अणु
+	व्योम __user *data_out = u64_to_user_ptr(kattr->test.ctx_out);
+	पूर्णांक err = -EFAULT;
 	u32 copy_size = size;
 
-	if (!data || !data_out)
-		return 0;
+	अगर (!data || !data_out)
+		वापस 0;
 
-	if (copy_size > kattr->test.ctx_size_out) {
+	अगर (copy_size > kattr->test.ctx_size_out) अणु
 		copy_size = kattr->test.ctx_size_out;
 		err = -ENOSPC;
-	}
+	पूर्ण
 
-	if (copy_to_user(data_out, data, copy_size))
-		goto out;
-	if (copy_to_user(&uattr->test.ctx_size_out, &size, sizeof(size)))
-		goto out;
-	if (err != -ENOSPC)
+	अगर (copy_to_user(data_out, data, copy_size))
+		जाओ out;
+	अगर (copy_to_user(&uattr->test.ctx_size_out, &size, माप(size)))
+		जाओ out;
+	अगर (err != -ENOSPC)
 		err = 0;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * range_is_zero - test whether buffer is initialized
@@ -456,465 +457,465 @@ out:
  * @from: check from this position
  * @to: check up until (excluding) this position
  *
- * This function returns true if the there is a non-zero byte
+ * This function वापसs true अगर the there is a non-zero byte
  * in the buf in the range [from,to).
  */
-static inline bool range_is_zero(void *buf, size_t from, size_t to)
-{
-	return !memchr_inv((u8 *)buf + from, 0, to - from);
-}
+अटल अंतरभूत bool range_is_zero(व्योम *buf, माप_प्रकार from, माप_प्रकार to)
+अणु
+	वापस !स_प्रथम_inv((u8 *)buf + from, 0, to - from);
+पूर्ण
 
-static int convert___skb_to_skb(struct sk_buff *skb, struct __sk_buff *__skb)
-{
-	struct qdisc_skb_cb *cb = (struct qdisc_skb_cb *)skb->cb;
+अटल पूर्णांक convert___skb_to_skb(काष्ठा sk_buff *skb, काष्ठा __sk_buff *__skb)
+अणु
+	काष्ठा qdisc_skb_cb *cb = (काष्ठा qdisc_skb_cb *)skb->cb;
 
-	if (!__skb)
-		return 0;
+	अगर (!__skb)
+		वापस 0;
 
-	/* make sure the fields we don't use are zeroed */
-	if (!range_is_zero(__skb, 0, offsetof(struct __sk_buff, mark)))
-		return -EINVAL;
+	/* make sure the fields we करोn't use are zeroed */
+	अगर (!range_is_zero(__skb, 0, दुरत्व(काष्ठा __sk_buff, mark)))
+		वापस -EINVAL;
 
 	/* mark is allowed */
 
-	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, mark),
-			   offsetof(struct __sk_buff, priority)))
-		return -EINVAL;
+	अगर (!range_is_zero(__skb, दुरत्वend(काष्ठा __sk_buff, mark),
+			   दुरत्व(काष्ठा __sk_buff, priority)))
+		वापस -EINVAL;
 
 	/* priority is allowed */
 
-	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, priority),
-			   offsetof(struct __sk_buff, ifindex)))
-		return -EINVAL;
+	अगर (!range_is_zero(__skb, दुरत्वend(काष्ठा __sk_buff, priority),
+			   दुरत्व(काष्ठा __sk_buff, अगरindex)))
+		वापस -EINVAL;
 
-	/* ifindex is allowed */
+	/* अगरindex is allowed */
 
-	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, ifindex),
-			   offsetof(struct __sk_buff, cb)))
-		return -EINVAL;
+	अगर (!range_is_zero(__skb, दुरत्वend(काष्ठा __sk_buff, अगरindex),
+			   दुरत्व(काष्ठा __sk_buff, cb)))
+		वापस -EINVAL;
 
 	/* cb is allowed */
 
-	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, cb),
-			   offsetof(struct __sk_buff, tstamp)))
-		return -EINVAL;
+	अगर (!range_is_zero(__skb, दुरत्वend(काष्ठा __sk_buff, cb),
+			   दुरत्व(काष्ठा __sk_buff, tstamp)))
+		वापस -EINVAL;
 
 	/* tstamp is allowed */
 	/* wire_len is allowed */
 	/* gso_segs is allowed */
 
-	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, gso_segs),
-			   offsetof(struct __sk_buff, gso_size)))
-		return -EINVAL;
+	अगर (!range_is_zero(__skb, दुरत्वend(काष्ठा __sk_buff, gso_segs),
+			   दुरत्व(काष्ठा __sk_buff, gso_size)))
+		वापस -EINVAL;
 
 	/* gso_size is allowed */
 
-	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, gso_size),
-			   sizeof(struct __sk_buff)))
-		return -EINVAL;
+	अगर (!range_is_zero(__skb, दुरत्वend(काष्ठा __sk_buff, gso_size),
+			   माप(काष्ठा __sk_buff)))
+		वापस -EINVAL;
 
 	skb->mark = __skb->mark;
 	skb->priority = __skb->priority;
 	skb->tstamp = __skb->tstamp;
-	memcpy(&cb->data, __skb->cb, QDISC_CB_PRIV_LEN);
+	स_नकल(&cb->data, __skb->cb, QDISC_CB_PRIV_LEN);
 
-	if (__skb->wire_len == 0) {
+	अगर (__skb->wire_len == 0) अणु
 		cb->pkt_len = skb->len;
-	} else {
-		if (__skb->wire_len < skb->len ||
+	पूर्ण अन्यथा अणु
+		अगर (__skb->wire_len < skb->len ||
 		    __skb->wire_len > GSO_MAX_SIZE)
-			return -EINVAL;
+			वापस -EINVAL;
 		cb->pkt_len = __skb->wire_len;
-	}
+	पूर्ण
 
-	if (__skb->gso_segs > GSO_MAX_SEGS)
-		return -EINVAL;
+	अगर (__skb->gso_segs > GSO_MAX_SEGS)
+		वापस -EINVAL;
 	skb_shinfo(skb)->gso_segs = __skb->gso_segs;
 	skb_shinfo(skb)->gso_size = __skb->gso_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void convert_skb_to___skb(struct sk_buff *skb, struct __sk_buff *__skb)
-{
-	struct qdisc_skb_cb *cb = (struct qdisc_skb_cb *)skb->cb;
+अटल व्योम convert_skb_to___skb(काष्ठा sk_buff *skb, काष्ठा __sk_buff *__skb)
+अणु
+	काष्ठा qdisc_skb_cb *cb = (काष्ठा qdisc_skb_cb *)skb->cb;
 
-	if (!__skb)
-		return;
+	अगर (!__skb)
+		वापस;
 
 	__skb->mark = skb->mark;
 	__skb->priority = skb->priority;
-	__skb->ifindex = skb->dev->ifindex;
+	__skb->अगरindex = skb->dev->अगरindex;
 	__skb->tstamp = skb->tstamp;
-	memcpy(__skb->cb, &cb->data, QDISC_CB_PRIV_LEN);
+	स_नकल(__skb->cb, &cb->data, QDISC_CB_PRIV_LEN);
 	__skb->wire_len = cb->pkt_len;
 	__skb->gso_segs = skb_shinfo(skb)->gso_segs;
-}
+पूर्ण
 
-int bpf_prog_test_run_skb(struct bpf_prog *prog, const union bpf_attr *kattr,
-			  union bpf_attr __user *uattr)
-{
+पूर्णांक bpf_prog_test_run_skb(काष्ठा bpf_prog *prog, स्थिर जोड़ bpf_attr *kattr,
+			  जोड़ bpf_attr __user *uattr)
+अणु
 	bool is_l2 = false, is_direct_pkt_access = false;
-	struct net *net = current->nsproxy->net_ns;
-	struct net_device *dev = net->loopback_dev;
+	काष्ठा net *net = current->nsproxy->net_ns;
+	काष्ठा net_device *dev = net->loopback_dev;
 	u32 size = kattr->test.data_size_in;
 	u32 repeat = kattr->test.repeat;
-	struct __sk_buff *ctx = NULL;
+	काष्ठा __sk_buff *ctx = शून्य;
 	u32 retval, duration;
-	int hh_len = ETH_HLEN;
-	struct sk_buff *skb;
-	struct sock *sk;
-	void *data;
-	int ret;
+	पूर्णांक hh_len = ETH_HLEN;
+	काष्ठा sk_buff *skb;
+	काष्ठा sock *sk;
+	व्योम *data;
+	पूर्णांक ret;
 
-	if (kattr->test.flags || kattr->test.cpu)
-		return -EINVAL;
+	अगर (kattr->test.flags || kattr->test.cpu)
+		वापस -EINVAL;
 
 	data = bpf_test_init(kattr, size, NET_SKB_PAD + NET_IP_ALIGN,
-			     SKB_DATA_ALIGN(sizeof(struct skb_shared_info)));
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+			     SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)));
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	ctx = bpf_ctx_init(kattr, sizeof(struct __sk_buff));
-	if (IS_ERR(ctx)) {
-		kfree(data);
-		return PTR_ERR(ctx);
-	}
+	ctx = bpf_ctx_init(kattr, माप(काष्ठा __sk_buff));
+	अगर (IS_ERR(ctx)) अणु
+		kमुक्त(data);
+		वापस PTR_ERR(ctx);
+	पूर्ण
 
-	switch (prog->type) {
-	case BPF_PROG_TYPE_SCHED_CLS:
-	case BPF_PROG_TYPE_SCHED_ACT:
+	चयन (prog->type) अणु
+	हाल BPF_PROG_TYPE_SCHED_CLS:
+	हाल BPF_PROG_TYPE_SCHED_ACT:
 		is_l2 = true;
 		fallthrough;
-	case BPF_PROG_TYPE_LWT_IN:
-	case BPF_PROG_TYPE_LWT_OUT:
-	case BPF_PROG_TYPE_LWT_XMIT:
+	हाल BPF_PROG_TYPE_LWT_IN:
+	हाल BPF_PROG_TYPE_LWT_OUT:
+	हाल BPF_PROG_TYPE_LWT_XMIT:
 		is_direct_pkt_access = true;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	sk = kzalloc(sizeof(struct sock), GFP_USER);
-	if (!sk) {
-		kfree(data);
-		kfree(ctx);
-		return -ENOMEM;
-	}
+	sk = kzalloc(माप(काष्ठा sock), GFP_USER);
+	अगर (!sk) अणु
+		kमुक्त(data);
+		kमुक्त(ctx);
+		वापस -ENOMEM;
+	पूर्ण
 	sock_net_set(sk, net);
-	sock_init_data(NULL, sk);
+	sock_init_data(शून्य, sk);
 
 	skb = build_skb(data, 0);
-	if (!skb) {
-		kfree(data);
-		kfree(ctx);
-		kfree(sk);
-		return -ENOMEM;
-	}
+	अगर (!skb) अणु
+		kमुक्त(data);
+		kमुक्त(ctx);
+		kमुक्त(sk);
+		वापस -ENOMEM;
+	पूर्ण
 	skb->sk = sk;
 
 	skb_reserve(skb, NET_SKB_PAD + NET_IP_ALIGN);
 	__skb_put(skb, size);
-	if (ctx && ctx->ifindex > 1) {
-		dev = dev_get_by_index(net, ctx->ifindex);
-		if (!dev) {
+	अगर (ctx && ctx->अगरindex > 1) अणु
+		dev = dev_get_by_index(net, ctx->अगरindex);
+		अगर (!dev) अणु
 			ret = -ENODEV;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	skb->protocol = eth_type_trans(skb, dev);
 	skb_reset_network_header(skb);
 
-	switch (skb->protocol) {
-	case htons(ETH_P_IP):
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IP):
 		sk->sk_family = AF_INET;
-		if (sizeof(struct iphdr) <= skb_headlen(skb)) {
+		अगर (माप(काष्ठा iphdr) <= skb_headlen(skb)) अणु
 			sk->sk_rcv_saddr = ip_hdr(skb)->saddr;
 			sk->sk_daddr = ip_hdr(skb)->daddr;
-		}
-		break;
-#if IS_ENABLED(CONFIG_IPV6)
-	case htons(ETH_P_IPV6):
+		पूर्ण
+		अवरोध;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	हाल htons(ETH_P_IPV6):
 		sk->sk_family = AF_INET6;
-		if (sizeof(struct ipv6hdr) <= skb_headlen(skb)) {
+		अगर (माप(काष्ठा ipv6hdr) <= skb_headlen(skb)) अणु
 			sk->sk_v6_rcv_saddr = ipv6_hdr(skb)->saddr;
 			sk->sk_v6_daddr = ipv6_hdr(skb)->daddr;
-		}
-		break;
-#endif
-	default:
-		break;
-	}
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (is_l2)
+	अगर (is_l2)
 		__skb_push(skb, hh_len);
-	if (is_direct_pkt_access)
-		bpf_compute_data_pointers(skb);
+	अगर (is_direct_pkt_access)
+		bpf_compute_data_poपूर्णांकers(skb);
 	ret = convert___skb_to_skb(skb, ctx);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 	ret = bpf_test_run(prog, skb, repeat, &retval, &duration, false);
-	if (ret)
-		goto out;
-	if (!is_l2) {
-		if (skb_headroom(skb) < hh_len) {
-			int nhead = HH_DATA_ALIGN(hh_len - skb_headroom(skb));
+	अगर (ret)
+		जाओ out;
+	अगर (!is_l2) अणु
+		अगर (skb_headroom(skb) < hh_len) अणु
+			पूर्णांक nhead = HH_DATA_ALIGN(hh_len - skb_headroom(skb));
 
-			if (pskb_expand_head(skb, nhead, 0, GFP_USER)) {
+			अगर (pskb_expand_head(skb, nhead, 0, GFP_USER)) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
-		}
-		memset(__skb_push(skb, hh_len), 0, hh_len);
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		स_रखो(__skb_push(skb, hh_len), 0, hh_len);
+	पूर्ण
 	convert_skb_to___skb(skb, ctx);
 
 	size = skb->len;
 	/* bpf program can never convert linear skb to non-linear */
-	if (WARN_ON_ONCE(skb_is_nonlinear(skb)))
+	अगर (WARN_ON_ONCE(skb_is_nonlinear(skb)))
 		size = skb_headlen(skb);
 	ret = bpf_test_finish(kattr, uattr, skb->data, size, retval, duration);
-	if (!ret)
+	अगर (!ret)
 		ret = bpf_ctx_finish(kattr, uattr, ctx,
-				     sizeof(struct __sk_buff));
+				     माप(काष्ठा __sk_buff));
 out:
-	if (dev && dev != net->loopback_dev)
+	अगर (dev && dev != net->loopback_dev)
 		dev_put(dev);
-	kfree_skb(skb);
-	bpf_sk_storage_free(sk);
-	kfree(sk);
-	kfree(ctx);
-	return ret;
-}
+	kमुक्त_skb(skb);
+	bpf_sk_storage_मुक्त(sk);
+	kमुक्त(sk);
+	kमुक्त(ctx);
+	वापस ret;
+पूर्ण
 
-int bpf_prog_test_run_xdp(struct bpf_prog *prog, const union bpf_attr *kattr,
-			  union bpf_attr __user *uattr)
-{
-	u32 tailroom = SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
+पूर्णांक bpf_prog_test_run_xdp(काष्ठा bpf_prog *prog, स्थिर जोड़ bpf_attr *kattr,
+			  जोड़ bpf_attr __user *uattr)
+अणु
+	u32 tailroom = SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info));
 	u32 headroom = XDP_PACKET_HEADROOM;
 	u32 size = kattr->test.data_size_in;
 	u32 repeat = kattr->test.repeat;
-	struct netdev_rx_queue *rxqueue;
-	struct xdp_buff xdp = {};
+	काष्ठा netdev_rx_queue *rxqueue;
+	काष्ठा xdp_buff xdp = अणुपूर्ण;
 	u32 retval, duration;
 	u32 max_data_sz;
-	void *data;
-	int ret;
+	व्योम *data;
+	पूर्णांक ret;
 
-	if (kattr->test.ctx_in || kattr->test.ctx_out)
-		return -EINVAL;
+	अगर (kattr->test.ctx_in || kattr->test.ctx_out)
+		वापस -EINVAL;
 
 	/* XDP have extra tailroom as (most) drivers use full page */
 	max_data_sz = 4096 - headroom - tailroom;
 
 	data = bpf_test_init(kattr, max_data_sz, headroom, tailroom);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	rxqueue = __netif_get_rx_queue(current->nsproxy->net_ns->loopback_dev, 0);
+	rxqueue = __netअगर_get_rx_queue(current->nsproxy->net_ns->loopback_dev, 0);
 	xdp_init_buff(&xdp, headroom + max_data_sz + tailroom,
 		      &rxqueue->xdp_rxq);
 	xdp_prepare_buff(&xdp, data, headroom, size, true);
 
-	bpf_prog_change_xdp(NULL, prog);
+	bpf_prog_change_xdp(शून्य, prog);
 	ret = bpf_test_run(prog, &xdp, repeat, &retval, &duration, true);
-	if (ret)
-		goto out;
-	if (xdp.data != data + headroom || xdp.data_end != xdp.data + size)
+	अगर (ret)
+		जाओ out;
+	अगर (xdp.data != data + headroom || xdp.data_end != xdp.data + size)
 		size = xdp.data_end - xdp.data;
 	ret = bpf_test_finish(kattr, uattr, xdp.data, size, retval, duration);
 out:
-	bpf_prog_change_xdp(prog, NULL);
-	kfree(data);
-	return ret;
-}
+	bpf_prog_change_xdp(prog, शून्य);
+	kमुक्त(data);
+	वापस ret;
+पूर्ण
 
-static int verify_user_bpf_flow_keys(struct bpf_flow_keys *ctx)
-{
-	/* make sure the fields we don't use are zeroed */
-	if (!range_is_zero(ctx, 0, offsetof(struct bpf_flow_keys, flags)))
-		return -EINVAL;
+अटल पूर्णांक verअगरy_user_bpf_flow_keys(काष्ठा bpf_flow_keys *ctx)
+अणु
+	/* make sure the fields we करोn't use are zeroed */
+	अगर (!range_is_zero(ctx, 0, दुरत्व(काष्ठा bpf_flow_keys, flags)))
+		वापस -EINVAL;
 
 	/* flags is allowed */
 
-	if (!range_is_zero(ctx, offsetofend(struct bpf_flow_keys, flags),
-			   sizeof(struct bpf_flow_keys)))
-		return -EINVAL;
+	अगर (!range_is_zero(ctx, दुरत्वend(काष्ठा bpf_flow_keys, flags),
+			   माप(काष्ठा bpf_flow_keys)))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bpf_prog_test_run_flow_dissector(struct bpf_prog *prog,
-				     const union bpf_attr *kattr,
-				     union bpf_attr __user *uattr)
-{
-	struct bpf_test_timer t = { NO_PREEMPT };
+पूर्णांक bpf_prog_test_run_flow_dissector(काष्ठा bpf_prog *prog,
+				     स्थिर जोड़ bpf_attr *kattr,
+				     जोड़ bpf_attr __user *uattr)
+अणु
+	काष्ठा bpf_test_समयr t = अणु NO_PREEMPT पूर्ण;
 	u32 size = kattr->test.data_size_in;
-	struct bpf_flow_dissector ctx = {};
+	काष्ठा bpf_flow_dissector ctx = अणुपूर्ण;
 	u32 repeat = kattr->test.repeat;
-	struct bpf_flow_keys *user_ctx;
-	struct bpf_flow_keys flow_keys;
-	const struct ethhdr *eth;
-	unsigned int flags = 0;
+	काष्ठा bpf_flow_keys *user_ctx;
+	काष्ठा bpf_flow_keys flow_keys;
+	स्थिर काष्ठा ethhdr *eth;
+	अचिन्हित पूर्णांक flags = 0;
 	u32 retval, duration;
-	void *data;
-	int ret;
+	व्योम *data;
+	पूर्णांक ret;
 
-	if (prog->type != BPF_PROG_TYPE_FLOW_DISSECTOR)
-		return -EINVAL;
+	अगर (prog->type != BPF_PROG_TYPE_FLOW_DISSECTOR)
+		वापस -EINVAL;
 
-	if (kattr->test.flags || kattr->test.cpu)
-		return -EINVAL;
+	अगर (kattr->test.flags || kattr->test.cpu)
+		वापस -EINVAL;
 
-	if (size < ETH_HLEN)
-		return -EINVAL;
+	अगर (size < ETH_HLEN)
+		वापस -EINVAL;
 
 	data = bpf_test_init(kattr, size, 0, 0);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	eth = (struct ethhdr *)data;
+	eth = (काष्ठा ethhdr *)data;
 
-	if (!repeat)
+	अगर (!repeat)
 		repeat = 1;
 
-	user_ctx = bpf_ctx_init(kattr, sizeof(struct bpf_flow_keys));
-	if (IS_ERR(user_ctx)) {
-		kfree(data);
-		return PTR_ERR(user_ctx);
-	}
-	if (user_ctx) {
-		ret = verify_user_bpf_flow_keys(user_ctx);
-		if (ret)
-			goto out;
+	user_ctx = bpf_ctx_init(kattr, माप(काष्ठा bpf_flow_keys));
+	अगर (IS_ERR(user_ctx)) अणु
+		kमुक्त(data);
+		वापस PTR_ERR(user_ctx);
+	पूर्ण
+	अगर (user_ctx) अणु
+		ret = verअगरy_user_bpf_flow_keys(user_ctx);
+		अगर (ret)
+			जाओ out;
 		flags = user_ctx->flags;
-	}
+	पूर्ण
 
 	ctx.flow_keys = &flow_keys;
 	ctx.data = data;
 	ctx.data_end = (__u8 *)data + size;
 
-	bpf_test_timer_enter(&t);
-	do {
+	bpf_test_समयr_enter(&t);
+	करो अणु
 		retval = bpf_flow_dissect(prog, &ctx, eth->h_proto, ETH_HLEN,
 					  size, flags);
-	} while (bpf_test_timer_continue(&t, repeat, &ret, &duration));
-	bpf_test_timer_leave(&t);
+	पूर्ण जबतक (bpf_test_समयr_जारी(&t, repeat, &ret, &duration));
+	bpf_test_समयr_leave(&t);
 
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	ret = bpf_test_finish(kattr, uattr, &flow_keys, sizeof(flow_keys),
+	ret = bpf_test_finish(kattr, uattr, &flow_keys, माप(flow_keys),
 			      retval, duration);
-	if (!ret)
+	अगर (!ret)
 		ret = bpf_ctx_finish(kattr, uattr, user_ctx,
-				     sizeof(struct bpf_flow_keys));
+				     माप(काष्ठा bpf_flow_keys));
 
 out:
-	kfree(user_ctx);
-	kfree(data);
-	return ret;
-}
+	kमुक्त(user_ctx);
+	kमुक्त(data);
+	वापस ret;
+पूर्ण
 
-int bpf_prog_test_run_sk_lookup(struct bpf_prog *prog, const union bpf_attr *kattr,
-				union bpf_attr __user *uattr)
-{
-	struct bpf_test_timer t = { NO_PREEMPT };
-	struct bpf_prog_array *progs = NULL;
-	struct bpf_sk_lookup_kern ctx = {};
+पूर्णांक bpf_prog_test_run_sk_lookup(काष्ठा bpf_prog *prog, स्थिर जोड़ bpf_attr *kattr,
+				जोड़ bpf_attr __user *uattr)
+अणु
+	काष्ठा bpf_test_समयr t = अणु NO_PREEMPT पूर्ण;
+	काष्ठा bpf_prog_array *progs = शून्य;
+	काष्ठा bpf_sk_lookup_kern ctx = अणुपूर्ण;
 	u32 repeat = kattr->test.repeat;
-	struct bpf_sk_lookup *user_ctx;
+	काष्ठा bpf_sk_lookup *user_ctx;
 	u32 retval, duration;
-	int ret = -EINVAL;
+	पूर्णांक ret = -EINVAL;
 
-	if (prog->type != BPF_PROG_TYPE_SK_LOOKUP)
-		return -EINVAL;
+	अगर (prog->type != BPF_PROG_TYPE_SK_LOOKUP)
+		वापस -EINVAL;
 
-	if (kattr->test.flags || kattr->test.cpu)
-		return -EINVAL;
+	अगर (kattr->test.flags || kattr->test.cpu)
+		वापस -EINVAL;
 
-	if (kattr->test.data_in || kattr->test.data_size_in || kattr->test.data_out ||
+	अगर (kattr->test.data_in || kattr->test.data_size_in || kattr->test.data_out ||
 	    kattr->test.data_size_out)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!repeat)
+	अगर (!repeat)
 		repeat = 1;
 
-	user_ctx = bpf_ctx_init(kattr, sizeof(*user_ctx));
-	if (IS_ERR(user_ctx))
-		return PTR_ERR(user_ctx);
+	user_ctx = bpf_ctx_init(kattr, माप(*user_ctx));
+	अगर (IS_ERR(user_ctx))
+		वापस PTR_ERR(user_ctx);
 
-	if (!user_ctx)
-		return -EINVAL;
+	अगर (!user_ctx)
+		वापस -EINVAL;
 
-	if (user_ctx->sk)
-		goto out;
+	अगर (user_ctx->sk)
+		जाओ out;
 
-	if (!range_is_zero(user_ctx, offsetofend(typeof(*user_ctx), local_port), sizeof(*user_ctx)))
-		goto out;
+	अगर (!range_is_zero(user_ctx, दुरत्वend(typeof(*user_ctx), local_port), माप(*user_ctx)))
+		जाओ out;
 
-	if (user_ctx->local_port > U16_MAX || user_ctx->remote_port > U16_MAX) {
-		ret = -ERANGE;
-		goto out;
-	}
+	अगर (user_ctx->local_port > U16_MAX || user_ctx->remote_port > U16_MAX) अणु
+		ret = -दुस्फल;
+		जाओ out;
+	पूर्ण
 
 	ctx.family = (u16)user_ctx->family;
 	ctx.protocol = (u16)user_ctx->protocol;
 	ctx.dport = (u16)user_ctx->local_port;
-	ctx.sport = (__force __be16)user_ctx->remote_port;
+	ctx.sport = (__क्रमce __be16)user_ctx->remote_port;
 
-	switch (ctx.family) {
-	case AF_INET:
-		ctx.v4.daddr = (__force __be32)user_ctx->local_ip4;
-		ctx.v4.saddr = (__force __be32)user_ctx->remote_ip4;
-		break;
+	चयन (ctx.family) अणु
+	हाल AF_INET:
+		ctx.v4.daddr = (__क्रमce __be32)user_ctx->local_ip4;
+		ctx.v4.saddr = (__क्रमce __be32)user_ctx->remote_ip4;
+		अवरोध;
 
-#if IS_ENABLED(CONFIG_IPV6)
-	case AF_INET6:
-		ctx.v6.daddr = (struct in6_addr *)user_ctx->local_ip6;
-		ctx.v6.saddr = (struct in6_addr *)user_ctx->remote_ip6;
-		break;
-#endif
+#अगर IS_ENABLED(CONFIG_IPV6)
+	हाल AF_INET6:
+		ctx.v6.daddr = (काष्ठा in6_addr *)user_ctx->local_ip6;
+		ctx.v6.saddr = (काष्ठा in6_addr *)user_ctx->remote_ip6;
+		अवरोध;
+#पूर्ण_अगर
 
-	default:
+	शेष:
 		ret = -EAFNOSUPPORT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	progs = bpf_prog_array_alloc(1, GFP_KERNEL);
-	if (!progs) {
+	अगर (!progs) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	progs->items[0].prog = prog;
 
-	bpf_test_timer_enter(&t);
-	do {
-		ctx.selected_sk = NULL;
+	bpf_test_समयr_enter(&t);
+	करो अणु
+		ctx.selected_sk = शून्य;
 		retval = BPF_PROG_SK_LOOKUP_RUN_ARRAY(progs, ctx, BPF_PROG_RUN);
-	} while (bpf_test_timer_continue(&t, repeat, &ret, &duration));
-	bpf_test_timer_leave(&t);
+	पूर्ण जबतक (bpf_test_समयr_जारी(&t, repeat, &ret, &duration));
+	bpf_test_समयr_leave(&t);
 
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	user_ctx->cookie = 0;
-	if (ctx.selected_sk) {
-		if (ctx.selected_sk->sk_reuseport && !ctx.no_reuseport) {
+	अगर (ctx.selected_sk) अणु
+		अगर (ctx.selected_sk->sk_reuseport && !ctx.no_reuseport) अणु
 			ret = -EOPNOTSUPP;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		user_ctx->cookie = sock_gen_cookie(ctx.selected_sk);
-	}
+	पूर्ण
 
-	ret = bpf_test_finish(kattr, uattr, NULL, 0, retval, duration);
-	if (!ret)
-		ret = bpf_ctx_finish(kattr, uattr, user_ctx, sizeof(*user_ctx));
+	ret = bpf_test_finish(kattr, uattr, शून्य, 0, retval, duration);
+	अगर (!ret)
+		ret = bpf_ctx_finish(kattr, uattr, user_ctx, माप(*user_ctx));
 
 out:
-	bpf_prog_array_free(progs);
-	kfree(user_ctx);
-	return ret;
-}
+	bpf_prog_array_मुक्त(progs);
+	kमुक्त(user_ctx);
+	वापस ret;
+पूर्ण

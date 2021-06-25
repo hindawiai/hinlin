@@ -1,145 +1,146 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2004 IBM Corporation
  * Copyright (C) 2015 Intel Corporation
  *
  * Authors:
  * Leendert van Doorn <leendert@watson.ibm.com>
- * Dave Safford <safford@watson.ibm.com>
+ * Dave Safक्रमd <safक्रमd@watson.ibm.com>
  * Reiner Sailer <sailer@watson.ibm.com>
  * Kylene Hall <kjhall@us.ibm.com>
  *
- * Maintained by: <tpmdd-devel@lists.sourceforge.net>
+ * Maपूर्णांकained by: <tpmdd-devel@lists.sourceक्रमge.net>
  *
- * Device driver for TCG/TCPA TPM (trusted platform module).
- * Specifications at www.trustedcomputinggroup.org
+ * Device driver क्रम TCG/TCPA TPM (trusted platक्रमm module).
+ * Specअगरications at www.trustedcomputinggroup.org
  */
 
-#ifndef __TPM_H__
-#define __TPM_H__
+#अगर_अघोषित __TPM_H__
+#घोषणा __TPM_H__
 
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/mutex.h>
-#include <linux/sched.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/tpm.h>
-#include <linux/tpm_eventlog.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/tpm.h>
+#समावेश <linux/tpm_eventlog.h>
 
-#ifdef CONFIG_X86
-#include <asm/intel-family.h>
-#endif
+#अगर_घोषित CONFIG_X86
+#समावेश <यंत्र/पूर्णांकel-family.h>
+#पूर्ण_अगर
 
-#define TPM_MINOR		224	/* officially assigned */
-#define TPM_BUFSIZE		4096
-#define TPM_NUM_DEVICES		65536
-#define TPM_RETRY		50
+#घोषणा TPM_MINOR		224	/* officially asचिन्हित */
+#घोषणा TPM_बफ_मानE		4096
+#घोषणा TPM_NUM_DEVICES		65536
+#घोषणा TPM_RETRY		50
 
-enum tpm_timeout {
+क्रमागत tpm_समयout अणु
 	TPM_TIMEOUT = 5,	/* msecs */
 	TPM_TIMEOUT_RETRY = 100, /* msecs */
 	TPM_TIMEOUT_RANGE_US = 300,	/* usecs */
 	TPM_TIMEOUT_POLL = 1,	/* msecs */
 	TPM_TIMEOUT_USECS_MIN = 100,      /* usecs */
 	TPM_TIMEOUT_USECS_MAX = 500      /* usecs */
-};
+पूर्ण;
 
 /* TPM addresses */
-enum tpm_addr {
+क्रमागत tpm_addr अणु
 	TPM_SUPERIO_ADDR = 0x2E,
 	TPM_ADDR = 0x4E,
-};
+पूर्ण;
 
-#define TPM_WARN_RETRY          0x800
-#define TPM_WARN_DOING_SELFTEST 0x802
-#define TPM_ERR_DEACTIVATED     0x6
-#define TPM_ERR_DISABLED        0x7
-#define TPM_ERR_INVALID_POSTINIT 38
+#घोषणा TPM_WARN_RETRY          0x800
+#घोषणा TPM_WARN_DOING_SELFTEST 0x802
+#घोषणा TPM_ERR_DEACTIVATED     0x6
+#घोषणा TPM_ERR_DISABLED        0x7
+#घोषणा TPM_ERR_INVALID_POSTINIT 38
 
-#define TPM_TAG_RQU_COMMAND 193
+#घोषणा TPM_TAG_RQU_COMMAND 193
 
-/* TPM2 specific constants. */
-#define TPM2_SPACE_BUFFER_SIZE		16384 /* 16 kB */
+/* TPM2 specअगरic स्थिरants. */
+#घोषणा TPM2_SPACE_BUFFER_SIZE		16384 /* 16 kB */
 
-struct	stclear_flags_t {
+काष्ठा	stclear_flags_t अणु
 	__be16	tag;
 	u8	deactivated;
 	u8	disableForceClear;
 	u8	physicalPresence;
 	u8	physicalPresenceLock;
 	u8	bGlobalLock;
-} __packed;
+पूर्ण __packed;
 
-struct tpm1_version {
+काष्ठा tpm1_version अणु
 	u8 major;
 	u8 minor;
 	u8 rev_major;
 	u8 rev_minor;
-} __packed;
+पूर्ण __packed;
 
-struct tpm1_version2 {
+काष्ठा tpm1_version2 अणु
 	__be16 tag;
-	struct tpm1_version version;
-} __packed;
+	काष्ठा tpm1_version version;
+पूर्ण __packed;
 
-struct	timeout_t {
+काष्ठा	समयout_t अणु
 	__be32	a;
 	__be32	b;
 	__be32	c;
 	__be32	d;
-} __packed;
+पूर्ण __packed;
 
-struct duration_t {
-	__be32	tpm_short;
+काष्ठा duration_t अणु
+	__be32	tpm_लघु;
 	__be32	tpm_medium;
-	__be32	tpm_long;
-} __packed;
+	__be32	tpm_दीर्घ;
+पूर्ण __packed;
 
-struct permanent_flags_t {
+काष्ठा permanent_flags_t अणु
 	__be16	tag;
 	u8	disable;
 	u8	ownership;
 	u8	deactivated;
-	u8	readPubek;
+	u8	पढ़ोPubek;
 	u8	disableOwnerClear;
-	u8	allowMaintenance;
-	u8	physicalPresenceLifetimeLock;
+	u8	allowMaपूर्णांकenance;
+	u8	physicalPresenceLअगरeसमयLock;
 	u8	physicalPresenceHWEnable;
 	u8	physicalPresenceCMDEnable;
 	u8	CEKPUsed;
 	u8	TPMpost;
 	u8	TPMpostLock;
 	u8	FIPS;
-	u8	operator;
+	u8	चालक;
 	u8	enableRevokeEK;
 	u8	nvLocked;
-	u8	readSRKPub;
+	u8	पढ़ोSRKPub;
 	u8	tpmEstablished;
-	u8	maintenanceDone;
+	u8	मुख्यtenanceDone;
 	u8	disableFullDALogicInfo;
-} __packed;
+पूर्ण __packed;
 
-typedef union {
-	struct	permanent_flags_t perm_flags;
-	struct	stclear_flags_t	stclear_flags;
+प्रकार जोड़ अणु
+	काष्ठा	permanent_flags_t perm_flags;
+	काष्ठा	stclear_flags_t	stclear_flags;
 	__u8	owned;
 	__be32	num_pcrs;
-	struct tpm1_version version1;
-	struct tpm1_version2 version2;
+	काष्ठा tpm1_version version1;
+	काष्ठा tpm1_version2 version2;
 	__be32	manufacturer_id;
-	struct timeout_t  timeout;
-	struct duration_t duration;
-} cap_t;
+	काष्ठा समयout_t  समयout;
+	काष्ठा duration_t duration;
+पूर्ण cap_t;
 
-enum tpm_capabilities {
+क्रमागत tpm_capabilities अणु
 	TPM_CAP_FLAG = 4,
 	TPM_CAP_PROP = 5,
 	TPM_CAP_VERSION_1_1 = 0x06,
 	TPM_CAP_VERSION_1_2 = 0x1A,
-};
+पूर्ण;
 
-enum tpm_sub_capabilities {
+क्रमागत tpm_sub_capabilities अणु
 	TPM_CAP_PROP_PCR = 0x101,
 	TPM_CAP_PROP_MANUFACTURER = 0x103,
 	TPM_CAP_FLAG_PERM = 0x108,
@@ -147,96 +148,96 @@ enum tpm_sub_capabilities {
 	TPM_CAP_PROP_OWNER = 0x111,
 	TPM_CAP_PROP_TIS_TIMEOUT = 0x115,
 	TPM_CAP_PROP_TIS_DURATION = 0x120,
-};
+पूर्ण;
 
 
-/* 128 bytes is an arbitrary cap. This could be as large as TPM_BUFSIZE - 18
- * bytes, but 128 is still a relatively large number of random bytes and
- * anything much bigger causes users of struct tpm_cmd_t to start getting
+/* 128 bytes is an arbitrary cap. This could be as large as TPM_बफ_मानE - 18
+ * bytes, but 128 is still a relatively large number of अक्रमom bytes and
+ * anything much bigger causes users of काष्ठा tpm_cmd_t to start getting
  * compiler warnings about stack frame size. */
-#define TPM_MAX_RNG_DATA	128
+#घोषणा TPM_MAX_RNG_DATA	128
 
-extern struct class *tpm_class;
-extern struct class *tpmrm_class;
-extern dev_t tpm_devt;
-extern const struct file_operations tpm_fops;
-extern const struct file_operations tpmrm_fops;
-extern struct idr dev_nums_idr;
+बाह्य काष्ठा class *tpm_class;
+बाह्य काष्ठा class *tpmrm_class;
+बाह्य dev_t tpm_devt;
+बाह्य स्थिर काष्ठा file_operations tpm_fops;
+बाह्य स्थिर काष्ठा file_operations tpmrm_fops;
+बाह्य काष्ठा idr dev_nums_idr;
 
-ssize_t tpm_transmit(struct tpm_chip *chip, u8 *buf, size_t bufsiz);
-int tpm_get_timeouts(struct tpm_chip *);
-int tpm_auto_startup(struct tpm_chip *chip);
+sमाप_प्रकार tpm_transmit(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार bufsiz);
+पूर्णांक tpm_get_समयouts(काष्ठा tpm_chip *);
+पूर्णांक tpm_स्वतः_startup(काष्ठा tpm_chip *chip);
 
-int tpm1_pm_suspend(struct tpm_chip *chip, u32 tpm_suspend_pcr);
-int tpm1_auto_startup(struct tpm_chip *chip);
-int tpm1_do_selftest(struct tpm_chip *chip);
-int tpm1_get_timeouts(struct tpm_chip *chip);
-unsigned long tpm1_calc_ordinal_duration(struct tpm_chip *chip, u32 ordinal);
-int tpm1_pcr_extend(struct tpm_chip *chip, u32 pcr_idx, const u8 *hash,
-		    const char *log_msg);
-int tpm1_pcr_read(struct tpm_chip *chip, u32 pcr_idx, u8 *res_buf);
-ssize_t tpm1_getcap(struct tpm_chip *chip, u32 subcap_id, cap_t *cap,
-		    const char *desc, size_t min_cap_length);
-int tpm1_get_random(struct tpm_chip *chip, u8 *out, size_t max);
-int tpm1_get_pcr_allocation(struct tpm_chip *chip);
-unsigned long tpm_calc_ordinal_duration(struct tpm_chip *chip, u32 ordinal);
-int tpm_pm_suspend(struct device *dev);
-int tpm_pm_resume(struct device *dev);
+पूर्णांक tpm1_pm_suspend(काष्ठा tpm_chip *chip, u32 tpm_suspend_pcr);
+पूर्णांक tpm1_स्वतः_startup(काष्ठा tpm_chip *chip);
+पूर्णांक tpm1_करो_selftest(काष्ठा tpm_chip *chip);
+पूर्णांक tpm1_get_समयouts(काष्ठा tpm_chip *chip);
+अचिन्हित दीर्घ tpm1_calc_ordinal_duration(काष्ठा tpm_chip *chip, u32 ordinal);
+पूर्णांक tpm1_pcr_extend(काष्ठा tpm_chip *chip, u32 pcr_idx, स्थिर u8 *hash,
+		    स्थिर अक्षर *log_msg);
+पूर्णांक tpm1_pcr_पढ़ो(काष्ठा tpm_chip *chip, u32 pcr_idx, u8 *res_buf);
+sमाप_प्रकार tpm1_अ_लोap(काष्ठा tpm_chip *chip, u32 subcap_id, cap_t *cap,
+		    स्थिर अक्षर *desc, माप_प्रकार min_cap_length);
+पूर्णांक tpm1_get_अक्रमom(काष्ठा tpm_chip *chip, u8 *out, माप_प्रकार max);
+पूर्णांक tpm1_get_pcr_allocation(काष्ठा tpm_chip *chip);
+अचिन्हित दीर्घ tpm_calc_ordinal_duration(काष्ठा tpm_chip *chip, u32 ordinal);
+पूर्णांक tpm_pm_suspend(काष्ठा device *dev);
+पूर्णांक tpm_pm_resume(काष्ठा device *dev);
 
-static inline void tpm_msleep(unsigned int delay_msec)
-{
+अटल अंतरभूत व्योम tpm_msleep(अचिन्हित पूर्णांक delay_msec)
+अणु
 	usleep_range((delay_msec * 1000) - TPM_TIMEOUT_RANGE_US,
 		     delay_msec * 1000);
-};
+पूर्ण;
 
-int tpm_chip_start(struct tpm_chip *chip);
-void tpm_chip_stop(struct tpm_chip *chip);
-struct tpm_chip *tpm_find_get_ops(struct tpm_chip *chip);
+पूर्णांक tpm_chip_start(काष्ठा tpm_chip *chip);
+व्योम tpm_chip_stop(काष्ठा tpm_chip *chip);
+काष्ठा tpm_chip *tpm_find_get_ops(काष्ठा tpm_chip *chip);
 
-struct tpm_chip *tpm_chip_alloc(struct device *dev,
-				const struct tpm_class_ops *ops);
-struct tpm_chip *tpmm_chip_alloc(struct device *pdev,
-				 const struct tpm_class_ops *ops);
-int tpm_chip_register(struct tpm_chip *chip);
-void tpm_chip_unregister(struct tpm_chip *chip);
+काष्ठा tpm_chip *tpm_chip_alloc(काष्ठा device *dev,
+				स्थिर काष्ठा tpm_class_ops *ops);
+काष्ठा tpm_chip *tpmm_chip_alloc(काष्ठा device *pdev,
+				 स्थिर काष्ठा tpm_class_ops *ops);
+पूर्णांक tpm_chip_रेजिस्टर(काष्ठा tpm_chip *chip);
+व्योम tpm_chip_unरेजिस्टर(काष्ठा tpm_chip *chip);
 
-void tpm_sysfs_add_device(struct tpm_chip *chip);
+व्योम tpm_sysfs_add_device(काष्ठा tpm_chip *chip);
 
 
-#ifdef CONFIG_ACPI
-extern void tpm_add_ppi(struct tpm_chip *chip);
-#else
-static inline void tpm_add_ppi(struct tpm_chip *chip)
-{
-}
-#endif
+#अगर_घोषित CONFIG_ACPI
+बाह्य व्योम tpm_add_ppi(काष्ठा tpm_chip *chip);
+#अन्यथा
+अटल अंतरभूत व्योम tpm_add_ppi(काष्ठा tpm_chip *chip)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-int tpm2_get_timeouts(struct tpm_chip *chip);
-int tpm2_pcr_read(struct tpm_chip *chip, u32 pcr_idx,
-		  struct tpm_digest *digest, u16 *digest_size_ptr);
-int tpm2_pcr_extend(struct tpm_chip *chip, u32 pcr_idx,
-		    struct tpm_digest *digests);
-int tpm2_get_random(struct tpm_chip *chip, u8 *dest, size_t max);
-ssize_t tpm2_get_tpm_pt(struct tpm_chip *chip, u32 property_id,
-			u32 *value, const char *desc);
+पूर्णांक tpm2_get_समयouts(काष्ठा tpm_chip *chip);
+पूर्णांक tpm2_pcr_पढ़ो(काष्ठा tpm_chip *chip, u32 pcr_idx,
+		  काष्ठा tpm_digest *digest, u16 *digest_size_ptr);
+पूर्णांक tpm2_pcr_extend(काष्ठा tpm_chip *chip, u32 pcr_idx,
+		    काष्ठा tpm_digest *digests);
+पूर्णांक tpm2_get_अक्रमom(काष्ठा tpm_chip *chip, u8 *dest, माप_प्रकार max);
+sमाप_प्रकार tpm2_get_tpm_pt(काष्ठा tpm_chip *chip, u32 property_id,
+			u32 *value, स्थिर अक्षर *desc);
 
-ssize_t tpm2_get_pcr_allocation(struct tpm_chip *chip);
-int tpm2_auto_startup(struct tpm_chip *chip);
-void tpm2_shutdown(struct tpm_chip *chip, u16 shutdown_type);
-unsigned long tpm2_calc_ordinal_duration(struct tpm_chip *chip, u32 ordinal);
-int tpm2_probe(struct tpm_chip *chip);
-int tpm2_get_cc_attrs_tbl(struct tpm_chip *chip);
-int tpm2_find_cc(struct tpm_chip *chip, u32 cc);
-int tpm2_init_space(struct tpm_space *space, unsigned int buf_size);
-void tpm2_del_space(struct tpm_chip *chip, struct tpm_space *space);
-void tpm2_flush_space(struct tpm_chip *chip);
-int tpm2_prepare_space(struct tpm_chip *chip, struct tpm_space *space, u8 *cmd,
-		       size_t cmdsiz);
-int tpm2_commit_space(struct tpm_chip *chip, struct tpm_space *space, void *buf,
-		      size_t *bufsiz);
+sमाप_प्रकार tpm2_get_pcr_allocation(काष्ठा tpm_chip *chip);
+पूर्णांक tpm2_स्वतः_startup(काष्ठा tpm_chip *chip);
+व्योम tpm2_shutकरोwn(काष्ठा tpm_chip *chip, u16 shutकरोwn_type);
+अचिन्हित दीर्घ tpm2_calc_ordinal_duration(काष्ठा tpm_chip *chip, u32 ordinal);
+पूर्णांक tpm2_probe(काष्ठा tpm_chip *chip);
+पूर्णांक tpm2_get_cc_attrs_tbl(काष्ठा tpm_chip *chip);
+पूर्णांक tpm2_find_cc(काष्ठा tpm_chip *chip, u32 cc);
+पूर्णांक tpm2_init_space(काष्ठा tpm_space *space, अचिन्हित पूर्णांक buf_size);
+व्योम tpm2_del_space(काष्ठा tpm_chip *chip, काष्ठा tpm_space *space);
+व्योम tpm2_flush_space(काष्ठा tpm_chip *chip);
+पूर्णांक tpm2_prepare_space(काष्ठा tpm_chip *chip, काष्ठा tpm_space *space, u8 *cmd,
+		       माप_प्रकार cmdsiz);
+पूर्णांक tpm2_commit_space(काष्ठा tpm_chip *chip, काष्ठा tpm_space *space, व्योम *buf,
+		      माप_प्रकार *bufsiz);
 
-void tpm_bios_log_setup(struct tpm_chip *chip);
-void tpm_bios_log_teardown(struct tpm_chip *chip);
-int tpm_dev_common_init(void);
-void tpm_dev_common_exit(void);
-#endif
+व्योम tpm_bios_log_setup(काष्ठा tpm_chip *chip);
+व्योम tpm_bios_log_tearकरोwn(काष्ठा tpm_chip *chip);
+पूर्णांक tpm_dev_common_init(व्योम);
+व्योम tpm_dev_common_निकास(व्योम);
+#पूर्ण_अगर

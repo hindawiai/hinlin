@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Unusual Devices File for In-System Design, Inc. ISD200 ASIC
+ * Unusual Devices File क्रम In-System Design, Inc. ISD200 ASIC
  */
 
-#if defined(CONFIG_USB_STORAGE_ISD200) || \
+#अगर defined(CONFIG_USB_STORAGE_ISD200) || \
 		defined(CONFIG_USB_STORAGE_ISD200_MODULE)
 
 UNUSUAL_DEV(  0x054c, 0x002b, 0x0100, 0x0110,
@@ -42,4 +43,4 @@ UNUSUAL_DEV(  0x0bf6, 0xa001, 0x0100, 0x0110,
 		USB_SC_ISD200, USB_PR_BULK, isd200_Initialization,
 		0),
 
-#endif /* defined(CONFIG_USB_STORAGE_ISD200) || ... */
+#पूर्ण_अगर /* defined(CONFIG_USB_STORAGE_ISD200) || ... */

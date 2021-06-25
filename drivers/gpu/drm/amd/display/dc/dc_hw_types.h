@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,143 +24,143 @@
  *
  */
 
-#ifndef DC_HW_TYPES_H
-#define DC_HW_TYPES_H
+#अगर_अघोषित DC_HW_TYPES_H
+#घोषणा DC_HW_TYPES_H
 
-#include "os_types.h"
-#include "fixed31_32.h"
-#include "signal_types.h"
+#समावेश "os_types.h"
+#समावेश "fixed31_32.h"
+#समावेश "signal_types.h"
 
 /******************************************************************************
- * Data types for Virtual HW Layer of DAL3.
- * (see DAL3 design documents for HW Layer definition)
+ * Data types क्रम Virtual HW Layer of DAL3.
+ * (see DAL3 design करोcuments क्रम HW Layer definition)
  *
- * The intended uses are:
- * 1. Generation pseudocode sequences for HW programming.
+ * The पूर्णांकended uses are:
+ * 1. Generation pseuकरोcode sequences क्रम HW programming.
  * 2. Implementation of real HW programming by HW Sequencer of DAL3.
  *
- * Note: do *not* add any types which are *not* used for HW programming - this
+ * Note: करो *not* add any types which are *not* used क्रम HW programming - this
  * will ensure separation of Logic layer from HW layer.
  ******************************************************************************/
 
-union large_integer {
-	struct {
-		uint32_t low_part;
-		int32_t high_part;
-	};
+जोड़ large_पूर्णांकeger अणु
+	काष्ठा अणु
+		uपूर्णांक32_t low_part;
+		पूर्णांक32_t high_part;
+	पूर्ण;
 
-	struct {
-		uint32_t low_part;
-		int32_t high_part;
-	} u;
+	काष्ठा अणु
+		uपूर्णांक32_t low_part;
+		पूर्णांक32_t high_part;
+	पूर्ण u;
 
-	int64_t quad_part;
-};
+	पूर्णांक64_t quad_part;
+पूर्ण;
 
-#define PHYSICAL_ADDRESS_LOC union large_integer
+#घोषणा PHYSICAL_ADDRESS_LOC जोड़ large_पूर्णांकeger
 
-enum dc_plane_addr_type {
+क्रमागत dc_plane_addr_type अणु
 	PLN_ADDR_TYPE_GRAPHICS = 0,
 	PLN_ADDR_TYPE_GRPH_STEREO,
 	PLN_ADDR_TYPE_VIDEO_PROGRESSIVE,
 	PLN_ADDR_TYPE_RGBEA
-};
+पूर्ण;
 
-struct dc_plane_address {
-	enum dc_plane_addr_type type;
-	bool tmz_surface;
-	union {
-		struct{
+काष्ठा dc_plane_address अणु
+	क्रमागत dc_plane_addr_type type;
+	bool पंचांगz_surface;
+	जोड़ अणु
+		काष्ठाअणु
 			PHYSICAL_ADDRESS_LOC addr;
 			PHYSICAL_ADDRESS_LOC cursor_cache_addr;
 			PHYSICAL_ADDRESS_LOC meta_addr;
-			union large_integer dcc_const_color;
-		} grph;
+			जोड़ large_पूर्णांकeger dcc_स्थिर_color;
+		पूर्ण grph;
 
 		/*stereo*/
-		struct {
+		काष्ठा अणु
 			PHYSICAL_ADDRESS_LOC left_addr;
 			PHYSICAL_ADDRESS_LOC left_meta_addr;
-			union large_integer left_dcc_const_color;
+			जोड़ large_पूर्णांकeger left_dcc_स्थिर_color;
 
 			PHYSICAL_ADDRESS_LOC right_addr;
 			PHYSICAL_ADDRESS_LOC right_meta_addr;
-			union large_integer right_dcc_const_color;
+			जोड़ large_पूर्णांकeger right_dcc_स्थिर_color;
 
 			PHYSICAL_ADDRESS_LOC left_alpha_addr;
 			PHYSICAL_ADDRESS_LOC left_alpha_meta_addr;
-			union large_integer left_alpha_dcc_const_color;
+			जोड़ large_पूर्णांकeger left_alpha_dcc_स्थिर_color;
 
 			PHYSICAL_ADDRESS_LOC right_alpha_addr;
 			PHYSICAL_ADDRESS_LOC right_alpha_meta_addr;
-			union large_integer right_alpha_dcc_const_color;
+			जोड़ large_पूर्णांकeger right_alpha_dcc_स्थिर_color;
 
-		} grph_stereo;
+		पूर्ण grph_stereo;
 
 		/*video  progressive*/
-		struct {
+		काष्ठा अणु
 			PHYSICAL_ADDRESS_LOC luma_addr;
 			PHYSICAL_ADDRESS_LOC luma_meta_addr;
-			union large_integer luma_dcc_const_color;
+			जोड़ large_पूर्णांकeger luma_dcc_स्थिर_color;
 
 			PHYSICAL_ADDRESS_LOC chroma_addr;
 			PHYSICAL_ADDRESS_LOC chroma_meta_addr;
-			union large_integer chroma_dcc_const_color;
-		} video_progressive;
+			जोड़ large_पूर्णांकeger chroma_dcc_स्थिर_color;
+		पूर्ण video_progressive;
 
-		struct {
+		काष्ठा अणु
 			PHYSICAL_ADDRESS_LOC addr;
 			PHYSICAL_ADDRESS_LOC meta_addr;
-			union large_integer dcc_const_color;
+			जोड़ large_पूर्णांकeger dcc_स्थिर_color;
 
 			PHYSICAL_ADDRESS_LOC alpha_addr;
 			PHYSICAL_ADDRESS_LOC alpha_meta_addr;
-			union large_integer alpha_dcc_const_color;
-		} rgbea;
-	};
+			जोड़ large_पूर्णांकeger alpha_dcc_स्थिर_color;
+		पूर्ण rgbea;
+	पूर्ण;
 
-	union large_integer page_table_base;
+	जोड़ large_पूर्णांकeger page_table_base;
 
-	uint8_t vmid;
-};
+	uपूर्णांक8_t vmid;
+पूर्ण;
 
-struct dc_size {
-	int width;
-	int height;
-};
+काष्ठा dc_size अणु
+	पूर्णांक width;
+	पूर्णांक height;
+पूर्ण;
 
-struct rect {
-	int x;
-	int y;
-	int width;
-	int height;
-};
+काष्ठा rect अणु
+	पूर्णांक x;
+	पूर्णांक y;
+	पूर्णांक width;
+	पूर्णांक height;
+पूर्ण;
 
-struct plane_size {
+काष्ठा plane_size अणु
 	/* Graphic surface pitch in pixels.
 	 * In LINEAR_GENERAL mode, pitch
 	 * is 32 pixel aligned.
 	 */
-	int surface_pitch;
-	int chroma_pitch;
-	struct rect surface_size;
-	struct rect chroma_size;
-};
+	पूर्णांक surface_pitch;
+	पूर्णांक chroma_pitch;
+	काष्ठा rect surface_size;
+	काष्ठा rect chroma_size;
+पूर्ण;
 
-struct dc_plane_dcc_param {
+काष्ठा dc_plane_dcc_param अणु
 	bool enable;
 
-	int meta_pitch;
+	पूर्णांक meta_pitch;
 	bool independent_64b_blks;
-	uint8_t dcc_ind_blk;
+	uपूर्णांक8_t dcc_ind_blk;
 
-	int meta_pitch_c;
+	पूर्णांक meta_pitch_c;
 	bool independent_64b_blks_c;
-	uint8_t dcc_ind_blk_c;
-};
+	uपूर्णांक8_t dcc_ind_blk_c;
+पूर्ण;
 
-/*Displayable pixel format in fb*/
-enum surface_pixel_format {
+/*Displayable pixel क्रमmat in fb*/
+क्रमागत surface_pixel_क्रमmat अणु
 	SURFACE_PIXEL_FORMAT_GRPH_BEGIN = 0,
 	/*TOBE REMOVED paletta 256 colors*/
 	SURFACE_PIXEL_FORMAT_GRPH_PALETA_256_COLORS =
@@ -176,17 +177,17 @@ enum surface_pixel_format {
 	SURFACE_PIXEL_FORMAT_GRPH_ARGB2101010,
 	/*swaped*/
 	SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010,
-	/*TOBE REMOVED swaped, XR_BIAS has no differance
-	 * for pixel layout than previous and we can
+	/*TOBE REMOVED swaped, XR_BIAS has no dअगरferance
+	 * क्रम pixel layout than previous and we can
 	 * delete this after discusion*/
 	SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010_XR_BIAS,
 	/*64 bpp */
 	SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616,
-	/*float*/
+	/*भग्न*/
 	SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F,
-	/*swaped & float*/
+	/*swaped & भग्न*/
 	SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F,
-	/*grow graphics here if necessary */
+	/*grow graphics here अगर necessary */
 	SURFACE_PIXEL_FORMAT_GRPH_RGB111110_FIX,
 	SURFACE_PIXEL_FORMAT_GRPH_BGR101111_FIX,
 	SURFACE_PIXEL_FORMAT_GRPH_RGB111110_FLOAT,
@@ -205,13 +206,13 @@ enum surface_pixel_format {
 	SURFACE_PIXEL_FORMAT_VIDEO_AYCrCb8888,
 	SURFACE_PIXEL_FORMAT_INVALID
 
-	/*grow 444 video here if necessary */
-};
+	/*grow 444 video here अगर necessary */
+पूर्ण;
 
 
 
-/* Pixel format */
-enum pixel_format {
+/* Pixel क्रमmat */
+क्रमागत pixel_क्रमmat अणु
 	/*graph*/
 	PIXEL_FORMAT_UNINITIALIZED,
 	PIXEL_FORMAT_INDEX8,
@@ -223,7 +224,7 @@ enum pixel_format {
 	/*video*/
 	PIXEL_FORMAT_420BPP8,
 	PIXEL_FORMAT_420BPP10,
-	/*end of pixel format definition*/
+	/*end of pixel क्रमmat definition*/
 	PIXEL_FORMAT_INVALID,
 
 	PIXEL_FORMAT_GRPH_BEGIN = PIXEL_FORMAT_INDEX8,
@@ -231,24 +232,24 @@ enum pixel_format {
 	PIXEL_FORMAT_VIDEO_BEGIN = PIXEL_FORMAT_420BPP8,
 	PIXEL_FORMAT_VIDEO_END = PIXEL_FORMAT_420BPP10,
 	PIXEL_FORMAT_UNKNOWN
-};
+पूर्ण;
 
-enum tile_split_values {
+क्रमागत tile_split_values अणु
 	DC_DISPLAY_MICRO_TILING = 0x0,
 	DC_THIN_MICRO_TILING = 0x1,
 	DC_DEPTH_MICRO_TILING = 0x2,
 	DC_ROTATED_MICRO_TILING = 0x3,
-};
+पूर्ण;
 
-enum tripleBuffer_enable {
+क्रमागत tripleBuffer_enable अणु
 	DC_TRIPLEBUFFER_DISABLE = 0x0,
 	DC_TRIPLEBUFFER_ENABLE = 0x1,
-};
+पूर्ण;
 
-/* TODO: These values come from hardware spec. We need to readdress this
- * if they ever change.
+/* TODO: These values come from hardware spec. We need to पढ़ोdress this
+ * अगर they ever change.
  */
-enum array_mode_values {
+क्रमागत array_mode_values अणु
 	DC_ARRAY_LINEAR_GENERAL = 0,
 	DC_ARRAY_LINEAR_ALLIGNED,
 	DC_ARRAY_1D_TILED_THIN1,
@@ -265,14 +266,14 @@ enum array_mode_values {
 	DC_ARRAY_3D_TILED_THICK,
 	DC_ARRAY_3D_TILED_X_THICK,
 	DC_ARRAY_PRT_3D_TILED_THICK,
-};
+पूर्ण;
 
-enum tile_mode_values {
+क्रमागत tile_mode_values अणु
 	DC_ADDR_SURF_MICRO_TILING_DISPLAY = 0x0,
 	DC_ADDR_SURF_MICRO_TILING_NON_DISPLAY = 0x1,
-};
+पूर्ण;
 
-enum swizzle_mode_values {
+क्रमागत swizzle_mode_values अणु
 	DC_SW_LINEAR = 0,
 	DC_SW_256B_S = 1,
 	DC_SW_256_D = 2,
@@ -299,242 +300,242 @@ enum swizzle_mode_values {
 	DC_SW_VAR_R_X = 31,
 	DC_SW_MAX = 32,
 	DC_SW_UNKNOWN = DC_SW_MAX
-};
+पूर्ण;
 
-union dc_tiling_info {
+जोड़ dc_tiling_info अणु
 
-	struct {
-		/* Specifies the number of memory banks for tiling
+	काष्ठा अणु
+		/* Specअगरies the number of memory banks क्रम tiling
 		 *	purposes.
 		 * Only applies to 2D and 3D tiling modes.
 		 *	POSSIBLE VALUES: 2,4,8,16
 		 */
-		unsigned int num_banks;
-		/* Specifies the number of tiles in the x direction
-		 *	to be incorporated into the same bank.
+		अचिन्हित पूर्णांक num_banks;
+		/* Specअगरies the number of tiles in the x direction
+		 *	to be incorporated पूर्णांकo the same bank.
 		 * Only applies to 2D and 3D tiling modes.
 		 *	POSSIBLE VALUES: 1,2,4,8
 		 */
-		unsigned int bank_width;
-		unsigned int bank_width_c;
-		/* Specifies the number of tiles in the y direction to
-		 *	be incorporated into the same bank.
+		अचिन्हित पूर्णांक bank_width;
+		अचिन्हित पूर्णांक bank_width_c;
+		/* Specअगरies the number of tiles in the y direction to
+		 *	be incorporated पूर्णांकo the same bank.
 		 * Only applies to 2D and 3D tiling modes.
 		 *	POSSIBLE VALUES: 1,2,4,8
 		 */
-		unsigned int bank_height;
-		unsigned int bank_height_c;
-		/* Specifies the macro tile aspect ratio. Only applies
+		अचिन्हित पूर्णांक bank_height;
+		अचिन्हित पूर्णांक bank_height_c;
+		/* Specअगरies the macro tile aspect ratio. Only applies
 		 * to 2D and 3D tiling modes.
 		 */
-		unsigned int tile_aspect;
-		unsigned int tile_aspect_c;
-		/* Specifies the number of bytes that will be stored
-		 *	contiguously for each tile.
+		अचिन्हित पूर्णांक tile_aspect;
+		अचिन्हित पूर्णांक tile_aspect_c;
+		/* Specअगरies the number of bytes that will be stored
+		 *	contiguously क्रम each tile.
 		 * If the tile data requires more storage than this
-		 *	amount, it is split into multiple slices.
+		 *	amount, it is split पूर्णांकo multiple slices.
 		 * This field must not be larger than
 		 *	GB_ADDR_CONFIG.DRAM_ROW_SIZE.
 		 * Only applies to 2D and 3D tiling modes.
-		 * For color render targets, TILE_SPLIT >= 256B.
+		 * For color render tarमाला_लो, TILE_SPLIT >= 256B.
 		 */
-		enum tile_split_values tile_split;
-		enum tile_split_values tile_split_c;
-		/* Specifies the addressing within a tile.
+		क्रमागत tile_split_values tile_split;
+		क्रमागत tile_split_values tile_split_c;
+		/* Specअगरies the addressing within a tile.
 		 *	0x0 - DISPLAY_MICRO_TILING
 		 *	0x1 - THIN_MICRO_TILING
 		 *	0x2 - DEPTH_MICRO_TILING
 		 *	0x3 - ROTATED_MICRO_TILING
 		 */
-		enum tile_mode_values tile_mode;
-		enum tile_mode_values tile_mode_c;
-		/* Specifies the number of pipes and how they are
-		 *	interleaved in the surface.
-		 * Refer to memory addressing document for complete
-		 *	details and constraints.
+		क्रमागत tile_mode_values tile_mode;
+		क्रमागत tile_mode_values tile_mode_c;
+		/* Specअगरies the number of pipes and how they are
+		 *	पूर्णांकerleaved in the surface.
+		 * Refer to memory addressing करोcument क्रम complete
+		 *	details and स्थिरraपूर्णांकs.
 		 */
-		unsigned int pipe_config;
-		/* Specifies the tiling mode of the surface.
+		अचिन्हित पूर्णांक pipe_config;
+		/* Specअगरies the tiling mode of the surface.
 		 * THIN tiles use an 8x8x1 tile size.
 		 * THICK tiles use an 8x8x4 tile size.
-		 * 2D tiling modes rotate banks for successive Z slices
-		 * 3D tiling modes rotate pipes and banks for Z slices
-		 * Refer to memory addressing document for complete
-		 *	details and constraints.
+		 * 2D tiling modes rotate banks क्रम successive Z slices
+		 * 3D tiling modes rotate pipes and banks क्रम Z slices
+		 * Refer to memory addressing करोcument क्रम complete
+		 *	details and स्थिरraपूर्णांकs.
 		 */
-		enum array_mode_values array_mode;
-	} gfx8;
+		क्रमागत array_mode_values array_mode;
+	पूर्ण gfx8;
 
-	struct {
-		enum swizzle_mode_values swizzle;
-		unsigned int num_pipes;
-		unsigned int max_compressed_frags;
-		unsigned int pipe_interleave;
+	काष्ठा अणु
+		क्रमागत swizzle_mode_values swizzle;
+		अचिन्हित पूर्णांक num_pipes;
+		अचिन्हित पूर्णांक max_compressed_frags;
+		अचिन्हित पूर्णांक pipe_पूर्णांकerleave;
 
-		unsigned int num_banks;
-		unsigned int num_shader_engines;
-		unsigned int num_rb_per_se;
+		अचिन्हित पूर्णांक num_banks;
+		अचिन्हित पूर्णांक num_shader_engines;
+		अचिन्हित पूर्णांक num_rb_per_se;
 		bool shaderEnable;
 
 		bool meta_linear;
 		bool rb_aligned;
 		bool pipe_aligned;
-		unsigned int num_pkrs;
-	} gfx9;
-};
+		अचिन्हित पूर्णांक num_pkrs;
+	पूर्ण gfx9;
+पूर्ण;
 
 /* Rotation angle */
-enum dc_rotation_angle {
+क्रमागत dc_rotation_angle अणु
 	ROTATION_ANGLE_0 = 0,
 	ROTATION_ANGLE_90,
 	ROTATION_ANGLE_180,
 	ROTATION_ANGLE_270,
 	ROTATION_ANGLE_COUNT
-};
+पूर्ण;
 
-enum dc_scan_direction {
-	SCAN_DIRECTION_UNKNOWN = 0,
-	SCAN_DIRECTION_HORIZONTAL = 1,  /* 0, 180 rotation */
-	SCAN_DIRECTION_VERTICAL = 2,    /* 90, 270 rotation */
-};
+क्रमागत dc_scan_direction अणु
+	SCAN_सूचीECTION_UNKNOWN = 0,
+	SCAN_सूचीECTION_HORIZONTAL = 1,  /* 0, 180 rotation */
+	SCAN_सूचीECTION_VERTICAL = 2,    /* 90, 270 rotation */
+पूर्ण;
 
-struct dc_cursor_position {
-	uint32_t x;
-	uint32_t y;
+काष्ठा dc_cursor_position अणु
+	uपूर्णांक32_t x;
+	uपूर्णांक32_t y;
 
-	uint32_t x_hotspot;
-	uint32_t y_hotspot;
+	uपूर्णांक32_t x_hotspot;
+	uपूर्णांक32_t y_hotspot;
 
 	/*
 	 * This parameter indicates whether HW cursor should be enabled
 	 */
 	bool enable;
 
-	/* Translate cursor x/y by the source rectangle for each plane. */
+	/* Translate cursor x/y by the source rectangle क्रम each plane. */
 	bool translate_by_source;
-};
+पूर्ण;
 
-struct dc_cursor_mi_param {
-	unsigned int pixel_clk_khz;
-	unsigned int ref_clk_khz;
-	struct rect viewport;
-	struct fixed31_32 h_scale_ratio;
-	struct fixed31_32 v_scale_ratio;
-	enum dc_rotation_angle rotation;
+काष्ठा dc_cursor_mi_param अणु
+	अचिन्हित पूर्णांक pixel_clk_khz;
+	अचिन्हित पूर्णांक ref_clk_khz;
+	काष्ठा rect viewport;
+	काष्ठा fixed31_32 h_scale_ratio;
+	काष्ठा fixed31_32 v_scale_ratio;
+	क्रमागत dc_rotation_angle rotation;
 	bool mirror;
-};
+पूर्ण;
 
 /* IPP related types */
 
-enum {
+क्रमागत अणु
 	GAMMA_RGB_256_ENTRIES = 256,
 	GAMMA_RGB_FLOAT_1024_ENTRIES = 1024,
 	GAMMA_CS_TFM_1D_ENTRIES = 4096,
 	GAMMA_CUSTOM_ENTRIES = 4096,
 	GAMMA_MAX_ENTRIES = 4096
-};
+पूर्ण;
 
-enum dc_gamma_type {
+क्रमागत dc_gamma_type अणु
 	GAMMA_RGB_256 = 1,
 	GAMMA_RGB_FLOAT_1024 = 2,
 	GAMMA_CS_TFM_1D = 3,
 	GAMMA_CUSTOM = 4,
-};
+पूर्ण;
 
-struct dc_csc_transform {
-	uint16_t matrix[12];
-	bool enable_adjustment;
-};
+काष्ठा dc_csc_transक्रमm अणु
+	uपूर्णांक16_t matrix[12];
+	bool enable_adjusपंचांगent;
+पूर्ण;
 
-struct dc_rgb_fixed {
-	struct fixed31_32 red;
-	struct fixed31_32 green;
-	struct fixed31_32 blue;
-};
+काष्ठा dc_rgb_fixed अणु
+	काष्ठा fixed31_32 red;
+	काष्ठा fixed31_32 green;
+	काष्ठा fixed31_32 blue;
+पूर्ण;
 
-struct dc_gamma {
-	struct kref refcount;
-	enum dc_gamma_type type;
-	unsigned int num_entries;
+काष्ठा dc_gamma अणु
+	काष्ठा kref refcount;
+	क्रमागत dc_gamma_type type;
+	अचिन्हित पूर्णांक num_entries;
 
-	struct dc_gamma_entries {
-		struct fixed31_32 red[GAMMA_MAX_ENTRIES];
-		struct fixed31_32 green[GAMMA_MAX_ENTRIES];
-		struct fixed31_32 blue[GAMMA_MAX_ENTRIES];
-	} entries;
+	काष्ठा dc_gamma_entries अणु
+		काष्ठा fixed31_32 red[GAMMA_MAX_ENTRIES];
+		काष्ठा fixed31_32 green[GAMMA_MAX_ENTRIES];
+		काष्ठा fixed31_32 blue[GAMMA_MAX_ENTRIES];
+	पूर्ण entries;
 
-	/* private to DC core */
-	struct dc_context *ctx;
+	/* निजी to DC core */
+	काष्ठा dc_context *ctx;
 
-	/* is_identity is used for RGB256 gamma identity which can also be programmed in INPUT_LUT.
+	/* is_identity is used क्रम RGB256 gamma identity which can also be programmed in INPUT_LUT.
 	 * is_logical_identity indicates the given gamma ramp regardless of type is identity.
 	 */
 	bool is_identity;
-};
+पूर्ण;
 
 /* Used by both ipp amd opp functions*/
-/* TODO: to be consolidated with enum color_space */
+/* TODO: to be consolidated with क्रमागत color_space */
 
 /*
- * This enum is for programming CURSOR_MODE register field. What this register
+ * This क्रमागत is क्रम programming CURSOR_MODE रेजिस्टर field. What this रेजिस्टर
  * should be programmed to depends on OS requested cursor shape flags and what
  * we stored in the cursor surface.
  */
-enum dc_cursor_color_format {
+क्रमागत dc_cursor_color_क्रमmat अणु
 	CURSOR_MODE_MONO,
 	CURSOR_MODE_COLOR_1BIT_AND,
 	CURSOR_MODE_COLOR_PRE_MULTIPLIED_ALPHA,
 	CURSOR_MODE_COLOR_UN_PRE_MULTIPLIED_ALPHA,
 	CURSOR_MODE_COLOR_64BIT_FP_PRE_MULTIPLIED,
 	CURSOR_MODE_COLOR_64BIT_FP_UN_PRE_MULTIPLIED
-};
+पूर्ण;
 
 /*
  * This is all the parameters required by DAL in order to update the cursor
  * attributes, including the new cursor image surface address, size, hotspot
- * location, color format, etc.
+ * location, color क्रमmat, etc.
  */
 
-union dc_cursor_attribute_flags {
-	struct {
-		uint32_t ENABLE_MAGNIFICATION:1;
-		uint32_t INVERSE_TRANSPARENT_CLAMPING:1;
-		uint32_t HORIZONTAL_MIRROR:1;
-		uint32_t VERTICAL_MIRROR:1;
-		uint32_t INVERT_PIXEL_DATA:1;
-		uint32_t ZERO_EXPANSION:1;
-		uint32_t MIN_MAX_INVERT:1;
-		uint32_t ENABLE_CURSOR_DEGAMMA:1;
-		uint32_t RESERVED:24;
-	} bits;
-	uint32_t value;
-};
+जोड़ dc_cursor_attribute_flags अणु
+	काष्ठा अणु
+		uपूर्णांक32_t ENABLE_MAGNIFICATION:1;
+		uपूर्णांक32_t INVERSE_TRANSPARENT_CLAMPING:1;
+		uपूर्णांक32_t HORIZONTAL_MIRROR:1;
+		uपूर्णांक32_t VERTICAL_MIRROR:1;
+		uपूर्णांक32_t INVERT_PIXEL_DATA:1;
+		uपूर्णांक32_t ZERO_EXPANSION:1;
+		uपूर्णांक32_t MIN_MAX_INVERT:1;
+		uपूर्णांक32_t ENABLE_CURSOR_DEGAMMA:1;
+		uपूर्णांक32_t RESERVED:24;
+	पूर्ण bits;
+	uपूर्णांक32_t value;
+पूर्ण;
 
-struct dc_cursor_attributes {
+काष्ठा dc_cursor_attributes अणु
 	PHYSICAL_ADDRESS_LOC address;
-	uint32_t pitch;
+	uपूर्णांक32_t pitch;
 
 	/* Width and height should correspond to cursor surface width x heigh */
-	uint32_t width;
-	uint32_t height;
+	uपूर्णांक32_t width;
+	uपूर्णांक32_t height;
 
-	enum dc_cursor_color_format color_format;
-	uint32_t sdr_white_level; // for boosting (SDR) cursor in HDR mode
+	क्रमागत dc_cursor_color_क्रमmat color_क्रमmat;
+	uपूर्णांक32_t sdr_white_level; // क्रम boosting (SDR) cursor in HDR mode
 
-	/* In case we support HW Cursor rotation in the future */
-	enum dc_rotation_angle rotation_angle;
+	/* In हाल we support HW Cursor rotation in the future */
+	क्रमागत dc_rotation_angle rotation_angle;
 
-	union dc_cursor_attribute_flags attribute_flags;
-};
+	जोड़ dc_cursor_attribute_flags attribute_flags;
+पूर्ण;
 
-struct dpp_cursor_attributes {
-	int bias;
-	int scale;
-};
+काष्ठा dpp_cursor_attributes अणु
+	पूर्णांक bias;
+	पूर्णांक scale;
+पूर्ण;
 
 /* OPP */
 
-enum dc_color_space {
+क्रमागत dc_color_space अणु
 	COLOR_SPACE_UNKNOWN,
 	COLOR_SPACE_SRGB,
 	COLOR_SPACE_XR_RGB,
@@ -556,9 +557,9 @@ enum dc_color_space {
 	COLOR_SPACE_APPCTRL,
 	COLOR_SPACE_CUSTOMPOINTS,
 	COLOR_SPACE_YCBCR709_BLACK,
-};
+पूर्ण;
 
-enum dc_dither_option {
+क्रमागत dc_dither_option अणु
 	DITHER_OPTION_DEFAULT,
 	DITHER_OPTION_DISABLE,
 	DITHER_OPTION_FM6,
@@ -585,31 +586,31 @@ enum dc_dither_option {
 	DITHER_OPTION_SPATIAL8_FM6,
 	DITHER_OPTION_MAX = DITHER_OPTION_SPATIAL8_FM6,
 	DITHER_OPTION_INVALID
-};
+पूर्ण;
 
-enum dc_quantization_range {
+क्रमागत dc_quantization_range अणु
 	QUANTIZATION_RANGE_UNKNOWN,
 	QUANTIZATION_RANGE_FULL,
 	QUANTIZATION_RANGE_LIMITED
-};
+पूर्ण;
 
-enum dc_dynamic_expansion {
+क्रमागत dc_dynamic_expansion अणु
 	DYN_EXPANSION_AUTO,
 	DYN_EXPANSION_DISABLE
-};
+पूर्ण;
 
 /* XFM */
 
-/* used in  struct dc_plane_state */
-struct scaling_taps {
-	uint32_t v_taps;
-	uint32_t h_taps;
-	uint32_t v_taps_c;
-	uint32_t h_taps_c;
-	bool integer_scaling;
-};
+/* used in  काष्ठा dc_plane_state */
+काष्ठा scaling_taps अणु
+	uपूर्णांक32_t v_taps;
+	uपूर्णांक32_t h_taps;
+	uपूर्णांक32_t v_taps_c;
+	uपूर्णांक32_t h_taps_c;
+	bool पूर्णांकeger_scaling;
+पूर्ण;
 
-enum dc_timing_standard {
+क्रमागत dc_timing_standard अणु
 	DC_TIMING_STANDARD_UNDEFINED,
 	DC_TIMING_STANDARD_DMT,
 	DC_TIMING_STANDARD_GTF,
@@ -629,9 +630,9 @@ enum dc_timing_standard {
 	DC_TIMING_STANDARD_USER_OVERRIDE,
 	/*!< For mode timing override by user*/
 	DC_TIMING_STANDARD_MAX
-};
+पूर्ण;
 
-enum dc_color_depth {
+क्रमागत dc_color_depth अणु
 	COLOR_DEPTH_UNDEFINED,
 	COLOR_DEPTH_666,
 	COLOR_DEPTH_888,
@@ -642,78 +643,78 @@ enum dc_color_depth {
 	COLOR_DEPTH_999,
 	COLOR_DEPTH_111111,
 	COLOR_DEPTH_COUNT
-};
+पूर्ण;
 
-enum dc_pixel_encoding {
+क्रमागत dc_pixel_encoding अणु
 	PIXEL_ENCODING_UNDEFINED,
 	PIXEL_ENCODING_RGB,
 	PIXEL_ENCODING_YCBCR422,
 	PIXEL_ENCODING_YCBCR444,
 	PIXEL_ENCODING_YCBCR420,
 	PIXEL_ENCODING_COUNT
-};
+पूर्ण;
 
-enum dc_aspect_ratio {
+क्रमागत dc_aspect_ratio अणु
 	ASPECT_RATIO_NO_DATA,
 	ASPECT_RATIO_4_3,
 	ASPECT_RATIO_16_9,
 	ASPECT_RATIO_64_27,
 	ASPECT_RATIO_256_135,
 	ASPECT_RATIO_FUTURE
-};
+पूर्ण;
 
-enum scanning_type {
+क्रमागत scanning_type अणु
 	SCANNING_TYPE_NODATA = 0,
 	SCANNING_TYPE_OVERSCAN,
 	SCANNING_TYPE_UNDERSCAN,
 	SCANNING_TYPE_FUTURE,
 	SCANNING_TYPE_UNDEFINED
-};
+पूर्ण;
 
-struct dc_crtc_timing_flags {
-	uint32_t INTERLACE :1;
-	uint32_t HSYNC_POSITIVE_POLARITY :1; /* when set to 1,
+काष्ठा dc_crtc_timing_flags अणु
+	uपूर्णांक32_t INTERLACE :1;
+	uपूर्णांक32_t HSYNC_POSITIVE_POLARITY :1; /* when set to 1,
 	 it is positive polarity --reversed with dal1 or video bios define*/
-	uint32_t VSYNC_POSITIVE_POLARITY :1; /* when set to 1,
+	uपूर्णांक32_t VSYNC_POSITIVE_POLARITY :1; /* when set to 1,
 	 it is positive polarity --reversed with dal1 or video bios define*/
 
-	uint32_t HORZ_COUNT_BY_TWO:1;
+	uपूर्णांक32_t HORZ_COUNT_BY_TWO:1;
 
-	uint32_t EXCLUSIVE_3D :1; /* if this bit set,
-	 timing can be driven in 3D format only
+	uपूर्णांक32_t EXCLUSIVE_3D :1; /* अगर this bit set,
+	 timing can be driven in 3D क्रमmat only
 	 and there is no corresponding 2D timing*/
-	uint32_t RIGHT_EYE_3D_POLARITY :1; /* 1 - means right eye polarity
+	uपूर्णांक32_t RIGHT_EYE_3D_POLARITY :1; /* 1 - means right eye polarity
 	 (right eye = '1', left eye = '0') */
-	uint32_t SUB_SAMPLE_3D :1; /* 1 - means left/right  images subsampled
-	 when mixed into 3D image. 0 - means summation (3D timing is doubled)*/
-	uint32_t USE_IN_3D_VIEW_ONLY :1; /* Do not use this timing in 2D View,
+	uपूर्णांक32_t SUB_SAMPLE_3D :1; /* 1 - means left/right  images subsampled
+	 when mixed पूर्णांकo 3D image. 0 - means summation (3D timing is द्विगुनd)*/
+	uपूर्णांक32_t USE_IN_3D_VIEW_ONLY :1; /* Do not use this timing in 2D View,
 	 because corresponding 2D timing also present in the list*/
-	uint32_t STEREO_3D_PREFERENCE :1; /* Means this is 2D timing
+	uपूर्णांक32_t STEREO_3D_PREFERENCE :1; /* Means this is 2D timing
 	 and we want to match priority of corresponding 3D timing*/
-	uint32_t Y_ONLY :1;
+	uपूर्णांक32_t Y_ONLY :1;
 
-	uint32_t YCBCR420 :1; /* TODO: shouldn't need this flag, should be a separate pixel format */
-	uint32_t DTD_COUNTER :5; /* values 1 to 16 */
+	uपूर्णांक32_t YCBCR420 :1; /* TODO: shouldn't need this flag, should be a separate pixel क्रमmat */
+	uपूर्णांक32_t DTD_COUNTER :5; /* values 1 to 16 */
 
-	uint32_t FORCE_HDR :1;
+	uपूर्णांक32_t FORCE_HDR :1;
 
-	/* HDMI 2.0 - Support scrambling for TMDS character
+	/* HDMI 2.0 - Support scrambling क्रम TMDS अक्षरacter
 	 * rates less than or equal to 340Mcsc */
-	uint32_t LTE_340MCSC_SCRAMBLE:1;
+	uपूर्णांक32_t LTE_340MCSC_SCRAMBLE:1;
 
-	uint32_t DSC : 1; /* Use DSC with this timing */
-#ifndef TRIM_FSFT
-	uint32_t FAST_TRANSPORT: 1;
-#endif
-	uint32_t VBLANK_SYNCHRONIZABLE: 1;
-};
+	uपूर्णांक32_t DSC : 1; /* Use DSC with this timing */
+#अगर_अघोषित TRIM_FSFT
+	uपूर्णांक32_t FAST_TRANSPORT: 1;
+#पूर्ण_अगर
+	uपूर्णांक32_t VBLANK_SYNCHRONIZABLE: 1;
+पूर्ण;
 
-enum dc_timing_3d_format {
+क्रमागत dc_timing_3d_क्रमmat अणु
 	TIMING_3D_FORMAT_NONE,
 	TIMING_3D_FORMAT_FRAME_ALTERNATE, /* No stereosync at all*/
 	TIMING_3D_FORMAT_INBAND_FA, /* Inband Frame Alternate (DVI/DP)*/
 	TIMING_3D_FORMAT_DP_HDMI_INBAND_FA, /* Inband FA to HDMI Frame Pack*/
-	/* for active DP-HDMI dongle*/
+	/* क्रम active DP-HDMI करोngle*/
 	TIMING_3D_FORMAT_SIDEBAND_FA, /* Sideband Frame Alternate (eDP)*/
 	TIMING_3D_FORMAT_HW_FRAME_PACKING,
 	TIMING_3D_FORMAT_SW_FRAME_PACKING,
@@ -723,182 +724,182 @@ enum dc_timing_3d_format {
 	TIMING_3D_FORMAT_SIDE_BY_SIDE,
 	TIMING_3D_FORMAT_TOP_AND_BOTTOM,
 	TIMING_3D_FORMAT_SBS_SW_PACKED,
-	/* Side-by-side, packed by application/driver into 2D frame*/
+	/* Side-by-side, packed by application/driver पूर्णांकo 2D frame*/
 	TIMING_3D_FORMAT_TB_SW_PACKED,
-	/* Top-and-bottom, packed by application/driver into 2D frame*/
+	/* Top-and-bottom, packed by application/driver पूर्णांकo 2D frame*/
 
 	TIMING_3D_FORMAT_MAX,
-};
+पूर्ण;
 
-struct dc_dsc_config {
-	uint32_t num_slices_h; /* Number of DSC slices - horizontal */
-	uint32_t num_slices_v; /* Number of DSC slices - vertical */
-	uint32_t bits_per_pixel; /* DSC target bitrate in 1/16 of bpp (e.g. 128 -> 8bpp) */
+काष्ठा dc_dsc_config अणु
+	uपूर्णांक32_t num_slices_h; /* Number of DSC slices - horizontal */
+	uपूर्णांक32_t num_slices_v; /* Number of DSC slices - vertical */
+	uपूर्णांक32_t bits_per_pixel; /* DSC target bitrate in 1/16 of bpp (e.g. 128 -> 8bpp) */
 	bool block_pred_enable; /* DSC block prediction enable */
-	uint32_t linebuf_depth; /* DSC line buffer depth */
-	uint32_t version_minor; /* DSC minor version. Full version is formed as 1.version_minor. */
+	uपूर्णांक32_t linebuf_depth; /* DSC line buffer depth */
+	uपूर्णांक32_t version_minor; /* DSC minor version. Full version is क्रमmed as 1.version_minor. */
 	bool ycbcr422_simple; /* Tell DSC engine to convert YCbCr 4:2:2 to 'YCbCr 4:2:2 simple'. */
-	int32_t rc_buffer_size; /* DSC RC buffer block size in bytes */
-};
-struct dc_crtc_timing {
-	uint32_t h_total;
-	uint32_t h_border_left;
-	uint32_t h_addressable;
-	uint32_t h_border_right;
-	uint32_t h_front_porch;
-	uint32_t h_sync_width;
+	पूर्णांक32_t rc_buffer_size; /* DSC RC buffer block size in bytes */
+पूर्ण;
+काष्ठा dc_crtc_timing अणु
+	uपूर्णांक32_t h_total;
+	uपूर्णांक32_t h_border_left;
+	uपूर्णांक32_t h_addressable;
+	uपूर्णांक32_t h_border_right;
+	uपूर्णांक32_t h_front_porch;
+	uपूर्णांक32_t h_sync_width;
 
-	uint32_t v_total;
-	uint32_t v_border_top;
-	uint32_t v_addressable;
-	uint32_t v_border_bottom;
-	uint32_t v_front_porch;
-	uint32_t v_sync_width;
+	uपूर्णांक32_t v_total;
+	uपूर्णांक32_t v_border_top;
+	uपूर्णांक32_t v_addressable;
+	uपूर्णांक32_t v_border_bottom;
+	uपूर्णांक32_t v_front_porch;
+	uपूर्णांक32_t v_sync_width;
 
-	uint32_t pix_clk_100hz;
+	uपूर्णांक32_t pix_clk_100hz;
 
-	uint32_t vic;
-	uint32_t hdmi_vic;
-	enum dc_timing_3d_format timing_3d_format;
-	enum dc_color_depth display_color_depth;
-	enum dc_pixel_encoding pixel_encoding;
-	enum dc_aspect_ratio aspect_ratio;
-	enum scanning_type scan_type;
+	uपूर्णांक32_t vic;
+	uपूर्णांक32_t hdmi_vic;
+	क्रमागत dc_timing_3d_क्रमmat timing_3d_क्रमmat;
+	क्रमागत dc_color_depth display_color_depth;
+	क्रमागत dc_pixel_encoding pixel_encoding;
+	क्रमागत dc_aspect_ratio aspect_ratio;
+	क्रमागत scanning_type scan_type;
 
-#ifndef TRIM_FSFT
-	uint32_t fast_transport_output_rate_100hz;
-#endif
+#अगर_अघोषित TRIM_FSFT
+	uपूर्णांक32_t fast_transport_output_rate_100hz;
+#पूर्ण_अगर
 
-	struct dc_crtc_timing_flags flags;
-	uint32_t dsc_fixed_bits_per_pixel_x16; /* DSC target bitrate in 1/16 of bpp (e.g. 128 -> 8bpp) */
-	struct dc_dsc_config dsc_cfg;
-};
+	काष्ठा dc_crtc_timing_flags flags;
+	uपूर्णांक32_t dsc_fixed_bits_per_pixel_x16; /* DSC target bitrate in 1/16 of bpp (e.g. 128 -> 8bpp) */
+	काष्ठा dc_dsc_config dsc_cfg;
+पूर्ण;
 
-enum trigger_delay {
+क्रमागत trigger_delay अणु
 	TRIGGER_DELAY_NEXT_PIXEL = 0,
 	TRIGGER_DELAY_NEXT_LINE,
-};
+पूर्ण;
 
-enum crtc_event {
+क्रमागत crtc_event अणु
 	CRTC_EVENT_VSYNC_RISING = 0,
 	CRTC_EVENT_VSYNC_FALLING
-};
+पूर्ण;
 
-struct crtc_trigger_info {
+काष्ठा crtc_trigger_info अणु
 	bool enabled;
-	struct dc_stream_state *event_source;
-	enum crtc_event event;
-	enum trigger_delay delay;
-};
+	काष्ठा dc_stream_state *event_source;
+	क्रमागत crtc_event event;
+	क्रमागत trigger_delay delay;
+पूर्ण;
 
-struct dc_crtc_timing_adjust {
-	uint32_t v_total_min;
-	uint32_t v_total_max;
-	uint32_t v_total_mid;
-	uint32_t v_total_mid_frame_num;
-};
+काष्ठा dc_crtc_timing_adjust अणु
+	uपूर्णांक32_t v_total_min;
+	uपूर्णांक32_t v_total_max;
+	uपूर्णांक32_t v_total_mid;
+	uपूर्णांक32_t v_total_mid_frame_num;
+पूर्ण;
 
 
 /* Passed on init */
-enum vram_type {
+क्रमागत vram_type अणु
 	VIDEO_MEMORY_TYPE_GDDR5  = 2,
 	VIDEO_MEMORY_TYPE_DDR3   = 3,
 	VIDEO_MEMORY_TYPE_DDR4   = 4,
 	VIDEO_MEMORY_TYPE_HBM    = 5,
 	VIDEO_MEMORY_TYPE_GDDR6  = 6,
-};
+पूर्ण;
 
-enum dwb_cnv_out_bpc {
+क्रमागत dwb_cnv_out_bpc अणु
 	DWB_CNV_OUT_BPC_8BPC  = 0,
 	DWB_CNV_OUT_BPC_10BPC = 1,
-};
+पूर्ण;
 
-enum dwb_output_depth {
+क्रमागत dwb_output_depth अणु
 	DWB_OUTPUT_PIXEL_DEPTH_8BPC = 0,
 	DWB_OUTPUT_PIXEL_DEPTH_10BPC = 1,
-};
+पूर्ण;
 
-enum dwb_capture_rate {
+क्रमागत dwb_capture_rate अणु
 	dwb_capture_rate_0 = 0,	/* Every frame is captured. */
 	dwb_capture_rate_1 = 1,	/* Every other frame is captured. */
 	dwb_capture_rate_2 = 2,	/* Every 3rd frame is captured. */
 	dwb_capture_rate_3 = 3,	/* Every 4th frame is captured. */
-};
+पूर्ण;
 
-enum dwb_scaler_mode {
+क्रमागत dwb_scaler_mode अणु
 	dwb_scaler_mode_bypass444 = 0,
 	dwb_scaler_mode_rgb444 = 1,
 	dwb_scaler_mode_yuv444 = 2,
 	dwb_scaler_mode_yuv420 = 3
-};
+पूर्ण;
 
-enum dwb_subsample_position {
+क्रमागत dwb_subsample_position अणु
 	DWB_INTERSTITIAL_SUBSAMPLING = 0,
 	DWB_COSITED_SUBSAMPLING      = 1
-};
+पूर्ण;
 
-enum dwb_stereo_eye_select {
+क्रमागत dwb_stereo_eye_select अणु
 	DWB_STEREO_EYE_LEFT  = 1,		/* Capture left eye only */
 	DWB_STEREO_EYE_RIGHT = 2,		/* Capture right eye only */
-};
+पूर्ण;
 
-enum dwb_stereo_type {
+क्रमागत dwb_stereo_type अणु
 	DWB_STEREO_TYPE_FRAME_PACKING = 0,		/* Frame packing */
 	DWB_STEREO_TYPE_FRAME_SEQUENTIAL = 3,	/* Frame sequential */
-};
+पूर्ण;
 
-enum dwb_out_format {
+क्रमागत dwb_out_क्रमmat अणु
 	DWB_OUT_FORMAT_32BPP_ARGB = 0,
 	DWB_OUT_FORMAT_32BPP_RGBA = 1,
 	DWB_OUT_FORMAT_64BPP_ARGB = 2,
 	DWB_OUT_FORMAT_64BPP_RGBA = 3
-};
+पूर्ण;
 
-enum dwb_out_denorm {
+क्रमागत dwb_out_denorm अणु
 	DWB_OUT_DENORM_10BPC = 0,
 	DWB_OUT_DENORM_8BPC = 1,
 	DWB_OUT_DENORM_BYPASS = 2
-};
+पूर्ण;
 
-enum cm_gamut_remap_select {
+क्रमागत cm_gamut_remap_select अणु
 	CM_GAMUT_REMAP_MODE_BYPASS = 0,
 	CM_GAMUT_REMAP_MODE_RAMA_COEFF,
 	CM_GAMUT_REMAP_MODE_RAMB_COEFF,
 	CM_GAMUT_REMAP_MODE_RESERVED
-};
+पूर्ण;
 
-enum cm_gamut_coef_format {
+क्रमागत cm_gamut_coef_क्रमmat अणु
 	CM_GAMUT_REMAP_COEF_FORMAT_S2_13 = 0,
 	CM_GAMUT_REMAP_COEF_FORMAT_S3_12 = 1
-};
+पूर्ण;
 
-struct mcif_warmup_params {
-	union large_integer	start_address;
-	unsigned int		address_increment;
-	unsigned int		region_size;
-	unsigned int		p_vmid;
-};
+काष्ठा mcअगर_warmup_params अणु
+	जोड़ large_पूर्णांकeger	start_address;
+	अचिन्हित पूर्णांक		address_increment;
+	अचिन्हित पूर्णांक		region_size;
+	अचिन्हित पूर्णांक		p_vmid;
+पूर्ण;
 
-#define MCIF_BUF_COUNT	4
+#घोषणा MCIF_BUF_COUNT	4
 
-struct mcif_buf_params {
-	unsigned long long	luma_address[MCIF_BUF_COUNT];
-	unsigned long long	chroma_address[MCIF_BUF_COUNT];
-	unsigned int		luma_pitch;
-	unsigned int		chroma_pitch;
-	unsigned int		warmup_pitch;
-	unsigned int		swlock;
-	unsigned int		p_vmid;
-};
+काष्ठा mcअगर_buf_params अणु
+	अचिन्हित दीर्घ दीर्घ	luma_address[MCIF_BUF_COUNT];
+	अचिन्हित दीर्घ दीर्घ	chroma_address[MCIF_BUF_COUNT];
+	अचिन्हित पूर्णांक		luma_pitch;
+	अचिन्हित पूर्णांक		chroma_pitch;
+	अचिन्हित पूर्णांक		warmup_pitch;
+	अचिन्हित पूर्णांक		swlock;
+	अचिन्हित पूर्णांक		p_vmid;
+पूर्ण;
 
 
-#define MAX_TG_COLOR_VALUE 0x3FF
-struct tg_color {
+#घोषणा MAX_TG_COLOR_VALUE 0x3FF
+काष्ठा tg_color अणु
 	/* Maximum 10 bits color value */
-	uint16_t color_r_cr;
-	uint16_t color_g_y;
-	uint16_t color_b_cb;
-};
+	uपूर्णांक16_t color_r_cr;
+	uपूर्णांक16_t color_g_y;
+	uपूर्णांक16_t color_b_cb;
+पूर्ण;
 
-#endif /* DC_HW_TYPES_H */
+#पूर्ण_अगर /* DC_HW_TYPES_H */
 

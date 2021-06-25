@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Watchdog driver for Faraday Technology FTWDT010
+ * Watchकरोg driver क्रम Faraday Technology FTWDT010
  *
  * Copyright (C) 2017 Linus Walleij <linus.walleij@linaro.org>
  *
@@ -8,222 +9,222 @@
  * Copyright (C) 2009 Paulius Zaleckas <paulius.zaleckas@teltonika.lt>
  */
 
-#include <linux/bitops.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/watchdog.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/watchकरोg.h>
 
-#define FTWDT010_WDCOUNTER	0x0
-#define FTWDT010_WDLOAD		0x4
-#define FTWDT010_WDRESTART	0x8
-#define FTWDT010_WDCR		0xC
+#घोषणा FTWDT010_WDCOUNTER	0x0
+#घोषणा FTWDT010_WDLOAD		0x4
+#घोषणा FTWDT010_WDRESTART	0x8
+#घोषणा FTWDT010_WDCR		0xC
 
-#define WDRESTART_MAGIC		0x5AB9
+#घोषणा WDRESTART_MAGIC		0x5AB9
 
-#define WDCR_CLOCK_5MHZ		BIT(4)
-#define WDCR_WDEXT		BIT(3)
-#define WDCR_WDINTR		BIT(2)
-#define WDCR_SYS_RST		BIT(1)
-#define WDCR_ENABLE		BIT(0)
+#घोषणा WDCR_CLOCK_5MHZ		BIT(4)
+#घोषणा WDCR_WDEXT		BIT(3)
+#घोषणा WDCR_WDINTR		BIT(2)
+#घोषणा WDCR_SYS_RST		BIT(1)
+#घोषणा WDCR_ENABLE		BIT(0)
 
-#define WDT_CLOCK		5000000		/* 5 MHz */
+#घोषणा WDT_CLOCK		5000000		/* 5 MHz */
 
-struct ftwdt010_wdt {
-	struct watchdog_device	wdd;
-	struct device		*dev;
-	void __iomem		*base;
+काष्ठा ftwdt010_wdt अणु
+	काष्ठा watchकरोg_device	wdd;
+	काष्ठा device		*dev;
+	व्योम __iomem		*base;
 	bool			has_irq;
-};
+पूर्ण;
 
-static inline
-struct ftwdt010_wdt *to_ftwdt010_wdt(struct watchdog_device *wdd)
-{
-	return container_of(wdd, struct ftwdt010_wdt, wdd);
-}
+अटल अंतरभूत
+काष्ठा ftwdt010_wdt *to_ftwdt010_wdt(काष्ठा watchकरोg_device *wdd)
+अणु
+	वापस container_of(wdd, काष्ठा ftwdt010_wdt, wdd);
+पूर्ण
 
-static int ftwdt010_wdt_start(struct watchdog_device *wdd)
-{
-	struct ftwdt010_wdt *gwdt = to_ftwdt010_wdt(wdd);
+अटल पूर्णांक ftwdt010_wdt_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा ftwdt010_wdt *gwdt = to_ftwdt010_wdt(wdd);
 	u32 enable;
 
-	writel(wdd->timeout * WDT_CLOCK, gwdt->base + FTWDT010_WDLOAD);
-	writel(WDRESTART_MAGIC, gwdt->base + FTWDT010_WDRESTART);
-	/* set clock before enabling */
+	ग_लिखोl(wdd->समयout * WDT_CLOCK, gwdt->base + FTWDT010_WDLOAD);
+	ग_लिखोl(WDRESTART_MAGIC, gwdt->base + FTWDT010_WDRESTART);
+	/* set घड़ी beक्रमe enabling */
 	enable = WDCR_CLOCK_5MHZ | WDCR_SYS_RST;
-	writel(enable, gwdt->base + FTWDT010_WDCR);
-	if (gwdt->has_irq)
+	ग_लिखोl(enable, gwdt->base + FTWDT010_WDCR);
+	अगर (gwdt->has_irq)
 		enable |= WDCR_WDINTR;
 	enable |= WDCR_ENABLE;
-	writel(enable, gwdt->base + FTWDT010_WDCR);
+	ग_लिखोl(enable, gwdt->base + FTWDT010_WDCR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ftwdt010_wdt_stop(struct watchdog_device *wdd)
-{
-	struct ftwdt010_wdt *gwdt = to_ftwdt010_wdt(wdd);
+अटल पूर्णांक ftwdt010_wdt_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा ftwdt010_wdt *gwdt = to_ftwdt010_wdt(wdd);
 
-	writel(0, gwdt->base + FTWDT010_WDCR);
+	ग_लिखोl(0, gwdt->base + FTWDT010_WDCR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ftwdt010_wdt_ping(struct watchdog_device *wdd)
-{
-	struct ftwdt010_wdt *gwdt = to_ftwdt010_wdt(wdd);
+अटल पूर्णांक ftwdt010_wdt_ping(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा ftwdt010_wdt *gwdt = to_ftwdt010_wdt(wdd);
 
-	writel(WDRESTART_MAGIC, gwdt->base + FTWDT010_WDRESTART);
+	ग_लिखोl(WDRESTART_MAGIC, gwdt->base + FTWDT010_WDRESTART);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ftwdt010_wdt_set_timeout(struct watchdog_device *wdd,
-				  unsigned int timeout)
-{
-	wdd->timeout = timeout;
-	if (watchdog_active(wdd))
+अटल पूर्णांक ftwdt010_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
+				  अचिन्हित पूर्णांक समयout)
+अणु
+	wdd->समयout = समयout;
+	अगर (watchकरोg_active(wdd))
 		ftwdt010_wdt_start(wdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t ftwdt010_wdt_interrupt(int irq, void *data)
-{
-	struct ftwdt010_wdt *gwdt = data;
+अटल irqवापस_t ftwdt010_wdt_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ftwdt010_wdt *gwdt = data;
 
-	watchdog_notify_pretimeout(&gwdt->wdd);
+	watchकरोg_notअगरy_preसमयout(&gwdt->wdd);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct watchdog_ops ftwdt010_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops ftwdt010_wdt_ops = अणु
 	.start		= ftwdt010_wdt_start,
 	.stop		= ftwdt010_wdt_stop,
 	.ping		= ftwdt010_wdt_ping,
-	.set_timeout	= ftwdt010_wdt_set_timeout,
+	.set_समयout	= ftwdt010_wdt_set_समयout,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static const struct watchdog_info ftwdt010_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info ftwdt010_wdt_info = अणु
 	.options	= WDIOF_KEEPALIVEPING
 			| WDIOF_MAGICCLOSE
 			| WDIOF_SETTIMEOUT,
 	.identity	= KBUILD_MODNAME,
-};
+पूर्ण;
 
 
-static int ftwdt010_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct ftwdt010_wdt *gwdt;
-	unsigned int reg;
-	int irq;
-	int ret;
+अटल पूर्णांक ftwdt010_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा ftwdt010_wdt *gwdt;
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक irq;
+	पूर्णांक ret;
 
-	gwdt = devm_kzalloc(dev, sizeof(*gwdt), GFP_KERNEL);
-	if (!gwdt)
-		return -ENOMEM;
+	gwdt = devm_kzalloc(dev, माप(*gwdt), GFP_KERNEL);
+	अगर (!gwdt)
+		वापस -ENOMEM;
 
-	gwdt->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(gwdt->base))
-		return PTR_ERR(gwdt->base);
+	gwdt->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(gwdt->base))
+		वापस PTR_ERR(gwdt->base);
 
 	gwdt->dev = dev;
 	gwdt->wdd.info = &ftwdt010_wdt_info;
 	gwdt->wdd.ops = &ftwdt010_wdt_ops;
-	gwdt->wdd.min_timeout = 1;
-	gwdt->wdd.max_timeout = 0xFFFFFFFF / WDT_CLOCK;
+	gwdt->wdd.min_समयout = 1;
+	gwdt->wdd.max_समयout = 0xFFFFFFFF / WDT_CLOCK;
 	gwdt->wdd.parent = dev;
 
 	/*
-	 * If 'timeout-sec' unspecified in devicetree, assume a 13 second
-	 * default.
+	 * If 'timeout-sec' unspecअगरied in devicetree, assume a 13 second
+	 * शेष.
 	 */
-	gwdt->wdd.timeout = 13U;
-	watchdog_init_timeout(&gwdt->wdd, 0, dev);
+	gwdt->wdd.समयout = 13U;
+	watchकरोg_init_समयout(&gwdt->wdd, 0, dev);
 
-	reg = readw(gwdt->base + FTWDT010_WDCR);
-	if (reg & WDCR_ENABLE) {
-		/* Watchdog was enabled by the bootloader, disable it. */
+	reg = पढ़ोw(gwdt->base + FTWDT010_WDCR);
+	अगर (reg & WDCR_ENABLE) अणु
+		/* Watchकरोg was enabled by the bootloader, disable it. */
 		reg &= ~WDCR_ENABLE;
-		writel(reg, gwdt->base + FTWDT010_WDCR);
-	}
+		ग_लिखोl(reg, gwdt->base + FTWDT010_WDCR);
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq) {
-		ret = devm_request_irq(dev, irq, ftwdt010_wdt_interrupt, 0,
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq) अणु
+		ret = devm_request_irq(dev, irq, ftwdt010_wdt_पूर्णांकerrupt, 0,
 				       "watchdog bark", gwdt);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		gwdt->has_irq = true;
-	}
+	पूर्ण
 
-	ret = devm_watchdog_register_device(dev, &gwdt->wdd);
-	if (ret)
-		return ret;
+	ret = devm_watchकरोg_रेजिस्टर_device(dev, &gwdt->wdd);
+	अगर (ret)
+		वापस ret;
 
-	/* Set up platform driver data */
-	platform_set_drvdata(pdev, gwdt);
+	/* Set up platक्रमm driver data */
+	platक्रमm_set_drvdata(pdev, gwdt);
 	dev_info(dev, "FTWDT010 watchdog driver enabled\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ftwdt010_wdt_suspend(struct device *dev)
-{
-	struct ftwdt010_wdt *gwdt = dev_get_drvdata(dev);
-	unsigned int reg;
+अटल पूर्णांक __maybe_unused ftwdt010_wdt_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा ftwdt010_wdt *gwdt = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक reg;
 
-	reg = readw(gwdt->base + FTWDT010_WDCR);
+	reg = पढ़ोw(gwdt->base + FTWDT010_WDCR);
 	reg &= ~WDCR_ENABLE;
-	writel(reg, gwdt->base + FTWDT010_WDCR);
+	ग_लिखोl(reg, gwdt->base + FTWDT010_WDCR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ftwdt010_wdt_resume(struct device *dev)
-{
-	struct ftwdt010_wdt *gwdt = dev_get_drvdata(dev);
-	unsigned int reg;
+अटल पूर्णांक __maybe_unused ftwdt010_wdt_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ftwdt010_wdt *gwdt = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक reg;
 
-	if (watchdog_active(&gwdt->wdd)) {
-		reg = readw(gwdt->base + FTWDT010_WDCR);
+	अगर (watchकरोg_active(&gwdt->wdd)) अणु
+		reg = पढ़ोw(gwdt->base + FTWDT010_WDCR);
 		reg |= WDCR_ENABLE;
-		writel(reg, gwdt->base + FTWDT010_WDCR);
-	}
+		ग_लिखोl(reg, gwdt->base + FTWDT010_WDCR);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops ftwdt010_wdt_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops ftwdt010_wdt_dev_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(ftwdt010_wdt_suspend,
 				ftwdt010_wdt_resume)
-};
+पूर्ण;
 
-#ifdef CONFIG_OF
-static const struct of_device_id ftwdt010_wdt_match[] = {
-	{ .compatible = "faraday,ftwdt010" },
-	{ .compatible = "cortina,gemini-watchdog" },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id ftwdt010_wdt_match[] = अणु
+	अणु .compatible = "faraday,ftwdt010" पूर्ण,
+	अणु .compatible = "cortina,gemini-watchdog" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ftwdt010_wdt_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver ftwdt010_wdt_driver = {
+अटल काष्ठा platक्रमm_driver ftwdt010_wdt_driver = अणु
 	.probe		= ftwdt010_wdt_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "ftwdt010-wdt",
 		.of_match_table = of_match_ptr(ftwdt010_wdt_match),
 		.pm = &ftwdt010_wdt_dev_pm_ops,
-	},
-};
-module_platform_driver(ftwdt010_wdt_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(ftwdt010_wdt_driver);
 MODULE_AUTHOR("Linus Walleij");
 MODULE_DESCRIPTION("Watchdog driver for Faraday Technology FTWDT010");
 MODULE_LICENSE("GPL");

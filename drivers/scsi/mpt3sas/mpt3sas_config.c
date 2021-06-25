@@ -1,35 +1,36 @@
+<शैली गुरु>
 /*
- * This module provides common API for accessing firmware configuration pages
+ * This module provides common API क्रम accessing firmware configuration pages
  *
  * This code is based on drivers/scsi/mpt3sas/mpt3sas_base.c
  * Copyright (C) 2012-2014  LSI Corporation
  * Copyright (C) 2013-2014 Avago Technologies
  *  (mailto: MPT-FusionLinux.pdl@avagotech.com)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * NO WARRANTY
  * THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
  * LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
- * solely responsible for determining the appropriateness of using and
+ * solely responsible क्रम determining the appropriateness of using and
  * distributing the Program and assumes all risks associated with its
  * exercise of rights under this Agreement, including but not limited to
  * the risks and costs of program errors, damage to or loss of data,
- * programs or equipment, and unavailability or interruption of operations.
+ * programs or equipment, and unavailability or पूर्णांकerruption of operations.
 
  * DISCLAIMER OF LIABILITY
  * NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
  * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -37,419 +38,419 @@
  * HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
 
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fअगरth Floor, Boston, MA  02110-1301,
  * USA.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/blkdev.h>
-#include <linux/sched.h>
-#include <linux/workqueue.h>
-#include <linux/delay.h>
-#include <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
 
-#include "mpt3sas_base.h"
+#समावेश "mpt3sas_base.h"
 
 /* local definitions */
 
-/* Timeout for config page request (in seconds) */
-#define MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT 15
+/* Timeout क्रम config page request (in seconds) */
+#घोषणा MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT 15
 
-/* Common sgl flags for READING a config page. */
-#define MPT3_CONFIG_COMMON_SGLFLAGS ((MPI2_SGE_FLAGS_SIMPLE_ELEMENT | \
+/* Common sgl flags क्रम READING a config page. */
+#घोषणा MPT3_CONFIG_COMMON_SGLFLAGS ((MPI2_SGE_FLAGS_SIMPLE_ELEMENT | \
 	MPI2_SGE_FLAGS_LAST_ELEMENT | MPI2_SGE_FLAGS_END_OF_BUFFER \
 	| MPI2_SGE_FLAGS_END_OF_LIST) << MPI2_SGE_FLAGS_SHIFT)
 
-/* Common sgl flags for WRITING a config page. */
-#define MPT3_CONFIG_COMMON_WRITE_SGLFLAGS ((MPI2_SGE_FLAGS_SIMPLE_ELEMENT | \
+/* Common sgl flags क्रम WRITING a config page. */
+#घोषणा MPT3_CONFIG_COMMON_WRITE_SGLFLAGS ((MPI2_SGE_FLAGS_SIMPLE_ELEMENT | \
 	MPI2_SGE_FLAGS_LAST_ELEMENT | MPI2_SGE_FLAGS_END_OF_BUFFER \
 	| MPI2_SGE_FLAGS_END_OF_LIST | MPI2_SGE_FLAGS_HOST_TO_IOC) \
 	<< MPI2_SGE_FLAGS_SHIFT)
 
 /**
- * struct config_request - obtain dma memory via routine
+ * काष्ठा config_request - obtain dma memory via routine
  * @sz: size
- * @page: virt pointer
- * @page_dma: phys pointer
+ * @page: virt poपूर्णांकer
+ * @page_dma: phys poपूर्णांकer
  *
  */
-struct config_request {
+काष्ठा config_request अणु
 	u16			sz;
-	void			*page;
+	व्योम			*page;
 	dma_addr_t		page_dma;
-};
+पूर्ण;
 
 /**
  * _config_display_some_debug - debug routine
  * @ioc: per adapter object
- * @smid: system request message index
+ * @smid: प्रणाली request message index
  * @calling_function_name: string pass from calling function
  * @mpi_reply: reply message frame
  * Context: none.
  *
- * Function for displaying debug info helpful when debugging issues
+ * Function क्रम displaying debug info helpful when debugging issues
  * in this module.
  */
-static void
-_config_display_some_debug(struct MPT3SAS_ADAPTER *ioc, u16 smid,
-	char *calling_function_name, MPI2DefaultReply_t *mpi_reply)
-{
+अटल व्योम
+_config_display_some_debug(काष्ठा MPT3SAS_ADAPTER *ioc, u16 smid,
+	अक्षर *calling_function_name, MPI2DefaultReply_t *mpi_reply)
+अणु
 	Mpi2ConfigRequest_t *mpi_request;
-	char *desc = NULL;
+	अक्षर *desc = शून्य;
 
 	mpi_request = mpt3sas_base_get_msg_frame(ioc, smid);
-	switch (mpi_request->Header.PageType & MPI2_CONFIG_PAGETYPE_MASK) {
-	case MPI2_CONFIG_PAGETYPE_IO_UNIT:
+	चयन (mpi_request->Header.PageType & MPI2_CONFIG_PAGETYPE_MASK) अणु
+	हाल MPI2_CONFIG_PAGETYPE_IO_UNIT:
 		desc = "io_unit";
-		break;
-	case MPI2_CONFIG_PAGETYPE_IOC:
+		अवरोध;
+	हाल MPI2_CONFIG_PAGETYPE_IOC:
 		desc = "ioc";
-		break;
-	case MPI2_CONFIG_PAGETYPE_BIOS:
+		अवरोध;
+	हाल MPI2_CONFIG_PAGETYPE_BIOS:
 		desc = "bios";
-		break;
-	case MPI2_CONFIG_PAGETYPE_RAID_VOLUME:
+		अवरोध;
+	हाल MPI2_CONFIG_PAGETYPE_RAID_VOLUME:
 		desc = "raid_volume";
-		break;
-	case MPI2_CONFIG_PAGETYPE_MANUFACTURING:
+		अवरोध;
+	हाल MPI2_CONFIG_PAGETYPE_MANUFACTURING:
 		desc = "manufacturing";
-		break;
-	case MPI2_CONFIG_PAGETYPE_RAID_PHYSDISK:
+		अवरोध;
+	हाल MPI2_CONFIG_PAGETYPE_RAID_PHYSDISK:
 		desc = "physdisk";
-		break;
-	case MPI2_CONFIG_PAGETYPE_EXTENDED:
-		switch (mpi_request->ExtPageType) {
-		case MPI2_CONFIG_EXTPAGETYPE_SAS_IO_UNIT:
+		अवरोध;
+	हाल MPI2_CONFIG_PAGETYPE_EXTENDED:
+		चयन (mpi_request->ExtPageType) अणु
+		हाल MPI2_CONFIG_EXTPAGETYPE_SAS_IO_UNIT:
 			desc = "sas_io_unit";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_SAS_EXPANDER:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_SAS_EXPANDER:
 			desc = "sas_expander";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_SAS_DEVICE:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_SAS_DEVICE:
 			desc = "sas_device";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_SAS_PHY:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_SAS_PHY:
 			desc = "sas_phy";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_LOG:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_LOG:
 			desc = "log";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_ENCLOSURE:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_ENCLOSURE:
 			desc = "enclosure";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_RAID_CONFIG:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_RAID_CONFIG:
 			desc = "raid_config";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_DRIVER_MAPPING:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_DRIVER_MAPPING:
 			desc = "driver_mapping";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_SAS_PORT:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_SAS_PORT:
 			desc = "sas_port";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_EXT_MANUFACTURING:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_EXT_MANUFACTURING:
 			desc = "ext_manufacturing";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_PCIE_IO_UNIT:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_PCIE_IO_UNIT:
 			desc = "pcie_io_unit";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_PCIE_SWITCH:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_PCIE_SWITCH:
 			desc = "pcie_switch";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_PCIE_DEVICE:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_PCIE_DEVICE:
 			desc = "pcie_device";
-			break;
-		case MPI2_CONFIG_EXTPAGETYPE_PCIE_LINK:
+			अवरोध;
+		हाल MPI2_CONFIG_EXTPAGETYPE_PCIE_LINK:
 			desc = "pcie_link";
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (!desc)
-		return;
+	अगर (!desc)
+		वापस;
 
 	ioc_info(ioc, "%s: %s(%d), action(%d), form(0x%08x), smid(%d)\n",
 		 calling_function_name, desc,
 		 mpi_request->Header.PageNumber, mpi_request->Action,
 		 le32_to_cpu(mpi_request->PageAddress), smid);
 
-	if (!mpi_reply)
-		return;
+	अगर (!mpi_reply)
+		वापस;
 
-	if (mpi_reply->IOCStatus || mpi_reply->IOCLogInfo)
+	अगर (mpi_reply->IOCStatus || mpi_reply->IOCLogInfo)
 		ioc_info(ioc, "\tiocstatus(0x%04x), loginfo(0x%08x)\n",
 			 le16_to_cpu(mpi_reply->IOCStatus),
 			 le32_to_cpu(mpi_reply->IOCLogInfo));
-}
+पूर्ण
 
 /**
  * _config_alloc_config_dma_memory - obtain physical memory
  * @ioc: per adapter object
- * @mem: struct config_request
+ * @mem: काष्ठा config_request
  *
- * A wrapper for obtaining dma-able memory for config page request.
+ * A wrapper क्रम obtaining dma-able memory क्रम config page request.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-static int
-_config_alloc_config_dma_memory(struct MPT3SAS_ADAPTER *ioc,
-	struct config_request *mem)
-{
-	int r = 0;
+अटल पूर्णांक
+_config_alloc_config_dma_memory(काष्ठा MPT3SAS_ADAPTER *ioc,
+	काष्ठा config_request *mem)
+अणु
+	पूर्णांक r = 0;
 
-	if (mem->sz > ioc->config_page_sz) {
+	अगर (mem->sz > ioc->config_page_sz) अणु
 		mem->page = dma_alloc_coherent(&ioc->pdev->dev, mem->sz,
 		    &mem->page_dma, GFP_KERNEL);
-		if (!mem->page) {
+		अगर (!mem->page) अणु
 			ioc_err(ioc, "%s: dma_alloc_coherent failed asking for (%d) bytes!!\n",
 				__func__, mem->sz);
 			r = -ENOMEM;
-		}
-	} else { /* use tmp buffer if less than 512 bytes */
+		पूर्ण
+	पूर्ण अन्यथा अणु /* use पंचांगp buffer अगर less than 512 bytes */
 		mem->page = ioc->config_page;
 		mem->page_dma = ioc->config_page_dma;
-	}
+	पूर्ण
 	ioc->config_vaddr = mem->page;
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * _config_free_config_dma_memory - wrapper to free the memory
+ * _config_मुक्त_config_dma_memory - wrapper to मुक्त the memory
  * @ioc: per adapter object
- * @mem: struct config_request
+ * @mem: काष्ठा config_request
  *
- * A wrapper to free dma-able memory when using _config_alloc_config_dma_memory.
+ * A wrapper to मुक्त dma-able memory when using _config_alloc_config_dma_memory.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-static void
-_config_free_config_dma_memory(struct MPT3SAS_ADAPTER *ioc,
-	struct config_request *mem)
-{
-	if (mem->sz > ioc->config_page_sz)
-		dma_free_coherent(&ioc->pdev->dev, mem->sz, mem->page,
+अटल व्योम
+_config_मुक्त_config_dma_memory(काष्ठा MPT3SAS_ADAPTER *ioc,
+	काष्ठा config_request *mem)
+अणु
+	अगर (mem->sz > ioc->config_page_sz)
+		dma_मुक्त_coherent(&ioc->pdev->dev, mem->sz, mem->page,
 		    mem->page_dma);
-}
+पूर्ण
 
 /**
- * mpt3sas_config_done - config page completion routine
+ * mpt3sas_config_करोne - config page completion routine
  * @ioc: per adapter object
- * @smid: system request message index
+ * @smid: प्रणाली request message index
  * @msix_index: MSIX table index supplied by the OS
  * @reply: reply message frame(lower 32bit addr)
  * Context: none.
  *
  * The callback handler when using _config_request.
  *
- * Return: 1 meaning mf should be freed from _base_interrupt
- *         0 means the mf is freed from this function.
+ * Return: 1 meaning mf should be मुक्तd from _base_पूर्णांकerrupt
+ *         0 means the mf is मुक्तd from this function.
  */
 u8
-mpt3sas_config_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index,
+mpt3sas_config_करोne(काष्ठा MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index,
 	u32 reply)
-{
+अणु
 	MPI2DefaultReply_t *mpi_reply;
 
-	if (ioc->config_cmds.status == MPT3_CMD_NOT_USED)
-		return 1;
-	if (ioc->config_cmds.smid != smid)
-		return 1;
+	अगर (ioc->config_cmds.status == MPT3_CMD_NOT_USED)
+		वापस 1;
+	अगर (ioc->config_cmds.smid != smid)
+		वापस 1;
 	ioc->config_cmds.status |= MPT3_CMD_COMPLETE;
 	mpi_reply =  mpt3sas_base_get_reply_virt_addr(ioc, reply);
-	if (mpi_reply) {
+	अगर (mpi_reply) अणु
 		ioc->config_cmds.status |= MPT3_CMD_REPLY_VALID;
-		memcpy(ioc->config_cmds.reply, mpi_reply,
+		स_नकल(ioc->config_cmds.reply, mpi_reply,
 		    mpi_reply->MsgLength*4);
-	}
+	पूर्ण
 	ioc->config_cmds.status &= ~MPT3_CMD_PENDING;
-	if (ioc->logging_level & MPT_DEBUG_CONFIG)
+	अगर (ioc->logging_level & MPT_DEBUG_CONFIG)
 		_config_display_some_debug(ioc, smid, "config_done", mpi_reply);
-	ioc->config_cmds.smid = USHRT_MAX;
-	complete(&ioc->config_cmds.done);
-	return 1;
-}
+	ioc->config_cmds.smid = अच_लघु_उच्च;
+	complete(&ioc->config_cmds.करोne);
+	वापस 1;
+पूर्ण
 
 /**
- * _config_request - main routine for sending config page requests
+ * _config_request - मुख्य routine क्रम sending config page requests
  * @ioc: per adapter object
  * @mpi_request: request message frame
- * @mpi_reply: reply mf payload returned from firmware
- * @timeout: timeout in seconds
+ * @mpi_reply: reply mf payload वापसed from firmware
+ * @समयout: समयout in seconds
  * @config_page: contents of the config page
  * @config_page_sz: size of config page
  * Context: sleep
  *
- * A generic API for config page requests to firmware.
+ * A generic API क्रम config page requests to firmware.
  *
- * The ioc->config_cmds.status flag should be MPT3_CMD_NOT_USED before calling
+ * The ioc->config_cmds.status flag should be MPT3_CMD_NOT_USED beक्रमe calling
  * this API.
  *
  * The callback index is set inside `ioc->config_cb_idx.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-static int
-_config_request(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigRequest_t
-	*mpi_request, Mpi2ConfigReply_t *mpi_reply, int timeout,
-	void *config_page, u16 config_page_sz)
-{
+अटल पूर्णांक
+_config_request(काष्ठा MPT3SAS_ADAPTER *ioc, Mpi2ConfigRequest_t
+	*mpi_request, Mpi2ConfigReply_t *mpi_reply, पूर्णांक समयout,
+	व्योम *config_page, u16 config_page_sz)
+अणु
 	u16 smid;
 	Mpi2ConfigRequest_t *config_request;
-	int r;
+	पूर्णांक r;
 	u8 retry_count, issue_host_reset = 0;
-	struct config_request mem;
-	u32 ioc_status = UINT_MAX;
+	काष्ठा config_request mem;
+	u32 ioc_status = अच_पूर्णांक_उच्च;
 
 	mutex_lock(&ioc->config_cmds.mutex);
-	if (ioc->config_cmds.status != MPT3_CMD_NOT_USED) {
+	अगर (ioc->config_cmds.status != MPT3_CMD_NOT_USED) अणु
 		ioc_err(ioc, "%s: config_cmd in use\n", __func__);
 		mutex_unlock(&ioc->config_cmds.mutex);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	retry_count = 0;
-	memset(&mem, 0, sizeof(struct config_request));
+	स_रखो(&mem, 0, माप(काष्ठा config_request));
 
 	mpi_request->VF_ID = 0; /* TODO */
 	mpi_request->VP_ID = 0;
 
-	if (config_page) {
+	अगर (config_page) अणु
 		mpi_request->Header.PageVersion = mpi_reply->Header.PageVersion;
 		mpi_request->Header.PageNumber = mpi_reply->Header.PageNumber;
 		mpi_request->Header.PageType = mpi_reply->Header.PageType;
 		mpi_request->Header.PageLength = mpi_reply->Header.PageLength;
 		mpi_request->ExtPageLength = mpi_reply->ExtPageLength;
 		mpi_request->ExtPageType = mpi_reply->ExtPageType;
-		if (mpi_request->Header.PageLength)
+		अगर (mpi_request->Header.PageLength)
 			mem.sz = mpi_request->Header.PageLength * 4;
-		else
+		अन्यथा
 			mem.sz = le16_to_cpu(mpi_reply->ExtPageLength) * 4;
 		r = _config_alloc_config_dma_memory(ioc, &mem);
-		if (r != 0)
-			goto out;
-		if (mpi_request->Action ==
+		अगर (r != 0)
+			जाओ out;
+		अगर (mpi_request->Action ==
 		    MPI2_CONFIG_ACTION_PAGE_WRITE_CURRENT ||
 		    mpi_request->Action ==
-		    MPI2_CONFIG_ACTION_PAGE_WRITE_NVRAM) {
+		    MPI2_CONFIG_ACTION_PAGE_WRITE_NVRAM) अणु
 			ioc->base_add_sg_single(&mpi_request->PageBufferSGE,
 			    MPT3_CONFIG_COMMON_WRITE_SGLFLAGS | mem.sz,
 			    mem.page_dma);
-			memcpy(mem.page, config_page, min_t(u16, mem.sz,
+			स_नकल(mem.page, config_page, min_t(u16, mem.sz,
 			    config_page_sz));
-		} else {
-			memset(config_page, 0, config_page_sz);
+		पूर्ण अन्यथा अणु
+			स_रखो(config_page, 0, config_page_sz);
 			ioc->base_add_sg_single(&mpi_request->PageBufferSGE,
 			    MPT3_CONFIG_COMMON_SGLFLAGS | mem.sz, mem.page_dma);
-			memset(mem.page, 0, min_t(u16, mem.sz, config_page_sz));
-		}
-	}
+			स_रखो(mem.page, 0, min_t(u16, mem.sz, config_page_sz));
+		पूर्ण
+	पूर्ण
 
  retry_config:
-	if (retry_count) {
-		if (retry_count > 2) { /* attempt only 2 retries */
+	अगर (retry_count) अणु
+		अगर (retry_count > 2) अणु /* attempt only 2 retries */
 			r = -EFAULT;
-			goto free_mem;
-		}
+			जाओ मुक्त_mem;
+		पूर्ण
 		ioc_info(ioc, "%s: attempting retry (%d)\n",
 			 __func__, retry_count);
-	}
+	पूर्ण
 
-	r = mpt3sas_wait_for_ioc(ioc, MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT);
-	if (r)
-		goto free_mem;
+	r = mpt3sas_रुको_क्रम_ioc(ioc, MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT);
+	अगर (r)
+		जाओ मुक्त_mem;
 
 	smid = mpt3sas_base_get_smid(ioc, ioc->config_cb_idx);
-	if (!smid) {
+	अगर (!smid) अणु
 		ioc_err(ioc, "%s: failed obtaining a smid\n", __func__);
 		ioc->config_cmds.status = MPT3_CMD_NOT_USED;
 		r = -EAGAIN;
-		goto free_mem;
-	}
+		जाओ मुक्त_mem;
+	पूर्ण
 
 	r = 0;
-	memset(ioc->config_cmds.reply, 0, sizeof(Mpi2ConfigReply_t));
+	स_रखो(ioc->config_cmds.reply, 0, माप(Mpi2ConfigReply_t));
 	ioc->config_cmds.status = MPT3_CMD_PENDING;
 	config_request = mpt3sas_base_get_msg_frame(ioc, smid);
 	ioc->config_cmds.smid = smid;
-	memcpy(config_request, mpi_request, sizeof(Mpi2ConfigRequest_t));
-	if (ioc->logging_level & MPT_DEBUG_CONFIG)
-		_config_display_some_debug(ioc, smid, "config_request", NULL);
-	init_completion(&ioc->config_cmds.done);
-	ioc->put_smid_default(ioc, smid);
-	wait_for_completion_timeout(&ioc->config_cmds.done, timeout*HZ);
-	if (!(ioc->config_cmds.status & MPT3_CMD_COMPLETE)) {
-		if (!(ioc->logging_level & MPT_DEBUG_CONFIG))
+	स_नकल(config_request, mpi_request, माप(Mpi2ConfigRequest_t));
+	अगर (ioc->logging_level & MPT_DEBUG_CONFIG)
+		_config_display_some_debug(ioc, smid, "config_request", शून्य);
+	init_completion(&ioc->config_cmds.करोne);
+	ioc->put_smid_शेष(ioc, smid);
+	रुको_क्रम_completion_समयout(&ioc->config_cmds.करोne, समयout*HZ);
+	अगर (!(ioc->config_cmds.status & MPT3_CMD_COMPLETE)) अणु
+		अगर (!(ioc->logging_level & MPT_DEBUG_CONFIG))
 			_config_display_some_debug(ioc,
-			    smid, "config_request", NULL);
+			    smid, "config_request", शून्य);
 		ioc_err(ioc, "%s: command timeout\n", __func__);
-		mpt3sas_base_check_cmd_timeout(ioc, ioc->config_cmds.status,
-				mpi_request, sizeof(Mpi2ConfigRequest_t) / 4);
+		mpt3sas_base_check_cmd_समयout(ioc, ioc->config_cmds.status,
+				mpi_request, माप(Mpi2ConfigRequest_t) / 4);
 		retry_count++;
-		if (ioc->config_cmds.smid == smid)
-			mpt3sas_base_free_smid(ioc, smid);
-		if ((ioc->shost_recovery) || (ioc->config_cmds.status &
+		अगर (ioc->config_cmds.smid == smid)
+			mpt3sas_base_मुक्त_smid(ioc, smid);
+		अगर ((ioc->shost_recovery) || (ioc->config_cmds.status &
 		    MPT3_CMD_RESET) || ioc->pci_error_recovery)
-			goto retry_config;
+			जाओ retry_config;
 		issue_host_reset = 1;
 		r = -EFAULT;
-		goto free_mem;
-	}
+		जाओ मुक्त_mem;
+	पूर्ण
 
-	if (ioc->config_cmds.status & MPT3_CMD_REPLY_VALID) {
-		memcpy(mpi_reply, ioc->config_cmds.reply,
-		    sizeof(Mpi2ConfigReply_t));
+	अगर (ioc->config_cmds.status & MPT3_CMD_REPLY_VALID) अणु
+		स_नकल(mpi_reply, ioc->config_cmds.reply,
+		    माप(Mpi2ConfigReply_t));
 
 		/* Reply Frame Sanity Checks to workaround FW issues */
-		if ((mpi_request->Header.PageType & 0xF) !=
-		    (mpi_reply->Header.PageType & 0xF)) {
-			if (!(ioc->logging_level & MPT_DEBUG_CONFIG))
+		अगर ((mpi_request->Header.PageType & 0xF) !=
+		    (mpi_reply->Header.PageType & 0xF)) अणु
+			अगर (!(ioc->logging_level & MPT_DEBUG_CONFIG))
 				_config_display_some_debug(ioc,
-				    smid, "config_request", NULL);
+				    smid, "config_request", शून्य);
 			_debug_dump_mf(mpi_request, ioc->request_sz/4);
 			_debug_dump_reply(mpi_reply, ioc->reply_sz/4);
 			panic("%s: %s: Firmware BUG: mpi_reply mismatch: Requested PageType(0x%02x) Reply PageType(0x%02x)\n",
 			      ioc->name, __func__,
 			      mpi_request->Header.PageType & 0xF,
 			      mpi_reply->Header.PageType & 0xF);
-		}
+		पूर्ण
 
-		if (((mpi_request->Header.PageType & 0xF) ==
+		अगर (((mpi_request->Header.PageType & 0xF) ==
 		    MPI2_CONFIG_PAGETYPE_EXTENDED) &&
-		    mpi_request->ExtPageType != mpi_reply->ExtPageType) {
-			if (!(ioc->logging_level & MPT_DEBUG_CONFIG))
+		    mpi_request->ExtPageType != mpi_reply->ExtPageType) अणु
+			अगर (!(ioc->logging_level & MPT_DEBUG_CONFIG))
 				_config_display_some_debug(ioc,
-				    smid, "config_request", NULL);
+				    smid, "config_request", शून्य);
 			_debug_dump_mf(mpi_request, ioc->request_sz/4);
 			_debug_dump_reply(mpi_reply, ioc->reply_sz/4);
 			panic("%s: %s: Firmware BUG: mpi_reply mismatch: Requested ExtPageType(0x%02x) Reply ExtPageType(0x%02x)\n",
 			      ioc->name, __func__,
 			      mpi_request->ExtPageType,
 			      mpi_reply->ExtPageType);
-		}
+		पूर्ण
 		ioc_status = le16_to_cpu(mpi_reply->IOCStatus)
 		    & MPI2_IOCSTATUS_MASK;
-	}
+	पूर्ण
 
-	if (retry_count)
+	अगर (retry_count)
 		ioc_info(ioc, "%s: retry (%d) completed!!\n",
 			 __func__, retry_count);
 
-	if ((ioc_status == MPI2_IOCSTATUS_SUCCESS) &&
+	अगर ((ioc_status == MPI2_IOCSTATUS_SUCCESS) &&
 	    config_page && mpi_request->Action ==
-	    MPI2_CONFIG_ACTION_PAGE_READ_CURRENT) {
+	    MPI2_CONFIG_ACTION_PAGE_READ_CURRENT) अणु
 		u8 *p = (u8 *)mem.page;
 
 		/* Config Page Sanity Checks to workaround FW issues */
-		if (p) {
-			if ((mpi_request->Header.PageType & 0xF) !=
-			    (p[3] & 0xF)) {
-				if (!(ioc->logging_level & MPT_DEBUG_CONFIG))
+		अगर (p) अणु
+			अगर ((mpi_request->Header.PageType & 0xF) !=
+			    (p[3] & 0xF)) अणु
+				अगर (!(ioc->logging_level & MPT_DEBUG_CONFIG))
 					_config_display_some_debug(ioc,
-					    smid, "config_request", NULL);
+					    smid, "config_request", शून्य);
 				_debug_dump_mf(mpi_request, ioc->request_sz/4);
 				_debug_dump_reply(mpi_reply, ioc->reply_sz/4);
 				_debug_dump_config(p, min_t(u16, mem.sz,
@@ -458,14 +459,14 @@ _config_request(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigRequest_t
 				      ioc->name, __func__,
 				      mpi_request->Header.PageType & 0xF,
 				      p[3] & 0xF);
-			}
+			पूर्ण
 
-			if (((mpi_request->Header.PageType & 0xF) ==
+			अगर (((mpi_request->Header.PageType & 0xF) ==
 			    MPI2_CONFIG_PAGETYPE_EXTENDED) &&
-			    (mpi_request->ExtPageType != p[6])) {
-				if (!(ioc->logging_level & MPT_DEBUG_CONFIG))
+			    (mpi_request->ExtPageType != p[6])) अणु
+				अगर (!(ioc->logging_level & MPT_DEBUG_CONFIG))
 					_config_display_some_debug(ioc,
-					    smid, "config_request", NULL);
+					    smid, "config_request", शून्य);
 				_debug_dump_mf(mpi_request, ioc->request_sz/4);
 				_debug_dump_reply(mpi_reply, ioc->reply_sz/4);
 				_debug_dump_config(p, min_t(u16, mem.sz,
@@ -473,41 +474,41 @@ _config_request(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigRequest_t
 				panic("%s: %s: Firmware BUG: config page mismatch: Requested ExtPageType(0x%02x) Reply ExtPageType(0x%02x)\n",
 				      ioc->name, __func__,
 				      mpi_request->ExtPageType, p[6]);
-			}
-		}
-		memcpy(config_page, mem.page, min_t(u16, mem.sz,
+			पूर्ण
+		पूर्ण
+		स_नकल(config_page, mem.page, min_t(u16, mem.sz,
 		    config_page_sz));
-	}
+	पूर्ण
 
- free_mem:
-	if (config_page)
-		_config_free_config_dma_memory(ioc, &mem);
+ मुक्त_mem:
+	अगर (config_page)
+		_config_मुक्त_config_dma_memory(ioc, &mem);
  out:
 	ioc->config_cmds.status = MPT3_CMD_NOT_USED;
 	mutex_unlock(&ioc->config_cmds.mutex);
 
-	if (issue_host_reset)
+	अगर (issue_host_reset)
 		mpt3sas_base_hard_reset_handler(ioc, FORCE_BIG_HAMMER);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_manufacturing_pg0 - obtain manufacturing page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_manufacturing_pg0(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_manufacturing_pg0(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2ManufacturingPage0_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_MANUFACTURING;
@@ -515,37 +516,37 @@ mpt3sas_config_get_manufacturing_pg0(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_MANUFACTURING0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_manufacturing_pg7 - obtain manufacturing page 7
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * @sz: size of buffer passed in config_page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_manufacturing_pg7(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_manufacturing_pg7(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2ManufacturingPage7_t *config_page,
 	u16 sz)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_MANUFACTURING;
@@ -553,36 +554,36 @@ mpt3sas_config_get_manufacturing_pg7(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_MANUFACTURING7_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
 	    sz);
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_manufacturing_pg10 - obtain manufacturing page 10
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_manufacturing_pg10(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_manufacturing_pg10(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply,
-	struct Mpi2ManufacturingPage10_t *config_page)
-{
+	काष्ठा Mpi2ManufacturingPage10_t *config_page)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_MANUFACTURING;
@@ -590,36 +591,36 @@ mpt3sas_config_get_manufacturing_pg10(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_MANUFACTURING0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_manufacturing_pg11 - obtain manufacturing page 11
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_manufacturing_pg11(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_manufacturing_pg11(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply,
-	struct Mpi2ManufacturingPage11_t *config_page)
-{
+	काष्ठा Mpi2ManufacturingPage11_t *config_page)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_MANUFACTURING;
@@ -627,36 +628,36 @@ mpt3sas_config_get_manufacturing_pg11(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_MANUFACTURING0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_set_manufacturing_pg11 - set manufacturing page 11
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_set_manufacturing_pg11(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_set_manufacturing_pg11(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply,
-	struct Mpi2ManufacturingPage11_t *config_page)
-{
+	काष्ठा Mpi2ManufacturingPage11_t *config_page)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_MANUFACTURING;
@@ -664,35 +665,35 @@ mpt3sas_config_set_manufacturing_pg11(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_MANUFACTURING0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_bios_pg2 - obtain bios page 2
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_bios_pg2(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_bios_pg2(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2BiosPage2_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_BIOS;
@@ -700,35 +701,35 @@ mpt3sas_config_get_bios_pg2(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_BIOSPAGE2_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_bios_pg3 - obtain bios page 3
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_bios_pg3(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
+पूर्णांक
+mpt3sas_config_get_bios_pg3(काष्ठा MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	*mpi_reply, Mpi2BiosPage3_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_BIOS;
@@ -736,35 +737,35 @@ mpt3sas_config_get_bios_pg3(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	mpi_request.Header.PageVersion = MPI2_BIOSPAGE3_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_iounit_pg0 - obtain iounit page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_iounit_pg0(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_iounit_pg0(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2IOUnitPage0_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_IO_UNIT;
@@ -772,35 +773,35 @@ mpt3sas_config_get_iounit_pg0(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_IOUNITPAGE0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_iounit_pg1 - obtain iounit page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_iounit_pg1(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_iounit_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2IOUnitPage1_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_IO_UNIT;
@@ -808,35 +809,35 @@ mpt3sas_config_get_iounit_pg1(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_IOUNITPAGE1_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_set_iounit_pg1 - set iounit page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_set_iounit_pg1(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_set_iounit_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2IOUnitPage1_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_IO_UNIT;
@@ -844,36 +845,36 @@ mpt3sas_config_set_iounit_pg1(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_IOUNITPAGE1_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_iounit_pg3 - obtain iounit page 3
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * @sz: size of buffer passed in config_page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_iounit_pg3(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_iounit_pg3(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2IOUnitPage3_t *config_page, u16 sz)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_IO_UNIT;
@@ -881,34 +882,34 @@ mpt3sas_config_get_iounit_pg3(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_IOUNITPAGE3_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page, sz);
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_iounit_pg8 - obtain iounit page 8
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_iounit_pg8(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_iounit_pg8(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2IOUnitPage8_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_IO_UNIT;
@@ -916,35 +917,35 @@ mpt3sas_config_get_iounit_pg8(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_IOUNITPAGE8_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_ioc_pg8 - obtain ioc page 8
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_ioc_pg8(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_ioc_pg8(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2IOCPage8_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_IOC;
@@ -952,34 +953,34 @@ mpt3sas_config_get_ioc_pg8(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_IOCPAGE8_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 /**
  * mpt3sas_config_get_ioc_pg1 - obtain ioc page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_ioc_pg1(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_ioc_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2IOCPage1_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_IOC;
@@ -987,35 +988,35 @@ mpt3sas_config_get_ioc_pg1(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_IOCPAGE8_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * mpt3sas_config_set_ioc_pg1 - modify ioc page 1
+ * mpt3sas_config_set_ioc_pg1 - modअगरy ioc page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_set_ioc_pg1(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_set_ioc_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2IOCPage1_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_IOC;
@@ -1023,38 +1024,38 @@ mpt3sas_config_set_ioc_pg1(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_IOCPAGE8_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_sas_device_pg0 - obtain sas device page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
- * @form: GET_NEXT_HANDLE or HANDLE
+ * @क्रमm: GET_NEXT_HANDLE or HANDLE
  * @handle: device handle
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_sas_device_pg0(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_sas_device_pg0(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2SasDevicePage0_t *config_page,
-	u32 form, u32 handle)
-{
+	u32 क्रमm, u32 handle)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1063,39 +1064,39 @@ mpt3sas_config_get_sas_device_pg0(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageNumber = 0;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
-	mpi_request.PageAddress = cpu_to_le32(form | handle);
+	mpi_request.PageAddress = cpu_to_le32(क्रमm | handle);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_sas_device_pg1 - obtain sas device page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
- * @form: GET_NEXT_HANDLE or HANDLE
+ * @क्रमm: GET_NEXT_HANDLE or HANDLE
  * @handle: device handle
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_sas_device_pg1(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_sas_device_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2SasDevicePage1_t *config_page,
-	u32 form, u32 handle)
-{
+	u32 क्रमm, u32 handle)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1104,39 +1105,39 @@ mpt3sas_config_get_sas_device_pg1(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageNumber = 1;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
-	mpi_request.PageAddress = cpu_to_le32(form | handle);
+	mpi_request.PageAddress = cpu_to_le32(क्रमm | handle);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_pcie_device_pg0 - obtain pcie device page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
- * @form: GET_NEXT_HANDLE or HANDLE
+ * @क्रमm: GET_NEXT_HANDLE or HANDLE
  * @handle: device handle
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_pcie_device_pg0(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_pcie_device_pg0(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26PCIeDevicePage0_t *config_page,
-	u32 form, u32 handle)
-{
+	u32 क्रमm, u32 handle)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1145,39 +1146,39 @@ mpt3sas_config_get_pcie_device_pg0(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageNumber = 0;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-			MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+			MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
-	mpi_request.PageAddress = cpu_to_le32(form | handle);
+	mpi_request.PageAddress = cpu_to_le32(क्रमm | handle);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 			MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-			sizeof(*config_page));
+			माप(*config_page));
 out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_pcie_device_pg2 - obtain pcie device page 2
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
- * @form: GET_NEXT_HANDLE or HANDLE
+ * @क्रमm: GET_NEXT_HANDLE or HANDLE
  * @handle: device handle
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_pcie_device_pg2(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_pcie_device_pg2(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26PCIeDevicePage2_t *config_page,
-	u32 form, u32 handle)
-{
+	u32 क्रमm, u32 handle)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1186,38 +1187,38 @@ mpt3sas_config_get_pcie_device_pg2(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageNumber = 2;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-			MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+			MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
-	mpi_request.PageAddress = cpu_to_le32(form | handle);
+	mpi_request.PageAddress = cpu_to_le32(क्रमm | handle);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 			MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-			sizeof(*config_page));
+			माप(*config_page));
 out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_number_hba_phys - obtain number of phys on the host
  * @ioc: per adapter object
- * @num_phys: pointer returned with the number of phys
+ * @num_phys: poपूर्णांकer वापसed with the number of phys
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_number_hba_phys(struct MPT3SAS_ADAPTER *ioc, u8 *num_phys)
-{
+पूर्णांक
+mpt3sas_config_get_number_hba_phys(काष्ठा MPT3SAS_ADAPTER *ioc, u8 *num_phys)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 	u16 ioc_status;
 	Mpi2ConfigReply_t mpi_reply;
 	Mpi2SasIOUnitPage0_t config_page;
 
 	*num_phys = 0;
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1226,46 +1227,46 @@ mpt3sas_config_get_number_hba_phys(struct MPT3SAS_ADAPTER *ioc, u8 *num_phys)
 	mpi_request.Header.PageVersion = MPI2_SASIOUNITPAGE0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, &mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, &mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, &config_page,
-	    sizeof(Mpi2SasIOUnitPage0_t));
-	if (!r) {
+	    माप(Mpi2SasIOUnitPage0_t));
+	अगर (!r) अणु
 		ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 		    MPI2_IOCSTATUS_MASK;
-		if (ioc_status == MPI2_IOCSTATUS_SUCCESS)
+		अगर (ioc_status == MPI2_IOCSTATUS_SUCCESS)
 			*num_phys = config_page.NumPhys;
-	}
+	पूर्ण
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_sas_iounit_pg0 - obtain sas iounit page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * @sz: size of buffer passed in config_page
  * Context: sleep.
  *
  * Calling function should call config_get_number_hba_phys prior to
- * this function, so enough memory is allocated for config_page.
+ * this function, so enough memory is allocated क्रम config_page.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_sas_iounit_pg0(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_sas_iounit_pg0(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2SasIOUnitPage0_t *config_page,
 	u16 sz)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1274,39 +1275,39 @@ mpt3sas_config_get_sas_iounit_pg0(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_SASIOUNITPAGE0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page, sz);
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_sas_iounit_pg1 - obtain sas iounit page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * @sz: size of buffer passed in config_page
  * Context: sleep.
  *
  * Calling function should call config_get_number_hba_phys prior to
- * this function, so enough memory is allocated for config_page.
+ * this function, so enough memory is allocated क्रम config_page.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_sas_iounit_pg1(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_sas_iounit_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2SasIOUnitPage1_t *config_page,
 	u16 sz)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1315,39 +1316,39 @@ mpt3sas_config_get_sas_iounit_pg1(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_SASIOUNITPAGE1_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page, sz);
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_set_sas_iounit_pg1 - send sas iounit page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * @sz: size of buffer passed in config_page
  * Context: sleep.
  *
  * Calling function should call config_get_number_hba_phys prior to
- * this function, so enough memory is allocated for config_page.
+ * this function, so enough memory is allocated क्रम config_page.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_set_sas_iounit_pg1(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_set_sas_iounit_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi2SasIOUnitPage1_t *config_page,
 	u16 sz)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1356,9 +1357,9 @@ mpt3sas_config_set_sas_iounit_pg1(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_SASIOUNITPAGE1_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	_config_request(ioc, &mpi_request, mpi_reply,
@@ -1367,28 +1368,28 @@ mpt3sas_config_set_sas_iounit_pg1(struct MPT3SAS_ADAPTER *ioc,
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page, sz);
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_expander_pg0 - obtain expander page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
- * @form: GET_NEXT_HANDLE or HANDLE
+ * @क्रमm: GET_NEXT_HANDLE or HANDLE
  * @handle: expander handle
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_expander_pg0(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
-	*mpi_reply, Mpi2ExpanderPage0_t *config_page, u32 form, u32 handle)
-{
+पूर्णांक
+mpt3sas_config_get_expander_pg0(काष्ठा MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
+	*mpi_reply, Mpi2ExpanderPage0_t *config_page, u32 क्रमm, u32 handle)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1397,39 +1398,39 @@ mpt3sas_config_get_expander_pg0(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	mpi_request.Header.PageVersion = MPI2_SASEXPANDER0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
-	mpi_request.PageAddress = cpu_to_le32(form | handle);
+	mpi_request.PageAddress = cpu_to_le32(क्रमm | handle);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_expander_pg1 - obtain expander page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * @phy_number: phy number
  * @handle: expander handle
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_expander_pg1(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
+पूर्णांक
+mpt3sas_config_get_expander_pg1(काष्ठा MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	*mpi_reply, Mpi2ExpanderPage1_t *config_page, u32 phy_number,
 	u16 handle)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1438,9 +1439,9 @@ mpt3sas_config_get_expander_pg1(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	mpi_request.Header.PageVersion = MPI2_SASEXPANDER1_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.PageAddress =
 	    cpu_to_le32(MPI2_SAS_EXPAND_PGAD_FORM_HNDL_PHY_NUM |
@@ -1448,30 +1449,30 @@ mpt3sas_config_get_expander_pg1(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_enclosure_pg0 - obtain enclosure page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
- * @form: GET_NEXT_HANDLE or HANDLE
+ * @क्रमm: GET_NEXT_HANDLE or HANDLE
  * @handle: expander handle
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_enclosure_pg0(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
-	*mpi_reply, Mpi2SasEnclosurePage0_t *config_page, u32 form, u32 handle)
-{
+पूर्णांक
+mpt3sas_config_get_enclosure_pg0(काष्ठा MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
+	*mpi_reply, Mpi2SasEnclosurePage0_t *config_page, u32 क्रमm, u32 handle)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1480,37 +1481,37 @@ mpt3sas_config_get_enclosure_pg0(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	mpi_request.Header.PageVersion = MPI2_SASENCLOSURE0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
-	mpi_request.PageAddress = cpu_to_le32(form | handle);
+	mpi_request.PageAddress = cpu_to_le32(क्रमm | handle);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_phy_pg0 - obtain phy page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * @phy_number: phy number
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_phy_pg0(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
+पूर्णांक
+mpt3sas_config_get_phy_pg0(काष्ठा MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	*mpi_reply, Mpi2SasPhyPage0_t *config_page, u32 phy_number)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1519,38 +1520,38 @@ mpt3sas_config_get_phy_pg0(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	mpi_request.Header.PageVersion = MPI2_SASPHY0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.PageAddress =
 	    cpu_to_le32(MPI2_SAS_PHY_PGAD_FORM_PHY_NUMBER | phy_number);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_phy_pg1 - obtain phy page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * @phy_number: phy number
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_phy_pg1(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
+पूर्णांक
+mpt3sas_config_get_phy_pg1(काष्ठा MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	*mpi_reply, Mpi2SasPhyPage1_t *config_page, u32 phy_number)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1559,40 +1560,40 @@ mpt3sas_config_get_phy_pg1(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	mpi_request.Header.PageVersion = MPI2_SASPHY1_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.PageAddress =
 	    cpu_to_le32(MPI2_SAS_PHY_PGAD_FORM_PHY_NUMBER | phy_number);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_raid_volume_pg1 - obtain raid volume page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
- * @form: GET_NEXT_HANDLE or HANDLE
+ * @क्रमm: GET_NEXT_HANDLE or HANDLE
  * @handle: volume handle
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_raid_volume_pg1(struct MPT3SAS_ADAPTER *ioc,
-	Mpi2ConfigReply_t *mpi_reply, Mpi2RaidVolPage1_t *config_page, u32 form,
+पूर्णांक
+mpt3sas_config_get_raid_volume_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
+	Mpi2ConfigReply_t *mpi_reply, Mpi2RaidVolPage1_t *config_page, u32 क्रमm,
 	u32 handle)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_RAID_VOLUME;
@@ -1600,39 +1601,39 @@ mpt3sas_config_get_raid_volume_pg1(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_RAIDVOLPAGE1_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
-	mpi_request.PageAddress = cpu_to_le32(form | handle);
+	mpi_request.PageAddress = cpu_to_le32(क्रमm | handle);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * mpt3sas_config_get_number_pds - obtain number of phys disk assigned to volume
+ * mpt3sas_config_get_number_pds - obtain number of phys disk asचिन्हित to volume
  * @ioc: per adapter object
  * @handle: volume handle
- * @num_pds: returns pds count
+ * @num_pds: वापसs pds count
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_number_pds(struct MPT3SAS_ADAPTER *ioc, u16 handle,
+पूर्णांक
+mpt3sas_config_get_number_pds(काष्ठा MPT3SAS_ADAPTER *ioc, u16 handle,
 	u8 *num_pds)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
 	Mpi2RaidVolPage0_t config_page;
 	Mpi2ConfigReply_t mpi_reply;
-	int r;
+	पूर्णांक r;
 	u16 ioc_status;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	*num_pds = 0;
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
@@ -1641,48 +1642,48 @@ mpt3sas_config_get_number_pds(struct MPT3SAS_ADAPTER *ioc, u16 handle,
 	mpi_request.Header.PageVersion = MPI2_RAIDVOLPAGE0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, &mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.PageAddress =
 	    cpu_to_le32(MPI2_RAID_VOLUME_PGAD_FORM_HANDLE | handle);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, &mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, &config_page,
-	    sizeof(Mpi2RaidVolPage0_t));
-	if (!r) {
+	    माप(Mpi2RaidVolPage0_t));
+	अगर (!r) अणु
 		ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 		    MPI2_IOCSTATUS_MASK;
-		if (ioc_status == MPI2_IOCSTATUS_SUCCESS)
+		अगर (ioc_status == MPI2_IOCSTATUS_SUCCESS)
 			*num_pds = config_page.NumPhysDisks;
-	}
+	पूर्ण
 
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_raid_volume_pg0 - obtain raid volume page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
- * @form: GET_NEXT_HANDLE or HANDLE
+ * @क्रमm: GET_NEXT_HANDLE or HANDLE
  * @handle: volume handle
  * @sz: size of buffer passed in config_page
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_raid_volume_pg0(struct MPT3SAS_ADAPTER *ioc,
-	Mpi2ConfigReply_t *mpi_reply, Mpi2RaidVolPage0_t *config_page, u32 form,
+पूर्णांक
+mpt3sas_config_get_raid_volume_pg0(काष्ठा MPT3SAS_ADAPTER *ioc,
+	Mpi2ConfigReply_t *mpi_reply, Mpi2RaidVolPage0_t *config_page, u32 क्रमm,
 	u32 handle, u16 sz)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_RAID_VOLUME;
@@ -1690,38 +1691,38 @@ mpt3sas_config_get_raid_volume_pg0(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI2_RAIDVOLPAGE0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
-	mpi_request.PageAddress = cpu_to_le32(form | handle);
+	mpi_request.PageAddress = cpu_to_le32(क्रमm | handle);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page, sz);
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_phys_disk_pg0 - obtain phys disk page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
- * @form: GET_NEXT_PHYSDISKNUM, PHYSDISKNUM, DEVHANDLE
- * @form_specific: specific to the form
+ * @क्रमm: GET_NEXT_PHYSDISKNUM, PHYSDISKNUM, DEVHANDLE
+ * @क्रमm_specअगरic: specअगरic to the क्रमm
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_phys_disk_pg0(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
-	*mpi_reply, Mpi2RaidPhysDiskPage0_t *config_page, u32 form,
-	u32 form_specific)
-{
+पूर्णांक
+mpt3sas_config_get_phys_disk_pg0(काष्ठा MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
+	*mpi_reply, Mpi2RaidPhysDiskPage0_t *config_page, u32 क्रमm,
+	u32 क्रमm_specअगरic)
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_RAID_PHYSDISK;
@@ -1729,36 +1730,36 @@ mpt3sas_config_get_phys_disk_pg0(struct MPT3SAS_ADAPTER *ioc, Mpi2ConfigReply_t
 	mpi_request.Header.PageVersion = MPI2_RAIDPHYSDISKPAGE0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
-	mpi_request.PageAddress = cpu_to_le32(form | form_specific);
+	mpi_request.PageAddress = cpu_to_le32(क्रमm | क्रमm_specअगरic);
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_get_driver_trigger_pg0 - obtain driver trigger page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_driver_trigger_pg0(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_driver_trigger_pg0(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26DriverTriggerPage0_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1768,35 +1769,35 @@ mpt3sas_config_get_driver_trigger_pg0(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI26_DRIVER_TRIGGER_PAGE0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * _config_set_driver_trigger_pg0 - write driver trigger page 0
+ * _config_set_driver_trigger_pg0 - ग_लिखो driver trigger page 0
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-static int
-_config_set_driver_trigger_pg0(struct MPT3SAS_ADAPTER *ioc,
+अटल पूर्णांक
+_config_set_driver_trigger_pg0(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26DriverTriggerPage0_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1806,21 +1807,21 @@ _config_set_driver_trigger_pg0(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI26_DRIVER_TRIGGER_PAGE0_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	_config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_NVRAM;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_update_driver_trigger_pg0 - update driver trigger page 0
@@ -1829,70 +1830,70 @@ _config_set_driver_trigger_pg0(struct MPT3SAS_ADAPTER *ioc,
  * @set: set ot clear trigger values
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-static int
-mpt3sas_config_update_driver_trigger_pg0(struct MPT3SAS_ADAPTER *ioc,
+अटल पूर्णांक
+mpt3sas_config_update_driver_trigger_pg0(काष्ठा MPT3SAS_ADAPTER *ioc,
 	u16 trigger_flag, bool set)
-{
+अणु
 	Mpi26DriverTriggerPage0_t tg_pg0;
 	Mpi2ConfigReply_t mpi_reply;
-	int rc;
+	पूर्णांक rc;
 	u16 flags, ioc_status;
 
 	rc = mpt3sas_config_get_driver_trigger_pg0(ioc, &mpi_reply, &tg_pg0);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
-		dcprintk(ioc,
+	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+		dcprपूर्णांकk(ioc,
 		    ioc_err(ioc,
 		    "%s: Failed to get trigger pg0, ioc_status(0x%04x)\n",
 		    __func__, ioc_status));
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (set)
+	अगर (set)
 		flags = le16_to_cpu(tg_pg0.TriggerFlags) | trigger_flag;
-	else
+	अन्यथा
 		flags = le16_to_cpu(tg_pg0.TriggerFlags) & ~trigger_flag;
 
 	tg_pg0.TriggerFlags = cpu_to_le16(flags);
 
 	rc = _config_set_driver_trigger_pg0(ioc, &mpi_reply, &tg_pg0);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
-		dcprintk(ioc,
+	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+		dcprपूर्णांकk(ioc,
 		    ioc_err(ioc,
 		    "%s: Failed to update trigger pg0, ioc_status(0x%04x)\n",
 		    __func__, ioc_status));
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * mpt3sas_config_get_driver_trigger_pg1 - obtain driver trigger page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_driver_trigger_pg1(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_driver_trigger_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26DriverTriggerPage1_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1902,35 +1903,35 @@ mpt3sas_config_get_driver_trigger_pg1(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI26_DRIVER_TRIGGER_PAGE1_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * _config_set_driver_trigger_pg1 - write driver trigger page 1
+ * _config_set_driver_trigger_pg1 - ग_लिखो driver trigger page 1
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-static int
-_config_set_driver_trigger_pg1(struct MPT3SAS_ADAPTER *ioc,
+अटल पूर्णांक
+_config_set_driver_trigger_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26DriverTriggerPage1_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -1940,21 +1941,21 @@ _config_set_driver_trigger_pg1(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI26_DRIVER_TRIGGER_PAGE1_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	_config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_NVRAM;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_update_driver_trigger_pg1 - update driver trigger page 1
@@ -1963,87 +1964,87 @@ _config_set_driver_trigger_pg1(struct MPT3SAS_ADAPTER *ioc,
  * @set: set ot clear trigger values
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_update_driver_trigger_pg1(struct MPT3SAS_ADAPTER *ioc,
-	struct SL_WH_MASTER_TRIGGER_T *master_tg, bool set)
-{
+पूर्णांक
+mpt3sas_config_update_driver_trigger_pg1(काष्ठा MPT3SAS_ADAPTER *ioc,
+	काष्ठा SL_WH_MASTER_TRIGGER_T *master_tg, bool set)
+अणु
 	Mpi26DriverTriggerPage1_t tg_pg1;
 	Mpi2ConfigReply_t mpi_reply;
-	int rc;
+	पूर्णांक rc;
 	u16 ioc_status;
 
 	rc = mpt3sas_config_update_driver_trigger_pg0(ioc,
 	    MPI26_DRIVER_TRIGGER0_FLAG_MASTER_TRIGGER_VALID, set);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = mpt3sas_config_get_driver_trigger_pg1(ioc, &mpi_reply, &tg_pg1);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
-		dcprintk(ioc,
+	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+		dcprपूर्णांकk(ioc,
 		    ioc_err(ioc,
 		    "%s: Failed to get trigger pg1, ioc_status(0x%04x)\n",
 		    __func__, ioc_status));
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (set) {
+	अगर (set) अणु
 		tg_pg1.NumMasterTrigger = cpu_to_le16(1);
 		tg_pg1.MasterTriggers[0].MasterTriggerFlags = cpu_to_le32(
 		    master_tg->MasterData);
-	} else {
+	पूर्ण अन्यथा अणु
 		tg_pg1.NumMasterTrigger = 0;
 		tg_pg1.MasterTriggers[0].MasterTriggerFlags = 0;
-	}
+	पूर्ण
 
 	rc = _config_set_driver_trigger_pg1(ioc, &mpi_reply, &tg_pg1);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
-		dcprintk(ioc,
+	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+		dcprपूर्णांकk(ioc,
 		    ioc_err(ioc,
 		    "%s: Failed to get trigger pg1, ioc_status(0x%04x)\n",
 		    __func__, ioc_status));
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
 	mpt3sas_config_update_driver_trigger_pg0(ioc,
 	    MPI26_DRIVER_TRIGGER0_FLAG_MASTER_TRIGGER_VALID, !set);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * mpt3sas_config_get_driver_trigger_pg2 - obtain driver trigger page 2
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_driver_trigger_pg2(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_driver_trigger_pg2(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26DriverTriggerPage2_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -2053,35 +2054,35 @@ mpt3sas_config_get_driver_trigger_pg2(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI26_DRIVER_TRIGGER_PAGE2_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * _config_set_driver_trigger_pg2 - write driver trigger page 2
+ * _config_set_driver_trigger_pg2 - ग_लिखो driver trigger page 2
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-static int
-_config_set_driver_trigger_pg2(struct MPT3SAS_ADAPTER *ioc,
+अटल पूर्णांक
+_config_set_driver_trigger_pg2(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26DriverTriggerPage2_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -2091,21 +2092,21 @@ _config_set_driver_trigger_pg2(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI26_DRIVER_TRIGGER_PAGE2_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	_config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_NVRAM;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_update_driver_trigger_pg2 - update driver trigger page 2
@@ -2114,96 +2115,96 @@ _config_set_driver_trigger_pg2(struct MPT3SAS_ADAPTER *ioc,
  * @set: set ot clear trigger values
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_update_driver_trigger_pg2(struct MPT3SAS_ADAPTER *ioc,
-	struct SL_WH_EVENT_TRIGGERS_T *event_tg, bool set)
-{
+पूर्णांक
+mpt3sas_config_update_driver_trigger_pg2(काष्ठा MPT3SAS_ADAPTER *ioc,
+	काष्ठा SL_WH_EVENT_TRIGGERS_T *event_tg, bool set)
+अणु
 	Mpi26DriverTriggerPage2_t tg_pg2;
 	Mpi2ConfigReply_t mpi_reply;
-	int rc, i, count;
+	पूर्णांक rc, i, count;
 	u16 ioc_status;
 
 	rc = mpt3sas_config_update_driver_trigger_pg0(ioc,
 	    MPI26_DRIVER_TRIGGER0_FLAG_MPI_EVENT_TRIGGER_VALID, set);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = mpt3sas_config_get_driver_trigger_pg2(ioc, &mpi_reply, &tg_pg2);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
-		dcprintk(ioc,
+	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+		dcprपूर्णांकk(ioc,
 		    ioc_err(ioc,
 		    "%s: Failed to get trigger pg2, ioc_status(0x%04x)\n",
 		    __func__, ioc_status));
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (set) {
+	अगर (set) अणु
 		count = event_tg->ValidEntries;
 		tg_pg2.NumMPIEventTrigger = cpu_to_le16(count);
-		for (i = 0; i < count; i++) {
+		क्रम (i = 0; i < count; i++) अणु
 			tg_pg2.MPIEventTriggers[i].MPIEventCode =
 			    cpu_to_le16(
 			    event_tg->EventTriggerEntry[i].EventValue);
-			tg_pg2.MPIEventTriggers[i].MPIEventCodeSpecific =
+			tg_pg2.MPIEventTriggers[i].MPIEventCodeSpecअगरic =
 			    cpu_to_le16(
-			    event_tg->EventTriggerEntry[i].LogEntryQualifier);
-		}
-	} else {
+			    event_tg->EventTriggerEntry[i].LogEntryQualअगरier);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		tg_pg2.NumMPIEventTrigger = 0;
-		memset(&tg_pg2.MPIEventTriggers[0], 0,
-		    NUM_VALID_ENTRIES * sizeof(
+		स_रखो(&tg_pg2.MPIEventTriggers[0], 0,
+		    NUM_VALID_ENTRIES * माप(
 		    MPI26_DRIVER_MPI_EVENT_TIGGER_ENTRY));
-	}
+	पूर्ण
 
 	rc = _config_set_driver_trigger_pg2(ioc, &mpi_reply, &tg_pg2);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
-		dcprintk(ioc,
+	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+		dcprपूर्णांकk(ioc,
 		    ioc_err(ioc,
 		    "%s: Failed to get trigger pg2, ioc_status(0x%04x)\n",
 		    __func__, ioc_status));
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
 	mpt3sas_config_update_driver_trigger_pg0(ioc,
 	    MPI26_DRIVER_TRIGGER0_FLAG_MPI_EVENT_TRIGGER_VALID, !set);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * mpt3sas_config_get_driver_trigger_pg3 - obtain driver trigger page 3
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_driver_trigger_pg3(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_driver_trigger_pg3(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26DriverTriggerPage3_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -2213,35 +2214,35 @@ mpt3sas_config_get_driver_trigger_pg3(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI26_DRIVER_TRIGGER_PAGE3_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * _config_set_driver_trigger_pg3 - write driver trigger page 3
+ * _config_set_driver_trigger_pg3 - ग_लिखो driver trigger page 3
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-static int
-_config_set_driver_trigger_pg3(struct MPT3SAS_ADAPTER *ioc,
+अटल पूर्णांक
+_config_set_driver_trigger_pg3(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26DriverTriggerPage3_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -2251,21 +2252,21 @@ _config_set_driver_trigger_pg3(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI26_DRIVER_TRIGGER_PAGE3_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	_config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_NVRAM;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_update_driver_trigger_pg3 - update driver trigger page 3
@@ -2274,93 +2275,93 @@ _config_set_driver_trigger_pg3(struct MPT3SAS_ADAPTER *ioc,
  * @set: set ot clear trigger values
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_update_driver_trigger_pg3(struct MPT3SAS_ADAPTER *ioc,
-	struct SL_WH_SCSI_TRIGGERS_T *scsi_tg, bool set)
-{
+पूर्णांक
+mpt3sas_config_update_driver_trigger_pg3(काष्ठा MPT3SAS_ADAPTER *ioc,
+	काष्ठा SL_WH_SCSI_TRIGGERS_T *scsi_tg, bool set)
+अणु
 	Mpi26DriverTriggerPage3_t tg_pg3;
 	Mpi2ConfigReply_t mpi_reply;
-	int rc, i, count;
+	पूर्णांक rc, i, count;
 	u16 ioc_status;
 
 	rc = mpt3sas_config_update_driver_trigger_pg0(ioc,
 	    MPI26_DRIVER_TRIGGER0_FLAG_SCSI_SENSE_TRIGGER_VALID, set);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = mpt3sas_config_get_driver_trigger_pg3(ioc, &mpi_reply, &tg_pg3);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
-		dcprintk(ioc,
+	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+		dcprपूर्णांकk(ioc,
 		    ioc_err(ioc,
 		    "%s: Failed to get trigger pg3, ioc_status(0x%04x)\n",
 		    __func__, ioc_status));
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (set) {
+	अगर (set) अणु
 		count = scsi_tg->ValidEntries;
 		tg_pg3.NumSCSISenseTrigger = cpu_to_le16(count);
-		for (i = 0; i < count; i++) {
+		क्रम (i = 0; i < count; i++) अणु
 			tg_pg3.SCSISenseTriggers[i].ASCQ =
 			    scsi_tg->SCSITriggerEntry[i].ASCQ;
 			tg_pg3.SCSISenseTriggers[i].ASC =
 			    scsi_tg->SCSITriggerEntry[i].ASC;
 			tg_pg3.SCSISenseTriggers[i].SenseKey =
 			    scsi_tg->SCSITriggerEntry[i].SenseKey;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		tg_pg3.NumSCSISenseTrigger = 0;
-		memset(&tg_pg3.SCSISenseTriggers[0], 0,
-		    NUM_VALID_ENTRIES * sizeof(
+		स_रखो(&tg_pg3.SCSISenseTriggers[0], 0,
+		    NUM_VALID_ENTRIES * माप(
 		    MPI26_DRIVER_SCSI_SENSE_TIGGER_ENTRY));
-	}
+	पूर्ण
 
 	rc = _config_set_driver_trigger_pg3(ioc, &mpi_reply, &tg_pg3);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
-		dcprintk(ioc,
+	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+		dcprपूर्णांकk(ioc,
 		    ioc_err(ioc,
 		    "%s: Failed to get trigger pg3, ioc_status(0x%04x)\n",
 		     __func__, ioc_status));
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out:
 	mpt3sas_config_update_driver_trigger_pg0(ioc,
 	    MPI26_DRIVER_TRIGGER0_FLAG_SCSI_SENSE_TRIGGER_VALID, !set);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * mpt3sas_config_get_driver_trigger_pg4 - obtain driver trigger page 4
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_driver_trigger_pg4(struct MPT3SAS_ADAPTER *ioc,
+पूर्णांक
+mpt3sas_config_get_driver_trigger_pg4(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26DriverTriggerPage4_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -2370,35 +2371,35 @@ mpt3sas_config_get_driver_trigger_pg4(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI26_DRIVER_TRIGGER_PAGE4_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * _config_set_driver_trigger_pg4 - write driver trigger page 4
+ * _config_set_driver_trigger_pg4 - ग_लिखो driver trigger page 4
  * @ioc: per adapter object
- * @mpi_reply: reply mf payload returned from firmware
+ * @mpi_reply: reply mf payload वापसed from firmware
  * @config_page: contents of the config page
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-static int
-_config_set_driver_trigger_pg4(struct MPT3SAS_ADAPTER *ioc,
+अटल पूर्णांक
+_config_set_driver_trigger_pg4(काष्ठा MPT3SAS_ADAPTER *ioc,
 	Mpi2ConfigReply_t *mpi_reply, Mpi26DriverTriggerPage4_t *config_page)
-{
+अणु
 	Mpi2ConfigRequest_t mpi_request;
-	int r;
+	पूर्णांक r;
 
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -2408,21 +2409,21 @@ _config_set_driver_trigger_pg4(struct MPT3SAS_ADAPTER *ioc,
 	mpi_request.Header.PageVersion = MPI26_DRIVER_TRIGGER_PAGE4_PAGEVERSION;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	_config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_WRITE_NVRAM;
 	r = _config_request(ioc, &mpi_request, mpi_reply,
 	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
-	    sizeof(*config_page));
+	    माप(*config_page));
  out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * mpt3sas_config_update_driver_trigger_pg4 - update driver trigger page 4
@@ -2431,102 +2432,102 @@ _config_set_driver_trigger_pg4(struct MPT3SAS_ADAPTER *ioc,
  * @set: set ot clear trigger values
  * Context: sleep.
  *
- * Returns 0 for success, non-zero for failure.
+ * Returns 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_update_driver_trigger_pg4(struct MPT3SAS_ADAPTER *ioc,
-	struct SL_WH_MPI_TRIGGERS_T *mpi_tg, bool set)
-{
+पूर्णांक
+mpt3sas_config_update_driver_trigger_pg4(काष्ठा MPT3SAS_ADAPTER *ioc,
+	काष्ठा SL_WH_MPI_TRIGGERS_T *mpi_tg, bool set)
+अणु
 	Mpi26DriverTriggerPage4_t tg_pg4;
 	Mpi2ConfigReply_t mpi_reply;
-	int rc, i, count;
+	पूर्णांक rc, i, count;
 	u16 ioc_status;
 
 	rc = mpt3sas_config_update_driver_trigger_pg0(ioc,
 	    MPI26_DRIVER_TRIGGER0_FLAG_LOGINFO_TRIGGER_VALID, set);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = mpt3sas_config_get_driver_trigger_pg4(ioc, &mpi_reply, &tg_pg4);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
-		dcprintk(ioc,
+	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+		dcprपूर्णांकk(ioc,
 		    ioc_err(ioc,
 		    "%s: Failed to get trigger pg4, ioc_status(0x%04x)\n",
 		    __func__, ioc_status));
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (set) {
+	अगर (set) अणु
 		count = mpi_tg->ValidEntries;
 		tg_pg4.NumIOCStatusLogInfoTrigger = cpu_to_le16(count);
-		for (i = 0; i < count; i++) {
+		क्रम (i = 0; i < count; i++) अणु
 			tg_pg4.IOCStatusLoginfoTriggers[i].IOCStatus =
 			    cpu_to_le16(mpi_tg->MPITriggerEntry[i].IOCStatus);
 			tg_pg4.IOCStatusLoginfoTriggers[i].LogInfo =
 			    cpu_to_le32(mpi_tg->MPITriggerEntry[i].IocLogInfo);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		tg_pg4.NumIOCStatusLogInfoTrigger = 0;
-		memset(&tg_pg4.IOCStatusLoginfoTriggers[0], 0,
-		    NUM_VALID_ENTRIES * sizeof(
+		स_रखो(&tg_pg4.IOCStatusLoginfoTriggers[0], 0,
+		    NUM_VALID_ENTRIES * माप(
 		    MPI26_DRIVER_IOCSTATUS_LOGINFO_TIGGER_ENTRY));
-	}
+	पूर्ण
 
 	rc = _config_set_driver_trigger_pg4(ioc, &mpi_reply, &tg_pg4);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 	    MPI2_IOCSTATUS_MASK;
-	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
-		dcprintk(ioc,
+	अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS) अणु
+		dcprपूर्णांकk(ioc,
 		    ioc_err(ioc,
 		    "%s: Failed to get trigger pg4, ioc_status(0x%04x)\n",
 		    __func__, ioc_status));
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
 	mpt3sas_config_update_driver_trigger_pg0(ioc,
 	    MPI26_DRIVER_TRIGGER0_FLAG_LOGINFO_TRIGGER_VALID, !set);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * mpt3sas_config_get_volume_handle - returns volume handle for give hidden
+ * mpt3sas_config_get_volume_handle - वापसs volume handle क्रम give hidden
  * raid components
  * @ioc: per adapter object
  * @pd_handle: phys disk handle
  * @volume_handle: volume handle
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_volume_handle(struct MPT3SAS_ADAPTER *ioc, u16 pd_handle,
+पूर्णांक
+mpt3sas_config_get_volume_handle(काष्ठा MPT3SAS_ADAPTER *ioc, u16 pd_handle,
 	u16 *volume_handle)
-{
-	Mpi2RaidConfigurationPage0_t *config_page = NULL;
+अणु
+	Mpi2RaidConfigurationPage0_t *config_page = शून्य;
 	Mpi2ConfigRequest_t mpi_request;
 	Mpi2ConfigReply_t mpi_reply;
-	int r, i, config_page_sz;
+	पूर्णांक r, i, config_page_sz;
 	u16 ioc_status;
-	int config_num;
+	पूर्णांक config_num;
 	u16 element_type;
 	u16 phys_disk_dev_handle;
 
 	*volume_handle = 0;
-	memset(&mpi_request, 0, sizeof(Mpi2ConfigRequest_t));
+	स_रखो(&mpi_request, 0, माप(Mpi2ConfigRequest_t));
 	mpi_request.Function = MPI2_FUNCTION_CONFIG;
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_HEADER;
 	mpi_request.Header.PageType = MPI2_CONFIG_PAGETYPE_EXTENDED;
@@ -2535,86 +2536,86 @@ mpt3sas_config_get_volume_handle(struct MPT3SAS_ADAPTER *ioc, u16 pd_handle,
 	mpi_request.Header.PageNumber = 0;
 	ioc->build_zero_len_sge_mpi(ioc, &mpi_request.PageBufferSGE);
 	r = _config_request(ioc, &mpi_request, &mpi_reply,
-	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, NULL, 0);
-	if (r)
-		goto out;
+	    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, शून्य, 0);
+	अगर (r)
+		जाओ out;
 
 	mpi_request.Action = MPI2_CONFIG_ACTION_PAGE_READ_CURRENT;
 	config_page_sz = (le16_to_cpu(mpi_reply.ExtPageLength) * 4);
-	config_page = kmalloc(config_page_sz, GFP_KERNEL);
-	if (!config_page) {
+	config_page = kदो_स्मृति(config_page_sz, GFP_KERNEL);
+	अगर (!config_page) अणु
 		r = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	config_num = 0xff;
-	while (1) {
+	जबतक (1) अणु
 		mpi_request.PageAddress = cpu_to_le32(config_num +
 		    MPI2_RAID_PGAD_FORM_GET_NEXT_CONFIGNUM);
 		r = _config_request(ioc, &mpi_request, &mpi_reply,
 		    MPT3_CONFIG_PAGE_DEFAULT_TIMEOUT, config_page,
 		    config_page_sz);
-		if (r)
-			goto out;
+		अगर (r)
+			जाओ out;
 		r = -1;
 		ioc_status = le16_to_cpu(mpi_reply.IOCStatus) &
 		    MPI2_IOCSTATUS_MASK;
-		if (ioc_status != MPI2_IOCSTATUS_SUCCESS)
-			goto out;
-		for (i = 0; i < config_page->NumElements; i++) {
+		अगर (ioc_status != MPI2_IOCSTATUS_SUCCESS)
+			जाओ out;
+		क्रम (i = 0; i < config_page->NumElements; i++) अणु
 			element_type = le16_to_cpu(config_page->
 			    ConfigElement[i].ElementFlags) &
 			    MPI2_RAIDCONFIG0_EFLAGS_MASK_ELEMENT_TYPE;
-			if (element_type ==
+			अगर (element_type ==
 			    MPI2_RAIDCONFIG0_EFLAGS_VOL_PHYS_DISK_ELEMENT ||
 			    element_type ==
-			    MPI2_RAIDCONFIG0_EFLAGS_OCE_ELEMENT) {
+			    MPI2_RAIDCONFIG0_EFLAGS_OCE_ELEMENT) अणु
 				phys_disk_dev_handle =
 				    le16_to_cpu(config_page->ConfigElement[i].
 				    PhysDiskDevHandle);
-				if (phys_disk_dev_handle == pd_handle) {
+				अगर (phys_disk_dev_handle == pd_handle) अणु
 					*volume_handle =
 					    le16_to_cpu(config_page->
 					    ConfigElement[i].VolDevHandle);
 					r = 0;
-					goto out;
-				}
-			} else if (element_type ==
-			    MPI2_RAIDCONFIG0_EFLAGS_HOT_SPARE_ELEMENT) {
+					जाओ out;
+				पूर्ण
+			पूर्ण अन्यथा अगर (element_type ==
+			    MPI2_RAIDCONFIG0_EFLAGS_HOT_SPARE_ELEMENT) अणु
 				*volume_handle = 0;
 				r = 0;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 		config_num = config_page->ConfigNum;
-	}
+	पूर्ण
  out:
-	kfree(config_page);
-	return r;
-}
+	kमुक्त(config_page);
+	वापस r;
+पूर्ण
 
 /**
- * mpt3sas_config_get_volume_wwid - returns wwid given the volume handle
+ * mpt3sas_config_get_volume_wwid - वापसs wwid given the volume handle
  * @ioc: per adapter object
  * @volume_handle: volume handle
  * @wwid: volume wwid
  * Context: sleep.
  *
- * Return: 0 for success, non-zero for failure.
+ * Return: 0 क्रम success, non-zero क्रम failure.
  */
-int
-mpt3sas_config_get_volume_wwid(struct MPT3SAS_ADAPTER *ioc, u16 volume_handle,
+पूर्णांक
+mpt3sas_config_get_volume_wwid(काष्ठा MPT3SAS_ADAPTER *ioc, u16 volume_handle,
 	u64 *wwid)
-{
+अणु
 	Mpi2ConfigReply_t mpi_reply;
 	Mpi2RaidVolPage1_t raid_vol_pg1;
 
 	*wwid = 0;
-	if (!(mpt3sas_config_get_raid_volume_pg1(ioc, &mpi_reply,
+	अगर (!(mpt3sas_config_get_raid_volume_pg1(ioc, &mpi_reply,
 	    &raid_vol_pg1, MPI2_RAID_VOLUME_PGAD_FORM_HANDLE,
-	    volume_handle))) {
+	    volume_handle))) अणु
 		*wwid = le64_to_cpu(raid_vol_pg1.WWID);
-		return 0;
-	} else
-		return -1;
-}
+		वापस 0;
+	पूर्ण अन्यथा
+		वापस -1;
+पूर्ण

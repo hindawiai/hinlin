@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ISHTP Ring Buffers
  *
  * Copyright (c) 2003-2016, Intel Corporation.
  */
 
-#include <linux/slab.h>
-#include "client.h"
+#समावेश <linux/slab.h>
+#समावेश "client.h"
 
 /**
  * ishtp_cl_alloc_rx_ring() - Allocate RX ring buffers
@@ -14,37 +15,37 @@
  *
  * Allocate and initialize RX ring buffers
  *
- * Return: 0 on success else -ENOMEM
+ * Return: 0 on success अन्यथा -ENOMEM
  */
-int ishtp_cl_alloc_rx_ring(struct ishtp_cl *cl)
-{
-	size_t	len = cl->device->fw_client->props.max_msg_length;
-	int	j;
-	struct ishtp_cl_rb *rb;
-	int	ret = 0;
-	unsigned long	flags;
+पूर्णांक ishtp_cl_alloc_rx_ring(काष्ठा ishtp_cl *cl)
+अणु
+	माप_प्रकार	len = cl->device->fw_client->props.max_msg_length;
+	पूर्णांक	j;
+	काष्ठा ishtp_cl_rb *rb;
+	पूर्णांक	ret = 0;
+	अचिन्हित दीर्घ	flags;
 
-	for (j = 0; j < cl->rx_ring_size; ++j) {
+	क्रम (j = 0; j < cl->rx_ring_size; ++j) अणु
 		rb = ishtp_io_rb_init(cl);
-		if (!rb) {
+		अगर (!rb) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ret = ishtp_io_rb_alloc_buf(rb, len);
-		if (ret)
-			goto out;
-		spin_lock_irqsave(&cl->free_list_spinlock, flags);
-		list_add_tail(&rb->list, &cl->free_rb_list.list);
-		spin_unlock_irqrestore(&cl->free_list_spinlock, flags);
-	}
+		अगर (ret)
+			जाओ out;
+		spin_lock_irqsave(&cl->मुक्त_list_spinlock, flags);
+		list_add_tail(&rb->list, &cl->मुक्त_rb_list.list);
+		spin_unlock_irqrestore(&cl->मुक्त_list_spinlock, flags);
+	पूर्ण
 
-	return	0;
+	वापस	0;
 
 out:
 	dev_err(&cl->device->dev, "error in allocating Rx buffers\n");
-	ishtp_cl_free_rx_ring(cl);
-	return	ret;
-}
+	ishtp_cl_मुक्त_rx_ring(cl);
+	वापस	ret;
+पूर्ण
 
 /**
  * ishtp_cl_alloc_tx_ring() - Allocate TX ring buffers
@@ -52,124 +53,124 @@ out:
  *
  * Allocate and initialize TX ring buffers
  *
- * Return: 0 on success else -ENOMEM
+ * Return: 0 on success अन्यथा -ENOMEM
  */
-int ishtp_cl_alloc_tx_ring(struct ishtp_cl *cl)
-{
-	size_t	len = cl->device->fw_client->props.max_msg_length;
-	int	j;
-	unsigned long	flags;
+पूर्णांक ishtp_cl_alloc_tx_ring(काष्ठा ishtp_cl *cl)
+अणु
+	माप_प्रकार	len = cl->device->fw_client->props.max_msg_length;
+	पूर्णांक	j;
+	अचिन्हित दीर्घ	flags;
 
-	cl->tx_ring_free_size = 0;
+	cl->tx_ring_मुक्त_size = 0;
 
-	/* Allocate pool to free Tx bufs */
-	for (j = 0; j < cl->tx_ring_size; ++j) {
-		struct ishtp_cl_tx_ring	*tx_buf;
+	/* Allocate pool to मुक्त Tx bufs */
+	क्रम (j = 0; j < cl->tx_ring_size; ++j) अणु
+		काष्ठा ishtp_cl_tx_ring	*tx_buf;
 
-		tx_buf = kzalloc(sizeof(struct ishtp_cl_tx_ring), GFP_KERNEL);
-		if (!tx_buf)
-			goto	out;
+		tx_buf = kzalloc(माप(काष्ठा ishtp_cl_tx_ring), GFP_KERNEL);
+		अगर (!tx_buf)
+			जाओ	out;
 
-		tx_buf->send_buf.data = kmalloc(len, GFP_KERNEL);
-		if (!tx_buf->send_buf.data) {
-			kfree(tx_buf);
-			goto	out;
-		}
+		tx_buf->send_buf.data = kदो_स्मृति(len, GFP_KERNEL);
+		अगर (!tx_buf->send_buf.data) अणु
+			kमुक्त(tx_buf);
+			जाओ	out;
+		पूर्ण
 
-		spin_lock_irqsave(&cl->tx_free_list_spinlock, flags);
-		list_add_tail(&tx_buf->list, &cl->tx_free_list.list);
-		++cl->tx_ring_free_size;
-		spin_unlock_irqrestore(&cl->tx_free_list_spinlock, flags);
-	}
-	return	0;
+		spin_lock_irqsave(&cl->tx_मुक्त_list_spinlock, flags);
+		list_add_tail(&tx_buf->list, &cl->tx_मुक्त_list.list);
+		++cl->tx_ring_मुक्त_size;
+		spin_unlock_irqrestore(&cl->tx_मुक्त_list_spinlock, flags);
+	पूर्ण
+	वापस	0;
 out:
 	dev_err(&cl->device->dev, "error in allocating Tx pool\n");
-	ishtp_cl_free_tx_ring(cl);
-	return	-ENOMEM;
-}
+	ishtp_cl_मुक्त_tx_ring(cl);
+	वापस	-ENOMEM;
+पूर्ण
 
 /**
- * ishtp_cl_free_rx_ring() - Free RX ring buffers
+ * ishtp_cl_मुक्त_rx_ring() - Free RX ring buffers
  * @cl: client device instance
  *
  * Free RX ring buffers
  */
-void ishtp_cl_free_rx_ring(struct ishtp_cl *cl)
-{
-	struct ishtp_cl_rb *rb;
-	unsigned long	flags;
+व्योम ishtp_cl_मुक्त_rx_ring(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_cl_rb *rb;
+	अचिन्हित दीर्घ	flags;
 
-	/* release allocated memory - pass over free_rb_list */
-	spin_lock_irqsave(&cl->free_list_spinlock, flags);
-	while (!list_empty(&cl->free_rb_list.list)) {
-		rb = list_entry(cl->free_rb_list.list.next, struct ishtp_cl_rb,
+	/* release allocated memory - pass over मुक्त_rb_list */
+	spin_lock_irqsave(&cl->मुक्त_list_spinlock, flags);
+	जबतक (!list_empty(&cl->मुक्त_rb_list.list)) अणु
+		rb = list_entry(cl->मुक्त_rb_list.list.next, काष्ठा ishtp_cl_rb,
 				list);
 		list_del(&rb->list);
-		kfree(rb->buffer.data);
-		kfree(rb);
-	}
-	spin_unlock_irqrestore(&cl->free_list_spinlock, flags);
+		kमुक्त(rb->buffer.data);
+		kमुक्त(rb);
+	पूर्ण
+	spin_unlock_irqrestore(&cl->मुक्त_list_spinlock, flags);
 	/* release allocated memory - pass over in_process_list */
 	spin_lock_irqsave(&cl->in_process_spinlock, flags);
-	while (!list_empty(&cl->in_process_list.list)) {
+	जबतक (!list_empty(&cl->in_process_list.list)) अणु
 		rb = list_entry(cl->in_process_list.list.next,
-				struct ishtp_cl_rb, list);
+				काष्ठा ishtp_cl_rb, list);
 		list_del(&rb->list);
-		kfree(rb->buffer.data);
-		kfree(rb);
-	}
+		kमुक्त(rb->buffer.data);
+		kमुक्त(rb);
+	पूर्ण
 	spin_unlock_irqrestore(&cl->in_process_spinlock, flags);
-}
+पूर्ण
 
 /**
- * ishtp_cl_free_tx_ring() - Free TX ring buffers
+ * ishtp_cl_मुक्त_tx_ring() - Free TX ring buffers
  * @cl: client device instance
  *
  * Free TX ring buffers
  */
-void ishtp_cl_free_tx_ring(struct ishtp_cl *cl)
-{
-	struct ishtp_cl_tx_ring	*tx_buf;
-	unsigned long	flags;
+व्योम ishtp_cl_मुक्त_tx_ring(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_cl_tx_ring	*tx_buf;
+	अचिन्हित दीर्घ	flags;
 
-	spin_lock_irqsave(&cl->tx_free_list_spinlock, flags);
-	/* release allocated memory - pass over tx_free_list */
-	while (!list_empty(&cl->tx_free_list.list)) {
-		tx_buf = list_entry(cl->tx_free_list.list.next,
-				    struct ishtp_cl_tx_ring, list);
+	spin_lock_irqsave(&cl->tx_मुक्त_list_spinlock, flags);
+	/* release allocated memory - pass over tx_मुक्त_list */
+	जबतक (!list_empty(&cl->tx_मुक्त_list.list)) अणु
+		tx_buf = list_entry(cl->tx_मुक्त_list.list.next,
+				    काष्ठा ishtp_cl_tx_ring, list);
 		list_del(&tx_buf->list);
-		--cl->tx_ring_free_size;
-		kfree(tx_buf->send_buf.data);
-		kfree(tx_buf);
-	}
-	spin_unlock_irqrestore(&cl->tx_free_list_spinlock, flags);
+		--cl->tx_ring_मुक्त_size;
+		kमुक्त(tx_buf->send_buf.data);
+		kमुक्त(tx_buf);
+	पूर्ण
+	spin_unlock_irqrestore(&cl->tx_मुक्त_list_spinlock, flags);
 
 	spin_lock_irqsave(&cl->tx_list_spinlock, flags);
 	/* release allocated memory - pass over tx_list */
-	while (!list_empty(&cl->tx_list.list)) {
+	जबतक (!list_empty(&cl->tx_list.list)) अणु
 		tx_buf = list_entry(cl->tx_list.list.next,
-				    struct ishtp_cl_tx_ring, list);
+				    काष्ठा ishtp_cl_tx_ring, list);
 		list_del(&tx_buf->list);
-		kfree(tx_buf->send_buf.data);
-		kfree(tx_buf);
-	}
+		kमुक्त(tx_buf->send_buf.data);
+		kमुक्त(tx_buf);
+	पूर्ण
 	spin_unlock_irqrestore(&cl->tx_list_spinlock, flags);
-}
+पूर्ण
 
 /**
- * ishtp_io_rb_free() - Free IO request block
+ * ishtp_io_rb_मुक्त() - Free IO request block
  * @rb: IO request block
  *
  * Free io request block memory
  */
-void ishtp_io_rb_free(struct ishtp_cl_rb *rb)
-{
-	if (rb == NULL)
-		return;
+व्योम ishtp_io_rb_मुक्त(काष्ठा ishtp_cl_rb *rb)
+अणु
+	अगर (rb == शून्य)
+		वापस;
 
-	kfree(rb->buffer.data);
-	kfree(rb);
-}
+	kमुक्त(rb->buffer.data);
+	kमुक्त(rb);
+पूर्ण
 
 /**
  * ishtp_io_rb_init() - Allocate and init IO request block
@@ -177,21 +178,21 @@ void ishtp_io_rb_free(struct ishtp_cl_rb *rb)
  *
  * Allocate and initialize request block
  *
- * Return: Allocted IO request block pointer
+ * Return: Allocted IO request block poपूर्णांकer
  */
-struct ishtp_cl_rb *ishtp_io_rb_init(struct ishtp_cl *cl)
-{
-	struct ishtp_cl_rb *rb;
+काष्ठा ishtp_cl_rb *ishtp_io_rb_init(काष्ठा ishtp_cl *cl)
+अणु
+	काष्ठा ishtp_cl_rb *rb;
 
-	rb = kzalloc(sizeof(struct ishtp_cl_rb), GFP_KERNEL);
-	if (!rb)
-		return NULL;
+	rb = kzalloc(माप(काष्ठा ishtp_cl_rb), GFP_KERNEL);
+	अगर (!rb)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&rb->list);
 	rb->cl = cl;
 	rb->buf_idx = 0;
-	return rb;
-}
+	वापस rb;
+पूर्ण
 
 /**
  * ishtp_io_rb_alloc_buf() - Allocate and init response buffer
@@ -200,98 +201,98 @@ struct ishtp_cl_rb *ishtp_io_rb_init(struct ishtp_cl *cl)
  *
  * Allocate respose buffer
  *
- * Return: 0 on success else -ENOMEM
+ * Return: 0 on success अन्यथा -ENOMEM
  */
-int ishtp_io_rb_alloc_buf(struct ishtp_cl_rb *rb, size_t length)
-{
-	if (!rb)
-		return -EINVAL;
+पूर्णांक ishtp_io_rb_alloc_buf(काष्ठा ishtp_cl_rb *rb, माप_प्रकार length)
+अणु
+	अगर (!rb)
+		वापस -EINVAL;
 
-	if (length == 0)
-		return 0;
+	अगर (length == 0)
+		वापस 0;
 
-	rb->buffer.data = kmalloc(length, GFP_KERNEL);
-	if (!rb->buffer.data)
-		return -ENOMEM;
+	rb->buffer.data = kदो_स्मृति(length, GFP_KERNEL);
+	अगर (!rb->buffer.data)
+		वापस -ENOMEM;
 
 	rb->buffer.size = length;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ishtp_cl_io_rb_recycle() - Recycle IO request blocks
  * @rb: IO request block
  *
- * Re-append rb to its client's free list and send flow control if needed
+ * Re-append rb to its client's मुक्त list and send flow control अगर needed
  *
- * Return: 0 on success else -EFAULT
+ * Return: 0 on success अन्यथा -EFAULT
  */
-int ishtp_cl_io_rb_recycle(struct ishtp_cl_rb *rb)
-{
-	struct ishtp_cl *cl;
-	int	rets = 0;
-	unsigned long	flags;
+पूर्णांक ishtp_cl_io_rb_recycle(काष्ठा ishtp_cl_rb *rb)
+अणु
+	काष्ठा ishtp_cl *cl;
+	पूर्णांक	rets = 0;
+	अचिन्हित दीर्घ	flags;
 
-	if (!rb || !rb->cl)
-		return	-EFAULT;
+	अगर (!rb || !rb->cl)
+		वापस	-EFAULT;
 
 	cl = rb->cl;
-	spin_lock_irqsave(&cl->free_list_spinlock, flags);
-	list_add_tail(&rb->list, &cl->free_rb_list.list);
-	spin_unlock_irqrestore(&cl->free_list_spinlock, flags);
+	spin_lock_irqsave(&cl->मुक्त_list_spinlock, flags);
+	list_add_tail(&rb->list, &cl->मुक्त_rb_list.list);
+	spin_unlock_irqrestore(&cl->मुक्त_list_spinlock, flags);
 
 	/*
-	 * If we returned the first buffer to empty 'free' list,
+	 * If we वापसed the first buffer to empty 'free' list,
 	 * send flow control
 	 */
-	if (!cl->out_flow_ctrl_creds)
-		rets = ishtp_cl_read_start(cl);
+	अगर (!cl->out_flow_ctrl_creds)
+		rets = ishtp_cl_पढ़ो_start(cl);
 
-	return	rets;
-}
+	वापस	rets;
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_io_rb_recycle);
 
 /**
  * ishtp_cl_tx_empty() -test whether client device tx buffer is empty
- * @cl: Pointer to client device instance
+ * @cl: Poपूर्णांकer to client device instance
  *
  * Look client device tx buffer list, and check whether this list is empty
  *
- * Return: true if client tx buffer list is empty else false
+ * Return: true अगर client tx buffer list is empty अन्यथा false
  */
-bool ishtp_cl_tx_empty(struct ishtp_cl *cl)
-{
-	int tx_list_empty;
-	unsigned long tx_flags;
+bool ishtp_cl_tx_empty(काष्ठा ishtp_cl *cl)
+अणु
+	पूर्णांक tx_list_empty;
+	अचिन्हित दीर्घ tx_flags;
 
 	spin_lock_irqsave(&cl->tx_list_spinlock, tx_flags);
 	tx_list_empty = list_empty(&cl->tx_list.list);
 	spin_unlock_irqrestore(&cl->tx_list_spinlock, tx_flags);
 
-	return !!tx_list_empty;
-}
+	वापस !!tx_list_empty;
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_tx_empty);
 
 /**
  * ishtp_cl_rx_get_rb() -Get a rb from client device rx buffer list
- * @cl: Pointer to client device instance
+ * @cl: Poपूर्णांकer to client device instance
  *
  * Check client device in-processing buffer list and get a rb from it.
  *
- * Return: rb pointer if buffer list isn't empty else NULL
+ * Return: rb poपूर्णांकer अगर buffer list isn't empty अन्यथा शून्य
  */
-struct ishtp_cl_rb *ishtp_cl_rx_get_rb(struct ishtp_cl *cl)
-{
-	unsigned long rx_flags;
-	struct ishtp_cl_rb *rb;
+काष्ठा ishtp_cl_rb *ishtp_cl_rx_get_rb(काष्ठा ishtp_cl *cl)
+अणु
+	अचिन्हित दीर्घ rx_flags;
+	काष्ठा ishtp_cl_rb *rb;
 
 	spin_lock_irqsave(&cl->in_process_spinlock, rx_flags);
 	rb = list_first_entry_or_null(&cl->in_process_list.list,
-				struct ishtp_cl_rb, list);
-	if (rb)
+				काष्ठा ishtp_cl_rb, list);
+	अगर (rb)
 		list_del_init(&rb->list);
 	spin_unlock_irqrestore(&cl->in_process_spinlock, rx_flags);
 
-	return rb;
-}
+	वापस rb;
+पूर्ण
 EXPORT_SYMBOL(ishtp_cl_rx_get_rb);

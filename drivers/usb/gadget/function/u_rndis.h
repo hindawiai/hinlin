@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * u_rndis.h
  *
- * Utility definitions for the subset function
+ * Utility definitions क्रम the subset function
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -10,37 +11,37 @@
  * Author: Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
-#ifndef U_RNDIS_H
-#define U_RNDIS_H
+#अगर_अघोषित U_RNDIS_H
+#घोषणा U_RNDIS_H
 
-#include <linux/usb/composite.h>
+#समावेश <linux/usb/composite.h>
 
-struct f_rndis_opts {
-	struct usb_function_instance	func_inst;
-	u32				vendor_id;
-	const char			*manufacturer;
-	struct net_device		*net;
+काष्ठा f_rndis_opts अणु
+	काष्ठा usb_function_instance	func_inst;
+	u32				venकरोr_id;
+	स्थिर अक्षर			*manufacturer;
+	काष्ठा net_device		*net;
 	bool				bound;
 	bool				borrowed_net;
 
-	struct config_group		*rndis_interf_group;
-	struct usb_os_desc		rndis_os_desc;
-	char				rndis_ext_compat_id[16];
+	काष्ठा config_group		*rndis_पूर्णांकerf_group;
+	काष्ठा usb_os_desc		rndis_os_desc;
+	अक्षर				rndis_ext_compat_id[16];
 
 	u8				class;
 	u8				subclass;
 	u8				protocol;
 
 	/*
-	 * Read/write access to configfs attributes is handled by configfs.
+	 * Read/ग_लिखो access to configfs attributes is handled by configfs.
 	 *
-	 * This is to protect the data from concurrent access by read/write
-	 * and create symlink/remove symlink.
+	 * This is to protect the data from concurrent access by पढ़ो/ग_लिखो
+	 * and create symlink/हटाओ symlink.
 	 */
-	struct mutex			lock;
-	int				refcnt;
-};
+	काष्ठा mutex			lock;
+	पूर्णांक				refcnt;
+पूर्ण;
 
-void rndis_borrow_net(struct usb_function_instance *f, struct net_device *net);
+व्योम rndis_borrow_net(काष्ठा usb_function_instance *f, काष्ठा net_device *net);
 
-#endif /* U_RNDIS_H */
+#पूर्ण_अगर /* U_RNDIS_H */

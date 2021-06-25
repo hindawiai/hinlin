@@ -1,244 +1,245 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Interrupt management for most GSC and related devices.
+ * Interrupt management क्रम most GSC and related devices.
  *
- * (c) Copyright 1999 Alex deVries for The Puffin Group
- * (c) Copyright 1999 Grant Grundler for Hewlett-Packard
+ * (c) Copyright 1999 Alex deVries क्रम The Puffin Group
+ * (c) Copyright 1999 Grant Grundler क्रम Hewlett-Packard
  * (c) Copyright 1999 Matthew Wilcox
  * (c) Copyright 2000 Helge Deller
- * (c) Copyright 2001 Matthew Wilcox for Hewlett-Packard
+ * (c) Copyright 2001 Matthew Wilcox क्रम Hewlett-Packard
  */
 
-#include <linux/bitops.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/module.h>
-#include <linux/types.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
 
-#include <asm/hardware.h>
-#include <asm/io.h>
+#समावेश <यंत्र/hardware.h>
+#समावेश <यंत्र/पन.स>
 
-#include "gsc.h"
+#समावेश "gsc.h"
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#ifdef DEBUG
-#define DEBPRINTK printk
-#else
-#define DEBPRINTK(x,...)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा DEBPRINTK prपूर्णांकk
+#अन्यथा
+#घोषणा DEBPRINTK(x,...)
+#पूर्ण_अगर
 
-int gsc_alloc_irq(struct gsc_irq *i)
-{
-	int irq = txn_alloc_irq(GSC_EIM_WIDTH);
-	if (irq < 0) {
-		printk("cannot get irq\n");
-		return irq;
-	}
+पूर्णांक gsc_alloc_irq(काष्ठा gsc_irq *i)
+अणु
+	पूर्णांक irq = txn_alloc_irq(GSC_EIM_WIDTH);
+	अगर (irq < 0) अणु
+		prपूर्णांकk("cannot get irq\n");
+		वापस irq;
+	पूर्ण
 
 	i->txn_addr = txn_alloc_addr(irq);
 	i->txn_data = txn_alloc_data(irq);
 	i->irq = irq;
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-int gsc_claim_irq(struct gsc_irq *i, int irq)
-{
-	int c = irq;
+पूर्णांक gsc_claim_irq(काष्ठा gsc_irq *i, पूर्णांक irq)
+अणु
+	पूर्णांक c = irq;
 
-	irq += CPU_IRQ_BASE; /* virtualize the IRQ first */
+	irq += CPU_IRQ_BASE; /* भवize the IRQ first */
 
 	irq = txn_claim_irq(irq);
-	if (irq < 0) {
-		printk("cannot claim irq %d\n", c);
-		return irq;
-	}
+	अगर (irq < 0) अणु
+		prपूर्णांकk("cannot claim irq %d\n", c);
+		वापस irq;
+	पूर्ण
 
 	i->txn_addr = txn_alloc_addr(irq);
 	i->txn_data = txn_alloc_data(irq);
 	i->irq = irq;
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
 EXPORT_SYMBOL(gsc_alloc_irq);
 EXPORT_SYMBOL(gsc_claim_irq);
 
-/* Common interrupt demultiplexer used by Asp, Lasi & Wax.  */
-irqreturn_t gsc_asic_intr(int gsc_asic_irq, void *dev)
-{
-	unsigned long irr;
-	struct gsc_asic *gsc_asic = dev;
+/* Common पूर्णांकerrupt demultiplexer used by Asp, Lasi & Wax.  */
+irqवापस_t gsc_asic_पूर्णांकr(पूर्णांक gsc_asic_irq, व्योम *dev)
+अणु
+	अचिन्हित दीर्घ irr;
+	काष्ठा gsc_asic *gsc_asic = dev;
 
-	irr = gsc_readl(gsc_asic->hpa + OFFSET_IRR);
-	if (irr == 0)
-		return IRQ_NONE;
+	irr = gsc_पढ़ोl(gsc_asic->hpa + OFFSET_IRR);
+	अगर (irr == 0)
+		वापस IRQ_NONE;
 
 	DEBPRINTK("%s intr, mask=0x%x\n", gsc_asic->name, irr);
 
-	do {
-		int local_irq = __ffs(irr);
-		unsigned int irq = gsc_asic->global_irq[local_irq];
+	करो अणु
+		पूर्णांक local_irq = __ffs(irr);
+		अचिन्हित पूर्णांक irq = gsc_asic->global_irq[local_irq];
 		generic_handle_irq(irq);
 		irr &= ~(1 << local_irq);
-	} while (irr);
+	पूर्ण जबतक (irr);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int gsc_find_local_irq(unsigned int irq, int *global_irqs, int limit)
-{
-	int local_irq;
+पूर्णांक gsc_find_local_irq(अचिन्हित पूर्णांक irq, पूर्णांक *global_irqs, पूर्णांक limit)
+अणु
+	पूर्णांक local_irq;
 
-	for (local_irq = 0; local_irq < limit; local_irq++) {
-		if (global_irqs[local_irq] == irq)
-			return local_irq;
-	}
+	क्रम (local_irq = 0; local_irq < limit; local_irq++) अणु
+		अगर (global_irqs[local_irq] == irq)
+			वापस local_irq;
+	पूर्ण
 
-	return NO_IRQ;
-}
+	वापस NO_IRQ;
+पूर्ण
 
-static void gsc_asic_mask_irq(struct irq_data *d)
-{
-	struct gsc_asic *irq_dev = irq_data_get_irq_chip_data(d);
-	int local_irq = gsc_find_local_irq(d->irq, irq_dev->global_irq, 32);
+अटल व्योम gsc_asic_mask_irq(काष्ठा irq_data *d)
+अणु
+	काष्ठा gsc_asic *irq_dev = irq_data_get_irq_chip_data(d);
+	पूर्णांक local_irq = gsc_find_local_irq(d->irq, irq_dev->global_irq, 32);
 	u32 imr;
 
 	DEBPRINTK(KERN_DEBUG "%s(%d) %s: IMR 0x%x\n", __func__, d->irq,
 			irq_dev->name, imr);
 
 	/* Disable the IRQ line by clearing the bit in the IMR */
-	imr = gsc_readl(irq_dev->hpa + OFFSET_IMR);
+	imr = gsc_पढ़ोl(irq_dev->hpa + OFFSET_IMR);
 	imr &= ~(1 << local_irq);
-	gsc_writel(imr, irq_dev->hpa + OFFSET_IMR);
-}
+	gsc_ग_लिखोl(imr, irq_dev->hpa + OFFSET_IMR);
+पूर्ण
 
-static void gsc_asic_unmask_irq(struct irq_data *d)
-{
-	struct gsc_asic *irq_dev = irq_data_get_irq_chip_data(d);
-	int local_irq = gsc_find_local_irq(d->irq, irq_dev->global_irq, 32);
+अटल व्योम gsc_asic_unmask_irq(काष्ठा irq_data *d)
+अणु
+	काष्ठा gsc_asic *irq_dev = irq_data_get_irq_chip_data(d);
+	पूर्णांक local_irq = gsc_find_local_irq(d->irq, irq_dev->global_irq, 32);
 	u32 imr;
 
 	DEBPRINTK(KERN_DEBUG "%s(%d) %s: IMR 0x%x\n", __func__, d->irq,
 			irq_dev->name, imr);
 
 	/* Enable the IRQ line by setting the bit in the IMR */
-	imr = gsc_readl(irq_dev->hpa + OFFSET_IMR);
+	imr = gsc_पढ़ोl(irq_dev->hpa + OFFSET_IMR);
 	imr |= 1 << local_irq;
-	gsc_writel(imr, irq_dev->hpa + OFFSET_IMR);
+	gsc_ग_लिखोl(imr, irq_dev->hpa + OFFSET_IMR);
 	/*
-	 * FIXME: read IPR to make sure the IRQ isn't already pending.
-	 *   If so, we need to read IRR and manually call do_irq().
+	 * FIXME: पढ़ो IPR to make sure the IRQ isn't alपढ़ोy pending.
+	 *   If so, we need to पढ़ो IRR and manually call करो_irq().
 	 */
-}
+पूर्ण
 
-static struct irq_chip gsc_asic_interrupt_type = {
+अटल काष्ठा irq_chip gsc_asic_पूर्णांकerrupt_type = अणु
 	.name		=	"GSC-ASIC",
 	.irq_unmask	=	gsc_asic_unmask_irq,
 	.irq_mask	=	gsc_asic_mask_irq,
-};
+पूर्ण;
 
-int gsc_assign_irq(struct irq_chip *type, void *data)
-{
-	static int irq = GSC_IRQ_BASE;
+पूर्णांक gsc_assign_irq(काष्ठा irq_chip *type, व्योम *data)
+अणु
+	अटल पूर्णांक irq = GSC_IRQ_BASE;
 
-	if (irq > GSC_IRQ_MAX)
-		return NO_IRQ;
+	अगर (irq > GSC_IRQ_MAX)
+		वापस NO_IRQ;
 
 	irq_set_chip_and_handler(irq, type, handle_simple_irq);
 	irq_set_chip_data(irq, data);
 
-	return irq++;
-}
+	वापस irq++;
+पूर्ण
 
-void gsc_asic_assign_irq(struct gsc_asic *asic, int local_irq, int *irqp)
-{
-	int irq = asic->global_irq[local_irq];
+व्योम gsc_asic_assign_irq(काष्ठा gsc_asic *asic, पूर्णांक local_irq, पूर्णांक *irqp)
+अणु
+	पूर्णांक irq = asic->global_irq[local_irq];
 	
-	if (irq <= 0) {
-		irq = gsc_assign_irq(&gsc_asic_interrupt_type, asic);
-		if (irq == NO_IRQ)
-			return;
+	अगर (irq <= 0) अणु
+		irq = gsc_assign_irq(&gsc_asic_पूर्णांकerrupt_type, asic);
+		अगर (irq == NO_IRQ)
+			वापस;
 
 		asic->global_irq[local_irq] = irq;
-	}
+	पूर्ण
 	*irqp = irq;
-}
+पूर्ण
 
-struct gsc_fixup_struct {
-	void (*choose_irq)(struct parisc_device *, void *);
-	void *ctrl;
-};
+काष्ठा gsc_fixup_काष्ठा अणु
+	व्योम (*choose_irq)(काष्ठा parisc_device *, व्योम *);
+	व्योम *ctrl;
+पूर्ण;
 
-static int gsc_fixup_irqs_callback(struct device *dev, void *data)
-{
-	struct parisc_device *padev = to_parisc_device(dev);
-	struct gsc_fixup_struct *gf = data;
+अटल पूर्णांक gsc_fixup_irqs_callback(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा parisc_device *padev = to_parisc_device(dev);
+	काष्ठा gsc_fixup_काष्ठा *gf = data;
 
-	/* work-around for 715/64 and others which have parent
+	/* work-around क्रम 715/64 and others which have parent
 	   at path [5] and children at path [5/0/x] */
-	if (padev->id.hw_type == HPHW_FAULTY)
+	अगर (padev->id.hw_type == HPHW_FAULTY)
 		gsc_fixup_irqs(padev, gf->ctrl, gf->choose_irq);
 	gf->choose_irq(padev, gf->ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void gsc_fixup_irqs(struct parisc_device *parent, void *ctrl,
-			void (*choose_irq)(struct parisc_device *, void *))
-{
-	struct gsc_fixup_struct data = {
+व्योम gsc_fixup_irqs(काष्ठा parisc_device *parent, व्योम *ctrl,
+			व्योम (*choose_irq)(काष्ठा parisc_device *, व्योम *))
+अणु
+	काष्ठा gsc_fixup_काष्ठा data = अणु
 		.choose_irq	= choose_irq,
 		.ctrl		= ctrl,
-	};
+	पूर्ण;
 
-	device_for_each_child(&parent->dev, &data, gsc_fixup_irqs_callback);
-}
+	device_क्रम_each_child(&parent->dev, &data, gsc_fixup_irqs_callback);
+पूर्ण
 
-int gsc_common_setup(struct parisc_device *parent, struct gsc_asic *gsc_asic)
-{
-	struct resource *res;
-	int i;
+पूर्णांक gsc_common_setup(काष्ठा parisc_device *parent, काष्ठा gsc_asic *gsc_asic)
+अणु
+	काष्ठा resource *res;
+	पूर्णांक i;
 
 	gsc_asic->gsc = parent;
 
 	/* Initialise local irq -> global irq mapping */
-	for (i = 0; i < 32; i++) {
+	क्रम (i = 0; i < 32; i++) अणु
 		gsc_asic->global_irq[i] = NO_IRQ;
-	}
+	पूर्ण
 
 	/* allocate resource region */
 	res = request_mem_region(gsc_asic->hpa, 0x100000, gsc_asic->name);
-	if (res) {
-		res->flags = IORESOURCE_MEM; 	/* do not mark it busy ! */
-	}
+	अगर (res) अणु
+		res->flags = IORESOURCE_MEM; 	/* करो not mark it busy ! */
+	पूर्ण
 
-#if 0
-	printk(KERN_WARNING "%s IRQ %d EIM 0x%x", gsc_asic->name,
+#अगर 0
+	prपूर्णांकk(KERN_WARNING "%s IRQ %d EIM 0x%x", gsc_asic->name,
 			parent->irq, gsc_asic->eim);
-	if (gsc_readl(gsc_asic->hpa + OFFSET_IMR))
-		printk("  IMR is non-zero! (0x%x)",
-				gsc_readl(gsc_asic->hpa + OFFSET_IMR));
-	printk("\n");
-#endif
+	अगर (gsc_पढ़ोl(gsc_asic->hpa + OFFSET_IMR))
+		prपूर्णांकk("  IMR is non-zero! (0x%x)",
+				gsc_पढ़ोl(gsc_asic->hpa + OFFSET_IMR));
+	prपूर्णांकk("\n");
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-extern struct parisc_driver lasi_driver;
-extern struct parisc_driver asp_driver;
-extern struct parisc_driver wax_driver;
+बाह्य काष्ठा parisc_driver lasi_driver;
+बाह्य काष्ठा parisc_driver asp_driver;
+बाह्य काष्ठा parisc_driver wax_driver;
 
-void __init gsc_init(void)
-{
-#ifdef CONFIG_GSC_LASI
-	register_parisc_driver(&lasi_driver);
-	register_parisc_driver(&asp_driver);
-#endif
-#ifdef CONFIG_GSC_WAX
-	register_parisc_driver(&wax_driver);
-#endif
-}
+व्योम __init gsc_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_GSC_LASI
+	रेजिस्टर_parisc_driver(&lasi_driver);
+	रेजिस्टर_parisc_driver(&asp_driver);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_GSC_WAX
+	रेजिस्टर_parisc_driver(&wax_driver);
+#पूर्ण_अगर
+पूर्ण

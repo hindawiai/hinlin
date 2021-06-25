@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVBIOS_TIMING_H__
-#define __NVBIOS_TIMING_H__
-#include <subdev/bios/ramcfg.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVBIOS_TIMING_H__
+#घोषणा __NVBIOS_TIMING_H__
+#समावेश <subdev/bios/ramcfg.h>
 
-u32 nvbios_timingTe(struct nvkm_bios *,
+u32 nvbios_timingTe(काष्ठा nvkm_bios *,
 		    u8 *ver, u8 *hdr, u8 *cnt, u8 *len, u8 *snr, u8 *ssz);
-u32 nvbios_timingEe(struct nvkm_bios *, int idx,
+u32 nvbios_timingEe(काष्ठा nvkm_bios *, पूर्णांक idx,
 		    u8 *ver, u8 *hdr, u8 *cnt, u8 *len);
-u32 nvbios_timingEp(struct nvkm_bios *, int idx,
-		    u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_ramcfg *);
-#endif
+u32 nvbios_timingEp(काष्ठा nvkm_bios *, पूर्णांक idx,
+		    u8 *ver, u8 *hdr, u8 *cnt, u8 *len, काष्ठा nvbios_ramcfg *);
+#पूर्ण_अगर

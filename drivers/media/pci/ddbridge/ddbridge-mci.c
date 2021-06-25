@@ -1,151 +1,152 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * ddbridge-mci.c: Digital Devices microcode interface
+ * ddbridge-mci.c: Digital Devices microcode पूर्णांकerface
  *
  * Copyright (C) 2017-2018 Digital Devices GmbH
  *                         Ralph Metzler <rjkm@metzlerbros.de>
  *                         Marcus Metzler <mocm@metzlerbros.de>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * version 2 only, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include "ddbridge.h"
-#include "ddbridge-io.h"
-#include "ddbridge-mci.h"
+#समावेश "ddbridge.h"
+#समावेश "ddbridge-io.h"
+#समावेश "ddbridge-mci.h"
 
-static LIST_HEAD(mci_list);
+अटल LIST_HEAD(mci_list);
 
-static int mci_reset(struct mci *state)
-{
-	struct ddb_link *link = state->base->link;
+अटल पूर्णांक mci_reset(काष्ठा mci *state)
+अणु
+	काष्ठा ddb_link *link = state->base->link;
 	u32 status = 0;
-	u32 timeout = 40;
+	u32 समयout = 40;
 
-	ddblwritel(link, MCI_CONTROL_RESET, MCI_CONTROL);
-	ddblwritel(link, 0, MCI_CONTROL + 4); /* 1= no internal init */
+	ddblग_लिखोl(link, MCI_CONTROL_RESET, MCI_CONTROL);
+	ddblग_लिखोl(link, 0, MCI_CONTROL + 4); /* 1= no पूर्णांकernal init */
 	msleep(300);
-	ddblwritel(link, 0, MCI_CONTROL);
+	ddblग_लिखोl(link, 0, MCI_CONTROL);
 
-	while (1) {
-		status = ddblreadl(link, MCI_CONTROL);
-		if ((status & MCI_CONTROL_READY) == MCI_CONTROL_READY)
-			break;
-		if (--timeout == 0)
-			break;
+	जबतक (1) अणु
+		status = ddblपढ़ोl(link, MCI_CONTROL);
+		अगर ((status & MCI_CONTROL_READY) == MCI_CONTROL_READY)
+			अवरोध;
+		अगर (--समयout == 0)
+			अवरोध;
 		msleep(50);
-	}
-	if ((status & MCI_CONTROL_READY) == 0)
-		return -1;
-	if (link->ids.device == 0x0009)
-		ddblwritel(link, SX8_TSCONFIG_MODE_NORMAL, SX8_TSCONFIG);
-	return 0;
-}
+	पूर्ण
+	अगर ((status & MCI_CONTROL_READY) == 0)
+		वापस -1;
+	अगर (link->ids.device == 0x0009)
+		ddblग_लिखोl(link, SX8_TSCONFIG_MODE_NORMAL, SX8_TSCONFIG);
+	वापस 0;
+पूर्ण
 
-int ddb_mci_config(struct mci *state, u32 config)
-{
-	struct ddb_link *link = state->base->link;
+पूर्णांक ddb_mci_config(काष्ठा mci *state, u32 config)
+अणु
+	काष्ठा ddb_link *link = state->base->link;
 
-	if (link->ids.device != 0x0009)
-		return -EINVAL;
-	ddblwritel(link, config, SX8_TSCONFIG);
-	return 0;
-}
+	अगर (link->ids.device != 0x0009)
+		वापस -EINVAL;
+	ddblग_लिखोl(link, config, SX8_TSCONFIG);
+	वापस 0;
+पूर्ण
 
-static int _mci_cmd_unlocked(struct mci *state,
+अटल पूर्णांक _mci_cmd_unlocked(काष्ठा mci *state,
 			     u32 *cmd, u32 cmd_len,
 			     u32 *res, u32 res_len)
-{
-	struct ddb_link *link = state->base->link;
+अणु
+	काष्ठा ddb_link *link = state->base->link;
 	u32 i, val;
-	unsigned long stat;
+	अचिन्हित दीर्घ stat;
 
-	val = ddblreadl(link, MCI_CONTROL);
-	if (val & (MCI_CONTROL_RESET | MCI_CONTROL_START_COMMAND))
-		return -EIO;
-	if (cmd && cmd_len)
-		for (i = 0; i < cmd_len; i++)
-			ddblwritel(link, cmd[i], MCI_COMMAND + i * 4);
+	val = ddblपढ़ोl(link, MCI_CONTROL);
+	अगर (val & (MCI_CONTROL_RESET | MCI_CONTROL_START_COMMAND))
+		वापस -EIO;
+	अगर (cmd && cmd_len)
+		क्रम (i = 0; i < cmd_len; i++)
+			ddblग_लिखोl(link, cmd[i], MCI_COMMAND + i * 4);
 	val |= (MCI_CONTROL_START_COMMAND | MCI_CONTROL_ENABLE_DONE_INTERRUPT);
-	ddblwritel(link, val, MCI_CONTROL);
+	ddblग_लिखोl(link, val, MCI_CONTROL);
 
-	stat = wait_for_completion_timeout(&state->base->completion, HZ);
-	if (stat == 0) {
+	stat = रुको_क्रम_completion_समयout(&state->base->completion, HZ);
+	अगर (stat == 0) अणु
 		dev_warn(state->base->dev, "MCI-%d: MCI timeout\n", state->nr);
-		return -EIO;
-	}
-	if (res && res_len)
-		for (i = 0; i < res_len; i++)
-			res[i] = ddblreadl(link, MCI_RESULT + i * 4);
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	अगर (res && res_len)
+		क्रम (i = 0; i < res_len; i++)
+			res[i] = ddblपढ़ोl(link, MCI_RESULT + i * 4);
+	वापस 0;
+पूर्ण
 
-int ddb_mci_cmd(struct mci *state,
-		struct mci_command *command,
-		struct mci_result *result)
-{
-	int stat;
+पूर्णांक ddb_mci_cmd(काष्ठा mci *state,
+		काष्ठा mci_command *command,
+		काष्ठा mci_result *result)
+अणु
+	पूर्णांक stat;
 
 	mutex_lock(&state->base->mci_lock);
 	stat = _mci_cmd_unlocked(state,
-				 (u32 *)command, sizeof(*command) / sizeof(u32),
-				 (u32 *)result,	sizeof(*result) / sizeof(u32));
+				 (u32 *)command, माप(*command) / माप(u32),
+				 (u32 *)result,	माप(*result) / माप(u32));
 	mutex_unlock(&state->base->mci_lock);
-	return stat;
-}
+	वापस stat;
+पूर्ण
 
-static void mci_handler(void *priv)
-{
-	struct mci_base *base = (struct mci_base *)priv;
+अटल व्योम mci_handler(व्योम *priv)
+अणु
+	काष्ठा mci_base *base = (काष्ठा mci_base *)priv;
 
 	complete(&base->completion);
-}
+पूर्ण
 
-static struct mci_base *match_base(void *key)
-{
-	struct mci_base *p;
+अटल काष्ठा mci_base *match_base(व्योम *key)
+अणु
+	काष्ठा mci_base *p;
 
-	list_for_each_entry(p, &mci_list, mci_list)
-		if (p->key == key)
-			return p;
-	return NULL;
-}
+	list_क्रम_each_entry(p, &mci_list, mci_list)
+		अगर (p->key == key)
+			वापस p;
+	वापस शून्य;
+पूर्ण
 
-static int probe(struct mci *state)
-{
+अटल पूर्णांक probe(काष्ठा mci *state)
+अणु
 	mci_reset(state);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct dvb_frontend
-*ddb_mci_attach(struct ddb_input *input, struct mci_cfg *cfg, int nr,
-		int (**fn_set_input)(struct dvb_frontend *fe, int input))
-{
-	struct ddb_port *port = input->port;
-	struct ddb *dev = port->dev;
-	struct ddb_link *link = &dev->link[port->lnr];
-	struct mci_base *base;
-	struct mci *state;
-	void *key = cfg->type ? (void *)port : (void *)link;
+काष्ठा dvb_frontend
+*ddb_mci_attach(काष्ठा ddb_input *input, काष्ठा mci_cfg *cfg, पूर्णांक nr,
+		पूर्णांक (**fn_set_input)(काष्ठा dvb_frontend *fe, पूर्णांक input))
+अणु
+	काष्ठा ddb_port *port = input->port;
+	काष्ठा ddb *dev = port->dev;
+	काष्ठा ddb_link *link = &dev->link[port->lnr];
+	काष्ठा mci_base *base;
+	काष्ठा mci *state;
+	व्योम *key = cfg->type ? (व्योम *)port : (व्योम *)link;
 
 	state = kzalloc(cfg->state_size, GFP_KERNEL);
-	if (!state)
-		return NULL;
+	अगर (!state)
+		वापस शून्य;
 
 	base = match_base(key);
-	if (base) {
+	अगर (base) अणु
 		base->count++;
 		state->base = base;
-	} else {
+	पूर्ण अन्यथा अणु
 		base = kzalloc(cfg->base_size, GFP_KERNEL);
-		if (!base)
-			goto fail;
+		अगर (!base)
+			जाओ fail;
 		base->key = key;
 		base->count = 1;
 		base->link = link;
@@ -155,24 +156,24 @@ struct dvb_frontend
 		ddb_irq_set(dev, link->nr, 0, mci_handler, base);
 		init_completion(&base->completion);
 		state->base = base;
-		if (probe(state) < 0) {
-			kfree(base);
-			goto fail;
-		}
+		अगर (probe(state) < 0) अणु
+			kमुक्त(base);
+			जाओ fail;
+		पूर्ण
 		list_add(&base->mci_list, &mci_list);
-		if (cfg->base_init)
+		अगर (cfg->base_init)
 			cfg->base_init(base);
-	}
-	memcpy(&state->fe.ops, cfg->fe_ops, sizeof(struct dvb_frontend_ops));
+	पूर्ण
+	स_नकल(&state->fe.ops, cfg->fe_ops, माप(काष्ठा dvb_frontend_ops));
 	state->fe.demodulator_priv = state;
 	state->nr = nr;
 	*fn_set_input = cfg->set_input;
 	state->tuner = nr;
 	state->demod = nr;
-	if (cfg->init)
+	अगर (cfg->init)
 		cfg->init(state);
-	return &state->fe;
+	वापस &state->fe;
 fail:
-	kfree(state);
-	return NULL;
-}
+	kमुक्त(state);
+	वापस शून्य;
+पूर्ण

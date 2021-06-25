@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
  /*
- * USB Driver for ALi m5602 based webcams
+ * USB Driver क्रम ALi m5602 based webcams
  *
- * Copyright (C) 2008 Erik Andrén
+ * Copyright (C) 2008 Erik Andrथऊn
  * Copyright (C) 2007 Ilyes Gouta. Based on the m5603x Linux Driver Project.
  * Copyright (C) 2005 m5603x Linux Driver Project <m5602@x3ng.com.br>
  *
- * Portions of code to USB interface and ALi driver software,
+ * Portions of code to USB पूर्णांकerface and ALi driver software,
  * Copyright (c) 2006 Willem Duinker
- * v4l2 interface modeled after the V4L2 driver
- * for SN9C10x PC Camera Controllers
+ * v4l2 पूर्णांकerface modeled after the V4L2 driver
+ * क्रम SN9C10x PC Camera Controllers
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include "m5602_ov9650.h"
-#include "m5602_ov7660.h"
-#include "m5602_mt9m111.h"
-#include "m5602_po1030.h"
-#include "m5602_s5k83a.h"
-#include "m5602_s5k4aa.h"
+#समावेश "m5602_ov9650.h"
+#समावेश "m5602_ov7660.h"
+#समावेश "m5602_mt9m111.h"
+#समावेश "m5602_po1030.h"
+#समावेश "m5602_s5k83a.h"
+#समावेश "m5602_s5k4aa.h"
 
 /* Kernel module parameters */
-int force_sensor;
-static bool dump_bridge;
+पूर्णांक क्रमce_sensor;
+अटल bool dump_bridge;
 bool dump_sensor;
 
-static const struct usb_device_id m5602_table[] = {
-	{USB_DEVICE(0x0402, 0x5602)},
-	{}
-};
+अटल स्थिर काष्ठा usb_device_id m5602_table[] = अणु
+	अणुUSB_DEVICE(0x0402, 0x5602)पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, m5602_table);
 
-/* A skeleton used for sending messages to the sensor */
-static const unsigned char sensor_urb_skeleton[] = {
+/* A skeleton used क्रम sending messages to the sensor */
+अटल स्थिर अचिन्हित अक्षर sensor_urb_skeleton[] = अणु
 	0x23, M5602_XB_GPIO_EN_H, 0x81, 0x06,
 	0x23, M5602_XB_MISC_CTRL, 0x81, 0x80,
 	0x13, M5602_XB_I2C_DEV_ADDR, 0x81, 0x00,
 	0x13, M5602_XB_I2C_REG_ADDR, 0x81, 0x00,
 	0x13, M5602_XB_I2C_DATA, 0x81, 0x00,
 	0x13, M5602_XB_I2C_CTRL, 0x81, 0x11
-};
+पूर्ण;
 
-/* A skeleton used for sending messages to the m5602 bridge */
-static const unsigned char bridge_urb_skeleton[] = {
+/* A skeleton used क्रम sending messages to the m5602 bridge */
+अटल स्थिर अचिन्हित अक्षर bridge_urb_skeleton[] = अणु
 	0x13, 0x00, 0x81, 0x00
-};
+पूर्ण;
 
 /* Reads a byte from the m5602 */
-int m5602_read_bridge(struct sd *sd, const u8 address, u8 *i2c_data)
-{
-	int err;
-	struct gspca_dev *gspca_dev = (struct gspca_dev *) sd;
-	struct usb_device *udev = sd->gspca_dev.dev;
+पूर्णांक m5602_पढ़ो_bridge(काष्ठा sd *sd, स्थिर u8 address, u8 *i2c_data)
+अणु
+	पूर्णांक err;
+	काष्ठा gspca_dev *gspca_dev = (काष्ठा gspca_dev *) sd;
+	काष्ठा usb_device *udev = sd->gspca_dev.dev;
 	__u8 *buf = sd->gspca_dev.usb_buf;
 
 	err = usb_control_msg(udev, usb_rcvctrlpipe(udev, 0),
@@ -65,24 +66,24 @@ int m5602_read_bridge(struct sd *sd, const u8 address, u8 *i2c_data)
 	gspca_dbg(gspca_dev, D_CONF, "Reading bridge register 0x%x containing 0x%x\n",
 		  address, *i2c_data);
 
-	/* usb_control_msg(...) returns the number of bytes sent upon success,
-	mask that and return zero instead*/
-	return (err < 0) ? err : 0;
-}
+	/* usb_control_msg(...) वापसs the number of bytes sent upon success,
+	mask that and वापस zero instead*/
+	वापस (err < 0) ? err : 0;
+पूर्ण
 
 /* Writes a byte to the m5602 */
-int m5602_write_bridge(struct sd *sd, const u8 address, const u8 i2c_data)
-{
-	int err;
-	struct gspca_dev *gspca_dev = (struct gspca_dev *) sd;
-	struct usb_device *udev = sd->gspca_dev.dev;
+पूर्णांक m5602_ग_लिखो_bridge(काष्ठा sd *sd, स्थिर u8 address, स्थिर u8 i2c_data)
+अणु
+	पूर्णांक err;
+	काष्ठा gspca_dev *gspca_dev = (काष्ठा gspca_dev *) sd;
+	काष्ठा usb_device *udev = sd->gspca_dev.dev;
 	__u8 *buf = sd->gspca_dev.usb_buf;
 
 	gspca_dbg(gspca_dev, D_CONF, "Writing bridge register 0x%x with 0x%x\n",
 		  address, i2c_data);
 
-	memcpy(buf, bridge_urb_skeleton,
-	       sizeof(bridge_urb_skeleton));
+	स_नकल(buf, bridge_urb_skeleton,
+	       माप(bridge_urb_skeleton));
 	buf[1] = address;
 	buf[3] = i2c_data;
 
@@ -91,104 +92,104 @@ int m5602_write_bridge(struct sd *sd, const u8 address, const u8 i2c_data)
 				0x0000, buf,
 				4, M5602_URB_MSG_TIMEOUT);
 
-	/* usb_control_msg(...) returns the number of bytes sent upon success,
-	   mask that and return zero instead */
-	return (err < 0) ? err : 0;
-}
+	/* usb_control_msg(...) वापसs the number of bytes sent upon success,
+	   mask that and वापस zero instead */
+	वापस (err < 0) ? err : 0;
+पूर्ण
 
-static int m5602_wait_for_i2c(struct sd *sd)
-{
-	int err;
+अटल पूर्णांक m5602_रुको_क्रम_i2c(काष्ठा sd *sd)
+अणु
+	पूर्णांक err;
 	u8 data;
 
-	do {
-		err = m5602_read_bridge(sd, M5602_XB_I2C_STATUS, &data);
-	} while ((data & I2C_BUSY) && !err);
-	return err;
-}
+	करो अणु
+		err = m5602_पढ़ो_bridge(sd, M5602_XB_I2C_STATUS, &data);
+	पूर्ण जबतक ((data & I2C_BUSY) && !err);
+	वापस err;
+पूर्ण
 
-int m5602_read_sensor(struct sd *sd, const u8 address,
-		       u8 *i2c_data, const u8 len)
-{
-	int err, i;
-	struct gspca_dev *gspca_dev = (struct gspca_dev *) sd;
+पूर्णांक m5602_पढ़ो_sensor(काष्ठा sd *sd, स्थिर u8 address,
+		       u8 *i2c_data, स्थिर u8 len)
+अणु
+	पूर्णांक err, i;
+	काष्ठा gspca_dev *gspca_dev = (काष्ठा gspca_dev *) sd;
 
-	if (!len || len > sd->sensor->i2c_regW)
-		return -EINVAL;
+	अगर (!len || len > sd->sensor->i2c_regW)
+		वापस -EINVAL;
 
-	err = m5602_wait_for_i2c(sd);
-	if (err < 0)
-		return err;
+	err = m5602_रुको_क्रम_i2c(sd);
+	अगर (err < 0)
+		वापस err;
 
-	err = m5602_write_bridge(sd, M5602_XB_I2C_DEV_ADDR,
+	err = m5602_ग_लिखो_bridge(sd, M5602_XB_I2C_DEV_ADDR,
 				 sd->sensor->i2c_slave_id);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = m5602_write_bridge(sd, M5602_XB_I2C_REG_ADDR, address);
-	if (err < 0)
-		return err;
+	err = m5602_ग_लिखो_bridge(sd, M5602_XB_I2C_REG_ADDR, address);
+	अगर (err < 0)
+		वापस err;
 
-	/* Sensors with registers that are of only
-	   one byte width are differently read */
+	/* Sensors with रेजिस्टरs that are of only
+	   one byte width are dअगरferently पढ़ो */
 
 	/* FIXME: This works with the ov9650, but has issues with the po1030 */
-	if (sd->sensor->i2c_regW == 1) {
-		err = m5602_write_bridge(sd, M5602_XB_I2C_CTRL, 1);
-		if (err < 0)
-			return err;
+	अगर (sd->sensor->i2c_regW == 1) अणु
+		err = m5602_ग_लिखो_bridge(sd, M5602_XB_I2C_CTRL, 1);
+		अगर (err < 0)
+			वापस err;
 
-		err = m5602_write_bridge(sd, M5602_XB_I2C_CTRL, 0x08);
-	} else {
-		err = m5602_write_bridge(sd, M5602_XB_I2C_CTRL, 0x18 + len);
-	}
+		err = m5602_ग_लिखो_bridge(sd, M5602_XB_I2C_CTRL, 0x08);
+	पूर्ण अन्यथा अणु
+		err = m5602_ग_लिखो_bridge(sd, M5602_XB_I2C_CTRL, 0x18 + len);
+	पूर्ण
 
-	for (i = 0; (i < len) && !err; i++) {
-		err = m5602_wait_for_i2c(sd);
-		if (err < 0)
-			return err;
+	क्रम (i = 0; (i < len) && !err; i++) अणु
+		err = m5602_रुको_क्रम_i2c(sd);
+		अगर (err < 0)
+			वापस err;
 
-		err = m5602_read_bridge(sd, M5602_XB_I2C_DATA, &(i2c_data[i]));
+		err = m5602_पढ़ो_bridge(sd, M5602_XB_I2C_DATA, &(i2c_data[i]));
 
 		gspca_dbg(gspca_dev, D_CONF, "Reading sensor register 0x%x containing 0x%x\n",
 			  address, *i2c_data);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-int m5602_write_sensor(struct sd *sd, const u8 address,
-			u8 *i2c_data, const u8 len)
-{
-	int err, i;
+पूर्णांक m5602_ग_लिखो_sensor(काष्ठा sd *sd, स्थिर u8 address,
+			u8 *i2c_data, स्थिर u8 len)
+अणु
+	पूर्णांक err, i;
 	u8 *p;
-	struct gspca_dev *gspca_dev = (struct gspca_dev *) sd;
-	struct usb_device *udev = sd->gspca_dev.dev;
+	काष्ठा gspca_dev *gspca_dev = (काष्ठा gspca_dev *) sd;
+	काष्ठा usb_device *udev = sd->gspca_dev.dev;
 	__u8 *buf = sd->gspca_dev.usb_buf;
 
 	/* No sensor with a data width larger than 16 bits has yet been seen */
-	if (len > sd->sensor->i2c_regW || !len)
-		return -EINVAL;
+	अगर (len > sd->sensor->i2c_regW || !len)
+		वापस -EINVAL;
 
-	memcpy(buf, sensor_urb_skeleton,
-	       sizeof(sensor_urb_skeleton));
+	स_नकल(buf, sensor_urb_skeleton,
+	       माप(sensor_urb_skeleton));
 
 	buf[11] = sd->sensor->i2c_slave_id;
 	buf[15] = address;
 
-	/* Special case larger sensor writes */
+	/* Special हाल larger sensor ग_लिखोs */
 	p = buf + 16;
 
-	/* Copy a four byte write sequence for each byte to be written to */
-	for (i = 0; i < len; i++) {
-		memcpy(p, sensor_urb_skeleton + 16, 4);
+	/* Copy a four byte ग_लिखो sequence क्रम each byte to be written to */
+	क्रम (i = 0; i < len; i++) अणु
+		स_नकल(p, sensor_urb_skeleton + 16, 4);
 		p[3] = i2c_data[i];
 		p += 4;
 		gspca_dbg(gspca_dev, D_CONF, "Writing sensor register 0x%x with 0x%x\n",
 			  address, i2c_data[i]);
-	}
+	पूर्ण
 
 	/* Copy the tailer */
-	memcpy(p, sensor_urb_skeleton + 20, 4);
+	स_नकल(p, sensor_urb_skeleton + 20, 4);
 
 	/* Set the total length */
 	p[3] = 0x10 + len;
@@ -198,120 +199,120 @@ int m5602_write_sensor(struct sd *sd, const u8 address,
 			      0x0000, buf,
 			      20 + len * 4, M5602_URB_MSG_TIMEOUT);
 
-	return (err < 0) ? err : 0;
-}
+	वापस (err < 0) ? err : 0;
+पूर्ण
 
-/* Dump all the registers of the m5602 bridge,
-   unfortunately this breaks the camera until it's power cycled */
-static void m5602_dump_bridge(struct sd *sd)
-{
-	int i;
-	for (i = 0; i < 0x80; i++) {
-		unsigned char val = 0;
-		m5602_read_bridge(sd, i, &val);
+/* Dump all the रेजिस्टरs of the m5602 bridge,
+   unक्रमtunately this अवरोधs the camera until it's घातer cycled */
+अटल व्योम m5602_dump_bridge(काष्ठा sd *sd)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < 0x80; i++) अणु
+		अचिन्हित अक्षर val = 0;
+		m5602_पढ़ो_bridge(sd, i, &val);
 		pr_info("ALi m5602 address 0x%x contains 0x%x\n", i, val);
-	}
+	पूर्ण
 	pr_info("Warning: The ALi m5602 webcam probably won't work until it's power cycled\n");
-}
+पूर्ण
 
-static int m5602_probe_sensor(struct sd *sd)
-{
+अटल पूर्णांक m5602_probe_sensor(काष्ठा sd *sd)
+अणु
 	/* Try the po1030 */
 	sd->sensor = &po1030;
-	if (!sd->sensor->probe(sd))
-		return 0;
+	अगर (!sd->sensor->probe(sd))
+		वापस 0;
 
 	/* Try the mt9m111 sensor */
 	sd->sensor = &mt9m111;
-	if (!sd->sensor->probe(sd))
-		return 0;
+	अगर (!sd->sensor->probe(sd))
+		वापस 0;
 
 	/* Try the s5k4aa */
 	sd->sensor = &s5k4aa;
-	if (!sd->sensor->probe(sd))
-		return 0;
+	अगर (!sd->sensor->probe(sd))
+		वापस 0;
 
 	/* Try the ov9650 */
 	sd->sensor = &ov9650;
-	if (!sd->sensor->probe(sd))
-		return 0;
+	अगर (!sd->sensor->probe(sd))
+		वापस 0;
 
 	/* Try the ov7660 */
 	sd->sensor = &ov7660;
-	if (!sd->sensor->probe(sd))
-		return 0;
+	अगर (!sd->sensor->probe(sd))
+		वापस 0;
 
 	/* Try the s5k83a */
 	sd->sensor = &s5k83a;
-	if (!sd->sensor->probe(sd))
-		return 0;
+	अगर (!sd->sensor->probe(sd))
+		वापस 0;
 
 	/* More sensor probe function goes here */
 	pr_info("Failed to find a sensor\n");
-	sd->sensor = NULL;
-	return -ENODEV;
-}
+	sd->sensor = शून्य;
+	वापस -ENODEV;
+पूर्ण
 
-static int m5602_configure(struct gspca_dev *gspca_dev,
-			   const struct usb_device_id *id);
+अटल पूर्णांक m5602_configure(काष्ठा gspca_dev *gspca_dev,
+			   स्थिर काष्ठा usb_device_id *id);
 
-static int m5602_init(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int err;
+अटल पूर्णांक m5602_init(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक err;
 
 	gspca_dbg(gspca_dev, D_CONF, "Initializing ALi m5602 webcam\n");
 	/* Run the init sequence */
 	err = sd->sensor->init(sd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int m5602_init_controls(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक m5602_init_controls(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	if (!sd->sensor->init_controls)
-		return 0;
+	अगर (!sd->sensor->init_controls)
+		वापस 0;
 
-	return sd->sensor->init_controls(sd);
-}
+	वापस sd->sensor->init_controls(sd);
+पूर्ण
 
-static int m5602_start_transfer(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक m5602_start_transfer(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 	__u8 *buf = sd->gspca_dev.usb_buf;
-	int err;
+	पूर्णांक err;
 
 	/* Send start command to the camera */
-	const u8 buffer[4] = {0x13, 0xf9, 0x0f, 0x01};
+	स्थिर u8 buffer[4] = अणु0x13, 0xf9, 0x0f, 0x01पूर्ण;
 
-	if (sd->sensor->start)
+	अगर (sd->sensor->start)
 		sd->sensor->start(sd);
 
-	memcpy(buf, buffer, sizeof(buffer));
+	स_नकल(buf, buffer, माप(buffer));
 	err = usb_control_msg(gspca_dev->dev,
 			      usb_sndctrlpipe(gspca_dev->dev, 0),
 			      0x04, 0x40, 0x19, 0x0000, buf,
-			      sizeof(buffer), M5602_URB_MSG_TIMEOUT);
+			      माप(buffer), M5602_URB_MSG_TIMEOUT);
 
 	gspca_dbg(gspca_dev, D_STREAM, "Transfer started\n");
-	return (err < 0) ? err : 0;
-}
+	वापस (err < 0) ? err : 0;
+पूर्ण
 
-static void m5602_urb_complete(struct gspca_dev *gspca_dev,
-				u8 *data, int len)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल व्योम m5602_urb_complete(काष्ठा gspca_dev *gspca_dev,
+				u8 *data, पूर्णांक len)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	if (len < 6) {
+	अगर (len < 6) अणु
 		gspca_dbg(gspca_dev, D_PACK, "Packet is less than 6 bytes\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Frame delimiter: ff xx xx xx ff ff */
-	if (data[0] == 0xff && data[4] == 0xff && data[5] == 0xff &&
-	    data[2] != sd->frame_id) {
+	अगर (data[0] == 0xff && data[4] == 0xff && data[5] == 0xff &&
+	    data[2] != sd->frame_id) अणु
 		gspca_dbg(gspca_dev, D_FRAM, "Frame delimiter detected\n");
 		sd->frame_id = data[2];
 
@@ -319,9 +320,9 @@ static void m5602_urb_complete(struct gspca_dev *gspca_dev,
 		data += 6;
 		len -= 6;
 
-		/* Complete the last frame (if any) */
+		/* Complete the last frame (अगर any) */
 		gspca_frame_add(gspca_dev, LAST_PACKET,
-				NULL, 0);
+				शून्य, 0);
 		sd->frame_count++;
 
 		/* Create a new frame */
@@ -330,39 +331,39 @@ static void m5602_urb_complete(struct gspca_dev *gspca_dev,
 		gspca_dbg(gspca_dev, D_FRAM, "Starting new frame %d\n",
 			  sd->frame_count);
 
-	} else {
-		int cur_frame_len;
+	पूर्ण अन्यथा अणु
+		पूर्णांक cur_frame_len;
 
 		cur_frame_len = gspca_dev->image_len;
 		/* Remove urb header */
 		data += 4;
 		len -= 4;
 
-		if (cur_frame_len + len <= gspca_dev->pixfmt.sizeimage) {
+		अगर (cur_frame_len + len <= gspca_dev->pixfmt.sizeimage) अणु
 			gspca_dbg(gspca_dev, D_FRAM, "Continuing frame %d copying %d bytes\n",
 				  sd->frame_count, len);
 
 			gspca_frame_add(gspca_dev, INTER_PACKET,
 					data, len);
-		} else {
-			/* Add the remaining data up to frame size */
+		पूर्ण अन्यथा अणु
+			/* Add the reमुख्यing data up to frame size */
 			gspca_frame_add(gspca_dev, INTER_PACKET, data,
 				gspca_dev->pixfmt.sizeimage - cur_frame_len);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void m5602_stop_transfer(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल व्योम m5602_stop_transfer(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	/* Run the sensor specific end transfer sequence */
-	if (sd->sensor->stop)
+	/* Run the sensor specअगरic end transfer sequence */
+	अगर (sd->sensor->stop)
 		sd->sensor->stop(sd);
-}
+पूर्ण
 
 /* sub-driver description */
-static const struct sd_desc sd_desc = {
+अटल स्थिर काष्ठा sd_desc sd_desc = अणु
 	.name		= MODULE_NAME,
 	.config		= m5602_configure,
 	.init		= m5602_init,
@@ -370,73 +371,73 @@ static const struct sd_desc sd_desc = {
 	.start		= m5602_start_transfer,
 	.stopN		= m5602_stop_transfer,
 	.pkt_scan	= m5602_urb_complete
-};
+पूर्ण;
 
-/* this function is called at probe time */
-static int m5602_configure(struct gspca_dev *gspca_dev,
-			   const struct usb_device_id *id)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	struct cam *cam;
-	int err;
+/* this function is called at probe समय */
+अटल पूर्णांक m5602_configure(काष्ठा gspca_dev *gspca_dev,
+			   स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	काष्ठा cam *cam;
+	पूर्णांक err;
 
 	cam = &gspca_dev->cam;
 
-	if (dump_bridge)
+	अगर (dump_bridge)
 		m5602_dump_bridge(sd);
 
 	/* Probe sensor */
 	err = m5602_probe_sensor(sd);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 
 fail:
 	gspca_err(gspca_dev, "ALi m5602 webcam failed\n");
-	cam->cam_mode = NULL;
+	cam->cam_mode = शून्य;
 	cam->nmodes = 0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int m5602_probe(struct usb_interface *intf,
-		       const struct usb_device_id *id)
-{
-	return gspca_dev_probe(intf, id, &sd_desc, sizeof(struct sd),
+अटल पूर्णांक m5602_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		       स्थिर काष्ठा usb_device_id *id)
+अणु
+	वापस gspca_dev_probe(पूर्णांकf, id, &sd_desc, माप(काष्ठा sd),
 			       THIS_MODULE);
-}
+पूर्ण
 
-static void m5602_disconnect(struct usb_interface *intf)
-{
-	struct gspca_dev *gspca_dev = usb_get_intfdata(intf);
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल व्योम m5602_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा gspca_dev *gspca_dev = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	if (sd->sensor->disconnect)
+	अगर (sd->sensor->disconnect)
 		sd->sensor->disconnect(sd);
 
-	gspca_disconnect(intf);
-}
+	gspca_disconnect(पूर्णांकf);
+पूर्ण
 
-static struct usb_driver sd_driver = {
+अटल काष्ठा usb_driver sd_driver = अणु
 	.name = MODULE_NAME,
 	.id_table = m5602_table,
 	.probe = m5602_probe,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend = gspca_suspend,
 	.resume = gspca_resume,
 	.reset_resume = gspca_resume,
-#endif
+#पूर्ण_अगर
 	.disconnect = m5602_disconnect
-};
+पूर्ण;
 
 module_usb_driver(sd_driver);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
-module_param(force_sensor, int, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(force_sensor,
+module_param(क्रमce_sensor, पूर्णांक, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(क्रमce_sensor,
 		"forces detection of a sensor, 1 = OV9650, 2 = S5K83A, 3 = S5K4AA, 4 = MT9M111, 5 = PO1030, 6 = OV7660");
 
 module_param(dump_bridge, bool, S_IRUGO | S_IWUSR);

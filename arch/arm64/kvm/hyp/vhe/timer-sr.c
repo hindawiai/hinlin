@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012-2015 - ARM Ltd
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
-#include <asm/kvm_hyp.h>
+#समावेश <यंत्र/kvm_hyp.h>
 
-void __kvm_timer_set_cntvoff(u64 cntvoff)
-{
-	write_sysreg(cntvoff, cntvoff_el2);
-}
+व्योम __kvm_समयr_set_cntvoff(u64 cntvoff)
+अणु
+	ग_लिखो_sysreg(cntvoff, cntvoff_el2);
+पूर्ण

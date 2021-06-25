@@ -1,570 +1,571 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (C) 2018 MOSER-BAER AG
 //
 
-#define pr_fmt(fmt) "InES_PTP: " fmt
+#घोषणा pr_fmt(fmt) "InES_PTP: " fmt
 
-#include <linux/ethtool.h>
-#include <linux/export.h>
-#include <linux/if_vlan.h>
-#include <linux/mii_timestamper.h>
-#include <linux/module.h>
-#include <linux/net_tstamp.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/phy.h>
-#include <linux/platform_device.h>
-#include <linux/ptp_classify.h>
-#include <linux/ptp_clock_kernel.h>
-#include <linux/stddef.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/export.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/mii_बारtamper.h>
+#समावेश <linux/module.h>
+#समावेश <linux/net_tstamp.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ptp_classअगरy.h>
+#समावेश <linux/ptp_घड़ी_kernel.h>
+#समावेश <linux/मानकघोष.स>
 
 MODULE_DESCRIPTION("Driver for the ZHAW InES PTP time stamping IP core");
 MODULE_AUTHOR("Richard Cochran <richardcochran@gmail.com>");
 MODULE_VERSION("1.0");
 MODULE_LICENSE("GPL");
 
-/* GLOBAL register */
-#define MCAST_MAC_SELECT_SHIFT	2
-#define MCAST_MAC_SELECT_MASK	0x3
-#define IO_RESET		BIT(1)
-#define PTP_RESET		BIT(0)
+/* GLOBAL रेजिस्टर */
+#घोषणा MCAST_MAC_SELECT_SHIFT	2
+#घोषणा MCAST_MAC_SELECT_MASK	0x3
+#घोषणा IO_RESET		BIT(1)
+#घोषणा PTP_RESET		BIT(0)
 
-/* VERSION register */
-#define IF_MAJOR_VER_SHIFT	12
-#define IF_MAJOR_VER_MASK	0xf
-#define IF_MINOR_VER_SHIFT	8
-#define IF_MINOR_VER_MASK	0xf
-#define FPGA_MAJOR_VER_SHIFT	4
-#define FPGA_MAJOR_VER_MASK	0xf
-#define FPGA_MINOR_VER_SHIFT	0
-#define FPGA_MINOR_VER_MASK	0xf
+/* VERSION रेजिस्टर */
+#घोषणा IF_MAJOR_VER_SHIFT	12
+#घोषणा IF_MAJOR_VER_MASK	0xf
+#घोषणा IF_MINOR_VER_SHIFT	8
+#घोषणा IF_MINOR_VER_MASK	0xf
+#घोषणा FPGA_MAJOR_VER_SHIFT	4
+#घोषणा FPGA_MAJOR_VER_MASK	0xf
+#घोषणा FPGA_MINOR_VER_SHIFT	0
+#घोषणा FPGA_MINOR_VER_MASK	0xf
 
-/* INT_STAT register */
-#define RX_INTR_STATUS_3	BIT(5)
-#define RX_INTR_STATUS_2	BIT(4)
-#define RX_INTR_STATUS_1	BIT(3)
-#define TX_INTR_STATUS_3	BIT(2)
-#define TX_INTR_STATUS_2	BIT(1)
-#define TX_INTR_STATUS_1	BIT(0)
+/* INT_STAT रेजिस्टर */
+#घोषणा RX_INTR_STATUS_3	BIT(5)
+#घोषणा RX_INTR_STATUS_2	BIT(4)
+#घोषणा RX_INTR_STATUS_1	BIT(3)
+#घोषणा TX_INTR_STATUS_3	BIT(2)
+#घोषणा TX_INTR_STATUS_2	BIT(1)
+#घोषणा TX_INTR_STATUS_1	BIT(0)
 
-/* INT_MSK register */
-#define RX_INTR_MASK_3		BIT(5)
-#define RX_INTR_MASK_2		BIT(4)
-#define RX_INTR_MASK_1		BIT(3)
-#define TX_INTR_MASK_3		BIT(2)
-#define TX_INTR_MASK_2		BIT(1)
-#define TX_INTR_MASK_1		BIT(0)
+/* INT_MSK रेजिस्टर */
+#घोषणा RX_INTR_MASK_3		BIT(5)
+#घोषणा RX_INTR_MASK_2		BIT(4)
+#घोषणा RX_INTR_MASK_1		BIT(3)
+#घोषणा TX_INTR_MASK_3		BIT(2)
+#घोषणा TX_INTR_MASK_2		BIT(1)
+#घोषणा TX_INTR_MASK_1		BIT(0)
 
-/* BUF_STAT register */
-#define RX_FIFO_NE_3		BIT(5)
-#define RX_FIFO_NE_2		BIT(4)
-#define RX_FIFO_NE_1		BIT(3)
-#define TX_FIFO_NE_3		BIT(2)
-#define TX_FIFO_NE_2		BIT(1)
-#define TX_FIFO_NE_1		BIT(0)
+/* BUF_STAT रेजिस्टर */
+#घोषणा RX_FIFO_NE_3		BIT(5)
+#घोषणा RX_FIFO_NE_2		BIT(4)
+#घोषणा RX_FIFO_NE_1		BIT(3)
+#घोषणा TX_FIFO_NE_3		BIT(2)
+#घोषणा TX_FIFO_NE_2		BIT(1)
+#घोषणा TX_FIFO_NE_1		BIT(0)
 
-/* PORT_CONF register */
-#define CM_ONE_STEP		BIT(6)
-#define PHY_SPEED_SHIFT		4
-#define PHY_SPEED_MASK		0x3
-#define P2P_DELAY_WR_POS_SHIFT	2
-#define P2P_DELAY_WR_POS_MASK	0x3
-#define PTP_MODE_SHIFT		0
-#define PTP_MODE_MASK		0x3
+/* PORT_CONF रेजिस्टर */
+#घोषणा CM_ONE_STEP		BIT(6)
+#घोषणा PHY_SPEED_SHIFT		4
+#घोषणा PHY_SPEED_MASK		0x3
+#घोषणा P2P_DELAY_WR_POS_SHIFT	2
+#घोषणा P2P_DELAY_WR_POS_MASK	0x3
+#घोषणा PTP_MODE_SHIFT		0
+#घोषणा PTP_MODE_MASK		0x3
 
-/* TS_STAT_TX register */
-#define TS_ENABLE		BIT(15)
-#define DATA_READ_POS_SHIFT	8
-#define DATA_READ_POS_MASK	0x1f
-#define DISCARDED_EVENTS_SHIFT	4
-#define DISCARDED_EVENTS_MASK	0xf
+/* TS_STAT_TX रेजिस्टर */
+#घोषणा TS_ENABLE		BIT(15)
+#घोषणा DATA_READ_POS_SHIFT	8
+#घोषणा DATA_READ_POS_MASK	0x1f
+#घोषणा DISCARDED_EVENTS_SHIFT	4
+#घोषणा DISCARDED_EVENTS_MASK	0xf
 
-#define INES_N_PORTS		3
-#define INES_REGISTER_SIZE	0x80
-#define INES_PORT_OFFSET	0x20
-#define INES_PORT_SIZE		0x20
-#define INES_FIFO_DEPTH		90
-#define INES_MAX_EVENTS		100
+#घोषणा INES_N_PORTS		3
+#घोषणा INES_REGISTER_SIZE	0x80
+#घोषणा INES_PORT_OFFSET	0x20
+#घोषणा INES_PORT_SIZE		0x20
+#घोषणा INES_FIFO_DEPTH		90
+#घोषणा INES_MAX_EVENTS		100
 
-#define BC_PTP_V1		0
-#define BC_PTP_V2		1
-#define TC_E2E_PTP_V2		2
-#define TC_P2P_PTP_V2		3
+#घोषणा BC_PTP_V1		0
+#घोषणा BC_PTP_V2		1
+#घोषणा TC_E2E_PTP_V2		2
+#घोषणा TC_P2P_PTP_V2		3
 
-#define PHY_SPEED_10		0
-#define PHY_SPEED_100		1
-#define PHY_SPEED_1000		2
+#घोषणा PHY_SPEED_10		0
+#घोषणा PHY_SPEED_100		1
+#घोषणा PHY_SPEED_1000		2
 
-#define PORT_CONF \
+#घोषणा PORT_CONF \
 	((PHY_SPEED_1000 << PHY_SPEED_SHIFT) | (BC_PTP_V2 << PTP_MODE_SHIFT))
 
-#define ines_read32(s, r)	__raw_readl((void __iomem *)&s->regs->r)
-#define ines_write32(s, v, r)	__raw_writel(v, (void __iomem *)&s->regs->r)
+#घोषणा ines_पढ़ो32(s, r)	__raw_पढ़ोl((व्योम __iomem *)&s->regs->r)
+#घोषणा ines_ग_लिखो32(s, v, r)	__raw_ग_लिखोl(v, (व्योम __iomem *)&s->regs->r)
 
-#define MESSAGE_TYPE_SYNC		1
-#define MESSAGE_TYPE_P_DELAY_REQ	2
-#define MESSAGE_TYPE_P_DELAY_RESP	3
-#define MESSAGE_TYPE_DELAY_REQ		4
+#घोषणा MESSAGE_TYPE_SYNC		1
+#घोषणा MESSAGE_TYPE_P_DELAY_REQ	2
+#घोषणा MESSAGE_TYPE_P_DELAY_RESP	3
+#घोषणा MESSAGE_TYPE_DELAY_REQ		4
 
-static LIST_HEAD(ines_clocks);
-static DEFINE_MUTEX(ines_clocks_lock);
+अटल LIST_HEAD(ines_घड़ीs);
+अटल DEFINE_MUTEX(ines_घड़ीs_lock);
 
-struct ines_global_regs {
+काष्ठा ines_global_regs अणु
 	u32 id;
 	u32 test;
 	u32 global;
 	u32 version;
 	u32 test2;
-	u32 int_stat;
-	u32 int_msk;
+	u32 पूर्णांक_stat;
+	u32 पूर्णांक_msk;
 	u32 buf_stat;
-};
+पूर्ण;
 
-struct ines_port_registers {
+काष्ठा ines_port_रेजिस्टरs अणु
 	u32 port_conf;
 	u32 p_delay;
 	u32 ts_stat_tx;
 	u32 ts_stat_rx;
 	u32 ts_tx;
 	u32 ts_rx;
-};
+पूर्ण;
 
-struct ines_timestamp {
-	struct list_head list;
-	unsigned long	tmo;
+काष्ठा ines_बारtamp अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ	पंचांगo;
 	u16		tag;
 	u64		sec;
 	u64		nsec;
 	u64		clkid;
 	u16		portnum;
 	u16		seqid;
-};
+पूर्ण;
 
-struct ines_port {
-	struct ines_port_registers	*regs;
-	struct mii_timestamper		mii_ts;
-	struct ines_clock		*clock;
+काष्ठा ines_port अणु
+	काष्ठा ines_port_रेजिस्टरs	*regs;
+	काष्ठा mii_बारtamper		mii_ts;
+	काष्ठा ines_घड़ी		*घड़ी;
 	bool				rxts_enabled;
 	bool				txts_enabled;
-	unsigned int			index;
-	struct delayed_work		ts_work;
+	अचिन्हित पूर्णांक			index;
+	काष्ठा delayed_work		ts_work;
 	/* lock protects event list and tx_skb */
 	spinlock_t			lock;
-	struct sk_buff			*tx_skb;
-	struct list_head		events;
-	struct list_head		pool;
-	struct ines_timestamp		pool_data[INES_MAX_EVENTS];
-};
+	काष्ठा sk_buff			*tx_skb;
+	काष्ठा list_head		events;
+	काष्ठा list_head		pool;
+	काष्ठा ines_बारtamp		pool_data[INES_MAX_EVENTS];
+पूर्ण;
 
-struct ines_clock {
-	struct ines_port		port[INES_N_PORTS];
-	struct ines_global_regs __iomem	*regs;
-	void __iomem			*base;
-	struct device_node		*node;
-	struct device			*dev;
-	struct list_head		list;
-};
+काष्ठा ines_घड़ी अणु
+	काष्ठा ines_port		port[INES_N_PORTS];
+	काष्ठा ines_global_regs __iomem	*regs;
+	व्योम __iomem			*base;
+	काष्ठा device_node		*node;
+	काष्ठा device			*dev;
+	काष्ठा list_head		list;
+पूर्ण;
 
-static bool ines_match(struct sk_buff *skb, unsigned int ptp_class,
-		       struct ines_timestamp *ts, struct device *dev);
-static int ines_rxfifo_read(struct ines_port *port);
-static u64 ines_rxts64(struct ines_port *port, unsigned int words);
-static bool ines_timestamp_expired(struct ines_timestamp *ts);
-static u64 ines_txts64(struct ines_port *port, unsigned int words);
-static void ines_txtstamp_work(struct work_struct *work);
-static bool is_sync_pdelay_resp(struct sk_buff *skb, int type);
-static u8 tag_to_msgtype(u8 tag);
+अटल bool ines_match(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक ptp_class,
+		       काष्ठा ines_बारtamp *ts, काष्ठा device *dev);
+अटल पूर्णांक ines_rxfअगरo_पढ़ो(काष्ठा ines_port *port);
+अटल u64 ines_rxts64(काष्ठा ines_port *port, अचिन्हित पूर्णांक words);
+अटल bool ines_बारtamp_expired(काष्ठा ines_बारtamp *ts);
+अटल u64 ines_txts64(काष्ठा ines_port *port, अचिन्हित पूर्णांक words);
+अटल व्योम ines_txtstamp_work(काष्ठा work_काष्ठा *work);
+अटल bool is_sync_pdelay_resp(काष्ठा sk_buff *skb, पूर्णांक type);
+अटल u8 tag_to_msgtype(u8 tag);
 
-static void ines_clock_cleanup(struct ines_clock *clock)
-{
-	struct ines_port *port;
-	int i;
+अटल व्योम ines_घड़ी_cleanup(काष्ठा ines_घड़ी *घड़ी)
+अणु
+	काष्ठा ines_port *port;
+	पूर्णांक i;
 
-	for (i = 0; i < INES_N_PORTS; i++) {
-		port = &clock->port[i];
+	क्रम (i = 0; i < INES_N_PORTS; i++) अणु
+		port = &घड़ी->port[i];
 		cancel_delayed_work_sync(&port->ts_work);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ines_clock_init(struct ines_clock *clock, struct device *device,
-			   void __iomem *addr)
-{
-	struct device_node *node = device->of_node;
-	unsigned long port_addr;
-	struct ines_port *port;
-	int i, j;
+अटल पूर्णांक ines_घड़ी_init(काष्ठा ines_घड़ी *घड़ी, काष्ठा device *device,
+			   व्योम __iomem *addr)
+अणु
+	काष्ठा device_node *node = device->of_node;
+	अचिन्हित दीर्घ port_addr;
+	काष्ठा ines_port *port;
+	पूर्णांक i, j;
 
-	INIT_LIST_HEAD(&clock->list);
-	clock->node = node;
-	clock->dev  = device;
-	clock->base = addr;
-	clock->regs = clock->base;
+	INIT_LIST_HEAD(&घड़ी->list);
+	घड़ी->node = node;
+	घड़ी->dev  = device;
+	घड़ी->base = addr;
+	घड़ी->regs = घड़ी->base;
 
-	for (i = 0; i < INES_N_PORTS; i++) {
-		port = &clock->port[i];
-		port_addr = (unsigned long) clock->base +
+	क्रम (i = 0; i < INES_N_PORTS; i++) अणु
+		port = &घड़ी->port[i];
+		port_addr = (अचिन्हित दीर्घ) घड़ी->base +
 			INES_PORT_OFFSET + i * INES_PORT_SIZE;
-		port->regs = (struct ines_port_registers *) port_addr;
-		port->clock = clock;
+		port->regs = (काष्ठा ines_port_रेजिस्टरs *) port_addr;
+		port->घड़ी = घड़ी;
 		port->index = i;
 		INIT_DELAYED_WORK(&port->ts_work, ines_txtstamp_work);
 		spin_lock_init(&port->lock);
 		INIT_LIST_HEAD(&port->events);
 		INIT_LIST_HEAD(&port->pool);
-		for (j = 0; j < INES_MAX_EVENTS; j++)
+		क्रम (j = 0; j < INES_MAX_EVENTS; j++)
 			list_add(&port->pool_data[j].list, &port->pool);
-	}
+	पूर्ण
 
-	ines_write32(clock, 0xBEEF, test);
-	ines_write32(clock, 0xBEEF, test2);
+	ines_ग_लिखो32(घड़ी, 0xBEEF, test);
+	ines_ग_लिखो32(घड़ी, 0xBEEF, test2);
 
-	dev_dbg(device, "ID      0x%x\n", ines_read32(clock, id));
-	dev_dbg(device, "TEST    0x%x\n", ines_read32(clock, test));
-	dev_dbg(device, "VERSION 0x%x\n", ines_read32(clock, version));
-	dev_dbg(device, "TEST2   0x%x\n", ines_read32(clock, test2));
+	dev_dbg(device, "ID      0x%x\n", ines_पढ़ो32(घड़ी, id));
+	dev_dbg(device, "TEST    0x%x\n", ines_पढ़ो32(घड़ी, test));
+	dev_dbg(device, "VERSION 0x%x\n", ines_पढ़ो32(घड़ी, version));
+	dev_dbg(device, "TEST2   0x%x\n", ines_पढ़ो32(घड़ी, test2));
 
-	for (i = 0; i < INES_N_PORTS; i++) {
-		port = &clock->port[i];
-		ines_write32(port, PORT_CONF, port_conf);
-	}
+	क्रम (i = 0; i < INES_N_PORTS; i++) अणु
+		port = &घड़ी->port[i];
+		ines_ग_लिखो32(port, PORT_CONF, port_conf);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct ines_port *ines_find_port(struct device_node *node, u32 index)
-{
-	struct ines_port *port = NULL;
-	struct ines_clock *clock;
-	struct list_head *this;
+अटल काष्ठा ines_port *ines_find_port(काष्ठा device_node *node, u32 index)
+अणु
+	काष्ठा ines_port *port = शून्य;
+	काष्ठा ines_घड़ी *घड़ी;
+	काष्ठा list_head *this;
 
-	mutex_lock(&ines_clocks_lock);
-	list_for_each(this, &ines_clocks) {
-		clock = list_entry(this, struct ines_clock, list);
-		if (clock->node == node) {
-			port = &clock->port[index];
-			break;
-		}
-	}
-	mutex_unlock(&ines_clocks_lock);
-	return port;
-}
+	mutex_lock(&ines_घड़ीs_lock);
+	list_क्रम_each(this, &ines_घड़ीs) अणु
+		घड़ी = list_entry(this, काष्ठा ines_घड़ी, list);
+		अगर (घड़ी->node == node) अणु
+			port = &घड़ी->port[index];
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	mutex_unlock(&ines_घड़ीs_lock);
+	वापस port;
+पूर्ण
 
-static u64 ines_find_rxts(struct ines_port *port, struct sk_buff *skb, int type)
-{
-	struct list_head *this, *next;
-	struct ines_timestamp *ts;
-	unsigned long flags;
+अटल u64 ines_find_rxts(काष्ठा ines_port *port, काष्ठा sk_buff *skb, पूर्णांक type)
+अणु
+	काष्ठा list_head *this, *next;
+	काष्ठा ines_बारtamp *ts;
+	अचिन्हित दीर्घ flags;
 	u64 ns = 0;
 
-	if (type == PTP_CLASS_NONE)
-		return 0;
+	अगर (type == PTP_CLASS_NONE)
+		वापस 0;
 
 	spin_lock_irqsave(&port->lock, flags);
-	ines_rxfifo_read(port);
-	list_for_each_safe(this, next, &port->events) {
-		ts = list_entry(this, struct ines_timestamp, list);
-		if (ines_timestamp_expired(ts)) {
+	ines_rxfअगरo_पढ़ो(port);
+	list_क्रम_each_safe(this, next, &port->events) अणु
+		ts = list_entry(this, काष्ठा ines_बारtamp, list);
+		अगर (ines_बारtamp_expired(ts)) अणु
 			list_del_init(&ts->list);
 			list_add(&ts->list, &port->pool);
-			continue;
-		}
-		if (ines_match(skb, type, ts, port->clock->dev)) {
+			जारी;
+		पूर्ण
+		अगर (ines_match(skb, type, ts, port->घड़ी->dev)) अणु
 			ns = ts->sec * 1000000000ULL + ts->nsec;
 			list_del_init(&ts->list);
 			list_add(&ts->list, &port->pool);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
-static u64 ines_find_txts(struct ines_port *port, struct sk_buff *skb)
-{
-	unsigned int class = ptp_classify_raw(skb), i;
+अटल u64 ines_find_txts(काष्ठा ines_port *port, काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक class = ptp_classअगरy_raw(skb), i;
 	u32 data_rd_pos, buf_stat, mask, ts_stat_tx;
-	struct ines_timestamp ts;
-	unsigned long flags;
+	काष्ठा ines_बारtamp ts;
+	अचिन्हित दीर्घ flags;
 	u64 ns = 0;
 
 	mask = TX_FIFO_NE_1 << port->index;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	for (i = 0; i < INES_FIFO_DEPTH; i++) {
+	क्रम (i = 0; i < INES_FIFO_DEPTH; i++) अणु
 
-		buf_stat = ines_read32(port->clock, buf_stat);
-		if (!(buf_stat & mask)) {
-			dev_dbg(port->clock->dev,
+		buf_stat = ines_पढ़ो32(port->घड़ी, buf_stat);
+		अगर (!(buf_stat & mask)) अणु
+			dev_dbg(port->घड़ी->dev,
 				  "Tx timestamp FIFO unexpectedly empty\n");
-			break;
-		}
-		ts_stat_tx = ines_read32(port, ts_stat_tx);
+			अवरोध;
+		पूर्ण
+		ts_stat_tx = ines_पढ़ो32(port, ts_stat_tx);
 		data_rd_pos = (ts_stat_tx >> DATA_READ_POS_SHIFT) &
 			DATA_READ_POS_MASK;
-		if (data_rd_pos) {
-			dev_err(port->clock->dev,
+		अगर (data_rd_pos) अणु
+			dev_err(port->घड़ी->dev,
 				"unexpected Tx read pos %u\n", data_rd_pos);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ts.tag     = ines_read32(port, ts_tx);
+		ts.tag     = ines_पढ़ो32(port, ts_tx);
 		ts.sec     = ines_txts64(port, 3);
 		ts.nsec    = ines_txts64(port, 2);
 		ts.clkid   = ines_txts64(port, 4);
-		ts.portnum = ines_read32(port, ts_tx);
-		ts.seqid   = ines_read32(port, ts_tx);
+		ts.portnum = ines_पढ़ो32(port, ts_tx);
+		ts.seqid   = ines_पढ़ो32(port, ts_tx);
 
-		if (ines_match(skb, class, &ts, port->clock->dev)) {
+		अगर (ines_match(skb, class, &ts, port->घड़ी->dev)) अणु
 			ns = ts.sec * 1000000000ULL + ts.nsec;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&port->lock, flags);
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
-static int ines_hwtstamp(struct mii_timestamper *mii_ts, struct ifreq *ifr)
-{
-	struct ines_port *port = container_of(mii_ts, struct ines_port, mii_ts);
+अटल पूर्णांक ines_hwtstamp(काष्ठा mii_बारtamper *mii_ts, काष्ठा अगरreq *अगरr)
+अणु
+	काष्ठा ines_port *port = container_of(mii_ts, काष्ठा ines_port, mii_ts);
 	u32 cm_one_step = 0, port_conf, ts_stat_rx, ts_stat_tx;
-	struct hwtstamp_config cfg;
-	unsigned long flags;
+	काष्ठा hwtstamp_config cfg;
+	अचिन्हित दीर्घ flags;
 
-	if (copy_from_user(&cfg, ifr->ifr_data, sizeof(cfg)))
-		return -EFAULT;
+	अगर (copy_from_user(&cfg, अगरr->अगरr_data, माप(cfg)))
+		वापस -EFAULT;
 
-	/* reserved for future extensions */
-	if (cfg.flags)
-		return -EINVAL;
+	/* reserved क्रम future extensions */
+	अगर (cfg.flags)
+		वापस -EINVAL;
 
-	switch (cfg.tx_type) {
-	case HWTSTAMP_TX_OFF:
+	चयन (cfg.tx_type) अणु
+	हाल HWTSTAMP_TX_OFF:
 		ts_stat_tx = 0;
-		break;
-	case HWTSTAMP_TX_ON:
+		अवरोध;
+	हाल HWTSTAMP_TX_ON:
 		ts_stat_tx = TS_ENABLE;
-		break;
-	case HWTSTAMP_TX_ONESTEP_P2P:
+		अवरोध;
+	हाल HWTSTAMP_TX_ONESTEP_P2P:
 		ts_stat_tx = TS_ENABLE;
 		cm_one_step = CM_ONE_STEP;
-		break;
-	default:
-		return -ERANGE;
-	}
+		अवरोध;
+	शेष:
+		वापस -दुस्फल;
+	पूर्ण
 
-	switch (cfg.rx_filter) {
-	case HWTSTAMP_FILTER_NONE:
+	चयन (cfg.rx_filter) अणु
+	हाल HWTSTAMP_FILTER_NONE:
 		ts_stat_rx = 0;
-		break;
-	case HWTSTAMP_FILTER_ALL:
-	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
-	case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
-	case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
-		return -ERANGE;
-	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
-	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
-	case HWTSTAMP_FILTER_PTP_V2_EVENT:
-	case HWTSTAMP_FILTER_PTP_V2_SYNC:
-	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+		अवरोध;
+	हाल HWTSTAMP_FILTER_ALL:
+	हाल HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+	हाल HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+	हाल HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+		वापस -दुस्फल;
+	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
+	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
+	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
 		ts_stat_rx = TS_ENABLE;
 		cfg.rx_filter = HWTSTAMP_FILTER_PTP_V2_EVENT;
-		break;
-	default:
-		return -ERANGE;
-	}
+		अवरोध;
+	शेष:
+		वापस -दुस्फल;
+	पूर्ण
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	port_conf = ines_read32(port, port_conf);
+	port_conf = ines_पढ़ो32(port, port_conf);
 	port_conf &= ~CM_ONE_STEP;
 	port_conf |= cm_one_step;
 
-	ines_write32(port, port_conf, port_conf);
-	ines_write32(port, ts_stat_rx, ts_stat_rx);
-	ines_write32(port, ts_stat_tx, ts_stat_tx);
+	ines_ग_लिखो32(port, port_conf, port_conf);
+	ines_ग_लिखो32(port, ts_stat_rx, ts_stat_rx);
+	ines_ग_लिखो32(port, ts_stat_tx, ts_stat_tx);
 
 	port->rxts_enabled = ts_stat_rx == TS_ENABLE;
 	port->txts_enabled = ts_stat_tx == TS_ENABLE;
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	return copy_to_user(ifr->ifr_data, &cfg, sizeof(cfg)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(अगरr->अगरr_data, &cfg, माप(cfg)) ? -EFAULT : 0;
+पूर्ण
 
-static void ines_link_state(struct mii_timestamper *mii_ts,
-			    struct phy_device *phydev)
-{
-	struct ines_port *port = container_of(mii_ts, struct ines_port, mii_ts);
+अटल व्योम ines_link_state(काष्ठा mii_बारtamper *mii_ts,
+			    काष्ठा phy_device *phydev)
+अणु
+	काष्ठा ines_port *port = container_of(mii_ts, काष्ठा ines_port, mii_ts);
 	u32 port_conf, speed_conf;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	switch (phydev->speed) {
-	case SPEED_10:
+	चयन (phydev->speed) अणु
+	हाल SPEED_10:
 		speed_conf = PHY_SPEED_10 << PHY_SPEED_SHIFT;
-		break;
-	case SPEED_100:
+		अवरोध;
+	हाल SPEED_100:
 		speed_conf = PHY_SPEED_100 << PHY_SPEED_SHIFT;
-		break;
-	case SPEED_1000:
+		अवरोध;
+	हाल SPEED_1000:
 		speed_conf = PHY_SPEED_1000 << PHY_SPEED_SHIFT;
-		break;
-	default:
-		dev_err(port->clock->dev, "bad speed: %d\n", phydev->speed);
-		return;
-	}
+		अवरोध;
+	शेष:
+		dev_err(port->घड़ी->dev, "bad speed: %d\n", phydev->speed);
+		वापस;
+	पूर्ण
 	spin_lock_irqsave(&port->lock, flags);
 
-	port_conf = ines_read32(port, port_conf);
+	port_conf = ines_पढ़ो32(port, port_conf);
 	port_conf &= ~(0x3 << PHY_SPEED_SHIFT);
 	port_conf |= speed_conf;
 
-	ines_write32(port, port_conf, port_conf);
+	ines_ग_लिखो32(port, port_conf, port_conf);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static bool ines_match(struct sk_buff *skb, unsigned int ptp_class,
-		       struct ines_timestamp *ts, struct device *dev)
-{
-	struct ptp_header *hdr;
+अटल bool ines_match(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक ptp_class,
+		       काष्ठा ines_बारtamp *ts, काष्ठा device *dev)
+अणु
+	काष्ठा ptp_header *hdr;
 	u16 portn, seqid;
 	u8 msgtype;
 	u64 clkid;
 
-	if (unlikely(ptp_class & PTP_CLASS_V1))
-		return false;
+	अगर (unlikely(ptp_class & PTP_CLASS_V1))
+		वापस false;
 
 	hdr = ptp_parse_header(skb, ptp_class);
-	if (!hdr)
-		return false;
+	अगर (!hdr)
+		वापस false;
 
 	msgtype = ptp_get_msgtype(hdr, ptp_class);
-	clkid = be64_to_cpup((__be64 *)&hdr->source_port_identity.clock_identity.id[0]);
+	clkid = be64_to_cpup((__be64 *)&hdr->source_port_identity.घड़ी_identity.id[0]);
 	portn = be16_to_cpu(hdr->source_port_identity.port_number);
 	seqid = be16_to_cpu(hdr->sequence_id);
 
-	if (tag_to_msgtype(ts->tag & 0x7) != msgtype) {
+	अगर (tag_to_msgtype(ts->tag & 0x7) != msgtype) अणु
 		dev_dbg(dev, "msgtype mismatch ts %hhu != skb %hhu\n",
 			tag_to_msgtype(ts->tag & 0x7), msgtype);
-		return false;
-	}
-	if (ts->clkid != clkid) {
+		वापस false;
+	पूर्ण
+	अगर (ts->clkid != clkid) अणु
 		dev_dbg(dev, "clkid mismatch ts %llx != skb %llx\n",
 			ts->clkid, clkid);
-		return false;
-	}
-	if (ts->portnum != portn) {
+		वापस false;
+	पूर्ण
+	अगर (ts->portnum != portn) अणु
 		dev_dbg(dev, "portn mismatch ts %hu != skb %hu\n",
 			ts->portnum, portn);
-		return false;
-	}
-	if (ts->seqid != seqid) {
+		वापस false;
+	पूर्ण
+	अगर (ts->seqid != seqid) अणु
 		dev_dbg(dev, "seqid mismatch ts %hu != skb %hu\n",
 			ts->seqid, seqid);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool ines_rxtstamp(struct mii_timestamper *mii_ts,
-			  struct sk_buff *skb, int type)
-{
-	struct ines_port *port = container_of(mii_ts, struct ines_port, mii_ts);
-	struct skb_shared_hwtstamps *ssh;
+अटल bool ines_rxtstamp(काष्ठा mii_बारtamper *mii_ts,
+			  काष्ठा sk_buff *skb, पूर्णांक type)
+अणु
+	काष्ठा ines_port *port = container_of(mii_ts, काष्ठा ines_port, mii_ts);
+	काष्ठा skb_shared_hwtstamps *ssh;
 	u64 ns;
 
-	if (!port->rxts_enabled)
-		return false;
+	अगर (!port->rxts_enabled)
+		वापस false;
 
 	ns = ines_find_rxts(port, skb, type);
-	if (!ns)
-		return false;
+	अगर (!ns)
+		वापस false;
 
 	ssh = skb_hwtstamps(skb);
-	ssh->hwtstamp = ns_to_ktime(ns);
-	netif_rx(skb);
+	ssh->hwtstamp = ns_to_kसमय(ns);
+	netअगर_rx(skb);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int ines_rxfifo_read(struct ines_port *port)
-{
+अटल पूर्णांक ines_rxfअगरo_पढ़ो(काष्ठा ines_port *port)
+अणु
 	u32 data_rd_pos, buf_stat, mask, ts_stat_rx;
-	struct ines_timestamp *ts;
-	unsigned int i;
+	काष्ठा ines_बारtamp *ts;
+	अचिन्हित पूर्णांक i;
 
 	mask = RX_FIFO_NE_1 << port->index;
 
-	for (i = 0; i < INES_FIFO_DEPTH; i++) {
-		if (list_empty(&port->pool)) {
-			dev_err(port->clock->dev, "event pool is empty\n");
-			return -1;
-		}
-		buf_stat = ines_read32(port->clock, buf_stat);
-		if (!(buf_stat & mask))
-			break;
+	क्रम (i = 0; i < INES_FIFO_DEPTH; i++) अणु
+		अगर (list_empty(&port->pool)) अणु
+			dev_err(port->घड़ी->dev, "event pool is empty\n");
+			वापस -1;
+		पूर्ण
+		buf_stat = ines_पढ़ो32(port->घड़ी, buf_stat);
+		अगर (!(buf_stat & mask))
+			अवरोध;
 
-		ts_stat_rx = ines_read32(port, ts_stat_rx);
+		ts_stat_rx = ines_पढ़ो32(port, ts_stat_rx);
 		data_rd_pos = (ts_stat_rx >> DATA_READ_POS_SHIFT) &
 			DATA_READ_POS_MASK;
-		if (data_rd_pos) {
-			dev_err(port->clock->dev, "unexpected Rx read pos %u\n",
+		अगर (data_rd_pos) अणु
+			dev_err(port->घड़ी->dev, "unexpected Rx read pos %u\n",
 				data_rd_pos);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ts = list_first_entry(&port->pool, struct ines_timestamp, list);
-		ts->tmo     = jiffies + HZ;
-		ts->tag     = ines_read32(port, ts_rx);
+		ts = list_first_entry(&port->pool, काष्ठा ines_बारtamp, list);
+		ts->पंचांगo     = jअगरfies + HZ;
+		ts->tag     = ines_पढ़ो32(port, ts_rx);
 		ts->sec     = ines_rxts64(port, 3);
 		ts->nsec    = ines_rxts64(port, 2);
 		ts->clkid   = ines_rxts64(port, 4);
-		ts->portnum = ines_read32(port, ts_rx);
-		ts->seqid   = ines_read32(port, ts_rx);
+		ts->portnum = ines_पढ़ो32(port, ts_rx);
+		ts->seqid   = ines_पढ़ो32(port, ts_rx);
 
 		list_del_init(&ts->list);
 		list_add_tail(&ts->list, &port->events);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64 ines_rxts64(struct ines_port *port, unsigned int words)
-{
-	unsigned int i;
+अटल u64 ines_rxts64(काष्ठा ines_port *port, अचिन्हित पूर्णांक words)
+अणु
+	अचिन्हित पूर्णांक i;
 	u64 result;
 	u16 word;
 
-	word = ines_read32(port, ts_rx);
+	word = ines_पढ़ो32(port, ts_rx);
 	result = word;
 	words--;
-	for (i = 0; i < words; i++) {
-		word = ines_read32(port, ts_rx);
+	क्रम (i = 0; i < words; i++) अणु
+		word = ines_पढ़ो32(port, ts_rx);
 		result <<= 16;
 		result |= word;
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
-static bool ines_timestamp_expired(struct ines_timestamp *ts)
-{
-	return time_after(jiffies, ts->tmo);
-}
+अटल bool ines_बारtamp_expired(काष्ठा ines_बारtamp *ts)
+अणु
+	वापस समय_after(jअगरfies, ts->पंचांगo);
+पूर्ण
 
-static int ines_ts_info(struct mii_timestamper *mii_ts,
-			struct ethtool_ts_info *info)
-{
-	info->so_timestamping =
+अटल पूर्णांक ines_ts_info(काष्ठा mii_बारtamper *mii_ts,
+			काष्ठा ethtool_ts_info *info)
+अणु
+	info->so_बारtamping =
 		SOF_TIMESTAMPING_TX_HARDWARE |
 		SOF_TIMESTAMPING_TX_SOFTWARE |
 		SOF_TIMESTAMPING_RX_HARDWARE |
@@ -583,220 +584,220 @@ static int ines_ts_info(struct mii_timestamper *mii_ts,
 		(1 << HWTSTAMP_FILTER_NONE) |
 		(1 << HWTSTAMP_FILTER_PTP_V2_EVENT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64 ines_txts64(struct ines_port *port, unsigned int words)
-{
-	unsigned int i;
+अटल u64 ines_txts64(काष्ठा ines_port *port, अचिन्हित पूर्णांक words)
+अणु
+	अचिन्हित पूर्णांक i;
 	u64 result;
 	u16 word;
 
-	word = ines_read32(port, ts_tx);
+	word = ines_पढ़ो32(port, ts_tx);
 	result = word;
 	words--;
-	for (i = 0; i < words; i++) {
-		word = ines_read32(port, ts_tx);
+	क्रम (i = 0; i < words; i++) अणु
+		word = ines_पढ़ो32(port, ts_tx);
 		result <<= 16;
 		result |= word;
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
-static bool ines_txts_onestep(struct ines_port *port, struct sk_buff *skb, int type)
-{
-	unsigned long flags;
+अटल bool ines_txts_onestep(काष्ठा ines_port *port, काष्ठा sk_buff *skb, पूर्णांक type)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 port_conf;
 
 	spin_lock_irqsave(&port->lock, flags);
-	port_conf = ines_read32(port, port_conf);
+	port_conf = ines_पढ़ो32(port, port_conf);
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	if (port_conf & CM_ONE_STEP)
-		return is_sync_pdelay_resp(skb, type);
+	अगर (port_conf & CM_ONE_STEP)
+		वापस is_sync_pdelay_resp(skb, type);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void ines_txtstamp(struct mii_timestamper *mii_ts,
-			  struct sk_buff *skb, int type)
-{
-	struct ines_port *port = container_of(mii_ts, struct ines_port, mii_ts);
-	struct sk_buff *old_skb = NULL;
-	unsigned long flags;
+अटल व्योम ines_txtstamp(काष्ठा mii_बारtamper *mii_ts,
+			  काष्ठा sk_buff *skb, पूर्णांक type)
+अणु
+	काष्ठा ines_port *port = container_of(mii_ts, काष्ठा ines_port, mii_ts);
+	काष्ठा sk_buff *old_skb = शून्य;
+	अचिन्हित दीर्घ flags;
 
-	if (!port->txts_enabled || ines_txts_onestep(port, skb, type)) {
-		kfree_skb(skb);
-		return;
-	}
+	अगर (!port->txts_enabled || ines_txts_onestep(port, skb, type)) अणु
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	if (port->tx_skb)
+	अगर (port->tx_skb)
 		old_skb = port->tx_skb;
 
 	port->tx_skb = skb;
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	kfree_skb(old_skb);
+	kमुक्त_skb(old_skb);
 
 	schedule_delayed_work(&port->ts_work, 1);
-}
+पूर्ण
 
-static void ines_txtstamp_work(struct work_struct *work)
-{
-	struct ines_port *port =
-		container_of(work, struct ines_port, ts_work.work);
-	struct skb_shared_hwtstamps ssh;
-	struct sk_buff *skb;
-	unsigned long flags;
+अटल व्योम ines_txtstamp_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ines_port *port =
+		container_of(work, काष्ठा ines_port, ts_work.work);
+	काष्ठा skb_shared_hwtstamps ssh;
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
 	u64 ns;
 
 	spin_lock_irqsave(&port->lock, flags);
 	skb = port->tx_skb;
-	port->tx_skb = NULL;
+	port->tx_skb = शून्य;
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	ns = ines_find_txts(port, skb);
-	if (!ns) {
-		kfree_skb(skb);
-		return;
-	}
-	ssh.hwtstamp = ns_to_ktime(ns);
-	skb_complete_tx_timestamp(skb, &ssh);
-}
+	अगर (!ns) अणु
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
+	ssh.hwtstamp = ns_to_kसमय(ns);
+	skb_complete_tx_बारtamp(skb, &ssh);
+पूर्ण
 
-static bool is_sync_pdelay_resp(struct sk_buff *skb, int type)
-{
-	struct ptp_header *hdr;
+अटल bool is_sync_pdelay_resp(काष्ठा sk_buff *skb, पूर्णांक type)
+अणु
+	काष्ठा ptp_header *hdr;
 	u8 msgtype;
 
 	hdr = ptp_parse_header(skb, type);
-	if (!hdr)
-		return false;
+	अगर (!hdr)
+		वापस false;
 
 	msgtype = ptp_get_msgtype(hdr, type);
 
-	switch (msgtype) {
-	case PTP_MSGTYPE_SYNC:
-	case PTP_MSGTYPE_PDELAY_RESP:
-		return true;
-	default:
-		return false;
-	}
-}
+	चयन (msgtype) अणु
+	हाल PTP_MSGTYPE_SYNC:
+	हाल PTP_MSGTYPE_PDELAY_RESP:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static u8 tag_to_msgtype(u8 tag)
-{
-	switch (tag) {
-	case MESSAGE_TYPE_SYNC:
-		return PTP_MSGTYPE_SYNC;
-	case MESSAGE_TYPE_P_DELAY_REQ:
-		return PTP_MSGTYPE_PDELAY_REQ;
-	case MESSAGE_TYPE_P_DELAY_RESP:
-		return PTP_MSGTYPE_PDELAY_RESP;
-	case MESSAGE_TYPE_DELAY_REQ:
-		return PTP_MSGTYPE_DELAY_REQ;
-	}
-	return 0xf;
-}
+अटल u8 tag_to_msgtype(u8 tag)
+अणु
+	चयन (tag) अणु
+	हाल MESSAGE_TYPE_SYNC:
+		वापस PTP_MSGTYPE_SYNC;
+	हाल MESSAGE_TYPE_P_DELAY_REQ:
+		वापस PTP_MSGTYPE_PDELAY_REQ;
+	हाल MESSAGE_TYPE_P_DELAY_RESP:
+		वापस PTP_MSGTYPE_PDELAY_RESP;
+	हाल MESSAGE_TYPE_DELAY_REQ:
+		वापस PTP_MSGTYPE_DELAY_REQ;
+	पूर्ण
+	वापस 0xf;
+पूर्ण
 
-static struct mii_timestamper *ines_ptp_probe_channel(struct device *device,
-						      unsigned int index)
-{
-	struct device_node *node = device->of_node;
-	struct ines_port *port;
+अटल काष्ठा mii_बारtamper *ines_ptp_probe_channel(काष्ठा device *device,
+						      अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा device_node *node = device->of_node;
+	काष्ठा ines_port *port;
 
-	if (index > INES_N_PORTS - 1) {
+	अगर (index > INES_N_PORTS - 1) अणु
 		dev_err(device, "bad port index %u\n", index);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 	port = ines_find_port(node, index);
-	if (!port) {
+	अगर (!port) अणु
 		dev_err(device, "missing port index %u\n", index);
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 	port->mii_ts.rxtstamp = ines_rxtstamp;
 	port->mii_ts.txtstamp = ines_txtstamp;
 	port->mii_ts.hwtstamp = ines_hwtstamp;
 	port->mii_ts.link_state = ines_link_state;
 	port->mii_ts.ts_info = ines_ts_info;
 
-	return &port->mii_ts;
-}
+	वापस &port->mii_ts;
+पूर्ण
 
-static void ines_ptp_release_channel(struct device *device,
-				     struct mii_timestamper *mii_ts)
-{
-}
+अटल व्योम ines_ptp_release_channel(काष्ठा device *device,
+				     काष्ठा mii_बारtamper *mii_ts)
+अणु
+पूर्ण
 
-static struct mii_timestamping_ctrl ines_ctrl = {
+अटल काष्ठा mii_बारtamping_ctrl ines_ctrl = अणु
 	.probe_channel = ines_ptp_probe_channel,
 	.release_channel = ines_ptp_release_channel,
-};
+पूर्ण;
 
-static int ines_ptp_ctrl_probe(struct platform_device *pld)
-{
-	struct ines_clock *clock;
-	void __iomem *addr;
-	int err = 0;
+अटल पूर्णांक ines_ptp_ctrl_probe(काष्ठा platक्रमm_device *pld)
+अणु
+	काष्ठा ines_घड़ी *घड़ी;
+	व्योम __iomem *addr;
+	पूर्णांक err = 0;
 
-	addr = devm_platform_ioremap_resource(pld, 0);
-	if (IS_ERR(addr)) {
+	addr = devm_platक्रमm_ioremap_resource(pld, 0);
+	अगर (IS_ERR(addr)) अणु
 		err = PTR_ERR(addr);
-		goto out;
-	}
-	clock = kzalloc(sizeof(*clock), GFP_KERNEL);
-	if (!clock) {
+		जाओ out;
+	पूर्ण
+	घड़ी = kzalloc(माप(*घड़ी), GFP_KERNEL);
+	अगर (!घड़ी) अणु
 		err = -ENOMEM;
-		goto out;
-	}
-	if (ines_clock_init(clock, &pld->dev, addr)) {
-		kfree(clock);
+		जाओ out;
+	पूर्ण
+	अगर (ines_घड़ी_init(घड़ी, &pld->dev, addr)) अणु
+		kमुक्त(घड़ी);
 		err = -ENOMEM;
-		goto out;
-	}
-	err = register_mii_tstamp_controller(&pld->dev, &ines_ctrl);
-	if (err) {
-		kfree(clock);
-		goto out;
-	}
-	mutex_lock(&ines_clocks_lock);
-	list_add_tail(&ines_clocks, &clock->list);
-	mutex_unlock(&ines_clocks_lock);
+		जाओ out;
+	पूर्ण
+	err = रेजिस्टर_mii_tstamp_controller(&pld->dev, &ines_ctrl);
+	अगर (err) अणु
+		kमुक्त(घड़ी);
+		जाओ out;
+	पूर्ण
+	mutex_lock(&ines_घड़ीs_lock);
+	list_add_tail(&ines_घड़ीs, &घड़ी->list);
+	mutex_unlock(&ines_घड़ीs_lock);
 
-	dev_set_drvdata(&pld->dev, clock);
+	dev_set_drvdata(&pld->dev, घड़ी);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ines_ptp_ctrl_remove(struct platform_device *pld)
-{
-	struct ines_clock *clock = dev_get_drvdata(&pld->dev);
+अटल पूर्णांक ines_ptp_ctrl_हटाओ(काष्ठा platक्रमm_device *pld)
+अणु
+	काष्ठा ines_घड़ी *घड़ी = dev_get_drvdata(&pld->dev);
 
-	unregister_mii_tstamp_controller(&pld->dev);
-	mutex_lock(&ines_clocks_lock);
-	list_del(&clock->list);
-	mutex_unlock(&ines_clocks_lock);
-	ines_clock_cleanup(clock);
-	kfree(clock);
-	return 0;
-}
+	unरेजिस्टर_mii_tstamp_controller(&pld->dev);
+	mutex_lock(&ines_घड़ीs_lock);
+	list_del(&घड़ी->list);
+	mutex_unlock(&ines_घड़ीs_lock);
+	ines_घड़ी_cleanup(घड़ी);
+	kमुक्त(घड़ी);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ines_ptp_ctrl_of_match[] = {
-	{ .compatible = "ines,ptp-ctrl" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id ines_ptp_ctrl_of_match[] = अणु
+	अणु .compatible = "ines,ptp-ctrl" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, ines_ptp_ctrl_of_match);
 
-static struct platform_driver ines_ptp_ctrl_driver = {
+अटल काष्ठा platक्रमm_driver ines_ptp_ctrl_driver = अणु
 	.probe  = ines_ptp_ctrl_probe,
-	.remove = ines_ptp_ctrl_remove,
-	.driver = {
+	.हटाओ = ines_ptp_ctrl_हटाओ,
+	.driver = अणु
 		.name = "ines_ptp_ctrl",
 		.of_match_table = of_match_ptr(ines_ptp_ctrl_of_match),
-	},
-};
-module_platform_driver(ines_ptp_ctrl_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(ines_ptp_ctrl_driver);

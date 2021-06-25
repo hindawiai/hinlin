@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Frame Buffer Device for Toshiba Mobile IO(TMIO) controller
+ * Frame Buffer Device क्रम Toshiba Mobile IO(TMIO) controller
  *
  * Copyright(C) 2005-2006 Chris Humbert
  * Copyright(C) 2005 Dirk Opfer
@@ -8,230 +9,230 @@
  *
  * Based on:
  *	drivers/video/w100fb.c
- *	code written by Sharp/Lineo for 2.4 kernels
+ *	code written by Sharp/Lineo क्रम 2.4 kernels
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/fb.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
 /* Why should fb driver call console functions? because console_lock() */
-#include <linux/console.h>
-#include <linux/mfd/core.h>
-#include <linux/mfd/tmio.h>
-#include <linux/uaccess.h>
+#समावेश <linux/console.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/mfd/पंचांगपन.स>
+#समावेश <linux/uaccess.h>
 
 /*
  * accelerator commands
  */
-#define TMIOFB_ACC_CSADR(x)	(0x00000000 | ((x) & 0x001ffffe))
-#define TMIOFB_ACC_CHPIX(x)	(0x01000000 | ((x) & 0x000003ff))
-#define TMIOFB_ACC_CVPIX(x)	(0x02000000 | ((x) & 0x000003ff))
-#define TMIOFB_ACC_PSADR(x)	(0x03000000 | ((x) & 0x00fffffe))
-#define TMIOFB_ACC_PHPIX(x)	(0x04000000 | ((x) & 0x000003ff))
-#define TMIOFB_ACC_PVPIX(x)	(0x05000000 | ((x) & 0x000003ff))
-#define TMIOFB_ACC_PHOFS(x)	(0x06000000 | ((x) & 0x000003ff))
-#define TMIOFB_ACC_PVOFS(x)	(0x07000000 | ((x) & 0x000003ff))
-#define TMIOFB_ACC_POADR(x)	(0x08000000 | ((x) & 0x00fffffe))
-#define TMIOFB_ACC_RSTR(x)	(0x09000000 | ((x) & 0x000000ff))
-#define TMIOFB_ACC_TCLOR(x)	(0x0A000000 | ((x) & 0x0000ffff))
-#define TMIOFB_ACC_FILL(x)	(0x0B000000 | ((x) & 0x0000ffff))
-#define TMIOFB_ACC_DSADR(x)	(0x0C000000 | ((x) & 0x00fffffe))
-#define TMIOFB_ACC_SSADR(x)	(0x0D000000 | ((x) & 0x00fffffe))
-#define TMIOFB_ACC_DHPIX(x)	(0x0E000000 | ((x) & 0x000003ff))
-#define TMIOFB_ACC_DVPIX(x)	(0x0F000000 | ((x) & 0x000003ff))
-#define TMIOFB_ACC_SHPIX(x)	(0x10000000 | ((x) & 0x000003ff))
-#define TMIOFB_ACC_SVPIX(x)	(0x11000000 | ((x) & 0x000003ff))
-#define TMIOFB_ACC_LBINI(x)	(0x12000000 | ((x) & 0x0000ffff))
-#define TMIOFB_ACC_LBK2(x)	(0x13000000 | ((x) & 0x0000ffff))
-#define TMIOFB_ACC_SHBINI(x)	(0x14000000 | ((x) & 0x0000ffff))
-#define TMIOFB_ACC_SHBK2(x)	(0x15000000 | ((x) & 0x0000ffff))
-#define TMIOFB_ACC_SVBINI(x)	(0x16000000 | ((x) & 0x0000ffff))
-#define TMIOFB_ACC_SVBK2(x)	(0x17000000 | ((x) & 0x0000ffff))
+#घोषणा TMIOFB_ACC_CSADR(x)	(0x00000000 | ((x) & 0x001ffffe))
+#घोषणा TMIOFB_ACC_CHPIX(x)	(0x01000000 | ((x) & 0x000003ff))
+#घोषणा TMIOFB_ACC_CVPIX(x)	(0x02000000 | ((x) & 0x000003ff))
+#घोषणा TMIOFB_ACC_PSADR(x)	(0x03000000 | ((x) & 0x00fffffe))
+#घोषणा TMIOFB_ACC_PHPIX(x)	(0x04000000 | ((x) & 0x000003ff))
+#घोषणा TMIOFB_ACC_PVPIX(x)	(0x05000000 | ((x) & 0x000003ff))
+#घोषणा TMIOFB_ACC_PHOFS(x)	(0x06000000 | ((x) & 0x000003ff))
+#घोषणा TMIOFB_ACC_PVOFS(x)	(0x07000000 | ((x) & 0x000003ff))
+#घोषणा TMIOFB_ACC_POADR(x)	(0x08000000 | ((x) & 0x00fffffe))
+#घोषणा TMIOFB_ACC_RSTR(x)	(0x09000000 | ((x) & 0x000000ff))
+#घोषणा TMIOFB_ACC_TCLOR(x)	(0x0A000000 | ((x) & 0x0000ffff))
+#घोषणा TMIOFB_ACC_FILL(x)	(0x0B000000 | ((x) & 0x0000ffff))
+#घोषणा TMIOFB_ACC_DSADR(x)	(0x0C000000 | ((x) & 0x00fffffe))
+#घोषणा TMIOFB_ACC_SSADR(x)	(0x0D000000 | ((x) & 0x00fffffe))
+#घोषणा TMIOFB_ACC_DHPIX(x)	(0x0E000000 | ((x) & 0x000003ff))
+#घोषणा TMIOFB_ACC_DVPIX(x)	(0x0F000000 | ((x) & 0x000003ff))
+#घोषणा TMIOFB_ACC_SHPIX(x)	(0x10000000 | ((x) & 0x000003ff))
+#घोषणा TMIOFB_ACC_SVPIX(x)	(0x11000000 | ((x) & 0x000003ff))
+#घोषणा TMIOFB_ACC_LBINI(x)	(0x12000000 | ((x) & 0x0000ffff))
+#घोषणा TMIOFB_ACC_LBK2(x)	(0x13000000 | ((x) & 0x0000ffff))
+#घोषणा TMIOFB_ACC_SHBINI(x)	(0x14000000 | ((x) & 0x0000ffff))
+#घोषणा TMIOFB_ACC_SHBK2(x)	(0x15000000 | ((x) & 0x0000ffff))
+#घोषणा TMIOFB_ACC_SVBINI(x)	(0x16000000 | ((x) & 0x0000ffff))
+#घोषणा TMIOFB_ACC_SVBK2(x)	(0x17000000 | ((x) & 0x0000ffff))
 
-#define TMIOFB_ACC_CMGO		0x20000000
-#define TMIOFB_ACC_CMGO_CEND	0x00000001
-#define TMIOFB_ACC_CMGO_INT	0x00000002
-#define TMIOFB_ACC_CMGO_CMOD	0x00000010
-#define TMIOFB_ACC_CMGO_CDVRV	0x00000020
-#define TMIOFB_ACC_CMGO_CDHRV	0x00000040
-#define TMIOFB_ACC_CMGO_RUND	0x00008000
-#define TMIOFB_ACC_SCGO		0x21000000
-#define TMIOFB_ACC_SCGO_CEND	0x00000001
-#define TMIOFB_ACC_SCGO_INT	0x00000002
-#define TMIOFB_ACC_SCGO_ROP3	0x00000004
-#define TMIOFB_ACC_SCGO_TRNS	0x00000008
-#define TMIOFB_ACC_SCGO_DVRV	0x00000010
-#define TMIOFB_ACC_SCGO_DHRV	0x00000020
-#define TMIOFB_ACC_SCGO_SVRV	0x00000040
-#define TMIOFB_ACC_SCGO_SHRV	0x00000080
-#define TMIOFB_ACC_SCGO_DSTXY	0x00008000
-#define TMIOFB_ACC_SBGO		0x22000000
-#define TMIOFB_ACC_SBGO_CEND	0x00000001
-#define TMIOFB_ACC_SBGO_INT	0x00000002
-#define TMIOFB_ACC_SBGO_DVRV	0x00000010
-#define TMIOFB_ACC_SBGO_DHRV	0x00000020
-#define TMIOFB_ACC_SBGO_SVRV	0x00000040
-#define TMIOFB_ACC_SBGO_SHRV	0x00000080
-#define TMIOFB_ACC_SBGO_SBMD	0x00000100
-#define TMIOFB_ACC_FLGO		0x23000000
-#define TMIOFB_ACC_FLGO_CEND	0x00000001
-#define TMIOFB_ACC_FLGO_INT	0x00000002
-#define TMIOFB_ACC_FLGO_ROP3	0x00000004
-#define TMIOFB_ACC_LDGO		0x24000000
-#define TMIOFB_ACC_LDGO_CEND	0x00000001
-#define TMIOFB_ACC_LDGO_INT	0x00000002
-#define TMIOFB_ACC_LDGO_ROP3	0x00000004
-#define TMIOFB_ACC_LDGO_ENDPX	0x00000008
-#define TMIOFB_ACC_LDGO_LVRV	0x00000010
-#define TMIOFB_ACC_LDGO_LHRV	0x00000020
-#define TMIOFB_ACC_LDGO_LDMOD	0x00000040
+#घोषणा TMIOFB_ACC_CMGO		0x20000000
+#घोषणा TMIOFB_ACC_CMGO_CEND	0x00000001
+#घोषणा TMIOFB_ACC_CMGO_INT	0x00000002
+#घोषणा TMIOFB_ACC_CMGO_CMOD	0x00000010
+#घोषणा TMIOFB_ACC_CMGO_CDVRV	0x00000020
+#घोषणा TMIOFB_ACC_CMGO_CDHRV	0x00000040
+#घोषणा TMIOFB_ACC_CMGO_RUND	0x00008000
+#घोषणा TMIOFB_ACC_SCGO		0x21000000
+#घोषणा TMIOFB_ACC_SCGO_CEND	0x00000001
+#घोषणा TMIOFB_ACC_SCGO_INT	0x00000002
+#घोषणा TMIOFB_ACC_SCGO_ROP3	0x00000004
+#घोषणा TMIOFB_ACC_SCGO_TRNS	0x00000008
+#घोषणा TMIOFB_ACC_SCGO_DVRV	0x00000010
+#घोषणा TMIOFB_ACC_SCGO_DHRV	0x00000020
+#घोषणा TMIOFB_ACC_SCGO_SVRV	0x00000040
+#घोषणा TMIOFB_ACC_SCGO_SHRV	0x00000080
+#घोषणा TMIOFB_ACC_SCGO_DSTXY	0x00008000
+#घोषणा TMIOFB_ACC_SBGO		0x22000000
+#घोषणा TMIOFB_ACC_SBGO_CEND	0x00000001
+#घोषणा TMIOFB_ACC_SBGO_INT	0x00000002
+#घोषणा TMIOFB_ACC_SBGO_DVRV	0x00000010
+#घोषणा TMIOFB_ACC_SBGO_DHRV	0x00000020
+#घोषणा TMIOFB_ACC_SBGO_SVRV	0x00000040
+#घोषणा TMIOFB_ACC_SBGO_SHRV	0x00000080
+#घोषणा TMIOFB_ACC_SBGO_SBMD	0x00000100
+#घोषणा TMIOFB_ACC_FLGO		0x23000000
+#घोषणा TMIOFB_ACC_FLGO_CEND	0x00000001
+#घोषणा TMIOFB_ACC_FLGO_INT	0x00000002
+#घोषणा TMIOFB_ACC_FLGO_ROP3	0x00000004
+#घोषणा TMIOFB_ACC_LDGO		0x24000000
+#घोषणा TMIOFB_ACC_LDGO_CEND	0x00000001
+#घोषणा TMIOFB_ACC_LDGO_INT	0x00000002
+#घोषणा TMIOFB_ACC_LDGO_ROP3	0x00000004
+#घोषणा TMIOFB_ACC_LDGO_ENDPX	0x00000008
+#घोषणा TMIOFB_ACC_LDGO_LVRV	0x00000010
+#घोषणा TMIOFB_ACC_LDGO_LHRV	0x00000020
+#घोषणा TMIOFB_ACC_LDGO_LDMOD	0x00000040
 
-/* a FIFO is always allocated, even if acceleration is not used */
-#define TMIOFB_FIFO_SIZE	512
+/* a FIFO is always allocated, even अगर acceleration is not used */
+#घोषणा TMIOFB_FIFO_SIZE	512
 
 /*
  * LCD Host Controller Configuration Register
  *
  * This iomem area supports only 16-bit IO.
  */
-#define CCR_CMD			0x04 /* Command				*/
-#define CCR_REVID		0x08 /* Revision ID			*/
-#define CCR_BASEL		0x10 /* LCD Control Reg Base Addr Low	*/
-#define CCR_BASEH		0x12 /* LCD Control Reg Base Addr High	*/
-#define CCR_UGCC		0x40 /* Unified Gated Clock Control	*/
-#define CCR_GCC			0x42 /* Gated Clock Control		*/
-#define CCR_USC			0x50 /* Unified Software Clear		*/
-#define CCR_VRAMRTC		0x60 /* VRAM Timing Control		*/
+#घोषणा CCR_CMD			0x04 /* Command				*/
+#घोषणा CCR_REVID		0x08 /* Revision ID			*/
+#घोषणा CCR_BASEL		0x10 /* LCD Control Reg Base Addr Low	*/
+#घोषणा CCR_BASEH		0x12 /* LCD Control Reg Base Addr High	*/
+#घोषणा CCR_UGCC		0x40 /* Unअगरied Gated Clock Control	*/
+#घोषणा CCR_GCC			0x42 /* Gated Clock Control		*/
+#घोषणा CCR_USC			0x50 /* Unअगरied Software Clear		*/
+#घोषणा CCR_VRAMRTC		0x60 /* VRAM Timing Control		*/
 				/* 0x61 VRAM Refresh Control		*/
-#define CCR_VRAMSAC		0x62 /* VRAM Access Control		*/
+#घोषणा CCR_VRAMSAC		0x62 /* VRAM Access Control		*/
 				/* 0x63	VRAM Status			*/
-#define CCR_VRAMBC		0x64 /* VRAM Block Control		*/
+#घोषणा CCR_VRAMBC		0x64 /* VRAM Block Control		*/
 
 /*
  * LCD Control Register
  *
  * This iomem area supports only 16-bit IO.
  */
-#define LCR_UIS			0x000 /* Unified Interrupt Status	*/
-#define LCR_VHPN		0x008 /* VRAM Horizontal Pixel Number	*/
-#define LCR_CFSAL		0x00a /* Command FIFO Start Address Low	*/
-#define LCR_CFSAH		0x00c /* Command FIFO Start Address High */
-#define LCR_CFS			0x00e /* Command FIFO Size		*/
-#define LCR_CFWS		0x010 /* Command FIFO Writeable Size	*/
-#define LCR_BBIE		0x012 /* BitBLT Interrupt Enable	*/
-#define LCR_BBISC		0x014 /* BitBLT Interrupt Status and Clear */
-#define LCR_CCS			0x016 /* Command Count Status		*/
-#define LCR_BBES		0x018 /* BitBLT Execution Status	*/
-#define LCR_CMDL		0x01c /* Command Low			*/
-#define LCR_CMDH		0x01e /* Command High			*/
-#define LCR_CFC			0x022 /* Command FIFO Clear		*/
-#define LCR_CCIFC		0x024 /* CMOS Camera IF Control		*/
-#define LCR_HWT			0x026 /* Hardware Test			*/
-#define LCR_LCDCCRC		0x100 /* LCDC Clock and Reset Control	*/
-#define LCR_LCDCC		0x102 /* LCDC Control			*/
-#define LCR_LCDCOPC		0x104 /* LCDC Output Pin Control	*/
-#define LCR_LCDIS		0x108 /* LCD Interrupt Status		*/
-#define LCR_LCDIM		0x10a /* LCD Interrupt Mask		*/
-#define LCR_LCDIE		0x10c /* LCD Interrupt Enable		*/
-#define LCR_GDSAL		0x122 /* Graphics Display Start Address Low */
-#define LCR_GDSAH		0x124 /* Graphics Display Start Address High */
-#define LCR_VHPCL		0x12a /* VRAM Horizontal Pixel Count Low */
-#define LCR_VHPCH		0x12c /* VRAM Horizontal Pixel Count High */
-#define LCR_GM			0x12e /* Graphic Mode(VRAM access enable) */
-#define LCR_HT			0x140 /* Horizontal Total		*/
-#define LCR_HDS			0x142 /* Horizontal Display Start	*/
-#define LCR_HSS			0x144 /* H-Sync Start			*/
-#define LCR_HSE			0x146 /* H-Sync End			*/
-#define LCR_HNP			0x14c /* Horizontal Number of Pixels	*/
-#define LCR_VT			0x150 /* Vertical Total			*/
-#define LCR_VDS			0x152 /* Vertical Display Start		*/
-#define LCR_VSS			0x154 /* V-Sync Start			*/
-#define LCR_VSE			0x156 /* V-Sync End			*/
-#define LCR_CDLN		0x160 /* Current Display Line Number	*/
-#define LCR_ILN			0x162 /* Interrupt Line Number		*/
-#define LCR_SP			0x164 /* Sync Polarity			*/
-#define LCR_MISC		0x166 /* MISC(RGB565 mode)		*/
-#define LCR_VIHSS		0x16a /* Video Interface H-Sync Start	*/
-#define LCR_VIVS		0x16c /* Video Interface Vertical Start	*/
-#define LCR_VIVE		0x16e /* Video Interface Vertical End	*/
-#define LCR_VIVSS		0x170 /* Video Interface V-Sync Start	*/
-#define LCR_VCCIS		0x17e /* Video / CMOS Camera Interface Select */
-#define LCR_VIDWSAL		0x180 /* VI Data Write Start Address Low */
-#define LCR_VIDWSAH		0x182 /* VI Data Write Start Address High */
-#define LCR_VIDRSAL		0x184 /* VI Data Read Start Address Low	*/
-#define LCR_VIDRSAH		0x186 /* VI Data Read Start Address High */
-#define LCR_VIPDDST		0x188 /* VI Picture Data Display Start Timing */
-#define LCR_VIPDDET		0x186 /* VI Picture Data Display End Timing */
-#define LCR_VIE			0x18c /* Video Interface Enable		*/
-#define LCR_VCS			0x18e /* Video/Camera Select		*/
-#define LCR_VPHWC		0x194 /* Video Picture Horizontal Wait Count */
-#define LCR_VPHS		0x196 /* Video Picture Horizontal Size	*/
-#define LCR_VPVWC		0x198 /* Video Picture Vertical Wait Count */
-#define LCR_VPVS		0x19a /* Video Picture Vertical Size	*/
-#define LCR_PLHPIX		0x1a0 /* PLHPIX				*/
-#define LCR_XS			0x1a2 /* XStart				*/
-#define LCR_XCKHW		0x1a4 /* XCK High Width			*/
-#define LCR_STHS		0x1a8 /* STH Start			*/
-#define LCR_VT2			0x1aa /* Vertical Total			*/
-#define LCR_YCKSW		0x1ac /* YCK Start Wait			*/
-#define LCR_YSTS		0x1ae /* YST Start			*/
-#define LCR_PPOLS		0x1b0 /* #PPOL Start			*/
-#define LCR_PRECW		0x1b2 /* PREC Width			*/
-#define LCR_VCLKHW		0x1b4 /* VCLK High Width		*/
-#define LCR_OC			0x1b6 /* Output Control			*/
+#घोषणा LCR_UIS			0x000 /* Unअगरied Interrupt Status	*/
+#घोषणा LCR_VHPN		0x008 /* VRAM Horizontal Pixel Number	*/
+#घोषणा LCR_CFSAL		0x00a /* Command FIFO Start Address Low	*/
+#घोषणा LCR_CFSAH		0x00c /* Command FIFO Start Address High */
+#घोषणा LCR_CFS			0x00e /* Command FIFO Size		*/
+#घोषणा LCR_CFWS		0x010 /* Command FIFO Writeable Size	*/
+#घोषणा LCR_BBIE		0x012 /* BitBLT Interrupt Enable	*/
+#घोषणा LCR_BBISC		0x014 /* BitBLT Interrupt Status and Clear */
+#घोषणा LCR_CCS			0x016 /* Command Count Status		*/
+#घोषणा LCR_BBES		0x018 /* BitBLT Execution Status	*/
+#घोषणा LCR_CMDL		0x01c /* Command Low			*/
+#घोषणा LCR_CMDH		0x01e /* Command High			*/
+#घोषणा LCR_CFC			0x022 /* Command FIFO Clear		*/
+#घोषणा LCR_CCIFC		0x024 /* CMOS Camera IF Control		*/
+#घोषणा LCR_HWT			0x026 /* Hardware Test			*/
+#घोषणा LCR_LCDCCRC		0x100 /* LCDC Clock and Reset Control	*/
+#घोषणा LCR_LCDCC		0x102 /* LCDC Control			*/
+#घोषणा LCR_LCDCOPC		0x104 /* LCDC Output Pin Control	*/
+#घोषणा LCR_LCDIS		0x108 /* LCD Interrupt Status		*/
+#घोषणा LCR_LCDIM		0x10a /* LCD Interrupt Mask		*/
+#घोषणा LCR_LCDIE		0x10c /* LCD Interrupt Enable		*/
+#घोषणा LCR_GDSAL		0x122 /* Graphics Display Start Address Low */
+#घोषणा LCR_GDSAH		0x124 /* Graphics Display Start Address High */
+#घोषणा LCR_VHPCL		0x12a /* VRAM Horizontal Pixel Count Low */
+#घोषणा LCR_VHPCH		0x12c /* VRAM Horizontal Pixel Count High */
+#घोषणा LCR_GM			0x12e /* Graphic Mode(VRAM access enable) */
+#घोषणा LCR_HT			0x140 /* Horizontal Total		*/
+#घोषणा LCR_HDS			0x142 /* Horizontal Display Start	*/
+#घोषणा LCR_HSS			0x144 /* H-Sync Start			*/
+#घोषणा LCR_HSE			0x146 /* H-Sync End			*/
+#घोषणा LCR_HNP			0x14c /* Horizontal Number of Pixels	*/
+#घोषणा LCR_VT			0x150 /* Vertical Total			*/
+#घोषणा LCR_VDS			0x152 /* Vertical Display Start		*/
+#घोषणा LCR_VSS			0x154 /* V-Sync Start			*/
+#घोषणा LCR_VSE			0x156 /* V-Sync End			*/
+#घोषणा LCR_CDLN		0x160 /* Current Display Line Number	*/
+#घोषणा LCR_ILN			0x162 /* Interrupt Line Number		*/
+#घोषणा LCR_SP			0x164 /* Sync Polarity			*/
+#घोषणा LCR_MISC		0x166 /* MISC(RGB565 mode)		*/
+#घोषणा LCR_VIHSS		0x16a /* Video Interface H-Sync Start	*/
+#घोषणा LCR_VIVS		0x16c /* Video Interface Vertical Start	*/
+#घोषणा LCR_VIVE		0x16e /* Video Interface Vertical End	*/
+#घोषणा LCR_VIVSS		0x170 /* Video Interface V-Sync Start	*/
+#घोषणा LCR_VCCIS		0x17e /* Video / CMOS Camera Interface Select */
+#घोषणा LCR_VIDWSAL		0x180 /* VI Data Write Start Address Low */
+#घोषणा LCR_VIDWSAH		0x182 /* VI Data Write Start Address High */
+#घोषणा LCR_VIDRSAL		0x184 /* VI Data Read Start Address Low	*/
+#घोषणा LCR_VIDRSAH		0x186 /* VI Data Read Start Address High */
+#घोषणा LCR_VIPDDST		0x188 /* VI Picture Data Display Start Timing */
+#घोषणा LCR_VIPDDET		0x186 /* VI Picture Data Display End Timing */
+#घोषणा LCR_VIE			0x18c /* Video Interface Enable		*/
+#घोषणा LCR_VCS			0x18e /* Video/Camera Select		*/
+#घोषणा LCR_VPHWC		0x194 /* Video Picture Horizontal Wait Count */
+#घोषणा LCR_VPHS		0x196 /* Video Picture Horizontal Size	*/
+#घोषणा LCR_VPVWC		0x198 /* Video Picture Vertical Wait Count */
+#घोषणा LCR_VPVS		0x19a /* Video Picture Vertical Size	*/
+#घोषणा LCR_PLHPIX		0x1a0 /* PLHPIX				*/
+#घोषणा LCR_XS			0x1a2 /* XStart				*/
+#घोषणा LCR_XCKHW		0x1a4 /* XCK High Width			*/
+#घोषणा LCR_STHS		0x1a8 /* STH Start			*/
+#घोषणा LCR_VT2			0x1aa /* Vertical Total			*/
+#घोषणा LCR_YCKSW		0x1ac /* YCK Start Wait			*/
+#घोषणा LCR_YSTS		0x1ae /* YST Start			*/
+#घोषणा LCR_PPOLS		0x1b0 /* #PPOL Start			*/
+#घोषणा LCR_PRECW		0x1b2 /* PREC Width			*/
+#घोषणा LCR_VCLKHW		0x1b4 /* VCLK High Width		*/
+#घोषणा LCR_OC			0x1b6 /* Output Control			*/
 
-static char *mode_option;
+अटल अक्षर *mode_option;
 
-struct tmiofb_par {
-	u32				pseudo_palette[16];
+काष्ठा पंचांगiofb_par अणु
+	u32				pseuकरो_palette[16];
 
-#ifdef CONFIG_FB_TMIO_ACCELL
-	wait_queue_head_t		wait_acc;
+#अगर_घोषित CONFIG_FB_TMIO_ACCELL
+	रुको_queue_head_t		रुको_acc;
 	bool				use_polling;
-#endif
+#पूर्ण_अगर
 
-	void __iomem			*ccr;
-	void __iomem			*lcr;
-};
+	व्योम __iomem			*ccr;
+	व्योम __iomem			*lcr;
+पूर्ण;
 
 /*--------------------------------------------------------------------------*/
 
 /*
- * reasons for an interrupt:
+ * reasons क्रम an पूर्णांकerrupt:
  *	uis	bbisc	lcdis
  *	0100	0001	accelerator command completed
  * 	2000	0001	vsync start
  * 	2000	0002	display start
  * 	2000	0004	line number match(0x1ff mask???)
  */
-static irqreturn_t tmiofb_irq(int irq, void *__info)
-{
-	struct fb_info *info = __info;
-	struct tmiofb_par *par = info->par;
-	unsigned int bbisc = tmio_ioread16(par->lcr + LCR_BBISC);
+अटल irqवापस_t पंचांगiofb_irq(पूर्णांक irq, व्योम *__info)
+अणु
+	काष्ठा fb_info *info = __info;
+	काष्ठा पंचांगiofb_par *par = info->par;
+	अचिन्हित पूर्णांक bbisc = पंचांगio_ioपढ़ो16(par->lcr + LCR_BBISC);
 
 
-	tmio_iowrite16(bbisc, par->lcr + LCR_BBISC);
+	पंचांगio_ioग_लिखो16(bbisc, par->lcr + LCR_BBISC);
 
-#ifdef CONFIG_FB_TMIO_ACCELL
+#अगर_घोषित CONFIG_FB_TMIO_ACCELL
 	/*
 	 * We were in polling mode and now we got correct irq.
 	 * Switch back to IRQ-based sync of command FIFO
 	 */
-	if (unlikely(par->use_polling && irq != -1)) {
-		printk(KERN_INFO "tmiofb: switching to waitq\n");
+	अगर (unlikely(par->use_polling && irq != -1)) अणु
+		prपूर्णांकk(KERN_INFO "tmiofb: switching to waitq\n");
 		par->use_polling = false;
-	}
+	पूर्ण
 
-	if (bbisc & 1)
-		wake_up(&par->wait_acc);
-#endif
+	अगर (bbisc & 1)
+		wake_up(&par->रुको_acc);
+#पूर्ण_अगर
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
 /*--------------------------------------------------------------------------*/
@@ -240,305 +241,305 @@ static irqreturn_t tmiofb_irq(int irq, void *__info)
 /*
  * Turns off the LCD controller and LCD host controller.
  */
-static int tmiofb_hw_stop(struct platform_device *dev)
-{
-	struct tmio_fb_data *data = dev_get_platdata(&dev->dev);
-	struct fb_info *info = platform_get_drvdata(dev);
-	struct tmiofb_par *par = info->par;
+अटल पूर्णांक पंचांगiofb_hw_stop(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा पंचांगio_fb_data *data = dev_get_platdata(&dev->dev);
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(dev);
+	काष्ठा पंचांगiofb_par *par = info->par;
 
-	tmio_iowrite16(0, par->ccr + CCR_UGCC);
-	tmio_iowrite16(0, par->lcr + LCR_GM);
-	data->lcd_set_power(dev, 0);
-	tmio_iowrite16(0x0010, par->lcr + LCR_LCDCCRC);
+	पंचांगio_ioग_लिखो16(0, par->ccr + CCR_UGCC);
+	पंचांगio_ioग_लिखो16(0, par->lcr + LCR_GM);
+	data->lcd_set_घातer(dev, 0);
+	पंचांगio_ioग_लिखो16(0x0010, par->lcr + LCR_LCDCCRC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Initializes the LCD host controller.
  */
-static int tmiofb_hw_init(struct platform_device *dev)
-{
-	const struct mfd_cell *cell = mfd_get_cell(dev);
-	struct fb_info *info = platform_get_drvdata(dev);
-	struct tmiofb_par *par = info->par;
-	const struct resource *nlcr = &cell->resources[0];
-	const struct resource *vram = &cell->resources[2];
-	unsigned long base;
+अटल पूर्णांक पंचांगiofb_hw_init(काष्ठा platक्रमm_device *dev)
+अणु
+	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(dev);
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(dev);
+	काष्ठा पंचांगiofb_par *par = info->par;
+	स्थिर काष्ठा resource *nlcr = &cell->resources[0];
+	स्थिर काष्ठा resource *vram = &cell->resources[2];
+	अचिन्हित दीर्घ base;
 
-	if (nlcr == NULL || vram == NULL)
-		return -EINVAL;
+	अगर (nlcr == शून्य || vram == शून्य)
+		वापस -EINVAL;
 
 	base = nlcr->start;
 
-	tmio_iowrite16(0x003a, par->ccr + CCR_UGCC);
-	tmio_iowrite16(0x003a, par->ccr + CCR_GCC);
-	tmio_iowrite16(0x3f00, par->ccr + CCR_USC);
+	पंचांगio_ioग_लिखो16(0x003a, par->ccr + CCR_UGCC);
+	पंचांगio_ioग_लिखो16(0x003a, par->ccr + CCR_GCC);
+	पंचांगio_ioग_लिखो16(0x3f00, par->ccr + CCR_USC);
 
-	msleep(2); /* wait for device to settle */
+	msleep(2); /* रुको क्रम device to settle */
 
-	tmio_iowrite16(0x0000, par->ccr + CCR_USC);
-	tmio_iowrite16(base >> 16, par->ccr + CCR_BASEH);
-	tmio_iowrite16(base, par->ccr + CCR_BASEL);
-	tmio_iowrite16(0x0002, par->ccr + CCR_CMD); /* base address enable */
-	tmio_iowrite16(0x40a8, par->ccr + CCR_VRAMRTC); /* VRAMRC, VRAMTC */
-	tmio_iowrite16(0x0018, par->ccr + CCR_VRAMSAC); /* VRAMSTS, VRAMAC */
-	tmio_iowrite16(0x0002, par->ccr + CCR_VRAMBC);
-	msleep(2); /* wait for device to settle */
-	tmio_iowrite16(0x000b, par->ccr + CCR_VRAMBC);
+	पंचांगio_ioग_लिखो16(0x0000, par->ccr + CCR_USC);
+	पंचांगio_ioग_लिखो16(base >> 16, par->ccr + CCR_BASEH);
+	पंचांगio_ioग_लिखो16(base, par->ccr + CCR_BASEL);
+	पंचांगio_ioग_लिखो16(0x0002, par->ccr + CCR_CMD); /* base address enable */
+	पंचांगio_ioग_लिखो16(0x40a8, par->ccr + CCR_VRAMRTC); /* VRAMRC, VRAMTC */
+	पंचांगio_ioग_लिखो16(0x0018, par->ccr + CCR_VRAMSAC); /* VRAMSTS, VRAMAC */
+	पंचांगio_ioग_लिखो16(0x0002, par->ccr + CCR_VRAMBC);
+	msleep(2); /* रुको क्रम device to settle */
+	पंचांगio_ioग_लिखो16(0x000b, par->ccr + CCR_VRAMBC);
 
 	base = vram->start + info->screen_size;
-	tmio_iowrite16(base >> 16, par->lcr + LCR_CFSAH);
-	tmio_iowrite16(base, par->lcr + LCR_CFSAL);
-	tmio_iowrite16(TMIOFB_FIFO_SIZE - 1, par->lcr + LCR_CFS);
-	tmio_iowrite16(1, par->lcr + LCR_CFC);
-	tmio_iowrite16(1, par->lcr + LCR_BBIE);
-	tmio_iowrite16(0, par->lcr + LCR_CFWS);
+	पंचांगio_ioग_लिखो16(base >> 16, par->lcr + LCR_CFSAH);
+	पंचांगio_ioग_लिखो16(base, par->lcr + LCR_CFSAL);
+	पंचांगio_ioग_लिखो16(TMIOFB_FIFO_SIZE - 1, par->lcr + LCR_CFS);
+	पंचांगio_ioग_लिखो16(1, par->lcr + LCR_CFC);
+	पंचांगio_ioग_लिखो16(1, par->lcr + LCR_BBIE);
+	पंचांगio_ioग_लिखो16(0, par->lcr + LCR_CFWS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Sets the LCD controller's output resolution and pixel clock
+ * Sets the LCD controller's output resolution and pixel घड़ी
  */
-static void tmiofb_hw_mode(struct platform_device *dev)
-{
-	struct tmio_fb_data *data = dev_get_platdata(&dev->dev);
-	struct fb_info *info = platform_get_drvdata(dev);
-	struct fb_videomode *mode = info->mode;
-	struct tmiofb_par *par = info->par;
-	unsigned int i;
+अटल व्योम पंचांगiofb_hw_mode(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा पंचांगio_fb_data *data = dev_get_platdata(&dev->dev);
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(dev);
+	काष्ठा fb_videomode *mode = info->mode;
+	काष्ठा पंचांगiofb_par *par = info->par;
+	अचिन्हित पूर्णांक i;
 
-	tmio_iowrite16(0, par->lcr + LCR_GM);
-	data->lcd_set_power(dev, 0);
-	tmio_iowrite16(0x0010, par->lcr + LCR_LCDCCRC);
+	पंचांगio_ioग_लिखो16(0, par->lcr + LCR_GM);
+	data->lcd_set_घातer(dev, 0);
+	पंचांगio_ioग_लिखो16(0x0010, par->lcr + LCR_LCDCCRC);
 	data->lcd_mode(dev, mode);
-	data->lcd_set_power(dev, 1);
+	data->lcd_set_घातer(dev, 1);
 
-	tmio_iowrite16(info->fix.line_length, par->lcr + LCR_VHPN);
-	tmio_iowrite16(0, par->lcr + LCR_GDSAH);
-	tmio_iowrite16(0, par->lcr + LCR_GDSAL);
-	tmio_iowrite16(info->fix.line_length >> 16, par->lcr + LCR_VHPCH);
-	tmio_iowrite16(info->fix.line_length, par->lcr + LCR_VHPCL);
-	tmio_iowrite16(i = 0, par->lcr + LCR_HSS);
-	tmio_iowrite16(i += mode->hsync_len, par->lcr + LCR_HSE);
-	tmio_iowrite16(i += mode->left_margin, par->lcr + LCR_HDS);
-	tmio_iowrite16(i += mode->xres + mode->right_margin, par->lcr + LCR_HT);
-	tmio_iowrite16(mode->xres, par->lcr + LCR_HNP);
-	tmio_iowrite16(i = 0, par->lcr + LCR_VSS);
-	tmio_iowrite16(i += mode->vsync_len, par->lcr + LCR_VSE);
-	tmio_iowrite16(i += mode->upper_margin, par->lcr + LCR_VDS);
-	tmio_iowrite16(i += mode->yres, par->lcr + LCR_ILN);
-	tmio_iowrite16(i += mode->lower_margin, par->lcr + LCR_VT);
-	tmio_iowrite16(3, par->lcr + LCR_MISC); /* RGB565 mode */
-	tmio_iowrite16(1, par->lcr + LCR_GM); /* VRAM enable */
-	tmio_iowrite16(0x4007, par->lcr + LCR_LCDCC);
-	tmio_iowrite16(3, par->lcr + LCR_SP);  /* sync polarity */
+	पंचांगio_ioग_लिखो16(info->fix.line_length, par->lcr + LCR_VHPN);
+	पंचांगio_ioग_लिखो16(0, par->lcr + LCR_GDSAH);
+	पंचांगio_ioग_लिखो16(0, par->lcr + LCR_GDSAL);
+	पंचांगio_ioग_लिखो16(info->fix.line_length >> 16, par->lcr + LCR_VHPCH);
+	पंचांगio_ioग_लिखो16(info->fix.line_length, par->lcr + LCR_VHPCL);
+	पंचांगio_ioग_लिखो16(i = 0, par->lcr + LCR_HSS);
+	पंचांगio_ioग_लिखो16(i += mode->hsync_len, par->lcr + LCR_HSE);
+	पंचांगio_ioग_लिखो16(i += mode->left_margin, par->lcr + LCR_HDS);
+	पंचांगio_ioग_लिखो16(i += mode->xres + mode->right_margin, par->lcr + LCR_HT);
+	पंचांगio_ioग_लिखो16(mode->xres, par->lcr + LCR_HNP);
+	पंचांगio_ioग_लिखो16(i = 0, par->lcr + LCR_VSS);
+	पंचांगio_ioग_लिखो16(i += mode->vsync_len, par->lcr + LCR_VSE);
+	पंचांगio_ioग_लिखो16(i += mode->upper_margin, par->lcr + LCR_VDS);
+	पंचांगio_ioग_लिखो16(i += mode->yres, par->lcr + LCR_ILN);
+	पंचांगio_ioग_लिखो16(i += mode->lower_margin, par->lcr + LCR_VT);
+	पंचांगio_ioग_लिखो16(3, par->lcr + LCR_MISC); /* RGB565 mode */
+	पंचांगio_ioग_लिखो16(1, par->lcr + LCR_GM); /* VRAM enable */
+	पंचांगio_ioग_लिखो16(0x4007, par->lcr + LCR_LCDCC);
+	पंचांगio_ioग_लिखो16(3, par->lcr + LCR_SP);  /* sync polarity */
 
-	tmio_iowrite16(0x0010, par->lcr + LCR_LCDCCRC);
-	msleep(5); /* wait for device to settle */
-	tmio_iowrite16(0x0014, par->lcr + LCR_LCDCCRC); /* STOP_CKP */
-	msleep(5); /* wait for device to settle */
-	tmio_iowrite16(0x0015, par->lcr + LCR_LCDCCRC); /* STOP_CKP|SOFT_RESET*/
-	tmio_iowrite16(0xfffa, par->lcr + LCR_VCS);
-}
+	पंचांगio_ioग_लिखो16(0x0010, par->lcr + LCR_LCDCCRC);
+	msleep(5); /* रुको क्रम device to settle */
+	पंचांगio_ioग_लिखो16(0x0014, par->lcr + LCR_LCDCCRC); /* STOP_CKP */
+	msleep(5); /* रुको क्रम device to settle */
+	पंचांगio_ioग_लिखो16(0x0015, par->lcr + LCR_LCDCCRC); /* STOP_CKP|SOFT_RESET*/
+	पंचांगio_ioग_लिखो16(0xfffa, par->lcr + LCR_VCS);
+पूर्ण
 
 /*--------------------------------------------------------------------------*/
 
-#ifdef CONFIG_FB_TMIO_ACCELL
-static int __must_check
-tmiofb_acc_wait(struct fb_info *info, unsigned int ccs)
-{
-	struct tmiofb_par *par = info->par;
+#अगर_घोषित CONFIG_FB_TMIO_ACCELL
+अटल पूर्णांक __must_check
+पंचांगiofb_acc_रुको(काष्ठा fb_info *info, अचिन्हित पूर्णांक ccs)
+अणु
+	काष्ठा पंचांगiofb_par *par = info->par;
 	/*
-	 * This code can be called with interrupts disabled.
+	 * This code can be called with पूर्णांकerrupts disabled.
 	 * So instead of relaying on irq to trigger the event,
 	 * poll the state till the necessary command is executed.
 	 */
-	if (irqs_disabled() || par->use_polling) {
-		int i = 0;
-		while (tmio_ioread16(par->lcr + LCR_CCS) > ccs) {
+	अगर (irqs_disabled() || par->use_polling) अणु
+		पूर्णांक i = 0;
+		जबतक (पंचांगio_ioपढ़ो16(par->lcr + LCR_CCS) > ccs) अणु
 			udelay(1);
 			i++;
-			if (i > 10000) {
+			अगर (i > 10000) अणु
 				pr_err("tmiofb: timeout waiting for %d\n",
 						ccs);
-				return -ETIMEDOUT;
-			}
-			tmiofb_irq(-1, info);
-		}
-	} else {
-		if (!wait_event_interruptible_timeout(par->wait_acc,
-				tmio_ioread16(par->lcr + LCR_CCS) <= ccs,
-				1000)) {
+				वापस -ETIMEDOUT;
+			पूर्ण
+			पंचांगiofb_irq(-1, info);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!रुको_event_पूर्णांकerruptible_समयout(par->रुको_acc,
+				पंचांगio_ioपढ़ो16(par->lcr + LCR_CCS) <= ccs,
+				1000)) अणु
 			pr_err("tmiofb: timeout waiting for %d\n", ccs);
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Writes an accelerator command to the accelerator's FIFO.
  */
-static int
-tmiofb_acc_write(struct fb_info *info, const u32 *cmd, unsigned int count)
-{
-	struct tmiofb_par *par = info->par;
-	int ret;
+अटल पूर्णांक
+पंचांगiofb_acc_ग_लिखो(काष्ठा fb_info *info, स्थिर u32 *cmd, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा पंचांगiofb_par *par = info->par;
+	पूर्णांक ret;
 
-	ret = tmiofb_acc_wait(info, TMIOFB_FIFO_SIZE - count);
-	if (ret)
-		return ret;
+	ret = पंचांगiofb_acc_रुको(info, TMIOFB_FIFO_SIZE - count);
+	अगर (ret)
+		वापस ret;
 
-	for (; count; count--, cmd++) {
-		tmio_iowrite16(*cmd >> 16, par->lcr + LCR_CMDH);
-		tmio_iowrite16(*cmd, par->lcr + LCR_CMDL);
-	}
+	क्रम (; count; count--, cmd++) अणु
+		पंचांगio_ioग_लिखो16(*cmd >> 16, par->lcr + LCR_CMDH);
+		पंचांगio_ioग_लिखो16(*cmd, par->lcr + LCR_CMDL);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Wait for the accelerator to finish its operations before writing
- * to the framebuffer for consistent display output.
+ * Wait क्रम the accelerator to finish its operations beक्रमe writing
+ * to the framebuffer क्रम consistent display output.
  */
-static int tmiofb_sync(struct fb_info *fbi)
-{
-	struct tmiofb_par *par = fbi->par;
+अटल पूर्णांक पंचांगiofb_sync(काष्ठा fb_info *fbi)
+अणु
+	काष्ठा पंचांगiofb_par *par = fbi->par;
 
-	int ret;
-	int i = 0;
+	पूर्णांक ret;
+	पूर्णांक i = 0;
 
-	ret = tmiofb_acc_wait(fbi, 0);
+	ret = पंचांगiofb_acc_रुको(fbi, 0);
 
-	while (tmio_ioread16(par->lcr + LCR_BBES) & 2) { /* blit active */
+	जबतक (पंचांगio_ioपढ़ो16(par->lcr + LCR_BBES) & 2) अणु /* blit active */
 		udelay(1);
 		i++ ;
-		if (i > 10000) {
-			printk(KERN_ERR "timeout waiting for blit to end!\n");
-			return -ETIMEDOUT;
-		}
-	}
+		अगर (i > 10000) अणु
+			prपूर्णांकk(KERN_ERR "timeout waiting for blit to end!\n");
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-tmiofb_fillrect(struct fb_info *fbi, const struct fb_fillrect *rect)
-{
-	const u32 cmd[] = {
+अटल व्योम
+पंचांगiofb_fillrect(काष्ठा fb_info *fbi, स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	स्थिर u32 cmd[] = अणु
 		TMIOFB_ACC_DSADR((rect->dy * fbi->mode->xres + rect->dx) * 2),
 		TMIOFB_ACC_DHPIX(rect->width - 1),
 		TMIOFB_ACC_DVPIX(rect->height - 1),
 		TMIOFB_ACC_FILL(rect->color),
 		TMIOFB_ACC_FLGO,
-	};
+	पूर्ण;
 
-	if (fbi->state != FBINFO_STATE_RUNNING ||
-	    fbi->flags & FBINFO_HWACCEL_DISABLED) {
+	अगर (fbi->state != FBINFO_STATE_RUNNING ||
+	    fbi->flags & FBINFO_HWACCEL_DISABLED) अणु
 		cfb_fillrect(fbi, rect);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	tmiofb_acc_write(fbi, cmd, ARRAY_SIZE(cmd));
-}
+	पंचांगiofb_acc_ग_लिखो(fbi, cmd, ARRAY_SIZE(cmd));
+पूर्ण
 
-static void
-tmiofb_copyarea(struct fb_info *fbi, const struct fb_copyarea *area)
-{
-	const u32 cmd[] = {
+अटल व्योम
+पंचांगiofb_copyarea(काष्ठा fb_info *fbi, स्थिर काष्ठा fb_copyarea *area)
+अणु
+	स्थिर u32 cmd[] = अणु
 		TMIOFB_ACC_DSADR((area->dy * fbi->mode->xres + area->dx) * 2),
 		TMIOFB_ACC_DHPIX(area->width - 1),
 		TMIOFB_ACC_DVPIX(area->height - 1),
 		TMIOFB_ACC_SSADR((area->sy * fbi->mode->xres + area->sx) * 2),
 		TMIOFB_ACC_SCGO,
-	};
+	पूर्ण;
 
-	if (fbi->state != FBINFO_STATE_RUNNING ||
-	    fbi->flags & FBINFO_HWACCEL_DISABLED) {
+	अगर (fbi->state != FBINFO_STATE_RUNNING ||
+	    fbi->flags & FBINFO_HWACCEL_DISABLED) अणु
 		cfb_copyarea(fbi, area);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	tmiofb_acc_write(fbi, cmd, ARRAY_SIZE(cmd));
-}
-#endif
+	पंचांगiofb_acc_ग_लिखो(fbi, cmd, ARRAY_SIZE(cmd));
+पूर्ण
+#पूर्ण_अगर
 
-static void tmiofb_clearscreen(struct fb_info *info)
-{
-	const struct fb_fillrect rect = {
+अटल व्योम पंचांगiofb_clearscreen(काष्ठा fb_info *info)
+अणु
+	स्थिर काष्ठा fb_fillrect rect = अणु
 		.dx	= 0,
 		.dy	= 0,
 		.width	= info->mode->xres,
 		.height	= info->mode->yres,
 		.color	= 0,
 		.rop	= ROP_COPY,
-	};
+	पूर्ण;
 
 	info->fbops->fb_fillrect(info, &rect);
-}
+पूर्ण
 
-static int tmiofb_vblank(struct fb_info *fbi, struct fb_vblank *vblank)
-{
-	struct tmiofb_par *par = fbi->par;
-	struct fb_videomode *mode = fbi->mode;
-	unsigned int vcount = tmio_ioread16(par->lcr + LCR_CDLN);
-	unsigned int vds = mode->vsync_len + mode->upper_margin;
+अटल पूर्णांक पंचांगiofb_vblank(काष्ठा fb_info *fbi, काष्ठा fb_vblank *vblank)
+अणु
+	काष्ठा पंचांगiofb_par *par = fbi->par;
+	काष्ठा fb_videomode *mode = fbi->mode;
+	अचिन्हित पूर्णांक vcount = पंचांगio_ioपढ़ो16(par->lcr + LCR_CDLN);
+	अचिन्हित पूर्णांक vds = mode->vsync_len + mode->upper_margin;
 
 	vblank->vcount = vcount;
 	vblank->flags = FB_VBLANK_HAVE_VBLANK | FB_VBLANK_HAVE_VCOUNT
 						| FB_VBLANK_HAVE_VSYNC;
 
-	if (vcount < mode->vsync_len)
+	अगर (vcount < mode->vsync_len)
 		vblank->flags |= FB_VBLANK_VSYNCING;
 
-	if (vcount < vds || vcount > vds + mode->yres)
+	अगर (vcount < vds || vcount > vds + mode->yres)
 		vblank->flags |= FB_VBLANK_VBLANKING;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int tmiofb_ioctl(struct fb_info *fbi,
-		unsigned int cmd, unsigned long arg)
-{
-	switch (cmd) {
-	case FBIOGET_VBLANK: {
-		struct fb_vblank vblank = {0};
-		void __user *argp = (void __user *) arg;
+अटल पूर्णांक पंचांगiofb_ioctl(काष्ठा fb_info *fbi,
+		अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल FBIOGET_VBLANK: अणु
+		काष्ठा fb_vblank vblank = अणु0पूर्ण;
+		व्योम __user *argp = (व्योम __user *) arg;
 
-		tmiofb_vblank(fbi, &vblank);
-		if (copy_to_user(argp, &vblank, sizeof vblank))
-			return -EFAULT;
-		return 0;
-	}
+		पंचांगiofb_vblank(fbi, &vblank);
+		अगर (copy_to_user(argp, &vblank, माप vblank))
+			वापस -EFAULT;
+		वापस 0;
+	पूर्ण
 
-#ifdef CONFIG_FB_TMIO_ACCELL
-	case FBIO_TMIO_ACC_SYNC:
-		tmiofb_sync(fbi);
-		return 0;
+#अगर_घोषित CONFIG_FB_TMIO_ACCELL
+	हाल FBIO_TMIO_ACC_SYNC:
+		पंचांगiofb_sync(fbi);
+		वापस 0;
 
-	case FBIO_TMIO_ACC_WRITE: {
-		u32 __user *argp = (void __user *) arg;
+	हाल FBIO_TMIO_ACC_WRITE: अणु
+		u32 __user *argp = (व्योम __user *) arg;
 		u32 len;
 		u32 acc[16];
 
-		if (get_user(len, argp))
-			return -EFAULT;
-		if (len > ARRAY_SIZE(acc))
-			return -EINVAL;
-		if (copy_from_user(acc, argp + 1, sizeof(u32) * len))
-			return -EFAULT;
+		अगर (get_user(len, argp))
+			वापस -EFAULT;
+		अगर (len > ARRAY_SIZE(acc))
+			वापस -EINVAL;
+		अगर (copy_from_user(acc, argp + 1, माप(u32) * len))
+			वापस -EFAULT;
 
-		return tmiofb_acc_write(fbi, acc, len);
-	}
-#endif
-	}
+		वापस पंचांगiofb_acc_ग_लिखो(fbi, acc, len);
+	पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	return -ENOTTY;
-}
+	वापस -ENOTTY;
+पूर्ण
 
 /*--------------------------------------------------------------------------*/
 
@@ -546,42 +547,42 @@ static int tmiofb_ioctl(struct fb_info *fbi,
  * displayed.  If desired, the x and y parameters can be rounded up to
  * match the selected mode.
  */
-static struct fb_videomode *
-tmiofb_find_mode(struct fb_info *info, struct fb_var_screeninfo *var)
-{
-	struct tmio_fb_data *data = dev_get_platdata(info->device);
-	struct fb_videomode *best = NULL;
-	int i;
+अटल काष्ठा fb_videomode *
+पंचांगiofb_find_mode(काष्ठा fb_info *info, काष्ठा fb_var_screeninfo *var)
+अणु
+	काष्ठा पंचांगio_fb_data *data = dev_get_platdata(info->device);
+	काष्ठा fb_videomode *best = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; i < data->num_modes; i++) {
-		struct fb_videomode *mode = data->modes + i;
+	क्रम (i = 0; i < data->num_modes; i++) अणु
+		काष्ठा fb_videomode *mode = data->modes + i;
 
-		if (mode->xres >= var->xres && mode->yres >= var->yres
+		अगर (mode->xres >= var->xres && mode->yres >= var->yres
 				&& (!best || (mode->xres < best->xres
 					   && mode->yres < best->yres)))
 			best = mode;
-	}
+	पूर्ण
 
-	return best;
-}
+	वापस best;
+पूर्ण
 
-static int tmiofb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
-{
+अटल पूर्णांक पंचांगiofb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
 
-	struct fb_videomode *mode;
-	struct tmio_fb_data *data = dev_get_platdata(info->device);
+	काष्ठा fb_videomode *mode;
+	काष्ठा पंचांगio_fb_data *data = dev_get_platdata(info->device);
 
-	mode = tmiofb_find_mode(info, var);
-	if (!mode || var->bits_per_pixel > 16)
-		return -EINVAL;
+	mode = पंचांगiofb_find_mode(info, var);
+	अगर (!mode || var->bits_per_pixel > 16)
+		वापस -EINVAL;
 
 	fb_videomode_to_var(var, mode);
 
-	var->xres_virtual = mode->xres;
-	var->yres_virtual = info->screen_size / (mode->xres * 2);
+	var->xres_भव = mode->xres;
+	var->yres_भव = info->screen_size / (mode->xres * 2);
 
-	if (var->yres_virtual < var->yres)
-		return -EINVAL;
+	अगर (var->yres_भव < var->yres)
+		वापस -EINVAL;
 
 	var->xoffset = 0;
 	var->yoffset = 0;
@@ -599,119 +600,119 @@ static int tmiofb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 	var->height = data->height; /* mm */
 	var->width = data->width; /* mm */
 	var->rotate = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tmiofb_set_par(struct fb_info *info)
-{
-	struct fb_var_screeninfo *var = &info->var;
-	struct fb_videomode *mode;
+अटल पूर्णांक पंचांगiofb_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा fb_var_screeninfo *var = &info->var;
+	काष्ठा fb_videomode *mode;
 
-	mode = tmiofb_find_mode(info, var);
-	if (!mode)
-		return -EINVAL;
+	mode = पंचांगiofb_find_mode(info, var);
+	अगर (!mode)
+		वापस -EINVAL;
 
 	info->mode = mode;
 	info->fix.line_length = info->mode->xres *
 			var->bits_per_pixel / 8;
 
-	tmiofb_hw_mode(to_platform_device(info->device));
-	tmiofb_clearscreen(info);
-	return 0;
-}
+	पंचांगiofb_hw_mode(to_platक्रमm_device(info->device));
+	पंचांगiofb_clearscreen(info);
+	वापस 0;
+पूर्ण
 
-static int tmiofb_setcolreg(unsigned regno, unsigned red, unsigned green,
-			   unsigned blue, unsigned transp,
-			   struct fb_info *info)
-{
-	struct tmiofb_par *par = info->par;
+अटल पूर्णांक पंचांगiofb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
+			   अचिन्हित blue, अचिन्हित transp,
+			   काष्ठा fb_info *info)
+अणु
+	काष्ठा पंचांगiofb_par *par = info->par;
 
-	if (regno < ARRAY_SIZE(par->pseudo_palette)) {
-		par->pseudo_palette[regno] =
+	अगर (regno < ARRAY_SIZE(par->pseuकरो_palette)) अणु
+		par->pseuकरो_palette[regno] =
 			((red & 0xf800)) |
 			((green & 0xfc00) >>  5) |
 			((blue & 0xf800) >> 11);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int tmiofb_blank(int blank, struct fb_info *info)
-{
+अटल पूर्णांक पंचांगiofb_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
 	/*
-	 * everything is done in lcd/bl drivers.
+	 * everything is करोne in lcd/bl drivers.
 	 * this is purely to make sysfs happy and work.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct fb_ops tmiofb_ops = {
+अटल स्थिर काष्ठा fb_ops पंचांगiofb_ops = अणु
 	.owner		= THIS_MODULE,
 
-	.fb_ioctl	= tmiofb_ioctl,
-	.fb_check_var	= tmiofb_check_var,
-	.fb_set_par	= tmiofb_set_par,
-	.fb_setcolreg	= tmiofb_setcolreg,
-	.fb_blank	= tmiofb_blank,
+	.fb_ioctl	= पंचांगiofb_ioctl,
+	.fb_check_var	= पंचांगiofb_check_var,
+	.fb_set_par	= पंचांगiofb_set_par,
+	.fb_setcolreg	= पंचांगiofb_setcolreg,
+	.fb_blank	= पंचांगiofb_blank,
 	.fb_imageblit	= cfb_imageblit,
-#ifdef CONFIG_FB_TMIO_ACCELL
-	.fb_sync	= tmiofb_sync,
-	.fb_fillrect	= tmiofb_fillrect,
-	.fb_copyarea	= tmiofb_copyarea,
-#else
+#अगर_घोषित CONFIG_FB_TMIO_ACCELL
+	.fb_sync	= पंचांगiofb_sync,
+	.fb_fillrect	= पंचांगiofb_fillrect,
+	.fb_copyarea	= पंचांगiofb_copyarea,
+#अन्यथा
 	.fb_fillrect	= cfb_fillrect,
 	.fb_copyarea	= cfb_copyarea,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*--------------------------------------------------------------------------*/
 
-static int tmiofb_probe(struct platform_device *dev)
-{
-	const struct mfd_cell *cell = mfd_get_cell(dev);
-	struct tmio_fb_data *data = dev_get_platdata(&dev->dev);
-	struct resource *ccr = platform_get_resource(dev, IORESOURCE_MEM, 1);
-	struct resource *lcr = platform_get_resource(dev, IORESOURCE_MEM, 0);
-	struct resource *vram = platform_get_resource(dev, IORESOURCE_MEM, 2);
-	int irq = platform_get_irq(dev, 0);
-	struct fb_info *info;
-	struct tmiofb_par *par;
-	int retval;
+अटल पूर्णांक पंचांगiofb_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(dev);
+	काष्ठा पंचांगio_fb_data *data = dev_get_platdata(&dev->dev);
+	काष्ठा resource *ccr = platक्रमm_get_resource(dev, IORESOURCE_MEM, 1);
+	काष्ठा resource *lcr = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
+	काष्ठा resource *vram = platक्रमm_get_resource(dev, IORESOURCE_MEM, 2);
+	पूर्णांक irq = platक्रमm_get_irq(dev, 0);
+	काष्ठा fb_info *info;
+	काष्ठा पंचांगiofb_par *par;
+	पूर्णांक retval;
 
 	/*
 	 * This is the only way ATM to disable the fb
 	 */
-	if (data == NULL) {
+	अगर (data == शून्य) अणु
 		dev_err(&dev->dev, "NULL platform data!\n");
-		return -EINVAL;
-	}
-	if (ccr == NULL || lcr == NULL || vram == NULL || irq < 0) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (ccr == शून्य || lcr == शून्य || vram == शून्य || irq < 0) अणु
 		dev_err(&dev->dev, "missing resources\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	info = framebuffer_alloc(sizeof(struct tmiofb_par), &dev->dev);
+	info = framebuffer_alloc(माप(काष्ठा पंचांगiofb_par), &dev->dev);
 
-	if (!info)
-		return -ENOMEM;
+	अगर (!info)
+		वापस -ENOMEM;
 
 	par = info->par;
 
-#ifdef CONFIG_FB_TMIO_ACCELL
-	init_waitqueue_head(&par->wait_acc);
+#अगर_घोषित CONFIG_FB_TMIO_ACCELL
+	init_रुकोqueue_head(&par->रुको_acc);
 
 	par->use_polling = true;
 
 	info->flags = FBINFO_DEFAULT | FBINFO_HWACCEL_COPYAREA
 			| FBINFO_HWACCEL_FILLRECT;
-#else
+#अन्यथा
 	info->flags = FBINFO_DEFAULT;
-#endif
+#पूर्ण_अगर
 
-	info->fbops = &tmiofb_ops;
+	info->fbops = &पंचांगiofb_ops;
 
-	strcpy(info->fix.id, "tmio-fb");
+	म_नकल(info->fix.id, "tmio-fb");
 	info->fix.smem_start = vram->start;
 	info->fix.smem_len = resource_size(vram);
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
@@ -720,72 +721,72 @@ static int tmiofb_probe(struct platform_device *dev)
 	info->fix.mmio_len = resource_size(lcr);
 	info->fix.accel = FB_ACCEL_NONE;
 	info->screen_size = info->fix.smem_len - (4 * TMIOFB_FIFO_SIZE);
-	info->pseudo_palette = par->pseudo_palette;
+	info->pseuकरो_palette = par->pseuकरो_palette;
 
 	par->ccr = ioremap(ccr->start, resource_size(ccr));
-	if (!par->ccr) {
+	अगर (!par->ccr) अणु
 		retval = -ENOMEM;
-		goto err_ioremap_ccr;
-	}
+		जाओ err_ioremap_ccr;
+	पूर्ण
 
 	par->lcr = ioremap(info->fix.mmio_start, info->fix.mmio_len);
-	if (!par->lcr) {
+	अगर (!par->lcr) अणु
 		retval = -ENOMEM;
-		goto err_ioremap_lcr;
-	}
+		जाओ err_ioremap_lcr;
+	पूर्ण
 
 	info->screen_base = ioremap(info->fix.smem_start, info->fix.smem_len);
-	if (!info->screen_base) {
+	अगर (!info->screen_base) अणु
 		retval = -ENOMEM;
-		goto err_ioremap_vram;
-	}
+		जाओ err_ioremap_vram;
+	पूर्ण
 
-	retval = request_irq(irq, &tmiofb_irq, 0,
+	retval = request_irq(irq, &पंचांगiofb_irq, 0,
 					dev_name(&dev->dev), info);
 
-	if (retval)
-		goto err_request_irq;
+	अगर (retval)
+		जाओ err_request_irq;
 
-	platform_set_drvdata(dev, info);
+	platक्रमm_set_drvdata(dev, info);
 
 	retval = fb_find_mode(&info->var, info, mode_option,
 			data->modes, data->num_modes,
 			data->modes, 16);
-	if (!retval) {
+	अगर (!retval) अणु
 		retval = -EINVAL;
-		goto err_find_mode;
-	}
+		जाओ err_find_mode;
+	पूर्ण
 
-	if (cell->enable) {
+	अगर (cell->enable) अणु
 		retval = cell->enable(dev);
-		if (retval)
-			goto err_enable;
-	}
+		अगर (retval)
+			जाओ err_enable;
+	पूर्ण
 
-	retval = tmiofb_hw_init(dev);
-	if (retval)
-		goto err_hw_init;
+	retval = पंचांगiofb_hw_init(dev);
+	अगर (retval)
+		जाओ err_hw_init;
 
 	fb_videomode_to_modelist(data->modes, data->num_modes,
 				 &info->modelist);
 
-	retval = register_framebuffer(info);
-	if (retval < 0)
-		goto err_register_framebuffer;
+	retval = रेजिस्टर_framebuffer(info);
+	अगर (retval < 0)
+		जाओ err_रेजिस्टर_framebuffer;
 
 	fb_info(info, "%s frame buffer device\n", info->fix.id);
 
-	return 0;
+	वापस 0;
 
-err_register_framebuffer:
+err_रेजिस्टर_framebuffer:
 /*err_set_par:*/
-	tmiofb_hw_stop(dev);
+	पंचांगiofb_hw_stop(dev);
 err_hw_init:
-	if (cell->disable)
+	अगर (cell->disable)
 		cell->disable(dev);
 err_enable:
 err_find_mode:
-	free_irq(irq, info);
+	मुक्त_irq(irq, info);
 err_request_irq:
 	iounmap(info->screen_base);
 err_ioremap_vram:
@@ -794,46 +795,46 @@ err_ioremap_lcr:
 	iounmap(par->ccr);
 err_ioremap_ccr:
 	framebuffer_release(info);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int tmiofb_remove(struct platform_device *dev)
-{
-	const struct mfd_cell *cell = mfd_get_cell(dev);
-	struct fb_info *info = platform_get_drvdata(dev);
-	int irq = platform_get_irq(dev, 0);
-	struct tmiofb_par *par;
+अटल पूर्णांक पंचांगiofb_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(dev);
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(dev);
+	पूर्णांक irq = platक्रमm_get_irq(dev, 0);
+	काष्ठा पंचांगiofb_par *par;
 
-	if (info) {
+	अगर (info) अणु
 		par = info->par;
-		unregister_framebuffer(info);
+		unरेजिस्टर_framebuffer(info);
 
-		tmiofb_hw_stop(dev);
+		पंचांगiofb_hw_stop(dev);
 
-		if (cell->disable)
+		अगर (cell->disable)
 			cell->disable(dev);
 
-		free_irq(irq, info);
+		मुक्त_irq(irq, info);
 
 		iounmap(info->screen_base);
 		iounmap(par->lcr);
 		iounmap(par->ccr);
 
 		framebuffer_release(info);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef DEBUG
-static void tmiofb_dump_regs(struct platform_device *dev)
-{
-	struct fb_info *info = platform_get_drvdata(dev);
-	struct tmiofb_par *par = info->par;
+#अगर_घोषित DEBUG
+अटल व्योम पंचांगiofb_dump_regs(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(dev);
+	काष्ठा पंचांगiofb_par *par = info->par;
 
-	printk(KERN_DEBUG "lhccr:\n");
-#define CCR_PR(n)	printk(KERN_DEBUG "\t" #n " = \t%04x\n",\
-		tmio_ioread16(par->ccr + CCR_ ## n));
+	prपूर्णांकk(KERN_DEBUG "lhccr:\n");
+#घोषणा CCR_PR(n)	prपूर्णांकk(KERN_DEBUG "\t" #n " = \t%04x\n",\
+		पंचांगio_ioपढ़ो16(par->ccr + CCR_ ## n));
 	CCR_PR(CMD);
 	CCR_PR(REVID);
 	CCR_PR(BASEL);
@@ -844,11 +845,11 @@ static void tmiofb_dump_regs(struct platform_device *dev)
 	CCR_PR(VRAMRTC);
 	CCR_PR(VRAMSAC);
 	CCR_PR(VRAMBC);
-#undef CCR_PR
+#अघोषित CCR_PR
 
-	printk(KERN_DEBUG "lcr: \n");
-#define LCR_PR(n)	printk(KERN_DEBUG "\t" #n " = \t%04x\n",\
-		tmio_ioread16(par->lcr + LCR_ ## n));
+	prपूर्णांकk(KERN_DEBUG "lcr: \n");
+#घोषणा LCR_PR(n)	prपूर्णांकk(KERN_DEBUG "\t" #n " = \t%04x\n",\
+		पंचांगio_ioपढ़ो16(par->lcr + LCR_ ## n));
 	LCR_PR(UIS);
 	LCR_PR(VHPN);
 	LCR_PR(CFSAL);
@@ -916,124 +917,124 @@ static void tmiofb_dump_regs(struct platform_device *dev)
 	LCR_PR(PRECW);
 	LCR_PR(VCLKHW);
 	LCR_PR(OC);
-#undef LCR_PR
-}
-#endif
+#अघोषित LCR_PR
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
-static int tmiofb_suspend(struct platform_device *dev, pm_message_t state)
-{
-	struct fb_info *info = platform_get_drvdata(dev);
-#ifdef CONFIG_FB_TMIO_ACCELL
-	struct tmiofb_par *par = info->par;
-#endif
-	const struct mfd_cell *cell = mfd_get_cell(dev);
-	int retval = 0;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक पंचांगiofb_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
+अणु
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(dev);
+#अगर_घोषित CONFIG_FB_TMIO_ACCELL
+	काष्ठा पंचांगiofb_par *par = info->par;
+#पूर्ण_अगर
+	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(dev);
+	पूर्णांक retval = 0;
 
 	console_lock();
 
 	fb_set_suspend(info, 1);
 
-	if (info->fbops->fb_sync)
+	अगर (info->fbops->fb_sync)
 		info->fbops->fb_sync(info);
 
 
-#ifdef CONFIG_FB_TMIO_ACCELL
+#अगर_घोषित CONFIG_FB_TMIO_ACCELL
 	/*
-	 * The fb should be usable even if interrupts are disabled (and they are
-	 * during suspend/resume). Switch temporary to forced polling.
+	 * The fb should be usable even अगर पूर्णांकerrupts are disabled (and they are
+	 * during suspend/resume). Switch temporary to क्रमced polling.
 	 */
-	printk(KERN_INFO "tmiofb: switching to polling\n");
+	prपूर्णांकk(KERN_INFO "tmiofb: switching to polling\n");
 	par->use_polling = true;
-#endif
-	tmiofb_hw_stop(dev);
+#पूर्ण_अगर
+	पंचांगiofb_hw_stop(dev);
 
-	if (cell->suspend)
+	अगर (cell->suspend)
 		retval = cell->suspend(dev);
 
 	console_unlock();
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int tmiofb_resume(struct platform_device *dev)
-{
-	struct fb_info *info = platform_get_drvdata(dev);
-	const struct mfd_cell *cell = mfd_get_cell(dev);
-	int retval = 0;
+अटल पूर्णांक पंचांगiofb_resume(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(dev);
+	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(dev);
+	पूर्णांक retval = 0;
 
 	console_lock();
 
-	if (cell->resume) {
+	अगर (cell->resume) अणु
 		retval = cell->resume(dev);
-		if (retval)
-			goto out;
-	}
+		अगर (retval)
+			जाओ out;
+	पूर्ण
 
-	tmiofb_irq(-1, info);
+	पंचांगiofb_irq(-1, info);
 
-	tmiofb_hw_init(dev);
+	पंचांगiofb_hw_init(dev);
 
-	tmiofb_hw_mode(dev);
+	पंचांगiofb_hw_mode(dev);
 
 	fb_set_suspend(info, 0);
 out:
 	console_unlock();
-	return retval;
-}
-#else
-#define tmiofb_suspend	NULL
-#define tmiofb_resume	NULL
-#endif
+	वापस retval;
+पूर्ण
+#अन्यथा
+#घोषणा पंचांगiofb_suspend	शून्य
+#घोषणा पंचांगiofb_resume	शून्य
+#पूर्ण_अगर
 
-static struct platform_driver tmiofb_driver = {
+अटल काष्ठा platक्रमm_driver पंचांगiofb_driver = अणु
 	.driver.name	= "tmio-fb",
 	.driver.owner	= THIS_MODULE,
-	.probe		= tmiofb_probe,
-	.remove		= tmiofb_remove,
-	.suspend	= tmiofb_suspend,
-	.resume		= tmiofb_resume,
-};
+	.probe		= पंचांगiofb_probe,
+	.हटाओ		= पंचांगiofb_हटाओ,
+	.suspend	= पंचांगiofb_suspend,
+	.resume		= पंचांगiofb_resume,
+पूर्ण;
 
 /*--------------------------------------------------------------------------*/
 
-#ifndef MODULE
-static void __init tmiofb_setup(char *options)
-{
-	char *this_opt;
+#अगर_अघोषित MODULE
+अटल व्योम __init पंचांगiofb_setup(अक्षर *options)
+अणु
+	अक्षर *this_opt;
 
-	if (!options || !*options)
-		return;
+	अगर (!options || !*options)
+		वापस;
 
-	while ((this_opt = strsep(&options, ",")) != NULL) {
-		if (!*this_opt)
-			continue;
+	जबतक ((this_opt = strsep(&options, ",")) != शून्य) अणु
+		अगर (!*this_opt)
+			जारी;
 		/*
 		 * FIXME
 		 */
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static int __init tmiofb_init(void)
-{
-#ifndef MODULE
-	char *option = NULL;
+अटल पूर्णांक __init पंचांगiofb_init(व्योम)
+अणु
+#अगर_अघोषित MODULE
+	अक्षर *option = शून्य;
 
-	if (fb_get_options("tmiofb", &option))
-		return -ENODEV;
-	tmiofb_setup(option);
-#endif
-	return platform_driver_register(&tmiofb_driver);
-}
+	अगर (fb_get_options("tmiofb", &option))
+		वापस -ENODEV;
+	पंचांगiofb_setup(option);
+#पूर्ण_अगर
+	वापस platक्रमm_driver_रेजिस्टर(&पंचांगiofb_driver);
+पूर्ण
 
-static void __exit tmiofb_cleanup(void)
-{
-	platform_driver_unregister(&tmiofb_driver);
-}
+अटल व्योम __निकास पंचांगiofb_cleanup(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&पंचांगiofb_driver);
+पूर्ण
 
-module_init(tmiofb_init);
-module_exit(tmiofb_cleanup);
+module_init(पंचांगiofb_init);
+module_निकास(पंचांगiofb_cleanup);
 
 MODULE_DESCRIPTION("TMIO framebuffer driver");
 MODULE_AUTHOR("Chris Humbert, Dirk Opfer, Dmitry Baryshkov");

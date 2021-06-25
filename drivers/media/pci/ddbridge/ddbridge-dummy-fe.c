@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for Dummy Frontend
+ *  Driver क्रम Dummy Frontend
  *
  *  Written by Emard <emard@softhome.net>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
 
-#include <media/dvb_frontend.h>
-#include "ddbridge-dummy-fe.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "ddbridge-dummy-fe.h"
 
-struct ddbridge_dummy_fe_state {
-	struct dvb_frontend frontend;
-};
+काष्ठा ddbridge_dummy_fe_state अणु
+	काष्ठा dvb_frontend frontend;
+पूर्ण;
 
-static int ddbridge_dummy_fe_read_status(struct dvb_frontend *fe,
-				    enum fe_status *status)
-{
+अटल पूर्णांक ddbridge_dummy_fe_पढ़ो_status(काष्ठा dvb_frontend *fe,
+				    क्रमागत fe_status *status)
+अणु
 	*status = FE_HAS_SIGNAL
 		| FE_HAS_CARRIER
 		| FE_HAS_VITERBI
 		| FE_HAS_SYNC
 		| FE_HAS_LOCK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ddbridge_dummy_fe_read_ber(struct dvb_frontend *fe, u32 *ber)
-{
+अटल पूर्णांक ddbridge_dummy_fe_पढ़ो_ber(काष्ठा dvb_frontend *fe, u32 *ber)
+अणु
 	*ber = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ddbridge_dummy_fe_read_signal_strength(struct dvb_frontend *fe,
+अटल पूर्णांक ddbridge_dummy_fe_पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe,
 					     u16 *strength)
-{
+अणु
 	*strength = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ddbridge_dummy_fe_read_snr(struct dvb_frontend *fe, u16 *snr)
-{
+अटल पूर्णांक ddbridge_dummy_fe_पढ़ो_snr(काष्ठा dvb_frontend *fe, u16 *snr)
+अणु
 	*snr = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ddbridge_dummy_fe_read_ucblocks(struct dvb_frontend *fe, u32 *ucblocks)
-{
+अटल पूर्णांक ddbridge_dummy_fe_पढ़ो_ucblocks(काष्ठा dvb_frontend *fe, u32 *ucblocks)
+अणु
 	*ucblocks = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Should only be implemented if it actually reads something from the hardware.
- * Also, it should check for the locks, in order to avoid report wrong data
+ * Should only be implemented अगर it actually पढ़ोs something from the hardware.
+ * Also, it should check क्रम the locks, in order to aव्योम report wrong data
  * to userspace.
  */
-static int ddbridge_dummy_fe_get_frontend(struct dvb_frontend *fe,
-				     struct dtv_frontend_properties *p)
-{
-	return 0;
-}
+अटल पूर्णांक ddbridge_dummy_fe_get_frontend(काष्ठा dvb_frontend *fe,
+				     काष्ठा dtv_frontend_properties *p)
+अणु
+	वापस 0;
+पूर्ण
 
-static int ddbridge_dummy_fe_set_frontend(struct dvb_frontend *fe)
-{
-	if (fe->ops.tuner_ops.set_params) {
+अटल पूर्णांक ddbridge_dummy_fe_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	अगर (fe->ops.tuner_ops.set_params) अणु
 		fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl)
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ddbridge_dummy_fe_sleep(struct dvb_frontend *fe)
-{
-	return 0;
-}
+अटल पूर्णांक ddbridge_dummy_fe_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	वापस 0;
+पूर्ण
 
-static int ddbridge_dummy_fe_init(struct dvb_frontend *fe)
-{
-	return 0;
-}
+अटल पूर्णांक ddbridge_dummy_fe_init(काष्ठा dvb_frontend *fe)
+अणु
+	वापस 0;
+पूर्ण
 
-static void ddbridge_dummy_fe_release(struct dvb_frontend *fe)
-{
-	struct ddbridge_dummy_fe_state *state = fe->demodulator_priv;
+अटल व्योम ddbridge_dummy_fe_release(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा ddbridge_dummy_fe_state *state = fe->demodulator_priv;
 
-	kfree(state);
-}
+	kमुक्त(state);
+पूर्ण
 
-static const struct dvb_frontend_ops ddbridge_dummy_fe_qam_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops ddbridge_dummy_fe_qam_ops;
 
-struct dvb_frontend *ddbridge_dummy_fe_qam_attach(void)
-{
-	struct ddbridge_dummy_fe_state *state = NULL;
+काष्ठा dvb_frontend *ddbridge_dummy_fe_qam_attach(व्योम)
+अणु
+	काष्ठा ddbridge_dummy_fe_state *state = शून्य;
 
-	/* allocate memory for the internal state */
-	state = kzalloc(sizeof(struct ddbridge_dummy_fe_state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	/* allocate memory क्रम the पूर्णांकernal state */
+	state = kzalloc(माप(काष्ठा ddbridge_dummy_fe_state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 
 	/* create dvb_frontend */
-	memcpy(&state->frontend.ops,
+	स_नकल(&state->frontend.ops,
 	       &ddbridge_dummy_fe_qam_ops,
-	       sizeof(struct dvb_frontend_ops));
+	       माप(काष्ठा dvb_frontend_ops));
 
 	state->frontend.demodulator_priv = state;
-	return &state->frontend;
-}
+	वापस &state->frontend;
+पूर्ण
 EXPORT_SYMBOL(ddbridge_dummy_fe_qam_attach);
 
-static const struct dvb_frontend_ops ddbridge_dummy_fe_qam_ops = {
-	.delsys = { SYS_DVBC_ANNEX_A },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops ddbridge_dummy_fe_qam_ops = अणु
+	.delsys = अणु SYS_DVBC_ANNEX_A पूर्ण,
+	.info = अणु
 		.name			= "ddbridge dummy DVB-C",
 		.frequency_min_hz	=  51 * MHz,
 		.frequency_max_hz	= 858 * MHz,
@@ -131,7 +132,7 @@ static const struct dvb_frontend_ops ddbridge_dummy_fe_qam_ops = {
 			FE_CAN_QAM_256 |
 			FE_CAN_FEC_AUTO |
 			FE_CAN_INVERSION_AUTO
-	},
+	पूर्ण,
 
 	.release = ddbridge_dummy_fe_release,
 
@@ -141,12 +142,12 @@ static const struct dvb_frontend_ops ddbridge_dummy_fe_qam_ops = {
 	.set_frontend = ddbridge_dummy_fe_set_frontend,
 	.get_frontend = ddbridge_dummy_fe_get_frontend,
 
-	.read_status = ddbridge_dummy_fe_read_status,
-	.read_ber = ddbridge_dummy_fe_read_ber,
-	.read_signal_strength = ddbridge_dummy_fe_read_signal_strength,
-	.read_snr = ddbridge_dummy_fe_read_snr,
-	.read_ucblocks = ddbridge_dummy_fe_read_ucblocks,
-};
+	.पढ़ो_status = ddbridge_dummy_fe_पढ़ो_status,
+	.पढ़ो_ber = ddbridge_dummy_fe_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = ddbridge_dummy_fe_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = ddbridge_dummy_fe_पढ़ो_snr,
+	.पढ़ो_ucblocks = ddbridge_dummy_fe_पढ़ो_ucblocks,
+पूर्ण;
 
 MODULE_DESCRIPTION("ddbridge dummy Frontend");
 MODULE_AUTHOR("Emard");

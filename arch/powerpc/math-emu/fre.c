@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
 
-int fre(void *frD, void *frB)
-{
-#ifdef DEBUG
-	printk("%s: %p %p\n", __func__, frD, frB);
-#endif
-	return -ENOSYS;
-}
+पूर्णांक fre(व्योम *frD, व्योम *frB)
+अणु
+#अगर_घोषित DEBUG
+	prपूर्णांकk("%s: %p %p\n", __func__, frD, frB);
+#पूर्ण_अगर
+	वापस -ENOSYS;
+पूर्ण

@@ -1,101 +1,102 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2012 - 2014 Cisco Systems
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#ifndef __TIMER_INTERNAL_H__
-#define __TIMER_INTERNAL_H__
-#include <linux/list.h>
-#include <asm/bug.h>
+#अगर_अघोषित __TIMER_INTERNAL_H__
+#घोषणा __TIMER_INTERNAL_H__
+#समावेश <linux/list.h>
+#समावेश <यंत्र/bug.h>
 
-#define TIMER_MULTIPLIER 256
-#define TIMER_MIN_DELTA  500
+#घोषणा TIMER_MULTIPLIER 256
+#घोषणा TIMER_MIN_DELTA  500
 
-enum time_travel_mode {
+क्रमागत समय_प्रकारravel_mode अणु
 	TT_MODE_OFF,
 	TT_MODE_BASIC,
 	TT_MODE_INFCPU,
 	TT_MODE_EXTERNAL,
-};
+पूर्ण;
 
-#ifdef CONFIG_UML_TIME_TRAVEL_SUPPORT
-struct time_travel_event {
-	unsigned long long time;
-	void (*fn)(struct time_travel_event *d);
-	struct list_head list;
+#अगर_घोषित CONFIG_UML_TIME_TRAVEL_SUPPORT
+काष्ठा समय_प्रकारravel_event अणु
+	अचिन्हित दीर्घ दीर्घ समय;
+	व्योम (*fn)(काष्ठा समय_प्रकारravel_event *d);
+	काष्ठा list_head list;
 	bool pending, onstack;
-};
+पूर्ण;
 
-extern enum time_travel_mode time_travel_mode;
+बाह्य क्रमागत समय_प्रकारravel_mode समय_प्रकारravel_mode;
 
-void time_travel_sleep(void);
+व्योम समय_प्रकारravel_sleep(व्योम);
 
-static inline void
-time_travel_set_event_fn(struct time_travel_event *e,
-			 void (*fn)(struct time_travel_event *d))
-{
+अटल अंतरभूत व्योम
+समय_प्रकारravel_set_event_fn(काष्ठा समय_प्रकारravel_event *e,
+			 व्योम (*fn)(काष्ठा समय_प्रकारravel_event *d))
+अणु
 	e->fn = fn;
-}
+पूर्ण
 
-void __time_travel_propagate_time(void);
+व्योम __समय_प्रकारravel_propagate_समय(व्योम);
 
-static inline void time_travel_propagate_time(void)
-{
-	if (time_travel_mode == TT_MODE_EXTERNAL)
-		__time_travel_propagate_time();
-}
+अटल अंतरभूत व्योम समय_प्रकारravel_propagate_समय(व्योम)
+अणु
+	अगर (समय_प्रकारravel_mode == TT_MODE_EXTERNAL)
+		__समय_प्रकारravel_propagate_समय();
+पूर्ण
 
-void __time_travel_wait_readable(int fd);
+व्योम __समय_प्रकारravel_रुको_पढ़ोable(पूर्णांक fd);
 
-static inline void time_travel_wait_readable(int fd)
-{
-	if (time_travel_mode == TT_MODE_EXTERNAL)
-		__time_travel_wait_readable(fd);
-}
+अटल अंतरभूत व्योम समय_प्रकारravel_रुको_पढ़ोable(पूर्णांक fd)
+अणु
+	अगर (समय_प्रकारravel_mode == TT_MODE_EXTERNAL)
+		__समय_प्रकारravel_रुको_पढ़ोable(fd);
+पूर्ण
 
-void time_travel_add_irq_event(struct time_travel_event *e);
-void time_travel_add_event_rel(struct time_travel_event *e,
-			       unsigned long long delay_ns);
-bool time_travel_del_event(struct time_travel_event *e);
-#else
-struct time_travel_event {
-};
+व्योम समय_प्रकारravel_add_irq_event(काष्ठा समय_प्रकारravel_event *e);
+व्योम समय_प्रकारravel_add_event_rel(काष्ठा समय_प्रकारravel_event *e,
+			       अचिन्हित दीर्घ दीर्घ delay_ns);
+bool समय_प्रकारravel_del_event(काष्ठा समय_प्रकारravel_event *e);
+#अन्यथा
+काष्ठा समय_प्रकारravel_event अणु
+पूर्ण;
 
-#define time_travel_mode TT_MODE_OFF
+#घोषणा समय_प्रकारravel_mode TT_MODE_OFF
 
-static inline void time_travel_sleep(void)
-{
-}
+अटल अंतरभूत व्योम समय_प्रकारravel_sleep(व्योम)
+अणु
+पूर्ण
 
 /* this is a macro so the event/function need not exist */
-#define time_travel_set_event_fn(e, fn) do {} while (0)
+#घोषणा समय_प्रकारravel_set_event_fn(e, fn) करो अणुपूर्ण जबतक (0)
 
-static inline void time_travel_propagate_time(void)
-{
-}
+अटल अंतरभूत व्योम समय_प्रकारravel_propagate_समय(व्योम)
+अणु
+पूर्ण
 
-static inline void time_travel_wait_readable(int fd)
-{
-}
+अटल अंतरभूत व्योम समय_प्रकारravel_रुको_पढ़ोable(पूर्णांक fd)
+अणु
+पूर्ण
 
-static inline void time_travel_add_irq_event(struct time_travel_event *e)
-{
+अटल अंतरभूत व्योम समय_प्रकारravel_add_irq_event(काष्ठा समय_प्रकारravel_event *e)
+अणु
 	WARN_ON(1);
-}
+पूर्ण
 
 /*
- * not inlines so the data structure need not exist,
+ * not अंतरभूतs so the data काष्ठाure need not exist,
  * cause linker failures
  */
-extern void time_travel_not_configured(void);
-#define time_travel_add_event_rel(...) time_travel_not_configured()
-#define time_travel_del_event(...) time_travel_not_configured()
-#endif /* CONFIG_UML_TIME_TRAVEL_SUPPORT */
+बाह्य व्योम समय_प्रकारravel_not_configured(व्योम);
+#घोषणा समय_प्रकारravel_add_event_rel(...) समय_प्रकारravel_not_configured()
+#घोषणा समय_प्रकारravel_del_event(...) समय_प्रकारravel_not_configured()
+#पूर्ण_अगर /* CONFIG_UML_TIME_TRAVEL_SUPPORT */
 
 /*
- * Without CONFIG_UML_TIME_TRAVEL_SUPPORT this is a linker error if used,
- * which is intentional since we really shouldn't link it in that case.
+ * Without CONFIG_UML_TIME_TRAVEL_SUPPORT this is a linker error अगर used,
+ * which is पूर्णांकentional since we really shouldn't link it in that हाल.
  */
-void time_travel_ndelay(unsigned long nsec);
-#endif /* __TIMER_INTERNAL_H__ */
+व्योम समय_प्रकारravel_ndelay(अचिन्हित दीर्घ nsec);
+#पूर्ण_अगर /* __TIMER_INTERNAL_H__ */

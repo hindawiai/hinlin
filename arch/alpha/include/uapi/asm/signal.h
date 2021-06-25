@@ -1,116 +1,117 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_ASMAXP_SIGNAL_H
-#define _UAPI_ASMAXP_SIGNAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_ASMAXP_SIGNAL_H
+#घोषणा _UAPI_ASMAXP_SIGNAL_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-/* Avoid too many header ordering problems.  */
-struct siginfo;
+/* Aव्योम too many header ordering problems.  */
+काष्ठा siginfo;
 
-#ifndef __KERNEL__
+#अगर_अघोषित __KERNEL__
 /* Here we must cater to libcs that poke about in kernel headers.  */
 
-#define NSIG		32
-typedef unsigned long sigset_t;
+#घोषणा NSIG		32
+प्रकार अचिन्हित दीर्घ sigset_t;
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
 
 /*
- * Linux/AXP has different signal numbers that Linux/i386: I'm trying
- * to make it OSF/1 binary compatible, at least for normal binaries.
+ * Linux/AXP has dअगरferent संकेत numbers that Linux/i386: I'm trying
+ * to make it OSF/1 binary compatible, at least क्रम normal binaries.
  */
-#define SIGHUP		 1
-#define SIGINT		 2
-#define SIGQUIT		 3
-#define SIGILL		 4
-#define SIGTRAP		 5
-#define SIGABRT		 6
-#define SIGEMT		 7
-#define SIGFPE		 8
-#define SIGKILL		 9
-#define SIGBUS		10
-#define SIGSEGV		11
-#define SIGSYS		12
-#define SIGPIPE		13
-#define SIGALRM		14
-#define SIGTERM		15
-#define SIGURG		16
-#define SIGSTOP		17
-#define SIGTSTP		18
-#define SIGCONT		19
-#define SIGCHLD		20
-#define SIGTTIN		21
-#define SIGTTOU		22
-#define SIGIO		23
-#define SIGXCPU		24
-#define SIGXFSZ		25
-#define SIGVTALRM	26
-#define SIGPROF		27
-#define SIGWINCH	28
-#define SIGINFO		29
-#define SIGUSR1		30
-#define SIGUSR2		31
+#घोषणा SIGHUP		 1
+#घोषणा संक_विघ्न		 2
+#घोषणा SIGQUIT		 3
+#घोषणा संक_अवैध		 4
+#घोषणा SIGTRAP		 5
+#घोषणा SIGABRT		 6
+#घोषणा SIGEMT		 7
+#घोषणा संक_भ_त्रुटि		 8
+#घोषणा SIGKILL		 9
+#घोषणा SIGBUS		10
+#घोषणा संक_अंश		11
+#घोषणा SIGSYS		12
+#घोषणा SIGPIPE		13
+#घोषणा SIGALRM		14
+#घोषणा संक_इति		15
+#घोषणा SIGURG		16
+#घोषणा SIGSTOP		17
+#घोषणा SIGTSTP		18
+#घोषणा SIGCONT		19
+#घोषणा SIGCHLD		20
+#घोषणा SIGTTIN		21
+#घोषणा SIGTTOU		22
+#घोषणा SIGIO		23
+#घोषणा SIGXCPU		24
+#घोषणा SIGXFSZ		25
+#घोषणा SIGVTALRM	26
+#घोषणा SIGPROF		27
+#घोषणा SIGWINCH	28
+#घोषणा SIGINFO		29
+#घोषणा SIGUSR1		30
+#घोषणा SIGUSR2		31
 
-#define SIGPOLL	SIGIO
-#define SIGPWR	SIGINFO
-#define SIGIOT	SIGABRT
+#घोषणा SIGPOLL	SIGIO
+#घोषणा SIGPWR	SIGINFO
+#घोषणा SIGIOT	SIGABRT
 
-/* These should not be considered constants from userland.  */
-#define SIGRTMIN	32
-#define SIGRTMAX	_NSIG
+/* These should not be considered स्थिरants from userland.  */
+#घोषणा SIGRTMIN	32
+#घोषणा SIGRTMAX	_NSIG
 
-#define SA_ONSTACK	0x00000001
-#define SA_RESTART	0x00000002
-#define SA_NOCLDSTOP	0x00000004
-#define SA_NODEFER	0x00000008
-#define SA_RESETHAND	0x00000010
-#define SA_NOCLDWAIT	0x00000020
-#define SA_SIGINFO	0x00000040
+#घोषणा SA_ONSTACK	0x00000001
+#घोषणा SA_RESTART	0x00000002
+#घोषणा SA_NOCLDSTOP	0x00000004
+#घोषणा SA_NODEFER	0x00000008
+#घोषणा SA_RESETHAND	0x00000010
+#घोषणा SA_NOCLDWAIT	0x00000020
+#घोषणा SA_SIGINFO	0x00000040
 
-#define SA_ONESHOT	SA_RESETHAND
-#define SA_NOMASK	SA_NODEFER
+#घोषणा SA_ONESHOT	SA_RESETHAND
+#घोषणा SA_NOMASK	SA_NODEFER
 
-#define MINSIGSTKSZ	4096
-#define SIGSTKSZ	16384
+#घोषणा MINSIGSTKSZ	4096
+#घोषणा SIGSTKSZ	16384
 
-#define SIG_BLOCK          1	/* for blocking signals */
-#define SIG_UNBLOCK        2	/* for unblocking signals */
-#define SIG_SETMASK        3	/* for setting the signal mask */
+#घोषणा SIG_BLOCK          1	/* क्रम blocking संकेतs */
+#घोषणा SIG_UNBLOCK        2	/* क्रम unblocking संकेतs */
+#घोषणा SIG_SETMASK        3	/* क्रम setting the संकेत mask */
 
-#include <asm-generic/signal-defs.h>
+#समावेश <यंत्र-generic/संकेत-defs.h>
 
-#ifndef __KERNEL__
+#अगर_अघोषित __KERNEL__
 /* Here we must cater to libcs that poke about in kernel headers.  */
 
-struct sigaction {
-	union {
+काष्ठा sigaction अणु
+	जोड़ अणु
 	  __sighandler_t	_sa_handler;
-	  void (*_sa_sigaction)(int, struct siginfo *, void *);
-	} _u;
+	  व्योम (*_sa_sigaction)(पूर्णांक, काष्ठा siginfo *, व्योम *);
+	पूर्ण _u;
 	sigset_t	sa_mask;
-	int		sa_flags;
-};
+	पूर्णांक		sa_flags;
+पूर्ण;
 
-#define sa_handler	_u._sa_handler
-#define sa_sigaction	_u._sa_sigaction
+#घोषणा sa_handler	_u._sa_handler
+#घोषणा sa_sigaction	_u._sa_sigaction
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-typedef struct sigaltstack {
-	void __user *ss_sp;
-	int ss_flags;
-	size_t ss_size;
-} stack_t;
+प्रकार काष्ठा sigaltstack अणु
+	व्योम __user *ss_sp;
+	पूर्णांक ss_flags;
+	माप_प्रकार ss_size;
+पूर्ण stack_t;
 
 /* sigstack(2) is deprecated, and will be withdrawn in a future version
-   of the X/Open CAE Specification.  Use sigaltstack instead.  It is only
-   implemented here for OSF/1 compatibility.  */
+   of the X/Open CAE Specअगरication.  Use sigaltstack instead.  It is only
+   implemented here क्रम OSF/1 compatibility.  */
 
-struct sigstack {
-	void __user *ss_sp;
-	int ss_onstack;
-};
+काष्ठा sigstack अणु
+	व्योम __user *ss_sp;
+	पूर्णांक ss_onstack;
+पूर्ण;
 
 
-#endif /* _UAPI_ASMAXP_SIGNAL_H */
+#पूर्ण_अगर /* _UAPI_ASMAXP_SIGNAL_H */

@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include <sched.h>
-#include "util.h" // for sched_getcpu()
-#include "../perf-sys.h"
-#include "cloexec.h"
-#include "event.h"
-#include "asm/bug.h"
-#include "debug.h"
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <linux/string.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश <sched.h>
+#समावेश "util.h" // क्रम sched_अ_लोpu()
+#समावेश "../perf-sys.h"
+#समावेश "cloexec.h"
+#समावेश "event.h"
+#समावेश "asm/bug.h"
+#समावेश "debug.h"
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
+#समावेश <linux/माला.स>
 
-static unsigned long flag = PERF_FLAG_FD_CLOEXEC;
+अटल अचिन्हित दीर्घ flag = PERF_FLAG_FD_CLOEXEC;
 
-int __weak sched_getcpu(void)
-{
-#ifdef __NR_getcpu
-	unsigned cpu;
-	int err = syscall(__NR_getcpu, &cpu, NULL, NULL);
-	if (!err)
-		return cpu;
-#else
-	errno = ENOSYS;
-#endif
-	return -1;
-}
+पूर्णांक __weak sched_अ_लोpu(व्योम)
+अणु
+#अगर_घोषित __NR_अ_लोpu
+	अचिन्हित cpu;
+	पूर्णांक err = syscall(__NR_अ_लोpu, &cpu, शून्य, शून्य);
+	अगर (!err)
+		वापस cpu;
+#अन्यथा
+	त्रुटि_सं = ENOSYS;
+#पूर्ण_अगर
+	वापस -1;
+पूर्ण
 
-static int perf_flag_probe(void)
-{
+अटल पूर्णांक perf_flag_probe(व्योम)
+अणु
 	/* use 'safest' configuration as used in evsel__fallback() */
-	struct perf_event_attr attr = {
+	काष्ठा perf_event_attr attr = अणु
 		.type = PERF_TYPE_SOFTWARE,
 		.config = PERF_COUNT_SW_CPU_CLOCK,
 		.exclude_kernel = 1,
-	};
-	int fd;
-	int err;
-	int cpu;
+	पूर्ण;
+	पूर्णांक fd;
+	पूर्णांक err;
+	पूर्णांक cpu;
 	pid_t pid = -1;
-	char sbuf[STRERR_BUFSIZE];
+	अक्षर sbuf[STRERR_बफ_मानE];
 
-	cpu = sched_getcpu();
-	if (cpu < 0)
+	cpu = sched_अ_लोpu();
+	अगर (cpu < 0)
 		cpu = 0;
 
 	/*
-	 * Using -1 for the pid is a workaround to avoid gratuitous jump label
+	 * Using -1 क्रम the pid is a workaround to aव्योम gratuitous jump label
 	 * changes.
 	 */
-	while (1) {
+	जबतक (1) अणु
 		/* check cloexec flag */
-		fd = sys_perf_event_open(&attr, pid, cpu, -1,
+		fd = sys_perf_event_खोलो(&attr, pid, cpu, -1,
 					 PERF_FLAG_FD_CLOEXEC);
-		if (fd < 0 && pid == -1 && errno == EACCES) {
+		अगर (fd < 0 && pid == -1 && त्रुटि_सं == EACCES) अणु
 			pid = 0;
-			continue;
-		}
-		break;
-	}
-	err = errno;
+			जारी;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	err = त्रुटि_सं;
 
-	if (fd >= 0) {
-		close(fd);
-		return 1;
-	}
+	अगर (fd >= 0) अणु
+		बंद(fd);
+		वापस 1;
+	पूर्ण
 
 	WARN_ONCE(err != EINVAL && err != EBUSY && err != EACCES,
 		  "perf_event_open(..., PERF_FLAG_FD_CLOEXEC) failed with unexpected error %d (%s)\n",
-		  err, str_error_r(err, sbuf, sizeof(sbuf)));
+		  err, str_error_r(err, sbuf, माप(sbuf)));
 
 	/* not supported, confirm error related to PERF_FLAG_FD_CLOEXEC */
-	while (1) {
-		fd = sys_perf_event_open(&attr, pid, cpu, -1, 0);
-		if (fd < 0 && pid == -1 && errno == EACCES) {
+	जबतक (1) अणु
+		fd = sys_perf_event_खोलो(&attr, pid, cpu, -1, 0);
+		अगर (fd < 0 && pid == -1 && त्रुटि_सं == EACCES) अणु
 			pid = 0;
-			continue;
-		}
-		break;
-	}
-	err = errno;
+			जारी;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	err = त्रुटि_सं;
 
-	if (fd >= 0)
-		close(fd);
+	अगर (fd >= 0)
+		बंद(fd);
 
-	if (WARN_ONCE(fd < 0 && err != EBUSY && err != EACCES,
+	अगर (WARN_ONCE(fd < 0 && err != EBUSY && err != EACCES,
 		      "perf_event_open(..., 0) failed unexpectedly with error %d (%s)\n",
-		      err, str_error_r(err, sbuf, sizeof(sbuf))))
-		return -1;
+		      err, str_error_r(err, sbuf, माप(sbuf))))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long perf_event_open_cloexec_flag(void)
-{
-	static bool probed;
+अचिन्हित दीर्घ perf_event_खोलो_cloexec_flag(व्योम)
+अणु
+	अटल bool probed;
 
-	if (!probed) {
-		if (perf_flag_probe() <= 0)
+	अगर (!probed) अणु
+		अगर (perf_flag_probe() <= 0)
 			flag = 0;
 		probed = true;
-	}
+	पूर्ण
 
-	return flag;
-}
+	वापस flag;
+पूर्ण

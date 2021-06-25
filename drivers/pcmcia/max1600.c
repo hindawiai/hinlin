@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * MAX1600 PCMCIA power switch library
+ * MAX1600 PCMCIA घातer चयन library
  *
  * Copyright (C) 2016 Russell King
  */
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/gpio/consumer.h>
-#include <linux/slab.h>
-#include "max1600.h"
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश "max1600.h"
 
-static const char *max1600_gpio_name[2][MAX1600_GPIO_MAX] = {
-	{ "a0vcc", "a1vcc", "a0vpp", "a1vpp" },
-	{ "b0vcc", "b1vcc", "b0vpp", "b1vpp" },
-};
+अटल स्थिर अक्षर *max1600_gpio_name[2][MAX1600_GPIO_MAX] = अणु
+	अणु "a0vcc", "a1vcc", "a0vpp", "a1vpp" पूर्ण,
+	अणु "b0vcc", "b1vcc", "b0vpp", "b1vpp" पूर्ण,
+पूर्ण;
 
-int max1600_init(struct device *dev, struct max1600 **ptr,
-	unsigned int channel, unsigned int code)
-{
-	struct max1600 *m;
-	int chan;
-	int i;
+पूर्णांक max1600_init(काष्ठा device *dev, काष्ठा max1600 **ptr,
+	अचिन्हित पूर्णांक channel, अचिन्हित पूर्णांक code)
+अणु
+	काष्ठा max1600 *m;
+	पूर्णांक chan;
+	पूर्णांक i;
 
-	switch (channel) {
-	case MAX1600_CHAN_A:
+	चयन (channel) अणु
+	हाल MAX1600_CHAN_A:
 		chan = 0;
-		break;
-	case MAX1600_CHAN_B:
+		अवरोध;
+	हाल MAX1600_CHAN_B:
 		chan = 1;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (code != MAX1600_CODE_LOW && code != MAX1600_CODE_HIGH)
-		return -EINVAL;
+	अगर (code != MAX1600_CODE_LOW && code != MAX1600_CODE_HIGH)
+		वापस -EINVAL;
 
-	m = devm_kzalloc(dev, sizeof(*m), GFP_KERNEL);
-	if (!m)
-		return -ENOMEM;
+	m = devm_kzalloc(dev, माप(*m), GFP_KERNEL);
+	अगर (!m)
+		वापस -ENOMEM;
 
 	m->dev = dev;
 	m->code = code;
 
-	for (i = 0; i < MAX1600_GPIO_MAX; i++) {
-		const char *name;
+	क्रम (i = 0; i < MAX1600_GPIO_MAX; i++) अणु
+		स्थिर अक्षर *name;
 
 		name = max1600_gpio_name[chan][i];
-		if (i != MAX1600_GPIO_0VPP) {
+		अगर (i != MAX1600_GPIO_0VPP) अणु
 			m->gpio[i] = devm_gpiod_get(dev, name, GPIOD_OUT_LOW);
-		} else {
+		पूर्ण अन्यथा अणु
 			m->gpio[i] = devm_gpiod_get_optional(dev, name,
 							     GPIOD_OUT_LOW);
-			if (!m->gpio[i])
-				break;
-		}
-		if (IS_ERR(m->gpio[i]))
-			return PTR_ERR(m->gpio[i]);
-	}
+			अगर (!m->gpio[i])
+				अवरोध;
+		पूर्ण
+		अगर (IS_ERR(m->gpio[i]))
+			वापस PTR_ERR(m->gpio[i]);
+	पूर्ण
 
 	*ptr = m;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(max1600_init);
 
-int max1600_configure(struct max1600 *m, unsigned int vcc, unsigned int vpp)
-{
-	DECLARE_BITMAP(values, MAX1600_GPIO_MAX) = { 0, };
-	int n = MAX1600_GPIO_0VPP;
+पूर्णांक max1600_configure(काष्ठा max1600 *m, अचिन्हित पूर्णांक vcc, अचिन्हित पूर्णांक vpp)
+अणु
+	DECLARE_BITMAP(values, MAX1600_GPIO_MAX) = अणु 0, पूर्ण;
+	पूर्णांक n = MAX1600_GPIO_0VPP;
 
-	if (m->gpio[MAX1600_GPIO_0VPP]) {
-		if (vpp == 0) {
+	अगर (m->gpio[MAX1600_GPIO_0VPP]) अणु
+		अगर (vpp == 0) अणु
 			__assign_bit(MAX1600_GPIO_0VPP, values, 0);
 			__assign_bit(MAX1600_GPIO_1VPP, values, 0);
-		} else if (vpp == 120) {
+		पूर्ण अन्यथा अगर (vpp == 120) अणु
 			__assign_bit(MAX1600_GPIO_0VPP, values, 0);
 			__assign_bit(MAX1600_GPIO_1VPP, values, 1);
-		} else if (vpp == vcc) {
+		पूर्ण अन्यथा अगर (vpp == vcc) अणु
 			__assign_bit(MAX1600_GPIO_0VPP, values, 1);
 			__assign_bit(MAX1600_GPIO_1VPP, values, 0);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(m->dev, "unrecognised Vpp %u.%uV\n",
 				vpp / 10, vpp % 10);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		n = MAX1600_GPIO_MAX;
-	} else if (vpp != vcc && vpp != 0) {
+	पूर्ण अन्यथा अगर (vpp != vcc && vpp != 0) अणु
 		dev_err(m->dev, "no VPP control\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (vcc == 0) {
+	अगर (vcc == 0) अणु
 		__assign_bit(MAX1600_GPIO_0VCC, values, 0);
 		__assign_bit(MAX1600_GPIO_1VCC, values, 0);
-	} else if (vcc == 33) { /* VY */
+	पूर्ण अन्यथा अगर (vcc == 33) अणु /* VY */
 		__assign_bit(MAX1600_GPIO_0VCC, values, 1);
 		__assign_bit(MAX1600_GPIO_1VCC, values, 0);
-	} else if (vcc == 50) { /* VX */
+	पूर्ण अन्यथा अगर (vcc == 50) अणु /* VX */
 		__assign_bit(MAX1600_GPIO_0VCC, values, 0);
 		__assign_bit(MAX1600_GPIO_1VCC, values, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(m->dev, "unrecognised Vcc %u.%uV\n",
 			vcc / 10, vcc % 10);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (m->code == MAX1600_CODE_HIGH) {
+	अगर (m->code == MAX1600_CODE_HIGH) अणु
 		/*
 		 * Cirrus mode appears to be the same as Intel mode,
 		 * except the VCC pins are inverted.
 		 */
 		__change_bit(MAX1600_GPIO_0VCC, values);
 		__change_bit(MAX1600_GPIO_1VCC, values);
-	}
+	पूर्ण
 
-	return gpiod_set_array_value_cansleep(n, m->gpio, NULL, values);
-}
+	वापस gpiod_set_array_value_cansleep(n, m->gpio, शून्य, values);
+पूर्ण
 EXPORT_SYMBOL_GPL(max1600_configure);
 
 MODULE_LICENSE("GPL v2");

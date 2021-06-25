@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __VIA_PMU_EVENT_H
-#define __VIA_PMU_EVENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __VIA_PMU_EVENT_H
+#घोषणा __VIA_PMU_EVENT_H
 
-#define PMU_EVT_POWER	0
-#define PMU_EVT_LID	1
-extern void via_pmu_event(int key, int down);
+#घोषणा PMU_EVT_POWER	0
+#घोषणा PMU_EVT_LID	1
+बाह्य व्योम via_pmu_event(पूर्णांक key, पूर्णांक करोwn);
 
-#endif /* __VIA_PMU_EVENT_H */
+#पूर्ण_अगर /* __VIA_PMU_EVENT_H */

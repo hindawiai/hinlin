@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * JZ4780 BCH controller driver
  *
@@ -6,264 +7,264 @@
  * Author: Alex Smith <alex.smith@imgtec.com>
  */
 
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "ingenic_ecc.h"
+#समावेश "ingenic_ecc.h"
 
-#define BCH_BHCR			0x0
-#define BCH_BHCCR			0x8
-#define BCH_BHCNT			0xc
-#define BCH_BHDR			0x10
-#define BCH_BHPAR0			0x14
-#define BCH_BHERR0			0x84
-#define BCH_BHINT			0x184
-#define BCH_BHINTES			0x188
-#define BCH_BHINTEC			0x18c
-#define BCH_BHINTE			0x190
+#घोषणा BCH_BHCR			0x0
+#घोषणा BCH_BHCCR			0x8
+#घोषणा BCH_BHCNT			0xc
+#घोषणा BCH_BHDR			0x10
+#घोषणा BCH_BHPAR0			0x14
+#घोषणा BCH_BHERR0			0x84
+#घोषणा BCH_BHINT			0x184
+#घोषणा BCH_BHINTES			0x188
+#घोषणा BCH_BHINTEC			0x18c
+#घोषणा BCH_BHINTE			0x190
 
-#define BCH_BHCR_BSEL_SHIFT		4
-#define BCH_BHCR_BSEL_MASK		(0x7f << BCH_BHCR_BSEL_SHIFT)
-#define BCH_BHCR_ENCE			BIT(2)
-#define BCH_BHCR_INIT			BIT(1)
-#define BCH_BHCR_BCHE			BIT(0)
+#घोषणा BCH_BHCR_BSEL_SHIFT		4
+#घोषणा BCH_BHCR_BSEL_MASK		(0x7f << BCH_BHCR_BSEL_SHIFT)
+#घोषणा BCH_BHCR_ENCE			BIT(2)
+#घोषणा BCH_BHCR_INIT			BIT(1)
+#घोषणा BCH_BHCR_BCHE			BIT(0)
 
-#define BCH_BHCNT_PARITYSIZE_SHIFT	16
-#define BCH_BHCNT_PARITYSIZE_MASK	(0x7f << BCH_BHCNT_PARITYSIZE_SHIFT)
-#define BCH_BHCNT_BLOCKSIZE_SHIFT	0
-#define BCH_BHCNT_BLOCKSIZE_MASK	(0x7ff << BCH_BHCNT_BLOCKSIZE_SHIFT)
+#घोषणा BCH_BHCNT_PARITYSIZE_SHIFT	16
+#घोषणा BCH_BHCNT_PARITYSIZE_MASK	(0x7f << BCH_BHCNT_PARITYSIZE_SHIFT)
+#घोषणा BCH_BHCNT_BLOCKSIZE_SHIFT	0
+#घोषणा BCH_BHCNT_BLOCKSIZE_MASK	(0x7ff << BCH_BHCNT_BLOCKSIZE_SHIFT)
 
-#define BCH_BHERR_MASK_SHIFT		16
-#define BCH_BHERR_MASK_MASK		(0xffff << BCH_BHERR_MASK_SHIFT)
-#define BCH_BHERR_INDEX_SHIFT		0
-#define BCH_BHERR_INDEX_MASK		(0x7ff << BCH_BHERR_INDEX_SHIFT)
+#घोषणा BCH_BHERR_MASK_SHIFT		16
+#घोषणा BCH_BHERR_MASK_MASK		(0xffff << BCH_BHERR_MASK_SHIFT)
+#घोषणा BCH_BHERR_INDEX_SHIFT		0
+#घोषणा BCH_BHERR_INDEX_MASK		(0x7ff << BCH_BHERR_INDEX_SHIFT)
 
-#define BCH_BHINT_ERRC_SHIFT		24
-#define BCH_BHINT_ERRC_MASK		(0x7f << BCH_BHINT_ERRC_SHIFT)
-#define BCH_BHINT_TERRC_SHIFT		16
-#define BCH_BHINT_TERRC_MASK		(0x7f << BCH_BHINT_TERRC_SHIFT)
-#define BCH_BHINT_DECF			BIT(3)
-#define BCH_BHINT_ENCF			BIT(2)
-#define BCH_BHINT_UNCOR			BIT(1)
-#define BCH_BHINT_ERR			BIT(0)
+#घोषणा BCH_BHINT_ERRC_SHIFT		24
+#घोषणा BCH_BHINT_ERRC_MASK		(0x7f << BCH_BHINT_ERRC_SHIFT)
+#घोषणा BCH_BHINT_TERRC_SHIFT		16
+#घोषणा BCH_BHINT_TERRC_MASK		(0x7f << BCH_BHINT_TERRC_SHIFT)
+#घोषणा BCH_BHINT_DECF			BIT(3)
+#घोषणा BCH_BHINT_ENCF			BIT(2)
+#घोषणा BCH_BHINT_UNCOR			BIT(1)
+#घोषणा BCH_BHINT_ERR			BIT(0)
 
-#define BCH_CLK_RATE			(200 * 1000 * 1000)
+#घोषणा BCH_CLK_RATE			(200 * 1000 * 1000)
 
-/* Timeout for BCH calculation/correction. */
-#define BCH_TIMEOUT_US			100000
+/* Timeout क्रम BCH calculation/correction. */
+#घोषणा BCH_TIMEOUT_US			100000
 
-static void jz4780_bch_reset(struct ingenic_ecc *bch,
-			     struct ingenic_ecc_params *params, bool encode)
-{
+अटल व्योम jz4780_bch_reset(काष्ठा ingenic_ecc *bch,
+			     काष्ठा ingenic_ecc_params *params, bool encode)
+अणु
 	u32 reg;
 
-	/* Clear interrupt status. */
-	writel(readl(bch->base + BCH_BHINT), bch->base + BCH_BHINT);
+	/* Clear पूर्णांकerrupt status. */
+	ग_लिखोl(पढ़ोl(bch->base + BCH_BHINT), bch->base + BCH_BHINT);
 
-	/* Set up BCH count register. */
+	/* Set up BCH count रेजिस्टर. */
 	reg = params->size << BCH_BHCNT_BLOCKSIZE_SHIFT;
 	reg |= params->bytes << BCH_BHCNT_PARITYSIZE_SHIFT;
-	writel(reg, bch->base + BCH_BHCNT);
+	ग_लिखोl(reg, bch->base + BCH_BHCNT);
 
 	/* Initialise and enable BCH. */
 	reg = BCH_BHCR_BCHE | BCH_BHCR_INIT;
 	reg |= params->strength << BCH_BHCR_BSEL_SHIFT;
-	if (encode)
+	अगर (encode)
 		reg |= BCH_BHCR_ENCE;
-	writel(reg, bch->base + BCH_BHCR);
-}
+	ग_लिखोl(reg, bch->base + BCH_BHCR);
+पूर्ण
 
-static void jz4780_bch_disable(struct ingenic_ecc *bch)
-{
-	writel(readl(bch->base + BCH_BHINT), bch->base + BCH_BHINT);
-	writel(BCH_BHCR_BCHE, bch->base + BCH_BHCCR);
-}
+अटल व्योम jz4780_bch_disable(काष्ठा ingenic_ecc *bch)
+अणु
+	ग_लिखोl(पढ़ोl(bch->base + BCH_BHINT), bch->base + BCH_BHINT);
+	ग_लिखोl(BCH_BHCR_BCHE, bch->base + BCH_BHCCR);
+पूर्ण
 
-static void jz4780_bch_write_data(struct ingenic_ecc *bch, const void *buf,
-				  size_t size)
-{
-	size_t size32 = size / sizeof(u32);
-	size_t size8 = size % sizeof(u32);
-	const u32 *src32;
-	const u8 *src8;
+अटल व्योम jz4780_bch_ग_लिखो_data(काष्ठा ingenic_ecc *bch, स्थिर व्योम *buf,
+				  माप_प्रकार size)
+अणु
+	माप_प्रकार size32 = size / माप(u32);
+	माप_प्रकार size8 = size % माप(u32);
+	स्थिर u32 *src32;
+	स्थिर u8 *src8;
 
-	src32 = (const u32 *)buf;
-	while (size32--)
-		writel(*src32++, bch->base + BCH_BHDR);
+	src32 = (स्थिर u32 *)buf;
+	जबतक (size32--)
+		ग_लिखोl(*src32++, bch->base + BCH_BHDR);
 
-	src8 = (const u8 *)src32;
-	while (size8--)
-		writeb(*src8++, bch->base + BCH_BHDR);
-}
+	src8 = (स्थिर u8 *)src32;
+	जबतक (size8--)
+		ग_लिखोb(*src8++, bch->base + BCH_BHDR);
+पूर्ण
 
-static void jz4780_bch_read_parity(struct ingenic_ecc *bch, void *buf,
-				   size_t size)
-{
-	size_t size32 = size / sizeof(u32);
-	size_t size8 = size % sizeof(u32);
+अटल व्योम jz4780_bch_पढ़ो_parity(काष्ठा ingenic_ecc *bch, व्योम *buf,
+				   माप_प्रकार size)
+अणु
+	माप_प्रकार size32 = size / माप(u32);
+	माप_प्रकार size8 = size % माप(u32);
 	u32 *dest32;
 	u8 *dest8;
 	u32 val, offset = 0;
 
 	dest32 = (u32 *)buf;
-	while (size32--) {
-		*dest32++ = readl(bch->base + BCH_BHPAR0 + offset);
-		offset += sizeof(u32);
-	}
+	जबतक (size32--) अणु
+		*dest32++ = पढ़ोl(bch->base + BCH_BHPAR0 + offset);
+		offset += माप(u32);
+	पूर्ण
 
 	dest8 = (u8 *)dest32;
-	val = readl(bch->base + BCH_BHPAR0 + offset);
-	switch (size8) {
-	case 3:
+	val = पढ़ोl(bch->base + BCH_BHPAR0 + offset);
+	चयन (size8) अणु
+	हाल 3:
 		dest8[2] = (val >> 16) & 0xff;
 		fallthrough;
-	case 2:
+	हाल 2:
 		dest8[1] = (val >> 8) & 0xff;
 		fallthrough;
-	case 1:
+	हाल 1:
 		dest8[0] = val & 0xff;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static bool jz4780_bch_wait_complete(struct ingenic_ecc *bch, unsigned int irq,
+अटल bool jz4780_bch_रुको_complete(काष्ठा ingenic_ecc *bch, अचिन्हित पूर्णांक irq,
 				     u32 *status)
-{
+अणु
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * While we could use interrupts here and sleep until the operation
+	 * While we could use पूर्णांकerrupts here and sleep until the operation
 	 * completes, the controller works fairly quickly (usually a few
 	 * microseconds) and so the overhead of sleeping until we get an
-	 * interrupt quite noticeably decreases performance.
+	 * पूर्णांकerrupt quite noticeably decreases perक्रमmance.
 	 */
-	ret = readl_poll_timeout(bch->base + BCH_BHINT, reg,
+	ret = पढ़ोl_poll_समयout(bch->base + BCH_BHINT, reg,
 				 (reg & irq) == irq, 0, BCH_TIMEOUT_US);
-	if (ret)
-		return false;
+	अगर (ret)
+		वापस false;
 
-	if (status)
+	अगर (status)
 		*status = reg;
 
-	writel(reg, bch->base + BCH_BHINT);
-	return true;
-}
+	ग_लिखोl(reg, bch->base + BCH_BHINT);
+	वापस true;
+पूर्ण
 
-static int jz4780_calculate(struct ingenic_ecc *bch,
-			    struct ingenic_ecc_params *params,
-			    const u8 *buf, u8 *ecc_code)
-{
-	int ret = 0;
+अटल पूर्णांक jz4780_calculate(काष्ठा ingenic_ecc *bch,
+			    काष्ठा ingenic_ecc_params *params,
+			    स्थिर u8 *buf, u8 *ecc_code)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&bch->lock);
 
 	jz4780_bch_reset(bch, params, true);
-	jz4780_bch_write_data(bch, buf, params->size);
+	jz4780_bch_ग_लिखो_data(bch, buf, params->size);
 
-	if (jz4780_bch_wait_complete(bch, BCH_BHINT_ENCF, NULL)) {
-		jz4780_bch_read_parity(bch, ecc_code, params->bytes);
-	} else {
+	अगर (jz4780_bch_रुको_complete(bch, BCH_BHINT_ENCF, शून्य)) अणु
+		jz4780_bch_पढ़ो_parity(bch, ecc_code, params->bytes);
+	पूर्ण अन्यथा अणु
 		dev_err(bch->dev, "timed out while calculating ECC\n");
 		ret = -ETIMEDOUT;
-	}
+	पूर्ण
 
 	jz4780_bch_disable(bch);
 	mutex_unlock(&bch->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int jz4780_correct(struct ingenic_ecc *bch,
-			  struct ingenic_ecc_params *params,
+अटल पूर्णांक jz4780_correct(काष्ठा ingenic_ecc *bch,
+			  काष्ठा ingenic_ecc_params *params,
 			  u8 *buf, u8 *ecc_code)
-{
+अणु
 	u32 reg, mask, index;
-	int i, ret, count;
+	पूर्णांक i, ret, count;
 
 	mutex_lock(&bch->lock);
 
 	jz4780_bch_reset(bch, params, false);
-	jz4780_bch_write_data(bch, buf, params->size);
-	jz4780_bch_write_data(bch, ecc_code, params->bytes);
+	jz4780_bch_ग_लिखो_data(bch, buf, params->size);
+	jz4780_bch_ग_लिखो_data(bch, ecc_code, params->bytes);
 
-	if (!jz4780_bch_wait_complete(bch, BCH_BHINT_DECF, &reg)) {
+	अगर (!jz4780_bch_रुको_complete(bch, BCH_BHINT_DECF, &reg)) अणु
 		dev_err(bch->dev, "timed out while correcting data\n");
 		ret = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (reg & BCH_BHINT_UNCOR) {
+	अगर (reg & BCH_BHINT_UNCOR) अणु
 		dev_warn(bch->dev, "uncorrectable ECC error\n");
 		ret = -EBADMSG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Correct any detected errors. */
-	if (reg & BCH_BHINT_ERR) {
+	अगर (reg & BCH_BHINT_ERR) अणु
 		count = (reg & BCH_BHINT_ERRC_MASK) >> BCH_BHINT_ERRC_SHIFT;
 		ret = (reg & BCH_BHINT_TERRC_MASK) >> BCH_BHINT_TERRC_SHIFT;
 
-		for (i = 0; i < count; i++) {
-			reg = readl(bch->base + BCH_BHERR0 + (i * 4));
+		क्रम (i = 0; i < count; i++) अणु
+			reg = पढ़ोl(bch->base + BCH_BHERR0 + (i * 4));
 			mask = (reg & BCH_BHERR_MASK_MASK) >>
 						BCH_BHERR_MASK_SHIFT;
 			index = (reg & BCH_BHERR_INDEX_MASK) >>
 						BCH_BHERR_INDEX_SHIFT;
 			buf[(index * 2) + 0] ^= mask;
 			buf[(index * 2) + 1] ^= mask >> 8;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = 0;
-	}
+	पूर्ण
 
 out:
 	jz4780_bch_disable(bch);
 	mutex_unlock(&bch->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int jz4780_bch_probe(struct platform_device *pdev)
-{
-	struct ingenic_ecc *bch;
-	int ret;
+अटल पूर्णांक jz4780_bch_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ingenic_ecc *bch;
+	पूर्णांक ret;
 
 	ret = ingenic_ecc_probe(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	bch = platform_get_drvdata(pdev);
+	bch = platक्रमm_get_drvdata(pdev);
 	clk_set_rate(bch->clk, BCH_CLK_RATE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ingenic_ecc_ops jz4780_bch_ops = {
+अटल स्थिर काष्ठा ingenic_ecc_ops jz4780_bch_ops = अणु
 	.disable = jz4780_bch_disable,
 	.calculate = jz4780_calculate,
 	.correct = jz4780_correct,
-};
+पूर्ण;
 
-static const struct of_device_id jz4780_bch_dt_match[] = {
-	{ .compatible = "ingenic,jz4780-bch", .data = &jz4780_bch_ops },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id jz4780_bch_dt_match[] = अणु
+	अणु .compatible = "ingenic,jz4780-bch", .data = &jz4780_bch_ops पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, jz4780_bch_dt_match);
 
-static struct platform_driver jz4780_bch_driver = {
+अटल काष्ठा platक्रमm_driver jz4780_bch_driver = अणु
 	.probe		= jz4780_bch_probe,
-	.driver	= {
+	.driver	= अणु
 		.name	= "jz4780-bch",
 		.of_match_table = of_match_ptr(jz4780_bch_dt_match),
-	},
-};
-module_platform_driver(jz4780_bch_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(jz4780_bch_driver);
 
 MODULE_AUTHOR("Alex Smith <alex@alex-smith.me.uk>");
 MODULE_AUTHOR("Harvey Hunt <harveyhuntnexus@gmail.com>");

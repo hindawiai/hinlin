@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /*
  * Copyright (c) 2005-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2015,2017 Qualcomm Atheros, Inc.
  */
 
-#ifndef _BMI_H_
-#define _BMI_H_
+#अगर_अघोषित _BMI_H_
+#घोषणा _BMI_H_
 
-#include "core.h"
+#समावेश "core.h"
 
 /*
  * Bootloader Messaging Interface (BMI)
  *
- * BMI is a very simple messaging interface used during initialization
- * to read memory, write memory, execute code, and to define an
+ * BMI is a very simple messaging पूर्णांकerface used during initialization
+ * to पढ़ो memory, ग_लिखो memory, execute code, and to define an
  * application entry PC.
  *
- * It is used to download an application to QCA988x, to provide
- * patches to code that is already resident on QCA988x, and generally
- * to examine and modify state.  The Host has an opportunity to use
+ * It is used to करोwnload an application to QCA988x, to provide
+ * patches to code that is alपढ़ोy resident on QCA988x, and generally
+ * to examine and modअगरy state.  The Host has an opportunity to use
  * BMI only once during bootup.  Once the Host issues a BMI_DONE
  * command, this opportunity ends.
  *
- * The Host writes BMI requests to mailbox0, and reads BMI responses
+ * The Host ग_लिखोs BMI requests to mailbox0, and पढ़ोs BMI responses
  * from mailbox0.   BMI requests all begin with a command
- * (see below for specific commands), and are followed by
- * command-specific data.
+ * (see below क्रम specअगरic commands), and are followed by
+ * command-specअगरic data.
  *
  * Flow control:
  * The Host can only issue a command once the Target gives it a
@@ -36,27 +37,27 @@
  * BMI handles all required Target-side cache flushing.
  */
 
-/* Maximum data size used for BMI transfers */
-#define BMI_MAX_DATA_SIZE	256
+/* Maximum data size used क्रम BMI transfers */
+#घोषणा BMI_MAX_DATA_SIZE	256
 
 /* len = cmd + addr + length */
-#define BMI_MAX_CMDBUF_SIZE (BMI_MAX_DATA_SIZE + \
-			sizeof(u32) + \
-			sizeof(u32) + \
-			sizeof(u32))
+#घोषणा BMI_MAX_CMDBUF_SIZE (BMI_MAX_DATA_SIZE + \
+			माप(u32) + \
+			माप(u32) + \
+			माप(u32))
 
-/* Maximum data size used for large BMI transfers */
-#define BMI_MAX_LARGE_DATA_SIZE	2048
+/* Maximum data size used क्रम large BMI transfers */
+#घोषणा BMI_MAX_LARGE_DATA_SIZE	2048
 
 /* len = cmd + addr + length */
-#define BMI_MAX_LARGE_CMDBUF_SIZE (BMI_MAX_LARGE_DATA_SIZE + \
-			sizeof(u32) + \
-			sizeof(u32) + \
-			sizeof(u32))
+#घोषणा BMI_MAX_LARGE_CMDBUF_SIZE (BMI_MAX_LARGE_DATA_SIZE + \
+			माप(u32) + \
+			माप(u32) + \
+			माप(u32))
 
 /* BMI Commands */
 
-enum bmi_cmd_id {
+क्रमागत bmi_cmd_id अणु
 	BMI_NO_COMMAND          = 0,
 	BMI_DONE                = 1,
 	BMI_READ_MEMORY         = 2,
@@ -76,202 +77,202 @@ enum bmi_cmd_id {
 	BMI_LZ_STREAM_START     = 13, /* should be followed by LZ_DATA */
 	BMI_LZ_DATA             = 14,
 	BMI_NVRAM_PROCESS       = 15,
-};
+पूर्ण;
 
-#define BMI_NVRAM_SEG_NAME_SZ 16
+#घोषणा BMI_NVRAM_SEG_NAME_SZ 16
 
-#define BMI_PARAM_GET_EEPROM_BOARD_ID 0x10
-#define BMI_PARAM_GET_FLASH_BOARD_ID 0x8000
-#define BMI_PARAM_FLASH_SECTION_ALL 0x10000
+#घोषणा BMI_PARAM_GET_EEPROM_BOARD_ID 0x10
+#घोषणा BMI_PARAM_GET_FLASH_BOARD_ID 0x8000
+#घोषणा BMI_PARAM_FLASH_SECTION_ALL 0x10000
 
 /* Dual-band Extended Board ID */
-#define BMI_PARAM_GET_EXT_BOARD_ID 0x40000
-#define ATH10K_BMI_EXT_BOARD_ID_SUPPORT 0x40000
+#घोषणा BMI_PARAM_GET_EXT_BOARD_ID 0x40000
+#घोषणा ATH10K_BMI_EXT_BOARD_ID_SUPPORT 0x40000
 
-#define ATH10K_BMI_BOARD_ID_FROM_OTP_MASK   0x7c00
-#define ATH10K_BMI_BOARD_ID_FROM_OTP_LSB    10
+#घोषणा ATH10K_BMI_BOARD_ID_FROM_OTP_MASK   0x7c00
+#घोषणा ATH10K_BMI_BOARD_ID_FROM_OTP_LSB    10
 
-#define ATH10K_BMI_CHIP_ID_FROM_OTP_MASK    0x18000
-#define ATH10K_BMI_CHIP_ID_FROM_OTP_LSB     15
+#घोषणा ATH10K_BMI_CHIP_ID_FROM_OTP_MASK    0x18000
+#घोषणा ATH10K_BMI_CHIP_ID_FROM_OTP_LSB     15
 
-#define ATH10K_BMI_BOARD_ID_STATUS_MASK 0xff
-#define ATH10K_BMI_EBOARD_ID_STATUS_MASK 0xff
+#घोषणा ATH10K_BMI_BOARD_ID_STATUS_MASK 0xff
+#घोषणा ATH10K_BMI_EBOARD_ID_STATUS_MASK 0xff
 
-struct bmi_cmd {
-	__le32 id; /* enum bmi_cmd_id */
-	union {
-		struct {
-		} done;
-		struct {
+काष्ठा bmi_cmd अणु
+	__le32 id; /* क्रमागत bmi_cmd_id */
+	जोड़ अणु
+		काष्ठा अणु
+		पूर्ण करोne;
+		काष्ठा अणु
 			__le32 addr;
 			__le32 len;
-		} read_mem;
-		struct {
+		पूर्ण पढ़ो_mem;
+		काष्ठा अणु
 			__le32 addr;
 			__le32 len;
 			u8 payload[0];
-		} write_mem;
-		struct {
+		पूर्ण ग_लिखो_mem;
+		काष्ठा अणु
 			__le32 addr;
 			__le32 param;
-		} execute;
-		struct {
+		पूर्ण execute;
+		काष्ठा अणु
 			__le32 addr;
-		} set_app_start;
-		struct {
+		पूर्ण set_app_start;
+		काष्ठा अणु
 			__le32 addr;
-		} read_soc_reg;
-		struct {
+		पूर्ण पढ़ो_soc_reg;
+		काष्ठा अणु
 			__le32 addr;
 			__le32 value;
-		} write_soc_reg;
-		struct {
-		} get_target_info;
-		struct {
+		पूर्ण ग_लिखो_soc_reg;
+		काष्ठा अणु
+		पूर्ण get_target_info;
+		काष्ठा अणु
 			__le32 rom_addr;
 			__le32 ram_addr; /* or value */
 			__le32 size;
-			__le32 activate; /* 0=install, but dont activate */
-		} rompatch_install;
-		struct {
+			__le32 activate; /* 0=install, but करोnt activate */
+		पूर्ण rompatch_install;
+		काष्ठा अणु
 			__le32 patch_id;
-		} rompatch_uninstall;
-		struct {
+		पूर्ण rompatch_uninstall;
+		काष्ठा अणु
 			__le32 count;
 			__le32 patch_ids[0]; /* length of @count */
-		} rompatch_activate;
-		struct {
+		पूर्ण rompatch_activate;
+		काष्ठा अणु
 			__le32 count;
 			__le32 patch_ids[0]; /* length of @count */
-		} rompatch_deactivate;
-		struct {
+		पूर्ण rompatch_deactivate;
+		काष्ठा अणु
 			__le32 addr;
-		} lz_start;
-		struct {
+		पूर्ण lz_start;
+		काष्ठा अणु
 			__le32 len; /* max BMI_MAX_DATA_SIZE */
 			u8 payload[0]; /* length of @len */
-		} lz_data;
-		struct {
+		पूर्ण lz_data;
+		काष्ठा अणु
 			u8 name[BMI_NVRAM_SEG_NAME_SZ];
-		} nvram_process;
+		पूर्ण nvram_process;
 		u8 payload[BMI_MAX_CMDBUF_SIZE];
-	};
-} __packed;
+	पूर्ण;
+पूर्ण __packed;
 
-union bmi_resp {
-	struct {
+जोड़ bmi_resp अणु
+	काष्ठा अणु
 		u8 payload[0];
-	} read_mem;
-	struct {
+	पूर्ण पढ़ो_mem;
+	काष्ठा अणु
 		__le32 result;
-	} execute;
-	struct {
+	पूर्ण execute;
+	काष्ठा अणु
 		__le32 value;
-	} read_soc_reg;
-	struct {
+	पूर्ण पढ़ो_soc_reg;
+	काष्ठा अणु
 		__le32 len;
 		__le32 version;
 		__le32 type;
-	} get_target_info;
-	struct {
+	पूर्ण get_target_info;
+	काष्ठा अणु
 		__le32 patch_id;
-	} rompatch_install;
-	struct {
+	पूर्ण rompatch_install;
+	काष्ठा अणु
 		__le32 patch_id;
-	} rompatch_uninstall;
-	struct {
+	पूर्ण rompatch_uninstall;
+	काष्ठा अणु
 		/* 0 = nothing executed
-		 * otherwise = NVRAM segment return value
+		 * otherwise = NVRAM segment वापस value
 		 */
 		__le32 result;
-	} nvram_process;
+	पूर्ण nvram_process;
 	u8 payload[BMI_MAX_CMDBUF_SIZE];
-} __packed;
+पूर्ण __packed;
 
-struct bmi_target_info {
+काष्ठा bmi_target_info अणु
 	u32 version;
 	u32 type;
-};
+पूर्ण;
 
-struct bmi_segmented_file_header {
+काष्ठा bmi_segmented_file_header अणु
 	__le32 magic_num;
 	__le32 file_flags;
 	u8 data[];
-};
+पूर्ण;
 
-struct bmi_segmented_metadata {
+काष्ठा bmi_segmented_metadata अणु
 	__le32 addr;
 	__le32 length;
 	u8 data[];
-};
+पूर्ण;
 
-#define BMI_SGMTFILE_MAGIC_NUM          0x544d4753 /* "SGMT" */
-#define BMI_SGMTFILE_FLAG_COMPRESS      1
+#घोषणा BMI_SGMTखाता_MAGIC_NUM          0x544d4753 /* "SGMT" */
+#घोषणा BMI_SGMTखाता_FLAG_COMPRESS      1
 
-/* Special values for bmi_segmented_metadata.length (all have high bit set) */
+/* Special values क्रम bmi_segmented_metadata.length (all have high bit set) */
 
 /* end of segmented data */
-#define BMI_SGMTFILE_DONE               0xffffffff
+#घोषणा BMI_SGMTखाता_DONE               0xffffffff
 
 /* Board Data segment */
-#define BMI_SGMTFILE_BDDATA             0xfffffffe
+#घोषणा BMI_SGMTखाता_BDDATA             0xfffffffe
 
 /* set beginning address */
-#define BMI_SGMTFILE_BEGINADDR          0xfffffffd
+#घोषणा BMI_SGMTखाता_BEGINADDR          0xfffffffd
 
 /* immediate function execution */
-#define BMI_SGMTFILE_EXEC               0xfffffffc
+#घोषणा BMI_SGMTखाता_EXEC               0xfffffffc
 
-/* in jiffies */
-#define BMI_COMMUNICATION_TIMEOUT_HZ (3 * HZ)
+/* in jअगरfies */
+#घोषणा BMI_COMMUNICATION_TIMEOUT_HZ (3 * HZ)
 
-#define BMI_CE_NUM_TO_TARG 0
-#define BMI_CE_NUM_TO_HOST 1
+#घोषणा BMI_CE_NUM_TO_TARG 0
+#घोषणा BMI_CE_NUM_TO_HOST 1
 
-void ath10k_bmi_start(struct ath10k *ar);
-int ath10k_bmi_done(struct ath10k *ar);
-int ath10k_bmi_get_target_info(struct ath10k *ar,
-			       struct bmi_target_info *target_info);
-int ath10k_bmi_get_target_info_sdio(struct ath10k *ar,
-				    struct bmi_target_info *target_info);
-int ath10k_bmi_read_memory(struct ath10k *ar, u32 address,
-			   void *buffer, u32 length);
-int ath10k_bmi_write_memory(struct ath10k *ar, u32 address,
-			    const void *buffer, u32 length);
+व्योम ath10k_bmi_start(काष्ठा ath10k *ar);
+पूर्णांक ath10k_bmi_करोne(काष्ठा ath10k *ar);
+पूर्णांक ath10k_bmi_get_target_info(काष्ठा ath10k *ar,
+			       काष्ठा bmi_target_info *target_info);
+पूर्णांक ath10k_bmi_get_target_info_sdio(काष्ठा ath10k *ar,
+				    काष्ठा bmi_target_info *target_info);
+पूर्णांक ath10k_bmi_पढ़ो_memory(काष्ठा ath10k *ar, u32 address,
+			   व्योम *buffer, u32 length);
+पूर्णांक ath10k_bmi_ग_लिखो_memory(काष्ठा ath10k *ar, u32 address,
+			    स्थिर व्योम *buffer, u32 length);
 
-#define ath10k_bmi_read32(ar, item, val)				\
-	({								\
-		int ret;						\
+#घोषणा ath10k_bmi_पढ़ो32(ar, item, val)				\
+	(अणु								\
+		पूर्णांक ret;						\
 		u32 addr;						\
-		__le32 tmp;						\
+		__le32 पंचांगp;						\
 									\
-		addr = host_interest_item_address(HI_ITEM(item));	\
-		ret = ath10k_bmi_read_memory(ar, addr, (u8 *)&tmp, 4); \
-		if (!ret)						\
-			*val = __le32_to_cpu(tmp);			\
+		addr = host_पूर्णांकerest_item_address(HI_ITEM(item));	\
+		ret = ath10k_bmi_पढ़ो_memory(ar, addr, (u8 *)&पंचांगp, 4); \
+		अगर (!ret)						\
+			*val = __le32_to_cpu(पंचांगp);			\
 		ret;							\
-	 })
+	 पूर्ण)
 
-#define ath10k_bmi_write32(ar, item, val)				\
-	({								\
-		int ret;						\
+#घोषणा ath10k_bmi_ग_लिखो32(ar, item, val)				\
+	(अणु								\
+		पूर्णांक ret;						\
 		u32 address;						\
 		__le32 v = __cpu_to_le32(val);				\
 									\
-		address = host_interest_item_address(HI_ITEM(item));	\
-		ret = ath10k_bmi_write_memory(ar, address,		\
-					      (u8 *)&v, sizeof(v));	\
+		address = host_पूर्णांकerest_item_address(HI_ITEM(item));	\
+		ret = ath10k_bmi_ग_लिखो_memory(ar, address,		\
+					      (u8 *)&v, माप(v));	\
 		ret;							\
-	})
+	पूर्ण)
 
-int ath10k_bmi_execute(struct ath10k *ar, u32 address, u32 param, u32 *result);
-int ath10k_bmi_lz_stream_start(struct ath10k *ar, u32 address);
-int ath10k_bmi_lz_data(struct ath10k *ar, const void *buffer, u32 length);
+पूर्णांक ath10k_bmi_execute(काष्ठा ath10k *ar, u32 address, u32 param, u32 *result);
+पूर्णांक ath10k_bmi_lz_stream_start(काष्ठा ath10k *ar, u32 address);
+पूर्णांक ath10k_bmi_lz_data(काष्ठा ath10k *ar, स्थिर व्योम *buffer, u32 length);
 
-int ath10k_bmi_fast_download(struct ath10k *ar, u32 address,
-			     const void *buffer, u32 length);
-int ath10k_bmi_read_soc_reg(struct ath10k *ar, u32 address, u32 *reg_val);
-int ath10k_bmi_write_soc_reg(struct ath10k *ar, u32 address, u32 reg_val);
-int ath10k_bmi_set_start(struct ath10k *ar, u32 address);
+पूर्णांक ath10k_bmi_fast_करोwnload(काष्ठा ath10k *ar, u32 address,
+			     स्थिर व्योम *buffer, u32 length);
+पूर्णांक ath10k_bmi_पढ़ो_soc_reg(काष्ठा ath10k *ar, u32 address, u32 *reg_val);
+पूर्णांक ath10k_bmi_ग_लिखो_soc_reg(काष्ठा ath10k *ar, u32 address, u32 reg_val);
+पूर्णांक ath10k_bmi_set_start(काष्ठा ath10k *ar, u32 address);
 
-#endif /* _BMI_H_ */
+#पूर्ण_अगर /* _BMI_H_ */

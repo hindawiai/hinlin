@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  arch/arm/include/asm/cpu.h
+ *  arch/arm/include/यंत्र/cpu.h
  *
  *  Copyright (C) 2004-2005 ARM Ltd.
  */
-#ifndef __ASM_ARM_CPU_H
-#define __ASM_ARM_CPU_H
+#अगर_अघोषित __ASM_ARM_CPU_H
+#घोषणा __ASM_ARM_CPU_H
 
-#include <linux/percpu.h>
-#include <linux/cpu.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/cpu.h>
 
-struct cpuinfo_arm {
-	struct cpu	cpu;
+काष्ठा cpuinfo_arm अणु
+	काष्ठा cpu	cpu;
 	u32		cpuid;
-#ifdef CONFIG_SMP
-	unsigned int	loops_per_jiffy;
-#endif
-};
+#अगर_घोषित CONFIG_SMP
+	अचिन्हित पूर्णांक	loops_per_jअगरfy;
+#पूर्ण_अगर
+पूर्ण;
 
-DECLARE_PER_CPU(struct cpuinfo_arm, cpu_data);
+DECLARE_PER_CPU(काष्ठा cpuinfo_arm, cpu_data);
 
-#endif
+#पूर्ण_अगर

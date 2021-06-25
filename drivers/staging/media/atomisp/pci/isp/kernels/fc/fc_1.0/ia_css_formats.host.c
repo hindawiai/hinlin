@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#include "ia_css_formats.host.h"
-#include "ia_css_types.h"
-#include "sh_css_defs.h"
+#समावेश "ia_css_formats.host.h"
+#समावेश "ia_css_types.h"
+#समावेश "sh_css_defs.h"
 
-/*#include "sh_css_frac.h"*/
-#ifndef IA_CSS_NO_DEBUG
+/*#समावेश "sh_css_frac.h"*/
+#अगर_अघोषित IA_CSS_NO_DEBUG
 /* FIXME: See BZ 4427 */
-#include "ia_css_debug.h"
-#endif
+#समावेश "ia_css_debug.h"
+#पूर्ण_अगर
 
-const struct ia_css_formats_config default_formats_config = {
+स्थिर काष्ठा ia_css_क्रमmats_config शेष_क्रमmats_config = अणु
 	1
-};
+पूर्ण;
 
-void
-ia_css_formats_encode(
-    struct sh_css_isp_formats_params *to,
-    const struct ia_css_formats_config *from,
-    unsigned int size)
-{
-	(void)size;
+व्योम
+ia_css_क्रमmats_encode(
+    काष्ठा sh_css_isp_क्रमmats_params *to,
+    स्थिर काष्ठा ia_css_क्रमmats_config *from,
+    अचिन्हित पूर्णांक size)
+अणु
+	(व्योम)size;
 	to->video_full_range_flag = from->video_full_range_flag;
-}
+पूर्ण
 
-#ifndef IA_CSS_NO_DEBUG
+#अगर_अघोषित IA_CSS_NO_DEBUG
 /* FIXME: See BZ 4427 */
-void
-ia_css_formats_dump(
-    const struct sh_css_isp_formats_params *formats,
-    unsigned int level)
-{
-	if (!formats) return;
+व्योम
+ia_css_क्रमmats_dump(
+    स्थिर काष्ठा sh_css_isp_क्रमmats_params *क्रमmats,
+    अचिन्हित पूर्णांक level)
+अणु
+	अगर (!क्रमmats) वापस;
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
-			    "video_full_range_flag", formats->video_full_range_flag);
-}
-#endif
+			    "video_full_range_flag", क्रमmats->video_full_range_flag);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef IA_CSS_NO_DEBUG
+#अगर_अघोषित IA_CSS_NO_DEBUG
 /* FIXME: See BZ 4427 */
-void
-ia_css_formats_debug_dtrace(
-    const struct ia_css_formats_config *config,
-    unsigned int level)
-{
+व्योम
+ia_css_क्रमmats_debug_dtrace(
+    स्थिर काष्ठा ia_css_क्रमmats_config *config,
+    अचिन्हित पूर्णांक level)
+अणु
 	ia_css_debug_dtrace(level,
 			    "config.video_full_range_flag=%d\n",
 			    config->video_full_range_flag);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

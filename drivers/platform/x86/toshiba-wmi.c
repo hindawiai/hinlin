@@ -1,137 +1,138 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * toshiba_wmi.c - Toshiba WMI Hotkey Driver
  *
  * Copyright (C) 2015 Azael Avalos <coproscefalo@gmail.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/acpi.h>
-#include <linux/input.h>
-#include <linux/input/sparse-keymap.h>
-#include <linux/dmi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/sparse-keymap.h>
+#समावेश <linux/dmi.h>
 
 MODULE_AUTHOR("Azael Avalos");
 MODULE_DESCRIPTION("Toshiba WMI Hotkey Driver");
 MODULE_LICENSE("GPL");
 
-#define WMI_EVENT_GUID	"59142400-C6A3-40FA-BADB-8A2652834100"
+#घोषणा WMI_EVENT_GUID	"59142400-C6A3-40FA-BADB-8A2652834100"
 
 MODULE_ALIAS("wmi:"WMI_EVENT_GUID);
 
-static struct input_dev *toshiba_wmi_input_dev;
+अटल काष्ठा input_dev *toshiba_wmi_input_dev;
 
-static const struct key_entry toshiba_wmi_keymap[] __initconst = {
+अटल स्थिर काष्ठा key_entry toshiba_wmi_keymap[] __initस्थिर = अणु
 	/* TODO: Add keymap values once found... */
-	/*{ KE_KEY, 0x00, { KEY_ } },*/
-	{ KE_END, 0 }
-};
+	/*अणु KE_KEY, 0x00, अणु KEY_ पूर्ण पूर्ण,*/
+	अणु KE_END, 0 पूर्ण
+पूर्ण;
 
-static void toshiba_wmi_notify(u32 value, void *context)
-{
-	struct acpi_buffer response = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *obj;
+अटल व्योम toshiba_wmi_notअगरy(u32 value, व्योम *context)
+अणु
+	काष्ठा acpi_buffer response = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *obj;
 	acpi_status status;
 
 	status = wmi_get_event_data(value, &response);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		pr_err("Bad event status 0x%x\n", status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	obj = (union acpi_object *)response.pointer;
-	if (!obj)
-		return;
+	obj = (जोड़ acpi_object *)response.poपूर्णांकer;
+	अगर (!obj)
+		वापस;
 
 	/* TODO: Add proper checks once we have data */
 	pr_debug("Unknown event received, obj type %x\n", obj->type);
 
-	kfree(response.pointer);
-}
+	kमुक्त(response.poपूर्णांकer);
+पूर्ण
 
-static const struct dmi_system_id toshiba_wmi_dmi_table[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id toshiba_wmi_dmi_table[] __initस्थिर = अणु
+	अणु
 		.ident = "Toshiba laptop",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
-		},
-	},
-	{}
-};
+		पूर्ण,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int __init toshiba_wmi_input_setup(void)
-{
+अटल पूर्णांक __init toshiba_wmi_input_setup(व्योम)
+अणु
 	acpi_status status;
-	int err;
+	पूर्णांक err;
 
 	toshiba_wmi_input_dev = input_allocate_device();
-	if (!toshiba_wmi_input_dev)
-		return -ENOMEM;
+	अगर (!toshiba_wmi_input_dev)
+		वापस -ENOMEM;
 
 	toshiba_wmi_input_dev->name = "Toshiba WMI hotkeys";
 	toshiba_wmi_input_dev->phys = "wmi/input0";
 	toshiba_wmi_input_dev->id.bustype = BUS_HOST;
 
 	err = sparse_keymap_setup(toshiba_wmi_input_dev,
-				  toshiba_wmi_keymap, NULL);
-	if (err)
-		goto err_free_dev;
+				  toshiba_wmi_keymap, शून्य);
+	अगर (err)
+		जाओ err_मुक्त_dev;
 
-	status = wmi_install_notify_handler(WMI_EVENT_GUID,
-					    toshiba_wmi_notify, NULL);
-	if (ACPI_FAILURE(status)) {
+	status = wmi_install_notअगरy_handler(WMI_EVENT_GUID,
+					    toshiba_wmi_notअगरy, शून्य);
+	अगर (ACPI_FAILURE(status)) अणु
 		err = -EIO;
-		goto err_free_dev;
-	}
+		जाओ err_मुक्त_dev;
+	पूर्ण
 
-	err = input_register_device(toshiba_wmi_input_dev);
-	if (err)
-		goto err_remove_notifier;
+	err = input_रेजिस्टर_device(toshiba_wmi_input_dev);
+	अगर (err)
+		जाओ err_हटाओ_notअगरier;
 
-	return 0;
+	वापस 0;
 
- err_remove_notifier:
-	wmi_remove_notify_handler(WMI_EVENT_GUID);
- err_free_dev:
-	input_free_device(toshiba_wmi_input_dev);
-	return err;
-}
+ err_हटाओ_notअगरier:
+	wmi_हटाओ_notअगरy_handler(WMI_EVENT_GUID);
+ err_मुक्त_dev:
+	input_मुक्त_device(toshiba_wmi_input_dev);
+	वापस err;
+पूर्ण
 
-static void toshiba_wmi_input_destroy(void)
-{
-	wmi_remove_notify_handler(WMI_EVENT_GUID);
-	input_unregister_device(toshiba_wmi_input_dev);
-}
+अटल व्योम toshiba_wmi_input_destroy(व्योम)
+अणु
+	wmi_हटाओ_notअगरy_handler(WMI_EVENT_GUID);
+	input_unरेजिस्टर_device(toshiba_wmi_input_dev);
+पूर्ण
 
-static int __init toshiba_wmi_init(void)
-{
-	int ret;
+अटल पूर्णांक __init toshiba_wmi_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!wmi_has_guid(WMI_EVENT_GUID) ||
-	    !dmi_check_system(toshiba_wmi_dmi_table))
-		return -ENODEV;
+	अगर (!wmi_has_guid(WMI_EVENT_GUID) ||
+	    !dmi_check_प्रणाली(toshiba_wmi_dmi_table))
+		वापस -ENODEV;
 
 	ret = toshiba_wmi_input_setup();
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Failed to setup input device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pr_info("Toshiba WMI Hotkey Driver\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit toshiba_wmi_exit(void)
-{
-	if (wmi_has_guid(WMI_EVENT_GUID))
+अटल व्योम __निकास toshiba_wmi_निकास(व्योम)
+अणु
+	अगर (wmi_has_guid(WMI_EVENT_GUID))
 		toshiba_wmi_input_destroy();
-}
+पूर्ण
 
 module_init(toshiba_wmi_init);
-module_exit(toshiba_wmi_exit);
+module_निकास(toshiba_wmi_निकास);

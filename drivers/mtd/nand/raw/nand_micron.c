@@ -1,599 +1,600 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Free Electrons
  * Copyright (C) 2017 NextThing Co
  *
- * Author: Boris Brezillon <boris.brezillon@free-electrons.com>
+ * Author: Boris Brezillon <boris.brezillon@मुक्त-electrons.com>
  */
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "internals.h"
+#समावेश "internals.h"
 
 /*
  * Special Micron status bit 3 indicates that the block has been
  * corrected by on-die ECC and should be rewritten.
  */
-#define NAND_ECC_STATUS_WRITE_RECOMMENDED	BIT(3)
+#घोषणा न_अंकD_ECC_STATUS_WRITE_RECOMMENDED	BIT(3)
 
 /*
  * On chips with 8-bit ECC and additional bit can be used to distinguish
- * cases where a errors were corrected without needing a rewrite
+ * हालs where a errors were corrected without needing a reग_लिखो
  *
  * Bit 4 Bit 3 Bit 0 Description
  * ----- ----- ----- -----------
  * 0     0     0     No Errors
  * 0     0     1     Multiple uncorrected errors
- * 0     1     0     4 - 6 errors corrected, recommend rewrite
+ * 0     1     0     4 - 6 errors corrected, recommend reग_लिखो
  * 0     1     1     Reserved
  * 1     0     0     1 - 3 errors corrected
  * 1     0     1     Reserved
- * 1     1     0     7 - 8 errors corrected, recommend rewrite
+ * 1     1     0     7 - 8 errors corrected, recommend reग_लिखो
  */
-#define NAND_ECC_STATUS_MASK		(BIT(4) | BIT(3) | BIT(0))
-#define NAND_ECC_STATUS_UNCORRECTABLE	BIT(0)
-#define NAND_ECC_STATUS_4_6_CORRECTED	BIT(3)
-#define NAND_ECC_STATUS_1_3_CORRECTED	BIT(4)
-#define NAND_ECC_STATUS_7_8_CORRECTED	(BIT(4) | BIT(3))
+#घोषणा न_अंकD_ECC_STATUS_MASK		(BIT(4) | BIT(3) | BIT(0))
+#घोषणा न_अंकD_ECC_STATUS_UNCORRECTABLE	BIT(0)
+#घोषणा न_अंकD_ECC_STATUS_4_6_CORRECTED	BIT(3)
+#घोषणा न_अंकD_ECC_STATUS_1_3_CORRECTED	BIT(4)
+#घोषणा न_अंकD_ECC_STATUS_7_8_CORRECTED	(BIT(4) | BIT(3))
 
-struct nand_onfi_vendor_micron {
-	u8 two_plane_read;
-	u8 read_cache;
-	u8 read_unique_id;
+काष्ठा nand_onfi_venकरोr_micron अणु
+	u8 two_plane_पढ़ो;
+	u8 पढ़ो_cache;
+	u8 पढ़ो_unique_id;
 	u8 dq_imped;
 	u8 dq_imped_num_settings;
 	u8 dq_imped_feat_addr;
-	u8 rb_pulldown_strength;
-	u8 rb_pulldown_strength_feat_addr;
-	u8 rb_pulldown_strength_num_settings;
+	u8 rb_pullकरोwn_strength;
+	u8 rb_pullकरोwn_strength_feat_addr;
+	u8 rb_pullकरोwn_strength_num_settings;
 	u8 otp_mode;
 	u8 otp_page_start;
 	u8 otp_data_prot_addr;
 	u8 otp_num_pages;
 	u8 otp_feat_addr;
-	u8 read_retry_options;
+	u8 पढ़ो_retry_options;
 	u8 reserved[72];
 	u8 param_revision;
-} __packed;
+पूर्ण __packed;
 
-struct micron_on_die_ecc {
-	bool forced;
+काष्ठा micron_on_die_ecc अणु
+	bool क्रमced;
 	bool enabled;
-	void *rawbuf;
-};
+	व्योम *rawbuf;
+पूर्ण;
 
-struct micron_nand {
-	struct micron_on_die_ecc ecc;
-};
+काष्ठा micron_nand अणु
+	काष्ठा micron_on_die_ecc ecc;
+पूर्ण;
 
-static int micron_nand_setup_read_retry(struct nand_chip *chip, int retry_mode)
-{
-	u8 feature[ONFI_SUBFEATURE_PARAM_LEN] = {retry_mode};
+अटल पूर्णांक micron_nand_setup_पढ़ो_retry(काष्ठा nand_chip *chip, पूर्णांक retry_mode)
+अणु
+	u8 feature[ONFI_SUBFEATURE_PARAM_LEN] = अणुretry_modeपूर्ण;
 
-	return nand_set_features(chip, ONFI_FEATURE_ADDR_READ_RETRY, feature);
-}
+	वापस nand_set_features(chip, ONFI_FEATURE_ADDR_READ_RETRY, feature);
+पूर्ण
 
 /*
- * Configure chip properties from Micron vendor-specific ONFI table
+ * Configure chip properties from Micron venकरोr-specअगरic ONFI table
  */
-static int micron_nand_onfi_init(struct nand_chip *chip)
-{
-	struct nand_parameters *p = &chip->parameters;
+अटल पूर्णांक micron_nand_onfi_init(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_parameters *p = &chip->parameters;
 
-	if (p->onfi) {
-		struct nand_onfi_vendor_micron *micron = (void *)p->onfi->vendor;
+	अगर (p->onfi) अणु
+		काष्ठा nand_onfi_venकरोr_micron *micron = (व्योम *)p->onfi->venकरोr;
 
-		chip->read_retries = micron->read_retry_options;
-		chip->ops.setup_read_retry = micron_nand_setup_read_retry;
-	}
+		chip->पढ़ो_retries = micron->पढ़ो_retry_options;
+		chip->ops.setup_पढ़ो_retry = micron_nand_setup_पढ़ो_retry;
+	पूर्ण
 
-	if (p->supports_set_get_features) {
+	अगर (p->supports_set_get_features) अणु
 		set_bit(ONFI_FEATURE_ADDR_READ_RETRY, p->set_feature_list);
 		set_bit(ONFI_FEATURE_ON_DIE_ECC, p->set_feature_list);
 		set_bit(ONFI_FEATURE_ADDR_READ_RETRY, p->get_feature_list);
 		set_bit(ONFI_FEATURE_ON_DIE_ECC, p->get_feature_list);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int micron_nand_on_die_4_ooblayout_ecc(struct mtd_info *mtd,
-					      int section,
-					      struct mtd_oob_region *oobregion)
-{
-	if (section >= 4)
-		return -ERANGE;
+अटल पूर्णांक micron_nand_on_die_4_ooblayout_ecc(काष्ठा mtd_info *mtd,
+					      पूर्णांक section,
+					      काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section >= 4)
+		वापस -दुस्फल;
 
 	oobregion->offset = (section * 16) + 8;
 	oobregion->length = 8;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int micron_nand_on_die_4_ooblayout_free(struct mtd_info *mtd,
-					       int section,
-					       struct mtd_oob_region *oobregion)
-{
-	if (section >= 4)
-		return -ERANGE;
+अटल पूर्णांक micron_nand_on_die_4_ooblayout_मुक्त(काष्ठा mtd_info *mtd,
+					       पूर्णांक section,
+					       काष्ठा mtd_oob_region *oobregion)
+अणु
+	अगर (section >= 4)
+		वापस -दुस्फल;
 
 	oobregion->offset = (section * 16) + 2;
 	oobregion->length = 6;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtd_ooblayout_ops micron_nand_on_die_4_ooblayout_ops = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops micron_nand_on_die_4_ooblayout_ops = अणु
 	.ecc = micron_nand_on_die_4_ooblayout_ecc,
-	.free = micron_nand_on_die_4_ooblayout_free,
-};
+	.मुक्त = micron_nand_on_die_4_ooblayout_मुक्त,
+पूर्ण;
 
-static int micron_nand_on_die_8_ooblayout_ecc(struct mtd_info *mtd,
-					      int section,
-					      struct mtd_oob_region *oobregion)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
+अटल पूर्णांक micron_nand_on_die_8_ooblayout_ecc(काष्ठा mtd_info *mtd,
+					      पूर्णांक section,
+					      काष्ठा mtd_oob_region *oobregion)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
 
-	if (section)
-		return -ERANGE;
+	अगर (section)
+		वापस -दुस्फल;
 
 	oobregion->offset = mtd->oobsize - chip->ecc.total;
 	oobregion->length = chip->ecc.total;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int micron_nand_on_die_8_ooblayout_free(struct mtd_info *mtd,
-					       int section,
-					       struct mtd_oob_region *oobregion)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
+अटल पूर्णांक micron_nand_on_die_8_ooblayout_मुक्त(काष्ठा mtd_info *mtd,
+					       पूर्णांक section,
+					       काष्ठा mtd_oob_region *oobregion)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
 
-	if (section)
-		return -ERANGE;
+	अगर (section)
+		वापस -दुस्फल;
 
 	oobregion->offset = 2;
 	oobregion->length = mtd->oobsize - chip->ecc.total - 2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtd_ooblayout_ops micron_nand_on_die_8_ooblayout_ops = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops micron_nand_on_die_8_ooblayout_ops = अणु
 	.ecc = micron_nand_on_die_8_ooblayout_ecc,
-	.free = micron_nand_on_die_8_ooblayout_free,
-};
+	.मुक्त = micron_nand_on_die_8_ooblayout_मुक्त,
+पूर्ण;
 
-static int micron_nand_on_die_ecc_setup(struct nand_chip *chip, bool enable)
-{
-	struct micron_nand *micron = nand_get_manufacturer_data(chip);
-	u8 feature[ONFI_SUBFEATURE_PARAM_LEN] = { 0, };
-	int ret;
+अटल पूर्णांक micron_nand_on_die_ecc_setup(काष्ठा nand_chip *chip, bool enable)
+अणु
+	काष्ठा micron_nand *micron = nand_get_manufacturer_data(chip);
+	u8 feature[ONFI_SUBFEATURE_PARAM_LEN] = अणु 0, पूर्ण;
+	पूर्णांक ret;
 
-	if (micron->ecc.forced)
-		return 0;
+	अगर (micron->ecc.क्रमced)
+		वापस 0;
 
-	if (micron->ecc.enabled == enable)
-		return 0;
+	अगर (micron->ecc.enabled == enable)
+		वापस 0;
 
-	if (enable)
+	अगर (enable)
 		feature[0] |= ONFI_FEATURE_ON_DIE_ECC_EN;
 
 	ret = nand_set_features(chip, ONFI_FEATURE_ON_DIE_ECC, feature);
-	if (!ret)
+	अगर (!ret)
 		micron->ecc.enabled = enable;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int micron_nand_on_die_ecc_status_4(struct nand_chip *chip, u8 status,
-					   void *buf, int page,
-					   int oob_required)
-{
-	struct micron_nand *micron = nand_get_manufacturer_data(chip);
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	unsigned int step, max_bitflips = 0;
+अटल पूर्णांक micron_nand_on_die_ecc_status_4(काष्ठा nand_chip *chip, u8 status,
+					   व्योम *buf, पूर्णांक page,
+					   पूर्णांक oob_required)
+अणु
+	काष्ठा micron_nand *micron = nand_get_manufacturer_data(chip);
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	अचिन्हित पूर्णांक step, max_bitflips = 0;
 	bool use_datain = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (!(status & NAND_ECC_STATUS_WRITE_RECOMMENDED)) {
-		if (status & NAND_STATUS_FAIL)
+	अगर (!(status & न_अंकD_ECC_STATUS_WRITE_RECOMMENDED)) अणु
+		अगर (status & न_अंकD_STATUS_FAIL)
 			mtd->ecc_stats.failed++;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * The internal ECC doesn't tell us the number of bitflips that have
-	 * been corrected, but tells us if it recommends to rewrite the block.
-	 * If it's the case, we need to read the page in raw mode and compare
+	 * The पूर्णांकernal ECC करोesn't tell us the number of bitflips that have
+	 * been corrected, but tells us अगर it recommends to reग_लिखो the block.
+	 * If it's the हाल, we need to पढ़ो the page in raw mode and compare
 	 * its content to the corrected version to extract the actual number of
 	 * bitflips.
-	 * But before we do that, we must make sure we have all OOB bytes read
-	 * in non-raw mode, even if the user did not request those bytes.
+	 * But beक्रमe we करो that, we must make sure we have all OOB bytes पढ़ो
+	 * in non-raw mode, even अगर the user did not request those bytes.
 	 */
-	if (!oob_required) {
+	अगर (!oob_required) अणु
 		/*
 		 * We first check which operation is supported by the controller
-		 * before running it. This trick makes it possible to support
-		 * all controllers, even the most constraints, without almost
-		 * any performance hit.
+		 * beक्रमe running it. This trick makes it possible to support
+		 * all controllers, even the most स्थिरraपूर्णांकs, without almost
+		 * any perक्रमmance hit.
 		 *
-		 * TODO: could be enhanced to avoid repeating the same check
+		 * TODO: could be enhanced to aव्योम repeating the same check
 		 * over and over in the fast path.
 		 */
-		if (!nand_has_exec_op(chip) ||
-		    !nand_read_data_op(chip, chip->oob_poi, mtd->oobsize, false,
+		अगर (!nand_has_exec_op(chip) ||
+		    !nand_पढ़ो_data_op(chip, chip->oob_poi, mtd->oobsize, false,
 				       true))
 			use_datain = true;
 
-		if (use_datain)
-			ret = nand_read_data_op(chip, chip->oob_poi,
+		अगर (use_datain)
+			ret = nand_पढ़ो_data_op(chip, chip->oob_poi,
 						mtd->oobsize, false, false);
-		else
-			ret = nand_change_read_column_op(chip, mtd->writesize,
+		अन्यथा
+			ret = nand_change_पढ़ो_column_op(chip, mtd->ग_लिखोsize,
 							 chip->oob_poi,
 							 mtd->oobsize, false);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	micron_nand_on_die_ecc_setup(chip, false);
 
-	ret = nand_read_page_op(chip, page, 0, micron->ecc.rawbuf,
-				mtd->writesize + mtd->oobsize);
-	if (ret)
-		return ret;
+	ret = nand_पढ़ो_page_op(chip, page, 0, micron->ecc.rawbuf,
+				mtd->ग_लिखोsize + mtd->oobsize);
+	अगर (ret)
+		वापस ret;
 
-	for (step = 0; step < chip->ecc.steps; step++) {
-		unsigned int offs, i, nbitflips = 0;
+	क्रम (step = 0; step < chip->ecc.steps; step++) अणु
+		अचिन्हित पूर्णांक offs, i, nbitflips = 0;
 		u8 *rawbuf, *corrbuf;
 
 		offs = step * chip->ecc.size;
 		rawbuf = micron->ecc.rawbuf + offs;
 		corrbuf = buf + offs;
 
-		for (i = 0; i < chip->ecc.size; i++)
+		क्रम (i = 0; i < chip->ecc.size; i++)
 			nbitflips += hweight8(corrbuf[i] ^ rawbuf[i]);
 
 		offs = (step * 16) + 4;
-		rawbuf = micron->ecc.rawbuf + mtd->writesize + offs;
+		rawbuf = micron->ecc.rawbuf + mtd->ग_लिखोsize + offs;
 		corrbuf = chip->oob_poi + offs;
 
-		for (i = 0; i < chip->ecc.bytes + 4; i++)
+		क्रम (i = 0; i < chip->ecc.bytes + 4; i++)
 			nbitflips += hweight8(corrbuf[i] ^ rawbuf[i]);
 
-		if (WARN_ON(nbitflips > chip->ecc.strength))
-			return -EINVAL;
+		अगर (WARN_ON(nbitflips > chip->ecc.strength))
+			वापस -EINVAL;
 
 		max_bitflips = max(nbitflips, max_bitflips);
 		mtd->ecc_stats.corrected += nbitflips;
-	}
+	पूर्ण
 
-	return max_bitflips;
-}
+	वापस max_bitflips;
+पूर्ण
 
-static int micron_nand_on_die_ecc_status_8(struct nand_chip *chip, u8 status)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+अटल पूर्णांक micron_nand_on_die_ecc_status_8(काष्ठा nand_chip *chip, u8 status)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
 	/*
-	 * With 8/512 we have more information but still don't know precisely
+	 * With 8/512 we have more inक्रमmation but still करोn't know precisely
 	 * how many bit-flips were seen.
 	 */
-	switch (status & NAND_ECC_STATUS_MASK) {
-	case NAND_ECC_STATUS_UNCORRECTABLE:
+	चयन (status & न_अंकD_ECC_STATUS_MASK) अणु
+	हाल न_अंकD_ECC_STATUS_UNCORRECTABLE:
 		mtd->ecc_stats.failed++;
-		return 0;
-	case NAND_ECC_STATUS_1_3_CORRECTED:
+		वापस 0;
+	हाल न_अंकD_ECC_STATUS_1_3_CORRECTED:
 		mtd->ecc_stats.corrected += 3;
-		return 3;
-	case NAND_ECC_STATUS_4_6_CORRECTED:
+		वापस 3;
+	हाल न_अंकD_ECC_STATUS_4_6_CORRECTED:
 		mtd->ecc_stats.corrected += 6;
-		/* rewrite recommended */
-		return 6;
-	case NAND_ECC_STATUS_7_8_CORRECTED:
+		/* reग_लिखो recommended */
+		वापस 6;
+	हाल न_अंकD_ECC_STATUS_7_8_CORRECTED:
 		mtd->ecc_stats.corrected += 8;
-		/* rewrite recommended */
-		return 8;
-	default:
-		return 0;
-	}
-}
+		/* reग_लिखो recommended */
+		वापस 8;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int
-micron_nand_read_page_on_die_ecc(struct nand_chip *chip, uint8_t *buf,
-				 int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+अटल पूर्णांक
+micron_nand_पढ़ो_page_on_die_ecc(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
+				 पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 	bool use_datain = false;
 	u8 status;
-	int ret, max_bitflips = 0;
+	पूर्णांक ret, max_bitflips = 0;
 
 	ret = micron_nand_on_die_ecc_setup(chip, true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = nand_read_page_op(chip, page, 0, NULL, 0);
-	if (ret)
-		goto out;
+	ret = nand_पढ़ो_page_op(chip, page, 0, शून्य, 0);
+	अगर (ret)
+		जाओ out;
 
 	ret = nand_status_op(chip, &status);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/*
-	 * We first check which operation is supported by the controller before
+	 * We first check which operation is supported by the controller beक्रमe
 	 * running it. This trick makes it possible to support all controllers,
-	 * even the most constraints, without almost any performance hit.
+	 * even the most स्थिरraपूर्णांकs, without almost any perक्रमmance hit.
 	 *
-	 * TODO: could be enhanced to avoid repeating the same check over and
+	 * TODO: could be enhanced to aव्योम repeating the same check over and
 	 * over in the fast path.
 	 */
-	if (!nand_has_exec_op(chip) ||
-	    !nand_read_data_op(chip, buf, mtd->writesize, false, true))
+	अगर (!nand_has_exec_op(chip) ||
+	    !nand_पढ़ो_data_op(chip, buf, mtd->ग_लिखोsize, false, true))
 		use_datain = true;
 
-	if (use_datain) {
-		ret = nand_exit_status_op(chip);
-		if (ret)
-			goto out;
+	अगर (use_datain) अणु
+		ret = nand_निकास_status_op(chip);
+		अगर (ret)
+			जाओ out;
 
-		ret = nand_read_data_op(chip, buf, mtd->writesize, false,
+		ret = nand_पढ़ो_data_op(chip, buf, mtd->ग_लिखोsize, false,
 					false);
-		if (!ret && oob_required)
-			ret = nand_read_data_op(chip, chip->oob_poi,
+		अगर (!ret && oob_required)
+			ret = nand_पढ़ो_data_op(chip, chip->oob_poi,
 						mtd->oobsize, false, false);
-	} else {
-		ret = nand_change_read_column_op(chip, 0, buf, mtd->writesize,
+	पूर्ण अन्यथा अणु
+		ret = nand_change_पढ़ो_column_op(chip, 0, buf, mtd->ग_लिखोsize,
 						 false);
-		if (!ret && oob_required)
-			ret = nand_change_read_column_op(chip, mtd->writesize,
+		अगर (!ret && oob_required)
+			ret = nand_change_पढ़ो_column_op(chip, mtd->ग_लिखोsize,
 							 chip->oob_poi,
 							 mtd->oobsize, false);
-	}
+	पूर्ण
 
-	if (chip->ecc.strength == 4)
+	अगर (chip->ecc.strength == 4)
 		max_bitflips = micron_nand_on_die_ecc_status_4(chip, status,
 							       buf, page,
 							       oob_required);
-	else
+	अन्यथा
 		max_bitflips = micron_nand_on_die_ecc_status_8(chip, status);
 
 out:
 	micron_nand_on_die_ecc_setup(chip, false);
 
-	return ret ? ret : max_bitflips;
-}
+	वापस ret ? ret : max_bitflips;
+पूर्ण
 
-static int
-micron_nand_write_page_on_die_ecc(struct nand_chip *chip, const uint8_t *buf,
-				  int oob_required, int page)
-{
-	int ret;
+अटल पूर्णांक
+micron_nand_ग_लिखो_page_on_die_ecc(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
+				  पूर्णांक oob_required, पूर्णांक page)
+अणु
+	पूर्णांक ret;
 
 	ret = micron_nand_on_die_ecc_setup(chip, true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = nand_write_page_raw(chip, buf, oob_required, page);
+	ret = nand_ग_लिखो_page_raw(chip, buf, oob_required, page);
 	micron_nand_on_die_ecc_setup(chip, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-enum {
-	/* The NAND flash doesn't support on-die ECC */
+क्रमागत अणु
+	/* The न_अंकD flash करोesn't support on-die ECC */
 	MICRON_ON_DIE_UNSUPPORTED,
 
 	/*
-	 * The NAND flash supports on-die ECC and it can be
+	 * The न_अंकD flash supports on-die ECC and it can be
 	 * enabled/disabled by a set features command.
 	 */
 	MICRON_ON_DIE_SUPPORTED,
 
 	/*
-	 * The NAND flash supports on-die ECC, and it cannot be
+	 * The न_अंकD flash supports on-die ECC, and it cannot be
 	 * disabled.
 	 */
 	MICRON_ON_DIE_MANDATORY,
-};
+पूर्ण;
 
-#define MICRON_ID_INTERNAL_ECC_MASK	GENMASK(1, 0)
-#define MICRON_ID_ECC_ENABLED		BIT(7)
+#घोषणा MICRON_ID_INTERNAL_ECC_MASK	GENMASK(1, 0)
+#घोषणा MICRON_ID_ECC_ENABLED		BIT(7)
 
 /*
- * Try to detect if the NAND support on-die ECC. To do this, we enable
- * the feature, and read back if it has been enabled as expected. We
- * also check if it can be disabled, because some Micron NANDs do not
- * allow disabling the on-die ECC and we don't support such NANDs for
+ * Try to detect अगर the न_अंकD support on-die ECC. To करो this, we enable
+ * the feature, and पढ़ो back अगर it has been enabled as expected. We
+ * also check अगर it can be disabled, because some Micron न_अंकDs करो not
+ * allow disabling the on-die ECC and we करोn't support such न_अंकDs क्रम
  * now.
  *
- * This function also has the side effect of disabling on-die ECC if
+ * This function also has the side effect of disabling on-die ECC अगर
  * it had been left enabled by the firmware/bootloader.
  */
-static int micron_supports_on_die_ecc(struct nand_chip *chip)
-{
-	const struct nand_ecc_props *requirements =
+अटल पूर्णांक micron_supports_on_die_ecc(काष्ठा nand_chip *chip)
+अणु
+	स्थिर काष्ठा nand_ecc_props *requirements =
 		nanddev_get_ecc_requirements(&chip->base);
 	u8 id[5];
-	int ret;
+	पूर्णांक ret;
 
-	if (!chip->parameters.onfi)
-		return MICRON_ON_DIE_UNSUPPORTED;
+	अगर (!chip->parameters.onfi)
+		वापस MICRON_ON_DIE_UNSUPPORTED;
 
-	if (nanddev_bits_per_cell(&chip->base) != 1)
-		return MICRON_ON_DIE_UNSUPPORTED;
+	अगर (nanddev_bits_per_cell(&chip->base) != 1)
+		वापस MICRON_ON_DIE_UNSUPPORTED;
 
 	/*
 	 * We only support on-die ECC of 4/512 or 8/512
 	 */
-	if  (requirements->strength != 4 && requirements->strength != 8)
-		return MICRON_ON_DIE_UNSUPPORTED;
+	अगर  (requirements->strength != 4 && requirements->strength != 8)
+		वापस MICRON_ON_DIE_UNSUPPORTED;
 
 	/* 0x2 means on-die ECC is available. */
-	if (chip->id.len != 5 ||
+	अगर (chip->id.len != 5 ||
 	    (chip->id.data[4] & MICRON_ID_INTERNAL_ECC_MASK) != 0x2)
-		return MICRON_ON_DIE_UNSUPPORTED;
+		वापस MICRON_ON_DIE_UNSUPPORTED;
 
 	/*
-	 * It seems that there are devices which do not support ECC officially.
+	 * It seems that there are devices which करो not support ECC officially.
 	 * At least the MT29F2G08ABAGA / MT29F2G08ABBGA devices supports
-	 * enabling the ECC feature but don't reflect that to the READ_ID table.
+	 * enabling the ECC feature but करोn't reflect that to the READ_ID table.
 	 * So we have to guarantee that we disable the ECC feature directly
 	 * after we did the READ_ID table command. Later we can evaluate the
 	 * ECC_ENABLE support.
 	 */
 	ret = micron_nand_on_die_ecc_setup(chip, true);
-	if (ret)
-		return MICRON_ON_DIE_UNSUPPORTED;
+	अगर (ret)
+		वापस MICRON_ON_DIE_UNSUPPORTED;
 
-	ret = nand_readid_op(chip, 0, id, sizeof(id));
-	if (ret)
-		return MICRON_ON_DIE_UNSUPPORTED;
+	ret = nand_पढ़ोid_op(chip, 0, id, माप(id));
+	अगर (ret)
+		वापस MICRON_ON_DIE_UNSUPPORTED;
 
 	ret = micron_nand_on_die_ecc_setup(chip, false);
-	if (ret)
-		return MICRON_ON_DIE_UNSUPPORTED;
+	अगर (ret)
+		वापस MICRON_ON_DIE_UNSUPPORTED;
 
-	if (!(id[4] & MICRON_ID_ECC_ENABLED))
-		return MICRON_ON_DIE_UNSUPPORTED;
+	अगर (!(id[4] & MICRON_ID_ECC_ENABLED))
+		वापस MICRON_ON_DIE_UNSUPPORTED;
 
-	ret = nand_readid_op(chip, 0, id, sizeof(id));
-	if (ret)
-		return MICRON_ON_DIE_UNSUPPORTED;
+	ret = nand_पढ़ोid_op(chip, 0, id, माप(id));
+	अगर (ret)
+		वापस MICRON_ON_DIE_UNSUPPORTED;
 
-	if (id[4] & MICRON_ID_ECC_ENABLED)
-		return MICRON_ON_DIE_MANDATORY;
+	अगर (id[4] & MICRON_ID_ECC_ENABLED)
+		वापस MICRON_ON_DIE_MANDATORY;
 
 	/*
 	 * We only support on-die ECC of 4/512 or 8/512
 	 */
-	if  (requirements->strength != 4 && requirements->strength != 8)
-		return MICRON_ON_DIE_UNSUPPORTED;
+	अगर  (requirements->strength != 4 && requirements->strength != 8)
+		वापस MICRON_ON_DIE_UNSUPPORTED;
 
-	return MICRON_ON_DIE_SUPPORTED;
-}
+	वापस MICRON_ON_DIE_SUPPORTED;
+पूर्ण
 
-static int micron_nand_init(struct nand_chip *chip)
-{
-	struct nand_device *base = &chip->base;
-	const struct nand_ecc_props *requirements =
+अटल पूर्णांक micron_nand_init(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_device *base = &chip->base;
+	स्थिर काष्ठा nand_ecc_props *requirements =
 		nanddev_get_ecc_requirements(base);
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct micron_nand *micron;
-	int ondie;
-	int ret;
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा micron_nand *micron;
+	पूर्णांक ondie;
+	पूर्णांक ret;
 
-	micron = kzalloc(sizeof(*micron), GFP_KERNEL);
-	if (!micron)
-		return -ENOMEM;
+	micron = kzalloc(माप(*micron), GFP_KERNEL);
+	अगर (!micron)
+		वापस -ENOMEM;
 
 	nand_set_manufacturer_data(chip, micron);
 
 	ret = micron_nand_onfi_init(chip);
-	if (ret)
-		goto err_free_manuf_data;
+	अगर (ret)
+		जाओ err_मुक्त_manuf_data;
 
-	chip->options |= NAND_BBM_FIRSTPAGE;
+	chip->options |= न_अंकD_BBM_FIRSTPAGE;
 
-	if (mtd->writesize == 2048)
-		chip->options |= NAND_BBM_SECONDPAGE;
+	अगर (mtd->ग_लिखोsize == 2048)
+		chip->options |= न_अंकD_BBM_SECONDPAGE;
 
 	ondie = micron_supports_on_die_ecc(chip);
 
-	if (ondie == MICRON_ON_DIE_MANDATORY &&
-	    chip->ecc.engine_type != NAND_ECC_ENGINE_TYPE_ON_DIE) {
+	अगर (ondie == MICRON_ON_DIE_MANDATORY &&
+	    chip->ecc.engine_type != न_अंकD_ECC_ENGINE_TYPE_ON_DIE) अणु
 		pr_err("On-die ECC forcefully enabled, not supported\n");
 		ret = -EINVAL;
-		goto err_free_manuf_data;
-	}
+		जाओ err_मुक्त_manuf_data;
+	पूर्ण
 
-	if (chip->ecc.engine_type == NAND_ECC_ENGINE_TYPE_ON_DIE) {
-		if (ondie == MICRON_ON_DIE_UNSUPPORTED) {
+	अगर (chip->ecc.engine_type == न_अंकD_ECC_ENGINE_TYPE_ON_DIE) अणु
+		अगर (ondie == MICRON_ON_DIE_UNSUPPORTED) अणु
 			pr_err("On-die ECC selected but not supported\n");
 			ret = -EINVAL;
-			goto err_free_manuf_data;
-		}
+			जाओ err_मुक्त_manuf_data;
+		पूर्ण
 
-		if (ondie == MICRON_ON_DIE_MANDATORY) {
-			micron->ecc.forced = true;
+		अगर (ondie == MICRON_ON_DIE_MANDATORY) अणु
+			micron->ecc.क्रमced = true;
 			micron->ecc.enabled = true;
-		}
+		पूर्ण
 
 		/*
-		 * In case of 4bit on-die ECC, we need a buffer to store a
+		 * In हाल of 4bit on-die ECC, we need a buffer to store a
 		 * page dumped in raw mode so that we can compare its content
 		 * to the same page after ECC correction happened and extract
 		 * the real number of bitflips from this comparison.
-		 * That's not needed for 8-bit ECC, because the status expose
+		 * That's not needed क्रम 8-bit ECC, because the status expose
 		 * a better approximation of the number of bitflips in a page.
 		 */
-		if (requirements->strength == 4) {
-			micron->ecc.rawbuf = kmalloc(mtd->writesize +
+		अगर (requirements->strength == 4) अणु
+			micron->ecc.rawbuf = kदो_स्मृति(mtd->ग_लिखोsize +
 						     mtd->oobsize,
 						     GFP_KERNEL);
-			if (!micron->ecc.rawbuf) {
+			अगर (!micron->ecc.rawbuf) अणु
 				ret = -ENOMEM;
-				goto err_free_manuf_data;
-			}
-		}
+				जाओ err_मुक्त_manuf_data;
+			पूर्ण
+		पूर्ण
 
-		if (requirements->strength == 4)
+		अगर (requirements->strength == 4)
 			mtd_set_ooblayout(mtd,
 					  &micron_nand_on_die_4_ooblayout_ops);
-		else
+		अन्यथा
 			mtd_set_ooblayout(mtd,
 					  &micron_nand_on_die_8_ooblayout_ops);
 
 		chip->ecc.bytes = requirements->strength * 2;
 		chip->ecc.size = 512;
 		chip->ecc.strength = requirements->strength;
-		chip->ecc.algo = NAND_ECC_ALGO_BCH;
-		chip->ecc.read_page = micron_nand_read_page_on_die_ecc;
-		chip->ecc.write_page = micron_nand_write_page_on_die_ecc;
+		chip->ecc.algo = न_अंकD_ECC_ALGO_BCH;
+		chip->ecc.पढ़ो_page = micron_nand_पढ़ो_page_on_die_ecc;
+		chip->ecc.ग_लिखो_page = micron_nand_ग_लिखो_page_on_die_ecc;
 
-		if (ondie == MICRON_ON_DIE_MANDATORY) {
-			chip->ecc.read_page_raw = nand_read_page_raw_notsupp;
-			chip->ecc.write_page_raw = nand_write_page_raw_notsupp;
-		} else {
-			if (!chip->ecc.read_page_raw)
-				chip->ecc.read_page_raw = nand_read_page_raw;
-			if (!chip->ecc.write_page_raw)
-				chip->ecc.write_page_raw = nand_write_page_raw;
-		}
-	}
+		अगर (ondie == MICRON_ON_DIE_MANDATORY) अणु
+			chip->ecc.पढ़ो_page_raw = nand_पढ़ो_page_raw_notsupp;
+			chip->ecc.ग_लिखो_page_raw = nand_ग_लिखो_page_raw_notsupp;
+		पूर्ण अन्यथा अणु
+			अगर (!chip->ecc.पढ़ो_page_raw)
+				chip->ecc.पढ़ो_page_raw = nand_पढ़ो_page_raw;
+			अगर (!chip->ecc.ग_लिखो_page_raw)
+				chip->ecc.ग_लिखो_page_raw = nand_ग_लिखो_page_raw;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_manuf_data:
-	kfree(micron->ecc.rawbuf);
-	kfree(micron);
+err_मुक्त_manuf_data:
+	kमुक्त(micron->ecc.rawbuf);
+	kमुक्त(micron);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void micron_nand_cleanup(struct nand_chip *chip)
-{
-	struct micron_nand *micron = nand_get_manufacturer_data(chip);
+अटल व्योम micron_nand_cleanup(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा micron_nand *micron = nand_get_manufacturer_data(chip);
 
-	kfree(micron->ecc.rawbuf);
-	kfree(micron);
-}
+	kमुक्त(micron->ecc.rawbuf);
+	kमुक्त(micron);
+पूर्ण
 
-static void micron_fixup_onfi_param_page(struct nand_chip *chip,
-					 struct nand_onfi_params *p)
-{
+अटल व्योम micron_fixup_onfi_param_page(काष्ठा nand_chip *chip,
+					 काष्ठा nand_onfi_params *p)
+अणु
 	/*
-	 * MT29F1G08ABAFAWP-ITE:F and possibly others report 00 00 for the
+	 * MT29F1G08ABAFAWP-ITE:F and possibly others report 00 00 क्रम the
 	 * revision number field of the ONFI parameter page. Assume ONFI
-	 * version 1.0 if the revision number is 00 00.
+	 * version 1.0 अगर the revision number is 00 00.
 	 */
-	if (le16_to_cpu(p->revision) == 0)
+	अगर (le16_to_cpu(p->revision) == 0)
 		p->revision = cpu_to_le16(ONFI_VERSION_1_0);
-}
+पूर्ण
 
-const struct nand_manufacturer_ops micron_nand_manuf_ops = {
+स्थिर काष्ठा nand_manufacturer_ops micron_nand_manuf_ops = अणु
 	.init = micron_nand_init,
 	.cleanup = micron_nand_cleanup,
 	.fixup_onfi_param_page = micron_fixup_onfi_param_page,
-};
+पूर्ण;

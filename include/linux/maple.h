@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_MAPLE_H
-#define __LINUX_MAPLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_MAPLE_H
+#घोषणा __LINUX_MAPLE_H
 
-#include <mach/maple.h>
+#समावेश <mach/maple.h>
 
-struct device;
-extern struct bus_type maple_bus_type;
+काष्ठा device;
+बाह्य काष्ठा bus_type maple_bus_type;
 
 /* Maple Bus command and response codes */
-enum maple_code {
-	MAPLE_RESPONSE_FILEERR =	-5,
+क्रमागत maple_code अणु
+	MAPLE_RESPONSE_खाताERR =	-5,
 	MAPLE_RESPONSE_AGAIN,	/* retransmit */
 	MAPLE_RESPONSE_BADCMD,
 	MAPLE_RESPONSE_BADFUNC,
@@ -29,78 +30,78 @@ enum maple_code {
 	MAPLE_COMMAND_BSYNC,
 	MAPLE_COMMAND_SETCOND,
 	MAPLE_COMMAND_MICCONTROL
-};
+पूर्ण;
 
-enum maple_file_errors {
-	MAPLE_FILEERR_INVALID_PARTITION =	0x01000000,
-	MAPLE_FILEERR_PHASE_ERROR =		0x02000000,
-	MAPLE_FILEERR_INVALID_BLOCK =		0x04000000,
-	MAPLE_FILEERR_WRITE_ERROR =		0x08000000,
-	MAPLE_FILEERR_INVALID_WRITE_LENGTH =	0x10000000,
-	MAPLE_FILEERR_BAD_CRC = 		0x20000000
-};
+क्रमागत maple_file_errors अणु
+	MAPLE_खाताERR_INVALID_PARTITION =	0x01000000,
+	MAPLE_खाताERR_PHASE_ERROR =		0x02000000,
+	MAPLE_खाताERR_INVALID_BLOCK =		0x04000000,
+	MAPLE_खाताERR_WRITE_ERROR =		0x08000000,
+	MAPLE_खाताERR_INVALID_WRITE_LENGTH =	0x10000000,
+	MAPLE_खाताERR_BAD_CRC = 		0x20000000
+पूर्ण;
 
-struct maple_buffer {
-	char bufx[0x400];
-	void *buf;
-};
+काष्ठा maple_buffer अणु
+	अक्षर bufx[0x400];
+	व्योम *buf;
+पूर्ण;
 
-struct mapleq {
-	struct list_head list;
-	struct maple_device *dev;
-	struct maple_buffer *recvbuf;
-	void *sendbuf, *recvbuf_p2;
-	unsigned char length;
-	enum maple_code command;
-};
+काष्ठा mapleq अणु
+	काष्ठा list_head list;
+	काष्ठा maple_device *dev;
+	काष्ठा maple_buffer *recvbuf;
+	व्योम *sendbuf, *recvbuf_p2;
+	अचिन्हित अक्षर length;
+	क्रमागत maple_code command;
+पूर्ण;
 
-struct maple_devinfo {
-	unsigned long function;
-	unsigned long function_data[3];
-	unsigned char area_code;
-	unsigned char connector_direction;
-	char product_name[31];
-	char product_licence[61];
-	unsigned short standby_power;
-	unsigned short max_power;
-};
+काष्ठा maple_devinfo अणु
+	अचिन्हित दीर्घ function;
+	अचिन्हित दीर्घ function_data[3];
+	अचिन्हित अक्षर area_code;
+	अचिन्हित अक्षर connector_direction;
+	अक्षर product_name[31];
+	अक्षर product_licence[61];
+	अचिन्हित लघु standby_घातer;
+	अचिन्हित लघु max_घातer;
+पूर्ण;
 
-struct maple_device {
-	struct maple_driver *driver;
-	struct mapleq *mq;
-	void (*callback) (struct mapleq * mq);
-	void (*fileerr_handler)(struct maple_device *mdev, void *recvbuf);
-	int (*can_unload)(struct maple_device *mdev);
-	unsigned long when, interval, function;
-	struct maple_devinfo devinfo;
-	unsigned char port, unit;
-	char product_name[32];
-	char product_licence[64];
+काष्ठा maple_device अणु
+	काष्ठा maple_driver *driver;
+	काष्ठा mapleq *mq;
+	व्योम (*callback) (काष्ठा mapleq * mq);
+	व्योम (*fileerr_handler)(काष्ठा maple_device *mdev, व्योम *recvbuf);
+	पूर्णांक (*can_unload)(काष्ठा maple_device *mdev);
+	अचिन्हित दीर्घ when, पूर्णांकerval, function;
+	काष्ठा maple_devinfo devinfo;
+	अचिन्हित अक्षर port, unit;
+	अक्षर product_name[32];
+	अक्षर product_licence[64];
 	atomic_t busy;
-	wait_queue_head_t maple_wait;
-	struct device dev;
-};
+	रुको_queue_head_t maple_रुको;
+	काष्ठा device dev;
+पूर्ण;
 
-struct maple_driver {
-	unsigned long function;
-	struct device_driver drv;
-};
+काष्ठा maple_driver अणु
+	अचिन्हित दीर्घ function;
+	काष्ठा device_driver drv;
+पूर्ण;
 
-void maple_getcond_callback(struct maple_device *dev,
-			    void (*callback) (struct mapleq * mq),
-			    unsigned long interval,
-			    unsigned long function);
-int maple_driver_register(struct maple_driver *);
-void maple_driver_unregister(struct maple_driver *);
+व्योम maple_अ_लोond_callback(काष्ठा maple_device *dev,
+			    व्योम (*callback) (काष्ठा mapleq * mq),
+			    अचिन्हित दीर्घ पूर्णांकerval,
+			    अचिन्हित दीर्घ function);
+पूर्णांक maple_driver_रेजिस्टर(काष्ठा maple_driver *);
+व्योम maple_driver_unरेजिस्टर(काष्ठा maple_driver *);
 
-int maple_add_packet(struct maple_device *mdev, u32 function,
-	u32 command, u32 length, void *data);
-void maple_clear_dev(struct maple_device *mdev);
+पूर्णांक maple_add_packet(काष्ठा maple_device *mdev, u32 function,
+	u32 command, u32 length, व्योम *data);
+व्योम maple_clear_dev(काष्ठा maple_device *mdev);
 
-#define to_maple_dev(n) container_of(n, struct maple_device, dev)
-#define to_maple_driver(n) container_of(n, struct maple_driver, drv)
+#घोषणा to_maple_dev(n) container_of(n, काष्ठा maple_device, dev)
+#घोषणा to_maple_driver(n) container_of(n, काष्ठा maple_driver, drv)
 
-#define maple_get_drvdata(d)		dev_get_drvdata(&(d)->dev)
-#define maple_set_drvdata(d,p)		dev_set_drvdata(&(d)->dev, (p))
+#घोषणा maple_get_drvdata(d)		dev_get_drvdata(&(d)->dev)
+#घोषणा maple_set_drvdata(d,p)		dev_set_drvdata(&(d)->dev, (p))
 
-#endif				/* __LINUX_MAPLE_H */
+#पूर्ण_अगर				/* __LINUX_MAPLE_H */

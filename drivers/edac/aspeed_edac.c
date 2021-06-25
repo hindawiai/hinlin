@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright 2018, 2019 Cisco Systems
  */
 
-#include <linux/edac.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/stop_machine.h>
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/regmap.h>
-#include "edac_module.h"
+#समावेश <linux/edac.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/stop_machine.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/regmap.h>
+#समावेश "edac_module.h"
 
 
-#define DRV_NAME "aspeed-edac"
+#घोषणा DRV_NAME "aspeed-edac"
 
 
-#define ASPEED_MCR_PROT        0x00 /* protection key register */
-#define ASPEED_MCR_CONF        0x04 /* configuration register */
-#define ASPEED_MCR_INTR_CTRL   0x50 /* interrupt control/status register */
-#define ASPEED_MCR_ADDR_UNREC  0x58 /* address of first un-recoverable error */
-#define ASPEED_MCR_ADDR_REC    0x5c /* address of last recoverable error */
-#define ASPEED_MCR_LAST        ASPEED_MCR_ADDR_REC
+#घोषणा ASPEED_MCR_PROT        0x00 /* protection key रेजिस्टर */
+#घोषणा ASPEED_MCR_CONF        0x04 /* configuration रेजिस्टर */
+#घोषणा ASPEED_MCR_INTR_CTRL   0x50 /* पूर्णांकerrupt control/status रेजिस्टर */
+#घोषणा ASPEED_MCR_ADDR_UNREC  0x58 /* address of first un-recoverable error */
+#घोषणा ASPEED_MCR_ADDR_REC    0x5c /* address of last recoverable error */
+#घोषणा ASPEED_MCR_LAST        ASPEED_MCR_ADDR_REC
 
 
-#define ASPEED_MCR_PROT_PASSWD	            0xfc600309
-#define ASPEED_MCR_CONF_DRAM_TYPE               BIT(4)
-#define ASPEED_MCR_CONF_ECC                     BIT(7)
-#define ASPEED_MCR_INTR_CTRL_CLEAR             BIT(31)
-#define ASPEED_MCR_INTR_CTRL_CNT_REC   GENMASK(23, 16)
-#define ASPEED_MCR_INTR_CTRL_CNT_UNREC GENMASK(15, 12)
-#define ASPEED_MCR_INTR_CTRL_ENABLE  (BIT(0) | BIT(1))
+#घोषणा ASPEED_MCR_PROT_PASSWD	            0xfc600309
+#घोषणा ASPEED_MCR_CONF_DRAM_TYPE               BIT(4)
+#घोषणा ASPEED_MCR_CONF_ECC                     BIT(7)
+#घोषणा ASPEED_MCR_INTR_CTRL_CLEAR             BIT(31)
+#घोषणा ASPEED_MCR_INTR_CTRL_CNT_REC   GENMASK(23, 16)
+#घोषणा ASPEED_MCR_INTR_CTRL_CNT_UNREC GENMASK(15, 12)
+#घोषणा ASPEED_MCR_INTR_CTRL_ENABLE  (BIT(0) | BIT(1))
 
 
-static struct regmap *aspeed_regmap;
+अटल काष्ठा regmap *aspeed_regmap;
 
 
-static int regmap_reg_write(void *context, unsigned int reg, unsigned int val)
-{
-	void __iomem *regs = (void __iomem *)context;
+अटल पूर्णांक regmap_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
+अणु
+	व्योम __iomem *regs = (व्योम __iomem *)context;
 
-	/* enable write to MCR register set */
-	writel(ASPEED_MCR_PROT_PASSWD, regs + ASPEED_MCR_PROT);
+	/* enable ग_लिखो to MCR रेजिस्टर set */
+	ग_लिखोl(ASPEED_MCR_PROT_PASSWD, regs + ASPEED_MCR_PROT);
 
-	writel(val, regs + reg);
+	ग_लिखोl(val, regs + reg);
 
-	/* disable write to MCR register set */
-	writel(~ASPEED_MCR_PROT_PASSWD, regs + ASPEED_MCR_PROT);
+	/* disable ग_लिखो to MCR रेजिस्टर set */
+	ग_लिखोl(~ASPEED_MCR_PROT_PASSWD, regs + ASPEED_MCR_PROT);
 
-	return 0;
-}
-
-
-static int regmap_reg_read(void *context, unsigned int reg, unsigned int *val)
-{
-	void __iomem *regs = (void __iomem *)context;
-
-	*val = readl(regs + reg);
-
-	return 0;
-}
-
-static bool regmap_is_volatile(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case ASPEED_MCR_PROT:
-	case ASPEED_MCR_INTR_CTRL:
-	case ASPEED_MCR_ADDR_UNREC:
-	case ASPEED_MCR_ADDR_REC:
-		return true;
-	default:
-		return false;
-	}
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct regmap_config aspeed_regmap_config = {
+अटल पूर्णांक regmap_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val)
+अणु
+	व्योम __iomem *regs = (व्योम __iomem *)context;
+
+	*val = पढ़ोl(regs + reg);
+
+	वापस 0;
+पूर्ण
+
+अटल bool regmap_is_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल ASPEED_MCR_PROT:
+	हाल ASPEED_MCR_INTR_CTRL:
+	हाल ASPEED_MCR_ADDR_UNREC:
+	हाल ASPEED_MCR_ADDR_REC:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
+
+
+अटल स्थिर काष्ठा regmap_config aspeed_regmap_config = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = ASPEED_MCR_LAST,
-	.reg_write = regmap_reg_write,
-	.reg_read = regmap_reg_read,
-	.volatile_reg = regmap_is_volatile,
+	.max_रेजिस्टर = ASPEED_MCR_LAST,
+	.reg_ग_लिखो = regmap_reg_ग_लिखो,
+	.reg_पढ़ो = regmap_reg_पढ़ो,
+	.अस्थिर_reg = regmap_is_अस्थिर,
 	.fast_io = true,
-};
+पूर्ण;
 
 
-static void count_rec(struct mem_ctl_info *mci, u8 rec_cnt, u32 rec_addr)
-{
-	struct csrow_info *csrow = mci->csrows[0];
+अटल व्योम count_rec(काष्ठा mem_ctl_info *mci, u8 rec_cnt, u32 rec_addr)
+अणु
+	काष्ठा csrow_info *csrow = mci->csrows[0];
 	u32 page, offset, syndrome;
 
-	if (!rec_cnt)
-		return;
+	अगर (!rec_cnt)
+		वापस;
 
-	/* report first few errors (if there are) */
+	/* report first few errors (अगर there are) */
 	/* note: no addresses are recorded */
-	if (rec_cnt > 1) {
+	अगर (rec_cnt > 1) अणु
 		/* page, offset and syndrome are not available */
 		page = 0;
 		offset = 0;
@@ -107,7 +108,7 @@ static void count_rec(struct mem_ctl_info *mci, u8 rec_cnt, u32 rec_addr)
 		edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, rec_cnt-1,
 				     page, offset, syndrome, 0, 0, -1,
 				     "address(es) not available", "");
-	}
+	पूर्ण
 
 	/* report last error */
 	/* note: rec_addr is the last recoverable error addr */
@@ -118,17 +119,17 @@ static void count_rec(struct mem_ctl_info *mci, u8 rec_cnt, u32 rec_addr)
 	edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, 1,
 			     csrow->first_page + page, offset, syndrome,
 			     0, 0, -1, "", "");
-}
+पूर्ण
 
 
-static void count_un_rec(struct mem_ctl_info *mci, u8 un_rec_cnt,
+अटल व्योम count_un_rec(काष्ठा mem_ctl_info *mci, u8 un_rec_cnt,
 			 u32 un_rec_addr)
-{
-	struct csrow_info *csrow = mci->csrows[0];
+अणु
+	काष्ठा csrow_info *csrow = mci->csrows[0];
 	u32 page, offset, syndrome;
 
-	if (!un_rec_cnt)
-		return;
+	अगर (!un_rec_cnt)
+		वापस;
 
 	/* report 1. error */
 	/* note: un_rec_addr is the first unrecoverable error addr */
@@ -140,9 +141,9 @@ static void count_un_rec(struct mem_ctl_info *mci, u8 un_rec_cnt,
 			     csrow->first_page + page, offset, syndrome,
 			     0, 0, -1, "", "");
 
-	/* report further errors (if there are) */
+	/* report further errors (अगर there are) */
 	/* note: no addresses are recorded */
-	if (un_rec_cnt > 1) {
+	अगर (un_rec_cnt > 1) अणु
 		/* page, offset and syndrome are not available */
 		page = 0;
 		offset = 0;
@@ -150,18 +151,18 @@ static void count_un_rec(struct mem_ctl_info *mci, u8 un_rec_cnt,
 		edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, un_rec_cnt-1,
 				     page, offset, syndrome, 0, 0, -1,
 				     "address(es) not available", "");
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static irqreturn_t mcr_isr(int irq, void *arg)
-{
-	struct mem_ctl_info *mci = arg;
+अटल irqवापस_t mcr_isr(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा mem_ctl_info *mci = arg;
 	u32 rec_addr, un_rec_addr;
 	u32 reg50, reg5c, reg58;
 	u8  rec_cnt, un_rec_cnt;
 
-	regmap_read(aspeed_regmap, ASPEED_MCR_INTR_CTRL, &reg50);
+	regmap_पढ़ो(aspeed_regmap, ASPEED_MCR_INTR_CTRL, &reg50);
 	dev_dbg(mci->pdev, "received edac interrupt w/ mcr register 50: 0x%x\n",
 		reg50);
 
@@ -172,13 +173,13 @@ static irqreturn_t mcr_isr(int irq, void *arg)
 	dev_dbg(mci->pdev, "%d recoverable interrupts and %d unrecoverable interrupts\n",
 		rec_cnt, un_rec_cnt);
 
-	regmap_read(aspeed_regmap, ASPEED_MCR_ADDR_UNREC, &reg58);
+	regmap_पढ़ो(aspeed_regmap, ASPEED_MCR_ADDR_UNREC, &reg58);
 	un_rec_addr = reg58;
 
-	regmap_read(aspeed_regmap, ASPEED_MCR_ADDR_REC, &reg5c);
+	regmap_पढ़ो(aspeed_regmap, ASPEED_MCR_ADDR_REC, &reg5c);
 	rec_addr = reg5c;
 
-	/* clear interrupt flags and error counters: */
+	/* clear पूर्णांकerrupt flags and error counters: */
 	regmap_update_bits(aspeed_regmap, ASPEED_MCR_INTR_CTRL,
 			   ASPEED_MCR_INTR_CTRL_CLEAR,
 			   ASPEED_MCR_INTR_CTRL_CLEAR);
@@ -190,69 +191,69 @@ static irqreturn_t mcr_isr(int irq, void *arg)
 	count_rec(mci, rec_cnt, rec_addr);
 	count_un_rec(mci, un_rec_cnt, un_rec_addr);
 
-	if (!rec_cnt && !un_rec_cnt)
+	अगर (!rec_cnt && !un_rec_cnt)
 		dev_dbg(mci->pdev, "received edac interrupt, but did not find any ECC counters\n");
 
-	regmap_read(aspeed_regmap, ASPEED_MCR_INTR_CTRL, &reg50);
+	regmap_पढ़ो(aspeed_regmap, ASPEED_MCR_INTR_CTRL, &reg50);
 	dev_dbg(mci->pdev, "edac interrupt handled. mcr reg 50 is now: 0x%x\n",
 		reg50);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-static int config_irq(void *ctx, struct platform_device *pdev)
-{
-	int irq;
-	int rc;
+अटल पूर्णांक config_irq(व्योम *ctx, काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक irq;
+	पूर्णांक rc;
 
-	/* register interrupt handler */
-	irq = platform_get_irq(pdev, 0);
+	/* रेजिस्टर पूर्णांकerrupt handler */
+	irq = platक्रमm_get_irq(pdev, 0);
 	dev_dbg(&pdev->dev, "got irq %d\n", irq);
-	if (irq < 0)
-		return irq;
+	अगर (irq < 0)
+		वापस irq;
 
 	rc = devm_request_irq(&pdev->dev, irq, mcr_isr, IRQF_TRIGGER_HIGH,
 			      DRV_NAME, ctx);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "unable to request irq %d\n", irq);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* enable interrupts */
+	/* enable पूर्णांकerrupts */
 	regmap_update_bits(aspeed_regmap, ASPEED_MCR_INTR_CTRL,
 			   ASPEED_MCR_INTR_CTRL_ENABLE,
 			   ASPEED_MCR_INTR_CTRL_ENABLE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int init_csrows(struct mem_ctl_info *mci)
-{
-	struct csrow_info *csrow = mci->csrows[0];
+अटल पूर्णांक init_csrows(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा csrow_info *csrow = mci->csrows[0];
 	u32 nr_pages, dram_type;
-	struct dimm_info *dimm;
-	struct device_node *np;
-	struct resource r;
+	काष्ठा dimm_info *dimm;
+	काष्ठा device_node *np;
+	काष्ठा resource r;
 	u32 reg04;
-	int rc;
+	पूर्णांक rc;
 
 	/* retrieve info about physical memory from device tree */
-	np = of_find_node_by_name(NULL, "memory");
-	if (!np) {
+	np = of_find_node_by_name(शून्य, "memory");
+	अगर (!np) अणु
 		dev_err(mci->pdev, "dt: missing /memory node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	rc = of_address_to_resource(np, 0, &r);
 
 	of_node_put(np);
 
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(mci->pdev, "dt: failed requesting resource for /memory node\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	dev_dbg(mci->pdev, "dt: /memory node resources: first page r.start=0x%x, resource_size=0x%x, PAGE_SHIFT macro=0x%x\n",
 		r.start, resource_size(&r), PAGE_SHIFT);
@@ -261,7 +262,7 @@ static int init_csrows(struct mem_ctl_info *mci)
 	nr_pages = resource_size(&r) >> PAGE_SHIFT;
 	csrow->last_page = csrow->first_page + nr_pages - 1;
 
-	regmap_read(aspeed_regmap, ASPEED_MCR_CONF, &reg04);
+	regmap_पढ़ो(aspeed_regmap, ASPEED_MCR_CONF, &reg04);
 	dram_type = (reg04 & ASPEED_MCR_CONF_DRAM_TYPE) ? MEM_DDR4 : MEM_DDR3;
 
 	dimm = csrow->channels[0]->dimm;
@@ -272,38 +273,38 @@ static int init_csrows(struct mem_ctl_info *mci)
 	dev_dbg(mci->pdev, "initialized dimm with first_page=0x%lx and nr_pages=0x%x\n",
 		csrow->first_page, nr_pages);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int aspeed_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct edac_mc_layer layers[2];
-	struct mem_ctl_info *mci;
-	void __iomem *regs;
+अटल पूर्णांक aspeed_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा edac_mc_layer layers[2];
+	काष्ठा mem_ctl_info *mci;
+	व्योम __iomem *regs;
 	u32 reg04;
-	int rc;
+	पूर्णांक rc;
 
-	regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(regs))
-		return PTR_ERR(regs);
+	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(regs))
+		वापस PTR_ERR(regs);
 
-	aspeed_regmap = devm_regmap_init(dev, NULL, (__force void *)regs,
+	aspeed_regmap = devm_regmap_init(dev, शून्य, (__क्रमce व्योम *)regs,
 					 &aspeed_regmap_config);
-	if (IS_ERR(aspeed_regmap))
-		return PTR_ERR(aspeed_regmap);
+	अगर (IS_ERR(aspeed_regmap))
+		वापस PTR_ERR(aspeed_regmap);
 
-	/* bail out if ECC mode is not configured */
-	regmap_read(aspeed_regmap, ASPEED_MCR_CONF, &reg04);
-	if (!(reg04 & ASPEED_MCR_CONF_ECC)) {
+	/* bail out अगर ECC mode is not configured */
+	regmap_पढ़ो(aspeed_regmap, ASPEED_MCR_CONF, &reg04);
+	अगर (!(reg04 & ASPEED_MCR_CONF_ECC)) अणु
 		dev_err(&pdev->dev, "ECC mode is not configured in u-boot\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	edac_op_state = EDAC_OPSTATE_INT;
 
-	/* allocate & init EDAC MC data structure */
+	/* allocate & init EDAC MC data काष्ठाure */
 	layers[0].type = EDAC_MC_LAYER_CHIP_SELECT;
 	layers[0].size = 1;
 	layers[0].is_virt_csrow = true;
@@ -312,8 +313,8 @@ static int aspeed_probe(struct platform_device *pdev)
 	layers[1].is_virt_csrow = false;
 
 	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers, 0);
-	if (!mci)
-		return -ENOMEM;
+	अगर (!mci)
+		वापस -ENOMEM;
 
 	mci->pdev = &pdev->dev;
 	mci->mtype_cap = MEM_FLAG_DDR3 | MEM_FLAG_DDR4;
@@ -326,72 +327,72 @@ static int aspeed_probe(struct platform_device *pdev)
 	mci->dev_name = dev_name(&pdev->dev);
 
 	rc = init_csrows(mci);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "failed to init csrows\n");
-		goto probe_exit02;
-	}
+		जाओ probe_निकास02;
+	पूर्ण
 
-	platform_set_drvdata(pdev, mci);
+	platक्रमm_set_drvdata(pdev, mci);
 
-	/* register with edac core */
+	/* रेजिस्टर with edac core */
 	rc = edac_mc_add_mc(mci);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "failed to register with EDAC core\n");
-		goto probe_exit02;
-	}
+		जाओ probe_निकास02;
+	पूर्ण
 
-	/* register interrupt handler and enable interrupts */
+	/* रेजिस्टर पूर्णांकerrupt handler and enable पूर्णांकerrupts */
 	rc = config_irq(mci, pdev);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "failed setting up irq\n");
-		goto probe_exit01;
-	}
+		जाओ probe_निकास01;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-probe_exit01:
+probe_निकास01:
 	edac_mc_del_mc(&pdev->dev);
-probe_exit02:
-	edac_mc_free(mci);
-	return rc;
-}
+probe_निकास02:
+	edac_mc_मुक्त(mci);
+	वापस rc;
+पूर्ण
 
 
-static int aspeed_remove(struct platform_device *pdev)
-{
-	struct mem_ctl_info *mci;
+अटल पूर्णांक aspeed_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mem_ctl_info *mci;
 
-	/* disable interrupts */
+	/* disable पूर्णांकerrupts */
 	regmap_update_bits(aspeed_regmap, ASPEED_MCR_INTR_CTRL,
 			   ASPEED_MCR_INTR_CTRL_ENABLE, 0);
 
-	/* free resources */
+	/* मुक्त resources */
 	mci = edac_mc_del_mc(&pdev->dev);
-	if (mci)
-		edac_mc_free(mci);
+	अगर (mci)
+		edac_mc_मुक्त(mci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct of_device_id aspeed_of_match[] = {
-	{ .compatible = "aspeed,ast2400-sdram-edac" },
-	{ .compatible = "aspeed,ast2500-sdram-edac" },
-	{ .compatible = "aspeed,ast2600-sdram-edac" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id aspeed_of_match[] = अणु
+	अणु .compatible = "aspeed,ast2400-sdram-edac" पूर्ण,
+	अणु .compatible = "aspeed,ast2500-sdram-edac" पूर्ण,
+	अणु .compatible = "aspeed,ast2600-sdram-edac" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, aspeed_of_match);
 
-static struct platform_driver aspeed_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver aspeed_driver = अणु
+	.driver		= अणु
 		.name	= DRV_NAME,
 		.of_match_table = aspeed_of_match
-	},
+	पूर्ण,
 	.probe		= aspeed_probe,
-	.remove		= aspeed_remove
-};
-module_platform_driver(aspeed_driver);
+	.हटाओ		= aspeed_हटाओ
+पूर्ण;
+module_platक्रमm_driver(aspeed_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Stefan Schaeckeler <sschaeck@cisco.com>");

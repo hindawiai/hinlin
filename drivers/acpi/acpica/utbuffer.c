@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: utbuffer - Buffer dump routines
@@ -7,10 +8,10 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
 
-#define _COMPONENT          ACPI_UTILITIES
+#घोषणा _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utbuffer")
 
 /*******************************************************************************
@@ -31,121 +32,121 @@ ACPI_MODULE_NAME("utbuffer")
  * DESCRIPTION: Generic dump buffer in both hex and ascii.
  *
  ******************************************************************************/
-void acpi_ut_dump_buffer(u8 *buffer, u32 count, u32 display, u32 base_offset)
-{
+व्योम acpi_ut_dump_buffer(u8 *buffer, u32 count, u32 display, u32 base_offset)
+अणु
 	u32 i = 0;
 	u32 j;
 	u32 temp32;
-	u8 buf_char;
+	u8 buf_अक्षर;
 	u32 display_data_only = display & DB_DISPLAY_DATA_ONLY;
 
 	display &= ~DB_DISPLAY_DATA_ONLY;
-	if (!buffer) {
-		acpi_os_printf("Null Buffer Pointer in DumpBuffer!\n");
-		return;
-	}
+	अगर (!buffer) अणु
+		acpi_os_म_लिखो("Null Buffer Pointer in DumpBuffer!\n");
+		वापस;
+	पूर्ण
 
-	if ((count < 4) || (count & 0x01)) {
+	अगर ((count < 4) || (count & 0x01)) अणु
 		display = DB_BYTE_DISPLAY;
-	}
+	पूर्ण
 
 	/* Nasty little dump buffer routine! */
 
-	while (i < count) {
+	जबतक (i < count) अणु
 
-		/* Print current offset */
+		/* Prपूर्णांक current offset */
 
-		if (!display_data_only) {
-			acpi_os_printf("%8.4X: ", (base_offset + i));
-		}
+		अगर (!display_data_only) अणु
+			acpi_os_म_लिखो("%8.4X: ", (base_offset + i));
+		पूर्ण
 
-		/* Print 16 hex chars */
+		/* Prपूर्णांक 16 hex अक्षरs */
 
-		for (j = 0; j < 16;) {
-			if (i + j >= count) {
+		क्रम (j = 0; j < 16;) अणु
+			अगर (i + j >= count) अणु
 
 				/* Dump fill spaces */
 
-				acpi_os_printf("%*s", ((display * 2) + 1), " ");
+				acpi_os_म_लिखो("%*s", ((display * 2) + 1), " ");
 				j += display;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			switch (display) {
-			case DB_BYTE_DISPLAY:
-			default:	/* Default is BYTE display */
+			चयन (display) अणु
+			हाल DB_BYTE_DISPLAY:
+			शेष:	/* Default is BYTE display */
 
-				acpi_os_printf("%02X ",
+				acpi_os_म_लिखो("%02X ",
 					       buffer[(acpi_size)i + j]);
-				break;
+				अवरोध;
 
-			case DB_WORD_DISPLAY:
+			हाल DB_WORD_DISPLAY:
 
 				ACPI_MOVE_16_TO_32(&temp32,
 						   &buffer[(acpi_size)i + j]);
-				acpi_os_printf("%04X ", temp32);
-				break;
+				acpi_os_म_लिखो("%04X ", temp32);
+				अवरोध;
 
-			case DB_DWORD_DISPLAY:
-
-				ACPI_MOVE_32_TO_32(&temp32,
-						   &buffer[(acpi_size)i + j]);
-				acpi_os_printf("%08X ", temp32);
-				break;
-
-			case DB_QWORD_DISPLAY:
+			हाल DB_DWORD_DISPLAY:
 
 				ACPI_MOVE_32_TO_32(&temp32,
 						   &buffer[(acpi_size)i + j]);
-				acpi_os_printf("%08X", temp32);
+				acpi_os_म_लिखो("%08X ", temp32);
+				अवरोध;
+
+			हाल DB_QWORD_DISPLAY:
+
+				ACPI_MOVE_32_TO_32(&temp32,
+						   &buffer[(acpi_size)i + j]);
+				acpi_os_म_लिखो("%08X", temp32);
 
 				ACPI_MOVE_32_TO_32(&temp32,
 						   &buffer[(acpi_size)i + j +
 							   4]);
-				acpi_os_printf("%08X ", temp32);
-				break;
-			}
+				acpi_os_म_लिखो("%08X ", temp32);
+				अवरोध;
+			पूर्ण
 
 			j += display;
-		}
+		पूर्ण
 
 		/*
-		 * Print the ASCII equivalent characters but watch out for the bad
-		 * unprintable ones (printable chars are 0x20 through 0x7E)
+		 * Prपूर्णांक the ASCII equivalent अक्षरacters but watch out क्रम the bad
+		 * unprपूर्णांकable ones (prपूर्णांकable अक्षरs are 0x20 through 0x7E)
 		 */
-		if (!display_data_only) {
-			acpi_os_printf(" ");
-			for (j = 0; j < 16; j++) {
-				if (i + j >= count) {
-					acpi_os_printf("\n");
-					return;
-				}
+		अगर (!display_data_only) अणु
+			acpi_os_म_लिखो(" ");
+			क्रम (j = 0; j < 16; j++) अणु
+				अगर (i + j >= count) अणु
+					acpi_os_म_लिखो("\n");
+					वापस;
+				पूर्ण
 
 				/*
-				 * Add comment characters so rest of line is ignored when
+				 * Add comment अक्षरacters so rest of line is ignored when
 				 * compiled
 				 */
-				if (j == 0) {
-					acpi_os_printf("// ");
-				}
+				अगर (j == 0) अणु
+					acpi_os_म_लिखो("// ");
+				पूर्ण
 
-				buf_char = buffer[(acpi_size)i + j];
-				if (isprint(buf_char)) {
-					acpi_os_printf("%c", buf_char);
-				} else {
-					acpi_os_printf(".");
-				}
-			}
+				buf_अक्षर = buffer[(acpi_size)i + j];
+				अगर (है_छाप(buf_अक्षर)) अणु
+					acpi_os_म_लिखो("%c", buf_अक्षर);
+				पूर्ण अन्यथा अणु
+					acpi_os_म_लिखो(".");
+				पूर्ण
+			पूर्ण
 
 			/* Done with that line. */
 
-			acpi_os_printf("\n");
-		}
+			acpi_os_म_लिखो("\n");
+		पूर्ण
 		i += 16;
-	}
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*******************************************************************************
  *
@@ -166,21 +167,21 @@ void acpi_ut_dump_buffer(u8 *buffer, u32 count, u32 display, u32 base_offset)
  *
  ******************************************************************************/
 
-void
+व्योम
 acpi_ut_debug_dump_buffer(u8 *buffer, u32 count, u32 display, u32 component_id)
-{
+अणु
 
-	/* Only dump the buffer if tracing is enabled */
+	/* Only dump the buffer अगर tracing is enabled */
 
-	if (!((ACPI_LV_TABLES & acpi_dbg_level) &&
-	      (component_id & acpi_dbg_layer))) {
-		return;
-	}
+	अगर (!((ACPI_LV_TABLES & acpi_dbg_level) &&
+	      (component_id & acpi_dbg_layer))) अणु
+		वापस;
+	पूर्ण
 
 	acpi_ut_dump_buffer(buffer, count, display, 0);
-}
+पूर्ण
 
-#ifdef ACPI_APPLICATION
+#अगर_घोषित ACPI_APPLICATION
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_dump_buffer_to_file
@@ -201,107 +202,107 @@ acpi_ut_debug_dump_buffer(u8 *buffer, u32 count, u32 display, u32 component_id)
  *
  ******************************************************************************/
 
-void
-acpi_ut_dump_buffer_to_file(ACPI_FILE file,
+व्योम
+acpi_ut_dump_buffer_to_file(ACPI_खाता file,
 			    u8 *buffer, u32 count, u32 display, u32 base_offset)
-{
+अणु
 	u32 i = 0;
 	u32 j;
 	u32 temp32;
-	u8 buf_char;
+	u8 buf_अक्षर;
 
-	if (!buffer) {
-		fprintf(file, "Null Buffer Pointer in DumpBuffer!\n");
-		return;
-	}
+	अगर (!buffer) अणु
+		ख_लिखो(file, "Null Buffer Pointer in DumpBuffer!\n");
+		वापस;
+	पूर्ण
 
-	if ((count < 4) || (count & 0x01)) {
+	अगर ((count < 4) || (count & 0x01)) अणु
 		display = DB_BYTE_DISPLAY;
-	}
+	पूर्ण
 
 	/* Nasty little dump buffer routine! */
 
-	while (i < count) {
+	जबतक (i < count) अणु
 
-		/* Print current offset */
+		/* Prपूर्णांक current offset */
 
-		fprintf(file, "%8.4X: ", (base_offset + i));
+		ख_लिखो(file, "%8.4X: ", (base_offset + i));
 
-		/* Print 16 hex chars */
+		/* Prपूर्णांक 16 hex अक्षरs */
 
-		for (j = 0; j < 16;) {
-			if (i + j >= count) {
+		क्रम (j = 0; j < 16;) अणु
+			अगर (i + j >= count) अणु
 
 				/* Dump fill spaces */
 
-				fprintf(file, "%*s", ((display * 2) + 1), " ");
+				ख_लिखो(file, "%*s", ((display * 2) + 1), " ");
 				j += display;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			switch (display) {
-			case DB_BYTE_DISPLAY:
-			default:	/* Default is BYTE display */
+			चयन (display) अणु
+			हाल DB_BYTE_DISPLAY:
+			शेष:	/* Default is BYTE display */
 
-				fprintf(file, "%02X ",
+				ख_लिखो(file, "%02X ",
 					buffer[(acpi_size)i + j]);
-				break;
+				अवरोध;
 
-			case DB_WORD_DISPLAY:
+			हाल DB_WORD_DISPLAY:
 
 				ACPI_MOVE_16_TO_32(&temp32,
 						   &buffer[(acpi_size)i + j]);
-				fprintf(file, "%04X ", temp32);
-				break;
+				ख_लिखो(file, "%04X ", temp32);
+				अवरोध;
 
-			case DB_DWORD_DISPLAY:
-
-				ACPI_MOVE_32_TO_32(&temp32,
-						   &buffer[(acpi_size)i + j]);
-				fprintf(file, "%08X ", temp32);
-				break;
-
-			case DB_QWORD_DISPLAY:
+			हाल DB_DWORD_DISPLAY:
 
 				ACPI_MOVE_32_TO_32(&temp32,
 						   &buffer[(acpi_size)i + j]);
-				fprintf(file, "%08X", temp32);
+				ख_लिखो(file, "%08X ", temp32);
+				अवरोध;
+
+			हाल DB_QWORD_DISPLAY:
+
+				ACPI_MOVE_32_TO_32(&temp32,
+						   &buffer[(acpi_size)i + j]);
+				ख_लिखो(file, "%08X", temp32);
 
 				ACPI_MOVE_32_TO_32(&temp32,
 						   &buffer[(acpi_size)i + j +
 							   4]);
-				fprintf(file, "%08X ", temp32);
-				break;
-			}
+				ख_लिखो(file, "%08X ", temp32);
+				अवरोध;
+			पूर्ण
 
 			j += display;
-		}
+		पूर्ण
 
 		/*
-		 * Print the ASCII equivalent characters but watch out for the bad
-		 * unprintable ones (printable chars are 0x20 through 0x7E)
+		 * Prपूर्णांक the ASCII equivalent अक्षरacters but watch out क्रम the bad
+		 * unprपूर्णांकable ones (prपूर्णांकable अक्षरs are 0x20 through 0x7E)
 		 */
-		fprintf(file, " ");
-		for (j = 0; j < 16; j++) {
-			if (i + j >= count) {
-				fprintf(file, "\n");
-				return;
-			}
+		ख_लिखो(file, " ");
+		क्रम (j = 0; j < 16; j++) अणु
+			अगर (i + j >= count) अणु
+				ख_लिखो(file, "\n");
+				वापस;
+			पूर्ण
 
-			buf_char = buffer[(acpi_size)i + j];
-			if (isprint(buf_char)) {
-				fprintf(file, "%c", buf_char);
-			} else {
-				fprintf(file, ".");
-			}
-		}
+			buf_अक्षर = buffer[(acpi_size)i + j];
+			अगर (है_छाप(buf_अक्षर)) अणु
+				ख_लिखो(file, "%c", buf_अक्षर);
+			पूर्ण अन्यथा अणु
+				ख_लिखो(file, ".");
+			पूर्ण
+		पूर्ण
 
 		/* Done with that line. */
 
-		fprintf(file, "\n");
+		ख_लिखो(file, "\n");
 		i += 16;
-	}
+	पूर्ण
 
-	return;
-}
-#endif
+	वापस;
+पूर्ण
+#पूर्ण_अगर

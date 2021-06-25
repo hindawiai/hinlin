@@ -1,30 +1,31 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2008 by Ralf Baechle (ralf@linux-mips.org)
  */
-#ifndef __ASM_R4K_TIMER_H
-#define __ASM_R4K_TIMER_H
+#अगर_अघोषित __ASM_R4K_TIMER_H
+#घोषणा __ASM_R4K_TIMER_H
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-#ifdef CONFIG_SYNC_R4K
+#अगर_घोषित CONFIG_SYNC_R4K
 
-extern void synchronise_count_master(int cpu);
-extern void synchronise_count_slave(int cpu);
+बाह्य व्योम synchronise_count_master(पूर्णांक cpu);
+बाह्य व्योम synchronise_count_slave(पूर्णांक cpu);
 
-#else
+#अन्यथा
 
-static inline void synchronise_count_master(int cpu)
-{
-}
+अटल अंतरभूत व्योम synchronise_count_master(पूर्णांक cpu)
+अणु
+पूर्ण
 
-static inline void synchronise_count_slave(int cpu)
-{
-}
+अटल अंतरभूत व्योम synchronise_count_slave(पूर्णांक cpu)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __ASM_R4K_TIMER_H */
+#पूर्ण_अगर /* __ASM_R4K_TIMER_H */

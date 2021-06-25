@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Parts of this file are based on Ralink's 2.6.21 BSP
  *
- * Copyright (C) 2008-2011 Gabor Juhos <juhosg@openwrt.org>
- * Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
+ * Copyright (C) 2008-2011 Gabor Juhos <juhosg@खोलोwrt.org>
+ * Copyright (C) 2008 Imre Kaloz <kaloz@खोलोwrt.org>
  * Copyright (C) 2013 John Crispin <john@phrozen.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bug.h>
 
-#include <asm/mipsregs.h>
-#include <asm/mach-ralink/ralink_regs.h>
-#include <asm/mach-ralink/mt7620.h>
-#include <asm/mach-ralink/pinmux.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/mach-ralink/ralink_regs.h>
+#समावेश <यंत्र/mach-ralink/mt7620.h>
+#समावेश <यंत्र/mach-ralink/pinmux.h>
 
-#include "common.h"
+#समावेश "common.h"
 
 /* analog */
-#define PMU0_CFG		0x88
-#define PMU_SW_SET		BIT(28)
-#define A_DCDC_EN		BIT(24)
-#define A_SSC_PERI		BIT(19)
-#define A_SSC_GEN		BIT(18)
-#define A_SSC_M			0x3
-#define A_SSC_S			16
-#define A_DLY_M			0x7
-#define A_DLY_S			8
-#define A_VTUNE_M		0xff
+#घोषणा PMU0_CFG		0x88
+#घोषणा PMU_SW_SET		BIT(28)
+#घोषणा A_DCDC_EN		BIT(24)
+#घोषणा A_SSC_PERI		BIT(19)
+#घोषणा A_SSC_GEN		BIT(18)
+#घोषणा A_SSC_M			0x3
+#घोषणा A_SSC_S			16
+#घोषणा A_DLY_M			0x7
+#घोषणा A_DLY_S			8
+#घोषणा A_VTUNE_M		0xff
 
 /* digital */
-#define PMU1_CFG		0x8C
-#define DIG_SW_SEL		BIT(25)
+#घोषणा PMU1_CFG		0x8C
+#घोषणा DIG_SW_SEL		BIT(25)
 
-/* clock scaling */
-#define CLKCFG_FDIV_MASK	0x1f00
-#define CLKCFG_FDIV_USB_VAL	0x0300
-#define CLKCFG_FFRAC_MASK	0x001f
-#define CLKCFG_FFRAC_USB_VAL	0x0003
+/* घड़ी scaling */
+#घोषणा CLKCFG_FDIV_MASK	0x1f00
+#घोषणा CLKCFG_FDIV_USB_VAL	0x0300
+#घोषणा CLKCFG_FFRAC_MASK	0x001f
+#घोषणा CLKCFG_FFRAC_USB_VAL	0x0003
 
 /* EFUSE bits */
-#define EFUSE_MT7688		0x100000
+#घोषणा EFUSE_MT7688		0x100000
 
 /* DRAM type bit */
-#define DRAM_TYPE_MT7628_MASK	0x1
+#घोषणा DRAM_TYPE_MT7628_MASK	0x1
 
-/* does the board have sdram or ddram */
-static int dram_type;
+/* करोes the board have sdram or ddram */
+अटल पूर्णांक dram_type;
 
-static struct rt2880_pmx_func i2c_grp[] =  { FUNC("i2c", 0, 1, 2) };
-static struct rt2880_pmx_func spi_grp[] = { FUNC("spi", 0, 3, 4) };
-static struct rt2880_pmx_func uartlite_grp[] = { FUNC("uartlite", 0, 15, 2) };
-static struct rt2880_pmx_func mdio_grp[] = {
+अटल काष्ठा rt2880_pmx_func i2c_grp[] =  अणु FUNC("i2c", 0, 1, 2) पूर्ण;
+अटल काष्ठा rt2880_pmx_func spi_grp[] = अणु FUNC("spi", 0, 3, 4) पूर्ण;
+अटल काष्ठा rt2880_pmx_func uartlite_grp[] = अणु FUNC("uartlite", 0, 15, 2) पूर्ण;
+अटल काष्ठा rt2880_pmx_func mdio_grp[] = अणु
 	FUNC("mdio", MT7620_GPIO_MODE_MDIO, 22, 2),
 	FUNC("refclk", MT7620_GPIO_MODE_MDIO_REFCLK, 22, 2),
-};
-static struct rt2880_pmx_func rgmii1_grp[] = { FUNC("rgmii1", 0, 24, 12) };
-static struct rt2880_pmx_func refclk_grp[] = { FUNC("spi refclk", 0, 37, 3) };
-static struct rt2880_pmx_func ephy_grp[] = { FUNC("ephy", 0, 40, 5) };
-static struct rt2880_pmx_func rgmii2_grp[] = { FUNC("rgmii2", 0, 60, 12) };
-static struct rt2880_pmx_func wled_grp[] = { FUNC("wled", 0, 72, 1) };
-static struct rt2880_pmx_func pa_grp[] = { FUNC("pa", 0, 18, 4) };
-static struct rt2880_pmx_func uartf_grp[] = {
+पूर्ण;
+अटल काष्ठा rt2880_pmx_func rgmii1_grp[] = अणु FUNC("rgmii1", 0, 24, 12) पूर्ण;
+अटल काष्ठा rt2880_pmx_func refclk_grp[] = अणु FUNC("spi refclk", 0, 37, 3) पूर्ण;
+अटल काष्ठा rt2880_pmx_func ephy_grp[] = अणु FUNC("ephy", 0, 40, 5) पूर्ण;
+अटल काष्ठा rt2880_pmx_func rgmii2_grp[] = अणु FUNC("rgmii2", 0, 60, 12) पूर्ण;
+अटल काष्ठा rt2880_pmx_func wled_grp[] = अणु FUNC("wled", 0, 72, 1) पूर्ण;
+अटल काष्ठा rt2880_pmx_func pa_grp[] = अणु FUNC("pa", 0, 18, 4) पूर्ण;
+अटल काष्ठा rt2880_pmx_func uartf_grp[] = अणु
 	FUNC("uartf", MT7620_GPIO_MODE_UARTF, 7, 8),
 	FUNC("pcm uartf", MT7620_GPIO_MODE_PCM_UARTF, 7, 8),
 	FUNC("pcm i2s", MT7620_GPIO_MODE_PCM_I2S, 7, 8),
@@ -71,21 +72,21 @@ static struct rt2880_pmx_func uartf_grp[] = {
 	FUNC("pcm gpio", MT7620_GPIO_MODE_PCM_GPIO, 11, 4),
 	FUNC("gpio uartf", MT7620_GPIO_MODE_GPIO_UARTF, 7, 4),
 	FUNC("gpio i2s", MT7620_GPIO_MODE_GPIO_I2S, 7, 4),
-};
-static struct rt2880_pmx_func wdt_grp[] = {
+पूर्ण;
+अटल काष्ठा rt2880_pmx_func wdt_grp[] = अणु
 	FUNC("wdt rst", 0, 17, 1),
 	FUNC("wdt refclk", 0, 17, 1),
-	};
-static struct rt2880_pmx_func pcie_rst_grp[] = {
+	पूर्ण;
+अटल काष्ठा rt2880_pmx_func pcie_rst_grp[] = अणु
 	FUNC("pcie rst", MT7620_GPIO_MODE_PCIE_RST, 36, 1),
 	FUNC("pcie refclk", MT7620_GPIO_MODE_PCIE_REF, 36, 1)
-};
-static struct rt2880_pmx_func nd_sd_grp[] = {
-	FUNC("nand", MT7620_GPIO_MODE_NAND, 45, 15),
+पूर्ण;
+अटल काष्ठा rt2880_pmx_func nd_sd_grp[] = अणु
+	FUNC("nand", MT7620_GPIO_MODE_न_अंकD, 45, 15),
 	FUNC("sd", MT7620_GPIO_MODE_SD, 47, 13)
-};
+पूर्ण;
 
-static struct rt2880_pmx_group mt7620a_pinmux_data[] = {
+अटल काष्ठा rt2880_pmx_group mt7620a_pinmux_data[] = अणु
 	GRP("i2c", i2c_grp, 1, MT7620_GPIO_MODE_I2C),
 	GRP("uartf", uartf_grp, MT7620_GPIO_MODE_UART0_MASK,
 		MT7620_GPIO_MODE_UART0_SHIFT),
@@ -105,206 +106,206 @@ static struct rt2880_pmx_group mt7620a_pinmux_data[] = {
 	GRP("wled", wled_grp, 1, MT7620_GPIO_MODE_WLED),
 	GRP("ephy", ephy_grp, 1, MT7620_GPIO_MODE_EPHY),
 	GRP("pa", pa_grp, 1, MT7620_GPIO_MODE_PA),
-	{ 0 }
-};
+	अणु 0 पूर्ण
+पूर्ण;
 
-static struct rt2880_pmx_func pwm1_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func pwm1_grp_mt7628[] = अणु
 	FUNC("sdxc d6", 3, 19, 1),
 	FUNC("utif", 2, 19, 1),
 	FUNC("gpio", 1, 19, 1),
 	FUNC("pwm1", 0, 19, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func pwm0_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func pwm0_grp_mt7628[] = अणु
 	FUNC("sdxc d7", 3, 18, 1),
 	FUNC("utif", 2, 18, 1),
 	FUNC("gpio", 1, 18, 1),
 	FUNC("pwm0", 0, 18, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func uart2_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func uart2_grp_mt7628[] = अणु
 	FUNC("sdxc d5 d4", 3, 20, 2),
 	FUNC("pwm", 2, 20, 2),
 	FUNC("gpio", 1, 20, 2),
 	FUNC("uart2", 0, 20, 2),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func uart1_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func uart1_grp_mt7628[] = अणु
 	FUNC("sw_r", 3, 45, 2),
 	FUNC("pwm", 2, 45, 2),
 	FUNC("gpio", 1, 45, 2),
 	FUNC("uart1", 0, 45, 2),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func i2c_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func i2c_grp_mt7628[] = अणु
 	FUNC("-", 3, 4, 2),
 	FUNC("debug", 2, 4, 2),
 	FUNC("gpio", 1, 4, 2),
 	FUNC("i2c", 0, 4, 2),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func refclk_grp_mt7628[] = { FUNC("refclk", 0, 37, 1) };
-static struct rt2880_pmx_func perst_grp_mt7628[] = { FUNC("perst", 0, 36, 1) };
-static struct rt2880_pmx_func wdt_grp_mt7628[] = { FUNC("wdt", 0, 38, 1) };
-static struct rt2880_pmx_func spi_grp_mt7628[] = { FUNC("spi", 0, 7, 4) };
+अटल काष्ठा rt2880_pmx_func refclk_grp_mt7628[] = अणु FUNC("refclk", 0, 37, 1) पूर्ण;
+अटल काष्ठा rt2880_pmx_func perst_grp_mt7628[] = अणु FUNC("perst", 0, 36, 1) पूर्ण;
+अटल काष्ठा rt2880_pmx_func wdt_grp_mt7628[] = अणु FUNC("wdt", 0, 38, 1) पूर्ण;
+अटल काष्ठा rt2880_pmx_func spi_grp_mt7628[] = अणु FUNC("spi", 0, 7, 4) पूर्ण;
 
-static struct rt2880_pmx_func sd_mode_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func sd_mode_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 22, 8),
 	FUNC("utif", 2, 22, 8),
 	FUNC("gpio", 1, 22, 8),
 	FUNC("sdxc", 0, 22, 8),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func uart0_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func uart0_grp_mt7628[] = अणु
 	FUNC("-", 3, 12, 2),
 	FUNC("-", 2, 12, 2),
 	FUNC("gpio", 1, 12, 2),
 	FUNC("uart0", 0, 12, 2),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func i2s_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func i2s_grp_mt7628[] = अणु
 	FUNC("antenna", 3, 0, 4),
 	FUNC("pcm", 2, 0, 4),
 	FUNC("gpio", 1, 0, 4),
 	FUNC("i2s", 0, 0, 4),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func spi_cs1_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func spi_cs1_grp_mt7628[] = अणु
 	FUNC("-", 3, 6, 1),
 	FUNC("refclk", 2, 6, 1),
 	FUNC("gpio", 1, 6, 1),
 	FUNC("spi cs1", 0, 6, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func spis_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func spis_grp_mt7628[] = अणु
 	FUNC("pwm_uart2", 3, 14, 4),
 	FUNC("utif", 2, 14, 4),
 	FUNC("gpio", 1, 14, 4),
 	FUNC("spis", 0, 14, 4),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func gpio_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func gpio_grp_mt7628[] = अणु
 	FUNC("pcie", 3, 11, 1),
 	FUNC("refclk", 2, 11, 1),
 	FUNC("gpio", 1, 11, 1),
 	FUNC("gpio", 0, 11, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func p4led_kn_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func p4led_kn_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 30, 1),
 	FUNC("utif", 2, 30, 1),
 	FUNC("gpio", 1, 30, 1),
 	FUNC("p4led_kn", 0, 30, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func p3led_kn_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func p3led_kn_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 31, 1),
 	FUNC("utif", 2, 31, 1),
 	FUNC("gpio", 1, 31, 1),
 	FUNC("p3led_kn", 0, 31, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func p2led_kn_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func p2led_kn_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 32, 1),
 	FUNC("utif", 2, 32, 1),
 	FUNC("gpio", 1, 32, 1),
 	FUNC("p2led_kn", 0, 32, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func p1led_kn_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func p1led_kn_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 33, 1),
 	FUNC("utif", 2, 33, 1),
 	FUNC("gpio", 1, 33, 1),
 	FUNC("p1led_kn", 0, 33, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func p0led_kn_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func p0led_kn_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 34, 1),
 	FUNC("rsvd", 2, 34, 1),
 	FUNC("gpio", 1, 34, 1),
 	FUNC("p0led_kn", 0, 34, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func wled_kn_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func wled_kn_grp_mt7628[] = अणु
 	FUNC("rsvd", 3, 35, 1),
 	FUNC("rsvd", 2, 35, 1),
 	FUNC("gpio", 1, 35, 1),
 	FUNC("wled_kn", 0, 35, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func p4led_an_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func p4led_an_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 39, 1),
 	FUNC("utif", 2, 39, 1),
 	FUNC("gpio", 1, 39, 1),
 	FUNC("p4led_an", 0, 39, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func p3led_an_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func p3led_an_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 40, 1),
 	FUNC("utif", 2, 40, 1),
 	FUNC("gpio", 1, 40, 1),
 	FUNC("p3led_an", 0, 40, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func p2led_an_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func p2led_an_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 41, 1),
 	FUNC("utif", 2, 41, 1),
 	FUNC("gpio", 1, 41, 1),
 	FUNC("p2led_an", 0, 41, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func p1led_an_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func p1led_an_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 42, 1),
 	FUNC("utif", 2, 42, 1),
 	FUNC("gpio", 1, 42, 1),
 	FUNC("p1led_an", 0, 42, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func p0led_an_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func p0led_an_grp_mt7628[] = अणु
 	FUNC("jtag", 3, 43, 1),
 	FUNC("rsvd", 2, 43, 1),
 	FUNC("gpio", 1, 43, 1),
 	FUNC("p0led_an", 0, 43, 1),
-};
+पूर्ण;
 
-static struct rt2880_pmx_func wled_an_grp_mt7628[] = {
+अटल काष्ठा rt2880_pmx_func wled_an_grp_mt7628[] = अणु
 	FUNC("rsvd", 3, 44, 1),
 	FUNC("rsvd", 2, 44, 1),
 	FUNC("gpio", 1, 44, 1),
 	FUNC("wled_an", 0, 44, 1),
-};
+पूर्ण;
 
-#define MT7628_GPIO_MODE_MASK		0x3
+#घोषणा MT7628_GPIO_MODE_MASK		0x3
 
-#define MT7628_GPIO_MODE_P4LED_KN	58
-#define MT7628_GPIO_MODE_P3LED_KN	56
-#define MT7628_GPIO_MODE_P2LED_KN	54
-#define MT7628_GPIO_MODE_P1LED_KN	52
-#define MT7628_GPIO_MODE_P0LED_KN	50
-#define MT7628_GPIO_MODE_WLED_KN	48
-#define MT7628_GPIO_MODE_P4LED_AN	42
-#define MT7628_GPIO_MODE_P3LED_AN	40
-#define MT7628_GPIO_MODE_P2LED_AN	38
-#define MT7628_GPIO_MODE_P1LED_AN	36
-#define MT7628_GPIO_MODE_P0LED_AN	34
-#define MT7628_GPIO_MODE_WLED_AN	32
-#define MT7628_GPIO_MODE_PWM1		30
-#define MT7628_GPIO_MODE_PWM0		28
-#define MT7628_GPIO_MODE_UART2		26
-#define MT7628_GPIO_MODE_UART1		24
-#define MT7628_GPIO_MODE_I2C		20
-#define MT7628_GPIO_MODE_REFCLK		18
-#define MT7628_GPIO_MODE_PERST		16
-#define MT7628_GPIO_MODE_WDT		14
-#define MT7628_GPIO_MODE_SPI		12
-#define MT7628_GPIO_MODE_SDMODE		10
-#define MT7628_GPIO_MODE_UART0		8
-#define MT7628_GPIO_MODE_I2S		6
-#define MT7628_GPIO_MODE_CS1		4
-#define MT7628_GPIO_MODE_SPIS		2
-#define MT7628_GPIO_MODE_GPIO		0
+#घोषणा MT7628_GPIO_MODE_P4LED_KN	58
+#घोषणा MT7628_GPIO_MODE_P3LED_KN	56
+#घोषणा MT7628_GPIO_MODE_P2LED_KN	54
+#घोषणा MT7628_GPIO_MODE_P1LED_KN	52
+#घोषणा MT7628_GPIO_MODE_P0LED_KN	50
+#घोषणा MT7628_GPIO_MODE_WLED_KN	48
+#घोषणा MT7628_GPIO_MODE_P4LED_AN	42
+#घोषणा MT7628_GPIO_MODE_P3LED_AN	40
+#घोषणा MT7628_GPIO_MODE_P2LED_AN	38
+#घोषणा MT7628_GPIO_MODE_P1LED_AN	36
+#घोषणा MT7628_GPIO_MODE_P0LED_AN	34
+#घोषणा MT7628_GPIO_MODE_WLED_AN	32
+#घोषणा MT7628_GPIO_MODE_PWM1		30
+#घोषणा MT7628_GPIO_MODE_PWM0		28
+#घोषणा MT7628_GPIO_MODE_UART2		26
+#घोषणा MT7628_GPIO_MODE_UART1		24
+#घोषणा MT7628_GPIO_MODE_I2C		20
+#घोषणा MT7628_GPIO_MODE_REFCLK		18
+#घोषणा MT7628_GPIO_MODE_PERST		16
+#घोषणा MT7628_GPIO_MODE_WDT		14
+#घोषणा MT7628_GPIO_MODE_SPI		12
+#घोषणा MT7628_GPIO_MODE_SDMODE		10
+#घोषणा MT7628_GPIO_MODE_UART0		8
+#घोषणा MT7628_GPIO_MODE_I2S		6
+#घोषणा MT7628_GPIO_MODE_CS1		4
+#घोषणा MT7628_GPIO_MODE_SPIS		2
+#घोषणा MT7628_GPIO_MODE_GPIO		0
 
-static struct rt2880_pmx_group mt7628an_pinmux_data[] = {
+अटल काष्ठा rt2880_pmx_group mt7628an_pinmux_data[] = अणु
 	GRP_G("pwm1", pwm1_grp_mt7628, MT7628_GPIO_MODE_MASK,
 				1, MT7628_GPIO_MODE_PWM1),
 	GRP_G("pwm0", pwm0_grp_mt7628, MT7628_GPIO_MODE_MASK,
@@ -355,174 +356,174 @@ static struct rt2880_pmx_group mt7628an_pinmux_data[] = {
 				1, MT7628_GPIO_MODE_P3LED_KN),
 	GRP_G("p4led_kn", p4led_kn_grp_mt7628, MT7628_GPIO_MODE_MASK,
 				1, MT7628_GPIO_MODE_P4LED_KN),
-	{ 0 }
-};
+	अणु 0 पूर्ण
+पूर्ण;
 
-static inline int is_mt76x8(void)
-{
-	return ralink_soc == MT762X_SOC_MT7628AN ||
+अटल अंतरभूत पूर्णांक is_mt76x8(व्योम)
+अणु
+	वापस ralink_soc == MT762X_SOC_MT7628AN ||
 	       ralink_soc == MT762X_SOC_MT7688;
-}
+पूर्ण
 
-static __init u32
-mt7620_calc_rate(u32 ref_rate, u32 mul, u32 div)
-{
+अटल __init u32
+mt7620_calc_rate(u32 ref_rate, u32 mul, u32 भाग)
+अणु
 	u64 t;
 
 	t = ref_rate;
 	t *= mul;
-	do_div(t, div);
+	करो_भाग(t, भाग);
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-#define MHZ(x)		((x) * 1000 * 1000)
+#घोषणा MHZ(x)		((x) * 1000 * 1000)
 
-static __init unsigned long
-mt7620_get_xtal_rate(void)
-{
+अटल __init अचिन्हित दीर्घ
+mt7620_get_xtal_rate(व्योम)
+अणु
 	u32 reg;
 
 	reg = rt_sysc_r32(SYSC_REG_SYSTEM_CONFIG0);
-	if (reg & SYSCFG0_XTAL_FREQ_SEL)
-		return MHZ(40);
+	अगर (reg & SYSCFG0_XTAL_FREQ_SEL)
+		वापस MHZ(40);
 
-	return MHZ(20);
-}
+	वापस MHZ(20);
+पूर्ण
 
-static __init unsigned long
-mt7620_get_periph_rate(unsigned long xtal_rate)
-{
+अटल __init अचिन्हित दीर्घ
+mt7620_get_periph_rate(अचिन्हित दीर्घ xtal_rate)
+अणु
 	u32 reg;
 
 	reg = rt_sysc_r32(SYSC_REG_CLKCFG0);
-	if (reg & CLKCFG0_PERI_CLK_SEL)
-		return xtal_rate;
+	अगर (reg & CLKCFG0_PERI_CLK_SEL)
+		वापस xtal_rate;
 
-	return MHZ(40);
-}
+	वापस MHZ(40);
+पूर्ण
 
-static const u32 mt7620_clk_divider[] __initconst = { 2, 3, 4, 8 };
+अटल स्थिर u32 mt7620_clk_भागider[] __initस्थिर = अणु 2, 3, 4, 8 पूर्ण;
 
-static __init unsigned long
-mt7620_get_cpu_pll_rate(unsigned long xtal_rate)
-{
+अटल __init अचिन्हित दीर्घ
+mt7620_get_cpu_pll_rate(अचिन्हित दीर्घ xtal_rate)
+अणु
 	u32 reg;
 	u32 mul;
-	u32 div;
+	u32 भाग;
 
 	reg = rt_sysc_r32(SYSC_REG_CPLL_CONFIG0);
-	if (reg & CPLL_CFG0_BYPASS_REF_CLK)
-		return xtal_rate;
+	अगर (reg & CPLL_CFG0_BYPASS_REF_CLK)
+		वापस xtal_rate;
 
-	if ((reg & CPLL_CFG0_SW_CFG) == 0)
-		return MHZ(600);
+	अगर ((reg & CPLL_CFG0_SW_CFG) == 0)
+		वापस MHZ(600);
 
 	mul = (reg >> CPLL_CFG0_PLL_MULT_RATIO_SHIFT) &
 	      CPLL_CFG0_PLL_MULT_RATIO_MASK;
 	mul += 24;
-	if (reg & CPLL_CFG0_LC_CURFCK)
+	अगर (reg & CPLL_CFG0_LC_CURFCK)
 		mul *= 2;
 
-	div = (reg >> CPLL_CFG0_PLL_DIV_RATIO_SHIFT) &
+	भाग = (reg >> CPLL_CFG0_PLL_DIV_RATIO_SHIFT) &
 	      CPLL_CFG0_PLL_DIV_RATIO_MASK;
 
-	WARN_ON(div >= ARRAY_SIZE(mt7620_clk_divider));
+	WARN_ON(भाग >= ARRAY_SIZE(mt7620_clk_भागider));
 
-	return mt7620_calc_rate(xtal_rate, mul, mt7620_clk_divider[div]);
-}
+	वापस mt7620_calc_rate(xtal_rate, mul, mt7620_clk_भागider[भाग]);
+पूर्ण
 
-static __init unsigned long
-mt7620_get_pll_rate(unsigned long xtal_rate, unsigned long cpu_pll_rate)
-{
+अटल __init अचिन्हित दीर्घ
+mt7620_get_pll_rate(अचिन्हित दीर्घ xtal_rate, अचिन्हित दीर्घ cpu_pll_rate)
+अणु
 	u32 reg;
 
 	reg = rt_sysc_r32(SYSC_REG_CPLL_CONFIG1);
-	if (reg & CPLL_CFG1_CPU_AUX1)
-		return xtal_rate;
+	अगर (reg & CPLL_CFG1_CPU_AUX1)
+		वापस xtal_rate;
 
-	if (reg & CPLL_CFG1_CPU_AUX0)
-		return MHZ(480);
+	अगर (reg & CPLL_CFG1_CPU_AUX0)
+		वापस MHZ(480);
 
-	return cpu_pll_rate;
-}
+	वापस cpu_pll_rate;
+पूर्ण
 
-static __init unsigned long
-mt7620_get_cpu_rate(unsigned long pll_rate)
-{
+अटल __init अचिन्हित दीर्घ
+mt7620_get_cpu_rate(अचिन्हित दीर्घ pll_rate)
+अणु
 	u32 reg;
 	u32 mul;
-	u32 div;
+	u32 भाग;
 
 	reg = rt_sysc_r32(SYSC_REG_CPU_SYS_CLKCFG);
 
 	mul = reg & CPU_SYS_CLKCFG_CPU_FFRAC_MASK;
-	div = (reg >> CPU_SYS_CLKCFG_CPU_FDIV_SHIFT) &
+	भाग = (reg >> CPU_SYS_CLKCFG_CPU_FDIV_SHIFT) &
 	      CPU_SYS_CLKCFG_CPU_FDIV_MASK;
 
-	return mt7620_calc_rate(pll_rate, mul, div);
-}
+	वापस mt7620_calc_rate(pll_rate, mul, भाग);
+पूर्ण
 
-static const u32 mt7620_ocp_dividers[16] __initconst = {
+अटल स्थिर u32 mt7620_ocp_भागiders[16] __initस्थिर = अणु
 	[CPU_SYS_CLKCFG_OCP_RATIO_2] = 2,
 	[CPU_SYS_CLKCFG_OCP_RATIO_3] = 3,
 	[CPU_SYS_CLKCFG_OCP_RATIO_4] = 4,
 	[CPU_SYS_CLKCFG_OCP_RATIO_5] = 5,
 	[CPU_SYS_CLKCFG_OCP_RATIO_10] = 10,
-};
+पूर्ण;
 
-static __init unsigned long
-mt7620_get_dram_rate(unsigned long pll_rate)
-{
-	if (dram_type == SYSCFG0_DRAM_TYPE_SDRAM)
-		return pll_rate / 4;
+अटल __init अचिन्हित दीर्घ
+mt7620_get_dram_rate(अचिन्हित दीर्घ pll_rate)
+अणु
+	अगर (dram_type == SYSCFG0_DRAM_TYPE_SDRAM)
+		वापस pll_rate / 4;
 
-	return pll_rate / 3;
-}
+	वापस pll_rate / 3;
+पूर्ण
 
-static __init unsigned long
-mt7620_get_sys_rate(unsigned long cpu_rate)
-{
+अटल __init अचिन्हित दीर्घ
+mt7620_get_sys_rate(अचिन्हित दीर्घ cpu_rate)
+अणु
 	u32 reg;
 	u32 ocp_ratio;
-	u32 div;
+	u32 भाग;
 
 	reg = rt_sysc_r32(SYSC_REG_CPU_SYS_CLKCFG);
 
 	ocp_ratio = (reg >> CPU_SYS_CLKCFG_OCP_RATIO_SHIFT) &
 		    CPU_SYS_CLKCFG_OCP_RATIO_MASK;
 
-	if (WARN_ON(ocp_ratio >= ARRAY_SIZE(mt7620_ocp_dividers)))
-		return cpu_rate;
+	अगर (WARN_ON(ocp_ratio >= ARRAY_SIZE(mt7620_ocp_भागiders)))
+		वापस cpu_rate;
 
-	div = mt7620_ocp_dividers[ocp_ratio];
-	if (WARN(!div, "invalid divider for OCP ratio %u", ocp_ratio))
-		return cpu_rate;
+	भाग = mt7620_ocp_भागiders[ocp_ratio];
+	अगर (WARN(!भाग, "invalid divider for OCP ratio %u", ocp_ratio))
+		वापस cpu_rate;
 
-	return cpu_rate / div;
-}
+	वापस cpu_rate / भाग;
+पूर्ण
 
-void __init ralink_clk_init(void)
-{
-	unsigned long xtal_rate;
-	unsigned long cpu_pll_rate;
-	unsigned long pll_rate;
-	unsigned long cpu_rate;
-	unsigned long sys_rate;
-	unsigned long dram_rate;
-	unsigned long periph_rate;
-	unsigned long pcmi2s_rate;
+व्योम __init ralink_clk_init(व्योम)
+अणु
+	अचिन्हित दीर्घ xtal_rate;
+	अचिन्हित दीर्घ cpu_pll_rate;
+	अचिन्हित दीर्घ pll_rate;
+	अचिन्हित दीर्घ cpu_rate;
+	अचिन्हित दीर्घ sys_rate;
+	अचिन्हित दीर्घ dram_rate;
+	अचिन्हित दीर्घ periph_rate;
+	अचिन्हित दीर्घ pcmi2s_rate;
 
 	xtal_rate = mt7620_get_xtal_rate();
 
-#define RFMT(label)	label ":%lu.%03luMHz "
-#define RINT(x)		((x) / 1000000)
-#define RFRAC(x)	(((x) / 1000) % 1000)
+#घोषणा RFMT(label)	label ":%lu.%03luMHz "
+#घोषणा RINT(x)		((x) / 1000000)
+#घोषणा RFRAC(x)	(((x) / 1000) % 1000)
 
-	if (is_mt76x8()) {
-		if (xtal_rate == MHZ(40))
+	अगर (is_mt76x8()) अणु
+		अगर (xtal_rate == MHZ(40))
 			cpu_rate = MHZ(580);
-		else
+		अन्यथा
 			cpu_rate = MHZ(575);
 		dram_rate = sys_rate = cpu_rate / 3;
 		periph_rate = MHZ(40);
@@ -530,7 +531,7 @@ void __init ralink_clk_init(void)
 
 		ralink_clk_add("10000d00.uartlite", periph_rate);
 		ralink_clk_add("10000e00.uartlite", periph_rate);
-	} else {
+	पूर्ण अन्यथा अणु
 		cpu_pll_rate = mt7620_get_cpu_pll_rate(xtal_rate);
 		pll_rate = mt7620_get_pll_rate(xtal_rate, cpu_pll_rate);
 
@@ -546,16 +547,16 @@ void __init ralink_clk_init(void)
 			 RINT(pll_rate), RFRAC(pll_rate));
 
 		ralink_clk_add("10000500.uart", periph_rate);
-	}
+	पूर्ण
 
 	pr_debug(RFMT("CPU") RFMT("DRAM") RFMT("SYS") RFMT("PERIPH"),
 		 RINT(cpu_rate), RFRAC(cpu_rate),
 		 RINT(dram_rate), RFRAC(dram_rate),
 		 RINT(sys_rate), RFRAC(sys_rate),
 		 RINT(periph_rate), RFRAC(periph_rate));
-#undef RFRAC
-#undef RINT
-#undef RFMT
+#अघोषित RFRAC
+#अघोषित RINT
+#अघोषित RFMT
 
 	ralink_clk_add("cpu", cpu_rate);
 	ralink_clk_add("10000100.timer", periph_rate);
@@ -569,11 +570,11 @@ void __init ralink_clk_init(void)
 	ralink_clk_add("10000e00.uart2", periph_rate);
 	ralink_clk_add("10180000.wmac", xtal_rate);
 
-	if (IS_ENABLED(CONFIG_USB) && !is_mt76x8()) {
+	अगर (IS_ENABLED(CONFIG_USB) && !is_mt76x8()) अणु
 		/*
-		 * When the CPU goes into sleep mode, the BUS clock will be
-		 * too low for USB to function properly. Adjust the busses
-		 * fractional divider to fix this
+		 * When the CPU goes पूर्णांकo sleep mode, the BUS घड़ी will be
+		 * too low क्रम USB to function properly. Adjust the busses
+		 * fractional भागider to fix this
 		 */
 		u32 val = rt_sysc_r32(SYSC_REG_CPU_SYS_CLKCFG);
 
@@ -581,68 +582,68 @@ void __init ralink_clk_init(void)
 		val |= CLKCFG_FDIV_USB_VAL | CLKCFG_FFRAC_USB_VAL;
 
 		rt_sysc_w32(val, SYSC_REG_CPU_SYS_CLKCFG);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init ralink_of_remap(void)
-{
+व्योम __init ralink_of_remap(व्योम)
+अणु
 	rt_sysc_membase = plat_of_remap_node("ralink,mt7620a-sysc");
 	rt_memc_membase = plat_of_remap_node("ralink,mt7620a-memc");
 
-	if (!rt_sysc_membase || !rt_memc_membase)
+	अगर (!rt_sysc_membase || !rt_memc_membase)
 		panic("Failed to remap core resources");
-}
+पूर्ण
 
-static __init void
-mt7620_dram_init(struct ralink_soc_info *soc_info)
-{
-	switch (dram_type) {
-	case SYSCFG0_DRAM_TYPE_SDRAM:
+अटल __init व्योम
+mt7620_dram_init(काष्ठा ralink_soc_info *soc_info)
+अणु
+	चयन (dram_type) अणु
+	हाल SYSCFG0_DRAM_TYPE_SDRAM:
 		pr_info("Board has SDRAM\n");
 		soc_info->mem_size_min = MT7620_SDRAM_SIZE_MIN;
 		soc_info->mem_size_max = MT7620_SDRAM_SIZE_MAX;
-		break;
+		अवरोध;
 
-	case SYSCFG0_DRAM_TYPE_DDR1:
+	हाल SYSCFG0_DRAM_TYPE_DDR1:
 		pr_info("Board has DDR1\n");
 		soc_info->mem_size_min = MT7620_DDR1_SIZE_MIN;
 		soc_info->mem_size_max = MT7620_DDR1_SIZE_MAX;
-		break;
+		अवरोध;
 
-	case SYSCFG0_DRAM_TYPE_DDR2:
+	हाल SYSCFG0_DRAM_TYPE_DDR2:
 		pr_info("Board has DDR2\n");
 		soc_info->mem_size_min = MT7620_DDR2_SIZE_MIN;
 		soc_info->mem_size_max = MT7620_DDR2_SIZE_MAX;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static __init void
-mt7628_dram_init(struct ralink_soc_info *soc_info)
-{
-	switch (dram_type) {
-	case SYSCFG0_DRAM_TYPE_DDR1_MT7628:
+अटल __init व्योम
+mt7628_dram_init(काष्ठा ralink_soc_info *soc_info)
+अणु
+	चयन (dram_type) अणु
+	हाल SYSCFG0_DRAM_TYPE_DDR1_MT7628:
 		pr_info("Board has DDR1\n");
 		soc_info->mem_size_min = MT7620_DDR1_SIZE_MIN;
 		soc_info->mem_size_max = MT7620_DDR1_SIZE_MAX;
-		break;
+		अवरोध;
 
-	case SYSCFG0_DRAM_TYPE_DDR2_MT7628:
+	हाल SYSCFG0_DRAM_TYPE_DDR2_MT7628:
 		pr_info("Board has DDR2\n");
 		soc_info->mem_size_min = MT7620_DDR2_SIZE_MIN;
 		soc_info->mem_size_max = MT7620_DDR2_SIZE_MAX;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init prom_soc_init(struct ralink_soc_info *soc_info)
-{
-	void __iomem *sysc = (void __iomem *) KSEG1ADDR(MT7620_SYSC_BASE);
-	unsigned char *name = NULL;
+व्योम __init prom_soc_init(काष्ठा ralink_soc_info *soc_info)
+अणु
+	व्योम __iomem *sysc = (व्योम __iomem *) KSEG1ADDR(MT7620_SYSC_BASE);
+	अचिन्हित अक्षर *name = शून्य;
 	u32 n0;
 	u32 n1;
 	u32 rev;
@@ -651,68 +652,68 @@ void __init prom_soc_init(struct ralink_soc_info *soc_info)
 	u32 pmu1;
 	u32 bga;
 
-	n0 = __raw_readl(sysc + SYSC_REG_CHIP_NAME0);
-	n1 = __raw_readl(sysc + SYSC_REG_CHIP_NAME1);
-	rev = __raw_readl(sysc + SYSC_REG_CHIP_REV);
+	n0 = __raw_पढ़ोl(sysc + SYSC_REG_CHIP_NAME0);
+	n1 = __raw_पढ़ोl(sysc + SYSC_REG_CHIP_NAME1);
+	rev = __raw_पढ़ोl(sysc + SYSC_REG_CHIP_REV);
 	bga = (rev >> CHIP_REV_PKG_SHIFT) & CHIP_REV_PKG_MASK;
 
-	if (n0 == MT7620_CHIP_NAME0 && n1 == MT7620_CHIP_NAME1) {
-		if (bga) {
+	अगर (n0 == MT7620_CHIP_NAME0 && n1 == MT7620_CHIP_NAME1) अणु
+		अगर (bga) अणु
 			ralink_soc = MT762X_SOC_MT7620A;
 			name = "MT7620A";
 			soc_info->compatible = "ralink,mt7620a-soc";
-		} else {
+		पूर्ण अन्यथा अणु
 			ralink_soc = MT762X_SOC_MT7620N;
 			name = "MT7620N";
 			soc_info->compatible = "ralink,mt7620n-soc";
-		}
-	} else if (n0 == MT7620_CHIP_NAME0 && n1 == MT7628_CHIP_NAME1) {
-		u32 efuse = __raw_readl(sysc + SYSC_REG_EFUSE_CFG);
+		पूर्ण
+	पूर्ण अन्यथा अगर (n0 == MT7620_CHIP_NAME0 && n1 == MT7628_CHIP_NAME1) अणु
+		u32 efuse = __raw_पढ़ोl(sysc + SYSC_REG_EFUSE_CFG);
 
-		if (efuse & EFUSE_MT7688) {
+		अगर (efuse & EFUSE_MT7688) अणु
 			ralink_soc = MT762X_SOC_MT7688;
 			name = "MT7688";
-		} else {
+		पूर्ण अन्यथा अणु
 			ralink_soc = MT762X_SOC_MT7628AN;
 			name = "MT7628AN";
-		}
+		पूर्ण
 		soc_info->compatible = "ralink,mt7628an-soc";
-	} else {
+	पूर्ण अन्यथा अणु
 		panic("mt762x: unknown SoC, n0:%08x n1:%08x\n", n0, n1);
-	}
+	पूर्ण
 
-	snprintf(soc_info->sys_type, RAMIPS_SYS_TYPE_LEN,
+	snम_लिखो(soc_info->sys_type, RAMIPS_SYS_TYPE_LEN,
 		"MediaTek %s ver:%u eco:%u",
 		name,
 		(rev >> CHIP_REV_VER_SHIFT) & CHIP_REV_VER_MASK,
 		(rev & CHIP_REV_ECO_MASK));
 
-	cfg0 = __raw_readl(sysc + SYSC_REG_SYSTEM_CONFIG0);
-	if (is_mt76x8()) {
+	cfg0 = __raw_पढ़ोl(sysc + SYSC_REG_SYSTEM_CONFIG0);
+	अगर (is_mt76x8()) अणु
 		dram_type = cfg0 & DRAM_TYPE_MT7628_MASK;
-	} else {
+	पूर्ण अन्यथा अणु
 		dram_type = (cfg0 >> SYSCFG0_DRAM_TYPE_SHIFT) &
 			    SYSCFG0_DRAM_TYPE_MASK;
-		if (dram_type == SYSCFG0_DRAM_TYPE_UNKNOWN)
+		अगर (dram_type == SYSCFG0_DRAM_TYPE_UNKNOWN)
 			dram_type = SYSCFG0_DRAM_TYPE_SDRAM;
-	}
+	पूर्ण
 
 	soc_info->mem_base = MT7620_DRAM_BASE;
-	if (is_mt76x8())
+	अगर (is_mt76x8())
 		mt7628_dram_init(soc_info);
-	else
+	अन्यथा
 		mt7620_dram_init(soc_info);
 
-	pmu0 = __raw_readl(sysc + PMU0_CFG);
-	pmu1 = __raw_readl(sysc + PMU1_CFG);
+	pmu0 = __raw_पढ़ोl(sysc + PMU0_CFG);
+	pmu1 = __raw_पढ़ोl(sysc + PMU1_CFG);
 
 	pr_info("Analog PMU set to %s control\n",
 		(pmu0 & PMU_SW_SET) ? ("sw") : ("hw"));
 	pr_info("Digital PMU set to %s control\n",
 		(pmu1 & DIG_SW_SEL) ? ("sw") : ("hw"));
 
-	if (is_mt76x8())
+	अगर (is_mt76x8())
 		rt2880_pinmux_data = mt7628an_pinmux_data;
-	else
+	अन्यथा
 		rt2880_pinmux_data = mt7620a_pinmux_data;
-}
+पूर्ण

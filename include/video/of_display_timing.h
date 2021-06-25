@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2012 Steffen Trumtrar <s.trumtrar@pengutronix.de>
  *
  * display timings of helpers
  */
 
-#ifndef __LINUX_OF_DISPLAY_TIMING_H
-#define __LINUX_OF_DISPLAY_TIMING_H
+#अगर_अघोषित __LINUX_OF_DISPLAY_TIMING_H
+#घोषणा __LINUX_OF_DISPLAY_TIMING_H
 
-struct device_node;
-struct display_timing;
-struct display_timings;
+काष्ठा device_node;
+काष्ठा display_timing;
+काष्ठा display_timings;
 
-#define OF_USE_NATIVE_MODE -1
+#घोषणा OF_USE_NATIVE_MODE -1
 
-#ifdef CONFIG_OF
-int of_get_display_timing(const struct device_node *np, const char *name,
-		struct display_timing *dt);
-struct display_timings *of_get_display_timings(const struct device_node *np);
-#else
-static inline int of_get_display_timing(const struct device_node *np,
-		const char *name, struct display_timing *dt)
-{
-	return -ENOSYS;
-}
-static inline struct display_timings *
-of_get_display_timings(const struct device_node *np)
-{
-	return NULL;
-}
-#endif
+#अगर_घोषित CONFIG_OF
+पूर्णांक of_get_display_timing(स्थिर काष्ठा device_node *np, स्थिर अक्षर *name,
+		काष्ठा display_timing *dt);
+काष्ठा display_timings *of_get_display_timings(स्थिर काष्ठा device_node *np);
+#अन्यथा
+अटल अंतरभूत पूर्णांक of_get_display_timing(स्थिर काष्ठा device_node *np,
+		स्थिर अक्षर *name, काष्ठा display_timing *dt)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+अटल अंतरभूत काष्ठा display_timings *
+of_get_display_timings(स्थिर काष्ठा device_node *np)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

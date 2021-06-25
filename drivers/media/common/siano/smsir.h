@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  *
  * Siano Mobile Silicon, Inc.
@@ -7,42 +8,42 @@
  *
  * Copyright (c) 2010 - Mauro Carvalho Chehab
  *	- Ported the driver to use rc-core
- *	- IR raw event decoding is now done at rc-core
+ *	- IR raw event decoding is now करोne at rc-core
  *	- Code almost re-written
  */
 
-#ifndef __SMS_IR_H__
-#define __SMS_IR_H__
+#अगर_अघोषित __SMS_IR_H__
+#घोषणा __SMS_IR_H__
 
-#include <linux/input.h>
-#include <media/rc-core.h>
+#समावेश <linux/input.h>
+#समावेश <media/rc-core.h>
 
-struct smscore_device_t;
+काष्ठा smscore_device_t;
 
-struct ir_t {
-	struct rc_dev *dev;
-	char name[40];
-	char phys[32];
+काष्ठा ir_t अणु
+	काष्ठा rc_dev *dev;
+	अक्षर name[40];
+	अक्षर phys[32];
 
-	char *rc_codes;
+	अक्षर *rc_codes;
 
-	u32 timeout;
+	u32 समयout;
 	u32 controller;
-};
+पूर्ण;
 
-#ifdef CONFIG_SMS_SIANO_RC
-int sms_ir_init(struct smscore_device_t *coredev);
-void sms_ir_exit(struct smscore_device_t *coredev);
-void sms_ir_event(struct smscore_device_t *coredev,
-			const char *buf, int len);
-#else
-inline static int sms_ir_init(struct smscore_device_t *coredev) {
-	return 0;
-}
-inline static void sms_ir_exit(struct smscore_device_t *coredev) {};
-inline static void sms_ir_event(struct smscore_device_t *coredev,
-			const char *buf, int len) {};
-#endif
+#अगर_घोषित CONFIG_SMS_SIANO_RC
+पूर्णांक sms_ir_init(काष्ठा smscore_device_t *coredev);
+व्योम sms_ir_निकास(काष्ठा smscore_device_t *coredev);
+व्योम sms_ir_event(काष्ठा smscore_device_t *coredev,
+			स्थिर अक्षर *buf, पूर्णांक len);
+#अन्यथा
+अंतरभूत अटल पूर्णांक sms_ir_init(काष्ठा smscore_device_t *coredev) अणु
+	वापस 0;
+पूर्ण
+अंतरभूत अटल व्योम sms_ir_निकास(काष्ठा smscore_device_t *coredev) अणुपूर्ण;
+अंतरभूत अटल व्योम sms_ir_event(काष्ठा smscore_device_t *coredev,
+			स्थिर अक्षर *buf, पूर्णांक len) अणुपूर्ण;
+#पूर्ण_अगर
 
-#endif /* __SMS_IR_H__ */
+#पूर्ण_अगर /* __SMS_IR_H__ */
 

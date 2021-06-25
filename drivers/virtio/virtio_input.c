@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/module.h>
-#include <linux/virtio.h>
-#include <linux/virtio_config.h>
-#include <linux/input.h>
-#include <linux/slab.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/module.h>
+#समावेश <linux/virtपन.स>
+#समावेश <linux/virtio_config.h>
+#समावेश <linux/input.h>
+#समावेश <linux/slab.h>
 
-#include <uapi/linux/virtio_ids.h>
-#include <uapi/linux/virtio_input.h>
-#include <linux/input/mt.h>
+#समावेश <uapi/linux/virtio_ids.h>
+#समावेश <uapi/linux/virtio_input.h>
+#समावेश <linux/input/mt.h>
 
-struct virtio_input {
-	struct virtio_device       *vdev;
-	struct input_dev           *idev;
-	char                       name[64];
-	char                       serial[64];
-	char                       phys[64];
-	struct virtqueue           *evt, *sts;
-	struct virtio_input_event  evts[64];
+काष्ठा virtio_input अणु
+	काष्ठा virtio_device       *vdev;
+	काष्ठा input_dev           *idev;
+	अक्षर                       name[64];
+	अक्षर                       serial[64];
+	अक्षर                       phys[64];
+	काष्ठा virtqueue           *evt, *sts;
+	काष्ठा virtio_input_event  evts[64];
 	spinlock_t                 lock;
-	bool                       ready;
-};
+	bool                       पढ़ोy;
+पूर्ण;
 
-static void virtinput_queue_evtbuf(struct virtio_input *vi,
-				   struct virtio_input_event *evtbuf)
-{
-	struct scatterlist sg[1];
+अटल व्योम virtinput_queue_evtbuf(काष्ठा virtio_input *vi,
+				   काष्ठा virtio_input_event *evtbuf)
+अणु
+	काष्ठा scatterlist sg[1];
 
-	sg_init_one(sg, evtbuf, sizeof(*evtbuf));
+	sg_init_one(sg, evtbuf, माप(*evtbuf));
 	virtqueue_add_inbuf(vi->evt, sg, 1, evtbuf, GFP_ATOMIC);
-}
+पूर्ण
 
-static void virtinput_recv_events(struct virtqueue *vq)
-{
-	struct virtio_input *vi = vq->vdev->priv;
-	struct virtio_input_event *event;
-	unsigned long flags;
-	unsigned int len;
+अटल व्योम virtinput_recv_events(काष्ठा virtqueue *vq)
+अणु
+	काष्ठा virtio_input *vi = vq->vdev->priv;
+	काष्ठा virtio_input_event *event;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक len;
 
 	spin_lock_irqsave(&vi->lock, flags);
-	if (vi->ready) {
-		while ((event = virtqueue_get_buf(vi->evt, &len)) != NULL) {
+	अगर (vi->पढ़ोy) अणु
+		जबतक ((event = virtqueue_get_buf(vi->evt, &len)) != शून्य) अणु
 			spin_unlock_irqrestore(&vi->lock, flags);
 			input_event(vi->idev,
 				    le16_to_cpu(event->type),
@@ -47,235 +48,235 @@ static void virtinput_recv_events(struct virtqueue *vq)
 				    le32_to_cpu(event->value));
 			spin_lock_irqsave(&vi->lock, flags);
 			virtinput_queue_evtbuf(vi, event);
-		}
+		पूर्ण
 		virtqueue_kick(vq);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&vi->lock, flags);
-}
+पूर्ण
 
 /*
  * On error we are losing the status update, which isn't critical as
- * this is typically used for stuff like keyboard leds.
+ * this is typically used क्रम stuff like keyboard leds.
  */
-static int virtinput_send_status(struct virtio_input *vi,
+अटल पूर्णांक virtinput_send_status(काष्ठा virtio_input *vi,
 				 u16 type, u16 code, s32 value)
-{
-	struct virtio_input_event *stsbuf;
-	struct scatterlist sg[1];
-	unsigned long flags;
-	int rc;
+अणु
+	काष्ठा virtio_input_event *stsbuf;
+	काष्ठा scatterlist sg[1];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
 	/*
-	 * Since 29cc309d8bf1 (HID: hid-multitouch: forward MSC_TIMESTAMP),
-	 * EV_MSC/MSC_TIMESTAMP is added to each before EV_SYN event.
+	 * Since 29cc309d8bf1 (HID: hid-multitouch: क्रमward MSC_TIMESTAMP),
+	 * EV_MSC/MSC_TIMESTAMP is added to each beक्रमe EV_SYN event.
 	 * EV_MSC is configured as INPUT_PASS_TO_ALL.
-	 * In case of touch device:
+	 * In हाल of touch device:
 	 *   BE pass EV_MSC/MSC_TIMESTAMP to FE on receiving event from evdev.
 	 *   FE pass EV_MSC/MSC_TIMESTAMP back to BE.
-	 *   BE writes EV_MSC/MSC_TIMESTAMP to evdev due to INPUT_PASS_TO_ALL.
+	 *   BE ग_लिखोs EV_MSC/MSC_TIMESTAMP to evdev due to INPUT_PASS_TO_ALL.
 	 *   BE receives extra EV_MSC/MSC_TIMESTAMP and pass to FE.
 	 *   >>> Each new frame becomes larger and larger.
-	 * Disable EV_MSC/MSC_TIMESTAMP forwarding for MT.
+	 * Disable EV_MSC/MSC_TIMESTAMP क्रमwarding क्रम MT.
 	 */
-	if (vi->idev->mt && type == EV_MSC && code == MSC_TIMESTAMP)
-		return 0;
+	अगर (vi->idev->mt && type == EV_MSC && code == MSC_TIMESTAMP)
+		वापस 0;
 
-	stsbuf = kzalloc(sizeof(*stsbuf), GFP_ATOMIC);
-	if (!stsbuf)
-		return -ENOMEM;
+	stsbuf = kzalloc(माप(*stsbuf), GFP_ATOMIC);
+	अगर (!stsbuf)
+		वापस -ENOMEM;
 
 	stsbuf->type  = cpu_to_le16(type);
 	stsbuf->code  = cpu_to_le16(code);
 	stsbuf->value = cpu_to_le32(value);
-	sg_init_one(sg, stsbuf, sizeof(*stsbuf));
+	sg_init_one(sg, stsbuf, माप(*stsbuf));
 
 	spin_lock_irqsave(&vi->lock, flags);
-	if (vi->ready) {
+	अगर (vi->पढ़ोy) अणु
 		rc = virtqueue_add_outbuf(vi->sts, sg, 1, stsbuf, GFP_ATOMIC);
 		virtqueue_kick(vi->sts);
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = -ENODEV;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&vi->lock, flags);
 
-	if (rc != 0)
-		kfree(stsbuf);
-	return rc;
-}
+	अगर (rc != 0)
+		kमुक्त(stsbuf);
+	वापस rc;
+पूर्ण
 
-static void virtinput_recv_status(struct virtqueue *vq)
-{
-	struct virtio_input *vi = vq->vdev->priv;
-	struct virtio_input_event *stsbuf;
-	unsigned long flags;
-	unsigned int len;
+अटल व्योम virtinput_recv_status(काष्ठा virtqueue *vq)
+अणु
+	काष्ठा virtio_input *vi = vq->vdev->priv;
+	काष्ठा virtio_input_event *stsbuf;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक len;
 
 	spin_lock_irqsave(&vi->lock, flags);
-	while ((stsbuf = virtqueue_get_buf(vi->sts, &len)) != NULL)
-		kfree(stsbuf);
+	जबतक ((stsbuf = virtqueue_get_buf(vi->sts, &len)) != शून्य)
+		kमुक्त(stsbuf);
 	spin_unlock_irqrestore(&vi->lock, flags);
-}
+पूर्ण
 
-static int virtinput_status(struct input_dev *idev, unsigned int type,
-			    unsigned int code, int value)
-{
-	struct virtio_input *vi = input_get_drvdata(idev);
+अटल पूर्णांक virtinput_status(काष्ठा input_dev *idev, अचिन्हित पूर्णांक type,
+			    अचिन्हित पूर्णांक code, पूर्णांक value)
+अणु
+	काष्ठा virtio_input *vi = input_get_drvdata(idev);
 
-	return virtinput_send_status(vi, type, code, value);
-}
+	वापस virtinput_send_status(vi, type, code, value);
+पूर्ण
 
-static u8 virtinput_cfg_select(struct virtio_input *vi,
+अटल u8 virtinput_cfg_select(काष्ठा virtio_input *vi,
 			       u8 select, u8 subsel)
-{
+अणु
 	u8 size;
 
-	virtio_cwrite_le(vi->vdev, struct virtio_input_config, select, &select);
-	virtio_cwrite_le(vi->vdev, struct virtio_input_config, subsel, &subsel);
-	virtio_cread_le(vi->vdev, struct virtio_input_config, size, &size);
-	return size;
-}
+	virtio_cग_लिखो_le(vi->vdev, काष्ठा virtio_input_config, select, &select);
+	virtio_cग_लिखो_le(vi->vdev, काष्ठा virtio_input_config, subsel, &subsel);
+	virtio_cपढ़ो_le(vi->vdev, काष्ठा virtio_input_config, size, &size);
+	वापस size;
+पूर्ण
 
-static void virtinput_cfg_bits(struct virtio_input *vi, int select, int subsel,
-			       unsigned long *bits, unsigned int bitcount)
-{
-	unsigned int bit;
+अटल व्योम virtinput_cfg_bits(काष्ठा virtio_input *vi, पूर्णांक select, पूर्णांक subsel,
+			       अचिन्हित दीर्घ *bits, अचिन्हित पूर्णांक bitcount)
+अणु
+	अचिन्हित पूर्णांक bit;
 	u8 *virtio_bits;
 	u8 bytes;
 
 	bytes = virtinput_cfg_select(vi, select, subsel);
-	if (!bytes)
-		return;
-	if (bitcount > bytes * 8)
+	अगर (!bytes)
+		वापस;
+	अगर (bitcount > bytes * 8)
 		bitcount = bytes * 8;
 
 	/*
-	 * Bitmap in virtio config space is a simple stream of bytes,
+	 * Biपंचांगap in virtio config space is a simple stream of bytes,
 	 * with the first byte carrying bits 0-7, second bits 8-15 and
 	 * so on.
 	 */
 	virtio_bits = kzalloc(bytes, GFP_KERNEL);
-	if (!virtio_bits)
-		return;
-	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config,
-					      u.bitmap),
+	अगर (!virtio_bits)
+		वापस;
+	virtio_cपढ़ो_bytes(vi->vdev, दुरत्व(काष्ठा virtio_input_config,
+					      u.biपंचांगap),
 			   virtio_bits, bytes);
-	for (bit = 0; bit < bitcount; bit++) {
-		if (virtio_bits[bit / 8] & (1 << (bit % 8)))
+	क्रम (bit = 0; bit < bitcount; bit++) अणु
+		अगर (virtio_bits[bit / 8] & (1 << (bit % 8)))
 			__set_bit(bit, bits);
-	}
-	kfree(virtio_bits);
+	पूर्ण
+	kमुक्त(virtio_bits);
 
-	if (select == VIRTIO_INPUT_CFG_EV_BITS)
+	अगर (select == VIRTIO_INPUT_CFG_EV_BITS)
 		__set_bit(subsel, vi->idev->evbit);
-}
+पूर्ण
 
-static void virtinput_cfg_abs(struct virtio_input *vi, int abs)
-{
+अटल व्योम virtinput_cfg_असल(काष्ठा virtio_input *vi, पूर्णांक असल)
+अणु
 	u32 mi, ma, re, fu, fl;
 
-	virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ABS_INFO, abs);
-	virtio_cread_le(vi->vdev, struct virtio_input_config, u.abs.min, &mi);
-	virtio_cread_le(vi->vdev, struct virtio_input_config, u.abs.max, &ma);
-	virtio_cread_le(vi->vdev, struct virtio_input_config, u.abs.res, &re);
-	virtio_cread_le(vi->vdev, struct virtio_input_config, u.abs.fuzz, &fu);
-	virtio_cread_le(vi->vdev, struct virtio_input_config, u.abs.flat, &fl);
-	input_set_abs_params(vi->idev, abs, mi, ma, fu, fl);
-	input_abs_set_res(vi->idev, abs, re);
-}
+	virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ABS_INFO, असल);
+	virtio_cपढ़ो_le(vi->vdev, काष्ठा virtio_input_config, u.असल.min, &mi);
+	virtio_cपढ़ो_le(vi->vdev, काष्ठा virtio_input_config, u.असल.max, &ma);
+	virtio_cपढ़ो_le(vi->vdev, काष्ठा virtio_input_config, u.असल.res, &re);
+	virtio_cपढ़ो_le(vi->vdev, काष्ठा virtio_input_config, u.असल.fuzz, &fu);
+	virtio_cपढ़ो_le(vi->vdev, काष्ठा virtio_input_config, u.असल.flat, &fl);
+	input_set_असल_params(vi->idev, असल, mi, ma, fu, fl);
+	input_असल_set_res(vi->idev, असल, re);
+पूर्ण
 
-static int virtinput_init_vqs(struct virtio_input *vi)
-{
-	struct virtqueue *vqs[2];
-	vq_callback_t *cbs[] = { virtinput_recv_events,
-				 virtinput_recv_status };
-	static const char * const names[] = { "events", "status" };
-	int err;
+अटल पूर्णांक virtinput_init_vqs(काष्ठा virtio_input *vi)
+अणु
+	काष्ठा virtqueue *vqs[2];
+	vq_callback_t *cbs[] = अणु virtinput_recv_events,
+				 virtinput_recv_status पूर्ण;
+	अटल स्थिर अक्षर * स्थिर names[] = अणु "events", "status" पूर्ण;
+	पूर्णांक err;
 
-	err = virtio_find_vqs(vi->vdev, 2, vqs, cbs, names, NULL);
-	if (err)
-		return err;
+	err = virtio_find_vqs(vi->vdev, 2, vqs, cbs, names, शून्य);
+	अगर (err)
+		वापस err;
 	vi->evt = vqs[0];
 	vi->sts = vqs[1];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void virtinput_fill_evt(struct virtio_input *vi)
-{
-	unsigned long flags;
-	int i, size;
+अटल व्योम virtinput_fill_evt(काष्ठा virtio_input *vi)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, size;
 
 	spin_lock_irqsave(&vi->lock, flags);
 	size = virtqueue_get_vring_size(vi->evt);
-	if (size > ARRAY_SIZE(vi->evts))
+	अगर (size > ARRAY_SIZE(vi->evts))
 		size = ARRAY_SIZE(vi->evts);
-	for (i = 0; i < size; i++)
+	क्रम (i = 0; i < size; i++)
 		virtinput_queue_evtbuf(vi, &vi->evts[i]);
 	virtqueue_kick(vi->evt);
 	spin_unlock_irqrestore(&vi->lock, flags);
-}
+पूर्ण
 
-static int virtinput_probe(struct virtio_device *vdev)
-{
-	struct virtio_input *vi;
-	unsigned long flags;
-	size_t size;
-	int abs, err, nslots;
+अटल पूर्णांक virtinput_probe(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_input *vi;
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार size;
+	पूर्णांक असल, err, nslots;
 
-	if (!virtio_has_feature(vdev, VIRTIO_F_VERSION_1))
-		return -ENODEV;
+	अगर (!virtio_has_feature(vdev, VIRTIO_F_VERSION_1))
+		वापस -ENODEV;
 
-	vi = kzalloc(sizeof(*vi), GFP_KERNEL);
-	if (!vi)
-		return -ENOMEM;
+	vi = kzalloc(माप(*vi), GFP_KERNEL);
+	अगर (!vi)
+		वापस -ENOMEM;
 
 	vdev->priv = vi;
 	vi->vdev = vdev;
 	spin_lock_init(&vi->lock);
 
 	err = virtinput_init_vqs(vi);
-	if (err)
-		goto err_init_vq;
+	अगर (err)
+		जाओ err_init_vq;
 
 	vi->idev = input_allocate_device();
-	if (!vi->idev) {
+	अगर (!vi->idev) अणु
 		err = -ENOMEM;
-		goto err_input_alloc;
-	}
+		जाओ err_input_alloc;
+	पूर्ण
 	input_set_drvdata(vi->idev, vi);
 
 	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_NAME, 0);
-	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config,
+	virtio_cपढ़ो_bytes(vi->vdev, दुरत्व(काष्ठा virtio_input_config,
 					      u.string),
-			   vi->name, min(size, sizeof(vi->name)));
+			   vi->name, min(size, माप(vi->name)));
 	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_SERIAL, 0);
-	virtio_cread_bytes(vi->vdev, offsetof(struct virtio_input_config,
+	virtio_cपढ़ो_bytes(vi->vdev, दुरत्व(काष्ठा virtio_input_config,
 					      u.string),
-			   vi->serial, min(size, sizeof(vi->serial)));
-	snprintf(vi->phys, sizeof(vi->phys),
+			   vi->serial, min(size, माप(vi->serial)));
+	snम_लिखो(vi->phys, माप(vi->phys),
 		 "virtio%d/input0", vdev->index);
 	vi->idev->name = vi->name;
 	vi->idev->phys = vi->phys;
 	vi->idev->uniq = vi->serial;
 
 	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_ID_DEVIDS, 0);
-	if (size >= sizeof(struct virtio_input_devids)) {
-		virtio_cread_le(vi->vdev, struct virtio_input_config,
+	अगर (size >= माप(काष्ठा virtio_input_devids)) अणु
+		virtio_cपढ़ो_le(vi->vdev, काष्ठा virtio_input_config,
 				u.ids.bustype, &vi->idev->id.bustype);
-		virtio_cread_le(vi->vdev, struct virtio_input_config,
-				u.ids.vendor, &vi->idev->id.vendor);
-		virtio_cread_le(vi->vdev, struct virtio_input_config,
+		virtio_cपढ़ो_le(vi->vdev, काष्ठा virtio_input_config,
+				u.ids.venकरोr, &vi->idev->id.venकरोr);
+		virtio_cपढ़ो_le(vi->vdev, काष्ठा virtio_input_config,
 				u.ids.product, &vi->idev->id.product);
-		virtio_cread_le(vi->vdev, struct virtio_input_config,
+		virtio_cपढ़ो_le(vi->vdev, काष्ठा virtio_input_config,
 				u.ids.version, &vi->idev->id.version);
-	} else {
+	पूर्ण अन्यथा अणु
 		vi->idev->id.bustype = BUS_VIRTUAL;
-	}
+	पूर्ण
 
 	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_PROP_BITS, 0,
 			   vi->idev->propbit, INPUT_PROP_CNT);
 	size = virtinput_cfg_select(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_REP);
-	if (size)
+	अगर (size)
 		__set_bit(EV_REP, vi->idev->evbit);
 
 	vi->idev->dev.parent = &vdev->dev;
@@ -287,7 +288,7 @@ static int virtinput_probe(struct virtio_device *vdev)
 	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_REL,
 			   vi->idev->relbit, REL_CNT);
 	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_ABS,
-			   vi->idev->absbit, ABS_CNT);
+			   vi->idev->असलbit, ABS_CNT);
 	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_MSC,
 			   vi->idev->mscbit, MSC_CNT);
 	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_SW,
@@ -299,112 +300,112 @@ static int virtinput_probe(struct virtio_device *vdev)
 	virtinput_cfg_bits(vi, VIRTIO_INPUT_CFG_EV_BITS, EV_SND,
 			   vi->idev->sndbit, SND_CNT);
 
-	if (test_bit(EV_ABS, vi->idev->evbit)) {
-		for (abs = 0; abs < ABS_CNT; abs++) {
-			if (!test_bit(abs, vi->idev->absbit))
-				continue;
-			virtinput_cfg_abs(vi, abs);
-		}
+	अगर (test_bit(EV_ABS, vi->idev->evbit)) अणु
+		क्रम (असल = 0; असल < ABS_CNT; असल++) अणु
+			अगर (!test_bit(असल, vi->idev->असलbit))
+				जारी;
+			virtinput_cfg_असल(vi, असल);
+		पूर्ण
 
-		if (test_bit(ABS_MT_SLOT, vi->idev->absbit)) {
-			nslots = input_abs_get_max(vi->idev, ABS_MT_SLOT) + 1;
+		अगर (test_bit(ABS_MT_SLOT, vi->idev->असलbit)) अणु
+			nslots = input_असल_get_max(vi->idev, ABS_MT_SLOT) + 1;
 			err = input_mt_init_slots(vi->idev, nslots, 0);
-			if (err)
-				goto err_mt_init_slots;
-		}
-	}
+			अगर (err)
+				जाओ err_mt_init_slots;
+		पूर्ण
+	पूर्ण
 
-	virtio_device_ready(vdev);
-	vi->ready = true;
-	err = input_register_device(vi->idev);
-	if (err)
-		goto err_input_register;
+	virtio_device_पढ़ोy(vdev);
+	vi->पढ़ोy = true;
+	err = input_रेजिस्टर_device(vi->idev);
+	अगर (err)
+		जाओ err_input_रेजिस्टर;
 
 	virtinput_fill_evt(vi);
-	return 0;
+	वापस 0;
 
-err_input_register:
+err_input_रेजिस्टर:
 	spin_lock_irqsave(&vi->lock, flags);
-	vi->ready = false;
+	vi->पढ़ोy = false;
 	spin_unlock_irqrestore(&vi->lock, flags);
 err_mt_init_slots:
-	input_free_device(vi->idev);
+	input_मुक्त_device(vi->idev);
 err_input_alloc:
 	vdev->config->del_vqs(vdev);
 err_init_vq:
-	kfree(vi);
-	return err;
-}
+	kमुक्त(vi);
+	वापस err;
+पूर्ण
 
-static void virtinput_remove(struct virtio_device *vdev)
-{
-	struct virtio_input *vi = vdev->priv;
-	void *buf;
-	unsigned long flags;
+अटल व्योम virtinput_हटाओ(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_input *vi = vdev->priv;
+	व्योम *buf;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vi->lock, flags);
-	vi->ready = false;
+	vi->पढ़ोy = false;
 	spin_unlock_irqrestore(&vi->lock, flags);
 
-	input_unregister_device(vi->idev);
+	input_unरेजिस्टर_device(vi->idev);
 	vdev->config->reset(vdev);
-	while ((buf = virtqueue_detach_unused_buf(vi->sts)) != NULL)
-		kfree(buf);
+	जबतक ((buf = virtqueue_detach_unused_buf(vi->sts)) != शून्य)
+		kमुक्त(buf);
 	vdev->config->del_vqs(vdev);
-	kfree(vi);
-}
+	kमुक्त(vi);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int virtinput_freeze(struct virtio_device *vdev)
-{
-	struct virtio_input *vi = vdev->priv;
-	unsigned long flags;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक virtinput_मुक्तze(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_input *vi = vdev->priv;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vi->lock, flags);
-	vi->ready = false;
+	vi->पढ़ोy = false;
 	spin_unlock_irqrestore(&vi->lock, flags);
 
 	vdev->config->del_vqs(vdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int virtinput_restore(struct virtio_device *vdev)
-{
-	struct virtio_input *vi = vdev->priv;
-	int err;
+अटल पूर्णांक virtinput_restore(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_input *vi = vdev->priv;
+	पूर्णांक err;
 
 	err = virtinput_init_vqs(vi);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	virtio_device_ready(vdev);
-	vi->ready = true;
+	virtio_device_पढ़ोy(vdev);
+	vi->पढ़ोy = true;
 	virtinput_fill_evt(vi);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static unsigned int features[] = {
+अटल अचिन्हित पूर्णांक features[] = अणु
 	/* none */
-};
-static const struct virtio_device_id id_table[] = {
-	{ VIRTIO_ID_INPUT, VIRTIO_DEV_ANY_ID },
-	{ 0 },
-};
+पूर्ण;
+अटल स्थिर काष्ठा virtio_device_id id_table[] = अणु
+	अणु VIRTIO_ID_INPUT, VIRTIO_DEV_ANY_ID पूर्ण,
+	अणु 0 पूर्ण,
+पूर्ण;
 
-static struct virtio_driver virtio_input_driver = {
+अटल काष्ठा virtio_driver virtio_input_driver = अणु
 	.driver.name         = KBUILD_MODNAME,
 	.driver.owner        = THIS_MODULE,
 	.feature_table       = features,
 	.feature_table_size  = ARRAY_SIZE(features),
 	.id_table            = id_table,
 	.probe               = virtinput_probe,
-	.remove              = virtinput_remove,
-#ifdef CONFIG_PM_SLEEP
-	.freeze	             = virtinput_freeze,
+	.हटाओ              = virtinput_हटाओ,
+#अगर_घोषित CONFIG_PM_SLEEP
+	.मुक्तze	             = virtinput_मुक्तze,
 	.restore             = virtinput_restore,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_virtio_driver(virtio_input_driver);
 MODULE_DEVICE_TABLE(virtio, id_table);

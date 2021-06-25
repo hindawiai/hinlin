@@ -1,50 +1,51 @@
+<शैली गुरु>
 /*
- * TI Clock driver internal definitions
+ * TI Clock driver पूर्णांकernal definitions
  *
  * Copyright (C) 2014 Texas Instruments, Inc
  *     Tero Kristo (t-kristo@ti.com)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
-#ifndef __DRIVERS_CLK_TI_CLOCK__
-#define __DRIVERS_CLK_TI_CLOCK__
+#अगर_अघोषित __DRIVERS_CLK_TI_CLOCK__
+#घोषणा __DRIVERS_CLK_TI_CLOCK__
 
-struct clk_omap_divider {
-	struct clk_hw		hw;
-	struct clk_omap_reg	reg;
-	u8			shift;
+काष्ठा clk_omap_भागider अणु
+	काष्ठा clk_hw		hw;
+	काष्ठा clk_omap_reg	reg;
+	u8			shअगरt;
 	u8			flags;
 	s8			latch;
 	u16			min;
 	u16			max;
 	u16			mask;
-	const struct clk_div_table	*table;
+	स्थिर काष्ठा clk_भाग_प्रकारable	*table;
 	u32		context;
-};
+पूर्ण;
 
-#define to_clk_omap_divider(_hw) container_of(_hw, struct clk_omap_divider, hw)
+#घोषणा to_clk_omap_भागider(_hw) container_of(_hw, काष्ठा clk_omap_भागider, hw)
 
-struct clk_omap_mux {
-	struct clk_hw		hw;
-	struct clk_omap_reg	reg;
+काष्ठा clk_omap_mux अणु
+	काष्ठा clk_hw		hw;
+	काष्ठा clk_omap_reg	reg;
 	u32			*table;
 	u32			mask;
-	u8			shift;
+	u8			shअगरt;
 	s8			latch;
 	u8			flags;
 	u8			saved_parent;
-};
+पूर्ण;
 
-#define to_clk_omap_mux(_hw) container_of(_hw, struct clk_omap_mux, hw)
+#घोषणा to_clk_omap_mux(_hw) container_of(_hw, काष्ठा clk_omap_mux, hw)
 
-enum {
+क्रमागत अणु
 	TI_CLK_FIXED,
 	TI_CLK_MUX,
 	TI_CLK_DIVIDER,
@@ -52,266 +53,266 @@ enum {
 	TI_CLK_FIXED_FACTOR,
 	TI_CLK_GATE,
 	TI_CLK_DPLL,
-};
+पूर्ण;
 
 /* Global flags */
-#define CLKF_INDEX_POWER_OF_TWO		(1 << 0)
-#define CLKF_INDEX_STARTS_AT_ONE	(1 << 1)
-#define CLKF_SET_RATE_PARENT		(1 << 2)
-#define CLKF_OMAP3			(1 << 3)
-#define CLKF_AM35XX			(1 << 4)
+#घोषणा CLKF_INDEX_POWER_OF_TWO		(1 << 0)
+#घोषणा CLKF_INDEX_STARTS_AT_ONE	(1 << 1)
+#घोषणा CLKF_SET_RATE_PARENT		(1 << 2)
+#घोषणा CLKF_OMAP3			(1 << 3)
+#घोषणा CLKF_AM35XX			(1 << 4)
 
 /* Gate flags */
-#define CLKF_SET_BIT_TO_DISABLE		(1 << 5)
-#define CLKF_INTERFACE			(1 << 6)
-#define CLKF_SSI			(1 << 7)
-#define CLKF_DSS			(1 << 8)
-#define CLKF_HSOTGUSB			(1 << 9)
-#define CLKF_WAIT			(1 << 10)
-#define CLKF_NO_WAIT			(1 << 11)
-#define CLKF_HSDIV			(1 << 12)
-#define CLKF_CLKDM			(1 << 13)
+#घोषणा CLKF_SET_BIT_TO_DISABLE		(1 << 5)
+#घोषणा CLKF_INTERFACE			(1 << 6)
+#घोषणा CLKF_SSI			(1 << 7)
+#घोषणा CLKF_DSS			(1 << 8)
+#घोषणा CLKF_HSOTGUSB			(1 << 9)
+#घोषणा CLKF_WAIT			(1 << 10)
+#घोषणा CLKF_NO_WAIT			(1 << 11)
+#घोषणा CLKF_HSDIV			(1 << 12)
+#घोषणा CLKF_CLKDM			(1 << 13)
 
 /* DPLL flags */
-#define CLKF_LOW_POWER_STOP		(1 << 5)
-#define CLKF_LOCK			(1 << 6)
-#define CLKF_LOW_POWER_BYPASS		(1 << 7)
-#define CLKF_PER			(1 << 8)
-#define CLKF_CORE			(1 << 9)
-#define CLKF_J_TYPE			(1 << 10)
+#घोषणा CLKF_LOW_POWER_STOP		(1 << 5)
+#घोषणा CLKF_LOCK			(1 << 6)
+#घोषणा CLKF_LOW_POWER_BYPASS		(1 << 7)
+#घोषणा CLKF_PER			(1 << 8)
+#घोषणा CLKF_CORE			(1 << 9)
+#घोषणा CLKF_J_TYPE			(1 << 10)
 
 /* CLKCTRL flags */
-#define CLKF_SW_SUP			BIT(5)
-#define CLKF_HW_SUP			BIT(6)
-#define CLKF_NO_IDLEST			BIT(7)
+#घोषणा CLKF_SW_SUP			BIT(5)
+#घोषणा CLKF_HW_SUP			BIT(6)
+#घोषणा CLKF_NO_IDLEST			BIT(7)
 
-#define CLKF_SOC_MASK			GENMASK(11, 8)
+#घोषणा CLKF_SOC_MASK			GENMASK(11, 8)
 
-#define CLKF_SOC_NONSEC			BIT(8)
-#define CLKF_SOC_DRA72			BIT(9)
-#define CLKF_SOC_DRA74			BIT(10)
-#define CLKF_SOC_DRA76			BIT(11)
+#घोषणा CLKF_SOC_NONSEC			BIT(8)
+#घोषणा CLKF_SOC_DRA72			BIT(9)
+#घोषणा CLKF_SOC_DRA74			BIT(10)
+#घोषणा CLKF_SOC_DRA76			BIT(11)
 
-#define CLK(dev, con, ck)		\
-	{				\
-		.lk = {			\
+#घोषणा CLK(dev, con, ck)		\
+	अणु				\
+		.lk = अणु			\
 			.dev_id = dev,	\
 			.con_id = con,	\
-		},			\
+		पूर्ण,			\
 		.clk = ck,		\
-	}
+	पूर्ण
 
-struct ti_clk {
-	const char *name;
-	const char *clkdm_name;
-	int type;
-	void *data;
-	struct ti_clk *patch;
-	struct clk *clk;
-};
+काष्ठा ti_clk अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *clkdm_name;
+	पूर्णांक type;
+	व्योम *data;
+	काष्ठा ti_clk *patch;
+	काष्ठा clk *clk;
+पूर्ण;
 
-struct ti_clk_mux {
-	u8 bit_shift;
-	int num_parents;
+काष्ठा ti_clk_mux अणु
+	u8 bit_shअगरt;
+	पूर्णांक num_parents;
 	u16 reg;
 	u8 module;
-	const char * const *parents;
+	स्थिर अक्षर * स्थिर *parents;
 	u16 flags;
-};
+पूर्ण;
 
-struct ti_clk_divider {
-	const char *parent;
-	u8 bit_shift;
-	u16 max_div;
+काष्ठा ti_clk_भागider अणु
+	स्थिर अक्षर *parent;
+	u8 bit_shअगरt;
+	u16 max_भाग;
 	u16 reg;
 	u8 module;
-	int *dividers;
-	int num_dividers;
+	पूर्णांक *भागiders;
+	पूर्णांक num_भागiders;
 	u16 flags;
-};
+पूर्ण;
 
-struct ti_clk_gate {
-	const char *parent;
-	u8 bit_shift;
+काष्ठा ti_clk_gate अणु
+	स्थिर अक्षर *parent;
+	u8 bit_shअगरt;
 	u16 reg;
 	u8 module;
 	u16 flags;
-};
+पूर्ण;
 
-/* Composite clock component types */
-enum {
+/* Composite घड़ी component types */
+क्रमागत अणु
 	CLK_COMPONENT_TYPE_GATE = 0,
 	CLK_COMPONENT_TYPE_DIVIDER,
 	CLK_COMPONENT_TYPE_MUX,
 	CLK_COMPONENT_TYPE_MAX,
-};
+पूर्ण;
 
 /**
- * struct ti_dt_clk - OMAP DT clock alias declarations
- * @lk: clock lookup definition
- * @node_name: clock DT node to map to
+ * काष्ठा ti_dt_clk - OMAP DT घड़ी alias declarations
+ * @lk: घड़ी lookup definition
+ * @node_name: घड़ी DT node to map to
  */
-struct ti_dt_clk {
-	struct clk_lookup		lk;
-	char				*node_name;
-};
+काष्ठा ti_dt_clk अणु
+	काष्ठा clk_lookup		lk;
+	अक्षर				*node_name;
+पूर्ण;
 
-#define DT_CLK(dev, con, name)		\
-	{				\
-		.lk = {			\
+#घोषणा DT_CLK(dev, con, name)		\
+	अणु				\
+		.lk = अणु			\
 			.dev_id = dev,	\
 			.con_id = con,	\
-		},			\
+		पूर्ण,			\
 		.node_name = name,	\
-	}
+	पूर्ण
 
 /* CLKCTRL type definitions */
-struct omap_clkctrl_div_data {
-	const int *dividers;
-	int max_div;
+काष्ठा omap_clkctrl_भाग_data अणु
+	स्थिर पूर्णांक *भागiders;
+	पूर्णांक max_भाग;
 	u32 flags;
-};
+पूर्ण;
 
-struct omap_clkctrl_bit_data {
+काष्ठा omap_clkctrl_bit_data अणु
 	u8 bit;
 	u8 type;
-	const char * const *parents;
-	const void *data;
-};
+	स्थिर अक्षर * स्थिर *parents;
+	स्थिर व्योम *data;
+पूर्ण;
 
-struct omap_clkctrl_reg_data {
+काष्ठा omap_clkctrl_reg_data अणु
 	u16 offset;
-	const struct omap_clkctrl_bit_data *bit_data;
+	स्थिर काष्ठा omap_clkctrl_bit_data *bit_data;
 	u16 flags;
-	const char *parent;
-	const char *clkdm_name;
-};
+	स्थिर अक्षर *parent;
+	स्थिर अक्षर *clkdm_name;
+पूर्ण;
 
-struct omap_clkctrl_data {
+काष्ठा omap_clkctrl_data अणु
 	u32 addr;
-	const struct omap_clkctrl_reg_data *regs;
-};
+	स्थिर काष्ठा omap_clkctrl_reg_data *regs;
+पूर्ण;
 
-extern const struct omap_clkctrl_data omap4_clkctrl_data[];
-extern const struct omap_clkctrl_data omap5_clkctrl_data[];
-extern const struct omap_clkctrl_data dra7_clkctrl_data[];
-extern const struct omap_clkctrl_data dra7_clkctrl_compat_data[];
-extern struct ti_dt_clk dra7xx_compat_clks[];
-extern const struct omap_clkctrl_data am3_clkctrl_data[];
-extern const struct omap_clkctrl_data am3_clkctrl_compat_data[];
-extern struct ti_dt_clk am33xx_compat_clks[];
-extern const struct omap_clkctrl_data am4_clkctrl_data[];
-extern const struct omap_clkctrl_data am4_clkctrl_compat_data[];
-extern struct ti_dt_clk am43xx_compat_clks[];
-extern const struct omap_clkctrl_data am438x_clkctrl_data[];
-extern const struct omap_clkctrl_data am438x_clkctrl_compat_data[];
-extern const struct omap_clkctrl_data dm814_clkctrl_data[];
-extern const struct omap_clkctrl_data dm816_clkctrl_data[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data omap4_clkctrl_data[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data omap5_clkctrl_data[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data dra7_clkctrl_data[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data dra7_clkctrl_compat_data[];
+बाह्य काष्ठा ti_dt_clk dra7xx_compat_clks[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data am3_clkctrl_data[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data am3_clkctrl_compat_data[];
+बाह्य काष्ठा ti_dt_clk am33xx_compat_clks[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data am4_clkctrl_data[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data am4_clkctrl_compat_data[];
+बाह्य काष्ठा ti_dt_clk am43xx_compat_clks[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data am438x_clkctrl_data[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data am438x_clkctrl_compat_data[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data dm814_clkctrl_data[];
+बाह्य स्थिर काष्ठा omap_clkctrl_data dm816_clkctrl_data[];
 
-typedef void (*ti_of_clk_init_cb_t)(void *, struct device_node *);
+प्रकार व्योम (*ti_of_clk_init_cb_t)(व्योम *, काष्ठा device_node *);
 
-struct clk *ti_clk_register(struct device *dev, struct clk_hw *hw,
-			    const char *con);
-struct clk *ti_clk_register_omap_hw(struct device *dev, struct clk_hw *hw,
-				    const char *con);
-int ti_clk_add_alias(struct device *dev, struct clk *clk, const char *con);
-void ti_clk_add_aliases(void);
+काष्ठा clk *ti_clk_रेजिस्टर(काष्ठा device *dev, काष्ठा clk_hw *hw,
+			    स्थिर अक्षर *con);
+काष्ठा clk *ti_clk_रेजिस्टर_omap_hw(काष्ठा device *dev, काष्ठा clk_hw *hw,
+				    स्थिर अक्षर *con);
+पूर्णांक ti_clk_add_alias(काष्ठा device *dev, काष्ठा clk *clk, स्थिर अक्षर *con);
+व्योम ti_clk_add_aliases(व्योम);
 
-void ti_clk_latch(struct clk_omap_reg *reg, s8 shift);
+व्योम ti_clk_latch(काष्ठा clk_omap_reg *reg, s8 shअगरt);
 
-struct clk_hw *ti_clk_build_component_mux(struct ti_clk_mux *setup);
+काष्ठा clk_hw *ti_clk_build_component_mux(काष्ठा ti_clk_mux *setup);
 
-int ti_clk_parse_divider_data(int *div_table, int num_dividers, int max_div,
-			      u8 flags, struct clk_omap_divider *div);
+पूर्णांक ti_clk_parse_भागider_data(पूर्णांक *भाग_प्रकारable, पूर्णांक num_भागiders, पूर्णांक max_भाग,
+			      u8 flags, काष्ठा clk_omap_भागider *भाग);
 
-int ti_clk_get_reg_addr(struct device_node *node, int index,
-			struct clk_omap_reg *reg);
-void ti_dt_clocks_register(struct ti_dt_clk *oclks);
-int ti_clk_retry_init(struct device_node *node, void *user,
+पूर्णांक ti_clk_get_reg_addr(काष्ठा device_node *node, पूर्णांक index,
+			काष्ठा clk_omap_reg *reg);
+व्योम ti_dt_घड़ीs_रेजिस्टर(काष्ठा ti_dt_clk *oclks);
+पूर्णांक ti_clk_retry_init(काष्ठा device_node *node, व्योम *user,
 		      ti_of_clk_init_cb_t func);
-int ti_clk_add_component(struct device_node *node, struct clk_hw *hw, int type);
+पूर्णांक ti_clk_add_component(काष्ठा device_node *node, काष्ठा clk_hw *hw, पूर्णांक type);
 
-int of_ti_clk_autoidle_setup(struct device_node *node);
-void omap2_clk_enable_init_clocks(const char **clk_names, u8 num_clocks);
+पूर्णांक of_ti_clk_स्वतःidle_setup(काष्ठा device_node *node);
+व्योम omap2_clk_enable_init_घड़ीs(स्थिर अक्षर **clk_names, u8 num_घड़ीs);
 
-extern const struct clk_hw_omap_ops clkhwops_omap3_dpll;
-extern const struct clk_hw_omap_ops clkhwops_omap4_dpllmx;
-extern const struct clk_hw_omap_ops clkhwops_wait;
-extern const struct clk_hw_omap_ops clkhwops_iclk;
-extern const struct clk_hw_omap_ops clkhwops_iclk_wait;
-extern const struct clk_hw_omap_ops clkhwops_omap2430_i2chs_wait;
-extern const struct clk_hw_omap_ops clkhwops_omap3430es2_dss_usbhost_wait;
-extern const struct clk_hw_omap_ops clkhwops_omap3430es2_iclk_hsotgusb_wait;
-extern const struct clk_hw_omap_ops clkhwops_omap3430es2_iclk_dss_usbhost_wait;
-extern const struct clk_hw_omap_ops clkhwops_omap3430es2_iclk_ssi_wait;
-extern const struct clk_hw_omap_ops clkhwops_am35xx_ipss_module_wait;
-extern const struct clk_hw_omap_ops clkhwops_am35xx_ipss_wait;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_omap3_dpll;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_omap4_dpllmx;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_रुको;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_iclk;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_iclk_रुको;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_omap2430_i2chs_रुको;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_omap3430es2_dss_usbhost_रुको;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_omap3430es2_iclk_hsotgusb_रुको;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_omap3430es2_iclk_dss_usbhost_रुको;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_omap3430es2_iclk_ssi_रुको;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_am35xx_ipss_module_रुको;
+बाह्य स्थिर काष्ठा clk_hw_omap_ops clkhwops_am35xx_ipss_रुको;
 
-extern const struct clk_ops ti_clk_divider_ops;
-extern const struct clk_ops ti_clk_mux_ops;
-extern const struct clk_ops omap_gate_clk_ops;
+बाह्य स्थिर काष्ठा clk_ops ti_clk_भागider_ops;
+बाह्य स्थिर काष्ठा clk_ops ti_clk_mux_ops;
+बाह्य स्थिर काष्ठा clk_ops omap_gate_clk_ops;
 
-extern struct ti_clk_features ti_clk_features;
+बाह्य काष्ठा ti_clk_features ti_clk_features;
 
-int omap2_init_clk_clkdm(struct clk_hw *hw);
-int omap2_clkops_enable_clkdm(struct clk_hw *hw);
-void omap2_clkops_disable_clkdm(struct clk_hw *hw);
+पूर्णांक omap2_init_clk_clkdm(काष्ठा clk_hw *hw);
+पूर्णांक omap2_clkops_enable_clkdm(काष्ठा clk_hw *hw);
+व्योम omap2_clkops_disable_clkdm(काष्ठा clk_hw *hw);
 
-int omap2_dflt_clk_enable(struct clk_hw *hw);
-void omap2_dflt_clk_disable(struct clk_hw *hw);
-int omap2_dflt_clk_is_enabled(struct clk_hw *hw);
-void omap2_clk_dflt_find_companion(struct clk_hw_omap *clk,
-				   struct clk_omap_reg *other_reg,
+पूर्णांक omap2_dflt_clk_enable(काष्ठा clk_hw *hw);
+व्योम omap2_dflt_clk_disable(काष्ठा clk_hw *hw);
+पूर्णांक omap2_dflt_clk_is_enabled(काष्ठा clk_hw *hw);
+व्योम omap2_clk_dflt_find_companion(काष्ठा clk_hw_omap *clk,
+				   काष्ठा clk_omap_reg *other_reg,
 				   u8 *other_bit);
-void omap2_clk_dflt_find_idlest(struct clk_hw_omap *clk,
-				struct clk_omap_reg *idlest_reg,
+व्योम omap2_clk_dflt_find_idlest(काष्ठा clk_hw_omap *clk,
+				काष्ठा clk_omap_reg *idlest_reg,
 				u8 *idlest_bit, u8 *idlest_val);
 
-void omap2_clkt_iclk_allow_idle(struct clk_hw_omap *clk);
-void omap2_clkt_iclk_deny_idle(struct clk_hw_omap *clk);
+व्योम omap2_clkt_iclk_allow_idle(काष्ठा clk_hw_omap *clk);
+व्योम omap2_clkt_iclk_deny_idle(काष्ठा clk_hw_omap *clk);
 
-u8 omap2_init_dpll_parent(struct clk_hw *hw);
-int omap3_noncore_dpll_enable(struct clk_hw *hw);
-void omap3_noncore_dpll_disable(struct clk_hw *hw);
-int omap3_noncore_dpll_set_parent(struct clk_hw *hw, u8 index);
-int omap3_noncore_dpll_set_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long parent_rate);
-int omap3_noncore_dpll_set_rate_and_parent(struct clk_hw *hw,
-					   unsigned long rate,
-					   unsigned long parent_rate,
+u8 omap2_init_dpll_parent(काष्ठा clk_hw *hw);
+पूर्णांक omap3_noncore_dpll_enable(काष्ठा clk_hw *hw);
+व्योम omap3_noncore_dpll_disable(काष्ठा clk_hw *hw);
+पूर्णांक omap3_noncore_dpll_set_parent(काष्ठा clk_hw *hw, u8 index);
+पूर्णांक omap3_noncore_dpll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate);
+पूर्णांक omap3_noncore_dpll_set_rate_and_parent(काष्ठा clk_hw *hw,
+					   अचिन्हित दीर्घ rate,
+					   अचिन्हित दीर्घ parent_rate,
 					   u8 index);
-int omap3_noncore_dpll_determine_rate(struct clk_hw *hw,
-				      struct clk_rate_request *req);
-long omap2_dpll_round_rate(struct clk_hw *hw, unsigned long target_rate,
-			   unsigned long *parent_rate);
-unsigned long omap3_clkoutx2_recalc(struct clk_hw *hw,
-				    unsigned long parent_rate);
+पूर्णांक omap3_noncore_dpll_determine_rate(काष्ठा clk_hw *hw,
+				      काष्ठा clk_rate_request *req);
+दीर्घ omap2_dpll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ target_rate,
+			   अचिन्हित दीर्घ *parent_rate);
+अचिन्हित दीर्घ omap3_clkoutx2_recalc(काष्ठा clk_hw *hw,
+				    अचिन्हित दीर्घ parent_rate);
 
 /*
- * OMAP3_DPLL5_FREQ_FOR_USBHOST: USBHOST and USBTLL are the only clocks
- * that are sourced by DPLL5, and both of these require this clock
- * to be at 120 MHz for proper operation.
+ * OMAP3_DPLL5_FREQ_FOR_USBHOST: USBHOST and USBTLL are the only घड़ीs
+ * that are sourced by DPLL5, and both of these require this घड़ी
+ * to be at 120 MHz क्रम proper operation.
  */
-#define OMAP3_DPLL5_FREQ_FOR_USBHOST	120000000
+#घोषणा OMAP3_DPLL5_FREQ_FOR_USBHOST	120000000
 
-unsigned long omap3_dpll_recalc(struct clk_hw *hw, unsigned long parent_rate);
-int omap3_dpll4_set_rate(struct clk_hw *clk, unsigned long rate,
-			 unsigned long parent_rate);
-int omap3_dpll4_set_rate_and_parent(struct clk_hw *hw, unsigned long rate,
-				    unsigned long parent_rate, u8 index);
-int omap3_dpll5_set_rate(struct clk_hw *hw, unsigned long rate,
-			 unsigned long parent_rate);
-void omap3_clk_lock_dpll5(void);
+अचिन्हित दीर्घ omap3_dpll_recalc(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate);
+पूर्णांक omap3_dpll4_set_rate(काष्ठा clk_hw *clk, अचिन्हित दीर्घ rate,
+			 अचिन्हित दीर्घ parent_rate);
+पूर्णांक omap3_dpll4_set_rate_and_parent(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				    अचिन्हित दीर्घ parent_rate, u8 index);
+पूर्णांक omap3_dpll5_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			 अचिन्हित दीर्घ parent_rate);
+व्योम omap3_clk_lock_dpll5(व्योम);
 
-unsigned long omap4_dpll_regm4xen_recalc(struct clk_hw *hw,
-					 unsigned long parent_rate);
-long omap4_dpll_regm4xen_round_rate(struct clk_hw *hw,
-				    unsigned long target_rate,
-				    unsigned long *parent_rate);
-int omap4_dpll_regm4xen_determine_rate(struct clk_hw *hw,
-				       struct clk_rate_request *req);
-int omap2_clk_for_each(int (*fn)(struct clk_hw_omap *hw));
+अचिन्हित दीर्घ omap4_dpll_regm4xen_recalc(काष्ठा clk_hw *hw,
+					 अचिन्हित दीर्घ parent_rate);
+दीर्घ omap4_dpll_regm4xen_round_rate(काष्ठा clk_hw *hw,
+				    अचिन्हित दीर्घ target_rate,
+				    अचिन्हित दीर्घ *parent_rate);
+पूर्णांक omap4_dpll_regm4xen_determine_rate(काष्ठा clk_hw *hw,
+				       काष्ठा clk_rate_request *req);
+पूर्णांक omap2_clk_क्रम_each(पूर्णांक (*fn)(काष्ठा clk_hw_omap *hw));
 
-extern struct ti_clk_ll_ops *ti_clk_ll_ops;
+बाह्य काष्ठा ti_clk_ll_ops *ti_clk_ll_ops;
 
-#endif
+#पूर्ण_अगर

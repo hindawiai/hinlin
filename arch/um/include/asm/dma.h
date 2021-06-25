@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __UM_DMA_H
-#define __UM_DMA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __UM_DMA_H
+#घोषणा __UM_DMA_H
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-extern unsigned long uml_physmem;
+बाह्य अचिन्हित दीर्घ uml_physmem;
 
-#define MAX_DMA_ADDRESS (uml_physmem)
+#घोषणा MAX_DMA_ADDRESS (uml_physmem)
 
-#endif
+#पूर्ण_अगर

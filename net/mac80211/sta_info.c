@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2002-2005, Instant802 Networks, Inc.
  * Copyright 2006-2007	Jiri Benc <jbenc@suse.cz>
@@ -7,388 +8,388 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/etherdevice.h>
-#include <linux/netdevice.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/skbuff.h>
-#include <linux/if_arp.h>
-#include <linux/timer.h>
-#include <linux/rtnetlink.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/rtnetlink.h>
 
-#include <net/codel.h>
-#include <net/mac80211.h>
-#include "ieee80211_i.h"
-#include "driver-ops.h"
-#include "rate.h"
-#include "sta_info.h"
-#include "debugfs_sta.h"
-#include "mesh.h"
-#include "wme.h"
+#समावेश <net/codel.h>
+#समावेश <net/mac80211.h>
+#समावेश "ieee80211_i.h"
+#समावेश "driver-ops.h"
+#समावेश "rate.h"
+#समावेश "sta_info.h"
+#समावेश "debugfs_sta.h"
+#समावेश "mesh.h"
+#समावेश "wme.h"
 
 /**
- * DOC: STA information lifetime rules
+ * DOC: STA inक्रमmation lअगरeसमय rules
  *
- * STA info structures (&struct sta_info) are managed in a hash table
- * for faster lookup and a list for iteration. They are managed using
- * RCU, i.e. access to the list and hash table is protected by RCU.
+ * STA info काष्ठाures (&काष्ठा sta_info) are managed in a hash table
+ * क्रम faster lookup and a list क्रम iteration. They are managed using
+ * RCU, i.e. access to the list and hash table is रक्षित by RCU.
  *
- * Upon allocating a STA info structure with sta_info_alloc(), the caller
- * owns that structure. It must then insert it into the hash table using
+ * Upon allocating a STA info काष्ठाure with sta_info_alloc(), the caller
+ * owns that काष्ठाure. It must then insert it पूर्णांकo the hash table using
  * either sta_info_insert() or sta_info_insert_rcu(); only in the latter
- * case (which acquires an rcu read section but must not be called from
- * within one) will the pointer still be valid after the call. Note that
- * the caller may not do much with the STA info before inserting it, in
+ * हाल (which acquires an rcu पढ़ो section but must not be called from
+ * within one) will the poपूर्णांकer still be valid after the call. Note that
+ * the caller may not करो much with the STA info beक्रमe inserting it, in
  * particular, it may not start any mesh peer link management or add
  * encryption keys.
  *
- * When the insertion fails (sta_info_insert()) returns non-zero), the
- * structure will have been freed by sta_info_insert()!
+ * When the insertion fails (sta_info_insert()) वापसs non-zero), the
+ * काष्ठाure will have been मुक्तd by sta_info_insert()!
  *
  * Station entries are added by mac80211 when you establish a link with a
- * peer. This means different things for the different type of interfaces
+ * peer. This means dअगरferent things क्रम the dअगरferent type of पूर्णांकerfaces
  * we support. For a regular station this mean we add the AP sta when we
  * receive an association response from the AP. For IBSS this occurs when
- * get to know about a peer on the same IBSS. For WDS we add the sta for
- * the peer immediately upon device open. When using AP mode we add stations
- * for each respective station upon request from userspace through nl80211.
+ * get to know about a peer on the same IBSS. For WDS we add the sta क्रम
+ * the peer immediately upon device खोलो. When using AP mode we add stations
+ * क्रम each respective station upon request from userspace through nl80211.
  *
- * In order to remove a STA info structure, various sta_info_destroy_*()
+ * In order to हटाओ a STA info काष्ठाure, various sta_info_destroy_*()
  * calls are available.
  *
- * There is no concept of ownership on a STA entry, each structure is
- * owned by the global hash table/list until it is removed. All users of
- * the structure need to be RCU protected so that the structure won't be
- * freed before they are done using it.
+ * There is no concept of ownership on a STA entry, each काष्ठाure is
+ * owned by the global hash table/list until it is हटाओd. All users of
+ * the काष्ठाure need to be RCU रक्षित so that the काष्ठाure won't be
+ * मुक्तd beक्रमe they are करोne using it.
  */
 
-static const struct rhashtable_params sta_rht_params = {
-	.nelem_hint = 3, /* start small */
-	.automatic_shrinking = true,
-	.head_offset = offsetof(struct sta_info, hash_node),
-	.key_offset = offsetof(struct sta_info, addr),
+अटल स्थिर काष्ठा rhashtable_params sta_rht_params = अणु
+	.nelem_hपूर्णांक = 3, /* start small */
+	.स्वतःmatic_shrinking = true,
+	.head_offset = दुरत्व(काष्ठा sta_info, hash_node),
+	.key_offset = दुरत्व(काष्ठा sta_info, addr),
 	.key_len = ETH_ALEN,
 	.max_size = CONFIG_MAC80211_STA_HASH_MAX_SIZE,
-};
+पूर्ण;
 
 /* Caller must hold local->sta_mtx */
-static int sta_info_hash_del(struct ieee80211_local *local,
-			     struct sta_info *sta)
-{
-	return rhltable_remove(&local->sta_hash, &sta->hash_node,
+अटल पूर्णांक sta_info_hash_del(काष्ठा ieee80211_local *local,
+			     काष्ठा sta_info *sta)
+अणु
+	वापस rhltable_हटाओ(&local->sta_hash, &sta->hash_node,
 			       sta_rht_params);
-}
+पूर्ण
 
-static void __cleanup_single_sta(struct sta_info *sta)
-{
-	int ac, i;
-	struct tid_ampdu_tx *tid_tx;
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct ieee80211_local *local = sdata->local;
-	struct ps_data *ps;
+अटल व्योम __cleanup_single_sta(काष्ठा sta_info *sta)
+अणु
+	पूर्णांक ac, i;
+	काष्ठा tid_ampdu_tx *tid_tx;
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा ps_data *ps;
 
-	if (test_sta_flag(sta, WLAN_STA_PS_STA) ||
+	अगर (test_sta_flag(sta, WLAN_STA_PS_STA) ||
 	    test_sta_flag(sta, WLAN_STA_PS_DRIVER) ||
-	    test_sta_flag(sta, WLAN_STA_PS_DELIVER)) {
-		if (sta->sdata->vif.type == NL80211_IFTYPE_AP ||
-		    sta->sdata->vif.type == NL80211_IFTYPE_AP_VLAN)
+	    test_sta_flag(sta, WLAN_STA_PS_DELIVER)) अणु
+		अगर (sta->sdata->vअगर.type == NL80211_IFTYPE_AP ||
+		    sta->sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN)
 			ps = &sdata->bss->ps;
-		else if (ieee80211_vif_is_mesh(&sdata->vif))
+		अन्यथा अगर (ieee80211_vअगर_is_mesh(&sdata->vअगर))
 			ps = &sdata->u.mesh.ps;
-		else
-			return;
+		अन्यथा
+			वापस;
 
 		clear_sta_flag(sta, WLAN_STA_PS_STA);
 		clear_sta_flag(sta, WLAN_STA_PS_DRIVER);
 		clear_sta_flag(sta, WLAN_STA_PS_DELIVER);
 
 		atomic_dec(&ps->num_sta_ps);
-	}
+	पूर्ण
 
-	if (sta->sta.txq[0]) {
-		for (i = 0; i < ARRAY_SIZE(sta->sta.txq); i++) {
-			struct txq_info *txqi;
+	अगर (sta->sta.txq[0]) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(sta->sta.txq); i++) अणु
+			काष्ठा txq_info *txqi;
 
-			if (!sta->sta.txq[i])
-				continue;
+			अगर (!sta->sta.txq[i])
+				जारी;
 
 			txqi = to_txq_info(sta->sta.txq[i]);
 
 			ieee80211_txq_purge(local, txqi);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
+	क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++) अणु
 		local->total_ps_buffered -= skb_queue_len(&sta->ps_tx_buf[ac]);
 		ieee80211_purge_tx_queue(&local->hw, &sta->ps_tx_buf[ac]);
 		ieee80211_purge_tx_queue(&local->hw, &sta->tx_filtered[ac]);
-	}
+	पूर्ण
 
-	if (ieee80211_vif_is_mesh(&sdata->vif))
+	अगर (ieee80211_vअगर_is_mesh(&sdata->vअगर))
 		mesh_sta_cleanup(sta);
 
 	cancel_work_sync(&sta->drv_deliver_wk);
 
 	/*
-	 * Destroy aggregation state here. It would be nice to wait for the
-	 * driver to finish aggregation stop and then clean up, but for now
+	 * Destroy aggregation state here. It would be nice to रुको क्रम the
+	 * driver to finish aggregation stop and then clean up, but क्रम now
 	 * drivers have to handle aggregation stop being requested, followed
-	 * directly by station destruction.
+	 * directly by station deकाष्ठाion.
 	 */
-	for (i = 0; i < IEEE80211_NUM_TIDS; i++) {
-		kfree(sta->ampdu_mlme.tid_start_tx[i]);
+	क्रम (i = 0; i < IEEE80211_NUM_TIDS; i++) अणु
+		kमुक्त(sta->ampdu_mlme.tid_start_tx[i]);
 		tid_tx = rcu_dereference_raw(sta->ampdu_mlme.tid_tx[i]);
-		if (!tid_tx)
-			continue;
+		अगर (!tid_tx)
+			जारी;
 		ieee80211_purge_tx_queue(&local->hw, &tid_tx->pending);
-		kfree(tid_tx);
-	}
-}
+		kमुक्त(tid_tx);
+	पूर्ण
+पूर्ण
 
-static void cleanup_single_sta(struct sta_info *sta)
-{
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct ieee80211_local *local = sdata->local;
+अटल व्योम cleanup_single_sta(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा ieee80211_local *local = sdata->local;
 
 	__cleanup_single_sta(sta);
-	sta_info_free(local, sta);
-}
+	sta_info_मुक्त(local, sta);
+पूर्ण
 
-struct rhlist_head *sta_info_hash_lookup(struct ieee80211_local *local,
-					 const u8 *addr)
-{
-	return rhltable_lookup(&local->sta_hash, addr, sta_rht_params);
-}
+काष्ठा rhlist_head *sta_info_hash_lookup(काष्ठा ieee80211_local *local,
+					 स्थिर u8 *addr)
+अणु
+	वापस rhltable_lookup(&local->sta_hash, addr, sta_rht_params);
+पूर्ण
 
-/* protected by RCU */
-struct sta_info *sta_info_get(struct ieee80211_sub_if_data *sdata,
-			      const u8 *addr)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct rhlist_head *tmp;
-	struct sta_info *sta;
+/* रक्षित by RCU */
+काष्ठा sta_info *sta_info_get(काष्ठा ieee80211_sub_अगर_data *sdata,
+			      स्थिर u8 *addr)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा rhlist_head *पंचांगp;
+	काष्ठा sta_info *sta;
 
-	rcu_read_lock();
-	for_each_sta_info(local, addr, sta, tmp) {
-		if (sta->sdata == sdata) {
-			rcu_read_unlock();
-			/* this is safe as the caller must already hold
-			 * another rcu read section or the mutex
+	rcu_पढ़ो_lock();
+	क्रम_each_sta_info(local, addr, sta, पंचांगp) अणु
+		अगर (sta->sdata == sdata) अणु
+			rcu_पढ़ो_unlock();
+			/* this is safe as the caller must alपढ़ोy hold
+			 * another rcu पढ़ो section or the mutex
 			 */
-			return sta;
-		}
-	}
-	rcu_read_unlock();
-	return NULL;
-}
+			वापस sta;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस शून्य;
+पूर्ण
 
 /*
- * Get sta info either from the specified interface
+ * Get sta info either from the specअगरied पूर्णांकerface
  * or from one of its vlans
  */
-struct sta_info *sta_info_get_bss(struct ieee80211_sub_if_data *sdata,
-				  const u8 *addr)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct rhlist_head *tmp;
-	struct sta_info *sta;
+काष्ठा sta_info *sta_info_get_bss(काष्ठा ieee80211_sub_अगर_data *sdata,
+				  स्थिर u8 *addr)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा rhlist_head *पंचांगp;
+	काष्ठा sta_info *sta;
 
-	rcu_read_lock();
-	for_each_sta_info(local, addr, sta, tmp) {
-		if (sta->sdata == sdata ||
-		    (sta->sdata->bss && sta->sdata->bss == sdata->bss)) {
-			rcu_read_unlock();
-			/* this is safe as the caller must already hold
-			 * another rcu read section or the mutex
+	rcu_पढ़ो_lock();
+	क्रम_each_sta_info(local, addr, sta, पंचांगp) अणु
+		अगर (sta->sdata == sdata ||
+		    (sta->sdata->bss && sta->sdata->bss == sdata->bss)) अणु
+			rcu_पढ़ो_unlock();
+			/* this is safe as the caller must alपढ़ोy hold
+			 * another rcu पढ़ो section or the mutex
 			 */
-			return sta;
-		}
-	}
-	rcu_read_unlock();
-	return NULL;
-}
+			वापस sta;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस शून्य;
+पूर्ण
 
-struct sta_info *sta_info_get_by_addrs(struct ieee80211_local *local,
-				       const u8 *sta_addr, const u8 *vif_addr)
-{
-	struct rhlist_head *tmp;
-	struct sta_info *sta;
+काष्ठा sta_info *sta_info_get_by_addrs(काष्ठा ieee80211_local *local,
+				       स्थिर u8 *sta_addr, स्थिर u8 *vअगर_addr)
+अणु
+	काष्ठा rhlist_head *पंचांगp;
+	काष्ठा sta_info *sta;
 
-	for_each_sta_info(local, sta_addr, sta, tmp) {
-		if (ether_addr_equal(vif_addr, sta->sdata->vif.addr))
-			return sta;
-	}
+	क्रम_each_sta_info(local, sta_addr, sta, पंचांगp) अणु
+		अगर (ether_addr_equal(vअगर_addr, sta->sdata->vअगर.addr))
+			वापस sta;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct sta_info *sta_info_get_by_idx(struct ieee80211_sub_if_data *sdata,
-				     int idx)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct sta_info *sta;
-	int i = 0;
+काष्ठा sta_info *sta_info_get_by_idx(काष्ठा ieee80211_sub_अगर_data *sdata,
+				     पूर्णांक idx)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sta_info *sta;
+	पूर्णांक i = 0;
 
-	list_for_each_entry_rcu(sta, &local->sta_list, list,
-				lockdep_is_held(&local->sta_mtx)) {
-		if (sdata != sta->sdata)
-			continue;
-		if (i < idx) {
+	list_क्रम_each_entry_rcu(sta, &local->sta_list, list,
+				lockdep_is_held(&local->sta_mtx)) अणु
+		अगर (sdata != sta->sdata)
+			जारी;
+		अगर (i < idx) अणु
 			++i;
-			continue;
-		}
-		return sta;
-	}
+			जारी;
+		पूर्ण
+		वापस sta;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * sta_info_free - free STA
+ * sta_info_मुक्त - मुक्त STA
  *
- * @local: pointer to the global information
- * @sta: STA info to free
+ * @local: poपूर्णांकer to the global inक्रमmation
+ * @sta: STA info to मुक्त
  *
- * This function must undo everything done by sta_info_alloc()
- * that may happen before sta_info_insert(). It may only be
+ * This function must unकरो everything करोne by sta_info_alloc()
+ * that may happen beक्रमe sta_info_insert(). It may only be
  * called when sta_info_insert() has not been attempted (and
- * if that fails, the station is freed anyway.)
+ * अगर that fails, the station is मुक्तd anyway.)
  */
-void sta_info_free(struct ieee80211_local *local, struct sta_info *sta)
-{
+व्योम sta_info_मुक्त(काष्ठा ieee80211_local *local, काष्ठा sta_info *sta)
+अणु
 	/*
 	 * If we had used sta_info_pre_move_state() then we might not
-	 * have gone through the state transitions down again, so do
-	 * it here now (and warn if it's inserted).
+	 * have gone through the state transitions करोwn again, so करो
+	 * it here now (and warn अगर it's inserted).
 	 *
 	 * This will clear state such as fast TX/RX that may have been
 	 * allocated during state transitions.
 	 */
-	while (sta->sta_state > IEEE80211_STA_NONE) {
-		int ret;
+	जबतक (sta->sta_state > IEEE80211_STA_NONE) अणु
+		पूर्णांक ret;
 
 		WARN_ON_ONCE(test_sta_flag(sta, WLAN_STA_INSERTED));
 
 		ret = sta_info_move_state(sta, sta->sta_state - 1);
-		if (WARN_ONCE(ret, "sta_info_move_state() returned %d\n", ret))
-			break;
-	}
+		अगर (WARN_ONCE(ret, "sta_info_move_state() returned %d\n", ret))
+			अवरोध;
+	पूर्ण
 
-	if (sta->rate_ctrl)
-		rate_control_free_sta(sta);
+	अगर (sta->rate_ctrl)
+		rate_control_मुक्त_sta(sta);
 
 	sta_dbg(sta->sdata, "Destroyed STA %pM\n", sta->sta.addr);
 
-	if (sta->sta.txq[0])
-		kfree(to_txq_info(sta->sta.txq[0]));
-	kfree(rcu_dereference_raw(sta->sta.rates));
-#ifdef CONFIG_MAC80211_MESH
-	kfree(sta->mesh);
-#endif
-	free_percpu(sta->pcpu_rx_stats);
-	kfree(sta);
-}
+	अगर (sta->sta.txq[0])
+		kमुक्त(to_txq_info(sta->sta.txq[0]));
+	kमुक्त(rcu_dereference_raw(sta->sta.rates));
+#अगर_घोषित CONFIG_MAC80211_MESH
+	kमुक्त(sta->mesh);
+#पूर्ण_अगर
+	मुक्त_percpu(sta->pcpu_rx_stats);
+	kमुक्त(sta);
+पूर्ण
 
 /* Caller must hold local->sta_mtx */
-static int sta_info_hash_add(struct ieee80211_local *local,
-			     struct sta_info *sta)
-{
-	return rhltable_insert(&local->sta_hash, &sta->hash_node,
+अटल पूर्णांक sta_info_hash_add(काष्ठा ieee80211_local *local,
+			     काष्ठा sta_info *sta)
+अणु
+	वापस rhltable_insert(&local->sta_hash, &sta->hash_node,
 			       sta_rht_params);
-}
+पूर्ण
 
-static void sta_deliver_ps_frames(struct work_struct *wk)
-{
-	struct sta_info *sta;
+अटल व्योम sta_deliver_ps_frames(काष्ठा work_काष्ठा *wk)
+अणु
+	काष्ठा sta_info *sta;
 
-	sta = container_of(wk, struct sta_info, drv_deliver_wk);
+	sta = container_of(wk, काष्ठा sta_info, drv_deliver_wk);
 
-	if (sta->dead)
-		return;
+	अगर (sta->dead)
+		वापस;
 
 	local_bh_disable();
-	if (!test_sta_flag(sta, WLAN_STA_PS_STA))
+	अगर (!test_sta_flag(sta, WLAN_STA_PS_STA))
 		ieee80211_sta_ps_deliver_wakeup(sta);
-	else if (test_and_clear_sta_flag(sta, WLAN_STA_PSPOLL))
+	अन्यथा अगर (test_and_clear_sta_flag(sta, WLAN_STA_PSPOLL))
 		ieee80211_sta_ps_deliver_poll_response(sta);
-	else if (test_and_clear_sta_flag(sta, WLAN_STA_UAPSD))
+	अन्यथा अगर (test_and_clear_sta_flag(sta, WLAN_STA_UAPSD))
 		ieee80211_sta_ps_deliver_uapsd(sta);
 	local_bh_enable();
-}
+पूर्ण
 
-static int sta_prepare_rate_control(struct ieee80211_local *local,
-				    struct sta_info *sta, gfp_t gfp)
-{
-	if (ieee80211_hw_check(&local->hw, HAS_RATE_CONTROL))
-		return 0;
+अटल पूर्णांक sta_prepare_rate_control(काष्ठा ieee80211_local *local,
+				    काष्ठा sta_info *sta, gfp_t gfp)
+अणु
+	अगर (ieee80211_hw_check(&local->hw, HAS_RATE_CONTROL))
+		वापस 0;
 
 	sta->rate_ctrl = local->rate_ctrl;
 	sta->rate_ctrl_priv = rate_control_alloc_sta(sta->rate_ctrl,
 						     sta, gfp);
-	if (!sta->rate_ctrl_priv)
-		return -ENOMEM;
+	अगर (!sta->rate_ctrl_priv)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct sta_info *sta_info_alloc(struct ieee80211_sub_if_data *sdata,
-				const u8 *addr, gfp_t gfp)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct ieee80211_hw *hw = &local->hw;
-	struct sta_info *sta;
-	int i;
+काष्ठा sta_info *sta_info_alloc(काष्ठा ieee80211_sub_अगर_data *sdata,
+				स्थिर u8 *addr, gfp_t gfp)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा ieee80211_hw *hw = &local->hw;
+	काष्ठा sta_info *sta;
+	पूर्णांक i;
 
-	sta = kzalloc(sizeof(*sta) + hw->sta_data_size, gfp);
-	if (!sta)
-		return NULL;
+	sta = kzalloc(माप(*sta) + hw->sta_data_size, gfp);
+	अगर (!sta)
+		वापस शून्य;
 
-	if (ieee80211_hw_check(hw, USES_RSS)) {
+	अगर (ieee80211_hw_check(hw, USES_RSS)) अणु
 		sta->pcpu_rx_stats =
-			alloc_percpu_gfp(struct ieee80211_sta_rx_stats, gfp);
-		if (!sta->pcpu_rx_stats)
-			goto free;
-	}
+			alloc_percpu_gfp(काष्ठा ieee80211_sta_rx_stats, gfp);
+		अगर (!sta->pcpu_rx_stats)
+			जाओ मुक्त;
+	पूर्ण
 
 	spin_lock_init(&sta->lock);
 	spin_lock_init(&sta->ps_lock);
 	INIT_WORK(&sta->drv_deliver_wk, sta_deliver_ps_frames);
 	INIT_WORK(&sta->ampdu_mlme.work, ieee80211_ba_session_work);
 	mutex_init(&sta->ampdu_mlme.mtx);
-#ifdef CONFIG_MAC80211_MESH
-	if (ieee80211_vif_is_mesh(&sdata->vif)) {
-		sta->mesh = kzalloc(sizeof(*sta->mesh), gfp);
-		if (!sta->mesh)
-			goto free;
+#अगर_घोषित CONFIG_MAC80211_MESH
+	अगर (ieee80211_vअगर_is_mesh(&sdata->vअगर)) अणु
+		sta->mesh = kzalloc(माप(*sta->mesh), gfp);
+		अगर (!sta->mesh)
+			जाओ मुक्त;
 		sta->mesh->plink_sta = sta;
 		spin_lock_init(&sta->mesh->plink_lock);
-		if (ieee80211_vif_is_mesh(&sdata->vif) &&
+		अगर (ieee80211_vअगर_is_mesh(&sdata->vअगर) &&
 		    !sdata->u.mesh.user_mpm)
-			timer_setup(&sta->mesh->plink_timer, mesh_plink_timer,
+			समयr_setup(&sta->mesh->plink_समयr, mesh_plink_समयr,
 				    0);
 		sta->mesh->nonpeer_pm = NL80211_MESH_POWER_ACTIVE;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	memcpy(sta->addr, addr, ETH_ALEN);
-	memcpy(sta->sta.addr, addr, ETH_ALEN);
+	स_नकल(sta->addr, addr, ETH_ALEN);
+	स_नकल(sta->sta.addr, addr, ETH_ALEN);
 	sta->sta.max_rx_aggregation_subframes =
 		local->hw.max_rx_aggregation_subframes;
 
-	/* Extended Key ID needs to install keys for keyid 0 and 1 Rx-only.
+	/* Extended Key ID needs to install keys क्रम keyid 0 and 1 Rx-only.
 	 * The Tx path starts to use a key as soon as the key slot ptk_idx
-	 * references to is not NULL. To not use the initial Rx-only key
-	 * prematurely for Tx initialize ptk_idx to an impossible PTK keyid
-	 * which always will refer to a NULL key.
+	 * references to is not शून्य. To not use the initial Rx-only key
+	 * prematurely क्रम Tx initialize ptk_idx to an impossible PTK keyid
+	 * which always will refer to a शून्य key.
 	 */
 	BUILD_BUG_ON(ARRAY_SIZE(sta->ptk) <= INVALID_PTK_KEYIDX);
 	sta->ptk_idx = INVALID_PTK_KEYIDX;
 
 	sta->local = local;
 	sta->sdata = sdata;
-	sta->rx_stats.last_rx = jiffies;
+	sta->rx_stats.last_rx = jअगरfies;
 
 	u64_stats_init(&sta->rx_stats.syncp);
 
@@ -399,287 +400,287 @@ struct sta_info *sta_info_alloc(struct ieee80211_sub_if_data *sdata,
 	/* Mark TID as unreserved */
 	sta->reserved_tid = IEEE80211_TID_UNRESERVED;
 
-	sta->last_connected = ktime_get_seconds();
-	ewma_signal_init(&sta->rx_stats_avg.signal);
-	ewma_avg_signal_init(&sta->status_stats.avg_ack_signal);
-	for (i = 0; i < ARRAY_SIZE(sta->rx_stats_avg.chain_signal); i++)
-		ewma_signal_init(&sta->rx_stats_avg.chain_signal[i]);
+	sta->last_connected = kसमय_get_seconds();
+	ewma_संकेत_init(&sta->rx_stats_avg.संकेत);
+	ewma_avg_संकेत_init(&sta->status_stats.avg_ack_संकेत);
+	क्रम (i = 0; i < ARRAY_SIZE(sta->rx_stats_avg.chain_संकेत); i++)
+		ewma_संकेत_init(&sta->rx_stats_avg.chain_संकेत[i]);
 
-	if (local->ops->wake_tx_queue) {
-		void *txq_data;
-		int size = sizeof(struct txq_info) +
-			   ALIGN(hw->txq_data_size, sizeof(void *));
+	अगर (local->ops->wake_tx_queue) अणु
+		व्योम *txq_data;
+		पूर्णांक size = माप(काष्ठा txq_info) +
+			   ALIGN(hw->txq_data_size, माप(व्योम *));
 
-		txq_data = kcalloc(ARRAY_SIZE(sta->sta.txq), size, gfp);
-		if (!txq_data)
-			goto free;
+		txq_data = kसुस्मृति(ARRAY_SIZE(sta->sta.txq), size, gfp);
+		अगर (!txq_data)
+			जाओ मुक्त;
 
-		for (i = 0; i < ARRAY_SIZE(sta->sta.txq); i++) {
-			struct txq_info *txq = txq_data + i * size;
+		क्रम (i = 0; i < ARRAY_SIZE(sta->sta.txq); i++) अणु
+			काष्ठा txq_info *txq = txq_data + i * size;
 
-			/* might not do anything for the bufferable MMPDU TXQ */
+			/* might not करो anything क्रम the bufferable MMPDU TXQ */
 			ieee80211_txq_init(sdata, sta, txq, i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sta_prepare_rate_control(local, sta, gfp))
-		goto free_txq;
+	अगर (sta_prepare_rate_control(local, sta, gfp))
+		जाओ मुक्त_txq;
 
-	sta->airtime_weight = IEEE80211_DEFAULT_AIRTIME_WEIGHT;
+	sta->airसमय_weight = IEEE80211_DEFAULT_AIRTIME_WEIGHT;
 
-	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
+	क्रम (i = 0; i < IEEE80211_NUM_ACS; i++) अणु
 		skb_queue_head_init(&sta->ps_tx_buf[i]);
 		skb_queue_head_init(&sta->tx_filtered[i]);
-		sta->airtime[i].deficit = sta->airtime_weight;
-		atomic_set(&sta->airtime[i].aql_tx_pending, 0);
-		sta->airtime[i].aql_limit_low = local->aql_txq_limit_low[i];
-		sta->airtime[i].aql_limit_high = local->aql_txq_limit_high[i];
-	}
+		sta->airसमय[i].deficit = sta->airसमय_weight;
+		atomic_set(&sta->airसमय[i].aql_tx_pending, 0);
+		sta->airसमय[i].aql_limit_low = local->aql_txq_limit_low[i];
+		sta->airसमय[i].aql_limit_high = local->aql_txq_limit_high[i];
+	पूर्ण
 
-	for (i = 0; i < IEEE80211_NUM_TIDS; i++)
-		sta->last_seq_ctrl[i] = cpu_to_le16(USHRT_MAX);
+	क्रम (i = 0; i < IEEE80211_NUM_TIDS; i++)
+		sta->last_seq_ctrl[i] = cpu_to_le16(अच_लघु_उच्च);
 
-	for (i = 0; i < NUM_NL80211_BANDS; i++) {
+	क्रम (i = 0; i < NUM_NL80211_BANDS; i++) अणु
 		u32 mandatory = 0;
-		int r;
+		पूर्णांक r;
 
-		if (!hw->wiphy->bands[i])
-			continue;
+		अगर (!hw->wiphy->bands[i])
+			जारी;
 
-		switch (i) {
-		case NL80211_BAND_2GHZ:
+		चयन (i) अणु
+		हाल NL80211_BAND_2GHZ:
 			/*
-			 * We use both here, even if we cannot really know for
+			 * We use both here, even अगर we cannot really know क्रम
 			 * sure the station will support both, but the only use
-			 * for this is when we don't know anything yet and send
+			 * क्रम this is when we करोn't know anything yet and send
 			 * management frames, and then we'll pick the lowest
 			 * possible rate anyway.
-			 * If we don't include _G here, we cannot find a rate
+			 * If we करोn't include _G here, we cannot find a rate
 			 * in P2P, and thus trigger the WARN_ONCE() in rate.c
 			 */
 			mandatory = IEEE80211_RATE_MANDATORY_B |
 				    IEEE80211_RATE_MANDATORY_G;
-			break;
-		case NL80211_BAND_5GHZ:
+			अवरोध;
+		हाल NL80211_BAND_5GHZ:
 			mandatory = IEEE80211_RATE_MANDATORY_A;
-			break;
-		case NL80211_BAND_60GHZ:
+			अवरोध;
+		हाल NL80211_BAND_60GHZ:
 			WARN_ON(1);
 			mandatory = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		for (r = 0; r < hw->wiphy->bands[i]->n_bitrates; r++) {
-			struct ieee80211_rate *rate;
+		क्रम (r = 0; r < hw->wiphy->bands[i]->n_bitrates; r++) अणु
+			काष्ठा ieee80211_rate *rate;
 
 			rate = &hw->wiphy->bands[i]->bitrates[r];
 
-			if (!(rate->flags & mandatory))
-				continue;
+			अगर (!(rate->flags & mandatory))
+				जारी;
 			sta->sta.supp_rates[i] |= BIT(r);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	sta->sta.smps_mode = IEEE80211_SMPS_OFF;
-	if (sdata->vif.type == NL80211_IFTYPE_AP ||
-	    sdata->vif.type == NL80211_IFTYPE_AP_VLAN) {
-		struct ieee80211_supported_band *sband;
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_AP ||
+	    sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN) अणु
+		काष्ठा ieee80211_supported_band *sband;
 		u8 smps;
 
 		sband = ieee80211_get_sband(sdata);
-		if (!sband)
-			goto free_txq;
+		अगर (!sband)
+			जाओ मुक्त_txq;
 
 		smps = (sband->ht_cap.cap & IEEE80211_HT_CAP_SM_PS) >>
 			IEEE80211_HT_CAP_SM_PS_SHIFT;
 		/*
 		 * Assume that hostapd advertises our caps in the beacon and
-		 * this is the known_smps_mode for a station that just assciated
+		 * this is the known_smps_mode क्रम a station that just assciated
 		 */
-		switch (smps) {
-		case WLAN_HT_SMPS_CONTROL_DISABLED:
+		चयन (smps) अणु
+		हाल WLAN_HT_SMPS_CONTROL_DISABLED:
 			sta->known_smps_mode = IEEE80211_SMPS_OFF;
-			break;
-		case WLAN_HT_SMPS_CONTROL_STATIC:
+			अवरोध;
+		हाल WLAN_HT_SMPS_CONTROL_STATIC:
 			sta->known_smps_mode = IEEE80211_SMPS_STATIC;
-			break;
-		case WLAN_HT_SMPS_CONTROL_DYNAMIC:
+			अवरोध;
+		हाल WLAN_HT_SMPS_CONTROL_DYNAMIC:
 			sta->known_smps_mode = IEEE80211_SMPS_DYNAMIC;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WARN_ON(1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	sta->sta.max_rc_amsdu_len = IEEE80211_MAX_MPDU_LEN_HT_BA;
 
 	sta->cparams.ce_threshold = CODEL_DISABLED_THRESHOLD;
 	sta->cparams.target = MS2TIME(20);
-	sta->cparams.interval = MS2TIME(100);
+	sta->cparams.पूर्णांकerval = MS2TIME(100);
 	sta->cparams.ecn = true;
 
 	sta_dbg(sdata, "Allocated STA %pM\n", sta->sta.addr);
 
-	return sta;
+	वापस sta;
 
-free_txq:
-	if (sta->sta.txq[0])
-		kfree(to_txq_info(sta->sta.txq[0]));
-free:
-	free_percpu(sta->pcpu_rx_stats);
-#ifdef CONFIG_MAC80211_MESH
-	kfree(sta->mesh);
-#endif
-	kfree(sta);
-	return NULL;
-}
+मुक्त_txq:
+	अगर (sta->sta.txq[0])
+		kमुक्त(to_txq_info(sta->sta.txq[0]));
+मुक्त:
+	मुक्त_percpu(sta->pcpu_rx_stats);
+#अगर_घोषित CONFIG_MAC80211_MESH
+	kमुक्त(sta->mesh);
+#पूर्ण_अगर
+	kमुक्त(sta);
+	वापस शून्य;
+पूर्ण
 
-static int sta_info_insert_check(struct sta_info *sta)
-{
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
+अटल पूर्णांक sta_info_insert_check(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
 
 	/*
 	 * Can't be a WARN_ON because it can be triggered through a race:
 	 * something inserts a STA (on one CPU) without holding the RTNL
 	 * and another CPU turns off the net device.
 	 */
-	if (unlikely(!ieee80211_sdata_running(sdata)))
-		return -ENETDOWN;
+	अगर (unlikely(!ieee80211_sdata_running(sdata)))
+		वापस -ENETDOWN;
 
-	if (WARN_ON(ether_addr_equal(sta->sta.addr, sdata->vif.addr) ||
+	अगर (WARN_ON(ether_addr_equal(sta->sta.addr, sdata->vअगर.addr) ||
 		    is_multicast_ether_addr(sta->sta.addr)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* The RCU read lock is required by rhashtable due to
+	/* The RCU पढ़ो lock is required by rhashtable due to
 	 * asynchronous resize/rehash.  We also require the mutex
-	 * for correctness.
+	 * क्रम correctness.
 	 */
-	rcu_read_lock();
-	lockdep_assert_held(&sdata->local->sta_mtx);
-	if (ieee80211_hw_check(&sdata->local->hw, NEEDS_UNIQUE_STA_ADDR) &&
-	    ieee80211_find_sta_by_ifaddr(&sdata->local->hw, sta->addr, NULL)) {
-		rcu_read_unlock();
-		return -ENOTUNIQ;
-	}
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	lockdep_निश्चित_held(&sdata->local->sta_mtx);
+	अगर (ieee80211_hw_check(&sdata->local->hw, NEEDS_UNIQUE_STA_ADDR) &&
+	    ieee80211_find_sta_by_अगरaddr(&sdata->local->hw, sta->addr, शून्य)) अणु
+		rcu_पढ़ो_unlock();
+		वापस -ENOTUNIQ;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sta_info_insert_drv_state(struct ieee80211_local *local,
-				     struct ieee80211_sub_if_data *sdata,
-				     struct sta_info *sta)
-{
-	enum ieee80211_sta_state state;
-	int err = 0;
+अटल पूर्णांक sta_info_insert_drv_state(काष्ठा ieee80211_local *local,
+				     काष्ठा ieee80211_sub_अगर_data *sdata,
+				     काष्ठा sta_info *sta)
+अणु
+	क्रमागत ieee80211_sta_state state;
+	पूर्णांक err = 0;
 
-	for (state = IEEE80211_STA_NOTEXIST; state < sta->sta_state; state++) {
+	क्रम (state = IEEE80211_STA_NOTEXIST; state < sta->sta_state; state++) अणु
 		err = drv_sta_state(local, sdata, sta, state, state + 1);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	if (!err) {
+	अगर (!err) अणु
 		/*
-		 * Drivers using legacy sta_add/sta_remove callbacks only
+		 * Drivers using legacy sta_add/sta_हटाओ callbacks only
 		 * get uploaded set to true after sta_add is called.
 		 */
-		if (!local->ops->sta_add)
+		अगर (!local->ops->sta_add)
 			sta->uploaded = true;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (sdata->vif.type == NL80211_IFTYPE_ADHOC) {
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_ADHOC) अणु
 		sdata_info(sdata,
 			   "failed to move IBSS STA %pM to state %d (%d) - keeping it anyway\n",
 			   sta->sta.addr, state + 1, err);
 		err = 0;
-	}
+	पूर्ण
 
 	/* unwind on error */
-	for (; state > IEEE80211_STA_NOTEXIST; state--)
+	क्रम (; state > IEEE80211_STA_NOTEXIST; state--)
 		WARN_ON(drv_sta_state(local, sdata, sta, state, state - 1));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-ieee80211_recalc_p2p_go_ps_allowed(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_local *local = sdata->local;
-	bool allow_p2p_go_ps = sdata->vif.p2p;
-	struct sta_info *sta;
+अटल व्योम
+ieee80211_recalc_p2p_go_ps_allowed(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	bool allow_p2p_go_ps = sdata->vअगर.p2p;
+	काष्ठा sta_info *sta;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(sta, &local->sta_list, list) {
-		if (sdata != sta->sdata ||
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(sta, &local->sta_list, list) अणु
+		अगर (sdata != sta->sdata ||
 		    !test_sta_flag(sta, WLAN_STA_ASSOC))
-			continue;
-		if (!sta->sta.support_p2p_ps) {
+			जारी;
+		अगर (!sta->sta.support_p2p_ps) अणु
 			allow_p2p_go_ps = false;
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (allow_p2p_go_ps != sdata->vif.bss_conf.allow_p2p_go_ps) {
-		sdata->vif.bss_conf.allow_p2p_go_ps = allow_p2p_go_ps;
-		ieee80211_bss_info_change_notify(sdata, BSS_CHANGED_P2P_PS);
-	}
-}
+	अगर (allow_p2p_go_ps != sdata->vअगर.bss_conf.allow_p2p_go_ps) अणु
+		sdata->vअगर.bss_conf.allow_p2p_go_ps = allow_p2p_go_ps;
+		ieee80211_bss_info_change_notअगरy(sdata, BSS_CHANGED_P2P_PS);
+	पूर्ण
+पूर्ण
 
 /*
  * should be called with sta_mtx locked
  * this function replaces the mutex lock
  * with a RCU lock
  */
-static int sta_info_insert_finish(struct sta_info *sta) __acquires(RCU)
-{
-	struct ieee80211_local *local = sta->local;
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct station_info *sinfo = NULL;
-	int err = 0;
+अटल पूर्णांक sta_info_insert_finish(काष्ठा sta_info *sta) __acquires(RCU)
+अणु
+	काष्ठा ieee80211_local *local = sta->local;
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा station_info *sinfo = शून्य;
+	पूर्णांक err = 0;
 
-	lockdep_assert_held(&local->sta_mtx);
+	lockdep_निश्चित_held(&local->sta_mtx);
 
-	/* check if STA exists already */
-	if (sta_info_get_bss(sdata, sta->sta.addr)) {
+	/* check अगर STA exists alपढ़ोy */
+	अगर (sta_info_get_bss(sdata, sta->sta.addr)) अणु
 		err = -EEXIST;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	sinfo = kzalloc(sizeof(struct station_info), GFP_KERNEL);
-	if (!sinfo) {
+	sinfo = kzalloc(माप(काष्ठा station_info), GFP_KERNEL);
+	अगर (!sinfo) अणु
 		err = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	local->num_sta++;
 	local->sta_generation++;
 	smp_mb();
 
-	/* simplify things and don't accept BA sessions yet */
+	/* simplअगरy things and करोn't accept BA sessions yet */
 	set_sta_flag(sta, WLAN_STA_BLOCK_BA);
 
 	/* make the station visible */
 	err = sta_info_hash_add(local, sta);
-	if (err)
-		goto out_drop_sta;
+	अगर (err)
+		जाओ out_drop_sta;
 
 	list_add_tail_rcu(&sta->list, &local->sta_list);
 
-	/* notify driver */
+	/* notअगरy driver */
 	err = sta_info_insert_drv_state(local, sdata, sta);
-	if (err)
-		goto out_remove;
+	अगर (err)
+		जाओ out_हटाओ;
 
 	set_sta_flag(sta, WLAN_STA_INSERTED);
 
-	if (sta->sta_state >= IEEE80211_STA_ASSOC) {
+	अगर (sta->sta_state >= IEEE80211_STA_ASSOC) अणु
 		ieee80211_recalc_min_chandef(sta->sdata);
-		if (!sta->sta.support_p2p_ps)
+		अगर (!sta->sta.support_p2p_ps)
 			ieee80211_recalc_p2p_go_ps_allowed(sta->sdata);
-	}
+	पूर्ण
 
 	/* accept BA sessions now */
 	clear_sta_flag(sta, WLAN_STA_BLOCK_BA);
@@ -689,19 +690,19 @@ static int sta_info_insert_finish(struct sta_info *sta) __acquires(RCU)
 
 	sinfo->generation = local->sta_generation;
 	cfg80211_new_sta(sdata->dev, sta->sta.addr, sinfo, GFP_KERNEL);
-	kfree(sinfo);
+	kमुक्त(sinfo);
 
 	sta_dbg(sdata, "Inserted STA %pM\n", sta->sta.addr);
 
-	/* move reference to rcu-protected */
-	rcu_read_lock();
+	/* move reference to rcu-रक्षित */
+	rcu_पढ़ो_lock();
 	mutex_unlock(&local->sta_mtx);
 
-	if (ieee80211_vif_is_mesh(&sdata->vif))
+	अगर (ieee80211_vअगर_is_mesh(&sdata->vअगर))
 		mesh_accept_plinks_update(sdata);
 
-	return 0;
- out_remove:
+	वापस 0;
+ out_हटाओ:
 	sta_info_hash_del(local, sta);
 	list_del_rcu(&sta->list);
  out_drop_sta:
@@ -710,256 +711,256 @@ static int sta_info_insert_finish(struct sta_info *sta) __acquires(RCU)
 	cleanup_single_sta(sta);
  out_err:
 	mutex_unlock(&local->sta_mtx);
-	kfree(sinfo);
-	rcu_read_lock();
-	return err;
-}
+	kमुक्त(sinfo);
+	rcu_पढ़ो_lock();
+	वापस err;
+पूर्ण
 
-int sta_info_insert_rcu(struct sta_info *sta) __acquires(RCU)
-{
-	struct ieee80211_local *local = sta->local;
-	int err;
+पूर्णांक sta_info_insert_rcu(काष्ठा sta_info *sta) __acquires(RCU)
+अणु
+	काष्ठा ieee80211_local *local = sta->local;
+	पूर्णांक err;
 
 	might_sleep();
 
 	mutex_lock(&local->sta_mtx);
 
 	err = sta_info_insert_check(sta);
-	if (err) {
-		sta_info_free(local, sta);
+	अगर (err) अणु
+		sta_info_मुक्त(local, sta);
 		mutex_unlock(&local->sta_mtx);
-		rcu_read_lock();
-		return err;
-	}
+		rcu_पढ़ो_lock();
+		वापस err;
+	पूर्ण
 
-	return sta_info_insert_finish(sta);
-}
+	वापस sta_info_insert_finish(sta);
+पूर्ण
 
-int sta_info_insert(struct sta_info *sta)
-{
-	int err = sta_info_insert_rcu(sta);
+पूर्णांक sta_info_insert(काष्ठा sta_info *sta)
+अणु
+	पूर्णांक err = sta_info_insert_rcu(sta);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline void __bss_tim_set(u8 *tim, u16 id)
-{
+अटल अंतरभूत व्योम __bss_tim_set(u8 *tim, u16 id)
+अणु
 	/*
-	 * This format has been mandated by the IEEE specifications,
-	 * so this line may not be changed to use the __set_bit() format.
+	 * This क्रमmat has been mandated by the IEEE specअगरications,
+	 * so this line may not be changed to use the __set_bit() क्रमmat.
 	 */
 	tim[id / 8] |= (1 << (id % 8));
-}
+पूर्ण
 
-static inline void __bss_tim_clear(u8 *tim, u16 id)
-{
+अटल अंतरभूत व्योम __bss_tim_clear(u8 *tim, u16 id)
+अणु
 	/*
-	 * This format has been mandated by the IEEE specifications,
-	 * so this line may not be changed to use the __clear_bit() format.
+	 * This क्रमmat has been mandated by the IEEE specअगरications,
+	 * so this line may not be changed to use the __clear_bit() क्रमmat.
 	 */
 	tim[id / 8] &= ~(1 << (id % 8));
-}
+पूर्ण
 
-static inline bool __bss_tim_get(u8 *tim, u16 id)
-{
+अटल अंतरभूत bool __bss_tim_get(u8 *tim, u16 id)
+अणु
 	/*
-	 * This format has been mandated by the IEEE specifications,
-	 * so this line may not be changed to use the test_bit() format.
+	 * This क्रमmat has been mandated by the IEEE specअगरications,
+	 * so this line may not be changed to use the test_bit() क्रमmat.
 	 */
-	return tim[id / 8] & (1 << (id % 8));
-}
+	वापस tim[id / 8] & (1 << (id % 8));
+पूर्ण
 
-static unsigned long ieee80211_tids_for_ac(int ac)
-{
+अटल अचिन्हित दीर्घ ieee80211_tids_क्रम_ac(पूर्णांक ac)
+अणु
 	/* If we ever support TIDs > 7, this obviously needs to be adjusted */
-	switch (ac) {
-	case IEEE80211_AC_VO:
-		return BIT(6) | BIT(7);
-	case IEEE80211_AC_VI:
-		return BIT(4) | BIT(5);
-	case IEEE80211_AC_BE:
-		return BIT(0) | BIT(3);
-	case IEEE80211_AC_BK:
-		return BIT(1) | BIT(2);
-	default:
+	चयन (ac) अणु
+	हाल IEEE80211_AC_VO:
+		वापस BIT(6) | BIT(7);
+	हाल IEEE80211_AC_VI:
+		वापस BIT(4) | BIT(5);
+	हाल IEEE80211_AC_BE:
+		वापस BIT(0) | BIT(3);
+	हाल IEEE80211_AC_BK:
+		वापस BIT(1) | BIT(2);
+	शेष:
 		WARN_ON(1);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void __sta_info_recalc_tim(struct sta_info *sta, bool ignore_pending)
-{
-	struct ieee80211_local *local = sta->local;
-	struct ps_data *ps;
+अटल व्योम __sta_info_recalc_tim(काष्ठा sta_info *sta, bool ignore_pending)
+अणु
+	काष्ठा ieee80211_local *local = sta->local;
+	काष्ठा ps_data *ps;
 	bool indicate_tim = false;
-	u8 ignore_for_tim = sta->sta.uapsd_queues;
-	int ac;
+	u8 ignore_क्रम_tim = sta->sta.uapsd_queues;
+	पूर्णांक ac;
 	u16 id = sta->sta.aid;
 
-	if (sta->sdata->vif.type == NL80211_IFTYPE_AP ||
-	    sta->sdata->vif.type == NL80211_IFTYPE_AP_VLAN) {
-		if (WARN_ON_ONCE(!sta->sdata->bss))
-			return;
+	अगर (sta->sdata->vअगर.type == NL80211_IFTYPE_AP ||
+	    sta->sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN) अणु
+		अगर (WARN_ON_ONCE(!sta->sdata->bss))
+			वापस;
 
 		ps = &sta->sdata->bss->ps;
-#ifdef CONFIG_MAC80211_MESH
-	} else if (ieee80211_vif_is_mesh(&sta->sdata->vif)) {
+#अगर_घोषित CONFIG_MAC80211_MESH
+	पूर्ण अन्यथा अगर (ieee80211_vअगर_is_mesh(&sta->sdata->vअगर)) अणु
 		ps = &sta->sdata->u.mesh.ps;
-#endif
-	} else {
-		return;
-	}
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		वापस;
+	पूर्ण
 
-	/* No need to do anything if the driver does all */
-	if (ieee80211_hw_check(&local->hw, AP_LINK_PS) && !local->ops->set_tim)
-		return;
+	/* No need to करो anything अगर the driver करोes all */
+	अगर (ieee80211_hw_check(&local->hw, AP_LINK_PS) && !local->ops->set_tim)
+		वापस;
 
-	if (sta->dead)
-		goto done;
+	अगर (sta->dead)
+		जाओ करोne;
 
 	/*
 	 * If all ACs are delivery-enabled then we should build
-	 * the TIM bit for all ACs anyway; if only some are then
+	 * the TIM bit क्रम all ACs anyway; अगर only some are then
 	 * we ignore those and build the TIM bit using only the
 	 * non-enabled ones.
 	 */
-	if (ignore_for_tim == BIT(IEEE80211_NUM_ACS) - 1)
-		ignore_for_tim = 0;
+	अगर (ignore_क्रम_tim == BIT(IEEE80211_NUM_ACS) - 1)
+		ignore_क्रम_tim = 0;
 
-	if (ignore_pending)
-		ignore_for_tim = BIT(IEEE80211_NUM_ACS) - 1;
+	अगर (ignore_pending)
+		ignore_क्रम_tim = BIT(IEEE80211_NUM_ACS) - 1;
 
-	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
-		unsigned long tids;
+	क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++) अणु
+		अचिन्हित दीर्घ tids;
 
-		if (ignore_for_tim & ieee80211_ac_to_qos_mask[ac])
-			continue;
+		अगर (ignore_क्रम_tim & ieee80211_ac_to_qos_mask[ac])
+			जारी;
 
 		indicate_tim |= !skb_queue_empty(&sta->tx_filtered[ac]) ||
 				!skb_queue_empty(&sta->ps_tx_buf[ac]);
-		if (indicate_tim)
-			break;
+		अगर (indicate_tim)
+			अवरोध;
 
-		tids = ieee80211_tids_for_ac(ac);
+		tids = ieee80211_tids_क्रम_ac(ac);
 
 		indicate_tim |=
 			sta->driver_buffered_tids & tids;
 		indicate_tim |=
 			sta->txq_buffered_tids & tids;
-	}
+	पूर्ण
 
- done:
+ करोne:
 	spin_lock_bh(&local->tim_lock);
 
-	if (indicate_tim == __bss_tim_get(ps->tim, id))
-		goto out_unlock;
+	अगर (indicate_tim == __bss_tim_get(ps->tim, id))
+		जाओ out_unlock;
 
-	if (indicate_tim)
+	अगर (indicate_tim)
 		__bss_tim_set(ps->tim, id);
-	else
+	अन्यथा
 		__bss_tim_clear(ps->tim, id);
 
-	if (local->ops->set_tim && !WARN_ON(sta->dead)) {
+	अगर (local->ops->set_tim && !WARN_ON(sta->dead)) अणु
 		local->tim_in_locked_section = true;
 		drv_set_tim(local, &sta->sta, indicate_tim);
 		local->tim_in_locked_section = false;
-	}
+	पूर्ण
 
 out_unlock:
 	spin_unlock_bh(&local->tim_lock);
-}
+पूर्ण
 
-void sta_info_recalc_tim(struct sta_info *sta)
-{
+व्योम sta_info_recalc_tim(काष्ठा sta_info *sta)
+अणु
 	__sta_info_recalc_tim(sta, false);
-}
+पूर्ण
 
-static bool sta_info_buffer_expired(struct sta_info *sta, struct sk_buff *skb)
-{
-	struct ieee80211_tx_info *info;
-	int timeout;
+अटल bool sta_info_buffer_expired(काष्ठा sta_info *sta, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_tx_info *info;
+	पूर्णांक समयout;
 
-	if (!skb)
-		return false;
+	अगर (!skb)
+		वापस false;
 
 	info = IEEE80211_SKB_CB(skb);
 
-	/* Timeout: (2 * listen_interval * beacon_int * 1024 / 1000000) sec */
-	timeout = (sta->listen_interval *
-		   sta->sdata->vif.bss_conf.beacon_int *
+	/* Timeout: (2 * listen_पूर्णांकerval * beacon_पूर्णांक * 1024 / 1000000) sec */
+	समयout = (sta->listen_पूर्णांकerval *
+		   sta->sdata->vअगर.bss_conf.beacon_पूर्णांक *
 		   32 / 15625) * HZ;
-	if (timeout < STA_TX_BUFFER_EXPIRE)
-		timeout = STA_TX_BUFFER_EXPIRE;
-	return time_after(jiffies, info->control.jiffies + timeout);
-}
+	अगर (समयout < STA_TX_BUFFER_EXPIRE)
+		समयout = STA_TX_BUFFER_EXPIRE;
+	वापस समय_after(jअगरfies, info->control.jअगरfies + समयout);
+पूर्ण
 
 
-static bool sta_info_cleanup_expire_buffered_ac(struct ieee80211_local *local,
-						struct sta_info *sta, int ac)
-{
-	unsigned long flags;
-	struct sk_buff *skb;
+अटल bool sta_info_cleanup_expire_buffered_ac(काष्ठा ieee80211_local *local,
+						काष्ठा sta_info *sta, पूर्णांक ac)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा sk_buff *skb;
 
 	/*
-	 * First check for frames that should expire on the filtered
+	 * First check क्रम frames that should expire on the filtered
 	 * queue. Frames here were rejected by the driver and are on
-	 * a separate queue to avoid reordering with normal PS-buffered
-	 * frames. They also aren't accounted for right now in the
+	 * a separate queue to aव्योम reordering with normal PS-buffered
+	 * frames. They also aren't accounted क्रम right now in the
 	 * total_ps_buffered counter.
 	 */
-	for (;;) {
+	क्रम (;;) अणु
 		spin_lock_irqsave(&sta->tx_filtered[ac].lock, flags);
 		skb = skb_peek(&sta->tx_filtered[ac]);
-		if (sta_info_buffer_expired(sta, skb))
+		अगर (sta_info_buffer_expired(sta, skb))
 			skb = __skb_dequeue(&sta->tx_filtered[ac]);
-		else
-			skb = NULL;
+		अन्यथा
+			skb = शून्य;
 		spin_unlock_irqrestore(&sta->tx_filtered[ac].lock, flags);
 
 		/*
-		 * Frames are queued in order, so if this one
+		 * Frames are queued in order, so अगर this one
 		 * hasn't expired yet we can stop testing. If
 		 * we actually reached the end of the queue we
 		 * also need to stop, of course.
 		 */
-		if (!skb)
-			break;
-		ieee80211_free_txskb(&local->hw, skb);
-	}
+		अगर (!skb)
+			अवरोध;
+		ieee80211_मुक्त_txskb(&local->hw, skb);
+	पूर्ण
 
 	/*
 	 * Now also check the normal PS-buffered queue, this will
-	 * only find something if the filtered queue was emptied
-	 * since the filtered frames are all before the normal PS
+	 * only find something अगर the filtered queue was emptied
+	 * since the filtered frames are all beक्रमe the normal PS
 	 * buffered frames.
 	 */
-	for (;;) {
+	क्रम (;;) अणु
 		spin_lock_irqsave(&sta->ps_tx_buf[ac].lock, flags);
 		skb = skb_peek(&sta->ps_tx_buf[ac]);
-		if (sta_info_buffer_expired(sta, skb))
+		अगर (sta_info_buffer_expired(sta, skb))
 			skb = __skb_dequeue(&sta->ps_tx_buf[ac]);
-		else
-			skb = NULL;
+		अन्यथा
+			skb = शून्य;
 		spin_unlock_irqrestore(&sta->ps_tx_buf[ac].lock, flags);
 
 		/*
-		 * frames are queued in order, so if this one
+		 * frames are queued in order, so अगर this one
 		 * hasn't expired yet (or we reached the end of
 		 * the queue) we can stop testing
 		 */
-		if (!skb)
-			break;
+		अगर (!skb)
+			अवरोध;
 
 		local->total_ps_buffered--;
 		ps_dbg(sta->sdata, "Buffered frame expired (STA %pM)\n",
 		       sta->sta.addr);
-		ieee80211_free_txskb(&local->hw, skb);
-	}
+		ieee80211_मुक्त_txskb(&local->hw, skb);
+	पूर्ण
 
 	/*
-	 * Finally, recalculate the TIM bit for this station -- it might
+	 * Finally, recalculate the TIM bit क्रम this station -- it might
 	 * now be clear because the station was too slow to retrieve its
 	 * frames.
 	 */
@@ -967,110 +968,110 @@ static bool sta_info_cleanup_expire_buffered_ac(struct ieee80211_local *local,
 
 	/*
 	 * Return whether there are any frames still buffered, this is
-	 * used to check whether the cleanup timer still needs to run,
-	 * if there are no frames we don't need to rearm the timer.
+	 * used to check whether the cleanup समयr still needs to run,
+	 * अगर there are no frames we करोn't need to rearm the समयr.
 	 */
-	return !(skb_queue_empty(&sta->ps_tx_buf[ac]) &&
+	वापस !(skb_queue_empty(&sta->ps_tx_buf[ac]) &&
 		 skb_queue_empty(&sta->tx_filtered[ac]));
-}
+पूर्ण
 
-static bool sta_info_cleanup_expire_buffered(struct ieee80211_local *local,
-					     struct sta_info *sta)
-{
+अटल bool sta_info_cleanup_expire_buffered(काष्ठा ieee80211_local *local,
+					     काष्ठा sta_info *sta)
+अणु
 	bool have_buffered = false;
-	int ac;
+	पूर्णांक ac;
 
-	/* This is only necessary for stations on BSS/MBSS interfaces */
-	if (!sta->sdata->bss &&
-	    !ieee80211_vif_is_mesh(&sta->sdata->vif))
-		return false;
+	/* This is only necessary क्रम stations on BSS/MBSS पूर्णांकerfaces */
+	अगर (!sta->sdata->bss &&
+	    !ieee80211_vअगर_is_mesh(&sta->sdata->vअगर))
+		वापस false;
 
-	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
+	क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
 		have_buffered |=
 			sta_info_cleanup_expire_buffered_ac(local, sta, ac);
 
-	return have_buffered;
-}
+	वापस have_buffered;
+पूर्ण
 
-static int __must_check __sta_info_destroy_part1(struct sta_info *sta)
-{
-	struct ieee80211_local *local;
-	struct ieee80211_sub_if_data *sdata;
-	int ret;
+अटल पूर्णांक __must_check __sta_info_destroy_part1(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_local *local;
+	काष्ठा ieee80211_sub_अगर_data *sdata;
+	पूर्णांक ret;
 
 	might_sleep();
 
-	if (!sta)
-		return -ENOENT;
+	अगर (!sta)
+		वापस -ENOENT;
 
 	local = sta->local;
 	sdata = sta->sdata;
 
-	lockdep_assert_held(&local->sta_mtx);
+	lockdep_निश्चित_held(&local->sta_mtx);
 
 	/*
-	 * Before removing the station from the driver and
+	 * Beक्रमe removing the station from the driver and
 	 * rate control, it might still start new aggregation
-	 * sessions -- block that to make sure the tear-down
+	 * sessions -- block that to make sure the tear-करोwn
 	 * will be sufficient.
 	 */
 	set_sta_flag(sta, WLAN_STA_BLOCK_BA);
-	ieee80211_sta_tear_down_BA_sessions(sta, AGG_STOP_DESTROY_STA);
+	ieee80211_sta_tear_करोwn_BA_sessions(sta, AGG_STOP_DESTROY_STA);
 
 	/*
-	 * Before removing the station from the driver there might be pending
-	 * rx frames on RSS queues sent prior to the disassociation - wait for
+	 * Beक्रमe removing the station from the driver there might be pending
+	 * rx frames on RSS queues sent prior to the disassociation - रुको क्रम
 	 * all such frames to be processed.
 	 */
 	drv_sync_rx_queues(local, sta);
 
 	ret = sta_info_hash_del(local, sta);
-	if (WARN_ON(ret))
-		return ret;
+	अगर (WARN_ON(ret))
+		वापस ret;
 
 	/*
-	 * for TDLS peers, make sure to return to the base channel before
+	 * क्रम TDLS peers, make sure to वापस to the base channel beक्रमe
 	 * removal.
 	 */
-	if (test_sta_flag(sta, WLAN_STA_TDLS_OFF_CHANNEL)) {
-		drv_tdls_cancel_channel_switch(local, sdata, &sta->sta);
+	अगर (test_sta_flag(sta, WLAN_STA_TDLS_OFF_CHANNEL)) अणु
+		drv_tdls_cancel_channel_चयन(local, sdata, &sta->sta);
 		clear_sta_flag(sta, WLAN_STA_TDLS_OFF_CHANNEL);
-	}
+	पूर्ण
 
 	list_del_rcu(&sta->list);
-	sta->removed = true;
+	sta->हटाओd = true;
 
-	drv_sta_pre_rcu_remove(local, sta->sdata, sta);
+	drv_sta_pre_rcu_हटाओ(local, sta->sdata, sta);
 
-	if (sdata->vif.type == NL80211_IFTYPE_AP_VLAN &&
-	    rcu_access_pointer(sdata->u.vlan.sta) == sta)
-		RCU_INIT_POINTER(sdata->u.vlan.sta, NULL);
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN &&
+	    rcu_access_poपूर्णांकer(sdata->u.vlan.sta) == sta)
+		RCU_INIT_POINTER(sdata->u.vlan.sta, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __sta_info_destroy_part2(struct sta_info *sta)
-{
-	struct ieee80211_local *local = sta->local;
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct station_info *sinfo;
-	int ret;
+अटल व्योम __sta_info_destroy_part2(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_local *local = sta->local;
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा station_info *sinfo;
+	पूर्णांक ret;
 
 	/*
-	 * NOTE: This assumes at least synchronize_net() was done
-	 *	 after _part1 and before _part2!
+	 * NOTE: This assumes at least synchronize_net() was करोne
+	 *	 after _part1 and beक्रमe _part2!
 	 */
 
 	might_sleep();
-	lockdep_assert_held(&local->sta_mtx);
+	lockdep_निश्चित_held(&local->sta_mtx);
 
-	if (sta->sta_state == IEEE80211_STA_AUTHORIZED) {
+	अगर (sta->sta_state == IEEE80211_STA_AUTHORIZED) अणु
 		ret = sta_info_move_state(sta, IEEE80211_STA_ASSOC);
 		WARN_ON_ONCE(ret);
-	}
+	पूर्ण
 
-	/* now keys can no longer be reached */
-	ieee80211_free_sta_keys(local, sta);
+	/* now keys can no दीर्घer be reached */
+	ieee80211_मुक्त_sta_keys(local, sta);
 
 	/* disable TIM bit - last chance to tell driver */
 	__sta_info_recalc_tim(sta, true);
@@ -1080,246 +1081,246 @@ static void __sta_info_destroy_part2(struct sta_info *sta)
 	local->num_sta--;
 	local->sta_generation++;
 
-	while (sta->sta_state > IEEE80211_STA_NONE) {
+	जबतक (sta->sta_state > IEEE80211_STA_NONE) अणु
 		ret = sta_info_move_state(sta, sta->sta_state - 1);
-		if (ret) {
+		अगर (ret) अणु
 			WARN_ON_ONCE(1);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (sta->uploaded) {
+	अगर (sta->uploaded) अणु
 		ret = drv_sta_state(local, sdata, sta, IEEE80211_STA_NONE,
 				    IEEE80211_STA_NOTEXIST);
 		WARN_ON_ONCE(ret != 0);
-	}
+	पूर्ण
 
 	sta_dbg(sdata, "Removed STA %pM\n", sta->sta.addr);
 
-	sinfo = kzalloc(sizeof(*sinfo), GFP_KERNEL);
-	if (sinfo)
+	sinfo = kzalloc(माप(*sinfo), GFP_KERNEL);
+	अगर (sinfo)
 		sta_set_sinfo(sta, sinfo, true);
 	cfg80211_del_sta_sinfo(sdata->dev, sta->sta.addr, sinfo, GFP_KERNEL);
-	kfree(sinfo);
+	kमुक्त(sinfo);
 
-	ieee80211_sta_debugfs_remove(sta);
+	ieee80211_sta_debugfs_हटाओ(sta);
 
 	ieee80211_destroy_frag_cache(&sta->frags);
 
 	cleanup_single_sta(sta);
-}
+पूर्ण
 
-int __must_check __sta_info_destroy(struct sta_info *sta)
-{
-	int err = __sta_info_destroy_part1(sta);
+पूर्णांक __must_check __sta_info_destroy(काष्ठा sta_info *sta)
+अणु
+	पूर्णांक err = __sta_info_destroy_part1(sta);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	synchronize_net();
 
 	__sta_info_destroy_part2(sta);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sta_info_destroy_addr(struct ieee80211_sub_if_data *sdata, const u8 *addr)
-{
-	struct sta_info *sta;
-	int ret;
+पूर्णांक sta_info_destroy_addr(काष्ठा ieee80211_sub_अगर_data *sdata, स्थिर u8 *addr)
+अणु
+	काष्ठा sta_info *sta;
+	पूर्णांक ret;
 
 	mutex_lock(&sdata->local->sta_mtx);
 	sta = sta_info_get(sdata, addr);
 	ret = __sta_info_destroy(sta);
 	mutex_unlock(&sdata->local->sta_mtx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int sta_info_destroy_addr_bss(struct ieee80211_sub_if_data *sdata,
-			      const u8 *addr)
-{
-	struct sta_info *sta;
-	int ret;
+पूर्णांक sta_info_destroy_addr_bss(काष्ठा ieee80211_sub_अगर_data *sdata,
+			      स्थिर u8 *addr)
+अणु
+	काष्ठा sta_info *sta;
+	पूर्णांक ret;
 
 	mutex_lock(&sdata->local->sta_mtx);
 	sta = sta_info_get_bss(sdata, addr);
 	ret = __sta_info_destroy(sta);
 	mutex_unlock(&sdata->local->sta_mtx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sta_info_cleanup(struct timer_list *t)
-{
-	struct ieee80211_local *local = from_timer(local, t, sta_cleanup);
-	struct sta_info *sta;
-	bool timer_needed = false;
+अटल व्योम sta_info_cleanup(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ieee80211_local *local = from_समयr(local, t, sta_cleanup);
+	काष्ठा sta_info *sta;
+	bool समयr_needed = false;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(sta, &local->sta_list, list)
-		if (sta_info_cleanup_expire_buffered(local, sta))
-			timer_needed = true;
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(sta, &local->sta_list, list)
+		अगर (sta_info_cleanup_expire_buffered(local, sta))
+			समयr_needed = true;
+	rcu_पढ़ो_unlock();
 
-	if (local->quiescing)
-		return;
+	अगर (local->quiescing)
+		वापस;
 
-	if (!timer_needed)
-		return;
+	अगर (!समयr_needed)
+		वापस;
 
-	mod_timer(&local->sta_cleanup,
-		  round_jiffies(jiffies + STA_INFO_CLEANUP_INTERVAL));
-}
+	mod_समयr(&local->sta_cleanup,
+		  round_jअगरfies(jअगरfies + STA_INFO_CLEANUP_INTERVAL));
+पूर्ण
 
-int sta_info_init(struct ieee80211_local *local)
-{
-	int err;
+पूर्णांक sta_info_init(काष्ठा ieee80211_local *local)
+अणु
+	पूर्णांक err;
 
 	err = rhltable_init(&local->sta_hash, &sta_rht_params);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	spin_lock_init(&local->tim_lock);
 	mutex_init(&local->sta_mtx);
 	INIT_LIST_HEAD(&local->sta_list);
 
-	timer_setup(&local->sta_cleanup, sta_info_cleanup, 0);
-	return 0;
-}
+	समयr_setup(&local->sta_cleanup, sta_info_cleanup, 0);
+	वापस 0;
+पूर्ण
 
-void sta_info_stop(struct ieee80211_local *local)
-{
-	del_timer_sync(&local->sta_cleanup);
+व्योम sta_info_stop(काष्ठा ieee80211_local *local)
+अणु
+	del_समयr_sync(&local->sta_cleanup);
 	rhltable_destroy(&local->sta_hash);
-}
+पूर्ण
 
 
-int __sta_info_flush(struct ieee80211_sub_if_data *sdata, bool vlans)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct sta_info *sta, *tmp;
-	LIST_HEAD(free_list);
-	int ret = 0;
+पूर्णांक __sta_info_flush(काष्ठा ieee80211_sub_अगर_data *sdata, bool vlans)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sta_info *sta, *पंचांगp;
+	LIST_HEAD(मुक्त_list);
+	पूर्णांक ret = 0;
 
 	might_sleep();
 
-	WARN_ON(vlans && sdata->vif.type != NL80211_IFTYPE_AP);
+	WARN_ON(vlans && sdata->vअगर.type != NL80211_IFTYPE_AP);
 	WARN_ON(vlans && !sdata->bss);
 
 	mutex_lock(&local->sta_mtx);
-	list_for_each_entry_safe(sta, tmp, &local->sta_list, list) {
-		if (sdata == sta->sdata ||
-		    (vlans && sdata->bss == sta->sdata->bss)) {
-			if (!WARN_ON(__sta_info_destroy_part1(sta)))
-				list_add(&sta->free_list, &free_list);
+	list_क्रम_each_entry_safe(sta, पंचांगp, &local->sta_list, list) अणु
+		अगर (sdata == sta->sdata ||
+		    (vlans && sdata->bss == sta->sdata->bss)) अणु
+			अगर (!WARN_ON(__sta_info_destroy_part1(sta)))
+				list_add(&sta->मुक्त_list, &मुक्त_list);
 			ret++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!list_empty(&free_list)) {
+	अगर (!list_empty(&मुक्त_list)) अणु
 		synchronize_net();
-		list_for_each_entry_safe(sta, tmp, &free_list, free_list)
+		list_क्रम_each_entry_safe(sta, पंचांगp, &मुक्त_list, मुक्त_list)
 			__sta_info_destroy_part2(sta);
-	}
+	पूर्ण
 	mutex_unlock(&local->sta_mtx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ieee80211_sta_expire(struct ieee80211_sub_if_data *sdata,
-			  unsigned long exp_time)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct sta_info *sta, *tmp;
+व्योम ieee80211_sta_expire(काष्ठा ieee80211_sub_अगर_data *sdata,
+			  अचिन्हित दीर्घ exp_समय)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sta_info *sta, *पंचांगp;
 
 	mutex_lock(&local->sta_mtx);
 
-	list_for_each_entry_safe(sta, tmp, &local->sta_list, list) {
-		unsigned long last_active = ieee80211_sta_last_active(sta);
+	list_क्रम_each_entry_safe(sta, पंचांगp, &local->sta_list, list) अणु
+		अचिन्हित दीर्घ last_active = ieee80211_sta_last_active(sta);
 
-		if (sdata != sta->sdata)
-			continue;
+		अगर (sdata != sta->sdata)
+			जारी;
 
-		if (time_is_before_jiffies(last_active + exp_time)) {
+		अगर (समय_is_beक्रमe_jअगरfies(last_active + exp_समय)) अणु
 			sta_dbg(sta->sdata, "expiring inactive STA %pM\n",
 				sta->sta.addr);
 
-			if (ieee80211_vif_is_mesh(&sdata->vif) &&
+			अगर (ieee80211_vअगर_is_mesh(&sdata->vअगर) &&
 			    test_sta_flag(sta, WLAN_STA_PS_STA))
 				atomic_dec(&sdata->u.mesh.ps.num_sta_ps);
 
 			WARN_ON(__sta_info_destroy(sta));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&local->sta_mtx);
-}
+पूर्ण
 
-struct ieee80211_sta *ieee80211_find_sta_by_ifaddr(struct ieee80211_hw *hw,
-						   const u8 *addr,
-						   const u8 *localaddr)
-{
-	struct ieee80211_local *local = hw_to_local(hw);
-	struct rhlist_head *tmp;
-	struct sta_info *sta;
+काष्ठा ieee80211_sta *ieee80211_find_sta_by_अगरaddr(काष्ठा ieee80211_hw *hw,
+						   स्थिर u8 *addr,
+						   स्थिर u8 *localaddr)
+अणु
+	काष्ठा ieee80211_local *local = hw_to_local(hw);
+	काष्ठा rhlist_head *पंचांगp;
+	काष्ठा sta_info *sta;
 
 	/*
-	 * Just return a random station if localaddr is NULL
+	 * Just वापस a अक्रमom station अगर localaddr is शून्य
 	 * ... first in list.
 	 */
-	for_each_sta_info(local, addr, sta, tmp) {
-		if (localaddr &&
-		    !ether_addr_equal(sta->sdata->vif.addr, localaddr))
-			continue;
-		if (!sta->uploaded)
-			return NULL;
-		return &sta->sta;
-	}
+	क्रम_each_sta_info(local, addr, sta, पंचांगp) अणु
+		अगर (localaddr &&
+		    !ether_addr_equal(sta->sdata->vअगर.addr, localaddr))
+			जारी;
+		अगर (!sta->uploaded)
+			वापस शून्य;
+		वापस &sta->sta;
+	पूर्ण
 
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(ieee80211_find_sta_by_ifaddr);
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(ieee80211_find_sta_by_अगरaddr);
 
-struct ieee80211_sta *ieee80211_find_sta(struct ieee80211_vif *vif,
-					 const u8 *addr)
-{
-	struct sta_info *sta;
+काष्ठा ieee80211_sta *ieee80211_find_sta(काष्ठा ieee80211_vअगर *vअगर,
+					 स्थिर u8 *addr)
+अणु
+	काष्ठा sta_info *sta;
 
-	if (!vif)
-		return NULL;
+	अगर (!vअगर)
+		वापस शून्य;
 
-	sta = sta_info_get_bss(vif_to_sdata(vif), addr);
-	if (!sta)
-		return NULL;
+	sta = sta_info_get_bss(vअगर_to_sdata(vअगर), addr);
+	अगर (!sta)
+		वापस शून्य;
 
-	if (!sta->uploaded)
-		return NULL;
+	अगर (!sta->uploaded)
+		वापस शून्य;
 
-	return &sta->sta;
-}
+	वापस &sta->sta;
+पूर्ण
 EXPORT_SYMBOL(ieee80211_find_sta);
 
-/* powersave support code */
-void ieee80211_sta_ps_deliver_wakeup(struct sta_info *sta)
-{
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct ieee80211_local *local = sdata->local;
-	struct sk_buff_head pending;
-	int filtered = 0, buffered = 0, ac, i;
-	unsigned long flags;
-	struct ps_data *ps;
+/* घातersave support code */
+व्योम ieee80211_sta_ps_deliver_wakeup(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sk_buff_head pending;
+	पूर्णांक filtered = 0, buffered = 0, ac, i;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ps_data *ps;
 
-	if (sdata->vif.type == NL80211_IFTYPE_AP_VLAN)
-		sdata = container_of(sdata->bss, struct ieee80211_sub_if_data,
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN)
+		sdata = container_of(sdata->bss, काष्ठा ieee80211_sub_अगर_data,
 				     u.ap);
 
-	if (sdata->vif.type == NL80211_IFTYPE_AP)
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_AP)
 		ps = &sdata->bss->ps;
-	else if (ieee80211_vif_is_mesh(&sdata->vif))
+	अन्यथा अगर (ieee80211_vअगर_is_mesh(&sdata->vअगर))
 		ps = &sdata->u.mesh.ps;
-	else
-		return;
+	अन्यथा
+		वापस;
 
 	clear_sta_flag(sta, WLAN_STA_SP);
 
@@ -1327,45 +1328,45 @@ void ieee80211_sta_ps_deliver_wakeup(struct sta_info *sta)
 	sta->driver_buffered_tids = 0;
 	sta->txq_buffered_tids = 0;
 
-	if (!ieee80211_hw_check(&local->hw, AP_LINK_PS))
-		drv_sta_notify(local, sdata, STA_NOTIFY_AWAKE, &sta->sta);
+	अगर (!ieee80211_hw_check(&local->hw, AP_LINK_PS))
+		drv_sta_notअगरy(local, sdata, STA_NOTIFY_AWAKE, &sta->sta);
 
-	for (i = 0; i < ARRAY_SIZE(sta->sta.txq); i++) {
-		if (!sta->sta.txq[i] || !txq_has_queue(sta->sta.txq[i]))
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(sta->sta.txq); i++) अणु
+		अगर (!sta->sta.txq[i] || !txq_has_queue(sta->sta.txq[i]))
+			जारी;
 
 		schedule_and_wake_txq(local, to_txq_info(sta->sta.txq[i]));
-	}
+	पूर्ण
 
 	skb_queue_head_init(&pending);
 
 	/* sync with ieee80211_tx_h_unicast_ps_buf */
 	spin_lock(&sta->ps_lock);
 	/* Send all buffered frames to the station */
-	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
-		int count = skb_queue_len(&pending), tmp;
+	क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++) अणु
+		पूर्णांक count = skb_queue_len(&pending), पंचांगp;
 
 		spin_lock_irqsave(&sta->tx_filtered[ac].lock, flags);
 		skb_queue_splice_tail_init(&sta->tx_filtered[ac], &pending);
 		spin_unlock_irqrestore(&sta->tx_filtered[ac].lock, flags);
-		tmp = skb_queue_len(&pending);
-		filtered += tmp - count;
-		count = tmp;
+		पंचांगp = skb_queue_len(&pending);
+		filtered += पंचांगp - count;
+		count = पंचांगp;
 
 		spin_lock_irqsave(&sta->ps_tx_buf[ac].lock, flags);
 		skb_queue_splice_tail_init(&sta->ps_tx_buf[ac], &pending);
 		spin_unlock_irqrestore(&sta->ps_tx_buf[ac].lock, flags);
-		tmp = skb_queue_len(&pending);
-		buffered += tmp - count;
-	}
+		पंचांगp = skb_queue_len(&pending);
+		buffered += पंचांगp - count;
+	पूर्ण
 
 	ieee80211_add_pending_skbs(local, &pending);
 
-	/* now we're no longer in the deliver code */
+	/* now we're no दीर्घer in the deliver code */
 	clear_sta_flag(sta, WLAN_STA_PS_DELIVER);
 
-	/* The station might have polled and then woken up before we responded,
-	 * so clear these flags now to avoid them sticking around.
+	/* The station might have polled and then woken up beक्रमe we responded,
+	 * so clear these flags now to aव्योम them sticking around.
 	 */
 	clear_sta_flag(sta, WLAN_STA_PSPOLL);
 	clear_sta_flag(sta, WLAN_STA_UAPSD);
@@ -1382,71 +1383,71 @@ void ieee80211_sta_ps_deliver_wakeup(struct sta_info *sta)
 	       sta->sta.addr, sta->sta.aid, filtered, buffered);
 
 	ieee80211_check_fast_xmit(sta);
-}
+पूर्ण
 
-static void ieee80211_send_null_response(struct sta_info *sta, int tid,
-					 enum ieee80211_frame_release_type reason,
+अटल व्योम ieee80211_send_null_response(काष्ठा sta_info *sta, पूर्णांक tid,
+					 क्रमागत ieee80211_frame_release_type reason,
 					 bool call_driver, bool more_data)
-{
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct ieee80211_local *local = sdata->local;
-	struct ieee80211_qos_hdr *nullfunc;
-	struct sk_buff *skb;
-	int size = sizeof(*nullfunc);
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा ieee80211_qos_hdr *nullfunc;
+	काष्ठा sk_buff *skb;
+	पूर्णांक size = माप(*nullfunc);
 	__le16 fc;
 	bool qos = sta->sta.wme;
-	struct ieee80211_tx_info *info;
-	struct ieee80211_chanctx_conf *chanctx_conf;
+	काष्ठा ieee80211_tx_info *info;
+	काष्ठा ieee80211_chanctx_conf *chanctx_conf;
 
 	/* Don't send NDPs when STA is connected HE */
-	if (sdata->vif.type == NL80211_IFTYPE_STATION &&
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_STATION &&
 	    !(sdata->u.mgd.flags & IEEE80211_STA_DISABLE_HE))
-		return;
+		वापस;
 
-	if (qos) {
+	अगर (qos) अणु
 		fc = cpu_to_le16(IEEE80211_FTYPE_DATA |
-				 IEEE80211_STYPE_QOS_NULLFUNC |
+				 IEEE80211_STYPE_QOS_शून्यFUNC |
 				 IEEE80211_FCTL_FROMDS);
-	} else {
+	पूर्ण अन्यथा अणु
 		size -= 2;
 		fc = cpu_to_le16(IEEE80211_FTYPE_DATA |
-				 IEEE80211_STYPE_NULLFUNC |
+				 IEEE80211_STYPE_शून्यFUNC |
 				 IEEE80211_FCTL_FROMDS);
-	}
+	पूर्ण
 
 	skb = dev_alloc_skb(local->hw.extra_tx_headroom + size);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	skb_reserve(skb, local->hw.extra_tx_headroom);
 
 	nullfunc = skb_put(skb, size);
 	nullfunc->frame_control = fc;
 	nullfunc->duration_id = 0;
-	memcpy(nullfunc->addr1, sta->sta.addr, ETH_ALEN);
-	memcpy(nullfunc->addr2, sdata->vif.addr, ETH_ALEN);
-	memcpy(nullfunc->addr3, sdata->vif.addr, ETH_ALEN);
+	स_नकल(nullfunc->addr1, sta->sta.addr, ETH_ALEN);
+	स_नकल(nullfunc->addr2, sdata->vअगर.addr, ETH_ALEN);
+	स_नकल(nullfunc->addr3, sdata->vअगर.addr, ETH_ALEN);
 	nullfunc->seq_ctrl = 0;
 
 	skb->priority = tid;
 	skb_set_queue_mapping(skb, ieee802_1d_to_ac[tid]);
-	if (qos) {
+	अगर (qos) अणु
 		nullfunc->qos_ctrl = cpu_to_le16(tid);
 
-		if (reason == IEEE80211_FRAME_RELEASE_UAPSD) {
+		अगर (reason == IEEE80211_FRAME_RELEASE_UAPSD) अणु
 			nullfunc->qos_ctrl |=
 				cpu_to_le16(IEEE80211_QOS_CTL_EOSP);
-			if (more_data)
+			अगर (more_data)
 				nullfunc->frame_control |=
 					cpu_to_le16(IEEE80211_FCTL_MOREDATA);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	info = IEEE80211_SKB_CB(skb);
 
 	/*
 	 * Tell TX path to send this frame even though the
-	 * STA may still remain is PS mode after this frame
+	 * STA may still reमुख्य is PS mode after this frame
 	 * exchange. Also set EOSP to indicate this packet
 	 * ends the poll/service period.
 	 */
@@ -1456,134 +1457,134 @@ static void ieee80211_send_null_response(struct sta_info *sta, int tid,
 
 	info->control.flags |= IEEE80211_TX_CTRL_PS_RESPONSE;
 
-	if (call_driver)
+	अगर (call_driver)
 		drv_allow_buffered_frames(local, sta, BIT(tid), 1,
 					  reason, false);
 
 	skb->dev = sdata->dev;
 
-	rcu_read_lock();
-	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
-	if (WARN_ON(!chanctx_conf)) {
-		rcu_read_unlock();
-		kfree_skb(skb);
-		return;
-	}
+	rcu_पढ़ो_lock();
+	chanctx_conf = rcu_dereference(sdata->vअगर.chanctx_conf);
+	अगर (WARN_ON(!chanctx_conf)) अणु
+		rcu_पढ़ो_unlock();
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	info->band = chanctx_conf->def.chan->band;
 	ieee80211_xmit(sdata, sta, skb);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int find_highest_prio_tid(unsigned long tids)
-{
+अटल पूर्णांक find_highest_prio_tid(अचिन्हित दीर्घ tids)
+अणु
 	/* lower 3 TIDs aren't ordered perfectly */
-	if (tids & 0xF8)
-		return fls(tids) - 1;
+	अगर (tids & 0xF8)
+		वापस fls(tids) - 1;
 	/* TID 0 is BE just like TID 3 */
-	if (tids & BIT(0))
-		return 0;
-	return fls(tids) - 1;
-}
+	अगर (tids & BIT(0))
+		वापस 0;
+	वापस fls(tids) - 1;
+पूर्ण
 
-/* Indicates if the MORE_DATA bit should be set in the last
+/* Indicates अगर the MORE_DATA bit should be set in the last
  * frame obtained by ieee80211_sta_ps_get_frames.
- * Note that driver_release_tids is relevant only if
+ * Note that driver_release_tids is relevant only अगर
  * reason = IEEE80211_FRAME_RELEASE_PSPOLL
  */
-static bool
-ieee80211_sta_ps_more_data(struct sta_info *sta, u8 ignored_acs,
-			   enum ieee80211_frame_release_type reason,
-			   unsigned long driver_release_tids)
-{
-	int ac;
+अटल bool
+ieee80211_sta_ps_more_data(काष्ठा sta_info *sta, u8 ignored_acs,
+			   क्रमागत ieee80211_frame_release_type reason,
+			   अचिन्हित दीर्घ driver_release_tids)
+अणु
+	पूर्णांक ac;
 
 	/* If the driver has data on more than one TID then
-	 * certainly there's more data if we release just a
+	 * certainly there's more data अगर we release just a
 	 * single frame now (from a single TID). This will
-	 * only happen for PS-Poll.
+	 * only happen क्रम PS-Poll.
 	 */
-	if (reason == IEEE80211_FRAME_RELEASE_PSPOLL &&
+	अगर (reason == IEEE80211_FRAME_RELEASE_PSPOLL &&
 	    hweight16(driver_release_tids) > 1)
-		return true;
+		वापस true;
 
-	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
-		if (ignored_acs & ieee80211_ac_to_qos_mask[ac])
-			continue;
+	क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++) अणु
+		अगर (ignored_acs & ieee80211_ac_to_qos_mask[ac])
+			जारी;
 
-		if (!skb_queue_empty(&sta->tx_filtered[ac]) ||
+		अगर (!skb_queue_empty(&sta->tx_filtered[ac]) ||
 		    !skb_queue_empty(&sta->ps_tx_buf[ac]))
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void
-ieee80211_sta_ps_get_frames(struct sta_info *sta, int n_frames, u8 ignored_acs,
-			    enum ieee80211_frame_release_type reason,
-			    struct sk_buff_head *frames,
-			    unsigned long *driver_release_tids)
-{
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct ieee80211_local *local = sdata->local;
-	int ac;
+अटल व्योम
+ieee80211_sta_ps_get_frames(काष्ठा sta_info *sta, पूर्णांक n_frames, u8 ignored_acs,
+			    क्रमागत ieee80211_frame_release_type reason,
+			    काष्ठा sk_buff_head *frames,
+			    अचिन्हित दीर्घ *driver_release_tids)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा ieee80211_local *local = sdata->local;
+	पूर्णांक ac;
 
-	/* Get response frame(s) and more data bit for the last one. */
-	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
-		unsigned long tids;
+	/* Get response frame(s) and more data bit क्रम the last one. */
+	क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++) अणु
+		अचिन्हित दीर्घ tids;
 
-		if (ignored_acs & ieee80211_ac_to_qos_mask[ac])
-			continue;
+		अगर (ignored_acs & ieee80211_ac_to_qos_mask[ac])
+			जारी;
 
-		tids = ieee80211_tids_for_ac(ac);
+		tids = ieee80211_tids_क्रम_ac(ac);
 
-		/* if we already have frames from software, then we can't also
+		/* अगर we alपढ़ोy have frames from software, then we can't also
 		 * release from hardware queues
 		 */
-		if (skb_queue_empty(frames)) {
+		अगर (skb_queue_empty(frames)) अणु
 			*driver_release_tids |=
 				sta->driver_buffered_tids & tids;
 			*driver_release_tids |= sta->txq_buffered_tids & tids;
-		}
+		पूर्ण
 
-		if (!*driver_release_tids) {
-			struct sk_buff *skb;
+		अगर (!*driver_release_tids) अणु
+			काष्ठा sk_buff *skb;
 
-			while (n_frames > 0) {
+			जबतक (n_frames > 0) अणु
 				skb = skb_dequeue(&sta->tx_filtered[ac]);
-				if (!skb) {
+				अगर (!skb) अणु
 					skb = skb_dequeue(
 						&sta->ps_tx_buf[ac]);
-					if (skb)
+					अगर (skb)
 						local->total_ps_buffered--;
-				}
-				if (!skb)
-					break;
+				पूर्ण
+				अगर (!skb)
+					अवरोध;
 				n_frames--;
 				__skb_queue_tail(frames, skb);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* If we have more frames buffered on this AC, then abort the
-		 * loop since we can't send more data from other ACs before
+		/* If we have more frames buffered on this AC, then पात the
+		 * loop since we can't send more data from other ACs beक्रमe
 		 * the buffered frames from this.
 		 */
-		if (!skb_queue_empty(&sta->tx_filtered[ac]) ||
+		अगर (!skb_queue_empty(&sta->tx_filtered[ac]) ||
 		    !skb_queue_empty(&sta->ps_tx_buf[ac]))
-			break;
-	}
-}
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-ieee80211_sta_ps_deliver_response(struct sta_info *sta,
-				  int n_frames, u8 ignored_acs,
-				  enum ieee80211_frame_release_type reason)
-{
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct ieee80211_local *local = sdata->local;
-	unsigned long driver_release_tids = 0;
-	struct sk_buff_head frames;
+अटल व्योम
+ieee80211_sta_ps_deliver_response(काष्ठा sta_info *sta,
+				  पूर्णांक n_frames, u8 ignored_acs,
+				  क्रमागत ieee80211_frame_release_type reason)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा ieee80211_local *local = sdata->local;
+	अचिन्हित दीर्घ driver_release_tids = 0;
+	काष्ठा sk_buff_head frames;
 	bool more_data;
 
 	/* Service or PS-Poll period starts */
@@ -1596,54 +1597,54 @@ ieee80211_sta_ps_deliver_response(struct sta_info *sta,
 
 	more_data = ieee80211_sta_ps_more_data(sta, ignored_acs, reason, driver_release_tids);
 
-	if (driver_release_tids && reason == IEEE80211_FRAME_RELEASE_PSPOLL)
+	अगर (driver_release_tids && reason == IEEE80211_FRAME_RELEASE_PSPOLL)
 		driver_release_tids =
 			BIT(find_highest_prio_tid(driver_release_tids));
 
-	if (skb_queue_empty(&frames) && !driver_release_tids) {
-		int tid, ac;
+	अगर (skb_queue_empty(&frames) && !driver_release_tids) अणु
+		पूर्णांक tid, ac;
 
 		/*
 		 * For PS-Poll, this can only happen due to a race condition
 		 * when we set the TIM bit and the station notices it, but
-		 * before it can poll for the frame we expire it.
+		 * beक्रमe it can poll क्रम the frame we expire it.
 		 *
 		 * For uAPSD, this is said in the standard (11.2.1.5 h):
-		 *	At each unscheduled SP for a non-AP STA, the AP shall
+		 *	At each unscheduled SP क्रम a non-AP STA, the AP shall
 		 *	attempt to transmit at least one MSDU or MMPDU, but no
-		 *	more than the value specified in the Max SP Length field
+		 *	more than the value specअगरied in the Max SP Length field
 		 *	in the QoS Capability element from delivery-enabled ACs,
-		 *	that are destined for the non-AP STA.
+		 *	that are destined क्रम the non-AP STA.
 		 *
 		 * Since we have no other MSDU/MMPDU, transmit a QoS null frame.
 		 */
 
 		/* This will evaluate to 1, 3, 5 or 7. */
-		for (ac = IEEE80211_AC_VO; ac < IEEE80211_NUM_ACS; ac++)
-			if (!(ignored_acs & ieee80211_ac_to_qos_mask[ac]))
-				break;
+		क्रम (ac = IEEE80211_AC_VO; ac < IEEE80211_NUM_ACS; ac++)
+			अगर (!(ignored_acs & ieee80211_ac_to_qos_mask[ac]))
+				अवरोध;
 		tid = 7 - 2 * ac;
 
 		ieee80211_send_null_response(sta, tid, reason, true, false);
-	} else if (!driver_release_tids) {
-		struct sk_buff_head pending;
-		struct sk_buff *skb;
-		int num = 0;
+	पूर्ण अन्यथा अगर (!driver_release_tids) अणु
+		काष्ठा sk_buff_head pending;
+		काष्ठा sk_buff *skb;
+		पूर्णांक num = 0;
 		u16 tids = 0;
 		bool need_null = false;
 
 		skb_queue_head_init(&pending);
 
-		while ((skb = __skb_dequeue(&frames))) {
-			struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-			struct ieee80211_hdr *hdr = (void *) skb->data;
-			u8 *qoshdr = NULL;
+		जबतक ((skb = __skb_dequeue(&frames))) अणु
+			काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+			काष्ठा ieee80211_hdr *hdr = (व्योम *) skb->data;
+			u8 *qoshdr = शून्य;
 
 			num++;
 
 			/*
 			 * Tell TX path to send this frame even though the
-			 * STA may still remain is PS mode after this frame
+			 * STA may still reमुख्य is PS mode after this frame
 			 * exchange.
 			 */
 			info->flags |= IEEE80211_TX_CTL_NO_PS_BUFFER;
@@ -1651,16 +1652,16 @@ ieee80211_sta_ps_deliver_response(struct sta_info *sta,
 
 			/*
 			 * Use MoreData flag to indicate whether there are
-			 * more buffered frames for this STA
+			 * more buffered frames क्रम this STA
 			 */
-			if (more_data || !skb_queue_empty(&frames))
+			अगर (more_data || !skb_queue_empty(&frames))
 				hdr->frame_control |=
 					cpu_to_le16(IEEE80211_FCTL_MOREDATA);
-			else
+			अन्यथा
 				hdr->frame_control &=
 					cpu_to_le16(~IEEE80211_FCTL_MOREDATA);
 
-			if (ieee80211_is_data_qos(hdr->frame_control) ||
+			अगर (ieee80211_is_data_qos(hdr->frame_control) ||
 			    ieee80211_is_qos_nullfunc(hdr->frame_control))
 				qoshdr = ieee80211_get_qos_ctl(hdr);
 
@@ -1669,75 +1670,75 @@ ieee80211_sta_ps_deliver_response(struct sta_info *sta,
 			__skb_queue_tail(&pending, skb);
 
 			/* end service period after last frame or add one */
-			if (!skb_queue_empty(&frames))
-				continue;
+			अगर (!skb_queue_empty(&frames))
+				जारी;
 
-			if (reason != IEEE80211_FRAME_RELEASE_UAPSD) {
-				/* for PS-Poll, there's only one frame */
+			अगर (reason != IEEE80211_FRAME_RELEASE_UAPSD) अणु
+				/* क्रम PS-Poll, there's only one frame */
 				info->flags |= IEEE80211_TX_STATUS_EOSP |
 					       IEEE80211_TX_CTL_REQ_TX_STATUS;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* For uAPSD, things are a bit more complicated. If the
 			 * last frame has a QoS header (i.e. is a QoS-data or
 			 * QoS-nulldata frame) then just set the EOSP bit there
-			 * and be done.
-			 * If the frame doesn't have a QoS header (which means
+			 * and be करोne.
+			 * If the frame करोesn't have a QoS header (which means
 			 * it should be a bufferable MMPDU) then we can't set
 			 * the EOSP bit in the QoS header; add a QoS-nulldata
 			 * frame to the list to send it after the MMPDU.
 			 *
 			 * Note that this code is only in the mac80211-release
 			 * code path, we assume that the driver will not buffer
-			 * anything but QoS-data frames, or if it does, will
-			 * create the QoS-nulldata frame by itself if needed.
+			 * anything but QoS-data frames, or अगर it करोes, will
+			 * create the QoS-nulldata frame by itself अगर needed.
 			 *
 			 * Cf. 802.11-2012 10.2.1.10 (c).
 			 */
-			if (qoshdr) {
+			अगर (qoshdr) अणु
 				*qoshdr |= IEEE80211_QOS_CTL_EOSP;
 
 				info->flags |= IEEE80211_TX_STATUS_EOSP |
 					       IEEE80211_TX_CTL_REQ_TX_STATUS;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* The standard isn't completely clear on this
 				 * as it says the more-data bit should be set
-				 * if there are more BUs. The QoS-Null frame
+				 * अगर there are more BUs. The QoS-Null frame
 				 * we're about to send isn't buffered yet, we
 				 * only create it below, but let's pretend it
-				 * was buffered just in case some clients only
+				 * was buffered just in हाल some clients only
 				 * expect more-data=0 when eosp=1.
 				 */
 				hdr->frame_control |=
 					cpu_to_le16(IEEE80211_FCTL_MOREDATA);
 				need_null = true;
 				num++;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		drv_allow_buffered_frames(local, sta, tids, num,
 					  reason, more_data);
 
 		ieee80211_add_pending_skbs(local, &pending);
 
-		if (need_null)
+		अगर (need_null)
 			ieee80211_send_null_response(
 				sta, find_highest_prio_tid(tids),
 				reason, false, false);
 
 		sta_info_recalc_tim(sta);
-	} else {
-		int tid;
+	पूर्ण अन्यथा अणु
+		पूर्णांक tid;
 
 		/*
 		 * We need to release a frame that is buffered somewhere in the
 		 * driver ... it'll have to handle that.
 		 * Note that the driver also has to check the number of frames
-		 * on the TIDs we're releasing from - if there are more than
-		 * n_frames it has to set the more-data bit (if we didn't ask
-		 * it to set it anyway due to other buffered frames); if there
+		 * on the TIDs we're releasing from - अगर there are more than
+		 * n_frames it has to set the more-data bit (अगर we didn't ask
+		 * it to set it anyway due to other buffered frames); अगर there
 		 * are fewer than n_frames it has to make sure to adjust that
 		 * to allow the service period to end properly.
 		 */
@@ -1745,127 +1746,127 @@ ieee80211_sta_ps_deliver_response(struct sta_info *sta,
 					    n_frames, reason, more_data);
 
 		/*
-		 * Note that we don't recalculate the TIM bit here as it would
+		 * Note that we करोn't recalculate the TIM bit here as it would
 		 * most likely have no effect at all unless the driver told us
-		 * that the TID(s) became empty before returning here from the
+		 * that the TID(s) became empty beक्रमe वापसing here from the
 		 * release function.
 		 * Either way, however, when the driver tells us that the TID(s)
-		 * became empty or we find that a txq became empty, we'll do the
+		 * became empty or we find that a txq became empty, we'll करो the
 		 * TIM recalculation.
 		 */
 
-		if (!sta->sta.txq[0])
-			return;
+		अगर (!sta->sta.txq[0])
+			वापस;
 
-		for (tid = 0; tid < ARRAY_SIZE(sta->sta.txq); tid++) {
-			if (!sta->sta.txq[tid] ||
+		क्रम (tid = 0; tid < ARRAY_SIZE(sta->sta.txq); tid++) अणु
+			अगर (!sta->sta.txq[tid] ||
 			    !(driver_release_tids & BIT(tid)) ||
 			    txq_has_queue(sta->sta.txq[tid]))
-				continue;
+				जारी;
 
 			sta_info_recalc_tim(sta);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void ieee80211_sta_ps_deliver_poll_response(struct sta_info *sta)
-{
-	u8 ignore_for_response = sta->sta.uapsd_queues;
+व्योम ieee80211_sta_ps_deliver_poll_response(काष्ठा sta_info *sta)
+अणु
+	u8 ignore_क्रम_response = sta->sta.uapsd_queues;
 
 	/*
 	 * If all ACs are delivery-enabled then we should reply
-	 * from any of them, if only some are enabled we reply
+	 * from any of them, अगर only some are enabled we reply
 	 * only from the non-enabled ones.
 	 */
-	if (ignore_for_response == BIT(IEEE80211_NUM_ACS) - 1)
-		ignore_for_response = 0;
+	अगर (ignore_क्रम_response == BIT(IEEE80211_NUM_ACS) - 1)
+		ignore_क्रम_response = 0;
 
-	ieee80211_sta_ps_deliver_response(sta, 1, ignore_for_response,
+	ieee80211_sta_ps_deliver_response(sta, 1, ignore_क्रम_response,
 					  IEEE80211_FRAME_RELEASE_PSPOLL);
-}
+पूर्ण
 
-void ieee80211_sta_ps_deliver_uapsd(struct sta_info *sta)
-{
-	int n_frames = sta->sta.max_sp;
+व्योम ieee80211_sta_ps_deliver_uapsd(काष्ठा sta_info *sta)
+अणु
+	पूर्णांक n_frames = sta->sta.max_sp;
 	u8 delivery_enabled = sta->sta.uapsd_queues;
 
 	/*
-	 * If we ever grow support for TSPEC this might happen if
+	 * If we ever grow support क्रम TSPEC this might happen अगर
 	 * the TSPEC update from hostapd comes in between a trigger
 	 * frame setting WLAN_STA_UAPSD in the RX path and this
 	 * actually getting called.
 	 */
-	if (!delivery_enabled)
-		return;
+	अगर (!delivery_enabled)
+		वापस;
 
-	switch (sta->sta.max_sp) {
-	case 1:
+	चयन (sta->sta.max_sp) अणु
+	हाल 1:
 		n_frames = 2;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		n_frames = 4;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		n_frames = 6;
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		/* XXX: what is a good value? */
 		n_frames = 128;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ieee80211_sta_ps_deliver_response(sta, n_frames, ~delivery_enabled,
 					  IEEE80211_FRAME_RELEASE_UAPSD);
-}
+पूर्ण
 
-void ieee80211_sta_block_awake(struct ieee80211_hw *hw,
-			       struct ieee80211_sta *pubsta, bool block)
-{
-	struct sta_info *sta = container_of(pubsta, struct sta_info, sta);
+व्योम ieee80211_sta_block_awake(काष्ठा ieee80211_hw *hw,
+			       काष्ठा ieee80211_sta *pubsta, bool block)
+अणु
+	काष्ठा sta_info *sta = container_of(pubsta, काष्ठा sta_info, sta);
 
 	trace_api_sta_block_awake(sta->local, pubsta, block);
 
-	if (block) {
+	अगर (block) अणु
 		set_sta_flag(sta, WLAN_STA_PS_DRIVER);
 		ieee80211_clear_fast_xmit(sta);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!test_sta_flag(sta, WLAN_STA_PS_DRIVER))
-		return;
+	अगर (!test_sta_flag(sta, WLAN_STA_PS_DRIVER))
+		वापस;
 
-	if (!test_sta_flag(sta, WLAN_STA_PS_STA)) {
+	अगर (!test_sta_flag(sta, WLAN_STA_PS_STA)) अणु
 		set_sta_flag(sta, WLAN_STA_PS_DELIVER);
 		clear_sta_flag(sta, WLAN_STA_PS_DRIVER);
 		ieee80211_queue_work(hw, &sta->drv_deliver_wk);
-	} else if (test_sta_flag(sta, WLAN_STA_PSPOLL) ||
-		   test_sta_flag(sta, WLAN_STA_UAPSD)) {
-		/* must be asleep in this case */
+	पूर्ण अन्यथा अगर (test_sta_flag(sta, WLAN_STA_PSPOLL) ||
+		   test_sta_flag(sta, WLAN_STA_UAPSD)) अणु
+		/* must be asleep in this हाल */
 		clear_sta_flag(sta, WLAN_STA_PS_DRIVER);
 		ieee80211_queue_work(hw, &sta->drv_deliver_wk);
-	} else {
+	पूर्ण अन्यथा अणु
 		clear_sta_flag(sta, WLAN_STA_PS_DRIVER);
 		ieee80211_check_fast_xmit(sta);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(ieee80211_sta_block_awake);
 
-void ieee80211_sta_eosp(struct ieee80211_sta *pubsta)
-{
-	struct sta_info *sta = container_of(pubsta, struct sta_info, sta);
-	struct ieee80211_local *local = sta->local;
+व्योम ieee80211_sta_eosp(काष्ठा ieee80211_sta *pubsta)
+अणु
+	काष्ठा sta_info *sta = container_of(pubsta, काष्ठा sta_info, sta);
+	काष्ठा ieee80211_local *local = sta->local;
 
 	trace_api_eosp(local, pubsta);
 
 	clear_sta_flag(sta, WLAN_STA_SP);
-}
+पूर्ण
 EXPORT_SYMBOL(ieee80211_sta_eosp);
 
-void ieee80211_send_eosp_nullfunc(struct ieee80211_sta *pubsta, int tid)
-{
-	struct sta_info *sta = container_of(pubsta, struct sta_info, sta);
-	enum ieee80211_frame_release_type reason;
+व्योम ieee80211_send_eosp_nullfunc(काष्ठा ieee80211_sta *pubsta, पूर्णांक tid)
+अणु
+	काष्ठा sta_info *sta = container_of(pubsta, काष्ठा sta_info, sta);
+	क्रमागत ieee80211_frame_release_type reason;
 	bool more_data;
 
 	trace_api_send_eosp_nullfunc(sta->local, pubsta, tid);
@@ -1875,406 +1876,406 @@ void ieee80211_send_eosp_nullfunc(struct ieee80211_sta *pubsta, int tid)
 					       reason, 0);
 
 	ieee80211_send_null_response(sta, tid, reason, false, more_data);
-}
+पूर्ण
 EXPORT_SYMBOL(ieee80211_send_eosp_nullfunc);
 
-void ieee80211_sta_set_buffered(struct ieee80211_sta *pubsta,
+व्योम ieee80211_sta_set_buffered(काष्ठा ieee80211_sta *pubsta,
 				u8 tid, bool buffered)
-{
-	struct sta_info *sta = container_of(pubsta, struct sta_info, sta);
+अणु
+	काष्ठा sta_info *sta = container_of(pubsta, काष्ठा sta_info, sta);
 
-	if (WARN_ON(tid >= IEEE80211_NUM_TIDS))
-		return;
+	अगर (WARN_ON(tid >= IEEE80211_NUM_TIDS))
+		वापस;
 
 	trace_api_sta_set_buffered(sta->local, pubsta, tid, buffered);
 
-	if (buffered)
+	अगर (buffered)
 		set_bit(tid, &sta->driver_buffered_tids);
-	else
+	अन्यथा
 		clear_bit(tid, &sta->driver_buffered_tids);
 
 	sta_info_recalc_tim(sta);
-}
+पूर्ण
 EXPORT_SYMBOL(ieee80211_sta_set_buffered);
 
-void ieee80211_sta_register_airtime(struct ieee80211_sta *pubsta, u8 tid,
-				    u32 tx_airtime, u32 rx_airtime)
-{
-	struct sta_info *sta = container_of(pubsta, struct sta_info, sta);
-	struct ieee80211_local *local = sta->sdata->local;
+व्योम ieee80211_sta_रेजिस्टर_airसमय(काष्ठा ieee80211_sta *pubsta, u8 tid,
+				    u32 tx_airसमय, u32 rx_airसमय)
+अणु
+	काष्ठा sta_info *sta = container_of(pubsta, काष्ठा sta_info, sta);
+	काष्ठा ieee80211_local *local = sta->sdata->local;
 	u8 ac = ieee80211_ac_from_tid(tid);
-	u32 airtime = 0;
+	u32 airसमय = 0;
 
-	if (sta->local->airtime_flags & AIRTIME_USE_TX)
-		airtime += tx_airtime;
-	if (sta->local->airtime_flags & AIRTIME_USE_RX)
-		airtime += rx_airtime;
+	अगर (sta->local->airसमय_flags & AIRTIME_USE_TX)
+		airसमय += tx_airसमय;
+	अगर (sta->local->airसमय_flags & AIRTIME_USE_RX)
+		airसमय += rx_airसमय;
 
 	spin_lock_bh(&local->active_txq_lock[ac]);
-	sta->airtime[ac].tx_airtime += tx_airtime;
-	sta->airtime[ac].rx_airtime += rx_airtime;
-	sta->airtime[ac].deficit -= airtime;
+	sta->airसमय[ac].tx_airसमय += tx_airसमय;
+	sta->airसमय[ac].rx_airसमय += rx_airसमय;
+	sta->airसमय[ac].deficit -= airसमय;
 	spin_unlock_bh(&local->active_txq_lock[ac]);
-}
-EXPORT_SYMBOL(ieee80211_sta_register_airtime);
+पूर्ण
+EXPORT_SYMBOL(ieee80211_sta_रेजिस्टर_airसमय);
 
-void ieee80211_sta_update_pending_airtime(struct ieee80211_local *local,
-					  struct sta_info *sta, u8 ac,
-					  u16 tx_airtime, bool tx_completed)
-{
-	int tx_pending;
+व्योम ieee80211_sta_update_pending_airसमय(काष्ठा ieee80211_local *local,
+					  काष्ठा sta_info *sta, u8 ac,
+					  u16 tx_airसमय, bool tx_completed)
+अणु
+	पूर्णांक tx_pending;
 
-	if (!wiphy_ext_feature_isset(local->hw.wiphy, NL80211_EXT_FEATURE_AQL))
-		return;
+	अगर (!wiphy_ext_feature_isset(local->hw.wiphy, NL80211_EXT_FEATURE_AQL))
+		वापस;
 
-	if (!tx_completed) {
-		if (sta)
-			atomic_add(tx_airtime,
-				   &sta->airtime[ac].aql_tx_pending);
+	अगर (!tx_completed) अणु
+		अगर (sta)
+			atomic_add(tx_airसमय,
+				   &sta->airसमय[ac].aql_tx_pending);
 
-		atomic_add(tx_airtime, &local->aql_total_pending_airtime);
-		return;
-	}
+		atomic_add(tx_airसमय, &local->aql_total_pending_airसमय);
+		वापस;
+	पूर्ण
 
-	if (sta) {
-		tx_pending = atomic_sub_return(tx_airtime,
-					       &sta->airtime[ac].aql_tx_pending);
-		if (tx_pending < 0)
-			atomic_cmpxchg(&sta->airtime[ac].aql_tx_pending,
+	अगर (sta) अणु
+		tx_pending = atomic_sub_वापस(tx_airसमय,
+					       &sta->airसमय[ac].aql_tx_pending);
+		अगर (tx_pending < 0)
+			atomic_cmpxchg(&sta->airसमय[ac].aql_tx_pending,
 				       tx_pending, 0);
-	}
+	पूर्ण
 
-	tx_pending = atomic_sub_return(tx_airtime,
-				       &local->aql_total_pending_airtime);
-	if (WARN_ONCE(tx_pending < 0,
+	tx_pending = atomic_sub_वापस(tx_airसमय,
+				       &local->aql_total_pending_airसमय);
+	अगर (WARN_ONCE(tx_pending < 0,
 		      "Device %s AC %d pending airtime underflow: %u, %u",
 		      wiphy_name(local->hw.wiphy), ac, tx_pending,
-		      tx_airtime))
-		atomic_cmpxchg(&local->aql_total_pending_airtime,
+		      tx_airसमय))
+		atomic_cmpxchg(&local->aql_total_pending_airसमय,
 			       tx_pending, 0);
-}
+पूर्ण
 
-int sta_info_move_state(struct sta_info *sta,
-			enum ieee80211_sta_state new_state)
-{
+पूर्णांक sta_info_move_state(काष्ठा sta_info *sta,
+			क्रमागत ieee80211_sta_state new_state)
+अणु
 	might_sleep();
 
-	if (sta->sta_state == new_state)
-		return 0;
+	अगर (sta->sta_state == new_state)
+		वापस 0;
 
 	/* check allowed transitions first */
 
-	switch (new_state) {
-	case IEEE80211_STA_NONE:
-		if (sta->sta_state != IEEE80211_STA_AUTH)
-			return -EINVAL;
-		break;
-	case IEEE80211_STA_AUTH:
-		if (sta->sta_state != IEEE80211_STA_NONE &&
+	चयन (new_state) अणु
+	हाल IEEE80211_STA_NONE:
+		अगर (sta->sta_state != IEEE80211_STA_AUTH)
+			वापस -EINVAL;
+		अवरोध;
+	हाल IEEE80211_STA_AUTH:
+		अगर (sta->sta_state != IEEE80211_STA_NONE &&
 		    sta->sta_state != IEEE80211_STA_ASSOC)
-			return -EINVAL;
-		break;
-	case IEEE80211_STA_ASSOC:
-		if (sta->sta_state != IEEE80211_STA_AUTH &&
+			वापस -EINVAL;
+		अवरोध;
+	हाल IEEE80211_STA_ASSOC:
+		अगर (sta->sta_state != IEEE80211_STA_AUTH &&
 		    sta->sta_state != IEEE80211_STA_AUTHORIZED)
-			return -EINVAL;
-		break;
-	case IEEE80211_STA_AUTHORIZED:
-		if (sta->sta_state != IEEE80211_STA_ASSOC)
-			return -EINVAL;
-		break;
-	default:
+			वापस -EINVAL;
+		अवरोध;
+	हाल IEEE80211_STA_AUTHORIZED:
+		अगर (sta->sta_state != IEEE80211_STA_ASSOC)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
 		WARN(1, "invalid state %d", new_state);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sta_dbg(sta->sdata, "moving STA %pM to state %d\n",
 		sta->sta.addr, new_state);
 
 	/*
-	 * notify the driver before the actual changes so it can
+	 * notअगरy the driver beक्रमe the actual changes so it can
 	 * fail the transition
 	 */
-	if (test_sta_flag(sta, WLAN_STA_INSERTED)) {
-		int err = drv_sta_state(sta->local, sta->sdata, sta,
+	अगर (test_sta_flag(sta, WLAN_STA_INSERTED)) अणु
+		पूर्णांक err = drv_sta_state(sta->local, sta->sdata, sta,
 					sta->sta_state, new_state);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	/* reflect the change in all state variables */
 
-	switch (new_state) {
-	case IEEE80211_STA_NONE:
-		if (sta->sta_state == IEEE80211_STA_AUTH)
+	चयन (new_state) अणु
+	हाल IEEE80211_STA_NONE:
+		अगर (sta->sta_state == IEEE80211_STA_AUTH)
 			clear_bit(WLAN_STA_AUTH, &sta->_flags);
-		break;
-	case IEEE80211_STA_AUTH:
-		if (sta->sta_state == IEEE80211_STA_NONE) {
+		अवरोध;
+	हाल IEEE80211_STA_AUTH:
+		अगर (sta->sta_state == IEEE80211_STA_NONE) अणु
 			set_bit(WLAN_STA_AUTH, &sta->_flags);
-		} else if (sta->sta_state == IEEE80211_STA_ASSOC) {
+		पूर्ण अन्यथा अगर (sta->sta_state == IEEE80211_STA_ASSOC) अणु
 			clear_bit(WLAN_STA_ASSOC, &sta->_flags);
 			ieee80211_recalc_min_chandef(sta->sdata);
-			if (!sta->sta.support_p2p_ps)
+			अगर (!sta->sta.support_p2p_ps)
 				ieee80211_recalc_p2p_go_ps_allowed(sta->sdata);
-		}
-		break;
-	case IEEE80211_STA_ASSOC:
-		if (sta->sta_state == IEEE80211_STA_AUTH) {
+		पूर्ण
+		अवरोध;
+	हाल IEEE80211_STA_ASSOC:
+		अगर (sta->sta_state == IEEE80211_STA_AUTH) अणु
 			set_bit(WLAN_STA_ASSOC, &sta->_flags);
-			sta->assoc_at = ktime_get_boottime_ns();
+			sta->assoc_at = kसमय_get_bootसमय_ns();
 			ieee80211_recalc_min_chandef(sta->sdata);
-			if (!sta->sta.support_p2p_ps)
+			अगर (!sta->sta.support_p2p_ps)
 				ieee80211_recalc_p2p_go_ps_allowed(sta->sdata);
-		} else if (sta->sta_state == IEEE80211_STA_AUTHORIZED) {
-			ieee80211_vif_dec_num_mcast(sta->sdata);
+		पूर्ण अन्यथा अगर (sta->sta_state == IEEE80211_STA_AUTHORIZED) अणु
+			ieee80211_vअगर_dec_num_mcast(sta->sdata);
 			clear_bit(WLAN_STA_AUTHORIZED, &sta->_flags);
 			ieee80211_clear_fast_xmit(sta);
 			ieee80211_clear_fast_rx(sta);
-		}
-		break;
-	case IEEE80211_STA_AUTHORIZED:
-		if (sta->sta_state == IEEE80211_STA_ASSOC) {
-			ieee80211_vif_inc_num_mcast(sta->sdata);
+		पूर्ण
+		अवरोध;
+	हाल IEEE80211_STA_AUTHORIZED:
+		अगर (sta->sta_state == IEEE80211_STA_ASSOC) अणु
+			ieee80211_vअगर_inc_num_mcast(sta->sdata);
 			set_bit(WLAN_STA_AUTHORIZED, &sta->_flags);
 			ieee80211_check_fast_xmit(sta);
 			ieee80211_check_fast_rx(sta);
-		}
-		if (sta->sdata->vif.type == NL80211_IFTYPE_AP_VLAN ||
-		    sta->sdata->vif.type == NL80211_IFTYPE_AP)
+		पूर्ण
+		अगर (sta->sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN ||
+		    sta->sdata->vअगर.type == NL80211_IFTYPE_AP)
 			cfg80211_send_layer2_update(sta->sdata->dev,
 						    sta->sta.addr);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	sta->sta_state = new_state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u8 sta_info_tx_streams(struct sta_info *sta)
-{
-	struct ieee80211_sta_ht_cap *ht_cap = &sta->sta.ht_cap;
+u8 sta_info_tx_streams(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_sta_ht_cap *ht_cap = &sta->sta.ht_cap;
 	u8 rx_streams;
 
-	if (!sta->sta.ht_cap.ht_supported)
-		return 1;
+	अगर (!sta->sta.ht_cap.ht_supported)
+		वापस 1;
 
-	if (sta->sta.vht_cap.vht_supported) {
-		int i;
+	अगर (sta->sta.vht_cap.vht_supported) अणु
+		पूर्णांक i;
 		u16 tx_mcs_map =
 			le16_to_cpu(sta->sta.vht_cap.vht_mcs.tx_mcs_map);
 
-		for (i = 7; i >= 0; i--)
-			if ((tx_mcs_map & (0x3 << (i * 2))) !=
+		क्रम (i = 7; i >= 0; i--)
+			अगर ((tx_mcs_map & (0x3 << (i * 2))) !=
 			    IEEE80211_VHT_MCS_NOT_SUPPORTED)
-				return i + 1;
-	}
+				वापस i + 1;
+	पूर्ण
 
-	if (ht_cap->mcs.rx_mask[3])
+	अगर (ht_cap->mcs.rx_mask[3])
 		rx_streams = 4;
-	else if (ht_cap->mcs.rx_mask[2])
+	अन्यथा अगर (ht_cap->mcs.rx_mask[2])
 		rx_streams = 3;
-	else if (ht_cap->mcs.rx_mask[1])
+	अन्यथा अगर (ht_cap->mcs.rx_mask[1])
 		rx_streams = 2;
-	else
+	अन्यथा
 		rx_streams = 1;
 
-	if (!(ht_cap->mcs.tx_params & IEEE80211_HT_MCS_TX_RX_DIFF))
-		return rx_streams;
+	अगर (!(ht_cap->mcs.tx_params & IEEE80211_HT_MCS_TX_RX_DIFF))
+		वापस rx_streams;
 
-	return ((ht_cap->mcs.tx_params & IEEE80211_HT_MCS_TX_MAX_STREAMS_MASK)
+	वापस ((ht_cap->mcs.tx_params & IEEE80211_HT_MCS_TX_MAX_STREAMS_MASK)
 			>> IEEE80211_HT_MCS_TX_MAX_STREAMS_SHIFT) + 1;
-}
+पूर्ण
 
-static struct ieee80211_sta_rx_stats *
-sta_get_last_rx_stats(struct sta_info *sta)
-{
-	struct ieee80211_sta_rx_stats *stats = &sta->rx_stats;
-	struct ieee80211_local *local = sta->local;
-	int cpu;
+अटल काष्ठा ieee80211_sta_rx_stats *
+sta_get_last_rx_stats(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_sta_rx_stats *stats = &sta->rx_stats;
+	काष्ठा ieee80211_local *local = sta->local;
+	पूर्णांक cpu;
 
-	if (!ieee80211_hw_check(&local->hw, USES_RSS))
-		return stats;
+	अगर (!ieee80211_hw_check(&local->hw, USES_RSS))
+		वापस stats;
 
-	for_each_possible_cpu(cpu) {
-		struct ieee80211_sta_rx_stats *cpustats;
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा ieee80211_sta_rx_stats *cpustats;
 
 		cpustats = per_cpu_ptr(sta->pcpu_rx_stats, cpu);
 
-		if (time_after(cpustats->last_rx, stats->last_rx))
+		अगर (समय_after(cpustats->last_rx, stats->last_rx))
 			stats = cpustats;
-	}
+	पूर्ण
 
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-static void sta_stats_decode_rate(struct ieee80211_local *local, u32 rate,
-				  struct rate_info *rinfo)
-{
+अटल व्योम sta_stats_decode_rate(काष्ठा ieee80211_local *local, u32 rate,
+				  काष्ठा rate_info *rinfo)
+अणु
 	rinfo->bw = STA_STATS_GET(BW, rate);
 
-	switch (STA_STATS_GET(TYPE, rate)) {
-	case STA_STATS_RATE_TYPE_VHT:
+	चयन (STA_STATS_GET(TYPE, rate)) अणु
+	हाल STA_STATS_RATE_TYPE_VHT:
 		rinfo->flags = RATE_INFO_FLAGS_VHT_MCS;
 		rinfo->mcs = STA_STATS_GET(VHT_MCS, rate);
 		rinfo->nss = STA_STATS_GET(VHT_NSS, rate);
-		if (STA_STATS_GET(SGI, rate))
+		अगर (STA_STATS_GET(SGI, rate))
 			rinfo->flags |= RATE_INFO_FLAGS_SHORT_GI;
-		break;
-	case STA_STATS_RATE_TYPE_HT:
+		अवरोध;
+	हाल STA_STATS_RATE_TYPE_HT:
 		rinfo->flags = RATE_INFO_FLAGS_MCS;
 		rinfo->mcs = STA_STATS_GET(HT_MCS, rate);
-		if (STA_STATS_GET(SGI, rate))
+		अगर (STA_STATS_GET(SGI, rate))
 			rinfo->flags |= RATE_INFO_FLAGS_SHORT_GI;
-		break;
-	case STA_STATS_RATE_TYPE_LEGACY: {
-		struct ieee80211_supported_band *sband;
+		अवरोध;
+	हाल STA_STATS_RATE_TYPE_LEGACY: अणु
+		काष्ठा ieee80211_supported_band *sband;
 		u16 brate;
-		unsigned int shift;
-		int band = STA_STATS_GET(LEGACY_BAND, rate);
-		int rate_idx = STA_STATS_GET(LEGACY_IDX, rate);
+		अचिन्हित पूर्णांक shअगरt;
+		पूर्णांक band = STA_STATS_GET(LEGACY_BAND, rate);
+		पूर्णांक rate_idx = STA_STATS_GET(LEGACY_IDX, rate);
 
 		sband = local->hw.wiphy->bands[band];
 
-		if (WARN_ON_ONCE(!sband->bitrates))
-			break;
+		अगर (WARN_ON_ONCE(!sband->bitrates))
+			अवरोध;
 
 		brate = sband->bitrates[rate_idx].bitrate;
-		if (rinfo->bw == RATE_INFO_BW_5)
-			shift = 2;
-		else if (rinfo->bw == RATE_INFO_BW_10)
-			shift = 1;
-		else
-			shift = 0;
-		rinfo->legacy = DIV_ROUND_UP(brate, 1 << shift);
-		break;
-		}
-	case STA_STATS_RATE_TYPE_HE:
+		अगर (rinfo->bw == RATE_INFO_BW_5)
+			shअगरt = 2;
+		अन्यथा अगर (rinfo->bw == RATE_INFO_BW_10)
+			shअगरt = 1;
+		अन्यथा
+			shअगरt = 0;
+		rinfo->legacy = DIV_ROUND_UP(brate, 1 << shअगरt);
+		अवरोध;
+		पूर्ण
+	हाल STA_STATS_RATE_TYPE_HE:
 		rinfo->flags = RATE_INFO_FLAGS_HE_MCS;
 		rinfo->mcs = STA_STATS_GET(HE_MCS, rate);
 		rinfo->nss = STA_STATS_GET(HE_NSS, rate);
 		rinfo->he_gi = STA_STATS_GET(HE_GI, rate);
 		rinfo->he_ru_alloc = STA_STATS_GET(HE_RU, rate);
 		rinfo->he_dcm = STA_STATS_GET(HE_DCM, rate);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int sta_set_rate_info_rx(struct sta_info *sta, struct rate_info *rinfo)
-{
+अटल पूर्णांक sta_set_rate_info_rx(काष्ठा sta_info *sta, काष्ठा rate_info *rinfo)
+अणु
 	u16 rate = READ_ONCE(sta_get_last_rx_stats(sta)->last_rate);
 
-	if (rate == STA_STATS_RATE_INVALID)
-		return -EINVAL;
+	अगर (rate == STA_STATS_RATE_INVALID)
+		वापस -EINVAL;
 
 	sta_stats_decode_rate(sta->local, rate, rinfo);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline u64 sta_get_tidstats_msdu(struct ieee80211_sta_rx_stats *rxstats,
-					int tid)
-{
-	unsigned int start;
+अटल अंतरभूत u64 sta_get_tidstats_msdu(काष्ठा ieee80211_sta_rx_stats *rxstats,
+					पूर्णांक tid)
+अणु
+	अचिन्हित पूर्णांक start;
 	u64 value;
 
-	do {
+	करो अणु
 		start = u64_stats_fetch_begin(&rxstats->syncp);
 		value = rxstats->msdu[tid];
-	} while (u64_stats_fetch_retry(&rxstats->syncp, start));
+	पूर्ण जबतक (u64_stats_fetch_retry(&rxstats->syncp, start));
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static void sta_set_tidstats(struct sta_info *sta,
-			     struct cfg80211_tid_stats *tidstats,
-			     int tid)
-{
-	struct ieee80211_local *local = sta->local;
-	int cpu;
+अटल व्योम sta_set_tidstats(काष्ठा sta_info *sta,
+			     काष्ठा cfg80211_tid_stats *tidstats,
+			     पूर्णांक tid)
+अणु
+	काष्ठा ieee80211_local *local = sta->local;
+	पूर्णांक cpu;
 
-	if (!(tidstats->filled & BIT(NL80211_TID_STATS_RX_MSDU))) {
-		if (!ieee80211_hw_check(&local->hw, USES_RSS))
+	अगर (!(tidstats->filled & BIT(NL80211_TID_STATS_RX_MSDU))) अणु
+		अगर (!ieee80211_hw_check(&local->hw, USES_RSS))
 			tidstats->rx_msdu +=
 				sta_get_tidstats_msdu(&sta->rx_stats, tid);
 
-		if (sta->pcpu_rx_stats) {
-			for_each_possible_cpu(cpu) {
-				struct ieee80211_sta_rx_stats *cpurxs;
+		अगर (sta->pcpu_rx_stats) अणु
+			क्रम_each_possible_cpu(cpu) अणु
+				काष्ठा ieee80211_sta_rx_stats *cpurxs;
 
 				cpurxs = per_cpu_ptr(sta->pcpu_rx_stats, cpu);
 				tidstats->rx_msdu +=
 					sta_get_tidstats_msdu(cpurxs, tid);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		tidstats->filled |= BIT(NL80211_TID_STATS_RX_MSDU);
-	}
+	पूर्ण
 
-	if (!(tidstats->filled & BIT(NL80211_TID_STATS_TX_MSDU))) {
+	अगर (!(tidstats->filled & BIT(NL80211_TID_STATS_TX_MSDU))) अणु
 		tidstats->filled |= BIT(NL80211_TID_STATS_TX_MSDU);
 		tidstats->tx_msdu = sta->tx_stats.msdu[tid];
-	}
+	पूर्ण
 
-	if (!(tidstats->filled & BIT(NL80211_TID_STATS_TX_MSDU_RETRIES)) &&
-	    ieee80211_hw_check(&local->hw, REPORTS_TX_ACK_STATUS)) {
+	अगर (!(tidstats->filled & BIT(NL80211_TID_STATS_TX_MSDU_RETRIES)) &&
+	    ieee80211_hw_check(&local->hw, REPORTS_TX_ACK_STATUS)) अणु
 		tidstats->filled |= BIT(NL80211_TID_STATS_TX_MSDU_RETRIES);
 		tidstats->tx_msdu_retries = sta->status_stats.msdu_retries[tid];
-	}
+	पूर्ण
 
-	if (!(tidstats->filled & BIT(NL80211_TID_STATS_TX_MSDU_FAILED)) &&
-	    ieee80211_hw_check(&local->hw, REPORTS_TX_ACK_STATUS)) {
+	अगर (!(tidstats->filled & BIT(NL80211_TID_STATS_TX_MSDU_FAILED)) &&
+	    ieee80211_hw_check(&local->hw, REPORTS_TX_ACK_STATUS)) अणु
 		tidstats->filled |= BIT(NL80211_TID_STATS_TX_MSDU_FAILED);
 		tidstats->tx_msdu_failed = sta->status_stats.msdu_failed[tid];
-	}
+	पूर्ण
 
-	if (local->ops->wake_tx_queue && tid < IEEE80211_NUM_TIDS) {
+	अगर (local->ops->wake_tx_queue && tid < IEEE80211_NUM_TIDS) अणु
 		spin_lock_bh(&local->fq.lock);
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 
 		tidstats->filled |= BIT(NL80211_TID_STATS_TXQ_STATS);
 		ieee80211_fill_txq_stats(&tidstats->txq_stats,
 					 to_txq_info(sta->sta.txq[tid]));
 
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 		spin_unlock_bh(&local->fq.lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline u64 sta_get_stats_bytes(struct ieee80211_sta_rx_stats *rxstats)
-{
-	unsigned int start;
+अटल अंतरभूत u64 sta_get_stats_bytes(काष्ठा ieee80211_sta_rx_stats *rxstats)
+अणु
+	अचिन्हित पूर्णांक start;
 	u64 value;
 
-	do {
+	करो अणु
 		start = u64_stats_fetch_begin(&rxstats->syncp);
 		value = rxstats->bytes;
-	} while (u64_stats_fetch_retry(&rxstats->syncp, start));
+	पूर्ण जबतक (u64_stats_fetch_retry(&rxstats->syncp, start));
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-void sta_set_sinfo(struct sta_info *sta, struct station_info *sinfo,
+व्योम sta_set_sinfo(काष्ठा sta_info *sta, काष्ठा station_info *sinfo,
 		   bool tidstats)
-{
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct ieee80211_local *local = sdata->local;
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा ieee80211_local *local = sdata->local;
 	u32 thr = 0;
-	int i, ac, cpu;
-	struct ieee80211_sta_rx_stats *last_rxstats;
+	पूर्णांक i, ac, cpu;
+	काष्ठा ieee80211_sta_rx_stats *last_rxstats;
 
 	last_rxstats = sta_get_last_rx_stats(sta);
 
 	sinfo->generation = sdata->local->sta_generation;
 
-	/* do before driver, so beacon filtering drivers have a
+	/* करो beक्रमe driver, so beacon filtering drivers have a
 	 * chance to e.g. just add the number of filtered beacons
-	 * (or just modify the value entirely, of course)
+	 * (or just modअगरy the value entirely, of course)
 	 */
-	if (sdata->vif.type == NL80211_IFTYPE_STATION)
-		sinfo->rx_beacon = sdata->u.mgd.count_beacon_signal;
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_STATION)
+		sinfo->rx_beacon = sdata->u.mgd.count_beacon_संकेत;
 
 	drv_sta_statistics(local, sdata, &sta->sta, sinfo);
 
@@ -2285,159 +2286,159 @@ void sta_set_sinfo(struct sta_info *sta, struct station_info *sinfo,
 			 BIT_ULL(NL80211_STA_INFO_ASSOC_AT_BOOTTIME) |
 			 BIT_ULL(NL80211_STA_INFO_RX_DROP_MISC);
 
-	if (sdata->vif.type == NL80211_IFTYPE_STATION) {
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_STATION) अणु
 		sinfo->beacon_loss_count = sdata->u.mgd.beacon_loss_count;
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_BEACON_LOSS);
-	}
+	पूर्ण
 
-	sinfo->connected_time = ktime_get_seconds() - sta->last_connected;
+	sinfo->connected_समय = kसमय_get_seconds() - sta->last_connected;
 	sinfo->assoc_at = sta->assoc_at;
-	sinfo->inactive_time =
-		jiffies_to_msecs(jiffies - ieee80211_sta_last_active(sta));
+	sinfo->inactive_समय =
+		jअगरfies_to_msecs(jअगरfies - ieee80211_sta_last_active(sta));
 
-	if (!(sinfo->filled & (BIT_ULL(NL80211_STA_INFO_TX_BYTES64) |
-			       BIT_ULL(NL80211_STA_INFO_TX_BYTES)))) {
+	अगर (!(sinfo->filled & (BIT_ULL(NL80211_STA_INFO_TX_BYTES64) |
+			       BIT_ULL(NL80211_STA_INFO_TX_BYTES)))) अणु
 		sinfo->tx_bytes = 0;
-		for (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
+		क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
 			sinfo->tx_bytes += sta->tx_stats.bytes[ac];
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BYTES64);
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_TX_PACKETS))) {
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_TX_PACKETS))) अणु
 		sinfo->tx_packets = 0;
-		for (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
+		क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
 			sinfo->tx_packets += sta->tx_stats.packets[ac];
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_PACKETS);
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & (BIT_ULL(NL80211_STA_INFO_RX_BYTES64) |
-			       BIT_ULL(NL80211_STA_INFO_RX_BYTES)))) {
-		if (!ieee80211_hw_check(&local->hw, USES_RSS))
+	अगर (!(sinfo->filled & (BIT_ULL(NL80211_STA_INFO_RX_BYTES64) |
+			       BIT_ULL(NL80211_STA_INFO_RX_BYTES)))) अणु
+		अगर (!ieee80211_hw_check(&local->hw, USES_RSS))
 			sinfo->rx_bytes += sta_get_stats_bytes(&sta->rx_stats);
 
-		if (sta->pcpu_rx_stats) {
-			for_each_possible_cpu(cpu) {
-				struct ieee80211_sta_rx_stats *cpurxs;
+		अगर (sta->pcpu_rx_stats) अणु
+			क्रम_each_possible_cpu(cpu) अणु
+				काष्ठा ieee80211_sta_rx_stats *cpurxs;
 
 				cpurxs = per_cpu_ptr(sta->pcpu_rx_stats, cpu);
 				sinfo->rx_bytes += sta_get_stats_bytes(cpurxs);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_BYTES64);
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_RX_PACKETS))) {
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_RX_PACKETS))) अणु
 		sinfo->rx_packets = sta->rx_stats.packets;
-		if (sta->pcpu_rx_stats) {
-			for_each_possible_cpu(cpu) {
-				struct ieee80211_sta_rx_stats *cpurxs;
+		अगर (sta->pcpu_rx_stats) अणु
+			क्रम_each_possible_cpu(cpu) अणु
+				काष्ठा ieee80211_sta_rx_stats *cpurxs;
 
 				cpurxs = per_cpu_ptr(sta->pcpu_rx_stats, cpu);
 				sinfo->rx_packets += cpurxs->packets;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_PACKETS);
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_TX_RETRIES))) {
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_TX_RETRIES))) अणु
 		sinfo->tx_retries = sta->status_stats.retry_count;
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_RETRIES);
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_TX_FAILED))) {
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_TX_FAILED))) अणु
 		sinfo->tx_failed = sta->status_stats.retry_failed;
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_FAILED);
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_RX_DURATION))) {
-		for (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
-			sinfo->rx_duration += sta->airtime[ac].rx_airtime;
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_RX_DURATION))) अणु
+		क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
+			sinfo->rx_duration += sta->airसमय[ac].rx_airसमय;
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_DURATION);
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_TX_DURATION))) {
-		for (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
-			sinfo->tx_duration += sta->airtime[ac].tx_airtime;
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_TX_DURATION))) अणु
+		क्रम (ac = 0; ac < IEEE80211_NUM_ACS; ac++)
+			sinfo->tx_duration += sta->airसमय[ac].tx_airसमय;
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_DURATION);
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_AIRTIME_WEIGHT))) {
-		sinfo->airtime_weight = sta->airtime_weight;
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_AIRTIME_WEIGHT))) अणु
+		sinfo->airसमय_weight = sta->airसमय_weight;
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_AIRTIME_WEIGHT);
-	}
+	पूर्ण
 
 	sinfo->rx_dropped_misc = sta->rx_stats.dropped;
-	if (sta->pcpu_rx_stats) {
-		for_each_possible_cpu(cpu) {
-			struct ieee80211_sta_rx_stats *cpurxs;
+	अगर (sta->pcpu_rx_stats) अणु
+		क्रम_each_possible_cpu(cpu) अणु
+			काष्ठा ieee80211_sta_rx_stats *cpurxs;
 
 			cpurxs = per_cpu_ptr(sta->pcpu_rx_stats, cpu);
 			sinfo->rx_dropped_misc += cpurxs->dropped;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sdata->vif.type == NL80211_IFTYPE_STATION &&
-	    !(sdata->vif.driver_flags & IEEE80211_VIF_BEACON_FILTER)) {
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_STATION &&
+	    !(sdata->vअगर.driver_flags & IEEE80211_VIF_BEACON_FILTER)) अणु
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_BEACON_RX) |
 				 BIT_ULL(NL80211_STA_INFO_BEACON_SIGNAL_AVG);
-		sinfo->rx_beacon_signal_avg = ieee80211_ave_rssi(&sdata->vif);
-	}
+		sinfo->rx_beacon_संकेत_avg = ieee80211_ave_rssi(&sdata->vअगर);
+	पूर्ण
 
-	if (ieee80211_hw_check(&sta->local->hw, SIGNAL_DBM) ||
-	    ieee80211_hw_check(&sta->local->hw, SIGNAL_UNSPEC)) {
-		if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_SIGNAL))) {
-			sinfo->signal = (s8)last_rxstats->last_signal;
+	अगर (ieee80211_hw_check(&sta->local->hw, SIGNAL_DBM) ||
+	    ieee80211_hw_check(&sta->local->hw, SIGNAL_UNSPEC)) अणु
+		अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_SIGNAL))) अणु
+			sinfo->संकेत = (s8)last_rxstats->last_संकेत;
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL);
-		}
+		पूर्ण
 
-		if (!sta->pcpu_rx_stats &&
-		    !(sinfo->filled & BIT_ULL(NL80211_STA_INFO_SIGNAL_AVG))) {
-			sinfo->signal_avg =
-				-ewma_signal_read(&sta->rx_stats_avg.signal);
+		अगर (!sta->pcpu_rx_stats &&
+		    !(sinfo->filled & BIT_ULL(NL80211_STA_INFO_SIGNAL_AVG))) अणु
+			sinfo->संकेत_avg =
+				-ewma_संकेत_पढ़ो(&sta->rx_stats_avg.संकेत);
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL_AVG);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* for the average - if pcpu_rx_stats isn't set - rxstats must point to
-	 * the sta->rx_stats struct, so the check here is fine with and without
+	/* क्रम the average - अगर pcpu_rx_stats isn't set - rxstats must poपूर्णांक to
+	 * the sta->rx_stats काष्ठा, so the check here is fine with and without
 	 * pcpu statistics
 	 */
-	if (last_rxstats->chains &&
+	अगर (last_rxstats->chains &&
 	    !(sinfo->filled & (BIT_ULL(NL80211_STA_INFO_CHAIN_SIGNAL) |
-			       BIT_ULL(NL80211_STA_INFO_CHAIN_SIGNAL_AVG)))) {
+			       BIT_ULL(NL80211_STA_INFO_CHAIN_SIGNAL_AVG)))) अणु
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_CHAIN_SIGNAL);
-		if (!sta->pcpu_rx_stats)
+		अगर (!sta->pcpu_rx_stats)
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_CHAIN_SIGNAL_AVG);
 
 		sinfo->chains = last_rxstats->chains;
 
-		for (i = 0; i < ARRAY_SIZE(sinfo->chain_signal); i++) {
-			sinfo->chain_signal[i] =
-				last_rxstats->chain_signal_last[i];
-			sinfo->chain_signal_avg[i] =
-				-ewma_signal_read(&sta->rx_stats_avg.chain_signal[i]);
-		}
-	}
+		क्रम (i = 0; i < ARRAY_SIZE(sinfo->chain_संकेत); i++) अणु
+			sinfo->chain_संकेत[i] =
+				last_rxstats->chain_संकेत_last[i];
+			sinfo->chain_संकेत_avg[i] =
+				-ewma_संकेत_पढ़ो(&sta->rx_stats_avg.chain_संकेत[i]);
+		पूर्ण
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_TX_BITRATE))) {
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_TX_BITRATE))) अणु
 		sta_set_rate_info_tx(sta, &sta->tx_stats.last_rate,
 				     &sinfo->txrate);
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_RX_BITRATE))) {
-		if (sta_set_rate_info_rx(sta, &sinfo->rxrate) == 0)
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_RX_BITRATE))) अणु
+		अगर (sta_set_rate_info_rx(sta, &sinfo->rxrate) == 0)
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_BITRATE);
-	}
+	पूर्ण
 
-	if (tidstats && !cfg80211_sinfo_alloc_tid_stats(sinfo, GFP_KERNEL)) {
-		for (i = 0; i < IEEE80211_NUM_TIDS + 1; i++)
+	अगर (tidstats && !cfg80211_sinfo_alloc_tid_stats(sinfo, GFP_KERNEL)) अणु
+		क्रम (i = 0; i < IEEE80211_NUM_TIDS + 1; i++)
 			sta_set_tidstats(sta, &sinfo->pertid[i], i);
-	}
+	पूर्ण
 
-	if (ieee80211_vif_is_mesh(&sdata->vif)) {
-#ifdef CONFIG_MAC80211_MESH
+	अगर (ieee80211_vअगर_is_mesh(&sdata->vअगर)) अणु
+#अगर_घोषित CONFIG_MAC80211_MESH
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_LLID) |
 				 BIT_ULL(NL80211_STA_INFO_PLID) |
 				 BIT_ULL(NL80211_STA_INFO_PLINK_STATE) |
@@ -2450,27 +2451,27 @@ void sta_set_sinfo(struct sta_info *sta, struct station_info *sinfo,
 		sinfo->llid = sta->mesh->llid;
 		sinfo->plid = sta->mesh->plid;
 		sinfo->plink_state = sta->mesh->plink_state;
-		if (test_sta_flag(sta, WLAN_STA_TOFFSET_KNOWN)) {
+		अगर (test_sta_flag(sta, WLAN_STA_TOFFSET_KNOWN)) अणु
 			sinfo->filled |= BIT_ULL(NL80211_STA_INFO_T_OFFSET);
 			sinfo->t_offset = sta->mesh->t_offset;
-		}
+		पूर्ण
 		sinfo->local_pm = sta->mesh->local_pm;
 		sinfo->peer_pm = sta->mesh->peer_pm;
 		sinfo->nonpeer_pm = sta->mesh->nonpeer_pm;
 		sinfo->connected_to_gate = sta->mesh->connected_to_gate;
 		sinfo->connected_to_as = sta->mesh->connected_to_as;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	sinfo->bss_param.flags = 0;
-	if (sdata->vif.bss_conf.use_cts_prot)
+	अगर (sdata->vअगर.bss_conf.use_cts_prot)
 		sinfo->bss_param.flags |= BSS_PARAM_FLAGS_CTS_PROT;
-	if (sdata->vif.bss_conf.use_short_preamble)
+	अगर (sdata->vअगर.bss_conf.use_लघु_preamble)
 		sinfo->bss_param.flags |= BSS_PARAM_FLAGS_SHORT_PREAMBLE;
-	if (sdata->vif.bss_conf.use_short_slot)
+	अगर (sdata->vअगर.bss_conf.use_लघु_slot)
 		sinfo->bss_param.flags |= BSS_PARAM_FLAGS_SHORT_SLOT_TIME;
-	sinfo->bss_param.dtim_period = sdata->vif.bss_conf.dtim_period;
-	sinfo->bss_param.beacon_interval = sdata->vif.bss_conf.beacon_int;
+	sinfo->bss_param.dtim_period = sdata->vअगर.bss_conf.dtim_period;
+	sinfo->bss_param.beacon_पूर्णांकerval = sdata->vअगर.bss_conf.beacon_पूर्णांक;
 
 	sinfo->sta_flags.set = 0;
 	sinfo->sta_flags.mask = BIT(NL80211_STA_FLAG_AUTHORIZED) |
@@ -2480,99 +2481,99 @@ void sta_set_sinfo(struct sta_info *sta, struct station_info *sinfo,
 				BIT(NL80211_STA_FLAG_AUTHENTICATED) |
 				BIT(NL80211_STA_FLAG_ASSOCIATED) |
 				BIT(NL80211_STA_FLAG_TDLS_PEER);
-	if (test_sta_flag(sta, WLAN_STA_AUTHORIZED))
+	अगर (test_sta_flag(sta, WLAN_STA_AUTHORIZED))
 		sinfo->sta_flags.set |= BIT(NL80211_STA_FLAG_AUTHORIZED);
-	if (test_sta_flag(sta, WLAN_STA_SHORT_PREAMBLE))
+	अगर (test_sta_flag(sta, WLAN_STA_SHORT_PREAMBLE))
 		sinfo->sta_flags.set |= BIT(NL80211_STA_FLAG_SHORT_PREAMBLE);
-	if (sta->sta.wme)
+	अगर (sta->sta.wme)
 		sinfo->sta_flags.set |= BIT(NL80211_STA_FLAG_WME);
-	if (test_sta_flag(sta, WLAN_STA_MFP))
+	अगर (test_sta_flag(sta, WLAN_STA_MFP))
 		sinfo->sta_flags.set |= BIT(NL80211_STA_FLAG_MFP);
-	if (test_sta_flag(sta, WLAN_STA_AUTH))
+	अगर (test_sta_flag(sta, WLAN_STA_AUTH))
 		sinfo->sta_flags.set |= BIT(NL80211_STA_FLAG_AUTHENTICATED);
-	if (test_sta_flag(sta, WLAN_STA_ASSOC))
+	अगर (test_sta_flag(sta, WLAN_STA_ASSOC))
 		sinfo->sta_flags.set |= BIT(NL80211_STA_FLAG_ASSOCIATED);
-	if (test_sta_flag(sta, WLAN_STA_TDLS_PEER))
+	अगर (test_sta_flag(sta, WLAN_STA_TDLS_PEER))
 		sinfo->sta_flags.set |= BIT(NL80211_STA_FLAG_TDLS_PEER);
 
 	thr = sta_get_expected_throughput(sta);
 
-	if (thr != 0) {
+	अगर (thr != 0) अणु
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_EXPECTED_THROUGHPUT);
 		sinfo->expected_throughput = thr;
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_ACK_SIGNAL)) &&
-	    sta->status_stats.ack_signal_filled) {
-		sinfo->ack_signal = sta->status_stats.last_ack_signal;
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_ACK_SIGNAL)) &&
+	    sta->status_stats.ack_संकेत_filled) अणु
+		sinfo->ack_संकेत = sta->status_stats.last_ack_संकेत;
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_ACK_SIGNAL);
-	}
+	पूर्ण
 
-	if (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_ACK_SIGNAL_AVG)) &&
-	    sta->status_stats.ack_signal_filled) {
-		sinfo->avg_ack_signal =
-			-(s8)ewma_avg_signal_read(
-				&sta->status_stats.avg_ack_signal);
+	अगर (!(sinfo->filled & BIT_ULL(NL80211_STA_INFO_ACK_SIGNAL_AVG)) &&
+	    sta->status_stats.ack_संकेत_filled) अणु
+		sinfo->avg_ack_संकेत =
+			-(s8)ewma_avg_संकेत_पढ़ो(
+				&sta->status_stats.avg_ack_संकेत);
 		sinfo->filled |=
 			BIT_ULL(NL80211_STA_INFO_ACK_SIGNAL_AVG);
-	}
+	पूर्ण
 
-	if (ieee80211_vif_is_mesh(&sdata->vif)) {
+	अगर (ieee80211_vअगर_is_mesh(&sdata->vअगर)) अणु
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_AIRTIME_LINK_METRIC);
-		sinfo->airtime_link_metric =
-			airtime_link_metric_get(local, sta);
-	}
-}
+		sinfo->airसमय_link_metric =
+			airसमय_link_metric_get(local, sta);
+	पूर्ण
+पूर्ण
 
-u32 sta_get_expected_throughput(struct sta_info *sta)
-{
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct ieee80211_local *local = sdata->local;
-	struct rate_control_ref *ref = NULL;
+u32 sta_get_expected_throughput(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा rate_control_ref *ref = शून्य;
 	u32 thr = 0;
 
-	if (test_sta_flag(sta, WLAN_STA_RATE_CONTROL))
+	अगर (test_sta_flag(sta, WLAN_STA_RATE_CONTROL))
 		ref = local->rate_ctrl;
 
-	/* check if the driver has a SW RC implementation */
-	if (ref && ref->ops->get_expected_throughput)
+	/* check अगर the driver has a SW RC implementation */
+	अगर (ref && ref->ops->get_expected_throughput)
 		thr = ref->ops->get_expected_throughput(sta->rate_ctrl_priv);
-	else
+	अन्यथा
 		thr = drv_get_expected_throughput(local, sta);
 
-	return thr;
-}
+	वापस thr;
+पूर्ण
 
-unsigned long ieee80211_sta_last_active(struct sta_info *sta)
-{
-	struct ieee80211_sta_rx_stats *stats = sta_get_last_rx_stats(sta);
+अचिन्हित दीर्घ ieee80211_sta_last_active(काष्ठा sta_info *sta)
+अणु
+	काष्ठा ieee80211_sta_rx_stats *stats = sta_get_last_rx_stats(sta);
 
-	if (!sta->status_stats.last_ack ||
-	    time_after(stats->last_rx, sta->status_stats.last_ack))
-		return stats->last_rx;
-	return sta->status_stats.last_ack;
-}
+	अगर (!sta->status_stats.last_ack ||
+	    समय_after(stats->last_rx, sta->status_stats.last_ack))
+		वापस stats->last_rx;
+	वापस sta->status_stats.last_ack;
+पूर्ण
 
-static void sta_update_codel_params(struct sta_info *sta, u32 thr)
-{
-	if (!sta->sdata->local->ops->wake_tx_queue)
-		return;
+अटल व्योम sta_update_codel_params(काष्ठा sta_info *sta, u32 thr)
+अणु
+	अगर (!sta->sdata->local->ops->wake_tx_queue)
+		वापस;
 
-	if (thr && thr < STA_SLOW_THRESHOLD * sta->local->num_sta) {
+	अगर (thr && thr < STA_SLOW_THRESHOLD * sta->local->num_sta) अणु
 		sta->cparams.target = MS2TIME(50);
-		sta->cparams.interval = MS2TIME(300);
+		sta->cparams.पूर्णांकerval = MS2TIME(300);
 		sta->cparams.ecn = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		sta->cparams.target = MS2TIME(20);
-		sta->cparams.interval = MS2TIME(100);
+		sta->cparams.पूर्णांकerval = MS2TIME(100);
 		sta->cparams.ecn = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ieee80211_sta_set_expected_throughput(struct ieee80211_sta *pubsta,
+व्योम ieee80211_sta_set_expected_throughput(काष्ठा ieee80211_sta *pubsta,
 					   u32 thr)
-{
-	struct sta_info *sta = container_of(pubsta, struct sta_info, sta);
+अणु
+	काष्ठा sta_info *sta = container_of(pubsta, काष्ठा sta_info, sta);
 
 	sta_update_codel_params(sta, thr);
-}
+पूर्ण

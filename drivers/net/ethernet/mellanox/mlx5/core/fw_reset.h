@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2020, Mellanox Technologies inc.  All rights reserved. */
 
-#ifndef __MLX5_FW_RESET_H
-#define __MLX5_FW_RESET_H
+#अगर_अघोषित __MLX5_FW_RESET_H
+#घोषणा __MLX5_FW_RESET_H
 
-#include "mlx5_core.h"
+#समावेश "mlx5_core.h"
 
-void mlx5_fw_reset_enable_remote_dev_reset_set(struct mlx5_core_dev *dev, bool enable);
-bool mlx5_fw_reset_enable_remote_dev_reset_get(struct mlx5_core_dev *dev);
-int mlx5_fw_reset_query(struct mlx5_core_dev *dev, u8 *reset_level, u8 *reset_type);
-int mlx5_fw_reset_set_reset_sync(struct mlx5_core_dev *dev, u8 reset_type_sel);
-int mlx5_fw_reset_set_live_patch(struct mlx5_core_dev *dev);
+व्योम mlx5_fw_reset_enable_remote_dev_reset_set(काष्ठा mlx5_core_dev *dev, bool enable);
+bool mlx5_fw_reset_enable_remote_dev_reset_get(काष्ठा mlx5_core_dev *dev);
+पूर्णांक mlx5_fw_reset_query(काष्ठा mlx5_core_dev *dev, u8 *reset_level, u8 *reset_type);
+पूर्णांक mlx5_fw_reset_set_reset_sync(काष्ठा mlx5_core_dev *dev, u8 reset_type_sel);
+पूर्णांक mlx5_fw_reset_set_live_patch(काष्ठा mlx5_core_dev *dev);
 
-int mlx5_fw_reset_wait_reset_done(struct mlx5_core_dev *dev);
-void mlx5_fw_reset_events_start(struct mlx5_core_dev *dev);
-void mlx5_fw_reset_events_stop(struct mlx5_core_dev *dev);
-int mlx5_fw_reset_init(struct mlx5_core_dev *dev);
-void mlx5_fw_reset_cleanup(struct mlx5_core_dev *dev);
+पूर्णांक mlx5_fw_reset_रुको_reset_करोne(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_fw_reset_events_start(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_fw_reset_events_stop(काष्ठा mlx5_core_dev *dev);
+पूर्णांक mlx5_fw_reset_init(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_fw_reset_cleanup(काष्ठा mlx5_core_dev *dev);
 
-#endif
+#पूर्ण_अगर

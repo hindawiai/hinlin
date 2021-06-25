@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 	Copyright (C) 2004 - 2009 Ivo van Doorn <IvDoorn@gmail.com>
 	<http://rt2x00.serialmonkey.com>
@@ -10,56 +11,56 @@
 	Abstract: rt2x00 generic mmio device routines.
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include "rt2x00.h"
-#include "rt2x00mmio.h"
+#समावेश "rt2x00.h"
+#समावेश "rt2x00mmio.h"
 
 /*
  * Register access.
  */
-int rt2x00mmio_regbusy_read(struct rt2x00_dev *rt2x00dev,
-			    const unsigned int offset,
-			    const struct rt2x00_field32 field,
+पूर्णांक rt2x00mmio_regbusy_पढ़ो(काष्ठा rt2x00_dev *rt2x00dev,
+			    स्थिर अचिन्हित पूर्णांक offset,
+			    स्थिर काष्ठा rt2x00_field32 field,
 			    u32 *reg)
-{
-	unsigned int i;
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
-		return 0;
+	अगर (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
+		वापस 0;
 
-	for (i = 0; i < REGISTER_BUSY_COUNT; i++) {
-		*reg = rt2x00mmio_register_read(rt2x00dev, offset);
-		if (!rt2x00_get_field32(*reg, field))
-			return 1;
+	क्रम (i = 0; i < REGISTER_BUSY_COUNT; i++) अणु
+		*reg = rt2x00mmio_रेजिस्टर_पढ़ो(rt2x00dev, offset);
+		अगर (!rt2x00_get_field32(*reg, field))
+			वापस 1;
 		udelay(REGISTER_BUSY_DELAY);
-	}
+	पूर्ण
 
-	printk_once(KERN_ERR "%s() Indirect register access failed: "
+	prपूर्णांकk_once(KERN_ERR "%s() Indirect register access failed: "
 	      "offset=0x%.08x, value=0x%.08x\n", __func__, offset, *reg);
 	*reg = ~0;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(rt2x00mmio_regbusy_read);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(rt2x00mmio_regbusy_पढ़ो);
 
-bool rt2x00mmio_rxdone(struct rt2x00_dev *rt2x00dev)
-{
-	struct data_queue *queue = rt2x00dev->rx;
-	struct queue_entry *entry;
-	struct queue_entry_priv_mmio *entry_priv;
-	struct skb_frame_desc *skbdesc;
-	int max_rx = 16;
+bool rt2x00mmio_rxकरोne(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	काष्ठा data_queue *queue = rt2x00dev->rx;
+	काष्ठा queue_entry *entry;
+	काष्ठा queue_entry_priv_mmio *entry_priv;
+	काष्ठा skb_frame_desc *skbdesc;
+	पूर्णांक max_rx = 16;
 
-	while (--max_rx) {
+	जबतक (--max_rx) अणु
 		entry = rt2x00queue_get_entry(queue, Q_INDEX);
 		entry_priv = entry->priv_data;
 
-		if (rt2x00dev->ops->lib->get_entry_state(entry))
-			break;
+		अगर (rt2x00dev->ops->lib->get_entry_state(entry))
+			अवरोध;
 
 		/*
 		 * Fill in desc fields of the skb descriptor
@@ -69,131 +70,131 @@ bool rt2x00mmio_rxdone(struct rt2x00_dev *rt2x00dev)
 		skbdesc->desc_len = entry->queue->desc_size;
 
 		/*
-		 * DMA is already done, notify rt2x00lib that
+		 * DMA is alपढ़ोy करोne, notअगरy rt2x00lib that
 		 * it finished successfully.
 		 */
 		rt2x00lib_dmastart(entry);
-		rt2x00lib_dmadone(entry);
+		rt2x00lib_dmaकरोne(entry);
 
 		/*
-		 * Send the frame to rt2x00lib for further processing.
+		 * Send the frame to rt2x00lib क्रम further processing.
 		 */
-		rt2x00lib_rxdone(entry, GFP_ATOMIC);
-	}
+		rt2x00lib_rxकरोne(entry, GFP_ATOMIC);
+	पूर्ण
 
-	return !max_rx;
-}
-EXPORT_SYMBOL_GPL(rt2x00mmio_rxdone);
+	वापस !max_rx;
+पूर्ण
+EXPORT_SYMBOL_GPL(rt2x00mmio_rxकरोne);
 
-void rt2x00mmio_flush_queue(struct data_queue *queue, bool drop)
-{
-	unsigned int i;
+व्योम rt2x00mmio_flush_queue(काष्ठा data_queue *queue, bool drop)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; !rt2x00queue_empty(queue) && i < 10; i++)
+	क्रम (i = 0; !rt2x00queue_empty(queue) && i < 10; i++)
 		msleep(50);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mmio_flush_queue);
 
 /*
  * Device initialization handlers.
  */
-static int rt2x00mmio_alloc_queue_dma(struct rt2x00_dev *rt2x00dev,
-				      struct data_queue *queue)
-{
-	struct queue_entry_priv_mmio *entry_priv;
-	void *addr;
+अटल पूर्णांक rt2x00mmio_alloc_queue_dma(काष्ठा rt2x00_dev *rt2x00dev,
+				      काष्ठा data_queue *queue)
+अणु
+	काष्ठा queue_entry_priv_mmio *entry_priv;
+	व्योम *addr;
 	dma_addr_t dma;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	/*
-	 * Allocate DMA memory for descriptor and buffer.
+	 * Allocate DMA memory क्रम descriptor and buffer.
 	 */
 	addr = dma_alloc_coherent(rt2x00dev->dev,
 				  queue->limit * queue->desc_size, &dma,
 				  GFP_KERNEL);
-	if (!addr)
-		return -ENOMEM;
+	अगर (!addr)
+		वापस -ENOMEM;
 
 	/*
 	 * Initialize all queue entries to contain valid addresses.
 	 */
-	for (i = 0; i < queue->limit; i++) {
+	क्रम (i = 0; i < queue->limit; i++) अणु
 		entry_priv = queue->entries[i].priv_data;
 		entry_priv->desc = addr + i * queue->desc_size;
 		entry_priv->desc_dma = dma + i * queue->desc_size;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rt2x00mmio_free_queue_dma(struct rt2x00_dev *rt2x00dev,
-				      struct data_queue *queue)
-{
-	struct queue_entry_priv_mmio *entry_priv =
+अटल व्योम rt2x00mmio_मुक्त_queue_dma(काष्ठा rt2x00_dev *rt2x00dev,
+				      काष्ठा data_queue *queue)
+अणु
+	काष्ठा queue_entry_priv_mmio *entry_priv =
 	    queue->entries[0].priv_data;
 
-	if (entry_priv->desc)
-		dma_free_coherent(rt2x00dev->dev,
+	अगर (entry_priv->desc)
+		dma_मुक्त_coherent(rt2x00dev->dev,
 				  queue->limit * queue->desc_size,
 				  entry_priv->desc, entry_priv->desc_dma);
-	entry_priv->desc = NULL;
-}
+	entry_priv->desc = शून्य;
+पूर्ण
 
-int rt2x00mmio_initialize(struct rt2x00_dev *rt2x00dev)
-{
-	struct data_queue *queue;
-	int status;
+पूर्णांक rt2x00mmio_initialize(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	काष्ठा data_queue *queue;
+	पूर्णांक status;
 
 	/*
 	 * Allocate DMA
 	 */
-	queue_for_each(rt2x00dev, queue) {
+	queue_क्रम_each(rt2x00dev, queue) अणु
 		status = rt2x00mmio_alloc_queue_dma(rt2x00dev, queue);
-		if (status)
-			goto exit;
-	}
+		अगर (status)
+			जाओ निकास;
+	पूर्ण
 
 	/*
-	 * Register interrupt handler.
+	 * Register पूर्णांकerrupt handler.
 	 */
 	status = request_irq(rt2x00dev->irq,
 			     rt2x00dev->ops->lib->irq_handler,
 			     IRQF_SHARED, rt2x00dev->name, rt2x00dev);
-	if (status) {
+	अगर (status) अणु
 		rt2x00_err(rt2x00dev, "IRQ %d allocation failed (error %d)\n",
 			   rt2x00dev->irq, status);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-exit:
-	queue_for_each(rt2x00dev, queue)
-		rt2x00mmio_free_queue_dma(rt2x00dev, queue);
+निकास:
+	queue_क्रम_each(rt2x00dev, queue)
+		rt2x00mmio_मुक्त_queue_dma(rt2x00dev, queue);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mmio_initialize);
 
-void rt2x00mmio_uninitialize(struct rt2x00_dev *rt2x00dev)
-{
-	struct data_queue *queue;
+व्योम rt2x00mmio_uninitialize(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	काष्ठा data_queue *queue;
 
 	/*
 	 * Free irq line.
 	 */
-	free_irq(rt2x00dev->irq, rt2x00dev);
+	मुक्त_irq(rt2x00dev->irq, rt2x00dev);
 
 	/*
 	 * Free DMA
 	 */
-	queue_for_each(rt2x00dev, queue)
-		rt2x00mmio_free_queue_dma(rt2x00dev, queue);
-}
+	queue_क्रम_each(rt2x00dev, queue)
+		rt2x00mmio_मुक्त_queue_dma(rt2x00dev, queue);
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mmio_uninitialize);
 
 /*
- * rt2x00mmio module information.
+ * rt2x00mmio module inक्रमmation.
  */
 MODULE_AUTHOR(DRV_PROJECT);
 MODULE_VERSION(DRV_VERSION);

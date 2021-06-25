@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_SEG6_HMAC_H
-#define _LINUX_SEG6_HMAC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_SEG6_HMAC_H
+#घोषणा _LINUX_SEG6_HMAC_H
 
-#include <uapi/linux/seg6_hmac.h>
+#समावेश <uapi/linux/seg6_hmac.h>
 
-#endif
+#पूर्ण_अगर

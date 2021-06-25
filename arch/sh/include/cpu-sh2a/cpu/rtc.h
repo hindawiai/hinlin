@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_CPU_SH2A_RTC_H
-#define __ASM_SH_CPU_SH2A_RTC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_CPU_SH2A_RTC_H
+#घोषणा __ASM_SH_CPU_SH2A_RTC_H
 
-#define rtc_reg_size		sizeof(u16)
-#define RTC_BIT_INVERTED	0
-#define RTC_DEF_CAPABILITIES	RTC_CAP_4_DIGIT_YEAR
+#घोषणा rtc_reg_size		माप(u16)
+#घोषणा RTC_BIT_INVERTED	0
+#घोषणा RTC_DEF_CAPABILITIES	RTC_CAP_4_DIGIT_YEAR
 
-#endif /* __ASM_SH_CPU_SH2A_RTC_H */
+#पूर्ण_अगर /* __ASM_SH_CPU_SH2A_RTC_H */

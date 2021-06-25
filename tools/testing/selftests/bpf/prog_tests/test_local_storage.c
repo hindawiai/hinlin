@@ -1,200 +1,201 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
  * Copyright (C) 2020 Google LLC.
  */
 
-#include <asm-generic/errno-base.h>
-#include <sys/stat.h>
-#include <test_progs.h>
-#include <linux/limits.h>
+#समावेश <यंत्र-generic/त्रुटि_सं-base.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <test_progs.h>
+#समावेश <linux/सीमा.स>
 
-#include "local_storage.skel.h"
-#include "network_helpers.h"
+#समावेश "local_storage.skel.h"
+#समावेश "network_helpers.h"
 
-#ifndef __NR_pidfd_open
-#define __NR_pidfd_open 434
-#endif
+#अगर_अघोषित __NR_pidfd_खोलो
+#घोषणा __NR_pidfd_खोलो 434
+#पूर्ण_अगर
 
-static inline int sys_pidfd_open(pid_t pid, unsigned int flags)
-{
-	return syscall(__NR_pidfd_open, pid, flags);
-}
+अटल अंतरभूत पूर्णांक sys_pidfd_खोलो(pid_t pid, अचिन्हित पूर्णांक flags)
+अणु
+	वापस syscall(__NR_pidfd_खोलो, pid, flags);
+पूर्ण
 
-static unsigned int duration;
+अटल अचिन्हित पूर्णांक duration;
 
-#define TEST_STORAGE_VALUE 0xbeefdead
+#घोषणा TEST_STORAGE_VALUE 0xbeefdead
 
-struct storage {
-	void *inode;
-	unsigned int value;
+काष्ठा storage अणु
+	व्योम *inode;
+	अचिन्हित पूर्णांक value;
 	/* Lock ensures that spin locked versions of local stoage operations
-	 * also work, most operations in this tests are still single threaded
+	 * also work, most operations in this tests are still single thपढ़ोed
 	 */
-	struct bpf_spin_lock lock;
-};
+	काष्ठा bpf_spin_lock lock;
+पूर्ण;
 
-/* Fork and exec the provided rm binary and return the exit code of the
- * forked process and its pid.
+/* Fork and exec the provided rm binary and वापस the निकास code of the
+ * विभाजनed process and its pid.
  */
-static int run_self_unlink(int *monitored_pid, const char *rm_path)
-{
-	int child_pid, child_status, ret;
-	int null_fd;
+अटल पूर्णांक run_self_unlink(पूर्णांक *monitored_pid, स्थिर अक्षर *rm_path)
+अणु
+	पूर्णांक child_pid, child_status, ret;
+	पूर्णांक null_fd;
 
-	child_pid = fork();
-	if (child_pid == 0) {
-		null_fd = open("/dev/null", O_WRONLY);
-		dup2(null_fd, STDOUT_FILENO);
-		dup2(null_fd, STDERR_FILENO);
-		close(null_fd);
+	child_pid = विभाजन();
+	अगर (child_pid == 0) अणु
+		null_fd = खोलो("/dev/null", O_WRONLY);
+		dup2(null_fd, STDOUT_खाताNO);
+		dup2(null_fd, STDERR_खाताNO);
+		बंद(null_fd);
 
 		*monitored_pid = getpid();
 		/* Use the copied /usr/bin/rm to delete itself
-		 * /tmp/copy_of_rm /tmp/copy_of_rm.
+		 * /पंचांगp/copy_of_rm /पंचांगp/copy_of_rm.
 		 */
-		ret = execlp(rm_path, rm_path, rm_path, NULL);
-		if (ret)
-			exit(errno);
-	} else if (child_pid > 0) {
-		waitpid(child_pid, &child_status, 0);
-		return WEXITSTATUS(child_status);
-	}
+		ret = execlp(rm_path, rm_path, rm_path, शून्य);
+		अगर (ret)
+			निकास(त्रुटि_सं);
+	पूर्ण अन्यथा अगर (child_pid > 0) अणु
+		रुकोpid(child_pid, &child_status, 0);
+		वापस WEXITSTATUS(child_status);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static bool check_syscall_operations(int map_fd, int obj_fd)
-{
-	struct storage val = { .value = TEST_STORAGE_VALUE, .lock = { 0 } },
-		       lookup_val = { .value = 0, .lock = { 0 } };
-	int err;
+अटल bool check_syscall_operations(पूर्णांक map_fd, पूर्णांक obj_fd)
+अणु
+	काष्ठा storage val = अणु .value = TEST_STORAGE_VALUE, .lock = अणु 0 पूर्ण पूर्ण,
+		       lookup_val = अणु .value = 0, .lock = अणु 0 पूर्ण पूर्ण;
+	पूर्णांक err;
 
 	/* Looking up an existing element should fail initially */
 	err = bpf_map_lookup_elem_flags(map_fd, &obj_fd, &lookup_val,
 					BPF_F_LOCK);
-	if (CHECK(!err || errno != ENOENT, "bpf_map_lookup_elem",
-		  "err:%d errno:%d\n", err, errno))
-		return false;
+	अगर (CHECK(!err || त्रुटि_सं != ENOENT, "bpf_map_lookup_elem",
+		  "err:%d errno:%d\n", err, त्रुटि_सं))
+		वापस false;
 
 	/* Create a new element */
 	err = bpf_map_update_elem(map_fd, &obj_fd, &val,
 				  BPF_NOEXIST | BPF_F_LOCK);
-	if (CHECK(err < 0, "bpf_map_update_elem", "err:%d errno:%d\n", err,
-		  errno))
-		return false;
+	अगर (CHECK(err < 0, "bpf_map_update_elem", "err:%d errno:%d\n", err,
+		  त्रुटि_सं))
+		वापस false;
 
 	/* Lookup the newly created element */
 	err = bpf_map_lookup_elem_flags(map_fd, &obj_fd, &lookup_val,
 					BPF_F_LOCK);
-	if (CHECK(err < 0, "bpf_map_lookup_elem", "err:%d errno:%d", err,
-		  errno))
-		return false;
+	अगर (CHECK(err < 0, "bpf_map_lookup_elem", "err:%d errno:%d", err,
+		  त्रुटि_सं))
+		वापस false;
 
 	/* Check the value of the newly created element */
-	if (CHECK(lookup_val.value != val.value, "bpf_map_lookup_elem",
+	अगर (CHECK(lookup_val.value != val.value, "bpf_map_lookup_elem",
 		  "value got = %x errno:%d", lookup_val.value, val.value))
-		return false;
+		वापस false;
 
 	err = bpf_map_delete_elem(map_fd, &obj_fd);
-	if (CHECK(err, "bpf_map_delete_elem()", "err:%d errno:%d\n", err,
-		  errno))
-		return false;
+	अगर (CHECK(err, "bpf_map_delete_elem()", "err:%d errno:%d\n", err,
+		  त्रुटि_सं))
+		वापस false;
 
 	/* The lookup should fail, now that the element has been deleted */
 	err = bpf_map_lookup_elem_flags(map_fd, &obj_fd, &lookup_val,
 					BPF_F_LOCK);
-	if (CHECK(!err || errno != ENOENT, "bpf_map_lookup_elem",
-		  "err:%d errno:%d\n", err, errno))
-		return false;
+	अगर (CHECK(!err || त्रुटि_सं != ENOENT, "bpf_map_lookup_elem",
+		  "err:%d errno:%d\n", err, त्रुटि_सं))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void test_test_local_storage(void)
-{
-	char tmp_dir_path[] = "/tmp/local_storageXXXXXX";
-	int err, serv_sk = -1, task_fd = -1, rm_fd = -1;
-	struct local_storage *skel = NULL;
-	char tmp_exec_path[64];
-	char cmd[256];
+व्योम test_test_local_storage(व्योम)
+अणु
+	अक्षर पंचांगp_dir_path[] = "/tmp/local_storageXXXXXX";
+	पूर्णांक err, serv_sk = -1, task_fd = -1, rm_fd = -1;
+	काष्ठा local_storage *skel = शून्य;
+	अक्षर पंचांगp_exec_path[64];
+	अक्षर cmd[256];
 
-	skel = local_storage__open_and_load();
-	if (CHECK(!skel, "skel_load", "lsm skeleton failed\n"))
-		goto close_prog;
+	skel = local_storage__खोलो_and_load();
+	अगर (CHECK(!skel, "skel_load", "lsm skeleton failed\n"))
+		जाओ बंद_prog;
 
 	err = local_storage__attach(skel);
-	if (CHECK(err, "attach", "lsm attach failed: %d\n", err))
-		goto close_prog;
+	अगर (CHECK(err, "attach", "lsm attach failed: %d\n", err))
+		जाओ बंद_prog;
 
-	task_fd = sys_pidfd_open(getpid(), 0);
-	if (CHECK(task_fd < 0, "pidfd_open",
-		  "failed to get pidfd err:%d, errno:%d", task_fd, errno))
-		goto close_prog;
+	task_fd = sys_pidfd_खोलो(getpid(), 0);
+	अगर (CHECK(task_fd < 0, "pidfd_open",
+		  "failed to get pidfd err:%d, errno:%d", task_fd, त्रुटि_सं))
+		जाओ बंद_prog;
 
-	if (!check_syscall_operations(bpf_map__fd(skel->maps.task_storage_map),
+	अगर (!check_syscall_operations(bpf_map__fd(skel->maps.task_storage_map),
 				      task_fd))
-		goto close_prog;
+		जाओ बंद_prog;
 
-	if (CHECK(!mkdtemp(tmp_dir_path), "mkdtemp",
-		  "unable to create tmpdir: %d\n", errno))
-		goto close_prog;
+	अगर (CHECK(!mkdtemp(पंचांगp_dir_path), "mkdtemp",
+		  "unable to create tmpdir: %d\n", त्रुटि_सं))
+		जाओ बंद_prog;
 
-	snprintf(tmp_exec_path, sizeof(tmp_exec_path), "%s/copy_of_rm",
-		 tmp_dir_path);
-	snprintf(cmd, sizeof(cmd), "cp /bin/rm %s", tmp_exec_path);
-	if (CHECK_FAIL(system(cmd)))
-		goto close_prog_rmdir;
+	snम_लिखो(पंचांगp_exec_path, माप(पंचांगp_exec_path), "%s/copy_of_rm",
+		 पंचांगp_dir_path);
+	snम_लिखो(cmd, माप(cmd), "cp /bin/rm %s", पंचांगp_exec_path);
+	अगर (CHECK_FAIL(प्रणाली(cmd)))
+		जाओ बंद_prog_सूची_हटाओ;
 
-	rm_fd = open(tmp_exec_path, O_RDONLY);
-	if (CHECK(rm_fd < 0, "open", "failed to open %s err:%d, errno:%d",
-		  tmp_exec_path, rm_fd, errno))
-		goto close_prog_rmdir;
+	rm_fd = खोलो(पंचांगp_exec_path, O_RDONLY);
+	अगर (CHECK(rm_fd < 0, "open", "failed to open %s err:%d, errno:%d",
+		  पंचांगp_exec_path, rm_fd, त्रुटि_सं))
+		जाओ बंद_prog_सूची_हटाओ;
 
-	if (!check_syscall_operations(bpf_map__fd(skel->maps.inode_storage_map),
+	अगर (!check_syscall_operations(bpf_map__fd(skel->maps.inode_storage_map),
 				      rm_fd))
-		goto close_prog_rmdir;
+		जाओ बंद_prog_सूची_हटाओ;
 
-	/* Sets skel->bss->monitored_pid to the pid of the forked child
-	 * forks a child process that executes tmp_exec_path and tries to
+	/* Sets skel->bss->monitored_pid to the pid of the विभाजनed child
+	 * विभाजनs a child process that executes पंचांगp_exec_path and tries to
 	 * unlink its executable. This operation should be denied by the loaded
 	 * LSM program.
 	 */
-	err = run_self_unlink(&skel->bss->monitored_pid, tmp_exec_path);
-	if (CHECK(err != EPERM, "run_self_unlink", "err %d want EPERM\n", err))
-		goto close_prog_rmdir;
+	err = run_self_unlink(&skel->bss->monitored_pid, पंचांगp_exec_path);
+	अगर (CHECK(err != EPERM, "run_self_unlink", "err %d want EPERM\n", err))
+		जाओ बंद_prog_सूची_हटाओ;
 
 	/* Set the process being monitored to be the current process */
 	skel->bss->monitored_pid = getpid();
 
 	/* Move copy_of_rm to a new location so that it triggers the
-	 * inode_rename LSM hook with a new_dentry that has a NULL inode ptr.
+	 * inode_नाम LSM hook with a new_dentry that has a शून्य inode ptr.
 	 */
-	snprintf(cmd, sizeof(cmd), "mv %s/copy_of_rm %s/check_null_ptr",
-		 tmp_dir_path, tmp_dir_path);
-	if (CHECK_FAIL(system(cmd)))
-		goto close_prog_rmdir;
+	snम_लिखो(cmd, माप(cmd), "mv %s/copy_of_rm %s/check_null_ptr",
+		 पंचांगp_dir_path, पंचांगp_dir_path);
+	अगर (CHECK_FAIL(प्रणाली(cmd)))
+		जाओ बंद_prog_सूची_हटाओ;
 
 	CHECK(skel->data->inode_storage_result != 0, "inode_storage_result",
 	      "inode_local_storage not set\n");
 
-	serv_sk = start_server(AF_INET6, SOCK_STREAM, NULL, 0, 0);
-	if (CHECK(serv_sk < 0, "start_server", "failed to start server\n"))
-		goto close_prog_rmdir;
+	serv_sk = start_server(AF_INET6, SOCK_STREAM, शून्य, 0, 0);
+	अगर (CHECK(serv_sk < 0, "start_server", "failed to start server\n"))
+		जाओ बंद_prog_सूची_हटाओ;
 
 	CHECK(skel->data->sk_storage_result != 0, "sk_storage_result",
 	      "sk_local_storage not set\n");
 
-	if (!check_syscall_operations(bpf_map__fd(skel->maps.sk_storage_map),
+	अगर (!check_syscall_operations(bpf_map__fd(skel->maps.sk_storage_map),
 				      serv_sk))
-		goto close_prog_rmdir;
+		जाओ बंद_prog_सूची_हटाओ;
 
-close_prog_rmdir:
-	snprintf(cmd, sizeof(cmd), "rm -rf %s", tmp_dir_path);
-	system(cmd);
-close_prog:
-	close(serv_sk);
-	close(rm_fd);
-	close(task_fd);
+बंद_prog_सूची_हटाओ:
+	snम_लिखो(cmd, माप(cmd), "rm -rf %s", पंचांगp_dir_path);
+	प्रणाली(cmd);
+बंद_prog:
+	बंद(serv_sk);
+	बंद(rm_fd);
+	बंद(task_fd);
 	local_storage__destroy(skel);
-}
+पूर्ण

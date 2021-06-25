@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_IRQ_H
-#define __ASM_SH_IRQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_IRQ_H
+#घोषणा __ASM_SH_IRQ_H
 
-#include <linux/cpumask.h>
-#include <asm/machvec.h>
+#समावेश <linux/cpumask.h>
+#समावेश <यंत्र/machvec.h>
 
 /*
- * Only legacy non-sparseirq platforms have to set a reasonably sane
- * value here. sparseirq platforms allocate their irq_descs on the fly,
- * so will expand automatically based on the number of registered IRQs.
+ * Only legacy non-sparseirq platक्रमms have to set a reasonably sane
+ * value here. sparseirq platक्रमms allocate their irq_descs on the fly,
+ * so will expand स्वतःmatically based on the number of रेजिस्टरed IRQs.
  */
-#ifdef CONFIG_SPARSE_IRQ
+#अगर_घोषित CONFIG_SPARSE_IRQ
 # define NR_IRQS		8
-#else
+#अन्यथा
 # define NR_IRQS		512
-#endif
+#पूर्ण_अगर
 
 /*
- * This is a special IRQ number for indicating that no IRQ has been
+ * This is a special IRQ number क्रम indicating that no IRQ has been
  * triggered and to simply ignore the IRQ dispatch. This is a special
- * case that can happen with IRQ auto-distribution when multiple CPUs
- * are woken up and signalled in parallel.
+ * हाल that can happen with IRQ स्वतः-distribution when multiple CPUs
+ * are woken up and संकेतled in parallel.
  */
-#define NO_IRQ_IGNORE		((unsigned int)-1)
+#घोषणा NO_IRQ_IGNORE		((अचिन्हित पूर्णांक)-1)
 
 /*
  * Simple Mask Register Support
  */
-extern void make_maskreg_irq(unsigned int irq);
-extern unsigned short *irq_mask_register;
+बाह्य व्योम make_maskreg_irq(अचिन्हित पूर्णांक irq);
+बाह्य अचिन्हित लघु *irq_mask_रेजिस्टर;
 
 /*
  * PINT IRQs
  */
-void init_IRQ_pint(void);
-void make_imask_irq(unsigned int irq);
+व्योम init_IRQ_pपूर्णांक(व्योम);
+व्योम make_imask_irq(अचिन्हित पूर्णांक irq);
 
-static inline int generic_irq_demux(int irq)
-{
-	return irq;
-}
+अटल अंतरभूत पूर्णांक generic_irq_demux(पूर्णांक irq)
+अणु
+	वापस irq;
+पूर्ण
 
-#define irq_demux(irq)		sh_mv.mv_irq_demux(irq)
+#घोषणा irq_demux(irq)		sh_mv.mv_irq_demux(irq)
 
-void init_IRQ(void);
-void migrate_irqs(void);
+व्योम init_IRQ(व्योम);
+व्योम migrate_irqs(व्योम);
 
-asmlinkage int do_IRQ(unsigned int irq, struct pt_regs *regs);
+यंत्रlinkage पूर्णांक करो_IRQ(अचिन्हित पूर्णांक irq, काष्ठा pt_regs *regs);
 
-#ifdef CONFIG_IRQSTACKS
-extern void irq_ctx_init(int cpu);
-extern void irq_ctx_exit(int cpu);
-#else
-# define irq_ctx_init(cpu) do { } while (0)
-# define irq_ctx_exit(cpu) do { } while (0)
-#endif
+#अगर_घोषित CONFIG_IRQSTACKS
+बाह्य व्योम irq_ctx_init(पूर्णांक cpu);
+बाह्य व्योम irq_ctx_निकास(पूर्णांक cpu);
+#अन्यथा
+# define irq_ctx_init(cpu) करो अणु पूर्ण जबतक (0)
+# define irq_ctx_निकास(cpu) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INTC_BALANCING
-extern unsigned int irq_lookup(unsigned int irq);
-extern void irq_finish(unsigned int irq);
-#else
-#define irq_lookup(irq)		(irq)
-#define irq_finish(irq)		do { } while (0)
-#endif
+#अगर_घोषित CONFIG_INTC_BALANCING
+बाह्य अचिन्हित पूर्णांक irq_lookup(अचिन्हित पूर्णांक irq);
+बाह्य व्योम irq_finish(अचिन्हित पूर्णांक irq);
+#अन्यथा
+#घोषणा irq_lookup(irq)		(irq)
+#घोषणा irq_finish(irq)		करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#include <asm-generic/irq.h>
+#समावेश <यंत्र-generic/irq.h>
 
-#endif /* __ASM_SH_IRQ_H */
+#पूर्ण_अगर /* __ASM_SH_IRQ_H */

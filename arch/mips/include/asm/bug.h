@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_BUG_H
-#define __ASM_BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_BUG_H
+#घोषणा __ASM_BUG_H
 
-#include <linux/compiler.h>
-#include <asm/sgidefs.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/sgidefs.h>
 
-#ifdef CONFIG_BUG
+#अगर_घोषित CONFIG_BUG
 
-#include <asm/break.h>
+#समावेश <यंत्र/अवरोध.h>
 
-static inline void __noreturn BUG(void)
-{
-	__asm__ __volatile__("break %0" : : "i" (BRK_BUG));
+अटल अंतरभूत व्योम __noवापस BUG(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__("break %0" : : "i" (BRK_BUG));
 	unreachable();
-}
+पूर्ण
 
-#define HAVE_ARCH_BUG
+#घोषणा HAVE_ARCH_BUG
 
-#if (_MIPS_ISA > _MIPS_ISA_MIPS1)
+#अगर (_MIPS_ISA > _MIPS_ISA_MIPS1)
 
-static inline void  __BUG_ON(unsigned long condition)
-{
-	if (__builtin_constant_p(condition)) {
-		if (condition)
+अटल अंतरभूत व्योम  __BUG_ON(अचिन्हित दीर्घ condition)
+अणु
+	अगर (__builtin_स्थिरant_p(condition)) अणु
+		अगर (condition)
 			BUG();
-		else
-			return;
-	}
-	__asm__ __volatile__("tne $0, %0, %1"
+		अन्यथा
+			वापस;
+	पूर्ण
+	__यंत्र__ __अस्थिर__("tne $0, %0, %1"
 			     : : "r" (condition), "i" (BRK_BUG));
-}
+पूर्ण
 
-#define BUG_ON(C) __BUG_ON((unsigned long)(C))
+#घोषणा BUG_ON(C) __BUG_ON((अचिन्हित दीर्घ)(C))
 
-#define HAVE_ARCH_BUG_ON
+#घोषणा HAVE_ARCH_BUG_ON
 
-#endif /* _MIPS_ISA > _MIPS_ISA_MIPS1 */
+#पूर्ण_अगर /* _MIPS_ISA > _MIPS_ISA_MIPS1 */
 
-#endif
+#पूर्ण_अगर
 
-#include <asm-generic/bug.h>
+#समावेश <यंत्र-generic/bug.h>
 
-#endif /* __ASM_BUG_H */
+#पूर्ण_अगर /* __ASM_BUG_H */

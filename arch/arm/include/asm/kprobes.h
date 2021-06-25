@@ -1,80 +1,81 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * arch/arm/include/asm/kprobes.h
+ * arch/arm/include/यंत्र/kprobes.h
  *
  * Copyright (C) 2006, 2007 Motorola Inc.
  */
 
-#ifndef _ARM_KPROBES_H
-#define _ARM_KPROBES_H
+#अगर_अघोषित _ARM_KPROBES_H
+#घोषणा _ARM_KPROBES_H
 
-#include <asm-generic/kprobes.h>
+#समावेश <यंत्र-generic/kprobes.h>
 
-#ifdef CONFIG_KPROBES
-#include <linux/types.h>
-#include <linux/ptrace.h>
-#include <linux/notifier.h>
+#अगर_घोषित CONFIG_KPROBES
+#समावेश <linux/types.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/notअगरier.h>
 
-#define __ARCH_WANT_KPROBES_INSN_SLOT
-#define MAX_INSN_SIZE			2
+#घोषणा __ARCH_WANT_KPROBES_INSN_SLOT
+#घोषणा MAX_INSN_SIZE			2
 
-#define flush_insn_slot(p)		do { } while (0)
-#define kretprobe_blacklist_size	0
+#घोषणा flush_insn_slot(p)		करो अणु पूर्ण जबतक (0)
+#घोषणा kretprobe_blacklist_size	0
 
-typedef u32 kprobe_opcode_t;
-struct kprobe;
-#include <asm/probes.h>
+प्रकार u32 kprobe_opcode_t;
+काष्ठा kprobe;
+#समावेश <यंत्र/probes.h>
 
-#define	arch_specific_insn	arch_probes_insn
+#घोषणा	arch_specअगरic_insn	arch_probes_insn
 
-struct prev_kprobe {
-	struct kprobe *kp;
-	unsigned int status;
-};
+काष्ठा prev_kprobe अणु
+	काष्ठा kprobe *kp;
+	अचिन्हित पूर्णांक status;
+पूर्ण;
 
 /* per-cpu kprobe control block */
-struct kprobe_ctlblk {
-	unsigned int kprobe_status;
-	struct prev_kprobe prev_kprobe;
-};
+काष्ठा kprobe_ctlblk अणु
+	अचिन्हित पूर्णांक kprobe_status;
+	काष्ठा prev_kprobe prev_kprobe;
+पूर्ण;
 
-void arch_remove_kprobe(struct kprobe *);
-int kprobe_fault_handler(struct pt_regs *regs, unsigned int fsr);
-int kprobe_exceptions_notify(struct notifier_block *self,
-			     unsigned long val, void *data);
+व्योम arch_हटाओ_kprobe(काष्ठा kprobe *);
+पूर्णांक kprobe_fault_handler(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक fsr);
+पूर्णांक kprobe_exceptions_notअगरy(काष्ठा notअगरier_block *self,
+			     अचिन्हित दीर्घ val, व्योम *data);
 
-/* optinsn template addresses */
-extern __visible kprobe_opcode_t optprobe_template_entry[];
-extern __visible kprobe_opcode_t optprobe_template_val[];
-extern __visible kprobe_opcode_t optprobe_template_call[];
-extern __visible kprobe_opcode_t optprobe_template_end[];
-extern __visible kprobe_opcode_t optprobe_template_sub_sp[];
-extern __visible kprobe_opcode_t optprobe_template_add_sp[];
-extern __visible kprobe_opcode_t optprobe_template_restore_begin[];
-extern __visible kprobe_opcode_t optprobe_template_restore_orig_insn[];
-extern __visible kprobe_opcode_t optprobe_template_restore_end[];
+/* optinsn ढाँचा addresses */
+बाह्य __visible kprobe_opcode_t optprobe_ढाँचा_entry[];
+बाह्य __visible kprobe_opcode_t optprobe_ढाँचा_val[];
+बाह्य __visible kprobe_opcode_t optprobe_ढाँचा_call[];
+बाह्य __visible kprobe_opcode_t optprobe_ढाँचा_end[];
+बाह्य __visible kprobe_opcode_t optprobe_ढाँचा_sub_sp[];
+बाह्य __visible kprobe_opcode_t optprobe_ढाँचा_add_sp[];
+बाह्य __visible kprobe_opcode_t optprobe_ढाँचा_restore_begin[];
+बाह्य __visible kprobe_opcode_t optprobe_ढाँचा_restore_orig_insn[];
+बाह्य __visible kprobe_opcode_t optprobe_ढाँचा_restore_end[];
 
-#define MAX_OPTIMIZED_LENGTH	4
-#define MAX_OPTINSN_SIZE				\
-	((unsigned long)optprobe_template_end -	\
-	 (unsigned long)optprobe_template_entry)
-#define RELATIVEJUMP_SIZE	4
+#घोषणा MAX_OPTIMIZED_LENGTH	4
+#घोषणा MAX_OPTINSN_SIZE				\
+	((अचिन्हित दीर्घ)optprobe_ढाँचा_end -	\
+	 (अचिन्हित दीर्घ)optprobe_ढाँचा_entry)
+#घोषणा RELATIVEJUMP_SIZE	4
 
-struct arch_optimized_insn {
+काष्ठा arch_optimized_insn अणु
 	/*
-	 * copy of the original instructions.
-	 * Different from x86, ARM kprobe_opcode_t is u32.
+	 * copy of the original inकाष्ठाions.
+	 * Dअगरferent from x86, ARM kprobe_opcode_t is u32.
 	 */
-#define MAX_COPIED_INSN	DIV_ROUND_UP(RELATIVEJUMP_SIZE, sizeof(kprobe_opcode_t))
+#घोषणा MAX_COPIED_INSN	DIV_ROUND_UP(RELATIVEJUMP_SIZE, माप(kprobe_opcode_t))
 	kprobe_opcode_t copied_insn[MAX_COPIED_INSN];
 	/* detour code buffer */
 	kprobe_opcode_t *insn;
 	/*
-	 * We always copy one instruction on ARM,
+	 * We always copy one inकाष्ठाion on ARM,
 	 * so size will always be 4, and unlike x86, there is no
-	 * need for a size field.
+	 * need क्रम a size field.
 	 */
-};
+पूर्ण;
 
-#endif /* CONFIG_KPROBES */
-#endif /* _ARM_KPROBES_H */
+#पूर्ण_अगर /* CONFIG_KPROBES */
+#पूर्ण_अगर /* _ARM_KPROBES_H */

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Linux driver for TerraTec DMX 6Fire USB
+ * Linux driver क्रम TerraTec DMX 6Fire USB
  *
  * Firmware loader
  *
@@ -9,95 +10,95 @@
  * Copyright:	(C) Torsten Schenk
  */
 
-#include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/bitrev.h>
-#include <linux/kernel.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
+#समावेश <linux/bitrev.h>
+#समावेश <linux/kernel.h>
 
-#include "firmware.h"
-#include "chip.h"
+#समावेश "firmware.h"
+#समावेश "chip.h"
 
 MODULE_FIRMWARE("6fire/dmx6firel2.ihx");
 MODULE_FIRMWARE("6fire/dmx6fireap.ihx");
 MODULE_FIRMWARE("6fire/dmx6firecf.bin");
 
-enum {
-	FPGA_BUFSIZE = 512, FPGA_EP = 2
-};
+क्रमागत अणु
+	FPGA_बफ_मानE = 512, FPGA_EP = 2
+पूर्ण;
 
 /*
- * wMaxPacketSize of pcm endpoints.
+ * wMaxPacketSize of pcm endpoपूर्णांकs.
  * keep synced with rates_in_packet_size and rates_out_packet_size in pcm.c
  * fpp: frames per isopacket
  *
- * CAUTION: keep sizeof <= buffer[] in usb6fire_fw_init
+ * CAUTION: keep माप <= buffer[] in usb6fire_fw_init
  */
-static const u8 ep_w_max_packet_size[] = {
+अटल स्थिर u8 ep_w_max_packet_size[] = अणु
 	0xe4, 0x00, 0xe4, 0x00, /* alt 1: 228 EP2 and EP6 (7 fpp) */
 	0xa4, 0x01, 0xa4, 0x01, /* alt 2: 420 EP2 and EP6 (13 fpp)*/
 	0x94, 0x01, 0x5c, 0x02  /* alt 3: 404 EP2 and 604 EP6 (25 fpp) */
-};
+पूर्ण;
 
-static const u8 known_fw_versions[][2] = {
-	{ 0x03, 0x01 }
-};
+अटल स्थिर u8 known_fw_versions[][2] = अणु
+	अणु 0x03, 0x01 पूर्ण
+पूर्ण;
 
-struct ihex_record {
+काष्ठा ihex_record अणु
 	u16 address;
 	u8 len;
 	u8 data[256];
-	char error; /* true if an error occurred parsing this record */
+	अक्षर error; /* true अगर an error occurred parsing this record */
 
 	u8 max_len; /* maximum record length in whole ihex */
 
-	/* private */
-	const char *txt_data;
-	unsigned int txt_length;
-	unsigned int txt_offset; /* current position in txt_data */
-};
+	/* निजी */
+	स्थिर अक्षर *txt_data;
+	अचिन्हित पूर्णांक txt_length;
+	अचिन्हित पूर्णांक txt_offset; /* current position in txt_data */
+पूर्ण;
 
-static u8 usb6fire_fw_ihex_hex(const u8 *data, u8 *crc)
-{
+अटल u8 usb6fire_fw_ihex_hex(स्थिर u8 *data, u8 *crc)
+अणु
 	u8 val = 0;
-	int hval;
+	पूर्णांक hval;
 
 	hval = hex_to_bin(data[0]);
-	if (hval >= 0)
+	अगर (hval >= 0)
 		val |= (hval << 4);
 
 	hval = hex_to_bin(data[1]);
-	if (hval >= 0)
+	अगर (hval >= 0)
 		val |= hval;
 
 	*crc += val;
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /*
- * returns true if record is available, false otherwise.
- * iff an error occurred, false will be returned and record->error will be true.
+ * वापसs true अगर record is available, false otherwise.
+ * अगरf an error occurred, false will be वापसed and record->error will be true.
  */
-static bool usb6fire_fw_ihex_next_record(struct ihex_record *record)
-{
+अटल bool usb6fire_fw_ihex_next_record(काष्ठा ihex_record *record)
+अणु
 	u8 crc = 0;
 	u8 type;
-	int i;
+	पूर्णांक i;
 
 	record->error = false;
 
 	/* find begin of record (marked by a colon) */
-	while (record->txt_offset < record->txt_length
+	जबतक (record->txt_offset < record->txt_length
 			&& record->txt_data[record->txt_offset] != ':')
 		record->txt_offset++;
-	if (record->txt_offset == record->txt_length)
-		return false;
+	अगर (record->txt_offset == record->txt_length)
+		वापस false;
 
-	/* number of characters needed for len, addr and type entries */
+	/* number of अक्षरacters needed क्रम len, addr and type entries */
 	record->txt_offset++;
-	if (record->txt_offset + 8 > record->txt_length) {
+	अगर (record->txt_offset + 8 > record->txt_length) अणु
 		record->error = true;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	record->len = usb6fire_fw_ihex_hex(record->txt_data +
 			record->txt_offset, &crc);
@@ -112,294 +113,294 @@ static bool usb6fire_fw_ihex_next_record(struct ihex_record *record)
 			record->txt_offset, &crc);
 	record->txt_offset += 2;
 
-	/* number of characters needed for data and crc entries */
-	if (record->txt_offset + 2 * (record->len + 1) > record->txt_length) {
+	/* number of अक्षरacters needed क्रम data and crc entries */
+	अगर (record->txt_offset + 2 * (record->len + 1) > record->txt_length) अणु
 		record->error = true;
-		return false;
-	}
-	for (i = 0; i < record->len; i++) {
+		वापस false;
+	पूर्ण
+	क्रम (i = 0; i < record->len; i++) अणु
 		record->data[i] = usb6fire_fw_ihex_hex(record->txt_data
 				+ record->txt_offset, &crc);
 		record->txt_offset += 2;
-	}
+	पूर्ण
 	usb6fire_fw_ihex_hex(record->txt_data + record->txt_offset, &crc);
-	if (crc) {
+	अगर (crc) अणु
 		record->error = true;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (type == 1 || !record->len) /* eof */
-		return false;
-	else if (type == 0)
-		return true;
-	else {
+	अगर (type == 1 || !record->len) /* eof */
+		वापस false;
+	अन्यथा अगर (type == 0)
+		वापस true;
+	अन्यथा अणु
 		record->error = true;
-		return false;
-	}
-}
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int usb6fire_fw_ihex_init(const struct firmware *fw,
-		struct ihex_record *record)
-{
+अटल पूर्णांक usb6fire_fw_ihex_init(स्थिर काष्ठा firmware *fw,
+		काष्ठा ihex_record *record)
+अणु
 	record->txt_data = fw->data;
 	record->txt_length = fw->size;
 	record->txt_offset = 0;
 	record->max_len = 0;
-	/* read all records, if loop ends, record->error indicates,
+	/* पढ़ो all records, अगर loop ends, record->error indicates,
 	 * whether ihex is valid. */
-	while (usb6fire_fw_ihex_next_record(record))
+	जबतक (usb6fire_fw_ihex_next_record(record))
 		record->max_len = max(record->len, record->max_len);
-	if (record->error)
-		return -EINVAL;
+	अगर (record->error)
+		वापस -EINVAL;
 	record->txt_offset = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb6fire_fw_ezusb_write(struct usb_device *device,
-		int type, int value, char *data, int len)
-{
-	return usb_control_msg_send(device, 0, type,
-				    USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+अटल पूर्णांक usb6fire_fw_ezusb_ग_लिखो(काष्ठा usb_device *device,
+		पूर्णांक type, पूर्णांक value, अक्षर *data, पूर्णांक len)
+अणु
+	वापस usb_control_msg_send(device, 0, type,
+				    USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 				    value, 0, data, len, HZ, GFP_KERNEL);
-}
+पूर्ण
 
-static int usb6fire_fw_ezusb_read(struct usb_device *device,
-		int type, int value, char *data, int len)
-{
-	return usb_control_msg_recv(device, 0, type,
-				    USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+अटल पूर्णांक usb6fire_fw_ezusb_पढ़ो(काष्ठा usb_device *device,
+		पूर्णांक type, पूर्णांक value, अक्षर *data, पूर्णांक len)
+अणु
+	वापस usb_control_msg_recv(device, 0, type,
+				    USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 				    value, 0, data, len, HZ, GFP_KERNEL);
-}
+पूर्ण
 
-static int usb6fire_fw_fpga_write(struct usb_device *device,
-		char *data, int len)
-{
-	int actual_len;
-	int ret;
+अटल पूर्णांक usb6fire_fw_fpga_ग_लिखो(काष्ठा usb_device *device,
+		अक्षर *data, पूर्णांक len)
+अणु
+	पूर्णांक actual_len;
+	पूर्णांक ret;
 
 	ret = usb_bulk_msg(device, usb_sndbulkpipe(device, FPGA_EP), data, len,
 			&actual_len, HZ);
-	if (ret < 0)
-		return ret;
-	else if (actual_len != len)
-		return -EIO;
-	return 0;
-}
+	अगर (ret < 0)
+		वापस ret;
+	अन्यथा अगर (actual_len != len)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static int usb6fire_fw_ezusb_upload(
-		struct usb_interface *intf, const char *fwname,
-		unsigned int postaddr, u8 *postdata, unsigned int postlen)
-{
-	int ret;
+अटल पूर्णांक usb6fire_fw_ezusb_upload(
+		काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर अक्षर *fwname,
+		अचिन्हित पूर्णांक postaddr, u8 *postdata, अचिन्हित पूर्णांक postlen)
+अणु
+	पूर्णांक ret;
 	u8 data;
-	struct usb_device *device = interface_to_usbdev(intf);
-	const struct firmware *fw = NULL;
-	struct ihex_record *rec = kmalloc(sizeof(struct ihex_record),
+	काष्ठा usb_device *device = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	स्थिर काष्ठा firmware *fw = शून्य;
+	काष्ठा ihex_record *rec = kदो_स्मृति(माप(काष्ठा ihex_record),
 			GFP_KERNEL);
 
-	if (!rec)
-		return -ENOMEM;
+	अगर (!rec)
+		वापस -ENOMEM;
 
 	ret = request_firmware(&fw, fwname, &device->dev);
-	if (ret < 0) {
-		kfree(rec);
-		dev_err(&intf->dev,
+	अगर (ret < 0) अणु
+		kमुक्त(rec);
+		dev_err(&पूर्णांकf->dev,
 			"error requesting ezusb firmware %s.\n", fwname);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = usb6fire_fw_ihex_init(fw, rec);
-	if (ret < 0) {
-		kfree(rec);
+	अगर (ret < 0) अणु
+		kमुक्त(rec);
 		release_firmware(fw);
-		dev_err(&intf->dev,
+		dev_err(&पूर्णांकf->dev,
 			"error validating ezusb firmware %s.\n", fwname);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	/* upload firmware image */
 	data = 0x01; /* stop ezusb cpu */
-	ret = usb6fire_fw_ezusb_write(device, 0xa0, 0xe600, &data, 1);
-	if (ret) {
-		kfree(rec);
+	ret = usb6fire_fw_ezusb_ग_लिखो(device, 0xa0, 0xe600, &data, 1);
+	अगर (ret) अणु
+		kमुक्त(rec);
 		release_firmware(fw);
-		dev_err(&intf->dev,
+		dev_err(&पूर्णांकf->dev,
 			"unable to upload ezusb firmware %s: begin message.\n",
 			fwname);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	while (usb6fire_fw_ihex_next_record(rec)) { /* write firmware */
-		ret = usb6fire_fw_ezusb_write(device, 0xa0, rec->address,
+	जबतक (usb6fire_fw_ihex_next_record(rec)) अणु /* ग_लिखो firmware */
+		ret = usb6fire_fw_ezusb_ग_लिखो(device, 0xa0, rec->address,
 				rec->data, rec->len);
-		if (ret) {
-			kfree(rec);
+		अगर (ret) अणु
+			kमुक्त(rec);
 			release_firmware(fw);
-			dev_err(&intf->dev,
+			dev_err(&पूर्णांकf->dev,
 				"unable to upload ezusb firmware %s: data urb.\n",
 				fwname);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	release_firmware(fw);
-	kfree(rec);
-	if (postdata) { /* write data after firmware has been uploaded */
-		ret = usb6fire_fw_ezusb_write(device, 0xa0, postaddr,
+	kमुक्त(rec);
+	अगर (postdata) अणु /* ग_लिखो data after firmware has been uploaded */
+		ret = usb6fire_fw_ezusb_ग_लिखो(device, 0xa0, postaddr,
 				postdata, postlen);
-		if (ret) {
-			dev_err(&intf->dev,
+		अगर (ret) अणु
+			dev_err(&पूर्णांकf->dev,
 				"unable to upload ezusb firmware %s: post urb.\n",
 				fwname);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	data = 0x00; /* resume ezusb cpu */
-	ret = usb6fire_fw_ezusb_write(device, 0xa0, 0xe600, &data, 1);
-	if (ret) {
-		dev_err(&intf->dev,
+	ret = usb6fire_fw_ezusb_ग_लिखो(device, 0xa0, 0xe600, &data, 1);
+	अगर (ret) अणु
+		dev_err(&पूर्णांकf->dev,
 			"unable to upload ezusb firmware %s: end message.\n",
 			fwname);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int usb6fire_fw_fpga_upload(
-		struct usb_interface *intf, const char *fwname)
-{
-	int ret;
-	int i;
-	struct usb_device *device = interface_to_usbdev(intf);
-	u8 *buffer = kmalloc(FPGA_BUFSIZE, GFP_KERNEL);
-	const char *c;
-	const char *end;
-	const struct firmware *fw;
+अटल पूर्णांक usb6fire_fw_fpga_upload(
+		काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर अक्षर *fwname)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
+	काष्ठा usb_device *device = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	u8 *buffer = kदो_स्मृति(FPGA_बफ_मानE, GFP_KERNEL);
+	स्थिर अक्षर *c;
+	स्थिर अक्षर *end;
+	स्थिर काष्ठा firmware *fw;
 
-	if (!buffer)
-		return -ENOMEM;
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	ret = request_firmware(&fw, fwname, &device->dev);
-	if (ret < 0) {
-		dev_err(&intf->dev, "unable to get fpga firmware %s.\n",
+	अगर (ret < 0) अणु
+		dev_err(&पूर्णांकf->dev, "unable to get fpga firmware %s.\n",
 				fwname);
-		kfree(buffer);
-		return -EIO;
-	}
+		kमुक्त(buffer);
+		वापस -EIO;
+	पूर्ण
 
 	c = fw->data;
 	end = fw->data + fw->size;
 
-	ret = usb6fire_fw_ezusb_write(device, 8, 0, NULL, 0);
-	if (ret) {
-		kfree(buffer);
+	ret = usb6fire_fw_ezusb_ग_लिखो(device, 8, 0, शून्य, 0);
+	अगर (ret) अणु
+		kमुक्त(buffer);
 		release_firmware(fw);
-		dev_err(&intf->dev,
+		dev_err(&पूर्णांकf->dev,
 			"unable to upload fpga firmware: begin urb.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	while (c != end) {
-		for (i = 0; c != end && i < FPGA_BUFSIZE; i++, c++)
+	जबतक (c != end) अणु
+		क्रम (i = 0; c != end && i < FPGA_बफ_मानE; i++, c++)
 			buffer[i] = bitrev8((u8)*c);
 
-		ret = usb6fire_fw_fpga_write(device, buffer, i);
-		if (ret < 0) {
+		ret = usb6fire_fw_fpga_ग_लिखो(device, buffer, i);
+		अगर (ret < 0) अणु
 			release_firmware(fw);
-			kfree(buffer);
-			dev_err(&intf->dev,
+			kमुक्त(buffer);
+			dev_err(&पूर्णांकf->dev,
 				"unable to upload fpga firmware: fw urb.\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	release_firmware(fw);
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	ret = usb6fire_fw_ezusb_write(device, 9, 0, NULL, 0);
-	if (ret) {
-		dev_err(&intf->dev,
+	ret = usb6fire_fw_ezusb_ग_लिखो(device, 9, 0, शून्य, 0);
+	अगर (ret) अणु
+		dev_err(&पूर्णांकf->dev,
 			"unable to upload fpga firmware: end urb.\n");
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* check, if the firmware version the devices has currently loaded
+/* check, अगर the firmware version the devices has currently loaded
  * is known by this driver. 'version' needs to have 4 bytes version
  * info data. */
-static int usb6fire_fw_check(struct usb_interface *intf, const u8 *version)
-{
-	int i;
+अटल पूर्णांक usb6fire_fw_check(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर u8 *version)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(known_fw_versions); i++)
-		if (!memcmp(version, known_fw_versions + i, 2))
-			return 0;
+	क्रम (i = 0; i < ARRAY_SIZE(known_fw_versions); i++)
+		अगर (!स_भेद(version, known_fw_versions + i, 2))
+			वापस 0;
 
-	dev_err(&intf->dev, "invalid firmware version in device: %4ph. "
+	dev_err(&पूर्णांकf->dev, "invalid firmware version in device: %4ph. "
 			"please reconnect to power. if this failure "
 			"still happens, check your firmware installation.",
 			version);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int usb6fire_fw_init(struct usb_interface *intf)
-{
-	int i;
-	int ret;
-	struct usb_device *device = interface_to_usbdev(intf);
+पूर्णांक usb6fire_fw_init(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
+	काष्ठा usb_device *device = पूर्णांकerface_to_usbdev(पूर्णांकf);
 	/* buffer: 8 receiving bytes from device and
-	 * sizeof(EP_W_MAX_PACKET_SIZE) bytes for non-const copy */
+	 * माप(EP_W_MAX_PACKET_SIZE) bytes क्रम non-स्थिर copy */
 	u8 buffer[12];
 
-	ret = usb6fire_fw_ezusb_read(device, 1, 0, buffer, 8);
-	if (ret) {
-		dev_err(&intf->dev,
+	ret = usb6fire_fw_ezusb_पढ़ो(device, 1, 0, buffer, 8);
+	अगर (ret) अणु
+		dev_err(&पूर्णांकf->dev,
 			"unable to receive device firmware state.\n");
-		return ret;
-	}
-	if (buffer[0] != 0xeb || buffer[1] != 0xaa || buffer[2] != 0x55) {
-		dev_err(&intf->dev,
+		वापस ret;
+	पूर्ण
+	अगर (buffer[0] != 0xeb || buffer[1] != 0xaa || buffer[2] != 0x55) अणु
+		dev_err(&पूर्णांकf->dev,
 			"unknown device firmware state received from device:");
-		for (i = 0; i < 8; i++)
-			printk(KERN_CONT "%02x ", buffer[i]);
-		printk(KERN_CONT "\n");
-		return -EIO;
-	}
-	/* do we need fpga loader ezusb firmware? */
-	if (buffer[3] == 0x01) {
-		ret = usb6fire_fw_ezusb_upload(intf,
-				"6fire/dmx6firel2.ihx", 0, NULL, 0);
-		if (ret < 0)
-			return ret;
-		return FW_NOT_READY;
-	}
-	/* do we need fpga firmware and application ezusb firmware? */
-	else if (buffer[3] == 0x02) {
-		ret = usb6fire_fw_check(intf, buffer + 4);
-		if (ret < 0)
-			return ret;
-		ret = usb6fire_fw_fpga_upload(intf, "6fire/dmx6firecf.bin");
-		if (ret < 0)
-			return ret;
-		memcpy(buffer, ep_w_max_packet_size,
-				sizeof(ep_w_max_packet_size));
-		ret = usb6fire_fw_ezusb_upload(intf, "6fire/dmx6fireap.ihx",
-				0x0003,	buffer, sizeof(ep_w_max_packet_size));
-		if (ret < 0)
-			return ret;
-		return FW_NOT_READY;
-	}
+		क्रम (i = 0; i < 8; i++)
+			prपूर्णांकk(KERN_CONT "%02x ", buffer[i]);
+		prपूर्णांकk(KERN_CONT "\n");
+		वापस -EIO;
+	पूर्ण
+	/* करो we need fpga loader ezusb firmware? */
+	अगर (buffer[3] == 0x01) अणु
+		ret = usb6fire_fw_ezusb_upload(पूर्णांकf,
+				"6fire/dmx6firel2.ihx", 0, शून्य, 0);
+		अगर (ret < 0)
+			वापस ret;
+		वापस FW_NOT_READY;
+	पूर्ण
+	/* करो we need fpga firmware and application ezusb firmware? */
+	अन्यथा अगर (buffer[3] == 0x02) अणु
+		ret = usb6fire_fw_check(पूर्णांकf, buffer + 4);
+		अगर (ret < 0)
+			वापस ret;
+		ret = usb6fire_fw_fpga_upload(पूर्णांकf, "6fire/dmx6firecf.bin");
+		अगर (ret < 0)
+			वापस ret;
+		स_नकल(buffer, ep_w_max_packet_size,
+				माप(ep_w_max_packet_size));
+		ret = usb6fire_fw_ezusb_upload(पूर्णांकf, "6fire/dmx6fireap.ihx",
+				0x0003,	buffer, माप(ep_w_max_packet_size));
+		अगर (ret < 0)
+			वापस ret;
+		वापस FW_NOT_READY;
+	पूर्ण
 	/* all fw loaded? */
-	else if (buffer[3] == 0x03)
-		return usb6fire_fw_check(intf, buffer + 4);
+	अन्यथा अगर (buffer[3] == 0x03)
+		वापस usb6fire_fw_check(पूर्णांकf, buffer + 4);
 	/* unknown data? */
-	else {
-		dev_err(&intf->dev,
+	अन्यथा अणु
+		dev_err(&पूर्णांकf->dev,
 			"unknown device firmware state received from device: ");
-		for (i = 0; i < 8; i++)
-			printk(KERN_CONT "%02x ", buffer[i]);
-		printk(KERN_CONT "\n");
-		return -EIO;
-	}
-	return 0;
-}
+		क्रम (i = 0; i < 8; i++)
+			prपूर्णांकk(KERN_CONT "%02x ", buffer[i]);
+		prपूर्णांकk(KERN_CONT "\n");
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 

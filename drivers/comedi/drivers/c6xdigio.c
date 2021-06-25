@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * c6xdigio.c
- * Hardware driver for Mechatronic Systems Inc. C6x_DIGIO DSP daughter card.
+ * Hardware driver क्रम Mechatronic Systems Inc. C6x_DIGIO DSP daughter card.
  * http://web.archive.org/web/%2A/http://robot0.ge.uiuc.edu/~spong/mecha/
  *
  * COMEDI - Linux Control and Measurement Device Interface
@@ -20,59 +21,59 @@
  *	[0] - base address
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/mm.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/timex.h>
-#include <linux/timer.h>
-#include <linux/io.h>
-#include <linux/pnp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pnp.h>
 
-#include "../comedidev.h"
+#समावेश "../comedidev.h"
 
 /*
  * Register I/O map
  */
-#define C6XDIGIO_DATA_REG	0x00
-#define C6XDIGIO_DATA_CHAN(x)	(((x) + 1) << 4)
-#define C6XDIGIO_DATA_PWM	BIT(5)
-#define C6XDIGIO_DATA_ENCODER	BIT(6)
-#define C6XDIGIO_STATUS_REG	0x01
-#define C6XDIGIO_CTRL_REG	0x02
+#घोषणा C6XDIGIO_DATA_REG	0x00
+#घोषणा C6XDIGIO_DATA_CHAN(x)	(((x) + 1) << 4)
+#घोषणा C6XDIGIO_DATA_PWM	BIT(5)
+#घोषणा C6XDIGIO_DATA_ENCODER	BIT(6)
+#घोषणा C6XDIGIO_STATUS_REG	0x01
+#घोषणा C6XDIGIO_CTRL_REG	0x02
 
-#define C6XDIGIO_TIME_OUT 20
+#घोषणा C6XDIGIO_TIME_OUT 20
 
-static int c6xdigio_chk_status(struct comedi_device *dev, unsigned long context)
-{
-	unsigned int status;
-	int timeout = 0;
+अटल पूर्णांक c6xdigio_chk_status(काष्ठा comedi_device *dev, अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित पूर्णांक status;
+	पूर्णांक समयout = 0;
 
-	do {
+	करो अणु
 		status = inb(dev->iobase + C6XDIGIO_STATUS_REG);
-		if ((status & 0x80) != context)
-			return 0;
-		timeout++;
-	} while  (timeout < C6XDIGIO_TIME_OUT);
+		अगर ((status & 0x80) != context)
+			वापस 0;
+		समयout++;
+	पूर्ण जबतक  (समयout < C6XDIGIO_TIME_OUT);
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int c6xdigio_write_data(struct comedi_device *dev,
-			       unsigned int val, unsigned int status)
-{
+अटल पूर्णांक c6xdigio_ग_लिखो_data(काष्ठा comedi_device *dev,
+			       अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक status)
+अणु
 	outb_p(val, dev->iobase + C6XDIGIO_DATA_REG);
-	return c6xdigio_chk_status(dev, status);
-}
+	वापस c6xdigio_chk_status(dev, status);
+पूर्ण
 
-static int c6xdigio_get_encoder_bits(struct comedi_device *dev,
-				     unsigned int *bits,
-				     unsigned int cmd,
-				     unsigned int status)
-{
-	unsigned int val;
+अटल पूर्णांक c6xdigio_get_encoder_bits(काष्ठा comedi_device *dev,
+				     अचिन्हित पूर्णांक *bits,
+				     अचिन्हित पूर्णांक cmd,
+				     अचिन्हित पूर्णांक status)
+अणु
+	अचिन्हित पूर्णांक val;
 
 	val = inb(dev->iobase + C6XDIGIO_STATUS_REG);
 	val >>= 3;
@@ -80,42 +81,42 @@ static int c6xdigio_get_encoder_bits(struct comedi_device *dev,
 
 	*bits = val;
 
-	return c6xdigio_write_data(dev, cmd, status);
-}
+	वापस c6xdigio_ग_लिखो_data(dev, cmd, status);
+पूर्ण
 
-static void c6xdigio_pwm_write(struct comedi_device *dev,
-			       unsigned int chan, unsigned int val)
-{
-	unsigned int cmd = C6XDIGIO_DATA_PWM | C6XDIGIO_DATA_CHAN(chan);
-	unsigned int bits;
+अटल व्योम c6xdigio_pwm_ग_लिखो(काष्ठा comedi_device *dev,
+			       अचिन्हित पूर्णांक chan, अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक cmd = C6XDIGIO_DATA_PWM | C6XDIGIO_DATA_CHAN(chan);
+	अचिन्हित पूर्णांक bits;
 
-	if (val > 498)
+	अगर (val > 498)
 		val = 498;
-	if (val < 2)
+	अगर (val < 2)
 		val = 2;
 
 	bits = (val >> 0) & 0x03;
-	c6xdigio_write_data(dev, cmd | bits | (0 << 2), 0x00);
+	c6xdigio_ग_लिखो_data(dev, cmd | bits | (0 << 2), 0x00);
 	bits = (val >> 2) & 0x03;
-	c6xdigio_write_data(dev, cmd | bits | (1 << 2), 0x80);
+	c6xdigio_ग_लिखो_data(dev, cmd | bits | (1 << 2), 0x80);
 	bits = (val >> 4) & 0x03;
-	c6xdigio_write_data(dev, cmd | bits | (0 << 2), 0x00);
+	c6xdigio_ग_लिखो_data(dev, cmd | bits | (0 << 2), 0x00);
 	bits = (val >> 6) & 0x03;
-	c6xdigio_write_data(dev, cmd | bits | (1 << 2), 0x80);
+	c6xdigio_ग_लिखो_data(dev, cmd | bits | (1 << 2), 0x80);
 	bits = (val >> 8) & 0x03;
-	c6xdigio_write_data(dev, cmd | bits | (0 << 2), 0x00);
+	c6xdigio_ग_लिखो_data(dev, cmd | bits | (0 << 2), 0x00);
 
-	c6xdigio_write_data(dev, 0x00, 0x80);
-}
+	c6xdigio_ग_लिखो_data(dev, 0x00, 0x80);
+पूर्ण
 
-static int c6xdigio_encoder_read(struct comedi_device *dev,
-				 unsigned int chan)
-{
-	unsigned int cmd = C6XDIGIO_DATA_ENCODER | C6XDIGIO_DATA_CHAN(chan);
-	unsigned int val = 0;
-	unsigned int bits;
+अटल पूर्णांक c6xdigio_encoder_पढ़ो(काष्ठा comedi_device *dev,
+				 अचिन्हित पूर्णांक chan)
+अणु
+	अचिन्हित पूर्णांक cmd = C6XDIGIO_DATA_ENCODER | C6XDIGIO_DATA_CHAN(chan);
+	अचिन्हित पूर्णांक val = 0;
+	अचिन्हित पूर्णांक bits;
 
-	c6xdigio_write_data(dev, cmd, 0x00);
+	c6xdigio_ग_लिखो_data(dev, cmd, 0x00);
 
 	c6xdigio_get_encoder_bits(dev, &bits, cmd | (1 << 2), 0x80);
 	val |= (bits << 0);
@@ -141,117 +142,117 @@ static int c6xdigio_encoder_read(struct comedi_device *dev,
 	c6xdigio_get_encoder_bits(dev, &bits, cmd | (0 << 2), 0x00);
 	val |= (bits << 21);
 
-	c6xdigio_write_data(dev, 0x00, 0x80);
+	c6xdigio_ग_लिखो_data(dev, 0x00, 0x80);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int c6xdigio_pwm_insn_write(struct comedi_device *dev,
-				   struct comedi_subdevice *s,
-				   struct comedi_insn *insn,
-				   unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int val = (s->state >> (16 * chan)) & 0xffff;
-	int i;
+अटल पूर्णांक c6xdigio_pwm_insn_ग_लिखो(काष्ठा comedi_device *dev,
+				   काष्ठा comedi_subdevice *s,
+				   काष्ठा comedi_insn *insn,
+				   अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक val = (s->state >> (16 * chan)) & 0xffff;
+	पूर्णांक i;
 
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		val = data[i];
-		c6xdigio_pwm_write(dev, chan, val);
-	}
+		c6xdigio_pwm_ग_लिखो(dev, chan, val);
+	पूर्ण
 
 	/*
 	 * There are only 2 PWM channels and they have a maxdata of 500.
-	 * Instead of allocating private data to save the values in for
-	 * readback this driver just packs the values for the two channels
+	 * Instead of allocating निजी data to save the values in क्रम
+	 * पढ़ोback this driver just packs the values क्रम the two channels
 	 * in the s->state.
 	 */
 	s->state &= (0xffff << (16 * chan));
 	s->state |= (val << (16 * chan));
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int c6xdigio_pwm_insn_read(struct comedi_device *dev,
-				  struct comedi_subdevice *s,
-				  struct comedi_insn *insn,
-				  unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int val;
-	int i;
+अटल पूर्णांक c6xdigio_pwm_insn_पढ़ो(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s,
+				  काष्ठा comedi_insn *insn,
+				  अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक i;
 
 	val = (s->state >> (16 * chan)) & 0xffff;
 
-	for (i = 0; i < insn->n; i++)
+	क्रम (i = 0; i < insn->n; i++)
 		data[i] = val;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int c6xdigio_encoder_insn_read(struct comedi_device *dev,
-				      struct comedi_subdevice *s,
-				      struct comedi_insn *insn,
-				      unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int val;
-	int i;
+अटल पूर्णांक c6xdigio_encoder_insn_पढ़ो(काष्ठा comedi_device *dev,
+				      काष्ठा comedi_subdevice *s,
+				      काष्ठा comedi_insn *insn,
+				      अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक i;
 
-	for (i = 0; i < insn->n; i++) {
-		val = c6xdigio_encoder_read(dev, chan);
+	क्रम (i = 0; i < insn->n; i++) अणु
+		val = c6xdigio_encoder_पढ़ो(dev, chan);
 
 		/* munge two's complement value to offset binary */
 		data[i] = comedi_offset_munge(s, val);
-	}
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static void c6xdigio_init(struct comedi_device *dev)
-{
+अटल व्योम c6xdigio_init(काष्ठा comedi_device *dev)
+अणु
 	/* Initialize the PWM */
-	c6xdigio_write_data(dev, 0x70, 0x00);
-	c6xdigio_write_data(dev, 0x74, 0x80);
-	c6xdigio_write_data(dev, 0x70, 0x00);
-	c6xdigio_write_data(dev, 0x00, 0x80);
+	c6xdigio_ग_लिखो_data(dev, 0x70, 0x00);
+	c6xdigio_ग_लिखो_data(dev, 0x74, 0x80);
+	c6xdigio_ग_लिखो_data(dev, 0x70, 0x00);
+	c6xdigio_ग_लिखो_data(dev, 0x00, 0x80);
 
 	/* Reset the encoders */
-	c6xdigio_write_data(dev, 0x68, 0x00);
-	c6xdigio_write_data(dev, 0x6c, 0x80);
-	c6xdigio_write_data(dev, 0x68, 0x00);
-	c6xdigio_write_data(dev, 0x00, 0x80);
-}
+	c6xdigio_ग_लिखो_data(dev, 0x68, 0x00);
+	c6xdigio_ग_लिखो_data(dev, 0x6c, 0x80);
+	c6xdigio_ग_लिखो_data(dev, 0x68, 0x00);
+	c6xdigio_ग_लिखो_data(dev, 0x00, 0x80);
+पूर्ण
 
-static const struct pnp_device_id c6xdigio_pnp_tbl[] = {
-	/* Standard LPT Printer Port */
-	{.id = "PNP0400", .driver_data = 0},
-	/* ECP Printer Port */
-	{.id = "PNP0401", .driver_data = 0},
-	{}
-};
+अटल स्थिर काष्ठा pnp_device_id c6xdigio_pnp_tbl[] = अणु
+	/* Standard LPT Prपूर्णांकer Port */
+	अणु.id = "PNP0400", .driver_data = 0पूर्ण,
+	/* ECP Prपूर्णांकer Port */
+	अणु.id = "PNP0401", .driver_data = 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct pnp_driver c6xdigio_pnp_driver = {
+अटल काष्ठा pnp_driver c6xdigio_pnp_driver = अणु
 	.name = "c6xdigio",
 	.id_table = c6xdigio_pnp_tbl,
-};
+पूर्ण;
 
-static int c6xdigio_attach(struct comedi_device *dev,
-			   struct comedi_devconfig *it)
-{
-	struct comedi_subdevice *s;
-	int ret;
+अटल पूर्णांक c6xdigio_attach(काष्ठा comedi_device *dev,
+			   काष्ठा comedi_devconfig *it)
+अणु
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret;
 
 	ret = comedi_request_region(dev, it->options[0], 0x03);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = comedi_alloc_subdevices(dev, 2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*  Make sure that PnP ports get activated */
-	pnp_register_driver(&c6xdigio_pnp_driver);
+	pnp_रेजिस्टर_driver(&c6xdigio_pnp_driver);
 
 	s = &dev->subdevices[0];
 	/* pwm output subdevice */
@@ -260,8 +261,8 @@ static int c6xdigio_attach(struct comedi_device *dev,
 	s->n_chan	= 2;
 	s->maxdata	= 500;
 	s->range_table	= &range_unknown;
-	s->insn_write	= c6xdigio_pwm_insn_write;
-	s->insn_read	= c6xdigio_pwm_insn_read;
+	s->insn_ग_लिखो	= c6xdigio_pwm_insn_ग_लिखो;
+	s->insn_पढ़ो	= c6xdigio_pwm_insn_पढ़ो;
 
 	s = &dev->subdevices[1];
 	/* encoder (counter) subdevice */
@@ -270,27 +271,27 @@ static int c6xdigio_attach(struct comedi_device *dev,
 	s->n_chan	= 2;
 	s->maxdata	= 0xffffff;
 	s->range_table	= &range_unknown;
-	s->insn_read	= c6xdigio_encoder_insn_read;
+	s->insn_पढ़ो	= c6xdigio_encoder_insn_पढ़ो;
 
 	/*  I will call this init anyway but more than likely the DSP board */
 	/*  will not be connected when device driver is loaded. */
 	c6xdigio_init(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void c6xdigio_detach(struct comedi_device *dev)
-{
+अटल व्योम c6xdigio_detach(काष्ठा comedi_device *dev)
+अणु
 	comedi_legacy_detach(dev);
-	pnp_unregister_driver(&c6xdigio_pnp_driver);
-}
+	pnp_unरेजिस्टर_driver(&c6xdigio_pnp_driver);
+पूर्ण
 
-static struct comedi_driver c6xdigio_driver = {
+अटल काष्ठा comedi_driver c6xdigio_driver = अणु
 	.driver_name	= "c6xdigio",
 	.module		= THIS_MODULE,
 	.attach		= c6xdigio_attach,
 	.detach		= c6xdigio_detach,
-};
+पूर्ण;
 module_comedi_driver(c6xdigio_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

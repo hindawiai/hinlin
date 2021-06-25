@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2018 Intel Corporation
 
-#include <linux/device.h>
-#include <linux/firmware.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
 
-#include "ipu3-css.h"
-#include "ipu3-css-fw.h"
-#include "ipu3-dmamap.h"
+#समावेश "ipu3-css.h"
+#समावेश "ipu3-css-fw.h"
+#समावेश "ipu3-dmamap.h"
 
-static void imgu_css_fw_show_binary(struct device *dev, struct imgu_fw_info *bi,
-				    const char *name)
-{
-	unsigned int i;
+अटल व्योम imgu_css_fw_show_binary(काष्ठा device *dev, काष्ठा imgu_fw_info *bi,
+				    स्थिर अक्षर *name)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	dev_dbg(dev, "found firmware binary type %i size %i name %s\n",
 		bi->type, bi->blob.size, name);
-	if (bi->type != IMGU_FW_ISP_FIRMWARE)
-		return;
+	अगर (bi->type != IMGU_FW_ISP_FIRMWARE)
+		वापस;
 
 	dev_dbg(dev, "    id %i mode %i bds 0x%x veceven %i/%i out_pins %i\n",
 		bi->info.isp.sp.id, bi->info.isp.sp.pipeline.mode,
@@ -38,99 +39,99 @@ static void imgu_css_fw_show_binary(struct device *dev, struct imgu_fw_info *bi,
 		bi->info.isp.sp.enable.input_raw ? "raw12" : "");
 
 	dev_dbg(dev, "    internal (%i,%i)\n",
-		bi->info.isp.sp.internal.max_width,
-		bi->info.isp.sp.internal.max_height);
+		bi->info.isp.sp.पूर्णांकernal.max_width,
+		bi->info.isp.sp.पूर्णांकernal.max_height);
 
 	dev_dbg(dev, "    output (%i,%i)-(%i,%i) formats",
 		bi->info.isp.sp.output.min_width,
 		bi->info.isp.sp.output.min_height,
 		bi->info.isp.sp.output.max_width,
 		bi->info.isp.sp.output.max_height);
-	for (i = 0; i < bi->info.isp.num_output_formats; i++)
-		dev_dbg(dev, " %i", bi->info.isp.output_formats[i]);
+	क्रम (i = 0; i < bi->info.isp.num_output_क्रमmats; i++)
+		dev_dbg(dev, " %i", bi->info.isp.output_क्रमmats[i]);
 	dev_dbg(dev, " vf");
-	for (i = 0; i < bi->info.isp.num_vf_formats; i++)
-		dev_dbg(dev, " %i", bi->info.isp.vf_formats[i]);
+	क्रम (i = 0; i < bi->info.isp.num_vf_क्रमmats; i++)
+		dev_dbg(dev, " %i", bi->info.isp.vf_क्रमmats[i]);
 	dev_dbg(dev, "\n");
-}
+पूर्ण
 
-unsigned int imgu_css_fw_obgrid_size(const struct imgu_fw_info *bi)
-{
-	unsigned int width = DIV_ROUND_UP(bi->info.isp.sp.internal.max_width,
+अचिन्हित पूर्णांक imgu_css_fw_obgrid_size(स्थिर काष्ठा imgu_fw_info *bi)
+अणु
+	अचिन्हित पूर्णांक width = DIV_ROUND_UP(bi->info.isp.sp.पूर्णांकernal.max_width,
 					  IMGU_OBGRID_TILE_SIZE * 2) + 1;
-	unsigned int height = DIV_ROUND_UP(bi->info.isp.sp.internal.max_height,
+	अचिन्हित पूर्णांक height = DIV_ROUND_UP(bi->info.isp.sp.पूर्णांकernal.max_height,
 					   IMGU_OBGRID_TILE_SIZE * 2) + 1;
-	unsigned int obgrid_size;
+	अचिन्हित पूर्णांक obgrid_size;
 
 	width = ALIGN(width, IPU3_UAPI_ISP_VEC_ELEMS / 4);
 	obgrid_size = PAGE_ALIGN(width * height *
-				 sizeof(struct ipu3_uapi_obgrid_param)) *
+				 माप(काष्ठा ipu3_uapi_obgrid_param)) *
 				 bi->info.isp.sp.iterator.num_stripes;
-	return obgrid_size;
-}
+	वापस obgrid_size;
+पूर्ण
 
-void *imgu_css_fw_pipeline_params(struct imgu_css *css, unsigned int pipe,
-				  enum imgu_abi_param_class cls,
-				  enum imgu_abi_memories mem,
-				  struct imgu_fw_isp_parameter *par,
-				  size_t par_size, void *binary_params)
-{
-	struct imgu_fw_info *bi =
+व्योम *imgu_css_fw_pipeline_params(काष्ठा imgu_css *css, अचिन्हित पूर्णांक pipe,
+				  क्रमागत imgu_abi_param_class cls,
+				  क्रमागत imgu_abi_memories mem,
+				  काष्ठा imgu_fw_isp_parameter *par,
+				  माप_प्रकार par_size, व्योम *binary_params)
+अणु
+	काष्ठा imgu_fw_info *bi =
 		&css->fwp->binary_header[css->pipes[pipe].bindex];
 
-	if (par->offset + par->size >
+	अगर (par->offset + par->size >
 	    bi->info.isp.sp.mem_initializers.params[cls][mem].size)
-		return NULL;
+		वापस शून्य;
 
-	if (par->size != par_size)
+	अगर (par->size != par_size)
 		pr_warn("parameter size doesn't match defined size\n");
 
-	if (par->size < par_size)
-		return NULL;
+	अगर (par->size < par_size)
+		वापस शून्य;
 
-	return binary_params + par->offset;
-}
+	वापस binary_params + par->offset;
+पूर्ण
 
-void imgu_css_fw_cleanup(struct imgu_css *css)
-{
-	struct imgu_device *imgu = dev_get_drvdata(css->dev);
+व्योम imgu_css_fw_cleanup(काष्ठा imgu_css *css)
+अणु
+	काष्ठा imgu_device *imgu = dev_get_drvdata(css->dev);
 
-	if (css->binary) {
-		unsigned int i;
+	अगर (css->binary) अणु
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; i < css->fwp->file_header.binary_nr; i++)
-			imgu_dmamap_free(imgu, &css->binary[i]);
-		kfree(css->binary);
-	}
-	if (css->fw)
+		क्रम (i = 0; i < css->fwp->file_header.binary_nr; i++)
+			imgu_dmamap_मुक्त(imgu, &css->binary[i]);
+		kमुक्त(css->binary);
+	पूर्ण
+	अगर (css->fw)
 		release_firmware(css->fw);
 
-	css->binary = NULL;
-	css->fw = NULL;
-}
+	css->binary = शून्य;
+	css->fw = शून्य;
+पूर्ण
 
-int imgu_css_fw_init(struct imgu_css *css)
-{
-	static const u32 BLOCK_MAX = 65536;
-	struct imgu_device *imgu = dev_get_drvdata(css->dev);
-	struct device *dev = css->dev;
-	unsigned int i, j, binary_nr;
-	int r;
+पूर्णांक imgu_css_fw_init(काष्ठा imgu_css *css)
+अणु
+	अटल स्थिर u32 BLOCK_MAX = 65536;
+	काष्ठा imgu_device *imgu = dev_get_drvdata(css->dev);
+	काष्ठा device *dev = css->dev;
+	अचिन्हित पूर्णांक i, j, binary_nr;
+	पूर्णांक r;
 
 	r = request_firmware(&css->fw, IMGU_FW_NAME, css->dev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* Check and display fw header info */
 
-	css->fwp = (struct imgu_fw_header *)css->fw->data;
-	if (css->fw->size < sizeof(struct imgu_fw_header *) ||
-	    css->fwp->file_header.h_size != sizeof(struct imgu_fw_bi_file_h))
-		goto bad_fw;
-	if (sizeof(struct imgu_fw_bi_file_h) +
-	    css->fwp->file_header.binary_nr * sizeof(struct imgu_fw_info) >
+	css->fwp = (काष्ठा imgu_fw_header *)css->fw->data;
+	अगर (css->fw->size < माप(काष्ठा imgu_fw_header *) ||
+	    css->fwp->file_header.h_size != माप(काष्ठा imgu_fw_bi_file_h))
+		जाओ bad_fw;
+	अगर (माप(काष्ठा imgu_fw_bi_file_h) +
+	    css->fwp->file_header.binary_nr * माप(काष्ठा imgu_fw_info) >
 	    css->fw->size)
-		goto bad_fw;
+		जाओ bad_fw;
 
 	dev_info(dev, "loaded firmware version %.64s, %u binaries, %zu bytes\n",
 		 css->fwp->file_header.version, css->fwp->file_header.binary_nr,
@@ -144,35 +145,35 @@ int imgu_css_fw_init(struct imgu_css *css)
 	css->fw_sp[0] = -1;
 	css->fw_sp[1] = -1;
 
-	for (i = 0; i < binary_nr; i++) {
-		struct imgu_fw_info *bi = &css->fwp->binary_header[i];
-		const char *name = (void *)css->fwp + bi->blob.prog_name_offset;
-		size_t len;
+	क्रम (i = 0; i < binary_nr; i++) अणु
+		काष्ठा imgu_fw_info *bi = &css->fwp->binary_header[i];
+		स्थिर अक्षर *name = (व्योम *)css->fwp + bi->blob.prog_name_offset;
+		माप_प्रकार len;
 
-		if (bi->blob.prog_name_offset >= css->fw->size)
-			goto bad_fw;
+		अगर (bi->blob.prog_name_offset >= css->fw->size)
+			जाओ bad_fw;
 		len = strnlen(name, css->fw->size - bi->blob.prog_name_offset);
-		if (len + 1 > css->fw->size - bi->blob.prog_name_offset ||
+		अगर (len + 1 > css->fw->size - bi->blob.prog_name_offset ||
 		    len + 1 >= IMGU_ABI_MAX_BINARY_NAME)
-			goto bad_fw;
+			जाओ bad_fw;
 
-		if (bi->blob.size != bi->blob.text_size + bi->blob.icache_size
+		अगर (bi->blob.size != bi->blob.text_size + bi->blob.icache_size
 		    + bi->blob.data_size + bi->blob.padding_size)
-			goto bad_fw;
-		if (bi->blob.offset + bi->blob.size > css->fw->size)
-			goto bad_fw;
+			जाओ bad_fw;
+		अगर (bi->blob.offset + bi->blob.size > css->fw->size)
+			जाओ bad_fw;
 
-		if (bi->type == IMGU_FW_BOOTLOADER_FIRMWARE) {
+		अगर (bi->type == IMGU_FW_BOOTLOADER_FIRMWARE) अणु
 			css->fw_bl = i;
-			if (bi->info.bl.sw_state >= css->iomem_length ||
+			अगर (bi->info.bl.sw_state >= css->iomem_length ||
 			    bi->info.bl.num_dma_cmds >= css->iomem_length ||
 			    bi->info.bl.dma_cmd_list >= css->iomem_length)
-				goto bad_fw;
-		}
-		if (bi->type == IMGU_FW_SP_FIRMWARE ||
-		    bi->type == IMGU_FW_SP1_FIRMWARE) {
+				जाओ bad_fw;
+		पूर्ण
+		अगर (bi->type == IMGU_FW_SP_FIRMWARE ||
+		    bi->type == IMGU_FW_SP1_FIRMWARE) अणु
 			css->fw_sp[bi->type == IMGU_FW_SP_FIRMWARE ? 0 : 1] = i;
-			if (bi->info.sp.per_frame_data >= css->iomem_length ||
+			अगर (bi->info.sp.per_frame_data >= css->iomem_length ||
 			    bi->info.sp.init_dmem_data >= css->iomem_length ||
 			    bi->info.sp.host_sp_queue >= css->iomem_length ||
 			    bi->info.sp.isp_started >= css->iomem_length ||
@@ -183,81 +184,81 @@ int imgu_css_fw_init(struct imgu_css *css)
 			    bi->info.sp.output + 12 >= css->iomem_length ||
 			    bi->info.sp.host_sp_queues_initialized >=
 			    css->iomem_length)
-				goto bad_fw;
-		}
-		if (bi->type != IMGU_FW_ISP_FIRMWARE)
-			continue;
+				जाओ bad_fw;
+		पूर्ण
+		अगर (bi->type != IMGU_FW_ISP_FIRMWARE)
+			जारी;
 
-		if (bi->info.isp.sp.pipeline.mode >= IPU3_CSS_PIPE_ID_NUM)
-			goto bad_fw;
+		अगर (bi->info.isp.sp.pipeline.mode >= IPU3_CSS_PIPE_ID_NUM)
+			जाओ bad_fw;
 
-		if (bi->info.isp.sp.iterator.num_stripes >
+		अगर (bi->info.isp.sp.iterator.num_stripes >
 		    IPU3_UAPI_MAX_STRIPES)
-			goto bad_fw;
+			जाओ bad_fw;
 
-		if (bi->info.isp.num_vf_formats > IMGU_ABI_FRAME_FORMAT_NUM ||
-		    bi->info.isp.num_output_formats > IMGU_ABI_FRAME_FORMAT_NUM)
-			goto bad_fw;
+		अगर (bi->info.isp.num_vf_क्रमmats > IMGU_ABI_FRAME_FORMAT_NUM ||
+		    bi->info.isp.num_output_क्रमmats > IMGU_ABI_FRAME_FORMAT_NUM)
+			जाओ bad_fw;
 
-		for (j = 0; j < bi->info.isp.num_output_formats; j++)
-			if (bi->info.isp.output_formats[j] >=
+		क्रम (j = 0; j < bi->info.isp.num_output_क्रमmats; j++)
+			अगर (bi->info.isp.output_क्रमmats[j] >=
 			    IMGU_ABI_FRAME_FORMAT_NUM)
-				goto bad_fw;
-		for (j = 0; j < bi->info.isp.num_vf_formats; j++)
-			if (bi->info.isp.vf_formats[j] >=
+				जाओ bad_fw;
+		क्रम (j = 0; j < bi->info.isp.num_vf_क्रमmats; j++)
+			अगर (bi->info.isp.vf_क्रमmats[j] >=
 			    IMGU_ABI_FRAME_FORMAT_NUM)
-				goto bad_fw;
+				जाओ bad_fw;
 
-		if (bi->info.isp.sp.block.block_width <= 0 ||
+		अगर (bi->info.isp.sp.block.block_width <= 0 ||
 		    bi->info.isp.sp.block.block_width > BLOCK_MAX ||
 		    bi->info.isp.sp.block.output_block_height <= 0 ||
 		    bi->info.isp.sp.block.output_block_height > BLOCK_MAX)
-			goto bad_fw;
+			जाओ bad_fw;
 
-		if (bi->blob.memory_offsets.offsets[IMGU_ABI_PARAM_CLASS_PARAM]
-		    + sizeof(struct imgu_fw_param_memory_offsets) >
+		अगर (bi->blob.memory_offsets.offsets[IMGU_ABI_PARAM_CLASS_PARAM]
+		    + माप(काष्ठा imgu_fw_param_memory_offsets) >
 		    css->fw->size ||
 		    bi->blob.memory_offsets.offsets[IMGU_ABI_PARAM_CLASS_CONFIG]
-		    + sizeof(struct imgu_fw_config_memory_offsets) >
+		    + माप(काष्ठा imgu_fw_config_memory_offsets) >
 		    css->fw->size ||
 		    bi->blob.memory_offsets.offsets[IMGU_ABI_PARAM_CLASS_STATE]
-		    + sizeof(struct imgu_fw_state_memory_offsets) >
+		    + माप(काष्ठा imgu_fw_state_memory_offsets) >
 		    css->fw->size)
-			goto bad_fw;
+			जाओ bad_fw;
 
 		imgu_css_fw_show_binary(dev, bi, name);
-	}
+	पूर्ण
 
-	if (css->fw_bl == -1 || css->fw_sp[0] == -1 || css->fw_sp[1] == -1)
-		goto bad_fw;
+	अगर (css->fw_bl == -1 || css->fw_sp[0] == -1 || css->fw_sp[1] == -1)
+		जाओ bad_fw;
 
-	/* Allocate and map fw binaries into IMGU */
+	/* Allocate and map fw binaries पूर्णांकo IMGU */
 
-	css->binary = kcalloc(binary_nr, sizeof(*css->binary), GFP_KERNEL);
-	if (!css->binary) {
+	css->binary = kसुस्मृति(binary_nr, माप(*css->binary), GFP_KERNEL);
+	अगर (!css->binary) अणु
 		r = -ENOMEM;
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 
-	for (i = 0; i < css->fwp->file_header.binary_nr; i++) {
-		struct imgu_fw_info *bi = &css->fwp->binary_header[i];
-		void *blob = (void *)css->fwp + bi->blob.offset;
-		size_t size = bi->blob.size;
+	क्रम (i = 0; i < css->fwp->file_header.binary_nr; i++) अणु
+		काष्ठा imgu_fw_info *bi = &css->fwp->binary_header[i];
+		व्योम *blob = (व्योम *)css->fwp + bi->blob.offset;
+		माप_प्रकार size = bi->blob.size;
 
-		if (!imgu_dmamap_alloc(imgu, &css->binary[i], size)) {
+		अगर (!imgu_dmamap_alloc(imgu, &css->binary[i], size)) अणु
 			r = -ENOMEM;
-			goto error_out;
-		}
-		memcpy(css->binary[i].vaddr, blob, size);
-	}
+			जाओ error_out;
+		पूर्ण
+		स_नकल(css->binary[i].vaddr, blob, size);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 bad_fw:
-	dev_err(dev, "invalid firmware binary, size %u\n", (int)css->fw->size);
+	dev_err(dev, "invalid firmware binary, size %u\n", (पूर्णांक)css->fw->size);
 	r = -ENODEV;
 
 error_out:
 	imgu_css_fw_cleanup(css);
-	return r;
-}
+	वापस r;
+पूर्ण

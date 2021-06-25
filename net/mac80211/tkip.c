@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2002-2004, Instant802 Networks, Inc.
  * Copyright 2005, Devicescape Software, Inc.
  * Copyright (C) 2016 Intel Deutschland GmbH
  */
-#include <linux/kernel.h>
-#include <linux/bitops.h>
-#include <linux/types.h>
-#include <linux/netdevice.h>
-#include <linux/export.h>
-#include <asm/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/types.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <net/mac80211.h>
-#include "driver-ops.h"
-#include "key.h"
-#include "tkip.h"
-#include "wep.h"
+#समावेश <net/mac80211.h>
+#समावेश "driver-ops.h"
+#समावेश "key.h"
+#समावेश "tkip.h"
+#समावेश "wep.h"
 
-#define PHASE1_LOOP_COUNT 8
+#घोषणा PHASE1_LOOP_COUNT 8
 
 /*
  * 2-byte by 2-byte subset of the full AES S-box table; second part of this
  * table is identical to first part but byte-swapped
  */
-static const u16 tkip_sbox[256] =
-{
+अटल स्थिर u16 tkip_sbox[256] =
+अणु
 	0xC6A5, 0xF884, 0xEE99, 0xF68D, 0xFF0D, 0xD6BD, 0xDEB1, 0x9154,
 	0x6050, 0x0203, 0xCEA9, 0x567D, 0xE719, 0xB562, 0x4DE6, 0xEC9A,
 	0x8F45, 0x1F9D, 0x8940, 0xFA87, 0xEF15, 0xB2EB, 0x8EC9, 0xFB0B,
@@ -57,32 +58,32 @@ static const u16 tkip_sbox[256] =
 	0x2DB6, 0x3C22, 0x1592, 0xC920, 0x8749, 0xAAFF, 0x5078, 0xA57A,
 	0x038F, 0x59F8, 0x0980, 0x1A17, 0x65DA, 0xD731, 0x84C6, 0xD0B8,
 	0x82C3, 0x29B0, 0x5A77, 0x1E11, 0x7BCB, 0xA8FC, 0x6DD6, 0x2C3A,
-};
+पूर्ण;
 
-static u16 tkipS(u16 val)
-{
-	return tkip_sbox[val & 0xff] ^ swab16(tkip_sbox[val >> 8]);
-}
+अटल u16 tkipS(u16 val)
+अणु
+	वापस tkip_sbox[val & 0xff] ^ swab16(tkip_sbox[val >> 8]);
+पूर्ण
 
-static u8 *write_tkip_iv(u8 *pos, u16 iv16)
-{
+अटल u8 *ग_लिखो_tkip_iv(u8 *pos, u16 iv16)
+अणु
 	*pos++ = iv16 >> 8;
 	*pos++ = ((iv16 >> 8) | 0x20) & 0x7f;
 	*pos++ = iv16 & 0xFF;
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
 /*
  * P1K := Phase1(TA, TK, TSC)
  * TA = transmitter address (48 bits)
- * TK = dot11DefaultKeyValue or dot11KeyMappingValue (128 bits)
+ * TK = करोt11DefaultKeyValue or करोt11KeyMappingValue (128 bits)
  * TSC = TKIP sequence counter (48 bits, only 32 msb bits used)
  * P1K: 80 bits
  */
-static void tkip_mixing_phase1(const u8 *tk, struct tkip_ctx *ctx,
-			       const u8 *ta, u32 tsc_IV32)
-{
-	int i, j;
+अटल व्योम tkip_mixing_phase1(स्थिर u8 *tk, काष्ठा tkip_ctx *ctx,
+			       स्थिर u8 *ta, u32 tsc_IV32)
+अणु
+	पूर्णांक i, j;
 	u16 *p1k = ctx->p1k;
 
 	p1k[0] = tsc_IV32 & 0xFFFF;
@@ -91,24 +92,24 @@ static void tkip_mixing_phase1(const u8 *tk, struct tkip_ctx *ctx,
 	p1k[3] = get_unaligned_le16(ta + 2);
 	p1k[4] = get_unaligned_le16(ta + 4);
 
-	for (i = 0; i < PHASE1_LOOP_COUNT; i++) {
+	क्रम (i = 0; i < PHASE1_LOOP_COUNT; i++) अणु
 		j = 2 * (i & 1);
 		p1k[0] += tkipS(p1k[4] ^ get_unaligned_le16(tk + 0 + j));
 		p1k[1] += tkipS(p1k[0] ^ get_unaligned_le16(tk + 4 + j));
 		p1k[2] += tkipS(p1k[1] ^ get_unaligned_le16(tk + 8 + j));
 		p1k[3] += tkipS(p1k[2] ^ get_unaligned_le16(tk + 12 + j));
 		p1k[4] += tkipS(p1k[3] ^ get_unaligned_le16(tk + 0 + j)) + i;
-	}
+	पूर्ण
 	ctx->state = TKIP_STATE_PHASE1_DONE;
 	ctx->p1k_iv32 = tsc_IV32;
-}
+पूर्ण
 
-static void tkip_mixing_phase2(const u8 *tk, struct tkip_ctx *ctx,
+अटल व्योम tkip_mixing_phase2(स्थिर u8 *tk, काष्ठा tkip_ctx *ctx,
 			       u16 tsc_IV16, u8 *rc4key)
-{
+अणु
 	u16 ppk[6];
-	const u16 *p1k = ctx->p1k;
-	int i;
+	स्थिर u16 *p1k = ctx->p1k;
+	पूर्णांक i;
 
 	ppk[0] = p1k[0];
 	ppk[1] = p1k[1];
@@ -130,78 +131,78 @@ static void tkip_mixing_phase2(const u8 *tk, struct tkip_ctx *ctx,
 	ppk[4] += ror16(ppk[3], 1);
 	ppk[5] += ror16(ppk[4], 1);
 
-	rc4key = write_tkip_iv(rc4key, tsc_IV16);
+	rc4key = ग_लिखो_tkip_iv(rc4key, tsc_IV16);
 	*rc4key++ = ((ppk[5] ^ get_unaligned_le16(tk)) >> 1) & 0xFF;
 
-	for (i = 0; i < 6; i++)
+	क्रम (i = 0; i < 6; i++)
 		put_unaligned_le16(ppk[i], rc4key + 2 * i);
-}
+पूर्ण
 
 /* Add TKIP IV and Ext. IV at @pos. @iv0, @iv1, and @iv2 are the first octets
- * of the IV. Returns pointer to the octet following IVs (i.e., beginning of
+ * of the IV. Returns poपूर्णांकer to the octet following IVs (i.e., beginning of
  * the packet payload). */
-u8 *ieee80211_tkip_add_iv(u8 *pos, struct ieee80211_key_conf *keyconf, u64 pn)
-{
-	pos = write_tkip_iv(pos, TKIP_PN_TO_IV16(pn));
+u8 *ieee80211_tkip_add_iv(u8 *pos, काष्ठा ieee80211_key_conf *keyconf, u64 pn)
+अणु
+	pos = ग_लिखो_tkip_iv(pos, TKIP_PN_TO_IV16(pn));
 	*pos++ = (keyconf->keyidx << 6) | (1 << 5) /* Ext IV */;
 	put_unaligned_le32(TKIP_PN_TO_IV32(pn), pos);
-	return pos + 4;
-}
+	वापस pos + 4;
+पूर्ण
 EXPORT_SYMBOL_GPL(ieee80211_tkip_add_iv);
 
-static void ieee80211_compute_tkip_p1k(struct ieee80211_key *key, u32 iv32)
-{
-	struct ieee80211_sub_if_data *sdata = key->sdata;
-	struct tkip_ctx *ctx = &key->u.tkip.tx;
-	const u8 *tk = &key->conf.key[NL80211_TKIP_DATA_OFFSET_ENCR_KEY];
+अटल व्योम ieee80211_compute_tkip_p1k(काष्ठा ieee80211_key *key, u32 iv32)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = key->sdata;
+	काष्ठा tkip_ctx *ctx = &key->u.tkip.tx;
+	स्थिर u8 *tk = &key->conf.key[NL80211_TKIP_DATA_OFFSET_ENCR_KEY];
 
-	lockdep_assert_held(&key->u.tkip.txlock);
+	lockdep_निश्चित_held(&key->u.tkip.txlock);
 
 	/*
-	 * Update the P1K when the IV32 is different from the value it
+	 * Update the P1K when the IV32 is dअगरferent from the value it
 	 * had when we last computed it (or when not initialised yet).
-	 * This might flip-flop back and forth if packets are processed
-	 * out-of-order due to the different ACs, but then we have to
+	 * This might flip-flop back and क्रमth अगर packets are processed
+	 * out-of-order due to the dअगरferent ACs, but then we have to
 	 * just compute the P1K more often.
 	 */
-	if (ctx->p1k_iv32 != iv32 || ctx->state == TKIP_STATE_NOT_INIT)
-		tkip_mixing_phase1(tk, ctx, sdata->vif.addr, iv32);
-}
+	अगर (ctx->p1k_iv32 != iv32 || ctx->state == TKIP_STATE_NOT_INIT)
+		tkip_mixing_phase1(tk, ctx, sdata->vअगर.addr, iv32);
+पूर्ण
 
-void ieee80211_get_tkip_p1k_iv(struct ieee80211_key_conf *keyconf,
+व्योम ieee80211_get_tkip_p1k_iv(काष्ठा ieee80211_key_conf *keyconf,
 			       u32 iv32, u16 *p1k)
-{
-	struct ieee80211_key *key = (struct ieee80211_key *)
-			container_of(keyconf, struct ieee80211_key, conf);
-	struct tkip_ctx *ctx = &key->u.tkip.tx;
+अणु
+	काष्ठा ieee80211_key *key = (काष्ठा ieee80211_key *)
+			container_of(keyconf, काष्ठा ieee80211_key, conf);
+	काष्ठा tkip_ctx *ctx = &key->u.tkip.tx;
 
 	spin_lock_bh(&key->u.tkip.txlock);
 	ieee80211_compute_tkip_p1k(key, iv32);
-	memcpy(p1k, ctx->p1k, sizeof(ctx->p1k));
+	स_नकल(p1k, ctx->p1k, माप(ctx->p1k));
 	spin_unlock_bh(&key->u.tkip.txlock);
-}
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_tkip_p1k_iv);
 
-void ieee80211_get_tkip_rx_p1k(struct ieee80211_key_conf *keyconf,
-			       const u8 *ta, u32 iv32, u16 *p1k)
-{
-	const u8 *tk = &keyconf->key[NL80211_TKIP_DATA_OFFSET_ENCR_KEY];
-	struct tkip_ctx ctx;
+व्योम ieee80211_get_tkip_rx_p1k(काष्ठा ieee80211_key_conf *keyconf,
+			       स्थिर u8 *ta, u32 iv32, u16 *p1k)
+अणु
+	स्थिर u8 *tk = &keyconf->key[NL80211_TKIP_DATA_OFFSET_ENCR_KEY];
+	काष्ठा tkip_ctx ctx;
 
 	tkip_mixing_phase1(tk, &ctx, ta, iv32);
-	memcpy(p1k, ctx.p1k, sizeof(ctx.p1k));
-}
+	स_नकल(p1k, ctx.p1k, माप(ctx.p1k));
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_tkip_rx_p1k);
 
-void ieee80211_get_tkip_p2k(struct ieee80211_key_conf *keyconf,
-			    struct sk_buff *skb, u8 *p2k)
-{
-	struct ieee80211_key *key = (struct ieee80211_key *)
-			container_of(keyconf, struct ieee80211_key, conf);
-	const u8 *tk = &key->conf.key[NL80211_TKIP_DATA_OFFSET_ENCR_KEY];
-	struct tkip_ctx *ctx = &key->u.tkip.tx;
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
-	const u8 *data = (u8 *)hdr + ieee80211_hdrlen(hdr->frame_control);
+व्योम ieee80211_get_tkip_p2k(काष्ठा ieee80211_key_conf *keyconf,
+			    काष्ठा sk_buff *skb, u8 *p2k)
+अणु
+	काष्ठा ieee80211_key *key = (काष्ठा ieee80211_key *)
+			container_of(keyconf, काष्ठा ieee80211_key, conf);
+	स्थिर u8 *tk = &key->conf.key[NL80211_TKIP_DATA_OFFSET_ENCR_KEY];
+	काष्ठा tkip_ctx *ctx = &key->u.tkip.tx;
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
+	स्थिर u8 *data = (u8 *)hdr + ieee80211_hdrlen(hdr->frame_control);
 	u32 iv32 = get_unaligned_le32(&data[4]);
 	u16 iv16 = data[2] | (data[0] << 8);
 
@@ -209,115 +210,115 @@ void ieee80211_get_tkip_p2k(struct ieee80211_key_conf *keyconf,
 	ieee80211_compute_tkip_p1k(key, iv32);
 	tkip_mixing_phase2(tk, ctx, iv16, p2k);
 	spin_unlock(&key->u.tkip.txlock);
-}
+पूर्ण
 EXPORT_SYMBOL(ieee80211_get_tkip_p2k);
 
 /*
- * Encrypt packet payload with TKIP using @key. @pos is a pointer to the
+ * Encrypt packet payload with TKIP using @key. @pos is a poपूर्णांकer to the
  * beginning of the buffer containing payload. This payload must include
- * the IV/Ext.IV and space for (taildroom) four octets for ICV.
+ * the IV/Ext.IV and space क्रम (taildroom) four octets क्रम ICV.
  * @payload_len is the length of payload (_not_ including IV/ICV length).
  * @ta is the transmitter addresses.
  */
-int ieee80211_tkip_encrypt_data(struct arc4_ctx *ctx,
-				struct ieee80211_key *key,
-				struct sk_buff *skb,
-				u8 *payload, size_t payload_len)
-{
+पूर्णांक ieee80211_tkip_encrypt_data(काष्ठा arc4_ctx *ctx,
+				काष्ठा ieee80211_key *key,
+				काष्ठा sk_buff *skb,
+				u8 *payload, माप_प्रकार payload_len)
+अणु
 	u8 rc4key[16];
 
 	ieee80211_get_tkip_p2k(&key->conf, skb, rc4key);
 
-	return ieee80211_wep_encrypt_data(ctx, rc4key, 16,
+	वापस ieee80211_wep_encrypt_data(ctx, rc4key, 16,
 					  payload, payload_len);
-}
+पूर्ण
 
-/* Decrypt packet payload with TKIP using @key. @pos is a pointer to the
+/* Decrypt packet payload with TKIP using @key. @pos is a poपूर्णांकer to the
  * beginning of the buffer containing IEEE 802.11 header payload, i.e.,
  * including IV, Ext. IV, real data, Michael MIC, ICV. @payload_len is the
  * length of payload, including IV, Ext. IV, MIC, ICV.  */
-int ieee80211_tkip_decrypt_data(struct arc4_ctx *ctx,
-				struct ieee80211_key *key,
-				u8 *payload, size_t payload_len, u8 *ta,
-				u8 *ra, int only_iv, int queue,
+पूर्णांक ieee80211_tkip_decrypt_data(काष्ठा arc4_ctx *ctx,
+				काष्ठा ieee80211_key *key,
+				u8 *payload, माप_प्रकार payload_len, u8 *ta,
+				u8 *ra, पूर्णांक only_iv, पूर्णांक queue,
 				u32 *out_iv32, u16 *out_iv16)
-{
+अणु
 	u32 iv32;
 	u32 iv16;
 	u8 rc4key[16], keyid, *pos = payload;
-	int res;
-	const u8 *tk = &key->conf.key[NL80211_TKIP_DATA_OFFSET_ENCR_KEY];
-	struct tkip_ctx_rx *rx_ctx = &key->u.tkip.rx[queue];
+	पूर्णांक res;
+	स्थिर u8 *tk = &key->conf.key[NL80211_TKIP_DATA_OFFSET_ENCR_KEY];
+	काष्ठा tkip_ctx_rx *rx_ctx = &key->u.tkip.rx[queue];
 
-	if (payload_len < 12)
-		return -1;
+	अगर (payload_len < 12)
+		वापस -1;
 
 	iv16 = (pos[0] << 8) | pos[2];
 	keyid = pos[3];
 	iv32 = get_unaligned_le32(pos + 4);
 	pos += 8;
 
-	if (!(keyid & (1 << 5)))
-		return TKIP_DECRYPT_NO_EXT_IV;
+	अगर (!(keyid & (1 << 5)))
+		वापस TKIP_DECRYPT_NO_EXT_IV;
 
-	if ((keyid >> 6) != key->conf.keyidx)
-		return TKIP_DECRYPT_INVALID_KEYIDX;
+	अगर ((keyid >> 6) != key->conf.keyidx)
+		वापस TKIP_DECRYPT_INVALID_KEYIDX;
 
-	/* Reject replays if the received TSC is smaller than or equal to the
-	 * last received value in a valid message, but with an exception for
-	 * the case where a new key has been set and no valid frame using that
+	/* Reject replays अगर the received TSC is smaller than or equal to the
+	 * last received value in a valid message, but with an exception क्रम
+	 * the हाल where a new key has been set and no valid frame using that
 	 * key has yet received and the local RSC was initialized to 0. This
 	 * exception allows the very first frame sent by the transmitter to be
-	 * accepted even if that transmitter were to use TSC 0 (IEEE 802.11
-	 * described TSC to be initialized to 1 whenever a new key is taken into
+	 * accepted even अगर that transmitter were to use TSC 0 (IEEE 802.11
+	 * described TSC to be initialized to 1 whenever a new key is taken पूर्णांकo
 	 * use).
 	 */
-	if (iv32 < rx_ctx->iv32 ||
+	अगर (iv32 < rx_ctx->iv32 ||
 	    (iv32 == rx_ctx->iv32 &&
 	     (iv16 < rx_ctx->iv16 ||
 	      (iv16 == rx_ctx->iv16 &&
 	       (rx_ctx->iv32 || rx_ctx->iv16 ||
 		rx_ctx->ctx.state != TKIP_STATE_NOT_INIT)))))
-		return TKIP_DECRYPT_REPLAY;
+		वापस TKIP_DECRYPT_REPLAY;
 
-	if (only_iv) {
+	अगर (only_iv) अणु
 		res = TKIP_DECRYPT_OK;
 		rx_ctx->ctx.state = TKIP_STATE_PHASE1_HW_UPLOADED;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (rx_ctx->ctx.state == TKIP_STATE_NOT_INIT ||
-	    rx_ctx->iv32 != iv32) {
-		/* IV16 wrapped around - perform TKIP phase 1 */
+	अगर (rx_ctx->ctx.state == TKIP_STATE_NOT_INIT ||
+	    rx_ctx->iv32 != iv32) अणु
+		/* IV16 wrapped around - perक्रमm TKIP phase 1 */
 		tkip_mixing_phase1(tk, &rx_ctx->ctx, ta, iv32);
-	}
-	if (key->local->ops->update_tkip_key &&
+	पूर्ण
+	अगर (key->local->ops->update_tkip_key &&
 	    key->flags & KEY_FLAG_UPLOADED_TO_HARDWARE &&
-	    rx_ctx->ctx.state != TKIP_STATE_PHASE1_HW_UPLOADED) {
-		struct ieee80211_sub_if_data *sdata = key->sdata;
+	    rx_ctx->ctx.state != TKIP_STATE_PHASE1_HW_UPLOADED) अणु
+		काष्ठा ieee80211_sub_अगर_data *sdata = key->sdata;
 
-		if (sdata->vif.type == NL80211_IFTYPE_AP_VLAN)
+		अगर (sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN)
 			sdata = container_of(key->sdata->bss,
-					struct ieee80211_sub_if_data, u.ap);
+					काष्ठा ieee80211_sub_अगर_data, u.ap);
 		drv_update_tkip_key(key->local, sdata, &key->conf, key->sta,
 				iv32, rx_ctx->ctx.p1k);
 		rx_ctx->ctx.state = TKIP_STATE_PHASE1_HW_UPLOADED;
-	}
+	पूर्ण
 
 	tkip_mixing_phase2(tk, &rx_ctx->ctx, iv16, rc4key);
 
 	res = ieee80211_wep_decrypt_data(ctx, rc4key, 16, pos, payload_len - 12);
- done:
-	if (res == TKIP_DECRYPT_OK) {
+ करोne:
+	अगर (res == TKIP_DECRYPT_OK) अणु
 		/*
-		 * Record previously received IV, will be copied into the
-		 * key information after MIC verification. It is possible
-		 * that we don't catch replays of fragments but that's ok
+		 * Record previously received IV, will be copied पूर्णांकo the
+		 * key inक्रमmation after MIC verअगरication. It is possible
+		 * that we करोn't catch replays of fragments but that's ok
 		 * because the Michael MIC verication will then fail.
 		 */
 		*out_iv32 = iv32;
 		*out_iv16 = iv16;
-	}
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण

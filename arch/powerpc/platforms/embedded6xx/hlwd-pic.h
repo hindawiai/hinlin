@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * arch/powerpc/platforms/embedded6xx/hlwd-pic.h
+ * arch/घातerpc/platक्रमms/embedded6xx/hlwd-pic.h
  *
- * Nintendo Wii "Hollywood" interrupt controller support.
+ * Nपूर्णांकenकरो Wii "Hollywood" पूर्णांकerrupt controller support.
  * Copyright (C) 2009 The GameCube Linux Team
  * Copyright (C) 2009 Albert Herranz
  */
 
-#ifndef __HLWD_PIC_H
-#define __HLWD_PIC_H
+#अगर_अघोषित __HLWD_PIC_H
+#घोषणा __HLWD_PIC_H
 
-extern unsigned int hlwd_pic_get_irq(void);
-extern void hlwd_pic_probe(void);
-extern void hlwd_quiesce(void);
+बाह्य अचिन्हित पूर्णांक hlwd_pic_get_irq(व्योम);
+बाह्य व्योम hlwd_pic_probe(व्योम);
+बाह्य व्योम hlwd_quiesce(व्योम);
 
-#endif
+#पूर्ण_अगर

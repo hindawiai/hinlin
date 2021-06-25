@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#include <uapi/asm/unistd.h>
+#समावेश <uapi/यंत्र/unistd.h>
 
-#define NR_syscalls (__NR_syscalls)
+#घोषणा NR_syscalls (__NR_syscalls)

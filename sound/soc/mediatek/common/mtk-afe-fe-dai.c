@@ -1,593 +1,594 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * mtk-afe-fe-dais.c  --  Mediatek afe fe dai operator
+ * mtk-afe-fe-dais.c  --  Mediatek afe fe dai चालक
  *
  * Copyright (c) 2016 MediaTek Inc.
  * Author: Garlic Tseng <garlic.tseng@mediatek.com>
  */
 
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <sound/soc.h>
-#include "mtk-afe-platform-driver.h"
-#include <sound/pcm_params.h>
-#include "mtk-afe-fe-dai.h"
-#include "mtk-base-afe.h"
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <sound/soc.h>
+#समावेश "mtk-afe-platform-driver.h"
+#समावेश <sound/pcm_params.h>
+#समावेश "mtk-afe-fe-dai.h"
+#समावेश "mtk-base-afe.h"
 
-#define AFE_BASE_END_OFFSET 8
+#घोषणा AFE_BASE_END_OFFSET 8
 
-static int mtk_regmap_update_bits(struct regmap *map, int reg,
-			   unsigned int mask,
-			   unsigned int val, int shift)
-{
-	if (reg < 0 || WARN_ON_ONCE(shift < 0))
-		return 0;
-	return regmap_update_bits(map, reg, mask << shift, val << shift);
-}
+अटल पूर्णांक mtk_regmap_update_bits(काष्ठा regmap *map, पूर्णांक reg,
+			   अचिन्हित पूर्णांक mask,
+			   अचिन्हित पूर्णांक val, पूर्णांक shअगरt)
+अणु
+	अगर (reg < 0 || WARN_ON_ONCE(shअगरt < 0))
+		वापस 0;
+	वापस regmap_update_bits(map, reg, mask << shअगरt, val << shअगरt);
+पूर्ण
 
-static int mtk_regmap_write(struct regmap *map, int reg, unsigned int val)
-{
-	if (reg < 0)
-		return 0;
-	return regmap_write(map, reg, val);
-}
+अटल पूर्णांक mtk_regmap_ग_लिखो(काष्ठा regmap *map, पूर्णांक reg, अचिन्हित पूर्णांक val)
+अणु
+	अगर (reg < 0)
+		वापस 0;
+	वापस regmap_ग_लिखो(map, reg, val);
+पूर्ण
 
-int mtk_afe_fe_startup(struct snd_pcm_substream *substream,
-		       struct snd_soc_dai *dai)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int memif_num = asoc_rtd_to_cpu(rtd, 0)->id;
-	struct mtk_base_afe_memif *memif = &afe->memif[memif_num];
-	const struct snd_pcm_hardware *mtk_afe_hardware = afe->mtk_afe_hardware;
-	int ret;
+पूर्णांक mtk_afe_fe_startup(काष्ठा snd_pcm_substream *substream,
+		       काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक memअगर_num = asoc_rtd_to_cpu(rtd, 0)->id;
+	काष्ठा mtk_base_afe_memअगर *memअगर = &afe->memअगर[memअगर_num];
+	स्थिर काष्ठा snd_pcm_hardware *mtk_afe_hardware = afe->mtk_afe_hardware;
+	पूर्णांक ret;
 
-	memif->substream = substream;
+	memअगर->substream = substream;
 
-	snd_pcm_hw_constraint_step(substream->runtime, 0,
+	snd_pcm_hw_स्थिरraपूर्णांक_step(substream->runसमय, 0,
 				   SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 16);
 	/* enable agent */
-	mtk_regmap_update_bits(afe->regmap, memif->data->agent_disable_reg,
-			       1, 0, memif->data->agent_disable_shift);
+	mtk_regmap_update_bits(afe->regmap, memअगर->data->agent_disable_reg,
+			       1, 0, memअगर->data->agent_disable_shअगरt);
 
-	snd_soc_set_runtime_hwparams(substream, mtk_afe_hardware);
+	snd_soc_set_runसमय_hwparams(substream, mtk_afe_hardware);
 
 	/*
 	 * Capture cannot use ping-pong buffer since hw_ptr at IRQ may be
-	 * smaller than period_size due to AFE's internal buffer.
+	 * smaller than period_size due to AFE's पूर्णांकernal buffer.
 	 * This easily leads to overrun when avail_min is period_size.
-	 * One more period can hold the possible unread buffer.
+	 * One more period can hold the possible unपढ़ो buffer.
 	 */
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
-		int periods_max = mtk_afe_hardware->periods_max;
+	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
+		पूर्णांक periods_max = mtk_afe_hardware->periods_max;
 
-		ret = snd_pcm_hw_constraint_minmax(runtime,
+		ret = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय,
 						   SNDRV_PCM_HW_PARAM_PERIODS,
 						   3, periods_max);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(afe->dev, "hw_constraint_minmax failed\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	ret = snd_pcm_hw_constraint_integer(runtime,
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
 					    SNDRV_PCM_HW_PARAM_PERIODS);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(afe->dev, "snd_pcm_hw_constraint_integer failed\n");
 
-	/* dynamic allocate irq to memif */
-	if (memif->irq_usage < 0) {
-		int irq_id = mtk_dynamic_irq_acquire(afe);
+	/* dynamic allocate irq to memअगर */
+	अगर (memअगर->irq_usage < 0) अणु
+		पूर्णांक irq_id = mtk_dynamic_irq_acquire(afe);
 
-		if (irq_id != afe->irqs_size) {
+		अगर (irq_id != afe->irqs_size) अणु
 			/* link */
-			memif->irq_usage = irq_id;
-		} else {
+			memअगर->irq_usage = irq_id;
+		पूर्ण अन्यथा अणु
 			dev_err(afe->dev, "%s() error: no more asys irq\n",
 				__func__);
 			ret = -EBUSY;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mtk_afe_fe_startup);
 
-void mtk_afe_fe_shutdown(struct snd_pcm_substream *substream,
-			 struct snd_soc_dai *dai)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
-	struct mtk_base_afe_memif *memif = &afe->memif[asoc_rtd_to_cpu(rtd, 0)->id];
-	int irq_id;
+व्योम mtk_afe_fe_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+			 काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
+	काष्ठा mtk_base_afe_memअगर *memअगर = &afe->memअगर[asoc_rtd_to_cpu(rtd, 0)->id];
+	पूर्णांक irq_id;
 
-	irq_id = memif->irq_usage;
+	irq_id = memअगर->irq_usage;
 
-	mtk_regmap_update_bits(afe->regmap, memif->data->agent_disable_reg,
-			       1, 1, memif->data->agent_disable_shift);
+	mtk_regmap_update_bits(afe->regmap, memअगर->data->agent_disable_reg,
+			       1, 1, memअगर->data->agent_disable_shअगरt);
 
-	if (!memif->const_irq) {
+	अगर (!memअगर->स्थिर_irq) अणु
 		mtk_dynamic_irq_release(afe, irq_id);
-		memif->irq_usage = -1;
-		memif->substream = NULL;
-	}
-}
-EXPORT_SYMBOL_GPL(mtk_afe_fe_shutdown);
+		memअगर->irq_usage = -1;
+		memअगर->substream = शून्य;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_afe_fe_shutकरोwn);
 
-int mtk_afe_fe_hw_params(struct snd_pcm_substream *substream,
-			 struct snd_pcm_hw_params *params,
-			 struct snd_soc_dai *dai)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
-	int id = asoc_rtd_to_cpu(rtd, 0)->id;
-	struct mtk_base_afe_memif *memif = &afe->memif[id];
-	int ret;
-	unsigned int channels = params_channels(params);
-	unsigned int rate = params_rate(params);
-	snd_pcm_format_t format = params_format(params);
+पूर्णांक mtk_afe_fe_hw_params(काष्ठा snd_pcm_substream *substream,
+			 काष्ठा snd_pcm_hw_params *params,
+			 काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
+	पूर्णांक id = asoc_rtd_to_cpu(rtd, 0)->id;
+	काष्ठा mtk_base_afe_memअगर *memअगर = &afe->memअगर[id];
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक channels = params_channels(params);
+	अचिन्हित पूर्णांक rate = params_rate(params);
+	snd_pcm_क्रमmat_t क्रमmat = params_क्रमmat(params);
 
-	if (afe->request_dram_resource)
+	अगर (afe->request_dram_resource)
 		afe->request_dram_resource(afe->dev);
 
 	dev_dbg(afe->dev, "%s(), %s, ch %d, rate %d, fmt %d, dma_addr %pad, dma_area %p, dma_bytes 0x%zx\n",
-		__func__, memif->data->name,
-		channels, rate, format,
-		&substream->runtime->dma_addr,
-		substream->runtime->dma_area,
-		substream->runtime->dma_bytes);
+		__func__, memअगर->data->name,
+		channels, rate, क्रमmat,
+		&substream->runसमय->dma_addr,
+		substream->runसमय->dma_area,
+		substream->runसमय->dma_bytes);
 
-	memset_io(substream->runtime->dma_area, 0,
-		  substream->runtime->dma_bytes);
+	स_रखो_io(substream->runसमय->dma_area, 0,
+		  substream->runसमय->dma_bytes);
 
 	/* set addr */
-	ret = mtk_memif_set_addr(afe, id,
-				 substream->runtime->dma_area,
-				 substream->runtime->dma_addr,
-				 substream->runtime->dma_bytes);
-	if (ret) {
+	ret = mtk_memअगर_set_addr(afe, id,
+				 substream->runसमय->dma_area,
+				 substream->runसमय->dma_addr,
+				 substream->runसमय->dma_bytes);
+	अगर (ret) अणु
 		dev_err(afe->dev, "%s(), error, id %d, set addr, ret %d\n",
 			__func__, id, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* set channel */
-	ret = mtk_memif_set_channel(afe, id, channels);
-	if (ret) {
+	ret = mtk_memअगर_set_channel(afe, id, channels);
+	अगर (ret) अणु
 		dev_err(afe->dev, "%s(), error, id %d, set channel %d, ret %d\n",
 			__func__, id, channels, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* set rate */
-	ret = mtk_memif_set_rate_substream(substream, id, rate);
-	if (ret) {
+	ret = mtk_memअगर_set_rate_substream(substream, id, rate);
+	अगर (ret) अणु
 		dev_err(afe->dev, "%s(), error, id %d, set rate %d, ret %d\n",
 			__func__, id, rate, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* set format */
-	ret = mtk_memif_set_format(afe, id, format);
-	if (ret) {
+	/* set क्रमmat */
+	ret = mtk_memअगर_set_क्रमmat(afe, id, क्रमmat);
+	अगर (ret) अणु
 		dev_err(afe->dev, "%s(), error, id %d, set format %d, ret %d\n",
-			__func__, id, format, ret);
-		return ret;
-	}
+			__func__, id, क्रमmat, ret);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mtk_afe_fe_hw_params);
 
-int mtk_afe_fe_hw_free(struct snd_pcm_substream *substream,
-		       struct snd_soc_dai *dai)
-{
-	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
+पूर्णांक mtk_afe_fe_hw_मुक्त(काष्ठा snd_pcm_substream *substream,
+		       काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
 
-	if (afe->release_dram_resource)
+	अगर (afe->release_dram_resource)
 		afe->release_dram_resource(afe->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mtk_afe_fe_hw_free);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_afe_fe_hw_मुक्त);
 
-int mtk_afe_fe_trigger(struct snd_pcm_substream *substream, int cmd,
-		       struct snd_soc_dai *dai)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct snd_pcm_runtime * const runtime = substream->runtime;
-	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
-	int id = asoc_rtd_to_cpu(rtd, 0)->id;
-	struct mtk_base_afe_memif *memif = &afe->memif[id];
-	struct mtk_base_afe_irq *irqs = &afe->irqs[memif->irq_usage];
-	const struct mtk_base_irq_data *irq_data = irqs->irq_data;
-	unsigned int counter = runtime->period_size;
-	int fs;
-	int ret;
+पूर्णांक mtk_afe_fe_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+		       काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा snd_pcm_runसमय * स्थिर runसमय = substream->runसमय;
+	काष्ठा mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
+	पूर्णांक id = asoc_rtd_to_cpu(rtd, 0)->id;
+	काष्ठा mtk_base_afe_memअगर *memअगर = &afe->memअगर[id];
+	काष्ठा mtk_base_afe_irq *irqs = &afe->irqs[memअगर->irq_usage];
+	स्थिर काष्ठा mtk_base_irq_data *irq_data = irqs->irq_data;
+	अचिन्हित पूर्णांक counter = runसमय->period_size;
+	पूर्णांक fs;
+	पूर्णांक ret;
 
-	dev_dbg(afe->dev, "%s %s cmd=%d\n", __func__, memif->data->name, cmd);
+	dev_dbg(afe->dev, "%s %s cmd=%d\n", __func__, memअगर->data->name, cmd);
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-		ret = mtk_memif_set_enable(afe, id);
-		if (ret) {
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+		ret = mtk_memअगर_set_enable(afe, id);
+		अगर (ret) अणु
 			dev_err(afe->dev, "%s(), error, id %d, memif enable, ret %d\n",
 				__func__, id, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/* set irq counter */
 		mtk_regmap_update_bits(afe->regmap, irq_data->irq_cnt_reg,
 				       irq_data->irq_cnt_maskbit, counter,
-				       irq_data->irq_cnt_shift);
+				       irq_data->irq_cnt_shअगरt);
 
 		/* set irq fs */
-		fs = afe->irq_fs(substream, runtime->rate);
+		fs = afe->irq_fs(substream, runसमय->rate);
 
-		if (fs < 0)
-			return -EINVAL;
+		अगर (fs < 0)
+			वापस -EINVAL;
 
 		mtk_regmap_update_bits(afe->regmap, irq_data->irq_fs_reg,
 				       irq_data->irq_fs_maskbit, fs,
-				       irq_data->irq_fs_shift);
+				       irq_data->irq_fs_shअगरt);
 
-		/* enable interrupt */
+		/* enable पूर्णांकerrupt */
 		mtk_regmap_update_bits(afe->regmap, irq_data->irq_en_reg,
-				       1, 1, irq_data->irq_en_shift);
+				       1, 1, irq_data->irq_en_shअगरt);
 
-		return 0;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-		ret = mtk_memif_set_disable(afe, id);
-		if (ret) {
+		वापस 0;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+		ret = mtk_memअगर_set_disable(afe, id);
+		अगर (ret) अणु
 			dev_err(afe->dev, "%s(), error, id %d, memif enable, ret %d\n",
 				__func__, id, ret);
-		}
+		पूर्ण
 
-		/* disable interrupt */
+		/* disable पूर्णांकerrupt */
 		mtk_regmap_update_bits(afe->regmap, irq_data->irq_en_reg,
-				       1, 0, irq_data->irq_en_shift);
+				       1, 0, irq_data->irq_en_shअगरt);
 		/* and clear pending IRQ */
-		mtk_regmap_write(afe->regmap, irq_data->irq_clr_reg,
-				 1 << irq_data->irq_clr_shift);
-		return ret;
-	default:
-		return -EINVAL;
-	}
-}
+		mtk_regmap_ग_लिखो(afe->regmap, irq_data->irq_clr_reg,
+				 1 << irq_data->irq_clr_shअगरt);
+		वापस ret;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(mtk_afe_fe_trigger);
 
-int mtk_afe_fe_prepare(struct snd_pcm_substream *substream,
-		       struct snd_soc_dai *dai)
-{
-	struct snd_soc_pcm_runtime *rtd  = asoc_substream_to_rtd(substream);
-	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
-	int id = asoc_rtd_to_cpu(rtd, 0)->id;
-	int pbuf_size;
+पूर्णांक mtk_afe_fe_prepare(काष्ठा snd_pcm_substream *substream,
+		       काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd  = asoc_substream_to_rtd(substream);
+	काष्ठा mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
+	पूर्णांक id = asoc_rtd_to_cpu(rtd, 0)->id;
+	पूर्णांक pbuf_size;
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		if (afe->get_memif_pbuf_size) {
-			pbuf_size = afe->get_memif_pbuf_size(substream);
-			mtk_memif_set_pbuf_size(afe, id, pbuf_size);
-		}
-	}
-	return 0;
-}
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		अगर (afe->get_memअगर_pbuf_size) अणु
+			pbuf_size = afe->get_memअगर_pbuf_size(substream);
+			mtk_memअगर_set_pbuf_size(afe, id, pbuf_size);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mtk_afe_fe_prepare);
 
-const struct snd_soc_dai_ops mtk_afe_fe_ops = {
+स्थिर काष्ठा snd_soc_dai_ops mtk_afe_fe_ops = अणु
 	.startup	= mtk_afe_fe_startup,
-	.shutdown	= mtk_afe_fe_shutdown,
+	.shutकरोwn	= mtk_afe_fe_shutकरोwn,
 	.hw_params	= mtk_afe_fe_hw_params,
-	.hw_free	= mtk_afe_fe_hw_free,
+	.hw_मुक्त	= mtk_afe_fe_hw_मुक्त,
 	.prepare	= mtk_afe_fe_prepare,
 	.trigger	= mtk_afe_fe_trigger,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(mtk_afe_fe_ops);
 
-static DEFINE_MUTEX(irqs_lock);
-int mtk_dynamic_irq_acquire(struct mtk_base_afe *afe)
-{
-	int i;
+अटल DEFINE_MUTEX(irqs_lock);
+पूर्णांक mtk_dynamic_irq_acquire(काष्ठा mtk_base_afe *afe)
+अणु
+	पूर्णांक i;
 
 	mutex_lock(&afe->irq_alloc_lock);
-	for (i = 0; i < afe->irqs_size; ++i) {
-		if (afe->irqs[i].irq_occupyed == 0) {
+	क्रम (i = 0; i < afe->irqs_size; ++i) अणु
+		अगर (afe->irqs[i].irq_occupyed == 0) अणु
 			afe->irqs[i].irq_occupyed = 1;
 			mutex_unlock(&afe->irq_alloc_lock);
-			return i;
-		}
-	}
+			वापस i;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&afe->irq_alloc_lock);
-	return afe->irqs_size;
-}
+	वापस afe->irqs_size;
+पूर्ण
 EXPORT_SYMBOL_GPL(mtk_dynamic_irq_acquire);
 
-int mtk_dynamic_irq_release(struct mtk_base_afe *afe, int irq_id)
-{
+पूर्णांक mtk_dynamic_irq_release(काष्ठा mtk_base_afe *afe, पूर्णांक irq_id)
+अणु
 	mutex_lock(&afe->irq_alloc_lock);
-	if (irq_id >= 0 && irq_id < afe->irqs_size) {
+	अगर (irq_id >= 0 && irq_id < afe->irqs_size) अणु
 		afe->irqs[irq_id].irq_occupyed = 0;
 		mutex_unlock(&afe->irq_alloc_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	mutex_unlock(&afe->irq_alloc_lock);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(mtk_dynamic_irq_release);
 
-int mtk_afe_suspend(struct snd_soc_component *component)
-{
-	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(component);
-	struct device *dev = afe->dev;
-	struct regmap *regmap = afe->regmap;
-	int i;
+पूर्णांक mtk_afe_suspend(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(component);
+	काष्ठा device *dev = afe->dev;
+	काष्ठा regmap *regmap = afe->regmap;
+	पूर्णांक i;
 
-	if (pm_runtime_status_suspended(dev) || afe->suspended)
-		return 0;
+	अगर (pm_runसमय_status_suspended(dev) || afe->suspended)
+		वापस 0;
 
-	if (!afe->reg_back_up)
+	अगर (!afe->reg_back_up)
 		afe->reg_back_up =
-			devm_kcalloc(dev, afe->reg_back_up_list_num,
-				     sizeof(unsigned int), GFP_KERNEL);
+			devm_kसुस्मृति(dev, afe->reg_back_up_list_num,
+				     माप(अचिन्हित पूर्णांक), GFP_KERNEL);
 
-	for (i = 0; i < afe->reg_back_up_list_num; i++)
-		regmap_read(regmap, afe->reg_back_up_list[i],
+	क्रम (i = 0; i < afe->reg_back_up_list_num; i++)
+		regmap_पढ़ो(regmap, afe->reg_back_up_list[i],
 			    &afe->reg_back_up[i]);
 
 	afe->suspended = true;
-	afe->runtime_suspend(dev);
-	return 0;
-}
+	afe->runसमय_suspend(dev);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mtk_afe_suspend);
 
-int mtk_afe_resume(struct snd_soc_component *component)
-{
-	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(component);
-	struct device *dev = afe->dev;
-	struct regmap *regmap = afe->regmap;
-	int i = 0;
+पूर्णांक mtk_afe_resume(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(component);
+	काष्ठा device *dev = afe->dev;
+	काष्ठा regmap *regmap = afe->regmap;
+	पूर्णांक i = 0;
 
-	if (pm_runtime_status_suspended(dev) || !afe->suspended)
-		return 0;
+	अगर (pm_runसमय_status_suspended(dev) || !afe->suspended)
+		वापस 0;
 
-	afe->runtime_resume(dev);
+	afe->runसमय_resume(dev);
 
-	if (!afe->reg_back_up)
+	अगर (!afe->reg_back_up)
 		dev_dbg(dev, "%s no reg_backup\n", __func__);
 
-	for (i = 0; i < afe->reg_back_up_list_num; i++)
-		mtk_regmap_write(regmap, afe->reg_back_up_list[i],
+	क्रम (i = 0; i < afe->reg_back_up_list_num; i++)
+		mtk_regmap_ग_लिखो(regmap, afe->reg_back_up_list[i],
 				 afe->reg_back_up[i]);
 
 	afe->suspended = false;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mtk_afe_resume);
 
-int mtk_memif_set_enable(struct mtk_base_afe *afe, int id)
-{
-	struct mtk_base_afe_memif *memif = &afe->memif[id];
+पूर्णांक mtk_memअगर_set_enable(काष्ठा mtk_base_afe *afe, पूर्णांक id)
+अणु
+	काष्ठा mtk_base_afe_memअगर *memअगर = &afe->memअगर[id];
 
-	if (memif->data->enable_shift < 0) {
+	अगर (memअगर->data->enable_shअगरt < 0) अणु
 		dev_warn(afe->dev, "%s(), error, id %d, enable_shift < 0\n",
 			 __func__, id);
-		return 0;
-	}
-	return mtk_regmap_update_bits(afe->regmap, memif->data->enable_reg,
-				      1, 1, memif->data->enable_shift);
-}
-EXPORT_SYMBOL_GPL(mtk_memif_set_enable);
+		वापस 0;
+	पूर्ण
+	वापस mtk_regmap_update_bits(afe->regmap, memअगर->data->enable_reg,
+				      1, 1, memअगर->data->enable_shअगरt);
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_memअगर_set_enable);
 
-int mtk_memif_set_disable(struct mtk_base_afe *afe, int id)
-{
-	struct mtk_base_afe_memif *memif = &afe->memif[id];
+पूर्णांक mtk_memअगर_set_disable(काष्ठा mtk_base_afe *afe, पूर्णांक id)
+अणु
+	काष्ठा mtk_base_afe_memअगर *memअगर = &afe->memअगर[id];
 
-	if (memif->data->enable_shift < 0) {
+	अगर (memअगर->data->enable_shअगरt < 0) अणु
 		dev_warn(afe->dev, "%s(), error, id %d, enable_shift < 0\n",
 			 __func__, id);
-		return 0;
-	}
-	return mtk_regmap_update_bits(afe->regmap, memif->data->enable_reg,
-				      1, 0, memif->data->enable_shift);
-}
-EXPORT_SYMBOL_GPL(mtk_memif_set_disable);
+		वापस 0;
+	पूर्ण
+	वापस mtk_regmap_update_bits(afe->regmap, memअगर->data->enable_reg,
+				      1, 0, memअगर->data->enable_shअगरt);
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_memअगर_set_disable);
 
-int mtk_memif_set_addr(struct mtk_base_afe *afe, int id,
-		       unsigned char *dma_area,
+पूर्णांक mtk_memअगर_set_addr(काष्ठा mtk_base_afe *afe, पूर्णांक id,
+		       अचिन्हित अक्षर *dma_area,
 		       dma_addr_t dma_addr,
-		       size_t dma_bytes)
-{
-	struct mtk_base_afe_memif *memif = &afe->memif[id];
-	int msb_at_bit33 = upper_32_bits(dma_addr) ? 1 : 0;
-	unsigned int phys_buf_addr = lower_32_bits(dma_addr);
-	unsigned int phys_buf_addr_upper_32 = upper_32_bits(dma_addr);
+		       माप_प्रकार dma_bytes)
+अणु
+	काष्ठा mtk_base_afe_memअगर *memअगर = &afe->memअगर[id];
+	पूर्णांक msb_at_bit33 = upper_32_bits(dma_addr) ? 1 : 0;
+	अचिन्हित पूर्णांक phys_buf_addr = lower_32_bits(dma_addr);
+	अचिन्हित पूर्णांक phys_buf_addr_upper_32 = upper_32_bits(dma_addr);
 
-	memif->dma_area = dma_area;
-	memif->dma_addr = dma_addr;
-	memif->dma_bytes = dma_bytes;
+	memअगर->dma_area = dma_area;
+	memअगर->dma_addr = dma_addr;
+	memअगर->dma_bytes = dma_bytes;
 
 	/* start */
-	mtk_regmap_write(afe->regmap, memif->data->reg_ofs_base,
+	mtk_regmap_ग_लिखो(afe->regmap, memअगर->data->reg_ofs_base,
 			 phys_buf_addr);
 	/* end */
-	if (memif->data->reg_ofs_end)
-		mtk_regmap_write(afe->regmap,
-				 memif->data->reg_ofs_end,
+	अगर (memअगर->data->reg_ofs_end)
+		mtk_regmap_ग_लिखो(afe->regmap,
+				 memअगर->data->reg_ofs_end,
 				 phys_buf_addr + dma_bytes - 1);
-	else
-		mtk_regmap_write(afe->regmap,
-				 memif->data->reg_ofs_base +
+	अन्यथा
+		mtk_regmap_ग_लिखो(afe->regmap,
+				 memअगर->data->reg_ofs_base +
 				 AFE_BASE_END_OFFSET,
 				 phys_buf_addr + dma_bytes - 1);
 
 	/* set start, end, upper 32 bits */
-	if (memif->data->reg_ofs_base_msb) {
-		mtk_regmap_write(afe->regmap, memif->data->reg_ofs_base_msb,
+	अगर (memअगर->data->reg_ofs_base_msb) अणु
+		mtk_regmap_ग_लिखो(afe->regmap, memअगर->data->reg_ofs_base_msb,
 				 phys_buf_addr_upper_32);
-		mtk_regmap_write(afe->regmap,
-				 memif->data->reg_ofs_end_msb,
+		mtk_regmap_ग_लिखो(afe->regmap,
+				 memअगर->data->reg_ofs_end_msb,
 				 phys_buf_addr_upper_32);
-	}
+	पूर्ण
 
 	/* set MSB to 33-bit */
-	if (memif->data->msb_reg >= 0)
-		mtk_regmap_update_bits(afe->regmap, memif->data->msb_reg,
-				       1, msb_at_bit33, memif->data->msb_shift);
+	अगर (memअगर->data->msb_reg >= 0)
+		mtk_regmap_update_bits(afe->regmap, memअगर->data->msb_reg,
+				       1, msb_at_bit33, memअगर->data->msb_shअगरt);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mtk_memif_set_addr);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_memअगर_set_addr);
 
-int mtk_memif_set_channel(struct mtk_base_afe *afe,
-			  int id, unsigned int channel)
-{
-	struct mtk_base_afe_memif *memif = &afe->memif[id];
-	unsigned int mono;
+पूर्णांक mtk_memअगर_set_channel(काष्ठा mtk_base_afe *afe,
+			  पूर्णांक id, अचिन्हित पूर्णांक channel)
+अणु
+	काष्ठा mtk_base_afe_memअगर *memअगर = &afe->memअगर[id];
+	अचिन्हित पूर्णांक mono;
 
-	if (memif->data->mono_shift < 0)
-		return 0;
+	अगर (memअगर->data->mono_shअगरt < 0)
+		वापस 0;
 
-	if (memif->data->quad_ch_mask) {
-		unsigned int quad_ch = (channel == 4) ? 1 : 0;
+	अगर (memअगर->data->quad_ch_mask) अणु
+		अचिन्हित पूर्णांक quad_ch = (channel == 4) ? 1 : 0;
 
-		mtk_regmap_update_bits(afe->regmap, memif->data->quad_ch_reg,
-				       memif->data->quad_ch_mask,
-				       quad_ch, memif->data->quad_ch_shift);
-	}
+		mtk_regmap_update_bits(afe->regmap, memअगर->data->quad_ch_reg,
+				       memअगर->data->quad_ch_mask,
+				       quad_ch, memअगर->data->quad_ch_shअगरt);
+	पूर्ण
 
-	if (memif->data->mono_invert)
+	अगर (memअगर->data->mono_invert)
 		mono = (channel == 1) ? 0 : 1;
-	else
+	अन्यथा
 		mono = (channel == 1) ? 1 : 0;
 
-	return mtk_regmap_update_bits(afe->regmap, memif->data->mono_reg,
-				      1, mono, memif->data->mono_shift);
-}
-EXPORT_SYMBOL_GPL(mtk_memif_set_channel);
+	वापस mtk_regmap_update_bits(afe->regmap, memअगर->data->mono_reg,
+				      1, mono, memअगर->data->mono_shअगरt);
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_memअगर_set_channel);
 
-static int mtk_memif_set_rate_fs(struct mtk_base_afe *afe,
-				 int id, int fs)
-{
-	struct mtk_base_afe_memif *memif = &afe->memif[id];
+अटल पूर्णांक mtk_memअगर_set_rate_fs(काष्ठा mtk_base_afe *afe,
+				 पूर्णांक id, पूर्णांक fs)
+अणु
+	काष्ठा mtk_base_afe_memअगर *memअगर = &afe->memअगर[id];
 
-	if (memif->data->fs_shift >= 0)
-		mtk_regmap_update_bits(afe->regmap, memif->data->fs_reg,
-				       memif->data->fs_maskbit,
-				       fs, memif->data->fs_shift);
+	अगर (memअगर->data->fs_shअगरt >= 0)
+		mtk_regmap_update_bits(afe->regmap, memअगर->data->fs_reg,
+				       memअगर->data->fs_maskbit,
+				       fs, memअगर->data->fs_shअगरt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mtk_memif_set_rate(struct mtk_base_afe *afe,
-		       int id, unsigned int rate)
-{
-	int fs = 0;
+पूर्णांक mtk_memअगर_set_rate(काष्ठा mtk_base_afe *afe,
+		       पूर्णांक id, अचिन्हित पूर्णांक rate)
+अणु
+	पूर्णांक fs = 0;
 
-	if (!afe->get_dai_fs) {
+	अगर (!afe->get_dai_fs) अणु
 		dev_err(afe->dev, "%s(), error, afe->get_dai_fs == NULL\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	fs = afe->get_dai_fs(afe, id, rate);
 
-	if (fs < 0)
-		return -EINVAL;
+	अगर (fs < 0)
+		वापस -EINVAL;
 
-	return mtk_memif_set_rate_fs(afe, id, fs);
-}
-EXPORT_SYMBOL_GPL(mtk_memif_set_rate);
+	वापस mtk_memअगर_set_rate_fs(afe, id, fs);
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_memअगर_set_rate);
 
-int mtk_memif_set_rate_substream(struct snd_pcm_substream *substream,
-				 int id, unsigned int rate)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct snd_soc_component *component =
+पूर्णांक mtk_memअगर_set_rate_substream(काष्ठा snd_pcm_substream *substream,
+				 पूर्णांक id, अचिन्हित पूर्णांक rate)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा snd_soc_component *component =
 		snd_soc_rtdcom_lookup(rtd, AFE_PCM_NAME);
-	struct mtk_base_afe *afe = snd_soc_component_get_drvdata(component);
+	काष्ठा mtk_base_afe *afe = snd_soc_component_get_drvdata(component);
 
-	int fs = 0;
+	पूर्णांक fs = 0;
 
-	if (!afe->memif_fs) {
+	अगर (!afe->memअगर_fs) अणु
 		dev_err(afe->dev, "%s(), error, afe->memif_fs == NULL\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	fs = afe->memif_fs(substream, rate);
+	fs = afe->memअगर_fs(substream, rate);
 
-	if (fs < 0)
-		return -EINVAL;
+	अगर (fs < 0)
+		वापस -EINVAL;
 
-	return mtk_memif_set_rate_fs(afe, id, fs);
-}
-EXPORT_SYMBOL_GPL(mtk_memif_set_rate_substream);
+	वापस mtk_memअगर_set_rate_fs(afe, id, fs);
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_memअगर_set_rate_substream);
 
-int mtk_memif_set_format(struct mtk_base_afe *afe,
-			 int id, snd_pcm_format_t format)
-{
-	struct mtk_base_afe_memif *memif = &afe->memif[id];
-	int hd_audio = 0;
-	int hd_align = 0;
+पूर्णांक mtk_memअगर_set_क्रमmat(काष्ठा mtk_base_afe *afe,
+			 पूर्णांक id, snd_pcm_क्रमmat_t क्रमmat)
+अणु
+	काष्ठा mtk_base_afe_memअगर *memअगर = &afe->memअगर[id];
+	पूर्णांक hd_audio = 0;
+	पूर्णांक hd_align = 0;
 
 	/* set hd mode */
-	switch (format) {
-	case SNDRV_PCM_FORMAT_S16_LE:
-	case SNDRV_PCM_FORMAT_U16_LE:
+	चयन (क्रमmat) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
+	हाल SNDRV_PCM_FORMAT_U16_LE:
 		hd_audio = 0;
-		break;
-	case SNDRV_PCM_FORMAT_S32_LE:
-	case SNDRV_PCM_FORMAT_U32_LE:
-		if (afe->memif_32bit_supported) {
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S32_LE:
+	हाल SNDRV_PCM_FORMAT_U32_LE:
+		अगर (afe->memअगर_32bit_supported) अणु
 			hd_audio = 2;
 			hd_align = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			hd_audio = 1;
 			hd_align = 1;
-		}
-		break;
-	case SNDRV_PCM_FORMAT_S24_LE:
-	case SNDRV_PCM_FORMAT_U24_LE:
+		पूर्ण
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S24_LE:
+	हाल SNDRV_PCM_FORMAT_U24_LE:
 		hd_audio = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(afe->dev, "%s() error: unsupported format %d\n",
-			__func__, format);
-		break;
-	}
+			__func__, क्रमmat);
+		अवरोध;
+	पूर्ण
 
-	mtk_regmap_update_bits(afe->regmap, memif->data->hd_reg,
-			       0x3, hd_audio, memif->data->hd_shift);
+	mtk_regmap_update_bits(afe->regmap, memअगर->data->hd_reg,
+			       0x3, hd_audio, memअगर->data->hd_shअगरt);
 
-	mtk_regmap_update_bits(afe->regmap, memif->data->hd_align_reg,
-			       0x1, hd_align, memif->data->hd_align_mshift);
+	mtk_regmap_update_bits(afe->regmap, memअगर->data->hd_align_reg,
+			       0x1, hd_align, memअगर->data->hd_align_mshअगरt);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mtk_memif_set_format);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_memअगर_set_क्रमmat);
 
-int mtk_memif_set_pbuf_size(struct mtk_base_afe *afe,
-			    int id, int pbuf_size)
-{
-	const struct mtk_base_memif_data *memif_data = afe->memif[id].data;
+पूर्णांक mtk_memअगर_set_pbuf_size(काष्ठा mtk_base_afe *afe,
+			    पूर्णांक id, पूर्णांक pbuf_size)
+अणु
+	स्थिर काष्ठा mtk_base_memअगर_data *memअगर_data = afe->memअगर[id].data;
 
-	if (memif_data->pbuf_mask == 0 || memif_data->minlen_mask == 0)
-		return 0;
+	अगर (memअगर_data->pbuf_mask == 0 || memअगर_data->minlen_mask == 0)
+		वापस 0;
 
-	mtk_regmap_update_bits(afe->regmap, memif_data->pbuf_reg,
-			       memif_data->pbuf_mask,
-			       pbuf_size, memif_data->pbuf_shift);
+	mtk_regmap_update_bits(afe->regmap, memअगर_data->pbuf_reg,
+			       memअगर_data->pbuf_mask,
+			       pbuf_size, memअगर_data->pbuf_shअगरt);
 
-	mtk_regmap_update_bits(afe->regmap, memif_data->minlen_reg,
-			       memif_data->minlen_mask,
-			       pbuf_size, memif_data->minlen_shift);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mtk_memif_set_pbuf_size);
+	mtk_regmap_update_bits(afe->regmap, memअगर_data->minlen_reg,
+			       memअगर_data->minlen_mask,
+			       pbuf_size, memअगर_data->minlen_shअगरt);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_memअगर_set_pbuf_size);
 
 MODULE_DESCRIPTION("Mediatek simple fe dai operator");
 MODULE_AUTHOR("Garlic Tseng <garlic.tseng@mediatek.com>");

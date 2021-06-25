@@ -1,893 +1,894 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * A generic kernel FIFO implementation
  *
  * Copyright (C) 2013 Stefani Seibold <stefani@seibold.net>
  */
 
-#ifndef _LINUX_KFIFO_H
-#define _LINUX_KFIFO_H
+#अगर_अघोषित _LINUX_KFIFO_H
+#घोषणा _LINUX_KFIFO_H
 
 /*
  * How to porting drivers to the new generic FIFO API:
  *
- * - Modify the declaration of the "struct kfifo *" object into a
+ * - Modअगरy the declaration of the "struct kfifo *" object पूर्णांकo a
  *   in-place "struct kfifo" object
- * - Init the in-place object with kfifo_alloc() or kfifo_init()
+ * - Init the in-place object with kfअगरo_alloc() or kfअगरo_init()
  *   Note: The address of the in-place "struct kfifo" object must be
  *   passed as the first argument to this functions
- * - Replace the use of __kfifo_put into kfifo_in and __kfifo_get
- *   into kfifo_out
- * - Replace the use of kfifo_put into kfifo_in_spinlocked and kfifo_get
- *   into kfifo_out_spinlocked
- *   Note: the spinlock pointer formerly passed to kfifo_init/kfifo_alloc
- *   must be passed now to the kfifo_in_spinlocked and kfifo_out_spinlocked
+ * - Replace the use of __kfअगरo_put पूर्णांकo kfअगरo_in and __kfअगरo_get
+ *   पूर्णांकo kfअगरo_out
+ * - Replace the use of kfअगरo_put पूर्णांकo kfअगरo_in_spinlocked and kfअगरo_get
+ *   पूर्णांकo kfअगरo_out_spinlocked
+ *   Note: the spinlock poपूर्णांकer क्रमmerly passed to kfअगरo_init/kfअगरo_alloc
+ *   must be passed now to the kfअगरo_in_spinlocked and kfअगरo_out_spinlocked
  *   as the last parameter
- * - The formerly __kfifo_* functions are renamed into kfifo_*
+ * - The क्रमmerly __kfअगरo_* functions are नामd पूर्णांकo kfअगरo_*
  */
 
 /*
- * Note about locking: There is no locking required until only one reader
- * and one writer is using the fifo and no kfifo_reset() will be called.
- * kfifo_reset_out() can be safely used, until it will be only called
- * in the reader thread.
- * For multiple writer and one reader there is only a need to lock the writer.
- * And vice versa for only one writer and multiple reader there is only a need
- * to lock the reader.
+ * Note about locking: There is no locking required until only one पढ़ोer
+ * and one ग_लिखोr is using the fअगरo and no kfअगरo_reset() will be called.
+ * kfअगरo_reset_out() can be safely used, until it will be only called
+ * in the पढ़ोer thपढ़ो.
+ * For multiple ग_लिखोr and one पढ़ोer there is only a need to lock the ग_लिखोr.
+ * And vice versa क्रम only one ग_लिखोr and multiple पढ़ोer there is only a need
+ * to lock the पढ़ोer.
  */
 
-#include <linux/kernel.h>
-#include <linux/spinlock.h>
-#include <linux/stddef.h>
-#include <linux/scatterlist.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/scatterlist.h>
 
-struct __kfifo {
-	unsigned int	in;
-	unsigned int	out;
-	unsigned int	mask;
-	unsigned int	esize;
-	void		*data;
-};
+काष्ठा __kfअगरo अणु
+	अचिन्हित पूर्णांक	in;
+	अचिन्हित पूर्णांक	out;
+	अचिन्हित पूर्णांक	mask;
+	अचिन्हित पूर्णांक	esize;
+	व्योम		*data;
+पूर्ण;
 
-#define __STRUCT_KFIFO_COMMON(datatype, recsize, ptrtype) \
-	union { \
-		struct __kfifo	kfifo; \
+#घोषणा __STRUCT_KFIFO_COMMON(datatype, recsize, ptrtype) \
+	जोड़ अणु \
+		काष्ठा __kfअगरo	kfअगरo; \
 		datatype	*type; \
-		const datatype	*const_type; \
-		char		(*rectype)[recsize]; \
+		स्थिर datatype	*स्थिर_type; \
+		अक्षर		(*rectype)[recsize]; \
 		ptrtype		*ptr; \
-		ptrtype const	*ptr_const; \
-	}
+		ptrtype स्थिर	*ptr_स्थिर; \
+	पूर्ण
 
-#define __STRUCT_KFIFO(type, size, recsize, ptrtype) \
-{ \
+#घोषणा __STRUCT_KFIFO(type, size, recsize, ptrtype) \
+अणु \
 	__STRUCT_KFIFO_COMMON(type, recsize, ptrtype); \
 	type		buf[((size < 2) || (size & (size - 1))) ? -1 : size]; \
-}
+पूर्ण
 
-#define STRUCT_KFIFO(type, size) \
-	struct __STRUCT_KFIFO(type, size, 0, type)
+#घोषणा STRUCT_KFIFO(type, size) \
+	काष्ठा __STRUCT_KFIFO(type, size, 0, type)
 
-#define __STRUCT_KFIFO_PTR(type, recsize, ptrtype) \
-{ \
+#घोषणा __STRUCT_KFIFO_PTR(type, recsize, ptrtype) \
+अणु \
 	__STRUCT_KFIFO_COMMON(type, recsize, ptrtype); \
 	type		buf[0]; \
-}
+पूर्ण
 
-#define STRUCT_KFIFO_PTR(type) \
-	struct __STRUCT_KFIFO_PTR(type, 0, type)
-
-/*
- * define compatibility "struct kfifo" for dynamic allocated fifos
- */
-struct kfifo __STRUCT_KFIFO_PTR(unsigned char, 0, void);
-
-#define STRUCT_KFIFO_REC_1(size) \
-	struct __STRUCT_KFIFO(unsigned char, size, 1, void)
-
-#define STRUCT_KFIFO_REC_2(size) \
-	struct __STRUCT_KFIFO(unsigned char, size, 2, void)
+#घोषणा STRUCT_KFIFO_PTR(type) \
+	काष्ठा __STRUCT_KFIFO_PTR(type, 0, type)
 
 /*
- * define kfifo_rec types
+ * define compatibility "struct kfifo" क्रम dynamic allocated fअगरos
  */
-struct kfifo_rec_ptr_1 __STRUCT_KFIFO_PTR(unsigned char, 1, void);
-struct kfifo_rec_ptr_2 __STRUCT_KFIFO_PTR(unsigned char, 2, void);
+काष्ठा kfअगरo __STRUCT_KFIFO_PTR(अचिन्हित अक्षर, 0, व्योम);
+
+#घोषणा STRUCT_KFIFO_REC_1(size) \
+	काष्ठा __STRUCT_KFIFO(अचिन्हित अक्षर, size, 1, व्योम)
+
+#घोषणा STRUCT_KFIFO_REC_2(size) \
+	काष्ठा __STRUCT_KFIFO(अचिन्हित अक्षर, size, 2, व्योम)
 
 /*
- * helper macro to distinguish between real in place fifo where the fifo
- * array is a part of the structure and the fifo type where the array is
- * outside of the fifo structure.
+ * define kfअगरo_rec types
  */
-#define	__is_kfifo_ptr(fifo) \
-	(sizeof(*fifo) == sizeof(STRUCT_KFIFO_PTR(typeof(*(fifo)->type))))
+काष्ठा kfअगरo_rec_ptr_1 __STRUCT_KFIFO_PTR(अचिन्हित अक्षर, 1, व्योम);
+काष्ठा kfअगरo_rec_ptr_2 __STRUCT_KFIFO_PTR(अचिन्हित अक्षर, 2, व्योम);
+
+/*
+ * helper macro to distinguish between real in place fअगरo where the fअगरo
+ * array is a part of the काष्ठाure and the fअगरo type where the array is
+ * outside of the fअगरo काष्ठाure.
+ */
+#घोषणा	__is_kfअगरo_ptr(fअगरo) \
+	(माप(*fअगरo) == माप(STRUCT_KFIFO_PTR(typeof(*(fअगरo)->type))))
 
 /**
- * DECLARE_KFIFO_PTR - macro to declare a fifo pointer object
- * @fifo: name of the declared fifo
- * @type: type of the fifo elements
+ * DECLARE_KFIFO_PTR - macro to declare a fअगरo poपूर्णांकer object
+ * @fअगरo: name of the declared fअगरo
+ * @type: type of the fअगरo elements
  */
-#define DECLARE_KFIFO_PTR(fifo, type)	STRUCT_KFIFO_PTR(type) fifo
+#घोषणा DECLARE_KFIFO_PTR(fअगरo, type)	STRUCT_KFIFO_PTR(type) fअगरo
 
 /**
- * DECLARE_KFIFO - macro to declare a fifo object
- * @fifo: name of the declared fifo
- * @type: type of the fifo elements
- * @size: the number of elements in the fifo, this must be a power of 2
+ * DECLARE_KFIFO - macro to declare a fअगरo object
+ * @fअगरo: name of the declared fअगरo
+ * @type: type of the fअगरo elements
+ * @size: the number of elements in the fअगरo, this must be a घातer of 2
  */
-#define DECLARE_KFIFO(fifo, type, size)	STRUCT_KFIFO(type, size) fifo
+#घोषणा DECLARE_KFIFO(fअगरo, type, size)	STRUCT_KFIFO(type, size) fअगरo
 
 /**
- * INIT_KFIFO - Initialize a fifo declared by DECLARE_KFIFO
- * @fifo: name of the declared fifo datatype
+ * INIT_KFIFO - Initialize a fअगरo declared by DECLARE_KFIFO
+ * @fअगरo: name of the declared fअगरo datatype
  */
-#define INIT_KFIFO(fifo) \
-(void)({ \
-	typeof(&(fifo)) __tmp = &(fifo); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	__kfifo->in = 0; \
-	__kfifo->out = 0; \
-	__kfifo->mask = __is_kfifo_ptr(__tmp) ? 0 : ARRAY_SIZE(__tmp->buf) - 1;\
-	__kfifo->esize = sizeof(*__tmp->buf); \
-	__kfifo->data = __is_kfifo_ptr(__tmp) ?  NULL : __tmp->buf; \
-})
+#घोषणा INIT_KFIFO(fअगरo) \
+(व्योम)(अणु \
+	typeof(&(fअगरo)) __पंचांगp = &(fअगरo); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	__kfअगरo->in = 0; \
+	__kfअगरo->out = 0; \
+	__kfअगरo->mask = __is_kfअगरo_ptr(__पंचांगp) ? 0 : ARRAY_SIZE(__पंचांगp->buf) - 1;\
+	__kfअगरo->esize = माप(*__पंचांगp->buf); \
+	__kfअगरo->data = __is_kfअगरo_ptr(__पंचांगp) ?  शून्य : __पंचांगp->buf; \
+पूर्ण)
 
 /**
- * DEFINE_KFIFO - macro to define and initialize a fifo
- * @fifo: name of the declared fifo datatype
- * @type: type of the fifo elements
- * @size: the number of elements in the fifo, this must be a power of 2
+ * DEFINE_KFIFO - macro to define and initialize a fअगरo
+ * @fअगरo: name of the declared fअगरo datatype
+ * @type: type of the fअगरo elements
+ * @size: the number of elements in the fअगरo, this must be a घातer of 2
  *
- * Note: the macro can be used for global and local fifo data type variables.
+ * Note: the macro can be used क्रम global and local fअगरo data type variables.
  */
-#define DEFINE_KFIFO(fifo, type, size) \
-	DECLARE_KFIFO(fifo, type, size) = \
-	(typeof(fifo)) { \
-		{ \
-			{ \
+#घोषणा DEFINE_KFIFO(fअगरo, type, size) \
+	DECLARE_KFIFO(fअगरo, type, size) = \
+	(typeof(fअगरo)) अणु \
+		अणु \
+			अणु \
 			.in	= 0, \
 			.out	= 0, \
-			.mask	= __is_kfifo_ptr(&(fifo)) ? \
+			.mask	= __is_kfअगरo_ptr(&(fअगरo)) ? \
 				  0 : \
-				  ARRAY_SIZE((fifo).buf) - 1, \
-			.esize	= sizeof(*(fifo).buf), \
-			.data	= __is_kfifo_ptr(&(fifo)) ? \
-				NULL : \
-				(fifo).buf, \
-			} \
-		} \
-	}
+				  ARRAY_SIZE((fअगरo).buf) - 1, \
+			.esize	= माप(*(fअगरo).buf), \
+			.data	= __is_kfअगरo_ptr(&(fअगरo)) ? \
+				शून्य : \
+				(fअगरo).buf, \
+			पूर्ण \
+		पूर्ण \
+	पूर्ण
 
 
-static inline unsigned int __must_check
-__kfifo_uint_must_check_helper(unsigned int val)
-{
-	return val;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __must_check
+__kfअगरo_uपूर्णांक_must_check_helper(अचिन्हित पूर्णांक val)
+अणु
+	वापस val;
+पूर्ण
 
-static inline int __must_check
-__kfifo_int_must_check_helper(int val)
-{
-	return val;
-}
+अटल अंतरभूत पूर्णांक __must_check
+__kfअगरo_पूर्णांक_must_check_helper(पूर्णांक val)
+अणु
+	वापस val;
+पूर्ण
 
 /**
- * kfifo_initialized - Check if the fifo is initialized
- * @fifo: address of the fifo to check
+ * kfअगरo_initialized - Check अगर the fअगरo is initialized
+ * @fअगरo: address of the fअगरo to check
  *
- * Return %true if fifo is initialized, otherwise %false.
- * Assumes the fifo was 0 before.
+ * Return %true अगर fअगरo is initialized, otherwise %false.
+ * Assumes the fअगरo was 0 beक्रमe.
  */
-#define kfifo_initialized(fifo) ((fifo)->kfifo.mask)
+#घोषणा kfअगरo_initialized(fअगरo) ((fअगरo)->kfअगरo.mask)
 
 /**
- * kfifo_esize - returns the size of the element managed by the fifo
- * @fifo: address of the fifo to be used
+ * kfअगरo_esize - वापसs the size of the element managed by the fअगरo
+ * @fअगरo: address of the fअगरo to be used
  */
-#define kfifo_esize(fifo)	((fifo)->kfifo.esize)
+#घोषणा kfअगरo_esize(fअगरo)	((fअगरo)->kfअगरo.esize)
 
 /**
- * kfifo_recsize - returns the size of the record length field
- * @fifo: address of the fifo to be used
+ * kfअगरo_recsize - वापसs the size of the record length field
+ * @fअगरo: address of the fअगरo to be used
  */
-#define kfifo_recsize(fifo)	(sizeof(*(fifo)->rectype))
+#घोषणा kfअगरo_recsize(fअगरo)	(माप(*(fअगरo)->rectype))
 
 /**
- * kfifo_size - returns the size of the fifo in elements
- * @fifo: address of the fifo to be used
+ * kfअगरo_size - वापसs the size of the fअगरo in elements
+ * @fअगरo: address of the fअगरo to be used
  */
-#define kfifo_size(fifo)	((fifo)->kfifo.mask + 1)
+#घोषणा kfअगरo_size(fअगरo)	((fअगरo)->kfअगरo.mask + 1)
 
 /**
- * kfifo_reset - removes the entire fifo content
- * @fifo: address of the fifo to be used
+ * kfअगरo_reset - हटाओs the entire fअगरo content
+ * @fअगरo: address of the fअगरo to be used
  *
- * Note: usage of kfifo_reset() is dangerous. It should be only called when the
- * fifo is exclusived locked or when it is secured that no other thread is
- * accessing the fifo.
+ * Note: usage of kfअगरo_reset() is dangerous. It should be only called when the
+ * fअगरo is exclusived locked or when it is secured that no other thपढ़ो is
+ * accessing the fअगरo.
  */
-#define kfifo_reset(fifo) \
-(void)({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	__tmp->kfifo.in = __tmp->kfifo.out = 0; \
-})
+#घोषणा kfअगरo_reset(fअगरo) \
+(व्योम)(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	__पंचांगp->kfअगरo.in = __पंचांगp->kfअगरo.out = 0; \
+पूर्ण)
 
 /**
- * kfifo_reset_out - skip fifo content
- * @fifo: address of the fifo to be used
+ * kfअगरo_reset_out - skip fअगरo content
+ * @fअगरo: address of the fअगरo to be used
  *
- * Note: The usage of kfifo_reset_out() is safe until it will be only called
- * from the reader thread and there is only one concurrent reader. Otherwise
- * it is dangerous and must be handled in the same way as kfifo_reset().
+ * Note: The usage of kfअगरo_reset_out() is safe until it will be only called
+ * from the पढ़ोer thपढ़ो and there is only one concurrent पढ़ोer. Otherwise
+ * it is dangerous and must be handled in the same way as kfअगरo_reset().
  */
-#define kfifo_reset_out(fifo)	\
-(void)({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	__tmp->kfifo.out = __tmp->kfifo.in; \
-})
+#घोषणा kfअगरo_reset_out(fअगरo)	\
+(व्योम)(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	__पंचांगp->kfअगरo.out = __पंचांगp->kfअगरo.in; \
+पूर्ण)
 
 /**
- * kfifo_len - returns the number of used elements in the fifo
- * @fifo: address of the fifo to be used
+ * kfअगरo_len - वापसs the number of used elements in the fअगरo
+ * @fअगरo: address of the fअगरo to be used
  */
-#define kfifo_len(fifo) \
-({ \
-	typeof((fifo) + 1) __tmpl = (fifo); \
-	__tmpl->kfifo.in - __tmpl->kfifo.out; \
-})
+#घोषणा kfअगरo_len(fअगरo) \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगpl = (fअगरo); \
+	__पंचांगpl->kfअगरo.in - __पंचांगpl->kfअगरo.out; \
+पूर्ण)
 
 /**
- * kfifo_is_empty - returns true if the fifo is empty
- * @fifo: address of the fifo to be used
+ * kfअगरo_is_empty - वापसs true अगर the fअगरo is empty
+ * @fअगरo: address of the fअगरo to be used
  */
-#define	kfifo_is_empty(fifo) \
-({ \
-	typeof((fifo) + 1) __tmpq = (fifo); \
-	__tmpq->kfifo.in == __tmpq->kfifo.out; \
-})
+#घोषणा	kfअगरo_is_empty(fअगरo) \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगpq = (fअगरo); \
+	__पंचांगpq->kfअगरo.in == __पंचांगpq->kfअगरo.out; \
+पूर्ण)
 
 /**
- * kfifo_is_empty_spinlocked - returns true if the fifo is empty using
- * a spinlock for locking
- * @fifo: address of the fifo to be used
- * @lock: spinlock to be used for locking
+ * kfअगरo_is_empty_spinlocked - वापसs true अगर the fअगरo is empty using
+ * a spinlock क्रम locking
+ * @fअगरo: address of the fअगरo to be used
+ * @lock: spinlock to be used क्रम locking
  */
-#define kfifo_is_empty_spinlocked(fifo, lock) \
-({ \
-	unsigned long __flags; \
+#घोषणा kfअगरo_is_empty_spinlocked(fअगरo, lock) \
+(अणु \
+	अचिन्हित दीर्घ __flags; \
 	bool __ret; \
 	spin_lock_irqsave(lock, __flags); \
-	__ret = kfifo_is_empty(fifo); \
+	__ret = kfअगरo_is_empty(fअगरo); \
 	spin_unlock_irqrestore(lock, __flags); \
 	__ret; \
-})
+पूर्ण)
 
 /**
- * kfifo_is_empty_spinlocked_noirqsave  - returns true if the fifo is empty
- * using a spinlock for locking, doesn't disable interrupts
- * @fifo: address of the fifo to be used
- * @lock: spinlock to be used for locking
+ * kfअगरo_is_empty_spinlocked_noirqsave  - वापसs true अगर the fअगरo is empty
+ * using a spinlock क्रम locking, करोesn't disable पूर्णांकerrupts
+ * @fअगरo: address of the fअगरo to be used
+ * @lock: spinlock to be used क्रम locking
  */
-#define kfifo_is_empty_spinlocked_noirqsave(fifo, lock) \
-({ \
+#घोषणा kfअगरo_is_empty_spinlocked_noirqsave(fअगरo, lock) \
+(अणु \
 	bool __ret; \
 	spin_lock(lock); \
-	__ret = kfifo_is_empty(fifo); \
+	__ret = kfअगरo_is_empty(fअगरo); \
 	spin_unlock(lock); \
 	__ret; \
-})
+पूर्ण)
 
 /**
- * kfifo_is_full - returns true if the fifo is full
- * @fifo: address of the fifo to be used
+ * kfअगरo_is_full - वापसs true अगर the fअगरo is full
+ * @fअगरo: address of the fअगरo to be used
  */
-#define	kfifo_is_full(fifo) \
-({ \
-	typeof((fifo) + 1) __tmpq = (fifo); \
-	kfifo_len(__tmpq) > __tmpq->kfifo.mask; \
-})
+#घोषणा	kfअगरo_is_full(fअगरo) \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगpq = (fअगरo); \
+	kfअगरo_len(__पंचांगpq) > __पंचांगpq->kfअगरo.mask; \
+पूर्ण)
 
 /**
- * kfifo_avail - returns the number of unused elements in the fifo
- * @fifo: address of the fifo to be used
+ * kfअगरo_avail - वापसs the number of unused elements in the fअगरo
+ * @fअगरo: address of the fअगरo to be used
  */
-#define	kfifo_avail(fifo) \
-__kfifo_uint_must_check_helper( \
-({ \
-	typeof((fifo) + 1) __tmpq = (fifo); \
-	const size_t __recsize = sizeof(*__tmpq->rectype); \
-	unsigned int __avail = kfifo_size(__tmpq) - kfifo_len(__tmpq); \
+#घोषणा	kfअगरo_avail(fअगरo) \
+__kfअगरo_uपूर्णांक_must_check_helper( \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगpq = (fअगरo); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगpq->rectype); \
+	अचिन्हित पूर्णांक __avail = kfअगरo_size(__पंचांगpq) - kfअगरo_len(__पंचांगpq); \
 	(__recsize) ? ((__avail <= __recsize) ? 0 : \
-	__kfifo_max_r(__avail - __recsize, __recsize)) : \
+	__kfअगरo_max_r(__avail - __recsize, __recsize)) : \
 	__avail; \
-}) \
+पूर्ण) \
 )
 
 /**
- * kfifo_skip - skip output data
- * @fifo: address of the fifo to be used
+ * kfअगरo_skip - skip output data
+ * @fअगरo: address of the fअगरo to be used
  */
-#define	kfifo_skip(fifo) \
-(void)({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	if (__recsize) \
-		__kfifo_skip_r(__kfifo, __recsize); \
-	else \
-		__kfifo->out++; \
-})
+#घोषणा	kfअगरo_skip(fअगरo) \
+(व्योम)(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	अगर (__recsize) \
+		__kfअगरo_skip_r(__kfअगरo, __recsize); \
+	अन्यथा \
+		__kfअगरo->out++; \
+पूर्ण)
 
 /**
- * kfifo_peek_len - gets the size of the next fifo record
- * @fifo: address of the fifo to be used
+ * kfअगरo_peek_len - माला_लो the size of the next fअगरo record
+ * @fअगरo: address of the fअगरo to be used
  *
- * This function returns the size of the next fifo record in number of bytes.
+ * This function वापसs the size of the next fअगरo record in number of bytes.
  */
-#define kfifo_peek_len(fifo) \
-__kfifo_uint_must_check_helper( \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	(!__recsize) ? kfifo_len(__tmp) * sizeof(*__tmp->type) : \
-	__kfifo_len_r(__kfifo, __recsize); \
-}) \
+#घोषणा kfअगरo_peek_len(fअगरo) \
+__kfअगरo_uपूर्णांक_must_check_helper( \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	(!__recsize) ? kfअगरo_len(__पंचांगp) * माप(*__पंचांगp->type) : \
+	__kfअगरo_len_r(__kfअगरo, __recsize); \
+पूर्ण) \
 )
 
 /**
- * kfifo_alloc - dynamically allocates a new fifo buffer
- * @fifo: pointer to the fifo
- * @size: the number of elements in the fifo, this must be a power of 2
- * @gfp_mask: get_free_pages mask, passed to kmalloc()
+ * kfअगरo_alloc - dynamically allocates a new fअगरo buffer
+ * @fअगरo: poपूर्णांकer to the fअगरo
+ * @size: the number of elements in the fअगरo, this must be a घातer of 2
+ * @gfp_mask: get_मुक्त_pages mask, passed to kदो_स्मृति()
  *
- * This macro dynamically allocates a new fifo buffer.
+ * This macro dynamically allocates a new fअगरo buffer.
  *
- * The number of elements will be rounded-up to a power of 2.
- * The fifo will be release with kfifo_free().
- * Return 0 if no error, otherwise an error code.
+ * The number of elements will be rounded-up to a घातer of 2.
+ * The fअगरo will be release with kfअगरo_मुक्त().
+ * Return 0 अगर no error, otherwise an error code.
  */
-#define kfifo_alloc(fifo, size, gfp_mask) \
-__kfifo_int_must_check_helper( \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	__is_kfifo_ptr(__tmp) ? \
-	__kfifo_alloc(__kfifo, size, sizeof(*__tmp->type), gfp_mask) : \
+#घोषणा kfअगरo_alloc(fअगरo, size, gfp_mask) \
+__kfअगरo_पूर्णांक_must_check_helper( \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	__is_kfअगरo_ptr(__पंचांगp) ? \
+	__kfअगरo_alloc(__kfअगरo, size, माप(*__पंचांगp->type), gfp_mask) : \
 	-EINVAL; \
-}) \
+पूर्ण) \
 )
 
 /**
- * kfifo_free - frees the fifo
- * @fifo: the fifo to be freed
+ * kfअगरo_मुक्त - मुक्तs the fअगरo
+ * @fअगरo: the fअगरo to be मुक्तd
  */
-#define kfifo_free(fifo) \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	if (__is_kfifo_ptr(__tmp)) \
-		__kfifo_free(__kfifo); \
-})
+#घोषणा kfअगरo_मुक्त(fअगरo) \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	अगर (__is_kfअगरo_ptr(__पंचांगp)) \
+		__kfअगरo_मुक्त(__kfअगरo); \
+पूर्ण)
 
 /**
- * kfifo_init - initialize a fifo using a preallocated buffer
- * @fifo: the fifo to assign the buffer
- * @buffer: the preallocated buffer to be used
- * @size: the size of the internal buffer, this have to be a power of 2
+ * kfअगरo_init - initialize a fअगरo using a pपुनः_स्मृतिated buffer
+ * @fअगरo: the fअगरo to assign the buffer
+ * @buffer: the pपुनः_स्मृतिated buffer to be used
+ * @size: the size of the पूर्णांकernal buffer, this have to be a घातer of 2
  *
- * This macro initializes a fifo using a preallocated buffer.
+ * This macro initializes a fअगरo using a pपुनः_स्मृतिated buffer.
  *
- * The number of elements will be rounded-up to a power of 2.
- * Return 0 if no error, otherwise an error code.
+ * The number of elements will be rounded-up to a घातer of 2.
+ * Return 0 अगर no error, otherwise an error code.
  */
-#define kfifo_init(fifo, buffer, size) \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	__is_kfifo_ptr(__tmp) ? \
-	__kfifo_init(__kfifo, buffer, size, sizeof(*__tmp->type)) : \
+#घोषणा kfअगरo_init(fअगरo, buffer, size) \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	__is_kfअगरo_ptr(__पंचांगp) ? \
+	__kfअगरo_init(__kfअगरo, buffer, size, माप(*__पंचांगp->type)) : \
 	-EINVAL; \
-})
+पूर्ण)
 
 /**
- * kfifo_put - put data into the fifo
- * @fifo: address of the fifo to be used
+ * kfअगरo_put - put data पूर्णांकo the fअगरo
+ * @fअगरo: address of the fअगरo to be used
  * @val: the data to be added
  *
- * This macro copies the given value into the fifo.
- * It returns 0 if the fifo was full. Otherwise it returns the number
+ * This macro copies the given value पूर्णांकo the fअगरo.
+ * It वापसs 0 अगर the fअगरo was full. Otherwise it वापसs the number
  * processed elements.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macro.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macro.
  */
-#define	kfifo_put(fifo, val) \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	typeof(*__tmp->const_type) __val = (val); \
-	unsigned int __ret; \
-	size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	if (__recsize) \
-		__ret = __kfifo_in_r(__kfifo, &__val, sizeof(__val), \
+#घोषणा	kfअगरo_put(fअगरo, val) \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	typeof(*__पंचांगp->स्थिर_type) __val = (val); \
+	अचिन्हित पूर्णांक __ret; \
+	माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	अगर (__recsize) \
+		__ret = __kfअगरo_in_r(__kfअगरo, &__val, माप(__val), \
 			__recsize); \
-	else { \
-		__ret = !kfifo_is_full(__tmp); \
-		if (__ret) { \
-			(__is_kfifo_ptr(__tmp) ? \
-			((typeof(__tmp->type))__kfifo->data) : \
-			(__tmp->buf) \
-			)[__kfifo->in & __tmp->kfifo.mask] = \
-				*(typeof(__tmp->type))&__val; \
+	अन्यथा अणु \
+		__ret = !kfअगरo_is_full(__पंचांगp); \
+		अगर (__ret) अणु \
+			(__is_kfअगरo_ptr(__पंचांगp) ? \
+			((typeof(__पंचांगp->type))__kfअगरo->data) : \
+			(__पंचांगp->buf) \
+			)[__kfअगरo->in & __पंचांगp->kfअगरo.mask] = \
+				*(typeof(__पंचांगp->type))&__val; \
 			smp_wmb(); \
-			__kfifo->in++; \
-		} \
-	} \
+			__kfअगरo->in++; \
+		पूर्ण \
+	पूर्ण \
 	__ret; \
-})
+पूर्ण)
 
 /**
- * kfifo_get - get data from the fifo
- * @fifo: address of the fifo to be used
+ * kfअगरo_get - get data from the fअगरo
+ * @fअगरo: address of the fअगरo to be used
  * @val: address where to store the data
  *
- * This macro reads the data from the fifo.
- * It returns 0 if the fifo was empty. Otherwise it returns the number
+ * This macro पढ़ोs the data from the fअगरo.
+ * It वापसs 0 अगर the fअगरo was empty. Otherwise it वापसs the number
  * processed elements.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macro.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macro.
  */
-#define	kfifo_get(fifo, val) \
-__kfifo_uint_must_check_helper( \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	typeof(__tmp->ptr) __val = (val); \
-	unsigned int __ret; \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	if (__recsize) \
-		__ret = __kfifo_out_r(__kfifo, __val, sizeof(*__val), \
+#घोषणा	kfअगरo_get(fअगरo, val) \
+__kfअगरo_uपूर्णांक_must_check_helper( \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	typeof(__पंचांगp->ptr) __val = (val); \
+	अचिन्हित पूर्णांक __ret; \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	अगर (__recsize) \
+		__ret = __kfअगरo_out_r(__kfअगरo, __val, माप(*__val), \
 			__recsize); \
-	else { \
-		__ret = !kfifo_is_empty(__tmp); \
-		if (__ret) { \
-			*(typeof(__tmp->type))__val = \
-				(__is_kfifo_ptr(__tmp) ? \
-				((typeof(__tmp->type))__kfifo->data) : \
-				(__tmp->buf) \
-				)[__kfifo->out & __tmp->kfifo.mask]; \
+	अन्यथा अणु \
+		__ret = !kfअगरo_is_empty(__पंचांगp); \
+		अगर (__ret) अणु \
+			*(typeof(__पंचांगp->type))__val = \
+				(__is_kfअगरo_ptr(__पंचांगp) ? \
+				((typeof(__पंचांगp->type))__kfअगरo->data) : \
+				(__पंचांगp->buf) \
+				)[__kfअगरo->out & __पंचांगp->kfअगरo.mask]; \
 			smp_wmb(); \
-			__kfifo->out++; \
-		} \
-	} \
+			__kfअगरo->out++; \
+		पूर्ण \
+	पूर्ण \
 	__ret; \
-}) \
+पूर्ण) \
 )
 
 /**
- * kfifo_peek - get data from the fifo without removing
- * @fifo: address of the fifo to be used
+ * kfअगरo_peek - get data from the fअगरo without removing
+ * @fअगरo: address of the fअगरo to be used
  * @val: address where to store the data
  *
- * This reads the data from the fifo without removing it from the fifo.
- * It returns 0 if the fifo was empty. Otherwise it returns the number
+ * This पढ़ोs the data from the fअगरo without removing it from the fअगरo.
+ * It वापसs 0 अगर the fअगरo was empty. Otherwise it वापसs the number
  * processed elements.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macro.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macro.
  */
-#define	kfifo_peek(fifo, val) \
-__kfifo_uint_must_check_helper( \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	typeof(__tmp->ptr) __val = (val); \
-	unsigned int __ret; \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	if (__recsize) \
-		__ret = __kfifo_out_peek_r(__kfifo, __val, sizeof(*__val), \
+#घोषणा	kfअगरo_peek(fअगरo, val) \
+__kfअगरo_uपूर्णांक_must_check_helper( \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	typeof(__पंचांगp->ptr) __val = (val); \
+	अचिन्हित पूर्णांक __ret; \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	अगर (__recsize) \
+		__ret = __kfअगरo_out_peek_r(__kfअगरo, __val, माप(*__val), \
 			__recsize); \
-	else { \
-		__ret = !kfifo_is_empty(__tmp); \
-		if (__ret) { \
-			*(typeof(__tmp->type))__val = \
-				(__is_kfifo_ptr(__tmp) ? \
-				((typeof(__tmp->type))__kfifo->data) : \
-				(__tmp->buf) \
-				)[__kfifo->out & __tmp->kfifo.mask]; \
+	अन्यथा अणु \
+		__ret = !kfअगरo_is_empty(__पंचांगp); \
+		अगर (__ret) अणु \
+			*(typeof(__पंचांगp->type))__val = \
+				(__is_kfअगरo_ptr(__पंचांगp) ? \
+				((typeof(__पंचांगp->type))__kfअगरo->data) : \
+				(__पंचांगp->buf) \
+				)[__kfअगरo->out & __पंचांगp->kfअगरo.mask]; \
 			smp_wmb(); \
-		} \
-	} \
+		पूर्ण \
+	पूर्ण \
 	__ret; \
-}) \
+पूर्ण) \
 )
 
 /**
- * kfifo_in - put data into the fifo
- * @fifo: address of the fifo to be used
+ * kfअगरo_in - put data पूर्णांकo the fअगरo
+ * @fअगरo: address of the fअगरo to be used
  * @buf: the data to be added
  * @n: number of elements to be added
  *
- * This macro copies the given buffer into the fifo and returns the
+ * This macro copies the given buffer पूर्णांकo the fअगरo and वापसs the
  * number of copied elements.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macro.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macro.
  */
-#define	kfifo_in(fifo, buf, n) \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	typeof(__tmp->ptr_const) __buf = (buf); \
-	unsigned long __n = (n); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
+#घोषणा	kfअगरo_in(fअगरo, buf, n) \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	typeof(__पंचांगp->ptr_स्थिर) __buf = (buf); \
+	अचिन्हित दीर्घ __n = (n); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
 	(__recsize) ?\
-	__kfifo_in_r(__kfifo, __buf, __n, __recsize) : \
-	__kfifo_in(__kfifo, __buf, __n); \
-})
+	__kfअगरo_in_r(__kfअगरo, __buf, __n, __recsize) : \
+	__kfअगरo_in(__kfअगरo, __buf, __n); \
+पूर्ण)
 
 /**
- * kfifo_in_spinlocked - put data into the fifo using a spinlock for locking
- * @fifo: address of the fifo to be used
+ * kfअगरo_in_spinlocked - put data पूर्णांकo the fअगरo using a spinlock क्रम locking
+ * @fअगरo: address of the fअगरo to be used
  * @buf: the data to be added
  * @n: number of elements to be added
- * @lock: pointer to the spinlock to use for locking
+ * @lock: poपूर्णांकer to the spinlock to use क्रम locking
  *
- * This macro copies the given values buffer into the fifo and returns the
+ * This macro copies the given values buffer पूर्णांकo the fअगरo and वापसs the
  * number of copied elements.
  */
-#define	kfifo_in_spinlocked(fifo, buf, n, lock) \
-({ \
-	unsigned long __flags; \
-	unsigned int __ret; \
+#घोषणा	kfअगरo_in_spinlocked(fअगरo, buf, n, lock) \
+(अणु \
+	अचिन्हित दीर्घ __flags; \
+	अचिन्हित पूर्णांक __ret; \
 	spin_lock_irqsave(lock, __flags); \
-	__ret = kfifo_in(fifo, buf, n); \
+	__ret = kfअगरo_in(fअगरo, buf, n); \
 	spin_unlock_irqrestore(lock, __flags); \
 	__ret; \
-})
+पूर्ण)
 
 /**
- * kfifo_in_spinlocked_noirqsave - put data into fifo using a spinlock for
- * locking, don't disable interrupts
- * @fifo: address of the fifo to be used
+ * kfअगरo_in_spinlocked_noirqsave - put data पूर्णांकo fअगरo using a spinlock क्रम
+ * locking, करोn't disable पूर्णांकerrupts
+ * @fअगरo: address of the fअगरo to be used
  * @buf: the data to be added
  * @n: number of elements to be added
- * @lock: pointer to the spinlock to use for locking
+ * @lock: poपूर्णांकer to the spinlock to use क्रम locking
  *
- * This is a variant of kfifo_in_spinlocked() but uses spin_lock/unlock()
- * for locking and doesn't disable interrupts.
+ * This is a variant of kfअगरo_in_spinlocked() but uses spin_lock/unlock()
+ * क्रम locking and करोesn't disable पूर्णांकerrupts.
  */
-#define kfifo_in_spinlocked_noirqsave(fifo, buf, n, lock) \
-({ \
-	unsigned int __ret; \
+#घोषणा kfअगरo_in_spinlocked_noirqsave(fअगरo, buf, n, lock) \
+(अणु \
+	अचिन्हित पूर्णांक __ret; \
 	spin_lock(lock); \
-	__ret = kfifo_in(fifo, buf, n); \
+	__ret = kfअगरo_in(fअगरo, buf, n); \
 	spin_unlock(lock); \
 	__ret; \
-})
+पूर्ण)
 
-/* alias for kfifo_in_spinlocked, will be removed in a future release */
-#define kfifo_in_locked(fifo, buf, n, lock) \
-		kfifo_in_spinlocked(fifo, buf, n, lock)
+/* alias क्रम kfअगरo_in_spinlocked, will be हटाओd in a future release */
+#घोषणा kfअगरo_in_locked(fअगरo, buf, n, lock) \
+		kfअगरo_in_spinlocked(fअगरo, buf, n, lock)
 
 /**
- * kfifo_out - get data from the fifo
- * @fifo: address of the fifo to be used
- * @buf: pointer to the storage buffer
+ * kfअगरo_out - get data from the fअगरo
+ * @fअगरo: address of the fअगरo to be used
+ * @buf: poपूर्णांकer to the storage buffer
  * @n: max. number of elements to get
  *
- * This macro get some data from the fifo and return the numbers of elements
+ * This macro get some data from the fअगरo and वापस the numbers of elements
  * copied.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macro.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macro.
  */
-#define	kfifo_out(fifo, buf, n) \
-__kfifo_uint_must_check_helper( \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	typeof(__tmp->ptr) __buf = (buf); \
-	unsigned long __n = (n); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
+#घोषणा	kfअगरo_out(fअगरo, buf, n) \
+__kfअगरo_uपूर्णांक_must_check_helper( \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	typeof(__पंचांगp->ptr) __buf = (buf); \
+	अचिन्हित दीर्घ __n = (n); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
 	(__recsize) ?\
-	__kfifo_out_r(__kfifo, __buf, __n, __recsize) : \
-	__kfifo_out(__kfifo, __buf, __n); \
-}) \
+	__kfअगरo_out_r(__kfअगरo, __buf, __n, __recsize) : \
+	__kfअगरo_out(__kfअगरo, __buf, __n); \
+पूर्ण) \
 )
 
 /**
- * kfifo_out_spinlocked - get data from the fifo using a spinlock for locking
- * @fifo: address of the fifo to be used
- * @buf: pointer to the storage buffer
+ * kfअगरo_out_spinlocked - get data from the fअगरo using a spinlock क्रम locking
+ * @fअगरo: address of the fअगरo to be used
+ * @buf: poपूर्णांकer to the storage buffer
  * @n: max. number of elements to get
- * @lock: pointer to the spinlock to use for locking
+ * @lock: poपूर्णांकer to the spinlock to use क्रम locking
  *
- * This macro get the data from the fifo and return the numbers of elements
+ * This macro get the data from the fअगरo and वापस the numbers of elements
  * copied.
  */
-#define	kfifo_out_spinlocked(fifo, buf, n, lock) \
-__kfifo_uint_must_check_helper( \
-({ \
-	unsigned long __flags; \
-	unsigned int __ret; \
+#घोषणा	kfअगरo_out_spinlocked(fअगरo, buf, n, lock) \
+__kfअगरo_uपूर्णांक_must_check_helper( \
+(अणु \
+	अचिन्हित दीर्घ __flags; \
+	अचिन्हित पूर्णांक __ret; \
 	spin_lock_irqsave(lock, __flags); \
-	__ret = kfifo_out(fifo, buf, n); \
+	__ret = kfअगरo_out(fअगरo, buf, n); \
 	spin_unlock_irqrestore(lock, __flags); \
 	__ret; \
-}) \
+पूर्ण) \
 )
 
 /**
- * kfifo_out_spinlocked_noirqsave - get data from the fifo using a spinlock
- * for locking, don't disable interrupts
- * @fifo: address of the fifo to be used
- * @buf: pointer to the storage buffer
+ * kfअगरo_out_spinlocked_noirqsave - get data from the fअगरo using a spinlock
+ * क्रम locking, करोn't disable पूर्णांकerrupts
+ * @fअगरo: address of the fअगरo to be used
+ * @buf: poपूर्णांकer to the storage buffer
  * @n: max. number of elements to get
- * @lock: pointer to the spinlock to use for locking
+ * @lock: poपूर्णांकer to the spinlock to use क्रम locking
  *
- * This is a variant of kfifo_out_spinlocked() which uses spin_lock/unlock()
- * for locking and doesn't disable interrupts.
+ * This is a variant of kfअगरo_out_spinlocked() which uses spin_lock/unlock()
+ * क्रम locking and करोesn't disable पूर्णांकerrupts.
  */
-#define kfifo_out_spinlocked_noirqsave(fifo, buf, n, lock) \
-__kfifo_uint_must_check_helper( \
-({ \
-	unsigned int __ret; \
+#घोषणा kfअगरo_out_spinlocked_noirqsave(fअगरo, buf, n, lock) \
+__kfअगरo_uपूर्णांक_must_check_helper( \
+(अणु \
+	अचिन्हित पूर्णांक __ret; \
 	spin_lock(lock); \
-	__ret = kfifo_out(fifo, buf, n); \
+	__ret = kfअगरo_out(fअगरo, buf, n); \
 	spin_unlock(lock); \
 	__ret; \
-}) \
+पूर्ण) \
 )
 
-/* alias for kfifo_out_spinlocked, will be removed in a future release */
-#define kfifo_out_locked(fifo, buf, n, lock) \
-		kfifo_out_spinlocked(fifo, buf, n, lock)
+/* alias क्रम kfअगरo_out_spinlocked, will be हटाओd in a future release */
+#घोषणा kfअगरo_out_locked(fअगरo, buf, n, lock) \
+		kfअगरo_out_spinlocked(fअगरo, buf, n, lock)
 
 /**
- * kfifo_from_user - puts some data from user space into the fifo
- * @fifo: address of the fifo to be used
- * @from: pointer to the data to be added
+ * kfअगरo_from_user - माला_दो some data from user space पूर्णांकo the fअगरo
+ * @fअगरo: address of the fअगरo to be used
+ * @from: poपूर्णांकer to the data to be added
  * @len: the length of the data to be added
- * @copied: pointer to output variable to store the number of copied bytes
+ * @copied: poपूर्णांकer to output variable to store the number of copied bytes
  *
- * This macro copies at most @len bytes from the @from into the
- * fifo, depending of the available space and returns -EFAULT/0.
+ * This macro copies at most @len bytes from the @from पूर्णांकo the
+ * fअगरo, depending of the available space and वापसs -EFAULT/0.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macro.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macro.
  */
-#define	kfifo_from_user(fifo, from, len, copied) \
-__kfifo_uint_must_check_helper( \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	const void __user *__from = (from); \
-	unsigned int __len = (len); \
-	unsigned int *__copied = (copied); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
+#घोषणा	kfअगरo_from_user(fअगरo, from, len, copied) \
+__kfअगरo_uपूर्णांक_must_check_helper( \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	स्थिर व्योम __user *__from = (from); \
+	अचिन्हित पूर्णांक __len = (len); \
+	अचिन्हित पूर्णांक *__copied = (copied); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
 	(__recsize) ? \
-	__kfifo_from_user_r(__kfifo, __from, __len,  __copied, __recsize) : \
-	__kfifo_from_user(__kfifo, __from, __len, __copied); \
-}) \
+	__kfअगरo_from_user_r(__kfअगरo, __from, __len,  __copied, __recsize) : \
+	__kfअगरo_from_user(__kfअगरo, __from, __len, __copied); \
+पूर्ण) \
 )
 
 /**
- * kfifo_to_user - copies data from the fifo into user space
- * @fifo: address of the fifo to be used
+ * kfअगरo_to_user - copies data from the fअगरo पूर्णांकo user space
+ * @fअगरo: address of the fअगरo to be used
  * @to: where the data must be copied
  * @len: the size of the destination buffer
- * @copied: pointer to output variable to store the number of copied bytes
+ * @copied: poपूर्णांकer to output variable to store the number of copied bytes
  *
- * This macro copies at most @len bytes from the fifo into the
- * @to buffer and returns -EFAULT/0.
+ * This macro copies at most @len bytes from the fअगरo पूर्णांकo the
+ * @to buffer and वापसs -EFAULT/0.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macro.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macro.
  */
-#define	kfifo_to_user(fifo, to, len, copied) \
-__kfifo_uint_must_check_helper( \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	void __user *__to = (to); \
-	unsigned int __len = (len); \
-	unsigned int *__copied = (copied); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
+#घोषणा	kfअगरo_to_user(fअगरo, to, len, copied) \
+__kfअगरo_uपूर्णांक_must_check_helper( \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	व्योम __user *__to = (to); \
+	अचिन्हित पूर्णांक __len = (len); \
+	अचिन्हित पूर्णांक *__copied = (copied); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
 	(__recsize) ? \
-	__kfifo_to_user_r(__kfifo, __to, __len, __copied, __recsize) : \
-	__kfifo_to_user(__kfifo, __to, __len, __copied); \
-}) \
+	__kfअगरo_to_user_r(__kfअगरo, __to, __len, __copied, __recsize) : \
+	__kfअगरo_to_user(__kfअगरo, __to, __len, __copied); \
+पूर्ण) \
 )
 
 /**
- * kfifo_dma_in_prepare - setup a scatterlist for DMA input
- * @fifo: address of the fifo to be used
- * @sgl: pointer to the scatterlist array
+ * kfअगरo_dma_in_prepare - setup a scatterlist क्रम DMA input
+ * @fअगरo: address of the fअगरo to be used
+ * @sgl: poपूर्णांकer to the scatterlist array
  * @nents: number of entries in the scatterlist array
  * @len: number of elements to transfer
  *
- * This macro fills a scatterlist for DMA input.
- * It returns the number entries in the scatterlist array.
+ * This macro fills a scatterlist क्रम DMA input.
+ * It वापसs the number entries in the scatterlist array.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macros.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macros.
  */
-#define	kfifo_dma_in_prepare(fifo, sgl, nents, len) \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	struct scatterlist *__sgl = (sgl); \
-	int __nents = (nents); \
-	unsigned int __len = (len); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
+#घोषणा	kfअगरo_dma_in_prepare(fअगरo, sgl, nents, len) \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	काष्ठा scatterlist *__sgl = (sgl); \
+	पूर्णांक __nents = (nents); \
+	अचिन्हित पूर्णांक __len = (len); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
 	(__recsize) ? \
-	__kfifo_dma_in_prepare_r(__kfifo, __sgl, __nents, __len, __recsize) : \
-	__kfifo_dma_in_prepare(__kfifo, __sgl, __nents, __len); \
-})
+	__kfअगरo_dma_in_prepare_r(__kfअगरo, __sgl, __nents, __len, __recsize) : \
+	__kfअगरo_dma_in_prepare(__kfअगरo, __sgl, __nents, __len); \
+पूर्ण)
 
 /**
- * kfifo_dma_in_finish - finish a DMA IN operation
- * @fifo: address of the fifo to be used
+ * kfअगरo_dma_in_finish - finish a DMA IN operation
+ * @fअगरo: address of the fअगरo to be used
  * @len: number of bytes to received
  *
  * This macro finish a DMA IN operation. The in counter will be updated by
- * the len parameter. No error checking will be done.
+ * the len parameter. No error checking will be करोne.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macros.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macros.
  */
-#define kfifo_dma_in_finish(fifo, len) \
-(void)({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	unsigned int __len = (len); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	if (__recsize) \
-		__kfifo_dma_in_finish_r(__kfifo, __len, __recsize); \
-	else \
-		__kfifo->in += __len / sizeof(*__tmp->type); \
-})
+#घोषणा kfअगरo_dma_in_finish(fअगरo, len) \
+(व्योम)(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	अचिन्हित पूर्णांक __len = (len); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	अगर (__recsize) \
+		__kfअगरo_dma_in_finish_r(__kfअगरo, __len, __recsize); \
+	अन्यथा \
+		__kfअगरo->in += __len / माप(*__पंचांगp->type); \
+पूर्ण)
 
 /**
- * kfifo_dma_out_prepare - setup a scatterlist for DMA output
- * @fifo: address of the fifo to be used
- * @sgl: pointer to the scatterlist array
+ * kfअगरo_dma_out_prepare - setup a scatterlist क्रम DMA output
+ * @fअगरo: address of the fअगरo to be used
+ * @sgl: poपूर्णांकer to the scatterlist array
  * @nents: number of entries in the scatterlist array
  * @len: number of elements to transfer
  *
- * This macro fills a scatterlist for DMA output which at most @len bytes
+ * This macro fills a scatterlist क्रम DMA output which at most @len bytes
  * to transfer.
- * It returns the number entries in the scatterlist array.
+ * It वापसs the number entries in the scatterlist array.
  * A zero means there is no space available and the scatterlist is not filled.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macros.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macros.
  */
-#define	kfifo_dma_out_prepare(fifo, sgl, nents, len) \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo);  \
-	struct scatterlist *__sgl = (sgl); \
-	int __nents = (nents); \
-	unsigned int __len = (len); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
+#घोषणा	kfअगरo_dma_out_prepare(fअगरo, sgl, nents, len) \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo);  \
+	काष्ठा scatterlist *__sgl = (sgl); \
+	पूर्णांक __nents = (nents); \
+	अचिन्हित पूर्णांक __len = (len); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
 	(__recsize) ? \
-	__kfifo_dma_out_prepare_r(__kfifo, __sgl, __nents, __len, __recsize) : \
-	__kfifo_dma_out_prepare(__kfifo, __sgl, __nents, __len); \
-})
+	__kfअगरo_dma_out_prepare_r(__kfअगरo, __sgl, __nents, __len, __recsize) : \
+	__kfअगरo_dma_out_prepare(__kfअगरo, __sgl, __nents, __len); \
+पूर्ण)
 
 /**
- * kfifo_dma_out_finish - finish a DMA OUT operation
- * @fifo: address of the fifo to be used
+ * kfअगरo_dma_out_finish - finish a DMA OUT operation
+ * @fअगरo: address of the fअगरo to be used
  * @len: number of bytes transferred
  *
  * This macro finish a DMA OUT operation. The out counter will be updated by
- * the len parameter. No error checking will be done.
+ * the len parameter. No error checking will be करोne.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macros.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macros.
  */
-#define kfifo_dma_out_finish(fifo, len) \
-(void)({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	unsigned int __len = (len); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
-	if (__recsize) \
-		__kfifo_dma_out_finish_r(__kfifo, __recsize); \
-	else \
-		__kfifo->out += __len / sizeof(*__tmp->type); \
-})
+#घोषणा kfअगरo_dma_out_finish(fअगरo, len) \
+(व्योम)(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	अचिन्हित पूर्णांक __len = (len); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
+	अगर (__recsize) \
+		__kfअगरo_dma_out_finish_r(__kfअगरo, __recsize); \
+	अन्यथा \
+		__kfअगरo->out += __len / माप(*__पंचांगp->type); \
+पूर्ण)
 
 /**
- * kfifo_out_peek - gets some data from the fifo
- * @fifo: address of the fifo to be used
- * @buf: pointer to the storage buffer
+ * kfअगरo_out_peek - माला_लो some data from the fअगरo
+ * @fअगरo: address of the fअगरo to be used
+ * @buf: poपूर्णांकer to the storage buffer
  * @n: max. number of elements to get
  *
- * This macro get the data from the fifo and return the numbers of elements
- * copied. The data is not removed from the fifo.
+ * This macro get the data from the fअगरo and वापस the numbers of elements
+ * copied. The data is not हटाओd from the fअगरo.
  *
- * Note that with only one concurrent reader and one concurrent
- * writer, you don't need extra locking to use these macro.
+ * Note that with only one concurrent पढ़ोer and one concurrent
+ * ग_लिखोr, you करोn't need extra locking to use these macro.
  */
-#define	kfifo_out_peek(fifo, buf, n) \
-__kfifo_uint_must_check_helper( \
-({ \
-	typeof((fifo) + 1) __tmp = (fifo); \
-	typeof(__tmp->ptr) __buf = (buf); \
-	unsigned long __n = (n); \
-	const size_t __recsize = sizeof(*__tmp->rectype); \
-	struct __kfifo *__kfifo = &__tmp->kfifo; \
+#घोषणा	kfअगरo_out_peek(fअगरo, buf, n) \
+__kfअगरo_uपूर्णांक_must_check_helper( \
+(अणु \
+	typeof((fअगरo) + 1) __पंचांगp = (fअगरo); \
+	typeof(__पंचांगp->ptr) __buf = (buf); \
+	अचिन्हित दीर्घ __n = (n); \
+	स्थिर माप_प्रकार __recsize = माप(*__पंचांगp->rectype); \
+	काष्ठा __kfअगरo *__kfअगरo = &__पंचांगp->kfअगरo; \
 	(__recsize) ? \
-	__kfifo_out_peek_r(__kfifo, __buf, __n, __recsize) : \
-	__kfifo_out_peek(__kfifo, __buf, __n); \
-}) \
+	__kfअगरo_out_peek_r(__kfअगरo, __buf, __n, __recsize) : \
+	__kfअगरo_out_peek(__kfअगरo, __buf, __n); \
+पूर्ण) \
 )
 
-extern int __kfifo_alloc(struct __kfifo *fifo, unsigned int size,
-	size_t esize, gfp_t gfp_mask);
+बाह्य पूर्णांक __kfअगरo_alloc(काष्ठा __kfअगरo *fअगरo, अचिन्हित पूर्णांक size,
+	माप_प्रकार esize, gfp_t gfp_mask);
 
-extern void __kfifo_free(struct __kfifo *fifo);
+बाह्य व्योम __kfअगरo_मुक्त(काष्ठा __kfअगरo *fअगरo);
 
-extern int __kfifo_init(struct __kfifo *fifo, void *buffer,
-	unsigned int size, size_t esize);
+बाह्य पूर्णांक __kfअगरo_init(काष्ठा __kfअगरo *fअगरo, व्योम *buffer,
+	अचिन्हित पूर्णांक size, माप_प्रकार esize);
 
-extern unsigned int __kfifo_in(struct __kfifo *fifo,
-	const void *buf, unsigned int len);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_in(काष्ठा __kfअगरo *fअगरo,
+	स्थिर व्योम *buf, अचिन्हित पूर्णांक len);
 
-extern unsigned int __kfifo_out(struct __kfifo *fifo,
-	void *buf, unsigned int len);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_out(काष्ठा __kfअगरo *fअगरo,
+	व्योम *buf, अचिन्हित पूर्णांक len);
 
-extern int __kfifo_from_user(struct __kfifo *fifo,
-	const void __user *from, unsigned long len, unsigned int *copied);
+बाह्य पूर्णांक __kfअगरo_from_user(काष्ठा __kfअगरo *fअगरo,
+	स्थिर व्योम __user *from, अचिन्हित दीर्घ len, अचिन्हित पूर्णांक *copied);
 
-extern int __kfifo_to_user(struct __kfifo *fifo,
-	void __user *to, unsigned long len, unsigned int *copied);
+बाह्य पूर्णांक __kfअगरo_to_user(काष्ठा __kfअगरo *fअगरo,
+	व्योम __user *to, अचिन्हित दीर्घ len, अचिन्हित पूर्णांक *copied);
 
-extern unsigned int __kfifo_dma_in_prepare(struct __kfifo *fifo,
-	struct scatterlist *sgl, int nents, unsigned int len);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_dma_in_prepare(काष्ठा __kfअगरo *fअगरo,
+	काष्ठा scatterlist *sgl, पूर्णांक nents, अचिन्हित पूर्णांक len);
 
-extern unsigned int __kfifo_dma_out_prepare(struct __kfifo *fifo,
-	struct scatterlist *sgl, int nents, unsigned int len);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_dma_out_prepare(काष्ठा __kfअगरo *fअगरo,
+	काष्ठा scatterlist *sgl, पूर्णांक nents, अचिन्हित पूर्णांक len);
 
-extern unsigned int __kfifo_out_peek(struct __kfifo *fifo,
-	void *buf, unsigned int len);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_out_peek(काष्ठा __kfअगरo *fअगरo,
+	व्योम *buf, अचिन्हित पूर्णांक len);
 
-extern unsigned int __kfifo_in_r(struct __kfifo *fifo,
-	const void *buf, unsigned int len, size_t recsize);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_in_r(काष्ठा __kfअगरo *fअगरo,
+	स्थिर व्योम *buf, अचिन्हित पूर्णांक len, माप_प्रकार recsize);
 
-extern unsigned int __kfifo_out_r(struct __kfifo *fifo,
-	void *buf, unsigned int len, size_t recsize);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_out_r(काष्ठा __kfअगरo *fअगरo,
+	व्योम *buf, अचिन्हित पूर्णांक len, माप_प्रकार recsize);
 
-extern int __kfifo_from_user_r(struct __kfifo *fifo,
-	const void __user *from, unsigned long len, unsigned int *copied,
-	size_t recsize);
+बाह्य पूर्णांक __kfअगरo_from_user_r(काष्ठा __kfअगरo *fअगरo,
+	स्थिर व्योम __user *from, अचिन्हित दीर्घ len, अचिन्हित पूर्णांक *copied,
+	माप_प्रकार recsize);
 
-extern int __kfifo_to_user_r(struct __kfifo *fifo, void __user *to,
-	unsigned long len, unsigned int *copied, size_t recsize);
+बाह्य पूर्णांक __kfअगरo_to_user_r(काष्ठा __kfअगरo *fअगरo, व्योम __user *to,
+	अचिन्हित दीर्घ len, अचिन्हित पूर्णांक *copied, माप_प्रकार recsize);
 
-extern unsigned int __kfifo_dma_in_prepare_r(struct __kfifo *fifo,
-	struct scatterlist *sgl, int nents, unsigned int len, size_t recsize);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_dma_in_prepare_r(काष्ठा __kfअगरo *fअगरo,
+	काष्ठा scatterlist *sgl, पूर्णांक nents, अचिन्हित पूर्णांक len, माप_प्रकार recsize);
 
-extern void __kfifo_dma_in_finish_r(struct __kfifo *fifo,
-	unsigned int len, size_t recsize);
+बाह्य व्योम __kfअगरo_dma_in_finish_r(काष्ठा __kfअगरo *fअगरo,
+	अचिन्हित पूर्णांक len, माप_प्रकार recsize);
 
-extern unsigned int __kfifo_dma_out_prepare_r(struct __kfifo *fifo,
-	struct scatterlist *sgl, int nents, unsigned int len, size_t recsize);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_dma_out_prepare_r(काष्ठा __kfअगरo *fअगरo,
+	काष्ठा scatterlist *sgl, पूर्णांक nents, अचिन्हित पूर्णांक len, माप_प्रकार recsize);
 
-extern void __kfifo_dma_out_finish_r(struct __kfifo *fifo, size_t recsize);
+बाह्य व्योम __kfअगरo_dma_out_finish_r(काष्ठा __kfअगरo *fअगरo, माप_प्रकार recsize);
 
-extern unsigned int __kfifo_len_r(struct __kfifo *fifo, size_t recsize);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_len_r(काष्ठा __kfअगरo *fअगरo, माप_प्रकार recsize);
 
-extern void __kfifo_skip_r(struct __kfifo *fifo, size_t recsize);
+बाह्य व्योम __kfअगरo_skip_r(काष्ठा __kfअगरo *fअगरo, माप_प्रकार recsize);
 
-extern unsigned int __kfifo_out_peek_r(struct __kfifo *fifo,
-	void *buf, unsigned int len, size_t recsize);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_out_peek_r(काष्ठा __kfअगरo *fअगरo,
+	व्योम *buf, अचिन्हित पूर्णांक len, माप_प्रकार recsize);
 
-extern unsigned int __kfifo_max_r(unsigned int len, size_t recsize);
+बाह्य अचिन्हित पूर्णांक __kfअगरo_max_r(अचिन्हित पूर्णांक len, माप_प्रकार recsize);
 
-#endif
+#पूर्ण_अगर

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * hed.h - ACPI Hardware Error Device
  *
  * Copyright (C) 2009, Intel Corp.
- *	Author: Huang Ying <ying.huang@intel.com>
+ *	Author: Huang Ying <ying.huang@पूर्णांकel.com>
  */
 
-#ifndef ACPI_HED_H
-#define ACPI_HED_H
+#अगर_अघोषित ACPI_HED_H
+#घोषणा ACPI_HED_H
 
-#include <linux/notifier.h>
+#समावेश <linux/notअगरier.h>
 
-int register_acpi_hed_notifier(struct notifier_block *nb);
-void unregister_acpi_hed_notifier(struct notifier_block *nb);
+पूर्णांक रेजिस्टर_acpi_hed_notअगरier(काष्ठा notअगरier_block *nb);
+व्योम unरेजिस्टर_acpi_hed_notअगरier(काष्ठा notअगरier_block *nb);
 
-#endif
+#पूर्ण_अगर

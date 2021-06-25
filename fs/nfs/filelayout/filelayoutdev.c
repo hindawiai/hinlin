@@ -1,305 +1,306 @@
+<शैली गुरु>
 /*
- *  Device operations for the pnfs nfs4 file layout driver.
+ *  Device operations क्रम the pnfs nfs4 file layout driver.
  *
  *  Copyright (c) 2002
  *  The Regents of the University of Michigan
  *  All Rights Reserved
  *
- *  Dean Hildebrand <dhildebz@umich.edu>
+ *  Dean Hildebअक्रम <dhildebz@umich.edu>
  *  Garth Goodson   <Garth.Goodson@netapp.com>
  *
  *  Permission is granted to use, copy, create derivative works, and
- *  redistribute this software and such derivative works for any purpose,
- *  so long as the name of the University of Michigan is not used in
- *  any advertising or publicity pertaining to the use or distribution
- *  of this software without specific, written prior authorization. If
- *  the above copyright notice or any other identification of the
+ *  redistribute this software and such derivative works क्रम any purpose,
+ *  so दीर्घ as the name of the University of Michigan is not used in
+ *  any advertising or खुलाity pertaining to the use or distribution
+ *  of this software without specअगरic, written prior authorization. If
+ *  the above copyright notice or any other identअगरication of the
  *  University of Michigan is included in any copy of any portion of
  *  this software, then the disclaimer below must also be included.
  *
  *  This software is provided as is, without representation or warranty
  *  of any kind either express or implied, including without limitation
- *  the implied warranties of merchantability, fitness for a particular
+ *  the implied warranties of merchantability, fitness क्रम a particular
  *  purpose, or noninfringement.  The Regents of the University of
- *  Michigan shall not be liable for any damages, including special,
+ *  Michigan shall not be liable क्रम any damages, including special,
  *  indirect, incidental, or consequential damages, with respect to any
  *  claim arising out of or in connection with the use of the software,
- *  even if it has been or is hereafter advised of the possibility of
+ *  even अगर it has been or is hereafter advised of the possibility of
  *  such damages.
  */
 
-#include <linux/nfs_fs.h>
-#include <linux/vmalloc.h>
-#include <linux/module.h>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/module.h>
 
-#include "../internal.h"
-#include "../nfs4session.h"
-#include "filelayout.h"
+#समावेश "../internal.h"
+#समावेश "../nfs4session.h"
+#समावेश "filelayout.h"
 
-#define NFSDBG_FACILITY		NFSDBG_PNFS_LD
+#घोषणा NFSDBG_FACILITY		NFSDBG_PNFS_LD
 
-static unsigned int dataserver_timeo = NFS4_DEF_DS_TIMEO;
-static unsigned int dataserver_retrans = NFS4_DEF_DS_RETRANS;
+अटल अचिन्हित पूर्णांक dataserver_समयo = NFS4_DEF_DS_TIMEO;
+अटल अचिन्हित पूर्णांक dataserver_retrans = NFS4_DEF_DS_RETRANS;
 
-void
-nfs4_fl_free_deviceid(struct nfs4_file_layout_dsaddr *dsaddr)
-{
-	struct nfs4_pnfs_ds *ds;
-	int i;
+व्योम
+nfs4_fl_मुक्त_deviceid(काष्ठा nfs4_file_layout_dsaddr *dsaddr)
+अणु
+	काष्ठा nfs4_pnfs_ds *ds;
+	पूर्णांक i;
 
-	nfs4_print_deviceid(&dsaddr->id_node.deviceid);
+	nfs4_prपूर्णांक_deviceid(&dsaddr->id_node.deviceid);
 
-	for (i = 0; i < dsaddr->ds_num; i++) {
+	क्रम (i = 0; i < dsaddr->ds_num; i++) अणु
 		ds = dsaddr->ds_list[i];
-		if (ds != NULL)
+		अगर (ds != शून्य)
 			nfs4_pnfs_ds_put(ds);
-	}
-	kfree(dsaddr->stripe_indices);
-	kfree_rcu(dsaddr, id_node.rcu);
-}
+	पूर्ण
+	kमुक्त(dsaddr->stripe_indices);
+	kमुक्त_rcu(dsaddr, id_node.rcu);
+पूर्ण
 
-/* Decode opaque device data and return the result */
-struct nfs4_file_layout_dsaddr *
-nfs4_fl_alloc_deviceid_node(struct nfs_server *server, struct pnfs_device *pdev,
+/* Decode opaque device data and वापस the result */
+काष्ठा nfs4_file_layout_dsaddr *
+nfs4_fl_alloc_deviceid_node(काष्ठा nfs_server *server, काष्ठा pnfs_device *pdev,
 		gfp_t gfp_flags)
-{
-	int i;
+अणु
+	पूर्णांक i;
 	u32 cnt, num;
 	u8 *indexp;
 	__be32 *p;
 	u8 *stripe_indices;
 	u8 max_stripe_index;
-	struct nfs4_file_layout_dsaddr *dsaddr = NULL;
-	struct xdr_stream stream;
-	struct xdr_buf buf;
-	struct page *scratch;
-	struct list_head dsaddrs;
-	struct nfs4_pnfs_ds_addr *da;
+	काष्ठा nfs4_file_layout_dsaddr *dsaddr = शून्य;
+	काष्ठा xdr_stream stream;
+	काष्ठा xdr_buf buf;
+	काष्ठा page *scratch;
+	काष्ठा list_head dsaddrs;
+	काष्ठा nfs4_pnfs_ds_addr *da;
 
 	/* set up xdr stream */
 	scratch = alloc_page(gfp_flags);
-	if (!scratch)
-		goto out_err;
+	अगर (!scratch)
+		जाओ out_err;
 
 	xdr_init_decode_pages(&stream, &buf, pdev->pages, pdev->pglen);
 	xdr_set_scratch_page(&stream, scratch);
 
 	/* Get the stripe count (number of stripe index) */
-	p = xdr_inline_decode(&stream, 4);
-	if (unlikely(!p))
-		goto out_err_free_scratch;
+	p = xdr_अंतरभूत_decode(&stream, 4);
+	अगर (unlikely(!p))
+		जाओ out_err_मुक्त_scratch;
 
 	cnt = be32_to_cpup(p);
-	dprintk("%s stripe count  %d\n", __func__, cnt);
-	if (cnt > NFS4_PNFS_MAX_STRIPE_CNT) {
-		printk(KERN_WARNING "NFS: %s: stripe count %d greater than "
+	dprपूर्णांकk("%s stripe count  %d\n", __func__, cnt);
+	अगर (cnt > NFS4_PNFS_MAX_STRIPE_CNT) अणु
+		prपूर्णांकk(KERN_WARNING "NFS: %s: stripe count %d greater than "
 		       "supported maximum %d\n", __func__,
 			cnt, NFS4_PNFS_MAX_STRIPE_CNT);
-		goto out_err_free_scratch;
-	}
+		जाओ out_err_मुक्त_scratch;
+	पूर्ण
 
-	/* read stripe indices */
-	stripe_indices = kcalloc(cnt, sizeof(u8), gfp_flags);
-	if (!stripe_indices)
-		goto out_err_free_scratch;
+	/* पढ़ो stripe indices */
+	stripe_indices = kसुस्मृति(cnt, माप(u8), gfp_flags);
+	अगर (!stripe_indices)
+		जाओ out_err_मुक्त_scratch;
 
-	p = xdr_inline_decode(&stream, cnt << 2);
-	if (unlikely(!p))
-		goto out_err_free_stripe_indices;
+	p = xdr_अंतरभूत_decode(&stream, cnt << 2);
+	अगर (unlikely(!p))
+		जाओ out_err_मुक्त_stripe_indices;
 
 	indexp = &stripe_indices[0];
 	max_stripe_index = 0;
-	for (i = 0; i < cnt; i++) {
+	क्रम (i = 0; i < cnt; i++) अणु
 		*indexp = be32_to_cpup(p++);
 		max_stripe_index = max(max_stripe_index, *indexp);
 		indexp++;
-	}
+	पूर्ण
 
 	/* Check the multipath list count */
-	p = xdr_inline_decode(&stream, 4);
-	if (unlikely(!p))
-		goto out_err_free_stripe_indices;
+	p = xdr_अंतरभूत_decode(&stream, 4);
+	अगर (unlikely(!p))
+		जाओ out_err_मुक्त_stripe_indices;
 
 	num = be32_to_cpup(p);
-	dprintk("%s ds_num %u\n", __func__, num);
-	if (num > NFS4_PNFS_MAX_MULTI_CNT) {
-		printk(KERN_WARNING "NFS: %s: multipath count %d greater than "
+	dprपूर्णांकk("%s ds_num %u\n", __func__, num);
+	अगर (num > NFS4_PNFS_MAX_MULTI_CNT) अणु
+		prपूर्णांकk(KERN_WARNING "NFS: %s: multipath count %d greater than "
 			"supported maximum %d\n", __func__,
 			num, NFS4_PNFS_MAX_MULTI_CNT);
-		goto out_err_free_stripe_indices;
-	}
+		जाओ out_err_मुक्त_stripe_indices;
+	पूर्ण
 
 	/* validate stripe indices are all < num */
-	if (max_stripe_index >= num) {
-		printk(KERN_WARNING "NFS: %s: stripe index %u >= num ds %u\n",
+	अगर (max_stripe_index >= num) अणु
+		prपूर्णांकk(KERN_WARNING "NFS: %s: stripe index %u >= num ds %u\n",
 			__func__, max_stripe_index, num);
-		goto out_err_free_stripe_indices;
-	}
+		जाओ out_err_मुक्त_stripe_indices;
+	पूर्ण
 
-	dsaddr = kzalloc(sizeof(*dsaddr) +
-			(sizeof(struct nfs4_pnfs_ds *) * (num - 1)),
+	dsaddr = kzalloc(माप(*dsaddr) +
+			(माप(काष्ठा nfs4_pnfs_ds *) * (num - 1)),
 			gfp_flags);
-	if (!dsaddr)
-		goto out_err_free_stripe_indices;
+	अगर (!dsaddr)
+		जाओ out_err_मुक्त_stripe_indices;
 
 	dsaddr->stripe_count = cnt;
 	dsaddr->stripe_indices = stripe_indices;
-	stripe_indices = NULL;
+	stripe_indices = शून्य;
 	dsaddr->ds_num = num;
 	nfs4_init_deviceid_node(&dsaddr->id_node, server, &pdev->dev_id);
 
 	INIT_LIST_HEAD(&dsaddrs);
 
-	for (i = 0; i < dsaddr->ds_num; i++) {
-		int j;
+	क्रम (i = 0; i < dsaddr->ds_num; i++) अणु
+		पूर्णांक j;
 		u32 mp_count;
 
-		p = xdr_inline_decode(&stream, 4);
-		if (unlikely(!p))
-			goto out_err_free_deviceid;
+		p = xdr_अंतरभूत_decode(&stream, 4);
+		अगर (unlikely(!p))
+			जाओ out_err_मुक्त_deviceid;
 
 		mp_count = be32_to_cpup(p); /* multipath count */
-		for (j = 0; j < mp_count; j++) {
+		क्रम (j = 0; j < mp_count; j++) अणु
 			da = nfs4_decode_mp_ds_addr(server->nfs_client->cl_net,
 						    &stream, gfp_flags);
-			if (da)
+			अगर (da)
 				list_add_tail(&da->da_node, &dsaddrs);
-		}
-		if (list_empty(&dsaddrs)) {
-			dprintk("%s: no suitable DS addresses found\n",
+		पूर्ण
+		अगर (list_empty(&dsaddrs)) अणु
+			dprपूर्णांकk("%s: no suitable DS addresses found\n",
 				__func__);
-			goto out_err_free_deviceid;
-		}
+			जाओ out_err_मुक्त_deviceid;
+		पूर्ण
 
 		dsaddr->ds_list[i] = nfs4_pnfs_ds_add(&dsaddrs, gfp_flags);
-		if (!dsaddr->ds_list[i])
-			goto out_err_drain_dsaddrs;
+		अगर (!dsaddr->ds_list[i])
+			जाओ out_err_drain_dsaddrs;
 
-		/* If DS was already in cache, free ds addrs */
-		while (!list_empty(&dsaddrs)) {
+		/* If DS was alपढ़ोy in cache, मुक्त ds addrs */
+		जबतक (!list_empty(&dsaddrs)) अणु
 			da = list_first_entry(&dsaddrs,
-					      struct nfs4_pnfs_ds_addr,
+					      काष्ठा nfs4_pnfs_ds_addr,
 					      da_node);
 			list_del_init(&da->da_node);
-			kfree(da->da_remotestr);
-			kfree(da);
-		}
-	}
+			kमुक्त(da->da_remotestr);
+			kमुक्त(da);
+		पूर्ण
+	पूर्ण
 
-	__free_page(scratch);
-	return dsaddr;
+	__मुक्त_page(scratch);
+	वापस dsaddr;
 
 out_err_drain_dsaddrs:
-	while (!list_empty(&dsaddrs)) {
-		da = list_first_entry(&dsaddrs, struct nfs4_pnfs_ds_addr,
+	जबतक (!list_empty(&dsaddrs)) अणु
+		da = list_first_entry(&dsaddrs, काष्ठा nfs4_pnfs_ds_addr,
 				      da_node);
 		list_del_init(&da->da_node);
-		kfree(da->da_remotestr);
-		kfree(da);
-	}
-out_err_free_deviceid:
-	nfs4_fl_free_deviceid(dsaddr);
+		kमुक्त(da->da_remotestr);
+		kमुक्त(da);
+	पूर्ण
+out_err_मुक्त_deviceid:
+	nfs4_fl_मुक्त_deviceid(dsaddr);
 	/* stripe_indicies was part of dsaddr */
-	goto out_err_free_scratch;
-out_err_free_stripe_indices:
-	kfree(stripe_indices);
-out_err_free_scratch:
-	__free_page(scratch);
+	जाओ out_err_मुक्त_scratch;
+out_err_मुक्त_stripe_indices:
+	kमुक्त(stripe_indices);
+out_err_मुक्त_scratch:
+	__मुक्त_page(scratch);
 out_err:
-	dprintk("%s ERROR: returning NULL\n", __func__);
-	return NULL;
-}
+	dprपूर्णांकk("%s ERROR: returning NULL\n", __func__);
+	वापस शून्य;
+पूर्ण
 
-void
-nfs4_fl_put_deviceid(struct nfs4_file_layout_dsaddr *dsaddr)
-{
+व्योम
+nfs4_fl_put_deviceid(काष्ठा nfs4_file_layout_dsaddr *dsaddr)
+अणु
 	nfs4_put_deviceid_node(&dsaddr->id_node);
-}
+पूर्ण
 
 /*
  * Want res = (offset - layout->pattern_offset)/ layout->stripe_unit
  * Then: ((res + fsi) % dsaddr->stripe_count)
  */
 u32
-nfs4_fl_calc_j_index(struct pnfs_layout_segment *lseg, loff_t offset)
-{
-	struct nfs4_filelayout_segment *flseg = FILELAYOUT_LSEG(lseg);
-	u64 tmp;
+nfs4_fl_calc_j_index(काष्ठा pnfs_layout_segment *lseg, loff_t offset)
+अणु
+	काष्ठा nfs4_filelayout_segment *flseg = खाताLAYOUT_LSEG(lseg);
+	u64 पंचांगp;
 
-	tmp = offset - flseg->pattern_offset;
-	do_div(tmp, flseg->stripe_unit);
-	tmp += flseg->first_stripe_index;
-	return do_div(tmp, flseg->dsaddr->stripe_count);
-}
+	पंचांगp = offset - flseg->pattern_offset;
+	करो_भाग(पंचांगp, flseg->stripe_unit);
+	पंचांगp += flseg->first_stripe_index;
+	वापस करो_भाग(पंचांगp, flseg->dsaddr->stripe_count);
+पूर्ण
 
 u32
-nfs4_fl_calc_ds_index(struct pnfs_layout_segment *lseg, u32 j)
-{
-	return FILELAYOUT_LSEG(lseg)->dsaddr->stripe_indices[j];
-}
+nfs4_fl_calc_ds_index(काष्ठा pnfs_layout_segment *lseg, u32 j)
+अणु
+	वापस खाताLAYOUT_LSEG(lseg)->dsaddr->stripe_indices[j];
+पूर्ण
 
-struct nfs_fh *
-nfs4_fl_select_ds_fh(struct pnfs_layout_segment *lseg, u32 j)
-{
-	struct nfs4_filelayout_segment *flseg = FILELAYOUT_LSEG(lseg);
+काष्ठा nfs_fh *
+nfs4_fl_select_ds_fh(काष्ठा pnfs_layout_segment *lseg, u32 j)
+अणु
+	काष्ठा nfs4_filelayout_segment *flseg = खाताLAYOUT_LSEG(lseg);
 	u32 i;
 
-	if (flseg->stripe_type == STRIPE_SPARSE) {
-		if (flseg->num_fh == 1)
+	अगर (flseg->stripe_type == STRIPE_SPARSE) अणु
+		अगर (flseg->num_fh == 1)
 			i = 0;
-		else if (flseg->num_fh == 0)
-			/* Use the MDS OPEN fh set in nfs_read_rpcsetup */
-			return NULL;
-		else
+		अन्यथा अगर (flseg->num_fh == 0)
+			/* Use the MDS OPEN fh set in nfs_पढ़ो_rpcsetup */
+			वापस शून्य;
+		अन्यथा
 			i = nfs4_fl_calc_ds_index(lseg, j);
-	} else
+	पूर्ण अन्यथा
 		i = j;
-	return flseg->fh_array[i];
-}
+	वापस flseg->fh_array[i];
+पूर्ण
 
-/* Upon return, either ds is connected, or ds is NULL */
-struct nfs4_pnfs_ds *
-nfs4_fl_prepare_ds(struct pnfs_layout_segment *lseg, u32 ds_idx)
-{
-	struct nfs4_file_layout_dsaddr *dsaddr = FILELAYOUT_LSEG(lseg)->dsaddr;
-	struct nfs4_pnfs_ds *ds = dsaddr->ds_list[ds_idx];
-	struct nfs4_deviceid_node *devid = FILELAYOUT_DEVID_NODE(lseg);
-	struct nfs4_pnfs_ds *ret = ds;
-	struct nfs_server *s = NFS_SERVER(lseg->pls_layout->plh_inode);
-	int status;
+/* Upon वापस, either ds is connected, or ds is शून्य */
+काष्ठा nfs4_pnfs_ds *
+nfs4_fl_prepare_ds(काष्ठा pnfs_layout_segment *lseg, u32 ds_idx)
+अणु
+	काष्ठा nfs4_file_layout_dsaddr *dsaddr = खाताLAYOUT_LSEG(lseg)->dsaddr;
+	काष्ठा nfs4_pnfs_ds *ds = dsaddr->ds_list[ds_idx];
+	काष्ठा nfs4_deviceid_node *devid = खाताLAYOUT_DEVID_NODE(lseg);
+	काष्ठा nfs4_pnfs_ds *ret = ds;
+	काष्ठा nfs_server *s = NFS_SERVER(lseg->pls_layout->plh_inode);
+	पूर्णांक status;
 
-	if (ds == NULL) {
-		printk(KERN_ERR "NFS: %s: No data server for offset index %d\n",
+	अगर (ds == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "NFS: %s: No data server for offset index %d\n",
 			__func__, ds_idx);
 		pnfs_generic_mark_devid_invalid(devid);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	smp_rmb();
-	if (ds->ds_clp)
-		goto out_test_devid;
+	अगर (ds->ds_clp)
+		जाओ out_test_devid;
 
-	status = nfs4_pnfs_ds_connect(s, ds, devid, dataserver_timeo,
+	status = nfs4_pnfs_ds_connect(s, ds, devid, dataserver_समयo,
 			     dataserver_retrans, 4,
 			     s->nfs_client->cl_minorversion);
-	if (status) {
+	अगर (status) अणु
 		nfs4_mark_deviceid_unavailable(devid);
-		ret = NULL;
-		goto out;
-	}
+		ret = शून्य;
+		जाओ out;
+	पूर्ण
 
 out_test_devid:
-	if (ret->ds_clp == NULL ||
+	अगर (ret->ds_clp == शून्य ||
 	    filelayout_test_devid_unavailable(devid))
-		ret = NULL;
+		ret = शून्य;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-module_param(dataserver_retrans, uint, 0644);
+module_param(dataserver_retrans, uपूर्णांक, 0644);
 MODULE_PARM_DESC(dataserver_retrans, "The  number of times the NFSv4.1 client "
 			"retries a request before it attempts further "
 			" recovery  action.");
-module_param(dataserver_timeo, uint, 0644);
-MODULE_PARM_DESC(dataserver_timeo, "The time (in tenths of a second) the "
+module_param(dataserver_समयo, uपूर्णांक, 0644);
+MODULE_PARM_DESC(dataserver_समयo, "The time (in tenths of a second) the "
 			"NFSv4.1  client  waits for a response from a "
 			" data server before it retries an NFS request.");

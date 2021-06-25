@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * eCryptfs: Linux filesystem encryption layer
+ * eCryptfs: Linux fileप्रणाली encryption layer
  *
  * Copyright (C) 2008 International Business Machines Corp.
  *   Author(s): Michael A. Halcrow <mahalcro@us.ibm.com>
  */
 
-#include <linux/kthread.h>
-#include <linux/freezer.h>
-#include <linux/slab.h>
-#include <linux/wait.h>
-#include <linux/mount.h>
-#include "ecryptfs_kernel.h"
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/mount.h>
+#समावेश "ecryptfs_kernel.h"
 
-struct ecryptfs_open_req {
-	struct file **lower_file;
-	struct path path;
-	struct completion done;
-	struct list_head kthread_ctl_list;
-};
+काष्ठा ecryptfs_खोलो_req अणु
+	काष्ठा file **lower_file;
+	काष्ठा path path;
+	काष्ठा completion करोne;
+	काष्ठा list_head kthपढ़ो_ctl_list;
+पूर्ण;
 
-static struct ecryptfs_kthread_ctl {
-#define ECRYPTFS_KTHREAD_ZOMBIE 0x00000001
+अटल काष्ठा ecryptfs_kthपढ़ो_ctl अणु
+#घोषणा ECRYPTFS_KTHREAD_ZOMBIE 0x00000001
 	u32 flags;
-	struct mutex mux;
-	struct list_head req_list;
-	wait_queue_head_t wait;
-} ecryptfs_kthread_ctl;
+	काष्ठा mutex mux;
+	काष्ठा list_head req_list;
+	रुको_queue_head_t रुको;
+पूर्ण ecryptfs_kthपढ़ो_ctl;
 
-static struct task_struct *ecryptfs_kthread;
+अटल काष्ठा task_काष्ठा *ecryptfs_kthपढ़ो;
 
 /**
- * ecryptfs_threadfn
+ * ecryptfs_thपढ़ोfn
  * @ignored: ignored
  *
- * The eCryptfs kernel thread that has the responsibility of getting
+ * The eCryptfs kernel thपढ़ो that has the responsibility of getting
  * the lower file with RW permissions.
  *
  * Returns zero on success; non-zero otherwise
  */
-static int ecryptfs_threadfn(void *ignored)
-{
-	set_freezable();
-	while (1)  {
-		struct ecryptfs_open_req *req;
+अटल पूर्णांक ecryptfs_thपढ़ोfn(व्योम *ignored)
+अणु
+	set_मुक्तzable();
+	जबतक (1)  अणु
+		काष्ठा ecryptfs_खोलो_req *req;
 
-		wait_event_freezable(
-			ecryptfs_kthread_ctl.wait,
-			(!list_empty(&ecryptfs_kthread_ctl.req_list)
-			 || kthread_should_stop()));
-		mutex_lock(&ecryptfs_kthread_ctl.mux);
-		if (ecryptfs_kthread_ctl.flags & ECRYPTFS_KTHREAD_ZOMBIE) {
-			mutex_unlock(&ecryptfs_kthread_ctl.mux);
-			goto out;
-		}
-		while (!list_empty(&ecryptfs_kthread_ctl.req_list)) {
-			req = list_first_entry(&ecryptfs_kthread_ctl.req_list,
-					       struct ecryptfs_open_req,
-					       kthread_ctl_list);
-			list_del(&req->kthread_ctl_list);
-			*req->lower_file = dentry_open(&req->path,
-				(O_RDWR | O_LARGEFILE), current_cred());
-			complete(&req->done);
-		}
-		mutex_unlock(&ecryptfs_kthread_ctl.mux);
-	}
+		रुको_event_मुक्तzable(
+			ecryptfs_kthपढ़ो_ctl.रुको,
+			(!list_empty(&ecryptfs_kthपढ़ो_ctl.req_list)
+			 || kthपढ़ो_should_stop()));
+		mutex_lock(&ecryptfs_kthपढ़ो_ctl.mux);
+		अगर (ecryptfs_kthपढ़ो_ctl.flags & ECRYPTFS_KTHREAD_ZOMBIE) अणु
+			mutex_unlock(&ecryptfs_kthपढ़ो_ctl.mux);
+			जाओ out;
+		पूर्ण
+		जबतक (!list_empty(&ecryptfs_kthपढ़ो_ctl.req_list)) अणु
+			req = list_first_entry(&ecryptfs_kthपढ़ो_ctl.req_list,
+					       काष्ठा ecryptfs_खोलो_req,
+					       kthपढ़ो_ctl_list);
+			list_del(&req->kthपढ़ो_ctl_list);
+			*req->lower_file = dentry_खोलो(&req->path,
+				(O_RDWR | O_LARGEखाता), current_cred());
+			complete(&req->करोne);
+		पूर्ण
+		mutex_unlock(&ecryptfs_kthपढ़ो_ctl.mux);
+	पूर्ण
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init ecryptfs_init_kthread(void)
-{
-	int rc = 0;
+पूर्णांक __init ecryptfs_init_kthपढ़ो(व्योम)
+अणु
+	पूर्णांक rc = 0;
 
-	mutex_init(&ecryptfs_kthread_ctl.mux);
-	init_waitqueue_head(&ecryptfs_kthread_ctl.wait);
-	INIT_LIST_HEAD(&ecryptfs_kthread_ctl.req_list);
-	ecryptfs_kthread = kthread_run(&ecryptfs_threadfn, NULL,
+	mutex_init(&ecryptfs_kthपढ़ो_ctl.mux);
+	init_रुकोqueue_head(&ecryptfs_kthपढ़ो_ctl.रुको);
+	INIT_LIST_HEAD(&ecryptfs_kthपढ़ो_ctl.req_list);
+	ecryptfs_kthपढ़ो = kthपढ़ो_run(&ecryptfs_thपढ़ोfn, शून्य,
 				       "ecryptfs-kthread");
-	if (IS_ERR(ecryptfs_kthread)) {
-		rc = PTR_ERR(ecryptfs_kthread);
-		printk(KERN_ERR "%s: Failed to create kernel thread; rc = [%d]"
+	अगर (IS_ERR(ecryptfs_kthपढ़ो)) अणु
+		rc = PTR_ERR(ecryptfs_kthपढ़ो);
+		prपूर्णांकk(KERN_ERR "%s: Failed to create kernel thread; rc = [%d]"
 		       "\n", __func__, rc);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-void ecryptfs_destroy_kthread(void)
-{
-	struct ecryptfs_open_req *req, *tmp;
+व्योम ecryptfs_destroy_kthपढ़ो(व्योम)
+अणु
+	काष्ठा ecryptfs_खोलो_req *req, *पंचांगp;
 
-	mutex_lock(&ecryptfs_kthread_ctl.mux);
-	ecryptfs_kthread_ctl.flags |= ECRYPTFS_KTHREAD_ZOMBIE;
-	list_for_each_entry_safe(req, tmp, &ecryptfs_kthread_ctl.req_list,
-				 kthread_ctl_list) {
-		list_del(&req->kthread_ctl_list);
+	mutex_lock(&ecryptfs_kthपढ़ो_ctl.mux);
+	ecryptfs_kthपढ़ो_ctl.flags |= ECRYPTFS_KTHREAD_ZOMBIE;
+	list_क्रम_each_entry_safe(req, पंचांगp, &ecryptfs_kthपढ़ो_ctl.req_list,
+				 kthपढ़ो_ctl_list) अणु
+		list_del(&req->kthपढ़ो_ctl_list);
 		*req->lower_file = ERR_PTR(-EIO);
-		complete(&req->done);
-	}
-	mutex_unlock(&ecryptfs_kthread_ctl.mux);
-	kthread_stop(ecryptfs_kthread);
-	wake_up(&ecryptfs_kthread_ctl.wait);
-}
+		complete(&req->करोne);
+	पूर्ण
+	mutex_unlock(&ecryptfs_kthपढ़ो_ctl.mux);
+	kthपढ़ो_stop(ecryptfs_kthपढ़ो);
+	wake_up(&ecryptfs_kthपढ़ो_ctl.रुको);
+पूर्ण
 
 /**
- * ecryptfs_privileged_open
- * @lower_file: Result of dentry_open by root on lower dentry
- * @lower_dentry: Lower dentry for file to open
- * @lower_mnt: Lower vfsmount for file to open
- * @cred: credential to use for this call
+ * ecryptfs_privileged_खोलो
+ * @lower_file: Result of dentry_खोलो by root on lower dentry
+ * @lower_dentry: Lower dentry क्रम file to खोलो
+ * @lower_mnt: Lower vfsmount क्रम file to खोलो
+ * @cred: credential to use क्रम this call
  *
- * This function gets a r/w file opened against the lower dentry.
+ * This function माला_लो a r/w file खोलोed against the lower dentry.
  *
  * Returns zero on success; non-zero otherwise
  */
-int ecryptfs_privileged_open(struct file **lower_file,
-			     struct dentry *lower_dentry,
-			     struct vfsmount *lower_mnt,
-			     const struct cred *cred)
-{
-	struct ecryptfs_open_req req;
-	int flags = O_LARGEFILE;
-	int rc = 0;
+पूर्णांक ecryptfs_privileged_खोलो(काष्ठा file **lower_file,
+			     काष्ठा dentry *lower_dentry,
+			     काष्ठा vfsmount *lower_mnt,
+			     स्थिर काष्ठा cred *cred)
+अणु
+	काष्ठा ecryptfs_खोलो_req req;
+	पूर्णांक flags = O_LARGEखाता;
+	पूर्णांक rc = 0;
 
-	init_completion(&req.done);
+	init_completion(&req.करोne);
 	req.lower_file = lower_file;
 	req.path.dentry = lower_dentry;
 	req.path.mnt = lower_mnt;
 
-	/* Corresponding dput() and mntput() are done when the
-	 * lower file is fput() when all eCryptfs files for the inode are
+	/* Corresponding dput() and mntput() are करोne when the
+	 * lower file is fput() when all eCryptfs files क्रम the inode are
 	 * released. */
 	flags |= IS_RDONLY(d_inode(lower_dentry)) ? O_RDONLY : O_RDWR;
-	(*lower_file) = dentry_open(&req.path, flags, cred);
-	if (!IS_ERR(*lower_file))
-		goto out;
-	if ((flags & O_ACCMODE) == O_RDONLY) {
+	(*lower_file) = dentry_खोलो(&req.path, flags, cred);
+	अगर (!IS_ERR(*lower_file))
+		जाओ out;
+	अगर ((flags & O_ACCMODE) == O_RDONLY) अणु
 		rc = PTR_ERR((*lower_file));
-		goto out;
-	}
-	mutex_lock(&ecryptfs_kthread_ctl.mux);
-	if (ecryptfs_kthread_ctl.flags & ECRYPTFS_KTHREAD_ZOMBIE) {
+		जाओ out;
+	पूर्ण
+	mutex_lock(&ecryptfs_kthपढ़ो_ctl.mux);
+	अगर (ecryptfs_kthपढ़ो_ctl.flags & ECRYPTFS_KTHREAD_ZOMBIE) अणु
 		rc = -EIO;
-		mutex_unlock(&ecryptfs_kthread_ctl.mux);
-		printk(KERN_ERR "%s: We are in the middle of shutting down; "
+		mutex_unlock(&ecryptfs_kthपढ़ो_ctl.mux);
+		prपूर्णांकk(KERN_ERR "%s: We are in the middle of shutting down; "
 		       "aborting privileged request to open lower file\n",
 			__func__);
-		goto out;
-	}
-	list_add_tail(&req.kthread_ctl_list, &ecryptfs_kthread_ctl.req_list);
-	mutex_unlock(&ecryptfs_kthread_ctl.mux);
-	wake_up(&ecryptfs_kthread_ctl.wait);
-	wait_for_completion(&req.done);
-	if (IS_ERR(*lower_file))
+		जाओ out;
+	पूर्ण
+	list_add_tail(&req.kthपढ़ो_ctl_list, &ecryptfs_kthपढ़ो_ctl.req_list);
+	mutex_unlock(&ecryptfs_kthपढ़ो_ctl.mux);
+	wake_up(&ecryptfs_kthपढ़ो_ctl.रुको);
+	रुको_क्रम_completion(&req.करोne);
+	अगर (IS_ERR(*lower_file))
 		rc = PTR_ERR(*lower_file);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण

@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * consolidates trace point definitions
+ * consolidates trace poपूर्णांक definitions
  *
  * Copyright (C) 2009 Neil Horman <nhorman@tuxdriver.com>
  */
 
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/string.h>
-#include <linux/if_arp.h>
-#include <linux/inetdevice.h>
-#include <linux/inet.h>
-#include <linux/interrupt.h>
-#include <linux/export.h>
-#include <linux/netpoll.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/rcupdate.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
-#include <linux/netlink.h>
-#include <linux/net_dropmon.h>
-#include <linux/slab.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/export.h>
+#समावेश <linux/netpoll.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/net_dropmon.h>
+#समावेश <linux/slab.h>
 
-#include <asm/unaligned.h>
-#include <asm/bitops.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <यंत्र/bitops.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/skb.h>
-#include <trace/events/net.h>
-#include <trace/events/napi.h>
-#include <trace/events/sock.h>
-#include <trace/events/udp.h>
-#include <trace/events/tcp.h>
-#include <trace/events/fib.h>
-#include <trace/events/qdisc.h>
-#if IS_ENABLED(CONFIG_BRIDGE)
-#include <trace/events/bridge.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/skb.h>
+#समावेश <trace/events/net.h>
+#समावेश <trace/events/napi.h>
+#समावेश <trace/events/sock.h>
+#समावेश <trace/events/udp.h>
+#समावेश <trace/events/tcp.h>
+#समावेश <trace/events/fib.h>
+#समावेश <trace/events/qdisc.h>
+#अगर IS_ENABLED(CONFIG_BRIDGE)
+#समावेश <trace/events/bridge.h>
 EXPORT_TRACEPOINT_SYMBOL_GPL(br_fdb_add);
-EXPORT_TRACEPOINT_SYMBOL_GPL(br_fdb_external_learn_add);
+EXPORT_TRACEPOINT_SYMBOL_GPL(br_fdb_बाह्यal_learn_add);
 EXPORT_TRACEPOINT_SYMBOL_GPL(fdb_delete);
 EXPORT_TRACEPOINT_SYMBOL_GPL(br_fdb_update);
-#endif
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_PAGE_POOL)
-#include <trace/events/page_pool.h>
-#endif
+#अगर IS_ENABLED(CONFIG_PAGE_POOL)
+#समावेश <trace/events/page_pool.h>
+#पूर्ण_अगर
 
-#include <trace/events/neigh.h>
+#समावेश <trace/events/neigh.h>
 EXPORT_TRACEPOINT_SYMBOL_GPL(neigh_update);
-EXPORT_TRACEPOINT_SYMBOL_GPL(neigh_update_done);
-EXPORT_TRACEPOINT_SYMBOL_GPL(neigh_timer_handler);
-EXPORT_TRACEPOINT_SYMBOL_GPL(neigh_event_send_done);
+EXPORT_TRACEPOINT_SYMBOL_GPL(neigh_update_करोne);
+EXPORT_TRACEPOINT_SYMBOL_GPL(neigh_समयr_handler);
+EXPORT_TRACEPOINT_SYMBOL_GPL(neigh_event_send_करोne);
 EXPORT_TRACEPOINT_SYMBOL_GPL(neigh_event_send_dead);
 EXPORT_TRACEPOINT_SYMBOL_GPL(neigh_cleanup_and_release);
 
-EXPORT_TRACEPOINT_SYMBOL_GPL(kfree_skb);
+EXPORT_TRACEPOINT_SYMBOL_GPL(kमुक्त_skb);
 
 EXPORT_TRACEPOINT_SYMBOL_GPL(napi_poll);
 

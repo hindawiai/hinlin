@@ -1,1 +1,2 @@
-#include <asm-generic/div64.h>
+<शैली गुरु>
+#समावेश <यंत्र-generic/भाग64.h>

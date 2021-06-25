@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * 16550 serial console support.
  *
  * Original copied from <file:arch/ppc/boot/common/ns16550.c>
  * (which had no copyright)
- * Modifications: 2006 (c) MontaVista Software, Inc.
+ * Modअगरications: 2006 (c) MontaVista Software, Inc.
  *
- * Modified by: Mark A. Greer <mgreer@mvista.com>
+ * Modअगरied by: Mark A. Greer <mgreer@mvista.com>
  */
-#include <stdarg.h>
-#include <stddef.h>
-#include "types.h"
-#include "string.h"
-#include "stdio.h"
-#include "io.h"
-#include "ops.h"
+#समावेश <मानकतर्क.स>
+#समावेश <मानकघोष.स>
+#समावेश "types.h"
+#समावेश "string.h"
+#समावेश "stdio.h"
+#समावेश "io.h"
+#समावेश "ops.h"
 
-#define UART_DLL	0	/* Out: Divisor Latch Low */
-#define UART_DLM	1	/* Out: Divisor Latch High */
-#define UART_FCR	2	/* Out: FIFO Control Register */
-#define UART_LCR	3	/* Out: Line Control Register */
-#define UART_MCR	4	/* Out: Modem Control Register */
-#define UART_LSR	5	/* In:  Line Status Register */
-#define UART_LSR_THRE	0x20	/* Transmit-hold-register empty */
-#define UART_LSR_DR	0x01	/* Receiver data ready */
-#define UART_MSR	6	/* In:  Modem Status Register */
-#define UART_SCR	7	/* I/O: Scratch Register */
+#घोषणा UART_DLL	0	/* Out: Divisor Latch Low */
+#घोषणा UART_DLM	1	/* Out: Divisor Latch High */
+#घोषणा UART_FCR	2	/* Out: FIFO Control Register */
+#घोषणा UART_LCR	3	/* Out: Line Control Register */
+#घोषणा UART_MCR	4	/* Out: Modem Control Register */
+#घोषणा UART_LSR	5	/* In:  Line Status Register */
+#घोषणा UART_LSR_THRE	0x20	/* Transmit-hold-रेजिस्टर empty */
+#घोषणा UART_LSR_DR	0x01	/* Receiver data पढ़ोy */
+#घोषणा UART_MSR	6	/* In:  Modem Status Register */
+#घोषणा UART_SCR	7	/* I/O: Scratch Register */
 
-static unsigned char *reg_base;
-static u32 reg_shift;
+अटल अचिन्हित अक्षर *reg_base;
+अटल u32 reg_shअगरt;
 
-static int ns16550_open(void)
-{
-	out_8(reg_base + (UART_FCR << reg_shift), 0x06);
-	return 0;
-}
+अटल पूर्णांक ns16550_खोलो(व्योम)
+अणु
+	out_8(reg_base + (UART_FCR << reg_shअगरt), 0x06);
+	वापस 0;
+पूर्ण
 
-static void ns16550_putc(unsigned char c)
-{
-	while ((in_8(reg_base + (UART_LSR << reg_shift)) & UART_LSR_THRE) == 0);
+अटल व्योम ns16550_अ_दो(अचिन्हित अक्षर c)
+अणु
+	जबतक ((in_8(reg_base + (UART_LSR << reg_shअगरt)) & UART_LSR_THRE) == 0);
 	out_8(reg_base, c);
-}
+पूर्ण
 
-static unsigned char ns16550_getc(void)
-{
-	while ((in_8(reg_base + (UART_LSR << reg_shift)) & UART_LSR_DR) == 0);
-	return in_8(reg_base);
-}
+अटल अचिन्हित अक्षर ns16550_अ_लो(व्योम)
+अणु
+	जबतक ((in_8(reg_base + (UART_LSR << reg_shअगरt)) & UART_LSR_DR) == 0);
+	वापस in_8(reg_base);
+पूर्ण
 
-static u8 ns16550_tstc(void)
-{
-	return ((in_8(reg_base + (UART_LSR << reg_shift)) & UART_LSR_DR) != 0);
-}
+अटल u8 ns16550_tstc(व्योम)
+अणु
+	वापस ((in_8(reg_base + (UART_LSR << reg_shअगरt)) & UART_LSR_DR) != 0);
+पूर्ण
 
-int ns16550_console_init(void *devp, struct serial_console_data *scdp)
-{
-	int n;
+पूर्णांक ns16550_console_init(व्योम *devp, काष्ठा serial_console_data *scdp)
+अणु
+	पूर्णांक n;
 	u32 reg_offset;
 
-	if (dt_get_virtual_reg(devp, (void **)&reg_base, 1) < 1)
-		return -1;
+	अगर (dt_get_भव_reg(devp, (व्योम **)&reg_base, 1) < 1)
+		वापस -1;
 
-	n = getprop(devp, "reg-offset", &reg_offset, sizeof(reg_offset));
-	if (n == sizeof(reg_offset))
+	n = getprop(devp, "reg-offset", &reg_offset, माप(reg_offset));
+	अगर (n == माप(reg_offset))
 		reg_base += reg_offset;
 
-	n = getprop(devp, "reg-shift", &reg_shift, sizeof(reg_shift));
-	if (n != sizeof(reg_shift))
-		reg_shift = 0;
+	n = getprop(devp, "reg-shift", &reg_shअगरt, माप(reg_shअगरt));
+	अगर (n != माप(reg_shअगरt))
+		reg_shअगरt = 0;
 
-	scdp->open = ns16550_open;
-	scdp->putc = ns16550_putc;
-	scdp->getc = ns16550_getc;
+	scdp->खोलो = ns16550_खोलो;
+	scdp->अ_दो = ns16550_अ_दो;
+	scdp->अ_लो = ns16550_अ_लो;
 	scdp->tstc = ns16550_tstc;
-	scdp->close = NULL;
+	scdp->बंद = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

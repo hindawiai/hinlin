@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * blockcheck.c
  *
- * Checksum and ECC codes for the OCFS2 userspace library.
+ * Checksum and ECC codes क्रम the OCFS2 userspace library.
  *
  * Copyright (C) 2006, 2008 Oracle.  All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/crc32.h>
-#include <linux/buffer_head.h>
-#include <linux/bitops.h>
-#include <linux/debugfs.h>
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <asm/byteorder.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <यंत्र/byteorder.h>
 
-#include <cluster/masklog.h>
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
+#समावेश "ocfs2.h"
 
-#include "blockcheck.h"
+#समावेश "blockcheck.h"
 
 
 /*
@@ -36,24 +37,24 @@
 /*
  * Calculate the bit offset in the hamming code buffer based on the bit's
  * offset in the data buffer.  Since the hamming code reserves all
- * power-of-two bits for parity, the data bit number and the code bit
- * number are offset by all the parity bits beforehand.
+ * घातer-of-two bits क्रम parity, the data bit number and the code bit
+ * number are offset by all the parity bits beक्रमehand.
  *
  * Recall that bit numbers in hamming code are 1-based.  This function
  * takes the 0-based data bit from the caller.
  *
- * An example.  Take bit 1 of the data buffer.  1 is a power of two (2^0),
+ * An example.  Take bit 1 of the data buffer.  1 is a घातer of two (2^0),
  * so it's a parity bit.  2 is a power of two (2^1), so it's a parity bit.
- * 3 is not a power of two.  So bit 1 of the data buffer ends up as bit 3
+ * 3 is not a घातer of two.  So bit 1 of the data buffer ends up as bit 3
  * in the code buffer.
  *
- * The caller can pass in *p if it wants to keep track of the most recent
+ * The caller can pass in *p अगर it wants to keep track of the most recent
  * number of parity bits added.  This allows the function to start the
  * calculation at the last place.
  */
-static unsigned int calc_code_bit(unsigned int i, unsigned int *p_cache)
-{
-	unsigned int b, p = 0;
+अटल अचिन्हित पूर्णांक calc_code_bit(अचिन्हित पूर्णांक i, अचिन्हित पूर्णांक *p_cache)
+अणु
+	अचिन्हित पूर्णांक b, p = 0;
 
 	/*
 	 * Data bits are 0-based, but we're talking code bits, which
@@ -61,56 +62,56 @@ static unsigned int calc_code_bit(unsigned int i, unsigned int *p_cache)
 	 */
 	b = i + 1;
 
-	/* Use the cache if it is there */
-	if (p_cache)
+	/* Use the cache अगर it is there */
+	अगर (p_cache)
 		p = *p_cache;
         b += p;
 
 	/*
-	 * For every power of two below our bit number, bump our bit.
+	 * For every घातer of two below our bit number, bump our bit.
 	 *
 	 * We compare with (b + 1) because we have to compare with what b
-	 * would be _if_ it were bumped up by the parity bit.  Capice?
+	 * would be _अगर_ it were bumped up by the parity bit.  Capice?
 	 *
 	 * p is set above.
 	 */
-	for (; (1 << p) < (b + 1); p++)
+	क्रम (; (1 << p) < (b + 1); p++)
 		b++;
 
-	if (p_cache)
+	अगर (p_cache)
 		*p_cache = p;
 
-	return b;
-}
+	वापस b;
+पूर्ण
 
 /*
  * This is the low level encoder function.  It can be called across
  * multiple hunks just like the crc32 code.  'd' is the number of bits
- * _in_this_hunk_.  nr is the bit offset of this hunk.  So, if you had
- * two 512B buffers, you would do it like so:
+ * _in_this_hunk_.  nr is the bit offset of this hunk.  So, अगर you had
+ * two 512B buffers, you would करो it like so:
  *
  * parity = ocfs2_hamming_encode(0, buf1, 512 * 8, 0);
  * parity = ocfs2_hamming_encode(parity, buf2, 512 * 8, 512 * 8);
  *
  * If you just have one buffer, use ocfs2_hamming_encode_block().
  */
-u32 ocfs2_hamming_encode(u32 parity, void *data, unsigned int d, unsigned int nr)
-{
-	unsigned int i, b, p = 0;
+u32 ocfs2_hamming_encode(u32 parity, व्योम *data, अचिन्हित पूर्णांक d, अचिन्हित पूर्णांक nr)
+अणु
+	अचिन्हित पूर्णांक i, b, p = 0;
 
 	BUG_ON(!d);
 
 	/*
-	 * b is the hamming code bit number.  Hamming code specifies a
+	 * b is the hamming code bit number.  Hamming code specअगरies a
 	 * 1-based array, but C uses 0-based.  So 'i' is for C, and 'b' is
-	 * for the algorithm.
+	 * क्रम the algorithm.
 	 *
-	 * The i++ in the for loop is so that the start offset passed
+	 * The i++ in the क्रम loop is so that the start offset passed
 	 * to ocfs2_find_next_bit_set() is one greater than the previously
 	 * found bit.
 	 */
-	for (i = 0; (i = ocfs2_find_next_bit(data, d, i)) < d; i++)
-	{
+	क्रम (i = 0; (i = ocfs2_find_next_bit(data, d, i)) < d; i++)
+	अणु
 		/*
 		 * i is the offset in this hunk, nr + i is the total bit
 		 * offset.
@@ -125,7 +126,7 @@ u32 ocfs2_hamming_encode(u32 parity, void *data, unsigned int d, unsigned int nr
 		 * <wikipedia href="https://en.wikipedia.org/wiki/Hamming_code">
 		 * In other words, the parity bit at position 2^k
 		 * checks bits in positions having bit k set in
-		 * their binary representation.  Conversely, for
+		 * their binary representation.  Conversely, क्रम
 		 * instance, bit 13, i.e. 1101(2), is checked by
 		 * bits 1000(2) = 8, 0100(2)=4 and 0001(2) = 1.
 		 * </wikipedia>
@@ -134,60 +135,60 @@ u32 ocfs2_hamming_encode(u32 parity, void *data, unsigned int d, unsigned int nr
 		 * our loop.
 		 */
 		parity ^= b;
-	}
+	पूर्ण
 
 	/* While the data buffer was treated as little endian, the
-	 * return value is in host endian. */
-	return parity;
-}
+	 * वापस value is in host endian. */
+	वापस parity;
+पूर्ण
 
-u32 ocfs2_hamming_encode_block(void *data, unsigned int blocksize)
-{
-	return ocfs2_hamming_encode(0, data, blocksize * 8, 0);
-}
+u32 ocfs2_hamming_encode_block(व्योम *data, अचिन्हित पूर्णांक blocksize)
+अणु
+	वापस ocfs2_hamming_encode(0, data, blocksize * 8, 0);
+पूर्ण
 
 /*
  * Like ocfs2_hamming_encode(), this can handle hunks.  nr is the bit
  * offset of the current hunk.  If bit to be fixed is not part of the
- * current hunk, this does nothing.
+ * current hunk, this करोes nothing.
  *
  * If you only have one hunk, use ocfs2_hamming_fix_block().
  */
-void ocfs2_hamming_fix(void *data, unsigned int d, unsigned int nr,
-		       unsigned int fix)
-{
-	unsigned int i, b;
+व्योम ocfs2_hamming_fix(व्योम *data, अचिन्हित पूर्णांक d, अचिन्हित पूर्णांक nr,
+		       अचिन्हित पूर्णांक fix)
+अणु
+	अचिन्हित पूर्णांक i, b;
 
 	BUG_ON(!d);
 
 	/*
 	 * If the bit to fix has an hweight of 1, it's a parity bit.  One
-	 * busted parity bit is its own error.  Nothing to do here.
+	 * busted parity bit is its own error.  Nothing to करो here.
 	 */
-	if (hweight32(fix) == 1)
-		return;
+	अगर (hweight32(fix) == 1)
+		वापस;
 
 	/*
 	 * nr + d is the bit right past the data hunk we're looking at.
-	 * If fix after that, nothing to do
+	 * If fix after that, nothing to करो
 	 */
-	if (fix >= calc_code_bit(nr + d, NULL))
-		return;
+	अगर (fix >= calc_code_bit(nr + d, शून्य))
+		वापस;
 
 	/*
 	 * nr is the offset in the data hunk we're starting at.  Let's
 	 * start b at the offset in the code buffer.  See hamming_encode()
-	 * for a more detailed description of 'b'.
+	 * क्रम a more detailed description of 'b'.
 	 */
-	b = calc_code_bit(nr, NULL);
-	/* If the fix is before this hunk, nothing to do */
-	if (fix < b)
-		return;
+	b = calc_code_bit(nr, शून्य);
+	/* If the fix is beक्रमe this hunk, nothing to करो */
+	अगर (fix < b)
+		वापस;
 
-	for (i = 0; i < d; i++, b++)
-	{
+	क्रम (i = 0; i < d; i++, b++)
+	अणु
 		/* Skip past parity bits */
-		while (hweight32(b) == 1)
+		जबतक (hweight32(b) == 1)
 			b++;
 
 		/*
@@ -198,49 +199,49 @@ void ocfs2_hamming_fix(void *data, unsigned int d, unsigned int nr,
 		 * Thus, when b == fix, bit i in the current hunk needs
 		 * fixing.
 		 */
-		if (b == fix)
-		{
-			if (ocfs2_test_bit(i, data))
+		अगर (b == fix)
+		अणु
+			अगर (ocfs2_test_bit(i, data))
 				ocfs2_clear_bit(i, data);
-			else
+			अन्यथा
 				ocfs2_set_bit(i, data);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void ocfs2_hamming_fix_block(void *data, unsigned int blocksize,
-			     unsigned int fix)
-{
+व्योम ocfs2_hamming_fix_block(व्योम *data, अचिन्हित पूर्णांक blocksize,
+			     अचिन्हित पूर्णांक fix)
+अणु
 	ocfs2_hamming_fix(data, blocksize * 8, 0, fix);
-}
+पूर्ण
 
 
 /*
  * Debugfs handling.
  */
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-static int blockcheck_u64_get(void *data, u64 *val)
-{
+अटल पूर्णांक blockcheck_u64_get(व्योम *data, u64 *val)
+अणु
 	*val = *(u64 *)data;
-	return 0;
-}
-DEFINE_DEBUGFS_ATTRIBUTE(blockcheck_fops, blockcheck_u64_get, NULL, "%llu\n");
+	वापस 0;
+पूर्ण
+DEFINE_DEBUGFS_ATTRIBUTE(blockcheck_fops, blockcheck_u64_get, शून्य, "%llu\n");
 
-static void ocfs2_blockcheck_debug_remove(struct ocfs2_blockcheck_stats *stats)
-{
-	if (stats) {
-		debugfs_remove_recursive(stats->b_debug_dir);
-		stats->b_debug_dir = NULL;
-	}
-}
+अटल व्योम ocfs2_blockcheck_debug_हटाओ(काष्ठा ocfs2_blockcheck_stats *stats)
+अणु
+	अगर (stats) अणु
+		debugfs_हटाओ_recursive(stats->b_debug_dir);
+		stats->b_debug_dir = शून्य;
+	पूर्ण
+पूर्ण
 
-static void ocfs2_blockcheck_debug_install(struct ocfs2_blockcheck_stats *stats,
-					   struct dentry *parent)
-{
-	struct dentry *dir;
+अटल व्योम ocfs2_blockcheck_debug_install(काष्ठा ocfs2_blockcheck_stats *stats,
+					   काष्ठा dentry *parent)
+अणु
+	काष्ठा dentry *dir;
 
 	dir = debugfs_create_dir("blockcheck", parent);
 	stats->b_debug_dir = dir;
@@ -254,132 +255,132 @@ static void ocfs2_blockcheck_debug_install(struct ocfs2_blockcheck_stats *stats,
 	debugfs_create_file("ecc_recoveries", S_IFREG | S_IRUSR, dir,
 			    &stats->b_recover_count, &blockcheck_fops);
 
-}
-#else
-static inline void ocfs2_blockcheck_debug_install(struct ocfs2_blockcheck_stats *stats,
-						  struct dentry *parent)
-{
-}
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम ocfs2_blockcheck_debug_install(काष्ठा ocfs2_blockcheck_stats *stats,
+						  काष्ठा dentry *parent)
+अणु
+पूर्ण
 
-static inline void ocfs2_blockcheck_debug_remove(struct ocfs2_blockcheck_stats *stats)
-{
-}
-#endif  /* CONFIG_DEBUG_FS */
+अटल अंतरभूत व्योम ocfs2_blockcheck_debug_हटाओ(काष्ठा ocfs2_blockcheck_stats *stats)
+अणु
+पूर्ण
+#पूर्ण_अगर  /* CONFIG_DEBUG_FS */
 
-/* Always-called wrappers for starting and stopping the debugfs files */
-void ocfs2_blockcheck_stats_debugfs_install(struct ocfs2_blockcheck_stats *stats,
-					    struct dentry *parent)
-{
+/* Always-called wrappers क्रम starting and stopping the debugfs files */
+व्योम ocfs2_blockcheck_stats_debugfs_install(काष्ठा ocfs2_blockcheck_stats *stats,
+					    काष्ठा dentry *parent)
+अणु
 	ocfs2_blockcheck_debug_install(stats, parent);
-}
+पूर्ण
 
-void ocfs2_blockcheck_stats_debugfs_remove(struct ocfs2_blockcheck_stats *stats)
-{
-	ocfs2_blockcheck_debug_remove(stats);
-}
+व्योम ocfs2_blockcheck_stats_debugfs_हटाओ(काष्ठा ocfs2_blockcheck_stats *stats)
+अणु
+	ocfs2_blockcheck_debug_हटाओ(stats);
+पूर्ण
 
-static void ocfs2_blockcheck_inc_check(struct ocfs2_blockcheck_stats *stats)
-{
+अटल व्योम ocfs2_blockcheck_inc_check(काष्ठा ocfs2_blockcheck_stats *stats)
+अणु
 	u64 new_count;
 
-	if (!stats)
-		return;
+	अगर (!stats)
+		वापस;
 
 	spin_lock(&stats->b_lock);
 	stats->b_check_count++;
 	new_count = stats->b_check_count;
 	spin_unlock(&stats->b_lock);
 
-	if (!new_count)
+	अगर (!new_count)
 		mlog(ML_NOTICE, "Block check count has wrapped\n");
-}
+पूर्ण
 
-static void ocfs2_blockcheck_inc_failure(struct ocfs2_blockcheck_stats *stats)
-{
+अटल व्योम ocfs2_blockcheck_inc_failure(काष्ठा ocfs2_blockcheck_stats *stats)
+अणु
 	u64 new_count;
 
-	if (!stats)
-		return;
+	अगर (!stats)
+		वापस;
 
 	spin_lock(&stats->b_lock);
 	stats->b_failure_count++;
 	new_count = stats->b_failure_count;
 	spin_unlock(&stats->b_lock);
 
-	if (!new_count)
+	अगर (!new_count)
 		mlog(ML_NOTICE, "Checksum failure count has wrapped\n");
-}
+पूर्ण
 
-static void ocfs2_blockcheck_inc_recover(struct ocfs2_blockcheck_stats *stats)
-{
+अटल व्योम ocfs2_blockcheck_inc_recover(काष्ठा ocfs2_blockcheck_stats *stats)
+अणु
 	u64 new_count;
 
-	if (!stats)
-		return;
+	अगर (!stats)
+		वापस;
 
 	spin_lock(&stats->b_lock);
 	stats->b_recover_count++;
 	new_count = stats->b_recover_count;
 	spin_unlock(&stats->b_lock);
 
-	if (!new_count)
+	अगर (!new_count)
 		mlog(ML_NOTICE, "ECC recovery count has wrapped\n");
-}
+पूर्ण
 
 
 
 /*
- * These are the low-level APIs for using the ocfs2_block_check structure.
+ * These are the low-level APIs क्रम using the ocfs2_block_check काष्ठाure.
  */
 
 /*
- * This function generates check information for a block.
- * data is the block to be checked.  bc is a pointer to the
- * ocfs2_block_check structure describing the crc32 and the ecc.
+ * This function generates check inक्रमmation क्रम a block.
+ * data is the block to be checked.  bc is a poपूर्णांकer to the
+ * ocfs2_block_check काष्ठाure describing the crc32 and the ecc.
  *
- * bc should be a pointer inside data, as the function will
- * take care of zeroing it before calculating the check information.  If
- * bc does not point inside data, the caller must make sure any inline
- * ocfs2_block_check structures are zeroed.
+ * bc should be a poपूर्णांकer inside data, as the function will
+ * take care of zeroing it beक्रमe calculating the check inक्रमmation.  If
+ * bc करोes not poपूर्णांक inside data, the caller must make sure any अंतरभूत
+ * ocfs2_block_check काष्ठाures are zeroed.
  *
- * The data buffer must be in on-disk endian (little endian for ocfs2).
- * bc will be filled with little-endian values and will be ready to go to
+ * The data buffer must be in on-disk endian (little endian क्रम ocfs2).
+ * bc will be filled with little-endian values and will be पढ़ोy to go to
  * disk.
  */
-void ocfs2_block_check_compute(void *data, size_t blocksize,
-			       struct ocfs2_block_check *bc)
-{
+व्योम ocfs2_block_check_compute(व्योम *data, माप_प्रकार blocksize,
+			       काष्ठा ocfs2_block_check *bc)
+अणु
 	u32 crc;
 	u32 ecc;
 
-	memset(bc, 0, sizeof(struct ocfs2_block_check));
+	स_रखो(bc, 0, माप(काष्ठा ocfs2_block_check));
 
 	crc = crc32_le(~0, data, blocksize);
 	ecc = ocfs2_hamming_encode_block(data, blocksize);
 
 	/*
-	 * No ecc'd ocfs2 structure is larger than 4K, so ecc will be no
+	 * No ecc'd ocfs2 काष्ठाure is larger than 4K, so ecc will be no
 	 * larger than 16 bits.
 	 */
-	BUG_ON(ecc > USHRT_MAX);
+	BUG_ON(ecc > अच_लघु_उच्च);
 
 	bc->bc_crc32e = cpu_to_le32(crc);
 	bc->bc_ecc = cpu_to_le16((u16)ecc);
-}
+पूर्ण
 
 /*
- * This function validates existing check information.  Like _compute,
- * the function will take care of zeroing bc before calculating check codes.
- * If bc is not a pointer inside data, the caller must have zeroed any
- * inline ocfs2_block_check structures.
+ * This function validates existing check inक्रमmation.  Like _compute,
+ * the function will take care of zeroing bc beक्रमe calculating check codes.
+ * If bc is not a poपूर्णांकer inside data, the caller must have zeroed any
+ * अंतरभूत ocfs2_block_check काष्ठाures.
  *
  * Again, the data passed in should be the on-disk endian.
  */
-int ocfs2_block_check_validate(void *data, size_t blocksize,
-			       struct ocfs2_block_check *bc,
-			       struct ocfs2_blockcheck_stats *stats)
-{
-	int rc = 0;
+पूर्णांक ocfs2_block_check_validate(व्योम *data, माप_प्रकार blocksize,
+			       काष्ठा ocfs2_block_check *bc,
+			       काष्ठा ocfs2_blockcheck_stats *stats)
+अणु
+	पूर्णांक rc = 0;
 	u32 bc_crc32e;
 	u16 bc_ecc;
 	u32 crc, ecc;
@@ -389,17 +390,17 @@ int ocfs2_block_check_validate(void *data, size_t blocksize,
 	bc_crc32e = le32_to_cpu(bc->bc_crc32e);
 	bc_ecc = le16_to_cpu(bc->bc_ecc);
 
-	memset(bc, 0, sizeof(struct ocfs2_block_check));
+	स_रखो(bc, 0, माप(काष्ठा ocfs2_block_check));
 
-	/* Fast path - if the crc32 validates, we're good to go */
+	/* Fast path - अगर the crc32 validates, we're good to go */
 	crc = crc32_le(~0, data, blocksize);
-	if (crc == bc_crc32e)
-		goto out;
+	अगर (crc == bc_crc32e)
+		जाओ out;
 
 	ocfs2_blockcheck_inc_failure(stats);
 	mlog(ML_ERROR,
 	     "CRC32 failed: stored: 0x%x, computed 0x%x. Applying ECC.\n",
-	     (unsigned int)bc_crc32e, (unsigned int)crc);
+	     (अचिन्हित पूर्णांक)bc_crc32e, (अचिन्हित पूर्णांक)crc);
 
 	/* Ok, try ECC fixups */
 	ecc = ocfs2_hamming_encode_block(data, blocksize);
@@ -407,13 +408,13 @@ int ocfs2_block_check_validate(void *data, size_t blocksize,
 
 	/* And check the crc32 again */
 	crc = crc32_le(~0, data, blocksize);
-	if (crc == bc_crc32e) {
+	अगर (crc == bc_crc32e) अणु
 		ocfs2_blockcheck_inc_recover(stats);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mlog(ML_ERROR, "Fixed CRC32 failed: stored: 0x%x, computed 0x%x\n",
-	     (unsigned int)bc_crc32e, (unsigned int)crc);
+	     (अचिन्हित पूर्णांक)bc_crc32e, (अचिन्हित पूर्णांक)crc);
 
 	rc = -EIO;
 
@@ -421,37 +422,37 @@ out:
 	bc->bc_crc32e = cpu_to_le32(bc_crc32e);
 	bc->bc_ecc = cpu_to_le16(bc_ecc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * This function generates check information for a list of buffer_heads.
- * bhs is the blocks to be checked.  bc is a pointer to the
- * ocfs2_block_check structure describing the crc32 and the ecc.
+ * This function generates check inक्रमmation क्रम a list of buffer_heads.
+ * bhs is the blocks to be checked.  bc is a poपूर्णांकer to the
+ * ocfs2_block_check काष्ठाure describing the crc32 and the ecc.
  *
- * bc should be a pointer inside data, as the function will
- * take care of zeroing it before calculating the check information.  If
- * bc does not point inside data, the caller must make sure any inline
- * ocfs2_block_check structures are zeroed.
+ * bc should be a poपूर्णांकer inside data, as the function will
+ * take care of zeroing it beक्रमe calculating the check inक्रमmation.  If
+ * bc करोes not poपूर्णांक inside data, the caller must make sure any अंतरभूत
+ * ocfs2_block_check काष्ठाures are zeroed.
  *
- * The data buffer must be in on-disk endian (little endian for ocfs2).
- * bc will be filled with little-endian values and will be ready to go to
+ * The data buffer must be in on-disk endian (little endian क्रम ocfs2).
+ * bc will be filled with little-endian values and will be पढ़ोy to go to
  * disk.
  */
-void ocfs2_block_check_compute_bhs(struct buffer_head **bhs, int nr,
-				   struct ocfs2_block_check *bc)
-{
-	int i;
+व्योम ocfs2_block_check_compute_bhs(काष्ठा buffer_head **bhs, पूर्णांक nr,
+				   काष्ठा ocfs2_block_check *bc)
+अणु
+	पूर्णांक i;
 	u32 crc, ecc;
 
 	BUG_ON(nr < 0);
 
-	if (!nr)
-		return;
+	अगर (!nr)
+		वापस;
 
-	memset(bc, 0, sizeof(struct ocfs2_block_check));
+	स_रखो(bc, 0, माप(काष्ठा ocfs2_block_check));
 
-	for (i = 0, crc = ~0, ecc = 0; i < nr; i++) {
+	क्रम (i = 0, crc = ~0, ecc = 0; i < nr; i++) अणु
 		crc = crc32_le(crc, bhs[i]->b_data, bhs[i]->b_size);
 		/*
 		 * The number of bits in a buffer is obviously b_size*8.
@@ -461,61 +462,61 @@ void ocfs2_block_check_compute_bhs(struct buffer_head **bhs, int nr,
 		ecc = (u16)ocfs2_hamming_encode(ecc, bhs[i]->b_data,
 						bhs[i]->b_size * 8,
 						bhs[i]->b_size * 8 * i);
-	}
+	पूर्ण
 
 	/*
-	 * No ecc'd ocfs2 structure is larger than 4K, so ecc will be no
+	 * No ecc'd ocfs2 काष्ठाure is larger than 4K, so ecc will be no
 	 * larger than 16 bits.
 	 */
-	BUG_ON(ecc > USHRT_MAX);
+	BUG_ON(ecc > अच_लघु_उच्च);
 
 	bc->bc_crc32e = cpu_to_le32(crc);
 	bc->bc_ecc = cpu_to_le16((u16)ecc);
-}
+पूर्ण
 
 /*
- * This function validates existing check information on a list of
+ * This function validates existing check inक्रमmation on a list of
  * buffer_heads.  Like _compute_bhs, the function will take care of
- * zeroing bc before calculating check codes.  If bc is not a pointer
- * inside data, the caller must have zeroed any inline
- * ocfs2_block_check structures.
+ * zeroing bc beक्रमe calculating check codes.  If bc is not a poपूर्णांकer
+ * inside data, the caller must have zeroed any अंतरभूत
+ * ocfs2_block_check काष्ठाures.
  *
  * Again, the data passed in should be the on-disk endian.
  */
-int ocfs2_block_check_validate_bhs(struct buffer_head **bhs, int nr,
-				   struct ocfs2_block_check *bc,
-				   struct ocfs2_blockcheck_stats *stats)
-{
-	int i, rc = 0;
+पूर्णांक ocfs2_block_check_validate_bhs(काष्ठा buffer_head **bhs, पूर्णांक nr,
+				   काष्ठा ocfs2_block_check *bc,
+				   काष्ठा ocfs2_blockcheck_stats *stats)
+अणु
+	पूर्णांक i, rc = 0;
 	u32 bc_crc32e;
 	u16 bc_ecc;
 	u32 crc, ecc, fix;
 
 	BUG_ON(nr < 0);
 
-	if (!nr)
-		return 0;
+	अगर (!nr)
+		वापस 0;
 
 	ocfs2_blockcheck_inc_check(stats);
 
 	bc_crc32e = le32_to_cpu(bc->bc_crc32e);
 	bc_ecc = le16_to_cpu(bc->bc_ecc);
 
-	memset(bc, 0, sizeof(struct ocfs2_block_check));
+	स_रखो(bc, 0, माप(काष्ठा ocfs2_block_check));
 
-	/* Fast path - if the crc32 validates, we're good to go */
-	for (i = 0, crc = ~0; i < nr; i++)
+	/* Fast path - अगर the crc32 validates, we're good to go */
+	क्रम (i = 0, crc = ~0; i < nr; i++)
 		crc = crc32_le(crc, bhs[i]->b_data, bhs[i]->b_size);
-	if (crc == bc_crc32e)
-		goto out;
+	अगर (crc == bc_crc32e)
+		जाओ out;
 
 	ocfs2_blockcheck_inc_failure(stats);
 	mlog(ML_ERROR,
 	     "CRC32 failed: stored: %u, computed %u.  Applying ECC.\n",
-	     (unsigned int)bc_crc32e, (unsigned int)crc);
+	     (अचिन्हित पूर्णांक)bc_crc32e, (अचिन्हित पूर्णांक)crc);
 
 	/* Ok, try ECC fixups */
-	for (i = 0, ecc = 0; i < nr; i++) {
+	क्रम (i = 0, ecc = 0; i < nr; i++) अणु
 		/*
 		 * The number of bits in a buffer is obviously b_size*8.
 		 * The offset of this buffer is b_size*i, so the bit offset
@@ -524,27 +525,27 @@ int ocfs2_block_check_validate_bhs(struct buffer_head **bhs, int nr,
 		ecc = (u16)ocfs2_hamming_encode(ecc, bhs[i]->b_data,
 						bhs[i]->b_size * 8,
 						bhs[i]->b_size * 8 * i);
-	}
+	पूर्ण
 	fix = ecc ^ bc_ecc;
-	for (i = 0; i < nr; i++) {
+	क्रम (i = 0; i < nr; i++) अणु
 		/*
 		 * Try the fix against each buffer.  It will only affect
 		 * one of them.
 		 */
 		ocfs2_hamming_fix(bhs[i]->b_data, bhs[i]->b_size * 8,
 				  bhs[i]->b_size * 8 * i, fix);
-	}
+	पूर्ण
 
 	/* And check the crc32 again */
-	for (i = 0, crc = ~0; i < nr; i++)
+	क्रम (i = 0, crc = ~0; i < nr; i++)
 		crc = crc32_le(crc, bhs[i]->b_data, bhs[i]->b_size);
-	if (crc == bc_crc32e) {
+	अगर (crc == bc_crc32e) अणु
 		ocfs2_blockcheck_inc_recover(stats);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mlog(ML_ERROR, "Fixed CRC32 failed: stored: %u, computed %u\n",
-	     (unsigned int)bc_crc32e, (unsigned int)crc);
+	     (अचिन्हित पूर्णांक)bc_crc32e, (अचिन्हित पूर्णांक)crc);
 
 	rc = -EIO;
 
@@ -552,54 +553,54 @@ out:
 	bc->bc_crc32e = cpu_to_le32(bc_crc32e);
 	bc->bc_ecc = cpu_to_le16(bc_ecc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * These are the main API.  They check the superblock flag before
+ * These are the मुख्य API.  They check the superblock flag beक्रमe
  * calling the underlying operations.
  *
- * They expect the buffer(s) to be in disk format.
+ * They expect the buffer(s) to be in disk क्रमmat.
  */
-void ocfs2_compute_meta_ecc(struct super_block *sb, void *data,
-			    struct ocfs2_block_check *bc)
-{
-	if (ocfs2_meta_ecc(OCFS2_SB(sb)))
+व्योम ocfs2_compute_meta_ecc(काष्ठा super_block *sb, व्योम *data,
+			    काष्ठा ocfs2_block_check *bc)
+अणु
+	अगर (ocfs2_meta_ecc(OCFS2_SB(sb)))
 		ocfs2_block_check_compute(data, sb->s_blocksize, bc);
-}
+पूर्ण
 
-int ocfs2_validate_meta_ecc(struct super_block *sb, void *data,
-			    struct ocfs2_block_check *bc)
-{
-	int rc = 0;
-	struct ocfs2_super *osb = OCFS2_SB(sb);
+पूर्णांक ocfs2_validate_meta_ecc(काष्ठा super_block *sb, व्योम *data,
+			    काष्ठा ocfs2_block_check *bc)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(sb);
 
-	if (ocfs2_meta_ecc(osb))
+	अगर (ocfs2_meta_ecc(osb))
 		rc = ocfs2_block_check_validate(data, sb->s_blocksize, bc,
 						&osb->osb_ecc_stats);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void ocfs2_compute_meta_ecc_bhs(struct super_block *sb,
-				struct buffer_head **bhs, int nr,
-				struct ocfs2_block_check *bc)
-{
-	if (ocfs2_meta_ecc(OCFS2_SB(sb)))
+व्योम ocfs2_compute_meta_ecc_bhs(काष्ठा super_block *sb,
+				काष्ठा buffer_head **bhs, पूर्णांक nr,
+				काष्ठा ocfs2_block_check *bc)
+अणु
+	अगर (ocfs2_meta_ecc(OCFS2_SB(sb)))
 		ocfs2_block_check_compute_bhs(bhs, nr, bc);
-}
+पूर्ण
 
-int ocfs2_validate_meta_ecc_bhs(struct super_block *sb,
-				struct buffer_head **bhs, int nr,
-				struct ocfs2_block_check *bc)
-{
-	int rc = 0;
-	struct ocfs2_super *osb = OCFS2_SB(sb);
+पूर्णांक ocfs2_validate_meta_ecc_bhs(काष्ठा super_block *sb,
+				काष्ठा buffer_head **bhs, पूर्णांक nr,
+				काष्ठा ocfs2_block_check *bc)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(sb);
 
-	if (ocfs2_meta_ecc(osb))
+	अगर (ocfs2_meta_ecc(osb))
 		rc = ocfs2_block_check_validate_bhs(bhs, nr, bc,
 						    &osb->osb_ecc_stats);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 

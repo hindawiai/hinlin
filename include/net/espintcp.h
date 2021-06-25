@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NET_ESPINTCP_H
-#define _NET_ESPINTCP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NET_ESPINTCP_H
+#घोषणा _NET_ESPINTCP_H
 
-#include <net/strparser.h>
-#include <linux/skmsg.h>
+#समावेश <net/strparser.h>
+#समावेश <linux/skmsg.h>
 
-void __init espintcp_init(void);
+व्योम __init espपूर्णांकcp_init(व्योम);
 
-int espintcp_push_skb(struct sock *sk, struct sk_buff *skb);
-int espintcp_queue_out(struct sock *sk, struct sk_buff *skb);
-bool tcp_is_ulp_esp(struct sock *sk);
+पूर्णांक espपूर्णांकcp_push_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+पूर्णांक espपूर्णांकcp_queue_out(काष्ठा sock *sk, काष्ठा sk_buff *skb);
+bool tcp_is_ulp_esp(काष्ठा sock *sk);
 
-struct espintcp_msg {
-	struct sk_buff *skb;
-	struct sk_msg skmsg;
-	int offset;
-	int len;
-};
+काष्ठा espपूर्णांकcp_msg अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा sk_msg skmsg;
+	पूर्णांक offset;
+	पूर्णांक len;
+पूर्ण;
 
-struct espintcp_ctx {
-	struct strparser strp;
-	struct sk_buff_head ike_queue;
-	struct sk_buff_head out_queue;
-	struct espintcp_msg partial;
-	void (*saved_data_ready)(struct sock *sk);
-	void (*saved_write_space)(struct sock *sk);
-	void (*saved_destruct)(struct sock *sk);
-	struct work_struct work;
+काष्ठा espपूर्णांकcp_ctx अणु
+	काष्ठा strparser strp;
+	काष्ठा sk_buff_head ike_queue;
+	काष्ठा sk_buff_head out_queue;
+	काष्ठा espपूर्णांकcp_msg partial;
+	व्योम (*saved_data_पढ़ोy)(काष्ठा sock *sk);
+	व्योम (*saved_ग_लिखो_space)(काष्ठा sock *sk);
+	व्योम (*saved_deकाष्ठा)(काष्ठा sock *sk);
+	काष्ठा work_काष्ठा work;
 	bool tx_running;
-};
+पूर्ण;
 
-static inline struct espintcp_ctx *espintcp_getctx(const struct sock *sk)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
+अटल अंतरभूत काष्ठा espपूर्णांकcp_ctx *espपूर्णांकcp_अ_लोtx(स्थिर काष्ठा sock *sk)
+अणु
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
 
-	/* RCU is only needed for diag */
-	return (__force void *)icsk->icsk_ulp_data;
-}
-#endif
+	/* RCU is only needed क्रम diag */
+	वापस (__क्रमce व्योम *)icsk->icsk_ulp_data;
+पूर्ण
+#पूर्ण_अगर

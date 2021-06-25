@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Driver for the ST Microelectronics SPEAr3xx pinmux
+ * Driver क्रम the ST Microelectronics SPEAr3xx pinmux
  *
  * Copyright (C) 2012 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -9,477 +10,477 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-spear3xx.h"
+#समावेश "pinctrl-spear3xx.h"
 
 /* pins */
-static const struct pinctrl_pin_desc spear3xx_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc spear3xx_pins[] = अणु
 	SPEAR_PIN_0_TO_101,
-};
+पूर्ण;
 
 /* firda_pins */
-static const unsigned firda_pins[] = { 0, 1 };
-static struct spear_muxreg firda_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित firda_pins[] = अणु 0, 1 पूर्ण;
+अटल काष्ठा spear_muxreg firda_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_FIRDA_MASK,
 		.val = PMX_FIRDA_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux firda_modemux[] = {
-	{
+अटल काष्ठा spear_modemux firda_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = firda_muxreg,
 		.nmuxregs = ARRAY_SIZE(firda_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_firda_pingroup = {
+काष्ठा spear_pingroup spear3xx_firda_pingroup = अणु
 	.name = "firda_grp",
 	.pins = firda_pins,
 	.npins = ARRAY_SIZE(firda_pins),
 	.modemuxs = firda_modemux,
 	.nmodemuxs = ARRAY_SIZE(firda_modemux),
-};
+पूर्ण;
 
-static const char *const firda_grps[] = { "firda_grp" };
-struct spear_function spear3xx_firda_function = {
+अटल स्थिर अक्षर *स्थिर firda_grps[] = अणु "firda_grp" पूर्ण;
+काष्ठा spear_function spear3xx_firda_function = अणु
 	.name = "firda",
 	.groups = firda_grps,
 	.ngroups = ARRAY_SIZE(firda_grps),
-};
+पूर्ण;
 
 /* i2c_pins */
-static const unsigned i2c_pins[] = { 4, 5 };
-static struct spear_muxreg i2c_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित i2c_pins[] = अणु 4, 5 पूर्ण;
+अटल काष्ठा spear_muxreg i2c_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_I2C_MASK,
 		.val = PMX_I2C_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux i2c_modemux[] = {
-	{
+अटल काष्ठा spear_modemux i2c_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = i2c_muxreg,
 		.nmuxregs = ARRAY_SIZE(i2c_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_i2c_pingroup = {
+काष्ठा spear_pingroup spear3xx_i2c_pingroup = अणु
 	.name = "i2c0_grp",
 	.pins = i2c_pins,
 	.npins = ARRAY_SIZE(i2c_pins),
 	.modemuxs = i2c_modemux,
 	.nmodemuxs = ARRAY_SIZE(i2c_modemux),
-};
+पूर्ण;
 
-static const char *const i2c_grps[] = { "i2c0_grp" };
-struct spear_function spear3xx_i2c_function = {
+अटल स्थिर अक्षर *स्थिर i2c_grps[] = अणु "i2c0_grp" पूर्ण;
+काष्ठा spear_function spear3xx_i2c_function = अणु
 	.name = "i2c0",
 	.groups = i2c_grps,
 	.ngroups = ARRAY_SIZE(i2c_grps),
-};
+पूर्ण;
 
 /* ssp_cs_pins */
-static const unsigned ssp_cs_pins[] = { 34, 35, 36 };
-static struct spear_muxreg ssp_cs_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित ssp_cs_pins[] = अणु 34, 35, 36 पूर्ण;
+अटल काष्ठा spear_muxreg ssp_cs_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_SSP_CS_MASK,
 		.val = PMX_SSP_CS_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux ssp_cs_modemux[] = {
-	{
+अटल काष्ठा spear_modemux ssp_cs_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = ssp_cs_muxreg,
 		.nmuxregs = ARRAY_SIZE(ssp_cs_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_ssp_cs_pingroup = {
+काष्ठा spear_pingroup spear3xx_ssp_cs_pingroup = अणु
 	.name = "ssp_cs_grp",
 	.pins = ssp_cs_pins,
 	.npins = ARRAY_SIZE(ssp_cs_pins),
 	.modemuxs = ssp_cs_modemux,
 	.nmodemuxs = ARRAY_SIZE(ssp_cs_modemux),
-};
+पूर्ण;
 
-static const char *const ssp_cs_grps[] = { "ssp_cs_grp" };
-struct spear_function spear3xx_ssp_cs_function = {
+अटल स्थिर अक्षर *स्थिर ssp_cs_grps[] = अणु "ssp_cs_grp" पूर्ण;
+काष्ठा spear_function spear3xx_ssp_cs_function = अणु
 	.name = "ssp_cs",
 	.groups = ssp_cs_grps,
 	.ngroups = ARRAY_SIZE(ssp_cs_grps),
-};
+पूर्ण;
 
 /* ssp_pins */
-static const unsigned ssp_pins[] = { 6, 7, 8, 9 };
-static struct spear_muxreg ssp_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित ssp_pins[] = अणु 6, 7, 8, 9 पूर्ण;
+अटल काष्ठा spear_muxreg ssp_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_SSP_MASK,
 		.val = PMX_SSP_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux ssp_modemux[] = {
-	{
+अटल काष्ठा spear_modemux ssp_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = ssp_muxreg,
 		.nmuxregs = ARRAY_SIZE(ssp_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_ssp_pingroup = {
+काष्ठा spear_pingroup spear3xx_ssp_pingroup = अणु
 	.name = "ssp0_grp",
 	.pins = ssp_pins,
 	.npins = ARRAY_SIZE(ssp_pins),
 	.modemuxs = ssp_modemux,
 	.nmodemuxs = ARRAY_SIZE(ssp_modemux),
-};
+पूर्ण;
 
-static const char *const ssp_grps[] = { "ssp0_grp" };
-struct spear_function spear3xx_ssp_function = {
+अटल स्थिर अक्षर *स्थिर ssp_grps[] = अणु "ssp0_grp" पूर्ण;
+काष्ठा spear_function spear3xx_ssp_function = अणु
 	.name = "ssp0",
 	.groups = ssp_grps,
 	.ngroups = ARRAY_SIZE(ssp_grps),
-};
+पूर्ण;
 
 /* mii_pins */
-static const unsigned mii_pins[] = { 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-	21, 22, 23, 24, 25, 26, 27 };
-static struct spear_muxreg mii_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित mii_pins[] = अणु 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+	21, 22, 23, 24, 25, 26, 27 पूर्ण;
+अटल काष्ठा spear_muxreg mii_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_MII_MASK,
 		.val = PMX_MII_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux mii_modemux[] = {
-	{
+अटल काष्ठा spear_modemux mii_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = mii_muxreg,
 		.nmuxregs = ARRAY_SIZE(mii_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_mii_pingroup = {
+काष्ठा spear_pingroup spear3xx_mii_pingroup = अणु
 	.name = "mii0_grp",
 	.pins = mii_pins,
 	.npins = ARRAY_SIZE(mii_pins),
 	.modemuxs = mii_modemux,
 	.nmodemuxs = ARRAY_SIZE(mii_modemux),
-};
+पूर्ण;
 
-static const char *const mii_grps[] = { "mii0_grp" };
-struct spear_function spear3xx_mii_function = {
+अटल स्थिर अक्षर *स्थिर mii_grps[] = अणु "mii0_grp" पूर्ण;
+काष्ठा spear_function spear3xx_mii_function = अणु
 	.name = "mii0",
 	.groups = mii_grps,
 	.ngroups = ARRAY_SIZE(mii_grps),
-};
+पूर्ण;
 
 /* gpio0_pin0_pins */
-static const unsigned gpio0_pin0_pins[] = { 28 };
-static struct spear_muxreg gpio0_pin0_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित gpio0_pin0_pins[] = अणु 28 पूर्ण;
+अटल काष्ठा spear_muxreg gpio0_pin0_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_GPIO_PIN0_MASK,
 		.val = PMX_GPIO_PIN0_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux gpio0_pin0_modemux[] = {
-	{
+अटल काष्ठा spear_modemux gpio0_pin0_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = gpio0_pin0_muxreg,
 		.nmuxregs = ARRAY_SIZE(gpio0_pin0_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_gpio0_pin0_pingroup = {
+काष्ठा spear_pingroup spear3xx_gpio0_pin0_pingroup = अणु
 	.name = "gpio0_pin0_grp",
 	.pins = gpio0_pin0_pins,
 	.npins = ARRAY_SIZE(gpio0_pin0_pins),
 	.modemuxs = gpio0_pin0_modemux,
 	.nmodemuxs = ARRAY_SIZE(gpio0_pin0_modemux),
-};
+पूर्ण;
 
 /* gpio0_pin1_pins */
-static const unsigned gpio0_pin1_pins[] = { 29 };
-static struct spear_muxreg gpio0_pin1_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित gpio0_pin1_pins[] = अणु 29 पूर्ण;
+अटल काष्ठा spear_muxreg gpio0_pin1_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_GPIO_PIN1_MASK,
 		.val = PMX_GPIO_PIN1_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux gpio0_pin1_modemux[] = {
-	{
+अटल काष्ठा spear_modemux gpio0_pin1_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = gpio0_pin1_muxreg,
 		.nmuxregs = ARRAY_SIZE(gpio0_pin1_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_gpio0_pin1_pingroup = {
+काष्ठा spear_pingroup spear3xx_gpio0_pin1_pingroup = अणु
 	.name = "gpio0_pin1_grp",
 	.pins = gpio0_pin1_pins,
 	.npins = ARRAY_SIZE(gpio0_pin1_pins),
 	.modemuxs = gpio0_pin1_modemux,
 	.nmodemuxs = ARRAY_SIZE(gpio0_pin1_modemux),
-};
+पूर्ण;
 
 /* gpio0_pin2_pins */
-static const unsigned gpio0_pin2_pins[] = { 30 };
-static struct spear_muxreg gpio0_pin2_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित gpio0_pin2_pins[] = अणु 30 पूर्ण;
+अटल काष्ठा spear_muxreg gpio0_pin2_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_GPIO_PIN2_MASK,
 		.val = PMX_GPIO_PIN2_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux gpio0_pin2_modemux[] = {
-	{
+अटल काष्ठा spear_modemux gpio0_pin2_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = gpio0_pin2_muxreg,
 		.nmuxregs = ARRAY_SIZE(gpio0_pin2_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_gpio0_pin2_pingroup = {
+काष्ठा spear_pingroup spear3xx_gpio0_pin2_pingroup = अणु
 	.name = "gpio0_pin2_grp",
 	.pins = gpio0_pin2_pins,
 	.npins = ARRAY_SIZE(gpio0_pin2_pins),
 	.modemuxs = gpio0_pin2_modemux,
 	.nmodemuxs = ARRAY_SIZE(gpio0_pin2_modemux),
-};
+पूर्ण;
 
 /* gpio0_pin3_pins */
-static const unsigned gpio0_pin3_pins[] = { 31 };
-static struct spear_muxreg gpio0_pin3_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित gpio0_pin3_pins[] = अणु 31 पूर्ण;
+अटल काष्ठा spear_muxreg gpio0_pin3_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_GPIO_PIN3_MASK,
 		.val = PMX_GPIO_PIN3_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux gpio0_pin3_modemux[] = {
-	{
+अटल काष्ठा spear_modemux gpio0_pin3_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = gpio0_pin3_muxreg,
 		.nmuxregs = ARRAY_SIZE(gpio0_pin3_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_gpio0_pin3_pingroup = {
+काष्ठा spear_pingroup spear3xx_gpio0_pin3_pingroup = अणु
 	.name = "gpio0_pin3_grp",
 	.pins = gpio0_pin3_pins,
 	.npins = ARRAY_SIZE(gpio0_pin3_pins),
 	.modemuxs = gpio0_pin3_modemux,
 	.nmodemuxs = ARRAY_SIZE(gpio0_pin3_modemux),
-};
+पूर्ण;
 
 /* gpio0_pin4_pins */
-static const unsigned gpio0_pin4_pins[] = { 32 };
-static struct spear_muxreg gpio0_pin4_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित gpio0_pin4_pins[] = अणु 32 पूर्ण;
+अटल काष्ठा spear_muxreg gpio0_pin4_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_GPIO_PIN4_MASK,
 		.val = PMX_GPIO_PIN4_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux gpio0_pin4_modemux[] = {
-	{
+अटल काष्ठा spear_modemux gpio0_pin4_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = gpio0_pin4_muxreg,
 		.nmuxregs = ARRAY_SIZE(gpio0_pin4_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_gpio0_pin4_pingroup = {
+काष्ठा spear_pingroup spear3xx_gpio0_pin4_pingroup = अणु
 	.name = "gpio0_pin4_grp",
 	.pins = gpio0_pin4_pins,
 	.npins = ARRAY_SIZE(gpio0_pin4_pins),
 	.modemuxs = gpio0_pin4_modemux,
 	.nmodemuxs = ARRAY_SIZE(gpio0_pin4_modemux),
-};
+पूर्ण;
 
 /* gpio0_pin5_pins */
-static const unsigned gpio0_pin5_pins[] = { 33 };
-static struct spear_muxreg gpio0_pin5_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित gpio0_pin5_pins[] = अणु 33 पूर्ण;
+अटल काष्ठा spear_muxreg gpio0_pin5_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_GPIO_PIN5_MASK,
 		.val = PMX_GPIO_PIN5_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux gpio0_pin5_modemux[] = {
-	{
+अटल काष्ठा spear_modemux gpio0_pin5_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = gpio0_pin5_muxreg,
 		.nmuxregs = ARRAY_SIZE(gpio0_pin5_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_gpio0_pin5_pingroup = {
+काष्ठा spear_pingroup spear3xx_gpio0_pin5_pingroup = अणु
 	.name = "gpio0_pin5_grp",
 	.pins = gpio0_pin5_pins,
 	.npins = ARRAY_SIZE(gpio0_pin5_pins),
 	.modemuxs = gpio0_pin5_modemux,
 	.nmodemuxs = ARRAY_SIZE(gpio0_pin5_modemux),
-};
+पूर्ण;
 
-static const char *const gpio0_grps[] = { "gpio0_pin0_grp", "gpio0_pin1_grp",
+अटल स्थिर अक्षर *स्थिर gpio0_grps[] = अणु "gpio0_pin0_grp", "gpio0_pin1_grp",
 	"gpio0_pin2_grp", "gpio0_pin3_grp", "gpio0_pin4_grp", "gpio0_pin5_grp",
-};
-struct spear_function spear3xx_gpio0_function = {
+पूर्ण;
+काष्ठा spear_function spear3xx_gpio0_function = अणु
 	.name = "gpio0",
 	.groups = gpio0_grps,
 	.ngroups = ARRAY_SIZE(gpio0_grps),
-};
+पूर्ण;
 
 /* uart0_ext_pins */
-static const unsigned uart0_ext_pins[] = { 37, 38, 39, 40, 41, 42 };
-static struct spear_muxreg uart0_ext_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित uart0_ext_pins[] = अणु 37, 38, 39, 40, 41, 42 पूर्ण;
+अटल काष्ठा spear_muxreg uart0_ext_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_UART0_MODEM_MASK,
 		.val = PMX_UART0_MODEM_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux uart0_ext_modemux[] = {
-	{
+अटल काष्ठा spear_modemux uart0_ext_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = uart0_ext_muxreg,
 		.nmuxregs = ARRAY_SIZE(uart0_ext_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_uart0_ext_pingroup = {
+काष्ठा spear_pingroup spear3xx_uart0_ext_pingroup = अणु
 	.name = "uart0_ext_grp",
 	.pins = uart0_ext_pins,
 	.npins = ARRAY_SIZE(uart0_ext_pins),
 	.modemuxs = uart0_ext_modemux,
 	.nmodemuxs = ARRAY_SIZE(uart0_ext_modemux),
-};
+पूर्ण;
 
-static const char *const uart0_ext_grps[] = { "uart0_ext_grp" };
-struct spear_function spear3xx_uart0_ext_function = {
+अटल स्थिर अक्षर *स्थिर uart0_ext_grps[] = अणु "uart0_ext_grp" पूर्ण;
+काष्ठा spear_function spear3xx_uart0_ext_function = अणु
 	.name = "uart0_ext",
 	.groups = uart0_ext_grps,
 	.ngroups = ARRAY_SIZE(uart0_ext_grps),
-};
+पूर्ण;
 
 /* uart0_pins */
-static const unsigned uart0_pins[] = { 2, 3 };
-static struct spear_muxreg uart0_muxreg[] = {
-	{
+अटल स्थिर अचिन्हित uart0_pins[] = अणु 2, 3 पूर्ण;
+अटल काष्ठा spear_muxreg uart0_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_UART0_MASK,
 		.val = PMX_UART0_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux uart0_modemux[] = {
-	{
+अटल काष्ठा spear_modemux uart0_modemux[] = अणु
+	अणु
 		.modes = ~0,
 		.muxregs = uart0_muxreg,
 		.nmuxregs = ARRAY_SIZE(uart0_muxreg),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_uart0_pingroup = {
+काष्ठा spear_pingroup spear3xx_uart0_pingroup = अणु
 	.name = "uart0_grp",
 	.pins = uart0_pins,
 	.npins = ARRAY_SIZE(uart0_pins),
 	.modemuxs = uart0_modemux,
 	.nmodemuxs = ARRAY_SIZE(uart0_modemux),
-};
+पूर्ण;
 
-static const char *const uart0_grps[] = { "uart0_grp" };
-struct spear_function spear3xx_uart0_function = {
+अटल स्थिर अक्षर *स्थिर uart0_grps[] = अणु "uart0_grp" पूर्ण;
+काष्ठा spear_function spear3xx_uart0_function = अणु
 	.name = "uart0",
 	.groups = uart0_grps,
 	.ngroups = ARRAY_SIZE(uart0_grps),
-};
+पूर्ण;
 
-/* timer_0_1_pins */
-static const unsigned timer_0_1_pins[] = { 43, 44, 47, 48 };
-static struct spear_muxreg timer_0_1_muxreg[] = {
-	{
+/* समयr_0_1_pins */
+अटल स्थिर अचिन्हित समयr_0_1_pins[] = अणु 43, 44, 47, 48 पूर्ण;
+अटल काष्ठा spear_muxreg समयr_0_1_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_TIMER_0_1_MASK,
 		.val = PMX_TIMER_0_1_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux timer_0_1_modemux[] = {
-	{
+अटल काष्ठा spear_modemux समयr_0_1_modemux[] = अणु
+	अणु
 		.modes = ~0,
-		.muxregs = timer_0_1_muxreg,
-		.nmuxregs = ARRAY_SIZE(timer_0_1_muxreg),
-	},
-};
+		.muxregs = समयr_0_1_muxreg,
+		.nmuxregs = ARRAY_SIZE(समयr_0_1_muxreg),
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_timer_0_1_pingroup = {
+काष्ठा spear_pingroup spear3xx_समयr_0_1_pingroup = अणु
 	.name = "timer_0_1_grp",
-	.pins = timer_0_1_pins,
-	.npins = ARRAY_SIZE(timer_0_1_pins),
-	.modemuxs = timer_0_1_modemux,
-	.nmodemuxs = ARRAY_SIZE(timer_0_1_modemux),
-};
+	.pins = समयr_0_1_pins,
+	.npins = ARRAY_SIZE(समयr_0_1_pins),
+	.modemuxs = समयr_0_1_modemux,
+	.nmodemuxs = ARRAY_SIZE(समयr_0_1_modemux),
+पूर्ण;
 
-static const char *const timer_0_1_grps[] = { "timer_0_1_grp" };
-struct spear_function spear3xx_timer_0_1_function = {
+अटल स्थिर अक्षर *स्थिर समयr_0_1_grps[] = अणु "timer_0_1_grp" पूर्ण;
+काष्ठा spear_function spear3xx_समयr_0_1_function = अणु
 	.name = "timer_0_1",
-	.groups = timer_0_1_grps,
-	.ngroups = ARRAY_SIZE(timer_0_1_grps),
-};
+	.groups = समयr_0_1_grps,
+	.ngroups = ARRAY_SIZE(समयr_0_1_grps),
+पूर्ण;
 
-/* timer_2_3_pins */
-static const unsigned timer_2_3_pins[] = { 45, 46, 49, 50 };
-static struct spear_muxreg timer_2_3_muxreg[] = {
-	{
+/* समयr_2_3_pins */
+अटल स्थिर अचिन्हित समयr_2_3_pins[] = अणु 45, 46, 49, 50 पूर्ण;
+अटल काष्ठा spear_muxreg समयr_2_3_muxreg[] = अणु
+	अणु
 		.reg = -1,
 		.mask = PMX_TIMER_2_3_MASK,
 		.val = PMX_TIMER_2_3_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct spear_modemux timer_2_3_modemux[] = {
-	{
+अटल काष्ठा spear_modemux समयr_2_3_modemux[] = अणु
+	अणु
 		.modes = ~0,
-		.muxregs = timer_2_3_muxreg,
-		.nmuxregs = ARRAY_SIZE(timer_2_3_muxreg),
-	},
-};
+		.muxregs = समयr_2_3_muxreg,
+		.nmuxregs = ARRAY_SIZE(समयr_2_3_muxreg),
+	पूर्ण,
+पूर्ण;
 
-struct spear_pingroup spear3xx_timer_2_3_pingroup = {
+काष्ठा spear_pingroup spear3xx_समयr_2_3_pingroup = अणु
 	.name = "timer_2_3_grp",
-	.pins = timer_2_3_pins,
-	.npins = ARRAY_SIZE(timer_2_3_pins),
-	.modemuxs = timer_2_3_modemux,
-	.nmodemuxs = ARRAY_SIZE(timer_2_3_modemux),
-};
+	.pins = समयr_2_3_pins,
+	.npins = ARRAY_SIZE(समयr_2_3_pins),
+	.modemuxs = समयr_2_3_modemux,
+	.nmodemuxs = ARRAY_SIZE(समयr_2_3_modemux),
+पूर्ण;
 
-static const char *const timer_2_3_grps[] = { "timer_2_3_grp" };
-struct spear_function spear3xx_timer_2_3_function = {
+अटल स्थिर अक्षर *स्थिर समयr_2_3_grps[] = अणु "timer_2_3_grp" पूर्ण;
+काष्ठा spear_function spear3xx_समयr_2_3_function = अणु
 	.name = "timer_2_3",
-	.groups = timer_2_3_grps,
-	.ngroups = ARRAY_SIZE(timer_2_3_grps),
-};
+	.groups = समयr_2_3_grps,
+	.ngroups = ARRAY_SIZE(समयr_2_3_grps),
+पूर्ण;
 
 /* Define muxreg arrays */
 DEFINE_MUXREG(firda_pins, 0, PMX_FIRDA_MASK, 0);
@@ -495,10 +496,10 @@ DEFINE_MUXREG(gpio0_pin4_pins, 0, PMX_GPIO_PIN4_MASK, 0);
 DEFINE_MUXREG(gpio0_pin5_pins, 0, PMX_GPIO_PIN5_MASK, 0);
 DEFINE_MUXREG(uart0_ext_pins, 0, PMX_UART0_MODEM_MASK, 0);
 DEFINE_MUXREG(uart0_pins, 0, PMX_UART0_MASK, 0);
-DEFINE_MUXREG(timer_0_1_pins, 0, PMX_TIMER_0_1_MASK, 0);
-DEFINE_MUXREG(timer_2_3_pins, 0, PMX_TIMER_2_3_MASK, 0);
+DEFINE_MUXREG(समयr_0_1_pins, 0, PMX_TIMER_0_1_MASK, 0);
+DEFINE_MUXREG(समयr_2_3_pins, 0, PMX_TIMER_2_3_MASK, 0);
 
-static struct spear_gpio_pingroup spear3xx_gpio_pingroup[] = {
+अटल काष्ठा spear_gpio_pingroup spear3xx_gpio_pingroup[] = अणु
 	GPIO_PINGROUP(firda_pins),
 	GPIO_PINGROUP(i2c_pins),
 	GPIO_PINGROUP(ssp_cs_pins),
@@ -512,13 +513,13 @@ static struct spear_gpio_pingroup spear3xx_gpio_pingroup[] = {
 	GPIO_PINGROUP(gpio0_pin5_pins),
 	GPIO_PINGROUP(uart0_ext_pins),
 	GPIO_PINGROUP(uart0_pins),
-	GPIO_PINGROUP(timer_0_1_pins),
-	GPIO_PINGROUP(timer_2_3_pins),
-};
+	GPIO_PINGROUP(समयr_0_1_pins),
+	GPIO_PINGROUP(समयr_2_3_pins),
+पूर्ण;
 
-struct spear_pinctrl_machdata spear3xx_machdata = {
+काष्ठा spear_pinctrl_machdata spear3xx_machdata = अणु
 	.pins = spear3xx_pins,
 	.npins = ARRAY_SIZE(spear3xx_pins),
 	.gpio_pingroups = spear3xx_gpio_pingroup,
 	.ngpio_pingroups = ARRAY_SIZE(spear3xx_gpio_pingroup),
-};
+पूर्ण;

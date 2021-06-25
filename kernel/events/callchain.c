@@ -1,192 +1,193 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Performance events callchain code, extracted from core.c:
+ * Perक्रमmance events callchain code, extracted from core.c:
  *
  *  Copyright (C) 2008 Thomas Gleixner <tglx@linutronix.de>
  *  Copyright (C) 2008-2011 Red Hat, Inc., Ingo Molnar
  *  Copyright (C) 2008-2011 Red Hat, Inc., Peter Zijlstra
- *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
+ *  Copyright  तऊ  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
-#include <linux/perf_event.h>
-#include <linux/slab.h>
-#include <linux/sched/task_stack.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/task_stack.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-struct callchain_cpus_entries {
-	struct rcu_head			rcu_head;
-	struct perf_callchain_entry	*cpu_entries[];
-};
+काष्ठा callchain_cpus_entries अणु
+	काष्ठा rcu_head			rcu_head;
+	काष्ठा perf_callchain_entry	*cpu_entries[];
+पूर्ण;
 
-int sysctl_perf_event_max_stack __read_mostly = PERF_MAX_STACK_DEPTH;
-int sysctl_perf_event_max_contexts_per_stack __read_mostly = PERF_MAX_CONTEXTS_PER_STACK;
+पूर्णांक sysctl_perf_event_max_stack __पढ़ो_mostly = PERF_MAX_STACK_DEPTH;
+पूर्णांक sysctl_perf_event_max_contexts_per_stack __पढ़ो_mostly = PERF_MAX_CONTEXTS_PER_STACK;
 
-static inline size_t perf_callchain_entry__sizeof(void)
-{
-	return (sizeof(struct perf_callchain_entry) +
-		sizeof(__u64) * (sysctl_perf_event_max_stack +
+अटल अंतरभूत माप_प्रकार perf_callchain_entry__माप(व्योम)
+अणु
+	वापस (माप(काष्ठा perf_callchain_entry) +
+		माप(__u64) * (sysctl_perf_event_max_stack +
 				 sysctl_perf_event_max_contexts_per_stack));
-}
+पूर्ण
 
-static DEFINE_PER_CPU(int, callchain_recursion[PERF_NR_CONTEXTS]);
-static atomic_t nr_callchain_events;
-static DEFINE_MUTEX(callchain_mutex);
-static struct callchain_cpus_entries *callchain_cpus_entries;
+अटल DEFINE_PER_CPU(पूर्णांक, callchain_recursion[PERF_NR_CONTEXTS]);
+अटल atomic_t nr_callchain_events;
+अटल DEFINE_MUTEX(callchain_mutex);
+अटल काष्ठा callchain_cpus_entries *callchain_cpus_entries;
 
 
-__weak void perf_callchain_kernel(struct perf_callchain_entry_ctx *entry,
-				  struct pt_regs *regs)
-{
-}
+__weak व्योम perf_callchain_kernel(काष्ठा perf_callchain_entry_ctx *entry,
+				  काष्ठा pt_regs *regs)
+अणु
+पूर्ण
 
-__weak void perf_callchain_user(struct perf_callchain_entry_ctx *entry,
-				struct pt_regs *regs)
-{
-}
+__weak व्योम perf_callchain_user(काष्ठा perf_callchain_entry_ctx *entry,
+				काष्ठा pt_regs *regs)
+अणु
+पूर्ण
 
-static void release_callchain_buffers_rcu(struct rcu_head *head)
-{
-	struct callchain_cpus_entries *entries;
-	int cpu;
+अटल व्योम release_callchain_buffers_rcu(काष्ठा rcu_head *head)
+अणु
+	काष्ठा callchain_cpus_entries *entries;
+	पूर्णांक cpu;
 
-	entries = container_of(head, struct callchain_cpus_entries, rcu_head);
+	entries = container_of(head, काष्ठा callchain_cpus_entries, rcu_head);
 
-	for_each_possible_cpu(cpu)
-		kfree(entries->cpu_entries[cpu]);
+	क्रम_each_possible_cpu(cpu)
+		kमुक्त(entries->cpu_entries[cpu]);
 
-	kfree(entries);
-}
+	kमुक्त(entries);
+पूर्ण
 
-static void release_callchain_buffers(void)
-{
-	struct callchain_cpus_entries *entries;
+अटल व्योम release_callchain_buffers(व्योम)
+अणु
+	काष्ठा callchain_cpus_entries *entries;
 
 	entries = callchain_cpus_entries;
-	RCU_INIT_POINTER(callchain_cpus_entries, NULL);
+	RCU_INIT_POINTER(callchain_cpus_entries, शून्य);
 	call_rcu(&entries->rcu_head, release_callchain_buffers_rcu);
-}
+पूर्ण
 
-static int alloc_callchain_buffers(void)
-{
-	int cpu;
-	int size;
-	struct callchain_cpus_entries *entries;
+अटल पूर्णांक alloc_callchain_buffers(व्योम)
+अणु
+	पूर्णांक cpu;
+	पूर्णांक size;
+	काष्ठा callchain_cpus_entries *entries;
 
 	/*
-	 * We can't use the percpu allocation API for data that can be
+	 * We can't use the percpu allocation API क्रम data that can be
 	 * accessed from NMI. Use a temporary manual per cpu allocation
-	 * until that gets sorted out.
+	 * until that माला_लो sorted out.
 	 */
-	size = offsetof(struct callchain_cpus_entries, cpu_entries[nr_cpu_ids]);
+	size = दुरत्व(काष्ठा callchain_cpus_entries, cpu_entries[nr_cpu_ids]);
 
 	entries = kzalloc(size, GFP_KERNEL);
-	if (!entries)
-		return -ENOMEM;
+	अगर (!entries)
+		वापस -ENOMEM;
 
-	size = perf_callchain_entry__sizeof() * PERF_NR_CONTEXTS;
+	size = perf_callchain_entry__माप() * PERF_NR_CONTEXTS;
 
-	for_each_possible_cpu(cpu) {
-		entries->cpu_entries[cpu] = kmalloc_node(size, GFP_KERNEL,
+	क्रम_each_possible_cpu(cpu) अणु
+		entries->cpu_entries[cpu] = kदो_स्मृति_node(size, GFP_KERNEL,
 							 cpu_to_node(cpu));
-		if (!entries->cpu_entries[cpu])
-			goto fail;
-	}
+		अगर (!entries->cpu_entries[cpu])
+			जाओ fail;
+	पूर्ण
 
-	rcu_assign_pointer(callchain_cpus_entries, entries);
+	rcu_assign_poपूर्णांकer(callchain_cpus_entries, entries);
 
-	return 0;
+	वापस 0;
 
 fail:
-	for_each_possible_cpu(cpu)
-		kfree(entries->cpu_entries[cpu]);
-	kfree(entries);
+	क्रम_each_possible_cpu(cpu)
+		kमुक्त(entries->cpu_entries[cpu]);
+	kमुक्त(entries);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-int get_callchain_buffers(int event_max_stack)
-{
-	int err = 0;
-	int count;
+पूर्णांक get_callchain_buffers(पूर्णांक event_max_stack)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक count;
 
 	mutex_lock(&callchain_mutex);
 
-	count = atomic_inc_return(&nr_callchain_events);
-	if (WARN_ON_ONCE(count < 1)) {
+	count = atomic_inc_वापस(&nr_callchain_events);
+	अगर (WARN_ON_ONCE(count < 1)) अणु
 		err = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/*
 	 * If requesting per event more than the global cap,
-	 * return a different error to help userspace figure
+	 * वापस a dअगरferent error to help userspace figure
 	 * this out.
 	 *
-	 * And also do it here so that we have &callchain_mutex held.
+	 * And also करो it here so that we have &callchain_mutex held.
 	 */
-	if (event_max_stack > sysctl_perf_event_max_stack) {
+	अगर (event_max_stack > sysctl_perf_event_max_stack) अणु
 		err = -EOVERFLOW;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (count == 1)
+	अगर (count == 1)
 		err = alloc_callchain_buffers();
-exit:
-	if (err)
+निकास:
+	अगर (err)
 		atomic_dec(&nr_callchain_events);
 
 	mutex_unlock(&callchain_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void put_callchain_buffers(void)
-{
-	if (atomic_dec_and_mutex_lock(&nr_callchain_events, &callchain_mutex)) {
+व्योम put_callchain_buffers(व्योम)
+अणु
+	अगर (atomic_dec_and_mutex_lock(&nr_callchain_events, &callchain_mutex)) अणु
 		release_callchain_buffers();
 		mutex_unlock(&callchain_mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct perf_callchain_entry *get_callchain_entry(int *rctx)
-{
-	int cpu;
-	struct callchain_cpus_entries *entries;
+काष्ठा perf_callchain_entry *get_callchain_entry(पूर्णांक *rctx)
+अणु
+	पूर्णांक cpu;
+	काष्ठा callchain_cpus_entries *entries;
 
 	*rctx = get_recursion_context(this_cpu_ptr(callchain_recursion));
-	if (*rctx == -1)
-		return NULL;
+	अगर (*rctx == -1)
+		वापस शून्य;
 
 	entries = rcu_dereference(callchain_cpus_entries);
-	if (!entries) {
+	अगर (!entries) अणु
 		put_recursion_context(this_cpu_ptr(callchain_recursion), *rctx);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	cpu = smp_processor_id();
 
-	return (((void *)entries->cpu_entries[cpu]) +
-		(*rctx * perf_callchain_entry__sizeof()));
-}
+	वापस (((व्योम *)entries->cpu_entries[cpu]) +
+		(*rctx * perf_callchain_entry__माप()));
+पूर्ण
 
-void
-put_callchain_entry(int rctx)
-{
+व्योम
+put_callchain_entry(पूर्णांक rctx)
+अणु
 	put_recursion_context(this_cpu_ptr(callchain_recursion), rctx);
-}
+पूर्ण
 
-struct perf_callchain_entry *
-get_perf_callchain(struct pt_regs *regs, u32 init_nr, bool kernel, bool user,
+काष्ठा perf_callchain_entry *
+get_perf_callchain(काष्ठा pt_regs *regs, u32 init_nr, bool kernel, bool user,
 		   u32 max_stack, bool crosstask, bool add_mark)
-{
-	struct perf_callchain_entry *entry;
-	struct perf_callchain_entry_ctx ctx;
-	int rctx;
+अणु
+	काष्ठा perf_callchain_entry *entry;
+	काष्ठा perf_callchain_entry_ctx ctx;
+	पूर्णांक rctx;
 
 	entry = get_callchain_entry(&rctx);
-	if (!entry)
-		return NULL;
+	अगर (!entry)
+		वापस शून्य;
 
 	ctx.entry     = entry;
 	ctx.max_stack = max_stack;
@@ -194,64 +195,64 @@ get_perf_callchain(struct pt_regs *regs, u32 init_nr, bool kernel, bool user,
 	ctx.contexts       = 0;
 	ctx.contexts_maxed = false;
 
-	if (kernel && !user_mode(regs)) {
-		if (add_mark)
+	अगर (kernel && !user_mode(regs)) अणु
+		अगर (add_mark)
 			perf_callchain_store_context(&ctx, PERF_CONTEXT_KERNEL);
 		perf_callchain_kernel(&ctx, regs);
-	}
+	पूर्ण
 
-	if (user) {
-		if (!user_mode(regs)) {
-			if  (current->mm)
+	अगर (user) अणु
+		अगर (!user_mode(regs)) अणु
+			अगर  (current->mm)
 				regs = task_pt_regs(current);
-			else
-				regs = NULL;
-		}
+			अन्यथा
+				regs = शून्य;
+		पूर्ण
 
-		if (regs) {
+		अगर (regs) अणु
 			mm_segment_t fs;
 
-			if (crosstask)
-				goto exit_put;
+			अगर (crosstask)
+				जाओ निकास_put;
 
-			if (add_mark)
+			अगर (add_mark)
 				perf_callchain_store_context(&ctx, PERF_CONTEXT_USER);
 
-			fs = force_uaccess_begin();
+			fs = क्रमce_uaccess_begin();
 			perf_callchain_user(&ctx, regs);
-			force_uaccess_end(fs);
-		}
-	}
+			क्रमce_uaccess_end(fs);
+		पूर्ण
+	पूर्ण
 
-exit_put:
+निकास_put:
 	put_callchain_entry(rctx);
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
 /*
- * Used for sysctl_perf_event_max_stack and
+ * Used क्रम sysctl_perf_event_max_stack and
  * sysctl_perf_event_max_contexts_per_stack.
  */
-int perf_event_max_stack_handler(struct ctl_table *table, int write,
-				 void *buffer, size_t *lenp, loff_t *ppos)
-{
-	int *value = table->data;
-	int new_value = *value, ret;
-	struct ctl_table new_table = *table;
+पूर्णांक perf_event_max_stack_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+				 व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक *value = table->data;
+	पूर्णांक new_value = *value, ret;
+	काष्ठा ctl_table new_table = *table;
 
 	new_table.data = &new_value;
-	ret = proc_dointvec_minmax(&new_table, write, buffer, lenp, ppos);
-	if (ret || !write)
-		return ret;
+	ret = proc_करोपूर्णांकvec_minmax(&new_table, ग_लिखो, buffer, lenp, ppos);
+	अगर (ret || !ग_लिखो)
+		वापस ret;
 
 	mutex_lock(&callchain_mutex);
-	if (atomic_read(&nr_callchain_events))
+	अगर (atomic_पढ़ो(&nr_callchain_events))
 		ret = -EBUSY;
-	else
+	अन्यथा
 		*value = new_value;
 
 	mutex_unlock(&callchain_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,360 +1,361 @@
+<शैली गुरु>
 /*
- * Common signal handling code for both 32 and 64 bits
+ * Common संकेत handling code क्रम both 32 and 64 bits
  *
  *    Copyright (c) 2007 Benjamin Herrenschmidt, IBM Corporation
- *    Extracted from signal_32.c and signal_64.c
+ *    Extracted from संकेत_32.c and संकेत_64.c
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file README.legal in the main directory of
- * this archive for more details.
+ * Public License.  See the file README.legal in the मुख्य directory of
+ * this archive क्रम more details.
  */
 
-#include <linux/tracehook.h>
-#include <linux/signal.h>
-#include <linux/uprobes.h>
-#include <linux/key.h>
-#include <linux/context_tracking.h>
-#include <linux/livepatch.h>
-#include <linux/syscalls.h>
-#include <asm/hw_breakpoint.h>
-#include <linux/uaccess.h>
-#include <asm/switch_to.h>
-#include <asm/unistd.h>
-#include <asm/debug.h>
-#include <asm/tm.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/uprobes.h>
+#समावेश <linux/key.h>
+#समावेश <linux/context_tracking.h>
+#समावेश <linux/livepatch.h>
+#समावेश <linux/syscalls.h>
+#समावेश <यंत्र/hw_अवरोधpoपूर्णांक.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/पंचांग.h>
 
-#include "signal.h"
+#समावेश "signal.h"
 
-#ifdef CONFIG_VSX
-unsigned long copy_fpr_to_user(void __user *to,
-			       struct task_struct *task)
-{
+#अगर_घोषित CONFIG_VSX
+अचिन्हित दीर्घ copy_fpr_to_user(व्योम __user *to,
+			       काष्ठा task_काष्ठा *task)
+अणु
 	u64 buf[ELF_NFPREG];
-	int i;
+	पूर्णांक i;
 
-	/* save FPR copy to local buffer then write to the thread_struct */
-	for (i = 0; i < (ELF_NFPREG - 1) ; i++)
-		buf[i] = task->thread.TS_FPR(i);
-	buf[i] = task->thread.fp_state.fpscr;
-	return __copy_to_user(to, buf, ELF_NFPREG * sizeof(double));
-}
+	/* save FPR copy to local buffer then ग_लिखो to the thपढ़ो_काष्ठा */
+	क्रम (i = 0; i < (ELF_NFPREG - 1) ; i++)
+		buf[i] = task->thपढ़ो.TS_FPR(i);
+	buf[i] = task->thपढ़ो.fp_state.fpscr;
+	वापस __copy_to_user(to, buf, ELF_NFPREG * माप(द्विगुन));
+पूर्ण
 
-unsigned long copy_fpr_from_user(struct task_struct *task,
-				 void __user *from)
-{
+अचिन्हित दीर्घ copy_fpr_from_user(काष्ठा task_काष्ठा *task,
+				 व्योम __user *from)
+अणु
 	u64 buf[ELF_NFPREG];
-	int i;
+	पूर्णांक i;
 
-	if (__copy_from_user(buf, from, ELF_NFPREG * sizeof(double)))
-		return 1;
-	for (i = 0; i < (ELF_NFPREG - 1) ; i++)
-		task->thread.TS_FPR(i) = buf[i];
-	task->thread.fp_state.fpscr = buf[i];
+	अगर (__copy_from_user(buf, from, ELF_NFPREG * माप(द्विगुन)))
+		वापस 1;
+	क्रम (i = 0; i < (ELF_NFPREG - 1) ; i++)
+		task->thपढ़ो.TS_FPR(i) = buf[i];
+	task->thपढ़ो.fp_state.fpscr = buf[i];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long copy_vsx_to_user(void __user *to,
-			       struct task_struct *task)
-{
+अचिन्हित दीर्घ copy_vsx_to_user(व्योम __user *to,
+			       काष्ठा task_काष्ठा *task)
+अणु
 	u64 buf[ELF_NVSRHALFREG];
-	int i;
+	पूर्णांक i;
 
-	/* save FPR copy to local buffer then write to the thread_struct */
-	for (i = 0; i < ELF_NVSRHALFREG; i++)
-		buf[i] = task->thread.fp_state.fpr[i][TS_VSRLOWOFFSET];
-	return __copy_to_user(to, buf, ELF_NVSRHALFREG * sizeof(double));
-}
+	/* save FPR copy to local buffer then ग_लिखो to the thपढ़ो_काष्ठा */
+	क्रम (i = 0; i < ELF_NVSRHALFREG; i++)
+		buf[i] = task->thपढ़ो.fp_state.fpr[i][TS_VSRLOWOFFSET];
+	वापस __copy_to_user(to, buf, ELF_NVSRHALFREG * माप(द्विगुन));
+पूर्ण
 
-unsigned long copy_vsx_from_user(struct task_struct *task,
-				 void __user *from)
-{
+अचिन्हित दीर्घ copy_vsx_from_user(काष्ठा task_काष्ठा *task,
+				 व्योम __user *from)
+अणु
 	u64 buf[ELF_NVSRHALFREG];
-	int i;
+	पूर्णांक i;
 
-	if (__copy_from_user(buf, from, ELF_NVSRHALFREG * sizeof(double)))
-		return 1;
-	for (i = 0; i < ELF_NVSRHALFREG ; i++)
-		task->thread.fp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
-	return 0;
-}
+	अगर (__copy_from_user(buf, from, ELF_NVSRHALFREG * माप(द्विगुन)))
+		वापस 1;
+	क्रम (i = 0; i < ELF_NVSRHALFREG ; i++)
+		task->thपढ़ो.fp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-unsigned long copy_ckfpr_to_user(void __user *to,
-				  struct task_struct *task)
-{
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+अचिन्हित दीर्घ copy_ckfpr_to_user(व्योम __user *to,
+				  काष्ठा task_काष्ठा *task)
+अणु
 	u64 buf[ELF_NFPREG];
-	int i;
+	पूर्णांक i;
 
-	/* save FPR copy to local buffer then write to the thread_struct */
-	for (i = 0; i < (ELF_NFPREG - 1) ; i++)
-		buf[i] = task->thread.TS_CKFPR(i);
-	buf[i] = task->thread.ckfp_state.fpscr;
-	return __copy_to_user(to, buf, ELF_NFPREG * sizeof(double));
-}
+	/* save FPR copy to local buffer then ग_लिखो to the thपढ़ो_काष्ठा */
+	क्रम (i = 0; i < (ELF_NFPREG - 1) ; i++)
+		buf[i] = task->thपढ़ो.TS_CKFPR(i);
+	buf[i] = task->thपढ़ो.ckfp_state.fpscr;
+	वापस __copy_to_user(to, buf, ELF_NFPREG * माप(द्विगुन));
+पूर्ण
 
-unsigned long copy_ckfpr_from_user(struct task_struct *task,
-					  void __user *from)
-{
+अचिन्हित दीर्घ copy_ckfpr_from_user(काष्ठा task_काष्ठा *task,
+					  व्योम __user *from)
+अणु
 	u64 buf[ELF_NFPREG];
-	int i;
+	पूर्णांक i;
 
-	if (__copy_from_user(buf, from, ELF_NFPREG * sizeof(double)))
-		return 1;
-	for (i = 0; i < (ELF_NFPREG - 1) ; i++)
-		task->thread.TS_CKFPR(i) = buf[i];
-	task->thread.ckfp_state.fpscr = buf[i];
+	अगर (__copy_from_user(buf, from, ELF_NFPREG * माप(द्विगुन)))
+		वापस 1;
+	क्रम (i = 0; i < (ELF_NFPREG - 1) ; i++)
+		task->thपढ़ो.TS_CKFPR(i) = buf[i];
+	task->thपढ़ो.ckfp_state.fpscr = buf[i];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long copy_ckvsx_to_user(void __user *to,
-				  struct task_struct *task)
-{
+अचिन्हित दीर्घ copy_ckvsx_to_user(व्योम __user *to,
+				  काष्ठा task_काष्ठा *task)
+अणु
 	u64 buf[ELF_NVSRHALFREG];
-	int i;
+	पूर्णांक i;
 
-	/* save FPR copy to local buffer then write to the thread_struct */
-	for (i = 0; i < ELF_NVSRHALFREG; i++)
-		buf[i] = task->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET];
-	return __copy_to_user(to, buf, ELF_NVSRHALFREG * sizeof(double));
-}
+	/* save FPR copy to local buffer then ग_लिखो to the thपढ़ो_काष्ठा */
+	क्रम (i = 0; i < ELF_NVSRHALFREG; i++)
+		buf[i] = task->thपढ़ो.ckfp_state.fpr[i][TS_VSRLOWOFFSET];
+	वापस __copy_to_user(to, buf, ELF_NVSRHALFREG * माप(द्विगुन));
+पूर्ण
 
-unsigned long copy_ckvsx_from_user(struct task_struct *task,
-					  void __user *from)
-{
+अचिन्हित दीर्घ copy_ckvsx_from_user(काष्ठा task_काष्ठा *task,
+					  व्योम __user *from)
+अणु
 	u64 buf[ELF_NVSRHALFREG];
-	int i;
+	पूर्णांक i;
 
-	if (__copy_from_user(buf, from, ELF_NVSRHALFREG * sizeof(double)))
-		return 1;
-	for (i = 0; i < ELF_NVSRHALFREG ; i++)
-		task->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
-	return 0;
-}
-#endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
-#endif
+	अगर (__copy_from_user(buf, from, ELF_NVSRHALFREG * माप(द्विगुन)))
+		वापस 1;
+	क्रम (i = 0; i < ELF_NVSRHALFREG ; i++)
+		task->thपढ़ो.ckfp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_TRANSACTIONAL_MEM */
+#पूर्ण_अगर
 
-/* Log an error when sending an unhandled signal to a process. Controlled
+/* Log an error when sending an unhandled संकेत to a process. Controlled
  * through debug.exception-trace sysctl.
  */
 
-int show_unhandled_signals = 1;
+पूर्णांक show_unhandled_संकेतs = 1;
 
 /*
- * Allocate space for the signal frame
+ * Allocate space क्रम the संकेत frame
  */
-static unsigned long get_tm_stackpointer(struct task_struct *tsk);
+अटल अचिन्हित दीर्घ get_पंचांग_stackpoपूर्णांकer(काष्ठा task_काष्ठा *tsk);
 
-void __user *get_sigframe(struct ksignal *ksig, struct task_struct *tsk,
-			  size_t frame_size, int is_32)
-{
-        unsigned long oldsp, newsp;
-	unsigned long sp = get_tm_stackpointer(tsk);
+व्योम __user *get_sigframe(काष्ठा kसंकेत *ksig, काष्ठा task_काष्ठा *tsk,
+			  माप_प्रकार frame_size, पूर्णांक is_32)
+अणु
+        अचिन्हित दीर्घ oldsp, newsp;
+	अचिन्हित दीर्घ sp = get_पंचांग_stackpoपूर्णांकer(tsk);
 
         /* Default to using normal stack */
-	if (is_32)
+	अगर (is_32)
 		oldsp = sp & 0x0ffffffffUL;
-	else
+	अन्यथा
 		oldsp = sp;
 	oldsp = sigsp(oldsp, ksig);
 	newsp = (oldsp - frame_size) & ~0xFUL;
 
-        return (void __user *)newsp;
-}
+        वापस (व्योम __user *)newsp;
+पूर्ण
 
-static void check_syscall_restart(struct pt_regs *regs, struct k_sigaction *ka,
-				  int has_handler)
-{
-	unsigned long ret = regs->gpr[3];
-	int restart = 1;
+अटल व्योम check_syscall_restart(काष्ठा pt_regs *regs, काष्ठा k_sigaction *ka,
+				  पूर्णांक has_handler)
+अणु
+	अचिन्हित दीर्घ ret = regs->gpr[3];
+	पूर्णांक restart = 1;
 
 	/* syscall ? */
-	if (!trap_is_syscall(regs))
-		return;
+	अगर (!trap_is_syscall(regs))
+		वापस;
 
-	if (trap_norestart(regs))
-		return;
+	अगर (trap_norestart(regs))
+		वापस;
 
-	/* error signalled ? */
-	if (trap_is_scv(regs)) {
+	/* error संकेतled ? */
+	अगर (trap_is_scv(regs)) अणु
 		/* 32-bit compat mode sign extend? */
-		if (!IS_ERR_VALUE(ret))
-			return;
+		अगर (!IS_ERR_VALUE(ret))
+			वापस;
 		ret = -ret;
-	} else if (!(regs->ccr & 0x10000000)) {
-		return;
-	}
+	पूर्ण अन्यथा अगर (!(regs->ccr & 0x10000000)) अणु
+		वापस;
+	पूर्ण
 
-	switch (ret) {
-	case ERESTART_RESTARTBLOCK:
-	case ERESTARTNOHAND:
+	चयन (ret) अणु
+	हाल ERESTART_RESTARTBLOCK:
+	हाल ERESTARTNOHAND:
 		/* ERESTARTNOHAND means that the syscall should only be
-		 * restarted if there was no handler for the signal, and since
-		 * we only get here if there is a handler, we dont restart.
+		 * restarted अगर there was no handler क्रम the संकेत, and since
+		 * we only get here अगर there is a handler, we करोnt restart.
 		 */
 		restart = !has_handler;
-		break;
-	case ERESTARTSYS:
-		/* ERESTARTSYS means to restart the syscall if there is no
-		 * handler or the handler was registered with SA_RESTART
+		अवरोध;
+	हाल ERESTARTSYS:
+		/* ERESTARTSYS means to restart the syscall अगर there is no
+		 * handler or the handler was रेजिस्टरed with SA_RESTART
 		 */
 		restart = !has_handler || (ka->sa.sa_flags & SA_RESTART) != 0;
-		break;
-	case ERESTARTNOINTR:
+		अवरोध;
+	हाल ERESTARTNOINTR:
 		/* ERESTARTNOINTR means that the syscall should be
-		 * called again after the signal handler returns.
+		 * called again after the संकेत handler वापसs.
 		 */
-		break;
-	default:
-		return;
-	}
-	if (restart) {
-		if (ret == ERESTART_RESTARTBLOCK)
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
+	अगर (restart) अणु
+		अगर (ret == ERESTART_RESTARTBLOCK)
 			regs->gpr[0] = __NR_restart_syscall;
-		else
+		अन्यथा
 			regs->gpr[3] = regs->orig_gpr3;
 		regs->nip -= 4;
 		regs->result = 0;
-	} else {
-		if (trap_is_scv(regs)) {
+	पूर्ण अन्यथा अणु
+		अगर (trap_is_scv(regs)) अणु
 			regs->result = -EINTR;
 			regs->gpr[3] = -EINTR;
-		} else {
+		पूर्ण अन्यथा अणु
 			regs->result = -EINTR;
 			regs->gpr[3] = EINTR;
 			regs->ccr |= 0x10000000;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void do_signal(struct task_struct *tsk)
-{
+अटल व्योम करो_संकेत(काष्ठा task_काष्ठा *tsk)
+अणु
 	sigset_t *oldset = sigmask_to_save();
-	struct ksignal ksig = { .sig = 0 };
-	int ret;
+	काष्ठा kसंकेत ksig = अणु .sig = 0 पूर्ण;
+	पूर्णांक ret;
 
 	BUG_ON(tsk != current);
 
-	get_signal(&ksig);
+	get_संकेत(&ksig);
 
 	/* Is there any syscall restart business here ? */
-	check_syscall_restart(tsk->thread.regs, &ksig.ka, ksig.sig > 0);
+	check_syscall_restart(tsk->thपढ़ो.regs, &ksig.ka, ksig.sig > 0);
 
-	if (ksig.sig <= 0) {
-		/* No signal to deliver -- put the saved sigmask back */
+	अगर (ksig.sig <= 0) अणु
+		/* No संकेत to deliver -- put the saved sigmask back */
 		restore_saved_sigmask();
-		set_trap_norestart(tsk->thread.regs);
-		return;               /* no signals delivered */
-	}
+		set_trap_norestart(tsk->thपढ़ो.regs);
+		वापस;               /* no संकेतs delivered */
+	पूर्ण
 
         /*
-	 * Reenable the DABR before delivering the signal to
-	 * user space. The DABR will have been cleared if it
+	 * Reenable the DABR beक्रमe delivering the संकेत to
+	 * user space. The DABR will have been cleared अगर it
 	 * triggered inside the kernel.
 	 */
-	if (!IS_ENABLED(CONFIG_PPC_ADV_DEBUG_REGS)) {
-		int i;
+	अगर (!IS_ENABLED(CONFIG_PPC_ADV_DEBUG_REGS)) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < nr_wp_slots(); i++) {
-			if (tsk->thread.hw_brk[i].address && tsk->thread.hw_brk[i].type)
-				__set_breakpoint(i, &tsk->thread.hw_brk[i]);
-		}
-	}
+		क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+			अगर (tsk->thपढ़ो.hw_brk[i].address && tsk->thपढ़ो.hw_brk[i].type)
+				__set_अवरोधpoपूर्णांक(i, &tsk->thपढ़ो.hw_brk[i]);
+		पूर्ण
+	पूर्ण
 
-	/* Re-enable the breakpoints for the signal stack */
-	thread_change_pc(tsk, tsk->thread.regs);
+	/* Re-enable the अवरोधpoपूर्णांकs क्रम the संकेत stack */
+	thपढ़ो_change_pc(tsk, tsk->thपढ़ो.regs);
 
-	rseq_signal_deliver(&ksig, tsk->thread.regs);
+	rseq_संकेत_deliver(&ksig, tsk->thपढ़ो.regs);
 
-	if (is_32bit_task()) {
-        	if (ksig.ka.sa.sa_flags & SA_SIGINFO)
-			ret = handle_rt_signal32(&ksig, oldset, tsk);
-		else
-			ret = handle_signal32(&ksig, oldset, tsk);
-	} else {
-		ret = handle_rt_signal64(&ksig, oldset, tsk);
-	}
+	अगर (is_32bit_task()) अणु
+        	अगर (ksig.ka.sa.sa_flags & SA_SIGINFO)
+			ret = handle_rt_संकेत32(&ksig, oldset, tsk);
+		अन्यथा
+			ret = handle_संकेत32(&ksig, oldset, tsk);
+	पूर्ण अन्यथा अणु
+		ret = handle_rt_संकेत64(&ksig, oldset, tsk);
+	पूर्ण
 
-	set_trap_norestart(tsk->thread.regs);
-	signal_setup_done(ret, &ksig, test_thread_flag(TIF_SINGLESTEP));
-}
+	set_trap_norestart(tsk->thपढ़ो.regs);
+	संकेत_setup_करोne(ret, &ksig, test_thपढ़ो_flag(TIF_SINGLESTEP));
+पूर्ण
 
-void do_notify_resume(struct pt_regs *regs, unsigned long thread_info_flags)
-{
-	if (thread_info_flags & _TIF_UPROBE)
-		uprobe_notify_resume(regs);
+व्योम करो_notअगरy_resume(काष्ठा pt_regs *regs, अचिन्हित दीर्घ thपढ़ो_info_flags)
+अणु
+	अगर (thपढ़ो_info_flags & _TIF_UPROBE)
+		uprobe_notअगरy_resume(regs);
 
-	if (thread_info_flags & _TIF_PATCH_PENDING)
+	अगर (thपढ़ो_info_flags & _TIF_PATCH_PENDING)
 		klp_update_patch_state(current);
 
-	if (thread_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) {
-		BUG_ON(regs != current->thread.regs);
-		do_signal(current);
-	}
+	अगर (thपढ़ो_info_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) अणु
+		BUG_ON(regs != current->thपढ़ो.regs);
+		करो_संकेत(current);
+	पूर्ण
 
-	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
-		tracehook_notify_resume(regs);
-		rseq_handle_notify_resume(NULL, regs);
-	}
-}
+	अगर (thपढ़ो_info_flags & _TIF_NOTIFY_RESUME) अणु
+		tracehook_notअगरy_resume(regs);
+		rseq_handle_notअगरy_resume(शून्य, regs);
+	पूर्ण
+पूर्ण
 
-static unsigned long get_tm_stackpointer(struct task_struct *tsk)
-{
-	/* When in an active transaction that takes a signal, we need to be
+अटल अचिन्हित दीर्घ get_पंचांग_stackpoपूर्णांकer(काष्ठा task_काष्ठा *tsk)
+अणु
+	/* When in an active transaction that takes a संकेत, we need to be
 	 * careful with the stack.  It's possible that the stack has moved back
-	 * up after the tbegin.  The obvious case here is when the tbegin is
-	 * called inside a function that returns before a tend.  In this case,
-	 * the stack is part of the checkpointed transactional memory state.
-	 * If we write over this non transactionally or in suspend, we are in
-	 * trouble because if we get a tm abort, the program counter and stack
-	 * pointer will be back at the tbegin but our in memory stack won't be
+	 * up after the tbegin.  The obvious हाल here is when the tbegin is
+	 * called inside a function that वापसs beक्रमe a tend.  In this हाल,
+	 * the stack is part of the checkpoपूर्णांकed transactional memory state.
+	 * If we ग_लिखो over this non transactionally or in suspend, we are in
+	 * trouble because अगर we get a पंचांग पात, the program counter and stack
+	 * poपूर्णांकer will be back at the tbegin but our in memory stack won't be
 	 * valid anymore.
 	 *
-	 * To avoid this, when taking a signal in an active transaction, we
-	 * need to use the stack pointer from the checkpointed state, rather
-	 * than the speculated state.  This ensures that the signal context
-	 * (written tm suspended) will be written below the stack required for
-	 * the rollback.  The transaction is aborted because of the treclaim,
-	 * so any memory written between the tbegin and the signal will be
+	 * To aव्योम this, when taking a संकेत in an active transaction, we
+	 * need to use the stack poपूर्णांकer from the checkpoपूर्णांकed state, rather
+	 * than the speculated state.  This ensures that the संकेत context
+	 * (written पंचांग suspended) will be written below the stack required क्रम
+	 * the rollback.  The transaction is पातed because of the treclaim,
+	 * so any memory written between the tbegin and the संकेत will be
 	 * rolled back anyway.
 	 *
-	 * For signals taken in non-TM or suspended mode, we use the
-	 * normal/non-checkpointed stack pointer.
+	 * For संकेतs taken in non-TM or suspended mode, we use the
+	 * normal/non-checkpoपूर्णांकed stack poपूर्णांकer.
 	 */
 
-	unsigned long ret = tsk->thread.regs->gpr[1];
+	अचिन्हित दीर्घ ret = tsk->thपढ़ो.regs->gpr[1];
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
 	BUG_ON(tsk != current);
 
-	if (MSR_TM_ACTIVE(tsk->thread.regs->msr)) {
+	अगर (MSR_TM_ACTIVE(tsk->thपढ़ो.regs->msr)) अणु
 		preempt_disable();
-		tm_reclaim_current(TM_CAUSE_SIGNAL);
-		if (MSR_TM_TRANSACTIONAL(tsk->thread.regs->msr))
-			ret = tsk->thread.ckpt_regs.gpr[1];
+		पंचांग_reclaim_current(TM_CAUSE_SIGNAL);
+		अगर (MSR_TM_TRANSACTIONAL(tsk->thपढ़ो.regs->msr))
+			ret = tsk->thपढ़ो.ckpt_regs.gpr[1];
 
 		/*
-		 * If we treclaim, we must clear the current thread's TM bits
-		 * before re-enabling preemption. Otherwise we might be
+		 * If we treclaim, we must clear the current thपढ़ो's TM bits
+		 * beक्रमe re-enabling preemption. Otherwise we might be
 		 * preempted and have the live MSR[TS] changed behind our back
-		 * (tm_recheckpoint_new_task() would recheckpoint). Besides, we
-		 * enter the signal handler in non-transactional state.
+		 * (पंचांग_recheckpoपूर्णांक_new_task() would recheckpoपूर्णांक). Besides, we
+		 * enter the संकेत handler in non-transactional state.
 		 */
-		tsk->thread.regs->msr &= ~MSR_TS_MASK;
+		tsk->thपढ़ो.regs->msr &= ~MSR_TS_MASK;
 		preempt_enable();
-	}
-#endif
-	return ret;
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-static const char fm32[] = KERN_INFO "%s[%d]: bad frame in %s: %p nip %08lx lr %08lx\n";
-static const char fm64[] = KERN_INFO "%s[%d]: bad frame in %s: %p nip %016lx lr %016lx\n";
+अटल स्थिर अक्षर fm32[] = KERN_INFO "%s[%d]: bad frame in %s: %p nip %08lx lr %08lx\n";
+अटल स्थिर अक्षर fm64[] = KERN_INFO "%s[%d]: bad frame in %s: %p nip %016lx lr %016lx\n";
 
-void signal_fault(struct task_struct *tsk, struct pt_regs *regs,
-		  const char *where, void __user *ptr)
-{
-	if (show_unhandled_signals)
-		printk_ratelimited(regs->msr & MSR_64BIT ? fm64 : fm32, tsk->comm,
+व्योम संकेत_fault(काष्ठा task_काष्ठा *tsk, काष्ठा pt_regs *regs,
+		  स्थिर अक्षर *where, व्योम __user *ptr)
+अणु
+	अगर (show_unhandled_संकेतs)
+		prपूर्णांकk_ratelimited(regs->msr & MSR_64BIT ? fm64 : fm32, tsk->comm,
 				   task_pid_nr(tsk), where, ptr, regs->nip, regs->link);
-}
+पूर्ण

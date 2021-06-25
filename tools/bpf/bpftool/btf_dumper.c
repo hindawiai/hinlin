@@ -1,784 +1,785 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (c) 2018 Facebook */
 
-#include <ctype.h>
-#include <stdio.h> /* for (FILE *) used by json_writer */
-#include <string.h>
-#include <unistd.h>
-#include <asm/byteorder.h>
-#include <linux/bitops.h>
-#include <linux/btf.h>
-#include <linux/err.h>
-#include <bpf/btf.h>
-#include <bpf/bpf.h>
+#समावेश <प्रकार.स>
+#समावेश <मानकपन.स> /* क्रम (खाता *) used by json_ग_लिखोr */
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/btf.h>
+#समावेश <linux/err.h>
+#समावेश <bpf/btf.h>
+#समावेश <bpf/bpf.h>
 
-#include "json_writer.h"
-#include "main.h"
+#समावेश "json_writer.h"
+#समावेश "main.h"
 
-#define BITS_PER_BYTE_MASK (BITS_PER_BYTE - 1)
-#define BITS_PER_BYTE_MASKED(bits) ((bits) & BITS_PER_BYTE_MASK)
-#define BITS_ROUNDDOWN_BYTES(bits) ((bits) >> 3)
-#define BITS_ROUNDUP_BYTES(bits) \
+#घोषणा BITS_PER_BYTE_MASK (BITS_PER_BYTE - 1)
+#घोषणा BITS_PER_BYTE_MASKED(bits) ((bits) & BITS_PER_BYTE_MASK)
+#घोषणा BITS_ROUNDDOWN_BYTES(bits) ((bits) >> 3)
+#घोषणा BITS_ROUNDUP_BYTES(bits) \
 	(BITS_ROUNDDOWN_BYTES(bits) + !!BITS_PER_BYTE_MASKED(bits))
 
-static int btf_dumper_do_type(const struct btf_dumper *d, __u32 type_id,
-			      __u8 bit_offset, const void *data);
+अटल पूर्णांक btf_dumper_करो_type(स्थिर काष्ठा btf_dumper *d, __u32 type_id,
+			      __u8 bit_offset, स्थिर व्योम *data);
 
-static int btf_dump_func(const struct btf *btf, char *func_sig,
-			 const struct btf_type *func_proto,
-			 const struct btf_type *func, int pos, int size);
+अटल पूर्णांक btf_dump_func(स्थिर काष्ठा btf *btf, अक्षर *func_sig,
+			 स्थिर काष्ठा btf_type *func_proto,
+			 स्थिर काष्ठा btf_type *func, पूर्णांक pos, पूर्णांक size);
 
-static int dump_prog_id_as_func_ptr(const struct btf_dumper *d,
-				    const struct btf_type *func_proto,
+अटल पूर्णांक dump_prog_id_as_func_ptr(स्थिर काष्ठा btf_dumper *d,
+				    स्थिर काष्ठा btf_type *func_proto,
 				    __u32 prog_id)
-{
-	struct bpf_prog_info_linear *prog_info = NULL;
-	const struct btf_type *func_type;
-	const char *prog_name = NULL;
-	struct bpf_func_info *finfo;
-	struct btf *prog_btf = NULL;
-	struct bpf_prog_info *info;
-	int prog_fd, func_sig_len;
-	char prog_str[1024];
+अणु
+	काष्ठा bpf_prog_info_linear *prog_info = शून्य;
+	स्थिर काष्ठा btf_type *func_type;
+	स्थिर अक्षर *prog_name = शून्य;
+	काष्ठा bpf_func_info *finfo;
+	काष्ठा btf *prog_btf = शून्य;
+	काष्ठा bpf_prog_info *info;
+	पूर्णांक prog_fd, func_sig_len;
+	अक्षर prog_str[1024];
 
 	/* Get the ptr's func_proto */
-	func_sig_len = btf_dump_func(d->btf, prog_str, func_proto, NULL, 0,
-				     sizeof(prog_str));
-	if (func_sig_len == -1)
-		return -1;
+	func_sig_len = btf_dump_func(d->btf, prog_str, func_proto, शून्य, 0,
+				     माप(prog_str));
+	अगर (func_sig_len == -1)
+		वापस -1;
 
-	if (!prog_id)
-		goto print;
+	अगर (!prog_id)
+		जाओ prपूर्णांक;
 
 	/* Get the bpf_prog's name.  Obtain from func_info. */
 	prog_fd = bpf_prog_get_fd_by_id(prog_id);
-	if (prog_fd == -1)
-		goto print;
+	अगर (prog_fd == -1)
+		जाओ prपूर्णांक;
 
 	prog_info = bpf_program__get_prog_info_linear(prog_fd,
 						1UL << BPF_PROG_INFO_FUNC_INFO);
-	close(prog_fd);
-	if (IS_ERR(prog_info)) {
-		prog_info = NULL;
-		goto print;
-	}
+	बंद(prog_fd);
+	अगर (IS_ERR(prog_info)) अणु
+		prog_info = शून्य;
+		जाओ prपूर्णांक;
+	पूर्ण
 	info = &prog_info->info;
 
-	if (!info->btf_id || !info->nr_func_info ||
+	अगर (!info->btf_id || !info->nr_func_info ||
 	    btf__get_from_id(info->btf_id, &prog_btf))
-		goto print;
+		जाओ prपूर्णांक;
 	finfo = u64_to_ptr(info->func_info);
 	func_type = btf__type_by_id(prog_btf, finfo->type_id);
-	if (!func_type || !btf_is_func(func_type))
-		goto print;
+	अगर (!func_type || !btf_is_func(func_type))
+		जाओ prपूर्णांक;
 
 	prog_name = btf__name_by_offset(prog_btf, func_type->name_off);
 
-print:
-	if (!prog_id)
-		snprintf(&prog_str[func_sig_len],
-			 sizeof(prog_str) - func_sig_len, " 0");
-	else if (prog_name)
-		snprintf(&prog_str[func_sig_len],
-			 sizeof(prog_str) - func_sig_len,
+prपूर्णांक:
+	अगर (!prog_id)
+		snम_लिखो(&prog_str[func_sig_len],
+			 माप(prog_str) - func_sig_len, " 0");
+	अन्यथा अगर (prog_name)
+		snम_लिखो(&prog_str[func_sig_len],
+			 माप(prog_str) - func_sig_len,
 			 " %s/prog_id:%u", prog_name, prog_id);
-	else
-		snprintf(&prog_str[func_sig_len],
-			 sizeof(prog_str) - func_sig_len,
+	अन्यथा
+		snम_लिखो(&prog_str[func_sig_len],
+			 माप(prog_str) - func_sig_len,
 			 " <unknown_prog_name>/prog_id:%u", prog_id);
 
-	prog_str[sizeof(prog_str) - 1] = '\0';
+	prog_str[माप(prog_str) - 1] = '\0';
 	jsonw_string(d->jw, prog_str);
-	btf__free(prog_btf);
-	free(prog_info);
-	return 0;
-}
+	btf__मुक्त(prog_btf);
+	मुक्त(prog_info);
+	वापस 0;
+पूर्ण
 
-static void btf_dumper_ptr(const struct btf_dumper *d,
-			   const struct btf_type *t,
-			   const void *data)
-{
-	unsigned long value = *(unsigned long *)data;
-	const struct btf_type *ptr_type;
+अटल व्योम btf_dumper_ptr(स्थिर काष्ठा btf_dumper *d,
+			   स्थिर काष्ठा btf_type *t,
+			   स्थिर व्योम *data)
+अणु
+	अचिन्हित दीर्घ value = *(अचिन्हित दीर्घ *)data;
+	स्थिर काष्ठा btf_type *ptr_type;
 	__s32 ptr_type_id;
 
-	if (!d->prog_id_as_func_ptr || value > UINT32_MAX)
-		goto print_ptr_value;
+	अगर (!d->prog_id_as_func_ptr || value > UINT32_MAX)
+		जाओ prपूर्णांक_ptr_value;
 
 	ptr_type_id = btf__resolve_type(d->btf, t->type);
-	if (ptr_type_id < 0)
-		goto print_ptr_value;
+	अगर (ptr_type_id < 0)
+		जाओ prपूर्णांक_ptr_value;
 	ptr_type = btf__type_by_id(d->btf, ptr_type_id);
-	if (!ptr_type || !btf_is_func_proto(ptr_type))
-		goto print_ptr_value;
+	अगर (!ptr_type || !btf_is_func_proto(ptr_type))
+		जाओ prपूर्णांक_ptr_value;
 
-	if (!dump_prog_id_as_func_ptr(d, ptr_type, value))
-		return;
+	अगर (!dump_prog_id_as_func_ptr(d, ptr_type, value))
+		वापस;
 
-print_ptr_value:
-	if (d->is_plain_text)
-		jsonw_printf(d->jw, "%p", (void *)value);
-	else
-		jsonw_printf(d->jw, "%lu", value);
-}
+prपूर्णांक_ptr_value:
+	अगर (d->is_plain_text)
+		jsonw_म_लिखो(d->jw, "%p", (व्योम *)value);
+	अन्यथा
+		jsonw_म_लिखो(d->jw, "%lu", value);
+पूर्ण
 
-static int btf_dumper_modifier(const struct btf_dumper *d, __u32 type_id,
-			       __u8 bit_offset, const void *data)
-{
-	int actual_type_id;
+अटल पूर्णांक btf_dumper_modअगरier(स्थिर काष्ठा btf_dumper *d, __u32 type_id,
+			       __u8 bit_offset, स्थिर व्योम *data)
+अणु
+	पूर्णांक actual_type_id;
 
 	actual_type_id = btf__resolve_type(d->btf, type_id);
-	if (actual_type_id < 0)
-		return actual_type_id;
+	अगर (actual_type_id < 0)
+		वापस actual_type_id;
 
-	return btf_dumper_do_type(d, actual_type_id, bit_offset, data);
-}
+	वापस btf_dumper_करो_type(d, actual_type_id, bit_offset, data);
+पूर्ण
 
-static int btf_dumper_enum(const struct btf_dumper *d,
-			    const struct btf_type *t,
-			    const void *data)
-{
-	const struct btf_enum *enums = btf_enum(t);
+अटल पूर्णांक btf_dumper_क्रमागत(स्थिर काष्ठा btf_dumper *d,
+			    स्थिर काष्ठा btf_type *t,
+			    स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा btf_क्रमागत *क्रमागतs = btf_क्रमागत(t);
 	__s64 value;
 	__u16 i;
 
-	switch (t->size) {
-	case 8:
+	चयन (t->size) अणु
+	हाल 8:
 		value = *(__s64 *)data;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		value = *(__s32 *)data;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		value = *(__s16 *)data;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		value = *(__s8 *)data;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < btf_vlen(t); i++) {
-		if (value == enums[i].val) {
+	क्रम (i = 0; i < btf_vlen(t); i++) अणु
+		अगर (value == क्रमागतs[i].val) अणु
 			jsonw_string(d->jw,
 				     btf__name_by_offset(d->btf,
-							 enums[i].name_off));
-			return 0;
-		}
-	}
+							 क्रमागतs[i].name_off));
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	jsonw_int(d->jw, value);
-	return 0;
-}
+	jsonw_पूर्णांक(d->jw, value);
+	वापस 0;
+पूर्ण
 
-static bool is_str_array(const struct btf *btf, const struct btf_array *arr,
-			 const char *s)
-{
-	const struct btf_type *elem_type;
-	const char *end_s;
+अटल bool is_str_array(स्थिर काष्ठा btf *btf, स्थिर काष्ठा btf_array *arr,
+			 स्थिर अक्षर *s)
+अणु
+	स्थिर काष्ठा btf_type *elem_type;
+	स्थिर अक्षर *end_s;
 
-	if (!arr->nelems)
-		return false;
+	अगर (!arr->nelems)
+		वापस false;
 
 	elem_type = btf__type_by_id(btf, arr->type);
-	/* Not skipping typedef.  typedef to char does not count as
+	/* Not skipping प्रकार.  प्रकार to अक्षर करोes not count as
 	 * a string now.
 	 */
-	while (elem_type && btf_is_mod(elem_type))
+	जबतक (elem_type && btf_is_mod(elem_type))
 		elem_type = btf__type_by_id(btf, elem_type->type);
 
-	if (!elem_type || !btf_is_int(elem_type) || elem_type->size != 1)
-		return false;
+	अगर (!elem_type || !btf_is_पूर्णांक(elem_type) || elem_type->size != 1)
+		वापस false;
 
-	if (btf_int_encoding(elem_type) != BTF_INT_CHAR &&
-	    strcmp("char", btf__name_by_offset(btf, elem_type->name_off)))
-		return false;
+	अगर (btf_पूर्णांक_encoding(elem_type) != BTF_INT_CHAR &&
+	    म_भेद("char", btf__name_by_offset(btf, elem_type->name_off)))
+		वापस false;
 
 	end_s = s + arr->nelems;
-	while (s < end_s) {
-		if (!*s)
-			return true;
-		if (*s <= 0x1f || *s >= 0x7f)
-			return false;
+	जबतक (s < end_s) अणु
+		अगर (!*s)
+			वापस true;
+		अगर (*s <= 0x1f || *s >= 0x7f)
+			वापस false;
 		s++;
-	}
+	पूर्ण
 
 	/* '\0' is not found */
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int btf_dumper_array(const struct btf_dumper *d, __u32 type_id,
-			    const void *data)
-{
-	const struct btf_type *t = btf__type_by_id(d->btf, type_id);
-	struct btf_array *arr = (struct btf_array *)(t + 1);
-	long long elem_size;
-	int ret = 0;
+अटल पूर्णांक btf_dumper_array(स्थिर काष्ठा btf_dumper *d, __u32 type_id,
+			    स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा btf_type *t = btf__type_by_id(d->btf, type_id);
+	काष्ठा btf_array *arr = (काष्ठा btf_array *)(t + 1);
+	दीर्घ दीर्घ elem_size;
+	पूर्णांक ret = 0;
 	__u32 i;
 
-	if (is_str_array(d->btf, arr, data)) {
+	अगर (is_str_array(d->btf, arr, data)) अणु
 		jsonw_string(d->jw, data);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	elem_size = btf__resolve_size(d->btf, arr->type);
-	if (elem_size < 0)
-		return elem_size;
+	अगर (elem_size < 0)
+		वापस elem_size;
 
 	jsonw_start_array(d->jw);
-	for (i = 0; i < arr->nelems; i++) {
-		ret = btf_dumper_do_type(d, arr->type, 0,
+	क्रम (i = 0; i < arr->nelems; i++) अणु
+		ret = btf_dumper_करो_type(d, arr->type, 0,
 					 data + i * elem_size);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
 	jsonw_end_array(d->jw);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void btf_int128_print(json_writer_t *jw, const void *data,
+अटल व्योम btf_पूर्णांक128_prपूर्णांक(json_ग_लिखोr_t *jw, स्थिर व्योम *data,
 			     bool is_plain_text)
-{
-	/* data points to a __int128 number.
+अणु
+	/* data poपूर्णांकs to a __पूर्णांक128 number.
 	 * Suppose
-	 *     int128_num = *(__int128 *)data;
-	 * The below formulas shows what upper_num and lower_num represents:
-	 *     upper_num = int128_num >> 64;
-	 *     lower_num = int128_num & 0xffffffffFFFFFFFFULL;
+	 *     पूर्णांक128_num = *(__पूर्णांक128 *)data;
+	 * The below क्रमmulas shows what upper_num and lower_num represents:
+	 *     upper_num = पूर्णांक128_num >> 64;
+	 *     lower_num = पूर्णांक128_num & 0xffffffffFFFFFFFFULL;
 	 */
 	__u64 upper_num, lower_num;
 
-#ifdef __BIG_ENDIAN_BITFIELD
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
 	upper_num = *(__u64 *)data;
 	lower_num = *(__u64 *)(data + 8);
-#else
+#अन्यथा
 	upper_num = *(__u64 *)(data + 8);
 	lower_num = *(__u64 *)data;
-#endif
+#पूर्ण_अगर
 
-	if (is_plain_text) {
-		if (upper_num == 0)
-			jsonw_printf(jw, "0x%llx", lower_num);
-		else
-			jsonw_printf(jw, "0x%llx%016llx", upper_num, lower_num);
-	} else {
-		if (upper_num == 0)
-			jsonw_printf(jw, "\"0x%llx\"", lower_num);
-		else
-			jsonw_printf(jw, "\"0x%llx%016llx\"", upper_num, lower_num);
-	}
-}
+	अगर (is_plain_text) अणु
+		अगर (upper_num == 0)
+			jsonw_म_लिखो(jw, "0x%llx", lower_num);
+		अन्यथा
+			jsonw_म_लिखो(jw, "0x%llx%016llx", upper_num, lower_num);
+	पूर्ण अन्यथा अणु
+		अगर (upper_num == 0)
+			jsonw_म_लिखो(jw, "\"0x%llx\"", lower_num);
+		अन्यथा
+			jsonw_म_लिखो(jw, "\"0x%llx%016llx\"", upper_num, lower_num);
+	पूर्ण
+पूर्ण
 
-static void btf_int128_shift(__u64 *print_num, __u16 left_shift_bits,
-			     __u16 right_shift_bits)
-{
+अटल व्योम btf_पूर्णांक128_shअगरt(__u64 *prपूर्णांक_num, __u16 left_shअगरt_bits,
+			     __u16 right_shअगरt_bits)
+अणु
 	__u64 upper_num, lower_num;
 
-#ifdef __BIG_ENDIAN_BITFIELD
-	upper_num = print_num[0];
-	lower_num = print_num[1];
-#else
-	upper_num = print_num[1];
-	lower_num = print_num[0];
-#endif
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
+	upper_num = prपूर्णांक_num[0];
+	lower_num = prपूर्णांक_num[1];
+#अन्यथा
+	upper_num = prपूर्णांक_num[1];
+	lower_num = prपूर्णांक_num[0];
+#पूर्ण_अगर
 
-	/* shake out un-needed bits by shift/or operations */
-	if (left_shift_bits >= 64) {
-		upper_num = lower_num << (left_shift_bits - 64);
+	/* shake out un-needed bits by shअगरt/or operations */
+	अगर (left_shअगरt_bits >= 64) अणु
+		upper_num = lower_num << (left_shअगरt_bits - 64);
 		lower_num = 0;
-	} else {
-		upper_num = (upper_num << left_shift_bits) |
-			    (lower_num >> (64 - left_shift_bits));
-		lower_num = lower_num << left_shift_bits;
-	}
+	पूर्ण अन्यथा अणु
+		upper_num = (upper_num << left_shअगरt_bits) |
+			    (lower_num >> (64 - left_shअगरt_bits));
+		lower_num = lower_num << left_shअगरt_bits;
+	पूर्ण
 
-	if (right_shift_bits >= 64) {
-		lower_num = upper_num >> (right_shift_bits - 64);
+	अगर (right_shअगरt_bits >= 64) अणु
+		lower_num = upper_num >> (right_shअगरt_bits - 64);
 		upper_num = 0;
-	} else {
-		lower_num = (lower_num >> right_shift_bits) |
-			    (upper_num << (64 - right_shift_bits));
-		upper_num = upper_num >> right_shift_bits;
-	}
+	पूर्ण अन्यथा अणु
+		lower_num = (lower_num >> right_shअगरt_bits) |
+			    (upper_num << (64 - right_shअगरt_bits));
+		upper_num = upper_num >> right_shअगरt_bits;
+	पूर्ण
 
-#ifdef __BIG_ENDIAN_BITFIELD
-	print_num[0] = upper_num;
-	print_num[1] = lower_num;
-#else
-	print_num[0] = lower_num;
-	print_num[1] = upper_num;
-#endif
-}
+#अगर_घोषित __BIG_ENDIAN_BITFIELD
+	prपूर्णांक_num[0] = upper_num;
+	prपूर्णांक_num[1] = lower_num;
+#अन्यथा
+	prपूर्णांक_num[0] = lower_num;
+	prपूर्णांक_num[1] = upper_num;
+#पूर्ण_अगर
+पूर्ण
 
-static void btf_dumper_bitfield(__u32 nr_bits, __u8 bit_offset,
-				const void *data, json_writer_t *jw,
+अटल व्योम btf_dumper_bitfield(__u32 nr_bits, __u8 bit_offset,
+				स्थिर व्योम *data, json_ग_लिखोr_t *jw,
 				bool is_plain_text)
-{
-	int left_shift_bits, right_shift_bits;
-	__u64 print_num[2] = {};
-	int bytes_to_copy;
-	int bits_to_copy;
+अणु
+	पूर्णांक left_shअगरt_bits, right_shअगरt_bits;
+	__u64 prपूर्णांक_num[2] = अणुपूर्ण;
+	पूर्णांक bytes_to_copy;
+	पूर्णांक bits_to_copy;
 
 	bits_to_copy = bit_offset + nr_bits;
 	bytes_to_copy = BITS_ROUNDUP_BYTES(bits_to_copy);
 
-	memcpy(print_num, data, bytes_to_copy);
-#if defined(__BIG_ENDIAN_BITFIELD)
-	left_shift_bits = bit_offset;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-	left_shift_bits = 128 - bits_to_copy;
-#else
-#error neither big nor little endian
-#endif
-	right_shift_bits = 128 - nr_bits;
+	स_नकल(prपूर्णांक_num, data, bytes_to_copy);
+#अगर defined(__BIG_ENDIAN_BITFIELD)
+	left_shअगरt_bits = bit_offset;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+	left_shअगरt_bits = 128 - bits_to_copy;
+#अन्यथा
+#त्रुटि neither big nor little endian
+#पूर्ण_अगर
+	right_shअगरt_bits = 128 - nr_bits;
 
-	btf_int128_shift(print_num, left_shift_bits, right_shift_bits);
-	btf_int128_print(jw, print_num, is_plain_text);
-}
+	btf_पूर्णांक128_shअगरt(prपूर्णांक_num, left_shअगरt_bits, right_shअगरt_bits);
+	btf_पूर्णांक128_prपूर्णांक(jw, prपूर्णांक_num, is_plain_text);
+पूर्ण
 
 
-static void btf_dumper_int_bits(__u32 int_type, __u8 bit_offset,
-				const void *data, json_writer_t *jw,
+अटल व्योम btf_dumper_पूर्णांक_bits(__u32 पूर्णांक_type, __u8 bit_offset,
+				स्थिर व्योम *data, json_ग_लिखोr_t *jw,
 				bool is_plain_text)
-{
-	int nr_bits = BTF_INT_BITS(int_type);
-	int total_bits_offset;
+अणु
+	पूर्णांक nr_bits = BTF_INT_BITS(पूर्णांक_type);
+	पूर्णांक total_bits_offset;
 
 	/* bits_offset is at most 7.
 	 * BTF_INT_OFFSET() cannot exceed 128 bits.
 	 */
-	total_bits_offset = bit_offset + BTF_INT_OFFSET(int_type);
+	total_bits_offset = bit_offset + BTF_INT_OFFSET(पूर्णांक_type);
 	data += BITS_ROUNDDOWN_BYTES(total_bits_offset);
 	bit_offset = BITS_PER_BYTE_MASKED(total_bits_offset);
 	btf_dumper_bitfield(nr_bits, bit_offset, data, jw,
 			    is_plain_text);
-}
+पूर्ण
 
-static int btf_dumper_int(const struct btf_type *t, __u8 bit_offset,
-			  const void *data, json_writer_t *jw,
+अटल पूर्णांक btf_dumper_पूर्णांक(स्थिर काष्ठा btf_type *t, __u8 bit_offset,
+			  स्थिर व्योम *data, json_ग_लिखोr_t *jw,
 			  bool is_plain_text)
-{
-	__u32 *int_type;
+अणु
+	__u32 *पूर्णांक_type;
 	__u32 nr_bits;
 
-	int_type = (__u32 *)(t + 1);
-	nr_bits = BTF_INT_BITS(*int_type);
-	/* if this is bit field */
-	if (bit_offset || BTF_INT_OFFSET(*int_type) ||
-	    BITS_PER_BYTE_MASKED(nr_bits)) {
-		btf_dumper_int_bits(*int_type, bit_offset, data, jw,
+	पूर्णांक_type = (__u32 *)(t + 1);
+	nr_bits = BTF_INT_BITS(*पूर्णांक_type);
+	/* अगर this is bit field */
+	अगर (bit_offset || BTF_INT_OFFSET(*पूर्णांक_type) ||
+	    BITS_PER_BYTE_MASKED(nr_bits)) अणु
+		btf_dumper_पूर्णांक_bits(*पूर्णांक_type, bit_offset, data, jw,
 				    is_plain_text);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (nr_bits == 128) {
-		btf_int128_print(jw, data, is_plain_text);
-		return 0;
-	}
+	अगर (nr_bits == 128) अणु
+		btf_पूर्णांक128_prपूर्णांक(jw, data, is_plain_text);
+		वापस 0;
+	पूर्ण
 
-	switch (BTF_INT_ENCODING(*int_type)) {
-	case 0:
-		if (BTF_INT_BITS(*int_type) == 64)
-			jsonw_printf(jw, "%llu", *(__u64 *)data);
-		else if (BTF_INT_BITS(*int_type) == 32)
-			jsonw_printf(jw, "%u", *(__u32 *)data);
-		else if (BTF_INT_BITS(*int_type) == 16)
-			jsonw_printf(jw, "%hu", *(__u16 *)data);
-		else if (BTF_INT_BITS(*int_type) == 8)
-			jsonw_printf(jw, "%hhu", *(__u8 *)data);
-		else
-			btf_dumper_int_bits(*int_type, bit_offset, data, jw,
+	चयन (BTF_INT_ENCODING(*पूर्णांक_type)) अणु
+	हाल 0:
+		अगर (BTF_INT_BITS(*पूर्णांक_type) == 64)
+			jsonw_म_लिखो(jw, "%llu", *(__u64 *)data);
+		अन्यथा अगर (BTF_INT_BITS(*पूर्णांक_type) == 32)
+			jsonw_म_लिखो(jw, "%u", *(__u32 *)data);
+		अन्यथा अगर (BTF_INT_BITS(*पूर्णांक_type) == 16)
+			jsonw_म_लिखो(jw, "%hu", *(__u16 *)data);
+		अन्यथा अगर (BTF_INT_BITS(*पूर्णांक_type) == 8)
+			jsonw_म_लिखो(jw, "%hhu", *(__u8 *)data);
+		अन्यथा
+			btf_dumper_पूर्णांक_bits(*पूर्णांक_type, bit_offset, data, jw,
 					    is_plain_text);
-		break;
-	case BTF_INT_SIGNED:
-		if (BTF_INT_BITS(*int_type) == 64)
-			jsonw_printf(jw, "%lld", *(long long *)data);
-		else if (BTF_INT_BITS(*int_type) == 32)
-			jsonw_printf(jw, "%d", *(int *)data);
-		else if (BTF_INT_BITS(*int_type) == 16)
-			jsonw_printf(jw, "%hd", *(short *)data);
-		else if (BTF_INT_BITS(*int_type) == 8)
-			jsonw_printf(jw, "%hhd", *(char *)data);
-		else
-			btf_dumper_int_bits(*int_type, bit_offset, data, jw,
+		अवरोध;
+	हाल BTF_INT_SIGNED:
+		अगर (BTF_INT_BITS(*पूर्णांक_type) == 64)
+			jsonw_म_लिखो(jw, "%lld", *(दीर्घ दीर्घ *)data);
+		अन्यथा अगर (BTF_INT_BITS(*पूर्णांक_type) == 32)
+			jsonw_म_लिखो(jw, "%d", *(पूर्णांक *)data);
+		अन्यथा अगर (BTF_INT_BITS(*पूर्णांक_type) == 16)
+			jsonw_म_लिखो(jw, "%hd", *(लघु *)data);
+		अन्यथा अगर (BTF_INT_BITS(*पूर्णांक_type) == 8)
+			jsonw_म_लिखो(jw, "%hhd", *(अक्षर *)data);
+		अन्यथा
+			btf_dumper_पूर्णांक_bits(*पूर्णांक_type, bit_offset, data, jw,
 					    is_plain_text);
-		break;
-	case BTF_INT_CHAR:
-		if (isprint(*(char *)data))
-			jsonw_printf(jw, "\"%c\"", *(char *)data);
-		else
-			if (is_plain_text)
-				jsonw_printf(jw, "0x%hhx", *(char *)data);
-			else
-				jsonw_printf(jw, "\"\\u00%02hhx\"",
-					     *(char *)data);
-		break;
-	case BTF_INT_BOOL:
-		jsonw_bool(jw, *(int *)data);
-		break;
-	default:
+		अवरोध;
+	हाल BTF_INT_CHAR:
+		अगर (है_छाप(*(अक्षर *)data))
+			jsonw_म_लिखो(jw, "\"%c\"", *(अक्षर *)data);
+		अन्यथा
+			अगर (is_plain_text)
+				jsonw_म_लिखो(jw, "0x%hhx", *(अक्षर *)data);
+			अन्यथा
+				jsonw_म_लिखो(jw, "\"\\u00%02hhx\"",
+					     *(अक्षर *)data);
+		अवरोध;
+	हाल BTF_INT_BOOL:
+		jsonw_bool(jw, *(पूर्णांक *)data);
+		अवरोध;
+	शेष:
 		/* shouldn't happen */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int btf_dumper_struct(const struct btf_dumper *d, __u32 type_id,
-			     const void *data)
-{
-	const struct btf_type *t;
-	struct btf_member *m;
-	const void *data_off;
-	int kind_flag;
-	int ret = 0;
-	int i, vlen;
+अटल पूर्णांक btf_dumper_काष्ठा(स्थिर काष्ठा btf_dumper *d, __u32 type_id,
+			     स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा btf_type *t;
+	काष्ठा btf_member *m;
+	स्थिर व्योम *data_off;
+	पूर्णांक kind_flag;
+	पूर्णांक ret = 0;
+	पूर्णांक i, vlen;
 
 	t = btf__type_by_id(d->btf, type_id);
-	if (!t)
-		return -EINVAL;
+	अगर (!t)
+		वापस -EINVAL;
 
 	kind_flag = BTF_INFO_KFLAG(t->info);
 	vlen = BTF_INFO_VLEN(t->info);
 	jsonw_start_object(d->jw);
-	m = (struct btf_member *)(t + 1);
+	m = (काष्ठा btf_member *)(t + 1);
 
-	for (i = 0; i < vlen; i++) {
+	क्रम (i = 0; i < vlen; i++) अणु
 		__u32 bit_offset = m[i].offset;
 		__u32 bitfield_size = 0;
 
-		if (kind_flag) {
+		अगर (kind_flag) अणु
 			bitfield_size = BTF_MEMBER_BITFIELD_SIZE(bit_offset);
 			bit_offset = BTF_MEMBER_BIT_OFFSET(bit_offset);
-		}
+		पूर्ण
 
 		jsonw_name(d->jw, btf__name_by_offset(d->btf, m[i].name_off));
 		data_off = data + BITS_ROUNDDOWN_BYTES(bit_offset);
-		if (bitfield_size) {
+		अगर (bitfield_size) अणु
 			btf_dumper_bitfield(bitfield_size,
 					    BITS_PER_BYTE_MASKED(bit_offset),
 					    data_off, d->jw, d->is_plain_text);
-		} else {
-			ret = btf_dumper_do_type(d, m[i].type,
+		पूर्ण अन्यथा अणु
+			ret = btf_dumper_करो_type(d, m[i].type,
 						 BITS_PER_BYTE_MASKED(bit_offset),
 						 data_off);
-			if (ret)
-				break;
-		}
-	}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	jsonw_end_object(d->jw);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btf_dumper_var(const struct btf_dumper *d, __u32 type_id,
-			  __u8 bit_offset, const void *data)
-{
-	const struct btf_type *t = btf__type_by_id(d->btf, type_id);
-	int ret;
+अटल पूर्णांक btf_dumper_var(स्थिर काष्ठा btf_dumper *d, __u32 type_id,
+			  __u8 bit_offset, स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा btf_type *t = btf__type_by_id(d->btf, type_id);
+	पूर्णांक ret;
 
 	jsonw_start_object(d->jw);
 	jsonw_name(d->jw, btf__name_by_offset(d->btf, t->name_off));
-	ret = btf_dumper_do_type(d, t->type, bit_offset, data);
+	ret = btf_dumper_करो_type(d, t->type, bit_offset, data);
 	jsonw_end_object(d->jw);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btf_dumper_datasec(const struct btf_dumper *d, __u32 type_id,
-			      const void *data)
-{
-	struct btf_var_secinfo *vsi;
-	const struct btf_type *t;
-	int ret = 0, i, vlen;
+अटल पूर्णांक btf_dumper_datasec(स्थिर काष्ठा btf_dumper *d, __u32 type_id,
+			      स्थिर व्योम *data)
+अणु
+	काष्ठा btf_var_secinfo *vsi;
+	स्थिर काष्ठा btf_type *t;
+	पूर्णांक ret = 0, i, vlen;
 
 	t = btf__type_by_id(d->btf, type_id);
-	if (!t)
-		return -EINVAL;
+	अगर (!t)
+		वापस -EINVAL;
 
 	vlen = BTF_INFO_VLEN(t->info);
-	vsi = (struct btf_var_secinfo *)(t + 1);
+	vsi = (काष्ठा btf_var_secinfo *)(t + 1);
 
 	jsonw_start_object(d->jw);
 	jsonw_name(d->jw, btf__name_by_offset(d->btf, t->name_off));
 	jsonw_start_array(d->jw);
-	for (i = 0; i < vlen; i++) {
-		ret = btf_dumper_do_type(d, vsi[i].type, 0, data + vsi[i].offset);
-		if (ret)
-			break;
-	}
+	क्रम (i = 0; i < vlen; i++) अणु
+		ret = btf_dumper_करो_type(d, vsi[i].type, 0, data + vsi[i].offset);
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 	jsonw_end_array(d->jw);
 	jsonw_end_object(d->jw);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int btf_dumper_do_type(const struct btf_dumper *d, __u32 type_id,
-			      __u8 bit_offset, const void *data)
-{
-	const struct btf_type *t = btf__type_by_id(d->btf, type_id);
+अटल पूर्णांक btf_dumper_करो_type(स्थिर काष्ठा btf_dumper *d, __u32 type_id,
+			      __u8 bit_offset, स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा btf_type *t = btf__type_by_id(d->btf, type_id);
 
-	switch (BTF_INFO_KIND(t->info)) {
-	case BTF_KIND_INT:
-		return btf_dumper_int(t, bit_offset, data, d->jw,
+	चयन (BTF_INFO_KIND(t->info)) अणु
+	हाल BTF_KIND_INT:
+		वापस btf_dumper_पूर्णांक(t, bit_offset, data, d->jw,
 				     d->is_plain_text);
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION:
-		return btf_dumper_struct(d, type_id, data);
-	case BTF_KIND_ARRAY:
-		return btf_dumper_array(d, type_id, data);
-	case BTF_KIND_ENUM:
-		return btf_dumper_enum(d, t, data);
-	case BTF_KIND_PTR:
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION:
+		वापस btf_dumper_काष्ठा(d, type_id, data);
+	हाल BTF_KIND_ARRAY:
+		वापस btf_dumper_array(d, type_id, data);
+	हाल BTF_KIND_ENUM:
+		वापस btf_dumper_क्रमागत(d, t, data);
+	हाल BTF_KIND_PTR:
 		btf_dumper_ptr(d, t, data);
-		return 0;
-	case BTF_KIND_UNKN:
-		jsonw_printf(d->jw, "(unknown)");
-		return 0;
-	case BTF_KIND_FWD:
-		/* map key or value can't be forward */
-		jsonw_printf(d->jw, "(fwd-kind-invalid)");
-		return -EINVAL;
-	case BTF_KIND_TYPEDEF:
-	case BTF_KIND_VOLATILE:
-	case BTF_KIND_CONST:
-	case BTF_KIND_RESTRICT:
-		return btf_dumper_modifier(d, type_id, bit_offset, data);
-	case BTF_KIND_VAR:
-		return btf_dumper_var(d, type_id, bit_offset, data);
-	case BTF_KIND_DATASEC:
-		return btf_dumper_datasec(d, type_id, data);
-	default:
-		jsonw_printf(d->jw, "(unsupported-kind");
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	हाल BTF_KIND_UNKN:
+		jsonw_म_लिखो(d->jw, "(unknown)");
+		वापस 0;
+	हाल BTF_KIND_FWD:
+		/* map key or value can't be क्रमward */
+		jsonw_म_लिखो(d->jw, "(fwd-kind-invalid)");
+		वापस -EINVAL;
+	हाल BTF_KIND_TYPEDEF:
+	हाल BTF_KIND_VOLATILE:
+	हाल BTF_KIND_CONST:
+	हाल BTF_KIND_RESTRICT:
+		वापस btf_dumper_modअगरier(d, type_id, bit_offset, data);
+	हाल BTF_KIND_VAR:
+		वापस btf_dumper_var(d, type_id, bit_offset, data);
+	हाल BTF_KIND_DATASEC:
+		वापस btf_dumper_datasec(d, type_id, data);
+	शेष:
+		jsonw_म_लिखो(d->jw, "(unsupported-kind");
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int btf_dumper_type(const struct btf_dumper *d, __u32 type_id,
-		    const void *data)
-{
-	return btf_dumper_do_type(d, type_id, 0, data);
-}
+पूर्णांक btf_dumper_type(स्थिर काष्ठा btf_dumper *d, __u32 type_id,
+		    स्थिर व्योम *data)
+अणु
+	वापस btf_dumper_करो_type(d, type_id, 0, data);
+पूर्ण
 
-#define BTF_PRINT_ARG(...)						\
-	do {								\
-		pos += snprintf(func_sig + pos, size - pos,		\
+#घोषणा BTF_PRINT_ARG(...)						\
+	करो अणु								\
+		pos += snम_लिखो(func_sig + pos, size - pos,		\
 				__VA_ARGS__);				\
-		if (pos >= size)					\
-			return -1;					\
-	} while (0)
-#define BTF_PRINT_TYPE(type)					\
-	do {								\
+		अगर (pos >= size)					\
+			वापस -1;					\
+	पूर्ण जबतक (0)
+#घोषणा BTF_PRINT_TYPE(type)					\
+	करो अणु								\
 		pos = __btf_dumper_type_only(btf, type, func_sig,	\
 					     pos, size);		\
-		if (pos == -1)						\
-			return -1;					\
-	} while (0)
+		अगर (pos == -1)						\
+			वापस -1;					\
+	पूर्ण जबतक (0)
 
-static int __btf_dumper_type_only(const struct btf *btf, __u32 type_id,
-				  char *func_sig, int pos, int size)
-{
-	const struct btf_type *proto_type;
-	const struct btf_array *array;
-	const struct btf_var *var;
-	const struct btf_type *t;
+अटल पूर्णांक __btf_dumper_type_only(स्थिर काष्ठा btf *btf, __u32 type_id,
+				  अक्षर *func_sig, पूर्णांक pos, पूर्णांक size)
+अणु
+	स्थिर काष्ठा btf_type *proto_type;
+	स्थिर काष्ठा btf_array *array;
+	स्थिर काष्ठा btf_var *var;
+	स्थिर काष्ठा btf_type *t;
 
-	if (!type_id) {
+	अगर (!type_id) अणु
 		BTF_PRINT_ARG("void ");
-		return pos;
-	}
+		वापस pos;
+	पूर्ण
 
 	t = btf__type_by_id(btf, type_id);
 
-	switch (BTF_INFO_KIND(t->info)) {
-	case BTF_KIND_INT:
-	case BTF_KIND_TYPEDEF:
-	case BTF_KIND_FLOAT:
+	चयन (BTF_INFO_KIND(t->info)) अणु
+	हाल BTF_KIND_INT:
+	हाल BTF_KIND_TYPEDEF:
+	हाल BTF_KIND_FLOAT:
 		BTF_PRINT_ARG("%s ", btf__name_by_offset(btf, t->name_off));
-		break;
-	case BTF_KIND_STRUCT:
+		अवरोध;
+	हाल BTF_KIND_STRUCT:
 		BTF_PRINT_ARG("struct %s ",
 			      btf__name_by_offset(btf, t->name_off));
-		break;
-	case BTF_KIND_UNION:
+		अवरोध;
+	हाल BTF_KIND_UNION:
 		BTF_PRINT_ARG("union %s ",
 			      btf__name_by_offset(btf, t->name_off));
-		break;
-	case BTF_KIND_ENUM:
+		अवरोध;
+	हाल BTF_KIND_ENUM:
 		BTF_PRINT_ARG("enum %s ",
 			      btf__name_by_offset(btf, t->name_off));
-		break;
-	case BTF_KIND_ARRAY:
-		array = (struct btf_array *)(t + 1);
+		अवरोध;
+	हाल BTF_KIND_ARRAY:
+		array = (काष्ठा btf_array *)(t + 1);
 		BTF_PRINT_TYPE(array->type);
 		BTF_PRINT_ARG("[%d]", array->nelems);
-		break;
-	case BTF_KIND_PTR:
+		अवरोध;
+	हाल BTF_KIND_PTR:
 		BTF_PRINT_TYPE(t->type);
 		BTF_PRINT_ARG("* ");
-		break;
-	case BTF_KIND_FWD:
+		अवरोध;
+	हाल BTF_KIND_FWD:
 		BTF_PRINT_ARG("%s %s ",
 			      BTF_INFO_KFLAG(t->info) ? "union" : "struct",
 			      btf__name_by_offset(btf, t->name_off));
-		break;
-	case BTF_KIND_VOLATILE:
+		अवरोध;
+	हाल BTF_KIND_VOLATILE:
 		BTF_PRINT_ARG("volatile ");
 		BTF_PRINT_TYPE(t->type);
-		break;
-	case BTF_KIND_CONST:
+		अवरोध;
+	हाल BTF_KIND_CONST:
 		BTF_PRINT_ARG("const ");
 		BTF_PRINT_TYPE(t->type);
-		break;
-	case BTF_KIND_RESTRICT:
+		अवरोध;
+	हाल BTF_KIND_RESTRICT:
 		BTF_PRINT_ARG("restrict ");
 		BTF_PRINT_TYPE(t->type);
-		break;
-	case BTF_KIND_FUNC_PROTO:
-		pos = btf_dump_func(btf, func_sig, t, NULL, pos, size);
-		if (pos == -1)
-			return -1;
-		break;
-	case BTF_KIND_FUNC:
+		अवरोध;
+	हाल BTF_KIND_FUNC_PROTO:
+		pos = btf_dump_func(btf, func_sig, t, शून्य, pos, size);
+		अगर (pos == -1)
+			वापस -1;
+		अवरोध;
+	हाल BTF_KIND_FUNC:
 		proto_type = btf__type_by_id(btf, t->type);
 		pos = btf_dump_func(btf, func_sig, proto_type, t, pos, size);
-		if (pos == -1)
-			return -1;
-		break;
-	case BTF_KIND_VAR:
-		var = (struct btf_var *)(t + 1);
-		if (var->linkage == BTF_VAR_STATIC)
+		अगर (pos == -1)
+			वापस -1;
+		अवरोध;
+	हाल BTF_KIND_VAR:
+		var = (काष्ठा btf_var *)(t + 1);
+		अगर (var->linkage == BTF_VAR_STATIC)
 			BTF_PRINT_ARG("static ");
 		BTF_PRINT_TYPE(t->type);
 		BTF_PRINT_ARG(" %s",
 			      btf__name_by_offset(btf, t->name_off));
-		break;
-	case BTF_KIND_DATASEC:
+		अवरोध;
+	हाल BTF_KIND_DATASEC:
 		BTF_PRINT_ARG("section (\"%s\") ",
 			      btf__name_by_offset(btf, t->name_off));
-		break;
-	case BTF_KIND_UNKN:
-	default:
-		return -1;
-	}
+		अवरोध;
+	हाल BTF_KIND_UNKN:
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-static int btf_dump_func(const struct btf *btf, char *func_sig,
-			 const struct btf_type *func_proto,
-			 const struct btf_type *func, int pos, int size)
-{
-	int i, vlen;
+अटल पूर्णांक btf_dump_func(स्थिर काष्ठा btf *btf, अक्षर *func_sig,
+			 स्थिर काष्ठा btf_type *func_proto,
+			 स्थिर काष्ठा btf_type *func, पूर्णांक pos, पूर्णांक size)
+अणु
+	पूर्णांक i, vlen;
 
 	BTF_PRINT_TYPE(func_proto->type);
-	if (func)
+	अगर (func)
 		BTF_PRINT_ARG("%s(", btf__name_by_offset(btf, func->name_off));
-	else
+	अन्यथा
 		BTF_PRINT_ARG("(");
 	vlen = BTF_INFO_VLEN(func_proto->info);
-	for (i = 0; i < vlen; i++) {
-		struct btf_param *arg = &((struct btf_param *)(func_proto + 1))[i];
+	क्रम (i = 0; i < vlen; i++) अणु
+		काष्ठा btf_param *arg = &((काष्ठा btf_param *)(func_proto + 1))[i];
 
-		if (i)
+		अगर (i)
 			BTF_PRINT_ARG(", ");
-		if (arg->type) {
+		अगर (arg->type) अणु
 			BTF_PRINT_TYPE(arg->type);
-			if (arg->name_off)
+			अगर (arg->name_off)
 				BTF_PRINT_ARG("%s",
 					      btf__name_by_offset(btf, arg->name_off));
-			else if (pos && func_sig[pos - 1] == ' ')
-				/* Remove unnecessary space for
-				 * FUNC_PROTO that does not have
+			अन्यथा अगर (pos && func_sig[pos - 1] == ' ')
+				/* Remove unnecessary space क्रम
+				 * FUNC_PROTO that करोes not have
 				 * arg->name_off
 				 */
 				func_sig[--pos] = '\0';
-		} else {
+		पूर्ण अन्यथा अणु
 			BTF_PRINT_ARG("...");
-		}
-	}
+		पूर्ण
+	पूर्ण
 	BTF_PRINT_ARG(")");
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-void btf_dumper_type_only(const struct btf *btf, __u32 type_id, char *func_sig,
-			  int size)
-{
-	int err;
+व्योम btf_dumper_type_only(स्थिर काष्ठा btf *btf, __u32 type_id, अक्षर *func_sig,
+			  पूर्णांक size)
+अणु
+	पूर्णांक err;
 
 	func_sig[0] = '\0';
-	if (!btf)
-		return;
+	अगर (!btf)
+		वापस;
 
 	err = __btf_dumper_type_only(btf, type_id, func_sig, 0, size);
-	if (err < 0)
+	अगर (err < 0)
 		func_sig[0] = '\0';
-}
+पूर्ण
 
-static const char *ltrim(const char *s)
-{
-	while (isspace(*s))
+अटल स्थिर अक्षर *ltrim(स्थिर अक्षर *s)
+अणु
+	जबतक (है_खाली(*s))
 		s++;
 
-	return s;
-}
+	वापस s;
+पूर्ण
 
-void btf_dump_linfo_plain(const struct btf *btf,
-			  const struct bpf_line_info *linfo,
-			  const char *prefix, bool linum)
-{
-	const char *line = btf__name_by_offset(btf, linfo->line_off);
+व्योम btf_dump_linfo_plain(स्थिर काष्ठा btf *btf,
+			  स्थिर काष्ठा bpf_line_info *linfo,
+			  स्थिर अक्षर *prefix, bool linum)
+अणु
+	स्थिर अक्षर *line = btf__name_by_offset(btf, linfo->line_off);
 
-	if (!line)
-		return;
+	अगर (!line)
+		वापस;
 	line = ltrim(line);
 
-	if (!prefix)
+	अगर (!prefix)
 		prefix = "";
 
-	if (linum) {
-		const char *file = btf__name_by_offset(btf, linfo->file_name_off);
+	अगर (linum) अणु
+		स्थिर अक्षर *file = btf__name_by_offset(btf, linfo->file_name_off);
 
-		/* More forgiving on file because linum option is
-		 * expected to provide more info than the already
+		/* More क्रमgiving on file because linum option is
+		 * expected to provide more info than the alपढ़ोy
 		 * available src line.
 		 */
-		if (!file)
+		अगर (!file)
 			file = "";
 
-		printf("%s%s [file:%s line_num:%u line_col:%u]\n",
+		म_लिखो("%s%s [file:%s line_num:%u line_col:%u]\n",
 		       prefix, line, file,
 		       BPF_LINE_INFO_LINE_NUM(linfo->line_col),
 		       BPF_LINE_INFO_LINE_COL(linfo->line_col));
-	} else {
-		printf("%s%s\n", prefix, line);
-	}
-}
+	पूर्ण अन्यथा अणु
+		म_लिखो("%s%s\n", prefix, line);
+	पूर्ण
+पूर्ण
 
-void btf_dump_linfo_json(const struct btf *btf,
-			 const struct bpf_line_info *linfo, bool linum)
-{
-	const char *line = btf__name_by_offset(btf, linfo->line_off);
+व्योम btf_dump_linfo_json(स्थिर काष्ठा btf *btf,
+			 स्थिर काष्ठा bpf_line_info *linfo, bool linum)
+अणु
+	स्थिर अक्षर *line = btf__name_by_offset(btf, linfo->line_off);
 
-	if (line)
+	अगर (line)
 		jsonw_string_field(json_wtr, "src", ltrim(line));
 
-	if (linum) {
-		const char *file = btf__name_by_offset(btf, linfo->file_name_off);
+	अगर (linum) अणु
+		स्थिर अक्षर *file = btf__name_by_offset(btf, linfo->file_name_off);
 
-		if (file)
+		अगर (file)
 			jsonw_string_field(json_wtr, "file", file);
 
-		if (BPF_LINE_INFO_LINE_NUM(linfo->line_col))
-			jsonw_int_field(json_wtr, "line_num",
+		अगर (BPF_LINE_INFO_LINE_NUM(linfo->line_col))
+			jsonw_पूर्णांक_field(json_wtr, "line_num",
 					BPF_LINE_INFO_LINE_NUM(linfo->line_col));
 
-		if (BPF_LINE_INFO_LINE_COL(linfo->line_col))
-			jsonw_int_field(json_wtr, "line_col",
+		अगर (BPF_LINE_INFO_LINE_COL(linfo->line_col))
+			jsonw_पूर्णांक_field(json_wtr, "line_col",
 					BPF_LINE_INFO_LINE_COL(linfo->line_col));
-	}
-}
+	पूर्ण
+पूर्ण

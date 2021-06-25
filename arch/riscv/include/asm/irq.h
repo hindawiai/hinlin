@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of California
+ * Copyright (C) 2012 Regents of the University of Calअगरornia
  * Copyright (C) 2017 SiFive
  */
 
-#ifndef _ASM_RISCV_IRQ_H
-#define _ASM_RISCV_IRQ_H
+#अगर_अघोषित _ASM_RISCV_IRQ_H
+#घोषणा _ASM_RISCV_IRQ_H
 
-#include <linux/interrupt.h>
-#include <linux/linkage.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/linkage.h>
 
-#include <asm-generic/irq.h>
+#समावेश <यंत्र-generic/irq.h>
 
-extern void __init init_IRQ(void);
+बाह्य व्योम __init init_IRQ(व्योम);
 
-#endif /* _ASM_RISCV_IRQ_H */
+#पूर्ण_अगर /* _ASM_RISCV_IRQ_H */

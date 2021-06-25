@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * From lib/bitmap.c
- * Helper functions for bitmap.h.
+ * From lib/biपंचांगap.c
+ * Helper functions क्रम biपंचांगap.h.
  */
-#include <linux/bitmap.h>
+#समावेश <linux/biपंचांगap.h>
 
-int __bitmap_weight(const unsigned long *bitmap, int bits)
-{
-	int k, w = 0, lim = bits/BITS_PER_LONG;
+पूर्णांक __biपंचांगap_weight(स्थिर अचिन्हित दीर्घ *biपंचांगap, पूर्णांक bits)
+अणु
+	पूर्णांक k, w = 0, lim = bits/BITS_PER_LONG;
 
-	for (k = 0; k < lim; k++)
-		w += hweight_long(bitmap[k]);
+	क्रम (k = 0; k < lim; k++)
+		w += hweight_दीर्घ(biपंचांगap[k]);
 
-	if (bits % BITS_PER_LONG)
-		w += hweight_long(bitmap[k] & BITMAP_LAST_WORD_MASK(bits));
+	अगर (bits % BITS_PER_LONG)
+		w += hweight_दीर्घ(biपंचांगap[k] & BITMAP_LAST_WORD_MASK(bits));
 
-	return w;
-}
+	वापस w;
+पूर्ण
 
-void __bitmap_or(unsigned long *dst, const unsigned long *bitmap1,
-		 const unsigned long *bitmap2, int bits)
-{
-	int k;
-	int nr = BITS_TO_LONGS(bits);
+व्योम __biपंचांगap_or(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *biपंचांगap1,
+		 स्थिर अचिन्हित दीर्घ *biपंचांगap2, पूर्णांक bits)
+अणु
+	पूर्णांक k;
+	पूर्णांक nr = BITS_TO_LONGS(bits);
 
-	for (k = 0; k < nr; k++)
-		dst[k] = bitmap1[k] | bitmap2[k];
-}
+	क्रम (k = 0; k < nr; k++)
+		dst[k] = biपंचांगap1[k] | biपंचांगap2[k];
+पूर्ण
 
-size_t bitmap_scnprintf(unsigned long *bitmap, unsigned int nbits,
-			char *buf, size_t size)
-{
+माप_प्रकार biपंचांगap_scnम_लिखो(अचिन्हित दीर्घ *biपंचांगap, अचिन्हित पूर्णांक nbits,
+			अक्षर *buf, माप_प्रकार size)
+अणु
 	/* current bit is 'cur', most recently seen range is [rbot, rtop] */
-	unsigned int cur, rbot, rtop;
+	अचिन्हित पूर्णांक cur, rbot, rtop;
 	bool first = true;
-	size_t ret = 0;
+	माप_प्रकार ret = 0;
 
-	rbot = cur = find_first_bit(bitmap, nbits);
-	while (cur < nbits) {
+	rbot = cur = find_first_bit(biपंचांगap, nbits);
+	जबतक (cur < nbits) अणु
 		rtop = cur;
-		cur = find_next_bit(bitmap, nbits, cur + 1);
-		if (cur < nbits && cur <= rtop + 1)
-			continue;
+		cur = find_next_bit(biपंचांगap, nbits, cur + 1);
+		अगर (cur < nbits && cur <= rtop + 1)
+			जारी;
 
-		if (!first)
-			ret += scnprintf(buf + ret, size - ret, ",");
+		अगर (!first)
+			ret += scnम_लिखो(buf + ret, size - ret, ",");
 
 		first = false;
 
-		ret += scnprintf(buf + ret, size - ret, "%d", rbot);
-		if (rbot < rtop)
-			ret += scnprintf(buf + ret, size - ret, "-%d", rtop);
+		ret += scnम_लिखो(buf + ret, size - ret, "%d", rbot);
+		अगर (rbot < rtop)
+			ret += scnम_लिखो(buf + ret, size - ret, "-%d", rtop);
 
 		rbot = cur;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int __bitmap_and(unsigned long *dst, const unsigned long *bitmap1,
-		 const unsigned long *bitmap2, unsigned int bits)
-{
-	unsigned int k;
-	unsigned int lim = bits/BITS_PER_LONG;
-	unsigned long result = 0;
+पूर्णांक __biपंचांगap_and(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *biपंचांगap1,
+		 स्थिर अचिन्हित दीर्घ *biपंचांगap2, अचिन्हित पूर्णांक bits)
+अणु
+	अचिन्हित पूर्णांक k;
+	अचिन्हित पूर्णांक lim = bits/BITS_PER_LONG;
+	अचिन्हित दीर्घ result = 0;
 
-	for (k = 0; k < lim; k++)
-		result |= (dst[k] = bitmap1[k] & bitmap2[k]);
-	if (bits % BITS_PER_LONG)
-		result |= (dst[k] = bitmap1[k] & bitmap2[k] &
+	क्रम (k = 0; k < lim; k++)
+		result |= (dst[k] = biपंचांगap1[k] & biपंचांगap2[k]);
+	अगर (bits % BITS_PER_LONG)
+		result |= (dst[k] = biपंचांगap1[k] & biपंचांगap2[k] &
 			   BITMAP_LAST_WORD_MASK(bits));
-	return result != 0;
-}
+	वापस result != 0;
+पूर्ण
 
-int __bitmap_equal(const unsigned long *bitmap1,
-		const unsigned long *bitmap2, unsigned int bits)
-{
-	unsigned int k, lim = bits/BITS_PER_LONG;
-	for (k = 0; k < lim; ++k)
-		if (bitmap1[k] != bitmap2[k])
-			return 0;
+पूर्णांक __biपंचांगap_equal(स्थिर अचिन्हित दीर्घ *biपंचांगap1,
+		स्थिर अचिन्हित दीर्घ *biपंचांगap2, अचिन्हित पूर्णांक bits)
+अणु
+	अचिन्हित पूर्णांक k, lim = bits/BITS_PER_LONG;
+	क्रम (k = 0; k < lim; ++k)
+		अगर (biपंचांगap1[k] != biपंचांगap2[k])
+			वापस 0;
 
-	if (bits % BITS_PER_LONG)
-		if ((bitmap1[k] ^ bitmap2[k]) & BITMAP_LAST_WORD_MASK(bits))
-			return 0;
+	अगर (bits % BITS_PER_LONG)
+		अगर ((biपंचांगap1[k] ^ biपंचांगap2[k]) & BITMAP_LAST_WORD_MASK(bits))
+			वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * patch.c - livepatch patching functions
  *
@@ -7,88 +8,88 @@
  * Copyright (C) 2015 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/livepatch.h>
-#include <linux/list.h>
-#include <linux/ftrace.h>
-#include <linux/rculist.h>
-#include <linux/slab.h>
-#include <linux/bug.h>
-#include <linux/printk.h>
-#include "core.h"
-#include "patch.h"
-#include "transition.h"
+#समावेश <linux/livepatch.h>
+#समावेश <linux/list.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश "core.h"
+#समावेश "patch.h"
+#समावेश "transition.h"
 
-static LIST_HEAD(klp_ops);
+अटल LIST_HEAD(klp_ops);
 
-struct klp_ops *klp_find_ops(void *old_func)
-{
-	struct klp_ops *ops;
-	struct klp_func *func;
+काष्ठा klp_ops *klp_find_ops(व्योम *old_func)
+अणु
+	काष्ठा klp_ops *ops;
+	काष्ठा klp_func *func;
 
-	list_for_each_entry(ops, &klp_ops, node) {
-		func = list_first_entry(&ops->func_stack, struct klp_func,
+	list_क्रम_each_entry(ops, &klp_ops, node) अणु
+		func = list_first_entry(&ops->func_stack, काष्ठा klp_func,
 					stack_node);
-		if (func->old_func == old_func)
-			return ops;
-	}
+		अगर (func->old_func == old_func)
+			वापस ops;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void notrace klp_ftrace_handler(unsigned long ip,
-				       unsigned long parent_ip,
-				       struct ftrace_ops *fops,
-				       struct ftrace_regs *fregs)
-{
-	struct klp_ops *ops;
-	struct klp_func *func;
-	int patch_state;
-	int bit;
+अटल व्योम notrace klp_ftrace_handler(अचिन्हित दीर्घ ip,
+				       अचिन्हित दीर्घ parent_ip,
+				       काष्ठा ftrace_ops *fops,
+				       काष्ठा ftrace_regs *fregs)
+अणु
+	काष्ठा klp_ops *ops;
+	काष्ठा klp_func *func;
+	पूर्णांक patch_state;
+	पूर्णांक bit;
 
-	ops = container_of(fops, struct klp_ops, fops);
+	ops = container_of(fops, काष्ठा klp_ops, fops);
 
 	bit = ftrace_test_recursion_trylock(ip, parent_ip);
-	if (WARN_ON_ONCE(bit < 0))
-		return;
+	अगर (WARN_ON_ONCE(bit < 0))
+		वापस;
 	/*
 	 * A variant of synchronize_rcu() is used to allow patching functions
 	 * where RCU is not watching, see klp_synchronize_transition().
 	 */
 	preempt_disable_notrace();
 
-	func = list_first_or_null_rcu(&ops->func_stack, struct klp_func,
+	func = list_first_or_null_rcu(&ops->func_stack, काष्ठा klp_func,
 				      stack_node);
 
 	/*
-	 * func should never be NULL because preemption should be disabled here
-	 * and unregister_ftrace_function() does the equivalent of a
-	 * synchronize_rcu() before the func_stack removal.
+	 * func should never be शून्य because preemption should be disabled here
+	 * and unरेजिस्टर_ftrace_function() करोes the equivalent of a
+	 * synchronize_rcu() beक्रमe the func_stack removal.
 	 */
-	if (WARN_ON_ONCE(!func))
-		goto unlock;
+	अगर (WARN_ON_ONCE(!func))
+		जाओ unlock;
 
 	/*
-	 * In the enable path, enforce the order of the ops->func_stack and
-	 * func->transition reads.  The corresponding write barrier is in
+	 * In the enable path, enक्रमce the order of the ops->func_stack and
+	 * func->transition पढ़ोs.  The corresponding ग_लिखो barrier is in
 	 * __klp_enable_patch().
 	 *
 	 * (Note that this barrier technically isn't needed in the disable
-	 * path.  In the rare case where klp_update_patch_state() runs before
-	 * this handler, its TIF_PATCH_PENDING read and this func->transition
-	 * read need to be ordered.  But klp_update_patch_state() already
-	 * enforces that.)
+	 * path.  In the rare हाल where klp_update_patch_state() runs beक्रमe
+	 * this handler, its TIF_PATCH_PENDING पढ़ो and this func->transition
+	 * पढ़ो need to be ordered.  But klp_update_patch_state() alपढ़ोy
+	 * enक्रमces that.)
 	 */
 	smp_rmb();
 
-	if (unlikely(func->transition)) {
+	अगर (unlikely(func->transition)) अणु
 
 		/*
-		 * Enforce the order of the func->transition and
-		 * current->patch_state reads.  Otherwise we could read an
+		 * Enक्रमce the order of the func->transition and
+		 * current->patch_state पढ़ोs.  Otherwise we could पढ़ो an
 		 * out-of-date task state and pick the wrong function.  The
-		 * corresponding write barrier is in klp_init_transition().
+		 * corresponding ग_लिखो barrier is in klp_init_transition().
 		 */
 		smp_rmb();
 
@@ -96,113 +97,113 @@ static void notrace klp_ftrace_handler(unsigned long ip,
 
 		WARN_ON_ONCE(patch_state == KLP_UNDEFINED);
 
-		if (patch_state == KLP_UNPATCHED) {
+		अगर (patch_state == KLP_UNPATCHED) अणु
 			/*
 			 * Use the previously patched version of the function.
-			 * If no previous patches exist, continue with the
+			 * If no previous patches exist, जारी with the
 			 * original function.
 			 */
 			func = list_entry_rcu(func->stack_node.next,
-					      struct klp_func, stack_node);
+					      काष्ठा klp_func, stack_node);
 
-			if (&func->stack_node == &ops->func_stack)
-				goto unlock;
-		}
-	}
+			अगर (&func->stack_node == &ops->func_stack)
+				जाओ unlock;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * NOPs are used to replace existing patches with original code.
 	 * Do nothing! Setting pc would cause an infinite loop.
 	 */
-	if (func->nop)
-		goto unlock;
+	अगर (func->nop)
+		जाओ unlock;
 
-	klp_arch_set_pc(fregs, (unsigned long)func->new_func);
+	klp_arch_set_pc(fregs, (अचिन्हित दीर्घ)func->new_func);
 
 unlock:
 	preempt_enable_notrace();
 	ftrace_test_recursion_unlock(bit);
-}
+पूर्ण
 
 /*
- * Convert a function address into the appropriate ftrace location.
+ * Convert a function address पूर्णांकo the appropriate ftrace location.
  *
  * Usually this is just the address of the function, but on some architectures
  * it's more complicated so allow them to provide a custom behaviour.
  */
-#ifndef klp_get_ftrace_location
-static unsigned long klp_get_ftrace_location(unsigned long faddr)
-{
-	return faddr;
-}
-#endif
+#अगर_अघोषित klp_get_ftrace_location
+अटल अचिन्हित दीर्घ klp_get_ftrace_location(अचिन्हित दीर्घ faddr)
+अणु
+	वापस faddr;
+पूर्ण
+#पूर्ण_अगर
 
-static void klp_unpatch_func(struct klp_func *func)
-{
-	struct klp_ops *ops;
+अटल व्योम klp_unpatch_func(काष्ठा klp_func *func)
+अणु
+	काष्ठा klp_ops *ops;
 
-	if (WARN_ON(!func->patched))
-		return;
-	if (WARN_ON(!func->old_func))
-		return;
+	अगर (WARN_ON(!func->patched))
+		वापस;
+	अगर (WARN_ON(!func->old_func))
+		वापस;
 
 	ops = klp_find_ops(func->old_func);
-	if (WARN_ON(!ops))
-		return;
+	अगर (WARN_ON(!ops))
+		वापस;
 
-	if (list_is_singular(&ops->func_stack)) {
-		unsigned long ftrace_loc;
+	अगर (list_is_singular(&ops->func_stack)) अणु
+		अचिन्हित दीर्घ ftrace_loc;
 
 		ftrace_loc =
-			klp_get_ftrace_location((unsigned long)func->old_func);
-		if (WARN_ON(!ftrace_loc))
-			return;
+			klp_get_ftrace_location((अचिन्हित दीर्घ)func->old_func);
+		अगर (WARN_ON(!ftrace_loc))
+			वापस;
 
-		WARN_ON(unregister_ftrace_function(&ops->fops));
+		WARN_ON(unरेजिस्टर_ftrace_function(&ops->fops));
 		WARN_ON(ftrace_set_filter_ip(&ops->fops, ftrace_loc, 1, 0));
 
 		list_del_rcu(&func->stack_node);
 		list_del(&ops->node);
-		kfree(ops);
-	} else {
+		kमुक्त(ops);
+	पूर्ण अन्यथा अणु
 		list_del_rcu(&func->stack_node);
-	}
+	पूर्ण
 
 	func->patched = false;
-}
+पूर्ण
 
-static int klp_patch_func(struct klp_func *func)
-{
-	struct klp_ops *ops;
-	int ret;
+अटल पूर्णांक klp_patch_func(काष्ठा klp_func *func)
+अणु
+	काष्ठा klp_ops *ops;
+	पूर्णांक ret;
 
-	if (WARN_ON(!func->old_func))
-		return -EINVAL;
+	अगर (WARN_ON(!func->old_func))
+		वापस -EINVAL;
 
-	if (WARN_ON(func->patched))
-		return -EINVAL;
+	अगर (WARN_ON(func->patched))
+		वापस -EINVAL;
 
 	ops = klp_find_ops(func->old_func);
-	if (!ops) {
-		unsigned long ftrace_loc;
+	अगर (!ops) अणु
+		अचिन्हित दीर्घ ftrace_loc;
 
 		ftrace_loc =
-			klp_get_ftrace_location((unsigned long)func->old_func);
-		if (!ftrace_loc) {
+			klp_get_ftrace_location((अचिन्हित दीर्घ)func->old_func);
+		अगर (!ftrace_loc) अणु
 			pr_err("failed to find location for function '%s'\n",
 				func->old_name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		ops = kzalloc(sizeof(*ops), GFP_KERNEL);
-		if (!ops)
-			return -ENOMEM;
+		ops = kzalloc(माप(*ops), GFP_KERNEL);
+		अगर (!ops)
+			वापस -ENOMEM;
 
 		ops->fops.func = klp_ftrace_handler;
 		ops->fops.flags = FTRACE_OPS_FL_DYNAMIC |
-#ifndef CONFIG_HAVE_DYNAMIC_FTRACE_WITH_ARGS
+#अगर_अघोषित CONFIG_HAVE_DYNAMIC_FTRACE_WITH_ARGS
 				  FTRACE_OPS_FL_SAVE_REGS |
-#endif
+#पूर्ण_अगर
 				  FTRACE_OPS_FL_IPMODIFY |
 				  FTRACE_OPS_FL_PERMANENT;
 
@@ -212,93 +213,93 @@ static int klp_patch_func(struct klp_func *func)
 		list_add_rcu(&func->stack_node, &ops->func_stack);
 
 		ret = ftrace_set_filter_ip(&ops->fops, ftrace_loc, 0, 0);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("failed to set ftrace filter for function '%s' (%d)\n",
 			       func->old_name, ret);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		ret = register_ftrace_function(&ops->fops);
-		if (ret) {
+		ret = रेजिस्टर_ftrace_function(&ops->fops);
+		अगर (ret) अणु
 			pr_err("failed to register ftrace handler for function '%s' (%d)\n",
 			       func->old_name, ret);
 			ftrace_set_filter_ip(&ops->fops, ftrace_loc, 1, 0);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 
-	} else {
+	पूर्ण अन्यथा अणु
 		list_add_rcu(&func->stack_node, &ops->func_stack);
-	}
+	पूर्ण
 
 	func->patched = true;
 
-	return 0;
+	वापस 0;
 
 err:
 	list_del_rcu(&func->stack_node);
 	list_del(&ops->node);
-	kfree(ops);
-	return ret;
-}
+	kमुक्त(ops);
+	वापस ret;
+पूर्ण
 
-static void __klp_unpatch_object(struct klp_object *obj, bool nops_only)
-{
-	struct klp_func *func;
+अटल व्योम __klp_unpatch_object(काष्ठा klp_object *obj, bool nops_only)
+अणु
+	काष्ठा klp_func *func;
 
-	klp_for_each_func(obj, func) {
-		if (nops_only && !func->nop)
-			continue;
+	klp_क्रम_each_func(obj, func) अणु
+		अगर (nops_only && !func->nop)
+			जारी;
 
-		if (func->patched)
+		अगर (func->patched)
 			klp_unpatch_func(func);
-	}
+	पूर्ण
 
-	if (obj->dynamic || !nops_only)
+	अगर (obj->dynamic || !nops_only)
 		obj->patched = false;
-}
+पूर्ण
 
 
-void klp_unpatch_object(struct klp_object *obj)
-{
+व्योम klp_unpatch_object(काष्ठा klp_object *obj)
+अणु
 	__klp_unpatch_object(obj, false);
-}
+पूर्ण
 
-int klp_patch_object(struct klp_object *obj)
-{
-	struct klp_func *func;
-	int ret;
+पूर्णांक klp_patch_object(काष्ठा klp_object *obj)
+अणु
+	काष्ठा klp_func *func;
+	पूर्णांक ret;
 
-	if (WARN_ON(obj->patched))
-		return -EINVAL;
+	अगर (WARN_ON(obj->patched))
+		वापस -EINVAL;
 
-	klp_for_each_func(obj, func) {
+	klp_क्रम_each_func(obj, func) अणु
 		ret = klp_patch_func(func);
-		if (ret) {
+		अगर (ret) अणु
 			klp_unpatch_object(obj);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	obj->patched = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __klp_unpatch_objects(struct klp_patch *patch, bool nops_only)
-{
-	struct klp_object *obj;
+अटल व्योम __klp_unpatch_objects(काष्ठा klp_patch *patch, bool nops_only)
+अणु
+	काष्ठा klp_object *obj;
 
-	klp_for_each_object(patch, obj)
-		if (obj->patched)
+	klp_क्रम_each_object(patch, obj)
+		अगर (obj->patched)
 			__klp_unpatch_object(obj, nops_only);
-}
+पूर्ण
 
-void klp_unpatch_objects(struct klp_patch *patch)
-{
+व्योम klp_unpatch_objects(काष्ठा klp_patch *patch)
+अणु
 	__klp_unpatch_objects(patch, false);
-}
+पूर्ण
 
-void klp_unpatch_objects_dynamic(struct klp_patch *patch)
-{
+व्योम klp_unpatch_objects_dynamic(काष्ठा klp_patch *patch)
+अणु
 	__klp_unpatch_objects(patch, true);
-}
+पूर्ण

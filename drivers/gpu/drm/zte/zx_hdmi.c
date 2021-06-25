@@ -1,231 +1,232 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2016 Linaro Ltd.
  * Copyright 2016 ZTE Corporation.
  */
 
-#include <linux/clk.h>
-#include <linux/component.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/hdmi.h>
-#include <linux/irq.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/hdmi.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_device.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_edid.h>
-#include <drm/drm_of.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_print.h>
-#include <drm/drm_simple_kms_helper.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <drm/drm_simple_kms_helper.h>
 
-#include <sound/hdmi-codec.h>
+#समावेश <sound/hdmi-codec.h>
 
-#include "zx_hdmi_regs.h"
-#include "zx_vou.h"
+#समावेश "zx_hdmi_regs.h"
+#समावेश "zx_vou.h"
 
-#define ZX_HDMI_INFOFRAME_SIZE		31
-#define DDC_SEGMENT_ADDR		0x30
+#घोषणा ZX_HDMI_INFOFRAME_SIZE		31
+#घोषणा DDC_SEGMENT_ADDR		0x30
 
-struct zx_hdmi_i2c {
-	struct i2c_adapter adap;
-	struct mutex lock;
-};
+काष्ठा zx_hdmi_i2c अणु
+	काष्ठा i2c_adapter adap;
+	काष्ठा mutex lock;
+पूर्ण;
 
-struct zx_hdmi {
-	struct drm_connector connector;
-	struct drm_encoder encoder;
-	struct zx_hdmi_i2c *ddc;
-	struct device *dev;
-	struct drm_device *drm;
-	void __iomem *mmio;
-	struct clk *cec_clk;
-	struct clk *osc_clk;
-	struct clk *xclk;
+काष्ठा zx_hdmi अणु
+	काष्ठा drm_connector connector;
+	काष्ठा drm_encoder encoder;
+	काष्ठा zx_hdmi_i2c *ddc;
+	काष्ठा device *dev;
+	काष्ठा drm_device *drm;
+	व्योम __iomem *mmio;
+	काष्ठा clk *cec_clk;
+	काष्ठा clk *osc_clk;
+	काष्ठा clk *xclk;
 	bool sink_is_hdmi;
 	bool sink_has_audio;
-	struct platform_device *audio_pdev;
-};
+	काष्ठा platक्रमm_device *audio_pdev;
+पूर्ण;
 
-#define to_zx_hdmi(x) container_of(x, struct zx_hdmi, x)
+#घोषणा to_zx_hdmi(x) container_of(x, काष्ठा zx_hdmi, x)
 
-static inline u8 hdmi_readb(struct zx_hdmi *hdmi, u16 offset)
-{
-	return readl_relaxed(hdmi->mmio + offset * 4);
-}
+अटल अंतरभूत u8 hdmi_पढ़ोb(काष्ठा zx_hdmi *hdmi, u16 offset)
+अणु
+	वापस पढ़ोl_relaxed(hdmi->mmio + offset * 4);
+पूर्ण
 
-static inline void hdmi_writeb(struct zx_hdmi *hdmi, u16 offset, u8 val)
-{
-	writel_relaxed(val, hdmi->mmio + offset * 4);
-}
+अटल अंतरभूत व्योम hdmi_ग_लिखोb(काष्ठा zx_hdmi *hdmi, u16 offset, u8 val)
+अणु
+	ग_लिखोl_relaxed(val, hdmi->mmio + offset * 4);
+पूर्ण
 
-static inline void hdmi_writeb_mask(struct zx_hdmi *hdmi, u16 offset,
+अटल अंतरभूत व्योम hdmi_ग_लिखोb_mask(काष्ठा zx_hdmi *hdmi, u16 offset,
 				    u8 mask, u8 val)
-{
-	u8 tmp;
+अणु
+	u8 पंचांगp;
 
-	tmp = hdmi_readb(hdmi, offset);
-	tmp = (tmp & ~mask) | (val & mask);
-	hdmi_writeb(hdmi, offset, tmp);
-}
+	पंचांगp = hdmi_पढ़ोb(hdmi, offset);
+	पंचांगp = (पंचांगp & ~mask) | (val & mask);
+	hdmi_ग_लिखोb(hdmi, offset, पंचांगp);
+पूर्ण
 
-static int zx_hdmi_infoframe_trans(struct zx_hdmi *hdmi,
-				   union hdmi_infoframe *frame, u8 fsel)
-{
+अटल पूर्णांक zx_hdmi_infoframe_trans(काष्ठा zx_hdmi *hdmi,
+				   जोड़ hdmi_infoframe *frame, u8 fsel)
+अणु
 	u8 buffer[ZX_HDMI_INFOFRAME_SIZE];
-	int num;
-	int i;
+	पूर्णांक num;
+	पूर्णांक i;
 
-	hdmi_writeb(hdmi, TPI_INFO_FSEL, fsel);
+	hdmi_ग_लिखोb(hdmi, TPI_INFO_FSEL, fsel);
 
 	num = hdmi_infoframe_pack(frame, buffer, ZX_HDMI_INFOFRAME_SIZE);
-	if (num < 0) {
+	अगर (num < 0) अणु
 		DRM_DEV_ERROR(hdmi->dev, "failed to pack infoframe: %d\n", num);
-		return num;
-	}
+		वापस num;
+	पूर्ण
 
-	for (i = 0; i < num; i++)
-		hdmi_writeb(hdmi, TPI_INFO_B0 + i, buffer[i]);
+	क्रम (i = 0; i < num; i++)
+		hdmi_ग_लिखोb(hdmi, TPI_INFO_B0 + i, buffer[i]);
 
-	hdmi_writeb_mask(hdmi, TPI_INFO_EN, TPI_INFO_TRANS_RPT,
+	hdmi_ग_लिखोb_mask(hdmi, TPI_INFO_EN, TPI_INFO_TRANS_RPT,
 			 TPI_INFO_TRANS_RPT);
-	hdmi_writeb_mask(hdmi, TPI_INFO_EN, TPI_INFO_TRANS_EN,
+	hdmi_ग_लिखोb_mask(hdmi, TPI_INFO_EN, TPI_INFO_TRANS_EN,
 			 TPI_INFO_TRANS_EN);
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
-static int zx_hdmi_config_video_vsi(struct zx_hdmi *hdmi,
-				    struct drm_display_mode *mode)
-{
-	union hdmi_infoframe frame;
-	int ret;
+अटल पूर्णांक zx_hdmi_config_video_vsi(काष्ठा zx_hdmi *hdmi,
+				    काष्ठा drm_display_mode *mode)
+अणु
+	जोड़ hdmi_infoframe frame;
+	पूर्णांक ret;
 
-	ret = drm_hdmi_vendor_infoframe_from_display_mode(&frame.vendor.hdmi,
+	ret = drm_hdmi_venकरोr_infoframe_from_display_mode(&frame.venकरोr.hdmi,
 							  &hdmi->connector,
 							  mode);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(hdmi->dev, "failed to get vendor infoframe: %d\n",
 			      ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return zx_hdmi_infoframe_trans(hdmi, &frame, FSEL_VSIF);
-}
+	वापस zx_hdmi_infoframe_trans(hdmi, &frame, FSEL_VSIF);
+पूर्ण
 
-static int zx_hdmi_config_video_avi(struct zx_hdmi *hdmi,
-				    struct drm_display_mode *mode)
-{
-	union hdmi_infoframe frame;
-	int ret;
+अटल पूर्णांक zx_hdmi_config_video_avi(काष्ठा zx_hdmi *hdmi,
+				    काष्ठा drm_display_mode *mode)
+अणु
+	जोड़ hdmi_infoframe frame;
+	पूर्णांक ret;
 
 	ret = drm_hdmi_avi_infoframe_from_display_mode(&frame.avi,
 						       &hdmi->connector,
 						       mode);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(hdmi->dev, "failed to get avi infoframe: %d\n",
 			      ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* We always use YUV444 for HDMI output. */
+	/* We always use YUV444 क्रम HDMI output. */
 	frame.avi.colorspace = HDMI_COLORSPACE_YUV444;
 
-	return zx_hdmi_infoframe_trans(hdmi, &frame, FSEL_AVI);
-}
+	वापस zx_hdmi_infoframe_trans(hdmi, &frame, FSEL_AVI);
+पूर्ण
 
-static void zx_hdmi_encoder_mode_set(struct drm_encoder *encoder,
-				     struct drm_display_mode *mode,
-				     struct drm_display_mode *adj_mode)
-{
-	struct zx_hdmi *hdmi = to_zx_hdmi(encoder);
+अटल व्योम zx_hdmi_encoder_mode_set(काष्ठा drm_encoder *encoder,
+				     काष्ठा drm_display_mode *mode,
+				     काष्ठा drm_display_mode *adj_mode)
+अणु
+	काष्ठा zx_hdmi *hdmi = to_zx_hdmi(encoder);
 
-	if (hdmi->sink_is_hdmi) {
+	अगर (hdmi->sink_is_hdmi) अणु
 		zx_hdmi_config_video_avi(hdmi, mode);
 		zx_hdmi_config_video_vsi(hdmi, mode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void zx_hdmi_phy_start(struct zx_hdmi *hdmi)
-{
+अटल व्योम zx_hdmi_phy_start(काष्ठा zx_hdmi *hdmi)
+अणु
 	/* Copy from ZTE BSP code */
-	hdmi_writeb(hdmi, 0x222, 0x0);
-	hdmi_writeb(hdmi, 0x224, 0x4);
-	hdmi_writeb(hdmi, 0x909, 0x0);
-	hdmi_writeb(hdmi, 0x7b0, 0x90);
-	hdmi_writeb(hdmi, 0x7b1, 0x00);
-	hdmi_writeb(hdmi, 0x7b2, 0xa7);
-	hdmi_writeb(hdmi, 0x7b8, 0xaa);
-	hdmi_writeb(hdmi, 0x7b2, 0xa7);
-	hdmi_writeb(hdmi, 0x7b3, 0x0f);
-	hdmi_writeb(hdmi, 0x7b4, 0x0f);
-	hdmi_writeb(hdmi, 0x7b5, 0x55);
-	hdmi_writeb(hdmi, 0x7b7, 0x03);
-	hdmi_writeb(hdmi, 0x7b9, 0x12);
-	hdmi_writeb(hdmi, 0x7ba, 0x32);
-	hdmi_writeb(hdmi, 0x7bc, 0x68);
-	hdmi_writeb(hdmi, 0x7be, 0x40);
-	hdmi_writeb(hdmi, 0x7bf, 0x84);
-	hdmi_writeb(hdmi, 0x7c1, 0x0f);
-	hdmi_writeb(hdmi, 0x7c8, 0x02);
-	hdmi_writeb(hdmi, 0x7c9, 0x03);
-	hdmi_writeb(hdmi, 0x7ca, 0x40);
-	hdmi_writeb(hdmi, 0x7dc, 0x31);
-	hdmi_writeb(hdmi, 0x7e2, 0x04);
-	hdmi_writeb(hdmi, 0x7e0, 0x06);
-	hdmi_writeb(hdmi, 0x7cb, 0x68);
-	hdmi_writeb(hdmi, 0x7f9, 0x02);
-	hdmi_writeb(hdmi, 0x7b6, 0x02);
-	hdmi_writeb(hdmi, 0x7f3, 0x0);
-}
+	hdmi_ग_लिखोb(hdmi, 0x222, 0x0);
+	hdmi_ग_लिखोb(hdmi, 0x224, 0x4);
+	hdmi_ग_लिखोb(hdmi, 0x909, 0x0);
+	hdmi_ग_लिखोb(hdmi, 0x7b0, 0x90);
+	hdmi_ग_लिखोb(hdmi, 0x7b1, 0x00);
+	hdmi_ग_लिखोb(hdmi, 0x7b2, 0xa7);
+	hdmi_ग_लिखोb(hdmi, 0x7b8, 0xaa);
+	hdmi_ग_लिखोb(hdmi, 0x7b2, 0xa7);
+	hdmi_ग_लिखोb(hdmi, 0x7b3, 0x0f);
+	hdmi_ग_लिखोb(hdmi, 0x7b4, 0x0f);
+	hdmi_ग_लिखोb(hdmi, 0x7b5, 0x55);
+	hdmi_ग_लिखोb(hdmi, 0x7b7, 0x03);
+	hdmi_ग_लिखोb(hdmi, 0x7b9, 0x12);
+	hdmi_ग_लिखोb(hdmi, 0x7ba, 0x32);
+	hdmi_ग_लिखोb(hdmi, 0x7bc, 0x68);
+	hdmi_ग_लिखोb(hdmi, 0x7be, 0x40);
+	hdmi_ग_लिखोb(hdmi, 0x7bf, 0x84);
+	hdmi_ग_लिखोb(hdmi, 0x7c1, 0x0f);
+	hdmi_ग_लिखोb(hdmi, 0x7c8, 0x02);
+	hdmi_ग_लिखोb(hdmi, 0x7c9, 0x03);
+	hdmi_ग_लिखोb(hdmi, 0x7ca, 0x40);
+	hdmi_ग_लिखोb(hdmi, 0x7dc, 0x31);
+	hdmi_ग_लिखोb(hdmi, 0x7e2, 0x04);
+	hdmi_ग_लिखोb(hdmi, 0x7e0, 0x06);
+	hdmi_ग_लिखोb(hdmi, 0x7cb, 0x68);
+	hdmi_ग_लिखोb(hdmi, 0x7f9, 0x02);
+	hdmi_ग_लिखोb(hdmi, 0x7b6, 0x02);
+	hdmi_ग_लिखोb(hdmi, 0x7f3, 0x0);
+पूर्ण
 
-static void zx_hdmi_hw_enable(struct zx_hdmi *hdmi)
-{
+अटल व्योम zx_hdmi_hw_enable(काष्ठा zx_hdmi *hdmi)
+अणु
 	/* Enable pclk */
-	hdmi_writeb_mask(hdmi, CLKPWD, CLKPWD_PDIDCK, CLKPWD_PDIDCK);
+	hdmi_ग_लिखोb_mask(hdmi, CLKPWD, CLKPWD_PDIDCK, CLKPWD_PDIDCK);
 
-	/* Enable HDMI for TX */
-	hdmi_writeb_mask(hdmi, FUNC_SEL, FUNC_HDMI_EN, FUNC_HDMI_EN);
+	/* Enable HDMI क्रम TX */
+	hdmi_ग_लिखोb_mask(hdmi, FUNC_SEL, FUNC_HDMI_EN, FUNC_HDMI_EN);
 
 	/* Enable deep color packet */
-	hdmi_writeb_mask(hdmi, P2T_CTRL, P2T_DC_PKT_EN, P2T_DC_PKT_EN);
+	hdmi_ग_लिखोb_mask(hdmi, P2T_CTRL, P2T_DC_PKT_EN, P2T_DC_PKT_EN);
 
-	/* Enable HDMI/MHL mode for output */
-	hdmi_writeb_mask(hdmi, TEST_TXCTRL, TEST_TXCTRL_HDMI_MODE,
+	/* Enable HDMI/MHL mode क्रम output */
+	hdmi_ग_लिखोb_mask(hdmi, TEST_TXCTRL, TEST_TXCTRL_HDMI_MODE,
 			 TEST_TXCTRL_HDMI_MODE);
 
 	/* Configure reg_qc_sel */
-	hdmi_writeb(hdmi, HDMICTL4, 0x3);
+	hdmi_ग_लिखोb(hdmi, HDMICTL4, 0x3);
 
-	/* Enable interrupt */
-	hdmi_writeb_mask(hdmi, INTR1_MASK, INTR1_MONITOR_DETECT,
+	/* Enable पूर्णांकerrupt */
+	hdmi_ग_लिखोb_mask(hdmi, INTR1_MASK, INTR1_MONITOR_DETECT,
 			 INTR1_MONITOR_DETECT);
 
 	/* Start up phy */
 	zx_hdmi_phy_start(hdmi);
-}
+पूर्ण
 
-static void zx_hdmi_hw_disable(struct zx_hdmi *hdmi)
-{
-	/* Disable interrupt */
-	hdmi_writeb_mask(hdmi, INTR1_MASK, INTR1_MONITOR_DETECT, 0);
+अटल व्योम zx_hdmi_hw_disable(काष्ठा zx_hdmi *hdmi)
+अणु
+	/* Disable पूर्णांकerrupt */
+	hdmi_ग_लिखोb_mask(hdmi, INTR1_MASK, INTR1_MONITOR_DETECT, 0);
 
 	/* Disable deep color packet */
-	hdmi_writeb_mask(hdmi, P2T_CTRL, P2T_DC_PKT_EN, P2T_DC_PKT_EN);
+	hdmi_ग_लिखोb_mask(hdmi, P2T_CTRL, P2T_DC_PKT_EN, P2T_DC_PKT_EN);
 
-	/* Disable HDMI for TX */
-	hdmi_writeb_mask(hdmi, FUNC_SEL, FUNC_HDMI_EN, 0);
+	/* Disable HDMI क्रम TX */
+	hdmi_ग_लिखोb_mask(hdmi, FUNC_SEL, FUNC_HDMI_EN, 0);
 
 	/* Disable pclk */
-	hdmi_writeb_mask(hdmi, CLKPWD, CLKPWD_PDIDCK, 0);
-}
+	hdmi_ग_लिखोb_mask(hdmi, CLKPWD, CLKPWD_PDIDCK, 0);
+पूर्ण
 
-static void zx_hdmi_encoder_enable(struct drm_encoder *encoder)
-{
-	struct zx_hdmi *hdmi = to_zx_hdmi(encoder);
+अटल व्योम zx_hdmi_encoder_enable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा zx_hdmi *hdmi = to_zx_hdmi(encoder);
 
 	clk_prepare_enable(hdmi->cec_clk);
 	clk_prepare_enable(hdmi->osc_clk);
@@ -234,11 +235,11 @@ static void zx_hdmi_encoder_enable(struct drm_encoder *encoder)
 	zx_hdmi_hw_enable(hdmi);
 
 	vou_inf_enable(VOU_HDMI, encoder->crtc);
-}
+पूर्ण
 
-static void zx_hdmi_encoder_disable(struct drm_encoder *encoder)
-{
-	struct zx_hdmi *hdmi = to_zx_hdmi(encoder);
+अटल व्योम zx_hdmi_encoder_disable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा zx_hdmi *hdmi = to_zx_hdmi(encoder);
 
 	vou_inf_disable(VOU_HDMI, encoder->crtc);
 
@@ -247,66 +248,66 @@ static void zx_hdmi_encoder_disable(struct drm_encoder *encoder)
 	clk_disable_unprepare(hdmi->xclk);
 	clk_disable_unprepare(hdmi->osc_clk);
 	clk_disable_unprepare(hdmi->cec_clk);
-}
+पूर्ण
 
-static const struct drm_encoder_helper_funcs zx_hdmi_encoder_helper_funcs = {
+अटल स्थिर काष्ठा drm_encoder_helper_funcs zx_hdmi_encoder_helper_funcs = अणु
 	.enable	= zx_hdmi_encoder_enable,
 	.disable = zx_hdmi_encoder_disable,
 	.mode_set = zx_hdmi_encoder_mode_set,
-};
+पूर्ण;
 
-static int zx_hdmi_connector_get_modes(struct drm_connector *connector)
-{
-	struct zx_hdmi *hdmi = to_zx_hdmi(connector);
-	struct edid *edid;
-	int ret;
+अटल पूर्णांक zx_hdmi_connector_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा zx_hdmi *hdmi = to_zx_hdmi(connector);
+	काष्ठा edid *edid;
+	पूर्णांक ret;
 
 	edid = drm_get_edid(connector, &hdmi->ddc->adap);
-	if (!edid)
-		return 0;
+	अगर (!edid)
+		वापस 0;
 
 	hdmi->sink_is_hdmi = drm_detect_hdmi_monitor(edid);
 	hdmi->sink_has_audio = drm_detect_monitor_audio(edid);
 	drm_connector_update_edid_property(connector, edid);
 	ret = drm_add_edid_modes(connector, edid);
-	kfree(edid);
+	kमुक्त(edid);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum drm_mode_status
-zx_hdmi_connector_mode_valid(struct drm_connector *connector,
-			     struct drm_display_mode *mode)
-{
-	return MODE_OK;
-}
+अटल क्रमागत drm_mode_status
+zx_hdmi_connector_mode_valid(काष्ठा drm_connector *connector,
+			     काष्ठा drm_display_mode *mode)
+अणु
+	वापस MODE_OK;
+पूर्ण
 
-static struct drm_connector_helper_funcs zx_hdmi_connector_helper_funcs = {
+अटल काष्ठा drm_connector_helper_funcs zx_hdmi_connector_helper_funcs = अणु
 	.get_modes = zx_hdmi_connector_get_modes,
 	.mode_valid = zx_hdmi_connector_mode_valid,
-};
+पूर्ण;
 
-static enum drm_connector_status
-zx_hdmi_connector_detect(struct drm_connector *connector, bool force)
-{
-	struct zx_hdmi *hdmi = to_zx_hdmi(connector);
+अटल क्रमागत drm_connector_status
+zx_hdmi_connector_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा zx_hdmi *hdmi = to_zx_hdmi(connector);
 
-	return (hdmi_readb(hdmi, TPI_HPD_RSEN) & TPI_HPD_CONNECTION) ?
+	वापस (hdmi_पढ़ोb(hdmi, TPI_HPD_RSEN) & TPI_HPD_CONNECTION) ?
 		connector_status_connected : connector_status_disconnected;
-}
+पूर्ण
 
-static const struct drm_connector_funcs zx_hdmi_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs zx_hdmi_connector_funcs = अणु
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.detect = zx_hdmi_connector_detect,
 	.destroy = drm_connector_cleanup,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-};
+पूर्ण;
 
-static int zx_hdmi_register(struct drm_device *drm, struct zx_hdmi *hdmi)
-{
-	struct drm_encoder *encoder = &hdmi->encoder;
+अटल पूर्णांक zx_hdmi_रेजिस्टर(काष्ठा drm_device *drm, काष्ठा zx_hdmi *hdmi)
+अणु
+	काष्ठा drm_encoder *encoder = &hdmi->encoder;
 
 	encoder->possible_crtcs = VOU_CRTC_MASK;
 
@@ -324,295 +325,295 @@ static int zx_hdmi_register(struct drm_device *drm, struct zx_hdmi *hdmi)
 
 	drm_connector_attach_encoder(&hdmi->connector, encoder);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t zx_hdmi_irq_thread(int irq, void *dev_id)
-{
-	struct zx_hdmi *hdmi = dev_id;
+अटल irqवापस_t zx_hdmi_irq_thपढ़ो(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा zx_hdmi *hdmi = dev_id;
 
 	drm_helper_hpd_irq_event(hdmi->connector.dev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t zx_hdmi_irq_handler(int irq, void *dev_id)
-{
-	struct zx_hdmi *hdmi = dev_id;
+अटल irqवापस_t zx_hdmi_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा zx_hdmi *hdmi = dev_id;
 	u8 lstat;
 
-	lstat = hdmi_readb(hdmi, L1_INTR_STAT);
+	lstat = hdmi_पढ़ोb(hdmi, L1_INTR_STAT);
 
-	/* Monitor detect/HPD interrupt */
-	if (lstat & L1_INTR_STAT_INTR1) {
+	/* Monitor detect/HPD पूर्णांकerrupt */
+	अगर (lstat & L1_INTR_STAT_INTR1) अणु
 		u8 stat;
 
-		stat = hdmi_readb(hdmi, INTR1_STAT);
-		hdmi_writeb(hdmi, INTR1_STAT, stat);
+		stat = hdmi_पढ़ोb(hdmi, INTR1_STAT);
+		hdmi_ग_लिखोb(hdmi, INTR1_STAT, stat);
 
-		if (stat & INTR1_MONITOR_DETECT)
-			return IRQ_WAKE_THREAD;
-	}
+		अगर (stat & INTR1_MONITOR_DETECT)
+			वापस IRQ_WAKE_THREAD;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static int zx_hdmi_audio_startup(struct device *dev, void *data)
-{
-	struct zx_hdmi *hdmi = dev_get_drvdata(dev);
-	struct drm_encoder *encoder = &hdmi->encoder;
+अटल पूर्णांक zx_hdmi_audio_startup(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा zx_hdmi *hdmi = dev_get_drvdata(dev);
+	काष्ठा drm_encoder *encoder = &hdmi->encoder;
 
 	vou_inf_hdmi_audio_sel(encoder->crtc, VOU_HDMI_AUD_SPDIF);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void zx_hdmi_audio_shutdown(struct device *dev, void *data)
-{
-	struct zx_hdmi *hdmi = dev_get_drvdata(dev);
+अटल व्योम zx_hdmi_audio_shutकरोwn(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा zx_hdmi *hdmi = dev_get_drvdata(dev);
 
 	/* Disable audio input */
-	hdmi_writeb_mask(hdmi, AUD_EN, AUD_IN_EN, 0);
-}
+	hdmi_ग_लिखोb_mask(hdmi, AUD_EN, AUD_IN_EN, 0);
+पूर्ण
 
-static inline int zx_hdmi_audio_get_n(unsigned int fs)
-{
-	unsigned int n;
+अटल अंतरभूत पूर्णांक zx_hdmi_audio_get_n(अचिन्हित पूर्णांक fs)
+अणु
+	अचिन्हित पूर्णांक n;
 
-	if (fs && (fs % 44100) == 0)
+	अगर (fs && (fs % 44100) == 0)
 		n = 6272 * (fs / 44100);
-	else
+	अन्यथा
 		n = fs * 128 / 1000;
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static int zx_hdmi_audio_hw_params(struct device *dev,
-				   void *data,
-				   struct hdmi_codec_daifmt *daifmt,
-				   struct hdmi_codec_params *params)
-{
-	struct zx_hdmi *hdmi = dev_get_drvdata(dev);
-	struct hdmi_audio_infoframe *cea = &params->cea;
-	union hdmi_infoframe frame;
-	int n;
+अटल पूर्णांक zx_hdmi_audio_hw_params(काष्ठा device *dev,
+				   व्योम *data,
+				   काष्ठा hdmi_codec_daअगरmt *daअगरmt,
+				   काष्ठा hdmi_codec_params *params)
+अणु
+	काष्ठा zx_hdmi *hdmi = dev_get_drvdata(dev);
+	काष्ठा hdmi_audio_infoframe *cea = &params->cea;
+	जोड़ hdmi_infoframe frame;
+	पूर्णांक n;
 
-	/* We only support spdif for now */
-	if (daifmt->fmt != HDMI_SPDIF) {
-		DRM_DEV_ERROR(hdmi->dev, "invalid daifmt %d\n", daifmt->fmt);
-		return -EINVAL;
-	}
+	/* We only support spdअगर क्रम now */
+	अगर (daअगरmt->fmt != HDMI_SPDIF) अणु
+		DRM_DEV_ERROR(hdmi->dev, "invalid daifmt %d\n", daअगरmt->fmt);
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (params->sample_width) {
-	case 16:
-		hdmi_writeb_mask(hdmi, TPI_AUD_CONFIG, SPDIF_SAMPLE_SIZE_MASK,
+	चयन (params->sample_width) अणु
+	हाल 16:
+		hdmi_ग_लिखोb_mask(hdmi, TPI_AUD_CONFIG, SPDIF_SAMPLE_SIZE_MASK,
 				 SPDIF_SAMPLE_SIZE_16BIT);
-		break;
-	case 20:
-		hdmi_writeb_mask(hdmi, TPI_AUD_CONFIG, SPDIF_SAMPLE_SIZE_MASK,
+		अवरोध;
+	हाल 20:
+		hdmi_ग_लिखोb_mask(hdmi, TPI_AUD_CONFIG, SPDIF_SAMPLE_SIZE_MASK,
 				 SPDIF_SAMPLE_SIZE_20BIT);
-		break;
-	case 24:
-		hdmi_writeb_mask(hdmi, TPI_AUD_CONFIG, SPDIF_SAMPLE_SIZE_MASK,
+		अवरोध;
+	हाल 24:
+		hdmi_ग_लिखोb_mask(hdmi, TPI_AUD_CONFIG, SPDIF_SAMPLE_SIZE_MASK,
 				 SPDIF_SAMPLE_SIZE_24BIT);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_DEV_ERROR(hdmi->dev, "invalid sample width %d\n",
 			      params->sample_width);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* CTS is calculated by hardware, and we only need to take care of N */
 	n = zx_hdmi_audio_get_n(params->sample_rate);
-	hdmi_writeb(hdmi, N_SVAL1, n & 0xff);
-	hdmi_writeb(hdmi, N_SVAL2, (n >> 8) & 0xff);
-	hdmi_writeb(hdmi, N_SVAL3, (n >> 16) & 0xf);
+	hdmi_ग_लिखोb(hdmi, N_SVAL1, n & 0xff);
+	hdmi_ग_लिखोb(hdmi, N_SVAL2, (n >> 8) & 0xff);
+	hdmi_ग_लिखोb(hdmi, N_SVAL3, (n >> 16) & 0xf);
 
-	/* Enable spdif mode */
-	hdmi_writeb_mask(hdmi, AUD_MODE, SPDIF_EN, SPDIF_EN);
+	/* Enable spdअगर mode */
+	hdmi_ग_लिखोb_mask(hdmi, AUD_MODE, SPDIF_EN, SPDIF_EN);
 
 	/* Enable audio input */
-	hdmi_writeb_mask(hdmi, AUD_EN, AUD_IN_EN, AUD_IN_EN);
+	hdmi_ग_लिखोb_mask(hdmi, AUD_EN, AUD_IN_EN, AUD_IN_EN);
 
-	memcpy(&frame.audio, cea, sizeof(*cea));
+	स_नकल(&frame.audio, cea, माप(*cea));
 
-	return zx_hdmi_infoframe_trans(hdmi, &frame, FSEL_AUDIO);
-}
+	वापस zx_hdmi_infoframe_trans(hdmi, &frame, FSEL_AUDIO);
+पूर्ण
 
-static int zx_hdmi_audio_mute(struct device *dev, void *data,
-			      bool enable, int direction)
-{
-	struct zx_hdmi *hdmi = dev_get_drvdata(dev);
+अटल पूर्णांक zx_hdmi_audio_mute(काष्ठा device *dev, व्योम *data,
+			      bool enable, पूर्णांक direction)
+अणु
+	काष्ठा zx_hdmi *hdmi = dev_get_drvdata(dev);
 
-	if (enable)
-		hdmi_writeb_mask(hdmi, TPI_AUD_CONFIG, TPI_AUD_MUTE,
+	अगर (enable)
+		hdmi_ग_लिखोb_mask(hdmi, TPI_AUD_CONFIG, TPI_AUD_MUTE,
 				 TPI_AUD_MUTE);
-	else
-		hdmi_writeb_mask(hdmi, TPI_AUD_CONFIG, TPI_AUD_MUTE, 0);
+	अन्यथा
+		hdmi_ग_लिखोb_mask(hdmi, TPI_AUD_CONFIG, TPI_AUD_MUTE, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zx_hdmi_audio_get_eld(struct device *dev, void *data,
-				 uint8_t *buf, size_t len)
-{
-	struct zx_hdmi *hdmi = dev_get_drvdata(dev);
-	struct drm_connector *connector = &hdmi->connector;
+अटल पूर्णांक zx_hdmi_audio_get_eld(काष्ठा device *dev, व्योम *data,
+				 uपूर्णांक8_t *buf, माप_प्रकार len)
+अणु
+	काष्ठा zx_hdmi *hdmi = dev_get_drvdata(dev);
+	काष्ठा drm_connector *connector = &hdmi->connector;
 
-	memcpy(buf, connector->eld, min(sizeof(connector->eld), len));
+	स_नकल(buf, connector->eld, min(माप(connector->eld), len));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hdmi_codec_ops zx_hdmi_codec_ops = {
+अटल स्थिर काष्ठा hdmi_codec_ops zx_hdmi_codec_ops = अणु
 	.audio_startup = zx_hdmi_audio_startup,
 	.hw_params = zx_hdmi_audio_hw_params,
-	.audio_shutdown = zx_hdmi_audio_shutdown,
+	.audio_shutकरोwn = zx_hdmi_audio_shutकरोwn,
 	.mute_stream = zx_hdmi_audio_mute,
 	.get_eld = zx_hdmi_audio_get_eld,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
-static struct hdmi_codec_pdata zx_hdmi_codec_pdata = {
+अटल काष्ठा hdmi_codec_pdata zx_hdmi_codec_pdata = अणु
 	.ops = &zx_hdmi_codec_ops,
-	.spdif = 1,
-};
+	.spdअगर = 1,
+पूर्ण;
 
-static int zx_hdmi_audio_register(struct zx_hdmi *hdmi)
-{
-	struct platform_device *pdev;
+अटल पूर्णांक zx_hdmi_audio_रेजिस्टर(काष्ठा zx_hdmi *hdmi)
+अणु
+	काष्ठा platक्रमm_device *pdev;
 
-	pdev = platform_device_register_data(hdmi->dev, HDMI_CODEC_DRV_NAME,
+	pdev = platक्रमm_device_रेजिस्टर_data(hdmi->dev, HDMI_CODEC_DRV_NAME,
 					     PLATFORM_DEVID_AUTO,
 					     &zx_hdmi_codec_pdata,
-					     sizeof(zx_hdmi_codec_pdata));
-	if (IS_ERR(pdev))
-		return PTR_ERR(pdev);
+					     माप(zx_hdmi_codec_pdata));
+	अगर (IS_ERR(pdev))
+		वापस PTR_ERR(pdev);
 
 	hdmi->audio_pdev = pdev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zx_hdmi_i2c_read(struct zx_hdmi *hdmi, struct i2c_msg *msg)
-{
-	int len = msg->len;
+अटल पूर्णांक zx_hdmi_i2c_पढ़ो(काष्ठा zx_hdmi *hdmi, काष्ठा i2c_msg *msg)
+अणु
+	पूर्णांक len = msg->len;
 	u8 *buf = msg->buf;
-	int retry = 0;
-	int ret = 0;
+	पूर्णांक retry = 0;
+	पूर्णांक ret = 0;
 
 	/* Bits [9:8] of bytes */
-	hdmi_writeb(hdmi, ZX_DDC_DIN_CNT2, (len >> 8) & 0xff);
+	hdmi_ग_लिखोb(hdmi, ZX_DDC_DIN_CNT2, (len >> 8) & 0xff);
 	/* Bits [7:0] of bytes */
-	hdmi_writeb(hdmi, ZX_DDC_DIN_CNT1, len & 0xff);
+	hdmi_ग_लिखोb(hdmi, ZX_DDC_DIN_CNT1, len & 0xff);
 
 	/* Clear FIFO */
-	hdmi_writeb_mask(hdmi, ZX_DDC_CMD, DDC_CMD_MASK, DDC_CMD_CLEAR_FIFO);
+	hdmi_ग_लिखोb_mask(hdmi, ZX_DDC_CMD, DDC_CMD_MASK, DDC_CMD_CLEAR_FIFO);
 
-	/* Kick off the read */
-	hdmi_writeb_mask(hdmi, ZX_DDC_CMD, DDC_CMD_MASK,
+	/* Kick off the पढ़ो */
+	hdmi_ग_लिखोb_mask(hdmi, ZX_DDC_CMD, DDC_CMD_MASK,
 			 DDC_CMD_SEQUENTIAL_READ);
 
-	while (len > 0) {
-		int cnt, i;
+	जबतक (len > 0) अणु
+		पूर्णांक cnt, i;
 
-		/* FIFO needs some time to get ready */
+		/* FIFO needs some समय to get पढ़ोy */
 		usleep_range(500, 1000);
 
-		cnt = hdmi_readb(hdmi, ZX_DDC_DOUT_CNT) & DDC_DOUT_CNT_MASK;
-		if (cnt == 0) {
-			if (++retry > 5) {
+		cnt = hdmi_पढ़ोb(hdmi, ZX_DDC_DOUT_CNT) & DDC_DOUT_CNT_MASK;
+		अगर (cnt == 0) अणु
+			अगर (++retry > 5) अणु
 				DRM_DEV_ERROR(hdmi->dev,
 					      "DDC FIFO read timed out!");
-				return -ETIMEDOUT;
-			}
-			continue;
-		}
+				वापस -ETIMEDOUT;
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		for (i = 0; i < cnt; i++)
-			*buf++ = hdmi_readb(hdmi, ZX_DDC_DATA);
+		क्रम (i = 0; i < cnt; i++)
+			*buf++ = hdmi_पढ़ोb(hdmi, ZX_DDC_DATA);
 		len -= cnt;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zx_hdmi_i2c_write(struct zx_hdmi *hdmi, struct i2c_msg *msg)
-{
+अटल पूर्णांक zx_hdmi_i2c_ग_लिखो(काष्ठा zx_hdmi *hdmi, काष्ठा i2c_msg *msg)
+अणु
 	/*
-	 * The DDC I2C adapter is only for reading EDID data, so we assume
-	 * that the write to this adapter must be the EDID data offset.
+	 * The DDC I2C adapter is only क्रम पढ़ोing EDID data, so we assume
+	 * that the ग_लिखो to this adapter must be the EDID data offset.
 	 */
-	if ((msg->len != 1) ||
+	अगर ((msg->len != 1) ||
 	    ((msg->addr != DDC_ADDR) && (msg->addr != DDC_SEGMENT_ADDR)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (msg->addr == DDC_SEGMENT_ADDR)
-		hdmi_writeb(hdmi, ZX_DDC_SEGM, msg->addr << 1);
-	else if (msg->addr == DDC_ADDR)
-		hdmi_writeb(hdmi, ZX_DDC_ADDR, msg->addr << 1);
+	अगर (msg->addr == DDC_SEGMENT_ADDR)
+		hdmi_ग_लिखोb(hdmi, ZX_DDC_SEGM, msg->addr << 1);
+	अन्यथा अगर (msg->addr == DDC_ADDR)
+		hdmi_ग_लिखोb(hdmi, ZX_DDC_ADDR, msg->addr << 1);
 
-	hdmi_writeb(hdmi, ZX_DDC_OFFSET, msg->buf[0]);
+	hdmi_ग_लिखोb(hdmi, ZX_DDC_OFFSET, msg->buf[0]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zx_hdmi_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs,
-			    int num)
-{
-	struct zx_hdmi *hdmi = i2c_get_adapdata(adap);
-	struct zx_hdmi_i2c *ddc = hdmi->ddc;
-	int i, ret = 0;
+अटल पूर्णांक zx_hdmi_i2c_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs,
+			    पूर्णांक num)
+अणु
+	काष्ठा zx_hdmi *hdmi = i2c_get_adapdata(adap);
+	काष्ठा zx_hdmi_i2c *ddc = hdmi->ddc;
+	पूर्णांक i, ret = 0;
 
 	mutex_lock(&ddc->lock);
 
 	/* Enable DDC master access */
-	hdmi_writeb_mask(hdmi, TPI_DDC_MASTER_EN, HW_DDC_MASTER, HW_DDC_MASTER);
+	hdmi_ग_लिखोb_mask(hdmi, TPI_DDC_MASTER_EN, HW_DDC_MASTER, HW_DDC_MASTER);
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		DRM_DEV_DEBUG(hdmi->dev,
 			      "xfer: num: %d/%d, len: %d, flags: %#x\n",
 			      i + 1, num, msgs[i].len, msgs[i].flags);
 
-		if (msgs[i].flags & I2C_M_RD)
-			ret = zx_hdmi_i2c_read(hdmi, &msgs[i]);
-		else
-			ret = zx_hdmi_i2c_write(hdmi, &msgs[i]);
+		अगर (msgs[i].flags & I2C_M_RD)
+			ret = zx_hdmi_i2c_पढ़ो(hdmi, &msgs[i]);
+		अन्यथा
+			ret = zx_hdmi_i2c_ग_लिखो(hdmi, &msgs[i]);
 
-		if (ret < 0)
-			break;
-	}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		ret = num;
 
 	/* Disable DDC master access */
-	hdmi_writeb_mask(hdmi, TPI_DDC_MASTER_EN, HW_DDC_MASTER, 0);
+	hdmi_ग_लिखोb_mask(hdmi, TPI_DDC_MASTER_EN, HW_DDC_MASTER, 0);
 
 	mutex_unlock(&ddc->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 zx_hdmi_i2c_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
-}
+अटल u32 zx_hdmi_i2c_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+पूर्ण
 
-static const struct i2c_algorithm zx_hdmi_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm zx_hdmi_algorithm = अणु
 	.master_xfer	= zx_hdmi_i2c_xfer,
 	.functionality	= zx_hdmi_i2c_func,
-};
+पूर्ण;
 
-static int zx_hdmi_ddc_register(struct zx_hdmi *hdmi)
-{
-	struct i2c_adapter *adap;
-	struct zx_hdmi_i2c *ddc;
-	int ret;
+अटल पूर्णांक zx_hdmi_ddc_रेजिस्टर(काष्ठा zx_hdmi *hdmi)
+अणु
+	काष्ठा i2c_adapter *adap;
+	काष्ठा zx_hdmi_i2c *ddc;
+	पूर्णांक ret;
 
-	ddc = devm_kzalloc(hdmi->dev, sizeof(*ddc), GFP_KERNEL);
-	if (!ddc)
-		return -ENOMEM;
+	ddc = devm_kzalloc(hdmi->dev, माप(*ddc), GFP_KERNEL);
+	अगर (!ddc)
+		वापस -ENOMEM;
 
 	hdmi->ddc = ddc;
 	mutex_init(&ddc->lock);
@@ -622,139 +623,139 @@ static int zx_hdmi_ddc_register(struct zx_hdmi *hdmi)
 	adap->class = I2C_CLASS_DDC;
 	adap->dev.parent = hdmi->dev;
 	adap->algo = &zx_hdmi_algorithm;
-	snprintf(adap->name, sizeof(adap->name), "zx hdmi i2c");
+	snम_लिखो(adap->name, माप(adap->name), "zx hdmi i2c");
 
 	ret = i2c_add_adapter(adap);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(hdmi->dev, "failed to add I2C adapter: %d\n",
 			      ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	i2c_set_adapdata(adap, hdmi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zx_hdmi_bind(struct device *dev, struct device *master, void *data)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct drm_device *drm = data;
-	struct resource *res;
-	struct zx_hdmi *hdmi;
-	int irq;
-	int ret;
+अटल पूर्णांक zx_hdmi_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा drm_device *drm = data;
+	काष्ठा resource *res;
+	काष्ठा zx_hdmi *hdmi;
+	पूर्णांक irq;
+	पूर्णांक ret;
 
-	hdmi = devm_kzalloc(dev, sizeof(*hdmi), GFP_KERNEL);
-	if (!hdmi)
-		return -ENOMEM;
+	hdmi = devm_kzalloc(dev, माप(*hdmi), GFP_KERNEL);
+	अगर (!hdmi)
+		वापस -ENOMEM;
 
 	hdmi->dev = dev;
 	hdmi->drm = drm;
 
 	dev_set_drvdata(dev, hdmi);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	hdmi->mmio = devm_ioremap_resource(dev, res);
-	if (IS_ERR(hdmi->mmio)) {
+	अगर (IS_ERR(hdmi->mmio)) अणु
 		ret = PTR_ERR(hdmi->mmio);
 		DRM_DEV_ERROR(dev, "failed to remap hdmi region: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	hdmi->cec_clk = devm_clk_get(hdmi->dev, "osc_cec");
-	if (IS_ERR(hdmi->cec_clk)) {
+	अगर (IS_ERR(hdmi->cec_clk)) अणु
 		ret = PTR_ERR(hdmi->cec_clk);
 		DRM_DEV_ERROR(dev, "failed to get cec_clk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	hdmi->osc_clk = devm_clk_get(hdmi->dev, "osc_clk");
-	if (IS_ERR(hdmi->osc_clk)) {
+	अगर (IS_ERR(hdmi->osc_clk)) अणु
 		ret = PTR_ERR(hdmi->osc_clk);
 		DRM_DEV_ERROR(dev, "failed to get osc_clk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	hdmi->xclk = devm_clk_get(hdmi->dev, "xclk");
-	if (IS_ERR(hdmi->xclk)) {
+	अगर (IS_ERR(hdmi->xclk)) अणु
 		ret = PTR_ERR(hdmi->xclk);
 		DRM_DEV_ERROR(dev, "failed to get xclk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = zx_hdmi_ddc_register(hdmi);
-	if (ret) {
+	ret = zx_hdmi_ddc_रेजिस्टर(hdmi);
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev, "failed to register ddc: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = zx_hdmi_audio_register(hdmi);
-	if (ret) {
+	ret = zx_hdmi_audio_रेजिस्टर(hdmi);
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev, "failed to register audio: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = zx_hdmi_register(drm, hdmi);
-	if (ret) {
+	ret = zx_hdmi_रेजिस्टर(drm, hdmi);
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev, "failed to register hdmi: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_request_threaded_irq(dev, irq, zx_hdmi_irq_handler,
-					zx_hdmi_irq_thread, IRQF_SHARED,
+	ret = devm_request_thपढ़ोed_irq(dev, irq, zx_hdmi_irq_handler,
+					zx_hdmi_irq_thपढ़ो, IRQF_SHARED,
 					dev_name(dev), hdmi);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev, "failed to request threaded irq: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void zx_hdmi_unbind(struct device *dev, struct device *master,
-			   void *data)
-{
-	struct zx_hdmi *hdmi = dev_get_drvdata(dev);
+अटल व्योम zx_hdmi_unbind(काष्ठा device *dev, काष्ठा device *master,
+			   व्योम *data)
+अणु
+	काष्ठा zx_hdmi *hdmi = dev_get_drvdata(dev);
 
 	hdmi->connector.funcs->destroy(&hdmi->connector);
 	hdmi->encoder.funcs->destroy(&hdmi->encoder);
 
-	if (hdmi->audio_pdev)
-		platform_device_unregister(hdmi->audio_pdev);
-}
+	अगर (hdmi->audio_pdev)
+		platक्रमm_device_unरेजिस्टर(hdmi->audio_pdev);
+पूर्ण
 
-static const struct component_ops zx_hdmi_component_ops = {
+अटल स्थिर काष्ठा component_ops zx_hdmi_component_ops = अणु
 	.bind = zx_hdmi_bind,
 	.unbind = zx_hdmi_unbind,
-};
+पूर्ण;
 
-static int zx_hdmi_probe(struct platform_device *pdev)
-{
-	return component_add(&pdev->dev, &zx_hdmi_component_ops);
-}
+अटल पूर्णांक zx_hdmi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस component_add(&pdev->dev, &zx_hdmi_component_ops);
+पूर्ण
 
-static int zx_hdmi_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक zx_hdmi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_del(&pdev->dev, &zx_hdmi_component_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id zx_hdmi_of_match[] = {
-	{ .compatible = "zte,zx296718-hdmi", },
-	{ /* end */ },
-};
+अटल स्थिर काष्ठा of_device_id zx_hdmi_of_match[] = अणु
+	अणु .compatible = "zte,zx296718-hdmi", पूर्ण,
+	अणु /* end */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, zx_hdmi_of_match);
 
-struct platform_driver zx_hdmi_driver = {
+काष्ठा platक्रमm_driver zx_hdmi_driver = अणु
 	.probe = zx_hdmi_probe,
-	.remove = zx_hdmi_remove,
-	.driver	= {
+	.हटाओ = zx_hdmi_हटाओ,
+	.driver	= अणु
 		.name = "zx-hdmi",
 		.of_match_table	= zx_hdmi_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;

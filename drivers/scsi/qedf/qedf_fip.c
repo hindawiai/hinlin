@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  QLogic FCoE Offload Driver
  *  Copyright (c) 2016-2018 Cavium Inc.
  */
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include "qedf.h"
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश "qedf.h"
 
-extern const struct qed_fcoe_ops *qed_ops;
+बाह्य स्थिर काष्ठा qed_fcoe_ops *qed_ops;
 /*
  * FIP VLAN functions that will eventually move to libfcoe.
  */
 
-void qedf_fcoe_send_vlan_req(struct qedf_ctx *qedf)
-{
-	struct sk_buff *skb;
-	char *eth_fr;
-	struct fip_vlan *vlan;
-#define MY_FIP_ALL_FCF_MACS        ((__u8[6]) { 1, 0x10, 0x18, 1, 0, 2 })
-	static u8 my_fcoe_all_fcfs[ETH_ALEN] = MY_FIP_ALL_FCF_MACS;
-	unsigned long flags = 0;
-	int rc;
+व्योम qedf_fcoe_send_vlan_req(काष्ठा qedf_ctx *qedf)
+अणु
+	काष्ठा sk_buff *skb;
+	अक्षर *eth_fr;
+	काष्ठा fip_vlan *vlan;
+#घोषणा MY_FIP_ALL_FCF_MACS        ((__u8[6]) अणु 1, 0x10, 0x18, 1, 0, 2 पूर्ण)
+	अटल u8 my_fcoe_all_fcfs[ETH_ALEN] = MY_FIP_ALL_FCF_MACS;
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक rc;
 
-	skb = dev_alloc_skb(sizeof(struct fip_vlan));
-	if (!skb) {
+	skb = dev_alloc_skb(माप(काष्ठा fip_vlan));
+	अगर (!skb) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Failed to allocate skb.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	eth_fr = (char *)skb->data;
-	vlan = (struct fip_vlan *)eth_fr;
+	eth_fr = (अक्षर *)skb->data;
+	vlan = (काष्ठा fip_vlan *)eth_fr;
 
-	memset(vlan, 0, sizeof(*vlan));
+	स_रखो(vlan, 0, माप(*vlan));
 	ether_addr_copy(vlan->eth.h_source, qedf->mac);
 	ether_addr_copy(vlan->eth.h_dest, my_fcoe_all_fcfs);
 	vlan->eth.h_proto = htons(ETH_P_FIP);
@@ -40,17 +41,17 @@ void qedf_fcoe_send_vlan_req(struct qedf_ctx *qedf)
 	vlan->fip.fip_ver = FIP_VER_ENCAPS(FIP_VER);
 	vlan->fip.fip_op = htons(FIP_OP_VLAN);
 	vlan->fip.fip_subcode = FIP_SC_VL_REQ;
-	vlan->fip.fip_dl_len = htons(sizeof(vlan->desc) / FIP_BPW);
+	vlan->fip.fip_dl_len = htons(माप(vlan->desc) / FIP_BPW);
 
 	vlan->desc.mac.fd_desc.fip_dtype = FIP_DT_MAC;
-	vlan->desc.mac.fd_desc.fip_dlen = sizeof(vlan->desc.mac) / FIP_BPW;
+	vlan->desc.mac.fd_desc.fip_dlen = माप(vlan->desc.mac) / FIP_BPW;
 	ether_addr_copy(vlan->desc.mac.fd_mac, qedf->mac);
 
 	vlan->desc.wwnn.fd_desc.fip_dtype = FIP_DT_NAME;
-	vlan->desc.wwnn.fd_desc.fip_dlen = sizeof(vlan->desc.wwnn) / FIP_BPW;
+	vlan->desc.wwnn.fd_desc.fip_dlen = माप(vlan->desc.wwnn) / FIP_BPW;
 	put_unaligned_be64(qedf->lport->wwnn, &vlan->desc.wwnn.fd_wwn);
 
-	skb_put(skb, sizeof(*vlan));
+	skb_put(skb, माप(*vlan));
 	skb->protocol = htons(ETH_P_FIP);
 	skb_reset_mac_header(skb);
 	skb_reset_network_header(skb);
@@ -58,133 +59,133 @@ void qedf_fcoe_send_vlan_req(struct qedf_ctx *qedf)
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC, "Sending FIP VLAN "
 		   "request.");
 
-	if (atomic_read(&qedf->link_state) != QEDF_LINK_UP) {
+	अगर (atomic_पढ़ो(&qedf->link_state) != QEDF_LINK_UP) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Cannot send vlan request "
 		    "because link is not up.\n");
 
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	set_bit(QED_LL2_XMIT_FLAGS_FIP_DISCOVERY, &flags);
 	rc = qed_ops->ll2->start_xmit(qedf->cdev, skb, flags);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "start_xmit failed rc = %d.\n", rc);
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-}
+पूर्ण
 
-static void qedf_fcoe_process_vlan_resp(struct qedf_ctx *qedf,
-	struct sk_buff *skb)
-{
-	struct fip_header *fiph;
-	struct fip_desc *desc;
+अटल व्योम qedf_fcoe_process_vlan_resp(काष्ठा qedf_ctx *qedf,
+	काष्ठा sk_buff *skb)
+अणु
+	काष्ठा fip_header *fiph;
+	काष्ठा fip_desc *desc;
 	u16 vid = 0;
-	ssize_t rlen;
-	size_t dlen;
+	sमाप_प्रकार rlen;
+	माप_प्रकार dlen;
 
-	fiph = (struct fip_header *)(((void *)skb->data) + 2 * ETH_ALEN + 2);
+	fiph = (काष्ठा fip_header *)(((व्योम *)skb->data) + 2 * ETH_ALEN + 2);
 
 	rlen = ntohs(fiph->fip_dl_len) * 4;
-	desc = (struct fip_desc *)(fiph + 1);
-	while (rlen > 0) {
+	desc = (काष्ठा fip_desc *)(fiph + 1);
+	जबतक (rlen > 0) अणु
 		dlen = desc->fip_dlen * FIP_BPW;
-		switch (desc->fip_dtype) {
-		case FIP_DT_VLAN:
-			vid = ntohs(((struct fip_vlan_desc *)desc)->fd_vlan);
-			break;
-		}
-		desc = (struct fip_desc *)((char *)desc + dlen);
+		चयन (desc->fip_dtype) अणु
+		हाल FIP_DT_VLAN:
+			vid = ntohs(((काष्ठा fip_vlan_desc *)desc)->fd_vlan);
+			अवरोध;
+		पूर्ण
+		desc = (काष्ठा fip_desc *)((अक्षर *)desc + dlen);
 		rlen -= dlen;
-	}
+	पूर्ण
 
-	if (atomic_read(&qedf->link_state) == QEDF_LINK_DOWN) {
+	अगर (atomic_पढ़ो(&qedf->link_state) == QEDF_LINK_DOWN) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 			  "Dropping VLAN response as link is down.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC, "VLAN response, "
 		   "vid=0x%x.\n", vid);
 
-	if (vid > 0 && qedf->vlan_id != vid) {
+	अगर (vid > 0 && qedf->vlan_id != vid) अणु
 		qedf_set_vlan_id(qedf, vid);
 
-		/* Inform waiter that it's ok to call fcoe_ctlr_link up() */
-		if (!completion_done(&qedf->fipvlan_compl))
+		/* Inक्रमm रुकोer that it's ok to call fcoe_ctlr_link up() */
+		अगर (!completion_करोne(&qedf->fipvlan_compl))
 			complete(&qedf->fipvlan_compl);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void qedf_fip_send(struct fcoe_ctlr *fip, struct sk_buff *skb)
-{
-	struct qedf_ctx *qedf = container_of(fip, struct qedf_ctx, ctlr);
-	struct ethhdr *eth_hdr;
-	struct fip_header *fiph;
+व्योम qedf_fip_send(काष्ठा fcoe_ctlr *fip, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा qedf_ctx *qedf = container_of(fip, काष्ठा qedf_ctx, ctlr);
+	काष्ठा ethhdr *eth_hdr;
+	काष्ठा fip_header *fiph;
 	u16 op, vlan_tci = 0;
 	u8 sub;
-	int rc = -1;
+	पूर्णांक rc = -1;
 
-	if (!test_bit(QEDF_LL2_STARTED, &qedf->flags)) {
+	अगर (!test_bit(QEDF_LL2_STARTED, &qedf->flags)) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "LL2 not started\n");
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-	fiph = (struct fip_header *) ((void *)skb->data + 2 * ETH_ALEN + 2);
-	eth_hdr = (struct ethhdr *)skb_mac_header(skb);
+	fiph = (काष्ठा fip_header *) ((व्योम *)skb->data + 2 * ETH_ALEN + 2);
+	eth_hdr = (काष्ठा ethhdr *)skb_mac_header(skb);
 	op = ntohs(fiph->fip_op);
 	sub = fiph->fip_subcode;
 
 	/*
 	 * Add VLAN tag to non-offload FIP frame based on current stored VLAN
-	 * for FIP/FCoE traffic.
+	 * क्रम FIP/FCoE traffic.
 	 */
 	__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), qedf->vlan_id);
 
-	/* Get VLAN ID from skb for printing purposes */
+	/* Get VLAN ID from skb क्रम prपूर्णांकing purposes */
 	__vlan_hwaccel_get_tag(skb, &vlan_tci);
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_LL2, "FIP frame send: "
 	    "dest=%pM op=%x sub=%x vlan=%04x.", eth_hdr->h_dest, op, sub,
 	    vlan_tci);
-	if (qedf_dump_frames)
-		print_hex_dump(KERN_WARNING, "fip ", DUMP_PREFIX_OFFSET, 16, 1,
+	अगर (qedf_dump_frames)
+		prपूर्णांक_hex_dump(KERN_WARNING, "fip ", DUMP_PREFIX_OFFSET, 16, 1,
 		    skb->data, skb->len, false);
 
 	rc = qed_ops->ll2->start_xmit(qedf->cdev, skb, 0);
-	if (rc) {
+	अगर (rc) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "start_xmit failed rc = %d.\n", rc);
-		kfree_skb(skb);
-		return;
-	}
-}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
+पूर्ण
 
-static u8 fcoe_all_enode[ETH_ALEN] = FIP_ALL_ENODE_MACS;
+अटल u8 fcoe_all_enode[ETH_ALEN] = FIP_ALL_ENODE_MACS;
 
 /* Process incoming FIP frames. */
-void qedf_fip_recv(struct qedf_ctx *qedf, struct sk_buff *skb)
-{
-	struct ethhdr *eth_hdr;
-	struct fip_header *fiph;
-	struct fip_desc *desc;
-	struct fip_mac_desc *mp;
-	struct fip_wwn_desc *wp;
-	struct fip_vn_desc *vp;
-	size_t rlen, dlen;
+व्योम qedf_fip_recv(काष्ठा qedf_ctx *qedf, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ethhdr *eth_hdr;
+	काष्ठा fip_header *fiph;
+	काष्ठा fip_desc *desc;
+	काष्ठा fip_mac_desc *mp;
+	काष्ठा fip_wwn_desc *wp;
+	काष्ठा fip_vn_desc *vp;
+	माप_प्रकार rlen, dlen;
 	u16 op;
 	u8 sub;
 	bool fcf_valid = false;
 	/* Default is to handle CVL regardless of fabric id descriptor */
 	bool fabric_id_valid = true;
 	bool fc_wwpn_valid = false;
-	u64 switch_name;
+	u64 चयन_name;
 	u16 vlan = 0;
 
-	eth_hdr = (struct ethhdr *)skb_mac_header(skb);
-	fiph = (struct fip_header *) ((void *)skb->data + 2 * ETH_ALEN + 2);
+	eth_hdr = (काष्ठा ethhdr *)skb_mac_header(skb);
+	fiph = (काष्ठा fip_header *) ((व्योम *)skb->data + 2 * ETH_ALEN + 2);
 	op = ntohs(fiph->fip_op);
 	sub = fiph->fip_subcode;
 
@@ -192,110 +193,110 @@ void qedf_fip_recv(struct qedf_ctx *qedf, struct sk_buff *skb)
 		  "FIP frame received: skb=%p fiph=%p source=%pM destn=%pM op=%x sub=%x vlan=%04x",
 		  skb, fiph, eth_hdr->h_source, eth_hdr->h_dest, op,
 		  sub, vlan);
-	if (qedf_dump_frames)
-		print_hex_dump(KERN_WARNING, "fip ", DUMP_PREFIX_OFFSET, 16, 1,
+	अगर (qedf_dump_frames)
+		prपूर्णांक_hex_dump(KERN_WARNING, "fip ", DUMP_PREFIX_OFFSET, 16, 1,
 		    skb->data, skb->len, false);
 
-	if (!ether_addr_equal(eth_hdr->h_dest, qedf->mac) &&
+	अगर (!ether_addr_equal(eth_hdr->h_dest, qedf->mac) &&
 	    !ether_addr_equal(eth_hdr->h_dest, fcoe_all_enode) &&
-		!ether_addr_equal(eth_hdr->h_dest, qedf->data_src_addr)) {
+		!ether_addr_equal(eth_hdr->h_dest, qedf->data_src_addr)) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_LL2,
 			  "Dropping FIP type 0x%x pkt due to destination MAC mismatch dest_mac=%pM ctlr.dest_addr=%pM data_src_addr=%pM.\n",
 			  op, eth_hdr->h_dest, qedf->mac,
 			  qedf->data_src_addr);
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	/* Handle FIP VLAN resp in the driver */
-	if (op == FIP_OP_VLAN && sub == FIP_SC_VL_NOTE) {
+	अगर (op == FIP_OP_VLAN && sub == FIP_SC_VL_NOTE) अणु
 		qedf_fcoe_process_vlan_resp(qedf, skb);
-		kfree_skb(skb);
-	} else if (op == FIP_OP_CTRL && sub == FIP_SC_CLR_VLINK) {
+		kमुक्त_skb(skb);
+	पूर्ण अन्यथा अगर (op == FIP_OP_CTRL && sub == FIP_SC_CLR_VLINK) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC, "Clear virtual "
 			   "link received.\n");
 
 		/* Check that an FCF has been selected by fcoe */
-		if (qedf->ctlr.sel_fcf == NULL) {
+		अगर (qedf->ctlr.sel_fcf == शून्य) अणु
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 			    "Dropping CVL since FCF has not been selected "
 			    "yet.");
-			kfree_skb(skb);
-			return;
-		}
+			kमुक्त_skb(skb);
+			वापस;
+		पूर्ण
 
 		/*
 		 * We need to loop through the CVL descriptors to determine
-		 * if we want to reset the fcoe link
+		 * अगर we want to reset the fcoe link
 		 */
 		rlen = ntohs(fiph->fip_dl_len) * FIP_BPW;
-		desc = (struct fip_desc *)(fiph + 1);
-		while (rlen >= sizeof(*desc)) {
+		desc = (काष्ठा fip_desc *)(fiph + 1);
+		जबतक (rlen >= माप(*desc)) अणु
 			dlen = desc->fip_dlen * FIP_BPW;
-			switch (desc->fip_dtype) {
-			case FIP_DT_MAC:
-				mp = (struct fip_mac_desc *)desc;
+			चयन (desc->fip_dtype) अणु
+			हाल FIP_DT_MAC:
+				mp = (काष्ठा fip_mac_desc *)desc;
 				QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 					  "Switch fd_mac=%pM.\n", mp->fd_mac);
-				if (ether_addr_equal(mp->fd_mac,
+				अगर (ether_addr_equal(mp->fd_mac,
 				    qedf->ctlr.sel_fcf->fcf_mac))
 					fcf_valid = true;
-				break;
-			case FIP_DT_NAME:
-				wp = (struct fip_wwn_desc *)desc;
-				switch_name = get_unaligned_be64(&wp->fd_wwn);
+				अवरोध;
+			हाल FIP_DT_NAME:
+				wp = (काष्ठा fip_wwn_desc *)desc;
+				चयन_name = get_unaligned_be64(&wp->fd_wwn);
 				QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 					  "Switch fd_wwn=%016llx fcf_switch_name=%016llx.\n",
-					  switch_name,
-					  qedf->ctlr.sel_fcf->switch_name);
-				if (switch_name ==
-				    qedf->ctlr.sel_fcf->switch_name)
+					  चयन_name,
+					  qedf->ctlr.sel_fcf->चयन_name);
+				अगर (चयन_name ==
+				    qedf->ctlr.sel_fcf->चयन_name)
 					fc_wwpn_valid = true;
-				break;
-			case FIP_DT_VN_ID:
+				अवरोध;
+			हाल FIP_DT_VN_ID:
 				fabric_id_valid = false;
-				vp = (struct fip_vn_desc *)desc;
+				vp = (काष्ठा fip_vn_desc *)desc;
 
 				QEDF_ERR(&qedf->dbg_ctx,
 					 "CVL vx_port fd_fc_id=0x%x fd_mac=%pM fd_wwpn=%016llx.\n",
 					 ntoh24(vp->fd_fc_id), vp->fd_mac,
 					 get_unaligned_be64(&vp->fd_wwpn));
-				/* Check for vx_port wwpn OR Check vx_port
+				/* Check क्रम vx_port wwpn OR Check vx_port
 				 * fabric ID OR Check vx_port MAC
 				 */
-				if ((get_unaligned_be64(&vp->fd_wwpn) ==
+				अगर ((get_unaligned_be64(&vp->fd_wwpn) ==
 					qedf->wwpn) ||
 				   (ntoh24(vp->fd_fc_id) ==
 					qedf->lport->port_id) ||
 				   (ether_addr_equal(vp->fd_mac,
-					qedf->data_src_addr))) {
+					qedf->data_src_addr))) अणु
 					fabric_id_valid = true;
-				}
-				break;
-			default:
-				/* Ignore anything else */
-				break;
-			}
-			desc = (struct fip_desc *)((char *)desc + dlen);
+				पूर्ण
+				अवरोध;
+			शेष:
+				/* Ignore anything अन्यथा */
+				अवरोध;
+			पूर्ण
+			desc = (काष्ठा fip_desc *)((अक्षर *)desc + dlen);
 			rlen -= dlen;
-		}
+		पूर्ण
 
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_DISC,
 			  "fcf_valid=%d fabric_id_valid=%d fc_wwpn_valid=%d.\n",
 			  fcf_valid, fabric_id_valid, fc_wwpn_valid);
-		if (fcf_valid && fabric_id_valid && fc_wwpn_valid)
+		अगर (fcf_valid && fabric_id_valid && fc_wwpn_valid)
 			qedf_ctx_soft_reset(qedf->lport);
-		kfree_skb(skb);
-	} else {
-		/* Everything else is handled by libfcoe */
+		kमुक्त_skb(skb);
+	पूर्ण अन्यथा अणु
+		/* Everything अन्यथा is handled by libfcoe */
 		__skb_pull(skb, ETH_HLEN);
 		fcoe_ctlr_recv(&qedf->ctlr, skb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-u8 *qedf_get_src_mac(struct fc_lport *lport)
-{
-	struct qedf_ctx *qedf = lport_priv(lport);
+u8 *qedf_get_src_mac(काष्ठा fc_lport *lport)
+अणु
+	काष्ठा qedf_ctx *qedf = lport_priv(lport);
 
-	return qedf->data_src_addr;
-}
+	वापस qedf->data_src_addr;
+पूर्ण

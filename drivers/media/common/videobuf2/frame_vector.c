@@ -1,155 +1,156 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/pagemap.h>
-#include <linux/sched.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/sched.h>
 
-#include <media/frame_vector.h>
+#समावेश <media/frame_vector.h>
 
 /**
- * get_vaddr_frames() - map virtual addresses to pfns
+ * get_vaddr_frames() - map भव addresses to pfns
  * @start:	starting user address
  * @nr_frames:	number of pages / pfns from start to map
- * @vec:	structure which receives pages / pfns of the addresses mapped.
- *		It should have space for at least nr_frames entries.
+ * @vec:	काष्ठाure which receives pages / pfns of the addresses mapped.
+ *		It should have space क्रम at least nr_frames entries.
  *
- * This function maps virtual addresses from @start and fills @vec structure
- * with page frame numbers or page pointers to corresponding pages (choice
- * depends on the type of the vma underlying the virtual address). If @start
- * belongs to a normal vma, the function grabs reference to each of the pages
- * to pin them in memory. If @start belongs to VM_IO | VM_PFNMAP vma, we don't
- * touch page structures and the caller must make sure pfns aren't reused for
- * anything else while he is using them.
+ * This function maps भव addresses from @start and fills @vec काष्ठाure
+ * with page frame numbers or page poपूर्णांकers to corresponding pages (choice
+ * depends on the type of the vma underlying the भव address). If @start
+ * beदीर्घs to a normal vma, the function grअसल reference to each of the pages
+ * to pin them in memory. If @start beदीर्घs to VM_IO | VM_PFNMAP vma, we करोn't
+ * touch page काष्ठाures and the caller must make sure pfns aren't reused क्रम
+ * anything अन्यथा जबतक he is using them.
  *
- * The function returns number of pages mapped which may be less than
- * @nr_frames. In particular we stop mapping if there are more vmas of
- * different type underlying the specified range of virtual addresses.
- * When the function isn't able to map a single page, it returns error.
+ * The function वापसs number of pages mapped which may be less than
+ * @nr_frames. In particular we stop mapping अगर there are more vmas of
+ * dअगरferent type underlying the specअगरied range of भव addresses.
+ * When the function isn't able to map a single page, it वापसs error.
  *
  * This function takes care of grabbing mmap_lock as necessary.
  */
-int get_vaddr_frames(unsigned long start, unsigned int nr_frames,
-		     struct frame_vector *vec)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
-	int ret = 0;
-	int err;
+पूर्णांक get_vaddr_frames(अचिन्हित दीर्घ start, अचिन्हित पूर्णांक nr_frames,
+		     काष्ठा frame_vector *vec)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक ret = 0;
+	पूर्णांक err;
 
-	if (nr_frames == 0)
-		return 0;
+	अगर (nr_frames == 0)
+		वापस 0;
 
-	if (WARN_ON_ONCE(nr_frames > vec->nr_allocated))
+	अगर (WARN_ON_ONCE(nr_frames > vec->nr_allocated))
 		nr_frames = vec->nr_allocated;
 
 	start = untagged_addr(start);
 
 	ret = pin_user_pages_fast(start, nr_frames,
 				  FOLL_FORCE | FOLL_WRITE | FOLL_LONGTERM,
-				  (struct page **)(vec->ptrs));
-	if (ret > 0) {
+				  (काष्ठा page **)(vec->ptrs));
+	अगर (ret > 0) अणु
 		vec->got_ref = true;
 		vec->is_pfns = false;
-		goto out_unlocked;
-	}
+		जाओ out_unlocked;
+	पूर्ण
 
-	mmap_read_lock(mm);
+	mmap_पढ़ो_lock(mm);
 	vec->got_ref = false;
 	vec->is_pfns = true;
 	ret = 0;
-	do {
-		unsigned long *nums = frame_vector_pfns(vec);
+	करो अणु
+		अचिन्हित दीर्घ *nums = frame_vector_pfns(vec);
 
-		vma = find_vma_intersection(mm, start, start + 1);
-		if (!vma)
-			break;
+		vma = find_vma_पूर्णांकersection(mm, start, start + 1);
+		अगर (!vma)
+			अवरोध;
 
-		while (ret < nr_frames && start + PAGE_SIZE <= vma->vm_end) {
+		जबतक (ret < nr_frames && start + PAGE_SIZE <= vma->vm_end) अणु
 			err = follow_pfn(vma, start, &nums[ret]);
-			if (err) {
-				if (ret == 0)
+			अगर (err) अणु
+				अगर (ret == 0)
 					ret = err;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			start += PAGE_SIZE;
 			ret++;
-		}
-		/* Bail out if VMA doesn't completely cover the tail page. */
-		if (start < vma->vm_end)
-			break;
-	} while (ret < nr_frames);
+		पूर्ण
+		/* Bail out अगर VMA करोesn't completely cover the tail page. */
+		अगर (start < vma->vm_end)
+			अवरोध;
+	पूर्ण जबतक (ret < nr_frames);
 out:
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 out_unlocked:
-	if (!ret)
+	अगर (!ret)
 		ret = -EFAULT;
-	if (ret > 0)
+	अगर (ret > 0)
 		vec->nr_frames = ret;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(get_vaddr_frames);
 
 /**
- * put_vaddr_frames() - drop references to pages if get_vaddr_frames() acquired
+ * put_vaddr_frames() - drop references to pages अगर get_vaddr_frames() acquired
  *			them
  * @vec:	frame vector to put
  *
- * Drop references to pages if get_vaddr_frames() acquired them. We also
- * invalidate the frame vector so that it is prepared for the next call into
+ * Drop references to pages अगर get_vaddr_frames() acquired them. We also
+ * invalidate the frame vector so that it is prepared क्रम the next call पूर्णांकo
  * get_vaddr_frames().
  */
-void put_vaddr_frames(struct frame_vector *vec)
-{
-	struct page **pages;
+व्योम put_vaddr_frames(काष्ठा frame_vector *vec)
+अणु
+	काष्ठा page **pages;
 
-	if (!vec->got_ref)
-		goto out;
+	अगर (!vec->got_ref)
+		जाओ out;
 	pages = frame_vector_pages(vec);
 	/*
-	 * frame_vector_pages() might needed to do a conversion when
+	 * frame_vector_pages() might needed to करो a conversion when
 	 * get_vaddr_frames() got pages but vec was later converted to pfns.
 	 * But it shouldn't really fail to convert pfns back...
 	 */
-	if (WARN_ON(IS_ERR(pages)))
-		goto out;
+	अगर (WARN_ON(IS_ERR(pages)))
+		जाओ out;
 
 	unpin_user_pages(pages, vec->nr_frames);
 	vec->got_ref = false;
 out:
 	vec->nr_frames = 0;
-}
+पूर्ण
 EXPORT_SYMBOL(put_vaddr_frames);
 
 /**
- * frame_vector_to_pages - convert frame vector to contain page pointers
+ * frame_vector_to_pages - convert frame vector to contain page poपूर्णांकers
  * @vec:	frame vector to convert
  *
- * Convert @vec to contain array of page pointers.  If the conversion is
- * successful, return 0. Otherwise return an error. Note that we do not grab
- * page references for the page structures.
+ * Convert @vec to contain array of page poपूर्णांकers.  If the conversion is
+ * successful, वापस 0. Otherwise वापस an error. Note that we करो not grab
+ * page references क्रम the page काष्ठाures.
  */
-int frame_vector_to_pages(struct frame_vector *vec)
-{
-	int i;
-	unsigned long *nums;
-	struct page **pages;
+पूर्णांक frame_vector_to_pages(काष्ठा frame_vector *vec)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ *nums;
+	काष्ठा page **pages;
 
-	if (!vec->is_pfns)
-		return 0;
+	अगर (!vec->is_pfns)
+		वापस 0;
 	nums = frame_vector_pfns(vec);
-	for (i = 0; i < vec->nr_frames; i++)
-		if (!pfn_valid(nums[i]))
-			return -EINVAL;
-	pages = (struct page **)nums;
-	for (i = 0; i < vec->nr_frames; i++)
+	क्रम (i = 0; i < vec->nr_frames; i++)
+		अगर (!pfn_valid(nums[i]))
+			वापस -EINVAL;
+	pages = (काष्ठा page **)nums;
+	क्रम (i = 0; i < vec->nr_frames; i++)
 		pages[i] = pfn_to_page(nums[i]);
 	vec->is_pfns = false;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(frame_vector_to_pages);
 
 /**
@@ -158,65 +159,65 @@ EXPORT_SYMBOL(frame_vector_to_pages);
  *
  * Convert @vec to contain array of pfns.
  */
-void frame_vector_to_pfns(struct frame_vector *vec)
-{
-	int i;
-	unsigned long *nums;
-	struct page **pages;
+व्योम frame_vector_to_pfns(काष्ठा frame_vector *vec)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ *nums;
+	काष्ठा page **pages;
 
-	if (vec->is_pfns)
-		return;
-	pages = (struct page **)(vec->ptrs);
-	nums = (unsigned long *)pages;
-	for (i = 0; i < vec->nr_frames; i++)
+	अगर (vec->is_pfns)
+		वापस;
+	pages = (काष्ठा page **)(vec->ptrs);
+	nums = (अचिन्हित दीर्घ *)pages;
+	क्रम (i = 0; i < vec->nr_frames; i++)
 		nums[i] = page_to_pfn(pages[i]);
 	vec->is_pfns = true;
-}
+पूर्ण
 EXPORT_SYMBOL(frame_vector_to_pfns);
 
 /**
- * frame_vector_create() - allocate & initialize structure for pinned pfns
+ * frame_vector_create() - allocate & initialize काष्ठाure क्रम pinned pfns
  * @nr_frames:	number of pfns slots we should reserve
  *
- * Allocate and initialize struct pinned_pfns to be able to hold @nr_pfns
+ * Allocate and initialize काष्ठा pinned_pfns to be able to hold @nr_pfns
  * pfns.
  */
-struct frame_vector *frame_vector_create(unsigned int nr_frames)
-{
-	struct frame_vector *vec;
-	int size = sizeof(struct frame_vector) + sizeof(void *) * nr_frames;
+काष्ठा frame_vector *frame_vector_create(अचिन्हित पूर्णांक nr_frames)
+अणु
+	काष्ठा frame_vector *vec;
+	पूर्णांक size = माप(काष्ठा frame_vector) + माप(व्योम *) * nr_frames;
 
-	if (WARN_ON_ONCE(nr_frames == 0))
-		return NULL;
+	अगर (WARN_ON_ONCE(nr_frames == 0))
+		वापस शून्य;
 	/*
-	 * This is absurdly high. It's here just to avoid strange effects when
+	 * This is असलurdly high. It's here just to aव्योम strange effects when
 	 * arithmetics overflows.
 	 */
-	if (WARN_ON_ONCE(nr_frames > INT_MAX / sizeof(void *) / 2))
-		return NULL;
+	अगर (WARN_ON_ONCE(nr_frames > पूर्णांक_उच्च / माप(व्योम *) / 2))
+		वापस शून्य;
 	/*
-	 * Avoid higher order allocations, use vmalloc instead. It should
+	 * Aव्योम higher order allocations, use vदो_स्मृति instead. It should
 	 * be rare anyway.
 	 */
-	vec = kvmalloc(size, GFP_KERNEL);
-	if (!vec)
-		return NULL;
+	vec = kvदो_स्मृति(size, GFP_KERNEL);
+	अगर (!vec)
+		वापस शून्य;
 	vec->nr_allocated = nr_frames;
 	vec->nr_frames = 0;
-	return vec;
-}
+	वापस vec;
+पूर्ण
 EXPORT_SYMBOL(frame_vector_create);
 
 /**
- * frame_vector_destroy() - free memory allocated to carry frame vector
- * @vec:	Frame vector to free
+ * frame_vector_destroy() - मुक्त memory allocated to carry frame vector
+ * @vec:	Frame vector to मुक्त
  *
- * Free structure allocated by frame_vector_create() to carry frames.
+ * Free काष्ठाure allocated by frame_vector_create() to carry frames.
  */
-void frame_vector_destroy(struct frame_vector *vec)
-{
+व्योम frame_vector_destroy(काष्ठा frame_vector *vec)
+अणु
 	/* Make sure put_vaddr_frames() got called properly... */
 	VM_BUG_ON(vec->nr_frames > 0);
-	kvfree(vec);
-}
+	kvमुक्त(vec);
+पूर्ण
 EXPORT_SYMBOL(frame_vector_destroy);

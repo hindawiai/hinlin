@@ -1,183 +1,184 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2018 MediaTek Inc.
  */
-#include <linux/bitfield.h>
-#include <linux/io.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_net.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/stmmac.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/sपंचांगmac.h>
 
-#include "stmmac.h"
-#include "stmmac_platform.h"
+#समावेश "stmmac.h"
+#समावेश "stmmac_platform.h"
 
-/* Peri Configuration register for mt2712 */
-#define PERI_ETH_PHY_INTF_SEL	0x418
-#define PHY_INTF_MII		0
-#define PHY_INTF_RGMII		1
-#define PHY_INTF_RMII		4
-#define RMII_CLK_SRC_RXC	BIT(4)
-#define RMII_CLK_SRC_INTERNAL	BIT(5)
+/* Peri Configuration रेजिस्टर क्रम mt2712 */
+#घोषणा PERI_ETH_PHY_INTF_SEL	0x418
+#घोषणा PHY_INTF_MII		0
+#घोषणा PHY_INTF_RGMII		1
+#घोषणा PHY_INTF_RMII		4
+#घोषणा RMII_CLK_SRC_RXC	BIT(4)
+#घोषणा RMII_CLK_SRC_INTERNAL	BIT(5)
 
-#define PERI_ETH_DLY	0x428
-#define ETH_DLY_GTXC_INV	BIT(6)
-#define ETH_DLY_GTXC_ENABLE	BIT(5)
-#define ETH_DLY_GTXC_STAGES	GENMASK(4, 0)
-#define ETH_DLY_TXC_INV		BIT(20)
-#define ETH_DLY_TXC_ENABLE	BIT(19)
-#define ETH_DLY_TXC_STAGES	GENMASK(18, 14)
-#define ETH_DLY_RXC_INV		BIT(13)
-#define ETH_DLY_RXC_ENABLE	BIT(12)
-#define ETH_DLY_RXC_STAGES	GENMASK(11, 7)
+#घोषणा PERI_ETH_DLY	0x428
+#घोषणा ETH_DLY_GTXC_INV	BIT(6)
+#घोषणा ETH_DLY_GTXC_ENABLE	BIT(5)
+#घोषणा ETH_DLY_GTXC_STAGES	GENMASK(4, 0)
+#घोषणा ETH_DLY_TXC_INV		BIT(20)
+#घोषणा ETH_DLY_TXC_ENABLE	BIT(19)
+#घोषणा ETH_DLY_TXC_STAGES	GENMASK(18, 14)
+#घोषणा ETH_DLY_RXC_INV		BIT(13)
+#घोषणा ETH_DLY_RXC_ENABLE	BIT(12)
+#घोषणा ETH_DLY_RXC_STAGES	GENMASK(11, 7)
 
-#define PERI_ETH_DLY_FINE	0x800
-#define ETH_RMII_DLY_TX_INV	BIT(2)
-#define ETH_FINE_DLY_GTXC	BIT(1)
-#define ETH_FINE_DLY_RXC	BIT(0)
+#घोषणा PERI_ETH_DLY_FINE	0x800
+#घोषणा ETH_RMII_DLY_TX_INV	BIT(2)
+#घोषणा ETH_FINE_DLY_GTXC	BIT(1)
+#घोषणा ETH_FINE_DLY_RXC	BIT(0)
 
-struct mac_delay_struct {
+काष्ठा mac_delay_काष्ठा अणु
 	u32 tx_delay;
 	u32 rx_delay;
 	bool tx_inv;
 	bool rx_inv;
-};
+पूर्ण;
 
-struct mediatek_dwmac_plat_data {
-	const struct mediatek_dwmac_variant *variant;
-	struct mac_delay_struct mac_delay;
-	struct clk_bulk_data *clks;
-	struct device_node *np;
-	struct regmap *peri_regmap;
-	struct device *dev;
-	phy_interface_t phy_mode;
-	int num_clks_to_config;
+काष्ठा mediatek_dwmac_plat_data अणु
+	स्थिर काष्ठा mediatek_dwmac_variant *variant;
+	काष्ठा mac_delay_काष्ठा mac_delay;
+	काष्ठा clk_bulk_data *clks;
+	काष्ठा device_node *np;
+	काष्ठा regmap *peri_regmap;
+	काष्ठा device *dev;
+	phy_पूर्णांकerface_t phy_mode;
+	पूर्णांक num_clks_to_config;
 	bool rmii_clk_from_mac;
 	bool rmii_rxc;
-};
+पूर्ण;
 
-struct mediatek_dwmac_variant {
-	int (*dwmac_set_phy_interface)(struct mediatek_dwmac_plat_data *plat);
-	int (*dwmac_set_delay)(struct mediatek_dwmac_plat_data *plat);
+काष्ठा mediatek_dwmac_variant अणु
+	पूर्णांक (*dwmac_set_phy_पूर्णांकerface)(काष्ठा mediatek_dwmac_plat_data *plat);
+	पूर्णांक (*dwmac_set_delay)(काष्ठा mediatek_dwmac_plat_data *plat);
 
-	/* clock ids to be requested */
-	const char * const *clk_list;
-	int num_clks;
+	/* घड़ी ids to be requested */
+	स्थिर अक्षर * स्थिर *clk_list;
+	पूर्णांक num_clks;
 
 	u32 dma_bit_mask;
 	u32 rx_delay_max;
 	u32 tx_delay_max;
-};
+पूर्ण;
 
-/* list of clocks required for mac */
-static const char * const mt2712_dwmac_clk_l[] = {
+/* list of घड़ीs required क्रम mac */
+अटल स्थिर अक्षर * स्थिर mt2712_dwmac_clk_l[] = अणु
 	"axi", "apb", "mac_main", "ptp_ref", "rmii_internal"
-};
+पूर्ण;
 
-static int mt2712_set_interface(struct mediatek_dwmac_plat_data *plat)
-{
-	int rmii_clk_from_mac = plat->rmii_clk_from_mac ? RMII_CLK_SRC_INTERNAL : 0;
-	int rmii_rxc = plat->rmii_rxc ? RMII_CLK_SRC_RXC : 0;
-	u32 intf_val = 0;
+अटल पूर्णांक mt2712_set_पूर्णांकerface(काष्ठा mediatek_dwmac_plat_data *plat)
+अणु
+	पूर्णांक rmii_clk_from_mac = plat->rmii_clk_from_mac ? RMII_CLK_SRC_INTERNAL : 0;
+	पूर्णांक rmii_rxc = plat->rmii_rxc ? RMII_CLK_SRC_RXC : 0;
+	u32 पूर्णांकf_val = 0;
 
-	/* The clock labeled as "rmii_internal" in mt2712_dwmac_clk_l is needed
-	 * only in RMII(when MAC provides the reference clock), and useless for
-	 * RGMII/MII/RMII(when PHY provides the reference clock).
-	 * num_clks_to_config indicates the real number of clocks should be
-	 * configured, equals to (plat->variant->num_clks - 1) in default for all the case,
-	 * then +1 for rmii_clk_from_mac case.
+	/* The घड़ी labeled as "rmii_internal" in mt2712_dwmac_clk_l is needed
+	 * only in RMII(when MAC provides the reference घड़ी), and useless क्रम
+	 * RGMII/MII/RMII(when PHY provides the reference घड़ी).
+	 * num_clks_to_config indicates the real number of घड़ीs should be
+	 * configured, equals to (plat->variant->num_clks - 1) in शेष क्रम all the हाल,
+	 * then +1 क्रम rmii_clk_from_mac हाल.
 	 */
 	plat->num_clks_to_config = plat->variant->num_clks - 1;
 
-	/* select phy interface in top control domain */
-	switch (plat->phy_mode) {
-	case PHY_INTERFACE_MODE_MII:
-		intf_val |= PHY_INTF_MII;
-		break;
-	case PHY_INTERFACE_MODE_RMII:
-		if (plat->rmii_clk_from_mac)
+	/* select phy पूर्णांकerface in top control करोमुख्य */
+	चयन (plat->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_MII:
+		पूर्णांकf_val |= PHY_INTF_MII;
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RMII:
+		अगर (plat->rmii_clk_from_mac)
 			plat->num_clks_to_config++;
-		intf_val |= (PHY_INTF_RMII | rmii_rxc | rmii_clk_from_mac);
-		break;
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-		intf_val |= PHY_INTF_RGMII;
-		break;
-	default:
+		पूर्णांकf_val |= (PHY_INTF_RMII | rmii_rxc | rmii_clk_from_mac);
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+		पूर्णांकf_val |= PHY_INTF_RGMII;
+		अवरोध;
+	शेष:
 		dev_err(plat->dev, "phy interface not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	regmap_write(plat->peri_regmap, PERI_ETH_PHY_INTF_SEL, intf_val);
+	regmap_ग_लिखो(plat->peri_regmap, PERI_ETH_PHY_INTF_SEL, पूर्णांकf_val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mt2712_delay_ps2stage(struct mediatek_dwmac_plat_data *plat)
-{
-	struct mac_delay_struct *mac_delay = &plat->mac_delay;
+अटल व्योम mt2712_delay_ps2stage(काष्ठा mediatek_dwmac_plat_data *plat)
+अणु
+	काष्ठा mac_delay_काष्ठा *mac_delay = &plat->mac_delay;
 
-	switch (plat->phy_mode) {
-	case PHY_INTERFACE_MODE_MII:
-	case PHY_INTERFACE_MODE_RMII:
-		/* 550ps per stage for MII/RMII */
+	चयन (plat->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_MII:
+	हाल PHY_INTERFACE_MODE_RMII:
+		/* 550ps per stage क्रम MII/RMII */
 		mac_delay->tx_delay /= 550;
 		mac_delay->rx_delay /= 550;
-		break;
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-		/* 170ps per stage for RGMII */
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+		/* 170ps per stage क्रम RGMII */
 		mac_delay->tx_delay /= 170;
 		mac_delay->rx_delay /= 170;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(plat->dev, "phy interface not supported\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void mt2712_delay_stage2ps(struct mediatek_dwmac_plat_data *plat)
-{
-	struct mac_delay_struct *mac_delay = &plat->mac_delay;
+अटल व्योम mt2712_delay_stage2ps(काष्ठा mediatek_dwmac_plat_data *plat)
+अणु
+	काष्ठा mac_delay_काष्ठा *mac_delay = &plat->mac_delay;
 
-	switch (plat->phy_mode) {
-	case PHY_INTERFACE_MODE_MII:
-	case PHY_INTERFACE_MODE_RMII:
-		/* 550ps per stage for MII/RMII */
+	चयन (plat->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_MII:
+	हाल PHY_INTERFACE_MODE_RMII:
+		/* 550ps per stage क्रम MII/RMII */
 		mac_delay->tx_delay *= 550;
 		mac_delay->rx_delay *= 550;
-		break;
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-		/* 170ps per stage for RGMII */
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+		/* 170ps per stage क्रम RGMII */
 		mac_delay->tx_delay *= 170;
 		mac_delay->rx_delay *= 170;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(plat->dev, "phy interface not supported\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int mt2712_set_delay(struct mediatek_dwmac_plat_data *plat)
-{
-	struct mac_delay_struct *mac_delay = &plat->mac_delay;
+अटल पूर्णांक mt2712_set_delay(काष्ठा mediatek_dwmac_plat_data *plat)
+अणु
+	काष्ठा mac_delay_काष्ठा *mac_delay = &plat->mac_delay;
 	u32 delay_val = 0, fine_val = 0;
 
 	mt2712_delay_ps2stage(plat);
 
-	switch (plat->phy_mode) {
-	case PHY_INTERFACE_MODE_MII:
+	चयन (plat->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_MII:
 		delay_val |= FIELD_PREP(ETH_DLY_TXC_ENABLE, !!mac_delay->tx_delay);
 		delay_val |= FIELD_PREP(ETH_DLY_TXC_STAGES, mac_delay->tx_delay);
 		delay_val |= FIELD_PREP(ETH_DLY_TXC_INV, mac_delay->tx_inv);
@@ -185,11 +186,11 @@ static int mt2712_set_delay(struct mediatek_dwmac_plat_data *plat)
 		delay_val |= FIELD_PREP(ETH_DLY_RXC_ENABLE, !!mac_delay->rx_delay);
 		delay_val |= FIELD_PREP(ETH_DLY_RXC_STAGES, mac_delay->rx_delay);
 		delay_val |= FIELD_PREP(ETH_DLY_RXC_INV, mac_delay->rx_inv);
-		break;
-	case PHY_INTERFACE_MODE_RMII:
-		if (plat->rmii_clk_from_mac) {
-			/* case 1: mac provides the rmii reference clock,
-			 * and the clock output to TXC pin.
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RMII:
+		अगर (plat->rmii_clk_from_mac) अणु
+			/* हाल 1: mac provides the rmii reference घड़ी,
+			 * and the घड़ी output to TXC pin.
 			 * The egress timing can be adjusted by GTXC delay macro circuit.
 			 * The ingress timing can be adjusted by TXC delay macro circuit.
 			 */
@@ -200,42 +201,42 @@ static int mt2712_set_delay(struct mediatek_dwmac_plat_data *plat)
 			delay_val |= FIELD_PREP(ETH_DLY_GTXC_ENABLE, !!mac_delay->tx_delay);
 			delay_val |= FIELD_PREP(ETH_DLY_GTXC_STAGES, mac_delay->tx_delay);
 			delay_val |= FIELD_PREP(ETH_DLY_GTXC_INV, mac_delay->tx_inv);
-		} else {
-			/* case 2: the rmii reference clock is from external phy,
+		पूर्ण अन्यथा अणु
+			/* हाल 2: the rmii reference घड़ी is from बाह्यal phy,
 			 * and the property "rmii_rxc" indicates which pin(TXC/RXC)
-			 * the reference clk is connected to. The reference clock is a
-			 * received signal, so rx_delay/rx_inv are used to indicate
-			 * the reference clock timing adjustment
+			 * the reference clk is connected to. The reference घड़ी is a
+			 * received संकेत, so rx_delay/rx_inv are used to indicate
+			 * the reference घड़ी timing adjusपंचांगent
 			 */
-			if (plat->rmii_rxc) {
-				/* the rmii reference clock from outside is connected
-				 * to RXC pin, the reference clock will be adjusted
+			अगर (plat->rmii_rxc) अणु
+				/* the rmii reference घड़ी from outside is connected
+				 * to RXC pin, the reference घड़ी will be adjusted
 				 * by RXC delay macro circuit.
 				 */
 				delay_val |= FIELD_PREP(ETH_DLY_RXC_ENABLE, !!mac_delay->rx_delay);
 				delay_val |= FIELD_PREP(ETH_DLY_RXC_STAGES, mac_delay->rx_delay);
 				delay_val |= FIELD_PREP(ETH_DLY_RXC_INV, mac_delay->rx_inv);
-			} else {
-				/* the rmii reference clock from outside is connected
-				 * to TXC pin, the reference clock will be adjusted
+			पूर्ण अन्यथा अणु
+				/* the rmii reference घड़ी from outside is connected
+				 * to TXC pin, the reference घड़ी will be adjusted
 				 * by TXC delay macro circuit.
 				 */
 				delay_val |= FIELD_PREP(ETH_DLY_TXC_ENABLE, !!mac_delay->rx_delay);
 				delay_val |= FIELD_PREP(ETH_DLY_TXC_STAGES, mac_delay->rx_delay);
 				delay_val |= FIELD_PREP(ETH_DLY_TXC_INV, mac_delay->rx_inv);
-			}
-			/* tx_inv will inverse the tx clock inside mac relateive to
-			 * reference clock from external phy,
-			 * and this bit is located in the same register with fine-tune
+			पूर्ण
+			/* tx_inv will inverse the tx घड़ी inside mac relateive to
+			 * reference घड़ी from बाह्यal phy,
+			 * and this bit is located in the same रेजिस्टर with fine-tune
 			 */
-			if (mac_delay->tx_inv)
+			अगर (mac_delay->tx_inv)
 				fine_val = ETH_RMII_DLY_TX_INV;
-		}
-		break;
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_ID:
+		पूर्ण
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
 		fine_val = ETH_FINE_DLY_GTXC | ETH_FINE_DLY_RXC;
 
 		delay_val |= FIELD_PREP(ETH_DLY_GTXC_ENABLE, !!mac_delay->tx_delay);
@@ -245,173 +246,173 @@ static int mt2712_set_delay(struct mediatek_dwmac_plat_data *plat)
 		delay_val |= FIELD_PREP(ETH_DLY_RXC_ENABLE, !!mac_delay->rx_delay);
 		delay_val |= FIELD_PREP(ETH_DLY_RXC_STAGES, mac_delay->rx_delay);
 		delay_val |= FIELD_PREP(ETH_DLY_RXC_INV, mac_delay->rx_inv);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(plat->dev, "phy interface not supported\n");
-		return -EINVAL;
-	}
-	regmap_write(plat->peri_regmap, PERI_ETH_DLY, delay_val);
-	regmap_write(plat->peri_regmap, PERI_ETH_DLY_FINE, fine_val);
+		वापस -EINVAL;
+	पूर्ण
+	regmap_ग_लिखो(plat->peri_regmap, PERI_ETH_DLY, delay_val);
+	regmap_ग_लिखो(plat->peri_regmap, PERI_ETH_DLY_FINE, fine_val);
 
 	mt2712_delay_stage2ps(plat);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mediatek_dwmac_variant mt2712_gmac_variant = {
-		.dwmac_set_phy_interface = mt2712_set_interface,
+अटल स्थिर काष्ठा mediatek_dwmac_variant mt2712_gmac_variant = अणु
+		.dwmac_set_phy_पूर्णांकerface = mt2712_set_पूर्णांकerface,
 		.dwmac_set_delay = mt2712_set_delay,
 		.clk_list = mt2712_dwmac_clk_l,
 		.num_clks = ARRAY_SIZE(mt2712_dwmac_clk_l),
 		.dma_bit_mask = 33,
 		.rx_delay_max = 17600,
 		.tx_delay_max = 17600,
-};
+पूर्ण;
 
-static int mediatek_dwmac_config_dt(struct mediatek_dwmac_plat_data *plat)
-{
-	struct mac_delay_struct *mac_delay = &plat->mac_delay;
+अटल पूर्णांक mediatek_dwmac_config_dt(काष्ठा mediatek_dwmac_plat_data *plat)
+अणु
+	काष्ठा mac_delay_काष्ठा *mac_delay = &plat->mac_delay;
 	u32 tx_delay_ps, rx_delay_ps;
-	int err;
+	पूर्णांक err;
 
 	plat->peri_regmap = syscon_regmap_lookup_by_phandle(plat->np, "mediatek,pericfg");
-	if (IS_ERR(plat->peri_regmap)) {
+	अगर (IS_ERR(plat->peri_regmap)) अणु
 		dev_err(plat->dev, "Failed to get pericfg syscon\n");
-		return PTR_ERR(plat->peri_regmap);
-	}
+		वापस PTR_ERR(plat->peri_regmap);
+	पूर्ण
 
 	err = of_get_phy_mode(plat->np, &plat->phy_mode);
-	if (err) {
+	अगर (err) अणु
 		dev_err(plat->dev, "not find phy-mode\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (!of_property_read_u32(plat->np, "mediatek,tx-delay-ps", &tx_delay_ps)) {
-		if (tx_delay_ps < plat->variant->tx_delay_max) {
+	अगर (!of_property_पढ़ो_u32(plat->np, "mediatek,tx-delay-ps", &tx_delay_ps)) अणु
+		अगर (tx_delay_ps < plat->variant->tx_delay_max) अणु
 			mac_delay->tx_delay = tx_delay_ps;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(plat->dev, "Invalid TX clock delay: %dps\n", tx_delay_ps);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (!of_property_read_u32(plat->np, "mediatek,rx-delay-ps", &rx_delay_ps)) {
-		if (rx_delay_ps < plat->variant->rx_delay_max) {
+	अगर (!of_property_पढ़ो_u32(plat->np, "mediatek,rx-delay-ps", &rx_delay_ps)) अणु
+		अगर (rx_delay_ps < plat->variant->rx_delay_max) अणु
 			mac_delay->rx_delay = rx_delay_ps;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(plat->dev, "Invalid RX clock delay: %dps\n", rx_delay_ps);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	mac_delay->tx_inv = of_property_read_bool(plat->np, "mediatek,txc-inverse");
-	mac_delay->rx_inv = of_property_read_bool(plat->np, "mediatek,rxc-inverse");
-	plat->rmii_rxc = of_property_read_bool(plat->np, "mediatek,rmii-rxc");
-	plat->rmii_clk_from_mac = of_property_read_bool(plat->np, "mediatek,rmii-clk-from-mac");
+	mac_delay->tx_inv = of_property_पढ़ो_bool(plat->np, "mediatek,txc-inverse");
+	mac_delay->rx_inv = of_property_पढ़ो_bool(plat->np, "mediatek,rxc-inverse");
+	plat->rmii_rxc = of_property_पढ़ो_bool(plat->np, "mediatek,rmii-rxc");
+	plat->rmii_clk_from_mac = of_property_पढ़ो_bool(plat->np, "mediatek,rmii-clk-from-mac");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mediatek_dwmac_clk_init(struct mediatek_dwmac_plat_data *plat)
-{
-	const struct mediatek_dwmac_variant *variant = plat->variant;
-	int i, num = variant->num_clks;
+अटल पूर्णांक mediatek_dwmac_clk_init(काष्ठा mediatek_dwmac_plat_data *plat)
+अणु
+	स्थिर काष्ठा mediatek_dwmac_variant *variant = plat->variant;
+	पूर्णांक i, num = variant->num_clks;
 
-	plat->clks = devm_kcalloc(plat->dev, num, sizeof(*plat->clks), GFP_KERNEL);
-	if (!plat->clks)
-		return -ENOMEM;
+	plat->clks = devm_kसुस्मृति(plat->dev, num, माप(*plat->clks), GFP_KERNEL);
+	अगर (!plat->clks)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num; i++)
+	क्रम (i = 0; i < num; i++)
 		plat->clks[i].id = variant->clk_list[i];
 
 	plat->num_clks_to_config = variant->num_clks;
 
-	return devm_clk_bulk_get(plat->dev, num, plat->clks);
-}
+	वापस devm_clk_bulk_get(plat->dev, num, plat->clks);
+पूर्ण
 
-static int mediatek_dwmac_init(struct platform_device *pdev, void *priv)
-{
-	struct mediatek_dwmac_plat_data *plat = priv;
-	const struct mediatek_dwmac_variant *variant = plat->variant;
-	int ret;
+अटल पूर्णांक mediatek_dwmac_init(काष्ठा platक्रमm_device *pdev, व्योम *priv)
+अणु
+	काष्ठा mediatek_dwmac_plat_data *plat = priv;
+	स्थिर काष्ठा mediatek_dwmac_variant *variant = plat->variant;
+	पूर्णांक ret;
 
 	ret = dma_set_mask_and_coherent(plat->dev, DMA_BIT_MASK(variant->dma_bit_mask));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(plat->dev, "No suitable DMA available, err = %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = variant->dwmac_set_phy_interface(plat);
-	if (ret) {
+	ret = variant->dwmac_set_phy_पूर्णांकerface(plat);
+	अगर (ret) अणु
 		dev_err(plat->dev, "failed to set phy interface, err = %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = variant->dwmac_set_delay(plat);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(plat->dev, "failed to set delay value, err = %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_bulk_prepare_enable(plat->num_clks_to_config, plat->clks);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(plat->dev, "failed to enable clks, err = %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pm_runtime_enable(&pdev->dev);
-	pm_runtime_get_sync(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
+	pm_runसमय_get_sync(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mediatek_dwmac_exit(struct platform_device *pdev, void *priv)
-{
-	struct mediatek_dwmac_plat_data *plat = priv;
+अटल व्योम mediatek_dwmac_निकास(काष्ठा platक्रमm_device *pdev, व्योम *priv)
+अणु
+	काष्ठा mediatek_dwmac_plat_data *plat = priv;
 
 	clk_bulk_disable_unprepare(plat->num_clks_to_config, plat->clks);
 
-	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
-}
+	pm_runसमय_put_sync(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+पूर्ण
 
-static int mediatek_dwmac_probe(struct platform_device *pdev)
-{
-	struct mediatek_dwmac_plat_data *priv_plat;
-	struct plat_stmmacenet_data *plat_dat;
-	struct stmmac_resources stmmac_res;
-	int ret;
+अटल पूर्णांक mediatek_dwmac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mediatek_dwmac_plat_data *priv_plat;
+	काष्ठा plat_sपंचांगmacenet_data *plat_dat;
+	काष्ठा sपंचांगmac_resources sपंचांगmac_res;
+	पूर्णांक ret;
 
-	priv_plat = devm_kzalloc(&pdev->dev, sizeof(*priv_plat), GFP_KERNEL);
-	if (!priv_plat)
-		return -ENOMEM;
+	priv_plat = devm_kzalloc(&pdev->dev, माप(*priv_plat), GFP_KERNEL);
+	अगर (!priv_plat)
+		वापस -ENOMEM;
 
 	priv_plat->variant = of_device_get_match_data(&pdev->dev);
-	if (!priv_plat->variant) {
+	अगर (!priv_plat->variant) अणु
 		dev_err(&pdev->dev, "Missing dwmac-mediatek variant\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	priv_plat->dev = &pdev->dev;
 	priv_plat->np = pdev->dev.of_node;
 
 	ret = mediatek_dwmac_config_dt(priv_plat);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = mediatek_dwmac_clk_init(priv_plat);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = stmmac_get_platform_resources(pdev, &stmmac_res);
-	if (ret)
-		return ret;
+	ret = sपंचांगmac_get_platक्रमm_resources(pdev, &sपंचांगmac_res);
+	अगर (ret)
+		वापस ret;
 
-	plat_dat = stmmac_probe_config_dt(pdev, stmmac_res.mac);
-	if (IS_ERR(plat_dat))
-		return PTR_ERR(plat_dat);
+	plat_dat = sपंचांगmac_probe_config_dt(pdev, sपंचांगmac_res.mac);
+	अगर (IS_ERR(plat_dat))
+		वापस PTR_ERR(plat_dat);
 
-	plat_dat->interface = priv_plat->phy_mode;
+	plat_dat->पूर्णांकerface = priv_plat->phy_mode;
 	plat_dat->has_gmac4 = 1;
 	plat_dat->has_gmac = 0;
 	plat_dat->pmt = 0;
@@ -419,36 +420,36 @@ static int mediatek_dwmac_probe(struct platform_device *pdev)
 	plat_dat->maxmtu = ETH_DATA_LEN;
 	plat_dat->bsp_priv = priv_plat;
 	plat_dat->init = mediatek_dwmac_init;
-	plat_dat->exit = mediatek_dwmac_exit;
+	plat_dat->निकास = mediatek_dwmac_निकास;
 	mediatek_dwmac_init(pdev, priv_plat);
 
-	ret = stmmac_dvr_probe(&pdev->dev, plat_dat, &stmmac_res);
-	if (ret) {
-		stmmac_remove_config_dt(pdev, plat_dat);
-		return ret;
-	}
+	ret = sपंचांगmac_dvr_probe(&pdev->dev, plat_dat, &sपंचांगmac_res);
+	अगर (ret) अणु
+		sपंचांगmac_हटाओ_config_dt(pdev, plat_dat);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mediatek_dwmac_match[] = {
-	{ .compatible = "mediatek,mt2712-gmac",
-	  .data = &mt2712_gmac_variant },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id mediatek_dwmac_match[] = अणु
+	अणु .compatible = "mediatek,mt2712-gmac",
+	  .data = &mt2712_gmac_variant पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, mediatek_dwmac_match);
 
-static struct platform_driver mediatek_dwmac_driver = {
+अटल काष्ठा platक्रमm_driver mediatek_dwmac_driver = अणु
 	.probe  = mediatek_dwmac_probe,
-	.remove = stmmac_pltfr_remove,
-	.driver = {
+	.हटाओ = sपंचांगmac_pltfr_हटाओ,
+	.driver = अणु
 		.name           = "dwmac-mediatek",
-		.pm		= &stmmac_pltfr_pm_ops,
+		.pm		= &sपंचांगmac_pltfr_pm_ops,
 		.of_match_table = mediatek_dwmac_match,
-	},
-};
-module_platform_driver(mediatek_dwmac_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(mediatek_dwmac_driver);
 
 MODULE_AUTHOR("Biao Huang <biao.huang@mediatek.com>");
 MODULE_DESCRIPTION("MediaTek DWMAC specific glue layer");

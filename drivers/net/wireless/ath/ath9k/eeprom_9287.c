@@ -1,90 +1,91 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2008-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <asm/unaligned.h>
-#include "hw.h"
-#include "ar9002_phy.h"
+#समावेश <यंत्र/unaligned.h>
+#समावेश "hw.h"
+#समावेश "ar9002_phy.h"
 
-#define SIZE_EEPROM_AR9287 (sizeof(struct ar9287_eeprom) / sizeof(u16))
+#घोषणा SIZE_EEPROM_AR9287 (माप(काष्ठा ar9287_eeprom) / माप(u16))
 
-static int ath9k_hw_ar9287_get_eeprom_ver(struct ath_hw *ah)
-{
+अटल पूर्णांक ath9k_hw_ar9287_get_eeprom_ver(काष्ठा ath_hw *ah)
+अणु
 	u16 version = le16_to_cpu(ah->eeprom.map9287.baseEepHeader.version);
 
-	return (version & AR5416_EEP_VER_MAJOR_MASK) >>
+	वापस (version & AR5416_EEP_VER_MAJOR_MASK) >>
 		AR5416_EEP_VER_MAJOR_SHIFT;
-}
+पूर्ण
 
-static int ath9k_hw_ar9287_get_eeprom_rev(struct ath_hw *ah)
-{
+अटल पूर्णांक ath9k_hw_ar9287_get_eeprom_rev(काष्ठा ath_hw *ah)
+अणु
 	u16 version = le16_to_cpu(ah->eeprom.map9287.baseEepHeader.version);
 
-	return version & AR5416_EEP_VER_MINOR_MASK;
-}
+	वापस version & AR5416_EEP_VER_MINOR_MASK;
+पूर्ण
 
-static bool __ath9k_hw_ar9287_fill_eeprom(struct ath_hw *ah)
-{
-	struct ar9287_eeprom *eep = &ah->eeprom.map9287;
+अटल bool __ath9k_hw_ar9287_fill_eeprom(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ar9287_eeprom *eep = &ah->eeprom.map9287;
 	u16 *eep_data;
-	int addr, eep_start_loc = AR9287_EEP_START_LOC;
+	पूर्णांक addr, eep_start_loc = AR9287_EEP_START_LOC;
 	eep_data = (u16 *)eep;
 
-	for (addr = 0; addr < SIZE_EEPROM_AR9287; addr++) {
-		if (!ath9k_hw_nvram_read(ah, addr + eep_start_loc, eep_data))
-			return false;
+	क्रम (addr = 0; addr < SIZE_EEPROM_AR9287; addr++) अणु
+		अगर (!ath9k_hw_nvram_पढ़ो(ah, addr + eep_start_loc, eep_data))
+			वापस false;
 		eep_data++;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool __ath9k_hw_usb_ar9287_fill_eeprom(struct ath_hw *ah)
-{
+अटल bool __ath9k_hw_usb_ar9287_fill_eeprom(काष्ठा ath_hw *ah)
+अणु
 	u16 *eep_data = (u16 *)&ah->eeprom.map9287;
 
 	ath9k_hw_usb_gen_fill_eeprom(ah, eep_data,
 				     AR9287_HTC_EEP_START_LOC,
 				     SIZE_EEPROM_AR9287);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool ath9k_hw_ar9287_fill_eeprom(struct ath_hw *ah)
-{
-	struct ath_common *common = ath9k_hw_common(ah);
+अटल bool ath9k_hw_ar9287_fill_eeprom(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
 
-	if (!ath9k_hw_use_flash(ah)) {
+	अगर (!ath9k_hw_use_flash(ah)) अणु
 		ath_dbg(common, EEPROM, "Reading from EEPROM, not flash\n");
-	}
+	पूर्ण
 
-	if (common->bus_ops->ath_bus_type == ATH_USB)
-		return __ath9k_hw_usb_ar9287_fill_eeprom(ah);
-	else
-		return __ath9k_hw_ar9287_fill_eeprom(ah);
-}
+	अगर (common->bus_ops->ath_bus_type == ATH_USB)
+		वापस __ath9k_hw_usb_ar9287_fill_eeprom(ah);
+	अन्यथा
+		वापस __ath9k_hw_ar9287_fill_eeprom(ah);
+पूर्ण
 
-#ifdef CONFIG_ATH9K_COMMON_DEBUG
-static u32 ar9287_dump_modal_eeprom(char *buf, u32 len, u32 size,
-				    struct modal_eep_ar9287_header *modal_hdr)
-{
+#अगर_घोषित CONFIG_ATH9K_COMMON_DEBUG
+अटल u32 ar9287_dump_modal_eeprom(अक्षर *buf, u32 len, u32 size,
+				    काष्ठा modal_eep_ar9287_header *modal_hdr)
+अणु
 	PR_EEP("Chain0 Ant. Control", le16_to_cpu(modal_hdr->antCtrlChain[0]));
 	PR_EEP("Chain1 Ant. Control", le16_to_cpu(modal_hdr->antCtrlChain[1]));
 	PR_EEP("Ant. Common Control", le32_to_cpu(modal_hdr->antCtrlCommon));
 	PR_EEP("Chain0 Ant. Gain", modal_hdr->antennaGainCh[0]);
 	PR_EEP("Chain1 Ant. Gain", modal_hdr->antennaGainCh[1]);
-	PR_EEP("Switch Settle", modal_hdr->switchSettling);
+	PR_EEP("Switch Settle", modal_hdr->चयनSettling);
 	PR_EEP("Chain0 TxRxAtten", modal_hdr->txRxAttenCh[0]);
 	PR_EEP("Chain1 TxRxAtten", modal_hdr->txRxAttenCh[1]);
 	PR_EEP("Chain0 RxTxMargin", modal_hdr->rxTxMarginCh[0]);
@@ -120,23 +121,23 @@ static u32 ar9287_dump_modal_eeprom(char *buf, u32 len, u32 size,
 	PR_EEP("QAM OutputBias", modal_hdr->ob_qam);
 	PR_EEP("PAL_OFF OutputBias", modal_hdr->ob_pal_off);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static u32 ath9k_hw_ar9287_dump_eeprom(struct ath_hw *ah, bool dump_base_hdr,
+अटल u32 ath9k_hw_ar9287_dump_eeprom(काष्ठा ath_hw *ah, bool dump_base_hdr,
 				       u8 *buf, u32 len, u32 size)
-{
-	struct ar9287_eeprom *eep = &ah->eeprom.map9287;
-	struct base_eep_ar9287_header *pBase = &eep->baseEepHeader;
+अणु
+	काष्ठा ar9287_eeprom *eep = &ah->eeprom.map9287;
+	काष्ठा base_eep_ar9287_header *pBase = &eep->baseEepHeader;
 	u32 binBuildNumber = le32_to_cpu(pBase->binBuildNumber);
 
-	if (!dump_base_hdr) {
-		len += scnprintf(buf + len, size - len,
+	अगर (!dump_base_hdr) अणु
+		len += scnम_लिखो(buf + len, size - len,
 				 "%20s :\n", "2GHz modal Header");
 		len = ar9287_dump_modal_eeprom(buf, len, size,
 						&eep->modalHeader);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	PR_EEP("Major Version", ath9k_hw_ar9287_get_eeprom_ver(ah));
 	PR_EEP("Minor Version", ath9k_hw_ar9287_get_eeprom_rev(ah));
@@ -161,47 +162,47 @@ static u32 ath9k_hw_ar9287_dump_eeprom(struct ath_hw *ah, bool dump_base_hdr,
 	PR_EEP("Cal Bin Minor Ver", (binBuildNumber >> 16) & 0xFF);
 	PR_EEP("Cal Bin Build", (binBuildNumber >> 8) & 0xFF);
 	PR_EEP("Power Table Offset", pBase->pwrTableOffset);
-	PR_EEP("OpenLoop Power Ctrl", pBase->openLoopPwrCntl);
+	PR_EEP("OpenLoop Power Ctrl", pBase->खोलोLoopPwrCntl);
 
-	len += scnprintf(buf + len, size - len, "%20s : %pM\n", "MacAddress",
+	len += scnम_लिखो(buf + len, size - len, "%20s : %pM\n", "MacAddress",
 			 pBase->macAddr);
 
 out:
-	if (len > size)
+	अगर (len > size)
 		len = size;
 
-	return len;
-}
-#else
-static u32 ath9k_hw_ar9287_dump_eeprom(struct ath_hw *ah, bool dump_base_hdr,
+	वापस len;
+पूर्ण
+#अन्यथा
+अटल u32 ath9k_hw_ar9287_dump_eeprom(काष्ठा ath_hw *ah, bool dump_base_hdr,
 				       u8 *buf, u32 len, u32 size)
-{
-	return 0;
-}
-#endif
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 
-static int ath9k_hw_ar9287_check_eeprom(struct ath_hw *ah)
-{
+अटल पूर्णांक ath9k_hw_ar9287_check_eeprom(काष्ठा ath_hw *ah)
+अणु
 	u32 el;
-	int i, err;
+	पूर्णांक i, err;
 	bool need_swap;
-	struct ar9287_eeprom *eep = &ah->eeprom.map9287;
+	काष्ठा ar9287_eeprom *eep = &ah->eeprom.map9287;
 
 	err = ath9k_hw_nvram_swap_data(ah, &need_swap, SIZE_EEPROM_AR9287);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (need_swap)
-		el = swab16((__force u16)eep->baseEepHeader.length);
-	else
+	अगर (need_swap)
+		el = swab16((__क्रमce u16)eep->baseEepHeader.length);
+	अन्यथा
 		el = le16_to_cpu(eep->baseEepHeader.length);
 
-	el = min(el / sizeof(u16), SIZE_EEPROM_AR9287);
-	if (!ath9k_hw_nvram_validate_checksum(ah, el))
-		return -EINVAL;
+	el = min(el / माप(u16), SIZE_EEPROM_AR9287);
+	अगर (!ath9k_hw_nvram_validate_checksum(ah, el))
+		वापस -EINVAL;
 
-	if (need_swap) {
+	अगर (need_swap) अणु
 		EEPROM_FIELD_SWAB16(eep->baseEepHeader.length);
 		EEPROM_FIELD_SWAB16(eep->baseEepHeader.checksum);
 		EEPROM_FIELD_SWAB16(eep->baseEepHeader.version);
@@ -212,190 +213,190 @@ static int ath9k_hw_ar9287_check_eeprom(struct ath_hw *ah)
 		EEPROM_FIELD_SWAB16(eep->baseEepHeader.deviceCap);
 		EEPROM_FIELD_SWAB32(eep->modalHeader.antCtrlCommon);
 
-		for (i = 0; i < AR9287_MAX_CHAINS; i++)
+		क्रम (i = 0; i < AR9287_MAX_CHAINS; i++)
 			EEPROM_FIELD_SWAB32(eep->modalHeader.antCtrlChain[i]);
 
-		for (i = 0; i < AR_EEPROM_MODAL_SPURS; i++)
+		क्रम (i = 0; i < AR_EEPROM_MODAL_SPURS; i++)
 			EEPROM_FIELD_SWAB16(
 				eep->modalHeader.spurChans[i].spurChan);
-	}
+	पूर्ण
 
-	if (!ath9k_hw_nvram_check_version(ah, AR9287_EEP_VER,
+	अगर (!ath9k_hw_nvram_check_version(ah, AR9287_EEP_VER,
 	    AR5416_EEP_NO_BACK_VER))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#undef SIZE_EEPROM_AR9287
+#अघोषित SIZE_EEPROM_AR9287
 
-static u32 ath9k_hw_ar9287_get_eeprom(struct ath_hw *ah,
-				      enum eeprom_param param)
-{
-	struct ar9287_eeprom *eep = &ah->eeprom.map9287;
-	struct modal_eep_ar9287_header *pModal = &eep->modalHeader;
-	struct base_eep_ar9287_header *pBase = &eep->baseEepHeader;
+अटल u32 ath9k_hw_ar9287_get_eeprom(काष्ठा ath_hw *ah,
+				      क्रमागत eeprom_param param)
+अणु
+	काष्ठा ar9287_eeprom *eep = &ah->eeprom.map9287;
+	काष्ठा modal_eep_ar9287_header *pModal = &eep->modalHeader;
+	काष्ठा base_eep_ar9287_header *pBase = &eep->baseEepHeader;
 	u16 ver_minor = ath9k_hw_ar9287_get_eeprom_rev(ah);
 
-	switch (param) {
-	case EEP_NFTHRESH_2:
-		return pModal->noiseFloorThreshCh[0];
-	case EEP_MAC_LSW:
-		return get_unaligned_be16(pBase->macAddr);
-	case EEP_MAC_MID:
-		return get_unaligned_be16(pBase->macAddr + 2);
-	case EEP_MAC_MSW:
-		return get_unaligned_be16(pBase->macAddr + 4);
-	case EEP_REG_0:
-		return le16_to_cpu(pBase->regDmn[0]);
-	case EEP_OP_CAP:
-		return le16_to_cpu(pBase->deviceCap);
-	case EEP_OP_MODE:
-		return pBase->opCapFlags;
-	case EEP_RF_SILENT:
-		return le16_to_cpu(pBase->rfSilent);
-	case EEP_TX_MASK:
-		return pBase->txMask;
-	case EEP_RX_MASK:
-		return pBase->rxMask;
-	case EEP_DEV_TYPE:
-		return pBase->deviceType;
-	case EEP_OL_PWRCTRL:
-		return pBase->openLoopPwrCntl;
-	case EEP_TEMPSENSE_SLOPE:
-		if (ver_minor >= AR9287_EEP_MINOR_VER_2)
-			return pBase->tempSensSlope;
-		else
-			return 0;
-	case EEP_TEMPSENSE_SLOPE_PAL_ON:
-		if (ver_minor >= AR9287_EEP_MINOR_VER_3)
-			return pBase->tempSensSlopePalOn;
-		else
-			return 0;
-	case EEP_ANTENNA_GAIN_2G:
-		return max_t(u8, pModal->antennaGainCh[0],
+	चयन (param) अणु
+	हाल EEP_NFTHRESH_2:
+		वापस pModal->noiseFloorThreshCh[0];
+	हाल EEP_MAC_LSW:
+		वापस get_unaligned_be16(pBase->macAddr);
+	हाल EEP_MAC_MID:
+		वापस get_unaligned_be16(pBase->macAddr + 2);
+	हाल EEP_MAC_MSW:
+		वापस get_unaligned_be16(pBase->macAddr + 4);
+	हाल EEP_REG_0:
+		वापस le16_to_cpu(pBase->regDmn[0]);
+	हाल EEP_OP_CAP:
+		वापस le16_to_cpu(pBase->deviceCap);
+	हाल EEP_OP_MODE:
+		वापस pBase->opCapFlags;
+	हाल EEP_RF_SILENT:
+		वापस le16_to_cpu(pBase->rfSilent);
+	हाल EEP_TX_MASK:
+		वापस pBase->txMask;
+	हाल EEP_RX_MASK:
+		वापस pBase->rxMask;
+	हाल EEP_DEV_TYPE:
+		वापस pBase->deviceType;
+	हाल EEP_OL_PWRCTRL:
+		वापस pBase->खोलोLoopPwrCntl;
+	हाल EEP_TEMPSENSE_SLOPE:
+		अगर (ver_minor >= AR9287_EEP_MINOR_VER_2)
+			वापस pBase->tempSensSlope;
+		अन्यथा
+			वापस 0;
+	हाल EEP_TEMPSENSE_SLOPE_PAL_ON:
+		अगर (ver_minor >= AR9287_EEP_MINOR_VER_3)
+			वापस pBase->tempSensSlopePalOn;
+		अन्यथा
+			वापस 0;
+	हाल EEP_ANTENNA_GAIN_2G:
+		वापस max_t(u8, pModal->antennaGainCh[0],
 				 pModal->antennaGainCh[1]);
-	default:
-		return 0;
-	}
-}
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void ar9287_eeprom_get_tx_gain_index(struct ath_hw *ah,
-			    struct ath9k_channel *chan,
-			    struct cal_data_op_loop_ar9287 *pRawDatasetOpLoop,
-			    u8 *pCalChans,  u16 availPiers, int8_t *pPwr)
-{
+अटल व्योम ar9287_eeprom_get_tx_gain_index(काष्ठा ath_hw *ah,
+			    काष्ठा ath9k_channel *chan,
+			    काष्ठा cal_data_op_loop_ar9287 *pRawDatasetOpLoop,
+			    u8 *pCalChans,  u16 availPiers, पूर्णांक8_t *pPwr)
+अणु
 	u16 idxL = 0, idxR = 0, numPiers;
 	bool match;
-	struct chan_centers centers;
+	काष्ठा chan_centers centers;
 
 	ath9k_hw_get_channel_centers(ah, chan, &centers);
 
-	for (numPiers = 0; numPiers < availPiers; numPiers++) {
-		if (pCalChans[numPiers] == AR5416_BCHAN_UNUSED)
-			break;
-	}
+	क्रम (numPiers = 0; numPiers < availPiers; numPiers++) अणु
+		अगर (pCalChans[numPiers] == AR5416_BCHAN_UNUSED)
+			अवरोध;
+	पूर्ण
 
 	match = ath9k_hw_get_lower_upper_index(
 		(u8)FREQ2FBIN(centers.synth_center, IS_CHAN_2GHZ(chan)),
 		pCalChans, numPiers, &idxL, &idxR);
 
-	if (match) {
-		*pPwr = (int8_t) pRawDatasetOpLoop[idxL].pwrPdg[0][0];
-	} else {
-		*pPwr = ((int8_t) pRawDatasetOpLoop[idxL].pwrPdg[0][0] +
-			 (int8_t) pRawDatasetOpLoop[idxR].pwrPdg[0][0])/2;
-	}
+	अगर (match) अणु
+		*pPwr = (पूर्णांक8_t) pRawDatasetOpLoop[idxL].pwrPdg[0][0];
+	पूर्ण अन्यथा अणु
+		*pPwr = ((पूर्णांक8_t) pRawDatasetOpLoop[idxL].pwrPdg[0][0] +
+			 (पूर्णांक8_t) pRawDatasetOpLoop[idxR].pwrPdg[0][0])/2;
+	पूर्ण
 
-}
+पूर्ण
 
-static void ar9287_eeprom_olpc_set_pdadcs(struct ath_hw *ah,
-					  int32_t txPower, u16 chain)
-{
-	u32 tmpVal;
+अटल व्योम ar9287_eeprom_olpc_set_pdadcs(काष्ठा ath_hw *ah,
+					  पूर्णांक32_t txPower, u16 chain)
+अणु
+	u32 पंचांगpVal;
 	u32 a;
 
-	/* Enable OLPC for chain 0 */
+	/* Enable OLPC क्रम chain 0 */
 
-	tmpVal = REG_READ(ah, 0xa270);
-	tmpVal = tmpVal & 0xFCFFFFFF;
-	tmpVal = tmpVal | (0x3 << 24);
-	REG_WRITE(ah, 0xa270, tmpVal);
+	पंचांगpVal = REG_READ(ah, 0xa270);
+	पंचांगpVal = पंचांगpVal & 0xFCFFFFFF;
+	पंचांगpVal = पंचांगpVal | (0x3 << 24);
+	REG_WRITE(ah, 0xa270, पंचांगpVal);
 
-	/* Enable OLPC for chain 1 */
+	/* Enable OLPC क्रम chain 1 */
 
-	tmpVal = REG_READ(ah, 0xb270);
-	tmpVal = tmpVal & 0xFCFFFFFF;
-	tmpVal = tmpVal | (0x3 << 24);
-	REG_WRITE(ah, 0xb270, tmpVal);
+	पंचांगpVal = REG_READ(ah, 0xb270);
+	पंचांगpVal = पंचांगpVal & 0xFCFFFFFF;
+	पंचांगpVal = पंचांगpVal | (0x3 << 24);
+	REG_WRITE(ah, 0xb270, पंचांगpVal);
 
-	/* Write the OLPC ref power for chain 0 */
+	/* Write the OLPC ref घातer क्रम chain 0 */
 
-	if (chain == 0) {
-		tmpVal = REG_READ(ah, 0xa398);
-		tmpVal = tmpVal & 0xff00ffff;
+	अगर (chain == 0) अणु
+		पंचांगpVal = REG_READ(ah, 0xa398);
+		पंचांगpVal = पंचांगpVal & 0xff00ffff;
 		a = (txPower)&0xff;
-		tmpVal = tmpVal | (a << 16);
-		REG_WRITE(ah, 0xa398, tmpVal);
-	}
+		पंचांगpVal = पंचांगpVal | (a << 16);
+		REG_WRITE(ah, 0xa398, पंचांगpVal);
+	पूर्ण
 
-	/* Write the OLPC ref power for chain 1 */
+	/* Write the OLPC ref घातer क्रम chain 1 */
 
-	if (chain == 1) {
-		tmpVal = REG_READ(ah, 0xb398);
-		tmpVal = tmpVal & 0xff00ffff;
+	अगर (chain == 1) अणु
+		पंचांगpVal = REG_READ(ah, 0xb398);
+		पंचांगpVal = पंचांगpVal & 0xff00ffff;
 		a = (txPower)&0xff;
-		tmpVal = tmpVal | (a << 16);
-		REG_WRITE(ah, 0xb398, tmpVal);
-	}
-}
+		पंचांगpVal = पंचांगpVal | (a << 16);
+		REG_WRITE(ah, 0xb398, पंचांगpVal);
+	पूर्ण
+पूर्ण
 
-static void ath9k_hw_set_ar9287_power_cal_table(struct ath_hw *ah,
-						struct ath9k_channel *chan)
-{
-	struct cal_data_per_freq_ar9287 *pRawDataset;
-	struct cal_data_op_loop_ar9287 *pRawDatasetOpenLoop;
-	u8 *pCalBChans = NULL;
+अटल व्योम ath9k_hw_set_ar9287_घातer_cal_table(काष्ठा ath_hw *ah,
+						काष्ठा ath9k_channel *chan)
+अणु
+	काष्ठा cal_data_per_freq_ar9287 *pRawDataset;
+	काष्ठा cal_data_op_loop_ar9287 *pRawDatasetOpenLoop;
+	u8 *pCalBChans = शून्य;
 	u16 pdGainOverlap_t2;
 	u8 pdadcValues[AR5416_NUM_PDADC_VALUES];
 	u16 gainBoundaries[AR5416_PD_GAINS_IN_MASK];
 	u16 numPiers = 0, i, j;
 	u16 numXpdGain, xpdMask;
-	u16 xpdGainValues[AR5416_NUM_PD_GAINS] = {0, 0, 0, 0};
+	u16 xpdGainValues[AR5416_NUM_PD_GAINS] = अणु0, 0, 0, 0पूर्ण;
 	u32 reg32, regOffset, regChainOffset, regval;
-	int16_t diff = 0;
-	struct ar9287_eeprom *pEepData = &ah->eeprom.map9287;
+	पूर्णांक16_t dअगरf = 0;
+	काष्ठा ar9287_eeprom *pEepData = &ah->eeprom.map9287;
 
 	xpdMask = pEepData->modalHeader.xpdGain;
 
-	if (ath9k_hw_ar9287_get_eeprom_rev(ah) >= AR9287_EEP_MINOR_VER_2)
+	अगर (ath9k_hw_ar9287_get_eeprom_rev(ah) >= AR9287_EEP_MINOR_VER_2)
 		pdGainOverlap_t2 = pEepData->modalHeader.pdGainOverlap;
-	else
+	अन्यथा
 		pdGainOverlap_t2 = (u16)(MS(REG_READ(ah, AR_PHY_TPCRG5),
 					    AR_PHY_TPCRG5_PD_GAIN_OVERLAP));
 
-	if (IS_CHAN_2GHZ(chan)) {
+	अगर (IS_CHAN_2GHZ(chan)) अणु
 		pCalBChans = pEepData->calFreqPier2G;
 		numPiers = AR9287_NUM_2G_CAL_PIERS;
-		if (ath9k_hw_ar9287_get_eeprom(ah, EEP_OL_PWRCTRL)) {
+		अगर (ath9k_hw_ar9287_get_eeprom(ah, EEP_OL_PWRCTRL)) अणु
 			pRawDatasetOpenLoop =
-			(struct cal_data_op_loop_ar9287 *)pEepData->calPierData2G[0];
+			(काष्ठा cal_data_op_loop_ar9287 *)pEepData->calPierData2G[0];
 			ah->initPDADC = pRawDatasetOpenLoop->vpdPdg[0][0];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	numXpdGain = 0;
 
 	/* Calculate the value of xpdgains from the xpdGain Mask */
-	for (i = 1; i <= AR5416_PD_GAINS_IN_MASK; i++) {
-		if ((xpdMask >> (AR5416_PD_GAINS_IN_MASK - i)) & 1) {
-			if (numXpdGain >= AR5416_NUM_PD_GAINS)
-				break;
+	क्रम (i = 1; i <= AR5416_PD_GAINS_IN_MASK; i++) अणु
+		अगर ((xpdMask >> (AR5416_PD_GAINS_IN_MASK - i)) & 1) अणु
+			अगर (numXpdGain >= AR5416_NUM_PD_GAINS)
+				अवरोध;
 			xpdGainValues[numXpdGain] =
 				(u16)(AR5416_PD_GAINS_IN_MASK-i);
 			numXpdGain++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	REG_RMW_FIELD(ah, AR_PHY_TPCRG1, AR_PHY_TPCRG1_NUM_PD_GAIN,
 		      (numXpdGain - 1) & 0x3);
@@ -406,23 +407,23 @@ static void ath9k_hw_set_ar9287_power_cal_table(struct ath_hw *ah,
 	REG_RMW_FIELD(ah, AR_PHY_TPCRG1, AR_PHY_TPCRG1_PD_GAIN_3,
 		      xpdGainValues[2]);
 
-	for (i = 0; i < AR9287_MAX_CHAINS; i++)	{
+	क्रम (i = 0; i < AR9287_MAX_CHAINS; i++)	अणु
 		regChainOffset = i * 0x1000;
 
-		if (pEepData->baseEepHeader.txMask & (1 << i)) {
+		अगर (pEepData->baseEepHeader.txMask & (1 << i)) अणु
 			pRawDatasetOpenLoop =
-			(struct cal_data_op_loop_ar9287 *)pEepData->calPierData2G[i];
+			(काष्ठा cal_data_op_loop_ar9287 *)pEepData->calPierData2G[i];
 
-			if (ath9k_hw_ar9287_get_eeprom(ah, EEP_OL_PWRCTRL)) {
-				int8_t txPower;
+			अगर (ath9k_hw_ar9287_get_eeprom(ah, EEP_OL_PWRCTRL)) अणु
+				पूर्णांक8_t txPower;
 				ar9287_eeprom_get_tx_gain_index(ah, chan,
 							pRawDatasetOpenLoop,
 							pCalBChans, numPiers,
 							&txPower);
 				ar9287_eeprom_olpc_set_pdadcs(ah, txPower, i);
-			} else {
+			पूर्ण अन्यथा अणु
 				pRawDataset =
-					(struct cal_data_per_freq_ar9287 *)
+					(काष्ठा cal_data_per_freq_ar9287 *)
 					pEepData->calPierData2G[i];
 
 				ath9k_hw_get_gain_boundaries_pdadcs(ah, chan,
@@ -432,13 +433,13 @@ static void ath9k_hw_set_ar9287_power_cal_table(struct ath_hw *ah,
 							   gainBoundaries,
 							   pdadcValues,
 							   numXpdGain);
-			}
+			पूर्ण
 
 			ENABLE_REGWRITE_BUFFER(ah);
 
-			if (i == 0) {
-				if (!ath9k_hw_ar9287_get_eeprom(ah,
-							EEP_OL_PWRCTRL)) {
+			अगर (i == 0) अणु
+				अगर (!ath9k_hw_ar9287_get_eeprom(ah,
+							EEP_OL_PWRCTRL)) अणु
 
 					regval = SM(pdGainOverlap_t2,
 						    AR_PHY_TPCRG5_PD_GAIN_OVERLAP)
@@ -454,213 +455,213 @@ static void ath9k_hw_set_ar9287_power_cal_table(struct ath_hw *ah,
 					REG_WRITE(ah,
 						  AR_PHY_TPCRG5 + regChainOffset,
 						  regval);
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if ((int32_t)AR9287_PWR_TABLE_OFFSET_DB !=
-			    pEepData->baseEepHeader.pwrTableOffset) {
-				diff = (u16)(pEepData->baseEepHeader.pwrTableOffset -
-					     (int32_t)AR9287_PWR_TABLE_OFFSET_DB);
-				diff *= 2;
+			अगर ((पूर्णांक32_t)AR9287_PWR_TABLE_OFFSET_DB !=
+			    pEepData->baseEepHeader.pwrTableOffset) अणु
+				dअगरf = (u16)(pEepData->baseEepHeader.pwrTableOffset -
+					     (पूर्णांक32_t)AR9287_PWR_TABLE_OFFSET_DB);
+				dअगरf *= 2;
 
-				for (j = 0; j < ((u16)AR5416_NUM_PDADC_VALUES-diff); j++)
-					pdadcValues[j] = pdadcValues[j+diff];
+				क्रम (j = 0; j < ((u16)AR5416_NUM_PDADC_VALUES-dअगरf); j++)
+					pdadcValues[j] = pdadcValues[j+dअगरf];
 
-				for (j = (u16)(AR5416_NUM_PDADC_VALUES-diff);
+				क्रम (j = (u16)(AR5416_NUM_PDADC_VALUES-dअगरf);
 				     j < AR5416_NUM_PDADC_VALUES; j++)
 					pdadcValues[j] =
-					  pdadcValues[AR5416_NUM_PDADC_VALUES-diff];
-			}
+					  pdadcValues[AR5416_NUM_PDADC_VALUES-dअगरf];
+			पूर्ण
 
-			if (!ath9k_hw_ar9287_get_eeprom(ah, EEP_OL_PWRCTRL)) {
+			अगर (!ath9k_hw_ar9287_get_eeprom(ah, EEP_OL_PWRCTRL)) अणु
 				regOffset = AR_PHY_BASE +
 					(672 << 2) + regChainOffset;
 
-				for (j = 0; j < 32; j++) {
+				क्रम (j = 0; j < 32; j++) अणु
 					reg32 = get_unaligned_le32(&pdadcValues[4 * j]);
 
 					REG_WRITE(ah, regOffset, reg32);
 					regOffset += 4;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			REGWRITE_BUFFER_FLUSH(ah);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ath9k_hw_set_ar9287_power_per_rate_table(struct ath_hw *ah,
-						     struct ath9k_channel *chan,
-						     int16_t *ratesArray,
+अटल व्योम ath9k_hw_set_ar9287_घातer_per_rate_table(काष्ठा ath_hw *ah,
+						     काष्ठा ath9k_channel *chan,
+						     पूर्णांक16_t *ratesArray,
 						     u16 cfgCtl,
 						     u16 antenna_reduction,
-						     u16 powerLimit)
-{
-#define CMP_CTL \
+						     u16 घातerLimit)
+अणु
+#घोषणा CMP_CTL \
 	(((cfgCtl & ~CTL_MODE_M) | (pCtlMode[ctlMode] & CTL_MODE_M)) == \
 	 pEepData->ctlIndex[i])
 
-#define CMP_NO_CTL \
+#घोषणा CMP_NO_CTL \
 	(((cfgCtl & ~CTL_MODE_M) | (pCtlMode[ctlMode] & CTL_MODE_M)) == \
 	 ((pEepData->ctlIndex[i] & CTL_MODE_M) | SD_NO_CTL))
 
 	u16 twiceMaxEdgePower;
-	int i;
-	struct cal_ctl_data_ar9287 *rep;
-	struct cal_target_power_leg targetPowerOfdm = {0, {0, 0, 0, 0} },
-				    targetPowerCck = {0, {0, 0, 0, 0} };
-	struct cal_target_power_leg targetPowerOfdmExt = {0, {0, 0, 0, 0} },
-				    targetPowerCckExt = {0, {0, 0, 0, 0} };
-	struct cal_target_power_ht targetPowerHt20,
-				    targetPowerHt40 = {0, {0, 0, 0, 0} };
+	पूर्णांक i;
+	काष्ठा cal_ctl_data_ar9287 *rep;
+	काष्ठा cal_target_घातer_leg targetPowerOfdm = अणु0, अणु0, 0, 0, 0पूर्ण पूर्ण,
+				    targetPowerCck = अणु0, अणु0, 0, 0, 0पूर्ण पूर्ण;
+	काष्ठा cal_target_घातer_leg targetPowerOfdmExt = अणु0, अणु0, 0, 0, 0पूर्ण पूर्ण,
+				    targetPowerCckExt = अणु0, अणु0, 0, 0, 0पूर्ण पूर्ण;
+	काष्ठा cal_target_घातer_ht targetPowerHt20,
+				    targetPowerHt40 = अणु0, अणु0, 0, 0, 0पूर्ण पूर्ण;
 	u16 scaledPower = 0, minCtlPower;
-	static const u16 ctlModesFor11g[] = {
+	अटल स्थिर u16 ctlModesFor11g[] = अणु
 		CTL_11B, CTL_11G, CTL_2GHT20,
 		CTL_11B_EXT, CTL_11G_EXT, CTL_2GHT40
-	};
+	पूर्ण;
 	u16 numCtlModes = 0;
-	const u16 *pCtlMode = NULL;
+	स्थिर u16 *pCtlMode = शून्य;
 	u16 ctlMode, freq;
-	struct chan_centers centers;
-	int tx_chainmask;
+	काष्ठा chan_centers centers;
+	पूर्णांक tx_chainmask;
 	u16 twiceMinEdgePower;
-	struct ar9287_eeprom *pEepData = &ah->eeprom.map9287;
+	काष्ठा ar9287_eeprom *pEepData = &ah->eeprom.map9287;
 	tx_chainmask = ah->txchainmask;
 
 	ath9k_hw_get_channel_centers(ah, chan, &centers);
-	scaledPower = ath9k_hw_get_scaled_power(ah, powerLimit,
+	scaledPower = ath9k_hw_get_scaled_घातer(ah, घातerLimit,
 						antenna_reduction);
 
 	/*
-	 * Get TX power from EEPROM.
+	 * Get TX घातer from EEPROM.
 	 */
-	if (IS_CHAN_2GHZ(chan))	{
+	अगर (IS_CHAN_2GHZ(chan))	अणु
 		/* CTL_11B, CTL_11G, CTL_2GHT20 */
 		numCtlModes =
 			ARRAY_SIZE(ctlModesFor11g) - SUB_NUM_CTL_MODES_AT_2G_40;
 
 		pCtlMode = ctlModesFor11g;
 
-		ath9k_hw_get_legacy_target_powers(ah, chan,
+		ath9k_hw_get_legacy_target_घातers(ah, chan,
 						  pEepData->calTargetPowerCck,
 						  AR9287_NUM_2G_CCK_TARGET_POWERS,
 						  &targetPowerCck, 4, false);
-		ath9k_hw_get_legacy_target_powers(ah, chan,
+		ath9k_hw_get_legacy_target_घातers(ah, chan,
 						  pEepData->calTargetPower2G,
 						  AR9287_NUM_2G_20_TARGET_POWERS,
 						  &targetPowerOfdm, 4, false);
-		ath9k_hw_get_target_powers(ah, chan,
+		ath9k_hw_get_target_घातers(ah, chan,
 					   pEepData->calTargetPower2GHT20,
 					   AR9287_NUM_2G_20_TARGET_POWERS,
 					   &targetPowerHt20, 8, false);
 
-		if (IS_CHAN_HT40(chan))	{
+		अगर (IS_CHAN_HT40(chan))	अणु
 			/* All 2G CTLs */
 			numCtlModes = ARRAY_SIZE(ctlModesFor11g);
-			ath9k_hw_get_target_powers(ah, chan,
+			ath9k_hw_get_target_घातers(ah, chan,
 						   pEepData->calTargetPower2GHT40,
 						   AR9287_NUM_2G_40_TARGET_POWERS,
 						   &targetPowerHt40, 8, true);
-			ath9k_hw_get_legacy_target_powers(ah, chan,
+			ath9k_hw_get_legacy_target_घातers(ah, chan,
 						  pEepData->calTargetPowerCck,
 						  AR9287_NUM_2G_CCK_TARGET_POWERS,
 						  &targetPowerCckExt, 4, true);
-			ath9k_hw_get_legacy_target_powers(ah, chan,
+			ath9k_hw_get_legacy_target_घातers(ah, chan,
 						  pEepData->calTargetPower2G,
 						  AR9287_NUM_2G_20_TARGET_POWERS,
 						  &targetPowerOfdmExt, 4, true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (ctlMode = 0; ctlMode < numCtlModes; ctlMode++) {
+	क्रम (ctlMode = 0; ctlMode < numCtlModes; ctlMode++) अणु
 		bool isHt40CtlMode =
 			(pCtlMode[ctlMode] == CTL_2GHT40) ? true : false;
 
-		if (isHt40CtlMode)
+		अगर (isHt40CtlMode)
 			freq = centers.synth_center;
-		else if (pCtlMode[ctlMode] & EXT_ADDITIVE)
+		अन्यथा अगर (pCtlMode[ctlMode] & EXT_ADDITIVE)
 			freq = centers.ext_center;
-		else
+		अन्यथा
 			freq = centers.ctl_center;
 
 		twiceMaxEdgePower = MAX_RATE_POWER;
 		/* Walk through the CTL indices stored in EEPROM */
-		for (i = 0; (i < AR9287_NUM_CTLS) && pEepData->ctlIndex[i]; i++) {
-			struct cal_ctl_edges *pRdEdgesPower;
+		क्रम (i = 0; (i < AR9287_NUM_CTLS) && pEepData->ctlIndex[i]; i++) अणु
+			काष्ठा cal_ctl_edges *pRdEdgesPower;
 
 			/*
 			 * Compare test group from regulatory channel list
 			 * with test mode from pCtlMode list
 			 */
-			if (CMP_CTL || CMP_NO_CTL) {
+			अगर (CMP_CTL || CMP_NO_CTL) अणु
 				rep = &(pEepData->ctlData[i]);
 				pRdEdgesPower =
 				rep->ctlEdges[ar5416_get_ntxchains(tx_chainmask) - 1];
 
-				twiceMinEdgePower = ath9k_hw_get_max_edge_power(freq,
+				twiceMinEdgePower = ath9k_hw_get_max_edge_घातer(freq,
 								pRdEdgesPower,
 								IS_CHAN_2GHZ(chan),
 								AR5416_NUM_BAND_EDGES);
 
-				if ((cfgCtl & ~CTL_MODE_M) == SD_NO_CTL) {
+				अगर ((cfgCtl & ~CTL_MODE_M) == SD_NO_CTL) अणु
 					twiceMaxEdgePower = min(twiceMaxEdgePower,
 								twiceMinEdgePower);
-				} else {
+				पूर्ण अन्यथा अणु
 					twiceMaxEdgePower = twiceMinEdgePower;
-					break;
-				}
-			}
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		minCtlPower = (u8)min(twiceMaxEdgePower, scaledPower);
 
-		/* Apply ctl mode to correct target power set */
-		switch (pCtlMode[ctlMode]) {
-		case CTL_11B:
-			for (i = 0; i < ARRAY_SIZE(targetPowerCck.tPow2x); i++) {
+		/* Apply ctl mode to correct target घातer set */
+		चयन (pCtlMode[ctlMode]) अणु
+		हाल CTL_11B:
+			क्रम (i = 0; i < ARRAY_SIZE(targetPowerCck.tPow2x); i++) अणु
 				targetPowerCck.tPow2x[i] =
 					(u8)min((u16)targetPowerCck.tPow2x[i],
 						minCtlPower);
-			}
-			break;
-		case CTL_11A:
-		case CTL_11G:
-			for (i = 0; i < ARRAY_SIZE(targetPowerOfdm.tPow2x); i++) {
+			पूर्ण
+			अवरोध;
+		हाल CTL_11A:
+		हाल CTL_11G:
+			क्रम (i = 0; i < ARRAY_SIZE(targetPowerOfdm.tPow2x); i++) अणु
 				targetPowerOfdm.tPow2x[i] =
 					(u8)min((u16)targetPowerOfdm.tPow2x[i],
 						minCtlPower);
-			}
-			break;
-		case CTL_5GHT20:
-		case CTL_2GHT20:
-			for (i = 0; i < ARRAY_SIZE(targetPowerHt20.tPow2x); i++) {
+			पूर्ण
+			अवरोध;
+		हाल CTL_5GHT20:
+		हाल CTL_2GHT20:
+			क्रम (i = 0; i < ARRAY_SIZE(targetPowerHt20.tPow2x); i++) अणु
 				targetPowerHt20.tPow2x[i] =
 					(u8)min((u16)targetPowerHt20.tPow2x[i],
 						minCtlPower);
-			}
-			break;
-		case CTL_11B_EXT:
+			पूर्ण
+			अवरोध;
+		हाल CTL_11B_EXT:
 			targetPowerCckExt.tPow2x[0] =
 				(u8)min((u16)targetPowerCckExt.tPow2x[0],
 					minCtlPower);
-			break;
-		case CTL_11A_EXT:
-		case CTL_11G_EXT:
+			अवरोध;
+		हाल CTL_11A_EXT:
+		हाल CTL_11G_EXT:
 			targetPowerOfdmExt.tPow2x[0] =
 				(u8)min((u16)targetPowerOfdmExt.tPow2x[0],
 					minCtlPower);
-			break;
-		case CTL_5GHT40:
-		case CTL_2GHT40:
-			for (i = 0; i < ARRAY_SIZE(targetPowerHt40.tPow2x); i++) {
+			अवरोध;
+		हाल CTL_5GHT40:
+		हाल CTL_2GHT40:
+			क्रम (i = 0; i < ARRAY_SIZE(targetPowerHt40.tPow2x); i++) अणु
 				targetPowerHt40.tPow2x[i] =
 					(u8)min((u16)targetPowerHt40.tPow2x[i],
 						minCtlPower);
-			}
-			break;
-		default:
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Now set the rates array */
 
@@ -675,10 +676,10 @@ static void ath9k_hw_set_ar9287_power_per_rate_table(struct ath_hw *ah,
 	ratesArray[rate54mb] = targetPowerOfdm.tPow2x[3];
 	ratesArray[rateXr] = targetPowerOfdm.tPow2x[0];
 
-	for (i = 0; i < ARRAY_SIZE(targetPowerHt20.tPow2x); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(targetPowerHt20.tPow2x); i++)
 		ratesArray[rateHt20_0 + i] = targetPowerHt20.tPow2x[i];
 
-	if (IS_CHAN_2GHZ(chan))	{
+	अगर (IS_CHAN_2GHZ(chan))	अणु
 		ratesArray[rate1l] = targetPowerCck.tPow2x[0];
 		ratesArray[rate2s] =
 		ratesArray[rate2l] = targetPowerCck.tPow2x[1];
@@ -686,67 +687,67 @@ static void ath9k_hw_set_ar9287_power_per_rate_table(struct ath_hw *ah,
 		ratesArray[rate5_5l] = targetPowerCck.tPow2x[2];
 		ratesArray[rate11s] =
 		ratesArray[rate11l] = targetPowerCck.tPow2x[3];
-	}
-	if (IS_CHAN_HT40(chan))	{
-		for (i = 0; i < ARRAY_SIZE(targetPowerHt40.tPow2x); i++)
+	पूर्ण
+	अगर (IS_CHAN_HT40(chan))	अणु
+		क्रम (i = 0; i < ARRAY_SIZE(targetPowerHt40.tPow2x); i++)
 			ratesArray[rateHt40_0 + i] = targetPowerHt40.tPow2x[i];
 
 		ratesArray[rateDupOfdm] = targetPowerHt40.tPow2x[0];
 		ratesArray[rateDupCck]  = targetPowerHt40.tPow2x[0];
 		ratesArray[rateExtOfdm] = targetPowerOfdmExt.tPow2x[0];
 
-		if (IS_CHAN_2GHZ(chan))
+		अगर (IS_CHAN_2GHZ(chan))
 			ratesArray[rateExtCck] = targetPowerCckExt.tPow2x[0];
-	}
+	पूर्ण
 
-#undef CMP_CTL
-#undef CMP_NO_CTL
-}
+#अघोषित CMP_CTL
+#अघोषित CMP_NO_CTL
+पूर्ण
 
-static void ath9k_hw_ar9287_set_txpower(struct ath_hw *ah,
-					struct ath9k_channel *chan, u16 cfgCtl,
+अटल व्योम ath9k_hw_ar9287_set_txघातer(काष्ठा ath_hw *ah,
+					काष्ठा ath9k_channel *chan, u16 cfgCtl,
 					u8 twiceAntennaReduction,
-					u8 powerLimit, bool test)
-{
-	struct ath_regulatory *regulatory = ath9k_hw_regulatory(ah);
-	struct ar9287_eeprom *pEepData = &ah->eeprom.map9287;
-	struct modal_eep_ar9287_header *pModal = &pEepData->modalHeader;
-	int16_t ratesArray[Ar5416RateSize];
+					u8 घातerLimit, bool test)
+अणु
+	काष्ठा ath_regulatory *regulatory = ath9k_hw_regulatory(ah);
+	काष्ठा ar9287_eeprom *pEepData = &ah->eeprom.map9287;
+	काष्ठा modal_eep_ar9287_header *pModal = &pEepData->modalHeader;
+	पूर्णांक16_t ratesArray[Ar5416RateSize];
 	u8 ht40PowerIncForPdadc = 2;
-	int i;
+	पूर्णांक i;
 
-	memset(ratesArray, 0, sizeof(ratesArray));
+	स_रखो(ratesArray, 0, माप(ratesArray));
 
-	if (ath9k_hw_ar9287_get_eeprom_rev(ah) >= AR9287_EEP_MINOR_VER_2)
+	अगर (ath9k_hw_ar9287_get_eeprom_rev(ah) >= AR9287_EEP_MINOR_VER_2)
 		ht40PowerIncForPdadc = pModal->ht40PowerIncForPdadc;
 
-	ath9k_hw_set_ar9287_power_per_rate_table(ah, chan,
+	ath9k_hw_set_ar9287_घातer_per_rate_table(ah, chan,
 						 &ratesArray[0], cfgCtl,
 						 twiceAntennaReduction,
-						 powerLimit);
+						 घातerLimit);
 
-	ath9k_hw_set_ar9287_power_cal_table(ah, chan);
+	ath9k_hw_set_ar9287_घातer_cal_table(ah, chan);
 
-	regulatory->max_power_level = 0;
-	for (i = 0; i < ARRAY_SIZE(ratesArray); i++) {
-		if (ratesArray[i] > MAX_RATE_POWER)
+	regulatory->max_घातer_level = 0;
+	क्रम (i = 0; i < ARRAY_SIZE(ratesArray); i++) अणु
+		अगर (ratesArray[i] > MAX_RATE_POWER)
 			ratesArray[i] = MAX_RATE_POWER;
 
-		if (ratesArray[i] > regulatory->max_power_level)
-			regulatory->max_power_level = ratesArray[i];
-	}
+		अगर (ratesArray[i] > regulatory->max_घातer_level)
+			regulatory->max_घातer_level = ratesArray[i];
+	पूर्ण
 
-	ath9k_hw_update_regulatory_maxpower(ah);
+	ath9k_hw_update_regulatory_maxघातer(ah);
 
-	if (test)
-		return;
+	अगर (test)
+		वापस;
 
-	for (i = 0; i < Ar5416RateSize; i++)
+	क्रम (i = 0; i < Ar5416RateSize; i++)
 		ratesArray[i] -= AR9287_PWR_TABLE_OFFSET_DB * 2;
 
 	ENABLE_REGWRITE_BUFFER(ah);
 
-	/* OFDM power per rate */
+	/* OFDM घातer per rate */
 	REG_WRITE(ah, AR_PHY_POWER_TX_RATE1,
 		  ATH9K_POW_SM(ratesArray[rate18mb], 24)
 		  | ATH9K_POW_SM(ratesArray[rate12mb], 16)
@@ -759,8 +760,8 @@ static void ath9k_hw_ar9287_set_txpower(struct ath_hw *ah,
 		  | ATH9K_POW_SM(ratesArray[rate36mb], 8)
 		  | ATH9K_POW_SM(ratesArray[rate24mb], 0));
 
-	/* CCK power per rate */
-	if (IS_CHAN_2GHZ(chan))	{
+	/* CCK घातer per rate */
+	अगर (IS_CHAN_2GHZ(chan))	अणु
 		REG_WRITE(ah, AR_PHY_POWER_TX_RATE3,
 			  ATH9K_POW_SM(ratesArray[rate2s], 24)
 			  | ATH9K_POW_SM(ratesArray[rate2l], 16)
@@ -771,9 +772,9 @@ static void ath9k_hw_ar9287_set_txpower(struct ath_hw *ah,
 			  | ATH9K_POW_SM(ratesArray[rate11l], 16)
 			  | ATH9K_POW_SM(ratesArray[rate5_5s], 8)
 			  | ATH9K_POW_SM(ratesArray[rate5_5l], 0));
-	}
+	पूर्ण
 
-	/* HT20 power per rate */
+	/* HT20 घातer per rate */
 	REG_WRITE(ah, AR_PHY_POWER_TX_RATE5,
 		  ATH9K_POW_SM(ratesArray[rateHt20_3], 24)
 		  | ATH9K_POW_SM(ratesArray[rateHt20_2], 16)
@@ -786,9 +787,9 @@ static void ath9k_hw_ar9287_set_txpower(struct ath_hw *ah,
 		  | ATH9K_POW_SM(ratesArray[rateHt20_5], 8)
 		  | ATH9K_POW_SM(ratesArray[rateHt20_4], 0));
 
-	/* HT40 power per rate */
-	if (IS_CHAN_HT40(chan))	{
-		if (ath9k_hw_ar9287_get_eeprom(ah, EEP_OL_PWRCTRL)) {
+	/* HT40 घातer per rate */
+	अगर (IS_CHAN_HT40(chan))	अणु
+		अगर (ath9k_hw_ar9287_get_eeprom(ah, EEP_OL_PWRCTRL)) अणु
 			REG_WRITE(ah, AR_PHY_POWER_TX_RATE7,
 				  ATH9K_POW_SM(ratesArray[rateHt40_3], 24)
 				  | ATH9K_POW_SM(ratesArray[rateHt40_2], 16)
@@ -800,7 +801,7 @@ static void ath9k_hw_ar9287_set_txpower(struct ath_hw *ah,
 				  | ATH9K_POW_SM(ratesArray[rateHt40_6], 16)
 				  | ATH9K_POW_SM(ratesArray[rateHt40_5], 8)
 				  | ATH9K_POW_SM(ratesArray[rateHt40_4], 0));
-		} else {
+		पूर्ण अन्यथा अणु
 			REG_WRITE(ah, AR_PHY_POWER_TX_RATE7,
 				  ATH9K_POW_SM(ratesArray[rateHt40_3] +
 					       ht40PowerIncForPdadc, 24)
@@ -820,47 +821,47 @@ static void ath9k_hw_ar9287_set_txpower(struct ath_hw *ah,
 						 ht40PowerIncForPdadc, 8)
 				  | ATH9K_POW_SM(ratesArray[rateHt40_4] +
 						 ht40PowerIncForPdadc, 0));
-		}
+		पूर्ण
 
-		/* Dup/Ext power per rate */
+		/* Dup/Ext घातer per rate */
 		REG_WRITE(ah, AR_PHY_POWER_TX_RATE9,
 			  ATH9K_POW_SM(ratesArray[rateExtOfdm], 24)
 			  | ATH9K_POW_SM(ratesArray[rateExtCck], 16)
 			  | ATH9K_POW_SM(ratesArray[rateDupOfdm], 8)
 			  | ATH9K_POW_SM(ratesArray[rateDupCck], 0));
-	}
+	पूर्ण
 
 	/* TPC initializations */
-	if (ah->tpc_enabled) {
-		int ht40_delta;
+	अगर (ah->tpc_enabled) अणु
+		पूर्णांक ht40_delta;
 
 		ht40_delta = (IS_CHAN_HT40(chan)) ? ht40PowerIncForPdadc : 0;
-		ar5008_hw_init_rate_txpower(ah, ratesArray, chan, ht40_delta);
+		ar5008_hw_init_rate_txघातer(ah, ratesArray, chan, ht40_delta);
 		/* Enable TPC */
 		REG_WRITE(ah, AR_PHY_POWER_TX_RATE_MAX,
 			MAX_RATE_POWER | AR_PHY_POWER_TX_RATE_MAX_TPC_ENABLE);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Disable TPC */
 		REG_WRITE(ah, AR_PHY_POWER_TX_RATE_MAX, MAX_RATE_POWER);
-	}
+	पूर्ण
 
 	REGWRITE_BUFFER_FLUSH(ah);
-}
+पूर्ण
 
-static void ath9k_hw_ar9287_set_board_values(struct ath_hw *ah,
-					     struct ath9k_channel *chan)
-{
-	struct ar9287_eeprom *eep = &ah->eeprom.map9287;
-	struct modal_eep_ar9287_header *pModal = &eep->modalHeader;
+अटल व्योम ath9k_hw_ar9287_set_board_values(काष्ठा ath_hw *ah,
+					     काष्ठा ath9k_channel *chan)
+अणु
+	काष्ठा ar9287_eeprom *eep = &ah->eeprom.map9287;
+	काष्ठा modal_eep_ar9287_header *pModal = &eep->modalHeader;
 	u32 regChainOffset, regval;
 	u8 txRxAttenLocal;
-	int i;
+	पूर्णांक i;
 
 	pModal = &eep->modalHeader;
 
 	REG_WRITE(ah, AR_PHY_SWITCH_COM, le32_to_cpu(pModal->antCtrlCommon));
 
-	for (i = 0; i < AR9287_MAX_CHAINS; i++)	{
+	क्रम (i = 0; i < AR9287_MAX_CHAINS; i++)	अणु
 		regChainOffset = i * 0x1000;
 
 		REG_WRITE(ah, AR_PHY_SWITCH_CHAIN_0 + regChainOffset,
@@ -889,15 +890,15 @@ static void ath9k_hw_ar9287_set_board_values(struct ath_hw *ah,
 		REG_RMW_FIELD(ah, AR_PHY_RXGAIN + regChainOffset,
 			      AR9280_PHY_RXGAIN_TXRX_MARGIN,
 			      pModal->rxTxMarginCh[i]);
-	}
+	पूर्ण
 
 
-	if (IS_CHAN_HT40(chan))
+	अगर (IS_CHAN_HT40(chan))
 		REG_RMW_FIELD(ah, AR_PHY_SETTLING,
 			      AR_PHY_SETTLING_SWITCH, pModal->swSettleHt40);
-	else
+	अन्यथा
 		REG_RMW_FIELD(ah, AR_PHY_SETTLING,
-			      AR_PHY_SETTLING_SWITCH, pModal->switchSettling);
+			      AR_PHY_SETTLING_SWITCH, pModal->चयनSettling);
 
 	REG_RMW_FIELD(ah, AR_PHY_DESIRED_SZ,
 		      AR_PHY_DESIRED_SZ_ADC, pModal->adcDesiredSize);
@@ -930,7 +931,7 @@ static void ath9k_hw_ar9287_set_board_values(struct ath_hw *ah,
 		   SM(pModal->ob_qam, AR9287_AN_RF2G3_OB_QAM) |
 		   SM(pModal->ob_pal_off, AR9287_AN_RF2G3_OB_PAL_OFF));
 
-	ath9k_hw_analog_shift_regwrite(ah, AR9287_AN_RF2G3_CH0, regval);
+	ath9k_hw_analog_shअगरt_regग_लिखो(ah, AR9287_AN_RF2G3_CH0, regval);
 
 	regval = REG_READ(ah, AR9287_AN_RF2G3_CH1);
 	regval &= ~(AR9287_AN_RF2G3_DB1 |
@@ -946,33 +947,33 @@ static void ath9k_hw_ar9287_set_board_values(struct ath_hw *ah,
 		   SM(pModal->ob_qam, AR9287_AN_RF2G3_OB_QAM) |
 		   SM(pModal->ob_pal_off, AR9287_AN_RF2G3_OB_PAL_OFF));
 
-	ath9k_hw_analog_shift_regwrite(ah, AR9287_AN_RF2G3_CH1, regval);
+	ath9k_hw_analog_shअगरt_regग_लिखो(ah, AR9287_AN_RF2G3_CH1, regval);
 
 	REG_RMW_FIELD(ah, AR_PHY_RF_CTL2,
 		      AR_PHY_TX_END_DATA_START, pModal->txFrameToDataStart);
 	REG_RMW_FIELD(ah, AR_PHY_RF_CTL2,
 		      AR_PHY_TX_END_PA_ON, pModal->txFrameToPaOn);
 
-	ath9k_hw_analog_shift_rmw(ah, AR9287_AN_TOP2,
+	ath9k_hw_analog_shअगरt_rmw(ah, AR9287_AN_TOP2,
 				  AR9287_AN_TOP2_XPABIAS_LVL,
 				  AR9287_AN_TOP2_XPABIAS_LVL_S,
 				  pModal->xpaBiasLvl);
-}
+पूर्ण
 
-static u16 ath9k_hw_ar9287_get_spur_channel(struct ath_hw *ah,
+अटल u16 ath9k_hw_ar9287_get_spur_channel(काष्ठा ath_hw *ah,
 					    u16 i, bool is2GHz)
-{
+अणु
 	__le16 spur_ch = ah->eeprom.map9287.modalHeader.spurChans[i].spurChan;
 
-	return le16_to_cpu(spur_ch);
-}
+	वापस le16_to_cpu(spur_ch);
+पूर्ण
 
-static u8 ath9k_hw_ar9287_get_eepmisc(struct ath_hw *ah)
-{
-	return ah->eeprom.map9287.baseEepHeader.eepMisc;
-}
+अटल u8 ath9k_hw_ar9287_get_eepmisc(काष्ठा ath_hw *ah)
+अणु
+	वापस ah->eeprom.map9287.baseEepHeader.eepMisc;
+पूर्ण
 
-const struct eeprom_ops eep_ar9287_ops = {
+स्थिर काष्ठा eeprom_ops eep_ar9287_ops = अणु
 	.check_eeprom		= ath9k_hw_ar9287_check_eeprom,
 	.get_eeprom		= ath9k_hw_ar9287_get_eeprom,
 	.fill_eeprom		= ath9k_hw_ar9287_fill_eeprom,
@@ -980,7 +981,7 @@ const struct eeprom_ops eep_ar9287_ops = {
 	.get_eeprom_ver		= ath9k_hw_ar9287_get_eeprom_ver,
 	.get_eeprom_rev		= ath9k_hw_ar9287_get_eeprom_rev,
 	.set_board_values	= ath9k_hw_ar9287_set_board_values,
-	.set_txpower		= ath9k_hw_ar9287_set_txpower,
+	.set_txघातer		= ath9k_hw_ar9287_set_txघातer,
 	.get_spur_channel	= ath9k_hw_ar9287_get_spur_channel,
 	.get_eepmisc		= ath9k_hw_ar9287_get_eepmisc
-};
+पूर्ण;

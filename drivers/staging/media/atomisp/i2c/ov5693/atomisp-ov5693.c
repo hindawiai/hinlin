@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for OmniVision OV5693 1080p HD camera sensor.
+ * Support क्रम OmniVision OV5693 1080p HD camera sensor.
  *
  * Copyright (c) 2013 Intel Corporation. All Rights Reserved.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  *
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/kmod.h>
-#include <linux/device.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/moduleparam.h>
-#include <media/v4l2-device.h>
-#include <linux/io.h>
-#include <linux/acpi.h>
-#include "../../include/linux/atomisp_gmin_platform.h"
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/acpi.h>
+#समावेश "../../include/linux/atomisp_gmin_platform.h"
 
-#include "ov5693.h"
-#include "ad5823.h"
+#समावेश "ov5693.h"
+#समावेश "ad5823.h"
 
-#define __cci_delay(t) \
-	do { \
-		if ((t) < 10) { \
+#घोषणा __cci_delay(t) \
+	करो अणु \
+		अगर ((t) < 10) अणु \
 			usleep_range((t) * 1000, ((t) + 1) * 1000); \
-		} else { \
+		पूर्ण अन्यथा अणु \
 			msleep((t)); \
-		} \
-	} while (0)
+		पूर्ण \
+	पूर्ण जबतक (0)
 
 /* Value 30ms reached through experimentation on byt ecs.
- * The DS specifies a much lower value but when using a smaller value
- * the I2C bus sometimes locks up permanently when starting the camera.
+ * The DS specअगरies a much lower value but when using a smaller value
+ * the I2C bus someबार locks up permanently when starting the camera.
  * This issue could not be reproduced on cht, so we can reduce the
  * delay value to a lower value when insmod.
  */
-static uint up_delay = 30;
-module_param(up_delay, uint, 0644);
+अटल uपूर्णांक up_delay = 30;
+module_param(up_delay, uपूर्णांक, 0644);
 MODULE_PARM_DESC(up_delay,
 		 "Delay prior to the first CCI transaction for ov5693");
 
-static int vcm_ad_i2c_wr8(struct i2c_client *client, u8 reg, u8 val)
-{
-	int err;
-	struct i2c_msg msg;
+अटल पूर्णांक vcm_ad_i2c_wr8(काष्ठा i2c_client *client, u8 reg, u8 val)
+अणु
+	पूर्णांक err;
+	काष्ठा i2c_msg msg;
 	u8 buf[2];
 
 	buf[0] = reg;
@@ -72,17 +73,17 @@ static int vcm_ad_i2c_wr8(struct i2c_client *client, u8 reg, u8 val)
 	msg.buf = &buf[0];
 
 	err = i2c_transfer(client->adapter, &msg, 1);
-	if (err != 1) {
+	अगर (err != 1) अणु
 		dev_err(&client->dev, "%s: vcm i2c fail, err code = %d\n",
 			__func__, err);
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ad5823_i2c_write(struct i2c_client *client, u8 reg, u8 val)
-{
-	struct i2c_msg msg;
+अटल पूर्णांक ad5823_i2c_ग_लिखो(काष्ठा i2c_client *client, u8 reg, u8 val)
+अणु
+	काष्ठा i2c_msg msg;
 	u8 buf[2];
 
 	buf[0] = reg;
@@ -92,14 +93,14 @@ static int ad5823_i2c_write(struct i2c_client *client, u8 reg, u8 val)
 	msg.len = 0x02;
 	msg.buf = &buf[0];
 
-	if (i2c_transfer(client->adapter, &msg, 1) != 1)
-		return -EIO;
-	return 0;
-}
+	अगर (i2c_transfer(client->adapter, &msg, 1) != 1)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static int ad5823_i2c_read(struct i2c_client *client, u8 reg, u8 *val)
-{
-	struct i2c_msg msg[2];
+अटल पूर्णांक ad5823_i2c_पढ़ो(काष्ठा i2c_client *client, u8 reg, u8 *val)
+अणु
+	काष्ठा i2c_msg msg[2];
 	u8 buf[2];
 
 	buf[0] = reg;
@@ -115,36 +116,36 @@ static int ad5823_i2c_read(struct i2c_client *client, u8 reg, u8 *val)
 	msg[1].len = 0x01;
 	msg[1].buf = &buf[1];
 	*val = 0;
-	if (i2c_transfer(client->adapter, msg, 2) != 2)
-		return -EIO;
+	अगर (i2c_transfer(client->adapter, msg, 2) != 2)
+		वापस -EIO;
 	*val = buf[1];
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const u32 ov5693_embedded_effective_size = 28;
+अटल स्थिर u32 ov5693_embedded_effective_size = 28;
 
-/* i2c read/write stuff */
-static int ov5693_read_reg(struct i2c_client *client,
+/* i2c पढ़ो/ग_लिखो stuff */
+अटल पूर्णांक ov5693_पढ़ो_reg(काष्ठा i2c_client *client,
 			   u16 data_length, u16 reg, u16 *val)
-{
-	int err;
-	struct i2c_msg msg[2];
-	unsigned char data[6];
+अणु
+	पूर्णांक err;
+	काष्ठा i2c_msg msg[2];
+	अचिन्हित अक्षर data[6];
 
-	if (!client->adapter) {
+	अगर (!client->adapter) अणु
 		dev_err(&client->dev, "%s error, no client->adapter\n",
 			__func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (data_length != OV5693_8BIT && data_length != OV5693_16BIT
-	    && data_length != OV5693_32BIT) {
+	अगर (data_length != OV5693_8BIT && data_length != OV5693_16BIT
+	    && data_length != OV5693_32BIT) अणु
 		dev_err(&client->dev, "%s error, invalid data length\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(msg, 0, sizeof(msg));
+	स_रखो(msg, 0, माप(msg));
 
 	msg[0].addr = client->addr;
 	msg[0].flags = 0;
@@ -161,31 +162,31 @@ static int ov5693_read_reg(struct i2c_client *client,
 	msg[1].buf = data;
 
 	err = i2c_transfer(client->adapter, msg, 2);
-	if (err != 2) {
-		if (err >= 0)
+	अगर (err != 2) अणु
+		अगर (err >= 0)
 			err = -EIO;
 		dev_err(&client->dev,
 			"read from offset 0x%x error %d", reg, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	*val = 0;
 	/* high byte comes first */
-	if (data_length == OV5693_8BIT)
+	अगर (data_length == OV5693_8BIT)
 		*val = (u8)data[0];
-	else if (data_length == OV5693_16BIT)
+	अन्यथा अगर (data_length == OV5693_16BIT)
 		*val = be16_to_cpu(*(__be16 *)&data[0]);
-	else
+	अन्यथा
 		*val = be32_to_cpu(*(__be32 *)&data[0]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_i2c_write(struct i2c_client *client, u16 len, u8 *data)
-{
-	struct i2c_msg msg;
-	const int num_msg = 1;
-	int ret;
+अटल पूर्णांक ov5693_i2c_ग_लिखो(काष्ठा i2c_client *client, u16 len, u8 *data)
+अणु
+	काष्ठा i2c_msg msg;
+	स्थिर पूर्णांक num_msg = 1;
+	पूर्णांक ret;
 
 	msg.addr = client->addr;
 	msg.flags = 0;
@@ -193,955 +194,955 @@ static int ov5693_i2c_write(struct i2c_client *client, u16 len, u8 *data)
 	msg.buf = data;
 	ret = i2c_transfer(client->adapter, &msg, 1);
 
-	return ret == num_msg ? 0 : -EIO;
-}
+	वापस ret == num_msg ? 0 : -EIO;
+पूर्ण
 
-static int vcm_dw_i2c_write(struct i2c_client *client, u16 data)
-{
-	struct i2c_msg msg;
-	const int num_msg = 1;
-	int ret;
+अटल पूर्णांक vcm_dw_i2c_ग_लिखो(काष्ठा i2c_client *client, u16 data)
+अणु
+	काष्ठा i2c_msg msg;
+	स्थिर पूर्णांक num_msg = 1;
+	पूर्णांक ret;
 	__be16 val;
 
 	val = cpu_to_be16(data);
 	msg.addr = VCM_ADDR;
 	msg.flags = 0;
 	msg.len = OV5693_16BIT;
-	msg.buf = (void *)&val;
+	msg.buf = (व्योम *)&val;
 
 	ret = i2c_transfer(client->adapter, &msg, 1);
 
-	return ret == num_msg ? 0 : -EIO;
-}
+	वापस ret == num_msg ? 0 : -EIO;
+पूर्ण
 
 /*
- * Theory: per datasheet, the two VCMs both allow for a 2-byte read.
- * The DW9714 doesn't actually specify what this does (it has a
- * two-byte write-only protocol, but specifies the read sequence as
- * legal), but it returns the same data (zeroes) always, after an
- * undocumented initial NAK.  The AD5823 has a one-byte address
- * register to which all writes go, and subsequent reads will cycle
- * through the 8 bytes of registers.  Notably, the default values (the
- * device is always power-cycled affirmatively, so we can rely on
+ * Theory: per datasheet, the two VCMs both allow क्रम a 2-byte पढ़ो.
+ * The DW9714 करोesn't actually specअगरy what this करोes (it has a
+ * two-byte ग_लिखो-only protocol, but specअगरies the पढ़ो sequence as
+ * legal), but it वापसs the same data (zeroes) always, after an
+ * unकरोcumented initial NAK.  The AD5823 has a one-byte address
+ * रेजिस्टर to which all ग_लिखोs go, and subsequent पढ़ोs will cycle
+ * through the 8 bytes of रेजिस्टरs.  Notably, the शेष values (the
+ * device is always घातer-cycled affirmatively, so we can rely on
  * these) in AD5823 are not pairwise repetitions of the same 16 bit
- * word.  So all we have to do is sequentially read two bytes at a
- * time and see if we detect a difference in any of the first four
+ * word.  So all we have to करो is sequentially पढ़ो two bytes at a
+ * समय and see अगर we detect a dअगरference in any of the first four
  * pairs.
  */
-static int vcm_detect(struct i2c_client *client)
-{
-	int i, ret;
-	struct i2c_msg msg;
+अटल पूर्णांक vcm_detect(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा i2c_msg msg;
 	u16 data0 = 0, data;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		msg.addr = VCM_ADDR;
 		msg.flags = I2C_M_RD;
-		msg.len = sizeof(data);
+		msg.len = माप(data);
 		msg.buf = (u8 *)&data;
 		ret = i2c_transfer(client->adapter, &msg, 1);
 
 		/*
-		 * DW9714 always fails the first read and returns
-		 * zeroes for subsequent ones
+		 * DW9714 always fails the first पढ़ो and वापसs
+		 * zeroes क्रम subsequent ones
 		 */
-		if (i == 0 && ret == -EREMOTEIO) {
+		अगर (i == 0 && ret == -EREMOTEIO) अणु
 			data0 = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (i == 0)
+		अगर (i == 0)
 			data0 = data;
 
-		if (data != data0)
-			return VCM_AD5823;
-	}
-	return ret == 1 ? VCM_DW9714 : ret;
-}
+		अगर (data != data0)
+			वापस VCM_AD5823;
+	पूर्ण
+	वापस ret == 1 ? VCM_DW9714 : ret;
+पूर्ण
 
-static int ov5693_write_reg(struct i2c_client *client, u16 data_length,
+अटल पूर्णांक ov5693_ग_लिखो_reg(काष्ठा i2c_client *client, u16 data_length,
 			    u16 reg, u16 val)
-{
-	int ret;
-	unsigned char data[4] = {0};
-	__be16 *wreg = (void *)data;
-	const u16 len = data_length + sizeof(u16); /* 16-bit address + data */
+अणु
+	पूर्णांक ret;
+	अचिन्हित अक्षर data[4] = अणु0पूर्ण;
+	__be16 *wreg = (व्योम *)data;
+	स्थिर u16 len = data_length + माप(u16); /* 16-bit address + data */
 
-	if (data_length != OV5693_8BIT && data_length != OV5693_16BIT) {
+	अगर (data_length != OV5693_8BIT && data_length != OV5693_16BIT) अणु
 		dev_err(&client->dev,
 			"%s error, invalid data_length\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* high byte goes out first */
 	*wreg = cpu_to_be16(reg);
 
-	if (data_length == OV5693_8BIT) {
+	अगर (data_length == OV5693_8BIT) अणु
 		data[2] = (u8)(val);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* OV5693_16BIT */
-		__be16 *wdata = (void *)&data[2];
+		__be16 *wdata = (व्योम *)&data[2];
 
 		*wdata = cpu_to_be16(val);
-	}
+	पूर्ण
 
-	ret = ov5693_i2c_write(client, len, data);
-	if (ret)
+	ret = ov5693_i2c_ग_लिखो(client, len, data);
+	अगर (ret)
 		dev_err(&client->dev,
 			"write error: wrote 0x%x to offset 0x%x error %d",
 			val, reg, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * ov5693_write_reg_array - Initializes a list of OV5693 registers
- * @client: i2c driver client structure
- * @reglist: list of registers to be written
+ * ov5693_ग_लिखो_reg_array - Initializes a list of OV5693 रेजिस्टरs
+ * @client: i2c driver client काष्ठाure
+ * @reglist: list of रेजिस्टरs to be written
  *
- * This function initializes a list of registers. When consecutive addresses
+ * This function initializes a list of रेजिस्टरs. When consecutive addresses
  * are found in a row on the list, this function creates a buffer and sends
  * consecutive data in a single i2c_transfer().
  *
  * __ov5693_flush_reg_array, __ov5693_buf_reg_array() and
- * __ov5693_write_reg_is_consecutive() are internal functions to
- * ov5693_write_reg_array_fast() and should be not used anywhere else.
+ * __ov5693_ग_लिखो_reg_is_consecutive() are पूर्णांकernal functions to
+ * ov5693_ग_लिखो_reg_array_fast() and should be not used anywhere अन्यथा.
  *
  */
 
-static int __ov5693_flush_reg_array(struct i2c_client *client,
-				    struct ov5693_write_ctrl *ctrl)
-{
+अटल पूर्णांक __ov5693_flush_reg_array(काष्ठा i2c_client *client,
+				    काष्ठा ov5693_ग_लिखो_ctrl *ctrl)
+अणु
 	u16 size;
-	__be16 *reg = (void *)&ctrl->buffer.addr;
+	__be16 *reg = (व्योम *)&ctrl->buffer.addr;
 
-	if (ctrl->index == 0)
-		return 0;
+	अगर (ctrl->index == 0)
+		वापस 0;
 
-	size = sizeof(u16) + ctrl->index; /* 16-bit address + data */
+	size = माप(u16) + ctrl->index; /* 16-bit address + data */
 
 	*reg = cpu_to_be16(ctrl->buffer.addr);
 	ctrl->index = 0;
 
-	return ov5693_i2c_write(client, size, (u8 *)reg);
-}
+	वापस ov5693_i2c_ग_लिखो(client, size, (u8 *)reg);
+पूर्ण
 
-static int __ov5693_buf_reg_array(struct i2c_client *client,
-				  struct ov5693_write_ctrl *ctrl,
-				  const struct ov5693_reg *next)
-{
-	int size;
+अटल पूर्णांक __ov5693_buf_reg_array(काष्ठा i2c_client *client,
+				  काष्ठा ov5693_ग_लिखो_ctrl *ctrl,
+				  स्थिर काष्ठा ov5693_reg *next)
+अणु
+	पूर्णांक size;
 	__be16 *data16;
 
-	switch (next->type) {
-	case OV5693_8BIT:
+	चयन (next->type) अणु
+	हाल OV5693_8BIT:
 		size = 1;
 		ctrl->buffer.data[ctrl->index] = (u8)next->val;
-		break;
-	case OV5693_16BIT:
+		अवरोध;
+	हाल OV5693_16BIT:
 		size = 2;
 
-		data16 = (void *)&ctrl->buffer.data[ctrl->index];
+		data16 = (व्योम *)&ctrl->buffer.data[ctrl->index];
 		*data16 = cpu_to_be16((u16)next->val);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* When first item is added, we need to store its starting address */
-	if (ctrl->index == 0)
+	अगर (ctrl->index == 0)
 		ctrl->buffer.addr = next->reg;
 
 	ctrl->index += size;
 
 	/*
-	 * Buffer cannot guarantee free space for u32? Better flush it to avoid
-	 * possible lack of memory for next item.
+	 * Buffer cannot guarantee मुक्त space क्रम u32? Better flush it to aव्योम
+	 * possible lack of memory क्रम next item.
 	 */
-	if (ctrl->index + sizeof(u16) >= OV5693_MAX_WRITE_BUF_SIZE)
-		return __ov5693_flush_reg_array(client, ctrl);
+	अगर (ctrl->index + माप(u16) >= OV5693_MAX_WRITE_BUF_SIZE)
+		वापस __ov5693_flush_reg_array(client, ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __ov5693_write_reg_is_consecutive(struct i2c_client *client,
-	struct ov5693_write_ctrl *ctrl,
-	const struct ov5693_reg *next)
-{
-	if (ctrl->index == 0)
-		return 1;
+अटल पूर्णांक __ov5693_ग_लिखो_reg_is_consecutive(काष्ठा i2c_client *client,
+	काष्ठा ov5693_ग_लिखो_ctrl *ctrl,
+	स्थिर काष्ठा ov5693_reg *next)
+अणु
+	अगर (ctrl->index == 0)
+		वापस 1;
 
-	return ctrl->buffer.addr + ctrl->index == next->reg;
-}
+	वापस ctrl->buffer.addr + ctrl->index == next->reg;
+पूर्ण
 
-static int ov5693_write_reg_array(struct i2c_client *client,
-				  const struct ov5693_reg *reglist)
-{
-	const struct ov5693_reg *next = reglist;
-	struct ov5693_write_ctrl ctrl;
-	int err;
+अटल पूर्णांक ov5693_ग_लिखो_reg_array(काष्ठा i2c_client *client,
+				  स्थिर काष्ठा ov5693_reg *reglist)
+अणु
+	स्थिर काष्ठा ov5693_reg *next = reglist;
+	काष्ठा ov5693_ग_लिखो_ctrl ctrl;
+	पूर्णांक err;
 
 	ctrl.index = 0;
-	for (; next->type != OV5693_TOK_TERM; next++) {
-		switch (next->type & OV5693_TOK_MASK) {
-		case OV5693_TOK_DELAY:
+	क्रम (; next->type != OV5693_TOK_TERM; next++) अणु
+		चयन (next->type & OV5693_TOK_MASK) अणु
+		हाल OV5693_TOK_DELAY:
 			err = __ov5693_flush_reg_array(client, &ctrl);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			msleep(next->val);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
 			 * If next address is not consecutive, data needs to be
-			 * flushed before proceed.
+			 * flushed beक्रमe proceed.
 			 */
-			if (!__ov5693_write_reg_is_consecutive(client, &ctrl,
-							       next)) {
+			अगर (!__ov5693_ग_लिखो_reg_is_consecutive(client, &ctrl,
+							       next)) अणु
 				err = __ov5693_flush_reg_array(client, &ctrl);
-				if (err)
-					return err;
-			}
+				अगर (err)
+					वापस err;
+			पूर्ण
 			err = __ov5693_buf_reg_array(client, &ctrl, next);
-			if (err) {
+			अगर (err) अणु
 				dev_err(&client->dev,
 					"%s: write error, aborted\n",
 					__func__);
-				return err;
-			}
-			break;
-		}
-	}
+				वापस err;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return __ov5693_flush_reg_array(client, &ctrl);
-}
+	वापस __ov5693_flush_reg_array(client, &ctrl);
+पूर्ण
 
-static int ov5693_g_focal(struct v4l2_subdev *sd, s32 *val)
-{
+अटल पूर्णांक ov5693_g_focal(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
 	*val = (OV5693_FOCAL_LENGTH_NUM << 16) | OV5693_FOCAL_LENGTH_DEM;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_g_fnumber(struct v4l2_subdev *sd, s32 *val)
-{
-	/*const f number for imx*/
+अटल पूर्णांक ov5693_g_fnumber(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	/*स्थिर f number क्रम imx*/
 	*val = (OV5693_F_NUMBER_DEFAULT_NUM << 16) | OV5693_F_NUMBER_DEM;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_g_fnumber_range(struct v4l2_subdev *sd, s32 *val)
-{
+अटल पूर्णांक ov5693_g_fnumber_range(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
 	*val = (OV5693_F_NUMBER_DEFAULT_NUM << 24) |
 	       (OV5693_F_NUMBER_DEM << 16) |
 	       (OV5693_F_NUMBER_DEFAULT_NUM << 8) | OV5693_F_NUMBER_DEM;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_g_bin_factor_x(struct v4l2_subdev *sd, s32 *val)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक ov5693_g_bin_factor_x(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 
 	*val = ov5693_res[dev->fmt_idx].bin_factor_x;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_g_bin_factor_y(struct v4l2_subdev *sd, s32 *val)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक ov5693_g_bin_factor_y(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 
 	*val = ov5693_res[dev->fmt_idx].bin_factor_y;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_get_intg_factor(struct i2c_client *client,
-				  struct camera_mipi_info *info,
-				  const struct ov5693_resolution *res)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	struct atomisp_sensor_mode_data *buf = &info->data;
-	unsigned int pix_clk_freq_hz;
+अटल पूर्णांक ov5693_get_पूर्णांकg_factor(काष्ठा i2c_client *client,
+				  काष्ठा camera_mipi_info *info,
+				  स्थिर काष्ठा ov5693_resolution *res)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	काष्ठा atomisp_sensor_mode_data *buf = &info->data;
+	अचिन्हित पूर्णांक pix_clk_freq_hz;
 	u16 reg_val;
-	int ret;
+	पूर्णांक ret;
 
-	if (!info)
-		return -EINVAL;
+	अगर (!info)
+		वापस -EINVAL;
 
-	/* pixel clock */
+	/* pixel घड़ी */
 	pix_clk_freq_hz = res->pix_clk_freq * 1000000;
 
 	dev->vt_pix_clk_freq_mhz = pix_clk_freq_hz;
 	buf->vt_pix_clk_freq_mhz = pix_clk_freq_hz;
 
-	/* get integration time */
-	buf->coarse_integration_time_min = OV5693_COARSE_INTG_TIME_MIN;
-	buf->coarse_integration_time_max_margin =
+	/* get पूर्णांकegration समय */
+	buf->coarse_पूर्णांकegration_समय_min = OV5693_COARSE_INTG_TIME_MIN;
+	buf->coarse_पूर्णांकegration_समय_max_margin =
 	    OV5693_COARSE_INTG_TIME_MAX_MARGIN;
 
-	buf->fine_integration_time_min = OV5693_FINE_INTG_TIME_MIN;
-	buf->fine_integration_time_max_margin =
+	buf->fine_पूर्णांकegration_समय_min = OV5693_FINE_INTG_TIME_MIN;
+	buf->fine_पूर्णांकegration_समय_max_margin =
 	    OV5693_FINE_INTG_TIME_MAX_MARGIN;
 
-	buf->fine_integration_time_def = OV5693_FINE_INTG_TIME_MIN;
+	buf->fine_पूर्णांकegration_समय_def = OV5693_FINE_INTG_TIME_MIN;
 	buf->frame_length_lines = res->lines_per_frame;
 	buf->line_length_pck = res->pixels_per_line;
-	buf->read_mode = res->bin_mode;
+	buf->पढ़ो_mode = res->bin_mode;
 
-	/* get the cropping and output resolution to ISP for this mode. */
-	ret =  ov5693_read_reg(client, OV5693_16BIT,
+	/* get the cropping and output resolution to ISP क्रम this mode. */
+	ret =  ov5693_पढ़ो_reg(client, OV5693_16BIT,
 			       OV5693_HORIZONTAL_START_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	buf->crop_horizontal_start = reg_val;
 
-	ret =  ov5693_read_reg(client, OV5693_16BIT,
+	ret =  ov5693_पढ़ो_reg(client, OV5693_16BIT,
 			       OV5693_VERTICAL_START_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	buf->crop_vertical_start = reg_val;
 
-	ret = ov5693_read_reg(client, OV5693_16BIT,
+	ret = ov5693_पढ़ो_reg(client, OV5693_16BIT,
 			      OV5693_HORIZONTAL_END_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	buf->crop_horizontal_end = reg_val;
 
-	ret = ov5693_read_reg(client, OV5693_16BIT,
+	ret = ov5693_पढ़ो_reg(client, OV5693_16BIT,
 			      OV5693_VERTICAL_END_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	buf->crop_vertical_end = reg_val;
 
-	ret = ov5693_read_reg(client, OV5693_16BIT,
+	ret = ov5693_पढ़ो_reg(client, OV5693_16BIT,
 			      OV5693_HORIZONTAL_OUTPUT_SIZE_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	buf->output_width = reg_val;
 
-	ret = ov5693_read_reg(client, OV5693_16BIT,
+	ret = ov5693_पढ़ो_reg(client, OV5693_16BIT,
 			      OV5693_VERTICAL_OUTPUT_SIZE_H, &reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	buf->output_height = reg_val;
 
 	buf->binning_factor_x = res->bin_factor_x ?
 				res->bin_factor_x : 1;
 	buf->binning_factor_y = res->bin_factor_y ?
 				res->bin_factor_y : 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long __ov5693_set_exposure(struct v4l2_subdev *sd, int coarse_itg,
-				  int gain, int digitgain)
+अटल दीर्घ __ov5693_set_exposure(काष्ठा v4l2_subdev *sd, पूर्णांक coarse_itg,
+				  पूर्णांक gain, पूर्णांक digitgain)
 
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 	u16 vts, hts;
-	int ret, exp_val;
+	पूर्णांक ret, exp_val;
 
 	hts = ov5693_res[dev->fmt_idx].pixels_per_line;
 	vts = ov5693_res[dev->fmt_idx].lines_per_frame;
 	/*
-	 * If coarse_itg is larger than 1<<15, can not write to reg directly.
-	 * The way is to write coarse_itg/2 to the reg, meanwhile write 2*hts
+	 * If coarse_itg is larger than 1<<15, can not ग_लिखो to reg directly.
+	 * The way is to ग_लिखो coarse_itg/2 to the reg, meanजबतक ग_लिखो 2*hts
 	 * to the reg.
 	 */
-	if (coarse_itg > (1 << 15)) {
+	अगर (coarse_itg > (1 << 15)) अणु
 		hts = hts * 2;
-		coarse_itg = (int)coarse_itg / 2;
-	}
+		coarse_itg = (पूर्णांक)coarse_itg / 2;
+	पूर्ण
 	/* group hold */
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_GROUP_ACCESS, 0x00);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: write %x error, aborted\n",
 			__func__, OV5693_GROUP_ACCESS);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_TIMING_HTS_H, (hts >> 8) & 0xFF);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: write %x error, aborted\n",
 			__func__, OV5693_TIMING_HTS_H);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_TIMING_HTS_L, hts & 0xFF);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: write %x error, aborted\n",
 			__func__, OV5693_TIMING_HTS_L);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	/* Increase the VTS to match exposure + MARGIN */
-	if (coarse_itg > vts - OV5693_INTEGRATION_TIME_MARGIN)
+	अगर (coarse_itg > vts - OV5693_INTEGRATION_TIME_MARGIN)
 		vts = (u16)coarse_itg + OV5693_INTEGRATION_TIME_MARGIN;
 
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_TIMING_VTS_H, (vts >> 8) & 0xFF);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: write %x error, aborted\n",
 			__func__, OV5693_TIMING_VTS_H);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_TIMING_VTS_L, vts & 0xFF);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: write %x error, aborted\n",
 			__func__, OV5693_TIMING_VTS_L);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* set exposure */
 
 	/* Lower four bit should be 0*/
 	exp_val = coarse_itg << 4;
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_EXPOSURE_L, exp_val & 0xFF);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: write %x error, aborted\n",
 			__func__, OV5693_EXPOSURE_L);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_EXPOSURE_M, (exp_val >> 8) & 0xFF);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: write %x error, aborted\n",
 			__func__, OV5693_EXPOSURE_M);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_EXPOSURE_H, (exp_val >> 16) & 0x0F);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: write %x error, aborted\n",
 			__func__, OV5693_EXPOSURE_H);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Analog gain */
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_AGC_L, gain & 0xff);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: write %x error, aborted\n",
 			__func__, OV5693_AGC_L);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_AGC_H, (gain >> 8) & 0xff);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: write %x error, aborted\n",
 			__func__, OV5693_AGC_H);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Digital gain */
-	if (digitgain) {
-		ret = ov5693_write_reg(client, OV5693_16BIT,
+	अगर (digitgain) अणु
+		ret = ov5693_ग_लिखो_reg(client, OV5693_16BIT,
 				       OV5693_MWB_RED_GAIN_H, digitgain);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&client->dev, "%s: write %x error, aborted\n",
 				__func__, OV5693_MWB_RED_GAIN_H);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = ov5693_write_reg(client, OV5693_16BIT,
+		ret = ov5693_ग_लिखो_reg(client, OV5693_16BIT,
 				       OV5693_MWB_GREEN_GAIN_H, digitgain);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&client->dev, "%s: write %x error, aborted\n",
 				__func__, OV5693_MWB_RED_GAIN_H);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = ov5693_write_reg(client, OV5693_16BIT,
+		ret = ov5693_ग_लिखो_reg(client, OV5693_16BIT,
 				       OV5693_MWB_BLUE_GAIN_H, digitgain);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&client->dev, "%s: write %x error, aborted\n",
 				__func__, OV5693_MWB_RED_GAIN_H);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* End group */
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_GROUP_ACCESS, 0x10);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Delay launch group */
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_GROUP_ACCESS, 0xa0);
-	if (ret)
-		return ret;
-	return ret;
-}
+	अगर (ret)
+		वापस ret;
+	वापस ret;
+पूर्ण
 
-static int ov5693_set_exposure(struct v4l2_subdev *sd, int exposure,
-			       int gain, int digitgain)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	int ret;
+अटल पूर्णांक ov5693_set_exposure(काष्ठा v4l2_subdev *sd, पूर्णांक exposure,
+			       पूर्णांक gain, पूर्णांक digitgain)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	पूर्णांक ret;
 
 	mutex_lock(&dev->input_lock);
 	ret = __ov5693_set_exposure(sd, exposure, gain, digitgain);
 	mutex_unlock(&dev->input_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long ov5693_s_exposure(struct v4l2_subdev *sd,
-			      struct atomisp_exposure *exposure)
-{
-	u16 coarse_itg = exposure->integration_time[0];
+अटल दीर्घ ov5693_s_exposure(काष्ठा v4l2_subdev *sd,
+			      काष्ठा atomisp_exposure *exposure)
+अणु
+	u16 coarse_itg = exposure->पूर्णांकegration_समय[0];
 	u16 analog_gain = exposure->gain[0];
 	u16 digital_gain = exposure->gain[1];
 
 	/* we should not accept the invalid value below */
-	if (analog_gain == 0) {
-		struct i2c_client *client = v4l2_get_subdevdata(sd);
+	अगर (analog_gain == 0) अणु
+		काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 
 		v4l2_err(client, "%s: invalid value\n", __func__);
-		return -EINVAL;
-	}
-	return ov5693_set_exposure(sd, coarse_itg, analog_gain, digital_gain);
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस ov5693_set_exposure(sd, coarse_itg, analog_gain, digital_gain);
+पूर्ण
 
-static int ov5693_read_otp_reg_array(struct i2c_client *client, u16 size,
+अटल पूर्णांक ov5693_पढ़ो_otp_reg_array(काष्ठा i2c_client *client, u16 size,
 				     u16 addr, u8 *buf)
-{
+अणु
 	u16 index;
-	int ret;
-	u16 *pVal = NULL;
+	पूर्णांक ret;
+	u16 *pVal = शून्य;
 
-	for (index = 0; index <= size; index++) {
+	क्रम (index = 0; index <= size; index++) अणु
 		pVal = (u16 *)(buf + index);
 		ret =
-		    ov5693_read_reg(client, OV5693_8BIT, addr + index,
+		    ov5693_पढ़ो_reg(client, OV5693_8BIT, addr + index,
 				    pVal);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __ov5693_otp_read(struct v4l2_subdev *sd, u8 *buf)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	int ret;
-	int i;
+अटल पूर्णांक __ov5693_otp_पढ़ो(काष्ठा v4l2_subdev *sd, u8 *buf)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	पूर्णांक ret;
+	पूर्णांक i;
 	u8 *b = buf;
 
 	dev->otp_size = 0;
-	for (i = 1; i < OV5693_OTP_BANK_MAX; i++) {
-		/*set bank NO and OTP read mode. */
-		ret = ov5693_write_reg(client, OV5693_8BIT, OV5693_OTP_BANK_REG,
+	क्रम (i = 1; i < OV5693_OTP_BANK_MAX; i++) अणु
+		/*set bank NO and OTP पढ़ो mode. */
+		ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT, OV5693_OTP_BANK_REG,
 				       (i | 0xc0));	//[7:6] 2'b11 [5:0] bank no
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&client->dev, "failed to prepare OTP page\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		//pr_debug("write 0x%x->0x%x\n",OV5693_OTP_BANK_REG,(i|0xc0));
 
-		/*enable read */
-		ret = ov5693_write_reg(client, OV5693_8BIT, OV5693_OTP_READ_REG,
+		/*enable पढ़ो */
+		ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT, OV5693_OTP_READ_REG,
 				       OV5693_OTP_MODE_READ);	// enable :1
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&client->dev,
 				"failed to set OTP reading mode page");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		//pr_debug("write 0x%x->0x%x\n",OV5693_OTP_READ_REG,OV5693_OTP_MODE_READ);
 
 		/* Reading the OTP data array */
-		ret = ov5693_read_otp_reg_array(client, OV5693_OTP_BANK_SIZE,
+		ret = ov5693_पढ़ो_otp_reg_array(client, OV5693_OTP_BANK_SIZE,
 						OV5693_OTP_START_ADDR,
 						b);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&client->dev, "failed to read OTP data\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		//pr_debug("BANK[%2d] %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n", i, *b, *(b+1), *(b+2), *(b+3), *(b+4), *(b+5), *(b+6), *(b+7), *(b+8), *(b+9), *(b+10), *(b+11), *(b+12), *(b+13), *(b+14), *(b+15));
 
-		//Intel OTP map, try to read 320byts first.
-		if (i == 21) {
-			if ((*b) == 0) {
+		//Intel OTP map, try to पढ़ो 320byts first.
+		अगर (i == 21) अणु
+			अगर ((*b) == 0) अणु
 				dev->otp_size = 320;
-				break;
-			} else {
+				अवरोध;
+			पूर्ण अन्यथा अणु
 				b = buf;
-				continue;
-			}
-		} else if (i ==
-			   24) {		//if the first 320bytes data doesn't not exist, try to read the next 32bytes data.
-			if ((*b) == 0) {
+				जारी;
+			पूर्ण
+		पूर्ण अन्यथा अगर (i ==
+			   24) अणु		//अगर the first 320bytes data करोesn't not exist, try to पढ़ो the next 32bytes data.
+			अगर ((*b) == 0) अणु
 				dev->otp_size = 32;
-				break;
-			} else {
+				अवरोध;
+			पूर्ण अन्यथा अणु
 				b = buf;
-				continue;
-			}
-		} else if (i ==
-			   27) {		//if the prvious 32bytes data doesn't exist, try to read the next 32bytes data again.
-			if ((*b) == 0) {
+				जारी;
+			पूर्ण
+		पूर्ण अन्यथा अगर (i ==
+			   27) अणु		//अगर the prvious 32bytes data करोesn't exist, try to पढ़ो the next 32bytes data again.
+			अगर ((*b) == 0) अणु
 				dev->otp_size = 32;
-				break;
-			} else {
+				अवरोध;
+			पूर्ण अन्यथा अणु
 				dev->otp_size = 0;	// no OTP data.
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		b = b + OV5693_OTP_BANK_SIZE;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Read otp data and store it into a kmalloced buffer.
- * The caller must kfree the buffer when no more needed.
- * @size: set to the size of the returned otp data.
+ * Read otp data and store it पूर्णांकo a kदो_स्मृतिed buffer.
+ * The caller must kमुक्त the buffer when no more needed.
+ * @size: set to the size of the वापसed otp data.
  */
-static void *ov5693_otp_read(struct v4l2_subdev *sd)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+अटल व्योम *ov5693_otp_पढ़ो(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 	u8 *buf;
-	int ret;
+	पूर्णांक ret;
 
 	buf = devm_kzalloc(&client->dev, (OV5693_OTP_DATA_SIZE + 16), GFP_KERNEL);
-	if (!buf)
-		return ERR_PTR(-ENOMEM);
+	अगर (!buf)
+		वापस ERR_PTR(-ENOMEM);
 
 	//otp valid after mipi on and sw stream on
-	ret = ov5693_write_reg(client, OV5693_8BIT, OV5693_FRAME_OFF_NUM, 0x00);
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT, OV5693_FRAME_OFF_NUM, 0x00);
 
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_SW_STREAM, OV5693_START_STREAMING);
 
-	ret = __ov5693_otp_read(sd, buf);
+	ret = __ov5693_otp_पढ़ो(sd, buf);
 
-	//mipi off and sw stream off after otp read
-	ret = ov5693_write_reg(client, OV5693_8BIT, OV5693_FRAME_OFF_NUM, 0x0f);
+	//mipi off and sw stream off after otp पढ़ो
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT, OV5693_FRAME_OFF_NUM, 0x0f);
 
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_SW_STREAM, OV5693_STOP_STREAMING);
 
 	/* Driver has failed to find valid data */
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "sensor found no valid OTP data\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static int ov5693_g_priv_int_data(struct v4l2_subdev *sd,
-				  struct v4l2_private_int_data *priv)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक ov5693_g_priv_पूर्णांक_data(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_निजी_पूर्णांक_data *priv)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 	u8 __user *to = priv->data;
-	u32 read_size = priv->size;
-	int ret;
+	u32 पढ़ो_size = priv->size;
+	पूर्णांक ret;
 
-	/* No need to copy data if size is 0 */
-	if (!read_size)
-		goto out;
+	/* No need to copy data अगर size is 0 */
+	अगर (!पढ़ो_size)
+		जाओ out;
 
-	if (IS_ERR(dev->otp_data)) {
+	अगर (IS_ERR(dev->otp_data)) अणु
 		dev_err(&client->dev, "OTP data not available");
-		return PTR_ERR(dev->otp_data);
-	}
+		वापस PTR_ERR(dev->otp_data);
+	पूर्ण
 
-	/* Correct read_size value only if bigger than maximum */
-	if (read_size > OV5693_OTP_DATA_SIZE)
-		read_size = OV5693_OTP_DATA_SIZE;
+	/* Correct पढ़ो_size value only अगर bigger than maximum */
+	अगर (पढ़ो_size > OV5693_OTP_DATA_SIZE)
+		पढ़ो_size = OV5693_OTP_DATA_SIZE;
 
-	ret = copy_to_user(to, dev->otp_data, read_size);
-	if (ret) {
+	ret = copy_to_user(to, dev->otp_data, पढ़ो_size);
+	अगर (ret) अणु
 		dev_err(&client->dev, "%s: failed to copy OTP data to user\n",
 			__func__);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	pr_debug("%s read_size:%d\n", __func__, read_size);
+	pr_debug("%s read_size:%d\n", __func__, पढ़ो_size);
 
 out:
 	/* Return correct size */
 	priv->size = dev->otp_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long ov5693_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
-{
-	switch (cmd) {
-	case ATOMISP_IOC_S_EXPOSURE:
-		return ov5693_s_exposure(sd, arg);
-	case ATOMISP_IOC_G_SENSOR_PRIV_INT_DATA:
-		return ov5693_g_priv_int_data(sd, arg);
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+अटल दीर्घ ov5693_ioctl(काष्ठा v4l2_subdev *sd, अचिन्हित पूर्णांक cmd, व्योम *arg)
+अणु
+	चयन (cmd) अणु
+	हाल ATOMISP_IOC_S_EXPOSURE:
+		वापस ov5693_s_exposure(sd, arg);
+	हाल ATOMISP_IOC_G_SENSOR_PRIV_INT_DATA:
+		वापस ov5693_g_priv_पूर्णांक_data(sd, arg);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * This returns the exposure time being used. This should only be used
- * for filling in EXIF data, not for actual image processing.
+ * This वापसs the exposure समय being used. This should only be used
+ * क्रम filling in EXIF data, not क्रम actual image processing.
  */
-static int ov5693_q_exposure(struct v4l2_subdev *sd, s32 *value)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+अटल पूर्णांक ov5693_q_exposure(काष्ठा v4l2_subdev *sd, s32 *value)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 	u16 reg_v, reg_v2;
-	int ret;
+	पूर्णांक ret;
 
 	/* get exposure */
-	ret = ov5693_read_reg(client, OV5693_8BIT,
+	ret = ov5693_पढ़ो_reg(client, OV5693_8BIT,
 			      OV5693_EXPOSURE_L,
 			      &reg_v);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	ret = ov5693_read_reg(client, OV5693_8BIT,
+	ret = ov5693_पढ़ो_reg(client, OV5693_8BIT,
 			      OV5693_EXPOSURE_M,
 			      &reg_v2);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	reg_v += reg_v2 << 8;
-	ret = ov5693_read_reg(client, OV5693_8BIT,
+	ret = ov5693_पढ़ो_reg(client, OV5693_8BIT,
 			      OV5693_EXPOSURE_H,
 			      &reg_v2);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	*value = reg_v + (((u32)reg_v2 << 16));
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ad5823_t_focus_vcm(struct v4l2_subdev *sd, u16 val)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret = -EINVAL;
+अटल पूर्णांक ad5823_t_focus_vcm(काष्ठा v4l2_subdev *sd, u16 val)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret = -EINVAL;
 	u8 vcm_code;
 
-	ret = ad5823_i2c_read(client, AD5823_REG_VCM_CODE_MSB, &vcm_code);
-	if (ret)
-		return ret;
+	ret = ad5823_i2c_पढ़ो(client, AD5823_REG_VCM_CODE_MSB, &vcm_code);
+	अगर (ret)
+		वापस ret;
 
 	/* set reg VCM_CODE_MSB Bit[1:0] */
 	vcm_code = (vcm_code & VCM_CODE_MSB_MASK) |
 		   ((val >> 8) & ~VCM_CODE_MSB_MASK);
-	ret = ad5823_i2c_write(client, AD5823_REG_VCM_CODE_MSB, vcm_code);
-	if (ret)
-		return ret;
+	ret = ad5823_i2c_ग_लिखो(client, AD5823_REG_VCM_CODE_MSB, vcm_code);
+	अगर (ret)
+		वापस ret;
 
 	/* set reg VCM_CODE_LSB Bit[7:0] */
-	ret = ad5823_i2c_write(client, AD5823_REG_VCM_CODE_LSB, (val & 0xff));
-	if (ret)
-		return ret;
+	ret = ad5823_i2c_ग_लिखो(client, AD5823_REG_VCM_CODE_LSB, (val & 0xff));
+	अगर (ret)
+		वापस ret;
 
-	/* set required vcm move time */
-	vcm_code = AD5823_RESONANCE_PERIOD / AD5823_RESONANCE_COEF
+	/* set required vcm move समय */
+	vcm_code = AD5823_RESOन_अंकCE_PERIOD / AD5823_RESOन_अंकCE_COEF
 		   - AD5823_HIGH_FREQ_RANGE;
-	ret = ad5823_i2c_write(client, AD5823_REG_VCM_MOVE_TIME, vcm_code);
+	ret = ad5823_i2c_ग_लिखो(client, AD5823_REG_VCM_MOVE_TIME, vcm_code);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ad5823_t_focus_abs(struct v4l2_subdev *sd, s32 value)
-{
+अटल पूर्णांक ad5823_t_focus_असल(काष्ठा v4l2_subdev *sd, s32 value)
+अणु
 	value = min(value, AD5823_MAX_FOCUS_POS);
-	return ad5823_t_focus_vcm(sd, value);
-}
+	वापस ad5823_t_focus_vcm(sd, value);
+पूर्ण
 
-static int ov5693_t_focus_abs(struct v4l2_subdev *sd, s32 value)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret = 0;
+अटल पूर्णांक ov5693_t_focus_असल(काष्ठा v4l2_subdev *sd, s32 value)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret = 0;
 
 	dev_dbg(&client->dev, "%s: FOCUS_POS: 0x%x\n", __func__, value);
 	value = clamp(value, 0, OV5693_VCM_MAX_FOCUS_POS);
-	if (dev->vcm == VCM_DW9714) {
-		if (dev->vcm_update) {
-			ret = vcm_dw_i2c_write(client, VCM_PROTECTION_OFF);
-			if (ret)
-				return ret;
-			ret = vcm_dw_i2c_write(client, DIRECT_VCM);
-			if (ret)
-				return ret;
-			ret = vcm_dw_i2c_write(client, VCM_PROTECTION_ON);
-			if (ret)
-				return ret;
+	अगर (dev->vcm == VCM_DW9714) अणु
+		अगर (dev->vcm_update) अणु
+			ret = vcm_dw_i2c_ग_लिखो(client, VCM_PROTECTION_OFF);
+			अगर (ret)
+				वापस ret;
+			ret = vcm_dw_i2c_ग_लिखो(client, सूचीECT_VCM);
+			अगर (ret)
+				वापस ret;
+			ret = vcm_dw_i2c_ग_लिखो(client, VCM_PROTECTION_ON);
+			अगर (ret)
+				वापस ret;
 			dev->vcm_update = false;
-		}
-		ret = vcm_dw_i2c_write(client,
+		पूर्ण
+		ret = vcm_dw_i2c_ग_लिखो(client,
 				       vcm_val(value, VCM_DEFAULT_S));
-	} else if (dev->vcm == VCM_AD5823) {
-		ad5823_t_focus_abs(sd, value);
-	}
-	if (ret == 0) {
+	पूर्ण अन्यथा अगर (dev->vcm == VCM_AD5823) अणु
+		ad5823_t_focus_असल(sd, value);
+	पूर्ण
+	अगर (ret == 0) अणु
 		dev->number_of_steps = value - dev->focus;
 		dev->focus = value;
-		dev->timestamp_t_focus_abs = ktime_get();
-	} else
+		dev->बारtamp_t_focus_असल = kसमय_get();
+	पूर्ण अन्यथा
 		dev_err(&client->dev,
 			"%s: i2c failed. ret %d\n", __func__, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ov5693_t_focus_rel(struct v4l2_subdev *sd, s32 value)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक ov5693_t_focus_rel(काष्ठा v4l2_subdev *sd, s32 value)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 
-	return ov5693_t_focus_abs(sd, dev->focus + value);
-}
+	वापस ov5693_t_focus_असल(sd, dev->focus + value);
+पूर्ण
 
-#define DELAY_PER_STEP_NS	1000000
-#define DELAY_MAX_PER_STEP_NS	(1000000 * 1023)
-static int ov5693_q_focus_status(struct v4l2_subdev *sd, s32 *value)
-{
+#घोषणा DELAY_PER_STEP_NS	1000000
+#घोषणा DELAY_MAX_PER_STEP_NS	(1000000 * 1023)
+अटल पूर्णांक ov5693_q_focus_status(काष्ठा v4l2_subdev *sd, s32 *value)
+अणु
 	u32 status = 0;
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	ktime_t temptime;
-	ktime_t timedelay = ns_to_ktime(min_t(u32,
-					      abs(dev->number_of_steps) * DELAY_PER_STEP_NS,
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	kसमय_प्रकार tempसमय;
+	kसमय_प्रकार समयdelay = ns_to_kसमय(min_t(u32,
+					      असल(dev->number_of_steps) * DELAY_PER_STEP_NS,
 					      DELAY_MAX_PER_STEP_NS));
 
-	temptime = ktime_sub(ktime_get(), (dev->timestamp_t_focus_abs));
-	if (ktime_compare(temptime, timedelay) <= 0) {
+	tempसमय = kसमय_sub(kसमय_get(), (dev->बारtamp_t_focus_असल));
+	अगर (kसमय_compare(tempसमय, समयdelay) <= 0) अणु
 		status |= ATOMISP_FOCUS_STATUS_MOVING;
 		status |= ATOMISP_FOCUS_HP_IN_PROGRESS;
-	} else {
+	पूर्ण अन्यथा अणु
 		status |= ATOMISP_FOCUS_STATUS_ACCEPTS_NEW_MOVE;
 		status |= ATOMISP_FOCUS_HP_COMPLETE;
-	}
+	पूर्ण
 
 	*value = status;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_q_focus_abs(struct v4l2_subdev *sd, s32 *value)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक ov5693_q_focus_असल(काष्ठा v4l2_subdev *sd, s32 *value)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 	s32 val;
 
 	ov5693_q_focus_status(sd, &val);
 
-	if (val & ATOMISP_FOCUS_STATUS_MOVING)
+	अगर (val & ATOMISP_FOCUS_STATUS_MOVING)
 		*value  = dev->focus - dev->number_of_steps;
-	else
+	अन्यथा
 		*value  = dev->focus;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_t_vcm_slew(struct v4l2_subdev *sd, s32 value)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-
-	dev->number_of_steps = value;
-	dev->vcm_update = true;
-	return 0;
-}
-
-static int ov5693_t_vcm_timing(struct v4l2_subdev *sd, s32 value)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक ov5693_t_vcm_slew(काष्ठा v4l2_subdev *sd, s32 value)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 
 	dev->number_of_steps = value;
 	dev->vcm_update = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct ov5693_device *dev =
-	    container_of(ctrl->handler, struct ov5693_device, ctrl_handler);
-	struct i2c_client *client = v4l2_get_subdevdata(&dev->sd);
-	int ret = 0;
+अटल पूर्णांक ov5693_t_vcm_timing(काष्ठा v4l2_subdev *sd, s32 value)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 
-	switch (ctrl->id) {
-	case V4L2_CID_FOCUS_ABSOLUTE:
+	dev->number_of_steps = value;
+	dev->vcm_update = true;
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक ov5693_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा ov5693_device *dev =
+	    container_of(ctrl->handler, काष्ठा ov5693_device, ctrl_handler);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&dev->sd);
+	पूर्णांक ret = 0;
+
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_FOCUS_ABSOLUTE:
 		dev_dbg(&client->dev, "%s: CID_FOCUS_ABSOLUTE:%d.\n",
 			__func__, ctrl->val);
-		ret = ov5693_t_focus_abs(&dev->sd, ctrl->val);
-		break;
-	case V4L2_CID_FOCUS_RELATIVE:
+		ret = ov5693_t_focus_असल(&dev->sd, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_FOCUS_RELATIVE:
 		dev_dbg(&client->dev, "%s: CID_FOCUS_RELATIVE:%d.\n",
 			__func__, ctrl->val);
 		ret = ov5693_t_focus_rel(&dev->sd, ctrl->val);
-		break;
-	case V4L2_CID_VCM_SLEW:
+		अवरोध;
+	हाल V4L2_CID_VCM_SLEW:
 		ret = ov5693_t_vcm_slew(&dev->sd, ctrl->val);
-		break;
-	case V4L2_CID_VCM_TIMING:
+		अवरोध;
+	हाल V4L2_CID_VCM_TIMING:
 		ret = ov5693_t_vcm_timing(&dev->sd, ctrl->val);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ov5693_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct ov5693_device *dev =
-	    container_of(ctrl->handler, struct ov5693_device, ctrl_handler);
-	int ret = 0;
+अटल पूर्णांक ov5693_g_अस्थिर_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा ov5693_device *dev =
+	    container_of(ctrl->handler, काष्ठा ov5693_device, ctrl_handler);
+	पूर्णांक ret = 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_EXPOSURE_ABSOLUTE:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_EXPOSURE_ABSOLUTE:
 		ret = ov5693_q_exposure(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FOCAL_ABSOLUTE:
+		अवरोध;
+	हाल V4L2_CID_FOCAL_ABSOLUTE:
 		ret = ov5693_g_focal(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FNUMBER_ABSOLUTE:
+		अवरोध;
+	हाल V4L2_CID_FNUMBER_ABSOLUTE:
 		ret = ov5693_g_fnumber(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FNUMBER_RANGE:
+		अवरोध;
+	हाल V4L2_CID_FNUMBER_RANGE:
 		ret = ov5693_g_fnumber_range(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FOCUS_ABSOLUTE:
-		ret = ov5693_q_focus_abs(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FOCUS_STATUS:
+		अवरोध;
+	हाल V4L2_CID_FOCUS_ABSOLUTE:
+		ret = ov5693_q_focus_असल(&dev->sd, &ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_FOCUS_STATUS:
 		ret = ov5693_q_focus_status(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_BIN_FACTOR_HORZ:
+		अवरोध;
+	हाल V4L2_CID_BIN_FACTOR_HORZ:
 		ret = ov5693_g_bin_factor_x(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_BIN_FACTOR_VERT:
+		अवरोध;
+	हाल V4L2_CID_BIN_FACTOR_VERT:
 		ret = ov5693_g_bin_factor_y(&dev->sd, &ctrl->val);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_ctrl_ops ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops ctrl_ops = अणु
 	.s_ctrl = ov5693_s_ctrl,
-	.g_volatile_ctrl = ov5693_g_volatile_ctrl
-};
+	.g_अस्थिर_ctrl = ov5693_g_अस्थिर_ctrl
+पूर्ण;
 
-static const struct v4l2_ctrl_config ov5693_controls[] = {
-	{
+अटल स्थिर काष्ठा v4l2_ctrl_config ov5693_controls[] = अणु
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_EXPOSURE_ABSOLUTE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -1151,8 +1152,8 @@ static const struct v4l2_ctrl_config ov5693_controls[] = {
 		.step = 0x01,
 		.def = 0x00,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FOCAL_ABSOLUTE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -1162,8 +1163,8 @@ static const struct v4l2_ctrl_config ov5693_controls[] = {
 		.step = 0x01,
 		.def = OV5693_FOCAL_LENGTH_DEFAULT,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FNUMBER_ABSOLUTE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -1173,8 +1174,8 @@ static const struct v4l2_ctrl_config ov5693_controls[] = {
 		.step = 0x01,
 		.def = OV5693_F_NUMBER_DEFAULT,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FNUMBER_RANGE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -1184,8 +1185,8 @@ static const struct v4l2_ctrl_config ov5693_controls[] = {
 		.step = 0x01,
 		.def = OV5693_F_NUMBER_RANGE,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FOCUS_ABSOLUTE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -1195,8 +1196,8 @@ static const struct v4l2_ctrl_config ov5693_controls[] = {
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FOCUS_RELATIVE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -1206,19 +1207,19 @@ static const struct v4l2_ctrl_config ov5693_controls[] = {
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FOCUS_STATUS,
 		.type = V4L2_CTRL_TYPE_INTEGER,
 		.name = "focus status",
 		.min = 0,
-		.max = 100,		/* allow enum to grow in the future */
+		.max = 100,		/* allow क्रमागत to grow in the future */
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_VCM_SLEW,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -1228,8 +1229,8 @@ static const struct v4l2_ctrl_config ov5693_controls[] = {
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_VCM_TIMING,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -1239,8 +1240,8 @@ static const struct v4l2_ctrl_config ov5693_controls[] = {
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_BIN_FACTOR_HORZ,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -1250,8 +1251,8 @@ static const struct v4l2_ctrl_config ov5693_controls[] = {
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_BIN_FACTOR_VERT,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -1261,208 +1262,208 @@ static const struct v4l2_ctrl_config ov5693_controls[] = {
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int ov5693_init(struct v4l2_subdev *sd)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret;
+अटल पूर्णांक ov5693_init(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret;
 
 	pr_info("%s\n", __func__);
 	mutex_lock(&dev->input_lock);
 	dev->vcm_update = false;
 
-	if (dev->vcm == VCM_AD5823) {
+	अगर (dev->vcm == VCM_AD5823) अणु
 		ret = vcm_ad_i2c_wr8(client, 0x01, 0x01); /* vcm init test */
-		if (ret)
+		अगर (ret)
 			dev_err(&client->dev,
 				"vcm reset failed\n");
 		/*change the mode*/
-		ret = ad5823_i2c_write(client, AD5823_REG_VCM_CODE_MSB,
+		ret = ad5823_i2c_ग_लिखो(client, AD5823_REG_VCM_CODE_MSB,
 				       AD5823_RING_CTRL_ENABLE);
-		if (ret)
+		अगर (ret)
 			dev_err(&client->dev,
 				"vcm enable ringing failed\n");
-		ret = ad5823_i2c_write(client, AD5823_REG_MODE,
+		ret = ad5823_i2c_ग_लिखो(client, AD5823_REG_MODE,
 				       AD5823_ARC_RES1);
-		if (ret)
+		अगर (ret)
 			dev_err(&client->dev,
 				"vcm change mode failed\n");
-	}
+	पूर्ण
 
-	/*change initial focus value for ad5823*/
-	if (dev->vcm == VCM_AD5823) {
+	/*change initial focus value क्रम ad5823*/
+	अगर (dev->vcm == VCM_AD5823) अणु
 		dev->focus = AD5823_INIT_FOCUS_POS;
-		ov5693_t_focus_abs(sd, AD5823_INIT_FOCUS_POS);
-	} else {
+		ov5693_t_focus_असल(sd, AD5823_INIT_FOCUS_POS);
+	पूर्ण अन्यथा अणु
 		dev->focus = 0;
-		ov5693_t_focus_abs(sd, 0);
-	}
+		ov5693_t_focus_असल(sd, 0);
+	पूर्ण
 
 	mutex_unlock(&dev->input_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int power_ctrl(struct v4l2_subdev *sd, bool flag)
-{
-	int ret;
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक घातer_ctrl(काष्ठा v4l2_subdev *sd, bool flag)
+अणु
+	पूर्णांक ret;
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 
-	if (!dev || !dev->platform_data)
-		return -ENODEV;
+	अगर (!dev || !dev->platक्रमm_data)
+		वापस -ENODEV;
 
 	/*
 	 * This driver assumes "internal DVDD, PWDNB tied to DOVDD".
 	 * In this set up only gpio0 (XSHUTDN) should be available
-	 * but in some products (for example ECS) gpio1 (PWDNB) is
+	 * but in some products (क्रम example ECS) gpio1 (PWDNB) is
 	 * also available. If gpio1 is available we emulate it being
 	 * tied to DOVDD here.
 	 */
-	if (flag) {
-		ret = dev->platform_data->v2p8_ctrl(sd, 1);
-		dev->platform_data->gpio1_ctrl(sd, 1);
-		if (ret == 0) {
-			ret = dev->platform_data->v1p8_ctrl(sd, 1);
-			if (ret) {
-				dev->platform_data->gpio1_ctrl(sd, 0);
-				ret = dev->platform_data->v2p8_ctrl(sd, 0);
-			}
-		}
-	} else {
-		dev->platform_data->gpio1_ctrl(sd, 0);
-		ret = dev->platform_data->v1p8_ctrl(sd, 0);
-		ret |= dev->platform_data->v2p8_ctrl(sd, 0);
-	}
+	अगर (flag) अणु
+		ret = dev->platक्रमm_data->v2p8_ctrl(sd, 1);
+		dev->platक्रमm_data->gpio1_ctrl(sd, 1);
+		अगर (ret == 0) अणु
+			ret = dev->platक्रमm_data->v1p8_ctrl(sd, 1);
+			अगर (ret) अणु
+				dev->platक्रमm_data->gpio1_ctrl(sd, 0);
+				ret = dev->platक्रमm_data->v2p8_ctrl(sd, 0);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		dev->platक्रमm_data->gpio1_ctrl(sd, 0);
+		ret = dev->platक्रमm_data->v1p8_ctrl(sd, 0);
+		ret |= dev->platक्रमm_data->v2p8_ctrl(sd, 0);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gpio_ctrl(struct v4l2_subdev *sd, bool flag)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक gpio_ctrl(काष्ठा v4l2_subdev *sd, bool flag)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 
-	if (!dev || !dev->platform_data)
-		return -ENODEV;
+	अगर (!dev || !dev->platक्रमm_data)
+		वापस -ENODEV;
 
-	return dev->platform_data->gpio0_ctrl(sd, flag);
-}
+	वापस dev->platक्रमm_data->gpio0_ctrl(sd, flag);
+पूर्ण
 
-static int __power_up(struct v4l2_subdev *sd)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret;
+अटल पूर्णांक __घातer_up(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret;
 
-	if (!dev->platform_data) {
+	अगर (!dev->platक्रमm_data) अणु
 		dev_err(&client->dev,
 			"no camera_sensor_platform_data");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* power control */
-	ret = power_ctrl(sd, 1);
-	if (ret)
-		goto fail_power;
+	/* घातer control */
+	ret = घातer_ctrl(sd, 1);
+	अगर (ret)
+		जाओ fail_घातer;
 
 	/* according to DS, at least 5ms is needed between DOVDD and PWDN */
-	/* add this delay time to 10~11ms*/
+	/* add this delay समय to 10~11ms*/
 	usleep_range(10000, 11000);
 
 	/* gpio ctrl */
 	ret = gpio_ctrl(sd, 1);
-	if (ret) {
+	अगर (ret) अणु
 		ret = gpio_ctrl(sd, 1);
-		if (ret)
-			goto fail_power;
-	}
+		अगर (ret)
+			जाओ fail_घातer;
+	पूर्ण
 
-	/* flis clock control */
-	ret = dev->platform_data->flisclk_ctrl(sd, 1);
-	if (ret)
-		goto fail_clk;
+	/* flis घड़ी control */
+	ret = dev->platक्रमm_data->flisclk_ctrl(sd, 1);
+	अगर (ret)
+		जाओ fail_clk;
 
 	__cci_delay(up_delay);
 
-	return 0;
+	वापस 0;
 
 fail_clk:
 	gpio_ctrl(sd, 0);
-fail_power:
-	power_ctrl(sd, 0);
+fail_घातer:
+	घातer_ctrl(sd, 0);
 	dev_err(&client->dev, "sensor power-up failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int power_down(struct v4l2_subdev *sd)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret = 0;
+अटल पूर्णांक घातer_करोwn(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret = 0;
 
 	dev->focus = OV5693_INVALID_CONFIG;
-	if (!dev->platform_data) {
+	अगर (!dev->platक्रमm_data) अणु
 		dev_err(&client->dev,
 			"no camera_sensor_platform_data");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = dev->platform_data->flisclk_ctrl(sd, 0);
-	if (ret)
+	ret = dev->platक्रमm_data->flisclk_ctrl(sd, 0);
+	अगर (ret)
 		dev_err(&client->dev, "flisclk failed\n");
 
 	/* gpio ctrl */
 	ret = gpio_ctrl(sd, 0);
-	if (ret) {
+	अगर (ret) अणु
 		ret = gpio_ctrl(sd, 0);
-		if (ret)
+		अगर (ret)
 			dev_err(&client->dev, "gpio failed 2\n");
-	}
+	पूर्ण
 
-	/* power control */
-	ret = power_ctrl(sd, 0);
-	if (ret)
+	/* घातer control */
+	ret = घातer_ctrl(sd, 0);
+	अगर (ret)
 		dev_err(&client->dev, "vprog failed.\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int power_up(struct v4l2_subdev *sd)
-{
-	static const int retry_count = 4;
-	int i, ret;
+अटल पूर्णांक घातer_up(काष्ठा v4l2_subdev *sd)
+अणु
+	अटल स्थिर पूर्णांक retry_count = 4;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < retry_count; i++) {
-		ret = __power_up(sd);
-		if (!ret)
-			return 0;
+	क्रम (i = 0; i < retry_count; i++) अणु
+		ret = __घातer_up(sd);
+		अगर (!ret)
+			वापस 0;
 
-		power_down(sd);
-	}
-	return ret;
-}
+		घातer_करोwn(sd);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ov5693_s_power(struct v4l2_subdev *sd, int on)
-{
-	int ret;
+अटल पूर्णांक ov5693_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
+अणु
+	पूर्णांक ret;
 
 	pr_info("%s: on %d\n", __func__, on);
-	if (on == 0)
-		return power_down(sd);
-	else {
-		ret = power_up(sd);
-		if (!ret) {
+	अगर (on == 0)
+		वापस घातer_करोwn(sd);
+	अन्यथा अणु
+		ret = घातer_up(sd);
+		अगर (!ret) अणु
 			ret = ov5693_init(sd);
 			/* restore settings */
 			ov5693_res = ov5693_res_preview;
 			N_RES = N_RES_PREVIEW;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  * distance - calculate the distance
@@ -1474,197 +1475,197 @@ static int ov5693_s_power(struct v4l2_subdev *sd, int on)
  * distance = (res_w/res_h - w/h) / (w/h) * 8192
  * res->width/height smaller than w/h wouldn't be considered.
  * The gap of ratio larger than 1/8 wouldn't be considered.
- * Returns the value of gap or -1 if fail.
+ * Returns the value of gap or -1 अगर fail.
  */
-#define LARGEST_ALLOWED_RATIO_MISMATCH 1024
-static int distance(struct ov5693_resolution *res, u32 w, u32 h)
-{
-	int ratio;
-	int distance;
+#घोषणा LARGEST_ALLOWED_RATIO_MISMATCH 1024
+अटल पूर्णांक distance(काष्ठा ov5693_resolution *res, u32 w, u32 h)
+अणु
+	पूर्णांक ratio;
+	पूर्णांक distance;
 
-	if (w == 0 || h == 0 ||
+	अगर (w == 0 || h == 0 ||
 	    res->width < w || res->height < h)
-		return -1;
+		वापस -1;
 
 	ratio = res->width << 13;
 	ratio /= w;
 	ratio *= h;
 	ratio /= res->height;
 
-	distance = abs(ratio - 8192);
+	distance = असल(ratio - 8192);
 
-	if (distance > LARGEST_ALLOWED_RATIO_MISMATCH)
-		return -1;
+	अगर (distance > LARGEST_ALLOWED_RATIO_MISMATCH)
+		वापस -1;
 
-	return distance;
-}
+	वापस distance;
+पूर्ण
 
 /* Return the nearest higher resolution index
  * Firstly try to find the approximate aspect ratio resolution
  * If we find multiple same AR resolutions, choose the
  * minimal size.
  */
-static int nearest_resolution_index(int w, int h)
-{
-	int i;
-	int idx = -1;
-	int dist;
-	int min_dist = INT_MAX;
-	int min_res_w = INT_MAX;
-	struct ov5693_resolution *tmp_res = NULL;
+अटल पूर्णांक nearest_resolution_index(पूर्णांक w, पूर्णांक h)
+अणु
+	पूर्णांक i;
+	पूर्णांक idx = -1;
+	पूर्णांक dist;
+	पूर्णांक min_dist = पूर्णांक_उच्च;
+	पूर्णांक min_res_w = पूर्णांक_उच्च;
+	काष्ठा ov5693_resolution *पंचांगp_res = शून्य;
 
-	for (i = 0; i < N_RES; i++) {
-		tmp_res = &ov5693_res[i];
-		dist = distance(tmp_res, w, h);
-		if (dist == -1)
-			continue;
-		if (dist < min_dist) {
+	क्रम (i = 0; i < N_RES; i++) अणु
+		पंचांगp_res = &ov5693_res[i];
+		dist = distance(पंचांगp_res, w, h);
+		अगर (dist == -1)
+			जारी;
+		अगर (dist < min_dist) अणु
 			min_dist = dist;
 			idx = i;
 			min_res_w = ov5693_res[i].width;
-			continue;
-		}
-		if (dist == min_dist && ov5693_res[i].width < min_res_w)
+			जारी;
+		पूर्ण
+		अगर (dist == min_dist && ov5693_res[i].width < min_res_w)
 			idx = i;
-	}
+	पूर्ण
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static int get_resolution_index(int w, int h)
-{
-	int i;
+अटल पूर्णांक get_resolution_index(पूर्णांक w, पूर्णांक h)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < N_RES; i++) {
-		if (w != ov5693_res[i].width)
-			continue;
-		if (h != ov5693_res[i].height)
-			continue;
+	क्रम (i = 0; i < N_RES; i++) अणु
+		अगर (w != ov5693_res[i].width)
+			जारी;
+		अगर (h != ov5693_res[i].height)
+			जारी;
 
-		return i;
-	}
+		वापस i;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-/* TODO: remove it. */
-static int startup(struct v4l2_subdev *sd)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret = 0;
+/* TODO: हटाओ it. */
+अटल पूर्णांक startup(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret = 0;
 
-	ret = ov5693_write_reg(client, OV5693_8BIT,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT,
 			       OV5693_SW_RESET, 0x01);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "ov5693 reset err.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ov5693_write_reg_array(client, ov5693_global_setting);
-	if (ret) {
+	ret = ov5693_ग_लिखो_reg_array(client, ov5693_global_setting);
+	अगर (ret) अणु
 		dev_err(&client->dev, "ov5693 write register err.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ov5693_write_reg_array(client, ov5693_res[dev->fmt_idx].regs);
-	if (ret) {
+	ret = ov5693_ग_लिखो_reg_array(client, ov5693_res[dev->fmt_idx].regs);
+	अगर (ret) अणु
 		dev_err(&client->dev, "ov5693 write register err.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ov5693_set_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
-			  struct v4l2_subdev_format *format)
-{
-	struct v4l2_mbus_framefmt *fmt = &format->format;
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct camera_mipi_info *ov5693_info = NULL;
-	int ret = 0;
-	int idx;
+अटल पूर्णांक ov5693_set_fmt(काष्ठा v4l2_subdev *sd,
+			  काष्ठा v4l2_subdev_pad_config *cfg,
+			  काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
+अणु
+	काष्ठा v4l2_mbus_framefmt *fmt = &क्रमmat->क्रमmat;
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा camera_mipi_info *ov5693_info = शून्य;
+	पूर्णांक ret = 0;
+	पूर्णांक idx;
 
-	if (format->pad)
-		return -EINVAL;
-	if (!fmt)
-		return -EINVAL;
+	अगर (क्रमmat->pad)
+		वापस -EINVAL;
+	अगर (!fmt)
+		वापस -EINVAL;
 	ov5693_info = v4l2_get_subdev_hostdata(sd);
-	if (!ov5693_info)
-		return -EINVAL;
+	अगर (!ov5693_info)
+		वापस -EINVAL;
 
 	mutex_lock(&dev->input_lock);
 	idx = nearest_resolution_index(fmt->width, fmt->height);
-	if (idx == -1) {
-		/* return the largest resolution */
+	अगर (idx == -1) अणु
+		/* वापस the largest resolution */
 		fmt->width = ov5693_res[N_RES - 1].width;
 		fmt->height = ov5693_res[N_RES - 1].height;
-	} else {
+	पूर्ण अन्यथा अणु
 		fmt->width = ov5693_res[idx].width;
 		fmt->height = ov5693_res[idx].height;
-	}
+	पूर्ण
 
 	fmt->code = MEDIA_BUS_FMT_SBGGR10_1X10;
-	if (format->which == V4L2_SUBDEV_FORMAT_TRY) {
+	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_TRY) अणु
 		cfg->try_fmt = *fmt;
 		mutex_unlock(&dev->input_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev->fmt_idx = get_resolution_index(fmt->width, fmt->height);
-	if (dev->fmt_idx == -1) {
+	अगर (dev->fmt_idx == -1) अणु
 		dev_err(&client->dev, "get resolution fail\n");
 		mutex_unlock(&dev->input_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = startup(sd);
-	if (ret) {
-		int i = 0;
+	अगर (ret) अणु
+		पूर्णांक i = 0;
 
 		dev_err(&client->dev, "ov5693 startup err, retry to power up\n");
-		for (i = 0; i < OV5693_POWER_UP_RETRY_NUM; i++) {
+		क्रम (i = 0; i < OV5693_POWER_UP_RETRY_NUM; i++) अणु
 			dev_err(&client->dev,
 				"ov5693 retry to power up %d/%d times, result: ",
 				i + 1, OV5693_POWER_UP_RETRY_NUM);
-			power_down(sd);
-			ret = power_up(sd);
-			if (!ret) {
+			घातer_करोwn(sd);
+			ret = घातer_up(sd);
+			अगर (!ret) अणु
 				mutex_unlock(&dev->input_lock);
 				ov5693_init(sd);
 				mutex_lock(&dev->input_lock);
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_err(&client->dev, "power up failed, continue\n");
-				continue;
-			}
+				जारी;
+			पूर्ण
 			ret = startup(sd);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(&client->dev, " startup FAILED!\n");
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_err(&client->dev, " startup SUCCESS!\n");
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * After sensor settings are set to HW, sometimes stream is started.
-	 * This would cause ISP timeout because ISP is not ready to receive
+	 * After sensor settings are set to HW, someबार stream is started.
+	 * This would cause ISP समयout because ISP is not पढ़ोy to receive
 	 * data yet. So add stop streaming here.
 	 */
-	ret = ov5693_write_reg(client, OV5693_8BIT, OV5693_SW_STREAM,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT, OV5693_SW_STREAM,
 			       OV5693_STOP_STREAMING);
-	if (ret)
+	अगर (ret)
 		dev_warn(&client->dev, "ov5693 stream off err\n");
 
-	ret = ov5693_get_intg_factor(client, ov5693_info,
+	ret = ov5693_get_पूर्णांकg_factor(client, ov5693_info,
 				     &ov5693_res[dev->fmt_idx]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "failed to get integration_factor\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ov5693_info->metadata_width = fmt->width * 10 / 8;
 	ov5693_info->metadata_height = 1;
@@ -1672,326 +1673,326 @@ static int ov5693_set_fmt(struct v4l2_subdev *sd,
 
 err:
 	mutex_unlock(&dev->input_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ov5693_get_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
-			  struct v4l2_subdev_format *format)
-{
-	struct v4l2_mbus_framefmt *fmt = &format->format;
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक ov5693_get_fmt(काष्ठा v4l2_subdev *sd,
+			  काष्ठा v4l2_subdev_pad_config *cfg,
+			  काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
+अणु
+	काष्ठा v4l2_mbus_framefmt *fmt = &क्रमmat->क्रमmat;
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 
-	if (format->pad)
-		return -EINVAL;
+	अगर (क्रमmat->pad)
+		वापस -EINVAL;
 
-	if (!fmt)
-		return -EINVAL;
+	अगर (!fmt)
+		वापस -EINVAL;
 
 	fmt->width = ov5693_res[dev->fmt_idx].width;
 	fmt->height = ov5693_res[dev->fmt_idx].height;
 	fmt->code = MEDIA_BUS_FMT_SBGGR10_1X10;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_detect(struct i2c_client *client)
-{
-	struct i2c_adapter *adapter = client->adapter;
+अटल पूर्णांक ov5693_detect(काष्ठा i2c_client *client)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
 	u16 high, low;
-	int ret;
+	पूर्णांक ret;
 	u16 id;
 	u8 revision;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_I2C))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_I2C))
+		वापस -ENODEV;
 
-	ret = ov5693_read_reg(client, OV5693_8BIT,
+	ret = ov5693_पढ़ो_reg(client, OV5693_8BIT,
 			      OV5693_SC_CMMN_CHIP_ID_H, &high);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "sensor_id_high = 0x%x\n", high);
-		return -ENODEV;
-	}
-	ret = ov5693_read_reg(client, OV5693_8BIT,
+		वापस -ENODEV;
+	पूर्ण
+	ret = ov5693_पढ़ो_reg(client, OV5693_8BIT,
 			      OV5693_SC_CMMN_CHIP_ID_L, &low);
 	id = ((((u16)high) << 8) | (u16)low);
 
-	if (id != OV5693_ID) {
+	अगर (id != OV5693_ID) अणु
 		dev_err(&client->dev, "sensor ID error 0x%x\n", id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = ov5693_read_reg(client, OV5693_8BIT,
+	ret = ov5693_पढ़ो_reg(client, OV5693_8BIT,
 			      OV5693_SC_CMMN_SUB_ID, &high);
 	revision = (u8)high & 0x0f;
 
 	dev_dbg(&client->dev, "sensor_revision = 0x%x\n", revision);
 	dev_dbg(&client->dev, "detect ov5693 success\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_s_stream(struct v4l2_subdev *sd, int enable)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret;
+अटल पूर्णांक ov5693_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret;
 
 	mutex_lock(&dev->input_lock);
 
-	ret = ov5693_write_reg(client, OV5693_8BIT, OV5693_SW_STREAM,
+	ret = ov5693_ग_लिखो_reg(client, OV5693_8BIT, OV5693_SW_STREAM,
 			       enable ? OV5693_START_STREAMING :
 			       OV5693_STOP_STREAMING);
 
 	mutex_unlock(&dev->input_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ov5693_s_config(struct v4l2_subdev *sd,
-			   int irq, void *platform_data)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret = 0;
+अटल पूर्णांक ov5693_s_config(काष्ठा v4l2_subdev *sd,
+			   पूर्णांक irq, व्योम *platक्रमm_data)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret = 0;
 
-	if (!platform_data)
-		return -ENODEV;
+	अगर (!platक्रमm_data)
+		वापस -ENODEV;
 
-	dev->platform_data =
-	    (struct camera_sensor_platform_data *)platform_data;
+	dev->platक्रमm_data =
+	    (काष्ठा camera_sensor_platक्रमm_data *)platक्रमm_data;
 
 	mutex_lock(&dev->input_lock);
-	/* power off the module, then power on it in future
-	 * as first power on by board may not fulfill the
-	 * power on sequqence needed by the module
+	/* घातer off the module, then घातer on it in future
+	 * as first घातer on by board may not fulfill the
+	 * घातer on sequqence needed by the module
 	 */
-	ret = power_down(sd);
-	if (ret) {
+	ret = घातer_करोwn(sd);
+	अगर (ret) अणु
 		dev_err(&client->dev, "ov5693 power-off err.\n");
-		goto fail_power_off;
-	}
+		जाओ fail_घातer_off;
+	पूर्ण
 
-	ret = power_up(sd);
-	if (ret) {
+	ret = घातer_up(sd);
+	अगर (ret) अणु
 		dev_err(&client->dev, "ov5693 power-up err.\n");
-		goto fail_power_on;
-	}
+		जाओ fail_घातer_on;
+	पूर्ण
 
-	if (!dev->vcm)
+	अगर (!dev->vcm)
 		dev->vcm = vcm_detect(client);
 
-	ret = dev->platform_data->csi_cfg(sd, 1);
-	if (ret)
-		goto fail_csi_cfg;
+	ret = dev->platक्रमm_data->csi_cfg(sd, 1);
+	अगर (ret)
+		जाओ fail_csi_cfg;
 
 	/* config & detect sensor */
 	ret = ov5693_detect(client);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "ov5693_detect err s_config.\n");
-		goto fail_csi_cfg;
-	}
+		जाओ fail_csi_cfg;
+	पूर्ण
 
-	dev->otp_data = ov5693_otp_read(sd);
+	dev->otp_data = ov5693_otp_पढ़ो(sd);
 
 	/* turn off sensor, after probed */
-	ret = power_down(sd);
-	if (ret) {
+	ret = घातer_करोwn(sd);
+	अगर (ret) अणु
 		dev_err(&client->dev, "ov5693 power-off err.\n");
-		goto fail_csi_cfg;
-	}
+		जाओ fail_csi_cfg;
+	पूर्ण
 	mutex_unlock(&dev->input_lock);
 
-	return ret;
+	वापस ret;
 
 fail_csi_cfg:
-	dev->platform_data->csi_cfg(sd, 0);
-fail_power_on:
-	power_down(sd);
+	dev->platक्रमm_data->csi_cfg(sd, 0);
+fail_घातer_on:
+	घातer_करोwn(sd);
 	dev_err(&client->dev, "sensor power-gating failed\n");
-fail_power_off:
+fail_घातer_off:
 	mutex_unlock(&dev->input_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ov5693_g_frame_interval(struct v4l2_subdev *sd,
-				   struct v4l2_subdev_frame_interval *interval)
-{
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक ov5693_g_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
+				   काष्ठा v4l2_subdev_frame_पूर्णांकerval *पूर्णांकerval)
+अणु
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 
-	interval->interval.numerator = 1;
-	interval->interval.denominator = ov5693_res[dev->fmt_idx].fps;
+	पूर्णांकerval->पूर्णांकerval.numerator = 1;
+	पूर्णांकerval->पूर्णांकerval.denominator = ov5693_res[dev->fmt_idx].fps;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_enum_mbus_code(struct v4l2_subdev *sd,
-				 struct v4l2_subdev_pad_config *cfg,
-				 struct v4l2_subdev_mbus_code_enum *code)
-{
-	if (code->index >= MAX_FMTS)
-		return -EINVAL;
+अटल पूर्णांक ov5693_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
+				 काष्ठा v4l2_subdev_pad_config *cfg,
+				 काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
+अणु
+	अगर (code->index >= MAX_FMTS)
+		वापस -EINVAL;
 
 	code->code = MEDIA_BUS_FMT_SBGGR10_1X10;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_enum_frame_size(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_pad_config *cfg,
-				  struct v4l2_subdev_frame_size_enum *fse)
-{
-	int index = fse->index;
+अटल पूर्णांक ov5693_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_subdev_pad_config *cfg,
+				  काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
+अणु
+	पूर्णांक index = fse->index;
 
-	if (index >= N_RES)
-		return -EINVAL;
+	अगर (index >= N_RES)
+		वापस -EINVAL;
 
 	fse->min_width = ov5693_res[index].width;
 	fse->min_height = ov5693_res[index].height;
 	fse->max_width = ov5693_res[index].width;
 	fse->max_height = ov5693_res[index].height;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_video_ops ov5693_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops ov5693_video_ops = अणु
 	.s_stream = ov5693_s_stream,
-	.g_frame_interval = ov5693_g_frame_interval,
-};
+	.g_frame_पूर्णांकerval = ov5693_g_frame_पूर्णांकerval,
+पूर्ण;
 
-static const struct v4l2_subdev_core_ops ov5693_core_ops = {
-	.s_power = ov5693_s_power,
+अटल स्थिर काष्ठा v4l2_subdev_core_ops ov5693_core_ops = अणु
+	.s_घातer = ov5693_s_घातer,
 	.ioctl = ov5693_ioctl,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_pad_ops ov5693_pad_ops = {
-	.enum_mbus_code = ov5693_enum_mbus_code,
-	.enum_frame_size = ov5693_enum_frame_size,
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops ov5693_pad_ops = अणु
+	.क्रमागत_mbus_code = ov5693_क्रमागत_mbus_code,
+	.क्रमागत_frame_size = ov5693_क्रमागत_frame_size,
 	.get_fmt = ov5693_get_fmt,
 	.set_fmt = ov5693_set_fmt,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops ov5693_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops ov5693_ops = अणु
 	.core = &ov5693_core_ops,
 	.video = &ov5693_video_ops,
 	.pad = &ov5693_pad_ops,
-};
+पूर्ण;
 
-static int ov5693_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct ov5693_device *dev = to_ov5693_sensor(sd);
+अटल पूर्णांक ov5693_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा ov5693_device *dev = to_ov5693_sensor(sd);
 
 	dev_dbg(&client->dev, "ov5693_remove...\n");
 
-	dev->platform_data->csi_cfg(sd, 0);
+	dev->platक्रमm_data->csi_cfg(sd, 0);
 
-	v4l2_device_unregister_subdev(sd);
+	v4l2_device_unरेजिस्टर_subdev(sd);
 
-	atomisp_gmin_remove_subdev(sd);
+	atomisp_gmin_हटाओ_subdev(sd);
 
 	media_entity_cleanup(&dev->sd.entity);
-	v4l2_ctrl_handler_free(&dev->ctrl_handler);
-	kfree(dev);
+	v4l2_ctrl_handler_मुक्त(&dev->ctrl_handler);
+	kमुक्त(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov5693_probe(struct i2c_client *client)
-{
-	struct ov5693_device *dev;
-	int i2c;
-	int ret;
-	void *pdata;
-	unsigned int i;
+अटल पूर्णांक ov5693_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा ov5693_device *dev;
+	पूर्णांक i2c;
+	पूर्णांक ret;
+	व्योम *pdata;
+	अचिन्हित पूर्णांक i;
 
 	/*
 	 * Firmware workaround: Some modules use a "secondary default"
-	 * address of 0x10 which doesn't appear on schematics, and
+	 * address of 0x10 which करोesn't appear on schematics, and
 	 * some BIOS versions haven't gotten the memo.  Work around
 	 * via config.
 	 */
-	i2c = gmin_get_var_int(&client->dev, false, "I2CAddr", -1);
-	if (i2c != -1) {
+	i2c = gmin_get_var_पूर्णांक(&client->dev, false, "I2CAddr", -1);
+	अगर (i2c != -1) अणु
 		dev_info(&client->dev,
 			 "Overriding firmware-provided I2C address (0x%x) with 0x%x\n",
 			 client->addr, i2c);
 		client->addr = i2c;
-	}
+	पूर्ण
 
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	mutex_init(&dev->input_lock);
 
 	dev->fmt_idx = 0;
 	v4l2_i2c_subdev_init(&dev->sd, client, &ov5693_ops);
 
-	pdata = gmin_camera_platform_data(&dev->sd,
+	pdata = gmin_camera_platक्रमm_data(&dev->sd,
 					  ATOMISP_INPUT_FORMAT_RAW_10,
 					  atomisp_bayer_order_bggr);
-	if (!pdata) {
+	अगर (!pdata) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	ret = ov5693_s_config(&dev->sd, client->irq, pdata);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	ret = atomisp_register_i2c_module(&dev->sd, pdata, RAW_CAMERA);
-	if (ret)
-		goto out_free;
+	ret = atomisp_रेजिस्टर_i2c_module(&dev->sd, pdata, RAW_CAMERA);
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	dev->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 	dev->pad.flags = MEDIA_PAD_FL_SOURCE;
-	dev->format.code = MEDIA_BUS_FMT_SBGGR10_1X10;
+	dev->क्रमmat.code = MEDIA_BUS_FMT_SBGGR10_1X10;
 	dev->sd.entity.function = MEDIA_ENT_F_CAM_SENSOR;
 	ret =
 	    v4l2_ctrl_handler_init(&dev->ctrl_handler,
 				   ARRAY_SIZE(ov5693_controls));
-	if (ret) {
-		ov5693_remove(client);
-		return ret;
-	}
+	अगर (ret) अणु
+		ov5693_हटाओ(client);
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(ov5693_controls); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(ov5693_controls); i++)
 		v4l2_ctrl_new_custom(&dev->ctrl_handler, &ov5693_controls[i],
-				     NULL);
+				     शून्य);
 
-	if (dev->ctrl_handler.error) {
-		ov5693_remove(client);
-		return dev->ctrl_handler.error;
-	}
+	अगर (dev->ctrl_handler.error) अणु
+		ov5693_हटाओ(client);
+		वापस dev->ctrl_handler.error;
+	पूर्ण
 
-	/* Use same lock for controls as for everything else. */
+	/* Use same lock क्रम controls as क्रम everything अन्यथा. */
 	dev->ctrl_handler.lock = &dev->input_lock;
 	dev->sd.ctrl_handler = &dev->ctrl_handler;
 
 	ret = media_entity_pads_init(&dev->sd.entity, 1, &dev->pad);
-	if (ret)
-		ov5693_remove(client);
+	अगर (ret)
+		ov5693_हटाओ(client);
 
-	return ret;
-out_free:
-	v4l2_device_unregister_subdev(&dev->sd);
-	kfree(dev);
-	return ret;
-}
+	वापस ret;
+out_मुक्त:
+	v4l2_device_unरेजिस्टर_subdev(&dev->sd);
+	kमुक्त(dev);
+	वापस ret;
+पूर्ण
 
-static const struct acpi_device_id ov5693_acpi_match[] = {
-	{"INT33BE"},
-	{},
-};
+अटल स्थिर काष्ठा acpi_device_id ov5693_acpi_match[] = अणु
+	अणु"INT33BE"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, ov5693_acpi_match);
 
-static struct i2c_driver ov5693_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ov5693_driver = अणु
+	.driver = अणु
 		.name = "ov5693",
 		.acpi_match_table = ov5693_acpi_match,
-	},
+	पूर्ण,
 	.probe_new = ov5693_probe,
-	.remove = ov5693_remove,
-};
+	.हटाओ = ov5693_हटाओ,
+पूर्ण;
 module_i2c_driver(ov5693_driver);
 
 MODULE_DESCRIPTION("A low-level driver for OmniVision 5693 sensors");

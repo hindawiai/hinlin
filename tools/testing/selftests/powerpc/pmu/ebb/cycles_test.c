@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
 
-#include "ebb.h"
+#समावेश "ebb.h"
 
 
 /*
  * Basic test that counts user cycles and takes EBBs.
  */
-int cycles(void)
-{
-	struct event event;
+पूर्णांक cycles(व्योम)
+अणु
+	काष्ठा event event;
 
 	SKIP_IF(!ebb_is_supported());
 
@@ -25,7 +26,7 @@ int cycles(void)
 	event.attr.exclude_hv = 1;
 	event.attr.exclude_idle = 1;
 
-	FAIL_IF(event_open(&event));
+	FAIL_IF(event_खोलो(&event));
 
 	ebb_enable_pmc_counting(1);
 	setup_ebb_handler(standard_ebb_callee);
@@ -34,25 +35,25 @@ int cycles(void)
 
 	mtspr(SPRN_PMC1, pmc_sample_period(sample_period));
 
-	while (ebb_state.stats.ebb_count < 10) {
+	जबतक (ebb_state.stats.ebb_count < 10) अणु
 		FAIL_IF(core_busy_loop());
 		FAIL_IF(ebb_check_mmcr0());
-	}
+	पूर्ण
 
 	ebb_global_disable();
-	ebb_freeze_pmcs();
+	ebb_मुक्तze_pmcs();
 
 	dump_ebb_state();
 
-	event_close(&event);
+	event_बंद(&event);
 
 	FAIL_IF(ebb_state.stats.ebb_count == 0);
 	FAIL_IF(!ebb_check_count(1, sample_period, 100));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(cycles, "cycles");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(cycles, "cycles");
+पूर्ण

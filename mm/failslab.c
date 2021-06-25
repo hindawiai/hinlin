@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/fault-inject.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include "slab.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/fault-inject.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश "slab.h"
 
-static struct {
-	struct fault_attr attr;
+अटल काष्ठा अणु
+	काष्ठा fault_attr attr;
 	bool ignore_gfp_reclaim;
 	bool cache_filter;
-} failslab = {
+पूर्ण failslab = अणु
 	.attr = FAULT_ATTR_INITIALIZER,
 	.ignore_gfp_reclaim = true,
 	.cache_filter = false,
-};
+पूर्ण;
 
-bool __should_failslab(struct kmem_cache *s, gfp_t gfpflags)
-{
-	/* No fault-injection for bootstrap cache */
-	if (unlikely(s == kmem_cache))
-		return false;
+bool __should_failslab(काष्ठा kmem_cache *s, gfp_t gfpflags)
+अणु
+	/* No fault-injection क्रम bootstrap cache */
+	अगर (unlikely(s == kmem_cache))
+		वापस false;
 
-	if (gfpflags & __GFP_NOFAIL)
-		return false;
+	अगर (gfpflags & __GFP_NOFAIL)
+		वापस false;
 
-	if (failslab.ignore_gfp_reclaim &&
-			(gfpflags & __GFP_DIRECT_RECLAIM))
-		return false;
+	अगर (failslab.ignore_gfp_reclaim &&
+			(gfpflags & __GFP_सूचीECT_RECLAIM))
+		वापस false;
 
-	if (failslab.cache_filter && !(s->flags & SLAB_FAILSLAB))
-		return false;
+	अगर (failslab.cache_filter && !(s->flags & SLAB_FAILSLAB))
+		वापस false;
 
-	return should_fail(&failslab.attr, s->object_size);
-}
+	वापस should_fail(&failslab.attr, s->object_size);
+पूर्ण
 
-static int __init setup_failslab(char *str)
-{
-	return setup_fault_attr(&failslab.attr, str);
-}
+अटल पूर्णांक __init setup_failslab(अक्षर *str)
+अणु
+	वापस setup_fault_attr(&failslab.attr, str);
+पूर्ण
 __setup("failslab=", setup_failslab);
 
-#ifdef CONFIG_FAULT_INJECTION_DEBUG_FS
-static int __init failslab_debugfs_init(void)
-{
-	struct dentry *dir;
+#अगर_घोषित CONFIG_FAULT_INJECTION_DEBUG_FS
+अटल पूर्णांक __init failslab_debugfs_init(व्योम)
+अणु
+	काष्ठा dentry *dir;
 	umode_t mode = S_IFREG | 0600;
 
-	dir = fault_create_debugfs_attr("failslab", NULL, &failslab.attr);
-	if (IS_ERR(dir))
-		return PTR_ERR(dir);
+	dir = fault_create_debugfs_attr("failslab", शून्य, &failslab.attr);
+	अगर (IS_ERR(dir))
+		वापस PTR_ERR(dir);
 
 	debugfs_create_bool("ignore-gfp-wait", mode, dir,
 			    &failslab.ignore_gfp_reclaim);
 	debugfs_create_bool("cache-filter", mode, dir,
 			    &failslab.cache_filter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 late_initcall(failslab_debugfs_init);
 
-#endif /* CONFIG_FAULT_INJECTION_DEBUG_FS */
+#पूर्ण_अगर /* CONFIG_FAULT_INJECTION_DEBUG_FS */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*******************************************************************************
  * This file contains the iSCSI Target DataIN value generation functions.
  *
@@ -8,512 +9,512 @@
  *
  ******************************************************************************/
 
-#include <linux/slab.h>
-#include <scsi/iscsi_proto.h>
-#include <target/iscsi/iscsi_target_core.h>
-#include "iscsi_target_seq_pdu_list.h"
-#include "iscsi_target_erl1.h"
-#include "iscsi_target_util.h"
-#include "iscsi_target.h"
-#include "iscsi_target_datain_values.h"
+#समावेश <linux/slab.h>
+#समावेश <scsi/iscsi_proto.h>
+#समावेश <target/iscsi/iscsi_target_core.h>
+#समावेश "iscsi_target_seq_pdu_list.h"
+#समावेश "iscsi_target_erl1.h"
+#समावेश "iscsi_target_util.h"
+#समावेश "iscsi_target.h"
+#समावेश "iscsi_target_datain_values.h"
 
-struct iscsi_datain_req *iscsit_allocate_datain_req(void)
-{
-	struct iscsi_datain_req *dr;
+काष्ठा iscsi_datain_req *iscsit_allocate_datain_req(व्योम)
+अणु
+	काष्ठा iscsi_datain_req *dr;
 
 	dr = kmem_cache_zalloc(lio_dr_cache, GFP_ATOMIC);
-	if (!dr) {
+	अगर (!dr) अणु
 		pr_err("Unable to allocate memory for"
 				" struct iscsi_datain_req\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	INIT_LIST_HEAD(&dr->cmd_datain_node);
 
-	return dr;
-}
+	वापस dr;
+पूर्ण
 
-void iscsit_attach_datain_req(struct iscsi_cmd *cmd, struct iscsi_datain_req *dr)
-{
+व्योम iscsit_attach_datain_req(काष्ठा iscsi_cmd *cmd, काष्ठा iscsi_datain_req *dr)
+अणु
 	spin_lock(&cmd->datain_lock);
 	list_add_tail(&dr->cmd_datain_node, &cmd->datain_list);
 	spin_unlock(&cmd->datain_lock);
-}
+पूर्ण
 
-void iscsit_free_datain_req(struct iscsi_cmd *cmd, struct iscsi_datain_req *dr)
-{
+व्योम iscsit_मुक्त_datain_req(काष्ठा iscsi_cmd *cmd, काष्ठा iscsi_datain_req *dr)
+अणु
 	spin_lock(&cmd->datain_lock);
 	list_del(&dr->cmd_datain_node);
 	spin_unlock(&cmd->datain_lock);
 
-	kmem_cache_free(lio_dr_cache, dr);
-}
+	kmem_cache_मुक्त(lio_dr_cache, dr);
+पूर्ण
 
-void iscsit_free_all_datain_reqs(struct iscsi_cmd *cmd)
-{
-	struct iscsi_datain_req *dr, *dr_tmp;
+व्योम iscsit_मुक्त_all_datain_reqs(काष्ठा iscsi_cmd *cmd)
+अणु
+	काष्ठा iscsi_datain_req *dr, *dr_पंचांगp;
 
 	spin_lock(&cmd->datain_lock);
-	list_for_each_entry_safe(dr, dr_tmp, &cmd->datain_list, cmd_datain_node) {
+	list_क्रम_each_entry_safe(dr, dr_पंचांगp, &cmd->datain_list, cmd_datain_node) अणु
 		list_del(&dr->cmd_datain_node);
-		kmem_cache_free(lio_dr_cache, dr);
-	}
+		kmem_cache_मुक्त(lio_dr_cache, dr);
+	पूर्ण
 	spin_unlock(&cmd->datain_lock);
-}
+पूर्ण
 
-struct iscsi_datain_req *iscsit_get_datain_req(struct iscsi_cmd *cmd)
-{
-	if (list_empty(&cmd->datain_list)) {
+काष्ठा iscsi_datain_req *iscsit_get_datain_req(काष्ठा iscsi_cmd *cmd)
+अणु
+	अगर (list_empty(&cmd->datain_list)) अणु
 		pr_err("cmd->datain_list is empty for ITT:"
 			" 0x%08x\n", cmd->init_task_tag);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return list_first_entry(&cmd->datain_list, struct iscsi_datain_req,
+	वापस list_first_entry(&cmd->datain_list, काष्ठा iscsi_datain_req,
 				cmd_datain_node);
-}
+पूर्ण
 
 /*
  *	For Normal and Recovery DataSequenceInOrder=Yes and DataPDUInOrder=Yes.
  */
-static struct iscsi_datain_req *iscsit_set_datain_values_yes_and_yes(
-	struct iscsi_cmd *cmd,
-	struct iscsi_datain *datain)
-{
-	u32 next_burst_len, read_data_done, read_data_left;
-	struct iscsi_conn *conn = cmd->conn;
-	struct iscsi_datain_req *dr;
+अटल काष्ठा iscsi_datain_req *iscsit_set_datain_values_yes_and_yes(
+	काष्ठा iscsi_cmd *cmd,
+	काष्ठा iscsi_datain *datain)
+अणु
+	u32 next_burst_len, पढ़ो_data_करोne, पढ़ो_data_left;
+	काष्ठा iscsi_conn *conn = cmd->conn;
+	काष्ठा iscsi_datain_req *dr;
 
 	dr = iscsit_get_datain_req(cmd);
-	if (!dr)
-		return NULL;
+	अगर (!dr)
+		वापस शून्य;
 
-	if (dr->recovery && dr->generate_recovery_values) {
-		if (iscsit_create_recovery_datain_values_datasequenceinorder_yes(
+	अगर (dr->recovery && dr->generate_recovery_values) अणु
+		अगर (iscsit_create_recovery_datain_values_datasequenceinorder_yes(
 					cmd, dr) < 0)
-			return NULL;
+			वापस शून्य;
 
 		dr->generate_recovery_values = 0;
-	}
+	पूर्ण
 
 	next_burst_len = (!dr->recovery) ?
 			cmd->next_burst_len : dr->next_burst_len;
-	read_data_done = (!dr->recovery) ?
-			cmd->read_data_done : dr->read_data_done;
+	पढ़ो_data_करोne = (!dr->recovery) ?
+			cmd->पढ़ो_data_करोne : dr->पढ़ो_data_करोne;
 
-	read_data_left = (cmd->se_cmd.data_length - read_data_done);
-	if (!read_data_left) {
+	पढ़ो_data_left = (cmd->se_cmd.data_length - पढ़ो_data_करोne);
+	अगर (!पढ़ो_data_left) अणु
 		pr_err("ITT: 0x%08x read_data_left is zero!\n",
 				cmd->init_task_tag);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if ((read_data_left <= conn->conn_ops->MaxRecvDataSegmentLength) &&
-	    (read_data_left <= (conn->sess->sess_ops->MaxBurstLength -
-	     next_burst_len))) {
-		datain->length = read_data_left;
+	अगर ((पढ़ो_data_left <= conn->conn_ops->MaxRecvDataSegmentLength) &&
+	    (पढ़ो_data_left <= (conn->sess->sess_ops->MaxBurstLength -
+	     next_burst_len))) अणु
+		datain->length = पढ़ो_data_left;
 
 		datain->flags |= (ISCSI_FLAG_CMD_FINAL | ISCSI_FLAG_DATA_STATUS);
-		if (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
+		अगर (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
 			datain->flags |= ISCSI_FLAG_DATA_ACK;
-	} else {
-		if ((next_burst_len +
+	पूर्ण अन्यथा अणु
+		अगर ((next_burst_len +
 		     conn->conn_ops->MaxRecvDataSegmentLength) <
-		     conn->sess->sess_ops->MaxBurstLength) {
+		     conn->sess->sess_ops->MaxBurstLength) अणु
 			datain->length =
 				conn->conn_ops->MaxRecvDataSegmentLength;
 			next_burst_len += datain->length;
-		} else {
+		पूर्ण अन्यथा अणु
 			datain->length = (conn->sess->sess_ops->MaxBurstLength -
 					  next_burst_len);
 			next_burst_len = 0;
 
 			datain->flags |= ISCSI_FLAG_CMD_FINAL;
-			if (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
+			अगर (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
 				datain->flags |= ISCSI_FLAG_DATA_ACK;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	datain->data_sn = (!dr->recovery) ? cmd->data_sn++ : dr->data_sn++;
-	datain->offset = read_data_done;
+	datain->offset = पढ़ो_data_करोne;
 
-	if (!dr->recovery) {
+	अगर (!dr->recovery) अणु
 		cmd->next_burst_len = next_burst_len;
-		cmd->read_data_done += datain->length;
-	} else {
+		cmd->पढ़ो_data_करोne += datain->length;
+	पूर्ण अन्यथा अणु
 		dr->next_burst_len = next_burst_len;
-		dr->read_data_done += datain->length;
-	}
+		dr->पढ़ो_data_करोne += datain->length;
+	पूर्ण
 
-	if (!dr->recovery) {
-		if (datain->flags & ISCSI_FLAG_DATA_STATUS)
+	अगर (!dr->recovery) अणु
+		अगर (datain->flags & ISCSI_FLAG_DATA_STATUS)
 			dr->dr_complete = DATAIN_COMPLETE_NORMAL;
 
-		return dr;
-	}
+		वापस dr;
+	पूर्ण
 
-	if (!dr->runlength) {
-		if (datain->flags & ISCSI_FLAG_DATA_STATUS) {
+	अगर (!dr->runlength) अणु
+		अगर (datain->flags & ISCSI_FLAG_DATA_STATUS) अणु
 			dr->dr_complete =
 			    (dr->recovery == DATAIN_WITHIN_COMMAND_RECOVERY) ?
 				DATAIN_COMPLETE_WITHIN_COMMAND_RECOVERY :
 				DATAIN_COMPLETE_CONNECTION_RECOVERY;
-		}
-	} else {
-		if ((dr->begrun + dr->runlength) == dr->data_sn) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर ((dr->begrun + dr->runlength) == dr->data_sn) अणु
 			dr->dr_complete =
 			    (dr->recovery == DATAIN_WITHIN_COMMAND_RECOVERY) ?
 				DATAIN_COMPLETE_WITHIN_COMMAND_RECOVERY :
 				DATAIN_COMPLETE_CONNECTION_RECOVERY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return dr;
-}
+	वापस dr;
+पूर्ण
 
 /*
  *	For Normal and Recovery DataSequenceInOrder=No and DataPDUInOrder=Yes.
  */
-static struct iscsi_datain_req *iscsit_set_datain_values_no_and_yes(
-	struct iscsi_cmd *cmd,
-	struct iscsi_datain *datain)
-{
-	u32 offset, read_data_done, read_data_left, seq_send_order;
-	struct iscsi_conn *conn = cmd->conn;
-	struct iscsi_datain_req *dr;
-	struct iscsi_seq *seq;
+अटल काष्ठा iscsi_datain_req *iscsit_set_datain_values_no_and_yes(
+	काष्ठा iscsi_cmd *cmd,
+	काष्ठा iscsi_datain *datain)
+अणु
+	u32 offset, पढ़ो_data_करोne, पढ़ो_data_left, seq_send_order;
+	काष्ठा iscsi_conn *conn = cmd->conn;
+	काष्ठा iscsi_datain_req *dr;
+	काष्ठा iscsi_seq *seq;
 
 	dr = iscsit_get_datain_req(cmd);
-	if (!dr)
-		return NULL;
+	अगर (!dr)
+		वापस शून्य;
 
-	if (dr->recovery && dr->generate_recovery_values) {
-		if (iscsit_create_recovery_datain_values_datasequenceinorder_no(
+	अगर (dr->recovery && dr->generate_recovery_values) अणु
+		अगर (iscsit_create_recovery_datain_values_datasequenceinorder_no(
 					cmd, dr) < 0)
-			return NULL;
+			वापस शून्य;
 
 		dr->generate_recovery_values = 0;
-	}
+	पूर्ण
 
-	read_data_done = (!dr->recovery) ?
-			cmd->read_data_done : dr->read_data_done;
+	पढ़ो_data_करोne = (!dr->recovery) ?
+			cmd->पढ़ो_data_करोne : dr->पढ़ो_data_करोne;
 	seq_send_order = (!dr->recovery) ?
 			cmd->seq_send_order : dr->seq_send_order;
 
-	read_data_left = (cmd->se_cmd.data_length - read_data_done);
-	if (!read_data_left) {
+	पढ़ो_data_left = (cmd->se_cmd.data_length - पढ़ो_data_करोne);
+	अगर (!पढ़ो_data_left) अणु
 		pr_err("ITT: 0x%08x read_data_left is zero!\n",
 				cmd->init_task_tag);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	seq = iscsit_get_seq_holder_for_datain(cmd, seq_send_order);
-	if (!seq)
-		return NULL;
+	seq = iscsit_get_seq_holder_क्रम_datain(cmd, seq_send_order);
+	अगर (!seq)
+		वापस शून्य;
 
 	seq->sent = 1;
 
-	if (!dr->recovery && !seq->next_burst_len)
+	अगर (!dr->recovery && !seq->next_burst_len)
 		seq->first_datasn = cmd->data_sn;
 
 	offset = (seq->offset + seq->next_burst_len);
 
-	if ((offset + conn->conn_ops->MaxRecvDataSegmentLength) >=
-	     cmd->se_cmd.data_length) {
+	अगर ((offset + conn->conn_ops->MaxRecvDataSegmentLength) >=
+	     cmd->se_cmd.data_length) अणु
 		datain->length = (cmd->se_cmd.data_length - offset);
 		datain->offset = offset;
 
 		datain->flags |= ISCSI_FLAG_CMD_FINAL;
-		if (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
+		अगर (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
 			datain->flags |= ISCSI_FLAG_DATA_ACK;
 
 		seq->next_burst_len = 0;
 		seq_send_order++;
-	} else {
-		if ((seq->next_burst_len +
+	पूर्ण अन्यथा अणु
+		अगर ((seq->next_burst_len +
 		     conn->conn_ops->MaxRecvDataSegmentLength) <
-		     conn->sess->sess_ops->MaxBurstLength) {
+		     conn->sess->sess_ops->MaxBurstLength) अणु
 			datain->length =
 				conn->conn_ops->MaxRecvDataSegmentLength;
 			datain->offset = (seq->offset + seq->next_burst_len);
 
 			seq->next_burst_len += datain->length;
-		} else {
+		पूर्ण अन्यथा अणु
 			datain->length = (conn->sess->sess_ops->MaxBurstLength -
 					  seq->next_burst_len);
 			datain->offset = (seq->offset + seq->next_burst_len);
 
 			datain->flags |= ISCSI_FLAG_CMD_FINAL;
-			if (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
+			अगर (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
 				datain->flags |= ISCSI_FLAG_DATA_ACK;
 
 			seq->next_burst_len = 0;
 			seq_send_order++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if ((read_data_done + datain->length) == cmd->se_cmd.data_length)
+	अगर ((पढ़ो_data_करोne + datain->length) == cmd->se_cmd.data_length)
 		datain->flags |= ISCSI_FLAG_DATA_STATUS;
 
 	datain->data_sn = (!dr->recovery) ? cmd->data_sn++ : dr->data_sn++;
-	if (!dr->recovery) {
+	अगर (!dr->recovery) अणु
 		cmd->seq_send_order = seq_send_order;
-		cmd->read_data_done += datain->length;
-	} else {
+		cmd->पढ़ो_data_करोne += datain->length;
+	पूर्ण अन्यथा अणु
 		dr->seq_send_order = seq_send_order;
-		dr->read_data_done += datain->length;
-	}
+		dr->पढ़ो_data_करोne += datain->length;
+	पूर्ण
 
-	if (!dr->recovery) {
-		if (datain->flags & ISCSI_FLAG_CMD_FINAL)
+	अगर (!dr->recovery) अणु
+		अगर (datain->flags & ISCSI_FLAG_CMD_FINAL)
 			seq->last_datasn = datain->data_sn;
-		if (datain->flags & ISCSI_FLAG_DATA_STATUS)
+		अगर (datain->flags & ISCSI_FLAG_DATA_STATUS)
 			dr->dr_complete = DATAIN_COMPLETE_NORMAL;
 
-		return dr;
-	}
+		वापस dr;
+	पूर्ण
 
-	if (!dr->runlength) {
-		if (datain->flags & ISCSI_FLAG_DATA_STATUS) {
+	अगर (!dr->runlength) अणु
+		अगर (datain->flags & ISCSI_FLAG_DATA_STATUS) अणु
 			dr->dr_complete =
 			    (dr->recovery == DATAIN_WITHIN_COMMAND_RECOVERY) ?
 				DATAIN_COMPLETE_WITHIN_COMMAND_RECOVERY :
 				DATAIN_COMPLETE_CONNECTION_RECOVERY;
-		}
-	} else {
-		if ((dr->begrun + dr->runlength) == dr->data_sn) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर ((dr->begrun + dr->runlength) == dr->data_sn) अणु
 			dr->dr_complete =
 			    (dr->recovery == DATAIN_WITHIN_COMMAND_RECOVERY) ?
 				DATAIN_COMPLETE_WITHIN_COMMAND_RECOVERY :
 				DATAIN_COMPLETE_CONNECTION_RECOVERY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return dr;
-}
+	वापस dr;
+पूर्ण
 
 /*
  *	For Normal and Recovery DataSequenceInOrder=Yes and DataPDUInOrder=No.
  */
-static struct iscsi_datain_req *iscsit_set_datain_values_yes_and_no(
-	struct iscsi_cmd *cmd,
-	struct iscsi_datain *datain)
-{
-	u32 next_burst_len, read_data_done, read_data_left;
-	struct iscsi_conn *conn = cmd->conn;
-	struct iscsi_datain_req *dr;
-	struct iscsi_pdu *pdu;
+अटल काष्ठा iscsi_datain_req *iscsit_set_datain_values_yes_and_no(
+	काष्ठा iscsi_cmd *cmd,
+	काष्ठा iscsi_datain *datain)
+अणु
+	u32 next_burst_len, पढ़ो_data_करोne, पढ़ो_data_left;
+	काष्ठा iscsi_conn *conn = cmd->conn;
+	काष्ठा iscsi_datain_req *dr;
+	काष्ठा iscsi_pdu *pdu;
 
 	dr = iscsit_get_datain_req(cmd);
-	if (!dr)
-		return NULL;
+	अगर (!dr)
+		वापस शून्य;
 
-	if (dr->recovery && dr->generate_recovery_values) {
-		if (iscsit_create_recovery_datain_values_datasequenceinorder_yes(
+	अगर (dr->recovery && dr->generate_recovery_values) अणु
+		अगर (iscsit_create_recovery_datain_values_datasequenceinorder_yes(
 					cmd, dr) < 0)
-			return NULL;
+			वापस शून्य;
 
 		dr->generate_recovery_values = 0;
-	}
+	पूर्ण
 
 	next_burst_len = (!dr->recovery) ?
 			cmd->next_burst_len : dr->next_burst_len;
-	read_data_done = (!dr->recovery) ?
-			cmd->read_data_done : dr->read_data_done;
+	पढ़ो_data_करोne = (!dr->recovery) ?
+			cmd->पढ़ो_data_करोne : dr->पढ़ो_data_करोne;
 
-	read_data_left = (cmd->se_cmd.data_length - read_data_done);
-	if (!read_data_left) {
+	पढ़ो_data_left = (cmd->se_cmd.data_length - पढ़ो_data_करोne);
+	अगर (!पढ़ो_data_left) अणु
 		pr_err("ITT: 0x%08x read_data_left is zero!\n",
 				cmd->init_task_tag);
-		return dr;
-	}
+		वापस dr;
+	पूर्ण
 
-	pdu = iscsit_get_pdu_holder_for_seq(cmd, NULL);
-	if (!pdu)
-		return dr;
+	pdu = iscsit_get_pdu_holder_क्रम_seq(cmd, शून्य);
+	अगर (!pdu)
+		वापस dr;
 
-	if ((read_data_done + pdu->length) == cmd->se_cmd.data_length) {
+	अगर ((पढ़ो_data_करोne + pdu->length) == cmd->se_cmd.data_length) अणु
 		pdu->flags |= (ISCSI_FLAG_CMD_FINAL | ISCSI_FLAG_DATA_STATUS);
-		if (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
+		अगर (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
 			pdu->flags |= ISCSI_FLAG_DATA_ACK;
 
 		next_burst_len = 0;
-	} else {
-		if ((next_burst_len + conn->conn_ops->MaxRecvDataSegmentLength) <
+	पूर्ण अन्यथा अणु
+		अगर ((next_burst_len + conn->conn_ops->MaxRecvDataSegmentLength) <
 		     conn->sess->sess_ops->MaxBurstLength)
 			next_burst_len += pdu->length;
-		else {
+		अन्यथा अणु
 			pdu->flags |= ISCSI_FLAG_CMD_FINAL;
-			if (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
+			अगर (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
 				pdu->flags |= ISCSI_FLAG_DATA_ACK;
 
 			next_burst_len = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	pdu->data_sn = (!dr->recovery) ? cmd->data_sn++ : dr->data_sn++;
-	if (!dr->recovery) {
+	अगर (!dr->recovery) अणु
 		cmd->next_burst_len = next_burst_len;
-		cmd->read_data_done += pdu->length;
-	} else {
+		cmd->पढ़ो_data_करोne += pdu->length;
+	पूर्ण अन्यथा अणु
 		dr->next_burst_len = next_burst_len;
-		dr->read_data_done += pdu->length;
-	}
+		dr->पढ़ो_data_करोne += pdu->length;
+	पूर्ण
 
 	datain->flags = pdu->flags;
 	datain->length = pdu->length;
 	datain->offset = pdu->offset;
 	datain->data_sn = pdu->data_sn;
 
-	if (!dr->recovery) {
-		if (datain->flags & ISCSI_FLAG_DATA_STATUS)
+	अगर (!dr->recovery) अणु
+		अगर (datain->flags & ISCSI_FLAG_DATA_STATUS)
 			dr->dr_complete = DATAIN_COMPLETE_NORMAL;
 
-		return dr;
-	}
+		वापस dr;
+	पूर्ण
 
-	if (!dr->runlength) {
-		if (datain->flags & ISCSI_FLAG_DATA_STATUS) {
+	अगर (!dr->runlength) अणु
+		अगर (datain->flags & ISCSI_FLAG_DATA_STATUS) अणु
 			dr->dr_complete =
 			    (dr->recovery == DATAIN_WITHIN_COMMAND_RECOVERY) ?
 				DATAIN_COMPLETE_WITHIN_COMMAND_RECOVERY :
 				DATAIN_COMPLETE_CONNECTION_RECOVERY;
-		}
-	} else {
-		if ((dr->begrun + dr->runlength) == dr->data_sn) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर ((dr->begrun + dr->runlength) == dr->data_sn) अणु
 			dr->dr_complete =
 			    (dr->recovery == DATAIN_WITHIN_COMMAND_RECOVERY) ?
 				DATAIN_COMPLETE_WITHIN_COMMAND_RECOVERY :
 				DATAIN_COMPLETE_CONNECTION_RECOVERY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return dr;
-}
+	वापस dr;
+पूर्ण
 
 /*
  *	For Normal and Recovery DataSequenceInOrder=No and DataPDUInOrder=No.
  */
-static struct iscsi_datain_req *iscsit_set_datain_values_no_and_no(
-	struct iscsi_cmd *cmd,
-	struct iscsi_datain *datain)
-{
-	u32 read_data_done, read_data_left, seq_send_order;
-	struct iscsi_conn *conn = cmd->conn;
-	struct iscsi_datain_req *dr;
-	struct iscsi_pdu *pdu;
-	struct iscsi_seq *seq = NULL;
+अटल काष्ठा iscsi_datain_req *iscsit_set_datain_values_no_and_no(
+	काष्ठा iscsi_cmd *cmd,
+	काष्ठा iscsi_datain *datain)
+अणु
+	u32 पढ़ो_data_करोne, पढ़ो_data_left, seq_send_order;
+	काष्ठा iscsi_conn *conn = cmd->conn;
+	काष्ठा iscsi_datain_req *dr;
+	काष्ठा iscsi_pdu *pdu;
+	काष्ठा iscsi_seq *seq = शून्य;
 
 	dr = iscsit_get_datain_req(cmd);
-	if (!dr)
-		return NULL;
+	अगर (!dr)
+		वापस शून्य;
 
-	if (dr->recovery && dr->generate_recovery_values) {
-		if (iscsit_create_recovery_datain_values_datasequenceinorder_no(
+	अगर (dr->recovery && dr->generate_recovery_values) अणु
+		अगर (iscsit_create_recovery_datain_values_datasequenceinorder_no(
 					cmd, dr) < 0)
-			return NULL;
+			वापस शून्य;
 
 		dr->generate_recovery_values = 0;
-	}
+	पूर्ण
 
-	read_data_done = (!dr->recovery) ?
-			cmd->read_data_done : dr->read_data_done;
+	पढ़ो_data_करोne = (!dr->recovery) ?
+			cmd->पढ़ो_data_करोne : dr->पढ़ो_data_करोne;
 	seq_send_order = (!dr->recovery) ?
 			cmd->seq_send_order : dr->seq_send_order;
 
-	read_data_left = (cmd->se_cmd.data_length - read_data_done);
-	if (!read_data_left) {
+	पढ़ो_data_left = (cmd->se_cmd.data_length - पढ़ो_data_करोne);
+	अगर (!पढ़ो_data_left) अणु
 		pr_err("ITT: 0x%08x read_data_left is zero!\n",
 				cmd->init_task_tag);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	seq = iscsit_get_seq_holder_for_datain(cmd, seq_send_order);
-	if (!seq)
-		return NULL;
+	seq = iscsit_get_seq_holder_क्रम_datain(cmd, seq_send_order);
+	अगर (!seq)
+		वापस शून्य;
 
 	seq->sent = 1;
 
-	if (!dr->recovery && !seq->next_burst_len)
+	अगर (!dr->recovery && !seq->next_burst_len)
 		seq->first_datasn = cmd->data_sn;
 
-	pdu = iscsit_get_pdu_holder_for_seq(cmd, seq);
-	if (!pdu)
-		return NULL;
+	pdu = iscsit_get_pdu_holder_क्रम_seq(cmd, seq);
+	अगर (!pdu)
+		वापस शून्य;
 
-	if (seq->pdu_send_order == seq->pdu_count) {
+	अगर (seq->pdu_send_order == seq->pdu_count) अणु
 		pdu->flags |= ISCSI_FLAG_CMD_FINAL;
-		if (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
+		अगर (conn->sess->sess_ops->ErrorRecoveryLevel > 0)
 			pdu->flags |= ISCSI_FLAG_DATA_ACK;
 
 		seq->next_burst_len = 0;
 		seq_send_order++;
-	} else
+	पूर्ण अन्यथा
 		seq->next_burst_len += pdu->length;
 
-	if ((read_data_done + pdu->length) == cmd->se_cmd.data_length)
+	अगर ((पढ़ो_data_करोne + pdu->length) == cmd->se_cmd.data_length)
 		pdu->flags |= ISCSI_FLAG_DATA_STATUS;
 
 	pdu->data_sn = (!dr->recovery) ? cmd->data_sn++ : dr->data_sn++;
-	if (!dr->recovery) {
+	अगर (!dr->recovery) अणु
 		cmd->seq_send_order = seq_send_order;
-		cmd->read_data_done += pdu->length;
-	} else {
+		cmd->पढ़ो_data_करोne += pdu->length;
+	पूर्ण अन्यथा अणु
 		dr->seq_send_order = seq_send_order;
-		dr->read_data_done += pdu->length;
-	}
+		dr->पढ़ो_data_करोne += pdu->length;
+	पूर्ण
 
 	datain->flags = pdu->flags;
 	datain->length = pdu->length;
 	datain->offset = pdu->offset;
 	datain->data_sn = pdu->data_sn;
 
-	if (!dr->recovery) {
-		if (datain->flags & ISCSI_FLAG_CMD_FINAL)
+	अगर (!dr->recovery) अणु
+		अगर (datain->flags & ISCSI_FLAG_CMD_FINAL)
 			seq->last_datasn = datain->data_sn;
-		if (datain->flags & ISCSI_FLAG_DATA_STATUS)
+		अगर (datain->flags & ISCSI_FLAG_DATA_STATUS)
 			dr->dr_complete = DATAIN_COMPLETE_NORMAL;
 
-		return dr;
-	}
+		वापस dr;
+	पूर्ण
 
-	if (!dr->runlength) {
-		if (datain->flags & ISCSI_FLAG_DATA_STATUS) {
+	अगर (!dr->runlength) अणु
+		अगर (datain->flags & ISCSI_FLAG_DATA_STATUS) अणु
 			dr->dr_complete =
 			    (dr->recovery == DATAIN_WITHIN_COMMAND_RECOVERY) ?
 				DATAIN_COMPLETE_WITHIN_COMMAND_RECOVERY :
 				DATAIN_COMPLETE_CONNECTION_RECOVERY;
-		}
-	} else {
-		if ((dr->begrun + dr->runlength) == dr->data_sn) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर ((dr->begrun + dr->runlength) == dr->data_sn) अणु
 			dr->dr_complete =
 			    (dr->recovery == DATAIN_WITHIN_COMMAND_RECOVERY) ?
 				DATAIN_COMPLETE_WITHIN_COMMAND_RECOVERY :
 				DATAIN_COMPLETE_CONNECTION_RECOVERY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return dr;
-}
+	वापस dr;
+पूर्ण
 
-struct iscsi_datain_req *iscsit_get_datain_values(
-	struct iscsi_cmd *cmd,
-	struct iscsi_datain *datain)
-{
-	struct iscsi_conn *conn = cmd->conn;
+काष्ठा iscsi_datain_req *iscsit_get_datain_values(
+	काष्ठा iscsi_cmd *cmd,
+	काष्ठा iscsi_datain *datain)
+अणु
+	काष्ठा iscsi_conn *conn = cmd->conn;
 
-	if (conn->sess->sess_ops->DataSequenceInOrder &&
+	अगर (conn->sess->sess_ops->DataSequenceInOrder &&
 	    conn->sess->sess_ops->DataPDUInOrder)
-		return iscsit_set_datain_values_yes_and_yes(cmd, datain);
-	else if (!conn->sess->sess_ops->DataSequenceInOrder &&
+		वापस iscsit_set_datain_values_yes_and_yes(cmd, datain);
+	अन्यथा अगर (!conn->sess->sess_ops->DataSequenceInOrder &&
 		  conn->sess->sess_ops->DataPDUInOrder)
-		return iscsit_set_datain_values_no_and_yes(cmd, datain);
-	else if (conn->sess->sess_ops->DataSequenceInOrder &&
+		वापस iscsit_set_datain_values_no_and_yes(cmd, datain);
+	अन्यथा अगर (conn->sess->sess_ops->DataSequenceInOrder &&
 		 !conn->sess->sess_ops->DataPDUInOrder)
-		return iscsit_set_datain_values_yes_and_no(cmd, datain);
-	else if (!conn->sess->sess_ops->DataSequenceInOrder &&
+		वापस iscsit_set_datain_values_yes_and_no(cmd, datain);
+	अन्यथा अगर (!conn->sess->sess_ops->DataSequenceInOrder &&
 		   !conn->sess->sess_ops->DataPDUInOrder)
-		return iscsit_set_datain_values_no_and_no(cmd, datain);
+		वापस iscsit_set_datain_values_no_and_no(cmd, datain);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(iscsit_get_datain_values);

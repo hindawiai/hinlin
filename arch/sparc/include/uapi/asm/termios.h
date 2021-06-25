@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_SPARC_TERMIOS_H
-#define _UAPI_SPARC_TERMIOS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_SPARC_TERMIOS_H
+#घोषणा _UAPI_SPARC_TERMIOS_H
 
-#include <asm/ioctls.h>
-#include <asm/termbits.h>
+#समावेश <यंत्र/ioctls.h>
+#समावेश <यंत्र/termbits.h>
 
-#if defined(__KERNEL__) || defined(__DEFINE_BSD_TERMIOS)
-struct sgttyb {
-	char	sg_ispeed;
-	char	sg_ospeed;
-	char	sg_erase;
-	char	sg_kill;
-	short	sg_flags;
-};
+#अगर defined(__KERNEL__) || defined(__DEFINE_BSD_TERMIOS)
+काष्ठा sgttyb अणु
+	अक्षर	sg_ispeed;
+	अक्षर	sg_ospeed;
+	अक्षर	sg_erase;
+	अक्षर	sg_समाप्त;
+	लघु	sg_flags;
+पूर्ण;
 
-struct tchars {
-	char	t_intrc;
-	char	t_quitc;
-	char	t_startc;
-	char	t_stopc;
-	char	t_eofc;
-	char	t_brkc;
-};
+काष्ठा tअक्षरs अणु
+	अक्षर	t_पूर्णांकrc;
+	अक्षर	t_quitc;
+	अक्षर	t_startc;
+	अक्षर	t_stopc;
+	अक्षर	t_eofc;
+	अक्षर	t_brkc;
+पूर्ण;
 
-struct ltchars {
-	char	t_suspc;
-	char	t_dsuspc;
-	char	t_rprntc;
-	char	t_flushc;
-	char	t_werasc;
-	char	t_lnextc;
-};
-#endif /* __KERNEL__ */
+काष्ठा ltअक्षरs अणु
+	अक्षर	t_suspc;
+	अक्षर	t_dsuspc;
+	अक्षर	t_rprntc;
+	अक्षर	t_flushc;
+	अक्षर	t_werasc;
+	अक्षर	t_lnextc;
+पूर्ण;
+#पूर्ण_अगर /* __KERNEL__ */
 
-struct winsize {
-	unsigned short ws_row;
-	unsigned short ws_col;
-	unsigned short ws_xpixel;
-	unsigned short ws_ypixel;
-};
+काष्ठा winsize अणु
+	अचिन्हित लघु ws_row;
+	अचिन्हित लघु ws_col;
+	अचिन्हित लघु ws_xpixel;
+	अचिन्हित लघु ws_ypixel;
+पूर्ण;
 
 
-#endif /* _UAPI_SPARC_TERMIOS_H */
+#पूर्ण_अगर /* _UAPI_SPARC_TERMIOS_H */

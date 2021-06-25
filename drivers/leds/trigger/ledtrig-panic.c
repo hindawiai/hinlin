@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Kernel Panic LED Trigger
  *
  * Copyright 2016 Ezequiel Garcia <ezequiel@vanguardiasur.com.ar>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/notifier.h>
-#include <linux/leds.h>
-#include "../leds.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/leds.h>
+#समावेश "../leds.h"
 
-static struct led_trigger *trigger;
+अटल काष्ठा led_trigger *trigger;
 
 /*
  * This is called in a special context by the atomic panic
- * notifier. This means the trigger can be changed without
+ * notअगरier. This means the trigger can be changed without
  * worrying about locking.
  */
-static void led_trigger_set_panic(struct led_classdev *led_cdev)
-{
-	struct led_trigger *trig;
+अटल व्योम led_trigger_set_panic(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा led_trigger *trig;
 
-	list_for_each_entry(trig, &trigger_list, next_trig) {
-		if (strcmp("panic", trig->name))
-			continue;
-		if (led_cdev->trigger)
+	list_क्रम_each_entry(trig, &trigger_list, next_trig) अणु
+		अगर (म_भेद("panic", trig->name))
+			जारी;
+		अगर (led_cdev->trigger)
 			list_del(&led_cdev->trig_list);
 		list_add_tail(&led_cdev->trig_list, &trig->led_cdevs);
 
-		/* Avoid the delayed blink path */
+		/* Aव्योम the delayed blink path */
 		led_cdev->blink_delay_on = 0;
 		led_cdev->blink_delay_off = 0;
 
 		led_cdev->trigger = trig;
-		if (trig->activate)
+		अगर (trig->activate)
 			trig->activate(led_cdev);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int led_trigger_panic_notifier(struct notifier_block *nb,
-				      unsigned long code, void *unused)
-{
-	struct led_classdev *led_cdev;
+अटल पूर्णांक led_trigger_panic_notअगरier(काष्ठा notअगरier_block *nb,
+				      अचिन्हित दीर्घ code, व्योम *unused)
+अणु
+	काष्ठा led_classdev *led_cdev;
 
-	list_for_each_entry(led_cdev, &leds_list, node)
-		if (led_cdev->flags & LED_PANIC_INDICATOR)
+	list_क्रम_each_entry(led_cdev, &leds_list, node)
+		अगर (led_cdev->flags & LED_PANIC_INDICATOR)
 			led_trigger_set_panic(led_cdev);
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block led_trigger_panic_nb = {
-	.notifier_call = led_trigger_panic_notifier,
-};
+अटल काष्ठा notअगरier_block led_trigger_panic_nb = अणु
+	.notअगरier_call = led_trigger_panic_notअगरier,
+पूर्ण;
 
-static long led_panic_blink(int state)
-{
+अटल दीर्घ led_panic_blink(पूर्णांक state)
+अणु
 	led_trigger_event(trigger, state ? LED_FULL : LED_OFF);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init ledtrig_panic_init(void)
-{
-	atomic_notifier_chain_register(&panic_notifier_list,
+अटल पूर्णांक __init ledtrig_panic_init(व्योम)
+अणु
+	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
 				       &led_trigger_panic_nb);
 
-	led_trigger_register_simple("panic", &trigger);
+	led_trigger_रेजिस्टर_simple("panic", &trigger);
 	panic_blink = led_panic_blink;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(ledtrig_panic_init);

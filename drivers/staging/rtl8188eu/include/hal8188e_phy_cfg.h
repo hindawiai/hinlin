@@ -1,65 +1,66 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __INC_HAL8188EPHYCFG_H__
-#define __INC_HAL8188EPHYCFG_H__
+#अगर_अघोषित __INC_HAL8188EPHYCFG_H__
+#घोषणा __INC_HAL8188EPHYCFG_H__
 
-#define LOOP_LIMIT			5
-#define MAX_STALL_TIME			50		/* us */
-#define AntennaDiversityValue		0x80
-#define MAX_TXPWR_IDX_NMODE_92S		63
-#define Reset_Cnt_Limit			3
+#घोषणा LOOP_LIMIT			5
+#घोषणा MAX_STALL_TIME			50		/* us */
+#घोषणा AntennaDiversityValue		0x80
+#घोषणा MAX_TXPWR_IDX_NMODE_92S		63
+#घोषणा Reset_Cnt_Limit			3
 
-#define MAX_AGGR_NUM			0x07
+#घोषणा MAX_AGGR_NUM			0x07
 
-enum sw_chnl_cmd_id {
+क्रमागत sw_chnl_cmd_id अणु
 	CmdID_End,
 	CmdID_SetTxPowerLevel,
 	CmdID_BBRegWrite10,
-	CmdID_WritePortUlong,
-	CmdID_WritePortUshort,
-	CmdID_WritePortUchar,
+	CmdID_WritePortUदीर्घ,
+	CmdID_WritePortUलघु,
+	CmdID_WritePortUअक्षर,
 	CmdID_RF_WriteReg,
-};
+पूर्ण;
 
 /* 1. Switch channel related */
-struct sw_chnl_cmd {
-	enum sw_chnl_cmd_id CmdID;
+काष्ठा sw_chnl_cmd अणु
+	क्रमागत sw_chnl_cmd_id CmdID;
 	u32 Para1;
 	u32 Para2;
 	u32 msDelay;
-};
+पूर्ण;
 
-enum hw90_block {
+क्रमागत hw90_block अणु
 	HW90_BLOCK_MAC = 0,
 	HW90_BLOCK_PHY0 = 1,
 	HW90_BLOCK_PHY1 = 2,
 	HW90_BLOCK_RF = 3,
 	HW90_BLOCK_MAXIMUM = 4, /*  Never use this */
-};
+पूर्ण;
 
-enum rf_radio_path {
+क्रमागत rf_radio_path अणु
 	RF_PATH_A = 0,			/* Radio Path A */
 	RF_PATH_B = 1,			/* Radio Path B */
-};
+पूर्ण;
 
-#define MAX_PG_GROUP 13
+#घोषणा MAX_PG_GROUP 13
 
-#define	RF_PATH_MAX			2
-#define		MAX_RF_PATH		RF_PATH_MAX
-#define		MAX_TX_COUNT		4 /* path numbers */
+#घोषणा	RF_PATH_MAX			2
+#घोषणा		MAX_RF_PATH		RF_PATH_MAX
+#घोषणा		MAX_TX_COUNT		4 /* path numbers */
 
-#define CHANNEL_MAX_NUMBER		14	/*  14 is the max chnl number */
-#define MAX_CHNL_GROUP_24G		6	/*  ch1~2, ch3~5, ch6~8,
+#घोषणा CHANNEL_MAX_NUMBER		14	/*  14 is the max chnl number */
+#घोषणा MAX_CHNL_GROUP_24G		6	/*  ch1~2, ch3~5, ch6~8,
 						 *ch9~11, ch12~13, CH 14
 						 * total three groups
 						 */
-#define CHANNEL_GROUP_MAX_88E		6
+#घोषणा CHANNEL_GROUP_MAX_88E		6
 
-enum wireless_mode {
+क्रमागत wireless_mode अणु
 	WIRELESS_MODE_UNKNOWN = 0x00,
 	WIRELESS_MODE_A			= BIT(2),
 	WIRELESS_MODE_B			= BIT(0),
@@ -68,9 +69,9 @@ enum wireless_mode {
 	WIRELESS_MODE_N_24G		= BIT(3),
 	WIRELESS_MODE_N_5G		= BIT(4),
 	WIRELESS_MODE_AC		= BIT(6)
-};
+पूर्ण;
 
-enum phy_rate_tx_offset_area {
+क्रमागत phy_rate_tx_offset_area अणु
 	RA_OFFSET_LEGACY_OFDM1,
 	RA_OFFSET_LEGACY_OFDM2,
 	RA_OFFSET_HT_OFDM1,
@@ -78,16 +79,16 @@ enum phy_rate_tx_offset_area {
 	RA_OFFSET_HT_OFDM3,
 	RA_OFFSET_HT_OFDM4,
 	RA_OFFSET_HT_CCK,
-};
+पूर्ण;
 
-struct bb_reg_def {
-	u32 rfintfs;		/*  set software control: */
+काष्ठा bb_reg_def अणु
+	u32 rfपूर्णांकfs;		/*  set software control: */
 				/*	0x870~0x877[8 bytes] */
-	u32 rfintfi;		/*  readback data: */
+	u32 rfपूर्णांकfi;		/*  पढ़ोback data: */
 				/*	0x8e0~0x8e7[8 bytes] */
-	u32 rfintfo;		/*  output data: */
+	u32 rfपूर्णांकfo;		/*  output data: */
 				/*	0x860~0x86f [16 bytes] */
-	u32 rfintfe;		/*  output enable: */
+	u32 rfपूर्णांकfe;		/*  output enable: */
 				/*	0x860~0x86f [16 bytes] */
 	u32 rf3wireOffset;	/*  LSSI data: */
 				/*	0x840~0x84f [16 bytes] */
@@ -131,45 +132,45 @@ struct bb_reg_def {
 				/*	0xc84~0xc87,0xc8c~0xc8f, 0xc94~0xc97,
 				 *	0xc9c~0xc9f [16 bytes]
 				 */
-	u32 rfLSSIReadBack;	/* LSSI RF readback data SI mode */
+	u32 rfLSSIReadBack;	/* LSSI RF पढ़ोback data SI mode */
 				/*	0x8a0~0x8af [16 bytes] */
-	u32 rfLSSIReadBackPi;	/* LSSI RF readback data PI mode 0x8b8-8bc for
+	u32 rfLSSIReadBackPi;	/* LSSI RF पढ़ोback data PI mode 0x8b8-8bc क्रम
 				 * Path A and B
 				 */
-};
+पूर्ण;
 
-/* Read initi reg value for tx power setting. */
-void rtl8192c_PHY_GetHWRegOriginalValue(struct adapter *adapter);
+/* Read initi reg value क्रम tx घातer setting. */
+व्योम rtl8192c_PHY_GetHWRegOriginalValue(काष्ठा adapter *adapter);
 
 /*  BB TX Power R/W */
-void PHY_GetTxPowerLevel8188E(struct adapter *adapter, u32 *powerlevel);
+व्योम PHY_GetTxPowerLevel8188E(काष्ठा adapter *adapter, u32 *घातerlevel);
 
-void PHY_ScanOperationBackup8188E(struct adapter *Adapter, u8 Operation);
+व्योम PHY_ScanOperationBackup8188E(काष्ठा adapter *Adapter, u8 Operation);
 
 /*  Call after initialization */
-void ChkFwCmdIoDone(struct adapter *adapter);
+व्योम ChkFwCmdIoDone(काष्ठा adapter *adapter);
 
 /*  BB/MAC/RF other monitor API */
-void PHY_SetRFPathSwitch_8188E(struct adapter *adapter,	bool main);
+व्योम PHY_SetRFPathSwitch_8188E(काष्ठा adapter *adapter,	bool मुख्य);
 
-void PHY_SwitchEphyParameter(struct adapter *adapter);
+व्योम PHY_SwitchEphyParameter(काष्ठा adapter *adapter);
 
-void PHY_EnableHostClkReq(struct adapter *adapter);
+व्योम PHY_EnableHostClkReq(काष्ठा adapter *adapter);
 
-bool SetAntennaConfig92C(struct adapter *adapter, u8 defaultant);
+bool SetAntennaConfig92C(काष्ठा adapter *adapter, u8 शेषant);
 
-#define PHY_SetMacReg	PHY_SetBBReg
+#घोषणा PHY_SetMacReg	PHY_SetBBReg
 
-#define	SIC_HW_SUPPORT			0
+#घोषणा	SIC_HW_SUPPORT			0
 
-#define	SIC_MAX_POLL_CNT		5
+#घोषणा	SIC_MAX_POLL_CNT		5
 
-#define	SIC_CMD_READY			0
-#define	SIC_CMD_WRITE			1
-#define	SIC_CMD_READ			2
+#घोषणा	SIC_CMD_READY			0
+#घोषणा	SIC_CMD_WRITE			1
+#घोषणा	SIC_CMD_READ			2
 
-#define	SIC_CMD_REG			0x1EB		/*  1byte */
-#define	SIC_ADDR_REG			0x1E8		/*  1b9~1ba, 2 bytes */
-#define	SIC_DATA_REG			0x1EC		/*  1bc~1bf */
+#घोषणा	SIC_CMD_REG			0x1EB		/*  1byte */
+#घोषणा	SIC_ADDR_REG			0x1E8		/*  1b9~1ba, 2 bytes */
+#घोषणा	SIC_DATA_REG			0x1EC		/*  1bc~1bf */
 
-#endif	/*  __INC_HAL8192CPHYCFG_H */
+#पूर्ण_अगर	/*  __INC_HAL8192CPHYCFG_H */

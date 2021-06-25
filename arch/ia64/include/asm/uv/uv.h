@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_UV_UV_H
-#define _ASM_IA64_UV_UV_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_UV_UV_H
+#घोषणा _ASM_IA64_UV_UV_H
 
-#ifdef CONFIG_IA64_SGI_UV
-extern bool ia64_is_uv;
+#अगर_घोषित CONFIG_IA64_SGI_UV
+बाह्य bool ia64_is_uv;
 
-static inline int is_uv_system(void)
-{
-	return ia64_is_uv;
-}
+अटल अंतरभूत पूर्णांक is_uv_प्रणाली(व्योम)
+अणु
+	वापस ia64_is_uv;
+पूर्ण
 
-void __init uv_probe_system_type(void);
-void __init uv_setup(char **cmdline_p);
-#else /* CONFIG_IA64_SGI_UV */
-static inline int is_uv_system(void)
-{
-	return false;
-}
+व्योम __init uv_probe_प्रणाली_type(व्योम);
+व्योम __init uv_setup(अक्षर **cmdline_p);
+#अन्यथा /* CONFIG_IA64_SGI_UV */
+अटल अंतरभूत पूर्णांक is_uv_प्रणाली(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void __init uv_probe_system_type(void)
-{
-}
+अटल अंतरभूत व्योम __init uv_probe_प्रणाली_type(व्योम)
+अणु
+पूर्ण
 
-static inline void __init uv_setup(char **cmdline_p)
-{
-}
-#endif /* CONFIG_IA64_SGI_UV */
+अटल अंतरभूत व्योम __init uv_setup(अक्षर **cmdline_p)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_IA64_SGI_UV */
 
-#endif	/* _ASM_IA64_UV_UV_H */
+#पूर्ण_अगर	/* _ASM_IA64_UV_UV_H */

@@ -1,22 +1,23 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2011 Broadcom Corporation
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <linux/module.h>
-#include <linux/cordic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cordic.h>
 
-static const s32 arctan_table[] = {
+अटल स्थिर s32 arctan_table[] = अणु
 	2949120,
 	1740967,
 	919879,
@@ -35,21 +36,21 @@ static const s32 arctan_table[] = {
 	115,
 	57,
 	29
-};
+पूर्ण;
 
 /*
- * cordic_calc_iq() - calculates the i/q coordinate for given angle
+ * cordic_calc_iq() - calculates the i/q coordinate क्रम given angle
  *
- * theta: angle in degrees for which i/q coordinate is to be calculated
+ * theta: angle in degrees क्रम which i/q coordinate is to be calculated
  * coord: function output parameter holding the i/q coordinate
  */
-struct cordic_iq cordic_calc_iq(s32 theta)
-{
-	struct cordic_iq coord;
-	s32 angle, valtmp;
-	unsigned iter;
-	int signx = 1;
-	int signtheta;
+काष्ठा cordic_iq cordic_calc_iq(s32 theta)
+अणु
+	काष्ठा cordic_iq coord;
+	s32 angle, valपंचांगp;
+	अचिन्हित iter;
+	पूर्णांक signx = 1;
+	पूर्णांक signtheta;
 
 	coord.i = CORDIC_ANGLE_GEN;
 	coord.q = 0;
@@ -60,31 +61,31 @@ struct cordic_iq cordic_calc_iq(s32 theta)
 	theta = ((theta + CORDIC_FIXED(180) * signtheta) % CORDIC_FIXED(360)) -
 		CORDIC_FIXED(180) * signtheta;
 
-	if (CORDIC_FLOAT(theta) > 90) {
+	अगर (CORDIC_FLOAT(theta) > 90) अणु
 		theta -= CORDIC_FIXED(180);
 		signx = -1;
-	} else if (CORDIC_FLOAT(theta) < -90) {
+	पूर्ण अन्यथा अगर (CORDIC_FLOAT(theta) < -90) अणु
 		theta += CORDIC_FIXED(180);
 		signx = -1;
-	}
+	पूर्ण
 
-	for (iter = 0; iter < CORDIC_NUM_ITER; iter++) {
-		if (theta > angle) {
-			valtmp = coord.i - (coord.q >> iter);
+	क्रम (iter = 0; iter < CORDIC_NUM_ITER; iter++) अणु
+		अगर (theta > angle) अणु
+			valपंचांगp = coord.i - (coord.q >> iter);
 			coord.q += (coord.i >> iter);
 			angle += arctan_table[iter];
-		} else {
-			valtmp = coord.i + (coord.q >> iter);
+		पूर्ण अन्यथा अणु
+			valपंचांगp = coord.i + (coord.q >> iter);
 			coord.q -= (coord.i >> iter);
 			angle -= arctan_table[iter];
-		}
-		coord.i = valtmp;
-	}
+		पूर्ण
+		coord.i = valपंचांगp;
+	पूर्ण
 
 	coord.i *= signx;
 	coord.q *= signx;
-	return coord;
-}
+	वापस coord;
+पूर्ण
 EXPORT_SYMBOL(cordic_calc_iq);
 
 MODULE_DESCRIPTION("CORDIC algorithm");

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Common PowerQUICC II code.
  *
- * Author: Scott Wood <scottwood@freescale.com>
+ * Author: Scott Wood <scottwood@मुक्तscale.com>
  * Copyright (c) 2007 Freescale Semiconductor
  *
  * Based on code by Vitaly Bordug <vbordug@ru.mvista.com>
@@ -10,71 +11,71 @@
  * Copyright (c) 2006 MontaVista Software, Inc.
  */
 
-#include <linux/kprobes.h>
+#समावेश <linux/kprobes.h>
 
-#include <asm/cpm2.h>
-#include <asm/io.h>
-#include <asm/pci-bridge.h>
+#समावेश <यंत्र/cpm2.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/pci-bridge.h>
 
-#include <platforms/82xx/pq2.h>
+#समावेश <platक्रमms/82xx/pq2.h>
 
-#define RMR_CSRE 0x00000001
+#घोषणा RMR_CSRE 0x00000001
 
-void __noreturn pq2_restart(char *cmd)
-{
+व्योम __noवापस pq2_restart(अक्षर *cmd)
+अणु
 	local_irq_disable();
 	setbits32(&cpm2_immr->im_clkrst.car_rmr, RMR_CSRE);
 
 	/* Clear the ME,EE,IR & DR bits in MSR to cause checkstop */
-	mtmsr(mfmsr() & ~(MSR_ME | MSR_EE | MSR_IR | MSR_DR));
+	mपंचांगsr(mfmsr() & ~(MSR_ME | MSR_EE | MSR_IR | MSR_DR));
 	in_8(&cpm2_immr->im_clkrst.res[0]);
 
 	panic("Restart failed\n");
-}
+पूर्ण
 NOKPROBE_SYMBOL(pq2_restart)
 
-#ifdef CONFIG_PCI
-static int pq2_pci_exclude_device(struct pci_controller *hose,
-                                  u_char bus, u8 devfn)
-{
-	if (bus == 0 && PCI_SLOT(devfn) == 0)
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	else
-		return PCIBIOS_SUCCESSFUL;
-}
+#अगर_घोषित CONFIG_PCI
+अटल पूर्णांक pq2_pci_exclude_device(काष्ठा pci_controller *hose,
+                                  u_अक्षर bus, u8 devfn)
+अणु
+	अगर (bus == 0 && PCI_SLOT(devfn) == 0)
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	अन्यथा
+		वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static void __init pq2_pci_add_bridge(struct device_node *np)
-{
-	struct pci_controller *hose;
-	struct resource r;
+अटल व्योम __init pq2_pci_add_bridge(काष्ठा device_node *np)
+अणु
+	काष्ठा pci_controller *hose;
+	काष्ठा resource r;
 
-	if (of_address_to_resource(np, 0, &r) || r.end - r.start < 0x10b)
-		goto err;
+	अगर (of_address_to_resource(np, 0, &r) || r.end - r.start < 0x10b)
+		जाओ err;
 
 	pci_add_flags(PCI_REASSIGN_ALL_BUS);
 
 	hose = pcibios_alloc_controller(np);
-	if (!hose)
-		return;
+	अगर (!hose)
+		वापस;
 
 	hose->dn = np;
 
 	setup_indirect_pci(hose, r.start + 0x100, r.start + 0x104, 0);
 	pci_process_bridge_OF_ranges(hose, np, 1);
 
-	return;
+	वापस;
 
 err:
-	printk(KERN_ERR "No valid PCI reg property in device tree\n");
-}
+	prपूर्णांकk(KERN_ERR "No valid PCI reg property in device tree\n");
+पूर्ण
 
-void __init pq2_init_pci(void)
-{
-	struct device_node *np;
+व्योम __init pq2_init_pci(व्योम)
+अणु
+	काष्ठा device_node *np;
 
 	ppc_md.pci_exclude_device = pq2_pci_exclude_device;
 
-	for_each_compatible_node(np, NULL, "fsl,pq2-pci")
+	क्रम_each_compatible_node(np, शून्य, "fsl,pq2-pci")
 		pq2_pci_add_bridge(np);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

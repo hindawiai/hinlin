@@ -1,4 +1,5 @@
+<शैली गुरु>
 
-#undef REQ_GEN_PREFIX
-#undef REQUEST_BEGIN
-#undef REQUEST_END
+#अघोषित REQ_GEN_PREFIX
+#अघोषित REQUEST_BEGIN
+#अघोषित REQUEST_END

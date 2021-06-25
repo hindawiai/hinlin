@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * sleep.c - x86-specific ACPI sleep support.
+ * sleep.c - x86-specअगरic ACPI sleep support.
  *
  *  Copyright (C) 2001-2003 Patrick Mochel
  *  Copyright (C) 2001-2003 Pavel Machek <pavel@ucw.cz>
  */
 
-#include <linux/acpi.h>
-#include <linux/memblock.h>
-#include <linux/dmi.h>
-#include <linux/cpumask.h>
-#include <linux/pgtable.h>
-#include <asm/segment.h>
-#include <asm/desc.h>
-#include <asm/cacheflush.h>
-#include <asm/realmode.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/segment.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/realmode.h>
 
-#include <linux/ftrace.h>
-#include "../../realmode/rm/wakeup.h"
-#include "sleep.h"
+#समावेश <linux/ftrace.h>
+#समावेश "../../realmode/rm/wakeup.h"
+#समावेश "sleep.h"
 
-unsigned long acpi_realmode_flags;
+अचिन्हित दीर्घ acpi_realmode_flags;
 
-#if defined(CONFIG_SMP) && defined(CONFIG_64BIT)
-static char temp_stack[4096];
-#endif
+#अगर defined(CONFIG_SMP) && defined(CONFIG_64BIT)
+अटल अक्षर temp_stack[4096];
+#पूर्ण_अगर
 
 /**
- * acpi_get_wakeup_address - provide physical address for S3 wakeup
+ * acpi_get_wakeup_address - provide physical address क्रम S3 wakeup
  *
  * Returns the physical address where the kernel should be resumed after the
- * system awakes from S3, e.g. for programming into the firmware waking vector.
+ * प्रणाली awakes from S3, e.g. क्रम programming पूर्णांकo the firmware waking vector.
  */
-unsigned long acpi_get_wakeup_address(void)
-{
-	return ((unsigned long)(real_mode_header->wakeup_start));
-}
+अचिन्हित दीर्घ acpi_get_wakeup_address(व्योम)
+अणु
+	वापस ((अचिन्हित दीर्घ)(real_mode_header->wakeup_start));
+पूर्ण
 
 /**
  * x86_acpi_enter_sleep_state - enter sleep state
@@ -43,10 +44,10 @@ unsigned long acpi_get_wakeup_address(void)
  *
  * Wrapper around acpi_enter_sleep_state() to be called by assembly.
  */
-asmlinkage acpi_status __visible x86_acpi_enter_sleep_state(u8 state)
-{
-	return acpi_enter_sleep_state(state);
-}
+यंत्रlinkage acpi_status __visible x86_acpi_enter_sleep_state(u8 state)
+अणु
+	वापस acpi_enter_sleep_state(state);
+पूर्ण
 
 /**
  * x86_acpi_suspend_lowlevel - save kernel state
@@ -54,46 +55,46 @@ asmlinkage acpi_status __visible x86_acpi_enter_sleep_state(u8 state)
  * Create an identity mapped page table and copy the wakeup routine to
  * low memory.
  */
-int x86_acpi_suspend_lowlevel(void)
-{
-	struct wakeup_header *header =
-		(struct wakeup_header *) __va(real_mode_header->wakeup_header);
+पूर्णांक x86_acpi_suspend_lowlevel(व्योम)
+अणु
+	काष्ठा wakeup_header *header =
+		(काष्ठा wakeup_header *) __va(real_mode_header->wakeup_header);
 
-	if (header->signature != WAKEUP_HEADER_SIGNATURE) {
-		printk(KERN_ERR "wakeup header does not match\n");
-		return -EINVAL;
-	}
+	अगर (header->signature != WAKEUP_HEADER_SIGNATURE) अणु
+		prपूर्णांकk(KERN_ERR "wakeup header does not match\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	header->video_mode = saved_video_mode;
 
 	header->pmode_behavior = 0;
 
-#ifndef CONFIG_64BIT
-	native_store_gdt((struct desc_ptr *)&header->pmode_gdt);
+#अगर_अघोषित CONFIG_64BIT
+	native_store_gdt((काष्ठा desc_ptr *)&header->pmode_gdt);
 
 	/*
-	 * We have to check that we can write back the value, and not
-	 * just read it.  At least on 90 nm Pentium M (Family 6, Model
-	 * 13), reading an invalid MSR is not guaranteed to trap, see
+	 * We have to check that we can ग_लिखो back the value, and not
+	 * just पढ़ो it.  At least on 90 nm Pentium M (Family 6, Model
+	 * 13), पढ़ोing an invalid MSR is not guaranteed to trap, see
 	 * Erratum X4 in "Intel Pentium M Processor on 90 nm Process
-	 * with 2-MB L2 Cache and Intel® Processor A100 and A110 on 90
-	 * nm process with 512-KB L2 Cache Specification Update".
+	 * with 2-MB L2 Cache and Intelतऍ Processor A100 and A110 on 90
+	 * nm process with 512-KB L2 Cache Specअगरication Update".
 	 */
-	if (!rdmsr_safe(MSR_EFER,
+	अगर (!rdmsr_safe(MSR_EFER,
 			&header->pmode_efer_low,
 			&header->pmode_efer_high) &&
 	    !wrmsr_safe(MSR_EFER,
 			header->pmode_efer_low,
 			header->pmode_efer_high))
 		header->pmode_behavior |= (1 << WAKEUP_BEHAVIOR_RESTORE_EFER);
-#endif /* !CONFIG_64BIT */
+#पूर्ण_अगर /* !CONFIG_64BIT */
 
-	header->pmode_cr0 = read_cr0();
-	if (__this_cpu_read(cpu_info.cpuid_level) >= 0) {
-		header->pmode_cr4 = __read_cr4();
+	header->pmode_cr0 = पढ़ो_cr0();
+	अगर (__this_cpu_पढ़ो(cpu_info.cpuid_level) >= 0) अणु
+		header->pmode_cr4 = __पढ़ो_cr4();
 		header->pmode_behavior |= (1 << WAKEUP_BEHAVIOR_RESTORE_CR4);
-	}
-	if (!rdmsr_safe(MSR_IA32_MISC_ENABLE,
+	पूर्ण
+	अगर (!rdmsr_safe(MSR_IA32_MISC_ENABLE,
 			&header->pmode_misc_en_low,
 			&header->pmode_misc_en_high) &&
 	    !wrmsr_safe(MSR_IA32_MISC_ENABLE,
@@ -104,57 +105,57 @@ int x86_acpi_suspend_lowlevel(void)
 	header->realmode_flags = acpi_realmode_flags;
 	header->real_magic = 0x12345678;
 
-#ifndef CONFIG_64BIT
-	header->pmode_entry = (u32)&wakeup_pmode_return;
+#अगर_अघोषित CONFIG_64BIT
+	header->pmode_entry = (u32)&wakeup_pmode_वापस;
 	header->pmode_cr3 = (u32)__pa_symbol(initial_page_table);
 	saved_magic = 0x12345678;
-#else /* CONFIG_64BIT */
-#ifdef CONFIG_SMP
-	initial_stack = (unsigned long)temp_stack + sizeof(temp_stack);
+#अन्यथा /* CONFIG_64BIT */
+#अगर_घोषित CONFIG_SMP
+	initial_stack = (अचिन्हित दीर्घ)temp_stack + माप(temp_stack);
 	early_gdt_descr.address =
-			(unsigned long)get_cpu_gdt_rw(smp_processor_id());
+			(अचिन्हित दीर्घ)get_cpu_gdt_rw(smp_processor_id());
 	initial_gs = per_cpu_offset(smp_processor_id());
-#endif
-	initial_code = (unsigned long)wakeup_long64;
+#पूर्ण_अगर
+	initial_code = (अचिन्हित दीर्घ)wakeup_दीर्घ64;
        saved_magic = 0x123456789abcdef0L;
-#endif /* CONFIG_64BIT */
+#पूर्ण_अगर /* CONFIG_64BIT */
 
 	/*
-	 * Pause/unpause graph tracing around do_suspend_lowlevel as it has
-	 * inconsistent call/return info after it jumps to the wakeup vector.
+	 * Pause/unछोड़ो graph tracing around करो_suspend_lowlevel as it has
+	 * inconsistent call/वापस info after it jumps to the wakeup vector.
 	 */
-	pause_graph_tracing();
-	do_suspend_lowlevel();
-	unpause_graph_tracing();
-	return 0;
-}
+	छोड़ो_graph_tracing();
+	करो_suspend_lowlevel();
+	unछोड़ो_graph_tracing();
+	वापस 0;
+पूर्ण
 
-static int __init acpi_sleep_setup(char *str)
-{
-	while ((str != NULL) && (*str != '\0')) {
-		if (strncmp(str, "s3_bios", 7) == 0)
+अटल पूर्णांक __init acpi_sleep_setup(अक्षर *str)
+अणु
+	जबतक ((str != शून्य) && (*str != '\0')) अणु
+		अगर (म_भेदन(str, "s3_bios", 7) == 0)
 			acpi_realmode_flags |= 1;
-		if (strncmp(str, "s3_mode", 7) == 0)
+		अगर (म_भेदन(str, "s3_mode", 7) == 0)
 			acpi_realmode_flags |= 2;
-		if (strncmp(str, "s3_beep", 7) == 0)
+		अगर (म_भेदन(str, "s3_beep", 7) == 0)
 			acpi_realmode_flags |= 4;
-#ifdef CONFIG_HIBERNATION
-		if (strncmp(str, "s4_nohwsig", 10) == 0)
+#अगर_घोषित CONFIG_HIBERNATION
+		अगर (म_भेदन(str, "s4_nohwsig", 10) == 0)
 			acpi_no_s4_hw_signature();
-#endif
-		if (strncmp(str, "nonvs", 5) == 0)
+#पूर्ण_अगर
+		अगर (म_भेदन(str, "nonvs", 5) == 0)
 			acpi_nvs_nosave();
-		if (strncmp(str, "nonvs_s3", 8) == 0)
+		अगर (म_भेदन(str, "nonvs_s3", 8) == 0)
 			acpi_nvs_nosave_s3();
-		if (strncmp(str, "old_ordering", 12) == 0)
+		अगर (म_भेदन(str, "old_ordering", 12) == 0)
 			acpi_old_suspend_ordering();
-		if (strncmp(str, "nobl", 4) == 0)
+		अगर (म_भेदन(str, "nobl", 4) == 0)
 			acpi_sleep_no_blacklist();
-		str = strchr(str, ',');
-		if (str != NULL)
-			str += strspn(str, ", \t");
-	}
-	return 1;
-}
+		str = म_अक्षर(str, ',');
+		अगर (str != शून्य)
+			str += म_अखोज(str, ", \t");
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 __setup("acpi_sleep=", acpi_sleep_setup);

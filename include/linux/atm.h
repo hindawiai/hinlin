@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* atm.h - general ATM declarations */
-#ifndef _LINUX_ATM_H
-#define _LINUX_ATM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* aपंचांग.h - general ATM declarations */
+#अगर_अघोषित _LINUX_ATM_H
+#घोषणा _LINUX_ATM_H
 
-#include <uapi/linux/atm.h>
+#समावेश <uapi/linux/aपंचांग.h>
 
-#ifdef CONFIG_COMPAT
-#include <linux/compat.h>
-struct compat_atmif_sioc {
-	int number;
-	int length;
+#अगर_घोषित CONFIG_COMPAT
+#समावेश <linux/compat.h>
+काष्ठा compat_aपंचांगअगर_sioc अणु
+	पूर्णांक number;
+	पूर्णांक length;
 	compat_uptr_t arg;
-};
-#endif
-#endif
+पूर्ण;
+#पूर्ण_अगर
+#पूर्ण_अगर

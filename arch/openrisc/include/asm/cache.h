@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,16 +13,16 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_CACHE_H
-#define __ASM_OPENRISC_CACHE_H
+#अगर_अघोषित __ASM_OPENRISC_CACHE_H
+#घोषणा __ASM_OPENRISC_CACHE_H
 
 /* FIXME: How can we replace these with values from the CPU...
  * they shouldn't be hard-coded!
  */
 
-#define __ro_after_init __read_mostly
+#घोषणा __ro_after_init __पढ़ो_mostly
 
-#define L1_CACHE_BYTES 16
-#define L1_CACHE_SHIFT 4
+#घोषणा L1_CACHE_BYTES 16
+#घोषणा L1_CACHE_SHIFT 4
 
-#endif /* __ASM_OPENRISC_CACHE_H */
+#पूर्ण_अगर /* __ASM_OPENRISC_CACHE_H */

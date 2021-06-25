@@ -1,206 +1,207 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/sys_eiger.c
  *
  *	Copyright (C) 1995 David A Rusling
  *	Copyright (C) 1996, 1999 Jay A Estabrook
- *	Copyright (C) 1998, 1999 Richard Henderson
+ *	Copyright (C) 1998, 1999 Riअक्षरd Henderson
  *	Copyright (C) 1999 Iain Grant
  *
  * Code supporting the EIGER (EV6+TSUNAMI).
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/sched.h>
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
 
-#include <asm/ptrace.h>
-#include <asm/dma.h>
-#include <asm/irq.h>
-#include <asm/mmu_context.h>
-#include <asm/io.h>
-#include <asm/core_tsunami.h>
-#include <asm/hwrpb.h>
-#include <asm/tlbflush.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/core_tsunami.h>
+#समावेश <यंत्र/hwrpb.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#include "proto.h"
-#include "irq_impl.h"
-#include "pci_impl.h"
-#include "machvec_impl.h"
+#समावेश "proto.h"
+#समावेश "irq_impl.h"
+#समावेश "pci_impl.h"
+#समावेश "machvec_impl.h"
 
 
-/* Note that this interrupt code is identical to TAKARA.  */
+/* Note that this पूर्णांकerrupt code is identical to TAKARA.  */
 
-/* Note mask bit is true for DISABLED irqs.  */
-static unsigned long cached_irq_mask[2] = { -1, -1 };
+/* Note mask bit is true क्रम DISABLED irqs.  */
+अटल अचिन्हित दीर्घ cached_irq_mask[2] = अणु -1, -1 पूर्ण;
 
-static inline void
-eiger_update_irq_hw(unsigned long irq, unsigned long mask)
-{
-	int regaddr;
+अटल अंतरभूत व्योम
+eiger_update_irq_hw(अचिन्हित दीर्घ irq, अचिन्हित दीर्घ mask)
+अणु
+	पूर्णांक regaddr;
 
 	mask = (irq >= 64 ? mask << 16 : mask >> ((irq - 16) & 0x30));
 	regaddr = 0x510 + (((irq - 16) >> 2) & 0x0c);
 	outl(mask & 0xffff0000UL, regaddr);
-}
+पूर्ण
 
-static inline void
-eiger_enable_irq(struct irq_data *d)
-{
-	unsigned int irq = d->irq;
-	unsigned long mask;
+अटल अंतरभूत व्योम
+eiger_enable_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq;
+	अचिन्हित दीर्घ mask;
 	mask = (cached_irq_mask[irq >= 64] &= ~(1UL << (irq & 63)));
 	eiger_update_irq_hw(irq, mask);
-}
+पूर्ण
 
-static void
-eiger_disable_irq(struct irq_data *d)
-{
-	unsigned int irq = d->irq;
-	unsigned long mask;
+अटल व्योम
+eiger_disable_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq;
+	अचिन्हित दीर्घ mask;
 	mask = (cached_irq_mask[irq >= 64] |= 1UL << (irq & 63));
 	eiger_update_irq_hw(irq, mask);
-}
+पूर्ण
 
-static struct irq_chip eiger_irq_type = {
+अटल काष्ठा irq_chip eiger_irq_type = अणु
 	.name		= "EIGER",
 	.irq_unmask	= eiger_enable_irq,
 	.irq_mask	= eiger_disable_irq,
 	.irq_mask_ack	= eiger_disable_irq,
-};
+पूर्ण;
 
-static void
-eiger_device_interrupt(unsigned long vector)
-{
-	unsigned intstatus;
+अटल व्योम
+eiger_device_पूर्णांकerrupt(अचिन्हित दीर्घ vector)
+अणु
+	अचिन्हित पूर्णांकstatus;
 
 	/*
 	 * The PALcode will have passed us vectors 0x800 or 0x810,
 	 * which are fairly arbitrary values and serve only to tell
-	 * us whether an interrupt has come in on IRQ0 or IRQ1. If
+	 * us whether an पूर्णांकerrupt has come in on IRQ0 or IRQ1. If
 	 * it's IRQ1 it's a PCI interrupt; if it's IRQ0, it's
-	 * probably ISA, but PCI interrupts can come through IRQ0
-	 * as well if the interrupt controller isn't in accelerated
+	 * probably ISA, but PCI पूर्णांकerrupts can come through IRQ0
+	 * as well अगर the पूर्णांकerrupt controller isn't in accelerated
 	 * mode.
 	 *
-	 * OTOH, the accelerator thing doesn't seem to be working
-	 * overly well, so what we'll do instead is try directly
-	 * examining the Master Interrupt Register to see if it's a
-	 * PCI interrupt, and if _not_ then we'll pass it on to the
+	 * OTOH, the accelerator thing करोesn't seem to be working
+	 * overly well, so what we'll करो instead is try directly
+	 * examining the Master Interrupt Register to see अगर it's a
+	 * PCI पूर्णांकerrupt, and अगर _not_ then we'll pass it on to the
 	 * ISA handler.
 	 */
 
-	intstatus = inw(0x500) & 15;
-	if (intstatus) {
+	पूर्णांकstatus = inw(0x500) & 15;
+	अगर (पूर्णांकstatus) अणु
 		/*
-		 * This is a PCI interrupt. Check each bit and
-		 * despatch an interrupt if it's set.
+		 * This is a PCI पूर्णांकerrupt. Check each bit and
+		 * despatch an पूर्णांकerrupt अगर it's set.
 		 */
 
-		if (intstatus & 8) handle_irq(16+3);
-		if (intstatus & 4) handle_irq(16+2);
-		if (intstatus & 2) handle_irq(16+1);
-		if (intstatus & 1) handle_irq(16+0);
-	} else {
-		isa_device_interrupt(vector);
-	}
-}
+		अगर (पूर्णांकstatus & 8) handle_irq(16+3);
+		अगर (पूर्णांकstatus & 4) handle_irq(16+2);
+		अगर (पूर्णांकstatus & 2) handle_irq(16+1);
+		अगर (पूर्णांकstatus & 1) handle_irq(16+0);
+	पूर्ण अन्यथा अणु
+		isa_device_पूर्णांकerrupt(vector);
+	पूर्ण
+पूर्ण
 
-static void
-eiger_srm_device_interrupt(unsigned long vector)
-{
-	int irq = (vector - 0x800) >> 4;
+अटल व्योम
+eiger_srm_device_पूर्णांकerrupt(अचिन्हित दीर्घ vector)
+अणु
+	पूर्णांक irq = (vector - 0x800) >> 4;
 	handle_irq(irq);
-}
+पूर्ण
 
-static void __init
-eiger_init_irq(void)
-{
-	long i;
+अटल व्योम __init
+eiger_init_irq(व्योम)
+अणु
+	दीर्घ i;
 
 	outb(0, DMA1_RESET_REG);
 	outb(0, DMA2_RESET_REG);
 	outb(DMA_MODE_CASCADE, DMA2_MODE_REG);
 	outb(0, DMA2_MASK_REG);
 
-	if (alpha_using_srm)
-		alpha_mv.device_interrupt = eiger_srm_device_interrupt;
+	अगर (alpha_using_srm)
+		alpha_mv.device_पूर्णांकerrupt = eiger_srm_device_पूर्णांकerrupt;
 
-	for (i = 16; i < 128; i += 16)
+	क्रम (i = 16; i < 128; i += 16)
 		eiger_update_irq_hw(i, -1);
 
 	init_i8259a_irqs();
 
-	for (i = 16; i < 128; ++i) {
+	क्रम (i = 16; i < 128; ++i) अणु
 		irq_set_chip_and_handler(i, &eiger_irq_type, handle_level_irq);
 		irq_set_status_flags(i, IRQ_LEVEL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-eiger_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
+अटल पूर्णांक
+eiger_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
 	u8 irq_orig;
 
-	/* The SRM console has already calculated out the IRQ value's for
-	   option cards. As this works lets just read in the value already
+	/* The SRM console has alपढ़ोy calculated out the IRQ value's क्रम
+	   option cards. As this works lets just पढ़ो in the value alपढ़ोy
 	   set and change it to a useable value by Linux.
 
 	   All the IRQ values generated by the console are greater than 90,
 	   so we subtract 80 because it is (90 - allocated ISA IRQ's).  */
 
-	pci_read_config_byte(dev, PCI_INTERRUPT_LINE, &irq_orig);
+	pci_पढ़ो_config_byte(dev, PCI_INTERRUPT_LINE, &irq_orig);
 
-	return irq_orig - 0x80;
-}
+	वापस irq_orig - 0x80;
+पूर्ण
 
-static u8
-eiger_swizzle(struct pci_dev *dev, u8 *pinp)
-{
-	struct pci_controller *hose = dev->sysdata;
-	int slot, pin = *pinp;
-	int bridge_count = 0;
+अटल u8
+eiger_swizzle(काष्ठा pci_dev *dev, u8 *pinp)
+अणु
+	काष्ठा pci_controller *hose = dev->sysdata;
+	पूर्णांक slot, pin = *pinp;
+	पूर्णांक bridge_count = 0;
 
 	/* Find the number of backplane bridges.  */
-	int backplane = inw(0x502) & 0x0f;
+	पूर्णांक backplane = inw(0x502) & 0x0f;
 
-	switch (backplane)
-	{
-	   case 0x00: bridge_count = 0; break; /* No bridges */
-	   case 0x01: bridge_count = 1; break; /* 1 */
-	   case 0x03: bridge_count = 2; break; /* 2 */
-	   case 0x07: bridge_count = 3; break; /* 3 */
-	   case 0x0f: bridge_count = 4; break; /* 4 */
-	}
+	चयन (backplane)
+	अणु
+	   हाल 0x00: bridge_count = 0; अवरोध; /* No bridges */
+	   हाल 0x01: bridge_count = 1; अवरोध; /* 1 */
+	   हाल 0x03: bridge_count = 2; अवरोध; /* 2 */
+	   हाल 0x07: bridge_count = 3; अवरोध; /* 3 */
+	   हाल 0x0f: bridge_count = 4; अवरोध; /* 4 */
+	पूर्ण
 
 	slot = PCI_SLOT(dev->devfn);
-	while (dev->bus->self) {
-		/* Check for built-in bridges on hose 0. */
-		if (hose->index == 0
+	जबतक (dev->bus->self) अणु
+		/* Check क्रम built-in bridges on hose 0. */
+		अगर (hose->index == 0
 		    && (PCI_SLOT(dev->bus->self->devfn)
-			> 20 - bridge_count)) {
+			> 20 - bridge_count)) अणु
 			slot = PCI_SLOT(dev->devfn);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/* Must be a card-based bridge.  */
-		pin = pci_swizzle_interrupt_pin(dev, pin);
+		pin = pci_swizzle_पूर्णांकerrupt_pin(dev, pin);
 
 		/* Move up the chain of bridges.  */
 		dev = dev->bus->self;
-	}
+	पूर्ण
 	*pinp = pin;
-	return slot;
-}
+	वापस slot;
+पूर्ण
 
 /*
  * The System Vectors
  */
 
-struct alpha_machine_vector eiger_mv __initmv = {
+काष्ठा alpha_machine_vector eiger_mv __iniपंचांगv = अणु
 	.vector_name		= "Eiger",
 	DO_EV6_MMU,
 	DO_DEFAULT_RTC,
@@ -212,14 +213,14 @@ struct alpha_machine_vector eiger_mv __initmv = {
 	.pci_dac_offset		= TSUNAMI_DAC_OFFSET,
 
 	.nr_irqs		= 128,
-	.device_interrupt	= eiger_device_interrupt,
+	.device_पूर्णांकerrupt	= eiger_device_पूर्णांकerrupt,
 
 	.init_arch		= tsunami_init_arch,
 	.init_irq		= eiger_init_irq,
 	.init_rtc		= common_init_rtc,
 	.init_pci		= common_init_pci,
-	.kill_arch		= tsunami_kill_arch,
+	.समाप्त_arch		= tsunami_समाप्त_arch,
 	.pci_map_irq		= eiger_map_irq,
 	.pci_swizzle		= eiger_swizzle,
-};
+पूर्ण;
 ALIAS_MV(eiger)

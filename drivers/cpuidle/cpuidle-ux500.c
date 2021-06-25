@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012 Linaro : Daniel Lezcano <daniel.lezcano@linaro.org> (IBM)
  *
@@ -6,119 +7,119 @@
  * and Jonas Aaberg <jonas.aberg@stericsson.com>.
  */
 
-#include <linux/init.h>
-#include <linux/cpuidle.h>
-#include <linux/spinlock.h>
-#include <linux/atomic.h>
-#include <linux/smp.h>
-#include <linux/mfd/dbx500-prcmu.h>
-#include <linux/platform_data/arm-ux500-pm.h>
-#include <linux/platform_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/mfd/dbx500-prcmu.h>
+#समावेश <linux/platक्रमm_data/arm-ux500-pm.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/cpuidle.h>
+#समावेश <यंत्र/cpuidle.h>
 
-static atomic_t master = ATOMIC_INIT(0);
-static DEFINE_SPINLOCK(master_lock);
+अटल atomic_t master = ATOMIC_INIT(0);
+अटल DEFINE_SPINLOCK(master_lock);
 
-static inline int ux500_enter_idle(struct cpuidle_device *dev,
-				   struct cpuidle_driver *drv, int index)
-{
-	int this_cpu = smp_processor_id();
+अटल अंतरभूत पूर्णांक ux500_enter_idle(काष्ठा cpuidle_device *dev,
+				   काष्ठा cpuidle_driver *drv, पूर्णांक index)
+अणु
+	पूर्णांक this_cpu = smp_processor_id();
 	bool recouple = false;
 
-	if (atomic_inc_return(&master) == num_online_cpus()) {
+	अगर (atomic_inc_वापस(&master) == num_online_cpus()) अणु
 
-		/* With this lock, we prevent the other cpu to exit and enter
+		/* With this lock, we prevent the other cpu to निकास and enter
 		 * this function again and become the master */
-		if (!spin_trylock(&master_lock))
-			goto wfi;
+		अगर (!spin_trylock(&master_lock))
+			जाओ wfi;
 
 		/* decouple the gic from the A9 cores */
-		if (prcmu_gic_decouple()) {
+		अगर (prcmu_gic_decouple()) अणु
 			spin_unlock(&master_lock);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* If an error occur, we will have to recouple the gic
 		 * manually */
 		recouple = true;
 
-		/* At this state, as the gic is decoupled, if the other
+		/* At this state, as the gic is decoupled, अगर the other
 		 * cpu is in WFI, we have the guarantee it won't be wake
 		 * up, so we can safely go to retention */
-		if (!prcmu_is_cpu_in_wfi(this_cpu ? 0 : 1))
-			goto out;
+		अगर (!prcmu_is_cpu_in_wfi(this_cpu ? 0 : 1))
+			जाओ out;
 
-		/* The prcmu will be in charge of watching the interrupts
+		/* The prcmu will be in अक्षरge of watching the पूर्णांकerrupts
 		 * and wake up the cpus */
-		if (prcmu_copy_gic_settings())
-			goto out;
+		अगर (prcmu_copy_gic_settings())
+			जाओ out;
 
-		/* Check in the meantime an interrupt did
+		/* Check in the meanसमय an पूर्णांकerrupt did
 		 * not occur on the gic ... */
-		if (prcmu_gic_pending_irq())
-			goto out;
+		अगर (prcmu_gic_pending_irq())
+			जाओ out;
 
 		/* ... and the prcmu */
-		if (prcmu_pending_irq())
-			goto out;
+		अगर (prcmu_pending_irq())
+			जाओ out;
 
-		/* Go to the retention state, the prcmu will wait for the
-		 * cpu to go WFI and this is what happens after exiting this
+		/* Go to the retention state, the prcmu will रुको क्रम the
+		 * cpu to go WFI and this is what happens after निकासing this
 		 * 'master' critical section */
-		if (prcmu_set_power_state(PRCMU_AP_IDLE, true, true))
-			goto out;
+		अगर (prcmu_set_घातer_state(PRCMU_AP_IDLE, true, true))
+			जाओ out;
 
-		/* When we switch to retention, the prcmu is in charge
-		 * of recoupling the gic automatically */
+		/* When we चयन to retention, the prcmu is in अक्षरge
+		 * of recoupling the gic स्वतःmatically */
 		recouple = false;
 
 		spin_unlock(&master_lock);
-	}
+	पूर्ण
 wfi:
-	cpu_do_idle();
+	cpu_करो_idle();
 out:
 	atomic_dec(&master);
 
-	if (recouple) {
+	अगर (recouple) अणु
 		prcmu_gic_recouple();
 		spin_unlock(&master_lock);
-	}
+	पूर्ण
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static struct cpuidle_driver ux500_idle_driver = {
+अटल काष्ठा cpuidle_driver ux500_idle_driver = अणु
 	.name = "ux500_idle",
 	.owner = THIS_MODULE,
-	.states = {
+	.states = अणु
 		ARM_CPUIDLE_WFI_STATE,
-		{
+		अणु
 			.enter		  = ux500_enter_idle,
-			.exit_latency	  = 70,
+			.निकास_latency	  = 70,
 			.target_residency = 260,
 			.flags		  = CPUIDLE_FLAG_TIMER_STOP,
 			.name		  = "ApIdle",
 			.desc		  = "ARM Retention",
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.safe_state_index = 0,
 	.state_count = 2,
-};
+पूर्ण;
 
-static int dbx500_cpuidle_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक dbx500_cpuidle_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	/* Configure wake up reasons */
 	prcmu_enable_wakeups(PRCMU_WAKEUP(ARM) | PRCMU_WAKEUP(RTC) |
 			     PRCMU_WAKEUP(ABB));
 
-	return cpuidle_register(&ux500_idle_driver, NULL);
-}
+	वापस cpuidle_रेजिस्टर(&ux500_idle_driver, शून्य);
+पूर्ण
 
-static struct platform_driver dbx500_cpuidle_plat_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver dbx500_cpuidle_plat_driver = अणु
+	.driver = अणु
 		.name = "cpuidle-dbx500",
-	},
+	पूर्ण,
 	.probe = dbx500_cpuidle_probe,
-};
-builtin_platform_driver(dbx500_cpuidle_plat_driver);
+पूर्ण;
+builtin_platक्रमm_driver(dbx500_cpuidle_plat_driver);

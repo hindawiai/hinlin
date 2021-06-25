@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#define TIMER_RETRY 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#घोषणा TIMER_RETRY 1
 
-struct k_clock {
-	int	(*clock_getres)(const clockid_t which_clock,
-				struct timespec64 *tp);
-	int	(*clock_set)(const clockid_t which_clock,
-			     const struct timespec64 *tp);
-	/* Returns the clock value in the current time namespace. */
-	int	(*clock_get_timespec)(const clockid_t which_clock,
-				      struct timespec64 *tp);
-	/* Returns the clock value in the root time namespace. */
-	ktime_t	(*clock_get_ktime)(const clockid_t which_clock);
-	int	(*clock_adj)(const clockid_t which_clock, struct __kernel_timex *tx);
-	int	(*timer_create)(struct k_itimer *timer);
-	int	(*nsleep)(const clockid_t which_clock, int flags,
-			  const struct timespec64 *);
-	int	(*timer_set)(struct k_itimer *timr, int flags,
-			     struct itimerspec64 *new_setting,
-			     struct itimerspec64 *old_setting);
-	int	(*timer_del)(struct k_itimer *timr);
-	void	(*timer_get)(struct k_itimer *timr,
-			     struct itimerspec64 *cur_setting);
-	void	(*timer_rearm)(struct k_itimer *timr);
-	s64	(*timer_forward)(struct k_itimer *timr, ktime_t now);
-	ktime_t	(*timer_remaining)(struct k_itimer *timr, ktime_t now);
-	int	(*timer_try_to_cancel)(struct k_itimer *timr);
-	void	(*timer_arm)(struct k_itimer *timr, ktime_t expires,
-			     bool absolute, bool sigev_none);
-	void	(*timer_wait_running)(struct k_itimer *timr);
-};
+काष्ठा k_घड़ी अणु
+	पूर्णांक	(*घड़ी_getres)(स्थिर घड़ीid_t which_घड़ी,
+				काष्ठा बारpec64 *tp);
+	पूर्णांक	(*घड़ी_set)(स्थिर घड़ीid_t which_घड़ी,
+			     स्थिर काष्ठा बारpec64 *tp);
+	/* Returns the घड़ी value in the current समय namespace. */
+	पूर्णांक	(*घड़ी_get_बारpec)(स्थिर घड़ीid_t which_घड़ी,
+				      काष्ठा बारpec64 *tp);
+	/* Returns the घड़ी value in the root समय namespace. */
+	kसमय_प्रकार	(*घड़ी_get_kसमय)(स्थिर घड़ीid_t which_घड़ी);
+	पूर्णांक	(*घड़ी_adj)(स्थिर घड़ीid_t which_घड़ी, काष्ठा __kernel_समयx *tx);
+	पूर्णांक	(*समयr_create)(काष्ठा k_iसमयr *समयr);
+	पूर्णांक	(*nsleep)(स्थिर घड़ीid_t which_घड़ी, पूर्णांक flags,
+			  स्थिर काष्ठा बारpec64 *);
+	पूर्णांक	(*समयr_set)(काष्ठा k_iसमयr *timr, पूर्णांक flags,
+			     काष्ठा iसमयrspec64 *new_setting,
+			     काष्ठा iसमयrspec64 *old_setting);
+	पूर्णांक	(*समयr_del)(काष्ठा k_iसमयr *timr);
+	व्योम	(*समयr_get)(काष्ठा k_iसमयr *timr,
+			     काष्ठा iसमयrspec64 *cur_setting);
+	व्योम	(*समयr_rearm)(काष्ठा k_iसमयr *timr);
+	s64	(*समयr_क्रमward)(काष्ठा k_iसमयr *timr, kसमय_प्रकार now);
+	kसमय_प्रकार	(*समयr_reमुख्यing)(काष्ठा k_iसमयr *timr, kसमय_प्रकार now);
+	पूर्णांक	(*समयr_try_to_cancel)(काष्ठा k_iसमयr *timr);
+	व्योम	(*समयr_arm)(काष्ठा k_iसमयr *timr, kसमय_प्रकार expires,
+			     bool असलolute, bool sigev_none);
+	व्योम	(*समयr_रुको_running)(काष्ठा k_iसमयr *timr);
+पूर्ण;
 
-extern const struct k_clock clock_posix_cpu;
-extern const struct k_clock clock_posix_dynamic;
-extern const struct k_clock clock_process;
-extern const struct k_clock clock_thread;
-extern const struct k_clock alarm_clock;
+बाह्य स्थिर काष्ठा k_घड़ी घड़ी_posix_cpu;
+बाह्य स्थिर काष्ठा k_घड़ी घड़ी_posix_dynamic;
+बाह्य स्थिर काष्ठा k_घड़ी घड़ी_process;
+बाह्य स्थिर काष्ठा k_घड़ी घड़ी_प्रकारhपढ़ो;
+बाह्य स्थिर काष्ठा k_घड़ी alarm_घड़ी;
 
-int posix_timer_event(struct k_itimer *timr, int si_private);
+पूर्णांक posix_समयr_event(काष्ठा k_iसमयr *timr, पूर्णांक si_निजी);
 
-void common_timer_get(struct k_itimer *timr, struct itimerspec64 *cur_setting);
-int common_timer_set(struct k_itimer *timr, int flags,
-		     struct itimerspec64 *new_setting,
-		     struct itimerspec64 *old_setting);
-int common_timer_del(struct k_itimer *timer);
+व्योम common_समयr_get(काष्ठा k_iसमयr *timr, काष्ठा iसमयrspec64 *cur_setting);
+पूर्णांक common_समयr_set(काष्ठा k_iसमयr *timr, पूर्णांक flags,
+		     काष्ठा iसमयrspec64 *new_setting,
+		     काष्ठा iसमयrspec64 *old_setting);
+पूर्णांक common_समयr_del(काष्ठा k_iसमयr *समयr);

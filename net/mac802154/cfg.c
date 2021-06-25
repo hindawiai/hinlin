@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Authors:
@@ -7,44 +8,44 @@
  * Based on: net/mac80211/cfg.c
  */
 
-#include <net/rtnetlink.h>
-#include <net/cfg802154.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/cfg802154.h>
 
-#include "ieee802154_i.h"
-#include "driver-ops.h"
-#include "cfg.h"
+#समावेश "ieee802154_i.h"
+#समावेश "driver-ops.h"
+#समावेश "cfg.h"
 
-static struct net_device *
-ieee802154_add_iface_deprecated(struct wpan_phy *wpan_phy,
-				const char *name,
-				unsigned char name_assign_type, int type)
-{
-	struct ieee802154_local *local = wpan_phy_priv(wpan_phy);
-	struct net_device *dev;
+अटल काष्ठा net_device *
+ieee802154_add_अगरace_deprecated(काष्ठा wpan_phy *wpan_phy,
+				स्थिर अक्षर *name,
+				अचिन्हित अक्षर name_assign_type, पूर्णांक type)
+अणु
+	काष्ठा ieee802154_local *local = wpan_phy_priv(wpan_phy);
+	काष्ठा net_device *dev;
 
 	rtnl_lock();
-	dev = ieee802154_if_add(local, name, name_assign_type, type,
+	dev = ieee802154_अगर_add(local, name, name_assign_type, type,
 				cpu_to_le64(0x0000000000000000ULL));
 	rtnl_unlock();
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static void ieee802154_del_iface_deprecated(struct wpan_phy *wpan_phy,
-					    struct net_device *dev)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+अटल व्योम ieee802154_del_अगरace_deprecated(काष्ठा wpan_phy *wpan_phy,
+					    काष्ठा net_device *dev)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
 
-	ieee802154_if_remove(sdata);
-}
+	ieee802154_अगर_हटाओ(sdata);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int ieee802154_suspend(struct wpan_phy *wpan_phy)
-{
-	struct ieee802154_local *local = wpan_phy_priv(wpan_phy);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक ieee802154_suspend(काष्ठा wpan_phy *wpan_phy)
+अणु
+	काष्ठा ieee802154_local *local = wpan_phy_priv(wpan_phy);
 
-	if (!local->open_count)
-		goto suspend;
+	अगर (!local->खोलो_count)
+		जाओ suspend;
 
 	ieee802154_stop_queue(&local->hw);
 	synchronize_net();
@@ -54,420 +55,420 @@ static int ieee802154_suspend(struct wpan_phy *wpan_phy)
 
 suspend:
 	local->suspended = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ieee802154_resume(struct wpan_phy *wpan_phy)
-{
-	struct ieee802154_local *local = wpan_phy_priv(wpan_phy);
-	int ret;
+अटल पूर्णांक ieee802154_resume(काष्ठा wpan_phy *wpan_phy)
+अणु
+	काष्ठा ieee802154_local *local = wpan_phy_priv(wpan_phy);
+	पूर्णांक ret;
 
-	/* nothing to do if HW shouldn't run */
-	if (!local->open_count)
-		goto wake_up;
+	/* nothing to करो अगर HW shouldn't run */
+	अगर (!local->खोलो_count)
+		जाओ wake_up;
 
 	/* restart hardware */
 	ret = drv_start(local);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 wake_up:
 	ieee802154_wake_queue(&local->hw);
 	local->suspended = false;
-	return 0;
-}
-#else
-#define ieee802154_suspend NULL
-#define ieee802154_resume NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा ieee802154_suspend शून्य
+#घोषणा ieee802154_resume शून्य
+#पूर्ण_अगर
 
-static int
-ieee802154_add_iface(struct wpan_phy *phy, const char *name,
-		     unsigned char name_assign_type,
-		     enum nl802154_iftype type, __le64 extended_addr)
-{
-	struct ieee802154_local *local = wpan_phy_priv(phy);
-	struct net_device *err;
+अटल पूर्णांक
+ieee802154_add_अगरace(काष्ठा wpan_phy *phy, स्थिर अक्षर *name,
+		     अचिन्हित अक्षर name_assign_type,
+		     क्रमागत nl802154_अगरtype type, __le64 extended_addr)
+अणु
+	काष्ठा ieee802154_local *local = wpan_phy_priv(phy);
+	काष्ठा net_device *err;
 
-	err = ieee802154_if_add(local, name, name_assign_type, type,
+	err = ieee802154_अगर_add(local, name, name_assign_type, type,
 				extended_addr);
-	return PTR_ERR_OR_ZERO(err);
-}
+	वापस PTR_ERR_OR_ZERO(err);
+पूर्ण
 
-static int
-ieee802154_del_iface(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev)
-{
-	ieee802154_if_remove(IEEE802154_WPAN_DEV_TO_SUB_IF(wpan_dev));
+अटल पूर्णांक
+ieee802154_del_अगरace(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev)
+अणु
+	ieee802154_अगर_हटाओ(IEEE802154_WPAN_DEV_TO_SUB_IF(wpan_dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ieee802154_set_channel(struct wpan_phy *wpan_phy, u8 page, u8 channel)
-{
-	struct ieee802154_local *local = wpan_phy_priv(wpan_phy);
-	int ret;
+अटल पूर्णांक
+ieee802154_set_channel(काष्ठा wpan_phy *wpan_phy, u8 page, u8 channel)
+अणु
+	काष्ठा ieee802154_local *local = wpan_phy_priv(wpan_phy);
+	पूर्णांक ret;
 
 	ASSERT_RTNL();
 
-	if (wpan_phy->current_page == page &&
+	अगर (wpan_phy->current_page == page &&
 	    wpan_phy->current_channel == channel)
-		return 0;
+		वापस 0;
 
 	ret = drv_set_channel(local, page, channel);
-	if (!ret) {
+	अगर (!ret) अणु
 		wpan_phy->current_page = page;
 		wpan_phy->current_channel = channel;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-ieee802154_set_cca_mode(struct wpan_phy *wpan_phy,
-			const struct wpan_phy_cca *cca)
-{
-	struct ieee802154_local *local = wpan_phy_priv(wpan_phy);
-	int ret;
+अटल पूर्णांक
+ieee802154_set_cca_mode(काष्ठा wpan_phy *wpan_phy,
+			स्थिर काष्ठा wpan_phy_cca *cca)
+अणु
+	काष्ठा ieee802154_local *local = wpan_phy_priv(wpan_phy);
+	पूर्णांक ret;
 
 	ASSERT_RTNL();
 
-	if (wpan_phy_cca_cmp(&wpan_phy->cca, cca))
-		return 0;
+	अगर (wpan_phy_cca_cmp(&wpan_phy->cca, cca))
+		वापस 0;
 
 	ret = drv_set_cca_mode(local, cca);
-	if (!ret)
+	अगर (!ret)
 		wpan_phy->cca = *cca;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-ieee802154_set_cca_ed_level(struct wpan_phy *wpan_phy, s32 ed_level)
-{
-	struct ieee802154_local *local = wpan_phy_priv(wpan_phy);
-	int ret;
+अटल पूर्णांक
+ieee802154_set_cca_ed_level(काष्ठा wpan_phy *wpan_phy, s32 ed_level)
+अणु
+	काष्ठा ieee802154_local *local = wpan_phy_priv(wpan_phy);
+	पूर्णांक ret;
 
 	ASSERT_RTNL();
 
-	if (wpan_phy->cca_ed_level == ed_level)
-		return 0;
+	अगर (wpan_phy->cca_ed_level == ed_level)
+		वापस 0;
 
 	ret = drv_set_cca_ed_level(local, ed_level);
-	if (!ret)
+	अगर (!ret)
 		wpan_phy->cca_ed_level = ed_level;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-ieee802154_set_tx_power(struct wpan_phy *wpan_phy, s32 power)
-{
-	struct ieee802154_local *local = wpan_phy_priv(wpan_phy);
-	int ret;
+अटल पूर्णांक
+ieee802154_set_tx_घातer(काष्ठा wpan_phy *wpan_phy, s32 घातer)
+अणु
+	काष्ठा ieee802154_local *local = wpan_phy_priv(wpan_phy);
+	पूर्णांक ret;
 
 	ASSERT_RTNL();
 
-	if (wpan_phy->transmit_power == power)
-		return 0;
+	अगर (wpan_phy->transmit_घातer == घातer)
+		वापस 0;
 
-	ret = drv_set_tx_power(local, power);
-	if (!ret)
-		wpan_phy->transmit_power = power;
+	ret = drv_set_tx_घातer(local, घातer);
+	अगर (!ret)
+		wpan_phy->transmit_घातer = घातer;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-ieee802154_set_pan_id(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
+अटल पूर्णांक
+ieee802154_set_pan_id(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
 		      __le16 pan_id)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	ASSERT_RTNL();
 
-	if (wpan_dev->pan_id == pan_id)
-		return 0;
+	अगर (wpan_dev->pan_id == pan_id)
+		वापस 0;
 
 	ret = mac802154_wpan_update_llsec(wpan_dev->netdev);
-	if (!ret)
+	अगर (!ret)
 		wpan_dev->pan_id = pan_id;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-ieee802154_set_backoff_exponent(struct wpan_phy *wpan_phy,
-				struct wpan_dev *wpan_dev,
+अटल पूर्णांक
+ieee802154_set_backoff_exponent(काष्ठा wpan_phy *wpan_phy,
+				काष्ठा wpan_dev *wpan_dev,
 				u8 min_be, u8 max_be)
-{
+अणु
 	ASSERT_RTNL();
 
 	wpan_dev->min_be = min_be;
 	wpan_dev->max_be = max_be;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ieee802154_set_short_addr(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
-			  __le16 short_addr)
-{
+अटल पूर्णांक
+ieee802154_set_लघु_addr(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
+			  __le16 लघु_addr)
+अणु
 	ASSERT_RTNL();
 
-	wpan_dev->short_addr = short_addr;
-	return 0;
-}
+	wpan_dev->लघु_addr = लघु_addr;
+	वापस 0;
+पूर्ण
 
-static int
-ieee802154_set_max_csma_backoffs(struct wpan_phy *wpan_phy,
-				 struct wpan_dev *wpan_dev,
+अटल पूर्णांक
+ieee802154_set_max_csma_backoffs(काष्ठा wpan_phy *wpan_phy,
+				 काष्ठा wpan_dev *wpan_dev,
 				 u8 max_csma_backoffs)
-{
+अणु
 	ASSERT_RTNL();
 
 	wpan_dev->csma_retries = max_csma_backoffs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ieee802154_set_max_frame_retries(struct wpan_phy *wpan_phy,
-				 struct wpan_dev *wpan_dev,
+अटल पूर्णांक
+ieee802154_set_max_frame_retries(काष्ठा wpan_phy *wpan_phy,
+				 काष्ठा wpan_dev *wpan_dev,
 				 s8 max_frame_retries)
-{
+अणु
 	ASSERT_RTNL();
 
 	wpan_dev->frame_retries = max_frame_retries;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ieee802154_set_lbt_mode(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
+अटल पूर्णांक
+ieee802154_set_lbt_mode(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
 			bool mode)
-{
+अणु
 	ASSERT_RTNL();
 
 	wpan_dev->lbt = mode;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ieee802154_set_ackreq_default(struct wpan_phy *wpan_phy,
-			      struct wpan_dev *wpan_dev, bool ackreq)
-{
+अटल पूर्णांक
+ieee802154_set_ackreq_शेष(काष्ठा wpan_phy *wpan_phy,
+			      काष्ठा wpan_dev *wpan_dev, bool ackreq)
+अणु
 	ASSERT_RTNL();
 
 	wpan_dev->ackreq = ackreq;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_IEEE802154_NL802154_EXPERIMENTAL
-static void
-ieee802154_get_llsec_table(struct wpan_phy *wpan_phy,
-			   struct wpan_dev *wpan_dev,
-			   struct ieee802154_llsec_table **table)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+#अगर_घोषित CONFIG_IEEE802154_NL802154_EXPERIMENTAL
+अटल व्योम
+ieee802154_get_llsec_table(काष्ठा wpan_phy *wpan_phy,
+			   काष्ठा wpan_dev *wpan_dev,
+			   काष्ठा ieee802154_llsec_table **table)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
 
 	*table = &sdata->sec.table;
-}
+पूर्ण
 
-static void
-ieee802154_lock_llsec_table(struct wpan_phy *wpan_phy,
-			    struct wpan_dev *wpan_dev)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+अटल व्योम
+ieee802154_lock_llsec_table(काष्ठा wpan_phy *wpan_phy,
+			    काष्ठा wpan_dev *wpan_dev)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
 
 	mutex_lock(&sdata->sec_mtx);
-}
+पूर्ण
 
-static void
-ieee802154_unlock_llsec_table(struct wpan_phy *wpan_phy,
-			      struct wpan_dev *wpan_dev)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+अटल व्योम
+ieee802154_unlock_llsec_table(काष्ठा wpan_phy *wpan_phy,
+			      काष्ठा wpan_dev *wpan_dev)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
 
 	mutex_unlock(&sdata->sec_mtx);
-}
+पूर्ण
 
-static int
-ieee802154_set_llsec_params(struct wpan_phy *wpan_phy,
-			    struct wpan_dev *wpan_dev,
-			    const struct ieee802154_llsec_params *params,
-			    int changed)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+अटल पूर्णांक
+ieee802154_set_llsec_params(काष्ठा wpan_phy *wpan_phy,
+			    काष्ठा wpan_dev *wpan_dev,
+			    स्थिर काष्ठा ieee802154_llsec_params *params,
+			    पूर्णांक changed)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	mutex_lock(&sdata->sec_mtx);
 	res = mac802154_llsec_set_params(&sdata->sec, params, changed);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-ieee802154_get_llsec_params(struct wpan_phy *wpan_phy,
-			    struct wpan_dev *wpan_dev,
-			    struct ieee802154_llsec_params *params)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+अटल पूर्णांक
+ieee802154_get_llsec_params(काष्ठा wpan_phy *wpan_phy,
+			    काष्ठा wpan_dev *wpan_dev,
+			    काष्ठा ieee802154_llsec_params *params)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	mutex_lock(&sdata->sec_mtx);
 	res = mac802154_llsec_get_params(&sdata->sec, params);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-ieee802154_add_llsec_key(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
-			 const struct ieee802154_llsec_key_id *id,
-			 const struct ieee802154_llsec_key *key)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+अटल पूर्णांक
+ieee802154_add_llsec_key(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
+			 स्थिर काष्ठा ieee802154_llsec_key_id *id,
+			 स्थिर काष्ठा ieee802154_llsec_key *key)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	mutex_lock(&sdata->sec_mtx);
 	res = mac802154_llsec_key_add(&sdata->sec, id, key);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-ieee802154_del_llsec_key(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
-			 const struct ieee802154_llsec_key_id *id)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+अटल पूर्णांक
+ieee802154_del_llsec_key(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
+			 स्थिर काष्ठा ieee802154_llsec_key_id *id)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	mutex_lock(&sdata->sec_mtx);
 	res = mac802154_llsec_key_del(&sdata->sec, id);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-ieee802154_add_seclevel(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
-			const struct ieee802154_llsec_seclevel *sl)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+अटल पूर्णांक
+ieee802154_add_seclevel(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
+			स्थिर काष्ठा ieee802154_llsec_seclevel *sl)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	mutex_lock(&sdata->sec_mtx);
 	res = mac802154_llsec_seclevel_add(&sdata->sec, sl);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-ieee802154_del_seclevel(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
-			const struct ieee802154_llsec_seclevel *sl)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+अटल पूर्णांक
+ieee802154_del_seclevel(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
+			स्थिर काष्ठा ieee802154_llsec_seclevel *sl)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	mutex_lock(&sdata->sec_mtx);
 	res = mac802154_llsec_seclevel_del(&sdata->sec, sl);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-ieee802154_add_device(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
-		      const struct ieee802154_llsec_device *dev_desc)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+अटल पूर्णांक
+ieee802154_add_device(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
+		      स्थिर काष्ठा ieee802154_llsec_device *dev_desc)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	mutex_lock(&sdata->sec_mtx);
 	res = mac802154_llsec_dev_add(&sdata->sec, dev_desc);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-ieee802154_del_device(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
+अटल पूर्णांक
+ieee802154_del_device(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
 		      __le64 extended_addr)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	mutex_lock(&sdata->sec_mtx);
 	res = mac802154_llsec_dev_del(&sdata->sec, extended_addr);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-ieee802154_add_devkey(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
+अटल पूर्णांक
+ieee802154_add_devkey(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
 		      __le64 extended_addr,
-		      const struct ieee802154_llsec_device_key *key)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+		      स्थिर काष्ठा ieee802154_llsec_device_key *key)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	mutex_lock(&sdata->sec_mtx);
 	res = mac802154_llsec_devkey_add(&sdata->sec, extended_addr, key);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-ieee802154_del_devkey(struct wpan_phy *wpan_phy, struct wpan_dev *wpan_dev,
+अटल पूर्णांक
+ieee802154_del_devkey(काष्ठा wpan_phy *wpan_phy, काष्ठा wpan_dev *wpan_dev,
 		      __le64 extended_addr,
-		      const struct ieee802154_llsec_device_key *key)
-{
-	struct net_device *dev = wpan_dev->netdev;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+		      स्थिर काष्ठा ieee802154_llsec_device_key *key)
+अणु
+	काष्ठा net_device *dev = wpan_dev->netdev;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	mutex_lock(&sdata->sec_mtx);
 	res = mac802154_llsec_devkey_del(&sdata->sec, extended_addr, key);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
-#endif /* CONFIG_IEEE802154_NL802154_EXPERIMENTAL */
+	वापस res;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_IEEE802154_NL802154_EXPERIMENTAL */
 
-const struct cfg802154_ops mac802154_config_ops = {
-	.add_virtual_intf_deprecated = ieee802154_add_iface_deprecated,
-	.del_virtual_intf_deprecated = ieee802154_del_iface_deprecated,
+स्थिर काष्ठा cfg802154_ops mac802154_config_ops = अणु
+	.add_भव_पूर्णांकf_deprecated = ieee802154_add_अगरace_deprecated,
+	.del_भव_पूर्णांकf_deprecated = ieee802154_del_अगरace_deprecated,
 	.suspend = ieee802154_suspend,
 	.resume = ieee802154_resume,
-	.add_virtual_intf = ieee802154_add_iface,
-	.del_virtual_intf = ieee802154_del_iface,
+	.add_भव_पूर्णांकf = ieee802154_add_अगरace,
+	.del_भव_पूर्णांकf = ieee802154_del_अगरace,
 	.set_channel = ieee802154_set_channel,
 	.set_cca_mode = ieee802154_set_cca_mode,
 	.set_cca_ed_level = ieee802154_set_cca_ed_level,
-	.set_tx_power = ieee802154_set_tx_power,
+	.set_tx_घातer = ieee802154_set_tx_घातer,
 	.set_pan_id = ieee802154_set_pan_id,
-	.set_short_addr = ieee802154_set_short_addr,
+	.set_लघु_addr = ieee802154_set_लघु_addr,
 	.set_backoff_exponent = ieee802154_set_backoff_exponent,
 	.set_max_csma_backoffs = ieee802154_set_max_csma_backoffs,
 	.set_max_frame_retries = ieee802154_set_max_frame_retries,
 	.set_lbt_mode = ieee802154_set_lbt_mode,
-	.set_ackreq_default = ieee802154_set_ackreq_default,
-#ifdef CONFIG_IEEE802154_NL802154_EXPERIMENTAL
+	.set_ackreq_शेष = ieee802154_set_ackreq_शेष,
+#अगर_घोषित CONFIG_IEEE802154_NL802154_EXPERIMENTAL
 	.get_llsec_table = ieee802154_get_llsec_table,
 	.lock_llsec_table = ieee802154_lock_llsec_table,
 	.unlock_llsec_table = ieee802154_unlock_llsec_table,
@@ -482,5 +483,5 @@ const struct cfg802154_ops mac802154_config_ops = {
 	.del_device = ieee802154_del_device,
 	.add_devkey = ieee802154_add_devkey,
 	.del_devkey = ieee802154_del_devkey,
-#endif /* CONFIG_IEEE802154_NL802154_EXPERIMENTAL */
-};
+#पूर्ण_अगर /* CONFIG_IEEE802154_NL802154_EXPERIMENTAL */
+पूर्ण;

@@ -1,140 +1,141 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright(c) 2008 Intel Corporation. All rights reserved.
  *
- * Maintained at www.Open-FCoE.org
+ * Maपूर्णांकained at www.Open-FCoE.org
  */
 
 /*
- * Provide interface to send ELS/CT FC frames
+ * Provide पूर्णांकerface to send ELS/CT FC frames
  */
 
-#include <linux/export.h>
-#include <asm/unaligned.h>
-#include <scsi/fc/fc_gs.h>
-#include <scsi/fc/fc_ns.h>
-#include <scsi/fc/fc_els.h>
-#include <scsi/libfc.h>
-#include "fc_encode.h"
-#include "fc_libfc.h"
+#समावेश <linux/export.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <scsi/fc/fc_gs.h>
+#समावेश <scsi/fc/fc_ns.h>
+#समावेश <scsi/fc/fc_els.h>
+#समावेश <scsi/libfc.h>
+#समावेश "fc_encode.h"
+#समावेश "fc_libfc.h"
 
 /**
  * fc_elsct_send() - Send an ELS or CT frame
  * @lport:	The local port to send the frame on
- * @did:	The destination ID for the frame
+ * @did:	The destination ID क्रम the frame
  * @fp:		The frame to be sent
  * @op:		The operational code
  * @resp:	The callback routine when the response is received
  * @arg:	The argument to pass to the response callback routine
- * @timer_msec: The timeout period for the frame (in msecs)
+ * @समयr_msec: The समयout period क्रम the frame (in msecs)
  */
-struct fc_seq *fc_elsct_send(struct fc_lport *lport, u32 did,
-			     struct fc_frame *fp, unsigned int op,
-			     void (*resp)(struct fc_seq *,
-					  struct fc_frame *,
-					  void *),
-			     void *arg, u32 timer_msec)
-{
-	enum fc_rctl r_ctl;
-	enum fc_fh_type fh_type;
-	int rc;
+काष्ठा fc_seq *fc_elsct_send(काष्ठा fc_lport *lport, u32 did,
+			     काष्ठा fc_frame *fp, अचिन्हित पूर्णांक op,
+			     व्योम (*resp)(काष्ठा fc_seq *,
+					  काष्ठा fc_frame *,
+					  व्योम *),
+			     व्योम *arg, u32 समयr_msec)
+अणु
+	क्रमागत fc_rctl r_ctl;
+	क्रमागत fc_fh_type fh_type;
+	पूर्णांक rc;
 
 	/* ELS requests */
-	if ((op >= ELS_LS_RJT) && (op <= ELS_AUTH_ELS))
+	अगर ((op >= ELS_LS_RJT) && (op <= ELS_AUTH_ELS))
 		rc = fc_els_fill(lport, did, fp, op, &r_ctl, &fh_type);
-	else {
+	अन्यथा अणु
 		/* CT requests */
 		rc = fc_ct_fill(lport, did, fp, op, &r_ctl, &fh_type, &did);
-	}
+	पूर्ण
 
-	if (rc) {
-		fc_frame_free(fp);
-		return NULL;
-	}
+	अगर (rc) अणु
+		fc_frame_मुक्त(fp);
+		वापस शून्य;
+	पूर्ण
 
 	fc_fill_fc_hdr(fp, r_ctl, did, lport->port_id, fh_type,
 		       FC_FCTL_REQ, 0);
 
-	return fc_exch_seq_send(lport, fp, resp, NULL, arg, timer_msec);
-}
+	वापस fc_exch_seq_send(lport, fp, resp, शून्य, arg, समयr_msec);
+पूर्ण
 EXPORT_SYMBOL(fc_elsct_send);
 
 /**
  * fc_elsct_init() - Initialize the ELS/CT layer
- * @lport: The local port to initialize the ELS/CT layer for
+ * @lport: The local port to initialize the ELS/CT layer क्रम
  */
-int fc_elsct_init(struct fc_lport *lport)
-{
-	if (!lport->tt.elsct_send)
+पूर्णांक fc_elsct_init(काष्ठा fc_lport *lport)
+अणु
+	अगर (!lport->tt.elsct_send)
 		lport->tt.elsct_send = fc_elsct_send;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(fc_elsct_init);
 
 /**
  * fc_els_resp_type() - Return a string describing the ELS response
- * @fp: The frame pointer or possible error code
+ * @fp: The frame poपूर्णांकer or possible error code
  */
-const char *fc_els_resp_type(struct fc_frame *fp)
-{
-	const char *msg;
-	struct fc_frame_header *fh;
-	struct fc_ct_hdr *ct;
+स्थिर अक्षर *fc_els_resp_type(काष्ठा fc_frame *fp)
+अणु
+	स्थिर अक्षर *msg;
+	काष्ठा fc_frame_header *fh;
+	काष्ठा fc_ct_hdr *ct;
 
-	if (IS_ERR(fp)) {
-		switch (-PTR_ERR(fp)) {
-		case FC_NO_ERR:
+	अगर (IS_ERR(fp)) अणु
+		चयन (-PTR_ERR(fp)) अणु
+		हाल FC_NO_ERR:
 			msg = "response no error";
-			break;
-		case FC_EX_TIMEOUT:
+			अवरोध;
+		हाल FC_EX_TIMEOUT:
 			msg = "response timeout";
-			break;
-		case FC_EX_CLOSED:
+			अवरोध;
+		हाल FC_EX_CLOSED:
 			msg = "response closed";
-			break;
-		default:
+			अवरोध;
+		शेष:
 			msg = "response unknown error";
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		fh = fc_frame_header_get(fp);
-		switch (fh->fh_type) {
-		case FC_TYPE_ELS:
-			switch (fc_frame_payload_op(fp)) {
-			case ELS_LS_ACC:
+		चयन (fh->fh_type) अणु
+		हाल FC_TYPE_ELS:
+			चयन (fc_frame_payload_op(fp)) अणु
+			हाल ELS_LS_ACC:
 				msg = "accept";
-				break;
-			case ELS_LS_RJT:
+				अवरोध;
+			हाल ELS_LS_RJT:
 				msg = "reject";
-				break;
-			default:
+				अवरोध;
+			शेष:
 				msg = "response unknown ELS";
-				break;
-			}
-			break;
-		case FC_TYPE_CT:
-			ct = fc_frame_payload_get(fp, sizeof(*ct));
-			if (ct) {
-				switch (ntohs(ct->ct_cmd)) {
-				case FC_FS_ACC:
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल FC_TYPE_CT:
+			ct = fc_frame_payload_get(fp, माप(*ct));
+			अगर (ct) अणु
+				चयन (ntohs(ct->ct_cmd)) अणु
+				हाल FC_FS_ACC:
 					msg = "CT accept";
-					break;
-				case FC_FS_RJT:
+					अवरोध;
+				हाल FC_FS_RJT:
 					msg = "CT reject";
-					break;
-				default:
+					अवरोध;
+				शेष:
 					msg = "response unknown CT";
-					break;
-				}
-			} else {
+					अवरोध;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				msg = "short CT response";
-			}
-			break;
-		default:
+			पूर्ण
+			अवरोध;
+		शेष:
 			msg = "response not ELS or CT";
-			break;
-		}
-	}
-	return msg;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस msg;
+पूर्ण

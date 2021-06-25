@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/netdevice.h>
-#include <net/gro_cells.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/gro_cells.h>
 
-struct gro_cell {
-	struct sk_buff_head	napi_skbs;
-	struct napi_struct	napi;
-};
+काष्ठा gro_cell अणु
+	काष्ठा sk_buff_head	napi_skbs;
+	काष्ठा napi_काष्ठा	napi;
+पूर्ण;
 
-int gro_cells_receive(struct gro_cells *gcells, struct sk_buff *skb)
-{
-	struct net_device *dev = skb->dev;
-	struct gro_cell *cell;
-	int res;
+पूर्णांक gro_cells_receive(काष्ठा gro_cells *gcells, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = skb->dev;
+	काष्ठा gro_cell *cell;
+	पूर्णांक res;
 
-	rcu_read_lock();
-	if (unlikely(!(dev->flags & IFF_UP)))
-		goto drop;
+	rcu_पढ़ो_lock();
+	अगर (unlikely(!(dev->flags & IFF_UP)))
+		जाओ drop;
 
-	if (!gcells->cells || skb_cloned(skb) || netif_elide_gro(dev)) {
-		res = netif_rx(skb);
-		goto unlock;
-	}
+	अगर (!gcells->cells || skb_cloned(skb) || netअगर_elide_gro(dev)) अणु
+		res = netअगर_rx(skb);
+		जाओ unlock;
+	पूर्ण
 
 	cell = this_cpu_ptr(gcells->cells);
 
-	if (skb_queue_len(&cell->napi_skbs) > netdev_max_backlog) {
+	अगर (skb_queue_len(&cell->napi_skbs) > netdev_max_backlog) अणु
 drop:
-		atomic_long_inc(&dev->rx_dropped);
-		kfree_skb(skb);
+		atomic_दीर्घ_inc(&dev->rx_dropped);
+		kमुक्त_skb(skb);
 		res = NET_RX_DROP;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	__skb_queue_tail(&cell->napi_skbs, skb);
-	if (skb_queue_len(&cell->napi_skbs) == 1)
+	अगर (skb_queue_len(&cell->napi_skbs) == 1)
 		napi_schedule(&cell->napi);
 
 	res = NET_RX_SUCCESS;
 
 unlock:
-	rcu_read_unlock();
-	return res;
-}
+	rcu_पढ़ो_unlock();
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(gro_cells_receive);
 
 /* called under BH context */
-static int gro_cell_poll(struct napi_struct *napi, int budget)
-{
-	struct gro_cell *cell = container_of(napi, struct gro_cell, napi);
-	struct sk_buff *skb;
-	int work_done = 0;
+अटल पूर्णांक gro_cell_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा gro_cell *cell = container_of(napi, काष्ठा gro_cell, napi);
+	काष्ठा sk_buff *skb;
+	पूर्णांक work_करोne = 0;
 
-	while (work_done < budget) {
+	जबतक (work_करोne < budget) अणु
 		skb = __skb_dequeue(&cell->napi_skbs);
-		if (!skb)
-			break;
+		अगर (!skb)
+			अवरोध;
 		napi_gro_receive(napi, skb);
-		work_done++;
-	}
+		work_करोne++;
+	पूर्ण
 
-	if (work_done < budget)
-		napi_complete_done(napi, work_done);
-	return work_done;
-}
+	अगर (work_करोne < budget)
+		napi_complete_करोne(napi, work_करोne);
+	वापस work_करोne;
+पूर्ण
 
-int gro_cells_init(struct gro_cells *gcells, struct net_device *dev)
-{
-	int i;
+पूर्णांक gro_cells_init(काष्ठा gro_cells *gcells, काष्ठा net_device *dev)
+अणु
+	पूर्णांक i;
 
-	gcells->cells = alloc_percpu(struct gro_cell);
-	if (!gcells->cells)
-		return -ENOMEM;
+	gcells->cells = alloc_percpu(काष्ठा gro_cell);
+	अगर (!gcells->cells)
+		वापस -ENOMEM;
 
-	for_each_possible_cpu(i) {
-		struct gro_cell *cell = per_cpu_ptr(gcells->cells, i);
+	क्रम_each_possible_cpu(i) अणु
+		काष्ठा gro_cell *cell = per_cpu_ptr(gcells->cells, i);
 
 		__skb_queue_head_init(&cell->napi_skbs);
 
 		set_bit(NAPI_STATE_NO_BUSY_POLL, &cell->napi.state);
 
-		netif_napi_add(dev, &cell->napi, gro_cell_poll,
+		netअगर_napi_add(dev, &cell->napi, gro_cell_poll,
 			       NAPI_POLL_WEIGHT);
 		napi_enable(&cell->napi);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(gro_cells_init);
 
-void gro_cells_destroy(struct gro_cells *gcells)
-{
-	int i;
+व्योम gro_cells_destroy(काष्ठा gro_cells *gcells)
+अणु
+	पूर्णांक i;
 
-	if (!gcells->cells)
-		return;
-	for_each_possible_cpu(i) {
-		struct gro_cell *cell = per_cpu_ptr(gcells->cells, i);
+	अगर (!gcells->cells)
+		वापस;
+	क्रम_each_possible_cpu(i) अणु
+		काष्ठा gro_cell *cell = per_cpu_ptr(gcells->cells, i);
 
 		napi_disable(&cell->napi);
-		__netif_napi_del(&cell->napi);
+		__netअगर_napi_del(&cell->napi);
 		__skb_queue_purge(&cell->napi_skbs);
-	}
+	पूर्ण
 	/* This barrier is needed because netpoll could access dev->napi_list
 	 * under rcu protection.
 	 */
 	synchronize_net();
 
-	free_percpu(gcells->cells);
-	gcells->cells = NULL;
-}
+	मुक्त_percpu(gcells->cells);
+	gcells->cells = शून्य;
+पूर्ण
 EXPORT_SYMBOL(gro_cells_destroy);

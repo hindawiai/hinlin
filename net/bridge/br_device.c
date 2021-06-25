@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	Device handling code
  *	Linux ethernet bridge
@@ -7,482 +8,482 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/netpoll.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/list.h>
-#include <linux/netfilter_bridge.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/netpoll.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/list.h>
+#समावेश <linux/netfilter_bridge.h>
 
-#include <linux/uaccess.h>
-#include "br_private.h"
+#समावेश <linux/uaccess.h>
+#समावेश "br_private.h"
 
-#define COMMON_FEATURES (NETIF_F_SG | NETIF_F_FRAGLIST | NETIF_F_HIGHDMA | \
+#घोषणा COMMON_FEATURES (NETIF_F_SG | NETIF_F_FRAGLIST | NETIF_F_HIGHDMA | \
 			 NETIF_F_GSO_MASK | NETIF_F_HW_CSUM)
 
-const struct nf_br_ops __rcu *nf_br_ops __read_mostly;
+स्थिर काष्ठा nf_br_ops __rcu *nf_br_ops __पढ़ो_mostly;
 EXPORT_SYMBOL_GPL(nf_br_ops);
 
 /* net device transmit always called with BH disabled */
-netdev_tx_t br_dev_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct net_bridge *br = netdev_priv(dev);
-	struct net_bridge_fdb_entry *dst;
-	struct net_bridge_mdb_entry *mdst;
-	const struct nf_br_ops *nf_ops;
+netdev_tx_t br_dev_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
+	काष्ठा net_bridge_fdb_entry *dst;
+	काष्ठा net_bridge_mdb_entry *mdst;
+	स्थिर काष्ठा nf_br_ops *nf_ops;
 	u8 state = BR_STATE_FORWARDING;
-	const unsigned char *dest;
+	स्थिर अचिन्हित अक्षर *dest;
 	u16 vid = 0;
 
-	memset(skb->cb, 0, sizeof(struct br_input_skb_cb));
+	स_रखो(skb->cb, 0, माप(काष्ठा br_input_skb_cb));
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	nf_ops = rcu_dereference(nf_br_ops);
-	if (nf_ops && nf_ops->br_dev_xmit_hook(skb)) {
-		rcu_read_unlock();
-		return NETDEV_TX_OK;
-	}
+	अगर (nf_ops && nf_ops->br_dev_xmit_hook(skb)) अणु
+		rcu_पढ़ो_unlock();
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	dev_sw_netstats_tx_add(dev, 1, skb->len);
 
-	br_switchdev_frame_unmark(skb);
+	br_चयनdev_frame_unmark(skb);
 	BR_INPUT_SKB_CB(skb)->brdev = dev;
 	BR_INPUT_SKB_CB(skb)->frag_max_size = 0;
 
 	skb_reset_mac_header(skb);
 	skb_pull(skb, ETH_HLEN);
 
-	if (!br_allowed_ingress(br, br_vlan_group_rcu(br), skb, &vid, &state))
-		goto out;
+	अगर (!br_allowed_ingress(br, br_vlan_group_rcu(br), skb, &vid, &state))
+		जाओ out;
 
-	if (IS_ENABLED(CONFIG_INET) &&
+	अगर (IS_ENABLED(CONFIG_INET) &&
 	    (eth_hdr(skb)->h_proto == htons(ETH_P_ARP) ||
 	     eth_hdr(skb)->h_proto == htons(ETH_P_RARP)) &&
-	    br_opt_get(br, BROPT_NEIGH_SUPPRESS_ENABLED)) {
-		br_do_proxy_suppress_arp(skb, br, vid, NULL);
-	} else if (IS_ENABLED(CONFIG_IPV6) &&
+	    br_opt_get(br, BROPT_NEIGH_SUPPRESS_ENABLED)) अणु
+		br_करो_proxy_suppress_arp(skb, br, vid, शून्य);
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_IPV6) &&
 		   skb->protocol == htons(ETH_P_IPV6) &&
 		   br_opt_get(br, BROPT_NEIGH_SUPPRESS_ENABLED) &&
-		   pskb_may_pull(skb, sizeof(struct ipv6hdr) +
-				 sizeof(struct nd_msg)) &&
-		   ipv6_hdr(skb)->nexthdr == IPPROTO_ICMPV6) {
-			struct nd_msg *msg, _msg;
+		   pskb_may_pull(skb, माप(काष्ठा ipv6hdr) +
+				 माप(काष्ठा nd_msg)) &&
+		   ipv6_hdr(skb)->nexthdr == IPPROTO_ICMPV6) अणु
+			काष्ठा nd_msg *msg, _msg;
 
 			msg = br_is_nd_neigh_msg(skb, &_msg);
-			if (msg)
-				br_do_suppress_nd(skb, br, vid, NULL, msg);
-	}
+			अगर (msg)
+				br_करो_suppress_nd(skb, br, vid, शून्य, msg);
+	पूर्ण
 
 	dest = eth_hdr(skb)->h_dest;
-	if (is_broadcast_ether_addr(dest)) {
+	अगर (is_broadcast_ether_addr(dest)) अणु
 		br_flood(br, skb, BR_PKT_BROADCAST, false, true);
-	} else if (is_multicast_ether_addr(dest)) {
-		if (unlikely(netpoll_tx_running(dev))) {
+	पूर्ण अन्यथा अगर (is_multicast_ether_addr(dest)) अणु
+		अगर (unlikely(netpoll_tx_running(dev))) अणु
 			br_flood(br, skb, BR_PKT_MULTICAST, false, true);
-			goto out;
-		}
-		if (br_multicast_rcv(br, NULL, skb, vid)) {
-			kfree_skb(skb);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
+		अगर (br_multicast_rcv(br, शून्य, skb, vid)) अणु
+			kमुक्त_skb(skb);
+			जाओ out;
+		पूर्ण
 
 		mdst = br_mdb_get(br, skb, vid);
-		if ((mdst || BR_INPUT_SKB_CB_MROUTERS_ONLY(skb)) &&
+		अगर ((mdst || BR_INPUT_SKB_CB_MROUTERS_ONLY(skb)) &&
 		    br_multicast_querier_exists(br, eth_hdr(skb), mdst))
 			br_multicast_flood(mdst, skb, false, true);
-		else
+		अन्यथा
 			br_flood(br, skb, BR_PKT_MULTICAST, false, true);
-	} else if ((dst = br_fdb_find_rcu(br, dest, vid)) != NULL) {
-		br_forward(dst->dst, skb, false, true);
-	} else {
+	पूर्ण अन्यथा अगर ((dst = br_fdb_find_rcu(br, dest, vid)) != शून्य) अणु
+		br_क्रमward(dst->dst, skb, false, true);
+	पूर्ण अन्यथा अणु
 		br_flood(br, skb, BR_PKT_UNICAST, false, true);
-	}
+	पूर्ण
 out:
-	rcu_read_unlock();
-	return NETDEV_TX_OK;
-}
+	rcu_पढ़ो_unlock();
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static struct lock_class_key bridge_netdev_addr_lock_key;
+अटल काष्ठा lock_class_key bridge_netdev_addr_lock_key;
 
-static void br_set_lockdep_class(struct net_device *dev)
-{
+अटल व्योम br_set_lockdep_class(काष्ठा net_device *dev)
+अणु
 	lockdep_set_class(&dev->addr_list_lock, &bridge_netdev_addr_lock_key);
-}
+पूर्ण
 
-static int br_dev_init(struct net_device *dev)
-{
-	struct net_bridge *br = netdev_priv(dev);
-	int err;
+अटल पूर्णांक br_dev_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
+	पूर्णांक err;
 
-	dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_sw_netstats);
-	if (!dev->tstats)
-		return -ENOMEM;
+	dev->tstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_sw_netstats);
+	अगर (!dev->tstats)
+		वापस -ENOMEM;
 
 	err = br_fdb_hash_init(br);
-	if (err) {
-		free_percpu(dev->tstats);
-		return err;
-	}
+	अगर (err) अणु
+		मुक्त_percpu(dev->tstats);
+		वापस err;
+	पूर्ण
 
 	err = br_mdb_hash_init(br);
-	if (err) {
-		free_percpu(dev->tstats);
+	अगर (err) अणु
+		मुक्त_percpu(dev->tstats);
 		br_fdb_hash_fini(br);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = br_vlan_init(br);
-	if (err) {
-		free_percpu(dev->tstats);
+	अगर (err) अणु
+		मुक्त_percpu(dev->tstats);
 		br_mdb_hash_fini(br);
 		br_fdb_hash_fini(br);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = br_multicast_init_stats(br);
-	if (err) {
-		free_percpu(dev->tstats);
+	अगर (err) अणु
+		मुक्त_percpu(dev->tstats);
 		br_vlan_flush(br);
 		br_mdb_hash_fini(br);
 		br_fdb_hash_fini(br);
-	}
+	पूर्ण
 
 	br_set_lockdep_class(dev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void br_dev_uninit(struct net_device *dev)
-{
-	struct net_bridge *br = netdev_priv(dev);
+अटल व्योम br_dev_uninit(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
 
 	br_multicast_dev_del(br);
 	br_multicast_uninit_stats(br);
 	br_vlan_flush(br);
 	br_mdb_hash_fini(br);
 	br_fdb_hash_fini(br);
-	free_percpu(dev->tstats);
-}
+	मुक्त_percpu(dev->tstats);
+पूर्ण
 
-static int br_dev_open(struct net_device *dev)
-{
-	struct net_bridge *br = netdev_priv(dev);
+अटल पूर्णांक br_dev_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
 
 	netdev_update_features(dev);
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 	br_stp_enable_bridge(br);
-	br_multicast_open(br);
+	br_multicast_खोलो(br);
 
-	if (br_opt_get(br, BROPT_MULTICAST_ENABLED))
+	अगर (br_opt_get(br, BROPT_MULTICAST_ENABLED))
 		br_multicast_join_snoopers(br);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void br_dev_set_multicast_list(struct net_device *dev)
-{
-}
+अटल व्योम br_dev_set_multicast_list(काष्ठा net_device *dev)
+अणु
+पूर्ण
 
-static void br_dev_change_rx_flags(struct net_device *dev, int change)
-{
-	if (change & IFF_PROMISC)
+अटल व्योम br_dev_change_rx_flags(काष्ठा net_device *dev, पूर्णांक change)
+अणु
+	अगर (change & IFF_PROMISC)
 		br_manage_promisc(netdev_priv(dev));
-}
+पूर्ण
 
-static int br_dev_stop(struct net_device *dev)
-{
-	struct net_bridge *br = netdev_priv(dev);
+अटल पूर्णांक br_dev_stop(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
 
 	br_stp_disable_bridge(br);
 	br_multicast_stop(br);
 
-	if (br_opt_get(br, BROPT_MULTICAST_ENABLED))
+	अगर (br_opt_get(br, BROPT_MULTICAST_ENABLED))
 		br_multicast_leave_snoopers(br);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int br_change_mtu(struct net_device *dev, int new_mtu)
-{
-	struct net_bridge *br = netdev_priv(dev);
+अटल पूर्णांक br_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
 
 	dev->mtu = new_mtu;
 
-	/* this flag will be cleared if the MTU was automatically adjusted */
+	/* this flag will be cleared अगर the MTU was स्वतःmatically adjusted */
 	br_opt_toggle(br, BROPT_MTU_SET_BY_USER, true);
-#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
-	/* remember the MTU in the rtable for PMTU */
+#अगर IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+	/* remember the MTU in the rtable क्रम PMTU */
 	dst_metric_set(&br->fake_rtable.dst, RTAX_MTU, new_mtu);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Allow setting mac address to any valid ethernet address. */
-static int br_set_mac_address(struct net_device *dev, void *p)
-{
-	struct net_bridge *br = netdev_priv(dev);
-	struct sockaddr *addr = p;
+अटल पूर्णांक br_set_mac_address(काष्ठा net_device *dev, व्योम *p)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
+	काष्ठा sockaddr *addr = p;
 
-	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(addr->sa_data))
+		वापस -EADDRNOTAVAIL;
 
 	/* dev_set_mac_addr() can be called by a master device on bridge's
-	 * NETDEV_UNREGISTER, but since it's being destroyed do nothing
+	 * NETDEV_UNREGISTER, but since it's being destroyed करो nothing
 	 */
-	if (dev->reg_state != NETREG_REGISTERED)
-		return -EBUSY;
+	अगर (dev->reg_state != NETREG_REGISTERED)
+		वापस -EBUSY;
 
 	spin_lock_bh(&br->lock);
-	if (!ether_addr_equal(dev->dev_addr, addr->sa_data)) {
+	अगर (!ether_addr_equal(dev->dev_addr, addr->sa_data)) अणु
 		/* Mac address will be changed in br_stp_change_bridge_id(). */
 		br_stp_change_bridge_id(br, addr->sa_data);
-	}
+	पूर्ण
 	spin_unlock_bh(&br->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void br_getinfo(struct net_device *dev, struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, "bridge", sizeof(info->driver));
-	strlcpy(info->version, BR_VERSION, sizeof(info->version));
-	strlcpy(info->fw_version, "N/A", sizeof(info->fw_version));
-	strlcpy(info->bus_info, "N/A", sizeof(info->bus_info));
-}
+अटल व्योम br_getinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, "bridge", माप(info->driver));
+	strlcpy(info->version, BR_VERSION, माप(info->version));
+	strlcpy(info->fw_version, "N/A", माप(info->fw_version));
+	strlcpy(info->bus_info, "N/A", माप(info->bus_info));
+पूर्ण
 
-static int br_get_link_ksettings(struct net_device *dev,
-				 struct ethtool_link_ksettings *cmd)
-{
-	struct net_bridge *br = netdev_priv(dev);
-	struct net_bridge_port *p;
+अटल पूर्णांक br_get_link_ksettings(काष्ठा net_device *dev,
+				 काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
+	काष्ठा net_bridge_port *p;
 
 	cmd->base.duplex = DUPLEX_UNKNOWN;
 	cmd->base.port = PORT_OTHER;
 	cmd->base.speed = SPEED_UNKNOWN;
 
-	list_for_each_entry(p, &br->port_list, list) {
-		struct ethtool_link_ksettings ecmd;
-		struct net_device *pdev = p->dev;
+	list_क्रम_each_entry(p, &br->port_list, list) अणु
+		काष्ठा ethtool_link_ksettings ecmd;
+		काष्ठा net_device *pdev = p->dev;
 
-		if (!netif_running(pdev) || !netif_oper_up(pdev))
-			continue;
+		अगर (!netअगर_running(pdev) || !netअगर_oper_up(pdev))
+			जारी;
 
-		if (__ethtool_get_link_ksettings(pdev, &ecmd))
-			continue;
+		अगर (__ethtool_get_link_ksettings(pdev, &ecmd))
+			जारी;
 
-		if (ecmd.base.speed == (__u32)SPEED_UNKNOWN)
-			continue;
+		अगर (ecmd.base.speed == (__u32)SPEED_UNKNOWN)
+			जारी;
 
-		if (cmd->base.speed == (__u32)SPEED_UNKNOWN ||
+		अगर (cmd->base.speed == (__u32)SPEED_UNKNOWN ||
 		    cmd->base.speed < ecmd.base.speed)
 			cmd->base.speed = ecmd.base.speed;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static netdev_features_t br_fix_features(struct net_device *dev,
+अटल netdev_features_t br_fix_features(काष्ठा net_device *dev,
 	netdev_features_t features)
-{
-	struct net_bridge *br = netdev_priv(dev);
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
 
-	return br_features_recompute(br, features);
-}
+	वापस br_features_recompute(br, features);
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-static void br_poll_controller(struct net_device *br_dev)
-{
-}
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+अटल व्योम br_poll_controller(काष्ठा net_device *br_dev)
+अणु
+पूर्ण
 
-static void br_netpoll_cleanup(struct net_device *dev)
-{
-	struct net_bridge *br = netdev_priv(dev);
-	struct net_bridge_port *p;
+अटल व्योम br_netpoll_cleanup(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
+	काष्ठा net_bridge_port *p;
 
-	list_for_each_entry(p, &br->port_list, list)
+	list_क्रम_each_entry(p, &br->port_list, list)
 		br_netpoll_disable(p);
-}
+पूर्ण
 
-static int __br_netpoll_enable(struct net_bridge_port *p)
-{
-	struct netpoll *np;
-	int err;
+अटल पूर्णांक __br_netpoll_enable(काष्ठा net_bridge_port *p)
+अणु
+	काष्ठा netpoll *np;
+	पूर्णांक err;
 
-	np = kzalloc(sizeof(*p->np), GFP_KERNEL);
-	if (!np)
-		return -ENOMEM;
+	np = kzalloc(माप(*p->np), GFP_KERNEL);
+	अगर (!np)
+		वापस -ENOMEM;
 
 	err = __netpoll_setup(np, p->dev);
-	if (err) {
-		kfree(np);
-		return err;
-	}
+	अगर (err) अणु
+		kमुक्त(np);
+		वापस err;
+	पूर्ण
 
 	p->np = np;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int br_netpoll_enable(struct net_bridge_port *p)
-{
-	if (!p->br->dev->npinfo)
-		return 0;
+पूर्णांक br_netpoll_enable(काष्ठा net_bridge_port *p)
+अणु
+	अगर (!p->br->dev->npinfo)
+		वापस 0;
 
-	return __br_netpoll_enable(p);
-}
+	वापस __br_netpoll_enable(p);
+पूर्ण
 
-static int br_netpoll_setup(struct net_device *dev, struct netpoll_info *ni)
-{
-	struct net_bridge *br = netdev_priv(dev);
-	struct net_bridge_port *p;
-	int err = 0;
+अटल पूर्णांक br_netpoll_setup(काष्ठा net_device *dev, काष्ठा netpoll_info *ni)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
+	काष्ठा net_bridge_port *p;
+	पूर्णांक err = 0;
 
-	list_for_each_entry(p, &br->port_list, list) {
-		if (!p->dev)
-			continue;
+	list_क्रम_each_entry(p, &br->port_list, list) अणु
+		अगर (!p->dev)
+			जारी;
 		err = __br_netpoll_enable(p);
-		if (err)
-			goto fail;
-	}
+		अगर (err)
+			जाओ fail;
+	पूर्ण
 
 out:
-	return err;
+	वापस err;
 
 fail:
 	br_netpoll_cleanup(dev);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-void br_netpoll_disable(struct net_bridge_port *p)
-{
-	struct netpoll *np = p->np;
+व्योम br_netpoll_disable(काष्ठा net_bridge_port *p)
+अणु
+	काष्ठा netpoll *np = p->np;
 
-	if (!np)
-		return;
+	अगर (!np)
+		वापस;
 
-	p->np = NULL;
+	p->np = शून्य;
 
-	__netpoll_free(np);
-}
+	__netpoll_मुक्त(np);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int br_add_slave(struct net_device *dev, struct net_device *slave_dev,
-			struct netlink_ext_ack *extack)
+अटल पूर्णांक br_add_slave(काष्ठा net_device *dev, काष्ठा net_device *slave_dev,
+			काष्ठा netlink_ext_ack *extack)
 
-{
-	struct net_bridge *br = netdev_priv(dev);
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
 
-	return br_add_if(br, slave_dev, extack);
-}
+	वापस br_add_अगर(br, slave_dev, extack);
+पूर्ण
 
-static int br_del_slave(struct net_device *dev, struct net_device *slave_dev)
-{
-	struct net_bridge *br = netdev_priv(dev);
+अटल पूर्णांक br_del_slave(काष्ठा net_device *dev, काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
 
-	return br_del_if(br, slave_dev);
-}
+	वापस br_del_अगर(br, slave_dev);
+पूर्ण
 
-static int br_fill_forward_path(struct net_device_path_ctx *ctx,
-				struct net_device_path *path)
-{
-	struct net_bridge_fdb_entry *f;
-	struct net_bridge_port *dst;
-	struct net_bridge *br;
+अटल पूर्णांक br_fill_क्रमward_path(काष्ठा net_device_path_ctx *ctx,
+				काष्ठा net_device_path *path)
+अणु
+	काष्ठा net_bridge_fdb_entry *f;
+	काष्ठा net_bridge_port *dst;
+	काष्ठा net_bridge *br;
 
-	if (netif_is_bridge_port(ctx->dev))
-		return -1;
+	अगर (netअगर_is_bridge_port(ctx->dev))
+		वापस -1;
 
 	br = netdev_priv(ctx->dev);
 
-	br_vlan_fill_forward_path_pvid(br, ctx, path);
+	br_vlan_fill_क्रमward_path_pvid(br, ctx, path);
 
 	f = br_fdb_find_rcu(br, ctx->daddr, path->bridge.vlan_id);
-	if (!f || !f->dst)
-		return -1;
+	अगर (!f || !f->dst)
+		वापस -1;
 
 	dst = READ_ONCE(f->dst);
-	if (!dst)
-		return -1;
+	अगर (!dst)
+		वापस -1;
 
-	if (br_vlan_fill_forward_path_mode(br, dst, path))
-		return -1;
+	अगर (br_vlan_fill_क्रमward_path_mode(br, dst, path))
+		वापस -1;
 
 	path->type = DEV_PATH_BRIDGE;
 	path->dev = dst->br->dev;
 	ctx->dev = dst->dev;
 
-	switch (path->bridge.vlan_mode) {
-	case DEV_PATH_BR_VLAN_TAG:
-		if (ctx->num_vlans >= ARRAY_SIZE(ctx->vlan))
-			return -ENOSPC;
+	चयन (path->bridge.vlan_mode) अणु
+	हाल DEV_PATH_BR_VLAN_TAG:
+		अगर (ctx->num_vlans >= ARRAY_SIZE(ctx->vlan))
+			वापस -ENOSPC;
 		ctx->vlan[ctx->num_vlans].id = path->bridge.vlan_id;
 		ctx->vlan[ctx->num_vlans].proto = path->bridge.vlan_proto;
 		ctx->num_vlans++;
-		break;
-	case DEV_PATH_BR_VLAN_UNTAG_HW:
-	case DEV_PATH_BR_VLAN_UNTAG:
+		अवरोध;
+	हाल DEV_PATH_BR_VLAN_UNTAG_HW:
+	हाल DEV_PATH_BR_VLAN_UNTAG:
 		ctx->num_vlans--;
-		break;
-	case DEV_PATH_BR_VLAN_KEEP:
-		break;
-	}
+		अवरोध;
+	हाल DEV_PATH_BR_VLAN_KEEP:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ethtool_ops br_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops br_ethtool_ops = अणु
 	.get_drvinfo		 = br_getinfo,
 	.get_link		 = ethtool_op_get_link,
 	.get_link_ksettings	 = br_get_link_ksettings,
-};
+पूर्ण;
 
-static const struct net_device_ops br_netdev_ops = {
-	.ndo_open		 = br_dev_open,
-	.ndo_stop		 = br_dev_stop,
-	.ndo_init		 = br_dev_init,
-	.ndo_uninit		 = br_dev_uninit,
-	.ndo_start_xmit		 = br_dev_xmit,
-	.ndo_get_stats64	 = dev_get_tstats64,
-	.ndo_set_mac_address	 = br_set_mac_address,
-	.ndo_set_rx_mode	 = br_dev_set_multicast_list,
-	.ndo_change_rx_flags	 = br_dev_change_rx_flags,
-	.ndo_change_mtu		 = br_change_mtu,
-	.ndo_do_ioctl		 = br_dev_ioctl,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_netpoll_setup	 = br_netpoll_setup,
-	.ndo_netpoll_cleanup	 = br_netpoll_cleanup,
-	.ndo_poll_controller	 = br_poll_controller,
-#endif
-	.ndo_add_slave		 = br_add_slave,
-	.ndo_del_slave		 = br_del_slave,
-	.ndo_fix_features        = br_fix_features,
-	.ndo_fdb_add		 = br_fdb_add,
-	.ndo_fdb_del		 = br_fdb_delete,
-	.ndo_fdb_dump		 = br_fdb_dump,
-	.ndo_fdb_get		 = br_fdb_get,
-	.ndo_bridge_getlink	 = br_getlink,
-	.ndo_bridge_setlink	 = br_setlink,
-	.ndo_bridge_dellink	 = br_dellink,
-	.ndo_features_check	 = passthru_features_check,
-	.ndo_fill_forward_path	 = br_fill_forward_path,
-};
+अटल स्थिर काष्ठा net_device_ops br_netdev_ops = अणु
+	.nकरो_खोलो		 = br_dev_खोलो,
+	.nकरो_stop		 = br_dev_stop,
+	.nकरो_init		 = br_dev_init,
+	.nकरो_uninit		 = br_dev_uninit,
+	.nकरो_start_xmit		 = br_dev_xmit,
+	.nकरो_get_stats64	 = dev_get_tstats64,
+	.nकरो_set_mac_address	 = br_set_mac_address,
+	.nकरो_set_rx_mode	 = br_dev_set_multicast_list,
+	.nकरो_change_rx_flags	 = br_dev_change_rx_flags,
+	.nकरो_change_mtu		 = br_change_mtu,
+	.nकरो_करो_ioctl		 = br_dev_ioctl,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_netpoll_setup	 = br_netpoll_setup,
+	.nकरो_netpoll_cleanup	 = br_netpoll_cleanup,
+	.nकरो_poll_controller	 = br_poll_controller,
+#पूर्ण_अगर
+	.nकरो_add_slave		 = br_add_slave,
+	.nकरो_del_slave		 = br_del_slave,
+	.nकरो_fix_features        = br_fix_features,
+	.nकरो_fdb_add		 = br_fdb_add,
+	.nकरो_fdb_del		 = br_fdb_delete,
+	.nकरो_fdb_dump		 = br_fdb_dump,
+	.nकरो_fdb_get		 = br_fdb_get,
+	.nकरो_bridge_getlink	 = br_getlink,
+	.nकरो_bridge_setlink	 = br_setlink,
+	.nकरो_bridge_dellink	 = br_dellink,
+	.nकरो_features_check	 = passthru_features_check,
+	.nकरो_fill_क्रमward_path	 = br_fill_क्रमward_path,
+पूर्ण;
 
-static struct device_type br_type = {
+अटल काष्ठा device_type br_type = अणु
 	.name	= "bridge",
-};
+पूर्ण;
 
-void br_dev_setup(struct net_device *dev)
-{
-	struct net_bridge *br = netdev_priv(dev);
+व्योम br_dev_setup(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_bridge *br = netdev_priv(dev);
 
-	eth_hw_addr_random(dev);
+	eth_hw_addr_अक्रमom(dev);
 	ether_setup(dev);
 
 	dev->netdev_ops = &br_netdev_ops;
-	dev->needs_free_netdev = true;
+	dev->needs_मुक्त_netdev = true;
 	dev->ethtool_ops = &br_ethtool_ops;
 	SET_NETDEV_DEVTYPE(dev, &br_type);
 	dev->priv_flags = IFF_EBRIDGE | IFF_NO_QUEUE;
@@ -498,12 +499,12 @@ void br_dev_setup(struct net_device *dev)
 	INIT_LIST_HEAD(&br->port_list);
 	INIT_HLIST_HEAD(&br->fdb_list);
 	INIT_HLIST_HEAD(&br->frame_type_list);
-#if IS_ENABLED(CONFIG_BRIDGE_MRP)
+#अगर IS_ENABLED(CONFIG_BRIDGE_MRP)
 	INIT_HLIST_HEAD(&br->mrp_list);
-#endif
-#if IS_ENABLED(CONFIG_BRIDGE_CFM)
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_BRIDGE_CFM)
 	INIT_HLIST_HEAD(&br->mep_list);
-#endif
+#पूर्ण_अगर
 	spin_lock_init(&br->hash_lock);
 
 	br->bridge_id.prio[0] = 0x80;
@@ -517,13 +518,13 @@ void br_dev_setup(struct net_device *dev)
 
 	br->designated_root = br->bridge_id;
 	br->bridge_max_age = br->max_age = 20 * HZ;
-	br->bridge_hello_time = br->hello_time = 2 * HZ;
-	br->bridge_forward_delay = br->forward_delay = 15 * HZ;
-	br->bridge_ageing_time = br->ageing_time = BR_DEFAULT_AGEING_TIME;
+	br->bridge_hello_समय = br->hello_समय = 2 * HZ;
+	br->bridge_क्रमward_delay = br->क्रमward_delay = 15 * HZ;
+	br->bridge_ageing_समय = br->ageing_समय = BR_DEFAULT_AGEING_TIME;
 	dev->max_mtu = ETH_MAX_MTU;
 
 	br_netfilter_rtable_init(br);
-	br_stp_timer_init(br);
+	br_stp_समयr_init(br);
 	br_multicast_init(br);
 	INIT_DELAYED_WORK(&br->gc_work, br_fdb_cleanup);
-}
+पूर्ण

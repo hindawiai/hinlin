@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef AMBA_PL011_H
-#define AMBA_PL011_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित AMBA_PL011_H
+#घोषणा AMBA_PL011_H
 
-enum {
+क्रमागत अणु
 	REG_DR,
 	REG_ST_DMAWM,
 	REG_ST_TIMEOUT,
@@ -30,6 +31,6 @@ enum {
 
 	/* The size of the array - must be last */
 	REG_ARRAY_SIZE,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

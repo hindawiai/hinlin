@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Russell King
  */
 
-#include <linux/clk.h>
-#include <linux/component.h>
-#include <linux/module.h>
-#include <linux/of_graph.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_ioctl.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_prime.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_of.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_ioctl.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_prime.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "armada_crtc.h"
-#include "armada_drm.h"
-#include "armada_gem.h"
-#include "armada_fb.h"
-#include "armada_hw.h"
-#include <drm/armada_drm.h>
-#include "armada_ioctlP.h"
+#समावेश "armada_crtc.h"
+#समावेश "armada_drm.h"
+#समावेश "armada_gem.h"
+#समावेश "armada_fb.h"
+#समावेश "armada_hw.h"
+#समावेश <drm/armada_drm.h>
+#समावेश "armada_ioctlP.h"
 
-static const struct drm_ioctl_desc armada_ioctls[] = {
+अटल स्थिर काष्ठा drm_ioctl_desc armada_ioctls[] = अणु
 	DRM_IOCTL_DEF_DRV(ARMADA_GEM_CREATE, armada_gem_create_ioctl,0),
 	DRM_IOCTL_DEF_DRV(ARMADA_GEM_MMAP, armada_gem_mmap_ioctl, 0),
-	DRM_IOCTL_DEF_DRV(ARMADA_GEM_PWRITE, armada_gem_pwrite_ioctl, 0),
-};
+	DRM_IOCTL_DEF_DRV(ARMADA_GEM_PWRITE, armada_gem_pग_लिखो_ioctl, 0),
+पूर्ण;
 
 DEFINE_DRM_GEM_FOPS(armada_drm_fops);
 
-static const struct drm_driver armada_drm_driver = {
-	.lastclose		= drm_fb_helper_lastclose,
+अटल स्थिर काष्ठा drm_driver armada_drm_driver = अणु
+	.lastबंद		= drm_fb_helper_lastबंद,
 	.prime_handle_to_fd	= drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle	= drm_gem_prime_fd_to_handle,
 	.gem_prime_import	= armada_gem_prime_import,
@@ -50,59 +51,59 @@ static const struct drm_driver armada_drm_driver = {
 	.ioctls			= armada_ioctls,
 	.num_ioctls = ARRAY_SIZE(armada_ioctls),
 	.fops			= &armada_drm_fops,
-};
+पूर्ण;
 
-static const struct drm_mode_config_funcs armada_drm_mode_config_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs armada_drm_mode_config_funcs = अणु
 	.fb_create		= armada_fb_create,
 	.output_poll_changed	= drm_fb_helper_output_poll_changed,
 	.atomic_check		= drm_atomic_helper_check,
 	.atomic_commit		= drm_atomic_helper_commit,
-};
+पूर्ण;
 
-static int armada_drm_bind(struct device *dev)
-{
-	struct armada_private *priv;
-	struct resource *mem = NULL;
-	int ret, n;
+अटल पूर्णांक armada_drm_bind(काष्ठा device *dev)
+अणु
+	काष्ठा armada_निजी *priv;
+	काष्ठा resource *mem = शून्य;
+	पूर्णांक ret, n;
 
-	for (n = 0; ; n++) {
-		struct resource *r = platform_get_resource(to_platform_device(dev),
+	क्रम (n = 0; ; n++) अणु
+		काष्ठा resource *r = platक्रमm_get_resource(to_platक्रमm_device(dev),
 							   IORESOURCE_MEM, n);
-		if (!r)
-			break;
+		अगर (!r)
+			अवरोध;
 
 		/* Resources above 64K are graphics memory */
-		if (resource_size(r) > SZ_64K)
+		अगर (resource_size(r) > SZ_64K)
 			mem = r;
-		else
-			return -EINVAL;
-	}
+		अन्यथा
+			वापस -EINVAL;
+	पूर्ण
 
-	if (!mem)
-		return -ENXIO;
+	अगर (!mem)
+		वापस -ENXIO;
 
-	if (!devm_request_mem_region(dev, mem->start, resource_size(mem),
+	अगर (!devm_request_mem_region(dev, mem->start, resource_size(mem),
 				     "armada-drm"))
-		return -EBUSY;
+		वापस -EBUSY;
 
 	priv = devm_drm_dev_alloc(dev, &armada_drm_driver,
-				  struct armada_private, drm);
-	if (IS_ERR(priv)) {
+				  काष्ठा armada_निजी, drm);
+	अगर (IS_ERR(priv)) अणु
 		dev_err(dev, "[" DRM_NAME ":%s] devm_drm_dev_alloc failed: %li\n",
 			__func__, PTR_ERR(priv));
-		return PTR_ERR(priv);
-	}
+		वापस PTR_ERR(priv);
+	पूर्ण
 
 	/* Remove early framebuffers */
-	ret = drm_fb_helper_remove_conflicting_framebuffers(NULL,
+	ret = drm_fb_helper_हटाओ_conflicting_framebuffers(शून्य,
 							    "armada-drm-fb",
 							    false);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "[" DRM_NAME ":%s] can't kick out simple-fb: %d\n",
 			__func__, ret);
-		kfree(priv);
-		return ret;
-	}
+		kमुक्त(priv);
+		वापस ret;
+	पूर्ण
 
 	dev_set_drvdata(dev, &priv->drm);
 
@@ -124,32 +125,32 @@ static int armada_drm_bind(struct device *dev)
 	mutex_init(&priv->linear_lock);
 
 	ret = component_bind_all(dev, &priv->drm);
-	if (ret)
-		goto err_kms;
+	अगर (ret)
+		जाओ err_kms;
 
 	ret = drm_vblank_init(&priv->drm, priv->drm.mode_config.num_crtc);
-	if (ret)
-		goto err_comp;
+	अगर (ret)
+		जाओ err_comp;
 
 	priv->drm.irq_enabled = true;
 
 	drm_mode_config_reset(&priv->drm);
 
 	ret = armada_fbdev_init(&priv->drm);
-	if (ret)
-		goto err_comp;
+	अगर (ret)
+		जाओ err_comp;
 
 	drm_kms_helper_poll_init(&priv->drm);
 
-	ret = drm_dev_register(&priv->drm, 0);
-	if (ret)
-		goto err_poll;
+	ret = drm_dev_रेजिस्टर(&priv->drm, 0);
+	अगर (ret)
+		जाओ err_poll;
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 	armada_drm_debugfs_init(priv->drm.primary);
-#endif
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
  err_poll:
 	drm_kms_helper_poll_fini(&priv->drm);
@@ -158,140 +159,140 @@ static int armada_drm_bind(struct device *dev)
 	component_unbind_all(dev, &priv->drm);
  err_kms:
 	drm_mode_config_cleanup(&priv->drm);
-	drm_mm_takedown(&priv->linear);
-	return ret;
-}
+	drm_mm_takeकरोwn(&priv->linear);
+	वापस ret;
+पूर्ण
 
-static void armada_drm_unbind(struct device *dev)
-{
-	struct drm_device *drm = dev_get_drvdata(dev);
-	struct armada_private *priv = drm_to_armada_dev(drm);
+अटल व्योम armada_drm_unbind(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(dev);
+	काष्ठा armada_निजी *priv = drm_to_armada_dev(drm);
 
 	drm_kms_helper_poll_fini(&priv->drm);
 	armada_fbdev_fini(&priv->drm);
 
-	drm_dev_unregister(&priv->drm);
+	drm_dev_unरेजिस्टर(&priv->drm);
 
-	drm_atomic_helper_shutdown(&priv->drm);
+	drm_atomic_helper_shutकरोwn(&priv->drm);
 
 	component_unbind_all(dev, &priv->drm);
 
 	drm_mode_config_cleanup(&priv->drm);
-	drm_mm_takedown(&priv->linear);
-}
+	drm_mm_takeकरोwn(&priv->linear);
+पूर्ण
 
-static int compare_of(struct device *dev, void *data)
-{
-	return dev->of_node == data;
-}
+अटल पूर्णांक compare_of(काष्ठा device *dev, व्योम *data)
+अणु
+	वापस dev->of_node == data;
+पूर्ण
 
-static int compare_dev_name(struct device *dev, void *data)
-{
-	const char *name = data;
-	return !strcmp(dev_name(dev), name);
-}
+अटल पूर्णांक compare_dev_name(काष्ठा device *dev, व्योम *data)
+अणु
+	स्थिर अक्षर *name = data;
+	वापस !म_भेद(dev_name(dev), name);
+पूर्ण
 
-static void armada_add_endpoints(struct device *dev,
-	struct component_match **match, struct device_node *dev_node)
-{
-	struct device_node *ep, *remote;
+अटल व्योम armada_add_endpoपूर्णांकs(काष्ठा device *dev,
+	काष्ठा component_match **match, काष्ठा device_node *dev_node)
+अणु
+	काष्ठा device_node *ep, *remote;
 
-	for_each_endpoint_of_node(dev_node, ep) {
+	क्रम_each_endpoपूर्णांक_of_node(dev_node, ep) अणु
 		remote = of_graph_get_remote_port_parent(ep);
-		if (remote && of_device_is_available(remote))
+		अगर (remote && of_device_is_available(remote))
 			drm_of_component_match_add(dev, match, compare_of,
 						   remote);
 		of_node_put(remote);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct component_master_ops armada_master_ops = {
+अटल स्थिर काष्ठा component_master_ops armada_master_ops = अणु
 	.bind = armada_drm_bind,
 	.unbind = armada_drm_unbind,
-};
+पूर्ण;
 
-static int armada_drm_probe(struct platform_device *pdev)
-{
-	struct component_match *match = NULL;
-	struct device *dev = &pdev->dev;
-	int ret;
+अटल पूर्णांक armada_drm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा component_match *match = शून्य;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक ret;
 
 	ret = drm_of_component_probe(dev, compare_dev_name, &armada_master_ops);
-	if (ret != -EINVAL)
-		return ret;
+	अगर (ret != -EINVAL)
+		वापस ret;
 
-	if (dev->platform_data) {
-		char **devices = dev->platform_data;
-		struct device *d;
-		int i;
+	अगर (dev->platक्रमm_data) अणु
+		अक्षर **devices = dev->platक्रमm_data;
+		काष्ठा device *d;
+		पूर्णांक i;
 
-		for (i = 0; devices[i]; i++)
+		क्रम (i = 0; devices[i]; i++)
 			component_match_add(dev, &match, compare_dev_name,
 					    devices[i]);
 
-		if (i == 0) {
+		अगर (i == 0) अणु
 			dev_err(dev, "missing 'ports' property\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		for (i = 0; devices[i]; i++) {
-			d = bus_find_device_by_name(&platform_bus_type, NULL,
+		क्रम (i = 0; devices[i]; i++) अणु
+			d = bus_find_device_by_name(&platक्रमm_bus_type, शून्य,
 						    devices[i]);
-			if (d && d->of_node)
-				armada_add_endpoints(dev, &match, d->of_node);
+			अगर (d && d->of_node)
+				armada_add_endpoपूर्णांकs(dev, &match, d->of_node);
 			put_device(d);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return component_master_add_with_match(&pdev->dev, &armada_master_ops,
+	वापस component_master_add_with_match(&pdev->dev, &armada_master_ops,
 					       match);
-}
+पूर्ण
 
-static int armada_drm_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक armada_drm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_master_del(&pdev->dev, &armada_master_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id armada_drm_platform_ids[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id armada_drm_platक्रमm_ids[] = अणु
+	अणु
 		.name		= "armada-drm",
-	}, {
+	पूर्ण, अणु
 		.name		= "armada-510-drm",
-	},
-	{ },
-};
-MODULE_DEVICE_TABLE(platform, armada_drm_platform_ids);
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, armada_drm_platक्रमm_ids);
 
-static struct platform_driver armada_drm_platform_driver = {
+अटल काष्ठा platक्रमm_driver armada_drm_platक्रमm_driver = अणु
 	.probe	= armada_drm_probe,
-	.remove	= armada_drm_remove,
-	.driver	= {
+	.हटाओ	= armada_drm_हटाओ,
+	.driver	= अणु
 		.name	= "armada-drm",
-	},
-	.id_table = armada_drm_platform_ids,
-};
+	पूर्ण,
+	.id_table = armada_drm_platक्रमm_ids,
+पूर्ण;
 
-static int __init armada_drm_init(void)
-{
-	int ret;
+अटल पूर्णांक __init armada_drm_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&armada_lcd_platform_driver);
-	if (ret)
-		return ret;
-	ret = platform_driver_register(&armada_drm_platform_driver);
-	if (ret)
-		platform_driver_unregister(&armada_lcd_platform_driver);
-	return ret;
-}
+	ret = platक्रमm_driver_रेजिस्टर(&armada_lcd_platक्रमm_driver);
+	अगर (ret)
+		वापस ret;
+	ret = platक्रमm_driver_रेजिस्टर(&armada_drm_platक्रमm_driver);
+	अगर (ret)
+		platक्रमm_driver_unरेजिस्टर(&armada_lcd_platक्रमm_driver);
+	वापस ret;
+पूर्ण
 module_init(armada_drm_init);
 
-static void __exit armada_drm_exit(void)
-{
-	platform_driver_unregister(&armada_drm_platform_driver);
-	platform_driver_unregister(&armada_lcd_platform_driver);
-}
-module_exit(armada_drm_exit);
+अटल व्योम __निकास armada_drm_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&armada_drm_platक्रमm_driver);
+	platक्रमm_driver_unरेजिस्टर(&armada_lcd_platक्रमm_driver);
+पूर्ण
+module_निकास(armada_drm_निकास);
 
 MODULE_AUTHOR("Russell King <rmk+kernel@armlinux.org.uk>");
 MODULE_DESCRIPTION("Armada DRM Driver");

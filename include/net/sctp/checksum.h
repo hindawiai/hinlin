@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* SCTP kernel reference Implementation
  * Copyright (c) 1999-2001 Motorola, Inc.
  * Copyright (c) 2001-2003 International Business Machines, Corp.
@@ -11,7 +12,7 @@
  * email address(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modified by:
+ * Written or modअगरied by:
  *    Dinakaran Joseph
  *    Jon Grimm <jgrimm@us.ibm.com>
  *    Sridhar Samudrala <sri@us.ibm.com>
@@ -20,38 +21,38 @@
  *    Vlad Yasevich <vladislav.yasevich@hp.com>
  */
 
-#ifndef __sctp_checksum_h__
-#define __sctp_checksum_h__
+#अगर_अघोषित __sctp_checksum_h__
+#घोषणा __sctp_checksum_h__
 
-#include <linux/types.h>
-#include <net/sctp/sctp.h>
-#include <linux/crc32c.h>
-#include <linux/crc32.h>
+#समावेश <linux/types.h>
+#समावेश <net/sctp/sctp.h>
+#समावेश <linux/crc32c.h>
+#समावेश <linux/crc32.h>
 
-static inline __wsum sctp_csum_update(const void *buff, int len, __wsum sum)
-{
+अटल अंतरभूत __wsum sctp_csum_update(स्थिर व्योम *buff, पूर्णांक len, __wsum sum)
+अणु
 	/* This uses the crypto implementation of crc32c, which is either
 	 * implemented w/ hardware support or resolves to __crc32c_le().
 	 */
-	return (__force __wsum)crc32c((__force __u32)sum, buff, len);
-}
+	वापस (__क्रमce __wsum)crc32c((__क्रमce __u32)sum, buff, len);
+पूर्ण
 
-static inline __wsum sctp_csum_combine(__wsum csum, __wsum csum2,
-				       int offset, int len)
-{
-	return (__force __wsum)__crc32c_le_combine((__force __u32)csum,
-						   (__force __u32)csum2, len);
-}
+अटल अंतरभूत __wsum sctp_csum_combine(__wsum csum, __wsum csum2,
+				       पूर्णांक offset, पूर्णांक len)
+अणु
+	वापस (__क्रमce __wsum)__crc32c_le_combine((__क्रमce __u32)csum,
+						   (__क्रमce __u32)csum2, len);
+पूर्ण
 
-static const struct skb_checksum_ops sctp_csum_ops = {
+अटल स्थिर काष्ठा skb_checksum_ops sctp_csum_ops = अणु
 	.update  = sctp_csum_update,
 	.combine = sctp_csum_combine,
-};
+पूर्ण;
 
-static inline __le32 sctp_compute_cksum(const struct sk_buff *skb,
-					unsigned int offset)
-{
-	struct sctphdr *sh = (struct sctphdr *)(skb->data + offset);
+अटल अंतरभूत __le32 sctp_compute_cksum(स्थिर काष्ठा sk_buff *skb,
+					अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा sctphdr *sh = (काष्ठा sctphdr *)(skb->data + offset);
 	__le32 old = sh->checksum;
 	__wsum new;
 
@@ -60,7 +61,7 @@ static inline __le32 sctp_compute_cksum(const struct sk_buff *skb,
 			      &sctp_csum_ops);
 	sh->checksum = old;
 
-	return cpu_to_le32((__force __u32)new);
-}
+	वापस cpu_to_le32((__क्रमce __u32)new);
+पूर्ण
 
-#endif /* __sctp_checksum_h__ */
+#पूर्ण_अगर /* __sctp_checksum_h__ */

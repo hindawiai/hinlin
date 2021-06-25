@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright © 2017 Keith Packard <keithp@keithp.com>
+ * Copyright तऊ 2017 Keith Packard <keithp@keithp.com>
  */
-#include <linux/file.h>
-#include <linux/uaccess.h>
+#समावेश <linux/file.h>
+#समावेश <linux/uaccess.h>
 
-#include <drm/drm_auth.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_file.h>
-#include <drm/drm_lease.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm_auth.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_file.h>
+#समावेश <drm/drm_lease.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "drm_crtc_internal.h"
-#include "drm_internal.h"
-#include "drm_legacy.h"
+#समावेश "drm_crtc_internal.h"
+#समावेश "drm_internal.h"
+#समावेश "drm_legacy.h"
 
-#define drm_for_each_lessee(lessee, lessor) \
-	list_for_each_entry((lessee), &(lessor)->lessees, lessee_list)
+#घोषणा drm_क्रम_each_lessee(lessee, lessor) \
+	list_क्रम_each_entry((lessee), &(lessor)->lessees, lessee_list)
 
-static uint64_t drm_lease_idr_object;
+अटल uपूर्णांक64_t drm_lease_idr_object;
 
 /**
- * drm_lease_owner - return ancestor owner drm_master
+ * drm_lease_owner - वापस ancestor owner drm_master
  * @master: drm_master somewhere within tree of lessees and lessors
  *
  * RETURN:
  *
- * drm_master at the top of the tree (i.e, with lessor NULL
+ * drm_master at the top of the tree (i.e, with lessor शून्य
  */
-struct drm_master *drm_lease_owner(struct drm_master *master)
-{
-	while (master->lessor != NULL)
+काष्ठा drm_master *drm_lease_owner(काष्ठा drm_master *master)
+अणु
+	जबतक (master->lessor != शून्य)
 		master = master->lessor;
-	return master;
-}
+	वापस master;
+पूर्ण
 
 /**
  * _drm_find_lessee - find lessee by id (idr_mutex held)
@@ -43,142 +44,142 @@ struct drm_master *drm_lease_owner(struct drm_master *master)
  *
  * RETURN:
  *
- * drm_master of the lessee if valid, NULL otherwise
+ * drm_master of the lessee अगर valid, शून्य otherwise
  */
 
-static struct drm_master*
-_drm_find_lessee(struct drm_master *master, int lessee_id)
-{
-	lockdep_assert_held(&master->dev->mode_config.idr_mutex);
-	return idr_find(&drm_lease_owner(master)->lessee_idr, lessee_id);
-}
+अटल काष्ठा drm_master*
+_drm_find_lessee(काष्ठा drm_master *master, पूर्णांक lessee_id)
+अणु
+	lockdep_निश्चित_held(&master->dev->mode_config.idr_mutex);
+	वापस idr_find(&drm_lease_owner(master)->lessee_idr, lessee_id);
+पूर्ण
 
 /**
- * _drm_lease_held_master - check to see if an object is leased (or owned) by master (idr_mutex held)
+ * _drm_lease_held_master - check to see अगर an object is leased (or owned) by master (idr_mutex held)
  * @master: the master to check the lease status of
  * @id: the id to check
  *
- * Checks if the specified master holds a lease on the object. Return
+ * Checks अगर the specअगरied master holds a lease on the object. Return
  * value:
  *
  *	true		'master' holds a lease on (or owns) the object
- *	false		'master' does not hold a lease.
+ *	false		'master' करोes not hold a lease.
  */
-static int _drm_lease_held_master(struct drm_master *master, int id)
-{
-	lockdep_assert_held(&master->dev->mode_config.idr_mutex);
-	if (master->lessor)
-		return idr_find(&master->leases, id) != NULL;
-	return true;
-}
+अटल पूर्णांक _drm_lease_held_master(काष्ठा drm_master *master, पूर्णांक id)
+अणु
+	lockdep_निश्चित_held(&master->dev->mode_config.idr_mutex);
+	अगर (master->lessor)
+		वापस idr_find(&master->leases, id) != शून्य;
+	वापस true;
+पूर्ण
 
 /**
- * _drm_has_leased - check to see if an object has been leased (idr_mutex held)
+ * _drm_has_leased - check to see अगर an object has been leased (idr_mutex held)
  * @master: the master to check the lease status of
  * @id: the id to check
  *
- * Checks if any lessee of 'master' holds a lease on 'id'. Return
+ * Checks अगर any lessee of 'master' holds a lease on 'id'. Return
  * value:
  *
  *	true		Some lessee holds a lease on the object.
  *	false		No lessee has a lease on the object.
  */
-static bool _drm_has_leased(struct drm_master *master, int id)
-{
-	struct drm_master *lessee;
+अटल bool _drm_has_leased(काष्ठा drm_master *master, पूर्णांक id)
+अणु
+	काष्ठा drm_master *lessee;
 
-	lockdep_assert_held(&master->dev->mode_config.idr_mutex);
-	drm_for_each_lessee(lessee, master)
-		if (_drm_lease_held_master(lessee, id))
-			return true;
-	return false;
-}
+	lockdep_निश्चित_held(&master->dev->mode_config.idr_mutex);
+	drm_क्रम_each_lessee(lessee, master)
+		अगर (_drm_lease_held_master(lessee, id))
+			वापस true;
+	वापस false;
+पूर्ण
 
 /**
  * _drm_lease_held - check drm_mode_object lease status (idr_mutex held)
  * @file_priv: the master drm_file
  * @id: the object id
  *
- * Checks if the specified master holds a lease on the object. Return
+ * Checks अगर the specअगरied master holds a lease on the object. Return
  * value:
  *
  *	true		'master' holds a lease on (or owns) the object
- *	false		'master' does not hold a lease.
+ *	false		'master' करोes not hold a lease.
  */
-bool _drm_lease_held(struct drm_file *file_priv, int id)
-{
-	if (!file_priv || !file_priv->master)
-		return true;
+bool _drm_lease_held(काष्ठा drm_file *file_priv, पूर्णांक id)
+अणु
+	अगर (!file_priv || !file_priv->master)
+		वापस true;
 
-	return _drm_lease_held_master(file_priv->master, id);
-}
+	वापस _drm_lease_held_master(file_priv->master, id);
+पूर्ण
 
 /**
  * drm_lease_held - check drm_mode_object lease status (idr_mutex not held)
  * @file_priv: the master drm_file
  * @id: the object id
  *
- * Checks if the specified master holds a lease on the object. Return
+ * Checks अगर the specअगरied master holds a lease on the object. Return
  * value:
  *
  *	true		'master' holds a lease on (or owns) the object
- *	false		'master' does not hold a lease.
+ *	false		'master' करोes not hold a lease.
  */
-bool drm_lease_held(struct drm_file *file_priv, int id)
-{
-	struct drm_master *master;
+bool drm_lease_held(काष्ठा drm_file *file_priv, पूर्णांक id)
+अणु
+	काष्ठा drm_master *master;
 	bool ret;
 
-	if (!file_priv || !file_priv->master || !file_priv->master->lessor)
-		return true;
+	अगर (!file_priv || !file_priv->master || !file_priv->master->lessor)
+		वापस true;
 
 	master = file_priv->master;
 	mutex_lock(&master->dev->mode_config.idr_mutex);
 	ret = _drm_lease_held_master(master, id);
 	mutex_unlock(&master->dev->mode_config.idr_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * drm_lease_filter_crtcs - restricted crtc set to leased values (idr_mutex not held)
  * @file_priv: requestor file
- * @crtcs_in: bitmask of crtcs to check
+ * @crtcs_in: biपंचांगask of crtcs to check
  *
- * Reconstructs a crtc mask based on the crtcs which are visible
- * through the specified file.
+ * Reस्थिरructs a crtc mask based on the crtcs which are visible
+ * through the specअगरied file.
  */
-uint32_t drm_lease_filter_crtcs(struct drm_file *file_priv, uint32_t crtcs_in)
-{
-	struct drm_master *master;
-	struct drm_device *dev;
-	struct drm_crtc *crtc;
-	int count_in, count_out;
-	uint32_t crtcs_out = 0;
+uपूर्णांक32_t drm_lease_filter_crtcs(काष्ठा drm_file *file_priv, uपूर्णांक32_t crtcs_in)
+अणु
+	काष्ठा drm_master *master;
+	काष्ठा drm_device *dev;
+	काष्ठा drm_crtc *crtc;
+	पूर्णांक count_in, count_out;
+	uपूर्णांक32_t crtcs_out = 0;
 
-	if (!file_priv || !file_priv->master || !file_priv->master->lessor)
-		return crtcs_in;
+	अगर (!file_priv || !file_priv->master || !file_priv->master->lessor)
+		वापस crtcs_in;
 
 	master = file_priv->master;
 	dev = master->dev;
 
 	count_in = count_out = 0;
 	mutex_lock(&master->dev->mode_config.idr_mutex);
-	list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
-		if (_drm_lease_held_master(master, crtc->base.id)) {
-			uint32_t mask_in = 1ul << count_in;
+	list_क्रम_each_entry(crtc, &dev->mode_config.crtc_list, head) अणु
+		अगर (_drm_lease_held_master(master, crtc->base.id)) अणु
+			uपूर्णांक32_t mask_in = 1ul << count_in;
 
-			if ((crtcs_in & mask_in) != 0) {
-				uint32_t mask_out = 1ul << count_out;
+			अगर ((crtcs_in & mask_in) != 0) अणु
+				uपूर्णांक32_t mask_out = 1ul << count_out;
 
 				crtcs_out |= mask_out;
-			}
+			पूर्ण
 			count_out++;
-		}
+		पूर्ण
 		count_in++;
-	}
+	पूर्ण
 	mutex_unlock(&master->dev->mode_config.idr_mutex);
-	return crtcs_out;
-}
+	वापस crtcs_out;
+पूर्ण
 
 /*
  * drm_lease_create - create a new drm_master with leased objects (idr_mutex not held)
@@ -190,49 +191,49 @@ uint32_t drm_lease_filter_crtcs(struct drm_file *file_priv, uint32_t crtcs_in)
  * leasing them to the new drmmaster.
  *
  * 	ERR_PTR(-EACCES)	some other master holds the title to any object
- * 	ERR_PTR(-ENOENT)	some object is not a valid DRM object for this device
+ * 	ERR_PTR(-ENOENT)	some object is not a valid DRM object क्रम this device
  * 	ERR_PTR(-EBUSY)		some other lessee holds title to this object
- *	ERR_PTR(-EEXIST)	same object specified more than once in the provided list
+ *	ERR_PTR(-EEXIST)	same object specअगरied more than once in the provided list
  *	ERR_PTR(-ENOMEM)	allocation failed
  */
-static struct drm_master *drm_lease_create(struct drm_master *lessor, struct idr *leases)
-{
-	struct drm_device *dev = lessor->dev;
-	int error;
-	struct drm_master *lessee;
-	int object;
-	int id;
-	void *entry;
+अटल काष्ठा drm_master *drm_lease_create(काष्ठा drm_master *lessor, काष्ठा idr *leases)
+अणु
+	काष्ठा drm_device *dev = lessor->dev;
+	पूर्णांक error;
+	काष्ठा drm_master *lessee;
+	पूर्णांक object;
+	पूर्णांक id;
+	व्योम *entry;
 
 	DRM_DEBUG_LEASE("lessor %d\n", lessor->lessee_id);
 
 	lessee = drm_master_create(lessor->dev);
-	if (!lessee) {
+	अगर (!lessee) अणु
 		DRM_DEBUG_LEASE("drm_master_create failed\n");
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	mutex_lock(&dev->mode_config.idr_mutex);
 
-	idr_for_each_entry(leases, entry, object) {
+	idr_क्रम_each_entry(leases, entry, object) अणु
 		error = 0;
-		if (!idr_find(&dev->mode_config.object_idr, object))
+		अगर (!idr_find(&dev->mode_config.object_idr, object))
 			error = -ENOENT;
-		else if (_drm_has_leased(lessor, object))
+		अन्यथा अगर (_drm_has_leased(lessor, object))
 			error = -EBUSY;
 
-		if (error != 0) {
+		अगर (error != 0) अणु
 			DRM_DEBUG_LEASE("object %d failed %d\n", object, error);
-			goto out_lessee;
-		}
-	}
+			जाओ out_lessee;
+		पूर्ण
+	पूर्ण
 
-	/* Insert the new lessee into the tree */
+	/* Insert the new lessee पूर्णांकo the tree */
 	id = idr_alloc(&(drm_lease_owner(lessor)->lessee_idr), lessee, 1, 0, GFP_KERNEL);
-	if (id < 0) {
+	अगर (id < 0) अणु
 		error = id;
-		goto out_lessee;
-	}
+		जाओ out_lessee;
+	पूर्ण
 
 	lessee->lessee_id = id;
 	lessee->lessor = drm_master_get(lessor);
@@ -243,28 +244,28 @@ static struct drm_master *drm_lease_create(struct drm_master *lessor, struct idr
 	DRM_DEBUG_LEASE("new lessee %d %p, lessor %d %p\n", lessee->lessee_id, lessee, lessor->lessee_id, lessor);
 
 	mutex_unlock(&dev->mode_config.idr_mutex);
-	return lessee;
+	वापस lessee;
 
 out_lessee:
 	mutex_unlock(&dev->mode_config.idr_mutex);
 
 	drm_master_put(&lessee);
 
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण
 
 /**
  * drm_lease_destroy - a master is going away (idr_mutex not held)
  * @master: the drm_master being destroyed
  *
  * All lessees will have been destroyed as they
- * hold a reference on their lessor. Notify any
- * lessor for this master so that it can check
+ * hold a reference on their lessor. Notअगरy any
+ * lessor क्रम this master so that it can check
  * the list of lessees.
  */
-void drm_lease_destroy(struct drm_master *master)
-{
-	struct drm_device *dev = master->dev;
+व्योम drm_lease_destroy(काष्ठा drm_master *master)
+अणु
+	काष्ठा drm_device *dev = master->dev;
 
 	mutex_lock(&dev->mode_config.idr_mutex);
 
@@ -276,294 +277,294 @@ void drm_lease_destroy(struct drm_master *master)
 	WARN_ON(!list_empty(&master->lessees));
 
 	/* Remove this master from the lessee idr in the owner */
-	if (master->lessee_id != 0) {
+	अगर (master->lessee_id != 0) अणु
 		DRM_DEBUG_LEASE("remove master %d from device list of lessees\n", master->lessee_id);
-		idr_remove(&(drm_lease_owner(master)->lessee_idr), master->lessee_id);
-	}
+		idr_हटाओ(&(drm_lease_owner(master)->lessee_idr), master->lessee_id);
+	पूर्ण
 
 	/* Remove this master from any lessee list it may be on */
 	list_del(&master->lessee_list);
 
 	mutex_unlock(&dev->mode_config.idr_mutex);
 
-	if (master->lessor) {
+	अगर (master->lessor) अणु
 		/* Tell the master to check the lessee list */
 		drm_sysfs_lease_event(dev);
 		drm_master_put(&master->lessor);
-	}
+	पूर्ण
 
 	DRM_DEBUG_LEASE("drm_lease_destroy done %d\n", master->lessee_id);
-}
+पूर्ण
 
 /**
  * _drm_lease_revoke - revoke access to all leased objects (idr_mutex held)
  * @top: the master losing its lease
  */
-static void _drm_lease_revoke(struct drm_master *top)
-{
-	int object;
-	void *entry;
-	struct drm_master *master = top;
+अटल व्योम _drm_lease_revoke(काष्ठा drm_master *top)
+अणु
+	पूर्णांक object;
+	व्योम *entry;
+	काष्ठा drm_master *master = top;
 
-	lockdep_assert_held(&top->dev->mode_config.idr_mutex);
+	lockdep_निश्चित_held(&top->dev->mode_config.idr_mutex);
 
 	/*
 	 * Walk the tree starting at 'top' emptying all leases. Because
-	 * the tree is fully connected, we can do this without recursing
+	 * the tree is fully connected, we can करो this without recursing
 	 */
-	for (;;) {
+	क्रम (;;) अणु
 		DRM_DEBUG_LEASE("revoke leases for %p %d\n", master, master->lessee_id);
 
 		/* Evacuate the lease */
-		idr_for_each_entry(&master->leases, entry, object)
-			idr_remove(&master->leases, object);
+		idr_क्रम_each_entry(&master->leases, entry, object)
+			idr_हटाओ(&master->leases, object);
 
 		/* Depth-first list walk */
 
 		/* Down */
-		if (!list_empty(&master->lessees)) {
-			master = list_first_entry(&master->lessees, struct drm_master, lessee_list);
-		} else {
+		अगर (!list_empty(&master->lessees)) अणु
+			master = list_first_entry(&master->lessees, काष्ठा drm_master, lessee_list);
+		पूर्ण अन्यथा अणु
 			/* Up */
-			while (master != top && master == list_last_entry(&master->lessor->lessees, struct drm_master, lessee_list))
+			जबतक (master != top && master == list_last_entry(&master->lessor->lessees, काष्ठा drm_master, lessee_list))
 				master = master->lessor;
 
-			if (master == top)
-				break;
+			अगर (master == top)
+				अवरोध;
 
 			/* Over */
 			master = list_next_entry(master, lessee_list);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * drm_lease_revoke - revoke access to all leased objects (idr_mutex not held)
  * @top: the master losing its lease
  */
-void drm_lease_revoke(struct drm_master *top)
-{
+व्योम drm_lease_revoke(काष्ठा drm_master *top)
+अणु
 	mutex_lock(&top->dev->mode_config.idr_mutex);
 	_drm_lease_revoke(top);
 	mutex_unlock(&top->dev->mode_config.idr_mutex);
-}
+पूर्ण
 
-static int validate_lease(struct drm_device *dev,
-			  int object_count,
-			  struct drm_mode_object **objects,
+अटल पूर्णांक validate_lease(काष्ठा drm_device *dev,
+			  पूर्णांक object_count,
+			  काष्ठा drm_mode_object **objects,
 			  bool universal_planes)
-{
-	int o;
-	int has_crtc = -1;
-	int has_connector = -1;
-	int has_plane = -1;
+अणु
+	पूर्णांक o;
+	पूर्णांक has_crtc = -1;
+	पूर्णांक has_connector = -1;
+	पूर्णांक has_plane = -1;
 
 	/* we want to confirm that there is at least one crtc, plane
 	   connector object. */
 
-	for (o = 0; o < object_count; o++) {
-		if (objects[o]->type == DRM_MODE_OBJECT_CRTC && has_crtc == -1) {
+	क्रम (o = 0; o < object_count; o++) अणु
+		अगर (objects[o]->type == DRM_MODE_OBJECT_CRTC && has_crtc == -1) अणु
 			has_crtc = o;
-		}
-		if (objects[o]->type == DRM_MODE_OBJECT_CONNECTOR && has_connector == -1)
+		पूर्ण
+		अगर (objects[o]->type == DRM_MODE_OBJECT_CONNECTOR && has_connector == -1)
 			has_connector = o;
 
-		if (universal_planes) {
-			if (objects[o]->type == DRM_MODE_OBJECT_PLANE && has_plane == -1)
+		अगर (universal_planes) अणु
+			अगर (objects[o]->type == DRM_MODE_OBJECT_PLANE && has_plane == -1)
 				has_plane = o;
-		}
-	}
-	if (has_crtc == -1 || has_connector == -1)
-		return -EINVAL;
-	if (universal_planes && has_plane == -1)
-		return -EINVAL;
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	अगर (has_crtc == -1 || has_connector == -1)
+		वापस -EINVAL;
+	अगर (universal_planes && has_plane == -1)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static int fill_object_idr(struct drm_device *dev,
-			   struct drm_file *lessor_priv,
-			   struct idr *leases,
-			   int object_count,
+अटल पूर्णांक fill_object_idr(काष्ठा drm_device *dev,
+			   काष्ठा drm_file *lessor_priv,
+			   काष्ठा idr *leases,
+			   पूर्णांक object_count,
 			   u32 *object_ids)
-{
-	struct drm_mode_object **objects;
+अणु
+	काष्ठा drm_mode_object **objects;
 	u32 o;
-	int ret;
+	पूर्णांक ret;
 	bool universal_planes = READ_ONCE(lessor_priv->universal_planes);
 
-	objects = kcalloc(object_count, sizeof(struct drm_mode_object *),
+	objects = kसुस्मृति(object_count, माप(काष्ठा drm_mode_object *),
 			  GFP_KERNEL);
-	if (!objects)
-		return -ENOMEM;
+	अगर (!objects)
+		वापस -ENOMEM;
 
 	/* step one - get references to all the mode objects
-	   and check for validity. */
-	for (o = 0; o < object_count; o++) {
+	   and check क्रम validity. */
+	क्रम (o = 0; o < object_count; o++) अणु
 		objects[o] = drm_mode_object_find(dev, lessor_priv,
 						  object_ids[o],
 						  DRM_MODE_OBJECT_ANY);
-		if (!objects[o]) {
+		अगर (!objects[o]) अणु
 			ret = -ENOENT;
-			goto out_free_objects;
-		}
+			जाओ out_मुक्त_objects;
+		पूर्ण
 
-		if (!drm_mode_object_lease_required(objects[o]->type)) {
+		अगर (!drm_mode_object_lease_required(objects[o]->type)) अणु
 			DRM_DEBUG_KMS("invalid object for lease\n");
 			ret = -EINVAL;
-			goto out_free_objects;
-		}
-	}
+			जाओ out_मुक्त_objects;
+		पूर्ण
+	पूर्ण
 
 	ret = validate_lease(dev, object_count, objects, universal_planes);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEBUG_LEASE("lease validation failed\n");
-		goto out_free_objects;
-	}
+		जाओ out_मुक्त_objects;
+	पूर्ण
 
-	/* add their IDs to the lease request - taking into account
+	/* add their IDs to the lease request - taking पूर्णांकo account
 	   universal planes */
-	for (o = 0; o < object_count; o++) {
-		struct drm_mode_object *obj = objects[o];
+	क्रम (o = 0; o < object_count; o++) अणु
+		काष्ठा drm_mode_object *obj = objects[o];
 		u32 object_id = objects[o]->id;
 
 		DRM_DEBUG_LEASE("Adding object %d to lease\n", object_id);
 
 		/*
 		 * We're using an IDR to hold the set of leased
-		 * objects, but we don't need to point at the object's
-		 * data structure from the lease as the main object_idr
+		 * objects, but we करोn't need to point at the object's
+		 * data काष्ठाure from the lease as the मुख्य object_idr
 		 * will be used to actually find that. Instead, all we
-		 * really want is a 'leased/not-leased' result, for
-		 * which any non-NULL pointer will work fine.
+		 * really want is a 'leased/not-leased' result, क्रम
+		 * which any non-शून्य poपूर्णांकer will work fine.
 		 */
 		ret = idr_alloc(leases, &drm_lease_idr_object , object_id, object_id + 1, GFP_KERNEL);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			DRM_DEBUG_LEASE("Object %d cannot be inserted into leases (%d)\n",
 					object_id, ret);
-			goto out_free_objects;
-		}
-		if (obj->type == DRM_MODE_OBJECT_CRTC && !universal_planes) {
-			struct drm_crtc *crtc = obj_to_crtc(obj);
+			जाओ out_मुक्त_objects;
+		पूर्ण
+		अगर (obj->type == DRM_MODE_OBJECT_CRTC && !universal_planes) अणु
+			काष्ठा drm_crtc *crtc = obj_to_crtc(obj);
 
 			ret = idr_alloc(leases, &drm_lease_idr_object, crtc->primary->base.id, crtc->primary->base.id + 1, GFP_KERNEL);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				DRM_DEBUG_LEASE("Object primary plane %d cannot be inserted into leases (%d)\n",
 						object_id, ret);
-				goto out_free_objects;
-			}
-			if (crtc->cursor) {
+				जाओ out_मुक्त_objects;
+			पूर्ण
+			अगर (crtc->cursor) अणु
 				ret = idr_alloc(leases, &drm_lease_idr_object, crtc->cursor->base.id, crtc->cursor->base.id + 1, GFP_KERNEL);
-				if (ret < 0) {
+				अगर (ret < 0) अणु
 					DRM_DEBUG_LEASE("Object cursor plane %d cannot be inserted into leases (%d)\n",
 							object_id, ret);
-					goto out_free_objects;
-				}
-			}
-		}
-	}
+					जाओ out_मुक्त_objects;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
-out_free_objects:
-	for (o = 0; o < object_count; o++) {
-		if (objects[o])
+out_मुक्त_objects:
+	क्रम (o = 0; o < object_count; o++) अणु
+		अगर (objects[o])
 			drm_mode_object_put(objects[o]);
-	}
-	kfree(objects);
-	return ret;
-}
+	पूर्ण
+	kमुक्त(objects);
+	वापस ret;
+पूर्ण
 
 /**
  * drm_mode_create_lease_ioctl - create a new lease
  * @dev: the drm device
- * @data: pointer to struct drm_mode_create_lease
+ * @data: poपूर्णांकer to काष्ठा drm_mode_create_lease
  * @lessor_priv: the file being manipulated
  *
- * The master associated with the specified file will have a lease
- * created containing the objects specified in the ioctl structure.
- * A file descriptor will be allocated for that and returned to the
+ * The master associated with the specअगरied file will have a lease
+ * created containing the objects specअगरied in the ioctl काष्ठाure.
+ * A file descriptor will be allocated क्रम that and वापसed to the
  * application.
  */
-int drm_mode_create_lease_ioctl(struct drm_device *dev,
-				void *data, struct drm_file *lessor_priv)
-{
-	struct drm_mode_create_lease *cl = data;
-	size_t object_count;
-	int ret = 0;
-	struct idr leases;
-	struct drm_master *lessor = lessor_priv->master;
-	struct drm_master *lessee = NULL;
-	struct file *lessee_file = NULL;
-	struct file *lessor_file = lessor_priv->filp;
-	struct drm_file *lessee_priv;
-	int fd = -1;
-	uint32_t *object_ids;
+पूर्णांक drm_mode_create_lease_ioctl(काष्ठा drm_device *dev,
+				व्योम *data, काष्ठा drm_file *lessor_priv)
+अणु
+	काष्ठा drm_mode_create_lease *cl = data;
+	माप_प्रकार object_count;
+	पूर्णांक ret = 0;
+	काष्ठा idr leases;
+	काष्ठा drm_master *lessor = lessor_priv->master;
+	काष्ठा drm_master *lessee = शून्य;
+	काष्ठा file *lessee_file = शून्य;
+	काष्ठा file *lessor_file = lessor_priv->filp;
+	काष्ठा drm_file *lessee_priv;
+	पूर्णांक fd = -1;
+	uपूर्णांक32_t *object_ids;
 
 	/* Can't lease without MODESET */
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
 	/* Do not allow sub-leases */
-	if (lessor->lessor) {
+	अगर (lessor->lessor) अणु
 		DRM_DEBUG_LEASE("recursive leasing not allowed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* need some objects */
-	if (cl->object_count == 0) {
+	अगर (cl->object_count == 0) अणु
 		DRM_DEBUG_LEASE("no objects in lease\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cl->flags && (cl->flags & ~(O_CLOEXEC | O_NONBLOCK))) {
+	अगर (cl->flags && (cl->flags & ~(O_CLOEXEC | O_NONBLOCK))) अणु
 		DRM_DEBUG_LEASE("invalid flags\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	object_count = cl->object_count;
 
 	object_ids = memdup_user(u64_to_user_ptr(cl->object_ids),
-			array_size(object_count, sizeof(__u32)));
-	if (IS_ERR(object_ids))
-		return PTR_ERR(object_ids);
+			array_size(object_count, माप(__u32)));
+	अगर (IS_ERR(object_ids))
+		वापस PTR_ERR(object_ids);
 
 	idr_init(&leases);
 
 	/* fill and validate the object idr */
 	ret = fill_object_idr(dev, lessor_priv, &leases,
 			      object_count, object_ids);
-	kfree(object_ids);
-	if (ret) {
+	kमुक्त(object_ids);
+	अगर (ret) अणु
 		DRM_DEBUG_LEASE("lease object lookup failed: %i\n", ret);
 		idr_destroy(&leases);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Allocate a file descriptor for the lease */
+	/* Allocate a file descriptor क्रम the lease */
 	fd = get_unused_fd_flags(cl->flags & (O_CLOEXEC | O_NONBLOCK));
-	if (fd < 0) {
+	अगर (fd < 0) अणु
 		idr_destroy(&leases);
-		return fd;
-	}
+		वापस fd;
+	पूर्ण
 
 	DRM_DEBUG_LEASE("Creating lease\n");
 	/* lessee will take the ownership of leases */
 	lessee = drm_lease_create(lessor, &leases);
 
-	if (IS_ERR(lessee)) {
+	अगर (IS_ERR(lessee)) अणु
 		ret = PTR_ERR(lessee);
 		idr_destroy(&leases);
-		goto out_leases;
-	}
+		जाओ out_leases;
+	पूर्ण
 
-	/* Clone the lessor file to create a new file for us */
+	/* Clone the lessor file to create a new file क्रम us */
 	DRM_DEBUG_LEASE("Allocating lease file\n");
-	lessee_file = file_clone_open(lessor_file);
-	if (IS_ERR(lessee_file)) {
+	lessee_file = file_clone_खोलो(lessor_file);
+	अगर (IS_ERR(lessee_file)) अणु
 		ret = PTR_ERR(lessee_file);
-		goto out_lessee;
-	}
+		जाओ out_lessee;
+	पूर्ण
 
-	lessee_priv = lessee_file->private_data;
+	lessee_priv = lessee_file->निजी_data;
 	/* Change the file to a master one */
 	drm_master_put(&lessee_priv->master);
 	lessee_priv->master = lessee;
@@ -579,7 +580,7 @@ int drm_mode_create_lease_ioctl(struct drm_device *dev,
 	fd_install(fd, lessee_file);
 
 	DRM_DEBUG_LEASE("drm_mode_create_lease_ioctl succeeded\n");
-	return 0;
+	वापस 0;
 
 out_lessee:
 	drm_master_put(&lessee);
@@ -588,169 +589,169 @@ out_leases:
 	put_unused_fd(fd);
 
 	DRM_DEBUG_LEASE("drm_mode_create_lease_ioctl failed: %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * drm_mode_list_lessees_ioctl - list lessee ids
  * @dev: the drm device
- * @data: pointer to struct drm_mode_list_lessees
+ * @data: poपूर्णांकer to काष्ठा drm_mode_list_lessees
  * @lessor_priv: the file being manipulated
  *
- * Starting from the master associated with the specified file,
+ * Starting from the master associated with the specअगरied file,
  * the master with the provided lessee_id is found, and then
  * an array of lessee ids associated with leases from that master
- * are returned.
+ * are वापसed.
  */
 
-int drm_mode_list_lessees_ioctl(struct drm_device *dev,
-			       void *data, struct drm_file *lessor_priv)
-{
-	struct drm_mode_list_lessees *arg = data;
-	__u32 __user *lessee_ids = (__u32 __user *) (uintptr_t) (arg->lessees_ptr);
+पूर्णांक drm_mode_list_lessees_ioctl(काष्ठा drm_device *dev,
+			       व्योम *data, काष्ठा drm_file *lessor_priv)
+अणु
+	काष्ठा drm_mode_list_lessees *arg = data;
+	__u32 __user *lessee_ids = (__u32 __user *) (uपूर्णांकptr_t) (arg->lessees_ptr);
 	__u32 count_lessees = arg->count_lessees;
-	struct drm_master *lessor = lessor_priv->master, *lessee;
-	int count;
-	int ret = 0;
+	काष्ठा drm_master *lessor = lessor_priv->master, *lessee;
+	पूर्णांक count;
+	पूर्णांक ret = 0;
 
-	if (arg->pad)
-		return -EINVAL;
+	अगर (arg->pad)
+		वापस -EINVAL;
 
 	/* Can't lease without MODESET */
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
 	DRM_DEBUG_LEASE("List lessees for %d\n", lessor->lessee_id);
 
 	mutex_lock(&dev->mode_config.idr_mutex);
 
 	count = 0;
-	drm_for_each_lessee(lessee, lessor) {
+	drm_क्रम_each_lessee(lessee, lessor) अणु
 		/* Only list un-revoked leases */
-		if (!idr_is_empty(&lessee->leases)) {
-			if (count_lessees > count) {
+		अगर (!idr_is_empty(&lessee->leases)) अणु
+			अगर (count_lessees > count) अणु
 				DRM_DEBUG_LEASE("Add lessee %d\n", lessee->lessee_id);
 				ret = put_user(lessee->lessee_id, lessee_ids + count);
-				if (ret)
-					break;
-			}
+				अगर (ret)
+					अवरोध;
+			पूर्ण
 			count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	DRM_DEBUG_LEASE("Lessor leases to %d\n", count);
-	if (ret == 0)
+	अगर (ret == 0)
 		arg->count_lessees = count;
 
 	mutex_unlock(&dev->mode_config.idr_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * drm_mode_get_lease_ioctl - list leased objects
  * @dev: the drm device
- * @data: pointer to struct drm_mode_get_lease
+ * @data: poपूर्णांकer to काष्ठा drm_mode_get_lease
  * @lessee_priv: the file being manipulated
  *
- * Return the list of leased objects for the specified lessee
+ * Return the list of leased objects क्रम the specअगरied lessee
  */
 
-int drm_mode_get_lease_ioctl(struct drm_device *dev,
-			     void *data, struct drm_file *lessee_priv)
-{
-	struct drm_mode_get_lease *arg = data;
-	__u32 __user *object_ids = (__u32 __user *) (uintptr_t) (arg->objects_ptr);
+पूर्णांक drm_mode_get_lease_ioctl(काष्ठा drm_device *dev,
+			     व्योम *data, काष्ठा drm_file *lessee_priv)
+अणु
+	काष्ठा drm_mode_get_lease *arg = data;
+	__u32 __user *object_ids = (__u32 __user *) (uपूर्णांकptr_t) (arg->objects_ptr);
 	__u32 count_objects = arg->count_objects;
-	struct drm_master *lessee = lessee_priv->master;
-	struct idr *object_idr;
-	int count;
-	void *entry;
-	int object;
-	int ret = 0;
+	काष्ठा drm_master *lessee = lessee_priv->master;
+	काष्ठा idr *object_idr;
+	पूर्णांक count;
+	व्योम *entry;
+	पूर्णांक object;
+	पूर्णांक ret = 0;
 
-	if (arg->pad)
-		return -EINVAL;
+	अगर (arg->pad)
+		वापस -EINVAL;
 
 	/* Can't lease without MODESET */
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
 	DRM_DEBUG_LEASE("get lease for %d\n", lessee->lessee_id);
 
 	mutex_lock(&dev->mode_config.idr_mutex);
 
-	if (lessee->lessor == NULL)
+	अगर (lessee->lessor == शून्य)
 		/* owner can use all objects */
 		object_idr = &lessee->dev->mode_config.object_idr;
-	else
+	अन्यथा
 		/* lessee can only use allowed object */
 		object_idr = &lessee->leases;
 
 	count = 0;
-	idr_for_each_entry(object_idr, entry, object) {
-		if (count_objects > count) {
+	idr_क्रम_each_entry(object_idr, entry, object) अणु
+		अगर (count_objects > count) अणु
 			DRM_DEBUG_LEASE("adding object %d\n", object);
 			ret = put_user(object, object_ids + count);
-			if (ret)
-				break;
-		}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
 		count++;
-	}
+	पूर्ण
 
 	DRM_DEBUG("lease holds %d objects\n", count);
-	if (ret == 0)
+	अगर (ret == 0)
 		arg->count_objects = count;
 
 	mutex_unlock(&dev->mode_config.idr_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * drm_mode_revoke_lease_ioctl - revoke lease
  * @dev: the drm device
- * @data: pointer to struct drm_mode_revoke_lease
+ * @data: poपूर्णांकer to काष्ठा drm_mode_revoke_lease
  * @lessor_priv: the file being manipulated
  *
- * This removes all of the objects from the lease without
+ * This हटाओs all of the objects from the lease without
  * actually getting rid of the lease itself; that way all
  * references to it still work correctly
  */
-int drm_mode_revoke_lease_ioctl(struct drm_device *dev,
-				void *data, struct drm_file *lessor_priv)
-{
-	struct drm_mode_revoke_lease *arg = data;
-	struct drm_master *lessor = lessor_priv->master;
-	struct drm_master *lessee;
-	int ret = 0;
+पूर्णांक drm_mode_revoke_lease_ioctl(काष्ठा drm_device *dev,
+				व्योम *data, काष्ठा drm_file *lessor_priv)
+अणु
+	काष्ठा drm_mode_revoke_lease *arg = data;
+	काष्ठा drm_master *lessor = lessor_priv->master;
+	काष्ठा drm_master *lessee;
+	पूर्णांक ret = 0;
 
 	DRM_DEBUG_LEASE("revoke lease for %d\n", arg->lessee_id);
 
 	/* Can't lease without MODESET */
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&dev->mode_config.idr_mutex);
 
 	lessee = _drm_find_lessee(lessor, arg->lessee_id);
 
 	/* No such lessee */
-	if (!lessee) {
+	अगर (!lessee) अणु
 		ret = -ENOENT;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* Lease is not held by lessor */
-	if (lessee->lessor != lessor) {
+	अगर (lessee->lessor != lessor) अणु
 		ret = -EACCES;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	_drm_lease_revoke(lessee);
 
 fail:
 	mutex_unlock(&dev->mode_config.idr_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

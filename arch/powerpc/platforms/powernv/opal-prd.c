@@ -1,109 +1,110 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * OPAL Runtime Diagnostics interface driver
- * Supported on POWERNV platform
+ * OPAL Runसमय Diagnostics पूर्णांकerface driver
+ * Supported on POWERNV platक्रमm
  *
  * Copyright IBM Corporation 2015
  */
 
-#define pr_fmt(fmt) "opal-prd: " fmt
+#घोषणा pr_fmt(fmt) "opal-prd: " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/miscdevice.h>
-#include <linux/fs.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/poll.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <asm/opal-prd.h>
-#include <asm/opal.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/opal-prd.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
 
 
 /*
- * The msg member must be at the end of the struct, as it's followed by the
+ * The msg member must be at the end of the काष्ठा, as it's followed by the
  * message data.
  */
-struct opal_prd_msg_queue_item {
-	struct list_head		list;
-	struct opal_prd_msg_header	msg;
-};
+काष्ठा opal_prd_msg_queue_item अणु
+	काष्ठा list_head		list;
+	काष्ठा opal_prd_msg_header	msg;
+पूर्ण;
 
-static struct device_node *prd_node;
-static LIST_HEAD(opal_prd_msg_queue);
-static DEFINE_SPINLOCK(opal_prd_msg_queue_lock);
-static DECLARE_WAIT_QUEUE_HEAD(opal_prd_msg_wait);
-static atomic_t prd_usage;
+अटल काष्ठा device_node *prd_node;
+अटल LIST_HEAD(opal_prd_msg_queue);
+अटल DEFINE_SPINLOCK(opal_prd_msg_queue_lock);
+अटल DECLARE_WAIT_QUEUE_HEAD(opal_prd_msg_रुको);
+अटल atomic_t prd_usage;
 
-static bool opal_prd_range_is_valid(uint64_t addr, uint64_t size)
-{
-	struct device_node *parent, *node;
+अटल bool opal_prd_range_is_valid(uपूर्णांक64_t addr, uपूर्णांक64_t size)
+अणु
+	काष्ठा device_node *parent, *node;
 	bool found;
 
-	if (addr + size < addr)
-		return false;
+	अगर (addr + size < addr)
+		वापस false;
 
 	parent = of_find_node_by_path("/reserved-memory");
-	if (!parent)
-		return false;
+	अगर (!parent)
+		वापस false;
 
 	found = false;
 
-	for_each_child_of_node(parent, node) {
-		uint64_t range_addr, range_size, range_end;
-		const __be32 *addrp;
-		const char *label;
+	क्रम_each_child_of_node(parent, node) अणु
+		uपूर्णांक64_t range_addr, range_size, range_end;
+		स्थिर __be32 *addrp;
+		स्थिर अक्षर *label;
 
-		addrp = of_get_address(node, 0, &range_size, NULL);
+		addrp = of_get_address(node, 0, &range_size, शून्य);
 
-		range_addr = of_read_number(addrp, 2);
+		range_addr = of_पढ़ो_number(addrp, 2);
 		range_end = range_addr + range_size;
 
-		label = of_get_property(node, "ibm,prd-label", NULL);
+		label = of_get_property(node, "ibm,prd-label", शून्य);
 
 		/* PRD ranges need a label */
-		if (!label)
-			continue;
+		अगर (!label)
+			जारी;
 
-		if (range_end <= range_addr)
-			continue;
+		अगर (range_end <= range_addr)
+			जारी;
 
-		if (addr >= range_addr && addr + size <= range_end) {
+		अगर (addr >= range_addr && addr + size <= range_end) अणु
 			found = true;
 			of_node_put(node);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	of_node_put(parent);
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static int opal_prd_open(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक opal_prd_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	/*
-	 * Prevent multiple (separate) processes from concurrent interactions
+	 * Prevent multiple (separate) processes from concurrent पूर्णांकeractions
 	 * with the FW PRD channel
 	 */
-	if (atomic_xchg(&prd_usage, 1) == 1)
-		return -EBUSY;
+	अगर (atomic_xchg(&prd_usage, 1) == 1)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * opal_prd_mmap - maps firmware-provided ranges into userspace
- * @file: file structure for the device
- * @vma: VMA to map the registers into
+ * opal_prd_mmap - maps firmware-provided ranges पूर्णांकo userspace
+ * @file: file काष्ठाure क्रम the device
+ * @vma: VMA to map the रेजिस्टरs पूर्णांकo
  */
 
-static int opal_prd_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	size_t addr, size;
+अटल पूर्णांक opal_prd_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	माप_प्रकार addr, size;
 	pgprot_t page_prot;
 
 	pr_devel("opal_prd_mmap(0x%016lx, 0x%016lx, 0x%lx, 0x%lx)\n",
@@ -114,321 +115,321 @@ static int opal_prd_mmap(struct file *file, struct vm_area_struct *vma)
 	size = vma->vm_end - vma->vm_start;
 
 	/* ensure we're mapping within one of the allowable ranges */
-	if (!opal_prd_range_is_valid(addr, size))
-		return -EINVAL;
+	अगर (!opal_prd_range_is_valid(addr, size))
+		वापस -EINVAL;
 
 	page_prot = phys_mem_access_prot(file, vma->vm_pgoff,
 					 size, vma->vm_page_prot);
 
-	return remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff, size,
+	वापस remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff, size,
 				page_prot);
-}
+पूर्ण
 
-static bool opal_msg_queue_empty(void)
-{
-	unsigned long flags;
+अटल bool opal_msg_queue_empty(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool ret;
 
 	spin_lock_irqsave(&opal_prd_msg_queue_lock, flags);
 	ret = list_empty(&opal_prd_msg_queue);
 	spin_unlock_irqrestore(&opal_prd_msg_queue_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __poll_t opal_prd_poll(struct file *file,
-		struct poll_table_struct *wait)
-{
-	poll_wait(file, &opal_prd_msg_wait, wait);
+अटल __poll_t opal_prd_poll(काष्ठा file *file,
+		काष्ठा poll_table_काष्ठा *रुको)
+अणु
+	poll_रुको(file, &opal_prd_msg_रुको, रुको);
 
-	if (!opal_msg_queue_empty())
-		return EPOLLIN | EPOLLRDNORM;
+	अगर (!opal_msg_queue_empty())
+		वापस EPOLLIN | EPOLLRDNORM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t opal_prd_read(struct file *file, char __user *buf,
-		size_t count, loff_t *ppos)
-{
-	struct opal_prd_msg_queue_item *item;
-	unsigned long flags;
-	ssize_t size, err;
-	int rc;
+अटल sमाप_प्रकार opal_prd_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+		माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा opal_prd_msg_queue_item *item;
+	अचिन्हित दीर्घ flags;
+	sमाप_प्रकार size, err;
+	पूर्णांक rc;
 
 	/* we need at least a header's worth of data */
-	if (count < sizeof(item->msg))
-		return -EINVAL;
+	अगर (count < माप(item->msg))
+		वापस -EINVAL;
 
-	if (*ppos)
-		return -ESPIPE;
+	अगर (*ppos)
+		वापस -ESPIPE;
 
-	item = NULL;
+	item = शून्य;
 
-	for (;;) {
+	क्रम (;;) अणु
 
 		spin_lock_irqsave(&opal_prd_msg_queue_lock, flags);
-		if (!list_empty(&opal_prd_msg_queue)) {
+		अगर (!list_empty(&opal_prd_msg_queue)) अणु
 			item = list_first_entry(&opal_prd_msg_queue,
-					struct opal_prd_msg_queue_item, list);
+					काष्ठा opal_prd_msg_queue_item, list);
 			list_del(&item->list);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&opal_prd_msg_queue_lock, flags);
 
-		if (item)
-			break;
+		अगर (item)
+			अवरोध;
 
-		if (file->f_flags & O_NONBLOCK)
-			return -EAGAIN;
+		अगर (file->f_flags & O_NONBLOCK)
+			वापस -EAGAIN;
 
-		rc = wait_event_interruptible(opal_prd_msg_wait,
+		rc = रुको_event_पूर्णांकerruptible(opal_prd_msg_रुको,
 				!opal_msg_queue_empty());
-		if (rc)
-			return -EINTR;
-	}
+		अगर (rc)
+			वापस -EINTR;
+	पूर्ण
 
 	size = be16_to_cpu(item->msg.size);
-	if (size > count) {
+	अगर (size > count) अणु
 		err = -EINVAL;
-		goto err_requeue;
-	}
+		जाओ err_requeue;
+	पूर्ण
 
 	rc = copy_to_user(buf, &item->msg, size);
-	if (rc) {
+	अगर (rc) अणु
 		err = -EFAULT;
-		goto err_requeue;
-	}
+		जाओ err_requeue;
+	पूर्ण
 
-	kfree(item);
+	kमुक्त(item);
 
-	return size;
+	वापस size;
 
 err_requeue:
 	/* eep! re-queue at the head of the list */
 	spin_lock_irqsave(&opal_prd_msg_queue_lock, flags);
 	list_add(&item->list, &opal_prd_msg_queue);
 	spin_unlock_irqrestore(&opal_prd_msg_queue_lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static ssize_t opal_prd_write(struct file *file, const char __user *buf,
-		size_t count, loff_t *ppos)
-{
-	struct opal_prd_msg_header hdr;
-	ssize_t size;
-	void *msg;
-	int rc;
+अटल sमाप_प्रकार opal_prd_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+		माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा opal_prd_msg_header hdr;
+	sमाप_प्रकार size;
+	व्योम *msg;
+	पूर्णांक rc;
 
-	size = sizeof(hdr);
+	size = माप(hdr);
 
-	if (count < size)
-		return -EINVAL;
+	अगर (count < size)
+		वापस -EINVAL;
 
 	/* grab the header */
-	rc = copy_from_user(&hdr, buf, sizeof(hdr));
-	if (rc)
-		return -EFAULT;
+	rc = copy_from_user(&hdr, buf, माप(hdr));
+	अगर (rc)
+		वापस -EFAULT;
 
 	size = be16_to_cpu(hdr.size);
 
 	msg = memdup_user(buf, size);
-	if (IS_ERR(msg))
-		return PTR_ERR(msg);
+	अगर (IS_ERR(msg))
+		वापस PTR_ERR(msg);
 
 	rc = opal_prd_msg(msg);
-	if (rc) {
+	अगर (rc) अणु
 		pr_warn("write: opal_prd_msg returned %d\n", rc);
 		size = -EIO;
-	}
+	पूर्ण
 
-	kfree(msg);
+	kमुक्त(msg);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int opal_prd_release(struct inode *inode, struct file *file)
-{
-	struct opal_prd_msg_header msg;
+अटल पूर्णांक opal_prd_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा opal_prd_msg_header msg;
 
-	msg.size = cpu_to_be16(sizeof(msg));
+	msg.size = cpu_to_be16(माप(msg));
 	msg.type = OPAL_PRD_MSG_TYPE_FINI;
 
-	opal_prd_msg((struct opal_prd_msg *)&msg);
+	opal_prd_msg((काष्ठा opal_prd_msg *)&msg);
 
 	atomic_xchg(&prd_usage, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long opal_prd_ioctl(struct file *file, unsigned int cmd,
-		unsigned long param)
-{
-	struct opal_prd_info info;
-	struct opal_prd_scom scom;
-	int rc = 0;
+अटल दीर्घ opal_prd_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+		अचिन्हित दीर्घ param)
+अणु
+	काष्ठा opal_prd_info info;
+	काष्ठा opal_prd_scom scom;
+	पूर्णांक rc = 0;
 
-	switch (cmd) {
-	case OPAL_PRD_GET_INFO:
-		memset(&info, 0, sizeof(info));
+	चयन (cmd) अणु
+	हाल OPAL_PRD_GET_INFO:
+		स_रखो(&info, 0, माप(info));
 		info.version = OPAL_PRD_KERNEL_VERSION;
-		rc = copy_to_user((void __user *)param, &info, sizeof(info));
-		if (rc)
-			return -EFAULT;
-		break;
+		rc = copy_to_user((व्योम __user *)param, &info, माप(info));
+		अगर (rc)
+			वापस -EFAULT;
+		अवरोध;
 
-	case OPAL_PRD_SCOM_READ:
-		rc = copy_from_user(&scom, (void __user *)param, sizeof(scom));
-		if (rc)
-			return -EFAULT;
+	हाल OPAL_PRD_SCOM_READ:
+		rc = copy_from_user(&scom, (व्योम __user *)param, माप(scom));
+		अगर (rc)
+			वापस -EFAULT;
 
-		scom.rc = opal_xscom_read(scom.chip, scom.addr,
+		scom.rc = opal_xscom_पढ़ो(scom.chip, scom.addr,
 				(__be64 *)&scom.data);
 		scom.data = be64_to_cpu(scom.data);
 		pr_devel("ioctl SCOM_READ: chip %llx addr %016llx data %016llx rc %lld\n",
 				scom.chip, scom.addr, scom.data, scom.rc);
 
-		rc = copy_to_user((void __user *)param, &scom, sizeof(scom));
-		if (rc)
-			return -EFAULT;
-		break;
+		rc = copy_to_user((व्योम __user *)param, &scom, माप(scom));
+		अगर (rc)
+			वापस -EFAULT;
+		अवरोध;
 
-	case OPAL_PRD_SCOM_WRITE:
-		rc = copy_from_user(&scom, (void __user *)param, sizeof(scom));
-		if (rc)
-			return -EFAULT;
+	हाल OPAL_PRD_SCOM_WRITE:
+		rc = copy_from_user(&scom, (व्योम __user *)param, माप(scom));
+		अगर (rc)
+			वापस -EFAULT;
 
-		scom.rc = opal_xscom_write(scom.chip, scom.addr, scom.data);
+		scom.rc = opal_xscom_ग_लिखो(scom.chip, scom.addr, scom.data);
 		pr_devel("ioctl SCOM_WRITE: chip %llx addr %016llx data %016llx rc %lld\n",
 				scom.chip, scom.addr, scom.data, scom.rc);
 
-		rc = copy_to_user((void __user *)param, &scom, sizeof(scom));
-		if (rc)
-			return -EFAULT;
-		break;
+		rc = copy_to_user((व्योम __user *)param, &scom, माप(scom));
+		अगर (rc)
+			वापस -EFAULT;
+		अवरोध;
 
-	default:
+	शेष:
 		rc = -EINVAL;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct file_operations opal_prd_fops = {
-	.open		= opal_prd_open,
+अटल स्थिर काष्ठा file_operations opal_prd_fops = अणु
+	.खोलो		= opal_prd_खोलो,
 	.mmap		= opal_prd_mmap,
 	.poll		= opal_prd_poll,
-	.read		= opal_prd_read,
-	.write		= opal_prd_write,
+	.पढ़ो		= opal_prd_पढ़ो,
+	.ग_लिखो		= opal_prd_ग_लिखो,
 	.unlocked_ioctl	= opal_prd_ioctl,
 	.release	= opal_prd_release,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct miscdevice opal_prd_dev = {
+अटल काष्ठा miscdevice opal_prd_dev = अणु
 	.minor		= MISC_DYNAMIC_MINOR,
 	.name		= "opal-prd",
 	.fops		= &opal_prd_fops,
-};
+पूर्ण;
 
-/* opal interface */
-static int opal_prd_msg_notifier(struct notifier_block *nb,
-		unsigned long msg_type, void *_msg)
-{
-	struct opal_prd_msg_queue_item *item;
-	struct opal_prd_msg_header *hdr;
-	struct opal_msg *msg = _msg;
-	int msg_size, item_size;
-	unsigned long flags;
+/* opal पूर्णांकerface */
+अटल पूर्णांक opal_prd_msg_notअगरier(काष्ठा notअगरier_block *nb,
+		अचिन्हित दीर्घ msg_type, व्योम *_msg)
+अणु
+	काष्ठा opal_prd_msg_queue_item *item;
+	काष्ठा opal_prd_msg_header *hdr;
+	काष्ठा opal_msg *msg = _msg;
+	पूर्णांक msg_size, item_size;
+	अचिन्हित दीर्घ flags;
 
-	if (msg_type != OPAL_MSG_PRD && msg_type != OPAL_MSG_PRD2)
-		return 0;
+	अगर (msg_type != OPAL_MSG_PRD && msg_type != OPAL_MSG_PRD2)
+		वापस 0;
 
 	/* Calculate total size of the message and item we need to store. The
 	 * 'size' field in the header includes the header itself. */
-	hdr = (void *)msg->params;
+	hdr = (व्योम *)msg->params;
 	msg_size = be16_to_cpu(hdr->size);
-	item_size = msg_size + sizeof(*item) - sizeof(item->msg);
+	item_size = msg_size + माप(*item) - माप(item->msg);
 
 	item = kzalloc(item_size, GFP_ATOMIC);
-	if (!item)
-		return -ENOMEM;
+	अगर (!item)
+		वापस -ENOMEM;
 
-	memcpy(&item->msg, msg->params, msg_size);
+	स_नकल(&item->msg, msg->params, msg_size);
 
 	spin_lock_irqsave(&opal_prd_msg_queue_lock, flags);
 	list_add_tail(&item->list, &opal_prd_msg_queue);
 	spin_unlock_irqrestore(&opal_prd_msg_queue_lock, flags);
 
-	wake_up_interruptible(&opal_prd_msg_wait);
+	wake_up_पूर्णांकerruptible(&opal_prd_msg_रुको);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct notifier_block opal_prd_event_nb = {
-	.notifier_call	= opal_prd_msg_notifier,
-	.next		= NULL,
+अटल काष्ठा notअगरier_block opal_prd_event_nb = अणु
+	.notअगरier_call	= opal_prd_msg_notअगरier,
+	.next		= शून्य,
 	.priority	= 0,
-};
+पूर्ण;
 
-static int opal_prd_probe(struct platform_device *pdev)
-{
-	int rc;
+अटल पूर्णांक opal_prd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक rc;
 
-	if (!pdev || !pdev->dev.of_node)
-		return -ENODEV;
+	अगर (!pdev || !pdev->dev.of_node)
+		वापस -ENODEV;
 
 	/* We should only have one prd driver instance per machine; ensure
 	 * that we only get a valid probe on a single OF node.
 	 */
-	if (prd_node)
-		return -EBUSY;
+	अगर (prd_node)
+		वापस -EBUSY;
 
 	prd_node = pdev->dev.of_node;
 
-	rc = opal_message_notifier_register(OPAL_MSG_PRD, &opal_prd_event_nb);
-	if (rc) {
+	rc = opal_message_notअगरier_रेजिस्टर(OPAL_MSG_PRD, &opal_prd_event_nb);
+	अगर (rc) अणु
 		pr_err("Couldn't register event notifier\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	rc = opal_message_notifier_register(OPAL_MSG_PRD2, &opal_prd_event_nb);
-	if (rc) {
+	rc = opal_message_notअगरier_रेजिस्टर(OPAL_MSG_PRD2, &opal_prd_event_nb);
+	अगर (rc) अणु
 		pr_err("Couldn't register PRD2 event notifier\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	rc = misc_register(&opal_prd_dev);
-	if (rc) {
+	rc = misc_रेजिस्टर(&opal_prd_dev);
+	अगर (rc) अणु
 		pr_err("failed to register miscdev\n");
-		opal_message_notifier_unregister(OPAL_MSG_PRD,
+		opal_message_notअगरier_unरेजिस्टर(OPAL_MSG_PRD,
 				&opal_prd_event_nb);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int opal_prd_remove(struct platform_device *pdev)
-{
-	misc_deregister(&opal_prd_dev);
-	opal_message_notifier_unregister(OPAL_MSG_PRD, &opal_prd_event_nb);
-	return 0;
-}
+अटल पूर्णांक opal_prd_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	misc_deरेजिस्टर(&opal_prd_dev);
+	opal_message_notअगरier_unरेजिस्टर(OPAL_MSG_PRD, &opal_prd_event_nb);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id opal_prd_match[] = {
-	{ .compatible = "ibm,opal-prd" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id opal_prd_match[] = अणु
+	अणु .compatible = "ibm,opal-prd" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver opal_prd_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver opal_prd_driver = अणु
+	.driver = अणु
 		.name		= "opal-prd",
 		.of_match_table	= opal_prd_match,
-	},
+	पूर्ण,
 	.probe	= opal_prd_probe,
-	.remove	= opal_prd_remove,
-};
+	.हटाओ	= opal_prd_हटाओ,
+पूर्ण;
 
-module_platform_driver(opal_prd_driver);
+module_platक्रमm_driver(opal_prd_driver);
 
 MODULE_DEVICE_TABLE(of, opal_prd_match);
 MODULE_DESCRIPTION("PowerNV OPAL runtime diagnostic driver");

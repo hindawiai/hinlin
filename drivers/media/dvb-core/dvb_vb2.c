@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * dvb-vb2.c - dvb-vb2
  *
@@ -6,188 +7,188 @@
  *
  * Author: jh1009.sung@samsung.com
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mm.h>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
 
-#include <media/dvbdev.h>
-#include <media/dvb_vb2.h>
+#समावेश <media/dvbdev.h>
+#समावेश <media/dvb_vb2.h>
 
-#define DVB_V2_MAX_SIZE		(4096 * 188)
+#घोषणा DVB_V2_MAX_SIZE		(4096 * 188)
 
-static int vb2_debug;
-module_param(vb2_debug, int, 0644);
+अटल पूर्णांक vb2_debug;
+module_param(vb2_debug, पूर्णांक, 0644);
 
-#define dprintk(level, fmt, arg...)					      \
-	do {								      \
-		if (vb2_debug >= level)					      \
+#घोषणा dprपूर्णांकk(level, fmt, arg...)					      \
+	करो अणु								      \
+		अगर (vb2_debug >= level)					      \
 			pr_info("vb2: %s: " fmt, __func__, ## arg); \
-	} while (0)
+	पूर्ण जबतक (0)
 
-static int _queue_setup(struct vb2_queue *vq,
-			unsigned int *nbuffers, unsigned int *nplanes,
-			unsigned int sizes[], struct device *alloc_devs[])
-{
-	struct dvb_vb2_ctx *ctx = vb2_get_drv_priv(vq);
+अटल पूर्णांक _queue_setup(काष्ठा vb2_queue *vq,
+			अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
+			अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा dvb_vb2_ctx *ctx = vb2_get_drv_priv(vq);
 
 	ctx->buf_cnt = *nbuffers;
 	*nplanes = 1;
 	sizes[0] = ctx->buf_siz;
 
 	/*
-	 * videobuf2-vmalloc allocator is context-less so no need to set
+	 * videobuf2-vदो_स्मृति allocator is context-less so no need to set
 	 * alloc_ctxs array.
 	 */
 
-	dprintk(3, "[%s] count=%d, size=%d\n", ctx->name,
+	dprपूर्णांकk(3, "[%s] count=%d, size=%d\n", ctx->name,
 		*nbuffers, sizes[0]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _buffer_prepare(struct vb2_buffer *vb)
-{
-	struct dvb_vb2_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
-	unsigned long size = ctx->buf_siz;
+अटल पूर्णांक _buffer_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा dvb_vb2_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+	अचिन्हित दीर्घ size = ctx->buf_siz;
 
-	if (vb2_plane_size(vb, 0) < size) {
-		dprintk(1, "[%s] data will not fit into plane (%lu < %lu)\n",
+	अगर (vb2_plane_size(vb, 0) < size) अणु
+		dprपूर्णांकk(1, "[%s] data will not fit into plane (%lu < %lu)\n",
 			ctx->name, vb2_plane_size(vb, 0), size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vb2_set_plane_payload(vb, 0, size);
-	dprintk(3, "[%s]\n", ctx->name);
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void _buffer_queue(struct vb2_buffer *vb)
-{
-	struct dvb_vb2_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
-	struct dvb_buffer *buf = container_of(vb, struct dvb_buffer, vb);
-	unsigned long flags = 0;
+अटल व्योम _buffer_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा dvb_vb2_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा dvb_buffer *buf = container_of(vb, काष्ठा dvb_buffer, vb);
+	अचिन्हित दीर्घ flags = 0;
 
 	spin_lock_irqsave(&ctx->slock, flags);
 	list_add_tail(&buf->list, &ctx->dvb_q);
 	spin_unlock_irqrestore(&ctx->slock, flags);
 
-	dprintk(3, "[%s]\n", ctx->name);
-}
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
+पूर्ण
 
-static int _start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct dvb_vb2_ctx *ctx = vb2_get_drv_priv(vq);
+अटल पूर्णांक _start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा dvb_vb2_ctx *ctx = vb2_get_drv_priv(vq);
 
-	dprintk(3, "[%s] count=%d\n", ctx->name, count);
-	return 0;
-}
+	dprपूर्णांकk(3, "[%s] count=%d\n", ctx->name, count);
+	वापस 0;
+पूर्ण
 
-static void _stop_streaming(struct vb2_queue *vq)
-{
-	struct dvb_vb2_ctx *ctx = vb2_get_drv_priv(vq);
-	struct dvb_buffer *buf;
-	unsigned long flags = 0;
+अटल व्योम _stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा dvb_vb2_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा dvb_buffer *buf;
+	अचिन्हित दीर्घ flags = 0;
 
-	dprintk(3, "[%s]\n", ctx->name);
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
 
 	spin_lock_irqsave(&ctx->slock, flags);
-	while (!list_empty(&ctx->dvb_q)) {
+	जबतक (!list_empty(&ctx->dvb_q)) अणु
 		buf = list_entry(ctx->dvb_q.next,
-				 struct dvb_buffer, list);
-		vb2_buffer_done(&buf->vb, VB2_BUF_STATE_ERROR);
+				 काष्ठा dvb_buffer, list);
+		vb2_buffer_करोne(&buf->vb, VB2_BUF_STATE_ERROR);
 		list_del(&buf->list);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&ctx->slock, flags);
-}
+पूर्ण
 
-static void _dmxdev_lock(struct vb2_queue *vq)
-{
-	struct dvb_vb2_ctx *ctx = vb2_get_drv_priv(vq);
+अटल व्योम _dmxdev_lock(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा dvb_vb2_ctx *ctx = vb2_get_drv_priv(vq);
 
 	mutex_lock(&ctx->mutex);
-	dprintk(3, "[%s]\n", ctx->name);
-}
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
+पूर्ण
 
-static void _dmxdev_unlock(struct vb2_queue *vq)
-{
-	struct dvb_vb2_ctx *ctx = vb2_get_drv_priv(vq);
+अटल व्योम _dmxdev_unlock(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा dvb_vb2_ctx *ctx = vb2_get_drv_priv(vq);
 
-	if (mutex_is_locked(&ctx->mutex))
+	अगर (mutex_is_locked(&ctx->mutex))
 		mutex_unlock(&ctx->mutex);
-	dprintk(3, "[%s]\n", ctx->name);
-}
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
+पूर्ण
 
-static const struct vb2_ops dvb_vb2_qops = {
+अटल स्थिर काष्ठा vb2_ops dvb_vb2_qops = अणु
 	.queue_setup		= _queue_setup,
 	.buf_prepare		= _buffer_prepare,
 	.buf_queue		= _buffer_queue,
 	.start_streaming	= _start_streaming,
 	.stop_streaming		= _stop_streaming,
-	.wait_prepare		= _dmxdev_unlock,
-	.wait_finish		= _dmxdev_lock,
-};
+	.रुको_prepare		= _dmxdev_unlock,
+	.रुको_finish		= _dmxdev_lock,
+पूर्ण;
 
-static void _fill_dmx_buffer(struct vb2_buffer *vb, void *pb)
-{
-	struct dvb_vb2_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
-	struct dmx_buffer *b = pb;
+अटल व्योम _fill_dmx_buffer(काष्ठा vb2_buffer *vb, व्योम *pb)
+अणु
+	काष्ठा dvb_vb2_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा dmx_buffer *b = pb;
 
 	b->index = vb->index;
 	b->length = vb->planes[0].length;
 	b->bytesused = vb->planes[0].bytesused;
 	b->offset = vb->planes[0].m.offset;
-	dprintk(3, "[%s]\n", ctx->name);
-}
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
+पूर्ण
 
-static int _fill_vb2_buffer(struct vb2_buffer *vb, struct vb2_plane *planes)
-{
-	struct dvb_vb2_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल पूर्णांक _fill_vb2_buffer(काष्ठा vb2_buffer *vb, काष्ठा vb2_plane *planes)
+अणु
+	काष्ठा dvb_vb2_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
 	planes[0].bytesused = 0;
-	dprintk(3, "[%s]\n", ctx->name);
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct vb2_buf_ops dvb_vb2_buf_ops = {
+अटल स्थिर काष्ठा vb2_buf_ops dvb_vb2_buf_ops = अणु
 	.fill_user_buffer	= _fill_dmx_buffer,
 	.fill_vb2_buffer	= _fill_vb2_buffer,
-};
+पूर्ण;
 
 /*
  * Videobuf operations
  */
-int dvb_vb2_init(struct dvb_vb2_ctx *ctx, const char *name, int nonblocking)
-{
-	struct vb2_queue *q = &ctx->vb_q;
-	int ret;
+पूर्णांक dvb_vb2_init(काष्ठा dvb_vb2_ctx *ctx, स्थिर अक्षर *name, पूर्णांक nonblocking)
+अणु
+	काष्ठा vb2_queue *q = &ctx->vb_q;
+	पूर्णांक ret;
 
-	memset(ctx, 0, sizeof(struct dvb_vb2_ctx));
+	स_रखो(ctx, 0, माप(काष्ठा dvb_vb2_ctx));
 	q->type = DVB_BUF_TYPE_CAPTURE;
 	/**capture type*/
 	q->is_output = 0;
 	/**only mmap is supported currently*/
 	q->io_modes = VB2_MMAP;
 	q->drv_priv = ctx;
-	q->buf_struct_size = sizeof(struct dvb_buffer);
+	q->buf_काष्ठा_size = माप(काष्ठा dvb_buffer);
 	q->min_buffers_needed = 1;
 	q->ops = &dvb_vb2_qops;
-	q->mem_ops = &vb2_vmalloc_memops;
+	q->mem_ops = &vb2_vदो_स्मृति_memops;
 	q->buf_ops = &dvb_vb2_buf_ops;
 	q->num_buffers = 0;
 	ret = vb2_core_queue_init(q);
-	if (ret) {
+	अगर (ret) अणु
 		ctx->state = DVB_VB2_STATE_NONE;
-		dprintk(1, "[%s] errno=%d\n", ctx->name, ret);
-		return ret;
-	}
+		dprपूर्णांकk(1, "[%s] errno=%d\n", ctx->name, ret);
+		वापस ret;
+	पूर्ण
 
 	mutex_init(&ctx->mutex);
 	spin_lock_init(&ctx->slock);
@@ -197,145 +198,145 @@ int dvb_vb2_init(struct dvb_vb2_ctx *ctx, const char *name, int nonblocking)
 	ctx->nonblocking = nonblocking;
 	ctx->state = DVB_VB2_STATE_INIT;
 
-	dprintk(3, "[%s]\n", ctx->name);
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dvb_vb2_release(struct dvb_vb2_ctx *ctx)
-{
-	struct vb2_queue *q = (struct vb2_queue *)&ctx->vb_q;
+पूर्णांक dvb_vb2_release(काष्ठा dvb_vb2_ctx *ctx)
+अणु
+	काष्ठा vb2_queue *q = (काष्ठा vb2_queue *)&ctx->vb_q;
 
-	if (ctx->state & DVB_VB2_STATE_INIT)
+	अगर (ctx->state & DVB_VB2_STATE_INIT)
 		vb2_core_queue_release(q);
 
 	ctx->state = DVB_VB2_STATE_NONE;
-	dprintk(3, "[%s]\n", ctx->name);
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dvb_vb2_stream_on(struct dvb_vb2_ctx *ctx)
-{
-	struct vb2_queue *q = &ctx->vb_q;
-	int ret;
+पूर्णांक dvb_vb2_stream_on(काष्ठा dvb_vb2_ctx *ctx)
+अणु
+	काष्ठा vb2_queue *q = &ctx->vb_q;
+	पूर्णांक ret;
 
 	ret = vb2_core_streamon(q, q->type);
-	if (ret) {
+	अगर (ret) अणु
 		ctx->state = DVB_VB2_STATE_NONE;
-		dprintk(1, "[%s] errno=%d\n", ctx->name, ret);
-		return ret;
-	}
+		dprपूर्णांकk(1, "[%s] errno=%d\n", ctx->name, ret);
+		वापस ret;
+	पूर्ण
 	ctx->state |= DVB_VB2_STATE_STREAMON;
-	dprintk(3, "[%s]\n", ctx->name);
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dvb_vb2_stream_off(struct dvb_vb2_ctx *ctx)
-{
-	struct vb2_queue *q = (struct vb2_queue *)&ctx->vb_q;
-	int ret;
+पूर्णांक dvb_vb2_stream_off(काष्ठा dvb_vb2_ctx *ctx)
+अणु
+	काष्ठा vb2_queue *q = (काष्ठा vb2_queue *)&ctx->vb_q;
+	पूर्णांक ret;
 
 	ctx->state &= ~DVB_VB2_STATE_STREAMON;
 	ret = vb2_core_streamoff(q, q->type);
-	if (ret) {
+	अगर (ret) अणु
 		ctx->state = DVB_VB2_STATE_NONE;
-		dprintk(1, "[%s] errno=%d\n", ctx->name, ret);
-		return ret;
-	}
-	dprintk(3, "[%s]\n", ctx->name);
+		dprपूर्णांकk(1, "[%s] errno=%d\n", ctx->name, ret);
+		वापस ret;
+	पूर्ण
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dvb_vb2_is_streaming(struct dvb_vb2_ctx *ctx)
-{
-	return (ctx->state & DVB_VB2_STATE_STREAMON);
-}
+पूर्णांक dvb_vb2_is_streaming(काष्ठा dvb_vb2_ctx *ctx)
+अणु
+	वापस (ctx->state & DVB_VB2_STATE_STREAMON);
+पूर्ण
 
-int dvb_vb2_fill_buffer(struct dvb_vb2_ctx *ctx,
-			const unsigned char *src, int len,
-			enum dmx_buffer_flags *buffer_flags)
-{
-	unsigned long flags = 0;
-	void *vbuf = NULL;
-	int todo = len;
-	unsigned char *psrc = (unsigned char *)src;
-	int ll = 0;
+पूर्णांक dvb_vb2_fill_buffer(काष्ठा dvb_vb2_ctx *ctx,
+			स्थिर अचिन्हित अक्षर *src, पूर्णांक len,
+			क्रमागत dmx_buffer_flags *buffer_flags)
+अणु
+	अचिन्हित दीर्घ flags = 0;
+	व्योम *vbuf = शून्य;
+	पूर्णांक toकरो = len;
+	अचिन्हित अक्षर *psrc = (अचिन्हित अक्षर *)src;
+	पूर्णांक ll = 0;
 
 	/*
-	 * normal case: This func is called twice from demux driver
-	 * one with valid src pointer, second time with NULL pointer
+	 * normal हाल: This func is called twice from demux driver
+	 * one with valid src poपूर्णांकer, second समय with शून्य poपूर्णांकer
 	 */
-	if (!src || !len)
-		return 0;
+	अगर (!src || !len)
+		वापस 0;
 	spin_lock_irqsave(&ctx->slock, flags);
-	if (buffer_flags && *buffer_flags) {
+	अगर (buffer_flags && *buffer_flags) अणु
 		ctx->flags |= *buffer_flags;
 		*buffer_flags = 0;
-	}
-	while (todo) {
-		if (!ctx->buf) {
-			if (list_empty(&ctx->dvb_q)) {
-				dprintk(3, "[%s] Buffer overflow!!!\n",
+	पूर्ण
+	जबतक (toकरो) अणु
+		अगर (!ctx->buf) अणु
+			अगर (list_empty(&ctx->dvb_q)) अणु
+				dprपूर्णांकk(3, "[%s] Buffer overflow!!!\n",
 					ctx->name);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			ctx->buf = list_entry(ctx->dvb_q.next,
-					      struct dvb_buffer, list);
-			ctx->remain = vb2_plane_size(&ctx->buf->vb, 0);
+					      काष्ठा dvb_buffer, list);
+			ctx->reमुख्य = vb2_plane_size(&ctx->buf->vb, 0);
 			ctx->offset = 0;
-		}
+		पूर्ण
 
-		if (!dvb_vb2_is_streaming(ctx)) {
-			vb2_buffer_done(&ctx->buf->vb, VB2_BUF_STATE_ERROR);
+		अगर (!dvb_vb2_is_streaming(ctx)) अणु
+			vb2_buffer_करोne(&ctx->buf->vb, VB2_BUF_STATE_ERROR);
 			list_del(&ctx->buf->list);
-			ctx->buf = NULL;
-			break;
-		}
+			ctx->buf = शून्य;
+			अवरोध;
+		पूर्ण
 
 		/* Fill buffer */
-		ll = min(todo, ctx->remain);
+		ll = min(toकरो, ctx->reमुख्य);
 		vbuf = vb2_plane_vaddr(&ctx->buf->vb, 0);
-		memcpy(vbuf + ctx->offset, psrc, ll);
-		todo -= ll;
+		स_नकल(vbuf + ctx->offset, psrc, ll);
+		toकरो -= ll;
 		psrc += ll;
 
-		ctx->remain -= ll;
+		ctx->reमुख्य -= ll;
 		ctx->offset += ll;
 
-		if (ctx->remain == 0) {
-			vb2_buffer_done(&ctx->buf->vb, VB2_BUF_STATE_DONE);
+		अगर (ctx->reमुख्य == 0) अणु
+			vb2_buffer_करोne(&ctx->buf->vb, VB2_BUF_STATE_DONE);
 			list_del(&ctx->buf->list);
-			ctx->buf = NULL;
-		}
-	}
+			ctx->buf = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (ctx->nonblocking && ctx->buf) {
+	अगर (ctx->nonblocking && ctx->buf) अणु
 		vb2_set_plane_payload(&ctx->buf->vb, 0, ll);
-		vb2_buffer_done(&ctx->buf->vb, VB2_BUF_STATE_DONE);
+		vb2_buffer_करोne(&ctx->buf->vb, VB2_BUF_STATE_DONE);
 		list_del(&ctx->buf->list);
-		ctx->buf = NULL;
-	}
+		ctx->buf = शून्य;
+	पूर्ण
 	spin_unlock_irqrestore(&ctx->slock, flags);
 
-	if (todo)
-		dprintk(1, "[%s] %d bytes are dropped.\n", ctx->name, todo);
-	else
-		dprintk(3, "[%s]\n", ctx->name);
+	अगर (toकरो)
+		dprपूर्णांकk(1, "[%s] %d bytes are dropped.\n", ctx->name, toकरो);
+	अन्यथा
+		dprपूर्णांकk(3, "[%s]\n", ctx->name);
 
-	dprintk(3, "[%s] %d bytes are copied\n", ctx->name, len - todo);
-	return (len - todo);
-}
+	dprपूर्णांकk(3, "[%s] %d bytes are copied\n", ctx->name, len - toकरो);
+	वापस (len - toकरो);
+पूर्ण
 
-int dvb_vb2_reqbufs(struct dvb_vb2_ctx *ctx, struct dmx_requestbuffers *req)
-{
-	int ret;
+पूर्णांक dvb_vb2_reqbufs(काष्ठा dvb_vb2_ctx *ctx, काष्ठा dmx_requestbuffers *req)
+अणु
+	पूर्णांक ret;
 
 	/* Adjust size to a sane value */
-	if (req->size > DVB_V2_MAX_SIZE)
+	अगर (req->size > DVB_V2_MAX_SIZE)
 		req->size = DVB_V2_MAX_SIZE;
 
 	/* FIXME: round req->size to a 188 or 204 multiple */
@@ -343,68 +344,68 @@ int dvb_vb2_reqbufs(struct dvb_vb2_ctx *ctx, struct dmx_requestbuffers *req)
 	ctx->buf_siz = req->size;
 	ctx->buf_cnt = req->count;
 	ret = vb2_core_reqbufs(&ctx->vb_q, VB2_MEMORY_MMAP, &req->count);
-	if (ret) {
+	अगर (ret) अणु
 		ctx->state = DVB_VB2_STATE_NONE;
-		dprintk(1, "[%s] count=%d size=%d errno=%d\n", ctx->name,
+		dprपूर्णांकk(1, "[%s] count=%d size=%d errno=%d\n", ctx->name,
 			ctx->buf_cnt, ctx->buf_siz, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ctx->state |= DVB_VB2_STATE_REQBUFS;
-	dprintk(3, "[%s] count=%d size=%d\n", ctx->name,
+	dprपूर्णांकk(3, "[%s] count=%d size=%d\n", ctx->name,
 		ctx->buf_cnt, ctx->buf_siz);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dvb_vb2_querybuf(struct dvb_vb2_ctx *ctx, struct dmx_buffer *b)
-{
+पूर्णांक dvb_vb2_querybuf(काष्ठा dvb_vb2_ctx *ctx, काष्ठा dmx_buffer *b)
+अणु
 	vb2_core_querybuf(&ctx->vb_q, b->index, b);
-	dprintk(3, "[%s] index=%d\n", ctx->name, b->index);
-	return 0;
-}
+	dprपूर्णांकk(3, "[%s] index=%d\n", ctx->name, b->index);
+	वापस 0;
+पूर्ण
 
-int dvb_vb2_expbuf(struct dvb_vb2_ctx *ctx, struct dmx_exportbuffer *exp)
-{
-	struct vb2_queue *q = &ctx->vb_q;
-	int ret;
+पूर्णांक dvb_vb2_expbuf(काष्ठा dvb_vb2_ctx *ctx, काष्ठा dmx_exportbuffer *exp)
+अणु
+	काष्ठा vb2_queue *q = &ctx->vb_q;
+	पूर्णांक ret;
 
 	ret = vb2_core_expbuf(&ctx->vb_q, &exp->fd, q->type, exp->index,
 			      0, exp->flags);
-	if (ret) {
-		dprintk(1, "[%s] index=%d errno=%d\n", ctx->name,
+	अगर (ret) अणु
+		dprपूर्णांकk(1, "[%s] index=%d errno=%d\n", ctx->name,
 			exp->index, ret);
-		return ret;
-	}
-	dprintk(3, "[%s] index=%d fd=%d\n", ctx->name, exp->index, exp->fd);
+		वापस ret;
+	पूर्ण
+	dprपूर्णांकk(3, "[%s] index=%d fd=%d\n", ctx->name, exp->index, exp->fd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dvb_vb2_qbuf(struct dvb_vb2_ctx *ctx, struct dmx_buffer *b)
-{
-	int ret;
+पूर्णांक dvb_vb2_qbuf(काष्ठा dvb_vb2_ctx *ctx, काष्ठा dmx_buffer *b)
+अणु
+	पूर्णांक ret;
 
-	ret = vb2_core_qbuf(&ctx->vb_q, b->index, b, NULL);
-	if (ret) {
-		dprintk(1, "[%s] index=%d errno=%d\n", ctx->name,
+	ret = vb2_core_qbuf(&ctx->vb_q, b->index, b, शून्य);
+	अगर (ret) अणु
+		dprपूर्णांकk(1, "[%s] index=%d errno=%d\n", ctx->name,
 			b->index, ret);
-		return ret;
-	}
-	dprintk(5, "[%s] index=%d\n", ctx->name, b->index);
+		वापस ret;
+	पूर्ण
+	dprपूर्णांकk(5, "[%s] index=%d\n", ctx->name, b->index);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dvb_vb2_dqbuf(struct dvb_vb2_ctx *ctx, struct dmx_buffer *b)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक dvb_vb2_dqbuf(काष्ठा dvb_vb2_ctx *ctx, काष्ठा dmx_buffer *b)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	ret = vb2_core_dqbuf(&ctx->vb_q, &b->index, b, ctx->nonblocking);
-	if (ret) {
-		dprintk(1, "[%s] errno=%d\n", ctx->name, ret);
-		return ret;
-	}
+	अगर (ret) अणु
+		dprपूर्णांकk(1, "[%s] errno=%d\n", ctx->name, ret);
+		वापस ret;
+	पूर्ण
 
 	spin_lock_irqsave(&ctx->slock, flags);
 	b->count = ctx->count++;
@@ -412,31 +413,31 @@ int dvb_vb2_dqbuf(struct dvb_vb2_ctx *ctx, struct dmx_buffer *b)
 	ctx->flags = 0;
 	spin_unlock_irqrestore(&ctx->slock, flags);
 
-	dprintk(5, "[%s] index=%d, count=%d, flags=%d\n",
+	dprपूर्णांकk(5, "[%s] index=%d, count=%d, flags=%d\n",
 		ctx->name, b->index, ctx->count, b->flags);
 
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dvb_vb2_mmap(struct dvb_vb2_ctx *ctx, struct vm_area_struct *vma)
-{
-	int ret;
+पूर्णांक dvb_vb2_mmap(काष्ठा dvb_vb2_ctx *ctx, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	पूर्णांक ret;
 
 	ret = vb2_mmap(&ctx->vb_q, vma);
-	if (ret) {
-		dprintk(1, "[%s] errno=%d\n", ctx->name, ret);
-		return ret;
-	}
-	dprintk(3, "[%s] ret=%d\n", ctx->name, ret);
+	अगर (ret) अणु
+		dprपूर्णांकk(1, "[%s] errno=%d\n", ctx->name, ret);
+		वापस ret;
+	पूर्ण
+	dprपूर्णांकk(3, "[%s] ret=%d\n", ctx->name, ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__poll_t dvb_vb2_poll(struct dvb_vb2_ctx *ctx, struct file *file,
-		      poll_table *wait)
-{
-	dprintk(3, "[%s]\n", ctx->name);
-	return vb2_core_poll(&ctx->vb_q, file, wait);
-}
+__poll_t dvb_vb2_poll(काष्ठा dvb_vb2_ctx *ctx, काष्ठा file *file,
+		      poll_table *रुको)
+अणु
+	dprपूर्णांकk(3, "[%s]\n", ctx->name);
+	वापस vb2_core_poll(&ctx->vb_q, file, रुको);
+पूर्ण
 

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * fs/kernfs/mount.c - kernfs mount implementation
  *
@@ -7,321 +8,321 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
-#include <linux/fs.h>
-#include <linux/mount.h>
-#include <linux/init.h>
-#include <linux/magic.h>
-#include <linux/slab.h>
-#include <linux/pagemap.h>
-#include <linux/namei.h>
-#include <linux/seq_file.h>
-#include <linux/exportfs.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/init.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/exportfs.h>
 
-#include "kernfs-internal.h"
+#समावेश "kernfs-internal.h"
 
-struct kmem_cache *kernfs_node_cache, *kernfs_iattrs_cache;
+काष्ठा kmem_cache *kernfs_node_cache, *kernfs_iattrs_cache;
 
-static int kernfs_sop_show_options(struct seq_file *sf, struct dentry *dentry)
-{
-	struct kernfs_root *root = kernfs_root(kernfs_dentry_node(dentry));
-	struct kernfs_syscall_ops *scops = root->syscall_ops;
+अटल पूर्णांक kernfs_sop_show_options(काष्ठा seq_file *sf, काष्ठा dentry *dentry)
+अणु
+	काष्ठा kernfs_root *root = kernfs_root(kernfs_dentry_node(dentry));
+	काष्ठा kernfs_syscall_ops *scops = root->syscall_ops;
 
-	if (scops && scops->show_options)
-		return scops->show_options(sf, root);
-	return 0;
-}
+	अगर (scops && scops->show_options)
+		वापस scops->show_options(sf, root);
+	वापस 0;
+पूर्ण
 
-static int kernfs_sop_show_path(struct seq_file *sf, struct dentry *dentry)
-{
-	struct kernfs_node *node = kernfs_dentry_node(dentry);
-	struct kernfs_root *root = kernfs_root(node);
-	struct kernfs_syscall_ops *scops = root->syscall_ops;
+अटल पूर्णांक kernfs_sop_show_path(काष्ठा seq_file *sf, काष्ठा dentry *dentry)
+अणु
+	काष्ठा kernfs_node *node = kernfs_dentry_node(dentry);
+	काष्ठा kernfs_root *root = kernfs_root(node);
+	काष्ठा kernfs_syscall_ops *scops = root->syscall_ops;
 
-	if (scops && scops->show_path)
-		return scops->show_path(sf, node, root);
+	अगर (scops && scops->show_path)
+		वापस scops->show_path(sf, node, root);
 
 	seq_dentry(sf, dentry, " \t\n\\");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct super_operations kernfs_sops = {
+स्थिर काष्ठा super_operations kernfs_sops = अणु
 	.statfs		= simple_statfs,
 	.drop_inode	= generic_delete_inode,
 	.evict_inode	= kernfs_evict_inode,
 
 	.show_options	= kernfs_sop_show_options,
 	.show_path	= kernfs_sop_show_path,
-};
+पूर्ण;
 
-static int kernfs_encode_fh(struct inode *inode, __u32 *fh, int *max_len,
-			    struct inode *parent)
-{
-	struct kernfs_node *kn = inode->i_private;
+अटल पूर्णांक kernfs_encode_fh(काष्ठा inode *inode, __u32 *fh, पूर्णांक *max_len,
+			    काष्ठा inode *parent)
+अणु
+	काष्ठा kernfs_node *kn = inode->i_निजी;
 
-	if (*max_len < 2) {
+	अगर (*max_len < 2) अणु
 		*max_len = 2;
-		return FILEID_INVALID;
-	}
+		वापस खाताID_INVALID;
+	पूर्ण
 
 	*max_len = 2;
 	*(u64 *)fh = kn->id;
-	return FILEID_KERNFS;
-}
+	वापस खाताID_KERNFS;
+पूर्ण
 
-static struct dentry *__kernfs_fh_to_dentry(struct super_block *sb,
-					    struct fid *fid, int fh_len,
-					    int fh_type, bool get_parent)
-{
-	struct kernfs_super_info *info = kernfs_info(sb);
-	struct kernfs_node *kn;
-	struct inode *inode;
+अटल काष्ठा dentry *__kernfs_fh_to_dentry(काष्ठा super_block *sb,
+					    काष्ठा fid *fid, पूर्णांक fh_len,
+					    पूर्णांक fh_type, bool get_parent)
+अणु
+	काष्ठा kernfs_super_info *info = kernfs_info(sb);
+	काष्ठा kernfs_node *kn;
+	काष्ठा inode *inode;
 	u64 id;
 
-	if (fh_len < 2)
-		return NULL;
+	अगर (fh_len < 2)
+		वापस शून्य;
 
-	switch (fh_type) {
-	case FILEID_KERNFS:
+	चयन (fh_type) अणु
+	हाल खाताID_KERNFS:
 		id = *(u64 *)fid;
-		break;
-	case FILEID_INO32_GEN:
-	case FILEID_INO32_GEN_PARENT:
+		अवरोध;
+	हाल खाताID_INO32_GEN:
+	हाल खाताID_INO32_GEN_PARENT:
 		/*
 		 * blk_log_action() exposes "LOW32,HIGH32" pair without
 		 * type and userland can call us with generic fid
-		 * constructed from them.  Combine it back to ID.  See
+		 * स्थिरructed from them.  Combine it back to ID.  See
 		 * blk_log_action().
 		 */
 		id = ((u64)fid->i32.gen << 32) | fid->i32.ino;
-		break;
-	default:
-		return NULL;
-	}
+		अवरोध;
+	शेष:
+		वापस शून्य;
+	पूर्ण
 
 	kn = kernfs_find_and_get_node_by_id(info->root, id);
-	if (!kn)
-		return ERR_PTR(-ESTALE);
+	अगर (!kn)
+		वापस ERR_PTR(-ESTALE);
 
-	if (get_parent) {
-		struct kernfs_node *parent;
+	अगर (get_parent) अणु
+		काष्ठा kernfs_node *parent;
 
 		parent = kernfs_get_parent(kn);
 		kernfs_put(kn);
 		kn = parent;
-		if (!kn)
-			return ERR_PTR(-ESTALE);
-	}
+		अगर (!kn)
+			वापस ERR_PTR(-ESTALE);
+	पूर्ण
 
 	inode = kernfs_get_inode(sb, kn);
 	kernfs_put(kn);
-	if (!inode)
-		return ERR_PTR(-ESTALE);
+	अगर (!inode)
+		वापस ERR_PTR(-ESTALE);
 
-	return d_obtain_alias(inode);
-}
+	वापस d_obtain_alias(inode);
+पूर्ण
 
-static struct dentry *kernfs_fh_to_dentry(struct super_block *sb,
-					  struct fid *fid, int fh_len,
-					  int fh_type)
-{
-	return __kernfs_fh_to_dentry(sb, fid, fh_len, fh_type, false);
-}
+अटल काष्ठा dentry *kernfs_fh_to_dentry(काष्ठा super_block *sb,
+					  काष्ठा fid *fid, पूर्णांक fh_len,
+					  पूर्णांक fh_type)
+अणु
+	वापस __kernfs_fh_to_dentry(sb, fid, fh_len, fh_type, false);
+पूर्ण
 
-static struct dentry *kernfs_fh_to_parent(struct super_block *sb,
-					  struct fid *fid, int fh_len,
-					  int fh_type)
-{
-	return __kernfs_fh_to_dentry(sb, fid, fh_len, fh_type, true);
-}
+अटल काष्ठा dentry *kernfs_fh_to_parent(काष्ठा super_block *sb,
+					  काष्ठा fid *fid, पूर्णांक fh_len,
+					  पूर्णांक fh_type)
+अणु
+	वापस __kernfs_fh_to_dentry(sb, fid, fh_len, fh_type, true);
+पूर्ण
 
-static struct dentry *kernfs_get_parent_dentry(struct dentry *child)
-{
-	struct kernfs_node *kn = kernfs_dentry_node(child);
+अटल काष्ठा dentry *kernfs_get_parent_dentry(काष्ठा dentry *child)
+अणु
+	काष्ठा kernfs_node *kn = kernfs_dentry_node(child);
 
-	return d_obtain_alias(kernfs_get_inode(child->d_sb, kn->parent));
-}
+	वापस d_obtain_alias(kernfs_get_inode(child->d_sb, kn->parent));
+पूर्ण
 
-static const struct export_operations kernfs_export_ops = {
+अटल स्थिर काष्ठा export_operations kernfs_export_ops = अणु
 	.encode_fh	= kernfs_encode_fh,
 	.fh_to_dentry	= kernfs_fh_to_dentry,
 	.fh_to_parent	= kernfs_fh_to_parent,
 	.get_parent	= kernfs_get_parent_dentry,
-};
+पूर्ण;
 
 /**
  * kernfs_root_from_sb - determine kernfs_root associated with a super_block
  * @sb: the super_block in question
  *
  * Return the kernfs_root associated with @sb.  If @sb is not a kernfs one,
- * %NULL is returned.
+ * %शून्य is वापसed.
  */
-struct kernfs_root *kernfs_root_from_sb(struct super_block *sb)
-{
-	if (sb->s_op == &kernfs_sops)
-		return kernfs_info(sb)->root;
-	return NULL;
-}
+काष्ठा kernfs_root *kernfs_root_from_sb(काष्ठा super_block *sb)
+अणु
+	अगर (sb->s_op == &kernfs_sops)
+		वापस kernfs_info(sb)->root;
+	वापस शून्य;
+पूर्ण
 
 /*
- * find the next ancestor in the path down to @child, where @parent was the
+ * find the next ancestor in the path करोwn to @child, where @parent was the
  * ancestor whose descendant we want to find.
  *
- * Say the path is /a/b/c/d.  @child is d, @parent is NULL.  We return the root
- * node.  If @parent is b, then we return the node for c.
+ * Say the path is /a/b/c/d.  @child is d, @parent is शून्य.  We वापस the root
+ * node.  If @parent is b, then we वापस the node क्रम c.
  * Passing in d as @parent is not ok.
  */
-static struct kernfs_node *find_next_ancestor(struct kernfs_node *child,
-					      struct kernfs_node *parent)
-{
-	if (child == parent) {
+अटल काष्ठा kernfs_node *find_next_ancestor(काष्ठा kernfs_node *child,
+					      काष्ठा kernfs_node *parent)
+अणु
+	अगर (child == parent) अणु
 		pr_crit_once("BUG in find_next_ancestor: called with parent == child");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	while (child->parent != parent) {
-		if (!child->parent)
-			return NULL;
+	जबतक (child->parent != parent) अणु
+		अगर (!child->parent)
+			वापस शून्य;
 		child = child->parent;
-	}
+	पूर्ण
 
-	return child;
-}
+	वापस child;
+पूर्ण
 
 /**
- * kernfs_node_dentry - get a dentry for the given kernfs_node
- * @kn: kernfs_node for which a dentry is needed
+ * kernfs_node_dentry - get a dentry क्रम the given kernfs_node
+ * @kn: kernfs_node क्रम which a dentry is needed
  * @sb: the kernfs super_block
  */
-struct dentry *kernfs_node_dentry(struct kernfs_node *kn,
-				  struct super_block *sb)
-{
-	struct dentry *dentry;
-	struct kernfs_node *knparent = NULL;
+काष्ठा dentry *kernfs_node_dentry(काष्ठा kernfs_node *kn,
+				  काष्ठा super_block *sb)
+अणु
+	काष्ठा dentry *dentry;
+	काष्ठा kernfs_node *knparent = शून्य;
 
 	BUG_ON(sb->s_op != &kernfs_sops);
 
 	dentry = dget(sb->s_root);
 
-	/* Check if this is the root kernfs_node */
-	if (!kn->parent)
-		return dentry;
+	/* Check अगर this is the root kernfs_node */
+	अगर (!kn->parent)
+		वापस dentry;
 
-	knparent = find_next_ancestor(kn, NULL);
-	if (WARN_ON(!knparent)) {
+	knparent = find_next_ancestor(kn, शून्य);
+	अगर (WARN_ON(!knparent)) अणु
 		dput(dentry);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	do {
-		struct dentry *dtmp;
-		struct kernfs_node *kntmp;
+	करो अणु
+		काष्ठा dentry *dपंचांगp;
+		काष्ठा kernfs_node *knपंचांगp;
 
-		if (kn == knparent)
-			return dentry;
-		kntmp = find_next_ancestor(kn, knparent);
-		if (WARN_ON(!kntmp)) {
+		अगर (kn == knparent)
+			वापस dentry;
+		knपंचांगp = find_next_ancestor(kn, knparent);
+		अगर (WARN_ON(!knपंचांगp)) अणु
 			dput(dentry);
-			return ERR_PTR(-EINVAL);
-		}
-		dtmp = lookup_positive_unlocked(kntmp->name, dentry,
-					       strlen(kntmp->name));
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
+		dपंचांगp = lookup_positive_unlocked(knपंचांगp->name, dentry,
+					       म_माप(knपंचांगp->name));
 		dput(dentry);
-		if (IS_ERR(dtmp))
-			return dtmp;
-		knparent = kntmp;
-		dentry = dtmp;
-	} while (true);
-}
+		अगर (IS_ERR(dपंचांगp))
+			वापस dपंचांगp;
+		knparent = knपंचांगp;
+		dentry = dपंचांगp;
+	पूर्ण जबतक (true);
+पूर्ण
 
-static int kernfs_fill_super(struct super_block *sb, struct kernfs_fs_context *kfc)
-{
-	struct kernfs_super_info *info = kernfs_info(sb);
-	struct inode *inode;
-	struct dentry *root;
+अटल पूर्णांक kernfs_fill_super(काष्ठा super_block *sb, काष्ठा kernfs_fs_context *kfc)
+अणु
+	काष्ठा kernfs_super_info *info = kernfs_info(sb);
+	काष्ठा inode *inode;
+	काष्ठा dentry *root;
 
 	info->sb = sb;
-	/* Userspace would break if executables or devices appear on sysfs */
-	sb->s_iflags |= SB_I_NOEXEC | SB_I_NODEV;
+	/* Userspace would अवरोध अगर executables or devices appear on sysfs */
+	sb->s_अगरlags |= SB_I_NOEXEC | SB_I_NODEV;
 	sb->s_blocksize = PAGE_SIZE;
 	sb->s_blocksize_bits = PAGE_SHIFT;
 	sb->s_magic = kfc->magic;
 	sb->s_op = &kernfs_sops;
 	sb->s_xattr = kernfs_xattr_handlers;
-	if (info->root->flags & KERNFS_ROOT_SUPPORT_EXPORTOP)
+	अगर (info->root->flags & KERNFS_ROOT_SUPPORT_EXPORTOP)
 		sb->s_export_op = &kernfs_export_ops;
-	sb->s_time_gran = 1;
+	sb->s_समय_gran = 1;
 
-	/* sysfs dentries and inodes don't require IO to create */
+	/* sysfs dentries and inodes करोn't require IO to create */
 	sb->s_shrink.seeks = 0;
 
 	/* get root inode, initialize and unlock it */
 	mutex_lock(&kernfs_mutex);
 	inode = kernfs_get_inode(sb, info->root->kn);
 	mutex_unlock(&kernfs_mutex);
-	if (!inode) {
+	अगर (!inode) अणु
 		pr_debug("kernfs: could not get root inode\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* instantiate and link root dentry */
 	root = d_make_root(inode);
-	if (!root) {
+	अगर (!root) अणु
 		pr_debug("%s: could not get root dentry!\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	sb->s_root = root;
-	sb->s_d_op = &kernfs_dops;
-	return 0;
-}
+	sb->s_d_op = &kernfs_करोps;
+	वापस 0;
+पूर्ण
 
-static int kernfs_test_super(struct super_block *sb, struct fs_context *fc)
-{
-	struct kernfs_super_info *sb_info = kernfs_info(sb);
-	struct kernfs_super_info *info = fc->s_fs_info;
+अटल पूर्णांक kernfs_test_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	काष्ठा kernfs_super_info *sb_info = kernfs_info(sb);
+	काष्ठा kernfs_super_info *info = fc->s_fs_info;
 
-	return sb_info->root == info->root && sb_info->ns == info->ns;
-}
+	वापस sb_info->root == info->root && sb_info->ns == info->ns;
+पूर्ण
 
-static int kernfs_set_super(struct super_block *sb, struct fs_context *fc)
-{
-	struct kernfs_fs_context *kfc = fc->fs_private;
+अटल पूर्णांक kernfs_set_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	काष्ठा kernfs_fs_context *kfc = fc->fs_निजी;
 
-	kfc->ns_tag = NULL;
-	return set_anon_super_fc(sb, fc);
-}
+	kfc->ns_tag = शून्य;
+	वापस set_anon_super_fc(sb, fc);
+पूर्ण
 
 /**
  * kernfs_super_ns - determine the namespace tag of a kernfs super_block
- * @sb: super_block of interest
+ * @sb: super_block of पूर्णांकerest
  *
  * Return the namespace tag associated with kernfs super_block @sb.
  */
-const void *kernfs_super_ns(struct super_block *sb)
-{
-	struct kernfs_super_info *info = kernfs_info(sb);
+स्थिर व्योम *kernfs_super_ns(काष्ठा super_block *sb)
+अणु
+	काष्ठा kernfs_super_info *info = kernfs_info(sb);
 
-	return info->ns;
-}
+	वापस info->ns;
+पूर्ण
 
 /**
- * kernfs_get_tree - kernfs filesystem access/retrieval helper
- * @fc: The filesystem context.
+ * kernfs_get_tree - kernfs fileप्रणाली access/retrieval helper
+ * @fc: The fileप्रणाली context.
  *
  * This is to be called from each kernfs user's fs_context->ops->get_tree()
- * implementation, which should set the specified ->@fs_type and ->@flags, and
- * specify the hierarchy and namespace tag to mount via ->@root and ->@ns,
+ * implementation, which should set the specअगरied ->@fs_type and ->@flags, and
+ * specअगरy the hierarchy and namespace tag to mount via ->@root and ->@ns,
  * respectively.
  */
-int kernfs_get_tree(struct fs_context *fc)
-{
-	struct kernfs_fs_context *kfc = fc->fs_private;
-	struct super_block *sb;
-	struct kernfs_super_info *info;
-	int error;
+पूर्णांक kernfs_get_tree(काष्ठा fs_context *fc)
+अणु
+	काष्ठा kernfs_fs_context *kfc = fc->fs_निजी;
+	काष्ठा super_block *sb;
+	काष्ठा kernfs_super_info *info;
+	पूर्णांक error;
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->root = kfc->root;
 	info->ns = kfc->ns_tag;
@@ -329,48 +330,48 @@ int kernfs_get_tree(struct fs_context *fc)
 
 	fc->s_fs_info = info;
 	sb = sget_fc(fc, kernfs_test_super, kernfs_set_super);
-	if (IS_ERR(sb))
-		return PTR_ERR(sb);
+	अगर (IS_ERR(sb))
+		वापस PTR_ERR(sb);
 
-	if (!sb->s_root) {
-		struct kernfs_super_info *info = kernfs_info(sb);
+	अगर (!sb->s_root) अणु
+		काष्ठा kernfs_super_info *info = kernfs_info(sb);
 
 		kfc->new_sb_created = true;
 
 		error = kernfs_fill_super(sb, kfc);
-		if (error) {
+		अगर (error) अणु
 			deactivate_locked_super(sb);
-			return error;
-		}
+			वापस error;
+		पूर्ण
 		sb->s_flags |= SB_ACTIVE;
 
 		mutex_lock(&kernfs_mutex);
 		list_add(&info->node, &info->root->supers);
 		mutex_unlock(&kernfs_mutex);
-	}
+	पूर्ण
 
 	fc->root = dget(sb->s_root);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kernfs_free_fs_context(struct fs_context *fc)
-{
-	/* Note that we don't deal with kfc->ns_tag here. */
-	kfree(fc->s_fs_info);
-	fc->s_fs_info = NULL;
-}
+व्योम kernfs_मुक्त_fs_context(काष्ठा fs_context *fc)
+अणु
+	/* Note that we करोn't deal with kfc->ns_tag here. */
+	kमुक्त(fc->s_fs_info);
+	fc->s_fs_info = शून्य;
+पूर्ण
 
 /**
- * kernfs_kill_sb - kill_sb for kernfs
- * @sb: super_block being killed
+ * kernfs_समाप्त_sb - समाप्त_sb क्रम kernfs
+ * @sb: super_block being समाप्तed
  *
- * This can be used directly for file_system_type->kill_sb().  If a kernfs
- * user needs extra cleanup, it can implement its own kill_sb() and call
+ * This can be used directly क्रम file_प्रणाली_type->समाप्त_sb().  If a kernfs
+ * user needs extra cleanup, it can implement its own समाप्त_sb() and call
  * this function at the end.
  */
-void kernfs_kill_sb(struct super_block *sb)
-{
-	struct kernfs_super_info *info = kernfs_info(sb);
+व्योम kernfs_समाप्त_sb(काष्ठा super_block *sb)
+अणु
+	काष्ठा kernfs_super_info *info = kernfs_info(sb);
 
 	mutex_lock(&kernfs_mutex);
 	list_del(&info->node);
@@ -378,20 +379,20 @@ void kernfs_kill_sb(struct super_block *sb)
 
 	/*
 	 * Remove the superblock from fs_supers/s_instances
-	 * so we can't find it, before freeing kernfs_super_info.
+	 * so we can't find it, beक्रमe मुक्तing kernfs_super_info.
 	 */
-	kill_anon_super(sb);
-	kfree(info);
-}
+	समाप्त_anon_super(sb);
+	kमुक्त(info);
+पूर्ण
 
-void __init kernfs_init(void)
-{
+व्योम __init kernfs_init(व्योम)
+अणु
 	kernfs_node_cache = kmem_cache_create("kernfs_node_cache",
-					      sizeof(struct kernfs_node),
-					      0, SLAB_PANIC, NULL);
+					      माप(काष्ठा kernfs_node),
+					      0, SLAB_PANIC, शून्य);
 
-	/* Creates slab cache for kernfs inode attributes */
+	/* Creates slab cache क्रम kernfs inode attributes */
 	kernfs_iattrs_cache  = kmem_cache_create("kernfs_iattrs_cache",
-					      sizeof(struct kernfs_iattrs),
-					      0, SLAB_PANIC, NULL);
-}
+					      माप(काष्ठा kernfs_iattrs),
+					      0, SLAB_PANIC, शून्य);
+पूर्ण

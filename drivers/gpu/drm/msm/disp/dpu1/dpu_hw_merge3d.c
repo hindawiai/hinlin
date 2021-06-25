@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/iopoll.h>
+#समावेश <linux/iopoll.h>
 
-#include "dpu_hw_mdss.h"
-#include "dpu_hwio.h"
-#include "dpu_hw_catalog.h"
-#include "dpu_hw_merge3d.h"
-#include "dpu_kms.h"
-#include "dpu_trace.h"
+#समावेश "dpu_hw_mdss.h"
+#समावेश "dpu_hwio.h"
+#समावेश "dpu_hw_catalog.h"
+#समावेश "dpu_hw_merge3d.h"
+#समावेश "dpu_kms.h"
+#समावेश "dpu_trace.h"
 
-#define MERGE_3D_MUX  0x000
-#define MERGE_3D_MODE 0x004
+#घोषणा MERGE_3D_MUX  0x000
+#घोषणा MERGE_3D_MODE 0x004
 
-static const struct dpu_merge_3d_cfg *_merge_3d_offset(enum dpu_merge_3d idx,
-		const struct dpu_mdss_cfg *m,
-		void __iomem *addr,
-		struct dpu_hw_blk_reg_map *b)
-{
-	int i;
+अटल स्थिर काष्ठा dpu_merge_3d_cfg *_merge_3d_offset(क्रमागत dpu_merge_3d idx,
+		स्थिर काष्ठा dpu_mdss_cfg *m,
+		व्योम __iomem *addr,
+		काष्ठा dpu_hw_blk_reg_map *b)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < m->merge_3d_count; i++) {
-		if (idx == m->merge_3d[i].id) {
+	क्रम (i = 0; i < m->merge_3d_count; i++) अणु
+		अगर (idx == m->merge_3d[i].id) अणु
 			b->base_off = addr;
 			b->blk_off = m->merge_3d[i].base;
 			b->length = m->merge_3d[i].len;
 			b->hwversion = m->hwversion;
 			b->log_mask = DPU_DBG_MASK_PINGPONG;
-			return &m->merge_3d[i];
-		}
-	}
+			वापस &m->merge_3d[i];
+		पूर्ण
+	पूर्ण
 
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static void dpu_hw_merge_3d_setup_3d_mode(struct dpu_hw_merge_3d *merge_3d,
-			enum dpu_3d_blend_mode mode_3d)
-{
-	struct dpu_hw_blk_reg_map *c;
+अटल व्योम dpu_hw_merge_3d_setup_3d_mode(काष्ठा dpu_hw_merge_3d *merge_3d,
+			क्रमागत dpu_3d_blend_mode mode_3d)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c;
 	u32 data;
 
 
 	c = &merge_3d->hw;
-	if (mode_3d == BLEND_3D_NONE) {
+	अगर (mode_3d == BLEND_3D_NONE) अणु
 		DPU_REG_WRITE(c, MERGE_3D_MODE, 0);
 		DPU_REG_WRITE(c, MERGE_3D_MUX, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		data = BIT(0) | ((mode_3d - 1) << 1);
 		DPU_REG_WRITE(c, MERGE_3D_MODE, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void _setup_merge_3d_ops(struct dpu_hw_merge_3d *c,
-				unsigned long features)
-{
+अटल व्योम _setup_merge_3d_ops(काष्ठा dpu_hw_merge_3d *c,
+				अचिन्हित दीर्घ features)
+अणु
 	c->ops.setup_3d_mode = dpu_hw_merge_3d_setup_3d_mode;
-};
+पूर्ण;
 
-static struct dpu_hw_blk_ops dpu_hw_ops;
+अटल काष्ठा dpu_hw_blk_ops dpu_hw_ops;
 
-struct dpu_hw_merge_3d *dpu_hw_merge_3d_init(enum dpu_merge_3d idx,
-		void __iomem *addr,
-		const struct dpu_mdss_cfg *m)
-{
-	struct dpu_hw_merge_3d *c;
-	const struct dpu_merge_3d_cfg *cfg;
+काष्ठा dpu_hw_merge_3d *dpu_hw_merge_3d_init(क्रमागत dpu_merge_3d idx,
+		व्योम __iomem *addr,
+		स्थिर काष्ठा dpu_mdss_cfg *m)
+अणु
+	काष्ठा dpu_hw_merge_3d *c;
+	स्थिर काष्ठा dpu_merge_3d_cfg *cfg;
 
-	c = kzalloc(sizeof(*c), GFP_KERNEL);
-	if (!c)
-		return ERR_PTR(-ENOMEM);
+	c = kzalloc(माप(*c), GFP_KERNEL);
+	अगर (!c)
+		वापस ERR_PTR(-ENOMEM);
 
 	cfg = _merge_3d_offset(idx, m, addr, &c->hw);
-	if (IS_ERR_OR_NULL(cfg)) {
-		kfree(c);
-		return ERR_PTR(-EINVAL);
-	}
+	अगर (IS_ERR_OR_शून्य(cfg)) अणु
+		kमुक्त(c);
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	c->idx = idx;
 	c->caps = cfg;
@@ -83,12 +84,12 @@ struct dpu_hw_merge_3d *dpu_hw_merge_3d_init(enum dpu_merge_3d idx,
 
 	dpu_hw_blk_init(&c->base, DPU_HW_BLK_MERGE_3D, idx, &dpu_hw_ops);
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-void dpu_hw_merge_3d_destroy(struct dpu_hw_merge_3d *hw)
-{
-	if (hw)
+व्योम dpu_hw_merge_3d_destroy(काष्ठा dpu_hw_merge_3d *hw)
+अणु
+	अगर (hw)
 		dpu_hw_blk_destroy(&hw->base);
-	kfree(hw);
-}
+	kमुक्त(hw);
+पूर्ण

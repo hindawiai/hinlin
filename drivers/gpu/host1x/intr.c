@@ -1,350 +1,351 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Tegra host1x Interrupt Management
  *
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  */
 
-#include <linux/clk.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/irq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/irq.h>
 
-#include <trace/events/host1x.h>
-#include "channel.h"
-#include "dev.h"
-#include "intr.h"
+#समावेश <trace/events/host1x.h>
+#समावेश "channel.h"
+#समावेश "dev.h"
+#समावेश "intr.h"
 
 /* Wait list management */
 
-enum waitlist_state {
+क्रमागत रुकोlist_state अणु
 	WLS_PENDING,
 	WLS_REMOVED,
 	WLS_CANCELLED,
 	WLS_HANDLED
-};
+पूर्ण;
 
-static void waiter_release(struct kref *kref)
-{
-	kfree(container_of(kref, struct host1x_waitlist, refcount));
-}
-
-/*
- * add a waiter to a waiter queue, sorted by threshold
- * returns true if it was added at the head of the queue
- */
-static bool add_waiter_to_queue(struct host1x_waitlist *waiter,
-				struct list_head *queue)
-{
-	struct host1x_waitlist *pos;
-	u32 thresh = waiter->thresh;
-
-	list_for_each_entry_reverse(pos, queue, list)
-		if ((s32)(pos->thresh - thresh) <= 0) {
-			list_add(&waiter->list, &pos->list);
-			return false;
-		}
-
-	list_add(&waiter->list, queue);
-	return true;
-}
+अटल व्योम रुकोer_release(काष्ठा kref *kref)
+अणु
+	kमुक्त(container_of(kref, काष्ठा host1x_रुकोlist, refcount));
+पूर्ण
 
 /*
- * run through a waiter queue for a single sync point ID
- * and gather all completed waiters into lists by actions
+ * add a रुकोer to a रुकोer queue, sorted by threshold
+ * वापसs true अगर it was added at the head of the queue
  */
-static void remove_completed_waiters(struct list_head *head, u32 sync,
-			struct list_head completed[HOST1X_INTR_ACTION_COUNT])
-{
-	struct list_head *dest;
-	struct host1x_waitlist *waiter, *next, *prev;
+अटल bool add_रुकोer_to_queue(काष्ठा host1x_रुकोlist *रुकोer,
+				काष्ठा list_head *queue)
+अणु
+	काष्ठा host1x_रुकोlist *pos;
+	u32 thresh = रुकोer->thresh;
 
-	list_for_each_entry_safe(waiter, next, head, list) {
-		if ((s32)(waiter->thresh - sync) > 0)
-			break;
+	list_क्रम_each_entry_reverse(pos, queue, list)
+		अगर ((s32)(pos->thresh - thresh) <= 0) अणु
+			list_add(&रुकोer->list, &pos->list);
+			वापस false;
+		पूर्ण
 
-		dest = completed + waiter->action;
+	list_add(&रुकोer->list, queue);
+	वापस true;
+पूर्ण
+
+/*
+ * run through a रुकोer queue क्रम a single sync poपूर्णांक ID
+ * and gather all completed रुकोers पूर्णांकo lists by actions
+ */
+अटल व्योम हटाओ_completed_रुकोers(काष्ठा list_head *head, u32 sync,
+			काष्ठा list_head completed[HOST1X_INTR_ACTION_COUNT])
+अणु
+	काष्ठा list_head *dest;
+	काष्ठा host1x_रुकोlist *रुकोer, *next, *prev;
+
+	list_क्रम_each_entry_safe(रुकोer, next, head, list) अणु
+		अगर ((s32)(रुकोer->thresh - sync) > 0)
+			अवरोध;
+
+		dest = completed + रुकोer->action;
 
 		/* consolidate submit cleanups */
-		if (waiter->action == HOST1X_INTR_ACTION_SUBMIT_COMPLETE &&
-		    !list_empty(dest)) {
+		अगर (रुकोer->action == HOST1X_INTR_ACTION_SUBMIT_COMPLETE &&
+		    !list_empty(dest)) अणु
 			prev = list_entry(dest->prev,
-					  struct host1x_waitlist, list);
-			if (prev->data == waiter->data) {
+					  काष्ठा host1x_रुकोlist, list);
+			अगर (prev->data == रुकोer->data) अणु
 				prev->count++;
-				dest = NULL;
-			}
-		}
+				dest = शून्य;
+			पूर्ण
+		पूर्ण
 
 		/* PENDING->REMOVED or CANCELLED->HANDLED */
-		if (atomic_inc_return(&waiter->state) == WLS_HANDLED || !dest) {
-			list_del(&waiter->list);
-			kref_put(&waiter->refcount, waiter_release);
-		} else
-			list_move_tail(&waiter->list, dest);
-	}
-}
+		अगर (atomic_inc_वापस(&रुकोer->state) == WLS_HANDLED || !dest) अणु
+			list_del(&रुकोer->list);
+			kref_put(&रुकोer->refcount, रुकोer_release);
+		पूर्ण अन्यथा
+			list_move_tail(&रुकोer->list, dest);
+	पूर्ण
+पूर्ण
 
-static void reset_threshold_interrupt(struct host1x *host,
-				      struct list_head *head,
-				      unsigned int id)
-{
+अटल व्योम reset_threshold_पूर्णांकerrupt(काष्ठा host1x *host,
+				      काष्ठा list_head *head,
+				      अचिन्हित पूर्णांक id)
+अणु
 	u32 thresh =
-		list_first_entry(head, struct host1x_waitlist, list)->thresh;
+		list_first_entry(head, काष्ठा host1x_रुकोlist, list)->thresh;
 
-	host1x_hw_intr_set_syncpt_threshold(host, id, thresh);
-	host1x_hw_intr_enable_syncpt_intr(host, id);
-}
+	host1x_hw_पूर्णांकr_set_syncpt_threshold(host, id, thresh);
+	host1x_hw_पूर्णांकr_enable_syncpt_पूर्णांकr(host, id);
+पूर्ण
 
-static void action_submit_complete(struct host1x_waitlist *waiter)
-{
-	struct host1x_channel *channel = waiter->data;
+अटल व्योम action_submit_complete(काष्ठा host1x_रुकोlist *रुकोer)
+अणु
+	काष्ठा host1x_channel *channel = रुकोer->data;
 
 	host1x_cdma_update(&channel->cdma);
 
 	/*  Add nr_completed to trace */
 	trace_host1x_channel_submit_complete(dev_name(channel->dev),
-					     waiter->count, waiter->thresh);
-}
+					     रुकोer->count, रुकोer->thresh);
+पूर्ण
 
-static void action_wakeup(struct host1x_waitlist *waiter)
-{
-	wait_queue_head_t *wq = waiter->data;
+अटल व्योम action_wakeup(काष्ठा host1x_रुकोlist *रुकोer)
+अणु
+	रुको_queue_head_t *wq = रुकोer->data;
 
 	wake_up(wq);
-}
+पूर्ण
 
-static void action_wakeup_interruptible(struct host1x_waitlist *waiter)
-{
-	wait_queue_head_t *wq = waiter->data;
+अटल व्योम action_wakeup_पूर्णांकerruptible(काष्ठा host1x_रुकोlist *रुकोer)
+अणु
+	रुको_queue_head_t *wq = रुकोer->data;
 
-	wake_up_interruptible(wq);
-}
+	wake_up_पूर्णांकerruptible(wq);
+पूर्ण
 
-typedef void (*action_handler)(struct host1x_waitlist *waiter);
+प्रकार व्योम (*action_handler)(काष्ठा host1x_रुकोlist *रुकोer);
 
-static const action_handler action_handlers[HOST1X_INTR_ACTION_COUNT] = {
+अटल स्थिर action_handler action_handlers[HOST1X_INTR_ACTION_COUNT] = अणु
 	action_submit_complete,
 	action_wakeup,
-	action_wakeup_interruptible,
-};
+	action_wakeup_पूर्णांकerruptible,
+पूर्ण;
 
-static void run_handlers(struct list_head completed[HOST1X_INTR_ACTION_COUNT])
-{
-	struct list_head *head = completed;
-	unsigned int i;
+अटल व्योम run_handlers(काष्ठा list_head completed[HOST1X_INTR_ACTION_COUNT])
+अणु
+	काष्ठा list_head *head = completed;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < HOST1X_INTR_ACTION_COUNT; ++i, ++head) {
+	क्रम (i = 0; i < HOST1X_INTR_ACTION_COUNT; ++i, ++head) अणु
 		action_handler handler = action_handlers[i];
-		struct host1x_waitlist *waiter, *next;
+		काष्ठा host1x_रुकोlist *रुकोer, *next;
 
-		list_for_each_entry_safe(waiter, next, head, list) {
-			list_del(&waiter->list);
-			handler(waiter);
-			WARN_ON(atomic_xchg(&waiter->state, WLS_HANDLED) !=
+		list_क्रम_each_entry_safe(रुकोer, next, head, list) अणु
+			list_del(&रुकोer->list);
+			handler(रुकोer);
+			WARN_ON(atomic_xchg(&रुकोer->state, WLS_HANDLED) !=
 				WLS_REMOVED);
-			kref_put(&waiter->refcount, waiter_release);
-		}
-	}
-}
+			kref_put(&रुकोer->refcount, रुकोer_release);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Remove & handle all waiters that have completed for the given syncpt
+ * Remove & handle all रुकोers that have completed क्रम the given syncpt
  */
-static int process_wait_list(struct host1x *host,
-			     struct host1x_syncpt *syncpt,
+अटल पूर्णांक process_रुको_list(काष्ठा host1x *host,
+			     काष्ठा host1x_syncpt *syncpt,
 			     u32 threshold)
-{
-	struct list_head completed[HOST1X_INTR_ACTION_COUNT];
-	unsigned int i;
-	int empty;
+अणु
+	काष्ठा list_head completed[HOST1X_INTR_ACTION_COUNT];
+	अचिन्हित पूर्णांक i;
+	पूर्णांक empty;
 
-	for (i = 0; i < HOST1X_INTR_ACTION_COUNT; ++i)
+	क्रम (i = 0; i < HOST1X_INTR_ACTION_COUNT; ++i)
 		INIT_LIST_HEAD(completed + i);
 
-	spin_lock(&syncpt->intr.lock);
+	spin_lock(&syncpt->पूर्णांकr.lock);
 
-	remove_completed_waiters(&syncpt->intr.wait_head, threshold,
+	हटाओ_completed_रुकोers(&syncpt->पूर्णांकr.रुको_head, threshold,
 				 completed);
 
-	empty = list_empty(&syncpt->intr.wait_head);
-	if (empty)
-		host1x_hw_intr_disable_syncpt_intr(host, syncpt->id);
-	else
-		reset_threshold_interrupt(host, &syncpt->intr.wait_head,
+	empty = list_empty(&syncpt->पूर्णांकr.रुको_head);
+	अगर (empty)
+		host1x_hw_पूर्णांकr_disable_syncpt_पूर्णांकr(host, syncpt->id);
+	अन्यथा
+		reset_threshold_पूर्णांकerrupt(host, &syncpt->पूर्णांकr.रुको_head,
 					  syncpt->id);
 
-	spin_unlock(&syncpt->intr.lock);
+	spin_unlock(&syncpt->पूर्णांकr.lock);
 
 	run_handlers(completed);
 
-	return empty;
-}
+	वापस empty;
+पूर्ण
 
 /*
- * Sync point threshold interrupt service thread function
- * Handles sync point threshold triggers, in thread context
+ * Sync poपूर्णांक threshold पूर्णांकerrupt service thपढ़ो function
+ * Handles sync poपूर्णांक threshold triggers, in thपढ़ो context
  */
 
-static void syncpt_thresh_work(struct work_struct *work)
-{
-	struct host1x_syncpt_intr *syncpt_intr =
-		container_of(work, struct host1x_syncpt_intr, work);
-	struct host1x_syncpt *syncpt =
-		container_of(syncpt_intr, struct host1x_syncpt, intr);
-	unsigned int id = syncpt->id;
-	struct host1x *host = syncpt->host;
+अटल व्योम syncpt_thresh_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा host1x_syncpt_पूर्णांकr *syncpt_पूर्णांकr =
+		container_of(work, काष्ठा host1x_syncpt_पूर्णांकr, work);
+	काष्ठा host1x_syncpt *syncpt =
+		container_of(syncpt_पूर्णांकr, काष्ठा host1x_syncpt, पूर्णांकr);
+	अचिन्हित पूर्णांक id = syncpt->id;
+	काष्ठा host1x *host = syncpt->host;
 
-	(void)process_wait_list(host, syncpt,
+	(व्योम)process_रुको_list(host, syncpt,
 				host1x_syncpt_load(host->syncpt + id));
-}
+पूर्ण
 
-int host1x_intr_add_action(struct host1x *host, struct host1x_syncpt *syncpt,
-			   u32 thresh, enum host1x_intr_action action,
-			   void *data, struct host1x_waitlist *waiter,
-			   void **ref)
-{
-	int queue_was_empty;
+पूर्णांक host1x_पूर्णांकr_add_action(काष्ठा host1x *host, काष्ठा host1x_syncpt *syncpt,
+			   u32 thresh, क्रमागत host1x_पूर्णांकr_action action,
+			   व्योम *data, काष्ठा host1x_रुकोlist *रुकोer,
+			   व्योम **ref)
+अणु
+	पूर्णांक queue_was_empty;
 
-	if (waiter == NULL) {
+	अगर (रुकोer == शून्य) अणु
 		pr_warn("%s: NULL waiter\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* initialize a new waiter */
-	INIT_LIST_HEAD(&waiter->list);
-	kref_init(&waiter->refcount);
-	if (ref)
-		kref_get(&waiter->refcount);
-	waiter->thresh = thresh;
-	waiter->action = action;
-	atomic_set(&waiter->state, WLS_PENDING);
-	waiter->data = data;
-	waiter->count = 1;
+	/* initialize a new रुकोer */
+	INIT_LIST_HEAD(&रुकोer->list);
+	kref_init(&रुकोer->refcount);
+	अगर (ref)
+		kref_get(&रुकोer->refcount);
+	रुकोer->thresh = thresh;
+	रुकोer->action = action;
+	atomic_set(&रुकोer->state, WLS_PENDING);
+	रुकोer->data = data;
+	रुकोer->count = 1;
 
-	spin_lock(&syncpt->intr.lock);
+	spin_lock(&syncpt->पूर्णांकr.lock);
 
-	queue_was_empty = list_empty(&syncpt->intr.wait_head);
+	queue_was_empty = list_empty(&syncpt->पूर्णांकr.रुको_head);
 
-	if (add_waiter_to_queue(waiter, &syncpt->intr.wait_head)) {
+	अगर (add_रुकोer_to_queue(रुकोer, &syncpt->पूर्णांकr.रुको_head)) अणु
 		/* added at head of list - new threshold value */
-		host1x_hw_intr_set_syncpt_threshold(host, syncpt->id, thresh);
+		host1x_hw_पूर्णांकr_set_syncpt_threshold(host, syncpt->id, thresh);
 
-		/* added as first waiter - enable interrupt */
-		if (queue_was_empty)
-			host1x_hw_intr_enable_syncpt_intr(host, syncpt->id);
-	}
+		/* added as first रुकोer - enable पूर्णांकerrupt */
+		अगर (queue_was_empty)
+			host1x_hw_पूर्णांकr_enable_syncpt_पूर्णांकr(host, syncpt->id);
+	पूर्ण
 
-	if (ref)
-		*ref = waiter;
+	अगर (ref)
+		*ref = रुकोer;
 
-	spin_unlock(&syncpt->intr.lock);
+	spin_unlock(&syncpt->पूर्णांकr.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void host1x_intr_put_ref(struct host1x *host, unsigned int id, void *ref,
+व्योम host1x_पूर्णांकr_put_ref(काष्ठा host1x *host, अचिन्हित पूर्णांक id, व्योम *ref,
 			 bool flush)
-{
-	struct host1x_waitlist *waiter = ref;
-	struct host1x_syncpt *syncpt;
+अणु
+	काष्ठा host1x_रुकोlist *रुकोer = ref;
+	काष्ठा host1x_syncpt *syncpt;
 
-	atomic_cmpxchg(&waiter->state, WLS_PENDING, WLS_CANCELLED);
+	atomic_cmpxchg(&रुकोer->state, WLS_PENDING, WLS_CANCELLED);
 
 	syncpt = host->syncpt + id;
 
-	spin_lock(&syncpt->intr.lock);
-	if (atomic_cmpxchg(&waiter->state, WLS_CANCELLED, WLS_HANDLED) ==
-	    WLS_CANCELLED) {
-		list_del(&waiter->list);
-		kref_put(&waiter->refcount, waiter_release);
-	}
-	spin_unlock(&syncpt->intr.lock);
+	spin_lock(&syncpt->पूर्णांकr.lock);
+	अगर (atomic_cmpxchg(&रुकोer->state, WLS_CANCELLED, WLS_HANDLED) ==
+	    WLS_CANCELLED) अणु
+		list_del(&रुकोer->list);
+		kref_put(&रुकोer->refcount, रुकोer_release);
+	पूर्ण
+	spin_unlock(&syncpt->पूर्णांकr.lock);
 
-	if (flush) {
+	अगर (flush) अणु
 		/* Wait until any concurrently executing handler has finished. */
-		while (atomic_read(&waiter->state) != WLS_HANDLED)
+		जबतक (atomic_पढ़ो(&रुकोer->state) != WLS_HANDLED)
 			schedule();
-	}
+	पूर्ण
 
-	kref_put(&waiter->refcount, waiter_release);
-}
+	kref_put(&रुकोer->refcount, रुकोer_release);
+पूर्ण
 
-int host1x_intr_init(struct host1x *host, unsigned int irq_sync)
-{
-	unsigned int id;
+पूर्णांक host1x_पूर्णांकr_init(काष्ठा host1x *host, अचिन्हित पूर्णांक irq_sync)
+अणु
+	अचिन्हित पूर्णांक id;
 	u32 nb_pts = host1x_syncpt_nb_pts(host);
 
-	mutex_init(&host->intr_mutex);
-	host->intr_syncpt_irq = irq_sync;
+	mutex_init(&host->पूर्णांकr_mutex);
+	host->पूर्णांकr_syncpt_irq = irq_sync;
 
-	for (id = 0; id < nb_pts; ++id) {
-		struct host1x_syncpt *syncpt = host->syncpt + id;
+	क्रम (id = 0; id < nb_pts; ++id) अणु
+		काष्ठा host1x_syncpt *syncpt = host->syncpt + id;
 
-		spin_lock_init(&syncpt->intr.lock);
-		INIT_LIST_HEAD(&syncpt->intr.wait_head);
-		snprintf(syncpt->intr.thresh_irq_name,
-			 sizeof(syncpt->intr.thresh_irq_name),
+		spin_lock_init(&syncpt->पूर्णांकr.lock);
+		INIT_LIST_HEAD(&syncpt->पूर्णांकr.रुको_head);
+		snम_लिखो(syncpt->पूर्णांकr.thresh_irq_name,
+			 माप(syncpt->पूर्णांकr.thresh_irq_name),
 			 "host1x_sp_%02u", id);
-	}
+	पूर्ण
 
-	host1x_intr_start(host);
+	host1x_पूर्णांकr_start(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void host1x_intr_deinit(struct host1x *host)
-{
-	host1x_intr_stop(host);
-}
+व्योम host1x_पूर्णांकr_deinit(काष्ठा host1x *host)
+अणु
+	host1x_पूर्णांकr_stop(host);
+पूर्ण
 
-void host1x_intr_start(struct host1x *host)
-{
+व्योम host1x_पूर्णांकr_start(काष्ठा host1x *host)
+अणु
 	u32 hz = clk_get_rate(host->clk);
-	int err;
+	पूर्णांक err;
 
-	mutex_lock(&host->intr_mutex);
-	err = host1x_hw_intr_init_host_sync(host, DIV_ROUND_UP(hz, 1000000),
+	mutex_lock(&host->पूर्णांकr_mutex);
+	err = host1x_hw_पूर्णांकr_init_host_sync(host, DIV_ROUND_UP(hz, 1000000),
 					    syncpt_thresh_work);
-	if (err) {
-		mutex_unlock(&host->intr_mutex);
-		return;
-	}
-	mutex_unlock(&host->intr_mutex);
-}
+	अगर (err) अणु
+		mutex_unlock(&host->पूर्णांकr_mutex);
+		वापस;
+	पूर्ण
+	mutex_unlock(&host->पूर्णांकr_mutex);
+पूर्ण
 
-void host1x_intr_stop(struct host1x *host)
-{
-	unsigned int id;
-	struct host1x_syncpt *syncpt = host->syncpt;
+व्योम host1x_पूर्णांकr_stop(काष्ठा host1x *host)
+अणु
+	अचिन्हित पूर्णांक id;
+	काष्ठा host1x_syncpt *syncpt = host->syncpt;
 	u32 nb_pts = host1x_syncpt_nb_pts(host);
 
-	mutex_lock(&host->intr_mutex);
+	mutex_lock(&host->पूर्णांकr_mutex);
 
-	host1x_hw_intr_disable_all_syncpt_intrs(host);
+	host1x_hw_पूर्णांकr_disable_all_syncpt_पूर्णांकrs(host);
 
-	for (id = 0; id < nb_pts; ++id) {
-		struct host1x_waitlist *waiter, *next;
+	क्रम (id = 0; id < nb_pts; ++id) अणु
+		काष्ठा host1x_रुकोlist *रुकोer, *next;
 
-		list_for_each_entry_safe(waiter, next,
-			&syncpt[id].intr.wait_head, list) {
-			if (atomic_cmpxchg(&waiter->state,
-			    WLS_CANCELLED, WLS_HANDLED) == WLS_CANCELLED) {
-				list_del(&waiter->list);
-				kref_put(&waiter->refcount, waiter_release);
-			}
-		}
+		list_क्रम_each_entry_safe(रुकोer, next,
+			&syncpt[id].पूर्णांकr.रुको_head, list) अणु
+			अगर (atomic_cmpxchg(&रुकोer->state,
+			    WLS_CANCELLED, WLS_HANDLED) == WLS_CANCELLED) अणु
+				list_del(&रुकोer->list);
+				kref_put(&रुकोer->refcount, रुकोer_release);
+			पूर्ण
+		पूर्ण
 
-		if (!list_empty(&syncpt[id].intr.wait_head)) {
+		अगर (!list_empty(&syncpt[id].पूर्णांकr.रुको_head)) अणु
 			/* output diagnostics */
-			mutex_unlock(&host->intr_mutex);
+			mutex_unlock(&host->पूर्णांकr_mutex);
 			pr_warn("%s cannot stop syncpt intr id=%u\n",
 				__func__, id);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	host1x_hw_intr_free_syncpt_irq(host);
+	host1x_hw_पूर्णांकr_मुक्त_syncpt_irq(host);
 
-	mutex_unlock(&host->intr_mutex);
-}
+	mutex_unlock(&host->पूर्णांकr_mutex);
+पूर्ण

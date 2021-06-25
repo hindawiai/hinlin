@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 // Copyright (c) 2019 Mellanox Technologies.
 
-#include <linux/mlx5/fs.h>
-#include "eswitch.h"
-#include "en_tc.h"
-#include "fs_core.h"
+#समावेश <linux/mlx5/fs.h>
+#समावेश "eswitch.h"
+#समावेश "en_tc.h"
+#समावेश "fs_core.h"
 
-struct mlx5_termtbl_handle {
-	struct hlist_node termtbl_hlist;
+काष्ठा mlx5_termtbl_handle अणु
+	काष्ठा hlist_node termtbl_hlist;
 
-	struct mlx5_flow_table *termtbl;
-	struct mlx5_flow_act flow_act;
-	struct mlx5_flow_destination dest;
+	काष्ठा mlx5_flow_table *termtbl;
+	काष्ठा mlx5_flow_act flow_act;
+	काष्ठा mlx5_flow_destination dest;
 
-	struct mlx5_flow_handle *rule;
-	int ref_count;
-};
+	काष्ठा mlx5_flow_handle *rule;
+	पूर्णांक ref_count;
+पूर्ण;
 
-static u32
-mlx5_eswitch_termtbl_hash(struct mlx5_flow_act *flow_act,
-			  struct mlx5_flow_destination *dest)
-{
+अटल u32
+mlx5_eचयन_termtbl_hash(काष्ठा mlx5_flow_act *flow_act,
+			  काष्ठा mlx5_flow_destination *dest)
+अणु
 	u32 hash;
 
 	hash = jhash_1word(flow_act->action, 0);
-	hash = jhash((const void *)&flow_act->vlan,
-		     sizeof(flow_act->vlan), hash);
-	hash = jhash((const void *)&dest->vport.num,
-		     sizeof(dest->vport.num), hash);
-	hash = jhash((const void *)&dest->vport.vhca_id,
-		     sizeof(dest->vport.num), hash);
-	if (dest->vport.pkt_reformat)
-		hash = jhash(dest->vport.pkt_reformat,
-			     sizeof(*dest->vport.pkt_reformat),
+	hash = jhash((स्थिर व्योम *)&flow_act->vlan,
+		     माप(flow_act->vlan), hash);
+	hash = jhash((स्थिर व्योम *)&dest->vport.num,
+		     माप(dest->vport.num), hash);
+	hash = jhash((स्थिर व्योम *)&dest->vport.vhca_id,
+		     माप(dest->vport.num), hash);
+	अगर (dest->vport.pkt_reक्रमmat)
+		hash = jhash(dest->vport.pkt_reक्रमmat,
+			     माप(*dest->vport.pkt_reक्रमmat),
 			     hash);
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
-static int
-mlx5_eswitch_termtbl_cmp(struct mlx5_flow_act *flow_act1,
-			 struct mlx5_flow_destination *dest1,
-			 struct mlx5_flow_act *flow_act2,
-			 struct mlx5_flow_destination *dest2)
-{
-	int ret;
+अटल पूर्णांक
+mlx5_eचयन_termtbl_cmp(काष्ठा mlx5_flow_act *flow_act1,
+			 काष्ठा mlx5_flow_destination *dest1,
+			 काष्ठा mlx5_flow_act *flow_act2,
+			 काष्ठा mlx5_flow_destination *dest2)
+अणु
+	पूर्णांक ret;
 
 	ret = flow_act1->action != flow_act2->action ||
 	      dest1->vport.num != dest2->vport.num ||
 	      dest1->vport.vhca_id != dest2->vport.vhca_id ||
-	      memcmp(&flow_act1->vlan, &flow_act2->vlan,
-		     sizeof(flow_act1->vlan));
-	if (ret)
-		return ret;
+	      स_भेद(&flow_act1->vlan, &flow_act2->vlan,
+		     माप(flow_act1->vlan));
+	अगर (ret)
+		वापस ret;
 
-	return dest1->vport.pkt_reformat && dest2->vport.pkt_reformat ?
-	       memcmp(dest1->vport.pkt_reformat, dest2->vport.pkt_reformat,
-		      sizeof(*dest1->vport.pkt_reformat)) : 0;
-}
+	वापस dest1->vport.pkt_reक्रमmat && dest2->vport.pkt_reक्रमmat ?
+	       स_भेद(dest1->vport.pkt_reक्रमmat, dest2->vport.pkt_reक्रमmat,
+		      माप(*dest1->vport.pkt_reक्रमmat)) : 0;
+पूर्ण
 
-static int
-mlx5_eswitch_termtbl_create(struct mlx5_core_dev *dev,
-			    struct mlx5_termtbl_handle *tt,
-			    struct mlx5_flow_act *flow_act)
-{
-	struct mlx5_flow_table_attr ft_attr = {};
-	struct mlx5_flow_namespace *root_ns;
-	int err, err2;
+अटल पूर्णांक
+mlx5_eचयन_termtbl_create(काष्ठा mlx5_core_dev *dev,
+			    काष्ठा mlx5_termtbl_handle *tt,
+			    काष्ठा mlx5_flow_act *flow_act)
+अणु
+	काष्ठा mlx5_flow_table_attr ft_attr = अणुपूर्ण;
+	काष्ठा mlx5_flow_namespace *root_ns;
+	पूर्णांक err, err2;
 
 	root_ns = mlx5_get_flow_namespace(dev, MLX5_FLOW_NAMESPACE_FDB);
-	if (!root_ns) {
+	अगर (!root_ns) अणु
 		esw_warn(dev, "Failed to get FDB flow namespace\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	/* As this is the terminating action then the termination table is the
 	 * same prio as the slow path
@@ -81,200 +82,200 @@ mlx5_eswitch_termtbl_create(struct mlx5_core_dev *dev,
 	ft_attr.prio = FDB_TC_OFFLOAD;
 	ft_attr.max_fte = 1;
 	ft_attr.level = 1;
-	ft_attr.autogroup.max_num_groups = 1;
-	tt->termtbl = mlx5_create_auto_grouped_flow_table(root_ns, &ft_attr);
-	if (IS_ERR(tt->termtbl)) {
+	ft_attr.स्वतःgroup.max_num_groups = 1;
+	tt->termtbl = mlx5_create_स्वतः_grouped_flow_table(root_ns, &ft_attr);
+	अगर (IS_ERR(tt->termtbl)) अणु
 		err = PTR_ERR(tt->termtbl);
 		esw_warn(dev, "Failed to create termination table, err %pe\n", tt->termtbl);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	tt->rule = mlx5_add_flow_rules(tt->termtbl, NULL, flow_act,
+	tt->rule = mlx5_add_flow_rules(tt->termtbl, शून्य, flow_act,
 				       &tt->dest, 1);
-	if (IS_ERR(tt->rule)) {
+	अगर (IS_ERR(tt->rule)) अणु
 		err = PTR_ERR(tt->rule);
 		esw_warn(dev, "Failed to create termination table rule, err %pe\n", tt->rule);
-		goto add_flow_err;
-	}
-	return 0;
+		जाओ add_flow_err;
+	पूर्ण
+	वापस 0;
 
 add_flow_err:
 	err2 = mlx5_destroy_flow_table(tt->termtbl);
-	if (err2)
+	अगर (err2)
 		esw_warn(dev, "Failed to destroy termination table, err %d\n", err2);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct mlx5_termtbl_handle *
-mlx5_eswitch_termtbl_get_create(struct mlx5_eswitch *esw,
-				struct mlx5_flow_act *flow_act,
-				struct mlx5_flow_destination *dest,
-				struct mlx5_esw_flow_attr *attr)
-{
-	struct mlx5_termtbl_handle *tt;
+अटल काष्ठा mlx5_termtbl_handle *
+mlx5_eचयन_termtbl_get_create(काष्ठा mlx5_eचयन *esw,
+				काष्ठा mlx5_flow_act *flow_act,
+				काष्ठा mlx5_flow_destination *dest,
+				काष्ठा mlx5_esw_flow_attr *attr)
+अणु
+	काष्ठा mlx5_termtbl_handle *tt;
 	bool found = false;
 	u32 hash_key;
-	int err;
+	पूर्णांक err;
 
 	mutex_lock(&esw->offloads.termtbl_mutex);
-	hash_key = mlx5_eswitch_termtbl_hash(flow_act, dest);
-	hash_for_each_possible(esw->offloads.termtbl_tbl, tt,
-			       termtbl_hlist, hash_key) {
-		if (!mlx5_eswitch_termtbl_cmp(&tt->flow_act, &tt->dest,
-					      flow_act, dest)) {
+	hash_key = mlx5_eचयन_termtbl_hash(flow_act, dest);
+	hash_क्रम_each_possible(esw->offloads.termtbl_tbl, tt,
+			       termtbl_hlist, hash_key) अणु
+		अगर (!mlx5_eचयन_termtbl_cmp(&tt->flow_act, &tt->dest,
+					      flow_act, dest)) अणु
 			found = true;
-			break;
-		}
-	}
-	if (found)
-		goto tt_add_ref;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (found)
+		जाओ tt_add_ref;
 
-	tt = kzalloc(sizeof(*tt), GFP_KERNEL);
-	if (!tt) {
+	tt = kzalloc(माप(*tt), GFP_KERNEL);
+	अगर (!tt) अणु
 		err = -ENOMEM;
-		goto tt_create_err;
-	}
+		जाओ tt_create_err;
+	पूर्ण
 
 	tt->dest.type = MLX5_FLOW_DESTINATION_TYPE_VPORT;
 	tt->dest.vport.num = dest->vport.num;
 	tt->dest.vport.vhca_id = dest->vport.vhca_id;
 	tt->dest.vport.flags = dest->vport.flags;
-	memcpy(&tt->flow_act, flow_act, sizeof(*flow_act));
+	स_नकल(&tt->flow_act, flow_act, माप(*flow_act));
 
-	err = mlx5_eswitch_termtbl_create(esw->dev, tt, flow_act);
-	if (err)
-		goto tt_create_err;
+	err = mlx5_eचयन_termtbl_create(esw->dev, tt, flow_act);
+	अगर (err)
+		जाओ tt_create_err;
 
 	hash_add(esw->offloads.termtbl_tbl, &tt->termtbl_hlist, hash_key);
 tt_add_ref:
 	tt->ref_count++;
 	mutex_unlock(&esw->offloads.termtbl_mutex);
-	return tt;
+	वापस tt;
 tt_create_err:
-	kfree(tt);
+	kमुक्त(tt);
 	mutex_unlock(&esw->offloads.termtbl_mutex);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-void
-mlx5_eswitch_termtbl_put(struct mlx5_eswitch *esw,
-			 struct mlx5_termtbl_handle *tt)
-{
+व्योम
+mlx5_eचयन_termtbl_put(काष्ठा mlx5_eचयन *esw,
+			 काष्ठा mlx5_termtbl_handle *tt)
+अणु
 	mutex_lock(&esw->offloads.termtbl_mutex);
-	if (--tt->ref_count == 0)
+	अगर (--tt->ref_count == 0)
 		hash_del(&tt->termtbl_hlist);
 	mutex_unlock(&esw->offloads.termtbl_mutex);
 
-	if (!tt->ref_count) {
+	अगर (!tt->ref_count) अणु
 		mlx5_del_flow_rules(tt->rule);
 		mlx5_destroy_flow_table(tt->termtbl);
-		kfree(tt);
-	}
-}
+		kमुक्त(tt);
+	पूर्ण
+पूर्ण
 
-static void
-mlx5_eswitch_termtbl_actions_move(struct mlx5_flow_act *src,
-				  struct mlx5_flow_act *dst)
-{
-	if (src->action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH) {
+अटल व्योम
+mlx5_eचयन_termtbl_actions_move(काष्ठा mlx5_flow_act *src,
+				  काष्ठा mlx5_flow_act *dst)
+अणु
+	अगर (src->action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH) अणु
 		src->action &= ~MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH;
 		dst->action |= MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH;
-		memcpy(&dst->vlan[0], &src->vlan[0], sizeof(src->vlan[0]));
-		memset(&src->vlan[0], 0, sizeof(src->vlan[0]));
+		स_नकल(&dst->vlan[0], &src->vlan[0], माप(src->vlan[0]));
+		स_रखो(&src->vlan[0], 0, माप(src->vlan[0]));
 
-		if (src->action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH_2) {
+		अगर (src->action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH_2) अणु
 			src->action &= ~MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH_2;
 			dst->action |= MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH_2;
-			memcpy(&dst->vlan[1], &src->vlan[1], sizeof(src->vlan[1]));
-			memset(&src->vlan[1], 0, sizeof(src->vlan[1]));
-		}
-	}
-}
+			स_नकल(&dst->vlan[1], &src->vlan[1], माप(src->vlan[1]));
+			स_रखो(&src->vlan[1], 0, माप(src->vlan[1]));
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool mlx5_eswitch_offload_is_uplink_port(const struct mlx5_eswitch *esw,
-						const struct mlx5_flow_spec *spec)
-{
+अटल bool mlx5_eचयन_offload_is_uplink_port(स्थिर काष्ठा mlx5_eचयन *esw,
+						स्थिर काष्ठा mlx5_flow_spec *spec)
+अणु
 	u16 port_mask, port_value;
 
-	if (MLX5_CAP_ESW_FLOWTABLE(esw->dev, flow_source))
-		return spec->flow_context.flow_source ==
+	अगर (MLX5_CAP_ESW_FLOWTABLE(esw->dev, flow_source))
+		वापस spec->flow_context.flow_source ==
 					MLX5_FLOW_CONTEXT_FLOW_SOURCE_UPLINK;
 
 	port_mask = MLX5_GET(fte_match_param, spec->match_criteria,
 			     misc_parameters.source_port);
 	port_value = MLX5_GET(fte_match_param, spec->match_value,
 			      misc_parameters.source_port);
-	return (port_mask & port_value) == MLX5_VPORT_UPLINK;
-}
+	वापस (port_mask & port_value) == MLX5_VPORT_UPLINK;
+पूर्ण
 
 bool
-mlx5_eswitch_termtbl_required(struct mlx5_eswitch *esw,
-			      struct mlx5_flow_attr *attr,
-			      struct mlx5_flow_act *flow_act,
-			      struct mlx5_flow_spec *spec)
-{
-	struct mlx5_esw_flow_attr *esw_attr = attr->esw_attr;
-	int i;
+mlx5_eचयन_termtbl_required(काष्ठा mlx5_eचयन *esw,
+			      काष्ठा mlx5_flow_attr *attr,
+			      काष्ठा mlx5_flow_act *flow_act,
+			      काष्ठा mlx5_flow_spec *spec)
+अणु
+	काष्ठा mlx5_esw_flow_attr *esw_attr = attr->esw_attr;
+	पूर्णांक i;
 
-	if (!MLX5_CAP_ESW_FLOWTABLE_FDB(esw->dev, termination_table) ||
+	अगर (!MLX5_CAP_ESW_FLOWTABLE_FDB(esw->dev, termination_table) ||
 	    !MLX5_CAP_ESW_FLOWTABLE_FDB(esw->dev, ignore_flow_level) ||
 	    attr->flags & MLX5_ESW_ATTR_FLAG_SLOW_PATH ||
-	    !mlx5_eswitch_offload_is_uplink_port(esw, spec))
-		return false;
+	    !mlx5_eचयन_offload_is_uplink_port(esw, spec))
+		वापस false;
 
 	/* push vlan on RX */
-	if (flow_act->action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH)
-		return true;
+	अगर (flow_act->action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH)
+		वापस true;
 
 	/* hairpin */
-	for (i = esw_attr->split_count; i < esw_attr->out_count; i++)
-		if (esw_attr->dests[i].rep->vport == MLX5_VPORT_UPLINK)
-			return true;
+	क्रम (i = esw_attr->split_count; i < esw_attr->out_count; i++)
+		अगर (esw_attr->dests[i].rep->vport == MLX5_VPORT_UPLINK)
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-struct mlx5_flow_handle *
-mlx5_eswitch_add_termtbl_rule(struct mlx5_eswitch *esw,
-			      struct mlx5_flow_table *fdb,
-			      struct mlx5_flow_spec *spec,
-			      struct mlx5_esw_flow_attr *attr,
-			      struct mlx5_flow_act *flow_act,
-			      struct mlx5_flow_destination *dest,
-			      int num_dest)
-{
-	struct mlx5_flow_act term_tbl_act = {};
-	struct mlx5_flow_handle *rule = NULL;
+काष्ठा mlx5_flow_handle *
+mlx5_eचयन_add_termtbl_rule(काष्ठा mlx5_eचयन *esw,
+			      काष्ठा mlx5_flow_table *fdb,
+			      काष्ठा mlx5_flow_spec *spec,
+			      काष्ठा mlx5_esw_flow_attr *attr,
+			      काष्ठा mlx5_flow_act *flow_act,
+			      काष्ठा mlx5_flow_destination *dest,
+			      पूर्णांक num_dest)
+अणु
+	काष्ठा mlx5_flow_act term_tbl_act = अणुपूर्ण;
+	काष्ठा mlx5_flow_handle *rule = शून्य;
 	bool term_table_created = false;
-	int num_vport_dests = 0;
-	int i, curr_dest;
+	पूर्णांक num_vport_dests = 0;
+	पूर्णांक i, curr_dest;
 
-	mlx5_eswitch_termtbl_actions_move(flow_act, &term_tbl_act);
+	mlx5_eचयन_termtbl_actions_move(flow_act, &term_tbl_act);
 	term_tbl_act.action |= MLX5_FLOW_CONTEXT_ACTION_FWD_DEST;
 
-	for (i = 0; i < num_dest; i++) {
-		struct mlx5_termtbl_handle *tt;
+	क्रम (i = 0; i < num_dest; i++) अणु
+		काष्ठा mlx5_termtbl_handle *tt;
 
 		/* only vport destinations can be terminated */
-		if (dest[i].type != MLX5_FLOW_DESTINATION_TYPE_VPORT)
-			continue;
+		अगर (dest[i].type != MLX5_FLOW_DESTINATION_TYPE_VPORT)
+			जारी;
 
-		if (attr->dests[num_vport_dests].flags & MLX5_ESW_DEST_ENCAP) {
+		अगर (attr->dests[num_vport_dests].flags & MLX5_ESW_DEST_ENCAP) अणु
 			term_tbl_act.action |= MLX5_FLOW_CONTEXT_ACTION_PACKET_REFORMAT;
-			term_tbl_act.pkt_reformat = attr->dests[num_vport_dests].pkt_reformat;
-		} else {
+			term_tbl_act.pkt_reक्रमmat = attr->dests[num_vport_dests].pkt_reक्रमmat;
+		पूर्ण अन्यथा अणु
 			term_tbl_act.action &= ~MLX5_FLOW_CONTEXT_ACTION_PACKET_REFORMAT;
-			term_tbl_act.pkt_reformat = NULL;
-		}
+			term_tbl_act.pkt_reक्रमmat = शून्य;
+		पूर्ण
 
-		/* get the terminating table for the action list */
-		tt = mlx5_eswitch_termtbl_get_create(esw, &term_tbl_act,
+		/* get the terminating table क्रम the action list */
+		tt = mlx5_eचयन_termtbl_get_create(esw, &term_tbl_act,
 						     &dest[i], attr);
-		if (IS_ERR(tt)) {
+		अगर (IS_ERR(tt)) अणु
 			esw_warn(esw->dev, "Failed to get termination table, err %pe\n", tt);
-			goto revert_changes;
-		}
+			जाओ revert_changes;
+		पूर्ण
 		attr->dests[num_vport_dests].termtbl = tt;
 		num_vport_dests++;
 
@@ -282,47 +283,47 @@ mlx5_eswitch_add_termtbl_rule(struct mlx5_eswitch *esw,
 		dest[i].type = MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE;
 		dest[i].ft = tt->termtbl;
 		term_table_created = true;
-	}
+	पूर्ण
 
 	/* at least one destination should reference a termination table */
-	if (!term_table_created)
-		goto revert_changes;
+	अगर (!term_table_created)
+		जाओ revert_changes;
 
 	/* create the FTE */
 	flow_act->action &= ~MLX5_FLOW_CONTEXT_ACTION_PACKET_REFORMAT;
-	flow_act->pkt_reformat = NULL;
+	flow_act->pkt_reक्रमmat = शून्य;
 	flow_act->flags |= FLOW_ACT_IGNORE_FLOW_LEVEL;
 	rule = mlx5_add_flow_rules(fdb, spec, flow_act, dest, num_dest);
-	if (IS_ERR(rule))
-		goto revert_changes;
+	अगर (IS_ERR(rule))
+		जाओ revert_changes;
 
-	goto out;
+	जाओ out;
 
 revert_changes:
 	/* revert the changes that were made to the original flow_act
 	 * and fall-back to the original rule actions
 	 */
-	mlx5_eswitch_termtbl_actions_move(&term_tbl_act, flow_act);
+	mlx5_eचयन_termtbl_actions_move(&term_tbl_act, flow_act);
 
-	for (curr_dest = 0; curr_dest < num_vport_dests; curr_dest++) {
-		struct mlx5_termtbl_handle *tt = attr->dests[curr_dest].termtbl;
+	क्रम (curr_dest = 0; curr_dest < num_vport_dests; curr_dest++) अणु
+		काष्ठा mlx5_termtbl_handle *tt = attr->dests[curr_dest].termtbl;
 
-		/* search for the destination associated with the
+		/* search क्रम the destination associated with the
 		 * current term table
 		 */
-		for (i = 0; i < num_dest; i++) {
-			if (dest[i].ft != tt->termtbl)
-				continue;
+		क्रम (i = 0; i < num_dest; i++) अणु
+			अगर (dest[i].ft != tt->termtbl)
+				जारी;
 
-			memset(&dest[i], 0, sizeof(dest[i]));
+			स_रखो(&dest[i], 0, माप(dest[i]));
 			dest[i].type = MLX5_FLOW_DESTINATION_TYPE_VPORT;
 			dest[i].vport.num = tt->dest.vport.num;
 			dest[i].vport.vhca_id = tt->dest.vport.vhca_id;
-			mlx5_eswitch_termtbl_put(esw, tt);
-			break;
-		}
-	}
+			mlx5_eचयन_termtbl_put(esw, tt);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	rule = mlx5_add_flow_rules(fdb, spec, flow_act, dest, num_dest);
 out:
-	return rule;
-}
+	वापस rule;
+पूर्ण

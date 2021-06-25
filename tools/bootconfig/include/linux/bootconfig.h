@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _BOOTCONFIG_LINUX_BOOTCONFIG_H
-#define _BOOTCONFIG_LINUX_BOOTCONFIG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _BOOTCONFIG_LINUX_BOOTCONFIG_H
+#घोषणा _BOOTCONFIG_LINUX_BOOTCONFIG_H
 
-#include "../../../../include/linux/bootconfig.h"
+#समावेश "../../../../include/linux/bootconfig.h"
 
-#ifndef fallthrough
+#अगर_अघोषित fallthrough
 # define fallthrough
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

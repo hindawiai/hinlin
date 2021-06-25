@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,377 +23,377 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 
-#include "nouveau_drv.h"
-#include "nouveau_usif.h"
-#include "nouveau_abi16.h"
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_usif.h"
+#समावेश "nouveau_abi16.h"
 
-#include <nvif/notify.h>
-#include <nvif/unpack.h>
-#include <nvif/client.h>
-#include <nvif/event.h>
-#include <nvif/ioctl.h>
+#समावेश <nvअगर/notअगरy.h>
+#समावेश <nvअगर/unpack.h>
+#समावेश <nvअगर/client.h>
+#समावेश <nvअगर/event.h>
+#समावेश <nvअगर/ioctl.h>
 
-struct usif_notify_p {
-	struct drm_pending_event base;
-	struct {
-		struct drm_event base;
+काष्ठा usअगर_notअगरy_p अणु
+	काष्ठा drm_pending_event base;
+	काष्ठा अणु
+		काष्ठा drm_event base;
 		u8 data[];
-	} e;
-};
+	पूर्ण e;
+पूर्ण;
 
-struct usif_notify {
-	struct list_head head;
+काष्ठा usअगर_notअगरy अणु
+	काष्ठा list_head head;
 	atomic_t enabled;
 	u32 handle;
 	u16 reply;
 	u8  route;
 	u64 token;
-	struct usif_notify_p *p;
-};
+	काष्ठा usअगर_notअगरy_p *p;
+पूर्ण;
 
-static inline struct usif_notify *
-usif_notify_find(struct drm_file *filp, u32 handle)
-{
-	struct nouveau_cli *cli = nouveau_cli(filp);
-	struct usif_notify *ntfy;
-	list_for_each_entry(ntfy, &cli->notifys, head) {
-		if (ntfy->handle == handle)
-			return ntfy;
-	}
-	return NULL;
-}
+अटल अंतरभूत काष्ठा usअगर_notअगरy *
+usअगर_notअगरy_find(काष्ठा drm_file *filp, u32 handle)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(filp);
+	काष्ठा usअगर_notअगरy *ntfy;
+	list_क्रम_each_entry(ntfy, &cli->notअगरys, head) अणु
+		अगर (ntfy->handle == handle)
+			वापस ntfy;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static inline void
-usif_notify_dtor(struct usif_notify *ntfy)
-{
+अटल अंतरभूत व्योम
+usअगर_notअगरy_dtor(काष्ठा usअगर_notअगरy *ntfy)
+अणु
 	list_del(&ntfy->head);
-	kfree(ntfy);
-}
+	kमुक्त(ntfy);
+पूर्ण
 
-int
-usif_notify(const void *header, u32 length, const void *data, u32 size)
-{
-	struct usif_notify *ntfy = NULL;
-	const union {
-		struct nvif_notify_rep_v0 v0;
-	} *rep = header;
-	struct drm_device *dev;
-	struct drm_file *filp;
-	unsigned long flags;
+पूर्णांक
+usअगर_notअगरy(स्थिर व्योम *header, u32 length, स्थिर व्योम *data, u32 size)
+अणु
+	काष्ठा usअगर_notअगरy *ntfy = शून्य;
+	स्थिर जोड़ अणु
+		काष्ठा nvअगर_notअगरy_rep_v0 v0;
+	पूर्ण *rep = header;
+	काष्ठा drm_device *dev;
+	काष्ठा drm_file *filp;
+	अचिन्हित दीर्घ flags;
 
-	if (length == sizeof(rep->v0) && rep->v0.version == 0) {
-		if (WARN_ON(!(ntfy = (void *)(unsigned long)rep->v0.token)))
-			return NVIF_NOTIFY_DROP;
+	अगर (length == माप(rep->v0) && rep->v0.version == 0) अणु
+		अगर (WARN_ON(!(ntfy = (व्योम *)(अचिन्हित दीर्घ)rep->v0.token)))
+			वापस NVIF_NOTIFY_DROP;
 		BUG_ON(rep->v0.route != NVDRM_NOTIFY_USIF);
-	} else
-	if (WARN_ON(1))
-		return NVIF_NOTIFY_DROP;
+	पूर्ण अन्यथा
+	अगर (WARN_ON(1))
+		वापस NVIF_NOTIFY_DROP;
 
-	if (WARN_ON(!ntfy->p || ntfy->reply != (length + size)))
-		return NVIF_NOTIFY_DROP;
+	अगर (WARN_ON(!ntfy->p || ntfy->reply != (length + size)))
+		वापस NVIF_NOTIFY_DROP;
 	filp = ntfy->p->base.file_priv;
 	dev = filp->minor->dev;
 
-	memcpy(&ntfy->p->e.data[0], header, length);
-	memcpy(&ntfy->p->e.data[length], data, size);
-	switch (rep->v0.version) {
-	case 0: {
-		struct nvif_notify_rep_v0 *rep = (void *)ntfy->p->e.data;
+	स_नकल(&ntfy->p->e.data[0], header, length);
+	स_नकल(&ntfy->p->e.data[length], data, size);
+	चयन (rep->v0.version) अणु
+	हाल 0: अणु
+		काष्ठा nvअगर_notअगरy_rep_v0 *rep = (व्योम *)ntfy->p->e.data;
 		rep->route = ntfy->route;
 		rep->token = ntfy->token;
-	}
-		break;
-	default:
+	पूर्ण
+		अवरोध;
+	शेष:
 		BUG();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_lock_irqsave(&dev->event_lock, flags);
-	if (!WARN_ON(filp->event_space < ntfy->p->e.base.length)) {
+	अगर (!WARN_ON(filp->event_space < ntfy->p->e.base.length)) अणु
 		list_add_tail(&ntfy->p->base.link, &filp->event_list);
 		filp->event_space -= ntfy->p->e.base.length;
-	}
-	wake_up_interruptible(&filp->event_wait);
+	पूर्ण
+	wake_up_पूर्णांकerruptible(&filp->event_रुको);
 	spin_unlock_irqrestore(&dev->event_lock, flags);
 	atomic_set(&ntfy->enabled, 0);
-	return NVIF_NOTIFY_DROP;
-}
+	वापस NVIF_NOTIFY_DROP;
+पूर्ण
 
-static int
-usif_notify_new(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
-{
-	struct nouveau_cli *cli = nouveau_cli(f);
-	struct nvif_client *client = &cli->base;
-	union {
-		struct nvif_ioctl_ntfy_new_v0 v0;
-	} *args = data;
-	union {
-		struct nvif_notify_req_v0 v0;
-	} *req;
-	struct usif_notify *ntfy;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+usअगर_notअगरy_new(काष्ठा drm_file *f, व्योम *data, u32 size, व्योम *argv, u32 argc)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(f);
+	काष्ठा nvअगर_client *client = &cli->base;
+	जोड़ अणु
+		काष्ठा nvअगर_ioctl_ntfy_new_v0 v0;
+	पूर्ण *args = data;
+	जोड़ अणु
+		काष्ठा nvअगर_notअगरy_req_v0 v0;
+	पूर्ण *req;
+	काष्ठा usअगर_notअगरy *ntfy;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
-		if (usif_notify_find(f, args->v0.index))
-			return -EEXIST;
-	} else
-		return ret;
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, true))) अणु
+		अगर (usअगर_notअगरy_find(f, args->v0.index))
+			वापस -EEXIST;
+	पूर्ण अन्यथा
+		वापस ret;
 	req = data;
 	ret = -ENOSYS;
 
-	if (!(ntfy = kmalloc(sizeof(*ntfy), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(ntfy = kदो_स्मृति(माप(*ntfy), GFP_KERNEL)))
+		वापस -ENOMEM;
 	atomic_set(&ntfy->enabled, 0);
 
-	if (!(ret = nvif_unpack(ret, &data, &size, req->v0, 0, 0, true))) {
-		ntfy->reply = sizeof(struct nvif_notify_rep_v0) + req->v0.reply;
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, req->v0, 0, 0, true))) अणु
+		ntfy->reply = माप(काष्ठा nvअगर_notअगरy_rep_v0) + req->v0.reply;
 		ntfy->route = req->v0.route;
 		ntfy->token = req->v0.token;
 		req->v0.route = NVDRM_NOTIFY_USIF;
-		req->v0.token = (unsigned long)(void *)ntfy;
-		ret = nvif_client_ioctl(client, argv, argc);
+		req->v0.token = (अचिन्हित दीर्घ)(व्योम *)ntfy;
+		ret = nvअगर_client_ioctl(client, argv, argc);
 		req->v0.token = ntfy->token;
 		req->v0.route = ntfy->route;
 		ntfy->handle = args->v0.index;
-	}
+	पूर्ण
 
-	if (ret == 0)
-		list_add(&ntfy->head, &cli->notifys);
-	if (ret)
-		kfree(ntfy);
-	return ret;
-}
+	अगर (ret == 0)
+		list_add(&ntfy->head, &cli->notअगरys);
+	अगर (ret)
+		kमुक्त(ntfy);
+	वापस ret;
+पूर्ण
 
-static int
-usif_notify_del(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
-{
-	struct nouveau_cli *cli = nouveau_cli(f);
-	struct nvif_client *client = &cli->base;
-	union {
-		struct nvif_ioctl_ntfy_del_v0 v0;
-	} *args = data;
-	struct usif_notify *ntfy;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+usअगर_notअगरy_del(काष्ठा drm_file *f, व्योम *data, u32 size, व्योम *argv, u32 argc)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(f);
+	काष्ठा nvअगर_client *client = &cli->base;
+	जोड़ अणु
+		काष्ठा nvअगर_ioctl_ntfy_del_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा usअगर_notअगरy *ntfy;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
-		if (!(ntfy = usif_notify_find(f, args->v0.index)))
-			return -ENOENT;
-	} else
-		return ret;
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, true))) अणु
+		अगर (!(ntfy = usअगर_notअगरy_find(f, args->v0.index)))
+			वापस -ENOENT;
+	पूर्ण अन्यथा
+		वापस ret;
 
-	ret = nvif_client_ioctl(client, argv, argc);
-	if (ret == 0)
-		usif_notify_dtor(ntfy);
-	return ret;
-}
+	ret = nvअगर_client_ioctl(client, argv, argc);
+	अगर (ret == 0)
+		usअगर_notअगरy_dtor(ntfy);
+	वापस ret;
+पूर्ण
 
-static int
-usif_notify_get(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
-{
-	struct nouveau_cli *cli = nouveau_cli(f);
-	struct nvif_client *client = &cli->base;
-	union {
-		struct nvif_ioctl_ntfy_del_v0 v0;
-	} *args = data;
-	struct usif_notify *ntfy;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+usअगर_notअगरy_get(काष्ठा drm_file *f, व्योम *data, u32 size, व्योम *argv, u32 argc)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(f);
+	काष्ठा nvअगर_client *client = &cli->base;
+	जोड़ अणु
+		काष्ठा nvअगर_ioctl_ntfy_del_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा usअगर_notअगरy *ntfy;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
-		if (!(ntfy = usif_notify_find(f, args->v0.index)))
-			return -ENOENT;
-	} else
-		return ret;
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, true))) अणु
+		अगर (!(ntfy = usअगर_notअगरy_find(f, args->v0.index)))
+			वापस -ENOENT;
+	पूर्ण अन्यथा
+		वापस ret;
 
-	if (atomic_xchg(&ntfy->enabled, 1))
-		return 0;
+	अगर (atomic_xchg(&ntfy->enabled, 1))
+		वापस 0;
 
-	ntfy->p = kmalloc(sizeof(*ntfy->p) + ntfy->reply, GFP_KERNEL);
-	if (ret = -ENOMEM, !ntfy->p)
-		goto done;
+	ntfy->p = kदो_स्मृति(माप(*ntfy->p) + ntfy->reply, GFP_KERNEL);
+	अगर (ret = -ENOMEM, !ntfy->p)
+		जाओ करोne;
 	ntfy->p->base.event = &ntfy->p->e.base;
 	ntfy->p->base.file_priv = f;
 	ntfy->p->e.base.type = DRM_NOUVEAU_EVENT_NVIF;
-	ntfy->p->e.base.length = sizeof(ntfy->p->e.base) + ntfy->reply;
+	ntfy->p->e.base.length = माप(ntfy->p->e.base) + ntfy->reply;
 
-	ret = nvif_client_ioctl(client, argv, argc);
-done:
-	if (ret) {
+	ret = nvअगर_client_ioctl(client, argv, argc);
+करोne:
+	अगर (ret) अणु
 		atomic_set(&ntfy->enabled, 0);
-		kfree(ntfy->p);
-	}
-	return ret;
-}
+		kमुक्त(ntfy->p);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int
-usif_notify_put(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
-{
-	struct nouveau_cli *cli = nouveau_cli(f);
-	struct nvif_client *client = &cli->base;
-	union {
-		struct nvif_ioctl_ntfy_put_v0 v0;
-	} *args = data;
-	struct usif_notify *ntfy;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+usअगर_notअगरy_put(काष्ठा drm_file *f, व्योम *data, u32 size, व्योम *argv, u32 argc)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(f);
+	काष्ठा nvअगर_client *client = &cli->base;
+	जोड़ अणु
+		काष्ठा nvअगर_ioctl_ntfy_put_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा usअगर_notअगरy *ntfy;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
-		if (!(ntfy = usif_notify_find(f, args->v0.index)))
-			return -ENOENT;
-	} else
-		return ret;
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, true))) अणु
+		अगर (!(ntfy = usअगर_notअगरy_find(f, args->v0.index)))
+			वापस -ENOENT;
+	पूर्ण अन्यथा
+		वापस ret;
 
-	ret = nvif_client_ioctl(client, argv, argc);
-	if (ret == 0 && atomic_xchg(&ntfy->enabled, 0))
-		kfree(ntfy->p);
-	return ret;
-}
+	ret = nvअगर_client_ioctl(client, argv, argc);
+	अगर (ret == 0 && atomic_xchg(&ntfy->enabled, 0))
+		kमुक्त(ntfy->p);
+	वापस ret;
+पूर्ण
 
-struct usif_object {
-	struct list_head head;
-	struct list_head ntfy;
+काष्ठा usअगर_object अणु
+	काष्ठा list_head head;
+	काष्ठा list_head ntfy;
 	u8  route;
 	u64 token;
-};
+पूर्ण;
 
-static void
-usif_object_dtor(struct usif_object *object)
-{
+अटल व्योम
+usअगर_object_dtor(काष्ठा usअगर_object *object)
+अणु
 	list_del(&object->head);
-	kfree(object);
-}
+	kमुक्त(object);
+पूर्ण
 
-static int
-usif_object_new(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
-{
-	struct nouveau_cli *cli = nouveau_cli(f);
-	struct nvif_client *client = &cli->base;
-	union {
-		struct nvif_ioctl_new_v0 v0;
-	} *args = data;
-	struct usif_object *object;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+usअगर_object_new(काष्ठा drm_file *f, व्योम *data, u32 size, व्योम *argv, u32 argc)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(f);
+	काष्ठा nvअगर_client *client = &cli->base;
+	जोड़ अणु
+		काष्ठा nvअगर_ioctl_new_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा usअगर_object *object;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(object = kmalloc(sizeof(*object), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(object = kदो_स्मृति(माप(*object), GFP_KERNEL)))
+		वापस -ENOMEM;
 	list_add(&object->head, &cli->objects);
 
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, true))) अणु
 		object->route = args->v0.route;
 		object->token = args->v0.token;
 		args->v0.route = NVDRM_OBJECT_USIF;
-		args->v0.token = (unsigned long)(void *)object;
-		ret = nvif_client_ioctl(client, argv, argc);
+		args->v0.token = (अचिन्हित दीर्घ)(व्योम *)object;
+		ret = nvअगर_client_ioctl(client, argv, argc);
 		args->v0.token = object->token;
 		args->v0.route = object->route;
-	}
+	पूर्ण
 
-	if (ret)
-		usif_object_dtor(object);
-	return ret;
-}
+	अगर (ret)
+		usअगर_object_dtor(object);
+	वापस ret;
+पूर्ण
 
-int
-usif_ioctl(struct drm_file *filp, void __user *user, u32 argc)
-{
-	struct nouveau_cli *cli = nouveau_cli(filp);
-	struct nvif_client *client = &cli->base;
-	void *data = kmalloc(argc, GFP_KERNEL);
+पूर्णांक
+usअगर_ioctl(काष्ठा drm_file *filp, व्योम __user *user, u32 argc)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(filp);
+	काष्ठा nvअगर_client *client = &cli->base;
+	व्योम *data = kदो_स्मृति(argc, GFP_KERNEL);
 	u32   size = argc;
-	union {
-		struct nvif_ioctl_v0 v0;
-	} *argv = data;
-	struct usif_object *object;
+	जोड़ अणु
+		काष्ठा nvअगर_ioctl_v0 v0;
+	पूर्ण *argv = data;
+	काष्ठा usअगर_object *object;
 	u8 owner;
-	int ret;
+	पूर्णांक ret;
 
-	if (ret = -ENOMEM, !argv)
-		goto done;
-	if (ret = -EFAULT, copy_from_user(argv, user, size))
-		goto done;
+	अगर (ret = -ENOMEM, !argv)
+		जाओ करोne;
+	अगर (ret = -EFAULT, copy_from_user(argv, user, size))
+		जाओ करोne;
 
-	if (!(ret = nvif_unpack(-ENOSYS, &data, &size, argv->v0, 0, 0, true))) {
-		/* block access to objects not created via this interface */
+	अगर (!(ret = nvअगर_unpack(-ENOSYS, &data, &size, argv->v0, 0, 0, true))) अणु
+		/* block access to objects not created via this पूर्णांकerface */
 		owner = argv->v0.owner;
-		if (argv->v0.object == 0ULL &&
+		अगर (argv->v0.object == 0ULL &&
 		    argv->v0.type != NVIF_IOCTL_V0_DEL)
 			argv->v0.owner = NVDRM_OBJECT_ANY; /* except client */
-		else
+		अन्यथा
 			argv->v0.owner = NVDRM_OBJECT_USIF;
-	} else
-		goto done;
+	पूर्ण अन्यथा
+		जाओ करोne;
 
-	/* USIF slightly abuses some return-only ioctl members in order
-	 * to provide interoperability with the older ABI16 objects
+	/* USIF slightly abuses some वापस-only ioctl members in order
+	 * to provide पूर्णांकeroperability with the older ABI16 objects
 	 */
 	mutex_lock(&cli->mutex);
-	if (argv->v0.route) {
-		if (ret = -EINVAL, argv->v0.route == 0xff)
-			ret = nouveau_abi16_usif(filp, argv, argc);
-		if (ret) {
+	अगर (argv->v0.route) अणु
+		अगर (ret = -EINVAL, argv->v0.route == 0xff)
+			ret = nouveau_abi16_usअगर(filp, argv, argc);
+		अगर (ret) अणु
 			mutex_unlock(&cli->mutex);
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-	switch (argv->v0.type) {
-	case NVIF_IOCTL_V0_NEW:
-		ret = usif_object_new(filp, data, size, argv, argc);
-		break;
-	case NVIF_IOCTL_V0_NTFY_NEW:
-		ret = usif_notify_new(filp, data, size, argv, argc);
-		break;
-	case NVIF_IOCTL_V0_NTFY_DEL:
-		ret = usif_notify_del(filp, data, size, argv, argc);
-		break;
-	case NVIF_IOCTL_V0_NTFY_GET:
-		ret = usif_notify_get(filp, data, size, argv, argc);
-		break;
-	case NVIF_IOCTL_V0_NTFY_PUT:
-		ret = usif_notify_put(filp, data, size, argv, argc);
-		break;
-	default:
-		ret = nvif_client_ioctl(client, argv, argc);
-		break;
-	}
-	if (argv->v0.route == NVDRM_OBJECT_USIF) {
-		object = (void *)(unsigned long)argv->v0.token;
+	चयन (argv->v0.type) अणु
+	हाल NVIF_IOCTL_V0_NEW:
+		ret = usअगर_object_new(filp, data, size, argv, argc);
+		अवरोध;
+	हाल NVIF_IOCTL_V0_NTFY_NEW:
+		ret = usअगर_notअगरy_new(filp, data, size, argv, argc);
+		अवरोध;
+	हाल NVIF_IOCTL_V0_NTFY_DEL:
+		ret = usअगर_notअगरy_del(filp, data, size, argv, argc);
+		अवरोध;
+	हाल NVIF_IOCTL_V0_NTFY_GET:
+		ret = usअगर_notअगरy_get(filp, data, size, argv, argc);
+		अवरोध;
+	हाल NVIF_IOCTL_V0_NTFY_PUT:
+		ret = usअगर_notअगरy_put(filp, data, size, argv, argc);
+		अवरोध;
+	शेष:
+		ret = nvअगर_client_ioctl(client, argv, argc);
+		अवरोध;
+	पूर्ण
+	अगर (argv->v0.route == NVDRM_OBJECT_USIF) अणु
+		object = (व्योम *)(अचिन्हित दीर्घ)argv->v0.token;
 		argv->v0.route = object->route;
 		argv->v0.token = object->token;
-		if (ret == 0 && argv->v0.type == NVIF_IOCTL_V0_DEL) {
+		अगर (ret == 0 && argv->v0.type == NVIF_IOCTL_V0_DEL) अणु
 			list_del(&object->head);
-			kfree(object);
-		}
-	} else {
+			kमुक्त(object);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		argv->v0.route = NVIF_IOCTL_V0_ROUTE_HIDDEN;
 		argv->v0.token = 0;
-	}
+	पूर्ण
 	argv->v0.owner = owner;
 	mutex_unlock(&cli->mutex);
 
-	if (copy_to_user(user, argv, argc))
+	अगर (copy_to_user(user, argv, argc))
 		ret = -EFAULT;
-done:
-	kfree(argv);
-	return ret;
-}
+करोne:
+	kमुक्त(argv);
+	वापस ret;
+पूर्ण
 
-void
-usif_client_fini(struct nouveau_cli *cli)
-{
-	struct usif_object *object, *otemp;
-	struct usif_notify *notify, *ntemp;
+व्योम
+usअगर_client_fini(काष्ठा nouveau_cli *cli)
+अणु
+	काष्ठा usअगर_object *object, *otemp;
+	काष्ठा usअगर_notअगरy *notअगरy, *ntemp;
 
-	list_for_each_entry_safe(notify, ntemp, &cli->notifys, head) {
-		usif_notify_dtor(notify);
-	}
+	list_क्रम_each_entry_safe(notअगरy, ntemp, &cli->notअगरys, head) अणु
+		usअगर_notअगरy_dtor(notअगरy);
+	पूर्ण
 
-	list_for_each_entry_safe(object, otemp, &cli->objects, head) {
-		usif_object_dtor(object);
-	}
-}
+	list_क्रम_each_entry_safe(object, otemp, &cli->objects, head) अणु
+		usअगर_object_dtor(object);
+	पूर्ण
+पूर्ण
 
-void
-usif_client_init(struct nouveau_cli *cli)
-{
+व्योम
+usअगर_client_init(काष्ठा nouveau_cli *cli)
+अणु
 	INIT_LIST_HEAD(&cli->objects);
-	INIT_LIST_HEAD(&cli->notifys);
-}
+	INIT_LIST_HEAD(&cli->notअगरys);
+पूर्ण

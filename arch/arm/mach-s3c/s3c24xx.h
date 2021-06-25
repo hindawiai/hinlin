@@ -1,124 +1,125 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
  *
- * Common Header for S3C24XX SoCs
+ * Common Header क्रम S3C24XX SoCs
  */
 
-#ifndef __ARCH_ARM_MACH_S3C24XX_COMMON_H
-#define __ARCH_ARM_MACH_S3C24XX_COMMON_H __FILE__
+#अगर_अघोषित __ARCH_ARM_MACH_S3C24XX_COMMON_H
+#घोषणा __ARCH_ARM_MACH_S3C24XX_COMMON_H __खाता__
 
-#include <linux/reboot.h>
-#include <mach/irqs.h>
+#समावेश <linux/reboot.h>
+#समावेश <mach/irqs.h>
 
-struct s3c2410_uartcfg;
+काष्ठा s3c2410_uartcfg;
 
-#ifdef CONFIG_CPU_S3C2410
-extern  int s3c2410_init(void);
-extern  int s3c2410a_init(void);
-extern void s3c2410_map_io(void);
-extern void s3c2410_init_uarts(struct s3c2410_uartcfg *cfg, int no);
-extern void s3c2410_init_clocks(int xtal);
-extern void s3c2410_init_irq(void);
-#else
-#define s3c2410_init_clocks NULL
-#define s3c2410_init_uarts NULL
-#define s3c2410_map_io NULL
-#define s3c2410_init NULL
-#define s3c2410a_init NULL
-#endif
+#अगर_घोषित CONFIG_CPU_S3C2410
+बाह्य  पूर्णांक s3c2410_init(व्योम);
+बाह्य  पूर्णांक s3c2410a_init(व्योम);
+बाह्य व्योम s3c2410_map_io(व्योम);
+बाह्य व्योम s3c2410_init_uarts(काष्ठा s3c2410_uartcfg *cfg, पूर्णांक no);
+बाह्य व्योम s3c2410_init_घड़ीs(पूर्णांक xtal);
+बाह्य व्योम s3c2410_init_irq(व्योम);
+#अन्यथा
+#घोषणा s3c2410_init_घड़ीs शून्य
+#घोषणा s3c2410_init_uarts शून्य
+#घोषणा s3c2410_map_io शून्य
+#घोषणा s3c2410_init शून्य
+#घोषणा s3c2410a_init शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_S3C2412
-extern  int s3c2412_init(void);
-extern void s3c2412_map_io(void);
-extern void s3c2412_init_uarts(struct s3c2410_uartcfg *cfg, int no);
-extern void s3c2412_init_clocks(int xtal);
-extern  int s3c2412_baseclk_add(void);
-extern void s3c2412_init_irq(void);
-#else
-#define s3c2412_init_clocks NULL
-#define s3c2412_init_uarts NULL
-#define s3c2412_map_io NULL
-#define s3c2412_init NULL
-#endif
+#अगर_घोषित CONFIG_CPU_S3C2412
+बाह्य  पूर्णांक s3c2412_init(व्योम);
+बाह्य व्योम s3c2412_map_io(व्योम);
+बाह्य व्योम s3c2412_init_uarts(काष्ठा s3c2410_uartcfg *cfg, पूर्णांक no);
+बाह्य व्योम s3c2412_init_घड़ीs(पूर्णांक xtal);
+बाह्य  पूर्णांक s3c2412_baseclk_add(व्योम);
+बाह्य व्योम s3c2412_init_irq(व्योम);
+#अन्यथा
+#घोषणा s3c2412_init_घड़ीs शून्य
+#घोषणा s3c2412_init_uarts शून्य
+#घोषणा s3c2412_map_io शून्य
+#घोषणा s3c2412_init शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_S3C2416
-extern  int s3c2416_init(void);
-extern void s3c2416_map_io(void);
-extern void s3c2416_init_uarts(struct s3c2410_uartcfg *cfg, int no);
-extern void s3c2416_init_clocks(int xtal);
-extern  int s3c2416_baseclk_add(void);
-extern void s3c2416_init_irq(void);
+#अगर_घोषित CONFIG_CPU_S3C2416
+बाह्य  पूर्णांक s3c2416_init(व्योम);
+बाह्य व्योम s3c2416_map_io(व्योम);
+बाह्य व्योम s3c2416_init_uarts(काष्ठा s3c2410_uartcfg *cfg, पूर्णांक no);
+बाह्य व्योम s3c2416_init_घड़ीs(पूर्णांक xtal);
+बाह्य  पूर्णांक s3c2416_baseclk_add(व्योम);
+बाह्य व्योम s3c2416_init_irq(व्योम);
 
-extern struct syscore_ops s3c2416_irq_syscore_ops;
-#else
-#define s3c2416_init_clocks NULL
-#define s3c2416_init_uarts NULL
-#define s3c2416_map_io NULL
-#define s3c2416_init NULL
-#endif
+बाह्य काष्ठा syscore_ops s3c2416_irq_syscore_ops;
+#अन्यथा
+#घोषणा s3c2416_init_घड़ीs शून्य
+#घोषणा s3c2416_init_uarts शून्य
+#घोषणा s3c2416_map_io शून्य
+#घोषणा s3c2416_init शून्य
+#पूर्ण_अगर
 
-#if defined(CONFIG_CPU_S3C2440) || defined(CONFIG_CPU_S3C2442)
-extern void s3c244x_map_io(void);
-extern void s3c244x_init_uarts(struct s3c2410_uartcfg *cfg, int no);
-#else
-#define s3c244x_init_uarts NULL
-#endif
+#अगर defined(CONFIG_CPU_S3C2440) || defined(CONFIG_CPU_S3C2442)
+बाह्य व्योम s3c244x_map_io(व्योम);
+बाह्य व्योम s3c244x_init_uarts(काष्ठा s3c2410_uartcfg *cfg, पूर्णांक no);
+#अन्यथा
+#घोषणा s3c244x_init_uarts शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_S3C2440
-extern  int s3c2440_init(void);
-extern void s3c2440_map_io(void);
-extern void s3c2440_init_clocks(int xtal);
-extern void s3c2440_init_irq(void);
-#else
-#define s3c2440_init NULL
-#define s3c2440_map_io NULL
-#endif
+#अगर_घोषित CONFIG_CPU_S3C2440
+बाह्य  पूर्णांक s3c2440_init(व्योम);
+बाह्य व्योम s3c2440_map_io(व्योम);
+बाह्य व्योम s3c2440_init_घड़ीs(पूर्णांक xtal);
+बाह्य व्योम s3c2440_init_irq(व्योम);
+#अन्यथा
+#घोषणा s3c2440_init शून्य
+#घोषणा s3c2440_map_io शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_S3C2442
-extern  int s3c2442_init(void);
-extern void s3c2442_map_io(void);
-extern void s3c2442_init_clocks(int xtal);
-extern void s3c2442_init_irq(void);
-#else
-#define s3c2442_init NULL
-#define s3c2442_map_io NULL
-#endif
+#अगर_घोषित CONFIG_CPU_S3C2442
+बाह्य  पूर्णांक s3c2442_init(व्योम);
+बाह्य व्योम s3c2442_map_io(व्योम);
+बाह्य व्योम s3c2442_init_घड़ीs(पूर्णांक xtal);
+बाह्य व्योम s3c2442_init_irq(व्योम);
+#अन्यथा
+#घोषणा s3c2442_init शून्य
+#घोषणा s3c2442_map_io शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_S3C2443
-extern  int s3c2443_init(void);
-extern void s3c2443_map_io(void);
-extern void s3c2443_init_uarts(struct s3c2410_uartcfg *cfg, int no);
-extern void s3c2443_init_clocks(int xtal);
-extern  int s3c2443_baseclk_add(void);
-extern void s3c2443_init_irq(void);
-#else
-#define s3c2443_init_clocks NULL
-#define s3c2443_init_uarts NULL
-#define s3c2443_map_io NULL
-#define s3c2443_init NULL
-#endif
+#अगर_घोषित CONFIG_CPU_S3C2443
+बाह्य  पूर्णांक s3c2443_init(व्योम);
+बाह्य व्योम s3c2443_map_io(व्योम);
+बाह्य व्योम s3c2443_init_uarts(काष्ठा s3c2410_uartcfg *cfg, पूर्णांक no);
+बाह्य व्योम s3c2443_init_घड़ीs(पूर्णांक xtal);
+बाह्य  पूर्णांक s3c2443_baseclk_add(व्योम);
+बाह्य व्योम s3c2443_init_irq(व्योम);
+#अन्यथा
+#घोषणा s3c2443_init_घड़ीs शून्य
+#घोषणा s3c2443_init_uarts शून्य
+#घोषणा s3c2443_map_io शून्य
+#घोषणा s3c2443_init शून्य
+#पूर्ण_अगर
 
-extern struct syscore_ops s3c24xx_irq_syscore_ops;
+बाह्य काष्ठा syscore_ops s3c24xx_irq_syscore_ops;
 
-extern struct platform_device s3c2410_device_dma;
-extern struct platform_device s3c2412_device_dma;
-extern struct platform_device s3c2440_device_dma;
-extern struct platform_device s3c2443_device_dma;
+बाह्य काष्ठा platक्रमm_device s3c2410_device_dma;
+बाह्य काष्ठा platक्रमm_device s3c2412_device_dma;
+बाह्य काष्ठा platक्रमm_device s3c2440_device_dma;
+बाह्य काष्ठा platक्रमm_device s3c2443_device_dma;
 
-extern struct platform_device s3c2410_device_dclk;
+बाह्य काष्ठा platक्रमm_device s3c2410_device_dclk;
 
-enum s3c24xx_timer_mode {
+क्रमागत s3c24xx_समयr_mode अणु
 	S3C24XX_PWM0,
 	S3C24XX_PWM1,
 	S3C24XX_PWM2,
 	S3C24XX_PWM3,
 	S3C24XX_PWM4,
-};
+पूर्ण;
 
-extern void __init s3c24xx_set_timer_source(enum s3c24xx_timer_mode event,
-					    enum s3c24xx_timer_mode source);
-extern void __init s3c24xx_timer_init(void);
+बाह्य व्योम __init s3c24xx_set_समयr_source(क्रमागत s3c24xx_समयr_mode event,
+					    क्रमागत s3c24xx_समयr_mode source);
+बाह्य व्योम __init s3c24xx_समयr_init(व्योम);
 
-#endif /* __ARCH_ARM_MACH_S3C24XX_COMMON_H */
+#पूर्ण_अगर /* __ARCH_ARM_MACH_S3C24XX_COMMON_H */

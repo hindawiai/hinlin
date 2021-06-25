@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * This file is part of STM32 DAC driver
  *
@@ -7,251 +8,251 @@
  *	    Fabrice Gasnier <fabrice.gasnier@st.com>
  */
 
-#include <linux/bitfield.h>
-#include <linux/delay.h>
-#include <linux/iio/iio.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "stm32-dac-core.h"
+#समावेश "stm32-dac-core.h"
 
-#define STM32_DAC_CHANNEL_1		1
-#define STM32_DAC_CHANNEL_2		2
-#define STM32_DAC_IS_CHAN_1(ch)		((ch) & STM32_DAC_CHANNEL_1)
+#घोषणा STM32_DAC_CHANNEL_1		1
+#घोषणा STM32_DAC_CHANNEL_2		2
+#घोषणा STM32_DAC_IS_CHAN_1(ch)		((ch) & STM32_DAC_CHANNEL_1)
 
-#define STM32_DAC_AUTO_SUSPEND_DELAY_MS	2000
+#घोषणा STM32_DAC_AUTO_SUSPEND_DELAY_MS	2000
 
 /**
- * struct stm32_dac - private data of DAC driver
+ * काष्ठा sपंचांग32_dac - निजी data of DAC driver
  * @common:		reference to DAC common data
- * @lock:		lock to protect against potential races when reading
- *			and update CR, to keep it in sync with pm_runtime
+ * @lock:		lock to protect against potential races when पढ़ोing
+ *			and update CR, to keep it in sync with pm_runसमय
  */
-struct stm32_dac {
-	struct stm32_dac_common *common;
-	struct mutex		lock;
-};
+काष्ठा sपंचांग32_dac अणु
+	काष्ठा sपंचांग32_dac_common *common;
+	काष्ठा mutex		lock;
+पूर्ण;
 
-static int stm32_dac_is_enabled(struct iio_dev *indio_dev, int channel)
-{
-	struct stm32_dac *dac = iio_priv(indio_dev);
+अटल पूर्णांक sपंचांग32_dac_is_enabled(काष्ठा iio_dev *indio_dev, पूर्णांक channel)
+अणु
+	काष्ठा sपंचांग32_dac *dac = iio_priv(indio_dev);
 	u32 en, val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(dac->common->regmap, STM32_DAC_CR, &val);
-	if (ret < 0)
-		return ret;
-	if (STM32_DAC_IS_CHAN_1(channel))
+	ret = regmap_पढ़ो(dac->common->regmap, STM32_DAC_CR, &val);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (STM32_DAC_IS_CHAN_1(channel))
 		en = FIELD_GET(STM32_DAC_CR_EN1, val);
-	else
+	अन्यथा
 		en = FIELD_GET(STM32_DAC_CR_EN2, val);
 
-	return !!en;
-}
+	वापस !!en;
+पूर्ण
 
-static int stm32_dac_set_enable_state(struct iio_dev *indio_dev, int ch,
+अटल पूर्णांक sपंचांग32_dac_set_enable_state(काष्ठा iio_dev *indio_dev, पूर्णांक ch,
 				      bool enable)
-{
-	struct stm32_dac *dac = iio_priv(indio_dev);
-	struct device *dev = indio_dev->dev.parent;
+अणु
+	काष्ठा sपंचांग32_dac *dac = iio_priv(indio_dev);
+	काष्ठा device *dev = indio_dev->dev.parent;
 	u32 msk = STM32_DAC_IS_CHAN_1(ch) ? STM32_DAC_CR_EN1 : STM32_DAC_CR_EN2;
 	u32 en = enable ? msk : 0;
-	int ret;
+	पूर्णांक ret;
 
-	/* already enabled / disabled ? */
+	/* alपढ़ोy enabled / disabled ? */
 	mutex_lock(&dac->lock);
-	ret = stm32_dac_is_enabled(indio_dev, ch);
-	if (ret < 0 || enable == !!ret) {
+	ret = sपंचांग32_dac_is_enabled(indio_dev, ch);
+	अगर (ret < 0 || enable == !!ret) अणु
 		mutex_unlock(&dac->lock);
-		return ret < 0 ? ret : 0;
-	}
+		वापस ret < 0 ? ret : 0;
+	पूर्ण
 
-	if (enable) {
-		ret = pm_runtime_get_sync(dev);
-		if (ret < 0) {
-			pm_runtime_put_noidle(dev);
+	अगर (enable) अणु
+		ret = pm_runसमय_get_sync(dev);
+		अगर (ret < 0) अणु
+			pm_runसमय_put_noidle(dev);
 			mutex_unlock(&dac->lock);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = regmap_update_bits(dac->common->regmap, STM32_DAC_CR, msk, en);
 	mutex_unlock(&dac->lock);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&indio_dev->dev, "%s failed\n", en ?
 			"Enable" : "Disable");
-		goto err_put_pm;
-	}
+		जाओ err_put_pm;
+	पूर्ण
 
 	/*
-	 * When HFSEL is set, it is not allowed to write the DHRx register
-	 * during 8 clock cycles after the ENx bit is set. It is not allowed
+	 * When HFSEL is set, it is not allowed to ग_लिखो the DHRx रेजिस्टर
+	 * during 8 घड़ी cycles after the ENx bit is set. It is not allowed
 	 * to make software/hardware trigger during this period either.
 	 */
-	if (en && dac->common->hfsel)
+	अगर (en && dac->common->hfsel)
 		udelay(1);
 
-	if (!enable) {
-		pm_runtime_mark_last_busy(dev);
-		pm_runtime_put_autosuspend(dev);
-	}
+	अगर (!enable) अणु
+		pm_runसमय_mark_last_busy(dev);
+		pm_runसमय_put_स्वतःsuspend(dev);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_put_pm:
-	if (enable) {
-		pm_runtime_mark_last_busy(dev);
-		pm_runtime_put_autosuspend(dev);
-	}
+	अगर (enable) अणु
+		pm_runसमय_mark_last_busy(dev);
+		pm_runसमय_put_स्वतःsuspend(dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stm32_dac_get_value(struct stm32_dac *dac, int channel, int *val)
-{
-	int ret;
+अटल पूर्णांक sपंचांग32_dac_get_value(काष्ठा sपंचांग32_dac *dac, पूर्णांक channel, पूर्णांक *val)
+अणु
+	पूर्णांक ret;
 
-	if (STM32_DAC_IS_CHAN_1(channel))
-		ret = regmap_read(dac->common->regmap, STM32_DAC_DOR1, val);
-	else
-		ret = regmap_read(dac->common->regmap, STM32_DAC_DOR2, val);
+	अगर (STM32_DAC_IS_CHAN_1(channel))
+		ret = regmap_पढ़ो(dac->common->regmap, STM32_DAC_DOR1, val);
+	अन्यथा
+		ret = regmap_पढ़ो(dac->common->regmap, STM32_DAC_DOR2, val);
 
-	return ret ? ret : IIO_VAL_INT;
-}
+	वापस ret ? ret : IIO_VAL_INT;
+पूर्ण
 
-static int stm32_dac_set_value(struct stm32_dac *dac, int channel, int val)
-{
-	int ret;
+अटल पूर्णांक sपंचांग32_dac_set_value(काष्ठा sपंचांग32_dac *dac, पूर्णांक channel, पूर्णांक val)
+अणु
+	पूर्णांक ret;
 
-	if (STM32_DAC_IS_CHAN_1(channel))
-		ret = regmap_write(dac->common->regmap, STM32_DAC_DHR12R1, val);
-	else
-		ret = regmap_write(dac->common->regmap, STM32_DAC_DHR12R2, val);
+	अगर (STM32_DAC_IS_CHAN_1(channel))
+		ret = regmap_ग_लिखो(dac->common->regmap, STM32_DAC_DHR12R1, val);
+	अन्यथा
+		ret = regmap_ग_लिखो(dac->common->regmap, STM32_DAC_DHR12R2, val);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stm32_dac_read_raw(struct iio_dev *indio_dev,
-			      struct iio_chan_spec const *chan,
-			      int *val, int *val2, long mask)
-{
-	struct stm32_dac *dac = iio_priv(indio_dev);
+अटल पूर्णांक sपंचांग32_dac_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			      काष्ठा iio_chan_spec स्थिर *chan,
+			      पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा sपंचांग32_dac *dac = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		return stm32_dac_get_value(dac, chan->channel, val);
-	case IIO_CHAN_INFO_SCALE:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		वापस sपंचांग32_dac_get_value(dac, chan->channel, val);
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = dac->common->vref_mv;
 		*val2 = chan->scan_type.realbits;
-		return IIO_VAL_FRACTIONAL_LOG2;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_FRACTIONAL_LOG2;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int stm32_dac_write_raw(struct iio_dev *indio_dev,
-			       struct iio_chan_spec const *chan,
-			       int val, int val2, long mask)
-{
-	struct stm32_dac *dac = iio_priv(indio_dev);
+अटल पूर्णांक sपंचांग32_dac_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			       काष्ठा iio_chan_spec स्थिर *chan,
+			       पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा sपंचांग32_dac *dac = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		return stm32_dac_set_value(dac, chan->channel, val);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		वापस sपंचांग32_dac_set_value(dac, chan->channel, val);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int stm32_dac_debugfs_reg_access(struct iio_dev *indio_dev,
-					unsigned reg, unsigned writeval,
-					unsigned *readval)
-{
-	struct stm32_dac *dac = iio_priv(indio_dev);
+अटल पूर्णांक sपंचांग32_dac_debugfs_reg_access(काष्ठा iio_dev *indio_dev,
+					अचिन्हित reg, अचिन्हित ग_लिखोval,
+					अचिन्हित *पढ़ोval)
+अणु
+	काष्ठा sपंचांग32_dac *dac = iio_priv(indio_dev);
 
-	if (!readval)
-		return regmap_write(dac->common->regmap, reg, writeval);
-	else
-		return regmap_read(dac->common->regmap, reg, readval);
-}
+	अगर (!पढ़ोval)
+		वापस regmap_ग_लिखो(dac->common->regmap, reg, ग_लिखोval);
+	अन्यथा
+		वापस regmap_पढ़ो(dac->common->regmap, reg, पढ़ोval);
+पूर्ण
 
-static const struct iio_info stm32_dac_iio_info = {
-	.read_raw = stm32_dac_read_raw,
-	.write_raw = stm32_dac_write_raw,
-	.debugfs_reg_access = stm32_dac_debugfs_reg_access,
-};
+अटल स्थिर काष्ठा iio_info sपंचांग32_dac_iio_info = अणु
+	.पढ़ो_raw = sपंचांग32_dac_पढ़ो_raw,
+	.ग_लिखो_raw = sपंचांग32_dac_ग_लिखो_raw,
+	.debugfs_reg_access = sपंचांग32_dac_debugfs_reg_access,
+पूर्ण;
 
-static const char * const stm32_dac_powerdown_modes[] = {
+अटल स्थिर अक्षर * स्थिर sपंचांग32_dac_घातerकरोwn_modes[] = अणु
 	"three_state",
-};
+पूर्ण;
 
-static int stm32_dac_get_powerdown_mode(struct iio_dev *indio_dev,
-					const struct iio_chan_spec *chan)
-{
-	return 0;
-}
+अटल पूर्णांक sपंचांग32_dac_get_घातerकरोwn_mode(काष्ठा iio_dev *indio_dev,
+					स्थिर काष्ठा iio_chan_spec *chan)
+अणु
+	वापस 0;
+पूर्ण
 
-static int stm32_dac_set_powerdown_mode(struct iio_dev *indio_dev,
-					const struct iio_chan_spec *chan,
-					unsigned int type)
-{
-	return 0;
-}
+अटल पूर्णांक sपंचांग32_dac_set_घातerकरोwn_mode(काष्ठा iio_dev *indio_dev,
+					स्थिर काष्ठा iio_chan_spec *chan,
+					अचिन्हित पूर्णांक type)
+अणु
+	वापस 0;
+पूर्ण
 
-static ssize_t stm32_dac_read_powerdown(struct iio_dev *indio_dev,
-					uintptr_t private,
-					const struct iio_chan_spec *chan,
-					char *buf)
-{
-	int ret = stm32_dac_is_enabled(indio_dev, chan->channel);
+अटल sमाप_प्रकार sपंचांग32_dac_पढ़ो_घातerकरोwn(काष्ठा iio_dev *indio_dev,
+					uपूर्णांकptr_t निजी,
+					स्थिर काष्ठा iio_chan_spec *chan,
+					अक्षर *buf)
+अणु
+	पूर्णांक ret = sपंचांग32_dac_is_enabled(indio_dev, chan->channel);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return sysfs_emit(buf, "%d\n", ret ? 0 : 1);
-}
+	वापस sysfs_emit(buf, "%d\n", ret ? 0 : 1);
+पूर्ण
 
-static ssize_t stm32_dac_write_powerdown(struct iio_dev *indio_dev,
-					 uintptr_t private,
-					 const struct iio_chan_spec *chan,
-					 const char *buf, size_t len)
-{
-	bool powerdown;
-	int ret;
+अटल sमाप_प्रकार sपंचांग32_dac_ग_लिखो_घातerकरोwn(काष्ठा iio_dev *indio_dev,
+					 uपूर्णांकptr_t निजी,
+					 स्थिर काष्ठा iio_chan_spec *chan,
+					 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	bool घातerकरोwn;
+	पूर्णांक ret;
 
-	ret = strtobool(buf, &powerdown);
-	if (ret)
-		return ret;
+	ret = strtobool(buf, &घातerकरोwn);
+	अगर (ret)
+		वापस ret;
 
-	ret = stm32_dac_set_enable_state(indio_dev, chan->channel, !powerdown);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_dac_set_enable_state(indio_dev, chan->channel, !घातerकरोwn);
+	अगर (ret)
+		वापस ret;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static const struct iio_enum stm32_dac_powerdown_mode_en = {
-	.items = stm32_dac_powerdown_modes,
-	.num_items = ARRAY_SIZE(stm32_dac_powerdown_modes),
-	.get = stm32_dac_get_powerdown_mode,
-	.set = stm32_dac_set_powerdown_mode,
-};
+अटल स्थिर काष्ठा iio_क्रमागत sपंचांग32_dac_घातerकरोwn_mode_en = अणु
+	.items = sपंचांग32_dac_घातerकरोwn_modes,
+	.num_items = ARRAY_SIZE(sपंचांग32_dac_घातerकरोwn_modes),
+	.get = sपंचांग32_dac_get_घातerकरोwn_mode,
+	.set = sपंचांग32_dac_set_घातerकरोwn_mode,
+पूर्ण;
 
-static const struct iio_chan_spec_ext_info stm32_dac_ext_info[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec_ext_info sपंचांग32_dac_ext_info[] = अणु
+	अणु
 		.name = "powerdown",
-		.read = stm32_dac_read_powerdown,
-		.write = stm32_dac_write_powerdown,
+		.पढ़ो = sपंचांग32_dac_पढ़ो_घातerकरोwn,
+		.ग_लिखो = sपंचांग32_dac_ग_लिखो_घातerकरोwn,
 		.shared = IIO_SEPARATE,
-	},
-	IIO_ENUM("powerdown_mode", IIO_SEPARATE, &stm32_dac_powerdown_mode_en),
-	IIO_ENUM_AVAILABLE("powerdown_mode", &stm32_dac_powerdown_mode_en),
-	{},
-};
+	पूर्ण,
+	IIO_ENUM("powerdown_mode", IIO_SEPARATE, &sपंचांग32_dac_घातerकरोwn_mode_en),
+	IIO_ENUM_AVAILABLE("powerdown_mode", &sपंचांग32_dac_घातerकरोwn_mode_en),
+	अणुपूर्ण,
+पूर्ण;
 
-#define STM32_DAC_CHANNEL(chan, name) {			\
+#घोषणा STM32_DAC_CHANNEL(chan, name) अणु			\
 	.type = IIO_VOLTAGE,				\
 	.indexed = 1,					\
 	.output = 1,					\
@@ -260,43 +261,43 @@ static const struct iio_chan_spec_ext_info stm32_dac_ext_info[] = {
 		BIT(IIO_CHAN_INFO_RAW) |		\
 		BIT(IIO_CHAN_INFO_SCALE),		\
 	/* scan_index is always 0 as num_channels is 1 */ \
-	.scan_type = {					\
+	.scan_type = अणु					\
 		.sign = 'u',				\
 		.realbits = 12,				\
 		.storagebits = 16,			\
-	},						\
+	पूर्ण,						\
 	.datasheet_name = name,				\
-	.ext_info = stm32_dac_ext_info			\
-}
+	.ext_info = sपंचांग32_dac_ext_info			\
+पूर्ण
 
-static const struct iio_chan_spec stm32_dac_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec sपंचांग32_dac_channels[] = अणु
 	STM32_DAC_CHANNEL(STM32_DAC_CHANNEL_1, "out1"),
 	STM32_DAC_CHANNEL(STM32_DAC_CHANNEL_2, "out2"),
-};
+पूर्ण;
 
-static int stm32_dac_chan_of_init(struct iio_dev *indio_dev)
-{
-	struct device_node *np = indio_dev->dev.of_node;
-	unsigned int i;
+अटल पूर्णांक sपंचांग32_dac_chan_of_init(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा device_node *np = indio_dev->dev.of_node;
+	अचिन्हित पूर्णांक i;
 	u32 channel;
-	int ret;
+	पूर्णांक ret;
 
-	ret = of_property_read_u32(np, "reg", &channel);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "reg", &channel);
+	अगर (ret) अणु
 		dev_err(&indio_dev->dev, "Failed to read reg property\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(stm32_dac_channels); i++) {
-		if (stm32_dac_channels[i].channel == channel)
-			break;
-	}
-	if (i >= ARRAY_SIZE(stm32_dac_channels)) {
+	क्रम (i = 0; i < ARRAY_SIZE(sपंचांग32_dac_channels); i++) अणु
+		अगर (sपंचांग32_dac_channels[i].channel == channel)
+			अवरोध;
+	पूर्ण
+	अगर (i >= ARRAY_SIZE(sपंचांग32_dac_channels)) अणु
 		dev_err(&indio_dev->dev, "Invalid reg property\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	indio_dev->channels = &stm32_dac_channels[i];
+	indio_dev->channels = &sपंचांग32_dac_channels[i];
 	/*
 	 * Expose only one channel here, as they can be used independently,
 	 * with separate trigger. Then separate IIO devices are instantiated
@@ -304,109 +305,109 @@ static int stm32_dac_chan_of_init(struct iio_dev *indio_dev)
 	 */
 	indio_dev->num_channels = 1;
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static int stm32_dac_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct device *dev = &pdev->dev;
-	struct iio_dev *indio_dev;
-	struct stm32_dac *dac;
-	int ret;
+अटल पूर्णांक sपंचांग32_dac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा sपंचांग32_dac *dac;
+	पूर्णांक ret;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
-	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*dac));
-	if (!indio_dev)
-		return -ENOMEM;
-	platform_set_drvdata(pdev, indio_dev);
+	indio_dev = devm_iio_device_alloc(&pdev->dev, माप(*dac));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, indio_dev);
 
 	dac = iio_priv(indio_dev);
 	dac->common = dev_get_drvdata(pdev->dev.parent);
 	indio_dev->name = dev_name(&pdev->dev);
 	indio_dev->dev.of_node = pdev->dev.of_node;
-	indio_dev->info = &stm32_dac_iio_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->info = &sपंचांग32_dac_iio_info;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
 	mutex_init(&dac->lock);
 
-	ret = stm32_dac_chan_of_init(indio_dev);
-	if (ret < 0)
-		return ret;
+	ret = sपंचांग32_dac_chan_of_init(indio_dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Get stm32-dac-core PM online */
-	pm_runtime_get_noresume(dev);
-	pm_runtime_set_active(dev);
-	pm_runtime_set_autosuspend_delay(dev, STM32_DAC_AUTO_SUSPEND_DELAY_MS);
-	pm_runtime_use_autosuspend(dev);
-	pm_runtime_enable(dev);
+	/* Get sपंचांग32-dac-core PM online */
+	pm_runसमय_get_noresume(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_set_स्वतःsuspend_delay(dev, STM32_DAC_AUTO_SUSPEND_DELAY_MS);
+	pm_runसमय_use_स्वतःsuspend(dev);
+	pm_runसमय_enable(dev);
 
-	ret = iio_device_register(indio_dev);
-	if (ret)
-		goto err_pm_put;
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret)
+		जाओ err_pm_put;
 
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
 
-	return 0;
+	वापस 0;
 
 err_pm_put:
-	pm_runtime_disable(dev);
-	pm_runtime_set_suspended(dev);
-	pm_runtime_put_noidle(dev);
+	pm_runसमय_disable(dev);
+	pm_runसमय_set_suspended(dev);
+	pm_runसमय_put_noidle(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stm32_dac_remove(struct platform_device *pdev)
-{
-	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
+अटल पूर्णांक sपंचांग32_dac_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(pdev);
 
-	pm_runtime_get_sync(&pdev->dev);
-	iio_device_unregister(indio_dev);
-	pm_runtime_disable(&pdev->dev);
-	pm_runtime_set_suspended(&pdev->dev);
-	pm_runtime_put_noidle(&pdev->dev);
+	pm_runसमय_get_sync(&pdev->dev);
+	iio_device_unरेजिस्टर(indio_dev);
+	pm_runसमय_disable(&pdev->dev);
+	pm_runसमय_set_suspended(&pdev->dev);
+	pm_runसमय_put_noidle(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stm32_dac_suspend(struct device *dev)
-{
-	struct iio_dev *indio_dev = dev_get_drvdata(dev);
-	int channel = indio_dev->channels[0].channel;
-	int ret;
+अटल पूर्णांक __maybe_unused sपंचांग32_dac_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_get_drvdata(dev);
+	पूर्णांक channel = indio_dev->channels[0].channel;
+	पूर्णांक ret;
 
-	/* Ensure DAC is disabled before suspend */
-	ret = stm32_dac_is_enabled(indio_dev, channel);
-	if (ret)
-		return ret < 0 ? ret : -EBUSY;
+	/* Ensure DAC is disabled beक्रमe suspend */
+	ret = sपंचांग32_dac_is_enabled(indio_dev, channel);
+	अगर (ret)
+		वापस ret < 0 ? ret : -EBUSY;
 
-	return pm_runtime_force_suspend(dev);
-}
+	वापस pm_runसमय_क्रमce_suspend(dev);
+पूर्ण
 
-static const struct dev_pm_ops stm32_dac_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(stm32_dac_suspend, pm_runtime_force_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops sपंचांग32_dac_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(sपंचांग32_dac_suspend, pm_runसमय_क्रमce_resume)
+पूर्ण;
 
-static const struct of_device_id stm32_dac_of_match[] = {
-	{ .compatible = "st,stm32-dac", },
-	{},
-};
-MODULE_DEVICE_TABLE(of, stm32_dac_of_match);
+अटल स्थिर काष्ठा of_device_id sपंचांग32_dac_of_match[] = अणु
+	अणु .compatible = "st,stm32-dac", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, sपंचांग32_dac_of_match);
 
-static struct platform_driver stm32_dac_driver = {
-	.probe = stm32_dac_probe,
-	.remove = stm32_dac_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver sपंचांग32_dac_driver = अणु
+	.probe = sपंचांग32_dac_probe,
+	.हटाओ = sपंचांग32_dac_हटाओ,
+	.driver = अणु
 		.name = "stm32-dac",
-		.of_match_table = stm32_dac_of_match,
-		.pm = &stm32_dac_pm_ops,
-	},
-};
-module_platform_driver(stm32_dac_driver);
+		.of_match_table = sपंचांग32_dac_of_match,
+		.pm = &sपंचांग32_dac_pm_ops,
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(sपंचांग32_dac_driver);
 
 MODULE_ALIAS("platform:stm32-dac");
 MODULE_AUTHOR("Amelie Delaunay <amelie.delaunay@st.com>");

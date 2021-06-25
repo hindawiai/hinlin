@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Panasonic MN88472 DVB-T/T2/C demodulator driver
  *
  * Copyright (C) 2013 Antti Palosaari <crope@iki.fi>
  */
 
-#ifndef MN88472_PRIV_H
-#define MN88472_PRIV_H
+#अगर_अघोषित MN88472_PRIV_H
+#घोषणा MN88472_PRIV_H
 
-#include <media/dvb_frontend.h>
-#include <media/dvb_math.h>
-#include "mn88472.h"
-#include <linux/firmware.h>
-#include <linux/regmap.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_गणित.स>
+#समावेश "mn88472.h"
+#समावेश <linux/firmware.h>
+#समावेश <linux/regmap.h>
 
-#define MN88472_FIRMWARE "dvb-demod-mn88472-02.fw"
+#घोषणा MN88472_FIRMWARE "dvb-demod-mn88472-02.fw"
 
-struct mn88472_dev {
-	struct i2c_client *client[3];
-	struct regmap *regmap[3];
-	struct dvb_frontend fe;
-	u16 i2c_write_max;
-	unsigned int clk;
-	unsigned int active:1;
-	unsigned int ts_mode:1;
-	unsigned int ts_clk:1;
-};
+काष्ठा mn88472_dev अणु
+	काष्ठा i2c_client *client[3];
+	काष्ठा regmap *regmap[3];
+	काष्ठा dvb_frontend fe;
+	u16 i2c_ग_लिखो_max;
+	अचिन्हित पूर्णांक clk;
+	अचिन्हित पूर्णांक active:1;
+	अचिन्हित पूर्णांक ts_mode:1;
+	अचिन्हित पूर्णांक ts_clk:1;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

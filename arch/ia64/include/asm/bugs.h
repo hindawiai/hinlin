@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * This is included by init/main.c to check for architecture-dependent bugs.
+ * This is included by init/मुख्य.c to check क्रम architecture-dependent bugs.
  *
  * Needs:
- *	void check_bugs(void);
+ *	व्योम check_bugs(व्योम);
  *
- * Based on <asm-alpha/bugs.h>.
+ * Based on <यंत्र-alpha/bugs.h>.
  *
- * Modified 1998, 1999, 2003
+ * Modअगरied 1998, 1999, 2003
  *	David Mosberger-Tang <davidm@hpl.hp.com>,  Hewlett-Packard Co.
  */
-#ifndef _ASM_IA64_BUGS_H
-#define _ASM_IA64_BUGS_H
+#अगर_अघोषित _ASM_IA64_BUGS_H
+#घोषणा _ASM_IA64_BUGS_H
 
-#include <asm/processor.h>
+#समावेश <यंत्र/processor.h>
 
-extern void check_bugs (void);
+बाह्य व्योम check_bugs (व्योम);
 
-#endif /* _ASM_IA64_BUGS_H */
+#पूर्ण_अगर /* _ASM_IA64_BUGS_H */

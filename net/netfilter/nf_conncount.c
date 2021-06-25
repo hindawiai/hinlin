@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * count the number of connections matching an arbitrary key.
  *
  * (C) 2017 Red Hat GmbH
- * Author: Florian Westphal <fw@strlen.de>
+ * Author: Florian Westphal <fw@म_माप.de>
  *
  * split from xt_connlimit.c:
  *   (c) 2000 Gerd Knorr <kraxel@bytesex.org>
@@ -11,363 +12,363 @@
  *		only ignore TIME_WAIT or gone connections
  *   (C) CC Computer Consultants GmbH, 2007
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/jhash.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/rbtree.h>
-#include <linux/module.h>
-#include <linux/random.h>
-#include <linux/skbuff.h>
-#include <linux/spinlock.h>
-#include <linux/netfilter/nf_conntrack_tcp.h>
-#include <linux/netfilter/x_tables.h>
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_count.h>
-#include <net/netfilter/nf_conntrack_core.h>
-#include <net/netfilter/nf_conntrack_tuple.h>
-#include <net/netfilter/nf_conntrack_zones.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/module.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/netfilter/nf_conntrack_tcp.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_count.h>
+#समावेश <net/netfilter/nf_conntrack_core.h>
+#समावेश <net/netfilter/nf_conntrack_tuple.h>
+#समावेश <net/netfilter/nf_conntrack_zones.h>
 
-#define CONNCOUNT_SLOTS		256U
+#घोषणा CONNCOUNT_SLOTS		256U
 
-#define CONNCOUNT_GC_MAX_NODES	8
-#define MAX_KEYLEN		5
+#घोषणा CONNCOUNT_GC_MAX_NODES	8
+#घोषणा MAX_KEYLEN		5
 
 /* we will save the tuples of all connections we care about */
-struct nf_conncount_tuple {
-	struct list_head		node;
-	struct nf_conntrack_tuple	tuple;
-	struct nf_conntrack_zone	zone;
-	int				cpu;
-	u32				jiffies32;
-};
+काष्ठा nf_conncount_tuple अणु
+	काष्ठा list_head		node;
+	काष्ठा nf_conntrack_tuple	tuple;
+	काष्ठा nf_conntrack_zone	zone;
+	पूर्णांक				cpu;
+	u32				jअगरfies32;
+पूर्ण;
 
-struct nf_conncount_rb {
-	struct rb_node node;
-	struct nf_conncount_list list;
+काष्ठा nf_conncount_rb अणु
+	काष्ठा rb_node node;
+	काष्ठा nf_conncount_list list;
 	u32 key[MAX_KEYLEN];
-	struct rcu_head rcu_head;
-};
+	काष्ठा rcu_head rcu_head;
+पूर्ण;
 
-static spinlock_t nf_conncount_locks[CONNCOUNT_SLOTS] __cacheline_aligned_in_smp;
+अटल spinlock_t nf_conncount_locks[CONNCOUNT_SLOTS] __cacheline_aligned_in_smp;
 
-struct nf_conncount_data {
-	unsigned int keylen;
-	struct rb_root root[CONNCOUNT_SLOTS];
-	struct net *net;
-	struct work_struct gc_work;
-	unsigned long pending_trees[BITS_TO_LONGS(CONNCOUNT_SLOTS)];
-	unsigned int gc_tree;
-};
+काष्ठा nf_conncount_data अणु
+	अचिन्हित पूर्णांक keylen;
+	काष्ठा rb_root root[CONNCOUNT_SLOTS];
+	काष्ठा net *net;
+	काष्ठा work_काष्ठा gc_work;
+	अचिन्हित दीर्घ pending_trees[BITS_TO_LONGS(CONNCOUNT_SLOTS)];
+	अचिन्हित पूर्णांक gc_tree;
+पूर्ण;
 
-static u_int32_t conncount_rnd __read_mostly;
-static struct kmem_cache *conncount_rb_cachep __read_mostly;
-static struct kmem_cache *conncount_conn_cachep __read_mostly;
+अटल u_पूर्णांक32_t conncount_rnd __पढ़ो_mostly;
+अटल काष्ठा kmem_cache *conncount_rb_cachep __पढ़ो_mostly;
+अटल काष्ठा kmem_cache *conncount_conn_cachep __पढ़ो_mostly;
 
-static inline bool already_closed(const struct nf_conn *conn)
-{
-	if (nf_ct_protonum(conn) == IPPROTO_TCP)
-		return conn->proto.tcp.state == TCP_CONNTRACK_TIME_WAIT ||
+अटल अंतरभूत bool alपढ़ोy_बंदd(स्थिर काष्ठा nf_conn *conn)
+अणु
+	अगर (nf_ct_protonum(conn) == IPPROTO_TCP)
+		वापस conn->proto.tcp.state == TCP_CONNTRACK_TIME_WAIT ||
 		       conn->proto.tcp.state == TCP_CONNTRACK_CLOSE;
-	else
-		return false;
-}
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static int key_diff(const u32 *a, const u32 *b, unsigned int klen)
-{
-	return memcmp(a, b, klen * sizeof(u32));
-}
+अटल पूर्णांक key_dअगरf(स्थिर u32 *a, स्थिर u32 *b, अचिन्हित पूर्णांक klen)
+अणु
+	वापस स_भेद(a, b, klen * माप(u32));
+पूर्ण
 
-static void conn_free(struct nf_conncount_list *list,
-		      struct nf_conncount_tuple *conn)
-{
-	lockdep_assert_held(&list->list_lock);
+अटल व्योम conn_मुक्त(काष्ठा nf_conncount_list *list,
+		      काष्ठा nf_conncount_tuple *conn)
+अणु
+	lockdep_निश्चित_held(&list->list_lock);
 
 	list->count--;
 	list_del(&conn->node);
 
-	kmem_cache_free(conncount_conn_cachep, conn);
-}
+	kmem_cache_मुक्त(conncount_conn_cachep, conn);
+पूर्ण
 
-static const struct nf_conntrack_tuple_hash *
-find_or_evict(struct net *net, struct nf_conncount_list *list,
-	      struct nf_conncount_tuple *conn)
-{
-	const struct nf_conntrack_tuple_hash *found;
-	unsigned long a, b;
-	int cpu = raw_smp_processor_id();
+अटल स्थिर काष्ठा nf_conntrack_tuple_hash *
+find_or_evict(काष्ठा net *net, काष्ठा nf_conncount_list *list,
+	      काष्ठा nf_conncount_tuple *conn)
+अणु
+	स्थिर काष्ठा nf_conntrack_tuple_hash *found;
+	अचिन्हित दीर्घ a, b;
+	पूर्णांक cpu = raw_smp_processor_id();
 	u32 age;
 
 	found = nf_conntrack_find_get(net, &conn->zone, &conn->tuple);
-	if (found)
-		return found;
-	b = conn->jiffies32;
-	a = (u32)jiffies;
+	अगर (found)
+		वापस found;
+	b = conn->jअगरfies32;
+	a = (u32)jअगरfies;
 
-	/* conn might have been added just before by another cpu and
-	 * might still be unconfirmed.  In this case, nf_conntrack_find()
-	 * returns no result.  Thus only evict if this cpu added the
-	 * stale entry or if the entry is older than two jiffies.
+	/* conn might have been added just beक्रमe by another cpu and
+	 * might still be unconfirmed.  In this हाल, nf_conntrack_find()
+	 * वापसs no result.  Thus only evict अगर this cpu added the
+	 * stale entry or अगर the entry is older than two jअगरfies.
 	 */
 	age = a - b;
-	if (conn->cpu == cpu || age >= 2) {
-		conn_free(list, conn);
-		return ERR_PTR(-ENOENT);
-	}
+	अगर (conn->cpu == cpu || age >= 2) अणु
+		conn_मुक्त(list, conn);
+		वापस ERR_PTR(-ENOENT);
+	पूर्ण
 
-	return ERR_PTR(-EAGAIN);
-}
+	वापस ERR_PTR(-EAGAIN);
+पूर्ण
 
-static int __nf_conncount_add(struct net *net,
-			      struct nf_conncount_list *list,
-			      const struct nf_conntrack_tuple *tuple,
-			      const struct nf_conntrack_zone *zone)
-{
-	const struct nf_conntrack_tuple_hash *found;
-	struct nf_conncount_tuple *conn, *conn_n;
-	struct nf_conn *found_ct;
-	unsigned int collect = 0;
+अटल पूर्णांक __nf_conncount_add(काष्ठा net *net,
+			      काष्ठा nf_conncount_list *list,
+			      स्थिर काष्ठा nf_conntrack_tuple *tuple,
+			      स्थिर काष्ठा nf_conntrack_zone *zone)
+अणु
+	स्थिर काष्ठा nf_conntrack_tuple_hash *found;
+	काष्ठा nf_conncount_tuple *conn, *conn_n;
+	काष्ठा nf_conn *found_ct;
+	अचिन्हित पूर्णांक collect = 0;
 
 	/* check the saved connections */
-	list_for_each_entry_safe(conn, conn_n, &list->head, node) {
-		if (collect > CONNCOUNT_GC_MAX_NODES)
-			break;
+	list_क्रम_each_entry_safe(conn, conn_n, &list->head, node) अणु
+		अगर (collect > CONNCOUNT_GC_MAX_NODES)
+			अवरोध;
 
 		found = find_or_evict(net, list, conn);
-		if (IS_ERR(found)) {
+		अगर (IS_ERR(found)) अणु
 			/* Not found, but might be about to be confirmed */
-			if (PTR_ERR(found) == -EAGAIN) {
-				if (nf_ct_tuple_equal(&conn->tuple, tuple) &&
+			अगर (PTR_ERR(found) == -EAGAIN) अणु
+				अगर (nf_ct_tuple_equal(&conn->tuple, tuple) &&
 				    nf_ct_zone_id(&conn->zone, conn->zone.dir) ==
 				    nf_ct_zone_id(zone, zone->dir))
-					return 0; /* already exists */
-			} else {
+					वापस 0; /* alपढ़ोy exists */
+			पूर्ण अन्यथा अणु
 				collect++;
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
 		found_ct = nf_ct_tuplehash_to_ctrack(found);
 
-		if (nf_ct_tuple_equal(&conn->tuple, tuple) &&
-		    nf_ct_zone_equal(found_ct, zone, zone->dir)) {
+		अगर (nf_ct_tuple_equal(&conn->tuple, tuple) &&
+		    nf_ct_zone_equal(found_ct, zone, zone->dir)) अणु
 			/*
 			 * We should not see tuples twice unless someone hooks
-			 * this into a table without "-p tcp --syn".
+			 * this पूर्णांकo a table without "-p tcp --syn".
 			 *
-			 * Attempt to avoid a re-add in this case.
+			 * Attempt to aव्योम a re-add in this हाल.
 			 */
 			nf_ct_put(found_ct);
-			return 0;
-		} else if (already_closed(found_ct)) {
+			वापस 0;
+		पूर्ण अन्यथा अगर (alपढ़ोy_बंदd(found_ct)) अणु
 			/*
-			 * we do not care about connections which are
-			 * closed already -> ditch it
+			 * we करो not care about connections which are
+			 * बंदd alपढ़ोy -> ditch it
 			 */
 			nf_ct_put(found_ct);
-			conn_free(list, conn);
+			conn_मुक्त(list, conn);
 			collect++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		nf_ct_put(found_ct);
-	}
+	पूर्ण
 
-	if (WARN_ON_ONCE(list->count > INT_MAX))
-		return -EOVERFLOW;
+	अगर (WARN_ON_ONCE(list->count > पूर्णांक_उच्च))
+		वापस -EOVERFLOW;
 
 	conn = kmem_cache_alloc(conncount_conn_cachep, GFP_ATOMIC);
-	if (conn == NULL)
-		return -ENOMEM;
+	अगर (conn == शून्य)
+		वापस -ENOMEM;
 
 	conn->tuple = *tuple;
 	conn->zone = *zone;
 	conn->cpu = raw_smp_processor_id();
-	conn->jiffies32 = (u32)jiffies;
+	conn->jअगरfies32 = (u32)jअगरfies;
 	list_add_tail(&conn->node, &list->head);
 	list->count++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int nf_conncount_add(struct net *net,
-		     struct nf_conncount_list *list,
-		     const struct nf_conntrack_tuple *tuple,
-		     const struct nf_conntrack_zone *zone)
-{
-	int ret;
+पूर्णांक nf_conncount_add(काष्ठा net *net,
+		     काष्ठा nf_conncount_list *list,
+		     स्थिर काष्ठा nf_conntrack_tuple *tuple,
+		     स्थिर काष्ठा nf_conntrack_zone *zone)
+अणु
+	पूर्णांक ret;
 
 	/* check the saved connections */
 	spin_lock_bh(&list->list_lock);
 	ret = __nf_conncount_add(net, list, tuple, zone);
 	spin_unlock_bh(&list->list_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_conncount_add);
 
-void nf_conncount_list_init(struct nf_conncount_list *list)
-{
+व्योम nf_conncount_list_init(काष्ठा nf_conncount_list *list)
+अणु
 	spin_lock_init(&list->list_lock);
 	INIT_LIST_HEAD(&list->head);
 	list->count = 0;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_conncount_list_init);
 
-/* Return true if the list is empty. Must be called with BH disabled. */
-bool nf_conncount_gc_list(struct net *net,
-			  struct nf_conncount_list *list)
-{
-	const struct nf_conntrack_tuple_hash *found;
-	struct nf_conncount_tuple *conn, *conn_n;
-	struct nf_conn *found_ct;
-	unsigned int collected = 0;
+/* Return true अगर the list is empty. Must be called with BH disabled. */
+bool nf_conncount_gc_list(काष्ठा net *net,
+			  काष्ठा nf_conncount_list *list)
+अणु
+	स्थिर काष्ठा nf_conntrack_tuple_hash *found;
+	काष्ठा nf_conncount_tuple *conn, *conn_n;
+	काष्ठा nf_conn *found_ct;
+	अचिन्हित पूर्णांक collected = 0;
 	bool ret = false;
 
-	/* don't bother if other cpu is already doing GC */
-	if (!spin_trylock(&list->list_lock))
-		return false;
+	/* करोn't bother अगर other cpu is alपढ़ोy करोing GC */
+	अगर (!spin_trylock(&list->list_lock))
+		वापस false;
 
-	list_for_each_entry_safe(conn, conn_n, &list->head, node) {
+	list_क्रम_each_entry_safe(conn, conn_n, &list->head, node) अणु
 		found = find_or_evict(net, list, conn);
-		if (IS_ERR(found)) {
-			if (PTR_ERR(found) == -ENOENT)
+		अगर (IS_ERR(found)) अणु
+			अगर (PTR_ERR(found) == -ENOENT)
 				collected++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		found_ct = nf_ct_tuplehash_to_ctrack(found);
-		if (already_closed(found_ct)) {
+		अगर (alपढ़ोy_बंदd(found_ct)) अणु
 			/*
-			 * we do not care about connections which are
-			 * closed already -> ditch it
+			 * we करो not care about connections which are
+			 * बंदd alपढ़ोy -> ditch it
 			 */
 			nf_ct_put(found_ct);
-			conn_free(list, conn);
+			conn_मुक्त(list, conn);
 			collected++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		nf_ct_put(found_ct);
-		if (collected > CONNCOUNT_GC_MAX_NODES)
-			break;
-	}
+		अगर (collected > CONNCOUNT_GC_MAX_NODES)
+			अवरोध;
+	पूर्ण
 
-	if (!list->count)
+	अगर (!list->count)
 		ret = true;
 	spin_unlock(&list->list_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_conncount_gc_list);
 
-static void __tree_nodes_free(struct rcu_head *h)
-{
-	struct nf_conncount_rb *rbconn;
+अटल व्योम __tree_nodes_मुक्त(काष्ठा rcu_head *h)
+अणु
+	काष्ठा nf_conncount_rb *rbconn;
 
-	rbconn = container_of(h, struct nf_conncount_rb, rcu_head);
-	kmem_cache_free(conncount_rb_cachep, rbconn);
-}
+	rbconn = container_of(h, काष्ठा nf_conncount_rb, rcu_head);
+	kmem_cache_मुक्त(conncount_rb_cachep, rbconn);
+पूर्ण
 
 /* caller must hold tree nf_conncount_locks[] lock */
-static void tree_nodes_free(struct rb_root *root,
-			    struct nf_conncount_rb *gc_nodes[],
-			    unsigned int gc_count)
-{
-	struct nf_conncount_rb *rbconn;
+अटल व्योम tree_nodes_मुक्त(काष्ठा rb_root *root,
+			    काष्ठा nf_conncount_rb *gc_nodes[],
+			    अचिन्हित पूर्णांक gc_count)
+अणु
+	काष्ठा nf_conncount_rb *rbconn;
 
-	while (gc_count) {
+	जबतक (gc_count) अणु
 		rbconn = gc_nodes[--gc_count];
 		spin_lock(&rbconn->list.list_lock);
-		if (!rbconn->list.count) {
+		अगर (!rbconn->list.count) अणु
 			rb_erase(&rbconn->node, root);
-			call_rcu(&rbconn->rcu_head, __tree_nodes_free);
-		}
+			call_rcu(&rbconn->rcu_head, __tree_nodes_मुक्त);
+		पूर्ण
 		spin_unlock(&rbconn->list.list_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void schedule_gc_worker(struct nf_conncount_data *data, int tree)
-{
+अटल व्योम schedule_gc_worker(काष्ठा nf_conncount_data *data, पूर्णांक tree)
+अणु
 	set_bit(tree, data->pending_trees);
 	schedule_work(&data->gc_work);
-}
+पूर्ण
 
-static unsigned int
-insert_tree(struct net *net,
-	    struct nf_conncount_data *data,
-	    struct rb_root *root,
-	    unsigned int hash,
-	    const u32 *key,
-	    const struct nf_conntrack_tuple *tuple,
-	    const struct nf_conntrack_zone *zone)
-{
-	struct nf_conncount_rb *gc_nodes[CONNCOUNT_GC_MAX_NODES];
-	struct rb_node **rbnode, *parent;
-	struct nf_conncount_rb *rbconn;
-	struct nf_conncount_tuple *conn;
-	unsigned int count = 0, gc_count = 0;
+अटल अचिन्हित पूर्णांक
+insert_tree(काष्ठा net *net,
+	    काष्ठा nf_conncount_data *data,
+	    काष्ठा rb_root *root,
+	    अचिन्हित पूर्णांक hash,
+	    स्थिर u32 *key,
+	    स्थिर काष्ठा nf_conntrack_tuple *tuple,
+	    स्थिर काष्ठा nf_conntrack_zone *zone)
+अणु
+	काष्ठा nf_conncount_rb *gc_nodes[CONNCOUNT_GC_MAX_NODES];
+	काष्ठा rb_node **rbnode, *parent;
+	काष्ठा nf_conncount_rb *rbconn;
+	काष्ठा nf_conncount_tuple *conn;
+	अचिन्हित पूर्णांक count = 0, gc_count = 0;
 	u8 keylen = data->keylen;
-	bool do_gc = true;
+	bool करो_gc = true;
 
 	spin_lock_bh(&nf_conncount_locks[hash]);
 restart:
-	parent = NULL;
+	parent = शून्य;
 	rbnode = &(root->rb_node);
-	while (*rbnode) {
-		int diff;
-		rbconn = rb_entry(*rbnode, struct nf_conncount_rb, node);
+	जबतक (*rbnode) अणु
+		पूर्णांक dअगरf;
+		rbconn = rb_entry(*rbnode, काष्ठा nf_conncount_rb, node);
 
 		parent = *rbnode;
-		diff = key_diff(key, rbconn->key, keylen);
-		if (diff < 0) {
+		dअगरf = key_dअगरf(key, rbconn->key, keylen);
+		अगर (dअगरf < 0) अणु
 			rbnode = &((*rbnode)->rb_left);
-		} else if (diff > 0) {
+		पूर्ण अन्यथा अगर (dअगरf > 0) अणु
 			rbnode = &((*rbnode)->rb_right);
-		} else {
-			int ret;
+		पूर्ण अन्यथा अणु
+			पूर्णांक ret;
 
 			ret = nf_conncount_add(net, &rbconn->list, tuple, zone);
-			if (ret)
+			अगर (ret)
 				count = 0; /* hotdrop */
-			else
+			अन्यथा
 				count = rbconn->list.count;
-			tree_nodes_free(root, gc_nodes, gc_count);
-			goto out_unlock;
-		}
+			tree_nodes_मुक्त(root, gc_nodes, gc_count);
+			जाओ out_unlock;
+		पूर्ण
 
-		if (gc_count >= ARRAY_SIZE(gc_nodes))
-			continue;
+		अगर (gc_count >= ARRAY_SIZE(gc_nodes))
+			जारी;
 
-		if (do_gc && nf_conncount_gc_list(net, &rbconn->list))
+		अगर (करो_gc && nf_conncount_gc_list(net, &rbconn->list))
 			gc_nodes[gc_count++] = rbconn;
-	}
+	पूर्ण
 
-	if (gc_count) {
-		tree_nodes_free(root, gc_nodes, gc_count);
+	अगर (gc_count) अणु
+		tree_nodes_मुक्त(root, gc_nodes, gc_count);
 		schedule_gc_worker(data, hash);
 		gc_count = 0;
-		do_gc = false;
-		goto restart;
-	}
+		करो_gc = false;
+		जाओ restart;
+	पूर्ण
 
-	/* expected case: match, insert new node */
+	/* expected हाल: match, insert new node */
 	rbconn = kmem_cache_alloc(conncount_rb_cachep, GFP_ATOMIC);
-	if (rbconn == NULL)
-		goto out_unlock;
+	अगर (rbconn == शून्य)
+		जाओ out_unlock;
 
 	conn = kmem_cache_alloc(conncount_conn_cachep, GFP_ATOMIC);
-	if (conn == NULL) {
-		kmem_cache_free(conncount_rb_cachep, rbconn);
-		goto out_unlock;
-	}
+	अगर (conn == शून्य) अणु
+		kmem_cache_मुक्त(conncount_rb_cachep, rbconn);
+		जाओ out_unlock;
+	पूर्ण
 
 	conn->tuple = *tuple;
 	conn->zone = *zone;
-	memcpy(rbconn->key, key, sizeof(u32) * keylen);
+	स_नकल(rbconn->key, key, माप(u32) * keylen);
 
 	nf_conncount_list_init(&rbconn->list);
 	list_add(&conn->node, &rbconn->list.head);
@@ -378,247 +379,247 @@ restart:
 	rb_insert_color(&rbconn->node, root);
 out_unlock:
 	spin_unlock_bh(&nf_conncount_locks[hash]);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static unsigned int
-count_tree(struct net *net,
-	   struct nf_conncount_data *data,
-	   const u32 *key,
-	   const struct nf_conntrack_tuple *tuple,
-	   const struct nf_conntrack_zone *zone)
-{
-	struct rb_root *root;
-	struct rb_node *parent;
-	struct nf_conncount_rb *rbconn;
-	unsigned int hash;
+अटल अचिन्हित पूर्णांक
+count_tree(काष्ठा net *net,
+	   काष्ठा nf_conncount_data *data,
+	   स्थिर u32 *key,
+	   स्थिर काष्ठा nf_conntrack_tuple *tuple,
+	   स्थिर काष्ठा nf_conntrack_zone *zone)
+अणु
+	काष्ठा rb_root *root;
+	काष्ठा rb_node *parent;
+	काष्ठा nf_conncount_rb *rbconn;
+	अचिन्हित पूर्णांक hash;
 	u8 keylen = data->keylen;
 
 	hash = jhash2(key, data->keylen, conncount_rnd) % CONNCOUNT_SLOTS;
 	root = &data->root[hash];
 
 	parent = rcu_dereference_raw(root->rb_node);
-	while (parent) {
-		int diff;
+	जबतक (parent) अणु
+		पूर्णांक dअगरf;
 
-		rbconn = rb_entry(parent, struct nf_conncount_rb, node);
+		rbconn = rb_entry(parent, काष्ठा nf_conncount_rb, node);
 
-		diff = key_diff(key, rbconn->key, keylen);
-		if (diff < 0) {
+		dअगरf = key_dअगरf(key, rbconn->key, keylen);
+		अगर (dअगरf < 0) अणु
 			parent = rcu_dereference_raw(parent->rb_left);
-		} else if (diff > 0) {
+		पूर्ण अन्यथा अगर (dअगरf > 0) अणु
 			parent = rcu_dereference_raw(parent->rb_right);
-		} else {
-			int ret;
+		पूर्ण अन्यथा अणु
+			पूर्णांक ret;
 
-			if (!tuple) {
+			अगर (!tuple) अणु
 				nf_conncount_gc_list(net, &rbconn->list);
-				return rbconn->list.count;
-			}
+				वापस rbconn->list.count;
+			पूर्ण
 
 			spin_lock_bh(&rbconn->list.list_lock);
-			/* Node might be about to be free'd.
-			 * We need to defer to insert_tree() in this case.
+			/* Node might be about to be मुक्त'd.
+			 * We need to defer to insert_tree() in this हाल.
 			 */
-			if (rbconn->list.count == 0) {
+			अगर (rbconn->list.count == 0) अणु
 				spin_unlock_bh(&rbconn->list.list_lock);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* same source network -> be counted! */
 			ret = __nf_conncount_add(net, &rbconn->list, tuple, zone);
 			spin_unlock_bh(&rbconn->list.list_lock);
-			if (ret)
-				return 0; /* hotdrop */
-			else
-				return rbconn->list.count;
-		}
-	}
+			अगर (ret)
+				वापस 0; /* hotdrop */
+			अन्यथा
+				वापस rbconn->list.count;
+		पूर्ण
+	पूर्ण
 
-	if (!tuple)
-		return 0;
+	अगर (!tuple)
+		वापस 0;
 
-	return insert_tree(net, data, root, hash, key, tuple, zone);
-}
+	वापस insert_tree(net, data, root, hash, key, tuple, zone);
+पूर्ण
 
-static void tree_gc_worker(struct work_struct *work)
-{
-	struct nf_conncount_data *data = container_of(work, struct nf_conncount_data, gc_work);
-	struct nf_conncount_rb *gc_nodes[CONNCOUNT_GC_MAX_NODES], *rbconn;
-	struct rb_root *root;
-	struct rb_node *node;
-	unsigned int tree, next_tree, gc_count = 0;
+अटल व्योम tree_gc_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nf_conncount_data *data = container_of(work, काष्ठा nf_conncount_data, gc_work);
+	काष्ठा nf_conncount_rb *gc_nodes[CONNCOUNT_GC_MAX_NODES], *rbconn;
+	काष्ठा rb_root *root;
+	काष्ठा rb_node *node;
+	अचिन्हित पूर्णांक tree, next_tree, gc_count = 0;
 
 	tree = data->gc_tree % CONNCOUNT_SLOTS;
 	root = &data->root[tree];
 
 	local_bh_disable();
-	rcu_read_lock();
-	for (node = rb_first(root); node != NULL; node = rb_next(node)) {
-		rbconn = rb_entry(node, struct nf_conncount_rb, node);
-		if (nf_conncount_gc_list(data->net, &rbconn->list))
+	rcu_पढ़ो_lock();
+	क्रम (node = rb_first(root); node != शून्य; node = rb_next(node)) अणु
+		rbconn = rb_entry(node, काष्ठा nf_conncount_rb, node);
+		अगर (nf_conncount_gc_list(data->net, &rbconn->list))
 			gc_count++;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 	local_bh_enable();
 
 	cond_resched();
 
 	spin_lock_bh(&nf_conncount_locks[tree]);
-	if (gc_count < ARRAY_SIZE(gc_nodes))
-		goto next; /* do not bother */
+	अगर (gc_count < ARRAY_SIZE(gc_nodes))
+		जाओ next; /* करो not bother */
 
 	gc_count = 0;
 	node = rb_first(root);
-	while (node != NULL) {
-		rbconn = rb_entry(node, struct nf_conncount_rb, node);
+	जबतक (node != शून्य) अणु
+		rbconn = rb_entry(node, काष्ठा nf_conncount_rb, node);
 		node = rb_next(node);
 
-		if (rbconn->list.count > 0)
-			continue;
+		अगर (rbconn->list.count > 0)
+			जारी;
 
 		gc_nodes[gc_count++] = rbconn;
-		if (gc_count >= ARRAY_SIZE(gc_nodes)) {
-			tree_nodes_free(root, gc_nodes, gc_count);
+		अगर (gc_count >= ARRAY_SIZE(gc_nodes)) अणु
+			tree_nodes_मुक्त(root, gc_nodes, gc_count);
 			gc_count = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	tree_nodes_free(root, gc_nodes, gc_count);
+	tree_nodes_मुक्त(root, gc_nodes, gc_count);
 next:
 	clear_bit(tree, data->pending_trees);
 
 	next_tree = (tree + 1) % CONNCOUNT_SLOTS;
 	next_tree = find_next_bit(data->pending_trees, CONNCOUNT_SLOTS, next_tree);
 
-	if (next_tree < CONNCOUNT_SLOTS) {
+	अगर (next_tree < CONNCOUNT_SLOTS) अणु
 		data->gc_tree = next_tree;
 		schedule_work(work);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&nf_conncount_locks[tree]);
-}
+पूर्ण
 
-/* Count and return number of conntrack entries in 'net' with particular 'key'.
- * If 'tuple' is not null, insert it into the accounting data structure.
- * Call with RCU read lock.
+/* Count and वापस number of conntrack entries in 'net' with particular 'key'.
+ * If 'tuple' is not null, insert it पूर्णांकo the accounting data काष्ठाure.
+ * Call with RCU पढ़ो lock.
  */
-unsigned int nf_conncount_count(struct net *net,
-				struct nf_conncount_data *data,
-				const u32 *key,
-				const struct nf_conntrack_tuple *tuple,
-				const struct nf_conntrack_zone *zone)
-{
-	return count_tree(net, data, key, tuple, zone);
-}
+अचिन्हित पूर्णांक nf_conncount_count(काष्ठा net *net,
+				काष्ठा nf_conncount_data *data,
+				स्थिर u32 *key,
+				स्थिर काष्ठा nf_conntrack_tuple *tuple,
+				स्थिर काष्ठा nf_conntrack_zone *zone)
+अणु
+	वापस count_tree(net, data, key, tuple, zone);
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_conncount_count);
 
-struct nf_conncount_data *nf_conncount_init(struct net *net, unsigned int family,
-					    unsigned int keylen)
-{
-	struct nf_conncount_data *data;
-	int ret, i;
+काष्ठा nf_conncount_data *nf_conncount_init(काष्ठा net *net, अचिन्हित पूर्णांक family,
+					    अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा nf_conncount_data *data;
+	पूर्णांक ret, i;
 
-	if (keylen % sizeof(u32) ||
-	    keylen / sizeof(u32) > MAX_KEYLEN ||
+	अगर (keylen % माप(u32) ||
+	    keylen / माप(u32) > MAX_KEYLEN ||
 	    keylen == 0)
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	net_get_random_once(&conncount_rnd, sizeof(conncount_rnd));
+	net_get_अक्रमom_once(&conncount_rnd, माप(conncount_rnd));
 
-	data = kmalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return ERR_PTR(-ENOMEM);
+	data = kदो_स्मृति(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस ERR_PTR(-ENOMEM);
 
 	ret = nf_ct_netns_get(net, family);
-	if (ret < 0) {
-		kfree(data);
-		return ERR_PTR(ret);
-	}
+	अगर (ret < 0) अणु
+		kमुक्त(data);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(data->root); ++i)
+	क्रम (i = 0; i < ARRAY_SIZE(data->root); ++i)
 		data->root[i] = RB_ROOT;
 
-	data->keylen = keylen / sizeof(u32);
+	data->keylen = keylen / माप(u32);
 	data->net = net;
 	INIT_WORK(&data->gc_work, tree_gc_worker);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_conncount_init);
 
-void nf_conncount_cache_free(struct nf_conncount_list *list)
-{
-	struct nf_conncount_tuple *conn, *conn_n;
+व्योम nf_conncount_cache_मुक्त(काष्ठा nf_conncount_list *list)
+अणु
+	काष्ठा nf_conncount_tuple *conn, *conn_n;
 
-	list_for_each_entry_safe(conn, conn_n, &list->head, node)
-		kmem_cache_free(conncount_conn_cachep, conn);
-}
-EXPORT_SYMBOL_GPL(nf_conncount_cache_free);
+	list_क्रम_each_entry_safe(conn, conn_n, &list->head, node)
+		kmem_cache_मुक्त(conncount_conn_cachep, conn);
+पूर्ण
+EXPORT_SYMBOL_GPL(nf_conncount_cache_मुक्त);
 
-static void destroy_tree(struct rb_root *r)
-{
-	struct nf_conncount_rb *rbconn;
-	struct rb_node *node;
+अटल व्योम destroy_tree(काष्ठा rb_root *r)
+अणु
+	काष्ठा nf_conncount_rb *rbconn;
+	काष्ठा rb_node *node;
 
-	while ((node = rb_first(r)) != NULL) {
-		rbconn = rb_entry(node, struct nf_conncount_rb, node);
+	जबतक ((node = rb_first(r)) != शून्य) अणु
+		rbconn = rb_entry(node, काष्ठा nf_conncount_rb, node);
 
 		rb_erase(node, r);
 
-		nf_conncount_cache_free(&rbconn->list);
+		nf_conncount_cache_मुक्त(&rbconn->list);
 
-		kmem_cache_free(conncount_rb_cachep, rbconn);
-	}
-}
+		kmem_cache_मुक्त(conncount_rb_cachep, rbconn);
+	पूर्ण
+पूर्ण
 
-void nf_conncount_destroy(struct net *net, unsigned int family,
-			  struct nf_conncount_data *data)
-{
-	unsigned int i;
+व्योम nf_conncount_destroy(काष्ठा net *net, अचिन्हित पूर्णांक family,
+			  काष्ठा nf_conncount_data *data)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	cancel_work_sync(&data->gc_work);
 	nf_ct_netns_put(net, family);
 
-	for (i = 0; i < ARRAY_SIZE(data->root); ++i)
+	क्रम (i = 0; i < ARRAY_SIZE(data->root); ++i)
 		destroy_tree(&data->root[i]);
 
-	kfree(data);
-}
+	kमुक्त(data);
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_conncount_destroy);
 
-static int __init nf_conncount_modinit(void)
-{
-	int i;
+अटल पूर्णांक __init nf_conncount_modinit(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < CONNCOUNT_SLOTS; ++i)
+	क्रम (i = 0; i < CONNCOUNT_SLOTS; ++i)
 		spin_lock_init(&nf_conncount_locks[i]);
 
 	conncount_conn_cachep = kmem_cache_create("nf_conncount_tuple",
-					   sizeof(struct nf_conncount_tuple),
-					   0, 0, NULL);
-	if (!conncount_conn_cachep)
-		return -ENOMEM;
+					   माप(काष्ठा nf_conncount_tuple),
+					   0, 0, शून्य);
+	अगर (!conncount_conn_cachep)
+		वापस -ENOMEM;
 
 	conncount_rb_cachep = kmem_cache_create("nf_conncount_rb",
-					   sizeof(struct nf_conncount_rb),
-					   0, 0, NULL);
-	if (!conncount_rb_cachep) {
+					   माप(काष्ठा nf_conncount_rb),
+					   0, 0, शून्य);
+	अगर (!conncount_rb_cachep) अणु
 		kmem_cache_destroy(conncount_conn_cachep);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit nf_conncount_modexit(void)
-{
+अटल व्योम __निकास nf_conncount_modनिकास(व्योम)
+अणु
 	kmem_cache_destroy(conncount_conn_cachep);
 	kmem_cache_destroy(conncount_rb_cachep);
-}
+पूर्ण
 
 module_init(nf_conncount_modinit);
-module_exit(nf_conncount_modexit);
+module_निकास(nf_conncount_modनिकास);
 MODULE_AUTHOR("Jan Engelhardt <jengelh@medozas.de>");
 MODULE_AUTHOR("Florian Westphal <fw@strlen.de>");
 MODULE_DESCRIPTION("netfilter: count number of connections matching a key");

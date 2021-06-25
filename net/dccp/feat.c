@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  net/dccp/feat.c
  *
- *  Feature negotiation for the DCCP protocol (RFC 4340, section 6)
+ *  Feature negotiation क्रम the DCCP protocol (RFC 4340, section 6)
  *
  *  Copyright (c) 2008 Gerrit Renker <gerrit@erg.abdn.ac.uk>
  *  Rewrote from scratch, some bits from earlier code by
@@ -15,124 +16,124 @@
  *  o Changing non-negotiable (NN) values is supported in state OPEN/PARTOPEN.
  *  o All currently known SP features have 1-byte quantities. If in the future
  *    extensions of RFCs 4340..42 define features with item lengths larger than
- *    one byte, a feature-specific extension of the code will be required.
+ *    one byte, a feature-specअगरic extension of the code will be required.
  */
-#include <linux/module.h>
-#include <linux/slab.h>
-#include "ccid.h"
-#include "feat.h"
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश "ccid.h"
+#समावेश "feat.h"
 
-/* feature-specific sysctls - initialised to the defaults from RFC 4340, 6.4 */
-unsigned long	sysctl_dccp_sequence_window __read_mostly = 100;
-int		sysctl_dccp_rx_ccid	    __read_mostly = 2,
-		sysctl_dccp_tx_ccid	    __read_mostly = 2;
+/* feature-specअगरic sysctls - initialised to the शेषs from RFC 4340, 6.4 */
+अचिन्हित दीर्घ	sysctl_dccp_sequence_winकरोw __पढ़ो_mostly = 100;
+पूर्णांक		sysctl_dccp_rx_ccid	    __पढ़ो_mostly = 2,
+		sysctl_dccp_tx_ccid	    __पढ़ो_mostly = 2;
 
 /*
  * Feature activation handlers.
  *
- * These all use an u64 argument, to provide enough room for NN/SP features. At
+ * These all use an u64 argument, to provide enough room क्रम NN/SP features. At
  * this stage the negotiated values have been checked to be within their range.
  */
-static int dccp_hdlr_ccid(struct sock *sk, u64 ccid, bool rx)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
-	struct ccid *new_ccid = ccid_new(ccid, sk, rx);
+अटल पूर्णांक dccp_hdlr_ccid(काष्ठा sock *sk, u64 ccid, bool rx)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
+	काष्ठा ccid *new_ccid = ccid_new(ccid, sk, rx);
 
-	if (new_ccid == NULL)
-		return -ENOMEM;
+	अगर (new_ccid == शून्य)
+		वापस -ENOMEM;
 
-	if (rx) {
+	अगर (rx) अणु
 		ccid_hc_rx_delete(dp->dccps_hc_rx_ccid, sk);
 		dp->dccps_hc_rx_ccid = new_ccid;
-	} else {
+	पूर्ण अन्यथा अणु
 		ccid_hc_tx_delete(dp->dccps_hc_tx_ccid, sk);
 		dp->dccps_hc_tx_ccid = new_ccid;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dccp_hdlr_seq_win(struct sock *sk, u64 seq_win, bool rx)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
+अटल पूर्णांक dccp_hdlr_seq_win(काष्ठा sock *sk, u64 seq_win, bool rx)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
 
-	if (rx) {
+	अगर (rx) अणु
 		dp->dccps_r_seq_win = seq_win;
 		/* propagate changes to update SWL/SWH */
 		dccp_update_gsr(sk, dp->dccps_gsr);
-	} else {
+	पूर्ण अन्यथा अणु
 		dp->dccps_l_seq_win = seq_win;
 		/* propagate changes to update AWL */
 		dccp_update_gss(sk, dp->dccps_gss);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dccp_hdlr_ack_ratio(struct sock *sk, u64 ratio, bool rx)
-{
-	if (rx)
+अटल पूर्णांक dccp_hdlr_ack_ratio(काष्ठा sock *sk, u64 ratio, bool rx)
+अणु
+	अगर (rx)
 		dccp_sk(sk)->dccps_r_ack_ratio = ratio;
-	else
+	अन्यथा
 		dccp_sk(sk)->dccps_l_ack_ratio = ratio;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dccp_hdlr_ackvec(struct sock *sk, u64 enable, bool rx)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
+अटल पूर्णांक dccp_hdlr_ackvec(काष्ठा sock *sk, u64 enable, bool rx)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
 
-	if (rx) {
-		if (enable && dp->dccps_hc_rx_ackvec == NULL) {
+	अगर (rx) अणु
+		अगर (enable && dp->dccps_hc_rx_ackvec == शून्य) अणु
 			dp->dccps_hc_rx_ackvec = dccp_ackvec_alloc(gfp_any());
-			if (dp->dccps_hc_rx_ackvec == NULL)
-				return -ENOMEM;
-		} else if (!enable) {
-			dccp_ackvec_free(dp->dccps_hc_rx_ackvec);
-			dp->dccps_hc_rx_ackvec = NULL;
-		}
-	}
-	return 0;
-}
+			अगर (dp->dccps_hc_rx_ackvec == शून्य)
+				वापस -ENOMEM;
+		पूर्ण अन्यथा अगर (!enable) अणु
+			dccp_ackvec_मुक्त(dp->dccps_hc_rx_ackvec);
+			dp->dccps_hc_rx_ackvec = शून्य;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dccp_hdlr_ndp(struct sock *sk, u64 enable, bool rx)
-{
-	if (!rx)
+अटल पूर्णांक dccp_hdlr_ndp(काष्ठा sock *sk, u64 enable, bool rx)
+अणु
+	अगर (!rx)
 		dccp_sk(sk)->dccps_send_ndp_count = (enable > 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Minimum Checksum Coverage is located at the RX side (9.2.1). This means that
- * `rx' holds when the sending peer informs about his partial coverage via a
- * ChangeR() option. In the other case, we are the sender and the receiver
+ * `rx' holds when the sending peer inक्रमms about his partial coverage via a
+ * ChangeR() option. In the other हाल, we are the sender and the receiver
  * announces its coverage via ChangeL() options. The policy here is to honour
  * such communication by enabling the corresponding partial coverage - but only
- * if it has not been set manually before; the warning here means that all
+ * अगर it has not been set manually beक्रमe; the warning here means that all
  * packets will be dropped.
  */
-static int dccp_hdlr_min_cscov(struct sock *sk, u64 cscov, bool rx)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
+अटल पूर्णांक dccp_hdlr_min_cscov(काष्ठा sock *sk, u64 cscov, bool rx)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
 
-	if (rx)
+	अगर (rx)
 		dp->dccps_pcrlen = cscov;
-	else {
-		if (dp->dccps_pcslen == 0)
+	अन्यथा अणु
+		अगर (dp->dccps_pcslen == 0)
 			dp->dccps_pcslen = cscov;
-		else if (cscov > dp->dccps_pcslen)
+		अन्यथा अगर (cscov > dp->dccps_pcslen)
 			DCCP_WARN("CsCov %u too small, peer requires >= %u\n",
 				  dp->dccps_pcslen, (u8)cscov);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct {
+अटल स्थिर काष्ठा अणु
 	u8			feat_num;		/* DCCPF_xxx */
-	enum dccp_feat_type	rxtx;			/* RX or TX  */
-	enum dccp_feat_type	reconciliation;		/* SP or NN  */
-	u8			default_value;		/* as in 6.4 */
-	int (*activation_hdlr)(struct sock *sk, u64 val, bool rx);
+	क्रमागत dccp_feat_type	rxtx;			/* RX or TX  */
+	क्रमागत dccp_feat_type	reconciliation;		/* SP or NN  */
+	u8			शेष_value;		/* as in 6.4 */
+	पूर्णांक (*activation_hdlr)(काष्ठा sock *sk, u64 val, bool rx);
 /*
- *    Lookup table for location and type of features (from RFC 4340/4342)
+ *    Lookup table क्रम location and type of features (from RFC 4340/4342)
  *  +--------------------------+----+-----+----+----+---------+-----------+
  *  | Feature                  | Location | Reconc. | Initial |  Section  |
  *  |                          | RX | TX  | SP | NN |  Value  | Reference |
@@ -149,70 +150,70 @@ static const struct {
  *  | DCCPF_SEND_LEV_RATE      | X  |     | X  |    |   0     | 4342/8.4  |
  *  +--------------------------+----+-----+----+----+---------+-----------+
  */
-} dccp_feat_table[] = {
-	{ DCCPF_CCID,		 FEAT_AT_TX, FEAT_SP, 2,   dccp_hdlr_ccid     },
-	{ DCCPF_SHORT_SEQNOS,	 FEAT_AT_TX, FEAT_SP, 0,   NULL },
-	{ DCCPF_SEQUENCE_WINDOW, FEAT_AT_TX, FEAT_NN, 100, dccp_hdlr_seq_win  },
-	{ DCCPF_ECN_INCAPABLE,	 FEAT_AT_RX, FEAT_SP, 0,   NULL },
-	{ DCCPF_ACK_RATIO,	 FEAT_AT_TX, FEAT_NN, 2,   dccp_hdlr_ack_ratio},
-	{ DCCPF_SEND_ACK_VECTOR, FEAT_AT_RX, FEAT_SP, 0,   dccp_hdlr_ackvec   },
-	{ DCCPF_SEND_NDP_COUNT,  FEAT_AT_TX, FEAT_SP, 0,   dccp_hdlr_ndp      },
-	{ DCCPF_MIN_CSUM_COVER,  FEAT_AT_RX, FEAT_SP, 0,   dccp_hdlr_min_cscov},
-	{ DCCPF_DATA_CHECKSUM,	 FEAT_AT_RX, FEAT_SP, 0,   NULL },
-	{ DCCPF_SEND_LEV_RATE,	 FEAT_AT_RX, FEAT_SP, 0,   NULL },
-};
-#define DCCP_FEAT_SUPPORTED_MAX		ARRAY_SIZE(dccp_feat_table)
+पूर्ण dccp_feat_table[] = अणु
+	अणु DCCPF_CCID,		 FEAT_AT_TX, FEAT_SP, 2,   dccp_hdlr_ccid     पूर्ण,
+	अणु DCCPF_SHORT_SEQNOS,	 FEAT_AT_TX, FEAT_SP, 0,   शून्य पूर्ण,
+	अणु DCCPF_SEQUENCE_WINDOW, FEAT_AT_TX, FEAT_NN, 100, dccp_hdlr_seq_win  पूर्ण,
+	अणु DCCPF_ECN_INCAPABLE,	 FEAT_AT_RX, FEAT_SP, 0,   शून्य पूर्ण,
+	अणु DCCPF_ACK_RATIO,	 FEAT_AT_TX, FEAT_NN, 2,   dccp_hdlr_ack_ratioपूर्ण,
+	अणु DCCPF_SEND_ACK_VECTOR, FEAT_AT_RX, FEAT_SP, 0,   dccp_hdlr_ackvec   पूर्ण,
+	अणु DCCPF_SEND_NDP_COUNT,  FEAT_AT_TX, FEAT_SP, 0,   dccp_hdlr_ndp      पूर्ण,
+	अणु DCCPF_MIN_CSUM_COVER,  FEAT_AT_RX, FEAT_SP, 0,   dccp_hdlr_min_cscovपूर्ण,
+	अणु DCCPF_DATA_CHECKSUM,	 FEAT_AT_RX, FEAT_SP, 0,   शून्य पूर्ण,
+	अणु DCCPF_SEND_LEV_RATE,	 FEAT_AT_RX, FEAT_SP, 0,   शून्य पूर्ण,
+पूर्ण;
+#घोषणा DCCP_FEAT_SUPPORTED_MAX		ARRAY_SIZE(dccp_feat_table)
 
 /**
- * dccp_feat_index  -  Hash function to map feature number into array position
+ * dccp_feat_index  -  Hash function to map feature number पूर्णांकo array position
  * @feat_num: feature to hash, one of %dccp_feature_numbers
  *
- * Returns consecutive array index or -1 if the feature is not understood.
+ * Returns consecutive array index or -1 अगर the feature is not understood.
  */
-static int dccp_feat_index(u8 feat_num)
-{
+अटल पूर्णांक dccp_feat_index(u8 feat_num)
+अणु
 	/* The first 9 entries are occupied by the types from RFC 4340, 6.4 */
-	if (feat_num > DCCPF_RESERVED && feat_num <= DCCPF_DATA_CHECKSUM)
-		return feat_num - 1;
+	अगर (feat_num > DCCPF_RESERVED && feat_num <= DCCPF_DATA_CHECKSUM)
+		वापस feat_num - 1;
 
 	/*
-	 * Other features: add cases for new feature types here after adding
+	 * Other features: add हालs क्रम new feature types here after adding
 	 * them to the above table.
 	 */
-	switch (feat_num) {
-	case DCCPF_SEND_LEV_RATE:
-			return DCCP_FEAT_SUPPORTED_MAX - 1;
-	}
-	return -1;
-}
+	चयन (feat_num) अणु
+	हाल DCCPF_SEND_LEV_RATE:
+			वापस DCCP_FEAT_SUPPORTED_MAX - 1;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static u8 dccp_feat_type(u8 feat_num)
-{
-	int idx = dccp_feat_index(feat_num);
+अटल u8 dccp_feat_type(u8 feat_num)
+अणु
+	पूर्णांक idx = dccp_feat_index(feat_num);
 
-	if (idx < 0)
-		return FEAT_UNKNOWN;
-	return dccp_feat_table[idx].reconciliation;
-}
+	अगर (idx < 0)
+		वापस FEAT_UNKNOWN;
+	वापस dccp_feat_table[idx].reconciliation;
+पूर्ण
 
-static int dccp_feat_default_value(u8 feat_num)
-{
-	int idx = dccp_feat_index(feat_num);
+अटल पूर्णांक dccp_feat_शेष_value(u8 feat_num)
+अणु
+	पूर्णांक idx = dccp_feat_index(feat_num);
 	/*
-	 * There are no default values for unknown features, so encountering a
-	 * negative index here indicates a serious problem somewhere else.
+	 * There are no शेष values क्रम unknown features, so encountering a
+	 * negative index here indicates a serious problem somewhere अन्यथा.
 	 */
 	DCCP_BUG_ON(idx < 0);
 
-	return idx < 0 ? 0 : dccp_feat_table[idx].default_value;
-}
+	वापस idx < 0 ? 0 : dccp_feat_table[idx].शेष_value;
+पूर्ण
 
 /*
- *	Debugging and verbose-printing section
+ *	Debugging and verbose-prपूर्णांकing section
  */
-static const char *dccp_feat_fname(const u8 feat)
-{
-	static const char *const feature_names[] = {
+अटल स्थिर अक्षर *dccp_feat_fname(स्थिर u8 feat)
+अणु
+	अटल स्थिर अक्षर *स्थिर feature_names[] = अणु
 		[DCCPF_RESERVED]	= "Reserved",
 		[DCCPF_CCID]		= "CCID",
 		[DCCPF_SHORT_SEQNOS]	= "Allow Short Seqnos",
@@ -223,221 +224,221 @@ static const char *dccp_feat_fname(const u8 feat)
 		[DCCPF_SEND_NDP_COUNT]	= "Send NDP Count",
 		[DCCPF_MIN_CSUM_COVER]	= "Min. Csum Coverage",
 		[DCCPF_DATA_CHECKSUM]	= "Send Data Checksum",
-	};
-	if (feat > DCCPF_DATA_CHECKSUM && feat < DCCPF_MIN_CCID_SPECIFIC)
-		return feature_names[DCCPF_RESERVED];
+	पूर्ण;
+	अगर (feat > DCCPF_DATA_CHECKSUM && feat < DCCPF_MIN_CCID_SPECIFIC)
+		वापस feature_names[DCCPF_RESERVED];
 
-	if (feat ==  DCCPF_SEND_LEV_RATE)
-		return "Send Loss Event Rate";
-	if (feat >= DCCPF_MIN_CCID_SPECIFIC)
-		return "CCID-specific";
+	अगर (feat ==  DCCPF_SEND_LEV_RATE)
+		वापस "Send Loss Event Rate";
+	अगर (feat >= DCCPF_MIN_CCID_SPECIFIC)
+		वापस "CCID-specific";
 
-	return feature_names[feat];
-}
+	वापस feature_names[feat];
+पूर्ण
 
-static const char *const dccp_feat_sname[] = {
+अटल स्थिर अक्षर *स्थिर dccp_feat_sname[] = अणु
 	"DEFAULT", "INITIALISING", "CHANGING", "UNSTABLE", "STABLE",
-};
+पूर्ण;
 
-#ifdef CONFIG_IP_DCCP_DEBUG
-static const char *dccp_feat_oname(const u8 opt)
-{
-	switch (opt) {
-	case DCCPO_CHANGE_L:  return "Change_L";
-	case DCCPO_CONFIRM_L: return "Confirm_L";
-	case DCCPO_CHANGE_R:  return "Change_R";
-	case DCCPO_CONFIRM_R: return "Confirm_R";
-	}
-	return NULL;
-}
+#अगर_घोषित CONFIG_IP_DCCP_DEBUG
+अटल स्थिर अक्षर *dccp_feat_oname(स्थिर u8 opt)
+अणु
+	चयन (opt) अणु
+	हाल DCCPO_CHANGE_L:  वापस "Change_L";
+	हाल DCCPO_CONFIRM_L: वापस "Confirm_L";
+	हाल DCCPO_CHANGE_R:  वापस "Change_R";
+	हाल DCCPO_CONFIRM_R: वापस "Confirm_R";
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void dccp_feat_printval(u8 feat_num, dccp_feat_val const *val)
-{
+अटल व्योम dccp_feat_prपूर्णांकval(u8 feat_num, dccp_feat_val स्थिर *val)
+अणु
 	u8 i, type = dccp_feat_type(feat_num);
 
-	if (val == NULL || (type == FEAT_SP && val->sp.vec == NULL))
+	अगर (val == शून्य || (type == FEAT_SP && val->sp.vec == शून्य))
 		dccp_pr_debug_cat("(NULL)");
-	else if (type == FEAT_SP)
-		for (i = 0; i < val->sp.len; i++)
+	अन्यथा अगर (type == FEAT_SP)
+		क्रम (i = 0; i < val->sp.len; i++)
 			dccp_pr_debug_cat("%s%u", i ? " " : "", val->sp.vec[i]);
-	else if (type == FEAT_NN)
-		dccp_pr_debug_cat("%llu", (unsigned long long)val->nn);
-	else
+	अन्यथा अगर (type == FEAT_NN)
+		dccp_pr_debug_cat("%llu", (अचिन्हित दीर्घ दीर्घ)val->nn);
+	अन्यथा
 		dccp_pr_debug_cat("unknown type %u", type);
-}
+पूर्ण
 
-static void dccp_feat_printvals(u8 feat_num, u8 *list, u8 len)
-{
+अटल व्योम dccp_feat_prपूर्णांकvals(u8 feat_num, u8 *list, u8 len)
+अणु
 	u8 type = dccp_feat_type(feat_num);
-	dccp_feat_val fval = { .sp.vec = list, .sp.len = len };
+	dccp_feat_val fval = अणु .sp.vec = list, .sp.len = len पूर्ण;
 
-	if (type == FEAT_NN)
+	अगर (type == FEAT_NN)
 		fval.nn = dccp_decode_value_var(list, len);
-	dccp_feat_printval(feat_num, &fval);
-}
+	dccp_feat_prपूर्णांकval(feat_num, &fval);
+पूर्ण
 
-static void dccp_feat_print_entry(struct dccp_feat_entry const *entry)
-{
+अटल व्योम dccp_feat_prपूर्णांक_entry(काष्ठा dccp_feat_entry स्थिर *entry)
+अणु
 	dccp_debug("   * %s %s = ", entry->is_local ? "local" : "remote",
 				    dccp_feat_fname(entry->feat_num));
-	dccp_feat_printval(entry->feat_num, &entry->val);
+	dccp_feat_prपूर्णांकval(entry->feat_num, &entry->val);
 	dccp_pr_debug_cat(", state=%s %s\n", dccp_feat_sname[entry->state],
 			  entry->needs_confirm ? "(Confirm pending)" : "");
-}
+पूर्ण
 
-#define dccp_feat_print_opt(opt, feat, val, len, mandatory)	do {	      \
+#घोषणा dccp_feat_prपूर्णांक_opt(opt, feat, val, len, mandatory)	करो अणु	      \
 	dccp_pr_debug("%s(%s, ", dccp_feat_oname(opt), dccp_feat_fname(feat));\
-	dccp_feat_printvals(feat, val, len);				      \
-	dccp_pr_debug_cat(") %s\n", mandatory ? "!" : "");	} while (0)
+	dccp_feat_prपूर्णांकvals(feat, val, len);				      \
+	dccp_pr_debug_cat(") %s\n", mandatory ? "!" : "");	पूर्ण जबतक (0)
 
-#define dccp_feat_print_fnlist(fn_list)  {		\
-	const struct dccp_feat_entry *___entry;		\
+#घोषणा dccp_feat_prपूर्णांक_fnlist(fn_list)  अणु		\
+	स्थिर काष्ठा dccp_feat_entry *___entry;		\
 							\
 	dccp_pr_debug("List Dump:\n");			\
-	list_for_each_entry(___entry, fn_list, node)	\
-		dccp_feat_print_entry(___entry);	\
-}
-#else	/* ! CONFIG_IP_DCCP_DEBUG */
-#define dccp_feat_print_opt(opt, feat, val, len, mandatory)
-#define dccp_feat_print_fnlist(fn_list)
-#endif
+	list_क्रम_each_entry(___entry, fn_list, node)	\
+		dccp_feat_prपूर्णांक_entry(___entry);	\
+पूर्ण
+#अन्यथा	/* ! CONFIG_IP_DCCP_DEBUG */
+#घोषणा dccp_feat_prपूर्णांक_opt(opt, feat, val, len, mandatory)
+#घोषणा dccp_feat_prपूर्णांक_fnlist(fn_list)
+#पूर्ण_अगर
 
-static int __dccp_feat_activate(struct sock *sk, const int idx,
-				const bool is_local, dccp_feat_val const *fval)
-{
+अटल पूर्णांक __dccp_feat_activate(काष्ठा sock *sk, स्थिर पूर्णांक idx,
+				स्थिर bool is_local, dccp_feat_val स्थिर *fval)
+अणु
 	bool rx;
 	u64 val;
 
-	if (idx < 0 || idx >= DCCP_FEAT_SUPPORTED_MAX)
-		return -1;
-	if (dccp_feat_table[idx].activation_hdlr == NULL)
-		return 0;
+	अगर (idx < 0 || idx >= DCCP_FEAT_SUPPORTED_MAX)
+		वापस -1;
+	अगर (dccp_feat_table[idx].activation_hdlr == शून्य)
+		वापस 0;
 
-	if (fval == NULL) {
-		val = dccp_feat_table[idx].default_value;
-	} else if (dccp_feat_table[idx].reconciliation == FEAT_SP) {
-		if (fval->sp.vec == NULL) {
+	अगर (fval == शून्य) अणु
+		val = dccp_feat_table[idx].शेष_value;
+	पूर्ण अन्यथा अगर (dccp_feat_table[idx].reconciliation == FEAT_SP) अणु
+		अगर (fval->sp.vec == शून्य) अणु
 			/*
 			 * This can happen when an empty Confirm is sent
-			 * for an SP (i.e. known) feature. In this case
-			 * we would be using the default anyway.
+			 * क्रम an SP (i.e. known) feature. In this हाल
+			 * we would be using the शेष anyway.
 			 */
 			DCCP_CRIT("Feature #%d undefined: using default", idx);
-			val = dccp_feat_table[idx].default_value;
-		} else {
+			val = dccp_feat_table[idx].शेष_value;
+		पूर्ण अन्यथा अणु
 			val = fval->sp.vec[0];
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		val = fval->nn;
-	}
+	पूर्ण
 
-	/* Location is RX if this is a local-RX or remote-TX feature */
+	/* Location is RX अगर this is a local-RX or remote-TX feature */
 	rx = (is_local == (dccp_feat_table[idx].rxtx == FEAT_AT_RX));
 
 	dccp_debug("   -> activating %s %s, %sval=%llu\n", rx ? "RX" : "TX",
 		   dccp_feat_fname(dccp_feat_table[idx].feat_num),
-		   fval ? "" : "default ",  (unsigned long long)val);
+		   fval ? "" : "default ",  (अचिन्हित दीर्घ दीर्घ)val);
 
-	return dccp_feat_table[idx].activation_hdlr(sk, val, rx);
-}
+	वापस dccp_feat_table[idx].activation_hdlr(sk, val, rx);
+पूर्ण
 
 /**
  * dccp_feat_activate  -  Activate feature value on socket
  * @sk: fully connected DCCP socket (after handshake is complete)
  * @feat_num: feature to activate, one of %dccp_feature_numbers
  * @local: whether local (1) or remote (0) @feat_num is meant
- * @fval: the value (SP or NN) to activate, or NULL to use the default value
+ * @fval: the value (SP or NN) to activate, or शून्य to use the शेष value
  *
  * For general use this function is preferable over __dccp_feat_activate().
  */
-static int dccp_feat_activate(struct sock *sk, u8 feat_num, bool local,
-			      dccp_feat_val const *fval)
-{
-	return __dccp_feat_activate(sk, dccp_feat_index(feat_num), local, fval);
-}
+अटल पूर्णांक dccp_feat_activate(काष्ठा sock *sk, u8 feat_num, bool local,
+			      dccp_feat_val स्थिर *fval)
+अणु
+	वापस __dccp_feat_activate(sk, dccp_feat_index(feat_num), local, fval);
+पूर्ण
 
-/* Test for "Req'd" feature (RFC 4340, 6.4) */
-static inline int dccp_feat_must_be_understood(u8 feat_num)
-{
-	return	feat_num == DCCPF_CCID || feat_num == DCCPF_SHORT_SEQNOS ||
+/* Test क्रम "Req'd" feature (RFC 4340, 6.4) */
+अटल अंतरभूत पूर्णांक dccp_feat_must_be_understood(u8 feat_num)
+अणु
+	वापस	feat_num == DCCPF_CCID || feat_num == DCCPF_SHORT_SEQNOS ||
 		feat_num == DCCPF_SEQUENCE_WINDOW;
-}
+पूर्ण
 
-/* copy constructor, fval must not already contain allocated memory */
-static int dccp_feat_clone_sp_val(dccp_feat_val *fval, u8 const *val, u8 len)
-{
+/* copy स्थिरructor, fval must not alपढ़ोy contain allocated memory */
+अटल पूर्णांक dccp_feat_clone_sp_val(dccp_feat_val *fval, u8 स्थिर *val, u8 len)
+अणु
 	fval->sp.len = len;
-	if (fval->sp.len > 0) {
+	अगर (fval->sp.len > 0) अणु
 		fval->sp.vec = kmemdup(val, len, gfp_any());
-		if (fval->sp.vec == NULL) {
+		अगर (fval->sp.vec == शून्य) अणु
 			fval->sp.len = 0;
-			return -ENOMEM;
-		}
-	}
-	return 0;
-}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void dccp_feat_val_destructor(u8 feat_num, dccp_feat_val *val)
-{
-	if (unlikely(val == NULL))
-		return;
-	if (dccp_feat_type(feat_num) == FEAT_SP)
-		kfree(val->sp.vec);
-	memset(val, 0, sizeof(*val));
-}
+अटल व्योम dccp_feat_val_deकाष्ठाor(u8 feat_num, dccp_feat_val *val)
+अणु
+	अगर (unlikely(val == शून्य))
+		वापस;
+	अगर (dccp_feat_type(feat_num) == FEAT_SP)
+		kमुक्त(val->sp.vec);
+	स_रखो(val, 0, माप(*val));
+पूर्ण
 
-static struct dccp_feat_entry *
-	      dccp_feat_clone_entry(struct dccp_feat_entry const *original)
-{
-	struct dccp_feat_entry *new;
+अटल काष्ठा dccp_feat_entry *
+	      dccp_feat_clone_entry(काष्ठा dccp_feat_entry स्थिर *original)
+अणु
+	काष्ठा dccp_feat_entry *new;
 	u8 type = dccp_feat_type(original->feat_num);
 
-	if (type == FEAT_UNKNOWN)
-		return NULL;
+	अगर (type == FEAT_UNKNOWN)
+		वापस शून्य;
 
-	new = kmemdup(original, sizeof(struct dccp_feat_entry), gfp_any());
-	if (new == NULL)
-		return NULL;
+	new = kmemdup(original, माप(काष्ठा dccp_feat_entry), gfp_any());
+	अगर (new == शून्य)
+		वापस शून्य;
 
-	if (type == FEAT_SP && dccp_feat_clone_sp_val(&new->val,
+	अगर (type == FEAT_SP && dccp_feat_clone_sp_val(&new->val,
 						      original->val.sp.vec,
-						      original->val.sp.len)) {
-		kfree(new);
-		return NULL;
-	}
-	return new;
-}
+						      original->val.sp.len)) अणु
+		kमुक्त(new);
+		वापस शून्य;
+	पूर्ण
+	वापस new;
+पूर्ण
 
-static void dccp_feat_entry_destructor(struct dccp_feat_entry *entry)
-{
-	if (entry != NULL) {
-		dccp_feat_val_destructor(entry->feat_num, &entry->val);
-		kfree(entry);
-	}
-}
+अटल व्योम dccp_feat_entry_deकाष्ठाor(काष्ठा dccp_feat_entry *entry)
+अणु
+	अगर (entry != शून्य) अणु
+		dccp_feat_val_deकाष्ठाor(entry->feat_num, &entry->val);
+		kमुक्त(entry);
+	पूर्ण
+पूर्ण
 
 /*
  * List management functions
  *
- * Feature negotiation lists rely on and maintain the following invariants:
- * - each feat_num in the list is known, i.e. we know its type and default value
+ * Feature negotiation lists rely on and मुख्यtain the following invariants:
+ * - each feat_num in the list is known, i.e. we know its type and शेष value
  * - each feat_num/is_local combination is unique (old entries are overwritten)
  * - SP values are always freshly allocated
  * - list is sorted in increasing order of feature number (faster lookup)
  */
-static struct dccp_feat_entry *dccp_feat_list_lookup(struct list_head *fn_list,
+अटल काष्ठा dccp_feat_entry *dccp_feat_list_lookup(काष्ठा list_head *fn_list,
 						     u8 feat_num, bool is_local)
-{
-	struct dccp_feat_entry *entry;
+अणु
+	काष्ठा dccp_feat_entry *entry;
 
-	list_for_each_entry(entry, fn_list, node) {
-		if (entry->feat_num == feat_num && entry->is_local == is_local)
-			return entry;
-		else if (entry->feat_num > feat_num)
-			break;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(entry, fn_list, node) अणु
+		अगर (entry->feat_num == feat_num && entry->is_local == is_local)
+			वापस entry;
+		अन्यथा अगर (entry->feat_num > feat_num)
+			अवरोध;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  * dccp_feat_entry_new  -  Central list update routine (called by all others)
@@ -445,46 +446,46 @@ static struct dccp_feat_entry *dccp_feat_list_lookup(struct list_head *fn_list,
  * @feat:  feature number
  * @local: whether the local (1) or remote feature with number @feat is meant
  *
- * This is the only constructor and serves to ensure the above invariants.
+ * This is the only स्थिरructor and serves to ensure the above invariants.
  */
-static struct dccp_feat_entry *
-	      dccp_feat_entry_new(struct list_head *head, u8 feat, bool local)
-{
-	struct dccp_feat_entry *entry;
+अटल काष्ठा dccp_feat_entry *
+	      dccp_feat_entry_new(काष्ठा list_head *head, u8 feat, bool local)
+अणु
+	काष्ठा dccp_feat_entry *entry;
 
-	list_for_each_entry(entry, head, node)
-		if (entry->feat_num == feat && entry->is_local == local) {
-			dccp_feat_val_destructor(entry->feat_num, &entry->val);
-			return entry;
-		} else if (entry->feat_num > feat) {
+	list_क्रम_each_entry(entry, head, node)
+		अगर (entry->feat_num == feat && entry->is_local == local) अणु
+			dccp_feat_val_deकाष्ठाor(entry->feat_num, &entry->val);
+			वापस entry;
+		पूर्ण अन्यथा अगर (entry->feat_num > feat) अणु
 			head = &entry->node;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	entry = kmalloc(sizeof(*entry), gfp_any());
-	if (entry != NULL) {
+	entry = kदो_स्मृति(माप(*entry), gfp_any());
+	अगर (entry != शून्य) अणु
 		entry->feat_num = feat;
 		entry->is_local = local;
 		list_add_tail(&entry->node, head);
-	}
-	return entry;
-}
+	पूर्ण
+	वापस entry;
+पूर्ण
 
 /**
- * dccp_feat_push_change  -  Add/overwrite a Change option in the list
+ * dccp_feat_push_change  -  Add/overग_लिखो a Change option in the list
  * @fn_list: feature-negotiation list to update
  * @feat: one of %dccp_feature_numbers
  * @local: whether local (1) or remote (0) @feat_num is meant
  * @mandatory: whether to use Mandatory feature negotiation options
- * @fval: pointer to NN/SP value to be inserted (will be copied)
+ * @fval: poपूर्णांकer to NN/SP value to be inserted (will be copied)
  */
-static int dccp_feat_push_change(struct list_head *fn_list, u8 feat, u8 local,
+अटल पूर्णांक dccp_feat_push_change(काष्ठा list_head *fn_list, u8 feat, u8 local,
 				 u8 mandatory, dccp_feat_val *fval)
-{
-	struct dccp_feat_entry *new = dccp_feat_entry_new(fn_list, feat, local);
+अणु
+	काष्ठा dccp_feat_entry *new = dccp_feat_entry_new(fn_list, feat, local);
 
-	if (new == NULL)
-		return -ENOMEM;
+	अगर (new == शून्य)
+		वापस -ENOMEM;
 
 	new->feat_num	     = feat;
 	new->is_local	     = local;
@@ -494,446 +495,446 @@ static int dccp_feat_push_change(struct list_head *fn_list, u8 feat, u8 local,
 	new->val	     = *fval;
 	new->needs_mandatory = mandatory;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * dccp_feat_push_confirm  -  Add a Confirm entry to the FN list
  * @fn_list: feature-negotiation list to add to
  * @feat: one of %dccp_feature_numbers
  * @local: whether local (1) or remote (0) @feat_num is being confirmed
- * @fval: pointer to NN/SP value to be inserted or NULL
+ * @fval: poपूर्णांकer to NN/SP value to be inserted or शून्य
  *
- * Returns 0 on success, a Reset code for further processing otherwise.
+ * Returns 0 on success, a Reset code क्रम further processing otherwise.
  */
-static int dccp_feat_push_confirm(struct list_head *fn_list, u8 feat, u8 local,
+अटल पूर्णांक dccp_feat_push_confirm(काष्ठा list_head *fn_list, u8 feat, u8 local,
 				  dccp_feat_val *fval)
-{
-	struct dccp_feat_entry *new = dccp_feat_entry_new(fn_list, feat, local);
+अणु
+	काष्ठा dccp_feat_entry *new = dccp_feat_entry_new(fn_list, feat, local);
 
-	if (new == NULL)
-		return DCCP_RESET_CODE_TOO_BUSY;
+	अगर (new == शून्य)
+		वापस DCCP_RESET_CODE_TOO_BUSY;
 
 	new->feat_num	     = feat;
 	new->is_local	     = local;
 	new->state	     = FEAT_STABLE;	/* transition in 6.6.2 */
 	new->needs_confirm   = true;
-	new->empty_confirm   = (fval == NULL);
-	new->val.nn	     = 0;		/* zeroes the whole structure */
-	if (!new->empty_confirm)
+	new->empty_confirm   = (fval == शून्य);
+	new->val.nn	     = 0;		/* zeroes the whole काष्ठाure */
+	अगर (!new->empty_confirm)
 		new->val     = *fval;
 	new->needs_mandatory = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dccp_push_empty_confirm(struct list_head *fn_list, u8 feat, u8 local)
-{
-	return dccp_feat_push_confirm(fn_list, feat, local, NULL);
-}
+अटल पूर्णांक dccp_push_empty_confirm(काष्ठा list_head *fn_list, u8 feat, u8 local)
+अणु
+	वापस dccp_feat_push_confirm(fn_list, feat, local, शून्य);
+पूर्ण
 
-static inline void dccp_feat_list_pop(struct dccp_feat_entry *entry)
-{
+अटल अंतरभूत व्योम dccp_feat_list_pop(काष्ठा dccp_feat_entry *entry)
+अणु
 	list_del(&entry->node);
-	dccp_feat_entry_destructor(entry);
-}
+	dccp_feat_entry_deकाष्ठाor(entry);
+पूर्ण
 
-void dccp_feat_list_purge(struct list_head *fn_list)
-{
-	struct dccp_feat_entry *entry, *next;
+व्योम dccp_feat_list_purge(काष्ठा list_head *fn_list)
+अणु
+	काष्ठा dccp_feat_entry *entry, *next;
 
-	list_for_each_entry_safe(entry, next, fn_list, node)
-		dccp_feat_entry_destructor(entry);
+	list_क्रम_each_entry_safe(entry, next, fn_list, node)
+		dccp_feat_entry_deकाष्ठाor(entry);
 	INIT_LIST_HEAD(fn_list);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dccp_feat_list_purge);
 
 /* generate @to as full clone of @from - @to must not contain any nodes */
-int dccp_feat_clone_list(struct list_head const *from, struct list_head *to)
-{
-	struct dccp_feat_entry *entry, *new;
+पूर्णांक dccp_feat_clone_list(काष्ठा list_head स्थिर *from, काष्ठा list_head *to)
+अणु
+	काष्ठा dccp_feat_entry *entry, *new;
 
 	INIT_LIST_HEAD(to);
-	list_for_each_entry(entry, from, node) {
+	list_क्रम_each_entry(entry, from, node) अणु
 		new = dccp_feat_clone_entry(entry);
-		if (new == NULL)
-			goto cloning_failed;
+		अगर (new == शून्य)
+			जाओ cloning_failed;
 		list_add_tail(&new->node, to);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 cloning_failed:
 	dccp_feat_list_purge(to);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * dccp_feat_valid_nn_length  -  Enforce length constraints on NN options
- * @feat_num: feature to return length of, one of %dccp_feature_numbers
+ * dccp_feat_valid_nn_length  -  Enक्रमce length स्थिरraपूर्णांकs on NN options
+ * @feat_num: feature to वापस length of, one of %dccp_feature_numbers
  *
- * Length is between 0 and %DCCP_OPTVAL_MAXLEN. Used for outgoing packets only,
- * incoming options are accepted as long as their values are valid.
+ * Length is between 0 and %DCCP_OPTVAL_MAXLEN. Used क्रम outgoing packets only,
+ * incoming options are accepted as दीर्घ as their values are valid.
  */
-static u8 dccp_feat_valid_nn_length(u8 feat_num)
-{
-	if (feat_num == DCCPF_ACK_RATIO)	/* RFC 4340, 11.3 and 6.6.8 */
-		return 2;
-	if (feat_num == DCCPF_SEQUENCE_WINDOW)	/* RFC 4340, 7.5.2 and 6.5  */
-		return 6;
-	return 0;
-}
+अटल u8 dccp_feat_valid_nn_length(u8 feat_num)
+अणु
+	अगर (feat_num == DCCPF_ACK_RATIO)	/* RFC 4340, 11.3 and 6.6.8 */
+		वापस 2;
+	अगर (feat_num == DCCPF_SEQUENCE_WINDOW)	/* RFC 4340, 7.5.2 and 6.5  */
+		वापस 6;
+	वापस 0;
+पूर्ण
 
-static u8 dccp_feat_is_valid_nn_val(u8 feat_num, u64 val)
-{
-	switch (feat_num) {
-	case DCCPF_ACK_RATIO:
-		return val <= DCCPF_ACK_RATIO_MAX;
-	case DCCPF_SEQUENCE_WINDOW:
-		return val >= DCCPF_SEQ_WMIN && val <= DCCPF_SEQ_WMAX;
-	}
-	return 0;	/* feature unknown - so we can't tell */
-}
+अटल u8 dccp_feat_is_valid_nn_val(u8 feat_num, u64 val)
+अणु
+	चयन (feat_num) अणु
+	हाल DCCPF_ACK_RATIO:
+		वापस val <= DCCPF_ACK_RATIO_MAX;
+	हाल DCCPF_SEQUENCE_WINDOW:
+		वापस val >= DCCPF_SEQ_WMIN && val <= DCCPF_SEQ_WMAX;
+	पूर्ण
+	वापस 0;	/* feature unknown - so we can't tell */
+पूर्ण
 
 /* check that SP values are within the ranges defined in RFC 4340 */
-static u8 dccp_feat_is_valid_sp_val(u8 feat_num, u8 val)
-{
-	switch (feat_num) {
-	case DCCPF_CCID:
-		return val == DCCPC_CCID2 || val == DCCPC_CCID3;
+अटल u8 dccp_feat_is_valid_sp_val(u8 feat_num, u8 val)
+अणु
+	चयन (feat_num) अणु
+	हाल DCCPF_CCID:
+		वापस val == DCCPC_CCID2 || val == DCCPC_CCID3;
 	/* Type-check Boolean feature values: */
-	case DCCPF_SHORT_SEQNOS:
-	case DCCPF_ECN_INCAPABLE:
-	case DCCPF_SEND_ACK_VECTOR:
-	case DCCPF_SEND_NDP_COUNT:
-	case DCCPF_DATA_CHECKSUM:
-	case DCCPF_SEND_LEV_RATE:
-		return val < 2;
-	case DCCPF_MIN_CSUM_COVER:
-		return val < 16;
-	}
-	return 0;			/* feature unknown */
-}
+	हाल DCCPF_SHORT_SEQNOS:
+	हाल DCCPF_ECN_INCAPABLE:
+	हाल DCCPF_SEND_ACK_VECTOR:
+	हाल DCCPF_SEND_NDP_COUNT:
+	हाल DCCPF_DATA_CHECKSUM:
+	हाल DCCPF_SEND_LEV_RATE:
+		वापस val < 2;
+	हाल DCCPF_MIN_CSUM_COVER:
+		वापस val < 16;
+	पूर्ण
+	वापस 0;			/* feature unknown */
+पूर्ण
 
-static u8 dccp_feat_sp_list_ok(u8 feat_num, u8 const *sp_list, u8 sp_len)
-{
-	if (sp_list == NULL || sp_len < 1)
-		return 0;
-	while (sp_len--)
-		if (!dccp_feat_is_valid_sp_val(feat_num, *sp_list++))
-			return 0;
-	return 1;
-}
+अटल u8 dccp_feat_sp_list_ok(u8 feat_num, u8 स्थिर *sp_list, u8 sp_len)
+अणु
+	अगर (sp_list == शून्य || sp_len < 1)
+		वापस 0;
+	जबतक (sp_len--)
+		अगर (!dccp_feat_is_valid_sp_val(feat_num, *sp_list++))
+			वापस 0;
+	वापस 1;
+पूर्ण
 
 /**
  * dccp_feat_insert_opts  -  Generate FN options from current list state
  * @skb: next sk_buff to be sent to the peer
- * @dp: for client during handshake and general negotiation
+ * @dp: क्रम client during handshake and general negotiation
  * @dreq: used by the server only (all Changes/Confirms in LISTEN/RESPOND)
  */
-int dccp_feat_insert_opts(struct dccp_sock *dp, struct dccp_request_sock *dreq,
-			  struct sk_buff *skb)
-{
-	struct list_head *fn = dreq ? &dreq->dreq_featneg : &dp->dccps_featneg;
-	struct dccp_feat_entry *pos, *next;
+पूर्णांक dccp_feat_insert_opts(काष्ठा dccp_sock *dp, काष्ठा dccp_request_sock *dreq,
+			  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा list_head *fn = dreq ? &dreq->dreq_featneg : &dp->dccps_featneg;
+	काष्ठा dccp_feat_entry *pos, *next;
 	u8 opt, type, len, *ptr, nn_in_nbo[DCCP_OPTVAL_MAXLEN];
 	bool rpt;
 
-	/* put entries into @skb in the order they appear in the list */
-	list_for_each_entry_safe_reverse(pos, next, fn, node) {
+	/* put entries पूर्णांकo @skb in the order they appear in the list */
+	list_क्रम_each_entry_safe_reverse(pos, next, fn, node) अणु
 		opt  = dccp_feat_genopt(pos);
 		type = dccp_feat_type(pos->feat_num);
 		rpt  = false;
 
-		if (pos->empty_confirm) {
+		अगर (pos->empty_confirm) अणु
 			len = 0;
-			ptr = NULL;
-		} else {
-			if (type == FEAT_SP) {
+			ptr = शून्य;
+		पूर्ण अन्यथा अणु
+			अगर (type == FEAT_SP) अणु
 				len = pos->val.sp.len;
 				ptr = pos->val.sp.vec;
 				rpt = pos->needs_confirm;
-			} else if (type == FEAT_NN) {
+			पूर्ण अन्यथा अगर (type == FEAT_NN) अणु
 				len = dccp_feat_valid_nn_length(pos->feat_num);
 				ptr = nn_in_nbo;
 				dccp_encode_value_var(pos->val.nn, ptr, len);
-			} else {
+			पूर्ण अन्यथा अणु
 				DCCP_BUG("unknown feature %u", pos->feat_num);
-				return -1;
-			}
-		}
-		dccp_feat_print_opt(opt, pos->feat_num, ptr, len, 0);
+				वापस -1;
+			पूर्ण
+		पूर्ण
+		dccp_feat_prपूर्णांक_opt(opt, pos->feat_num, ptr, len, 0);
 
-		if (dccp_insert_fn_opt(skb, opt, pos->feat_num, ptr, len, rpt))
-			return -1;
-		if (pos->needs_mandatory && dccp_insert_option_mandatory(skb))
-			return -1;
+		अगर (dccp_insert_fn_opt(skb, opt, pos->feat_num, ptr, len, rpt))
+			वापस -1;
+		अगर (pos->needs_mandatory && dccp_insert_option_mandatory(skb))
+			वापस -1;
 
-		if (skb->sk->sk_state == DCCP_OPEN &&
-		    (opt == DCCPO_CONFIRM_R || opt == DCCPO_CONFIRM_L)) {
+		अगर (skb->sk->sk_state == DCCP_OPEN &&
+		    (opt == DCCPO_CONFIRM_R || opt == DCCPO_CONFIRM_L)) अणु
 			/*
-			 * Confirms don't get retransmitted (6.6.3) once the
+			 * Confirms करोn't get retransmitted (6.6.3) once the
 			 * connection is in state OPEN
 			 */
 			dccp_feat_list_pop(pos);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Enter CHANGING after transmitting the Change
 			 * option (6.6.2).
 			 */
-			if (pos->state == FEAT_INITIALISING)
+			अगर (pos->state == FEAT_INITIALISING)
 				pos->state = FEAT_CHANGING;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * __feat_register_nn  -  Register new NN value on socket
- * @fn: feature-negotiation list to register with
+ * __feat_रेजिस्टर_nn  -  Register new NN value on socket
+ * @fn: feature-negotiation list to रेजिस्टर with
  * @feat: an NN feature from %dccp_feature_numbers
- * @mandatory: use Mandatory option if 1
- * @nn_val: value to register (restricted to 4 bytes)
+ * @mandatory: use Mandatory option अगर 1
+ * @nn_val: value to रेजिस्टर (restricted to 4 bytes)
  *
  * Note that NN features are local by definition (RFC 4340, 6.3.2).
  */
-static int __feat_register_nn(struct list_head *fn, u8 feat,
+अटल पूर्णांक __feat_रेजिस्टर_nn(काष्ठा list_head *fn, u8 feat,
 			      u8 mandatory, u64 nn_val)
-{
-	dccp_feat_val fval = { .nn = nn_val };
+अणु
+	dccp_feat_val fval = अणु .nn = nn_val पूर्ण;
 
-	if (dccp_feat_type(feat) != FEAT_NN ||
+	अगर (dccp_feat_type(feat) != FEAT_NN ||
 	    !dccp_feat_is_valid_nn_val(feat, nn_val))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Don't bother with default values, they will be activated anyway. */
-	if (nn_val - (u64)dccp_feat_default_value(feat) == 0)
-		return 0;
+	/* Don't bother with शेष values, they will be activated anyway. */
+	अगर (nn_val - (u64)dccp_feat_शेष_value(feat) == 0)
+		वापस 0;
 
-	return dccp_feat_push_change(fn, feat, 1, mandatory, &fval);
-}
+	वापस dccp_feat_push_change(fn, feat, 1, mandatory, &fval);
+पूर्ण
 
 /**
- * __feat_register_sp  -  Register new SP value/list on socket
- * @fn: feature-negotiation list to register with
+ * __feat_रेजिस्टर_sp  -  Register new SP value/list on socket
+ * @fn: feature-negotiation list to रेजिस्टर with
  * @feat: an SP feature from %dccp_feature_numbers
  * @is_local: whether the local (1) or the remote (0) @feat is meant
- * @mandatory: use Mandatory option if 1
+ * @mandatory: use Mandatory option अगर 1
  * @sp_val: SP value followed by optional preference list
  * @sp_len: length of @sp_val in bytes
  */
-static int __feat_register_sp(struct list_head *fn, u8 feat, u8 is_local,
-			      u8 mandatory, u8 const *sp_val, u8 sp_len)
-{
+अटल पूर्णांक __feat_रेजिस्टर_sp(काष्ठा list_head *fn, u8 feat, u8 is_local,
+			      u8 mandatory, u8 स्थिर *sp_val, u8 sp_len)
+अणु
 	dccp_feat_val fval;
 
-	if (dccp_feat_type(feat) != FEAT_SP ||
+	अगर (dccp_feat_type(feat) != FEAT_SP ||
 	    !dccp_feat_sp_list_ok(feat, sp_val, sp_len))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Avoid negotiating alien CCIDs by only advertising supported ones */
-	if (feat == DCCPF_CCID && !ccid_support_check(sp_val, sp_len))
-		return -EOPNOTSUPP;
+	/* Aव्योम negotiating alien CCIDs by only advertising supported ones */
+	अगर (feat == DCCPF_CCID && !ccid_support_check(sp_val, sp_len))
+		वापस -EOPNOTSUPP;
 
-	if (dccp_feat_clone_sp_val(&fval, sp_val, sp_len))
-		return -ENOMEM;
+	अगर (dccp_feat_clone_sp_val(&fval, sp_val, sp_len))
+		वापस -ENOMEM;
 
-	if (dccp_feat_push_change(fn, feat, is_local, mandatory, &fval)) {
-		kfree(fval.sp.vec);
-		return -ENOMEM;
-	}
+	अगर (dccp_feat_push_change(fn, feat, is_local, mandatory, &fval)) अणु
+		kमुक्त(fval.sp.vec);
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * dccp_feat_register_sp  -  Register requests to change SP feature values
+ * dccp_feat_रेजिस्टर_sp  -  Register requests to change SP feature values
  * @sk: client or listening socket
  * @feat: one of %dccp_feature_numbers
  * @is_local: whether the local (1) or remote (0) @feat is meant
  * @list: array of preferred values, in descending order of preference
  * @len: length of @list in bytes
  */
-int dccp_feat_register_sp(struct sock *sk, u8 feat, u8 is_local,
-			  u8 const *list, u8 len)
-{	 /* any changes must be registered before establishing the connection */
-	if (sk->sk_state != DCCP_CLOSED)
-		return -EISCONN;
-	if (dccp_feat_type(feat) != FEAT_SP)
-		return -EINVAL;
-	return __feat_register_sp(&dccp_sk(sk)->dccps_featneg, feat, is_local,
+पूर्णांक dccp_feat_रेजिस्टर_sp(काष्ठा sock *sk, u8 feat, u8 is_local,
+			  u8 स्थिर *list, u8 len)
+अणु	 /* any changes must be रेजिस्टरed beक्रमe establishing the connection */
+	अगर (sk->sk_state != DCCP_CLOSED)
+		वापस -EISCONN;
+	अगर (dccp_feat_type(feat) != FEAT_SP)
+		वापस -EINVAL;
+	वापस __feat_रेजिस्टर_sp(&dccp_sk(sk)->dccps_featneg, feat, is_local,
 				  0, list, len);
-}
+पूर्ण
 
 /**
  * dccp_feat_nn_get  -  Query current/pending value of NN feature
  * @sk: DCCP socket of an established connection
  * @feat: NN feature number from %dccp_feature_numbers
  *
- * For a known NN feature, returns value currently being negotiated, or
- * current (confirmed) value if no negotiation is going on.
+ * For a known NN feature, वापसs value currently being negotiated, or
+ * current (confirmed) value अगर no negotiation is going on.
  */
-u64 dccp_feat_nn_get(struct sock *sk, u8 feat)
-{
-	if (dccp_feat_type(feat) == FEAT_NN) {
-		struct dccp_sock *dp = dccp_sk(sk);
-		struct dccp_feat_entry *entry;
+u64 dccp_feat_nn_get(काष्ठा sock *sk, u8 feat)
+अणु
+	अगर (dccp_feat_type(feat) == FEAT_NN) अणु
+		काष्ठा dccp_sock *dp = dccp_sk(sk);
+		काष्ठा dccp_feat_entry *entry;
 
 		entry = dccp_feat_list_lookup(&dp->dccps_featneg, feat, 1);
-		if (entry != NULL)
-			return entry->val.nn;
+		अगर (entry != शून्य)
+			वापस entry->val.nn;
 
-		switch (feat) {
-		case DCCPF_ACK_RATIO:
-			return dp->dccps_l_ack_ratio;
-		case DCCPF_SEQUENCE_WINDOW:
-			return dp->dccps_l_seq_win;
-		}
-	}
+		चयन (feat) अणु
+		हाल DCCPF_ACK_RATIO:
+			वापस dp->dccps_l_ack_ratio;
+		हाल DCCPF_SEQUENCE_WINDOW:
+			वापस dp->dccps_l_seq_win;
+		पूर्ण
+	पूर्ण
 	DCCP_BUG("attempt to look up unsupported feature %u", feat);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(dccp_feat_nn_get);
 
 /**
- * dccp_feat_signal_nn_change  -  Update NN values for an established connection
+ * dccp_feat_संकेत_nn_change  -  Update NN values क्रम an established connection
  * @sk: DCCP socket of an established connection
  * @feat: NN feature number from %dccp_feature_numbers
  * @nn_val: the new value to use
  *
  * This function is used to communicate NN updates out-of-band.
  */
-int dccp_feat_signal_nn_change(struct sock *sk, u8 feat, u64 nn_val)
-{
-	struct list_head *fn = &dccp_sk(sk)->dccps_featneg;
-	dccp_feat_val fval = { .nn = nn_val };
-	struct dccp_feat_entry *entry;
+पूर्णांक dccp_feat_संकेत_nn_change(काष्ठा sock *sk, u8 feat, u64 nn_val)
+अणु
+	काष्ठा list_head *fn = &dccp_sk(sk)->dccps_featneg;
+	dccp_feat_val fval = अणु .nn = nn_val पूर्ण;
+	काष्ठा dccp_feat_entry *entry;
 
-	if (sk->sk_state != DCCP_OPEN && sk->sk_state != DCCP_PARTOPEN)
-		return 0;
+	अगर (sk->sk_state != DCCP_OPEN && sk->sk_state != DCCP_PARTOPEN)
+		वापस 0;
 
-	if (dccp_feat_type(feat) != FEAT_NN ||
+	अगर (dccp_feat_type(feat) != FEAT_NN ||
 	    !dccp_feat_is_valid_nn_val(feat, nn_val))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (nn_val == dccp_feat_nn_get(sk, feat))
-		return 0;	/* already set or negotiation under way */
+	अगर (nn_val == dccp_feat_nn_get(sk, feat))
+		वापस 0;	/* alपढ़ोy set or negotiation under way */
 
 	entry = dccp_feat_list_lookup(fn, feat, 1);
-	if (entry != NULL) {
+	अगर (entry != शून्य) अणु
 		dccp_pr_debug("Clobbering existing NN entry %llu -> %llu\n",
-			      (unsigned long long)entry->val.nn,
-			      (unsigned long long)nn_val);
+			      (अचिन्हित दीर्घ दीर्घ)entry->val.nn,
+			      (अचिन्हित दीर्घ दीर्घ)nn_val);
 		dccp_feat_list_pop(entry);
-	}
+	पूर्ण
 
 	inet_csk_schedule_ack(sk);
-	return dccp_feat_push_change(fn, feat, 1, 0, &fval);
-}
-EXPORT_SYMBOL_GPL(dccp_feat_signal_nn_change);
+	वापस dccp_feat_push_change(fn, feat, 1, 0, &fval);
+पूर्ण
+EXPORT_SYMBOL_GPL(dccp_feat_संकेत_nn_change);
 
 /*
  *	Tracking features whose value depend on the choice of CCID
  *
- * This is designed with an extension in mind so that a list walk could be done
- * before activating any features. However, the existing framework was found to
- * work satisfactorily up until now, the automatic verification is left open.
+ * This is deचिन्हित with an extension in mind so that a list walk could be करोne
+ * beक्रमe activating any features. However, the existing framework was found to
+ * work satisfactorily up until now, the स्वतःmatic verअगरication is left खोलो.
  * When adding new CCIDs, add a corresponding dependency table here.
  */
-static const struct ccid_dependency *dccp_feat_ccid_deps(u8 ccid, bool is_local)
-{
-	static const struct ccid_dependency ccid2_dependencies[2][2] = {
+अटल स्थिर काष्ठा ccid_dependency *dccp_feat_ccid_deps(u8 ccid, bool is_local)
+अणु
+	अटल स्थिर काष्ठा ccid_dependency ccid2_dependencies[2][2] = अणु
 		/*
 		 * CCID2 mandates Ack Vectors (RFC 4341, 4.): as CCID is a TX
 		 * feature and Send Ack Vector is an RX feature, `is_local'
 		 * needs to be reversed.
 		 */
-		{	/* Dependencies of the receiver-side (remote) CCID2 */
-			{
+		अणु	/* Dependencies of the receiver-side (remote) CCID2 */
+			अणु
 				.dependent_feat	= DCCPF_SEND_ACK_VECTOR,
 				.is_local	= true,
 				.is_mandatory	= true,
 				.val		= 1
-			},
-			{ 0, 0, 0, 0 }
-		},
-		{	/* Dependencies of the sender-side (local) CCID2 */
-			{
+			पूर्ण,
+			अणु 0, 0, 0, 0 पूर्ण
+		पूर्ण,
+		अणु	/* Dependencies of the sender-side (local) CCID2 */
+			अणु
 				.dependent_feat	= DCCPF_SEND_ACK_VECTOR,
 				.is_local	= false,
 				.is_mandatory	= true,
 				.val		= 1
-			},
-			{ 0, 0, 0, 0 }
-		}
-	};
-	static const struct ccid_dependency ccid3_dependencies[2][5] = {
-		{	/*
+			पूर्ण,
+			अणु 0, 0, 0, 0 पूर्ण
+		पूर्ण
+	पूर्ण;
+	अटल स्थिर काष्ठा ccid_dependency ccid3_dependencies[2][5] = अणु
+		अणु	/*
 			 * Dependencies of the receiver-side CCID3
 			 */
-			{	/* locally disable Ack Vectors */
+			अणु	/* locally disable Ack Vectors */
 				.dependent_feat	= DCCPF_SEND_ACK_VECTOR,
 				.is_local	= true,
 				.is_mandatory	= false,
 				.val		= 0
-			},
-			{	/* see below why Send Loss Event Rate is on */
+			पूर्ण,
+			अणु	/* see below why Send Loss Event Rate is on */
 				.dependent_feat	= DCCPF_SEND_LEV_RATE,
 				.is_local	= true,
 				.is_mandatory	= true,
 				.val		= 1
-			},
-			{	/* NDP Count is needed as per RFC 4342, 6.1.1 */
+			पूर्ण,
+			अणु	/* NDP Count is needed as per RFC 4342, 6.1.1 */
 				.dependent_feat	= DCCPF_SEND_NDP_COUNT,
 				.is_local	= false,
 				.is_mandatory	= true,
 				.val		= 1
-			},
-			{ 0, 0, 0, 0 },
-		},
-		{	/*
+			पूर्ण,
+			अणु 0, 0, 0, 0 पूर्ण,
+		पूर्ण,
+		अणु	/*
 			 * CCID3 at the TX side: we request that the HC-receiver
 			 * will not send Ack Vectors (they will be ignored, so
 			 * Mandatory is not set); we enable Send Loss Event Rate
-			 * (Mandatory since the implementation does not support
+			 * (Mandatory since the implementation करोes not support
 			 * the Loss Intervals option of RFC 4342, 8.6).
-			 * The last two options are for peer's information only.
+			 * The last two options are क्रम peer's inक्रमmation only.
 			*/
-			{
+			अणु
 				.dependent_feat	= DCCPF_SEND_ACK_VECTOR,
 				.is_local	= false,
 				.is_mandatory	= false,
 				.val		= 0
-			},
-			{
+			पूर्ण,
+			अणु
 				.dependent_feat	= DCCPF_SEND_LEV_RATE,
 				.is_local	= false,
 				.is_mandatory	= true,
 				.val		= 1
-			},
-			{	/* this CCID does not support Ack Ratio */
+			पूर्ण,
+			अणु	/* this CCID करोes not support Ack Ratio */
 				.dependent_feat	= DCCPF_ACK_RATIO,
 				.is_local	= true,
 				.is_mandatory	= false,
 				.val		= 0
-			},
-			{	/* tell receiver we are sending NDP counts */
+			पूर्ण,
+			अणु	/* tell receiver we are sending NDP counts */
 				.dependent_feat	= DCCPF_SEND_NDP_COUNT,
 				.is_local	= true,
 				.is_mandatory	= false,
 				.val		= 1
-			},
-			{ 0, 0, 0, 0 }
-		}
-	};
-	switch (ccid) {
-	case DCCPC_CCID2:
-		return ccid2_dependencies[is_local];
-	case DCCPC_CCID3:
-		return ccid3_dependencies[is_local];
-	default:
-		return NULL;
-	}
-}
+			पूर्ण,
+			अणु 0, 0, 0, 0 पूर्ण
+		पूर्ण
+	पूर्ण;
+	चयन (ccid) अणु
+	हाल DCCPC_CCID2:
+		वापस ccid2_dependencies[is_local];
+	हाल DCCPC_CCID3:
+		वापस ccid3_dependencies[is_local];
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  * dccp_feat_propagate_ccid - Resolve dependencies of features on choice of CCID
@@ -941,97 +942,97 @@ static const struct ccid_dependency *dccp_feat_ccid_deps(u8 ccid, bool is_local)
  * @id: CCID number to track
  * @is_local: whether TX CCID (1) or RX CCID (0) is meant
  *
- * This function needs to be called after registering all other features.
+ * This function needs to be called after रेजिस्टरing all other features.
  */
-static int dccp_feat_propagate_ccid(struct list_head *fn, u8 id, bool is_local)
-{
-	const struct ccid_dependency *table = dccp_feat_ccid_deps(id, is_local);
-	int i, rc = (table == NULL);
+अटल पूर्णांक dccp_feat_propagate_ccid(काष्ठा list_head *fn, u8 id, bool is_local)
+अणु
+	स्थिर काष्ठा ccid_dependency *table = dccp_feat_ccid_deps(id, is_local);
+	पूर्णांक i, rc = (table == शून्य);
 
-	for (i = 0; rc == 0 && table[i].dependent_feat != DCCPF_RESERVED; i++)
-		if (dccp_feat_type(table[i].dependent_feat) == FEAT_SP)
-			rc = __feat_register_sp(fn, table[i].dependent_feat,
+	क्रम (i = 0; rc == 0 && table[i].dependent_feat != DCCPF_RESERVED; i++)
+		अगर (dccp_feat_type(table[i].dependent_feat) == FEAT_SP)
+			rc = __feat_रेजिस्टर_sp(fn, table[i].dependent_feat,
 						    table[i].is_local,
 						    table[i].is_mandatory,
 						    &table[i].val, 1);
-		else
-			rc = __feat_register_nn(fn, table[i].dependent_feat,
+		अन्यथा
+			rc = __feat_रेजिस्टर_nn(fn, table[i].dependent_feat,
 						    table[i].is_mandatory,
 						    table[i].val);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * dccp_feat_finalise_settings  -  Finalise settings before starting negotiation
+ * dccp_feat_finalise_settings  -  Finalise settings beक्रमe starting negotiation
  * @dp: client or listening socket (settings will be inherited)
  *
  * This is called after all registrations (socket initialisation, sysctls, and
- * sockopt calls), and before sending the first packet containing Change options
- * (ie. client-Request or server-Response), to ensure internal consistency.
+ * sockopt calls), and beक्रमe sending the first packet containing Change options
+ * (ie. client-Request or server-Response), to ensure पूर्णांकernal consistency.
  */
-int dccp_feat_finalise_settings(struct dccp_sock *dp)
-{
-	struct list_head *fn = &dp->dccps_featneg;
-	struct dccp_feat_entry *entry;
-	int i = 2, ccids[2] = { -1, -1 };
+पूर्णांक dccp_feat_finalise_settings(काष्ठा dccp_sock *dp)
+अणु
+	काष्ठा list_head *fn = &dp->dccps_featneg;
+	काष्ठा dccp_feat_entry *entry;
+	पूर्णांक i = 2, ccids[2] = अणु -1, -1 पूर्ण;
 
 	/*
 	 * Propagating CCIDs:
-	 * 1) not useful to propagate CCID settings if this host advertises more
-	 *    than one CCID: the choice of CCID  may still change - if this is
-	 *    the client, or if this is the server and the client sends
+	 * 1) not useful to propagate CCID settings अगर this host advertises more
+	 *    than one CCID: the choice of CCID  may still change - अगर this is
+	 *    the client, or अगर this is the server and the client sends
 	 *    singleton CCID values.
 	 * 2) since is that propagate_ccid changes the list, we defer changing
 	 *    the sorted list until after the traversal.
 	 */
-	list_for_each_entry(entry, fn, node)
-		if (entry->feat_num == DCCPF_CCID && entry->val.sp.len == 1)
+	list_क्रम_each_entry(entry, fn, node)
+		अगर (entry->feat_num == DCCPF_CCID && entry->val.sp.len == 1)
 			ccids[entry->is_local] = entry->val.sp.vec[0];
-	while (i--)
-		if (ccids[i] > 0 && dccp_feat_propagate_ccid(fn, ccids[i], i))
-			return -1;
-	dccp_feat_print_fnlist(fn);
-	return 0;
-}
+	जबतक (i--)
+		अगर (ccids[i] > 0 && dccp_feat_propagate_ccid(fn, ccids[i], i))
+			वापस -1;
+	dccp_feat_prपूर्णांक_fnlist(fn);
+	वापस 0;
+पूर्ण
 
 /**
  * dccp_feat_server_ccid_dependencies  -  Resolve CCID-dependent features
  * @dreq: server socket to resolve
  *
  * It is the server which resolves the dependencies once the CCID has been
- * fully negotiated. If no CCID has been negotiated, it uses the default CCID.
+ * fully negotiated. If no CCID has been negotiated, it uses the शेष CCID.
  */
-int dccp_feat_server_ccid_dependencies(struct dccp_request_sock *dreq)
-{
-	struct list_head *fn = &dreq->dreq_featneg;
-	struct dccp_feat_entry *entry;
+पूर्णांक dccp_feat_server_ccid_dependencies(काष्ठा dccp_request_sock *dreq)
+अणु
+	काष्ठा list_head *fn = &dreq->dreq_featneg;
+	काष्ठा dccp_feat_entry *entry;
 	u8 is_local, ccid;
 
-	for (is_local = 0; is_local <= 1; is_local++) {
+	क्रम (is_local = 0; is_local <= 1; is_local++) अणु
 		entry = dccp_feat_list_lookup(fn, DCCPF_CCID, is_local);
 
-		if (entry != NULL && !entry->empty_confirm)
+		अगर (entry != शून्य && !entry->empty_confirm)
 			ccid = entry->val.sp.vec[0];
-		else
-			ccid = dccp_feat_default_value(DCCPF_CCID);
+		अन्यथा
+			ccid = dccp_feat_शेष_value(DCCPF_CCID);
 
-		if (dccp_feat_propagate_ccid(fn, ccid, is_local))
-			return -1;
-	}
-	return 0;
-}
+		अगर (dccp_feat_propagate_ccid(fn, ccid, is_local))
+			वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Select the first entry in @servlist that also occurs in @clilist (6.3.1) */
-static int dccp_feat_preflist_match(u8 *servlist, u8 slen, u8 *clilist, u8 clen)
-{
+अटल पूर्णांक dccp_feat_preflist_match(u8 *servlist, u8 slen, u8 *clilist, u8 clen)
+अणु
 	u8 c, s;
 
-	for (s = 0; s < slen; s++)
-		for (c = 0; c < clen; c++)
-			if (servlist[s] == clilist[c])
-				return servlist[s];
-	return -1;
-}
+	क्रम (s = 0; s < slen; s++)
+		क्रम (c = 0; c < clen; c++)
+			अगर (servlist[s] == clilist[c])
+				वापस servlist[s];
+	वापस -1;
+पूर्ण
 
 /**
  * dccp_feat_prefer  -  Move preferred entry to the start of array
@@ -1040,59 +1041,59 @@ static int dccp_feat_preflist_match(u8 *servlist, u8 slen, u8 *clilist, u8 clen)
  * @array_len: size of the array
  *
  * Reorder the @array_len elements in @array so that @preferred_value comes
- * first. Returns >0 to indicate that @preferred_value does occur in @array.
+ * first. Returns >0 to indicate that @preferred_value करोes occur in @array.
  */
-static u8 dccp_feat_prefer(u8 preferred_value, u8 *array, u8 array_len)
-{
-	u8 i, does_occur = 0;
+अटल u8 dccp_feat_prefer(u8 preferred_value, u8 *array, u8 array_len)
+अणु
+	u8 i, करोes_occur = 0;
 
-	if (array != NULL) {
-		for (i = 0; i < array_len; i++)
-			if (array[i] == preferred_value) {
+	अगर (array != शून्य) अणु
+		क्रम (i = 0; i < array_len; i++)
+			अगर (array[i] == preferred_value) अणु
 				array[i] = array[0];
-				does_occur++;
-			}
-		if (does_occur)
+				करोes_occur++;
+			पूर्ण
+		अगर (करोes_occur)
 			array[0] = preferred_value;
-	}
-	return does_occur;
-}
+	पूर्ण
+	वापस करोes_occur;
+पूर्ण
 
 /**
  * dccp_feat_reconcile  -  Reconcile SP preference lists
- *  @fv: SP list to reconcile into
+ *  @fv: SP list to reconcile पूर्णांकo
  *  @arr: received SP preference list
  *  @len: length of @arr in bytes
  *  @is_server: whether this side is the server (and @fv is the server's list)
  *  @reorder: whether to reorder the list in @fv after reconciling with @arr
- * When successful, > 0 is returned and the reconciled list is in @fval.
+ * When successful, > 0 is वापसed and the reconciled list is in @fval.
  * A value of 0 means that negotiation failed (no shared entry).
  */
-static int dccp_feat_reconcile(dccp_feat_val *fv, u8 *arr, u8 len,
+अटल पूर्णांक dccp_feat_reconcile(dccp_feat_val *fv, u8 *arr, u8 len,
 			       bool is_server, bool reorder)
-{
-	int rc;
+अणु
+	पूर्णांक rc;
 
-	if (!fv->sp.vec || !arr) {
+	अगर (!fv->sp.vec || !arr) अणु
 		DCCP_CRIT("NULL feature value or array");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (is_server)
+	अगर (is_server)
 		rc = dccp_feat_preflist_match(fv->sp.vec, fv->sp.len, arr, len);
-	else
+	अन्यथा
 		rc = dccp_feat_preflist_match(arr, len, fv->sp.vec, fv->sp.len);
 
-	if (!reorder)
-		return rc;
-	if (rc < 0)
-		return 0;
+	अगर (!reorder)
+		वापस rc;
+	अगर (rc < 0)
+		वापस 0;
 
 	/*
-	 * Reorder list: used for activating features and in dccp_insert_fn_opt.
+	 * Reorder list: used क्रम activating features and in dccp_insert_fn_opt.
 	 */
-	return dccp_feat_prefer(rc, fv->sp.vec, fv->sp.len);
-}
+	वापस dccp_feat_prefer(rc, fv->sp.vec, fv->sp.len);
+पूर्ण
 
 /**
  * dccp_feat_change_recv  -  Process incoming ChangeL/R options
@@ -1104,106 +1105,106 @@ static int dccp_feat_reconcile(dccp_feat_val *fv, u8 *arr, u8 len,
  * @len: length of @val in bytes
  * @server: whether this node is the server (1) or the client (0)
  */
-static u8 dccp_feat_change_recv(struct list_head *fn, u8 is_mandatory, u8 opt,
-				u8 feat, u8 *val, u8 len, const bool server)
-{
+अटल u8 dccp_feat_change_recv(काष्ठा list_head *fn, u8 is_mandatory, u8 opt,
+				u8 feat, u8 *val, u8 len, स्थिर bool server)
+अणु
 	u8 defval, type = dccp_feat_type(feat);
-	const bool local = (opt == DCCPO_CHANGE_R);
-	struct dccp_feat_entry *entry;
+	स्थिर bool local = (opt == DCCPO_CHANGE_R);
+	काष्ठा dccp_feat_entry *entry;
 	dccp_feat_val fval;
 
-	if (len == 0 || type == FEAT_UNKNOWN)		/* 6.1 and 6.6.8 */
-		goto unknown_feature_or_value;
+	अगर (len == 0 || type == FEAT_UNKNOWN)		/* 6.1 and 6.6.8 */
+		जाओ unknown_feature_or_value;
 
-	dccp_feat_print_opt(opt, feat, val, len, is_mandatory);
+	dccp_feat_prपूर्णांक_opt(opt, feat, val, len, is_mandatory);
 
 	/*
 	 *	Negotiation of NN features: Change R is invalid, so there is no
-	 *	simultaneous negotiation; hence we do not look up in the list.
+	 *	simultaneous negotiation; hence we करो not look up in the list.
 	 */
-	if (type == FEAT_NN) {
-		if (local || len > sizeof(fval.nn))
-			goto unknown_feature_or_value;
+	अगर (type == FEAT_NN) अणु
+		अगर (local || len > माप(fval.nn))
+			जाओ unknown_feature_or_value;
 
 		/* 6.3.2: "The feature remote MUST accept any valid value..." */
 		fval.nn = dccp_decode_value_var(val, len);
-		if (!dccp_feat_is_valid_nn_val(feat, fval.nn))
-			goto unknown_feature_or_value;
+		अगर (!dccp_feat_is_valid_nn_val(feat, fval.nn))
+			जाओ unknown_feature_or_value;
 
-		return dccp_feat_push_confirm(fn, feat, local, &fval);
-	}
+		वापस dccp_feat_push_confirm(fn, feat, local, &fval);
+	पूर्ण
 
 	/*
 	 *	Unidirectional/simultaneous negotiation of SP features (6.3.1)
 	 */
 	entry = dccp_feat_list_lookup(fn, feat, local);
-	if (entry == NULL) {
+	अगर (entry == शून्य) अणु
 		/*
-		 * No particular preferences have been registered. We deal with
+		 * No particular preferences have been रेजिस्टरed. We deal with
 		 * this situation by assuming that all valid values are equally
 		 * acceptable, and apply the following checks:
-		 * - if the peer's list is a singleton, we accept a valid value;
-		 * - if we are the server, we first try to see if the peer (the
-		 *   client) advertises the default value. If yes, we use it,
+		 * - अगर the peer's list is a singleton, we accept a valid value;
+		 * - अगर we are the server, we first try to see अगर the peer (the
+		 *   client) advertises the शेष value. If yes, we use it,
 		 *   otherwise we accept the preferred value;
-		 * - else if we are the client, we use the first list element.
+		 * - अन्यथा अगर we are the client, we use the first list element.
 		 */
-		if (dccp_feat_clone_sp_val(&fval, val, 1))
-			return DCCP_RESET_CODE_TOO_BUSY;
+		अगर (dccp_feat_clone_sp_val(&fval, val, 1))
+			वापस DCCP_RESET_CODE_TOO_BUSY;
 
-		if (len > 1 && server) {
-			defval = dccp_feat_default_value(feat);
-			if (dccp_feat_preflist_match(&defval, 1, val, len) > -1)
+		अगर (len > 1 && server) अणु
+			defval = dccp_feat_शेष_value(feat);
+			अगर (dccp_feat_preflist_match(&defval, 1, val, len) > -1)
 				fval.sp.vec[0] = defval;
-		} else if (!dccp_feat_is_valid_sp_val(feat, fval.sp.vec[0])) {
-			kfree(fval.sp.vec);
-			goto unknown_feature_or_value;
-		}
+		पूर्ण अन्यथा अगर (!dccp_feat_is_valid_sp_val(feat, fval.sp.vec[0])) अणु
+			kमुक्त(fval.sp.vec);
+			जाओ unknown_feature_or_value;
+		पूर्ण
 
 		/* Treat unsupported CCIDs like invalid values */
-		if (feat == DCCPF_CCID && !ccid_support_check(fval.sp.vec, 1)) {
-			kfree(fval.sp.vec);
-			goto not_valid_or_not_known;
-		}
+		अगर (feat == DCCPF_CCID && !ccid_support_check(fval.sp.vec, 1)) अणु
+			kमुक्त(fval.sp.vec);
+			जाओ not_valid_or_not_known;
+		पूर्ण
 
-		return dccp_feat_push_confirm(fn, feat, local, &fval);
+		वापस dccp_feat_push_confirm(fn, feat, local, &fval);
 
-	} else if (entry->state == FEAT_UNSTABLE) {	/* 6.6.2 */
-		return 0;
-	}
+	पूर्ण अन्यथा अगर (entry->state == FEAT_UNSTABLE) अणु	/* 6.6.2 */
+		वापस 0;
+	पूर्ण
 
-	if (dccp_feat_reconcile(&entry->val, val, len, server, true)) {
+	अगर (dccp_feat_reconcile(&entry->val, val, len, server, true)) अणु
 		entry->empty_confirm = false;
-	} else if (is_mandatory) {
-		return DCCP_RESET_CODE_MANDATORY_ERROR;
-	} else if (entry->state == FEAT_INITIALISING) {
+	पूर्ण अन्यथा अगर (is_mandatory) अणु
+		वापस DCCP_RESET_CODE_MANDATORY_ERROR;
+	पूर्ण अन्यथा अगर (entry->state == FEAT_INITIALISING) अणु
 		/*
 		 * Failed simultaneous negotiation (server only): try to `save'
-		 * the connection by checking whether entry contains the default
-		 * value for @feat. If yes, send an empty Confirm to signal that
+		 * the connection by checking whether entry contains the शेष
+		 * value क्रम @feat. If yes, send an empty Confirm to संकेत that
 		 * the received Change was not understood - which implies using
-		 * the default value.
+		 * the शेष value.
 		 * If this also fails, we use Reset as the last resort.
 		 */
 		WARN_ON(!server);
-		defval = dccp_feat_default_value(feat);
-		if (!dccp_feat_reconcile(&entry->val, &defval, 1, server, true))
-			return DCCP_RESET_CODE_OPTION_ERROR;
+		defval = dccp_feat_शेष_value(feat);
+		अगर (!dccp_feat_reconcile(&entry->val, &defval, 1, server, true))
+			वापस DCCP_RESET_CODE_OPTION_ERROR;
 		entry->empty_confirm = true;
-	}
+	पूर्ण
 	entry->needs_confirm   = true;
 	entry->needs_mandatory = false;
 	entry->state	       = FEAT_STABLE;
-	return 0;
+	वापस 0;
 
 unknown_feature_or_value:
-	if (!is_mandatory)
-		return dccp_push_empty_confirm(fn, feat, local);
+	अगर (!is_mandatory)
+		वापस dccp_push_empty_confirm(fn, feat, local);
 
 not_valid_or_not_known:
-	return is_mandatory ? DCCP_RESET_CODE_MANDATORY_ERROR
+	वापस is_mandatory ? DCCP_RESET_CODE_MANDATORY_ERROR
 			    : DCCP_RESET_CODE_OPTION_ERROR;
-}
+पूर्ण
 
 /**
  * dccp_feat_confirm_recv  -  Process received Confirm options
@@ -1215,84 +1216,84 @@ not_valid_or_not_known:
  * @len: length of @val in bytes
  * @server: whether this node is server (1) or client (0)
  */
-static u8 dccp_feat_confirm_recv(struct list_head *fn, u8 is_mandatory, u8 opt,
-				 u8 feat, u8 *val, u8 len, const bool server)
-{
+अटल u8 dccp_feat_confirm_recv(काष्ठा list_head *fn, u8 is_mandatory, u8 opt,
+				 u8 feat, u8 *val, u8 len, स्थिर bool server)
+अणु
 	u8 *plist, plen, type = dccp_feat_type(feat);
-	const bool local = (opt == DCCPO_CONFIRM_R);
-	struct dccp_feat_entry *entry = dccp_feat_list_lookup(fn, feat, local);
+	स्थिर bool local = (opt == DCCPO_CONFIRM_R);
+	काष्ठा dccp_feat_entry *entry = dccp_feat_list_lookup(fn, feat, local);
 
-	dccp_feat_print_opt(opt, feat, val, len, is_mandatory);
+	dccp_feat_prपूर्णांक_opt(opt, feat, val, len, is_mandatory);
 
-	if (entry == NULL) {	/* nothing queued: ignore or handle error */
-		if (is_mandatory && type == FEAT_UNKNOWN)
-			return DCCP_RESET_CODE_MANDATORY_ERROR;
+	अगर (entry == शून्य) अणु	/* nothing queued: ignore or handle error */
+		अगर (is_mandatory && type == FEAT_UNKNOWN)
+			वापस DCCP_RESET_CODE_MANDATORY_ERROR;
 
-		if (!local && type == FEAT_NN)		/* 6.3.2 */
-			goto confirmation_failed;
-		return 0;
-	}
+		अगर (!local && type == FEAT_NN)		/* 6.3.2 */
+			जाओ confirmation_failed;
+		वापस 0;
+	पूर्ण
 
-	if (entry->state != FEAT_CHANGING)		/* 6.6.2 */
-		return 0;
+	अगर (entry->state != FEAT_CHANGING)		/* 6.6.2 */
+		वापस 0;
 
-	if (len == 0) {
-		if (dccp_feat_must_be_understood(feat))	/* 6.6.7 */
-			goto confirmation_failed;
+	अगर (len == 0) अणु
+		अगर (dccp_feat_must_be_understood(feat))	/* 6.6.7 */
+			जाओ confirmation_failed;
 		/*
 		 * Empty Confirm during connection setup: this means reverting
-		 * to the `old' value, which in this case is the default. Since
-		 * we handle default values automatically when no other values
+		 * to the `old' value, which in this हाल is the शेष. Since
+		 * we handle शेष values स्वतःmatically when no other values
 		 * have been set, we revert to the old value by removing this
 		 * entry from the list.
 		 */
 		dccp_feat_list_pop(entry);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (type == FEAT_NN) {
-		if (len > sizeof(entry->val.nn))
-			goto confirmation_failed;
+	अगर (type == FEAT_NN) अणु
+		अगर (len > माप(entry->val.nn))
+			जाओ confirmation_failed;
 
-		if (entry->val.nn == dccp_decode_value_var(val, len))
-			goto confirmation_succeeded;
+		अगर (entry->val.nn == dccp_decode_value_var(val, len))
+			जाओ confirmation_succeeded;
 
 		DCCP_WARN("Bogus Confirm for non-existing value\n");
-		goto confirmation_failed;
-	}
+		जाओ confirmation_failed;
+	पूर्ण
 
 	/*
 	 * Parsing SP Confirms: the first element of @val is the preferred
-	 * SP value which the peer confirms, the remainder depends on @len.
+	 * SP value which the peer confirms, the reमुख्यder depends on @len.
 	 * Note that only the confirmed value need to be a valid SP value.
 	 */
-	if (!dccp_feat_is_valid_sp_val(feat, *val))
-		goto confirmation_failed;
+	अगर (!dccp_feat_is_valid_sp_val(feat, *val))
+		जाओ confirmation_failed;
 
-	if (len == 1) {		/* peer didn't supply a preference list */
+	अगर (len == 1) अणु		/* peer didn't supply a preference list */
 		plist = val;
 		plen  = len;
-	} else {		/* preferred value + preference list */
+	पूर्ण अन्यथा अणु		/* preferred value + preference list */
 		plist = val + 1;
 		plen  = len - 1;
-	}
+	पूर्ण
 
 	/* Check whether the peer got the reconciliation right (6.6.8) */
-	if (dccp_feat_reconcile(&entry->val, plist, plen, server, 0) != *val) {
+	अगर (dccp_feat_reconcile(&entry->val, plist, plen, server, 0) != *val) अणु
 		DCCP_WARN("Confirm selected the wrong value %u\n", *val);
-		return DCCP_RESET_CODE_OPTION_ERROR;
-	}
+		वापस DCCP_RESET_CODE_OPTION_ERROR;
+	पूर्ण
 	entry->val.sp.vec[0] = *val;
 
 confirmation_succeeded:
 	entry->state = FEAT_STABLE;
-	return 0;
+	वापस 0;
 
 confirmation_failed:
 	DCCP_WARN("Confirmation failed\n");
-	return is_mandatory ? DCCP_RESET_CODE_MANDATORY_ERROR
+	वापस is_mandatory ? DCCP_RESET_CODE_MANDATORY_ERROR
 			    : DCCP_RESET_CODE_OPTION_ERROR;
-}
+पूर्ण
 
 /**
  * dccp_feat_handle_nn_established  -  Fast-path reception of NN options
@@ -1304,94 +1305,94 @@ confirmation_failed:
  * @len:	length of @val in bytes
  *
  * This function combines the functionality of change_recv/confirm_recv, with
- * the following differences (reset codes are the same):
+ * the following dअगरferences (reset codes are the same):
  *    - cleanup after receiving the Confirm;
  *    - values are directly activated after successful parsing;
  *    - deliberately restricted to NN features.
  * The restriction to NN features is essential since SP features can have non-
- * predictable outcomes (depending on the remote configuration), and are inter-
- * dependent (CCIDs for instance cause further dependencies).
+ * predictable outcomes (depending on the remote configuration), and are पूर्णांकer-
+ * dependent (CCIDs क्रम instance cause further dependencies).
  */
-static u8 dccp_feat_handle_nn_established(struct sock *sk, u8 mandatory, u8 opt,
+अटल u8 dccp_feat_handle_nn_established(काष्ठा sock *sk, u8 mandatory, u8 opt,
 					  u8 feat, u8 *val, u8 len)
-{
-	struct list_head *fn = &dccp_sk(sk)->dccps_featneg;
-	const bool local = (opt == DCCPO_CONFIRM_R);
-	struct dccp_feat_entry *entry;
+अणु
+	काष्ठा list_head *fn = &dccp_sk(sk)->dccps_featneg;
+	स्थिर bool local = (opt == DCCPO_CONFIRM_R);
+	काष्ठा dccp_feat_entry *entry;
 	u8 type = dccp_feat_type(feat);
 	dccp_feat_val fval;
 
-	dccp_feat_print_opt(opt, feat, val, len, mandatory);
+	dccp_feat_prपूर्णांक_opt(opt, feat, val, len, mandatory);
 
 	/* Ignore non-mandatory unknown and non-NN features */
-	if (type == FEAT_UNKNOWN) {
-		if (local && !mandatory)
-			return 0;
-		goto fast_path_unknown;
-	} else if (type != FEAT_NN) {
-		return 0;
-	}
+	अगर (type == FEAT_UNKNOWN) अणु
+		अगर (local && !mandatory)
+			वापस 0;
+		जाओ fast_path_unknown;
+	पूर्ण अन्यथा अगर (type != FEAT_NN) अणु
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * We don't accept empty Confirms, since in fast-path feature
+	 * We करोn't accept empty Confirms, since in fast-path feature
 	 * negotiation the values are enabled immediately after sending
 	 * the Change option.
 	 * Empty Changes on the other hand are invalid (RFC 4340, 6.1).
 	 */
-	if (len == 0 || len > sizeof(fval.nn))
-		goto fast_path_unknown;
+	अगर (len == 0 || len > माप(fval.nn))
+		जाओ fast_path_unknown;
 
-	if (opt == DCCPO_CHANGE_L) {
+	अगर (opt == DCCPO_CHANGE_L) अणु
 		fval.nn = dccp_decode_value_var(val, len);
-		if (!dccp_feat_is_valid_nn_val(feat, fval.nn))
-			goto fast_path_unknown;
+		अगर (!dccp_feat_is_valid_nn_val(feat, fval.nn))
+			जाओ fast_path_unknown;
 
-		if (dccp_feat_push_confirm(fn, feat, local, &fval) ||
+		अगर (dccp_feat_push_confirm(fn, feat, local, &fval) ||
 		    dccp_feat_activate(sk, feat, local, &fval))
-			return DCCP_RESET_CODE_TOO_BUSY;
+			वापस DCCP_RESET_CODE_TOO_BUSY;
 
 		/* set the `Ack Pending' flag to piggyback a Confirm */
 		inet_csk_schedule_ack(sk);
 
-	} else if (opt == DCCPO_CONFIRM_R) {
+	पूर्ण अन्यथा अगर (opt == DCCPO_CONFIRM_R) अणु
 		entry = dccp_feat_list_lookup(fn, feat, local);
-		if (entry == NULL || entry->state != FEAT_CHANGING)
-			return 0;
+		अगर (entry == शून्य || entry->state != FEAT_CHANGING)
+			वापस 0;
 
 		fval.nn = dccp_decode_value_var(val, len);
 		/*
-		 * Just ignore a value that doesn't match our current value.
+		 * Just ignore a value that करोesn't match our current value.
 		 * If the option changes twice within two RTTs, then at least
-		 * one CONFIRM will be received for the old value after a
+		 * one CONFIRM will be received क्रम the old value after a
 		 * new CHANGE was sent.
 		 */
-		if (fval.nn != entry->val.nn)
-			return 0;
+		अगर (fval.nn != entry->val.nn)
+			वापस 0;
 
 		/* Only activate after receiving the Confirm option (6.6.1). */
 		dccp_feat_activate(sk, feat, local, &fval);
 
-		/* It has been confirmed - so remove the entry */
+		/* It has been confirmed - so हटाओ the entry */
 		dccp_feat_list_pop(entry);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		DCCP_WARN("Received illegal option %u\n", opt);
-		goto fast_path_failed;
-	}
-	return 0;
+		जाओ fast_path_failed;
+	पूर्ण
+	वापस 0;
 
 fast_path_unknown:
-	if (!mandatory)
-		return dccp_push_empty_confirm(fn, feat, local);
+	अगर (!mandatory)
+		वापस dccp_push_empty_confirm(fn, feat, local);
 
 fast_path_failed:
-	return mandatory ? DCCP_RESET_CODE_MANDATORY_ERROR
+	वापस mandatory ? DCCP_RESET_CODE_MANDATORY_ERROR
 			 : DCCP_RESET_CODE_OPTION_ERROR;
-}
+पूर्ण
 
 /**
  * dccp_feat_parse_options  -  Process Feature-Negotiation Options
- * @sk: for general use and used by the client during connection setup
+ * @sk: क्रम general use and used by the client during connection setup
  * @dreq: used by the server during connection setup
  * @mandatory: whether @opt was preceded by a Mandatory option
  * @opt: %DCCPO_CHANGE_L | %DCCPO_CHANGE_R | %DCCPO_CONFIRM_L | %DCCPO_CONFIRM_R
@@ -1399,179 +1400,179 @@ fast_path_failed:
  * @val: value contents of @opt
  * @len: length of @val in bytes
  *
- * Returns 0 on success, a Reset code for ending the connection otherwise.
+ * Returns 0 on success, a Reset code क्रम ending the connection otherwise.
  */
-int dccp_feat_parse_options(struct sock *sk, struct dccp_request_sock *dreq,
+पूर्णांक dccp_feat_parse_options(काष्ठा sock *sk, काष्ठा dccp_request_sock *dreq,
 			    u8 mandatory, u8 opt, u8 feat, u8 *val, u8 len)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
-	struct list_head *fn = dreq ? &dreq->dreq_featneg : &dp->dccps_featneg;
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
+	काष्ठा list_head *fn = dreq ? &dreq->dreq_featneg : &dp->dccps_featneg;
 	bool server = false;
 
-	switch (sk->sk_state) {
+	चयन (sk->sk_state) अणु
 	/*
 	 *	Negotiation during connection setup
 	 */
-	case DCCP_LISTEN:
+	हाल DCCP_LISTEN:
 		server = true;
 		fallthrough;
-	case DCCP_REQUESTING:
-		switch (opt) {
-		case DCCPO_CHANGE_L:
-		case DCCPO_CHANGE_R:
-			return dccp_feat_change_recv(fn, mandatory, opt, feat,
+	हाल DCCP_REQUESTING:
+		चयन (opt) अणु
+		हाल DCCPO_CHANGE_L:
+		हाल DCCPO_CHANGE_R:
+			वापस dccp_feat_change_recv(fn, mandatory, opt, feat,
 						     val, len, server);
-		case DCCPO_CONFIRM_R:
-		case DCCPO_CONFIRM_L:
-			return dccp_feat_confirm_recv(fn, mandatory, opt, feat,
+		हाल DCCPO_CONFIRM_R:
+		हाल DCCPO_CONFIRM_L:
+			वापस dccp_feat_confirm_recv(fn, mandatory, opt, feat,
 						      val, len, server);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 	/*
-	 *	Support for exchanging NN options on an established connection.
+	 *	Support क्रम exchanging NN options on an established connection.
 	 */
-	case DCCP_OPEN:
-	case DCCP_PARTOPEN:
-		return dccp_feat_handle_nn_established(sk, mandatory, opt, feat,
+	हाल DCCP_OPEN:
+	हाल DCCP_PARTOPEN:
+		वापस dccp_feat_handle_nn_established(sk, mandatory, opt, feat,
 						       val, len);
-	}
-	return 0;	/* ignore FN options in all other states */
-}
+	पूर्ण
+	वापस 0;	/* ignore FN options in all other states */
+पूर्ण
 
 /**
- * dccp_feat_init  -  Seed feature negotiation with host-specific defaults
+ * dccp_feat_init  -  Seed feature negotiation with host-specअगरic शेषs
  * @sk: Socket to initialize.
  *
- * This initialises global defaults, depending on the value of the sysctls.
- * These can later be overridden by registering changes via setsockopt calls.
+ * This initialises global शेषs, depending on the value of the sysctls.
+ * These can later be overridden by रेजिस्टरing changes via setsockopt calls.
  * The last link in the chain is finalise_settings, to make sure that between
  * here and the start of actual feature negotiation no inconsistencies enter.
  *
- * All features not appearing below use either defaults or are otherwise
+ * All features not appearing below use either शेषs or are otherwise
  * later adjusted through dccp_feat_finalise_settings().
  */
-int dccp_feat_init(struct sock *sk)
-{
-	struct list_head *fn = &dccp_sk(sk)->dccps_featneg;
+पूर्णांक dccp_feat_init(काष्ठा sock *sk)
+अणु
+	काष्ठा list_head *fn = &dccp_sk(sk)->dccps_featneg;
 	u8 on = 1, off = 0;
-	int rc;
-	struct {
+	पूर्णांक rc;
+	काष्ठा अणु
 		u8 *val;
 		u8 len;
-	} tx, rx;
+	पूर्ण tx, rx;
 
 	/* Non-negotiable (NN) features */
-	rc = __feat_register_nn(fn, DCCPF_SEQUENCE_WINDOW, 0,
-				    sysctl_dccp_sequence_window);
-	if (rc)
-		return rc;
+	rc = __feat_रेजिस्टर_nn(fn, DCCPF_SEQUENCE_WINDOW, 0,
+				    sysctl_dccp_sequence_winकरोw);
+	अगर (rc)
+		वापस rc;
 
 	/* Server-priority (SP) features */
 
-	/* Advertise that short seqnos are not supported (7.6.1) */
-	rc = __feat_register_sp(fn, DCCPF_SHORT_SEQNOS, true, true, &off, 1);
-	if (rc)
-		return rc;
+	/* Advertise that लघु seqnos are not supported (7.6.1) */
+	rc = __feat_रेजिस्टर_sp(fn, DCCPF_SHORT_SEQNOS, true, true, &off, 1);
+	अगर (rc)
+		वापस rc;
 
 	/* RFC 4340 12.1: "If a DCCP is not ECN capable, ..." */
-	rc = __feat_register_sp(fn, DCCPF_ECN_INCAPABLE, true, true, &on, 1);
-	if (rc)
-		return rc;
+	rc = __feat_रेजिस्टर_sp(fn, DCCPF_ECN_INCAPABLE, true, true, &on, 1);
+	अगर (rc)
+		वापस rc;
 
 	/*
 	 * We advertise the available list of CCIDs and reorder according to
-	 * preferences, to avoid failure resulting from negotiating different
+	 * preferences, to aव्योम failure resulting from negotiating dअगरferent
 	 * singleton values (which always leads to failure).
 	 * These settings can still (later) be overridden via sockopts.
 	 */
-	if (ccid_get_builtin_ccids(&tx.val, &tx.len))
-		return -ENOBUFS;
-	if (ccid_get_builtin_ccids(&rx.val, &rx.len)) {
-		kfree(tx.val);
-		return -ENOBUFS;
-	}
+	अगर (ccid_get_builtin_ccids(&tx.val, &tx.len))
+		वापस -ENOBUFS;
+	अगर (ccid_get_builtin_ccids(&rx.val, &rx.len)) अणु
+		kमुक्त(tx.val);
+		वापस -ENOBUFS;
+	पूर्ण
 
-	if (!dccp_feat_prefer(sysctl_dccp_tx_ccid, tx.val, tx.len) ||
+	अगर (!dccp_feat_prefer(sysctl_dccp_tx_ccid, tx.val, tx.len) ||
 	    !dccp_feat_prefer(sysctl_dccp_rx_ccid, rx.val, rx.len))
-		goto free_ccid_lists;
+		जाओ मुक्त_ccid_lists;
 
-	rc = __feat_register_sp(fn, DCCPF_CCID, true, false, tx.val, tx.len);
-	if (rc)
-		goto free_ccid_lists;
+	rc = __feat_रेजिस्टर_sp(fn, DCCPF_CCID, true, false, tx.val, tx.len);
+	अगर (rc)
+		जाओ मुक्त_ccid_lists;
 
-	rc = __feat_register_sp(fn, DCCPF_CCID, false, false, rx.val, rx.len);
+	rc = __feat_रेजिस्टर_sp(fn, DCCPF_CCID, false, false, rx.val, rx.len);
 
-free_ccid_lists:
-	kfree(tx.val);
-	kfree(rx.val);
-	return rc;
-}
+मुक्त_ccid_lists:
+	kमुक्त(tx.val);
+	kमुक्त(rx.val);
+	वापस rc;
+पूर्ण
 
-int dccp_feat_activate_values(struct sock *sk, struct list_head *fn_list)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
-	struct dccp_feat_entry *cur, *next;
-	int idx;
-	dccp_feat_val *fvals[DCCP_FEAT_SUPPORTED_MAX][2] = {
-		 [0 ... DCCP_FEAT_SUPPORTED_MAX-1] = { NULL, NULL }
-	};
+पूर्णांक dccp_feat_activate_values(काष्ठा sock *sk, काष्ठा list_head *fn_list)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
+	काष्ठा dccp_feat_entry *cur, *next;
+	पूर्णांक idx;
+	dccp_feat_val *fvals[DCCP_FEAT_SUPPORTED_MAX][2] = अणु
+		 [0 ... DCCP_FEAT_SUPPORTED_MAX-1] = अणु शून्य, शून्य पूर्ण
+	पूर्ण;
 
-	list_for_each_entry(cur, fn_list, node) {
+	list_क्रम_each_entry(cur, fn_list, node) अणु
 		/*
 		 * An empty Confirm means that either an unknown feature type
-		 * or an invalid value was present. In the first case there is
-		 * nothing to activate, in the other the default value is used.
+		 * or an invalid value was present. In the first हाल there is
+		 * nothing to activate, in the other the शेष value is used.
 		 */
-		if (cur->empty_confirm)
-			continue;
+		अगर (cur->empty_confirm)
+			जारी;
 
 		idx = dccp_feat_index(cur->feat_num);
-		if (idx < 0) {
+		अगर (idx < 0) अणु
 			DCCP_BUG("Unknown feature %u", cur->feat_num);
-			goto activation_failed;
-		}
-		if (cur->state != FEAT_STABLE) {
+			जाओ activation_failed;
+		पूर्ण
+		अगर (cur->state != FEAT_STABLE) अणु
 			DCCP_CRIT("Negotiation of %s %s failed in state %s",
 				  cur->is_local ? "local" : "remote",
 				  dccp_feat_fname(cur->feat_num),
 				  dccp_feat_sname[cur->state]);
-			goto activation_failed;
-		}
+			जाओ activation_failed;
+		पूर्ण
 		fvals[idx][cur->is_local] = &cur->val;
-	}
+	पूर्ण
 
 	/*
 	 * Activate in decreasing order of index, so that the CCIDs are always
-	 * activated as the last feature. This avoids the case where a CCID
+	 * activated as the last feature. This aव्योमs the हाल where a CCID
 	 * relies on the initialisation of one or more features that it depends
 	 * on (e.g. Send NDP Count, Send Ack Vector, and Ack Ratio features).
 	 */
-	for (idx = DCCP_FEAT_SUPPORTED_MAX; --idx >= 0;)
-		if (__dccp_feat_activate(sk, idx, 0, fvals[idx][0]) ||
-		    __dccp_feat_activate(sk, idx, 1, fvals[idx][1])) {
+	क्रम (idx = DCCP_FEAT_SUPPORTED_MAX; --idx >= 0;)
+		अगर (__dccp_feat_activate(sk, idx, 0, fvals[idx][0]) ||
+		    __dccp_feat_activate(sk, idx, 1, fvals[idx][1])) अणु
 			DCCP_CRIT("Could not activate %d", idx);
-			goto activation_failed;
-		}
+			जाओ activation_failed;
+		पूर्ण
 
-	/* Clean up Change options which have been confirmed already */
-	list_for_each_entry_safe(cur, next, fn_list, node)
-		if (!cur->needs_confirm)
+	/* Clean up Change options which have been confirmed alपढ़ोy */
+	list_क्रम_each_entry_safe(cur, next, fn_list, node)
+		अगर (!cur->needs_confirm)
 			dccp_feat_list_pop(cur);
 
 	dccp_pr_debug("Activation OK\n");
-	return 0;
+	वापस 0;
 
 activation_failed:
 	/*
 	 * We clean up everything that may have been allocated, since
-	 * it is difficult to track at which stage negotiation failed.
+	 * it is dअगरficult to track at which stage negotiation failed.
 	 * This is ok, since all allocation functions below are robust
-	 * against NULL arguments.
+	 * against शून्य arguments.
 	 */
 	ccid_hc_rx_delete(dp->dccps_hc_rx_ccid, sk);
 	ccid_hc_tx_delete(dp->dccps_hc_tx_ccid, sk);
-	dp->dccps_hc_rx_ccid = dp->dccps_hc_tx_ccid = NULL;
-	dccp_ackvec_free(dp->dccps_hc_rx_ackvec);
-	dp->dccps_hc_rx_ackvec = NULL;
-	return -1;
-}
+	dp->dccps_hc_rx_ccid = dp->dccps_hc_tx_ccid = शून्य;
+	dccp_ackvec_मुक्त(dp->dccps_hc_rx_ackvec);
+	dp->dccps_hc_rx_ackvec = शून्य;
+	वापस -1;
+पूर्ण

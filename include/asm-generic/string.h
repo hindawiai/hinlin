@@ -1,10 +1,11 @@
-#ifndef __ASM_GENERIC_STRING_H
-#define __ASM_GENERIC_STRING_H
+<शैली गुरु>
+#अगर_अघोषित __ASM_GENERIC_STRING_H
+#घोषणा __ASM_GENERIC_STRING_H
 /*
  * The kernel provides all required functions in lib/string.c
  *
  * Architectures probably want to provide at least their own optimized
- * memcpy and memset functions though.
+ * स_नकल and स_रखो functions though.
  */
 
-#endif /* __ASM_GENERIC_STRING_H */
+#पूर्ण_अगर /* __ASM_GENERIC_STRING_H */

@@ -1,164 +1,165 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Initialize MMU support.
  *
  * Copyright (C) 1998-2003 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
 
-#include <linux/dma-map-ops.h>
-#include <linux/dmar.h>
-#include <linux/efi.h>
-#include <linux/elf.h>
-#include <linux/memblock.h>
-#include <linux/mm.h>
-#include <linux/sched/signal.h>
-#include <linux/mmzone.h>
-#include <linux/module.h>
-#include <linux/personality.h>
-#include <linux/reboot.h>
-#include <linux/slab.h>
-#include <linux/swap.h>
-#include <linux/proc_fs.h>
-#include <linux/bitops.h>
-#include <linux/kexec.h>
-#include <linux/swiotlb.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/dmar.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/module.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/swiotlb.h>
 
-#include <asm/dma.h>
-#include <asm/efi.h>
-#include <asm/io.h>
-#include <asm/numa.h>
-#include <asm/patch.h>
-#include <asm/pgalloc.h>
-#include <asm/sal.h>
-#include <asm/sections.h>
-#include <asm/tlb.h>
-#include <linux/uaccess.h>
-#include <asm/unistd.h>
-#include <asm/mca.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/efi.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/numa.h>
+#समावेश <यंत्र/patch.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/sal.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/mca.h>
 
-extern void ia64_tlb_init (void);
+बाह्य व्योम ia64_tlb_init (व्योम);
 
-unsigned long MAX_DMA_ADDRESS = PAGE_OFFSET + 0x100000000UL;
+अचिन्हित दीर्घ MAX_DMA_ADDRESS = PAGE_OFFSET + 0x100000000UL;
 
-struct page *zero_page_memmap_ptr;	/* map entry for zero page */
+काष्ठा page *zero_page_memmap_ptr;	/* map entry क्रम zero page */
 EXPORT_SYMBOL(zero_page_memmap_ptr);
 
-void
+व्योम
 __ia64_sync_icache_dcache (pte_t pte)
-{
-	unsigned long addr;
-	struct page *page;
+अणु
+	अचिन्हित दीर्घ addr;
+	काष्ठा page *page;
 
 	page = pte_page(pte);
-	addr = (unsigned long) page_address(page);
+	addr = (अचिन्हित दीर्घ) page_address(page);
 
-	if (test_bit(PG_arch_1, &page->flags))
-		return;				/* i-cache is already coherent with d-cache */
+	अगर (test_bit(PG_arch_1, &page->flags))
+		वापस;				/* i-cache is alपढ़ोy coherent with d-cache */
 
 	flush_icache_range(addr, addr + page_size(page));
 	set_bit(PG_arch_1, &page->flags);	/* mark page as clean */
-}
+पूर्ण
 
 /*
  * Since DMA is i-cache coherent, any (complete) pages that were written via
- * DMA can be marked as "clean" so that lazy_mmu_prot_update() doesn't have to
- * flush them when they get mapped into an executable vm-area.
+ * DMA can be marked as "clean" so that lazy_mmu_prot_update() करोesn't have to
+ * flush them when they get mapped पूर्णांकo an executable vm-area.
  */
-void arch_dma_mark_clean(phys_addr_t paddr, size_t size)
-{
-	unsigned long pfn = PHYS_PFN(paddr);
+व्योम arch_dma_mark_clean(phys_addr_t paddr, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ pfn = PHYS_PFN(paddr);
 
-	do {
+	करो अणु
 		set_bit(PG_arch_1, &pfn_to_page(pfn)->flags);
-	} while (++pfn <= PHYS_PFN(paddr + size - 1));
-}
+	पूर्ण जबतक (++pfn <= PHYS_PFN(paddr + size - 1));
+पूर्ण
 
-inline void
-ia64_set_rbs_bot (void)
-{
-	unsigned long stack_size = rlimit_max(RLIMIT_STACK) & -16;
+अंतरभूत व्योम
+ia64_set_rbs_bot (व्योम)
+अणु
+	अचिन्हित दीर्घ stack_size = rlimit_max(RLIMIT_STACK) & -16;
 
-	if (stack_size > MAX_USER_STACK_SIZE)
+	अगर (stack_size > MAX_USER_STACK_SIZE)
 		stack_size = MAX_USER_STACK_SIZE;
-	current->thread.rbs_bot = PAGE_ALIGN(current->mm->start_stack - stack_size);
-}
+	current->thपढ़ो.rbs_bot = PAGE_ALIGN(current->mm->start_stack - stack_size);
+पूर्ण
 
 /*
- * This performs some platform-dependent address space initialization.
- * On IA-64, we want to setup the VM area for the register backing
+ * This perक्रमms some platक्रमm-dependent address space initialization.
+ * On IA-64, we want to setup the VM area क्रम the रेजिस्टर backing
  * store (which grows upwards) and install the gateway page which is
- * used for signal trampolines, etc.
+ * used क्रम संकेत trampolines, etc.
  */
-void
-ia64_init_addr_space (void)
-{
-	struct vm_area_struct *vma;
+व्योम
+ia64_init_addr_space (व्योम)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
 
 	ia64_set_rbs_bot();
 
 	/*
-	 * If we're out of memory and kmem_cache_alloc() returns NULL, we simply ignore
-	 * the problem.  When the process attempts to write to the register backing store
-	 * for the first time, it will get a SEGFAULT in this case.
+	 * If we're out of memory and kmem_cache_alloc() वापसs शून्य, we simply ignore
+	 * the problem.  When the process attempts to ग_लिखो to the रेजिस्टर backing store
+	 * क्रम the first समय, it will get a SEGFAULT in this हाल.
 	 */
 	vma = vm_area_alloc(current->mm);
-	if (vma) {
+	अगर (vma) अणु
 		vma_set_anonymous(vma);
-		vma->vm_start = current->thread.rbs_bot & PAGE_MASK;
+		vma->vm_start = current->thपढ़ो.rbs_bot & PAGE_MASK;
 		vma->vm_end = vma->vm_start + PAGE_SIZE;
 		vma->vm_flags = VM_DATA_DEFAULT_FLAGS|VM_GROWSUP|VM_ACCOUNT;
 		vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
-		mmap_write_lock(current->mm);
-		if (insert_vm_struct(current->mm, vma)) {
-			mmap_write_unlock(current->mm);
-			vm_area_free(vma);
-			return;
-		}
-		mmap_write_unlock(current->mm);
-	}
+		mmap_ग_लिखो_lock(current->mm);
+		अगर (insert_vm_काष्ठा(current->mm, vma)) अणु
+			mmap_ग_लिखो_unlock(current->mm);
+			vm_area_मुक्त(vma);
+			वापस;
+		पूर्ण
+		mmap_ग_लिखो_unlock(current->mm);
+	पूर्ण
 
-	/* map NaT-page at address zero to speed up speculative dereferencing of NULL: */
-	if (!(current->personality & MMAP_PAGE_ZERO)) {
+	/* map NaT-page at address zero to speed up speculative dereferencing of शून्य: */
+	अगर (!(current->personality & MMAP_PAGE_ZERO)) अणु
 		vma = vm_area_alloc(current->mm);
-		if (vma) {
+		अगर (vma) अणु
 			vma_set_anonymous(vma);
 			vma->vm_end = PAGE_SIZE;
 			vma->vm_page_prot = __pgprot(pgprot_val(PAGE_READONLY) | _PAGE_MA_NAT);
 			vma->vm_flags = VM_READ | VM_MAYREAD | VM_IO |
 					VM_DONTEXPAND | VM_DONTDUMP;
-			mmap_write_lock(current->mm);
-			if (insert_vm_struct(current->mm, vma)) {
-				mmap_write_unlock(current->mm);
-				vm_area_free(vma);
-				return;
-			}
-			mmap_write_unlock(current->mm);
-		}
-	}
-}
+			mmap_ग_लिखो_lock(current->mm);
+			अगर (insert_vm_काष्ठा(current->mm, vma)) अणु
+				mmap_ग_लिखो_unlock(current->mm);
+				vm_area_मुक्त(vma);
+				वापस;
+			पूर्ण
+			mmap_ग_लिखो_unlock(current->mm);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void
-free_initmem (void)
-{
-	free_reserved_area(ia64_imva(__init_begin), ia64_imva(__init_end),
+व्योम
+मुक्त_iniपंचांगem (व्योम)
+अणु
+	मुक्त_reserved_area(ia64_imva(__init_begin), ia64_imva(__init_end),
 			   -1, "unused kernel");
-}
+पूर्ण
 
-void __init
-free_initrd_mem (unsigned long start, unsigned long end)
-{
+व्योम __init
+मुक्त_initrd_mem (अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	/*
-	 * EFI uses 4KB pages while the kernel can use 4KB or bigger.
-	 * Thus EFI and the kernel may have different page sizes. It is
-	 * therefore possible to have the initrd share the same page as
+	 * EFI uses 4KB pages जबतक the kernel can use 4KB or bigger.
+	 * Thus EFI and the kernel may have dअगरferent page sizes. It is
+	 * thereक्रमe possible to have the initrd share the same page as
 	 * the end of the kernel (given current setup).
 	 *
-	 * To avoid freeing/using the wrong page (kernel sized) we:
+	 * To aव्योम मुक्तing/using the wrong page (kernel sized) we:
 	 *	- align up the beginning of initrd
-	 *	- align down the end of initrd
+	 *	- align करोwn the end of initrd
 	 *
 	 *  |             |
 	 *  |=============| a000
@@ -178,28 +179,28 @@ free_initrd_mem (unsigned long start, unsigned long end)
 	 *  |KKKKKKKKKKKKK|
 	 *  K=kernel using 8KB pages
 	 *
-	 * In this example, we must free page 8000 ONLY. So we must align up
+	 * In this example, we must मुक्त page 8000 ONLY. So we must align up
 	 * initrd_start and keep initrd_end as is.
 	 */
 	start = PAGE_ALIGN(start);
 	end = end & PAGE_MASK;
 
-	if (start < end)
-		printk(KERN_INFO "Freeing initrd memory: %ldkB freed\n", (end - start) >> 10);
+	अगर (start < end)
+		prपूर्णांकk(KERN_INFO "Freeing initrd memory: %ldkB freed\n", (end - start) >> 10);
 
-	for (; start < end; start += PAGE_SIZE) {
-		if (!virt_addr_valid(start))
-			continue;
-		free_reserved_page(virt_to_page(start));
-	}
-}
+	क्रम (; start < end; start += PAGE_SIZE) अणु
+		अगर (!virt_addr_valid(start))
+			जारी;
+		मुक्त_reserved_page(virt_to_page(start));
+	पूर्ण
+पूर्ण
 
 /*
  * This installs a clean page in the kernel's page table.
  */
-static struct page * __init
-put_kernel_page (struct page *page, unsigned long address, pgprot_t pgprot)
-{
+अटल काष्ठा page * __init
+put_kernel_page (काष्ठा page *page, अचिन्हित दीर्घ address, pgprot_t pgprot)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -208,112 +209,112 @@ put_kernel_page (struct page *page, unsigned long address, pgprot_t pgprot)
 
 	pgd = pgd_offset_k(address);		/* note: this is NOT pgd_offset()! */
 
-	{
+	अणु
 		p4d = p4d_alloc(&init_mm, pgd, address);
-		if (!p4d)
-			goto out;
+		अगर (!p4d)
+			जाओ out;
 		pud = pud_alloc(&init_mm, p4d, address);
-		if (!pud)
-			goto out;
+		अगर (!pud)
+			जाओ out;
 		pmd = pmd_alloc(&init_mm, pud, address);
-		if (!pmd)
-			goto out;
+		अगर (!pmd)
+			जाओ out;
 		pte = pte_alloc_kernel(pmd, address);
-		if (!pte)
-			goto out;
-		if (!pte_none(*pte))
-			goto out;
+		अगर (!pte)
+			जाओ out;
+		अगर (!pte_none(*pte))
+			जाओ out;
 		set_pte(pte, mk_pte(page, pgprot));
-	}
+	पूर्ण
   out:
-	/* no need for flush_tlb */
-	return page;
-}
+	/* no need क्रम flush_tlb */
+	वापस page;
+पूर्ण
 
-static void __init
-setup_gate (void)
-{
-	struct page *page;
+अटल व्योम __init
+setup_gate (व्योम)
+अणु
+	काष्ठा page *page;
 
 	/*
-	 * Map the gate page twice: once read-only to export the ELF
+	 * Map the gate page twice: once पढ़ो-only to export the ELF
 	 * headers etc. and once execute-only page to enable
 	 * privilege-promotion via "epc":
 	 */
 	page = virt_to_page(ia64_imva(__start_gate_section));
 	put_kernel_page(page, GATE_ADDR, PAGE_READONLY);
-#ifdef HAVE_BUGGY_SEGREL
+#अगर_घोषित HAVE_BUGGY_SEGREL
 	page = virt_to_page(ia64_imva(__start_gate_section + PAGE_SIZE));
 	put_kernel_page(page, GATE_ADDR + PAGE_SIZE, PAGE_GATE);
-#else
+#अन्यथा
 	put_kernel_page(page, GATE_ADDR + PERCPU_PAGE_SIZE, PAGE_GATE);
-	/* Fill in the holes (if any) with read-only zero pages: */
-	{
-		unsigned long addr;
+	/* Fill in the holes (अगर any) with पढ़ो-only zero pages: */
+	अणु
+		अचिन्हित दीर्घ addr;
 
-		for (addr = GATE_ADDR + PAGE_SIZE;
+		क्रम (addr = GATE_ADDR + PAGE_SIZE;
 		     addr < GATE_ADDR + PERCPU_PAGE_SIZE;
 		     addr += PAGE_SIZE)
-		{
+		अणु
 			put_kernel_page(ZERO_PAGE(0), addr,
 					PAGE_READONLY);
 			put_kernel_page(ZERO_PAGE(0), addr + PERCPU_PAGE_SIZE,
 					PAGE_READONLY);
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 	ia64_patch_gate();
-}
+पूर्ण
 
-static struct vm_area_struct gate_vma;
+अटल काष्ठा vm_area_काष्ठा gate_vma;
 
-static int __init gate_vma_init(void)
-{
-	vma_init(&gate_vma, NULL);
+अटल पूर्णांक __init gate_vma_init(व्योम)
+अणु
+	vma_init(&gate_vma, शून्य);
 	gate_vma.vm_start = FIXADDR_USER_START;
 	gate_vma.vm_end = FIXADDR_USER_END;
 	gate_vma.vm_flags = VM_READ | VM_MAYREAD | VM_EXEC | VM_MAYEXEC;
 	gate_vma.vm_page_prot = __P101;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 __initcall(gate_vma_init);
 
-struct vm_area_struct *get_gate_vma(struct mm_struct *mm)
-{
-	return &gate_vma;
-}
+काष्ठा vm_area_काष्ठा *get_gate_vma(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस &gate_vma;
+पूर्ण
 
-int in_gate_area_no_mm(unsigned long addr)
-{
-	if ((addr >= FIXADDR_USER_START) && (addr < FIXADDR_USER_END))
-		return 1;
-	return 0;
-}
+पूर्णांक in_gate_area_no_mm(अचिन्हित दीर्घ addr)
+अणु
+	अगर ((addr >= FIXADDR_USER_START) && (addr < FIXADDR_USER_END))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-int in_gate_area(struct mm_struct *mm, unsigned long addr)
-{
-	return in_gate_area_no_mm(addr);
-}
+पूर्णांक in_gate_area(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
+अणु
+	वापस in_gate_area_no_mm(addr);
+पूर्ण
 
-void ia64_mmu_init(void *my_cpu_data)
-{
-	unsigned long pta, impl_va_bits;
-	extern void tlb_init(void);
+व्योम ia64_mmu_init(व्योम *my_cpu_data)
+अणु
+	अचिन्हित दीर्घ pta, impl_va_bits;
+	बाह्य व्योम tlb_init(व्योम);
 
-#ifdef CONFIG_DISABLE_VHPT
+#अगर_घोषित CONFIG_DISABLE_VHPT
 #	define VHPT_ENABLE_BIT	0
-#else
+#अन्यथा
 #	define VHPT_ENABLE_BIT	1
-#endif
+#पूर्ण_अगर
 
 	/*
-	 * Check if the virtually mapped linear page table (VMLPT) overlaps with a mapped
+	 * Check अगर the भवly mapped linear page table (VMLPT) overlaps with a mapped
 	 * address space.  The IA-64 architecture guarantees that at least 50 bits of
-	 * virtual address space are implemented but if we pick a large enough page size
+	 * भव address space are implemented but अगर we pick a large enough page size
 	 * (e.g., 64KB), the mapped address space is big enough that it will overlap with
 	 * VMLPT.  I assume that once we run on machines big enough to warrant 64KB pages,
-	 * IMPL_VA_MSB will be significantly bigger, so this is unlikely to become a
+	 * IMPL_VA_MSB will be signअगरicantly bigger, so this is unlikely to become a
 	 * problem in practice.  Alternatively, we could truncate the top of the mapped
 	 * address space to not permit mappings that would overlap with the VMLPT.
 	 * --davidm 00/12/06
@@ -321,26 +322,26 @@ void ia64_mmu_init(void *my_cpu_data)
 #	define pte_bits			3
 #	define mapped_space_bits	(3*(PAGE_SHIFT - pte_bits) + PAGE_SHIFT)
 	/*
-	 * The virtual page table has to cover the entire implemented address space within
-	 * a region even though not all of this space may be mappable.  The reason for
-	 * this is that the Access bit and Dirty bit fault handlers perform
-	 * non-speculative accesses to the virtual page table, so the address range of the
-	 * virtual page table itself needs to be covered by virtual page table.
+	 * The भव page table has to cover the entire implemented address space within
+	 * a region even though not all of this space may be mappable.  The reason क्रम
+	 * this is that the Access bit and Dirty bit fault handlers perक्रमm
+	 * non-speculative accesses to the भव page table, so the address range of the
+	 * भव page table itself needs to be covered by भव page table.
 	 */
 #	define vmlpt_bits		(impl_va_bits - PAGE_SHIFT + pte_bits)
 #	define POW2(n)			(1ULL << (n))
 
 	impl_va_bits = ffz(~(local_cpu_data->unimpl_va_mask | (7UL << 61)));
 
-	if (impl_va_bits < 51 || impl_va_bits > 61)
+	अगर (impl_va_bits < 51 || impl_va_bits > 61)
 		panic("CPU has bogus IMPL_VA_MSB value of %lu!\n", impl_va_bits - 1);
 	/*
 	 * mapped_space_bits - PAGE_SHIFT is the total number of ptes we need,
-	 * which must fit into "vmlpt_bits - pte_bits" slots. Second half of
-	 * the test makes sure that our mapped space doesn't overlap the
+	 * which must fit पूर्णांकo "vmlpt_bits - pte_bits" slots. Second half of
+	 * the test makes sure that our mapped space करोesn't overlap the
 	 * unimplemented hole in the middle of the region.
 	 */
-	if ((mapped_space_bits - PAGE_SHIFT > vmlpt_bits - pte_bits) ||
+	अगर ((mapped_space_bits - PAGE_SHIFT > vmlpt_bits - pte_bits) ||
 	    (mapped_space_bits > impl_va_bits - 1))
 		panic("Cannot build a big enough virtual-linear page table"
 		      " to cover mapped address space.\n"
@@ -351,8 +352,8 @@ void ia64_mmu_init(void *my_cpu_data)
 	pta = POW2(61) - POW2(vmlpt_bits);
 
 	/*
-	 * Set the (virtually mapped linear) page table address.  Bit
-	 * 8 selects between the short and long format, bits 2-7 the
+	 * Set the (भवly mapped linear) page table address.  Bit
+	 * 8 selects between the लघु and दीर्घ क्रमmat, bits 2-7 the
 	 * size of the table, and bit 0 whether the VHPT walker is
 	 * enabled.
 	 */
@@ -360,136 +361,136 @@ void ia64_mmu_init(void *my_cpu_data)
 
 	ia64_tlb_init();
 
-#ifdef	CONFIG_HUGETLB_PAGE
+#अगर_घोषित	CONFIG_HUGETLB_PAGE
 	ia64_set_rr(HPAGE_REGION_BASE, HPAGE_SHIFT << 2);
 	ia64_srlz_d();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-int __init register_active_ranges(u64 start, u64 len, int nid)
-{
+पूर्णांक __init रेजिस्टर_active_ranges(u64 start, u64 len, पूर्णांक nid)
+अणु
 	u64 end = start + len;
 
-#ifdef CONFIG_KEXEC
-	if (start > crashk_res.start && start < crashk_res.end)
+#अगर_घोषित CONFIG_KEXEC
+	अगर (start > crashk_res.start && start < crashk_res.end)
 		start = crashk_res.end;
-	if (end > crashk_res.start && end < crashk_res.end)
+	अगर (end > crashk_res.start && end < crashk_res.end)
 		end = crashk_res.start;
-#endif
+#पूर्ण_अगर
 
-	if (start < end)
+	अगर (start < end)
 		memblock_add_node(__pa(start), end - start, nid);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-find_max_min_low_pfn (u64 start, u64 end, void *arg)
-{
-	unsigned long pfn_start, pfn_end;
-#ifdef CONFIG_FLATMEM
+पूर्णांक
+find_max_min_low_pfn (u64 start, u64 end, व्योम *arg)
+अणु
+	अचिन्हित दीर्घ pfn_start, pfn_end;
+#अगर_घोषित CONFIG_FLATMEM
 	pfn_start = (PAGE_ALIGN(__pa(start))) >> PAGE_SHIFT;
 	pfn_end = (PAGE_ALIGN(__pa(end - 1))) >> PAGE_SHIFT;
-#else
+#अन्यथा
 	pfn_start = GRANULEROUNDDOWN(__pa(start)) >> PAGE_SHIFT;
 	pfn_end = GRANULEROUNDUP(__pa(end - 1)) >> PAGE_SHIFT;
-#endif
+#पूर्ण_अगर
 	min_low_pfn = min(min_low_pfn, pfn_start);
 	max_low_pfn = max(max_low_pfn, pfn_end);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Boot command-line option "nolwsys" can be used to disable the use of any light-weight
- * system call handler.  When this option is in effect, all fsyscalls will end up bubbling
- * down into the kernel and calling the normal (heavy-weight) syscall handler.  This is
- * useful for performance testing, but conceivably could also come in handy for debugging
+ * प्रणाली call handler.  When this option is in effect, all fsyscalls will end up bubbling
+ * करोwn पूर्णांकo the kernel and calling the normal (heavy-weight) syscall handler.  This is
+ * useful क्रम perक्रमmance testing, but conceivably could also come in handy क्रम debugging
  * purposes.
  */
 
-static int nolwsys __initdata;
+अटल पूर्णांक nolwsys __initdata;
 
-static int __init
-nolwsys_setup (char *s)
-{
+अटल पूर्णांक __init
+nolwsys_setup (अक्षर *s)
+अणु
 	nolwsys = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("nolwsys", nolwsys_setup);
 
-void __init
-mem_init (void)
-{
-	int i;
+व्योम __init
+mem_init (व्योम)
+अणु
+	पूर्णांक i;
 
-	BUG_ON(PTRS_PER_PGD * sizeof(pgd_t) != PAGE_SIZE);
-	BUG_ON(PTRS_PER_PMD * sizeof(pmd_t) != PAGE_SIZE);
-	BUG_ON(PTRS_PER_PTE * sizeof(pte_t) != PAGE_SIZE);
+	BUG_ON(PTRS_PER_PGD * माप(pgd_t) != PAGE_SIZE);
+	BUG_ON(PTRS_PER_PMD * माप(pmd_t) != PAGE_SIZE);
+	BUG_ON(PTRS_PER_PTE * माप(pte_t) != PAGE_SIZE);
 
 	/*
 	 * This needs to be called _after_ the command line has been parsed but
-	 * _before_ any drivers that may need the PCI DMA interface are
-	 * initialized or bootmem has been freed.
+	 * _beक्रमe_ any drivers that may need the PCI DMA पूर्णांकerface are
+	 * initialized or booपंचांगem has been मुक्तd.
 	 */
-	do {
-#ifdef CONFIG_INTEL_IOMMU
-		detect_intel_iommu();
-		if (iommu_detected)
-			break;
-#endif
-#ifdef CONFIG_SWIOTLB
+	करो अणु
+#अगर_घोषित CONFIG_INTEL_IOMMU
+		detect_पूर्णांकel_iommu();
+		अगर (iommu_detected)
+			अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SWIOTLB
 		swiotlb_init(1);
-#endif
-	} while (0);
+#पूर्ण_अगर
+	पूर्ण जबतक (0);
 
-#ifdef CONFIG_FLATMEM
+#अगर_घोषित CONFIG_FLATMEM
 	BUG_ON(!mem_map);
-#endif
+#पूर्ण_अगर
 
 	set_max_mapnr(max_low_pfn);
 	high_memory = __va(max_low_pfn * PAGE_SIZE);
-	memblock_free_all();
+	memblock_मुक्त_all();
 
 	/*
-	 * For fsyscall entrpoints with no light-weight handler, use the ordinary
+	 * For fsyscall entrpoपूर्णांकs with no light-weight handler, use the ordinary
 	 * (heavy-weight) handler, but mark it by setting bit 0, so the fsyscall entry
 	 * code can tell them apart.
 	 */
-	for (i = 0; i < NR_syscalls; ++i) {
-		extern unsigned long fsyscall_table[NR_syscalls];
-		extern unsigned long sys_call_table[NR_syscalls];
+	क्रम (i = 0; i < NR_syscalls; ++i) अणु
+		बाह्य अचिन्हित दीर्घ fsyscall_table[NR_syscalls];
+		बाह्य अचिन्हित दीर्घ sys_call_table[NR_syscalls];
 
-		if (!fsyscall_table[i] || nolwsys)
+		अगर (!fsyscall_table[i] || nolwsys)
 			fsyscall_table[i] = sys_call_table[i] | 1;
-	}
+	पूर्ण
 	setup_gate();
-}
+पूर्ण
 
-#ifdef CONFIG_MEMORY_HOTPLUG
-int arch_add_memory(int nid, u64 start, u64 size,
-		    struct mhp_params *params)
-{
-	unsigned long start_pfn = start >> PAGE_SHIFT;
-	unsigned long nr_pages = size >> PAGE_SHIFT;
-	int ret;
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+पूर्णांक arch_add_memory(पूर्णांक nid, u64 start, u64 size,
+		    काष्ठा mhp_params *params)
+अणु
+	अचिन्हित दीर्घ start_pfn = start >> PAGE_SHIFT;
+	अचिन्हित दीर्घ nr_pages = size >> PAGE_SHIFT;
+	पूर्णांक ret;
 
-	if (WARN_ON_ONCE(params->pgprot.pgprot != PAGE_KERNEL.pgprot))
-		return -EINVAL;
+	अगर (WARN_ON_ONCE(params->pgprot.pgprot != PAGE_KERNEL.pgprot))
+		वापस -EINVAL;
 
 	ret = __add_pages(nid, start_pfn, nr_pages, params);
-	if (ret)
-		printk("%s: Problem encountered in __add_pages() as ret=%d\n",
+	अगर (ret)
+		prपूर्णांकk("%s: Problem encountered in __add_pages() as ret=%d\n",
 		       __func__,  ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void arch_remove_memory(int nid, u64 start, u64 size,
-			struct vmem_altmap *altmap)
-{
-	unsigned long start_pfn = start >> PAGE_SHIFT;
-	unsigned long nr_pages = size >> PAGE_SHIFT;
+व्योम arch_हटाओ_memory(पूर्णांक nid, u64 start, u64 size,
+			काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	अचिन्हित दीर्घ start_pfn = start >> PAGE_SHIFT;
+	अचिन्हित दीर्घ nr_pages = size >> PAGE_SHIFT;
 
-	__remove_pages(start_pfn, nr_pages, altmap);
-}
-#endif
+	__हटाओ_pages(start_pfn, nr_pages, alपंचांगap);
+पूर्ण
+#पूर्ण_अगर

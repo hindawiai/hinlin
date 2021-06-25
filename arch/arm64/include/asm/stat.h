@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_STAT_H
-#define __ASM_STAT_H
+#अगर_अघोषित __ASM_STAT_H
+#घोषणा __ASM_STAT_H
 
-#include <uapi/asm/stat.h>
+#समावेश <uapi/यंत्र/स्थिति.स>
 
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 
-#include <linux/time.h>
-#include <asm/compat.h>
+#समावेश <linux/समय.स>
+#समावेश <यंत्र/compat.h>
 
 /*
- * struct stat64 is needed for compat tasks only. Its definition is different
- * from the generic struct stat64.
+ * काष्ठा stat64 is needed क्रम compat tasks only. Its definition is dअगरferent
+ * from the generic काष्ठा stat64.
  */
-struct stat64 {
+काष्ठा stat64 अणु
 	compat_u64	st_dev;
-	unsigned char   __pad0[4];
+	अचिन्हित अक्षर   __pad0[4];
 
-#define STAT64_HAS_BROKEN_ST_INO	1
-	compat_ulong_t	__st_ino;
-	compat_uint_t	st_mode;
-	compat_uint_t	st_nlink;
+#घोषणा STAT64_HAS_BROKEN_ST_INO	1
+	compat_uदीर्घ_t	__st_ino;
+	compat_uपूर्णांक_t	st_mode;
+	compat_uपूर्णांक_t	st_nlink;
 
-	compat_ulong_t	st_uid;
-	compat_ulong_t	st_gid;
+	compat_uदीर्घ_t	st_uid;
+	compat_uदीर्घ_t	st_gid;
 
 	compat_u64	st_rdev;
-	unsigned char   __pad3[4];
+	अचिन्हित अक्षर   __pad3[4];
 
 	compat_s64	st_size;
-	compat_ulong_t	st_blksize;
+	compat_uदीर्घ_t	st_blksize;
 	compat_u64	st_blocks;	/* Number of 512-byte blocks allocated. */
 
-	compat_ulong_t	st_atime;
-	compat_ulong_t	st_atime_nsec;
+	compat_uदीर्घ_t	st_aसमय;
+	compat_uदीर्घ_t	st_aसमय_nsec;
 
-	compat_ulong_t	st_mtime;
-	compat_ulong_t	st_mtime_nsec;
+	compat_uदीर्घ_t	st_mसमय;
+	compat_uदीर्घ_t	st_mसमय_nsec;
 
-	compat_ulong_t	st_ctime;
-	compat_ulong_t	st_ctime_nsec;
+	compat_uदीर्घ_t	st_स_समय;
+	compat_uदीर्घ_t	st_स_समय_nsec;
 
 	compat_u64	st_ino;
-};
+पूर्ण;
 
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर

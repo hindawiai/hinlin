@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,45 +22,45 @@
  *
  * Authors: Ben Skeggs
  */
-#define gf119_pmu_code gk104_pmu_code
-#define gf119_pmu_data gk104_pmu_data
-#include "priv.h"
-#include "fuc/gf119.fuc4.h"
+#घोषणा gf119_pmu_code gk104_pmu_code
+#घोषणा gf119_pmu_data gk104_pmu_data
+#समावेश "priv.h"
+#समावेश "fuc/gf119.fuc4.h"
 
-#include <core/option.h>
-#include <subdev/fuse.h>
-#include <subdev/timer.h>
+#समावेश <core/option.h>
+#समावेश <subdev/fuse.h>
+#समावेश <subdev/समयr.h>
 
-static void
-magic_(struct nvkm_device *device, u32 ctrl, int size)
-{
+अटल व्योम
+magic_(काष्ठा nvkm_device *device, u32 ctrl, पूर्णांक size)
+अणु
 	nvkm_wr32(device, 0x00c800, 0x00000000);
 	nvkm_wr32(device, 0x00c808, 0x00000000);
 	nvkm_wr32(device, 0x00c800, ctrl);
 	nvkm_msec(device, 2000,
-		if (nvkm_rd32(device, 0x00c800) & 0x40000000) {
-			while (size--)
+		अगर (nvkm_rd32(device, 0x00c800) & 0x40000000) अणु
+			जबतक (size--)
 				nvkm_wr32(device, 0x00c804, 0x00000000);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 	);
 	nvkm_wr32(device, 0x00c800, 0x00000000);
-}
+पूर्ण
 
-static void
-magic(struct nvkm_device *device, u32 ctrl)
-{
+अटल व्योम
+magic(काष्ठा nvkm_device *device, u32 ctrl)
+अणु
 	magic_(device, 0x8000a41f | ctrl, 6);
 	magic_(device, 0x80000421 | ctrl, 1);
-}
+पूर्ण
 
-static void
-gk104_pmu_pgob(struct nvkm_pmu *pmu, bool enable)
-{
-	struct nvkm_device *device = pmu->subdev.device;
+अटल व्योम
+gk104_pmu_pgob(काष्ठा nvkm_pmu *pmu, bool enable)
+अणु
+	काष्ठा nvkm_device *device = pmu->subdev.device;
 
-	if (!(nvkm_fuse_read(device->fuse, 0x31c) & 0x00000001))
-		return;
+	अगर (!(nvkm_fuse_पढ़ो(device->fuse, 0x31c) & 0x00000001))
+		वापस;
 
 	nvkm_mask(device, 0x000200, 0x00001000, 0x00000000);
 	nvkm_rd32(device, 0x000200);
@@ -81,54 +82,54 @@ gk104_pmu_pgob(struct nvkm_pmu *pmu, bool enable)
 	nvkm_mask(device, 0x000200, 0x00001000, 0x00001000);
 	nvkm_rd32(device, 0x000200);
 
-	if (nvkm_boolopt(device->cfgopt, "War00C800_0", true)) {
-		switch (device->chipset) {
-		case 0xe4:
+	अगर (nvkm_boolopt(device->cfgopt, "War00C800_0", true)) अणु
+		चयन (device->chipset) अणु
+		हाल 0xe4:
 			magic(device, 0x04000000);
 			magic(device, 0x06000000);
 			magic(device, 0x0c000000);
 			magic(device, 0x0e000000);
-			break;
-		case 0xe6:
+			अवरोध;
+		हाल 0xe6:
 			magic(device, 0x02000000);
 			magic(device, 0x04000000);
 			magic(device, 0x0a000000);
-			break;
-		case 0xe7:
+			अवरोध;
+		हाल 0xe7:
 			magic(device, 0x02000000);
-			break;
-		default:
-			break;
-		}
-	}
-}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static const struct nvkm_pmu_func
-gk104_pmu = {
+अटल स्थिर काष्ठा nvkm_pmu_func
+gk104_pmu = अणु
 	.flcn = &gt215_pmu_flcn,
 	.code.data = gk104_pmu_code,
-	.code.size = sizeof(gk104_pmu_code),
+	.code.size = माप(gk104_pmu_code),
 	.data.data = gk104_pmu_data,
-	.data.size = sizeof(gk104_pmu_data),
+	.data.size = माप(gk104_pmu_data),
 	.enabled = gf100_pmu_enabled,
 	.reset = gf100_pmu_reset,
 	.init = gt215_pmu_init,
 	.fini = gt215_pmu_fini,
-	.intr = gt215_pmu_intr,
+	.पूर्णांकr = gt215_pmu_पूर्णांकr,
 	.send = gt215_pmu_send,
 	.recv = gt215_pmu_recv,
 	.pgob = gk104_pmu_pgob,
-};
+पूर्ण;
 
-static const struct nvkm_pmu_fwif
-gk104_pmu_fwif[] = {
-	{ -1, gf100_pmu_nofw, &gk104_pmu },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_pmu_fwअगर
+gk104_pmu_fwअगर[] = अणु
+	अणु -1, gf100_pmu_nofw, &gk104_pmu पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gk104_pmu_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_pmu **ppmu)
-{
-	return nvkm_pmu_new_(gk104_pmu_fwif, device, type, inst, ppmu);
-}
+पूर्णांक
+gk104_pmu_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_pmu **ppmu)
+अणु
+	वापस nvkm_pmu_new_(gk104_pmu_fwअगर, device, type, inst, ppmu);
+पूर्ण

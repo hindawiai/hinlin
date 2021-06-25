@@ -1,80 +1,81 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#ifndef __ASM_LINKAGE_H
-#define __ASM_LINKAGE_H
+#अगर_अघोषित __ASM_LINKAGE_H
+#घोषणा __ASM_LINKAGE_H
 
-#include <asm/dwarf.h>
+#समावेश <यंत्र/dwarf.h>
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
 .macro ST2 e, o, off
-#ifdef CONFIG_ARC_HAS_LL64
+#अगर_घोषित CONFIG_ARC_HAS_LL64
 	std	\e, [sp, \off]
-#else
+#अन्यथा
 	st	\e, [sp, \off]
 	st	\o, [sp, \off+4]
-#endif
+#पूर्ण_अगर
 .endm
 
 .macro LD2 e, o, off
-#ifdef CONFIG_ARC_HAS_LL64
+#अगर_घोषित CONFIG_ARC_HAS_LL64
 	ldd	\e, [sp, \off]
-#else
+#अन्यथा
 	ld	\e, [sp, \off]
 	ld	\o, [sp, \off+4]
-#endif
+#पूर्ण_अगर
 .endm
 
-#define ASM_NL		 `	/* use '`' to mark new line in macro */
-#define __ALIGN		.align 4
-#define __ALIGN_STR	__stringify(__ALIGN)
+#घोषणा ASM_NL		 `	/* use '`' to mark new line in macro */
+#घोषणा __ALIGN		.align 4
+#घोषणा __ALIGN_STR	__stringअगरy(__ALIGN)
 
-/* annotation for data we want in DCCM - if enabled in .config */
+/* annotation क्रम data we want in DCCM - अगर enabled in .config */
 .macro ARCFP_DATA nm
-#ifdef CONFIG_ARC_HAS_DCCM
+#अगर_घोषित CONFIG_ARC_HAS_DCCM
 	.section .data.arcfp
-#else
+#अन्यथा
 	.section .data
-#endif
-	.global \nm
+#पूर्ण_अगर
+	.global \नm
 .endm
 
-/* annotation for data we want in DCCM - if enabled in .config */
+/* annotation क्रम data we want in DCCM - अगर enabled in .config */
 .macro ARCFP_CODE
-#ifdef CONFIG_ARC_HAS_ICCM
+#अगर_घोषित CONFIG_ARC_HAS_ICCM
 	.section .text.arcfp, "ax",@progbits
-#else
+#अन्यथा
 	.section .text, "ax",@progbits
-#endif
+#पूर्ण_अगर
 .endm
 
-#define ENTRY_CFI(name)		\
+#घोषणा ENTRY_CFI(name)		\
 	.globl name ASM_NL	\
 	ALIGN ASM_NL 		\
 	name: ASM_NL		\
 	CFI_STARTPROC ASM_NL
 
-#define END_CFI(name) 		\
+#घोषणा END_CFI(name) 		\
 	CFI_ENDPROC ASM_NL	\
 	.size name, .-name
 
-#else	/* !__ASSEMBLY__ */
+#अन्यथा	/* !__ASSEMBLY__ */
 
-#ifdef CONFIG_ARC_HAS_ICCM
-#define __arcfp_code __section(".text.arcfp")
-#else
-#define __arcfp_code __section(".text")
-#endif
+#अगर_घोषित CONFIG_ARC_HAS_ICCM
+#घोषणा __arcfp_code __section(".text.arcfp")
+#अन्यथा
+#घोषणा __arcfp_code __section(".text")
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARC_HAS_DCCM
-#define __arcfp_data __section(".data.arcfp")
-#else
-#define __arcfp_data __section(".data")
-#endif
+#अगर_घोषित CONFIG_ARC_HAS_DCCM
+#घोषणा __arcfp_data __section(".data.arcfp")
+#अन्यथा
+#घोषणा __arcfp_data __section(".data")
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

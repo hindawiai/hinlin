@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _CPUIDLE_HALTPOLL_H
-#define _CPUIDLE_HALTPOLL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _CPUIDLE_HALTPOLL_H
+#घोषणा _CPUIDLE_HALTPOLL_H
 
-#ifdef CONFIG_ARCH_CPUIDLE_HALTPOLL
-#include <asm/cpuidle_haltpoll.h>
-#else
-static inline void arch_haltpoll_enable(unsigned int cpu)
-{
-}
+#अगर_घोषित CONFIG_ARCH_CPUIDLE_HALTPOLL
+#समावेश <यंत्र/cpuidle_haltpoll.h>
+#अन्यथा
+अटल अंतरभूत व्योम arch_haltpoll_enable(अचिन्हित पूर्णांक cpu)
+अणु
+पूर्ण
 
-static inline void arch_haltpoll_disable(unsigned int cpu)
-{
-}
-#endif
-#endif
+अटल अंतरभूत व्योम arch_haltpoll_disable(अचिन्हित पूर्णांक cpu)
+अणु
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर

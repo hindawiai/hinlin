@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PERF_UNIT_H
-#define PERF_UNIT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PERF_UNIT_H
+#घोषणा PERF_UNIT_H
 
-#include <stddef.h>
-#include <linux/types.h>
+#समावेश <मानकघोष.स>
+#समावेश <linux/types.h>
 
-struct parse_tag {
-	char tag;
-	int  mult;
-};
+काष्ठा parse_tag अणु
+	अक्षर tag;
+	पूर्णांक  mult;
+पूर्ण;
 
-unsigned long parse_tag_value(const char *str, struct parse_tag *tags);
+अचिन्हित दीर्घ parse_tag_value(स्थिर अक्षर *str, काष्ठा parse_tag *tags);
 
-double convert_unit_double(double value, char *unit);
-unsigned long convert_unit(unsigned long value, char *unit);
-int unit_number__scnprintf(char *buf, size_t size, u64 n);
+द्विगुन convert_unit_द्विगुन(द्विगुन value, अक्षर *unit);
+अचिन्हित दीर्घ convert_unit(अचिन्हित दीर्घ value, अक्षर *unit);
+पूर्णांक unit_number__scnम_लिखो(अक्षर *buf, माप_प्रकार size, u64 n);
 
-#endif /* PERF_UNIT_H */
+#पूर्ण_अगर /* PERF_UNIT_H */

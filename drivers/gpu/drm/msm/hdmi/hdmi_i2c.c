@@ -1,267 +1,268 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#include "hdmi.h"
+#समावेश "hdmi.h"
 
-struct hdmi_i2c_adapter {
-	struct i2c_adapter base;
-	struct hdmi *hdmi;
-	bool sw_done;
-	wait_queue_head_t ddc_event;
-};
-#define to_hdmi_i2c_adapter(x) container_of(x, struct hdmi_i2c_adapter, base)
+काष्ठा hdmi_i2c_adapter अणु
+	काष्ठा i2c_adapter base;
+	काष्ठा hdmi *hdmi;
+	bool sw_करोne;
+	रुको_queue_head_t ddc_event;
+पूर्ण;
+#घोषणा to_hdmi_i2c_adapter(x) container_of(x, काष्ठा hdmi_i2c_adapter, base)
 
-static void init_ddc(struct hdmi_i2c_adapter *hdmi_i2c)
-{
-	struct hdmi *hdmi = hdmi_i2c->hdmi;
+अटल व्योम init_ddc(काष्ठा hdmi_i2c_adapter *hdmi_i2c)
+अणु
+	काष्ठा hdmi *hdmi = hdmi_i2c->hdmi;
 
-	hdmi_write(hdmi, REG_HDMI_DDC_CTRL,
+	hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_CTRL,
 			HDMI_DDC_CTRL_SW_STATUS_RESET);
-	hdmi_write(hdmi, REG_HDMI_DDC_CTRL,
+	hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_CTRL,
 			HDMI_DDC_CTRL_SOFT_RESET);
 
-	hdmi_write(hdmi, REG_HDMI_DDC_SPEED,
+	hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_SPEED,
 			HDMI_DDC_SPEED_THRESHOLD(2) |
 			HDMI_DDC_SPEED_PRESCALE(10));
 
-	hdmi_write(hdmi, REG_HDMI_DDC_SETUP,
+	hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_SETUP,
 			HDMI_DDC_SETUP_TIMEOUT(0xff));
 
-	/* enable reference timer for 27us */
-	hdmi_write(hdmi, REG_HDMI_DDC_REF,
+	/* enable reference समयr क्रम 27us */
+	hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_REF,
 			HDMI_DDC_REF_REFTIMER_ENABLE |
 			HDMI_DDC_REF_REFTIMER(27));
-}
+पूर्ण
 
-static int ddc_clear_irq(struct hdmi_i2c_adapter *hdmi_i2c)
-{
-	struct hdmi *hdmi = hdmi_i2c->hdmi;
-	struct drm_device *dev = hdmi->dev;
-	uint32_t retry = 0xffff;
-	uint32_t ddc_int_ctrl;
+अटल पूर्णांक ddc_clear_irq(काष्ठा hdmi_i2c_adapter *hdmi_i2c)
+अणु
+	काष्ठा hdmi *hdmi = hdmi_i2c->hdmi;
+	काष्ठा drm_device *dev = hdmi->dev;
+	uपूर्णांक32_t retry = 0xffff;
+	uपूर्णांक32_t ddc_पूर्णांक_ctrl;
 
-	do {
+	करो अणु
 		--retry;
 
-		hdmi_write(hdmi, REG_HDMI_DDC_INT_CTRL,
+		hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_INT_CTRL,
 				HDMI_DDC_INT_CTRL_SW_DONE_ACK |
 				HDMI_DDC_INT_CTRL_SW_DONE_MASK);
 
-		ddc_int_ctrl = hdmi_read(hdmi, REG_HDMI_DDC_INT_CTRL);
+		ddc_पूर्णांक_ctrl = hdmi_पढ़ो(hdmi, REG_HDMI_DDC_INT_CTRL);
 
-	} while ((ddc_int_ctrl & HDMI_DDC_INT_CTRL_SW_DONE_INT) && retry);
+	पूर्ण जबतक ((ddc_पूर्णांक_ctrl & HDMI_DDC_INT_CTRL_SW_DONE_INT) && retry);
 
-	if (!retry) {
+	अगर (!retry) अणु
 		DRM_DEV_ERROR(dev->dev, "timeout waiting for DDC\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	hdmi_i2c->sw_done = false;
+	hdmi_i2c->sw_करोne = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define MAX_TRANSACTIONS 4
+#घोषणा MAX_TRANSACTIONS 4
 
-static bool sw_done(struct hdmi_i2c_adapter *hdmi_i2c)
-{
-	struct hdmi *hdmi = hdmi_i2c->hdmi;
+अटल bool sw_करोne(काष्ठा hdmi_i2c_adapter *hdmi_i2c)
+अणु
+	काष्ठा hdmi *hdmi = hdmi_i2c->hdmi;
 
-	if (!hdmi_i2c->sw_done) {
-		uint32_t ddc_int_ctrl;
+	अगर (!hdmi_i2c->sw_करोne) अणु
+		uपूर्णांक32_t ddc_पूर्णांक_ctrl;
 
-		ddc_int_ctrl = hdmi_read(hdmi, REG_HDMI_DDC_INT_CTRL);
+		ddc_पूर्णांक_ctrl = hdmi_पढ़ो(hdmi, REG_HDMI_DDC_INT_CTRL);
 
-		if ((ddc_int_ctrl & HDMI_DDC_INT_CTRL_SW_DONE_MASK) &&
-				(ddc_int_ctrl & HDMI_DDC_INT_CTRL_SW_DONE_INT)) {
-			hdmi_i2c->sw_done = true;
-			hdmi_write(hdmi, REG_HDMI_DDC_INT_CTRL,
+		अगर ((ddc_पूर्णांक_ctrl & HDMI_DDC_INT_CTRL_SW_DONE_MASK) &&
+				(ddc_पूर्णांक_ctrl & HDMI_DDC_INT_CTRL_SW_DONE_INT)) अणु
+			hdmi_i2c->sw_करोne = true;
+			hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_INT_CTRL,
 					HDMI_DDC_INT_CTRL_SW_DONE_ACK);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return hdmi_i2c->sw_done;
-}
+	वापस hdmi_i2c->sw_करोne;
+पूर्ण
 
-static int msm_hdmi_i2c_xfer(struct i2c_adapter *i2c,
-		struct i2c_msg *msgs, int num)
-{
-	struct hdmi_i2c_adapter *hdmi_i2c = to_hdmi_i2c_adapter(i2c);
-	struct hdmi *hdmi = hdmi_i2c->hdmi;
-	struct drm_device *dev = hdmi->dev;
-	static const uint32_t nack[] = {
+अटल पूर्णांक msm_hdmi_i2c_xfer(काष्ठा i2c_adapter *i2c,
+		काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा hdmi_i2c_adapter *hdmi_i2c = to_hdmi_i2c_adapter(i2c);
+	काष्ठा hdmi *hdmi = hdmi_i2c->hdmi;
+	काष्ठा drm_device *dev = hdmi->dev;
+	अटल स्थिर uपूर्णांक32_t nack[] = अणु
 			HDMI_DDC_SW_STATUS_NACK0, HDMI_DDC_SW_STATUS_NACK1,
 			HDMI_DDC_SW_STATUS_NACK2, HDMI_DDC_SW_STATUS_NACK3,
-	};
-	int indices[MAX_TRANSACTIONS];
-	int ret, i, j, index = 0;
-	uint32_t ddc_status, ddc_data, i2c_trans;
+	पूर्ण;
+	पूर्णांक indices[MAX_TRANSACTIONS];
+	पूर्णांक ret, i, j, index = 0;
+	uपूर्णांक32_t ddc_status, ddc_data, i2c_trans;
 
 	num = min(num, MAX_TRANSACTIONS);
 
-	WARN_ON(!(hdmi_read(hdmi, REG_HDMI_CTRL) & HDMI_CTRL_ENABLE));
+	WARN_ON(!(hdmi_पढ़ो(hdmi, REG_HDMI_CTRL) & HDMI_CTRL_ENABLE));
 
-	if (num == 0)
-		return num;
+	अगर (num == 0)
+		वापस num;
 
 	init_ddc(hdmi_i2c);
 
 	ret = ddc_clear_irq(hdmi_i2c);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < num; i++) {
-		struct i2c_msg *p = &msgs[i];
-		uint32_t raw_addr = p->addr << 1;
+	क्रम (i = 0; i < num; i++) अणु
+		काष्ठा i2c_msg *p = &msgs[i];
+		uपूर्णांक32_t raw_addr = p->addr << 1;
 
-		if (p->flags & I2C_M_RD)
+		अगर (p->flags & I2C_M_RD)
 			raw_addr |= 1;
 
 		ddc_data = HDMI_DDC_DATA_DATA(raw_addr) |
 				HDMI_DDC_DATA_DATA_RW(DDC_WRITE);
 
-		if (i == 0) {
+		अगर (i == 0) अणु
 			ddc_data |= HDMI_DDC_DATA_INDEX(0) |
 					HDMI_DDC_DATA_INDEX_WRITE;
-		}
+		पूर्ण
 
-		hdmi_write(hdmi, REG_HDMI_DDC_DATA, ddc_data);
+		hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_DATA, ddc_data);
 		index++;
 
 		indices[i] = index;
 
-		if (p->flags & I2C_M_RD) {
+		अगर (p->flags & I2C_M_RD) अणु
 			index += p->len;
-		} else {
-			for (j = 0; j < p->len; j++) {
+		पूर्ण अन्यथा अणु
+			क्रम (j = 0; j < p->len; j++) अणु
 				ddc_data = HDMI_DDC_DATA_DATA(p->buf[j]) |
 						HDMI_DDC_DATA_DATA_RW(DDC_WRITE);
-				hdmi_write(hdmi, REG_HDMI_DDC_DATA, ddc_data);
+				hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_DATA, ddc_data);
 				index++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		i2c_trans = HDMI_I2C_TRANSACTION_REG_CNT(p->len) |
 				HDMI_I2C_TRANSACTION_REG_RW(
 						(p->flags & I2C_M_RD) ? DDC_READ : DDC_WRITE) |
 				HDMI_I2C_TRANSACTION_REG_START;
 
-		if (i == (num - 1))
+		अगर (i == (num - 1))
 			i2c_trans |= HDMI_I2C_TRANSACTION_REG_STOP;
 
-		hdmi_write(hdmi, REG_HDMI_I2C_TRANSACTION(i), i2c_trans);
-	}
+		hdmi_ग_लिखो(hdmi, REG_HDMI_I2C_TRANSACTION(i), i2c_trans);
+	पूर्ण
 
 	/* trigger the transfer: */
-	hdmi_write(hdmi, REG_HDMI_DDC_CTRL,
+	hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_CTRL,
 			HDMI_DDC_CTRL_TRANSACTION_CNT(num - 1) |
 			HDMI_DDC_CTRL_GO);
 
-	ret = wait_event_timeout(hdmi_i2c->ddc_event, sw_done(hdmi_i2c), HZ/4);
-	if (ret <= 0) {
-		if (ret == 0)
+	ret = रुको_event_समयout(hdmi_i2c->ddc_event, sw_करोne(hdmi_i2c), HZ/4);
+	अगर (ret <= 0) अणु
+		अगर (ret == 0)
 			ret = -ETIMEDOUT;
 		dev_warn(dev->dev, "DDC timeout: %d\n", ret);
 		DBG("sw_status=%08x, hw_status=%08x, int_ctrl=%08x",
-				hdmi_read(hdmi, REG_HDMI_DDC_SW_STATUS),
-				hdmi_read(hdmi, REG_HDMI_DDC_HW_STATUS),
-				hdmi_read(hdmi, REG_HDMI_DDC_INT_CTRL));
-		return ret;
-	}
+				hdmi_पढ़ो(hdmi, REG_HDMI_DDC_SW_STATUS),
+				hdmi_पढ़ो(hdmi, REG_HDMI_DDC_HW_STATUS),
+				hdmi_पढ़ो(hdmi, REG_HDMI_DDC_INT_CTRL));
+		वापस ret;
+	पूर्ण
 
-	ddc_status = hdmi_read(hdmi, REG_HDMI_DDC_SW_STATUS);
+	ddc_status = hdmi_पढ़ो(hdmi, REG_HDMI_DDC_SW_STATUS);
 
-	/* read back results of any read transactions: */
-	for (i = 0; i < num; i++) {
-		struct i2c_msg *p = &msgs[i];
+	/* पढ़ो back results of any पढ़ो transactions: */
+	क्रम (i = 0; i < num; i++) अणु
+		काष्ठा i2c_msg *p = &msgs[i];
 
-		if (!(p->flags & I2C_M_RD))
-			continue;
+		अगर (!(p->flags & I2C_M_RD))
+			जारी;
 
-		/* check for NACK: */
-		if (ddc_status & nack[i]) {
+		/* check क्रम NACK: */
+		अगर (ddc_status & nack[i]) अणु
 			DBG("ddc_status=%08x", ddc_status);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ddc_data = HDMI_DDC_DATA_DATA_RW(DDC_READ) |
 				HDMI_DDC_DATA_INDEX(indices[i]) |
 				HDMI_DDC_DATA_INDEX_WRITE;
 
-		hdmi_write(hdmi, REG_HDMI_DDC_DATA, ddc_data);
+		hdmi_ग_लिखो(hdmi, REG_HDMI_DDC_DATA, ddc_data);
 
 		/* discard first byte: */
-		hdmi_read(hdmi, REG_HDMI_DDC_DATA);
+		hdmi_पढ़ो(hdmi, REG_HDMI_DDC_DATA);
 
-		for (j = 0; j < p->len; j++) {
-			ddc_data = hdmi_read(hdmi, REG_HDMI_DDC_DATA);
+		क्रम (j = 0; j < p->len; j++) अणु
+			ddc_data = hdmi_पढ़ो(hdmi, REG_HDMI_DDC_DATA);
 			p->buf[j] = FIELD(ddc_data, HDMI_DDC_DATA_DATA);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static u32 msm_hdmi_i2c_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
-}
+अटल u32 msm_hdmi_i2c_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+पूर्ण
 
-static const struct i2c_algorithm msm_hdmi_i2c_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm msm_hdmi_i2c_algorithm = अणु
 	.master_xfer	= msm_hdmi_i2c_xfer,
 	.functionality	= msm_hdmi_i2c_func,
-};
+पूर्ण;
 
-void msm_hdmi_i2c_irq(struct i2c_adapter *i2c)
-{
-	struct hdmi_i2c_adapter *hdmi_i2c = to_hdmi_i2c_adapter(i2c);
+व्योम msm_hdmi_i2c_irq(काष्ठा i2c_adapter *i2c)
+अणु
+	काष्ठा hdmi_i2c_adapter *hdmi_i2c = to_hdmi_i2c_adapter(i2c);
 
-	if (sw_done(hdmi_i2c))
+	अगर (sw_करोne(hdmi_i2c))
 		wake_up_all(&hdmi_i2c->ddc_event);
-}
+पूर्ण
 
-void msm_hdmi_i2c_destroy(struct i2c_adapter *i2c)
-{
-	struct hdmi_i2c_adapter *hdmi_i2c = to_hdmi_i2c_adapter(i2c);
+व्योम msm_hdmi_i2c_destroy(काष्ठा i2c_adapter *i2c)
+अणु
+	काष्ठा hdmi_i2c_adapter *hdmi_i2c = to_hdmi_i2c_adapter(i2c);
 	i2c_del_adapter(i2c);
-	kfree(hdmi_i2c);
-}
+	kमुक्त(hdmi_i2c);
+पूर्ण
 
-struct i2c_adapter *msm_hdmi_i2c_init(struct hdmi *hdmi)
-{
-	struct hdmi_i2c_adapter *hdmi_i2c;
-	struct i2c_adapter *i2c = NULL;
-	int ret;
+काष्ठा i2c_adapter *msm_hdmi_i2c_init(काष्ठा hdmi *hdmi)
+अणु
+	काष्ठा hdmi_i2c_adapter *hdmi_i2c;
+	काष्ठा i2c_adapter *i2c = शून्य;
+	पूर्णांक ret;
 
-	hdmi_i2c = kzalloc(sizeof(*hdmi_i2c), GFP_KERNEL);
-	if (!hdmi_i2c) {
+	hdmi_i2c = kzalloc(माप(*hdmi_i2c), GFP_KERNEL);
+	अगर (!hdmi_i2c) अणु
 		ret = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	i2c = &hdmi_i2c->base;
 
 	hdmi_i2c->hdmi = hdmi;
-	init_waitqueue_head(&hdmi_i2c->ddc_event);
+	init_रुकोqueue_head(&hdmi_i2c->ddc_event);
 
 
 	i2c->owner = THIS_MODULE;
 	i2c->class = I2C_CLASS_DDC;
-	snprintf(i2c->name, sizeof(i2c->name), "msm hdmi i2c");
+	snम_लिखो(i2c->name, माप(i2c->name), "msm hdmi i2c");
 	i2c->dev.parent = &hdmi->pdev->dev;
 	i2c->algo = &msm_hdmi_i2c_algorithm;
 
 	ret = i2c_add_adapter(i2c);
-	if (ret)
-		goto fail;
+	अगर (ret)
+		जाओ fail;
 
-	return i2c;
+	वापस i2c;
 
 fail:
-	if (i2c)
+	अगर (i2c)
 		msm_hdmi_i2c_destroy(i2c);
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण

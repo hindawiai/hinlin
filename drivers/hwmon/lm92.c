@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * lm92 - Hardware monitoring driver
  * Copyright (C) 2005-2008  Jean Delvare <jdelvare@suse.de>
@@ -10,7 +11,7 @@
  * its own temperature with a 0.0625 deg resolution and a 0.33 deg
  * accuracy. Complete datasheet can be obtained from National's website
  * at:
- *   http://www.national.com/pf/LM/LM92.html
+ *   http://www.national.com/pf/LM/LM92.hपंचांगl
  *
  * This driver also supports the MAX6635 sensor chip made by Maxim.
  * This chip is compatible with the LM92, but has a lesser accuracy
@@ -22,236 +23,236 @@
  * comments will refer to this chipset, but are actually general and
  * concern all supported chipsets, unless mentioned otherwise.
  *
- * Support could easily be added for the National Semiconductor LM76
+ * Support could easily be added क्रम the National Semiconductor LM76
  * and Maxim MAX6633 and MAX6634 chips, which are mostly compatible
  * with the LM92.
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
-#include <linux/jiffies.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/jअगरfies.h>
 
 /*
- * The LM92 and MAX6635 have 2 two-state pins for address selection,
+ * The LM92 and MAX6635 have 2 two-state pins क्रम address selection,
  * resulting in 4 possible addresses.
  */
-static const unsigned short normal_i2c[] = { 0x48, 0x49, 0x4a, 0x4b,
-						I2C_CLIENT_END };
-enum chips { lm92, max6635 };
+अटल स्थिर अचिन्हित लघु normal_i2c[] = अणु 0x48, 0x49, 0x4a, 0x4b,
+						I2C_CLIENT_END पूर्ण;
+क्रमागत chips अणु lm92, max6635 पूर्ण;
 
-/* The LM92 registers */
-#define LM92_REG_CONFIG			0x01 /* 8-bit, RW */
-#define LM92_REG_TEMP			0x00 /* 16-bit, RO */
-#define LM92_REG_TEMP_HYST		0x02 /* 16-bit, RW */
-#define LM92_REG_TEMP_CRIT		0x03 /* 16-bit, RW */
-#define LM92_REG_TEMP_LOW		0x04 /* 16-bit, RW */
-#define LM92_REG_TEMP_HIGH		0x05 /* 16-bit, RW */
-#define LM92_REG_MAN_ID			0x07 /* 16-bit, RO, LM92 only */
+/* The LM92 रेजिस्टरs */
+#घोषणा LM92_REG_CONFIG			0x01 /* 8-bit, RW */
+#घोषणा LM92_REG_TEMP			0x00 /* 16-bit, RO */
+#घोषणा LM92_REG_TEMP_HYST		0x02 /* 16-bit, RW */
+#घोषणा LM92_REG_TEMP_CRIT		0x03 /* 16-bit, RW */
+#घोषणा LM92_REG_TEMP_LOW		0x04 /* 16-bit, RW */
+#घोषणा LM92_REG_TEMP_HIGH		0x05 /* 16-bit, RW */
+#घोषणा LM92_REG_MAN_ID			0x07 /* 16-bit, RO, LM92 only */
 
 /*
- * The LM92 uses signed 13-bit values with LSB = 0.0625 degree Celsius,
- * left-justified in 16-bit registers. No rounding is done, with such
+ * The LM92 uses चिन्हित 13-bit values with LSB = 0.0625 degree Celsius,
+ * left-justअगरied in 16-bit रेजिस्टरs. No rounding is करोne, with such
  * a resolution it's just not worth it. Note that the MAX6635 doesn't
- * make use of the 4 lower bits for limits (i.e. effective resolution
- * for limits is 1 degree Celsius).
+ * make use of the 4 lower bits क्रम limits (i.e. effective resolution
+ * क्रम limits is 1 degree Celsius).
  */
-static inline int TEMP_FROM_REG(s16 reg)
-{
-	return reg / 8 * 625 / 10;
-}
+अटल अंतरभूत पूर्णांक TEMP_FROM_REG(s16 reg)
+अणु
+	वापस reg / 8 * 625 / 10;
+पूर्ण
 
-static inline s16 TEMP_TO_REG(long val)
-{
+अटल अंतरभूत s16 TEMP_TO_REG(दीर्घ val)
+अणु
 	val = clamp_val(val, -60000, 160000);
-	return val * 10 / 625 * 8;
-}
+	वापस val * 10 / 625 * 8;
+पूर्ण
 
-/* Alarm flags are stored in the 3 LSB of the temperature register */
-static inline u8 ALARMS_FROM_REG(s16 reg)
-{
-	return reg & 0x0007;
-}
+/* Alarm flags are stored in the 3 LSB of the temperature रेजिस्टर */
+अटल अंतरभूत u8 ALARMS_FROM_REG(s16 reg)
+अणु
+	वापस reg & 0x0007;
+पूर्ण
 
-enum temp_index {
+क्रमागत temp_index अणु
 	t_input,
 	t_crit,
 	t_min,
 	t_max,
 	t_hyst,
 	t_num_regs
-};
+पूर्ण;
 
-static const u8 regs[t_num_regs] = {
+अटल स्थिर u8 regs[t_num_regs] = अणु
 	[t_input] = LM92_REG_TEMP,
 	[t_crit] = LM92_REG_TEMP_CRIT,
 	[t_min] = LM92_REG_TEMP_LOW,
 	[t_max] = LM92_REG_TEMP_HIGH,
 	[t_hyst] = LM92_REG_TEMP_HYST,
-};
+पूर्ण;
 
-/* Client data (each client gets its own) */
-struct lm92_data {
-	struct i2c_client *client;
-	struct mutex update_lock;
-	char valid; /* zero until following fields are valid */
-	unsigned long last_updated; /* in jiffies */
+/* Client data (each client माला_लो its own) */
+काष्ठा lm92_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा mutex update_lock;
+	अक्षर valid; /* zero until following fields are valid */
+	अचिन्हित दीर्घ last_updated; /* in jअगरfies */
 
-	/* registers values */
-	s16 temp[t_num_regs];	/* index with enum temp_index */
-};
+	/* रेजिस्टरs values */
+	s16 temp[t_num_regs];	/* index with क्रमागत temp_index */
+पूर्ण;
 
 /*
  * Sysfs attributes and callback functions
  */
 
-static struct lm92_data *lm92_update_device(struct device *dev)
-{
-	struct lm92_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
-	int i;
+अटल काष्ठा lm92_data *lm92_update_device(काष्ठा device *dev)
+अणु
+	काष्ठा lm92_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक i;
 
 	mutex_lock(&data->update_lock);
 
-	if (time_after(jiffies, data->last_updated + HZ) ||
-	    !data->valid) {
+	अगर (समय_after(jअगरfies, data->last_updated + HZ) ||
+	    !data->valid) अणु
 		dev_dbg(&client->dev, "Updating lm92 data\n");
-		for (i = 0; i < t_num_regs; i++) {
+		क्रम (i = 0; i < t_num_regs; i++) अणु
 			data->temp[i] =
-				i2c_smbus_read_word_swapped(client, regs[i]);
-		}
-		data->last_updated = jiffies;
+				i2c_smbus_पढ़ो_word_swapped(client, regs[i]);
+		पूर्ण
+		data->last_updated = jअगरfies;
 		data->valid = 1;
-	}
+	पूर्ण
 
 	mutex_unlock(&data->update_lock);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static ssize_t temp_show(struct device *dev, struct device_attribute *devattr,
-			 char *buf)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	struct lm92_data *data = lm92_update_device(dev);
+अटल sमाप_प्रकार temp_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
+			 अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	काष्ठा lm92_data *data = lm92_update_device(dev);
 
-	return sprintf(buf, "%d\n", TEMP_FROM_REG(data->temp[attr->index]));
-}
+	वापस प्र_लिखो(buf, "%d\n", TEMP_FROM_REG(data->temp[attr->index]));
+पूर्ण
 
-static ssize_t temp_store(struct device *dev,
-			  struct device_attribute *devattr, const char *buf,
-			  size_t count)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	struct lm92_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
-	int nr = attr->index;
-	long val;
-	int err;
+अटल sमाप_प्रकार temp_store(काष्ठा device *dev,
+			  काष्ठा device_attribute *devattr, स्थिर अक्षर *buf,
+			  माप_प्रकार count)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	काष्ठा lm92_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक nr = attr->index;
+	दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtol(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_दीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 	data->temp[nr] = TEMP_TO_REG(val);
-	i2c_smbus_write_word_swapped(client, regs[nr], data->temp[nr]);
+	i2c_smbus_ग_लिखो_word_swapped(client, regs[nr], data->temp[nr]);
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t temp_hyst_show(struct device *dev,
-			      struct device_attribute *devattr, char *buf)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	struct lm92_data *data = lm92_update_device(dev);
+अटल sमाप_प्रकार temp_hyst_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	काष्ठा lm92_data *data = lm92_update_device(dev);
 
-	return sprintf(buf, "%d\n", TEMP_FROM_REG(data->temp[attr->index])
+	वापस प्र_लिखो(buf, "%d\n", TEMP_FROM_REG(data->temp[attr->index])
 		       - TEMP_FROM_REG(data->temp[t_hyst]));
-}
+पूर्ण
 
-static ssize_t temp1_min_hyst_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct lm92_data *data = lm92_update_device(dev);
+अटल sमाप_प्रकार temp1_min_hyst_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा lm92_data *data = lm92_update_device(dev);
 
-	return sprintf(buf, "%d\n", TEMP_FROM_REG(data->temp[t_min])
+	वापस प्र_लिखो(buf, "%d\n", TEMP_FROM_REG(data->temp[t_min])
 		       + TEMP_FROM_REG(data->temp[t_hyst]));
-}
+पूर्ण
 
-static ssize_t temp_hyst_store(struct device *dev,
-			       struct device_attribute *devattr,
-			       const char *buf, size_t count)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	struct lm92_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
-	long val;
-	int err;
+अटल sमाप_प्रकार temp_hyst_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *devattr,
+			       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	काष्ठा lm92_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
+	दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtol(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_दीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	val = clamp_val(val, -120000, 220000);
 	mutex_lock(&data->update_lock);
 	data->temp[t_hyst] =
 		TEMP_TO_REG(TEMP_FROM_REG(data->temp[attr->index]) - val);
-	i2c_smbus_write_word_swapped(client, LM92_REG_TEMP_HYST,
+	i2c_smbus_ग_लिखो_word_swapped(client, LM92_REG_TEMP_HYST,
 				     data->temp[t_hyst]);
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t alarms_show(struct device *dev, struct device_attribute *attr,
-			   char *buf)
-{
-	struct lm92_data *data = lm92_update_device(dev);
+अटल sमाप_प्रकार alarms_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा lm92_data *data = lm92_update_device(dev);
 
-	return sprintf(buf, "%d\n", ALARMS_FROM_REG(data->temp[t_input]));
-}
+	वापस प्र_लिखो(buf, "%d\n", ALARMS_FROM_REG(data->temp[t_input]));
+पूर्ण
 
-static ssize_t alarm_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	int bitnr = to_sensor_dev_attr(attr)->index;
-	struct lm92_data *data = lm92_update_device(dev);
-	return sprintf(buf, "%d\n", (data->temp[t_input] >> bitnr) & 1);
-}
+अटल sमाप_प्रकार alarm_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	पूर्णांक bitnr = to_sensor_dev_attr(attr)->index;
+	काष्ठा lm92_data *data = lm92_update_device(dev);
+	वापस प्र_लिखो(buf, "%d\n", (data->temp[t_input] >> bitnr) & 1);
+पूर्ण
 
-static SENSOR_DEVICE_ATTR_RO(temp1_input, temp, t_input);
-static SENSOR_DEVICE_ATTR_RW(temp1_crit, temp, t_crit);
-static SENSOR_DEVICE_ATTR_RW(temp1_crit_hyst, temp_hyst, t_crit);
-static SENSOR_DEVICE_ATTR_RW(temp1_min, temp, t_min);
-static DEVICE_ATTR_RO(temp1_min_hyst);
-static SENSOR_DEVICE_ATTR_RW(temp1_max, temp, t_max);
-static SENSOR_DEVICE_ATTR_RO(temp1_max_hyst, temp_hyst, t_max);
-static DEVICE_ATTR_RO(alarms);
-static SENSOR_DEVICE_ATTR_RO(temp1_crit_alarm, alarm, 2);
-static SENSOR_DEVICE_ATTR_RO(temp1_min_alarm, alarm, 0);
-static SENSOR_DEVICE_ATTR_RO(temp1_max_alarm, alarm, 1);
+अटल SENSOR_DEVICE_ATTR_RO(temp1_input, temp, t_input);
+अटल SENSOR_DEVICE_ATTR_RW(temp1_crit, temp, t_crit);
+अटल SENSOR_DEVICE_ATTR_RW(temp1_crit_hyst, temp_hyst, t_crit);
+अटल SENSOR_DEVICE_ATTR_RW(temp1_min, temp, t_min);
+अटल DEVICE_ATTR_RO(temp1_min_hyst);
+अटल SENSOR_DEVICE_ATTR_RW(temp1_max, temp, t_max);
+अटल SENSOR_DEVICE_ATTR_RO(temp1_max_hyst, temp_hyst, t_max);
+अटल DEVICE_ATTR_RO(alarms);
+अटल SENSOR_DEVICE_ATTR_RO(temp1_crit_alarm, alarm, 2);
+अटल SENSOR_DEVICE_ATTR_RO(temp1_min_alarm, alarm, 0);
+अटल SENSOR_DEVICE_ATTR_RO(temp1_max_alarm, alarm, 1);
 
 /*
  * Detection and registration
  */
 
-static void lm92_init_client(struct i2c_client *client)
-{
+अटल व्योम lm92_init_client(काष्ठा i2c_client *client)
+अणु
 	u8 config;
 
-	/* Start the conversions if needed */
-	config = i2c_smbus_read_byte_data(client, LM92_REG_CONFIG);
-	if (config & 0x01)
-		i2c_smbus_write_byte_data(client, LM92_REG_CONFIG,
+	/* Start the conversions अगर needed */
+	config = i2c_smbus_पढ़ो_byte_data(client, LM92_REG_CONFIG);
+	अगर (config & 0x01)
+		i2c_smbus_ग_लिखो_byte_data(client, LM92_REG_CONFIG,
 					  config & 0xFE);
-}
+पूर्ण
 
-static struct attribute *lm92_attrs[] = {
+अटल काष्ठा attribute *lm92_attrs[] = अणु
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
 	&sensor_dev_attr_temp1_crit.dev_attr.attr,
 	&sensor_dev_attr_temp1_crit_hyst.dev_attr.attr,
@@ -263,44 +264,44 @@ static struct attribute *lm92_attrs[] = {
 	&sensor_dev_attr_temp1_crit_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp1_min_alarm.dev_attr.attr,
 	&sensor_dev_attr_temp1_max_alarm.dev_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(lm92);
 
-/* Return 0 if detection is successful, -ENODEV otherwise */
-static int lm92_detect(struct i2c_client *new_client,
-		       struct i2c_board_info *info)
-{
-	struct i2c_adapter *adapter = new_client->adapter;
+/* Return 0 अगर detection is successful, -ENODEV otherwise */
+अटल पूर्णांक lm92_detect(काष्ठा i2c_client *new_client,
+		       काष्ठा i2c_board_info *info)
+अणु
+	काष्ठा i2c_adapter *adapter = new_client->adapter;
 	u8 config;
 	u16 man_id;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA
 					    | I2C_FUNC_SMBUS_WORD_DATA))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	config = i2c_smbus_read_byte_data(new_client, LM92_REG_CONFIG);
-	man_id = i2c_smbus_read_word_data(new_client, LM92_REG_MAN_ID);
+	config = i2c_smbus_पढ़ो_byte_data(new_client, LM92_REG_CONFIG);
+	man_id = i2c_smbus_पढ़ो_word_data(new_client, LM92_REG_MAN_ID);
 
-	if ((config & 0xe0) == 0x00 && man_id == 0x0180)
+	अगर ((config & 0xe0) == 0x00 && man_id == 0x0180)
 		pr_info("lm92: Found National Semiconductor LM92 chip\n");
-	else
-		return -ENODEV;
+	अन्यथा
+		वापस -ENODEV;
 
 	strlcpy(info->type, "lm92", I2C_NAME_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm92_probe(struct i2c_client *new_client)
-{
-	struct device *hwmon_dev;
-	struct lm92_data *data;
+अटल पूर्णांक lm92_probe(काष्ठा i2c_client *new_client)
+अणु
+	काष्ठा device *hwmon_dev;
+	काष्ठा lm92_data *data;
 
-	data = devm_kzalloc(&new_client->dev, sizeof(struct lm92_data),
+	data = devm_kzalloc(&new_client->dev, माप(काष्ठा lm92_data),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->client = new_client;
 	mutex_init(&data->update_lock);
@@ -308,33 +309,33 @@ static int lm92_probe(struct i2c_client *new_client)
 	/* Initialize the chipset */
 	lm92_init_client(new_client);
 
-	hwmon_dev = devm_hwmon_device_register_with_groups(&new_client->dev,
+	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(&new_client->dev,
 							   new_client->name,
 							   data, lm92_groups);
-	return PTR_ERR_OR_ZERO(hwmon_dev);
-}
+	वापस PTR_ERR_OR_ZERO(hwmon_dev);
+पूर्ण
 
 /*
  * Module and driver stuff
  */
 
-static const struct i2c_device_id lm92_id[] = {
-	{ "lm92", lm92 },
-	{ "max6635", max6635 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id lm92_id[] = अणु
+	अणु "lm92", lm92 पूर्ण,
+	अणु "max6635", max6635 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, lm92_id);
 
-static struct i2c_driver lm92_driver = {
+अटल काष्ठा i2c_driver lm92_driver = अणु
 	.class		= I2C_CLASS_HWMON,
-	.driver = {
+	.driver = अणु
 		.name	= "lm92",
-	},
+	पूर्ण,
 	.probe_new	= lm92_probe,
 	.id_table	= lm92_id,
 	.detect		= lm92_detect,
 	.address_list	= normal_i2c,
-};
+पूर्ण;
 
 module_i2c_driver(lm92_driver);
 

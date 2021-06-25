@@ -1,561 +1,562 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-  A FORE Systems 200E-series driver for ATM on Linux.
+  A FORE Systems 200E-series driver क्रम ATM on Linux.
   Christophe Lizzi (lizzi@cnam.fr), October 1999-March 2003.
 
   Based on the PCA-200E driver from Uwe Dannowski (Uwe.Dannowski@inf.tu-dresden.de).
 
   This driver simultaneously supports PCA-200E and SBA-200E adapters
-  on i386, alpha (untested), powerpc, sparc and sparc64 architectures.
+  on i386, alpha (untested), घातerpc, sparc and sparc64 architectures.
 
 */
 
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/capability.h>
-#include <linux/interrupt.h>
-#include <linux/bitops.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/atmdev.h>
-#include <linux/sonet.h>
-#include <linux/dma-mapping.h>
-#include <linux/delay.h>
-#include <linux/firmware.h>
-#include <linux/pgtable.h>
-#include <asm/io.h>
-#include <asm/string.h>
-#include <asm/page.h>
-#include <asm/irq.h>
-#include <asm/dma.h>
-#include <asm/byteorder.h>
-#include <linux/uaccess.h>
-#include <linux/atomic.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/aपंचांगdev.h>
+#समावेश <linux/sonet.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/माला.स>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/atomic.h>
 
-#ifdef CONFIG_SBUS
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <asm/idprom.h>
-#include <asm/openprom.h>
-#include <asm/oplib.h>
-#endif
+#अगर_घोषित CONFIG_SBUS
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <यंत्र/idprom.h>
+#समावेश <यंत्र/खोलोprom.h>
+#समावेश <यंत्र/oplib.h>
+#पूर्ण_अगर
 
-#if defined(CONFIG_ATM_FORE200E_USE_TASKLET) /* defer interrupt work to a tasklet */
-#define FORE200E_USE_TASKLET
-#endif
+#अगर defined(CONFIG_ATM_FORE200E_USE_TASKLET) /* defer पूर्णांकerrupt work to a tasklet */
+#घोषणा FORE200E_USE_TASKLET
+#पूर्ण_अगर
 
-#if 0 /* enable the debugging code of the buffer supply queues */
-#define FORE200E_BSQ_DEBUG
-#endif
+#अगर 0 /* enable the debugging code of the buffer supply queues */
+#घोषणा FORE200E_BSQ_DEBUG
+#पूर्ण_अगर
 
-#if 1 /* ensure correct handling of 52-byte AAL0 SDUs expected by atmdump-like apps */
-#define FORE200E_52BYTE_AAL0_SDU
-#endif
+#अगर 1 /* ensure correct handling of 52-byte AAL0 SDUs expected by aपंचांगdump-like apps */
+#घोषणा FORE200E_52BYTE_AAL0_SDU
+#पूर्ण_अगर
 
-#include "fore200e.h"
-#include "suni.h"
+#समावेश "fore200e.h"
+#समावेश "suni.h"
 
-#define FORE200E_VERSION "0.3e"
+#घोषणा FORE200E_VERSION "0.3e"
 
-#define FORE200E         "fore200e: "
+#घोषणा FORE200E         "fore200e: "
 
-#if 0 /* override .config */
-#define CONFIG_ATM_FORE200E_DEBUG 1
-#endif
-#if defined(CONFIG_ATM_FORE200E_DEBUG) && (CONFIG_ATM_FORE200E_DEBUG > 0)
-#define DPRINTK(level, format, args...)  do { if (CONFIG_ATM_FORE200E_DEBUG >= (level)) \
-                                                  printk(FORE200E format, ##args); } while (0)
-#else
-#define DPRINTK(level, format, args...)  do {} while (0)
-#endif
+#अगर 0 /* override .config */
+#घोषणा CONFIG_ATM_FORE200E_DEBUG 1
+#पूर्ण_अगर
+#अगर defined(CONFIG_ATM_FORE200E_DEBUG) && (CONFIG_ATM_FORE200E_DEBUG > 0)
+#घोषणा DPRINTK(level, क्रमmat, args...)  करो अणु अगर (CONFIG_ATM_FORE200E_DEBUG >= (level)) \
+                                                  prपूर्णांकk(FORE200E क्रमmat, ##args); पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा DPRINTK(level, क्रमmat, args...)  करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
 
-#define FORE200E_ALIGN(addr, alignment) \
-        ((((unsigned long)(addr) + (alignment - 1)) & ~(alignment - 1)) - (unsigned long)(addr))
+#घोषणा FORE200E_ALIGN(addr, alignment) \
+        ((((अचिन्हित दीर्घ)(addr) + (alignment - 1)) & ~(alignment - 1)) - (अचिन्हित दीर्घ)(addr))
 
-#define FORE200E_DMA_INDEX(dma_addr, type, index)  ((dma_addr) + (index) * sizeof(type))
+#घोषणा FORE200E_DMA_INDEX(dma_addr, type, index)  ((dma_addr) + (index) * माप(type))
 
-#define FORE200E_INDEX(virt_addr, type, index)     (&((type *)(virt_addr))[ index ])
+#घोषणा FORE200E_INDEX(virt_addr, type, index)     (&((type *)(virt_addr))[ index ])
 
-#define FORE200E_NEXT_ENTRY(index, modulo)         (index = ((index) + 1) % (modulo))
+#घोषणा FORE200E_NEXT_ENTRY(index, modulo)         (index = ((index) + 1) % (modulo))
 
-#if 1
-#define ASSERT(expr)     if (!(expr)) { \
-			     printk(FORE200E "assertion failed! %s[%d]: %s\n", \
+#अगर 1
+#घोषणा ASSERT(expr)     अगर (!(expr)) अणु \
+			     prपूर्णांकk(FORE200E "assertion failed! %s[%d]: %s\n", \
 				    __func__, __LINE__, #expr); \
 			     panic(FORE200E "%s", __func__); \
-			 }
-#else
-#define ASSERT(expr)     do {} while (0)
-#endif
+			 पूर्ण
+#अन्यथा
+#घोषणा ASSERT(expr)     करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
 
-static const struct atmdev_ops   fore200e_ops;
+अटल स्थिर काष्ठा aपंचांगdev_ops   क्रमe200e_ops;
 
-static LIST_HEAD(fore200e_boards);
+अटल LIST_HEAD(क्रमe200e_boards);
 
 
 MODULE_AUTHOR("Christophe Lizzi - credits to Uwe Dannowski and Heikki Vatiainen");
 MODULE_DESCRIPTION("FORE Systems 200E-series ATM driver - version " FORE200E_VERSION);
 
-static const int fore200e_rx_buf_nbr[ BUFFER_SCHEME_NBR ][ BUFFER_MAGN_NBR ] = {
-    { BUFFER_S1_NBR, BUFFER_L1_NBR },
-    { BUFFER_S2_NBR, BUFFER_L2_NBR }
-};
+अटल स्थिर पूर्णांक क्रमe200e_rx_buf_nbr[ BUFFER_SCHEME_NBR ][ BUFFER_MAGN_NBR ] = अणु
+    अणु BUFFER_S1_NBR, BUFFER_L1_NBR पूर्ण,
+    अणु BUFFER_S2_NBR, BUFFER_L2_NBR पूर्ण
+पूर्ण;
 
-static const int fore200e_rx_buf_size[ BUFFER_SCHEME_NBR ][ BUFFER_MAGN_NBR ] = {
-    { BUFFER_S1_SIZE, BUFFER_L1_SIZE },
-    { BUFFER_S2_SIZE, BUFFER_L2_SIZE }
-};
-
-
-#if defined(CONFIG_ATM_FORE200E_DEBUG) && (CONFIG_ATM_FORE200E_DEBUG > 0)
-static const char* fore200e_traffic_class[] = { "NONE", "UBR", "CBR", "VBR", "ABR", "ANY" };
-#endif
+अटल स्थिर पूर्णांक क्रमe200e_rx_buf_size[ BUFFER_SCHEME_NBR ][ BUFFER_MAGN_NBR ] = अणु
+    अणु BUFFER_S1_SIZE, BUFFER_L1_SIZE पूर्ण,
+    अणु BUFFER_S2_SIZE, BUFFER_L2_SIZE पूर्ण
+पूर्ण;
 
 
-#if 0 /* currently unused */
-static int 
-fore200e_fore2atm_aal(enum fore200e_aal aal)
-{
-    switch(aal) {
-    case FORE200E_AAL0:  return ATM_AAL0;
-    case FORE200E_AAL34: return ATM_AAL34;
-    case FORE200E_AAL5:  return ATM_AAL5;
-    }
-
-    return -EINVAL;
-}
-#endif
+#अगर defined(CONFIG_ATM_FORE200E_DEBUG) && (CONFIG_ATM_FORE200E_DEBUG > 0)
+अटल स्थिर अक्षर* क्रमe200e_traffic_class[] = अणु "NONE", "UBR", "CBR", "VBR", "ABR", "ANY" पूर्ण;
+#पूर्ण_अगर
 
 
-static enum fore200e_aal
-fore200e_atm2fore_aal(int aal)
-{
-    switch(aal) {
-    case ATM_AAL0:  return FORE200E_AAL0;
-    case ATM_AAL34: return FORE200E_AAL34;
-    case ATM_AAL1:
-    case ATM_AAL2:
-    case ATM_AAL5:  return FORE200E_AAL5;
-    }
+#अगर 0 /* currently unused */
+अटल पूर्णांक 
+क्रमe200e_क्रमe2aपंचांग_aal(क्रमागत क्रमe200e_aal aal)
+अणु
+    चयन(aal) अणु
+    हाल FORE200E_AAL0:  वापस ATM_AAL0;
+    हाल FORE200E_AAL34: वापस ATM_AAL34;
+    हाल FORE200E_AAL5:  वापस ATM_AAL5;
+    पूर्ण
 
-    return -EINVAL;
-}
-
-
-static char*
-fore200e_irq_itoa(int irq)
-{
-    static char str[8];
-    sprintf(str, "%d", irq);
-    return str;
-}
+    वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
 
-/* allocate and align a chunk of memory intended to hold the data behing exchanged
+अटल क्रमागत क्रमe200e_aal
+क्रमe200e_aपंचांग2क्रमe_aal(पूर्णांक aal)
+अणु
+    चयन(aal) अणु
+    हाल ATM_AAL0:  वापस FORE200E_AAL0;
+    हाल ATM_AAL34: वापस FORE200E_AAL34;
+    हाल ATM_AAL1:
+    हाल ATM_AAL2:
+    हाल ATM_AAL5:  वापस FORE200E_AAL5;
+    पूर्ण
+
+    वापस -EINVAL;
+पूर्ण
+
+
+अटल अक्षर*
+क्रमe200e_irq_itoa(पूर्णांक irq)
+अणु
+    अटल अक्षर str[8];
+    प्र_लिखो(str, "%d", irq);
+    वापस str;
+पूर्ण
+
+
+/* allocate and align a chunk of memory पूर्णांकended to hold the data behing exchanged
    between the driver and the adapter (using streaming DVMA) */
 
-static int
-fore200e_chunk_alloc(struct fore200e* fore200e, struct chunk* chunk, int size, int alignment, int direction)
-{
-    unsigned long offset = 0;
+अटल पूर्णांक
+क्रमe200e_chunk_alloc(काष्ठा क्रमe200e* क्रमe200e, काष्ठा chunk* chunk, पूर्णांक size, पूर्णांक alignment, पूर्णांक direction)
+अणु
+    अचिन्हित दीर्घ offset = 0;
 
-    if (alignment <= sizeof(int))
+    अगर (alignment <= माप(पूर्णांक))
 	alignment = 0;
 
     chunk->alloc_size = size + alignment;
     chunk->direction  = direction;
 
     chunk->alloc_addr = kzalloc(chunk->alloc_size, GFP_KERNEL);
-    if (chunk->alloc_addr == NULL)
-	return -ENOMEM;
+    अगर (chunk->alloc_addr == शून्य)
+	वापस -ENOMEM;
 
-    if (alignment > 0)
+    अगर (alignment > 0)
 	offset = FORE200E_ALIGN(chunk->alloc_addr, alignment); 
     
     chunk->align_addr = chunk->alloc_addr + offset;
 
-    chunk->dma_addr = dma_map_single(fore200e->dev, chunk->align_addr,
+    chunk->dma_addr = dma_map_single(क्रमe200e->dev, chunk->align_addr,
 				     size, direction);
-    if (dma_mapping_error(fore200e->dev, chunk->dma_addr)) {
-	kfree(chunk->alloc_addr);
-	return -ENOMEM;
-    }
-    return 0;
-}
+    अगर (dma_mapping_error(क्रमe200e->dev, chunk->dma_addr)) अणु
+	kमुक्त(chunk->alloc_addr);
+	वापस -ENOMEM;
+    पूर्ण
+    वापस 0;
+पूर्ण
 
 
-/* free a chunk of memory */
+/* मुक्त a chunk of memory */
 
-static void
-fore200e_chunk_free(struct fore200e* fore200e, struct chunk* chunk)
-{
-    dma_unmap_single(fore200e->dev, chunk->dma_addr, chunk->dma_size,
+अटल व्योम
+क्रमe200e_chunk_मुक्त(काष्ठा क्रमe200e* क्रमe200e, काष्ठा chunk* chunk)
+अणु
+    dma_unmap_single(क्रमe200e->dev, chunk->dma_addr, chunk->dma_size,
 		     chunk->direction);
-    kfree(chunk->alloc_addr);
-}
+    kमुक्त(chunk->alloc_addr);
+पूर्ण
 
 /*
- * Allocate a DMA consistent chunk of memory intended to act as a communication
+ * Allocate a DMA consistent chunk of memory पूर्णांकended to act as a communication
  * mechanism (to hold descriptors, status, queues, etc.) shared by the driver
  * and the adapter.
  */
-static int
-fore200e_dma_chunk_alloc(struct fore200e *fore200e, struct chunk *chunk,
-		int size, int nbr, int alignment)
-{
-	/* returned chunks are page-aligned */
+अटल पूर्णांक
+क्रमe200e_dma_chunk_alloc(काष्ठा क्रमe200e *क्रमe200e, काष्ठा chunk *chunk,
+		पूर्णांक size, पूर्णांक nbr, पूर्णांक alignment)
+अणु
+	/* वापसed chunks are page-aligned */
 	chunk->alloc_size = size * nbr;
-	chunk->alloc_addr = dma_alloc_coherent(fore200e->dev, chunk->alloc_size,
+	chunk->alloc_addr = dma_alloc_coherent(क्रमe200e->dev, chunk->alloc_size,
 					       &chunk->dma_addr, GFP_KERNEL);
-	if (!chunk->alloc_addr)
-		return -ENOMEM;
+	अगर (!chunk->alloc_addr)
+		वापस -ENOMEM;
 	chunk->align_addr = chunk->alloc_addr;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Free a DMA consistent chunk of memory.
  */
-static void
-fore200e_dma_chunk_free(struct fore200e* fore200e, struct chunk* chunk)
-{
-	dma_free_coherent(fore200e->dev, chunk->alloc_size, chunk->alloc_addr,
+अटल व्योम
+क्रमe200e_dma_chunk_मुक्त(काष्ठा क्रमe200e* क्रमe200e, काष्ठा chunk* chunk)
+अणु
+	dma_मुक्त_coherent(क्रमe200e->dev, chunk->alloc_size, chunk->alloc_addr,
 			  chunk->dma_addr);
-}
+पूर्ण
 
-static void
-fore200e_spin(int msecs)
-{
-    unsigned long timeout = jiffies + msecs_to_jiffies(msecs);
-    while (time_before(jiffies, timeout));
-}
+अटल व्योम
+क्रमe200e_spin(पूर्णांक msecs)
+अणु
+    अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(msecs);
+    जबतक (समय_beक्रमe(jअगरfies, समयout));
+पूर्ण
 
 
-static int
-fore200e_poll(struct fore200e* fore200e, volatile u32* addr, u32 val, int msecs)
-{
-    unsigned long timeout = jiffies + msecs_to_jiffies(msecs);
-    int           ok;
+अटल पूर्णांक
+क्रमe200e_poll(काष्ठा क्रमe200e* क्रमe200e, अस्थिर u32* addr, u32 val, पूर्णांक msecs)
+अणु
+    अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(msecs);
+    पूर्णांक           ok;
 
     mb();
-    do {
-	if ((ok = (*addr == val)) || (*addr & STATUS_ERROR))
-	    break;
+    करो अणु
+	अगर ((ok = (*addr == val)) || (*addr & STATUS_ERROR))
+	    अवरोध;
 
-    } while (time_before(jiffies, timeout));
+    पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
 
-#if 1
-    if (!ok) {
-	printk(FORE200E "cmd polling failed, got status 0x%08x, expected 0x%08x\n",
+#अगर 1
+    अगर (!ok) अणु
+	prपूर्णांकk(FORE200E "cmd polling failed, got status 0x%08x, expected 0x%08x\n",
 	       *addr, val);
-    }
-#endif
+    पूर्ण
+#पूर्ण_अगर
 
-    return ok;
-}
-
-
-static int
-fore200e_io_poll(struct fore200e* fore200e, volatile u32 __iomem *addr, u32 val, int msecs)
-{
-    unsigned long timeout = jiffies + msecs_to_jiffies(msecs);
-    int           ok;
-
-    do {
-	if ((ok = (fore200e->bus->read(addr) == val)))
-	    break;
-
-    } while (time_before(jiffies, timeout));
-
-#if 1
-    if (!ok) {
-	printk(FORE200E "I/O polling failed, got status 0x%08x, expected 0x%08x\n",
-	       fore200e->bus->read(addr), val);
-    }
-#endif
-
-    return ok;
-}
+    वापस ok;
+पूर्ण
 
 
-static void
-fore200e_free_rx_buf(struct fore200e* fore200e)
-{
-    int scheme, magn, nbr;
-    struct buffer* buffer;
+अटल पूर्णांक
+क्रमe200e_io_poll(काष्ठा क्रमe200e* क्रमe200e, अस्थिर u32 __iomem *addr, u32 val, पूर्णांक msecs)
+अणु
+    अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(msecs);
+    पूर्णांक           ok;
 
-    for (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++) {
-	for (magn = 0; magn < BUFFER_MAGN_NBR; magn++) {
+    करो अणु
+	अगर ((ok = (क्रमe200e->bus->पढ़ो(addr) == val)))
+	    अवरोध;
 
-	    if ((buffer = fore200e->host_bsq[ scheme ][ magn ].buffer) != NULL) {
+    पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
 
-		for (nbr = 0; nbr < fore200e_rx_buf_nbr[ scheme ][ magn ]; nbr++) {
+#अगर 1
+    अगर (!ok) अणु
+	prपूर्णांकk(FORE200E "I/O polling failed, got status 0x%08x, expected 0x%08x\n",
+	       क्रमe200e->bus->पढ़ो(addr), val);
+    पूर्ण
+#पूर्ण_अगर
 
-		    struct chunk* data = &buffer[ nbr ].data;
-
-		    if (data->alloc_addr != NULL)
-			fore200e_chunk_free(fore200e, data);
-		}
-	    }
-	}
-    }
-}
+    वापस ok;
+पूर्ण
 
 
-static void
-fore200e_uninit_bs_queue(struct fore200e* fore200e)
-{
-    int scheme, magn;
+अटल व्योम
+क्रमe200e_मुक्त_rx_buf(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    पूर्णांक scheme, magn, nbr;
+    काष्ठा buffer* buffer;
+
+    क्रम (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++) अणु
+	क्रम (magn = 0; magn < BUFFER_MAGN_NBR; magn++) अणु
+
+	    अगर ((buffer = क्रमe200e->host_bsq[ scheme ][ magn ].buffer) != शून्य) अणु
+
+		क्रम (nbr = 0; nbr < क्रमe200e_rx_buf_nbr[ scheme ][ magn ]; nbr++) अणु
+
+		    काष्ठा chunk* data = &buffer[ nbr ].data;
+
+		    अगर (data->alloc_addr != शून्य)
+			क्रमe200e_chunk_मुक्त(क्रमe200e, data);
+		पूर्ण
+	    पूर्ण
+	पूर्ण
+    पूर्ण
+पूर्ण
+
+
+अटल व्योम
+क्रमe200e_uninit_bs_queue(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    पूर्णांक scheme, magn;
     
-    for (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++) {
-	for (magn = 0; magn < BUFFER_MAGN_NBR; magn++) {
+    क्रम (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++) अणु
+	क्रम (magn = 0; magn < BUFFER_MAGN_NBR; magn++) अणु
 
-	    struct chunk* status    = &fore200e->host_bsq[ scheme ][ magn ].status;
-	    struct chunk* rbd_block = &fore200e->host_bsq[ scheme ][ magn ].rbd_block;
+	    काष्ठा chunk* status    = &क्रमe200e->host_bsq[ scheme ][ magn ].status;
+	    काष्ठा chunk* rbd_block = &क्रमe200e->host_bsq[ scheme ][ magn ].rbd_block;
 	    
-	    if (status->alloc_addr)
-		fore200e_dma_chunk_free(fore200e, status);
+	    अगर (status->alloc_addr)
+		क्रमe200e_dma_chunk_मुक्त(क्रमe200e, status);
 	    
-	    if (rbd_block->alloc_addr)
-		fore200e_dma_chunk_free(fore200e, rbd_block);
-	}
-    }
-}
+	    अगर (rbd_block->alloc_addr)
+		क्रमe200e_dma_chunk_मुक्त(क्रमe200e, rbd_block);
+	पूर्ण
+    पूर्ण
+पूर्ण
 
 
-static int
-fore200e_reset(struct fore200e* fore200e, int diag)
-{
-    int ok;
+अटल पूर्णांक
+क्रमe200e_reset(काष्ठा क्रमe200e* क्रमe200e, पूर्णांक diag)
+अणु
+    पूर्णांक ok;
 
-    fore200e->cp_monitor = fore200e->virt_base + FORE200E_CP_MONITOR_OFFSET;
+    क्रमe200e->cp_monitor = क्रमe200e->virt_base + FORE200E_CP_MONITOR_OFFSET;
     
-    fore200e->bus->write(BSTAT_COLD_START, &fore200e->cp_monitor->bstat);
+    क्रमe200e->bus->ग_लिखो(BSTAT_COLD_START, &क्रमe200e->cp_monitor->bstat);
 
-    fore200e->bus->reset(fore200e);
+    क्रमe200e->bus->reset(क्रमe200e);
 
-    if (diag) {
-	ok = fore200e_io_poll(fore200e, &fore200e->cp_monitor->bstat, BSTAT_SELFTEST_OK, 1000);
-	if (ok == 0) {
+    अगर (diag) अणु
+	ok = क्रमe200e_io_poll(क्रमe200e, &क्रमe200e->cp_monitor->bstat, BSTAT_SELFTEST_OK, 1000);
+	अगर (ok == 0) अणु
 	    
-	    printk(FORE200E "device %s self-test failed\n", fore200e->name);
-	    return -ENODEV;
-	}
+	    prपूर्णांकk(FORE200E "device %s self-test failed\n", क्रमe200e->name);
+	    वापस -ENODEV;
+	पूर्ण
 
-	printk(FORE200E "device %s self-test passed\n", fore200e->name);
+	prपूर्णांकk(FORE200E "device %s self-test passed\n", क्रमe200e->name);
 	
-	fore200e->state = FORE200E_STATE_RESET;
-    }
+	क्रमe200e->state = FORE200E_STATE_RESET;
+    पूर्ण
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 
-static void
-fore200e_shutdown(struct fore200e* fore200e)
-{
-    printk(FORE200E "removing device %s at 0x%lx, IRQ %s\n",
-	   fore200e->name, fore200e->phys_base, 
-	   fore200e_irq_itoa(fore200e->irq));
+अटल व्योम
+क्रमe200e_shutकरोwn(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    prपूर्णांकk(FORE200E "removing device %s at 0x%lx, IRQ %s\n",
+	   क्रमe200e->name, क्रमe200e->phys_base, 
+	   क्रमe200e_irq_itoa(क्रमe200e->irq));
     
-    if (fore200e->state > FORE200E_STATE_RESET) {
-	/* first, reset the board to prevent further interrupts or data transfers */
-	fore200e_reset(fore200e, 0);
-    }
+    अगर (क्रमe200e->state > FORE200E_STATE_RESET) अणु
+	/* first, reset the board to prevent further पूर्णांकerrupts or data transfers */
+	क्रमe200e_reset(क्रमe200e, 0);
+    पूर्ण
     
     /* then, release all allocated resources */
-    switch(fore200e->state) {
+    चयन(क्रमe200e->state) अणु
 
-    case FORE200E_STATE_COMPLETE:
-	kfree(fore200e->stats);
-
-	fallthrough;
-    case FORE200E_STATE_IRQ:
-	free_irq(fore200e->irq, fore200e->atm_dev);
+    हाल FORE200E_STATE_COMPLETE:
+	kमुक्त(क्रमe200e->stats);
 
 	fallthrough;
-    case FORE200E_STATE_ALLOC_BUF:
-	fore200e_free_rx_buf(fore200e);
+    हाल FORE200E_STATE_IRQ:
+	मुक्त_irq(क्रमe200e->irq, क्रमe200e->aपंचांग_dev);
 
 	fallthrough;
-    case FORE200E_STATE_INIT_BSQ:
-	fore200e_uninit_bs_queue(fore200e);
+    हाल FORE200E_STATE_ALLOC_BUF:
+	क्रमe200e_मुक्त_rx_buf(क्रमe200e);
 
 	fallthrough;
-    case FORE200E_STATE_INIT_RXQ:
-	fore200e_dma_chunk_free(fore200e, &fore200e->host_rxq.status);
-	fore200e_dma_chunk_free(fore200e, &fore200e->host_rxq.rpd);
+    हाल FORE200E_STATE_INIT_BSQ:
+	क्रमe200e_uninit_bs_queue(क्रमe200e);
 
 	fallthrough;
-    case FORE200E_STATE_INIT_TXQ:
-	fore200e_dma_chunk_free(fore200e, &fore200e->host_txq.status);
-	fore200e_dma_chunk_free(fore200e, &fore200e->host_txq.tpd);
+    हाल FORE200E_STATE_INIT_RXQ:
+	क्रमe200e_dma_chunk_मुक्त(क्रमe200e, &क्रमe200e->host_rxq.status);
+	क्रमe200e_dma_chunk_मुक्त(क्रमe200e, &क्रमe200e->host_rxq.rpd);
 
 	fallthrough;
-    case FORE200E_STATE_INIT_CMDQ:
-	fore200e_dma_chunk_free(fore200e, &fore200e->host_cmdq.status);
+    हाल FORE200E_STATE_INIT_TXQ:
+	क्रमe200e_dma_chunk_मुक्त(क्रमe200e, &क्रमe200e->host_txq.status);
+	क्रमe200e_dma_chunk_मुक्त(क्रमe200e, &क्रमe200e->host_txq.tpd);
 
 	fallthrough;
-    case FORE200E_STATE_INITIALIZE:
-	/* nothing to do for that state */
-
-    case FORE200E_STATE_START_FW:
-	/* nothing to do for that state */
-
-    case FORE200E_STATE_RESET:
-	/* nothing to do for that state */
-
-    case FORE200E_STATE_MAP:
-	fore200e->bus->unmap(fore200e);
+    हाल FORE200E_STATE_INIT_CMDQ:
+	क्रमe200e_dma_chunk_मुक्त(क्रमe200e, &क्रमe200e->host_cmdq.status);
 
 	fallthrough;
-    case FORE200E_STATE_CONFIGURE:
-	/* nothing to do for that state */
+    हाल FORE200E_STATE_INITIALIZE:
+	/* nothing to करो क्रम that state */
 
-    case FORE200E_STATE_REGISTER:
-	/* XXX shouldn't we *start* by deregistering the device? */
-	atm_dev_deregister(fore200e->atm_dev);
+    हाल FORE200E_STATE_START_FW:
+	/* nothing to करो क्रम that state */
 
-    case FORE200E_STATE_BLANK:
-	/* nothing to do for that state */
-	break;
-    }
-}
+    हाल FORE200E_STATE_RESET:
+	/* nothing to करो क्रम that state */
+
+    हाल FORE200E_STATE_MAP:
+	क्रमe200e->bus->unmap(क्रमe200e);
+
+	fallthrough;
+    हाल FORE200E_STATE_CONFIGURE:
+	/* nothing to करो क्रम that state */
+
+    हाल FORE200E_STATE_REGISTER:
+	/* XXX shouldn't we *start* by deरेजिस्टरing the device? */
+	aपंचांग_dev_deरेजिस्टर(क्रमe200e->aपंचांग_dev);
+
+    हाल FORE200E_STATE_BLANK:
+	/* nothing to करो क्रम that state */
+	अवरोध;
+    पूर्ण
+पूर्ण
 
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 
-static u32 fore200e_pca_read(volatile u32 __iomem *addr)
-{
+अटल u32 क्रमe200e_pca_पढ़ो(अस्थिर u32 __iomem *addr)
+अणु
     /* on big-endian hosts, the board is configured to convert
        the endianess of slave RAM accesses  */
-    return le32_to_cpu(readl(addr));
-}
+    वापस le32_to_cpu(पढ़ोl(addr));
+पूर्ण
 
 
-static void fore200e_pca_write(u32 val, volatile u32 __iomem *addr)
-{
+अटल व्योम क्रमe200e_pca_ग_लिखो(u32 val, अस्थिर u32 __iomem *addr)
+अणु
     /* on big-endian hosts, the board is configured to convert
        the endianess of slave RAM accesses  */
-    writel(cpu_to_le32(val), addr);
-}
+    ग_लिखोl(cpu_to_le32(val), addr);
+पूर्ण
 
-static int
-fore200e_pca_irq_check(struct fore200e* fore200e)
-{
-    /* this is a 1 bit register */
-    int irq_posted = readl(fore200e->regs.pca.psr);
+अटल पूर्णांक
+क्रमe200e_pca_irq_check(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    /* this is a 1 bit रेजिस्टर */
+    पूर्णांक irq_posted = पढ़ोl(क्रमe200e->regs.pca.psr);
 
-#if defined(CONFIG_ATM_FORE200E_DEBUG) && (CONFIG_ATM_FORE200E_DEBUG == 2)
-    if (irq_posted && (readl(fore200e->regs.pca.hcr) & PCA200E_HCR_OUTFULL)) {
-	DPRINTK(2,"FIFO OUT full, device %d\n", fore200e->atm_dev->number);
-    }
-#endif
+#अगर defined(CONFIG_ATM_FORE200E_DEBUG) && (CONFIG_ATM_FORE200E_DEBUG == 2)
+    अगर (irq_posted && (पढ़ोl(क्रमe200e->regs.pca.hcr) & PCA200E_HCR_OUTFULL)) अणु
+	DPRINTK(2,"FIFO OUT full, device %d\n", क्रमe200e->aपंचांग_dev->number);
+    पूर्ण
+#पूर्ण_अगर
 
-    return irq_posted;
-}
-
-
-static void
-fore200e_pca_irq_ack(struct fore200e* fore200e)
-{
-    writel(PCA200E_HCR_CLRINTR, fore200e->regs.pca.hcr);
-}
+    वापस irq_posted;
+पूर्ण
 
 
-static void
-fore200e_pca_reset(struct fore200e* fore200e)
-{
-    writel(PCA200E_HCR_RESET, fore200e->regs.pca.hcr);
-    fore200e_spin(10);
-    writel(0, fore200e->regs.pca.hcr);
-}
+अटल व्योम
+क्रमe200e_pca_irq_ack(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    ग_लिखोl(PCA200E_HCR_CLRINTR, क्रमe200e->regs.pca.hcr);
+पूर्ण
 
 
-static int fore200e_pca_map(struct fore200e* fore200e)
-{
-    DPRINTK(2, "device %s being mapped in memory\n", fore200e->name);
+अटल व्योम
+क्रमe200e_pca_reset(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    ग_लिखोl(PCA200E_HCR_RESET, क्रमe200e->regs.pca.hcr);
+    क्रमe200e_spin(10);
+    ग_लिखोl(0, क्रमe200e->regs.pca.hcr);
+पूर्ण
 
-    fore200e->virt_base = ioremap(fore200e->phys_base, PCA200E_IOSPACE_LENGTH);
+
+अटल पूर्णांक क्रमe200e_pca_map(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    DPRINTK(2, "device %s being mapped in memory\n", क्रमe200e->name);
+
+    क्रमe200e->virt_base = ioremap(क्रमe200e->phys_base, PCA200E_IOSPACE_LENGTH);
     
-    if (fore200e->virt_base == NULL) {
-	printk(FORE200E "can't map device %s\n", fore200e->name);
-	return -EFAULT;
-    }
+    अगर (क्रमe200e->virt_base == शून्य) अणु
+	prपूर्णांकk(FORE200E "can't map device %s\n", क्रमe200e->name);
+	वापस -EFAULT;
+    पूर्ण
 
-    DPRINTK(1, "device %s mapped to 0x%p\n", fore200e->name, fore200e->virt_base);
+    DPRINTK(1, "device %s mapped to 0x%p\n", क्रमe200e->name, क्रमe200e->virt_base);
 
-    /* gain access to the PCA specific registers  */
-    fore200e->regs.pca.hcr = fore200e->virt_base + PCA200E_HCR_OFFSET;
-    fore200e->regs.pca.imr = fore200e->virt_base + PCA200E_IMR_OFFSET;
-    fore200e->regs.pca.psr = fore200e->virt_base + PCA200E_PSR_OFFSET;
+    /* gain access to the PCA specअगरic रेजिस्टरs  */
+    क्रमe200e->regs.pca.hcr = क्रमe200e->virt_base + PCA200E_HCR_OFFSET;
+    क्रमe200e->regs.pca.imr = क्रमe200e->virt_base + PCA200E_IMR_OFFSET;
+    क्रमe200e->regs.pca.psr = क्रमe200e->virt_base + PCA200E_PSR_OFFSET;
 
-    fore200e->state = FORE200E_STATE_MAP;
-    return 0;
-}
-
-
-static void
-fore200e_pca_unmap(struct fore200e* fore200e)
-{
-    DPRINTK(2, "device %s being unmapped from memory\n", fore200e->name);
-
-    if (fore200e->virt_base != NULL)
-	iounmap(fore200e->virt_base);
-}
+    क्रमe200e->state = FORE200E_STATE_MAP;
+    वापस 0;
+पूर्ण
 
 
-static int fore200e_pca_configure(struct fore200e *fore200e)
-{
-    struct pci_dev *pci_dev = to_pci_dev(fore200e->dev);
+अटल व्योम
+क्रमe200e_pca_unmap(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    DPRINTK(2, "device %s being unmapped from memory\n", क्रमe200e->name);
+
+    अगर (क्रमe200e->virt_base != शून्य)
+	iounmap(क्रमe200e->virt_base);
+पूर्ण
+
+
+अटल पूर्णांक क्रमe200e_pca_configure(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    काष्ठा pci_dev *pci_dev = to_pci_dev(क्रमe200e->dev);
     u8              master_ctrl, latency;
 
-    DPRINTK(2, "device %s being configured\n", fore200e->name);
+    DPRINTK(2, "device %s being configured\n", क्रमe200e->name);
 
-    if ((pci_dev->irq == 0) || (pci_dev->irq == 0xFF)) {
-	printk(FORE200E "incorrect IRQ setting - misconfigured PCI-PCI bridge?\n");
-	return -EIO;
-    }
+    अगर ((pci_dev->irq == 0) || (pci_dev->irq == 0xFF)) अणु
+	prपूर्णांकk(FORE200E "incorrect IRQ setting - misconfigured PCI-PCI bridge?\n");
+	वापस -EIO;
+    पूर्ण
 
-    pci_read_config_byte(pci_dev, PCA200E_PCI_MASTER_CTRL, &master_ctrl);
+    pci_पढ़ो_config_byte(pci_dev, PCA200E_PCI_MASTER_CTRL, &master_ctrl);
 
     master_ctrl = master_ctrl
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	/* request the PCA board to convert the endianess of slave RAM accesses */
 	| PCA200E_CTRL_CONVERT_ENDIAN
-#endif
-#if 0
+#पूर्ण_अगर
+#अगर 0
         | PCA200E_CTRL_DIS_CACHE_RD
         | PCA200E_CTRL_DIS_WRT_INVAL
         | PCA200E_CTRL_ENA_CONT_REQ_MODE
         | PCA200E_CTRL_2_CACHE_WRT_INVAL
-#endif
+#पूर्ण_अगर
 	| PCA200E_CTRL_LARGE_PCI_BURSTS;
     
-    pci_write_config_byte(pci_dev, PCA200E_PCI_MASTER_CTRL, master_ctrl);
+    pci_ग_लिखो_config_byte(pci_dev, PCA200E_PCI_MASTER_CTRL, master_ctrl);
 
-    /* raise latency from 32 (default) to 192, as this seems to prevent NIC
+    /* उठाओ latency from 32 (शेष) to 192, as this seems to prevent NIC
        lockups (under heavy rx loads) due to continuous 'FIFO OUT full' condition.
-       this may impact the performances of other PCI devices on the same bus, though */
+       this may impact the perक्रमmances of other PCI devices on the same bus, though */
     latency = 192;
-    pci_write_config_byte(pci_dev, PCI_LATENCY_TIMER, latency);
+    pci_ग_लिखो_config_byte(pci_dev, PCI_LATENCY_TIMER, latency);
 
-    fore200e->state = FORE200E_STATE_CONFIGURE;
-    return 0;
-}
+    क्रमe200e->state = FORE200E_STATE_CONFIGURE;
+    वापस 0;
+पूर्ण
 
 
-static int __init
-fore200e_pca_prom_read(struct fore200e* fore200e, struct prom_data* prom)
-{
-    struct host_cmdq*       cmdq  = &fore200e->host_cmdq;
-    struct host_cmdq_entry* entry = &cmdq->host_entry[ cmdq->head ];
-    struct prom_opcode      opcode;
-    int                     ok;
+अटल पूर्णांक __init
+क्रमe200e_pca_prom_पढ़ो(काष्ठा क्रमe200e* क्रमe200e, काष्ठा prom_data* prom)
+अणु
+    काष्ठा host_cmdq*       cmdq  = &क्रमe200e->host_cmdq;
+    काष्ठा host_cmdq_entry* entry = &cmdq->host_entry[ cmdq->head ];
+    काष्ठा prom_opcode      opcode;
+    पूर्णांक                     ok;
     u32                     prom_dma;
 
     FORE200E_NEXT_ENTRY(cmdq->head, QUEUE_SIZE_CMD);
@@ -563,1048 +564,1048 @@ fore200e_pca_prom_read(struct fore200e* fore200e, struct prom_data* prom)
     opcode.opcode = OPCODE_GET_PROM;
     opcode.pad    = 0;
 
-    prom_dma = dma_map_single(fore200e->dev, prom, sizeof(struct prom_data),
+    prom_dma = dma_map_single(क्रमe200e->dev, prom, माप(काष्ठा prom_data),
 			      DMA_FROM_DEVICE);
-    if (dma_mapping_error(fore200e->dev, prom_dma))
-	return -ENOMEM;
+    अगर (dma_mapping_error(क्रमe200e->dev, prom_dma))
+	वापस -ENOMEM;
 
-    fore200e->bus->write(prom_dma, &entry->cp_entry->cmd.prom_block.prom_haddr);
+    क्रमe200e->bus->ग_लिखो(prom_dma, &entry->cp_entry->cmd.prom_block.prom_haddr);
     
     *entry->status = STATUS_PENDING;
 
-    fore200e->bus->write(*(u32*)&opcode, (u32 __iomem *)&entry->cp_entry->cmd.prom_block.opcode);
+    क्रमe200e->bus->ग_लिखो(*(u32*)&opcode, (u32 __iomem *)&entry->cp_entry->cmd.prom_block.opcode);
 
-    ok = fore200e_poll(fore200e, entry->status, STATUS_COMPLETE, 400);
+    ok = क्रमe200e_poll(क्रमe200e, entry->status, STATUS_COMPLETE, 400);
 
     *entry->status = STATUS_FREE;
 
-    dma_unmap_single(fore200e->dev, prom_dma, sizeof(struct prom_data), DMA_FROM_DEVICE);
+    dma_unmap_single(क्रमe200e->dev, prom_dma, माप(काष्ठा prom_data), DMA_FROM_DEVICE);
 
-    if (ok == 0) {
-	printk(FORE200E "unable to get PROM data from device %s\n", fore200e->name);
-	return -EIO;
-    }
+    अगर (ok == 0) अणु
+	prपूर्णांकk(FORE200E "unable to get PROM data from device %s\n", क्रमe200e->name);
+	वापस -EIO;
+    पूर्ण
 
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
     
-#define swap_here(addr) (*((u32*)(addr)) = swab32( *((u32*)(addr)) ))
+#घोषणा swap_here(addr) (*((u32*)(addr)) = swab32( *((u32*)(addr)) ))
 
     /* MAC address is stored as little-endian */
     swap_here(&prom->mac_addr[0]);
     swap_here(&prom->mac_addr[4]);
-#endif
+#पूर्ण_अगर
     
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 
-static int
-fore200e_pca_proc_read(struct fore200e* fore200e, char *page)
-{
-    struct pci_dev *pci_dev = to_pci_dev(fore200e->dev);
+अटल पूर्णांक
+क्रमe200e_pca_proc_पढ़ो(काष्ठा क्रमe200e* क्रमe200e, अक्षर *page)
+अणु
+    काष्ठा pci_dev *pci_dev = to_pci_dev(क्रमe200e->dev);
 
-    return sprintf(page, "   PCI bus/slot/function:\t%d/%d/%d\n",
+    वापस प्र_लिखो(page, "   PCI bus/slot/function:\t%d/%d/%d\n",
 		   pci_dev->bus->number, PCI_SLOT(pci_dev->devfn), PCI_FUNC(pci_dev->devfn));
-}
+पूर्ण
 
-static const struct fore200e_bus fore200e_pci_ops = {
+अटल स्थिर काष्ठा क्रमe200e_bus क्रमe200e_pci_ops = अणु
 	.model_name		= "PCA-200E",
 	.proc_name		= "pca200e",
 	.descr_alignment	= 32,
 	.buffer_alignment	= 4,
 	.status_alignment	= 32,
-	.read			= fore200e_pca_read,
-	.write			= fore200e_pca_write,
-	.configure		= fore200e_pca_configure,
-	.map			= fore200e_pca_map,
-	.reset			= fore200e_pca_reset,
-	.prom_read		= fore200e_pca_prom_read,
-	.unmap			= fore200e_pca_unmap,
-	.irq_check		= fore200e_pca_irq_check,
-	.irq_ack		= fore200e_pca_irq_ack,
-	.proc_read		= fore200e_pca_proc_read,
-};
-#endif /* CONFIG_PCI */
+	.पढ़ो			= क्रमe200e_pca_पढ़ो,
+	.ग_लिखो			= क्रमe200e_pca_ग_लिखो,
+	.configure		= क्रमe200e_pca_configure,
+	.map			= क्रमe200e_pca_map,
+	.reset			= क्रमe200e_pca_reset,
+	.prom_पढ़ो		= क्रमe200e_pca_prom_पढ़ो,
+	.unmap			= क्रमe200e_pca_unmap,
+	.irq_check		= क्रमe200e_pca_irq_check,
+	.irq_ack		= क्रमe200e_pca_irq_ack,
+	.proc_पढ़ो		= क्रमe200e_pca_proc_पढ़ो,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PCI */
 
-#ifdef CONFIG_SBUS
+#अगर_घोषित CONFIG_SBUS
 
-static u32 fore200e_sba_read(volatile u32 __iomem *addr)
-{
-    return sbus_readl(addr);
-}
+अटल u32 क्रमe200e_sba_पढ़ो(अस्थिर u32 __iomem *addr)
+अणु
+    वापस sbus_पढ़ोl(addr);
+पूर्ण
 
-static void fore200e_sba_write(u32 val, volatile u32 __iomem *addr)
-{
-    sbus_writel(val, addr);
-}
+अटल व्योम क्रमe200e_sba_ग_लिखो(u32 val, अस्थिर u32 __iomem *addr)
+अणु
+    sbus_ग_लिखोl(val, addr);
+पूर्ण
 
-static void fore200e_sba_irq_enable(struct fore200e *fore200e)
-{
-	u32 hcr = fore200e->bus->read(fore200e->regs.sba.hcr) & SBA200E_HCR_STICKY;
-	fore200e->bus->write(hcr | SBA200E_HCR_INTR_ENA, fore200e->regs.sba.hcr);
-}
+अटल व्योम क्रमe200e_sba_irq_enable(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+	u32 hcr = क्रमe200e->bus->पढ़ो(क्रमe200e->regs.sba.hcr) & SBA200E_HCR_STICKY;
+	क्रमe200e->bus->ग_लिखो(hcr | SBA200E_HCR_INTR_ENA, क्रमe200e->regs.sba.hcr);
+पूर्ण
 
-static int fore200e_sba_irq_check(struct fore200e *fore200e)
-{
-	return fore200e->bus->read(fore200e->regs.sba.hcr) & SBA200E_HCR_INTR_REQ;
-}
+अटल पूर्णांक क्रमe200e_sba_irq_check(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+	वापस क्रमe200e->bus->पढ़ो(क्रमe200e->regs.sba.hcr) & SBA200E_HCR_INTR_REQ;
+पूर्ण
 
-static void fore200e_sba_irq_ack(struct fore200e *fore200e)
-{
-	u32 hcr = fore200e->bus->read(fore200e->regs.sba.hcr) & SBA200E_HCR_STICKY;
-	fore200e->bus->write(hcr | SBA200E_HCR_INTR_CLR, fore200e->regs.sba.hcr);
-}
+अटल व्योम क्रमe200e_sba_irq_ack(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+	u32 hcr = क्रमe200e->bus->पढ़ो(क्रमe200e->regs.sba.hcr) & SBA200E_HCR_STICKY;
+	क्रमe200e->bus->ग_लिखो(hcr | SBA200E_HCR_INTR_CLR, क्रमe200e->regs.sba.hcr);
+पूर्ण
 
-static void fore200e_sba_reset(struct fore200e *fore200e)
-{
-	fore200e->bus->write(SBA200E_HCR_RESET, fore200e->regs.sba.hcr);
-	fore200e_spin(10);
-	fore200e->bus->write(0, fore200e->regs.sba.hcr);
-}
+अटल व्योम क्रमe200e_sba_reset(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+	क्रमe200e->bus->ग_लिखो(SBA200E_HCR_RESET, क्रमe200e->regs.sba.hcr);
+	क्रमe200e_spin(10);
+	क्रमe200e->bus->ग_लिखो(0, क्रमe200e->regs.sba.hcr);
+पूर्ण
 
-static int __init fore200e_sba_map(struct fore200e *fore200e)
-{
-	struct platform_device *op = to_platform_device(fore200e->dev);
-	unsigned int bursts;
+अटल पूर्णांक __init क्रमe200e_sba_map(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+	काष्ठा platक्रमm_device *op = to_platक्रमm_device(क्रमe200e->dev);
+	अचिन्हित पूर्णांक bursts;
 
-	/* gain access to the SBA specific registers  */
-	fore200e->regs.sba.hcr = of_ioremap(&op->resource[0], 0, SBA200E_HCR_LENGTH, "SBA HCR");
-	fore200e->regs.sba.bsr = of_ioremap(&op->resource[1], 0, SBA200E_BSR_LENGTH, "SBA BSR");
-	fore200e->regs.sba.isr = of_ioremap(&op->resource[2], 0, SBA200E_ISR_LENGTH, "SBA ISR");
-	fore200e->virt_base    = of_ioremap(&op->resource[3], 0, SBA200E_RAM_LENGTH, "SBA RAM");
+	/* gain access to the SBA specअगरic रेजिस्टरs  */
+	क्रमe200e->regs.sba.hcr = of_ioremap(&op->resource[0], 0, SBA200E_HCR_LENGTH, "SBA HCR");
+	क्रमe200e->regs.sba.bsr = of_ioremap(&op->resource[1], 0, SBA200E_BSR_LENGTH, "SBA BSR");
+	क्रमe200e->regs.sba.isr = of_ioremap(&op->resource[2], 0, SBA200E_ISR_LENGTH, "SBA ISR");
+	क्रमe200e->virt_base    = of_ioremap(&op->resource[3], 0, SBA200E_RAM_LENGTH, "SBA RAM");
 
-	if (!fore200e->virt_base) {
-		printk(FORE200E "unable to map RAM of device %s\n", fore200e->name);
-		return -EFAULT;
-	}
+	अगर (!क्रमe200e->virt_base) अणु
+		prपूर्णांकk(FORE200E "unable to map RAM of device %s\n", क्रमe200e->name);
+		वापस -EFAULT;
+	पूर्ण
 
-	DPRINTK(1, "device %s mapped to 0x%p\n", fore200e->name, fore200e->virt_base);
+	DPRINTK(1, "device %s mapped to 0x%p\n", क्रमe200e->name, क्रमe200e->virt_base);
     
-	fore200e->bus->write(0x02, fore200e->regs.sba.isr); /* XXX hardwired interrupt level */
+	क्रमe200e->bus->ग_लिखो(0x02, क्रमe200e->regs.sba.isr); /* XXX hardwired पूर्णांकerrupt level */
 
 	/* get the supported DVMA burst sizes */
-	bursts = of_getintprop_default(op->dev.of_node->parent, "burst-sizes", 0x00);
+	bursts = of_getपूर्णांकprop_शेष(op->dev.of_node->parent, "burst-sizes", 0x00);
 
-	if (sbus_can_dma_64bit())
+	अगर (sbus_can_dma_64bit())
 		sbus_set_sbus64(&op->dev, bursts);
 
-	fore200e->state = FORE200E_STATE_MAP;
-	return 0;
-}
+	क्रमe200e->state = FORE200E_STATE_MAP;
+	वापस 0;
+पूर्ण
 
-static void fore200e_sba_unmap(struct fore200e *fore200e)
-{
-	struct platform_device *op = to_platform_device(fore200e->dev);
+अटल व्योम क्रमe200e_sba_unmap(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+	काष्ठा platक्रमm_device *op = to_platक्रमm_device(क्रमe200e->dev);
 
-	of_iounmap(&op->resource[0], fore200e->regs.sba.hcr, SBA200E_HCR_LENGTH);
-	of_iounmap(&op->resource[1], fore200e->regs.sba.bsr, SBA200E_BSR_LENGTH);
-	of_iounmap(&op->resource[2], fore200e->regs.sba.isr, SBA200E_ISR_LENGTH);
-	of_iounmap(&op->resource[3], fore200e->virt_base,    SBA200E_RAM_LENGTH);
-}
+	of_iounmap(&op->resource[0], क्रमe200e->regs.sba.hcr, SBA200E_HCR_LENGTH);
+	of_iounmap(&op->resource[1], क्रमe200e->regs.sba.bsr, SBA200E_BSR_LENGTH);
+	of_iounmap(&op->resource[2], क्रमe200e->regs.sba.isr, SBA200E_ISR_LENGTH);
+	of_iounmap(&op->resource[3], क्रमe200e->virt_base,    SBA200E_RAM_LENGTH);
+पूर्ण
 
-static int __init fore200e_sba_configure(struct fore200e *fore200e)
-{
-	fore200e->state = FORE200E_STATE_CONFIGURE;
-	return 0;
-}
+अटल पूर्णांक __init क्रमe200e_sba_configure(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+	क्रमe200e->state = FORE200E_STATE_CONFIGURE;
+	वापस 0;
+पूर्ण
 
-static int __init fore200e_sba_prom_read(struct fore200e *fore200e, struct prom_data *prom)
-{
-	struct platform_device *op = to_platform_device(fore200e->dev);
-	const u8 *prop;
-	int len;
+अटल पूर्णांक __init क्रमe200e_sba_prom_पढ़ो(काष्ठा क्रमe200e *क्रमe200e, काष्ठा prom_data *prom)
+अणु
+	काष्ठा platक्रमm_device *op = to_platक्रमm_device(क्रमe200e->dev);
+	स्थिर u8 *prop;
+	पूर्णांक len;
 
 	prop = of_get_property(op->dev.of_node, "madaddrlo2", &len);
-	if (!prop)
-		return -ENODEV;
-	memcpy(&prom->mac_addr[4], prop, 4);
+	अगर (!prop)
+		वापस -ENODEV;
+	स_नकल(&prom->mac_addr[4], prop, 4);
 
 	prop = of_get_property(op->dev.of_node, "madaddrhi4", &len);
-	if (!prop)
-		return -ENODEV;
-	memcpy(&prom->mac_addr[2], prop, 4);
+	अगर (!prop)
+		वापस -ENODEV;
+	स_नकल(&prom->mac_addr[2], prop, 4);
 
-	prom->serial_number = of_getintprop_default(op->dev.of_node,
+	prom->serial_number = of_getपूर्णांकprop_शेष(op->dev.of_node,
 						    "serialnumber", 0);
-	prom->hw_revision = of_getintprop_default(op->dev.of_node,
+	prom->hw_revision = of_getपूर्णांकprop_शेष(op->dev.of_node,
 						  "promversion", 0);
     
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fore200e_sba_proc_read(struct fore200e *fore200e, char *page)
-{
-	struct platform_device *op = to_platform_device(fore200e->dev);
-	const struct linux_prom_registers *regs;
+अटल पूर्णांक क्रमe200e_sba_proc_पढ़ो(काष्ठा क्रमe200e *क्रमe200e, अक्षर *page)
+अणु
+	काष्ठा platक्रमm_device *op = to_platक्रमm_device(क्रमe200e->dev);
+	स्थिर काष्ठा linux_prom_रेजिस्टरs *regs;
 
-	regs = of_get_property(op->dev.of_node, "reg", NULL);
+	regs = of_get_property(op->dev.of_node, "reg", शून्य);
 
-	return sprintf(page, "   SBUS slot/device:\t\t%d/'%pOFn'\n",
+	वापस प्र_लिखो(page, "   SBUS slot/device:\t\t%d/'%pOFn'\n",
 		       (regs ? regs->which_io : 0), op->dev.of_node);
-}
+पूर्ण
 
-static const struct fore200e_bus fore200e_sbus_ops = {
+अटल स्थिर काष्ठा क्रमe200e_bus क्रमe200e_sbus_ops = अणु
 	.model_name		= "SBA-200E",
 	.proc_name		= "sba200e",
 	.descr_alignment	= 32,
 	.buffer_alignment	= 64,
 	.status_alignment	= 32,
-	.read			= fore200e_sba_read,
-	.write			= fore200e_sba_write,
-	.configure		= fore200e_sba_configure,
-	.map			= fore200e_sba_map,
-	.reset			= fore200e_sba_reset,
-	.prom_read		= fore200e_sba_prom_read,
-	.unmap			= fore200e_sba_unmap,
-	.irq_enable		= fore200e_sba_irq_enable,
-	.irq_check		= fore200e_sba_irq_check,
-	.irq_ack		= fore200e_sba_irq_ack,
-	.proc_read		= fore200e_sba_proc_read,
-};
-#endif /* CONFIG_SBUS */
+	.पढ़ो			= क्रमe200e_sba_पढ़ो,
+	.ग_लिखो			= क्रमe200e_sba_ग_लिखो,
+	.configure		= क्रमe200e_sba_configure,
+	.map			= क्रमe200e_sba_map,
+	.reset			= क्रमe200e_sba_reset,
+	.prom_पढ़ो		= क्रमe200e_sba_prom_पढ़ो,
+	.unmap			= क्रमe200e_sba_unmap,
+	.irq_enable		= क्रमe200e_sba_irq_enable,
+	.irq_check		= क्रमe200e_sba_irq_check,
+	.irq_ack		= क्रमe200e_sba_irq_ack,
+	.proc_पढ़ो		= क्रमe200e_sba_proc_पढ़ो,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_SBUS */
 
-static void
-fore200e_tx_irq(struct fore200e* fore200e)
-{
-    struct host_txq*        txq = &fore200e->host_txq;
-    struct host_txq_entry*  entry;
-    struct atm_vcc*         vcc;
-    struct fore200e_vc_map* vc_map;
+अटल व्योम
+क्रमe200e_tx_irq(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    काष्ठा host_txq*        txq = &क्रमe200e->host_txq;
+    काष्ठा host_txq_entry*  entry;
+    काष्ठा aपंचांग_vcc*         vcc;
+    काष्ठा क्रमe200e_vc_map* vc_map;
 
-    if (fore200e->host_txq.txing == 0)
-	return;
+    अगर (क्रमe200e->host_txq.txing == 0)
+	वापस;
 
-    for (;;) {
+    क्रम (;;) अणु
 	
 	entry = &txq->host_entry[ txq->tail ];
 
-        if ((*entry->status & STATUS_COMPLETE) == 0) {
-	    break;
-	}
+        अगर ((*entry->status & STATUS_COMPLETE) == 0) अणु
+	    अवरोध;
+	पूर्ण
 
 	DPRINTK(3, "TX COMPLETED: entry = %p [tail = %d], vc_map = %p, skb = %p\n", 
 		entry, txq->tail, entry->vc_map, entry->skb);
 
-	/* free copy of misaligned data */
-	kfree(entry->data);
+	/* मुक्त copy of misaligned data */
+	kमुक्त(entry->data);
 	
-	/* remove DMA mapping */
-	dma_unmap_single(fore200e->dev, entry->tpd->tsd[ 0 ].buffer, entry->tpd->tsd[ 0 ].length,
+	/* हटाओ DMA mapping */
+	dma_unmap_single(क्रमe200e->dev, entry->tpd->tsd[ 0 ].buffer, entry->tpd->tsd[ 0 ].length,
 				 DMA_TO_DEVICE);
 
 	vc_map = entry->vc_map;
 
-	/* vcc closed since the time the entry was submitted for tx? */
-	if ((vc_map->vcc == NULL) ||
-	    (test_bit(ATM_VF_READY, &vc_map->vcc->flags) == 0)) {
+	/* vcc बंदd since the समय the entry was submitted क्रम tx? */
+	अगर ((vc_map->vcc == शून्य) ||
+	    (test_bit(ATM_VF_READY, &vc_map->vcc->flags) == 0)) अणु
 
 	    DPRINTK(1, "no ready vcc found for PDU sent on device %d\n",
-		    fore200e->atm_dev->number);
+		    क्रमe200e->aपंचांग_dev->number);
 
-	    dev_kfree_skb_any(entry->skb);
-	}
-	else {
+	    dev_kमुक्त_skb_any(entry->skb);
+	पूर्ण
+	अन्यथा अणु
 	    ASSERT(vc_map->vcc);
 
-	    /* vcc closed then immediately re-opened? */
-	    if (vc_map->incarn != entry->incarn) {
+	    /* vcc बंदd then immediately re-खोलोed? */
+	    अगर (vc_map->incarn != entry->incarn) अणु
 
-		/* when a vcc is closed, some PDUs may be still pending in the tx queue.
-		   if the same vcc is immediately re-opened, those pending PDUs must
+		/* when a vcc is बंदd, some PDUs may be still pending in the tx queue.
+		   अगर the same vcc is immediately re-खोलोed, those pending PDUs must
 		   not be popped after the completion of their emission, as they refer
-		   to the prior incarnation of that vcc. otherwise, sk_atm(vcc)->sk_wmem_alloc
+		   to the prior incarnation of that vcc. otherwise, sk_aपंचांग(vcc)->sk_wmem_alloc
 		   would be decremented by the size of the (unrelated) skb, possibly
-		   leading to a negative sk->sk_wmem_alloc count, ultimately freezing the vcc.
+		   leading to a negative sk->sk_wmem_alloc count, ultimately मुक्तzing the vcc.
 		   we thus bind the tx entry to the current incarnation of the vcc
-		   when the entry is submitted for tx. When the tx later completes,
-		   if the incarnation number of the tx entry does not match the one
-		   of the vcc, then this implies that the vcc has been closed then re-opened.
+		   when the entry is submitted क्रम tx. When the tx later completes,
+		   अगर the incarnation number of the tx entry करोes not match the one
+		   of the vcc, then this implies that the vcc has been बंदd then re-खोलोed.
 		   we thus just drop the skb here. */
 
 		DPRINTK(1, "vcc closed-then-re-opened; dropping PDU sent on device %d\n",
-			fore200e->atm_dev->number);
+			क्रमe200e->aपंचांग_dev->number);
 
-		dev_kfree_skb_any(entry->skb);
-	    }
-	    else {
+		dev_kमुक्त_skb_any(entry->skb);
+	    पूर्ण
+	    अन्यथा अणु
 		vcc = vc_map->vcc;
 		ASSERT(vcc);
 
-		/* notify tx completion */
-		if (vcc->pop) {
+		/* notअगरy tx completion */
+		अगर (vcc->pop) अणु
 		    vcc->pop(vcc, entry->skb);
-		}
-		else {
-		    dev_kfree_skb_any(entry->skb);
-		}
+		पूर्ण
+		अन्यथा अणु
+		    dev_kमुक्त_skb_any(entry->skb);
+		पूर्ण
 
 		/* check error condition */
-		if (*entry->status & STATUS_ERROR)
+		अगर (*entry->status & STATUS_ERROR)
 		    atomic_inc(&vcc->stats->tx_err);
-		else
+		अन्यथा
 		    atomic_inc(&vcc->stats->tx);
-	    }
-	}
+	    पूर्ण
+	पूर्ण
 
 	*entry->status = STATUS_FREE;
 
-	fore200e->host_txq.txing--;
+	क्रमe200e->host_txq.txing--;
 
 	FORE200E_NEXT_ENTRY(txq->tail, QUEUE_SIZE_TX);
-    }
-}
+    पूर्ण
+पूर्ण
 
 
-#ifdef FORE200E_BSQ_DEBUG
-int bsq_audit(int where, struct host_bsq* bsq, int scheme, int magn)
-{
-    struct buffer* buffer;
-    int count = 0;
+#अगर_घोषित FORE200E_BSQ_DEBUG
+पूर्णांक bsq_audit(पूर्णांक where, काष्ठा host_bsq* bsq, पूर्णांक scheme, पूर्णांक magn)
+अणु
+    काष्ठा buffer* buffer;
+    पूर्णांक count = 0;
 
-    buffer = bsq->freebuf;
-    while (buffer) {
+    buffer = bsq->मुक्तbuf;
+    जबतक (buffer) अणु
 
-	if (buffer->supplied) {
-	    printk(FORE200E "bsq_audit(%d): queue %d.%d, buffer %ld supplied but in free list!\n",
+	अगर (buffer->supplied) अणु
+	    prपूर्णांकk(FORE200E "bsq_audit(%d): queue %d.%d, buffer %ld supplied but in free list!\n",
 		   where, scheme, magn, buffer->index);
-	}
+	पूर्ण
 
-	if (buffer->magn != magn) {
-	    printk(FORE200E "bsq_audit(%d): queue %d.%d, buffer %ld, unexpected magn = %d\n",
+	अगर (buffer->magn != magn) अणु
+	    prपूर्णांकk(FORE200E "bsq_audit(%d): queue %d.%d, buffer %ld, unexpected magn = %d\n",
 		   where, scheme, magn, buffer->index, buffer->magn);
-	}
+	पूर्ण
 
-	if (buffer->scheme != scheme) {
-	    printk(FORE200E "bsq_audit(%d): queue %d.%d, buffer %ld, unexpected scheme = %d\n",
+	अगर (buffer->scheme != scheme) अणु
+	    prपूर्णांकk(FORE200E "bsq_audit(%d): queue %d.%d, buffer %ld, unexpected scheme = %d\n",
 		   where, scheme, magn, buffer->index, buffer->scheme);
-	}
+	पूर्ण
 
-	if ((buffer->index < 0) || (buffer->index >= fore200e_rx_buf_nbr[ scheme ][ magn ])) {
-	    printk(FORE200E "bsq_audit(%d): queue %d.%d, out of range buffer index = %ld !\n",
+	अगर ((buffer->index < 0) || (buffer->index >= क्रमe200e_rx_buf_nbr[ scheme ][ magn ])) अणु
+	    prपूर्णांकk(FORE200E "bsq_audit(%d): queue %d.%d, out of range buffer index = %ld !\n",
 		   where, scheme, magn, buffer->index);
-	}
+	पूर्ण
 
 	count++;
 	buffer = buffer->next;
-    }
+    पूर्ण
 
-    if (count != bsq->freebuf_count) {
-	printk(FORE200E "bsq_audit(%d): queue %d.%d, %d bufs in free list, but freebuf_count = %d\n",
-	       where, scheme, magn, count, bsq->freebuf_count);
-    }
-    return 0;
-}
-#endif
+    अगर (count != bsq->मुक्तbuf_count) अणु
+	prपूर्णांकk(FORE200E "bsq_audit(%d): queue %d.%d, %d bufs in free list, but freebuf_count = %d\n",
+	       where, scheme, magn, count, bsq->मुक्तbuf_count);
+    पूर्ण
+    वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 
-static void
-fore200e_supply(struct fore200e* fore200e)
-{
-    int  scheme, magn, i;
+अटल व्योम
+क्रमe200e_supply(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    पूर्णांक  scheme, magn, i;
 
-    struct host_bsq*       bsq;
-    struct host_bsq_entry* entry;
-    struct buffer*         buffer;
+    काष्ठा host_bsq*       bsq;
+    काष्ठा host_bsq_entry* entry;
+    काष्ठा buffer*         buffer;
 
-    for (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++) {
-	for (magn = 0; magn < BUFFER_MAGN_NBR; magn++) {
+    क्रम (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++) अणु
+	क्रम (magn = 0; magn < BUFFER_MAGN_NBR; magn++) अणु
 
-	    bsq = &fore200e->host_bsq[ scheme ][ magn ];
+	    bsq = &क्रमe200e->host_bsq[ scheme ][ magn ];
 
-#ifdef FORE200E_BSQ_DEBUG
+#अगर_घोषित FORE200E_BSQ_DEBUG
 	    bsq_audit(1, bsq, scheme, magn);
-#endif
-	    while (bsq->freebuf_count >= RBD_BLK_SIZE) {
+#पूर्ण_अगर
+	    जबतक (bsq->मुक्तbuf_count >= RBD_BLK_SIZE) अणु
 
 		DPRINTK(2, "supplying %d rx buffers to queue %d / %d, freebuf_count = %d\n",
-			RBD_BLK_SIZE, scheme, magn, bsq->freebuf_count);
+			RBD_BLK_SIZE, scheme, magn, bsq->मुक्तbuf_count);
 
 		entry = &bsq->host_entry[ bsq->head ];
 
-		for (i = 0; i < RBD_BLK_SIZE; i++) {
+		क्रम (i = 0; i < RBD_BLK_SIZE; i++) अणु
 
-		    /* take the first buffer in the free buffer list */
-		    buffer = bsq->freebuf;
-		    if (!buffer) {
-			printk(FORE200E "no more free bufs in queue %d.%d, but freebuf_count = %d\n",
-			       scheme, magn, bsq->freebuf_count);
-			return;
-		    }
-		    bsq->freebuf = buffer->next;
+		    /* take the first buffer in the मुक्त buffer list */
+		    buffer = bsq->मुक्तbuf;
+		    अगर (!buffer) अणु
+			prपूर्णांकk(FORE200E "no more free bufs in queue %d.%d, but freebuf_count = %d\n",
+			       scheme, magn, bsq->मुक्तbuf_count);
+			वापस;
+		    पूर्ण
+		    bsq->मुक्तbuf = buffer->next;
 		    
-#ifdef FORE200E_BSQ_DEBUG
-		    if (buffer->supplied)
-			printk(FORE200E "queue %d.%d, buffer %lu already supplied\n",
+#अगर_घोषित FORE200E_BSQ_DEBUG
+		    अगर (buffer->supplied)
+			prपूर्णांकk(FORE200E "queue %d.%d, buffer %lu already supplied\n",
 			       scheme, magn, buffer->index);
 		    buffer->supplied = 1;
-#endif
+#पूर्ण_अगर
 		    entry->rbd_block->rbd[ i ].buffer_haddr = buffer->data.dma_addr;
 		    entry->rbd_block->rbd[ i ].handle       = FORE200E_BUF2HDL(buffer);
-		}
+		पूर्ण
 
 		FORE200E_NEXT_ENTRY(bsq->head, QUEUE_SIZE_BS);
 
- 		/* decrease accordingly the number of free rx buffers */
-		bsq->freebuf_count -= RBD_BLK_SIZE;
+ 		/* decrease accordingly the number of मुक्त rx buffers */
+		bsq->मुक्तbuf_count -= RBD_BLK_SIZE;
 
 		*entry->status = STATUS_PENDING;
-		fore200e->bus->write(entry->rbd_block_dma, &entry->cp_entry->rbd_block_haddr);
-	    }
-	}
-    }
-}
+		क्रमe200e->bus->ग_लिखो(entry->rbd_block_dma, &entry->cp_entry->rbd_block_haddr);
+	    पूर्ण
+	पूर्ण
+    पूर्ण
+पूर्ण
 
 
-static int
-fore200e_push_rpd(struct fore200e* fore200e, struct atm_vcc* vcc, struct rpd* rpd)
-{
-    struct sk_buff*      skb;
-    struct buffer*       buffer;
-    struct fore200e_vcc* fore200e_vcc;
-    int                  i, pdu_len = 0;
-#ifdef FORE200E_52BYTE_AAL0_SDU
+अटल पूर्णांक
+क्रमe200e_push_rpd(काष्ठा क्रमe200e* क्रमe200e, काष्ठा aपंचांग_vcc* vcc, काष्ठा rpd* rpd)
+अणु
+    काष्ठा sk_buff*      skb;
+    काष्ठा buffer*       buffer;
+    काष्ठा क्रमe200e_vcc* क्रमe200e_vcc;
+    पूर्णांक                  i, pdu_len = 0;
+#अगर_घोषित FORE200E_52BYTE_AAL0_SDU
     u32                  cell_header = 0;
-#endif
+#पूर्ण_अगर
 
     ASSERT(vcc);
     
-    fore200e_vcc = FORE200E_VCC(vcc);
-    ASSERT(fore200e_vcc);
+    क्रमe200e_vcc = FORE200E_VCC(vcc);
+    ASSERT(क्रमe200e_vcc);
 
-#ifdef FORE200E_52BYTE_AAL0_SDU
-    if ((vcc->qos.aal == ATM_AAL0) && (vcc->qos.rxtp.max_sdu == ATM_AAL0_SDU)) {
+#अगर_घोषित FORE200E_52BYTE_AAL0_SDU
+    अगर ((vcc->qos.aal == ATM_AAL0) && (vcc->qos.rxtp.max_sdu == ATM_AAL0_SDU)) अणु
 
-	cell_header = (rpd->atm_header.gfc << ATM_HDR_GFC_SHIFT) |
-	              (rpd->atm_header.vpi << ATM_HDR_VPI_SHIFT) |
-                      (rpd->atm_header.vci << ATM_HDR_VCI_SHIFT) |
-                      (rpd->atm_header.plt << ATM_HDR_PTI_SHIFT) | 
-                       rpd->atm_header.clp;
+	cell_header = (rpd->aपंचांग_header.gfc << ATM_HDR_GFC_SHIFT) |
+	              (rpd->aपंचांग_header.vpi << ATM_HDR_VPI_SHIFT) |
+                      (rpd->aपंचांग_header.vci << ATM_HDR_VCI_SHIFT) |
+                      (rpd->aपंचांग_header.plt << ATM_HDR_PTI_SHIFT) | 
+                       rpd->aपंचांग_header.clp;
 	pdu_len = 4;
-    }
-#endif
+    पूर्ण
+#पूर्ण_अगर
     
     /* compute total PDU length */
-    for (i = 0; i < rpd->nseg; i++)
+    क्रम (i = 0; i < rpd->nseg; i++)
 	pdu_len += rpd->rsd[ i ].length;
     
     skb = alloc_skb(pdu_len, GFP_ATOMIC);
-    if (skb == NULL) {
+    अगर (skb == शून्य) अणु
 	DPRINTK(2, "unable to alloc new skb, rx PDU length = %d\n", pdu_len);
 
 	atomic_inc(&vcc->stats->rx_drop);
-	return -ENOMEM;
-    } 
+	वापस -ENOMEM;
+    पूर्ण 
 
-    __net_timestamp(skb);
+    __net_बारtamp(skb);
     
-#ifdef FORE200E_52BYTE_AAL0_SDU
-    if (cell_header) {
+#अगर_घोषित FORE200E_52BYTE_AAL0_SDU
+    अगर (cell_header) अणु
 	*((u32*)skb_put(skb, 4)) = cell_header;
-    }
-#endif
+    पूर्ण
+#पूर्ण_अगर
 
     /* reassemble segments */
-    for (i = 0; i < rpd->nseg; i++) {
+    क्रम (i = 0; i < rpd->nseg; i++) अणु
 	
 	/* rebuild rx buffer address from rsd handle */
 	buffer = FORE200E_HDL2BUF(rpd->rsd[ i ].handle);
 	
 	/* Make device DMA transfer visible to CPU.  */
-	dma_sync_single_for_cpu(fore200e->dev, buffer->data.dma_addr,
+	dma_sync_single_क्रम_cpu(क्रमe200e->dev, buffer->data.dma_addr,
 				rpd->rsd[i].length, DMA_FROM_DEVICE);
 	
 	skb_put_data(skb, buffer->data.align_addr, rpd->rsd[i].length);
 
 	/* Now let the device get at it again.  */
-	dma_sync_single_for_device(fore200e->dev, buffer->data.dma_addr,
+	dma_sync_single_क्रम_device(क्रमe200e->dev, buffer->data.dma_addr,
 				   rpd->rsd[i].length, DMA_FROM_DEVICE);
-    }
+    पूर्ण
 
     DPRINTK(3, "rx skb: len = %d, truesize = %d\n", skb->len, skb->truesize);
     
-    if (pdu_len < fore200e_vcc->rx_min_pdu)
-	fore200e_vcc->rx_min_pdu = pdu_len;
-    if (pdu_len > fore200e_vcc->rx_max_pdu)
-	fore200e_vcc->rx_max_pdu = pdu_len;
-    fore200e_vcc->rx_pdu++;
+    अगर (pdu_len < क्रमe200e_vcc->rx_min_pdu)
+	क्रमe200e_vcc->rx_min_pdu = pdu_len;
+    अगर (pdu_len > क्रमe200e_vcc->rx_max_pdu)
+	क्रमe200e_vcc->rx_max_pdu = pdu_len;
+    क्रमe200e_vcc->rx_pdu++;
 
     /* push PDU */
-    if (atm_charge(vcc, skb->truesize) == 0) {
+    अगर (aपंचांग_अक्षरge(vcc, skb->truesize) == 0) अणु
 
 	DPRINTK(2, "receive buffers saturated for %d.%d.%d - PDU dropped\n",
 		vcc->itf, vcc->vpi, vcc->vci);
 
-	dev_kfree_skb_any(skb);
+	dev_kमुक्त_skb_any(skb);
 
 	atomic_inc(&vcc->stats->rx_drop);
-	return -ENOMEM;
-    }
+	वापस -ENOMEM;
+    पूर्ण
 
     vcc->push(vcc, skb);
     atomic_inc(&vcc->stats->rx);
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 
-static void
-fore200e_collect_rpd(struct fore200e* fore200e, struct rpd* rpd)
-{
-    struct host_bsq* bsq;
-    struct buffer*   buffer;
-    int              i;
+अटल व्योम
+क्रमe200e_collect_rpd(काष्ठा क्रमe200e* क्रमe200e, काष्ठा rpd* rpd)
+अणु
+    काष्ठा host_bsq* bsq;
+    काष्ठा buffer*   buffer;
+    पूर्णांक              i;
     
-    for (i = 0; i < rpd->nseg; i++) {
+    क्रम (i = 0; i < rpd->nseg; i++) अणु
 
 	/* rebuild rx buffer address from rsd handle */
 	buffer = FORE200E_HDL2BUF(rpd->rsd[ i ].handle);
 
-	bsq = &fore200e->host_bsq[ buffer->scheme ][ buffer->magn ];
+	bsq = &क्रमe200e->host_bsq[ buffer->scheme ][ buffer->magn ];
 
-#ifdef FORE200E_BSQ_DEBUG
+#अगर_घोषित FORE200E_BSQ_DEBUG
 	bsq_audit(2, bsq, buffer->scheme, buffer->magn);
 
-	if (buffer->supplied == 0)
-	    printk(FORE200E "queue %d.%d, buffer %ld was not supplied\n",
+	अगर (buffer->supplied == 0)
+	    prपूर्णांकk(FORE200E "queue %d.%d, buffer %ld was not supplied\n",
 		   buffer->scheme, buffer->magn, buffer->index);
 	buffer->supplied = 0;
-#endif
+#पूर्ण_अगर
 
-	/* re-insert the buffer into the free buffer list */
-	buffer->next = bsq->freebuf;
-	bsq->freebuf = buffer;
+	/* re-insert the buffer पूर्णांकo the मुक्त buffer list */
+	buffer->next = bsq->मुक्तbuf;
+	bsq->मुक्तbuf = buffer;
 
-	/* then increment the number of free rx buffers */
-	bsq->freebuf_count++;
-    }
-}
+	/* then increment the number of मुक्त rx buffers */
+	bsq->मुक्तbuf_count++;
+    पूर्ण
+पूर्ण
 
 
-static void
-fore200e_rx_irq(struct fore200e* fore200e)
-{
-    struct host_rxq*        rxq = &fore200e->host_rxq;
-    struct host_rxq_entry*  entry;
-    struct atm_vcc*         vcc;
-    struct fore200e_vc_map* vc_map;
+अटल व्योम
+क्रमe200e_rx_irq(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    काष्ठा host_rxq*        rxq = &क्रमe200e->host_rxq;
+    काष्ठा host_rxq_entry*  entry;
+    काष्ठा aपंचांग_vcc*         vcc;
+    काष्ठा क्रमe200e_vc_map* vc_map;
 
-    for (;;) {
+    क्रम (;;) अणु
 	
 	entry = &rxq->host_entry[ rxq->head ];
 
 	/* no more received PDUs */
-	if ((*entry->status & STATUS_COMPLETE) == 0)
-	    break;
+	अगर ((*entry->status & STATUS_COMPLETE) == 0)
+	    अवरोध;
 
-	vc_map = FORE200E_VC_MAP(fore200e, entry->rpd->atm_header.vpi, entry->rpd->atm_header.vci);
+	vc_map = FORE200E_VC_MAP(क्रमe200e, entry->rpd->aपंचांग_header.vpi, entry->rpd->aपंचांग_header.vci);
 
-	if ((vc_map->vcc == NULL) ||
-	    (test_bit(ATM_VF_READY, &vc_map->vcc->flags) == 0)) {
+	अगर ((vc_map->vcc == शून्य) ||
+	    (test_bit(ATM_VF_READY, &vc_map->vcc->flags) == 0)) अणु
 
 	    DPRINTK(1, "no ready VC found for PDU received on %d.%d.%d\n",
-		    fore200e->atm_dev->number,
-		    entry->rpd->atm_header.vpi, entry->rpd->atm_header.vci);
-	}
-	else {
+		    क्रमe200e->aपंचांग_dev->number,
+		    entry->rpd->aपंचांग_header.vpi, entry->rpd->aपंचांग_header.vci);
+	पूर्ण
+	अन्यथा अणु
 	    vcc = vc_map->vcc;
 	    ASSERT(vcc);
 
-	    if ((*entry->status & STATUS_ERROR) == 0) {
+	    अगर ((*entry->status & STATUS_ERROR) == 0) अणु
 
-		fore200e_push_rpd(fore200e, vcc, entry->rpd);
-	    }
-	    else {
+		क्रमe200e_push_rpd(क्रमe200e, vcc, entry->rpd);
+	    पूर्ण
+	    अन्यथा अणु
 		DPRINTK(2, "damaged PDU on %d.%d.%d\n",
-			fore200e->atm_dev->number,
-			entry->rpd->atm_header.vpi, entry->rpd->atm_header.vci);
+			क्रमe200e->aपंचांग_dev->number,
+			entry->rpd->aपंचांग_header.vpi, entry->rpd->aपंचांग_header.vci);
 		atomic_inc(&vcc->stats->rx_err);
-	    }
-	}
+	    पूर्ण
+	पूर्ण
 
 	FORE200E_NEXT_ENTRY(rxq->head, QUEUE_SIZE_RX);
 
-	fore200e_collect_rpd(fore200e, entry->rpd);
+	क्रमe200e_collect_rpd(क्रमe200e, entry->rpd);
 
-	/* rewrite the rpd address to ack the received PDU */
-	fore200e->bus->write(entry->rpd_dma, &entry->cp_entry->rpd_haddr);
+	/* reग_लिखो the rpd address to ack the received PDU */
+	क्रमe200e->bus->ग_लिखो(entry->rpd_dma, &entry->cp_entry->rpd_haddr);
 	*entry->status = STATUS_FREE;
 
-	fore200e_supply(fore200e);
-    }
-}
+	क्रमe200e_supply(क्रमe200e);
+    पूर्ण
+पूर्ण
 
 
-#ifndef FORE200E_USE_TASKLET
-static void
-fore200e_irq(struct fore200e* fore200e)
-{
-    unsigned long flags;
+#अगर_अघोषित FORE200E_USE_TASKLET
+अटल व्योम
+क्रमe200e_irq(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    अचिन्हित दीर्घ flags;
 
-    spin_lock_irqsave(&fore200e->q_lock, flags);
-    fore200e_rx_irq(fore200e);
-    spin_unlock_irqrestore(&fore200e->q_lock, flags);
+    spin_lock_irqsave(&क्रमe200e->q_lock, flags);
+    क्रमe200e_rx_irq(क्रमe200e);
+    spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
 
-    spin_lock_irqsave(&fore200e->q_lock, flags);
-    fore200e_tx_irq(fore200e);
-    spin_unlock_irqrestore(&fore200e->q_lock, flags);
-}
-#endif
+    spin_lock_irqsave(&क्रमe200e->q_lock, flags);
+    क्रमe200e_tx_irq(क्रमe200e);
+    spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
+पूर्ण
+#पूर्ण_अगर
 
 
-static irqreturn_t
-fore200e_interrupt(int irq, void* dev)
-{
-    struct fore200e* fore200e = FORE200E_DEV((struct atm_dev*)dev);
+अटल irqवापस_t
+क्रमe200e_पूर्णांकerrupt(पूर्णांक irq, व्योम* dev)
+अणु
+    काष्ठा क्रमe200e* क्रमe200e = FORE200E_DEV((काष्ठा aपंचांग_dev*)dev);
 
-    if (fore200e->bus->irq_check(fore200e) == 0) {
+    अगर (क्रमe200e->bus->irq_check(क्रमe200e) == 0) अणु
 	
-	DPRINTK(3, "interrupt NOT triggered by device %d\n", fore200e->atm_dev->number);
-	return IRQ_NONE;
-    }
-    DPRINTK(3, "interrupt triggered by device %d\n", fore200e->atm_dev->number);
+	DPRINTK(3, "interrupt NOT triggered by device %d\n", क्रमe200e->aपंचांग_dev->number);
+	वापस IRQ_NONE;
+    पूर्ण
+    DPRINTK(3, "interrupt triggered by device %d\n", क्रमe200e->aपंचांग_dev->number);
 
-#ifdef FORE200E_USE_TASKLET
-    tasklet_schedule(&fore200e->tx_tasklet);
-    tasklet_schedule(&fore200e->rx_tasklet);
-#else
-    fore200e_irq(fore200e);
-#endif
+#अगर_घोषित FORE200E_USE_TASKLET
+    tasklet_schedule(&क्रमe200e->tx_tasklet);
+    tasklet_schedule(&क्रमe200e->rx_tasklet);
+#अन्यथा
+    क्रमe200e_irq(क्रमe200e);
+#पूर्ण_अगर
     
-    fore200e->bus->irq_ack(fore200e);
-    return IRQ_HANDLED;
-}
+    क्रमe200e->bus->irq_ack(क्रमe200e);
+    वापस IRQ_HANDLED;
+पूर्ण
 
 
-#ifdef FORE200E_USE_TASKLET
-static void
-fore200e_tx_tasklet(unsigned long data)
-{
-    struct fore200e* fore200e = (struct fore200e*) data;
-    unsigned long flags;
+#अगर_घोषित FORE200E_USE_TASKLET
+अटल व्योम
+क्रमe200e_tx_tasklet(अचिन्हित दीर्घ data)
+अणु
+    काष्ठा क्रमe200e* क्रमe200e = (काष्ठा क्रमe200e*) data;
+    अचिन्हित दीर्घ flags;
 
-    DPRINTK(3, "tx tasklet scheduled for device %d\n", fore200e->atm_dev->number);
+    DPRINTK(3, "tx tasklet scheduled for device %d\n", क्रमe200e->aपंचांग_dev->number);
 
-    spin_lock_irqsave(&fore200e->q_lock, flags);
-    fore200e_tx_irq(fore200e);
-    spin_unlock_irqrestore(&fore200e->q_lock, flags);
-}
-
-
-static void
-fore200e_rx_tasklet(unsigned long data)
-{
-    struct fore200e* fore200e = (struct fore200e*) data;
-    unsigned long    flags;
-
-    DPRINTK(3, "rx tasklet scheduled for device %d\n", fore200e->atm_dev->number);
-
-    spin_lock_irqsave(&fore200e->q_lock, flags);
-    fore200e_rx_irq((struct fore200e*) data);
-    spin_unlock_irqrestore(&fore200e->q_lock, flags);
-}
-#endif
+    spin_lock_irqsave(&क्रमe200e->q_lock, flags);
+    क्रमe200e_tx_irq(क्रमe200e);
+    spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
+पूर्ण
 
 
-static int
-fore200e_select_scheme(struct atm_vcc* vcc)
-{
+अटल व्योम
+क्रमe200e_rx_tasklet(अचिन्हित दीर्घ data)
+अणु
+    काष्ठा क्रमe200e* क्रमe200e = (काष्ठा क्रमe200e*) data;
+    अचिन्हित दीर्घ    flags;
+
+    DPRINTK(3, "rx tasklet scheduled for device %d\n", क्रमe200e->aपंचांग_dev->number);
+
+    spin_lock_irqsave(&क्रमe200e->q_lock, flags);
+    क्रमe200e_rx_irq((काष्ठा क्रमe200e*) data);
+    spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
+पूर्ण
+#पूर्ण_अगर
+
+
+अटल पूर्णांक
+क्रमe200e_select_scheme(काष्ठा aपंचांग_vcc* vcc)
+अणु
     /* fairly balance the VCs over (identical) buffer schemes */
-    int scheme = vcc->vci % 2 ? BUFFER_SCHEME_ONE : BUFFER_SCHEME_TWO;
+    पूर्णांक scheme = vcc->vci % 2 ? BUFFER_SCHEME_ONE : BUFFER_SCHEME_TWO;
 
     DPRINTK(1, "VC %d.%d.%d uses buffer scheme %d\n",
 	    vcc->itf, vcc->vpi, vcc->vci, scheme);
 
-    return scheme;
-}
+    वापस scheme;
+पूर्ण
 
 
-static int 
-fore200e_activate_vcin(struct fore200e* fore200e, int activate, struct atm_vcc* vcc, int mtu)
-{
-    struct host_cmdq*        cmdq  = &fore200e->host_cmdq;
-    struct host_cmdq_entry*  entry = &cmdq->host_entry[ cmdq->head ];
-    struct activate_opcode   activ_opcode;
-    struct deactivate_opcode deactiv_opcode;
-    struct vpvc              vpvc;
-    int                      ok;
-    enum fore200e_aal        aal = fore200e_atm2fore_aal(vcc->qos.aal);
+अटल पूर्णांक 
+क्रमe200e_activate_vcin(काष्ठा क्रमe200e* क्रमe200e, पूर्णांक activate, काष्ठा aपंचांग_vcc* vcc, पूर्णांक mtu)
+अणु
+    काष्ठा host_cmdq*        cmdq  = &क्रमe200e->host_cmdq;
+    काष्ठा host_cmdq_entry*  entry = &cmdq->host_entry[ cmdq->head ];
+    काष्ठा activate_opcode   activ_opcode;
+    काष्ठा deactivate_opcode deactiv_opcode;
+    काष्ठा vpvc              vpvc;
+    पूर्णांक                      ok;
+    क्रमागत क्रमe200e_aal        aal = क्रमe200e_aपंचांग2क्रमe_aal(vcc->qos.aal);
 
     FORE200E_NEXT_ENTRY(cmdq->head, QUEUE_SIZE_CMD);
     
-    if (activate) {
-	FORE200E_VCC(vcc)->scheme = fore200e_select_scheme(vcc);
+    अगर (activate) अणु
+	FORE200E_VCC(vcc)->scheme = क्रमe200e_select_scheme(vcc);
 	
 	activ_opcode.opcode = OPCODE_ACTIVATE_VCIN;
 	activ_opcode.aal    = aal;
 	activ_opcode.scheme = FORE200E_VCC(vcc)->scheme;
 	activ_opcode.pad    = 0;
-    }
-    else {
+    पूर्ण
+    अन्यथा अणु
 	deactiv_opcode.opcode = OPCODE_DEACTIVATE_VCIN;
 	deactiv_opcode.pad    = 0;
-    }
+    पूर्ण
 
     vpvc.vci = vcc->vci;
     vpvc.vpi = vcc->vpi;
 
     *entry->status = STATUS_PENDING;
 
-    if (activate) {
+    अगर (activate) अणु
 
-#ifdef FORE200E_52BYTE_AAL0_SDU
+#अगर_घोषित FORE200E_52BYTE_AAL0_SDU
 	mtu = 48;
-#endif
-	/* the MTU is not used by the cp, except in the case of AAL0 */
-	fore200e->bus->write(mtu,                        &entry->cp_entry->cmd.activate_block.mtu);
-	fore200e->bus->write(*(u32*)&vpvc,         (u32 __iomem *)&entry->cp_entry->cmd.activate_block.vpvc);
-	fore200e->bus->write(*(u32*)&activ_opcode, (u32 __iomem *)&entry->cp_entry->cmd.activate_block.opcode);
-    }
-    else {
-	fore200e->bus->write(*(u32*)&vpvc,         (u32 __iomem *)&entry->cp_entry->cmd.deactivate_block.vpvc);
-	fore200e->bus->write(*(u32*)&deactiv_opcode, (u32 __iomem *)&entry->cp_entry->cmd.deactivate_block.opcode);
-    }
+#पूर्ण_अगर
+	/* the MTU is not used by the cp, except in the हाल of AAL0 */
+	क्रमe200e->bus->ग_लिखो(mtu,                        &entry->cp_entry->cmd.activate_block.mtu);
+	क्रमe200e->bus->ग_लिखो(*(u32*)&vpvc,         (u32 __iomem *)&entry->cp_entry->cmd.activate_block.vpvc);
+	क्रमe200e->bus->ग_लिखो(*(u32*)&activ_opcode, (u32 __iomem *)&entry->cp_entry->cmd.activate_block.opcode);
+    पूर्ण
+    अन्यथा अणु
+	क्रमe200e->bus->ग_लिखो(*(u32*)&vpvc,         (u32 __iomem *)&entry->cp_entry->cmd.deactivate_block.vpvc);
+	क्रमe200e->bus->ग_लिखो(*(u32*)&deactiv_opcode, (u32 __iomem *)&entry->cp_entry->cmd.deactivate_block.opcode);
+    पूर्ण
 
-    ok = fore200e_poll(fore200e, entry->status, STATUS_COMPLETE, 400);
+    ok = क्रमe200e_poll(क्रमe200e, entry->status, STATUS_COMPLETE, 400);
 
     *entry->status = STATUS_FREE;
 
-    if (ok == 0) {
-	printk(FORE200E "unable to %s VC %d.%d.%d\n",
+    अगर (ok == 0) अणु
+	prपूर्णांकk(FORE200E "unable to %s VC %d.%d.%d\n",
 	       activate ? "open" : "close", vcc->itf, vcc->vpi, vcc->vci);
-	return -EIO;
-    }
+	वापस -EIO;
+    पूर्ण
 
     DPRINTK(1, "VC %d.%d.%d %sed\n", vcc->itf, vcc->vpi, vcc->vci, 
 	    activate ? "open" : "clos");
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 
-#define FORE200E_MAX_BACK2BACK_CELLS 255    /* XXX depends on CDVT */
+#घोषणा FORE200E_MAX_BACK2BACK_CELLS 255    /* XXX depends on CDVT */
 
-static void
-fore200e_rate_ctrl(struct atm_qos* qos, struct tpd_rate* rate)
-{
-    if (qos->txtp.max_pcr < ATM_OC3_PCR) {
+अटल व्योम
+क्रमe200e_rate_ctrl(काष्ठा aपंचांग_qos* qos, काष्ठा tpd_rate* rate)
+अणु
+    अगर (qos->txtp.max_pcr < ATM_OC3_PCR) अणु
     
 	/* compute the data cells to idle cells ratio from the tx PCR */
 	rate->data_cells = qos->txtp.max_pcr * FORE200E_MAX_BACK2BACK_CELLS / ATM_OC3_PCR;
 	rate->idle_cells = FORE200E_MAX_BACK2BACK_CELLS - rate->data_cells;
-    }
-    else {
+    पूर्ण
+    अन्यथा अणु
 	/* disable rate control */
 	rate->data_cells = rate->idle_cells = 0;
-    }
-}
+    पूर्ण
+पूर्ण
 
 
-static int
-fore200e_open(struct atm_vcc *vcc)
-{
-    struct fore200e*        fore200e = FORE200E_DEV(vcc->dev);
-    struct fore200e_vcc*    fore200e_vcc;
-    struct fore200e_vc_map* vc_map;
-    unsigned long	    flags;
-    int			    vci = vcc->vci;
-    short		    vpi = vcc->vpi;
+अटल पूर्णांक
+क्रमe200e_खोलो(काष्ठा aपंचांग_vcc *vcc)
+अणु
+    काष्ठा क्रमe200e*        क्रमe200e = FORE200E_DEV(vcc->dev);
+    काष्ठा क्रमe200e_vcc*    क्रमe200e_vcc;
+    काष्ठा क्रमe200e_vc_map* vc_map;
+    अचिन्हित दीर्घ	    flags;
+    पूर्णांक			    vci = vcc->vci;
+    लघु		    vpi = vcc->vpi;
 
     ASSERT((vpi >= 0) && (vpi < 1<<FORE200E_VPI_BITS));
     ASSERT((vci >= 0) && (vci < 1<<FORE200E_VCI_BITS));
 
-    spin_lock_irqsave(&fore200e->q_lock, flags);
+    spin_lock_irqsave(&क्रमe200e->q_lock, flags);
 
-    vc_map = FORE200E_VC_MAP(fore200e, vpi, vci);
-    if (vc_map->vcc) {
+    vc_map = FORE200E_VC_MAP(क्रमe200e, vpi, vci);
+    अगर (vc_map->vcc) अणु
 
-	spin_unlock_irqrestore(&fore200e->q_lock, flags);
+	spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
 
-	printk(FORE200E "VC %d.%d.%d already in use\n",
-	       fore200e->atm_dev->number, vpi, vci);
+	prपूर्णांकk(FORE200E "VC %d.%d.%d already in use\n",
+	       क्रमe200e->aपंचांग_dev->number, vpi, vci);
 
-	return -EINVAL;
-    }
+	वापस -EINVAL;
+    पूर्ण
 
     vc_map->vcc = vcc;
 
-    spin_unlock_irqrestore(&fore200e->q_lock, flags);
+    spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
 
-    fore200e_vcc = kzalloc(sizeof(struct fore200e_vcc), GFP_ATOMIC);
-    if (fore200e_vcc == NULL) {
-	vc_map->vcc = NULL;
-	return -ENOMEM;
-    }
+    क्रमe200e_vcc = kzalloc(माप(काष्ठा क्रमe200e_vcc), GFP_ATOMIC);
+    अगर (क्रमe200e_vcc == शून्य) अणु
+	vc_map->vcc = शून्य;
+	वापस -ENOMEM;
+    पूर्ण
 
     DPRINTK(2, "opening %d.%d.%d:%d QoS = (tx: cl=%s, pcr=%d-%d, cdv=%d, max_sdu=%d; "
 	    "rx: cl=%s, pcr=%d-%d, cdv=%d, max_sdu=%d)\n",
-	    vcc->itf, vcc->vpi, vcc->vci, fore200e_atm2fore_aal(vcc->qos.aal),
-	    fore200e_traffic_class[ vcc->qos.txtp.traffic_class ],
+	    vcc->itf, vcc->vpi, vcc->vci, क्रमe200e_aपंचांग2क्रमe_aal(vcc->qos.aal),
+	    क्रमe200e_traffic_class[ vcc->qos.txtp.traffic_class ],
 	    vcc->qos.txtp.min_pcr, vcc->qos.txtp.max_pcr, vcc->qos.txtp.max_cdv, vcc->qos.txtp.max_sdu,
-	    fore200e_traffic_class[ vcc->qos.rxtp.traffic_class ],
+	    क्रमe200e_traffic_class[ vcc->qos.rxtp.traffic_class ],
 	    vcc->qos.rxtp.min_pcr, vcc->qos.rxtp.max_pcr, vcc->qos.rxtp.max_cdv, vcc->qos.rxtp.max_sdu);
     
-    /* pseudo-CBR bandwidth requested? */
-    if ((vcc->qos.txtp.traffic_class == ATM_CBR) && (vcc->qos.txtp.max_pcr > 0)) {
+    /* pseuकरो-CBR bandwidth requested? */
+    अगर ((vcc->qos.txtp.traffic_class == ATM_CBR) && (vcc->qos.txtp.max_pcr > 0)) अणु
 	
-	mutex_lock(&fore200e->rate_mtx);
-	if (fore200e->available_cell_rate < vcc->qos.txtp.max_pcr) {
-	    mutex_unlock(&fore200e->rate_mtx);
+	mutex_lock(&क्रमe200e->rate_mtx);
+	अगर (क्रमe200e->available_cell_rate < vcc->qos.txtp.max_pcr) अणु
+	    mutex_unlock(&क्रमe200e->rate_mtx);
 
-	    kfree(fore200e_vcc);
-	    vc_map->vcc = NULL;
-	    return -EAGAIN;
-	}
+	    kमुक्त(क्रमe200e_vcc);
+	    vc_map->vcc = शून्य;
+	    वापस -EAGAIN;
+	पूर्ण
 
 	/* reserve bandwidth */
-	fore200e->available_cell_rate -= vcc->qos.txtp.max_pcr;
-	mutex_unlock(&fore200e->rate_mtx);
-    }
+	क्रमe200e->available_cell_rate -= vcc->qos.txtp.max_pcr;
+	mutex_unlock(&क्रमe200e->rate_mtx);
+    पूर्ण
     
     vcc->itf = vcc->dev->number;
 
     set_bit(ATM_VF_PARTIAL,&vcc->flags);
     set_bit(ATM_VF_ADDR, &vcc->flags);
 
-    vcc->dev_data = fore200e_vcc;
+    vcc->dev_data = क्रमe200e_vcc;
     
-    if (fore200e_activate_vcin(fore200e, 1, vcc, vcc->qos.rxtp.max_sdu) < 0) {
+    अगर (क्रमe200e_activate_vcin(क्रमe200e, 1, vcc, vcc->qos.rxtp.max_sdu) < 0) अणु
 
-	vc_map->vcc = NULL;
+	vc_map->vcc = शून्य;
 
 	clear_bit(ATM_VF_ADDR, &vcc->flags);
 	clear_bit(ATM_VF_PARTIAL,&vcc->flags);
 
-	vcc->dev_data = NULL;
+	vcc->dev_data = शून्य;
 
-	fore200e->available_cell_rate += vcc->qos.txtp.max_pcr;
+	क्रमe200e->available_cell_rate += vcc->qos.txtp.max_pcr;
 
-	kfree(fore200e_vcc);
-	return -EINVAL;
-    }
+	kमुक्त(क्रमe200e_vcc);
+	वापस -EINVAL;
+    पूर्ण
     
     /* compute rate control parameters */
-    if ((vcc->qos.txtp.traffic_class == ATM_CBR) && (vcc->qos.txtp.max_pcr > 0)) {
+    अगर ((vcc->qos.txtp.traffic_class == ATM_CBR) && (vcc->qos.txtp.max_pcr > 0)) अणु
 	
-	fore200e_rate_ctrl(&vcc->qos, &fore200e_vcc->rate);
+	क्रमe200e_rate_ctrl(&vcc->qos, &क्रमe200e_vcc->rate);
 	set_bit(ATM_VF_HASQOS, &vcc->flags);
 
 	DPRINTK(3, "tx on %d.%d.%d:%d, tx PCR = %d, rx PCR = %d, data_cells = %u, idle_cells = %u\n",
-		vcc->itf, vcc->vpi, vcc->vci, fore200e_atm2fore_aal(vcc->qos.aal),
+		vcc->itf, vcc->vpi, vcc->vci, क्रमe200e_aपंचांग2क्रमe_aal(vcc->qos.aal),
 		vcc->qos.txtp.max_pcr, vcc->qos.rxtp.max_pcr, 
-		fore200e_vcc->rate.data_cells, fore200e_vcc->rate.idle_cells);
-    }
+		क्रमe200e_vcc->rate.data_cells, क्रमe200e_vcc->rate.idle_cells);
+    पूर्ण
     
-    fore200e_vcc->tx_min_pdu = fore200e_vcc->rx_min_pdu = MAX_PDU_SIZE + 1;
-    fore200e_vcc->tx_max_pdu = fore200e_vcc->rx_max_pdu = 0;
-    fore200e_vcc->tx_pdu     = fore200e_vcc->rx_pdu     = 0;
+    क्रमe200e_vcc->tx_min_pdu = क्रमe200e_vcc->rx_min_pdu = MAX_PDU_SIZE + 1;
+    क्रमe200e_vcc->tx_max_pdu = क्रमe200e_vcc->rx_max_pdu = 0;
+    क्रमe200e_vcc->tx_pdu     = क्रमe200e_vcc->rx_pdu     = 0;
 
     /* new incarnation of the vcc */
-    vc_map->incarn = ++fore200e->incarn_count;
+    vc_map->incarn = ++क्रमe200e->incarn_count;
 
-    /* VC unusable before this flag is set */
+    /* VC unusable beक्रमe this flag is set */
     set_bit(ATM_VF_READY, &vcc->flags);
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 
-static void
-fore200e_close(struct atm_vcc* vcc)
-{
-    struct fore200e_vcc*    fore200e_vcc;
-    struct fore200e*        fore200e;
-    struct fore200e_vc_map* vc_map;
-    unsigned long           flags;
+अटल व्योम
+क्रमe200e_बंद(काष्ठा aपंचांग_vcc* vcc)
+अणु
+    काष्ठा क्रमe200e_vcc*    क्रमe200e_vcc;
+    काष्ठा क्रमe200e*        क्रमe200e;
+    काष्ठा क्रमe200e_vc_map* vc_map;
+    अचिन्हित दीर्घ           flags;
 
     ASSERT(vcc);
-    fore200e = FORE200E_DEV(vcc->dev);
+    क्रमe200e = FORE200E_DEV(vcc->dev);
 
     ASSERT((vcc->vpi >= 0) && (vcc->vpi < 1<<FORE200E_VPI_BITS));
     ASSERT((vcc->vci >= 0) && (vcc->vci < 1<<FORE200E_VCI_BITS));
 
-    DPRINTK(2, "closing %d.%d.%d:%d\n", vcc->itf, vcc->vpi, vcc->vci, fore200e_atm2fore_aal(vcc->qos.aal));
+    DPRINTK(2, "closing %d.%d.%d:%d\n", vcc->itf, vcc->vpi, vcc->vci, क्रमe200e_aपंचांग2क्रमe_aal(vcc->qos.aal));
 
     clear_bit(ATM_VF_READY, &vcc->flags);
 
-    fore200e_activate_vcin(fore200e, 0, vcc, 0);
+    क्रमe200e_activate_vcin(क्रमe200e, 0, vcc, 0);
 
-    spin_lock_irqsave(&fore200e->q_lock, flags);
+    spin_lock_irqsave(&क्रमe200e->q_lock, flags);
 
-    vc_map = FORE200E_VC_MAP(fore200e, vcc->vpi, vcc->vci);
+    vc_map = FORE200E_VC_MAP(क्रमe200e, vcc->vpi, vcc->vci);
 
-    /* the vc is no longer considered as "in use" by fore200e_open() */
-    vc_map->vcc = NULL;
+    /* the vc is no दीर्घer considered as "in use" by क्रमe200e_खोलो() */
+    vc_map->vcc = शून्य;
 
     vcc->itf = vcc->vci = vcc->vpi = 0;
 
-    fore200e_vcc = FORE200E_VCC(vcc);
-    vcc->dev_data = NULL;
+    क्रमe200e_vcc = FORE200E_VCC(vcc);
+    vcc->dev_data = शून्य;
 
-    spin_unlock_irqrestore(&fore200e->q_lock, flags);
+    spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
 
-    /* release reserved bandwidth, if any */
-    if ((vcc->qos.txtp.traffic_class == ATM_CBR) && (vcc->qos.txtp.max_pcr > 0)) {
+    /* release reserved bandwidth, अगर any */
+    अगर ((vcc->qos.txtp.traffic_class == ATM_CBR) && (vcc->qos.txtp.max_pcr > 0)) अणु
 
-	mutex_lock(&fore200e->rate_mtx);
-	fore200e->available_cell_rate += vcc->qos.txtp.max_pcr;
-	mutex_unlock(&fore200e->rate_mtx);
+	mutex_lock(&क्रमe200e->rate_mtx);
+	क्रमe200e->available_cell_rate += vcc->qos.txtp.max_pcr;
+	mutex_unlock(&क्रमe200e->rate_mtx);
 
 	clear_bit(ATM_VF_HASQOS, &vcc->flags);
-    }
+    पूर्ण
 
     clear_bit(ATM_VF_ADDR, &vcc->flags);
     clear_bit(ATM_VF_PARTIAL,&vcc->flags);
 
-    ASSERT(fore200e_vcc);
-    kfree(fore200e_vcc);
-}
+    ASSERT(क्रमe200e_vcc);
+    kमुक्त(क्रमe200e_vcc);
+पूर्ण
 
 
-static int
-fore200e_send(struct atm_vcc *vcc, struct sk_buff *skb)
-{
-    struct fore200e*        fore200e;
-    struct fore200e_vcc*    fore200e_vcc;
-    struct fore200e_vc_map* vc_map;
-    struct host_txq*        txq;
-    struct host_txq_entry*  entry;
-    struct tpd*             tpd;
-    struct tpd_haddr        tpd_haddr;
-    int                     retry        = CONFIG_ATM_FORE200E_TX_RETRY;
-    int                     tx_copy      = 0;
-    int                     tx_len       = skb->len;
-    u32*                    cell_header  = NULL;
-    unsigned char*          skb_data;
-    int                     skb_len;
-    unsigned char*          data;
-    unsigned long           flags;
+अटल पूर्णांक
+क्रमe200e_send(काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb)
+अणु
+    काष्ठा क्रमe200e*        क्रमe200e;
+    काष्ठा क्रमe200e_vcc*    क्रमe200e_vcc;
+    काष्ठा क्रमe200e_vc_map* vc_map;
+    काष्ठा host_txq*        txq;
+    काष्ठा host_txq_entry*  entry;
+    काष्ठा tpd*             tpd;
+    काष्ठा tpd_haddr        tpd_haddr;
+    पूर्णांक                     retry        = CONFIG_ATM_FORE200E_TX_RETRY;
+    पूर्णांक                     tx_copy      = 0;
+    पूर्णांक                     tx_len       = skb->len;
+    u32*                    cell_header  = शून्य;
+    अचिन्हित अक्षर*          skb_data;
+    पूर्णांक                     skb_len;
+    अचिन्हित अक्षर*          data;
+    अचिन्हित दीर्घ           flags;
 
-    if (!vcc)
-        return -EINVAL;
+    अगर (!vcc)
+        वापस -EINVAL;
 
-    fore200e = FORE200E_DEV(vcc->dev);
-    fore200e_vcc = FORE200E_VCC(vcc);
+    क्रमe200e = FORE200E_DEV(vcc->dev);
+    क्रमe200e_vcc = FORE200E_VCC(vcc);
 
-    if (!fore200e)
-        return -EINVAL;
+    अगर (!क्रमe200e)
+        वापस -EINVAL;
 
-    txq = &fore200e->host_txq;
-    if (!fore200e_vcc)
-        return -EINVAL;
+    txq = &क्रमe200e->host_txq;
+    अगर (!क्रमe200e_vcc)
+        वापस -EINVAL;
 
-    if (!test_bit(ATM_VF_READY, &vcc->flags)) {
+    अगर (!test_bit(ATM_VF_READY, &vcc->flags)) अणु
 	DPRINTK(1, "VC %d.%d.%d not ready for tx\n", vcc->itf, vcc->vpi, vcc->vpi);
-	dev_kfree_skb_any(skb);
-	return -EINVAL;
-    }
+	dev_kमुक्त_skb_any(skb);
+	वापस -EINVAL;
+    पूर्ण
 
-#ifdef FORE200E_52BYTE_AAL0_SDU
-    if ((vcc->qos.aal == ATM_AAL0) && (vcc->qos.txtp.max_sdu == ATM_AAL0_SDU)) {
+#अगर_घोषित FORE200E_52BYTE_AAL0_SDU
+    अगर ((vcc->qos.aal == ATM_AAL0) && (vcc->qos.txtp.max_sdu == ATM_AAL0_SDU)) अणु
 	cell_header = (u32*) skb->data;
 	skb_data    = skb->data + 4;    /* skip 4-byte cell header */
 	skb_len     = tx_len = skb->len  - 4;
 
 	DPRINTK(3, "user-supplied cell header = 0x%08x\n", *cell_header);
-    }
-    else 
-#endif
-    {
+    पूर्ण
+    अन्यथा 
+#पूर्ण_अगर
+    अणु
 	skb_data = skb->data;
 	skb_len  = skb->len;
-    }
+    पूर्ण
     
-    if (((unsigned long)skb_data) & 0x3) {
+    अगर (((अचिन्हित दीर्घ)skb_data) & 0x3) अणु
 
-	DPRINTK(2, "misaligned tx PDU on device %s\n", fore200e->name);
+	DPRINTK(2, "misaligned tx PDU on device %s\n", क्रमe200e->name);
 	tx_copy = 1;
 	tx_len  = skb_len;
-    }
+    पूर्ण
 
-    if ((vcc->qos.aal == ATM_AAL0) && (skb_len % ATM_CELL_PAYLOAD)) {
+    अगर ((vcc->qos.aal == ATM_AAL0) && (skb_len % ATM_CELL_PAYLOAD)) अणु
 
         /* this simply NUKES the PCA board */
-	DPRINTK(2, "incomplete tx AAL0 PDU on device %s\n", fore200e->name);
+	DPRINTK(2, "incomplete tx AAL0 PDU on device %s\n", क्रमe200e->name);
 	tx_copy = 1;
 	tx_len  = ((skb_len / ATM_CELL_PAYLOAD) + 1) * ATM_CELL_PAYLOAD;
-    }
+    पूर्ण
     
-    if (tx_copy) {
-	data = kmalloc(tx_len, GFP_ATOMIC);
-	if (data == NULL) {
-	    if (vcc->pop) {
+    अगर (tx_copy) अणु
+	data = kदो_स्मृति(tx_len, GFP_ATOMIC);
+	अगर (data == शून्य) अणु
+	    अगर (vcc->pop) अणु
 		vcc->pop(vcc, skb);
-	    }
-	    else {
-		dev_kfree_skb_any(skb);
-	    }
-	    return -ENOMEM;
-	}
+	    पूर्ण
+	    अन्यथा अणु
+		dev_kमुक्त_skb_any(skb);
+	    पूर्ण
+	    वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(data, skb_data, skb_len);
-	if (skb_len < tx_len)
-	    memset(data + skb_len, 0x00, tx_len - skb_len);
-    }
-    else {
+	स_नकल(data, skb_data, skb_len);
+	अगर (skb_len < tx_len)
+	    स_रखो(data + skb_len, 0x00, tx_len - skb_len);
+    पूर्ण
+    अन्यथा अणु
 	data = skb_data;
-    }
+    पूर्ण
 
-    vc_map = FORE200E_VC_MAP(fore200e, vcc->vpi, vcc->vci);
+    vc_map = FORE200E_VC_MAP(क्रमe200e, vcc->vpi, vcc->vci);
     ASSERT(vc_map->vcc == vcc);
 
   retry_here:
 
-    spin_lock_irqsave(&fore200e->q_lock, flags);
+    spin_lock_irqsave(&क्रमe200e->q_lock, flags);
 
     entry = &txq->host_entry[ txq->head ];
 
-    if ((*entry->status != STATUS_FREE) || (txq->txing >= QUEUE_SIZE_TX - 2)) {
+    अगर ((*entry->status != STATUS_FREE) || (txq->txing >= QUEUE_SIZE_TX - 2)) अणु
 
-	/* try to free completed tx queue entries */
-	fore200e_tx_irq(fore200e);
+	/* try to मुक्त completed tx queue entries */
+	क्रमe200e_tx_irq(क्रमe200e);
 
-	if (*entry->status != STATUS_FREE) {
+	अगर (*entry->status != STATUS_FREE) अणु
 
-	    spin_unlock_irqrestore(&fore200e->q_lock, flags);
+	    spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
 
 	    /* retry once again? */
-	    if (--retry > 0) {
+	    अगर (--retry > 0) अणु
 		udelay(50);
-		goto retry_here;
-	    }
+		जाओ retry_here;
+	    पूर्ण
 
 	    atomic_inc(&vcc->stats->tx_err);
 
-	    fore200e->tx_sat++;
+	    क्रमe200e->tx_sat++;
 	    DPRINTK(2, "tx queue of device %s is saturated, PDU dropped - heartbeat is %08x\n",
-		    fore200e->name, fore200e->cp_queues->heartbeat);
-	    if (vcc->pop) {
+		    क्रमe200e->name, क्रमe200e->cp_queues->heartbeat);
+	    अगर (vcc->pop) अणु
 		vcc->pop(vcc, skb);
-	    }
-	    else {
-		dev_kfree_skb_any(skb);
-	    }
+	    पूर्ण
+	    अन्यथा अणु
+		dev_kमुक्त_skb_any(skb);
+	    पूर्ण
 
-	    if (tx_copy)
-		kfree(data);
+	    अगर (tx_copy)
+		kमुक्त(data);
 
-	    return -ENOBUFS;
-	}
-    }
+	    वापस -ENOBUFS;
+	पूर्ण
+    पूर्ण
 
     entry->incarn = vc_map->incarn;
     entry->vc_map = vc_map;
     entry->skb    = skb;
-    entry->data   = tx_copy ? data : NULL;
+    entry->data   = tx_copy ? data : शून्य;
 
     tpd = entry->tpd;
-    tpd->tsd[ 0 ].buffer = dma_map_single(fore200e->dev, data, tx_len,
+    tpd->tsd[ 0 ].buffer = dma_map_single(क्रमe200e->dev, data, tx_len,
 					  DMA_TO_DEVICE);
-    if (dma_mapping_error(fore200e->dev, tpd->tsd[0].buffer)) {
-	if (tx_copy)
-	    kfree(data);
-	spin_unlock_irqrestore(&fore200e->q_lock, flags);
-	return -ENOMEM;
-    }
+    अगर (dma_mapping_error(क्रमe200e->dev, tpd->tsd[0].buffer)) अणु
+	अगर (tx_copy)
+	    kमुक्त(data);
+	spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
+	वापस -ENOMEM;
+    पूर्ण
     tpd->tsd[ 0 ].length = tx_len;
 
     FORE200E_NEXT_ENTRY(txq->head, QUEUE_SIZE_TX);
@@ -1615,109 +1616,109 @@ fore200e_send(struct atm_vcc *vcc, struct sk_buff *skb)
      */
     
     DPRINTK(3, "tx on %d.%d.%d:%d, len = %u (%u)\n", 
-	    vcc->itf, vcc->vpi, vcc->vci, fore200e_atm2fore_aal(vcc->qos.aal),
+	    vcc->itf, vcc->vpi, vcc->vci, क्रमe200e_aपंचांग2क्रमe_aal(vcc->qos.aal),
 	    tpd->tsd[0].length, skb_len);
 
-    if (skb_len < fore200e_vcc->tx_min_pdu)
-	fore200e_vcc->tx_min_pdu = skb_len;
-    if (skb_len > fore200e_vcc->tx_max_pdu)
-	fore200e_vcc->tx_max_pdu = skb_len;
-    fore200e_vcc->tx_pdu++;
+    अगर (skb_len < क्रमe200e_vcc->tx_min_pdu)
+	क्रमe200e_vcc->tx_min_pdu = skb_len;
+    अगर (skb_len > क्रमe200e_vcc->tx_max_pdu)
+	क्रमe200e_vcc->tx_max_pdu = skb_len;
+    क्रमe200e_vcc->tx_pdu++;
 
-    /* set tx rate control information */
-    tpd->rate.data_cells = fore200e_vcc->rate.data_cells;
-    tpd->rate.idle_cells = fore200e_vcc->rate.idle_cells;
+    /* set tx rate control inक्रमmation */
+    tpd->rate.data_cells = क्रमe200e_vcc->rate.data_cells;
+    tpd->rate.idle_cells = क्रमe200e_vcc->rate.idle_cells;
 
-    if (cell_header) {
-	tpd->atm_header.clp = (*cell_header & ATM_HDR_CLP);
-	tpd->atm_header.plt = (*cell_header & ATM_HDR_PTI_MASK) >> ATM_HDR_PTI_SHIFT;
-	tpd->atm_header.vci = (*cell_header & ATM_HDR_VCI_MASK) >> ATM_HDR_VCI_SHIFT;
-	tpd->atm_header.vpi = (*cell_header & ATM_HDR_VPI_MASK) >> ATM_HDR_VPI_SHIFT;
-	tpd->atm_header.gfc = (*cell_header & ATM_HDR_GFC_MASK) >> ATM_HDR_GFC_SHIFT;
-    }
-    else {
+    अगर (cell_header) अणु
+	tpd->aपंचांग_header.clp = (*cell_header & ATM_HDR_CLP);
+	tpd->aपंचांग_header.plt = (*cell_header & ATM_HDR_PTI_MASK) >> ATM_HDR_PTI_SHIFT;
+	tpd->aपंचांग_header.vci = (*cell_header & ATM_HDR_VCI_MASK) >> ATM_HDR_VCI_SHIFT;
+	tpd->aपंचांग_header.vpi = (*cell_header & ATM_HDR_VPI_MASK) >> ATM_HDR_VPI_SHIFT;
+	tpd->aपंचांग_header.gfc = (*cell_header & ATM_HDR_GFC_MASK) >> ATM_HDR_GFC_SHIFT;
+    पूर्ण
+    अन्यथा अणु
 	/* set the ATM header, common to all cells conveying the PDU */
-	tpd->atm_header.clp = 0;
-	tpd->atm_header.plt = 0;
-	tpd->atm_header.vci = vcc->vci;
-	tpd->atm_header.vpi = vcc->vpi;
-	tpd->atm_header.gfc = 0;
-    }
+	tpd->aपंचांग_header.clp = 0;
+	tpd->aपंचांग_header.plt = 0;
+	tpd->aपंचांग_header.vci = vcc->vci;
+	tpd->aपंचांग_header.vpi = vcc->vpi;
+	tpd->aपंचांग_header.gfc = 0;
+    पूर्ण
 
     tpd->spec.length = tx_len;
     tpd->spec.nseg   = 1;
-    tpd->spec.aal    = fore200e_atm2fore_aal(vcc->qos.aal);
-    tpd->spec.intr   = 1;
+    tpd->spec.aal    = क्रमe200e_aपंचांग2क्रमe_aal(vcc->qos.aal);
+    tpd->spec.पूर्णांकr   = 1;
 
-    tpd_haddr.size  = sizeof(struct tpd) / (1<<TPD_HADDR_SHIFT);  /* size is expressed in 32 byte blocks */
+    tpd_haddr.size  = माप(काष्ठा tpd) / (1<<TPD_HADDR_SHIFT);  /* size is expressed in 32 byte blocks */
     tpd_haddr.pad   = 0;
-    tpd_haddr.haddr = entry->tpd_dma >> TPD_HADDR_SHIFT;          /* shift the address, as we are in a bitfield */
+    tpd_haddr.haddr = entry->tpd_dma >> TPD_HADDR_SHIFT;          /* shअगरt the address, as we are in a bitfield */
 
     *entry->status = STATUS_PENDING;
-    fore200e->bus->write(*(u32*)&tpd_haddr, (u32 __iomem *)&entry->cp_entry->tpd_haddr);
+    क्रमe200e->bus->ग_लिखो(*(u32*)&tpd_haddr, (u32 __iomem *)&entry->cp_entry->tpd_haddr);
 
-    spin_unlock_irqrestore(&fore200e->q_lock, flags);
+    spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 
-static int
-fore200e_getstats(struct fore200e* fore200e)
-{
-    struct host_cmdq*       cmdq  = &fore200e->host_cmdq;
-    struct host_cmdq_entry* entry = &cmdq->host_entry[ cmdq->head ];
-    struct stats_opcode     opcode;
-    int                     ok;
+अटल पूर्णांक
+क्रमe200e_माला_लोtats(काष्ठा क्रमe200e* क्रमe200e)
+अणु
+    काष्ठा host_cmdq*       cmdq  = &क्रमe200e->host_cmdq;
+    काष्ठा host_cmdq_entry* entry = &cmdq->host_entry[ cmdq->head ];
+    काष्ठा stats_opcode     opcode;
+    पूर्णांक                     ok;
     u32                     stats_dma_addr;
 
-    if (fore200e->stats == NULL) {
-	fore200e->stats = kzalloc(sizeof(struct stats), GFP_KERNEL);
-	if (fore200e->stats == NULL)
-	    return -ENOMEM;
-    }
+    अगर (क्रमe200e->stats == शून्य) अणु
+	क्रमe200e->stats = kzalloc(माप(काष्ठा stats), GFP_KERNEL);
+	अगर (क्रमe200e->stats == शून्य)
+	    वापस -ENOMEM;
+    पूर्ण
     
-    stats_dma_addr = dma_map_single(fore200e->dev, fore200e->stats,
-				    sizeof(struct stats), DMA_FROM_DEVICE);
-    if (dma_mapping_error(fore200e->dev, stats_dma_addr))
-    	return -ENOMEM;
+    stats_dma_addr = dma_map_single(क्रमe200e->dev, क्रमe200e->stats,
+				    माप(काष्ठा stats), DMA_FROM_DEVICE);
+    अगर (dma_mapping_error(क्रमe200e->dev, stats_dma_addr))
+    	वापस -ENOMEM;
     
     FORE200E_NEXT_ENTRY(cmdq->head, QUEUE_SIZE_CMD);
 
     opcode.opcode = OPCODE_GET_STATS;
     opcode.pad    = 0;
 
-    fore200e->bus->write(stats_dma_addr, &entry->cp_entry->cmd.stats_block.stats_haddr);
+    क्रमe200e->bus->ग_लिखो(stats_dma_addr, &entry->cp_entry->cmd.stats_block.stats_haddr);
     
     *entry->status = STATUS_PENDING;
 
-    fore200e->bus->write(*(u32*)&opcode, (u32 __iomem *)&entry->cp_entry->cmd.stats_block.opcode);
+    क्रमe200e->bus->ग_लिखो(*(u32*)&opcode, (u32 __iomem *)&entry->cp_entry->cmd.stats_block.opcode);
 
-    ok = fore200e_poll(fore200e, entry->status, STATUS_COMPLETE, 400);
+    ok = क्रमe200e_poll(क्रमe200e, entry->status, STATUS_COMPLETE, 400);
 
     *entry->status = STATUS_FREE;
 
-    dma_unmap_single(fore200e->dev, stats_dma_addr, sizeof(struct stats), DMA_FROM_DEVICE);
+    dma_unmap_single(क्रमe200e->dev, stats_dma_addr, माप(काष्ठा stats), DMA_FROM_DEVICE);
     
-    if (ok == 0) {
-	printk(FORE200E "unable to get statistics from device %s\n", fore200e->name);
-	return -EIO;
-    }
+    अगर (ok == 0) अणु
+	prपूर्णांकk(FORE200E "unable to get statistics from device %s\n", क्रमe200e->name);
+	वापस -EIO;
+    पूर्ण
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
-#if 0 /* currently unused */
-static int
-fore200e_get_oc3(struct fore200e* fore200e, struct oc3_regs* regs)
-{
-    struct host_cmdq*       cmdq  = &fore200e->host_cmdq;
-    struct host_cmdq_entry* entry = &cmdq->host_entry[ cmdq->head ];
-    struct oc3_opcode       opcode;
-    int                     ok;
+#अगर 0 /* currently unused */
+अटल पूर्णांक
+क्रमe200e_get_oc3(काष्ठा क्रमe200e* क्रमe200e, काष्ठा oc3_regs* regs)
+अणु
+    काष्ठा host_cmdq*       cmdq  = &क्रमe200e->host_cmdq;
+    काष्ठा host_cmdq_entry* entry = &cmdq->host_entry[ cmdq->head ];
+    काष्ठा oc3_opcode       opcode;
+    पूर्णांक                     ok;
     u32                     oc3_regs_dma_addr;
 
-    oc3_regs_dma_addr = fore200e->bus->dma_map(fore200e, regs, sizeof(struct oc3_regs), DMA_FROM_DEVICE);
+    oc3_regs_dma_addr = क्रमe200e->bus->dma_map(क्रमe200e, regs, माप(काष्ठा oc3_regs), DMA_FROM_DEVICE);
 
     FORE200E_NEXT_ENTRY(cmdq->head, QUEUE_SIZE_CMD);
 
@@ -1726,35 +1727,35 @@ fore200e_get_oc3(struct fore200e* fore200e, struct oc3_regs* regs)
     opcode.value  = 0;
     opcode.mask   = 0;
 
-    fore200e->bus->write(oc3_regs_dma_addr, &entry->cp_entry->cmd.oc3_block.regs_haddr);
+    क्रमe200e->bus->ग_लिखो(oc3_regs_dma_addr, &entry->cp_entry->cmd.oc3_block.regs_haddr);
     
     *entry->status = STATUS_PENDING;
 
-    fore200e->bus->write(*(u32*)&opcode, (u32*)&entry->cp_entry->cmd.oc3_block.opcode);
+    क्रमe200e->bus->ग_लिखो(*(u32*)&opcode, (u32*)&entry->cp_entry->cmd.oc3_block.opcode);
 
-    ok = fore200e_poll(fore200e, entry->status, STATUS_COMPLETE, 400);
+    ok = क्रमe200e_poll(क्रमe200e, entry->status, STATUS_COMPLETE, 400);
 
     *entry->status = STATUS_FREE;
 
-    fore200e->bus->dma_unmap(fore200e, oc3_regs_dma_addr, sizeof(struct oc3_regs), DMA_FROM_DEVICE);
+    क्रमe200e->bus->dma_unmap(क्रमe200e, oc3_regs_dma_addr, माप(काष्ठा oc3_regs), DMA_FROM_DEVICE);
     
-    if (ok == 0) {
-	printk(FORE200E "unable to get OC-3 regs of device %s\n", fore200e->name);
-	return -EIO;
-    }
+    अगर (ok == 0) अणु
+	prपूर्णांकk(FORE200E "unable to get OC-3 regs of device %s\n", क्रमe200e->name);
+	वापस -EIO;
+    पूर्ण
 
-    return 0;
-}
-#endif
+    वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 
-static int
-fore200e_set_oc3(struct fore200e* fore200e, u32 reg, u32 value, u32 mask)
-{
-    struct host_cmdq*       cmdq  = &fore200e->host_cmdq;
-    struct host_cmdq_entry* entry = &cmdq->host_entry[ cmdq->head ];
-    struct oc3_opcode       opcode;
-    int                     ok;
+अटल पूर्णांक
+क्रमe200e_set_oc3(काष्ठा क्रमe200e* क्रमe200e, u32 reg, u32 value, u32 mask)
+अणु
+    काष्ठा host_cmdq*       cmdq  = &क्रमe200e->host_cmdq;
+    काष्ठा host_cmdq_entry* entry = &cmdq->host_entry[ cmdq->head ];
+    काष्ठा oc3_opcode       opcode;
+    पूर्णांक                     ok;
 
     DPRINTK(2, "set OC-3 reg = 0x%02x, value = 0x%02x, mask = 0x%02x\n", reg, value, mask);
 
@@ -1765,1043 +1766,1043 @@ fore200e_set_oc3(struct fore200e* fore200e, u32 reg, u32 value, u32 mask)
     opcode.value  = value;
     opcode.mask   = mask;
 
-    fore200e->bus->write(0, &entry->cp_entry->cmd.oc3_block.regs_haddr);
+    क्रमe200e->bus->ग_लिखो(0, &entry->cp_entry->cmd.oc3_block.regs_haddr);
     
     *entry->status = STATUS_PENDING;
 
-    fore200e->bus->write(*(u32*)&opcode, (u32 __iomem *)&entry->cp_entry->cmd.oc3_block.opcode);
+    क्रमe200e->bus->ग_लिखो(*(u32*)&opcode, (u32 __iomem *)&entry->cp_entry->cmd.oc3_block.opcode);
 
-    ok = fore200e_poll(fore200e, entry->status, STATUS_COMPLETE, 400);
+    ok = क्रमe200e_poll(क्रमe200e, entry->status, STATUS_COMPLETE, 400);
 
     *entry->status = STATUS_FREE;
 
-    if (ok == 0) {
-	printk(FORE200E "unable to set OC-3 reg 0x%02x of device %s\n", reg, fore200e->name);
-	return -EIO;
-    }
+    अगर (ok == 0) अणु
+	prपूर्णांकk(FORE200E "unable to set OC-3 reg 0x%02x of device %s\n", reg, क्रमe200e->name);
+	वापस -EIO;
+    पूर्ण
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 
-static int
-fore200e_setloop(struct fore200e* fore200e, int loop_mode)
-{
+अटल पूर्णांक
+क्रमe200e_setloop(काष्ठा क्रमe200e* क्रमe200e, पूर्णांक loop_mode)
+अणु
     u32 mct_value, mct_mask;
-    int error;
+    पूर्णांक error;
 
-    if (!capable(CAP_NET_ADMIN))
-	return -EPERM;
+    अगर (!capable(CAP_NET_ADMIN))
+	वापस -EPERM;
     
-    switch (loop_mode) {
+    चयन (loop_mode) अणु
 
-    case ATM_LM_NONE:
+    हाल ATM_LM_NONE:
 	mct_value = 0; 
 	mct_mask  = SUNI_MCT_DLE | SUNI_MCT_LLE;
-	break;
+	अवरोध;
 	
-    case ATM_LM_LOC_PHY:
+    हाल ATM_LM_LOC_PHY:
 	mct_value = mct_mask = SUNI_MCT_DLE;
-	break;
+	अवरोध;
 
-    case ATM_LM_RMT_PHY:
+    हाल ATM_LM_RMT_PHY:
 	mct_value = mct_mask = SUNI_MCT_LLE;
-	break;
+	अवरोध;
 
-    default:
-	return -EINVAL;
-    }
+    शेष:
+	वापस -EINVAL;
+    पूर्ण
 
-    error = fore200e_set_oc3(fore200e, SUNI_MCT, mct_value, mct_mask);
-    if (error == 0)
-	fore200e->loop_mode = loop_mode;
+    error = क्रमe200e_set_oc3(क्रमe200e, SUNI_MCT, mct_value, mct_mask);
+    अगर (error == 0)
+	क्रमe200e->loop_mode = loop_mode;
 
-    return error;
-}
+    वापस error;
+पूर्ण
 
 
-static int
-fore200e_fetch_stats(struct fore200e* fore200e, struct sonet_stats __user *arg)
-{
-    struct sonet_stats tmp;
+अटल पूर्णांक
+क्रमe200e_fetch_stats(काष्ठा क्रमe200e* क्रमe200e, काष्ठा sonet_stats __user *arg)
+अणु
+    काष्ठा sonet_stats पंचांगp;
 
-    if (fore200e_getstats(fore200e) < 0)
-	return -EIO;
+    अगर (क्रमe200e_माला_लोtats(क्रमe200e) < 0)
+	वापस -EIO;
 
-    tmp.section_bip = be32_to_cpu(fore200e->stats->oc3.section_bip8_errors);
-    tmp.line_bip    = be32_to_cpu(fore200e->stats->oc3.line_bip24_errors);
-    tmp.path_bip    = be32_to_cpu(fore200e->stats->oc3.path_bip8_errors);
-    tmp.line_febe   = be32_to_cpu(fore200e->stats->oc3.line_febe_errors);
-    tmp.path_febe   = be32_to_cpu(fore200e->stats->oc3.path_febe_errors);
-    tmp.corr_hcs    = be32_to_cpu(fore200e->stats->oc3.corr_hcs_errors);
-    tmp.uncorr_hcs  = be32_to_cpu(fore200e->stats->oc3.ucorr_hcs_errors);
-    tmp.tx_cells    = be32_to_cpu(fore200e->stats->aal0.cells_transmitted)  +
-	              be32_to_cpu(fore200e->stats->aal34.cells_transmitted) +
-	              be32_to_cpu(fore200e->stats->aal5.cells_transmitted);
-    tmp.rx_cells    = be32_to_cpu(fore200e->stats->aal0.cells_received)     +
-	              be32_to_cpu(fore200e->stats->aal34.cells_received)    +
-	              be32_to_cpu(fore200e->stats->aal5.cells_received);
+    पंचांगp.section_bip = be32_to_cpu(क्रमe200e->stats->oc3.section_bip8_errors);
+    पंचांगp.line_bip    = be32_to_cpu(क्रमe200e->stats->oc3.line_bip24_errors);
+    पंचांगp.path_bip    = be32_to_cpu(क्रमe200e->stats->oc3.path_bip8_errors);
+    पंचांगp.line_febe   = be32_to_cpu(क्रमe200e->stats->oc3.line_febe_errors);
+    पंचांगp.path_febe   = be32_to_cpu(क्रमe200e->stats->oc3.path_febe_errors);
+    पंचांगp.corr_hcs    = be32_to_cpu(क्रमe200e->stats->oc3.corr_hcs_errors);
+    पंचांगp.uncorr_hcs  = be32_to_cpu(क्रमe200e->stats->oc3.ucorr_hcs_errors);
+    पंचांगp.tx_cells    = be32_to_cpu(क्रमe200e->stats->aal0.cells_transmitted)  +
+	              be32_to_cpu(क्रमe200e->stats->aal34.cells_transmitted) +
+	              be32_to_cpu(क्रमe200e->stats->aal5.cells_transmitted);
+    पंचांगp.rx_cells    = be32_to_cpu(क्रमe200e->stats->aal0.cells_received)     +
+	              be32_to_cpu(क्रमe200e->stats->aal34.cells_received)    +
+	              be32_to_cpu(क्रमe200e->stats->aal5.cells_received);
 
-    if (arg)
-	return copy_to_user(arg, &tmp, sizeof(struct sonet_stats)) ? -EFAULT : 0;	
+    अगर (arg)
+	वापस copy_to_user(arg, &पंचांगp, माप(काष्ठा sonet_stats)) ? -EFAULT : 0;	
     
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 
-static int
-fore200e_ioctl(struct atm_dev* dev, unsigned int cmd, void __user * arg)
-{
-    struct fore200e* fore200e = FORE200E_DEV(dev);
+अटल पूर्णांक
+क्रमe200e_ioctl(काष्ठा aपंचांग_dev* dev, अचिन्हित पूर्णांक cmd, व्योम __user * arg)
+अणु
+    काष्ठा क्रमe200e* क्रमe200e = FORE200E_DEV(dev);
     
-    DPRINTK(2, "ioctl cmd = 0x%x (%u), arg = 0x%p (%lu)\n", cmd, cmd, arg, (unsigned long)arg);
+    DPRINTK(2, "ioctl cmd = 0x%x (%u), arg = 0x%p (%lu)\n", cmd, cmd, arg, (अचिन्हित दीर्घ)arg);
 
-    switch (cmd) {
+    चयन (cmd) अणु
 
-    case SONET_GETSTAT:
-	return fore200e_fetch_stats(fore200e, (struct sonet_stats __user *)arg);
+    हाल SONET_GETSTAT:
+	वापस क्रमe200e_fetch_stats(क्रमe200e, (काष्ठा sonet_stats __user *)arg);
 
-    case SONET_GETDIAG:
-	return put_user(0, (int __user *)arg) ? -EFAULT : 0;
+    हाल SONET_GETDIAG:
+	वापस put_user(0, (पूर्णांक __user *)arg) ? -EFAULT : 0;
 
-    case ATM_SETLOOP:
-	return fore200e_setloop(fore200e, (int)(unsigned long)arg);
+    हाल ATM_SETLOOP:
+	वापस क्रमe200e_setloop(क्रमe200e, (पूर्णांक)(अचिन्हित दीर्घ)arg);
 
-    case ATM_GETLOOP:
-	return put_user(fore200e->loop_mode, (int __user *)arg) ? -EFAULT : 0;
+    हाल ATM_GETLOOP:
+	वापस put_user(क्रमe200e->loop_mode, (पूर्णांक __user *)arg) ? -EFAULT : 0;
 
-    case ATM_QUERYLOOP:
-	return put_user(ATM_LM_LOC_PHY | ATM_LM_RMT_PHY, (int __user *)arg) ? -EFAULT : 0;
-    }
+    हाल ATM_QUERYLOOP:
+	वापस put_user(ATM_LM_LOC_PHY | ATM_LM_RMT_PHY, (पूर्णांक __user *)arg) ? -EFAULT : 0;
+    पूर्ण
 
-    return -ENOSYS; /* not implemented */
-}
+    वापस -ENOSYS; /* not implemented */
+पूर्ण
 
 
-static int
-fore200e_change_qos(struct atm_vcc* vcc,struct atm_qos* qos, int flags)
-{
-    struct fore200e_vcc* fore200e_vcc = FORE200E_VCC(vcc);
-    struct fore200e*     fore200e     = FORE200E_DEV(vcc->dev);
+अटल पूर्णांक
+क्रमe200e_change_qos(काष्ठा aपंचांग_vcc* vcc,काष्ठा aपंचांग_qos* qos, पूर्णांक flags)
+अणु
+    काष्ठा क्रमe200e_vcc* क्रमe200e_vcc = FORE200E_VCC(vcc);
+    काष्ठा क्रमe200e*     क्रमe200e     = FORE200E_DEV(vcc->dev);
 
-    if (!test_bit(ATM_VF_READY, &vcc->flags)) {
+    अगर (!test_bit(ATM_VF_READY, &vcc->flags)) अणु
 	DPRINTK(1, "VC %d.%d.%d not ready for QoS change\n", vcc->itf, vcc->vpi, vcc->vpi);
-	return -EINVAL;
-    }
+	वापस -EINVAL;
+    पूर्ण
 
     DPRINTK(2, "change_qos %d.%d.%d, "
 	    "(tx: cl=%s, pcr=%d-%d, cdv=%d, max_sdu=%d; "
 	    "rx: cl=%s, pcr=%d-%d, cdv=%d, max_sdu=%d), flags = 0x%x\n"
 	    "available_cell_rate = %u",
 	    vcc->itf, vcc->vpi, vcc->vci,
-	    fore200e_traffic_class[ qos->txtp.traffic_class ],
+	    क्रमe200e_traffic_class[ qos->txtp.traffic_class ],
 	    qos->txtp.min_pcr, qos->txtp.max_pcr, qos->txtp.max_cdv, qos->txtp.max_sdu,
-	    fore200e_traffic_class[ qos->rxtp.traffic_class ],
+	    क्रमe200e_traffic_class[ qos->rxtp.traffic_class ],
 	    qos->rxtp.min_pcr, qos->rxtp.max_pcr, qos->rxtp.max_cdv, qos->rxtp.max_sdu,
-	    flags, fore200e->available_cell_rate);
+	    flags, क्रमe200e->available_cell_rate);
 
-    if ((qos->txtp.traffic_class == ATM_CBR) && (qos->txtp.max_pcr > 0)) {
+    अगर ((qos->txtp.traffic_class == ATM_CBR) && (qos->txtp.max_pcr > 0)) अणु
 
-	mutex_lock(&fore200e->rate_mtx);
-	if (fore200e->available_cell_rate + vcc->qos.txtp.max_pcr < qos->txtp.max_pcr) {
-	    mutex_unlock(&fore200e->rate_mtx);
-	    return -EAGAIN;
-	}
+	mutex_lock(&क्रमe200e->rate_mtx);
+	अगर (क्रमe200e->available_cell_rate + vcc->qos.txtp.max_pcr < qos->txtp.max_pcr) अणु
+	    mutex_unlock(&क्रमe200e->rate_mtx);
+	    वापस -EAGAIN;
+	पूर्ण
 
-	fore200e->available_cell_rate += vcc->qos.txtp.max_pcr;
-	fore200e->available_cell_rate -= qos->txtp.max_pcr;
+	क्रमe200e->available_cell_rate += vcc->qos.txtp.max_pcr;
+	क्रमe200e->available_cell_rate -= qos->txtp.max_pcr;
 
-	mutex_unlock(&fore200e->rate_mtx);
+	mutex_unlock(&क्रमe200e->rate_mtx);
 	
-	memcpy(&vcc->qos, qos, sizeof(struct atm_qos));
+	स_नकल(&vcc->qos, qos, माप(काष्ठा aपंचांग_qos));
 	
 	/* update rate control parameters */
-	fore200e_rate_ctrl(qos, &fore200e_vcc->rate);
+	क्रमe200e_rate_ctrl(qos, &क्रमe200e_vcc->rate);
 
 	set_bit(ATM_VF_HASQOS, &vcc->flags);
 
-	return 0;
-    }
+	वापस 0;
+    पूर्ण
     
-    return -EINVAL;
-}
+    वापस -EINVAL;
+पूर्ण
     
 
-static int fore200e_irq_request(struct fore200e *fore200e)
-{
-    if (request_irq(fore200e->irq, fore200e_interrupt, IRQF_SHARED, fore200e->name, fore200e->atm_dev) < 0) {
+अटल पूर्णांक क्रमe200e_irq_request(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    अगर (request_irq(क्रमe200e->irq, क्रमe200e_पूर्णांकerrupt, IRQF_SHARED, क्रमe200e->name, क्रमe200e->aपंचांग_dev) < 0) अणु
 
-	printk(FORE200E "unable to reserve IRQ %s for device %s\n",
-	       fore200e_irq_itoa(fore200e->irq), fore200e->name);
-	return -EBUSY;
-    }
+	prपूर्णांकk(FORE200E "unable to reserve IRQ %s for device %s\n",
+	       क्रमe200e_irq_itoa(क्रमe200e->irq), क्रमe200e->name);
+	वापस -EBUSY;
+    पूर्ण
 
-    printk(FORE200E "IRQ %s reserved for device %s\n",
-	   fore200e_irq_itoa(fore200e->irq), fore200e->name);
+    prपूर्णांकk(FORE200E "IRQ %s reserved for device %s\n",
+	   क्रमe200e_irq_itoa(क्रमe200e->irq), क्रमe200e->name);
 
-#ifdef FORE200E_USE_TASKLET
-    tasklet_init(&fore200e->tx_tasklet, fore200e_tx_tasklet, (unsigned long)fore200e);
-    tasklet_init(&fore200e->rx_tasklet, fore200e_rx_tasklet, (unsigned long)fore200e);
-#endif
+#अगर_घोषित FORE200E_USE_TASKLET
+    tasklet_init(&क्रमe200e->tx_tasklet, क्रमe200e_tx_tasklet, (अचिन्हित दीर्घ)क्रमe200e);
+    tasklet_init(&क्रमe200e->rx_tasklet, क्रमe200e_rx_tasklet, (अचिन्हित दीर्घ)क्रमe200e);
+#पूर्ण_अगर
 
-    fore200e->state = FORE200E_STATE_IRQ;
-    return 0;
-}
+    क्रमe200e->state = FORE200E_STATE_IRQ;
+    वापस 0;
+पूर्ण
 
 
-static int fore200e_get_esi(struct fore200e *fore200e)
-{
-    struct prom_data* prom = kzalloc(sizeof(struct prom_data), GFP_KERNEL);
-    int ok, i;
+अटल पूर्णांक क्रमe200e_get_esi(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    काष्ठा prom_data* prom = kzalloc(माप(काष्ठा prom_data), GFP_KERNEL);
+    पूर्णांक ok, i;
 
-    if (!prom)
-	return -ENOMEM;
+    अगर (!prom)
+	वापस -ENOMEM;
 
-    ok = fore200e->bus->prom_read(fore200e, prom);
-    if (ok < 0) {
-	kfree(prom);
-	return -EBUSY;
-    }
+    ok = क्रमe200e->bus->prom_पढ़ो(क्रमe200e, prom);
+    अगर (ok < 0) अणु
+	kमुक्त(prom);
+	वापस -EBUSY;
+    पूर्ण
 	
-    printk(FORE200E "device %s, rev. %c, S/N: %d, ESI: %pM\n",
-	   fore200e->name, 
+    prपूर्णांकk(FORE200E "device %s, rev. %c, S/N: %d, ESI: %pM\n",
+	   क्रमe200e->name, 
 	   (prom->hw_revision & 0xFF) + '@',    /* probably meaningless with SBA boards */
 	   prom->serial_number & 0xFFFF, &prom->mac_addr[2]);
 	
-    for (i = 0; i < ESI_LEN; i++) {
-	fore200e->esi[ i ] = fore200e->atm_dev->esi[ i ] = prom->mac_addr[ i + 2 ];
-    }
+    क्रम (i = 0; i < ESI_LEN; i++) अणु
+	क्रमe200e->esi[ i ] = क्रमe200e->aपंचांग_dev->esi[ i ] = prom->mac_addr[ i + 2 ];
+    पूर्ण
     
-    kfree(prom);
+    kमुक्त(prom);
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 
-static int fore200e_alloc_rx_buf(struct fore200e *fore200e)
-{
-    int scheme, magn, nbr, size, i;
+अटल पूर्णांक क्रमe200e_alloc_rx_buf(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    पूर्णांक scheme, magn, nbr, size, i;
 
-    struct host_bsq* bsq;
-    struct buffer*   buffer;
+    काष्ठा host_bsq* bsq;
+    काष्ठा buffer*   buffer;
 
-    for (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++) {
-	for (magn = 0; magn < BUFFER_MAGN_NBR; magn++) {
+    क्रम (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++) अणु
+	क्रम (magn = 0; magn < BUFFER_MAGN_NBR; magn++) अणु
 
-	    bsq = &fore200e->host_bsq[ scheme ][ magn ];
+	    bsq = &क्रमe200e->host_bsq[ scheme ][ magn ];
 
-	    nbr  = fore200e_rx_buf_nbr[ scheme ][ magn ];
-	    size = fore200e_rx_buf_size[ scheme ][ magn ];
+	    nbr  = क्रमe200e_rx_buf_nbr[ scheme ][ magn ];
+	    size = क्रमe200e_rx_buf_size[ scheme ][ magn ];
 
 	    DPRINTK(2, "rx buffers %d / %d are being allocated\n", scheme, magn);
 
 	    /* allocate the array of receive buffers */
-	    buffer = bsq->buffer = kcalloc(nbr, sizeof(struct buffer),
+	    buffer = bsq->buffer = kसुस्मृति(nbr, माप(काष्ठा buffer),
                                            GFP_KERNEL);
 
-	    if (buffer == NULL)
-		return -ENOMEM;
+	    अगर (buffer == शून्य)
+		वापस -ENOMEM;
 
-	    bsq->freebuf = NULL;
+	    bsq->मुक्तbuf = शून्य;
 
-	    for (i = 0; i < nbr; i++) {
+	    क्रम (i = 0; i < nbr; i++) अणु
 
 		buffer[ i ].scheme = scheme;
 		buffer[ i ].magn   = magn;
-#ifdef FORE200E_BSQ_DEBUG
+#अगर_घोषित FORE200E_BSQ_DEBUG
 		buffer[ i ].index  = i;
 		buffer[ i ].supplied = 0;
-#endif
+#पूर्ण_अगर
 
 		/* allocate the receive buffer body */
-		if (fore200e_chunk_alloc(fore200e,
-					 &buffer[ i ].data, size, fore200e->bus->buffer_alignment,
-					 DMA_FROM_DEVICE) < 0) {
+		अगर (क्रमe200e_chunk_alloc(क्रमe200e,
+					 &buffer[ i ].data, size, क्रमe200e->bus->buffer_alignment,
+					 DMA_FROM_DEVICE) < 0) अणु
 		    
-		    while (i > 0)
-			fore200e_chunk_free(fore200e, &buffer[ --i ].data);
-		    kfree(buffer);
+		    जबतक (i > 0)
+			क्रमe200e_chunk_मुक्त(क्रमe200e, &buffer[ --i ].data);
+		    kमुक्त(buffer);
 		    
-		    return -ENOMEM;
-		}
+		    वापस -ENOMEM;
+		पूर्ण
 
-		/* insert the buffer into the free buffer list */
-		buffer[ i ].next = bsq->freebuf;
-		bsq->freebuf = &buffer[ i ];
-	    }
-	    /* all the buffers are free, initially */
-	    bsq->freebuf_count = nbr;
+		/* insert the buffer पूर्णांकo the मुक्त buffer list */
+		buffer[ i ].next = bsq->मुक्तbuf;
+		bsq->मुक्तbuf = &buffer[ i ];
+	    पूर्ण
+	    /* all the buffers are मुक्त, initially */
+	    bsq->मुक्तbuf_count = nbr;
 
-#ifdef FORE200E_BSQ_DEBUG
+#अगर_घोषित FORE200E_BSQ_DEBUG
 	    bsq_audit(3, bsq, scheme, magn);
-#endif
-	}
-    }
+#पूर्ण_अगर
+	पूर्ण
+    पूर्ण
 
-    fore200e->state = FORE200E_STATE_ALLOC_BUF;
-    return 0;
-}
+    क्रमe200e->state = FORE200E_STATE_ALLOC_BUF;
+    वापस 0;
+पूर्ण
 
 
-static int fore200e_init_bs_queue(struct fore200e *fore200e)
-{
-    int scheme, magn, i;
+अटल पूर्णांक क्रमe200e_init_bs_queue(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    पूर्णांक scheme, magn, i;
 
-    struct host_bsq*     bsq;
-    struct cp_bsq_entry __iomem * cp_entry;
+    काष्ठा host_bsq*     bsq;
+    काष्ठा cp_bsq_entry __iomem * cp_entry;
 
-    for (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++) {
-	for (magn = 0; magn < BUFFER_MAGN_NBR; magn++) {
+    क्रम (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++) अणु
+	क्रम (magn = 0; magn < BUFFER_MAGN_NBR; magn++) अणु
 
 	    DPRINTK(2, "buffer supply queue %d / %d is being initialized\n", scheme, magn);
 
-	    bsq = &fore200e->host_bsq[ scheme ][ magn ];
+	    bsq = &क्रमe200e->host_bsq[ scheme ][ magn ];
 
 	    /* allocate and align the array of status words */
-	    if (fore200e_dma_chunk_alloc(fore200e,
+	    अगर (क्रमe200e_dma_chunk_alloc(क्रमe200e,
 					       &bsq->status,
-					       sizeof(enum status), 
+					       माप(क्रमागत status), 
 					       QUEUE_SIZE_BS,
-					       fore200e->bus->status_alignment) < 0) {
-		return -ENOMEM;
-	    }
+					       क्रमe200e->bus->status_alignment) < 0) अणु
+		वापस -ENOMEM;
+	    पूर्ण
 
 	    /* allocate and align the array of receive buffer descriptors */
-	    if (fore200e_dma_chunk_alloc(fore200e,
+	    अगर (क्रमe200e_dma_chunk_alloc(क्रमe200e,
 					       &bsq->rbd_block,
-					       sizeof(struct rbd_block),
+					       माप(काष्ठा rbd_block),
 					       QUEUE_SIZE_BS,
-					       fore200e->bus->descr_alignment) < 0) {
+					       क्रमe200e->bus->descr_alignment) < 0) अणु
 		
-		fore200e_dma_chunk_free(fore200e, &bsq->status);
-		return -ENOMEM;
-	    }
+		क्रमe200e_dma_chunk_मुक्त(क्रमe200e, &bsq->status);
+		वापस -ENOMEM;
+	    पूर्ण
 	    
 	    /* get the base address of the cp resident buffer supply queue entries */
-	    cp_entry = fore200e->virt_base + 
-		       fore200e->bus->read(&fore200e->cp_queues->cp_bsq[ scheme ][ magn ]);
+	    cp_entry = क्रमe200e->virt_base + 
+		       क्रमe200e->bus->पढ़ो(&क्रमe200e->cp_queues->cp_bsq[ scheme ][ magn ]);
 	    
 	    /* fill the host resident and cp resident buffer supply queue entries */
-	    for (i = 0; i < QUEUE_SIZE_BS; i++) {
+	    क्रम (i = 0; i < QUEUE_SIZE_BS; i++) अणु
 		
 		bsq->host_entry[ i ].status = 
-		                     FORE200E_INDEX(bsq->status.align_addr, enum status, i);
+		                     FORE200E_INDEX(bsq->status.align_addr, क्रमागत status, i);
 	        bsq->host_entry[ i ].rbd_block =
-		                     FORE200E_INDEX(bsq->rbd_block.align_addr, struct rbd_block, i);
+		                     FORE200E_INDEX(bsq->rbd_block.align_addr, काष्ठा rbd_block, i);
 		bsq->host_entry[ i ].rbd_block_dma =
-		                     FORE200E_DMA_INDEX(bsq->rbd_block.dma_addr, struct rbd_block, i);
+		                     FORE200E_DMA_INDEX(bsq->rbd_block.dma_addr, काष्ठा rbd_block, i);
 		bsq->host_entry[ i ].cp_entry = &cp_entry[ i ];
 		
 		*bsq->host_entry[ i ].status = STATUS_FREE;
 		
-		fore200e->bus->write(FORE200E_DMA_INDEX(bsq->status.dma_addr, enum status, i), 
+		क्रमe200e->bus->ग_लिखो(FORE200E_DMA_INDEX(bsq->status.dma_addr, क्रमागत status, i), 
 				     &cp_entry[ i ].status_haddr);
-	    }
-	}
-    }
+	    पूर्ण
+	पूर्ण
+    पूर्ण
 
-    fore200e->state = FORE200E_STATE_INIT_BSQ;
-    return 0;
-}
+    क्रमe200e->state = FORE200E_STATE_INIT_BSQ;
+    वापस 0;
+पूर्ण
 
 
-static int fore200e_init_rx_queue(struct fore200e *fore200e)
-{
-    struct host_rxq*     rxq =  &fore200e->host_rxq;
-    struct cp_rxq_entry __iomem * cp_entry;
-    int i;
+अटल पूर्णांक क्रमe200e_init_rx_queue(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    काष्ठा host_rxq*     rxq =  &क्रमe200e->host_rxq;
+    काष्ठा cp_rxq_entry __iomem * cp_entry;
+    पूर्णांक i;
 
     DPRINTK(2, "receive queue is being initialized\n");
 
     /* allocate and align the array of status words */
-    if (fore200e_dma_chunk_alloc(fore200e,
+    अगर (क्रमe200e_dma_chunk_alloc(क्रमe200e,
 				       &rxq->status,
-				       sizeof(enum status), 
+				       माप(क्रमागत status), 
 				       QUEUE_SIZE_RX,
-				       fore200e->bus->status_alignment) < 0) {
-	return -ENOMEM;
-    }
+				       क्रमe200e->bus->status_alignment) < 0) अणु
+	वापस -ENOMEM;
+    पूर्ण
 
     /* allocate and align the array of receive PDU descriptors */
-    if (fore200e_dma_chunk_alloc(fore200e,
+    अगर (क्रमe200e_dma_chunk_alloc(क्रमe200e,
 				       &rxq->rpd,
-				       sizeof(struct rpd), 
+				       माप(काष्ठा rpd), 
 				       QUEUE_SIZE_RX,
-				       fore200e->bus->descr_alignment) < 0) {
+				       क्रमe200e->bus->descr_alignment) < 0) अणु
 	
-	fore200e_dma_chunk_free(fore200e, &rxq->status);
-	return -ENOMEM;
-    }
+	क्रमe200e_dma_chunk_मुक्त(क्रमe200e, &rxq->status);
+	वापस -ENOMEM;
+    पूर्ण
 
     /* get the base address of the cp resident rx queue entries */
-    cp_entry = fore200e->virt_base + fore200e->bus->read(&fore200e->cp_queues->cp_rxq);
+    cp_entry = क्रमe200e->virt_base + क्रमe200e->bus->पढ़ो(&क्रमe200e->cp_queues->cp_rxq);
 
     /* fill the host resident and cp resident rx entries */
-    for (i=0; i < QUEUE_SIZE_RX; i++) {
+    क्रम (i=0; i < QUEUE_SIZE_RX; i++) अणु
 	
 	rxq->host_entry[ i ].status = 
-	                     FORE200E_INDEX(rxq->status.align_addr, enum status, i);
+	                     FORE200E_INDEX(rxq->status.align_addr, क्रमागत status, i);
 	rxq->host_entry[ i ].rpd = 
-	                     FORE200E_INDEX(rxq->rpd.align_addr, struct rpd, i);
+	                     FORE200E_INDEX(rxq->rpd.align_addr, काष्ठा rpd, i);
 	rxq->host_entry[ i ].rpd_dma = 
-	                     FORE200E_DMA_INDEX(rxq->rpd.dma_addr, struct rpd, i);
+	                     FORE200E_DMA_INDEX(rxq->rpd.dma_addr, काष्ठा rpd, i);
 	rxq->host_entry[ i ].cp_entry = &cp_entry[ i ];
 
 	*rxq->host_entry[ i ].status = STATUS_FREE;
 
-	fore200e->bus->write(FORE200E_DMA_INDEX(rxq->status.dma_addr, enum status, i), 
+	क्रमe200e->bus->ग_लिखो(FORE200E_DMA_INDEX(rxq->status.dma_addr, क्रमागत status, i), 
 			     &cp_entry[ i ].status_haddr);
 
-	fore200e->bus->write(FORE200E_DMA_INDEX(rxq->rpd.dma_addr, struct rpd, i),
+	क्रमe200e->bus->ग_लिखो(FORE200E_DMA_INDEX(rxq->rpd.dma_addr, काष्ठा rpd, i),
 			     &cp_entry[ i ].rpd_haddr);
-    }
+    पूर्ण
 
     /* set the head entry of the queue */
     rxq->head = 0;
 
-    fore200e->state = FORE200E_STATE_INIT_RXQ;
-    return 0;
-}
+    क्रमe200e->state = FORE200E_STATE_INIT_RXQ;
+    वापस 0;
+पूर्ण
 
 
-static int fore200e_init_tx_queue(struct fore200e *fore200e)
-{
-    struct host_txq*     txq =  &fore200e->host_txq;
-    struct cp_txq_entry __iomem * cp_entry;
-    int i;
+अटल पूर्णांक क्रमe200e_init_tx_queue(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    काष्ठा host_txq*     txq =  &क्रमe200e->host_txq;
+    काष्ठा cp_txq_entry __iomem * cp_entry;
+    पूर्णांक i;
 
     DPRINTK(2, "transmit queue is being initialized\n");
 
     /* allocate and align the array of status words */
-    if (fore200e_dma_chunk_alloc(fore200e,
+    अगर (क्रमe200e_dma_chunk_alloc(क्रमe200e,
 				       &txq->status,
-				       sizeof(enum status), 
+				       माप(क्रमागत status), 
 				       QUEUE_SIZE_TX,
-				       fore200e->bus->status_alignment) < 0) {
-	return -ENOMEM;
-    }
+				       क्रमe200e->bus->status_alignment) < 0) अणु
+	वापस -ENOMEM;
+    पूर्ण
 
     /* allocate and align the array of transmit PDU descriptors */
-    if (fore200e_dma_chunk_alloc(fore200e,
+    अगर (क्रमe200e_dma_chunk_alloc(क्रमe200e,
 				       &txq->tpd,
-				       sizeof(struct tpd), 
+				       माप(काष्ठा tpd), 
 				       QUEUE_SIZE_TX,
-				       fore200e->bus->descr_alignment) < 0) {
+				       क्रमe200e->bus->descr_alignment) < 0) अणु
 	
-	fore200e_dma_chunk_free(fore200e, &txq->status);
-	return -ENOMEM;
-    }
+	क्रमe200e_dma_chunk_मुक्त(क्रमe200e, &txq->status);
+	वापस -ENOMEM;
+    पूर्ण
 
     /* get the base address of the cp resident tx queue entries */
-    cp_entry = fore200e->virt_base + fore200e->bus->read(&fore200e->cp_queues->cp_txq);
+    cp_entry = क्रमe200e->virt_base + क्रमe200e->bus->पढ़ो(&क्रमe200e->cp_queues->cp_txq);
 
     /* fill the host resident and cp resident tx entries */
-    for (i=0; i < QUEUE_SIZE_TX; i++) {
+    क्रम (i=0; i < QUEUE_SIZE_TX; i++) अणु
 	
 	txq->host_entry[ i ].status = 
-	                     FORE200E_INDEX(txq->status.align_addr, enum status, i);
+	                     FORE200E_INDEX(txq->status.align_addr, क्रमागत status, i);
 	txq->host_entry[ i ].tpd = 
-	                     FORE200E_INDEX(txq->tpd.align_addr, struct tpd, i);
+	                     FORE200E_INDEX(txq->tpd.align_addr, काष्ठा tpd, i);
 	txq->host_entry[ i ].tpd_dma  = 
-                             FORE200E_DMA_INDEX(txq->tpd.dma_addr, struct tpd, i);
+                             FORE200E_DMA_INDEX(txq->tpd.dma_addr, काष्ठा tpd, i);
 	txq->host_entry[ i ].cp_entry = &cp_entry[ i ];
 
 	*txq->host_entry[ i ].status = STATUS_FREE;
 	
-	fore200e->bus->write(FORE200E_DMA_INDEX(txq->status.dma_addr, enum status, i), 
+	क्रमe200e->bus->ग_लिखो(FORE200E_DMA_INDEX(txq->status.dma_addr, क्रमागत status, i), 
 			     &cp_entry[ i ].status_haddr);
 	
         /* although there is a one-to-one mapping of tx queue entries and tpds,
-	   we do not write here the DMA (physical) base address of each tpd into
-	   the related cp resident entry, because the cp relies on this write
-	   operation to detect that a new pdu has been submitted for tx */
-    }
+	   we करो not ग_लिखो here the DMA (physical) base address of each tpd पूर्णांकo
+	   the related cp resident entry, because the cp relies on this ग_लिखो
+	   operation to detect that a new pdu has been submitted क्रम tx */
+    पूर्ण
 
     /* set the head and tail entries of the queue */
     txq->head = 0;
     txq->tail = 0;
 
-    fore200e->state = FORE200E_STATE_INIT_TXQ;
-    return 0;
-}
+    क्रमe200e->state = FORE200E_STATE_INIT_TXQ;
+    वापस 0;
+पूर्ण
 
 
-static int fore200e_init_cmd_queue(struct fore200e *fore200e)
-{
-    struct host_cmdq*     cmdq =  &fore200e->host_cmdq;
-    struct cp_cmdq_entry __iomem * cp_entry;
-    int i;
+अटल पूर्णांक क्रमe200e_init_cmd_queue(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    काष्ठा host_cmdq*     cmdq =  &क्रमe200e->host_cmdq;
+    काष्ठा cp_cmdq_entry __iomem * cp_entry;
+    पूर्णांक i;
 
     DPRINTK(2, "command queue is being initialized\n");
 
     /* allocate and align the array of status words */
-    if (fore200e_dma_chunk_alloc(fore200e,
+    अगर (क्रमe200e_dma_chunk_alloc(क्रमe200e,
 				       &cmdq->status,
-				       sizeof(enum status), 
+				       माप(क्रमागत status), 
 				       QUEUE_SIZE_CMD,
-				       fore200e->bus->status_alignment) < 0) {
-	return -ENOMEM;
-    }
+				       क्रमe200e->bus->status_alignment) < 0) अणु
+	वापस -ENOMEM;
+    पूर्ण
     
     /* get the base address of the cp resident cmd queue entries */
-    cp_entry = fore200e->virt_base + fore200e->bus->read(&fore200e->cp_queues->cp_cmdq);
+    cp_entry = क्रमe200e->virt_base + क्रमe200e->bus->पढ़ो(&क्रमe200e->cp_queues->cp_cmdq);
 
     /* fill the host resident and cp resident cmd entries */
-    for (i=0; i < QUEUE_SIZE_CMD; i++) {
+    क्रम (i=0; i < QUEUE_SIZE_CMD; i++) अणु
 	
 	cmdq->host_entry[ i ].status   = 
-                              FORE200E_INDEX(cmdq->status.align_addr, enum status, i);
+                              FORE200E_INDEX(cmdq->status.align_addr, क्रमागत status, i);
 	cmdq->host_entry[ i ].cp_entry = &cp_entry[ i ];
 
 	*cmdq->host_entry[ i ].status = STATUS_FREE;
 
-	fore200e->bus->write(FORE200E_DMA_INDEX(cmdq->status.dma_addr, enum status, i), 
+	क्रमe200e->bus->ग_लिखो(FORE200E_DMA_INDEX(cmdq->status.dma_addr, क्रमागत status, i), 
                              &cp_entry[ i ].status_haddr);
-    }
+    पूर्ण
 
     /* set the head entry of the queue */
     cmdq->head = 0;
 
-    fore200e->state = FORE200E_STATE_INIT_CMDQ;
-    return 0;
-}
+    क्रमe200e->state = FORE200E_STATE_INIT_CMDQ;
+    वापस 0;
+पूर्ण
 
 
-static void fore200e_param_bs_queue(struct fore200e *fore200e,
-				    enum buffer_scheme scheme,
-				    enum buffer_magn magn, int queue_length,
-				    int pool_size, int supply_blksize)
-{
-    struct bs_spec __iomem * bs_spec = &fore200e->cp_queues->init.bs_spec[ scheme ][ magn ];
+अटल व्योम क्रमe200e_param_bs_queue(काष्ठा क्रमe200e *क्रमe200e,
+				    क्रमागत buffer_scheme scheme,
+				    क्रमागत buffer_magn magn, पूर्णांक queue_length,
+				    पूर्णांक pool_size, पूर्णांक supply_blksize)
+अणु
+    काष्ठा bs_spec __iomem * bs_spec = &क्रमe200e->cp_queues->init.bs_spec[ scheme ][ magn ];
 
-    fore200e->bus->write(queue_length,                           &bs_spec->queue_length);
-    fore200e->bus->write(fore200e_rx_buf_size[ scheme ][ magn ], &bs_spec->buffer_size);
-    fore200e->bus->write(pool_size,                              &bs_spec->pool_size);
-    fore200e->bus->write(supply_blksize,                         &bs_spec->supply_blksize);
-}
+    क्रमe200e->bus->ग_लिखो(queue_length,                           &bs_spec->queue_length);
+    क्रमe200e->bus->ग_लिखो(क्रमe200e_rx_buf_size[ scheme ][ magn ], &bs_spec->buffer_size);
+    क्रमe200e->bus->ग_लिखो(pool_size,                              &bs_spec->pool_size);
+    क्रमe200e->bus->ग_लिखो(supply_blksize,                         &bs_spec->supply_blksize);
+पूर्ण
 
 
-static int fore200e_initialize(struct fore200e *fore200e)
-{
-    struct cp_queues __iomem * cpq;
-    int               ok, scheme, magn;
+अटल पूर्णांक क्रमe200e_initialize(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    काष्ठा cp_queues __iomem * cpq;
+    पूर्णांक               ok, scheme, magn;
 
-    DPRINTK(2, "device %s being initialized\n", fore200e->name);
+    DPRINTK(2, "device %s being initialized\n", क्रमe200e->name);
 
-    mutex_init(&fore200e->rate_mtx);
-    spin_lock_init(&fore200e->q_lock);
+    mutex_init(&क्रमe200e->rate_mtx);
+    spin_lock_init(&क्रमe200e->q_lock);
 
-    cpq = fore200e->cp_queues = fore200e->virt_base + FORE200E_CP_QUEUES_OFFSET;
+    cpq = क्रमe200e->cp_queues = क्रमe200e->virt_base + FORE200E_CP_QUEUES_OFFSET;
 
-    /* enable cp to host interrupts */
-    fore200e->bus->write(1, &cpq->imask);
+    /* enable cp to host पूर्णांकerrupts */
+    क्रमe200e->bus->ग_लिखो(1, &cpq->imask);
 
-    if (fore200e->bus->irq_enable)
-	fore200e->bus->irq_enable(fore200e);
+    अगर (क्रमe200e->bus->irq_enable)
+	क्रमe200e->bus->irq_enable(क्रमe200e);
     
-    fore200e->bus->write(NBR_CONNECT, &cpq->init.num_connect);
+    क्रमe200e->bus->ग_लिखो(NBR_CONNECT, &cpq->init.num_connect);
 
-    fore200e->bus->write(QUEUE_SIZE_CMD, &cpq->init.cmd_queue_len);
-    fore200e->bus->write(QUEUE_SIZE_RX,  &cpq->init.rx_queue_len);
-    fore200e->bus->write(QUEUE_SIZE_TX,  &cpq->init.tx_queue_len);
+    क्रमe200e->bus->ग_लिखो(QUEUE_SIZE_CMD, &cpq->init.cmd_queue_len);
+    क्रमe200e->bus->ग_लिखो(QUEUE_SIZE_RX,  &cpq->init.rx_queue_len);
+    क्रमe200e->bus->ग_लिखो(QUEUE_SIZE_TX,  &cpq->init.tx_queue_len);
 
-    fore200e->bus->write(RSD_EXTENSION,  &cpq->init.rsd_extension);
-    fore200e->bus->write(TSD_EXTENSION,  &cpq->init.tsd_extension);
+    क्रमe200e->bus->ग_लिखो(RSD_EXTENSION,  &cpq->init.rsd_extension);
+    क्रमe200e->bus->ग_लिखो(TSD_EXTENSION,  &cpq->init.tsd_extension);
 
-    for (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++)
-	for (magn = 0; magn < BUFFER_MAGN_NBR; magn++)
-	    fore200e_param_bs_queue(fore200e, scheme, magn,
+    क्रम (scheme = 0; scheme < BUFFER_SCHEME_NBR; scheme++)
+	क्रम (magn = 0; magn < BUFFER_MAGN_NBR; magn++)
+	    क्रमe200e_param_bs_queue(क्रमe200e, scheme, magn,
 				    QUEUE_SIZE_BS, 
-				    fore200e_rx_buf_nbr[ scheme ][ magn ],
+				    क्रमe200e_rx_buf_nbr[ scheme ][ magn ],
 				    RBD_BLK_SIZE);
 
     /* issue the initialize command */
-    fore200e->bus->write(STATUS_PENDING,    &cpq->init.status);
-    fore200e->bus->write(OPCODE_INITIALIZE, &cpq->init.opcode);
+    क्रमe200e->bus->ग_लिखो(STATUS_PENDING,    &cpq->init.status);
+    क्रमe200e->bus->ग_लिखो(OPCODE_INITIALIZE, &cpq->init.opcode);
 
-    ok = fore200e_io_poll(fore200e, &cpq->init.status, STATUS_COMPLETE, 3000);
-    if (ok == 0) {
-	printk(FORE200E "device %s initialization failed\n", fore200e->name);
-	return -ENODEV;
-    }
+    ok = क्रमe200e_io_poll(क्रमe200e, &cpq->init.status, STATUS_COMPLETE, 3000);
+    अगर (ok == 0) अणु
+	prपूर्णांकk(FORE200E "device %s initialization failed\n", क्रमe200e->name);
+	वापस -ENODEV;
+    पूर्ण
 
-    printk(FORE200E "device %s initialized\n", fore200e->name);
+    prपूर्णांकk(FORE200E "device %s initialized\n", क्रमe200e->name);
 
-    fore200e->state = FORE200E_STATE_INITIALIZE;
-    return 0;
-}
-
-
-static void fore200e_monitor_putc(struct fore200e *fore200e, char c)
-{
-    struct cp_monitor __iomem * monitor = fore200e->cp_monitor;
-
-#if 0
-    printk("%c", c);
-#endif
-    fore200e->bus->write(((u32) c) | FORE200E_CP_MONITOR_UART_AVAIL, &monitor->soft_uart.send);
-}
+    क्रमe200e->state = FORE200E_STATE_INITIALIZE;
+    वापस 0;
+पूर्ण
 
 
-static int fore200e_monitor_getc(struct fore200e *fore200e)
-{
-    struct cp_monitor __iomem * monitor = fore200e->cp_monitor;
-    unsigned long      timeout = jiffies + msecs_to_jiffies(50);
-    int                c;
+अटल व्योम क्रमe200e_monitor_अ_दो(काष्ठा क्रमe200e *क्रमe200e, अक्षर c)
+अणु
+    काष्ठा cp_monitor __iomem * monitor = क्रमe200e->cp_monitor;
 
-    while (time_before(jiffies, timeout)) {
-
-	c = (int) fore200e->bus->read(&monitor->soft_uart.recv);
-
-	if (c & FORE200E_CP_MONITOR_UART_AVAIL) {
-
-	    fore200e->bus->write(FORE200E_CP_MONITOR_UART_FREE, &monitor->soft_uart.recv);
-#if 0
-	    printk("%c", c & 0xFF);
-#endif
-	    return c & 0xFF;
-	}
-    }
-
-    return -1;
-}
+#अगर 0
+    prपूर्णांकk("%c", c);
+#पूर्ण_अगर
+    क्रमe200e->bus->ग_लिखो(((u32) c) | FORE200E_CP_MONITOR_UART_AVAIL, &monitor->soft_uart.send);
+पूर्ण
 
 
-static void fore200e_monitor_puts(struct fore200e *fore200e, char *str)
-{
-    while (*str) {
+अटल पूर्णांक क्रमe200e_monitor_अ_लो(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    काष्ठा cp_monitor __iomem * monitor = क्रमe200e->cp_monitor;
+    अचिन्हित दीर्घ      समयout = jअगरfies + msecs_to_jअगरfies(50);
+    पूर्णांक                c;
 
-	/* the i960 monitor doesn't accept any new character if it has something to say */
-	while (fore200e_monitor_getc(fore200e) >= 0);
+    जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+
+	c = (पूर्णांक) क्रमe200e->bus->पढ़ो(&monitor->soft_uart.recv);
+
+	अगर (c & FORE200E_CP_MONITOR_UART_AVAIL) अणु
+
+	    क्रमe200e->bus->ग_लिखो(FORE200E_CP_MONITOR_UART_FREE, &monitor->soft_uart.recv);
+#अगर 0
+	    prपूर्णांकk("%c", c & 0xFF);
+#पूर्ण_अगर
+	    वापस c & 0xFF;
+	पूर्ण
+    पूर्ण
+
+    वापस -1;
+पूर्ण
+
+
+अटल व्योम क्रमe200e_monitor_माला_दो(काष्ठा क्रमe200e *क्रमe200e, अक्षर *str)
+अणु
+    जबतक (*str) अणु
+
+	/* the i960 monitor करोesn't accept any new अक्षरacter अगर it has something to say */
+	जबतक (क्रमe200e_monitor_अ_लो(क्रमe200e) >= 0);
 	
-	fore200e_monitor_putc(fore200e, *str++);
-    }
+	क्रमe200e_monitor_अ_दो(क्रमe200e, *str++);
+    पूर्ण
 
-    while (fore200e_monitor_getc(fore200e) >= 0);
-}
+    जबतक (क्रमe200e_monitor_अ_लो(क्रमe200e) >= 0);
+पूर्ण
 
-#ifdef __LITTLE_ENDIAN
-#define FW_EXT ".bin"
-#else
-#define FW_EXT "_ecd.bin2"
-#endif
+#अगर_घोषित __LITTLE_ENDIAN
+#घोषणा FW_EXT ".bin"
+#अन्यथा
+#घोषणा FW_EXT "_ecd.bin2"
+#पूर्ण_अगर
 
-static int fore200e_load_and_start_fw(struct fore200e *fore200e)
-{
-    const struct firmware *firmware;
-    const struct fw_header *fw_header;
-    const __le32 *fw_data;
+अटल पूर्णांक क्रमe200e_load_and_start_fw(काष्ठा क्रमe200e *क्रमe200e)
+अणु
+    स्थिर काष्ठा firmware *firmware;
+    स्थिर काष्ठा fw_header *fw_header;
+    स्थिर __le32 *fw_data;
     u32 fw_size;
     u32 __iomem *load_addr;
-    char buf[48];
-    int err;
+    अक्षर buf[48];
+    पूर्णांक err;
 
-    sprintf(buf, "%s%s", fore200e->bus->proc_name, FW_EXT);
-    if ((err = request_firmware(&firmware, buf, fore200e->dev)) < 0) {
-	printk(FORE200E "problem loading firmware image %s\n", fore200e->bus->model_name);
-	return err;
-    }
+    प्र_लिखो(buf, "%s%s", क्रमe200e->bus->proc_name, FW_EXT);
+    अगर ((err = request_firmware(&firmware, buf, क्रमe200e->dev)) < 0) अणु
+	prपूर्णांकk(FORE200E "problem loading firmware image %s\n", क्रमe200e->bus->model_name);
+	वापस err;
+    पूर्ण
 
-    fw_data = (const __le32 *)firmware->data;
-    fw_size = firmware->size / sizeof(u32);
-    fw_header = (const struct fw_header *)firmware->data;
-    load_addr = fore200e->virt_base + le32_to_cpu(fw_header->load_offset);
+    fw_data = (स्थिर __le32 *)firmware->data;
+    fw_size = firmware->size / माप(u32);
+    fw_header = (स्थिर काष्ठा fw_header *)firmware->data;
+    load_addr = क्रमe200e->virt_base + le32_to_cpu(fw_header->load_offset);
 
     DPRINTK(2, "device %s firmware being loaded at 0x%p (%d words)\n",
-	    fore200e->name, load_addr, fw_size);
+	    क्रमe200e->name, load_addr, fw_size);
 
-    if (le32_to_cpu(fw_header->magic) != FW_HEADER_MAGIC) {
-	printk(FORE200E "corrupted %s firmware image\n", fore200e->bus->model_name);
-	goto release;
-    }
+    अगर (le32_to_cpu(fw_header->magic) != FW_HEADER_MAGIC) अणु
+	prपूर्णांकk(FORE200E "corrupted %s firmware image\n", क्रमe200e->bus->model_name);
+	जाओ release;
+    पूर्ण
 
-    for (; fw_size--; fw_data++, load_addr++)
-	fore200e->bus->write(le32_to_cpu(*fw_data), load_addr);
+    क्रम (; fw_size--; fw_data++, load_addr++)
+	क्रमe200e->bus->ग_लिखो(le32_to_cpu(*fw_data), load_addr);
 
-    DPRINTK(2, "device %s firmware being started\n", fore200e->name);
+    DPRINTK(2, "device %s firmware being started\n", क्रमe200e->name);
 
-#if defined(__sparc_v9__)
+#अगर defined(__sparc_v9__)
     /* reported to be required by SBA cards on some sparc64 hosts */
-    fore200e_spin(100);
-#endif
+    क्रमe200e_spin(100);
+#पूर्ण_अगर
 
-    sprintf(buf, "\rgo %x\r", le32_to_cpu(fw_header->start_offset));
-    fore200e_monitor_puts(fore200e, buf);
+    प्र_लिखो(buf, "\rgo %x\r", le32_to_cpu(fw_header->start_offset));
+    क्रमe200e_monitor_माला_दो(क्रमe200e, buf);
 
-    if (fore200e_io_poll(fore200e, &fore200e->cp_monitor->bstat, BSTAT_CP_RUNNING, 1000) == 0) {
-	printk(FORE200E "device %s firmware didn't start\n", fore200e->name);
-	goto release;
-    }
+    अगर (क्रमe200e_io_poll(क्रमe200e, &क्रमe200e->cp_monitor->bstat, BSTAT_CP_RUNNING, 1000) == 0) अणु
+	prपूर्णांकk(FORE200E "device %s firmware didn't start\n", क्रमe200e->name);
+	जाओ release;
+    पूर्ण
 
-    printk(FORE200E "device %s firmware started\n", fore200e->name);
+    prपूर्णांकk(FORE200E "device %s firmware started\n", क्रमe200e->name);
 
-    fore200e->state = FORE200E_STATE_START_FW;
+    क्रमe200e->state = FORE200E_STATE_START_FW;
     err = 0;
 
 release:
     release_firmware(firmware);
-    return err;
-}
+    वापस err;
+पूर्ण
 
 
-static int fore200e_register(struct fore200e *fore200e, struct device *parent)
-{
-    struct atm_dev* atm_dev;
+अटल पूर्णांक क्रमe200e_रेजिस्टर(काष्ठा क्रमe200e *क्रमe200e, काष्ठा device *parent)
+अणु
+    काष्ठा aपंचांग_dev* aपंचांग_dev;
 
-    DPRINTK(2, "device %s being registered\n", fore200e->name);
+    DPRINTK(2, "device %s being registered\n", क्रमe200e->name);
 
-    atm_dev = atm_dev_register(fore200e->bus->proc_name, parent, &fore200e_ops,
-                               -1, NULL);
-    if (atm_dev == NULL) {
-	printk(FORE200E "unable to register device %s\n", fore200e->name);
-	return -ENODEV;
-    }
+    aपंचांग_dev = aपंचांग_dev_रेजिस्टर(क्रमe200e->bus->proc_name, parent, &क्रमe200e_ops,
+                               -1, शून्य);
+    अगर (aपंचांग_dev == शून्य) अणु
+	prपूर्णांकk(FORE200E "unable to register device %s\n", क्रमe200e->name);
+	वापस -ENODEV;
+    पूर्ण
 
-    atm_dev->dev_data = fore200e;
-    fore200e->atm_dev = atm_dev;
+    aपंचांग_dev->dev_data = क्रमe200e;
+    क्रमe200e->aपंचांग_dev = aपंचांग_dev;
 
-    atm_dev->ci_range.vpi_bits = FORE200E_VPI_BITS;
-    atm_dev->ci_range.vci_bits = FORE200E_VCI_BITS;
+    aपंचांग_dev->ci_range.vpi_bits = FORE200E_VPI_BITS;
+    aपंचांग_dev->ci_range.vci_bits = FORE200E_VCI_BITS;
 
-    fore200e->available_cell_rate = ATM_OC3_PCR;
+    क्रमe200e->available_cell_rate = ATM_OC3_PCR;
 
-    fore200e->state = FORE200E_STATE_REGISTER;
-    return 0;
-}
+    क्रमe200e->state = FORE200E_STATE_REGISTER;
+    वापस 0;
+पूर्ण
 
 
-static int fore200e_init(struct fore200e *fore200e, struct device *parent)
-{
-    if (fore200e_register(fore200e, parent) < 0)
-	return -ENODEV;
+अटल पूर्णांक क्रमe200e_init(काष्ठा क्रमe200e *क्रमe200e, काष्ठा device *parent)
+अणु
+    अगर (क्रमe200e_रेजिस्टर(क्रमe200e, parent) < 0)
+	वापस -ENODEV;
     
-    if (fore200e->bus->configure(fore200e) < 0)
-	return -ENODEV;
+    अगर (क्रमe200e->bus->configure(क्रमe200e) < 0)
+	वापस -ENODEV;
 
-    if (fore200e->bus->map(fore200e) < 0)
-	return -ENODEV;
+    अगर (क्रमe200e->bus->map(क्रमe200e) < 0)
+	वापस -ENODEV;
 
-    if (fore200e_reset(fore200e, 1) < 0)
-	return -ENODEV;
+    अगर (क्रमe200e_reset(क्रमe200e, 1) < 0)
+	वापस -ENODEV;
 
-    if (fore200e_load_and_start_fw(fore200e) < 0)
-	return -ENODEV;
+    अगर (क्रमe200e_load_and_start_fw(क्रमe200e) < 0)
+	वापस -ENODEV;
 
-    if (fore200e_initialize(fore200e) < 0)
-	return -ENODEV;
+    अगर (क्रमe200e_initialize(क्रमe200e) < 0)
+	वापस -ENODEV;
 
-    if (fore200e_init_cmd_queue(fore200e) < 0)
-	return -ENOMEM;
+    अगर (क्रमe200e_init_cmd_queue(क्रमe200e) < 0)
+	वापस -ENOMEM;
 
-    if (fore200e_init_tx_queue(fore200e) < 0)
-	return -ENOMEM;
+    अगर (क्रमe200e_init_tx_queue(क्रमe200e) < 0)
+	वापस -ENOMEM;
 
-    if (fore200e_init_rx_queue(fore200e) < 0)
-	return -ENOMEM;
+    अगर (क्रमe200e_init_rx_queue(क्रमe200e) < 0)
+	वापस -ENOMEM;
 
-    if (fore200e_init_bs_queue(fore200e) < 0)
-	return -ENOMEM;
+    अगर (क्रमe200e_init_bs_queue(क्रमe200e) < 0)
+	वापस -ENOMEM;
 
-    if (fore200e_alloc_rx_buf(fore200e) < 0)
-	return -ENOMEM;
+    अगर (क्रमe200e_alloc_rx_buf(क्रमe200e) < 0)
+	वापस -ENOMEM;
 
-    if (fore200e_get_esi(fore200e) < 0)
-	return -EIO;
+    अगर (क्रमe200e_get_esi(क्रमe200e) < 0)
+	वापस -EIO;
 
-    if (fore200e_irq_request(fore200e) < 0)
-	return -EBUSY;
+    अगर (क्रमe200e_irq_request(क्रमe200e) < 0)
+	वापस -EBUSY;
 
-    fore200e_supply(fore200e);
+    क्रमe200e_supply(क्रमe200e);
 
-    /* all done, board initialization is now complete */
-    fore200e->state = FORE200E_STATE_COMPLETE;
-    return 0;
-}
+    /* all करोne, board initialization is now complete */
+    क्रमe200e->state = FORE200E_STATE_COMPLETE;
+    वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SBUS
-static const struct of_device_id fore200e_sba_match[];
-static int fore200e_sba_probe(struct platform_device *op)
-{
-	const struct of_device_id *match;
-	struct fore200e *fore200e;
-	static int index = 0;
-	int err;
+#अगर_घोषित CONFIG_SBUS
+अटल स्थिर काष्ठा of_device_id क्रमe200e_sba_match[];
+अटल पूर्णांक क्रमe200e_sba_probe(काष्ठा platक्रमm_device *op)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा क्रमe200e *क्रमe200e;
+	अटल पूर्णांक index = 0;
+	पूर्णांक err;
 
-	match = of_match_device(fore200e_sba_match, &op->dev);
-	if (!match)
-		return -EINVAL;
+	match = of_match_device(क्रमe200e_sba_match, &op->dev);
+	अगर (!match)
+		वापस -EINVAL;
 
-	fore200e = kzalloc(sizeof(struct fore200e), GFP_KERNEL);
-	if (!fore200e)
-		return -ENOMEM;
+	क्रमe200e = kzalloc(माप(काष्ठा क्रमe200e), GFP_KERNEL);
+	अगर (!क्रमe200e)
+		वापस -ENOMEM;
 
-	fore200e->bus = &fore200e_sbus_ops;
-	fore200e->dev = &op->dev;
-	fore200e->irq = op->archdata.irqs[0];
-	fore200e->phys_base = op->resource[0].start;
+	क्रमe200e->bus = &क्रमe200e_sbus_ops;
+	क्रमe200e->dev = &op->dev;
+	क्रमe200e->irq = op->archdata.irqs[0];
+	क्रमe200e->phys_base = op->resource[0].start;
 
-	sprintf(fore200e->name, "SBA-200E-%d", index);
+	प्र_लिखो(क्रमe200e->name, "SBA-200E-%d", index);
 
-	err = fore200e_init(fore200e, &op->dev);
-	if (err < 0) {
-		fore200e_shutdown(fore200e);
-		kfree(fore200e);
-		return err;
-	}
+	err = क्रमe200e_init(क्रमe200e, &op->dev);
+	अगर (err < 0) अणु
+		क्रमe200e_shutकरोwn(क्रमe200e);
+		kमुक्त(क्रमe200e);
+		वापस err;
+	पूर्ण
 
 	index++;
-	dev_set_drvdata(&op->dev, fore200e);
+	dev_set_drvdata(&op->dev, क्रमe200e);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fore200e_sba_remove(struct platform_device *op)
-{
-	struct fore200e *fore200e = dev_get_drvdata(&op->dev);
+अटल पूर्णांक क्रमe200e_sba_हटाओ(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा क्रमe200e *क्रमe200e = dev_get_drvdata(&op->dev);
 
-	fore200e_shutdown(fore200e);
-	kfree(fore200e);
+	क्रमe200e_shutकरोwn(क्रमe200e);
+	kमुक्त(क्रमe200e);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id fore200e_sba_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id क्रमe200e_sba_match[] = अणु
+	अणु
 		.name = SBA200E_PROM_NAME,
-	},
-	{},
-};
-MODULE_DEVICE_TABLE(of, fore200e_sba_match);
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, क्रमe200e_sba_match);
 
-static struct platform_driver fore200e_sba_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver क्रमe200e_sba_driver = अणु
+	.driver = अणु
 		.name = "fore_200e",
-		.of_match_table = fore200e_sba_match,
-	},
-	.probe		= fore200e_sba_probe,
-	.remove		= fore200e_sba_remove,
-};
-#endif
+		.of_match_table = क्रमe200e_sba_match,
+	पूर्ण,
+	.probe		= क्रमe200e_sba_probe,
+	.हटाओ		= क्रमe200e_sba_हटाओ,
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_PCI
-static int fore200e_pca_detect(struct pci_dev *pci_dev,
-			       const struct pci_device_id *pci_ent)
-{
-    struct fore200e* fore200e;
-    int err = 0;
-    static int index = 0;
+#अगर_घोषित CONFIG_PCI
+अटल पूर्णांक क्रमe200e_pca_detect(काष्ठा pci_dev *pci_dev,
+			       स्थिर काष्ठा pci_device_id *pci_ent)
+अणु
+    काष्ठा क्रमe200e* क्रमe200e;
+    पूर्णांक err = 0;
+    अटल पूर्णांक index = 0;
 
-    if (pci_enable_device(pci_dev)) {
+    अगर (pci_enable_device(pci_dev)) अणु
 	err = -EINVAL;
-	goto out;
-    }
+	जाओ out;
+    पूर्ण
 
-    if (dma_set_mask_and_coherent(&pci_dev->dev, DMA_BIT_MASK(32))) {
+    अगर (dma_set_mask_and_coherent(&pci_dev->dev, DMA_BIT_MASK(32))) अणु
 	err = -EINVAL;
-	goto out;
-    }
+	जाओ out;
+    पूर्ण
     
-    fore200e = kzalloc(sizeof(struct fore200e), GFP_KERNEL);
-    if (fore200e == NULL) {
+    क्रमe200e = kzalloc(माप(काष्ठा क्रमe200e), GFP_KERNEL);
+    अगर (क्रमe200e == शून्य) अणु
 	err = -ENOMEM;
-	goto out_disable;
-    }
+	जाओ out_disable;
+    पूर्ण
 
-    fore200e->bus       = &fore200e_pci_ops;
-    fore200e->dev	= &pci_dev->dev;
-    fore200e->irq       = pci_dev->irq;
-    fore200e->phys_base = pci_resource_start(pci_dev, 0);
+    क्रमe200e->bus       = &क्रमe200e_pci_ops;
+    क्रमe200e->dev	= &pci_dev->dev;
+    क्रमe200e->irq       = pci_dev->irq;
+    क्रमe200e->phys_base = pci_resource_start(pci_dev, 0);
 
-    sprintf(fore200e->name, "PCA-200E-%d", index - 1);
+    प्र_लिखो(क्रमe200e->name, "PCA-200E-%d", index - 1);
 
     pci_set_master(pci_dev);
 
-    printk(FORE200E "device PCA-200E found at 0x%lx, IRQ %s\n",
-	   fore200e->phys_base, fore200e_irq_itoa(fore200e->irq));
+    prपूर्णांकk(FORE200E "device PCA-200E found at 0x%lx, IRQ %s\n",
+	   क्रमe200e->phys_base, क्रमe200e_irq_itoa(क्रमe200e->irq));
 
-    sprintf(fore200e->name, "PCA-200E-%d", index);
+    प्र_लिखो(क्रमe200e->name, "PCA-200E-%d", index);
 
-    err = fore200e_init(fore200e, &pci_dev->dev);
-    if (err < 0) {
-	fore200e_shutdown(fore200e);
-	goto out_free;
-    }
+    err = क्रमe200e_init(क्रमe200e, &pci_dev->dev);
+    अगर (err < 0) अणु
+	क्रमe200e_shutकरोwn(क्रमe200e);
+	जाओ out_मुक्त;
+    पूर्ण
 
     ++index;
-    pci_set_drvdata(pci_dev, fore200e);
+    pci_set_drvdata(pci_dev, क्रमe200e);
 
 out:
-    return err;
+    वापस err;
 
-out_free:
-    kfree(fore200e);
+out_मुक्त:
+    kमुक्त(क्रमe200e);
 out_disable:
     pci_disable_device(pci_dev);
-    goto out;
-}
+    जाओ out;
+पूर्ण
 
 
-static void fore200e_pca_remove_one(struct pci_dev *pci_dev)
-{
-    struct fore200e *fore200e;
+अटल व्योम क्रमe200e_pca_हटाओ_one(काष्ठा pci_dev *pci_dev)
+अणु
+    काष्ठा क्रमe200e *क्रमe200e;
 
-    fore200e = pci_get_drvdata(pci_dev);
+    क्रमe200e = pci_get_drvdata(pci_dev);
 
-    fore200e_shutdown(fore200e);
-    kfree(fore200e);
+    क्रमe200e_shutकरोwn(क्रमe200e);
+    kमुक्त(क्रमe200e);
     pci_disable_device(pci_dev);
-}
+पूर्ण
 
 
-static const struct pci_device_id fore200e_pca_tbl[] = {
-    { PCI_VENDOR_ID_FORE, PCI_DEVICE_ID_FORE_PCA200E, PCI_ANY_ID, PCI_ANY_ID },
-    { 0, }
-};
+अटल स्थिर काष्ठा pci_device_id क्रमe200e_pca_tbl[] = अणु
+    अणु PCI_VENDOR_ID_FORE, PCI_DEVICE_ID_FORE_PCA200E, PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+    अणु 0, पूर्ण
+पूर्ण;
 
-MODULE_DEVICE_TABLE(pci, fore200e_pca_tbl);
+MODULE_DEVICE_TABLE(pci, क्रमe200e_pca_tbl);
 
-static struct pci_driver fore200e_pca_driver = {
+अटल काष्ठा pci_driver क्रमe200e_pca_driver = अणु
     .name =     "fore_200e",
-    .probe =    fore200e_pca_detect,
-    .remove =   fore200e_pca_remove_one,
-    .id_table = fore200e_pca_tbl,
-};
-#endif
+    .probe =    क्रमe200e_pca_detect,
+    .हटाओ =   क्रमe200e_pca_हटाओ_one,
+    .id_table = क्रमe200e_pca_tbl,
+पूर्ण;
+#पूर्ण_अगर
 
-static int __init fore200e_module_init(void)
-{
-	int err = 0;
+अटल पूर्णांक __init क्रमe200e_module_init(व्योम)
+अणु
+	पूर्णांक err = 0;
 
-	printk(FORE200E "FORE Systems 200E-series ATM driver - version " FORE200E_VERSION "\n");
+	prपूर्णांकk(FORE200E "FORE Systems 200E-series ATM driver - version " FORE200E_VERSION "\n");
 
-#ifdef CONFIG_SBUS
-	err = platform_driver_register(&fore200e_sba_driver);
-	if (err)
-		return err;
-#endif
+#अगर_घोषित CONFIG_SBUS
+	err = platक्रमm_driver_रेजिस्टर(&क्रमe200e_sba_driver);
+	अगर (err)
+		वापस err;
+#पूर्ण_अगर
 
-#ifdef CONFIG_PCI
-	err = pci_register_driver(&fore200e_pca_driver);
-#endif
+#अगर_घोषित CONFIG_PCI
+	err = pci_रेजिस्टर_driver(&क्रमe200e_pca_driver);
+#पूर्ण_अगर
 
-#ifdef CONFIG_SBUS
-	if (err)
-		platform_driver_unregister(&fore200e_sba_driver);
-#endif
+#अगर_घोषित CONFIG_SBUS
+	अगर (err)
+		platक्रमm_driver_unरेजिस्टर(&क्रमe200e_sba_driver);
+#पूर्ण_अगर
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit fore200e_module_cleanup(void)
-{
-#ifdef CONFIG_PCI
-	pci_unregister_driver(&fore200e_pca_driver);
-#endif
-#ifdef CONFIG_SBUS
-	platform_driver_unregister(&fore200e_sba_driver);
-#endif
-}
+अटल व्योम __निकास क्रमe200e_module_cleanup(व्योम)
+अणु
+#अगर_घोषित CONFIG_PCI
+	pci_unरेजिस्टर_driver(&क्रमe200e_pca_driver);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SBUS
+	platक्रमm_driver_unरेजिस्टर(&क्रमe200e_sba_driver);
+#पूर्ण_अगर
+पूर्ण
 
-static int
-fore200e_proc_read(struct atm_dev *dev, loff_t* pos, char* page)
-{
-    struct fore200e*     fore200e  = FORE200E_DEV(dev);
-    struct fore200e_vcc* fore200e_vcc;
-    struct atm_vcc*      vcc;
-    int                  i, len, left = *pos;
-    unsigned long        flags;
+अटल पूर्णांक
+क्रमe200e_proc_पढ़ो(काष्ठा aपंचांग_dev *dev, loff_t* pos, अक्षर* page)
+अणु
+    काष्ठा क्रमe200e*     क्रमe200e  = FORE200E_DEV(dev);
+    काष्ठा क्रमe200e_vcc* क्रमe200e_vcc;
+    काष्ठा aपंचांग_vcc*      vcc;
+    पूर्णांक                  i, len, left = *pos;
+    अचिन्हित दीर्घ        flags;
 
-    if (!left--) {
+    अगर (!left--) अणु
 
-	if (fore200e_getstats(fore200e) < 0)
-	    return -EIO;
+	अगर (क्रमe200e_माला_लोtats(क्रमe200e) < 0)
+	    वापस -EIO;
 
-	len = sprintf(page,"\n"
+	len = प्र_लिखो(page,"\n"
 		       " device:\n"
-		       "   internal name:\t\t%s\n", fore200e->name);
+		       "   internal name:\t\t%s\n", क्रमe200e->name);
 
-	/* print bus-specific information */
-	if (fore200e->bus->proc_read)
-	    len += fore200e->bus->proc_read(fore200e, page + len);
+	/* prपूर्णांक bus-specअगरic inक्रमmation */
+	अगर (क्रमe200e->bus->proc_पढ़ो)
+	    len += क्रमe200e->bus->proc_पढ़ो(क्रमe200e, page + len);
 	
-	len += sprintf(page + len,
+	len += प्र_लिखो(page + len,
 		"   interrupt line:\t\t%s\n"
 		"   physical base address:\t0x%p\n"
 		"   virtual base address:\t0x%p\n"
 		"   factory address (ESI):\t%pM\n"
 		"   board serial number:\t\t%d\n\n",
-		fore200e_irq_itoa(fore200e->irq),
-		(void*)fore200e->phys_base,
-		fore200e->virt_base,
-		fore200e->esi,
-		fore200e->esi[4] * 256 + fore200e->esi[5]);
+		क्रमe200e_irq_itoa(क्रमe200e->irq),
+		(व्योम*)क्रमe200e->phys_base,
+		क्रमe200e->virt_base,
+		क्रमe200e->esi,
+		क्रमe200e->esi[4] * 256 + क्रमe200e->esi[5]);
 
-	return len;
-    }
+	वापस len;
+    पूर्ण
 
-    if (!left--)
-	return sprintf(page,
+    अगर (!left--)
+	वापस प्र_लिखो(page,
 		       "   free small bufs, scheme 1:\t%d\n"
 		       "   free large bufs, scheme 1:\t%d\n"
 		       "   free small bufs, scheme 2:\t%d\n"
 		       "   free large bufs, scheme 2:\t%d\n",
-		       fore200e->host_bsq[ BUFFER_SCHEME_ONE ][ BUFFER_MAGN_SMALL ].freebuf_count,
-		       fore200e->host_bsq[ BUFFER_SCHEME_ONE ][ BUFFER_MAGN_LARGE ].freebuf_count,
-		       fore200e->host_bsq[ BUFFER_SCHEME_TWO ][ BUFFER_MAGN_SMALL ].freebuf_count,
-		       fore200e->host_bsq[ BUFFER_SCHEME_TWO ][ BUFFER_MAGN_LARGE ].freebuf_count);
+		       क्रमe200e->host_bsq[ BUFFER_SCHEME_ONE ][ BUFFER_MAGN_SMALL ].मुक्तbuf_count,
+		       क्रमe200e->host_bsq[ BUFFER_SCHEME_ONE ][ BUFFER_MAGN_LARGE ].मुक्तbuf_count,
+		       क्रमe200e->host_bsq[ BUFFER_SCHEME_TWO ][ BUFFER_MAGN_SMALL ].मुक्तbuf_count,
+		       क्रमe200e->host_bsq[ BUFFER_SCHEME_TWO ][ BUFFER_MAGN_LARGE ].मुक्तbuf_count);
 
-    if (!left--) {
-	u32 hb = fore200e->bus->read(&fore200e->cp_queues->heartbeat);
+    अगर (!left--) अणु
+	u32 hb = क्रमe200e->bus->पढ़ो(&क्रमe200e->cp_queues->heartbeat);
 
-	len = sprintf(page,"\n\n"
+	len = प्र_लिखो(page,"\n\n"
 		      " cell processor:\n"
 		      "   heartbeat state:\t\t");
 	
-	if (hb >> 16 != 0xDEAD)
-	    len += sprintf(page + len, "0x%08x\n", hb);
-	else
-	    len += sprintf(page + len, "*** FATAL ERROR %04x ***\n", hb & 0xFFFF);
+	अगर (hb >> 16 != 0xDEAD)
+	    len += प्र_लिखो(page + len, "0x%08x\n", hb);
+	अन्यथा
+	    len += प्र_लिखो(page + len, "*** FATAL ERROR %04x ***\n", hb & 0xFFFF);
 
-	return len;
-    }
+	वापस len;
+    पूर्ण
 
-    if (!left--) {
-	static const char* media_name[] = {
+    अगर (!left--) अणु
+	अटल स्थिर अक्षर* media_name[] = अणु
 	    "unshielded twisted pair",
 	    "multimode optical fiber ST",
 	    "multimode optical fiber SC",
 	    "single-mode optical fiber ST",
 	    "single-mode optical fiber SC",
 	    "unknown"
-	};
+	पूर्ण;
 
-	static const char* oc3_mode[] = {
+	अटल स्थिर अक्षर* oc3_mode[] = अणु
 	    "normal operation",
 	    "diagnostic loopback",
 	    "line loopback",
 	    "unknown"
-	};
+	पूर्ण;
 
-	u32 fw_release     = fore200e->bus->read(&fore200e->cp_queues->fw_release);
-	u32 mon960_release = fore200e->bus->read(&fore200e->cp_queues->mon960_release);
-	u32 oc3_revision   = fore200e->bus->read(&fore200e->cp_queues->oc3_revision);
-	u32 media_index    = FORE200E_MEDIA_INDEX(fore200e->bus->read(&fore200e->cp_queues->media_type));
+	u32 fw_release     = क्रमe200e->bus->पढ़ो(&क्रमe200e->cp_queues->fw_release);
+	u32 mon960_release = क्रमe200e->bus->पढ़ो(&क्रमe200e->cp_queues->mon960_release);
+	u32 oc3_revision   = क्रमe200e->bus->पढ़ो(&क्रमe200e->cp_queues->oc3_revision);
+	u32 media_index    = FORE200E_MEDIA_INDEX(क्रमe200e->bus->पढ़ो(&क्रमe200e->cp_queues->media_type));
 	u32 oc3_index;
 
-	if (media_index > 4)
+	अगर (media_index > 4)
 		media_index = 5;
 	
-	switch (fore200e->loop_mode) {
-	    case ATM_LM_NONE:    oc3_index = 0;
-		                 break;
-	    case ATM_LM_LOC_PHY: oc3_index = 1;
-		                 break;
-	    case ATM_LM_RMT_PHY: oc3_index = 2;
-		                 break;
-	    default:             oc3_index = 3;
-	}
+	चयन (क्रमe200e->loop_mode) अणु
+	    हाल ATM_LM_NONE:    oc3_index = 0;
+		                 अवरोध;
+	    हाल ATM_LM_LOC_PHY: oc3_index = 1;
+		                 अवरोध;
+	    हाल ATM_LM_RMT_PHY: oc3_index = 2;
+		                 अवरोध;
+	    शेष:             oc3_index = 3;
+	पूर्ण
 
-	return sprintf(page,
+	वापस प्र_लिखो(page,
 		       "   firmware release:\t\t%d.%d.%d\n"
 		       "   monitor release:\t\t%d.%d\n"
 		       "   media type:\t\t\t%s\n"
@@ -2812,32 +2813,32 @@ fore200e_proc_read(struct atm_dev *dev, loff_t* pos, char* page)
 		       media_name[ media_index ],
 		       oc3_revision,
 		       oc3_mode[ oc3_index ]);
-    }
+    पूर्ण
 
-    if (!left--) {
-	struct cp_monitor __iomem * cp_monitor = fore200e->cp_monitor;
+    अगर (!left--) अणु
+	काष्ठा cp_monitor __iomem * cp_monitor = क्रमe200e->cp_monitor;
 
-	return sprintf(page,
+	वापस प्र_लिखो(page,
 		       "\n\n"
 		       " monitor:\n"
 		       "   version number:\t\t%d\n"
 		       "   boot status word:\t\t0x%08x\n",
-		       fore200e->bus->read(&cp_monitor->mon_version),
-		       fore200e->bus->read(&cp_monitor->bstat));
-    }
+		       क्रमe200e->bus->पढ़ो(&cp_monitor->mon_version),
+		       क्रमe200e->bus->पढ़ो(&cp_monitor->bstat));
+    पूर्ण
 
-    if (!left--)
-	return sprintf(page,
+    अगर (!left--)
+	वापस प्र_लिखो(page,
 		       "\n"
 		       " device statistics:\n"
 		       "  4b5b:\n"
 		       "     crc_header_errors:\t\t%10u\n"
 		       "     framing_errors:\t\t%10u\n",
-		       be32_to_cpu(fore200e->stats->phy.crc_header_errors),
-		       be32_to_cpu(fore200e->stats->phy.framing_errors));
+		       be32_to_cpu(क्रमe200e->stats->phy.crc_header_errors),
+		       be32_to_cpu(क्रमe200e->stats->phy.framing_errors));
     
-    if (!left--)
-	return sprintf(page, "\n"
+    अगर (!left--)
+	वापस प्र_लिखो(page, "\n"
 		       "  OC-3:\n"
 		       "     section_bip8_errors:\t%10u\n"
 		       "     path_bip8_errors:\t\t%10u\n"
@@ -2846,16 +2847,16 @@ fore200e_proc_read(struct atm_dev *dev, loff_t* pos, char* page)
 		       "     path_febe_errors:\t\t%10u\n"
 		       "     corr_hcs_errors:\t\t%10u\n"
 		       "     ucorr_hcs_errors:\t\t%10u\n",
-		       be32_to_cpu(fore200e->stats->oc3.section_bip8_errors),
-		       be32_to_cpu(fore200e->stats->oc3.path_bip8_errors),
-		       be32_to_cpu(fore200e->stats->oc3.line_bip24_errors),
-		       be32_to_cpu(fore200e->stats->oc3.line_febe_errors),
-		       be32_to_cpu(fore200e->stats->oc3.path_febe_errors),
-		       be32_to_cpu(fore200e->stats->oc3.corr_hcs_errors),
-		       be32_to_cpu(fore200e->stats->oc3.ucorr_hcs_errors));
+		       be32_to_cpu(क्रमe200e->stats->oc3.section_bip8_errors),
+		       be32_to_cpu(क्रमe200e->stats->oc3.path_bip8_errors),
+		       be32_to_cpu(क्रमe200e->stats->oc3.line_bip24_errors),
+		       be32_to_cpu(क्रमe200e->stats->oc3.line_febe_errors),
+		       be32_to_cpu(क्रमe200e->stats->oc3.path_febe_errors),
+		       be32_to_cpu(क्रमe200e->stats->oc3.corr_hcs_errors),
+		       be32_to_cpu(क्रमe200e->stats->oc3.ucorr_hcs_errors));
 
-    if (!left--)
-	return sprintf(page,"\n"
+    अगर (!left--)
+	वापस प्र_लिखो(page,"\n"
 		       "   ATM:\t\t\t\t     cells\n"
 		       "     TX:\t\t\t%10u\n"
 		       "     RX:\t\t\t%10u\n"
@@ -2863,25 +2864,25 @@ fore200e_proc_read(struct atm_dev *dev, loff_t* pos, char* page)
 		       "     vpi no conn:\t\t%10u\n"
 		       "     vci out of range:\t\t%10u\n"
 		       "     vci no conn:\t\t%10u\n",
-		       be32_to_cpu(fore200e->stats->atm.cells_transmitted),
-		       be32_to_cpu(fore200e->stats->atm.cells_received),
-		       be32_to_cpu(fore200e->stats->atm.vpi_bad_range),
-		       be32_to_cpu(fore200e->stats->atm.vpi_no_conn),
-		       be32_to_cpu(fore200e->stats->atm.vci_bad_range),
-		       be32_to_cpu(fore200e->stats->atm.vci_no_conn));
+		       be32_to_cpu(क्रमe200e->stats->aपंचांग.cells_transmitted),
+		       be32_to_cpu(क्रमe200e->stats->aपंचांग.cells_received),
+		       be32_to_cpu(क्रमe200e->stats->aपंचांग.vpi_bad_range),
+		       be32_to_cpu(क्रमe200e->stats->aपंचांग.vpi_no_conn),
+		       be32_to_cpu(क्रमe200e->stats->aपंचांग.vci_bad_range),
+		       be32_to_cpu(क्रमe200e->stats->aपंचांग.vci_no_conn));
     
-    if (!left--)
-	return sprintf(page,"\n"
+    अगर (!left--)
+	वापस प्र_लिखो(page,"\n"
 		       "   AAL0:\t\t\t     cells\n"
 		       "     TX:\t\t\t%10u\n"
 		       "     RX:\t\t\t%10u\n"
 		       "     dropped:\t\t\t%10u\n",
-		       be32_to_cpu(fore200e->stats->aal0.cells_transmitted),
-		       be32_to_cpu(fore200e->stats->aal0.cells_received),
-		       be32_to_cpu(fore200e->stats->aal0.cells_dropped));
+		       be32_to_cpu(क्रमe200e->stats->aal0.cells_transmitted),
+		       be32_to_cpu(क्रमe200e->stats->aal0.cells_received),
+		       be32_to_cpu(क्रमe200e->stats->aal0.cells_dropped));
     
-    if (!left--)
-	return sprintf(page,"\n"
+    अगर (!left--)
+	वापस प्र_लिखो(page,"\n"
 		       "   AAL3/4:\n"
 		       "     SAR sublayer:\t\t     cells\n"
 		       "       TX:\t\t\t%10u\n"
@@ -2894,18 +2895,18 @@ fore200e_proc_read(struct atm_dev *dev, loff_t* pos, char* page)
 		       "       RX:\t\t\t%10u\n"
 		       "       dropped:\t\t\t%10u\n"
 		       "       protocol errors:\t\t%10u\n",
-		       be32_to_cpu(fore200e->stats->aal34.cells_transmitted),
-		       be32_to_cpu(fore200e->stats->aal34.cells_received),
-		       be32_to_cpu(fore200e->stats->aal34.cells_dropped),
-		       be32_to_cpu(fore200e->stats->aal34.cells_crc_errors),
-		       be32_to_cpu(fore200e->stats->aal34.cells_protocol_errors),
-		       be32_to_cpu(fore200e->stats->aal34.cspdus_transmitted),
-		       be32_to_cpu(fore200e->stats->aal34.cspdus_received),
-		       be32_to_cpu(fore200e->stats->aal34.cspdus_dropped),
-		       be32_to_cpu(fore200e->stats->aal34.cspdus_protocol_errors));
+		       be32_to_cpu(क्रमe200e->stats->aal34.cells_transmitted),
+		       be32_to_cpu(क्रमe200e->stats->aal34.cells_received),
+		       be32_to_cpu(क्रमe200e->stats->aal34.cells_dropped),
+		       be32_to_cpu(क्रमe200e->stats->aal34.cells_crc_errors),
+		       be32_to_cpu(क्रमe200e->stats->aal34.cells_protocol_errors),
+		       be32_to_cpu(क्रमe200e->stats->aal34.cspdus_transmitted),
+		       be32_to_cpu(क्रमe200e->stats->aal34.cspdus_received),
+		       be32_to_cpu(क्रमe200e->stats->aal34.cspdus_dropped),
+		       be32_to_cpu(क्रमe200e->stats->aal34.cspdus_protocol_errors));
     
-    if (!left--)
-	return sprintf(page,"\n"
+    अगर (!left--)
+	वापस प्र_लिखो(page,"\n"
 		       "   AAL5:\n"
 		       "     SAR sublayer:\t\t     cells\n"
 		       "       TX:\t\t\t%10u\n"
@@ -2918,18 +2919,18 @@ fore200e_proc_read(struct atm_dev *dev, loff_t* pos, char* page)
 		       "       dropped:\t\t\t%10u\n"
 		       "       CRC errors:\t\t%10u\n"
 		       "       protocol errors:\t\t%10u\n",
-		       be32_to_cpu(fore200e->stats->aal5.cells_transmitted),
-		       be32_to_cpu(fore200e->stats->aal5.cells_received),
-		       be32_to_cpu(fore200e->stats->aal5.cells_dropped),
-		       be32_to_cpu(fore200e->stats->aal5.congestion_experienced),
-		       be32_to_cpu(fore200e->stats->aal5.cspdus_transmitted),
-		       be32_to_cpu(fore200e->stats->aal5.cspdus_received),
-		       be32_to_cpu(fore200e->stats->aal5.cspdus_dropped),
-		       be32_to_cpu(fore200e->stats->aal5.cspdus_crc_errors),
-		       be32_to_cpu(fore200e->stats->aal5.cspdus_protocol_errors));
+		       be32_to_cpu(क्रमe200e->stats->aal5.cells_transmitted),
+		       be32_to_cpu(क्रमe200e->stats->aal5.cells_received),
+		       be32_to_cpu(क्रमe200e->stats->aal5.cells_dropped),
+		       be32_to_cpu(क्रमe200e->stats->aal5.congestion_experienced),
+		       be32_to_cpu(क्रमe200e->stats->aal5.cspdus_transmitted),
+		       be32_to_cpu(क्रमe200e->stats->aal5.cspdus_received),
+		       be32_to_cpu(क्रमe200e->stats->aal5.cspdus_dropped),
+		       be32_to_cpu(क्रमe200e->stats->aal5.cspdus_crc_errors),
+		       be32_to_cpu(क्रमe200e->stats->aal5.cspdus_protocol_errors));
     
-    if (!left--)
-	return sprintf(page,"\n"
+    अगर (!left--)
+	वापस प्र_लिखो(page,"\n"
 		       "   AUX:\t\t       allocation failures\n"
 		       "     small b1:\t\t\t%10u\n"
 		       "     large b1:\t\t\t%10u\n"
@@ -2937,81 +2938,81 @@ fore200e_proc_read(struct atm_dev *dev, loff_t* pos, char* page)
 		       "     large b2:\t\t\t%10u\n"
 		       "     RX PDUs:\t\t\t%10u\n"
 		       "     TX PDUs:\t\t\t%10lu\n",
-		       be32_to_cpu(fore200e->stats->aux.small_b1_failed),
-		       be32_to_cpu(fore200e->stats->aux.large_b1_failed),
-		       be32_to_cpu(fore200e->stats->aux.small_b2_failed),
-		       be32_to_cpu(fore200e->stats->aux.large_b2_failed),
-		       be32_to_cpu(fore200e->stats->aux.rpd_alloc_failed),
-		       fore200e->tx_sat);
+		       be32_to_cpu(क्रमe200e->stats->aux.small_b1_failed),
+		       be32_to_cpu(क्रमe200e->stats->aux.large_b1_failed),
+		       be32_to_cpu(क्रमe200e->stats->aux.small_b2_failed),
+		       be32_to_cpu(क्रमe200e->stats->aux.large_b2_failed),
+		       be32_to_cpu(क्रमe200e->stats->aux.rpd_alloc_failed),
+		       क्रमe200e->tx_sat);
     
-    if (!left--)
-	return sprintf(page,"\n"
+    अगर (!left--)
+	वापस प्र_लिखो(page,"\n"
 		       " receive carrier:\t\t\t%s\n",
-		       fore200e->stats->aux.receive_carrier ? "ON" : "OFF!");
+		       क्रमe200e->stats->aux.receive_carrier ? "ON" : "OFF!");
     
-    if (!left--) {
-        return sprintf(page,"\n"
+    अगर (!left--) अणु
+        वापस प्र_लिखो(page,"\n"
 		       " VCCs:\n  address   VPI VCI   AAL "
 		       "TX PDUs   TX min/max size  RX PDUs   RX min/max size\n");
-    }
+    पूर्ण
 
-    for (i = 0; i < NBR_CONNECT; i++) {
+    क्रम (i = 0; i < NBR_CONNECT; i++) अणु
 
-	vcc = fore200e->vc_map[i].vcc;
+	vcc = क्रमe200e->vc_map[i].vcc;
 
-	if (vcc == NULL)
-	    continue;
+	अगर (vcc == शून्य)
+	    जारी;
 
-	spin_lock_irqsave(&fore200e->q_lock, flags);
+	spin_lock_irqsave(&क्रमe200e->q_lock, flags);
 
-	if (vcc && test_bit(ATM_VF_READY, &vcc->flags) && !left--) {
+	अगर (vcc && test_bit(ATM_VF_READY, &vcc->flags) && !left--) अणु
 
-	    fore200e_vcc = FORE200E_VCC(vcc);
-	    ASSERT(fore200e_vcc);
+	    क्रमe200e_vcc = FORE200E_VCC(vcc);
+	    ASSERT(क्रमe200e_vcc);
 
-	    len = sprintf(page,
+	    len = प्र_लिखो(page,
 			  "  %pK  %03d %05d %1d   %09lu %05d/%05d      %09lu %05d/%05d\n",
 			  vcc,
-			  vcc->vpi, vcc->vci, fore200e_atm2fore_aal(vcc->qos.aal),
-			  fore200e_vcc->tx_pdu,
-			  fore200e_vcc->tx_min_pdu > 0xFFFF ? 0 : fore200e_vcc->tx_min_pdu,
-			  fore200e_vcc->tx_max_pdu,
-			  fore200e_vcc->rx_pdu,
-			  fore200e_vcc->rx_min_pdu > 0xFFFF ? 0 : fore200e_vcc->rx_min_pdu,
-			  fore200e_vcc->rx_max_pdu);
+			  vcc->vpi, vcc->vci, क्रमe200e_aपंचांग2क्रमe_aal(vcc->qos.aal),
+			  क्रमe200e_vcc->tx_pdu,
+			  क्रमe200e_vcc->tx_min_pdu > 0xFFFF ? 0 : क्रमe200e_vcc->tx_min_pdu,
+			  क्रमe200e_vcc->tx_max_pdu,
+			  क्रमe200e_vcc->rx_pdu,
+			  क्रमe200e_vcc->rx_min_pdu > 0xFFFF ? 0 : क्रमe200e_vcc->rx_min_pdu,
+			  क्रमe200e_vcc->rx_max_pdu);
 
-	    spin_unlock_irqrestore(&fore200e->q_lock, flags);
-	    return len;
-	}
+	    spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
+	    वापस len;
+	पूर्ण
 
-	spin_unlock_irqrestore(&fore200e->q_lock, flags);
-    }
+	spin_unlock_irqrestore(&क्रमe200e->q_lock, flags);
+    पूर्ण
     
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
-module_init(fore200e_module_init);
-module_exit(fore200e_module_cleanup);
+module_init(क्रमe200e_module_init);
+module_निकास(क्रमe200e_module_cleanup);
 
 
-static const struct atmdev_ops fore200e_ops = {
-	.open       = fore200e_open,
-	.close      = fore200e_close,
-	.ioctl      = fore200e_ioctl,
-	.send       = fore200e_send,
-	.change_qos = fore200e_change_qos,
-	.proc_read  = fore200e_proc_read,
+अटल स्थिर काष्ठा aपंचांगdev_ops क्रमe200e_ops = अणु
+	.खोलो       = क्रमe200e_खोलो,
+	.बंद      = क्रमe200e_बंद,
+	.ioctl      = क्रमe200e_ioctl,
+	.send       = क्रमe200e_send,
+	.change_qos = क्रमe200e_change_qos,
+	.proc_पढ़ो  = क्रमe200e_proc_पढ़ो,
 	.owner      = THIS_MODULE
-};
+पूर्ण;
 
 MODULE_LICENSE("GPL");
-#ifdef CONFIG_PCI
-#ifdef __LITTLE_ENDIAN__
+#अगर_घोषित CONFIG_PCI
+#अगर_घोषित __LITTLE_ENDIAN__
 MODULE_FIRMWARE("pca200e.bin");
-#else
+#अन्यथा
 MODULE_FIRMWARE("pca200e_ecd.bin2");
-#endif
-#endif /* CONFIG_PCI */
-#ifdef CONFIG_SBUS
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_PCI */
+#अगर_घोषित CONFIG_SBUS
 MODULE_FIRMWARE("sba200e_ecd.bin2");
-#endif
+#पूर्ण_अगर

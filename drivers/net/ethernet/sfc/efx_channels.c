@@ -1,148 +1,149 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2018 Solarflare Communications Inc.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
-#include "net_driver.h"
-#include <linux/module.h>
-#include "efx_channels.h"
-#include "efx.h"
-#include "efx_common.h"
-#include "tx_common.h"
-#include "rx_common.h"
-#include "nic.h"
-#include "sriov.h"
-#include "workarounds.h"
+#समावेश "net_driver.h"
+#समावेश <linux/module.h>
+#समावेश "efx_channels.h"
+#समावेश "efx.h"
+#समावेश "efx_common.h"
+#समावेश "tx_common.h"
+#समावेश "rx_common.h"
+#समावेश "nic.h"
+#समावेश "sriov.h"
+#समावेश "workarounds.h"
 
-/* This is the first interrupt mode to try out of:
+/* This is the first पूर्णांकerrupt mode to try out of:
  * 0 => MSI-X
  * 1 => MSI
  * 2 => legacy
  */
-unsigned int efx_interrupt_mode = EFX_INT_MODE_MSIX;
+अचिन्हित पूर्णांक efx_पूर्णांकerrupt_mode = EFX_INT_MODE_MSIX;
 
-/* This is the requested number of CPUs to use for Receive-Side Scaling (RSS),
+/* This is the requested number of CPUs to use क्रम Receive-Side Scaling (RSS),
  * i.e. the number of CPUs among which we may distribute simultaneous
- * interrupt handling.
+ * पूर्णांकerrupt handling.
  *
- * Cards without MSI-X will only target one CPU via legacy or MSI interrupt.
- * The default (0) means to assign an interrupt to each core.
+ * Cards without MSI-X will only target one CPU via legacy or MSI पूर्णांकerrupt.
+ * The शेष (0) means to assign an पूर्णांकerrupt to each core.
  */
-unsigned int rss_cpus;
+अचिन्हित पूर्णांक rss_cpus;
 
-static unsigned int irq_adapt_low_thresh = 8000;
-module_param(irq_adapt_low_thresh, uint, 0644);
+अटल अचिन्हित पूर्णांक irq_adapt_low_thresh = 8000;
+module_param(irq_adapt_low_thresh, uपूर्णांक, 0644);
 MODULE_PARM_DESC(irq_adapt_low_thresh,
 		 "Threshold score for reducing IRQ moderation");
 
-static unsigned int irq_adapt_high_thresh = 16000;
-module_param(irq_adapt_high_thresh, uint, 0644);
+अटल अचिन्हित पूर्णांक irq_adapt_high_thresh = 16000;
+module_param(irq_adapt_high_thresh, uपूर्णांक, 0644);
 MODULE_PARM_DESC(irq_adapt_high_thresh,
 		 "Threshold score for increasing IRQ moderation");
 
-/* This is the weight assigned to each of the (per-channel) virtual
+/* This is the weight asचिन्हित to each of the (per-channel) भव
  * NAPI devices.
  */
-static int napi_weight = 64;
+अटल पूर्णांक napi_weight = 64;
 
 /***************
  * Housekeeping
  ***************/
 
-int efx_channel_dummy_op_int(struct efx_channel *channel)
-{
-	return 0;
-}
+पूर्णांक efx_channel_dummy_op_पूर्णांक(काष्ठा efx_channel *channel)
+अणु
+	वापस 0;
+पूर्ण
 
-void efx_channel_dummy_op_void(struct efx_channel *channel)
-{
-}
+व्योम efx_channel_dummy_op_व्योम(काष्ठा efx_channel *channel)
+अणु
+पूर्ण
 
-static const struct efx_channel_type efx_default_channel_type = {
-	.pre_probe		= efx_channel_dummy_op_int,
-	.post_remove		= efx_channel_dummy_op_void,
+अटल स्थिर काष्ठा efx_channel_type efx_शेष_channel_type = अणु
+	.pre_probe		= efx_channel_dummy_op_पूर्णांक,
+	.post_हटाओ		= efx_channel_dummy_op_व्योम,
 	.get_name		= efx_get_channel_name,
 	.copy			= efx_copy_channel,
-	.want_txqs		= efx_default_channel_want_txqs,
+	.want_txqs		= efx_शेष_channel_want_txqs,
 	.keep_eventq		= false,
 	.want_pio		= true,
-};
+पूर्ण;
 
 /*************
  * INTERRUPTS
  *************/
 
-static unsigned int efx_wanted_parallelism(struct efx_nic *efx)
-{
-	cpumask_var_t thread_mask;
-	unsigned int count;
-	int cpu;
+अटल अचिन्हित पूर्णांक efx_wanted_parallelism(काष्ठा efx_nic *efx)
+अणु
+	cpumask_var_t thपढ़ो_mask;
+	अचिन्हित पूर्णांक count;
+	पूर्णांक cpu;
 
-	if (rss_cpus) {
+	अगर (rss_cpus) अणु
 		count = rss_cpus;
-	} else {
-		if (unlikely(!zalloc_cpumask_var(&thread_mask, GFP_KERNEL))) {
-			netif_warn(efx, probe, efx->net_dev,
+	पूर्ण अन्यथा अणु
+		अगर (unlikely(!zalloc_cpumask_var(&thपढ़ो_mask, GFP_KERNEL))) अणु
+			netअगर_warn(efx, probe, efx->net_dev,
 				   "RSS disabled due to allocation failure\n");
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		count = 0;
-		for_each_online_cpu(cpu) {
-			if (!cpumask_test_cpu(cpu, thread_mask)) {
+		क्रम_each_online_cpu(cpu) अणु
+			अगर (!cpumask_test_cpu(cpu, thपढ़ो_mask)) अणु
 				++count;
-				cpumask_or(thread_mask, thread_mask,
+				cpumask_or(thपढ़ो_mask, thपढ़ो_mask,
 					   topology_sibling_cpumask(cpu));
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		free_cpumask_var(thread_mask);
-	}
+		मुक्त_cpumask_var(thपढ़ो_mask);
+	पूर्ण
 
-	if (count > EFX_MAX_RX_QUEUES) {
-		netif_cond_dbg(efx, probe, efx->net_dev, !rss_cpus, warn,
+	अगर (count > EFX_MAX_RX_QUEUES) अणु
+		netअगर_cond_dbg(efx, probe, efx->net_dev, !rss_cpus, warn,
 			       "Reducing number of rx queues from %u to %u.\n",
 			       count, EFX_MAX_RX_QUEUES);
 		count = EFX_MAX_RX_QUEUES;
-	}
+	पूर्ण
 
-	/* If RSS is requested for the PF *and* VFs then we can't write RSS
+	/* If RSS is requested क्रम the PF *and* VFs then we can't ग_लिखो RSS
 	 * table entries that are inaccessible to VFs
 	 */
-#ifdef CONFIG_SFC_SRIOV
-	if (efx->type->sriov_wanted) {
-		if (efx->type->sriov_wanted(efx) && efx_vf_size(efx) > 1 &&
-		    count > efx_vf_size(efx)) {
-			netif_warn(efx, probe, efx->net_dev,
+#अगर_घोषित CONFIG_SFC_SRIOV
+	अगर (efx->type->sriov_wanted) अणु
+		अगर (efx->type->sriov_wanted(efx) && efx_vf_size(efx) > 1 &&
+		    count > efx_vf_size(efx)) अणु
+			netअगर_warn(efx, probe, efx->net_dev,
 				   "Reducing number of RSS channels from %u to %u for "
 				   "VF support. Increase vf-msix-limit to use more "
 				   "channels on the PF.\n",
 				   count, efx_vf_size(efx));
 			count = efx_vf_size(efx);
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int efx_allocate_msix_channels(struct efx_nic *efx,
-				      unsigned int max_channels,
-				      unsigned int extra_channels,
-				      unsigned int parallelism)
-{
-	unsigned int n_channels = parallelism;
-	int vec_count;
-	int tx_per_ev;
-	int n_xdp_tx;
-	int n_xdp_ev;
+अटल पूर्णांक efx_allocate_msix_channels(काष्ठा efx_nic *efx,
+				      अचिन्हित पूर्णांक max_channels,
+				      अचिन्हित पूर्णांक extra_channels,
+				      अचिन्हित पूर्णांक parallelism)
+अणु
+	अचिन्हित पूर्णांक n_channels = parallelism;
+	पूर्णांक vec_count;
+	पूर्णांक tx_per_ev;
+	पूर्णांक n_xdp_tx;
+	पूर्णांक n_xdp_ev;
 
-	if (efx_separate_tx_channels)
+	अगर (efx_separate_tx_channels)
 		n_channels *= 2;
 	n_channels += extra_channels;
 
@@ -156,47 +157,47 @@ static int efx_allocate_msix_channels(struct efx_nic *efx,
 	n_xdp_ev = DIV_ROUND_UP(n_xdp_tx, tx_per_ev);
 
 	vec_count = pci_msix_vec_count(efx->pci_dev);
-	if (vec_count < 0)
-		return vec_count;
+	अगर (vec_count < 0)
+		वापस vec_count;
 
-	max_channels = min_t(unsigned int, vec_count, max_channels);
+	max_channels = min_t(अचिन्हित पूर्णांक, vec_count, max_channels);
 
 	/* Check resources.
 	 * We need a channel per event queue, plus a VI per tx queue.
 	 * This may be more pessimistic than it needs to be.
 	 */
-	if (n_channels + n_xdp_ev > max_channels) {
-		netif_err(efx, drv, efx->net_dev,
+	अगर (n_channels + n_xdp_ev > max_channels) अणु
+		netअगर_err(efx, drv, efx->net_dev,
 			  "Insufficient resources for %d XDP event queues (%d other channels, max %d)\n",
 			  n_xdp_ev, n_channels, max_channels);
 		efx->n_xdp_channels = 0;
 		efx->xdp_tx_per_channel = 0;
 		efx->xdp_tx_queue_count = 0;
-	} else if (n_channels + n_xdp_tx > efx->max_vis) {
-		netif_err(efx, drv, efx->net_dev,
+	पूर्ण अन्यथा अगर (n_channels + n_xdp_tx > efx->max_vis) अणु
+		netअगर_err(efx, drv, efx->net_dev,
 			  "Insufficient resources for %d XDP TX queues (%d other channels, max VIs %d)\n",
 			  n_xdp_tx, n_channels, efx->max_vis);
 		efx->n_xdp_channels = 0;
 		efx->xdp_tx_per_channel = 0;
 		efx->xdp_tx_queue_count = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		efx->n_xdp_channels = n_xdp_ev;
 		efx->xdp_tx_per_channel = EFX_MAX_TXQ_PER_CHANNEL;
 		efx->xdp_tx_queue_count = n_xdp_tx;
 		n_channels += n_xdp_ev;
-		netif_dbg(efx, drv, efx->net_dev,
+		netअगर_dbg(efx, drv, efx->net_dev,
 			  "Allocating %d TX and %d event queues for XDP\n",
 			  n_xdp_tx, n_xdp_ev);
-	}
+	पूर्ण
 
-	if (vec_count < n_channels) {
-		netif_err(efx, drv, efx->net_dev,
+	अगर (vec_count < n_channels) अणु
+		netअगर_err(efx, drv, efx->net_dev,
 			  "WARNING: Insufficient MSI-X vectors available (%d < %u).\n",
 			  vec_count, n_channels);
-		netif_err(efx, drv, efx->net_dev,
+		netअगर_err(efx, drv, efx->net_dev,
 			  "WARNING: Performance may be reduced.\n");
 		n_channels = vec_count;
-	}
+	पूर्ण
 
 	n_channels = min(n_channels, max_channels);
 
@@ -205,7 +206,7 @@ static int efx_allocate_msix_channels(struct efx_nic *efx,
 	/* Ignore XDP tx channels when creating rx channels. */
 	n_channels -= efx->n_xdp_channels;
 
-	if (efx_separate_tx_channels) {
+	अगर (efx_separate_tx_channels) अणु
 		efx->n_tx_channels =
 			min(max(n_channels / 2, 1U),
 			    efx->max_tx_channels);
@@ -214,235 +215,235 @@ static int efx_allocate_msix_channels(struct efx_nic *efx,
 		efx->n_rx_channels =
 			max(n_channels -
 			    efx->n_tx_channels, 1U);
-	} else {
+	पूर्ण अन्यथा अणु
 		efx->n_tx_channels = min(n_channels, efx->max_tx_channels);
 		efx->tx_channel_offset = 0;
 		efx->n_rx_channels = n_channels;
-	}
+	पूर्ण
 
 	efx->n_rx_channels = min(efx->n_rx_channels, parallelism);
 	efx->n_tx_channels = min(efx->n_tx_channels, parallelism);
 
 	efx->xdp_channel_offset = n_channels;
 
-	netif_dbg(efx, drv, efx->net_dev,
+	netअगर_dbg(efx, drv, efx->net_dev,
 		  "Allocating %u RX channels\n",
 		  efx->n_rx_channels);
 
-	return efx->n_channels;
-}
+	वापस efx->n_channels;
+पूर्ण
 
-/* Probe the number and type of interrupts we are able to obtain, and
+/* Probe the number and type of पूर्णांकerrupts we are able to obtain, and
  * the resulting numbers of channels and RX queues.
  */
-int efx_probe_interrupts(struct efx_nic *efx)
-{
-	unsigned int extra_channels = 0;
-	unsigned int rss_spread;
-	unsigned int i, j;
-	int rc;
+पूर्णांक efx_probe_पूर्णांकerrupts(काष्ठा efx_nic *efx)
+अणु
+	अचिन्हित पूर्णांक extra_channels = 0;
+	अचिन्हित पूर्णांक rss_spपढ़ो;
+	अचिन्हित पूर्णांक i, j;
+	पूर्णांक rc;
 
-	for (i = 0; i < EFX_MAX_EXTRA_CHANNELS; i++)
-		if (efx->extra_channel_type[i])
+	क्रम (i = 0; i < EFX_MAX_EXTRA_CHANNELS; i++)
+		अगर (efx->extra_channel_type[i])
 			++extra_channels;
 
-	if (efx->interrupt_mode == EFX_INT_MODE_MSIX) {
-		unsigned int parallelism = efx_wanted_parallelism(efx);
-		struct msix_entry xentries[EFX_MAX_CHANNELS];
-		unsigned int n_channels;
+	अगर (efx->पूर्णांकerrupt_mode == EFX_INT_MODE_MSIX) अणु
+		अचिन्हित पूर्णांक parallelism = efx_wanted_parallelism(efx);
+		काष्ठा msix_entry xentries[EFX_MAX_CHANNELS];
+		अचिन्हित पूर्णांक n_channels;
 
 		rc = efx_allocate_msix_channels(efx, efx->max_channels,
 						extra_channels, parallelism);
-		if (rc >= 0) {
+		अगर (rc >= 0) अणु
 			n_channels = rc;
-			for (i = 0; i < n_channels; i++)
+			क्रम (i = 0; i < n_channels; i++)
 				xentries[i].entry = i;
 			rc = pci_enable_msix_range(efx->pci_dev, xentries, 1,
 						   n_channels);
-		}
-		if (rc < 0) {
+		पूर्ण
+		अगर (rc < 0) अणु
 			/* Fall back to single channel MSI */
-			netif_err(efx, drv, efx->net_dev,
+			netअगर_err(efx, drv, efx->net_dev,
 				  "could not enable MSI-X\n");
-			if (efx->type->min_interrupt_mode >= EFX_INT_MODE_MSI)
-				efx->interrupt_mode = EFX_INT_MODE_MSI;
-			else
-				return rc;
-		} else if (rc < n_channels) {
-			netif_err(efx, drv, efx->net_dev,
+			अगर (efx->type->min_पूर्णांकerrupt_mode >= EFX_INT_MODE_MSI)
+				efx->पूर्णांकerrupt_mode = EFX_INT_MODE_MSI;
+			अन्यथा
+				वापस rc;
+		पूर्ण अन्यथा अगर (rc < n_channels) अणु
+			netअगर_err(efx, drv, efx->net_dev,
 				  "WARNING: Insufficient MSI-X vectors"
 				  " available (%d < %u).\n", rc, n_channels);
-			netif_err(efx, drv, efx->net_dev,
+			netअगर_err(efx, drv, efx->net_dev,
 				  "WARNING: Performance may be reduced.\n");
 			n_channels = rc;
-		}
+		पूर्ण
 
-		if (rc > 0) {
-			for (i = 0; i < efx->n_channels; i++)
+		अगर (rc > 0) अणु
+			क्रम (i = 0; i < efx->n_channels; i++)
 				efx_get_channel(efx, i)->irq =
 					xentries[i].vector;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Try single interrupt MSI */
-	if (efx->interrupt_mode == EFX_INT_MODE_MSI) {
+	/* Try single पूर्णांकerrupt MSI */
+	अगर (efx->पूर्णांकerrupt_mode == EFX_INT_MODE_MSI) अणु
 		efx->n_channels = 1;
 		efx->n_rx_channels = 1;
 		efx->n_tx_channels = 1;
 		efx->n_xdp_channels = 0;
 		efx->xdp_channel_offset = efx->n_channels;
 		rc = pci_enable_msi(efx->pci_dev);
-		if (rc == 0) {
+		अगर (rc == 0) अणु
 			efx_get_channel(efx, 0)->irq = efx->pci_dev->irq;
-		} else {
-			netif_err(efx, drv, efx->net_dev,
+		पूर्ण अन्यथा अणु
+			netअगर_err(efx, drv, efx->net_dev,
 				  "could not enable MSI\n");
-			if (efx->type->min_interrupt_mode >= EFX_INT_MODE_LEGACY)
-				efx->interrupt_mode = EFX_INT_MODE_LEGACY;
-			else
-				return rc;
-		}
-	}
+			अगर (efx->type->min_पूर्णांकerrupt_mode >= EFX_INT_MODE_LEGACY)
+				efx->पूर्णांकerrupt_mode = EFX_INT_MODE_LEGACY;
+			अन्यथा
+				वापस rc;
+		पूर्ण
+	पूर्ण
 
-	/* Assume legacy interrupts */
-	if (efx->interrupt_mode == EFX_INT_MODE_LEGACY) {
+	/* Assume legacy पूर्णांकerrupts */
+	अगर (efx->पूर्णांकerrupt_mode == EFX_INT_MODE_LEGACY) अणु
 		efx->n_channels = 1 + (efx_separate_tx_channels ? 1 : 0);
 		efx->n_rx_channels = 1;
 		efx->n_tx_channels = 1;
 		efx->n_xdp_channels = 0;
 		efx->xdp_channel_offset = efx->n_channels;
 		efx->legacy_irq = efx->pci_dev->irq;
-	}
+	पूर्ण
 
-	/* Assign extra channels if possible, before XDP channels */
+	/* Assign extra channels अगर possible, beक्रमe XDP channels */
 	efx->n_extra_tx_channels = 0;
 	j = efx->xdp_channel_offset;
-	for (i = 0; i < EFX_MAX_EXTRA_CHANNELS; i++) {
-		if (!efx->extra_channel_type[i])
-			continue;
-		if (j <= efx->tx_channel_offset + efx->n_tx_channels) {
+	क्रम (i = 0; i < EFX_MAX_EXTRA_CHANNELS; i++) अणु
+		अगर (!efx->extra_channel_type[i])
+			जारी;
+		अगर (j <= efx->tx_channel_offset + efx->n_tx_channels) अणु
 			efx->extra_channel_type[i]->handle_no_channel(efx);
-		} else {
+		पूर्ण अन्यथा अणु
 			--j;
 			efx_get_channel(efx, j)->type =
 				efx->extra_channel_type[i];
-			if (efx_channel_has_tx_queues(efx_get_channel(efx, j)))
+			अगर (efx_channel_has_tx_queues(efx_get_channel(efx, j)))
 				efx->n_extra_tx_channels++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	rss_spread = efx->n_rx_channels;
-	/* RSS might be usable on VFs even if it is disabled on the PF */
-#ifdef CONFIG_SFC_SRIOV
-	if (efx->type->sriov_wanted) {
-		efx->rss_spread = ((rss_spread > 1 ||
+	rss_spपढ़ो = efx->n_rx_channels;
+	/* RSS might be usable on VFs even अगर it is disabled on the PF */
+#अगर_घोषित CONFIG_SFC_SRIOV
+	अगर (efx->type->sriov_wanted) अणु
+		efx->rss_spपढ़ो = ((rss_spपढ़ो > 1 ||
 				    !efx->type->sriov_wanted(efx)) ?
-				   rss_spread : efx_vf_size(efx));
-		return 0;
-	}
-#endif
-	efx->rss_spread = rss_spread;
+				   rss_spपढ़ो : efx_vf_size(efx));
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
+	efx->rss_spपढ़ो = rss_spपढ़ो;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if defined(CONFIG_SMP)
-void efx_set_interrupt_affinity(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
-	unsigned int cpu;
+#अगर defined(CONFIG_SMP)
+व्योम efx_set_पूर्णांकerrupt_affinity(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
+	अचिन्हित पूर्णांक cpu;
 
-	efx_for_each_channel(channel, efx) {
-		cpu = cpumask_local_spread(channel->channel,
+	efx_क्रम_each_channel(channel, efx) अणु
+		cpu = cpumask_local_spपढ़ो(channel->channel,
 					   pcibus_to_node(efx->pci_dev->bus));
-		irq_set_affinity_hint(channel->irq, cpumask_of(cpu));
-	}
-}
+		irq_set_affinity_hपूर्णांक(channel->irq, cpumask_of(cpu));
+	पूर्ण
+पूर्ण
 
-void efx_clear_interrupt_affinity(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
+व्योम efx_clear_पूर्णांकerrupt_affinity(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
 
-	efx_for_each_channel(channel, efx)
-		irq_set_affinity_hint(channel->irq, NULL);
-}
-#else
-void
-efx_set_interrupt_affinity(struct efx_nic *efx __attribute__ ((unused)))
-{
-}
+	efx_क्रम_each_channel(channel, efx)
+		irq_set_affinity_hपूर्णांक(channel->irq, शून्य);
+पूर्ण
+#अन्यथा
+व्योम
+efx_set_पूर्णांकerrupt_affinity(काष्ठा efx_nic *efx __attribute__ ((unused)))
+अणु
+पूर्ण
 
-void
-efx_clear_interrupt_affinity(struct efx_nic *efx __attribute__ ((unused)))
-{
-}
-#endif /* CONFIG_SMP */
+व्योम
+efx_clear_पूर्णांकerrupt_affinity(काष्ठा efx_nic *efx __attribute__ ((unused)))
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-void efx_remove_interrupts(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
+व्योम efx_हटाओ_पूर्णांकerrupts(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
 
-	/* Remove MSI/MSI-X interrupts */
-	efx_for_each_channel(channel, efx)
+	/* Remove MSI/MSI-X पूर्णांकerrupts */
+	efx_क्रम_each_channel(channel, efx)
 		channel->irq = 0;
 	pci_disable_msi(efx->pci_dev);
 	pci_disable_msix(efx->pci_dev);
 
-	/* Remove legacy interrupt */
+	/* Remove legacy पूर्णांकerrupt */
 	efx->legacy_irq = 0;
-}
+पूर्ण
 
 /***************
  * EVENT QUEUES
  ***************/
 
 /* Create event queue
- * Event queue memory allocations are done only once.  If the channel
+ * Event queue memory allocations are करोne only once.  If the channel
  * is reset, the memory buffer will be reused; this guards against
- * errors during channel reset and also simplifies interrupt handling.
+ * errors during channel reset and also simplअगरies पूर्णांकerrupt handling.
  */
-int efx_probe_eventq(struct efx_channel *channel)
-{
-	struct efx_nic *efx = channel->efx;
-	unsigned long entries;
+पूर्णांक efx_probe_eventq(काष्ठा efx_channel *channel)
+अणु
+	काष्ठा efx_nic *efx = channel->efx;
+	अचिन्हित दीर्घ entries;
 
-	netif_dbg(efx, probe, efx->net_dev,
+	netअगर_dbg(efx, probe, efx->net_dev,
 		  "chan %d create event queue\n", channel->channel);
 
-	/* Build an event queue with room for one event per tx and rx buffer,
-	 * plus some extra for link state events and MCDI completions.
+	/* Build an event queue with room क्रम one event per tx and rx buffer,
+	 * plus some extra क्रम link state events and MCDI completions.
 	 */
-	entries = roundup_pow_of_two(efx->rxq_entries + efx->txq_entries + 128);
+	entries = roundup_घात_of_two(efx->rxq_entries + efx->txq_entries + 128);
 	EFX_WARN_ON_PARANOID(entries > EFX_MAX_EVQ_SIZE);
 	channel->eventq_mask = max(entries, EFX_MIN_EVQ_SIZE) - 1;
 
-	return efx_nic_probe_eventq(channel);
-}
+	वापस efx_nic_probe_eventq(channel);
+पूर्ण
 
 /* Prepare channel's event queue */
-int efx_init_eventq(struct efx_channel *channel)
-{
-	struct efx_nic *efx = channel->efx;
-	int rc;
+पूर्णांक efx_init_eventq(काष्ठा efx_channel *channel)
+अणु
+	काष्ठा efx_nic *efx = channel->efx;
+	पूर्णांक rc;
 
 	EFX_WARN_ON_PARANOID(channel->eventq_init);
 
-	netif_dbg(efx, drv, efx->net_dev,
+	netअगर_dbg(efx, drv, efx->net_dev,
 		  "chan %d init event queue\n", channel->channel);
 
 	rc = efx_nic_init_eventq(channel);
-	if (rc == 0) {
+	अगर (rc == 0) अणु
 		efx->type->push_irq_moderation(channel);
-		channel->eventq_read_ptr = 0;
+		channel->eventq_पढ़ो_ptr = 0;
 		channel->eventq_init = true;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 /* Enable event queue processing and NAPI */
-void efx_start_eventq(struct efx_channel *channel)
-{
-	netif_dbg(channel->efx, ifup, channel->efx->net_dev,
+व्योम efx_start_eventq(काष्ठा efx_channel *channel)
+अणु
+	netअगर_dbg(channel->efx, अगरup, channel->efx->net_dev,
 		  "chan %d start event queue\n", channel->channel);
 
 	/* Make sure the NAPI handler sees the enabled flag set */
@@ -450,38 +451,38 @@ void efx_start_eventq(struct efx_channel *channel)
 	smp_wmb();
 
 	napi_enable(&channel->napi_str);
-	efx_nic_eventq_read_ack(channel);
-}
+	efx_nic_eventq_पढ़ो_ack(channel);
+पूर्ण
 
 /* Disable event queue processing and NAPI */
-void efx_stop_eventq(struct efx_channel *channel)
-{
-	if (!channel->enabled)
-		return;
+व्योम efx_stop_eventq(काष्ठा efx_channel *channel)
+अणु
+	अगर (!channel->enabled)
+		वापस;
 
 	napi_disable(&channel->napi_str);
 	channel->enabled = false;
-}
+पूर्ण
 
-void efx_fini_eventq(struct efx_channel *channel)
-{
-	if (!channel->eventq_init)
-		return;
+व्योम efx_fini_eventq(काष्ठा efx_channel *channel)
+अणु
+	अगर (!channel->eventq_init)
+		वापस;
 
-	netif_dbg(channel->efx, drv, channel->efx->net_dev,
+	netअगर_dbg(channel->efx, drv, channel->efx->net_dev,
 		  "chan %d fini event queue\n", channel->channel);
 
 	efx_nic_fini_eventq(channel);
 	channel->eventq_init = false;
-}
+पूर्ण
 
-void efx_remove_eventq(struct efx_channel *channel)
-{
-	netif_dbg(channel->efx, drv, channel->efx->net_dev,
+व्योम efx_हटाओ_eventq(काष्ठा efx_channel *channel)
+अणु
+	netअगर_dbg(channel->efx, drv, channel->efx->net_dev,
 		  "chan %d remove event queue\n", channel->channel);
 
-	efx_nic_remove_eventq(channel);
-}
+	efx_nic_हटाओ_eventq(channel);
+पूर्ण
 
 /**************************************************************************
  *
@@ -489,208 +490,208 @@ void efx_remove_eventq(struct efx_channel *channel)
  *
  *************************************************************************/
 
-#ifdef CONFIG_RFS_ACCEL
-static void efx_filter_rfs_expire(struct work_struct *data)
-{
-	struct delayed_work *dwork = to_delayed_work(data);
-	struct efx_channel *channel;
-	unsigned int time, quota;
+#अगर_घोषित CONFIG_RFS_ACCEL
+अटल व्योम efx_filter_rfs_expire(काष्ठा work_काष्ठा *data)
+अणु
+	काष्ठा delayed_work *dwork = to_delayed_work(data);
+	काष्ठा efx_channel *channel;
+	अचिन्हित पूर्णांक समय, quota;
 
-	channel = container_of(dwork, struct efx_channel, filter_work);
-	time = jiffies - channel->rfs_last_expiry;
-	quota = channel->rfs_filter_count * time / (30 * HZ);
-	if (quota >= 20 && __efx_filter_rfs_expire(channel, min(channel->rfs_filter_count, quota)))
-		channel->rfs_last_expiry += time;
-	/* Ensure we do more work eventually even if NAPI poll is not happening */
+	channel = container_of(dwork, काष्ठा efx_channel, filter_work);
+	समय = jअगरfies - channel->rfs_last_expiry;
+	quota = channel->rfs_filter_count * समय / (30 * HZ);
+	अगर (quota >= 20 && __efx_filter_rfs_expire(channel, min(channel->rfs_filter_count, quota)))
+		channel->rfs_last_expiry += समय;
+	/* Ensure we करो more work eventually even अगर NAPI poll is not happening */
 	schedule_delayed_work(dwork, 30 * HZ);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-/* Allocate and initialise a channel structure. */
-static struct efx_channel *efx_alloc_channel(struct efx_nic *efx, int i)
-{
-	struct efx_rx_queue *rx_queue;
-	struct efx_tx_queue *tx_queue;
-	struct efx_channel *channel;
-	int j;
+/* Allocate and initialise a channel काष्ठाure. */
+अटल काष्ठा efx_channel *efx_alloc_channel(काष्ठा efx_nic *efx, पूर्णांक i)
+अणु
+	काष्ठा efx_rx_queue *rx_queue;
+	काष्ठा efx_tx_queue *tx_queue;
+	काष्ठा efx_channel *channel;
+	पूर्णांक j;
 
-	channel = kzalloc(sizeof(*channel), GFP_KERNEL);
-	if (!channel)
-		return NULL;
+	channel = kzalloc(माप(*channel), GFP_KERNEL);
+	अगर (!channel)
+		वापस शून्य;
 
 	channel->efx = efx;
 	channel->channel = i;
-	channel->type = &efx_default_channel_type;
+	channel->type = &efx_शेष_channel_type;
 
-	for (j = 0; j < EFX_MAX_TXQ_PER_CHANNEL; j++) {
+	क्रम (j = 0; j < EFX_MAX_TXQ_PER_CHANNEL; j++) अणु
 		tx_queue = &channel->tx_queue[j];
 		tx_queue->efx = efx;
 		tx_queue->queue = -1;
 		tx_queue->label = j;
 		tx_queue->channel = channel;
-	}
+	पूर्ण
 
-#ifdef CONFIG_RFS_ACCEL
+#अगर_घोषित CONFIG_RFS_ACCEL
 	INIT_DELAYED_WORK(&channel->filter_work, efx_filter_rfs_expire);
-#endif
+#पूर्ण_अगर
 
 	rx_queue = &channel->rx_queue;
 	rx_queue->efx = efx;
-	timer_setup(&rx_queue->slow_fill, efx_rx_slow_fill, 0);
+	समयr_setup(&rx_queue->slow_fill, efx_rx_slow_fill, 0);
 
-	return channel;
-}
+	वापस channel;
+पूर्ण
 
-int efx_init_channels(struct efx_nic *efx)
-{
-	unsigned int i;
+पूर्णांक efx_init_channels(काष्ठा efx_nic *efx)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < EFX_MAX_CHANNELS; i++) {
+	क्रम (i = 0; i < EFX_MAX_CHANNELS; i++) अणु
 		efx->channel[i] = efx_alloc_channel(efx, i);
-		if (!efx->channel[i])
-			return -ENOMEM;
+		अगर (!efx->channel[i])
+			वापस -ENOMEM;
 		efx->msi_context[i].efx = efx;
 		efx->msi_context[i].index = i;
-	}
+	पूर्ण
 
-	/* Higher numbered interrupt modes are less capable! */
-	efx->interrupt_mode = min(efx->type->min_interrupt_mode,
-				  efx_interrupt_mode);
+	/* Higher numbered पूर्णांकerrupt modes are less capable! */
+	efx->पूर्णांकerrupt_mode = min(efx->type->min_पूर्णांकerrupt_mode,
+				  efx_पूर्णांकerrupt_mode);
 
 	efx->max_channels = EFX_MAX_CHANNELS;
 	efx->max_tx_channels = EFX_MAX_CHANNELS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void efx_fini_channels(struct efx_nic *efx)
-{
-	unsigned int i;
+व्योम efx_fini_channels(काष्ठा efx_nic *efx)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < EFX_MAX_CHANNELS; i++)
-		if (efx->channel[i]) {
-			kfree(efx->channel[i]);
-			efx->channel[i] = NULL;
-		}
-}
+	क्रम (i = 0; i < EFX_MAX_CHANNELS; i++)
+		अगर (efx->channel[i]) अणु
+			kमुक्त(efx->channel[i]);
+			efx->channel[i] = शून्य;
+		पूर्ण
+पूर्ण
 
-/* Allocate and initialise a channel structure, copying parameters
- * (but not resources) from an old channel structure.
+/* Allocate and initialise a channel काष्ठाure, copying parameters
+ * (but not resources) from an old channel काष्ठाure.
  */
-struct efx_channel *efx_copy_channel(const struct efx_channel *old_channel)
-{
-	struct efx_rx_queue *rx_queue;
-	struct efx_tx_queue *tx_queue;
-	struct efx_channel *channel;
-	int j;
+काष्ठा efx_channel *efx_copy_channel(स्थिर काष्ठा efx_channel *old_channel)
+अणु
+	काष्ठा efx_rx_queue *rx_queue;
+	काष्ठा efx_tx_queue *tx_queue;
+	काष्ठा efx_channel *channel;
+	पूर्णांक j;
 
-	channel = kmalloc(sizeof(*channel), GFP_KERNEL);
-	if (!channel)
-		return NULL;
+	channel = kदो_स्मृति(माप(*channel), GFP_KERNEL);
+	अगर (!channel)
+		वापस शून्य;
 
 	*channel = *old_channel;
 
-	channel->napi_dev = NULL;
+	channel->napi_dev = शून्य;
 	INIT_HLIST_NODE(&channel->napi_str.napi_hash_node);
 	channel->napi_str.napi_id = 0;
 	channel->napi_str.state = 0;
-	memset(&channel->eventq, 0, sizeof(channel->eventq));
+	स_रखो(&channel->eventq, 0, माप(channel->eventq));
 
-	for (j = 0; j < EFX_MAX_TXQ_PER_CHANNEL; j++) {
+	क्रम (j = 0; j < EFX_MAX_TXQ_PER_CHANNEL; j++) अणु
 		tx_queue = &channel->tx_queue[j];
-		if (tx_queue->channel)
+		अगर (tx_queue->channel)
 			tx_queue->channel = channel;
-		tx_queue->buffer = NULL;
-		tx_queue->cb_page = NULL;
-		memset(&tx_queue->txd, 0, sizeof(tx_queue->txd));
-	}
+		tx_queue->buffer = शून्य;
+		tx_queue->cb_page = शून्य;
+		स_रखो(&tx_queue->txd, 0, माप(tx_queue->txd));
+	पूर्ण
 
 	rx_queue = &channel->rx_queue;
-	rx_queue->buffer = NULL;
-	memset(&rx_queue->rxd, 0, sizeof(rx_queue->rxd));
-	timer_setup(&rx_queue->slow_fill, efx_rx_slow_fill, 0);
-#ifdef CONFIG_RFS_ACCEL
+	rx_queue->buffer = शून्य;
+	स_रखो(&rx_queue->rxd, 0, माप(rx_queue->rxd));
+	समयr_setup(&rx_queue->slow_fill, efx_rx_slow_fill, 0);
+#अगर_घोषित CONFIG_RFS_ACCEL
 	INIT_DELAYED_WORK(&channel->filter_work, efx_filter_rfs_expire);
-#endif
+#पूर्ण_अगर
 
-	return channel;
-}
+	वापस channel;
+पूर्ण
 
-static int efx_probe_channel(struct efx_channel *channel)
-{
-	struct efx_tx_queue *tx_queue;
-	struct efx_rx_queue *rx_queue;
-	int rc;
+अटल पूर्णांक efx_probe_channel(काष्ठा efx_channel *channel)
+अणु
+	काष्ठा efx_tx_queue *tx_queue;
+	काष्ठा efx_rx_queue *rx_queue;
+	पूर्णांक rc;
 
-	netif_dbg(channel->efx, probe, channel->efx->net_dev,
+	netअगर_dbg(channel->efx, probe, channel->efx->net_dev,
 		  "creating channel %d\n", channel->channel);
 
 	rc = channel->type->pre_probe(channel);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
 	rc = efx_probe_eventq(channel);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
-	efx_for_each_channel_tx_queue(tx_queue, channel) {
+	efx_क्रम_each_channel_tx_queue(tx_queue, channel) अणु
 		rc = efx_probe_tx_queue(tx_queue);
-		if (rc)
-			goto fail;
-	}
+		अगर (rc)
+			जाओ fail;
+	पूर्ण
 
-	efx_for_each_channel_rx_queue(rx_queue, channel) {
+	efx_क्रम_each_channel_rx_queue(rx_queue, channel) अणु
 		rc = efx_probe_rx_queue(rx_queue);
-		if (rc)
-			goto fail;
-	}
+		अगर (rc)
+			जाओ fail;
+	पूर्ण
 
-	channel->rx_list = NULL;
+	channel->rx_list = शून्य;
 
-	return 0;
+	वापस 0;
 
 fail:
-	efx_remove_channel(channel);
-	return rc;
-}
+	efx_हटाओ_channel(channel);
+	वापस rc;
+पूर्ण
 
-void efx_get_channel_name(struct efx_channel *channel, char *buf, size_t len)
-{
-	struct efx_nic *efx = channel->efx;
-	const char *type;
-	int number;
+व्योम efx_get_channel_name(काष्ठा efx_channel *channel, अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा efx_nic *efx = channel->efx;
+	स्थिर अक्षर *type;
+	पूर्णांक number;
 
 	number = channel->channel;
 
-	if (number >= efx->xdp_channel_offset &&
-	    !WARN_ON_ONCE(!efx->n_xdp_channels)) {
+	अगर (number >= efx->xdp_channel_offset &&
+	    !WARN_ON_ONCE(!efx->n_xdp_channels)) अणु
 		type = "-xdp";
 		number -= efx->xdp_channel_offset;
-	} else if (efx->tx_channel_offset == 0) {
+	पूर्ण अन्यथा अगर (efx->tx_channel_offset == 0) अणु
 		type = "";
-	} else if (number < efx->tx_channel_offset) {
+	पूर्ण अन्यथा अगर (number < efx->tx_channel_offset) अणु
 		type = "-rx";
-	} else {
+	पूर्ण अन्यथा अणु
 		type = "-tx";
 		number -= efx->tx_channel_offset;
-	}
-	snprintf(buf, len, "%s%s-%d", efx->name, type, number);
-}
+	पूर्ण
+	snम_लिखो(buf, len, "%s%s-%d", efx->name, type, number);
+पूर्ण
 
-void efx_set_channel_names(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
+व्योम efx_set_channel_names(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
 
-	efx_for_each_channel(channel, efx)
+	efx_क्रम_each_channel(channel, efx)
 		channel->type->get_name(channel,
 					efx->msi_context[channel->channel].name,
-					sizeof(efx->msi_context[0].name));
-}
+					माप(efx->msi_context[0].name));
+पूर्ण
 
-int efx_probe_channels(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
-	int rc;
+पूर्णांक efx_probe_channels(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
+	पूर्णांक rc;
 
 	/* Restart special buffer allocation */
 	efx->next_buffer_table = 0;
@@ -698,586 +699,586 @@ int efx_probe_channels(struct efx_nic *efx)
 	/* Probe channels in reverse, so that any 'extra' channels
 	 * use the start of the buffer table. This allows the traffic
 	 * channels to be resized without moving them or wasting the
-	 * entries before them.
+	 * entries beक्रमe them.
 	 */
-	efx_for_each_channel_rev(channel, efx) {
+	efx_क्रम_each_channel_rev(channel, efx) अणु
 		rc = efx_probe_channel(channel);
-		if (rc) {
-			netif_err(efx, probe, efx->net_dev,
+		अगर (rc) अणु
+			netअगर_err(efx, probe, efx->net_dev,
 				  "failed to create channel %d\n",
 				  channel->channel);
-			goto fail;
-		}
-	}
+			जाओ fail;
+		पूर्ण
+	पूर्ण
 	efx_set_channel_names(efx);
 
-	return 0;
+	वापस 0;
 
 fail:
-	efx_remove_channels(efx);
-	return rc;
-}
+	efx_हटाओ_channels(efx);
+	वापस rc;
+पूर्ण
 
-void efx_remove_channel(struct efx_channel *channel)
-{
-	struct efx_tx_queue *tx_queue;
-	struct efx_rx_queue *rx_queue;
+व्योम efx_हटाओ_channel(काष्ठा efx_channel *channel)
+अणु
+	काष्ठा efx_tx_queue *tx_queue;
+	काष्ठा efx_rx_queue *rx_queue;
 
-	netif_dbg(channel->efx, drv, channel->efx->net_dev,
+	netअगर_dbg(channel->efx, drv, channel->efx->net_dev,
 		  "destroy chan %d\n", channel->channel);
 
-	efx_for_each_channel_rx_queue(rx_queue, channel)
-		efx_remove_rx_queue(rx_queue);
-	efx_for_each_channel_tx_queue(tx_queue, channel)
-		efx_remove_tx_queue(tx_queue);
-	efx_remove_eventq(channel);
-	channel->type->post_remove(channel);
-}
+	efx_क्रम_each_channel_rx_queue(rx_queue, channel)
+		efx_हटाओ_rx_queue(rx_queue);
+	efx_क्रम_each_channel_tx_queue(tx_queue, channel)
+		efx_हटाओ_tx_queue(tx_queue);
+	efx_हटाओ_eventq(channel);
+	channel->type->post_हटाओ(channel);
+पूर्ण
 
-void efx_remove_channels(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
+व्योम efx_हटाओ_channels(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
 
-	efx_for_each_channel(channel, efx)
-		efx_remove_channel(channel);
+	efx_क्रम_each_channel(channel, efx)
+		efx_हटाओ_channel(channel);
 
-	kfree(efx->xdp_tx_queues);
-}
+	kमुक्त(efx->xdp_tx_queues);
+पूर्ण
 
-int efx_realloc_channels(struct efx_nic *efx, u32 rxq_entries, u32 txq_entries)
-{
-	struct efx_channel *other_channel[EFX_MAX_CHANNELS], *channel;
-	unsigned int i, next_buffer_table = 0;
+पूर्णांक efx_पुनः_स्मृति_channels(काष्ठा efx_nic *efx, u32 rxq_entries, u32 txq_entries)
+अणु
+	काष्ठा efx_channel *other_channel[EFX_MAX_CHANNELS], *channel;
+	अचिन्हित पूर्णांक i, next_buffer_table = 0;
 	u32 old_rxq_entries, old_txq_entries;
-	int rc, rc2;
+	पूर्णांक rc, rc2;
 
 	rc = efx_check_disabled(efx);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Not all channels should be reallocated. We must avoid
-	 * reallocating their buffer table entries.
+	/* Not all channels should be पुनः_स्मृतिated. We must aव्योम
+	 * पुनः_स्मृतिating their buffer table entries.
 	 */
-	efx_for_each_channel(channel, efx) {
-		struct efx_rx_queue *rx_queue;
-		struct efx_tx_queue *tx_queue;
+	efx_क्रम_each_channel(channel, efx) अणु
+		काष्ठा efx_rx_queue *rx_queue;
+		काष्ठा efx_tx_queue *tx_queue;
 
-		if (channel->type->copy)
-			continue;
+		अगर (channel->type->copy)
+			जारी;
 		next_buffer_table = max(next_buffer_table,
 					channel->eventq.index +
 					channel->eventq.entries);
-		efx_for_each_channel_rx_queue(rx_queue, channel)
+		efx_क्रम_each_channel_rx_queue(rx_queue, channel)
 			next_buffer_table = max(next_buffer_table,
 						rx_queue->rxd.index +
 						rx_queue->rxd.entries);
-		efx_for_each_channel_tx_queue(tx_queue, channel)
+		efx_क्रम_each_channel_tx_queue(tx_queue, channel)
 			next_buffer_table = max(next_buffer_table,
 						tx_queue->txd.index +
 						tx_queue->txd.entries);
-	}
+	पूर्ण
 
 	efx_device_detach_sync(efx);
 	efx_stop_all(efx);
-	efx_soft_disable_interrupts(efx);
+	efx_soft_disable_पूर्णांकerrupts(efx);
 
 	/* Clone channels (where possible) */
-	memset(other_channel, 0, sizeof(other_channel));
-	for (i = 0; i < efx->n_channels; i++) {
+	स_रखो(other_channel, 0, माप(other_channel));
+	क्रम (i = 0; i < efx->n_channels; i++) अणु
 		channel = efx->channel[i];
-		if (channel->type->copy)
+		अगर (channel->type->copy)
 			channel = channel->type->copy(channel);
-		if (!channel) {
+		अगर (!channel) अणु
 			rc = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		other_channel[i] = channel;
-	}
+	पूर्ण
 
-	/* Swap entry counts and channel pointers */
+	/* Swap entry counts and channel poपूर्णांकers */
 	old_rxq_entries = efx->rxq_entries;
 	old_txq_entries = efx->txq_entries;
 	efx->rxq_entries = rxq_entries;
 	efx->txq_entries = txq_entries;
-	for (i = 0; i < efx->n_channels; i++) {
+	क्रम (i = 0; i < efx->n_channels; i++) अणु
 		channel = efx->channel[i];
 		efx->channel[i] = other_channel[i];
 		other_channel[i] = channel;
-	}
+	पूर्ण
 
 	/* Restart buffer table allocation */
 	efx->next_buffer_table = next_buffer_table;
 
-	for (i = 0; i < efx->n_channels; i++) {
+	क्रम (i = 0; i < efx->n_channels; i++) अणु
 		channel = efx->channel[i];
-		if (!channel->type->copy)
-			continue;
+		अगर (!channel->type->copy)
+			जारी;
 		rc = efx_probe_channel(channel);
-		if (rc)
-			goto rollback;
+		अगर (rc)
+			जाओ rollback;
 		efx_init_napi_channel(efx->channel[i]);
-	}
+	पूर्ण
 
 out:
-	/* Destroy unused channel structures */
-	for (i = 0; i < efx->n_channels; i++) {
+	/* Destroy unused channel काष्ठाures */
+	क्रम (i = 0; i < efx->n_channels; i++) अणु
 		channel = other_channel[i];
-		if (channel && channel->type->copy) {
+		अगर (channel && channel->type->copy) अणु
 			efx_fini_napi_channel(channel);
-			efx_remove_channel(channel);
-			kfree(channel);
-		}
-	}
+			efx_हटाओ_channel(channel);
+			kमुक्त(channel);
+		पूर्ण
+	पूर्ण
 
-	rc2 = efx_soft_enable_interrupts(efx);
-	if (rc2) {
+	rc2 = efx_soft_enable_पूर्णांकerrupts(efx);
+	अगर (rc2) अणु
 		rc = rc ? rc : rc2;
-		netif_err(efx, drv, efx->net_dev,
+		netअगर_err(efx, drv, efx->net_dev,
 			  "unable to restart interrupts on channel reallocation\n");
 		efx_schedule_reset(efx, RESET_TYPE_DISABLE);
-	} else {
+	पूर्ण अन्यथा अणु
 		efx_start_all(efx);
-		efx_device_attach_if_not_resetting(efx);
-	}
-	return rc;
+		efx_device_attach_अगर_not_resetting(efx);
+	पूर्ण
+	वापस rc;
 
 rollback:
 	/* Swap back */
 	efx->rxq_entries = old_rxq_entries;
 	efx->txq_entries = old_txq_entries;
-	for (i = 0; i < efx->n_channels; i++) {
+	क्रम (i = 0; i < efx->n_channels; i++) अणु
 		channel = efx->channel[i];
 		efx->channel[i] = other_channel[i];
 		other_channel[i] = channel;
-	}
-	goto out;
-}
+	पूर्ण
+	जाओ out;
+पूर्ण
 
-int efx_set_channels(struct efx_nic *efx)
-{
-	struct efx_tx_queue *tx_queue;
-	struct efx_channel *channel;
-	unsigned int next_queue = 0;
-	int xdp_queue_number;
-	int rc;
+पूर्णांक efx_set_channels(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_tx_queue *tx_queue;
+	काष्ठा efx_channel *channel;
+	अचिन्हित पूर्णांक next_queue = 0;
+	पूर्णांक xdp_queue_number;
+	पूर्णांक rc;
 
 	efx->tx_channel_offset =
 		efx_separate_tx_channels ?
 		efx->n_channels - efx->n_tx_channels : 0;
 
-	if (efx->xdp_tx_queue_count) {
+	अगर (efx->xdp_tx_queue_count) अणु
 		EFX_WARN_ON_PARANOID(efx->xdp_tx_queues);
 
-		/* Allocate array for XDP TX queue lookup. */
-		efx->xdp_tx_queues = kcalloc(efx->xdp_tx_queue_count,
-					     sizeof(*efx->xdp_tx_queues),
+		/* Allocate array क्रम XDP TX queue lookup. */
+		efx->xdp_tx_queues = kसुस्मृति(efx->xdp_tx_queue_count,
+					     माप(*efx->xdp_tx_queues),
 					     GFP_KERNEL);
-		if (!efx->xdp_tx_queues)
-			return -ENOMEM;
-	}
+		अगर (!efx->xdp_tx_queues)
+			वापस -ENOMEM;
+	पूर्ण
 
 	/* We need to mark which channels really have RX and TX
-	 * queues, and adjust the TX queue numbers if we have separate
+	 * queues, and adjust the TX queue numbers अगर we have separate
 	 * RX-only and TX-only channels.
 	 */
 	xdp_queue_number = 0;
-	efx_for_each_channel(channel, efx) {
-		if (channel->channel < efx->n_rx_channels)
+	efx_क्रम_each_channel(channel, efx) अणु
+		अगर (channel->channel < efx->n_rx_channels)
 			channel->rx_queue.core_index = channel->channel;
-		else
+		अन्यथा
 			channel->rx_queue.core_index = -1;
 
-		if (channel->channel >= efx->tx_channel_offset) {
-			if (efx_channel_is_xdp_tx(channel)) {
-				efx_for_each_channel_tx_queue(tx_queue, channel) {
+		अगर (channel->channel >= efx->tx_channel_offset) अणु
+			अगर (efx_channel_is_xdp_tx(channel)) अणु
+				efx_क्रम_each_channel_tx_queue(tx_queue, channel) अणु
 					tx_queue->queue = next_queue++;
-					netif_dbg(efx, drv, efx->net_dev, "Channel %u TXQ %u is XDP %u, HW %u\n",
+					netअगर_dbg(efx, drv, efx->net_dev, "Channel %u TXQ %u is XDP %u, HW %u\n",
 						  channel->channel, tx_queue->label,
 						  xdp_queue_number, tx_queue->queue);
 					/* We may have a few left-over XDP TX
 					 * queues owing to xdp_tx_queue_count
-					 * not dividing evenly by EFX_MAX_TXQ_PER_CHANNEL.
+					 * not भागiding evenly by EFX_MAX_TXQ_PER_CHANNEL.
 					 * We still allocate and probe those
 					 * TXQs, but never use them.
 					 */
-					if (xdp_queue_number < efx->xdp_tx_queue_count)
+					अगर (xdp_queue_number < efx->xdp_tx_queue_count)
 						efx->xdp_tx_queues[xdp_queue_number] = tx_queue;
 					xdp_queue_number++;
-				}
-			} else {
-				efx_for_each_channel_tx_queue(tx_queue, channel) {
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				efx_क्रम_each_channel_tx_queue(tx_queue, channel) अणु
 					tx_queue->queue = next_queue++;
-					netif_dbg(efx, drv, efx->net_dev, "Channel %u TXQ %u is HW %u\n",
+					netअगर_dbg(efx, drv, efx->net_dev, "Channel %u TXQ %u is HW %u\n",
 						  channel->channel, tx_queue->label,
 						  tx_queue->queue);
-				}
-			}
-		}
-	}
-	if (xdp_queue_number)
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (xdp_queue_number)
 		efx->xdp_tx_queue_count = xdp_queue_number;
 
-	rc = netif_set_real_num_tx_queues(efx->net_dev, efx->n_tx_channels);
-	if (rc)
-		return rc;
-	return netif_set_real_num_rx_queues(efx->net_dev, efx->n_rx_channels);
-}
+	rc = netअगर_set_real_num_tx_queues(efx->net_dev, efx->n_tx_channels);
+	अगर (rc)
+		वापस rc;
+	वापस netअगर_set_real_num_rx_queues(efx->net_dev, efx->n_rx_channels);
+पूर्ण
 
-bool efx_default_channel_want_txqs(struct efx_channel *channel)
-{
-	return channel->channel - channel->efx->tx_channel_offset <
+bool efx_शेष_channel_want_txqs(काष्ठा efx_channel *channel)
+अणु
+	वापस channel->channel - channel->efx->tx_channel_offset <
 		channel->efx->n_tx_channels;
-}
+पूर्ण
 
 /*************
  * START/STOP
  *************/
 
-int efx_soft_enable_interrupts(struct efx_nic *efx)
-{
-	struct efx_channel *channel, *end_channel;
-	int rc;
+पूर्णांक efx_soft_enable_पूर्णांकerrupts(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel, *end_channel;
+	पूर्णांक rc;
 
 	BUG_ON(efx->state == STATE_DISABLED);
 
 	efx->irq_soft_enabled = true;
 	smp_wmb();
 
-	efx_for_each_channel(channel, efx) {
-		if (!channel->type->keep_eventq) {
+	efx_क्रम_each_channel(channel, efx) अणु
+		अगर (!channel->type->keep_eventq) अणु
 			rc = efx_init_eventq(channel);
-			if (rc)
-				goto fail;
-		}
+			अगर (rc)
+				जाओ fail;
+		पूर्ण
 		efx_start_eventq(channel);
-	}
+	पूर्ण
 
 	efx_mcdi_mode_event(efx);
 
-	return 0;
+	वापस 0;
 fail:
 	end_channel = channel;
-	efx_for_each_channel(channel, efx) {
-		if (channel == end_channel)
-			break;
+	efx_क्रम_each_channel(channel, efx) अणु
+		अगर (channel == end_channel)
+			अवरोध;
 		efx_stop_eventq(channel);
-		if (!channel->type->keep_eventq)
+		अगर (!channel->type->keep_eventq)
 			efx_fini_eventq(channel);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void efx_soft_disable_interrupts(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
+व्योम efx_soft_disable_पूर्णांकerrupts(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
 
-	if (efx->state == STATE_DISABLED)
-		return;
+	अगर (efx->state == STATE_DISABLED)
+		वापस;
 
 	efx_mcdi_mode_poll(efx);
 
 	efx->irq_soft_enabled = false;
 	smp_wmb();
 
-	if (efx->legacy_irq)
+	अगर (efx->legacy_irq)
 		synchronize_irq(efx->legacy_irq);
 
-	efx_for_each_channel(channel, efx) {
-		if (channel->irq)
+	efx_क्रम_each_channel(channel, efx) अणु
+		अगर (channel->irq)
 			synchronize_irq(channel->irq);
 
 		efx_stop_eventq(channel);
-		if (!channel->type->keep_eventq)
+		अगर (!channel->type->keep_eventq)
 			efx_fini_eventq(channel);
-	}
+	पूर्ण
 
 	/* Flush the asynchronous MCDI request queue */
 	efx_mcdi_flush_async(efx);
-}
+पूर्ण
 
-int efx_enable_interrupts(struct efx_nic *efx)
-{
-	struct efx_channel *channel, *end_channel;
-	int rc;
+पूर्णांक efx_enable_पूर्णांकerrupts(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel, *end_channel;
+	पूर्णांक rc;
 
 	/* TODO: Is this really a bug? */
 	BUG_ON(efx->state == STATE_DISABLED);
 
-	if (efx->eeh_disabled_legacy_irq) {
+	अगर (efx->eeh_disabled_legacy_irq) अणु
 		enable_irq(efx->legacy_irq);
 		efx->eeh_disabled_legacy_irq = false;
-	}
+	पूर्ण
 
 	efx->type->irq_enable_master(efx);
 
-	efx_for_each_channel(channel, efx) {
-		if (channel->type->keep_eventq) {
+	efx_क्रम_each_channel(channel, efx) अणु
+		अगर (channel->type->keep_eventq) अणु
 			rc = efx_init_eventq(channel);
-			if (rc)
-				goto fail;
-		}
-	}
+			अगर (rc)
+				जाओ fail;
+		पूर्ण
+	पूर्ण
 
-	rc = efx_soft_enable_interrupts(efx);
-	if (rc)
-		goto fail;
+	rc = efx_soft_enable_पूर्णांकerrupts(efx);
+	अगर (rc)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 
 fail:
 	end_channel = channel;
-	efx_for_each_channel(channel, efx) {
-		if (channel == end_channel)
-			break;
-		if (channel->type->keep_eventq)
+	efx_क्रम_each_channel(channel, efx) अणु
+		अगर (channel == end_channel)
+			अवरोध;
+		अगर (channel->type->keep_eventq)
 			efx_fini_eventq(channel);
-	}
+	पूर्ण
 
 	efx->type->irq_disable_non_ev(efx);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void efx_disable_interrupts(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
+व्योम efx_disable_पूर्णांकerrupts(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
 
-	efx_soft_disable_interrupts(efx);
+	efx_soft_disable_पूर्णांकerrupts(efx);
 
-	efx_for_each_channel(channel, efx) {
-		if (channel->type->keep_eventq)
+	efx_क्रम_each_channel(channel, efx) अणु
+		अगर (channel->type->keep_eventq)
 			efx_fini_eventq(channel);
-	}
+	पूर्ण
 
 	efx->type->irq_disable_non_ev(efx);
-}
+पूर्ण
 
-void efx_start_channels(struct efx_nic *efx)
-{
-	struct efx_tx_queue *tx_queue;
-	struct efx_rx_queue *rx_queue;
-	struct efx_channel *channel;
+व्योम efx_start_channels(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_tx_queue *tx_queue;
+	काष्ठा efx_rx_queue *rx_queue;
+	काष्ठा efx_channel *channel;
 
-	efx_for_each_channel(channel, efx) {
-		efx_for_each_channel_tx_queue(tx_queue, channel) {
+	efx_क्रम_each_channel(channel, efx) अणु
+		efx_क्रम_each_channel_tx_queue(tx_queue, channel) अणु
 			efx_init_tx_queue(tx_queue);
 			atomic_inc(&efx->active_queues);
-		}
+		पूर्ण
 
-		efx_for_each_channel_rx_queue(rx_queue, channel) {
+		efx_क्रम_each_channel_rx_queue(rx_queue, channel) अणु
 			efx_init_rx_queue(rx_queue);
 			atomic_inc(&efx->active_queues);
 			efx_stop_eventq(channel);
 			efx_fast_push_rx_descriptors(rx_queue, false);
 			efx_start_eventq(channel);
-		}
+		पूर्ण
 
 		WARN_ON(channel->rx_pkt_n_frags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void efx_stop_channels(struct efx_nic *efx)
-{
-	struct efx_tx_queue *tx_queue;
-	struct efx_rx_queue *rx_queue;
-	struct efx_channel *channel;
-	int rc = 0;
+व्योम efx_stop_channels(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_tx_queue *tx_queue;
+	काष्ठा efx_rx_queue *rx_queue;
+	काष्ठा efx_channel *channel;
+	पूर्णांक rc = 0;
 
 	/* Stop RX refill */
-	efx_for_each_channel(channel, efx) {
-		efx_for_each_channel_rx_queue(rx_queue, channel)
+	efx_क्रम_each_channel(channel, efx) अणु
+		efx_क्रम_each_channel_rx_queue(rx_queue, channel)
 			rx_queue->refill_enabled = false;
-	}
+	पूर्ण
 
-	efx_for_each_channel(channel, efx) {
-		/* RX packet processing is pipelined, so wait for the
+	efx_क्रम_each_channel(channel, efx) अणु
+		/* RX packet processing is pipelined, so रुको क्रम the
 		 * NAPI handler to complete.  At least event queue 0
-		 * might be kept active by non-data events, so don't
+		 * might be kept active by non-data events, so करोn't
 		 * use napi_synchronize() but actually disable NAPI
 		 * temporarily.
 		 */
-		if (efx_channel_has_rx_queue(channel)) {
+		अगर (efx_channel_has_rx_queue(channel)) अणु
 			efx_stop_eventq(channel);
 			efx_start_eventq(channel);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (efx->type->fini_dmaq)
+	अगर (efx->type->fini_dmaq)
 		rc = efx->type->fini_dmaq(efx);
 
-	if (rc) {
-		netif_err(efx, drv, efx->net_dev, "failed to flush queues\n");
-	} else {
-		netif_dbg(efx, drv, efx->net_dev,
+	अगर (rc) अणु
+		netअगर_err(efx, drv, efx->net_dev, "failed to flush queues\n");
+	पूर्ण अन्यथा अणु
+		netअगर_dbg(efx, drv, efx->net_dev,
 			  "successfully flushed all queues\n");
-	}
+	पूर्ण
 
-	efx_for_each_channel(channel, efx) {
-		efx_for_each_channel_rx_queue(rx_queue, channel)
+	efx_क्रम_each_channel(channel, efx) अणु
+		efx_क्रम_each_channel_rx_queue(rx_queue, channel)
 			efx_fini_rx_queue(rx_queue);
-		efx_for_each_channel_tx_queue(tx_queue, channel)
+		efx_क्रम_each_channel_tx_queue(tx_queue, channel)
 			efx_fini_tx_queue(tx_queue);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**************************************************************************
  *
- * NAPI interface
+ * NAPI पूर्णांकerface
  *
  *************************************************************************/
 
 /* Process channel's event queue
  *
- * This function is responsible for processing the event queue of a
+ * This function is responsible क्रम processing the event queue of a
  * single channel.  The caller must guarantee that this function will
  * never be concurrently called more than once on the same channel,
- * though different channels may be being processed concurrently.
+ * though dअगरferent channels may be being processed concurrently.
  */
-static int efx_process_channel(struct efx_channel *channel, int budget)
-{
-	struct efx_tx_queue *tx_queue;
-	struct list_head rx_list;
-	int spent;
+अटल पूर्णांक efx_process_channel(काष्ठा efx_channel *channel, पूर्णांक budget)
+अणु
+	काष्ठा efx_tx_queue *tx_queue;
+	काष्ठा list_head rx_list;
+	पूर्णांक spent;
 
-	if (unlikely(!channel->enabled))
-		return 0;
+	अगर (unlikely(!channel->enabled))
+		वापस 0;
 
 	/* Prepare the batch receive list */
-	EFX_WARN_ON_PARANOID(channel->rx_list != NULL);
+	EFX_WARN_ON_PARANOID(channel->rx_list != शून्य);
 	INIT_LIST_HEAD(&rx_list);
 	channel->rx_list = &rx_list;
 
-	efx_for_each_channel_tx_queue(tx_queue, channel) {
+	efx_क्रम_each_channel_tx_queue(tx_queue, channel) अणु
 		tx_queue->pkts_compl = 0;
 		tx_queue->bytes_compl = 0;
-	}
+	पूर्ण
 
 	spent = efx_nic_process_eventq(channel, budget);
-	if (spent && efx_channel_has_rx_queue(channel)) {
-		struct efx_rx_queue *rx_queue =
+	अगर (spent && efx_channel_has_rx_queue(channel)) अणु
+		काष्ठा efx_rx_queue *rx_queue =
 			efx_channel_get_rx_queue(channel);
 
 		efx_rx_flush_packet(channel);
 		efx_fast_push_rx_descriptors(rx_queue, true);
-	}
+	पूर्ण
 
 	/* Update BQL */
-	efx_for_each_channel_tx_queue(tx_queue, channel) {
-		if (tx_queue->bytes_compl) {
+	efx_क्रम_each_channel_tx_queue(tx_queue, channel) अणु
+		अगर (tx_queue->bytes_compl) अणु
 			netdev_tx_completed_queue(tx_queue->core_txq,
 						  tx_queue->pkts_compl,
 						  tx_queue->bytes_compl);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Receive any packets we queued up */
-	netif_receive_skb_list(channel->rx_list);
-	channel->rx_list = NULL;
+	netअगर_receive_skb_list(channel->rx_list);
+	channel->rx_list = शून्य;
 
-	return spent;
-}
+	वापस spent;
+पूर्ण
 
-static void efx_update_irq_mod(struct efx_nic *efx, struct efx_channel *channel)
-{
-	int step = efx->irq_mod_step_us;
+अटल व्योम efx_update_irq_mod(काष्ठा efx_nic *efx, काष्ठा efx_channel *channel)
+अणु
+	पूर्णांक step = efx->irq_mod_step_us;
 
-	if (channel->irq_mod_score < irq_adapt_low_thresh) {
-		if (channel->irq_moderation_us > step) {
+	अगर (channel->irq_mod_score < irq_adapt_low_thresh) अणु
+		अगर (channel->irq_moderation_us > step) अणु
 			channel->irq_moderation_us -= step;
 			efx->type->push_irq_moderation(channel);
-		}
-	} else if (channel->irq_mod_score > irq_adapt_high_thresh) {
-		if (channel->irq_moderation_us <
-		    efx->irq_rx_moderation_us) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (channel->irq_mod_score > irq_adapt_high_thresh) अणु
+		अगर (channel->irq_moderation_us <
+		    efx->irq_rx_moderation_us) अणु
 			channel->irq_moderation_us += step;
 			efx->type->push_irq_moderation(channel);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	channel->irq_count = 0;
 	channel->irq_mod_score = 0;
-}
+पूर्ण
 
 /* NAPI poll handler
  *
  * NAPI guarantees serialisation of polls of the same device, which
  * provides the guarantee required by efx_process_channel().
  */
-static int efx_poll(struct napi_struct *napi, int budget)
-{
-	struct efx_channel *channel =
-		container_of(napi, struct efx_channel, napi_str);
-	struct efx_nic *efx = channel->efx;
-#ifdef CONFIG_RFS_ACCEL
-	unsigned int time;
-#endif
-	int spent;
+अटल पूर्णांक efx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा efx_channel *channel =
+		container_of(napi, काष्ठा efx_channel, napi_str);
+	काष्ठा efx_nic *efx = channel->efx;
+#अगर_घोषित CONFIG_RFS_ACCEL
+	अचिन्हित पूर्णांक समय;
+#पूर्ण_अगर
+	पूर्णांक spent;
 
-	netif_vdbg(efx, intr, efx->net_dev,
+	netअगर_vdbg(efx, पूर्णांकr, efx->net_dev,
 		   "channel %d NAPI poll executing on CPU %d\n",
 		   channel->channel, raw_smp_processor_id());
 
 	spent = efx_process_channel(channel, budget);
 
-	xdp_do_flush_map();
+	xdp_करो_flush_map();
 
-	if (spent < budget) {
-		if (efx_channel_has_rx_queue(channel) &&
+	अगर (spent < budget) अणु
+		अगर (efx_channel_has_rx_queue(channel) &&
 		    efx->irq_rx_adaptive &&
-		    unlikely(++channel->irq_count == 1000)) {
+		    unlikely(++channel->irq_count == 1000)) अणु
 			efx_update_irq_mod(efx, channel);
-		}
+		पूर्ण
 
-#ifdef CONFIG_RFS_ACCEL
+#अगर_घोषित CONFIG_RFS_ACCEL
 		/* Perhaps expire some ARFS filters */
-		time = jiffies - channel->rfs_last_expiry;
+		समय = jअगरfies - channel->rfs_last_expiry;
 		/* Would our quota be >= 20? */
-		if (channel->rfs_filter_count * time >= 600 * HZ)
-			mod_delayed_work(system_wq, &channel->filter_work, 0);
-#endif
+		अगर (channel->rfs_filter_count * समय >= 600 * HZ)
+			mod_delayed_work(प्रणाली_wq, &channel->filter_work, 0);
+#पूर्ण_अगर
 
 		/* There is no race here; although napi_disable() will
-		 * only wait for napi_complete(), this isn't a problem
-		 * since efx_nic_eventq_read_ack() will have no effect if
-		 * interrupts have already been disabled.
+		 * only रुको क्रम napi_complete(), this isn't a problem
+		 * since efx_nic_eventq_पढ़ो_ack() will have no effect अगर
+		 * पूर्णांकerrupts have alपढ़ोy been disabled.
 		 */
-		if (napi_complete_done(napi, spent))
-			efx_nic_eventq_read_ack(channel);
-	}
+		अगर (napi_complete_करोne(napi, spent))
+			efx_nic_eventq_पढ़ो_ack(channel);
+	पूर्ण
 
-	return spent;
-}
+	वापस spent;
+पूर्ण
 
-void efx_init_napi_channel(struct efx_channel *channel)
-{
-	struct efx_nic *efx = channel->efx;
+व्योम efx_init_napi_channel(काष्ठा efx_channel *channel)
+अणु
+	काष्ठा efx_nic *efx = channel->efx;
 
 	channel->napi_dev = efx->net_dev;
-	netif_napi_add(channel->napi_dev, &channel->napi_str,
+	netअगर_napi_add(channel->napi_dev, &channel->napi_str,
 		       efx_poll, napi_weight);
-}
+पूर्ण
 
-void efx_init_napi(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
+व्योम efx_init_napi(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
 
-	efx_for_each_channel(channel, efx)
+	efx_क्रम_each_channel(channel, efx)
 		efx_init_napi_channel(channel);
-}
+पूर्ण
 
-void efx_fini_napi_channel(struct efx_channel *channel)
-{
-	if (channel->napi_dev)
-		netif_napi_del(&channel->napi_str);
+व्योम efx_fini_napi_channel(काष्ठा efx_channel *channel)
+अणु
+	अगर (channel->napi_dev)
+		netअगर_napi_del(&channel->napi_str);
 
-	channel->napi_dev = NULL;
-}
+	channel->napi_dev = शून्य;
+पूर्ण
 
-void efx_fini_napi(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
+व्योम efx_fini_napi(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
 
-	efx_for_each_channel(channel, efx)
+	efx_क्रम_each_channel(channel, efx)
 		efx_fini_napi_channel(channel);
-}
+पूर्ण

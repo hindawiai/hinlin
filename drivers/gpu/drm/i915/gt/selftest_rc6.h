@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef SELFTEST_RC6_H
-#define SELFTEST_RC6_H
+#अगर_अघोषित SELFTEST_RC6_H
+#घोषणा SELFTEST_RC6_H
 
-int live_rc6_ctx_wa(void *arg);
-int live_rc6_manual(void *arg);
+पूर्णांक live_rc6_ctx_wa(व्योम *arg);
+पूर्णांक live_rc6_manual(व्योम *arg);
 
-#endif /* SELFTEST_RC6_H */
+#पूर्ण_अगर /* SELFTEST_RC6_H */

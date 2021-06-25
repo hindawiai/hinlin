@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/drivers/video/wmt_ge_rops.c
  *
- *  Accelerators for raster operations using WonderMedia Graphics Engine
+ *  Accelerators क्रम raster operations using WonderMedia Graphics Engine
  *
- *  Copyright (C) 2010 Alexey Charkov <alchark@gmail.com>
+ *  Copyright (C) 2010 Alexey Charkov <alअक्षरk@gmail.com>
  */
 
-#include <linux/module.h>
-#include <linux/fb.h>
-#include <linux/platform_device.h>
-#include "core/fb_draw.h"
-#include "wmt_ge_rops.h"
+#समावेश <linux/module.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश "core/fb_draw.h"
+#समावेश "wmt_ge_rops.h"
 
-#define GE_COMMAND_OFF		0x00
-#define GE_DEPTH_OFF		0x04
-#define GE_HIGHCOLOR_OFF	0x08
-#define GE_ROPCODE_OFF		0x14
-#define GE_FIRE_OFF		0x18
-#define GE_SRCBASE_OFF		0x20
-#define GE_SRCDISPW_OFF		0x24
-#define GE_SRCDISPH_OFF		0x28
-#define GE_SRCAREAX_OFF		0x2c
-#define GE_SRCAREAY_OFF		0x30
-#define GE_SRCAREAW_OFF		0x34
-#define GE_SRCAREAH_OFF		0x38
-#define GE_DESTBASE_OFF		0x3c
-#define GE_DESTDISPW_OFF	0x40
-#define GE_DESTDISPH_OFF	0x44
-#define GE_DESTAREAX_OFF	0x48
-#define GE_DESTAREAY_OFF	0x4c
-#define GE_DESTAREAW_OFF	0x50
-#define GE_DESTAREAH_OFF	0x54
-#define GE_PAT0C_OFF		0x88	/* Pattern 0 color */
-#define GE_ENABLE_OFF		0xec
-#define GE_INTEN_OFF		0xf0
-#define GE_STATUS_OFF		0xf8
+#घोषणा GE_COMMAND_OFF		0x00
+#घोषणा GE_DEPTH_OFF		0x04
+#घोषणा GE_HIGHCOLOR_OFF	0x08
+#घोषणा GE_ROPCODE_OFF		0x14
+#घोषणा GE_FIRE_OFF		0x18
+#घोषणा GE_SRCBASE_OFF		0x20
+#घोषणा GE_SRCDISPW_OFF		0x24
+#घोषणा GE_SRCDISPH_OFF		0x28
+#घोषणा GE_SRCAREAX_OFF		0x2c
+#घोषणा GE_SRCAREAY_OFF		0x30
+#घोषणा GE_SRCAREAW_OFF		0x34
+#घोषणा GE_SRCAREAH_OFF		0x38
+#घोषणा GE_DESTBASE_OFF		0x3c
+#घोषणा GE_DESTDISPW_OFF	0x40
+#घोषणा GE_DESTDISPH_OFF	0x44
+#घोषणा GE_DESTAREAX_OFF	0x48
+#घोषणा GE_DESTAREAY_OFF	0x4c
+#घोषणा GE_DESTAREAW_OFF	0x50
+#घोषणा GE_DESTAREAH_OFF	0x54
+#घोषणा GE_PAT0C_OFF		0x88	/* Pattern 0 color */
+#घोषणा GE_ENABLE_OFF		0xec
+#घोषणा GE_INTEN_OFF		0xf0
+#घोषणा GE_STATUS_OFF		0xf8
 
-static void __iomem *regbase;
+अटल व्योम __iomem *regbase;
 
-void wmt_ge_fillrect(struct fb_info *p, const struct fb_fillrect *rect)
-{
-	unsigned long fg, pat;
+व्योम wmt_ge_fillrect(काष्ठा fb_info *p, स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	अचिन्हित दीर्घ fg, pat;
 
-	if (p->state != FBINFO_STATE_RUNNING)
-		return;
+	अगर (p->state != FBINFO_STATE_RUNNING)
+		वापस;
 
-	if (p->fix.visual == FB_VISUAL_TRUECOLOR ||
-	    p->fix.visual == FB_VISUAL_DIRECTCOLOR)
-		fg = ((u32 *) (p->pseudo_palette))[rect->color];
-	else
+	अगर (p->fix.visual == FB_VISUAL_TRUECOLOR ||
+	    p->fix.visual == FB_VISUAL_सूचीECTCOLOR)
+		fg = ((u32 *) (p->pseuकरो_palette))[rect->color];
+	अन्यथा
 		fg = rect->color;
 
 	pat = pixel_to_pat(p->var.bits_per_pixel, fg);
 
-	if (p->fbops->fb_sync)
+	अगर (p->fbops->fb_sync)
 		p->fbops->fb_sync(p);
 
-	writel(p->var.bits_per_pixel == 32 ? 3 :
+	ग_लिखोl(p->var.bits_per_pixel == 32 ? 3 :
 	      (p->var.bits_per_pixel == 8 ? 0 : 1), regbase + GE_DEPTH_OFF);
-	writel(p->var.bits_per_pixel == 15 ? 1 : 0, regbase + GE_HIGHCOLOR_OFF);
-	writel(p->fix.smem_start, regbase + GE_DESTBASE_OFF);
-	writel(p->var.xres_virtual - 1, regbase + GE_DESTDISPW_OFF);
-	writel(p->var.yres_virtual - 1, regbase + GE_DESTDISPH_OFF);
-	writel(rect->dx, regbase + GE_DESTAREAX_OFF);
-	writel(rect->dy, regbase + GE_DESTAREAY_OFF);
-	writel(rect->width - 1, regbase + GE_DESTAREAW_OFF);
-	writel(rect->height - 1, regbase + GE_DESTAREAH_OFF);
+	ग_लिखोl(p->var.bits_per_pixel == 15 ? 1 : 0, regbase + GE_HIGHCOLOR_OFF);
+	ग_लिखोl(p->fix.smem_start, regbase + GE_DESTBASE_OFF);
+	ग_लिखोl(p->var.xres_भव - 1, regbase + GE_DESTDISPW_OFF);
+	ग_लिखोl(p->var.yres_भव - 1, regbase + GE_DESTDISPH_OFF);
+	ग_लिखोl(rect->dx, regbase + GE_DESTAREAX_OFF);
+	ग_लिखोl(rect->dy, regbase + GE_DESTAREAY_OFF);
+	ग_लिखोl(rect->width - 1, regbase + GE_DESTAREAW_OFF);
+	ग_लिखोl(rect->height - 1, regbase + GE_DESTAREAH_OFF);
 
-	writel(pat, regbase + GE_PAT0C_OFF);
-	writel(1, regbase + GE_COMMAND_OFF);
-	writel(rect->rop == ROP_XOR ? 0x5a : 0xf0, regbase + GE_ROPCODE_OFF);
-	writel(1, regbase + GE_FIRE_OFF);
-}
+	ग_लिखोl(pat, regbase + GE_PAT0C_OFF);
+	ग_लिखोl(1, regbase + GE_COMMAND_OFF);
+	ग_लिखोl(rect->rop == ROP_XOR ? 0x5a : 0xf0, regbase + GE_ROPCODE_OFF);
+	ग_लिखोl(1, regbase + GE_FIRE_OFF);
+पूर्ण
 EXPORT_SYMBOL_GPL(wmt_ge_fillrect);
 
-void wmt_ge_copyarea(struct fb_info *p, const struct fb_copyarea *area)
-{
-	if (p->state != FBINFO_STATE_RUNNING)
-		return;
+व्योम wmt_ge_copyarea(काष्ठा fb_info *p, स्थिर काष्ठा fb_copyarea *area)
+अणु
+	अगर (p->state != FBINFO_STATE_RUNNING)
+		वापस;
 
-	if (p->fbops->fb_sync)
+	अगर (p->fbops->fb_sync)
 		p->fbops->fb_sync(p);
 
-	writel(p->var.bits_per_pixel > 16 ? 3 :
+	ग_लिखोl(p->var.bits_per_pixel > 16 ? 3 :
 	      (p->var.bits_per_pixel > 8 ? 1 : 0), regbase + GE_DEPTH_OFF);
 
-	writel(p->fix.smem_start, regbase + GE_SRCBASE_OFF);
-	writel(p->var.xres_virtual - 1, regbase + GE_SRCDISPW_OFF);
-	writel(p->var.yres_virtual - 1, regbase + GE_SRCDISPH_OFF);
-	writel(area->sx, regbase + GE_SRCAREAX_OFF);
-	writel(area->sy, regbase + GE_SRCAREAY_OFF);
-	writel(area->width - 1, regbase + GE_SRCAREAW_OFF);
-	writel(area->height - 1, regbase + GE_SRCAREAH_OFF);
+	ग_लिखोl(p->fix.smem_start, regbase + GE_SRCBASE_OFF);
+	ग_लिखोl(p->var.xres_भव - 1, regbase + GE_SRCDISPW_OFF);
+	ग_लिखोl(p->var.yres_भव - 1, regbase + GE_SRCDISPH_OFF);
+	ग_लिखोl(area->sx, regbase + GE_SRCAREAX_OFF);
+	ग_लिखोl(area->sy, regbase + GE_SRCAREAY_OFF);
+	ग_लिखोl(area->width - 1, regbase + GE_SRCAREAW_OFF);
+	ग_लिखोl(area->height - 1, regbase + GE_SRCAREAH_OFF);
 
-	writel(p->fix.smem_start, regbase + GE_DESTBASE_OFF);
-	writel(p->var.xres_virtual - 1, regbase + GE_DESTDISPW_OFF);
-	writel(p->var.yres_virtual - 1, regbase + GE_DESTDISPH_OFF);
-	writel(area->dx, regbase + GE_DESTAREAX_OFF);
-	writel(area->dy, regbase + GE_DESTAREAY_OFF);
-	writel(area->width - 1, regbase + GE_DESTAREAW_OFF);
-	writel(area->height - 1, regbase + GE_DESTAREAH_OFF);
+	ग_लिखोl(p->fix.smem_start, regbase + GE_DESTBASE_OFF);
+	ग_लिखोl(p->var.xres_भव - 1, regbase + GE_DESTDISPW_OFF);
+	ग_लिखोl(p->var.yres_भव - 1, regbase + GE_DESTDISPH_OFF);
+	ग_लिखोl(area->dx, regbase + GE_DESTAREAX_OFF);
+	ग_लिखोl(area->dy, regbase + GE_DESTAREAY_OFF);
+	ग_लिखोl(area->width - 1, regbase + GE_DESTAREAW_OFF);
+	ग_लिखोl(area->height - 1, regbase + GE_DESTAREAH_OFF);
 
-	writel(0xcc, regbase + GE_ROPCODE_OFF);
-	writel(1, regbase + GE_COMMAND_OFF);
-	writel(1, regbase + GE_FIRE_OFF);
-}
+	ग_लिखोl(0xcc, regbase + GE_ROPCODE_OFF);
+	ग_लिखोl(1, regbase + GE_COMMAND_OFF);
+	ग_लिखोl(1, regbase + GE_FIRE_OFF);
+पूर्ण
 EXPORT_SYMBOL_GPL(wmt_ge_copyarea);
 
-int wmt_ge_sync(struct fb_info *p)
-{
-	int loops = 5000000;
-	while ((readl(regbase + GE_STATUS_OFF) & 4) && --loops)
+पूर्णांक wmt_ge_sync(काष्ठा fb_info *p)
+अणु
+	पूर्णांक loops = 5000000;
+	जबतक ((पढ़ोl(regbase + GE_STATUS_OFF) & 4) && --loops)
 		cpu_relax();
-	return loops > 0 ? 0 : -EBUSY;
-}
+	वापस loops > 0 ? 0 : -EBUSY;
+पूर्ण
 EXPORT_SYMBOL_GPL(wmt_ge_sync);
 
-static int wmt_ge_rops_probe(struct platform_device *pdev)
-{
-	struct resource *res;
+अटल पूर्णांक wmt_ge_rops_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य) अणु
 		dev_err(&pdev->dev, "no I/O memory resource defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Only one ROP engine is presently supported. */
-	if (unlikely(regbase)) {
+	अगर (unlikely(regbase)) अणु
 		WARN_ON(1);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	regbase = ioremap(res->start, resource_size(res));
-	if (regbase == NULL) {
+	अगर (regbase == शून्य) अणु
 		dev_err(&pdev->dev, "failed to map I/O memory\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	writel(1, regbase + GE_ENABLE_OFF);
-	printk(KERN_INFO "Enabled support for WMT GE raster acceleration\n");
+	ग_लिखोl(1, regbase + GE_ENABLE_OFF);
+	prपूर्णांकk(KERN_INFO "Enabled support for WMT GE raster acceleration\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wmt_ge_rops_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक wmt_ge_rops_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	iounmap(regbase);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id wmt_dt_ids[] = {
-	{ .compatible = "wm,prizm-ge-rops", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id wmt_dt_ids[] = अणु
+	अणु .compatible = "wm,prizm-ge-rops", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static struct platform_driver wmt_ge_rops_driver = {
+अटल काष्ठा platक्रमm_driver wmt_ge_rops_driver = अणु
 	.probe		= wmt_ge_rops_probe,
-	.remove		= wmt_ge_rops_remove,
-	.driver		= {
+	.हटाओ		= wmt_ge_rops_हटाओ,
+	.driver		= अणु
 		.name	= "wmt_ge_rops",
 		.of_match_table = wmt_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(wmt_ge_rops_driver);
+module_platक्रमm_driver(wmt_ge_rops_driver);
 
 MODULE_AUTHOR("Alexey Charkov <alchark@gmail.com>");
 MODULE_DESCRIPTION("Accelerators for raster operations using "

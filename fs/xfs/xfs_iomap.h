@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2003-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __XFS_IOMAP_H__
-#define __XFS_IOMAP_H__
+#अगर_अघोषित __XFS_IOMAP_H__
+#घोषणा __XFS_IOMAP_H__
 
-#include <linux/iomap.h>
+#समावेश <linux/iomap.h>
 
-struct xfs_inode;
-struct xfs_bmbt_irec;
+काष्ठा xfs_inode;
+काष्ठा xfs_bmbt_irec;
 
-int xfs_iomap_write_direct(struct xfs_inode *ip, xfs_fileoff_t offset_fsb,
-		xfs_fileoff_t count_fsb, struct xfs_bmbt_irec *imap);
-int xfs_iomap_write_unwritten(struct xfs_inode *, xfs_off_t, xfs_off_t, bool);
-xfs_fileoff_t xfs_iomap_eof_align_last_fsb(struct xfs_inode *ip,
+पूर्णांक xfs_iomap_ग_लिखो_direct(काष्ठा xfs_inode *ip, xfs_fileoff_t offset_fsb,
+		xfs_fileoff_t count_fsb, काष्ठा xfs_bmbt_irec *imap);
+पूर्णांक xfs_iomap_ग_लिखो_unwritten(काष्ठा xfs_inode *, xfs_off_t, xfs_off_t, bool);
+xfs_fileoff_t xfs_iomap_eof_align_last_fsb(काष्ठा xfs_inode *ip,
 		xfs_fileoff_t end_fsb);
 
-int xfs_bmbt_to_iomap(struct xfs_inode *, struct iomap *,
-		struct xfs_bmbt_irec *, u16);
+पूर्णांक xfs_bmbt_to_iomap(काष्ठा xfs_inode *, काष्ठा iomap *,
+		काष्ठा xfs_bmbt_irec *, u16);
 
-static inline xfs_filblks_t
+अटल अंतरभूत xfs_filblks_t
 xfs_aligned_fsb_count(
 	xfs_fileoff_t		offset_fsb,
 	xfs_filblks_t		count_fsb,
 	xfs_extlen_t		extsz)
-{
-	if (extsz) {
+अणु
+	अगर (extsz) अणु
 		xfs_extlen_t	align;
 
-		div_u64_rem(offset_fsb, extsz, &align);
-		if (align)
+		भाग_u64_rem(offset_fsb, extsz, &align);
+		अगर (align)
 			count_fsb += align;
-		div_u64_rem(count_fsb, extsz, &align);
-		if (align)
+		भाग_u64_rem(count_fsb, extsz, &align);
+		अगर (align)
 			count_fsb += extsz - align;
-	}
+	पूर्ण
 
-	return count_fsb;
-}
+	वापस count_fsb;
+पूर्ण
 
-extern const struct iomap_ops xfs_buffered_write_iomap_ops;
-extern const struct iomap_ops xfs_direct_write_iomap_ops;
-extern const struct iomap_ops xfs_read_iomap_ops;
-extern const struct iomap_ops xfs_seek_iomap_ops;
-extern const struct iomap_ops xfs_xattr_iomap_ops;
+बाह्य स्थिर काष्ठा iomap_ops xfs_buffered_ग_लिखो_iomap_ops;
+बाह्य स्थिर काष्ठा iomap_ops xfs_direct_ग_लिखो_iomap_ops;
+बाह्य स्थिर काष्ठा iomap_ops xfs_पढ़ो_iomap_ops;
+बाह्य स्थिर काष्ठा iomap_ops xfs_seek_iomap_ops;
+बाह्य स्थिर काष्ठा iomap_ops xfs_xattr_iomap_ops;
 
-#endif /* __XFS_IOMAP_H__*/
+#पूर्ण_अगर /* __XFS_IOMAP_H__*/

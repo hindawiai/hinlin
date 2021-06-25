@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * snapshot.c    Ceph snapshot context utility routines (part of libceph)
  *
  * Copyright (C) 2013 Inktank Storage, Inc.
  */
 
-#include <linux/types.h>
-#include <linux/export.h>
-#include <linux/ceph/libceph.h>
+#समावेश <linux/types.h>
+#समावेश <linux/export.h>
+#समावेश <linux/ceph/libceph.h>
 
 /*
  * Ceph snapshot contexts are reference counted objects, and the
- * returned structure holds a single reference.  Acquire additional
+ * वापसed काष्ठाure holds a single reference.  Acquire additional
  * references with ceph_get_snap_context(), and release them with
  * ceph_put_snap_context().  When the reference count reaches zero
- * the entire structure is freed.
+ * the entire काष्ठाure is मुक्तd.
  */
 
 /*
@@ -22,42 +23,42 @@
  * indicated number of snapshot ids (which can be 0).  Caller has
  * to fill in snapc->seq and snapc->snaps[0..snap_count-1].
  *
- * Returns a null pointer if an error occurs.
+ * Returns a null poपूर्णांकer अगर an error occurs.
  */
-struct ceph_snap_context *ceph_create_snap_context(u32 snap_count,
+काष्ठा ceph_snap_context *ceph_create_snap_context(u32 snap_count,
 						gfp_t gfp_flags)
-{
-	struct ceph_snap_context *snapc;
-	size_t size;
+अणु
+	काष्ठा ceph_snap_context *snapc;
+	माप_प्रकार size;
 
-	size = sizeof (struct ceph_snap_context);
-	size += snap_count * sizeof (snapc->snaps[0]);
+	size = माप (काष्ठा ceph_snap_context);
+	size += snap_count * माप (snapc->snaps[0]);
 	snapc = kzalloc(size, gfp_flags);
-	if (!snapc)
-		return NULL;
+	अगर (!snapc)
+		वापस शून्य;
 
 	refcount_set(&snapc->nref, 1);
 	snapc->num_snaps = snap_count;
 
-	return snapc;
-}
+	वापस snapc;
+पूर्ण
 EXPORT_SYMBOL(ceph_create_snap_context);
 
-struct ceph_snap_context *ceph_get_snap_context(struct ceph_snap_context *sc)
-{
-	if (sc)
+काष्ठा ceph_snap_context *ceph_get_snap_context(काष्ठा ceph_snap_context *sc)
+अणु
+	अगर (sc)
 		refcount_inc(&sc->nref);
-	return sc;
-}
+	वापस sc;
+पूर्ण
 EXPORT_SYMBOL(ceph_get_snap_context);
 
-void ceph_put_snap_context(struct ceph_snap_context *sc)
-{
-	if (!sc)
-		return;
-	if (refcount_dec_and_test(&sc->nref)) {
-		/*printk(" deleting snap_context %p\n", sc);*/
-		kfree(sc);
-	}
-}
+व्योम ceph_put_snap_context(काष्ठा ceph_snap_context *sc)
+अणु
+	अगर (!sc)
+		वापस;
+	अगर (refcount_dec_and_test(&sc->nref)) अणु
+		/*prपूर्णांकk(" deleting snap_context %p\n", sc);*/
+		kमुक्त(sc);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(ceph_put_snap_context);

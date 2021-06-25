@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  bcu.c, Bus Control Unit routines for the NEC VR4100 series.
+ *  bcu.c, Bus Control Unit routines क्रम the NEC VR4100 series.
  *
  *  Copyright (C) 2002	MontaVista Software Inc.
  *    Author: Yoichi Yuasa <source@mvista.com>
@@ -10,201 +11,201 @@
  * Changes:
  *  MontaVista Software Inc. <source@mvista.com>
  *  - New creation, NEC VR4122 and VR4131 are supported.
- *  - Added support for NEC VR4111 and VR4121.
+ *  - Added support क्रम NEC VR4111 and VR4121.
  *
  *  Yoichi Yuasa <yuasa@linux-mips.org>
- *  - Added support for NEC VR4133.
+ *  - Added support क्रम NEC VR4133.
  */
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/smp.h>
-#include <linux/types.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/types.h>
 
-#include <asm/cpu-type.h>
-#include <asm/cpu.h>
-#include <asm/io.h>
+#समावेश <यंत्र/cpu-type.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/पन.स>
 
-#define CLKSPEEDREG_TYPE1	(void __iomem *)KSEG1ADDR(0x0b000014)
-#define CLKSPEEDREG_TYPE2	(void __iomem *)KSEG1ADDR(0x0f000014)
- #define CLKSP(x)		((x) & 0x001f)
- #define CLKSP_VR4133(x)	((x) & 0x0007)
+#घोषणा CLKSPEEDREG_TYPE1	(व्योम __iomem *)KSEG1ADDR(0x0b000014)
+#घोषणा CLKSPEEDREG_TYPE2	(व्योम __iomem *)KSEG1ADDR(0x0f000014)
+ #घोषणा CLKSP(x)		((x) & 0x001f)
+ #घोषणा CLKSP_VR4133(x)	((x) & 0x0007)
 
- #define DIV2B			0x8000
- #define DIV3B			0x4000
- #define DIV4B			0x2000
+ #घोषणा DIV2B			0x8000
+ #घोषणा DIV3B			0x4000
+ #घोषणा DIV4B			0x2000
 
- #define DIVT(x)		(((x) & 0xf000) >> 12)
- #define DIVVT(x)		(((x) & 0x0f00) >> 8)
+ #घोषणा DIVT(x)		(((x) & 0xf000) >> 12)
+ #घोषणा DIVVT(x)		(((x) & 0x0f00) >> 8)
 
- #define TDIVMODE(x)		(2 << (((x) & 0x1000) >> 12))
- #define VTDIVMODE(x)		(((x) & 0x0700) >> 8)
+ #घोषणा TDIVMODE(x)		(2 << (((x) & 0x1000) >> 12))
+ #घोषणा VTDIVMODE(x)		(((x) & 0x0700) >> 8)
 
-static unsigned long vr41xx_vtclock;
-static unsigned long vr41xx_tclock;
+अटल अचिन्हित दीर्घ vr41xx_vtघड़ी;
+अटल अचिन्हित दीर्घ vr41xx_tघड़ी;
 
-unsigned long vr41xx_get_vtclock_frequency(void)
-{
-	return vr41xx_vtclock;
-}
+अचिन्हित दीर्घ vr41xx_get_vtघड़ी_frequency(व्योम)
+अणु
+	वापस vr41xx_vtघड़ी;
+पूर्ण
 
-EXPORT_SYMBOL_GPL(vr41xx_get_vtclock_frequency);
+EXPORT_SYMBOL_GPL(vr41xx_get_vtघड़ी_frequency);
 
-unsigned long vr41xx_get_tclock_frequency(void)
-{
-	return vr41xx_tclock;
-}
+अचिन्हित दीर्घ vr41xx_get_tघड़ी_frequency(व्योम)
+अणु
+	वापस vr41xx_tघड़ी;
+पूर्ण
 
-EXPORT_SYMBOL_GPL(vr41xx_get_tclock_frequency);
+EXPORT_SYMBOL_GPL(vr41xx_get_tघड़ी_frequency);
 
-static inline uint16_t read_clkspeed(void)
-{
-	switch (current_cpu_type()) {
-	case CPU_VR4111:
-	case CPU_VR4121: return readw(CLKSPEEDREG_TYPE1);
-	case CPU_VR4122:
-	case CPU_VR4131:
-	case CPU_VR4133: return readw(CLKSPEEDREG_TYPE2);
-	default:
-		printk(KERN_INFO "Unexpected CPU of NEC VR4100 series\n");
-		break;
-	}
+अटल अंतरभूत uपूर्णांक16_t पढ़ो_clkspeed(व्योम)
+अणु
+	चयन (current_cpu_type()) अणु
+	हाल CPU_VR4111:
+	हाल CPU_VR4121: वापस पढ़ोw(CLKSPEEDREG_TYPE1);
+	हाल CPU_VR4122:
+	हाल CPU_VR4131:
+	हाल CPU_VR4133: वापस पढ़ोw(CLKSPEEDREG_TYPE2);
+	शेष:
+		prपूर्णांकk(KERN_INFO "Unexpected CPU of NEC VR4100 series\n");
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline unsigned long calculate_pclock(uint16_t clkspeed)
-{
-	unsigned long pclock = 0;
+अटल अंतरभूत अचिन्हित दीर्घ calculate_pघड़ी(uपूर्णांक16_t clkspeed)
+अणु
+	अचिन्हित दीर्घ pघड़ी = 0;
 
-	switch (current_cpu_type()) {
-	case CPU_VR4111:
-	case CPU_VR4121:
-		pclock = 18432000 * 64;
-		pclock /= CLKSP(clkspeed);
-		break;
-	case CPU_VR4122:
-		pclock = 18432000 * 98;
-		pclock /= CLKSP(clkspeed);
-		break;
-	case CPU_VR4131:
-		pclock = 18432000 * 108;
-		pclock /= CLKSP(clkspeed);
-		break;
-	case CPU_VR4133:
-		switch (CLKSP_VR4133(clkspeed)) {
-		case 0:
-			pclock = 133000000;
-			break;
-		case 1:
-			pclock = 149000000;
-			break;
-		case 2:
-			pclock = 165900000;
-			break;
-		case 3:
-			pclock = 199100000;
-			break;
-		case 4:
-			pclock = 265900000;
-			break;
-		default:
-			printk(KERN_INFO "Unknown PClock speed for NEC VR4133\n");
-			break;
-		}
-		break;
-	default:
-		printk(KERN_INFO "Unexpected CPU of NEC VR4100 series\n");
-		break;
-	}
+	चयन (current_cpu_type()) अणु
+	हाल CPU_VR4111:
+	हाल CPU_VR4121:
+		pघड़ी = 18432000 * 64;
+		pघड़ी /= CLKSP(clkspeed);
+		अवरोध;
+	हाल CPU_VR4122:
+		pघड़ी = 18432000 * 98;
+		pघड़ी /= CLKSP(clkspeed);
+		अवरोध;
+	हाल CPU_VR4131:
+		pघड़ी = 18432000 * 108;
+		pघड़ी /= CLKSP(clkspeed);
+		अवरोध;
+	हाल CPU_VR4133:
+		चयन (CLKSP_VR4133(clkspeed)) अणु
+		हाल 0:
+			pघड़ी = 133000000;
+			अवरोध;
+		हाल 1:
+			pघड़ी = 149000000;
+			अवरोध;
+		हाल 2:
+			pघड़ी = 165900000;
+			अवरोध;
+		हाल 3:
+			pघड़ी = 199100000;
+			अवरोध;
+		हाल 4:
+			pघड़ी = 265900000;
+			अवरोध;
+		शेष:
+			prपूर्णांकk(KERN_INFO "Unknown PClock speed for NEC VR4133\n");
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_INFO "Unexpected CPU of NEC VR4100 series\n");
+		अवरोध;
+	पूर्ण
 
-	printk(KERN_INFO "PClock: %ldHz\n", pclock);
+	prपूर्णांकk(KERN_INFO "PClock: %ldHz\n", pघड़ी);
 
-	return pclock;
-}
+	वापस pघड़ी;
+पूर्ण
 
-static inline unsigned long calculate_vtclock(uint16_t clkspeed, unsigned long pclock)
-{
-	unsigned long vtclock = 0;
+अटल अंतरभूत अचिन्हित दीर्घ calculate_vtघड़ी(uपूर्णांक16_t clkspeed, अचिन्हित दीर्घ pघड़ी)
+अणु
+	अचिन्हित दीर्घ vtघड़ी = 0;
 
-	switch (current_cpu_type()) {
-	case CPU_VR4111:
-		/* The NEC VR4111 doesn't have the VTClock. */
-		break;
-	case CPU_VR4121:
-		vtclock = pclock;
+	चयन (current_cpu_type()) अणु
+	हाल CPU_VR4111:
+		/* The NEC VR4111 करोesn't have the VTClock. */
+		अवरोध;
+	हाल CPU_VR4121:
+		vtघड़ी = pघड़ी;
 		/* DIVVT == 9 Divide by 1.5 . VTClock = (PClock * 6) / 9 */
-		if (DIVVT(clkspeed) == 9)
-			vtclock = pclock * 6;
+		अगर (DIVVT(clkspeed) == 9)
+			vtघड़ी = pघड़ी * 6;
 		/* DIVVT == 10 Divide by 2.5 . VTClock = (PClock * 4) / 10 */
-		else if (DIVVT(clkspeed) == 10)
-			vtclock = pclock * 4;
-		vtclock /= DIVVT(clkspeed);
-		printk(KERN_INFO "VTClock: %ldHz\n", vtclock);
-		break;
-	case CPU_VR4122:
-		if(VTDIVMODE(clkspeed) == 7)
-			vtclock = pclock / 1;
-		else if(VTDIVMODE(clkspeed) == 1)
-			vtclock = pclock / 2;
-		else
-			vtclock = pclock / VTDIVMODE(clkspeed);
-		printk(KERN_INFO "VTClock: %ldHz\n", vtclock);
-		break;
-	case CPU_VR4131:
-	case CPU_VR4133:
-		vtclock = pclock / VTDIVMODE(clkspeed);
-		printk(KERN_INFO "VTClock: %ldHz\n", vtclock);
-		break;
-	default:
-		printk(KERN_INFO "Unexpected CPU of NEC VR4100 series\n");
-		break;
-	}
+		अन्यथा अगर (DIVVT(clkspeed) == 10)
+			vtघड़ी = pघड़ी * 4;
+		vtघड़ी /= DIVVT(clkspeed);
+		prपूर्णांकk(KERN_INFO "VTClock: %ldHz\n", vtघड़ी);
+		अवरोध;
+	हाल CPU_VR4122:
+		अगर(VTDIVMODE(clkspeed) == 7)
+			vtघड़ी = pघड़ी / 1;
+		अन्यथा अगर(VTDIVMODE(clkspeed) == 1)
+			vtघड़ी = pघड़ी / 2;
+		अन्यथा
+			vtघड़ी = pघड़ी / VTDIVMODE(clkspeed);
+		prपूर्णांकk(KERN_INFO "VTClock: %ldHz\n", vtघड़ी);
+		अवरोध;
+	हाल CPU_VR4131:
+	हाल CPU_VR4133:
+		vtघड़ी = pघड़ी / VTDIVMODE(clkspeed);
+		prपूर्णांकk(KERN_INFO "VTClock: %ldHz\n", vtघड़ी);
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_INFO "Unexpected CPU of NEC VR4100 series\n");
+		अवरोध;
+	पूर्ण
 
-	return vtclock;
-}
+	वापस vtघड़ी;
+पूर्ण
 
-static inline unsigned long calculate_tclock(uint16_t clkspeed, unsigned long pclock,
-					     unsigned long vtclock)
-{
-	unsigned long tclock = 0;
+अटल अंतरभूत अचिन्हित दीर्घ calculate_tघड़ी(uपूर्णांक16_t clkspeed, अचिन्हित दीर्घ pघड़ी,
+					     अचिन्हित दीर्घ vtघड़ी)
+अणु
+	अचिन्हित दीर्घ tघड़ी = 0;
 
-	switch (current_cpu_type()) {
-	case CPU_VR4111:
-		if (!(clkspeed & DIV2B))
-			tclock = pclock / 2;
-		else if (!(clkspeed & DIV3B))
-			tclock = pclock / 3;
-		else if (!(clkspeed & DIV4B))
-			tclock = pclock / 4;
-		break;
-	case CPU_VR4121:
-		tclock = pclock / DIVT(clkspeed);
-		break;
-	case CPU_VR4122:
-	case CPU_VR4131:
-	case CPU_VR4133:
-		tclock = vtclock / TDIVMODE(clkspeed);
-		break;
-	default:
-		printk(KERN_INFO "Unexpected CPU of NEC VR4100 series\n");
-		break;
-	}
+	चयन (current_cpu_type()) अणु
+	हाल CPU_VR4111:
+		अगर (!(clkspeed & DIV2B))
+			tघड़ी = pघड़ी / 2;
+		अन्यथा अगर (!(clkspeed & DIV3B))
+			tघड़ी = pघड़ी / 3;
+		अन्यथा अगर (!(clkspeed & DIV4B))
+			tघड़ी = pघड़ी / 4;
+		अवरोध;
+	हाल CPU_VR4121:
+		tघड़ी = pघड़ी / DIVT(clkspeed);
+		अवरोध;
+	हाल CPU_VR4122:
+	हाल CPU_VR4131:
+	हाल CPU_VR4133:
+		tघड़ी = vtघड़ी / TDIVMODE(clkspeed);
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_INFO "Unexpected CPU of NEC VR4100 series\n");
+		अवरोध;
+	पूर्ण
 
-	printk(KERN_INFO "TClock: %ldHz\n", tclock);
+	prपूर्णांकk(KERN_INFO "TClock: %ldHz\n", tघड़ी);
 
-	return tclock;
-}
+	वापस tघड़ी;
+पूर्ण
 
-void vr41xx_calculate_clock_frequency(void)
-{
-	unsigned long pclock;
-	uint16_t clkspeed;
+व्योम vr41xx_calculate_घड़ी_frequency(व्योम)
+अणु
+	अचिन्हित दीर्घ pघड़ी;
+	uपूर्णांक16_t clkspeed;
 
-	clkspeed = read_clkspeed();
+	clkspeed = पढ़ो_clkspeed();
 
-	pclock = calculate_pclock(clkspeed);
-	vr41xx_vtclock = calculate_vtclock(clkspeed, pclock);
-	vr41xx_tclock = calculate_tclock(clkspeed, pclock, vr41xx_vtclock);
-}
+	pघड़ी = calculate_pघड़ी(clkspeed);
+	vr41xx_vtघड़ी = calculate_vtघड़ी(clkspeed, pघड़ी);
+	vr41xx_tघड़ी = calculate_tघड़ी(clkspeed, pघड़ी, vr41xx_vtघड़ी);
+पूर्ण
 
-EXPORT_SYMBOL_GPL(vr41xx_calculate_clock_frequency);
+EXPORT_SYMBOL_GPL(vr41xx_calculate_घड़ी_frequency);

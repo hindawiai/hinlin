@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * D-Link DIR-685 router I2C-based Touchkeys input driver
+ * D-Link सूची-685 router I2C-based Touchkeys input driver
  * Copyright (C) 2017 Linus Walleij <linus.walleij@linaro.org>
  *
  * This is a one-off touchkey controller based on the Cypress Semiconductor
- * CY8C214 MCU with some firmware in its internal 8KB flash. The circuit
+ * CY8C214 MCU with some firmware in its पूर्णांकernal 8KB flash. The circuit
  * board inside the router is named E119921
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/input.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/input.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bitops.h>
 
-struct dir685_touchkeys {
-	struct device		*dev;
-	struct i2c_client	*client;
-	struct input_dev	*input;
-	unsigned long		cur_key;
+काष्ठा dir685_touchkeys अणु
+	काष्ठा device		*dev;
+	काष्ठा i2c_client	*client;
+	काष्ठा input_dev	*input;
+	अचिन्हित दीर्घ		cur_key;
 	u16			codes[7];
-};
+पूर्ण;
 
-static irqreturn_t dir685_tk_irq_thread(int irq, void *data)
-{
-	struct dir685_touchkeys *tk = data;
-	const int num_bits = min_t(int, ARRAY_SIZE(tk->codes), 16);
-	unsigned long changed;
+अटल irqवापस_t dir685_tk_irq_thपढ़ो(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा dir685_touchkeys *tk = data;
+	स्थिर पूर्णांक num_bits = min_t(पूर्णांक, ARRAY_SIZE(tk->codes), 16);
+	अचिन्हित दीर्घ changed;
 	u8 buf[6];
-	unsigned long key;
-	int i;
-	int err;
+	अचिन्हित दीर्घ key;
+	पूर्णांक i;
+	पूर्णांक err;
 
-	memset(buf, 0, sizeof(buf));
-	err = i2c_master_recv(tk->client, buf, sizeof(buf));
-	if (err != sizeof(buf)) {
+	स_रखो(buf, 0, माप(buf));
+	err = i2c_master_recv(tk->client, buf, माप(buf));
+	अगर (err != माप(buf)) अणु
 		dev_err(tk->dev, "short read %d\n", err);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	dev_dbg(tk->dev, "IN: %*ph\n", (int)sizeof(buf), buf);
+	dev_dbg(tk->dev, "IN: %*ph\n", (पूर्णांक)माप(buf), buf);
 	key = be16_to_cpup((__be16 *) &buf[4]);
 
-	/* Figure out if any bits went high or low since last message */
+	/* Figure out अगर any bits went high or low since last message */
 	changed = tk->cur_key ^ key;
-	for_each_set_bit(i, &changed, num_bits) {
+	क्रम_each_set_bit(i, &changed, num_bits) अणु
 		dev_dbg(tk->dev, "key %d is %s\n", i,
 			test_bit(i, &key) ? "down" : "up");
 		input_report_key(tk->input, tk->codes[i], test_bit(i, &key));
-	}
+	पूर्ण
 
-	/* Store currently down keys */
+	/* Store currently करोwn keys */
 	tk->cur_key = key;
 	input_sync(tk->input);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int dir685_tk_probe(struct i2c_client *client,
-			   const struct i2c_device_id *id)
-{
-	struct dir685_touchkeys *tk;
-	struct device *dev = &client->dev;
-	u8 bl_data[] = { 0xa7, 0x40 };
-	int err;
-	int i;
+अटल पूर्णांक dir685_tk_probe(काष्ठा i2c_client *client,
+			   स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा dir685_touchkeys *tk;
+	काष्ठा device *dev = &client->dev;
+	u8 bl_data[] = अणु 0xa7, 0x40 पूर्ण;
+	पूर्णांक err;
+	पूर्णांक i;
 
-	tk = devm_kzalloc(&client->dev, sizeof(*tk), GFP_KERNEL);
-	if (!tk)
-		return -ENOMEM;
+	tk = devm_kzalloc(&client->dev, माप(*tk), GFP_KERNEL);
+	अगर (!tk)
+		वापस -ENOMEM;
 
 	tk->input = devm_input_allocate_device(dev);
-	if (!tk->input)
-		return -ENOMEM;
+	अगर (!tk->input)
+		वापस -ENOMEM;
 
 	tk->client = client;
 	tk->dev = dev;
 
-	tk->input->keycodesize = sizeof(u16);
+	tk->input->keycodesize = माप(u16);
 	tk->input->keycodemax = ARRAY_SIZE(tk->codes);
 	tk->input->keycode = tk->codes;
 	tk->codes[0] = KEY_UP;
@@ -89,66 +90,66 @@ static int dir685_tk_probe(struct i2c_client *client,
 	tk->codes[4] = KEY_ENTER;
 	tk->codes[5] = KEY_WPS_BUTTON;
 	/*
-	 * This key appears in the vendor driver, but I have
+	 * This key appears in the venकरोr driver, but I have
 	 * not been able to activate it.
 	 */
 	tk->codes[6] = KEY_RESERVED;
 
 	__set_bit(EV_KEY, tk->input->evbit);
-	for (i = 0; i < ARRAY_SIZE(tk->codes); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(tk->codes); i++)
 		__set_bit(tk->codes[i], tk->input->keybit);
 	__clear_bit(KEY_RESERVED, tk->input->keybit);
 
 	tk->input->name = "D-Link DIR-685 touchkeys";
 	tk->input->id.bustype = BUS_I2C;
 
-	err = input_register_device(tk->input);
-	if (err)
-		return err;
+	err = input_रेजिस्टर_device(tk->input);
+	अगर (err)
+		वापस err;
 
 	/* Set the brightness to max level */
-	err = i2c_master_send(client, bl_data, sizeof(bl_data));
-	if (err != sizeof(bl_data))
+	err = i2c_master_send(client, bl_data, माप(bl_data));
+	अगर (err != माप(bl_data))
 		dev_warn(tk->dev, "error setting brightness level\n");
 
-	if (!client->irq) {
+	अगर (!client->irq) अणु
 		dev_err(dev, "no IRQ on the I2C device\n");
-		return -ENODEV;
-	}
-	err = devm_request_threaded_irq(dev, client->irq,
-					NULL, dir685_tk_irq_thread,
+		वापस -ENODEV;
+	पूर्ण
+	err = devm_request_thपढ़ोed_irq(dev, client->irq,
+					शून्य, dir685_tk_irq_thपढ़ो,
 					IRQF_ONESHOT,
 					"dir685-tk", tk);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "can't request IRQ\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id dir685_tk_id[] = {
-	{ "dir685tk", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id dir685_tk_id[] = अणु
+	अणु "dir685tk", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, dir685_tk_id);
 
-#ifdef CONFIG_OF
-static const struct of_device_id dir685_tk_of_match[] = {
-	{ .compatible = "dlink,dir685-touchkeys" },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id dir685_tk_of_match[] = अणु
+	अणु .compatible = "dlink,dir685-touchkeys" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, dir685_tk_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver dir685_tk_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver dir685_tk_i2c_driver = अणु
+	.driver = अणु
 		.name	= "dlink-dir685-touchkeys",
 		.of_match_table = of_match_ptr(dir685_tk_of_match),
-	},
+	पूर्ण,
 	.probe		= dir685_tk_probe,
 	.id_table	= dir685_tk_id,
-};
+पूर्ण;
 module_i2c_driver(dir685_tk_i2c_driver);
 
 MODULE_AUTHOR("Linus Walleij <linus.walleij@linaro.org>");

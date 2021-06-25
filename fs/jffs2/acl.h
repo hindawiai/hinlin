@@ -1,43 +1,44 @@
+<शैली गुरु>
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright © 2006  NEC Corporation
+ * Copyright तऊ 2006  NEC Corporation
  *
  * Created by KaiGai Kohei <kaigai@ak.jp.nec.com>
  *
- * For licensing information, see the file 'LICENCE' in this directory.
+ * For licensing inक्रमmation, see the file 'LICENCE' in this directory.
  *
  */
 
-struct jffs2_acl_entry {
-	jint16_t	e_tag;
-	jint16_t	e_perm;
-	jint32_t	e_id;
-};
+काष्ठा jffs2_acl_entry अणु
+	jपूर्णांक16_t	e_tag;
+	jपूर्णांक16_t	e_perm;
+	jपूर्णांक32_t	e_id;
+पूर्ण;
 
-struct jffs2_acl_entry_short {
-	jint16_t	e_tag;
-	jint16_t	e_perm;
-};
+काष्ठा jffs2_acl_entry_लघु अणु
+	jपूर्णांक16_t	e_tag;
+	jपूर्णांक16_t	e_perm;
+पूर्ण;
 
-struct jffs2_acl_header {
-	jint32_t	a_version;
-	struct jffs2_acl_entry	a_entries[];
-};
+काष्ठा jffs2_acl_header अणु
+	jपूर्णांक32_t	a_version;
+	काष्ठा jffs2_acl_entry	a_entries[];
+पूर्ण;
 
-#ifdef CONFIG_JFFS2_FS_POSIX_ACL
+#अगर_घोषित CONFIG_JFFS2_FS_POSIX_ACL
 
-struct posix_acl *jffs2_get_acl(struct inode *inode, int type);
-int jffs2_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
-		  struct posix_acl *acl, int type);
-extern int jffs2_init_acl_pre(struct inode *, struct inode *, umode_t *);
-extern int jffs2_init_acl_post(struct inode *);
+काष्ठा posix_acl *jffs2_get_acl(काष्ठा inode *inode, पूर्णांक type);
+पूर्णांक jffs2_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		  काष्ठा posix_acl *acl, पूर्णांक type);
+बाह्य पूर्णांक jffs2_init_acl_pre(काष्ठा inode *, काष्ठा inode *, umode_t *);
+बाह्य पूर्णांक jffs2_init_acl_post(काष्ठा inode *);
 
-#else
+#अन्यथा
 
-#define jffs2_get_acl				(NULL)
-#define jffs2_set_acl				(NULL)
-#define jffs2_init_acl_pre(dir_i,inode,mode)	(0)
-#define jffs2_init_acl_post(inode)		(0)
+#घोषणा jffs2_get_acl				(शून्य)
+#घोषणा jffs2_set_acl				(शून्य)
+#घोषणा jffs2_init_acl_pre(dir_i,inode,mode)	(0)
+#घोषणा jffs2_init_acl_post(inode)		(0)
 
-#endif	/* CONFIG_JFFS2_FS_POSIX_ACL */
+#पूर्ण_अगर	/* CONFIG_JFFS2_FS_POSIX_ACL */

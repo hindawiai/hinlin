@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2003,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef	__XFS_INODE_BUF_H__
-#define	__XFS_INODE_BUF_H__
+#अगर_अघोषित	__XFS_INODE_BUF_H__
+#घोषणा	__XFS_INODE_BUF_H__
 
-struct xfs_inode;
-struct xfs_dinode;
+काष्ठा xfs_inode;
+काष्ठा xfs_dinode;
 
 /*
- * Inode location information.  Stored in the inode and passed to
- * xfs_imap_to_bp() to get a buffer and dinode for a given inode.
+ * Inode location inक्रमmation.  Stored in the inode and passed to
+ * xfs_imap_to_bp() to get a buffer and dinode क्रम a given inode.
  */
-struct xfs_imap {
+काष्ठा xfs_imap अणु
 	xfs_daddr_t	im_blkno;	/* starting BB of inode chunk */
-	unsigned short	im_len;		/* length in BBs of inode chunk */
-	unsigned short	im_boffset;	/* inode offset in block in bytes */
-};
+	अचिन्हित लघु	im_len;		/* length in BBs of inode chunk */
+	अचिन्हित लघु	im_boffset;	/* inode offset in block in bytes */
+पूर्ण;
 
-int	xfs_imap_to_bp(struct xfs_mount *mp, struct xfs_trans *tp,
-		       struct xfs_imap *imap, struct xfs_buf **bpp);
-void	xfs_dinode_calc_crc(struct xfs_mount *, struct xfs_dinode *);
-void	xfs_inode_to_disk(struct xfs_inode *ip, struct xfs_dinode *to,
+पूर्णांक	xfs_imap_to_bp(काष्ठा xfs_mount *mp, काष्ठा xfs_trans *tp,
+		       काष्ठा xfs_imap *imap, काष्ठा xfs_buf **bpp);
+व्योम	xfs_dinode_calc_crc(काष्ठा xfs_mount *, काष्ठा xfs_dinode *);
+व्योम	xfs_inode_to_disk(काष्ठा xfs_inode *ip, काष्ठा xfs_dinode *to,
 			  xfs_lsn_t lsn);
-int	xfs_inode_from_disk(struct xfs_inode *ip, struct xfs_dinode *from);
+पूर्णांक	xfs_inode_from_disk(काष्ठा xfs_inode *ip, काष्ठा xfs_dinode *from);
 
-xfs_failaddr_t xfs_dinode_verify(struct xfs_mount *mp, xfs_ino_t ino,
-			   struct xfs_dinode *dip);
-xfs_failaddr_t xfs_inode_validate_extsize(struct xfs_mount *mp,
-		uint32_t extsize, uint16_t mode, uint16_t flags);
-xfs_failaddr_t xfs_inode_validate_cowextsize(struct xfs_mount *mp,
-		uint32_t cowextsize, uint16_t mode, uint16_t flags,
-		uint64_t flags2);
+xfs_failaddr_t xfs_dinode_verअगरy(काष्ठा xfs_mount *mp, xfs_ino_t ino,
+			   काष्ठा xfs_dinode *dip);
+xfs_failaddr_t xfs_inode_validate_extsize(काष्ठा xfs_mount *mp,
+		uपूर्णांक32_t extsize, uपूर्णांक16_t mode, uपूर्णांक16_t flags);
+xfs_failaddr_t xfs_inode_validate_cowextsize(काष्ठा xfs_mount *mp,
+		uपूर्णांक32_t cowextsize, uपूर्णांक16_t mode, uपूर्णांक16_t flags,
+		uपूर्णांक64_t flags2);
 
-static inline uint64_t xfs_inode_encode_bigtime(struct timespec64 tv)
-{
-	return xfs_unix_to_bigtime(tv.tv_sec) * NSEC_PER_SEC + tv.tv_nsec;
-}
+अटल अंतरभूत uपूर्णांक64_t xfs_inode_encode_bigसमय(काष्ठा बारpec64 tv)
+अणु
+	वापस xfs_unix_to_bigसमय(tv.tv_sec) * NSEC_PER_SEC + tv.tv_nsec;
+पूर्ण
 
-struct timespec64 xfs_inode_from_disk_ts(struct xfs_dinode *dip,
-		const xfs_timestamp_t ts);
+काष्ठा बारpec64 xfs_inode_from_disk_ts(काष्ठा xfs_dinode *dip,
+		स्थिर xfs_बारtamp_t ts);
 
-#endif	/* __XFS_INODE_BUF_H__ */
+#पूर्ण_अगर	/* __XFS_INODE_BUF_H__ */

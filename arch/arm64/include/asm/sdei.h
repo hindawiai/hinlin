@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 // Copyright (C) 2017 Arm Ltd.
-#ifndef __ASM_SDEI_H
-#define __ASM_SDEI_H
+#अगर_अघोषित __ASM_SDEI_H
+#घोषणा __ASM_SDEI_H
 
-/* Values for sdei_exit_mode */
-#define SDEI_EXIT_HVC  0
-#define SDEI_EXIT_SMC  1
+/* Values क्रम sdei_निकास_mode */
+#घोषणा SDEI_EXIT_HVC  0
+#घोषणा SDEI_EXIT_SMC  1
 
-#define SDEI_STACK_SIZE		IRQ_STACK_SIZE
+#घोषणा SDEI_STACK_SIZE		IRQ_STACK_SIZE
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/linkage.h>
-#include <linux/preempt.h>
-#include <linux/types.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/types.h>
 
-#include <asm/virt.h>
+#समावेश <यंत्र/virt.h>
 
-extern unsigned long sdei_exit_mode;
+बाह्य अचिन्हित दीर्घ sdei_निकास_mode;
 
-/* Software Delegated Exception entry point from firmware*/
-asmlinkage void __sdei_asm_handler(unsigned long event_num, unsigned long arg,
-				   unsigned long pc, unsigned long pstate);
+/* Software Delegated Exception entry poपूर्णांक from firmware*/
+यंत्रlinkage व्योम __sdei_यंत्र_handler(अचिन्हित दीर्घ event_num, अचिन्हित दीर्घ arg,
+				   अचिन्हित दीर्घ pc, अचिन्हित दीर्घ pstate);
 
 /* and its CONFIG_UNMAP_KERNEL_AT_EL0 trampoline */
-asmlinkage void __sdei_asm_entry_trampoline(unsigned long event_num,
-						   unsigned long arg,
-						   unsigned long pc,
-						   unsigned long pstate);
+यंत्रlinkage व्योम __sdei_यंत्र_entry_trampoline(अचिन्हित दीर्घ event_num,
+						   अचिन्हित दीर्घ arg,
+						   अचिन्हित दीर्घ pc,
+						   अचिन्हित दीर्घ pstate);
 
 /*
- * The above entry point does the minimum to call C code. This function does
- * anything else, before calling the driver.
+ * The above entry poपूर्णांक करोes the minimum to call C code. This function करोes
+ * anything अन्यथा, beक्रमe calling the driver.
  */
-struct sdei_registered_event;
-asmlinkage unsigned long __sdei_handler(struct pt_regs *regs,
-					struct sdei_registered_event *arg);
+काष्ठा sdei_रेजिस्टरed_event;
+यंत्रlinkage अचिन्हित दीर्घ __sdei_handler(काष्ठा pt_regs *regs,
+					काष्ठा sdei_रेजिस्टरed_event *arg);
 
-unsigned long sdei_arch_get_entry_point(int conduit);
-#define sdei_arch_get_entry_point(x)	sdei_arch_get_entry_point(x)
+अचिन्हित दीर्घ sdei_arch_get_entry_poपूर्णांक(पूर्णांक conduit);
+#घोषणा sdei_arch_get_entry_poपूर्णांक(x)	sdei_arch_get_entry_poपूर्णांक(x)
 
-struct stack_info;
+काष्ठा stack_info;
 
-bool _on_sdei_stack(unsigned long sp, struct stack_info *info);
-static inline bool on_sdei_stack(unsigned long sp,
-				struct stack_info *info)
-{
-	if (!IS_ENABLED(CONFIG_VMAP_STACK))
-		return false;
-	if (!IS_ENABLED(CONFIG_ARM_SDE_INTERFACE))
-		return false;
-	if (in_nmi())
-		return _on_sdei_stack(sp, info);
+bool _on_sdei_stack(अचिन्हित दीर्घ sp, काष्ठा stack_info *info);
+अटल अंतरभूत bool on_sdei_stack(अचिन्हित दीर्घ sp,
+				काष्ठा stack_info *info)
+अणु
+	अगर (!IS_ENABLED(CONFIG_VMAP_STACK))
+		वापस false;
+	अगर (!IS_ENABLED(CONFIG_ARM_SDE_INTERFACE))
+		वापस false;
+	अगर (in_nmi())
+		वापस _on_sdei_stack(sp, info);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#endif /* __ASSEMBLY__ */
-#endif	/* __ASM_SDEI_H */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर	/* __ASM_SDEI_H */

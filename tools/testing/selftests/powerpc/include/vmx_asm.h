@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright 2015, Cyril Bur, IBM Corp.
  */
 
-#include "basic_asm.h"
+#समावेश "basic_asm.h"
 
 /* POS MUST BE 16 ALIGNED! */
-#define PUSH_VMX(pos,reg) \
+#घोषणा PUSH_VMX(pos,reg) \
 	li	reg,pos; \
 	stvx	v20,reg,%r1; \
 	addi	reg,reg,16; \
@@ -33,7 +34,7 @@
 	stvx	v31,reg,%r1;
 
 /* POS MUST BE 16 ALIGNED! */
-#define POP_VMX(pos,reg) \
+#घोषणा POP_VMX(pos,reg) \
 	li	reg,pos; \
 	lvx	v20,reg,%r1; \
 	addi	reg,reg,16; \

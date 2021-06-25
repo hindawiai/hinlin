@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#include <linux/module.h>
-#include <linux/moduleloader.h>
-#include <linux/kernel.h>
-#include <linux/elf.h>
-#include <linux/vmalloc.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/string.h>
-#include <asm/unwind.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleloader.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/unwind.h>
 
-static inline void arc_write_me(unsigned short *addr, unsigned long value)
-{
+अटल अंतरभूत व्योम arc_ग_लिखो_me(अचिन्हित लघु *addr, अचिन्हित दीर्घ value)
+अणु
 	*addr = (value & 0xffff0000) >> 16;
 	*(addr + 1) = (value & 0xffff);
-}
+पूर्ण
 
 /*
- * This gets called before relocation loop in generic loader
+ * This माला_लो called beक्रमe relocation loop in generic loader
  * Make a note of the section index of unwinding section
  */
-int module_frob_arch_sections(Elf_Ehdr *hdr, Elf_Shdr *sechdrs,
-			      char *secstr, struct module *mod)
-{
-#ifdef CONFIG_ARC_DW2_UNWIND
+पूर्णांक module_frob_arch_sections(Elf_Ehdr *hdr, Elf_Shdr *sechdrs,
+			      अक्षर *secstr, काष्ठा module *mod)
+अणु
+#अगर_घोषित CONFIG_ARC_DW2_UNWIND
 	mod->arch.unw_sec_idx = 0;
-	mod->arch.unw_info = NULL;
-#endif
+	mod->arch.unw_info = शून्य;
+#पूर्ण_अगर
 	mod->arch.secstr = secstr;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void module_arch_cleanup(struct module *mod)
-{
-#ifdef CONFIG_ARC_DW2_UNWIND
-	if (mod->arch.unw_info)
-		unwind_remove_table(mod->arch.unw_info, 0);
-#endif
-}
+व्योम module_arch_cleanup(काष्ठा module *mod)
+अणु
+#अगर_घोषित CONFIG_ARC_DW2_UNWIND
+	अगर (mod->arch.unw_info)
+		unwind_हटाओ_table(mod->arch.unw_info, 0);
+#पूर्ण_अगर
+पूर्ण
 
-int apply_relocate_add(Elf32_Shdr *sechdrs,
-		       const char *strtab,
-		       unsigned int symindex,	/* sec index for sym tbl */
-		       unsigned int relsec,	/* sec index for relo sec */
-		       struct module *module)
-{
-	int i, n, relo_type;
-	Elf32_Rela *rel_entry = (void *)sechdrs[relsec].sh_addr;
+पूर्णांक apply_relocate_add(Elf32_Shdr *sechdrs,
+		       स्थिर अक्षर *strtab,
+		       अचिन्हित पूर्णांक symindex,	/* sec index क्रम sym tbl */
+		       अचिन्हित पूर्णांक rअन्यथाc,	/* sec index क्रम relo sec */
+		       काष्ठा module *module)
+अणु
+	पूर्णांक i, n, relo_type;
+	Elf32_Rela *rel_entry = (व्योम *)sechdrs[rअन्यथाc].sh_addr;
 	Elf32_Sym *sym_entry, *sym_sec;
 	Elf32_Addr relocation, location, tgt_addr;
-	unsigned int tgtsec;
+	अचिन्हित पूर्णांक tgtsec;
 
 	/*
-	 * @relsec has relocations e.g. .rela.init.text
+	 * @rअन्यथाc has relocations e.g. .rela.init.text
 	 * @tgtsec is section to patch e.g. .init.text
 	 */
-	tgtsec = sechdrs[relsec].sh_info;
+	tgtsec = sechdrs[rअन्यथाc].sh_info;
 	tgt_addr = sechdrs[tgtsec].sh_addr;
 	sym_sec = (Elf32_Sym *) sechdrs[symindex].sh_addr;
-	n = sechdrs[relsec].sh_size / sizeof(*rel_entry);
+	n = sechdrs[rअन्यथाc].sh_size / माप(*rel_entry);
 
 	pr_debug("\nSection to fixup %s @%x\n",
 		 module->arch.secstr + sechdrs[tgtsec].sh_name, tgt_addr);
@@ -70,8 +71,8 @@ int apply_relocate_add(Elf32_Shdr *sechdrs,
 	pr_debug("=========================================================\n");
 
 	/* Loop thru entries in relocation section */
-	for (i = 0; i < n; i++) {
-		const char *s;
+	क्रम (i = 0; i < n; i++) अणु
+		स्थिर अक्षर *s;
 
 		/* This is where to make the change */
 		location = tgt_addr + rel_entry[i].r_offset;
@@ -82,65 +83,65 @@ int apply_relocate_add(Elf32_Shdr *sechdrs,
 
 		relocation = sym_entry->st_value + rel_entry[i].r_addend;
 
-		if (sym_entry->st_name == 0 && ELF_ST_TYPE (sym_entry->st_info) == STT_SECTION) {
+		अगर (sym_entry->st_name == 0 && ELF_ST_TYPE (sym_entry->st_info) == STT_SECTION) अणु
 			s = module->arch.secstr + sechdrs[sym_entry->st_shndx].sh_name;
-		} else {
+		पूर्ण अन्यथा अणु
 			s = strtab + sym_entry->st_name;
-		}
+		पूर्ण
 
 		pr_debug("   %x\t%x\t%x %x %x [%s]\n",
 			 rel_entry[i].r_offset, rel_entry[i].r_addend,
 			 sym_entry->st_value, location, relocation, s);
 
-		/* This assumes modules are built with -mlong-calls
-		 * so any branches/jumps are absolute 32 bit jmps
-		 * global data access again is abs 32 bit.
+		/* This assumes modules are built with -mदीर्घ-calls
+		 * so any branches/jumps are असलolute 32 bit jmps
+		 * global data access again is असल 32 bit.
 		 * Both of these are handled by same relocation type
 		 */
 		relo_type = ELF32_R_TYPE(rel_entry[i].r_info);
 
-		if (likely(R_ARC_32_ME == relo_type))	/* ME ( S + A ) */
-			arc_write_me((unsigned short *)location, relocation);
-		else if (R_ARC_32 == relo_type)		/* ( S + A ) */
+		अगर (likely(R_ARC_32_ME == relo_type))	/* ME ( S + A ) */
+			arc_ग_लिखो_me((अचिन्हित लघु *)location, relocation);
+		अन्यथा अगर (R_ARC_32 == relo_type)		/* ( S + A ) */
 			*((Elf32_Addr *) location) = relocation;
-		else if (R_ARC_32_PCREL == relo_type)	/* ( S + A ) - PDATA ) */
+		अन्यथा अगर (R_ARC_32_PCREL == relo_type)	/* ( S + A ) - PDATA ) */
 			*((Elf32_Addr *) location) = relocation - location;
-		else
-			goto relo_err;
+		अन्यथा
+			जाओ relo_err;
 
-	}
+	पूर्ण
 
-#ifdef CONFIG_ARC_DW2_UNWIND
-	if (strcmp(module->arch.secstr+sechdrs[tgtsec].sh_name, ".eh_frame") == 0)
+#अगर_घोषित CONFIG_ARC_DW2_UNWIND
+	अगर (म_भेद(module->arch.secstr+sechdrs[tgtsec].sh_name, ".eh_frame") == 0)
 		module->arch.unw_sec_idx = tgtsec;
-#endif
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
 relo_err:
 	pr_err("%s: unknown relocation: %u\n",
 		module->name, ELF32_R_TYPE(rel_entry[i].r_info));
-	return -ENOEXEC;
+	वापस -ENOEXEC;
 
-}
+पूर्ण
 
-/* Just before lift off: After sections have been relocated, we add the
+/* Just beक्रमe lअगरt off: After sections have been relocated, we add the
  * dwarf section to unwinder table pool
- * This couldn't be done in module_frob_arch_sections() because
+ * This couldn't be करोne in module_frob_arch_sections() because
  * relocations had not been applied by then
  */
-int module_finalize(const Elf32_Ehdr *hdr, const Elf_Shdr *sechdrs,
-		    struct module *mod)
-{
-#ifdef CONFIG_ARC_DW2_UNWIND
-	void *unw;
-	int unwsec = mod->arch.unw_sec_idx;
+पूर्णांक module_finalize(स्थिर Elf32_Ehdr *hdr, स्थिर Elf_Shdr *sechdrs,
+		    काष्ठा module *mod)
+अणु
+#अगर_घोषित CONFIG_ARC_DW2_UNWIND
+	व्योम *unw;
+	पूर्णांक unwsec = mod->arch.unw_sec_idx;
 
-	if (unwsec) {
-		unw = unwind_add_table(mod, (void *)sechdrs[unwsec].sh_addr,
+	अगर (unwsec) अणु
+		unw = unwind_add_table(mod, (व्योम *)sechdrs[unwsec].sh_addr,
 				       sechdrs[unwsec].sh_size);
 		mod->arch.unw_info = unw;
-	}
-#endif
-	return 0;
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण

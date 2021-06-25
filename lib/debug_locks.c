@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * lib/debug_locks.c
  *
- * Generic place for common debugging facilities for various locks:
+ * Generic place क्रम common debugging facilities क्रम various locks:
  * spinlocks, rwlocks, mutexes and rwsems.
  *
  * Started by Ingo Molnar:
  *
  *  Copyright (C) 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
-#include <linux/rwsem.h>
-#include <linux/mutex.h>
-#include <linux/export.h>
-#include <linux/spinlock.h>
-#include <linux/debug_locks.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/export.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/debug_locks.h>
 
 /*
  * We want to turn all lock-debugging facilities on/off at once,
@@ -22,28 +23,28 @@
  * that would just muddy the log. So we report the first one and
  * shut up after that.
  */
-int debug_locks __read_mostly = 1;
+पूर्णांक debug_locks __पढ़ो_mostly = 1;
 EXPORT_SYMBOL_GPL(debug_locks);
 
 /*
  * The locking-testsuite uses <debug_locks_silent> to get a
- * 'silent failure': nothing is printed to the console when
+ * 'silent failure': nothing is prपूर्णांकed to the console when
  * a locking bug is detected.
  */
-int debug_locks_silent __read_mostly;
+पूर्णांक debug_locks_silent __पढ़ो_mostly;
 EXPORT_SYMBOL_GPL(debug_locks_silent);
 
 /*
  * Generic 'turn off all lock debugging' function:
  */
-noinstr int debug_locks_off(void)
-{
-	if (debug_locks && __debug_locks_off()) {
-		if (!debug_locks_silent) {
+noinstr पूर्णांक debug_locks_off(व्योम)
+अणु
+	अगर (debug_locks && __debug_locks_off()) अणु
+		अगर (!debug_locks_silent) अणु
 			console_verbose();
-			return 1;
-		}
-	}
-	return 0;
-}
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(debug_locks_off);

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2013, NVIDIA Corporation.  All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sub license,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sub license,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
@@ -21,25 +22,25 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <linux/backlight.h>
-#include <linux/err.h>
-#include <linux/module.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-static DEFINE_MUTEX(panel_lock);
-static LIST_HEAD(panel_list);
+अटल DEFINE_MUTEX(panel_lock);
+अटल LIST_HEAD(panel_list);
 
 /**
  * DOC: drm panel
  *
- * The DRM panel helpers allow drivers to register panel objects with a
+ * The DRM panel helpers allow drivers to रेजिस्टर panel objects with a
  * central registry and provide functions to retrieve those panels in display
  * drivers.
  *
- * For easy integration into drivers using the &drm_bridge infrastructure please
+ * For easy पूर्णांकegration पूर्णांकo drivers using the &drm_bridge infraकाष्ठाure please
  * take look at drm_panel_bridge_add() and devm_drm_panel_bridge_add().
  */
 
@@ -49,19 +50,19 @@ static LIST_HEAD(panel_list);
  * @dev: parent device of the panel
  * @funcs: panel operations
  * @connector_type: the connector type (DRM_MODE_CONNECTOR_*) corresponding to
- *	the panel interface
+ *	the panel पूर्णांकerface
  *
- * Initialize the panel structure for subsequent registration with
+ * Initialize the panel काष्ठाure क्रम subsequent registration with
  * drm_panel_add().
  */
-void drm_panel_init(struct drm_panel *panel, struct device *dev,
-		    const struct drm_panel_funcs *funcs, int connector_type)
-{
+व्योम drm_panel_init(काष्ठा drm_panel *panel, काष्ठा device *dev,
+		    स्थिर काष्ठा drm_panel_funcs *funcs, पूर्णांक connector_type)
+अणु
 	INIT_LIST_HEAD(&panel->list);
 	panel->dev = dev;
 	panel->funcs = funcs;
 	panel->connector_type = connector_type;
-}
+पूर्ण
 EXPORT_SYMBOL(drm_panel_init);
 
 /**
@@ -71,71 +72,71 @@ EXPORT_SYMBOL(drm_panel_init);
  * Add a panel to the global registry so that it can be looked up by display
  * drivers.
  */
-void drm_panel_add(struct drm_panel *panel)
-{
+व्योम drm_panel_add(काष्ठा drm_panel *panel)
+अणु
 	mutex_lock(&panel_lock);
 	list_add_tail(&panel->list, &panel_list);
 	mutex_unlock(&panel_lock);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_panel_add);
 
 /**
- * drm_panel_remove - remove a panel from the global registry
+ * drm_panel_हटाओ - हटाओ a panel from the global registry
  * @panel: DRM panel
  *
  * Removes a panel from the global registry.
  */
-void drm_panel_remove(struct drm_panel *panel)
-{
+व्योम drm_panel_हटाओ(काष्ठा drm_panel *panel)
+अणु
 	mutex_lock(&panel_lock);
 	list_del_init(&panel->list);
 	mutex_unlock(&panel_lock);
-}
-EXPORT_SYMBOL(drm_panel_remove);
+पूर्ण
+EXPORT_SYMBOL(drm_panel_हटाओ);
 
 /**
- * drm_panel_prepare - power on a panel
+ * drm_panel_prepare - घातer on a panel
  * @panel: DRM panel
  *
- * Calling this function will enable power and deassert any reset signals to
+ * Calling this function will enable घातer and deनिश्चित any reset संकेतs to
  * the panel. After this has completed it is possible to communicate with any
- * integrated circuitry via a command bus.
+ * पूर्णांकegrated circuitry via a command bus.
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int drm_panel_prepare(struct drm_panel *panel)
-{
-	if (!panel)
-		return -EINVAL;
+पूर्णांक drm_panel_prepare(काष्ठा drm_panel *panel)
+अणु
+	अगर (!panel)
+		वापस -EINVAL;
 
-	if (panel->funcs && panel->funcs->prepare)
-		return panel->funcs->prepare(panel);
+	अगर (panel->funcs && panel->funcs->prepare)
+		वापस panel->funcs->prepare(panel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_panel_prepare);
 
 /**
- * drm_panel_unprepare - power off a panel
+ * drm_panel_unprepare - घातer off a panel
  * @panel: DRM panel
  *
- * Calling this function will completely power off a panel (assert the panel's
- * reset, turn off power supplies, ...). After this function has completed, it
- * is usually no longer possible to communicate with the panel until another
+ * Calling this function will completely घातer off a panel (निश्चित the panel's
+ * reset, turn off घातer supplies, ...). After this function has completed, it
+ * is usually no दीर्घer possible to communicate with the panel until another
  * call to drm_panel_prepare().
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int drm_panel_unprepare(struct drm_panel *panel)
-{
-	if (!panel)
-		return -EINVAL;
+पूर्णांक drm_panel_unprepare(काष्ठा drm_panel *panel)
+अणु
+	अगर (!panel)
+		वापस -EINVAL;
 
-	if (panel->funcs && panel->funcs->unprepare)
-		return panel->funcs->unprepare(panel);
+	अगर (panel->funcs && panel->funcs->unprepare)
+		वापस panel->funcs->unprepare(panel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_panel_unprepare);
 
 /**
@@ -148,26 +149,26 @@ EXPORT_SYMBOL(drm_panel_unprepare);
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int drm_panel_enable(struct drm_panel *panel)
-{
-	int ret;
+पूर्णांक drm_panel_enable(काष्ठा drm_panel *panel)
+अणु
+	पूर्णांक ret;
 
-	if (!panel)
-		return -EINVAL;
+	अगर (!panel)
+		वापस -EINVAL;
 
-	if (panel->funcs && panel->funcs->enable) {
+	अगर (panel->funcs && panel->funcs->enable) अणु
 		ret = panel->funcs->enable(panel);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	ret = backlight_enable(panel->backlight);
-	if (ret < 0)
+	अगर (ret < 0)
 		DRM_DEV_INFO(panel->dev, "failed to enable backlight: %d\n",
 			     ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_panel_enable);
 
 /**
@@ -176,27 +177,27 @@ EXPORT_SYMBOL(drm_panel_enable);
  *
  * This will typically turn off the panel's backlight or disable the display
  * drivers. For smart panels it should still be possible to communicate with
- * the integrated circuitry via any command bus after this call.
+ * the पूर्णांकegrated circuitry via any command bus after this call.
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int drm_panel_disable(struct drm_panel *panel)
-{
-	int ret;
+पूर्णांक drm_panel_disable(काष्ठा drm_panel *panel)
+अणु
+	पूर्णांक ret;
 
-	if (!panel)
-		return -EINVAL;
+	अगर (!panel)
+		वापस -EINVAL;
 
 	ret = backlight_disable(panel->backlight);
-	if (ret < 0)
+	अगर (ret < 0)
 		DRM_DEV_INFO(panel->dev, "failed to disable backlight: %d\n",
 			     ret);
 
-	if (panel->funcs && panel->funcs->disable)
-		return panel->funcs->disable(panel);
+	अगर (panel->funcs && panel->funcs->disable)
+		वापस panel->funcs->disable(panel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_panel_disable);
 
 /**
@@ -204,145 +205,145 @@ EXPORT_SYMBOL(drm_panel_disable);
  * @panel: DRM panel
  * @connector: DRM connector
  *
- * The modes probed from the panel are automatically added to the connector
+ * The modes probed from the panel are स्वतःmatically added to the connector
  * that the panel is attached to.
  *
  * Return: The number of modes available from the panel on success or a
  * negative error code on failure.
  */
-int drm_panel_get_modes(struct drm_panel *panel,
-			struct drm_connector *connector)
-{
-	if (!panel)
-		return -EINVAL;
+पूर्णांक drm_panel_get_modes(काष्ठा drm_panel *panel,
+			काष्ठा drm_connector *connector)
+अणु
+	अगर (!panel)
+		वापस -EINVAL;
 
-	if (panel->funcs && panel->funcs->get_modes)
-		return panel->funcs->get_modes(panel, connector);
+	अगर (panel->funcs && panel->funcs->get_modes)
+		वापस panel->funcs->get_modes(panel, connector);
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 EXPORT_SYMBOL(drm_panel_get_modes);
 
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 /**
  * of_drm_find_panel - look up a panel using a device tree node
  * @np: device tree node of the panel
  *
- * Searches the set of registered panels for one that matches the given device
- * tree node. If a matching panel is found, return a pointer to it.
+ * Searches the set of रेजिस्टरed panels क्रम one that matches the given device
+ * tree node. If a matching panel is found, वापस a poपूर्णांकer to it.
  *
- * Return: A pointer to the panel registered for the specified device tree
- * node or an ERR_PTR() if no panel matching the device tree node can be found.
+ * Return: A poपूर्णांकer to the panel रेजिस्टरed क्रम the specअगरied device tree
+ * node or an ERR_PTR() अगर no panel matching the device tree node can be found.
  *
- * Possible error codes returned by this function:
+ * Possible error codes वापसed by this function:
  *
  * - EPROBE_DEFER: the panel device has not been probed yet, and the caller
  *   should retry later
  * - ENODEV: the device is not available (status != "okay" or "ok")
  */
-struct drm_panel *of_drm_find_panel(const struct device_node *np)
-{
-	struct drm_panel *panel;
+काष्ठा drm_panel *of_drm_find_panel(स्थिर काष्ठा device_node *np)
+अणु
+	काष्ठा drm_panel *panel;
 
-	if (!of_device_is_available(np))
-		return ERR_PTR(-ENODEV);
+	अगर (!of_device_is_available(np))
+		वापस ERR_PTR(-ENODEV);
 
 	mutex_lock(&panel_lock);
 
-	list_for_each_entry(panel, &panel_list, list) {
-		if (panel->dev->of_node == np) {
+	list_क्रम_each_entry(panel, &panel_list, list) अणु
+		अगर (panel->dev->of_node == np) अणु
 			mutex_unlock(&panel_lock);
-			return panel;
-		}
-	}
+			वापस panel;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&panel_lock);
-	return ERR_PTR(-EPROBE_DEFER);
-}
+	वापस ERR_PTR(-EPROBE_DEFER);
+पूर्ण
 EXPORT_SYMBOL(of_drm_find_panel);
 
 /**
  * of_drm_get_panel_orientation - look up the orientation of the panel through
  * the "rotation" binding from a device tree node
  * @np: device tree node of the panel
- * @orientation: orientation enum to be filled in
+ * @orientation: orientation क्रमागत to be filled in
  *
  * Looks up the rotation of a panel in the device tree. The orientation of the
  * panel is expressed as a property name "rotation" in the device tree. The
- * rotation in the device tree is counter clockwise.
+ * rotation in the device tree is counter घड़ीwise.
  *
- * Return: 0 when a valid rotation value (0, 90, 180, or 270) is read or the
- * rotation property doesn't exist. Return a negative error code on failure.
+ * Return: 0 when a valid rotation value (0, 90, 180, or 270) is पढ़ो or the
+ * rotation property करोesn't exist. Return a negative error code on failure.
  */
-int of_drm_get_panel_orientation(const struct device_node *np,
-				 enum drm_panel_orientation *orientation)
-{
-	int rotation, ret;
+पूर्णांक of_drm_get_panel_orientation(स्थिर काष्ठा device_node *np,
+				 क्रमागत drm_panel_orientation *orientation)
+अणु
+	पूर्णांक rotation, ret;
 
-	ret = of_property_read_u32(np, "rotation", &rotation);
-	if (ret == -EINVAL) {
+	ret = of_property_पढ़ो_u32(np, "rotation", &rotation);
+	अगर (ret == -EINVAL) अणु
 		/* Don't return an error if there's no rotation property. */
 		*orientation = DRM_MODE_PANEL_ORIENTATION_UNKNOWN;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (rotation == 0)
+	अगर (rotation == 0)
 		*orientation = DRM_MODE_PANEL_ORIENTATION_NORMAL;
-	else if (rotation == 90)
+	अन्यथा अगर (rotation == 90)
 		*orientation = DRM_MODE_PANEL_ORIENTATION_RIGHT_UP;
-	else if (rotation == 180)
+	अन्यथा अगर (rotation == 180)
 		*orientation = DRM_MODE_PANEL_ORIENTATION_BOTTOM_UP;
-	else if (rotation == 270)
+	अन्यथा अगर (rotation == 270)
 		*orientation = DRM_MODE_PANEL_ORIENTATION_LEFT_UP;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(of_drm_get_panel_orientation);
-#endif
+#पूर्ण_अगर
 
-#if IS_REACHABLE(CONFIG_BACKLIGHT_CLASS_DEVICE)
+#अगर IS_REACHABLE(CONFIG_BACKLIGHT_CLASS_DEVICE)
 /**
- * drm_panel_of_backlight - use backlight device node for backlight
+ * drm_panel_of_backlight - use backlight device node क्रम backlight
  * @panel: DRM panel
  *
- * Use this function to enable backlight handling if your panel
+ * Use this function to enable backlight handling अगर your panel
  * uses device tree and has a backlight phandle.
  *
  * When the panel is enabled backlight will be enabled after a
  * successful call to &drm_panel_funcs.enable()
  *
- * When the panel is disabled backlight will be disabled before the
+ * When the panel is disabled backlight will be disabled beक्रमe the
  * call to &drm_panel_funcs.disable().
  *
- * A typical implementation for a panel driver supporting device tree
- * will call this function at probe time. Backlight will then be handled
- * transparently without requiring any intervention from the driver.
+ * A typical implementation क्रम a panel driver supporting device tree
+ * will call this function at probe समय. Backlight will then be handled
+ * transparently without requiring any पूर्णांकervention from the driver.
  * drm_panel_of_backlight() must be called after the call to drm_panel_init().
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int drm_panel_of_backlight(struct drm_panel *panel)
-{
-	struct backlight_device *backlight;
+पूर्णांक drm_panel_of_backlight(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा backlight_device *backlight;
 
-	if (!panel || !panel->dev)
-		return -EINVAL;
+	अगर (!panel || !panel->dev)
+		वापस -EINVAL;
 
 	backlight = devm_of_find_backlight(panel->dev);
 
-	if (IS_ERR(backlight))
-		return PTR_ERR(backlight);
+	अगर (IS_ERR(backlight))
+		वापस PTR_ERR(backlight);
 
 	panel->backlight = backlight;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_panel_of_backlight);
-#endif
+#पूर्ण_अगर
 
 MODULE_AUTHOR("Thierry Reding <treding@nvidia.com>");
 MODULE_DESCRIPTION("DRM panel infrastructure");

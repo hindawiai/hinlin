@@ -1,41 +1,42 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2015-2018 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
+ *  - Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -44,1195 +45,1195 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/ratelimit.h>
-#include <linux/fault-inject.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/fault-inject.h>
 
-#include "hfi.h"
-#include "trace.h"
-#include "debugfs.h"
-#include "device.h"
-#include "qp.h"
-#include "sdma.h"
-#include "fault.h"
+#समावेश "hfi.h"
+#समावेश "trace.h"
+#समावेश "debugfs.h"
+#समावेश "device.h"
+#समावेश "qp.h"
+#समावेश "sdma.h"
+#समावेश "fault.h"
 
-static struct dentry *hfi1_dbg_root;
+अटल काष्ठा dentry *hfi1_dbg_root;
 
-/* wrappers to enforce srcu in seq file */
-ssize_t hfi1_seq_read(struct file *file, char __user *buf, size_t size,
+/* wrappers to enक्रमce srcu in seq file */
+sमाप_प्रकार hfi1_seq_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size,
 		      loff_t *ppos)
-{
-	struct dentry *d = file->f_path.dentry;
-	ssize_t r;
+अणु
+	काष्ठा dentry *d = file->f_path.dentry;
+	sमाप_प्रकार r;
 
 	r = debugfs_file_get(d);
-	if (unlikely(r))
-		return r;
-	r = seq_read(file, buf, size, ppos);
+	अगर (unlikely(r))
+		वापस r;
+	r = seq_पढ़ो(file, buf, size, ppos);
 	debugfs_file_put(d);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-loff_t hfi1_seq_lseek(struct file *file, loff_t offset, int whence)
-{
-	struct dentry *d = file->f_path.dentry;
+loff_t hfi1_seq_lseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	काष्ठा dentry *d = file->f_path.dentry;
 	loff_t r;
 
 	r = debugfs_file_get(d);
-	if (unlikely(r))
-		return r;
+	अगर (unlikely(r))
+		वापस r;
 	r = seq_lseek(file, offset, whence);
 	debugfs_file_put(d);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-#define private2dd(file) (file_inode(file)->i_private)
-#define private2ppd(file) (file_inode(file)->i_private)
+#घोषणा निजी2dd(file) (file_inode(file)->i_निजी)
+#घोषणा निजी2ppd(file) (file_inode(file)->i_निजी)
 
-static void *_opcode_stats_seq_start(struct seq_file *s, loff_t *pos)
-{
-	struct hfi1_opcode_stats_perctx *opstats;
+अटल व्योम *_opcode_stats_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	काष्ठा hfi1_opcode_stats_perctx *opstats;
 
-	if (*pos >= ARRAY_SIZE(opstats->stats))
-		return NULL;
-	return pos;
-}
+	अगर (*pos >= ARRAY_SIZE(opstats->stats))
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void *_opcode_stats_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
-	struct hfi1_opcode_stats_perctx *opstats;
+अटल व्योम *_opcode_stats_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा hfi1_opcode_stats_perctx *opstats;
 
 	++*pos;
-	if (*pos >= ARRAY_SIZE(opstats->stats))
-		return NULL;
-	return pos;
-}
+	अगर (*pos >= ARRAY_SIZE(opstats->stats))
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void _opcode_stats_seq_stop(struct seq_file *s, void *v)
-{
-}
+अटल व्योम _opcode_stats_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
+पूर्ण
 
-static int opcode_stats_show(struct seq_file *s, u8 i, u64 packets, u64 bytes)
-{
-	if (!packets && !bytes)
-		return SEQ_SKIP;
-	seq_printf(s, "%02x %llu/%llu\n", i,
-		   (unsigned long long)packets,
-		   (unsigned long long)bytes);
+अटल पूर्णांक opcode_stats_show(काष्ठा seq_file *s, u8 i, u64 packets, u64 bytes)
+अणु
+	अगर (!packets && !bytes)
+		वापस SEQ_SKIP;
+	seq_म_लिखो(s, "%02x %llu/%llu\n", i,
+		   (अचिन्हित दीर्घ दीर्घ)packets,
+		   (अचिन्हित दीर्घ दीर्घ)bytes);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _opcode_stats_seq_show(struct seq_file *s, void *v)
-{
+अटल पूर्णांक _opcode_stats_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
 	loff_t *spos = v;
 	loff_t i = *spos, j;
 	u64 n_packets = 0, n_bytes = 0;
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
-	struct hfi1_ctxtdata *rcd;
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
+	काष्ठा hfi1_ctxtdata *rcd;
 
-	for (j = 0; j < dd->first_dyn_alloc_ctxt; j++) {
+	क्रम (j = 0; j < dd->first_dyn_alloc_ctxt; j++) अणु
 		rcd = hfi1_rcd_get_by_index(dd, j);
-		if (rcd) {
+		अगर (rcd) अणु
 			n_packets += rcd->opstats->stats[i].n_packets;
 			n_bytes += rcd->opstats->stats[i].n_bytes;
-		}
+		पूर्ण
 		hfi1_rcd_put(rcd);
-	}
-	return opcode_stats_show(s, i, n_packets, n_bytes);
-}
+	पूर्ण
+	वापस opcode_stats_show(s, i, n_packets, n_bytes);
+पूर्ण
 
-DEBUGFS_SEQ_FILE_OPS(opcode_stats);
-DEBUGFS_SEQ_FILE_OPEN(opcode_stats)
-DEBUGFS_FILE_OPS(opcode_stats);
+DEBUGFS_SEQ_खाता_OPS(opcode_stats);
+DEBUGFS_SEQ_खाता_OPEN(opcode_stats)
+DEBUGFS_खाता_OPS(opcode_stats);
 
-static void *_tx_opcode_stats_seq_start(struct seq_file *s, loff_t *pos)
-{
-	return _opcode_stats_seq_start(s, pos);
-}
+अटल व्योम *_tx_opcode_stats_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	वापस _opcode_stats_seq_start(s, pos);
+पूर्ण
 
-static void *_tx_opcode_stats_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
-	return _opcode_stats_seq_next(s, v, pos);
-}
+अटल व्योम *_tx_opcode_stats_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
+	वापस _opcode_stats_seq_next(s, v, pos);
+पूर्ण
 
-static void _tx_opcode_stats_seq_stop(struct seq_file *s, void *v)
-{
-}
+अटल व्योम _tx_opcode_stats_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
+पूर्ण
 
-static int _tx_opcode_stats_seq_show(struct seq_file *s, void *v)
-{
+अटल पूर्णांक _tx_opcode_stats_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
 	loff_t *spos = v;
 	loff_t i = *spos;
-	int j;
+	पूर्णांक j;
 	u64 n_packets = 0, n_bytes = 0;
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
 
-	for_each_possible_cpu(j) {
-		struct hfi1_opcode_stats_perctx *s =
+	क्रम_each_possible_cpu(j) अणु
+		काष्ठा hfi1_opcode_stats_perctx *s =
 			per_cpu_ptr(dd->tx_opstats, j);
 		n_packets += s->stats[i].n_packets;
 		n_bytes += s->stats[i].n_bytes;
-	}
-	return opcode_stats_show(s, i, n_packets, n_bytes);
-}
+	पूर्ण
+	वापस opcode_stats_show(s, i, n_packets, n_bytes);
+पूर्ण
 
-DEBUGFS_SEQ_FILE_OPS(tx_opcode_stats);
-DEBUGFS_SEQ_FILE_OPEN(tx_opcode_stats)
-DEBUGFS_FILE_OPS(tx_opcode_stats);
+DEBUGFS_SEQ_खाता_OPS(tx_opcode_stats);
+DEBUGFS_SEQ_खाता_OPEN(tx_opcode_stats)
+DEBUGFS_खाता_OPS(tx_opcode_stats);
 
-static void *_ctx_stats_seq_start(struct seq_file *s, loff_t *pos)
-{
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
+अटल व्योम *_ctx_stats_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
 
-	if (!*pos)
-		return SEQ_START_TOKEN;
-	if (*pos >= dd->first_dyn_alloc_ctxt)
-		return NULL;
-	return pos;
-}
+	अगर (!*pos)
+		वापस SEQ_START_TOKEN;
+	अगर (*pos >= dd->first_dyn_alloc_ctxt)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void *_ctx_stats_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
+अटल व्योम *_ctx_stats_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
 
-	if (v == SEQ_START_TOKEN)
-		return pos;
+	अगर (v == SEQ_START_TOKEN)
+		वापस pos;
 
 	++*pos;
-	if (*pos >= dd->first_dyn_alloc_ctxt)
-		return NULL;
-	return pos;
-}
+	अगर (*pos >= dd->first_dyn_alloc_ctxt)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void _ctx_stats_seq_stop(struct seq_file *s, void *v)
-{
+अटल व्योम _ctx_stats_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
 	/* nothing allocated */
-}
+पूर्ण
 
-static int _ctx_stats_seq_show(struct seq_file *s, void *v)
-{
+अटल पूर्णांक _ctx_stats_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
 	loff_t *spos;
 	loff_t i, j;
 	u64 n_packets = 0;
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
-	struct hfi1_ctxtdata *rcd;
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
+	काष्ठा hfi1_ctxtdata *rcd;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(s, "Ctx:npkts\n");
-		return 0;
-	}
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(s, "Ctx:npkts\n");
+		वापस 0;
+	पूर्ण
 
 	spos = v;
 	i = *spos;
 
 	rcd = hfi1_rcd_get_by_index_safe(dd, i);
-	if (!rcd)
-		return SEQ_SKIP;
+	अगर (!rcd)
+		वापस SEQ_SKIP;
 
-	for (j = 0; j < ARRAY_SIZE(rcd->opstats->stats); j++)
+	क्रम (j = 0; j < ARRAY_SIZE(rcd->opstats->stats); j++)
 		n_packets += rcd->opstats->stats[j].n_packets;
 
 	hfi1_rcd_put(rcd);
 
-	if (!n_packets)
-		return SEQ_SKIP;
+	अगर (!n_packets)
+		वापस SEQ_SKIP;
 
-	seq_printf(s, "  %llu:%llu\n", i, n_packets);
-	return 0;
-}
+	seq_म_लिखो(s, "  %llu:%llu\n", i, n_packets);
+	वापस 0;
+पूर्ण
 
-DEBUGFS_SEQ_FILE_OPS(ctx_stats);
-DEBUGFS_SEQ_FILE_OPEN(ctx_stats)
-DEBUGFS_FILE_OPS(ctx_stats);
+DEBUGFS_SEQ_खाता_OPS(ctx_stats);
+DEBUGFS_SEQ_खाता_OPEN(ctx_stats)
+DEBUGFS_खाता_OPS(ctx_stats);
 
-static void *_qp_stats_seq_start(struct seq_file *s, loff_t *pos)
+अटल व्योम *_qp_stats_seq_start(काष्ठा seq_file *s, loff_t *pos)
 	__acquires(RCU)
-{
-	struct rvt_qp_iter *iter;
+अणु
+	काष्ठा rvt_qp_iter *iter;
 	loff_t n = *pos;
 
-	iter = rvt_qp_iter_init(s->private, 0, NULL);
+	iter = rvt_qp_iter_init(s->निजी, 0, शून्य);
 
-	/* stop calls rcu_read_unlock */
-	rcu_read_lock();
+	/* stop calls rcu_पढ़ो_unlock */
+	rcu_पढ़ो_lock();
 
-	if (!iter)
-		return NULL;
+	अगर (!iter)
+		वापस शून्य;
 
-	do {
-		if (rvt_qp_iter_next(iter)) {
-			kfree(iter);
-			return NULL;
-		}
-	} while (n--);
+	करो अणु
+		अगर (rvt_qp_iter_next(iter)) अणु
+			kमुक्त(iter);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण जबतक (n--);
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
-static void *_qp_stats_seq_next(struct seq_file *s, void *iter_ptr,
+अटल व्योम *_qp_stats_seq_next(काष्ठा seq_file *s, व्योम *iter_ptr,
 				loff_t *pos)
 	__must_hold(RCU)
-{
-	struct rvt_qp_iter *iter = iter_ptr;
+अणु
+	काष्ठा rvt_qp_iter *iter = iter_ptr;
 
 	(*pos)++;
 
-	if (rvt_qp_iter_next(iter)) {
-		kfree(iter);
-		return NULL;
-	}
+	अगर (rvt_qp_iter_next(iter)) अणु
+		kमुक्त(iter);
+		वापस शून्य;
+	पूर्ण
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
-static void _qp_stats_seq_stop(struct seq_file *s, void *iter_ptr)
+अटल व्योम _qp_stats_seq_stop(काष्ठा seq_file *s, व्योम *iter_ptr)
 	__releases(RCU)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int _qp_stats_seq_show(struct seq_file *s, void *iter_ptr)
-{
-	struct rvt_qp_iter *iter = iter_ptr;
+अटल पूर्णांक _qp_stats_seq_show(काष्ठा seq_file *s, व्योम *iter_ptr)
+अणु
+	काष्ठा rvt_qp_iter *iter = iter_ptr;
 
-	if (!iter)
-		return 0;
+	अगर (!iter)
+		वापस 0;
 
-	qp_iter_print(s, iter);
+	qp_iter_prपूर्णांक(s, iter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-DEBUGFS_SEQ_FILE_OPS(qp_stats);
-DEBUGFS_SEQ_FILE_OPEN(qp_stats)
-DEBUGFS_FILE_OPS(qp_stats);
+DEBUGFS_SEQ_खाता_OPS(qp_stats);
+DEBUGFS_SEQ_खाता_OPEN(qp_stats)
+DEBUGFS_खाता_OPS(qp_stats);
 
-static void *_sdes_seq_start(struct seq_file *s, loff_t *pos)
-{
-	struct hfi1_ibdev *ibd;
-	struct hfi1_devdata *dd;
+अटल व्योम *_sdes_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	काष्ठा hfi1_ibdev *ibd;
+	काष्ठा hfi1_devdata *dd;
 
-	ibd = (struct hfi1_ibdev *)s->private;
+	ibd = (काष्ठा hfi1_ibdev *)s->निजी;
 	dd = dd_from_dev(ibd);
-	if (!dd->per_sdma || *pos >= dd->num_sdma)
-		return NULL;
-	return pos;
-}
+	अगर (!dd->per_sdma || *pos >= dd->num_sdma)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void *_sdes_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
+अटल व्योम *_sdes_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
 
 	++*pos;
-	if (!dd->per_sdma || *pos >= dd->num_sdma)
-		return NULL;
-	return pos;
-}
+	अगर (!dd->per_sdma || *pos >= dd->num_sdma)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void _sdes_seq_stop(struct seq_file *s, void *v)
-{
-}
+अटल व्योम _sdes_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
+पूर्ण
 
-static int _sdes_seq_show(struct seq_file *s, void *v)
-{
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
+अटल पूर्णांक _sdes_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
 	loff_t *spos = v;
 	loff_t i = *spos;
 
 	sdma_seqfile_dump_sde(s, &dd->per_sdma[i]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-DEBUGFS_SEQ_FILE_OPS(sdes);
-DEBUGFS_SEQ_FILE_OPEN(sdes)
-DEBUGFS_FILE_OPS(sdes);
+DEBUGFS_SEQ_खाता_OPS(sdes);
+DEBUGFS_SEQ_खाता_OPEN(sdes)
+DEBUGFS_खाता_OPS(sdes);
 
-static void *_rcds_seq_start(struct seq_file *s, loff_t *pos)
-{
-	struct hfi1_ibdev *ibd;
-	struct hfi1_devdata *dd;
+अटल व्योम *_rcds_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	काष्ठा hfi1_ibdev *ibd;
+	काष्ठा hfi1_devdata *dd;
 
-	ibd = (struct hfi1_ibdev *)s->private;
+	ibd = (काष्ठा hfi1_ibdev *)s->निजी;
 	dd = dd_from_dev(ibd);
-	if (!dd->rcd || *pos >= dd->n_krcv_queues)
-		return NULL;
-	return pos;
-}
+	अगर (!dd->rcd || *pos >= dd->n_krcv_queues)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void *_rcds_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
+अटल व्योम *_rcds_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
 
 	++*pos;
-	if (!dd->rcd || *pos >= dd->num_rcv_contexts)
-		return NULL;
-	return pos;
-}
+	अगर (!dd->rcd || *pos >= dd->num_rcv_contexts)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void _rcds_seq_stop(struct seq_file *s, void *v)
-{
-}
+अटल व्योम _rcds_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
+पूर्ण
 
-static int _rcds_seq_show(struct seq_file *s, void *v)
-{
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
-	struct hfi1_ctxtdata *rcd;
+अटल पूर्णांक _rcds_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
+	काष्ठा hfi1_ctxtdata *rcd;
 	loff_t *spos = v;
 	loff_t i = *spos;
 
 	rcd = hfi1_rcd_get_by_index_safe(dd, i);
-	if (rcd)
+	अगर (rcd)
 		seqfile_dump_rcd(s, rcd);
 	hfi1_rcd_put(rcd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-DEBUGFS_SEQ_FILE_OPS(rcds);
-DEBUGFS_SEQ_FILE_OPEN(rcds)
-DEBUGFS_FILE_OPS(rcds);
+DEBUGFS_SEQ_खाता_OPS(rcds);
+DEBUGFS_SEQ_खाता_OPEN(rcds)
+DEBUGFS_खाता_OPS(rcds);
 
-static void *_pios_seq_start(struct seq_file *s, loff_t *pos)
-{
-	struct hfi1_ibdev *ibd;
-	struct hfi1_devdata *dd;
+अटल व्योम *_pios_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	काष्ठा hfi1_ibdev *ibd;
+	काष्ठा hfi1_devdata *dd;
 
-	ibd = (struct hfi1_ibdev *)s->private;
+	ibd = (काष्ठा hfi1_ibdev *)s->निजी;
 	dd = dd_from_dev(ibd);
-	if (!dd->send_contexts || *pos >= dd->num_send_contexts)
-		return NULL;
-	return pos;
-}
+	अगर (!dd->send_contexts || *pos >= dd->num_send_contexts)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void *_pios_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
+अटल व्योम *_pios_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
 
 	++*pos;
-	if (!dd->send_contexts || *pos >= dd->num_send_contexts)
-		return NULL;
-	return pos;
-}
+	अगर (!dd->send_contexts || *pos >= dd->num_send_contexts)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void _pios_seq_stop(struct seq_file *s, void *v)
-{
-}
+अटल व्योम _pios_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
+पूर्ण
 
-static int _pios_seq_show(struct seq_file *s, void *v)
-{
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
-	struct send_context_info *sci;
+अटल पूर्णांक _pios_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
+	काष्ठा send_context_info *sci;
 	loff_t *spos = v;
 	loff_t i = *spos;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dd->sc_lock, flags);
 	sci = &dd->send_contexts[i];
-	if (sci && sci->type != SC_USER && sci->allocated && sci->sc)
+	अगर (sci && sci->type != SC_USER && sci->allocated && sci->sc)
 		seqfile_dump_sci(s, i, sci);
 	spin_unlock_irqrestore(&dd->sc_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-DEBUGFS_SEQ_FILE_OPS(pios);
-DEBUGFS_SEQ_FILE_OPEN(pios)
-DEBUGFS_FILE_OPS(pios);
+DEBUGFS_SEQ_खाता_OPS(pios);
+DEBUGFS_SEQ_खाता_OPEN(pios)
+DEBUGFS_खाता_OPS(pios);
 
-/* read the per-device counters */
-static ssize_t dev_counters_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *ppos)
-{
+/* पढ़ो the per-device counters */
+अटल sमाप_प्रकार dev_counters_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
 	u64 *counters;
-	size_t avail;
-	struct hfi1_devdata *dd;
-	ssize_t rval;
+	माप_प्रकार avail;
+	काष्ठा hfi1_devdata *dd;
+	sमाप_प्रकार rval;
 
-	dd = private2dd(file);
-	avail = hfi1_read_cntrs(dd, NULL, &counters);
-	rval =  simple_read_from_buffer(buf, count, ppos, counters, avail);
-	return rval;
-}
+	dd = निजी2dd(file);
+	avail = hfi1_पढ़ो_cntrs(dd, शून्य, &counters);
+	rval =  simple_पढ़ो_from_buffer(buf, count, ppos, counters, avail);
+	वापस rval;
+पूर्ण
 
-/* read the per-device counters */
-static ssize_t dev_names_read(struct file *file, char __user *buf,
-			      size_t count, loff_t *ppos)
-{
-	char *names;
-	size_t avail;
-	struct hfi1_devdata *dd;
-	ssize_t rval;
+/* पढ़ो the per-device counters */
+अटल sमाप_प्रकार dev_names_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *names;
+	माप_प्रकार avail;
+	काष्ठा hfi1_devdata *dd;
+	sमाप_प्रकार rval;
 
-	dd = private2dd(file);
-	avail = hfi1_read_cntrs(dd, &names, NULL);
-	rval =  simple_read_from_buffer(buf, count, ppos, names, avail);
-	return rval;
-}
+	dd = निजी2dd(file);
+	avail = hfi1_पढ़ो_cntrs(dd, &names, शून्य);
+	rval =  simple_पढ़ो_from_buffer(buf, count, ppos, names, avail);
+	वापस rval;
+पूर्ण
 
-struct counter_info {
-	char *name;
-	const struct file_operations ops;
-};
+काष्ठा counter_info अणु
+	अक्षर *name;
+	स्थिर काष्ठा file_operations ops;
+पूर्ण;
 
 /*
  * Could use file_inode(file)->i_ino to figure out which file,
- * instead of separate routine for each, but for now, this works...
+ * instead of separate routine क्रम each, but क्रम now, this works...
  */
 
-/* read the per-port names (same for each port) */
-static ssize_t portnames_read(struct file *file, char __user *buf,
-			      size_t count, loff_t *ppos)
-{
-	char *names;
-	size_t avail;
-	struct hfi1_devdata *dd;
-	ssize_t rval;
+/* पढ़ो the per-port names (same क्रम each port) */
+अटल sमाप_प्रकार portnames_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *names;
+	माप_प्रकार avail;
+	काष्ठा hfi1_devdata *dd;
+	sमाप_प्रकार rval;
 
-	dd = private2dd(file);
-	avail = hfi1_read_portcntrs(dd->pport, &names, NULL);
-	rval = simple_read_from_buffer(buf, count, ppos, names, avail);
-	return rval;
-}
+	dd = निजी2dd(file);
+	avail = hfi1_पढ़ो_portcntrs(dd->pport, &names, शून्य);
+	rval = simple_पढ़ो_from_buffer(buf, count, ppos, names, avail);
+	वापस rval;
+पूर्ण
 
-/* read the per-port counters */
-static ssize_t portcntrs_debugfs_read(struct file *file, char __user *buf,
-				      size_t count, loff_t *ppos)
-{
+/* पढ़ो the per-port counters */
+अटल sमाप_प्रकार portcntrs_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
 	u64 *counters;
-	size_t avail;
-	struct hfi1_pportdata *ppd;
-	ssize_t rval;
+	माप_प्रकार avail;
+	काष्ठा hfi1_pportdata *ppd;
+	sमाप_प्रकार rval;
 
-	ppd = private2ppd(file);
-	avail = hfi1_read_portcntrs(ppd, NULL, &counters);
-	rval = simple_read_from_buffer(buf, count, ppos, counters, avail);
-	return rval;
-}
+	ppd = निजी2ppd(file);
+	avail = hfi1_पढ़ो_portcntrs(ppd, शून्य, &counters);
+	rval = simple_पढ़ो_from_buffer(buf, count, ppos, counters, avail);
+	वापस rval;
+पूर्ण
 
-static void check_dyn_flag(u64 scratch0, char *p, int size, int *used,
-			   int this_hfi, int hfi, u32 flag, const char *what)
-{
+अटल व्योम check_dyn_flag(u64 scratch0, अक्षर *p, पूर्णांक size, पूर्णांक *used,
+			   पूर्णांक this_hfi, पूर्णांक hfi, u32 flag, स्थिर अक्षर *what)
+अणु
 	u32 mask;
 
 	mask = flag << (hfi ? CR_DYN_SHIFT : 0);
-	if (scratch0 & mask) {
-		*used += scnprintf(p + *used, size - *used,
+	अगर (scratch0 & mask) अणु
+		*used += scnम_लिखो(p + *used, size - *used,
 				   "  0x%08x - HFI%d %s in use, %s device\n",
 				   mask, hfi, what,
 				   this_hfi == hfi ? "this" : "other");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static ssize_t asic_flags_read(struct file *file, char __user *buf,
-			       size_t count, loff_t *ppos)
-{
-	struct hfi1_pportdata *ppd;
-	struct hfi1_devdata *dd;
+अटल sमाप_प्रकार asic_flags_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
+	काष्ठा hfi1_devdata *dd;
 	u64 scratch0;
-	char *tmp;
-	int ret = 0;
-	int size;
-	int used;
-	int i;
+	अक्षर *पंचांगp;
+	पूर्णांक ret = 0;
+	पूर्णांक size;
+	पूर्णांक used;
+	पूर्णांक i;
 
-	ppd = private2ppd(file);
+	ppd = निजी2ppd(file);
 	dd = ppd->dd;
 	size = PAGE_SIZE;
 	used = 0;
-	tmp = kmalloc(size, GFP_KERNEL);
-	if (!tmp)
-		return -ENOMEM;
+	पंचांगp = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!पंचांगp)
+		वापस -ENOMEM;
 
-	scratch0 = read_csr(dd, ASIC_CFG_SCRATCH);
-	used += scnprintf(tmp + used, size - used,
+	scratch0 = पढ़ो_csr(dd, ASIC_CFG_SCRATCH);
+	used += scnम_लिखो(पंचांगp + used, size - used,
 			  "Resource flags: 0x%016llx\n", scratch0);
 
 	/* check permanent flag */
-	if (scratch0 & CR_THERM_INIT) {
-		used += scnprintf(tmp + used, size - used,
+	अगर (scratch0 & CR_THERM_INIT) अणु
+		used += scnम_लिखो(पंचांगp + used, size - used,
 				  "  0x%08x - thermal monitoring initialized\n",
 				  (u32)CR_THERM_INIT);
-	}
+	पूर्ण
 
 	/* check each dynamic flag on each HFI */
-	for (i = 0; i < 2; i++) {
-		check_dyn_flag(scratch0, tmp, size, &used, dd->hfi1_id, i,
+	क्रम (i = 0; i < 2; i++) अणु
+		check_dyn_flag(scratch0, पंचांगp, size, &used, dd->hfi1_id, i,
 			       CR_SBUS, "SBus");
-		check_dyn_flag(scratch0, tmp, size, &used, dd->hfi1_id, i,
+		check_dyn_flag(scratch0, पंचांगp, size, &used, dd->hfi1_id, i,
 			       CR_EPROM, "EPROM");
-		check_dyn_flag(scratch0, tmp, size, &used, dd->hfi1_id, i,
+		check_dyn_flag(scratch0, पंचांगp, size, &used, dd->hfi1_id, i,
 			       CR_I2C1, "i2c chain 1");
-		check_dyn_flag(scratch0, tmp, size, &used, dd->hfi1_id, i,
+		check_dyn_flag(scratch0, पंचांगp, size, &used, dd->hfi1_id, i,
 			       CR_I2C2, "i2c chain 2");
-	}
-	used += scnprintf(tmp + used, size - used, "Write bits to clear\n");
+	पूर्ण
+	used += scnम_लिखो(पंचांगp + used, size - used, "Write bits to clear\n");
 
-	ret = simple_read_from_buffer(buf, count, ppos, tmp, used);
-	kfree(tmp);
-	return ret;
-}
+	ret = simple_पढ़ो_from_buffer(buf, count, ppos, पंचांगp, used);
+	kमुक्त(पंचांगp);
+	वापस ret;
+पूर्ण
 
-static ssize_t asic_flags_write(struct file *file, const char __user *buf,
-				size_t count, loff_t *ppos)
-{
-	struct hfi1_pportdata *ppd;
-	struct hfi1_devdata *dd;
-	char *buff;
-	int ret;
-	unsigned long long value;
+अटल sमाप_प्रकार asic_flags_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
+	काष्ठा hfi1_devdata *dd;
+	अक्षर *buff;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ दीर्घ value;
 	u64 scratch0;
 	u64 clear;
 
-	ppd = private2ppd(file);
+	ppd = निजी2ppd(file);
 	dd = ppd->dd;
 
-	/* zero terminate and read the expected integer */
+	/* zero terminate and पढ़ो the expected पूर्णांकeger */
 	buff = memdup_user_nul(buf, count);
-	if (IS_ERR(buff))
-		return PTR_ERR(buff);
+	अगर (IS_ERR(buff))
+		वापस PTR_ERR(buff);
 
-	ret = kstrtoull(buff, 0, &value);
-	if (ret)
-		goto do_free;
+	ret = kम_से_अदीर्घl(buff, 0, &value);
+	अगर (ret)
+		जाओ करो_मुक्त;
 	clear = value;
 
 	/* obtain exclusive access */
 	mutex_lock(&dd->asic_data->asic_resource_mutex);
 	acquire_hw_mutex(dd);
 
-	scratch0 = read_csr(dd, ASIC_CFG_SCRATCH);
+	scratch0 = पढ़ो_csr(dd, ASIC_CFG_SCRATCH);
 	scratch0 &= ~clear;
-	write_csr(dd, ASIC_CFG_SCRATCH, scratch0);
-	/* force write to be visible to other HFI on another OS */
-	(void)read_csr(dd, ASIC_CFG_SCRATCH);
+	ग_लिखो_csr(dd, ASIC_CFG_SCRATCH, scratch0);
+	/* क्रमce ग_लिखो to be visible to other HFI on another OS */
+	(व्योम)पढ़ो_csr(dd, ASIC_CFG_SCRATCH);
 
 	release_hw_mutex(dd);
 	mutex_unlock(&dd->asic_data->asic_resource_mutex);
 
-	/* return the number of bytes written */
+	/* वापस the number of bytes written */
 	ret = count;
 
- do_free:
-	kfree(buff);
-	return ret;
-}
+ करो_मुक्त:
+	kमुक्त(buff);
+	वापस ret;
+पूर्ण
 
-/* read the dc8051 memory */
-static ssize_t dc8051_memory_read(struct file *file, char __user *buf,
-				  size_t count, loff_t *ppos)
-{
-	struct hfi1_pportdata *ppd = private2ppd(file);
-	ssize_t rval;
-	void *tmp;
+/* पढ़ो the dc8051 memory */
+अटल sमाप_प्रकार dc8051_memory_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा hfi1_pportdata *ppd = निजी2ppd(file);
+	sमाप_प्रकार rval;
+	व्योम *पंचांगp;
 	loff_t start, end;
 
 	/* the checks below expect the position to be positive */
-	if (*ppos < 0)
-		return -EINVAL;
+	अगर (*ppos < 0)
+		वापस -EINVAL;
 
-	tmp = kzalloc(DC8051_DATA_MEM_SIZE, GFP_KERNEL);
-	if (!tmp)
-		return -ENOMEM;
+	पंचांगp = kzalloc(DC8051_DATA_MEM_SIZE, GFP_KERNEL);
+	अगर (!पंचांगp)
+		वापस -ENOMEM;
 
 	/*
 	 * Fill in the requested portion of the temporary buffer from the
-	 * 8051 memory.  The 8051 memory read is done in terms of 8 bytes.
-	 * Adjust start and end to fit.  Skip reading anything if out of
+	 * 8051 memory.  The 8051 memory पढ़ो is करोne in terms of 8 bytes.
+	 * Adjust start and end to fit.  Skip पढ़ोing anything अगर out of
 	 * range.
 	 */
-	start = *ppos & ~0x7;	/* round down */
-	if (start < DC8051_DATA_MEM_SIZE) {
+	start = *ppos & ~0x7;	/* round करोwn */
+	अगर (start < DC8051_DATA_MEM_SIZE) अणु
 		end = (*ppos + count + 7) & ~0x7; /* round up */
-		if (end > DC8051_DATA_MEM_SIZE)
+		अगर (end > DC8051_DATA_MEM_SIZE)
 			end = DC8051_DATA_MEM_SIZE;
-		rval = read_8051_data(ppd->dd, start, end - start,
-				      (u64 *)(tmp + start));
-		if (rval)
-			goto done;
-	}
+		rval = पढ़ो_8051_data(ppd->dd, start, end - start,
+				      (u64 *)(पंचांगp + start));
+		अगर (rval)
+			जाओ करोne;
+	पूर्ण
 
-	rval = simple_read_from_buffer(buf, count, ppos, tmp,
+	rval = simple_पढ़ो_from_buffer(buf, count, ppos, पंचांगp,
 				       DC8051_DATA_MEM_SIZE);
-done:
-	kfree(tmp);
-	return rval;
-}
+करोne:
+	kमुक्त(पंचांगp);
+	वापस rval;
+पूर्ण
 
-static ssize_t debugfs_lcb_read(struct file *file, char __user *buf,
-				size_t count, loff_t *ppos)
-{
-	struct hfi1_pportdata *ppd = private2ppd(file);
-	struct hfi1_devdata *dd = ppd->dd;
-	unsigned long total, csr_off;
+अटल sमाप_प्रकार debugfs_lcb_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा hfi1_pportdata *ppd = निजी2ppd(file);
+	काष्ठा hfi1_devdata *dd = ppd->dd;
+	अचिन्हित दीर्घ total, csr_off;
 	u64 data;
 
-	if (*ppos < 0)
-		return -EINVAL;
-	/* only read 8 byte quantities */
-	if ((count % 8) != 0)
-		return -EINVAL;
+	अगर (*ppos < 0)
+		वापस -EINVAL;
+	/* only पढ़ो 8 byte quantities */
+	अगर ((count % 8) != 0)
+		वापस -EINVAL;
 	/* offset must be 8-byte aligned */
-	if ((*ppos % 8) != 0)
-		return -EINVAL;
-	/* do nothing if out of range or zero count */
-	if (*ppos >= (LCB_END - LCB_START) || !count)
-		return 0;
-	/* reduce count if needed */
-	if (*ppos + count > LCB_END - LCB_START)
+	अगर ((*ppos % 8) != 0)
+		वापस -EINVAL;
+	/* करो nothing अगर out of range or zero count */
+	अगर (*ppos >= (LCB_END - LCB_START) || !count)
+		वापस 0;
+	/* reduce count अगर needed */
+	अगर (*ppos + count > LCB_END - LCB_START)
 		count = (LCB_END - LCB_START) - *ppos;
 
 	csr_off = LCB_START + *ppos;
-	for (total = 0; total < count; total += 8, csr_off += 8) {
-		if (read_lcb_csr(dd, csr_off, (u64 *)&data))
-			break; /* failed */
-		if (put_user(data, (unsigned long __user *)(buf + total)))
-			break;
-	}
+	क्रम (total = 0; total < count; total += 8, csr_off += 8) अणु
+		अगर (पढ़ो_lcb_csr(dd, csr_off, (u64 *)&data))
+			अवरोध; /* failed */
+		अगर (put_user(data, (अचिन्हित दीर्घ __user *)(buf + total)))
+			अवरोध;
+	पूर्ण
 	*ppos += total;
-	return total;
-}
+	वापस total;
+पूर्ण
 
-static ssize_t debugfs_lcb_write(struct file *file, const char __user *buf,
-				 size_t count, loff_t *ppos)
-{
-	struct hfi1_pportdata *ppd = private2ppd(file);
-	struct hfi1_devdata *dd = ppd->dd;
-	unsigned long total, csr_off, data;
+अटल sमाप_प्रकार debugfs_lcb_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा hfi1_pportdata *ppd = निजी2ppd(file);
+	काष्ठा hfi1_devdata *dd = ppd->dd;
+	अचिन्हित दीर्घ total, csr_off, data;
 
-	if (*ppos < 0)
-		return -EINVAL;
-	/* only write 8 byte quantities */
-	if ((count % 8) != 0)
-		return -EINVAL;
+	अगर (*ppos < 0)
+		वापस -EINVAL;
+	/* only ग_लिखो 8 byte quantities */
+	अगर ((count % 8) != 0)
+		वापस -EINVAL;
 	/* offset must be 8-byte aligned */
-	if ((*ppos % 8) != 0)
-		return -EINVAL;
-	/* do nothing if out of range or zero count */
-	if (*ppos >= (LCB_END - LCB_START) || !count)
-		return 0;
-	/* reduce count if needed */
-	if (*ppos + count > LCB_END - LCB_START)
+	अगर ((*ppos % 8) != 0)
+		वापस -EINVAL;
+	/* करो nothing अगर out of range or zero count */
+	अगर (*ppos >= (LCB_END - LCB_START) || !count)
+		वापस 0;
+	/* reduce count अगर needed */
+	अगर (*ppos + count > LCB_END - LCB_START)
 		count = (LCB_END - LCB_START) - *ppos;
 
 	csr_off = LCB_START + *ppos;
-	for (total = 0; total < count; total += 8, csr_off += 8) {
-		if (get_user(data, (unsigned long __user *)(buf + total)))
-			break;
-		if (write_lcb_csr(dd, csr_off, data))
-			break; /* failed */
-	}
+	क्रम (total = 0; total < count; total += 8, csr_off += 8) अणु
+		अगर (get_user(data, (अचिन्हित दीर्घ __user *)(buf + total)))
+			अवरोध;
+		अगर (ग_लिखो_lcb_csr(dd, csr_off, data))
+			अवरोध; /* failed */
+	पूर्ण
 	*ppos += total;
-	return total;
-}
+	वापस total;
+पूर्ण
 
 /*
- * read the per-port QSFP data for ppd
+ * पढ़ो the per-port QSFP data क्रम ppd
  */
-static ssize_t qsfp_debugfs_dump(struct file *file, char __user *buf,
-				 size_t count, loff_t *ppos)
-{
-	struct hfi1_pportdata *ppd;
-	char *tmp;
-	int ret;
+अटल sमाप_प्रकार qsfp_debugfs_dump(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
+	अक्षर *पंचांगp;
+	पूर्णांक ret;
 
-	ppd = private2ppd(file);
-	tmp = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!tmp)
-		return -ENOMEM;
+	ppd = निजी2ppd(file);
+	पंचांगp = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!पंचांगp)
+		वापस -ENOMEM;
 
-	ret = qsfp_dump(ppd, tmp, PAGE_SIZE);
-	if (ret > 0)
-		ret = simple_read_from_buffer(buf, count, ppos, tmp, ret);
-	kfree(tmp);
-	return ret;
-}
+	ret = qsfp_dump(ppd, पंचांगp, PAGE_SIZE);
+	अगर (ret > 0)
+		ret = simple_पढ़ो_from_buffer(buf, count, ppos, पंचांगp, ret);
+	kमुक्त(पंचांगp);
+	वापस ret;
+पूर्ण
 
-/* Do an i2c write operation on the chain for the given HFI. */
-static ssize_t __i2c_debugfs_write(struct file *file, const char __user *buf,
-				   size_t count, loff_t *ppos, u32 target)
-{
-	struct hfi1_pportdata *ppd;
-	char *buff;
-	int ret;
-	int i2c_addr;
-	int offset;
-	int total_written;
+/* Do an i2c ग_लिखो operation on the chain क्रम the given HFI. */
+अटल sमाप_प्रकार __i2c_debugfs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				   माप_प्रकार count, loff_t *ppos, u32 target)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
+	अक्षर *buff;
+	पूर्णांक ret;
+	पूर्णांक i2c_addr;
+	पूर्णांक offset;
+	पूर्णांक total_written;
 
-	ppd = private2ppd(file);
+	ppd = निजी2ppd(file);
 
-	/* byte offset format: [offsetSize][i2cAddr][offsetHigh][offsetLow] */
+	/* byte offset क्रमmat: [offsetSize][i2cAddr][offsetHigh][offsetLow] */
 	i2c_addr = (*ppos >> 16) & 0xffff;
 	offset = *ppos & 0xffff;
 
 	/* explicitly reject invalid address 0 to catch cp and cat */
-	if (i2c_addr == 0)
-		return -EINVAL;
+	अगर (i2c_addr == 0)
+		वापस -EINVAL;
 
 	buff = memdup_user(buf, count);
-	if (IS_ERR(buff))
-		return PTR_ERR(buff);
+	अगर (IS_ERR(buff))
+		वापस PTR_ERR(buff);
 
-	total_written = i2c_write(ppd, target, i2c_addr, offset, buff, count);
-	if (total_written < 0) {
+	total_written = i2c_ग_लिखो(ppd, target, i2c_addr, offset, buff, count);
+	अगर (total_written < 0) अणु
 		ret = total_written;
-		goto _free;
-	}
+		जाओ _मुक्त;
+	पूर्ण
 
 	*ppos += total_written;
 
 	ret = total_written;
 
- _free:
-	kfree(buff);
-	return ret;
-}
+ _मुक्त:
+	kमुक्त(buff);
+	वापस ret;
+पूर्ण
 
-/* Do an i2c write operation on chain for HFI 0. */
-static ssize_t i2c1_debugfs_write(struct file *file, const char __user *buf,
-				  size_t count, loff_t *ppos)
-{
-	return __i2c_debugfs_write(file, buf, count, ppos, 0);
-}
+/* Do an i2c ग_लिखो operation on chain क्रम HFI 0. */
+अटल sमाप_प्रकार i2c1_debugfs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस __i2c_debugfs_ग_लिखो(file, buf, count, ppos, 0);
+पूर्ण
 
-/* Do an i2c write operation on chain for HFI 1. */
-static ssize_t i2c2_debugfs_write(struct file *file, const char __user *buf,
-				  size_t count, loff_t *ppos)
-{
-	return __i2c_debugfs_write(file, buf, count, ppos, 1);
-}
+/* Do an i2c ग_लिखो operation on chain क्रम HFI 1. */
+अटल sमाप_प्रकार i2c2_debugfs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस __i2c_debugfs_ग_लिखो(file, buf, count, ppos, 1);
+पूर्ण
 
-/* Do an i2c read operation on the chain for the given HFI. */
-static ssize_t __i2c_debugfs_read(struct file *file, char __user *buf,
-				  size_t count, loff_t *ppos, u32 target)
-{
-	struct hfi1_pportdata *ppd;
-	char *buff;
-	int ret;
-	int i2c_addr;
-	int offset;
-	int total_read;
+/* Do an i2c पढ़ो operation on the chain क्रम the given HFI. */
+अटल sमाप_प्रकार __i2c_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				  माप_प्रकार count, loff_t *ppos, u32 target)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
+	अक्षर *buff;
+	पूर्णांक ret;
+	पूर्णांक i2c_addr;
+	पूर्णांक offset;
+	पूर्णांक total_पढ़ो;
 
-	ppd = private2ppd(file);
+	ppd = निजी2ppd(file);
 
-	/* byte offset format: [offsetSize][i2cAddr][offsetHigh][offsetLow] */
+	/* byte offset क्रमmat: [offsetSize][i2cAddr][offsetHigh][offsetLow] */
 	i2c_addr = (*ppos >> 16) & 0xffff;
 	offset = *ppos & 0xffff;
 
 	/* explicitly reject invalid address 0 to catch cp and cat */
-	if (i2c_addr == 0)
-		return -EINVAL;
+	अगर (i2c_addr == 0)
+		वापस -EINVAL;
 
-	buff = kmalloc(count, GFP_KERNEL);
-	if (!buff)
-		return -ENOMEM;
+	buff = kदो_स्मृति(count, GFP_KERNEL);
+	अगर (!buff)
+		वापस -ENOMEM;
 
-	total_read = i2c_read(ppd, target, i2c_addr, offset, buff, count);
-	if (total_read < 0) {
-		ret = total_read;
-		goto _free;
-	}
+	total_पढ़ो = i2c_पढ़ो(ppd, target, i2c_addr, offset, buff, count);
+	अगर (total_पढ़ो < 0) अणु
+		ret = total_पढ़ो;
+		जाओ _मुक्त;
+	पूर्ण
 
-	*ppos += total_read;
+	*ppos += total_पढ़ो;
 
-	ret = copy_to_user(buf, buff, total_read);
-	if (ret > 0) {
+	ret = copy_to_user(buf, buff, total_पढ़ो);
+	अगर (ret > 0) अणु
 		ret = -EFAULT;
-		goto _free;
-	}
+		जाओ _मुक्त;
+	पूर्ण
 
-	ret = total_read;
+	ret = total_पढ़ो;
 
- _free:
-	kfree(buff);
-	return ret;
-}
+ _मुक्त:
+	kमुक्त(buff);
+	वापस ret;
+पूर्ण
 
-/* Do an i2c read operation on chain for HFI 0. */
-static ssize_t i2c1_debugfs_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *ppos)
-{
-	return __i2c_debugfs_read(file, buf, count, ppos, 0);
-}
+/* Do an i2c पढ़ो operation on chain क्रम HFI 0. */
+अटल sमाप_प्रकार i2c1_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस __i2c_debugfs_पढ़ो(file, buf, count, ppos, 0);
+पूर्ण
 
-/* Do an i2c read operation on chain for HFI 1. */
-static ssize_t i2c2_debugfs_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *ppos)
-{
-	return __i2c_debugfs_read(file, buf, count, ppos, 1);
-}
+/* Do an i2c पढ़ो operation on chain क्रम HFI 1. */
+अटल sमाप_प्रकार i2c2_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस __i2c_debugfs_पढ़ो(file, buf, count, ppos, 1);
+पूर्ण
 
-/* Do a QSFP write operation on the i2c chain for the given HFI. */
-static ssize_t __qsfp_debugfs_write(struct file *file, const char __user *buf,
-				    size_t count, loff_t *ppos, u32 target)
-{
-	struct hfi1_pportdata *ppd;
-	char *buff;
-	int ret;
-	int total_written;
+/* Do a QSFP ग_लिखो operation on the i2c chain क्रम the given HFI. */
+अटल sमाप_प्रकार __qsfp_debugfs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				    माप_प्रकार count, loff_t *ppos, u32 target)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
+	अक्षर *buff;
+	पूर्णांक ret;
+	पूर्णांक total_written;
 
-	if (*ppos + count > QSFP_PAGESIZE * 4) /* base page + page00-page03 */
-		return -EINVAL;
+	अगर (*ppos + count > QSFP_PAGESIZE * 4) /* base page + page00-page03 */
+		वापस -EINVAL;
 
-	ppd = private2ppd(file);
+	ppd = निजी2ppd(file);
 
 	buff = memdup_user(buf, count);
-	if (IS_ERR(buff))
-		return PTR_ERR(buff);
+	अगर (IS_ERR(buff))
+		वापस PTR_ERR(buff);
 
-	total_written = qsfp_write(ppd, target, *ppos, buff, count);
-	if (total_written < 0) {
+	total_written = qsfp_ग_लिखो(ppd, target, *ppos, buff, count);
+	अगर (total_written < 0) अणु
 		ret = total_written;
-		goto _free;
-	}
+		जाओ _मुक्त;
+	पूर्ण
 
 	*ppos += total_written;
 
 	ret = total_written;
 
- _free:
-	kfree(buff);
-	return ret;
-}
+ _मुक्त:
+	kमुक्त(buff);
+	वापस ret;
+पूर्ण
 
-/* Do a QSFP write operation on i2c chain for HFI 0. */
-static ssize_t qsfp1_debugfs_write(struct file *file, const char __user *buf,
-				   size_t count, loff_t *ppos)
-{
-	return __qsfp_debugfs_write(file, buf, count, ppos, 0);
-}
+/* Do a QSFP ग_लिखो operation on i2c chain क्रम HFI 0. */
+अटल sमाप_प्रकार qsfp1_debugfs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस __qsfp_debugfs_ग_लिखो(file, buf, count, ppos, 0);
+पूर्ण
 
-/* Do a QSFP write operation on i2c chain for HFI 1. */
-static ssize_t qsfp2_debugfs_write(struct file *file, const char __user *buf,
-				   size_t count, loff_t *ppos)
-{
-	return __qsfp_debugfs_write(file, buf, count, ppos, 1);
-}
+/* Do a QSFP ग_लिखो operation on i2c chain क्रम HFI 1. */
+अटल sमाप_प्रकार qsfp2_debugfs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस __qsfp_debugfs_ग_लिखो(file, buf, count, ppos, 1);
+पूर्ण
 
-/* Do a QSFP read operation on the i2c chain for the given HFI. */
-static ssize_t __qsfp_debugfs_read(struct file *file, char __user *buf,
-				   size_t count, loff_t *ppos, u32 target)
-{
-	struct hfi1_pportdata *ppd;
-	char *buff;
-	int ret;
-	int total_read;
+/* Do a QSFP पढ़ो operation on the i2c chain क्रम the given HFI. */
+अटल sमाप_प्रकार __qsfp_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				   माप_प्रकार count, loff_t *ppos, u32 target)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
+	अक्षर *buff;
+	पूर्णांक ret;
+	पूर्णांक total_पढ़ो;
 
-	if (*ppos + count > QSFP_PAGESIZE * 4) { /* base page + page00-page03 */
+	अगर (*ppos + count > QSFP_PAGESIZE * 4) अणु /* base page + page00-page03 */
 		ret = -EINVAL;
-		goto _return;
-	}
+		जाओ _वापस;
+	पूर्ण
 
-	ppd = private2ppd(file);
+	ppd = निजी2ppd(file);
 
-	buff = kmalloc(count, GFP_KERNEL);
-	if (!buff) {
+	buff = kदो_स्मृति(count, GFP_KERNEL);
+	अगर (!buff) अणु
 		ret = -ENOMEM;
-		goto _return;
-	}
+		जाओ _वापस;
+	पूर्ण
 
-	total_read = qsfp_read(ppd, target, *ppos, buff, count);
-	if (total_read < 0) {
-		ret = total_read;
-		goto _free;
-	}
+	total_पढ़ो = qsfp_पढ़ो(ppd, target, *ppos, buff, count);
+	अगर (total_पढ़ो < 0) अणु
+		ret = total_पढ़ो;
+		जाओ _मुक्त;
+	पूर्ण
 
-	*ppos += total_read;
+	*ppos += total_पढ़ो;
 
-	ret = copy_to_user(buf, buff, total_read);
-	if (ret > 0) {
+	ret = copy_to_user(buf, buff, total_पढ़ो);
+	अगर (ret > 0) अणु
 		ret = -EFAULT;
-		goto _free;
-	}
+		जाओ _मुक्त;
+	पूर्ण
 
-	ret = total_read;
+	ret = total_पढ़ो;
 
- _free:
-	kfree(buff);
- _return:
-	return ret;
-}
+ _मुक्त:
+	kमुक्त(buff);
+ _वापस:
+	वापस ret;
+पूर्ण
 
-/* Do a QSFP read operation on i2c chain for HFI 0. */
-static ssize_t qsfp1_debugfs_read(struct file *file, char __user *buf,
-				  size_t count, loff_t *ppos)
-{
-	return __qsfp_debugfs_read(file, buf, count, ppos, 0);
-}
+/* Do a QSFP पढ़ो operation on i2c chain क्रम HFI 0. */
+अटल sमाप_प्रकार qsfp1_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस __qsfp_debugfs_पढ़ो(file, buf, count, ppos, 0);
+पूर्ण
 
-/* Do a QSFP read operation on i2c chain for HFI 1. */
-static ssize_t qsfp2_debugfs_read(struct file *file, char __user *buf,
-				  size_t count, loff_t *ppos)
-{
-	return __qsfp_debugfs_read(file, buf, count, ppos, 1);
-}
+/* Do a QSFP पढ़ो operation on i2c chain क्रम HFI 1. */
+अटल sमाप_प्रकार qsfp2_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस __qsfp_debugfs_पढ़ो(file, buf, count, ppos, 1);
+पूर्ण
 
-static int __i2c_debugfs_open(struct inode *in, struct file *fp, u32 target)
-{
-	struct hfi1_pportdata *ppd;
+अटल पूर्णांक __i2c_debugfs_खोलो(काष्ठा inode *in, काष्ठा file *fp, u32 target)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
 
-	ppd = private2ppd(fp);
+	ppd = निजी2ppd(fp);
 
-	return acquire_chip_resource(ppd->dd, i2c_target(target), 0);
-}
+	वापस acquire_chip_resource(ppd->dd, i2c_target(target), 0);
+पूर्ण
 
-static int i2c1_debugfs_open(struct inode *in, struct file *fp)
-{
-	return __i2c_debugfs_open(in, fp, 0);
-}
+अटल पूर्णांक i2c1_debugfs_खोलो(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	वापस __i2c_debugfs_खोलो(in, fp, 0);
+पूर्ण
 
-static int i2c2_debugfs_open(struct inode *in, struct file *fp)
-{
-	return __i2c_debugfs_open(in, fp, 1);
-}
+अटल पूर्णांक i2c2_debugfs_खोलो(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	वापस __i2c_debugfs_खोलो(in, fp, 1);
+पूर्ण
 
-static int __i2c_debugfs_release(struct inode *in, struct file *fp, u32 target)
-{
-	struct hfi1_pportdata *ppd;
+अटल पूर्णांक __i2c_debugfs_release(काष्ठा inode *in, काष्ठा file *fp, u32 target)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
 
-	ppd = private2ppd(fp);
-
-	release_chip_resource(ppd->dd, i2c_target(target));
-
-	return 0;
-}
-
-static int i2c1_debugfs_release(struct inode *in, struct file *fp)
-{
-	return __i2c_debugfs_release(in, fp, 0);
-}
-
-static int i2c2_debugfs_release(struct inode *in, struct file *fp)
-{
-	return __i2c_debugfs_release(in, fp, 1);
-}
-
-static int __qsfp_debugfs_open(struct inode *in, struct file *fp, u32 target)
-{
-	struct hfi1_pportdata *ppd;
-
-	ppd = private2ppd(fp);
-
-	return acquire_chip_resource(ppd->dd, i2c_target(target), 0);
-}
-
-static int qsfp1_debugfs_open(struct inode *in, struct file *fp)
-{
-	return __qsfp_debugfs_open(in, fp, 0);
-}
-
-static int qsfp2_debugfs_open(struct inode *in, struct file *fp)
-{
-	return __qsfp_debugfs_open(in, fp, 1);
-}
-
-static int __qsfp_debugfs_release(struct inode *in, struct file *fp, u32 target)
-{
-	struct hfi1_pportdata *ppd;
-
-	ppd = private2ppd(fp);
+	ppd = निजी2ppd(fp);
 
 	release_chip_resource(ppd->dd, i2c_target(target));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qsfp1_debugfs_release(struct inode *in, struct file *fp)
-{
-	return __qsfp_debugfs_release(in, fp, 0);
-}
+अटल पूर्णांक i2c1_debugfs_release(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	वापस __i2c_debugfs_release(in, fp, 0);
+पूर्ण
 
-static int qsfp2_debugfs_release(struct inode *in, struct file *fp)
-{
-	return __qsfp_debugfs_release(in, fp, 1);
-}
+अटल पूर्णांक i2c2_debugfs_release(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	वापस __i2c_debugfs_release(in, fp, 1);
+पूर्ण
 
-#define EXPROM_WRITE_ENABLE BIT_ULL(14)
+अटल पूर्णांक __qsfp_debugfs_खोलो(काष्ठा inode *in, काष्ठा file *fp, u32 target)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
 
-static bool exprom_wp_disabled;
+	ppd = निजी2ppd(fp);
 
-static int exprom_wp_set(struct hfi1_devdata *dd, bool disable)
-{
+	वापस acquire_chip_resource(ppd->dd, i2c_target(target), 0);
+पूर्ण
+
+अटल पूर्णांक qsfp1_debugfs_खोलो(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	वापस __qsfp_debugfs_खोलो(in, fp, 0);
+पूर्ण
+
+अटल पूर्णांक qsfp2_debugfs_खोलो(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	वापस __qsfp_debugfs_खोलो(in, fp, 1);
+पूर्ण
+
+अटल पूर्णांक __qsfp_debugfs_release(काष्ठा inode *in, काष्ठा file *fp, u32 target)
+अणु
+	काष्ठा hfi1_pportdata *ppd;
+
+	ppd = निजी2ppd(fp);
+
+	release_chip_resource(ppd->dd, i2c_target(target));
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक qsfp1_debugfs_release(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	वापस __qsfp_debugfs_release(in, fp, 0);
+पूर्ण
+
+अटल पूर्णांक qsfp2_debugfs_release(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	वापस __qsfp_debugfs_release(in, fp, 1);
+पूर्ण
+
+#घोषणा EXPROM_WRITE_ENABLE BIT_ULL(14)
+
+अटल bool exprom_wp_disabled;
+
+अटल पूर्णांक exprom_wp_set(काष्ठा hfi1_devdata *dd, bool disable)
+अणु
 	u64 gpio_val = 0;
 
-	if (disable) {
+	अगर (disable) अणु
 		gpio_val = EXPROM_WRITE_ENABLE;
 		exprom_wp_disabled = true;
 		dd_dev_info(dd, "Disable Expansion ROM Write Protection\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		exprom_wp_disabled = false;
 		dd_dev_info(dd, "Enable Expansion ROM Write Protection\n");
-	}
+	पूर्ण
 
-	write_csr(dd, ASIC_GPIO_OUT, gpio_val);
-	write_csr(dd, ASIC_GPIO_OE, gpio_val);
+	ग_लिखो_csr(dd, ASIC_GPIO_OUT, gpio_val);
+	ग_लिखो_csr(dd, ASIC_GPIO_OE, gpio_val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t exprom_wp_debugfs_read(struct file *file, char __user *buf,
-				      size_t count, loff_t *ppos)
-{
-	return 0;
-}
+अटल sमाप_प्रकार exprom_wp_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस 0;
+पूर्ण
 
-static ssize_t exprom_wp_debugfs_write(struct file *file,
-				       const char __user *buf, size_t count,
+अटल sमाप_प्रकार exprom_wp_debugfs_ग_लिखो(काष्ठा file *file,
+				       स्थिर अक्षर __user *buf, माप_प्रकार count,
 				       loff_t *ppos)
-{
-	struct hfi1_pportdata *ppd = private2ppd(file);
-	char cdata;
+अणु
+	काष्ठा hfi1_pportdata *ppd = निजी2ppd(file);
+	अक्षर cdata;
 
-	if (count != 1)
-		return -EINVAL;
-	if (get_user(cdata, buf))
-		return -EFAULT;
-	if (cdata == '0')
+	अगर (count != 1)
+		वापस -EINVAL;
+	अगर (get_user(cdata, buf))
+		वापस -EFAULT;
+	अगर (cdata == '0')
 		exprom_wp_set(ppd->dd, false);
-	else if (cdata == '1')
+	अन्यथा अगर (cdata == '1')
 		exprom_wp_set(ppd->dd, true);
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static unsigned long exprom_in_use;
+अटल अचिन्हित दीर्घ exprom_in_use;
 
-static int exprom_wp_debugfs_open(struct inode *in, struct file *fp)
-{
-	if (test_and_set_bit(0, &exprom_in_use))
-		return -EBUSY;
+अटल पूर्णांक exprom_wp_debugfs_खोलो(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	अगर (test_and_set_bit(0, &exprom_in_use))
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exprom_wp_debugfs_release(struct inode *in, struct file *fp)
-{
-	struct hfi1_pportdata *ppd = private2ppd(fp);
+अटल पूर्णांक exprom_wp_debugfs_release(काष्ठा inode *in, काष्ठा file *fp)
+अणु
+	काष्ठा hfi1_pportdata *ppd = निजी2ppd(fp);
 
-	if (exprom_wp_disabled)
+	अगर (exprom_wp_disabled)
 		exprom_wp_set(ppd->dd, false);
 	clear_bit(0, &exprom_in_use);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define DEBUGFS_OPS(nm, readroutine, writeroutine)	\
-{ \
+#घोषणा DEBUGFS_OPS(nm, पढ़ोroutine, ग_लिखोroutine)	\
+अणु \
 	.name = nm, \
-	.ops = { \
+	.ops = अणु \
 		.owner = THIS_MODULE, \
-		.read = readroutine, \
-		.write = writeroutine, \
+		.पढ़ो = पढ़ोroutine, \
+		.ग_लिखो = ग_लिखोroutine, \
 		.llseek = generic_file_llseek, \
-	}, \
-}
+	पूर्ण, \
+पूर्ण
 
-#define DEBUGFS_XOPS(nm, readf, writef, openf, releasef) \
-{ \
+#घोषणा DEBUGFS_XOPS(nm, पढ़ोf, ग_लिखोf, खोलोf, releasef) \
+अणु \
 	.name = nm, \
-	.ops = { \
+	.ops = अणु \
 		.owner = THIS_MODULE, \
-		.read = readf, \
-		.write = writef, \
+		.पढ़ो = पढ़ोf, \
+		.ग_लिखो = ग_लिखोf, \
 		.llseek = generic_file_llseek, \
-		.open = openf, \
+		.खोलो = खोलोf, \
 		.release = releasef \
-	}, \
-}
+	पूर्ण, \
+पूर्ण
 
-static const struct counter_info cntr_ops[] = {
-	DEBUGFS_OPS("counter_names", dev_names_read, NULL),
-	DEBUGFS_OPS("counters", dev_counters_read, NULL),
-	DEBUGFS_OPS("portcounter_names", portnames_read, NULL),
-};
+अटल स्थिर काष्ठा counter_info cntr_ops[] = अणु
+	DEBUGFS_OPS("counter_names", dev_names_पढ़ो, शून्य),
+	DEBUGFS_OPS("counters", dev_counters_पढ़ो, शून्य),
+	DEBUGFS_OPS("portcounter_names", portnames_पढ़ो, शून्य),
+पूर्ण;
 
-static const struct counter_info port_cntr_ops[] = {
-	DEBUGFS_OPS("port%dcounters", portcntrs_debugfs_read, NULL),
-	DEBUGFS_XOPS("i2c1", i2c1_debugfs_read, i2c1_debugfs_write,
-		     i2c1_debugfs_open, i2c1_debugfs_release),
-	DEBUGFS_XOPS("i2c2", i2c2_debugfs_read, i2c2_debugfs_write,
-		     i2c2_debugfs_open, i2c2_debugfs_release),
-	DEBUGFS_OPS("qsfp_dump%d", qsfp_debugfs_dump, NULL),
-	DEBUGFS_XOPS("qsfp1", qsfp1_debugfs_read, qsfp1_debugfs_write,
-		     qsfp1_debugfs_open, qsfp1_debugfs_release),
-	DEBUGFS_XOPS("qsfp2", qsfp2_debugfs_read, qsfp2_debugfs_write,
-		     qsfp2_debugfs_open, qsfp2_debugfs_release),
-	DEBUGFS_XOPS("exprom_wp", exprom_wp_debugfs_read,
-		     exprom_wp_debugfs_write, exprom_wp_debugfs_open,
+अटल स्थिर काष्ठा counter_info port_cntr_ops[] = अणु
+	DEBUGFS_OPS("port%dcounters", portcntrs_debugfs_पढ़ो, शून्य),
+	DEBUGFS_XOPS("i2c1", i2c1_debugfs_पढ़ो, i2c1_debugfs_ग_लिखो,
+		     i2c1_debugfs_खोलो, i2c1_debugfs_release),
+	DEBUGFS_XOPS("i2c2", i2c2_debugfs_पढ़ो, i2c2_debugfs_ग_लिखो,
+		     i2c2_debugfs_खोलो, i2c2_debugfs_release),
+	DEBUGFS_OPS("qsfp_dump%d", qsfp_debugfs_dump, शून्य),
+	DEBUGFS_XOPS("qsfp1", qsfp1_debugfs_पढ़ो, qsfp1_debugfs_ग_लिखो,
+		     qsfp1_debugfs_खोलो, qsfp1_debugfs_release),
+	DEBUGFS_XOPS("qsfp2", qsfp2_debugfs_पढ़ो, qsfp2_debugfs_ग_लिखो,
+		     qsfp2_debugfs_खोलो, qsfp2_debugfs_release),
+	DEBUGFS_XOPS("exprom_wp", exprom_wp_debugfs_पढ़ो,
+		     exprom_wp_debugfs_ग_लिखो, exprom_wp_debugfs_खोलो,
 		     exprom_wp_debugfs_release),
-	DEBUGFS_OPS("asic_flags", asic_flags_read, asic_flags_write),
-	DEBUGFS_OPS("dc8051_memory", dc8051_memory_read, NULL),
-	DEBUGFS_OPS("lcb", debugfs_lcb_read, debugfs_lcb_write),
-};
+	DEBUGFS_OPS("asic_flags", asic_flags_पढ़ो, asic_flags_ग_लिखो),
+	DEBUGFS_OPS("dc8051_memory", dc8051_memory_पढ़ो, शून्य),
+	DEBUGFS_OPS("lcb", debugfs_lcb_पढ़ो, debugfs_lcb_ग_लिखो),
+पूर्ण;
 
-static void *_sdma_cpu_list_seq_start(struct seq_file *s, loff_t *pos)
-{
-	if (*pos >= num_online_cpus())
-		return NULL;
+अटल व्योम *_sdma_cpu_list_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	अगर (*pos >= num_online_cpus())
+		वापस शून्य;
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-static void *_sdma_cpu_list_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
+अटल व्योम *_sdma_cpu_list_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
 	++*pos;
-	if (*pos >= num_online_cpus())
-		return NULL;
+	अगर (*pos >= num_online_cpus())
+		वापस शून्य;
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-static void _sdma_cpu_list_seq_stop(struct seq_file *s, void *v)
-{
+अटल व्योम _sdma_cpu_list_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
 	/* nothing allocated */
-}
+पूर्ण
 
-static int _sdma_cpu_list_seq_show(struct seq_file *s, void *v)
-{
-	struct hfi1_ibdev *ibd = (struct hfi1_ibdev *)s->private;
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
+अटल पूर्णांक _sdma_cpu_list_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	काष्ठा hfi1_ibdev *ibd = (काष्ठा hfi1_ibdev *)s->निजी;
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
 	loff_t *spos = v;
 	loff_t i = *spos;
 
-	sdma_seqfile_dump_cpu_list(s, dd, (unsigned long)i);
-	return 0;
-}
+	sdma_seqfile_dump_cpu_list(s, dd, (अचिन्हित दीर्घ)i);
+	वापस 0;
+पूर्ण
 
-DEBUGFS_SEQ_FILE_OPS(sdma_cpu_list);
-DEBUGFS_SEQ_FILE_OPEN(sdma_cpu_list)
-DEBUGFS_FILE_OPS(sdma_cpu_list);
+DEBUGFS_SEQ_खाता_OPS(sdma_cpu_list);
+DEBUGFS_SEQ_खाता_OPEN(sdma_cpu_list)
+DEBUGFS_खाता_OPS(sdma_cpu_list);
 
-void hfi1_dbg_ibdev_init(struct hfi1_ibdev *ibd)
-{
-	char name[sizeof("port0counters") + 1];
-	char link[10];
-	struct hfi1_devdata *dd = dd_from_dev(ibd);
-	struct hfi1_pportdata *ppd;
-	struct dentry *root;
-	int unit = dd->unit;
-	int i, j;
+व्योम hfi1_dbg_ibdev_init(काष्ठा hfi1_ibdev *ibd)
+अणु
+	अक्षर name[माप("port0counters") + 1];
+	अक्षर link[10];
+	काष्ठा hfi1_devdata *dd = dd_from_dev(ibd);
+	काष्ठा hfi1_pportdata *ppd;
+	काष्ठा dentry *root;
+	पूर्णांक unit = dd->unit;
+	पूर्णांक i, j;
 
-	if (!hfi1_dbg_root)
-		return;
-	snprintf(name, sizeof(name), "%s_%d", class_name(), unit);
-	snprintf(link, sizeof(link), "%d", unit);
+	अगर (!hfi1_dbg_root)
+		वापस;
+	snम_लिखो(name, माप(name), "%s_%d", class_name(), unit);
+	snम_लिखो(link, माप(link), "%d", unit);
 	root = debugfs_create_dir(name, hfi1_dbg_root);
 	ibd->hfi1_ibdev_dbg = root;
 
@@ -1252,46 +1253,46 @@ void hfi1_dbg_ibdev_init(struct hfi1_ibdev *ibd)
 			    &_sdma_cpu_list_file_ops);
 
 	/* dev counter files */
-	for (i = 0; i < ARRAY_SIZE(cntr_ops); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(cntr_ops); i++)
 		debugfs_create_file(cntr_ops[i].name, 0444, root, dd,
 				    &cntr_ops[i].ops);
 
 	/* per port files */
-	for (ppd = dd->pport, j = 0; j < dd->num_pports; j++, ppd++)
-		for (i = 0; i < ARRAY_SIZE(port_cntr_ops); i++) {
-			snprintf(name,
-				 sizeof(name),
+	क्रम (ppd = dd->pport, j = 0; j < dd->num_pports; j++, ppd++)
+		क्रम (i = 0; i < ARRAY_SIZE(port_cntr_ops); i++) अणु
+			snम_लिखो(name,
+				 माप(name),
 				 port_cntr_ops[i].name,
 				 j + 1);
 			debugfs_create_file(name,
-					    !port_cntr_ops[i].ops.write ?
+					    !port_cntr_ops[i].ops.ग_लिखो ?
 						    S_IRUGO :
 						    S_IRUGO | S_IWUSR,
 					    root, ppd, &port_cntr_ops[i].ops);
-		}
+		पूर्ण
 
 	hfi1_fault_init_debugfs(ibd);
-}
+पूर्ण
 
-void hfi1_dbg_ibdev_exit(struct hfi1_ibdev *ibd)
-{
-	if (!hfi1_dbg_root)
-		goto out;
-	hfi1_fault_exit_debugfs(ibd);
-	debugfs_remove(ibd->hfi1_ibdev_link);
-	debugfs_remove_recursive(ibd->hfi1_ibdev_dbg);
+व्योम hfi1_dbg_ibdev_निकास(काष्ठा hfi1_ibdev *ibd)
+अणु
+	अगर (!hfi1_dbg_root)
+		जाओ out;
+	hfi1_fault_निकास_debugfs(ibd);
+	debugfs_हटाओ(ibd->hfi1_ibdev_link);
+	debugfs_हटाओ_recursive(ibd->hfi1_ibdev_dbg);
 out:
-	ibd->hfi1_ibdev_dbg = NULL;
-}
+	ibd->hfi1_ibdev_dbg = शून्य;
+पूर्ण
 
 /*
  * driver stats field names, one line per stat, single string.  Used by
- * programs like hfistats to print the stats in a way which works for
- * different versions of drivers, without changing program source.
- * if hfi1_ib_stats changes, this needs to change.  Names need to be
- * 12 chars or less (w/o newline), for proper display by hfistats utility.
+ * programs like hfistats to prपूर्णांक the stats in a way which works क्रम
+ * dअगरferent versions of drivers, without changing program source.
+ * अगर hfi1_ib_stats changes, this needs to change.  Names need to be
+ * 12 अक्षरs or less (w/o newline), क्रम proper display by hfistats utility.
  */
-static const char * const hfi1_statnames[] = {
+अटल स्थिर अक्षर * स्थिर hfi1_statnames[] = अणु
 	/* must be element 0*/
 	"KernIntr",
 	"ErrorIntr",
@@ -1303,108 +1304,108 @@ static const char * const hfi1_statnames[] = {
 	"RcvLen_Errs",
 	"EgrBufFull",
 	"EgrHdrFull"
-};
+पूर्ण;
 
-static void *_driver_stats_names_seq_start(struct seq_file *s, loff_t *pos)
-{
-	if (*pos >= ARRAY_SIZE(hfi1_statnames))
-		return NULL;
-	return pos;
-}
+अटल व्योम *_driver_stats_names_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	अगर (*pos >= ARRAY_SIZE(hfi1_statnames))
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void *_driver_stats_names_seq_next(
-	struct seq_file *s,
-	void *v,
+अटल व्योम *_driver_stats_names_seq_next(
+	काष्ठा seq_file *s,
+	व्योम *v,
 	loff_t *pos)
-{
+अणु
 	++*pos;
-	if (*pos >= ARRAY_SIZE(hfi1_statnames))
-		return NULL;
-	return pos;
-}
+	अगर (*pos >= ARRAY_SIZE(hfi1_statnames))
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void _driver_stats_names_seq_stop(struct seq_file *s, void *v)
-{
-}
+अटल व्योम _driver_stats_names_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
+पूर्ण
 
-static int _driver_stats_names_seq_show(struct seq_file *s, void *v)
-{
+अटल पूर्णांक _driver_stats_names_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
 	loff_t *spos = v;
 
-	seq_printf(s, "%s\n", hfi1_statnames[*spos]);
-	return 0;
-}
+	seq_म_लिखो(s, "%s\n", hfi1_statnames[*spos]);
+	वापस 0;
+पूर्ण
 
-DEBUGFS_SEQ_FILE_OPS(driver_stats_names);
-DEBUGFS_SEQ_FILE_OPEN(driver_stats_names)
-DEBUGFS_FILE_OPS(driver_stats_names);
+DEBUGFS_SEQ_खाता_OPS(driver_stats_names);
+DEBUGFS_SEQ_खाता_OPEN(driver_stats_names)
+DEBUGFS_खाता_OPS(driver_stats_names);
 
-static void *_driver_stats_seq_start(struct seq_file *s, loff_t *pos)
-{
-	if (*pos >= ARRAY_SIZE(hfi1_statnames))
-		return NULL;
-	return pos;
-}
+अटल व्योम *_driver_stats_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	अगर (*pos >= ARRAY_SIZE(hfi1_statnames))
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void *_driver_stats_seq_next(struct seq_file *s, void *v, loff_t *pos)
-{
+अटल व्योम *_driver_stats_seq_next(काष्ठा seq_file *s, व्योम *v, loff_t *pos)
+अणु
 	++*pos;
-	if (*pos >= ARRAY_SIZE(hfi1_statnames))
-		return NULL;
-	return pos;
-}
+	अगर (*pos >= ARRAY_SIZE(hfi1_statnames))
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void _driver_stats_seq_stop(struct seq_file *s, void *v)
-{
-}
+अटल व्योम _driver_stats_seq_stop(काष्ठा seq_file *s, व्योम *v)
+अणु
+पूर्ण
 
-static u64 hfi1_sps_ints(void)
-{
-	unsigned long index, flags;
-	struct hfi1_devdata *dd;
-	u64 sps_ints = 0;
+अटल u64 hfi1_sps_पूर्णांकs(व्योम)
+अणु
+	अचिन्हित दीर्घ index, flags;
+	काष्ठा hfi1_devdata *dd;
+	u64 sps_पूर्णांकs = 0;
 
 	xa_lock_irqsave(&hfi1_dev_table, flags);
-	xa_for_each(&hfi1_dev_table, index, dd) {
-		sps_ints += get_all_cpu_total(dd->int_counter);
-	}
+	xa_क्रम_each(&hfi1_dev_table, index, dd) अणु
+		sps_पूर्णांकs += get_all_cpu_total(dd->पूर्णांक_counter);
+	पूर्ण
 	xa_unlock_irqrestore(&hfi1_dev_table, flags);
-	return sps_ints;
-}
+	वापस sps_पूर्णांकs;
+पूर्ण
 
-static int _driver_stats_seq_show(struct seq_file *s, void *v)
-{
+अटल पूर्णांक _driver_stats_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
 	loff_t *spos = v;
-	char *buffer;
+	अक्षर *buffer;
 	u64 *stats = (u64 *)&hfi1_stats;
-	size_t sz = seq_get_buf(s, &buffer);
+	माप_प्रकार sz = seq_get_buf(s, &buffer);
 
-	if (sz < sizeof(u64))
-		return SEQ_SKIP;
-	/* special case for interrupts */
-	if (*spos == 0)
-		*(u64 *)buffer = hfi1_sps_ints();
-	else
+	अगर (sz < माप(u64))
+		वापस SEQ_SKIP;
+	/* special हाल क्रम पूर्णांकerrupts */
+	अगर (*spos == 0)
+		*(u64 *)buffer = hfi1_sps_पूर्णांकs();
+	अन्यथा
 		*(u64 *)buffer = stats[*spos];
-	seq_commit(s,  sizeof(u64));
-	return 0;
-}
+	seq_commit(s,  माप(u64));
+	वापस 0;
+पूर्ण
 
-DEBUGFS_SEQ_FILE_OPS(driver_stats);
-DEBUGFS_SEQ_FILE_OPEN(driver_stats)
-DEBUGFS_FILE_OPS(driver_stats);
+DEBUGFS_SEQ_खाता_OPS(driver_stats);
+DEBUGFS_SEQ_खाता_OPEN(driver_stats)
+DEBUGFS_खाता_OPS(driver_stats);
 
-void hfi1_dbg_init(void)
-{
-	hfi1_dbg_root  = debugfs_create_dir(DRIVER_NAME, NULL);
-	debugfs_create_file("driver_stats_names", 0444, hfi1_dbg_root, NULL,
+व्योम hfi1_dbg_init(व्योम)
+अणु
+	hfi1_dbg_root  = debugfs_create_dir(DRIVER_NAME, शून्य);
+	debugfs_create_file("driver_stats_names", 0444, hfi1_dbg_root, शून्य,
 			    &_driver_stats_names_file_ops);
-	debugfs_create_file("driver_stats", 0444, hfi1_dbg_root, NULL,
+	debugfs_create_file("driver_stats", 0444, hfi1_dbg_root, शून्य,
 			    &_driver_stats_file_ops);
-}
+पूर्ण
 
-void hfi1_dbg_exit(void)
-{
-	debugfs_remove_recursive(hfi1_dbg_root);
-	hfi1_dbg_root = NULL;
-}
+व्योम hfi1_dbg_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(hfi1_dbg_root);
+	hfi1_dbg_root = शून्य;
+पूर्ण

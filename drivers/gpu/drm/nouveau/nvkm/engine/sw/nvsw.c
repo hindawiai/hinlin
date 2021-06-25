@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,65 +22,65 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include "nvsw.h"
-#include "chan.h"
+#समावेश "nvsw.h"
+#समावेश "chan.h"
 
-#include <nvif/if0004.h>
+#समावेश <nvअगर/अगर0004.h>
 
-static int
-nvkm_nvsw_mthd_(struct nvkm_object *object, u32 mthd, void *data, u32 size)
-{
-	struct nvkm_nvsw *nvsw = nvkm_nvsw(object);
-	if (nvsw->func->mthd)
-		return nvsw->func->mthd(nvsw, mthd, data, size);
-	return -ENODEV;
-}
+अटल पूर्णांक
+nvkm_nvsw_mthd_(काष्ठा nvkm_object *object, u32 mthd, व्योम *data, u32 size)
+अणु
+	काष्ठा nvkm_nvsw *nvsw = nvkm_nvsw(object);
+	अगर (nvsw->func->mthd)
+		वापस nvsw->func->mthd(nvsw, mthd, data, size);
+	वापस -ENODEV;
+पूर्ण
 
-static int
-nvkm_nvsw_ntfy_(struct nvkm_object *object, u32 mthd,
-		struct nvkm_event **pevent)
-{
-	struct nvkm_nvsw *nvsw = nvkm_nvsw(object);
-	switch (mthd) {
-	case NV04_NVSW_NTFY_UEVENT:
+अटल पूर्णांक
+nvkm_nvsw_ntfy_(काष्ठा nvkm_object *object, u32 mthd,
+		काष्ठा nvkm_event **pevent)
+अणु
+	काष्ठा nvkm_nvsw *nvsw = nvkm_nvsw(object);
+	चयन (mthd) अणु
+	हाल NV04_NVSW_NTFY_UEVENT:
 		*pevent = &nvsw->chan->event;
-		return 0;
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static const struct nvkm_object_func
-nvkm_nvsw_ = {
+अटल स्थिर काष्ठा nvkm_object_func
+nvkm_nvsw_ = अणु
 	.mthd = nvkm_nvsw_mthd_,
 	.ntfy = nvkm_nvsw_ntfy_,
-};
+पूर्ण;
 
-int
-nvkm_nvsw_new_(const struct nvkm_nvsw_func *func, struct nvkm_sw_chan *chan,
-	       const struct nvkm_oclass *oclass, void *data, u32 size,
-	       struct nvkm_object **pobject)
-{
-	struct nvkm_nvsw *nvsw;
+पूर्णांक
+nvkm_nvsw_new_(स्थिर काष्ठा nvkm_nvsw_func *func, काष्ठा nvkm_sw_chan *chan,
+	       स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
+	       काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nvkm_nvsw *nvsw;
 
-	if (!(nvsw = kzalloc(sizeof(*nvsw), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(nvsw = kzalloc(माप(*nvsw), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*pobject = &nvsw->object;
 
 	nvkm_object_ctor(&nvkm_nvsw_, oclass, &nvsw->object);
 	nvsw->func = func;
 	nvsw->chan = chan;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_nvsw_func
-nvkm_nvsw = {
-};
+अटल स्थिर काष्ठा nvkm_nvsw_func
+nvkm_nvsw = अणु
+पूर्ण;
 
-int
-nvkm_nvsw_new(struct nvkm_sw_chan *chan, const struct nvkm_oclass *oclass,
-	      void *data, u32 size, struct nvkm_object **pobject)
-{
-	return nvkm_nvsw_new_(&nvkm_nvsw, chan, oclass, data, size, pobject);
-}
+पूर्णांक
+nvkm_nvsw_new(काष्ठा nvkm_sw_chan *chan, स्थिर काष्ठा nvkm_oclass *oclass,
+	      व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
+अणु
+	वापस nvkm_nvsw_new_(&nvkm_nvsw, chan, oclass, data, size, pobject);
+पूर्ण

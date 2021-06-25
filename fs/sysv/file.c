@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/sysv/file.c
  *
@@ -14,46 +15,46 @@
  *  SystemV/Coherent regular file handling primitives
  */
 
-#include "sysv.h"
+#समावेश "sysv.h"
 
 /*
- * We have mostly NULLs here: the current defaults are OK for
- * the coh filesystem.
+ * We have mostly शून्यs here: the current शेषs are OK क्रम
+ * the coh fileप्रणाली.
  */
-const struct file_operations sysv_file_operations = {
+स्थिर काष्ठा file_operations sysv_file_operations = अणु
 	.llseek		= generic_file_llseek,
-	.read_iter	= generic_file_read_iter,
-	.write_iter	= generic_file_write_iter,
+	.पढ़ो_iter	= generic_file_पढ़ो_iter,
+	.ग_लिखो_iter	= generic_file_ग_लिखो_iter,
 	.mmap		= generic_file_mmap,
 	.fsync		= generic_file_fsync,
-	.splice_read	= generic_file_splice_read,
-};
+	.splice_पढ़ो	= generic_file_splice_पढ़ो,
+पूर्ण;
 
-static int sysv_setattr(struct user_namespace *mnt_userns,
-			struct dentry *dentry, struct iattr *attr)
-{
-	struct inode *inode = d_inode(dentry);
-	int error;
+अटल पूर्णांक sysv_setattr(काष्ठा user_namespace *mnt_userns,
+			काष्ठा dentry *dentry, काष्ठा iattr *attr)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक error;
 
 	error = setattr_prepare(&init_user_ns, dentry, attr);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if ((attr->ia_valid & ATTR_SIZE) &&
-	    attr->ia_size != i_size_read(inode)) {
+	अगर ((attr->ia_valid & ATTR_SIZE) &&
+	    attr->ia_size != i_size_पढ़ो(inode)) अणु
 		error = inode_newsize_ok(inode, attr->ia_size);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 		truncate_setsize(inode, attr->ia_size);
 		sysv_truncate(inode);
-	}
+	पूर्ण
 
 	setattr_copy(&init_user_ns, inode, attr);
 	mark_inode_dirty(inode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct inode_operations sysv_file_inode_operations = {
+स्थिर काष्ठा inode_operations sysv_file_inode_operations = अणु
 	.setattr	= sysv_setattr,
 	.getattr	= sysv_getattr,
-};
+पूर्ण;

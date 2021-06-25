@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bitops.h>
-#include <linux/bug.h>
-#include <linux/export.h>
-#include <linux/limits.h>
-#include <linux/math.h>
-#include <linux/minmax.h>
-#include <linux/types.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bitops.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/export.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/गणित.स>
+#समावेश <linux/minmax.h>
+#समावेश <linux/types.h>
 
-#include <linux/reciprocal_div.h>
+#समावेश <linux/reciprocal_भाग.h>
 
 /*
  * For a description of the algorithm please have a look at
- * include/linux/reciprocal_div.h
+ * include/linux/reciprocal_भाग.h
  */
 
-struct reciprocal_value reciprocal_value(u32 d)
-{
-	struct reciprocal_value R;
+काष्ठा reciprocal_value reciprocal_value(u32 d)
+अणु
+	काष्ठा reciprocal_value R;
 	u64 m;
-	int l;
+	पूर्णांक l;
 
 	l = fls(d - 1);
 	m = ((1ULL << 32) * ((1ULL << l) - d));
-	do_div(m, d);
+	करो_भाग(m, d);
 	++m;
 	R.m = (u32)m;
 	R.sh1 = min(l, 1);
 	R.sh2 = max(l - 1, 0);
 
-	return R;
-}
+	वापस R;
+पूर्ण
 EXPORT_SYMBOL(reciprocal_value);
 
-struct reciprocal_value_adv reciprocal_value_adv(u32 d, u8 prec)
-{
-	struct reciprocal_value_adv R;
-	u32 l, post_shift;
+काष्ठा reciprocal_value_adv reciprocal_value_adv(u32 d, u8 prec)
+अणु
+	काष्ठा reciprocal_value_adv R;
+	u32 l, post_shअगरt;
 	u64 mhigh, mlow;
 
-	/* ceil(log2(d)) */
+	/* उच्चमान(log2(d)) */
 	l = fls(d - 1);
-	/* NOTE: mlow/mhigh could overflow u64 when l == 32. This case needs to
-	 * be handled before calling "reciprocal_value_adv", please see the
-	 * comment at include/linux/reciprocal_div.h.
+	/* NOTE: mlow/mhigh could overflow u64 when l == 32. This हाल needs to
+	 * be handled beक्रमe calling "reciprocal_value_adv", please see the
+	 * comment at include/linux/reciprocal_भाग.h.
 	 */
 	WARN(l == 32,
 	     "ceil(log2(0x%08x)) == 32, %s doesn't support such divisor",
 	     d, __func__);
-	post_shift = l;
+	post_shअगरt = l;
 	mlow = 1ULL << (32 + l);
-	do_div(mlow, d);
+	करो_भाग(mlow, d);
 	mhigh = (1ULL << (32 + l)) + (1ULL << (32 + l - prec));
-	do_div(mhigh, d);
+	करो_भाग(mhigh, d);
 
-	for (; post_shift > 0; post_shift--) {
+	क्रम (; post_shअगरt > 0; post_shअगरt--) अणु
 		u64 lo = mlow >> 1, hi = mhigh >> 1;
 
-		if (lo >= hi)
-			break;
+		अगर (lo >= hi)
+			अवरोध;
 
 		mlow = lo;
 		mhigh = hi;
-	}
+	पूर्ण
 
 	R.m = (u32)mhigh;
-	R.sh = post_shift;
+	R.sh = post_shअगरt;
 	R.exp = l;
 	R.is_wide_m = mhigh > U32_MAX;
 
-	return R;
-}
+	वापस R;
+पूर्ण
 EXPORT_SYMBOL(reciprocal_value_adv);

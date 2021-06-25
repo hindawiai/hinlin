@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_ADC_H
-#define __ASM_ADC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_ADC_H
+#घोषणा __ASM_ADC_H
 /*
  * Copyright (C) 2004  Andriy Skulysh
  */
 
-#include <cpu/adc.h>
+#समावेश <cpu/adc.h>
 
-int adc_single(unsigned int channel);
+पूर्णांक adc_single(अचिन्हित पूर्णांक channel);
 
-#endif /* __ASM_ADC_H */
+#पूर्ण_अगर /* __ASM_ADC_H */

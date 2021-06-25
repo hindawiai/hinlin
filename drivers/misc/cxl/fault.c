@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2014 IBM Corp.
  */
 
-#include <linux/workqueue.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/mm.h>
-#include <linux/pid.h>
-#include <linux/mm.h>
-#include <linux/moduleparam.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/pid.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/moduleparam.h>
 
-#undef MODULE_PARAM_PREFIX
-#define MODULE_PARAM_PREFIX "cxl" "."
-#include <asm/current.h>
-#include <asm/copro.h>
-#include <asm/mmu.h>
+#अघोषित MODULE_PARAM_PREFIX
+#घोषणा MODULE_PARAM_PREFIX "cxl" "."
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/copro.h>
+#समावेश <यंत्र/mmu.h>
 
-#include "cxl.h"
-#include "trace.h"
+#समावेश "cxl.h"
+#समावेश "trace.h"
 
-static bool sste_matches(struct cxl_sste *sste, struct copro_slb *slb)
-{
-	return ((sste->vsid_data == cpu_to_be64(slb->vsid)) &&
+अटल bool sste_matches(काष्ठा cxl_sste *sste, काष्ठा copro_slb *slb)
+अणु
+	वापस ((sste->vsid_data == cpu_to_be64(slb->vsid)) &&
 		(sste->esid_data == cpu_to_be64(slb->esid)));
-}
+पूर्ण
 
 /*
- * This finds a free SSTE for the given SLB, or returns NULL if it's already in
+ * This finds a मुक्त SSTE क्रम the given SLB, or वापसs शून्य अगर it's alपढ़ोy in
  * the segment table.
  */
-static struct cxl_sste *find_free_sste(struct cxl_context *ctx,
-				       struct copro_slb *slb)
-{
-	struct cxl_sste *primary, *sste, *ret = NULL;
-	unsigned int mask = (ctx->sst_size >> 7) - 1; /* SSTP0[SegTableSize] */
-	unsigned int entry;
-	unsigned int hash;
+अटल काष्ठा cxl_sste *find_मुक्त_sste(काष्ठा cxl_context *ctx,
+				       काष्ठा copro_slb *slb)
+अणु
+	काष्ठा cxl_sste *primary, *sste, *ret = शून्य;
+	अचिन्हित पूर्णांक mask = (ctx->sst_size >> 7) - 1; /* SSTP0[SegTableSize] */
+	अचिन्हित पूर्णांक entry;
+	अचिन्हित पूर्णांक hash;
 
-	if (slb->vsid & SLB_VSID_B_1T)
+	अगर (slb->vsid & SLB_VSID_B_1T)
 		hash = (slb->esid >> SID_SHIFT_1T) & mask;
-	else /* 256M */
+	अन्यथा /* 256M */
 		hash = (slb->esid >> SID_SHIFT) & mask;
 
 	primary = ctx->sstp + (hash << 3);
 
-	for (entry = 0, sste = primary; entry < 8; entry++, sste++) {
-		if (!ret && !(be64_to_cpu(sste->esid_data) & SLB_ESID_V))
+	क्रम (entry = 0, sste = primary; entry < 8; entry++, sste++) अणु
+		अगर (!ret && !(be64_to_cpu(sste->esid_data) & SLB_ESID_V))
 			ret = sste;
-		if (sste_matches(sste, slb))
-			return NULL;
-	}
-	if (ret)
-		return ret;
+		अगर (sste_matches(sste, slb))
+			वापस शून्य;
+	पूर्ण
+	अगर (ret)
+		वापस ret;
 
-	/* Nothing free, select an entry to cast out */
+	/* Nothing मुक्त, select an entry to cast out */
 	ret = primary + ctx->sst_lru;
 	ctx->sst_lru = (ctx->sst_lru + 1) & 0x7;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cxl_load_segment(struct cxl_context *ctx, struct copro_slb *slb)
-{
+अटल व्योम cxl_load_segment(काष्ठा cxl_context *ctx, काष्ठा copro_slb *slb)
+अणु
 	/* mask is the group index, we search primary and secondary here. */
-	struct cxl_sste *sste;
-	unsigned long flags;
+	काष्ठा cxl_sste *sste;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ctx->sste_lock, flags);
-	sste = find_free_sste(ctx, slb);
-	if (!sste)
-		goto out_unlock;
+	sste = find_मुक्त_sste(ctx, slb);
+	अगर (!sste)
+		जाओ out_unlock;
 
 	pr_devel("CXL Populating SST[%li]: %#llx %#llx\n",
 			sste - ctx->sstp, slb->vsid, slb->esid);
-	trace_cxl_ste_write(ctx, sste - ctx->sstp, slb->esid, slb->vsid);
+	trace_cxl_ste_ग_लिखो(ctx, sste - ctx->sstp, slb->esid, slb->vsid);
 
 	sste->vsid_data = cpu_to_be64(slb->vsid);
 	sste->esid_data = cpu_to_be64(slb->esid);
 out_unlock:
 	spin_unlock_irqrestore(&ctx->sste_lock, flags);
-}
+पूर्ण
 
-static int cxl_fault_segment(struct cxl_context *ctx, struct mm_struct *mm,
+अटल पूर्णांक cxl_fault_segment(काष्ठा cxl_context *ctx, काष्ठा mm_काष्ठा *mm,
 			     u64 ea)
-{
-	struct copro_slb slb = {0,0};
-	int rc;
+अणु
+	काष्ठा copro_slb slb = अणु0,0पूर्ण;
+	पूर्णांक rc;
 
-	if (!(rc = copro_calculate_slb(mm, ea, &slb))) {
+	अगर (!(rc = copro_calculate_slb(mm, ea, &slb))) अणु
 		cxl_load_segment(ctx, &slb);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void cxl_ack_ae(struct cxl_context *ctx)
-{
-	unsigned long flags;
+अटल व्योम cxl_ack_ae(काष्ठा cxl_context *ctx)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	cxl_ops->ack_irq(ctx, CXL_PSL_TFC_An_AE, 0);
 
@@ -107,41 +108,41 @@ static void cxl_ack_ae(struct cxl_context *ctx)
 	spin_unlock_irqrestore(&ctx->lock, flags);
 
 	wake_up_all(&ctx->wq);
-}
+पूर्ण
 
-static int cxl_handle_segment_miss(struct cxl_context *ctx,
-				   struct mm_struct *mm, u64 ea)
-{
-	int rc;
+अटल पूर्णांक cxl_handle_segment_miss(काष्ठा cxl_context *ctx,
+				   काष्ठा mm_काष्ठा *mm, u64 ea)
+अणु
+	पूर्णांक rc;
 
 	pr_devel("CXL interrupt: Segment fault pe: %i ea: %#llx\n", ctx->pe, ea);
 	trace_cxl_ste_miss(ctx, ea);
 
-	if ((rc = cxl_fault_segment(ctx, mm, ea)))
+	अगर ((rc = cxl_fault_segment(ctx, mm, ea)))
 		cxl_ack_ae(ctx);
-	else {
+	अन्यथा अणु
 
-		mb(); /* Order seg table write to TFC MMIO write */
+		mb(); /* Order seg table ग_लिखो to TFC MMIO ग_लिखो */
 		cxl_ops->ack_irq(ctx, CXL_PSL_TFC_An_R, 0);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int cxl_handle_mm_fault(struct mm_struct *mm, u64 dsisr, u64 dar)
-{
+पूर्णांक cxl_handle_mm_fault(काष्ठा mm_काष्ठा *mm, u64 dsisr, u64 dar)
+अणु
 	vm_fault_t flt = 0;
-	int result;
-	unsigned long access, flags, inv_flags = 0;
+	पूर्णांक result;
+	अचिन्हित दीर्घ access, flags, inv_flags = 0;
 
 	/*
 	 * Add the fault handling cpu to task mm cpumask so that we
-	 * can do a safe lockless page table walk when inserting the
+	 * can करो a safe lockless page table walk when inserting the
 	 * hash page table entry. This function get called with a
-	 * valid mm for user space addresses. Hence using the if (mm)
+	 * valid mm क्रम user space addresses. Hence using the अगर (mm)
 	 * check is sufficient here.
 	 */
-	if (mm && !cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm))) {
+	अगर (mm && !cpumask_test_cpu(smp_processor_id(), mm_cpumask(mm))) अणु
 		cpumask_set_cpu(smp_processor_id(), mm_cpumask(mm));
 		/*
 		 * We need to make sure we walk the table only after
@@ -149,208 +150,208 @@ int cxl_handle_mm_fault(struct mm_struct *mm, u64 dsisr, u64 dar)
 		 * is explained in serialize_against_pte_lookup()
 		 */
 		smp_mb();
-	}
-	if ((result = copro_handle_mm_fault(mm, dar, dsisr, &flt))) {
+	पूर्ण
+	अगर ((result = copro_handle_mm_fault(mm, dar, dsisr, &flt))) अणु
 		pr_devel("copro_handle_mm_fault failed: %#x\n", result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	if (!radix_enabled()) {
+	अगर (!radix_enabled()) अणु
 		/*
 		 * update_mmu_cache() will not have loaded the hash since current->trap
 		 * is not a 0x400 or 0x300, so just call hash_page_mm() here.
 		 */
 		access = _PAGE_PRESENT | _PAGE_READ;
-		if (dsisr & CXL_PSL_DSISR_An_S)
+		अगर (dsisr & CXL_PSL_DSISR_An_S)
 			access |= _PAGE_WRITE;
 
-		if (!mm && (get_region_id(dar) != USER_REGION_ID))
+		अगर (!mm && (get_region_id(dar) != USER_REGION_ID))
 			access |= _PAGE_PRIVILEGED;
 
-		if (dsisr & DSISR_NOHPTE)
+		अगर (dsisr & DSISR_NOHPTE)
 			inv_flags |= HPTE_NOHPTE_UPDATE;
 
 		local_irq_save(flags);
 		hash_page_mm(mm, dar, access, 0x300, inv_flags);
 		local_irq_restore(flags);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void cxl_handle_page_fault(struct cxl_context *ctx,
-				  struct mm_struct *mm,
+अटल व्योम cxl_handle_page_fault(काष्ठा cxl_context *ctx,
+				  काष्ठा mm_काष्ठा *mm,
 				  u64 dsisr, u64 dar)
-{
+अणु
 	trace_cxl_pte_miss(ctx, dsisr, dar);
 
-	if (cxl_handle_mm_fault(mm, dsisr, dar)) {
+	अगर (cxl_handle_mm_fault(mm, dsisr, dar)) अणु
 		cxl_ack_ae(ctx);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_devel("Page fault successfully handled for pe: %i!\n", ctx->pe);
 		cxl_ops->ack_irq(ctx, CXL_PSL_TFC_An_R, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Returns the mm_struct corresponding to the context ctx.
- * mm_users == 0, the context may be in the process of being closed.
+ * Returns the mm_काष्ठा corresponding to the context ctx.
+ * mm_users == 0, the context may be in the process of being बंदd.
  */
-static struct mm_struct *get_mem_context(struct cxl_context *ctx)
-{
-	if (ctx->mm == NULL)
-		return NULL;
+अटल काष्ठा mm_काष्ठा *get_mem_context(काष्ठा cxl_context *ctx)
+अणु
+	अगर (ctx->mm == शून्य)
+		वापस शून्य;
 
-	if (!mmget_not_zero(ctx->mm))
-		return NULL;
+	अगर (!mmget_not_zero(ctx->mm))
+		वापस शून्य;
 
-	return ctx->mm;
-}
+	वापस ctx->mm;
+पूर्ण
 
-static bool cxl_is_segment_miss(struct cxl_context *ctx, u64 dsisr)
-{
-	if ((cxl_is_power8() && (dsisr & CXL_PSL_DSISR_An_DS)))
-		return true;
+अटल bool cxl_is_segment_miss(काष्ठा cxl_context *ctx, u64 dsisr)
+अणु
+	अगर ((cxl_is_घातer8() && (dsisr & CXL_PSL_DSISR_An_DS)))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool cxl_is_page_fault(struct cxl_context *ctx, u64 dsisr)
-{
-	if ((cxl_is_power8()) && (dsisr & CXL_PSL_DSISR_An_DM))
-		return true;
+अटल bool cxl_is_page_fault(काष्ठा cxl_context *ctx, u64 dsisr)
+अणु
+	अगर ((cxl_is_घातer8()) && (dsisr & CXL_PSL_DSISR_An_DM))
+		वापस true;
 
-	if (cxl_is_power9())
-		return true;
+	अगर (cxl_is_घातer9())
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void cxl_handle_fault(struct work_struct *fault_work)
-{
-	struct cxl_context *ctx =
-		container_of(fault_work, struct cxl_context, fault_work);
+व्योम cxl_handle_fault(काष्ठा work_काष्ठा *fault_work)
+अणु
+	काष्ठा cxl_context *ctx =
+		container_of(fault_work, काष्ठा cxl_context, fault_work);
 	u64 dsisr = ctx->dsisr;
 	u64 dar = ctx->dar;
-	struct mm_struct *mm = NULL;
+	काष्ठा mm_काष्ठा *mm = शून्य;
 
-	if (cpu_has_feature(CPU_FTR_HVMODE)) {
-		if (cxl_p2n_read(ctx->afu, CXL_PSL_DSISR_An) != dsisr ||
-		    cxl_p2n_read(ctx->afu, CXL_PSL_DAR_An) != dar ||
-		    cxl_p2n_read(ctx->afu, CXL_PSL_PEHandle_An) != ctx->pe) {
+	अगर (cpu_has_feature(CPU_FTR_HVMODE)) अणु
+		अगर (cxl_p2n_पढ़ो(ctx->afu, CXL_PSL_DSISR_An) != dsisr ||
+		    cxl_p2n_पढ़ो(ctx->afu, CXL_PSL_DAR_An) != dar ||
+		    cxl_p2n_पढ़ो(ctx->afu, CXL_PSL_PEHandle_An) != ctx->pe) अणु
 			/* Most likely explanation is harmless - a dedicated
 			 * process has detached and these were cleared by the
-			 * PSL purge, but warn about it just in case
+			 * PSL purge, but warn about it just in हाल
 			 */
 			dev_notice(&ctx->afu->dev, "cxl_handle_fault: Translation fault regs changed\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	/* Early return if the context is being / has been detached */
-	if (ctx->status == CLOSED) {
+	/* Early वापस अगर the context is being / has been detached */
+	अगर (ctx->status == CLOSED) अणु
 		cxl_ack_ae(ctx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pr_devel("CXL BOTTOM HALF handling fault for afu pe: %i. "
 		"DSISR: %#llx DAR: %#llx\n", ctx->pe, dsisr, dar);
 
-	if (!ctx->kernel) {
+	अगर (!ctx->kernel) अणु
 
 		mm = get_mem_context(ctx);
-		if (mm == NULL) {
+		अगर (mm == शून्य) अणु
 			pr_devel("%s: unable to get mm for pe=%d pid=%i\n",
 				 __func__, ctx->pe, pid_nr(ctx->pid));
 			cxl_ack_ae(ctx);
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 			pr_devel("Handling page fault for pe=%d pid=%i\n",
 				 ctx->pe, pid_nr(ctx->pid));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (cxl_is_segment_miss(ctx, dsisr))
+	अगर (cxl_is_segment_miss(ctx, dsisr))
 		cxl_handle_segment_miss(ctx, mm, dar);
-	else if (cxl_is_page_fault(ctx, dsisr))
+	अन्यथा अगर (cxl_is_page_fault(ctx, dsisr))
 		cxl_handle_page_fault(ctx, mm, dsisr, dar);
-	else
+	अन्यथा
 		WARN(1, "cxl_handle_fault has nothing to handle\n");
 
-	if (mm)
+	अगर (mm)
 		mmput(mm);
-}
+पूर्ण
 
-static void cxl_prefault_one(struct cxl_context *ctx, u64 ea)
-{
-	struct mm_struct *mm;
+अटल व्योम cxl_prefault_one(काष्ठा cxl_context *ctx, u64 ea)
+अणु
+	काष्ठा mm_काष्ठा *mm;
 
 	mm = get_mem_context(ctx);
-	if (mm == NULL) {
+	अगर (mm == शून्य) अणु
 		pr_devel("cxl_prefault_one unable to get mm %i\n",
 			 pid_nr(ctx->pid));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cxl_fault_segment(ctx, mm, ea);
 
 	mmput(mm);
-}
+पूर्ण
 
-static u64 next_segment(u64 ea, u64 vsid)
-{
-	if (vsid & SLB_VSID_B_1T)
+अटल u64 next_segment(u64 ea, u64 vsid)
+अणु
+	अगर (vsid & SLB_VSID_B_1T)
 		ea |= (1ULL << 40) - 1;
-	else
+	अन्यथा
 		ea |= (1ULL << 28) - 1;
 
-	return ea + 1;
-}
+	वापस ea + 1;
+पूर्ण
 
-static void cxl_prefault_vma(struct cxl_context *ctx)
-{
+अटल व्योम cxl_prefault_vma(काष्ठा cxl_context *ctx)
+अणु
 	u64 ea, last_esid = 0;
-	struct copro_slb slb;
-	struct vm_area_struct *vma;
-	int rc;
-	struct mm_struct *mm;
+	काष्ठा copro_slb slb;
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक rc;
+	काष्ठा mm_काष्ठा *mm;
 
 	mm = get_mem_context(ctx);
-	if (mm == NULL) {
+	अगर (mm == शून्य) अणु
 		pr_devel("cxl_prefault_vm unable to get mm %i\n",
 			 pid_nr(ctx->pid));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mmap_read_lock(mm);
-	for (vma = mm->mmap; vma; vma = vma->vm_next) {
-		for (ea = vma->vm_start; ea < vma->vm_end;
-				ea = next_segment(ea, slb.vsid)) {
+	mmap_पढ़ो_lock(mm);
+	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
+		क्रम (ea = vma->vm_start; ea < vma->vm_end;
+				ea = next_segment(ea, slb.vsid)) अणु
 			rc = copro_calculate_slb(mm, ea, &slb);
-			if (rc)
-				continue;
+			अगर (rc)
+				जारी;
 
-			if (last_esid == slb.esid)
-				continue;
+			अगर (last_esid == slb.esid)
+				जारी;
 
 			cxl_load_segment(ctx, &slb);
 			last_esid = slb.esid;
-		}
-	}
-	mmap_read_unlock(mm);
+		पूर्ण
+	पूर्ण
+	mmap_पढ़ो_unlock(mm);
 
 	mmput(mm);
-}
+पूर्ण
 
-void cxl_prefault(struct cxl_context *ctx, u64 wed)
-{
-	switch (ctx->afu->prefault_mode) {
-	case CXL_PREFAULT_WED:
+व्योम cxl_prefault(काष्ठा cxl_context *ctx, u64 wed)
+अणु
+	चयन (ctx->afu->prefault_mode) अणु
+	हाल CXL_PREFAULT_WED:
 		cxl_prefault_one(ctx, wed);
-		break;
-	case CXL_PREFAULT_ALL:
+		अवरोध;
+	हाल CXL_PREFAULT_ALL:
 		cxl_prefault_vma(ctx);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण

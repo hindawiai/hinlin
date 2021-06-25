@@ -1,58 +1,59 @@
-#ifndef MISC_H
-#define MISC_H
+<शैली गुरु>
+#अगर_अघोषित MISC_H
+#घोषणा MISC_H
 
-#include "assume.h"
-#include "int_typedefs.h"
-#include "locks.h"
+#समावेश "assume.h"
+#समावेश "int_typedefs.h"
+#समावेश "locks.h"
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* Probably won't need to deal with bottom halves. */
-static inline void local_bh_disable(void) {}
-static inline void local_bh_enable(void) {}
+अटल अंतरभूत व्योम local_bh_disable(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम local_bh_enable(व्योम) अणुपूर्ण
 
-#define MODULE_ALIAS(X)
-#define module_param(...)
-#define EXPORT_SYMBOL_GPL(x)
+#घोषणा MODULE_ALIAS(X)
+#घोषणा module_param(...)
+#घोषणा EXPORT_SYMBOL_GPL(x)
 
-#define container_of(ptr, type, member) ({			\
-	const typeof(((type *)0)->member) *__mptr = (ptr);	\
-	(type *)((char *)__mptr - offsetof(type, member));	\
-})
+#घोषणा container_of(ptr, type, member) (अणु			\
+	स्थिर typeof(((type *)0)->member) *__mptr = (ptr);	\
+	(type *)((अक्षर *)__mptr - दुरत्व(type, member));	\
+पूर्ण)
 
-#ifndef USE_SIMPLE_SYNC_SRCU
+#अगर_अघोषित USE_SIMPLE_SYNC_SRCU
 /* Abuse udelay to make sure that busy loops terminate. */
-#define udelay(x) assume(0)
+#घोषणा udelay(x) assume(0)
 
-#else
+#अन्यथा
 
 /* The simple custom synchronize_srcu is ok with try_check_zero failing. */
-#define udelay(x) do { } while (0)
-#endif
+#घोषणा udelay(x) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#define trace_rcu_torture_read(rcutorturename, rhp, secs, c_old, c) \
-	do { } while (0)
+#घोषणा trace_rcu_torture_पढ़ो(rcutortuनाम, rhp, secs, c_old, c) \
+	करो अणु पूर्ण जबतक (0)
 
-#define notrace
+#घोषणा notrace
 
-/* Avoid including rcupdate.h */
-struct rcu_synchronize {
-	struct rcu_head head;
-	struct completion completion;
-};
+/* Aव्योम including rcupdate.h */
+काष्ठा rcu_synchronize अणु
+	काष्ठा rcu_head head;
+	काष्ठा completion completion;
+पूर्ण;
 
-void wakeme_after_rcu(struct rcu_head *head);
+व्योम wakeme_after_rcu(काष्ठा rcu_head *head);
 
-#define rcu_lock_acquire(a) do { } while (0)
-#define rcu_lock_release(a) do { } while (0)
-#define rcu_lockdep_assert(c, s) do { } while (0)
-#define RCU_LOCKDEP_WARN(c, s) do { } while (0)
+#घोषणा rcu_lock_acquire(a) करो अणु पूर्ण जबतक (0)
+#घोषणा rcu_lock_release(a) करो अणु पूर्ण जबतक (0)
+#घोषणा rcu_lockdep_निश्चित(c, s) करो अणु पूर्ण जबतक (0)
+#घोषणा RCU_LOCKDEP_WARN(c, s) करो अणु पूर्ण जबतक (0)
 
-/* Let CBMC non-deterministically choose switch between normal and expedited. */
-bool rcu_gp_is_normal(void);
-bool rcu_gp_is_expedited(void);
+/* Let CBMC non-deterministically choose चयन between normal and expedited. */
+bool rcu_gp_is_normal(व्योम);
+bool rcu_gp_is_expedited(व्योम);
 
-/* Do the same for old versions of rcu. */
-#define rcu_expedited (rcu_gp_is_expedited())
+/* Do the same क्रम old versions of rcu. */
+#घोषणा rcu_expedited (rcu_gp_is_expedited())
 
-#endif
+#पूर्ण_अगर

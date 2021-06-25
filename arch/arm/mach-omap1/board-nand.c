@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap1/board-nand.c
  *
- * Common OMAP1 board NAND code
+ * Common OMAP1 board न_अंकD code
  *
  * Copyright (C) 2004, 2012 Texas Instruments, Inc.
  * Copyright (C) 2002 MontaVista Software, Inc.
@@ -10,24 +11,24 @@
  * Author: RidgeRun, Inc.
  *         Greg Lonnon (glonnon@ridgerun.com) or info@ridgerun.com
  */
-#include <linux/kernel.h>
-#include <linux/io.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/rawnand.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/rawnand.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-void omap1_nand_cmd_ctl(struct nand_chip *this, int cmd, unsigned int ctrl)
-{
-	unsigned long mask;
+व्योम omap1_nand_cmd_ctl(काष्ठा nand_chip *this, पूर्णांक cmd, अचिन्हित पूर्णांक ctrl)
+अणु
+	अचिन्हित दीर्घ mask;
 
-	if (cmd == NAND_CMD_NONE)
-		return;
+	अगर (cmd == न_अंकD_CMD_NONE)
+		वापस;
 
-	mask = (ctrl & NAND_CLE) ? 0x02 : 0;
-	if (ctrl & NAND_ALE)
+	mask = (ctrl & न_अंकD_CLE) ? 0x02 : 0;
+	अगर (ctrl & न_अंकD_ALE)
 		mask |= 0x04;
 
-	writeb(cmd, this->legacy.IO_ADDR_W + mask);
-}
+	ग_लिखोb(cmd, this->legacy.IO_ADDR_W + mask);
+पूर्ण
 

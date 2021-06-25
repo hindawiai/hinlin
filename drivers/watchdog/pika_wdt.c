@@ -1,302 +1,303 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * PIKA FPGA based Watchdog Timer
+ * PIKA FPGA based Watchकरोg Timer
  *
  * Copyright (c) 2008 PIKA Technologies
  *   Sean MacLennan <smaclennan@pikatech.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/miscdevice.h>
-#include <linux/watchdog.h>
-#include <linux/reboot.h>
-#include <linux/jiffies.h>
-#include <linux/timer.h>
-#include <linux/bitops.h>
-#include <linux/uaccess.h>
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#define DRV_NAME "PIKA-WDT"
+#घोषणा DRV_NAME "PIKA-WDT"
 
-/* Hardware timeout in seconds */
-#define WDT_HW_TIMEOUT 2
+/* Hardware समयout in seconds */
+#घोषणा WDT_HW_TIMEOUT 2
 
 /* Timer heartbeat (500ms) */
-#define WDT_TIMEOUT	(HZ/2)
+#घोषणा WDT_TIMEOUT	(HZ/2)
 
-/* User land timeout */
-#define WDT_HEARTBEAT 15
-static int heartbeat = WDT_HEARTBEAT;
-module_param(heartbeat, int, 0);
+/* User land समयout */
+#घोषणा WDT_HEARTBEAT 15
+अटल पूर्णांक heartbeat = WDT_HEARTBEAT;
+module_param(heartbeat, पूर्णांक, 0);
 MODULE_PARM_DESC(heartbeat, "Watchdog heartbeats in seconds. "
 	"(default = " __MODULE_STRING(WDT_HEARTBEAT) ")");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started "
 	"(default=" __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static struct {
-	void __iomem *fpga;
-	unsigned long next_heartbeat;	/* the next_heartbeat for the timer */
-	unsigned long open;
-	char expect_close;
-	int bootstatus;
-	struct timer_list timer;	/* The timer that pings the watchdog */
-} pikawdt_private;
+अटल काष्ठा अणु
+	व्योम __iomem *fpga;
+	अचिन्हित दीर्घ next_heartbeat;	/* the next_heartbeat क्रम the समयr */
+	अचिन्हित दीर्घ खोलो;
+	अक्षर expect_बंद;
+	पूर्णांक bootstatus;
+	काष्ठा समयr_list समयr;	/* The समयr that pings the watchकरोg */
+पूर्ण pikawdt_निजी;
 
-static struct watchdog_info ident __ro_after_init = {
+अटल काष्ठा watchकरोg_info ident __ro_after_init = अणु
 	.identity	= DRV_NAME,
 	.options	= WDIOF_CARDRESET |
 			  WDIOF_SETTIMEOUT |
 			  WDIOF_KEEPALIVEPING |
 			  WDIOF_MAGICCLOSE,
-};
+पूर्ण;
 
 /*
- * Reload the watchdog timer.  (ie, pat the watchdog)
+ * Reload the watchकरोg समयr.  (ie, pat the watchकरोg)
  */
-static inline void pikawdt_reset(void)
-{
+अटल अंतरभूत व्योम pikawdt_reset(व्योम)
+अणु
 	/* -- FPGA: Reset Control Register (32bit R/W) (Offset: 0x14) --
-	 * Bit 7,    WTCHDG_EN: When set to 1, the watchdog timer is enabled.
-	 *           Once enabled, it cannot be disabled. The watchdog can be
-	 *           kicked by performing any write access to the reset
-	 *           control register (this register).
-	 * Bit 8-11, WTCHDG_TIMEOUT_SEC: Sets the watchdog timeout value in
+	 * Bit 7,    WTCHDG_EN: When set to 1, the watchकरोg समयr is enabled.
+	 *           Once enabled, it cannot be disabled. The watchकरोg can be
+	 *           kicked by perक्रमming any ग_लिखो access to the reset
+	 *           control रेजिस्टर (this रेजिस्टर).
+	 * Bit 8-11, WTCHDG_TIMEOUT_SEC: Sets the watchकरोg समयout value in
 	 *           seconds. Valid ranges are 1 to 15 seconds. The value can
-	 *           be modified dynamically.
+	 *           be modअगरied dynamically.
 	 */
-	unsigned reset = in_be32(pikawdt_private.fpga + 0x14);
-	/* enable with max timeout - 15 seconds */
+	अचिन्हित reset = in_be32(pikawdt_निजी.fpga + 0x14);
+	/* enable with max समयout - 15 seconds */
 	reset |= (1 << 7) + (WDT_HW_TIMEOUT << 8);
-	out_be32(pikawdt_private.fpga + 0x14, reset);
-}
+	out_be32(pikawdt_निजी.fpga + 0x14, reset);
+पूर्ण
 
 /*
  * Timer tick
  */
-static void pikawdt_ping(struct timer_list *unused)
-{
-	if (time_before(jiffies, pikawdt_private.next_heartbeat) ||
-			(!nowayout && !pikawdt_private.open)) {
+अटल व्योम pikawdt_ping(काष्ठा समयr_list *unused)
+अणु
+	अगर (समय_beक्रमe(jअगरfies, pikawdt_निजी.next_heartbeat) ||
+			(!nowayout && !pikawdt_निजी.खोलो)) अणु
 		pikawdt_reset();
-		mod_timer(&pikawdt_private.timer, jiffies + WDT_TIMEOUT);
-	} else
+		mod_समयr(&pikawdt_निजी.समयr, jअगरfies + WDT_TIMEOUT);
+	पूर्ण अन्यथा
 		pr_crit("I will reset your machine !\n");
-}
+पूर्ण
 
 
-static void pikawdt_keepalive(void)
-{
-	pikawdt_private.next_heartbeat = jiffies + heartbeat * HZ;
-}
+अटल व्योम pikawdt_keepalive(व्योम)
+अणु
+	pikawdt_निजी.next_heartbeat = jअगरfies + heartbeat * HZ;
+पूर्ण
 
-static void pikawdt_start(void)
-{
+अटल व्योम pikawdt_start(व्योम)
+अणु
 	pikawdt_keepalive();
-	mod_timer(&pikawdt_private.timer, jiffies + WDT_TIMEOUT);
-}
+	mod_समयr(&pikawdt_निजी.समयr, jअगरfies + WDT_TIMEOUT);
+पूर्ण
 
 /*
- * Watchdog device is opened, and watchdog starts running.
+ * Watchकरोg device is खोलोed, and watchकरोg starts running.
  */
-static int pikawdt_open(struct inode *inode, struct file *file)
-{
-	/* /dev/watchdog can only be opened once */
-	if (test_and_set_bit(0, &pikawdt_private.open))
-		return -EBUSY;
+अटल पूर्णांक pikawdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	/* /dev/watchकरोg can only be खोलोed once */
+	अगर (test_and_set_bit(0, &pikawdt_निजी.खोलो))
+		वापस -EBUSY;
 
 	pikawdt_start();
 
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
 /*
- * Close the watchdog device.
+ * Close the watchकरोg device.
  */
-static int pikawdt_release(struct inode *inode, struct file *file)
-{
-	/* stop internal ping */
-	if (!pikawdt_private.expect_close)
-		del_timer(&pikawdt_private.timer);
+अटल पूर्णांक pikawdt_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	/* stop पूर्णांकernal ping */
+	अगर (!pikawdt_निजी.expect_बंद)
+		del_समयr(&pikawdt_निजी.समयr);
 
-	clear_bit(0, &pikawdt_private.open);
-	pikawdt_private.expect_close = 0;
-	return 0;
-}
+	clear_bit(0, &pikawdt_निजी.खोलो);
+	pikawdt_निजी.expect_बंद = 0;
+	वापस 0;
+पूर्ण
 
 /*
- * Pat the watchdog whenever device is written to.
+ * Pat the watchकरोg whenever device is written to.
  */
-static ssize_t pikawdt_write(struct file *file, const char __user *data,
-			     size_t len, loff_t *ppos)
-{
-	if (!len)
-		return 0;
+अटल sमाप_प्रकार pikawdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+			     माप_प्रकार len, loff_t *ppos)
+अणु
+	अगर (!len)
+		वापस 0;
 
-	/* Scan for magic character */
-	if (!nowayout) {
-		size_t i;
+	/* Scan क्रम magic अक्षरacter */
+	अगर (!nowayout) अणु
+		माप_प्रकार i;
 
-		pikawdt_private.expect_close = 0;
+		pikawdt_निजी.expect_बंद = 0;
 
-		for (i = 0; i < len; i++) {
-			char c;
-			if (get_user(c, data + i))
-				return -EFAULT;
-			if (c == 'V') {
-				pikawdt_private.expect_close = 42;
-				break;
-			}
-		}
-	}
+		क्रम (i = 0; i < len; i++) अणु
+			अक्षर c;
+			अगर (get_user(c, data + i))
+				वापस -EFAULT;
+			अगर (c == 'V') अणु
+				pikawdt_निजी.expect_बंद = 42;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	pikawdt_keepalive();
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
  * Handle commands from user-space.
  */
-static long pikawdt_ioctl(struct file *file,
-		unsigned int cmd, unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	int new_value;
+अटल दीर्घ pikawdt_ioctl(काष्ठा file *file,
+		अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	पूर्णांक new_value;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		return copy_to_user(argp, &ident, sizeof(ident)) ? -EFAULT : 0;
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		वापस copy_to_user(argp, &ident, माप(ident)) ? -EFAULT : 0;
 
-	case WDIOC_GETSTATUS:
-		return put_user(0, p);
+	हाल WDIOC_GETSTATUS:
+		वापस put_user(0, p);
 
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(pikawdt_private.bootstatus, p);
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(pikawdt_निजी.bootstatus, p);
 
-	case WDIOC_KEEPALIVE:
+	हाल WDIOC_KEEPALIVE:
 		pikawdt_keepalive();
-		return 0;
+		वापस 0;
 
-	case WDIOC_SETTIMEOUT:
-		if (get_user(new_value, p))
-			return -EFAULT;
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(new_value, p))
+			वापस -EFAULT;
 
 		heartbeat = new_value;
 		pikawdt_keepalive();
 
-		return put_user(new_value, p);  /* return current value */
+		वापस put_user(new_value, p);  /* वापस current value */
 
-	case WDIOC_GETTIMEOUT:
-		return put_user(heartbeat, p);
-	}
-	return -ENOTTY;
-}
+	हाल WDIOC_GETTIMEOUT:
+		वापस put_user(heartbeat, p);
+	पूर्ण
+	वापस -ENOTTY;
+पूर्ण
 
 
-static const struct file_operations pikawdt_fops = {
+अटल स्थिर काष्ठा file_operations pikawdt_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.open		= pikawdt_open,
+	.खोलो		= pikawdt_खोलो,
 	.release	= pikawdt_release,
-	.write		= pikawdt_write,
+	.ग_लिखो		= pikawdt_ग_लिखो,
 	.unlocked_ioctl	= pikawdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-};
+पूर्ण;
 
-static struct miscdevice pikawdt_miscdev = {
+अटल काष्ठा miscdevice pikawdt_miscdev = अणु
 	.minor	= WATCHDOG_MINOR,
 	.name	= "watchdog",
 	.fops	= &pikawdt_fops,
-};
+पूर्ण;
 
-static int __init pikawdt_init(void)
-{
-	struct device_node *np;
-	void __iomem *fpga;
+अटल पूर्णांक __init pikawdt_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	व्योम __iomem *fpga;
 	u32 post1;
-	int ret;
+	पूर्णांक ret;
 
-	np = of_find_compatible_node(NULL, NULL, "pika,fpga");
-	if (np == NULL) {
+	np = of_find_compatible_node(शून्य, शून्य, "pika,fpga");
+	अगर (np == शून्य) अणु
 		pr_err("Unable to find fpga\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	pikawdt_private.fpga = of_iomap(np, 0);
+	pikawdt_निजी.fpga = of_iomap(np, 0);
 	of_node_put(np);
-	if (pikawdt_private.fpga == NULL) {
+	अगर (pikawdt_निजी.fpga == शून्य) अणु
 		pr_err("Unable to map fpga\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	ident.firmware_version = in_be32(pikawdt_private.fpga + 0x1c) & 0xffff;
+	ident.firmware_version = in_be32(pikawdt_निजी.fpga + 0x1c) & 0xffff;
 
-	/* POST information is in the sd area. */
-	np = of_find_compatible_node(NULL, NULL, "pika,fpga-sd");
-	if (np == NULL) {
+	/* POST inक्रमmation is in the sd area. */
+	np = of_find_compatible_node(शून्य, शून्य, "pika,fpga-sd");
+	अगर (np == शून्य) अणु
 		pr_err("Unable to find fpga-sd\n");
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	fpga = of_iomap(np, 0);
 	of_node_put(np);
-	if (fpga == NULL) {
+	अगर (fpga == शून्य) अणु
 		pr_err("Unable to map fpga-sd\n");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* -- FPGA: POST Test Results Register 1 (32bit R/W) (Offset: 0x4040) --
-	 * Bit 31,   WDOG: Set to 1 when the last reset was caused by a watchdog
-	 *           timeout.
+	 * Bit 31,   WDOG: Set to 1 when the last reset was caused by a watchकरोg
+	 *           समयout.
 	 */
 	post1 = in_be32(fpga + 0x40);
-	if (post1 & 0x80000000)
-		pikawdt_private.bootstatus = WDIOF_CARDRESET;
+	अगर (post1 & 0x80000000)
+		pikawdt_निजी.bootstatus = WDIOF_CARDRESET;
 
 	iounmap(fpga);
 
-	timer_setup(&pikawdt_private.timer, pikawdt_ping, 0);
+	समयr_setup(&pikawdt_निजी.समयr, pikawdt_ping, 0);
 
-	ret = misc_register(&pikawdt_miscdev);
-	if (ret) {
+	ret = misc_रेजिस्टर(&pikawdt_miscdev);
+	अगर (ret) अणु
 		pr_err("Unable to register miscdev\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pr_info("initialized. heartbeat=%d sec (nowayout=%d)\n",
 		heartbeat, nowayout);
-	return 0;
+	वापस 0;
 
 out:
-	iounmap(pikawdt_private.fpga);
-	return ret;
-}
+	iounmap(pikawdt_निजी.fpga);
+	वापस ret;
+पूर्ण
 
-static void __exit pikawdt_exit(void)
-{
-	misc_deregister(&pikawdt_miscdev);
+अटल व्योम __निकास pikawdt_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&pikawdt_miscdev);
 
-	iounmap(pikawdt_private.fpga);
-}
+	iounmap(pikawdt_निजी.fpga);
+पूर्ण
 
 module_init(pikawdt_init);
-module_exit(pikawdt_exit);
+module_निकास(pikawdt_निकास);
 
 MODULE_AUTHOR("Sean MacLennan <smaclennan@pikatech.com>");
 MODULE_DESCRIPTION("PIKA FPGA based Watchdog Timer");

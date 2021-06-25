@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*******************************************************************************
 *
 * Copyright (c) 2015-2016 Intel Corporation.  All rights reserved.
@@ -5,20 +6,20 @@
 * This software is available to you under a choice of one of two
 * licenses.  You may choose to be licensed under the terms of the GNU
 * General Public License (GPL) Version 2, available from the file
-* COPYING in the main directory of this source tree, or the
+* COPYING in the मुख्य directory of this source tree, or the
 * OpenFabrics.org BSD license below:
 *
-*   Redistribution and use in source and binary forms, with or
-*   without modification, are permitted provided that the following
+*   Redistribution and use in source and binary क्रमms, with or
+*   without modअगरication, are permitted provided that the following
 *   conditions are met:
 *
 *    - Redistributions of source code must retain the above
 *	copyright notice, this list of conditions and the following
 *	disclaimer.
 *
-*    - Redistributions in binary form must reproduce the above
+*    - Redistributions in binary क्रमm must reproduce the above
 *	copyright notice, this list of conditions and the following
-*	disclaimer in the documentation and/or other materials
+*	disclaimer in the करोcumentation and/or other materials
 *	provided with the distribution.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,83 +33,83 @@
 *
 *******************************************************************************/
 
-#ifndef I40IW_TYPE_H
-#define I40IW_TYPE_H
-#include "i40iw_user.h"
-#include "i40iw_hmc.h"
-#include "i40iw_vf.h"
-#include "i40iw_virtchnl.h"
+#अगर_अघोषित I40IW_TYPE_H
+#घोषणा I40IW_TYPE_H
+#समावेश "i40iw_user.h"
+#समावेश "i40iw_hmc.h"
+#समावेश "i40iw_vf.h"
+#समावेश "i40iw_virtchnl.h"
 
-struct i40iw_cqp_sq_wqe {
+काष्ठा i40iw_cqp_sq_wqe अणु
 	u64 buf[I40IW_CQP_WQE_SIZE];
-};
+पूर्ण;
 
-struct i40iw_sc_aeqe {
+काष्ठा i40iw_sc_aeqe अणु
 	u64 buf[I40IW_AEQE_SIZE];
-};
+पूर्ण;
 
-struct i40iw_ceqe {
+काष्ठा i40iw_ceqe अणु
 	u64 buf[I40IW_CEQE_SIZE];
-};
+पूर्ण;
 
-struct i40iw_cqp_ctx {
+काष्ठा i40iw_cqp_ctx अणु
 	u64 buf[I40IW_CQP_CTX_SIZE];
-};
+पूर्ण;
 
-struct i40iw_cq_shadow_area {
+काष्ठा i40iw_cq_shaकरोw_area अणु
 	u64 buf[I40IW_SHADOW_AREA_SIZE];
-};
+पूर्ण;
 
-struct i40iw_sc_dev;
-struct i40iw_hmc_info;
-struct i40iw_vsi_pestat;
+काष्ठा i40iw_sc_dev;
+काष्ठा i40iw_hmc_info;
+काष्ठा i40iw_vsi_pestat;
 
-struct i40iw_cqp_ops;
-struct i40iw_ccq_ops;
-struct i40iw_ceq_ops;
-struct i40iw_aeq_ops;
-struct i40iw_mr_ops;
-struct i40iw_cqp_misc_ops;
-struct i40iw_pd_ops;
-struct i40iw_priv_qp_ops;
-struct i40iw_priv_cq_ops;
-struct i40iw_hmc_ops;
-struct pci_dev;
+काष्ठा i40iw_cqp_ops;
+काष्ठा i40iw_ccq_ops;
+काष्ठा i40iw_ceq_ops;
+काष्ठा i40iw_aeq_ops;
+काष्ठा i40iw_mr_ops;
+काष्ठा i40iw_cqp_misc_ops;
+काष्ठा i40iw_pd_ops;
+काष्ठा i40iw_priv_qp_ops;
+काष्ठा i40iw_priv_cq_ops;
+काष्ठा i40iw_hmc_ops;
+काष्ठा pci_dev;
 
-enum i40iw_page_size {
+क्रमागत i40iw_page_size अणु
 	I40IW_PAGE_SIZE_4K,
 	I40IW_PAGE_SIZE_2M
-};
+पूर्ण;
 
-enum i40iw_resource_indicator_type {
+क्रमागत i40iw_resource_indicator_type अणु
 	I40IW_RSRC_INDICATOR_TYPE_ADAPTER = 0,
 	I40IW_RSRC_INDICATOR_TYPE_CQ,
 	I40IW_RSRC_INDICATOR_TYPE_QP,
 	I40IW_RSRC_INDICATOR_TYPE_SRQ
-};
+पूर्ण;
 
-enum i40iw_hdrct_flags {
+क्रमागत i40iw_hdrct_flags अणु
 	DDP_LEN_FLAG = 0x80,
 	DDP_HDR_FLAG = 0x40,
 	RDMA_HDR_FLAG = 0x20
-};
+पूर्ण;
 
-enum i40iw_term_layers {
+क्रमागत i40iw_term_layers अणु
 	LAYER_RDMA = 0,
 	LAYER_DDP = 1,
 	LAYER_MPA = 2
-};
+पूर्ण;
 
-enum i40iw_term_error_types {
+क्रमागत i40iw_term_error_types अणु
 	RDMAP_REMOTE_PROT = 1,
 	RDMAP_REMOTE_OP = 2,
 	DDP_CATASTROPHIC = 0,
 	DDP_TAGGED_BUFFER = 1,
 	DDP_UNTAGGED_BUFFER = 2,
 	DDP_LLP = 3
-};
+पूर्ण;
 
-enum i40iw_term_rdma_errors {
+क्रमागत i40iw_term_rdma_errors अणु
 	RDMAP_INV_STAG = 0x00,
 	RDMAP_INV_BOUNDS = 0x01,
 	RDMAP_ACCESS = 0x02,
@@ -120,9 +121,9 @@ enum i40iw_term_rdma_errors {
 	RDMAP_CATASTROPHIC_GLOBAL = 0x08,
 	RDMAP_CANT_INV_STAG = 0x09,
 	RDMAP_UNSPECIFIED = 0xff
-};
+पूर्ण;
 
-enum i40iw_term_ddp_errors {
+क्रमागत i40iw_term_ddp_errors अणु
 	DDP_CATASTROPHIC_LOCAL = 0x00,
 	DDP_TAGGED_INV_STAG = 0x00,
 	DDP_TAGGED_BOUNDS = 0x01,
@@ -135,16 +136,16 @@ enum i40iw_term_ddp_errors {
 	DDP_UNTAGGED_INV_MO = 0x04,
 	DDP_UNTAGGED_INV_TOO_LONG = 0x05,
 	DDP_UNTAGGED_INV_DDP_VER = 0x06
-};
+पूर्ण;
 
-enum i40iw_term_mpa_errors {
+क्रमागत i40iw_term_mpa_errors अणु
 	MPA_CLOSED = 0x01,
 	MPA_CRC = 0x02,
 	MPA_MARKER = 0x03,
 	MPA_REQ_RSP = 0x04,
-};
+पूर्ण;
 
-enum i40iw_flush_opcode {
+क्रमागत i40iw_flush_opcode अणु
 	FLUSH_INVALID = 0,
 	FLUSH_PROT_ERR,
 	FLUSH_REM_ACCESS_ERR,
@@ -153,21 +154,21 @@ enum i40iw_flush_opcode {
 	FLUSH_LOC_LEN_ERR,
 	FLUSH_GENERAL_ERR,
 	FLUSH_FATAL_ERR
-};
+पूर्ण;
 
-enum i40iw_term_eventtypes {
+क्रमागत i40iw_term_eventtypes अणु
 	TERM_EVENT_QP_FATAL,
 	TERM_EVENT_QP_ACCESS_ERR
-};
+पूर्ण;
 
-struct i40iw_terminate_hdr {
+काष्ठा i40iw_terminate_hdr अणु
 	u8 layer_etype;
 	u8 error_code;
 	u8 hdrct;
 	u8 rsvd;
-};
+पूर्ण;
 
-enum i40iw_debug_flag {
+क्रमागत i40iw_debug_flag अणु
 	I40IW_DEBUG_NONE	= 0x00000000,
 	I40IW_DEBUG_ERR		= 0x00000001,
 	I40IW_DEBUG_INIT	= 0x00000002,
@@ -190,9 +191,9 @@ enum i40iw_debug_flag {
 	I40IW_DEBUG_DCB		= 0x00040000,
 	I40IW_DEBUG_CQE		= 0x00800000,
 	I40IW_DEBUG_ALL		= 0xFFFFFFFF
-};
+पूर्ण;
 
-enum i40iw_hw_stats_index_32b {
+क्रमागत i40iw_hw_stats_index_32b अणु
 	I40IW_HW_STAT_INDEX_IP4RXDISCARD = 0,
 	I40IW_HW_STAT_INDEX_IP4RXTRUNC,
 	I40IW_HW_STAT_INDEX_IP4TXNOROUTE,
@@ -203,9 +204,9 @@ enum i40iw_hw_stats_index_32b {
 	I40IW_HW_STAT_INDEX_TCPRXOPTERR,
 	I40IW_HW_STAT_INDEX_TCPRXPROTOERR,
 	I40IW_HW_STAT_INDEX_MAX_32
-};
+पूर्ण;
 
-enum i40iw_hw_stats_index_64b {
+क्रमागत i40iw_hw_stats_index_64b अणु
 	I40IW_HW_STAT_INDEX_IP4RXOCTS = 0,
 	I40IW_HW_STAT_INDEX_IP4RXPKTS,
 	I40IW_HW_STAT_INDEX_IP4RXFRAGS,
@@ -233,41 +234,41 @@ enum i40iw_hw_stats_index_64b {
 	I40IW_HW_STAT_INDEX_RDMAVBND,
 	I40IW_HW_STAT_INDEX_RDMAVINV,
 	I40IW_HW_STAT_INDEX_MAX_64
-};
+पूर्ण;
 
-enum i40iw_feature_type {
+क्रमागत i40iw_feature_type अणु
 	I40IW_FEATURE_FW_INFO = 0,
 	I40IW_MAX_FEATURES
-};
+पूर्ण;
 
-struct i40iw_dev_hw_stats_offsets {
+काष्ठा i40iw_dev_hw_stats_offsets अणु
 	u32 stats_offset_32[I40IW_HW_STAT_INDEX_MAX_32];
 	u32 stats_offset_64[I40IW_HW_STAT_INDEX_MAX_64];
-};
+पूर्ण;
 
-struct i40iw_dev_hw_stats {
+काष्ठा i40iw_dev_hw_stats अणु
 	u64 stats_value_32[I40IW_HW_STAT_INDEX_MAX_32];
 	u64 stats_value_64[I40IW_HW_STAT_INDEX_MAX_64];
-};
+पूर्ण;
 
-struct i40iw_vsi_pestat {
-	struct i40iw_hw *hw;
-	struct i40iw_dev_hw_stats hw_stats;
-	struct i40iw_dev_hw_stats last_read_hw_stats;
-	struct i40iw_dev_hw_stats_offsets hw_stats_offsets;
-	struct timer_list stats_timer;
-	struct i40iw_sc_vsi *vsi;
+काष्ठा i40iw_vsi_pestat अणु
+	काष्ठा i40iw_hw *hw;
+	काष्ठा i40iw_dev_hw_stats hw_stats;
+	काष्ठा i40iw_dev_hw_stats last_पढ़ो_hw_stats;
+	काष्ठा i40iw_dev_hw_stats_offsets hw_stats_offsets;
+	काष्ठा समयr_list stats_समयr;
+	काष्ठा i40iw_sc_vsi *vsi;
 	spinlock_t lock; /* rdma stats lock */
-};
+पूर्ण;
 
-struct i40iw_hw {
+काष्ठा i40iw_hw अणु
 	u8 __iomem *hw_addr;
-	struct pci_dev *pcidev;
-	struct i40iw_hmc_info hmc;
-};
+	काष्ठा pci_dev *pcidev;
+	काष्ठा i40iw_hmc_info hmc;
+पूर्ण;
 
-struct i40iw_pfpdu {
-	struct list_head rxlist;
+काष्ठा i40iw_pfpdu अणु
+	काष्ठा list_head rxlist;
 	u32 rcv_nxt;
 	u32 fps;
 	u32 max_fpdu_data;
@@ -281,86 +282,86 @@ struct i40iw_pfpdu {
 	u64 tx_err;
 	u64 out_of_order;
 	u64 pmode_count;
-};
+पूर्ण;
 
-struct i40iw_sc_pd {
+काष्ठा i40iw_sc_pd अणु
 	u32 size;
-	struct i40iw_sc_dev *dev;
+	काष्ठा i40iw_sc_dev *dev;
 	u16 pd_id;
-	int abi_ver;
-};
+	पूर्णांक abi_ver;
+पूर्ण;
 
-struct i40iw_cqp_quanta {
+काष्ठा i40iw_cqp_quanta अणु
 	u64 elem[I40IW_CQP_WQE_SIZE];
-};
+पूर्ण;
 
-struct i40iw_sc_cqp {
+काष्ठा i40iw_sc_cqp अणु
 	u32 size;
 	u64 sq_pa;
 	u64 host_ctx_pa;
-	void *back_cqp;
-	struct i40iw_sc_dev *dev;
-	enum i40iw_status_code (*process_cqp_sds)(struct i40iw_sc_dev *,
-						  struct i40iw_update_sds_info *);
-	struct i40iw_dma_mem sdbuf;
-	struct i40iw_ring sq_ring;
-	struct i40iw_cqp_quanta *sq_base;
+	व्योम *back_cqp;
+	काष्ठा i40iw_sc_dev *dev;
+	क्रमागत i40iw_status_code (*process_cqp_sds)(काष्ठा i40iw_sc_dev *,
+						  काष्ठा i40iw_update_sds_info *);
+	काष्ठा i40iw_dma_mem sdbuf;
+	काष्ठा i40iw_ring sq_ring;
+	काष्ठा i40iw_cqp_quanta *sq_base;
 	u64 *host_ctx;
 	u64 *scratch_array;
 	u32 cqp_id;
 	u32 sq_size;
 	u32 hw_sq_size;
-	u8 struct_ver;
+	u8 काष्ठा_ver;
 	u8 polarity;
 	bool en_datacenter_tcp;
 	u8 hmc_profile;
 	u8 enabled_vf_count;
-	u8 timeout_count;
-};
+	u8 समयout_count;
+पूर्ण;
 
-struct i40iw_sc_aeq {
+काष्ठा i40iw_sc_aeq अणु
 	u32 size;
 	u64 aeq_elem_pa;
-	struct i40iw_sc_dev *dev;
-	struct i40iw_sc_aeqe *aeqe_base;
-	void *pbl_list;
+	काष्ठा i40iw_sc_dev *dev;
+	काष्ठा i40iw_sc_aeqe *aeqe_base;
+	व्योम *pbl_list;
 	u32 elem_cnt;
-	struct i40iw_ring aeq_ring;
-	bool virtual_map;
+	काष्ठा i40iw_ring aeq_ring;
+	bool भव_map;
 	u8 pbl_chunk_size;
 	u32 first_pm_pbl_idx;
 	u8 polarity;
-};
+पूर्ण;
 
-struct i40iw_sc_ceq {
+काष्ठा i40iw_sc_ceq अणु
 	u32 size;
 	u64 ceq_elem_pa;
-	struct i40iw_sc_dev *dev;
-	struct i40iw_ceqe *ceqe_base;
-	void *pbl_list;
+	काष्ठा i40iw_sc_dev *dev;
+	काष्ठा i40iw_ceqe *ceqe_base;
+	व्योम *pbl_list;
 	u32 ceq_id;
 	u32 elem_cnt;
-	struct i40iw_ring ceq_ring;
-	bool virtual_map;
+	काष्ठा i40iw_ring ceq_ring;
+	bool भव_map;
 	u8 pbl_chunk_size;
 	bool tph_en;
 	u8 tph_val;
 	u32 first_pm_pbl_idx;
 	u8 polarity;
-};
+पूर्ण;
 
-struct i40iw_sc_cq {
-	struct i40iw_cq_uk cq_uk;
+काष्ठा i40iw_sc_cq अणु
+	काष्ठा i40iw_cq_uk cq_uk;
 	u64 cq_pa;
-	u64 shadow_area_pa;
-	struct i40iw_sc_dev *dev;
-	struct i40iw_sc_vsi *vsi;
-	void *pbl_list;
-	void *back_cq;
+	u64 shaकरोw_area_pa;
+	काष्ठा i40iw_sc_dev *dev;
+	काष्ठा i40iw_sc_vsi *vsi;
+	व्योम *pbl_list;
+	व्योम *back_cq;
 	u32 ceq_id;
-	u32 shadow_read_threshold;
+	u32 shaकरोw_पढ़ो_threshold;
 	bool ceqe_mask;
-	bool virtual_map;
+	bool भव_map;
 	u8 pbl_chunk_size;
 	u8 cq_type;
 	bool ceq_id_valid;
@@ -368,22 +369,22 @@ struct i40iw_sc_cq {
 	u8 tph_val;
 	u32 first_pm_pbl_idx;
 	bool check_overflow;
-};
+पूर्ण;
 
-struct i40iw_sc_qp {
-	struct i40iw_qp_uk qp_uk;
+काष्ठा i40iw_sc_qp अणु
+	काष्ठा i40iw_qp_uk qp_uk;
 	u64 sq_pa;
 	u64 rq_pa;
 	u64 hw_host_ctx_pa;
-	u64 shadow_area_pa;
+	u64 shaकरोw_area_pa;
 	u64 q2_pa;
-	struct i40iw_sc_dev *dev;
-	struct i40iw_sc_vsi *vsi;
-	struct i40iw_sc_pd *pd;
+	काष्ठा i40iw_sc_dev *dev;
+	काष्ठा i40iw_sc_vsi *vsi;
+	काष्ठा i40iw_sc_pd *pd;
 	u64 *hw_host_ctx;
-	void *llp_stream_handle;
-	void *back_qp;
-	struct i40iw_pfpdu pfpdu;
+	व्योम *llp_stream_handle;
+	व्योम *back_qp;
+	काष्ठा i40iw_pfpdu pfpdu;
 	u8 *q2_buf;
 	u64 qp_compl_ctx;
 	u16 qs_handle;
@@ -398,52 +399,52 @@ struct i40iw_sc_qp {
 	bool rq_tph_en;
 	bool rcv_tph_en;
 	bool xmit_tph_en;
-	bool virtual_map;
+	bool भव_map;
 	bool flush_sq;
 	bool flush_rq;
 	u8 user_pri;
-	struct list_head list;
+	काष्ठा list_head list;
 	bool on_qoslist;
 	bool sq_flush;
-	enum i40iw_flush_opcode flush_code;
-	enum i40iw_term_eventtypes eventtype;
+	क्रमागत i40iw_flush_opcode flush_code;
+	क्रमागत i40iw_term_eventtypes eventtype;
 	u8 term_flags;
-};
+पूर्ण;
 
-struct i40iw_hmc_fpm_misc {
+काष्ठा i40iw_hmc_fpm_misc अणु
 	u32 max_ceqs;
 	u32 max_sds;
 	u32 xf_block_size;
 	u32 q1_block_size;
 	u32 ht_multiplier;
-	u32 timer_bucket;
-};
+	u32 समयr_bucket;
+पूर्ण;
 
-struct i40iw_vchnl_if {
-	enum i40iw_status_code (*vchnl_recv)(struct i40iw_sc_dev *, u32, u8 *, u16);
-	enum i40iw_status_code (*vchnl_send)(struct i40iw_sc_dev *dev, u32, u8 *, u16);
-};
+काष्ठा i40iw_vchnl_अगर अणु
+	क्रमागत i40iw_status_code (*vchnl_recv)(काष्ठा i40iw_sc_dev *, u32, u8 *, u16);
+	क्रमागत i40iw_status_code (*vchnl_send)(काष्ठा i40iw_sc_dev *dev, u32, u8 *, u16);
+पूर्ण;
 
-#define I40IW_VCHNL_MAX_VF_MSG_SIZE 512
+#घोषणा I40IW_VCHNL_MAX_VF_MSG_SIZE 512
 
-struct i40iw_vchnl_vf_msg_buffer {
-	struct i40iw_virtchnl_op_buf vchnl_msg;
-	char parm_buffer[I40IW_VCHNL_MAX_VF_MSG_SIZE - 1];
-};
+काष्ठा i40iw_vchnl_vf_msg_buffer अणु
+	काष्ठा i40iw_virtchnl_op_buf vchnl_msg;
+	अक्षर parm_buffer[I40IW_VCHNL_MAX_VF_MSG_SIZE - 1];
+पूर्ण;
 
-struct i40iw_qos {
-	struct list_head qplist;
+काष्ठा i40iw_qos अणु
+	काष्ठा list_head qplist;
 	spinlock_t lock;	/* qos list */
 	u16 qs_handle;
-};
+पूर्ण;
 
-struct i40iw_vfdev {
-	struct i40iw_sc_dev *pf_dev;
+काष्ठा i40iw_vfdev अणु
+	काष्ठा i40iw_sc_dev *pf_dev;
 	u8 *hmc_info_mem;
-	struct i40iw_vsi_pestat pestat;
-	struct i40iw_hmc_pble_info *pble_info;
-	struct i40iw_hmc_info hmc_info;
-	struct i40iw_vchnl_vf_msg_buffer vf_msg_buffer;
+	काष्ठा i40iw_vsi_pestat pestat;
+	काष्ठा i40iw_hmc_pble_info *pble_info;
+	काष्ठा i40iw_hmc_info hmc_info;
+	काष्ठा i40iw_vchnl_vf_msg_buffer vf_msg_buffer;
 	u64 fpm_query_buf_pa;
 	u64 *fpm_query_buf;
 	u32 vf_id;
@@ -452,60 +453,60 @@ struct i40iw_vfdev {
 	u16 pmf_index;
 	u16 iw_vf_idx;		/* VF Device table index */
 	bool stats_initialized;
-};
+पूर्ण;
 
-#define I40IW_INVALID_FCN_ID 0xff
-struct i40iw_sc_vsi {
-	struct i40iw_sc_dev *dev;
-	void *back_vsi; /* Owned by OS */
+#घोषणा I40IW_INVALID_FCN_ID 0xff
+काष्ठा i40iw_sc_vsi अणु
+	काष्ठा i40iw_sc_dev *dev;
+	व्योम *back_vsi; /* Owned by OS */
 	u32 ilq_count;
-	struct i40iw_virt_mem ilq_mem;
-	struct i40iw_puda_rsrc *ilq;
+	काष्ठा i40iw_virt_mem ilq_mem;
+	काष्ठा i40iw_puda_rsrc *ilq;
 	u32 ieq_count;
-	struct i40iw_virt_mem ieq_mem;
-	struct i40iw_puda_rsrc *ieq;
+	काष्ठा i40iw_virt_mem ieq_mem;
+	काष्ठा i40iw_puda_rsrc *ieq;
 	u16 exception_lan_queue;
 	u16 mtu;
 	u8 fcn_id;
 	bool stats_fcn_id_alloc;
-	struct i40iw_qos qos[I40IW_MAX_USER_PRIORITY];
-	struct i40iw_vsi_pestat *pestat;
-};
+	काष्ठा i40iw_qos qos[I40IW_MAX_USER_PRIORITY];
+	काष्ठा i40iw_vsi_pestat *pestat;
+पूर्ण;
 
-struct i40iw_sc_dev {
-	struct list_head cqp_cmd_head;	/* head of the CQP command list */
+काष्ठा i40iw_sc_dev अणु
+	काष्ठा list_head cqp_cmd_head;	/* head of the CQP command list */
 	spinlock_t cqp_lock; /* cqp list sync */
-	struct i40iw_dev_uk dev_uk;
+	काष्ठा i40iw_dev_uk dev_uk;
 	bool fcn_id_array[I40IW_MAX_STATS_COUNT];
-	struct i40iw_dma_mem vf_fpm_query_buf[I40IW_MAX_PE_ENABLED_VF_COUNT];
+	काष्ठा i40iw_dma_mem vf_fpm_query_buf[I40IW_MAX_PE_ENABLED_VF_COUNT];
 	u64 fpm_query_buf_pa;
 	u64 fpm_commit_buf_pa;
 	u64 *fpm_query_buf;
 	u64 *fpm_commit_buf;
-	void *back_dev;
-	struct i40iw_hw *hw;
+	व्योम *back_dev;
+	काष्ठा i40iw_hw *hw;
 	u8 __iomem *db_addr;
-	struct i40iw_hmc_info *hmc_info;
-	struct i40iw_hmc_pble_info *pble_info;
-	struct i40iw_vfdev *vf_dev[I40IW_MAX_PE_ENABLED_VF_COUNT];
-	struct i40iw_sc_cqp *cqp;
-	struct i40iw_sc_aeq *aeq;
-	struct i40iw_sc_ceq *ceq[I40IW_CEQ_MAX_COUNT];
-	struct i40iw_sc_cq *ccq;
-	const struct i40iw_cqp_ops *cqp_ops;
-	const struct i40iw_ccq_ops *ccq_ops;
-	const struct i40iw_ceq_ops *ceq_ops;
-	const struct i40iw_aeq_ops *aeq_ops;
-	const struct i40iw_pd_ops *iw_pd_ops;
-	const struct i40iw_priv_qp_ops *iw_priv_qp_ops;
-	const struct i40iw_priv_cq_ops *iw_priv_cq_ops;
-	const struct i40iw_mr_ops *mr_ops;
-	const struct i40iw_cqp_misc_ops *cqp_misc_ops;
-	const struct i40iw_hmc_ops *hmc_ops;
-	struct i40iw_vchnl_if vchnl_if;
-	const struct i40iw_vf_cqp_ops *iw_vf_cqp_ops;
+	काष्ठा i40iw_hmc_info *hmc_info;
+	काष्ठा i40iw_hmc_pble_info *pble_info;
+	काष्ठा i40iw_vfdev *vf_dev[I40IW_MAX_PE_ENABLED_VF_COUNT];
+	काष्ठा i40iw_sc_cqp *cqp;
+	काष्ठा i40iw_sc_aeq *aeq;
+	काष्ठा i40iw_sc_ceq *ceq[I40IW_CEQ_MAX_COUNT];
+	काष्ठा i40iw_sc_cq *ccq;
+	स्थिर काष्ठा i40iw_cqp_ops *cqp_ops;
+	स्थिर काष्ठा i40iw_ccq_ops *ccq_ops;
+	स्थिर काष्ठा i40iw_ceq_ops *ceq_ops;
+	स्थिर काष्ठा i40iw_aeq_ops *aeq_ops;
+	स्थिर काष्ठा i40iw_pd_ops *iw_pd_ops;
+	स्थिर काष्ठा i40iw_priv_qp_ops *iw_priv_qp_ops;
+	स्थिर काष्ठा i40iw_priv_cq_ops *iw_priv_cq_ops;
+	स्थिर काष्ठा i40iw_mr_ops *mr_ops;
+	स्थिर काष्ठा i40iw_cqp_misc_ops *cqp_misc_ops;
+	स्थिर काष्ठा i40iw_hmc_ops *hmc_ops;
+	काष्ठा i40iw_vchnl_अगर vchnl_अगर;
+	स्थिर काष्ठा i40iw_vf_cqp_ops *iw_vf_cqp_ops;
 
-	struct i40iw_hmc_fpm_misc hmc_fpm_misc;
+	काष्ठा i40iw_hmc_fpm_misc hmc_fpm_misc;
 	u64 feature_info[I40IW_MAX_FEATURES];
 	u32 debug_mask;
 	u8 hmc_fn_id;
@@ -513,20 +514,20 @@ struct i40iw_sc_dev {
 	bool vchnl_up;
 	bool ceq_valid;
 	u8 vf_id;
-	wait_queue_head_t vf_reqs;
+	रुको_queue_head_t vf_reqs;
 	u64 cqp_cmd_stats[OP_SIZE_CQP_STAT_ARRAY];
-	struct i40iw_vchnl_vf_msg_buffer vchnl_vf_msg_buf;
+	काष्ठा i40iw_vchnl_vf_msg_buffer vchnl_vf_msg_buf;
 	u8 hw_rev;
-};
+पूर्ण;
 
-struct i40iw_modify_cq_info {
+काष्ठा i40iw_modअगरy_cq_info अणु
 	u64 cq_pa;
-	struct i40iw_cqe *cq_base;
-	void *pbl_list;
+	काष्ठा i40iw_cqe *cq_base;
+	व्योम *pbl_list;
 	u32 ceq_id;
 	u32 cq_size;
-	u32 shadow_read_threshold;
-	bool virtual_map;
+	u32 shaकरोw_पढ़ो_threshold;
+	bool भव_map;
 	u8 pbl_chunk_size;
 	bool check_overflow;
 	bool cq_resize;
@@ -534,17 +535,17 @@ struct i40iw_modify_cq_info {
 	bool check_overflow_change;
 	u32 first_pm_pbl_idx;
 	bool ceq_valid;
-};
+पूर्ण;
 
-struct i40iw_create_qp_info {
+काष्ठा i40iw_create_qp_info अणु
 	u8 next_iwarp_state;
 	bool ord_valid;
 	bool tcp_ctx_valid;
 	bool cq_num_valid;
 	bool arp_cache_idx_valid;
-};
+पूर्ण;
 
-struct i40iw_modify_qp_info {
+काष्ठा i40iw_modअगरy_qp_info अणु
 	u64 rx_win0;
 	u64 rx_win1;
 	u8 next_iwarp_state;
@@ -554,122 +555,122 @@ struct i40iw_modify_qp_info {
 	bool cq_num_valid;
 	bool arp_cache_idx_valid;
 	bool reset_tcp_conn;
-	bool remove_hash_idx;
-	bool dont_send_term;
-	bool dont_send_fin;
+	bool हटाओ_hash_idx;
+	bool करोnt_send_term;
+	bool करोnt_send_fin;
 	bool cached_var_valid;
-	bool force_loopback;
-};
+	bool क्रमce_loopback;
+पूर्ण;
 
-struct i40iw_ccq_cqe_info {
-	struct i40iw_sc_cqp *cqp;
+काष्ठा i40iw_ccq_cqe_info अणु
+	काष्ठा i40iw_sc_cqp *cqp;
 	u64 scratch;
 	u32 op_ret_val;
 	u16 maj_err_code;
 	u16 min_err_code;
 	u8 op_code;
 	bool error;
-};
+पूर्ण;
 
-struct i40iw_l2params {
+काष्ठा i40iw_l2params अणु
 	u16 qs_handle_list[I40IW_MAX_USER_PRIORITY];
 	u16 mtu;
-};
+पूर्ण;
 
-struct i40iw_vsi_init_info {
-	struct i40iw_sc_dev *dev;
-	void  *back_vsi;
-	struct i40iw_l2params *params;
+काष्ठा i40iw_vsi_init_info अणु
+	काष्ठा i40iw_sc_dev *dev;
+	व्योम  *back_vsi;
+	काष्ठा i40iw_l2params *params;
 	u16 exception_lan_queue;
-};
+पूर्ण;
 
-struct i40iw_vsi_stats_info {
-	struct i40iw_vsi_pestat *pestat;
+काष्ठा i40iw_vsi_stats_info अणु
+	काष्ठा i40iw_vsi_pestat *pestat;
 	u8 fcn_id;
 	bool alloc_fcn_id;
 	bool stats_initialize;
-};
+पूर्ण;
 
-struct i40iw_device_init_info {
+काष्ठा i40iw_device_init_info अणु
 	u64 fpm_query_buf_pa;
 	u64 fpm_commit_buf_pa;
 	u64 *fpm_query_buf;
 	u64 *fpm_commit_buf;
-	struct i40iw_hw *hw;
-	void __iomem *bar0;
-	enum i40iw_status_code (*vchnl_send)(struct i40iw_sc_dev *, u32, u8 *, u16);
+	काष्ठा i40iw_hw *hw;
+	व्योम __iomem *bar0;
+	क्रमागत i40iw_status_code (*vchnl_send)(काष्ठा i40iw_sc_dev *, u32, u8 *, u16);
 	u8 hmc_fn_id;
 	bool is_pf;
 	u32 debug_mask;
-};
+पूर्ण;
 
-enum i40iw_cqp_hmc_profile {
-	I40IW_HMC_PROFILE_DEFAULT = 1,
-	I40IW_HMC_PROFILE_FAVOR_VF = 2,
-	I40IW_HMC_PROFILE_EQUAL = 3,
-};
+क्रमागत i40iw_cqp_hmc_profile अणु
+	I40IW_HMC_PROखाता_DEFAULT = 1,
+	I40IW_HMC_PROखाता_FAVOR_VF = 2,
+	I40IW_HMC_PROखाता_EQUAL = 3,
+पूर्ण;
 
-struct i40iw_cqp_init_info {
+काष्ठा i40iw_cqp_init_info अणु
 	u64 cqp_compl_ctx;
 	u64 host_ctx_pa;
 	u64 sq_pa;
-	struct i40iw_sc_dev *dev;
-	struct i40iw_cqp_quanta *sq;
+	काष्ठा i40iw_sc_dev *dev;
+	काष्ठा i40iw_cqp_quanta *sq;
 	u64 *host_ctx;
 	u64 *scratch_array;
 	u32 sq_size;
-	u8 struct_ver;
+	u8 काष्ठा_ver;
 	bool en_datacenter_tcp;
 	u8 hmc_profile;
 	u8 enabled_vf_count;
-};
+पूर्ण;
 
-struct i40iw_ceq_init_info {
+काष्ठा i40iw_ceq_init_info अणु
 	u64 ceqe_pa;
-	struct i40iw_sc_dev *dev;
+	काष्ठा i40iw_sc_dev *dev;
 	u64 *ceqe_base;
-	void *pbl_list;
+	व्योम *pbl_list;
 	u32 elem_cnt;
 	u32 ceq_id;
-	bool virtual_map;
+	bool भव_map;
 	u8 pbl_chunk_size;
 	bool tph_en;
 	u8 tph_val;
 	u32 first_pm_pbl_idx;
-};
+पूर्ण;
 
-struct i40iw_aeq_init_info {
+काष्ठा i40iw_aeq_init_info अणु
 	u64 aeq_elem_pa;
-	struct i40iw_sc_dev *dev;
+	काष्ठा i40iw_sc_dev *dev;
 	u32 *aeqe_base;
-	void *pbl_list;
+	व्योम *pbl_list;
 	u32 elem_cnt;
-	bool virtual_map;
+	bool भव_map;
 	u8 pbl_chunk_size;
 	u32 first_pm_pbl_idx;
-};
+पूर्ण;
 
-struct i40iw_ccq_init_info {
+काष्ठा i40iw_ccq_init_info अणु
 	u64 cq_pa;
-	u64 shadow_area_pa;
-	struct i40iw_sc_dev *dev;
-	struct i40iw_cqe *cq_base;
-	u64 *shadow_area;
-	void *pbl_list;
+	u64 shaकरोw_area_pa;
+	काष्ठा i40iw_sc_dev *dev;
+	काष्ठा i40iw_cqe *cq_base;
+	u64 *shaकरोw_area;
+	व्योम *pbl_list;
 	u32 num_elem;
 	u32 ceq_id;
-	u32 shadow_read_threshold;
+	u32 shaकरोw_पढ़ो_threshold;
 	bool ceqe_mask;
 	bool ceq_id_valid;
 	bool tph_en;
 	u8 tph_val;
-	bool avoid_mem_cflct;
-	bool virtual_map;
+	bool aव्योम_mem_cflct;
+	bool भव_map;
 	u8 pbl_chunk_size;
 	u32 first_pm_pbl_idx;
-};
+पूर्ण;
 
-struct i40iwarp_offload_info {
+काष्ठा i40iwarp_offload_info अणु
 	u16 rcv_mark_offset;
 	u16 snd_mark_offset;
 	u16 pd_id;
@@ -690,19 +691,19 @@ struct i40iwarp_offload_info {
 	bool rcv_no_mpa_crc;
 
 	u8 last_byte_sent;
-};
+पूर्ण;
 
-struct i40iw_tcp_offload_info {
+काष्ठा i40iw_tcp_offload_info अणु
 	bool ipv4;
 	bool no_nagle;
 	bool insert_vlan_tag;
-	bool time_stamp;
+	bool समय_stamp;
 	u8 cwnd_inc_limit;
 	bool drop_ooo_seg;
 	u8 dup_ack_thresh;
 	u8 ttl;
 	u8 src_mac_addr_idx;
-	bool avoid_stretch_ack;
+	bool aव्योम_stretch_ack;
 	u8 tos;
 	u16 src_port;
 	u16 dst_port;
@@ -718,8 +719,8 @@ struct i40iw_tcp_offload_info {
 	u8 tcp_state;
 	u8 snd_wscale;
 	u8 rcv_wscale;
-	u32 time_stamp_recent;
-	u32 time_stamp_age;
+	u32 समय_stamp_recent;
+	u32 समय_stamp_age;
 	u32 snd_nxt;
 	u32 snd_wnd;
 	u32 rcv_nxt;
@@ -732,7 +733,7 @@ struct i40iw_tcp_offload_info {
 	u32 cwnd;
 	u32 snd_wl1;
 	u32 snd_wl2;
-	u32 max_snd_window;
+	u32 max_snd_winकरोw;
 	u8 rexmit_thresh;
 	u32 local_ipaddr0;
 	u32 local_ipaddr1;
@@ -740,12 +741,12 @@ struct i40iw_tcp_offload_info {
 	u32 local_ipaddr3;
 	bool ignore_tcp_opt;
 	bool ignore_tcp_uns_opt;
-};
+पूर्ण;
 
-struct i40iw_qp_host_ctx_info {
+काष्ठा i40iw_qp_host_ctx_info अणु
 	u64 qp_compl_ctx;
-	struct i40iw_tcp_offload_info *tcp_info;
-	struct i40iwarp_offload_info *iwarp_info;
+	काष्ठा i40iw_tcp_offload_info *tcp_info;
+	काष्ठा i40iwarp_offload_info *iwarp_info;
 	u32 send_cq_num;
 	u32 rcv_cq_num;
 	bool tcp_info_valid;
@@ -754,9 +755,9 @@ struct i40iw_qp_host_ctx_info {
 	u16 err_rq_idx;
 	bool add_to_qoslist;
 	u8 user_pri;
-};
+पूर्ण;
 
-struct i40iw_aeqe_info {
+काष्ठा i40iw_aeqe_info अणु
 	u64 compl_ctx;
 	u32 qp_cq_id;
 	u16 ae_id;
@@ -770,9 +771,9 @@ struct i40iw_aeqe_info {
 	bool out_rdrsp;
 	u8 q2_data_written;
 	bool aeqe_overflow;
-};
+पूर्ण;
 
-struct i40iw_allocate_stag_info {
+काष्ठा i40iw_allocate_stag_info अणु
 	u64 total_len;
 	u32 chunk_size;
 	u32 stag_idx;
@@ -783,17 +784,17 @@ struct i40iw_allocate_stag_info {
 	bool use_hmc_fcn_index;
 	u8 hmc_fcn_index;
 	bool use_pf_rid;
-};
+पूर्ण;
 
-struct i40iw_reg_ns_stag_info {
+काष्ठा i40iw_reg_ns_stag_info अणु
 	u64 reg_addr_pa;
 	u64 fbo;
-	void *va;
+	व्योम *va;
 	u64 total_len;
 	u32 page_size;
 	u32 chunk_size;
 	u32 first_pm_pbl_index;
-	enum i40iw_addressing_type addr_type;
+	क्रमागत i40iw_addressing_type addr_type;
 	i40iw_stag_index stag_idx;
 	u16 access_rights;
 	u16 pd_id;
@@ -801,60 +802,60 @@ struct i40iw_reg_ns_stag_info {
 	bool use_hmc_fcn_index;
 	u8 hmc_fcn_index;
 	bool use_pf_rid;
-};
+पूर्ण;
 
-struct i40iw_fast_reg_stag_info {
+काष्ठा i40iw_fast_reg_stag_info अणु
 	u64 wr_id;
 	u64 reg_addr_pa;
 	u64 fbo;
-	void *va;
+	व्योम *va;
 	u64 total_len;
 	u32 page_size;
 	u32 chunk_size;
 	u32 first_pm_pbl_index;
-	enum i40iw_addressing_type addr_type;
+	क्रमागत i40iw_addressing_type addr_type;
 	i40iw_stag_index stag_idx;
 	u16 access_rights;
 	u16 pd_id;
 	i40iw_stag_key stag_key;
 	bool local_fence;
-	bool read_fence;
-	bool signaled;
+	bool पढ़ो_fence;
+	bool संकेतed;
 	bool use_hmc_fcn_index;
 	u8 hmc_fcn_index;
 	bool use_pf_rid;
 	bool defer_flag;
-};
+पूर्ण;
 
-struct i40iw_dealloc_stag_info {
+काष्ठा i40iw_dealloc_stag_info अणु
 	u32 stag_idx;
 	u16 pd_id;
 	bool mr;
 	bool dealloc_pbl;
-};
+पूर्ण;
 
-struct i40iw_register_shared_stag {
-	void *va;
-	enum i40iw_addressing_type addr_type;
+काष्ठा i40iw_रेजिस्टर_shared_stag अणु
+	व्योम *va;
+	क्रमागत i40iw_addressing_type addr_type;
 	i40iw_stag_index new_stag_idx;
 	i40iw_stag_index parent_stag_idx;
 	u32 access_rights;
 	u16 pd_id;
 	i40iw_stag_key new_stag_key;
-};
+पूर्ण;
 
-struct i40iw_qp_init_info {
-	struct i40iw_qp_uk_init_info qp_uk_init_info;
-	struct i40iw_sc_pd *pd;
-	struct i40iw_sc_vsi *vsi;
+काष्ठा i40iw_qp_init_info अणु
+	काष्ठा i40iw_qp_uk_init_info qp_uk_init_info;
+	काष्ठा i40iw_sc_pd *pd;
+	काष्ठा i40iw_sc_vsi *vsi;
 	u64 *host_ctx;
 	u8 *q2;
 	u64 sq_pa;
 	u64 rq_pa;
 	u64 host_ctx_pa;
 	u64 q2_pa;
-	u64 shadow_area_pa;
-	int abi_ver;
+	u64 shaकरोw_area_pa;
+	पूर्णांक abi_ver;
 	u8 sq_tph_val;
 	u8 rq_tph_val;
 	u8 type;
@@ -862,16 +863,16 @@ struct i40iw_qp_init_info {
 	bool rq_tph_en;
 	bool rcv_tph_en;
 	bool xmit_tph_en;
-	bool virtual_map;
-};
+	bool भव_map;
+पूर्ण;
 
-struct i40iw_cq_init_info {
-	struct i40iw_sc_dev *dev;
+काष्ठा i40iw_cq_init_info अणु
+	काष्ठा i40iw_sc_dev *dev;
 	u64 cq_base_pa;
-	u64 shadow_area_pa;
+	u64 shaकरोw_area_pa;
 	u32 ceq_id;
-	u32 shadow_read_threshold;
-	bool virtual_map;
+	u32 shaकरोw_पढ़ो_threshold;
+	bool भव_map;
 	bool ceqe_mask;
 	u8 pbl_chunk_size;
 	u32 first_pm_pbl_idx;
@@ -879,44 +880,44 @@ struct i40iw_cq_init_info {
 	bool tph_en;
 	u8 tph_val;
 	u8 type;
-	struct i40iw_cq_uk_init_info cq_uk_init_info;
-};
+	काष्ठा i40iw_cq_uk_init_info cq_uk_init_info;
+पूर्ण;
 
-struct i40iw_upload_context_info {
+काष्ठा i40iw_upload_context_info अणु
 	u64 buf_pa;
-	bool freeze_qp;
-	bool raw_format;
+	bool मुक्तze_qp;
+	bool raw_क्रमmat;
 	u32 qp_id;
 	u8 qp_type;
-};
+पूर्ण;
 
-struct i40iw_add_arp_cache_entry_info {
+काष्ठा i40iw_add_arp_cache_entry_info अणु
 	u8 mac_addr[6];
 	u32 reach_max;
 	u16 arp_index;
 	bool permanent;
-};
+पूर्ण;
 
-struct i40iw_apbvt_info {
+काष्ठा i40iw_apbvt_info अणु
 	u16 port;
 	bool add;
-};
+पूर्ण;
 
-enum i40iw_quad_entry_type {
+क्रमागत i40iw_quad_entry_type अणु
 	I40IW_QHASH_TYPE_TCP_ESTABLISHED = 1,
 	I40IW_QHASH_TYPE_TCP_SYN,
-};
+पूर्ण;
 
-enum i40iw_quad_hash_manage_type {
+क्रमागत i40iw_quad_hash_manage_type अणु
 	I40IW_QHASH_MANAGE_TYPE_DELETE = 0,
 	I40IW_QHASH_MANAGE_TYPE_ADD,
 	I40IW_QHASH_MANAGE_TYPE_MODIFY
-};
+पूर्ण;
 
-struct i40iw_qhash_table_info {
-	struct i40iw_sc_vsi *vsi;
-	enum i40iw_quad_hash_manage_type manage;
-	enum i40iw_quad_entry_type entry_type;
+काष्ठा i40iw_qhash_table_info अणु
+	काष्ठा i40iw_sc_vsi *vsi;
+	क्रमागत i40iw_quad_hash_manage_type manage;
+	क्रमागत i40iw_quad_entry_type entry_type;
 	bool vlan_valid;
 	bool ipv4_valid;
 	u8 mac_addr[6];
@@ -927,14 +928,14 @@ struct i40iw_qhash_table_info {
 	u32 src_ip[4];
 	u16 dest_port;
 	u16 src_port;
-};
+पूर्ण;
 
-struct i40iw_local_mac_ipaddr_entry_info {
+काष्ठा i40iw_local_mac_ipaddr_entry_info अणु
 	u8 mac_addr[6];
 	u8 entry_idx;
-};
+पूर्ण;
 
-struct i40iw_qp_flush_info {
+काष्ठा i40iw_qp_flush_info अणु
 	u16 sq_minor_code;
 	u16 sq_major_code;
 	u16 rq_minor_code;
@@ -945,9 +946,9 @@ struct i40iw_qp_flush_info {
 	bool rq;
 	bool userflushcode;
 	bool generate_ae;
-};
+पूर्ण;
 
-struct i40iw_cqp_commit_fpm_values {
+काष्ठा i40iw_cqp_commit_fpm_values अणु
 	u64 qp_base;
 	u64 cq_base;
 	u32 hte_base;
@@ -974,9 +975,9 @@ struct i40iw_cqp_commit_fpm_values {
 	u32 fsimc_cnt;
 	u32 fsiav_cnt;
 	u32 pbl_cnt;
-};
+पूर्ण;
 
-struct i40iw_cqp_query_fpm_values {
+काष्ठा i40iw_cqp_query_fpm_values अणु
 	u16 first_pe_sd_index;
 	u32 qp_objsize;
 	u32 cq_objsize;
@@ -1000,359 +1001,359 @@ struct i40iw_cqp_query_fpm_values {
 	u32 fsimc_max;
 	u32 fsiav_max;
 	u32 pbl_max;
-};
+पूर्ण;
 
-struct i40iw_gen_ae_info {
+काष्ठा i40iw_gen_ae_info अणु
 	u16 ae_code;
 	u8 ae_source;
-};
+पूर्ण;
 
-struct i40iw_cqp_ops {
-	enum i40iw_status_code (*cqp_init)(struct i40iw_sc_cqp *,
-					   struct i40iw_cqp_init_info *);
-	enum i40iw_status_code (*cqp_create)(struct i40iw_sc_cqp *, u16 *, u16 *);
-	void (*cqp_post_sq)(struct i40iw_sc_cqp *);
-	u64 *(*cqp_get_next_send_wqe)(struct i40iw_sc_cqp *, u64 scratch);
-	enum i40iw_status_code (*cqp_destroy)(struct i40iw_sc_cqp *);
-	enum i40iw_status_code (*poll_for_cqp_op_done)(struct i40iw_sc_cqp *, u8,
-						       struct i40iw_ccq_cqe_info *);
-};
+काष्ठा i40iw_cqp_ops अणु
+	क्रमागत i40iw_status_code (*cqp_init)(काष्ठा i40iw_sc_cqp *,
+					   काष्ठा i40iw_cqp_init_info *);
+	क्रमागत i40iw_status_code (*cqp_create)(काष्ठा i40iw_sc_cqp *, u16 *, u16 *);
+	व्योम (*cqp_post_sq)(काष्ठा i40iw_sc_cqp *);
+	u64 *(*cqp_get_next_send_wqe)(काष्ठा i40iw_sc_cqp *, u64 scratch);
+	क्रमागत i40iw_status_code (*cqp_destroy)(काष्ठा i40iw_sc_cqp *);
+	क्रमागत i40iw_status_code (*poll_क्रम_cqp_op_करोne)(काष्ठा i40iw_sc_cqp *, u8,
+						       काष्ठा i40iw_ccq_cqe_info *);
+पूर्ण;
 
-struct i40iw_ccq_ops {
-	enum i40iw_status_code (*ccq_init)(struct i40iw_sc_cq *,
-					   struct i40iw_ccq_init_info *);
-	enum i40iw_status_code (*ccq_create)(struct i40iw_sc_cq *, u64, bool, bool);
-	enum i40iw_status_code (*ccq_destroy)(struct i40iw_sc_cq *, u64, bool);
-	enum i40iw_status_code (*ccq_create_done)(struct i40iw_sc_cq *);
-	enum i40iw_status_code (*ccq_get_cqe_info)(struct i40iw_sc_cq *,
-						   struct i40iw_ccq_cqe_info *);
-	void (*ccq_arm)(struct i40iw_sc_cq *);
-};
+काष्ठा i40iw_ccq_ops अणु
+	क्रमागत i40iw_status_code (*ccq_init)(काष्ठा i40iw_sc_cq *,
+					   काष्ठा i40iw_ccq_init_info *);
+	क्रमागत i40iw_status_code (*ccq_create)(काष्ठा i40iw_sc_cq *, u64, bool, bool);
+	क्रमागत i40iw_status_code (*ccq_destroy)(काष्ठा i40iw_sc_cq *, u64, bool);
+	क्रमागत i40iw_status_code (*ccq_create_करोne)(काष्ठा i40iw_sc_cq *);
+	क्रमागत i40iw_status_code (*ccq_get_cqe_info)(काष्ठा i40iw_sc_cq *,
+						   काष्ठा i40iw_ccq_cqe_info *);
+	व्योम (*ccq_arm)(काष्ठा i40iw_sc_cq *);
+पूर्ण;
 
-struct i40iw_ceq_ops {
-	enum i40iw_status_code (*ceq_init)(struct i40iw_sc_ceq *,
-					   struct i40iw_ceq_init_info *);
-	enum i40iw_status_code (*ceq_create)(struct i40iw_sc_ceq *, u64, bool);
-	enum i40iw_status_code (*cceq_create_done)(struct i40iw_sc_ceq *);
-	enum i40iw_status_code (*cceq_destroy_done)(struct i40iw_sc_ceq *);
-	enum i40iw_status_code (*cceq_create)(struct i40iw_sc_ceq *, u64);
-	enum i40iw_status_code (*ceq_destroy)(struct i40iw_sc_ceq *, u64, bool);
-	void *(*process_ceq)(struct i40iw_sc_dev *, struct i40iw_sc_ceq *);
-};
+काष्ठा i40iw_ceq_ops अणु
+	क्रमागत i40iw_status_code (*ceq_init)(काष्ठा i40iw_sc_ceq *,
+					   काष्ठा i40iw_ceq_init_info *);
+	क्रमागत i40iw_status_code (*ceq_create)(काष्ठा i40iw_sc_ceq *, u64, bool);
+	क्रमागत i40iw_status_code (*cceq_create_करोne)(काष्ठा i40iw_sc_ceq *);
+	क्रमागत i40iw_status_code (*cceq_destroy_करोne)(काष्ठा i40iw_sc_ceq *);
+	क्रमागत i40iw_status_code (*cceq_create)(काष्ठा i40iw_sc_ceq *, u64);
+	क्रमागत i40iw_status_code (*ceq_destroy)(काष्ठा i40iw_sc_ceq *, u64, bool);
+	व्योम *(*process_ceq)(काष्ठा i40iw_sc_dev *, काष्ठा i40iw_sc_ceq *);
+पूर्ण;
 
-struct i40iw_aeq_ops {
-	enum i40iw_status_code (*aeq_init)(struct i40iw_sc_aeq *,
-					   struct i40iw_aeq_init_info *);
-	enum i40iw_status_code (*aeq_create)(struct i40iw_sc_aeq *, u64, bool);
-	enum i40iw_status_code (*aeq_destroy)(struct i40iw_sc_aeq *, u64, bool);
-	enum i40iw_status_code (*get_next_aeqe)(struct i40iw_sc_aeq *,
-						struct i40iw_aeqe_info *);
-	enum i40iw_status_code (*repost_aeq_entries)(struct i40iw_sc_dev *, u32);
-	enum i40iw_status_code (*aeq_create_done)(struct i40iw_sc_aeq *);
-	enum i40iw_status_code (*aeq_destroy_done)(struct i40iw_sc_aeq *);
-};
+काष्ठा i40iw_aeq_ops अणु
+	क्रमागत i40iw_status_code (*aeq_init)(काष्ठा i40iw_sc_aeq *,
+					   काष्ठा i40iw_aeq_init_info *);
+	क्रमागत i40iw_status_code (*aeq_create)(काष्ठा i40iw_sc_aeq *, u64, bool);
+	क्रमागत i40iw_status_code (*aeq_destroy)(काष्ठा i40iw_sc_aeq *, u64, bool);
+	क्रमागत i40iw_status_code (*get_next_aeqe)(काष्ठा i40iw_sc_aeq *,
+						काष्ठा i40iw_aeqe_info *);
+	क्रमागत i40iw_status_code (*repost_aeq_entries)(काष्ठा i40iw_sc_dev *, u32);
+	क्रमागत i40iw_status_code (*aeq_create_करोne)(काष्ठा i40iw_sc_aeq *);
+	क्रमागत i40iw_status_code (*aeq_destroy_करोne)(काष्ठा i40iw_sc_aeq *);
+पूर्ण;
 
-struct i40iw_pd_ops {
-	void (*pd_init)(struct i40iw_sc_dev *, struct i40iw_sc_pd *, u16, int);
-};
+काष्ठा i40iw_pd_ops अणु
+	व्योम (*pd_init)(काष्ठा i40iw_sc_dev *, काष्ठा i40iw_sc_pd *, u16, पूर्णांक);
+पूर्ण;
 
-struct i40iw_priv_qp_ops {
-	enum i40iw_status_code (*qp_init)(struct i40iw_sc_qp *, struct i40iw_qp_init_info *);
-	enum i40iw_status_code (*qp_create)(struct i40iw_sc_qp *,
-					    struct i40iw_create_qp_info *, u64, bool);
-	enum i40iw_status_code (*qp_modify)(struct i40iw_sc_qp *,
-					    struct i40iw_modify_qp_info *, u64, bool);
-	enum i40iw_status_code (*qp_destroy)(struct i40iw_sc_qp *, u64, bool, bool, bool);
-	enum i40iw_status_code (*qp_flush_wqes)(struct i40iw_sc_qp *,
-						struct i40iw_qp_flush_info *, u64, bool);
-	enum i40iw_status_code (*qp_upload_context)(struct i40iw_sc_dev *,
-						    struct i40iw_upload_context_info *,
+काष्ठा i40iw_priv_qp_ops अणु
+	क्रमागत i40iw_status_code (*qp_init)(काष्ठा i40iw_sc_qp *, काष्ठा i40iw_qp_init_info *);
+	क्रमागत i40iw_status_code (*qp_create)(काष्ठा i40iw_sc_qp *,
+					    काष्ठा i40iw_create_qp_info *, u64, bool);
+	क्रमागत i40iw_status_code (*qp_modअगरy)(काष्ठा i40iw_sc_qp *,
+					    काष्ठा i40iw_modअगरy_qp_info *, u64, bool);
+	क्रमागत i40iw_status_code (*qp_destroy)(काष्ठा i40iw_sc_qp *, u64, bool, bool, bool);
+	क्रमागत i40iw_status_code (*qp_flush_wqes)(काष्ठा i40iw_sc_qp *,
+						काष्ठा i40iw_qp_flush_info *, u64, bool);
+	क्रमागत i40iw_status_code (*qp_upload_context)(काष्ठा i40iw_sc_dev *,
+						    काष्ठा i40iw_upload_context_info *,
 						    u64, bool);
-	enum i40iw_status_code (*qp_setctx)(struct i40iw_sc_qp *, u64 *,
-					    struct i40iw_qp_host_ctx_info *);
+	क्रमागत i40iw_status_code (*qp_setctx)(काष्ठा i40iw_sc_qp *, u64 *,
+					    काष्ठा i40iw_qp_host_ctx_info *);
 
-	void (*qp_send_lsmm)(struct i40iw_sc_qp *, void *, u32, i40iw_stag);
-	void (*qp_send_lsmm_nostag)(struct i40iw_sc_qp *, void *, u32);
-	void (*qp_send_rtt)(struct i40iw_sc_qp *, bool);
-	enum i40iw_status_code (*qp_post_wqe0)(struct i40iw_sc_qp *, u8);
-	enum i40iw_status_code (*iw_mr_fast_register)(struct i40iw_sc_qp *,
-						      struct i40iw_fast_reg_stag_info *,
+	व्योम (*qp_send_lsmm)(काष्ठा i40iw_sc_qp *, व्योम *, u32, i40iw_stag);
+	व्योम (*qp_send_lsmm_nostag)(काष्ठा i40iw_sc_qp *, व्योम *, u32);
+	व्योम (*qp_send_rtt)(काष्ठा i40iw_sc_qp *, bool);
+	क्रमागत i40iw_status_code (*qp_post_wqe0)(काष्ठा i40iw_sc_qp *, u8);
+	क्रमागत i40iw_status_code (*iw_mr_fast_रेजिस्टर)(काष्ठा i40iw_sc_qp *,
+						      काष्ठा i40iw_fast_reg_stag_info *,
 						      bool);
-};
+पूर्ण;
 
-struct i40iw_priv_cq_ops {
-	enum i40iw_status_code (*cq_init)(struct i40iw_sc_cq *, struct i40iw_cq_init_info *);
-	enum i40iw_status_code (*cq_create)(struct i40iw_sc_cq *, u64, bool, bool);
-	enum i40iw_status_code (*cq_destroy)(struct i40iw_sc_cq *, u64, bool);
-	enum i40iw_status_code (*cq_modify)(struct i40iw_sc_cq *,
-					    struct i40iw_modify_cq_info *, u64, bool);
-};
+काष्ठा i40iw_priv_cq_ops अणु
+	क्रमागत i40iw_status_code (*cq_init)(काष्ठा i40iw_sc_cq *, काष्ठा i40iw_cq_init_info *);
+	क्रमागत i40iw_status_code (*cq_create)(काष्ठा i40iw_sc_cq *, u64, bool, bool);
+	क्रमागत i40iw_status_code (*cq_destroy)(काष्ठा i40iw_sc_cq *, u64, bool);
+	क्रमागत i40iw_status_code (*cq_modअगरy)(काष्ठा i40iw_sc_cq *,
+					    काष्ठा i40iw_modअगरy_cq_info *, u64, bool);
+पूर्ण;
 
-struct i40iw_mr_ops {
-	enum i40iw_status_code (*alloc_stag)(struct i40iw_sc_dev *,
-					     struct i40iw_allocate_stag_info *, u64, bool);
-	enum i40iw_status_code (*mr_reg_non_shared)(struct i40iw_sc_dev *,
-						    struct i40iw_reg_ns_stag_info *,
+काष्ठा i40iw_mr_ops अणु
+	क्रमागत i40iw_status_code (*alloc_stag)(काष्ठा i40iw_sc_dev *,
+					     काष्ठा i40iw_allocate_stag_info *, u64, bool);
+	क्रमागत i40iw_status_code (*mr_reg_non_shared)(काष्ठा i40iw_sc_dev *,
+						    काष्ठा i40iw_reg_ns_stag_info *,
 						    u64, bool);
-	enum i40iw_status_code (*mr_reg_shared)(struct i40iw_sc_dev *,
-						struct i40iw_register_shared_stag *,
+	क्रमागत i40iw_status_code (*mr_reg_shared)(काष्ठा i40iw_sc_dev *,
+						काष्ठा i40iw_रेजिस्टर_shared_stag *,
 						u64, bool);
-	enum i40iw_status_code (*dealloc_stag)(struct i40iw_sc_dev *,
-					       struct i40iw_dealloc_stag_info *,
+	क्रमागत i40iw_status_code (*dealloc_stag)(काष्ठा i40iw_sc_dev *,
+					       काष्ठा i40iw_dealloc_stag_info *,
 					       u64, bool);
-	enum i40iw_status_code (*query_stag)(struct i40iw_sc_dev *, u64, u32, bool);
-	enum i40iw_status_code (*mw_alloc)(struct i40iw_sc_dev *, u64, u32, u16, bool);
-};
+	क्रमागत i40iw_status_code (*query_stag)(काष्ठा i40iw_sc_dev *, u64, u32, bool);
+	क्रमागत i40iw_status_code (*mw_alloc)(काष्ठा i40iw_sc_dev *, u64, u32, u16, bool);
+पूर्ण;
 
-struct i40iw_cqp_misc_ops {
-	enum i40iw_status_code (*manage_hmc_pm_func_table)(struct i40iw_sc_cqp *,
+काष्ठा i40iw_cqp_misc_ops अणु
+	क्रमागत i40iw_status_code (*manage_hmc_pm_func_table)(काष्ठा i40iw_sc_cqp *,
 							   u64, u8, bool, bool);
-	enum i40iw_status_code (*set_hmc_resource_profile)(struct i40iw_sc_cqp *,
+	क्रमागत i40iw_status_code (*set_hmc_resource_profile)(काष्ठा i40iw_sc_cqp *,
 							   u64, u8, u8, bool, bool);
-	enum i40iw_status_code (*commit_fpm_values)(struct i40iw_sc_cqp *, u64, u8,
-						    struct i40iw_dma_mem *, bool, u8);
-	enum i40iw_status_code (*query_fpm_values)(struct i40iw_sc_cqp *, u64, u8,
-						   struct i40iw_dma_mem *, bool, u8);
-	enum i40iw_status_code (*static_hmc_pages_allocated)(struct i40iw_sc_cqp *,
+	क्रमागत i40iw_status_code (*commit_fpm_values)(काष्ठा i40iw_sc_cqp *, u64, u8,
+						    काष्ठा i40iw_dma_mem *, bool, u8);
+	क्रमागत i40iw_status_code (*query_fpm_values)(काष्ठा i40iw_sc_cqp *, u64, u8,
+						   काष्ठा i40iw_dma_mem *, bool, u8);
+	क्रमागत i40iw_status_code (*अटल_hmc_pages_allocated)(काष्ठा i40iw_sc_cqp *,
 							     u64, u8, bool, bool);
-	enum i40iw_status_code (*add_arp_cache_entry)(struct i40iw_sc_cqp *,
-						      struct i40iw_add_arp_cache_entry_info *,
+	क्रमागत i40iw_status_code (*add_arp_cache_entry)(काष्ठा i40iw_sc_cqp *,
+						      काष्ठा i40iw_add_arp_cache_entry_info *,
 						      u64, bool);
-	enum i40iw_status_code (*del_arp_cache_entry)(struct i40iw_sc_cqp *, u64, u16, bool);
-	enum i40iw_status_code (*query_arp_cache_entry)(struct i40iw_sc_cqp *, u64, u16, bool);
-	enum i40iw_status_code (*manage_apbvt_entry)(struct i40iw_sc_cqp *,
-						     struct i40iw_apbvt_info *, u64, bool);
-	enum i40iw_status_code (*manage_qhash_table_entry)(struct i40iw_sc_cqp *,
-							   struct i40iw_qhash_table_info *, u64, bool);
-	enum i40iw_status_code (*alloc_local_mac_ipaddr_table_entry)(struct i40iw_sc_cqp *, u64, bool);
-	enum i40iw_status_code (*add_local_mac_ipaddr_entry)(struct i40iw_sc_cqp *,
-							     struct i40iw_local_mac_ipaddr_entry_info *,
+	क्रमागत i40iw_status_code (*del_arp_cache_entry)(काष्ठा i40iw_sc_cqp *, u64, u16, bool);
+	क्रमागत i40iw_status_code (*query_arp_cache_entry)(काष्ठा i40iw_sc_cqp *, u64, u16, bool);
+	क्रमागत i40iw_status_code (*manage_apbvt_entry)(काष्ठा i40iw_sc_cqp *,
+						     काष्ठा i40iw_apbvt_info *, u64, bool);
+	क्रमागत i40iw_status_code (*manage_qhash_table_entry)(काष्ठा i40iw_sc_cqp *,
+							   काष्ठा i40iw_qhash_table_info *, u64, bool);
+	क्रमागत i40iw_status_code (*alloc_local_mac_ipaddr_table_entry)(काष्ठा i40iw_sc_cqp *, u64, bool);
+	क्रमागत i40iw_status_code (*add_local_mac_ipaddr_entry)(काष्ठा i40iw_sc_cqp *,
+							     काष्ठा i40iw_local_mac_ipaddr_entry_info *,
 							     u64, bool);
-	enum i40iw_status_code (*del_local_mac_ipaddr_entry)(struct i40iw_sc_cqp *, u64, u8, u8, bool);
-	enum i40iw_status_code (*cqp_nop)(struct i40iw_sc_cqp *, u64, bool);
-	enum i40iw_status_code (*commit_fpm_values_done)(struct i40iw_sc_cqp
+	क्रमागत i40iw_status_code (*del_local_mac_ipaddr_entry)(काष्ठा i40iw_sc_cqp *, u64, u8, u8, bool);
+	क्रमागत i40iw_status_code (*cqp_nop)(काष्ठा i40iw_sc_cqp *, u64, bool);
+	क्रमागत i40iw_status_code (*commit_fpm_values_करोne)(काष्ठा i40iw_sc_cqp
 							  *);
-	enum i40iw_status_code (*query_fpm_values_done)(struct i40iw_sc_cqp *);
-	enum i40iw_status_code (*manage_hmc_pm_func_table_done)(struct i40iw_sc_cqp *);
-	enum i40iw_status_code (*update_suspend_qp)(struct i40iw_sc_cqp *, struct i40iw_sc_qp *, u64);
-	enum i40iw_status_code (*update_resume_qp)(struct i40iw_sc_cqp *, struct i40iw_sc_qp *, u64);
-};
+	क्रमागत i40iw_status_code (*query_fpm_values_करोne)(काष्ठा i40iw_sc_cqp *);
+	क्रमागत i40iw_status_code (*manage_hmc_pm_func_table_करोne)(काष्ठा i40iw_sc_cqp *);
+	क्रमागत i40iw_status_code (*update_suspend_qp)(काष्ठा i40iw_sc_cqp *, काष्ठा i40iw_sc_qp *, u64);
+	क्रमागत i40iw_status_code (*update_resume_qp)(काष्ठा i40iw_sc_cqp *, काष्ठा i40iw_sc_qp *, u64);
+पूर्ण;
 
-struct i40iw_hmc_ops {
-	enum i40iw_status_code (*init_iw_hmc)(struct i40iw_sc_dev *, u8);
-	enum i40iw_status_code (*parse_fpm_query_buf)(u64 *, struct i40iw_hmc_info *,
-						      struct i40iw_hmc_fpm_misc *);
-	enum i40iw_status_code (*configure_iw_fpm)(struct i40iw_sc_dev *, u8);
-	enum i40iw_status_code (*parse_fpm_commit_buf)(u64 *, struct i40iw_hmc_obj_info *, u32 *sd);
-	enum i40iw_status_code (*create_hmc_object)(struct i40iw_sc_dev *dev,
-						    struct i40iw_hmc_create_obj_info *);
-	enum i40iw_status_code (*del_hmc_object)(struct i40iw_sc_dev *dev,
-						 struct i40iw_hmc_del_obj_info *,
+काष्ठा i40iw_hmc_ops अणु
+	क्रमागत i40iw_status_code (*init_iw_hmc)(काष्ठा i40iw_sc_dev *, u8);
+	क्रमागत i40iw_status_code (*parse_fpm_query_buf)(u64 *, काष्ठा i40iw_hmc_info *,
+						      काष्ठा i40iw_hmc_fpm_misc *);
+	क्रमागत i40iw_status_code (*configure_iw_fpm)(काष्ठा i40iw_sc_dev *, u8);
+	क्रमागत i40iw_status_code (*parse_fpm_commit_buf)(u64 *, काष्ठा i40iw_hmc_obj_info *, u32 *sd);
+	क्रमागत i40iw_status_code (*create_hmc_object)(काष्ठा i40iw_sc_dev *dev,
+						    काष्ठा i40iw_hmc_create_obj_info *);
+	क्रमागत i40iw_status_code (*del_hmc_object)(काष्ठा i40iw_sc_dev *dev,
+						 काष्ठा i40iw_hmc_del_obj_info *,
 						 bool reset);
-	enum i40iw_status_code (*pf_init_vfhmc)(struct i40iw_sc_dev *, u8, u32 *);
-	enum i40iw_status_code (*vf_configure_vffpm)(struct i40iw_sc_dev *, u32 *);
-};
+	क्रमागत i40iw_status_code (*pf_init_vfhmc)(काष्ठा i40iw_sc_dev *, u8, u32 *);
+	क्रमागत i40iw_status_code (*vf_configure_vffpm)(काष्ठा i40iw_sc_dev *, u32 *);
+पूर्ण;
 
-struct cqp_info {
-	union {
-		struct {
-			struct i40iw_sc_qp *qp;
-			struct i40iw_create_qp_info info;
+काष्ठा cqp_info अणु
+	जोड़ अणु
+		काष्ठा अणु
+			काष्ठा i40iw_sc_qp *qp;
+			काष्ठा i40iw_create_qp_info info;
 			u64 scratch;
-		} qp_create;
+		पूर्ण qp_create;
 
-		struct {
-			struct i40iw_sc_qp *qp;
-			struct i40iw_modify_qp_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_qp *qp;
+			काष्ठा i40iw_modअगरy_qp_info info;
 			u64 scratch;
-		} qp_modify;
+		पूर्ण qp_modअगरy;
 
-		struct {
-			struct i40iw_sc_qp *qp;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_qp *qp;
 			u64 scratch;
-			bool remove_hash_idx;
+			bool हटाओ_hash_idx;
 			bool ignore_mw_bnd;
-		} qp_destroy;
+		पूर्ण qp_destroy;
 
-		struct {
-			struct i40iw_sc_cq *cq;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cq *cq;
 			u64 scratch;
 			bool check_overflow;
-		} cq_create;
+		पूर्ण cq_create;
 
-		struct {
-			struct i40iw_sc_cq *cq;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cq *cq;
 			u64 scratch;
-		} cq_destroy;
+		पूर्ण cq_destroy;
 
-		struct {
-			struct i40iw_sc_dev *dev;
-			struct i40iw_allocate_stag_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_dev *dev;
+			काष्ठा i40iw_allocate_stag_info info;
 			u64 scratch;
-		} alloc_stag;
+		पूर्ण alloc_stag;
 
-		struct {
-			struct i40iw_sc_dev *dev;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_dev *dev;
 			u64 scratch;
 			u32 mw_stag_index;
 			u16 pd_id;
-		} mw_alloc;
+		पूर्ण mw_alloc;
 
-		struct {
-			struct i40iw_sc_dev *dev;
-			struct i40iw_reg_ns_stag_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_dev *dev;
+			काष्ठा i40iw_reg_ns_stag_info info;
 			u64 scratch;
-		} mr_reg_non_shared;
+		पूर्ण mr_reg_non_shared;
 
-		struct {
-			struct i40iw_sc_dev *dev;
-			struct i40iw_dealloc_stag_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_dev *dev;
+			काष्ठा i40iw_dealloc_stag_info info;
 			u64 scratch;
-		} dealloc_stag;
+		पूर्ण dealloc_stag;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
-			struct i40iw_local_mac_ipaddr_entry_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
+			काष्ठा i40iw_local_mac_ipaddr_entry_info info;
 			u64 scratch;
-		} add_local_mac_ipaddr_entry;
+		पूर्ण add_local_mac_ipaddr_entry;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
-			struct i40iw_add_arp_cache_entry_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
+			काष्ठा i40iw_add_arp_cache_entry_info info;
 			u64 scratch;
-		} add_arp_cache_entry;
+		पूर्ण add_arp_cache_entry;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
 			u64 scratch;
 			u8 entry_idx;
 			u8 ignore_ref_count;
-		} del_local_mac_ipaddr_entry;
+		पूर्ण del_local_mac_ipaddr_entry;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
 			u64 scratch;
 			u16 arp_index;
-		} del_arp_cache_entry;
+		पूर्ण del_arp_cache_entry;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
-			struct i40iw_manage_vf_pble_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
+			काष्ठा i40iw_manage_vf_pble_info info;
 			u64 scratch;
-		} manage_vf_pble_bp;
+		पूर्ण manage_vf_pble_bp;
 
-		struct {
-			struct i40iw_sc_dev *dev;
-			struct i40iw_upload_context_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_dev *dev;
+			काष्ठा i40iw_upload_context_info info;
 			u64 scratch;
-		} qp_upload_context;
+		पूर्ण qp_upload_context;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
 			u64 scratch;
-		} alloc_local_mac_ipaddr_entry;
+		पूर्ण alloc_local_mac_ipaddr_entry;
 
-		struct {
-			struct i40iw_sc_dev *dev;
-			struct i40iw_hmc_fcn_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_dev *dev;
+			काष्ठा i40iw_hmc_fcn_info info;
 			u64 scratch;
-		} manage_hmc_pm;
+		पूर्ण manage_hmc_pm;
 
-		struct {
-			struct i40iw_sc_ceq *ceq;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_ceq *ceq;
 			u64 scratch;
-		} ceq_create;
+		पूर्ण ceq_create;
 
-		struct {
-			struct i40iw_sc_ceq *ceq;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_ceq *ceq;
 			u64 scratch;
-		} ceq_destroy;
+		पूर्ण ceq_destroy;
 
-		struct {
-			struct i40iw_sc_aeq *aeq;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_aeq *aeq;
 			u64 scratch;
-		} aeq_create;
+		पूर्ण aeq_create;
 
-		struct {
-			struct i40iw_sc_aeq *aeq;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_aeq *aeq;
 			u64 scratch;
-		} aeq_destroy;
+		पूर्ण aeq_destroy;
 
-		struct {
-			struct i40iw_sc_qp *qp;
-			struct i40iw_qp_flush_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_qp *qp;
+			काष्ठा i40iw_qp_flush_info info;
 			u64 scratch;
-		} qp_flush_wqes;
+		पूर्ण qp_flush_wqes;
 
-		struct {
-			struct i40iw_sc_qp *qp;
-			struct i40iw_gen_ae_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_qp *qp;
+			काष्ठा i40iw_gen_ae_info info;
 			u64 scratch;
-		} gen_ae;
+		पूर्ण gen_ae;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
-			void *fpm_values_va;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
+			व्योम *fpm_values_va;
 			u64 fpm_values_pa;
 			u8 hmc_fn_id;
 			u64 scratch;
-		} query_fpm_values;
+		पूर्ण query_fpm_values;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
-			void *fpm_values_va;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
+			व्योम *fpm_values_va;
 			u64 fpm_values_pa;
 			u8 hmc_fn_id;
 			u64 scratch;
-		} commit_fpm_values;
+		पूर्ण commit_fpm_values;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
-			struct i40iw_apbvt_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
+			काष्ठा i40iw_apbvt_info info;
 			u64 scratch;
-		} manage_apbvt_entry;
+		पूर्ण manage_apbvt_entry;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
-			struct i40iw_qhash_table_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
+			काष्ठा i40iw_qhash_table_info info;
 			u64 scratch;
-		} manage_qhash_table_entry;
+		पूर्ण manage_qhash_table_entry;
 
-		struct {
-			struct i40iw_sc_dev *dev;
-			struct i40iw_update_sds_info info;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_dev *dev;
+			काष्ठा i40iw_update_sds_info info;
 			u64 scratch;
-		} update_pe_sds;
+		पूर्ण update_pe_sds;
 
-		struct {
-			struct i40iw_sc_cqp *cqp;
-			struct i40iw_sc_qp *qp;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
+			काष्ठा i40iw_sc_qp *qp;
 			u64 scratch;
-		} suspend_resume;
-		struct {
-			struct i40iw_sc_cqp *cqp;
-			void *cap_va;
+		पूर्ण suspend_resume;
+		काष्ठा अणु
+			काष्ठा i40iw_sc_cqp *cqp;
+			व्योम *cap_va;
 			u64 cap_pa;
 			u64 scratch;
-		} query_rdma_features;
-	} u;
-};
+		पूर्ण query_rdma_features;
+	पूर्ण u;
+पूर्ण;
 
-struct cqp_commands_info {
-	struct list_head cqp_cmd_entry;
+काष्ठा cqp_commands_info अणु
+	काष्ठा list_head cqp_cmd_entry;
 	u8 cqp_cmd;
 	u8 post_sq;
-	struct cqp_info in;
-};
+	काष्ठा cqp_info in;
+पूर्ण;
 
-struct i40iw_virtchnl_work_info {
-	void (*callback_fcn)(void *vf_dev);
-	void *worker_vf_dev;
-};
+काष्ठा i40iw_virtchnl_work_info अणु
+	व्योम (*callback_fcn)(व्योम *vf_dev);
+	व्योम *worker_vf_dev;
+पूर्ण;
 
-struct i40iw_cqp_timeout {
+काष्ठा i40iw_cqp_समयout अणु
 	u64 compl_cqp_cmds;
 	u8 count;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,140 +1,141 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  * rtl8712_recv.c
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
- * Linux device driver for RTL8192SU
+ * Linux device driver क्रम RTL8192SU
  *
- * Modifications for inclusion into the Linux staging tree are
+ * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact information:
+ * Contact inक्रमmation:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
 
-#define _RTL8712_RECV_C_
+#घोषणा _RTL8712_RECV_C_
 
-#include <linux/if_ether.h>
-#include <linux/ip.h>
-#include <net/cfg80211.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/ip.h>
+#समावेश <net/cfg80211.h>
 
-#include "osdep_service.h"
-#include "drv_types.h"
-#include "recv_osdep.h"
-#include "mlme_osdep.h"
-#include "ethernet.h"
-#include "usb_ops.h"
-#include "wifi.h"
+#समावेश "osdep_service.h"
+#समावेश "drv_types.h"
+#समावेश "recv_osdep.h"
+#समावेश "mlme_osdep.h"
+#समावेश "ethernet.h"
+#समावेश "usb_ops.h"
+#समावेश "wifi.h"
 
-static void recv_tasklet(struct tasklet_struct *t);
+अटल व्योम recv_tasklet(काष्ठा tasklet_काष्ठा *t);
 
-void r8712_init_recv_priv(struct recv_priv *precvpriv,
-			  struct _adapter *padapter)
-{
-	int i;
-	struct recv_buf *precvbuf;
-	addr_t tmpaddr = 0;
-	int alignment = 0;
-	struct sk_buff *pskb = NULL;
+व्योम r8712_init_recv_priv(काष्ठा recv_priv *precvpriv,
+			  काष्ठा _adapter *padapter)
+अणु
+	पूर्णांक i;
+	काष्ठा recv_buf *precvbuf;
+	addr_t पंचांगpaddr = 0;
+	पूर्णांक alignment = 0;
+	काष्ठा sk_buff *pskb = शून्य;
 
 	/*init recv_buf*/
-	_init_queue(&precvpriv->free_recv_buf_queue);
+	_init_queue(&precvpriv->मुक्त_recv_buf_queue);
 	precvpriv->pallocated_recv_buf =
-		kzalloc(NR_RECVBUFF * sizeof(struct recv_buf) + 4, GFP_ATOMIC);
-	if (!precvpriv->pallocated_recv_buf)
-		return;
+		kzalloc(NR_RECVBUFF * माप(काष्ठा recv_buf) + 4, GFP_ATOMIC);
+	अगर (!precvpriv->pallocated_recv_buf)
+		वापस;
 	precvpriv->precv_buf = precvpriv->pallocated_recv_buf + 4 -
 			      ((addr_t)(precvpriv->pallocated_recv_buf) & 3);
-	precvbuf = (struct recv_buf *)precvpriv->precv_buf;
-	for (i = 0; i < NR_RECVBUFF; i++) {
+	precvbuf = (काष्ठा recv_buf *)precvpriv->precv_buf;
+	क्रम (i = 0; i < NR_RECVBUFF; i++) अणु
 		INIT_LIST_HEAD(&precvbuf->list);
 		spin_lock_init(&precvbuf->recvbuf_lock);
-		if (r8712_os_recvbuf_resource_alloc(padapter, precvbuf))
-			break;
+		अगर (r8712_os_recvbuf_resource_alloc(padapter, precvbuf))
+			अवरोध;
 		precvbuf->ref_cnt = 0;
 		precvbuf->adapter = padapter;
 		list_add_tail(&precvbuf->list,
-			      &(precvpriv->free_recv_buf_queue.queue));
+			      &(precvpriv->मुक्त_recv_buf_queue.queue));
 		precvbuf++;
-	}
-	precvpriv->free_recv_buf_queue_cnt = NR_RECVBUFF;
+	पूर्ण
+	precvpriv->मुक्त_recv_buf_queue_cnt = NR_RECVBUFF;
 	tasklet_setup(&precvpriv->recv_tasklet, recv_tasklet);
 	skb_queue_head_init(&precvpriv->rx_skb_queue);
 
-	skb_queue_head_init(&precvpriv->free_recv_skb_queue);
-	for (i = 0; i < NR_PREALLOC_RECV_SKB; i++) {
+	skb_queue_head_init(&precvpriv->मुक्त_recv_skb_queue);
+	क्रम (i = 0; i < NR_PREALLOC_RECV_SKB; i++) अणु
 		pskb = netdev_alloc_skb(padapter->pnetdev, MAX_RECVBUF_SZ +
 		       RECVBUFF_ALIGN_SZ);
-		if (pskb) {
-			tmpaddr = (addr_t)pskb->data;
-			alignment = tmpaddr & (RECVBUFF_ALIGN_SZ - 1);
+		अगर (pskb) अणु
+			पंचांगpaddr = (addr_t)pskb->data;
+			alignment = पंचांगpaddr & (RECVBUFF_ALIGN_SZ - 1);
 			skb_reserve(pskb, (RECVBUFF_ALIGN_SZ - alignment));
-			skb_queue_tail(&precvpriv->free_recv_skb_queue, pskb);
-		}
-		pskb = NULL;
-	}
-}
+			skb_queue_tail(&precvpriv->मुक्त_recv_skb_queue, pskb);
+		पूर्ण
+		pskb = शून्य;
+	पूर्ण
+पूर्ण
 
-void r8712_free_recv_priv(struct recv_priv *precvpriv)
-{
-	int i;
-	struct recv_buf *precvbuf;
-	struct _adapter *padapter = precvpriv->adapter;
+व्योम r8712_मुक्त_recv_priv(काष्ठा recv_priv *precvpriv)
+अणु
+	पूर्णांक i;
+	काष्ठा recv_buf *precvbuf;
+	काष्ठा _adapter *padapter = precvpriv->adapter;
 
-	precvbuf = (struct recv_buf *)precvpriv->precv_buf;
-	for (i = 0; i < NR_RECVBUFF; i++) {
-		r8712_os_recvbuf_resource_free(padapter, precvbuf);
+	precvbuf = (काष्ठा recv_buf *)precvpriv->precv_buf;
+	क्रम (i = 0; i < NR_RECVBUFF; i++) अणु
+		r8712_os_recvbuf_resource_मुक्त(padapter, precvbuf);
 		precvbuf++;
-	}
-	kfree(precvpriv->pallocated_recv_buf);
+	पूर्ण
+	kमुक्त(precvpriv->pallocated_recv_buf);
 	skb_queue_purge(&precvpriv->rx_skb_queue);
-	if (skb_queue_len(&precvpriv->rx_skb_queue))
+	अगर (skb_queue_len(&precvpriv->rx_skb_queue))
 		netdev_warn(padapter->pnetdev, "r8712u: rx_skb_queue not empty\n");
-	skb_queue_purge(&precvpriv->free_recv_skb_queue);
-	if (skb_queue_len(&precvpriv->free_recv_skb_queue))
+	skb_queue_purge(&precvpriv->मुक्त_recv_skb_queue);
+	अगर (skb_queue_len(&precvpriv->मुक्त_recv_skb_queue))
 		netdev_warn(padapter->pnetdev, "r8712u: free_recv_skb_queue not empty %d\n",
-			    skb_queue_len(&precvpriv->free_recv_skb_queue));
-}
+			    skb_queue_len(&precvpriv->मुक्त_recv_skb_queue));
+पूर्ण
 
-void r8712_init_recvbuf(struct _adapter *padapter, struct recv_buf *precvbuf)
-{
+व्योम r8712_init_recvbuf(काष्ठा _adapter *padapter, काष्ठा recv_buf *precvbuf)
+अणु
 	precvbuf->transfer_len = 0;
 	precvbuf->len = 0;
 	precvbuf->ref_cnt = 0;
-	if (precvbuf->pbuf) {
+	अगर (precvbuf->pbuf) अणु
 		precvbuf->pdata = precvbuf->pbuf;
 		precvbuf->phead = precvbuf->pbuf;
 		precvbuf->ptail = precvbuf->pbuf;
 		precvbuf->pend = precvbuf->pdata + MAX_RECVBUF_SZ;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void r8712_free_recvframe(union recv_frame *precvframe,
-			  struct  __queue *pfree_recv_queue)
-{
-	unsigned long irqL;
-	struct _adapter *padapter = precvframe->u.hdr.adapter;
-	struct recv_priv *precvpriv = &padapter->recvpriv;
+व्योम r8712_मुक्त_recvframe(जोड़ recv_frame *precvframe,
+			  काष्ठा  __queue *pमुक्त_recv_queue)
+अणु
+	अचिन्हित दीर्घ irqL;
+	काष्ठा _adapter *padapter = precvframe->u.hdr.adapter;
+	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
 
-	if (precvframe->u.hdr.pkt) {
-		dev_kfree_skb_any(precvframe->u.hdr.pkt);/*free skb by driver*/
-		precvframe->u.hdr.pkt = NULL;
-	}
-	spin_lock_irqsave(&pfree_recv_queue->lock, irqL);
+	अगर (precvframe->u.hdr.pkt) अणु
+		dev_kमुक्त_skb_any(precvframe->u.hdr.pkt);/*मुक्त skb by driver*/
+		precvframe->u.hdr.pkt = शून्य;
+	पूर्ण
+	spin_lock_irqsave(&pमुक्त_recv_queue->lock, irqL);
 	list_del_init(&(precvframe->u.hdr.list));
-	list_add_tail(&(precvframe->u.hdr.list), &pfree_recv_queue->queue);
-	if (padapter) {
-		if (pfree_recv_queue == &precvpriv->free_recv_queue)
-			precvpriv->free_recvframe_cnt++;
-	}
-	spin_unlock_irqrestore(&pfree_recv_queue->lock, irqL);
-}
+	list_add_tail(&(precvframe->u.hdr.list), &pमुक्त_recv_queue->queue);
+	अगर (padapter) अणु
+		अगर (pमुक्त_recv_queue == &precvpriv->मुक्त_recv_queue)
+			precvpriv->मुक्त_recvframe_cnt++;
+	पूर्ण
+	spin_unlock_irqrestore(&pमुक्त_recv_queue->lock, irqL);
+पूर्ण
 
-static void update_recvframe_attrib_from_recvstat(struct rx_pkt_attrib *pattrib,
-						  struct recv_stat *prxstat)
-{
+अटल व्योम update_recvframe_attrib_from_recvstat(काष्ठा rx_pkt_attrib *pattrib,
+						  काष्ठा recv_stat *prxstat)
+अणु
 	u16 drvinfo_sz;
 
 	drvinfo_sz = (le32_to_cpu(prxstat->rxdw0) & 0x000f0000) >> 16;
@@ -147,275 +148,275 @@ static void update_recvframe_attrib_from_recvstat(struct rx_pkt_attrib *pattrib,
 	/*Offset 4*/
 	/*Offset 8*/
 	/*Offset 12*/
-	if (le32_to_cpu(prxstat->rxdw3) & BIT(13)) {
+	अगर (le32_to_cpu(prxstat->rxdw3) & BIT(13)) अणु
 		pattrib->tcpchk_valid = 1; /* valid */
-		if (le32_to_cpu(prxstat->rxdw3) & BIT(11))
+		अगर (le32_to_cpu(prxstat->rxdw3) & BIT(11))
 			pattrib->tcp_chkrpt = 1; /* correct */
-		else
+		अन्यथा
 			pattrib->tcp_chkrpt = 0; /* incorrect */
-		if (le32_to_cpu(prxstat->rxdw3) & BIT(12))
+		अगर (le32_to_cpu(prxstat->rxdw3) & BIT(12))
 			pattrib->ip_chkrpt = 1; /* correct */
-		else
+		अन्यथा
 			pattrib->ip_chkrpt = 0; /* incorrect */
-	} else {
+	पूर्ण अन्यथा अणु
 		pattrib->tcpchk_valid = 0; /* invalid */
-	}
+	पूर्ण
 	pattrib->mcs_rate = (u8)((le32_to_cpu(prxstat->rxdw3)) & 0x3f);
 	pattrib->htc = (u8)((le32_to_cpu(prxstat->rxdw3) >> 14) & 0x1);
 	/*Offset 16*/
 	/*Offset 20*/
 	/*phy_info*/
-}
+पूर्ण
 
-/*perform defrag*/
-static union recv_frame *recvframe_defrag(struct _adapter *adapter,
-					  struct  __queue *defrag_q)
-{
-	struct list_head *plist, *phead;
+/*perक्रमm defrag*/
+अटल जोड़ recv_frame *recvframe_defrag(काष्ठा _adapter *adapter,
+					  काष्ठा  __queue *defrag_q)
+अणु
+	काष्ठा list_head *plist, *phead;
 	u8 wlanhdr_offset;
 	u8	curfragnum;
-	struct recv_frame_hdr *pfhdr, *pnfhdr;
-	union recv_frame *prframe, *pnextrframe;
-	struct  __queue	*pfree_recv_queue;
+	काष्ठा recv_frame_hdr *pfhdr, *pnfhdr;
+	जोड़ recv_frame *prframe, *pnextrframe;
+	काष्ठा  __queue	*pमुक्त_recv_queue;
 
-	pfree_recv_queue = &adapter->recvpriv.free_recv_queue;
+	pमुक्त_recv_queue = &adapter->recvpriv.मुक्त_recv_queue;
 	phead = &defrag_q->queue;
 	plist = phead->next;
-	prframe = container_of(plist, union recv_frame, u.list);
+	prframe = container_of(plist, जोड़ recv_frame, u.list);
 	list_del_init(&prframe->u.list);
 	pfhdr = &prframe->u.hdr;
 	curfragnum = 0;
-	if (curfragnum != pfhdr->attrib.frag_num) {
+	अगर (curfragnum != pfhdr->attrib.frag_num) अणु
 		/*the first fragment number must be 0
-		 *free the whole queue
+		 *मुक्त the whole queue
 		 */
-		r8712_free_recvframe(prframe, pfree_recv_queue);
-		r8712_free_recvframe_queue(defrag_q, pfree_recv_queue);
-		return NULL;
-	}
+		r8712_मुक्त_recvframe(prframe, pमुक्त_recv_queue);
+		r8712_मुक्त_recvframe_queue(defrag_q, pमुक्त_recv_queue);
+		वापस शून्य;
+	पूर्ण
 	curfragnum++;
 	plist = &defrag_q->queue;
 	plist = plist->next;
-	while (!end_of_queue_search(phead, plist)) {
-		pnextrframe = container_of(plist, union recv_frame, u.list);
+	जबतक (!end_of_queue_search(phead, plist)) अणु
+		pnextrframe = container_of(plist, जोड़ recv_frame, u.list);
 		pnfhdr = &pnextrframe->u.hdr;
 		/*check the fragment sequence  (2nd ~n fragment frame) */
-		if (curfragnum != pnfhdr->attrib.frag_num) {
+		अगर (curfragnum != pnfhdr->attrib.frag_num) अणु
 			/* the fragment number must increase  (after decache)
 			 * release the defrag_q & prframe
 			 */
-			r8712_free_recvframe(prframe, pfree_recv_queue);
-			r8712_free_recvframe_queue(defrag_q, pfree_recv_queue);
-			return NULL;
-		}
+			r8712_मुक्त_recvframe(prframe, pमुक्त_recv_queue);
+			r8712_मुक्त_recvframe_queue(defrag_q, pमुक्त_recv_queue);
+			वापस शून्य;
+		पूर्ण
 		curfragnum++;
 		/* copy the 2nd~n fragment frame's payload to the first fragment
 		 * get the 2nd~last fragment frame's payload
 		 */
 		wlanhdr_offset = pnfhdr->attrib.hdrlen + pnfhdr->attrib.iv_len;
 		recvframe_pull(pnextrframe, wlanhdr_offset);
-		/* append  to first fragment frame's tail (if privacy frame,
+		/* append  to first fragment frame's tail (अगर privacy frame,
 		 * pull the ICV)
 		 */
 		recvframe_pull_tail(prframe, pfhdr->attrib.icv_len);
-		memcpy(pfhdr->rx_tail, pnfhdr->rx_data, pnfhdr->len);
+		स_नकल(pfhdr->rx_tail, pnfhdr->rx_data, pnfhdr->len);
 		recvframe_put(prframe, pnfhdr->len);
 		pfhdr->attrib.icv_len = pnfhdr->attrib.icv_len;
 		plist = plist->next;
-	}
-	/* free the defrag_q queue and return the prframe */
-	r8712_free_recvframe_queue(defrag_q, pfree_recv_queue);
-	return prframe;
-}
+	पूर्ण
+	/* मुक्त the defrag_q queue and वापस the prframe */
+	r8712_मुक्त_recvframe_queue(defrag_q, pमुक्त_recv_queue);
+	वापस prframe;
+पूर्ण
 
-/* check if need to defrag, if needed queue the frame to defrag_q */
-union recv_frame *r8712_recvframe_chk_defrag(struct _adapter *padapter,
-					     union recv_frame *precv_frame)
-{
+/* check अगर need to defrag, अगर needed queue the frame to defrag_q */
+जोड़ recv_frame *r8712_recvframe_chk_defrag(काष्ठा _adapter *padapter,
+					     जोड़ recv_frame *precv_frame)
+अणु
 	u8	ismfrag;
 	u8	fragnum;
 	u8   *psta_addr;
-	struct recv_frame_hdr *pfhdr;
-	struct sta_info *psta;
-	struct	sta_priv *pstapriv;
-	struct list_head *phead;
-	union recv_frame *prtnframe = NULL;
-	struct  __queue *pfree_recv_queue, *pdefrag_q;
+	काष्ठा recv_frame_hdr *pfhdr;
+	काष्ठा sta_info *psta;
+	काष्ठा	sta_priv *pstapriv;
+	काष्ठा list_head *phead;
+	जोड़ recv_frame *prtnframe = शून्य;
+	काष्ठा  __queue *pमुक्त_recv_queue, *pdefrag_q;
 
 	pstapriv = &padapter->stapriv;
 	pfhdr = &precv_frame->u.hdr;
-	pfree_recv_queue = &padapter->recvpriv.free_recv_queue;
-	/* need to define struct of wlan header frame ctrl */
+	pमुक्त_recv_queue = &padapter->recvpriv.मुक्त_recv_queue;
+	/* need to define काष्ठा of wlan header frame ctrl */
 	ismfrag = pfhdr->attrib.mfrag;
 	fragnum = pfhdr->attrib.frag_num;
 	psta_addr = pfhdr->attrib.ta;
 	psta = r8712_get_stainfo(pstapriv, psta_addr);
-	if (!psta)
-		pdefrag_q = NULL;
-	else
+	अगर (!psta)
+		pdefrag_q = शून्य;
+	अन्यथा
 		pdefrag_q = &psta->sta_recvpriv.defrag_q;
 
-	if ((ismfrag == 0) && (fragnum == 0))
+	अगर ((ismfrag == 0) && (fragnum == 0))
 		prtnframe = precv_frame;/*isn't a fragment frame*/
-	if (ismfrag == 1) {
+	अगर (ismfrag == 1) अणु
 		/* 0~(n-1) fragment frame
 		 * enqueue to defraf_g
 		 */
-		if (pdefrag_q) {
-			if (fragnum == 0) {
+		अगर (pdefrag_q) अणु
+			अगर (fragnum == 0) अणु
 				/*the first fragment*/
-				if (!list_empty(&pdefrag_q->queue)) {
-					/*free current defrag_q */
-					r8712_free_recvframe_queue(pdefrag_q,
-							     pfree_recv_queue);
-				}
-			}
+				अगर (!list_empty(&pdefrag_q->queue)) अणु
+					/*मुक्त current defrag_q */
+					r8712_मुक्त_recvframe_queue(pdefrag_q,
+							     pमुक्त_recv_queue);
+				पूर्ण
+			पूर्ण
 			/* Then enqueue the 0~(n-1) fragment to the defrag_q */
 			phead = &pdefrag_q->queue;
 			list_add_tail(&pfhdr->list, phead);
-			prtnframe = NULL;
-		} else {
-			/* can't find this ta's defrag_queue, so free this
+			prtnframe = शून्य;
+		पूर्ण अन्यथा अणु
+			/* can't find this ta's defrag_queue, so मुक्त this
 			 * recv_frame
 			 */
-			r8712_free_recvframe(precv_frame, pfree_recv_queue);
-			prtnframe = NULL;
-		}
-	}
-	if ((ismfrag == 0) && (fragnum != 0)) {
+			r8712_मुक्त_recvframe(precv_frame, pमुक्त_recv_queue);
+			prtnframe = शून्य;
+		पूर्ण
+	पूर्ण
+	अगर ((ismfrag == 0) && (fragnum != 0)) अणु
 		/* the last fragment frame
 		 * enqueue the last fragment
 		 */
-		if (pdefrag_q) {
+		अगर (pdefrag_q) अणु
 			phead = &pdefrag_q->queue;
 			list_add_tail(&pfhdr->list, phead);
 			/*call recvframe_defrag to defrag*/
 			precv_frame = recvframe_defrag(padapter, pdefrag_q);
 			prtnframe = precv_frame;
-		} else {
-			/* can't find this ta's defrag_queue, so free this
+		पूर्ण अन्यथा अणु
+			/* can't find this ta's defrag_queue, so मुक्त this
 			 *  recv_frame
 			 */
-			r8712_free_recvframe(precv_frame, pfree_recv_queue);
-			prtnframe = NULL;
-		}
-	}
-	if (prtnframe && (prtnframe->u.hdr.attrib.privacy)) {
+			r8712_मुक्त_recvframe(precv_frame, pमुक्त_recv_queue);
+			prtnframe = शून्य;
+		पूर्ण
+	पूर्ण
+	अगर (prtnframe && (prtnframe->u.hdr.attrib.privacy)) अणु
 		/* after defrag we must check tkip mic code */
-		if (r8712_recvframe_chkmic(padapter, prtnframe) == _FAIL) {
-			r8712_free_recvframe(prtnframe, pfree_recv_queue);
-			prtnframe = NULL;
-		}
-	}
-	return prtnframe;
-}
+		अगर (r8712_recvframe_chkmic(padapter, prtnframe) == _FAIL) अणु
+			r8712_मुक्त_recvframe(prtnframe, pमुक्त_recv_queue);
+			prtnframe = शून्य;
+		पूर्ण
+	पूर्ण
+	वापस prtnframe;
+पूर्ण
 
-static void amsdu_to_msdu(struct _adapter *padapter, union recv_frame *prframe)
-{
-	int	a_len, padding_len;
+अटल व्योम amsdu_to_msdu(काष्ठा _adapter *padapter, जोड़ recv_frame *prframe)
+अणु
+	पूर्णांक	a_len, padding_len;
 	u16	eth_type, nSubframe_Length;
 	u8	nr_subframes, i;
-	unsigned char *pdata;
-	struct rx_pkt_attrib *pattrib;
+	अचिन्हित अक्षर *pdata;
+	काष्ठा rx_pkt_attrib *pattrib;
 	_pkt *sub_skb, *subframes[MAX_SUBFRAME_COUNT];
-	struct recv_priv *precvpriv = &padapter->recvpriv;
-	struct  __queue *pfree_recv_queue = &(precvpriv->free_recv_queue);
+	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
+	काष्ठा  __queue *pमुक्त_recv_queue = &(precvpriv->मुक्त_recv_queue);
 
 	nr_subframes = 0;
 	pattrib = &prframe->u.hdr.attrib;
 	recvframe_pull(prframe, prframe->u.hdr.attrib.hdrlen);
-	if (prframe->u.hdr.attrib.iv_len > 0)
+	अगर (prframe->u.hdr.attrib.iv_len > 0)
 		recvframe_pull(prframe, prframe->u.hdr.attrib.iv_len);
 	a_len = prframe->u.hdr.len;
 	pdata = prframe->u.hdr.rx_data;
-	while (a_len > ETH_HLEN) {
+	जबतक (a_len > ETH_HLEN) अणु
 		/* Offset 12 denote 2 mac address */
 		nSubframe_Length = *((u16 *)(pdata + 12));
 		/*==m==>change the length order*/
 		nSubframe_Length = (nSubframe_Length >> 8) +
 				   (nSubframe_Length << 8);
-		if (a_len < (ETHERNET_HEADER_SIZE + nSubframe_Length)) {
+		अगर (a_len < (ETHERNET_HEADER_SIZE + nSubframe_Length)) अणु
 			netdev_warn(padapter->pnetdev, "r8712u: nRemain_Length is %d and nSubframe_Length is: %d\n",
 				    a_len, nSubframe_Length);
-			goto exit;
-		}
-		/* move the data point to data content */
+			जाओ निकास;
+		पूर्ण
+		/* move the data poपूर्णांक to data content */
 		pdata += ETH_HLEN;
 		a_len -= ETH_HLEN;
-		/* Allocate new skb for releasing to upper layer */
+		/* Allocate new skb क्रम releasing to upper layer */
 		sub_skb = dev_alloc_skb(nSubframe_Length + 12);
-		if (!sub_skb)
-			break;
+		अगर (!sub_skb)
+			अवरोध;
 		skb_reserve(sub_skb, 12);
 		skb_put_data(sub_skb, pdata, nSubframe_Length);
 		subframes[nr_subframes++] = sub_skb;
-		if (nr_subframes >= MAX_SUBFRAME_COUNT) {
+		अगर (nr_subframes >= MAX_SUBFRAME_COUNT) अणु
 			netdev_warn(padapter->pnetdev, "r8712u: ParseSubframe(): Too many Subframes! Packets dropped!\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pdata += nSubframe_Length;
 		a_len -= nSubframe_Length;
-		if (a_len != 0) {
+		अगर (a_len != 0) अणु
 			padding_len = 4 - ((nSubframe_Length + ETH_HLEN) & 3);
-			if (padding_len == 4)
+			अगर (padding_len == 4)
 				padding_len = 0;
-			if (a_len < padding_len)
-				goto exit;
+			अगर (a_len < padding_len)
+				जाओ निकास;
 			pdata += padding_len;
 			a_len -= padding_len;
-		}
-	}
-	for (i = 0; i < nr_subframes; i++) {
+		पूर्ण
+	पूर्ण
+	क्रम (i = 0; i < nr_subframes; i++) अणु
 		sub_skb = subframes[i];
-		/* convert hdr + possible LLC headers into Ethernet header */
+		/* convert hdr + possible LLC headers पूर्णांकo Ethernet header */
 		eth_type = (sub_skb->data[6] << 8) | sub_skb->data[7];
-		if (sub_skb->len >= 8 &&
-		    ((!memcmp(sub_skb->data, rfc1042_header, SNAP_SIZE) &&
+		अगर (sub_skb->len >= 8 &&
+		    ((!स_भेद(sub_skb->data, rfc1042_header, SNAP_SIZE) &&
 		      eth_type != ETH_P_AARP && eth_type != ETH_P_IPX) ||
-		     !memcmp(sub_skb->data, bridge_tunnel_header, SNAP_SIZE))) {
-			/* remove RFC1042 or Bridge-Tunnel encapsulation and
+		     !स_भेद(sub_skb->data, bridge_tunnel_header, SNAP_SIZE))) अणु
+			/* हटाओ RFC1042 or Bridge-Tunnel encapsulation and
 			 * replace EtherType
 			 */
 			skb_pull(sub_skb, SNAP_SIZE);
-			memcpy(skb_push(sub_skb, ETH_ALEN), pattrib->src,
+			स_नकल(skb_push(sub_skb, ETH_ALEN), pattrib->src,
 			       ETH_ALEN);
-			memcpy(skb_push(sub_skb, ETH_ALEN), pattrib->dst,
+			स_नकल(skb_push(sub_skb, ETH_ALEN), pattrib->dst,
 			       ETH_ALEN);
-		} else {
+		पूर्ण अन्यथा अणु
 			__be16 len;
 			/* Leave Ethernet header part of hdr and full payload */
 			len = htons(sub_skb->len);
-			memcpy(skb_push(sub_skb, 2), &len, 2);
-			memcpy(skb_push(sub_skb, ETH_ALEN), pattrib->src,
+			स_नकल(skb_push(sub_skb, 2), &len, 2);
+			स_नकल(skb_push(sub_skb, ETH_ALEN), pattrib->src,
 			       ETH_ALEN);
-			memcpy(skb_push(sub_skb, ETH_ALEN), pattrib->dst,
+			स_नकल(skb_push(sub_skb, ETH_ALEN), pattrib->dst,
 			       ETH_ALEN);
-		}
+		पूर्ण
 		/* Indicate the packets to upper layer */
-		if (sub_skb) {
+		अगर (sub_skb) अणु
 			sub_skb->protocol =
 				 eth_type_trans(sub_skb, padapter->pnetdev);
 			sub_skb->dev = padapter->pnetdev;
-			if ((pattrib->tcpchk_valid == 1) &&
-			    (pattrib->tcp_chkrpt == 1)) {
+			अगर ((pattrib->tcpchk_valid == 1) &&
+			    (pattrib->tcp_chkrpt == 1)) अणु
 				sub_skb->ip_summed = CHECKSUM_UNNECESSARY;
-			} else {
+			पूर्ण अन्यथा अणु
 				sub_skb->ip_summed = CHECKSUM_NONE;
-			}
-			netif_rx(sub_skb);
-		}
-	}
-exit:
+			पूर्ण
+			netअगर_rx(sub_skb);
+		पूर्ण
+	पूर्ण
+निकास:
 	prframe->u.hdr.len = 0;
-	r8712_free_recvframe(prframe, pfree_recv_queue);
-}
+	r8712_मुक्त_recvframe(prframe, pमुक्त_recv_queue);
+पूर्ण
 
-void r8712_rxcmd_event_hdl(struct _adapter *padapter, void *prxcmdbuf)
-{
+व्योम r8712_rxcmd_event_hdl(काष्ठा _adapter *padapter, व्योम *prxcmdbuf)
+अणु
 	__le32 voffset;
 	u8 *poffset;
 	u16 cmd_len, drvinfo_sz;
-	struct recv_stat *prxstat;
+	काष्ठा recv_stat *prxstat;
 
 	poffset = prxcmdbuf;
 	voffset = *(__le32 *)poffset;
@@ -423,161 +424,161 @@ void r8712_rxcmd_event_hdl(struct _adapter *padapter, void *prxcmdbuf)
 	drvinfo_sz = (le32_to_cpu(prxstat->rxdw0) & 0x000f0000) >> 16;
 	drvinfo_sz <<= 3;
 	poffset += RXDESC_SIZE + drvinfo_sz;
-	do {
+	करो अणु
 		voffset  = *(__le32 *)poffset;
 		cmd_len = (u16)(le32_to_cpu(voffset) & 0xffff);
 		r8712_event_handle(padapter, (__le32 *)poffset);
 		poffset += (cmd_len + 8);/*8 bytes alignment*/
-	} while (le32_to_cpu(voffset) & BIT(31));
-}
+	पूर्ण जबतक (le32_to_cpu(voffset) & BIT(31));
+पूर्ण
 
-static int check_indicate_seq(struct recv_reorder_ctrl *preorder_ctrl,
+अटल पूर्णांक check_indicate_seq(काष्ठा recv_reorder_ctrl *preorder_ctrl,
 			      u16 seq_num)
-{
+अणु
 	u8 wsize = preorder_ctrl->wsize_b;
 	u16 wend = (preorder_ctrl->indicate_seq + wsize - 1) % 4096;
 
 	/* Rx Reorder initialize condition.*/
-	if (preorder_ctrl->indicate_seq == 0xffff)
+	अगर (preorder_ctrl->indicate_seq == 0xffff)
 		preorder_ctrl->indicate_seq = seq_num;
 	/* Drop out the packet which SeqNum is smaller than WinStart */
-	if (SN_LESS(seq_num, preorder_ctrl->indicate_seq))
-		return false;
+	अगर (SN_LESS(seq_num, preorder_ctrl->indicate_seq))
+		वापस false;
 	/*
-	 * Sliding window manipulation. Conditions includes:
-	 * 1. Incoming SeqNum is equal to WinStart =>Window shift 1
-	 * 2. Incoming SeqNum is larger than the WinEnd => Window shift N
+	 * Sliding winकरोw manipulation. Conditions includes:
+	 * 1. Incoming SeqNum is equal to WinStart =>Winकरोw shअगरt 1
+	 * 2. Incoming SeqNum is larger than the WinEnd => Winकरोw shअगरt N
 	 */
-	if (SN_EQUAL(seq_num, preorder_ctrl->indicate_seq))
+	अगर (SN_EQUAL(seq_num, preorder_ctrl->indicate_seq))
 		preorder_ctrl->indicate_seq = (preorder_ctrl->indicate_seq +
 					      1) % 4096;
-	else if (SN_LESS(wend, seq_num)) {
-		if (seq_num >= (wsize - 1))
+	अन्यथा अगर (SN_LESS(wend, seq_num)) अणु
+		अगर (seq_num >= (wsize - 1))
 			preorder_ctrl->indicate_seq = seq_num + 1 - wsize;
-		else
+		अन्यथा
 			preorder_ctrl->indicate_seq = 4095 - (wsize -
 						      (seq_num + 1)) + 1;
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static int enqueue_reorder_recvframe(struct recv_reorder_ctrl *preorder_ctrl,
-				     union recv_frame *prframe)
-{
-	struct list_head *phead, *plist;
-	union recv_frame *pnextrframe;
-	struct rx_pkt_attrib *pnextattrib;
-	struct  __queue *ppending_recvframe_queue =
+अटल पूर्णांक enqueue_reorder_recvframe(काष्ठा recv_reorder_ctrl *preorder_ctrl,
+				     जोड़ recv_frame *prframe)
+अणु
+	काष्ठा list_head *phead, *plist;
+	जोड़ recv_frame *pnextrframe;
+	काष्ठा rx_pkt_attrib *pnextattrib;
+	काष्ठा  __queue *ppending_recvframe_queue =
 					&preorder_ctrl->pending_recvframe_queue;
-	struct rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
+	काष्ठा rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
 
 	phead = &ppending_recvframe_queue->queue;
 	plist = phead->next;
-	while (!end_of_queue_search(phead, plist)) {
-		pnextrframe = container_of(plist, union recv_frame, u.list);
+	जबतक (!end_of_queue_search(phead, plist)) अणु
+		pnextrframe = container_of(plist, जोड़ recv_frame, u.list);
 		pnextattrib = &pnextrframe->u.hdr.attrib;
 
-		if (SN_EQUAL(pnextattrib->seq_num, pattrib->seq_num))
-			return false;
+		अगर (SN_EQUAL(pnextattrib->seq_num, pattrib->seq_num))
+			वापस false;
 
-		if (SN_LESS(pnextattrib->seq_num, pattrib->seq_num))
+		अगर (SN_LESS(pnextattrib->seq_num, pattrib->seq_num))
 			plist = plist->next;
-		else
-			break;
-	}
+		अन्यथा
+			अवरोध;
+	पूर्ण
 	list_del_init(&(prframe->u.hdr.list));
 	list_add_tail(&(prframe->u.hdr.list), plist);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int r8712_recv_indicatepkts_in_order(struct _adapter *padapter,
-				     struct recv_reorder_ctrl *preorder_ctrl,
-				     int bforced)
-{
-	struct list_head *phead, *plist;
-	union recv_frame *prframe;
-	struct rx_pkt_attrib *pattrib;
-	int bPktInBuf = false;
-	struct  __queue *ppending_recvframe_queue =
+पूर्णांक r8712_recv_indicatepkts_in_order(काष्ठा _adapter *padapter,
+				     काष्ठा recv_reorder_ctrl *preorder_ctrl,
+				     पूर्णांक bक्रमced)
+अणु
+	काष्ठा list_head *phead, *plist;
+	जोड़ recv_frame *prframe;
+	काष्ठा rx_pkt_attrib *pattrib;
+	पूर्णांक bPktInBuf = false;
+	काष्ठा  __queue *ppending_recvframe_queue =
 			 &preorder_ctrl->pending_recvframe_queue;
 
 	phead = &ppending_recvframe_queue->queue;
 	plist = phead->next;
-	/* Handling some condition for forced indicate case.*/
-	if (bforced) {
-		if (list_empty(phead))
-			return true;
+	/* Handling some condition क्रम क्रमced indicate हाल.*/
+	अगर (bक्रमced) अणु
+		अगर (list_empty(phead))
+			वापस true;
 
-		prframe = container_of(plist, union recv_frame, u.list);
+		prframe = container_of(plist, जोड़ recv_frame, u.list);
 		pattrib = &prframe->u.hdr.attrib;
 		preorder_ctrl->indicate_seq = pattrib->seq_num;
-	}
+	पूर्ण
 	/* Prepare indication list and indication.
-	 * Check if there is any packet need indicate.
+	 * Check अगर there is any packet need indicate.
 	 */
-	while (!list_empty(phead)) {
-		prframe = container_of(plist, union recv_frame, u.list);
+	जबतक (!list_empty(phead)) अणु
+		prframe = container_of(plist, जोड़ recv_frame, u.list);
 		pattrib = &prframe->u.hdr.attrib;
-		if (!SN_LESS(preorder_ctrl->indicate_seq, pattrib->seq_num)) {
+		अगर (!SN_LESS(preorder_ctrl->indicate_seq, pattrib->seq_num)) अणु
 			plist = plist->next;
 			list_del_init(&(prframe->u.hdr.list));
-			if (SN_EQUAL(preorder_ctrl->indicate_seq,
+			अगर (SN_EQUAL(preorder_ctrl->indicate_seq,
 				     pattrib->seq_num))
 				preorder_ctrl->indicate_seq =
 				  (preorder_ctrl->indicate_seq + 1) % 4096;
 			/*indicate this recv_frame*/
-			if (!pattrib->amsdu) {
-				if (!padapter->driver_stopped &&
-				    !padapter->surprise_removed) {
+			अगर (!pattrib->amsdu) अणु
+				अगर (!padapter->driver_stopped &&
+				    !padapter->surprise_हटाओd) अणु
 					/* indicate this recv_frame */
 					r8712_recv_indicatepkt(padapter,
 							       prframe);
-				}
-			} else if (pattrib->amsdu == 1) {
+				पूर्ण
+			पूर्ण अन्यथा अगर (pattrib->amsdu == 1) अणु
 				amsdu_to_msdu(padapter, prframe);
-			}
+			पूर्ण
 			/* Update local variables. */
 			bPktInBuf = false;
-		} else {
+		पूर्ण अन्यथा अणु
 			bPktInBuf = true;
-			break;
-		}
-	}
-	return bPktInBuf;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस bPktInBuf;
+पूर्ण
 
-static int recv_indicatepkt_reorder(struct _adapter *padapter,
-				    union recv_frame *prframe)
-{
-	unsigned long irql;
-	struct rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
-	struct recv_reorder_ctrl *preorder_ctrl = prframe->u.hdr.preorder_ctrl;
-	struct  __queue *ppending_recvframe_queue =
+अटल पूर्णांक recv_indicatepkt_reorder(काष्ठा _adapter *padapter,
+				    जोड़ recv_frame *prframe)
+अणु
+	अचिन्हित दीर्घ irql;
+	काष्ठा rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
+	काष्ठा recv_reorder_ctrl *preorder_ctrl = prframe->u.hdr.preorder_ctrl;
+	काष्ठा  __queue *ppending_recvframe_queue =
 			 &preorder_ctrl->pending_recvframe_queue;
 
-	if (!pattrib->amsdu) {
+	अगर (!pattrib->amsdu) अणु
 		/* s1. */
 		r8712_wlanhdr_to_ethhdr(prframe);
-		if (pattrib->qos != 1) {
-			if (!padapter->driver_stopped &&
-			    !padapter->surprise_removed) {
+		अगर (pattrib->qos != 1) अणु
+			अगर (!padapter->driver_stopped &&
+			    !padapter->surprise_हटाओd) अणु
 				r8712_recv_indicatepkt(padapter, prframe);
-				return 0;
-			} else {
-				return -EINVAL;
-			}
-		}
-	}
+				वापस 0;
+			पूर्ण अन्यथा अणु
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_lock_irqsave(&ppending_recvframe_queue->lock, irql);
-	/*s2. check if winstart_b(indicate_seq) needs to be updated*/
-	if (!check_indicate_seq(preorder_ctrl, pattrib->seq_num))
-		goto _err_exit;
-	/*s3. Insert all packet into Reorder Queue to maintain its ordering.*/
-	if (!enqueue_reorder_recvframe(preorder_ctrl, prframe))
-		goto _err_exit;
+	/*s2. check अगर winstart_b(indicate_seq) needs to be updated*/
+	अगर (!check_indicate_seq(preorder_ctrl, pattrib->seq_num))
+		जाओ _err_निकास;
+	/*s3. Insert all packet पूर्णांकo Reorder Queue to मुख्यtain its ordering.*/
+	अगर (!enqueue_reorder_recvframe(preorder_ctrl, prframe))
+		जाओ _err_निकास;
 	/*s4.
 	 * Indication process.
-	 * After Packet dropping and Sliding Window shifting as above, we can
+	 * After Packet dropping and Sliding Winकरोw shअगरting as above, we can
 	 * now just indicate the packets with the SeqNum smaller than latest
 	 * WinStart and buffer other packets.
 	 *
@@ -586,403 +587,403 @@ static int recv_indicatepkt_reorder(struct _adapter *padapter,
 	 * 2. All packets with SeqNum larger than or equal to
 	 * WinStart => Buffer it.
 	 */
-	if (r8712_recv_indicatepkts_in_order(padapter, preorder_ctrl, false)) {
-		mod_timer(&preorder_ctrl->reordering_ctrl_timer,
-			  jiffies + msecs_to_jiffies(REORDER_WAIT_TIME));
+	अगर (r8712_recv_indicatepkts_in_order(padapter, preorder_ctrl, false)) अणु
+		mod_समयr(&preorder_ctrl->reordering_ctrl_समयr,
+			  jअगरfies + msecs_to_jअगरfies(REORDER_WAIT_TIME));
 		spin_unlock_irqrestore(&ppending_recvframe_queue->lock, irql);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&ppending_recvframe_queue->lock, irql);
-		del_timer(&preorder_ctrl->reordering_ctrl_timer);
-	}
-	return 0;
-_err_exit:
+		del_समयr(&preorder_ctrl->reordering_ctrl_समयr);
+	पूर्ण
+	वापस 0;
+_err_निकास:
 	spin_unlock_irqrestore(&ppending_recvframe_queue->lock, irql);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-void r8712_reordering_ctrl_timeout_handler(void *pcontext)
-{
-	unsigned long irql;
-	struct recv_reorder_ctrl *preorder_ctrl = pcontext;
-	struct _adapter *padapter = preorder_ctrl->padapter;
-	struct  __queue *ppending_recvframe_queue =
+व्योम r8712_reordering_ctrl_समयout_handler(व्योम *pcontext)
+अणु
+	अचिन्हित दीर्घ irql;
+	काष्ठा recv_reorder_ctrl *preorder_ctrl = pcontext;
+	काष्ठा _adapter *padapter = preorder_ctrl->padapter;
+	काष्ठा  __queue *ppending_recvframe_queue =
 				 &preorder_ctrl->pending_recvframe_queue;
 
-	if (padapter->driver_stopped || padapter->surprise_removed)
-		return;
+	अगर (padapter->driver_stopped || padapter->surprise_हटाओd)
+		वापस;
 	spin_lock_irqsave(&ppending_recvframe_queue->lock, irql);
 	r8712_recv_indicatepkts_in_order(padapter, preorder_ctrl, true);
 	spin_unlock_irqrestore(&ppending_recvframe_queue->lock, irql);
-}
+पूर्ण
 
-static int r8712_process_recv_indicatepkts(struct _adapter *padapter,
-					   union recv_frame *prframe)
-{
-	int retval = _SUCCESS;
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct ht_priv	*phtpriv = &pmlmepriv->htpriv;
+अटल पूर्णांक r8712_process_recv_indicatepkts(काष्ठा _adapter *padapter,
+					   जोड़ recv_frame *prframe)
+अणु
+	पूर्णांक retval = _SUCCESS;
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा ht_priv	*phtpriv = &pmlmepriv->htpriv;
 
-	if (phtpriv->ht_option == 1) { /*B/G/N Mode*/
-		if (recv_indicatepkt_reorder(padapter, prframe)) {
-			/* including perform A-MPDU Rx Ordering Buffer Control*/
-			if (!padapter->driver_stopped &&
-			    !padapter->surprise_removed)
-				return _FAIL;
-		}
-	} else { /*B/G mode*/
+	अगर (phtpriv->ht_option == 1) अणु /*B/G/N Mode*/
+		अगर (recv_indicatepkt_reorder(padapter, prframe)) अणु
+			/* including perक्रमm A-MPDU Rx Ordering Buffer Control*/
+			अगर (!padapter->driver_stopped &&
+			    !padapter->surprise_हटाओd)
+				वापस _FAIL;
+		पूर्ण
+	पूर्ण अन्यथा अणु /*B/G mode*/
 		retval = r8712_wlanhdr_to_ethhdr(prframe);
-		if (retval)
-			return _FAIL;
-		if (!padapter->driver_stopped && !padapter->surprise_removed) {
+		अगर (retval)
+			वापस _FAIL;
+		अगर (!padapter->driver_stopped && !padapter->surprise_हटाओd) अणु
 			/* indicate this recv_frame */
 			r8712_recv_indicatepkt(padapter, prframe);
-		} else {
-			return _FAIL;
-		}
-	}
-	return retval;
-}
+		पूर्ण अन्यथा अणु
+			वापस _FAIL;
+		पूर्ण
+	पूर्ण
+	वापस retval;
+पूर्ण
 
-static u8 query_rx_pwr_percentage(s8 antpower)
-{
-	if ((antpower <= -100) || (antpower >= 20))
-		return	0;
-	else if (antpower >= 0)
-		return	100;
-	else
-		return 100 + antpower;
-}
+अटल u8 query_rx_pwr_percentage(s8 antघातer)
+अणु
+	अगर ((antघातer <= -100) || (antघातer >= 20))
+		वापस	0;
+	अन्यथा अगर (antघातer >= 0)
+		वापस	100;
+	अन्यथा
+		वापस 100 + antघातer;
+पूर्ण
 
-static u8 evm_db2percentage(s8 value)
-{
+अटल u8 evm_db2percentage(s8 value)
+अणु
 	/*
 	 * -33dB~0dB to 0%~99%
 	 */
 	s8 ret_val = clamp(-value, 0, 33) * 3;
 
-	if (ret_val == 99)
+	अगर (ret_val == 99)
 		ret_val = 100;
 
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
-s32 r8712_signal_scale_mapping(s32 cur_sig)
-{
+s32 r8712_संकेत_scale_mapping(s32 cur_sig)
+अणु
 	s32 ret_sig;
 
-	if (cur_sig >= 51 && cur_sig <= 100)
+	अगर (cur_sig >= 51 && cur_sig <= 100)
 		ret_sig = 100;
-	else if (cur_sig >= 41 && cur_sig <= 50)
+	अन्यथा अगर (cur_sig >= 41 && cur_sig <= 50)
 		ret_sig = 80 + ((cur_sig - 40) * 2);
-	else if (cur_sig >= 31 && cur_sig <= 40)
+	अन्यथा अगर (cur_sig >= 31 && cur_sig <= 40)
 		ret_sig = 66 + (cur_sig - 30);
-	else if (cur_sig >= 21 && cur_sig <= 30)
+	अन्यथा अगर (cur_sig >= 21 && cur_sig <= 30)
 		ret_sig = 54 + (cur_sig - 20);
-	else if (cur_sig >= 10 && cur_sig <= 20)
+	अन्यथा अगर (cur_sig >= 10 && cur_sig <= 20)
 		ret_sig = 42 + (((cur_sig - 10) * 2) / 3);
-	else if (cur_sig >= 5 && cur_sig <= 9)
+	अन्यथा अगर (cur_sig >= 5 && cur_sig <= 9)
 		ret_sig = 22 + (((cur_sig - 5) * 3) / 2);
-	else if (cur_sig >= 1 && cur_sig <= 4)
+	अन्यथा अगर (cur_sig >= 1 && cur_sig <= 4)
 		ret_sig = 6 + (((cur_sig - 1) * 3) / 2);
-	else
+	अन्यथा
 		ret_sig = cur_sig;
-	return ret_sig;
-}
+	वापस ret_sig;
+पूर्ण
 
-static s32  translate2dbm(struct _adapter *padapter, u8 signal_strength_idx)
-{
-	s32 signal_power; /* in dBm.*/
+अटल s32  translate2dbm(काष्ठा _adapter *padapter, u8 संकेत_strength_idx)
+अणु
+	s32 संकेत_घातer; /* in dBm.*/
 	/* Translate to dBm (x=0.5y-95).*/
-	signal_power = (s32)((signal_strength_idx + 1) >> 1);
-	signal_power -= 95;
-	return signal_power;
-}
+	संकेत_घातer = (s32)((संकेत_strength_idx + 1) >> 1);
+	संकेत_घातer -= 95;
+	वापस संकेत_घातer;
+पूर्ण
 
-static void query_rx_phy_status(struct _adapter *padapter,
-				union recv_frame *prframe)
-{
+अटल व्योम query_rx_phy_status(काष्ठा _adapter *padapter,
+				जोड़ recv_frame *prframe)
+अणु
 	u8 i, max_spatial_stream, evm;
-	struct recv_stat *prxstat = (struct recv_stat *)prframe->u.hdr.rx_head;
-	struct phy_stat *pphy_stat = (struct phy_stat *)(prxstat + 1);
+	काष्ठा recv_stat *prxstat = (काष्ठा recv_stat *)prframe->u.hdr.rx_head;
+	काष्ठा phy_stat *pphy_stat = (काष्ठा phy_stat *)(prxstat + 1);
 	u8 *pphy_head = (u8 *)(prxstat + 1);
 	s8 rx_pwr[4], rx_pwr_all;
 	u8 pwdb_all;
 	u32 rssi, total_rssi = 0;
 	u8 bcck_rate = 0, rf_rx_num = 0, cck_highpwr = 0;
-	struct phy_cck_rx_status *pcck_buf;
+	काष्ठा phy_cck_rx_status *pcck_buf;
 	u8 sq;
 
-	/* Record it for next packet processing*/
+	/* Record it क्रम next packet processing*/
 	bcck_rate = (prframe->u.hdr.attrib.mcs_rate <= 3 ? 1 : 0);
-	if (bcck_rate) {
+	अगर (bcck_rate) अणु
 		u8 report;
 
 		/* CCK Driver info Structure is not the same as OFDM packet.*/
-		pcck_buf = (struct phy_cck_rx_status *)pphy_stat;
-		/* (1)Hardware does not provide RSSI for CCK
+		pcck_buf = (काष्ठा phy_cck_rx_status *)pphy_stat;
+		/* (1)Hardware करोes not provide RSSI क्रम CCK
 		 * (2)PWDB, Average PWDB calculated by hardware
-		 * (for rate adaptive)
+		 * (क्रम rate adaptive)
 		 */
-		if (!cck_highpwr) {
+		अगर (!cck_highpwr) अणु
 			report = pcck_buf->cck_agc_rpt & 0xc0;
 			report >>= 6;
-			switch (report) {
-			/* Modify the RF RNA gain value to -40, -20,
+			चयन (report) अणु
+			/* Modअगरy the RF RNA gain value to -40, -20,
 			 * -2, 14 by Jenyu's suggestion
-			 * Note: different RF with the different
+			 * Note: dअगरferent RF with the dअगरferent
 			 * RNA gain.
 			 */
-			case 0x3:
+			हाल 0x3:
 				rx_pwr_all = -40 - (pcck_buf->cck_agc_rpt &
 					     0x3e);
-				break;
-			case 0x2:
+				अवरोध;
+			हाल 0x2:
 				rx_pwr_all = -20 - (pcck_buf->cck_agc_rpt &
 					     0x3e);
-				break;
-			case 0x1:
+				अवरोध;
+			हाल 0x1:
 				rx_pwr_all = -2 - (pcck_buf->cck_agc_rpt &
 					     0x3e);
-				break;
-			case 0x0:
+				अवरोध;
+			हाल 0x0:
 				rx_pwr_all = 14 - (pcck_buf->cck_agc_rpt &
 					     0x3e);
-				break;
-			}
-		} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			report = ((u8)(le32_to_cpu(pphy_stat->phydw1) >> 8)) &
 				 0x60;
 			report >>= 5;
-			switch (report) {
-			case 0x3:
+			चयन (report) अणु
+			हाल 0x3:
 				rx_pwr_all = -40 - ((pcck_buf->cck_agc_rpt &
 					     0x1f) << 1);
-				break;
-			case 0x2:
+				अवरोध;
+			हाल 0x2:
 				rx_pwr_all = -20 - ((pcck_buf->cck_agc_rpt &
 					     0x1f) << 1);
-				break;
-			case 0x1:
+				अवरोध;
+			हाल 0x1:
 				rx_pwr_all = -2 - ((pcck_buf->cck_agc_rpt &
 					     0x1f) << 1);
-				break;
-			case 0x0:
+				अवरोध;
+			हाल 0x0:
 				rx_pwr_all = 14 - ((pcck_buf->cck_agc_rpt &
 					     0x1f) << 1);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		pwdb_all = query_rx_pwr_percentage(rx_pwr_all);
 		/* CCK gain is smaller than OFDM/MCS gain,*/
-		/* so we add gain diff by experiences, the val is 6 */
+		/* so we add gain dअगरf by experiences, the val is 6 */
 		pwdb_all += 6;
-		if (pwdb_all > 100)
+		अगर (pwdb_all > 100)
 			pwdb_all = 100;
-		/* modify the offset to make the same gain index with OFDM.*/
-		if (pwdb_all > 34 && pwdb_all <= 42)
+		/* modअगरy the offset to make the same gain index with OFDM.*/
+		अगर (pwdb_all > 34 && pwdb_all <= 42)
 			pwdb_all -= 2;
-		else if (pwdb_all > 26 && pwdb_all <= 34)
+		अन्यथा अगर (pwdb_all > 26 && pwdb_all <= 34)
 			pwdb_all -= 6;
-		else if (pwdb_all > 14 && pwdb_all <= 26)
+		अन्यथा अगर (pwdb_all > 14 && pwdb_all <= 26)
 			pwdb_all -= 8;
-		else if (pwdb_all > 4 && pwdb_all <= 14)
+		अन्यथा अगर (pwdb_all > 4 && pwdb_all <= 14)
 			pwdb_all -= 4;
 		/*
 		 * (3) Get Signal Quality (EVM)
 		 */
-		if (pwdb_all > 40) {
+		अगर (pwdb_all > 40) अणु
 			sq = 100;
-		} else {
+		पूर्ण अन्यथा अणु
 			sq = pcck_buf->sq_rpt;
-			if (pcck_buf->sq_rpt > 64)
+			अगर (pcck_buf->sq_rpt > 64)
 				sq = 0;
-			else if (pcck_buf->sq_rpt < 20)
+			अन्यथा अगर (pcck_buf->sq_rpt < 20)
 				sq = 100;
-			else
+			अन्यथा
 				sq = ((64 - sq) * 100) / 44;
-		}
-		prframe->u.hdr.attrib.signal_qual = sq;
-		prframe->u.hdr.attrib.rx_mimo_signal_qual[0] = sq;
-		prframe->u.hdr.attrib.rx_mimo_signal_qual[1] = -1;
-	} else {
-		/* (1)Get RSSI for HT rate */
-		for (i = 0; i < ((padapter->registrypriv.rf_config) &
-			    0x0f); i++) {
+		पूर्ण
+		prframe->u.hdr.attrib.संकेत_qual = sq;
+		prframe->u.hdr.attrib.rx_mimo_संकेत_qual[0] = sq;
+		prframe->u.hdr.attrib.rx_mimo_संकेत_qual[1] = -1;
+	पूर्ण अन्यथा अणु
+		/* (1)Get RSSI क्रम HT rate */
+		क्रम (i = 0; i < ((padapter->registrypriv.rf_config) &
+			    0x0f); i++) अणु
 			rf_rx_num++;
 			rx_pwr[i] = ((pphy_head[PHY_STAT_GAIN_TRSW_SHT + i]
 				    & 0x3F) * 2) - 110;
 			/* Translate DBM to percentage. */
 			rssi = query_rx_pwr_percentage(rx_pwr[i]);
 			total_rssi += rssi;
-		}
-		/* (2)PWDB, Average PWDB calculated by hardware (for
+		पूर्ण
+		/* (2)PWDB, Average PWDB calculated by hardware (क्रम
 		 * rate adaptive)
 		 */
 		rx_pwr_all = (((pphy_head[PHY_STAT_PWDB_ALL_SHT]) >> 1) & 0x7f)
 			     - 106;
 		pwdb_all = query_rx_pwr_percentage(rx_pwr_all);
 
-		{
+		अणु
 			/* (3)EVM of HT rate */
-			if (prframe->u.hdr.attrib.htc &&
+			अगर (prframe->u.hdr.attrib.htc &&
 			    prframe->u.hdr.attrib.mcs_rate >= 20 &&
-			    prframe->u.hdr.attrib.mcs_rate <= 27) {
+			    prframe->u.hdr.attrib.mcs_rate <= 27) अणु
 				/* both spatial stream make sense */
 				max_spatial_stream = 2;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* only spatial stream 1 makes sense */
 				max_spatial_stream = 1;
-			}
-			for (i = 0; i < max_spatial_stream; i++) {
+			पूर्ण
+			क्रम (i = 0; i < max_spatial_stream; i++) अणु
 				evm = evm_db2percentage((pphy_head
 				      [PHY_STAT_RXEVM_SHT + i]));/*dbm*/
-				prframe->u.hdr.attrib.signal_qual =
+				prframe->u.hdr.attrib.संकेत_qual =
 					 (u8)(evm & 0xff);
-				prframe->u.hdr.attrib.rx_mimo_signal_qual[i] =
+				prframe->u.hdr.attrib.rx_mimo_संकेत_qual[i] =
 					 (u8)(evm & 0xff);
-			}
-		}
-	}
-	/* UI BSS List signal strength(in percentage), make it good looking,
-	 * from 0~100. It is assigned to the BSS List in
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	/* UI BSS List संकेत strength(in percentage), make it good looking,
+	 * from 0~100. It is asचिन्हित to the BSS List in
 	 * GetValueFromBeaconOrProbeRsp().
 	 */
-	if (bcck_rate) {
-		prframe->u.hdr.attrib.signal_strength =
-			 (u8)r8712_signal_scale_mapping(pwdb_all);
-	} else {
-		if (rf_rx_num != 0)
-			prframe->u.hdr.attrib.signal_strength =
-				 (u8)(r8712_signal_scale_mapping(total_rssi /=
+	अगर (bcck_rate) अणु
+		prframe->u.hdr.attrib.संकेत_strength =
+			 (u8)r8712_संकेत_scale_mapping(pwdb_all);
+	पूर्ण अन्यथा अणु
+		अगर (rf_rx_num != 0)
+			prframe->u.hdr.attrib.संकेत_strength =
+				 (u8)(r8712_संकेत_scale_mapping(total_rssi /=
 				 rf_rx_num));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void process_link_qual(struct _adapter *padapter,
-			      union recv_frame *prframe)
-{
-	u32	last_evm = 0, tmpVal;
-	struct rx_pkt_attrib *pattrib;
-	struct smooth_rssi_data *sqd = &padapter->recvpriv.signal_qual_data;
+अटल व्योम process_link_qual(काष्ठा _adapter *padapter,
+			      जोड़ recv_frame *prframe)
+अणु
+	u32	last_evm = 0, पंचांगpVal;
+	काष्ठा rx_pkt_attrib *pattrib;
+	काष्ठा smooth_rssi_data *sqd = &padapter->recvpriv.संकेत_qual_data;
 
-	if (!prframe || !padapter)
-		return;
+	अगर (!prframe || !padapter)
+		वापस;
 	pattrib = &prframe->u.hdr.attrib;
-	if (pattrib->signal_qual != 0) {
+	अगर (pattrib->संकेत_qual != 0) अणु
 		/*
-		 * 1. Record the general EVM to the sliding window.
+		 * 1. Record the general EVM to the sliding winकरोw.
 		 */
-		if (sqd->total_num++ >= PHY_LINKQUALITY_SLID_WIN_MAX) {
+		अगर (sqd->total_num++ >= PHY_LINKQUALITY_SLID_WIN_MAX) अणु
 			sqd->total_num = PHY_LINKQUALITY_SLID_WIN_MAX;
 			last_evm = sqd->elements[sqd->index];
 			sqd->total_val -= last_evm;
-		}
-		sqd->total_val += pattrib->signal_qual;
-		sqd->elements[sqd->index++] = pattrib->signal_qual;
-		if (sqd->index >= PHY_LINKQUALITY_SLID_WIN_MAX)
+		पूर्ण
+		sqd->total_val += pattrib->संकेत_qual;
+		sqd->elements[sqd->index++] = pattrib->संकेत_qual;
+		अगर (sqd->index >= PHY_LINKQUALITY_SLID_WIN_MAX)
 			sqd->index = 0;
 
-		/* <1> Showed on UI for user, in percentage. */
-		tmpVal = sqd->total_val / sqd->total_num;
-		padapter->recvpriv.signal = (u8)tmpVal;
-	}
-}
+		/* <1> Showed on UI क्रम user, in percentage. */
+		पंचांगpVal = sqd->total_val / sqd->total_num;
+		padapter->recvpriv.संकेत = (u8)पंचांगpVal;
+	पूर्ण
+पूर्ण
 
-static void process_rssi(struct _adapter *padapter, union recv_frame *prframe)
-{
-	u32 last_rssi, tmp_val;
-	struct rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
-	struct smooth_rssi_data *ssd = &padapter->recvpriv.signal_strength_data;
+अटल व्योम process_rssi(काष्ठा _adapter *padapter, जोड़ recv_frame *prframe)
+अणु
+	u32 last_rssi, पंचांगp_val;
+	काष्ठा rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
+	काष्ठा smooth_rssi_data *ssd = &padapter->recvpriv.संकेत_strength_data;
 
-	if (ssd->total_num++ >= PHY_RSSI_SLID_WIN_MAX) {
+	अगर (ssd->total_num++ >= PHY_RSSI_SLID_WIN_MAX) अणु
 		ssd->total_num = PHY_RSSI_SLID_WIN_MAX;
 		last_rssi = ssd->elements[ssd->index];
 		ssd->total_val -= last_rssi;
-	}
-	ssd->total_val += pattrib->signal_strength;
-	ssd->elements[ssd->index++] = pattrib->signal_strength;
-	if (ssd->index >= PHY_RSSI_SLID_WIN_MAX)
+	पूर्ण
+	ssd->total_val += pattrib->संकेत_strength;
+	ssd->elements[ssd->index++] = pattrib->संकेत_strength;
+	अगर (ssd->index >= PHY_RSSI_SLID_WIN_MAX)
 		ssd->index = 0;
-	tmp_val = ssd->total_val / ssd->total_num;
-	padapter->recvpriv.rssi = (s8)translate2dbm(padapter, (u8)tmp_val);
-}
+	पंचांगp_val = ssd->total_val / ssd->total_num;
+	padapter->recvpriv.rssi = (s8)translate2dbm(padapter, (u8)पंचांगp_val);
+पूर्ण
 
-static void process_phy_info(struct _adapter *padapter,
-			     union recv_frame *prframe)
-{
+अटल व्योम process_phy_info(काष्ठा _adapter *padapter,
+			     जोड़ recv_frame *prframe)
+अणु
 	query_rx_phy_status(padapter, prframe);
 	process_rssi(padapter, prframe);
 	process_link_qual(padapter,  prframe);
-}
+पूर्ण
 
-int recv_func(struct _adapter *padapter, void *pcontext)
-{
-	struct rx_pkt_attrib *pattrib;
-	union recv_frame *prframe, *orig_prframe;
-	int retval = _SUCCESS;
-	struct  __queue *pfree_recv_queue = &padapter->recvpriv.free_recv_queue;
-	struct	mlme_priv	*pmlmepriv = &padapter->mlmepriv;
+पूर्णांक recv_func(काष्ठा _adapter *padapter, व्योम *pcontext)
+अणु
+	काष्ठा rx_pkt_attrib *pattrib;
+	जोड़ recv_frame *prframe, *orig_prframe;
+	पूर्णांक retval = _SUCCESS;
+	काष्ठा  __queue *pमुक्त_recv_queue = &padapter->recvpriv.मुक्त_recv_queue;
+	काष्ठा	mlme_priv	*pmlmepriv = &padapter->mlmepriv;
 
 	prframe = pcontext;
 	orig_prframe = prframe;
 	pattrib = &prframe->u.hdr.attrib;
-	if (check_fwstate(pmlmepriv, WIFI_MP_STATE)) {
-		if (pattrib->crc_err == 1)
+	अगर (check_fwstate(pmlmepriv, WIFI_MP_STATE)) अणु
+		अगर (pattrib->crc_err == 1)
 			padapter->mppriv.rx_crcerrpktcount++;
-		else
+		अन्यथा
 			padapter->mppriv.rx_pktcount++;
-		if (!check_fwstate(pmlmepriv, WIFI_MP_LPBK_STATE)) {
-			/* free this recv_frame */
-			r8712_free_recvframe(orig_prframe, pfree_recv_queue);
-			goto _exit_recv_func;
-		}
-	}
+		अगर (!check_fwstate(pmlmepriv, WIFI_MP_LPBK_STATE)) अणु
+			/* मुक्त this recv_frame */
+			r8712_मुक्त_recvframe(orig_prframe, pमुक्त_recv_queue);
+			जाओ _निकास_recv_func;
+		पूर्ण
+	पूर्ण
 	/* check the frame crtl field and decache */
 	retval = r8712_validate_recv_frame(padapter, prframe);
-	if (retval != _SUCCESS) {
-		/* free this recv_frame */
-		r8712_free_recvframe(orig_prframe, pfree_recv_queue);
-		goto _exit_recv_func;
-	}
+	अगर (retval != _SUCCESS) अणु
+		/* मुक्त this recv_frame */
+		r8712_मुक्त_recvframe(orig_prframe, pमुक्त_recv_queue);
+		जाओ _निकास_recv_func;
+	पूर्ण
 	process_phy_info(padapter, prframe);
 	prframe = r8712_decryptor(padapter, prframe);
-	if (!prframe) {
+	अगर (!prframe) अणु
 		retval = _FAIL;
-		goto _exit_recv_func;
-	}
+		जाओ _निकास_recv_func;
+	पूर्ण
 	prframe = r8712_recvframe_chk_defrag(padapter, prframe);
-	if (!prframe)
-		goto _exit_recv_func;
+	अगर (!prframe)
+		जाओ _निकास_recv_func;
 	prframe = r8712_portctrl(padapter, prframe);
-	if (!prframe) {
+	अगर (!prframe) अणु
 		retval = _FAIL;
-		goto _exit_recv_func;
-	}
+		जाओ _निकास_recv_func;
+	पूर्ण
 	retval = r8712_process_recv_indicatepkts(padapter, prframe);
-	if (retval != _SUCCESS) {
-		r8712_free_recvframe(orig_prframe, pfree_recv_queue);
-		goto _exit_recv_func;
-	}
-_exit_recv_func:
-	return retval;
-}
+	अगर (retval != _SUCCESS) अणु
+		r8712_मुक्त_recvframe(orig_prframe, pमुक्त_recv_queue);
+		जाओ _निकास_recv_func;
+	पूर्ण
+_निकास_recv_func:
+	वापस retval;
+पूर्ण
 
-static void recvbuf2recvframe(struct _adapter *padapter, struct sk_buff *pskb)
-{
-	u8 *pbuf, shift_sz = 0;
+अटल व्योम recvbuf2recvframe(काष्ठा _adapter *padapter, काष्ठा sk_buff *pskb)
+अणु
+	u8 *pbuf, shअगरt_sz = 0;
 	u8	frag, mf;
-	uint	pkt_len;
+	uपूर्णांक	pkt_len;
 	u32 transfer_len;
-	struct recv_stat *prxstat;
-	u16	pkt_cnt, drvinfo_sz, pkt_offset, tmp_len, alloc_sz;
-	struct  __queue *pfree_recv_queue;
-	_pkt  *pkt_copy = NULL;
-	union recv_frame *precvframe = NULL;
-	struct recv_priv *precvpriv = &padapter->recvpriv;
+	काष्ठा recv_stat *prxstat;
+	u16	pkt_cnt, drvinfo_sz, pkt_offset, पंचांगp_len, alloc_sz;
+	काष्ठा  __queue *pमुक्त_recv_queue;
+	_pkt  *pkt_copy = शून्य;
+	जोड़ recv_frame *precvframe = शून्य;
+	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
 
-	pfree_recv_queue = &(precvpriv->free_recv_queue);
+	pमुक्त_recv_queue = &(precvpriv->मुक्त_recv_queue);
 	pbuf = pskb->data;
-	prxstat = (struct recv_stat *)pbuf;
+	prxstat = (काष्ठा recv_stat *)pbuf;
 	pkt_cnt = (le32_to_cpu(prxstat->rxdw2) >> 16) & 0xff;
 	pkt_len =  le32_to_cpu(prxstat->rxdw0) & 0x00003fff;
 	transfer_len = pskb->len;
@@ -990,62 +991,62 @@ static void recvbuf2recvframe(struct _adapter *padapter, struct sk_buff *pskb)
 	 * pairs. The packet count will be a big number so that the containing
 	 * packet will effect the Rx reordering.
 	 */
-	if (transfer_len < pkt_len) {
-		/* In this case, it means the MAX_RECVBUF_SZ is too small to
+	अगर (transfer_len < pkt_len) अणु
+		/* In this हाल, it means the MAX_RECVBUF_SZ is too small to
 		 * get the data from 8712u.
 		 */
-		return;
-	}
-	do {
-		prxstat = (struct recv_stat *)pbuf;
+		वापस;
+	पूर्ण
+	करो अणु
+		prxstat = (काष्ठा recv_stat *)pbuf;
 		pkt_len =  le32_to_cpu(prxstat->rxdw0) & 0x00003fff;
 		/* more fragment bit */
 		mf = (le32_to_cpu(prxstat->rxdw1) >> 27) & 0x1;
 		/* ragmentation number */
 		frag = (le32_to_cpu(prxstat->rxdw2) >> 12) & 0xf;
-		/* uint 2^3 = 8 bytes */
+		/* uपूर्णांक 2^3 = 8 bytes */
 		drvinfo_sz = (le32_to_cpu(prxstat->rxdw0) & 0x000f0000) >> 16;
 		drvinfo_sz <<= 3;
-		if (pkt_len <= 0)
-			return;
+		अगर (pkt_len <= 0)
+			वापस;
 		/* Qos data, wireless lan header length is 26 */
-		if ((le32_to_cpu(prxstat->rxdw0) >> 23) & 0x01)
-			shift_sz = 2;
-		precvframe = r8712_alloc_recvframe(pfree_recv_queue);
-		if (!precvframe)
-			return;
+		अगर ((le32_to_cpu(prxstat->rxdw0) >> 23) & 0x01)
+			shअगरt_sz = 2;
+		precvframe = r8712_alloc_recvframe(pमुक्त_recv_queue);
+		अगर (!precvframe)
+			वापस;
 		INIT_LIST_HEAD(&precvframe->u.hdr.list);
-		precvframe->u.hdr.precvbuf = NULL; /*can't access the precvbuf*/
+		precvframe->u.hdr.precvbuf = शून्य; /*can't access the precvbuf*/
 		precvframe->u.hdr.len = 0;
-		tmp_len = pkt_len + drvinfo_sz + RXDESC_SIZE;
-		pkt_offset = (u16)round_up(tmp_len, 128);
-		/* for first fragment packet, driver need allocate 1536 +
+		पंचांगp_len = pkt_len + drvinfo_sz + RXDESC_SIZE;
+		pkt_offset = (u16)round_up(पंचांगp_len, 128);
+		/* क्रम first fragment packet, driver need allocate 1536 +
 		 * drvinfo_sz + RXDESC_SIZE to defrag packet.
 		 */
-		if ((mf == 1) && (frag == 0))
+		अगर ((mf == 1) && (frag == 0))
 			/*1658+6=1664, 1664 is 128 alignment.*/
-			alloc_sz = max_t(u16, tmp_len, 1658);
-		else
-			alloc_sz = tmp_len;
-		/* 2 is for IP header 4 bytes alignment in QoS packet case.
-		 * 4 is for skb->data 4 bytes alignment.
+			alloc_sz = max_t(u16, पंचांगp_len, 1658);
+		अन्यथा
+			alloc_sz = पंचांगp_len;
+		/* 2 is क्रम IP header 4 bytes alignment in QoS packet हाल.
+		 * 4 is क्रम skb->data 4 bytes alignment.
 		 */
 		alloc_sz += 6;
 		pkt_copy = netdev_alloc_skb(padapter->pnetdev, alloc_sz);
-		if (!pkt_copy)
-			return;
+		अगर (!pkt_copy)
+			वापस;
 
 		precvframe->u.hdr.pkt = pkt_copy;
 		skb_reserve(pkt_copy, 4 - ((addr_t)(pkt_copy->data) % 4));
-		skb_reserve(pkt_copy, shift_sz);
-		memcpy(pkt_copy->data, pbuf, tmp_len);
+		skb_reserve(pkt_copy, shअगरt_sz);
+		स_नकल(pkt_copy->data, pbuf, पंचांगp_len);
 		precvframe->u.hdr.rx_head = precvframe->u.hdr.rx_data =
 			precvframe->u.hdr.rx_tail = pkt_copy->data;
 		precvframe->u.hdr.rx_end = pkt_copy->data + alloc_sz;
 
-		recvframe_put(precvframe, tmp_len);
+		recvframe_put(precvframe, पंचांगp_len);
 		recvframe_pull(precvframe, drvinfo_sz + RXDESC_SIZE);
-		/* because the endian issue, driver avoid reference to the
+		/* because the endian issue, driver aव्योम reference to the
 		 * rxstat after calling update_recvframe_attrib_from_recvstat();
 		 */
 		update_recvframe_attrib_from_recvstat(&precvframe->u.hdr.attrib,
@@ -1054,25 +1055,25 @@ static void recvbuf2recvframe(struct _adapter *padapter, struct sk_buff *pskb)
 		transfer_len -= pkt_offset;
 		pbuf += pkt_offset;
 		pkt_cnt--;
-		precvframe = NULL;
-		pkt_copy = NULL;
-	} while ((transfer_len > 0) && pkt_cnt > 0);
-}
+		precvframe = शून्य;
+		pkt_copy = शून्य;
+	पूर्ण जबतक ((transfer_len > 0) && pkt_cnt > 0);
+पूर्ण
 
-static void recv_tasklet(struct tasklet_struct *t)
-{
-	struct sk_buff *pskb;
-	struct _adapter *padapter = from_tasklet(padapter, t,
+अटल व्योम recv_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा sk_buff *pskb;
+	काष्ठा _adapter *padapter = from_tasklet(padapter, t,
 						 recvpriv.recv_tasklet);
-	struct recv_priv *precvpriv = &padapter->recvpriv;
+	काष्ठा recv_priv *precvpriv = &padapter->recvpriv;
 
-	while (NULL != (pskb = skb_dequeue(&precvpriv->rx_skb_queue))) {
+	जबतक (शून्य != (pskb = skb_dequeue(&precvpriv->rx_skb_queue))) अणु
 		recvbuf2recvframe(padapter, pskb);
-		skb_reset_tail_pointer(pskb);
+		skb_reset_tail_poपूर्णांकer(pskb);
 		pskb->len = 0;
-		if (!skb_cloned(pskb))
-			skb_queue_tail(&precvpriv->free_recv_skb_queue, pskb);
-		else
+		अगर (!skb_cloned(pskb))
+			skb_queue_tail(&precvpriv->मुक्त_recv_skb_queue, pskb);
+		अन्यथा
 			consume_skb(pskb);
-	}
-}
+	पूर्ण
+पूर्ण

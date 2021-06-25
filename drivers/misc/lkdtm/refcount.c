@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * This is for all the tests related to refcount bugs (e.g. overflow,
+ * This is क्रम all the tests related to refcount bugs (e.g. overflow,
  * underflow, reaching zero untested, etc).
  */
-#include "lkdtm.h"
-#include <linux/refcount.h>
+#समावेश "lkdtm.h"
+#समावेश <linux/refcount.h>
 
-static void overflow_check(refcount_t *ref)
-{
-	switch (refcount_read(ref)) {
-	case REFCOUNT_SATURATED:
+अटल व्योम overflow_check(refcount_t *ref)
+अणु
+	चयन (refcount_पढ़ो(ref)) अणु
+	हाल REFCOUNT_SATURATED:
 		pr_info("Overflow detected: saturated\n");
-		break;
-	case REFCOUNT_MAX:
+		अवरोध;
+	हाल REFCOUNT_MAX:
 		pr_warn("Overflow detected: unsafely reset to max\n");
-		break;
-	default:
-		pr_err("Fail: refcount wrapped to %d\n", refcount_read(ref));
-	}
-}
+		अवरोध;
+	शेष:
+		pr_err("Fail: refcount wrapped to %d\n", refcount_पढ़ो(ref));
+	पूर्ण
+पूर्ण
 
 /*
  * A refcount_inc() above the maximum value of the refcount implementation,
  * should at least saturate, and at most also WARN.
  */
-void lkdtm_REFCOUNT_INC_OVERFLOW(void)
-{
+व्योम lkdपंचांग_REFCOUNT_INC_OVERFLOW(व्योम)
+अणु
 	refcount_t over = REFCOUNT_INIT(REFCOUNT_MAX - 1);
 
 	pr_info("attempting good refcount_inc() without overflow\n");
@@ -37,11 +38,11 @@ void lkdtm_REFCOUNT_INC_OVERFLOW(void)
 	refcount_inc(&over);
 
 	overflow_check(&over);
-}
+पूर्ण
 
 /* refcount_add() should behave just like refcount_inc() above. */
-void lkdtm_REFCOUNT_ADD_OVERFLOW(void)
-{
+व्योम lkdपंचांग_REFCOUNT_ADD_OVERFLOW(व्योम)
+अणु
 	refcount_t over = REFCOUNT_INIT(REFCOUNT_MAX - 1);
 
 	pr_info("attempting good refcount_add() without overflow\n");
@@ -55,56 +56,56 @@ void lkdtm_REFCOUNT_ADD_OVERFLOW(void)
 	refcount_add(4, &over);
 
 	overflow_check(&over);
-}
+पूर्ण
 
 /* refcount_inc_not_zero() should behave just like refcount_inc() above. */
-void lkdtm_REFCOUNT_INC_NOT_ZERO_OVERFLOW(void)
-{
+व्योम lkdपंचांग_REFCOUNT_INC_NOT_ZERO_OVERFLOW(व्योम)
+अणु
 	refcount_t over = REFCOUNT_INIT(REFCOUNT_MAX);
 
 	pr_info("attempting bad refcount_inc_not_zero() overflow\n");
-	if (!refcount_inc_not_zero(&over))
+	अगर (!refcount_inc_not_zero(&over))
 		pr_warn("Weird: refcount_inc_not_zero() reported zero\n");
 
 	overflow_check(&over);
-}
+पूर्ण
 
 /* refcount_add_not_zero() should behave just like refcount_inc() above. */
-void lkdtm_REFCOUNT_ADD_NOT_ZERO_OVERFLOW(void)
-{
+व्योम lkdपंचांग_REFCOUNT_ADD_NOT_ZERO_OVERFLOW(व्योम)
+अणु
 	refcount_t over = REFCOUNT_INIT(REFCOUNT_MAX);
 
 	pr_info("attempting bad refcount_add_not_zero() overflow\n");
-	if (!refcount_add_not_zero(6, &over))
+	अगर (!refcount_add_not_zero(6, &over))
 		pr_warn("Weird: refcount_add_not_zero() reported zero\n");
 
 	overflow_check(&over);
-}
+पूर्ण
 
-static void check_zero(refcount_t *ref)
-{
-	switch (refcount_read(ref)) {
-	case REFCOUNT_SATURATED:
+अटल व्योम check_zero(refcount_t *ref)
+अणु
+	चयन (refcount_पढ़ो(ref)) अणु
+	हाल REFCOUNT_SATURATED:
 		pr_info("Zero detected: saturated\n");
-		break;
-	case REFCOUNT_MAX:
+		अवरोध;
+	हाल REFCOUNT_MAX:
 		pr_warn("Zero detected: unsafely reset to max\n");
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		pr_warn("Still at zero: refcount_inc/add() must not inc-from-0\n");
-		break;
-	default:
-		pr_err("Fail: refcount went crazy: %d\n", refcount_read(ref));
-	}
-}
+		अवरोध;
+	शेष:
+		pr_err("Fail: refcount went crazy: %d\n", refcount_पढ़ो(ref));
+	पूर्ण
+पूर्ण
 
 /*
  * A refcount_dec(), as opposed to a refcount_dec_and_test(), when it hits
- * zero it should either saturate (when inc-from-zero isn't protected)
- * or stay at zero (when inc-from-zero is protected) and should WARN for both.
+ * zero it should either saturate (when inc-from-zero isn't रक्षित)
+ * or stay at zero (when inc-from-zero is रक्षित) and should WARN क्रम both.
  */
-void lkdtm_REFCOUNT_DEC_ZERO(void)
-{
+व्योम lkdपंचांग_REFCOUNT_DEC_ZERO(व्योम)
+अणु
 	refcount_t zero = REFCOUNT_INIT(2);
 
 	pr_info("attempting good refcount_dec()\n");
@@ -114,279 +115,279 @@ void lkdtm_REFCOUNT_DEC_ZERO(void)
 	refcount_dec(&zero);
 
 	check_zero(&zero);
-}
+पूर्ण
 
-static void check_negative(refcount_t *ref, int start)
-{
+अटल व्योम check_negative(refcount_t *ref, पूर्णांक start)
+अणु
 	/*
 	 * refcount_t refuses to move a refcount at all on an
 	 * over-sub, so we have to track our starting position instead of
 	 * looking only at zero-pinning.
 	 */
-	if (refcount_read(ref) == start) {
+	अगर (refcount_पढ़ो(ref) == start) अणु
 		pr_warn("Still at %d: refcount_inc/add() must not inc-from-0\n",
 			start);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (refcount_read(ref)) {
-	case REFCOUNT_SATURATED:
+	चयन (refcount_पढ़ो(ref)) अणु
+	हाल REFCOUNT_SATURATED:
 		pr_info("Negative detected: saturated\n");
-		break;
-	case REFCOUNT_MAX:
+		अवरोध;
+	हाल REFCOUNT_MAX:
 		pr_warn("Negative detected: unsafely reset to max\n");
-		break;
-	default:
-		pr_err("Fail: refcount went crazy: %d\n", refcount_read(ref));
-	}
-}
+		अवरोध;
+	शेष:
+		pr_err("Fail: refcount went crazy: %d\n", refcount_पढ़ो(ref));
+	पूर्ण
+पूर्ण
 
 /* A refcount_dec() going negative should saturate and may WARN. */
-void lkdtm_REFCOUNT_DEC_NEGATIVE(void)
-{
+व्योम lkdपंचांग_REFCOUNT_DEC_NEGATIVE(व्योम)
+अणु
 	refcount_t neg = REFCOUNT_INIT(0);
 
 	pr_info("attempting bad refcount_dec() below zero\n");
 	refcount_dec(&neg);
 
 	check_negative(&neg, 0);
-}
+पूर्ण
 
 /*
  * A refcount_dec_and_test() should act like refcount_dec() above when
  * going negative.
  */
-void lkdtm_REFCOUNT_DEC_AND_TEST_NEGATIVE(void)
-{
+व्योम lkdपंचांग_REFCOUNT_DEC_AND_TEST_NEGATIVE(व्योम)
+अणु
 	refcount_t neg = REFCOUNT_INIT(0);
 
 	pr_info("attempting bad refcount_dec_and_test() below zero\n");
-	if (refcount_dec_and_test(&neg))
+	अगर (refcount_dec_and_test(&neg))
 		pr_warn("Weird: refcount_dec_and_test() reported zero\n");
 
 	check_negative(&neg, 0);
-}
+पूर्ण
 
 /*
  * A refcount_sub_and_test() should act like refcount_dec_and_test()
  * above when going negative.
  */
-void lkdtm_REFCOUNT_SUB_AND_TEST_NEGATIVE(void)
-{
+व्योम lkdपंचांग_REFCOUNT_SUB_AND_TEST_NEGATIVE(व्योम)
+अणु
 	refcount_t neg = REFCOUNT_INIT(3);
 
 	pr_info("attempting bad refcount_sub_and_test() below zero\n");
-	if (refcount_sub_and_test(5, &neg))
+	अगर (refcount_sub_and_test(5, &neg))
 		pr_warn("Weird: refcount_sub_and_test() reported zero\n");
 
 	check_negative(&neg, 3);
-}
+पूर्ण
 
-static void check_from_zero(refcount_t *ref)
-{
-	switch (refcount_read(ref)) {
-	case 0:
+अटल व्योम check_from_zero(refcount_t *ref)
+अणु
+	चयन (refcount_पढ़ो(ref)) अणु
+	हाल 0:
 		pr_info("Zero detected: stayed at zero\n");
-		break;
-	case REFCOUNT_SATURATED:
+		अवरोध;
+	हाल REFCOUNT_SATURATED:
 		pr_info("Zero detected: saturated\n");
-		break;
-	case REFCOUNT_MAX:
+		अवरोध;
+	हाल REFCOUNT_MAX:
 		pr_warn("Zero detected: unsafely reset to max\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_info("Fail: zero not detected, incremented to %d\n",
-			refcount_read(ref));
-	}
-}
+			refcount_पढ़ो(ref));
+	पूर्ण
+पूर्ण
 
 /*
  * A refcount_inc() from zero should pin to zero or saturate and may WARN.
  */
-void lkdtm_REFCOUNT_INC_ZERO(void)
-{
+व्योम lkdपंचांग_REFCOUNT_INC_ZERO(व्योम)
+अणु
 	refcount_t zero = REFCOUNT_INIT(0);
 
 	pr_info("attempting safe refcount_inc_not_zero() from zero\n");
-	if (!refcount_inc_not_zero(&zero)) {
+	अगर (!refcount_inc_not_zero(&zero)) अणु
 		pr_info("Good: zero detected\n");
-		if (refcount_read(&zero) == 0)
+		अगर (refcount_पढ़ो(&zero) == 0)
 			pr_info("Correctly stayed at zero\n");
-		else
+		अन्यथा
 			pr_err("Fail: refcount went past zero!\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Fail: Zero not detected!?\n");
-	}
+	पूर्ण
 
 	pr_info("attempting bad refcount_inc() from zero\n");
 	refcount_inc(&zero);
 
 	check_from_zero(&zero);
-}
+पूर्ण
 
 /*
  * A refcount_add() should act like refcount_inc() above when starting
  * at zero.
  */
-void lkdtm_REFCOUNT_ADD_ZERO(void)
-{
+व्योम lkdपंचांग_REFCOUNT_ADD_ZERO(व्योम)
+अणु
 	refcount_t zero = REFCOUNT_INIT(0);
 
 	pr_info("attempting safe refcount_add_not_zero() from zero\n");
-	if (!refcount_add_not_zero(3, &zero)) {
+	अगर (!refcount_add_not_zero(3, &zero)) अणु
 		pr_info("Good: zero detected\n");
-		if (refcount_read(&zero) == 0)
+		अगर (refcount_पढ़ो(&zero) == 0)
 			pr_info("Correctly stayed at zero\n");
-		else
+		अन्यथा
 			pr_err("Fail: refcount went past zero\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Fail: Zero not detected!?\n");
-	}
+	पूर्ण
 
 	pr_info("attempting bad refcount_add() from zero\n");
 	refcount_add(3, &zero);
 
 	check_from_zero(&zero);
-}
+पूर्ण
 
-static void check_saturated(refcount_t *ref)
-{
-	switch (refcount_read(ref)) {
-	case REFCOUNT_SATURATED:
+अटल व्योम check_saturated(refcount_t *ref)
+अणु
+	चयन (refcount_पढ़ो(ref)) अणु
+	हाल REFCOUNT_SATURATED:
 		pr_info("Saturation detected: still saturated\n");
-		break;
-	case REFCOUNT_MAX:
+		अवरोध;
+	हाल REFCOUNT_MAX:
 		pr_warn("Saturation detected: unsafely reset to max\n");
-		break;
-	default:
-		pr_err("Fail: refcount went crazy: %d\n", refcount_read(ref));
-	}
-}
+		अवरोध;
+	शेष:
+		pr_err("Fail: refcount went crazy: %d\n", refcount_पढ़ो(ref));
+	पूर्ण
+पूर्ण
 
 /*
  * A refcount_inc() from a saturated value should at most warn about
- * being saturated already.
+ * being saturated alपढ़ोy.
  */
-void lkdtm_REFCOUNT_INC_SATURATED(void)
-{
+व्योम lkdपंचांग_REFCOUNT_INC_SATURATED(व्योम)
+अणु
 	refcount_t sat = REFCOUNT_INIT(REFCOUNT_SATURATED);
 
 	pr_info("attempting bad refcount_inc() from saturated\n");
 	refcount_inc(&sat);
 
 	check_saturated(&sat);
-}
+पूर्ण
 
 /* Should act like refcount_inc() above from saturated. */
-void lkdtm_REFCOUNT_DEC_SATURATED(void)
-{
+व्योम lkdपंचांग_REFCOUNT_DEC_SATURATED(व्योम)
+अणु
 	refcount_t sat = REFCOUNT_INIT(REFCOUNT_SATURATED);
 
 	pr_info("attempting bad refcount_dec() from saturated\n");
 	refcount_dec(&sat);
 
 	check_saturated(&sat);
-}
+पूर्ण
 
 /* Should act like refcount_inc() above from saturated. */
-void lkdtm_REFCOUNT_ADD_SATURATED(void)
-{
+व्योम lkdपंचांग_REFCOUNT_ADD_SATURATED(व्योम)
+अणु
 	refcount_t sat = REFCOUNT_INIT(REFCOUNT_SATURATED);
 
 	pr_info("attempting bad refcount_dec() from saturated\n");
 	refcount_add(8, &sat);
 
 	check_saturated(&sat);
-}
+पूर्ण
 
 /* Should act like refcount_inc() above from saturated. */
-void lkdtm_REFCOUNT_INC_NOT_ZERO_SATURATED(void)
-{
+व्योम lkdपंचांग_REFCOUNT_INC_NOT_ZERO_SATURATED(व्योम)
+अणु
 	refcount_t sat = REFCOUNT_INIT(REFCOUNT_SATURATED);
 
 	pr_info("attempting bad refcount_inc_not_zero() from saturated\n");
-	if (!refcount_inc_not_zero(&sat))
+	अगर (!refcount_inc_not_zero(&sat))
 		pr_warn("Weird: refcount_inc_not_zero() reported zero\n");
 
 	check_saturated(&sat);
-}
+पूर्ण
 
 /* Should act like refcount_inc() above from saturated. */
-void lkdtm_REFCOUNT_ADD_NOT_ZERO_SATURATED(void)
-{
+व्योम lkdपंचांग_REFCOUNT_ADD_NOT_ZERO_SATURATED(व्योम)
+अणु
 	refcount_t sat = REFCOUNT_INIT(REFCOUNT_SATURATED);
 
 	pr_info("attempting bad refcount_add_not_zero() from saturated\n");
-	if (!refcount_add_not_zero(7, &sat))
+	अगर (!refcount_add_not_zero(7, &sat))
 		pr_warn("Weird: refcount_add_not_zero() reported zero\n");
 
 	check_saturated(&sat);
-}
+पूर्ण
 
 /* Should act like refcount_inc() above from saturated. */
-void lkdtm_REFCOUNT_DEC_AND_TEST_SATURATED(void)
-{
+व्योम lkdपंचांग_REFCOUNT_DEC_AND_TEST_SATURATED(व्योम)
+अणु
 	refcount_t sat = REFCOUNT_INIT(REFCOUNT_SATURATED);
 
 	pr_info("attempting bad refcount_dec_and_test() from saturated\n");
-	if (refcount_dec_and_test(&sat))
+	अगर (refcount_dec_and_test(&sat))
 		pr_warn("Weird: refcount_dec_and_test() reported zero\n");
 
 	check_saturated(&sat);
-}
+पूर्ण
 
 /* Should act like refcount_inc() above from saturated. */
-void lkdtm_REFCOUNT_SUB_AND_TEST_SATURATED(void)
-{
+व्योम lkdपंचांग_REFCOUNT_SUB_AND_TEST_SATURATED(व्योम)
+अणु
 	refcount_t sat = REFCOUNT_INIT(REFCOUNT_SATURATED);
 
 	pr_info("attempting bad refcount_sub_and_test() from saturated\n");
-	if (refcount_sub_and_test(8, &sat))
+	अगर (refcount_sub_and_test(8, &sat))
 		pr_warn("Weird: refcount_sub_and_test() reported zero\n");
 
 	check_saturated(&sat);
-}
+पूर्ण
 
-/* Used to time the existing atomic_t when used for reference counting */
-void lkdtm_ATOMIC_TIMING(void)
-{
-	unsigned int i;
+/* Used to समय the existing atomic_t when used क्रम reference counting */
+व्योम lkdपंचांग_ATOMIC_TIMING(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 	atomic_t count = ATOMIC_INIT(1);
 
-	for (i = 0; i < INT_MAX - 1; i++)
+	क्रम (i = 0; i < पूर्णांक_उच्च - 1; i++)
 		atomic_inc(&count);
 
-	for (i = INT_MAX; i > 0; i--)
-		if (atomic_dec_and_test(&count))
-			break;
+	क्रम (i = पूर्णांक_उच्च; i > 0; i--)
+		अगर (atomic_dec_and_test(&count))
+			अवरोध;
 
-	if (i != 1)
+	अगर (i != 1)
 		pr_err("atomic timing: out of sync up/down cycle: %u\n", i - 1);
-	else
+	अन्यथा
 		pr_info("atomic timing: done\n");
-}
+पूर्ण
 
 /*
  * This can be compared to ATOMIC_TIMING when implementing fast refcount
  * protections. Looking at the number of CPU cycles tells the real story
- * about performance. For example:
+ * about perक्रमmance. For example:
  *    cd /sys/kernel/debug/provoke-crash
- *    perf stat -B -- cat <(echo REFCOUNT_TIMING) > DIRECT
+ *    perf stat -B -- cat <(echo REFCOUNT_TIMING) > सूचीECT
  */
-void lkdtm_REFCOUNT_TIMING(void)
-{
-	unsigned int i;
+व्योम lkdपंचांग_REFCOUNT_TIMING(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 	refcount_t count = REFCOUNT_INIT(1);
 
-	for (i = 0; i < INT_MAX - 1; i++)
+	क्रम (i = 0; i < पूर्णांक_उच्च - 1; i++)
 		refcount_inc(&count);
 
-	for (i = INT_MAX; i > 0; i--)
-		if (refcount_dec_and_test(&count))
-			break;
+	क्रम (i = पूर्णांक_उच्च; i > 0; i--)
+		अगर (refcount_dec_and_test(&count))
+			अवरोध;
 
-	if (i != 1)
+	अगर (i != 1)
 		pr_err("refcount: out of sync up/down cycle: %u\n", i - 1);
-	else
+	अन्यथा
 		pr_info("refcount timing: done\n");
-}
+पूर्ण

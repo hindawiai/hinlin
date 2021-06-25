@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/syscalls.h>
-#include <linux/uaccess.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/cachectl.h>
-#include <asm/proc-fns.h>
-#include <asm/fpu.h>
-#include <asm/fp_udfiex_crtl.h>
+#समावेश <यंत्र/cachectl.h>
+#समावेश <यंत्र/proc-fns.h>
+#समावेश <यंत्र/fpu.h>
+#समावेश <यंत्र/fp_udfiex_crtl.h>
 
-SYSCALL_DEFINE6(mmap2, unsigned long, addr, unsigned long, len,
-	       unsigned long, prot, unsigned long, flags,
-	       unsigned long, fd, unsigned long, pgoff)
-{
-	if (pgoff & (~PAGE_MASK >> 12))
-		return -EINVAL;
+SYSCALL_DEFINE6(mmap2, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, len,
+	       अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, flags,
+	       अचिन्हित दीर्घ, fd, अचिन्हित दीर्घ, pgoff)
+अणु
+	अगर (pgoff & (~PAGE_MASK >> 12))
+		वापस -EINVAL;
 
-	return sys_mmap_pgoff(addr, len, prot, flags, fd,
+	वापस sys_mmap_pgoff(addr, len, prot, flags, fd,
 			      pgoff >> (PAGE_SHIFT - 12));
-}
+पूर्ण
 
-SYSCALL_DEFINE4(fadvise64_64_wrapper,int, fd, int, advice, loff_t, offset,
+SYSCALL_DEFINE4(fadvise64_64_wrapper,पूर्णांक, fd, पूर्णांक, advice, loff_t, offset,
 					 loff_t, len)
-{
-	return sys_fadvise64_64(fd, offset, len, advice);
-}
+अणु
+	वापस sys_fadvise64_64(fd, offset, len, advice);
+पूर्ण
 
-SYSCALL_DEFINE3(cacheflush, unsigned int, start, unsigned int, end, int, cache)
-{
-	struct vm_area_struct *vma;
+SYSCALL_DEFINE3(cacheflush, अचिन्हित पूर्णांक, start, अचिन्हित पूर्णांक, end, पूर्णांक, cache)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
 	bool flushi = true, wbd = true;
 
 	vma = find_vma(current->mm, start);
-	if (!vma)
-		return -EFAULT;
-	switch (cache) {
-	case ICACHE:
+	अगर (!vma)
+		वापस -EFAULT;
+	चयन (cache) अणु
+	हाल ICACHE:
 		wbd = false;
-		break;
-	case DCACHE:
+		अवरोध;
+	हाल DCACHE:
 		flushi = false;
-		break;
-	case BCACHE:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल BCACHE:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	cpu_cache_wbinval_range_check(vma, start, end, flushi, wbd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-SYSCALL_DEFINE2(fp_udfiex_crtl, unsigned int, cmd, unsigned int, act)
-{
-#if IS_ENABLED(CONFIG_SUPPORT_DENORMAL_ARITHMETIC)
-	int old_udf_iex;
+SYSCALL_DEFINE2(fp_udfiex_crtl, अचिन्हित पूर्णांक, cmd, अचिन्हित पूर्णांक, act)
+अणु
+#अगर IS_ENABLED(CONFIG_SUPPORT_DENORMAL_ARITHMETIC)
+	पूर्णांक old_udf_iex;
 
-	if (!used_math()) {
+	अगर (!used_math()) अणु
 		load_fpu(&init_fpuregs);
-		current->thread.fpu.UDF_IEX_trap = init_fpuregs.UDF_IEX_trap;
+		current->thपढ़ो.fpu.UDF_IEX_trap = init_fpuregs.UDF_IEX_trap;
 		set_used_math();
-	}
+	पूर्ण
 
-	old_udf_iex = current->thread.fpu.UDF_IEX_trap;
+	old_udf_iex = current->thपढ़ो.fpu.UDF_IEX_trap;
 	act &= (FPCSR_mskUDFE | FPCSR_mskIEXE);
 
-	switch (cmd) {
-	case DISABLE_UDF_IEX_TRAP:
-		current->thread.fpu.UDF_IEX_trap &= ~act;
-		break;
-	case ENABLE_UDF_IEX_TRAP:
-		current->thread.fpu.UDF_IEX_trap |= act;
-		break;
-	case GET_UDF_IEX_TRAP:
-		break;
-	default:
-		return -EINVAL;
-	}
-	return old_udf_iex;
-#else
-	return -ENOTSUPP;
-#endif
-}
+	चयन (cmd) अणु
+	हाल DISABLE_UDF_IEX_TRAP:
+		current->thपढ़ो.fpu.UDF_IEX_trap &= ~act;
+		अवरोध;
+	हाल ENABLE_UDF_IEX_TRAP:
+		current->thपढ़ो.fpu.UDF_IEX_trap |= act;
+		अवरोध;
+	हाल GET_UDF_IEX_TRAP:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस old_udf_iex;
+#अन्यथा
+	वापस -ENOTSUPP;
+#पूर्ण_अगर
+पूर्ण

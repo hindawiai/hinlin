@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * userspace-consumer.c
  *
@@ -6,115 +7,115 @@
  *
  * Author: Mike Rapoport <mike@compulab.co.il>
  *
- * Based of virtual consumer driver:
+ * Based of भव consumer driver:
  *   Copyright 2008 Wolfson Microelectronics PLC.
- *   Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ *   Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  */
 
-#include <linux/err.h>
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/regulator/userspace-consumer.h>
-#include <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/regulator/userspace-consumer.h>
+#समावेश <linux/slab.h>
 
-struct userspace_consumer_data {
-	const char *name;
+काष्ठा userspace_consumer_data अणु
+	स्थिर अक्षर *name;
 
-	struct mutex lock;
+	काष्ठा mutex lock;
 	bool enabled;
 
-	int num_supplies;
-	struct regulator_bulk_data *supplies;
-};
+	पूर्णांक num_supplies;
+	काष्ठा regulator_bulk_data *supplies;
+पूर्ण;
 
-static ssize_t reg_show_name(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	struct userspace_consumer_data *data = dev_get_drvdata(dev);
+अटल sमाप_प्रकार reg_show_name(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा userspace_consumer_data *data = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", data->name);
-}
+	वापस प्र_लिखो(buf, "%s\n", data->name);
+पूर्ण
 
-static ssize_t reg_show_state(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	struct userspace_consumer_data *data = dev_get_drvdata(dev);
+अटल sमाप_प्रकार reg_show_state(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा userspace_consumer_data *data = dev_get_drvdata(dev);
 
-	if (data->enabled)
-		return sprintf(buf, "enabled\n");
+	अगर (data->enabled)
+		वापस प्र_लिखो(buf, "enabled\n");
 
-	return sprintf(buf, "disabled\n");
-}
+	वापस प्र_लिखो(buf, "disabled\n");
+पूर्ण
 
-static ssize_t reg_set_state(struct device *dev, struct device_attribute *attr,
-			 const char *buf, size_t count)
-{
-	struct userspace_consumer_data *data = dev_get_drvdata(dev);
+अटल sमाप_प्रकार reg_set_state(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा userspace_consumer_data *data = dev_get_drvdata(dev);
 	bool enabled;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * sysfs_streq() doesn't need the \n's, but we add them so the strings
+	 * sysfs_streq() करोesn't need the \n's, but we add them so the strings
 	 * will be shared with show_state(), above.
 	 */
-	if (sysfs_streq(buf, "enabled\n") || sysfs_streq(buf, "1"))
+	अगर (sysfs_streq(buf, "enabled\n") || sysfs_streq(buf, "1"))
 		enabled = true;
-	else if (sysfs_streq(buf, "disabled\n") || sysfs_streq(buf, "0"))
+	अन्यथा अगर (sysfs_streq(buf, "disabled\n") || sysfs_streq(buf, "0"))
 		enabled = false;
-	else {
+	अन्यथा अणु
 		dev_err(dev, "Configuring invalid mode\n");
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
 	mutex_lock(&data->lock);
-	if (enabled != data->enabled) {
-		if (enabled)
+	अगर (enabled != data->enabled) अणु
+		अगर (enabled)
 			ret = regulator_bulk_enable(data->num_supplies,
 						    data->supplies);
-		else
+		अन्यथा
 			ret = regulator_bulk_disable(data->num_supplies,
 						     data->supplies);
 
-		if (ret == 0)
+		अगर (ret == 0)
 			data->enabled = enabled;
-		else
+		अन्यथा
 			dev_err(dev, "Failed to configure state: %d\n", ret);
-	}
+	पूर्ण
 	mutex_unlock(&data->lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(name, 0444, reg_show_name, NULL);
-static DEVICE_ATTR(state, 0644, reg_show_state, reg_set_state);
+अटल DEVICE_ATTR(name, 0444, reg_show_name, शून्य);
+अटल DEVICE_ATTR(state, 0644, reg_show_state, reg_set_state);
 
-static struct attribute *attributes[] = {
+अटल काष्ठा attribute *attributes[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_state.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group attr_group = {
+अटल स्थिर काष्ठा attribute_group attr_group = अणु
 	.attrs	= attributes,
-};
+पूर्ण;
 
-static int regulator_userspace_consumer_probe(struct platform_device *pdev)
-{
-	struct regulator_userspace_consumer_data *pdata;
-	struct userspace_consumer_data *drvdata;
-	int ret;
+अटल पूर्णांक regulator_userspace_consumer_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा regulator_userspace_consumer_data *pdata;
+	काष्ठा userspace_consumer_data *drvdata;
+	पूर्णांक ret;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	if (!pdata)
-		return -EINVAL;
+	अगर (!pdata)
+		वापस -EINVAL;
 
 	drvdata = devm_kzalloc(&pdev->dev,
-			       sizeof(struct userspace_consumer_data),
+			       माप(काष्ठा userspace_consumer_data),
 			       GFP_KERNEL);
-	if (drvdata == NULL)
-		return -ENOMEM;
+	अगर (drvdata == शून्य)
+		वापस -ENOMEM;
 
 	drvdata->name = pdata->name;
 	drvdata->num_supplies = pdata->num_supplies;
@@ -124,57 +125,57 @@ static int regulator_userspace_consumer_probe(struct platform_device *pdev)
 
 	ret = devm_regulator_bulk_get(&pdev->dev, drvdata->num_supplies,
 				      drvdata->supplies);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to get supplies: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = sysfs_create_group(&pdev->dev.kobj, &attr_group);
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
-	if (pdata->init_on) {
+	अगर (pdata->init_on) अणु
 		ret = regulator_bulk_enable(drvdata->num_supplies,
 					    drvdata->supplies);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev,
 				"Failed to set initial state: %d\n", ret);
-			goto err_enable;
-		}
-	}
+			जाओ err_enable;
+		पूर्ण
+	पूर्ण
 
 	drvdata->enabled = pdata->init_on;
-	platform_set_drvdata(pdev, drvdata);
+	platक्रमm_set_drvdata(pdev, drvdata);
 
-	return 0;
+	वापस 0;
 
 err_enable:
-	sysfs_remove_group(&pdev->dev.kobj, &attr_group);
+	sysfs_हटाओ_group(&pdev->dev.kobj, &attr_group);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int regulator_userspace_consumer_remove(struct platform_device *pdev)
-{
-	struct userspace_consumer_data *data = platform_get_drvdata(pdev);
+अटल पूर्णांक regulator_userspace_consumer_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा userspace_consumer_data *data = platक्रमm_get_drvdata(pdev);
 
-	sysfs_remove_group(&pdev->dev.kobj, &attr_group);
+	sysfs_हटाओ_group(&pdev->dev.kobj, &attr_group);
 
-	if (data->enabled)
+	अगर (data->enabled)
 		regulator_bulk_disable(data->num_supplies, data->supplies);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver regulator_userspace_consumer_driver = {
+अटल काष्ठा platक्रमm_driver regulator_userspace_consumer_driver = अणु
 	.probe		= regulator_userspace_consumer_probe,
-	.remove		= regulator_userspace_consumer_remove,
-	.driver		= {
+	.हटाओ		= regulator_userspace_consumer_हटाओ,
+	.driver		= अणु
 		.name		= "reg-userspace-consumer",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(regulator_userspace_consumer_driver);
+module_platक्रमm_driver(regulator_userspace_consumer_driver);
 
 MODULE_AUTHOR("Mike Rapoport <mike@compulab.co.il>");
 MODULE_DESCRIPTION("Userspace consumer for voltage and current regulators");

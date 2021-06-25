@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
@@ -8,39 +9,39 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
-#ifndef __AA_RESOURCE_H
-#define __AA_RESOURCE_H
+#अगर_अघोषित __AA_RESOURCE_H
+#घोषणा __AA_RESOURCE_H
 
-#include <linux/resource.h>
-#include <linux/sched.h>
+#समावेश <linux/resource.h>
+#समावेश <linux/sched.h>
 
-#include "apparmorfs.h"
+#समावेश "apparmorfs.h"
 
-struct aa_profile;
+काष्ठा aa_profile;
 
-/* struct aa_rlimit - rlimit settings for the profile
+/* काष्ठा aa_rlimit - rlimit settings क्रम the profile
  * @mask: which hard limits to set
  * @limits: rlimit values that override task limits
  *
  * AppArmor rlimits are used to set confined task rlimits.  Only the
- * limits specified in @mask will be controlled by apparmor.
+ * limits specअगरied in @mask will be controlled by apparmor.
  */
-struct aa_rlimit {
-	unsigned int mask;
-	struct rlimit limits[RLIM_NLIMITS];
-};
+काष्ठा aa_rlimit अणु
+	अचिन्हित पूर्णांक mask;
+	काष्ठा rlimit limits[RLIM_NLIMITS];
+पूर्ण;
 
-extern struct aa_sfs_entry aa_sfs_entry_rlimit[];
+बाह्य काष्ठा aa_sfs_entry aa_sfs_entry_rlimit[];
 
-int aa_map_resource(int resource);
-int aa_task_setrlimit(struct aa_label *label, struct task_struct *task,
-		      unsigned int resource, struct rlimit *new_rlim);
+पूर्णांक aa_map_resource(पूर्णांक resource);
+पूर्णांक aa_task_setrlimit(काष्ठा aa_label *label, काष्ठा task_काष्ठा *task,
+		      अचिन्हित पूर्णांक resource, काष्ठा rlimit *new_rlim);
 
-void __aa_transition_rlimits(struct aa_label *old, struct aa_label *new);
+व्योम __aa_transition_rlimits(काष्ठा aa_label *old, काष्ठा aa_label *new);
 
-static inline void aa_free_rlimit_rules(struct aa_rlimit *rlims)
-{
+अटल अंतरभूत व्योम aa_मुक्त_rlimit_rules(काष्ठा aa_rlimit *rlims)
+अणु
 	/* NOP */
-}
+पूर्ण
 
-#endif /* __AA_RESOURCE_H */
+#पूर्ण_अगर /* __AA_RESOURCE_H */

@@ -1,21 +1,22 @@
+<शैली गुरु>
 /*
- * RNG driver for AMD RNGs
+ * RNG driver क्रम AMD RNGs
  *
  * Copyright 2005 (c) MontaVista Software, Inc.
  *
  * with the majority of the code coming from:
  *
- * Hardware driver for the Intel/AMD/VIA Random Number Generators (RNG)
+ * Hardware driver क्रम the Intel/AMD/VIA Ranकरोm Number Generators (RNG)
  * (c) Copyright 2003 Red Hat Inc <jgarzik@redhat.com>
  *
  * derived from
  *
- * Hardware driver for the AMD 768 Random Number Generator (RNG)
+ * Hardware driver क्रम the AMD 768 Ranकरोm Number Generator (RNG)
  * (c) Copyright 2001 Red Hat Inc
  *
  * derived from
  *
- * Hardware driver for Intel i810 Random Number Generator (RNG)
+ * Hardware driver क्रम Intel i810 Ranकरोm Number Generator (RNG)
  * Copyright 2000,2001 Jeff Garzik <jgarzik@pobox.com>
  * Copyright 2000,2001 Philipp Rumpf <prumpf@mandrakesoft.com>
  *
@@ -24,187 +25,187 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/delay.h>
-#include <linux/hw_random.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
-#define DRV_NAME "AMD768-HWRNG"
+#घोषणा DRV_NAME "AMD768-HWRNG"
 
-#define RNGDATA		0x00
-#define RNGDONE		0x04
-#define PMBASE_OFFSET	0xF0
-#define PMBASE_SIZE	8
+#घोषणा RNGDATA		0x00
+#घोषणा RNGDONE		0x04
+#घोषणा PMBASE_OFFSET	0xF0
+#घोषणा PMBASE_SIZE	8
 
 /*
- * Data for PCI driver interface
+ * Data क्रम PCI driver पूर्णांकerface
  *
- * This data only exists for exporting the supported
- * PCI ids via MODULE_DEVICE_TABLE.  We do not actually
- * register a pci_driver, because someone else might one day
- * want to register another driver on the same PCI id.
+ * This data only exists क्रम exporting the supported
+ * PCI ids via MODULE_DEVICE_TABLE.  We करो not actually
+ * रेजिस्टर a pci_driver, because someone अन्यथा might one day
+ * want to रेजिस्टर another driver on the same PCI id.
  */
-static const struct pci_device_id pci_tbl[] = {
-	{ PCI_VDEVICE(AMD, 0x7443), 0, },
-	{ PCI_VDEVICE(AMD, 0x746b), 0, },
-	{ 0, },	/* terminate list */
-};
+अटल स्थिर काष्ठा pci_device_id pci_tbl[] = अणु
+	अणु PCI_VDEVICE(AMD, 0x7443), 0, पूर्ण,
+	अणु PCI_VDEVICE(AMD, 0x746b), 0, पूर्ण,
+	अणु 0, पूर्ण,	/* terminate list */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, pci_tbl);
 
-struct amd768_priv {
-	void __iomem *iobase;
-	struct pci_dev *pcidev;
+काष्ठा amd768_priv अणु
+	व्योम __iomem *iobase;
+	काष्ठा pci_dev *pcidev;
 	u32 pmbase;
-};
+पूर्ण;
 
-static int amd_rng_read(struct hwrng *rng, void *buf, size_t max, bool wait)
-{
+अटल पूर्णांक amd_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *buf, माप_प्रकार max, bool रुको)
+अणु
 	u32 *data = buf;
-	struct amd768_priv *priv = (struct amd768_priv *)rng->priv;
-	size_t read = 0;
-	/* We will wait at maximum one time per read */
-	int timeout = max / 4 + 1;
+	काष्ठा amd768_priv *priv = (काष्ठा amd768_priv *)rng->priv;
+	माप_प्रकार पढ़ो = 0;
+	/* We will रुको at maximum one समय per पढ़ो */
+	पूर्णांक समयout = max / 4 + 1;
 
 	/*
 	 * RNG data is available when RNGDONE is set to 1
-	 * New random numbers are generated approximately 128 microseconds
-	 * after RNGDATA is read
+	 * New अक्रमom numbers are generated approximately 128 microseconds
+	 * after RNGDATA is पढ़ो
 	 */
-	while (read < max) {
-		if (ioread32(priv->iobase + RNGDONE) == 0) {
-			if (wait) {
+	जबतक (पढ़ो < max) अणु
+		अगर (ioपढ़ो32(priv->iobase + RNGDONE) == 0) अणु
+			अगर (रुको) अणु
 				/* Delay given by datasheet */
 				usleep_range(128, 196);
-				if (timeout-- == 0)
-					return read;
-			} else {
-				return 0;
-			}
-		} else {
-			*data = ioread32(priv->iobase + RNGDATA);
+				अगर (समयout-- == 0)
+					वापस पढ़ो;
+			पूर्ण अन्यथा अणु
+				वापस 0;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			*data = ioपढ़ो32(priv->iobase + RNGDATA);
 			data++;
-			read += 4;
-		}
-	}
+			पढ़ो += 4;
+		पूर्ण
+	पूर्ण
 
-	return read;
-}
+	वापस पढ़ो;
+पूर्ण
 
-static int amd_rng_init(struct hwrng *rng)
-{
-	struct amd768_priv *priv = (struct amd768_priv *)rng->priv;
+अटल पूर्णांक amd_rng_init(काष्ठा hwrng *rng)
+अणु
+	काष्ठा amd768_priv *priv = (काष्ठा amd768_priv *)rng->priv;
 	u8 rnen;
 
-	pci_read_config_byte(priv->pcidev, 0x40, &rnen);
+	pci_पढ़ो_config_byte(priv->pcidev, 0x40, &rnen);
 	rnen |= BIT(7);	/* RNG on */
-	pci_write_config_byte(priv->pcidev, 0x40, rnen);
+	pci_ग_लिखो_config_byte(priv->pcidev, 0x40, rnen);
 
-	pci_read_config_byte(priv->pcidev, 0x41, &rnen);
+	pci_पढ़ो_config_byte(priv->pcidev, 0x41, &rnen);
 	rnen |= BIT(7);	/* PMIO enable */
-	pci_write_config_byte(priv->pcidev, 0x41, rnen);
+	pci_ग_लिखो_config_byte(priv->pcidev, 0x41, rnen);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void amd_rng_cleanup(struct hwrng *rng)
-{
-	struct amd768_priv *priv = (struct amd768_priv *)rng->priv;
+अटल व्योम amd_rng_cleanup(काष्ठा hwrng *rng)
+अणु
+	काष्ठा amd768_priv *priv = (काष्ठा amd768_priv *)rng->priv;
 	u8 rnen;
 
-	pci_read_config_byte(priv->pcidev, 0x40, &rnen);
+	pci_पढ़ो_config_byte(priv->pcidev, 0x40, &rnen);
 	rnen &= ~BIT(7);	/* RNG off */
-	pci_write_config_byte(priv->pcidev, 0x40, rnen);
-}
+	pci_ग_लिखो_config_byte(priv->pcidev, 0x40, rnen);
+पूर्ण
 
-static struct hwrng amd_rng = {
+अटल काष्ठा hwrng amd_rng = अणु
 	.name		= "amd",
 	.init		= amd_rng_init,
 	.cleanup	= amd_rng_cleanup,
-	.read		= amd_rng_read,
-};
+	.पढ़ो		= amd_rng_पढ़ो,
+पूर्ण;
 
-static int __init mod_init(void)
-{
-	int err = -ENODEV;
-	struct pci_dev *pdev = NULL;
-	const struct pci_device_id *ent;
+अटल पूर्णांक __init mod_init(व्योम)
+अणु
+	पूर्णांक err = -ENODEV;
+	काष्ठा pci_dev *pdev = शून्य;
+	स्थिर काष्ठा pci_device_id *ent;
 	u32 pmbase;
-	struct amd768_priv *priv;
+	काष्ठा amd768_priv *priv;
 
-	for_each_pci_dev(pdev) {
+	क्रम_each_pci_dev(pdev) अणु
 		ent = pci_match_id(pci_tbl, pdev);
-		if (ent)
-			goto found;
-	}
+		अगर (ent)
+			जाओ found;
+	पूर्ण
 	/* Device not found. */
-	return -ENODEV;
+	वापस -ENODEV;
 
 found:
-	err = pci_read_config_dword(pdev, 0x58, &pmbase);
-	if (err)
-		return err;
+	err = pci_पढ़ो_config_dword(pdev, 0x58, &pmbase);
+	अगर (err)
+		वापस err;
 
 	pmbase &= 0x0000FF00;
-	if (pmbase == 0)
-		return -EIO;
+	अगर (pmbase == 0)
+		वापस -EIO;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	if (!request_region(pmbase + PMBASE_OFFSET, PMBASE_SIZE, DRV_NAME)) {
+	अगर (!request_region(pmbase + PMBASE_OFFSET, PMBASE_SIZE, DRV_NAME)) अणु
 		dev_err(&pdev->dev, DRV_NAME " region 0x%x already in use!\n",
 			pmbase + 0xF0);
 		err = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	priv->iobase = ioport_map(pmbase + PMBASE_OFFSET, PMBASE_SIZE);
-	if (!priv->iobase) {
+	अगर (!priv->iobase) अणु
 		pr_err(DRV_NAME "Cannot map ioport\n");
 		err = -EINVAL;
-		goto err_iomap;
-	}
+		जाओ err_iomap;
+	पूर्ण
 
-	amd_rng.priv = (unsigned long)priv;
+	amd_rng.priv = (अचिन्हित दीर्घ)priv;
 	priv->pmbase = pmbase;
 	priv->pcidev = pdev;
 
 	pr_info(DRV_NAME " detected\n");
-	err = hwrng_register(&amd_rng);
-	if (err) {
+	err = hwrng_रेजिस्टर(&amd_rng);
+	अगर (err) अणु
 		pr_err(DRV_NAME " registering failed (%d)\n", err);
-		goto err_hwrng;
-	}
-	return 0;
+		जाओ err_hwrng;
+	पूर्ण
+	वापस 0;
 
 err_hwrng:
 	ioport_unmap(priv->iobase);
 err_iomap:
 	release_region(pmbase + PMBASE_OFFSET, PMBASE_SIZE);
 out:
-	kfree(priv);
-	return err;
-}
+	kमुक्त(priv);
+	वापस err;
+पूर्ण
 
-static void __exit mod_exit(void)
-{
-	struct amd768_priv *priv;
+अटल व्योम __निकास mod_निकास(व्योम)
+अणु
+	काष्ठा amd768_priv *priv;
 
-	priv = (struct amd768_priv *)amd_rng.priv;
+	priv = (काष्ठा amd768_priv *)amd_rng.priv;
 
-	hwrng_unregister(&amd_rng);
+	hwrng_unरेजिस्टर(&amd_rng);
 
 	ioport_unmap(priv->iobase);
 
 	release_region(priv->pmbase + PMBASE_OFFSET, PMBASE_SIZE);
 
-	kfree(priv);
-}
+	kमुक्त(priv);
+पूर्ण
 
 module_init(mod_init);
-module_exit(mod_exit);
+module_निकास(mod_निकास);
 
 MODULE_AUTHOR("The Linux Kernel team");
 MODULE_DESCRIPTION("H/W RNG driver for AMD chipsets");

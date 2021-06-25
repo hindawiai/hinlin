@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <asm/byteorder.h>
-#include <asm/fpu.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/fpu.h>
 
-#define add_ssaaaa(sh, sl, ah, al, bh, bl) \
+#घोषणा add_ssaaaa(sh, sl, ah, al, bh, bl) \
   ((sl) = (al) + (bl), (sh) = (ah) + (bh) + ((sl) < (al)))
 
-#define sub_ddmmss(sh, sl, ah, al, bh, bl) \
+#घोषणा sub_ddmmss(sh, sl, ah, al, bh, bl) \
   ((sl) = (al) - (bl), (sh) = (ah) - (bh) - ((al) < (bl)))
 
-#define umul_ppmm(wh, wl, u, v)			\
-  __asm__ ("mulq %2,%3,%1; umulh %2,%3,%0"	\
+#घोषणा umul_ppmm(wh, wl, u, v)			\
+  __यंत्र__ ("mulq %2,%3,%1; umulh %2,%3,%0"	\
 	   : "=r" ((UDItype)(wh)),		\
 	     "=&r" ((UDItype)(wl))		\
 	   : "r" ((UDItype)(u)),		\
 	     "r" ((UDItype)(v)))
 
-#define udiv_qrnnd(q, r, n1, n0, d)				\
-  do { unsigned long __r;					\
-    (q) = __udiv_qrnnd (&__r, (n1), (n0), (d));			\
+#घोषणा uभाग_qrnnd(q, r, n1, n0, d)				\
+  करो अणु अचिन्हित दीर्घ __r;					\
+    (q) = __uभाग_qrnnd (&__r, (n1), (n0), (d));			\
     (r) = __r;							\
-  } while (0)
-extern unsigned long __udiv_qrnnd (unsigned long *, unsigned long,
-				   unsigned long , unsigned long);
+  पूर्ण जबतक (0)
+बाह्य अचिन्हित दीर्घ __uभाग_qrnnd (अचिन्हित दीर्घ *, अचिन्हित दीर्घ,
+				   अचिन्हित दीर्घ , अचिन्हित दीर्घ);
 
-#define UDIV_NEEDS_NORMALIZATION 1  
+#घोषणा UDIV_NEEDS_NORMALIZATION 1  
 
-#define abort()			goto bad_insn
+#घोषणा पात()			जाओ bad_insn
 
-#ifndef __LITTLE_ENDIAN
-#define __LITTLE_ENDIAN -1
-#endif
-#define __BYTE_ORDER __LITTLE_ENDIAN
+#अगर_अघोषित __LITTLE_ENDIAN
+#घोषणा __LITTLE_ENDIAN -1
+#पूर्ण_अगर
+#घोषणा __BYTE_ORDER __LITTLE_ENDIAN

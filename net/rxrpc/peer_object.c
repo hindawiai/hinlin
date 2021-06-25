@@ -1,314 +1,315 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* RxRPC remote transport endpoint record management
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* RxRPC remote transport endpoपूर्णांक record management
  *
  * Copyright (C) 2007, 2016 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/net.h>
-#include <linux/skbuff.h>
-#include <linux/udp.h>
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <linux/slab.h>
-#include <linux/hashtable.h>
-#include <net/sock.h>
-#include <net/af_rxrpc.h>
-#include <net/ip.h>
-#include <net/route.h>
-#include <net/ip6_route.h>
-#include "ar-internal.h"
+#समावेश <linux/module.h>
+#समावेश <linux/net.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hashtable.h>
+#समावेश <net/sock.h>
+#समावेश <net/af_rxrpc.h>
+#समावेश <net/ip.h>
+#समावेश <net/route.h>
+#समावेश <net/ip6_route.h>
+#समावेश "ar-internal.h"
 
 /*
  * Hash a peer key.
  */
-static unsigned long rxrpc_peer_hash_key(struct rxrpc_local *local,
-					 const struct sockaddr_rxrpc *srx)
-{
-	const u16 *p;
-	unsigned int i, size;
-	unsigned long hash_key;
+अटल अचिन्हित दीर्घ rxrpc_peer_hash_key(काष्ठा rxrpc_local *local,
+					 स्थिर काष्ठा sockaddr_rxrpc *srx)
+अणु
+	स्थिर u16 *p;
+	अचिन्हित पूर्णांक i, size;
+	अचिन्हित दीर्घ hash_key;
 
 	_enter("");
 
-	hash_key = (unsigned long)local / __alignof__(*local);
+	hash_key = (अचिन्हित दीर्घ)local / __alignof__(*local);
 	hash_key += srx->transport_type;
 	hash_key += srx->transport_len;
 	hash_key += srx->transport.family;
 
-	switch (srx->transport.family) {
-	case AF_INET:
-		hash_key += (u16 __force)srx->transport.sin.sin_port;
-		size = sizeof(srx->transport.sin.sin_addr);
+	चयन (srx->transport.family) अणु
+	हाल AF_INET:
+		hash_key += (u16 __क्रमce)srx->transport.sin.sin_port;
+		size = माप(srx->transport.sin.sin_addr);
 		p = (u16 *)&srx->transport.sin.sin_addr;
-		break;
-#ifdef CONFIG_AF_RXRPC_IPV6
-	case AF_INET6:
-		hash_key += (u16 __force)srx->transport.sin.sin_port;
-		size = sizeof(srx->transport.sin6.sin6_addr);
+		अवरोध;
+#अगर_घोषित CONFIG_AF_RXRPC_IPV6
+	हाल AF_INET6:
+		hash_key += (u16 __क्रमce)srx->transport.sin.sin_port;
+		size = माप(srx->transport.sin6.sin6_addr);
 		p = (u16 *)&srx->transport.sin6.sin6_addr;
-		break;
-#endif
-	default:
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		WARN(1, "AF_RXRPC: Unsupported transport address family\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Step through the peer address in 16-bit portions for speed */
-	for (i = 0; i < size; i += sizeof(*p), p++)
+	/* Step through the peer address in 16-bit portions क्रम speed */
+	क्रम (i = 0; i < size; i += माप(*p), p++)
 		hash_key += *p;
 
 	_leave(" 0x%lx", hash_key);
-	return hash_key;
-}
+	वापस hash_key;
+पूर्ण
 
 /*
  * Compare a peer to a key.  Return -ve, 0 or +ve to indicate less than, same
  * or greater than.
  *
- * Unfortunately, the primitives in linux/hashtable.h don't allow for sorted
- * buckets and mid-bucket insertion, so we don't make full use of this
- * information at this point.
+ * Unक्रमtunately, the primitives in linux/hashtable.h करोn't allow क्रम sorted
+ * buckets and mid-bucket insertion, so we करोn't make full use of this
+ * inक्रमmation at this poपूर्णांक.
  */
-static long rxrpc_peer_cmp_key(const struct rxrpc_peer *peer,
-			       struct rxrpc_local *local,
-			       const struct sockaddr_rxrpc *srx,
-			       unsigned long hash_key)
-{
-	long diff;
+अटल दीर्घ rxrpc_peer_cmp_key(स्थिर काष्ठा rxrpc_peer *peer,
+			       काष्ठा rxrpc_local *local,
+			       स्थिर काष्ठा sockaddr_rxrpc *srx,
+			       अचिन्हित दीर्घ hash_key)
+अणु
+	दीर्घ dअगरf;
 
-	diff = ((peer->hash_key - hash_key) ?:
-		((unsigned long)peer->local - (unsigned long)local) ?:
+	dअगरf = ((peer->hash_key - hash_key) ?:
+		((अचिन्हित दीर्घ)peer->local - (अचिन्हित दीर्घ)local) ?:
 		(peer->srx.transport_type - srx->transport_type) ?:
 		(peer->srx.transport_len - srx->transport_len) ?:
 		(peer->srx.transport.family - srx->transport.family));
-	if (diff != 0)
-		return diff;
+	अगर (dअगरf != 0)
+		वापस dअगरf;
 
-	switch (srx->transport.family) {
-	case AF_INET:
-		return ((u16 __force)peer->srx.transport.sin.sin_port -
-			(u16 __force)srx->transport.sin.sin_port) ?:
-			memcmp(&peer->srx.transport.sin.sin_addr,
+	चयन (srx->transport.family) अणु
+	हाल AF_INET:
+		वापस ((u16 __क्रमce)peer->srx.transport.sin.sin_port -
+			(u16 __क्रमce)srx->transport.sin.sin_port) ?:
+			स_भेद(&peer->srx.transport.sin.sin_addr,
 			       &srx->transport.sin.sin_addr,
-			       sizeof(struct in_addr));
-#ifdef CONFIG_AF_RXRPC_IPV6
-	case AF_INET6:
-		return ((u16 __force)peer->srx.transport.sin6.sin6_port -
-			(u16 __force)srx->transport.sin6.sin6_port) ?:
-			memcmp(&peer->srx.transport.sin6.sin6_addr,
+			       माप(काष्ठा in_addr));
+#अगर_घोषित CONFIG_AF_RXRPC_IPV6
+	हाल AF_INET6:
+		वापस ((u16 __क्रमce)peer->srx.transport.sin6.sin6_port -
+			(u16 __क्रमce)srx->transport.sin6.sin6_port) ?:
+			स_भेद(&peer->srx.transport.sin6.sin6_addr,
 			       &srx->transport.sin6.sin6_addr,
-			       sizeof(struct in6_addr));
-#endif
-	default:
+			       माप(काष्ठा in6_addr));
+#पूर्ण_अगर
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Look up a remote transport endpoint for the specified address using RCU.
+ * Look up a remote transport endpoपूर्णांक क्रम the specअगरied address using RCU.
  */
-static struct rxrpc_peer *__rxrpc_lookup_peer_rcu(
-	struct rxrpc_local *local,
-	const struct sockaddr_rxrpc *srx,
-	unsigned long hash_key)
-{
-	struct rxrpc_peer *peer;
-	struct rxrpc_net *rxnet = local->rxnet;
+अटल काष्ठा rxrpc_peer *__rxrpc_lookup_peer_rcu(
+	काष्ठा rxrpc_local *local,
+	स्थिर काष्ठा sockaddr_rxrpc *srx,
+	अचिन्हित दीर्घ hash_key)
+अणु
+	काष्ठा rxrpc_peer *peer;
+	काष्ठा rxrpc_net *rxnet = local->rxnet;
 
-	hash_for_each_possible_rcu(rxnet->peer_hash, peer, hash_link, hash_key) {
-		if (rxrpc_peer_cmp_key(peer, local, srx, hash_key) == 0 &&
-		    atomic_read(&peer->usage) > 0)
-			return peer;
-	}
+	hash_क्रम_each_possible_rcu(rxnet->peer_hash, peer, hash_link, hash_key) अणु
+		अगर (rxrpc_peer_cmp_key(peer, local, srx, hash_key) == 0 &&
+		    atomic_पढ़ो(&peer->usage) > 0)
+			वापस peer;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Look up a remote transport endpoint for the specified address using RCU.
+ * Look up a remote transport endpoपूर्णांक क्रम the specअगरied address using RCU.
  */
-struct rxrpc_peer *rxrpc_lookup_peer_rcu(struct rxrpc_local *local,
-					 const struct sockaddr_rxrpc *srx)
-{
-	struct rxrpc_peer *peer;
-	unsigned long hash_key = rxrpc_peer_hash_key(local, srx);
+काष्ठा rxrpc_peer *rxrpc_lookup_peer_rcu(काष्ठा rxrpc_local *local,
+					 स्थिर काष्ठा sockaddr_rxrpc *srx)
+अणु
+	काष्ठा rxrpc_peer *peer;
+	अचिन्हित दीर्घ hash_key = rxrpc_peer_hash_key(local, srx);
 
 	peer = __rxrpc_lookup_peer_rcu(local, srx, hash_key);
-	if (peer) {
+	अगर (peer) अणु
 		_net("PEER %d {%pISp}", peer->debug_id, &peer->srx.transport);
-		_leave(" = %p {u=%d}", peer, atomic_read(&peer->usage));
-	}
-	return peer;
-}
+		_leave(" = %p {u=%d}", peer, atomic_पढ़ो(&peer->usage));
+	पूर्ण
+	वापस peer;
+पूर्ण
 
 /*
- * assess the MTU size for the network interface through which this peer is
+ * assess the MTU size क्रम the network पूर्णांकerface through which this peer is
  * reached
  */
-static void rxrpc_assess_MTU_size(struct rxrpc_sock *rx,
-				  struct rxrpc_peer *peer)
-{
-	struct net *net = sock_net(&rx->sk);
-	struct dst_entry *dst;
-	struct rtable *rt;
-	struct flowi fl;
-	struct flowi4 *fl4 = &fl.u.ip4;
-#ifdef CONFIG_AF_RXRPC_IPV6
-	struct flowi6 *fl6 = &fl.u.ip6;
-#endif
+अटल व्योम rxrpc_assess_MTU_size(काष्ठा rxrpc_sock *rx,
+				  काष्ठा rxrpc_peer *peer)
+अणु
+	काष्ठा net *net = sock_net(&rx->sk);
+	काष्ठा dst_entry *dst;
+	काष्ठा rtable *rt;
+	काष्ठा flowi fl;
+	काष्ठा flowi4 *fl4 = &fl.u.ip4;
+#अगर_घोषित CONFIG_AF_RXRPC_IPV6
+	काष्ठा flowi6 *fl6 = &fl.u.ip6;
+#पूर्ण_अगर
 
-	peer->if_mtu = 1500;
+	peer->अगर_mtu = 1500;
 
-	memset(&fl, 0, sizeof(fl));
-	switch (peer->srx.transport.family) {
-	case AF_INET:
+	स_रखो(&fl, 0, माप(fl));
+	चयन (peer->srx.transport.family) अणु
+	हाल AF_INET:
 		rt = ip_route_output_ports(
-			net, fl4, NULL,
+			net, fl4, शून्य,
 			peer->srx.transport.sin.sin_addr.s_addr, 0,
 			htons(7000), htons(7001), IPPROTO_UDP, 0, 0);
-		if (IS_ERR(rt)) {
+		अगर (IS_ERR(rt)) अणु
 			_leave(" [route err %ld]", PTR_ERR(rt));
-			return;
-		}
+			वापस;
+		पूर्ण
 		dst = &rt->dst;
-		break;
+		अवरोध;
 
-#ifdef CONFIG_AF_RXRPC_IPV6
-	case AF_INET6:
-		fl6->flowi6_iif = LOOPBACK_IFINDEX;
+#अगर_घोषित CONFIG_AF_RXRPC_IPV6
+	हाल AF_INET6:
+		fl6->flowi6_iअगर = LOOPBACK_IFINDEX;
 		fl6->flowi6_scope = RT_SCOPE_UNIVERSE;
 		fl6->flowi6_proto = IPPROTO_UDP;
-		memcpy(&fl6->daddr, &peer->srx.transport.sin6.sin6_addr,
-		       sizeof(struct in6_addr));
+		स_नकल(&fl6->daddr, &peer->srx.transport.sin6.sin6_addr,
+		       माप(काष्ठा in6_addr));
 		fl6->fl6_dport = htons(7001);
 		fl6->fl6_sport = htons(7000);
-		dst = ip6_route_output(net, NULL, fl6);
-		if (dst->error) {
+		dst = ip6_route_output(net, शून्य, fl6);
+		अगर (dst->error) अणु
 			_leave(" [route err %d]", dst->error);
-			return;
-		}
-		break;
-#endif
+			वापस;
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर
 
-	default:
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	peer->if_mtu = dst_mtu(dst);
+	peer->अगर_mtu = dst_mtu(dst);
 	dst_release(dst);
 
-	_leave(" [if_mtu %u]", peer->if_mtu);
-}
+	_leave(" [if_mtu %u]", peer->अगर_mtu);
+पूर्ण
 
 /*
  * Allocate a peer.
  */
-struct rxrpc_peer *rxrpc_alloc_peer(struct rxrpc_local *local, gfp_t gfp)
-{
-	const void *here = __builtin_return_address(0);
-	struct rxrpc_peer *peer;
+काष्ठा rxrpc_peer *rxrpc_alloc_peer(काष्ठा rxrpc_local *local, gfp_t gfp)
+अणु
+	स्थिर व्योम *here = __builtin_वापस_address(0);
+	काष्ठा rxrpc_peer *peer;
 
 	_enter("");
 
-	peer = kzalloc(sizeof(struct rxrpc_peer), gfp);
-	if (peer) {
+	peer = kzalloc(माप(काष्ठा rxrpc_peer), gfp);
+	अगर (peer) अणु
 		atomic_set(&peer->usage, 1);
 		peer->local = rxrpc_get_local(local);
-		INIT_HLIST_HEAD(&peer->error_targets);
+		INIT_HLIST_HEAD(&peer->error_tarमाला_लो);
 		peer->service_conns = RB_ROOT;
 		seqlock_init(&peer->service_conn_lock);
 		spin_lock_init(&peer->lock);
 		spin_lock_init(&peer->rtt_input_lock);
-		peer->debug_id = atomic_inc_return(&rxrpc_debug_id);
+		peer->debug_id = atomic_inc_वापस(&rxrpc_debug_id);
 
 		rxrpc_peer_init_rtt(peer);
 
-		if (RXRPC_TX_SMSS > 2190)
+		अगर (RXRPC_TX_SMSS > 2190)
 			peer->cong_cwnd = 2;
-		else if (RXRPC_TX_SMSS > 1095)
+		अन्यथा अगर (RXRPC_TX_SMSS > 1095)
 			peer->cong_cwnd = 3;
-		else
+		अन्यथा
 			peer->cong_cwnd = 4;
 		trace_rxrpc_peer(peer->debug_id, rxrpc_peer_new, 1, here);
-	}
+	पूर्ण
 
 	_leave(" = %p", peer);
-	return peer;
-}
+	वापस peer;
+पूर्ण
 
 /*
  * Initialise peer record.
  */
-static void rxrpc_init_peer(struct rxrpc_sock *rx, struct rxrpc_peer *peer,
-			    unsigned long hash_key)
-{
+अटल व्योम rxrpc_init_peer(काष्ठा rxrpc_sock *rx, काष्ठा rxrpc_peer *peer,
+			    अचिन्हित दीर्घ hash_key)
+अणु
 	peer->hash_key = hash_key;
 	rxrpc_assess_MTU_size(rx, peer);
-	peer->mtu = peer->if_mtu;
-	peer->rtt_last_req = ktime_get_real();
+	peer->mtu = peer->अगर_mtu;
+	peer->rtt_last_req = kसमय_get_real();
 
-	switch (peer->srx.transport.family) {
-	case AF_INET:
-		peer->hdrsize = sizeof(struct iphdr);
-		break;
-#ifdef CONFIG_AF_RXRPC_IPV6
-	case AF_INET6:
-		peer->hdrsize = sizeof(struct ipv6hdr);
-		break;
-#endif
-	default:
+	चयन (peer->srx.transport.family) अणु
+	हाल AF_INET:
+		peer->hdrsize = माप(काष्ठा iphdr);
+		अवरोध;
+#अगर_घोषित CONFIG_AF_RXRPC_IPV6
+	हाल AF_INET6:
+		peer->hdrsize = माप(काष्ठा ipv6hdr);
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	switch (peer->srx.transport_type) {
-	case SOCK_DGRAM:
-		peer->hdrsize += sizeof(struct udphdr);
-		break;
-	default:
+	चयन (peer->srx.transport_type) अणु
+	हाल SOCK_DGRAM:
+		peer->hdrsize += माप(काष्ठा udphdr);
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	peer->hdrsize += sizeof(struct rxrpc_wire_header);
+	peer->hdrsize += माप(काष्ठा rxrpc_wire_header);
 	peer->maxdata = peer->mtu - peer->hdrsize;
-}
+पूर्ण
 
 /*
  * Set up a new peer.
  */
-static struct rxrpc_peer *rxrpc_create_peer(struct rxrpc_sock *rx,
-					    struct rxrpc_local *local,
-					    struct sockaddr_rxrpc *srx,
-					    unsigned long hash_key,
+अटल काष्ठा rxrpc_peer *rxrpc_create_peer(काष्ठा rxrpc_sock *rx,
+					    काष्ठा rxrpc_local *local,
+					    काष्ठा sockaddr_rxrpc *srx,
+					    अचिन्हित दीर्घ hash_key,
 					    gfp_t gfp)
-{
-	struct rxrpc_peer *peer;
+अणु
+	काष्ठा rxrpc_peer *peer;
 
 	_enter("");
 
 	peer = rxrpc_alloc_peer(local, gfp);
-	if (peer) {
-		memcpy(&peer->srx, srx, sizeof(*srx));
+	अगर (peer) अणु
+		स_नकल(&peer->srx, srx, माप(*srx));
 		rxrpc_init_peer(rx, peer, hash_key);
-	}
+	पूर्ण
 
 	_leave(" = %p", peer);
-	return peer;
-}
+	वापस peer;
+पूर्ण
 
 /*
  * Set up a new incoming peer.  There shouldn't be any other matching peers
- * since we've already done a search in the list from the non-reentrant context
- * (the data_ready handler) that is the only place we can add new peers.
+ * since we've alपढ़ोy करोne a search in the list from the non-reentrant context
+ * (the data_पढ़ोy handler) that is the only place we can add new peers.
  */
-void rxrpc_new_incoming_peer(struct rxrpc_sock *rx, struct rxrpc_local *local,
-			     struct rxrpc_peer *peer)
-{
-	struct rxrpc_net *rxnet = local->rxnet;
-	unsigned long hash_key;
+व्योम rxrpc_new_incoming_peer(काष्ठा rxrpc_sock *rx, काष्ठा rxrpc_local *local,
+			     काष्ठा rxrpc_peer *peer)
+अणु
+	काष्ठा rxrpc_net *rxnet = local->rxnet;
+	अचिन्हित दीर्घ hash_key;
 
 	hash_key = rxrpc_peer_hash_key(local, &peer->srx);
 	rxrpc_init_peer(rx, peer, hash_key);
@@ -317,103 +318,103 @@ void rxrpc_new_incoming_peer(struct rxrpc_sock *rx, struct rxrpc_local *local,
 	hash_add_rcu(rxnet->peer_hash, &peer->hash_link, hash_key);
 	list_add_tail(&peer->keepalive_link, &rxnet->peer_keepalive_new);
 	spin_unlock(&rxnet->peer_hash_lock);
-}
+पूर्ण
 
 /*
- * obtain a remote transport endpoint for the specified address
+ * obtain a remote transport endpoपूर्णांक क्रम the specअगरied address
  */
-struct rxrpc_peer *rxrpc_lookup_peer(struct rxrpc_sock *rx,
-				     struct rxrpc_local *local,
-				     struct sockaddr_rxrpc *srx, gfp_t gfp)
-{
-	struct rxrpc_peer *peer, *candidate;
-	struct rxrpc_net *rxnet = local->rxnet;
-	unsigned long hash_key = rxrpc_peer_hash_key(local, srx);
+काष्ठा rxrpc_peer *rxrpc_lookup_peer(काष्ठा rxrpc_sock *rx,
+				     काष्ठा rxrpc_local *local,
+				     काष्ठा sockaddr_rxrpc *srx, gfp_t gfp)
+अणु
+	काष्ठा rxrpc_peer *peer, *candidate;
+	काष्ठा rxrpc_net *rxnet = local->rxnet;
+	अचिन्हित दीर्घ hash_key = rxrpc_peer_hash_key(local, srx);
 
 	_enter("{%pISp}", &srx->transport);
 
 	/* search the peer list first */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	peer = __rxrpc_lookup_peer_rcu(local, srx, hash_key);
-	if (peer && !rxrpc_get_peer_maybe(peer))
-		peer = NULL;
-	rcu_read_unlock();
+	अगर (peer && !rxrpc_get_peer_maybe(peer))
+		peer = शून्य;
+	rcu_पढ़ो_unlock();
 
-	if (!peer) {
+	अगर (!peer) अणु
 		/* The peer is not yet present in hash - create a candidate
-		 * for a new record and then redo the search.
+		 * क्रम a new record and then reकरो the search.
 		 */
 		candidate = rxrpc_create_peer(rx, local, srx, hash_key, gfp);
-		if (!candidate) {
+		अगर (!candidate) अणु
 			_leave(" = NULL [nomem]");
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
 		spin_lock_bh(&rxnet->peer_hash_lock);
 
-		/* Need to check that we aren't racing with someone else */
+		/* Need to check that we aren't racing with someone अन्यथा */
 		peer = __rxrpc_lookup_peer_rcu(local, srx, hash_key);
-		if (peer && !rxrpc_get_peer_maybe(peer))
-			peer = NULL;
-		if (!peer) {
+		अगर (peer && !rxrpc_get_peer_maybe(peer))
+			peer = शून्य;
+		अगर (!peer) अणु
 			hash_add_rcu(rxnet->peer_hash,
 				     &candidate->hash_link, hash_key);
 			list_add_tail(&candidate->keepalive_link,
 				      &rxnet->peer_keepalive_new);
-		}
+		पूर्ण
 
 		spin_unlock_bh(&rxnet->peer_hash_lock);
 
-		if (peer)
-			kfree(candidate);
-		else
+		अगर (peer)
+			kमुक्त(candidate);
+		अन्यथा
 			peer = candidate;
-	}
+	पूर्ण
 
 	_net("PEER %d {%pISp}", peer->debug_id, &peer->srx.transport);
 
-	_leave(" = %p {u=%d}", peer, atomic_read(&peer->usage));
-	return peer;
-}
+	_leave(" = %p {u=%d}", peer, atomic_पढ़ो(&peer->usage));
+	वापस peer;
+पूर्ण
 
 /*
  * Get a ref on a peer record.
  */
-struct rxrpc_peer *rxrpc_get_peer(struct rxrpc_peer *peer)
-{
-	const void *here = __builtin_return_address(0);
-	int n;
+काष्ठा rxrpc_peer *rxrpc_get_peer(काष्ठा rxrpc_peer *peer)
+अणु
+	स्थिर व्योम *here = __builtin_वापस_address(0);
+	पूर्णांक n;
 
-	n = atomic_inc_return(&peer->usage);
+	n = atomic_inc_वापस(&peer->usage);
 	trace_rxrpc_peer(peer->debug_id, rxrpc_peer_got, n, here);
-	return peer;
-}
+	वापस peer;
+पूर्ण
 
 /*
- * Get a ref on a peer record unless its usage has already reached 0.
+ * Get a ref on a peer record unless its usage has alपढ़ोy reached 0.
  */
-struct rxrpc_peer *rxrpc_get_peer_maybe(struct rxrpc_peer *peer)
-{
-	const void *here = __builtin_return_address(0);
+काष्ठा rxrpc_peer *rxrpc_get_peer_maybe(काष्ठा rxrpc_peer *peer)
+अणु
+	स्थिर व्योम *here = __builtin_वापस_address(0);
 
-	if (peer) {
-		int n = atomic_fetch_add_unless(&peer->usage, 1, 0);
-		if (n > 0)
+	अगर (peer) अणु
+		पूर्णांक n = atomic_fetch_add_unless(&peer->usage, 1, 0);
+		अगर (n > 0)
 			trace_rxrpc_peer(peer->debug_id, rxrpc_peer_got, n + 1, here);
-		else
-			peer = NULL;
-	}
-	return peer;
-}
+		अन्यथा
+			peer = शून्य;
+	पूर्ण
+	वापस peer;
+पूर्ण
 
 /*
  * Discard a peer record.
  */
-static void __rxrpc_put_peer(struct rxrpc_peer *peer)
-{
-	struct rxrpc_net *rxnet = peer->local->rxnet;
+अटल व्योम __rxrpc_put_peer(काष्ठा rxrpc_peer *peer)
+अणु
+	काष्ठा rxrpc_net *rxnet = peer->local->rxnet;
 
-	ASSERT(hlist_empty(&peer->error_targets));
+	ASSERT(hlist_empty(&peer->error_tarमाला_लो));
 
 	spin_lock_bh(&rxnet->peer_hash_lock);
 	hash_del_rcu(&peer->hash_link);
@@ -421,67 +422,67 @@ static void __rxrpc_put_peer(struct rxrpc_peer *peer)
 	spin_unlock_bh(&rxnet->peer_hash_lock);
 
 	rxrpc_put_local(peer->local);
-	kfree_rcu(peer, rcu);
-}
+	kमुक्त_rcu(peer, rcu);
+पूर्ण
 
 /*
  * Drop a ref on a peer record.
  */
-void rxrpc_put_peer(struct rxrpc_peer *peer)
-{
-	const void *here = __builtin_return_address(0);
-	unsigned int debug_id;
-	int n;
+व्योम rxrpc_put_peer(काष्ठा rxrpc_peer *peer)
+अणु
+	स्थिर व्योम *here = __builtin_वापस_address(0);
+	अचिन्हित पूर्णांक debug_id;
+	पूर्णांक n;
 
-	if (peer) {
+	अगर (peer) अणु
 		debug_id = peer->debug_id;
-		n = atomic_dec_return(&peer->usage);
+		n = atomic_dec_वापस(&peer->usage);
 		trace_rxrpc_peer(debug_id, rxrpc_peer_put, n, here);
-		if (n == 0)
+		अगर (n == 0)
 			__rxrpc_put_peer(peer);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Drop a ref on a peer record where the caller already holds the
+ * Drop a ref on a peer record where the caller alपढ़ोy holds the
  * peer_hash_lock.
  */
-void rxrpc_put_peer_locked(struct rxrpc_peer *peer)
-{
-	const void *here = __builtin_return_address(0);
-	unsigned int debug_id = peer->debug_id;
-	int n;
+व्योम rxrpc_put_peer_locked(काष्ठा rxrpc_peer *peer)
+अणु
+	स्थिर व्योम *here = __builtin_वापस_address(0);
+	अचिन्हित पूर्णांक debug_id = peer->debug_id;
+	पूर्णांक n;
 
-	n = atomic_dec_return(&peer->usage);
+	n = atomic_dec_वापस(&peer->usage);
 	trace_rxrpc_peer(debug_id, rxrpc_peer_put, n, here);
-	if (n == 0) {
+	अगर (n == 0) अणु
 		hash_del_rcu(&peer->hash_link);
 		list_del_init(&peer->keepalive_link);
 		rxrpc_put_local(peer->local);
-		kfree_rcu(peer, rcu);
-	}
-}
+		kमुक्त_rcu(peer, rcu);
+	पूर्ण
+पूर्ण
 
 /*
  * Make sure all peer records have been discarded.
  */
-void rxrpc_destroy_all_peers(struct rxrpc_net *rxnet)
-{
-	struct rxrpc_peer *peer;
-	int i;
+व्योम rxrpc_destroy_all_peers(काष्ठा rxrpc_net *rxnet)
+अणु
+	काष्ठा rxrpc_peer *peer;
+	पूर्णांक i;
 
-	for (i = 0; i < HASH_SIZE(rxnet->peer_hash); i++) {
-		if (hlist_empty(&rxnet->peer_hash[i]))
-			continue;
+	क्रम (i = 0; i < HASH_SIZE(rxnet->peer_hash); i++) अणु
+		अगर (hlist_empty(&rxnet->peer_hash[i]))
+			जारी;
 
-		hlist_for_each_entry(peer, &rxnet->peer_hash[i], hash_link) {
+		hlist_क्रम_each_entry(peer, &rxnet->peer_hash[i], hash_link) अणु
 			pr_err("Leaked peer %u {%u} %pISp\n",
 			       peer->debug_id,
-			       atomic_read(&peer->usage),
+			       atomic_पढ़ो(&peer->usage),
 			       &peer->srx.transport);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * rxrpc_kernel_get_peer - Get the peer address of a call
@@ -491,11 +492,11 @@ void rxrpc_destroy_all_peers(struct rxrpc_net *rxnet)
  *
  * Get the address of the remote peer in a call.
  */
-void rxrpc_kernel_get_peer(struct socket *sock, struct rxrpc_call *call,
-			   struct sockaddr_rxrpc *_srx)
-{
+व्योम rxrpc_kernel_get_peer(काष्ठा socket *sock, काष्ठा rxrpc_call *call,
+			   काष्ठा sockaddr_rxrpc *_srx)
+अणु
 	*_srx = call->peer->srx;
-}
+पूर्ण
 EXPORT_SYMBOL(rxrpc_kernel_get_peer);
 
 /**
@@ -506,17 +507,17 @@ EXPORT_SYMBOL(rxrpc_kernel_get_peer);
  *
  * Get the call's peer smoothed RTT in uS.
  */
-bool rxrpc_kernel_get_srtt(struct socket *sock, struct rxrpc_call *call,
+bool rxrpc_kernel_get_srtt(काष्ठा socket *sock, काष्ठा rxrpc_call *call,
 			   u32 *_srtt)
-{
-	struct rxrpc_peer *peer = call->peer;
+अणु
+	काष्ठा rxrpc_peer *peer = call->peer;
 
-	if (peer->rtt_count == 0) {
+	अगर (peer->rtt_count == 0) अणु
 		*_srtt = 1000000; /* 1S */
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	*_srtt = call->peer->srtt_us >> 3;
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(rxrpc_kernel_get_srtt);

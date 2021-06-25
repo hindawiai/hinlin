@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -7,296 +8,296 @@
  *	Jaswinder Singh <jassi.brar@samsung.com>
  */
 
-#include <linux/debugfs.h>
-#include <linux/kernel.h>
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/amba/bus.h>
-#include <linux/scatterlist.h>
-#include <linux/of.h>
-#include <linux/of_dma.h>
-#include <linux/err.h>
-#include <linux/pm_runtime.h>
-#include <linux/bug.h>
-#include <linux/reset.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/err.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/bug.h>
+#समावेश <linux/reset.h>
 
-#include "dmaengine.h"
-#define PL330_MAX_CHAN		8
-#define PL330_MAX_IRQS		32
-#define PL330_MAX_PERI		32
-#define PL330_MAX_BURST         16
+#समावेश "dmaengine.h"
+#घोषणा PL330_MAX_CHAN		8
+#घोषणा PL330_MAX_IRQS		32
+#घोषणा PL330_MAX_PERI		32
+#घोषणा PL330_MAX_BURST         16
 
-#define PL330_QUIRK_BROKEN_NO_FLUSHP	BIT(0)
-#define PL330_QUIRK_PERIPH_BURST	BIT(1)
+#घोषणा PL330_QUIRK_BROKEN_NO_FLUSHP	BIT(0)
+#घोषणा PL330_QUIRK_PERIPH_BURST	BIT(1)
 
-enum pl330_cachectrl {
+क्रमागत pl330_cachectrl अणु
 	CCTRL0,		/* Noncacheable and nonbufferable */
 	CCTRL1,		/* Bufferable only */
-	CCTRL2,		/* Cacheable, but do not allocate */
-	CCTRL3,		/* Cacheable and bufferable, but do not allocate */
+	CCTRL2,		/* Cacheable, but करो not allocate */
+	CCTRL3,		/* Cacheable and bufferable, but करो not allocate */
 	INVALID1,	/* AWCACHE = 0x1000 */
 	INVALID2,
-	CCTRL6,		/* Cacheable write-through, allocate on writes only */
-	CCTRL7,		/* Cacheable write-back, allocate on writes only */
-};
+	CCTRL6,		/* Cacheable ग_लिखो-through, allocate on ग_लिखोs only */
+	CCTRL7,		/* Cacheable ग_लिखो-back, allocate on ग_लिखोs only */
+पूर्ण;
 
-enum pl330_byteswap {
+क्रमागत pl330_byteswap अणु
 	SWAP_NO,
 	SWAP_2,
 	SWAP_4,
 	SWAP_8,
 	SWAP_16,
-};
+पूर्ण;
 
 /* Register and Bit field Definitions */
-#define DS			0x0
-#define DS_ST_STOP		0x0
-#define DS_ST_EXEC		0x1
-#define DS_ST_CMISS		0x2
-#define DS_ST_UPDTPC		0x3
-#define DS_ST_WFE		0x4
-#define DS_ST_ATBRR		0x5
-#define DS_ST_QBUSY		0x6
-#define DS_ST_WFP		0x7
-#define DS_ST_KILL		0x8
-#define DS_ST_CMPLT		0x9
-#define DS_ST_FLTCMP		0xe
-#define DS_ST_FAULT		0xf
+#घोषणा DS			0x0
+#घोषणा DS_ST_STOP		0x0
+#घोषणा DS_ST_EXEC		0x1
+#घोषणा DS_ST_CMISS		0x2
+#घोषणा DS_ST_UPDTPC		0x3
+#घोषणा DS_ST_WFE		0x4
+#घोषणा DS_ST_ATBRR		0x5
+#घोषणा DS_ST_QBUSY		0x6
+#घोषणा DS_ST_WFP		0x7
+#घोषणा DS_ST_KILL		0x8
+#घोषणा DS_ST_CMPLT		0x9
+#घोषणा DS_ST_FLTCMP		0xe
+#घोषणा DS_ST_FAULT		0xf
 
-#define DPC			0x4
-#define INTEN			0x20
-#define ES			0x24
-#define INTSTATUS		0x28
-#define INTCLR			0x2c
-#define FSM			0x30
-#define FSC			0x34
-#define FTM			0x38
+#घोषणा DPC			0x4
+#घोषणा INTEN			0x20
+#घोषणा ES			0x24
+#घोषणा INTSTATUS		0x28
+#घोषणा INTCLR			0x2c
+#घोषणा FSM			0x30
+#घोषणा FSC			0x34
+#घोषणा FTM			0x38
 
-#define _FTC			0x40
-#define FTC(n)			(_FTC + (n)*0x4)
+#घोषणा _FTC			0x40
+#घोषणा FTC(n)			(_FTC + (n)*0x4)
 
-#define _CS			0x100
-#define CS(n)			(_CS + (n)*0x8)
-#define CS_CNS			(1 << 21)
+#घोषणा _CS			0x100
+#घोषणा CS(n)			(_CS + (n)*0x8)
+#घोषणा CS_CNS			(1 << 21)
 
-#define _CPC			0x104
-#define CPC(n)			(_CPC + (n)*0x8)
+#घोषणा _CPC			0x104
+#घोषणा CPC(n)			(_CPC + (n)*0x8)
 
-#define _SA			0x400
-#define SA(n)			(_SA + (n)*0x20)
+#घोषणा _SA			0x400
+#घोषणा SA(n)			(_SA + (n)*0x20)
 
-#define _DA			0x404
-#define DA(n)			(_DA + (n)*0x20)
+#घोषणा _DA			0x404
+#घोषणा DA(n)			(_DA + (n)*0x20)
 
-#define _CC			0x408
-#define CC(n)			(_CC + (n)*0x20)
+#घोषणा _CC			0x408
+#घोषणा CC(n)			(_CC + (n)*0x20)
 
-#define CC_SRCINC		(1 << 0)
-#define CC_DSTINC		(1 << 14)
-#define CC_SRCPRI		(1 << 8)
-#define CC_DSTPRI		(1 << 22)
-#define CC_SRCNS		(1 << 9)
-#define CC_DSTNS		(1 << 23)
-#define CC_SRCIA		(1 << 10)
-#define CC_DSTIA		(1 << 24)
-#define CC_SRCBRSTLEN_SHFT	4
-#define CC_DSTBRSTLEN_SHFT	18
-#define CC_SRCBRSTSIZE_SHFT	1
-#define CC_DSTBRSTSIZE_SHFT	15
-#define CC_SRCCCTRL_SHFT	11
-#define CC_SRCCCTRL_MASK	0x7
-#define CC_DSTCCTRL_SHFT	25
-#define CC_DRCCCTRL_MASK	0x7
-#define CC_SWAP_SHFT		28
+#घोषणा CC_SRCINC		(1 << 0)
+#घोषणा CC_DSTINC		(1 << 14)
+#घोषणा CC_SRCPRI		(1 << 8)
+#घोषणा CC_DSTPRI		(1 << 22)
+#घोषणा CC_SRCNS		(1 << 9)
+#घोषणा CC_DSTNS		(1 << 23)
+#घोषणा CC_SRCIA		(1 << 10)
+#घोषणा CC_DSTIA		(1 << 24)
+#घोषणा CC_SRCBRSTLEN_SHFT	4
+#घोषणा CC_DSTBRSTLEN_SHFT	18
+#घोषणा CC_SRCBRSTSIZE_SHFT	1
+#घोषणा CC_DSTBRSTSIZE_SHFT	15
+#घोषणा CC_SRCCCTRL_SHFT	11
+#घोषणा CC_SRCCCTRL_MASK	0x7
+#घोषणा CC_DSTCCTRL_SHFT	25
+#घोषणा CC_DRCCCTRL_MASK	0x7
+#घोषणा CC_SWAP_SHFT		28
 
-#define _LC0			0x40c
-#define LC0(n)			(_LC0 + (n)*0x20)
+#घोषणा _LC0			0x40c
+#घोषणा LC0(n)			(_LC0 + (n)*0x20)
 
-#define _LC1			0x410
-#define LC1(n)			(_LC1 + (n)*0x20)
+#घोषणा _LC1			0x410
+#घोषणा LC1(n)			(_LC1 + (n)*0x20)
 
-#define DBGSTATUS		0xd00
-#define DBG_BUSY		(1 << 0)
+#घोषणा DBGSTATUS		0xd00
+#घोषणा DBG_BUSY		(1 << 0)
 
-#define DBGCMD			0xd04
-#define DBGINST0		0xd08
-#define DBGINST1		0xd0c
+#घोषणा DBGCMD			0xd04
+#घोषणा DBGINST0		0xd08
+#घोषणा DBGINST1		0xd0c
 
-#define CR0			0xe00
-#define CR1			0xe04
-#define CR2			0xe08
-#define CR3			0xe0c
-#define CR4			0xe10
-#define CRD			0xe14
+#घोषणा CR0			0xe00
+#घोषणा CR1			0xe04
+#घोषणा CR2			0xe08
+#घोषणा CR3			0xe0c
+#घोषणा CR4			0xe10
+#घोषणा CRD			0xe14
 
-#define PERIPH_ID		0xfe0
-#define PERIPH_REV_SHIFT	20
-#define PERIPH_REV_MASK		0xf
-#define PERIPH_REV_R0P0		0
-#define PERIPH_REV_R1P0		1
-#define PERIPH_REV_R1P1		2
+#घोषणा PERIPH_ID		0xfe0
+#घोषणा PERIPH_REV_SHIFT	20
+#घोषणा PERIPH_REV_MASK		0xf
+#घोषणा PERIPH_REV_R0P0		0
+#घोषणा PERIPH_REV_R1P0		1
+#घोषणा PERIPH_REV_R1P1		2
 
-#define CR0_PERIPH_REQ_SET	(1 << 0)
-#define CR0_BOOT_EN_SET		(1 << 1)
-#define CR0_BOOT_MAN_NS		(1 << 2)
-#define CR0_NUM_CHANS_SHIFT	4
-#define CR0_NUM_CHANS_MASK	0x7
-#define CR0_NUM_PERIPH_SHIFT	12
-#define CR0_NUM_PERIPH_MASK	0x1f
-#define CR0_NUM_EVENTS_SHIFT	17
-#define CR0_NUM_EVENTS_MASK	0x1f
+#घोषणा CR0_PERIPH_REQ_SET	(1 << 0)
+#घोषणा CR0_BOOT_EN_SET		(1 << 1)
+#घोषणा CR0_BOOT_MAN_NS		(1 << 2)
+#घोषणा CR0_NUM_CHANS_SHIFT	4
+#घोषणा CR0_NUM_CHANS_MASK	0x7
+#घोषणा CR0_NUM_PERIPH_SHIFT	12
+#घोषणा CR0_NUM_PERIPH_MASK	0x1f
+#घोषणा CR0_NUM_EVENTS_SHIFT	17
+#घोषणा CR0_NUM_EVENTS_MASK	0x1f
 
-#define CR1_ICACHE_LEN_SHIFT	0
-#define CR1_ICACHE_LEN_MASK	0x7
-#define CR1_NUM_ICACHELINES_SHIFT	4
-#define CR1_NUM_ICACHELINES_MASK	0xf
+#घोषणा CR1_ICACHE_LEN_SHIFT	0
+#घोषणा CR1_ICACHE_LEN_MASK	0x7
+#घोषणा CR1_NUM_ICACHELINES_SHIFT	4
+#घोषणा CR1_NUM_ICACHELINES_MASK	0xf
 
-#define CRD_DATA_WIDTH_SHIFT	0
-#define CRD_DATA_WIDTH_MASK	0x7
-#define CRD_WR_CAP_SHIFT	4
-#define CRD_WR_CAP_MASK		0x7
-#define CRD_WR_Q_DEP_SHIFT	8
-#define CRD_WR_Q_DEP_MASK	0xf
-#define CRD_RD_CAP_SHIFT	12
-#define CRD_RD_CAP_MASK		0x7
-#define CRD_RD_Q_DEP_SHIFT	16
-#define CRD_RD_Q_DEP_MASK	0xf
-#define CRD_DATA_BUFF_SHIFT	20
-#define CRD_DATA_BUFF_MASK	0x3ff
+#घोषणा CRD_DATA_WIDTH_SHIFT	0
+#घोषणा CRD_DATA_WIDTH_MASK	0x7
+#घोषणा CRD_WR_CAP_SHIFT	4
+#घोषणा CRD_WR_CAP_MASK		0x7
+#घोषणा CRD_WR_Q_DEP_SHIFT	8
+#घोषणा CRD_WR_Q_DEP_MASK	0xf
+#घोषणा CRD_RD_CAP_SHIFT	12
+#घोषणा CRD_RD_CAP_MASK		0x7
+#घोषणा CRD_RD_Q_DEP_SHIFT	16
+#घोषणा CRD_RD_Q_DEP_MASK	0xf
+#घोषणा CRD_DATA_BUFF_SHIFT	20
+#घोषणा CRD_DATA_BUFF_MASK	0x3ff
 
-#define PART			0x330
-#define DESIGNER		0x41
-#define REVISION		0x0
-#define INTEG_CFG		0x0
-#define PERIPH_ID_VAL		((PART << 0) | (DESIGNER << 12))
+#घोषणा PART			0x330
+#घोषणा DESIGNER		0x41
+#घोषणा REVISION		0x0
+#घोषणा INTEG_CFG		0x0
+#घोषणा PERIPH_ID_VAL		((PART << 0) | (DESIGNER << 12))
 
-#define PL330_STATE_STOPPED		(1 << 0)
-#define PL330_STATE_EXECUTING		(1 << 1)
-#define PL330_STATE_WFE			(1 << 2)
-#define PL330_STATE_FAULTING		(1 << 3)
-#define PL330_STATE_COMPLETING		(1 << 4)
-#define PL330_STATE_WFP			(1 << 5)
-#define PL330_STATE_KILLING		(1 << 6)
-#define PL330_STATE_FAULT_COMPLETING	(1 << 7)
-#define PL330_STATE_CACHEMISS		(1 << 8)
-#define PL330_STATE_UPDTPC		(1 << 9)
-#define PL330_STATE_ATBARRIER		(1 << 10)
-#define PL330_STATE_QUEUEBUSY		(1 << 11)
-#define PL330_STATE_INVALID		(1 << 15)
+#घोषणा PL330_STATE_STOPPED		(1 << 0)
+#घोषणा PL330_STATE_EXECUTING		(1 << 1)
+#घोषणा PL330_STATE_WFE			(1 << 2)
+#घोषणा PL330_STATE_FAULTING		(1 << 3)
+#घोषणा PL330_STATE_COMPLETING		(1 << 4)
+#घोषणा PL330_STATE_WFP			(1 << 5)
+#घोषणा PL330_STATE_KILLING		(1 << 6)
+#घोषणा PL330_STATE_FAULT_COMPLETING	(1 << 7)
+#घोषणा PL330_STATE_CACHEMISS		(1 << 8)
+#घोषणा PL330_STATE_UPDTPC		(1 << 9)
+#घोषणा PL330_STATE_ATBARRIER		(1 << 10)
+#घोषणा PL330_STATE_QUEUEBUSY		(1 << 11)
+#घोषणा PL330_STATE_INVALID		(1 << 15)
 
-#define PL330_STABLE_STATES (PL330_STATE_STOPPED | PL330_STATE_EXECUTING \
+#घोषणा PL330_STABLE_STATES (PL330_STATE_STOPPED | PL330_STATE_EXECUTING \
 				| PL330_STATE_WFE | PL330_STATE_FAULTING)
 
-#define CMD_DMAADDH		0x54
-#define CMD_DMAEND		0x00
-#define CMD_DMAFLUSHP		0x35
-#define CMD_DMAGO		0xa0
-#define CMD_DMALD		0x04
-#define CMD_DMALDP		0x25
-#define CMD_DMALP		0x20
-#define CMD_DMALPEND		0x28
-#define CMD_DMAKILL		0x01
-#define CMD_DMAMOV		0xbc
-#define CMD_DMANOP		0x18
-#define CMD_DMARMB		0x12
-#define CMD_DMASEV		0x34
-#define CMD_DMAST		0x08
-#define CMD_DMASTP		0x29
-#define CMD_DMASTZ		0x0c
-#define CMD_DMAWFE		0x36
-#define CMD_DMAWFP		0x30
-#define CMD_DMAWMB		0x13
+#घोषणा CMD_DMAADDH		0x54
+#घोषणा CMD_DMAEND		0x00
+#घोषणा CMD_DMAFLUSHP		0x35
+#घोषणा CMD_DMAGO		0xa0
+#घोषणा CMD_DMALD		0x04
+#घोषणा CMD_DMALDP		0x25
+#घोषणा CMD_DMALP		0x20
+#घोषणा CMD_DMALPEND		0x28
+#घोषणा CMD_DMAKILL		0x01
+#घोषणा CMD_DMAMOV		0xbc
+#घोषणा CMD_DMANOP		0x18
+#घोषणा CMD_DMARMB		0x12
+#घोषणा CMD_DMASEV		0x34
+#घोषणा CMD_DMAST		0x08
+#घोषणा CMD_DMASTP		0x29
+#घोषणा CMD_DMASTZ		0x0c
+#घोषणा CMD_DMAWFE		0x36
+#घोषणा CMD_DMAWFP		0x30
+#घोषणा CMD_DMAWMB		0x13
 
-#define SZ_DMAADDH		3
-#define SZ_DMAEND		1
-#define SZ_DMAFLUSHP		2
-#define SZ_DMALD		1
-#define SZ_DMALDP		2
-#define SZ_DMALP		2
-#define SZ_DMALPEND		2
-#define SZ_DMAKILL		1
-#define SZ_DMAMOV		6
-#define SZ_DMANOP		1
-#define SZ_DMARMB		1
-#define SZ_DMASEV		2
-#define SZ_DMAST		1
-#define SZ_DMASTP		2
-#define SZ_DMASTZ		1
-#define SZ_DMAWFE		2
-#define SZ_DMAWFP		2
-#define SZ_DMAWMB		1
-#define SZ_DMAGO		6
+#घोषणा SZ_DMAADDH		3
+#घोषणा SZ_DMAEND		1
+#घोषणा SZ_DMAFLUSHP		2
+#घोषणा SZ_DMALD		1
+#घोषणा SZ_DMALDP		2
+#घोषणा SZ_DMALP		2
+#घोषणा SZ_DMALPEND		2
+#घोषणा SZ_DMAKILL		1
+#घोषणा SZ_DMAMOV		6
+#घोषणा SZ_DMANOP		1
+#घोषणा SZ_DMARMB		1
+#घोषणा SZ_DMASEV		2
+#घोषणा SZ_DMAST		1
+#घोषणा SZ_DMASTP		2
+#घोषणा SZ_DMASTZ		1
+#घोषणा SZ_DMAWFE		2
+#घोषणा SZ_DMAWFP		2
+#घोषणा SZ_DMAWMB		1
+#घोषणा SZ_DMAGO		6
 
-#define BRST_LEN(ccr)		((((ccr) >> CC_SRCBRSTLEN_SHFT) & 0xf) + 1)
-#define BRST_SIZE(ccr)		(1 << (((ccr) >> CC_SRCBRSTSIZE_SHFT) & 0x7))
+#घोषणा BRST_LEN(ccr)		((((ccr) >> CC_SRCBRSTLEN_SHFT) & 0xf) + 1)
+#घोषणा BRST_SIZE(ccr)		(1 << (((ccr) >> CC_SRCBRSTSIZE_SHFT) & 0x7))
 
-#define BYTE_TO_BURST(b, ccr)	((b) / BRST_SIZE(ccr) / BRST_LEN(ccr))
-#define BURST_TO_BYTE(c, ccr)	((c) * BRST_SIZE(ccr) * BRST_LEN(ccr))
+#घोषणा BYTE_TO_BURST(b, ccr)	((b) / BRST_SIZE(ccr) / BRST_LEN(ccr))
+#घोषणा BURST_TO_BYTE(c, ccr)	((c) * BRST_SIZE(ccr) * BRST_LEN(ccr))
 
 /*
- * With 256 bytes, we can do more than 2.5MB and 5MB xfers per req
- * at 1byte/burst for P<->M and M<->M respectively.
+ * With 256 bytes, we can करो more than 2.5MB and 5MB xfers per req
+ * at 1byte/burst क्रम P<->M and M<->M respectively.
  * For typical scenario, at 1word/burst, 10MB and 20MB xfers per req
- * should be enough for P<->M and M<->M respectively.
+ * should be enough क्रम P<->M and M<->M respectively.
  */
-#define MCODE_BUFF_PER_REQ	256
+#घोषणा MCODE_BUFF_PER_REQ	256
 
-/* Use this _only_ to wait on transient states */
-#define UNTIL(t, s)	while (!(_state(t) & (s))) cpu_relax();
+/* Use this _only_ to रुको on transient states */
+#घोषणा UNTIL(t, s)	जबतक (!(_state(t) & (s))) cpu_relax();
 
-#ifdef PL330_DEBUG_MCGEN
-static unsigned cmd_line;
-#define PL330_DBGCMD_DUMP(off, x...)	do { \
-						printk("%x:", cmd_line); \
-						printk(KERN_CONT x); \
+#अगर_घोषित PL330_DEBUG_MCGEN
+अटल अचिन्हित cmd_line;
+#घोषणा PL330_DBGCMD_DUMP(off, x...)	करो अणु \
+						prपूर्णांकk("%x:", cmd_line); \
+						prपूर्णांकk(KERN_CONT x); \
 						cmd_line += off; \
-					} while (0)
-#define PL330_DBGMC_START(addr)		(cmd_line = addr)
-#else
-#define PL330_DBGCMD_DUMP(off, x...)	do {} while (0)
-#define PL330_DBGMC_START(addr)		do {} while (0)
-#endif
+					पूर्ण जबतक (0)
+#घोषणा PL330_DBGMC_START(addr)		(cmd_line = addr)
+#अन्यथा
+#घोषणा PL330_DBGCMD_DUMP(off, x...)	करो अणुपूर्ण जबतक (0)
+#घोषणा PL330_DBGMC_START(addr)		करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-/* The number of default descriptors */
+/* The number of शेष descriptors */
 
-#define NR_DEFAULT_DESC	16
+#घोषणा NR_DEFAULT_DESC	16
 
-/* Delay for runtime PM autosuspend, ms */
-#define PL330_AUTOSUSPEND_DELAY 20
+/* Delay क्रम runसमय PM स्वतःsuspend, ms */
+#घोषणा PL330_AUTOSUSPEND_DELAY 20
 
-/* Populated by the PL330 core driver for DMA API driver's info */
-struct pl330_config {
+/* Populated by the PL330 core driver क्रम DMA API driver's info */
+काष्ठा pl330_config अणु
 	u32	periph_id;
-#define DMAC_MODE_NS	(1 << 0)
-	unsigned int	mode;
-	unsigned int	data_bus_width:10; /* In number of bits */
-	unsigned int	data_buf_dep:11;
-	unsigned int	num_chan:4;
-	unsigned int	num_peri:6;
+#घोषणा DMAC_MODE_NS	(1 << 0)
+	अचिन्हित पूर्णांक	mode;
+	अचिन्हित पूर्णांक	data_bus_width:10; /* In number of bits */
+	अचिन्हित पूर्णांक	data_buf_dep:11;
+	अचिन्हित पूर्णांक	num_chan:4;
+	अचिन्हित पूर्णांक	num_peri:6;
 	u32		peri_ns;
-	unsigned int	num_events:6;
+	अचिन्हित पूर्णांक	num_events:6;
 	u32		irq_ns;
-};
+पूर्ण;
 
 /*
  * Request Configuration.
- * The PL330 core does not modify this and uses the last
- * working configuration if the request doesn't provide any.
+ * The PL330 core करोes not modअगरy this and uses the last
+ * working configuration अगर the request करोesn't provide any.
  *
- * The Client may want to provide this info only for the
+ * The Client may want to provide this info only क्रम the
  * first request and a request with new settings.
  */
-struct pl330_reqcfg {
+काष्ठा pl330_reqcfg अणु
 	/* Address Incrementing */
-	unsigned dst_inc:1;
-	unsigned src_inc:1;
+	अचिन्हित dst_inc:1;
+	अचिन्हित src_inc:1;
 
 	/*
 	 * For now, the SRC & DST protection levels
@@ -305,91 +306,91 @@ struct pl330_reqcfg {
 	bool nonsecure;
 	bool privileged;
 	bool insnaccess;
-	unsigned brst_len:5;
-	unsigned brst_size:3; /* in power of 2 */
+	अचिन्हित brst_len:5;
+	अचिन्हित brst_size:3; /* in घातer of 2 */
 
-	enum pl330_cachectrl dcctl;
-	enum pl330_cachectrl scctl;
-	enum pl330_byteswap swap;
-	struct pl330_config *pcfg;
-};
+	क्रमागत pl330_cachectrl dcctl;
+	क्रमागत pl330_cachectrl scctl;
+	क्रमागत pl330_byteswap swap;
+	काष्ठा pl330_config *pcfg;
+पूर्ण;
 
 /*
  * One cycle of DMAC operation.
  * There may be more than one xfer in a request.
  */
-struct pl330_xfer {
+काष्ठा pl330_xfer अणु
 	u32 src_addr;
 	u32 dst_addr;
 	/* Size to xfer */
 	u32 bytes;
-};
+पूर्ण;
 
 /* The xfer callbacks are made with one of these arguments. */
-enum pl330_op_err {
+क्रमागत pl330_op_err अणु
 	/* The all xfers in the request were success. */
 	PL330_ERR_NONE,
-	/* If req aborted due to global error. */
+	/* If req पातed due to global error. */
 	PL330_ERR_ABORT,
 	/* If req failed due to problem with Channel. */
 	PL330_ERR_FAIL,
-};
+पूर्ण;
 
-enum dmamov_dst {
+क्रमागत dmamov_dst अणु
 	SAR = 0,
 	CCR,
 	DAR,
-};
+पूर्ण;
 
-enum pl330_dst {
+क्रमागत pl330_dst अणु
 	SRC = 0,
 	DST,
-};
+पूर्ण;
 
-enum pl330_cond {
+क्रमागत pl330_cond अणु
 	SINGLE,
 	BURST,
 	ALWAYS,
-};
+पूर्ण;
 
-struct dma_pl330_desc;
+काष्ठा dma_pl330_desc;
 
-struct _pl330_req {
+काष्ठा _pl330_req अणु
 	u32 mc_bus;
-	void *mc_cpu;
-	struct dma_pl330_desc *desc;
-};
+	व्योम *mc_cpu;
+	काष्ठा dma_pl330_desc *desc;
+पूर्ण;
 
-/* ToBeDone for tasklet */
-struct _pl330_tbd {
+/* ToBeDone क्रम tasklet */
+काष्ठा _pl330_tbd अणु
 	bool reset_dmac;
 	bool reset_mngr;
 	u8 reset_chan;
-};
+पूर्ण;
 
-/* A DMAC Thread */
-struct pl330_thread {
+/* A DMAC Thपढ़ो */
+काष्ठा pl330_thपढ़ो अणु
 	u8 id;
-	int ev;
+	पूर्णांक ev;
 	/* If the channel is not yet acquired by any client */
-	bool free;
+	bool मुक्त;
 	/* Parent DMAC */
-	struct pl330_dmac *dmac;
-	/* Only two at a time */
-	struct _pl330_req req[2];
+	काष्ठा pl330_dmac *dmac;
+	/* Only two at a समय */
+	काष्ठा _pl330_req req[2];
 	/* Index of the last enqueued request */
-	unsigned lstenq;
-	/* Index of the last submitted request or -1 if the DMA is stopped */
-	int req_running;
-};
+	अचिन्हित lstenq;
+	/* Index of the last submitted request or -1 अगर the DMA is stopped */
+	पूर्णांक req_running;
+पूर्ण;
 
-enum pl330_dmac_state {
+क्रमागत pl330_dmac_state अणु
 	UNINIT,
 	INIT,
 	DYING,
-};
+पूर्ण;
 
-enum desc_status {
+क्रमागत desc_status अणु
 	/* In the DMAC pool */
 	FREE,
 	/*
@@ -398,195 +399,195 @@ enum desc_status {
 	 */
 	PREP,
 	/*
-	 * Sitting on the work_list and already submitted
+	 * Sitting on the work_list and alपढ़ोy submitted
 	 * to the PL330 core. Not more than two descriptors
-	 * of a channel can be BUSY at any time.
+	 * of a channel can be BUSY at any समय.
 	 */
 	BUSY,
 	/*
-	 * Sitting on the channel work_list but xfer done
+	 * Sitting on the channel work_list but xfer करोne
 	 * by PL330 core
 	 */
 	DONE,
-};
+पूर्ण;
 
-struct dma_pl330_chan {
+काष्ठा dma_pl330_chan अणु
 	/* Schedule desc completion */
-	struct tasklet_struct task;
+	काष्ठा tasklet_काष्ठा task;
 
 	/* DMA-Engine Channel */
-	struct dma_chan chan;
+	काष्ठा dma_chan chan;
 
 	/* List of submitted descriptors */
-	struct list_head submitted_list;
+	काष्ठा list_head submitted_list;
 	/* List of issued descriptors */
-	struct list_head work_list;
+	काष्ठा list_head work_list;
 	/* List of completed descriptors */
-	struct list_head completed_list;
+	काष्ठा list_head completed_list;
 
-	/* Pointer to the DMAC that manages this channel,
-	 * NULL if the channel is available to be acquired.
+	/* Poपूर्णांकer to the DMAC that manages this channel,
+	 * शून्य अगर the channel is available to be acquired.
 	 * As the parent, this DMAC also provides descriptors
 	 * to the channel.
 	 */
-	struct pl330_dmac *dmac;
+	काष्ठा pl330_dmac *dmac;
 
 	/* To protect channel manipulation */
 	spinlock_t lock;
 
 	/*
-	 * Hardware channel thread of PL330 DMAC. NULL if the channel is
+	 * Hardware channel thपढ़ो of PL330 DMAC. शून्य अगर the channel is
 	 * available.
 	 */
-	struct pl330_thread *thread;
+	काष्ठा pl330_thपढ़ो *thपढ़ो;
 
 	/* For D-to-M and M-to-D channels */
-	int burst_sz; /* the peripheral fifo width */
-	int burst_len; /* the number of burst */
-	phys_addr_t fifo_addr;
-	/* DMA-mapped view of the FIFO; may differ if an IOMMU is present */
-	dma_addr_t fifo_dma;
-	enum dma_data_direction dir;
-	struct dma_slave_config slave_config;
+	पूर्णांक burst_sz; /* the peripheral fअगरo width */
+	पूर्णांक burst_len; /* the number of burst */
+	phys_addr_t fअगरo_addr;
+	/* DMA-mapped view of the FIFO; may dअगरfer अगर an IOMMU is present */
+	dma_addr_t fअगरo_dma;
+	क्रमागत dma_data_direction dir;
+	काष्ठा dma_slave_config slave_config;
 
-	/* for cyclic capability */
+	/* क्रम cyclic capability */
 	bool cyclic;
 
-	/* for runtime pm tracking */
+	/* क्रम runसमय pm tracking */
 	bool active;
-};
+पूर्ण;
 
-struct pl330_dmac {
+काष्ठा pl330_dmac अणु
 	/* DMA-Engine Device */
-	struct dma_device ddma;
+	काष्ठा dma_device ddma;
 
-	/* Pool of descriptors available for the DMAC's channels */
-	struct list_head desc_pool;
+	/* Pool of descriptors available क्रम the DMAC's channels */
+	काष्ठा list_head desc_pool;
 	/* To protect desc_pool manipulation */
 	spinlock_t pool_lock;
 
-	/* Size of MicroCode buffers for each channel. */
-	unsigned mcbufsz;
-	/* ioremap'ed address of PL330 registers. */
-	void __iomem	*base;
+	/* Size of MicroCode buffers क्रम each channel. */
+	अचिन्हित mcbufsz;
+	/* ioremap'ed address of PL330 रेजिस्टरs. */
+	व्योम __iomem	*base;
 	/* Populated by the PL330 core driver during pl330_add */
-	struct pl330_config	pcfg;
+	काष्ठा pl330_config	pcfg;
 
 	spinlock_t		lock;
 	/* Maximum possible events/irqs */
-	int			events[32];
+	पूर्णांक			events[32];
 	/* BUS address of MicroCode buffer */
 	dma_addr_t		mcode_bus;
 	/* CPU address of MicroCode buffer */
-	void			*mcode_cpu;
-	/* List of all Channel threads */
-	struct pl330_thread	*channels;
-	/* Pointer to the MANAGER thread */
-	struct pl330_thread	*manager;
-	/* To handle bad news in interrupt */
-	struct tasklet_struct	tasks;
-	struct _pl330_tbd	dmac_tbd;
+	व्योम			*mcode_cpu;
+	/* List of all Channel thपढ़ोs */
+	काष्ठा pl330_thपढ़ो	*channels;
+	/* Poपूर्णांकer to the MANAGER thपढ़ो */
+	काष्ठा pl330_thपढ़ो	*manager;
+	/* To handle bad news in पूर्णांकerrupt */
+	काष्ठा tasklet_काष्ठा	tasks;
+	काष्ठा _pl330_tbd	dmac_tbd;
 	/* State of DMAC operation */
-	enum pl330_dmac_state	state;
+	क्रमागत pl330_dmac_state	state;
 	/* Holds list of reqs with due callbacks */
-	struct list_head        req_done;
+	काष्ठा list_head        req_करोne;
 
 	/* Peripheral channels connected to this DMAC */
-	unsigned int num_peripherals;
-	struct dma_pl330_chan *peripherals; /* keep at end */
-	int quirks;
+	अचिन्हित पूर्णांक num_peripherals;
+	काष्ठा dma_pl330_chan *peripherals; /* keep at end */
+	पूर्णांक quirks;
 
-	struct reset_control	*rstc;
-	struct reset_control	*rstc_ocp;
-};
+	काष्ठा reset_control	*rstc;
+	काष्ठा reset_control	*rstc_ocp;
+पूर्ण;
 
-static struct pl330_of_quirks {
-	char *quirk;
-	int id;
-} of_quirks[] = {
-	{
+अटल काष्ठा pl330_of_quirks अणु
+	अक्षर *quirk;
+	पूर्णांक id;
+पूर्ण of_quirks[] = अणु
+	अणु
 		.quirk = "arm,pl330-broken-no-flushp",
 		.id = PL330_QUIRK_BROKEN_NO_FLUSHP,
-	},
-	{
+	पूर्ण,
+	अणु
 		.quirk = "arm,pl330-periph-burst",
 		.id = PL330_QUIRK_PERIPH_BURST,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-struct dma_pl330_desc {
+काष्ठा dma_pl330_desc अणु
 	/* To attach to a queue as child */
-	struct list_head node;
+	काष्ठा list_head node;
 
-	/* Descriptor for the DMA Engine API */
-	struct dma_async_tx_descriptor txd;
+	/* Descriptor क्रम the DMA Engine API */
+	काष्ठा dma_async_tx_descriptor txd;
 
-	/* Xfer for PL330 core */
-	struct pl330_xfer px;
+	/* Xfer क्रम PL330 core */
+	काष्ठा pl330_xfer px;
 
-	struct pl330_reqcfg rqcfg;
+	काष्ठा pl330_reqcfg rqcfg;
 
-	enum desc_status status;
+	क्रमागत desc_status status;
 
-	int bytes_requested;
+	पूर्णांक bytes_requested;
 	bool last;
 
 	/* The channel which currently holds this desc */
-	struct dma_pl330_chan *pchan;
+	काष्ठा dma_pl330_chan *pchan;
 
-	enum dma_transfer_direction rqtype;
-	/* Index of peripheral for the xfer. */
-	unsigned peri:5;
+	क्रमागत dma_transfer_direction rqtype;
+	/* Index of peripheral क्रम the xfer. */
+	अचिन्हित peri:5;
 	/* Hook to attach to DMAC's list of reqs with due callback */
-	struct list_head rqd;
-};
+	काष्ठा list_head rqd;
+पूर्ण;
 
-struct _xfer_spec {
+काष्ठा _xfer_spec अणु
 	u32 ccr;
-	struct dma_pl330_desc *desc;
-};
+	काष्ठा dma_pl330_desc *desc;
+पूर्ण;
 
-static int pl330_config_write(struct dma_chan *chan,
-			struct dma_slave_config *slave_config,
-			enum dma_transfer_direction direction);
+अटल पूर्णांक pl330_config_ग_लिखो(काष्ठा dma_chan *chan,
+			काष्ठा dma_slave_config *slave_config,
+			क्रमागत dma_transfer_direction direction);
 
-static inline bool _queue_full(struct pl330_thread *thrd)
-{
-	return thrd->req[0].desc != NULL && thrd->req[1].desc != NULL;
-}
+अटल अंतरभूत bool _queue_full(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	वापस thrd->req[0].desc != शून्य && thrd->req[1].desc != शून्य;
+पूर्ण
 
-static inline bool is_manager(struct pl330_thread *thrd)
-{
-	return thrd->dmac->manager == thrd;
-}
+अटल अंतरभूत bool is_manager(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	वापस thrd->dmac->manager == thrd;
+पूर्ण
 
-/* If manager of the thread is in Non-Secure mode */
-static inline bool _manager_ns(struct pl330_thread *thrd)
-{
-	return (thrd->dmac->pcfg.mode & DMAC_MODE_NS) ? true : false;
-}
+/* If manager of the thपढ़ो is in Non-Secure mode */
+अटल अंतरभूत bool _manager_ns(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	वापस (thrd->dmac->pcfg.mode & DMAC_MODE_NS) ? true : false;
+पूर्ण
 
-static inline u32 get_revision(u32 periph_id)
-{
-	return (periph_id >> PERIPH_REV_SHIFT) & PERIPH_REV_MASK;
-}
+अटल अंतरभूत u32 get_revision(u32 periph_id)
+अणु
+	वापस (periph_id >> PERIPH_REV_SHIFT) & PERIPH_REV_MASK;
+पूर्ण
 
-static inline u32 _emit_END(unsigned dry_run, u8 buf[])
-{
-	if (dry_run)
-		return SZ_DMAEND;
+अटल अंतरभूत u32 _emit_END(अचिन्हित dry_run, u8 buf[])
+अणु
+	अगर (dry_run)
+		वापस SZ_DMAEND;
 
 	buf[0] = CMD_DMAEND;
 
 	PL330_DBGCMD_DUMP(SZ_DMAEND, "\tDMAEND\n");
 
-	return SZ_DMAEND;
-}
+	वापस SZ_DMAEND;
+पूर्ण
 
-static inline u32 _emit_FLUSHP(unsigned dry_run, u8 buf[], u8 peri)
-{
-	if (dry_run)
-		return SZ_DMAFLUSHP;
+अटल अंतरभूत u32 _emit_FLUSHP(अचिन्हित dry_run, u8 buf[], u8 peri)
+अणु
+	अगर (dry_run)
+		वापस SZ_DMAFLUSHP;
 
 	buf[0] = CMD_DMAFLUSHP;
 
@@ -596,36 +597,36 @@ static inline u32 _emit_FLUSHP(unsigned dry_run, u8 buf[], u8 peri)
 
 	PL330_DBGCMD_DUMP(SZ_DMAFLUSHP, "\tDMAFLUSHP %u\n", peri >> 3);
 
-	return SZ_DMAFLUSHP;
-}
+	वापस SZ_DMAFLUSHP;
+पूर्ण
 
-static inline u32 _emit_LD(unsigned dry_run, u8 buf[],	enum pl330_cond cond)
-{
-	if (dry_run)
-		return SZ_DMALD;
+अटल अंतरभूत u32 _emit_LD(अचिन्हित dry_run, u8 buf[],	क्रमागत pl330_cond cond)
+अणु
+	अगर (dry_run)
+		वापस SZ_DMALD;
 
 	buf[0] = CMD_DMALD;
 
-	if (cond == SINGLE)
+	अगर (cond == SINGLE)
 		buf[0] |= (0 << 1) | (1 << 0);
-	else if (cond == BURST)
+	अन्यथा अगर (cond == BURST)
 		buf[0] |= (1 << 1) | (1 << 0);
 
 	PL330_DBGCMD_DUMP(SZ_DMALD, "\tDMALD%c\n",
 		cond == SINGLE ? 'S' : (cond == BURST ? 'B' : 'A'));
 
-	return SZ_DMALD;
-}
+	वापस SZ_DMALD;
+पूर्ण
 
-static inline u32 _emit_LDP(unsigned dry_run, u8 buf[],
-		enum pl330_cond cond, u8 peri)
-{
-	if (dry_run)
-		return SZ_DMALDP;
+अटल अंतरभूत u32 _emit_LDP(अचिन्हित dry_run, u8 buf[],
+		क्रमागत pl330_cond cond, u8 peri)
+अणु
+	अगर (dry_run)
+		वापस SZ_DMALDP;
 
 	buf[0] = CMD_DMALDP;
 
-	if (cond == BURST)
+	अगर (cond == BURST)
 		buf[0] |= (1 << 1);
 
 	peri &= 0x1f;
@@ -635,85 +636,85 @@ static inline u32 _emit_LDP(unsigned dry_run, u8 buf[],
 	PL330_DBGCMD_DUMP(SZ_DMALDP, "\tDMALDP%c %u\n",
 		cond == SINGLE ? 'S' : 'B', peri >> 3);
 
-	return SZ_DMALDP;
-}
+	वापस SZ_DMALDP;
+पूर्ण
 
-static inline u32 _emit_LP(unsigned dry_run, u8 buf[],
-		unsigned loop, u8 cnt)
-{
-	if (dry_run)
-		return SZ_DMALP;
+अटल अंतरभूत u32 _emit_LP(अचिन्हित dry_run, u8 buf[],
+		अचिन्हित loop, u8 cnt)
+अणु
+	अगर (dry_run)
+		वापस SZ_DMALP;
 
 	buf[0] = CMD_DMALP;
 
-	if (loop)
+	अगर (loop)
 		buf[0] |= (1 << 1);
 
-	cnt--; /* DMAC increments by 1 internally */
+	cnt--; /* DMAC increments by 1 पूर्णांकernally */
 	buf[1] = cnt;
 
 	PL330_DBGCMD_DUMP(SZ_DMALP, "\tDMALP_%c %u\n", loop ? '1' : '0', cnt);
 
-	return SZ_DMALP;
-}
+	वापस SZ_DMALP;
+पूर्ण
 
-struct _arg_LPEND {
-	enum pl330_cond cond;
-	bool forever;
-	unsigned loop;
+काष्ठा _arg_LPEND अणु
+	क्रमागत pl330_cond cond;
+	bool क्रमever;
+	अचिन्हित loop;
 	u8 bjump;
-};
+पूर्ण;
 
-static inline u32 _emit_LPEND(unsigned dry_run, u8 buf[],
-		const struct _arg_LPEND *arg)
-{
-	enum pl330_cond cond = arg->cond;
-	bool forever = arg->forever;
-	unsigned loop = arg->loop;
+अटल अंतरभूत u32 _emit_LPEND(अचिन्हित dry_run, u8 buf[],
+		स्थिर काष्ठा _arg_LPEND *arg)
+अणु
+	क्रमागत pl330_cond cond = arg->cond;
+	bool क्रमever = arg->क्रमever;
+	अचिन्हित loop = arg->loop;
 	u8 bjump = arg->bjump;
 
-	if (dry_run)
-		return SZ_DMALPEND;
+	अगर (dry_run)
+		वापस SZ_DMALPEND;
 
 	buf[0] = CMD_DMALPEND;
 
-	if (loop)
+	अगर (loop)
 		buf[0] |= (1 << 2);
 
-	if (!forever)
+	अगर (!क्रमever)
 		buf[0] |= (1 << 4);
 
-	if (cond == SINGLE)
+	अगर (cond == SINGLE)
 		buf[0] |= (0 << 1) | (1 << 0);
-	else if (cond == BURST)
+	अन्यथा अगर (cond == BURST)
 		buf[0] |= (1 << 1) | (1 << 0);
 
 	buf[1] = bjump;
 
 	PL330_DBGCMD_DUMP(SZ_DMALPEND, "\tDMALP%s%c_%c bjmpto_%x\n",
-			forever ? "FE" : "END",
+			क्रमever ? "FE" : "END",
 			cond == SINGLE ? 'S' : (cond == BURST ? 'B' : 'A'),
 			loop ? '1' : '0',
 			bjump);
 
-	return SZ_DMALPEND;
-}
+	वापस SZ_DMALPEND;
+पूर्ण
 
-static inline u32 _emit_KILL(unsigned dry_run, u8 buf[])
-{
-	if (dry_run)
-		return SZ_DMAKILL;
+अटल अंतरभूत u32 _emit_KILL(अचिन्हित dry_run, u8 buf[])
+अणु
+	अगर (dry_run)
+		वापस SZ_DMAKILL;
 
 	buf[0] = CMD_DMAKILL;
 
-	return SZ_DMAKILL;
-}
+	वापस SZ_DMAKILL;
+पूर्ण
 
-static inline u32 _emit_MOV(unsigned dry_run, u8 buf[],
-		enum dmamov_dst dst, u32 val)
-{
-	if (dry_run)
-		return SZ_DMAMOV;
+अटल अंतरभूत u32 _emit_MOV(अचिन्हित dry_run, u8 buf[],
+		क्रमागत dmamov_dst dst, u32 val)
+अणु
+	अगर (dry_run)
+		वापस SZ_DMAMOV;
 
 	buf[0] = CMD_DMAMOV;
 	buf[1] = dst;
@@ -725,25 +726,25 @@ static inline u32 _emit_MOV(unsigned dry_run, u8 buf[],
 	PL330_DBGCMD_DUMP(SZ_DMAMOV, "\tDMAMOV %s 0x%x\n",
 		dst == SAR ? "SAR" : (dst == DAR ? "DAR" : "CCR"), val);
 
-	return SZ_DMAMOV;
-}
+	वापस SZ_DMAMOV;
+पूर्ण
 
-static inline u32 _emit_RMB(unsigned dry_run, u8 buf[])
-{
-	if (dry_run)
-		return SZ_DMARMB;
+अटल अंतरभूत u32 _emit_RMB(अचिन्हित dry_run, u8 buf[])
+अणु
+	अगर (dry_run)
+		वापस SZ_DMARMB;
 
 	buf[0] = CMD_DMARMB;
 
 	PL330_DBGCMD_DUMP(SZ_DMARMB, "\tDMARMB\n");
 
-	return SZ_DMARMB;
-}
+	वापस SZ_DMARMB;
+पूर्ण
 
-static inline u32 _emit_SEV(unsigned dry_run, u8 buf[], u8 ev)
-{
-	if (dry_run)
-		return SZ_DMASEV;
+अटल अंतरभूत u32 _emit_SEV(अचिन्हित dry_run, u8 buf[], u8 ev)
+अणु
+	अगर (dry_run)
+		वापस SZ_DMASEV;
 
 	buf[0] = CMD_DMASEV;
 
@@ -753,36 +754,36 @@ static inline u32 _emit_SEV(unsigned dry_run, u8 buf[], u8 ev)
 
 	PL330_DBGCMD_DUMP(SZ_DMASEV, "\tDMASEV %u\n", ev >> 3);
 
-	return SZ_DMASEV;
-}
+	वापस SZ_DMASEV;
+पूर्ण
 
-static inline u32 _emit_ST(unsigned dry_run, u8 buf[], enum pl330_cond cond)
-{
-	if (dry_run)
-		return SZ_DMAST;
+अटल अंतरभूत u32 _emit_ST(अचिन्हित dry_run, u8 buf[], क्रमागत pl330_cond cond)
+अणु
+	अगर (dry_run)
+		वापस SZ_DMAST;
 
 	buf[0] = CMD_DMAST;
 
-	if (cond == SINGLE)
+	अगर (cond == SINGLE)
 		buf[0] |= (0 << 1) | (1 << 0);
-	else if (cond == BURST)
+	अन्यथा अगर (cond == BURST)
 		buf[0] |= (1 << 1) | (1 << 0);
 
 	PL330_DBGCMD_DUMP(SZ_DMAST, "\tDMAST%c\n",
 		cond == SINGLE ? 'S' : (cond == BURST ? 'B' : 'A'));
 
-	return SZ_DMAST;
-}
+	वापस SZ_DMAST;
+पूर्ण
 
-static inline u32 _emit_STP(unsigned dry_run, u8 buf[],
-		enum pl330_cond cond, u8 peri)
-{
-	if (dry_run)
-		return SZ_DMASTP;
+अटल अंतरभूत u32 _emit_STP(अचिन्हित dry_run, u8 buf[],
+		क्रमागत pl330_cond cond, u8 peri)
+अणु
+	अगर (dry_run)
+		वापस SZ_DMASTP;
 
 	buf[0] = CMD_DMASTP;
 
-	if (cond == BURST)
+	अगर (cond == BURST)
 		buf[0] |= (1 << 1);
 
 	peri &= 0x1f;
@@ -792,22 +793,22 @@ static inline u32 _emit_STP(unsigned dry_run, u8 buf[],
 	PL330_DBGCMD_DUMP(SZ_DMASTP, "\tDMASTP%c %u\n",
 		cond == SINGLE ? 'S' : 'B', peri >> 3);
 
-	return SZ_DMASTP;
-}
+	वापस SZ_DMASTP;
+पूर्ण
 
-static inline u32 _emit_WFP(unsigned dry_run, u8 buf[],
-		enum pl330_cond cond, u8 peri)
-{
-	if (dry_run)
-		return SZ_DMAWFP;
+अटल अंतरभूत u32 _emit_WFP(अचिन्हित dry_run, u8 buf[],
+		क्रमागत pl330_cond cond, u8 peri)
+अणु
+	अगर (dry_run)
+		वापस SZ_DMAWFP;
 
 	buf[0] = CMD_DMAWFP;
 
-	if (cond == SINGLE)
+	अगर (cond == SINGLE)
 		buf[0] |= (0 << 1) | (0 << 0);
-	else if (cond == BURST)
+	अन्यथा अगर (cond == BURST)
 		buf[0] |= (1 << 1) | (0 << 0);
-	else
+	अन्यथा
 		buf[0] |= (0 << 1) | (1 << 0);
 
 	peri &= 0x1f;
@@ -817,36 +818,36 @@ static inline u32 _emit_WFP(unsigned dry_run, u8 buf[],
 	PL330_DBGCMD_DUMP(SZ_DMAWFP, "\tDMAWFP%c %u\n",
 		cond == SINGLE ? 'S' : (cond == BURST ? 'B' : 'P'), peri >> 3);
 
-	return SZ_DMAWFP;
-}
+	वापस SZ_DMAWFP;
+पूर्ण
 
-static inline u32 _emit_WMB(unsigned dry_run, u8 buf[])
-{
-	if (dry_run)
-		return SZ_DMAWMB;
+अटल अंतरभूत u32 _emit_WMB(अचिन्हित dry_run, u8 buf[])
+अणु
+	अगर (dry_run)
+		वापस SZ_DMAWMB;
 
 	buf[0] = CMD_DMAWMB;
 
 	PL330_DBGCMD_DUMP(SZ_DMAWMB, "\tDMAWMB\n");
 
-	return SZ_DMAWMB;
-}
+	वापस SZ_DMAWMB;
+पूर्ण
 
-struct _arg_GO {
+काष्ठा _arg_GO अणु
 	u8 chan;
 	u32 addr;
-	unsigned ns;
-};
+	अचिन्हित ns;
+पूर्ण;
 
-static inline u32 _emit_GO(unsigned dry_run, u8 buf[],
-		const struct _arg_GO *arg)
-{
+अटल अंतरभूत u32 _emit_GO(अचिन्हित dry_run, u8 buf[],
+		स्थिर काष्ठा _arg_GO *arg)
+अणु
 	u8 chan = arg->chan;
 	u32 addr = arg->addr;
-	unsigned ns = arg->ns;
+	अचिन्हित ns = arg->ns;
 
-	if (dry_run)
-		return SZ_DMAGO;
+	अगर (dry_run)
+		वापस SZ_DMAGO;
 
 	buf[0] = CMD_DMAGO;
 	buf[0] |= (ns << 1);
@@ -856,181 +857,181 @@ static inline u32 _emit_GO(unsigned dry_run, u8 buf[],
 	buf[4] = addr >> 16;
 	buf[5] = addr >> 24;
 
-	return SZ_DMAGO;
-}
+	वापस SZ_DMAGO;
+पूर्ण
 
-#define msecs_to_loops(t) (loops_per_jiffy / 1000 * HZ * t)
+#घोषणा msecs_to_loops(t) (loops_per_jअगरfy / 1000 * HZ * t)
 
 /* Returns Time-Out */
-static bool _until_dmac_idle(struct pl330_thread *thrd)
-{
-	void __iomem *regs = thrd->dmac->base;
-	unsigned long loops = msecs_to_loops(5);
+अटल bool _until_dmac_idle(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	व्योम __iomem *regs = thrd->dmac->base;
+	अचिन्हित दीर्घ loops = msecs_to_loops(5);
 
-	do {
+	करो अणु
 		/* Until Manager is Idle */
-		if (!(readl(regs + DBGSTATUS) & DBG_BUSY))
-			break;
+		अगर (!(पढ़ोl(regs + DBGSTATUS) & DBG_BUSY))
+			अवरोध;
 
 		cpu_relax();
-	} while (--loops);
+	पूर्ण जबतक (--loops);
 
-	if (!loops)
-		return true;
+	अगर (!loops)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline void _execute_DBGINSN(struct pl330_thread *thrd,
+अटल अंतरभूत व्योम _execute_DBGINSN(काष्ठा pl330_thपढ़ो *thrd,
 		u8 insn[], bool as_manager)
-{
-	void __iomem *regs = thrd->dmac->base;
+अणु
+	व्योम __iomem *regs = thrd->dmac->base;
 	u32 val;
 
-	/* If timed out due to halted state-machine */
-	if (_until_dmac_idle(thrd)) {
+	/* If समयd out due to halted state-machine */
+	अगर (_until_dmac_idle(thrd)) अणु
 		dev_err(thrd->dmac->ddma.dev, "DMAC halted!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	val = (insn[0] << 16) | (insn[1] << 24);
-	if (!as_manager) {
+	अगर (!as_manager) अणु
 		val |= (1 << 0);
 		val |= (thrd->id << 8); /* Channel Number */
-	}
-	writel(val, regs + DBGINST0);
+	पूर्ण
+	ग_लिखोl(val, regs + DBGINST0);
 
 	val = le32_to_cpu(*((__le32 *)&insn[2]));
-	writel(val, regs + DBGINST1);
+	ग_लिखोl(val, regs + DBGINST1);
 
 	/* Get going */
-	writel(0, regs + DBGCMD);
-}
+	ग_लिखोl(0, regs + DBGCMD);
+पूर्ण
 
-static inline u32 _state(struct pl330_thread *thrd)
-{
-	void __iomem *regs = thrd->dmac->base;
+अटल अंतरभूत u32 _state(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	व्योम __iomem *regs = thrd->dmac->base;
 	u32 val;
 
-	if (is_manager(thrd))
-		val = readl(regs + DS) & 0xf;
-	else
-		val = readl(regs + CS(thrd->id)) & 0xf;
+	अगर (is_manager(thrd))
+		val = पढ़ोl(regs + DS) & 0xf;
+	अन्यथा
+		val = पढ़ोl(regs + CS(thrd->id)) & 0xf;
 
-	switch (val) {
-	case DS_ST_STOP:
-		return PL330_STATE_STOPPED;
-	case DS_ST_EXEC:
-		return PL330_STATE_EXECUTING;
-	case DS_ST_CMISS:
-		return PL330_STATE_CACHEMISS;
-	case DS_ST_UPDTPC:
-		return PL330_STATE_UPDTPC;
-	case DS_ST_WFE:
-		return PL330_STATE_WFE;
-	case DS_ST_FAULT:
-		return PL330_STATE_FAULTING;
-	case DS_ST_ATBRR:
-		if (is_manager(thrd))
-			return PL330_STATE_INVALID;
-		else
-			return PL330_STATE_ATBARRIER;
-	case DS_ST_QBUSY:
-		if (is_manager(thrd))
-			return PL330_STATE_INVALID;
-		else
-			return PL330_STATE_QUEUEBUSY;
-	case DS_ST_WFP:
-		if (is_manager(thrd))
-			return PL330_STATE_INVALID;
-		else
-			return PL330_STATE_WFP;
-	case DS_ST_KILL:
-		if (is_manager(thrd))
-			return PL330_STATE_INVALID;
-		else
-			return PL330_STATE_KILLING;
-	case DS_ST_CMPLT:
-		if (is_manager(thrd))
-			return PL330_STATE_INVALID;
-		else
-			return PL330_STATE_COMPLETING;
-	case DS_ST_FLTCMP:
-		if (is_manager(thrd))
-			return PL330_STATE_INVALID;
-		else
-			return PL330_STATE_FAULT_COMPLETING;
-	default:
-		return PL330_STATE_INVALID;
-	}
-}
+	चयन (val) अणु
+	हाल DS_ST_STOP:
+		वापस PL330_STATE_STOPPED;
+	हाल DS_ST_EXEC:
+		वापस PL330_STATE_EXECUTING;
+	हाल DS_ST_CMISS:
+		वापस PL330_STATE_CACHEMISS;
+	हाल DS_ST_UPDTPC:
+		वापस PL330_STATE_UPDTPC;
+	हाल DS_ST_WFE:
+		वापस PL330_STATE_WFE;
+	हाल DS_ST_FAULT:
+		वापस PL330_STATE_FAULTING;
+	हाल DS_ST_ATBRR:
+		अगर (is_manager(thrd))
+			वापस PL330_STATE_INVALID;
+		अन्यथा
+			वापस PL330_STATE_ATBARRIER;
+	हाल DS_ST_QBUSY:
+		अगर (is_manager(thrd))
+			वापस PL330_STATE_INVALID;
+		अन्यथा
+			वापस PL330_STATE_QUEUEBUSY;
+	हाल DS_ST_WFP:
+		अगर (is_manager(thrd))
+			वापस PL330_STATE_INVALID;
+		अन्यथा
+			वापस PL330_STATE_WFP;
+	हाल DS_ST_KILL:
+		अगर (is_manager(thrd))
+			वापस PL330_STATE_INVALID;
+		अन्यथा
+			वापस PL330_STATE_KILLING;
+	हाल DS_ST_CMPLT:
+		अगर (is_manager(thrd))
+			वापस PL330_STATE_INVALID;
+		अन्यथा
+			वापस PL330_STATE_COMPLETING;
+	हाल DS_ST_FLTCMP:
+		अगर (is_manager(thrd))
+			वापस PL330_STATE_INVALID;
+		अन्यथा
+			वापस PL330_STATE_FAULT_COMPLETING;
+	शेष:
+		वापस PL330_STATE_INVALID;
+	पूर्ण
+पूर्ण
 
-static void _stop(struct pl330_thread *thrd)
-{
-	void __iomem *regs = thrd->dmac->base;
-	u8 insn[6] = {0, 0, 0, 0, 0, 0};
-	u32 inten = readl(regs + INTEN);
+अटल व्योम _stop(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	व्योम __iomem *regs = thrd->dmac->base;
+	u8 insn[6] = अणु0, 0, 0, 0, 0, 0पूर्ण;
+	u32 पूर्णांकen = पढ़ोl(regs + INTEN);
 
-	if (_state(thrd) == PL330_STATE_FAULT_COMPLETING)
+	अगर (_state(thrd) == PL330_STATE_FAULT_COMPLETING)
 		UNTIL(thrd, PL330_STATE_FAULTING | PL330_STATE_KILLING);
 
-	/* Return if nothing needs to be done */
-	if (_state(thrd) == PL330_STATE_COMPLETING
+	/* Return अगर nothing needs to be करोne */
+	अगर (_state(thrd) == PL330_STATE_COMPLETING
 		  || _state(thrd) == PL330_STATE_KILLING
 		  || _state(thrd) == PL330_STATE_STOPPED)
-		return;
+		वापस;
 
 	_emit_KILL(0, insn);
 
 	_execute_DBGINSN(thrd, insn, is_manager(thrd));
 
 	/* clear the event */
-	if (inten & (1 << thrd->ev))
-		writel(1 << thrd->ev, regs + INTCLR);
-	/* Stop generating interrupts for SEV */
-	writel(inten & ~(1 << thrd->ev), regs + INTEN);
-}
+	अगर (पूर्णांकen & (1 << thrd->ev))
+		ग_लिखोl(1 << thrd->ev, regs + INTCLR);
+	/* Stop generating पूर्णांकerrupts क्रम SEV */
+	ग_लिखोl(पूर्णांकen & ~(1 << thrd->ev), regs + INTEN);
+पूर्ण
 
-/* Start doing req 'idx' of thread 'thrd' */
-static bool _trigger(struct pl330_thread *thrd)
-{
-	void __iomem *regs = thrd->dmac->base;
-	struct _pl330_req *req;
-	struct dma_pl330_desc *desc;
-	struct _arg_GO go;
-	unsigned ns;
-	u8 insn[6] = {0, 0, 0, 0, 0, 0};
-	int idx;
+/* Start करोing req 'idx' of thread 'thrd' */
+अटल bool _trigger(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	व्योम __iomem *regs = thrd->dmac->base;
+	काष्ठा _pl330_req *req;
+	काष्ठा dma_pl330_desc *desc;
+	काष्ठा _arg_GO go;
+	अचिन्हित ns;
+	u8 insn[6] = अणु0, 0, 0, 0, 0, 0पूर्ण;
+	पूर्णांक idx;
 
-	/* Return if already ACTIVE */
-	if (_state(thrd) != PL330_STATE_STOPPED)
-		return true;
+	/* Return अगर alपढ़ोy ACTIVE */
+	अगर (_state(thrd) != PL330_STATE_STOPPED)
+		वापस true;
 
 	idx = 1 - thrd->lstenq;
-	if (thrd->req[idx].desc != NULL) {
+	अगर (thrd->req[idx].desc != शून्य) अणु
 		req = &thrd->req[idx];
-	} else {
+	पूर्ण अन्यथा अणु
 		idx = thrd->lstenq;
-		if (thrd->req[idx].desc != NULL)
+		अगर (thrd->req[idx].desc != शून्य)
 			req = &thrd->req[idx];
-		else
-			req = NULL;
-	}
+		अन्यथा
+			req = शून्य;
+	पूर्ण
 
-	/* Return if no request */
-	if (!req)
-		return true;
+	/* Return अगर no request */
+	अगर (!req)
+		वापस true;
 
-	/* Return if req is running */
-	if (idx == thrd->req_running)
-		return true;
+	/* Return अगर req is running */
+	अगर (idx == thrd->req_running)
+		वापस true;
 
 	desc = req->desc;
 
 	ns = desc->rqcfg.nonsecure ? 1 : 0;
 
-	/* See 'Abort Sources' point-4 at Page 2-25 */
-	if (_manager_ns(thrd) && !ns)
+	/* See 'Abort Sources' poपूर्णांक-4 at Page 2-25 */
+	अगर (_manager_ns(thrd) && !ns)
 		dev_info(thrd->dmac->ddma.dev, "%s:%d Recipe for ABORT!\n",
 			__func__, __LINE__);
 
@@ -1039,216 +1040,216 @@ static bool _trigger(struct pl330_thread *thrd)
 	go.ns = ns;
 	_emit_GO(0, insn, &go);
 
-	/* Set to generate interrupts for SEV */
-	writel(readl(regs + INTEN) | (1 << thrd->ev), regs + INTEN);
+	/* Set to generate पूर्णांकerrupts क्रम SEV */
+	ग_लिखोl(पढ़ोl(regs + INTEN) | (1 << thrd->ev), regs + INTEN);
 
 	/* Only manager can execute GO */
 	_execute_DBGINSN(thrd, insn, true);
 
 	thrd->req_running = idx;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool _start(struct pl330_thread *thrd)
-{
-	switch (_state(thrd)) {
-	case PL330_STATE_FAULT_COMPLETING:
+अटल bool _start(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	चयन (_state(thrd)) अणु
+	हाल PL330_STATE_FAULT_COMPLETING:
 		UNTIL(thrd, PL330_STATE_FAULTING | PL330_STATE_KILLING);
 
-		if (_state(thrd) == PL330_STATE_KILLING)
+		अगर (_state(thrd) == PL330_STATE_KILLING)
 			UNTIL(thrd, PL330_STATE_STOPPED)
 		fallthrough;
 
-	case PL330_STATE_FAULTING:
+	हाल PL330_STATE_FAULTING:
 		_stop(thrd);
 		fallthrough;
 
-	case PL330_STATE_KILLING:
-	case PL330_STATE_COMPLETING:
+	हाल PL330_STATE_KILLING:
+	हाल PL330_STATE_COMPLETING:
 		UNTIL(thrd, PL330_STATE_STOPPED)
 		fallthrough;
 
-	case PL330_STATE_STOPPED:
-		return _trigger(thrd);
+	हाल PL330_STATE_STOPPED:
+		वापस _trigger(thrd);
 
-	case PL330_STATE_WFP:
-	case PL330_STATE_QUEUEBUSY:
-	case PL330_STATE_ATBARRIER:
-	case PL330_STATE_UPDTPC:
-	case PL330_STATE_CACHEMISS:
-	case PL330_STATE_EXECUTING:
-		return true;
+	हाल PL330_STATE_WFP:
+	हाल PL330_STATE_QUEUEBUSY:
+	हाल PL330_STATE_ATBARRIER:
+	हाल PL330_STATE_UPDTPC:
+	हाल PL330_STATE_CACHEMISS:
+	हाल PL330_STATE_EXECUTING:
+		वापस true;
 
-	case PL330_STATE_WFE: /* For RESUME, nothing yet */
-	default:
-		return false;
-	}
-}
+	हाल PL330_STATE_WFE: /* For RESUME, nothing yet */
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static inline int _ldst_memtomem(unsigned dry_run, u8 buf[],
-		const struct _xfer_spec *pxs, int cyc)
-{
-	int off = 0;
-	struct pl330_config *pcfg = pxs->desc->rqcfg.pcfg;
+अटल अंतरभूत पूर्णांक _ldst_memtomem(अचिन्हित dry_run, u8 buf[],
+		स्थिर काष्ठा _xfer_spec *pxs, पूर्णांक cyc)
+अणु
+	पूर्णांक off = 0;
+	काष्ठा pl330_config *pcfg = pxs->desc->rqcfg.pcfg;
 
-	/* check lock-up free version */
-	if (get_revision(pcfg->periph_id) >= PERIPH_REV_R1P0) {
-		while (cyc--) {
+	/* check lock-up मुक्त version */
+	अगर (get_revision(pcfg->periph_id) >= PERIPH_REV_R1P0) अणु
+		जबतक (cyc--) अणु
 			off += _emit_LD(dry_run, &buf[off], ALWAYS);
 			off += _emit_ST(dry_run, &buf[off], ALWAYS);
-		}
-	} else {
-		while (cyc--) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		जबतक (cyc--) अणु
 			off += _emit_LD(dry_run, &buf[off], ALWAYS);
 			off += _emit_RMB(dry_run, &buf[off]);
 			off += _emit_ST(dry_run, &buf[off], ALWAYS);
 			off += _emit_WMB(dry_run, &buf[off]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
-static u32 _emit_load(unsigned int dry_run, u8 buf[],
-	enum pl330_cond cond, enum dma_transfer_direction direction,
+अटल u32 _emit_load(अचिन्हित पूर्णांक dry_run, u8 buf[],
+	क्रमागत pl330_cond cond, क्रमागत dma_transfer_direction direction,
 	u8 peri)
-{
-	int off = 0;
+अणु
+	पूर्णांक off = 0;
 
-	switch (direction) {
-	case DMA_MEM_TO_MEM:
-	case DMA_MEM_TO_DEV:
+	चयन (direction) अणु
+	हाल DMA_MEM_TO_MEM:
+	हाल DMA_MEM_TO_DEV:
 		off += _emit_LD(dry_run, &buf[off], cond);
-		break;
+		अवरोध;
 
-	case DMA_DEV_TO_MEM:
-		if (cond == ALWAYS) {
+	हाल DMA_DEV_TO_MEM:
+		अगर (cond == ALWAYS) अणु
 			off += _emit_LDP(dry_run, &buf[off], SINGLE,
 				peri);
 			off += _emit_LDP(dry_run, &buf[off], BURST,
 				peri);
-		} else {
+		पूर्ण अन्यथा अणु
 			off += _emit_LDP(dry_run, &buf[off], cond,
 				peri);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		/* this code should be unreachable */
 		WARN_ON(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
-static inline u32 _emit_store(unsigned int dry_run, u8 buf[],
-	enum pl330_cond cond, enum dma_transfer_direction direction,
+अटल अंतरभूत u32 _emit_store(अचिन्हित पूर्णांक dry_run, u8 buf[],
+	क्रमागत pl330_cond cond, क्रमागत dma_transfer_direction direction,
 	u8 peri)
-{
-	int off = 0;
+अणु
+	पूर्णांक off = 0;
 
-	switch (direction) {
-	case DMA_MEM_TO_MEM:
-	case DMA_DEV_TO_MEM:
+	चयन (direction) अणु
+	हाल DMA_MEM_TO_MEM:
+	हाल DMA_DEV_TO_MEM:
 		off += _emit_ST(dry_run, &buf[off], cond);
-		break;
+		अवरोध;
 
-	case DMA_MEM_TO_DEV:
-		if (cond == ALWAYS) {
+	हाल DMA_MEM_TO_DEV:
+		अगर (cond == ALWAYS) अणु
 			off += _emit_STP(dry_run, &buf[off], SINGLE,
 				peri);
 			off += _emit_STP(dry_run, &buf[off], BURST,
 				peri);
-		} else {
+		पूर्ण अन्यथा अणु
 			off += _emit_STP(dry_run, &buf[off], cond,
 				peri);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		/* this code should be unreachable */
 		WARN_ON(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
-static inline int _ldst_peripheral(struct pl330_dmac *pl330,
-				 unsigned dry_run, u8 buf[],
-				 const struct _xfer_spec *pxs, int cyc,
-				 enum pl330_cond cond)
-{
-	int off = 0;
+अटल अंतरभूत पूर्णांक _ldst_peripheral(काष्ठा pl330_dmac *pl330,
+				 अचिन्हित dry_run, u8 buf[],
+				 स्थिर काष्ठा _xfer_spec *pxs, पूर्णांक cyc,
+				 क्रमागत pl330_cond cond)
+अणु
+	पूर्णांक off = 0;
 
 	/*
-	 * do FLUSHP at beginning to clear any stale dma requests before the
+	 * करो FLUSHP at beginning to clear any stale dma requests beक्रमe the
 	 * first WFP.
 	 */
-	if (!(pl330->quirks & PL330_QUIRK_BROKEN_NO_FLUSHP))
+	अगर (!(pl330->quirks & PL330_QUIRK_BROKEN_NO_FLUSHP))
 		off += _emit_FLUSHP(dry_run, &buf[off], pxs->desc->peri);
-	while (cyc--) {
+	जबतक (cyc--) अणु
 		off += _emit_WFP(dry_run, &buf[off], cond, pxs->desc->peri);
 		off += _emit_load(dry_run, &buf[off], cond, pxs->desc->rqtype,
 			pxs->desc->peri);
 		off += _emit_store(dry_run, &buf[off], cond, pxs->desc->rqtype,
 			pxs->desc->peri);
-	}
+	पूर्ण
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
-static int _bursts(struct pl330_dmac *pl330, unsigned dry_run, u8 buf[],
-		const struct _xfer_spec *pxs, int cyc)
-{
-	int off = 0;
-	enum pl330_cond cond = BRST_LEN(pxs->ccr) > 1 ? BURST : SINGLE;
+अटल पूर्णांक _bursts(काष्ठा pl330_dmac *pl330, अचिन्हित dry_run, u8 buf[],
+		स्थिर काष्ठा _xfer_spec *pxs, पूर्णांक cyc)
+अणु
+	पूर्णांक off = 0;
+	क्रमागत pl330_cond cond = BRST_LEN(pxs->ccr) > 1 ? BURST : SINGLE;
 
-	if (pl330->quirks & PL330_QUIRK_PERIPH_BURST)
+	अगर (pl330->quirks & PL330_QUIRK_PERIPH_BURST)
 		cond = BURST;
 
-	switch (pxs->desc->rqtype) {
-	case DMA_MEM_TO_DEV:
-	case DMA_DEV_TO_MEM:
+	चयन (pxs->desc->rqtype) अणु
+	हाल DMA_MEM_TO_DEV:
+	हाल DMA_DEV_TO_MEM:
 		off += _ldst_peripheral(pl330, dry_run, &buf[off], pxs, cyc,
 			cond);
-		break;
+		अवरोध;
 
-	case DMA_MEM_TO_MEM:
+	हाल DMA_MEM_TO_MEM:
 		off += _ldst_memtomem(dry_run, &buf[off], pxs, cyc);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* this code should be unreachable */
 		WARN_ON(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
 /*
  * only the unaligned burst transfers have the dregs.
  * so, still transfer dregs with a reduced size burst
- * for mem-to-mem, mem-to-dev or dev-to-mem.
+ * क्रम mem-to-mem, mem-to-dev or dev-to-mem.
  */
-static int _dregs(struct pl330_dmac *pl330, unsigned int dry_run, u8 buf[],
-		const struct _xfer_spec *pxs, int transfer_length)
-{
-	int off = 0;
-	int dregs_ccr;
+अटल पूर्णांक _dregs(काष्ठा pl330_dmac *pl330, अचिन्हित पूर्णांक dry_run, u8 buf[],
+		स्थिर काष्ठा _xfer_spec *pxs, पूर्णांक transfer_length)
+अणु
+	पूर्णांक off = 0;
+	पूर्णांक dregs_ccr;
 
-	if (transfer_length == 0)
-		return off;
+	अगर (transfer_length == 0)
+		वापस off;
 
 	/*
 	 * dregs_len = (total bytes - BURST_TO_BYTE(bursts, ccr)) /
 	 *             BRST_SIZE(ccr)
 	 * the dregs len must be smaller than burst len,
-	 * so, for higher efficiency, we can modify CCR
-	 * to use a reduced size burst len for the dregs.
+	 * so, क्रम higher efficiency, we can modअगरy CCR
+	 * to use a reduced size burst len क्रम the dregs.
 	 */
 	dregs_ccr = pxs->ccr;
 	dregs_ccr &= ~((0xf << CC_SRCBRSTLEN_SHFT) |
@@ -1258,67 +1259,67 @@ static int _dregs(struct pl330_dmac *pl330, unsigned int dry_run, u8 buf[],
 	dregs_ccr |= (((transfer_length - 1) & 0xf) <<
 		CC_DSTBRSTLEN_SHFT);
 
-	switch (pxs->desc->rqtype) {
-	case DMA_MEM_TO_DEV:
-	case DMA_DEV_TO_MEM:
+	चयन (pxs->desc->rqtype) अणु
+	हाल DMA_MEM_TO_DEV:
+	हाल DMA_DEV_TO_MEM:
 		off += _emit_MOV(dry_run, &buf[off], CCR, dregs_ccr);
 		off += _ldst_peripheral(pl330, dry_run, &buf[off], pxs, 1,
 					BURST);
-		break;
+		अवरोध;
 
-	case DMA_MEM_TO_MEM:
+	हाल DMA_MEM_TO_MEM:
 		off += _emit_MOV(dry_run, &buf[off], CCR, dregs_ccr);
 		off += _ldst_memtomem(dry_run, &buf[off], pxs, 1);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* this code should be unreachable */
 		WARN_ON(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
 /* Returns bytes consumed and updates bursts */
-static inline int _loop(struct pl330_dmac *pl330, unsigned dry_run, u8 buf[],
-		unsigned long *bursts, const struct _xfer_spec *pxs)
-{
-	int cyc, cycmax, szlp, szlpend, szbrst, off;
-	unsigned lcnt0, lcnt1, ljmp0, ljmp1;
-	struct _arg_LPEND lpend;
+अटल अंतरभूत पूर्णांक _loop(काष्ठा pl330_dmac *pl330, अचिन्हित dry_run, u8 buf[],
+		अचिन्हित दीर्घ *bursts, स्थिर काष्ठा _xfer_spec *pxs)
+अणु
+	पूर्णांक cyc, cycmax, szlp, szlpend, szbrst, off;
+	अचिन्हित lcnt0, lcnt1, ljmp0, ljmp1;
+	काष्ठा _arg_LPEND lpend;
 
-	if (*bursts == 1)
-		return _bursts(pl330, dry_run, buf, pxs, 1);
+	अगर (*bursts == 1)
+		वापस _bursts(pl330, dry_run, buf, pxs, 1);
 
 	/* Max iterations possible in DMALP is 256 */
-	if (*bursts >= 256*256) {
+	अगर (*bursts >= 256*256) अणु
 		lcnt1 = 256;
 		lcnt0 = 256;
 		cyc = *bursts / lcnt1 / lcnt0;
-	} else if (*bursts > 256) {
+	पूर्ण अन्यथा अगर (*bursts > 256) अणु
 		lcnt1 = 256;
 		lcnt0 = *bursts / lcnt1;
 		cyc = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		lcnt1 = *bursts;
 		lcnt0 = 0;
 		cyc = 1;
-	}
+	पूर्ण
 
 	szlp = _emit_LP(1, buf, 0, 0);
 	szbrst = _bursts(pl330, 1, buf, pxs, 1);
 
 	lpend.cond = ALWAYS;
-	lpend.forever = false;
+	lpend.क्रमever = false;
 	lpend.loop = 0;
 	lpend.bjump = 0;
 	szlpend = _emit_LPEND(1, buf, &lpend);
 
-	if (lcnt0) {
+	अगर (lcnt0) अणु
 		szlp *= 2;
 		szlpend *= 2;
-	}
+	पूर्ण
 
 	/*
 	 * Max bursts that we can unroll due to limit on the
@@ -1331,10 +1332,10 @@ static inline int _loop(struct pl330_dmac *pl330, unsigned dry_run, u8 buf[],
 
 	off = 0;
 
-	if (lcnt0) {
+	अगर (lcnt0) अणु
 		off += _emit_LP(dry_run, &buf[off], 0, lcnt0);
 		ljmp0 = off;
-	}
+	पूर्ण
 
 	off += _emit_LP(dry_run, &buf[off], 1, lcnt1);
 	ljmp1 = off;
@@ -1342,53 +1343,53 @@ static inline int _loop(struct pl330_dmac *pl330, unsigned dry_run, u8 buf[],
 	off += _bursts(pl330, dry_run, &buf[off], pxs, cyc);
 
 	lpend.cond = ALWAYS;
-	lpend.forever = false;
+	lpend.क्रमever = false;
 	lpend.loop = 1;
 	lpend.bjump = off - ljmp1;
 	off += _emit_LPEND(dry_run, &buf[off], &lpend);
 
-	if (lcnt0) {
+	अगर (lcnt0) अणु
 		lpend.cond = ALWAYS;
-		lpend.forever = false;
+		lpend.क्रमever = false;
 		lpend.loop = 0;
 		lpend.bjump = off - ljmp0;
 		off += _emit_LPEND(dry_run, &buf[off], &lpend);
-	}
+	पूर्ण
 
 	*bursts = lcnt1 * cyc;
-	if (lcnt0)
+	अगर (lcnt0)
 		*bursts *= lcnt0;
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
-static inline int _setup_loops(struct pl330_dmac *pl330,
-			       unsigned dry_run, u8 buf[],
-			       const struct _xfer_spec *pxs)
-{
-	struct pl330_xfer *x = &pxs->desc->px;
+अटल अंतरभूत पूर्णांक _setup_loops(काष्ठा pl330_dmac *pl330,
+			       अचिन्हित dry_run, u8 buf[],
+			       स्थिर काष्ठा _xfer_spec *pxs)
+अणु
+	काष्ठा pl330_xfer *x = &pxs->desc->px;
 	u32 ccr = pxs->ccr;
-	unsigned long c, bursts = BYTE_TO_BURST(x->bytes, ccr);
-	int num_dregs = (x->bytes - BURST_TO_BYTE(bursts, ccr)) /
+	अचिन्हित दीर्घ c, bursts = BYTE_TO_BURST(x->bytes, ccr);
+	पूर्णांक num_dregs = (x->bytes - BURST_TO_BYTE(bursts, ccr)) /
 		BRST_SIZE(ccr);
-	int off = 0;
+	पूर्णांक off = 0;
 
-	while (bursts) {
+	जबतक (bursts) अणु
 		c = bursts;
 		off += _loop(pl330, dry_run, &buf[off], &c, pxs);
 		bursts -= c;
-	}
+	पूर्ण
 	off += _dregs(pl330, dry_run, &buf[off], pxs, num_dregs);
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
-static inline int _setup_xfer(struct pl330_dmac *pl330,
-			      unsigned dry_run, u8 buf[],
-			      const struct _xfer_spec *pxs)
-{
-	struct pl330_xfer *x = &pxs->desc->px;
-	int off = 0;
+अटल अंतरभूत पूर्णांक _setup_xfer(काष्ठा pl330_dmac *pl330,
+			      अचिन्हित dry_run, u8 buf[],
+			      स्थिर काष्ठा _xfer_spec *pxs)
+अणु
+	काष्ठा pl330_xfer *x = &pxs->desc->px;
+	पूर्णांक off = 0;
 
 	/* DMAMOV SAR, x->src_addr */
 	off += _emit_MOV(dry_run, &buf[off], SAR, x->src_addr);
@@ -1398,20 +1399,20 @@ static inline int _setup_xfer(struct pl330_dmac *pl330,
 	/* Setup Loop(s) */
 	off += _setup_loops(pl330, dry_run, &buf[off], pxs);
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
 /*
  * A req is a sequence of one or more xfer units.
- * Returns the number of bytes taken to setup the MC for the req.
+ * Returns the number of bytes taken to setup the MC क्रम the req.
  */
-static int _setup_req(struct pl330_dmac *pl330, unsigned dry_run,
-		      struct pl330_thread *thrd, unsigned index,
-		      struct _xfer_spec *pxs)
-{
-	struct _pl330_req *req = &thrd->req[index];
+अटल पूर्णांक _setup_req(काष्ठा pl330_dmac *pl330, अचिन्हित dry_run,
+		      काष्ठा pl330_thपढ़ो *thrd, अचिन्हित index,
+		      काष्ठा _xfer_spec *pxs)
+अणु
+	काष्ठा _pl330_req *req = &thrd->req[index];
 	u8 *buf = req->mc_cpu;
-	int off = 0;
+	पूर्णांक off = 0;
 
 	PL330_DBGMC_START(req->mc_bus);
 
@@ -1425,25 +1426,25 @@ static int _setup_req(struct pl330_dmac *pl330, unsigned dry_run,
 	/* DMAEND */
 	off += _emit_END(dry_run, &buf[off]);
 
-	return off;
-}
+	वापस off;
+पूर्ण
 
-static inline u32 _prepare_ccr(const struct pl330_reqcfg *rqc)
-{
+अटल अंतरभूत u32 _prepare_ccr(स्थिर काष्ठा pl330_reqcfg *rqc)
+अणु
 	u32 ccr = 0;
 
-	if (rqc->src_inc)
+	अगर (rqc->src_inc)
 		ccr |= CC_SRCINC;
 
-	if (rqc->dst_inc)
+	अगर (rqc->dst_inc)
 		ccr |= CC_DSTINC;
 
-	/* We set same protection levels for Src and DST for now */
-	if (rqc->privileged)
+	/* We set same protection levels क्रम Src and DST क्रम now */
+	अगर (rqc->privileged)
 		ccr |= CC_SRCPRI | CC_DSTPRI;
-	if (rqc->nonsecure)
+	अगर (rqc->nonsecure)
 		ccr |= CC_SRCNS | CC_DSTNS;
-	if (rqc->insnaccess)
+	अगर (rqc->insnaccess)
 		ccr |= CC_SRCIA | CC_DSTIA;
 
 	ccr |= (((rqc->brst_len - 1) & 0xf) << CC_SRCBRSTLEN_SHFT);
@@ -1457,83 +1458,83 @@ static inline u32 _prepare_ccr(const struct pl330_reqcfg *rqc)
 
 	ccr |= (rqc->swap << CC_SWAP_SHFT);
 
-	return ccr;
-}
+	वापस ccr;
+पूर्ण
 
 /*
- * Submit a list of xfers after which the client wants notification.
- * Client is not notified after each xfer unit, just once after all
- * xfer units are done or some error occurs.
+ * Submit a list of xfers after which the client wants notअगरication.
+ * Client is not notअगरied after each xfer unit, just once after all
+ * xfer units are करोne or some error occurs.
  */
-static int pl330_submit_req(struct pl330_thread *thrd,
-	struct dma_pl330_desc *desc)
-{
-	struct pl330_dmac *pl330 = thrd->dmac;
-	struct _xfer_spec xs;
-	unsigned long flags;
-	unsigned idx;
+अटल पूर्णांक pl330_submit_req(काष्ठा pl330_thपढ़ो *thrd,
+	काष्ठा dma_pl330_desc *desc)
+अणु
+	काष्ठा pl330_dmac *pl330 = thrd->dmac;
+	काष्ठा _xfer_spec xs;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित idx;
 	u32 ccr;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	switch (desc->rqtype) {
-	case DMA_MEM_TO_DEV:
-		break;
+	चयन (desc->rqtype) अणु
+	हाल DMA_MEM_TO_DEV:
+		अवरोध;
 
-	case DMA_DEV_TO_MEM:
-		break;
+	हाल DMA_DEV_TO_MEM:
+		अवरोध;
 
-	case DMA_MEM_TO_MEM:
-		break;
+	हाल DMA_MEM_TO_MEM:
+		अवरोध;
 
-	default:
-		return -ENOTSUPP;
-	}
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	if (pl330->state == DYING
-		|| pl330->dmac_tbd.reset_chan & (1 << thrd->id)) {
+	अगर (pl330->state == DYING
+		|| pl330->dmac_tbd.reset_chan & (1 << thrd->id)) अणु
 		dev_info(thrd->dmac->ddma.dev, "%s:%d\n",
 			__func__, __LINE__);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	/* If request for non-existing peripheral */
-	if (desc->rqtype != DMA_MEM_TO_MEM &&
-	    desc->peri >= pl330->pcfg.num_peri) {
+	/* If request क्रम non-existing peripheral */
+	अगर (desc->rqtype != DMA_MEM_TO_MEM &&
+	    desc->peri >= pl330->pcfg.num_peri) अणु
 		dev_info(thrd->dmac->ddma.dev,
 				"%s:%d Invalid peripheral(%u)!\n",
 				__func__, __LINE__, desc->peri);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irqsave(&pl330->lock, flags);
 
-	if (_queue_full(thrd)) {
+	अगर (_queue_full(thrd)) अणु
 		ret = -EAGAIN;
-		goto xfer_exit;
-	}
+		जाओ xfer_निकास;
+	पूर्ण
 
 	/* Prefer Secure Channel */
-	if (!_manager_ns(thrd))
+	अगर (!_manager_ns(thrd))
 		desc->rqcfg.nonsecure = 0;
-	else
+	अन्यथा
 		desc->rqcfg.nonsecure = 1;
 
 	ccr = _prepare_ccr(&desc->rqcfg);
 
-	idx = thrd->req[0].desc == NULL ? 0 : 1;
+	idx = thrd->req[0].desc == शून्य ? 0 : 1;
 
 	xs.ccr = ccr;
 	xs.desc = desc;
 
-	/* First dry run to check if req is acceptable */
+	/* First dry run to check अगर req is acceptable */
 	ret = _setup_req(pl330, 1, thrd, idx, &xs);
 
-	if (ret > pl330->mcbufsz / 2) {
+	अगर (ret > pl330->mcbufsz / 2) अणु
 		dev_info(pl330->ddma.dev, "%s:%d Try increasing mcbufsz (%i/%i)\n",
 				__func__, __LINE__, ret, pl330->mcbufsz / 2);
 		ret = -ENOMEM;
-		goto xfer_exit;
-	}
+		जाओ xfer_निकास;
+	पूर्ण
 
 	/* Hook the request */
 	thrd->lstenq = idx;
@@ -1542,25 +1543,25 @@ static int pl330_submit_req(struct pl330_thread *thrd,
 
 	ret = 0;
 
-xfer_exit:
+xfer_निकास:
 	spin_unlock_irqrestore(&pl330->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dma_pl330_rqcb(struct dma_pl330_desc *desc, enum pl330_op_err err)
-{
-	struct dma_pl330_chan *pch;
-	unsigned long flags;
+अटल व्योम dma_pl330_rqcb(काष्ठा dma_pl330_desc *desc, क्रमागत pl330_op_err err)
+अणु
+	काष्ठा dma_pl330_chan *pch;
+	अचिन्हित दीर्घ flags;
 
-	if (!desc)
-		return;
+	अगर (!desc)
+		वापस;
 
 	pch = desc->pchan;
 
-	/* If desc aborted */
-	if (!pch)
-		return;
+	/* If desc पातed */
+	अगर (!pch)
+		वापस;
 
 	spin_lock_irqsave(&pch->lock, flags);
 
@@ -1569,45 +1570,45 @@ static void dma_pl330_rqcb(struct dma_pl330_desc *desc, enum pl330_op_err err)
 	spin_unlock_irqrestore(&pch->lock, flags);
 
 	tasklet_schedule(&pch->task);
-}
+पूर्ण
 
-static void pl330_dotask(struct tasklet_struct *t)
-{
-	struct pl330_dmac *pl330 = from_tasklet(pl330, t, tasks);
-	unsigned long flags;
-	int i;
+अटल व्योम pl330_करोtask(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा pl330_dmac *pl330 = from_tasklet(pl330, t, tasks);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	spin_lock_irqsave(&pl330->lock, flags);
 
 	/* The DMAC itself gone nuts */
-	if (pl330->dmac_tbd.reset_dmac) {
+	अगर (pl330->dmac_tbd.reset_dmac) अणु
 		pl330->state = DYING;
 		/* Reset the manager too */
 		pl330->dmac_tbd.reset_mngr = true;
 		/* Clear the reset flag */
 		pl330->dmac_tbd.reset_dmac = false;
-	}
+	पूर्ण
 
-	if (pl330->dmac_tbd.reset_mngr) {
+	अगर (pl330->dmac_tbd.reset_mngr) अणु
 		_stop(pl330->manager);
 		/* Reset all channels */
 		pl330->dmac_tbd.reset_chan = (1 << pl330->pcfg.num_chan) - 1;
 		/* Clear the reset flag */
 		pl330->dmac_tbd.reset_mngr = false;
-	}
+	पूर्ण
 
-	for (i = 0; i < pl330->pcfg.num_chan; i++) {
+	क्रम (i = 0; i < pl330->pcfg.num_chan; i++) अणु
 
-		if (pl330->dmac_tbd.reset_chan & (1 << i)) {
-			struct pl330_thread *thrd = &pl330->channels[i];
-			void __iomem *regs = pl330->base;
-			enum pl330_op_err err;
+		अगर (pl330->dmac_tbd.reset_chan & (1 << i)) अणु
+			काष्ठा pl330_thपढ़ो *thrd = &pl330->channels[i];
+			व्योम __iomem *regs = pl330->base;
+			क्रमागत pl330_op_err err;
 
 			_stop(thrd);
 
-			if (readl(regs + FSC) & (1 << thrd->id))
+			अगर (पढ़ोl(regs + FSC) & (1 << thrd->id))
 				err = PL330_ERR_FAIL;
-			else
+			अन्यथा
 				err = PL330_ERR_ABORT;
 
 			spin_unlock_irqrestore(&pl330->lock, flags);
@@ -1615,75 +1616,75 @@ static void pl330_dotask(struct tasklet_struct *t)
 			dma_pl330_rqcb(thrd->req[thrd->lstenq].desc, err);
 			spin_lock_irqsave(&pl330->lock, flags);
 
-			thrd->req[0].desc = NULL;
-			thrd->req[1].desc = NULL;
+			thrd->req[0].desc = शून्य;
+			thrd->req[1].desc = शून्य;
 			thrd->req_running = -1;
 
 			/* Clear the reset flag */
 			pl330->dmac_tbd.reset_chan &= ~(1 << i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&pl330->lock, flags);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-/* Returns 1 if state was updated, 0 otherwise */
-static int pl330_update(struct pl330_dmac *pl330)
-{
-	struct dma_pl330_desc *descdone;
-	unsigned long flags;
-	void __iomem *regs;
+/* Returns 1 अगर state was updated, 0 otherwise */
+अटल पूर्णांक pl330_update(काष्ठा pl330_dmac *pl330)
+अणु
+	काष्ठा dma_pl330_desc *descकरोne;
+	अचिन्हित दीर्घ flags;
+	व्योम __iomem *regs;
 	u32 val;
-	int id, ev, ret = 0;
+	पूर्णांक id, ev, ret = 0;
 
 	regs = pl330->base;
 
 	spin_lock_irqsave(&pl330->lock, flags);
 
-	val = readl(regs + FSM) & 0x1;
-	if (val)
+	val = पढ़ोl(regs + FSM) & 0x1;
+	अगर (val)
 		pl330->dmac_tbd.reset_mngr = true;
-	else
+	अन्यथा
 		pl330->dmac_tbd.reset_mngr = false;
 
-	val = readl(regs + FSC) & ((1 << pl330->pcfg.num_chan) - 1);
+	val = पढ़ोl(regs + FSC) & ((1 << pl330->pcfg.num_chan) - 1);
 	pl330->dmac_tbd.reset_chan |= val;
-	if (val) {
-		int i = 0;
-		while (i < pl330->pcfg.num_chan) {
-			if (val & (1 << i)) {
+	अगर (val) अणु
+		पूर्णांक i = 0;
+		जबतक (i < pl330->pcfg.num_chan) अणु
+			अगर (val & (1 << i)) अणु
 				dev_info(pl330->ddma.dev,
 					"Reset Channel-%d\t CS-%x FTC-%x\n",
-						i, readl(regs + CS(i)),
-						readl(regs + FTC(i)));
+						i, पढ़ोl(regs + CS(i)),
+						पढ़ोl(regs + FTC(i)));
 				_stop(&pl330->channels[i]);
-			}
+			पूर्ण
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Check which event happened i.e, thread notified */
-	val = readl(regs + ES);
-	if (pl330->pcfg.num_events < 32
-			&& val & ~((1 << pl330->pcfg.num_events) - 1)) {
+	/* Check which event happened i.e, thपढ़ो notअगरied */
+	val = पढ़ोl(regs + ES);
+	अगर (pl330->pcfg.num_events < 32
+			&& val & ~((1 << pl330->pcfg.num_events) - 1)) अणु
 		pl330->dmac_tbd.reset_dmac = true;
 		dev_err(pl330->ddma.dev, "%s:%d Unexpected!\n", __func__,
 			__LINE__);
 		ret = 1;
-		goto updt_exit;
-	}
+		जाओ updt_निकास;
+	पूर्ण
 
-	for (ev = 0; ev < pl330->pcfg.num_events; ev++) {
-		if (val & (1 << ev)) { /* Event occurred */
-			struct pl330_thread *thrd;
-			u32 inten = readl(regs + INTEN);
-			int active;
+	क्रम (ev = 0; ev < pl330->pcfg.num_events; ev++) अणु
+		अगर (val & (1 << ev)) अणु /* Event occurred */
+			काष्ठा pl330_thपढ़ो *thrd;
+			u32 पूर्णांकen = पढ़ोl(regs + INTEN);
+			पूर्णांक active;
 
 			/* Clear the event */
-			if (inten & (1 << ev))
-				writel(1 << ev, regs + INTCLR);
+			अगर (पूर्णांकen & (1 << ev))
+				ग_लिखोl(1 << ev, regs + INTCLR);
 
 			ret = 1;
 
@@ -1692,912 +1693,912 @@ static int pl330_update(struct pl330_dmac *pl330)
 			thrd = &pl330->channels[id];
 
 			active = thrd->req_running;
-			if (active == -1) /* Aborted */
-				continue;
+			अगर (active == -1) /* Aborted */
+				जारी;
 
 			/* Detach the req */
-			descdone = thrd->req[active].desc;
-			thrd->req[active].desc = NULL;
+			descकरोne = thrd->req[active].desc;
+			thrd->req[active].desc = शून्य;
 
 			thrd->req_running = -1;
 
 			/* Get going again ASAP */
 			_start(thrd);
 
-			/* For now, just make a list of callbacks to be done */
-			list_add_tail(&descdone->rqd, &pl330->req_done);
-		}
-	}
+			/* For now, just make a list of callbacks to be करोne */
+			list_add_tail(&descकरोne->rqd, &pl330->req_करोne);
+		पूर्ण
+	पूर्ण
 
-	/* Now that we are in no hurry, do the callbacks */
-	while (!list_empty(&pl330->req_done)) {
-		descdone = list_first_entry(&pl330->req_done,
-					    struct dma_pl330_desc, rqd);
-		list_del(&descdone->rqd);
+	/* Now that we are in no hurry, करो the callbacks */
+	जबतक (!list_empty(&pl330->req_करोne)) अणु
+		descकरोne = list_first_entry(&pl330->req_करोne,
+					    काष्ठा dma_pl330_desc, rqd);
+		list_del(&descकरोne->rqd);
 		spin_unlock_irqrestore(&pl330->lock, flags);
-		dma_pl330_rqcb(descdone, PL330_ERR_NONE);
+		dma_pl330_rqcb(descकरोne, PL330_ERR_NONE);
 		spin_lock_irqsave(&pl330->lock, flags);
-	}
+	पूर्ण
 
-updt_exit:
+updt_निकास:
 	spin_unlock_irqrestore(&pl330->lock, flags);
 
-	if (pl330->dmac_tbd.reset_dmac
+	अगर (pl330->dmac_tbd.reset_dmac
 			|| pl330->dmac_tbd.reset_mngr
-			|| pl330->dmac_tbd.reset_chan) {
+			|| pl330->dmac_tbd.reset_chan) अणु
 		ret = 1;
 		tasklet_schedule(&pl330->tasks);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Reserve an event */
-static inline int _alloc_event(struct pl330_thread *thrd)
-{
-	struct pl330_dmac *pl330 = thrd->dmac;
-	int ev;
+अटल अंतरभूत पूर्णांक _alloc_event(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	काष्ठा pl330_dmac *pl330 = thrd->dmac;
+	पूर्णांक ev;
 
-	for (ev = 0; ev < pl330->pcfg.num_events; ev++)
-		if (pl330->events[ev] == -1) {
+	क्रम (ev = 0; ev < pl330->pcfg.num_events; ev++)
+		अगर (pl330->events[ev] == -1) अणु
 			pl330->events[ev] = thrd->id;
-			return ev;
-		}
+			वापस ev;
+		पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static bool _chan_ns(const struct pl330_dmac *pl330, int i)
-{
-	return pl330->pcfg.irq_ns & (1 << i);
-}
+अटल bool _chan_ns(स्थिर काष्ठा pl330_dmac *pl330, पूर्णांक i)
+अणु
+	वापस pl330->pcfg.irq_ns & (1 << i);
+पूर्ण
 
-/* Upon success, returns IdentityToken for the
- * allocated channel, NULL otherwise.
+/* Upon success, वापसs IdentityToken क्रम the
+ * allocated channel, शून्य otherwise.
  */
-static struct pl330_thread *pl330_request_channel(struct pl330_dmac *pl330)
-{
-	struct pl330_thread *thrd = NULL;
-	int chans, i;
+अटल काष्ठा pl330_thपढ़ो *pl330_request_channel(काष्ठा pl330_dmac *pl330)
+अणु
+	काष्ठा pl330_thपढ़ो *thrd = शून्य;
+	पूर्णांक chans, i;
 
-	if (pl330->state == DYING)
-		return NULL;
+	अगर (pl330->state == DYING)
+		वापस शून्य;
 
 	chans = pl330->pcfg.num_chan;
 
-	for (i = 0; i < chans; i++) {
+	क्रम (i = 0; i < chans; i++) अणु
 		thrd = &pl330->channels[i];
-		if ((thrd->free) && (!_manager_ns(thrd) ||
-					_chan_ns(pl330, i))) {
+		अगर ((thrd->मुक्त) && (!_manager_ns(thrd) ||
+					_chan_ns(pl330, i))) अणु
 			thrd->ev = _alloc_event(thrd);
-			if (thrd->ev >= 0) {
-				thrd->free = false;
+			अगर (thrd->ev >= 0) अणु
+				thrd->मुक्त = false;
 				thrd->lstenq = 1;
-				thrd->req[0].desc = NULL;
-				thrd->req[1].desc = NULL;
+				thrd->req[0].desc = शून्य;
+				thrd->req[1].desc = शून्य;
 				thrd->req_running = -1;
-				break;
-			}
-		}
-		thrd = NULL;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		thrd = शून्य;
+	पूर्ण
 
-	return thrd;
-}
+	वापस thrd;
+पूर्ण
 
 /* Release an event */
-static inline void _free_event(struct pl330_thread *thrd, int ev)
-{
-	struct pl330_dmac *pl330 = thrd->dmac;
+अटल अंतरभूत व्योम _मुक्त_event(काष्ठा pl330_thपढ़ो *thrd, पूर्णांक ev)
+अणु
+	काष्ठा pl330_dmac *pl330 = thrd->dmac;
 
-	/* If the event is valid and was held by the thread */
-	if (ev >= 0 && ev < pl330->pcfg.num_events
+	/* If the event is valid and was held by the thपढ़ो */
+	अगर (ev >= 0 && ev < pl330->pcfg.num_events
 			&& pl330->events[ev] == thrd->id)
 		pl330->events[ev] = -1;
-}
+पूर्ण
 
-static void pl330_release_channel(struct pl330_thread *thrd)
-{
-	if (!thrd || thrd->free)
-		return;
+अटल व्योम pl330_release_channel(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	अगर (!thrd || thrd->मुक्त)
+		वापस;
 
 	_stop(thrd);
 
 	dma_pl330_rqcb(thrd->req[1 - thrd->lstenq].desc, PL330_ERR_ABORT);
 	dma_pl330_rqcb(thrd->req[thrd->lstenq].desc, PL330_ERR_ABORT);
 
-	_free_event(thrd, thrd->ev);
-	thrd->free = true;
-}
+	_मुक्त_event(thrd, thrd->ev);
+	thrd->मुक्त = true;
+पूर्ण
 
-/* Initialize the structure for PL330 configuration, that can be used
+/* Initialize the काष्ठाure क्रम PL330 configuration, that can be used
  * by the client driver the make best use of the DMAC
  */
-static void read_dmac_config(struct pl330_dmac *pl330)
-{
-	void __iomem *regs = pl330->base;
+अटल व्योम पढ़ो_dmac_config(काष्ठा pl330_dmac *pl330)
+अणु
+	व्योम __iomem *regs = pl330->base;
 	u32 val;
 
-	val = readl(regs + CRD) >> CRD_DATA_WIDTH_SHIFT;
+	val = पढ़ोl(regs + CRD) >> CRD_DATA_WIDTH_SHIFT;
 	val &= CRD_DATA_WIDTH_MASK;
 	pl330->pcfg.data_bus_width = 8 * (1 << val);
 
-	val = readl(regs + CRD) >> CRD_DATA_BUFF_SHIFT;
+	val = पढ़ोl(regs + CRD) >> CRD_DATA_BUFF_SHIFT;
 	val &= CRD_DATA_BUFF_MASK;
 	pl330->pcfg.data_buf_dep = val + 1;
 
-	val = readl(regs + CR0) >> CR0_NUM_CHANS_SHIFT;
+	val = पढ़ोl(regs + CR0) >> CR0_NUM_CHANS_SHIFT;
 	val &= CR0_NUM_CHANS_MASK;
 	val += 1;
 	pl330->pcfg.num_chan = val;
 
-	val = readl(regs + CR0);
-	if (val & CR0_PERIPH_REQ_SET) {
+	val = पढ़ोl(regs + CR0);
+	अगर (val & CR0_PERIPH_REQ_SET) अणु
 		val = (val >> CR0_NUM_PERIPH_SHIFT) & CR0_NUM_PERIPH_MASK;
 		val += 1;
 		pl330->pcfg.num_peri = val;
-		pl330->pcfg.peri_ns = readl(regs + CR4);
-	} else {
+		pl330->pcfg.peri_ns = पढ़ोl(regs + CR4);
+	पूर्ण अन्यथा अणु
 		pl330->pcfg.num_peri = 0;
-	}
+	पूर्ण
 
-	val = readl(regs + CR0);
-	if (val & CR0_BOOT_MAN_NS)
+	val = पढ़ोl(regs + CR0);
+	अगर (val & CR0_BOOT_MAN_NS)
 		pl330->pcfg.mode |= DMAC_MODE_NS;
-	else
+	अन्यथा
 		pl330->pcfg.mode &= ~DMAC_MODE_NS;
 
-	val = readl(regs + CR0) >> CR0_NUM_EVENTS_SHIFT;
+	val = पढ़ोl(regs + CR0) >> CR0_NUM_EVENTS_SHIFT;
 	val &= CR0_NUM_EVENTS_MASK;
 	val += 1;
 	pl330->pcfg.num_events = val;
 
-	pl330->pcfg.irq_ns = readl(regs + CR3);
-}
+	pl330->pcfg.irq_ns = पढ़ोl(regs + CR3);
+पूर्ण
 
-static inline void _reset_thread(struct pl330_thread *thrd)
-{
-	struct pl330_dmac *pl330 = thrd->dmac;
+अटल अंतरभूत व्योम _reset_thपढ़ो(काष्ठा pl330_thपढ़ो *thrd)
+अणु
+	काष्ठा pl330_dmac *pl330 = thrd->dmac;
 
 	thrd->req[0].mc_cpu = pl330->mcode_cpu
 				+ (thrd->id * pl330->mcbufsz);
 	thrd->req[0].mc_bus = pl330->mcode_bus
 				+ (thrd->id * pl330->mcbufsz);
-	thrd->req[0].desc = NULL;
+	thrd->req[0].desc = शून्य;
 
 	thrd->req[1].mc_cpu = thrd->req[0].mc_cpu
 				+ pl330->mcbufsz / 2;
 	thrd->req[1].mc_bus = thrd->req[0].mc_bus
 				+ pl330->mcbufsz / 2;
-	thrd->req[1].desc = NULL;
+	thrd->req[1].desc = शून्य;
 
 	thrd->req_running = -1;
-}
+पूर्ण
 
-static int dmac_alloc_threads(struct pl330_dmac *pl330)
-{
-	int chans = pl330->pcfg.num_chan;
-	struct pl330_thread *thrd;
-	int i;
+अटल पूर्णांक dmac_alloc_thपढ़ोs(काष्ठा pl330_dmac *pl330)
+अणु
+	पूर्णांक chans = pl330->pcfg.num_chan;
+	काष्ठा pl330_thपढ़ो *thrd;
+	पूर्णांक i;
 
-	/* Allocate 1 Manager and 'chans' Channel threads */
-	pl330->channels = kcalloc(1 + chans, sizeof(*thrd),
+	/* Allocate 1 Manager and 'chans' Channel thपढ़ोs */
+	pl330->channels = kसुस्मृति(1 + chans, माप(*thrd),
 					GFP_KERNEL);
-	if (!pl330->channels)
-		return -ENOMEM;
+	अगर (!pl330->channels)
+		वापस -ENOMEM;
 
-	/* Init Channel threads */
-	for (i = 0; i < chans; i++) {
+	/* Init Channel thपढ़ोs */
+	क्रम (i = 0; i < chans; i++) अणु
 		thrd = &pl330->channels[i];
 		thrd->id = i;
 		thrd->dmac = pl330;
-		_reset_thread(thrd);
-		thrd->free = true;
-	}
+		_reset_thपढ़ो(thrd);
+		thrd->मुक्त = true;
+	पूर्ण
 
 	/* MANAGER is indexed at the end */
 	thrd = &pl330->channels[chans];
 	thrd->id = chans;
 	thrd->dmac = pl330;
-	thrd->free = false;
+	thrd->मुक्त = false;
 	pl330->manager = thrd;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dmac_alloc_resources(struct pl330_dmac *pl330)
-{
-	int chans = pl330->pcfg.num_chan;
-	int ret;
+अटल पूर्णांक dmac_alloc_resources(काष्ठा pl330_dmac *pl330)
+अणु
+	पूर्णांक chans = pl330->pcfg.num_chan;
+	पूर्णांक ret;
 
 	/*
-	 * Alloc MicroCode buffer for 'chans' Channel threads.
+	 * Alloc MicroCode buffer क्रम 'chans' Channel thपढ़ोs.
 	 * A channel's buffer offset is (Channel_Id * MCODE_BUFF_PERCHAN)
 	 */
 	pl330->mcode_cpu = dma_alloc_attrs(pl330->ddma.dev,
 				chans * pl330->mcbufsz,
 				&pl330->mcode_bus, GFP_KERNEL,
 				DMA_ATTR_PRIVILEGED);
-	if (!pl330->mcode_cpu) {
+	अगर (!pl330->mcode_cpu) अणु
 		dev_err(pl330->ddma.dev, "%s:%d Can't allocate memory!\n",
 			__func__, __LINE__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	ret = dmac_alloc_threads(pl330);
-	if (ret) {
+	ret = dmac_alloc_thपढ़ोs(pl330);
+	अगर (ret) अणु
 		dev_err(pl330->ddma.dev, "%s:%d Can't to create channels for DMAC!\n",
 			__func__, __LINE__);
-		dma_free_attrs(pl330->ddma.dev,
+		dma_मुक्त_attrs(pl330->ddma.dev,
 				chans * pl330->mcbufsz,
 				pl330->mcode_cpu, pl330->mcode_bus,
 				DMA_ATTR_PRIVILEGED);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pl330_add(struct pl330_dmac *pl330)
-{
-	int i, ret;
+अटल पूर्णांक pl330_add(काष्ठा pl330_dmac *pl330)
+अणु
+	पूर्णांक i, ret;
 
-	/* Check if we can handle this DMAC */
-	if ((pl330->pcfg.periph_id & 0xfffff) != PERIPH_ID_VAL) {
+	/* Check अगर we can handle this DMAC */
+	अगर ((pl330->pcfg.periph_id & 0xfffff) != PERIPH_ID_VAL) अणु
 		dev_err(pl330->ddma.dev, "PERIPH_ID 0x%x !\n",
 			pl330->pcfg.periph_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Read the configuration of the DMAC */
-	read_dmac_config(pl330);
+	पढ़ो_dmac_config(pl330);
 
-	if (pl330->pcfg.num_events == 0) {
+	अगर (pl330->pcfg.num_events == 0) अणु
 		dev_err(pl330->ddma.dev, "%s:%d Can't work without events!\n",
 			__func__, __LINE__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_init(&pl330->lock);
 
-	INIT_LIST_HEAD(&pl330->req_done);
+	INIT_LIST_HEAD(&pl330->req_करोne);
 
-	/* Use default MC buffer size if not provided */
-	if (!pl330->mcbufsz)
+	/* Use शेष MC buffer size अगर not provided */
+	अगर (!pl330->mcbufsz)
 		pl330->mcbufsz = MCODE_BUFF_PER_REQ * 2;
 
-	/* Mark all events as free */
-	for (i = 0; i < pl330->pcfg.num_events; i++)
+	/* Mark all events as मुक्त */
+	क्रम (i = 0; i < pl330->pcfg.num_events; i++)
 		pl330->events[i] = -1;
 
 	/* Allocate resources needed by the DMAC */
 	ret = dmac_alloc_resources(pl330);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pl330->ddma.dev, "Unable to create channels for DMAC\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	tasklet_setup(&pl330->tasks, pl330_dotask);
+	tasklet_setup(&pl330->tasks, pl330_करोtask);
 
 	pl330->state = INIT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dmac_free_threads(struct pl330_dmac *pl330)
-{
-	struct pl330_thread *thrd;
-	int i;
+अटल पूर्णांक dmac_मुक्त_thपढ़ोs(काष्ठा pl330_dmac *pl330)
+अणु
+	काष्ठा pl330_thपढ़ो *thrd;
+	पूर्णांक i;
 
-	/* Release Channel threads */
-	for (i = 0; i < pl330->pcfg.num_chan; i++) {
+	/* Release Channel thपढ़ोs */
+	क्रम (i = 0; i < pl330->pcfg.num_chan; i++) अणु
 		thrd = &pl330->channels[i];
 		pl330_release_channel(thrd);
-	}
+	पूर्ण
 
 	/* Free memory */
-	kfree(pl330->channels);
+	kमुक्त(pl330->channels);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pl330_del(struct pl330_dmac *pl330)
-{
+अटल व्योम pl330_del(काष्ठा pl330_dmac *pl330)
+अणु
 	pl330->state = UNINIT;
 
-	tasklet_kill(&pl330->tasks);
+	tasklet_समाप्त(&pl330->tasks);
 
 	/* Free DMAC resources */
-	dmac_free_threads(pl330);
+	dmac_मुक्त_thपढ़ोs(pl330);
 
-	dma_free_attrs(pl330->ddma.dev,
+	dma_मुक्त_attrs(pl330->ddma.dev,
 		pl330->pcfg.num_chan * pl330->mcbufsz, pl330->mcode_cpu,
 		pl330->mcode_bus, DMA_ATTR_PRIVILEGED);
-}
+पूर्ण
 
-/* forward declaration */
-static struct amba_driver pl330_driver;
+/* क्रमward declaration */
+अटल काष्ठा amba_driver pl330_driver;
 
-static inline struct dma_pl330_chan *
-to_pchan(struct dma_chan *ch)
-{
-	if (!ch)
-		return NULL;
+अटल अंतरभूत काष्ठा dma_pl330_chan *
+to_pchan(काष्ठा dma_chan *ch)
+अणु
+	अगर (!ch)
+		वापस शून्य;
 
-	return container_of(ch, struct dma_pl330_chan, chan);
-}
+	वापस container_of(ch, काष्ठा dma_pl330_chan, chan);
+पूर्ण
 
-static inline struct dma_pl330_desc *
-to_desc(struct dma_async_tx_descriptor *tx)
-{
-	return container_of(tx, struct dma_pl330_desc, txd);
-}
+अटल अंतरभूत काष्ठा dma_pl330_desc *
+to_desc(काष्ठा dma_async_tx_descriptor *tx)
+अणु
+	वापस container_of(tx, काष्ठा dma_pl330_desc, txd);
+पूर्ण
 
-static inline void fill_queue(struct dma_pl330_chan *pch)
-{
-	struct dma_pl330_desc *desc;
-	int ret;
+अटल अंतरभूत व्योम fill_queue(काष्ठा dma_pl330_chan *pch)
+अणु
+	काष्ठा dma_pl330_desc *desc;
+	पूर्णांक ret;
 
-	list_for_each_entry(desc, &pch->work_list, node) {
+	list_क्रम_each_entry(desc, &pch->work_list, node) अणु
 
-		/* If already submitted */
-		if (desc->status == BUSY)
-			continue;
+		/* If alपढ़ोy submitted */
+		अगर (desc->status == BUSY)
+			जारी;
 
-		ret = pl330_submit_req(pch->thread, desc);
-		if (!ret) {
+		ret = pl330_submit_req(pch->thपढ़ो, desc);
+		अगर (!ret) अणु
 			desc->status = BUSY;
-		} else if (ret == -EAGAIN) {
+		पूर्ण अन्यथा अगर (ret == -EAGAIN) अणु
 			/* QFull or DMAC Dying */
-			break;
-		} else {
+			अवरोध;
+		पूर्ण अन्यथा अणु
 			/* Unacceptable request */
 			desc->status = DONE;
 			dev_err(pch->dmac->ddma.dev, "%s:%d Bad Desc(%d)\n",
 					__func__, __LINE__, desc->txd.cookie);
 			tasklet_schedule(&pch->task);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void pl330_tasklet(struct tasklet_struct *t)
-{
-	struct dma_pl330_chan *pch = from_tasklet(pch, t, task);
-	struct dma_pl330_desc *desc, *_dt;
-	unsigned long flags;
-	bool power_down = false;
+अटल व्योम pl330_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा dma_pl330_chan *pch = from_tasklet(pch, t, task);
+	काष्ठा dma_pl330_desc *desc, *_dt;
+	अचिन्हित दीर्घ flags;
+	bool घातer_करोwn = false;
 
 	spin_lock_irqsave(&pch->lock, flags);
 
 	/* Pick up ripe tomatoes */
-	list_for_each_entry_safe(desc, _dt, &pch->work_list, node)
-		if (desc->status == DONE) {
-			if (!pch->cyclic)
+	list_क्रम_each_entry_safe(desc, _dt, &pch->work_list, node)
+		अगर (desc->status == DONE) अणु
+			अगर (!pch->cyclic)
 				dma_cookie_complete(&desc->txd);
 			list_move_tail(&desc->node, &pch->completed_list);
-		}
+		पूर्ण
 
 	/* Try to submit a req imm. next to the last completed cookie */
 	fill_queue(pch);
 
-	if (list_empty(&pch->work_list)) {
-		spin_lock(&pch->thread->dmac->lock);
-		_stop(pch->thread);
-		spin_unlock(&pch->thread->dmac->lock);
-		power_down = true;
+	अगर (list_empty(&pch->work_list)) अणु
+		spin_lock(&pch->thपढ़ो->dmac->lock);
+		_stop(pch->thपढ़ो);
+		spin_unlock(&pch->thपढ़ो->dmac->lock);
+		घातer_करोwn = true;
 		pch->active = false;
-	} else {
-		/* Make sure the PL330 Channel thread is active */
-		spin_lock(&pch->thread->dmac->lock);
-		_start(pch->thread);
-		spin_unlock(&pch->thread->dmac->lock);
-	}
+	पूर्ण अन्यथा अणु
+		/* Make sure the PL330 Channel thपढ़ो is active */
+		spin_lock(&pch->thपढ़ो->dmac->lock);
+		_start(pch->thपढ़ो);
+		spin_unlock(&pch->thपढ़ो->dmac->lock);
+	पूर्ण
 
-	while (!list_empty(&pch->completed_list)) {
-		struct dmaengine_desc_callback cb;
+	जबतक (!list_empty(&pch->completed_list)) अणु
+		काष्ठा dmaengine_desc_callback cb;
 
 		desc = list_first_entry(&pch->completed_list,
-					struct dma_pl330_desc, node);
+					काष्ठा dma_pl330_desc, node);
 
 		dmaengine_desc_get_callback(&desc->txd, &cb);
 
-		if (pch->cyclic) {
+		अगर (pch->cyclic) अणु
 			desc->status = PREP;
 			list_move_tail(&desc->node, &pch->work_list);
-			if (power_down) {
+			अगर (घातer_करोwn) अणु
 				pch->active = true;
-				spin_lock(&pch->thread->dmac->lock);
-				_start(pch->thread);
-				spin_unlock(&pch->thread->dmac->lock);
-				power_down = false;
-			}
-		} else {
+				spin_lock(&pch->thपढ़ो->dmac->lock);
+				_start(pch->thपढ़ो);
+				spin_unlock(&pch->thपढ़ो->dmac->lock);
+				घातer_करोwn = false;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			desc->status = FREE;
 			list_move_tail(&desc->node, &pch->dmac->desc_pool);
-		}
+		पूर्ण
 
 		dma_descriptor_unmap(&desc->txd);
 
-		if (dmaengine_desc_callback_valid(&cb)) {
+		अगर (dmaengine_desc_callback_valid(&cb)) अणु
 			spin_unlock_irqrestore(&pch->lock, flags);
-			dmaengine_desc_callback_invoke(&cb, NULL);
+			dmaengine_desc_callback_invoke(&cb, शून्य);
 			spin_lock_irqsave(&pch->lock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&pch->lock, flags);
 
-	/* If work list empty, power down */
-	if (power_down) {
-		pm_runtime_mark_last_busy(pch->dmac->ddma.dev);
-		pm_runtime_put_autosuspend(pch->dmac->ddma.dev);
-	}
-}
+	/* If work list empty, घातer करोwn */
+	अगर (घातer_करोwn) अणु
+		pm_runसमय_mark_last_busy(pch->dmac->ddma.dev);
+		pm_runसमय_put_स्वतःsuspend(pch->dmac->ddma.dev);
+	पूर्ण
+पूर्ण
 
-static struct dma_chan *of_dma_pl330_xlate(struct of_phandle_args *dma_spec,
-						struct of_dma *ofdma)
-{
-	int count = dma_spec->args_count;
-	struct pl330_dmac *pl330 = ofdma->of_dma_data;
-	unsigned int chan_id;
+अटल काष्ठा dma_chan *of_dma_pl330_xlate(काष्ठा of_phandle_args *dma_spec,
+						काष्ठा of_dma *ofdma)
+अणु
+	पूर्णांक count = dma_spec->args_count;
+	काष्ठा pl330_dmac *pl330 = ofdma->of_dma_data;
+	अचिन्हित पूर्णांक chan_id;
 
-	if (!pl330)
-		return NULL;
+	अगर (!pl330)
+		वापस शून्य;
 
-	if (count != 1)
-		return NULL;
+	अगर (count != 1)
+		वापस शून्य;
 
 	chan_id = dma_spec->args[0];
-	if (chan_id >= pl330->num_peripherals)
-		return NULL;
+	अगर (chan_id >= pl330->num_peripherals)
+		वापस शून्य;
 
-	return dma_get_slave_channel(&pl330->peripherals[chan_id].chan);
-}
+	वापस dma_get_slave_channel(&pl330->peripherals[chan_id].chan);
+पूर्ण
 
-static int pl330_alloc_chan_resources(struct dma_chan *chan)
-{
-	struct dma_pl330_chan *pch = to_pchan(chan);
-	struct pl330_dmac *pl330 = pch->dmac;
-	unsigned long flags;
+अटल पूर्णांक pl330_alloc_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
+	काष्ठा pl330_dmac *pl330 = pch->dmac;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pl330->lock, flags);
 
 	dma_cookie_init(chan);
 	pch->cyclic = false;
 
-	pch->thread = pl330_request_channel(pl330);
-	if (!pch->thread) {
+	pch->thपढ़ो = pl330_request_channel(pl330);
+	अगर (!pch->thपढ़ो) अणु
 		spin_unlock_irqrestore(&pl330->lock, flags);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	tasklet_setup(&pch->task, pl330_tasklet);
 
 	spin_unlock_irqrestore(&pl330->lock, flags);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * We need the data direction between the DMAC (the dma-mapping "device") and
- * the FIFO (the dmaengine "dev"), from the FIFO's point of view. Confusing!
+ * the FIFO (the dmaengine "dev"), from the FIFO's poपूर्णांक of view. Confusing!
  */
-static enum dma_data_direction
-pl330_dma_slave_map_dir(enum dma_transfer_direction dir)
-{
-	switch (dir) {
-	case DMA_MEM_TO_DEV:
-		return DMA_FROM_DEVICE;
-	case DMA_DEV_TO_MEM:
-		return DMA_TO_DEVICE;
-	case DMA_DEV_TO_DEV:
-		return DMA_BIDIRECTIONAL;
-	default:
-		return DMA_NONE;
-	}
-}
+अटल क्रमागत dma_data_direction
+pl330_dma_slave_map_dir(क्रमागत dma_transfer_direction dir)
+अणु
+	चयन (dir) अणु
+	हाल DMA_MEM_TO_DEV:
+		वापस DMA_FROM_DEVICE;
+	हाल DMA_DEV_TO_MEM:
+		वापस DMA_TO_DEVICE;
+	हाल DMA_DEV_TO_DEV:
+		वापस DMA_BIसूचीECTIONAL;
+	शेष:
+		वापस DMA_NONE;
+	पूर्ण
+पूर्ण
 
-static void pl330_unprep_slave_fifo(struct dma_pl330_chan *pch)
-{
-	if (pch->dir != DMA_NONE)
-		dma_unmap_resource(pch->chan.device->dev, pch->fifo_dma,
+अटल व्योम pl330_unprep_slave_fअगरo(काष्ठा dma_pl330_chan *pch)
+अणु
+	अगर (pch->dir != DMA_NONE)
+		dma_unmap_resource(pch->chan.device->dev, pch->fअगरo_dma,
 				   1 << pch->burst_sz, pch->dir, 0);
 	pch->dir = DMA_NONE;
-}
+पूर्ण
 
 
-static bool pl330_prep_slave_fifo(struct dma_pl330_chan *pch,
-				  enum dma_transfer_direction dir)
-{
-	struct device *dev = pch->chan.device->dev;
-	enum dma_data_direction dma_dir = pl330_dma_slave_map_dir(dir);
+अटल bool pl330_prep_slave_fअगरo(काष्ठा dma_pl330_chan *pch,
+				  क्रमागत dma_transfer_direction dir)
+अणु
+	काष्ठा device *dev = pch->chan.device->dev;
+	क्रमागत dma_data_direction dma_dir = pl330_dma_slave_map_dir(dir);
 
-	/* Already mapped for this config? */
-	if (pch->dir == dma_dir)
-		return true;
+	/* Alपढ़ोy mapped क्रम this config? */
+	अगर (pch->dir == dma_dir)
+		वापस true;
 
-	pl330_unprep_slave_fifo(pch);
-	pch->fifo_dma = dma_map_resource(dev, pch->fifo_addr,
+	pl330_unprep_slave_fअगरo(pch);
+	pch->fअगरo_dma = dma_map_resource(dev, pch->fअगरo_addr,
 					 1 << pch->burst_sz, dma_dir, 0);
-	if (dma_mapping_error(dev, pch->fifo_dma))
-		return false;
+	अगर (dma_mapping_error(dev, pch->fअगरo_dma))
+		वापस false;
 
 	pch->dir = dma_dir;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int fixup_burst_len(int max_burst_len, int quirks)
-{
-	if (max_burst_len > PL330_MAX_BURST)
-		return PL330_MAX_BURST;
-	else if (max_burst_len < 1)
-		return 1;
-	else
-		return max_burst_len;
-}
+अटल पूर्णांक fixup_burst_len(पूर्णांक max_burst_len, पूर्णांक quirks)
+अणु
+	अगर (max_burst_len > PL330_MAX_BURST)
+		वापस PL330_MAX_BURST;
+	अन्यथा अगर (max_burst_len < 1)
+		वापस 1;
+	अन्यथा
+		वापस max_burst_len;
+पूर्ण
 
-static int pl330_config_write(struct dma_chan *chan,
-			struct dma_slave_config *slave_config,
-			enum dma_transfer_direction direction)
-{
-	struct dma_pl330_chan *pch = to_pchan(chan);
+अटल पूर्णांक pl330_config_ग_लिखो(काष्ठा dma_chan *chan,
+			काष्ठा dma_slave_config *slave_config,
+			क्रमागत dma_transfer_direction direction)
+अणु
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
 
-	pl330_unprep_slave_fifo(pch);
-	if (direction == DMA_MEM_TO_DEV) {
-		if (slave_config->dst_addr)
-			pch->fifo_addr = slave_config->dst_addr;
-		if (slave_config->dst_addr_width)
+	pl330_unprep_slave_fअगरo(pch);
+	अगर (direction == DMA_MEM_TO_DEV) अणु
+		अगर (slave_config->dst_addr)
+			pch->fअगरo_addr = slave_config->dst_addr;
+		अगर (slave_config->dst_addr_width)
 			pch->burst_sz = __ffs(slave_config->dst_addr_width);
 		pch->burst_len = fixup_burst_len(slave_config->dst_maxburst,
 			pch->dmac->quirks);
-	} else if (direction == DMA_DEV_TO_MEM) {
-		if (slave_config->src_addr)
-			pch->fifo_addr = slave_config->src_addr;
-		if (slave_config->src_addr_width)
+	पूर्ण अन्यथा अगर (direction == DMA_DEV_TO_MEM) अणु
+		अगर (slave_config->src_addr)
+			pch->fअगरo_addr = slave_config->src_addr;
+		अगर (slave_config->src_addr_width)
 			pch->burst_sz = __ffs(slave_config->src_addr_width);
 		pch->burst_len = fixup_burst_len(slave_config->src_maxburst,
 			pch->dmac->quirks);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pl330_config(struct dma_chan *chan,
-			struct dma_slave_config *slave_config)
-{
-	struct dma_pl330_chan *pch = to_pchan(chan);
+अटल पूर्णांक pl330_config(काष्ठा dma_chan *chan,
+			काष्ठा dma_slave_config *slave_config)
+अणु
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
 
-	memcpy(&pch->slave_config, slave_config, sizeof(*slave_config));
+	स_नकल(&pch->slave_config, slave_config, माप(*slave_config));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pl330_terminate_all(struct dma_chan *chan)
-{
-	struct dma_pl330_chan *pch = to_pchan(chan);
-	struct dma_pl330_desc *desc;
-	unsigned long flags;
-	struct pl330_dmac *pl330 = pch->dmac;
-	bool power_down = false;
+अटल पूर्णांक pl330_terminate_all(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
+	काष्ठा dma_pl330_desc *desc;
+	अचिन्हित दीर्घ flags;
+	काष्ठा pl330_dmac *pl330 = pch->dmac;
+	bool घातer_करोwn = false;
 
-	pm_runtime_get_sync(pl330->ddma.dev);
+	pm_runसमय_get_sync(pl330->ddma.dev);
 	spin_lock_irqsave(&pch->lock, flags);
 
 	spin_lock(&pl330->lock);
-	_stop(pch->thread);
-	pch->thread->req[0].desc = NULL;
-	pch->thread->req[1].desc = NULL;
-	pch->thread->req_running = -1;
+	_stop(pch->thपढ़ो);
+	pch->thपढ़ो->req[0].desc = शून्य;
+	pch->thपढ़ो->req[1].desc = शून्य;
+	pch->thपढ़ो->req_running = -1;
 	spin_unlock(&pl330->lock);
 
-	power_down = pch->active;
+	घातer_करोwn = pch->active;
 	pch->active = false;
 
-	/* Mark all desc done */
-	list_for_each_entry(desc, &pch->submitted_list, node) {
+	/* Mark all desc करोne */
+	list_क्रम_each_entry(desc, &pch->submitted_list, node) अणु
 		desc->status = FREE;
 		dma_cookie_complete(&desc->txd);
-	}
+	पूर्ण
 
-	list_for_each_entry(desc, &pch->work_list , node) {
+	list_क्रम_each_entry(desc, &pch->work_list , node) अणु
 		desc->status = FREE;
 		dma_cookie_complete(&desc->txd);
-	}
+	पूर्ण
 
 	list_splice_tail_init(&pch->submitted_list, &pl330->desc_pool);
 	list_splice_tail_init(&pch->work_list, &pl330->desc_pool);
 	list_splice_tail_init(&pch->completed_list, &pl330->desc_pool);
 	spin_unlock_irqrestore(&pch->lock, flags);
-	pm_runtime_mark_last_busy(pl330->ddma.dev);
-	if (power_down)
-		pm_runtime_put_autosuspend(pl330->ddma.dev);
-	pm_runtime_put_autosuspend(pl330->ddma.dev);
+	pm_runसमय_mark_last_busy(pl330->ddma.dev);
+	अगर (घातer_करोwn)
+		pm_runसमय_put_स्वतःsuspend(pl330->ddma.dev);
+	pm_runसमय_put_स्वतःsuspend(pl330->ddma.dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * We don't support DMA_RESUME command because of hardware
+ * We करोn't support DMA_RESUME command because of hardware
  * limitations, so after pausing the channel we cannot restore
  * it to active state. We have to terminate channel and setup
- * DMA transfer again. This pause feature was implemented to
- * allow safely read residue before channel termination.
+ * DMA transfer again. This छोड़ो feature was implemented to
+ * allow safely पढ़ो residue beक्रमe channel termination.
  */
-static int pl330_pause(struct dma_chan *chan)
-{
-	struct dma_pl330_chan *pch = to_pchan(chan);
-	struct pl330_dmac *pl330 = pch->dmac;
-	unsigned long flags;
+अटल पूर्णांक pl330_छोड़ो(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
+	काष्ठा pl330_dmac *pl330 = pch->dmac;
+	अचिन्हित दीर्घ flags;
 
-	pm_runtime_get_sync(pl330->ddma.dev);
+	pm_runसमय_get_sync(pl330->ddma.dev);
 	spin_lock_irqsave(&pch->lock, flags);
 
 	spin_lock(&pl330->lock);
-	_stop(pch->thread);
+	_stop(pch->thपढ़ो);
 	spin_unlock(&pl330->lock);
 
 	spin_unlock_irqrestore(&pch->lock, flags);
-	pm_runtime_mark_last_busy(pl330->ddma.dev);
-	pm_runtime_put_autosuspend(pl330->ddma.dev);
+	pm_runसमय_mark_last_busy(pl330->ddma.dev);
+	pm_runसमय_put_स्वतःsuspend(pl330->ddma.dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pl330_free_chan_resources(struct dma_chan *chan)
-{
-	struct dma_pl330_chan *pch = to_pchan(chan);
-	struct pl330_dmac *pl330 = pch->dmac;
-	unsigned long flags;
+अटल व्योम pl330_मुक्त_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
+	काष्ठा pl330_dmac *pl330 = pch->dmac;
+	अचिन्हित दीर्घ flags;
 
-	tasklet_kill(&pch->task);
+	tasklet_समाप्त(&pch->task);
 
-	pm_runtime_get_sync(pch->dmac->ddma.dev);
+	pm_runसमय_get_sync(pch->dmac->ddma.dev);
 	spin_lock_irqsave(&pl330->lock, flags);
 
-	pl330_release_channel(pch->thread);
-	pch->thread = NULL;
+	pl330_release_channel(pch->thपढ़ो);
+	pch->thपढ़ो = शून्य;
 
-	if (pch->cyclic)
+	अगर (pch->cyclic)
 		list_splice_tail_init(&pch->work_list, &pch->dmac->desc_pool);
 
 	spin_unlock_irqrestore(&pl330->lock, flags);
-	pm_runtime_mark_last_busy(pch->dmac->ddma.dev);
-	pm_runtime_put_autosuspend(pch->dmac->ddma.dev);
-	pl330_unprep_slave_fifo(pch);
-}
+	pm_runसमय_mark_last_busy(pch->dmac->ddma.dev);
+	pm_runसमय_put_स्वतःsuspend(pch->dmac->ddma.dev);
+	pl330_unprep_slave_fअगरo(pch);
+पूर्ण
 
-static int pl330_get_current_xferred_count(struct dma_pl330_chan *pch,
-					   struct dma_pl330_desc *desc)
-{
-	struct pl330_thread *thrd = pch->thread;
-	struct pl330_dmac *pl330 = pch->dmac;
-	void __iomem *regs = thrd->dmac->base;
+अटल पूर्णांक pl330_get_current_xferred_count(काष्ठा dma_pl330_chan *pch,
+					   काष्ठा dma_pl330_desc *desc)
+अणु
+	काष्ठा pl330_thपढ़ो *thrd = pch->thपढ़ो;
+	काष्ठा pl330_dmac *pl330 = pch->dmac;
+	व्योम __iomem *regs = thrd->dmac->base;
 	u32 val, addr;
 
-	pm_runtime_get_sync(pl330->ddma.dev);
+	pm_runसमय_get_sync(pl330->ddma.dev);
 	val = addr = 0;
-	if (desc->rqcfg.src_inc) {
-		val = readl(regs + SA(thrd->id));
+	अगर (desc->rqcfg.src_inc) अणु
+		val = पढ़ोl(regs + SA(thrd->id));
 		addr = desc->px.src_addr;
-	} else {
-		val = readl(regs + DA(thrd->id));
+	पूर्ण अन्यथा अणु
+		val = पढ़ोl(regs + DA(thrd->id));
 		addr = desc->px.dst_addr;
-	}
-	pm_runtime_mark_last_busy(pch->dmac->ddma.dev);
-	pm_runtime_put_autosuspend(pl330->ddma.dev);
+	पूर्ण
+	pm_runसमय_mark_last_busy(pch->dmac->ddma.dev);
+	pm_runसमय_put_स्वतःsuspend(pl330->ddma.dev);
 
 	/* If DMAMOV hasn't finished yet, SAR/DAR can be zero */
-	if (!val)
-		return 0;
+	अगर (!val)
+		वापस 0;
 
-	return val - addr;
-}
+	वापस val - addr;
+पूर्ण
 
-static enum dma_status
-pl330_tx_status(struct dma_chan *chan, dma_cookie_t cookie,
-		 struct dma_tx_state *txstate)
-{
-	enum dma_status ret;
-	unsigned long flags;
-	struct dma_pl330_desc *desc, *running = NULL, *last_enq = NULL;
-	struct dma_pl330_chan *pch = to_pchan(chan);
-	unsigned int transferred, residual = 0;
+अटल क्रमागत dma_status
+pl330_tx_status(काष्ठा dma_chan *chan, dma_cookie_t cookie,
+		 काष्ठा dma_tx_state *txstate)
+अणु
+	क्रमागत dma_status ret;
+	अचिन्हित दीर्घ flags;
+	काष्ठा dma_pl330_desc *desc, *running = शून्य, *last_enq = शून्य;
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
+	अचिन्हित पूर्णांक transferred, residual = 0;
 
 	ret = dma_cookie_status(chan, cookie, txstate);
 
-	if (!txstate)
-		return ret;
+	अगर (!txstate)
+		वापस ret;
 
-	if (ret == DMA_COMPLETE)
-		goto out;
+	अगर (ret == DMA_COMPLETE)
+		जाओ out;
 
 	spin_lock_irqsave(&pch->lock, flags);
-	spin_lock(&pch->thread->dmac->lock);
+	spin_lock(&pch->thपढ़ो->dmac->lock);
 
-	if (pch->thread->req_running != -1)
-		running = pch->thread->req[pch->thread->req_running].desc;
+	अगर (pch->thपढ़ो->req_running != -1)
+		running = pch->thपढ़ो->req[pch->thपढ़ो->req_running].desc;
 
-	last_enq = pch->thread->req[pch->thread->lstenq].desc;
+	last_enq = pch->thपढ़ो->req[pch->thपढ़ो->lstenq].desc;
 
 	/* Check in pending list */
-	list_for_each_entry(desc, &pch->work_list, node) {
-		if (desc->status == DONE)
+	list_क्रम_each_entry(desc, &pch->work_list, node) अणु
+		अगर (desc->status == DONE)
 			transferred = desc->bytes_requested;
-		else if (running && desc == running)
+		अन्यथा अगर (running && desc == running)
 			transferred =
 				pl330_get_current_xferred_count(pch, desc);
-		else if (desc->status == BUSY)
+		अन्यथा अगर (desc->status == BUSY)
 			/*
 			 * Busy but not running means either just enqueued,
-			 * or finished and not yet marked done
+			 * or finished and not yet marked करोne
 			 */
-			if (desc == last_enq)
+			अगर (desc == last_enq)
 				transferred = 0;
-			else
+			अन्यथा
 				transferred = desc->bytes_requested;
-		else
+		अन्यथा
 			transferred = 0;
 		residual += desc->bytes_requested - transferred;
-		if (desc->txd.cookie == cookie) {
-			switch (desc->status) {
-			case DONE:
+		अगर (desc->txd.cookie == cookie) अणु
+			चयन (desc->status) अणु
+			हाल DONE:
 				ret = DMA_COMPLETE;
-				break;
-			case PREP:
-			case BUSY:
+				अवरोध;
+			हाल PREP:
+			हाल BUSY:
 				ret = DMA_IN_PROGRESS;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				WARN_ON(1);
-			}
-			break;
-		}
-		if (desc->last)
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		अगर (desc->last)
 			residual = 0;
-	}
-	spin_unlock(&pch->thread->dmac->lock);
+	पूर्ण
+	spin_unlock(&pch->thपढ़ो->dmac->lock);
 	spin_unlock_irqrestore(&pch->lock, flags);
 
 out:
 	dma_set_residue(txstate, residual);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void pl330_issue_pending(struct dma_chan *chan)
-{
-	struct dma_pl330_chan *pch = to_pchan(chan);
-	unsigned long flags;
+अटल व्योम pl330_issue_pending(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pch->lock, flags);
-	if (list_empty(&pch->work_list)) {
+	अगर (list_empty(&pch->work_list)) अणु
 		/*
 		 * Warn on nothing pending. Empty submitted_list may
-		 * break our pm_runtime usage counter as it is
+		 * अवरोध our pm_runसमय usage counter as it is
 		 * updated on work_list emptiness status.
 		 */
 		WARN_ON(list_empty(&pch->submitted_list));
 		pch->active = true;
-		pm_runtime_get_sync(pch->dmac->ddma.dev);
-	}
+		pm_runसमय_get_sync(pch->dmac->ddma.dev);
+	पूर्ण
 	list_splice_tail_init(&pch->submitted_list, &pch->work_list);
 	spin_unlock_irqrestore(&pch->lock, flags);
 
 	pl330_tasklet(&pch->task);
-}
+पूर्ण
 
 /*
- * We returned the last one of the circular list of descriptor(s)
+ * We वापसed the last one of the circular list of descriptor(s)
  * from prep_xxx, so the argument to submit corresponds to the last
  * descriptor of the list.
  */
-static dma_cookie_t pl330_tx_submit(struct dma_async_tx_descriptor *tx)
-{
-	struct dma_pl330_desc *desc, *last = to_desc(tx);
-	struct dma_pl330_chan *pch = to_pchan(tx->chan);
+अटल dma_cookie_t pl330_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
+अणु
+	काष्ठा dma_pl330_desc *desc, *last = to_desc(tx);
+	काष्ठा dma_pl330_chan *pch = to_pchan(tx->chan);
 	dma_cookie_t cookie;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pch->lock, flags);
 
 	/* Assign cookies to all nodes */
-	while (!list_empty(&last->node)) {
-		desc = list_entry(last->node.next, struct dma_pl330_desc, node);
-		if (pch->cyclic) {
+	जबतक (!list_empty(&last->node)) अणु
+		desc = list_entry(last->node.next, काष्ठा dma_pl330_desc, node);
+		अगर (pch->cyclic) अणु
 			desc->txd.callback = last->txd.callback;
 			desc->txd.callback_param = last->txd.callback_param;
-		}
+		पूर्ण
 		desc->last = false;
 
 		dma_cookie_assign(&desc->txd);
 
 		list_move_tail(&desc->node, &pch->submitted_list);
-	}
+	पूर्ण
 
 	last->last = true;
 	cookie = dma_cookie_assign(&last->txd);
 	list_add_tail(&last->node, &pch->submitted_list);
 	spin_unlock_irqrestore(&pch->lock, flags);
 
-	return cookie;
-}
+	वापस cookie;
+पूर्ण
 
-static inline void _init_desc(struct dma_pl330_desc *desc)
-{
+अटल अंतरभूत व्योम _init_desc(काष्ठा dma_pl330_desc *desc)
+अणु
 	desc->rqcfg.swap = SWAP_NO;
 	desc->rqcfg.scctl = CCTRL0;
 	desc->rqcfg.dcctl = CCTRL0;
 	desc->txd.tx_submit = pl330_tx_submit;
 
 	INIT_LIST_HEAD(&desc->node);
-}
+पूर्ण
 
 /* Returns the number of descriptors added to the DMAC pool */
-static int add_desc(struct list_head *pool, spinlock_t *lock,
-		    gfp_t flg, int count)
-{
-	struct dma_pl330_desc *desc;
-	unsigned long flags;
-	int i;
+अटल पूर्णांक add_desc(काष्ठा list_head *pool, spinlock_t *lock,
+		    gfp_t flg, पूर्णांक count)
+अणु
+	काष्ठा dma_pl330_desc *desc;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	desc = kcalloc(count, sizeof(*desc), flg);
-	if (!desc)
-		return 0;
+	desc = kसुस्मृति(count, माप(*desc), flg);
+	अगर (!desc)
+		वापस 0;
 
 	spin_lock_irqsave(lock, flags);
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		_init_desc(&desc[i]);
 		list_add_tail(&desc[i].node, pool);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(lock, flags);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct dma_pl330_desc *pluck_desc(struct list_head *pool,
+अटल काष्ठा dma_pl330_desc *pluck_desc(काष्ठा list_head *pool,
 					 spinlock_t *lock)
-{
-	struct dma_pl330_desc *desc = NULL;
-	unsigned long flags;
+अणु
+	काष्ठा dma_pl330_desc *desc = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(lock, flags);
 
-	if (!list_empty(pool)) {
+	अगर (!list_empty(pool)) अणु
 		desc = list_entry(pool->next,
-				struct dma_pl330_desc, node);
+				काष्ठा dma_pl330_desc, node);
 
 		list_del_init(&desc->node);
 
 		desc->status = PREP;
-		desc->txd.callback = NULL;
-	}
+		desc->txd.callback = शून्य;
+	पूर्ण
 
 	spin_unlock_irqrestore(lock, flags);
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-static struct dma_pl330_desc *pl330_get_desc(struct dma_pl330_chan *pch)
-{
-	struct pl330_dmac *pl330 = pch->dmac;
-	u8 *peri_id = pch->chan.private;
-	struct dma_pl330_desc *desc;
+अटल काष्ठा dma_pl330_desc *pl330_get_desc(काष्ठा dma_pl330_chan *pch)
+अणु
+	काष्ठा pl330_dmac *pl330 = pch->dmac;
+	u8 *peri_id = pch->chan.निजी;
+	काष्ठा dma_pl330_desc *desc;
 
 	/* Pluck one desc from the pool of DMAC */
 	desc = pluck_desc(&pl330->desc_pool, &pl330->pool_lock);
 
 	/* If the DMAC pool is empty, alloc new */
-	if (!desc) {
+	अगर (!desc) अणु
 		DEFINE_SPINLOCK(lock);
 		LIST_HEAD(pool);
 
-		if (!add_desc(&pool, &lock, GFP_ATOMIC, 1))
-			return NULL;
+		अगर (!add_desc(&pool, &lock, GFP_ATOMIC, 1))
+			वापस शून्य;
 
 		desc = pluck_desc(&pool, &lock);
 		WARN_ON(!desc || !list_empty(&pool));
-	}
+	पूर्ण
 
 	/* Initialize the descriptor */
 	desc->pchan = pch;
@@ -2609,130 +2610,130 @@ static struct dma_pl330_desc *pl330_get_desc(struct dma_pl330_chan *pch)
 
 	dma_async_tx_descriptor_init(&desc->txd, &pch->chan);
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-static inline void fill_px(struct pl330_xfer *px,
-		dma_addr_t dst, dma_addr_t src, size_t len)
-{
+अटल अंतरभूत व्योम fill_px(काष्ठा pl330_xfer *px,
+		dma_addr_t dst, dma_addr_t src, माप_प्रकार len)
+अणु
 	px->bytes = len;
 	px->dst_addr = dst;
 	px->src_addr = src;
-}
+पूर्ण
 
-static struct dma_pl330_desc *
-__pl330_prep_dma_memcpy(struct dma_pl330_chan *pch, dma_addr_t dst,
-		dma_addr_t src, size_t len)
-{
-	struct dma_pl330_desc *desc = pl330_get_desc(pch);
+अटल काष्ठा dma_pl330_desc *
+__pl330_prep_dma_स_नकल(काष्ठा dma_pl330_chan *pch, dma_addr_t dst,
+		dma_addr_t src, माप_प्रकार len)
+अणु
+	काष्ठा dma_pl330_desc *desc = pl330_get_desc(pch);
 
-	if (!desc) {
+	अगर (!desc) अणु
 		dev_err(pch->dmac->ddma.dev, "%s:%d Unable to fetch desc\n",
 			__func__, __LINE__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
-	 * Ideally we should lookout for reqs bigger than
+	 * Ideally we should lookout क्रम reqs bigger than
 	 * those that can be programmed with 256 bytes of
-	 * MC buffer, but considering a req size is seldom
+	 * MC buffer, but considering a req size is selकरोm
 	 * going to be word-unaligned and more than 200MB,
 	 * we take it easy.
 	 * Also, should the limit is reached we'd rather
-	 * have the platform increase MC buffer size than
+	 * have the platक्रमm increase MC buffer size than
 	 * complicating this API driver.
 	 */
 	fill_px(&desc->px, dst, src, len);
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
 /* Call after fixing burst size */
-static inline int get_burst_len(struct dma_pl330_desc *desc, size_t len)
-{
-	struct dma_pl330_chan *pch = desc->pchan;
-	struct pl330_dmac *pl330 = pch->dmac;
-	int burst_len;
+अटल अंतरभूत पूर्णांक get_burst_len(काष्ठा dma_pl330_desc *desc, माप_प्रकार len)
+अणु
+	काष्ठा dma_pl330_chan *pch = desc->pchan;
+	काष्ठा pl330_dmac *pl330 = pch->dmac;
+	पूर्णांक burst_len;
 
 	burst_len = pl330->pcfg.data_bus_width / 8;
 	burst_len *= pl330->pcfg.data_buf_dep / pl330->pcfg.num_chan;
 	burst_len >>= desc->rqcfg.brst_size;
 
 	/* src/dst_burst_len can't be more than 16 */
-	if (burst_len > PL330_MAX_BURST)
+	अगर (burst_len > PL330_MAX_BURST)
 		burst_len = PL330_MAX_BURST;
 
-	return burst_len;
-}
+	वापस burst_len;
+पूर्ण
 
-static struct dma_async_tx_descriptor *pl330_prep_dma_cyclic(
-		struct dma_chan *chan, dma_addr_t dma_addr, size_t len,
-		size_t period_len, enum dma_transfer_direction direction,
-		unsigned long flags)
-{
-	struct dma_pl330_desc *desc = NULL, *first = NULL;
-	struct dma_pl330_chan *pch = to_pchan(chan);
-	struct pl330_dmac *pl330 = pch->dmac;
-	unsigned int i;
+अटल काष्ठा dma_async_tx_descriptor *pl330_prep_dma_cyclic(
+		काष्ठा dma_chan *chan, dma_addr_t dma_addr, माप_प्रकार len,
+		माप_प्रकार period_len, क्रमागत dma_transfer_direction direction,
+		अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा dma_pl330_desc *desc = शून्य, *first = शून्य;
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
+	काष्ठा pl330_dmac *pl330 = pch->dmac;
+	अचिन्हित पूर्णांक i;
 	dma_addr_t dst;
 	dma_addr_t src;
 
-	if (len % period_len != 0)
-		return NULL;
+	अगर (len % period_len != 0)
+		वापस शून्य;
 
-	if (!is_slave_direction(direction)) {
+	अगर (!is_slave_direction(direction)) अणु
 		dev_err(pch->dmac->ddma.dev, "%s:%d Invalid dma direction\n",
 		__func__, __LINE__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	pl330_config_write(chan, &pch->slave_config, direction);
+	pl330_config_ग_लिखो(chan, &pch->slave_config, direction);
 
-	if (!pl330_prep_slave_fifo(pch, direction))
-		return NULL;
+	अगर (!pl330_prep_slave_fअगरo(pch, direction))
+		वापस शून्य;
 
-	for (i = 0; i < len / period_len; i++) {
+	क्रम (i = 0; i < len / period_len; i++) अणु
 		desc = pl330_get_desc(pch);
-		if (!desc) {
-			unsigned long iflags;
+		अगर (!desc) अणु
+			अचिन्हित दीर्घ अगरlags;
 
 			dev_err(pch->dmac->ddma.dev, "%s:%d Unable to fetch desc\n",
 				__func__, __LINE__);
 
-			if (!first)
-				return NULL;
+			अगर (!first)
+				वापस शून्य;
 
-			spin_lock_irqsave(&pl330->pool_lock, iflags);
+			spin_lock_irqsave(&pl330->pool_lock, अगरlags);
 
-			while (!list_empty(&first->node)) {
+			जबतक (!list_empty(&first->node)) अणु
 				desc = list_entry(first->node.next,
-						struct dma_pl330_desc, node);
+						काष्ठा dma_pl330_desc, node);
 				list_move_tail(&desc->node, &pl330->desc_pool);
-			}
+			पूर्ण
 
 			list_move_tail(&first->node, &pl330->desc_pool);
 
-			spin_unlock_irqrestore(&pl330->pool_lock, iflags);
+			spin_unlock_irqrestore(&pl330->pool_lock, अगरlags);
 
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		switch (direction) {
-		case DMA_MEM_TO_DEV:
+		चयन (direction) अणु
+		हाल DMA_MEM_TO_DEV:
 			desc->rqcfg.src_inc = 1;
 			desc->rqcfg.dst_inc = 0;
 			src = dma_addr;
-			dst = pch->fifo_dma;
-			break;
-		case DMA_DEV_TO_MEM:
+			dst = pch->fअगरo_dma;
+			अवरोध;
+		हाल DMA_DEV_TO_MEM:
 			desc->rqcfg.src_inc = 0;
 			desc->rqcfg.dst_inc = 1;
-			src = pch->fifo_dma;
+			src = pch->fअगरo_dma;
 			dst = dma_addr;
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		desc->rqtype = direction;
 		desc->rqcfg.brst_size = pch->burst_sz;
@@ -2740,40 +2741,40 @@ static struct dma_async_tx_descriptor *pl330_prep_dma_cyclic(
 		desc->bytes_requested = period_len;
 		fill_px(&desc->px, dst, src, period_len);
 
-		if (!first)
+		अगर (!first)
 			first = desc;
-		else
+		अन्यथा
 			list_add_tail(&desc->node, &first->node);
 
 		dma_addr += period_len;
-	}
+	पूर्ण
 
-	if (!desc)
-		return NULL;
+	अगर (!desc)
+		वापस शून्य;
 
 	pch->cyclic = true;
 	desc->txd.flags = flags;
 
-	return &desc->txd;
-}
+	वापस &desc->txd;
+पूर्ण
 
-static struct dma_async_tx_descriptor *
-pl330_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dst,
-		dma_addr_t src, size_t len, unsigned long flags)
-{
-	struct dma_pl330_desc *desc;
-	struct dma_pl330_chan *pch = to_pchan(chan);
-	struct pl330_dmac *pl330;
-	int burst;
+अटल काष्ठा dma_async_tx_descriptor *
+pl330_prep_dma_स_नकल(काष्ठा dma_chan *chan, dma_addr_t dst,
+		dma_addr_t src, माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा dma_pl330_desc *desc;
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
+	काष्ठा pl330_dmac *pl330;
+	पूर्णांक burst;
 
-	if (unlikely(!pch || !len))
-		return NULL;
+	अगर (unlikely(!pch || !len))
+		वापस शून्य;
 
 	pl330 = pch->dmac;
 
-	desc = __pl330_prep_dma_memcpy(pch, dst, src, len);
-	if (!desc)
-		return NULL;
+	desc = __pl330_prep_dma_स_नकल(pch, dst, src, len);
+	अगर (!desc)
+		वापस शून्य;
 
 	desc->rqcfg.src_inc = 1;
 	desc->rqcfg.dst_inc = 1;
@@ -2783,234 +2784,234 @@ pl330_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dst,
 	burst = pl330->pcfg.data_bus_width / 8;
 
 	/*
-	 * Make sure we use a burst size that aligns with all the memcpy
-	 * parameters because our DMA programming algorithm doesn't cope with
+	 * Make sure we use a burst size that aligns with all the स_नकल
+	 * parameters because our DMA programming algorithm करोesn't cope with
 	 * transfers which straddle an entry in the DMA device's MFIFO.
 	 */
-	while ((src | dst | len) & (burst - 1))
+	जबतक ((src | dst | len) & (burst - 1))
 		burst /= 2;
 
 	desc->rqcfg.brst_size = 0;
-	while (burst != (1 << desc->rqcfg.brst_size))
+	जबतक (burst != (1 << desc->rqcfg.brst_size))
 		desc->rqcfg.brst_size++;
 
 	desc->rqcfg.brst_len = get_burst_len(desc, len);
 	/*
 	 * If burst size is smaller than bus width then make sure we only
-	 * transfer one at a time to avoid a burst stradling an MFIFO entry.
+	 * transfer one at a समय to aव्योम a burst stradling an MFIFO entry.
 	 */
-	if (burst * 8 < pl330->pcfg.data_bus_width)
+	अगर (burst * 8 < pl330->pcfg.data_bus_width)
 		desc->rqcfg.brst_len = 1;
 
 	desc->bytes_requested = len;
 
 	desc->txd.flags = flags;
 
-	return &desc->txd;
-}
+	वापस &desc->txd;
+पूर्ण
 
-static void __pl330_giveback_desc(struct pl330_dmac *pl330,
-				  struct dma_pl330_desc *first)
-{
-	unsigned long flags;
-	struct dma_pl330_desc *desc;
+अटल व्योम __pl330_giveback_desc(काष्ठा pl330_dmac *pl330,
+				  काष्ठा dma_pl330_desc *first)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा dma_pl330_desc *desc;
 
-	if (!first)
-		return;
+	अगर (!first)
+		वापस;
 
 	spin_lock_irqsave(&pl330->pool_lock, flags);
 
-	while (!list_empty(&first->node)) {
+	जबतक (!list_empty(&first->node)) अणु
 		desc = list_entry(first->node.next,
-				struct dma_pl330_desc, node);
+				काष्ठा dma_pl330_desc, node);
 		list_move_tail(&desc->node, &pl330->desc_pool);
-	}
+	पूर्ण
 
 	list_move_tail(&first->node, &pl330->desc_pool);
 
 	spin_unlock_irqrestore(&pl330->pool_lock, flags);
-}
+पूर्ण
 
-static struct dma_async_tx_descriptor *
-pl330_prep_slave_sg(struct dma_chan *chan, struct scatterlist *sgl,
-		unsigned int sg_len, enum dma_transfer_direction direction,
-		unsigned long flg, void *context)
-{
-	struct dma_pl330_desc *first, *desc = NULL;
-	struct dma_pl330_chan *pch = to_pchan(chan);
-	struct scatterlist *sg;
-	int i;
+अटल काष्ठा dma_async_tx_descriptor *
+pl330_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
+		अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
+		अचिन्हित दीर्घ flg, व्योम *context)
+अणु
+	काष्ठा dma_pl330_desc *first, *desc = शून्य;
+	काष्ठा dma_pl330_chan *pch = to_pchan(chan);
+	काष्ठा scatterlist *sg;
+	पूर्णांक i;
 
-	if (unlikely(!pch || !sgl || !sg_len))
-		return NULL;
+	अगर (unlikely(!pch || !sgl || !sg_len))
+		वापस शून्य;
 
-	pl330_config_write(chan, &pch->slave_config, direction);
+	pl330_config_ग_लिखो(chan, &pch->slave_config, direction);
 
-	if (!pl330_prep_slave_fifo(pch, direction))
-		return NULL;
+	अगर (!pl330_prep_slave_fअगरo(pch, direction))
+		वापस शून्य;
 
-	first = NULL;
+	first = शून्य;
 
-	for_each_sg(sgl, sg, sg_len, i) {
+	क्रम_each_sg(sgl, sg, sg_len, i) अणु
 
 		desc = pl330_get_desc(pch);
-		if (!desc) {
-			struct pl330_dmac *pl330 = pch->dmac;
+		अगर (!desc) अणु
+			काष्ठा pl330_dmac *pl330 = pch->dmac;
 
 			dev_err(pch->dmac->ddma.dev,
 				"%s:%d Unable to fetch desc\n",
 				__func__, __LINE__);
 			__pl330_giveback_desc(pl330, first);
 
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		if (!first)
+		अगर (!first)
 			first = desc;
-		else
+		अन्यथा
 			list_add_tail(&desc->node, &first->node);
 
-		if (direction == DMA_MEM_TO_DEV) {
+		अगर (direction == DMA_MEM_TO_DEV) अणु
 			desc->rqcfg.src_inc = 1;
 			desc->rqcfg.dst_inc = 0;
-			fill_px(&desc->px, pch->fifo_dma, sg_dma_address(sg),
+			fill_px(&desc->px, pch->fअगरo_dma, sg_dma_address(sg),
 				sg_dma_len(sg));
-		} else {
+		पूर्ण अन्यथा अणु
 			desc->rqcfg.src_inc = 0;
 			desc->rqcfg.dst_inc = 1;
-			fill_px(&desc->px, sg_dma_address(sg), pch->fifo_dma,
+			fill_px(&desc->px, sg_dma_address(sg), pch->fअगरo_dma,
 				sg_dma_len(sg));
-		}
+		पूर्ण
 
 		desc->rqcfg.brst_size = pch->burst_sz;
 		desc->rqcfg.brst_len = pch->burst_len;
 		desc->rqtype = direction;
 		desc->bytes_requested = sg_dma_len(sg);
-	}
+	पूर्ण
 
 	/* Return the last desc in the chain */
 	desc->txd.flags = flg;
-	return &desc->txd;
-}
+	वापस &desc->txd;
+पूर्ण
 
-static irqreturn_t pl330_irq_handler(int irq, void *data)
-{
-	if (pl330_update(data))
-		return IRQ_HANDLED;
-	else
-		return IRQ_NONE;
-}
+अटल irqवापस_t pl330_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	अगर (pl330_update(data))
+		वापस IRQ_HANDLED;
+	अन्यथा
+		वापस IRQ_NONE;
+पूर्ण
 
-#define PL330_DMA_BUSWIDTHS \
+#घोषणा PL330_DMA_BUSWIDTHS \
 	BIT(DMA_SLAVE_BUSWIDTH_UNDEFINED) | \
 	BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
 	BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) | \
 	BIT(DMA_SLAVE_BUSWIDTH_4_BYTES) | \
 	BIT(DMA_SLAVE_BUSWIDTH_8_BYTES)
 
-#ifdef CONFIG_DEBUG_FS
-static int pl330_debugfs_show(struct seq_file *s, void *data)
-{
-	struct pl330_dmac *pl330 = s->private;
-	int chans, pchs, ch, pr;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल पूर्णांक pl330_debugfs_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा pl330_dmac *pl330 = s->निजी;
+	पूर्णांक chans, pchs, ch, pr;
 
 	chans = pl330->pcfg.num_chan;
 	pchs = pl330->num_peripherals;
 
-	seq_puts(s, "PL330 physical channels:\n");
-	seq_puts(s, "THREAD:\t\tCHANNEL:\n");
-	seq_puts(s, "--------\t-----\n");
-	for (ch = 0; ch < chans; ch++) {
-		struct pl330_thread *thrd = &pl330->channels[ch];
-		int found = -1;
+	seq_माला_दो(s, "PL330 physical channels:\n");
+	seq_माला_दो(s, "THREAD:\t\tCHANNEL:\n");
+	seq_माला_दो(s, "--------\t-----\n");
+	क्रम (ch = 0; ch < chans; ch++) अणु
+		काष्ठा pl330_thपढ़ो *thrd = &pl330->channels[ch];
+		पूर्णांक found = -1;
 
-		for (pr = 0; pr < pchs; pr++) {
-			struct dma_pl330_chan *pch = &pl330->peripherals[pr];
+		क्रम (pr = 0; pr < pchs; pr++) अणु
+			काष्ठा dma_pl330_chan *pch = &pl330->peripherals[pr];
 
-			if (!pch->thread || thrd->id != pch->thread->id)
-				continue;
+			अगर (!pch->thपढ़ो || thrd->id != pch->thपढ़ो->id)
+				जारी;
 
 			found = pr;
-		}
+		पूर्ण
 
-		seq_printf(s, "%d\t\t", thrd->id);
-		if (found == -1)
-			seq_puts(s, "--\n");
-		else
-			seq_printf(s, "%d\n", found);
-	}
+		seq_म_लिखो(s, "%d\t\t", thrd->id);
+		अगर (found == -1)
+			seq_माला_दो(s, "--\n");
+		अन्यथा
+			seq_म_लिखो(s, "%d\n", found);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(pl330_debugfs);
 
-static inline void init_pl330_debugfs(struct pl330_dmac *pl330)
-{
+अटल अंतरभूत व्योम init_pl330_debugfs(काष्ठा pl330_dmac *pl330)
+अणु
 	debugfs_create_file(dev_name(pl330->ddma.dev),
-			    S_IFREG | 0444, NULL, pl330,
+			    S_IFREG | 0444, शून्य, pl330,
 			    &pl330_debugfs_fops);
-}
-#else
-static inline void init_pl330_debugfs(struct pl330_dmac *pl330)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम init_pl330_debugfs(काष्ठा pl330_dmac *pl330)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Runtime PM callbacks are provided by amba/bus.c driver.
+ * Runसमय PM callbacks are provided by amba/bus.c driver.
  *
- * It is assumed here that IRQ safe runtime PM is chosen in probe and amba
- * bus driver will only disable/enable the clock in runtime PM callbacks.
+ * It is assumed here that IRQ safe runसमय PM is chosen in probe and amba
+ * bus driver will only disable/enable the घड़ी in runसमय PM callbacks.
  */
-static int __maybe_unused pl330_suspend(struct device *dev)
-{
-	struct amba_device *pcdev = to_amba_device(dev);
+अटल पूर्णांक __maybe_unused pl330_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा amba_device *pcdev = to_amba_device(dev);
 
-	pm_runtime_force_suspend(dev);
+	pm_runसमय_क्रमce_suspend(dev);
 	amba_pclk_unprepare(pcdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused pl330_resume(struct device *dev)
-{
-	struct amba_device *pcdev = to_amba_device(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused pl330_resume(काष्ठा device *dev)
+अणु
+	काष्ठा amba_device *pcdev = to_amba_device(dev);
+	पूर्णांक ret;
 
 	ret = amba_pclk_prepare(pcdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	pm_runtime_force_resume(dev);
+	pm_runसमय_क्रमce_resume(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dev_pm_ops pl330_pm = {
+अटल स्थिर काष्ठा dev_pm_ops pl330_pm = अणु
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(pl330_suspend, pl330_resume)
-};
+पूर्ण;
 
-static int
-pl330_probe(struct amba_device *adev, const struct amba_id *id)
-{
-	struct pl330_config *pcfg;
-	struct pl330_dmac *pl330;
-	struct dma_pl330_chan *pch, *_p;
-	struct dma_device *pd;
-	struct resource *res;
-	int i, ret, irq;
-	int num_chan;
-	struct device_node *np = adev->dev.of_node;
+अटल पूर्णांक
+pl330_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
+अणु
+	काष्ठा pl330_config *pcfg;
+	काष्ठा pl330_dmac *pl330;
+	काष्ठा dma_pl330_chan *pch, *_p;
+	काष्ठा dma_device *pd;
+	काष्ठा resource *res;
+	पूर्णांक i, ret, irq;
+	पूर्णांक num_chan;
+	काष्ठा device_node *np = adev->dev.of_node;
 
 	ret = dma_set_mask_and_coherent(&adev->dev, DMA_BIT_MASK(32));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Allocate a new DMAC and its Channels */
-	pl330 = devm_kzalloc(&adev->dev, sizeof(*pl330), GFP_KERNEL);
-	if (!pl330)
-		return -ENOMEM;
+	pl330 = devm_kzalloc(&adev->dev, माप(*pl330), GFP_KERNEL);
+	अगर (!pl330)
+		वापस -ENOMEM;
 
 	pd = &pl330->ddma;
 	pd->dev = &adev->dev;
@@ -3018,113 +3019,113 @@ pl330_probe(struct amba_device *adev, const struct amba_id *id)
 	pl330->mcbufsz = 0;
 
 	/* get quirk */
-	for (i = 0; i < ARRAY_SIZE(of_quirks); i++)
-		if (of_property_read_bool(np, of_quirks[i].quirk))
+	क्रम (i = 0; i < ARRAY_SIZE(of_quirks); i++)
+		अगर (of_property_पढ़ो_bool(np, of_quirks[i].quirk))
 			pl330->quirks |= of_quirks[i].id;
 
 	res = &adev->res;
 	pl330->base = devm_ioremap_resource(&adev->dev, res);
-	if (IS_ERR(pl330->base))
-		return PTR_ERR(pl330->base);
+	अगर (IS_ERR(pl330->base))
+		वापस PTR_ERR(pl330->base);
 
 	amba_set_drvdata(adev, pl330);
 
 	pl330->rstc = devm_reset_control_get_optional(&adev->dev, "dma");
-	if (IS_ERR(pl330->rstc)) {
-		return dev_err_probe(&adev->dev, PTR_ERR(pl330->rstc), "Failed to get reset!\n");
-	} else {
-		ret = reset_control_deassert(pl330->rstc);
-		if (ret) {
+	अगर (IS_ERR(pl330->rstc)) अणु
+		वापस dev_err_probe(&adev->dev, PTR_ERR(pl330->rstc), "Failed to get reset!\n");
+	पूर्ण अन्यथा अणु
+		ret = reset_control_deनिश्चित(pl330->rstc);
+		अगर (ret) अणु
 			dev_err(&adev->dev, "Couldn't deassert the device from reset!\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	pl330->rstc_ocp = devm_reset_control_get_optional(&adev->dev, "dma-ocp");
-	if (IS_ERR(pl330->rstc_ocp)) {
-		return dev_err_probe(&adev->dev, PTR_ERR(pl330->rstc_ocp),
+	अगर (IS_ERR(pl330->rstc_ocp)) अणु
+		वापस dev_err_probe(&adev->dev, PTR_ERR(pl330->rstc_ocp),
 				     "Failed to get OCP reset!\n");
-	} else {
-		ret = reset_control_deassert(pl330->rstc_ocp);
-		if (ret) {
+	पूर्ण अन्यथा अणु
+		ret = reset_control_deनिश्चित(pl330->rstc_ocp);
+		अगर (ret) अणु
 			dev_err(&adev->dev, "Couldn't deassert the device from OCP reset!\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < AMBA_NR_IRQS; i++) {
+	क्रम (i = 0; i < AMBA_NR_IRQS; i++) अणु
 		irq = adev->irq[i];
-		if (irq) {
+		अगर (irq) अणु
 			ret = devm_request_irq(&adev->dev, irq,
 					       pl330_irq_handler, 0,
 					       dev_name(&adev->dev), pl330);
-			if (ret)
-				return ret;
-		} else {
-			break;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	pcfg = &pl330->pcfg;
 
 	pcfg->periph_id = adev->periphid;
 	ret = pl330_add(pl330);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	INIT_LIST_HEAD(&pl330->desc_pool);
 	spin_lock_init(&pl330->pool_lock);
 
-	/* Create a descriptor pool of default size */
-	if (!add_desc(&pl330->desc_pool, &pl330->pool_lock,
+	/* Create a descriptor pool of शेष size */
+	अगर (!add_desc(&pl330->desc_pool, &pl330->pool_lock,
 		      GFP_KERNEL, NR_DEFAULT_DESC))
 		dev_warn(&adev->dev, "unable to allocate desc\n");
 
 	INIT_LIST_HEAD(&pd->channels);
 
 	/* Initialize channel parameters */
-	num_chan = max_t(int, pcfg->num_peri, pcfg->num_chan);
+	num_chan = max_t(पूर्णांक, pcfg->num_peri, pcfg->num_chan);
 
 	pl330->num_peripherals = num_chan;
 
-	pl330->peripherals = kcalloc(num_chan, sizeof(*pch), GFP_KERNEL);
-	if (!pl330->peripherals) {
+	pl330->peripherals = kसुस्मृति(num_chan, माप(*pch), GFP_KERNEL);
+	अगर (!pl330->peripherals) अणु
 		ret = -ENOMEM;
-		goto probe_err2;
-	}
+		जाओ probe_err2;
+	पूर्ण
 
-	for (i = 0; i < num_chan; i++) {
+	क्रम (i = 0; i < num_chan; i++) अणु
 		pch = &pl330->peripherals[i];
 
-		pch->chan.private = adev->dev.of_node;
+		pch->chan.निजी = adev->dev.of_node;
 		INIT_LIST_HEAD(&pch->submitted_list);
 		INIT_LIST_HEAD(&pch->work_list);
 		INIT_LIST_HEAD(&pch->completed_list);
 		spin_lock_init(&pch->lock);
-		pch->thread = NULL;
+		pch->thपढ़ो = शून्य;
 		pch->chan.device = pd;
 		pch->dmac = pl330;
 		pch->dir = DMA_NONE;
 
 		/* Add the channel to the DMAC list */
 		list_add_tail(&pch->chan.device_node, &pd->channels);
-	}
+	पूर्ण
 
 	dma_cap_set(DMA_MEMCPY, pd->cap_mask);
-	if (pcfg->num_peri) {
+	अगर (pcfg->num_peri) अणु
 		dma_cap_set(DMA_SLAVE, pd->cap_mask);
 		dma_cap_set(DMA_CYCLIC, pd->cap_mask);
 		dma_cap_set(DMA_PRIVATE, pd->cap_mask);
-	}
+	पूर्ण
 
 	pd->device_alloc_chan_resources = pl330_alloc_chan_resources;
-	pd->device_free_chan_resources = pl330_free_chan_resources;
-	pd->device_prep_dma_memcpy = pl330_prep_dma_memcpy;
+	pd->device_मुक्त_chan_resources = pl330_मुक्त_chan_resources;
+	pd->device_prep_dma_स_नकल = pl330_prep_dma_स_नकल;
 	pd->device_prep_dma_cyclic = pl330_prep_dma_cyclic;
 	pd->device_tx_status = pl330_tx_status;
 	pd->device_prep_slave_sg = pl330_prep_slave_sg;
 	pd->device_config = pl330_config;
-	pd->device_pause = pl330_pause;
+	pd->device_छोड़ो = pl330_छोड़ो;
 	pd->device_terminate_all = pl330_terminate_all;
 	pd->device_issue_pending = pl330_issue_pending;
 	pd->src_addr_widths = PL330_DMA_BUSWIDTHS;
@@ -3133,27 +3134,27 @@ pl330_probe(struct amba_device *adev, const struct amba_id *id)
 	pd->residue_granularity = DMA_RESIDUE_GRANULARITY_BURST;
 	pd->max_burst = PL330_MAX_BURST;
 
-	ret = dma_async_device_register(pd);
-	if (ret) {
+	ret = dma_async_device_रेजिस्टर(pd);
+	अगर (ret) अणु
 		dev_err(&adev->dev, "unable to register DMAC\n");
-		goto probe_err3;
-	}
+		जाओ probe_err3;
+	पूर्ण
 
-	if (adev->dev.of_node) {
-		ret = of_dma_controller_register(adev->dev.of_node,
+	अगर (adev->dev.of_node) अणु
+		ret = of_dma_controller_रेजिस्टर(adev->dev.of_node,
 					 of_dma_pl330_xlate, pl330);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&adev->dev,
 			"unable to register DMA to the generic DT DMA helpers\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * This is the limit for transfers with a buswidth of 1, larger
+	 * This is the limit क्रम transfers with a buswidth of 1, larger
 	 * buswidths will have larger limits.
 	 */
 	ret = dma_set_max_seg_size(&adev->dev, 1900800);
-	if (ret)
+	अगर (ret)
 		dev_err(&adev->dev, "unable to set the seg size\n");
 
 
@@ -3165,100 +3166,100 @@ pl330_probe(struct amba_device *adev, const struct amba_id *id)
 		pcfg->data_buf_dep, pcfg->data_bus_width / 8, pcfg->num_chan,
 		pcfg->num_peri, pcfg->num_events);
 
-	pm_runtime_irq_safe(&adev->dev);
-	pm_runtime_use_autosuspend(&adev->dev);
-	pm_runtime_set_autosuspend_delay(&adev->dev, PL330_AUTOSUSPEND_DELAY);
-	pm_runtime_mark_last_busy(&adev->dev);
-	pm_runtime_put_autosuspend(&adev->dev);
+	pm_runसमय_irq_safe(&adev->dev);
+	pm_runसमय_use_स्वतःsuspend(&adev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&adev->dev, PL330_AUTOSUSPEND_DELAY);
+	pm_runसमय_mark_last_busy(&adev->dev);
+	pm_runसमय_put_स्वतःsuspend(&adev->dev);
 
-	return 0;
+	वापस 0;
 probe_err3:
 	/* Idle the DMAC */
-	list_for_each_entry_safe(pch, _p, &pl330->ddma.channels,
-			chan.device_node) {
+	list_क्रम_each_entry_safe(pch, _p, &pl330->ddma.channels,
+			chan.device_node) अणु
 
 		/* Remove the channel */
 		list_del(&pch->chan.device_node);
 
 		/* Flush the channel */
-		if (pch->thread) {
+		अगर (pch->thपढ़ो) अणु
 			pl330_terminate_all(&pch->chan);
-			pl330_free_chan_resources(&pch->chan);
-		}
-	}
+			pl330_मुक्त_chan_resources(&pch->chan);
+		पूर्ण
+	पूर्ण
 probe_err2:
 	pl330_del(pl330);
 
-	if (pl330->rstc_ocp)
-		reset_control_assert(pl330->rstc_ocp);
+	अगर (pl330->rstc_ocp)
+		reset_control_निश्चित(pl330->rstc_ocp);
 
-	if (pl330->rstc)
-		reset_control_assert(pl330->rstc);
-	return ret;
-}
+	अगर (pl330->rstc)
+		reset_control_निश्चित(pl330->rstc);
+	वापस ret;
+पूर्ण
 
-static void pl330_remove(struct amba_device *adev)
-{
-	struct pl330_dmac *pl330 = amba_get_drvdata(adev);
-	struct dma_pl330_chan *pch, *_p;
-	int i, irq;
+अटल व्योम pl330_हटाओ(काष्ठा amba_device *adev)
+अणु
+	काष्ठा pl330_dmac *pl330 = amba_get_drvdata(adev);
+	काष्ठा dma_pl330_chan *pch, *_p;
+	पूर्णांक i, irq;
 
-	pm_runtime_get_noresume(pl330->ddma.dev);
+	pm_runसमय_get_noresume(pl330->ddma.dev);
 
-	if (adev->dev.of_node)
-		of_dma_controller_free(adev->dev.of_node);
+	अगर (adev->dev.of_node)
+		of_dma_controller_मुक्त(adev->dev.of_node);
 
-	for (i = 0; i < AMBA_NR_IRQS; i++) {
+	क्रम (i = 0; i < AMBA_NR_IRQS; i++) अणु
 		irq = adev->irq[i];
-		if (irq)
-			devm_free_irq(&adev->dev, irq, pl330);
-	}
+		अगर (irq)
+			devm_मुक्त_irq(&adev->dev, irq, pl330);
+	पूर्ण
 
-	dma_async_device_unregister(&pl330->ddma);
+	dma_async_device_unरेजिस्टर(&pl330->ddma);
 
 	/* Idle the DMAC */
-	list_for_each_entry_safe(pch, _p, &pl330->ddma.channels,
-			chan.device_node) {
+	list_क्रम_each_entry_safe(pch, _p, &pl330->ddma.channels,
+			chan.device_node) अणु
 
 		/* Remove the channel */
 		list_del(&pch->chan.device_node);
 
 		/* Flush the channel */
-		if (pch->thread) {
+		अगर (pch->thपढ़ो) अणु
 			pl330_terminate_all(&pch->chan);
-			pl330_free_chan_resources(&pch->chan);
-		}
-	}
+			pl330_मुक्त_chan_resources(&pch->chan);
+		पूर्ण
+	पूर्ण
 
 	pl330_del(pl330);
 
-	if (pl330->rstc_ocp)
-		reset_control_assert(pl330->rstc_ocp);
+	अगर (pl330->rstc_ocp)
+		reset_control_निश्चित(pl330->rstc_ocp);
 
-	if (pl330->rstc)
-		reset_control_assert(pl330->rstc);
-}
+	अगर (pl330->rstc)
+		reset_control_निश्चित(pl330->rstc);
+पूर्ण
 
-static const struct amba_id pl330_ids[] = {
-	{
+अटल स्थिर काष्ठा amba_id pl330_ids[] = अणु
+	अणु
 		.id	= 0x00041330,
 		.mask	= 0x000fffff,
-	},
-	{ 0, 0 },
-};
+	पूर्ण,
+	अणु 0, 0 पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(amba, pl330_ids);
 
-static struct amba_driver pl330_driver = {
-	.drv = {
+अटल काष्ठा amba_driver pl330_driver = अणु
+	.drv = अणु
 		.owner = THIS_MODULE,
 		.name = "dma-pl330",
 		.pm = &pl330_pm,
-	},
+	पूर्ण,
 	.id_table = pl330_ids,
 	.probe = pl330_probe,
-	.remove = pl330_remove,
-};
+	.हटाओ = pl330_हटाओ,
+पूर्ण;
 
 module_amba_driver(pl330_driver);
 

@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SDK7786 FPGA USRGPIR Support.
  *
  * Copyright (C) 2010  Paul Mundt
  */
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/gpio/driver.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/spinlock.h>
-#include <linux/io.h>
-#include <mach/fpga.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पन.स>
+#समावेश <mach/fpga.h>
 
-#define NR_FPGA_GPIOS	8
+#घोषणा NR_FPGA_GPIOS	8
 
-static const char *usrgpir_gpio_names[NR_FPGA_GPIOS] = {
+अटल स्थिर अक्षर *usrgpir_gpio_names[NR_FPGA_GPIOS] = अणु
 	"in0", "in1", "in2", "in3", "in4", "in5", "in6", "in7",
-};
+पूर्ण;
 
-static int usrgpir_gpio_direction_input(struct gpio_chip *chip, unsigned gpio)
-{
+अटल पूर्णांक usrgpir_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित gpio)
+अणु
 	/* always in */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usrgpir_gpio_get(struct gpio_chip *chip, unsigned gpio)
-{
-	return !!(fpga_read_reg(USRGPIR) & (1 << gpio));
-}
+अटल पूर्णांक usrgpir_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित gpio)
+अणु
+	वापस !!(fpga_पढ़ो_reg(USRGPIR) & (1 << gpio));
+पूर्ण
 
-static struct gpio_chip usrgpir_gpio_chip = {
+अटल काष्ठा gpio_chip usrgpir_gpio_chip = अणु
 	.label			= "sdk7786-fpga",
 	.names			= usrgpir_gpio_names,
 	.direction_input	= usrgpir_gpio_direction_input,
 	.get			= usrgpir_gpio_get,
-	.base			= -1, /* don't care */
+	.base			= -1, /* करोn't care */
 	.ngpio			= NR_FPGA_GPIOS,
-};
+पूर्ण;
 
-static int __init usrgpir_gpio_setup(void)
-{
-	return gpiochip_add_data(&usrgpir_gpio_chip, NULL);
-}
+अटल पूर्णांक __init usrgpir_gpio_setup(व्योम)
+अणु
+	वापस gpiochip_add_data(&usrgpir_gpio_chip, शून्य);
+पूर्ण
 device_initcall(usrgpir_gpio_setup);

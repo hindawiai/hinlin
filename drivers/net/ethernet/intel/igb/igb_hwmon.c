@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2007 - 2018 Intel Corporation. */
 
-#include "igb.h"
-#include "e1000_82575.h"
-#include "e1000_hw.h"
+#समावेश "igb.h"
+#समावेश "e1000_82575.h"
+#समावेश "e1000_hw.h"
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/sysfs.h>
-#include <linux/kobject.h>
-#include <linux/device.h>
-#include <linux/netdevice.h>
-#include <linux/hwmon.h>
-#include <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/device.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/pci.h>
 
-#ifdef CONFIG_IGB_HWMON
-static struct i2c_board_info i350_sensor_info = {
+#अगर_घोषित CONFIG_IGB_HWMON
+अटल काष्ठा i2c_board_info i350_sensor_info = अणु
 	I2C_BOARD_INFO("i350bb", (0Xf8 >> 1)),
-};
+पूर्ण;
 
 /* hwmon callback functions */
-static ssize_t igb_hwmon_show_location(struct device *dev,
-				       struct device_attribute *attr,
-				       char *buf)
-{
-	struct hwmon_attr *igb_attr = container_of(attr, struct hwmon_attr,
+अटल sमाप_प्रकार igb_hwmon_show_location(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       अक्षर *buf)
+अणु
+	काष्ठा hwmon_attr *igb_attr = container_of(attr, काष्ठा hwmon_attr,
 						   dev_attr);
-	return sprintf(buf, "loc%u\n",
+	वापस प्र_लिखो(buf, "loc%u\n",
 		       igb_attr->sensor->location);
-}
+पूर्ण
 
-static ssize_t igb_hwmon_show_temp(struct device *dev,
-				   struct device_attribute *attr,
-				   char *buf)
-{
-	struct hwmon_attr *igb_attr = container_of(attr, struct hwmon_attr,
+अटल sमाप_प्रकार igb_hwmon_show_temp(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   अक्षर *buf)
+अणु
+	काष्ठा hwmon_attr *igb_attr = container_of(attr, काष्ठा hwmon_attr,
 						   dev_attr);
-	unsigned int value;
+	अचिन्हित पूर्णांक value;
 
 	/* reset the temp field */
 	igb_attr->hw->mac.ops.get_thermal_sensor_data(igb_attr->hw);
@@ -46,87 +47,87 @@ static ssize_t igb_hwmon_show_temp(struct device *dev,
 	/* display millidegree */
 	value *= 1000;
 
-	return sprintf(buf, "%u\n", value);
-}
+	वापस प्र_लिखो(buf, "%u\n", value);
+पूर्ण
 
-static ssize_t igb_hwmon_show_cautionthresh(struct device *dev,
-					    struct device_attribute *attr,
-					    char *buf)
-{
-	struct hwmon_attr *igb_attr = container_of(attr, struct hwmon_attr,
+अटल sमाप_प्रकार igb_hwmon_show_cautionthresh(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    अक्षर *buf)
+अणु
+	काष्ठा hwmon_attr *igb_attr = container_of(attr, काष्ठा hwmon_attr,
 						   dev_attr);
-	unsigned int value = igb_attr->sensor->caution_thresh;
+	अचिन्हित पूर्णांक value = igb_attr->sensor->caution_thresh;
 
 	/* display millidegree */
 	value *= 1000;
 
-	return sprintf(buf, "%u\n", value);
-}
+	वापस प्र_लिखो(buf, "%u\n", value);
+पूर्ण
 
-static ssize_t igb_hwmon_show_maxopthresh(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct hwmon_attr *igb_attr = container_of(attr, struct hwmon_attr,
+अटल sमाप_प्रकार igb_hwmon_show_maxopthresh(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा hwmon_attr *igb_attr = container_of(attr, काष्ठा hwmon_attr,
 						   dev_attr);
-	unsigned int value = igb_attr->sensor->max_op_thresh;
+	अचिन्हित पूर्णांक value = igb_attr->sensor->max_op_thresh;
 
 	/* display millidegree */
 	value *= 1000;
 
-	return sprintf(buf, "%u\n", value);
-}
+	वापस प्र_लिखो(buf, "%u\n", value);
+पूर्ण
 
-/* igb_add_hwmon_attr - Create hwmon attr table for a hwmon sysfs file.
- * @ adapter: pointer to the adapter structure
+/* igb_add_hwmon_attr - Create hwmon attr table क्रम a hwmon sysfs file.
+ * @ adapter: poपूर्णांकer to the adapter काष्ठाure
  * @ offset: offset in the eeprom sensor data table
  * @ type: type of sensor data to display
  *
- * For each file we want in hwmon's sysfs interface we need a device_attribute
- * This is included in our hwmon_attr struct that contains the references to
- * the data structures we need to get the data to display.
+ * For each file we want in hwmon's sysfs पूर्णांकerface we need a device_attribute
+ * This is included in our hwmon_attr काष्ठा that contains the references to
+ * the data काष्ठाures we need to get the data to display.
  */
-static int igb_add_hwmon_attr(struct igb_adapter *adapter,
-			      unsigned int offset, int type)
-{
-	int rc;
-	unsigned int n_attr;
-	struct hwmon_attr *igb_attr;
+अटल पूर्णांक igb_add_hwmon_attr(काष्ठा igb_adapter *adapter,
+			      अचिन्हित पूर्णांक offset, पूर्णांक type)
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक n_attr;
+	काष्ठा hwmon_attr *igb_attr;
 
 	n_attr = adapter->igb_hwmon_buff->n_hwmon;
 	igb_attr = &adapter->igb_hwmon_buff->hwmon_list[n_attr];
 
-	switch (type) {
-	case IGB_HWMON_TYPE_LOC:
+	चयन (type) अणु
+	हाल IGB_HWMON_TYPE_LOC:
 		igb_attr->dev_attr.show = igb_hwmon_show_location;
-		snprintf(igb_attr->name, sizeof(igb_attr->name),
+		snम_लिखो(igb_attr->name, माप(igb_attr->name),
 			 "temp%u_label", offset + 1);
-		break;
-	case IGB_HWMON_TYPE_TEMP:
+		अवरोध;
+	हाल IGB_HWMON_TYPE_TEMP:
 		igb_attr->dev_attr.show = igb_hwmon_show_temp;
-		snprintf(igb_attr->name, sizeof(igb_attr->name),
+		snम_लिखो(igb_attr->name, माप(igb_attr->name),
 			 "temp%u_input", offset + 1);
-		break;
-	case IGB_HWMON_TYPE_CAUTION:
+		अवरोध;
+	हाल IGB_HWMON_TYPE_CAUTION:
 		igb_attr->dev_attr.show = igb_hwmon_show_cautionthresh;
-		snprintf(igb_attr->name, sizeof(igb_attr->name),
+		snम_लिखो(igb_attr->name, माप(igb_attr->name),
 			 "temp%u_max", offset + 1);
-		break;
-	case IGB_HWMON_TYPE_MAX:
+		अवरोध;
+	हाल IGB_HWMON_TYPE_MAX:
 		igb_attr->dev_attr.show = igb_hwmon_show_maxopthresh;
-		snprintf(igb_attr->name, sizeof(igb_attr->name),
+		snम_लिखो(igb_attr->name, माप(igb_attr->name),
 			 "temp%u_crit", offset + 1);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -EPERM;
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* These always the same regardless of type */
 	igb_attr->sensor =
 		&adapter->hw.mac.thermal_sensor_data.sensor[offset];
 	igb_attr->hw = &adapter->hw;
-	igb_attr->dev_attr.store = NULL;
+	igb_attr->dev_attr.store = शून्य;
 	igb_attr->dev_attr.attr.mode = 0444;
 	igb_attr->dev_attr.attr.name = igb_attr->name;
 	sysfs_attr_init(&igb_attr->dev_attr.attr);
@@ -135,95 +136,95 @@ static int igb_add_hwmon_attr(struct igb_adapter *adapter,
 
 	++adapter->igb_hwmon_buff->n_hwmon;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void igb_sysfs_del_adapter(struct igb_adapter *adapter)
-{
-}
+अटल व्योम igb_sysfs_del_adapter(काष्ठा igb_adapter *adapter)
+अणु
+पूर्ण
 
-/* called from igb_main.c */
-void igb_sysfs_exit(struct igb_adapter *adapter)
-{
+/* called from igb_मुख्य.c */
+व्योम igb_sysfs_निकास(काष्ठा igb_adapter *adapter)
+अणु
 	igb_sysfs_del_adapter(adapter);
-}
+पूर्ण
 
-/* called from igb_main.c */
-int igb_sysfs_init(struct igb_adapter *adapter)
-{
-	struct hwmon_buff *igb_hwmon;
-	struct i2c_client *client;
-	struct device *hwmon_dev;
-	unsigned int i;
-	int rc = 0;
+/* called from igb_मुख्य.c */
+पूर्णांक igb_sysfs_init(काष्ठा igb_adapter *adapter)
+अणु
+	काष्ठा hwmon_buff *igb_hwmon;
+	काष्ठा i2c_client *client;
+	काष्ठा device *hwmon_dev;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक rc = 0;
 
 	/* If this method isn't defined we don't support thermals */
-	if (adapter->hw.mac.ops.init_thermal_sensor_thresh == NULL)
-		goto exit;
+	अगर (adapter->hw.mac.ops.init_thermal_sensor_thresh == शून्य)
+		जाओ निकास;
 
-	/* Don't create thermal hwmon interface if no sensors present */
+	/* Don't create thermal hwmon पूर्णांकerface अगर no sensors present */
 	rc = (adapter->hw.mac.ops.init_thermal_sensor_thresh(&adapter->hw));
-	if (rc)
-		goto exit;
+	अगर (rc)
+		जाओ निकास;
 
-	igb_hwmon = devm_kzalloc(&adapter->pdev->dev, sizeof(*igb_hwmon),
+	igb_hwmon = devm_kzalloc(&adapter->pdev->dev, माप(*igb_hwmon),
 				 GFP_KERNEL);
-	if (!igb_hwmon) {
+	अगर (!igb_hwmon) अणु
 		rc = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	adapter->igb_hwmon_buff = igb_hwmon;
 
-	for (i = 0; i < E1000_MAX_SENSORS; i++) {
+	क्रम (i = 0; i < E1000_MAX_SENSORS; i++) अणु
 
-		/* Only create hwmon sysfs entries for sensors that have
+		/* Only create hwmon sysfs entries क्रम sensors that have
 		 * meaningful data.
 		 */
-		if (adapter->hw.mac.thermal_sensor_data.sensor[i].location == 0)
-			continue;
+		अगर (adapter->hw.mac.thermal_sensor_data.sensor[i].location == 0)
+			जारी;
 
-		/* Bail if any hwmon attr struct fails to initialize */
+		/* Bail अगर any hwmon attr काष्ठा fails to initialize */
 		rc = igb_add_hwmon_attr(adapter, i, IGB_HWMON_TYPE_CAUTION);
-		if (rc)
-			goto exit;
+		अगर (rc)
+			जाओ निकास;
 		rc = igb_add_hwmon_attr(adapter, i, IGB_HWMON_TYPE_LOC);
-		if (rc)
-			goto exit;
+		अगर (rc)
+			जाओ निकास;
 		rc = igb_add_hwmon_attr(adapter, i, IGB_HWMON_TYPE_TEMP);
-		if (rc)
-			goto exit;
+		अगर (rc)
+			जाओ निकास;
 		rc = igb_add_hwmon_attr(adapter, i, IGB_HWMON_TYPE_MAX);
-		if (rc)
-			goto exit;
-	}
+		अगर (rc)
+			जाओ निकास;
+	पूर्ण
 
 	/* init i2c_client */
 	client = i2c_new_client_device(&adapter->i2c_adap, &i350_sensor_info);
-	if (IS_ERR(client)) {
+	अगर (IS_ERR(client)) अणु
 		dev_info(&adapter->pdev->dev,
 			 "Failed to create new i2c device.\n");
 		rc = PTR_ERR(client);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	adapter->i2c_client = client;
 
 	igb_hwmon->groups[0] = &igb_hwmon->group;
 	igb_hwmon->group.attrs = igb_hwmon->attrs;
 
-	hwmon_dev = devm_hwmon_device_register_with_groups(&adapter->pdev->dev,
+	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(&adapter->pdev->dev,
 							   client->name,
 							   igb_hwmon,
 							   igb_hwmon->groups);
-	if (IS_ERR(hwmon_dev)) {
+	अगर (IS_ERR(hwmon_dev)) अणु
 		rc = PTR_ERR(hwmon_dev);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	goto exit;
+	जाओ निकास;
 
 err:
 	igb_sysfs_del_adapter(adapter);
-exit:
-	return rc;
-}
-#endif
+निकास:
+	वापस rc;
+पूर्ण
+#पूर्ण_अगर

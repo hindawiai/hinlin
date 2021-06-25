@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __m68k_POLL_H
-#define __m68k_POLL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __m68k_POLL_H
+#घोषणा __m68k_POLL_H
 
-#define POLLWRNORM	POLLOUT
-#define POLLWRBAND	256
+#घोषणा POLLWRNORM	POLLOUT
+#घोषणा POLLWRBAND	256
 
-#include <asm-generic/poll.h>
+#समावेश <यंत्र-generic/poll.h>
 
-#endif
+#पूर्ण_अगर

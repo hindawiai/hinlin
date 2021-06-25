@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
-   BlueZ - Bluetooth protocol stack for Linux
+   BlueZ - Bluetooth protocol stack क्रम Linux
    Copyright (C) 2015  Intel Coropration
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -10,7 +11,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -20,34 +21,34 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-struct mgmt_pending_cmd {
-	struct list_head list;
+काष्ठा mgmt_pending_cmd अणु
+	काष्ठा list_head list;
 	u16 opcode;
-	int index;
-	void *param;
-	size_t param_len;
-	struct sock *sk;
-	void *user_data;
-	int (*cmd_complete)(struct mgmt_pending_cmd *cmd, u8 status);
-};
+	पूर्णांक index;
+	व्योम *param;
+	माप_प्रकार param_len;
+	काष्ठा sock *sk;
+	व्योम *user_data;
+	पूर्णांक (*cmd_complete)(काष्ठा mgmt_pending_cmd *cmd, u8 status);
+पूर्ण;
 
-int mgmt_send_event(u16 event, struct hci_dev *hdev, unsigned short channel,
-		    void *data, u16 data_len, int flag, struct sock *skip_sk);
-int mgmt_cmd_status(struct sock *sk, u16 index, u16 cmd, u8 status);
-int mgmt_cmd_complete(struct sock *sk, u16 index, u16 cmd, u8 status,
-		      void *rp, size_t rp_len);
+पूर्णांक mgmt_send_event(u16 event, काष्ठा hci_dev *hdev, अचिन्हित लघु channel,
+		    व्योम *data, u16 data_len, पूर्णांक flag, काष्ठा sock *skip_sk);
+पूर्णांक mgmt_cmd_status(काष्ठा sock *sk, u16 index, u16 cmd, u8 status);
+पूर्णांक mgmt_cmd_complete(काष्ठा sock *sk, u16 index, u16 cmd, u8 status,
+		      व्योम *rp, माप_प्रकार rp_len);
 
-struct mgmt_pending_cmd *mgmt_pending_find(unsigned short channel, u16 opcode,
-					   struct hci_dev *hdev);
-struct mgmt_pending_cmd *mgmt_pending_find_data(unsigned short channel,
+काष्ठा mgmt_pending_cmd *mgmt_pending_find(अचिन्हित लघु channel, u16 opcode,
+					   काष्ठा hci_dev *hdev);
+काष्ठा mgmt_pending_cmd *mgmt_pending_find_data(अचिन्हित लघु channel,
 						u16 opcode,
-						struct hci_dev *hdev,
-						const void *data);
-void mgmt_pending_foreach(u16 opcode, struct hci_dev *hdev,
-			  void (*cb)(struct mgmt_pending_cmd *cmd, void *data),
-			  void *data);
-struct mgmt_pending_cmd *mgmt_pending_add(struct sock *sk, u16 opcode,
-					  struct hci_dev *hdev,
-					  void *data, u16 len);
-void mgmt_pending_free(struct mgmt_pending_cmd *cmd);
-void mgmt_pending_remove(struct mgmt_pending_cmd *cmd);
+						काष्ठा hci_dev *hdev,
+						स्थिर व्योम *data);
+व्योम mgmt_pending_क्रमeach(u16 opcode, काष्ठा hci_dev *hdev,
+			  व्योम (*cb)(काष्ठा mgmt_pending_cmd *cmd, व्योम *data),
+			  व्योम *data);
+काष्ठा mgmt_pending_cmd *mgmt_pending_add(काष्ठा sock *sk, u16 opcode,
+					  काष्ठा hci_dev *hdev,
+					  व्योम *data, u16 len);
+व्योम mgmt_pending_मुक्त(काष्ठा mgmt_pending_cmd *cmd);
+व्योम mgmt_pending_हटाओ(काष्ठा mgmt_pending_cmd *cmd);

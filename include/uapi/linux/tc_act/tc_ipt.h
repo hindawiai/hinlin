@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_TC_IPT_H
-#define __LINUX_TC_IPT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_TC_IPT_H
+#घोषणा __LINUX_TC_IPT_H
 
-#include <linux/pkt_cls.h>
+#समावेश <linux/pkt_cls.h>
 
-enum {
+क्रमागत अणु
 	TCA_IPT_UNSPEC,
 	TCA_IPT_TABLE,
 	TCA_IPT_HOOK,
@@ -14,7 +15,7 @@ enum {
 	TCA_IPT_TARG,
 	TCA_IPT_PAD,
 	__TCA_IPT_MAX
-};
-#define TCA_IPT_MAX (__TCA_IPT_MAX - 1)
+पूर्ण;
+#घोषणा TCA_IPT_MAX (__TCA_IPT_MAX - 1)
                                                                                 
-#endif
+#पूर्ण_अगर

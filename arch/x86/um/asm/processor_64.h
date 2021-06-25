@@ -1,37 +1,38 @@
+<शैली गुरु>
 /*
  * Copyright 2003 PathScale, Inc.
  *
  * Licensed under the GPL
  */
 
-#ifndef __UM_PROCESSOR_X86_64_H
-#define __UM_PROCESSOR_X86_64_H
+#अगर_अघोषित __UM_PROCESSOR_X86_64_H
+#घोषणा __UM_PROCESSOR_X86_64_H
 
-struct arch_thread {
-        unsigned long debugregs[8];
-        int debugregs_seq;
-        unsigned long fs;
-        struct faultinfo faultinfo;
-};
+काष्ठा arch_thपढ़ो अणु
+        अचिन्हित दीर्घ debugregs[8];
+        पूर्णांक debugregs_seq;
+        अचिन्हित दीर्घ fs;
+        काष्ठा faultinfo faultinfo;
+पूर्ण;
 
-#define INIT_ARCH_THREAD { .debugregs  		= { [ 0 ... 7 ] = 0 }, \
+#घोषणा INIT_ARCH_THREAD अणु .debugregs  		= अणु [ 0 ... 7 ] = 0 पूर्ण, \
 			   .debugregs_seq	= 0, \
 			   .fs			= 0, \
-			   .faultinfo		= { 0, 0, 0 } }
+			   .faultinfo		= अणु 0, 0, 0 पूर्ण पूर्ण
 
-#define STACKSLOTS_PER_LINE 4
+#घोषणा STACKSLOTS_PER_LINE 4
 
-static inline void arch_flush_thread(struct arch_thread *thread)
-{
-}
+अटल अंतरभूत व्योम arch_flush_thपढ़ो(काष्ठा arch_thपढ़ो *thपढ़ो)
+अणु
+पूर्ण
 
-static inline void arch_copy_thread(struct arch_thread *from,
-                                    struct arch_thread *to)
-{
+अटल अंतरभूत व्योम arch_copy_thपढ़ो(काष्ठा arch_thपढ़ो *from,
+                                    काष्ठा arch_thपढ़ो *to)
+अणु
 	to->fs = from->fs;
-}
+पूर्ण
 
-#define current_sp() ({ void *sp; __asm__("movq %%rsp, %0" : "=r" (sp) : ); sp; })
-#define current_bp() ({ unsigned long bp; __asm__("movq %%rbp, %0" : "=r" (bp) : ); bp; })
+#घोषणा current_sp() (अणु व्योम *sp; __यंत्र__("movq %%rsp, %0" : "=r" (sp) : ); sp; पूर्ण)
+#घोषणा current_bp() (अणु अचिन्हित दीर्घ bp; __यंत्र__("movq %%rbp, %0" : "=r" (bp) : ); bp; पूर्ण)
 
-#endif
+#पूर्ण_अगर

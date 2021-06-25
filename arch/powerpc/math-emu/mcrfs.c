@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
 
-#include <asm/sfp-machine.h>
-#include <math-emu/soft-fp.h>
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <math-emu/soft-fp.h>
 
-int
+पूर्णांक
 mcrfs(u32 *ccr, u32 crfD, u32 crfS)
-{
+अणु
 	u32 value, clear;
 
-#ifdef DEBUG
-	printk("%s: %p (%08x) %d %d\n", __func__, ccr, *ccr, crfD, crfS);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("%s: %p (%08x) %d %d\n", __func__, ccr, *ccr, crfD, crfS);
+#पूर्ण_अगर
 
 	clear = 15 << ((7 - crfS) << 2);
-	if (!crfS)
+	अगर (!crfS)
 		clear = 0x90000000;
 
 	value = (__FPU_FPSCR >> ((7 - crfS) << 2)) & 15;
@@ -25,9 +26,9 @@ mcrfs(u32 *ccr, u32 crfD, u32 crfS)
 	*ccr &= ~(15 << ((7 - crfD) << 2));
 	*ccr |= (value << ((7 - crfD) << 2));
 
-#ifdef DEBUG
-	printk("CR: %08x\n", __func__, *ccr);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("CR: %08x\n", __func__, *ccr);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

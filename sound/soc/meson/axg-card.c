@@ -1,128 +1,129 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
 //
 // Copyright (c) 2018 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <sound/soc.h>
-#include <sound/soc-dai.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dai.h>
 
-#include "axg-tdm.h"
-#include "meson-card.h"
+#समावेश "axg-tdm.h"
+#समावेश "meson-card.h"
 
-struct axg_dai_link_tdm_mask {
+काष्ठा axg_dai_link_tdm_mask अणु
 	u32 tx;
 	u32 rx;
-};
+पूर्ण;
 
-struct axg_dai_link_tdm_data {
-	unsigned int mclk_fs;
-	unsigned int slots;
-	unsigned int slot_width;
+काष्ठा axg_dai_link_tdm_data अणु
+	अचिन्हित पूर्णांक mclk_fs;
+	अचिन्हित पूर्णांक slots;
+	अचिन्हित पूर्णांक slot_width;
 	u32 *tx_mask;
 	u32 *rx_mask;
-	struct axg_dai_link_tdm_mask *codec_masks;
-};
+	काष्ठा axg_dai_link_tdm_mask *codec_masks;
+पूर्ण;
 
 /*
- * Base params for the codec to codec links
+ * Base params क्रम the codec to codec links
  * Those will be over-written by the CPU side of the link
  */
-static const struct snd_soc_pcm_stream codec_params = {
-	.formats = SNDRV_PCM_FMTBIT_S24_LE,
+अटल स्थिर काष्ठा snd_soc_pcm_stream codec_params = अणु
+	.क्रमmats = SNDRV_PCM_FMTBIT_S24_LE,
 	.rate_min = 5525,
 	.rate_max = 192000,
 	.channels_min = 1,
 	.channels_max = 8,
-};
+पूर्ण;
 
-static int axg_card_tdm_be_hw_params(struct snd_pcm_substream *substream,
-				     struct snd_pcm_hw_params *params)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct meson_card *priv = snd_soc_card_get_drvdata(rtd->card);
-	struct axg_dai_link_tdm_data *be =
-		(struct axg_dai_link_tdm_data *)priv->link_data[rtd->num];
+अटल पूर्णांक axg_card_tdm_be_hw_params(काष्ठा snd_pcm_substream *substream,
+				     काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा meson_card *priv = snd_soc_card_get_drvdata(rtd->card);
+	काष्ठा axg_dai_link_tdm_data *be =
+		(काष्ठा axg_dai_link_tdm_data *)priv->link_data[rtd->num];
 
-	return meson_card_i2s_set_sysclk(substream, params, be->mclk_fs);
-}
+	वापस meson_card_i2s_set_sysclk(substream, params, be->mclk_fs);
+पूर्ण
 
-static const struct snd_soc_ops axg_card_tdm_be_ops = {
+अटल स्थिर काष्ठा snd_soc_ops axg_card_tdm_be_ops = अणु
 	.hw_params = axg_card_tdm_be_hw_params,
-};
+पूर्ण;
 
-static int axg_card_tdm_dai_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct meson_card *priv = snd_soc_card_get_drvdata(rtd->card);
-	struct axg_dai_link_tdm_data *be =
-		(struct axg_dai_link_tdm_data *)priv->link_data[rtd->num];
-	struct snd_soc_dai *codec_dai;
-	int ret, i;
+अटल पूर्णांक axg_card_tdm_dai_init(काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा meson_card *priv = snd_soc_card_get_drvdata(rtd->card);
+	काष्ठा axg_dai_link_tdm_data *be =
+		(काष्ठा axg_dai_link_tdm_data *)priv->link_data[rtd->num];
+	काष्ठा snd_soc_dai *codec_dai;
+	पूर्णांक ret, i;
 
-	for_each_rtd_codec_dais(rtd, i, codec_dai) {
+	क्रम_each_rtd_codec_dais(rtd, i, codec_dai) अणु
 		ret = snd_soc_dai_set_tdm_slot(codec_dai,
 					       be->codec_masks[i].tx,
 					       be->codec_masks[i].rx,
 					       be->slots, be->slot_width);
-		if (ret && ret != -ENOTSUPP) {
+		अगर (ret && ret != -ENOTSUPP) अणु
 			dev_err(codec_dai->dev,
 				"setting tdm link slots failed\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = axg_tdm_set_tdm_slots(asoc_rtd_to_cpu(rtd, 0), be->tx_mask, be->rx_mask,
 				    be->slots, be->slot_width);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(asoc_rtd_to_cpu(rtd, 0)->dev, "setting tdm link slots failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axg_card_tdm_dai_lb_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct meson_card *priv = snd_soc_card_get_drvdata(rtd->card);
-	struct axg_dai_link_tdm_data *be =
-		(struct axg_dai_link_tdm_data *)priv->link_data[rtd->num];
-	int ret;
+अटल पूर्णांक axg_card_tdm_dai_lb_init(काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा meson_card *priv = snd_soc_card_get_drvdata(rtd->card);
+	काष्ठा axg_dai_link_tdm_data *be =
+		(काष्ठा axg_dai_link_tdm_data *)priv->link_data[rtd->num];
+	पूर्णांक ret;
 
 	/* The loopback rx_mask is the pad tx_mask */
-	ret = axg_tdm_set_tdm_slots(asoc_rtd_to_cpu(rtd, 0), NULL, be->tx_mask,
+	ret = axg_tdm_set_tdm_slots(asoc_rtd_to_cpu(rtd, 0), शून्य, be->tx_mask,
 				    be->slots, be->slot_width);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(asoc_rtd_to_cpu(rtd, 0)->dev, "setting tdm link slots failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axg_card_add_tdm_loopback(struct snd_soc_card *card,
-				     int *index)
-{
-	struct meson_card *priv = snd_soc_card_get_drvdata(card);
-	struct snd_soc_dai_link *pad = &card->dai_link[*index];
-	struct snd_soc_dai_link *lb;
-	struct snd_soc_dai_link_component *dlc;
-	int ret;
+अटल पूर्णांक axg_card_add_tdm_loopback(काष्ठा snd_soc_card *card,
+				     पूर्णांक *index)
+अणु
+	काष्ठा meson_card *priv = snd_soc_card_get_drvdata(card);
+	काष्ठा snd_soc_dai_link *pad = &card->dai_link[*index];
+	काष्ठा snd_soc_dai_link *lb;
+	काष्ठा snd_soc_dai_link_component *dlc;
+	पूर्णांक ret;
 
 	/* extend links */
-	ret = meson_card_reallocate_links(card, card->num_links + 1);
-	if (ret)
-		return ret;
+	ret = meson_card_पुनः_स्मृतिate_links(card, card->num_links + 1);
+	अगर (ret)
+		वापस ret;
 
 	lb = &card->dai_link[*index + 1];
 
-	lb->name = devm_kasprintf(card->dev, GFP_KERNEL, "%s-lb", pad->name);
-	if (!lb->name)
-		return -ENOMEM;
+	lb->name = devm_kaप्र_लिखो(card->dev, GFP_KERNEL, "%s-lb", pad->name);
+	अगर (!lb->name)
+		वापस -ENOMEM;
 
-	dlc = devm_kzalloc(card->dev, 2 * sizeof(*dlc), GFP_KERNEL);
-	if (!dlc)
-		return -ENOMEM;
+	dlc = devm_kzalloc(card->dev, 2 * माप(*dlc), GFP_KERNEL);
+	अगर (!dlc)
+		वापस -ENOMEM;
 
 	lb->cpus = &dlc[0];
 	lb->codecs = &dlc[1];
@@ -148,227 +149,227 @@ static int axg_card_add_tdm_loopback(struct snd_soc_card *card,
 	 */
 	of_node_get(lb->cpus->of_node);
 
-	/* Let add_links continue where it should */
+	/* Let add_links जारी where it should */
 	*index += 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axg_card_parse_cpu_tdm_slots(struct snd_soc_card *card,
-					struct snd_soc_dai_link *link,
-					struct device_node *node,
-					struct axg_dai_link_tdm_data *be)
-{
-	char propname[32];
+अटल पूर्णांक axg_card_parse_cpu_tdm_slots(काष्ठा snd_soc_card *card,
+					काष्ठा snd_soc_dai_link *link,
+					काष्ठा device_node *node,
+					काष्ठा axg_dai_link_tdm_data *be)
+अणु
+	अक्षर propname[32];
 	u32 tx, rx;
-	int i;
+	पूर्णांक i;
 
-	be->tx_mask = devm_kcalloc(card->dev, AXG_TDM_NUM_LANES,
-				   sizeof(*be->tx_mask), GFP_KERNEL);
-	be->rx_mask = devm_kcalloc(card->dev, AXG_TDM_NUM_LANES,
-				   sizeof(*be->rx_mask), GFP_KERNEL);
-	if (!be->tx_mask || !be->rx_mask)
-		return -ENOMEM;
+	be->tx_mask = devm_kसुस्मृति(card->dev, AXG_TDM_NUM_LANES,
+				   माप(*be->tx_mask), GFP_KERNEL);
+	be->rx_mask = devm_kसुस्मृति(card->dev, AXG_TDM_NUM_LANES,
+				   माप(*be->rx_mask), GFP_KERNEL);
+	अगर (!be->tx_mask || !be->rx_mask)
+		वापस -ENOMEM;
 
-	for (i = 0, tx = 0; i < AXG_TDM_NUM_LANES; i++) {
-		snprintf(propname, 32, "dai-tdm-slot-tx-mask-%d", i);
+	क्रम (i = 0, tx = 0; i < AXG_TDM_NUM_LANES; i++) अणु
+		snम_लिखो(propname, 32, "dai-tdm-slot-tx-mask-%d", i);
 		snd_soc_of_get_slot_mask(node, propname, &be->tx_mask[i]);
 		tx = max(tx, be->tx_mask[i]);
-	}
+	पूर्ण
 
-	/* Disable playback is the interface has no tx slots */
-	if (!tx)
+	/* Disable playback is the पूर्णांकerface has no tx slots */
+	अगर (!tx)
 		link->dpcm_playback = 0;
 
-	for (i = 0, rx = 0; i < AXG_TDM_NUM_LANES; i++) {
-		snprintf(propname, 32, "dai-tdm-slot-rx-mask-%d", i);
+	क्रम (i = 0, rx = 0; i < AXG_TDM_NUM_LANES; i++) अणु
+		snम_लिखो(propname, 32, "dai-tdm-slot-rx-mask-%d", i);
 		snd_soc_of_get_slot_mask(node, propname, &be->rx_mask[i]);
 		rx = max(rx, be->rx_mask[i]);
-	}
+	पूर्ण
 
-	/* Disable capture is the interface has no rx slots */
-	if (!rx)
+	/* Disable capture is the पूर्णांकerface has no rx slots */
+	अगर (!rx)
 		link->dpcm_capture = 0;
 
-	/* ... but the interface should at least have one of them */
-	if (!tx && !rx) {
+	/* ... but the पूर्णांकerface should at least have one of them */
+	अगर (!tx && !rx) अणु
 		dev_err(card->dev, "tdm link has no cpu slots\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	of_property_read_u32(node, "dai-tdm-slot-num", &be->slots);
-	if (!be->slots) {
+	of_property_पढ़ो_u32(node, "dai-tdm-slot-num", &be->slots);
+	अगर (!be->slots) अणु
 		/*
 		 * If the slot number is not provided, set it such as it
 		 * accommodates the largest mask
 		 */
 		be->slots = fls(max(tx, rx));
-	} else if (be->slots < fls(max(tx, rx)) || be->slots > 32) {
+	पूर्ण अन्यथा अगर (be->slots < fls(max(tx, rx)) || be->slots > 32) अणु
 		/*
-		 * Error if the slots can't accommodate the largest mask or
-		 * if it is just too big
+		 * Error अगर the slots can't accommodate the largest mask or
+		 * अगर it is just too big
 		 */
 		dev_err(card->dev, "bad slot number\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	of_property_read_u32(node, "dai-tdm-slot-width", &be->slot_width);
+	of_property_पढ़ो_u32(node, "dai-tdm-slot-width", &be->slot_width);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axg_card_parse_codecs_masks(struct snd_soc_card *card,
-				       struct snd_soc_dai_link *link,
-				       struct device_node *node,
-				       struct axg_dai_link_tdm_data *be)
-{
-	struct axg_dai_link_tdm_mask *codec_mask;
-	struct device_node *np;
+अटल पूर्णांक axg_card_parse_codecs_masks(काष्ठा snd_soc_card *card,
+				       काष्ठा snd_soc_dai_link *link,
+				       काष्ठा device_node *node,
+				       काष्ठा axg_dai_link_tdm_data *be)
+अणु
+	काष्ठा axg_dai_link_tdm_mask *codec_mask;
+	काष्ठा device_node *np;
 
-	codec_mask = devm_kcalloc(card->dev, link->num_codecs,
-				  sizeof(*codec_mask), GFP_KERNEL);
-	if (!codec_mask)
-		return -ENOMEM;
+	codec_mask = devm_kसुस्मृति(card->dev, link->num_codecs,
+				  माप(*codec_mask), GFP_KERNEL);
+	अगर (!codec_mask)
+		वापस -ENOMEM;
 
 	be->codec_masks = codec_mask;
 
-	for_each_child_of_node(node, np) {
+	क्रम_each_child_of_node(node, np) अणु
 		snd_soc_of_get_slot_mask(np, "dai-tdm-slot-rx-mask",
 					 &codec_mask->rx);
 		snd_soc_of_get_slot_mask(np, "dai-tdm-slot-tx-mask",
 					 &codec_mask->tx);
 
 		codec_mask++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axg_card_parse_tdm(struct snd_soc_card *card,
-			      struct device_node *node,
-			      int *index)
-{
-	struct meson_card *priv = snd_soc_card_get_drvdata(card);
-	struct snd_soc_dai_link *link = &card->dai_link[*index];
-	struct axg_dai_link_tdm_data *be;
-	int ret;
+अटल पूर्णांक axg_card_parse_tdm(काष्ठा snd_soc_card *card,
+			      काष्ठा device_node *node,
+			      पूर्णांक *index)
+अणु
+	काष्ठा meson_card *priv = snd_soc_card_get_drvdata(card);
+	काष्ठा snd_soc_dai_link *link = &card->dai_link[*index];
+	काष्ठा axg_dai_link_tdm_data *be;
+	पूर्णांक ret;
 
 	/* Allocate tdm link parameters */
-	be = devm_kzalloc(card->dev, sizeof(*be), GFP_KERNEL);
-	if (!be)
-		return -ENOMEM;
+	be = devm_kzalloc(card->dev, माप(*be), GFP_KERNEL);
+	अगर (!be)
+		वापस -ENOMEM;
 	priv->link_data[*index] = be;
 
 	/* Setup tdm link */
 	link->ops = &axg_card_tdm_be_ops;
 	link->init = axg_card_tdm_dai_init;
-	link->dai_fmt = meson_card_parse_daifmt(node, link->cpus->of_node);
+	link->dai_fmt = meson_card_parse_daअगरmt(node, link->cpus->of_node);
 
-	of_property_read_u32(node, "mclk-fs", &be->mclk_fs);
+	of_property_पढ़ो_u32(node, "mclk-fs", &be->mclk_fs);
 
 	ret = axg_card_parse_cpu_tdm_slots(card, link, node, be);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(card->dev, "error parsing tdm link slots\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = axg_card_parse_codecs_masks(card, link, node, be);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Add loopback if the pad dai has playback */
-	if (link->dpcm_playback) {
+	/* Add loopback अगर the pad dai has playback */
+	अगर (link->dpcm_playback) अणु
 		ret = axg_card_add_tdm_loopback(card, index);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axg_card_cpu_is_capture_fe(struct device_node *np)
-{
-	return of_device_is_compatible(np, DT_PREFIX "axg-toddr");
-}
+अटल पूर्णांक axg_card_cpu_is_capture_fe(काष्ठा device_node *np)
+अणु
+	वापस of_device_is_compatible(np, DT_PREFIX "axg-toddr");
+पूर्ण
 
-static int axg_card_cpu_is_playback_fe(struct device_node *np)
-{
-	return of_device_is_compatible(np, DT_PREFIX "axg-frddr");
-}
+अटल पूर्णांक axg_card_cpu_is_playback_fe(काष्ठा device_node *np)
+अणु
+	वापस of_device_is_compatible(np, DT_PREFIX "axg-frddr");
+पूर्ण
 
-static int axg_card_cpu_is_tdm_iface(struct device_node *np)
-{
-	return of_device_is_compatible(np, DT_PREFIX "axg-tdm-iface");
-}
+अटल पूर्णांक axg_card_cpu_is_tdm_अगरace(काष्ठा device_node *np)
+अणु
+	वापस of_device_is_compatible(np, DT_PREFIX "axg-tdm-iface");
+पूर्ण
 
-static int axg_card_cpu_is_codec(struct device_node *np)
-{
-	return of_device_is_compatible(np, DT_PREFIX "g12a-tohdmitx") ||
+अटल पूर्णांक axg_card_cpu_is_codec(काष्ठा device_node *np)
+अणु
+	वापस of_device_is_compatible(np, DT_PREFIX "g12a-tohdmitx") ||
 		of_device_is_compatible(np, DT_PREFIX "g12a-toacodec");
-}
+पूर्ण
 
-static int axg_card_add_link(struct snd_soc_card *card, struct device_node *np,
-			     int *index)
-{
-	struct snd_soc_dai_link *dai_link = &card->dai_link[*index];
-	struct snd_soc_dai_link_component *cpu;
-	int ret;
+अटल पूर्णांक axg_card_add_link(काष्ठा snd_soc_card *card, काष्ठा device_node *np,
+			     पूर्णांक *index)
+अणु
+	काष्ठा snd_soc_dai_link *dai_link = &card->dai_link[*index];
+	काष्ठा snd_soc_dai_link_component *cpu;
+	पूर्णांक ret;
 
-	cpu = devm_kzalloc(card->dev, sizeof(*cpu), GFP_KERNEL);
-	if (!cpu)
-		return -ENOMEM;
+	cpu = devm_kzalloc(card->dev, माप(*cpu), GFP_KERNEL);
+	अगर (!cpu)
+		वापस -ENOMEM;
 
 	dai_link->cpus = cpu;
 	dai_link->num_cpus = 1;
 
 	ret = meson_card_parse_dai(card, np, &dai_link->cpus->of_node,
 				   &dai_link->cpus->dai_name);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (axg_card_cpu_is_playback_fe(dai_link->cpus->of_node))
-		return meson_card_set_fe_link(card, dai_link, np, true);
-	else if (axg_card_cpu_is_capture_fe(dai_link->cpus->of_node))
-		return meson_card_set_fe_link(card, dai_link, np, false);
+	अगर (axg_card_cpu_is_playback_fe(dai_link->cpus->of_node))
+		वापस meson_card_set_fe_link(card, dai_link, np, true);
+	अन्यथा अगर (axg_card_cpu_is_capture_fe(dai_link->cpus->of_node))
+		वापस meson_card_set_fe_link(card, dai_link, np, false);
 
 
 	ret = meson_card_set_be_link(card, dai_link, np);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (axg_card_cpu_is_codec(dai_link->cpus->of_node)) {
+	अगर (axg_card_cpu_is_codec(dai_link->cpus->of_node)) अणु
 		dai_link->params = &codec_params;
-	} else {
+	पूर्ण अन्यथा अणु
 		dai_link->no_pcm = 1;
 		snd_soc_dai_link_set_capabilities(dai_link);
-		if (axg_card_cpu_is_tdm_iface(dai_link->cpus->of_node))
+		अगर (axg_card_cpu_is_tdm_अगरace(dai_link->cpus->of_node))
 			ret = axg_card_parse_tdm(card, np, index);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct meson_card_match_data axg_card_match_data = {
+अटल स्थिर काष्ठा meson_card_match_data axg_card_match_data = अणु
 	.add_link = axg_card_add_link,
-};
+पूर्ण;
 
-static const struct of_device_id axg_card_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id axg_card_of_match[] = अणु
+	अणु
 		.compatible = "amlogic,axg-sound-card",
 		.data = &axg_card_match_data,
-	}, {}
-};
+	पूर्ण, अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, axg_card_of_match);
 
-static struct platform_driver axg_card_pdrv = {
+अटल काष्ठा platक्रमm_driver axg_card_pdrv = अणु
 	.probe = meson_card_probe,
-	.remove = meson_card_remove,
-	.driver = {
+	.हटाओ = meson_card_हटाओ,
+	.driver = अणु
 		.name = "axg-sound-card",
 		.of_match_table = axg_card_of_match,
-	},
-};
-module_platform_driver(axg_card_pdrv);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(axg_card_pdrv);
 
 MODULE_DESCRIPTION("Amlogic AXG ALSA machine driver");
 MODULE_AUTHOR("Jerome Brunet <jbrunet@baylibre.com>");

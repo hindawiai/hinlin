@@ -1,104 +1,105 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Character LCD driver for Linux
+ * Character LCD driver क्रम Linux
  *
  * Copyright (C) 2000-2008, Willy Tarreau <w@1wt.eu>
  * Copyright (C) 2016-2017 Glider bvba
  */
 
-#ifndef _CHARLCD_H
-#define _CHARLCD_H
+#अगर_अघोषित _CHARLCD_H
+#घोषणा _CHARLCD_H
 
-#define LCD_FLAG_B		0x0004	/* Blink on */
-#define LCD_FLAG_C		0x0008	/* Cursor on */
-#define LCD_FLAG_D		0x0010	/* Display on */
-#define LCD_FLAG_F		0x0020	/* Large font mode */
-#define LCD_FLAG_N		0x0040	/* 2-rows mode */
-#define LCD_FLAG_L		0x0080	/* Backlight enabled */
+#घोषणा LCD_FLAG_B		0x0004	/* Blink on */
+#घोषणा LCD_FLAG_C		0x0008	/* Cursor on */
+#घोषणा LCD_FLAG_D		0x0010	/* Display on */
+#घोषणा LCD_FLAG_F		0x0020	/* Large font mode */
+#घोषणा LCD_FLAG_N		0x0040	/* 2-rows mode */
+#घोषणा LCD_FLAG_L		0x0080	/* Backlight enabled */
 
-enum charlcd_onoff {
+क्रमागत अक्षरlcd_onoff अणु
 	CHARLCD_OFF = 0,
 	CHARLCD_ON,
-};
+पूर्ण;
 
-enum charlcd_shift_dir {
+क्रमागत अक्षरlcd_shअगरt_dir अणु
 	CHARLCD_SHIFT_LEFT,
 	CHARLCD_SHIFT_RIGHT,
-};
+पूर्ण;
 
-enum charlcd_fontsize {
+क्रमागत अक्षरlcd_fontsize अणु
 	CHARLCD_FONTSIZE_SMALL,
 	CHARLCD_FONTSIZE_LARGE,
-};
+पूर्ण;
 
-enum charlcd_lines {
+क्रमागत अक्षरlcd_lines अणु
 	CHARLCD_LINES_1,
 	CHARLCD_LINES_2,
-};
+पूर्ण;
 
-struct charlcd {
-	const struct charlcd_ops *ops;
-	const unsigned char *char_conv;	/* Optional */
+काष्ठा अक्षरlcd अणु
+	स्थिर काष्ठा अक्षरlcd_ops *ops;
+	स्थिर अचिन्हित अक्षर *अक्षर_conv;	/* Optional */
 
-	int height;
-	int width;
+	पूर्णांक height;
+	पूर्णांक width;
 
 	/* Contains the LCD X and Y offset */
-	struct {
-		unsigned long x;
-		unsigned long y;
-	} addr;
+	काष्ठा अणु
+		अचिन्हित दीर्घ x;
+		अचिन्हित दीर्घ y;
+	पूर्ण addr;
 
-	void *drvdata;
-};
+	व्योम *drvdata;
+पूर्ण;
 
 /**
- * struct charlcd_ops - Functions used by charlcd. Drivers have to implement
+ * काष्ठा अक्षरlcd_ops - Functions used by अक्षरlcd. Drivers have to implement
  * these.
  * @backlight: Turn backlight on or off. Optional.
- * @print: Print one character to the display at current cursor position.
- * The buffered cursor position is advanced by charlcd. The cursor should not
+ * @prपूर्णांक: Prपूर्णांक one अक्षरacter to the display at current cursor position.
+ * The buffered cursor position is advanced by अक्षरlcd. The cursor should not
  * wrap to the next line at the end of a line.
- * @gotoxy: Set cursor to x, y. The x and y values to set the cursor to are
- * previously set in addr.x and addr.y by charlcd.
+ * @जाओxy: Set cursor to x, y. The x and y values to set the cursor to are
+ * previously set in addr.x and addr.y by अक्षरlcd.
  * @home: Set cursor to 0, 0. The values in addr.x and addr.y are set to 0, 0 by
- * charlcd prior to calling this function.
+ * अक्षरlcd prior to calling this function.
  * @clear_display: Clear the whole display and set the cursor to 0, 0. The
- * values in addr.x and addr.y are set to 0, 0 by charlcd after to calling this
+ * values in addr.x and addr.y are set to 0, 0 by अक्षरlcd after to calling this
  * function.
  * @init_display: Initialize the display.
- * @shift_cursor: Shift cursor left or right one position.
- * @shift_display: Shift whole display content left or right.
+ * @shअगरt_cursor: Shअगरt cursor left or right one position.
+ * @shअगरt_display: Shअगरt whole display content left or right.
  * @display: Turn display on or off.
  * @cursor: Turn cursor on or off.
  * @blink: Turn cursor blink on or off.
  * @lines: One or two lines.
- * @redefine_char: Redefine the actual pixel matrix of character.
+ * @redefine_अक्षर: Redefine the actual pixel matrix of अक्षरacter.
  */
-struct charlcd_ops {
-	void (*backlight)(struct charlcd *lcd, enum charlcd_onoff on);
-	int (*print)(struct charlcd *lcd, int c);
-	int (*gotoxy)(struct charlcd *lcd, unsigned int x, unsigned int y);
-	int (*home)(struct charlcd *lcd);
-	int (*clear_display)(struct charlcd *lcd);
-	int (*init_display)(struct charlcd *lcd);
-	int (*shift_cursor)(struct charlcd *lcd, enum charlcd_shift_dir dir);
-	int (*shift_display)(struct charlcd *lcd, enum charlcd_shift_dir dir);
-	int (*display)(struct charlcd *lcd, enum charlcd_onoff on);
-	int (*cursor)(struct charlcd *lcd, enum charlcd_onoff on);
-	int (*blink)(struct charlcd *lcd, enum charlcd_onoff on);
-	int (*fontsize)(struct charlcd *lcd, enum charlcd_fontsize size);
-	int (*lines)(struct charlcd *lcd, enum charlcd_lines lines);
-	int (*redefine_char)(struct charlcd *lcd, char *esc);
-};
+काष्ठा अक्षरlcd_ops अणु
+	व्योम (*backlight)(काष्ठा अक्षरlcd *lcd, क्रमागत अक्षरlcd_onoff on);
+	पूर्णांक (*prपूर्णांक)(काष्ठा अक्षरlcd *lcd, पूर्णांक c);
+	पूर्णांक (*जाओxy)(काष्ठा अक्षरlcd *lcd, अचिन्हित पूर्णांक x, अचिन्हित पूर्णांक y);
+	पूर्णांक (*home)(काष्ठा अक्षरlcd *lcd);
+	पूर्णांक (*clear_display)(काष्ठा अक्षरlcd *lcd);
+	पूर्णांक (*init_display)(काष्ठा अक्षरlcd *lcd);
+	पूर्णांक (*shअगरt_cursor)(काष्ठा अक्षरlcd *lcd, क्रमागत अक्षरlcd_shअगरt_dir dir);
+	पूर्णांक (*shअगरt_display)(काष्ठा अक्षरlcd *lcd, क्रमागत अक्षरlcd_shअगरt_dir dir);
+	पूर्णांक (*display)(काष्ठा अक्षरlcd *lcd, क्रमागत अक्षरlcd_onoff on);
+	पूर्णांक (*cursor)(काष्ठा अक्षरlcd *lcd, क्रमागत अक्षरlcd_onoff on);
+	पूर्णांक (*blink)(काष्ठा अक्षरlcd *lcd, क्रमागत अक्षरlcd_onoff on);
+	पूर्णांक (*fontsize)(काष्ठा अक्षरlcd *lcd, क्रमागत अक्षरlcd_fontsize size);
+	पूर्णांक (*lines)(काष्ठा अक्षरlcd *lcd, क्रमागत अक्षरlcd_lines lines);
+	पूर्णांक (*redefine_अक्षर)(काष्ठा अक्षरlcd *lcd, अक्षर *esc);
+पूर्ण;
 
-void charlcd_backlight(struct charlcd *lcd, enum charlcd_onoff on);
-struct charlcd *charlcd_alloc(void);
-void charlcd_free(struct charlcd *lcd);
+व्योम अक्षरlcd_backlight(काष्ठा अक्षरlcd *lcd, क्रमागत अक्षरlcd_onoff on);
+काष्ठा अक्षरlcd *अक्षरlcd_alloc(व्योम);
+व्योम अक्षरlcd_मुक्त(काष्ठा अक्षरlcd *lcd);
 
-int charlcd_register(struct charlcd *lcd);
-int charlcd_unregister(struct charlcd *lcd);
+पूर्णांक अक्षरlcd_रेजिस्टर(काष्ठा अक्षरlcd *lcd);
+पूर्णांक अक्षरlcd_unरेजिस्टर(काष्ठा अक्षरlcd *lcd);
 
-void charlcd_poke(struct charlcd *lcd);
+व्योम अक्षरlcd_poke(काष्ठा अक्षरlcd *lcd);
 
-#endif /* CHARLCD_H */
+#पूर्ण_अगर /* CHARLCD_H */

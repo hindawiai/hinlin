@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/platform_device.h>
-#include <linux/memregion.h>
-#include <linux/module.h>
-#include <linux/pfn_t.h>
-#include "../bus.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/memregion.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pfn_t.h>
+#समावेश "../bus.h"
 
-static bool region_idle;
+अटल bool region_idle;
 module_param_named(region_idle, region_idle, bool, 0644);
 
-static int dax_hmem_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct dax_region *dax_region;
-	struct memregion_info *mri;
-	struct dev_dax_data data;
-	struct dev_dax *dev_dax;
-	struct resource *res;
-	struct range range;
+अटल पूर्णांक dax_hmem_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा dax_region *dax_region;
+	काष्ठा memregion_info *mri;
+	काष्ठा dev_dax_data data;
+	काष्ठा dev_dax *dev_dax;
+	काष्ठा resource *res;
+	काष्ठा range range;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENOMEM;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENOMEM;
 
-	mri = dev->platform_data;
+	mri = dev->platक्रमm_data;
 	range.start = res->start;
 	range.end = res->end;
 	dax_region = alloc_dax_region(dev, pdev->id, &range, mri->target_node,
 			PMD_SIZE, 0);
-	if (!dax_region)
-		return -ENOMEM;
+	अगर (!dax_region)
+		वापस -ENOMEM;
 
-	data = (struct dev_dax_data) {
+	data = (काष्ठा dev_dax_data) अणु
 		.dax_region = dax_region,
 		.id = -1,
 		.size = region_idle ? 0 : resource_size(res),
-	};
+	पूर्ण;
 	dev_dax = devm_create_dev_dax(&data);
-	if (IS_ERR(dev_dax))
-		return PTR_ERR(dev_dax);
+	अगर (IS_ERR(dev_dax))
+		वापस PTR_ERR(dev_dax);
 
-	/* child dev_dax instances now own the lifetime of the dax_region */
+	/* child dev_dax instances now own the lअगरeसमय of the dax_region */
 	dax_region_put(dax_region);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dax_hmem_remove(struct platform_device *pdev)
-{
-	/* devm handles teardown */
-	return 0;
-}
+अटल पूर्णांक dax_hmem_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	/* devm handles tearकरोwn */
+	वापस 0;
+पूर्ण
 
-static struct platform_driver dax_hmem_driver = {
+अटल काष्ठा platक्रमm_driver dax_hmem_driver = अणु
 	.probe = dax_hmem_probe,
-	.remove = dax_hmem_remove,
-	.driver = {
+	.हटाओ = dax_hmem_हटाओ,
+	.driver = अणु
 		.name = "hmem",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(dax_hmem_driver);
+module_platक्रमm_driver(dax_hmem_driver);
 
 MODULE_ALIAS("platform:hmem*");
 MODULE_LICENSE("GPL v2");

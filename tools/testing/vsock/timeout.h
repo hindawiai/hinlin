@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef TIMEOUT_H
-#define TIMEOUT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित TIMEOUT_H
+#घोषणा TIMEOUT_H
 
-enum {
-	/* Default timeout */
+क्रमागत अणु
+	/* Default समयout */
 	TIMEOUT = 10 /* seconds */
-};
+पूर्ण;
 
-void sigalrm(int signo);
-void timeout_begin(unsigned int seconds);
-void timeout_check(const char *operation);
-void timeout_end(void);
+व्योम sigalrm(पूर्णांक signo);
+व्योम समयout_begin(अचिन्हित पूर्णांक seconds);
+व्योम समयout_check(स्थिर अक्षर *operation);
+व्योम समयout_end(व्योम);
 
-#endif /* TIMEOUT_H */
+#पूर्ण_अगर /* TIMEOUT_H */

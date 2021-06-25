@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SafeSetID Linux Security Module
  *
@@ -6,340 +7,340 @@
  *
  * Copyright (C) 2018 The Chromium OS Authors.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2, as
  * published by the Free Software Foundation.
  *
  */
 
-#define pr_fmt(fmt) "SafeSetID: " fmt
+#घोषणा pr_fmt(fmt) "SafeSetID: " fmt
 
-#include <linux/security.h>
-#include <linux/cred.h>
+#समावेश <linux/security.h>
+#समावेश <linux/cred.h>
 
-#include "lsm.h"
+#समावेश "lsm.h"
 
-static DEFINE_MUTEX(uid_policy_update_lock);
-static DEFINE_MUTEX(gid_policy_update_lock);
+अटल DEFINE_MUTEX(uid_policy_update_lock);
+अटल DEFINE_MUTEX(gid_policy_update_lock);
 
 /*
- * In the case the input buffer contains one or more invalid IDs, the kid_t
- * variables pointed to by @parent and @child will get updated but this
- * function will return an error.
- * Contents of @buf may be modified.
+ * In the हाल the input buffer contains one or more invalid IDs, the kid_t
+ * variables poपूर्णांकed to by @parent and @child will get updated but this
+ * function will वापस an error.
+ * Contents of @buf may be modअगरied.
  */
-static int parse_policy_line(struct file *file, char *buf,
-	struct setid_rule *rule)
-{
-	char *child_str;
-	int ret;
+अटल पूर्णांक parse_policy_line(काष्ठा file *file, अक्षर *buf,
+	काष्ठा setid_rule *rule)
+अणु
+	अक्षर *child_str;
+	पूर्णांक ret;
 	u32 parsed_parent, parsed_child;
 
 	/* Format of |buf| string should be <UID>:<UID> or <GID>:<GID> */
-	child_str = strchr(buf, ':');
-	if (child_str == NULL)
-		return -EINVAL;
+	child_str = म_अक्षर(buf, ':');
+	अगर (child_str == शून्य)
+		वापस -EINVAL;
 	*child_str = '\0';
 	child_str++;
 
 	ret = kstrtou32(buf, 0, &parsed_parent);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = kstrtou32(child_str, 0, &parsed_child);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (rule->type == UID){
+	अगर (rule->type == UID)अणु
 		rule->src_id.uid = make_kuid(file->f_cred->user_ns, parsed_parent);
 		rule->dst_id.uid = make_kuid(file->f_cred->user_ns, parsed_child);
-		if (!uid_valid(rule->src_id.uid) || !uid_valid(rule->dst_id.uid))
-			return -EINVAL;
-	} else if (rule->type == GID){
+		अगर (!uid_valid(rule->src_id.uid) || !uid_valid(rule->dst_id.uid))
+			वापस -EINVAL;
+	पूर्ण अन्यथा अगर (rule->type == GID)अणु
 		rule->src_id.gid = make_kgid(file->f_cred->user_ns, parsed_parent);
 		rule->dst_id.gid = make_kgid(file->f_cred->user_ns, parsed_child);
-		if (!gid_valid(rule->src_id.gid) || !gid_valid(rule->dst_id.gid))
-			return -EINVAL;
-	} else {
+		अगर (!gid_valid(rule->src_id.gid) || !gid_valid(rule->dst_id.gid))
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
 		/* Error, rule->type is an invalid type */
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __release_ruleset(struct rcu_head *rcu)
-{
-	struct setid_ruleset *pol =
-		container_of(rcu, struct setid_ruleset, rcu);
-	int bucket;
-	struct setid_rule *rule;
-	struct hlist_node *tmp;
+अटल व्योम __release_ruleset(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा setid_ruleset *pol =
+		container_of(rcu, काष्ठा setid_ruleset, rcu);
+	पूर्णांक bucket;
+	काष्ठा setid_rule *rule;
+	काष्ठा hlist_node *पंचांगp;
 
-	hash_for_each_safe(pol->rules, bucket, tmp, rule, next)
-		kfree(rule);
-	kfree(pol->policy_str);
-	kfree(pol);
-}
+	hash_क्रम_each_safe(pol->rules, bucket, पंचांगp, rule, next)
+		kमुक्त(rule);
+	kमुक्त(pol->policy_str);
+	kमुक्त(pol);
+पूर्ण
 
-static void release_ruleset(struct setid_ruleset *pol){
+अटल व्योम release_ruleset(काष्ठा setid_ruleset *pol)अणु
 	call_rcu(&pol->rcu, __release_ruleset);
-}
+पूर्ण
 
-static void insert_rule(struct setid_ruleset *pol, struct setid_rule *rule)
-{
-	if (pol->type == UID)
+अटल व्योम insert_rule(काष्ठा setid_ruleset *pol, काष्ठा setid_rule *rule)
+अणु
+	अगर (pol->type == UID)
 		hash_add(pol->rules, &rule->next, __kuid_val(rule->src_id.uid));
-	else if (pol->type == GID)
+	अन्यथा अगर (pol->type == GID)
 		hash_add(pol->rules, &rule->next, __kgid_val(rule->src_id.gid));
-	else /* Error, pol->type is neither UID or GID */
-		return;
-}
+	अन्यथा /* Error, pol->type is neither UID or GID */
+		वापस;
+पूर्ण
 
-static int verify_ruleset(struct setid_ruleset *pol)
-{
-	int bucket;
-	struct setid_rule *rule, *nrule;
-	int res = 0;
+अटल पूर्णांक verअगरy_ruleset(काष्ठा setid_ruleset *pol)
+अणु
+	पूर्णांक bucket;
+	काष्ठा setid_rule *rule, *nrule;
+	पूर्णांक res = 0;
 
-	hash_for_each(pol->rules, bucket, rule, next) {
-		if (_setid_policy_lookup(pol, rule->dst_id, INVALID_ID) == SIDPOL_DEFAULT) {
-			if (pol->type == UID) {
+	hash_क्रम_each(pol->rules, bucket, rule, next) अणु
+		अगर (_setid_policy_lookup(pol, rule->dst_id, INVALID_ID) == SIDPOL_DEFAULT) अणु
+			अगर (pol->type == UID) अणु
 				pr_warn("insecure policy detected: uid %d is constrained but transitively unconstrained through uid %d\n",
 					__kuid_val(rule->src_id.uid),
 					__kuid_val(rule->dst_id.uid));
-			} else if (pol->type == GID) {
+			पूर्ण अन्यथा अगर (pol->type == GID) अणु
 				pr_warn("insecure policy detected: gid %d is constrained but transitively unconstrained through gid %d\n",
 					__kgid_val(rule->src_id.gid),
 					__kgid_val(rule->dst_id.gid));
-			} else { /* pol->type is an invalid type */
+			पूर्ण अन्यथा अणु /* pol->type is an invalid type */
 				res = -EINVAL;
-				return res;
-			}
+				वापस res;
+			पूर्ण
 			res = -EINVAL;
 
 			/* fix it up */
-			nrule = kmalloc(sizeof(struct setid_rule), GFP_KERNEL);
-			if (!nrule)
-				return -ENOMEM;
-			if (pol->type == UID){
+			nrule = kदो_स्मृति(माप(काष्ठा setid_rule), GFP_KERNEL);
+			अगर (!nrule)
+				वापस -ENOMEM;
+			अगर (pol->type == UID)अणु
 				nrule->src_id.uid = rule->dst_id.uid;
 				nrule->dst_id.uid = rule->dst_id.uid;
 				nrule->type = UID;
-			} else { /* pol->type must be GID if we've made it to here */
+			पूर्ण अन्यथा अणु /* pol->type must be GID अगर we've made it to here */
 				nrule->src_id.gid = rule->dst_id.gid;
 				nrule->dst_id.gid = rule->dst_id.gid;
 				nrule->type = GID;
-			}
+			पूर्ण
 			insert_rule(pol, nrule);
-		}
-	}
-	return res;
-}
+		पूर्ण
+	पूर्ण
+	वापस res;
+पूर्ण
 
-static ssize_t handle_policy_update(struct file *file,
-				    const char __user *ubuf, size_t len, enum setid_type policy_type)
-{
-	struct setid_ruleset *pol;
-	char *buf, *p, *end;
-	int err;
+अटल sमाप_प्रकार handle_policy_update(काष्ठा file *file,
+				    स्थिर अक्षर __user *ubuf, माप_प्रकार len, क्रमागत setid_type policy_type)
+अणु
+	काष्ठा setid_ruleset *pol;
+	अक्षर *buf, *p, *end;
+	पूर्णांक err;
 
-	pol = kmalloc(sizeof(struct setid_ruleset), GFP_KERNEL);
-	if (!pol)
-		return -ENOMEM;
-	pol->policy_str = NULL;
+	pol = kदो_स्मृति(माप(काष्ठा setid_ruleset), GFP_KERNEL);
+	अगर (!pol)
+		वापस -ENOMEM;
+	pol->policy_str = शून्य;
 	pol->type = policy_type;
 	hash_init(pol->rules);
 
 	p = buf = memdup_user_nul(ubuf, len);
-	if (IS_ERR(buf)) {
+	अगर (IS_ERR(buf)) अणु
 		err = PTR_ERR(buf);
-		goto out_free_pol;
-	}
+		जाओ out_मुक्त_pol;
+	पूर्ण
 	pol->policy_str = kstrdup(buf, GFP_KERNEL);
-	if (pol->policy_str == NULL) {
+	अगर (pol->policy_str == शून्य) अणु
 		err = -ENOMEM;
-		goto out_free_buf;
-	}
+		जाओ out_मुक्त_buf;
+	पूर्ण
 
-	/* policy lines, including the last one, end with \n */
-	while (*p != '\0') {
-		struct setid_rule *rule;
+	/* policy lines, including the last one, end with \न */
+	जबतक (*p != '\0') अणु
+		काष्ठा setid_rule *rule;
 
-		end = strchr(p, '\n');
-		if (end == NULL) {
+		end = म_अक्षर(p, '\n');
+		अगर (end == शून्य) अणु
 			err = -EINVAL;
-			goto out_free_buf;
-		}
+			जाओ out_मुक्त_buf;
+		पूर्ण
 		*end = '\0';
 
-		rule = kmalloc(sizeof(struct setid_rule), GFP_KERNEL);
-		if (!rule) {
+		rule = kदो_स्मृति(माप(काष्ठा setid_rule), GFP_KERNEL);
+		अगर (!rule) अणु
 			err = -ENOMEM;
-			goto out_free_buf;
-		}
+			जाओ out_मुक्त_buf;
+		पूर्ण
 
 		rule->type = policy_type;
 		err = parse_policy_line(file, p, rule);
-		if (err)
-			goto out_free_rule;
+		अगर (err)
+			जाओ out_मुक्त_rule;
 
-		if (_setid_policy_lookup(pol, rule->src_id, rule->dst_id) == SIDPOL_ALLOWED) {
+		अगर (_setid_policy_lookup(pol, rule->src_id, rule->dst_id) == SIDPOL_ALLOWED) अणु
 			pr_warn("bad policy: duplicate entry\n");
 			err = -EEXIST;
-			goto out_free_rule;
-		}
+			जाओ out_मुक्त_rule;
+		पूर्ण
 
 		insert_rule(pol, rule);
 		p = end + 1;
-		continue;
+		जारी;
 
-out_free_rule:
-		kfree(rule);
-		goto out_free_buf;
-	}
+out_मुक्त_rule:
+		kमुक्त(rule);
+		जाओ out_मुक्त_buf;
+	पूर्ण
 
-	err = verify_ruleset(pol);
+	err = verअगरy_ruleset(pol);
 	/* bogus policy falls through after fixing it up */
-	if (err && err != -EINVAL)
-		goto out_free_buf;
+	अगर (err && err != -EINVAL)
+		जाओ out_मुक्त_buf;
 
 	/*
 	 * Everything looks good, apply the policy and release the old one.
-	 * What we really want here is an xchg() wrapper for RCU, but since that
-	 * doesn't currently exist, just use a spinlock for now.
+	 * What we really want here is an xchg() wrapper क्रम RCU, but since that
+	 * करोesn't currently exist, just use a spinlock क्रम now.
 	 */
-	if (policy_type == UID) {
+	अगर (policy_type == UID) अणु
 		mutex_lock(&uid_policy_update_lock);
-		pol = rcu_replace_pointer(safesetid_setuid_rules, pol,
+		pol = rcu_replace_poपूर्णांकer(safesetid_setuid_rules, pol,
 					  lockdep_is_held(&uid_policy_update_lock));
 		mutex_unlock(&uid_policy_update_lock);
-	} else if (policy_type == GID) {
+	पूर्ण अन्यथा अगर (policy_type == GID) अणु
 		mutex_lock(&gid_policy_update_lock);
-		pol = rcu_replace_pointer(safesetid_setgid_rules, pol,
+		pol = rcu_replace_poपूर्णांकer(safesetid_setgid_rules, pol,
 					  lockdep_is_held(&gid_policy_update_lock));
 		mutex_unlock(&gid_policy_update_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Error, policy type is neither UID or GID */
 		pr_warn("error: bad policy type");
-	}
+	पूर्ण
 	err = len;
 
-out_free_buf:
-	kfree(buf);
-out_free_pol:
-	if (pol)
+out_मुक्त_buf:
+	kमुक्त(buf);
+out_मुक्त_pol:
+	अगर (pol)
 		release_ruleset(pol);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static ssize_t safesetid_uid_file_write(struct file *file,
-				    const char __user *buf,
-				    size_t len,
+अटल sमाप_प्रकार safesetid_uid_file_ग_लिखो(काष्ठा file *file,
+				    स्थिर अक्षर __user *buf,
+				    माप_प्रकार len,
 				    loff_t *ppos)
-{
-	if (!file_ns_capable(file, &init_user_ns, CAP_MAC_ADMIN))
-		return -EPERM;
+अणु
+	अगर (!file_ns_capable(file, &init_user_ns, CAP_MAC_ADMIN))
+		वापस -EPERM;
 
-	if (*ppos != 0)
-		return -EINVAL;
+	अगर (*ppos != 0)
+		वापस -EINVAL;
 
-	return handle_policy_update(file, buf, len, UID);
-}
+	वापस handle_policy_update(file, buf, len, UID);
+पूर्ण
 
-static ssize_t safesetid_gid_file_write(struct file *file,
-				    const char __user *buf,
-				    size_t len,
+अटल sमाप_प्रकार safesetid_gid_file_ग_लिखो(काष्ठा file *file,
+				    स्थिर अक्षर __user *buf,
+				    माप_प्रकार len,
 				    loff_t *ppos)
-{
-	if (!file_ns_capable(file, &init_user_ns, CAP_MAC_ADMIN))
-		return -EPERM;
+अणु
+	अगर (!file_ns_capable(file, &init_user_ns, CAP_MAC_ADMIN))
+		वापस -EPERM;
 
-	if (*ppos != 0)
-		return -EINVAL;
+	अगर (*ppos != 0)
+		वापस -EINVAL;
 
-	return handle_policy_update(file, buf, len, GID);
-}
+	वापस handle_policy_update(file, buf, len, GID);
+पूर्ण
 
-static ssize_t safesetid_file_read(struct file *file, char __user *buf,
-				   size_t len, loff_t *ppos, struct mutex *policy_update_lock, struct __rcu setid_ruleset* ruleset)
-{
-	ssize_t res = 0;
-	struct setid_ruleset *pol;
-	const char *kbuf;
+अटल sमाप_प्रकार safesetid_file_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				   माप_प्रकार len, loff_t *ppos, काष्ठा mutex *policy_update_lock, काष्ठा __rcu setid_ruleset* ruleset)
+अणु
+	sमाप_प्रकार res = 0;
+	काष्ठा setid_ruleset *pol;
+	स्थिर अक्षर *kbuf;
 
 	mutex_lock(policy_update_lock);
-	pol = rcu_dereference_protected(ruleset, lockdep_is_held(policy_update_lock));
-	if (pol) {
+	pol = rcu_dereference_रक्षित(ruleset, lockdep_is_held(policy_update_lock));
+	अगर (pol) अणु
 		kbuf = pol->policy_str;
-		res = simple_read_from_buffer(buf, len, ppos,
-					      kbuf, strlen(kbuf));
-	}
+		res = simple_पढ़ो_from_buffer(buf, len, ppos,
+					      kbuf, म_माप(kbuf));
+	पूर्ण
 	mutex_unlock(policy_update_lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static ssize_t safesetid_uid_file_read(struct file *file, char __user *buf,
-				   size_t len, loff_t *ppos)
-{
-	return safesetid_file_read(file, buf, len, ppos,
+अटल sमाप_प्रकार safesetid_uid_file_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				   माप_प्रकार len, loff_t *ppos)
+अणु
+	वापस safesetid_file_पढ़ो(file, buf, len, ppos,
 				   &uid_policy_update_lock, safesetid_setuid_rules);
-}
+पूर्ण
 
-static ssize_t safesetid_gid_file_read(struct file *file, char __user *buf,
-				   size_t len, loff_t *ppos)
-{
-	return safesetid_file_read(file, buf, len, ppos,
+अटल sमाप_प्रकार safesetid_gid_file_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				   माप_प्रकार len, loff_t *ppos)
+अणु
+	वापस safesetid_file_पढ़ो(file, buf, len, ppos,
 				   &gid_policy_update_lock, safesetid_setgid_rules);
-}
+पूर्ण
 
 
 
-static const struct file_operations safesetid_uid_file_fops = {
-	.read = safesetid_uid_file_read,
-	.write = safesetid_uid_file_write,
-};
+अटल स्थिर काष्ठा file_operations safesetid_uid_file_fops = अणु
+	.पढ़ो = safesetid_uid_file_पढ़ो,
+	.ग_लिखो = safesetid_uid_file_ग_लिखो,
+पूर्ण;
 
-static const struct file_operations safesetid_gid_file_fops = {
-	.read = safesetid_gid_file_read,
-	.write = safesetid_gid_file_write,
-};
+अटल स्थिर काष्ठा file_operations safesetid_gid_file_fops = अणु
+	.पढ़ो = safesetid_gid_file_पढ़ो,
+	.ग_लिखो = safesetid_gid_file_ग_लिखो,
+पूर्ण;
 
-static int __init safesetid_init_securityfs(void)
-{
-	int ret;
-	struct dentry *policy_dir;
-	struct dentry *uid_policy_file;
-	struct dentry *gid_policy_file;
+अटल पूर्णांक __init safesetid_init_securityfs(व्योम)
+अणु
+	पूर्णांक ret;
+	काष्ठा dentry *policy_dir;
+	काष्ठा dentry *uid_policy_file;
+	काष्ठा dentry *gid_policy_file;
 
-	if (!safesetid_initialized)
-		return 0;
+	अगर (!safesetid_initialized)
+		वापस 0;
 
-	policy_dir = securityfs_create_dir("safesetid", NULL);
-	if (IS_ERR(policy_dir)) {
+	policy_dir = securityfs_create_dir("safesetid", शून्य);
+	अगर (IS_ERR(policy_dir)) अणु
 		ret = PTR_ERR(policy_dir);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	uid_policy_file = securityfs_create_file("uid_allowlist_policy", 0600,
-			policy_dir, NULL, &safesetid_uid_file_fops);
-	if (IS_ERR(uid_policy_file)) {
+			policy_dir, शून्य, &safesetid_uid_file_fops);
+	अगर (IS_ERR(uid_policy_file)) अणु
 		ret = PTR_ERR(uid_policy_file);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	gid_policy_file = securityfs_create_file("gid_allowlist_policy", 0600,
-			policy_dir, NULL, &safesetid_gid_file_fops);
-	if (IS_ERR(gid_policy_file)) {
+			policy_dir, शून्य, &safesetid_gid_file_fops);
+	अगर (IS_ERR(gid_policy_file)) अणु
 		ret = PTR_ERR(gid_policy_file);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 
-	return 0;
+	वापस 0;
 
 error:
-	securityfs_remove(policy_dir);
-	return ret;
-}
+	securityfs_हटाओ(policy_dir);
+	वापस ret;
+पूर्ण
 fs_initcall(safesetid_init_securityfs);

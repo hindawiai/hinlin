@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
 /*
  * Microsemi MIPS SoC support
  *
  * Copyright (c) 2017 Microsemi Corporation
  */
-#include <asm/machine.h>
-#include <asm/prom.h>
+#समावेश <यंत्र/machine.h>
+#समावेश <यंत्र/prom.h>
 
-#define DEVCPU_GCB_CHIP_REGS_CHIP_ID	0x71070000
-#define CHIP_ID_PART_ID			GENMASK(27, 12)
+#घोषणा DEVCPU_GCB_CHIP_REGS_CHIP_ID	0x71070000
+#घोषणा CHIP_ID_PART_ID			GENMASK(27, 12)
 
-#define OCELOT_PART_ID			(0x7514 << 12)
+#घोषणा OCELOT_PART_ID			(0x7514 << 12)
 
-#define UART_UART			0x70100000
+#घोषणा UART_UART			0x70100000
 
-static __init bool ocelot_detect(void)
-{
+अटल __init bool ocelot_detect(व्योम)
+अणु
 	u32 rev;
-	int idx;
+	पूर्णांक idx;
 
-	/* Look for the TLB entry set up by redboot before trying to use it */
-	write_c0_entryhi(DEVCPU_GCB_CHIP_REGS_CHIP_ID);
+	/* Look क्रम the TLB entry set up by redboot beक्रमe trying to use it */
+	ग_लिखो_c0_entryhi(DEVCPU_GCB_CHIP_REGS_CHIP_ID);
 	mtc0_tlbw_hazard();
 	tlb_probe();
 	tlb_probe_hazard();
-	idx = read_c0_index();
-	if (idx < 0)
-		return 0;
+	idx = पढ़ो_c0_index();
+	अगर (idx < 0)
+		वापस 0;
 
 	/* A TLB entry exists, lets assume its usable and check the CHIP ID */
-	rev = __raw_readl((void __iomem *)DEVCPU_GCB_CHIP_REGS_CHIP_ID);
+	rev = __raw_पढ़ोl((व्योम __iomem *)DEVCPU_GCB_CHIP_REGS_CHIP_ID);
 
-	if ((rev & CHIP_ID_PART_ID) != OCELOT_PART_ID)
-		return 0;
+	अगर ((rev & CHIP_ID_PART_ID) != OCELOT_PART_ID)
+		वापस 0;
 
-	/* Copy command line from bootloader early for Initrd detection */
-	if (fw_arg0 < 10 && (fw_arg1 & 0xFFF00000) == 0x80000000) {
-		unsigned int prom_argc = fw_arg0;
-		const char **prom_argv = (const char **)fw_arg1;
+	/* Copy command line from bootloader early क्रम Initrd detection */
+	अगर (fw_arg0 < 10 && (fw_arg1 & 0xFFF00000) == 0x80000000) अणु
+		अचिन्हित पूर्णांक prom_argc = fw_arg0;
+		स्थिर अक्षर **prom_argv = (स्थिर अक्षर **)fw_arg1;
 
-		if (prom_argc > 1 && strlen(prom_argv[1]) > 0)
-			/* ignore all built-in args if any f/w args given */
-			strcpy(arcs_cmdline, prom_argv[1]);
-	}
+		अगर (prom_argc > 1 && म_माप(prom_argv[1]) > 0)
+			/* ignore all built-in args अगर any f/w args given */
+			म_नकल(arcs_cmdline, prom_argv[1]);
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void __init ocelot_earlyprintk_init(void)
-{
-	void __iomem *uart_base;
+अटल व्योम __init ocelot_earlyprपूर्णांकk_init(व्योम)
+अणु
+	व्योम __iomem *uart_base;
 
 	uart_base = ioremap(UART_UART, 0x20);
-	setup_8250_early_printk_port((unsigned long)uart_base, 2, 50000);
-}
+	setup_8250_early_prपूर्णांकk_port((अचिन्हित दीर्घ)uart_base, 2, 50000);
+पूर्ण
 
-static void __init ocelot_late_init(void)
-{
-	ocelot_earlyprintk_init();
-}
+अटल व्योम __init ocelot_late_init(व्योम)
+अणु
+	ocelot_earlyprपूर्णांकk_init();
+पूर्ण
 
-static __init const void *ocelot_fixup_fdt(const void *fdt,
-					   const void *match_data)
-{
-	/* This has to be done so late because ioremap needs to work */
-	late_time_init = ocelot_late_init;
+अटल __init स्थिर व्योम *ocelot_fixup_fdt(स्थिर व्योम *fdt,
+					   स्थिर व्योम *match_data)
+अणु
+	/* This has to be करोne so late because ioremap needs to work */
+	late_समय_init = ocelot_late_init;
 
-	return fdt;
-}
+	वापस fdt;
+पूर्ण
 
-extern char __dtb_ocelot_pcb123_begin[];
+बाह्य अक्षर __dtb_ocelot_pcb123_begin[];
 
-MIPS_MACHINE(ocelot) = {
+MIPS_MACHINE(ocelot) = अणु
 	.fdt = __dtb_ocelot_pcb123_begin,
 	.fixup_fdt = ocelot_fixup_fdt,
 	.detect = ocelot_detect,
-};
+पूर्ण;

@@ -1,87 +1,88 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __EMUX_VOICE_H
-#define __EMUX_VOICE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __EMUX_VOICE_H
+#घोषणा __EMUX_VOICE_H
 
 /*
- * A structure to keep track of each hardware voice
+ * A काष्ठाure to keep track of each hardware voice
  *
- *  Copyright (C) 1999 Steve Ratcliffe
+ *  Copyright (C) 1999 Steve Ratclअगरfe
  *  Copyright (c) 1999-2000 Takashi Iwai <tiwai@suse.de>
  */
 
-#include <linux/wait.h>
-#include <linux/sched.h>
-#include <sound/core.h>
-#include <sound/emux_synth.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/sched.h>
+#समावेश <sound/core.h>
+#समावेश <sound/emux_synth.h>
 
-/* Prototypes for emux_seq.c */
-int snd_emux_init_seq(struct snd_emux *emu, struct snd_card *card, int index);
-void snd_emux_detach_seq(struct snd_emux *emu);
-struct snd_emux_port *snd_emux_create_port(struct snd_emux *emu, char *name,
-					   int max_channels, int type,
-					   struct snd_seq_port_callback *callback);
-void snd_emux_reset_port(struct snd_emux_port *port);
-int snd_emux_event_input(struct snd_seq_event *ev, int direct, void *private,
-			 int atomic, int hop);
-int snd_emux_inc_count(struct snd_emux *emu);
-void snd_emux_dec_count(struct snd_emux *emu);
-int snd_emux_init_virmidi(struct snd_emux *emu, struct snd_card *card);
-int snd_emux_delete_virmidi(struct snd_emux *emu);
+/* Prototypes क्रम emux_seq.c */
+पूर्णांक snd_emux_init_seq(काष्ठा snd_emux *emu, काष्ठा snd_card *card, पूर्णांक index);
+व्योम snd_emux_detach_seq(काष्ठा snd_emux *emu);
+काष्ठा snd_emux_port *snd_emux_create_port(काष्ठा snd_emux *emu, अक्षर *name,
+					   पूर्णांक max_channels, पूर्णांक type,
+					   काष्ठा snd_seq_port_callback *callback);
+व्योम snd_emux_reset_port(काष्ठा snd_emux_port *port);
+पूर्णांक snd_emux_event_input(काष्ठा snd_seq_event *ev, पूर्णांक direct, व्योम *निजी,
+			 पूर्णांक atomic, पूर्णांक hop);
+पूर्णांक snd_emux_inc_count(काष्ठा snd_emux *emu);
+व्योम snd_emux_dec_count(काष्ठा snd_emux *emu);
+पूर्णांक snd_emux_init_virmidi(काष्ठा snd_emux *emu, काष्ठा snd_card *card);
+पूर्णांक snd_emux_delete_virmidi(काष्ठा snd_emux *emu);
 
-/* Prototypes for emux_synth.c */
-void snd_emux_init_voices(struct snd_emux *emu);
+/* Prototypes क्रम emux_synth.c */
+व्योम snd_emux_init_voices(काष्ठा snd_emux *emu);
 
-void snd_emux_note_on(void *p, int note, int vel, struct snd_midi_channel *chan);
-void snd_emux_note_off(void *p, int note, int vel, struct snd_midi_channel *chan);
-void snd_emux_key_press(void *p, int note, int vel, struct snd_midi_channel *chan);
-void snd_emux_terminate_note(void *p, int note, struct snd_midi_channel *chan);
-void snd_emux_control(void *p, int type, struct snd_midi_channel *chan);
+व्योम snd_emux_note_on(व्योम *p, पूर्णांक note, पूर्णांक vel, काष्ठा snd_midi_channel *chan);
+व्योम snd_emux_note_off(व्योम *p, पूर्णांक note, पूर्णांक vel, काष्ठा snd_midi_channel *chan);
+व्योम snd_emux_key_press(व्योम *p, पूर्णांक note, पूर्णांक vel, काष्ठा snd_midi_channel *chan);
+व्योम snd_emux_terminate_note(व्योम *p, पूर्णांक note, काष्ठा snd_midi_channel *chan);
+व्योम snd_emux_control(व्योम *p, पूर्णांक type, काष्ठा snd_midi_channel *chan);
 
-void snd_emux_sounds_off_all(struct snd_emux_port *port);
-void snd_emux_update_channel(struct snd_emux_port *port,
-			     struct snd_midi_channel *chan, int update);
-void snd_emux_update_port(struct snd_emux_port *port, int update);
+व्योम snd_emux_sounds_off_all(काष्ठा snd_emux_port *port);
+व्योम snd_emux_update_channel(काष्ठा snd_emux_port *port,
+			     काष्ठा snd_midi_channel *chan, पूर्णांक update);
+व्योम snd_emux_update_port(काष्ठा snd_emux_port *port, पूर्णांक update);
 
-void snd_emux_timer_callback(struct timer_list *t);
+व्योम snd_emux_समयr_callback(काष्ठा समयr_list *t);
 
 /* emux_effect.c */
-#ifdef SNDRV_EMUX_USE_RAW_EFFECT
-void snd_emux_create_effect(struct snd_emux_port *p);
-void snd_emux_delete_effect(struct snd_emux_port *p);
-void snd_emux_clear_effect(struct snd_emux_port *p);
-void snd_emux_setup_effect(struct snd_emux_voice *vp);
-void snd_emux_send_effect_oss(struct snd_emux_port *port,
-			      struct snd_midi_channel *chan, int type, int val);
-void snd_emux_send_effect(struct snd_emux_port *port,
-			  struct snd_midi_channel *chan, int type, int val, int mode);
-#endif
+#अगर_घोषित SNDRV_EMUX_USE_RAW_EFFECT
+व्योम snd_emux_create_effect(काष्ठा snd_emux_port *p);
+व्योम snd_emux_delete_effect(काष्ठा snd_emux_port *p);
+व्योम snd_emux_clear_effect(काष्ठा snd_emux_port *p);
+व्योम snd_emux_setup_effect(काष्ठा snd_emux_voice *vp);
+व्योम snd_emux_send_effect_oss(काष्ठा snd_emux_port *port,
+			      काष्ठा snd_midi_channel *chan, पूर्णांक type, पूर्णांक val);
+व्योम snd_emux_send_effect(काष्ठा snd_emux_port *port,
+			  काष्ठा snd_midi_channel *chan, पूर्णांक type, पूर्णांक val, पूर्णांक mode);
+#पूर्ण_अगर
 
 /* emux_nrpn.c */
-void snd_emux_sysex(void *private_data, unsigned char *buf, int len,
-		    int parsed, struct snd_midi_channel_set *chset);
-int snd_emux_xg_control(struct snd_emux_port *port,
-			struct snd_midi_channel *chan, int param);
-void snd_emux_nrpn(void *private_data, struct snd_midi_channel *chan,
-		   struct snd_midi_channel_set *chset);
+व्योम snd_emux_sysex(व्योम *निजी_data, अचिन्हित अक्षर *buf, पूर्णांक len,
+		    पूर्णांक parsed, काष्ठा snd_midi_channel_set *chset);
+पूर्णांक snd_emux_xg_control(काष्ठा snd_emux_port *port,
+			काष्ठा snd_midi_channel *chan, पूर्णांक param);
+व्योम snd_emux_nrpn(व्योम *निजी_data, काष्ठा snd_midi_channel *chan,
+		   काष्ठा snd_midi_channel_set *chset);
 
 /* emux_oss.c */
-void snd_emux_init_seq_oss(struct snd_emux *emu);
-void snd_emux_detach_seq_oss(struct snd_emux *emu);
+व्योम snd_emux_init_seq_oss(काष्ठा snd_emux *emu);
+व्योम snd_emux_detach_seq_oss(काष्ठा snd_emux *emu);
 
 /* emux_proc.c */
-#ifdef CONFIG_SND_PROC_FS
-void snd_emux_proc_init(struct snd_emux *emu, struct snd_card *card, int device);
-void snd_emux_proc_free(struct snd_emux *emu);
-#else
-static inline void snd_emux_proc_init(struct snd_emux *emu,
-				      struct snd_card *card, int device) {}
-static inline void snd_emux_proc_free(struct snd_emux *emu) {}
-#endif
+#अगर_घोषित CONFIG_SND_PROC_FS
+व्योम snd_emux_proc_init(काष्ठा snd_emux *emu, काष्ठा snd_card *card, पूर्णांक device);
+व्योम snd_emux_proc_मुक्त(काष्ठा snd_emux *emu);
+#अन्यथा
+अटल अंतरभूत व्योम snd_emux_proc_init(काष्ठा snd_emux *emu,
+				      काष्ठा snd_card *card, पूर्णांक device) अणुपूर्ण
+अटल अंतरभूत व्योम snd_emux_proc_मुक्त(काष्ठा snd_emux *emu) अणुपूर्ण
+#पूर्ण_अगर
 
-#define STATE_IS_PLAYING(s) ((s) & SNDRV_EMUX_ST_ON)
+#घोषणा STATE_IS_PLAYING(s) ((s) & SNDRV_EMUX_ST_ON)
 
 /* emux_hwdep.c */
-int snd_emux_init_hwdep(struct snd_emux *emu);
-void snd_emux_delete_hwdep(struct snd_emux *emu);
+पूर्णांक snd_emux_init_hwdep(काष्ठा snd_emux *emu);
+व्योम snd_emux_delete_hwdep(काष्ठा snd_emux *emu);
 
-#endif
+#पूर्ण_अगर

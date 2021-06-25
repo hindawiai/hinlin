@@ -1,40 +1,41 @@
+<शैली गुरु>
 /*
- * include/asm-xtensa/cache.h
+ * include/यंत्र-xtensa/cache.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * (C) 2001 - 2005 Tensilica Inc.
  */
 
-#ifndef _XTENSA_CACHE_H
-#define _XTENSA_CACHE_H
+#अगर_अघोषित _XTENSA_CACHE_H
+#घोषणा _XTENSA_CACHE_H
 
-#include <asm/core.h>
+#समावेश <यंत्र/core.h>
 
-#define L1_CACHE_SHIFT	XCHAL_DCACHE_LINEWIDTH
-#define L1_CACHE_BYTES	XCHAL_DCACHE_LINESIZE
-#define SMP_CACHE_BYTES	L1_CACHE_BYTES
+#घोषणा L1_CACHE_SHIFT	XCHAL_DCACHE_LINEWIDTH
+#घोषणा L1_CACHE_BYTES	XCHAL_DCACHE_LINESIZE
+#घोषणा SMP_CACHE_BYTES	L1_CACHE_BYTES
 
-#define DCACHE_WAY_SIZE	(XCHAL_DCACHE_SIZE/XCHAL_DCACHE_WAYS)
-#define ICACHE_WAY_SIZE	(XCHAL_ICACHE_SIZE/XCHAL_ICACHE_WAYS)
-#define DCACHE_WAY_SHIFT (XCHAL_DCACHE_SETWIDTH + XCHAL_DCACHE_LINEWIDTH)
-#define ICACHE_WAY_SHIFT (XCHAL_ICACHE_SETWIDTH + XCHAL_ICACHE_LINEWIDTH)
+#घोषणा DCACHE_WAY_SIZE	(XCHAL_DCACHE_SIZE/XCHAL_DCACHE_WAYS)
+#घोषणा ICACHE_WAY_SIZE	(XCHAL_ICACHE_SIZE/XCHAL_ICACHE_WAYS)
+#घोषणा DCACHE_WAY_SHIFT (XCHAL_DCACHE_SETWIDTH + XCHAL_DCACHE_LINEWIDTH)
+#घोषणा ICACHE_WAY_SHIFT (XCHAL_ICACHE_SETWIDTH + XCHAL_ICACHE_LINEWIDTH)
 
 /* Maximum cache size per way. */
-#if DCACHE_WAY_SIZE >= ICACHE_WAY_SIZE
+#अगर DCACHE_WAY_SIZE >= ICACHE_WAY_SIZE
 # define CACHE_WAY_SIZE DCACHE_WAY_SIZE
-#else
+#अन्यथा
 # define CACHE_WAY_SIZE ICACHE_WAY_SIZE
-#endif
+#पूर्ण_अगर
 
-#define ARCH_DMA_MINALIGN	L1_CACHE_BYTES
+#घोषणा ARCH_DMA_MINALIGN	L1_CACHE_BYTES
 
 /*
  * R/O after init is actually writable, it cannot go to .rodata
  * according to vmlinux linker script.
  */
-#define __ro_after_init __read_mostly
+#घोषणा __ro_after_init __पढ़ो_mostly
 
-#endif	/* _XTENSA_CACHE_H */
+#पूर्ण_अगर	/* _XTENSA_CACHE_H */

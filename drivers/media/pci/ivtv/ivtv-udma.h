@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
     Copyright (C) 2003-2004  Kevin Thayer <nufan_wfk at yahoo.com>
     Copyright (C) 2004  Chris Kennedy <c@groovy.org>
@@ -6,31 +7,31 @@
 
  */
 
-#ifndef IVTV_UDMA_H
-#define IVTV_UDMA_H
+#अगर_अघोषित IVTV_UDMA_H
+#घोषणा IVTV_UDMA_H
 
 /* User DMA functions */
-void ivtv_udma_get_page_info(struct ivtv_dma_page_info *dma_page, unsigned long first, unsigned long size);
-int ivtv_udma_fill_sg_list(struct ivtv_user_dma *dma, struct ivtv_dma_page_info *dma_page, int map_offset);
-void ivtv_udma_fill_sg_array(struct ivtv_user_dma *dma, u32 buffer_offset, u32 buffer_offset_2, u32 split);
-int ivtv_udma_setup(struct ivtv *itv, unsigned long ivtv_dest_addr,
-		       void __user *userbuf, int size_in_bytes);
-void ivtv_udma_unmap(struct ivtv *itv);
-void ivtv_udma_free(struct ivtv *itv);
-void ivtv_udma_alloc(struct ivtv *itv);
-void ivtv_udma_prepare(struct ivtv *itv);
-void ivtv_udma_start(struct ivtv *itv);
+व्योम ivtv_udma_get_page_info(काष्ठा ivtv_dma_page_info *dma_page, अचिन्हित दीर्घ first, अचिन्हित दीर्घ size);
+पूर्णांक ivtv_udma_fill_sg_list(काष्ठा ivtv_user_dma *dma, काष्ठा ivtv_dma_page_info *dma_page, पूर्णांक map_offset);
+व्योम ivtv_udma_fill_sg_array(काष्ठा ivtv_user_dma *dma, u32 buffer_offset, u32 buffer_offset_2, u32 split);
+पूर्णांक ivtv_udma_setup(काष्ठा ivtv *itv, अचिन्हित दीर्घ ivtv_dest_addr,
+		       व्योम __user *userbuf, पूर्णांक size_in_bytes);
+व्योम ivtv_udma_unmap(काष्ठा ivtv *itv);
+व्योम ivtv_udma_मुक्त(काष्ठा ivtv *itv);
+व्योम ivtv_udma_alloc(काष्ठा ivtv *itv);
+व्योम ivtv_udma_prepare(काष्ठा ivtv *itv);
+व्योम ivtv_udma_start(काष्ठा ivtv *itv);
 
-static inline void ivtv_udma_sync_for_device(struct ivtv *itv)
-{
-	pci_dma_sync_single_for_device(itv->pdev, itv->udma.SG_handle,
-		sizeof(itv->udma.SGarray), PCI_DMA_TODEVICE);
-}
+अटल अंतरभूत व्योम ivtv_udma_sync_क्रम_device(काष्ठा ivtv *itv)
+अणु
+	pci_dma_sync_single_क्रम_device(itv->pdev, itv->udma.SG_handle,
+		माप(itv->udma.SGarray), PCI_DMA_TODEVICE);
+पूर्ण
 
-static inline void ivtv_udma_sync_for_cpu(struct ivtv *itv)
-{
-	pci_dma_sync_single_for_cpu(itv->pdev, itv->udma.SG_handle,
-		sizeof(itv->udma.SGarray), PCI_DMA_TODEVICE);
-}
+अटल अंतरभूत व्योम ivtv_udma_sync_क्रम_cpu(काष्ठा ivtv *itv)
+अणु
+	pci_dma_sync_single_क्रम_cpu(itv->pdev, itv->udma.SG_handle,
+		माप(itv->udma.SGarray), PCI_DMA_TODEVICE);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

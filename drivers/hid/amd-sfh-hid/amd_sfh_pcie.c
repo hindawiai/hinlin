@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * AMD MP2 PCIe communication driver
  * Copyright 2020 Advanced Micro Devices, Inc.
@@ -7,177 +8,177 @@
  *	    Sandeep Singh <Sandeep.singh@amd.com>
  */
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmi.h>
-#include <linux/interrupt.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include "amd_sfh_pcie.h"
+#समावेश "amd_sfh_pcie.h"
 
-#define DRIVER_NAME	"pcie_mp2_amd"
-#define DRIVER_DESC	"AMD(R) PCIe MP2 Communication Driver"
+#घोषणा DRIVER_NAME	"pcie_mp2_amd"
+#घोषणा DRIVER_DESC	"AMD(R) PCIe MP2 Communication Driver"
 
-#define ACEL_EN		BIT(0)
-#define GYRO_EN		BIT(1)
-#define MAGNO_EN	BIT(2)
-#define ALS_EN		BIT(19)
+#घोषणा ACEL_EN		BIT(0)
+#घोषणा GYRO_EN		BIT(1)
+#घोषणा MAGNO_EN	BIT(2)
+#घोषणा ALS_EN		BIT(19)
 
-static int sensor_mask_override = -1;
-module_param_named(sensor_mask, sensor_mask_override, int, 0444);
+अटल पूर्णांक sensor_mask_override = -1;
+module_param_named(sensor_mask, sensor_mask_override, पूर्णांक, 0444);
 MODULE_PARM_DESC(sensor_mask, "override the detected sensors mask");
 
-void amd_start_sensor(struct amd_mp2_dev *privdata, struct amd_mp2_sensor_info info)
-{
-	union sfh_cmd_param cmd_param;
-	union sfh_cmd_base cmd_base;
+व्योम amd_start_sensor(काष्ठा amd_mp2_dev *privdata, काष्ठा amd_mp2_sensor_info info)
+अणु
+	जोड़ sfh_cmd_param cmd_param;
+	जोड़ sfh_cmd_base cmd_base;
 
-	/* fill up command register */
-	memset(&cmd_base, 0, sizeof(cmd_base));
+	/* fill up command रेजिस्टर */
+	स_रखो(&cmd_base, 0, माप(cmd_base));
 	cmd_base.s.cmd_id = ENABLE_SENSOR;
 	cmd_base.s.period = info.period;
 	cmd_base.s.sensor_id = info.sensor_idx;
 
-	/* fill up command param register */
-	memset(&cmd_param, 0, sizeof(cmd_param));
+	/* fill up command param रेजिस्टर */
+	स_रखो(&cmd_param, 0, माप(cmd_param));
 	cmd_param.s.buf_layout = 1;
 	cmd_param.s.buf_length = 16;
 
-	writeq(info.dma_address, privdata->mmio + AMD_C2P_MSG2);
-	writel(cmd_param.ul, privdata->mmio + AMD_C2P_MSG1);
-	writel(cmd_base.ul, privdata->mmio + AMD_C2P_MSG0);
-}
+	ग_लिखोq(info.dma_address, privdata->mmio + AMD_C2P_MSG2);
+	ग_लिखोl(cmd_param.ul, privdata->mmio + AMD_C2P_MSG1);
+	ग_लिखोl(cmd_base.ul, privdata->mmio + AMD_C2P_MSG0);
+पूर्ण
 
-void amd_stop_sensor(struct amd_mp2_dev *privdata, u16 sensor_idx)
-{
-	union sfh_cmd_base cmd_base;
+व्योम amd_stop_sensor(काष्ठा amd_mp2_dev *privdata, u16 sensor_idx)
+अणु
+	जोड़ sfh_cmd_base cmd_base;
 
-	/* fill up command register */
-	memset(&cmd_base, 0, sizeof(cmd_base));
+	/* fill up command रेजिस्टर */
+	स_रखो(&cmd_base, 0, माप(cmd_base));
 	cmd_base.s.cmd_id = DISABLE_SENSOR;
 	cmd_base.s.period = 0;
 	cmd_base.s.sensor_id = sensor_idx;
 
-	writeq(0x0, privdata->mmio + AMD_C2P_MSG2);
-	writel(cmd_base.ul, privdata->mmio + AMD_C2P_MSG0);
-}
+	ग_लिखोq(0x0, privdata->mmio + AMD_C2P_MSG2);
+	ग_लिखोl(cmd_base.ul, privdata->mmio + AMD_C2P_MSG0);
+पूर्ण
 
-void amd_stop_all_sensors(struct amd_mp2_dev *privdata)
-{
-	union sfh_cmd_base cmd_base;
+व्योम amd_stop_all_sensors(काष्ठा amd_mp2_dev *privdata)
+अणु
+	जोड़ sfh_cmd_base cmd_base;
 
-	/* fill up command register */
-	memset(&cmd_base, 0, sizeof(cmd_base));
+	/* fill up command रेजिस्टर */
+	स_रखो(&cmd_base, 0, माप(cmd_base));
 	cmd_base.s.cmd_id = STOP_ALL_SENSORS;
 	cmd_base.s.period = 0;
 	cmd_base.s.sensor_id = 0;
 
-	writel(cmd_base.ul, privdata->mmio + AMD_C2P_MSG0);
-}
+	ग_लिखोl(cmd_base.ul, privdata->mmio + AMD_C2P_MSG0);
+पूर्ण
 
-static const struct dmi_system_id dmi_sensor_mask_overrides[] = {
-	{
-		.matches = {
+अटल स्थिर काष्ठा dmi_प्रणाली_id dmi_sensor_mask_overrides[] = अणु
+	अणु
+		.matches = अणु
 			DMI_MATCH(DMI_PRODUCT_NAME, "HP ENVY x360 Convertible 13-ag0xxx"),
-		},
-		.driver_data = (void *)(ACEL_EN | MAGNO_EN),
-	},
-	{
-		.matches = {
+		पूर्ण,
+		.driver_data = (व्योम *)(ACEL_EN | MAGNO_EN),
+	पूर्ण,
+	अणु
+		.matches = अणु
 			DMI_MATCH(DMI_PRODUCT_NAME, "HP ENVY x360 Convertible 15-cp0xxx"),
-		},
-		.driver_data = (void *)(ACEL_EN | MAGNO_EN),
-	},
-	{ }
-};
+		पूर्ण,
+		.driver_data = (व्योम *)(ACEL_EN | MAGNO_EN),
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-int amd_mp2_get_sensor_num(struct amd_mp2_dev *privdata, u8 *sensor_id)
-{
-	int activestatus, num_of_sensors = 0;
-	const struct dmi_system_id *dmi_id;
+पूर्णांक amd_mp2_get_sensor_num(काष्ठा amd_mp2_dev *privdata, u8 *sensor_id)
+अणु
+	पूर्णांक activestatus, num_of_sensors = 0;
+	स्थिर काष्ठा dmi_प्रणाली_id *dmi_id;
 	u32 activecontrolstatus;
 
-	if (sensor_mask_override == -1) {
+	अगर (sensor_mask_override == -1) अणु
 		dmi_id = dmi_first_match(dmi_sensor_mask_overrides);
-		if (dmi_id)
-			sensor_mask_override = (long)dmi_id->driver_data;
-	}
+		अगर (dmi_id)
+			sensor_mask_override = (दीर्घ)dmi_id->driver_data;
+	पूर्ण
 
-	if (sensor_mask_override >= 0) {
+	अगर (sensor_mask_override >= 0) अणु
 		activestatus = sensor_mask_override;
-	} else {
-		activecontrolstatus = readl(privdata->mmio + AMD_P2C_MSG3);
+	पूर्ण अन्यथा अणु
+		activecontrolstatus = पढ़ोl(privdata->mmio + AMD_P2C_MSG3);
 		activestatus = activecontrolstatus >> 4;
-	}
+	पूर्ण
 
-	if (ACEL_EN  & activestatus)
+	अगर (ACEL_EN  & activestatus)
 		sensor_id[num_of_sensors++] = accel_idx;
 
-	if (GYRO_EN & activestatus)
+	अगर (GYRO_EN & activestatus)
 		sensor_id[num_of_sensors++] = gyro_idx;
 
-	if (MAGNO_EN & activestatus)
+	अगर (MAGNO_EN & activestatus)
 		sensor_id[num_of_sensors++] = mag_idx;
 
-	if (ALS_EN & activestatus)
+	अगर (ALS_EN & activestatus)
 		sensor_id[num_of_sensors++] = als_idx;
 
-	return num_of_sensors;
-}
+	वापस num_of_sensors;
+पूर्ण
 
-static void amd_mp2_pci_remove(void *privdata)
-{
+अटल व्योम amd_mp2_pci_हटाओ(व्योम *privdata)
+अणु
 	amd_sfh_hid_client_deinit(privdata);
 	amd_stop_all_sensors(privdata);
-}
+पूर्ण
 
-static int amd_mp2_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	struct amd_mp2_dev *privdata;
-	int rc;
+अटल पूर्णांक amd_mp2_pci_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा amd_mp2_dev *privdata;
+	पूर्णांक rc;
 
-	privdata = devm_kzalloc(&pdev->dev, sizeof(*privdata), GFP_KERNEL);
-	if (!privdata)
-		return -ENOMEM;
+	privdata = devm_kzalloc(&pdev->dev, माप(*privdata), GFP_KERNEL);
+	अगर (!privdata)
+		वापस -ENOMEM;
 
 	privdata->pdev = pdev;
 	pci_set_drvdata(pdev, privdata);
 	rc = pcim_enable_device(pdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = pcim_iomap_regions(pdev, BIT(2), DRIVER_NAME);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	privdata->mmio = pcim_iomap_table(pdev)[2];
 	pci_set_master(pdev);
 	rc = pci_set_dma_mask(pdev, DMA_BIT_MASK(64));
-	if (rc) {
+	अगर (rc) अणु
 		rc = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-		return rc;
-	}
-	rc = devm_add_action_or_reset(&pdev->dev, amd_mp2_pci_remove, privdata);
-	if (rc)
-		return rc;
+		वापस rc;
+	पूर्ण
+	rc = devm_add_action_or_reset(&pdev->dev, amd_mp2_pci_हटाओ, privdata);
+	अगर (rc)
+		वापस rc;
 
-	return amd_sfh_hid_client_init(privdata);
-}
+	वापस amd_sfh_hid_client_init(privdata);
+पूर्ण
 
-static const struct pci_device_id amd_mp2_pci_tbl[] = {
-	{ PCI_VDEVICE(AMD, PCI_DEVICE_ID_AMD_MP2) },
-	{ }
-};
+अटल स्थिर काष्ठा pci_device_id amd_mp2_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(AMD, PCI_DEVICE_ID_AMD_MP2) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, amd_mp2_pci_tbl);
 
-static struct pci_driver amd_mp2_pci_driver = {
+अटल काष्ठा pci_driver amd_mp2_pci_driver = अणु
 	.name		= DRIVER_NAME,
 	.id_table	= amd_mp2_pci_tbl,
 	.probe		= amd_mp2_pci_probe,
-};
+पूर्ण;
 module_pci_driver(amd_mp2_pci_driver);
 
 MODULE_DESCRIPTION(DRIVER_DESC);

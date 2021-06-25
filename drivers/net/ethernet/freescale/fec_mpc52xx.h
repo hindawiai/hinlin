@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
- * drivers/net/ethernet/freescale/fec_mpc52xx.h
+ * drivers/net/ethernet/मुक्तscale/fec_mpc52xx.h
  *
- * Driver for the MPC5200 Fast Ethernet Controller
+ * Driver क्रम the MPC5200 Fast Ethernet Controller
  *
  * Author: Dale Farnsworth <dfarnsworth@mvista.com>
  *
@@ -11,26 +12,26 @@
  * or implied.
  */
 
-#ifndef __DRIVERS_NET_MPC52XX_FEC_H__
-#define __DRIVERS_NET_MPC52XX_FEC_H__
+#अगर_अघोषित __DRIVERS_NET_MPC52XX_FEC_H__
+#घोषणा __DRIVERS_NET_MPC52XX_FEC_H__
 
-#include <linux/phy.h>
+#समावेश <linux/phy.h>
 
-/* Tunable constant */
-/* FEC_RX_BUFFER_SIZE includes 4 bytes for CRC32 */
-#define FEC_RX_BUFFER_SIZE	1522	/* max receive packet size */
-#define FEC_RX_NUM_BD		256
-#define FEC_TX_NUM_BD		64
+/* Tunable स्थिरant */
+/* FEC_RX_BUFFER_SIZE includes 4 bytes क्रम CRC32 */
+#घोषणा FEC_RX_BUFFER_SIZE	1522	/* max receive packet size */
+#घोषणा FEC_RX_NUM_BD		256
+#घोषणा FEC_TX_NUM_BD		64
 
-#define FEC_RESET_DELAY		50 	/* uS */
+#घोषणा FEC_RESET_DELAY		50 	/* uS */
 
-#define FEC_WATCHDOG_TIMEOUT	((400*HZ)/1000)
+#घोषणा FEC_WATCHDOG_TIMEOUT	((400*HZ)/1000)
 
 /* ======================================================================== */
-/* Hardware register sets & bits                                            */
+/* Hardware रेजिस्टर sets & bits                                            */
 /* ======================================================================== */
 
-struct mpc52xx_fec {
+काष्ठा mpc52xx_fec अणु
 	u32 fec_id;			/* FEC + 0x000 */
 	u32 ievent;			/* FEC + 0x004 */
 	u32 imask;			/* FEC + 0x008 */
@@ -57,7 +58,7 @@ struct mpc52xx_fec {
 	u32 r_cntrl;			/* FEC + 0x084 */
 	u32 r_hash;			/* FEC + 0x088 */
 	u32 r_data;			/* FEC + 0x08C */
-	u32 ar_done;			/* FEC + 0x090 */
+	u32 ar_करोne;			/* FEC + 0x090 */
 	u32 r_test;			/* FEC + 0x094 */
 	u32 r_mib;			/* FEC + 0x098 */
 	u32 r_da_low;			/* FEC + 0x09C */
@@ -75,7 +76,7 @@ struct mpc52xx_fec {
 	u32 fdxfc_da2;			/* FEC + 0x0E0 */
 	u32 paddr1;			/* FEC + 0x0E4 */
 	u32 paddr2;			/* FEC + 0x0E8 */
-	u32 op_pause;			/* FEC + 0x0EC */
+	u32 op_छोड़ो;			/* FEC + 0x0EC */
 
 	u32 reserved5[4];		/* FEC + 0x0F0-0FC */
 	u32 instr_reg;			/* FEC + 0x100 */
@@ -88,44 +89,44 @@ struct mpc52xx_fec {
 	u32 iaddr2;			/* FEC + 0x11C */
 	u32 gaddr1;			/* FEC + 0x120 */
 	u32 gaddr2;			/* FEC + 0x124 */
-	u32 random;			/* FEC + 0x128 */
-	u32 rand1;			/* FEC + 0x12C */
-	u32 tmp;			/* FEC + 0x130 */
+	u32 अक्रमom;			/* FEC + 0x128 */
+	u32 अक्रम1;			/* FEC + 0x12C */
+	u32 पंचांगp;			/* FEC + 0x130 */
 
 	u32 reserved6[3];		/* FEC + 0x134-13C */
-	u32 fifo_id;			/* FEC + 0x140 */
+	u32 fअगरo_id;			/* FEC + 0x140 */
 	u32 x_wmrk;			/* FEC + 0x144 */
 	u32 fcntrl;			/* FEC + 0x148 */
 	u32 r_bound;			/* FEC + 0x14C */
 	u32 r_fstart;			/* FEC + 0x150 */
 	u32 r_count;			/* FEC + 0x154 */
 	u32 r_lag;			/* FEC + 0x158 */
-	u32 r_read;			/* FEC + 0x15C */
-	u32 r_write;			/* FEC + 0x160 */
+	u32 r_पढ़ो;			/* FEC + 0x15C */
+	u32 r_ग_लिखो;			/* FEC + 0x160 */
 	u32 x_count;			/* FEC + 0x164 */
 	u32 x_lag;			/* FEC + 0x168 */
 	u32 x_retry;			/* FEC + 0x16C */
-	u32 x_write;			/* FEC + 0x170 */
-	u32 x_read;			/* FEC + 0x174 */
+	u32 x_ग_लिखो;			/* FEC + 0x170 */
+	u32 x_पढ़ो;			/* FEC + 0x174 */
 
 	u32 reserved7[2];		/* FEC + 0x178-17C */
 	u32 fm_cntrl;			/* FEC + 0x180 */
-	u32 rfifo_data;			/* FEC + 0x184 */
-	u32 rfifo_status;		/* FEC + 0x188 */
-	u32 rfifo_cntrl;		/* FEC + 0x18C */
-	u32 rfifo_lrf_ptr;		/* FEC + 0x190 */
-	u32 rfifo_lwf_ptr;		/* FEC + 0x194 */
-	u32 rfifo_alarm;		/* FEC + 0x198 */
-	u32 rfifo_rdptr;		/* FEC + 0x19C */
-	u32 rfifo_wrptr;		/* FEC + 0x1A0 */
-	u32 tfifo_data;			/* FEC + 0x1A4 */
-	u32 tfifo_status;		/* FEC + 0x1A8 */
-	u32 tfifo_cntrl;		/* FEC + 0x1AC */
-	u32 tfifo_lrf_ptr;		/* FEC + 0x1B0 */
-	u32 tfifo_lwf_ptr;		/* FEC + 0x1B4 */
-	u32 tfifo_alarm;		/* FEC + 0x1B8 */
-	u32 tfifo_rdptr;		/* FEC + 0x1BC */
-	u32 tfifo_wrptr;		/* FEC + 0x1C0 */
+	u32 rfअगरo_data;			/* FEC + 0x184 */
+	u32 rfअगरo_status;		/* FEC + 0x188 */
+	u32 rfअगरo_cntrl;		/* FEC + 0x18C */
+	u32 rfअगरo_lrf_ptr;		/* FEC + 0x190 */
+	u32 rfअगरo_lwf_ptr;		/* FEC + 0x194 */
+	u32 rfअगरo_alarm;		/* FEC + 0x198 */
+	u32 rfअगरo_rdptr;		/* FEC + 0x19C */
+	u32 rfअगरo_wrptr;		/* FEC + 0x1A0 */
+	u32 tfअगरo_data;			/* FEC + 0x1A4 */
+	u32 tfअगरo_status;		/* FEC + 0x1A8 */
+	u32 tfअगरo_cntrl;		/* FEC + 0x1AC */
+	u32 tfअगरo_lrf_ptr;		/* FEC + 0x1B0 */
+	u32 tfअगरo_lwf_ptr;		/* FEC + 0x1B4 */
+	u32 tfअगरo_alarm;		/* FEC + 0x1B8 */
+	u32 tfअगरo_rdptr;		/* FEC + 0x1BC */
+	u32 tfअगरo_wrptr;		/* FEC + 0x1C0 */
 
 	u32 reset_cntrl;		/* FEC + 0x1C4 */
 	u32 xmit_fsm;			/* FEC + 0x1C8 */
@@ -205,90 +206,90 @@ struct mpc52xx_fec {
 	u32 reserved10[7];		/* FEC + 0x2E4-2FC */
 
 	u32 reserved11[64];		/* FEC + 0x300-3FF */
-};
+पूर्ण;
 
-#define	FEC_MIB_DISABLE			0x80000000
+#घोषणा	FEC_MIB_DISABLE			0x80000000
 
-#define	FEC_IEVENT_HBERR		0x80000000
-#define	FEC_IEVENT_BABR			0x40000000
-#define	FEC_IEVENT_BABT			0x20000000
-#define	FEC_IEVENT_GRA			0x10000000
-#define	FEC_IEVENT_TFINT		0x08000000
-#define	FEC_IEVENT_MII			0x00800000
-#define	FEC_IEVENT_LATE_COL		0x00200000
-#define	FEC_IEVENT_COL_RETRY_LIM	0x00100000
-#define	FEC_IEVENT_XFIFO_UN		0x00080000
-#define	FEC_IEVENT_XFIFO_ERROR		0x00040000
-#define	FEC_IEVENT_RFIFO_ERROR		0x00020000
+#घोषणा	FEC_IEVENT_HBERR		0x80000000
+#घोषणा	FEC_IEVENT_BABR			0x40000000
+#घोषणा	FEC_IEVENT_BABT			0x20000000
+#घोषणा	FEC_IEVENT_GRA			0x10000000
+#घोषणा	FEC_IEVENT_TFINT		0x08000000
+#घोषणा	FEC_IEVENT_MII			0x00800000
+#घोषणा	FEC_IEVENT_LATE_COL		0x00200000
+#घोषणा	FEC_IEVENT_COL_RETRY_LIM	0x00100000
+#घोषणा	FEC_IEVENT_XFIFO_UN		0x00080000
+#घोषणा	FEC_IEVENT_XFIFO_ERROR		0x00040000
+#घोषणा	FEC_IEVENT_RFIFO_ERROR		0x00020000
 
-#define	FEC_IMASK_HBERR			0x80000000
-#define	FEC_IMASK_BABR			0x40000000
-#define	FEC_IMASK_BABT			0x20000000
-#define	FEC_IMASK_GRA			0x10000000
-#define	FEC_IMASK_MII			0x00800000
-#define	FEC_IMASK_LATE_COL		0x00200000
-#define	FEC_IMASK_COL_RETRY_LIM		0x00100000
-#define	FEC_IMASK_XFIFO_UN		0x00080000
-#define	FEC_IMASK_XFIFO_ERROR		0x00040000
-#define	FEC_IMASK_RFIFO_ERROR		0x00020000
+#घोषणा	FEC_IMASK_HBERR			0x80000000
+#घोषणा	FEC_IMASK_BABR			0x40000000
+#घोषणा	FEC_IMASK_BABT			0x20000000
+#घोषणा	FEC_IMASK_GRA			0x10000000
+#घोषणा	FEC_IMASK_MII			0x00800000
+#घोषणा	FEC_IMASK_LATE_COL		0x00200000
+#घोषणा	FEC_IMASK_COL_RETRY_LIM		0x00100000
+#घोषणा	FEC_IMASK_XFIFO_UN		0x00080000
+#घोषणा	FEC_IMASK_XFIFO_ERROR		0x00040000
+#घोषणा	FEC_IMASK_RFIFO_ERROR		0x00020000
 
 /* all but MII, which is enabled separately */
-#define FEC_IMASK_ENABLE	(FEC_IMASK_HBERR | FEC_IMASK_BABR | \
+#घोषणा FEC_IMASK_ENABLE	(FEC_IMASK_HBERR | FEC_IMASK_BABR | \
 		FEC_IMASK_BABT | FEC_IMASK_GRA | FEC_IMASK_LATE_COL | \
 		FEC_IMASK_COL_RETRY_LIM | FEC_IMASK_XFIFO_UN | \
 		FEC_IMASK_XFIFO_ERROR | FEC_IMASK_RFIFO_ERROR)
 
-#define	FEC_RCNTRL_MAX_FL_SHIFT		16
-#define	FEC_RCNTRL_LOOP			0x01
-#define	FEC_RCNTRL_DRT			0x02
-#define	FEC_RCNTRL_MII_MODE		0x04
-#define	FEC_RCNTRL_PROM			0x08
-#define	FEC_RCNTRL_BC_REJ		0x10
-#define	FEC_RCNTRL_FCE			0x20
+#घोषणा	FEC_RCNTRL_MAX_FL_SHIFT		16
+#घोषणा	FEC_RCNTRL_LOOP			0x01
+#घोषणा	FEC_RCNTRL_DRT			0x02
+#घोषणा	FEC_RCNTRL_MII_MODE		0x04
+#घोषणा	FEC_RCNTRL_PROM			0x08
+#घोषणा	FEC_RCNTRL_BC_REJ		0x10
+#घोषणा	FEC_RCNTRL_FCE			0x20
 
-#define	FEC_TCNTRL_GTS			0x00000001
-#define	FEC_TCNTRL_HBC			0x00000002
-#define	FEC_TCNTRL_FDEN			0x00000004
-#define	FEC_TCNTRL_TFC_PAUSE		0x00000008
-#define	FEC_TCNTRL_RFC_PAUSE		0x00000010
+#घोषणा	FEC_TCNTRL_GTS			0x00000001
+#घोषणा	FEC_TCNTRL_HBC			0x00000002
+#घोषणा	FEC_TCNTRL_FDEN			0x00000004
+#घोषणा	FEC_TCNTRL_TFC_PAUSE		0x00000008
+#घोषणा	FEC_TCNTRL_RFC_PAUSE		0x00000010
 
-#define	FEC_ECNTRL_RESET		0x00000001
-#define	FEC_ECNTRL_ETHER_EN		0x00000002
+#घोषणा	FEC_ECNTRL_RESET		0x00000001
+#घोषणा	FEC_ECNTRL_ETHER_EN		0x00000002
 
-#define FEC_MII_DATA_ST			0x40000000	/* Start frame */
-#define FEC_MII_DATA_OP_RD		0x20000000	/* Perform read */
-#define FEC_MII_DATA_OP_WR		0x10000000	/* Perform write */
-#define FEC_MII_DATA_PA_MSK		0x0f800000	/* PHY Address mask */
-#define FEC_MII_DATA_RA_MSK		0x007c0000	/* PHY Register mask */
-#define FEC_MII_DATA_TA			0x00020000	/* Turnaround */
-#define FEC_MII_DATA_DATAMSK		0x0000ffff	/* PHY data mask */
+#घोषणा FEC_MII_DATA_ST			0x40000000	/* Start frame */
+#घोषणा FEC_MII_DATA_OP_RD		0x20000000	/* Perक्रमm पढ़ो */
+#घोषणा FEC_MII_DATA_OP_WR		0x10000000	/* Perक्रमm ग_लिखो */
+#घोषणा FEC_MII_DATA_PA_MSK		0x0f800000	/* PHY Address mask */
+#घोषणा FEC_MII_DATA_RA_MSK		0x007c0000	/* PHY Register mask */
+#घोषणा FEC_MII_DATA_TA			0x00020000	/* Turnaround */
+#घोषणा FEC_MII_DATA_DATAMSK		0x0000ffff	/* PHY data mask */
 
-#define FEC_MII_READ_FRAME	(FEC_MII_DATA_ST | FEC_MII_DATA_OP_RD | FEC_MII_DATA_TA)
-#define FEC_MII_WRITE_FRAME	(FEC_MII_DATA_ST | FEC_MII_DATA_OP_WR | FEC_MII_DATA_TA)
+#घोषणा FEC_MII_READ_FRAME	(FEC_MII_DATA_ST | FEC_MII_DATA_OP_RD | FEC_MII_DATA_TA)
+#घोषणा FEC_MII_WRITE_FRAME	(FEC_MII_DATA_ST | FEC_MII_DATA_OP_WR | FEC_MII_DATA_TA)
 
-#define FEC_MII_DATA_RA_SHIFT		0x12		/* MII reg addr bits */
-#define FEC_MII_DATA_PA_SHIFT		0x17		/* MII PHY addr bits */
+#घोषणा FEC_MII_DATA_RA_SHIFT		0x12		/* MII reg addr bits */
+#घोषणा FEC_MII_DATA_PA_SHIFT		0x17		/* MII PHY addr bits */
 
-#define FEC_PADDR2_TYPE			0x8808
+#घोषणा FEC_PADDR2_TYPE			0x8808
 
-#define FEC_OP_PAUSE_OPCODE		0x00010000
+#घोषणा FEC_OP_PAUSE_OPCODE		0x00010000
 
-#define FEC_FIFO_WMRK_256B		0x3
+#घोषणा FEC_FIFO_WMRK_256B		0x3
 
-#define FEC_FIFO_STATUS_ERR		0x00400000
-#define FEC_FIFO_STATUS_UF		0x00200000
-#define FEC_FIFO_STATUS_OF		0x00100000
+#घोषणा FEC_FIFO_STATUS_ERR		0x00400000
+#घोषणा FEC_FIFO_STATUS_UF		0x00200000
+#घोषणा FEC_FIFO_STATUS_OF		0x00100000
 
-#define FEC_FIFO_CNTRL_FRAME		0x08000000
-#define FEC_FIFO_CNTRL_LTG_7		0x07000000
+#घोषणा FEC_FIFO_CNTRL_FRAME		0x08000000
+#घोषणा FEC_FIFO_CNTRL_LTG_7		0x07000000
 
-#define FEC_RESET_CNTRL_RESET_FIFO	0x02000000
-#define FEC_RESET_CNTRL_ENABLE_IS_RESET	0x01000000
+#घोषणा FEC_RESET_CNTRL_RESET_FIFO	0x02000000
+#घोषणा FEC_RESET_CNTRL_ENABLE_IS_RESET	0x01000000
 
-#define FEC_XMIT_FSM_APPEND_CRC		0x02000000
-#define FEC_XMIT_FSM_ENABLE_CRC		0x01000000
+#घोषणा FEC_XMIT_FSM_APPEND_CRC		0x02000000
+#घोषणा FEC_XMIT_FSM_ENABLE_CRC		0x01000000
 
 
-extern struct platform_driver mpc52xx_fec_mdio_driver;
+बाह्य काष्ठा platक्रमm_driver mpc52xx_fec_mdio_driver;
 
-#endif	/* __DRIVERS_NET_MPC52XX_FEC_H__ */
+#पूर्ण_अगर	/* __DRIVERS_NET_MPC52XX_FEC_H__ */

@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: MIT */
-#if !defined(_RADEON_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _RADEON_TRACE_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर !defined(_RADEON_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _RADEON_TRACE_H_
 
-#include <linux/stringify.h>
-#include <linux/tracepoint.h>
-#include <linux/types.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <linux/types.h>
 
-#include <drm/drm_file.h>
+#समावेश <drm/drm_file.h>
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM radeon
-#define TRACE_INCLUDE_FILE radeon_trace
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM radeon
+#घोषणा TRACE_INCLUDE_खाता radeon_trace
 
 TRACE_EVENT(radeon_bo_create,
-	    TP_PROTO(struct radeon_bo *bo),
+	    TP_PROTO(काष्ठा radeon_bo *bo),
 	    TP_ARGS(bo),
 	    TP_STRUCT__entry(
-			     __field(struct radeon_bo *, bo)
+			     __field(काष्ठा radeon_bo *, bo)
 			     __field(u32, pages)
 			     ),
 
@@ -24,11 +25,11 @@ TRACE_EVENT(radeon_bo_create,
 			   __entry->bo = bo;
 			   __entry->pages = bo->tbo.mem.num_pages;
 			   ),
-	    TP_printk("bo=%p, pages=%u", __entry->bo, __entry->pages)
+	    TP_prपूर्णांकk("bo=%p, pages=%u", __entry->bo, __entry->pages)
 );
 
 TRACE_EVENT(radeon_cs,
-	    TP_PROTO(struct radeon_cs_parser *p),
+	    TP_PROTO(काष्ठा radeon_cs_parser *p),
 	    TP_ARGS(p),
 	    TP_STRUCT__entry(
 			     __field(u32, ring)
@@ -42,13 +43,13 @@ TRACE_EVENT(radeon_cs,
 			   __entry->fences = radeon_fence_count_emitted(
 				p->rdev, p->ring);
 			   ),
-	    TP_printk("ring=%u, dw=%u, fences=%u",
+	    TP_prपूर्णांकk("ring=%u, dw=%u, fences=%u",
 		      __entry->ring, __entry->dw,
 		      __entry->fences)
 );
 
 TRACE_EVENT(radeon_vm_grab_id,
-	    TP_PROTO(unsigned vmid, int ring),
+	    TP_PROTO(अचिन्हित vmid, पूर्णांक ring),
 	    TP_ARGS(vmid, ring),
 	    TP_STRUCT__entry(
 			     __field(u32, vmid)
@@ -59,11 +60,11 @@ TRACE_EVENT(radeon_vm_grab_id,
 			   __entry->vmid = vmid;
 			   __entry->ring = ring;
 			   ),
-	    TP_printk("vmid=%u, ring=%u", __entry->vmid, __entry->ring)
+	    TP_prपूर्णांकk("vmid=%u, ring=%u", __entry->vmid, __entry->ring)
 );
 
 TRACE_EVENT(radeon_vm_bo_update,
-	    TP_PROTO(struct radeon_bo_va *bo_va),
+	    TP_PROTO(काष्ठा radeon_bo_va *bo_va),
 	    TP_ARGS(bo_va),
 	    TP_STRUCT__entry(
 			     __field(u64, soffset)
@@ -76,13 +77,13 @@ TRACE_EVENT(radeon_vm_bo_update,
 			   __entry->eoffset = bo_va->it.last + 1;
 			   __entry->flags = bo_va->flags;
 			   ),
-	    TP_printk("soffs=%010llx, eoffs=%010llx, flags=%08x",
+	    TP_prपूर्णांकk("soffs=%010llx, eoffs=%010llx, flags=%08x",
 		      __entry->soffset, __entry->eoffset, __entry->flags)
 );
 
 TRACE_EVENT(radeon_vm_set_page,
-	    TP_PROTO(uint64_t pe, uint64_t addr, unsigned count,
-		     uint32_t incr, uint32_t flags),
+	    TP_PROTO(uपूर्णांक64_t pe, uपूर्णांक64_t addr, अचिन्हित count,
+		     uपूर्णांक32_t incr, uपूर्णांक32_t flags),
 	    TP_ARGS(pe, addr, count, incr, flags),
 	    TP_STRUCT__entry(
 			     __field(u64, pe)
@@ -99,13 +100,13 @@ TRACE_EVENT(radeon_vm_set_page,
 			   __entry->incr = incr;
 			   __entry->flags = flags;
 			   ),
-	    TP_printk("pe=%010Lx, addr=%010Lx, incr=%u, flags=%08x, count=%u",
+	    TP_prपूर्णांकk("pe=%010Lx, addr=%010Lx, incr=%u, flags=%08x, count=%u",
 		      __entry->pe, __entry->addr, __entry->incr,
 		      __entry->flags, __entry->count)
 );
 
 TRACE_EVENT(radeon_vm_flush,
-	    TP_PROTO(uint64_t pd_addr, unsigned ring, unsigned id),
+	    TP_PROTO(uपूर्णांक64_t pd_addr, अचिन्हित ring, अचिन्हित id),
 	    TP_ARGS(pd_addr, ring, id),
 	    TP_STRUCT__entry(
 			     __field(u64, pd_addr)
@@ -118,19 +119,19 @@ TRACE_EVENT(radeon_vm_flush,
 			   __entry->ring = ring;
 			   __entry->id = id;
 			   ),
-	    TP_printk("pd_addr=%010Lx, ring=%u, id=%u",
+	    TP_prपूर्णांकk("pd_addr=%010Lx, ring=%u, id=%u",
 		      __entry->pd_addr, __entry->ring, __entry->id)
 );
 
 DECLARE_EVENT_CLASS(radeon_fence_request,
 
-	    TP_PROTO(struct drm_device *dev, int ring, u32 seqno),
+	    TP_PROTO(काष्ठा drm_device *dev, पूर्णांक ring, u32 seqno),
 
 	    TP_ARGS(dev, ring, seqno),
 
 	    TP_STRUCT__entry(
 			     __field(u32, dev)
-			     __field(int, ring)
+			     __field(पूर्णांक, ring)
 			     __field(u32, seqno)
 			     ),
 
@@ -140,70 +141,70 @@ DECLARE_EVENT_CLASS(radeon_fence_request,
 			   __entry->seqno = seqno;
 			   ),
 
-	    TP_printk("dev=%u, ring=%d, seqno=%u",
+	    TP_prपूर्णांकk("dev=%u, ring=%d, seqno=%u",
 		      __entry->dev, __entry->ring, __entry->seqno)
 );
 
 DEFINE_EVENT(radeon_fence_request, radeon_fence_emit,
 
-	    TP_PROTO(struct drm_device *dev, int ring, u32 seqno),
+	    TP_PROTO(काष्ठा drm_device *dev, पूर्णांक ring, u32 seqno),
 
 	    TP_ARGS(dev, ring, seqno)
 );
 
-DEFINE_EVENT(radeon_fence_request, radeon_fence_wait_begin,
+DEFINE_EVENT(radeon_fence_request, radeon_fence_रुको_begin,
 
-	    TP_PROTO(struct drm_device *dev, int ring, u32 seqno),
+	    TP_PROTO(काष्ठा drm_device *dev, पूर्णांक ring, u32 seqno),
 
 	    TP_ARGS(dev, ring, seqno)
 );
 
-DEFINE_EVENT(radeon_fence_request, radeon_fence_wait_end,
+DEFINE_EVENT(radeon_fence_request, radeon_fence_रुको_end,
 
-	    TP_PROTO(struct drm_device *dev, int ring, u32 seqno),
+	    TP_PROTO(काष्ठा drm_device *dev, पूर्णांक ring, u32 seqno),
 
 	    TP_ARGS(dev, ring, seqno)
 );
 
 DECLARE_EVENT_CLASS(radeon_semaphore_request,
 
-	    TP_PROTO(int ring, struct radeon_semaphore *sem),
+	    TP_PROTO(पूर्णांक ring, काष्ठा radeon_semaphore *sem),
 
 	    TP_ARGS(ring, sem),
 
 	    TP_STRUCT__entry(
-			     __field(int, ring)
-			     __field(signed, waiters)
-			     __field(uint64_t, gpu_addr)
+			     __field(पूर्णांक, ring)
+			     __field(चिन्हित, रुकोers)
+			     __field(uपूर्णांक64_t, gpu_addr)
 			     ),
 
 	    TP_fast_assign(
 			   __entry->ring = ring;
-			   __entry->waiters = sem->waiters;
+			   __entry->रुकोers = sem->रुकोers;
 			   __entry->gpu_addr = sem->gpu_addr;
 			   ),
 
-	    TP_printk("ring=%u, waiters=%d, addr=%010Lx", __entry->ring,
-		      __entry->waiters, __entry->gpu_addr)
+	    TP_prपूर्णांकk("ring=%u, waiters=%d, addr=%010Lx", __entry->ring,
+		      __entry->रुकोers, __entry->gpu_addr)
 );
 
-DEFINE_EVENT(radeon_semaphore_request, radeon_semaphore_signale,
+DEFINE_EVENT(radeon_semaphore_request, radeon_semaphore_संकेतe,
 
-	    TP_PROTO(int ring, struct radeon_semaphore *sem),
+	    TP_PROTO(पूर्णांक ring, काष्ठा radeon_semaphore *sem),
 
 	    TP_ARGS(ring, sem)
 );
 
-DEFINE_EVENT(radeon_semaphore_request, radeon_semaphore_wait,
+DEFINE_EVENT(radeon_semaphore_request, radeon_semaphore_रुको,
 
-	    TP_PROTO(int ring, struct radeon_semaphore *sem),
+	    TP_PROTO(पूर्णांक ring, काष्ठा radeon_semaphore *sem),
 
 	    TP_ARGS(ring, sem)
 );
 
-#endif
+#पूर्ण_अगर
 
 /* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH ../../drivers/gpu/drm/radeon
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH ../../drivers/gpu/drm/radeon
+#समावेश <trace/define_trace.h>

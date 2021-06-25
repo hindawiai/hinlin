@@ -1,14 +1,15 @@
+<शैली गुरु>
 /* bnx2x_cmn.h: QLogic Everest network driver.
  *
  * Copyright (c) 2007-2013 Broadcom Corporation
  * Copyright (c) 2014 QLogic Corporation
  * All rights reserved
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  *
- * Maintained by: Ariel Elior <ariel.elior@qlogic.com>
+ * Maपूर्णांकained by: Ariel Elior <ariel.elior@qlogic.com>
  * Written by: Eliezer Tamir
  * Based on code from Michael Chan's bnx2 driver
  * UDP CSUM errata workaround by Arik Gendelman
@@ -16,60 +17,60 @@
  * Statistics and Link management by Yitchak Gertner
  *
  */
-#ifndef BNX2X_CMN_H
-#define BNX2X_CMN_H
+#अगर_अघोषित BNX2X_CMN_H
+#घोषणा BNX2X_CMN_H
 
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/irq.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/irq.h>
 
-#include "bnx2x.h"
-#include "bnx2x_sriov.h"
+#समावेश "bnx2x.h"
+#समावेश "bnx2x_sriov.h"
 
-/* This is used as a replacement for an MCP if it's not present */
-extern int bnx2x_load_count[2][3]; /* per-path: 0-common, 1-port0, 2-port1 */
-extern int bnx2x_num_queues;
+/* This is used as a replacement क्रम an MCP अगर it's not present */
+बाह्य पूर्णांक bnx2x_load_count[2][3]; /* per-path: 0-common, 1-port0, 2-port1 */
+बाह्य पूर्णांक bnx2x_num_queues;
 
 /************************ Macros ********************************/
-#define BNX2X_PCI_FREE(x, y, size) \
-	do { \
-		if (x) { \
-			dma_free_coherent(&bp->pdev->dev, size, (void *)x, y); \
-			x = NULL; \
+#घोषणा BNX2X_PCI_FREE(x, y, size) \
+	करो अणु \
+		अगर (x) अणु \
+			dma_मुक्त_coherent(&bp->pdev->dev, size, (व्योम *)x, y); \
+			x = शून्य; \
 			y = 0; \
-		} \
-	} while (0)
+		पूर्ण \
+	पूर्ण जबतक (0)
 
-#define BNX2X_FREE(x) \
-	do { \
-		if (x) { \
-			kfree((void *)x); \
-			x = NULL; \
-		} \
-	} while (0)
+#घोषणा BNX2X_FREE(x) \
+	करो अणु \
+		अगर (x) अणु \
+			kमुक्त((व्योम *)x); \
+			x = शून्य; \
+		पूर्ण \
+	पूर्ण जबतक (0)
 
-#define BNX2X_PCI_ALLOC(y, size)					\
-({									\
-	void *x = dma_alloc_coherent(&bp->pdev->dev, size, y, GFP_KERNEL); \
-	if (x)								\
+#घोषणा BNX2X_PCI_ALLOC(y, size)					\
+(अणु									\
+	व्योम *x = dma_alloc_coherent(&bp->pdev->dev, size, y, GFP_KERNEL); \
+	अगर (x)								\
 		DP(NETIF_MSG_HW,					\
 		   "BNX2X_PCI_ALLOC: Physical %Lx Virtual %p\n",	\
-		   (unsigned long long)(*y), x);			\
+		   (अचिन्हित दीर्घ दीर्घ)(*y), x);			\
 	x;								\
-})
-#define BNX2X_PCI_FALLOC(y, size)					\
-({									\
-	void *x = dma_alloc_coherent(&bp->pdev->dev, size, y, GFP_KERNEL); \
-	if (x) {							\
-		memset(x, 0xff, size);					\
+पूर्ण)
+#घोषणा BNX2X_PCI_FALLOC(y, size)					\
+(अणु									\
+	व्योम *x = dma_alloc_coherent(&bp->pdev->dev, size, y, GFP_KERNEL); \
+	अगर (x) अणु							\
+		स_रखो(x, 0xff, size);					\
 		DP(NETIF_MSG_HW,					\
 		   "BNX2X_PCI_FALLOC: Physical %Lx Virtual %p\n",	\
-		   (unsigned long long)(*y), x);			\
-	}								\
+		   (अचिन्हित दीर्घ दीर्घ)(*y), x);			\
+	पूर्ण								\
 	x;								\
-})
+पूर्ण)
 
 /*********************** Interfaces ****************************
  *  Functions that need to be implemented by each driver version
@@ -82,17 +83,17 @@ extern int bnx2x_num_queues;
  * @bp:			driver handle
  * @unload_mode:	requested function's unload mode
  *
- * Return unload mode returned by the MCP: COMMON, PORT or FUNC.
+ * Return unload mode वापसed by the MCP: COMMON, PORT or FUNC.
  */
-u32 bnx2x_send_unload_req(struct bnx2x *bp, int unload_mode);
+u32 bnx2x_send_unload_req(काष्ठा bnx2x *bp, पूर्णांक unload_mode);
 
 /**
- * bnx2x_send_unload_done - send UNLOAD_DONE command to the MCP.
+ * bnx2x_send_unload_करोne - send UNLOAD_DONE command to the MCP.
  *
  * @bp:		driver handle
- * @keep_link:		true iff link should be kept up
+ * @keep_link:		true अगरf link should be kept up
  */
-void bnx2x_send_unload_done(struct bnx2x *bp, bool keep_link);
+व्योम bnx2x_send_unload_करोne(काष्ठा bnx2x *bp, bool keep_link);
 
 /**
  * bnx2x_config_rss_pf - configure RSS parameters in a PF.
@@ -103,7 +104,7 @@ void bnx2x_send_unload_done(struct bnx2x *bp, bool keep_link);
  * @config_hash:	re-configure RSS hash keys configuration
  * @enable:		enabled or disabled configuration
  */
-int bnx2x_rss(struct bnx2x *bp, struct bnx2x_rss_config_obj *rss_obj,
+पूर्णांक bnx2x_rss(काष्ठा bnx2x *bp, काष्ठा bnx2x_rss_config_obj *rss_obj,
 	      bool config_hash, bool enable);
 
 /**
@@ -113,19 +114,19 @@ int bnx2x_rss(struct bnx2x *bp, struct bnx2x_rss_config_obj *rss_obj,
  *
  * Initializes the Function Object with the appropriate
  * parameters which include a function slow path driver
- * interface.
+ * पूर्णांकerface.
  */
-void bnx2x__init_func_obj(struct bnx2x *bp);
+व्योम bnx2x__init_func_obj(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_setup_queue - setup eth queue.
  *
  * @bp:		driver handle
- * @fp:		pointer to the fastpath structure
+ * @fp:		poपूर्णांकer to the fastpath काष्ठाure
  * @leading:	boolean
  *
  */
-int bnx2x_setup_queue(struct bnx2x *bp, struct bnx2x_fastpath *fp,
+पूर्णांक bnx2x_setup_queue(काष्ठा bnx2x *bp, काष्ठा bnx2x_fastpath *fp,
 		       bool leading);
 
 /**
@@ -133,7 +134,7 @@ int bnx2x_setup_queue(struct bnx2x *bp, struct bnx2x_fastpath *fp,
  *
  * @bp:		driver handle
  */
-int bnx2x_setup_leading(struct bnx2x *bp);
+पूर्णांक bnx2x_setup_leading(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_fw_command - send the MCP a request
@@ -144,30 +145,30 @@ int bnx2x_setup_leading(struct bnx2x *bp);
  *
  * block until there is a reply
  */
-u32 bnx2x_fw_command(struct bnx2x *bp, u32 command, u32 param);
+u32 bnx2x_fw_command(काष्ठा bnx2x *bp, u32 command, u32 param);
 
 /**
- * bnx2x_initial_phy_init - initialize link parameters structure variables.
+ * bnx2x_initial_phy_init - initialize link parameters काष्ठाure variables.
  *
  * @bp:		driver handle
  * @load_mode:	current mode
  */
-int bnx2x_initial_phy_init(struct bnx2x *bp, int load_mode);
+पूर्णांक bnx2x_initial_phy_init(काष्ठा bnx2x *bp, पूर्णांक load_mode);
 
 /**
- * bnx2x_link_set - configure hw according to link parameters structure.
+ * bnx2x_link_set - configure hw according to link parameters काष्ठाure.
  *
  * @bp:		driver handle
  */
-void bnx2x_link_set(struct bnx2x *bp);
+व्योम bnx2x_link_set(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_force_link_reset - Forces link reset, and put the PHY
+ * bnx2x_क्रमce_link_reset - Forces link reset, and put the PHY
  * in reset as well.
  *
  * @bp:		driver handle
  */
-void bnx2x_force_link_reset(struct bnx2x *bp);
+व्योम bnx2x_क्रमce_link_reset(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_link_test - query link status.
@@ -175,19 +176,19 @@ void bnx2x_force_link_reset(struct bnx2x *bp);
  * @bp:		driver handle
  * @is_serdes:	bool
  *
- * Returns 0 if link is UP.
+ * Returns 0 अगर link is UP.
  */
-u8 bnx2x_link_test(struct bnx2x *bp, u8 is_serdes);
+u8 bnx2x_link_test(काष्ठा bnx2x *bp, u8 is_serdes);
 
 /**
- * bnx2x_drv_pulse - write driver pulse to shmem
+ * bnx2x_drv_pulse - ग_लिखो driver pulse to shmem
  *
  * @bp:		driver handle
  *
- * writes the value in bp->fw_drv_pulse_wr_seq to drv_pulse mbox
+ * ग_लिखोs the value in bp->fw_drv_pulse_wr_seq to drv_pulse mbox
  * in the shmem.
  */
-void bnx2x_drv_pulse(struct bnx2x *bp);
+व्योम bnx2x_drv_pulse(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_igu_ack_sb - update IGU with current SB value
@@ -199,97 +200,97 @@ void bnx2x_drv_pulse(struct bnx2x *bp);
  * @op:		SB operation
  * @update:	is HW update required
  */
-void bnx2x_igu_ack_sb(struct bnx2x *bp, u8 igu_sb_id, u8 segment,
+व्योम bnx2x_igu_ack_sb(काष्ठा bnx2x *bp, u8 igu_sb_id, u8 segment,
 		      u16 index, u8 op, u8 update);
 
 /* Disable transactions from chip to host */
-void bnx2x_pf_disable(struct bnx2x *bp);
-int bnx2x_pretend_func(struct bnx2x *bp, u16 pretend_func_val);
+व्योम bnx2x_pf_disable(काष्ठा bnx2x *bp);
+पूर्णांक bnx2x_pretend_func(काष्ठा bnx2x *bp, u16 pretend_func_val);
 
 /**
  * bnx2x__link_status_update - handles link status change.
  *
  * @bp:		driver handle
  */
-void bnx2x__link_status_update(struct bnx2x *bp);
+व्योम bnx2x__link_status_update(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_link_report - report link status to upper layer.
  *
  * @bp:		driver handle
  */
-void bnx2x_link_report(struct bnx2x *bp);
+व्योम bnx2x_link_report(काष्ठा bnx2x *bp);
 
 /* None-atomic version of bnx2x_link_report() */
-void __bnx2x_link_report(struct bnx2x *bp);
+व्योम __bnx2x_link_report(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_get_mf_speed - calculate MF speed.
  *
  * @bp:		driver handle
  *
- * Takes into account current linespeed and MF configuration.
+ * Takes पूर्णांकo account current linespeed and MF configuration.
  */
-u16 bnx2x_get_mf_speed(struct bnx2x *bp);
+u16 bnx2x_get_mf_speed(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_msix_sp_int - MSI-X slowpath interrupt handler
+ * bnx2x_msix_sp_पूर्णांक - MSI-X slowpath पूर्णांकerrupt handler
  *
  * @irq:		irq number
- * @dev_instance:	private instance
+ * @dev_instance:	निजी instance
  */
-irqreturn_t bnx2x_msix_sp_int(int irq, void *dev_instance);
+irqवापस_t bnx2x_msix_sp_पूर्णांक(पूर्णांक irq, व्योम *dev_instance);
 
 /**
- * bnx2x_interrupt - non MSI-X interrupt handler
+ * bnx2x_पूर्णांकerrupt - non MSI-X पूर्णांकerrupt handler
  *
  * @irq:		irq number
- * @dev_instance:	private instance
+ * @dev_instance:	निजी instance
  */
-irqreturn_t bnx2x_interrupt(int irq, void *dev_instance);
+irqवापस_t bnx2x_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance);
 
 /**
- * bnx2x_cnic_notify - send command to cnic driver
+ * bnx2x_cnic_notअगरy - send command to cnic driver
  *
  * @bp:		driver handle
  * @cmd:	command
  */
-int bnx2x_cnic_notify(struct bnx2x *bp, int cmd);
+पूर्णांक bnx2x_cnic_notअगरy(काष्ठा bnx2x *bp, पूर्णांक cmd);
 
 /**
- * bnx2x_setup_cnic_irq_info - provides cnic with IRQ information
+ * bnx2x_setup_cnic_irq_info - provides cnic with IRQ inक्रमmation
  *
  * @bp:		driver handle
  */
-void bnx2x_setup_cnic_irq_info(struct bnx2x *bp);
+व्योम bnx2x_setup_cnic_irq_info(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_setup_cnic_info - provides cnic with updated info
  *
  * @bp:		driver handle
  */
-void bnx2x_setup_cnic_info(struct bnx2x *bp);
+व्योम bnx2x_setup_cnic_info(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_int_enable - enable HW interrupts.
+ * bnx2x_पूर्णांक_enable - enable HW पूर्णांकerrupts.
  *
  * @bp:		driver handle
  */
-void bnx2x_int_enable(struct bnx2x *bp);
+व्योम bnx2x_पूर्णांक_enable(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_int_disable_sync - disable interrupts.
+ * bnx2x_पूर्णांक_disable_sync - disable पूर्णांकerrupts.
  *
  * @bp:		driver handle
- * @disable_hw:	true, disable HW interrupts.
+ * @disable_hw:	true, disable HW पूर्णांकerrupts.
  *
  * This function ensures that there are no
- * ISRs or SP DPCs (sp_task) are running after it returns.
+ * ISRs or SP DPCs (sp_task) are running after it वापसs.
  */
-void bnx2x_int_disable_sync(struct bnx2x *bp, int disable_hw);
+व्योम bnx2x_पूर्णांक_disable_sync(काष्ठा bnx2x *bp, पूर्णांक disable_hw);
 
 /**
- * bnx2x_nic_init_cnic - init driver internals for cnic.
+ * bnx2x_nic_init_cnic - init driver पूर्णांकernals क्रम cnic.
  *
  * @bp:		driver handle
  * @load_code:	COMMON, PORT or FUNCTION
@@ -299,10 +300,10 @@ void bnx2x_int_disable_sync(struct bnx2x *bp, int disable_hw);
  *  - status blocks
  *  - etc.
  */
-void bnx2x_nic_init_cnic(struct bnx2x *bp);
+व्योम bnx2x_nic_init_cnic(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_preirq_nic_init - init driver internals.
+ * bnx2x_preirq_nic_init - init driver पूर्णांकernals.
  *
  * @bp:		driver handle
  *
@@ -311,10 +312,10 @@ void bnx2x_nic_init_cnic(struct bnx2x *bp);
  *  - fastpath rings
  *  etc.
  */
-void bnx2x_pre_irq_nic_init(struct bnx2x *bp);
+व्योम bnx2x_pre_irq_nic_init(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_postirq_nic_init - init driver internals.
+ * bnx2x_postirq_nic_init - init driver पूर्णांकernals.
  *
  * @bp:		driver handle
  * @load_code:	COMMON, PORT or FUNCTION
@@ -324,52 +325,52 @@ void bnx2x_pre_irq_nic_init(struct bnx2x *bp);
  *  - slowpath rings
  *  - etc.
  */
-void bnx2x_post_irq_nic_init(struct bnx2x *bp, u32 load_code);
+व्योम bnx2x_post_irq_nic_init(काष्ठा bnx2x *bp, u32 load_code);
 /**
- * bnx2x_alloc_mem_cnic - allocate driver's memory for cnic.
+ * bnx2x_alloc_mem_cnic - allocate driver's memory क्रम cnic.
  *
  * @bp:		driver handle
  */
-int bnx2x_alloc_mem_cnic(struct bnx2x *bp);
+पूर्णांक bnx2x_alloc_mem_cnic(काष्ठा bnx2x *bp);
 /**
  * bnx2x_alloc_mem - allocate driver's memory.
  *
  * @bp:		driver handle
  */
-int bnx2x_alloc_mem(struct bnx2x *bp);
+पूर्णांक bnx2x_alloc_mem(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_free_mem_cnic - release driver's memory for cnic.
+ * bnx2x_मुक्त_mem_cnic - release driver's memory क्रम cnic.
  *
  * @bp:		driver handle
  */
-void bnx2x_free_mem_cnic(struct bnx2x *bp);
+व्योम bnx2x_मुक्त_mem_cnic(काष्ठा bnx2x *bp);
 /**
- * bnx2x_free_mem - release driver's memory.
+ * bnx2x_मुक्त_mem - release driver's memory.
  *
  * @bp:		driver handle
  */
-void bnx2x_free_mem(struct bnx2x *bp);
+व्योम bnx2x_मुक्त_mem(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_set_num_queues - set number of queues according to mode.
  *
  * @bp:		driver handle
  */
-void bnx2x_set_num_queues(struct bnx2x *bp);
+व्योम bnx2x_set_num_queues(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_chip_cleanup - cleanup chip internals.
+ * bnx2x_chip_cleanup - cleanup chip पूर्णांकernals.
  *
  * @bp:			driver handle
  * @unload_mode:	COMMON, PORT, FUNCTION
- * @keep_link:		true iff link should be kept up.
+ * @keep_link:		true अगरf link should be kept up.
  *
  * - Cleanup MAC configuration.
  * - Closes clients.
  * - etc.
  */
-void bnx2x_chip_cleanup(struct bnx2x *bp, int unload_mode, bool keep_link);
+व्योम bnx2x_chip_cleanup(काष्ठा bnx2x *bp, पूर्णांक unload_mode, bool keep_link);
 
 /**
  * bnx2x_acquire_hw_lock - acquire HW lock.
@@ -377,7 +378,7 @@ void bnx2x_chip_cleanup(struct bnx2x *bp, int unload_mode, bool keep_link);
  * @bp:		driver handle
  * @resource:	resource bit which was locked
  */
-int bnx2x_acquire_hw_lock(struct bnx2x *bp, u32 resource);
+पूर्णांक bnx2x_acquire_hw_lock(काष्ठा bnx2x *bp, u32 resource);
 
 /**
  * bnx2x_release_hw_lock - release HW lock.
@@ -385,14 +386,14 @@ int bnx2x_acquire_hw_lock(struct bnx2x *bp, u32 resource);
  * @bp:		driver handle
  * @resource:	resource bit which was locked
  */
-int bnx2x_release_hw_lock(struct bnx2x *bp, u32 resource);
+पूर्णांक bnx2x_release_hw_lock(काष्ठा bnx2x *bp, u32 resource);
 
 /**
  * bnx2x_release_leader_lock - release recovery leader lock
  *
  * @bp:		driver handle
  */
-int bnx2x_release_leader_lock(struct bnx2x *bp);
+पूर्णांक bnx2x_release_leader_lock(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_set_eth_mac - configure eth MAC address in the HW
@@ -402,70 +403,70 @@ int bnx2x_release_leader_lock(struct bnx2x *bp);
  *
  * Configures according to the value in netdev->dev_addr.
  */
-int bnx2x_set_eth_mac(struct bnx2x *bp, bool set);
+पूर्णांक bnx2x_set_eth_mac(काष्ठा bnx2x *bp, bool set);
 
 /**
  * bnx2x_set_rx_mode - set MAC filtering configurations.
  *
  * @dev:	netdevice
  *
- * called with netif_tx_lock from dev_mcast.c
+ * called with netअगर_tx_lock from dev_mcast.c
  * If bp->state is OPEN, should be called with
- * netif_addr_lock_bh()
+ * netअगर_addr_lock_bh()
  */
-void bnx2x_set_rx_mode_inner(struct bnx2x *bp);
+व्योम bnx2x_set_rx_mode_inner(काष्ठा bnx2x *bp);
 
 /* Parity errors related */
-void bnx2x_set_pf_load(struct bnx2x *bp);
-bool bnx2x_clear_pf_load(struct bnx2x *bp);
-bool bnx2x_chk_parity_attn(struct bnx2x *bp, bool *global, bool print);
-bool bnx2x_reset_is_done(struct bnx2x *bp, int engine);
-void bnx2x_set_reset_in_progress(struct bnx2x *bp);
-void bnx2x_set_reset_global(struct bnx2x *bp);
-void bnx2x_disable_close_the_gate(struct bnx2x *bp);
-int bnx2x_init_hw_func_cnic(struct bnx2x *bp);
+व्योम bnx2x_set_pf_load(काष्ठा bnx2x *bp);
+bool bnx2x_clear_pf_load(काष्ठा bnx2x *bp);
+bool bnx2x_chk_parity_attn(काष्ठा bnx2x *bp, bool *global, bool prपूर्णांक);
+bool bnx2x_reset_is_करोne(काष्ठा bnx2x *bp, पूर्णांक engine);
+व्योम bnx2x_set_reset_in_progress(काष्ठा bnx2x *bp);
+व्योम bnx2x_set_reset_global(काष्ठा bnx2x *bp);
+व्योम bnx2x_disable_बंद_the_gate(काष्ठा bnx2x *bp);
+पूर्णांक bnx2x_init_hw_func_cnic(काष्ठा bnx2x *bp);
 
-void bnx2x_clear_vlan_info(struct bnx2x *bp);
+व्योम bnx2x_clear_vlan_info(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_sp_event - handle ramrods completion.
  *
- * @fp:		fastpath handle for the event
+ * @fp:		fastpath handle क्रम the event
  * @rr_cqe:	eth_rx_cqe
  */
-void bnx2x_sp_event(struct bnx2x_fastpath *fp, union eth_rx_cqe *rr_cqe);
+व्योम bnx2x_sp_event(काष्ठा bnx2x_fastpath *fp, जोड़ eth_rx_cqe *rr_cqe);
 
 /**
  * bnx2x_ilt_set_info - prepare ILT configurations.
  *
  * @bp:		driver handle
  */
-void bnx2x_ilt_set_info(struct bnx2x *bp);
+व्योम bnx2x_ilt_set_info(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_ilt_set_cnic_info - prepare ILT configurations for SRC
+ * bnx2x_ilt_set_cnic_info - prepare ILT configurations क्रम SRC
  * and TM.
  *
  * @bp:		driver handle
  */
-void bnx2x_ilt_set_info_cnic(struct bnx2x *bp);
+व्योम bnx2x_ilt_set_info_cnic(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_dcbx_init - initialize dcbx protocol.
  *
  * @bp:		driver handle
  */
-void bnx2x_dcbx_init(struct bnx2x *bp, bool update_shmem);
+व्योम bnx2x_dcbx_init(काष्ठा bnx2x *bp, bool update_shmem);
 
 /**
- * bnx2x_set_power_state - set power state to the requested value.
+ * bnx2x_set_घातer_state - set घातer state to the requested value.
  *
  * @bp:		driver handle
  * @state:	required state D0 or D3hot
  *
  * Currently only D0 and D3hot are supported.
  */
-int bnx2x_set_power_state(struct bnx2x *bp, pci_power_t state);
+पूर्णांक bnx2x_set_घातer_state(काष्ठा bnx2x *bp, pci_घातer_t state);
 
 /**
  * bnx2x_update_max_mf_config - update MAX part of MF configuration in HW.
@@ -473,41 +474,41 @@ int bnx2x_set_power_state(struct bnx2x *bp, pci_power_t state);
  * @bp:		driver handle
  * @value:	new value
  */
-void bnx2x_update_max_mf_config(struct bnx2x *bp, u32 value);
+व्योम bnx2x_update_max_mf_config(काष्ठा bnx2x *bp, u32 value);
 /* Error handling */
-void bnx2x_fw_dump_lvl(struct bnx2x *bp, const char *lvl);
+व्योम bnx2x_fw_dump_lvl(काष्ठा bnx2x *bp, स्थिर अक्षर *lvl);
 
-/* dev_close main block */
-int bnx2x_nic_unload(struct bnx2x *bp, int unload_mode, bool keep_link);
+/* dev_बंद मुख्य block */
+पूर्णांक bnx2x_nic_unload(काष्ठा bnx2x *bp, पूर्णांक unload_mode, bool keep_link);
 
-/* dev_open main block */
-int bnx2x_nic_load(struct bnx2x *bp, int load_mode);
+/* dev_खोलो मुख्य block */
+पूर्णांक bnx2x_nic_load(काष्ठा bnx2x *bp, पूर्णांक load_mode);
 
 /* hard_xmit callback */
-netdev_tx_t bnx2x_start_xmit(struct sk_buff *skb, struct net_device *dev);
+netdev_tx_t bnx2x_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
 
 /* setup_tc callback */
-int bnx2x_setup_tc(struct net_device *dev, u8 num_tc);
-int __bnx2x_setup_tc(struct net_device *dev, enum tc_setup_type type,
-		     void *type_data);
+पूर्णांक bnx2x_setup_tc(काष्ठा net_device *dev, u8 num_tc);
+पूर्णांक __bnx2x_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
+		     व्योम *type_data);
 
-int bnx2x_get_vf_config(struct net_device *dev, int vf,
-			struct ifla_vf_info *ivi);
-int bnx2x_set_vf_mac(struct net_device *dev, int queue, u8 *mac);
-int bnx2x_set_vf_vlan(struct net_device *netdev, int vf, u16 vlan, u8 qos,
+पूर्णांक bnx2x_get_vf_config(काष्ठा net_device *dev, पूर्णांक vf,
+			काष्ठा अगरla_vf_info *ivi);
+पूर्णांक bnx2x_set_vf_mac(काष्ठा net_device *dev, पूर्णांक queue, u8 *mac);
+पूर्णांक bnx2x_set_vf_vlan(काष्ठा net_device *netdev, पूर्णांक vf, u16 vlan, u8 qos,
 		      __be16 vlan_proto);
-int bnx2x_set_vf_spoofchk(struct net_device *dev, int idx, bool val);
+पूर्णांक bnx2x_set_vf_spoofchk(काष्ठा net_device *dev, पूर्णांक idx, bool val);
 
 /* select_queue callback */
-u16 bnx2x_select_queue(struct net_device *dev, struct sk_buff *skb,
-		       struct net_device *sb_dev);
+u16 bnx2x_select_queue(काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+		       काष्ठा net_device *sb_dev);
 
-static inline void bnx2x_update_rx_prod(struct bnx2x *bp,
-					struct bnx2x_fastpath *fp,
+अटल अंतरभूत व्योम bnx2x_update_rx_prod(काष्ठा bnx2x *bp,
+					काष्ठा bnx2x_fastpath *fp,
 					u16 bd_prod, u16 rx_comp_prod,
 					u16 rx_sge_prod)
-{
-	struct ustorm_eth_rx_producers rx_prods = {0};
+अणु
+	काष्ठा ustorm_eth_rx_producers rx_prods = अणु0पूर्ण;
 	u32 i;
 
 	/* Update producers */
@@ -515,44 +516,44 @@ static inline void bnx2x_update_rx_prod(struct bnx2x *bp,
 	rx_prods.cqe_prod = rx_comp_prod;
 	rx_prods.sge_prod = rx_sge_prod;
 
-	/* Make sure that the BD and SGE data is updated before updating the
-	 * producers since FW might read the BD/SGE right after the producer
+	/* Make sure that the BD and SGE data is updated beक्रमe updating the
+	 * producers since FW might पढ़ो the BD/SGE right after the producer
 	 * is updated.
-	 * This is only applicable for weak-ordered memory model archs such
+	 * This is only applicable क्रम weak-ordered memory model archs such
 	 * as IA-64. The following barrier is also mandatory since FW will
 	 * assumes BDs must have buffers.
 	 */
 	wmb();
 
-	for (i = 0; i < sizeof(rx_prods)/4; i++)
+	क्रम (i = 0; i < माप(rx_prods)/4; i++)
 		REG_WR_RELAXED(bp, fp->ustorm_rx_prods_offset + i * 4,
 			       ((u32 *)&rx_prods)[i]);
 
 	DP(NETIF_MSG_RX_STATUS,
 	   "queue[%d]:  wrote  bd_prod %u  cqe_prod %u  sge_prod %u\n",
 	   fp->index, bd_prod, rx_comp_prod, rx_sge_prod);
-}
+पूर्ण
 
 /* reload helper */
-int bnx2x_reload_if_running(struct net_device *dev);
+पूर्णांक bnx2x_reload_अगर_running(काष्ठा net_device *dev);
 
-int bnx2x_change_mac_addr(struct net_device *dev, void *p);
+पूर्णांक bnx2x_change_mac_addr(काष्ठा net_device *dev, व्योम *p);
 
 /* NAPI poll Tx part */
-int bnx2x_tx_int(struct bnx2x *bp, struct bnx2x_fp_txdata *txdata);
+पूर्णांक bnx2x_tx_पूर्णांक(काष्ठा bnx2x *bp, काष्ठा bnx2x_fp_txdata *txdata);
 
-extern const struct dev_pm_ops bnx2x_pm_ops;
+बाह्य स्थिर काष्ठा dev_pm_ops bnx2x_pm_ops;
 
 /* Release IRQ vectors */
-void bnx2x_free_irq(struct bnx2x *bp);
+व्योम bnx2x_मुक्त_irq(काष्ठा bnx2x *bp);
 
-void bnx2x_free_fp_mem(struct bnx2x *bp);
-void bnx2x_init_rx_rings(struct bnx2x *bp);
-void bnx2x_init_rx_rings_cnic(struct bnx2x *bp);
-void bnx2x_free_skbs(struct bnx2x *bp);
-void bnx2x_netif_stop(struct bnx2x *bp, int disable_hw);
-void bnx2x_netif_start(struct bnx2x *bp);
-int bnx2x_load_cnic(struct bnx2x *bp);
+व्योम bnx2x_मुक्त_fp_mem(काष्ठा bnx2x *bp);
+व्योम bnx2x_init_rx_rings(काष्ठा bnx2x *bp);
+व्योम bnx2x_init_rx_rings_cnic(काष्ठा bnx2x *bp);
+व्योम bnx2x_मुक्त_skbs(काष्ठा bnx2x *bp);
+व्योम bnx2x_netअगर_stop(काष्ठा bnx2x *bp, पूर्णांक disable_hw);
+व्योम bnx2x_netअगर_start(काष्ठा bnx2x *bp);
+पूर्णांक bnx2x_load_cnic(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_enable_msix - set msix configuration.
@@ -562,28 +563,28 @@ int bnx2x_load_cnic(struct bnx2x *bp);
  * fills msix_table, requests vectors, updates num_queues
  * according to number of available vectors.
  */
-int bnx2x_enable_msix(struct bnx2x *bp);
+पूर्णांक bnx2x_enable_msix(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_enable_msi - request msi mode from OS, updated internals accordingly
+ * bnx2x_enable_msi - request msi mode from OS, updated पूर्णांकernals accordingly
  *
  * @bp:		driver handle
  */
-int bnx2x_enable_msi(struct bnx2x *bp);
+पूर्णांक bnx2x_enable_msi(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_alloc_mem_bp - allocate memories outsize main driver structure
+ * bnx2x_alloc_mem_bp - allocate memories outsize मुख्य driver काष्ठाure
  *
  * @bp:		driver handle
  */
-int bnx2x_alloc_mem_bp(struct bnx2x *bp);
+पूर्णांक bnx2x_alloc_mem_bp(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_free_mem_bp - release memories outsize main driver structure
+ * bnx2x_मुक्त_mem_bp - release memories outsize मुख्य driver काष्ठाure
  *
  * @bp:		driver handle
  */
-void bnx2x_free_mem_bp(struct bnx2x *bp);
+व्योम bnx2x_मुक्त_mem_bp(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_change_mtu - change mtu netdev callback
@@ -592,52 +593,52 @@ void bnx2x_free_mem_bp(struct bnx2x *bp);
  * @new_mtu:	requested mtu
  *
  */
-int bnx2x_change_mtu(struct net_device *dev, int new_mtu);
+पूर्णांक bnx2x_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu);
 
-#ifdef NETDEV_FCOE_WWNN
+#अगर_घोषित NETDEV_FCOE_WWNN
 /**
- * bnx2x_fcoe_get_wwn - return the requested WWN value for this port
+ * bnx2x_fcoe_get_wwn - वापस the requested WWN value क्रम this port
  *
  * @dev:	net_device
  * @wwn:	output buffer
  * @type:	WWN type: NETDEV_FCOE_WWNN (node) or NETDEV_FCOE_WWPN (port)
  *
  */
-int bnx2x_fcoe_get_wwn(struct net_device *dev, u64 *wwn, int type);
-#endif
+पूर्णांक bnx2x_fcoe_get_wwn(काष्ठा net_device *dev, u64 *wwn, पूर्णांक type);
+#पूर्ण_अगर
 
-netdev_features_t bnx2x_fix_features(struct net_device *dev,
+netdev_features_t bnx2x_fix_features(काष्ठा net_device *dev,
 				     netdev_features_t features);
-int bnx2x_set_features(struct net_device *dev, netdev_features_t features);
+पूर्णांक bnx2x_set_features(काष्ठा net_device *dev, netdev_features_t features);
 
 /**
- * bnx2x_tx_timeout - tx timeout netdev callback
+ * bnx2x_tx_समयout - tx समयout netdev callback
  *
  * @dev:	net device
  */
-void bnx2x_tx_timeout(struct net_device *dev, unsigned int txqueue);
+व्योम bnx2x_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
 
-/** bnx2x_get_c2s_mapping - read inner-to-outer vlan configuration
+/** bnx2x_get_c2s_mapping - पढ़ो inner-to-outer vlan configuration
  * c2s_map should have BNX2X_MAX_PRIORITY entries.
  * @bp:			driver handle
- * @c2s_map:		should have BNX2X_MAX_PRIORITY entries for mapping
- * @c2s_default:	entry for non-tagged configuration
+ * @c2s_map:		should have BNX2X_MAX_PRIORITY entries क्रम mapping
+ * @c2s_शेष:	entry क्रम non-tagged configuration
  */
-void bnx2x_get_c2s_mapping(struct bnx2x *bp, u8 *c2s_map, u8 *c2s_default);
+व्योम bnx2x_get_c2s_mapping(काष्ठा bnx2x *bp, u8 *c2s_map, u8 *c2s_शेष);
 
 /*********************** Inlines **********************************/
 /*********************** Fast path ********************************/
-static inline void bnx2x_update_fpsb_idx(struct bnx2x_fastpath *fp)
-{
+अटल अंतरभूत व्योम bnx2x_update_fpsb_idx(काष्ठा bnx2x_fastpath *fp)
+अणु
 	barrier(); /* status block is written to by the chip */
 	fp->fp_hc_idx = fp->sb_running_index[SM_RX_ID];
-}
+पूर्ण
 
-static inline void bnx2x_igu_ack_sb_gen(struct bnx2x *bp, u8 igu_sb_id,
+अटल अंतरभूत व्योम bnx2x_igu_ack_sb_gen(काष्ठा bnx2x *bp, u8 igu_sb_id,
 					u8 segment, u16 index, u8 op,
 					u8 update, u32 igu_addr)
-{
-	struct igu_regular cmd_data = {0};
+अणु
+	काष्ठा igu_regular cmd_data = अणु0पूर्ण;
 
 	cmd_data.sb_id_and_flags =
 			((index << IGU_REGULAR_SB_INDEX_SHIFT) |
@@ -651,14 +652,14 @@ static inline void bnx2x_igu_ack_sb_gen(struct bnx2x *bp, u8 igu_sb_id,
 
 	/* Make sure that ACK is written */
 	barrier();
-}
+पूर्ण
 
-static inline void bnx2x_hc_ack_sb(struct bnx2x *bp, u8 sb_id,
+अटल अंतरभूत व्योम bnx2x_hc_ack_sb(काष्ठा bnx2x *bp, u8 sb_id,
 				   u8 storm, u16 index, u8 op, u8 update)
-{
+अणु
 	u32 hc_addr = (HC_REG_COMMAND_REG + BP_PORT(bp)*32 +
 		       COMMAND_REG_INT_ACK);
-	struct igu_ack_register igu_ack;
+	काष्ठा igu_ack_रेजिस्टर igu_ack;
 
 	igu_ack.status_block_index = index;
 	igu_ack.sb_id_and_flags =
@@ -671,40 +672,40 @@ static inline void bnx2x_hc_ack_sb(struct bnx2x *bp, u8 sb_id,
 
 	/* Make sure that ACK is written */
 	barrier();
-}
+पूर्ण
 
-static inline void bnx2x_ack_sb(struct bnx2x *bp, u8 igu_sb_id, u8 storm,
+अटल अंतरभूत व्योम bnx2x_ack_sb(काष्ठा bnx2x *bp, u8 igu_sb_id, u8 storm,
 				u16 index, u8 op, u8 update)
-{
-	if (bp->common.int_block == INT_BLOCK_HC)
+अणु
+	अगर (bp->common.पूर्णांक_block == INT_BLOCK_HC)
 		bnx2x_hc_ack_sb(bp, igu_sb_id, storm, index, op, update);
-	else {
+	अन्यथा अणु
 		u8 segment;
 
-		if (CHIP_INT_MODE_IS_BC(bp))
+		अगर (CHIP_INT_MODE_IS_BC(bp))
 			segment = storm;
-		else if (igu_sb_id != bp->igu_dsb_id)
+		अन्यथा अगर (igu_sb_id != bp->igu_dsb_id)
 			segment = IGU_SEG_ACCESS_DEF;
-		else if (storm == ATTENTION_ID)
+		अन्यथा अगर (storm == ATTENTION_ID)
 			segment = IGU_SEG_ACCESS_ATTN;
-		else
+		अन्यथा
 			segment = IGU_SEG_ACCESS_DEF;
 		bnx2x_igu_ack_sb(bp, igu_sb_id, segment, index, op, update);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline u16 bnx2x_hc_ack_int(struct bnx2x *bp)
-{
+अटल अंतरभूत u16 bnx2x_hc_ack_पूर्णांक(काष्ठा bnx2x *bp)
+अणु
 	u32 hc_addr = (HC_REG_COMMAND_REG + BP_PORT(bp)*32 +
 		       COMMAND_REG_SIMD_MASK);
 	u32 result = REG_RD(bp, hc_addr);
 
 	barrier();
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static inline u16 bnx2x_igu_ack_int(struct bnx2x *bp)
-{
+अटल अंतरभूत u16 bnx2x_igu_ack_पूर्णांक(काष्ठा bnx2x *bp)
+अणु
 	u32 igu_addr = (BAR_IGU_INTMEM + IGU_REG_SISR_MDPC_WMASK_LSB_UPPER*8);
 	u32 result = REG_RD(bp, igu_addr);
 
@@ -712,28 +713,28 @@ static inline u16 bnx2x_igu_ack_int(struct bnx2x *bp)
 	   result, igu_addr);
 
 	barrier();
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static inline u16 bnx2x_ack_int(struct bnx2x *bp)
-{
+अटल अंतरभूत u16 bnx2x_ack_पूर्णांक(काष्ठा bnx2x *bp)
+अणु
 	barrier();
-	if (bp->common.int_block == INT_BLOCK_HC)
-		return bnx2x_hc_ack_int(bp);
-	else
-		return bnx2x_igu_ack_int(bp);
-}
+	अगर (bp->common.पूर्णांक_block == INT_BLOCK_HC)
+		वापस bnx2x_hc_ack_पूर्णांक(bp);
+	अन्यथा
+		वापस bnx2x_igu_ack_पूर्णांक(bp);
+पूर्ण
 
-static inline int bnx2x_has_tx_work_unload(struct bnx2x_fp_txdata *txdata)
-{
+अटल अंतरभूत पूर्णांक bnx2x_has_tx_work_unload(काष्ठा bnx2x_fp_txdata *txdata)
+अणु
 	/* Tell compiler that consumer and producer can change */
 	barrier();
-	return txdata->tx_pkt_prod != txdata->tx_pkt_cons;
-}
+	वापस txdata->tx_pkt_prod != txdata->tx_pkt_cons;
+पूर्ण
 
-static inline u16 bnx2x_tx_avail(struct bnx2x *bp,
-				 struct bnx2x_fp_txdata *txdata)
-{
+अटल अंतरभूत u16 bnx2x_tx_avail(काष्ठा bnx2x *bp,
+				 काष्ठा bnx2x_fp_txdata *txdata)
+अणु
 	s16 used;
 	u16 prod;
 	u16 cons;
@@ -743,189 +744,189 @@ static inline u16 bnx2x_tx_avail(struct bnx2x *bp,
 
 	used = SUB_S16(prod, cons);
 
-#ifdef BNX2X_STOP_ON_ERROR
+#अगर_घोषित BNX2X_STOP_ON_ERROR
 	WARN_ON(used < 0);
 	WARN_ON(used > txdata->tx_ring_size);
 	WARN_ON((txdata->tx_ring_size - used) > MAX_TX_AVAIL);
-#endif
+#पूर्ण_अगर
 
-	return (s16)(txdata->tx_ring_size) - used;
-}
+	वापस (s16)(txdata->tx_ring_size) - used;
+पूर्ण
 
-static inline int bnx2x_tx_queue_has_work(struct bnx2x_fp_txdata *txdata)
-{
+अटल अंतरभूत पूर्णांक bnx2x_tx_queue_has_work(काष्ठा bnx2x_fp_txdata *txdata)
+अणु
 	u16 hw_cons;
 
 	/* Tell compiler that status block fields can change */
 	barrier();
 	hw_cons = le16_to_cpu(*txdata->tx_cons_sb);
-	return hw_cons != txdata->tx_pkt_cons;
-}
+	वापस hw_cons != txdata->tx_pkt_cons;
+पूर्ण
 
-static inline bool bnx2x_has_tx_work(struct bnx2x_fastpath *fp)
-{
+अटल अंतरभूत bool bnx2x_has_tx_work(काष्ठा bnx2x_fastpath *fp)
+अणु
 	u8 cos;
-	for_each_cos_in_tx_queue(fp, cos)
-		if (bnx2x_tx_queue_has_work(fp->txdata_ptr[cos]))
-			return true;
-	return false;
-}
+	क्रम_each_cos_in_tx_queue(fp, cos)
+		अगर (bnx2x_tx_queue_has_work(fp->txdata_ptr[cos]))
+			वापस true;
+	वापस false;
+पूर्ण
 
-#define BNX2X_IS_CQE_COMPLETED(cqe_fp) (cqe_fp->marker == 0x0)
-#define BNX2X_SEED_CQE(cqe_fp) (cqe_fp->marker = 0xFFFFFFFF)
-static inline int bnx2x_has_rx_work(struct bnx2x_fastpath *fp)
-{
+#घोषणा BNX2X_IS_CQE_COMPLETED(cqe_fp) (cqe_fp->marker == 0x0)
+#घोषणा BNX2X_SEED_CQE(cqe_fp) (cqe_fp->marker = 0xFFFFFFFF)
+अटल अंतरभूत पूर्णांक bnx2x_has_rx_work(काष्ठा bnx2x_fastpath *fp)
+अणु
 	u16 cons;
-	union eth_rx_cqe *cqe;
-	struct eth_fast_path_rx_cqe *cqe_fp;
+	जोड़ eth_rx_cqe *cqe;
+	काष्ठा eth_fast_path_rx_cqe *cqe_fp;
 
 	cons = RCQ_BD(fp->rx_comp_cons);
 	cqe = &fp->rx_comp_ring[cons];
 	cqe_fp = &cqe->fast_path_cqe;
-	return BNX2X_IS_CQE_COMPLETED(cqe_fp);
-}
+	वापस BNX2X_IS_CQE_COMPLETED(cqe_fp);
+पूर्ण
 
 /**
- * bnx2x_tx_disable - disables tx from stack point of view
+ * bnx2x_tx_disable - disables tx from stack poपूर्णांक of view
  *
  * @bp:		driver handle
  */
-static inline void bnx2x_tx_disable(struct bnx2x *bp)
-{
-	netif_tx_disable(bp->dev);
-	netif_carrier_off(bp->dev);
-}
+अटल अंतरभूत व्योम bnx2x_tx_disable(काष्ठा bnx2x *bp)
+अणु
+	netअगर_tx_disable(bp->dev);
+	netअगर_carrier_off(bp->dev);
+पूर्ण
 
-static inline void bnx2x_free_rx_sge(struct bnx2x *bp,
-				     struct bnx2x_fastpath *fp, u16 index)
-{
-	struct sw_rx_page *sw_buf = &fp->rx_page_ring[index];
-	struct page *page = sw_buf->page;
-	struct eth_rx_sge *sge = &fp->rx_sge_ring[index];
+अटल अंतरभूत व्योम bnx2x_मुक्त_rx_sge(काष्ठा bnx2x *bp,
+				     काष्ठा bnx2x_fastpath *fp, u16 index)
+अणु
+	काष्ठा sw_rx_page *sw_buf = &fp->rx_page_ring[index];
+	काष्ठा page *page = sw_buf->page;
+	काष्ठा eth_rx_sge *sge = &fp->rx_sge_ring[index];
 
 	/* Skip "next page" elements */
-	if (!page)
-		return;
+	अगर (!page)
+		वापस;
 
 	/* Since many fragments can share the same page, make sure to
-	 * only unmap and free the page once.
+	 * only unmap and मुक्त the page once.
 	 */
 	dma_unmap_page(&bp->pdev->dev, dma_unmap_addr(sw_buf, mapping),
 		       SGE_PAGE_SIZE, DMA_FROM_DEVICE);
 
 	put_page(page);
 
-	sw_buf->page = NULL;
+	sw_buf->page = शून्य;
 	sge->addr_hi = 0;
 	sge->addr_lo = 0;
-}
+पूर्ण
 
-static inline void bnx2x_del_all_napi_cnic(struct bnx2x *bp)
-{
-	int i;
+अटल अंतरभूत व्योम bnx2x_del_all_napi_cnic(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक i;
 
-	for_each_rx_queue_cnic(bp, i) {
-		__netif_napi_del(&bnx2x_fp(bp, i, napi));
-	}
+	क्रम_each_rx_queue_cnic(bp, i) अणु
+		__netअगर_napi_del(&bnx2x_fp(bp, i, napi));
+	पूर्ण
 	synchronize_net();
-}
+पूर्ण
 
-static inline void bnx2x_del_all_napi(struct bnx2x *bp)
-{
-	int i;
+अटल अंतरभूत व्योम bnx2x_del_all_napi(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक i;
 
-	for_each_eth_queue(bp, i) {
-		__netif_napi_del(&bnx2x_fp(bp, i, napi));
-	}
+	क्रम_each_eth_queue(bp, i) अणु
+		__netअगर_napi_del(&bnx2x_fp(bp, i, napi));
+	पूर्ण
 	synchronize_net();
-}
+पूर्ण
 
-int bnx2x_set_int_mode(struct bnx2x *bp);
+पूर्णांक bnx2x_set_पूर्णांक_mode(काष्ठा bnx2x *bp);
 
-static inline void bnx2x_disable_msi(struct bnx2x *bp)
-{
-	if (bp->flags & USING_MSIX_FLAG) {
+अटल अंतरभूत व्योम bnx2x_disable_msi(काष्ठा bnx2x *bp)
+अणु
+	अगर (bp->flags & USING_MSIX_FLAG) अणु
 		pci_disable_msix(bp->pdev);
 		bp->flags &= ~(USING_MSIX_FLAG | USING_SINGLE_MSIX_FLAG);
-	} else if (bp->flags & USING_MSI_FLAG) {
+	पूर्ण अन्यथा अगर (bp->flags & USING_MSI_FLAG) अणु
 		pci_disable_msi(bp->pdev);
 		bp->flags &= ~USING_MSI_FLAG;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void bnx2x_clear_sge_mask_next_elems(struct bnx2x_fastpath *fp)
-{
-	int i, j;
+अटल अंतरभूत व्योम bnx2x_clear_sge_mask_next_elems(काष्ठा bnx2x_fastpath *fp)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 1; i <= NUM_RX_SGE_PAGES; i++) {
-		int idx = RX_SGE_CNT * i - 1;
+	क्रम (i = 1; i <= NUM_RX_SGE_PAGES; i++) अणु
+		पूर्णांक idx = RX_SGE_CNT * i - 1;
 
-		for (j = 0; j < 2; j++) {
+		क्रम (j = 0; j < 2; j++) अणु
 			BIT_VEC64_CLEAR_BIT(fp->sge_mask, idx);
 			idx--;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline void bnx2x_init_sge_ring_bit_mask(struct bnx2x_fastpath *fp)
-{
+अटल अंतरभूत व्योम bnx2x_init_sge_ring_bit_mask(काष्ठा bnx2x_fastpath *fp)
+अणु
 	/* Set the mask to all 1-s: it's faster to compare to 0 than to 0xf-s */
-	memset(fp->sge_mask, 0xff, sizeof(fp->sge_mask));
+	स_रखो(fp->sge_mask, 0xff, माप(fp->sge_mask));
 
 	/* Clear the two last indices in the page to 1:
 	   these are the indices that correspond to the "next" element,
-	   hence will never be indicated and should be removed from
+	   hence will never be indicated and should be हटाओd from
 	   the calculations. */
 	bnx2x_clear_sge_mask_next_elems(fp);
-}
+पूर्ण
 
 /* note that we are not allocating a new buffer,
  * we are just moving one from cons to prod
  * we are not creating a new mapping,
- * so there is no need to check for dma_mapping_error().
+ * so there is no need to check क्रम dma_mapping_error().
  */
-static inline void bnx2x_reuse_rx_data(struct bnx2x_fastpath *fp,
+अटल अंतरभूत व्योम bnx2x_reuse_rx_data(काष्ठा bnx2x_fastpath *fp,
 				      u16 cons, u16 prod)
-{
-	struct sw_rx_bd *cons_rx_buf = &fp->rx_buf_ring[cons];
-	struct sw_rx_bd *prod_rx_buf = &fp->rx_buf_ring[prod];
-	struct eth_rx_bd *cons_bd = &fp->rx_desc_ring[cons];
-	struct eth_rx_bd *prod_bd = &fp->rx_desc_ring[prod];
+अणु
+	काष्ठा sw_rx_bd *cons_rx_buf = &fp->rx_buf_ring[cons];
+	काष्ठा sw_rx_bd *prod_rx_buf = &fp->rx_buf_ring[prod];
+	काष्ठा eth_rx_bd *cons_bd = &fp->rx_desc_ring[cons];
+	काष्ठा eth_rx_bd *prod_bd = &fp->rx_desc_ring[prod];
 
 	dma_unmap_addr_set(prod_rx_buf, mapping,
 			   dma_unmap_addr(cons_rx_buf, mapping));
 	prod_rx_buf->data = cons_rx_buf->data;
 	*prod_bd = *cons_bd;
-}
+पूर्ण
 
 /************************* Init ******************************************/
 
-/* returns func by VN for current port */
-static inline int func_by_vn(struct bnx2x *bp, int vn)
-{
-	return 2 * vn + BP_PORT(bp);
-}
+/* वापसs func by VN क्रम current port */
+अटल अंतरभूत पूर्णांक func_by_vn(काष्ठा bnx2x *bp, पूर्णांक vn)
+अणु
+	वापस 2 * vn + BP_PORT(bp);
+पूर्ण
 
-static inline int bnx2x_config_rss_eth(struct bnx2x *bp, bool config_hash)
-{
-	return bnx2x_rss(bp, &bp->rss_conf_obj, config_hash, true);
-}
+अटल अंतरभूत पूर्णांक bnx2x_config_rss_eth(काष्ठा bnx2x *bp, bool config_hash)
+अणु
+	वापस bnx2x_rss(bp, &bp->rss_conf_obj, config_hash, true);
+पूर्ण
 
 /**
  * bnx2x_func_start - init function
  *
  * @bp:		driver handle
  *
- * Must be called before sending CLIENT_SETUP for the first client.
+ * Must be called beक्रमe sending CLIENT_SETUP क्रम the first client.
  */
-static inline int bnx2x_func_start(struct bnx2x *bp)
-{
-	struct bnx2x_func_state_params func_params = {NULL};
-	struct bnx2x_func_start_params *start_params =
+अटल अंतरभूत पूर्णांक bnx2x_func_start(काष्ठा bnx2x *bp)
+अणु
+	काष्ठा bnx2x_func_state_params func_params = अणुशून्यपूर्ण;
+	काष्ठा bnx2x_func_start_params *start_params =
 		&func_params.params.start;
 	u16 port;
 
-	/* Prepare parameters for function state transitions */
+	/* Prepare parameters क्रम function state transitions */
 	__set_bit(RAMROD_COMP_WAIT, &func_params.ramrod_flags);
 
 	func_params.f_obj = &bp->func_obj;
@@ -935,8 +936,8 @@ static inline int bnx2x_func_start(struct bnx2x *bp)
 	start_params->mf_mode = bp->mf_mode;
 	start_params->sd_vlan_tag = bp->mf_ov;
 
-	/* Configure Ethertype for BD mode */
-	if (IS_MF_BD(bp)) {
+	/* Configure Ethertype क्रम BD mode */
+	अगर (IS_MF_BD(bp)) अणु
 		DP(NETIF_MSG_IFUP, "Configuring ethertype 0x88a8 for BD\n");
 		start_params->sd_vlan_eth_type = ETH_P_8021AD;
 		REG_WR(bp, PRS_REG_VLAN_TYPE_0, ETH_P_8021AD);
@@ -944,7 +945,7 @@ static inline int bnx2x_func_start(struct bnx2x *bp)
 		REG_WR(bp, NIG_REG_LLH_E1HOV_TYPE_1, ETH_P_8021AD);
 
 		bnx2x_get_c2s_mapping(bp, start_params->c2s_pri,
-				      &start_params->c2s_pri_default);
+				      &start_params->c2s_pri_शेष);
 		start_params->c2s_pri_valid = 1;
 
 		DP(NETIF_MSG_IFUP,
@@ -953,83 +954,83 @@ static inline int bnx2x_func_start(struct bnx2x *bp)
 		   start_params->c2s_pri[2], start_params->c2s_pri[3],
 		   start_params->c2s_pri[4], start_params->c2s_pri[5],
 		   start_params->c2s_pri[6], start_params->c2s_pri[7],
-		   start_params->c2s_pri_default);
-	}
+		   start_params->c2s_pri_शेष);
+	पूर्ण
 
-	if (CHIP_IS_E2(bp) || CHIP_IS_E3(bp))
+	अगर (CHIP_IS_E2(bp) || CHIP_IS_E3(bp))
 		start_params->network_cos_mode = STATIC_COS;
-	else /* CHIP_IS_E1X */
+	अन्यथा /* CHIP_IS_E1X */
 		start_params->network_cos_mode = FW_WRR;
-	if (bp->udp_tunnel_ports[BNX2X_UDP_PORT_VXLAN]) {
+	अगर (bp->udp_tunnel_ports[BNX2X_UDP_PORT_VXLAN]) अणु
 		port = bp->udp_tunnel_ports[BNX2X_UDP_PORT_VXLAN];
 		start_params->vxlan_dst_port = port;
-	}
-	if (bp->udp_tunnel_ports[BNX2X_UDP_PORT_GENEVE]) {
+	पूर्ण
+	अगर (bp->udp_tunnel_ports[BNX2X_UDP_PORT_GENEVE]) अणु
 		port = bp->udp_tunnel_ports[BNX2X_UDP_PORT_GENEVE];
 		start_params->geneve_dst_port = port;
-	}
+	पूर्ण
 
 	start_params->inner_rss = 1;
 
-	if (IS_MF_UFP(bp) && BNX2X_IS_MF_SD_PROTOCOL_FCOE(bp)) {
+	अगर (IS_MF_UFP(bp) && BNX2X_IS_MF_SD_PROTOCOL_FCOE(bp)) अणु
 		start_params->class_fail_ethtype = ETH_P_FIP;
 		start_params->class_fail = 1;
 		start_params->no_added_tags = 1;
-	}
+	पूर्ण
 
-	return bnx2x_func_state_change(bp, &func_params);
-}
+	वापस bnx2x_func_state_change(bp, &func_params);
+पूर्ण
 
 /**
- * bnx2x_set_fw_mac_addr - fill in a MAC address in FW format
+ * bnx2x_set_fw_mac_addr - fill in a MAC address in FW क्रमmat
  *
- * @fw_hi:	pointer to upper part
- * @fw_mid:	pointer to middle part
- * @fw_lo:	pointer to lower part
- * @mac:	pointer to MAC address
+ * @fw_hi:	poपूर्णांकer to upper part
+ * @fw_mid:	poपूर्णांकer to middle part
+ * @fw_lo:	poपूर्णांकer to lower part
+ * @mac:	poपूर्णांकer to MAC address
  */
-static inline void bnx2x_set_fw_mac_addr(__le16 *fw_hi, __le16 *fw_mid,
+अटल अंतरभूत व्योम bnx2x_set_fw_mac_addr(__le16 *fw_hi, __le16 *fw_mid,
 					 __le16 *fw_lo, u8 *mac)
-{
+अणु
 	((u8 *)fw_hi)[0]  = mac[1];
 	((u8 *)fw_hi)[1]  = mac[0];
 	((u8 *)fw_mid)[0] = mac[3];
 	((u8 *)fw_mid)[1] = mac[2];
 	((u8 *)fw_lo)[0]  = mac[5];
 	((u8 *)fw_lo)[1]  = mac[4];
-}
+पूर्ण
 
-static inline void bnx2x_free_rx_mem_pool(struct bnx2x *bp,
-					  struct bnx2x_alloc_pool *pool)
-{
-	if (!pool->page)
-		return;
+अटल अंतरभूत व्योम bnx2x_मुक्त_rx_mem_pool(काष्ठा bnx2x *bp,
+					  काष्ठा bnx2x_alloc_pool *pool)
+अणु
+	अगर (!pool->page)
+		वापस;
 
 	put_page(pool->page);
 
-	pool->page = NULL;
-}
+	pool->page = शून्य;
+पूर्ण
 
-static inline void bnx2x_free_rx_sge_range(struct bnx2x *bp,
-					   struct bnx2x_fastpath *fp, int last)
-{
-	int i;
+अटल अंतरभूत व्योम bnx2x_मुक्त_rx_sge_range(काष्ठा bnx2x *bp,
+					   काष्ठा bnx2x_fastpath *fp, पूर्णांक last)
+अणु
+	पूर्णांक i;
 
-	if (fp->mode == TPA_MODE_DISABLED)
-		return;
+	अगर (fp->mode == TPA_MODE_DISABLED)
+		वापस;
 
-	for (i = 0; i < last; i++)
-		bnx2x_free_rx_sge(bp, fp, i);
+	क्रम (i = 0; i < last; i++)
+		bnx2x_मुक्त_rx_sge(bp, fp, i);
 
-	bnx2x_free_rx_mem_pool(bp, &fp->page_pool);
-}
+	bnx2x_मुक्त_rx_mem_pool(bp, &fp->page_pool);
+पूर्ण
 
-static inline void bnx2x_set_next_page_rx_bd(struct bnx2x_fastpath *fp)
-{
-	int i;
+अटल अंतरभूत व्योम bnx2x_set_next_page_rx_bd(काष्ठा bnx2x_fastpath *fp)
+अणु
+	पूर्णांक i;
 
-	for (i = 1; i <= NUM_RX_RINGS; i++) {
-		struct eth_rx_bd *rx_bd;
+	क्रम (i = 1; i <= NUM_RX_RINGS; i++) अणु
+		काष्ठा eth_rx_bd *rx_bd;
 
 		rx_bd = &fp->rx_desc_ring[RX_DESC_CNT * i - 2];
 		rx_bd->addr_hi =
@@ -1038,30 +1039,30 @@ static inline void bnx2x_set_next_page_rx_bd(struct bnx2x_fastpath *fp)
 		rx_bd->addr_lo =
 			cpu_to_le32(U64_LO(fp->rx_desc_mapping +
 				    BCM_PAGE_SIZE*(i % NUM_RX_RINGS)));
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Statistics ID are global per chip/path, while Client IDs for E1x are per
+/* Statistics ID are global per chip/path, जबतक Client IDs क्रम E1x are per
  * port.
  */
-static inline u8 bnx2x_stats_id(struct bnx2x_fastpath *fp)
-{
-	struct bnx2x *bp = fp->bp;
-	if (!CHIP_IS_E1x(bp)) {
-		/* there are special statistics counters for FCoE 136..140 */
-		if (IS_FCOE_FP(fp))
-			return bp->cnic_base_cl_id + (bp->pf_num >> 1);
-		return fp->cl_id;
-	}
-	return fp->cl_id + BP_PORT(bp) * FP_SB_MAX_E1x;
-}
+अटल अंतरभूत u8 bnx2x_stats_id(काष्ठा bnx2x_fastpath *fp)
+अणु
+	काष्ठा bnx2x *bp = fp->bp;
+	अगर (!CHIP_IS_E1x(bp)) अणु
+		/* there are special statistics counters क्रम FCoE 136..140 */
+		अगर (IS_FCOE_FP(fp))
+			वापस bp->cnic_base_cl_id + (bp->pf_num >> 1);
+		वापस fp->cl_id;
+	पूर्ण
+	वापस fp->cl_id + BP_PORT(bp) * FP_SB_MAX_E1x;
+पूर्ण
 
-static inline void bnx2x_init_vlan_mac_fp_objs(struct bnx2x_fastpath *fp,
+अटल अंतरभूत व्योम bnx2x_init_vlan_mac_fp_objs(काष्ठा bnx2x_fastpath *fp,
 					       bnx2x_obj_type obj_type)
-{
-	struct bnx2x *bp = fp->bp;
+अणु
+	काष्ठा bnx2x *bp = fp->bp;
 
-	/* Configure classification DBs */
+	/* Configure classअगरication DBs */
 	bnx2x_init_mac_obj(bp, &bnx2x_sp_obj(bp, fp).mac_obj, fp->cl_id,
 			   fp->cid, BP_FUNC(bp), bnx2x_sp(bp, mac_rdata),
 			   bnx2x_sp_mapping(bp, mac_rdata),
@@ -1069,7 +1070,7 @@ static inline void bnx2x_init_vlan_mac_fp_objs(struct bnx2x_fastpath *fp,
 			   &bp->sp_state, obj_type,
 			   &bp->macs_pool);
 
-	if (!CHIP_IS_E1x(bp))
+	अगर (!CHIP_IS_E1x(bp))
 		bnx2x_init_vlan_obj(bp, &bnx2x_sp_obj(bp, fp).vlan_obj,
 				    fp->cl_id, fp->cid, BP_FUNC(bp),
 				    bnx2x_sp(bp, vlan_rdata),
@@ -1077,7 +1078,7 @@ static inline void bnx2x_init_vlan_mac_fp_objs(struct bnx2x_fastpath *fp,
 				    BNX2X_FILTER_VLAN_PENDING,
 				    &bp->sp_state, obj_type,
 				    &bp->vlans_pool);
-}
+पूर्ण
 
 /**
  * bnx2x_get_path_func_num - get number of active functions
@@ -1087,40 +1088,40 @@ static inline void bnx2x_init_vlan_mac_fp_objs(struct bnx2x_fastpath *fp,
  * Calculates the number of active (not hidden) functions on the
  * current path.
  */
-static inline u8 bnx2x_get_path_func_num(struct bnx2x *bp)
-{
+अटल अंतरभूत u8 bnx2x_get_path_func_num(काष्ठा bnx2x *bp)
+अणु
 	u8 func_num = 0, i;
 
 	/* 57710 has only one function per-port */
-	if (CHIP_IS_E1(bp))
-		return 1;
+	अगर (CHIP_IS_E1(bp))
+		वापस 1;
 
 	/* Calculate a number of functions enabled on the current
 	 * PATH/PORT.
 	 */
-	if (CHIP_REV_IS_SLOW(bp)) {
-		if (IS_MF(bp))
+	अगर (CHIP_REV_IS_SLOW(bp)) अणु
+		अगर (IS_MF(bp))
 			func_num = 4;
-		else
+		अन्यथा
 			func_num = 2;
-	} else {
-		for (i = 0; i < E1H_FUNC_MAX / 2; i++) {
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < E1H_FUNC_MAX / 2; i++) अणु
 			u32 func_config =
 				MF_CFG_RD(bp,
 					  func_mf_config[BP_PATH(bp) + 2 * i].
 					  config);
 			func_num +=
 				((func_config & FUNC_MF_CFG_FUNC_HIDE) ? 0 : 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	WARN_ON(!func_num);
 
-	return func_num;
-}
+	वापस func_num;
+पूर्ण
 
-static inline void bnx2x_init_bp_objs(struct bnx2x *bp)
-{
+अटल अंतरभूत व्योम bnx2x_init_bp_objs(काष्ठा bnx2x *bp)
+अणु
 	/* RX_MODE controlling object */
 	bnx2x_init_rx_mode_obj(bp, &bp->rx_mode_obj);
 
@@ -1148,21 +1149,21 @@ static inline void bnx2x_init_bp_objs(struct bnx2x *bp)
 				  BNX2X_OBJ_TYPE_RX);
 
 	bp->vlan_credit = PF_VLAN_CREDIT_E2(bp, bnx2x_get_path_func_num(bp));
-}
+पूर्ण
 
-static inline u8 bnx2x_fp_qzone_id(struct bnx2x_fastpath *fp)
-{
-	if (CHIP_IS_E1x(fp->bp))
-		return fp->cl_id + BP_PORT(fp->bp) * ETH_MAX_RX_CLIENTS_E1H;
-	else
-		return fp->cl_id;
-}
+अटल अंतरभूत u8 bnx2x_fp_qzone_id(काष्ठा bnx2x_fastpath *fp)
+अणु
+	अगर (CHIP_IS_E1x(fp->bp))
+		वापस fp->cl_id + BP_PORT(fp->bp) * ETH_MAX_RX_CLIENTS_E1H;
+	अन्यथा
+		वापस fp->cl_id;
+पूर्ण
 
-static inline void bnx2x_init_txdata(struct bnx2x *bp,
-				     struct bnx2x_fp_txdata *txdata, u32 cid,
-				     int txq_index, __le16 *tx_cons_sb,
-				     struct bnx2x_fastpath *fp)
-{
+अटल अंतरभूत व्योम bnx2x_init_txdata(काष्ठा bnx2x *bp,
+				     काष्ठा bnx2x_fp_txdata *txdata, u32 cid,
+				     पूर्णांक txq_index, __le16 *tx_cons_sb,
+				     काष्ठा bnx2x_fastpath *fp)
+अणु
 	txdata->cid = cid;
 	txdata->txq_index = txq_index;
 	txdata->tx_cons_sb = tx_cons_sb;
@@ -1171,94 +1172,94 @@ static inline void bnx2x_init_txdata(struct bnx2x *bp,
 
 	DP(NETIF_MSG_IFUP, "created tx data cid %d, txq %d\n",
 	   txdata->cid, txdata->txq_index);
-}
+पूर्ण
 
-static inline u8 bnx2x_cnic_eth_cl_id(struct bnx2x *bp, u8 cl_idx)
-{
-	return bp->cnic_base_cl_id + cl_idx +
+अटल अंतरभूत u8 bnx2x_cnic_eth_cl_id(काष्ठा bnx2x *bp, u8 cl_idx)
+अणु
+	वापस bp->cnic_base_cl_id + cl_idx +
 		(bp->pf_num >> 1) * BNX2X_MAX_CNIC_ETH_CL_ID_IDX;
-}
+पूर्ण
 
-static inline u8 bnx2x_cnic_fw_sb_id(struct bnx2x *bp)
-{
-	/* the 'first' id is allocated for the cnic */
-	return bp->base_fw_ndsb;
-}
+अटल अंतरभूत u8 bnx2x_cnic_fw_sb_id(काष्ठा bnx2x *bp)
+अणु
+	/* the 'first' id is allocated क्रम the cnic */
+	वापस bp->base_fw_ndsb;
+पूर्ण
 
-static inline u8 bnx2x_cnic_igu_sb_id(struct bnx2x *bp)
-{
-	return bp->igu_base_sb;
-}
+अटल अंतरभूत u8 bnx2x_cnic_igu_sb_id(काष्ठा bnx2x *bp)
+अणु
+	वापस bp->igu_base_sb;
+पूर्ण
 
-static inline int bnx2x_clean_tx_queue(struct bnx2x *bp,
-				       struct bnx2x_fp_txdata *txdata)
-{
-	int cnt = 1000;
+अटल अंतरभूत पूर्णांक bnx2x_clean_tx_queue(काष्ठा bnx2x *bp,
+				       काष्ठा bnx2x_fp_txdata *txdata)
+अणु
+	पूर्णांक cnt = 1000;
 
-	while (bnx2x_has_tx_work_unload(txdata)) {
-		if (!cnt) {
+	जबतक (bnx2x_has_tx_work_unload(txdata)) अणु
+		अगर (!cnt) अणु
 			BNX2X_ERR("timeout waiting for queue[%d]: txdata->tx_pkt_prod(%d) != txdata->tx_pkt_cons(%d)\n",
 				  txdata->txq_index, txdata->tx_pkt_prod,
 				  txdata->tx_pkt_cons);
-#ifdef BNX2X_STOP_ON_ERROR
+#अगर_घोषित BNX2X_STOP_ON_ERROR
 			bnx2x_panic();
-			return -EBUSY;
-#else
-			break;
-#endif
-		}
+			वापस -EBUSY;
+#अन्यथा
+			अवरोध;
+#पूर्ण_अगर
+		पूर्ण
 		cnt--;
 		usleep_range(1000, 2000);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bnx2x_get_link_cfg_idx(struct bnx2x *bp);
+पूर्णांक bnx2x_get_link_cfg_idx(काष्ठा bnx2x *bp);
 
-static inline void __storm_memset_struct(struct bnx2x *bp,
-					 u32 addr, size_t size, u32 *data)
-{
-	int i;
-	for (i = 0; i < size/4; i++)
+अटल अंतरभूत व्योम __storm_स_रखो_काष्ठा(काष्ठा bnx2x *bp,
+					 u32 addr, माप_प्रकार size, u32 *data)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < size/4; i++)
 		REG_WR(bp, addr + (i * 4), data[i]);
-}
+पूर्ण
 
 /**
- * bnx2x_wait_sp_comp - wait for the outstanding SP commands.
+ * bnx2x_रुको_sp_comp - रुको क्रम the outstanding SP commands.
  *
  * @bp:		driver handle
  * @mask:	bits that need to be cleared
  */
-static inline bool bnx2x_wait_sp_comp(struct bnx2x *bp, unsigned long mask)
-{
-	int tout = 5000; /* Wait for 5 secs tops */
+अटल अंतरभूत bool bnx2x_रुको_sp_comp(काष्ठा bnx2x *bp, अचिन्हित दीर्घ mask)
+अणु
+	पूर्णांक tout = 5000; /* Wait क्रम 5 secs tops */
 
-	while (tout--) {
+	जबतक (tout--) अणु
 		smp_mb();
-		netif_addr_lock_bh(bp->dev);
-		if (!(bp->sp_state & mask)) {
-			netif_addr_unlock_bh(bp->dev);
-			return true;
-		}
-		netif_addr_unlock_bh(bp->dev);
+		netअगर_addr_lock_bh(bp->dev);
+		अगर (!(bp->sp_state & mask)) अणु
+			netअगर_addr_unlock_bh(bp->dev);
+			वापस true;
+		पूर्ण
+		netअगर_addr_unlock_bh(bp->dev);
 
 		usleep_range(1000, 2000);
-	}
+	पूर्ण
 
 	smp_mb();
 
-	netif_addr_lock_bh(bp->dev);
-	if (bp->sp_state & mask) {
+	netअगर_addr_lock_bh(bp->dev);
+	अगर (bp->sp_state & mask) अणु
 		BNX2X_ERR("Filtering completion timed out. sp_state 0x%lx, mask 0x%lx\n",
 			  bp->sp_state, mask);
-		netif_addr_unlock_bh(bp->dev);
-		return false;
-	}
-	netif_addr_unlock_bh(bp->dev);
+		netअगर_addr_unlock_bh(bp->dev);
+		वापस false;
+	पूर्ण
+	netअगर_addr_unlock_bh(bp->dev);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * bnx2x_set_ctx_validation - set CDU context validation values
@@ -1267,13 +1268,13 @@ static inline bool bnx2x_wait_sp_comp(struct bnx2x *bp, unsigned long mask)
  * @cxt:	context of the connection on the host memory
  * @cid:	SW CID of the connection to be configured
  */
-void bnx2x_set_ctx_validation(struct bnx2x *bp, struct eth_context *cxt,
+व्योम bnx2x_set_ctx_validation(काष्ठा bnx2x *bp, काष्ठा eth_context *cxt,
 			      u32 cid);
 
-void bnx2x_update_coalesce_sb_index(struct bnx2x *bp, u8 fw_sb_id,
+व्योम bnx2x_update_coalesce_sb_index(काष्ठा bnx2x *bp, u8 fw_sb_id,
 				    u8 sb_index, u8 disable, u16 usec);
-void bnx2x_acquire_phy_lock(struct bnx2x *bp);
-void bnx2x_release_phy_lock(struct bnx2x *bp);
+व्योम bnx2x_acquire_phy_lock(काष्ठा bnx2x *bp);
+व्योम bnx2x_release_phy_lock(काष्ठा bnx2x *bp);
 
 /**
  * bnx2x_extract_max_cfg - extract MAX BW part from MF configuration.
@@ -1282,30 +1283,30 @@ void bnx2x_release_phy_lock(struct bnx2x *bp);
  * @mf_cfg:	MF configuration
  *
  */
-static inline u16 bnx2x_extract_max_cfg(struct bnx2x *bp, u32 mf_cfg)
-{
+अटल अंतरभूत u16 bnx2x_extract_max_cfg(काष्ठा bnx2x *bp, u32 mf_cfg)
+अणु
 	u16 max_cfg = (mf_cfg & FUNC_MF_CFG_MAX_BW_MASK) >>
 			      FUNC_MF_CFG_MAX_BW_SHIFT;
-	if (!max_cfg) {
+	अगर (!max_cfg) अणु
 		DP(NETIF_MSG_IFUP | BNX2X_MSG_ETHTOOL,
 		   "Max BW configured to 0 - using 100 instead\n");
 		max_cfg = 100;
-	}
-	return max_cfg;
-}
+	पूर्ण
+	वापस max_cfg;
+पूर्ण
 
-/* checks if HW supports GRO for given MTU */
-static inline bool bnx2x_mtu_allows_gro(int mtu)
-{
+/* checks अगर HW supports GRO क्रम given MTU */
+अटल अंतरभूत bool bnx2x_mtu_allows_gro(पूर्णांक mtu)
+अणु
 	/* gro frags per page */
-	int fpp = SGE_PAGE_SIZE / (mtu - ETH_MAX_TPA_HEADER_SIZE);
+	पूर्णांक fpp = SGE_PAGE_SIZE / (mtu - ETH_MAX_TPA_HEADER_SIZE);
 
 	/*
 	 * 1. Number of frags should not grow above MAX_SKB_FRAGS
 	 * 2. Frag must fit the page
 	 */
-	return mtu <= SGE_PAGE_SIZE && (U_ETH_SGL_SIZE * fpp) <= MAX_SKB_FRAGS;
-}
+	वापस mtu <= SGE_PAGE_SIZE && (U_ETH_SGL_SIZE * fpp) <= MAX_SKB_FRAGS;
+पूर्ण
 
 /**
  * bnx2x_get_iscsi_info - update iSCSI params according to licensing info.
@@ -1313,29 +1314,29 @@ static inline bool bnx2x_mtu_allows_gro(int mtu)
  * @bp:		driver handle
  *
  */
-void bnx2x_get_iscsi_info(struct bnx2x *bp);
+व्योम bnx2x_get_iscsi_info(काष्ठा bnx2x *bp);
 
 /**
- * bnx2x_link_sync_notify - send notification to other functions.
+ * bnx2x_link_sync_notअगरy - send notअगरication to other functions.
  *
  * @bp:		driver handle
  *
  */
-static inline void bnx2x_link_sync_notify(struct bnx2x *bp)
-{
-	int func;
-	int vn;
+अटल अंतरभूत व्योम bnx2x_link_sync_notअगरy(काष्ठा bnx2x *bp)
+अणु
+	पूर्णांक func;
+	पूर्णांक vn;
 
 	/* Set the attention towards other drivers on the same port */
-	for (vn = VN_0; vn < BP_MAX_VN_NUM(bp); vn++) {
-		if (vn == BP_VN(bp))
-			continue;
+	क्रम (vn = VN_0; vn < BP_MAX_VN_NUM(bp); vn++) अणु
+		अगर (vn == BP_VN(bp))
+			जारी;
 
 		func = func_by_vn(bp, vn);
 		REG_WR(bp, MISC_REG_AEU_GENERAL_ATTN_0 +
 		       (LINK_SYNC_ATTENTION_BIT_FUNC_0 + func)*4, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * bnx2x_update_drv_flags - update flags in shmem
@@ -1345,23 +1346,23 @@ static inline void bnx2x_link_sync_notify(struct bnx2x *bp)
  * @set:	set or clear
  *
  */
-static inline void bnx2x_update_drv_flags(struct bnx2x *bp, u32 flags, u32 set)
-{
-	if (SHMEM2_HAS(bp, drv_flags)) {
+अटल अंतरभूत व्योम bnx2x_update_drv_flags(काष्ठा bnx2x *bp, u32 flags, u32 set)
+अणु
+	अगर (SHMEM2_HAS(bp, drv_flags)) अणु
 		u32 drv_flags;
 		bnx2x_acquire_hw_lock(bp, HW_LOCK_RESOURCE_DRV_FLAGS);
 		drv_flags = SHMEM2_RD(bp, drv_flags);
 
-		if (set)
+		अगर (set)
 			SET_FLAGS(drv_flags, flags);
-		else
+		अन्यथा
 			RESET_FLAGS(drv_flags, flags);
 
 		SHMEM2_WR(bp, drv_flags, drv_flags);
 		DP(NETIF_MSG_IFUP, "drv_flags 0x%08x\n", drv_flags);
 		bnx2x_release_hw_lock(bp, HW_LOCK_RESOURCE_DRV_FLAGS);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 
@@ -1369,35 +1370,35 @@ static inline void bnx2x_update_drv_flags(struct bnx2x *bp, u32 flags, u32 set)
  * bnx2x_fill_fw_str - Fill buffer with FW version string
  *
  * @bp:        driver handle
- * @buf:       character buffer to fill with the fw name
+ * @buf:       अक्षरacter buffer to fill with the fw name
  * @buf_len:   length of the above buffer
  *
  */
-void bnx2x_fill_fw_str(struct bnx2x *bp, char *buf, size_t buf_len);
+व्योम bnx2x_fill_fw_str(काष्ठा bnx2x *bp, अक्षर *buf, माप_प्रकार buf_len);
 
-int bnx2x_drain_tx_queues(struct bnx2x *bp);
-void bnx2x_squeeze_objects(struct bnx2x *bp);
+पूर्णांक bnx2x_drain_tx_queues(काष्ठा bnx2x *bp);
+व्योम bnx2x_squeeze_objects(काष्ठा bnx2x *bp);
 
-void bnx2x_schedule_sp_rtnl(struct bnx2x*, enum sp_rtnl_flag,
+व्योम bnx2x_schedule_sp_rtnl(काष्ठा bnx2x*, क्रमागत sp_rtnl_flag,
 			    u32 verbose);
 
 /**
- * bnx2x_set_os_driver_state - write driver state for management FW usage
+ * bnx2x_set_os_driver_state - ग_लिखो driver state क्रम management FW usage
  *
  * @bp:		driver handle
  * @state:	OS_DRIVER_STATE_* value reflecting current driver state
  */
-void bnx2x_set_os_driver_state(struct bnx2x *bp, u32 state);
+व्योम bnx2x_set_os_driver_state(काष्ठा bnx2x *bp, u32 state);
 
 /**
- * bnx2x_nvram_read - reads data from nvram [might sleep]
+ * bnx2x_nvram_पढ़ो - पढ़ोs data from nvram [might sleep]
  *
  * @bp:		driver handle
  * @offset:	byte offset in nvram
- * @ret_buf:	pointer to buffer where data is to be stored
+ * @ret_buf:	poपूर्णांकer to buffer where data is to be stored
  * @buf_size:   Length of 'ret_buf' in bytes
  */
-int bnx2x_nvram_read(struct bnx2x *bp, u32 offset, u8 *ret_buf,
-		     int buf_size);
+पूर्णांक bnx2x_nvram_पढ़ो(काष्ठा bnx2x *bp, u32 offset, u8 *ret_buf,
+		     पूर्णांक buf_size);
 
-#endif /* BNX2X_CMN_H */
+#पूर्ण_अगर /* BNX2X_CMN_H */

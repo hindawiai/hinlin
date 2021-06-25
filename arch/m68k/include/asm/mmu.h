@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MMU_H
-#define __MMU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MMU_H
+#घोषणा __MMU_H
 
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 /* Default "unsigned long" context */
-typedef unsigned long mm_context_t;
-#else
-typedef struct {
-	unsigned long		end_brk;
-} mm_context_t;
-#endif
+प्रकार अचिन्हित दीर्घ mm_context_t;
+#अन्यथा
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ		end_brk;
+पूर्ण mm_context_t;
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,539 +1,540 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Freescale PowerQUICC Ethernet Driver -- MIIM bus implementation
- * Provides Bus interface for MIIM regs
+ * Provides Bus पूर्णांकerface क्रम MIIM regs
  *
- * Author: Andy Fleming <afleming@freescale.com>
- * Modifier: Sandeep Gopalpet <sandeep.kumar@freescale.com>
+ * Author: Andy Fleming <afleming@मुक्तscale.com>
+ * Modअगरier: Sandeep Gopalpet <sandeep.kumar@मुक्तscale.com>
  *
  * Copyright 2002-2004, 2008-2009 Freescale Semiconductor, Inc.
  *
  * Based on gianfar_mii.c and ucc_geth_mii.c (Li Yang, Kim Phillips)
  */
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/mii.h>
-#include <linux/of_address.h>
-#include <linux/of_mdio.h>
-#include <linux/of_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_device.h>
 
-#include <asm/io.h>
-#if IS_ENABLED(CONFIG_UCC_GETH)
-#include <soc/fsl/qe/ucc.h>
-#endif
+#समावेश <यंत्र/पन.स>
+#अगर IS_ENABLED(CONFIG_UCC_GETH)
+#समावेश <soc/fsl/qe/ucc.h>
+#पूर्ण_अगर
 
-#include "gianfar.h"
+#समावेश "gianfar.h"
 
-#define MIIMIND_BUSY		0x00000001
-#define MIIMIND_NOTVALID	0x00000004
-#define MIIMCFG_INIT_VALUE	0x00000007
-#define MIIMCFG_RESET		0x80000000
+#घोषणा MIIMIND_BUSY		0x00000001
+#घोषणा MIIMIND_NOTVALID	0x00000004
+#घोषणा MIIMCFG_INIT_VALUE	0x00000007
+#घोषणा MIIMCFG_RESET		0x80000000
 
-#define MII_READ_COMMAND	0x00000001
+#घोषणा MII_READ_COMMAND	0x00000001
 
-struct fsl_pq_mii {
+काष्ठा fsl_pq_mii अणु
 	u32 miimcfg;	/* MII management configuration reg */
 	u32 miimcom;	/* MII management command reg */
 	u32 miimadd;	/* MII management address reg */
 	u32 miimcon;	/* MII management control reg */
 	u32 miimstat;	/* MII management status reg */
 	u32 miimind;	/* MII management indication reg */
-};
+पूर्ण;
 
-struct fsl_pq_mdio {
+काष्ठा fsl_pq_mdio अणु
 	u8 res1[16];
-	u32 ieventm;	/* MDIO Interrupt event register (for etsec2)*/
-	u32 imaskm;	/* MDIO Interrupt mask register (for etsec2)*/
+	u32 ievenपंचांग;	/* MDIO Interrupt event रेजिस्टर (क्रम etsec2)*/
+	u32 imaskm;	/* MDIO Interrupt mask रेजिस्टर (क्रम etsec2)*/
 	u8 res2[4];
-	u32 emapm;	/* MDIO Event mapping register (for etsec2)*/
+	u32 emapm;	/* MDIO Event mapping रेजिस्टर (क्रम etsec2)*/
 	u8 res3[1280];
-	struct fsl_pq_mii mii;
+	काष्ठा fsl_pq_mii mii;
 	u8 res4[28];
 	u32 utbipar;	/* TBI phy address reg (only on UCC) */
 	u8 res5[2728];
-} __packed;
+पूर्ण __packed;
 
-/* Number of microseconds to wait for an MII register to respond */
-#define MII_TIMEOUT	1000
+/* Number of microseconds to रुको क्रम an MII रेजिस्टर to respond */
+#घोषणा MII_TIMEOUT	1000
 
-struct fsl_pq_mdio_priv {
-	void __iomem *map;
-	struct fsl_pq_mii __iomem *regs;
-};
+काष्ठा fsl_pq_mdio_priv अणु
+	व्योम __iomem *map;
+	काष्ठा fsl_pq_mii __iomem *regs;
+पूर्ण;
 
 /*
- * Per-device-type data.  Each type of device tree node that we support gets
+ * Per-device-type data.  Each type of device tree node that we support माला_लो
  * one of these.
  *
- * @mii_offset: the offset of the MII registers within the memory map of the
- * node.  Some nodes define only the MII registers, and some define the whole
- * MAC (which includes the MII registers).
+ * @mii_offset: the offset of the MII रेजिस्टरs within the memory map of the
+ * node.  Some nodes define only the MII रेजिस्टरs, and some define the whole
+ * MAC (which includes the MII रेजिस्टरs).
  *
- * @get_tbipa: determines the address of the TBIPA register
+ * @get_tbipa: determines the address of the TBIPA रेजिस्टर
  *
- * @ucc_configure: a special function for extra QE configuration
+ * @ucc_configure: a special function क्रम extra QE configuration
  */
-struct fsl_pq_mdio_data {
-	unsigned int mii_offset;	/* offset of the MII registers */
-	uint32_t __iomem * (*get_tbipa)(void __iomem *p);
-	void (*ucc_configure)(phys_addr_t start, phys_addr_t end);
-};
+काष्ठा fsl_pq_mdio_data अणु
+	अचिन्हित पूर्णांक mii_offset;	/* offset of the MII रेजिस्टरs */
+	uपूर्णांक32_t __iomem * (*get_tbipa)(व्योम __iomem *p);
+	व्योम (*ucc_configure)(phys_addr_t start, phys_addr_t end);
+पूर्ण;
 
 /*
- * Write value to the PHY at mii_id at register regnum, on the bus attached
- * to the local interface, which may be different from the generic mdio bus
- * (tied to a single interface), waiting until the write is done before
- * returning. This is helpful in programming interfaces like the TBI which
- * control interfaces like onchip SERDES and are always tied to the local
- * mdio pins, which may not be the same as system mdio bus, used for
- * controlling the external PHYs, for example.
+ * Write value to the PHY at mii_id at रेजिस्टर regnum, on the bus attached
+ * to the local पूर्णांकerface, which may be dअगरferent from the generic mdio bus
+ * (tied to a single पूर्णांकerface), रुकोing until the ग_लिखो is करोne beक्रमe
+ * वापसing. This is helpful in programming पूर्णांकerfaces like the TBI which
+ * control पूर्णांकerfaces like onchip SERDES and are always tied to the local
+ * mdio pins, which may not be the same as प्रणाली mdio bus, used क्रम
+ * controlling the बाह्यal PHYs, क्रम example.
  */
-static int fsl_pq_mdio_write(struct mii_bus *bus, int mii_id, int regnum,
+अटल पूर्णांक fsl_pq_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum,
 		u16 value)
-{
-	struct fsl_pq_mdio_priv *priv = bus->priv;
-	struct fsl_pq_mii __iomem *regs = priv->regs;
-	unsigned int timeout;
+अणु
+	काष्ठा fsl_pq_mdio_priv *priv = bus->priv;
+	काष्ठा fsl_pq_mii __iomem *regs = priv->regs;
+	अचिन्हित पूर्णांक समयout;
 
-	/* Set the PHY address and the register address we want to write */
-	iowrite32be((mii_id << 8) | regnum, &regs->miimadd);
+	/* Set the PHY address and the रेजिस्टर address we want to ग_लिखो */
+	ioग_लिखो32be((mii_id << 8) | regnum, &regs->miimadd);
 
 	/* Write out the value we want */
-	iowrite32be(value, &regs->miimcon);
+	ioग_लिखो32be(value, &regs->miimcon);
 
-	/* Wait for the transaction to finish */
-	timeout = MII_TIMEOUT;
-	while ((ioread32be(&regs->miimind) & MIIMIND_BUSY) && timeout) {
+	/* Wait क्रम the transaction to finish */
+	समयout = MII_TIMEOUT;
+	जबतक ((ioपढ़ो32be(&regs->miimind) & MIIMIND_BUSY) && समयout) अणु
 		cpu_relax();
-		timeout--;
-	}
+		समयout--;
+	पूर्ण
 
-	return timeout ? 0 : -ETIMEDOUT;
-}
+	वापस समयout ? 0 : -ETIMEDOUT;
+पूर्ण
 
 /*
- * Read the bus for PHY at addr mii_id, register regnum, and return the value.
+ * Read the bus क्रम PHY at addr mii_id, रेजिस्टर regnum, and वापस the value.
  * Clears miimcom first.
  *
- * All PHY operation done on the bus attached to the local interface, which
- * may be different from the generic mdio bus.  This is helpful in programming
- * interfaces like the TBI which, in turn, control interfaces like on-chip
+ * All PHY operation करोne on the bus attached to the local पूर्णांकerface, which
+ * may be dअगरferent from the generic mdio bus.  This is helpful in programming
+ * पूर्णांकerfaces like the TBI which, in turn, control पूर्णांकerfaces like on-chip
  * SERDES and are always tied to the local mdio pins, which may not be the
- * same as system mdio bus, used for controlling the external PHYs, for eg.
+ * same as प्रणाली mdio bus, used क्रम controlling the बाह्यal PHYs, क्रम eg.
  */
-static int fsl_pq_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
-{
-	struct fsl_pq_mdio_priv *priv = bus->priv;
-	struct fsl_pq_mii __iomem *regs = priv->regs;
-	unsigned int timeout;
+अटल पूर्णांक fsl_pq_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum)
+अणु
+	काष्ठा fsl_pq_mdio_priv *priv = bus->priv;
+	काष्ठा fsl_pq_mii __iomem *regs = priv->regs;
+	अचिन्हित पूर्णांक समयout;
 	u16 value;
 
-	/* Set the PHY address and the register address we want to read */
-	iowrite32be((mii_id << 8) | regnum, &regs->miimadd);
+	/* Set the PHY address and the रेजिस्टर address we want to पढ़ो */
+	ioग_लिखो32be((mii_id << 8) | regnum, &regs->miimadd);
 
-	/* Clear miimcom, and then initiate a read */
-	iowrite32be(0, &regs->miimcom);
-	iowrite32be(MII_READ_COMMAND, &regs->miimcom);
+	/* Clear miimcom, and then initiate a पढ़ो */
+	ioग_लिखो32be(0, &regs->miimcom);
+	ioग_लिखो32be(MII_READ_COMMAND, &regs->miimcom);
 
-	/* Wait for the transaction to finish, normally less than 100us */
-	timeout = MII_TIMEOUT;
-	while ((ioread32be(&regs->miimind) &
-	       (MIIMIND_NOTVALID | MIIMIND_BUSY)) && timeout) {
+	/* Wait क्रम the transaction to finish, normally less than 100us */
+	समयout = MII_TIMEOUT;
+	जबतक ((ioपढ़ो32be(&regs->miimind) &
+	       (MIIMIND_NOTVALID | MIIMIND_BUSY)) && समयout) अणु
 		cpu_relax();
-		timeout--;
-	}
+		समयout--;
+	पूर्ण
 
-	if (!timeout)
-		return -ETIMEDOUT;
+	अगर (!समयout)
+		वापस -ETIMEDOUT;
 
-	/* Grab the value of the register from miimstat */
-	value = ioread32be(&regs->miimstat);
+	/* Grab the value of the रेजिस्टर from miimstat */
+	value = ioपढ़ो32be(&regs->miimstat);
 
 	dev_dbg(&bus->dev, "read %04x from address %x/%x\n", value, mii_id, regnum);
-	return value;
-}
+	वापस value;
+पूर्ण
 
-/* Reset the MIIM registers, and wait for the bus to free */
-static int fsl_pq_mdio_reset(struct mii_bus *bus)
-{
-	struct fsl_pq_mdio_priv *priv = bus->priv;
-	struct fsl_pq_mii __iomem *regs = priv->regs;
-	unsigned int timeout;
+/* Reset the MIIM रेजिस्टरs, and रुको क्रम the bus to मुक्त */
+अटल पूर्णांक fsl_pq_mdio_reset(काष्ठा mii_bus *bus)
+अणु
+	काष्ठा fsl_pq_mdio_priv *priv = bus->priv;
+	काष्ठा fsl_pq_mii __iomem *regs = priv->regs;
+	अचिन्हित पूर्णांक समयout;
 
 	mutex_lock(&bus->mdio_lock);
 
-	/* Reset the management interface */
-	iowrite32be(MIIMCFG_RESET, &regs->miimcfg);
+	/* Reset the management पूर्णांकerface */
+	ioग_लिखो32be(MIIMCFG_RESET, &regs->miimcfg);
 
-	/* Setup the MII Mgmt clock speed */
-	iowrite32be(MIIMCFG_INIT_VALUE, &regs->miimcfg);
+	/* Setup the MII Mgmt घड़ी speed */
+	ioग_लिखो32be(MIIMCFG_INIT_VALUE, &regs->miimcfg);
 
-	/* Wait until the bus is free */
-	timeout = MII_TIMEOUT;
-	while ((ioread32be(&regs->miimind) & MIIMIND_BUSY) && timeout) {
+	/* Wait until the bus is मुक्त */
+	समयout = MII_TIMEOUT;
+	जबतक ((ioपढ़ो32be(&regs->miimind) & MIIMIND_BUSY) && समयout) अणु
 		cpu_relax();
-		timeout--;
-	}
+		समयout--;
+	पूर्ण
 
 	mutex_unlock(&bus->mdio_lock);
 
-	if (!timeout) {
+	अगर (!समयout) अणु
 		dev_err(&bus->dev, "timeout waiting for MII bus\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_GIANFAR)
+#अगर IS_ENABLED(CONFIG_GIANFAR)
 /*
  * Return the TBIPA address, starting from the address
- * of the mapped GFAR MDIO registers (struct gfar)
- * This is mildly evil, but so is our hardware for doing this.
- * Also, we have to cast back to struct gfar because of
- * definition weirdness done in gianfar.h.
+ * of the mapped GFAR MDIO रेजिस्टरs (काष्ठा gfar)
+ * This is mildly evil, but so is our hardware क्रम करोing this.
+ * Also, we have to cast back to काष्ठा gfar because of
+ * definition weirdness करोne in gianfar.h.
  */
-static uint32_t __iomem *get_gfar_tbipa_from_mdio(void __iomem *p)
-{
-	struct gfar __iomem *enet_regs = p;
+अटल uपूर्णांक32_t __iomem *get_gfar_tbipa_from_mdio(व्योम __iomem *p)
+अणु
+	काष्ठा gfar __iomem *enet_regs = p;
 
-	return &enet_regs->tbipa;
-}
+	वापस &enet_regs->tbipa;
+पूर्ण
 
 /*
  * Return the TBIPA address, starting from the address
- * of the mapped GFAR MII registers (gfar_mii_regs[] within struct gfar)
+ * of the mapped GFAR MII रेजिस्टरs (gfar_mii_regs[] within काष्ठा gfar)
  */
-static uint32_t __iomem *get_gfar_tbipa_from_mii(void __iomem *p)
-{
-	return get_gfar_tbipa_from_mdio(container_of(p, struct gfar, gfar_mii_regs));
-}
+अटल uपूर्णांक32_t __iomem *get_gfar_tbipa_from_mii(व्योम __iomem *p)
+अणु
+	वापस get_gfar_tbipa_from_mdio(container_of(p, काष्ठा gfar, gfar_mii_regs));
+पूर्ण
 
 /*
- * Return the TBIPAR address for an eTSEC2 node
+ * Return the TBIPAR address क्रम an eTSEC2 node
  */
-static uint32_t __iomem *get_etsec_tbipa(void __iomem *p)
-{
-	return p;
-}
-#endif
+अटल uपूर्णांक32_t __iomem *get_etsec_tbipa(व्योम __iomem *p)
+अणु
+	वापस p;
+पूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_UCC_GETH)
+#अगर IS_ENABLED(CONFIG_UCC_GETH)
 /*
- * Return the TBIPAR address for a QE MDIO node, starting from the address
- * of the mapped MII registers (struct fsl_pq_mii)
+ * Return the TBIPAR address क्रम a QE MDIO node, starting from the address
+ * of the mapped MII रेजिस्टरs (काष्ठा fsl_pq_mii)
  */
-static uint32_t __iomem *get_ucc_tbipa(void __iomem *p)
-{
-	struct fsl_pq_mdio __iomem *mdio = container_of(p, struct fsl_pq_mdio, mii);
+अटल uपूर्णांक32_t __iomem *get_ucc_tbipa(व्योम __iomem *p)
+अणु
+	काष्ठा fsl_pq_mdio __iomem *mdio = container_of(p, काष्ठा fsl_pq_mdio, mii);
 
-	return &mdio->utbipar;
-}
+	वापस &mdio->utbipar;
+पूर्ण
 
 /*
  * Find the UCC node that controls the given MDIO node
  *
  * For some reason, the QE MDIO nodes are not children of the UCC devices
- * that control them.  Therefore, we need to scan all UCC nodes looking for
- * the one that encompases the given MDIO node.  We do this by comparing
+ * that control them.  Thereक्रमe, we need to scan all UCC nodes looking क्रम
+ * the one that encompases the given MDIO node.  We करो this by comparing
  * physical addresses.  The 'start' and 'end' addresses of the MDIO node are
  * passed, and the correct UCC node will cover the entire address range.
  *
  * This assumes that there is only one QE MDIO node in the entire device tree.
  */
-static void ucc_configure(phys_addr_t start, phys_addr_t end)
-{
-	static bool found_mii_master;
-	struct device_node *np = NULL;
+अटल व्योम ucc_configure(phys_addr_t start, phys_addr_t end)
+अणु
+	अटल bool found_mii_master;
+	काष्ठा device_node *np = शून्य;
 
-	if (found_mii_master)
-		return;
+	अगर (found_mii_master)
+		वापस;
 
-	for_each_compatible_node(np, NULL, "ucc_geth") {
-		struct resource res;
-		const uint32_t *iprop;
-		uint32_t id;
-		int ret;
+	क्रम_each_compatible_node(np, शून्य, "ucc_geth") अणु
+		काष्ठा resource res;
+		स्थिर uपूर्णांक32_t *iprop;
+		uपूर्णांक32_t id;
+		पूर्णांक ret;
 
 		ret = of_address_to_resource(np, 0, &res);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_debug("fsl-pq-mdio: no address range in node %pOF\n",
 				 np);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* if our mdio regs fall within this UCC regs range */
-		if ((start < res.start) || (end > res.end))
-			continue;
+		/* अगर our mdio regs fall within this UCC regs range */
+		अगर ((start < res.start) || (end > res.end))
+			जारी;
 
-		iprop = of_get_property(np, "cell-index", NULL);
-		if (!iprop) {
-			iprop = of_get_property(np, "device-id", NULL);
-			if (!iprop) {
+		iprop = of_get_property(np, "cell-index", शून्य);
+		अगर (!iprop) अणु
+			iprop = of_get_property(np, "device-id", शून्य);
+			अगर (!iprop) अणु
 				pr_debug("fsl-pq-mdio: no UCC ID in node %pOF\n",
 					 np);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		id = be32_to_cpup(iprop);
 
 		/*
-		 * cell-index and device-id for QE nodes are
+		 * cell-index and device-id क्रम QE nodes are
 		 * numbered from 1, not 0.
 		 */
-		if (ucc_set_qe_mux_mii_mng(id - 1) < 0) {
+		अगर (ucc_set_qe_mux_mii_mng(id - 1) < 0) अणु
 			pr_debug("fsl-pq-mdio: invalid UCC ID in node %pOF\n",
 				 np);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		pr_debug("fsl-pq-mdio: setting node UCC%u to MII master\n", id);
 		found_mii_master = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static const struct of_device_id fsl_pq_mdio_match[] = {
-#if IS_ENABLED(CONFIG_GIANFAR)
-	{
+अटल स्थिर काष्ठा of_device_id fsl_pq_mdio_match[] = अणु
+#अगर IS_ENABLED(CONFIG_GIANFAR)
+	अणु
 		.compatible = "fsl,gianfar-tbi",
-		.data = &(struct fsl_pq_mdio_data) {
+		.data = &(काष्ठा fsl_pq_mdio_data) अणु
 			.mii_offset = 0,
 			.get_tbipa = get_gfar_tbipa_from_mii,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.compatible = "fsl,gianfar-mdio",
-		.data = &(struct fsl_pq_mdio_data) {
+		.data = &(काष्ठा fsl_pq_mdio_data) अणु
 			.mii_offset = 0,
 			.get_tbipa = get_gfar_tbipa_from_mii,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.type = "mdio",
 		.compatible = "gianfar",
-		.data = &(struct fsl_pq_mdio_data) {
-			.mii_offset = offsetof(struct fsl_pq_mdio, mii),
+		.data = &(काष्ठा fsl_pq_mdio_data) अणु
+			.mii_offset = दुरत्व(काष्ठा fsl_pq_mdio, mii),
 			.get_tbipa = get_gfar_tbipa_from_mdio,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.compatible = "fsl,etsec2-tbi",
-		.data = &(struct fsl_pq_mdio_data) {
-			.mii_offset = offsetof(struct fsl_pq_mdio, mii),
+		.data = &(काष्ठा fsl_pq_mdio_data) अणु
+			.mii_offset = दुरत्व(काष्ठा fsl_pq_mdio, mii),
 			.get_tbipa = get_etsec_tbipa,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.compatible = "fsl,etsec2-mdio",
-		.data = &(struct fsl_pq_mdio_data) {
-			.mii_offset = offsetof(struct fsl_pq_mdio, mii),
+		.data = &(काष्ठा fsl_pq_mdio_data) अणु
+			.mii_offset = दुरत्व(काष्ठा fsl_pq_mdio, mii),
 			.get_tbipa = get_etsec_tbipa,
-		},
-	},
-#endif
-#if IS_ENABLED(CONFIG_UCC_GETH)
-	{
+		पूर्ण,
+	पूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_UCC_GETH)
+	अणु
 		.compatible = "fsl,ucc-mdio",
-		.data = &(struct fsl_pq_mdio_data) {
+		.data = &(काष्ठा fsl_pq_mdio_data) अणु
 			.mii_offset = 0,
 			.get_tbipa = get_ucc_tbipa,
 			.ucc_configure = ucc_configure,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		/* Legacy UCC MDIO node */
 		.type = "mdio",
 		.compatible = "ucc_geth_phy",
-		.data = &(struct fsl_pq_mdio_data) {
+		.data = &(काष्ठा fsl_pq_mdio_data) अणु
 			.mii_offset = 0,
 			.get_tbipa = get_ucc_tbipa,
 			.ucc_configure = ucc_configure,
-		},
-	},
-#endif
-	/* No Kconfig option for Fman support yet */
-	{
+		पूर्ण,
+	पूर्ण,
+#पूर्ण_अगर
+	/* No Kconfig option क्रम Fman support yet */
+	अणु
 		.compatible = "fsl,fman-mdio",
-		.data = &(struct fsl_pq_mdio_data) {
+		.data = &(काष्ठा fsl_pq_mdio_data) अणु
 			.mii_offset = 0,
-			/* Fman TBI operations are handled elsewhere */
-		},
-	},
+			/* Fman TBI operations are handled अन्यथाwhere */
+		पूर्ण,
+	पूर्ण,
 
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, fsl_pq_mdio_match);
 
-static void set_tbipa(const u32 tbipa_val, struct platform_device *pdev,
-		      uint32_t __iomem * (*get_tbipa)(void __iomem *),
-		      void __iomem *reg_map, struct resource *reg_res)
-{
-	struct device_node *np = pdev->dev.of_node;
-	uint32_t __iomem *tbipa;
+अटल व्योम set_tbipa(स्थिर u32 tbipa_val, काष्ठा platक्रमm_device *pdev,
+		      uपूर्णांक32_t __iomem * (*get_tbipa)(व्योम __iomem *),
+		      व्योम __iomem *reg_map, काष्ठा resource *reg_res)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	uपूर्णांक32_t __iomem *tbipa;
 	bool tbipa_mapped;
 
 	tbipa = of_iomap(np, 1);
-	if (tbipa) {
+	अगर (tbipa) अणु
 		tbipa_mapped = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		tbipa_mapped = false;
 		tbipa = (*get_tbipa)(reg_map);
 
 		/*
 		 * Add consistency check to make sure TBI is contained within
 		 * the mapped range (not because we would get a segfault,
-		 * rather to catch bugs in computing TBI address). Print error
-		 * message but continue anyway.
+		 * rather to catch bugs in computing TBI address). Prपूर्णांक error
+		 * message but जारी anyway.
 		 */
-		if ((void *)tbipa > reg_map + resource_size(reg_res) - 4)
+		अगर ((व्योम *)tbipa > reg_map + resource_size(reg_res) - 4)
 			dev_err(&pdev->dev, "invalid register map (should be at least 0x%04zx to contain TBI address)\n",
-				((void *)tbipa - reg_map) + 4);
-	}
+				((व्योम *)tbipa - reg_map) + 4);
+	पूर्ण
 
-	iowrite32be(be32_to_cpu(tbipa_val), tbipa);
+	ioग_लिखो32be(be32_to_cpu(tbipa_val), tbipa);
 
-	if (tbipa_mapped)
+	अगर (tbipa_mapped)
 		iounmap(tbipa);
-}
+पूर्ण
 
-static int fsl_pq_mdio_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *id =
+अटल पूर्णांक fsl_pq_mdio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *id =
 		of_match_device(fsl_pq_mdio_match, &pdev->dev);
-	const struct fsl_pq_mdio_data *data;
-	struct device_node *np = pdev->dev.of_node;
-	struct resource res;
-	struct device_node *tbi;
-	struct fsl_pq_mdio_priv *priv;
-	struct mii_bus *new_bus;
-	int err;
+	स्थिर काष्ठा fsl_pq_mdio_data *data;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा resource res;
+	काष्ठा device_node *tbi;
+	काष्ठा fsl_pq_mdio_priv *priv;
+	काष्ठा mii_bus *new_bus;
+	पूर्णांक err;
 
-	if (!id) {
+	अगर (!id) अणु
 		dev_err(&pdev->dev, "Failed to match device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	data = id->data;
 
 	dev_dbg(&pdev->dev, "found %s compatible node\n", id->compatible);
 
-	new_bus = mdiobus_alloc_size(sizeof(*priv));
-	if (!new_bus)
-		return -ENOMEM;
+	new_bus = mdiobus_alloc_size(माप(*priv));
+	अगर (!new_bus)
+		वापस -ENOMEM;
 
 	priv = new_bus->priv;
 	new_bus->name = "Freescale PowerQUICC MII Bus";
-	new_bus->read = &fsl_pq_mdio_read;
-	new_bus->write = &fsl_pq_mdio_write;
+	new_bus->पढ़ो = &fsl_pq_mdio_पढ़ो;
+	new_bus->ग_लिखो = &fsl_pq_mdio_ग_लिखो;
 	new_bus->reset = &fsl_pq_mdio_reset;
 
 	err = of_address_to_resource(np, 0, &res);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "could not obtain address information\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	snprintf(new_bus->id, MII_BUS_ID_SIZE, "%pOFn@%llx", np,
-		 (unsigned long long)res.start);
+	snम_लिखो(new_bus->id, MII_BUS_ID_SIZE, "%pOFn@%llx", np,
+		 (अचिन्हित दीर्घ दीर्घ)res.start);
 
 	priv->map = of_iomap(np, 0);
-	if (!priv->map) {
+	अगर (!priv->map) अणु
 		err = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/*
-	 * Some device tree nodes represent only the MII registers, and
-	 * others represent the MAC and MII registers.  The 'mii_offset' field
-	 * contains the offset of the MII registers inside the mapped register
+	 * Some device tree nodes represent only the MII रेजिस्टरs, and
+	 * others represent the MAC and MII रेजिस्टरs.  The 'mii_offset' field
+	 * contains the offset of the MII रेजिस्टरs inside the mapped रेजिस्टर
 	 * space.
 	 */
-	if (data->mii_offset > resource_size(&res)) {
+	अगर (data->mii_offset > resource_size(&res)) अणु
 		dev_err(&pdev->dev, "invalid register map\n");
 		err = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	priv->regs = priv->map + data->mii_offset;
 
 	new_bus->parent = &pdev->dev;
-	platform_set_drvdata(pdev, new_bus);
+	platक्रमm_set_drvdata(pdev, new_bus);
 
-	if (data->get_tbipa) {
-		for_each_child_of_node(np, tbi) {
-			if (of_node_is_type(tbi, "tbi-phy")) {
+	अगर (data->get_tbipa) अणु
+		क्रम_each_child_of_node(np, tbi) अणु
+			अगर (of_node_is_type(tbi, "tbi-phy")) अणु
 				dev_dbg(&pdev->dev, "found TBI PHY node %pOFP\n",
 					tbi);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (tbi) {
-			const u32 *prop = of_get_property(tbi, "reg", NULL);
-			if (!prop) {
+		अगर (tbi) अणु
+			स्थिर u32 *prop = of_get_property(tbi, "reg", शून्य);
+			अगर (!prop) अणु
 				dev_err(&pdev->dev,
 					"missing 'reg' property in node %pOF\n",
 					tbi);
 				err = -EBUSY;
-				goto error;
-			}
+				जाओ error;
+			पूर्ण
 			set_tbipa(*prop, pdev,
 				  data->get_tbipa, priv->map, &res);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (data->ucc_configure)
+	अगर (data->ucc_configure)
 		data->ucc_configure(res.start, res.end);
 
-	err = of_mdiobus_register(new_bus, np);
-	if (err) {
+	err = of_mdiobus_रेजिस्टर(new_bus, np);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "cannot register %s as MDIO bus\n",
 			new_bus->name);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	if (priv->map)
+	अगर (priv->map)
 		iounmap(priv->map);
 
-	kfree(new_bus);
+	kमुक्त(new_bus);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static int fsl_pq_mdio_remove(struct platform_device *pdev)
-{
-	struct device *device = &pdev->dev;
-	struct mii_bus *bus = dev_get_drvdata(device);
-	struct fsl_pq_mdio_priv *priv = bus->priv;
+अटल पूर्णांक fsl_pq_mdio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *device = &pdev->dev;
+	काष्ठा mii_bus *bus = dev_get_drvdata(device);
+	काष्ठा fsl_pq_mdio_priv *priv = bus->priv;
 
-	mdiobus_unregister(bus);
+	mdiobus_unरेजिस्टर(bus);
 
 	iounmap(priv->map);
-	mdiobus_free(bus);
+	mdiobus_मुक्त(bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver fsl_pq_mdio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver fsl_pq_mdio_driver = अणु
+	.driver = अणु
 		.name = "fsl-pq_mdio",
 		.of_match_table = fsl_pq_mdio_match,
-	},
+	पूर्ण,
 	.probe = fsl_pq_mdio_probe,
-	.remove = fsl_pq_mdio_remove,
-};
+	.हटाओ = fsl_pq_mdio_हटाओ,
+पूर्ण;
 
-module_platform_driver(fsl_pq_mdio_driver);
+module_platक्रमm_driver(fsl_pq_mdio_driver);
 
 MODULE_LICENSE("GPL");

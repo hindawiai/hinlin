@@ -1,25 +1,26 @@
+<शैली गुरु>
 /******************************************************************************
  * grant_table.h
  *
  * Two sets of functionality:
- * 1. Granting foreign access to our memory reservation.
+ * 1. Granting क्रमeign access to our memory reservation.
  * 2. Accessing others' memory reservations via grant references.
- * (i.e., mechanisms for both sender and recipient of grant references)
+ * (i.e., mechanisms क्रम both sender and recipient of grant references)
  *
  * Copyright (c) 2004-2005, K A Fraser
  * Copyright (c) 2005, Christopher Clark
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -34,255 +35,255 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __ASM_GNTTAB_H__
-#define __ASM_GNTTAB_H__
+#अगर_अघोषित __ASM_GNTTAB_H__
+#घोषणा __ASM_GNTTAB_H__
 
-#include <asm/page.h>
+#समावेश <यंत्र/page.h>
 
-#include <xen/interface/xen.h>
-#include <xen/interface/grant_table.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <xen/पूर्णांकerface/grant_table.h>
 
-#include <asm/xen/hypervisor.h>
+#समावेश <यंत्र/xen/hypervisor.h>
 
-#include <xen/features.h>
-#include <xen/page.h>
-#include <linux/mm_types.h>
-#include <linux/page-flags.h>
-#include <linux/kernel.h>
+#समावेश <xen/features.h>
+#समावेश <xen/page.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/page-flags.h>
+#समावेश <linux/kernel.h>
 
 /*
  * Technically there's no reliably invalid grant reference or grant handle,
  * so pick the value that is the most unlikely one to be observed valid.
  */
-#define INVALID_GRANT_REF          ((grant_ref_t)-1)
-#define INVALID_GRANT_HANDLE       ((grant_handle_t)-1)
+#घोषणा INVALID_GRANT_REF          ((grant_ref_t)-1)
+#घोषणा INVALID_GRANT_HANDLE       ((grant_handle_t)-1)
 
-#define GNTTAB_RESERVED_XENSTORE 1
+#घोषणा GNTTAB_RESERVED_XENSTORE 1
 
 /* NR_GRANT_FRAMES must be less than or equal to that configured in Xen */
-#define NR_GRANT_FRAMES 4
+#घोषणा NR_GRANT_FRAMES 4
 
-struct gnttab_free_callback {
-	struct gnttab_free_callback *next;
-	void (*fn)(void *);
-	void *arg;
+काष्ठा gnttab_मुक्त_callback अणु
+	काष्ठा gnttab_मुक्त_callback *next;
+	व्योम (*fn)(व्योम *);
+	व्योम *arg;
 	u16 count;
-};
+पूर्ण;
 
-struct gntab_unmap_queue_data;
+काष्ठा gntab_unmap_queue_data;
 
-typedef void (*gnttab_unmap_refs_done)(int result, struct gntab_unmap_queue_data *data);
+प्रकार व्योम (*gnttab_unmap_refs_करोne)(पूर्णांक result, काष्ठा gntab_unmap_queue_data *data);
 
-struct gntab_unmap_queue_data
-{
-	struct delayed_work	gnttab_work;
-	void *data;
-	gnttab_unmap_refs_done	done;
-	struct gnttab_unmap_grant_ref *unmap_ops;
-	struct gnttab_unmap_grant_ref *kunmap_ops;
-	struct page **pages;
-	unsigned int count;
-	unsigned int age;
-};
+काष्ठा gntab_unmap_queue_data
+अणु
+	काष्ठा delayed_work	gnttab_work;
+	व्योम *data;
+	gnttab_unmap_refs_करोne	करोne;
+	काष्ठा gnttab_unmap_grant_ref *unmap_ops;
+	काष्ठा gnttab_unmap_grant_ref *kunmap_ops;
+	काष्ठा page **pages;
+	अचिन्हित पूर्णांक count;
+	अचिन्हित पूर्णांक age;
+पूर्ण;
 
-int gnttab_init(void);
-int gnttab_suspend(void);
-int gnttab_resume(void);
+पूर्णांक gnttab_init(व्योम);
+पूर्णांक gnttab_suspend(व्योम);
+पूर्णांक gnttab_resume(व्योम);
 
-int gnttab_grant_foreign_access(domid_t domid, unsigned long frame,
-				int readonly);
+पूर्णांक gnttab_grant_क्रमeign_access(करोmid_t करोmid, अचिन्हित दीर्घ frame,
+				पूर्णांक पढ़ोonly);
 
 /*
- * End access through the given grant reference, iff the grant entry is no
- * longer in use.  Return 1 if the grant entry was freed, 0 if it is still in
+ * End access through the given grant reference, अगरf the grant entry is no
+ * दीर्घer in use.  Return 1 अगर the grant entry was मुक्तd, 0 अगर it is still in
  * use.
  */
-int gnttab_end_foreign_access_ref(grant_ref_t ref, int readonly);
+पूर्णांक gnttab_end_क्रमeign_access_ref(grant_ref_t ref, पूर्णांक पढ़ोonly);
 
 /*
  * Eventually end access through the given grant reference, and once that
- * access has been ended, free the given page too.  Access will be ended
- * immediately iff the grant entry is not in use, otherwise it will happen
- * some time later.  page may be 0, in which case no freeing will occur.
+ * access has been ended, मुक्त the given page too.  Access will be ended
+ * immediately अगरf the grant entry is not in use, otherwise it will happen
+ * some समय later.  page may be 0, in which हाल no मुक्तing will occur.
  */
-void gnttab_end_foreign_access(grant_ref_t ref, int readonly,
-			       unsigned long page);
+व्योम gnttab_end_क्रमeign_access(grant_ref_t ref, पूर्णांक पढ़ोonly,
+			       अचिन्हित दीर्घ page);
 
-int gnttab_grant_foreign_transfer(domid_t domid, unsigned long pfn);
+पूर्णांक gnttab_grant_क्रमeign_transfer(करोmid_t करोmid, अचिन्हित दीर्घ pfn);
 
-unsigned long gnttab_end_foreign_transfer_ref(grant_ref_t ref);
-unsigned long gnttab_end_foreign_transfer(grant_ref_t ref);
+अचिन्हित दीर्घ gnttab_end_क्रमeign_transfer_ref(grant_ref_t ref);
+अचिन्हित दीर्घ gnttab_end_क्रमeign_transfer(grant_ref_t ref);
 
-int gnttab_query_foreign_access(grant_ref_t ref);
+पूर्णांक gnttab_query_क्रमeign_access(grant_ref_t ref);
 
 /*
  * operations on reserved batches of grant references
  */
-int gnttab_alloc_grant_references(u16 count, grant_ref_t *pprivate_head);
+पूर्णांक gnttab_alloc_grant_references(u16 count, grant_ref_t *pनिजी_head);
 
-void gnttab_free_grant_reference(grant_ref_t ref);
+व्योम gnttab_मुक्त_grant_reference(grant_ref_t ref);
 
-void gnttab_free_grant_references(grant_ref_t head);
+व्योम gnttab_मुक्त_grant_references(grant_ref_t head);
 
-int gnttab_empty_grant_references(const grant_ref_t *pprivate_head);
+पूर्णांक gnttab_empty_grant_references(स्थिर grant_ref_t *pनिजी_head);
 
-int gnttab_claim_grant_reference(grant_ref_t *pprivate_head);
+पूर्णांक gnttab_claim_grant_reference(grant_ref_t *pनिजी_head);
 
-void gnttab_release_grant_reference(grant_ref_t *private_head,
+व्योम gnttab_release_grant_reference(grant_ref_t *निजी_head,
 				    grant_ref_t release);
 
-void gnttab_request_free_callback(struct gnttab_free_callback *callback,
-				  void (*fn)(void *), void *arg, u16 count);
-void gnttab_cancel_free_callback(struct gnttab_free_callback *callback);
+व्योम gnttab_request_मुक्त_callback(काष्ठा gnttab_मुक्त_callback *callback,
+				  व्योम (*fn)(व्योम *), व्योम *arg, u16 count);
+व्योम gnttab_cancel_मुक्त_callback(काष्ठा gnttab_मुक्त_callback *callback);
 
-void gnttab_grant_foreign_access_ref(grant_ref_t ref, domid_t domid,
-				     unsigned long frame, int readonly);
+व्योम gnttab_grant_क्रमeign_access_ref(grant_ref_t ref, करोmid_t करोmid,
+				     अचिन्हित दीर्घ frame, पूर्णांक पढ़ोonly);
 
 /* Give access to the first 4K of the page */
-static inline void gnttab_page_grant_foreign_access_ref_one(
-	grant_ref_t ref, domid_t domid,
-	struct page *page, int readonly)
-{
-	gnttab_grant_foreign_access_ref(ref, domid, xen_page_to_gfn(page),
-					readonly);
-}
+अटल अंतरभूत व्योम gnttab_page_grant_क्रमeign_access_ref_one(
+	grant_ref_t ref, करोmid_t करोmid,
+	काष्ठा page *page, पूर्णांक पढ़ोonly)
+अणु
+	gnttab_grant_क्रमeign_access_ref(ref, करोmid, xen_page_to_gfn(page),
+					पढ़ोonly);
+पूर्ण
 
-void gnttab_grant_foreign_transfer_ref(grant_ref_t, domid_t domid,
-				       unsigned long pfn);
+व्योम gnttab_grant_क्रमeign_transfer_ref(grant_ref_t, करोmid_t करोmid,
+				       अचिन्हित दीर्घ pfn);
 
-static inline void
-gnttab_set_map_op(struct gnttab_map_grant_ref *map, phys_addr_t addr,
-		  uint32_t flags, grant_ref_t ref, domid_t domid)
-{
-	if (flags & GNTMAP_contains_pte)
+अटल अंतरभूत व्योम
+gnttab_set_map_op(काष्ठा gnttab_map_grant_ref *map, phys_addr_t addr,
+		  uपूर्णांक32_t flags, grant_ref_t ref, करोmid_t करोmid)
+अणु
+	अगर (flags & GNTMAP_contains_pte)
 		map->host_addr = addr;
-	else if (xen_feature(XENFEAT_auto_translated_physmap))
+	अन्यथा अगर (xen_feature(XENFEAT_स्वतः_translated_physmap))
 		map->host_addr = __pa(addr);
-	else
+	अन्यथा
 		map->host_addr = addr;
 
 	map->flags = flags;
 	map->ref = ref;
-	map->dom = domid;
+	map->करोm = करोmid;
 	map->status = 1; /* arbitrary positive value */
-}
+पूर्ण
 
-static inline void
-gnttab_set_unmap_op(struct gnttab_unmap_grant_ref *unmap, phys_addr_t addr,
-		    uint32_t flags, grant_handle_t handle)
-{
-	if (flags & GNTMAP_contains_pte)
+अटल अंतरभूत व्योम
+gnttab_set_unmap_op(काष्ठा gnttab_unmap_grant_ref *unmap, phys_addr_t addr,
+		    uपूर्णांक32_t flags, grant_handle_t handle)
+अणु
+	अगर (flags & GNTMAP_contains_pte)
 		unmap->host_addr = addr;
-	else if (xen_feature(XENFEAT_auto_translated_physmap))
+	अन्यथा अगर (xen_feature(XENFEAT_स्वतः_translated_physmap))
 		unmap->host_addr = __pa(addr);
-	else
+	अन्यथा
 		unmap->host_addr = addr;
 
 	unmap->handle = handle;
 	unmap->dev_bus_addr = 0;
-}
+पूर्ण
 
-int arch_gnttab_init(unsigned long nr_shared, unsigned long nr_status);
-int arch_gnttab_map_shared(xen_pfn_t *frames, unsigned long nr_gframes,
-			   unsigned long max_nr_gframes,
-			   void **__shared);
-int arch_gnttab_map_status(uint64_t *frames, unsigned long nr_gframes,
-			   unsigned long max_nr_gframes,
+पूर्णांक arch_gnttab_init(अचिन्हित दीर्घ nr_shared, अचिन्हित दीर्घ nr_status);
+पूर्णांक arch_gnttab_map_shared(xen_pfn_t *frames, अचिन्हित दीर्घ nr_gframes,
+			   अचिन्हित दीर्घ max_nr_gframes,
+			   व्योम **__shared);
+पूर्णांक arch_gnttab_map_status(uपूर्णांक64_t *frames, अचिन्हित दीर्घ nr_gframes,
+			   अचिन्हित दीर्घ max_nr_gframes,
 			   grant_status_t **__shared);
-void arch_gnttab_unmap(void *shared, unsigned long nr_gframes);
+व्योम arch_gnttab_unmap(व्योम *shared, अचिन्हित दीर्घ nr_gframes);
 
-struct grant_frames {
+काष्ठा grant_frames अणु
 	xen_pfn_t *pfn;
-	unsigned int count;
-	void *vaddr;
-};
-extern struct grant_frames xen_auto_xlat_grant_frames;
-unsigned int gnttab_max_grant_frames(void);
-int gnttab_setup_auto_xlat_frames(phys_addr_t addr);
-void gnttab_free_auto_xlat_frames(void);
+	अचिन्हित पूर्णांक count;
+	व्योम *vaddr;
+पूर्ण;
+बाह्य काष्ठा grant_frames xen_स्वतः_xlat_grant_frames;
+अचिन्हित पूर्णांक gnttab_max_grant_frames(व्योम);
+पूर्णांक gnttab_setup_स्वतः_xlat_frames(phys_addr_t addr);
+व्योम gnttab_मुक्त_स्वतः_xlat_frames(व्योम);
 
-#define gnttab_map_vaddr(map) ((void *)(map.host_virt_addr))
+#घोषणा gnttab_map_vaddr(map) ((व्योम *)(map.host_virt_addr))
 
-int gnttab_alloc_pages(int nr_pages, struct page **pages);
-void gnttab_free_pages(int nr_pages, struct page **pages);
+पूर्णांक gnttab_alloc_pages(पूर्णांक nr_pages, काष्ठा page **pages);
+व्योम gnttab_मुक्त_pages(पूर्णांक nr_pages, काष्ठा page **pages);
 
-struct gnttab_page_cache {
+काष्ठा gnttab_page_cache अणु
 	spinlock_t		lock;
-#ifdef CONFIG_XEN_UNPOPULATED_ALLOC
-	struct page		*pages;
-#else
-	struct list_head	pages;
-#endif
-	unsigned int		num_pages;
-};
+#अगर_घोषित CONFIG_XEN_UNPOPULATED_ALLOC
+	काष्ठा page		*pages;
+#अन्यथा
+	काष्ठा list_head	pages;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक		num_pages;
+पूर्ण;
 
-void gnttab_page_cache_init(struct gnttab_page_cache *cache);
-int gnttab_page_cache_get(struct gnttab_page_cache *cache, struct page **page);
-void gnttab_page_cache_put(struct gnttab_page_cache *cache, struct page **page,
-			   unsigned int num);
-void gnttab_page_cache_shrink(struct gnttab_page_cache *cache,
-			      unsigned int num);
+व्योम gnttab_page_cache_init(काष्ठा gnttab_page_cache *cache);
+पूर्णांक gnttab_page_cache_get(काष्ठा gnttab_page_cache *cache, काष्ठा page **page);
+व्योम gnttab_page_cache_put(काष्ठा gnttab_page_cache *cache, काष्ठा page **page,
+			   अचिन्हित पूर्णांक num);
+व्योम gnttab_page_cache_shrink(काष्ठा gnttab_page_cache *cache,
+			      अचिन्हित पूर्णांक num);
 
-#ifdef CONFIG_XEN_GRANT_DMA_ALLOC
-struct gnttab_dma_alloc_args {
-	/* Device for which DMA memory will be/was allocated. */
-	struct device *dev;
-	/* If set then DMA buffer is coherent and write-combine otherwise. */
+#अगर_घोषित CONFIG_XEN_GRANT_DMA_ALLOC
+काष्ठा gnttab_dma_alloc_args अणु
+	/* Device क्रम which DMA memory will be/was allocated. */
+	काष्ठा device *dev;
+	/* If set then DMA buffer is coherent and ग_लिखो-combine otherwise. */
 	bool coherent;
 
-	int nr_pages;
-	struct page **pages;
+	पूर्णांक nr_pages;
+	काष्ठा page **pages;
 	xen_pfn_t *frames;
-	void *vaddr;
+	व्योम *vaddr;
 	dma_addr_t dev_bus_addr;
-};
+पूर्ण;
 
-int gnttab_dma_alloc_pages(struct gnttab_dma_alloc_args *args);
-int gnttab_dma_free_pages(struct gnttab_dma_alloc_args *args);
-#endif
+पूर्णांक gnttab_dma_alloc_pages(काष्ठा gnttab_dma_alloc_args *args);
+पूर्णांक gnttab_dma_मुक्त_pages(काष्ठा gnttab_dma_alloc_args *args);
+#पूर्ण_अगर
 
-int gnttab_pages_set_private(int nr_pages, struct page **pages);
-void gnttab_pages_clear_private(int nr_pages, struct page **pages);
+पूर्णांक gnttab_pages_set_निजी(पूर्णांक nr_pages, काष्ठा page **pages);
+व्योम gnttab_pages_clear_निजी(पूर्णांक nr_pages, काष्ठा page **pages);
 
-int gnttab_map_refs(struct gnttab_map_grant_ref *map_ops,
-		    struct gnttab_map_grant_ref *kmap_ops,
-		    struct page **pages, unsigned int count);
-int gnttab_unmap_refs(struct gnttab_unmap_grant_ref *unmap_ops,
-		      struct gnttab_unmap_grant_ref *kunmap_ops,
-		      struct page **pages, unsigned int count);
-void gnttab_unmap_refs_async(struct gntab_unmap_queue_data* item);
-int gnttab_unmap_refs_sync(struct gntab_unmap_queue_data *item);
+पूर्णांक gnttab_map_refs(काष्ठा gnttab_map_grant_ref *map_ops,
+		    काष्ठा gnttab_map_grant_ref *kmap_ops,
+		    काष्ठा page **pages, अचिन्हित पूर्णांक count);
+पूर्णांक gnttab_unmap_refs(काष्ठा gnttab_unmap_grant_ref *unmap_ops,
+		      काष्ठा gnttab_unmap_grant_ref *kunmap_ops,
+		      काष्ठा page **pages, अचिन्हित पूर्णांक count);
+व्योम gnttab_unmap_refs_async(काष्ठा gntab_unmap_queue_data* item);
+पूर्णांक gnttab_unmap_refs_sync(काष्ठा gntab_unmap_queue_data *item);
 
 
-/* Perform a batch of grant map/copy operations. Retry every batch slot
- * for which the hypervisor returns GNTST_eagain. This is typically due
+/* Perक्रमm a batch of grant map/copy operations. Retry every batch slot
+ * क्रम which the hypervisor वापसs GNTST_eagain. This is typically due
  * to paged out target frames.
  *
- * Will retry for 1, 2, ... 255 ms, i.e. 256 times during 32 seconds.
+ * Will retry क्रम 1, 2, ... 255 ms, i.e. 256 बार during 32 seconds.
  *
  * Return value in each iand every status field of the batch guaranteed
  * to not be GNTST_eagain.
  */
-void gnttab_batch_map(struct gnttab_map_grant_ref *batch, unsigned count);
-void gnttab_batch_copy(struct gnttab_copy *batch, unsigned count);
+व्योम gnttab_batch_map(काष्ठा gnttab_map_grant_ref *batch, अचिन्हित count);
+व्योम gnttab_batch_copy(काष्ठा gnttab_copy *batch, अचिन्हित count);
 
 
-struct xen_page_foreign {
-	domid_t domid;
+काष्ठा xen_page_क्रमeign अणु
+	करोmid_t करोmid;
 	grant_ref_t gref;
-};
+पूर्ण;
 
-static inline struct xen_page_foreign *xen_page_foreign(struct page *page)
-{
-	if (!PageForeign(page))
-		return NULL;
-#if BITS_PER_LONG < 64
-	return (struct xen_page_foreign *)page->private;
-#else
-	BUILD_BUG_ON(sizeof(struct xen_page_foreign) > BITS_PER_LONG);
-	return (struct xen_page_foreign *)&page->private;
-#endif
-}
+अटल अंतरभूत काष्ठा xen_page_क्रमeign *xen_page_क्रमeign(काष्ठा page *page)
+अणु
+	अगर (!PageForeign(page))
+		वापस शून्य;
+#अगर BITS_PER_LONG < 64
+	वापस (काष्ठा xen_page_क्रमeign *)page->निजी;
+#अन्यथा
+	BUILD_BUG_ON(माप(काष्ठा xen_page_क्रमeign) > BITS_PER_LONG);
+	वापस (काष्ठा xen_page_क्रमeign *)&page->निजी;
+#पूर्ण_अगर
+पूर्ण
 
 /* Split Linux page in chunk of the size of the grant and call fn
  *
@@ -290,44 +291,44 @@ static inline struct xen_page_foreign *xen_page_foreign(struct page *page)
  *	gfn: guest frame number
  *	offset: offset in the grant
  *	len: length of the data in the grant.
- *	data: internal information
+ *	data: पूर्णांकernal inक्रमmation
  */
-typedef void (*xen_grant_fn_t)(unsigned long gfn, unsigned int offset,
-			       unsigned int len, void *data);
+प्रकार व्योम (*xen_grant_fn_t)(अचिन्हित दीर्घ gfn, अचिन्हित पूर्णांक offset,
+			       अचिन्हित पूर्णांक len, व्योम *data);
 
-void gnttab_foreach_grant_in_range(struct page *page,
-				   unsigned int offset,
-				   unsigned int len,
+व्योम gnttab_क्रमeach_grant_in_range(काष्ठा page *page,
+				   अचिन्हित पूर्णांक offset,
+				   अचिन्हित पूर्णांक len,
 				   xen_grant_fn_t fn,
-				   void *data);
+				   व्योम *data);
 
 /* Helper to get to call fn only on the first "grant chunk" */
-static inline void gnttab_for_one_grant(struct page *page, unsigned int offset,
-					unsigned len, xen_grant_fn_t fn,
-					void *data)
-{
+अटल अंतरभूत व्योम gnttab_क्रम_one_grant(काष्ठा page *page, अचिन्हित पूर्णांक offset,
+					अचिन्हित len, xen_grant_fn_t fn,
+					व्योम *data)
+अणु
 	/* The first request is limited to the size of one grant */
-	len = min_t(unsigned int, XEN_PAGE_SIZE - (offset & ~XEN_PAGE_MASK),
+	len = min_t(अचिन्हित पूर्णांक, XEN_PAGE_SIZE - (offset & ~XEN_PAGE_MASK),
 		    len);
 
-	gnttab_foreach_grant_in_range(page, offset, len, fn, data);
-}
+	gnttab_क्रमeach_grant_in_range(page, offset, len, fn, data);
+पूर्ण
 
-/* Get @nr_grefs grants from an array of page and call fn for each grant */
-void gnttab_foreach_grant(struct page **pages,
-			  unsigned int nr_grefs,
+/* Get @nr_grefs grants from an array of page and call fn क्रम each grant */
+व्योम gnttab_क्रमeach_grant(काष्ठा page **pages,
+			  अचिन्हित पूर्णांक nr_grefs,
 			  xen_grant_fn_t fn,
-			  void *data);
+			  व्योम *data);
 
-/* Get the number of grant in a specified region
+/* Get the number of grant in a specअगरied region
  *
  * start: Offset from the beginning of the first page
  * len: total length of data (can cross multiple page)
  */
-static inline unsigned int gnttab_count_grant(unsigned int start,
-					      unsigned int len)
-{
-	return XEN_PFN_UP(xen_offset_in_page(start) + len);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक gnttab_count_grant(अचिन्हित पूर्णांक start,
+					      अचिन्हित पूर्णांक len)
+अणु
+	वापस XEN_PFN_UP(xen_offset_in_page(start) + len);
+पूर्ण
 
-#endif /* __ASM_GNTTAB_H__ */
+#पूर्ण_अगर /* __ASM_GNTTAB_H__ */

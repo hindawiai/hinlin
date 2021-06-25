@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2017 Samsung Electronics Co.Ltd
  * Author:
  *	Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
-#include <linux/clk.h>
-#include <linux/component.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <drm/drm_fourcc.h>
-#include <drm/exynos_drm.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/exynos_drm.h>
 
-#include "exynos_drm_drv.h"
-#include "exynos_drm_fb.h"
-#include "exynos_drm_ipp.h"
-#include "regs-scaler.h"
+#समावेश "exynos_drm_drv.h"
+#समावेश "exynos_drm_fb.h"
+#समावेश "exynos_drm_ipp.h"
+#समावेश "regs-scaler.h"
 
-#define scaler_read(offset)		readl(scaler->regs + (offset))
-#define scaler_write(cfg, offset)	writel(cfg, scaler->regs + (offset))
-#define SCALER_MAX_CLK			4
-#define SCALER_AUTOSUSPEND_DELAY	2000
-#define SCALER_RESET_WAIT_RETRIES	100
+#घोषणा scaler_पढ़ो(offset)		पढ़ोl(scaler->regs + (offset))
+#घोषणा scaler_ग_लिखो(cfg, offset)	ग_लिखोl(cfg, scaler->regs + (offset))
+#घोषणा SCALER_MAX_CLK			4
+#घोषणा SCALER_AUTOSUSPEND_DELAY	2000
+#घोषणा SCALER_RESET_WAIT_RETRIES	100
 
-struct scaler_data {
-	const char	*clk_name[SCALER_MAX_CLK];
-	unsigned int	num_clk;
-	const struct exynos_drm_ipp_formats *formats;
-	unsigned int	num_formats;
-};
+काष्ठा scaler_data अणु
+	स्थिर अक्षर	*clk_name[SCALER_MAX_CLK];
+	अचिन्हित पूर्णांक	num_clk;
+	स्थिर काष्ठा exynos_drm_ipp_क्रमmats *क्रमmats;
+	अचिन्हित पूर्णांक	num_क्रमmats;
+पूर्ण;
 
-struct scaler_context {
-	struct exynos_drm_ipp		ipp;
-	struct drm_device		*drm_dev;
-	void				*dma_priv;
-	struct device			*dev;
-	void __iomem			*regs;
-	struct clk			*clock[SCALER_MAX_CLK];
-	struct exynos_drm_ipp_task	*task;
-	const struct scaler_data	*scaler_data;
-};
+काष्ठा scaler_context अणु
+	काष्ठा exynos_drm_ipp		ipp;
+	काष्ठा drm_device		*drm_dev;
+	व्योम				*dma_priv;
+	काष्ठा device			*dev;
+	व्योम __iomem			*regs;
+	काष्ठा clk			*घड़ी[SCALER_MAX_CLK];
+	काष्ठा exynos_drm_ipp_task	*task;
+	स्थिर काष्ठा scaler_data	*scaler_data;
+पूर्ण;
 
-struct scaler_format {
+काष्ठा scaler_क्रमmat अणु
 	u32	drm_fmt;
-	u32	internal_fmt;
+	u32	पूर्णांकernal_fmt;
 	u32	chroma_tile_w;
 	u32	chroma_tile_h;
-};
+पूर्ण;
 
-static const struct scaler_format scaler_formats[] = {
-	{ DRM_FORMAT_NV12, SCALER_YUV420_2P_UV, 8, 8 },
-	{ DRM_FORMAT_NV21, SCALER_YUV420_2P_VU, 8, 8 },
-	{ DRM_FORMAT_YUV420, SCALER_YUV420_3P, 8, 8 },
-	{ DRM_FORMAT_YUYV, SCALER_YUV422_1P_YUYV, 16, 16 },
-	{ DRM_FORMAT_UYVY, SCALER_YUV422_1P_UYVY, 16, 16 },
-	{ DRM_FORMAT_YVYU, SCALER_YUV422_1P_YVYU, 16, 16 },
-	{ DRM_FORMAT_NV16, SCALER_YUV422_2P_UV, 8, 16 },
-	{ DRM_FORMAT_NV61, SCALER_YUV422_2P_VU, 8, 16 },
-	{ DRM_FORMAT_YUV422, SCALER_YUV422_3P, 8, 16 },
-	{ DRM_FORMAT_NV24, SCALER_YUV444_2P_UV, 16, 16 },
-	{ DRM_FORMAT_NV42, SCALER_YUV444_2P_VU, 16, 16 },
-	{ DRM_FORMAT_YUV444, SCALER_YUV444_3P, 16, 16 },
-	{ DRM_FORMAT_RGB565, SCALER_RGB_565, 0, 0 },
-	{ DRM_FORMAT_XRGB1555, SCALER_ARGB1555, 0, 0 },
-	{ DRM_FORMAT_ARGB1555, SCALER_ARGB1555, 0, 0 },
-	{ DRM_FORMAT_XRGB4444, SCALER_ARGB4444, 0, 0 },
-	{ DRM_FORMAT_ARGB4444, SCALER_ARGB4444, 0, 0 },
-	{ DRM_FORMAT_XRGB8888, SCALER_ARGB8888, 0, 0 },
-	{ DRM_FORMAT_ARGB8888, SCALER_ARGB8888, 0, 0 },
-	{ DRM_FORMAT_RGBX8888, SCALER_RGBA8888, 0, 0 },
-	{ DRM_FORMAT_RGBA8888, SCALER_RGBA8888, 0, 0 },
-};
+अटल स्थिर काष्ठा scaler_क्रमmat scaler_क्रमmats[] = अणु
+	अणु DRM_FORMAT_NV12, SCALER_YUV420_2P_UV, 8, 8 पूर्ण,
+	अणु DRM_FORMAT_NV21, SCALER_YUV420_2P_VU, 8, 8 पूर्ण,
+	अणु DRM_FORMAT_YUV420, SCALER_YUV420_3P, 8, 8 पूर्ण,
+	अणु DRM_FORMAT_YUYV, SCALER_YUV422_1P_YUYV, 16, 16 पूर्ण,
+	अणु DRM_FORMAT_UYVY, SCALER_YUV422_1P_UYVY, 16, 16 पूर्ण,
+	अणु DRM_FORMAT_YVYU, SCALER_YUV422_1P_YVYU, 16, 16 पूर्ण,
+	अणु DRM_FORMAT_NV16, SCALER_YUV422_2P_UV, 8, 16 पूर्ण,
+	अणु DRM_FORMAT_NV61, SCALER_YUV422_2P_VU, 8, 16 पूर्ण,
+	अणु DRM_FORMAT_YUV422, SCALER_YUV422_3P, 8, 16 पूर्ण,
+	अणु DRM_FORMAT_NV24, SCALER_YUV444_2P_UV, 16, 16 पूर्ण,
+	अणु DRM_FORMAT_NV42, SCALER_YUV444_2P_VU, 16, 16 पूर्ण,
+	अणु DRM_FORMAT_YUV444, SCALER_YUV444_3P, 16, 16 पूर्ण,
+	अणु DRM_FORMAT_RGB565, SCALER_RGB_565, 0, 0 पूर्ण,
+	अणु DRM_FORMAT_XRGB1555, SCALER_ARGB1555, 0, 0 पूर्ण,
+	अणु DRM_FORMAT_ARGB1555, SCALER_ARGB1555, 0, 0 पूर्ण,
+	अणु DRM_FORMAT_XRGB4444, SCALER_ARGB4444, 0, 0 पूर्ण,
+	अणु DRM_FORMAT_ARGB4444, SCALER_ARGB4444, 0, 0 पूर्ण,
+	अणु DRM_FORMAT_XRGB8888, SCALER_ARGB8888, 0, 0 पूर्ण,
+	अणु DRM_FORMAT_ARGB8888, SCALER_ARGB8888, 0, 0 पूर्ण,
+	अणु DRM_FORMAT_RGBX8888, SCALER_RGBA8888, 0, 0 पूर्ण,
+	अणु DRM_FORMAT_RGBA8888, SCALER_RGBA8888, 0, 0 पूर्ण,
+पूर्ण;
 
-static const struct scaler_format *scaler_get_format(u32 drm_fmt)
-{
-	int i;
+अटल स्थिर काष्ठा scaler_क्रमmat *scaler_get_क्रमmat(u32 drm_fmt)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(scaler_formats); i++)
-		if (scaler_formats[i].drm_fmt == drm_fmt)
-			return &scaler_formats[i];
+	क्रम (i = 0; i < ARRAY_SIZE(scaler_क्रमmats); i++)
+		अगर (scaler_क्रमmats[i].drm_fmt == drm_fmt)
+			वापस &scaler_क्रमmats[i];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline int scaler_reset(struct scaler_context *scaler)
-{
-	int retry = SCALER_RESET_WAIT_RETRIES;
+अटल अंतरभूत पूर्णांक scaler_reset(काष्ठा scaler_context *scaler)
+अणु
+	पूर्णांक retry = SCALER_RESET_WAIT_RETRIES;
 
-	scaler_write(SCALER_CFG_SOFT_RESET, SCALER_CFG);
-	do {
+	scaler_ग_लिखो(SCALER_CFG_SOFT_RESET, SCALER_CFG);
+	करो अणु
 		cpu_relax();
-	} while (--retry > 1 &&
-		 scaler_read(SCALER_CFG) & SCALER_CFG_SOFT_RESET);
-	do {
+	पूर्ण जबतक (--retry > 1 &&
+		 scaler_पढ़ो(SCALER_CFG) & SCALER_CFG_SOFT_RESET);
+	करो अणु
 		cpu_relax();
-		scaler_write(1, SCALER_INT_EN);
-	} while (--retry > 0 && scaler_read(SCALER_INT_EN) != 1);
+		scaler_ग_लिखो(1, SCALER_INT_EN);
+	पूर्ण जबतक (--retry > 0 && scaler_पढ़ो(SCALER_INT_EN) != 1);
 
-	return retry ? 0 : -EIO;
-}
+	वापस retry ? 0 : -EIO;
+पूर्ण
 
-static inline void scaler_enable_int(struct scaler_context *scaler)
-{
+अटल अंतरभूत व्योम scaler_enable_पूर्णांक(काष्ठा scaler_context *scaler)
+अणु
 	u32 val;
 
 	val = SCALER_INT_EN_TIMEOUT |
@@ -136,601 +137,601 @@ static inline void scaler_enable_int(struct scaler_context *scaler)
 		SCALER_INT_EN_ILLEGAL_SRC_Y_BASE |
 		SCALER_INT_EN_ILLEGAL_SRC_COLOR |
 		SCALER_INT_EN_FRAME_END;
-	scaler_write(val, SCALER_INT_EN);
-}
+	scaler_ग_लिखो(val, SCALER_INT_EN);
+पूर्ण
 
-static inline void scaler_set_src_fmt(struct scaler_context *scaler,
+अटल अंतरभूत व्योम scaler_set_src_fmt(काष्ठा scaler_context *scaler,
 	u32 src_fmt, u32 tile)
-{
+अणु
 	u32 val;
 
 	val = SCALER_SRC_CFG_SET_COLOR_FORMAT(src_fmt) | (tile << 10);
-	scaler_write(val, SCALER_SRC_CFG);
-}
+	scaler_ग_लिखो(val, SCALER_SRC_CFG);
+पूर्ण
 
-static inline void scaler_set_src_base(struct scaler_context *scaler,
-	struct exynos_drm_ipp_buffer *src_buf)
-{
-	static unsigned int bases[] = {
+अटल अंतरभूत व्योम scaler_set_src_base(काष्ठा scaler_context *scaler,
+	काष्ठा exynos_drm_ipp_buffer *src_buf)
+अणु
+	अटल अचिन्हित पूर्णांक bases[] = अणु
 		SCALER_SRC_Y_BASE,
 		SCALER_SRC_CB_BASE,
 		SCALER_SRC_CR_BASE,
-	};
-	int i;
+	पूर्ण;
+	पूर्णांक i;
 
-	for (i = 0; i < src_buf->format->num_planes; ++i)
-		scaler_write(src_buf->dma_addr[i], bases[i]);
-}
+	क्रम (i = 0; i < src_buf->क्रमmat->num_planes; ++i)
+		scaler_ग_लिखो(src_buf->dma_addr[i], bases[i]);
+पूर्ण
 
-static inline void scaler_set_src_span(struct scaler_context *scaler,
-	struct exynos_drm_ipp_buffer *src_buf)
-{
+अटल अंतरभूत व्योम scaler_set_src_span(काष्ठा scaler_context *scaler,
+	काष्ठा exynos_drm_ipp_buffer *src_buf)
+अणु
 	u32 val;
 
 	val = SCALER_SRC_SPAN_SET_Y_SPAN(src_buf->buf.pitch[0] /
-		src_buf->format->cpp[0]);
+		src_buf->क्रमmat->cpp[0]);
 
-	if (src_buf->format->num_planes > 1)
+	अगर (src_buf->क्रमmat->num_planes > 1)
 		val |= SCALER_SRC_SPAN_SET_C_SPAN(src_buf->buf.pitch[1]);
 
-	scaler_write(val, SCALER_SRC_SPAN);
-}
+	scaler_ग_लिखो(val, SCALER_SRC_SPAN);
+पूर्ण
 
-static inline void scaler_set_src_luma_chroma_pos(struct scaler_context *scaler,
-			struct drm_exynos_ipp_task_rect *src_pos,
-			const struct scaler_format *fmt)
-{
+अटल अंतरभूत व्योम scaler_set_src_luma_chroma_pos(काष्ठा scaler_context *scaler,
+			काष्ठा drm_exynos_ipp_task_rect *src_pos,
+			स्थिर काष्ठा scaler_क्रमmat *fmt)
+अणु
 	u32 val;
 
 	val = SCALER_SRC_Y_POS_SET_YH_POS(src_pos->x << 2);
 	val |=  SCALER_SRC_Y_POS_SET_YV_POS(src_pos->y << 2);
-	scaler_write(val, SCALER_SRC_Y_POS);
+	scaler_ग_लिखो(val, SCALER_SRC_Y_POS);
 	val = SCALER_SRC_C_POS_SET_CH_POS(
 		(src_pos->x * fmt->chroma_tile_w / 16) << 2);
 	val |=  SCALER_SRC_C_POS_SET_CV_POS(
 		(src_pos->y * fmt->chroma_tile_h / 16) << 2);
-	scaler_write(val, SCALER_SRC_C_POS);
-}
+	scaler_ग_लिखो(val, SCALER_SRC_C_POS);
+पूर्ण
 
-static inline void scaler_set_src_wh(struct scaler_context *scaler,
-	struct drm_exynos_ipp_task_rect *src_pos)
-{
+अटल अंतरभूत व्योम scaler_set_src_wh(काष्ठा scaler_context *scaler,
+	काष्ठा drm_exynos_ipp_task_rect *src_pos)
+अणु
 	u32 val;
 
 	val = SCALER_SRC_WH_SET_WIDTH(src_pos->w);
 	val |= SCALER_SRC_WH_SET_HEIGHT(src_pos->h);
-	scaler_write(val, SCALER_SRC_WH);
-}
+	scaler_ग_लिखो(val, SCALER_SRC_WH);
+पूर्ण
 
-static inline void scaler_set_dst_fmt(struct scaler_context *scaler,
+अटल अंतरभूत व्योम scaler_set_dst_fmt(काष्ठा scaler_context *scaler,
 	u32 dst_fmt)
-{
+अणु
 	u32 val;
 
 	val = SCALER_DST_CFG_SET_COLOR_FORMAT(dst_fmt);
-	scaler_write(val, SCALER_DST_CFG);
-}
+	scaler_ग_लिखो(val, SCALER_DST_CFG);
+पूर्ण
 
-static inline void scaler_set_dst_base(struct scaler_context *scaler,
-	struct exynos_drm_ipp_buffer *dst_buf)
-{
-	static unsigned int bases[] = {
+अटल अंतरभूत व्योम scaler_set_dst_base(काष्ठा scaler_context *scaler,
+	काष्ठा exynos_drm_ipp_buffer *dst_buf)
+अणु
+	अटल अचिन्हित पूर्णांक bases[] = अणु
 		SCALER_DST_Y_BASE,
 		SCALER_DST_CB_BASE,
 		SCALER_DST_CR_BASE,
-	};
-	int i;
+	पूर्ण;
+	पूर्णांक i;
 
-	for (i = 0; i < dst_buf->format->num_planes; ++i)
-		scaler_write(dst_buf->dma_addr[i], bases[i]);
-}
+	क्रम (i = 0; i < dst_buf->क्रमmat->num_planes; ++i)
+		scaler_ग_लिखो(dst_buf->dma_addr[i], bases[i]);
+पूर्ण
 
-static inline void scaler_set_dst_span(struct scaler_context *scaler,
-	struct exynos_drm_ipp_buffer *dst_buf)
-{
+अटल अंतरभूत व्योम scaler_set_dst_span(काष्ठा scaler_context *scaler,
+	काष्ठा exynos_drm_ipp_buffer *dst_buf)
+अणु
 	u32 val;
 
 	val = SCALER_DST_SPAN_SET_Y_SPAN(dst_buf->buf.pitch[0] /
-		dst_buf->format->cpp[0]);
+		dst_buf->क्रमmat->cpp[0]);
 
-	if (dst_buf->format->num_planes > 1)
+	अगर (dst_buf->क्रमmat->num_planes > 1)
 		val |= SCALER_DST_SPAN_SET_C_SPAN(dst_buf->buf.pitch[1]);
 
-	scaler_write(val, SCALER_DST_SPAN);
-}
+	scaler_ग_लिखो(val, SCALER_DST_SPAN);
+पूर्ण
 
-static inline void scaler_set_dst_luma_pos(struct scaler_context *scaler,
-	struct drm_exynos_ipp_task_rect *dst_pos)
-{
+अटल अंतरभूत व्योम scaler_set_dst_luma_pos(काष्ठा scaler_context *scaler,
+	काष्ठा drm_exynos_ipp_task_rect *dst_pos)
+अणु
 	u32 val;
 
 	val = SCALER_DST_WH_SET_WIDTH(dst_pos->w);
 	val |= SCALER_DST_WH_SET_HEIGHT(dst_pos->h);
-	scaler_write(val, SCALER_DST_WH);
-}
+	scaler_ग_लिखो(val, SCALER_DST_WH);
+पूर्ण
 
-static inline void scaler_set_dst_wh(struct scaler_context *scaler,
-	struct drm_exynos_ipp_task_rect *dst_pos)
-{
+अटल अंतरभूत व्योम scaler_set_dst_wh(काष्ठा scaler_context *scaler,
+	काष्ठा drm_exynos_ipp_task_rect *dst_pos)
+अणु
 	u32 val;
 
 	val = SCALER_DST_POS_SET_H_POS(dst_pos->x);
 	val |= SCALER_DST_POS_SET_V_POS(dst_pos->y);
-	scaler_write(val, SCALER_DST_POS);
-}
+	scaler_ग_लिखो(val, SCALER_DST_POS);
+पूर्ण
 
-static inline void scaler_set_hv_ratio(struct scaler_context *scaler,
-	unsigned int rotation,
-	struct drm_exynos_ipp_task_rect *src_pos,
-	struct drm_exynos_ipp_task_rect *dst_pos)
-{
+अटल अंतरभूत व्योम scaler_set_hv_ratio(काष्ठा scaler_context *scaler,
+	अचिन्हित पूर्णांक rotation,
+	काष्ठा drm_exynos_ipp_task_rect *src_pos,
+	काष्ठा drm_exynos_ipp_task_rect *dst_pos)
+अणु
 	u32 val, h_ratio, v_ratio;
 
-	if (drm_rotation_90_or_270(rotation)) {
+	अगर (drm_rotation_90_or_270(rotation)) अणु
 		h_ratio = (src_pos->h << 16) / dst_pos->w;
 		v_ratio = (src_pos->w << 16) / dst_pos->h;
-	} else {
+	पूर्ण अन्यथा अणु
 		h_ratio = (src_pos->w << 16) / dst_pos->w;
 		v_ratio = (src_pos->h << 16) / dst_pos->h;
-	}
+	पूर्ण
 
 	val = SCALER_H_RATIO_SET(h_ratio);
-	scaler_write(val, SCALER_H_RATIO);
+	scaler_ग_लिखो(val, SCALER_H_RATIO);
 
 	val = SCALER_V_RATIO_SET(v_ratio);
-	scaler_write(val, SCALER_V_RATIO);
-}
+	scaler_ग_लिखो(val, SCALER_V_RATIO);
+पूर्ण
 
-static inline void scaler_set_rotation(struct scaler_context *scaler,
-	unsigned int rotation)
-{
+अटल अंतरभूत व्योम scaler_set_rotation(काष्ठा scaler_context *scaler,
+	अचिन्हित पूर्णांक rotation)
+अणु
 	u32 val = 0;
 
-	if (rotation & DRM_MODE_ROTATE_90)
+	अगर (rotation & DRM_MODE_ROTATE_90)
 		val |= SCALER_ROT_CFG_SET_ROTMODE(SCALER_ROT_MODE_90);
-	else if (rotation & DRM_MODE_ROTATE_180)
+	अन्यथा अगर (rotation & DRM_MODE_ROTATE_180)
 		val |= SCALER_ROT_CFG_SET_ROTMODE(SCALER_ROT_MODE_180);
-	else if (rotation & DRM_MODE_ROTATE_270)
+	अन्यथा अगर (rotation & DRM_MODE_ROTATE_270)
 		val |= SCALER_ROT_CFG_SET_ROTMODE(SCALER_ROT_MODE_270);
-	if (rotation & DRM_MODE_REFLECT_X)
+	अगर (rotation & DRM_MODE_REFLECT_X)
 		val |= SCALER_ROT_CFG_FLIP_X_EN;
-	if (rotation & DRM_MODE_REFLECT_Y)
+	अगर (rotation & DRM_MODE_REFLECT_Y)
 		val |= SCALER_ROT_CFG_FLIP_Y_EN;
-	scaler_write(val, SCALER_ROT_CFG);
-}
+	scaler_ग_लिखो(val, SCALER_ROT_CFG);
+पूर्ण
 
-static inline void scaler_set_csc(struct scaler_context *scaler,
-	const struct drm_format_info *fmt)
-{
-	static const u32 csc_mtx[2][3][3] = {
-		{ /* YCbCr to RGB */
-			{0x254, 0x000, 0x331},
-			{0x254, 0xf38, 0xe60},
-			{0x254, 0x409, 0x000},
-		},
-		{ /* RGB to YCbCr */
-			{0x084, 0x102, 0x032},
-			{0xfb4, 0xf6b, 0x0e1},
-			{0x0e1, 0xf44, 0xfdc},
-		},
-	};
-	int i, j, dir;
+अटल अंतरभूत व्योम scaler_set_csc(काष्ठा scaler_context *scaler,
+	स्थिर काष्ठा drm_क्रमmat_info *fmt)
+अणु
+	अटल स्थिर u32 csc_mtx[2][3][3] = अणु
+		अणु /* YCbCr to RGB */
+			अणु0x254, 0x000, 0x331पूर्ण,
+			अणु0x254, 0xf38, 0xe60पूर्ण,
+			अणु0x254, 0x409, 0x000पूर्ण,
+		पूर्ण,
+		अणु /* RGB to YCbCr */
+			अणु0x084, 0x102, 0x032पूर्ण,
+			अणु0xfb4, 0xf6b, 0x0e1पूर्ण,
+			अणु0x0e1, 0xf44, 0xfdcपूर्ण,
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक i, j, dir;
 
-	switch (fmt->format) {
-	case DRM_FORMAT_RGB565:
-	case DRM_FORMAT_XRGB1555:
-	case DRM_FORMAT_ARGB1555:
-	case DRM_FORMAT_XRGB4444:
-	case DRM_FORMAT_ARGB4444:
-	case DRM_FORMAT_XRGB8888:
-	case DRM_FORMAT_ARGB8888:
-	case DRM_FORMAT_RGBX8888:
-	case DRM_FORMAT_RGBA8888:
+	चयन (fmt->क्रमmat) अणु
+	हाल DRM_FORMAT_RGB565:
+	हाल DRM_FORMAT_XRGB1555:
+	हाल DRM_FORMAT_ARGB1555:
+	हाल DRM_FORMAT_XRGB4444:
+	हाल DRM_FORMAT_ARGB4444:
+	हाल DRM_FORMAT_XRGB8888:
+	हाल DRM_FORMAT_ARGB8888:
+	हाल DRM_FORMAT_RGBX8888:
+	हाल DRM_FORMAT_RGBA8888:
 		dir = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dir = 0;
-	}
+	पूर्ण
 
-	for (i = 0; i < 3; i++)
-		for (j = 0; j < 3; j++)
-			scaler_write(csc_mtx[dir][i][j], SCALER_CSC_COEF(j, i));
-}
+	क्रम (i = 0; i < 3; i++)
+		क्रम (j = 0; j < 3; j++)
+			scaler_ग_लिखो(csc_mtx[dir][i][j], SCALER_CSC_COEF(j, i));
+पूर्ण
 
-static inline void scaler_set_timer(struct scaler_context *scaler,
-	unsigned int timer, unsigned int divider)
-{
+अटल अंतरभूत व्योम scaler_set_समयr(काष्ठा scaler_context *scaler,
+	अचिन्हित पूर्णांक समयr, अचिन्हित पूर्णांक भागider)
+अणु
 	u32 val;
 
 	val = SCALER_TIMEOUT_CTRL_TIMER_ENABLE;
-	val |= SCALER_TIMEOUT_CTRL_SET_TIMER_VALUE(timer);
-	val |= SCALER_TIMEOUT_CTRL_SET_TIMER_DIV(divider);
-	scaler_write(val, SCALER_TIMEOUT_CTRL);
-}
+	val |= SCALER_TIMEOUT_CTRL_SET_TIMER_VALUE(समयr);
+	val |= SCALER_TIMEOUT_CTRL_SET_TIMER_DIV(भागider);
+	scaler_ग_लिखो(val, SCALER_TIMEOUT_CTRL);
+पूर्ण
 
-static inline void scaler_start_hw(struct scaler_context *scaler)
-{
-	scaler_write(SCALER_CFG_START_CMD, SCALER_CFG);
-}
+अटल अंतरभूत व्योम scaler_start_hw(काष्ठा scaler_context *scaler)
+अणु
+	scaler_ग_लिखो(SCALER_CFG_START_CMD, SCALER_CFG);
+पूर्ण
 
-static int scaler_commit(struct exynos_drm_ipp *ipp,
-			  struct exynos_drm_ipp_task *task)
-{
-	struct scaler_context *scaler =
-			container_of(ipp, struct scaler_context, ipp);
+अटल पूर्णांक scaler_commit(काष्ठा exynos_drm_ipp *ipp,
+			  काष्ठा exynos_drm_ipp_task *task)
+अणु
+	काष्ठा scaler_context *scaler =
+			container_of(ipp, काष्ठा scaler_context, ipp);
 
-	struct drm_exynos_ipp_task_rect *src_pos = &task->src.rect;
-	struct drm_exynos_ipp_task_rect *dst_pos = &task->dst.rect;
-	const struct scaler_format *src_fmt, *dst_fmt;
+	काष्ठा drm_exynos_ipp_task_rect *src_pos = &task->src.rect;
+	काष्ठा drm_exynos_ipp_task_rect *dst_pos = &task->dst.rect;
+	स्थिर काष्ठा scaler_क्रमmat *src_fmt, *dst_fmt;
 
-	src_fmt = scaler_get_format(task->src.buf.fourcc);
-	dst_fmt = scaler_get_format(task->dst.buf.fourcc);
+	src_fmt = scaler_get_क्रमmat(task->src.buf.fourcc);
+	dst_fmt = scaler_get_क्रमmat(task->dst.buf.fourcc);
 
-	pm_runtime_get_sync(scaler->dev);
-	if (scaler_reset(scaler)) {
-		pm_runtime_put(scaler->dev);
-		return -EIO;
-	}
+	pm_runसमय_get_sync(scaler->dev);
+	अगर (scaler_reset(scaler)) अणु
+		pm_runसमय_put(scaler->dev);
+		वापस -EIO;
+	पूर्ण
 
 	scaler->task = task;
 
 	scaler_set_src_fmt(
-		scaler, src_fmt->internal_fmt, task->src.buf.modifier != 0);
+		scaler, src_fmt->पूर्णांकernal_fmt, task->src.buf.modअगरier != 0);
 	scaler_set_src_base(scaler, &task->src);
 	scaler_set_src_span(scaler, &task->src);
 	scaler_set_src_luma_chroma_pos(scaler, src_pos, src_fmt);
 	scaler_set_src_wh(scaler, src_pos);
 
-	scaler_set_dst_fmt(scaler, dst_fmt->internal_fmt);
+	scaler_set_dst_fmt(scaler, dst_fmt->पूर्णांकernal_fmt);
 	scaler_set_dst_base(scaler, &task->dst);
 	scaler_set_dst_span(scaler, &task->dst);
 	scaler_set_dst_luma_pos(scaler, dst_pos);
 	scaler_set_dst_wh(scaler, dst_pos);
 
-	scaler_set_hv_ratio(scaler, task->transform.rotation, src_pos, dst_pos);
-	scaler_set_rotation(scaler, task->transform.rotation);
+	scaler_set_hv_ratio(scaler, task->transक्रमm.rotation, src_pos, dst_pos);
+	scaler_set_rotation(scaler, task->transक्रमm.rotation);
 
-	scaler_set_csc(scaler, task->src.format);
+	scaler_set_csc(scaler, task->src.क्रमmat);
 
-	scaler_set_timer(scaler, 0xffff, 0xf);
+	scaler_set_समयr(scaler, 0xffff, 0xf);
 
-	scaler_enable_int(scaler);
+	scaler_enable_पूर्णांक(scaler);
 	scaler_start_hw(scaler);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct exynos_drm_ipp_funcs ipp_funcs = {
+अटल काष्ठा exynos_drm_ipp_funcs ipp_funcs = अणु
 	.commit = scaler_commit,
-};
+पूर्ण;
 
-static inline void scaler_disable_int(struct scaler_context *scaler)
-{
-	scaler_write(0, SCALER_INT_EN);
-}
+अटल अंतरभूत व्योम scaler_disable_पूर्णांक(काष्ठा scaler_context *scaler)
+अणु
+	scaler_ग_लिखो(0, SCALER_INT_EN);
+पूर्ण
 
-static inline u32 scaler_get_int_status(struct scaler_context *scaler)
-{
-	u32 val = scaler_read(SCALER_INT_STATUS);
+अटल अंतरभूत u32 scaler_get_पूर्णांक_status(काष्ठा scaler_context *scaler)
+अणु
+	u32 val = scaler_पढ़ो(SCALER_INT_STATUS);
 
-	scaler_write(val, SCALER_INT_STATUS);
+	scaler_ग_लिखो(val, SCALER_INT_STATUS);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline int scaler_task_done(u32 val)
-{
-	return val & SCALER_INT_STATUS_FRAME_END ? 0 : -EINVAL;
-}
+अटल अंतरभूत पूर्णांक scaler_task_करोne(u32 val)
+अणु
+	वापस val & SCALER_INT_STATUS_FRAME_END ? 0 : -EINVAL;
+पूर्ण
 
-static irqreturn_t scaler_irq_handler(int irq, void *arg)
-{
-	struct scaler_context *scaler = arg;
+अटल irqवापस_t scaler_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा scaler_context *scaler = arg;
 
-	u32 val = scaler_get_int_status(scaler);
+	u32 val = scaler_get_पूर्णांक_status(scaler);
 
-	scaler_disable_int(scaler);
+	scaler_disable_पूर्णांक(scaler);
 
-	if (scaler->task) {
-		struct exynos_drm_ipp_task *task = scaler->task;
+	अगर (scaler->task) अणु
+		काष्ठा exynos_drm_ipp_task *task = scaler->task;
 
-		scaler->task = NULL;
-		pm_runtime_mark_last_busy(scaler->dev);
-		pm_runtime_put_autosuspend(scaler->dev);
-		exynos_drm_ipp_task_done(task, scaler_task_done(val));
-	}
+		scaler->task = शून्य;
+		pm_runसमय_mark_last_busy(scaler->dev);
+		pm_runसमय_put_स्वतःsuspend(scaler->dev);
+		exynos_drm_ipp_task_करोne(task, scaler_task_करोne(val));
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int scaler_bind(struct device *dev, struct device *master, void *data)
-{
-	struct scaler_context *scaler = dev_get_drvdata(dev);
-	struct drm_device *drm_dev = data;
-	struct exynos_drm_ipp *ipp = &scaler->ipp;
+अटल पूर्णांक scaler_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा scaler_context *scaler = dev_get_drvdata(dev);
+	काष्ठा drm_device *drm_dev = data;
+	काष्ठा exynos_drm_ipp *ipp = &scaler->ipp;
 
 	scaler->drm_dev = drm_dev;
 	ipp->drm_dev = drm_dev;
-	exynos_drm_register_dma(drm_dev, dev, &scaler->dma_priv);
+	exynos_drm_रेजिस्टर_dma(drm_dev, dev, &scaler->dma_priv);
 
-	exynos_drm_ipp_register(dev, ipp, &ipp_funcs,
+	exynos_drm_ipp_रेजिस्टर(dev, ipp, &ipp_funcs,
 			DRM_EXYNOS_IPP_CAP_CROP | DRM_EXYNOS_IPP_CAP_ROTATE |
 			DRM_EXYNOS_IPP_CAP_SCALE | DRM_EXYNOS_IPP_CAP_CONVERT,
-			scaler->scaler_data->formats,
-			scaler->scaler_data->num_formats, "scaler");
+			scaler->scaler_data->क्रमmats,
+			scaler->scaler_data->num_क्रमmats, "scaler");
 
 	dev_info(dev, "The exynos scaler has been probed successfully\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scaler_unbind(struct device *dev, struct device *master,
-			void *data)
-{
-	struct scaler_context *scaler = dev_get_drvdata(dev);
-	struct exynos_drm_ipp *ipp = &scaler->ipp;
+अटल व्योम scaler_unbind(काष्ठा device *dev, काष्ठा device *master,
+			व्योम *data)
+अणु
+	काष्ठा scaler_context *scaler = dev_get_drvdata(dev);
+	काष्ठा exynos_drm_ipp *ipp = &scaler->ipp;
 
-	exynos_drm_ipp_unregister(dev, ipp);
-	exynos_drm_unregister_dma(scaler->drm_dev, scaler->dev,
+	exynos_drm_ipp_unरेजिस्टर(dev, ipp);
+	exynos_drm_unरेजिस्टर_dma(scaler->drm_dev, scaler->dev,
 				  &scaler->dma_priv);
-}
+पूर्ण
 
-static const struct component_ops scaler_component_ops = {
+अटल स्थिर काष्ठा component_ops scaler_component_ops = अणु
 	.bind	= scaler_bind,
 	.unbind = scaler_unbind,
-};
+पूर्ण;
 
-static int scaler_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource	*regs_res;
-	struct scaler_context *scaler;
-	int irq;
-	int ret, i;
+अटल पूर्णांक scaler_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource	*regs_res;
+	काष्ठा scaler_context *scaler;
+	पूर्णांक irq;
+	पूर्णांक ret, i;
 
-	scaler = devm_kzalloc(dev, sizeof(*scaler), GFP_KERNEL);
-	if (!scaler)
-		return -ENOMEM;
+	scaler = devm_kzalloc(dev, माप(*scaler), GFP_KERNEL);
+	अगर (!scaler)
+		वापस -ENOMEM;
 
 	scaler->scaler_data =
-		(struct scaler_data *)of_device_get_match_data(dev);
+		(काष्ठा scaler_data *)of_device_get_match_data(dev);
 
 	scaler->dev = dev;
-	regs_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	regs_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	scaler->regs = devm_ioremap_resource(dev, regs_res);
-	if (IS_ERR(scaler->regs))
-		return PTR_ERR(scaler->regs);
+	अगर (IS_ERR(scaler->regs))
+		वापस PTR_ERR(scaler->regs);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	ret = devm_request_threaded_irq(dev, irq, NULL,	scaler_irq_handler,
+	ret = devm_request_thपढ़ोed_irq(dev, irq, शून्य,	scaler_irq_handler,
 					IRQF_ONESHOT, "drm_scaler", scaler);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to request irq\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < scaler->scaler_data->num_clk; ++i) {
-		scaler->clock[i] = devm_clk_get(dev,
+	क्रम (i = 0; i < scaler->scaler_data->num_clk; ++i) अणु
+		scaler->घड़ी[i] = devm_clk_get(dev,
 					      scaler->scaler_data->clk_name[i]);
-		if (IS_ERR(scaler->clock[i])) {
+		अगर (IS_ERR(scaler->घड़ी[i])) अणु
 			dev_err(dev, "failed to get clock\n");
-			return PTR_ERR(scaler->clock[i]);
-		}
-	}
+			वापस PTR_ERR(scaler->घड़ी[i]);
+		पूर्ण
+	पूर्ण
 
-	pm_runtime_use_autosuspend(dev);
-	pm_runtime_set_autosuspend_delay(dev, SCALER_AUTOSUSPEND_DELAY);
-	pm_runtime_enable(dev);
-	platform_set_drvdata(pdev, scaler);
+	pm_runसमय_use_स्वतःsuspend(dev);
+	pm_runसमय_set_स्वतःsuspend_delay(dev, SCALER_AUTOSUSPEND_DELAY);
+	pm_runसमय_enable(dev);
+	platक्रमm_set_drvdata(pdev, scaler);
 
 	ret = component_add(dev, &scaler_component_ops);
-	if (ret)
-		goto err_ippdrv_register;
+	अगर (ret)
+		जाओ err_ippdrv_रेजिस्टर;
 
-	return 0;
+	वापस 0;
 
-err_ippdrv_register:
-	pm_runtime_dont_use_autosuspend(dev);
-	pm_runtime_disable(dev);
-	return ret;
-}
+err_ippdrv_रेजिस्टर:
+	pm_runसमय_करोnt_use_स्वतःsuspend(dev);
+	pm_runसमय_disable(dev);
+	वापस ret;
+पूर्ण
 
-static int scaler_remove(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक scaler_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
 
 	component_del(dev, &scaler_component_ops);
-	pm_runtime_dont_use_autosuspend(dev);
-	pm_runtime_disable(dev);
+	pm_runसमय_करोnt_use_स्वतःsuspend(dev);
+	pm_runसमय_disable(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int clk_disable_unprepare_wrapper(struct clk *clk)
-{
+अटल पूर्णांक clk_disable_unprepare_wrapper(काष्ठा clk *clk)
+अणु
 	clk_disable_unprepare(clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scaler_clk_ctrl(struct scaler_context *scaler, bool enable)
-{
-	int (*clk_fun)(struct clk *clk), i;
+अटल पूर्णांक scaler_clk_ctrl(काष्ठा scaler_context *scaler, bool enable)
+अणु
+	पूर्णांक (*clk_fun)(काष्ठा clk *clk), i;
 
 	clk_fun = enable ? clk_prepare_enable : clk_disable_unprepare_wrapper;
 
-	for (i = 0; i < scaler->scaler_data->num_clk; ++i)
-		clk_fun(scaler->clock[i]);
+	क्रम (i = 0; i < scaler->scaler_data->num_clk; ++i)
+		clk_fun(scaler->घड़ी[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scaler_runtime_suspend(struct device *dev)
-{
-	struct scaler_context *scaler = dev_get_drvdata(dev);
+अटल पूर्णांक scaler_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा scaler_context *scaler = dev_get_drvdata(dev);
 
-	return  scaler_clk_ctrl(scaler, false);
-}
+	वापस  scaler_clk_ctrl(scaler, false);
+पूर्ण
 
-static int scaler_runtime_resume(struct device *dev)
-{
-	struct scaler_context *scaler = dev_get_drvdata(dev);
+अटल पूर्णांक scaler_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा scaler_context *scaler = dev_get_drvdata(dev);
 
-	return  scaler_clk_ctrl(scaler, true);
-}
-#endif
+	वापस  scaler_clk_ctrl(scaler, true);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops scaler_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-	SET_RUNTIME_PM_OPS(scaler_runtime_suspend, scaler_runtime_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops scaler_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+	SET_RUNTIME_PM_OPS(scaler_runसमय_suspend, scaler_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct drm_exynos_ipp_limit scaler_5420_two_pixel_hv_limits[] = {
-	{ IPP_SIZE_LIMIT(BUFFER, .h = { 16, SZ_8K }, .v = { 16, SZ_8K }) },
-	{ IPP_SIZE_LIMIT(AREA, .h.align = 2, .v.align = 2) },
-	{ IPP_SCALE_LIMIT(.h = { 65536 * 1 / 4, 65536 * 16 },
-			  .v = { 65536 * 1 / 4, 65536 * 16 }) },
-};
+अटल स्थिर काष्ठा drm_exynos_ipp_limit scaler_5420_two_pixel_hv_limits[] = अणु
+	अणु IPP_SIZE_LIMIT(BUFFER, .h = अणु 16, SZ_8K पूर्ण, .v = अणु 16, SZ_8K पूर्ण) पूर्ण,
+	अणु IPP_SIZE_LIMIT(AREA, .h.align = 2, .v.align = 2) पूर्ण,
+	अणु IPP_SCALE_LIMIT(.h = अणु 65536 * 1 / 4, 65536 * 16 पूर्ण,
+			  .v = अणु 65536 * 1 / 4, 65536 * 16 पूर्ण) पूर्ण,
+पूर्ण;
 
-static const struct drm_exynos_ipp_limit scaler_5420_two_pixel_h_limits[] = {
-	{ IPP_SIZE_LIMIT(BUFFER, .h = { 16, SZ_8K }, .v = { 16, SZ_8K }) },
-	{ IPP_SIZE_LIMIT(AREA, .h.align = 2, .v.align = 1) },
-	{ IPP_SCALE_LIMIT(.h = { 65536 * 1 / 4, 65536 * 16 },
-			  .v = { 65536 * 1 / 4, 65536 * 16 }) },
-};
+अटल स्थिर काष्ठा drm_exynos_ipp_limit scaler_5420_two_pixel_h_limits[] = अणु
+	अणु IPP_SIZE_LIMIT(BUFFER, .h = अणु 16, SZ_8K पूर्ण, .v = अणु 16, SZ_8K पूर्ण) पूर्ण,
+	अणु IPP_SIZE_LIMIT(AREA, .h.align = 2, .v.align = 1) पूर्ण,
+	अणु IPP_SCALE_LIMIT(.h = अणु 65536 * 1 / 4, 65536 * 16 पूर्ण,
+			  .v = अणु 65536 * 1 / 4, 65536 * 16 पूर्ण) पूर्ण,
+पूर्ण;
 
-static const struct drm_exynos_ipp_limit scaler_5420_one_pixel_limits[] = {
-	{ IPP_SIZE_LIMIT(BUFFER, .h = { 16, SZ_8K }, .v = { 16, SZ_8K }) },
-	{ IPP_SCALE_LIMIT(.h = { 65536 * 1 / 4, 65536 * 16 },
-			  .v = { 65536 * 1 / 4, 65536 * 16 }) },
-};
+अटल स्थिर काष्ठा drm_exynos_ipp_limit scaler_5420_one_pixel_limits[] = अणु
+	अणु IPP_SIZE_LIMIT(BUFFER, .h = अणु 16, SZ_8K पूर्ण, .v = अणु 16, SZ_8K पूर्ण) पूर्ण,
+	अणु IPP_SCALE_LIMIT(.h = अणु 65536 * 1 / 4, 65536 * 16 पूर्ण,
+			  .v = अणु 65536 * 1 / 4, 65536 * 16 पूर्ण) पूर्ण,
+पूर्ण;
 
-static const struct drm_exynos_ipp_limit scaler_5420_tile_limits[] = {
-	{ IPP_SIZE_LIMIT(BUFFER, .h = { 16, SZ_8K }, .v = { 16, SZ_8K })},
-	{ IPP_SIZE_LIMIT(AREA, .h.align = 16, .v.align = 16) },
-	{ IPP_SCALE_LIMIT(.h = {1, 1}, .v = {1, 1})},
-	{ }
-};
+अटल स्थिर काष्ठा drm_exynos_ipp_limit scaler_5420_tile_limits[] = अणु
+	अणु IPP_SIZE_LIMIT(BUFFER, .h = अणु 16, SZ_8K पूर्ण, .v = अणु 16, SZ_8K पूर्ण)पूर्ण,
+	अणु IPP_SIZE_LIMIT(AREA, .h.align = 16, .v.align = 16) पूर्ण,
+	अणु IPP_SCALE_LIMIT(.h = अणु1, 1पूर्ण, .v = अणु1, 1पूर्ण)पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-#define IPP_SRCDST_TILE_FORMAT(f, l)	\
+#घोषणा IPP_SRCDST_TILE_FORMAT(f, l)	\
 	IPP_SRCDST_MFORMAT(f, DRM_FORMAT_MOD_SAMSUNG_16_16_TILE, (l))
 
-static const struct exynos_drm_ipp_formats exynos5420_formats[] = {
+अटल स्थिर काष्ठा exynos_drm_ipp_क्रमmats exynos5420_क्रमmats[] = अणु
 	/* SCALER_YUV420_2P_UV */
-	{ IPP_SRCDST_FORMAT(NV21, scaler_5420_two_pixel_hv_limits) },
+	अणु IPP_SRCDST_FORMAT(NV21, scaler_5420_two_pixel_hv_limits) पूर्ण,
 
 	/* SCALER_YUV420_2P_VU */
-	{ IPP_SRCDST_FORMAT(NV12, scaler_5420_two_pixel_hv_limits) },
+	अणु IPP_SRCDST_FORMAT(NV12, scaler_5420_two_pixel_hv_limits) पूर्ण,
 
 	/* SCALER_YUV420_3P */
-	{ IPP_SRCDST_FORMAT(YUV420, scaler_5420_two_pixel_hv_limits) },
+	अणु IPP_SRCDST_FORMAT(YUV420, scaler_5420_two_pixel_hv_limits) पूर्ण,
 
 	/* SCALER_YUV422_1P_YUYV */
-	{ IPP_SRCDST_FORMAT(YUYV, scaler_5420_two_pixel_h_limits) },
+	अणु IPP_SRCDST_FORMAT(YUYV, scaler_5420_two_pixel_h_limits) पूर्ण,
 
 	/* SCALER_YUV422_1P_UYVY */
-	{ IPP_SRCDST_FORMAT(UYVY, scaler_5420_two_pixel_h_limits) },
+	अणु IPP_SRCDST_FORMAT(UYVY, scaler_5420_two_pixel_h_limits) पूर्ण,
 
 	/* SCALER_YUV422_1P_YVYU */
-	{ IPP_SRCDST_FORMAT(YVYU, scaler_5420_two_pixel_h_limits) },
+	अणु IPP_SRCDST_FORMAT(YVYU, scaler_5420_two_pixel_h_limits) पूर्ण,
 
 	/* SCALER_YUV422_2P_UV */
-	{ IPP_SRCDST_FORMAT(NV61, scaler_5420_two_pixel_h_limits) },
+	अणु IPP_SRCDST_FORMAT(NV61, scaler_5420_two_pixel_h_limits) पूर्ण,
 
 	/* SCALER_YUV422_2P_VU */
-	{ IPP_SRCDST_FORMAT(NV16, scaler_5420_two_pixel_h_limits) },
+	अणु IPP_SRCDST_FORMAT(NV16, scaler_5420_two_pixel_h_limits) पूर्ण,
 
 	/* SCALER_YUV422_3P */
-	{ IPP_SRCDST_FORMAT(YUV422, scaler_5420_two_pixel_h_limits) },
+	अणु IPP_SRCDST_FORMAT(YUV422, scaler_5420_two_pixel_h_limits) पूर्ण,
 
 	/* SCALER_YUV444_2P_UV */
-	{ IPP_SRCDST_FORMAT(NV42, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(NV42, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_YUV444_2P_VU */
-	{ IPP_SRCDST_FORMAT(NV24, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(NV24, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_YUV444_3P */
-	{ IPP_SRCDST_FORMAT(YUV444, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(YUV444, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_RGB_565 */
-	{ IPP_SRCDST_FORMAT(RGB565, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(RGB565, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_ARGB1555 */
-	{ IPP_SRCDST_FORMAT(XRGB1555, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(XRGB1555, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_ARGB1555 */
-	{ IPP_SRCDST_FORMAT(ARGB1555, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(ARGB1555, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_ARGB4444 */
-	{ IPP_SRCDST_FORMAT(XRGB4444, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(XRGB4444, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_ARGB4444 */
-	{ IPP_SRCDST_FORMAT(ARGB4444, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(ARGB4444, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_ARGB8888 */
-	{ IPP_SRCDST_FORMAT(XRGB8888, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(XRGB8888, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_ARGB8888 */
-	{ IPP_SRCDST_FORMAT(ARGB8888, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(ARGB8888, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_RGBA8888 */
-	{ IPP_SRCDST_FORMAT(RGBX8888, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(RGBX8888, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_RGBA8888 */
-	{ IPP_SRCDST_FORMAT(RGBA8888, scaler_5420_one_pixel_limits) },
+	अणु IPP_SRCDST_FORMAT(RGBA8888, scaler_5420_one_pixel_limits) पूर्ण,
 
 	/* SCALER_YUV420_2P_UV TILE */
-	{ IPP_SRCDST_TILE_FORMAT(NV21, scaler_5420_tile_limits) },
+	अणु IPP_SRCDST_TILE_FORMAT(NV21, scaler_5420_tile_limits) पूर्ण,
 
 	/* SCALER_YUV420_2P_VU TILE */
-	{ IPP_SRCDST_TILE_FORMAT(NV12, scaler_5420_tile_limits) },
+	अणु IPP_SRCDST_TILE_FORMAT(NV12, scaler_5420_tile_limits) पूर्ण,
 
 	/* SCALER_YUV420_3P TILE */
-	{ IPP_SRCDST_TILE_FORMAT(YUV420, scaler_5420_tile_limits) },
+	अणु IPP_SRCDST_TILE_FORMAT(YUV420, scaler_5420_tile_limits) पूर्ण,
 
 	/* SCALER_YUV422_1P_YUYV TILE */
-	{ IPP_SRCDST_TILE_FORMAT(YUYV, scaler_5420_tile_limits) },
-};
+	अणु IPP_SRCDST_TILE_FORMAT(YUYV, scaler_5420_tile_limits) पूर्ण,
+पूर्ण;
 
-static const struct scaler_data exynos5420_data = {
-	.clk_name	= {"mscl"},
+अटल स्थिर काष्ठा scaler_data exynos5420_data = अणु
+	.clk_name	= अणु"mscl"पूर्ण,
 	.num_clk	= 1,
-	.formats	= exynos5420_formats,
-	.num_formats	= ARRAY_SIZE(exynos5420_formats),
-};
+	.क्रमmats	= exynos5420_क्रमmats,
+	.num_क्रमmats	= ARRAY_SIZE(exynos5420_क्रमmats),
+पूर्ण;
 
-static const struct scaler_data exynos5433_data = {
-	.clk_name	= {"pclk", "aclk", "aclk_xiu"},
+अटल स्थिर काष्ठा scaler_data exynos5433_data = अणु
+	.clk_name	= अणु"pclk", "aclk", "aclk_xiu"पूर्ण,
 	.num_clk	= 3,
-	.formats	= exynos5420_formats, /* intentional */
-	.num_formats	= ARRAY_SIZE(exynos5420_formats),
-};
+	.क्रमmats	= exynos5420_क्रमmats, /* पूर्णांकentional */
+	.num_क्रमmats	= ARRAY_SIZE(exynos5420_क्रमmats),
+पूर्ण;
 
-static const struct of_device_id exynos_scaler_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id exynos_scaler_match[] = अणु
+	अणु
 		.compatible = "samsung,exynos5420-scaler",
 		.data = &exynos5420_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-scaler",
 		.data = &exynos5433_data,
-	}, {
-	},
-};
+	पूर्ण, अणु
+	पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, exynos_scaler_match);
 
-struct platform_driver scaler_driver = {
+काष्ठा platक्रमm_driver scaler_driver = अणु
 	.probe		= scaler_probe,
-	.remove		= scaler_remove,
-	.driver		= {
+	.हटाओ		= scaler_हटाओ,
+	.driver		= अणु
 		.name	= "exynos-scaler",
 		.owner	= THIS_MODULE,
 		.pm	= &scaler_pm_ops,
 		.of_match_table = exynos_scaler_match,
-	},
-};
+	पूर्ण,
+पूर्ण;

@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * MCP2221A - Microchip USB to I2C Host Protocol Bridge
  *
  * Copyright (c) 2020, Rishi Gupta <gupt21@gmail.com>
  *
- * Datasheet: https://ww1.microchip.com/downloads/en/DeviceDoc/20005565B.pdf
+ * Datasheet: https://ww1.microchip.com/करोwnloads/en/DeviceDoc/20005565B.pdf
  */
 
-#include <linux/module.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/hid.h>
-#include <linux/hidraw.h>
-#include <linux/i2c.h>
-#include <linux/gpio/driver.h>
-#include "hid-ids.h"
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/hidraw.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश "hid-ids.h"
 
 /* Commands codes in a raw output report */
-enum {
+क्रमागत अणु
 	MCP2221_I2C_WR_DATA = 0x90,
 	MCP2221_I2C_WR_NO_STOP = 0x94,
 	MCP2221_I2C_RD_DATA = 0x91,
@@ -30,10 +31,10 @@ enum {
 	MCP2221_I2C_CANCEL = 0x10,
 	MCP2221_GPIO_SET = 0x50,
 	MCP2221_GPIO_GET = 0x51,
-};
+पूर्ण;
 
 /* Response codes in a raw input report */
-enum {
+क्रमागत अणु
 	MCP2221_SUCCESS = 0x00,
 	MCP2221_I2C_ENG_BUSY = 0x01,
 	MCP2221_I2C_START_TOUT = 0x12,
@@ -47,323 +48,323 @@ enum {
 	MCP2221_I2C_READ_COMPL = 0x55,
 	MCP2221_ALT_F_NOT_GPIOV = 0xEE,
 	MCP2221_ALT_F_NOT_GPIOD = 0xEF,
-};
+पूर्ण;
 
 /* MCP GPIO direction encoding */
-enum {
-	MCP2221_DIR_OUT = 0x00,
-	MCP2221_DIR_IN = 0x01,
-};
+क्रमागत अणु
+	MCP2221_सूची_OUT = 0x00,
+	MCP2221_सूची_IN = 0x01,
+पूर्ण;
 
-#define MCP_NGPIO	4
+#घोषणा MCP_NGPIO	4
 
 /* MCP GPIO set command layout */
-struct mcp_set_gpio {
+काष्ठा mcp_set_gpio अणु
 	u8 cmd;
 	u8 dummy;
-	struct {
+	काष्ठा अणु
 		u8 change_value;
 		u8 value;
 		u8 change_direction;
 		u8 direction;
-	} gpio[MCP_NGPIO];
-} __packed;
+	पूर्ण gpio[MCP_NGPIO];
+पूर्ण __packed;
 
 /* MCP GPIO get command layout */
-struct mcp_get_gpio {
+काष्ठा mcp_get_gpio अणु
 	u8 cmd;
 	u8 dummy;
-	struct {
+	काष्ठा अणु
 		u8 direction;
 		u8 value;
-	} gpio[MCP_NGPIO];
-} __packed;
+	पूर्ण gpio[MCP_NGPIO];
+पूर्ण __packed;
 
 /*
- * There is no way to distinguish responses. Therefore next command
+ * There is no way to distinguish responses. Thereक्रमe next command
  * is sent only after response to previous has been received. Mutex
- * lock is used for this purpose mainly.
+ * lock is used क्रम this purpose मुख्यly.
  */
-struct mcp2221 {
-	struct hid_device *hdev;
-	struct i2c_adapter adapter;
-	struct mutex lock;
-	struct completion wait_in_report;
+काष्ठा mcp2221 अणु
+	काष्ठा hid_device *hdev;
+	काष्ठा i2c_adapter adapter;
+	काष्ठा mutex lock;
+	काष्ठा completion रुको_in_report;
 	u8 *rxbuf;
 	u8 txbuf[64];
-	int rxbuf_idx;
-	int status;
-	u8 cur_i2c_clk_div;
-	struct gpio_chip *gc;
+	पूर्णांक rxbuf_idx;
+	पूर्णांक status;
+	u8 cur_i2c_clk_भाग;
+	काष्ठा gpio_chip *gc;
 	u8 gp_idx;
 	u8 gpio_dir;
-};
+पूर्ण;
 
 /*
- * Default i2c bus clock frequency 400 kHz. Modify this if you
+ * Default i2c bus घड़ी frequency 400 kHz. Modअगरy this अगर you
  * want to set some other frequency (min 50 kHz - max 400 kHz).
  */
-static uint i2c_clk_freq = 400;
+अटल uपूर्णांक i2c_clk_freq = 400;
 
 /* Synchronously send output report to the device */
-static int mcp_send_report(struct mcp2221 *mcp,
-					u8 *out_report, size_t len)
-{
+अटल पूर्णांक mcp_send_report(काष्ठा mcp2221 *mcp,
+					u8 *out_report, माप_प्रकार len)
+अणु
 	u8 *buf;
-	int ret;
+	पूर्णांक ret;
 
 	buf = kmemdup(out_report, len, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	/* mcp2221 uses interrupt endpoint for out reports */
+	/* mcp2221 uses पूर्णांकerrupt endpoपूर्णांक क्रम out reports */
 	ret = hid_hw_output_report(mcp->hdev, buf, len);
-	kfree(buf);
+	kमुक्त(buf);
 
-	if (ret < 0)
-		return ret;
-	return 0;
-}
+	अगर (ret < 0)
+		वापस ret;
+	वापस 0;
+पूर्ण
 
 /*
- * Send o/p report to the device and wait for i/p report to be
- * received from the device. If the device does not respond,
- * we timeout.
+ * Send o/p report to the device and रुको क्रम i/p report to be
+ * received from the device. If the device करोes not respond,
+ * we समयout.
  */
-static int mcp_send_data_req_status(struct mcp2221 *mcp,
-			u8 *out_report, int len)
-{
-	int ret;
-	unsigned long t;
+अटल पूर्णांक mcp_send_data_req_status(काष्ठा mcp2221 *mcp,
+			u8 *out_report, पूर्णांक len)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ t;
 
-	reinit_completion(&mcp->wait_in_report);
+	reinit_completion(&mcp->रुको_in_report);
 
 	ret = mcp_send_report(mcp, out_report, len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	t = wait_for_completion_timeout(&mcp->wait_in_report,
-							msecs_to_jiffies(4000));
-	if (!t)
-		return -ETIMEDOUT;
+	t = रुको_क्रम_completion_समयout(&mcp->रुको_in_report,
+							msecs_to_jअगरfies(4000));
+	अगर (!t)
+		वापस -ETIMEDOUT;
 
-	return mcp->status;
-}
+	वापस mcp->status;
+पूर्ण
 
-/* Check pass/fail for actual communication with i2c slave */
-static int mcp_chk_last_cmd_status(struct mcp2221 *mcp)
-{
-	memset(mcp->txbuf, 0, 8);
+/* Check pass/fail क्रम actual communication with i2c slave */
+अटल पूर्णांक mcp_chk_last_cmd_status(काष्ठा mcp2221 *mcp)
+अणु
+	स_रखो(mcp->txbuf, 0, 8);
 	mcp->txbuf[0] = MCP2221_I2C_PARAM_OR_STATUS;
 
-	return mcp_send_data_req_status(mcp, mcp->txbuf, 8);
-}
+	वापस mcp_send_data_req_status(mcp, mcp->txbuf, 8);
+पूर्ण
 
-/* Cancels last command releasing i2c bus just in case occupied */
-static int mcp_cancel_last_cmd(struct mcp2221 *mcp)
-{
-	memset(mcp->txbuf, 0, 8);
+/* Cancels last command releasing i2c bus just in हाल occupied */
+अटल पूर्णांक mcp_cancel_last_cmd(काष्ठा mcp2221 *mcp)
+अणु
+	स_रखो(mcp->txbuf, 0, 8);
 	mcp->txbuf[0] = MCP2221_I2C_PARAM_OR_STATUS;
 	mcp->txbuf[2] = MCP2221_I2C_CANCEL;
 
-	return mcp_send_data_req_status(mcp, mcp->txbuf, 8);
-}
+	वापस mcp_send_data_req_status(mcp, mcp->txbuf, 8);
+पूर्ण
 
-static int mcp_set_i2c_speed(struct mcp2221 *mcp)
-{
-	int ret;
+अटल पूर्णांक mcp_set_i2c_speed(काष्ठा mcp2221 *mcp)
+अणु
+	पूर्णांक ret;
 
-	memset(mcp->txbuf, 0, 8);
+	स_रखो(mcp->txbuf, 0, 8);
 	mcp->txbuf[0] = MCP2221_I2C_PARAM_OR_STATUS;
 	mcp->txbuf[3] = MCP2221_I2C_SET_SPEED;
-	mcp->txbuf[4] = mcp->cur_i2c_clk_div;
+	mcp->txbuf[4] = mcp->cur_i2c_clk_भाग;
 
 	ret = mcp_send_data_req_status(mcp, mcp->txbuf, 8);
-	if (ret) {
+	अगर (ret) अणु
 		/* Small delay is needed here */
 		usleep_range(980, 1000);
 		mcp_cancel_last_cmd(mcp);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * An output report can contain minimum 1 and maximum 60 user data
  * bytes. If the number of data bytes is more then 60, we send it
  * in chunks of 60 bytes. Last chunk may contain exactly 60 or less
- * bytes. Total number of bytes is informed in very first report to
- * mcp2221, from that point onwards it first collect all the data
+ * bytes. Total number of bytes is inक्रमmed in very first report to
+ * mcp2221, from that poपूर्णांक onwards it first collect all the data
  * from host and then send to i2c slave device.
  */
-static int mcp_i2c_write(struct mcp2221 *mcp,
-				struct i2c_msg *msg, int type, u8 last_status)
-{
-	int ret, len, idx, sent;
+अटल पूर्णांक mcp_i2c_ग_लिखो(काष्ठा mcp2221 *mcp,
+				काष्ठा i2c_msg *msg, पूर्णांक type, u8 last_status)
+अणु
+	पूर्णांक ret, len, idx, sent;
 
 	idx = 0;
 	sent  = 0;
-	if (msg->len < 60)
+	अगर (msg->len < 60)
 		len = msg->len;
-	else
+	अन्यथा
 		len = 60;
 
-	do {
+	करो अणु
 		mcp->txbuf[0] = type;
 		mcp->txbuf[1] = msg->len & 0xff;
 		mcp->txbuf[2] = msg->len >> 8;
 		mcp->txbuf[3] = (u8)(msg->addr << 1);
 
-		memcpy(&mcp->txbuf[4], &msg->buf[idx], len);
+		स_नकल(&mcp->txbuf[4], &msg->buf[idx], len);
 
 		ret = mcp_send_data_req_status(mcp, mcp->txbuf, len + 4);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		usleep_range(980, 1000);
 
-		if (last_status) {
+		अगर (last_status) अणु
 			ret = mcp_chk_last_cmd_status(mcp);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
 		sent = sent + len;
-		if (sent >= msg->len)
-			break;
+		अगर (sent >= msg->len)
+			अवरोध;
 
 		idx = idx + len;
-		if ((msg->len - sent) < 60)
+		अगर ((msg->len - sent) < 60)
 			len = msg->len - sent;
-		else
+		अन्यथा
 			len = 60;
 
 		/*
-		 * Testing shows delay is needed between successive writes
-		 * otherwise next write fails on first-try from i2c core.
-		 * This value is obtained through automated stress testing.
+		 * Testing shows delay is needed between successive ग_लिखोs
+		 * otherwise next ग_लिखो fails on first-try from i2c core.
+		 * This value is obtained through स्वतःmated stress testing.
 		 */
 		usleep_range(980, 1000);
-	} while (len > 0);
+	पूर्ण जबतक (len > 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Device reads all data (0 - 65535 bytes) from i2c slave device and
- * stores it in device itself. This data is read back from device to
+ * Device पढ़ोs all data (0 - 65535 bytes) from i2c slave device and
+ * stores it in device itself. This data is पढ़ो back from device to
  * host in multiples of 60 bytes using input reports.
  */
-static int mcp_i2c_smbus_read(struct mcp2221 *mcp,
-				struct i2c_msg *msg, int type, u16 smbus_addr,
+अटल पूर्णांक mcp_i2c_smbus_पढ़ो(काष्ठा mcp2221 *mcp,
+				काष्ठा i2c_msg *msg, पूर्णांक type, u16 smbus_addr,
 				u8 smbus_len, u8 *smbus_buf)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u16 total_len;
 
 	mcp->txbuf[0] = type;
-	if (msg) {
+	अगर (msg) अणु
 		mcp->txbuf[1] = msg->len & 0xff;
 		mcp->txbuf[2] = msg->len >> 8;
 		mcp->txbuf[3] = (u8)(msg->addr << 1);
 		total_len = msg->len;
 		mcp->rxbuf = msg->buf;
-	} else {
+	पूर्ण अन्यथा अणु
 		mcp->txbuf[1] = smbus_len;
 		mcp->txbuf[2] = 0;
 		mcp->txbuf[3] = (u8)(smbus_addr << 1);
 		total_len = smbus_len;
 		mcp->rxbuf = smbus_buf;
-	}
+	पूर्ण
 
 	ret = mcp_send_data_req_status(mcp, mcp->txbuf, 4);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mcp->rxbuf_idx = 0;
 
-	do {
-		memset(mcp->txbuf, 0, 4);
+	करो अणु
+		स_रखो(mcp->txbuf, 0, 4);
 		mcp->txbuf[0] = MCP2221_I2C_GET_DATA;
 
 		ret = mcp_send_data_req_status(mcp, mcp->txbuf, 1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = mcp_chk_last_cmd_status(mcp);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		usleep_range(980, 1000);
-	} while (mcp->rxbuf_idx < total_len);
+	पूर्ण जबतक (mcp->rxbuf_idx < total_len);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcp_i2c_xfer(struct i2c_adapter *adapter,
-				struct i2c_msg msgs[], int num)
-{
-	int ret;
-	struct mcp2221 *mcp = i2c_get_adapdata(adapter);
+अटल पूर्णांक mcp_i2c_xfer(काष्ठा i2c_adapter *adapter,
+				काष्ठा i2c_msg msgs[], पूर्णांक num)
+अणु
+	पूर्णांक ret;
+	काष्ठा mcp2221 *mcp = i2c_get_adapdata(adapter);
 
-	hid_hw_power(mcp->hdev, PM_HINT_FULLON);
+	hid_hw_घातer(mcp->hdev, PM_HINT_FULLON);
 
 	mutex_lock(&mcp->lock);
 
-	/* Setting speed before every transaction is required for mcp2221 */
+	/* Setting speed beक्रमe every transaction is required क्रम mcp2221 */
 	ret = mcp_set_i2c_speed(mcp);
-	if (ret)
-		goto exit;
+	अगर (ret)
+		जाओ निकास;
 
-	if (num == 1) {
-		if (msgs->flags & I2C_M_RD) {
-			ret = mcp_i2c_smbus_read(mcp, msgs, MCP2221_I2C_RD_DATA,
-							0, 0, NULL);
-		} else {
-			ret = mcp_i2c_write(mcp, msgs, MCP2221_I2C_WR_DATA, 1);
-		}
-		if (ret)
-			goto exit;
+	अगर (num == 1) अणु
+		अगर (msgs->flags & I2C_M_RD) अणु
+			ret = mcp_i2c_smbus_पढ़ो(mcp, msgs, MCP2221_I2C_RD_DATA,
+							0, 0, शून्य);
+		पूर्ण अन्यथा अणु
+			ret = mcp_i2c_ग_लिखो(mcp, msgs, MCP2221_I2C_WR_DATA, 1);
+		पूर्ण
+		अगर (ret)
+			जाओ निकास;
 		ret = num;
-	} else if (num == 2) {
-		/* Ex transaction; send reg address and read its contents */
-		if (msgs[0].addr == msgs[1].addr &&
+	पूर्ण अन्यथा अगर (num == 2) अणु
+		/* Ex transaction; send reg address and पढ़ो its contents */
+		अगर (msgs[0].addr == msgs[1].addr &&
 			!(msgs[0].flags & I2C_M_RD) &&
-			 (msgs[1].flags & I2C_M_RD)) {
+			 (msgs[1].flags & I2C_M_RD)) अणु
 
-			ret = mcp_i2c_write(mcp, &msgs[0],
+			ret = mcp_i2c_ग_लिखो(mcp, &msgs[0],
 						MCP2221_I2C_WR_NO_STOP, 0);
-			if (ret)
-				goto exit;
+			अगर (ret)
+				जाओ निकास;
 
-			ret = mcp_i2c_smbus_read(mcp, &msgs[1],
+			ret = mcp_i2c_smbus_पढ़ो(mcp, &msgs[1],
 						MCP2221_I2C_RD_RPT_START,
-						0, 0, NULL);
-			if (ret)
-				goto exit;
+						0, 0, शून्य);
+			अगर (ret)
+				जाओ निकास;
 			ret = num;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&adapter->dev,
 				"unsupported multi-msg i2c transaction\n");
 			ret = -EOPNOTSUPP;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(&adapter->dev,
 			"unsupported multi-msg i2c transaction\n");
 		ret = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-exit:
-	hid_hw_power(mcp->hdev, PM_HINT_NORMAL);
+निकास:
+	hid_hw_घातer(mcp->hdev, PM_HINT_NORMAL);
 	mutex_unlock(&mcp->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcp_smbus_write(struct mcp2221 *mcp, u16 addr,
-				u8 command, u8 *buf, u8 len, int type,
+अटल पूर्णांक mcp_smbus_ग_लिखो(काष्ठा mcp2221 *mcp, u16 addr,
+				u8 command, u8 *buf, u8 len, पूर्णांक type,
 				u8 last_status)
-{
-	int data_len, ret;
+अणु
+	पूर्णांक data_len, ret;
 
 	mcp->txbuf[0] = type;
 	mcp->txbuf[1] = len + 1; /* 1 is due to command byte itself */
@@ -371,225 +372,225 @@ static int mcp_smbus_write(struct mcp2221 *mcp, u16 addr,
 	mcp->txbuf[3] = (u8)(addr << 1);
 	mcp->txbuf[4] = command;
 
-	switch (len) {
-	case 0:
+	चयन (len) अणु
+	हाल 0:
 		data_len = 5;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		mcp->txbuf[5] = buf[0];
 		data_len = 6;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		mcp->txbuf[5] = buf[0];
 		mcp->txbuf[6] = buf[1];
 		data_len = 7;
-		break;
-	default:
-		memcpy(&mcp->txbuf[5], buf, len);
+		अवरोध;
+	शेष:
+		स_नकल(&mcp->txbuf[5], buf, len);
 		data_len = len + 5;
-	}
+	पूर्ण
 
 	ret = mcp_send_data_req_status(mcp, mcp->txbuf, data_len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (last_status) {
+	अगर (last_status) अणु
 		usleep_range(980, 1000);
 
 		ret = mcp_chk_last_cmd_status(mcp);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcp_smbus_xfer(struct i2c_adapter *adapter, u16 addr,
-				unsigned short flags, char read_write,
-				u8 command, int size,
-				union i2c_smbus_data *data)
-{
-	int ret;
-	struct mcp2221 *mcp = i2c_get_adapdata(adapter);
+अटल पूर्णांक mcp_smbus_xfer(काष्ठा i2c_adapter *adapter, u16 addr,
+				अचिन्हित लघु flags, अक्षर पढ़ो_ग_लिखो,
+				u8 command, पूर्णांक size,
+				जोड़ i2c_smbus_data *data)
+अणु
+	पूर्णांक ret;
+	काष्ठा mcp2221 *mcp = i2c_get_adapdata(adapter);
 
-	hid_hw_power(mcp->hdev, PM_HINT_FULLON);
+	hid_hw_घातer(mcp->hdev, PM_HINT_FULLON);
 
 	mutex_lock(&mcp->lock);
 
 	ret = mcp_set_i2c_speed(mcp);
-	if (ret)
-		goto exit;
+	अगर (ret)
+		जाओ निकास;
 
-	switch (size) {
+	चयन (size) अणु
 
-	case I2C_SMBUS_QUICK:
-		if (read_write == I2C_SMBUS_READ)
-			ret = mcp_i2c_smbus_read(mcp, NULL, MCP2221_I2C_RD_DATA,
+	हाल I2C_SMBUS_QUICK:
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ)
+			ret = mcp_i2c_smbus_पढ़ो(mcp, शून्य, MCP2221_I2C_RD_DATA,
 						addr, 0, &data->byte);
-		else
-			ret = mcp_smbus_write(mcp, addr, command, NULL,
+		अन्यथा
+			ret = mcp_smbus_ग_लिखो(mcp, addr, command, शून्य,
 						0, MCP2221_I2C_WR_DATA, 1);
-		break;
-	case I2C_SMBUS_BYTE:
-		if (read_write == I2C_SMBUS_READ)
-			ret = mcp_i2c_smbus_read(mcp, NULL, MCP2221_I2C_RD_DATA,
+		अवरोध;
+	हाल I2C_SMBUS_BYTE:
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ)
+			ret = mcp_i2c_smbus_पढ़ो(mcp, शून्य, MCP2221_I2C_RD_DATA,
 						addr, 1, &data->byte);
-		else
-			ret = mcp_smbus_write(mcp, addr, command, NULL,
+		अन्यथा
+			ret = mcp_smbus_ग_लिखो(mcp, addr, command, शून्य,
 						0, MCP2221_I2C_WR_DATA, 1);
-		break;
-	case I2C_SMBUS_BYTE_DATA:
-		if (read_write == I2C_SMBUS_READ) {
-			ret = mcp_smbus_write(mcp, addr, command, NULL,
+		अवरोध;
+	हाल I2C_SMBUS_BYTE_DATA:
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ) अणु
+			ret = mcp_smbus_ग_लिखो(mcp, addr, command, शून्य,
 						0, MCP2221_I2C_WR_NO_STOP, 0);
-			if (ret)
-				goto exit;
+			अगर (ret)
+				जाओ निकास;
 
-			ret = mcp_i2c_smbus_read(mcp, NULL,
+			ret = mcp_i2c_smbus_पढ़ो(mcp, शून्य,
 						MCP2221_I2C_RD_RPT_START,
 						addr, 1, &data->byte);
-		} else {
-			ret = mcp_smbus_write(mcp, addr, command, &data->byte,
+		पूर्ण अन्यथा अणु
+			ret = mcp_smbus_ग_लिखो(mcp, addr, command, &data->byte,
 						1, MCP2221_I2C_WR_DATA, 1);
-		}
-		break;
-	case I2C_SMBUS_WORD_DATA:
-		if (read_write == I2C_SMBUS_READ) {
-			ret = mcp_smbus_write(mcp, addr, command, NULL,
+		पूर्ण
+		अवरोध;
+	हाल I2C_SMBUS_WORD_DATA:
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ) अणु
+			ret = mcp_smbus_ग_लिखो(mcp, addr, command, शून्य,
 						0, MCP2221_I2C_WR_NO_STOP, 0);
-			if (ret)
-				goto exit;
+			अगर (ret)
+				जाओ निकास;
 
-			ret = mcp_i2c_smbus_read(mcp, NULL,
+			ret = mcp_i2c_smbus_पढ़ो(mcp, शून्य,
 						MCP2221_I2C_RD_RPT_START,
 						addr, 2, (u8 *)&data->word);
-		} else {
-			ret = mcp_smbus_write(mcp, addr, command,
+		पूर्ण अन्यथा अणु
+			ret = mcp_smbus_ग_लिखो(mcp, addr, command,
 						(u8 *)&data->word, 2,
 						MCP2221_I2C_WR_DATA, 1);
-		}
-		break;
-	case I2C_SMBUS_BLOCK_DATA:
-		if (read_write == I2C_SMBUS_READ) {
-			ret = mcp_smbus_write(mcp, addr, command, NULL,
+		पूर्ण
+		अवरोध;
+	हाल I2C_SMBUS_BLOCK_DATA:
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ) अणु
+			ret = mcp_smbus_ग_लिखो(mcp, addr, command, शून्य,
 						0, MCP2221_I2C_WR_NO_STOP, 1);
-			if (ret)
-				goto exit;
+			अगर (ret)
+				जाओ निकास;
 
 			mcp->rxbuf_idx = 0;
 			mcp->rxbuf = data->block;
 			mcp->txbuf[0] = MCP2221_I2C_GET_DATA;
 			ret = mcp_send_data_req_status(mcp, mcp->txbuf, 1);
-			if (ret)
-				goto exit;
-		} else {
-			if (!data->block[0]) {
+			अगर (ret)
+				जाओ निकास;
+		पूर्ण अन्यथा अणु
+			अगर (!data->block[0]) अणु
 				ret = -EINVAL;
-				goto exit;
-			}
-			ret = mcp_smbus_write(mcp, addr, command, data->block,
+				जाओ निकास;
+			पूर्ण
+			ret = mcp_smbus_ग_लिखो(mcp, addr, command, data->block,
 						data->block[0] + 1,
 						MCP2221_I2C_WR_DATA, 1);
-		}
-		break;
-	case I2C_SMBUS_I2C_BLOCK_DATA:
-		if (read_write == I2C_SMBUS_READ) {
-			ret = mcp_smbus_write(mcp, addr, command, NULL,
+		पूर्ण
+		अवरोध;
+	हाल I2C_SMBUS_I2C_BLOCK_DATA:
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ) अणु
+			ret = mcp_smbus_ग_लिखो(mcp, addr, command, शून्य,
 						0, MCP2221_I2C_WR_NO_STOP, 1);
-			if (ret)
-				goto exit;
+			अगर (ret)
+				जाओ निकास;
 
 			mcp->rxbuf_idx = 0;
 			mcp->rxbuf = data->block;
 			mcp->txbuf[0] = MCP2221_I2C_GET_DATA;
 			ret = mcp_send_data_req_status(mcp, mcp->txbuf, 1);
-			if (ret)
-				goto exit;
-		} else {
-			if (!data->block[0]) {
+			अगर (ret)
+				जाओ निकास;
+		पूर्ण अन्यथा अणु
+			अगर (!data->block[0]) अणु
 				ret = -EINVAL;
-				goto exit;
-			}
-			ret = mcp_smbus_write(mcp, addr, command,
+				जाओ निकास;
+			पूर्ण
+			ret = mcp_smbus_ग_लिखो(mcp, addr, command,
 						&data->block[1], data->block[0],
 						MCP2221_I2C_WR_DATA, 1);
-		}
-		break;
-	case I2C_SMBUS_PROC_CALL:
-		ret = mcp_smbus_write(mcp, addr, command,
+		पूर्ण
+		अवरोध;
+	हाल I2C_SMBUS_PROC_CALL:
+		ret = mcp_smbus_ग_लिखो(mcp, addr, command,
 						(u8 *)&data->word,
 						2, MCP2221_I2C_WR_NO_STOP, 0);
-		if (ret)
-			goto exit;
+		अगर (ret)
+			जाओ निकास;
 
-		ret = mcp_i2c_smbus_read(mcp, NULL,
+		ret = mcp_i2c_smbus_पढ़ो(mcp, शून्य,
 						MCP2221_I2C_RD_RPT_START,
 						addr, 2, (u8 *)&data->word);
-		break;
-	case I2C_SMBUS_BLOCK_PROC_CALL:
-		ret = mcp_smbus_write(mcp, addr, command, data->block,
+		अवरोध;
+	हाल I2C_SMBUS_BLOCK_PROC_CALL:
+		ret = mcp_smbus_ग_लिखो(mcp, addr, command, data->block,
 						data->block[0] + 1,
 						MCP2221_I2C_WR_NO_STOP, 0);
-		if (ret)
-			goto exit;
+		अगर (ret)
+			जाओ निकास;
 
-		ret = mcp_i2c_smbus_read(mcp, NULL,
+		ret = mcp_i2c_smbus_पढ़ो(mcp, शून्य,
 						MCP2221_I2C_RD_RPT_START,
 						addr, I2C_SMBUS_BLOCK_MAX,
 						data->block);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&mcp->adapter.dev,
 			"unsupported smbus transaction size:%d\n", size);
 		ret = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-exit:
-	hid_hw_power(mcp->hdev, PM_HINT_NORMAL);
+निकास:
+	hid_hw_घातer(mcp->hdev, PM_HINT_NORMAL);
 	mutex_unlock(&mcp->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 mcp_i2c_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_I2C |
+अटल u32 mcp_i2c_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_I2C |
 			I2C_FUNC_SMBUS_READ_BLOCK_DATA |
 			I2C_FUNC_SMBUS_BLOCK_PROC_CALL |
 			(I2C_FUNC_SMBUS_EMUL & ~I2C_FUNC_SMBUS_PEC);
-}
+पूर्ण
 
-static const struct i2c_algorithm mcp_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm mcp_i2c_algo = अणु
 	.master_xfer = mcp_i2c_xfer,
 	.smbus_xfer = mcp_smbus_xfer,
 	.functionality = mcp_i2c_func,
-};
+पूर्ण;
 
-static int mcp_gpio_get(struct gpio_chip *gc,
-				unsigned int offset)
-{
-	int ret;
-	struct mcp2221 *mcp = gpiochip_get_data(gc);
+अटल पूर्णांक mcp_gpio_get(काष्ठा gpio_chip *gc,
+				अचिन्हित पूर्णांक offset)
+अणु
+	पूर्णांक ret;
+	काष्ठा mcp2221 *mcp = gpiochip_get_data(gc);
 
 	mcp->txbuf[0] = MCP2221_GPIO_GET;
 
-	mcp->gp_idx = offsetof(struct mcp_get_gpio, gpio[offset].value);
+	mcp->gp_idx = दुरत्व(काष्ठा mcp_get_gpio, gpio[offset].value);
 
 	mutex_lock(&mcp->lock);
 	ret = mcp_send_data_req_status(mcp, mcp->txbuf, 1);
 	mutex_unlock(&mcp->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mcp_gpio_set(struct gpio_chip *gc,
-				unsigned int offset, int value)
-{
-	struct mcp2221 *mcp = gpiochip_get_data(gc);
+अटल व्योम mcp_gpio_set(काष्ठा gpio_chip *gc,
+				अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा mcp2221 *mcp = gpiochip_get_data(gc);
 
-	memset(mcp->txbuf, 0, 18);
+	स_रखो(mcp->txbuf, 0, 18);
 	mcp->txbuf[0] = MCP2221_GPIO_SET;
 
-	mcp->gp_idx = offsetof(struct mcp_set_gpio, gpio[offset].value);
+	mcp->gp_idx = दुरत्व(काष्ठा mcp_set_gpio, gpio[offset].value);
 
 	mcp->txbuf[mcp->gp_idx - 1] = 1;
 	mcp->txbuf[mcp->gp_idx] = !!value;
@@ -597,292 +598,292 @@ static void mcp_gpio_set(struct gpio_chip *gc,
 	mutex_lock(&mcp->lock);
 	mcp_send_data_req_status(mcp, mcp->txbuf, 18);
 	mutex_unlock(&mcp->lock);
-}
+पूर्ण
 
-static int mcp_gpio_dir_set(struct mcp2221 *mcp,
-				unsigned int offset, u8 val)
-{
-	memset(mcp->txbuf, 0, 18);
+अटल पूर्णांक mcp_gpio_dir_set(काष्ठा mcp2221 *mcp,
+				अचिन्हित पूर्णांक offset, u8 val)
+अणु
+	स_रखो(mcp->txbuf, 0, 18);
 	mcp->txbuf[0] = MCP2221_GPIO_SET;
 
-	mcp->gp_idx = offsetof(struct mcp_set_gpio, gpio[offset].direction);
+	mcp->gp_idx = दुरत्व(काष्ठा mcp_set_gpio, gpio[offset].direction);
 
 	mcp->txbuf[mcp->gp_idx - 1] = 1;
 	mcp->txbuf[mcp->gp_idx] = val;
 
-	return mcp_send_data_req_status(mcp, mcp->txbuf, 18);
-}
+	वापस mcp_send_data_req_status(mcp, mcp->txbuf, 18);
+पूर्ण
 
-static int mcp_gpio_direction_input(struct gpio_chip *gc,
-				unsigned int offset)
-{
-	int ret;
-	struct mcp2221 *mcp = gpiochip_get_data(gc);
+अटल पूर्णांक mcp_gpio_direction_input(काष्ठा gpio_chip *gc,
+				अचिन्हित पूर्णांक offset)
+अणु
+	पूर्णांक ret;
+	काष्ठा mcp2221 *mcp = gpiochip_get_data(gc);
 
 	mutex_lock(&mcp->lock);
-	ret = mcp_gpio_dir_set(mcp, offset, MCP2221_DIR_IN);
+	ret = mcp_gpio_dir_set(mcp, offset, MCP2221_सूची_IN);
 	mutex_unlock(&mcp->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcp_gpio_direction_output(struct gpio_chip *gc,
-				unsigned int offset, int value)
-{
-	int ret;
-	struct mcp2221 *mcp = gpiochip_get_data(gc);
+अटल पूर्णांक mcp_gpio_direction_output(काष्ठा gpio_chip *gc,
+				अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	पूर्णांक ret;
+	काष्ठा mcp2221 *mcp = gpiochip_get_data(gc);
 
 	mutex_lock(&mcp->lock);
-	ret = mcp_gpio_dir_set(mcp, offset, MCP2221_DIR_OUT);
+	ret = mcp_gpio_dir_set(mcp, offset, MCP2221_सूची_OUT);
 	mutex_unlock(&mcp->lock);
 
 	/* Can't configure as output, bailout early */
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mcp_gpio_set(gc, offset, value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mcp_gpio_get_direction(struct gpio_chip *gc,
-				unsigned int offset)
-{
-	int ret;
-	struct mcp2221 *mcp = gpiochip_get_data(gc);
+अटल पूर्णांक mcp_gpio_get_direction(काष्ठा gpio_chip *gc,
+				अचिन्हित पूर्णांक offset)
+अणु
+	पूर्णांक ret;
+	काष्ठा mcp2221 *mcp = gpiochip_get_data(gc);
 
 	mcp->txbuf[0] = MCP2221_GPIO_GET;
 
-	mcp->gp_idx = offsetof(struct mcp_get_gpio, gpio[offset].direction);
+	mcp->gp_idx = दुरत्व(काष्ठा mcp_get_gpio, gpio[offset].direction);
 
 	mutex_lock(&mcp->lock);
 	ret = mcp_send_data_req_status(mcp, mcp->txbuf, 1);
 	mutex_unlock(&mcp->lock);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (mcp->gpio_dir == MCP2221_DIR_IN)
-		return GPIO_LINE_DIRECTION_IN;
+	अगर (mcp->gpio_dir == MCP2221_सूची_IN)
+		वापस GPIO_LINE_सूचीECTION_IN;
 
-	return GPIO_LINE_DIRECTION_OUT;
-}
+	वापस GPIO_LINE_सूचीECTION_OUT;
+पूर्ण
 
 /* Gives current state of i2c engine inside mcp2221 */
-static int mcp_get_i2c_eng_state(struct mcp2221 *mcp,
+अटल पूर्णांक mcp_get_i2c_eng_state(काष्ठा mcp2221 *mcp,
 				u8 *data, u8 idx)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	switch (data[idx]) {
-	case MCP2221_I2C_WRADDRL_NACK:
-	case MCP2221_I2C_WRADDRL_SEND:
+	चयन (data[idx]) अणु
+	हाल MCP2221_I2C_WRADDRL_NACK:
+	हाल MCP2221_I2C_WRADDRL_SEND:
 		ret = -ENXIO;
-		break;
-	case MCP2221_I2C_START_TOUT:
-	case MCP2221_I2C_STOP_TOUT:
-	case MCP2221_I2C_WRADDRL_TOUT:
-	case MCP2221_I2C_WRDATA_TOUT:
+		अवरोध;
+	हाल MCP2221_I2C_START_TOUT:
+	हाल MCP2221_I2C_STOP_TOUT:
+	हाल MCP2221_I2C_WRADDRL_TOUT:
+	हाल MCP2221_I2C_WRDATA_TOUT:
 		ret = -ETIMEDOUT;
-		break;
-	case MCP2221_I2C_ENG_BUSY:
+		अवरोध;
+	हाल MCP2221_I2C_ENG_BUSY:
 		ret = -EAGAIN;
-		break;
-	case MCP2221_SUCCESS:
+		अवरोध;
+	हाल MCP2221_SUCCESS:
 		ret = 0x00;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EIO;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * MCP2221 uses interrupt endpoint for input reports. This function
+ * MCP2221 uses पूर्णांकerrupt endpoपूर्णांक क्रम input reports. This function
  * is called by HID layer when it receives i/p report from mcp2221,
  * which is actually a response to the previously sent command.
  *
- * MCP2221A firmware specific return codes are parsed and 0 or
- * appropriate negative error code is returned. Delayed response
- * results in timeout error and stray reponses results in -EIO.
+ * MCP2221A firmware specअगरic वापस codes are parsed and 0 or
+ * appropriate negative error code is वापसed. Delayed response
+ * results in समयout error and stray reponses results in -EIO.
  */
-static int mcp2221_raw_event(struct hid_device *hdev,
-				struct hid_report *report, u8 *data, int size)
-{
+अटल पूर्णांक mcp2221_raw_event(काष्ठा hid_device *hdev,
+				काष्ठा hid_report *report, u8 *data, पूर्णांक size)
+अणु
 	u8 *buf;
-	struct mcp2221 *mcp = hid_get_drvdata(hdev);
+	काष्ठा mcp2221 *mcp = hid_get_drvdata(hdev);
 
-	switch (data[0]) {
+	चयन (data[0]) अणु
 
-	case MCP2221_I2C_WR_DATA:
-	case MCP2221_I2C_WR_NO_STOP:
-	case MCP2221_I2C_RD_DATA:
-	case MCP2221_I2C_RD_RPT_START:
-		switch (data[1]) {
-		case MCP2221_SUCCESS:
+	हाल MCP2221_I2C_WR_DATA:
+	हाल MCP2221_I2C_WR_NO_STOP:
+	हाल MCP2221_I2C_RD_DATA:
+	हाल MCP2221_I2C_RD_RPT_START:
+		चयन (data[1]) अणु
+		हाल MCP2221_SUCCESS:
 			mcp->status = 0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			mcp->status = mcp_get_i2c_eng_state(mcp, data, 2);
-		}
-		complete(&mcp->wait_in_report);
-		break;
+		पूर्ण
+		complete(&mcp->रुको_in_report);
+		अवरोध;
 
-	case MCP2221_I2C_PARAM_OR_STATUS:
-		switch (data[1]) {
-		case MCP2221_SUCCESS:
-			if ((mcp->txbuf[3] == MCP2221_I2C_SET_SPEED) &&
-				(data[3] != MCP2221_I2C_SET_SPEED)) {
+	हाल MCP2221_I2C_PARAM_OR_STATUS:
+		चयन (data[1]) अणु
+		हाल MCP2221_SUCCESS:
+			अगर ((mcp->txbuf[3] == MCP2221_I2C_SET_SPEED) &&
+				(data[3] != MCP2221_I2C_SET_SPEED)) अणु
 				mcp->status = -EAGAIN;
-				break;
-			}
-			if (data[20] & MCP2221_I2C_MASK_ADDR_NACK) {
+				अवरोध;
+			पूर्ण
+			अगर (data[20] & MCP2221_I2C_MASK_ADDR_NACK) अणु
 				mcp->status = -ENXIO;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			mcp->status = mcp_get_i2c_eng_state(mcp, data, 8);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			mcp->status = -EIO;
-		}
-		complete(&mcp->wait_in_report);
-		break;
+		पूर्ण
+		complete(&mcp->रुको_in_report);
+		अवरोध;
 
-	case MCP2221_I2C_GET_DATA:
-		switch (data[1]) {
-		case MCP2221_SUCCESS:
-			if (data[2] == MCP2221_I2C_ADDR_NACK) {
+	हाल MCP2221_I2C_GET_DATA:
+		चयन (data[1]) अणु
+		हाल MCP2221_SUCCESS:
+			अगर (data[2] == MCP2221_I2C_ADDR_NACK) अणु
 				mcp->status = -ENXIO;
-				break;
-			}
-			if (!mcp_get_i2c_eng_state(mcp, data, 2)
-				&& (data[3] == 0)) {
+				अवरोध;
+			पूर्ण
+			अगर (!mcp_get_i2c_eng_state(mcp, data, 2)
+				&& (data[3] == 0)) अणु
 				mcp->status = 0;
-				break;
-			}
-			if (data[3] == 127) {
+				अवरोध;
+			पूर्ण
+			अगर (data[3] == 127) अणु
 				mcp->status = -EIO;
-				break;
-			}
-			if (data[2] == MCP2221_I2C_READ_COMPL) {
+				अवरोध;
+			पूर्ण
+			अगर (data[2] == MCP2221_I2C_READ_COMPL) अणु
 				buf = mcp->rxbuf;
-				memcpy(&buf[mcp->rxbuf_idx], &data[4], data[3]);
+				स_नकल(&buf[mcp->rxbuf_idx], &data[4], data[3]);
 				mcp->rxbuf_idx = mcp->rxbuf_idx + data[3];
 				mcp->status = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			mcp->status = -EIO;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			mcp->status = -EIO;
-		}
-		complete(&mcp->wait_in_report);
-		break;
+		पूर्ण
+		complete(&mcp->रुको_in_report);
+		अवरोध;
 
-	case MCP2221_GPIO_GET:
-		switch (data[1]) {
-		case MCP2221_SUCCESS:
-			if ((data[mcp->gp_idx] == MCP2221_ALT_F_NOT_GPIOV) ||
-				(data[mcp->gp_idx + 1] == MCP2221_ALT_F_NOT_GPIOD)) {
+	हाल MCP2221_GPIO_GET:
+		चयन (data[1]) अणु
+		हाल MCP2221_SUCCESS:
+			अगर ((data[mcp->gp_idx] == MCP2221_ALT_F_NOT_GPIOV) ||
+				(data[mcp->gp_idx + 1] == MCP2221_ALT_F_NOT_GPIOD)) अणु
 				mcp->status = -ENOENT;
-			} else {
+			पूर्ण अन्यथा अणु
 				mcp->status = !!data[mcp->gp_idx];
 				mcp->gpio_dir = data[mcp->gp_idx + 1];
-			}
-			break;
-		default:
+			पूर्ण
+			अवरोध;
+		शेष:
 			mcp->status = -EAGAIN;
-		}
-		complete(&mcp->wait_in_report);
-		break;
+		पूर्ण
+		complete(&mcp->रुको_in_report);
+		अवरोध;
 
-	case MCP2221_GPIO_SET:
-		switch (data[1]) {
-		case MCP2221_SUCCESS:
-			if ((data[mcp->gp_idx] == MCP2221_ALT_F_NOT_GPIOV) ||
-				(data[mcp->gp_idx - 1] == MCP2221_ALT_F_NOT_GPIOV)) {
+	हाल MCP2221_GPIO_SET:
+		चयन (data[1]) अणु
+		हाल MCP2221_SUCCESS:
+			अगर ((data[mcp->gp_idx] == MCP2221_ALT_F_NOT_GPIOV) ||
+				(data[mcp->gp_idx - 1] == MCP2221_ALT_F_NOT_GPIOV)) अणु
 				mcp->status = -ENOENT;
-			} else {
+			पूर्ण अन्यथा अणु
 				mcp->status = 0;
-			}
-			break;
-		default:
+			पूर्ण
+			अवरोध;
+		शेष:
 			mcp->status = -EAGAIN;
-		}
-		complete(&mcp->wait_in_report);
-		break;
+		पूर्ण
+		complete(&mcp->रुको_in_report);
+		अवरोध;
 
-	default:
+	शेष:
 		mcp->status = -EIO;
-		complete(&mcp->wait_in_report);
-	}
+		complete(&mcp->रुको_in_report);
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int mcp2221_probe(struct hid_device *hdev,
-					const struct hid_device_id *id)
-{
-	int ret;
-	struct mcp2221 *mcp;
+अटल पूर्णांक mcp2221_probe(काष्ठा hid_device *hdev,
+					स्थिर काष्ठा hid_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा mcp2221 *mcp;
 
-	mcp = devm_kzalloc(&hdev->dev, sizeof(*mcp), GFP_KERNEL);
-	if (!mcp)
-		return -ENOMEM;
+	mcp = devm_kzalloc(&hdev->dev, माप(*mcp), GFP_KERNEL);
+	अगर (!mcp)
+		वापस -ENOMEM;
 
 	ret = hid_parse(hdev);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "can't parse reports\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = hid_hw_start(hdev, HID_CONNECT_HIDRAW);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "can't start hardware\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = hid_hw_open(hdev);
-	if (ret) {
+	ret = hid_hw_खोलो(hdev);
+	अगर (ret) अणु
 		hid_err(hdev, "can't open device\n");
-		goto err_hstop;
-	}
+		जाओ err_hstop;
+	पूर्ण
 
 	mutex_init(&mcp->lock);
-	init_completion(&mcp->wait_in_report);
+	init_completion(&mcp->रुको_in_report);
 	hid_set_drvdata(hdev, mcp);
 	mcp->hdev = hdev;
 
-	/* Set I2C bus clock diviser */
-	if (i2c_clk_freq > 400)
+	/* Set I2C bus घड़ी भागiser */
+	अगर (i2c_clk_freq > 400)
 		i2c_clk_freq = 400;
-	if (i2c_clk_freq < 50)
+	अगर (i2c_clk_freq < 50)
 		i2c_clk_freq = 50;
-	mcp->cur_i2c_clk_div = (12000000 / (i2c_clk_freq * 1000)) - 3;
+	mcp->cur_i2c_clk_भाग = (12000000 / (i2c_clk_freq * 1000)) - 3;
 
 	mcp->adapter.owner = THIS_MODULE;
 	mcp->adapter.class = I2C_CLASS_HWMON;
 	mcp->adapter.algo = &mcp_i2c_algo;
 	mcp->adapter.retries = 1;
 	mcp->adapter.dev.parent = &hdev->dev;
-	snprintf(mcp->adapter.name, sizeof(mcp->adapter.name),
+	snम_लिखो(mcp->adapter.name, माप(mcp->adapter.name),
 			"MCP2221 usb-i2c bridge on hidraw%d",
-			((struct hidraw *)hdev->hidraw)->minor);
+			((काष्ठा hidraw *)hdev->hidraw)->minor);
 
 	ret = i2c_add_adapter(&mcp->adapter);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "can't add usb-i2c adapter: %d\n", ret);
-		goto err_i2c;
-	}
+		जाओ err_i2c;
+	पूर्ण
 	i2c_set_adapdata(&mcp->adapter, mcp);
 
 	/* Setup GPIO chip */
-	mcp->gc = devm_kzalloc(&hdev->dev, sizeof(*mcp->gc), GFP_KERNEL);
-	if (!mcp->gc) {
+	mcp->gc = devm_kzalloc(&hdev->dev, माप(*mcp->gc), GFP_KERNEL);
+	अगर (!mcp->gc) अणु
 		ret = -ENOMEM;
-		goto err_gc;
-	}
+		जाओ err_gc;
+	पूर्ण
 
 	mcp->gc->label = "mcp2221_gpio";
 	mcp->gc->direction_input = mcp_gpio_direction_input;
@@ -896,42 +897,42 @@ static int mcp2221_probe(struct hid_device *hdev,
 	mcp->gc->parent = &hdev->dev;
 
 	ret = devm_gpiochip_add_data(&hdev->dev, mcp->gc, mcp);
-	if (ret)
-		goto err_gc;
+	अगर (ret)
+		जाओ err_gc;
 
-	return 0;
+	वापस 0;
 
 err_gc:
 	i2c_del_adapter(&mcp->adapter);
 err_i2c:
-	hid_hw_close(mcp->hdev);
+	hid_hw_बंद(mcp->hdev);
 err_hstop:
 	hid_hw_stop(mcp->hdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mcp2221_remove(struct hid_device *hdev)
-{
-	struct mcp2221 *mcp = hid_get_drvdata(hdev);
+अटल व्योम mcp2221_हटाओ(काष्ठा hid_device *hdev)
+अणु
+	काष्ठा mcp2221 *mcp = hid_get_drvdata(hdev);
 
 	i2c_del_adapter(&mcp->adapter);
-	hid_hw_close(mcp->hdev);
+	hid_hw_बंद(mcp->hdev);
 	hid_hw_stop(mcp->hdev);
-}
+पूर्ण
 
-static const struct hid_device_id mcp2221_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROCHIP, USB_DEVICE_ID_MCP2221) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id mcp2221_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROCHIP, USB_DEVICE_ID_MCP2221) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, mcp2221_devices);
 
-static struct hid_driver mcp2221_driver = {
+अटल काष्ठा hid_driver mcp2221_driver = अणु
 	.name		= "mcp2221",
 	.id_table	= mcp2221_devices,
 	.probe		= mcp2221_probe,
-	.remove		= mcp2221_remove,
+	.हटाओ		= mcp2221_हटाओ,
 	.raw_event	= mcp2221_raw_event,
-};
+पूर्ण;
 
 /* Register with HID core */
 module_hid_driver(mcp2221_driver);

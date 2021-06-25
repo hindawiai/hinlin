@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* r8169_firmware.h: RealTek 8169/8168/8101 ethernet driver.
  *
  * Copyright (c) 2002 ShuChen <shuchen@realtek.com.tw>
  * Copyright (c) 2003 - 2007 Francois Romieu <romieu@fr.zoreil.com>
  * Copyright (c) a lot of people too. Please respect their work.
  *
- * See MAINTAINERS file for support contact information.
+ * See MAINTAINERS file क्रम support contact inक्रमmation.
  */
 
-#include <linux/device.h>
-#include <linux/firmware.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
 
-struct rtl8169_private;
-typedef void (*rtl_fw_write_t)(struct rtl8169_private *tp, int reg, int val);
-typedef int (*rtl_fw_read_t)(struct rtl8169_private *tp, int reg);
+काष्ठा rtl8169_निजी;
+प्रकार व्योम (*rtl_fw_ग_लिखो_t)(काष्ठा rtl8169_निजी *tp, पूर्णांक reg, पूर्णांक val);
+प्रकार पूर्णांक (*rtl_fw_पढ़ो_t)(काष्ठा rtl8169_निजी *tp, पूर्णांक reg);
 
-#define RTL_VER_SIZE		32
+#घोषणा RTL_VER_SIZE		32
 
-struct rtl_fw {
-	rtl_fw_write_t phy_write;
-	rtl_fw_read_t phy_read;
-	rtl_fw_write_t mac_mcu_write;
-	rtl_fw_read_t mac_mcu_read;
-	const struct firmware *fw;
-	const char *fw_name;
-	struct device *dev;
+काष्ठा rtl_fw अणु
+	rtl_fw_ग_लिखो_t phy_ग_लिखो;
+	rtl_fw_पढ़ो_t phy_पढ़ो;
+	rtl_fw_ग_लिखो_t mac_mcu_ग_लिखो;
+	rtl_fw_पढ़ो_t mac_mcu_पढ़ो;
+	स्थिर काष्ठा firmware *fw;
+	स्थिर अक्षर *fw_name;
+	काष्ठा device *dev;
 
-	char version[RTL_VER_SIZE];
+	अक्षर version[RTL_VER_SIZE];
 
-	struct rtl_fw_phy_action {
+	काष्ठा rtl_fw_phy_action अणु
 		__le32 *code;
-		size_t size;
-	} phy_action;
-};
+		माप_प्रकार size;
+	पूर्ण phy_action;
+पूर्ण;
 
-int rtl_fw_request_firmware(struct rtl_fw *rtl_fw);
-void rtl_fw_release_firmware(struct rtl_fw *rtl_fw);
-void rtl_fw_write_firmware(struct rtl8169_private *tp, struct rtl_fw *rtl_fw);
+पूर्णांक rtl_fw_request_firmware(काष्ठा rtl_fw *rtl_fw);
+व्योम rtl_fw_release_firmware(काष्ठा rtl_fw *rtl_fw);
+व्योम rtl_fw_ग_लिखो_firmware(काष्ठा rtl8169_निजी *tp, काष्ठा rtl_fw *rtl_fw);

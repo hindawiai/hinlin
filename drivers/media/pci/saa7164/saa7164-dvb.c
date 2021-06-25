@@ -1,353 +1,354 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for the NXP SAA7164 PCIe bridge
+ *  Driver क्रम the NXP SAA7164 PCIe bridge
  *
- *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
+ *  Copyright (c) 2010-2015 Steven Toth <stoth@kernelद_असल.com>
  */
 
-#include "saa7164.h"
+#समावेश "saa7164.h"
 
-#include "tda10048.h"
-#include "tda18271.h"
-#include "s5h1411.h"
-#include "si2157.h"
-#include "si2168.h"
-#include "lgdt3306a.h"
+#समावेश "tda10048.h"
+#समावेश "tda18271.h"
+#समावेश "s5h1411.h"
+#समावेश "si2157.h"
+#समावेश "si2168.h"
+#समावेश "lgdt3306a.h"
 
-#define DRIVER_NAME "saa7164"
+#घोषणा DRIVER_NAME "saa7164"
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-/* addr is in the card struct, get it from there */
-static struct tda10048_config hauppauge_hvr2200_1_config = {
+/* addr is in the card काष्ठा, get it from there */
+अटल काष्ठा tda10048_config hauppauge_hvr2200_1_config = अणु
 	.demod_address    = 0x10 >> 1,
 	.output_mode      = TDA10048_SERIAL_OUTPUT,
-	.fwbulkwritelen   = TDA10048_BULKWRITE_200,
+	.fwbulkग_लिखोlen   = TDA10048_BULKWRITE_200,
 	.inversion        = TDA10048_INVERSION_ON,
-	.dtv6_if_freq_khz = TDA10048_IF_3300,
-	.dtv7_if_freq_khz = TDA10048_IF_3500,
-	.dtv8_if_freq_khz = TDA10048_IF_4000,
+	.dtv6_अगर_freq_khz = TDA10048_IF_3300,
+	.dtv7_अगर_freq_khz = TDA10048_IF_3500,
+	.dtv8_अगर_freq_khz = TDA10048_IF_4000,
 	.clk_freq_khz     = TDA10048_CLK_16000,
-};
-static struct tda10048_config hauppauge_hvr2200_2_config = {
+पूर्ण;
+अटल काष्ठा tda10048_config hauppauge_hvr2200_2_config = अणु
 	.demod_address    = 0x12 >> 1,
 	.output_mode      = TDA10048_SERIAL_OUTPUT,
-	.fwbulkwritelen   = TDA10048_BULKWRITE_200,
+	.fwbulkग_लिखोlen   = TDA10048_BULKWRITE_200,
 	.inversion        = TDA10048_INVERSION_ON,
-	.dtv6_if_freq_khz = TDA10048_IF_3300,
-	.dtv7_if_freq_khz = TDA10048_IF_3500,
-	.dtv8_if_freq_khz = TDA10048_IF_4000,
+	.dtv6_अगर_freq_khz = TDA10048_IF_3300,
+	.dtv7_अगर_freq_khz = TDA10048_IF_3500,
+	.dtv8_अगर_freq_khz = TDA10048_IF_4000,
 	.clk_freq_khz     = TDA10048_CLK_16000,
-};
+पूर्ण;
 
-static struct tda18271_std_map hauppauge_tda18271_std_map = {
-	.atsc_6   = { .if_freq = 3250, .agc_mode = 3, .std = 3,
-		      .if_lvl = 6, .rfagc_top = 0x37 },
-	.qam_6    = { .if_freq = 4000, .agc_mode = 3, .std = 0,
-		      .if_lvl = 6, .rfagc_top = 0x37 },
-};
+अटल काष्ठा tda18271_std_map hauppauge_tda18271_std_map = अणु
+	.atsc_6   = अणु .अगर_freq = 3250, .agc_mode = 3, .std = 3,
+		      .अगर_lvl = 6, .rfagc_top = 0x37 पूर्ण,
+	.qam_6    = अणु .अगर_freq = 4000, .agc_mode = 3, .std = 0,
+		      .अगर_lvl = 6, .rfagc_top = 0x37 पूर्ण,
+पूर्ण;
 
-static struct tda18271_config hauppauge_hvr22x0_tuner_config = {
+अटल काष्ठा tda18271_config hauppauge_hvr22x0_tuner_config = अणु
 	.std_map	= &hauppauge_tda18271_std_map,
 	.gate		= TDA18271_GATE_ANALOG,
 	.role		= TDA18271_MASTER,
-};
+पूर्ण;
 
-static struct tda18271_config hauppauge_hvr22x0s_tuner_config = {
+अटल काष्ठा tda18271_config hauppauge_hvr22x0s_tuner_config = अणु
 	.std_map	= &hauppauge_tda18271_std_map,
 	.gate		= TDA18271_GATE_ANALOG,
 	.role		= TDA18271_SLAVE,
 	.output_opt     = TDA18271_OUTPUT_LT_OFF,
 	.rf_cal_on_startup = 1
-};
+पूर्ण;
 
-static struct s5h1411_config hauppauge_s5h1411_config = {
+अटल काष्ठा s5h1411_config hauppauge_s5h1411_config = अणु
 	.output_mode   = S5H1411_SERIAL_OUTPUT,
 	.gpio          = S5H1411_GPIO_ON,
-	.qam_if        = S5H1411_IF_4000,
-	.vsb_if        = S5H1411_IF_3250,
+	.qam_अगर        = S5H1411_IF_4000,
+	.vsb_अगर        = S5H1411_IF_3250,
 	.inversion     = S5H1411_INVERSION_ON,
 	.status_mode   = S5H1411_DEMODLOCKING,
 	.mpeg_timing   = S5H1411_MPEGTIMING_CONTINUOUS_NONINVERTING_CLOCK,
-};
+पूर्ण;
 
-static struct lgdt3306a_config hauppauge_hvr2255a_config = {
+अटल काष्ठा lgdt3306a_config hauppauge_hvr2255a_config = अणु
 	.i2c_addr               = 0xb2 >> 1,
-	.qam_if_khz             = 4000,
-	.vsb_if_khz             = 3250,
+	.qam_अगर_khz             = 4000,
+	.vsb_अगर_khz             = 3250,
 	.deny_i2c_rptr          = 1, /* Disabled */
 	.spectral_inversion     = 0, /* Disabled */
 	.mpeg_mode              = LGDT3306A_MPEG_SERIAL,
 	.tpclk_edge             = LGDT3306A_TPCLK_RISING_EDGE,
 	.tpvalid_polarity       = LGDT3306A_TP_VALID_HIGH,
 	.xtalMHz                = 25, /* 24 or 25 */
-};
+पूर्ण;
 
-static struct lgdt3306a_config hauppauge_hvr2255b_config = {
+अटल काष्ठा lgdt3306a_config hauppauge_hvr2255b_config = अणु
 	.i2c_addr               = 0x1c >> 1,
-	.qam_if_khz             = 4000,
-	.vsb_if_khz             = 3250,
+	.qam_अगर_khz             = 4000,
+	.vsb_अगर_khz             = 3250,
 	.deny_i2c_rptr          = 1, /* Disabled */
 	.spectral_inversion     = 0, /* Disabled */
 	.mpeg_mode              = LGDT3306A_MPEG_SERIAL,
 	.tpclk_edge             = LGDT3306A_TPCLK_RISING_EDGE,
 	.tpvalid_polarity       = LGDT3306A_TP_VALID_HIGH,
 	.xtalMHz                = 25, /* 24 or 25 */
-};
+पूर्ण;
 
-static struct si2157_config hauppauge_hvr2255_tuner_config = {
+अटल काष्ठा si2157_config hauppauge_hvr2255_tuner_config = अणु
 	.inversion = 1,
-	.if_port = 1,
-};
+	.अगर_port = 1,
+पूर्ण;
 
-static int si2157_attach(struct saa7164_port *port, struct i2c_adapter *adapter,
-	struct dvb_frontend *fe, u8 addr8bit, struct si2157_config *cfg)
-{
-	struct i2c_board_info bi;
-	struct i2c_client *tuner;
+अटल पूर्णांक si2157_attach(काष्ठा saa7164_port *port, काष्ठा i2c_adapter *adapter,
+	काष्ठा dvb_frontend *fe, u8 addr8bit, काष्ठा si2157_config *cfg)
+अणु
+	काष्ठा i2c_board_info bi;
+	काष्ठा i2c_client *tuner;
 
 	cfg->fe = fe;
 
-	memset(&bi, 0, sizeof(bi));
+	स_रखो(&bi, 0, माप(bi));
 
 	strscpy(bi.type, "si2157", I2C_NAME_SIZE);
-	bi.platform_data = cfg;
+	bi.platक्रमm_data = cfg;
 	bi.addr = addr8bit >> 1;
 
 	request_module(bi.type);
 
 	tuner = i2c_new_client_device(adapter, &bi);
-	if (!i2c_client_has_driver(tuner))
-		return -ENODEV;
+	अगर (!i2c_client_has_driver(tuner))
+		वापस -ENODEV;
 
-	if (!try_module_get(tuner->dev.driver->owner)) {
-		i2c_unregister_device(tuner);
-		return -ENODEV;
-	}
+	अगर (!try_module_get(tuner->dev.driver->owner)) अणु
+		i2c_unरेजिस्टर_device(tuner);
+		वापस -ENODEV;
+	पूर्ण
 
 	port->i2c_client_tuner = tuner;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa7164_dvb_stop_port(struct saa7164_port *port)
-{
-	struct saa7164_dev *dev = port->dev;
-	int ret;
+अटल पूर्णांक saa7164_dvb_stop_port(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dev *dev = port->dev;
+	पूर्णांक ret;
 
 	ret = saa7164_api_transition_port(port, SAA_DMASTATE_STOP);
-	if ((ret != SAA_OK) && (ret != SAA_ERR_ALREADY_STOPPED)) {
-		printk(KERN_ERR "%s() stop transition failed, ret = 0x%x\n",
+	अगर ((ret != SAA_OK) && (ret != SAA_ERR_ALREADY_STOPPED)) अणु
+		prपूर्णांकk(KERN_ERR "%s() stop transition failed, ret = 0x%x\n",
 			__func__, ret);
 		ret = -EIO;
-	} else {
-		dprintk(DBGLVL_DVB, "%s()    Stopped\n", __func__);
+	पूर्ण अन्यथा अणु
+		dprपूर्णांकk(DBGLVL_DVB, "%s()    Stopped\n", __func__);
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int saa7164_dvb_acquire_port(struct saa7164_port *port)
-{
-	struct saa7164_dev *dev = port->dev;
-	int ret;
+अटल पूर्णांक saa7164_dvb_acquire_port(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dev *dev = port->dev;
+	पूर्णांक ret;
 
 	ret = saa7164_api_transition_port(port, SAA_DMASTATE_ACQUIRE);
-	if ((ret != SAA_OK) && (ret != SAA_ERR_ALREADY_STOPPED)) {
-		printk(KERN_ERR "%s() acquire transition failed, ret = 0x%x\n",
+	अगर ((ret != SAA_OK) && (ret != SAA_ERR_ALREADY_STOPPED)) अणु
+		prपूर्णांकk(KERN_ERR "%s() acquire transition failed, ret = 0x%x\n",
 			__func__, ret);
 		ret = -EIO;
-	} else {
-		dprintk(DBGLVL_DVB, "%s() Acquired\n", __func__);
+	पूर्ण अन्यथा अणु
+		dprपूर्णांकk(DBGLVL_DVB, "%s() Acquired\n", __func__);
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int saa7164_dvb_pause_port(struct saa7164_port *port)
-{
-	struct saa7164_dev *dev = port->dev;
-	int ret;
+अटल पूर्णांक saa7164_dvb_छोड़ो_port(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dev *dev = port->dev;
+	पूर्णांक ret;
 
 	ret = saa7164_api_transition_port(port, SAA_DMASTATE_PAUSE);
-	if ((ret != SAA_OK) && (ret != SAA_ERR_ALREADY_STOPPED)) {
-		printk(KERN_ERR "%s() pause transition failed, ret = 0x%x\n",
+	अगर ((ret != SAA_OK) && (ret != SAA_ERR_ALREADY_STOPPED)) अणु
+		prपूर्णांकk(KERN_ERR "%s() pause transition failed, ret = 0x%x\n",
 			__func__, ret);
 		ret = -EIO;
-	} else {
-		dprintk(DBGLVL_DVB, "%s()   Paused\n", __func__);
+	पूर्ण अन्यथा अणु
+		dprपूर्णांकk(DBGLVL_DVB, "%s()   Paused\n", __func__);
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Firmware is very windows centric, meaning you have to transition
- * the part through AVStream / KS Windows stages, forwards or backwards.
- * States are: stopped, acquired (h/w), paused, started.
+/* Firmware is very winकरोws centric, meaning you have to transition
+ * the part through AVStream / KS Winकरोws stages, क्रमwards or backwards.
+ * States are: stopped, acquired (h/w), छोड़ोd, started.
  */
-static int saa7164_dvb_stop_streaming(struct saa7164_port *port)
-{
-	struct saa7164_dev *dev = port->dev;
-	struct saa7164_buffer *buf;
-	struct list_head *p, *q;
-	int ret;
+अटल पूर्णांक saa7164_dvb_stop_streaming(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dev *dev = port->dev;
+	काष्ठा saa7164_buffer *buf;
+	काष्ठा list_head *p, *q;
+	पूर्णांक ret;
 
-	dprintk(DBGLVL_DVB, "%s(port=%d)\n", __func__, port->nr);
+	dprपूर्णांकk(DBGLVL_DVB, "%s(port=%d)\n", __func__, port->nr);
 
-	ret = saa7164_dvb_pause_port(port);
+	ret = saa7164_dvb_छोड़ो_port(port);
 	ret = saa7164_dvb_acquire_port(port);
 	ret = saa7164_dvb_stop_port(port);
 
-	/* Mark the hardware buffers as free */
+	/* Mark the hardware buffers as मुक्त */
 	mutex_lock(&port->dmaqueue_lock);
-	list_for_each_safe(p, q, &port->dmaqueue.list) {
-		buf = list_entry(p, struct saa7164_buffer, list);
+	list_क्रम_each_safe(p, q, &port->dmaqueue.list) अणु
+		buf = list_entry(p, काष्ठा saa7164_buffer, list);
 		buf->flags = SAA7164_BUFFER_FREE;
-	}
+	पूर्ण
 	mutex_unlock(&port->dmaqueue_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int saa7164_dvb_start_port(struct saa7164_port *port)
-{
-	struct saa7164_dev *dev = port->dev;
-	int ret = 0, result;
+अटल पूर्णांक saa7164_dvb_start_port(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dev *dev = port->dev;
+	पूर्णांक ret = 0, result;
 
-	dprintk(DBGLVL_DVB, "%s(port=%d)\n", __func__, port->nr);
+	dprपूर्णांकk(DBGLVL_DVB, "%s(port=%d)\n", __func__, port->nr);
 
 	saa7164_buffer_cfg_port(port);
 
 	/* Acquire the hardware */
 	result = saa7164_api_transition_port(port, SAA_DMASTATE_ACQUIRE);
-	if ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) {
-		printk(KERN_ERR "%s() acquire transition failed, res = 0x%x\n",
+	अगर ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) अणु
+		prपूर्णांकk(KERN_ERR "%s() acquire transition failed, res = 0x%x\n",
 			__func__, result);
 
 		/* Stop the hardware, regardless */
 		result = saa7164_api_transition_port(port, SAA_DMASTATE_STOP);
-		if ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) {
-			printk(KERN_ERR "%s() acquire/forced stop transition failed, res = 0x%x\n",
+		अगर ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) अणु
+			prपूर्णांकk(KERN_ERR "%s() acquire/forced stop transition failed, res = 0x%x\n",
 			       __func__, result);
-		}
+		पूर्ण
 		ret = -EIO;
-		goto out;
-	} else
-		dprintk(DBGLVL_DVB, "%s()   Acquired\n", __func__);
+		जाओ out;
+	पूर्ण अन्यथा
+		dprपूर्णांकk(DBGLVL_DVB, "%s()   Acquired\n", __func__);
 
 	/* Pause the hardware */
 	result = saa7164_api_transition_port(port, SAA_DMASTATE_PAUSE);
-	if ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) {
-		printk(KERN_ERR "%s() pause transition failed, res = 0x%x\n",
+	अगर ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) अणु
+		prपूर्णांकk(KERN_ERR "%s() pause transition failed, res = 0x%x\n",
 				__func__, result);
 
 		/* Stop the hardware, regardless */
 		result = saa7164_api_transition_port(port, SAA_DMASTATE_STOP);
-		if ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) {
-			printk(KERN_ERR "%s() pause/forced stop transition failed, res = 0x%x\n",
+		अगर ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) अणु
+			prपूर्णांकk(KERN_ERR "%s() pause/forced stop transition failed, res = 0x%x\n",
 			       __func__, result);
-		}
+		पूर्ण
 
 		ret = -EIO;
-		goto out;
-	} else
-		dprintk(DBGLVL_DVB, "%s()   Paused\n", __func__);
+		जाओ out;
+	पूर्ण अन्यथा
+		dprपूर्णांकk(DBGLVL_DVB, "%s()   Paused\n", __func__);
 
 	/* Start the hardware */
 	result = saa7164_api_transition_port(port, SAA_DMASTATE_RUN);
-	if ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) {
-		printk(KERN_ERR "%s() run transition failed, result = 0x%x\n",
+	अगर ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) अणु
+		prपूर्णांकk(KERN_ERR "%s() run transition failed, result = 0x%x\n",
 				__func__, result);
 
 		/* Stop the hardware, regardless */
 		result = saa7164_api_transition_port(port, SAA_DMASTATE_STOP);
-		if ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) {
-			printk(KERN_ERR "%s() run/forced stop transition failed, res = 0x%x\n",
+		अगर ((result != SAA_OK) && (result != SAA_ERR_ALREADY_STOPPED)) अणु
+			prपूर्णांकk(KERN_ERR "%s() run/forced stop transition failed, res = 0x%x\n",
 			       __func__, result);
-		}
+		पूर्ण
 
 		ret = -EIO;
-	} else
-		dprintk(DBGLVL_DVB, "%s()   Running\n", __func__);
+	पूर्ण अन्यथा
+		dprपूर्णांकk(DBGLVL_DVB, "%s()   Running\n", __func__);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int saa7164_dvb_start_feed(struct dvb_demux_feed *feed)
-{
-	struct dvb_demux *demux = feed->demux;
-	struct saa7164_port *port = (struct saa7164_port *) demux->priv;
-	struct saa7164_dvb *dvb = &port->dvb;
-	struct saa7164_dev *dev = port->dev;
-	int ret = 0;
+अटल पूर्णांक saa7164_dvb_start_feed(काष्ठा dvb_demux_feed *feed)
+अणु
+	काष्ठा dvb_demux *demux = feed->demux;
+	काष्ठा saa7164_port *port = (काष्ठा saa7164_port *) demux->priv;
+	काष्ठा saa7164_dvb *dvb = &port->dvb;
+	काष्ठा saa7164_dev *dev = port->dev;
+	पूर्णांक ret = 0;
 
-	dprintk(DBGLVL_DVB, "%s(port=%d)\n", __func__, port->nr);
+	dprपूर्णांकk(DBGLVL_DVB, "%s(port=%d)\n", __func__, port->nr);
 
-	if (!demux->dmx.frontend)
-		return -EINVAL;
+	अगर (!demux->dmx.frontend)
+		वापस -EINVAL;
 
-	if (dvb) {
+	अगर (dvb) अणु
 		mutex_lock(&dvb->lock);
-		if (dvb->feeding++ == 0) {
+		अगर (dvb->feeding++ == 0) अणु
 			/* Start transport */
 			ret = saa7164_dvb_start_port(port);
-		}
+		पूर्ण
 		mutex_unlock(&dvb->lock);
-		dprintk(DBGLVL_DVB, "%s(port=%d) now feeding = %d\n",
+		dprपूर्णांकk(DBGLVL_DVB, "%s(port=%d) now feeding = %d\n",
 			__func__, port->nr, dvb->feeding);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int saa7164_dvb_stop_feed(struct dvb_demux_feed *feed)
-{
-	struct dvb_demux *demux = feed->demux;
-	struct saa7164_port *port = (struct saa7164_port *) demux->priv;
-	struct saa7164_dvb *dvb = &port->dvb;
-	struct saa7164_dev *dev = port->dev;
-	int ret = 0;
+अटल पूर्णांक saa7164_dvb_stop_feed(काष्ठा dvb_demux_feed *feed)
+अणु
+	काष्ठा dvb_demux *demux = feed->demux;
+	काष्ठा saa7164_port *port = (काष्ठा saa7164_port *) demux->priv;
+	काष्ठा saa7164_dvb *dvb = &port->dvb;
+	काष्ठा saa7164_dev *dev = port->dev;
+	पूर्णांक ret = 0;
 
-	dprintk(DBGLVL_DVB, "%s(port=%d)\n", __func__, port->nr);
+	dprपूर्णांकk(DBGLVL_DVB, "%s(port=%d)\n", __func__, port->nr);
 
-	if (dvb) {
+	अगर (dvb) अणु
 		mutex_lock(&dvb->lock);
-		if (--dvb->feeding == 0) {
+		अगर (--dvb->feeding == 0) अणु
 			/* Stop transport */
 			ret = saa7164_dvb_stop_streaming(port);
-		}
+		पूर्ण
 		mutex_unlock(&dvb->lock);
-		dprintk(DBGLVL_DVB, "%s(port=%d) now feeding = %d\n",
+		dprपूर्णांकk(DBGLVL_DVB, "%s(port=%d) now feeding = %d\n",
 			__func__, port->nr, dvb->feeding);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dvb_register(struct saa7164_port *port)
-{
-	struct saa7164_dvb *dvb = &port->dvb;
-	struct saa7164_dev *dev = port->dev;
-	struct saa7164_buffer *buf;
-	int result, i;
+अटल पूर्णांक dvb_रेजिस्टर(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dvb *dvb = &port->dvb;
+	काष्ठा saa7164_dev *dev = port->dev;
+	काष्ठा saa7164_buffer *buf;
+	पूर्णांक result, i;
 
-	dprintk(DBGLVL_DVB, "%s(port=%d)\n", __func__, port->nr);
+	dprपूर्णांकk(DBGLVL_DVB, "%s(port=%d)\n", __func__, port->nr);
 
 	BUG_ON(port->type != SAA7164_MPEG_DVB);
 
 	/* Sanity check that the PCI configuration space is active */
-	if (port->hwcfg.BARLocation == 0) {
+	अगर (port->hwcfg.BARLocation == 0) अणु
 		result = -ENOMEM;
-		printk(KERN_ERR "%s: dvb_register_adapter failed (errno = %d), NO PCI configuration\n",
+		prपूर्णांकk(KERN_ERR "%s: dvb_register_adapter failed (errno = %d), NO PCI configuration\n",
 			DRIVER_NAME, result);
-		goto fail_adapter;
-	}
+		जाओ fail_adapter;
+	पूर्ण
 
-	/* Init and establish defaults */
+	/* Init and establish शेषs */
 	port->hw_streamingparams.bitspersample = 8;
 	port->hw_streamingparams.samplesperline = 188;
 	port->hw_streamingparams.numberoflines =
@@ -355,50 +356,50 @@ static int dvb_register(struct saa7164_port *port)
 
 	port->hw_streamingparams.pitch = 188;
 	port->hw_streamingparams.linethreshold = 0;
-	port->hw_streamingparams.pagetablelistvirt = NULL;
-	port->hw_streamingparams.pagetablelistphys = NULL;
+	port->hw_streamingparams.pagetablelistvirt = शून्य;
+	port->hw_streamingparams.pagetablelistphys = शून्य;
 	port->hw_streamingparams.numpagetables = 2 +
 		((SAA7164_TS_NUMBER_OF_LINES * 188) / PAGE_SIZE);
 
 	port->hw_streamingparams.numpagetableentries = port->hwcfg.buffercount;
 
 	/* Allocate the PCI resources */
-	for (i = 0; i < port->hwcfg.buffercount; i++) {
+	क्रम (i = 0; i < port->hwcfg.buffercount; i++) अणु
 		buf = saa7164_buffer_alloc(port,
 			port->hw_streamingparams.numberoflines *
 			port->hw_streamingparams.pitch);
 
-		if (!buf) {
+		अगर (!buf) अणु
 			result = -ENOMEM;
-			printk(KERN_ERR "%s: dvb_register_adapter failed (errno = %d), unable to allocate buffers\n",
+			prपूर्णांकk(KERN_ERR "%s: dvb_register_adapter failed (errno = %d), unable to allocate buffers\n",
 				DRIVER_NAME, result);
-			goto fail_adapter;
-		}
+			जाओ fail_adapter;
+		पूर्ण
 
 		mutex_lock(&port->dmaqueue_lock);
 		list_add_tail(&buf->list, &port->dmaqueue.list);
 		mutex_unlock(&port->dmaqueue_lock);
-	}
+	पूर्ण
 
-	/* register adapter */
-	result = dvb_register_adapter(&dvb->adapter, DRIVER_NAME, THIS_MODULE,
+	/* रेजिस्टर adapter */
+	result = dvb_रेजिस्टर_adapter(&dvb->adapter, DRIVER_NAME, THIS_MODULE,
 			&dev->pci->dev, adapter_nr);
-	if (result < 0) {
-		printk(KERN_ERR "%s: dvb_register_adapter failed (errno = %d)\n",
+	अगर (result < 0) अणु
+		prपूर्णांकk(KERN_ERR "%s: dvb_register_adapter failed (errno = %d)\n",
 		       DRIVER_NAME, result);
-		goto fail_adapter;
-	}
+		जाओ fail_adapter;
+	पूर्ण
 	dvb->adapter.priv = port;
 
-	/* register frontend */
-	result = dvb_register_frontend(&dvb->adapter, dvb->frontend);
-	if (result < 0) {
-		printk(KERN_ERR "%s: dvb_register_frontend failed (errno = %d)\n",
+	/* रेजिस्टर frontend */
+	result = dvb_रेजिस्टर_frontend(&dvb->adapter, dvb->frontend);
+	अगर (result < 0) अणु
+		prपूर्णांकk(KERN_ERR "%s: dvb_register_frontend failed (errno = %d)\n",
 		       DRIVER_NAME, result);
-		goto fail_frontend;
-	}
+		जाओ fail_frontend;
+	पूर्ण
 
-	/* register demux stuff */
+	/* रेजिस्टर demux stuff */
 	dvb->demux.dmx.capabilities =
 		DMX_TS_FILTERING | DMX_SECTION_FILTERING |
 		DMX_MEMORY_BASED_FILTERING;
@@ -408,333 +409,333 @@ static int dvb_register(struct saa7164_port *port)
 	dvb->demux.start_feed = saa7164_dvb_start_feed;
 	dvb->demux.stop_feed  = saa7164_dvb_stop_feed;
 	result = dvb_dmx_init(&dvb->demux);
-	if (result < 0) {
-		printk(KERN_ERR "%s: dvb_dmx_init failed (errno = %d)\n",
+	अगर (result < 0) अणु
+		prपूर्णांकk(KERN_ERR "%s: dvb_dmx_init failed (errno = %d)\n",
 		       DRIVER_NAME, result);
-		goto fail_dmx;
-	}
+		जाओ fail_dmx;
+	पूर्ण
 
 	dvb->dmxdev.filternum    = 256;
 	dvb->dmxdev.demux        = &dvb->demux.dmx;
 	dvb->dmxdev.capabilities = 0;
 	result = dvb_dmxdev_init(&dvb->dmxdev, &dvb->adapter);
-	if (result < 0) {
-		printk(KERN_ERR "%s: dvb_dmxdev_init failed (errno = %d)\n",
+	अगर (result < 0) अणु
+		prपूर्णांकk(KERN_ERR "%s: dvb_dmxdev_init failed (errno = %d)\n",
 		       DRIVER_NAME, result);
-		goto fail_dmxdev;
-	}
+		जाओ fail_dmxdev;
+	पूर्ण
 
 	dvb->fe_hw.source = DMX_FRONTEND_0;
 	result = dvb->demux.dmx.add_frontend(&dvb->demux.dmx, &dvb->fe_hw);
-	if (result < 0) {
-		printk(KERN_ERR "%s: add_frontend failed (DMX_FRONTEND_0, errno = %d)\n",
+	अगर (result < 0) अणु
+		prपूर्णांकk(KERN_ERR "%s: add_frontend failed (DMX_FRONTEND_0, errno = %d)\n",
 		       DRIVER_NAME, result);
-		goto fail_fe_hw;
-	}
+		जाओ fail_fe_hw;
+	पूर्ण
 
 	dvb->fe_mem.source = DMX_MEMORY_FE;
 	result = dvb->demux.dmx.add_frontend(&dvb->demux.dmx, &dvb->fe_mem);
-	if (result < 0) {
-		printk(KERN_ERR "%s: add_frontend failed (DMX_MEMORY_FE, errno = %d)\n",
+	अगर (result < 0) अणु
+		prपूर्णांकk(KERN_ERR "%s: add_frontend failed (DMX_MEMORY_FE, errno = %d)\n",
 		       DRIVER_NAME, result);
-		goto fail_fe_mem;
-	}
+		जाओ fail_fe_mem;
+	पूर्ण
 
 	result = dvb->demux.dmx.connect_frontend(&dvb->demux.dmx, &dvb->fe_hw);
-	if (result < 0) {
-		printk(KERN_ERR "%s: connect_frontend failed (errno = %d)\n",
+	अगर (result < 0) अणु
+		prपूर्णांकk(KERN_ERR "%s: connect_frontend failed (errno = %d)\n",
 		       DRIVER_NAME, result);
-		goto fail_fe_conn;
-	}
+		जाओ fail_fe_conn;
+	पूर्ण
 
-	/* register network adapter */
+	/* रेजिस्टर network adapter */
 	dvb_net_init(&dvb->adapter, &dvb->net, &dvb->demux.dmx);
-	return 0;
+	वापस 0;
 
 fail_fe_conn:
-	dvb->demux.dmx.remove_frontend(&dvb->demux.dmx, &dvb->fe_mem);
+	dvb->demux.dmx.हटाओ_frontend(&dvb->demux.dmx, &dvb->fe_mem);
 fail_fe_mem:
-	dvb->demux.dmx.remove_frontend(&dvb->demux.dmx, &dvb->fe_hw);
+	dvb->demux.dmx.हटाओ_frontend(&dvb->demux.dmx, &dvb->fe_hw);
 fail_fe_hw:
 	dvb_dmxdev_release(&dvb->dmxdev);
 fail_dmxdev:
 	dvb_dmx_release(&dvb->demux);
 fail_dmx:
-	dvb_unregister_frontend(dvb->frontend);
+	dvb_unरेजिस्टर_frontend(dvb->frontend);
 fail_frontend:
 	dvb_frontend_detach(dvb->frontend);
-	dvb_unregister_adapter(&dvb->adapter);
+	dvb_unरेजिस्टर_adapter(&dvb->adapter);
 fail_adapter:
-	return result;
-}
+	वापस result;
+पूर्ण
 
-int saa7164_dvb_unregister(struct saa7164_port *port)
-{
-	struct saa7164_dvb *dvb = &port->dvb;
-	struct saa7164_dev *dev = port->dev;
-	struct saa7164_buffer *b;
-	struct list_head *c, *n;
-	struct i2c_client *client;
+पूर्णांक saa7164_dvb_unरेजिस्टर(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dvb *dvb = &port->dvb;
+	काष्ठा saa7164_dev *dev = port->dev;
+	काष्ठा saa7164_buffer *b;
+	काष्ठा list_head *c, *n;
+	काष्ठा i2c_client *client;
 
-	dprintk(DBGLVL_DVB, "%s()\n", __func__);
+	dprपूर्णांकk(DBGLVL_DVB, "%s()\n", __func__);
 
 	BUG_ON(port->type != SAA7164_MPEG_DVB);
 
 	/* Remove any allocated buffers */
 	mutex_lock(&port->dmaqueue_lock);
-	list_for_each_safe(c, n, &port->dmaqueue.list) {
-		b = list_entry(c, struct saa7164_buffer, list);
+	list_क्रम_each_safe(c, n, &port->dmaqueue.list) अणु
+		b = list_entry(c, काष्ठा saa7164_buffer, list);
 		list_del(c);
 		saa7164_buffer_dealloc(b);
-	}
+	पूर्ण
 	mutex_unlock(&port->dmaqueue_lock);
 
-	if (dvb->frontend == NULL)
-		return 0;
+	अगर (dvb->frontend == शून्य)
+		वापस 0;
 
-	/* remove I2C client for tuner */
+	/* हटाओ I2C client क्रम tuner */
 	client = port->i2c_client_tuner;
-	if (client) {
+	अगर (client) अणु
 		module_put(client->dev.driver->owner);
-		i2c_unregister_device(client);
-	}
+		i2c_unरेजिस्टर_device(client);
+	पूर्ण
 
-	/* remove I2C client for demodulator */
+	/* हटाओ I2C client क्रम demodulator */
 	client = port->i2c_client_demod;
-	if (client) {
+	अगर (client) अणु
 		module_put(client->dev.driver->owner);
-		i2c_unregister_device(client);
-	}
+		i2c_unरेजिस्टर_device(client);
+	पूर्ण
 
 	dvb_net_release(&dvb->net);
-	dvb->demux.dmx.remove_frontend(&dvb->demux.dmx, &dvb->fe_mem);
-	dvb->demux.dmx.remove_frontend(&dvb->demux.dmx, &dvb->fe_hw);
+	dvb->demux.dmx.हटाओ_frontend(&dvb->demux.dmx, &dvb->fe_mem);
+	dvb->demux.dmx.हटाओ_frontend(&dvb->demux.dmx, &dvb->fe_hw);
 	dvb_dmxdev_release(&dvb->dmxdev);
 	dvb_dmx_release(&dvb->demux);
-	dvb_unregister_frontend(dvb->frontend);
+	dvb_unरेजिस्टर_frontend(dvb->frontend);
 	dvb_frontend_detach(dvb->frontend);
-	dvb_unregister_adapter(&dvb->adapter);
-	return 0;
-}
+	dvb_unरेजिस्टर_adapter(&dvb->adapter);
+	वापस 0;
+पूर्ण
 
-/* All the DVB attach calls go here, this function gets modified
- * for each new card.
+/* All the DVB attach calls go here, this function माला_लो modअगरied
+ * क्रम each new card.
  */
-int saa7164_dvb_register(struct saa7164_port *port)
-{
-	struct saa7164_dev *dev = port->dev;
-	struct saa7164_dvb *dvb = &port->dvb;
-	struct saa7164_i2c *i2c_bus = NULL;
-	struct si2168_config si2168_config;
-	struct si2157_config si2157_config;
-	struct i2c_adapter *adapter;
-	struct i2c_board_info info;
-	struct i2c_client *client_demod;
-	struct i2c_client *client_tuner;
-	int ret;
+पूर्णांक saa7164_dvb_रेजिस्टर(काष्ठा saa7164_port *port)
+अणु
+	काष्ठा saa7164_dev *dev = port->dev;
+	काष्ठा saa7164_dvb *dvb = &port->dvb;
+	काष्ठा saa7164_i2c *i2c_bus = शून्य;
+	काष्ठा si2168_config si2168_config;
+	काष्ठा si2157_config si2157_config;
+	काष्ठा i2c_adapter *adapter;
+	काष्ठा i2c_board_info info;
+	काष्ठा i2c_client *client_demod;
+	काष्ठा i2c_client *client_tuner;
+	पूर्णांक ret;
 
-	dprintk(DBGLVL_DVB, "%s()\n", __func__);
+	dprपूर्णांकk(DBGLVL_DVB, "%s()\n", __func__);
 
 	/* init frontend */
-	switch (dev->board) {
-	case SAA7164_BOARD_HAUPPAUGE_HVR2200:
-	case SAA7164_BOARD_HAUPPAUGE_HVR2200_2:
-	case SAA7164_BOARD_HAUPPAUGE_HVR2200_3:
-	case SAA7164_BOARD_HAUPPAUGE_HVR2200_4:
-	case SAA7164_BOARD_HAUPPAUGE_HVR2200_5:
+	चयन (dev->board) अणु
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2200:
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2200_2:
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2200_3:
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2200_4:
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2200_5:
 		i2c_bus = &dev->i2c_bus[port->nr + 1];
-		switch (port->nr) {
-		case 0:
+		चयन (port->nr) अणु
+		हाल 0:
 			port->dvb.frontend = dvb_attach(tda10048_attach,
 				&hauppauge_hvr2200_1_config,
 				&i2c_bus->i2c_adap);
 
-			if (port->dvb.frontend != NULL) {
-				/* TODO: addr is in the card struct */
+			अगर (port->dvb.frontend != शून्य) अणु
+				/* TODO: addr is in the card काष्ठा */
 				dvb_attach(tda18271_attach, port->dvb.frontend,
 					0xc0 >> 1, &i2c_bus->i2c_adap,
 					&hauppauge_hvr22x0_tuner_config);
-			}
+			पूर्ण
 
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			port->dvb.frontend = dvb_attach(tda10048_attach,
 				&hauppauge_hvr2200_2_config,
 				&i2c_bus->i2c_adap);
 
-			if (port->dvb.frontend != NULL) {
-				/* TODO: addr is in the card struct */
+			अगर (port->dvb.frontend != शून्य) अणु
+				/* TODO: addr is in the card काष्ठा */
 				dvb_attach(tda18271_attach, port->dvb.frontend,
 					0xc0 >> 1, &i2c_bus->i2c_adap,
 					&hauppauge_hvr22x0s_tuner_config);
-			}
+			पूर्ण
 
-			break;
-		}
-		break;
-	case SAA7164_BOARD_HAUPPAUGE_HVR2250:
-	case SAA7164_BOARD_HAUPPAUGE_HVR2250_2:
-	case SAA7164_BOARD_HAUPPAUGE_HVR2250_3:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2250:
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2250_2:
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2250_3:
 		i2c_bus = &dev->i2c_bus[port->nr + 1];
 
 		port->dvb.frontend = dvb_attach(s5h1411_attach,
 			&hauppauge_s5h1411_config,
 			&i2c_bus->i2c_adap);
 
-		if (port->dvb.frontend != NULL) {
-			if (port->nr == 0) {
+		अगर (port->dvb.frontend != शून्य) अणु
+			अगर (port->nr == 0) अणु
 				/* Master TDA18271 */
-				/* TODO: addr is in the card struct */
+				/* TODO: addr is in the card काष्ठा */
 				dvb_attach(tda18271_attach, port->dvb.frontend,
 					0xc0 >> 1, &i2c_bus->i2c_adap,
 					&hauppauge_hvr22x0_tuner_config);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* Slave TDA18271 */
 				dvb_attach(tda18271_attach, port->dvb.frontend,
 					0xc0 >> 1, &i2c_bus->i2c_adap,
 					&hauppauge_hvr22x0s_tuner_config);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		break;
-	case SAA7164_BOARD_HAUPPAUGE_HVR2255proto:
-	case SAA7164_BOARD_HAUPPAUGE_HVR2255:
+		अवरोध;
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2255proto:
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2255:
 		i2c_bus = &dev->i2c_bus[2];
 
-		if (port->nr == 0) {
+		अगर (port->nr == 0) अणु
 			port->dvb.frontend = dvb_attach(lgdt3306a_attach,
 				&hauppauge_hvr2255a_config, &i2c_bus->i2c_adap);
-		} else {
+		पूर्ण अन्यथा अणु
 			port->dvb.frontend = dvb_attach(lgdt3306a_attach,
 				&hauppauge_hvr2255b_config, &i2c_bus->i2c_adap);
-		}
+		पूर्ण
 
-		if (port->dvb.frontend != NULL) {
+		अगर (port->dvb.frontend != शून्य) अणु
 
-			if (port->nr == 0) {
+			अगर (port->nr == 0) अणु
 				si2157_attach(port, &dev->i2c_bus[0].i2c_adap,
 					      port->dvb.frontend, 0xc0,
 					      &hauppauge_hvr2255_tuner_config);
-			} else {
+			पूर्ण अन्यथा अणु
 				si2157_attach(port, &dev->i2c_bus[1].i2c_adap,
 					      port->dvb.frontend, 0xc0,
 					      &hauppauge_hvr2255_tuner_config);
-			}
-		}
-		break;
-	case SAA7164_BOARD_HAUPPAUGE_HVR2205:
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल SAA7164_BOARD_HAUPPAUGE_HVR2205:
 
-		if (port->nr == 0) {
+		अगर (port->nr == 0) अणु
 			/* attach frontend */
-			memset(&si2168_config, 0, sizeof(si2168_config));
+			स_रखो(&si2168_config, 0, माप(si2168_config));
 			si2168_config.i2c_adapter = &adapter;
 			si2168_config.fe = &port->dvb.frontend;
 			si2168_config.ts_mode = SI2168_TS_SERIAL;
-			memset(&info, 0, sizeof(struct i2c_board_info));
+			स_रखो(&info, 0, माप(काष्ठा i2c_board_info));
 			strscpy(info.type, "si2168", I2C_NAME_SIZE);
 			info.addr = 0xc8 >> 1;
-			info.platform_data = &si2168_config;
+			info.platक्रमm_data = &si2168_config;
 			request_module(info.type);
 			client_demod = i2c_new_client_device(&dev->i2c_bus[2].i2c_adap, &info);
-			if (!i2c_client_has_driver(client_demod))
-				goto frontend_detach;
+			अगर (!i2c_client_has_driver(client_demod))
+				जाओ frontend_detach;
 
-			if (!try_module_get(client_demod->dev.driver->owner)) {
-				i2c_unregister_device(client_demod);
-				goto frontend_detach;
-			}
+			अगर (!try_module_get(client_demod->dev.driver->owner)) अणु
+				i2c_unरेजिस्टर_device(client_demod);
+				जाओ frontend_detach;
+			पूर्ण
 			port->i2c_client_demod = client_demod;
 
 			/* attach tuner */
-			memset(&si2157_config, 0, sizeof(si2157_config));
-			si2157_config.if_port = 1;
+			स_रखो(&si2157_config, 0, माप(si2157_config));
+			si2157_config.अगर_port = 1;
 			si2157_config.fe = port->dvb.frontend;
-			memset(&info, 0, sizeof(struct i2c_board_info));
+			स_रखो(&info, 0, माप(काष्ठा i2c_board_info));
 			strscpy(info.type, "si2157", I2C_NAME_SIZE);
 			info.addr = 0xc0 >> 1;
-			info.platform_data = &si2157_config;
+			info.platक्रमm_data = &si2157_config;
 			request_module(info.type);
 			client_tuner = i2c_new_client_device(&dev->i2c_bus[0].i2c_adap, &info);
-			if (!i2c_client_has_driver(client_tuner)) {
+			अगर (!i2c_client_has_driver(client_tuner)) अणु
 				module_put(client_demod->dev.driver->owner);
-				i2c_unregister_device(client_demod);
-				goto frontend_detach;
-			}
-			if (!try_module_get(client_tuner->dev.driver->owner)) {
-				i2c_unregister_device(client_tuner);
+				i2c_unरेजिस्टर_device(client_demod);
+				जाओ frontend_detach;
+			पूर्ण
+			अगर (!try_module_get(client_tuner->dev.driver->owner)) अणु
+				i2c_unरेजिस्टर_device(client_tuner);
 				module_put(client_demod->dev.driver->owner);
-				i2c_unregister_device(client_demod);
-				goto frontend_detach;
-			}
+				i2c_unरेजिस्टर_device(client_demod);
+				जाओ frontend_detach;
+			पूर्ण
 			port->i2c_client_tuner = client_tuner;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* attach frontend */
-			memset(&si2168_config, 0, sizeof(si2168_config));
+			स_रखो(&si2168_config, 0, माप(si2168_config));
 			si2168_config.i2c_adapter = &adapter;
 			si2168_config.fe = &port->dvb.frontend;
 			si2168_config.ts_mode = SI2168_TS_SERIAL;
-			memset(&info, 0, sizeof(struct i2c_board_info));
+			स_रखो(&info, 0, माप(काष्ठा i2c_board_info));
 			strscpy(info.type, "si2168", I2C_NAME_SIZE);
 			info.addr = 0xcc >> 1;
-			info.platform_data = &si2168_config;
+			info.platक्रमm_data = &si2168_config;
 			request_module(info.type);
 			client_demod = i2c_new_client_device(&dev->i2c_bus[2].i2c_adap, &info);
-			if (!i2c_client_has_driver(client_demod))
-				goto frontend_detach;
+			अगर (!i2c_client_has_driver(client_demod))
+				जाओ frontend_detach;
 
-			if (!try_module_get(client_demod->dev.driver->owner)) {
-				i2c_unregister_device(client_demod);
-				goto frontend_detach;
-			}
+			अगर (!try_module_get(client_demod->dev.driver->owner)) अणु
+				i2c_unरेजिस्टर_device(client_demod);
+				जाओ frontend_detach;
+			पूर्ण
 			port->i2c_client_demod = client_demod;
 
 			/* attach tuner */
-			memset(&si2157_config, 0, sizeof(si2157_config));
+			स_रखो(&si2157_config, 0, माप(si2157_config));
 			si2157_config.fe = port->dvb.frontend;
-			si2157_config.if_port = 1;
-			memset(&info, 0, sizeof(struct i2c_board_info));
+			si2157_config.अगर_port = 1;
+			स_रखो(&info, 0, माप(काष्ठा i2c_board_info));
 			strscpy(info.type, "si2157", I2C_NAME_SIZE);
 			info.addr = 0xc0 >> 1;
-			info.platform_data = &si2157_config;
+			info.platक्रमm_data = &si2157_config;
 			request_module(info.type);
 			client_tuner = i2c_new_client_device(&dev->i2c_bus[1].i2c_adap, &info);
-			if (!i2c_client_has_driver(client_tuner)) {
+			अगर (!i2c_client_has_driver(client_tuner)) अणु
 				module_put(client_demod->dev.driver->owner);
-				i2c_unregister_device(client_demod);
-				goto frontend_detach;
-			}
-			if (!try_module_get(client_tuner->dev.driver->owner)) {
-				i2c_unregister_device(client_tuner);
+				i2c_unरेजिस्टर_device(client_demod);
+				जाओ frontend_detach;
+			पूर्ण
+			अगर (!try_module_get(client_tuner->dev.driver->owner)) अणु
+				i2c_unरेजिस्टर_device(client_tuner);
 				module_put(client_demod->dev.driver->owner);
-				i2c_unregister_device(client_demod);
-				goto frontend_detach;
-			}
+				i2c_unरेजिस्टर_device(client_demod);
+				जाओ frontend_detach;
+			पूर्ण
 			port->i2c_client_tuner = client_tuner;
-		}
+		पूर्ण
 
-		break;
-	default:
-		printk(KERN_ERR "%s: The frontend isn't supported\n",
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "%s: The frontend isn't supported\n",
 		       dev->name);
-		break;
-	}
-	if (NULL == dvb->frontend) {
-		printk(KERN_ERR "%s() Frontend initialization failed\n",
+		अवरोध;
+	पूर्ण
+	अगर (शून्य == dvb->frontend) अणु
+		prपूर्णांकk(KERN_ERR "%s() Frontend initialization failed\n",
 		       __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	/* register everything */
-	ret = dvb_register(port);
-	if (ret < 0) {
-		if (dvb->frontend->ops.release)
+	/* रेजिस्टर everything */
+	ret = dvb_रेजिस्टर(port);
+	अगर (ret < 0) अणु
+		अगर (dvb->frontend->ops.release)
 			dvb->frontend->ops.release(dvb->frontend);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 frontend_detach:
-	printk(KERN_ERR "%s() Frontend/I2C initialization failed\n", __func__);
-	return -1;
-}
+	prपूर्णांकk(KERN_ERR "%s() Frontend/I2C initialization failed\n", __func__);
+	वापस -1;
+पूर्ण

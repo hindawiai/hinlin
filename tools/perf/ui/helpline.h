@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PERF_UI_HELPLINE_H_
-#define _PERF_UI_HELPLINE_H_ 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PERF_UI_HELPLINE_H_
+#घोषणा _PERF_UI_HELPLINE_H_ 1
 
-#include <stdio.h>
-#include <stdarg.h>
+#समावेश <मानकपन.स>
+#समावेश <मानकतर्क.स>
 
-struct ui_helpline {
-	void (*pop)(void);
-	void (*push)(const char *msg);
-	int  (*show)(const char *fmt, va_list ap);
-};
+काष्ठा ui_helpline अणु
+	व्योम (*pop)(व्योम);
+	व्योम (*push)(स्थिर अक्षर *msg);
+	पूर्णांक  (*show)(स्थिर अक्षर *fmt, बहु_सूची ap);
+पूर्ण;
 
-extern struct ui_helpline *helpline_fns;
+बाह्य काष्ठा ui_helpline *helpline_fns;
 
-void ui_helpline__init(void);
+व्योम ui_helpline__init(व्योम);
 
-void ui_helpline__pop(void);
-void ui_helpline__push(const char *msg);
-void ui_helpline__vpush(const char *fmt, va_list ap);
-void ui_helpline__fpush(const char *fmt, ...);
-void ui_helpline__puts(const char *msg);
-void ui_helpline__printf(const char *fmt, ...);
-int  ui_helpline__vshow(const char *fmt, va_list ap);
+व्योम ui_helpline__pop(व्योम);
+व्योम ui_helpline__push(स्थिर अक्षर *msg);
+व्योम ui_helpline__vpush(स्थिर अक्षर *fmt, बहु_सूची ap);
+व्योम ui_helpline__fpush(स्थिर अक्षर *fmt, ...);
+व्योम ui_helpline__माला_दो(स्थिर अक्षर *msg);
+व्योम ui_helpline__म_लिखो(स्थिर अक्षर *fmt, ...);
+पूर्णांक  ui_helpline__vshow(स्थिर अक्षर *fmt, बहु_सूची ap);
 
-extern char ui_helpline__current[512];
-extern char ui_helpline__last_msg[];
+बाह्य अक्षर ui_helpline__current[512];
+बाह्य अक्षर ui_helpline__last_msg[];
 
-#endif /* _PERF_UI_HELPLINE_H_ */
+#पूर्ण_अगर /* _PERF_UI_HELPLINE_H_ */

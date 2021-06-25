@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
  */
-#include <linux/mm.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/clkdev.h>
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/sizes.h>
-#include <soc/imx/revision.h>
-#include <dt-bindings/clock/imx5-clock.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/sizes.h>
+#समावेश <soc/imx/revision.h>
+#समावेश <dt-bindings/घड़ी/imx5-घड़ी.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-#define MX51_DPLL1_BASE		0x83f80000
-#define MX51_DPLL2_BASE		0x83f84000
-#define MX51_DPLL3_BASE		0x83f88000
+#घोषणा MX51_DPLL1_BASE		0x83f80000
+#घोषणा MX51_DPLL2_BASE		0x83f84000
+#घोषणा MX51_DPLL3_BASE		0x83f88000
 
-#define MX53_DPLL1_BASE		0x63f80000
-#define MX53_DPLL2_BASE		0x63f84000
-#define MX53_DPLL3_BASE		0x63f88000
-#define MX53_DPLL4_BASE		0x63f8c000
+#घोषणा MX53_DPLL1_BASE		0x63f80000
+#घोषणा MX53_DPLL2_BASE		0x63f84000
+#घोषणा MX53_DPLL3_BASE		0x63f88000
+#घोषणा MX53_DPLL4_BASE		0x63f8c000
 
-#define MXC_CCM_CCR		(ccm_base + 0x00)
-#define MXC_CCM_CCDR		(ccm_base + 0x04)
-#define MXC_CCM_CSR		(ccm_base + 0x08)
-#define MXC_CCM_CCSR		(ccm_base + 0x0c)
-#define MXC_CCM_CACRR		(ccm_base + 0x10)
-#define MXC_CCM_CBCDR		(ccm_base + 0x14)
-#define MXC_CCM_CBCMR		(ccm_base + 0x18)
-#define MXC_CCM_CSCMR1		(ccm_base + 0x1c)
-#define MXC_CCM_CSCMR2		(ccm_base + 0x20)
-#define MXC_CCM_CSCDR1		(ccm_base + 0x24)
-#define MXC_CCM_CS1CDR		(ccm_base + 0x28)
-#define MXC_CCM_CS2CDR		(ccm_base + 0x2c)
-#define MXC_CCM_CDCDR		(ccm_base + 0x30)
-#define MXC_CCM_CHSCDR		(ccm_base + 0x34)
-#define MXC_CCM_CSCDR2		(ccm_base + 0x38)
-#define MXC_CCM_CSCDR3		(ccm_base + 0x3c)
-#define MXC_CCM_CSCDR4		(ccm_base + 0x40)
-#define MXC_CCM_CWDR		(ccm_base + 0x44)
-#define MXC_CCM_CDHIPR		(ccm_base + 0x48)
-#define MXC_CCM_CDCR		(ccm_base + 0x4c)
-#define MXC_CCM_CTOR		(ccm_base + 0x50)
-#define MXC_CCM_CLPCR		(ccm_base + 0x54)
-#define MXC_CCM_CISR		(ccm_base + 0x58)
-#define MXC_CCM_CIMR		(ccm_base + 0x5c)
-#define MXC_CCM_CCOSR		(ccm_base + 0x60)
-#define MXC_CCM_CGPR		(ccm_base + 0x64)
-#define MXC_CCM_CCGR0		(ccm_base + 0x68)
-#define MXC_CCM_CCGR1		(ccm_base + 0x6c)
-#define MXC_CCM_CCGR2		(ccm_base + 0x70)
-#define MXC_CCM_CCGR3		(ccm_base + 0x74)
-#define MXC_CCM_CCGR4		(ccm_base + 0x78)
-#define MXC_CCM_CCGR5		(ccm_base + 0x7c)
-#define MXC_CCM_CCGR6		(ccm_base + 0x80)
-#define MXC_CCM_CCGR7		(ccm_base + 0x84)
+#घोषणा MXC_CCM_CCR		(ccm_base + 0x00)
+#घोषणा MXC_CCM_CCDR		(ccm_base + 0x04)
+#घोषणा MXC_CCM_CSR		(ccm_base + 0x08)
+#घोषणा MXC_CCM_CCSR		(ccm_base + 0x0c)
+#घोषणा MXC_CCM_CACRR		(ccm_base + 0x10)
+#घोषणा MXC_CCM_CBCDR		(ccm_base + 0x14)
+#घोषणा MXC_CCM_CBCMR		(ccm_base + 0x18)
+#घोषणा MXC_CCM_CSCMR1		(ccm_base + 0x1c)
+#घोषणा MXC_CCM_CSCMR2		(ccm_base + 0x20)
+#घोषणा MXC_CCM_CSCDR1		(ccm_base + 0x24)
+#घोषणा MXC_CCM_CS1CDR		(ccm_base + 0x28)
+#घोषणा MXC_CCM_CS2CDR		(ccm_base + 0x2c)
+#घोषणा MXC_CCM_CDCDR		(ccm_base + 0x30)
+#घोषणा MXC_CCM_CHSCDR		(ccm_base + 0x34)
+#घोषणा MXC_CCM_CSCDR2		(ccm_base + 0x38)
+#घोषणा MXC_CCM_CSCDR3		(ccm_base + 0x3c)
+#घोषणा MXC_CCM_CSCDR4		(ccm_base + 0x40)
+#घोषणा MXC_CCM_CWDR		(ccm_base + 0x44)
+#घोषणा MXC_CCM_CDHIPR		(ccm_base + 0x48)
+#घोषणा MXC_CCM_CDCR		(ccm_base + 0x4c)
+#घोषणा MXC_CCM_CTOR		(ccm_base + 0x50)
+#घोषणा MXC_CCM_CLPCR		(ccm_base + 0x54)
+#घोषणा MXC_CCM_CISR		(ccm_base + 0x58)
+#घोषणा MXC_CCM_CIMR		(ccm_base + 0x5c)
+#घोषणा MXC_CCM_CCOSR		(ccm_base + 0x60)
+#घोषणा MXC_CCM_CGPR		(ccm_base + 0x64)
+#घोषणा MXC_CCM_CCGR0		(ccm_base + 0x68)
+#घोषणा MXC_CCM_CCGR1		(ccm_base + 0x6c)
+#घोषणा MXC_CCM_CCGR2		(ccm_base + 0x70)
+#घोषणा MXC_CCM_CCGR3		(ccm_base + 0x74)
+#घोषणा MXC_CCM_CCGR4		(ccm_base + 0x78)
+#घोषणा MXC_CCM_CCGR5		(ccm_base + 0x7c)
+#घोषणा MXC_CCM_CCGR6		(ccm_base + 0x80)
+#घोषणा MXC_CCM_CCGR7		(ccm_base + 0x84)
 
-/* Low-power Audio Playback Mode clock */
-static const char *lp_apm_sel[] = { "osc", };
+/* Low-घातer Audio Playback Mode घड़ी */
+अटल स्थिर अक्षर *lp_apm_sel[] = अणु "osc", पूर्ण;
 
-/* This is used multiple times */
-static const char *standard_pll_sel[] = { "pll1_sw", "pll2_sw", "pll3_sw", "lp_apm", };
-static const char *periph_apm_sel[] = { "pll1_sw", "pll3_sw", "lp_apm", };
-static const char *main_bus_sel[] = { "pll2_sw", "periph_apm", };
-static const char *per_lp_apm_sel[] = { "main_bus", "lp_apm", };
-static const char *per_root_sel[] = { "per_podf", "ipg", };
-static const char *esdhc_c_sel[] = { "esdhc_a_podf", "esdhc_b_podf", };
-static const char *esdhc_d_sel[] = { "esdhc_a_podf", "esdhc_b_podf", };
-static const char *ssi_apm_sels[] = { "ckih1", "lp_amp", "ckih2", };
-static const char *ssi_clk_sels[] = { "pll1_sw", "pll2_sw", "pll3_sw", "ssi_apm", };
-static const char *ssi3_clk_sels[] = { "ssi1_root_gate", "ssi2_root_gate", };
-static const char *ssi_ext1_com_sels[] = { "ssi_ext1_podf", "ssi1_root_gate", };
-static const char *ssi_ext2_com_sels[] = { "ssi_ext2_podf", "ssi2_root_gate", };
-static const char *emi_slow_sel[] = { "main_bus", "ahb", };
-static const char *usb_phy_sel_str[] = { "osc", "usb_phy_podf", };
-static const char *mx51_ipu_di0_sel[] = { "di_pred", "osc", "ckih1", "tve_di", };
-static const char *mx53_ipu_di0_sel[] = { "di_pred", "osc", "ckih1", "di_pll4_podf", "dummy", "ldb_di0_gate", };
-static const char *mx53_ldb_di0_sel[] = { "pll3_sw", "pll4_sw", };
-static const char *mx51_ipu_di1_sel[] = { "di_pred", "osc", "ckih1", "tve_di", "ipp_di1", };
-static const char *mx53_ipu_di1_sel[] = { "di_pred", "osc", "ckih1", "tve_di", "ipp_di1", "ldb_di1_gate", };
-static const char *mx53_ldb_di1_sel[] = { "pll3_sw", "pll4_sw", };
-static const char *mx51_tve_ext_sel[] = { "osc", "ckih1", };
-static const char *mx53_tve_ext_sel[] = { "pll4_sw", "ckih1", };
-static const char *mx51_tve_sel[] = { "tve_pred", "tve_ext_sel", };
-static const char *ipu_sel[] = { "axi_a", "axi_b", "emi_slow_gate", "ahb", };
-static const char *gpu3d_sel[] = { "axi_a", "axi_b", "emi_slow_gate", "ahb" };
-static const char *gpu2d_sel[] = { "axi_a", "axi_b", "emi_slow_gate", "ahb" };
-static const char *vpu_sel[] = { "axi_a", "axi_b", "emi_slow_gate", "ahb", };
-static const char *mx53_can_sel[] = { "ipg", "ckih1", "ckih2", "lp_apm", };
-static const char *mx53_cko1_sel[] = {
+/* This is used multiple बार */
+अटल स्थिर अक्षर *standard_pll_sel[] = अणु "pll1_sw", "pll2_sw", "pll3_sw", "lp_apm", पूर्ण;
+अटल स्थिर अक्षर *periph_apm_sel[] = अणु "pll1_sw", "pll3_sw", "lp_apm", पूर्ण;
+अटल स्थिर अक्षर *मुख्य_bus_sel[] = अणु "pll2_sw", "periph_apm", पूर्ण;
+अटल स्थिर अक्षर *per_lp_apm_sel[] = अणु "main_bus", "lp_apm", पूर्ण;
+अटल स्थिर अक्षर *per_root_sel[] = अणु "per_podf", "ipg", पूर्ण;
+अटल स्थिर अक्षर *esdhc_c_sel[] = अणु "esdhc_a_podf", "esdhc_b_podf", पूर्ण;
+अटल स्थिर अक्षर *esdhc_d_sel[] = अणु "esdhc_a_podf", "esdhc_b_podf", पूर्ण;
+अटल स्थिर अक्षर *ssi_apm_sels[] = अणु "ckih1", "lp_amp", "ckih2", पूर्ण;
+अटल स्थिर अक्षर *ssi_clk_sels[] = अणु "pll1_sw", "pll2_sw", "pll3_sw", "ssi_apm", पूर्ण;
+अटल स्थिर अक्षर *ssi3_clk_sels[] = अणु "ssi1_root_gate", "ssi2_root_gate", पूर्ण;
+अटल स्थिर अक्षर *ssi_ext1_com_sels[] = अणु "ssi_ext1_podf", "ssi1_root_gate", पूर्ण;
+अटल स्थिर अक्षर *ssi_ext2_com_sels[] = अणु "ssi_ext2_podf", "ssi2_root_gate", पूर्ण;
+अटल स्थिर अक्षर *emi_slow_sel[] = अणु "main_bus", "ahb", पूर्ण;
+अटल स्थिर अक्षर *usb_phy_sel_str[] = अणु "osc", "usb_phy_podf", पूर्ण;
+अटल स्थिर अक्षर *mx51_ipu_di0_sel[] = अणु "di_pred", "osc", "ckih1", "tve_di", पूर्ण;
+अटल स्थिर अक्षर *mx53_ipu_di0_sel[] = अणु "di_pred", "osc", "ckih1", "di_pll4_podf", "dummy", "ldb_di0_gate", पूर्ण;
+अटल स्थिर अक्षर *mx53_ldb_di0_sel[] = अणु "pll3_sw", "pll4_sw", पूर्ण;
+अटल स्थिर अक्षर *mx51_ipu_di1_sel[] = अणु "di_pred", "osc", "ckih1", "tve_di", "ipp_di1", पूर्ण;
+अटल स्थिर अक्षर *mx53_ipu_di1_sel[] = अणु "di_pred", "osc", "ckih1", "tve_di", "ipp_di1", "ldb_di1_gate", पूर्ण;
+अटल स्थिर अक्षर *mx53_ldb_di1_sel[] = अणु "pll3_sw", "pll4_sw", पूर्ण;
+अटल स्थिर अक्षर *mx51_tve_ext_sel[] = अणु "osc", "ckih1", पूर्ण;
+अटल स्थिर अक्षर *mx53_tve_ext_sel[] = अणु "pll4_sw", "ckih1", पूर्ण;
+अटल स्थिर अक्षर *mx51_tve_sel[] = अणु "tve_pred", "tve_ext_sel", पूर्ण;
+अटल स्थिर अक्षर *ipu_sel[] = अणु "axi_a", "axi_b", "emi_slow_gate", "ahb", पूर्ण;
+अटल स्थिर अक्षर *gpu3d_sel[] = अणु "axi_a", "axi_b", "emi_slow_gate", "ahb" पूर्ण;
+अटल स्थिर अक्षर *gpu2d_sel[] = अणु "axi_a", "axi_b", "emi_slow_gate", "ahb" पूर्ण;
+अटल स्थिर अक्षर *vpu_sel[] = अणु "axi_a", "axi_b", "emi_slow_gate", "ahb", पूर्ण;
+अटल स्थिर अक्षर *mx53_can_sel[] = अणु "ipg", "ckih1", "ckih2", "lp_apm", पूर्ण;
+अटल स्थिर अक्षर *mx53_cko1_sel[] = अणु
 	"cpu_podf", "pll1_sw", "pll2_sw", "pll3_sw",
 	"emi_slow_podf", "pll4_sw", "nfc_podf", "dummy",
 	"di_pred", "dummy", "dummy", "ahb",
-	"ipg", "per_root", "ckil", "dummy",};
-static const char *mx53_cko2_sel[] = {
+	"ipg", "per_root", "ckil", "dummy",पूर्ण;
+अटल स्थिर अक्षर *mx53_cko2_sel[] = अणु
 	"dummy"/* dptc_core */, "dummy"/* dptc_perich */,
 	"dummy", "esdhc_a_podf",
 	"usboh3_podf", "dummy"/* wrck_clk_root */,
@@ -114,36 +115,36 @@ static const char *mx53_cko2_sel[] = {
 	"dummy"/* lpsr_clk_root */, "dummy"/* pgc_clk_root */,
 	"dummy"/* tve_out */, "usb_phy_sel",
 	"tve_sel", "lp_apm",
-	"uart_root", "dummy"/* spdif0_clk_root */,
-	"dummy", "dummy", };
-static const char *mx51_spdif_xtal_sel[] = { "osc", "ckih", "ckih2", };
-static const char *mx53_spdif_xtal_sel[] = { "osc", "ckih", "ckih2", "pll4_sw", };
-static const char *spdif_sel[] = { "pll1_sw", "pll2_sw", "pll3_sw", "spdif_xtal_sel", };
-static const char *spdif0_com_sel[] = { "spdif0_podf", "ssi1_root_gate", };
-static const char *mx51_spdif1_com_sel[] = { "spdif1_podf", "ssi2_root_gate", };
-static const char *step_sels[] = { "lp_apm", };
-static const char *cpu_podf_sels[] = { "pll1_sw", "step_sel" };
-static const char *ieee1588_sels[] = { "pll3_sw", "pll4_sw", "dummy" /* usbphy2_clk */, "dummy" /* fec_phy_clk */ };
+	"uart_root", "dummy"/* spdअगर0_clk_root */,
+	"dummy", "dummy", पूर्ण;
+अटल स्थिर अक्षर *mx51_spdअगर_xtal_sel[] = अणु "osc", "ckih", "ckih2", पूर्ण;
+अटल स्थिर अक्षर *mx53_spdअगर_xtal_sel[] = अणु "osc", "ckih", "ckih2", "pll4_sw", पूर्ण;
+अटल स्थिर अक्षर *spdअगर_sel[] = अणु "pll1_sw", "pll2_sw", "pll3_sw", "spdif_xtal_sel", पूर्ण;
+अटल स्थिर अक्षर *spdअगर0_com_sel[] = अणु "spdif0_podf", "ssi1_root_gate", पूर्ण;
+अटल स्थिर अक्षर *mx51_spdअगर1_com_sel[] = अणु "spdif1_podf", "ssi2_root_gate", पूर्ण;
+अटल स्थिर अक्षर *step_sels[] = अणु "lp_apm", पूर्ण;
+अटल स्थिर अक्षर *cpu_podf_sels[] = अणु "pll1_sw", "step_sel" पूर्ण;
+अटल स्थिर अक्षर *ieee1588_sels[] = अणु "pll3_sw", "pll4_sw", "dummy" /* usbphy2_clk */, "dummy" /* fec_phy_clk */ पूर्ण;
 
-static struct clk *clk[IMX5_CLK_END];
-static struct clk_onecell_data clk_data;
+अटल काष्ठा clk *clk[IMX5_CLK_END];
+अटल काष्ठा clk_onecell_data clk_data;
 
-static void __init mx5_clocks_common_init(void __iomem *ccm_base)
-{
+अटल व्योम __init mx5_घड़ीs_common_init(व्योम __iomem *ccm_base)
+अणु
 	clk[IMX5_CLK_DUMMY]		= imx_clk_fixed("dummy", 0);
-	clk[IMX5_CLK_CKIL]		= imx_obtain_fixed_clock("ckil", 0);
-	clk[IMX5_CLK_OSC]		= imx_obtain_fixed_clock("osc", 0);
-	clk[IMX5_CLK_CKIH1]		= imx_obtain_fixed_clock("ckih1", 0);
-	clk[IMX5_CLK_CKIH2]		= imx_obtain_fixed_clock("ckih2", 0);
+	clk[IMX5_CLK_CKIL]		= imx_obtain_fixed_घड़ी("ckil", 0);
+	clk[IMX5_CLK_OSC]		= imx_obtain_fixed_घड़ी("osc", 0);
+	clk[IMX5_CLK_CKIH1]		= imx_obtain_fixed_घड़ी("ckih1", 0);
+	clk[IMX5_CLK_CKIH2]		= imx_obtain_fixed_घड़ी("ckih2", 0);
 
 	clk[IMX5_CLK_PER_LP_APM]	= imx_clk_mux("per_lp_apm", MXC_CCM_CBCMR, 1, 1,
 						per_lp_apm_sel, ARRAY_SIZE(per_lp_apm_sel));
-	clk[IMX5_CLK_PER_PRED1]		= imx_clk_divider("per_pred1", "per_lp_apm", MXC_CCM_CBCDR, 6, 2);
-	clk[IMX5_CLK_PER_PRED2]		= imx_clk_divider("per_pred2", "per_pred1", MXC_CCM_CBCDR, 3, 3);
-	clk[IMX5_CLK_PER_PODF]		= imx_clk_divider("per_podf", "per_pred2", MXC_CCM_CBCDR, 0, 3);
+	clk[IMX5_CLK_PER_PRED1]		= imx_clk_भागider("per_pred1", "per_lp_apm", MXC_CCM_CBCDR, 6, 2);
+	clk[IMX5_CLK_PER_PRED2]		= imx_clk_भागider("per_pred2", "per_pred1", MXC_CCM_CBCDR, 3, 3);
+	clk[IMX5_CLK_PER_PODF]		= imx_clk_भागider("per_podf", "per_pred2", MXC_CCM_CBCDR, 0, 3);
 	clk[IMX5_CLK_PER_ROOT]		= imx_clk_mux("per_root", MXC_CCM_CBCMR, 0, 1,
 						per_root_sel, ARRAY_SIZE(per_root_sel));
-	clk[IMX5_CLK_AHB]		= imx_clk_divider("ahb", "main_bus", MXC_CCM_CBCDR, 10, 3);
+	clk[IMX5_CLK_AHB]		= imx_clk_भागider("ahb", "main_bus", MXC_CCM_CBCDR, 10, 3);
 	clk[IMX5_CLK_AHB_MAX]		= imx_clk_gate2_flags("ahb_max", "ahb", MXC_CCM_CCGR0, 28, CLK_IS_CRITICAL);
 	clk[IMX5_CLK_AIPS_TZ1]		= imx_clk_gate2_flags("aips_tz1", "ahb", MXC_CCM_CCGR0, 24, CLK_IS_CRITICAL);
 	clk[IMX5_CLK_AIPS_TZ2]		= imx_clk_gate2_flags("aips_tz2", "ahb", MXC_CCM_CCGR0, 26, CLK_IS_CRITICAL);
@@ -151,39 +152,39 @@ static void __init mx5_clocks_common_init(void __iomem *ccm_base)
 	clk[IMX5_CLK_TMAX2]		= imx_clk_gate2_flags("tmax2", "ahb", MXC_CCM_CCGR1, 2, CLK_IS_CRITICAL);
 	clk[IMX5_CLK_TMAX3]		= imx_clk_gate2_flags("tmax3", "ahb", MXC_CCM_CCGR1, 4, CLK_IS_CRITICAL);
 	clk[IMX5_CLK_SPBA]		= imx_clk_gate2_flags("spba", "ipg", MXC_CCM_CCGR5, 0, CLK_IS_CRITICAL);
-	clk[IMX5_CLK_IPG]		= imx_clk_divider("ipg", "ahb", MXC_CCM_CBCDR, 8, 2);
-	clk[IMX5_CLK_AXI_A]		= imx_clk_divider("axi_a", "main_bus", MXC_CCM_CBCDR, 16, 3);
-	clk[IMX5_CLK_AXI_B]		= imx_clk_divider("axi_b", "main_bus", MXC_CCM_CBCDR, 19, 3);
+	clk[IMX5_CLK_IPG]		= imx_clk_भागider("ipg", "ahb", MXC_CCM_CBCDR, 8, 2);
+	clk[IMX5_CLK_AXI_A]		= imx_clk_भागider("axi_a", "main_bus", MXC_CCM_CBCDR, 16, 3);
+	clk[IMX5_CLK_AXI_B]		= imx_clk_भागider("axi_b", "main_bus", MXC_CCM_CBCDR, 19, 3);
 	clk[IMX5_CLK_UART_SEL]		= imx_clk_mux("uart_sel", MXC_CCM_CSCMR1, 24, 2,
 						standard_pll_sel, ARRAY_SIZE(standard_pll_sel));
-	clk[IMX5_CLK_UART_PRED]		= imx_clk_divider("uart_pred", "uart_sel", MXC_CCM_CSCDR1, 3, 3);
-	clk[IMX5_CLK_UART_ROOT]		= imx_clk_divider("uart_root", "uart_pred", MXC_CCM_CSCDR1, 0, 3);
+	clk[IMX5_CLK_UART_PRED]		= imx_clk_भागider("uart_pred", "uart_sel", MXC_CCM_CSCDR1, 3, 3);
+	clk[IMX5_CLK_UART_ROOT]		= imx_clk_भागider("uart_root", "uart_pred", MXC_CCM_CSCDR1, 0, 3);
 
-	clk[IMX5_CLK_ESDHC_A_PRED]	= imx_clk_divider("esdhc_a_pred", "esdhc_a_sel", MXC_CCM_CSCDR1, 16, 3);
-	clk[IMX5_CLK_ESDHC_A_PODF]	= imx_clk_divider("esdhc_a_podf", "esdhc_a_pred", MXC_CCM_CSCDR1, 11, 3);
-	clk[IMX5_CLK_ESDHC_B_PRED]	= imx_clk_divider("esdhc_b_pred", "esdhc_b_sel", MXC_CCM_CSCDR1, 22, 3);
-	clk[IMX5_CLK_ESDHC_B_PODF]	= imx_clk_divider("esdhc_b_podf", "esdhc_b_pred", MXC_CCM_CSCDR1, 19, 3);
+	clk[IMX5_CLK_ESDHC_A_PRED]	= imx_clk_भागider("esdhc_a_pred", "esdhc_a_sel", MXC_CCM_CSCDR1, 16, 3);
+	clk[IMX5_CLK_ESDHC_A_PODF]	= imx_clk_भागider("esdhc_a_podf", "esdhc_a_pred", MXC_CCM_CSCDR1, 11, 3);
+	clk[IMX5_CLK_ESDHC_B_PRED]	= imx_clk_भागider("esdhc_b_pred", "esdhc_b_sel", MXC_CCM_CSCDR1, 22, 3);
+	clk[IMX5_CLK_ESDHC_B_PODF]	= imx_clk_भागider("esdhc_b_podf", "esdhc_b_pred", MXC_CCM_CSCDR1, 19, 3);
 
 	clk[IMX5_CLK_EMI_SEL]		= imx_clk_mux("emi_sel", MXC_CCM_CBCDR, 26, 1,
 						emi_slow_sel, ARRAY_SIZE(emi_slow_sel));
-	clk[IMX5_CLK_EMI_SLOW_PODF]	= imx_clk_divider("emi_slow_podf", "emi_sel", MXC_CCM_CBCDR, 22, 3);
-	clk[IMX5_CLK_NFC_PODF]		= imx_clk_divider("nfc_podf", "emi_slow_podf", MXC_CCM_CBCDR, 13, 3);
+	clk[IMX5_CLK_EMI_SLOW_PODF]	= imx_clk_भागider("emi_slow_podf", "emi_sel", MXC_CCM_CBCDR, 22, 3);
+	clk[IMX5_CLK_NFC_PODF]		= imx_clk_भागider("nfc_podf", "emi_slow_podf", MXC_CCM_CBCDR, 13, 3);
 	clk[IMX5_CLK_ECSPI_SEL]		= imx_clk_mux("ecspi_sel", MXC_CCM_CSCMR1, 4, 2,
 						standard_pll_sel, ARRAY_SIZE(standard_pll_sel));
-	clk[IMX5_CLK_ECSPI_PRED]	= imx_clk_divider("ecspi_pred", "ecspi_sel", MXC_CCM_CSCDR2, 25, 3);
-	clk[IMX5_CLK_ECSPI_PODF]	= imx_clk_divider("ecspi_podf", "ecspi_pred", MXC_CCM_CSCDR2, 19, 6);
+	clk[IMX5_CLK_ECSPI_PRED]	= imx_clk_भागider("ecspi_pred", "ecspi_sel", MXC_CCM_CSCDR2, 25, 3);
+	clk[IMX5_CLK_ECSPI_PODF]	= imx_clk_भागider("ecspi_podf", "ecspi_pred", MXC_CCM_CSCDR2, 19, 6);
 	clk[IMX5_CLK_USBOH3_SEL]	= imx_clk_mux("usboh3_sel", MXC_CCM_CSCMR1, 22, 2,
 						standard_pll_sel, ARRAY_SIZE(standard_pll_sel));
-	clk[IMX5_CLK_USBOH3_PRED]	= imx_clk_divider("usboh3_pred", "usboh3_sel", MXC_CCM_CSCDR1, 8, 3);
-	clk[IMX5_CLK_USBOH3_PODF]	= imx_clk_divider("usboh3_podf", "usboh3_pred", MXC_CCM_CSCDR1, 6, 2);
-	clk[IMX5_CLK_USB_PHY_PRED]	= imx_clk_divider("usb_phy_pred", "pll3_sw", MXC_CCM_CDCDR, 3, 3);
-	clk[IMX5_CLK_USB_PHY_PODF]	= imx_clk_divider("usb_phy_podf", "usb_phy_pred", MXC_CCM_CDCDR, 0, 3);
+	clk[IMX5_CLK_USBOH3_PRED]	= imx_clk_भागider("usboh3_pred", "usboh3_sel", MXC_CCM_CSCDR1, 8, 3);
+	clk[IMX5_CLK_USBOH3_PODF]	= imx_clk_भागider("usboh3_podf", "usboh3_pred", MXC_CCM_CSCDR1, 6, 2);
+	clk[IMX5_CLK_USB_PHY_PRED]	= imx_clk_भागider("usb_phy_pred", "pll3_sw", MXC_CCM_CDCDR, 3, 3);
+	clk[IMX5_CLK_USB_PHY_PODF]	= imx_clk_भागider("usb_phy_podf", "usb_phy_pred", MXC_CCM_CDCDR, 0, 3);
 	clk[IMX5_CLK_USB_PHY_SEL]	= imx_clk_mux("usb_phy_sel", MXC_CCM_CSCMR1, 26, 1,
 						usb_phy_sel_str, ARRAY_SIZE(usb_phy_sel_str));
 	clk[IMX5_CLK_STEP_SEL]		= imx_clk_mux("step_sel", MXC_CCM_CCSR, 7, 2, step_sels, ARRAY_SIZE(step_sels));
 	clk[IMX5_CLK_CPU_PODF_SEL]	= imx_clk_mux("cpu_podf_sel", MXC_CCM_CCSR, 2, 1, cpu_podf_sels, ARRAY_SIZE(cpu_podf_sels));
-	clk[IMX5_CLK_CPU_PODF]		= imx_clk_divider("cpu_podf", "cpu_podf_sel", MXC_CCM_CACRR, 0, 3);
-	clk[IMX5_CLK_DI_PRED]		= imx_clk_divider("di_pred", "pll3_sw", MXC_CCM_CDCDR, 6, 3);
+	clk[IMX5_CLK_CPU_PODF]		= imx_clk_भागider("cpu_podf", "cpu_podf_sel", MXC_CCM_CACRR, 0, 3);
+	clk[IMX5_CLK_DI_PRED]		= imx_clk_भागider("di_pred", "pll3_sw", MXC_CCM_CDCDR, 6, 3);
 	clk[IMX5_CLK_IIM_GATE]		= imx_clk_gate2("iim_gate", "ipg", MXC_CCM_CCGR0, 30);
 	clk[IMX5_CLK_UART1_IPG_GATE]	= imx_clk_gate2("uart1_ipg_gate", "ipg", MXC_CCM_CCGR1, 6);
 	clk[IMX5_CLK_UART1_PER_GATE]	= imx_clk_gate2("uart1_per_gate", "uart_root", MXC_CCM_CCGR1, 8);
@@ -240,14 +241,14 @@ static void __init mx5_clocks_common_init(void __iomem *ccm_base)
 	clk[IMX5_CLK_SSI_EXT2_SEL]	= imx_clk_mux("ssi_ext2_sel", MXC_CCM_CSCMR1, 30, 2, ssi_clk_sels, ARRAY_SIZE(ssi_clk_sels));
 	clk[IMX5_CLK_SSI_EXT1_COM_SEL]	= imx_clk_mux("ssi_ext1_com_sel", MXC_CCM_CSCMR1, 0, 1, ssi_ext1_com_sels, ARRAY_SIZE(ssi_ext1_com_sels));
 	clk[IMX5_CLK_SSI_EXT2_COM_SEL]	= imx_clk_mux("ssi_ext2_com_sel", MXC_CCM_CSCMR1, 1, 1, ssi_ext2_com_sels, ARRAY_SIZE(ssi_ext2_com_sels));
-	clk[IMX5_CLK_SSI1_ROOT_PRED]	= imx_clk_divider("ssi1_root_pred", "ssi1_root_sel", MXC_CCM_CS1CDR, 6, 3);
-	clk[IMX5_CLK_SSI1_ROOT_PODF]	= imx_clk_divider("ssi1_root_podf", "ssi1_root_pred", MXC_CCM_CS1CDR, 0, 6);
-	clk[IMX5_CLK_SSI2_ROOT_PRED]	= imx_clk_divider("ssi2_root_pred", "ssi2_root_sel", MXC_CCM_CS2CDR, 6, 3);
-	clk[IMX5_CLK_SSI2_ROOT_PODF]	= imx_clk_divider("ssi2_root_podf", "ssi2_root_pred", MXC_CCM_CS2CDR, 0, 6);
-	clk[IMX5_CLK_SSI_EXT1_PRED]	= imx_clk_divider("ssi_ext1_pred", "ssi_ext1_sel", MXC_CCM_CS1CDR, 22, 3);
-	clk[IMX5_CLK_SSI_EXT1_PODF]	= imx_clk_divider("ssi_ext1_podf", "ssi_ext1_pred", MXC_CCM_CS1CDR, 16, 6);
-	clk[IMX5_CLK_SSI_EXT2_PRED]	= imx_clk_divider("ssi_ext2_pred", "ssi_ext2_sel", MXC_CCM_CS2CDR, 22, 3);
-	clk[IMX5_CLK_SSI_EXT2_PODF]	= imx_clk_divider("ssi_ext2_podf", "ssi_ext2_pred", MXC_CCM_CS2CDR, 16, 6);
+	clk[IMX5_CLK_SSI1_ROOT_PRED]	= imx_clk_भागider("ssi1_root_pred", "ssi1_root_sel", MXC_CCM_CS1CDR, 6, 3);
+	clk[IMX5_CLK_SSI1_ROOT_PODF]	= imx_clk_भागider("ssi1_root_podf", "ssi1_root_pred", MXC_CCM_CS1CDR, 0, 6);
+	clk[IMX5_CLK_SSI2_ROOT_PRED]	= imx_clk_भागider("ssi2_root_pred", "ssi2_root_sel", MXC_CCM_CS2CDR, 6, 3);
+	clk[IMX5_CLK_SSI2_ROOT_PODF]	= imx_clk_भागider("ssi2_root_podf", "ssi2_root_pred", MXC_CCM_CS2CDR, 0, 6);
+	clk[IMX5_CLK_SSI_EXT1_PRED]	= imx_clk_भागider("ssi_ext1_pred", "ssi_ext1_sel", MXC_CCM_CS1CDR, 22, 3);
+	clk[IMX5_CLK_SSI_EXT1_PODF]	= imx_clk_भागider("ssi_ext1_podf", "ssi_ext1_pred", MXC_CCM_CS1CDR, 16, 6);
+	clk[IMX5_CLK_SSI_EXT2_PRED]	= imx_clk_भागider("ssi_ext2_pred", "ssi_ext2_sel", MXC_CCM_CS2CDR, 22, 3);
+	clk[IMX5_CLK_SSI_EXT2_PODF]	= imx_clk_भागider("ssi_ext2_podf", "ssi_ext2_pred", MXC_CCM_CS2CDR, 16, 6);
 	clk[IMX5_CLK_SSI1_ROOT_GATE]	= imx_clk_gate2("ssi1_root_gate", "ssi1_root_podf", MXC_CCM_CCGR3, 18);
 	clk[IMX5_CLK_SSI2_ROOT_GATE]	= imx_clk_gate2("ssi2_root_gate", "ssi2_root_podf", MXC_CCM_CCGR3, 22);
 	clk[IMX5_CLK_SSI3_ROOT_GATE]	= imx_clk_gate2("ssi3_root_gate", "ssi3_root_sel", MXC_CCM_CCGR3, 26);
@@ -260,28 +261,28 @@ static void __init mx5_clocks_common_init(void __iomem *ccm_base)
 	clk[IMX5_CLK_OWIRE_GATE]	= imx_clk_gate2("owire_gate", "per_root", MXC_CCM_CCGR2, 22);
 	clk[IMX5_CLK_SRTC_GATE]		= imx_clk_gate2("srtc_gate", "per_root", MXC_CCM_CCGR4, 28);
 	clk[IMX5_CLK_PATA_GATE]		= imx_clk_gate2("pata_gate", "ipg", MXC_CCM_CCGR4, 0);
-	clk[IMX5_CLK_SPDIF0_SEL]	= imx_clk_mux("spdif0_sel", MXC_CCM_CSCMR2, 0, 2, spdif_sel, ARRAY_SIZE(spdif_sel));
-	clk[IMX5_CLK_SPDIF0_PRED]	= imx_clk_divider("spdif0_pred", "spdif0_sel", MXC_CCM_CDCDR, 25, 3);
-	clk[IMX5_CLK_SPDIF0_PODF]	= imx_clk_divider("spdif0_podf", "spdif0_pred", MXC_CCM_CDCDR, 19, 6);
+	clk[IMX5_CLK_SPDIF0_SEL]	= imx_clk_mux("spdif0_sel", MXC_CCM_CSCMR2, 0, 2, spdअगर_sel, ARRAY_SIZE(spdअगर_sel));
+	clk[IMX5_CLK_SPDIF0_PRED]	= imx_clk_भागider("spdif0_pred", "spdif0_sel", MXC_CCM_CDCDR, 25, 3);
+	clk[IMX5_CLK_SPDIF0_PODF]	= imx_clk_भागider("spdif0_podf", "spdif0_pred", MXC_CCM_CDCDR, 19, 6);
 	clk[IMX5_CLK_SPDIF0_COM_SEL]	= imx_clk_mux_flags("spdif0_com_sel", MXC_CCM_CSCMR2, 4, 1,
-						spdif0_com_sel, ARRAY_SIZE(spdif0_com_sel), CLK_SET_RATE_PARENT);
+						spdअगर0_com_sel, ARRAY_SIZE(spdअगर0_com_sel), CLK_SET_RATE_PARENT);
 	clk[IMX5_CLK_SPDIF0_GATE]	= imx_clk_gate2("spdif0_gate", "spdif0_com_sel", MXC_CCM_CCGR5, 26);
 	clk[IMX5_CLK_SPDIF_IPG_GATE]	= imx_clk_gate2("spdif_ipg_gate", "ipg", MXC_CCM_CCGR5, 30);
 	clk[IMX5_CLK_SAHARA_IPG_GATE]	= imx_clk_gate2("sahara_ipg_gate", "ipg", MXC_CCM_CCGR4, 14);
 	clk[IMX5_CLK_SATA_REF]		= imx_clk_fixed_factor("sata_ref", "usb_phy1_gate", 1, 1);
 
-	clk_register_clkdev(clk[IMX5_CLK_CPU_PODF], NULL, "cpu0");
-	clk_register_clkdev(clk[IMX5_CLK_GPC_DVFS], "gpc_dvfs", NULL);
+	clk_रेजिस्टर_clkdev(clk[IMX5_CLK_CPU_PODF], शून्य, "cpu0");
+	clk_रेजिस्टर_clkdev(clk[IMX5_CLK_GPC_DVFS], "gpc_dvfs", शून्य);
 
 	/* move usb phy clk to 24MHz */
 	clk_set_parent(clk[IMX5_CLK_USB_PHY_SEL], clk[IMX5_CLK_OSC]);
-}
+पूर्ण
 
-static void __init mx50_clocks_init(struct device_node *np)
-{
-	void __iomem *ccm_base;
-	void __iomem *pll_base;
-	unsigned long r;
+अटल व्योम __init mx50_घड़ीs_init(काष्ठा device_node *np)
+अणु
+	व्योम __iomem *ccm_base;
+	व्योम __iomem *pll_base;
+	अचिन्हित दीर्घ r;
 
 	pll_base = ioremap(MX53_DPLL1_BASE, SZ_16K);
 	WARN_ON(!pll_base);
@@ -298,11 +299,11 @@ static void __init mx50_clocks_init(struct device_node *np)
 	ccm_base = of_iomap(np, 0);
 	WARN_ON(!ccm_base);
 
-	mx5_clocks_common_init(ccm_base);
+	mx5_घड़ीs_common_init(ccm_base);
 
 	/*
-	 * This clock is called periph_clk in the i.MX50 Reference Manual, but
-	 * it comes closest in scope to the main_bus_clk of i.MX51 and i.MX53
+	 * This घड़ी is called periph_clk in the i.MX50 Reference Manual, but
+	 * it comes बंदst in scope to the मुख्य_bus_clk of i.MX51 and i.MX53
 	 */
 	clk[IMX5_CLK_MAIN_BUS]          = imx_clk_mux("main_bus", MXC_CCM_CBCDR, 25, 2,
 						standard_pll_sel, ARRAY_SIZE(standard_pll_sel));
@@ -329,15 +330,15 @@ static void __init mx50_clocks_init(struct device_node *np)
 
 	clk[IMX5_CLK_CKO1_SEL]		= imx_clk_mux("cko1_sel", MXC_CCM_CCOSR, 0, 4,
 						mx53_cko1_sel, ARRAY_SIZE(mx53_cko1_sel));
-	clk[IMX5_CLK_CKO1_PODF]		= imx_clk_divider("cko1_podf", "cko1_sel", MXC_CCM_CCOSR, 4, 3);
+	clk[IMX5_CLK_CKO1_PODF]		= imx_clk_भागider("cko1_podf", "cko1_sel", MXC_CCM_CCOSR, 4, 3);
 	clk[IMX5_CLK_CKO1]		= imx_clk_gate2("cko1", "cko1_podf", MXC_CCM_CCOSR, 7);
 
 	clk[IMX5_CLK_CKO2_SEL]		= imx_clk_mux("cko2_sel", MXC_CCM_CCOSR, 16, 5,
 						mx53_cko2_sel, ARRAY_SIZE(mx53_cko2_sel));
-	clk[IMX5_CLK_CKO2_PODF]		= imx_clk_divider("cko2_podf", "cko2_sel", MXC_CCM_CCOSR, 21, 3);
+	clk[IMX5_CLK_CKO2_PODF]		= imx_clk_भागider("cko2_podf", "cko2_sel", MXC_CCM_CCOSR, 21, 3);
 	clk[IMX5_CLK_CKO2]		= imx_clk_gate2("cko2", "cko2_podf", MXC_CCM_CCOSR, 24);
 
-	imx_check_clocks(clk, ARRAY_SIZE(clk));
+	imx_check_घड़ीs(clk, ARRAY_SIZE(clk));
 
 	clk_data.clks = clk;
 	clk_data.clk_num = ARRAY_SIZE(clk);
@@ -347,25 +348,25 @@ static void __init mx50_clocks_init(struct device_node *np)
 	clk_set_parent(clk[IMX5_CLK_ESDHC_A_SEL], clk[IMX5_CLK_PLL2_SW]);
 	clk_set_parent(clk[IMX5_CLK_ESDHC_B_SEL], clk[IMX5_CLK_PLL2_SW]);
 
-	/* set SDHC root clock to 200MHZ*/
+	/* set SDHC root घड़ी to 200MHZ*/
 	clk_set_rate(clk[IMX5_CLK_ESDHC_A_PODF], 200000000);
 	clk_set_rate(clk[IMX5_CLK_ESDHC_B_PODF], 200000000);
 
 	clk_prepare_enable(clk[IMX5_CLK_IIM_GATE]);
-	imx_print_silicon_rev("i.MX50", IMX_CHIP_REVISION_1_1);
+	imx_prपूर्णांक_silicon_rev("i.MX50", IMX_CHIP_REVISION_1_1);
 	clk_disable_unprepare(clk[IMX5_CLK_IIM_GATE]);
 
 	r = clk_round_rate(clk[IMX5_CLK_USBOH3_PER_GATE], 54000000);
 	clk_set_rate(clk[IMX5_CLK_USBOH3_PER_GATE], r);
 
-	imx_register_uart_clocks(5);
-}
-CLK_OF_DECLARE(imx50_ccm, "fsl,imx50-ccm", mx50_clocks_init);
+	imx_रेजिस्टर_uart_घड़ीs(5);
+पूर्ण
+CLK_OF_DECLARE(imx50_ccm, "fsl,imx50-ccm", mx50_घड़ीs_init);
 
-static void __init mx51_clocks_init(struct device_node *np)
-{
-	void __iomem *ccm_base;
-	void __iomem *pll_base;
+अटल व्योम __init mx51_घड़ीs_init(काष्ठा device_node *np)
+अणु
+	व्योम __iomem *ccm_base;
+	व्योम __iomem *pll_base;
 	u32 val;
 
 	pll_base = ioremap(MX51_DPLL1_BASE, SZ_16K);
@@ -383,12 +384,12 @@ static void __init mx51_clocks_init(struct device_node *np)
 	ccm_base = of_iomap(np, 0);
 	WARN_ON(!ccm_base);
 
-	mx5_clocks_common_init(ccm_base);
+	mx5_घड़ीs_common_init(ccm_base);
 
 	clk[IMX5_CLK_PERIPH_APM]	= imx_clk_mux("periph_apm", MXC_CCM_CBCMR, 12, 2,
 						periph_apm_sel, ARRAY_SIZE(periph_apm_sel));
 	clk[IMX5_CLK_MAIN_BUS]		= imx_clk_mux("main_bus", MXC_CCM_CBCDR, 25, 1,
-						main_bus_sel, ARRAY_SIZE(main_bus_sel));
+						मुख्य_bus_sel, ARRAY_SIZE(मुख्य_bus_sel));
 	clk[IMX5_CLK_LP_APM]		= imx_clk_mux("lp_apm", MXC_CCM_CCSR, 9, 1,
 						lp_apm_sel, ARRAY_SIZE(lp_apm_sel));
 	clk[IMX5_CLK_IPU_DI0_SEL]	= imx_clk_mux_flags("ipu_di0_sel", MXC_CCM_CSCMR2, 26, 3,
@@ -400,7 +401,7 @@ static void __init mx51_clocks_init(struct device_node *np)
 	clk[IMX5_CLK_TVE_SEL]		= imx_clk_mux("tve_sel", MXC_CCM_CSCMR1, 7, 1,
 						mx51_tve_sel, ARRAY_SIZE(mx51_tve_sel));
 	clk[IMX5_CLK_TVE_GATE]		= imx_clk_gate2("tve_gate", "tve_sel", MXC_CCM_CCGR2, 30);
-	clk[IMX5_CLK_TVE_PRED]		= imx_clk_divider("tve_pred", "pll3_sw", MXC_CCM_CDCDR, 28, 3);
+	clk[IMX5_CLK_TVE_PRED]		= imx_clk_भागider("tve_pred", "pll3_sw", MXC_CCM_CDCDR, 28, 3);
 	clk[IMX5_CLK_ESDHC_A_SEL]	= imx_clk_mux("esdhc_a_sel", MXC_CCM_CSCMR1, 20, 2,
 						standard_pll_sel, ARRAY_SIZE(standard_pll_sel));
 	clk[IMX5_CLK_ESDHC_B_SEL]	= imx_clk_mux("esdhc_b_sel", MXC_CCM_CSCMR1, 16, 2,
@@ -419,16 +420,16 @@ static void __init mx51_clocks_init(struct device_node *np)
 	clk[IMX5_CLK_MIPI_ESC_GATE]	= imx_clk_gate2_flags("mipi_esc_gate", "ipg", MXC_CCM_CCGR4, 10, CLK_IS_CRITICAL);
 	clk[IMX5_CLK_MIPI_HSP_GATE]	= imx_clk_gate2_flags("mipi_hsp_gate", "ipg", MXC_CCM_CCGR4, 12, CLK_IS_CRITICAL);
 	clk[IMX5_CLK_SPDIF_XTAL_SEL]	= imx_clk_mux("spdif_xtal_sel", MXC_CCM_CSCMR1, 2, 2,
-						mx51_spdif_xtal_sel, ARRAY_SIZE(mx51_spdif_xtal_sel));
+						mx51_spdअगर_xtal_sel, ARRAY_SIZE(mx51_spdअगर_xtal_sel));
 	clk[IMX5_CLK_SPDIF1_SEL]	= imx_clk_mux("spdif1_sel", MXC_CCM_CSCMR2, 2, 2,
-						spdif_sel, ARRAY_SIZE(spdif_sel));
-	clk[IMX5_CLK_SPDIF1_PRED]	= imx_clk_divider("spdif1_pred", "spdif1_sel", MXC_CCM_CDCDR, 16, 3);
-	clk[IMX5_CLK_SPDIF1_PODF]	= imx_clk_divider("spdif1_podf", "spdif1_pred", MXC_CCM_CDCDR, 9, 6);
+						spdअगर_sel, ARRAY_SIZE(spdअगर_sel));
+	clk[IMX5_CLK_SPDIF1_PRED]	= imx_clk_भागider("spdif1_pred", "spdif1_sel", MXC_CCM_CDCDR, 16, 3);
+	clk[IMX5_CLK_SPDIF1_PODF]	= imx_clk_भागider("spdif1_podf", "spdif1_pred", MXC_CCM_CDCDR, 9, 6);
 	clk[IMX5_CLK_SPDIF1_COM_SEL]	= imx_clk_mux("spdif1_com_sel", MXC_CCM_CSCMR2, 5, 1,
-						mx51_spdif1_com_sel, ARRAY_SIZE(mx51_spdif1_com_sel));
+						mx51_spdअगर1_com_sel, ARRAY_SIZE(mx51_spdअगर1_com_sel));
 	clk[IMX5_CLK_SPDIF1_GATE]	= imx_clk_gate2("spdif1_gate", "spdif1_com_sel", MXC_CCM_CCGR5, 28);
 
-	imx_check_clocks(clk, ARRAY_SIZE(clk));
+	imx_check_घड़ीs(clk, ARRAY_SIZE(clk));
 
 	clk_data.clks = clk;
 	clk_data.clk_num = ARRAY_SIZE(clk);
@@ -441,38 +442,38 @@ static void __init mx51_clocks_init(struct device_node *np)
 	clk_set_parent(clk[IMX5_CLK_ESDHC_A_SEL], clk[IMX5_CLK_PLL2_SW]);
 	clk_set_parent(clk[IMX5_CLK_ESDHC_B_SEL], clk[IMX5_CLK_PLL2_SW]);
 
-	/* set SDHC root clock to 166.25MHZ*/
+	/* set SDHC root घड़ी to 166.25MHZ*/
 	clk_set_rate(clk[IMX5_CLK_ESDHC_A_PODF], 166250000);
 	clk_set_rate(clk[IMX5_CLK_ESDHC_B_PODF], 166250000);
 
 	clk_prepare_enable(clk[IMX5_CLK_IIM_GATE]);
-	imx_print_silicon_rev("i.MX51", mx51_revision());
+	imx_prपूर्णांक_silicon_rev("i.MX51", mx51_revision());
 	clk_disable_unprepare(clk[IMX5_CLK_IIM_GATE]);
 
 	/*
 	 * Reference Manual says: Functionality of CCDR[18] and CLPCR[23] is no
-	 * longer supported. Set to one for better power saving.
+	 * दीर्घer supported. Set to one क्रम better घातer saving.
 	 *
-	 * The effect of not setting these bits is that MIPI clocks can't be
-	 * enabled without the IPU clock being enabled aswell.
+	 * The effect of not setting these bits is that MIPI घड़ीs can't be
+	 * enabled without the IPU घड़ी being enabled aswell.
 	 */
-	val = readl(MXC_CCM_CCDR);
+	val = पढ़ोl(MXC_CCM_CCDR);
 	val |= 1 << 18;
-	writel(val, MXC_CCM_CCDR);
+	ग_लिखोl(val, MXC_CCM_CCDR);
 
-	val = readl(MXC_CCM_CLPCR);
+	val = पढ़ोl(MXC_CCM_CLPCR);
 	val |= 1 << 23;
-	writel(val, MXC_CCM_CLPCR);
+	ग_लिखोl(val, MXC_CCM_CLPCR);
 
-	imx_register_uart_clocks(3);
-}
-CLK_OF_DECLARE(imx51_ccm, "fsl,imx51-ccm", mx51_clocks_init);
+	imx_रेजिस्टर_uart_घड़ीs(3);
+पूर्ण
+CLK_OF_DECLARE(imx51_ccm, "fsl,imx51-ccm", mx51_घड़ीs_init);
 
-static void __init mx53_clocks_init(struct device_node *np)
-{
-	void __iomem *ccm_base;
-	void __iomem *pll_base;
-	unsigned long r;
+अटल व्योम __init mx53_घड़ीs_init(काष्ठा device_node *np)
+अणु
+	व्योम __iomem *ccm_base;
+	व्योम __iomem *pll_base;
+	अचिन्हित दीर्घ r;
 
 	pll_base = ioremap(MX53_DPLL1_BASE, SZ_16K);
 	WARN_ON(!pll_base);
@@ -493,21 +494,21 @@ static void __init mx53_clocks_init(struct device_node *np)
 	ccm_base = of_iomap(np, 0);
 	WARN_ON(!ccm_base);
 
-	mx5_clocks_common_init(ccm_base);
+	mx5_घड़ीs_common_init(ccm_base);
 
 	clk[IMX5_CLK_PERIPH_APM]	= imx_clk_mux("periph_apm", MXC_CCM_CBCMR, 12, 2,
 						periph_apm_sel, ARRAY_SIZE(periph_apm_sel));
 	clk[IMX5_CLK_MAIN_BUS]		= imx_clk_mux("main_bus", MXC_CCM_CBCDR, 25, 1,
-						main_bus_sel, ARRAY_SIZE(main_bus_sel));
+						मुख्य_bus_sel, ARRAY_SIZE(मुख्य_bus_sel));
 	clk[IMX5_CLK_LP_APM]		= imx_clk_mux("lp_apm", MXC_CCM_CCSR, 10, 1,
 						lp_apm_sel, ARRAY_SIZE(lp_apm_sel));
 	clk[IMX5_CLK_LDB_DI1_DIV_3_5]	= imx_clk_fixed_factor("ldb_di1_div_3_5", "ldb_di1_sel", 2, 7);
-	clk[IMX5_CLK_LDB_DI1_DIV]	= imx_clk_divider_flags("ldb_di1_div", "ldb_di1_div_3_5", MXC_CCM_CSCMR2, 11, 1, 0);
+	clk[IMX5_CLK_LDB_DI1_DIV]	= imx_clk_भागider_flags("ldb_di1_div", "ldb_di1_div_3_5", MXC_CCM_CSCMR2, 11, 1, 0);
 	clk[IMX5_CLK_LDB_DI1_SEL]	= imx_clk_mux_flags("ldb_di1_sel", MXC_CCM_CSCMR2, 9, 1,
 						mx53_ldb_di1_sel, ARRAY_SIZE(mx53_ldb_di1_sel), CLK_SET_RATE_PARENT);
-	clk[IMX5_CLK_DI_PLL4_PODF]	= imx_clk_divider("di_pll4_podf", "pll4_sw", MXC_CCM_CDCDR, 16, 3);
+	clk[IMX5_CLK_DI_PLL4_PODF]	= imx_clk_भागider("di_pll4_podf", "pll4_sw", MXC_CCM_CDCDR, 16, 3);
 	clk[IMX5_CLK_LDB_DI0_DIV_3_5]	= imx_clk_fixed_factor("ldb_di0_div_3_5", "ldb_di0_sel", 2, 7);
-	clk[IMX5_CLK_LDB_DI0_DIV]	= imx_clk_divider_flags("ldb_di0_div", "ldb_di0_div_3_5", MXC_CCM_CSCMR2, 10, 1, 0);
+	clk[IMX5_CLK_LDB_DI0_DIV]	= imx_clk_भागider_flags("ldb_di0_div", "ldb_di0_div_3_5", MXC_CCM_CSCMR2, 10, 1, 0);
 	clk[IMX5_CLK_LDB_DI0_SEL]	= imx_clk_mux_flags("ldb_di0_sel", MXC_CCM_CSCMR2, 8, 1,
 						mx53_ldb_di0_sel, ARRAY_SIZE(mx53_ldb_di0_sel), CLK_SET_RATE_PARENT);
 	clk[IMX5_CLK_LDB_DI0_GATE]	= imx_clk_gate2("ldb_di0_gate", "ldb_di0_div", MXC_CCM_CCGR6, 28);
@@ -519,7 +520,7 @@ static void __init mx53_clocks_init(struct device_node *np)
 	clk[IMX5_CLK_TVE_EXT_SEL]	= imx_clk_mux_flags("tve_ext_sel", MXC_CCM_CSCMR1, 6, 1,
 						mx53_tve_ext_sel, ARRAY_SIZE(mx53_tve_ext_sel), CLK_SET_RATE_PARENT);
 	clk[IMX5_CLK_TVE_GATE]		= imx_clk_gate2("tve_gate", "tve_pred", MXC_CCM_CCGR2, 30);
-	clk[IMX5_CLK_TVE_PRED]		= imx_clk_divider("tve_pred", "tve_ext_sel", MXC_CCM_CDCDR, 28, 3);
+	clk[IMX5_CLK_TVE_PRED]		= imx_clk_भागider("tve_pred", "tve_ext_sel", MXC_CCM_CDCDR, 28, 3);
 	clk[IMX5_CLK_ESDHC_A_SEL]	= imx_clk_mux("esdhc_a_sel", MXC_CCM_CSCMR1, 20, 2,
 						standard_pll_sel, ARRAY_SIZE(standard_pll_sel));
 	clk[IMX5_CLK_ESDHC_B_SEL]	= imx_clk_mux("esdhc_b_sel", MXC_CCM_CSCMR1, 16, 2,
@@ -544,21 +545,21 @@ static void __init mx53_clocks_init(struct device_node *np)
 
 	clk[IMX5_CLK_FIRI_SEL]		= imx_clk_mux("firi_sel", MXC_CCM_CSCMR2, 12, 2,
 						standard_pll_sel, ARRAY_SIZE(standard_pll_sel));
-	clk[IMX5_CLK_FIRI_PRED]		= imx_clk_divider("firi_pred", "firi_sel", MXC_CCM_CSCDR3, 6, 3);
-	clk[IMX5_CLK_FIRI_PODF]		= imx_clk_divider("firi_podf", "firi_pred", MXC_CCM_CSCDR3, 0, 6);
+	clk[IMX5_CLK_FIRI_PRED]		= imx_clk_भागider("firi_pred", "firi_sel", MXC_CCM_CSCDR3, 6, 3);
+	clk[IMX5_CLK_FIRI_PODF]		= imx_clk_भागider("firi_podf", "firi_pred", MXC_CCM_CSCDR3, 0, 6);
 	clk[IMX5_CLK_FIRI_SERIAL_GATE]	= imx_clk_gate2("firi_serial_gate", "firi_podf", MXC_CCM_CCGR1, 28);
 	clk[IMX5_CLK_FIRI_IPG_GATE]	= imx_clk_gate2("firi_ipg_gate", "ipg", MXC_CCM_CCGR1, 26);
 
 	clk[IMX5_CLK_CSI0_MCLK1_SEL]	= imx_clk_mux("csi0_mclk1_sel", MXC_CCM_CSCMR2, 22, 2,
 						standard_pll_sel, ARRAY_SIZE(standard_pll_sel));
-	clk[IMX5_CLK_CSI0_MCLK1_PRED]	= imx_clk_divider("csi0_mclk1_pred", "csi0_mclk1_sel", MXC_CCM_CSCDR4, 6, 3);
-	clk[IMX5_CLK_CSI0_MCLK1_PODF]	= imx_clk_divider("csi0_mclk1_podf", "csi0_mclk1_pred", MXC_CCM_CSCDR4, 0, 6);
+	clk[IMX5_CLK_CSI0_MCLK1_PRED]	= imx_clk_भागider("csi0_mclk1_pred", "csi0_mclk1_sel", MXC_CCM_CSCDR4, 6, 3);
+	clk[IMX5_CLK_CSI0_MCLK1_PODF]	= imx_clk_भागider("csi0_mclk1_podf", "csi0_mclk1_pred", MXC_CCM_CSCDR4, 0, 6);
 	clk[IMX5_CLK_CSI0_MCLK1_GATE]	= imx_clk_gate2("csi0_mclk1_serial_gate", "csi0_mclk1_podf", MXC_CCM_CCGR6, 4);
 
 	clk[IMX5_CLK_IEEE1588_SEL]	= imx_clk_mux("ieee1588_sel", MXC_CCM_CSCMR2, 14, 2,
 						ieee1588_sels, ARRAY_SIZE(ieee1588_sels));
-	clk[IMX5_CLK_IEEE1588_PRED]	= imx_clk_divider("ieee1588_pred", "ieee1588_sel", MXC_CCM_CSCDR2, 6, 3);
-	clk[IMX5_CLK_IEEE1588_PODF]	= imx_clk_divider("ieee1588_podf", "ieee1588_pred", MXC_CCM_CSCDR2, 0, 6);
+	clk[IMX5_CLK_IEEE1588_PRED]	= imx_clk_भागider("ieee1588_pred", "ieee1588_sel", MXC_CCM_CSCDR2, 6, 3);
+	clk[IMX5_CLK_IEEE1588_PODF]	= imx_clk_भागider("ieee1588_podf", "ieee1588_pred", MXC_CCM_CSCDR2, 0, 6);
 	clk[IMX5_CLK_IEEE1588_GATE]	= imx_clk_gate2("ieee1588_serial_gate", "ieee1588_podf", MXC_CCM_CCGR7, 6);
 	clk[IMX5_CLK_UART4_IPG_GATE]	= imx_clk_gate2("uart4_ipg_gate", "ipg", MXC_CCM_CCGR7, 8);
 	clk[IMX5_CLK_UART4_PER_GATE]	= imx_clk_gate2("uart4_per_gate", "uart_root", MXC_CCM_CCGR7, 10);
@@ -567,22 +568,22 @@ static void __init mx53_clocks_init(struct device_node *np)
 
 	clk[IMX5_CLK_CKO1_SEL]		= imx_clk_mux("cko1_sel", MXC_CCM_CCOSR, 0, 4,
 						mx53_cko1_sel, ARRAY_SIZE(mx53_cko1_sel));
-	clk[IMX5_CLK_CKO1_PODF]		= imx_clk_divider("cko1_podf", "cko1_sel", MXC_CCM_CCOSR, 4, 3);
+	clk[IMX5_CLK_CKO1_PODF]		= imx_clk_भागider("cko1_podf", "cko1_sel", MXC_CCM_CCOSR, 4, 3);
 	clk[IMX5_CLK_CKO1]		= imx_clk_gate2("cko1", "cko1_podf", MXC_CCM_CCOSR, 7);
 
 	clk[IMX5_CLK_CKO2_SEL]		= imx_clk_mux("cko2_sel", MXC_CCM_CCOSR, 16, 5,
 						mx53_cko2_sel, ARRAY_SIZE(mx53_cko2_sel));
-	clk[IMX5_CLK_CKO2_PODF]		= imx_clk_divider("cko2_podf", "cko2_sel", MXC_CCM_CCOSR, 21, 3);
+	clk[IMX5_CLK_CKO2_PODF]		= imx_clk_भागider("cko2_podf", "cko2_sel", MXC_CCM_CCOSR, 21, 3);
 	clk[IMX5_CLK_CKO2]		= imx_clk_gate2("cko2", "cko2_podf", MXC_CCM_CCOSR, 24);
 	clk[IMX5_CLK_SPDIF_XTAL_SEL]	= imx_clk_mux("spdif_xtal_sel", MXC_CCM_CSCMR1, 2, 2,
-						mx53_spdif_xtal_sel, ARRAY_SIZE(mx53_spdif_xtal_sel));
+						mx53_spdअगर_xtal_sel, ARRAY_SIZE(mx53_spdअगर_xtal_sel));
 	clk[IMX5_CLK_ARM]		= imx_clk_cpu("arm", "cpu_podf",
 						clk[IMX5_CLK_CPU_PODF],
 						clk[IMX5_CLK_CPU_PODF_SEL],
 						clk[IMX5_CLK_PLL1_SW],
 						clk[IMX5_CLK_STEP_SEL]);
 
-	imx_check_clocks(clk, ARRAY_SIZE(clk));
+	imx_check_घड़ीs(clk, ARRAY_SIZE(clk));
 
 	clk_data.clks = clk;
 	clk_data.clk_num = ARRAY_SIZE(clk);
@@ -592,23 +593,23 @@ static void __init mx53_clocks_init(struct device_node *np)
 	clk_set_parent(clk[IMX5_CLK_ESDHC_A_SEL], clk[IMX5_CLK_PLL2_SW]);
 	clk_set_parent(clk[IMX5_CLK_ESDHC_B_SEL], clk[IMX5_CLK_PLL2_SW]);
 
-	/* set SDHC root clock to 200MHZ*/
+	/* set SDHC root घड़ी to 200MHZ*/
 	clk_set_rate(clk[IMX5_CLK_ESDHC_A_PODF], 200000000);
 	clk_set_rate(clk[IMX5_CLK_ESDHC_B_PODF], 200000000);
 
 	/* move can bus clk to 24MHz */
 	clk_set_parent(clk[IMX5_CLK_CAN_SEL], clk[IMX5_CLK_LP_APM]);
 
-	/* make sure step clock is running from 24MHz */
+	/* make sure step घड़ी is running from 24MHz */
 	clk_set_parent(clk[IMX5_CLK_STEP_SEL], clk[IMX5_CLK_LP_APM]);
 
 	clk_prepare_enable(clk[IMX5_CLK_IIM_GATE]);
-	imx_print_silicon_rev("i.MX53", mx53_revision());
+	imx_prपूर्णांक_silicon_rev("i.MX53", mx53_revision());
 	clk_disable_unprepare(clk[IMX5_CLK_IIM_GATE]);
 
 	r = clk_round_rate(clk[IMX5_CLK_USBOH3_PER_GATE], 54000000);
 	clk_set_rate(clk[IMX5_CLK_USBOH3_PER_GATE], r);
 
-	imx_register_uart_clocks(5);
-}
-CLK_OF_DECLARE(imx53_ccm, "fsl,imx53-ccm", mx53_clocks_init);
+	imx_रेजिस्टर_uart_घड़ीs(5);
+पूर्ण
+CLK_OF_DECLARE(imx53_ccm, "fsl,imx53-ccm", mx53_घड़ीs_init);

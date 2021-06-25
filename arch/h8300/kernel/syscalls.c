@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/syscalls.h>
-#include <linux/signal.h>
-#include <linux/unistd.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/syscalls.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/unistd.h>
 
-#undef __SYSCALL
-#define __SYSCALL(nr, call) [nr] = (call),
+#अघोषित __SYSCALL
+#घोषणा __SYSCALL(nr, call) [nr] = (call),
 
-#define sys_mmap2 sys_mmap_pgoff
+#घोषणा sys_mmap2 sys_mmap_pgoff
 
-asmlinkage int sys_rt_sigreturn(void);
+यंत्रlinkage पूर्णांक sys_rt_sigवापस(व्योम);
 
-void *_sys_call_table[__NR_syscalls] = {
-#include <asm/unistd.h>
-};
+व्योम *_sys_call_table[__NR_syscalls] = अणु
+#समावेश <यंत्र/unistd.h>
+पूर्ण;

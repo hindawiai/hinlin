@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Huawei HiNIC PCI Express Linux driver
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
-#ifndef HINIC_DEBUGFS_H
-#define HINIC_DEBUGFS_H
+#अगर_अघोषित HINIC_DEBUGFS_H
+#घोषणा HINIC_DEBUGFS_H
 
-#include "hinic_dev.h"
+#समावेश "hinic_dev.h"
 
-#define    TBL_ID_FUNC_CFG_SM_NODE                      11
-#define    TBL_ID_FUNC_CFG_SM_INST                      1
+#घोषणा    TBL_ID_FUNC_CFG_SM_NODE                      11
+#घोषणा    TBL_ID_FUNC_CFG_SM_INST                      1
 
-#define HINIC_FUNCTION_CONFIGURE_TABLE_SIZE             64
-#define HINIC_FUNCTION_CONFIGURE_TABLE			1
+#घोषणा HINIC_FUNCTION_CONFIGURE_TABLE_SIZE             64
+#घोषणा HINIC_FUNCTION_CONFIGURE_TABLE			1
 
-struct hinic_cmd_lt_rd {
+काष्ठा hinic_cmd_lt_rd अणु
 	u8	status;
 	u8	version;
 	u8	rsvd0[6];
 
-	unsigned char node;
-	unsigned char inst;
-	unsigned char entry_size;
-	unsigned char rsvd;
-	unsigned int lt_index;
-	unsigned int offset;
-	unsigned int len;
-	unsigned char data[100];
-};
+	अचिन्हित अक्षर node;
+	अचिन्हित अक्षर inst;
+	अचिन्हित अक्षर entry_size;
+	अचिन्हित अक्षर rsvd;
+	अचिन्हित पूर्णांक lt_index;
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक len;
+	अचिन्हित अक्षर data[100];
+पूर्ण;
 
-struct tag_sml_funcfg_tbl {
-	union {
-		struct {
+काष्ठा tag_sml_funcfg_tbl अणु
+	जोड़ अणु
+		काष्ठा अणु
 			u32 rsvd0            :8;
 			u32 nic_rx_mode      :5;
 			u32 rsvd1            :18;
 			u32 valid            :1;
-		} bs;
+		पूर्ण bs;
 
 		u32 value;
-	} dw0;
+	पूर्ण dw0;
 
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u32 vlan_id             :12;
 			u32 vlan_mode           :3;
 			u32 fast_recycled_mode  :1;
 			u32 mtu                 :16;
-		} bs;
+		पूर्ण bs;
 
 		u32 value;
-	} dw1;
+	पूर्ण dw1;
 
 	u32 dw2;
 	u32 dw3;
@@ -64,51 +65,51 @@ struct tag_sml_funcfg_tbl {
 	u32 dw11;
 	u32 dw12;
 
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u32 rsvd2               :15;
 			u32 cfg_q_num           :9;
 			u32 cfg_rq_depth        :6;
 			u32 vhd_type            :2;
-		} bs;
+		पूर्ण bs;
 
 		u32 value;
-	} dw13;
+	पूर्ण dw13;
 
 	u32 dw14;
 	u32 dw15;
-};
+पूर्ण;
 
-int hinic_sq_debug_add(struct hinic_dev *dev, u16 sq_id);
+पूर्णांक hinic_sq_debug_add(काष्ठा hinic_dev *dev, u16 sq_id);
 
-void hinic_sq_debug_rem(struct hinic_sq *sq);
+व्योम hinic_sq_debug_rem(काष्ठा hinic_sq *sq);
 
-int hinic_rq_debug_add(struct hinic_dev *dev, u16 rq_id);
+पूर्णांक hinic_rq_debug_add(काष्ठा hinic_dev *dev, u16 rq_id);
 
-void hinic_rq_debug_rem(struct hinic_rq *rq);
+व्योम hinic_rq_debug_rem(काष्ठा hinic_rq *rq);
 
-int hinic_func_table_debug_add(struct hinic_dev *dev);
+पूर्णांक hinic_func_table_debug_add(काष्ठा hinic_dev *dev);
 
-void hinic_func_table_debug_rem(struct hinic_dev *dev);
+व्योम hinic_func_table_debug_rem(काष्ठा hinic_dev *dev);
 
-void hinic_sq_dbgfs_init(struct hinic_dev *nic_dev);
+व्योम hinic_sq_dbgfs_init(काष्ठा hinic_dev *nic_dev);
 
-void hinic_sq_dbgfs_uninit(struct hinic_dev *nic_dev);
+व्योम hinic_sq_dbgfs_uninit(काष्ठा hinic_dev *nic_dev);
 
-void hinic_rq_dbgfs_init(struct hinic_dev *nic_dev);
+व्योम hinic_rq_dbgfs_init(काष्ठा hinic_dev *nic_dev);
 
-void hinic_rq_dbgfs_uninit(struct hinic_dev *nic_dev);
+व्योम hinic_rq_dbgfs_uninit(काष्ठा hinic_dev *nic_dev);
 
-void hinic_func_tbl_dbgfs_init(struct hinic_dev *nic_dev);
+व्योम hinic_func_tbl_dbgfs_init(काष्ठा hinic_dev *nic_dev);
 
-void hinic_func_tbl_dbgfs_uninit(struct hinic_dev *nic_dev);
+व्योम hinic_func_tbl_dbgfs_uninit(काष्ठा hinic_dev *nic_dev);
 
-void hinic_dbg_init(struct hinic_dev *nic_dev);
+व्योम hinic_dbg_init(काष्ठा hinic_dev *nic_dev);
 
-void hinic_dbg_uninit(struct hinic_dev *nic_dev);
+व्योम hinic_dbg_uninit(काष्ठा hinic_dev *nic_dev);
 
-void hinic_dbg_register_debugfs(const char *debugfs_dir_name);
+व्योम hinic_dbg_रेजिस्टर_debugfs(स्थिर अक्षर *debugfs_dir_name);
 
-void hinic_dbg_unregister_debugfs(void);
+व्योम hinic_dbg_unरेजिस्टर_debugfs(व्योम);
 
-#endif
+#पूर्ण_अगर

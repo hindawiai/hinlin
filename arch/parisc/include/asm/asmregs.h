@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 1999 Hewlett-Packard (Frank Rowand)
  */
 
-#ifndef _PARISC_ASMREGS_H
-#define _PARISC_ASMREGS_H
+#अगर_अघोषित _PARISC_ASMREGS_H
+#घोषणा _PARISC_ASMREGS_H
 
 ;! General Registers
 
@@ -19,7 +20,7 @@ ret1:	.reg	%r29
 sl:	.reg	%r29
 sp:	.reg	%r30
 
-#if 0
+#अगर 0
 /* PA20_REVISIT */
 arg7:	.reg	r19
 arg6:	.reg	r20
@@ -27,7 +28,7 @@ arg5:	.reg	r21
 arg4:	.reg	r22
 gp:	.reg	r27
 ap:	.reg	r29
-#endif
+#पूर्ण_अगर
 
 
 r0:	.reg	%r0
@@ -76,7 +77,7 @@ sr6:	.reg	%sr6
 sr7:	.reg	%sr7
 
 
-;! Floating Point Registers
+;! Floating Poपूर्णांक Registers
 
 fr0:	.reg	%fr0
 fr1:	.reg	%fr1
@@ -123,7 +124,7 @@ pidr3:	.reg	%cr12
 pidr4:	.reg	%cr13
 iva:	.reg	%cr14
 eiem:	.reg	%cr15
-itmr:	.reg	%cr16
+iपंचांगr:	.reg	%cr16
 pcsq:	.reg	%cr17
 pcoq:	.reg	%cr18
 iir:	.reg	%cr19
@@ -167,4 +168,4 @@ cr29:	.reg	%cr29
 cr30:	.reg	%cr30
 cr31:	.reg	%cr31
 
-#endif
+#पूर्ण_अगर

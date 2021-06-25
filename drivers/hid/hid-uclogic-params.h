@@ -1,167 +1,168 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- *  HID driver for UC-Logic devices not fully compliant with HID standard
+ *  HID driver क्रम UC-Logic devices not fully compliant with HID standard
  *  - tablet initialization and parameter retrieval
  *
  *  Copyright (c) 2018 Nikolai Kondrashov
  */
 
 /*
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
  */
 
-#ifndef _HID_UCLOGIC_PARAMS_H
-#define _HID_UCLOGIC_PARAMS_H
+#अगर_अघोषित _HID_UCLOGIC_PARAMS_H
+#घोषणा _HID_UCLOGIC_PARAMS_H
 
-#include <linux/usb.h>
-#include <linux/hid.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/hid.h>
 
 /* Types of pen in-range reporting */
-enum uclogic_params_pen_inrange {
+क्रमागत uclogic_params_pen_inrange अणु
 	/* Normal reports: zero - out of proximity, one - in proximity */
 	UCLOGIC_PARAMS_PEN_INRANGE_NORMAL = 0,
 	/* Inverted reports: zero - in proximity, one - out of proximity */
 	UCLOGIC_PARAMS_PEN_INRANGE_INVERTED,
 	/* No reports */
 	UCLOGIC_PARAMS_PEN_INRANGE_NONE,
-};
+पूर्ण;
 
 /* Convert a pen in-range reporting type to a string */
-extern const char *uclogic_params_pen_inrange_to_str(
-			enum uclogic_params_pen_inrange inrange);
+बाह्य स्थिर अक्षर *uclogic_params_pen_inrange_to_str(
+			क्रमागत uclogic_params_pen_inrange inrange);
 
 /*
- * Tablet interface's pen input parameters.
+ * Tablet पूर्णांकerface's pen input parameters.
  *
- * Must use declarative (descriptive) language, not imperative, to simplify
- * understanding and maintain consistency.
+ * Must use declarative (descriptive) language, not imperative, to simplअगरy
+ * understanding and मुख्यtain consistency.
  *
  * Noop (preserving functionality) when filled with zeroes.
  */
-struct uclogic_params_pen {
+काष्ठा uclogic_params_pen अणु
 	/*
-	 * Pointer to report descriptor describing the inputs.
-	 * Allocated with kmalloc.
+	 * Poपूर्णांकer to report descriptor describing the inमाला_दो.
+	 * Allocated with kदो_स्मृति.
 	 */
 	__u8 *desc_ptr;
 	/*
 	 * Size of the report descriptor.
-	 * Only valid, if "desc_ptr" is not NULL.
+	 * Only valid, अगर "desc_ptr" is not शून्य.
 	 */
-	unsigned int desc_size;
-	/* Report ID, if reports should be tweaked, zero if not */
-	unsigned int id;
-	/* Type of in-range reporting, only valid if "id" is not zero */
-	enum uclogic_params_pen_inrange inrange;
+	अचिन्हित पूर्णांक desc_size;
+	/* Report ID, अगर reports should be tweaked, zero अगर not */
+	अचिन्हित पूर्णांक id;
+	/* Type of in-range reporting, only valid अगर "id" is not zero */
+	क्रमागत uclogic_params_pen_inrange inrange;
 	/*
-	 * True, if reports include fragmented high resolution coords, with
+	 * True, अगर reports include fragmented high resolution coords, with
 	 * high-order X and then Y bytes following the pressure field.
-	 * Only valid if "id" is not zero.
+	 * Only valid अगर "id" is not zero.
 	 */
 	bool fragmented_hires;
-};
+पूर्ण;
 
 /*
- * Parameters of frame control inputs of a tablet interface.
+ * Parameters of frame control inमाला_दो of a tablet पूर्णांकerface.
  *
- * Must use declarative (descriptive) language, not imperative, to simplify
- * understanding and maintain consistency.
+ * Must use declarative (descriptive) language, not imperative, to simplअगरy
+ * understanding and मुख्यtain consistency.
  *
  * Noop (preserving functionality) when filled with zeroes.
  */
-struct uclogic_params_frame {
+काष्ठा uclogic_params_frame अणु
 	/*
-	 * Pointer to report descriptor describing the inputs.
-	 * Allocated with kmalloc.
+	 * Poपूर्णांकer to report descriptor describing the inमाला_दो.
+	 * Allocated with kदो_स्मृति.
 	 */
 	__u8 *desc_ptr;
 	/*
 	 * Size of the report descriptor.
-	 * Only valid, if "desc_ptr" is not NULL.
+	 * Only valid, अगर "desc_ptr" is not शून्य.
 	 */
-	unsigned int desc_size;
+	अचिन्हित पूर्णांक desc_size;
 	/*
-	 * Report ID, if reports should be tweaked, zero if not.
+	 * Report ID, अगर reports should be tweaked, zero अगर not.
 	 */
-	unsigned int id;
+	अचिन्हित पूर्णांक id;
 	/*
-	 * Number of the least-significant bit of the 2-bit state of a rotary
-	 * encoder, in the report. Cannot point to a 2-bit field crossing a
-	 * byte boundary. Zero if not present. Only valid if "id" is not zero.
+	 * Number of the least-signअगरicant bit of the 2-bit state of a rotary
+	 * encoder, in the report. Cannot poपूर्णांक to a 2-bit field crossing a
+	 * byte boundary. Zero अगर not present. Only valid अगर "id" is not zero.
 	 */
-	unsigned int re_lsb;
+	अचिन्हित पूर्णांक re_lsb;
 	/*
 	 * Offset of the Wacom-style device ID byte in the report, to be set
-	 * to pad device ID (0xf), for compatibility with Wacom drivers. Zero
-	 * if no changes to the report should be made. Only valid if "id" is
+	 * to pad device ID (0xf), क्रम compatibility with Wacom drivers. Zero
+	 * अगर no changes to the report should be made. Only valid अगर "id" is
 	 * not zero.
 	 */
-	unsigned int dev_id_byte;
-};
+	अचिन्हित पूर्णांक dev_id_byte;
+पूर्ण;
 
 /*
- * Tablet interface report parameters.
+ * Tablet पूर्णांकerface report parameters.
  *
- * Must use declarative (descriptive) language, not imperative, to simplify
- * understanding and maintain consistency.
+ * Must use declarative (descriptive) language, not imperative, to simplअगरy
+ * understanding and मुख्यtain consistency.
  *
  * When filled with zeros represents a "noop" configuration - passes all
  * reports unchanged and lets the generic HID driver handle everything.
  *
  * The resulting device report descriptor is assembled from all the report
- * descriptor parts referenced by the structure. No order of assembly should
- * be assumed. The structure represents original device report descriptor if
- * all the parts are NULL.
+ * descriptor parts referenced by the काष्ठाure. No order of assembly should
+ * be assumed. The काष्ठाure represents original device report descriptor अगर
+ * all the parts are शून्य.
  */
-struct uclogic_params {
+काष्ठा uclogic_params अणु
 	/*
-	 * True if the whole interface is invalid, false otherwise.
+	 * True अगर the whole पूर्णांकerface is invalid, false otherwise.
 	 */
 	bool invalid;
 	/*
-	 * Pointer to the common part of the replacement report descriptor,
-	 * allocated with kmalloc. NULL if no common part is needed.
-	 * Only valid, if "invalid" is false.
+	 * Poपूर्णांकer to the common part of the replacement report descriptor,
+	 * allocated with kदो_स्मृति. शून्य अगर no common part is needed.
+	 * Only valid, अगर "invalid" is false.
 	 */
 	__u8 *desc_ptr;
 	/*
 	 * Size of the common part of the replacement report descriptor.
-	 * Only valid, if "desc_ptr" is not NULL.
+	 * Only valid, अगर "desc_ptr" is not शून्य.
 	 */
-	unsigned int desc_size;
+	अचिन्हित पूर्णांक desc_size;
 	/*
-	 * True, if pen usage in report descriptor is invalid, when present.
-	 * Only valid, if "invalid" is false.
+	 * True, अगर pen usage in report descriptor is invalid, when present.
+	 * Only valid, अगर "invalid" is false.
 	 */
 	bool pen_unused;
 	/*
 	 * Pen parameters and optional report descriptor part.
-	 * Only valid if "pen_unused" is valid and false.
+	 * Only valid अगर "pen_unused" is valid and false.
 	 */
-	struct uclogic_params_pen pen;
+	काष्ठा uclogic_params_pen pen;
 	/*
 	 * Frame control parameters and optional report descriptor part.
-	 * Only valid, if "invalid" is false.
+	 * Only valid, अगर "invalid" is false.
 	 */
-	struct uclogic_params_frame frame;
+	काष्ठा uclogic_params_frame frame;
 	/*
-	 * Bitmask matching frame controls "sub-report" flag in the second
-	 * byte of the pen report, or zero if it's not expected.
-	 * Only valid if both "pen" and "frame" are valid, and "frame.id" is
+	 * Biपंचांगask matching frame controls "sub-report" flag in the second
+	 * byte of the pen report, or zero अगर it's not expected.
+	 * Only valid अगर both "pen" and "frame" are valid, and "frame.id" is
 	 * not zero.
 	 */
 	__u8 pen_frame_flag;
-};
+पूर्ण;
 
-/* Initialize a tablet interface and discover its parameters */
-extern int uclogic_params_init(struct uclogic_params *params,
-				struct hid_device *hdev);
+/* Initialize a tablet पूर्णांकerface and discover its parameters */
+बाह्य पूर्णांक uclogic_params_init(काष्ठा uclogic_params *params,
+				काष्ठा hid_device *hdev);
 
-/* Tablet interface parameters *printf format string */
-#define UCLOGIC_PARAMS_FMT_STR \
+/* Tablet पूर्णांकerface parameters *म_लिखो क्रमmat string */
+#घोषणा UCLOGIC_PARAMS_FMT_STR \
 		".invalid = %s\n"                   \
 		".desc_ptr = %p\n"                  \
 		".desc_size = %u\n"                 \
@@ -178,8 +179,8 @@ extern int uclogic_params_init(struct uclogic_params *params,
 		".frame.dev_id_byte = %u\n"         \
 		".pen_frame_flag = 0x%02x\n"
 
-/* Tablet interface parameters *printf format arguments */
-#define UCLOGIC_PARAMS_FMT_ARGS(_params) \
+/* Tablet पूर्णांकerface parameters *म_लिखो क्रमmat arguments */
+#घोषणा UCLOGIC_PARAMS_FMT_ARGS(_params) \
 		((_params)->invalid ? "true" : "false"),                    \
 		(_params)->desc_ptr,                                        \
 		(_params)->desc_size,                                       \
@@ -196,12 +197,12 @@ extern int uclogic_params_init(struct uclogic_params *params,
 		(_params)->frame.dev_id_byte,                               \
 		(_params)->pen_frame_flag
 
-/* Get a replacement report descriptor for a tablet's interface. */
-extern int uclogic_params_get_desc(const struct uclogic_params *params,
+/* Get a replacement report descriptor क्रम a tablet's पूर्णांकerface. */
+बाह्य पूर्णांक uclogic_params_get_desc(स्थिर काष्ठा uclogic_params *params,
 					__u8 **pdesc,
-					unsigned int *psize);
+					अचिन्हित पूर्णांक *psize);
 
-/* Free resources used by tablet interface's parameters */
-extern void uclogic_params_cleanup(struct uclogic_params *params);
+/* Free resources used by tablet पूर्णांकerface's parameters */
+बाह्य व्योम uclogic_params_cleanup(काष्ठा uclogic_params *params);
 
-#endif /* _HID_UCLOGIC_PARAMS_H */
+#पूर्ण_अगर /* _HID_UCLOGIC_PARAMS_H */

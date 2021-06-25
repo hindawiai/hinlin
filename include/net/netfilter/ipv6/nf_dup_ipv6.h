@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_DUP_IPV6_H_
-#define _NF_DUP_IPV6_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_DUP_IPV6_H_
+#घोषणा _NF_DUP_IPV6_H_
 
-#include <linux/skbuff.h>
+#समावेश <linux/skbuff.h>
 
-void nf_dup_ipv6(struct net *net, struct sk_buff *skb, unsigned int hooknum,
-		 const struct in6_addr *gw, int oif);
+व्योम nf_dup_ipv6(काष्ठा net *net, काष्ठा sk_buff *skb, अचिन्हित पूर्णांक hooknum,
+		 स्थिर काष्ठा in6_addr *gw, पूर्णांक oअगर);
 
-#endif /* _NF_DUP_IPV6_H_ */
+#पूर्ण_अगर /* _NF_DUP_IPV6_H_ */

@@ -1,107 +1,108 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * NVIDIA Tegra Video decoder driver
  *
  * Copyright (C) 2016-2019 GRATE-DRIVER project
  */
 
-#ifndef TEGRA_VDE_H
-#define TEGRA_VDE_H
+#अगर_अघोषित TEGRA_VDE_H
+#घोषणा TEGRA_VDE_H
 
-#include <linux/completion.h>
-#include <linux/dma-direction.h>
-#include <linux/iova.h>
-#include <linux/list.h>
-#include <linux/miscdevice.h>
-#include <linux/mutex.h>
-#include <linux/types.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/dma-direction.h>
+#समावेश <linux/iova.h>
+#समावेश <linux/list.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/types.h>
 
-struct clk;
-struct dma_buf;
-struct gen_pool;
-struct iommu_group;
-struct iommu_domain;
-struct reset_control;
-struct dma_buf_attachment;
+काष्ठा clk;
+काष्ठा dma_buf;
+काष्ठा gen_pool;
+काष्ठा iommu_group;
+काष्ठा iommu_करोमुख्य;
+काष्ठा reset_control;
+काष्ठा dma_buf_attachment;
 
-struct tegra_vde {
-	void __iomem *sxe;
-	void __iomem *bsev;
-	void __iomem *mbe;
-	void __iomem *ppe;
-	void __iomem *mce;
-	void __iomem *tfe;
-	void __iomem *ppb;
-	void __iomem *vdma;
-	void __iomem *frameid;
-	struct mutex lock;
-	struct mutex map_lock;
-	struct list_head map_list;
-	struct miscdevice miscdev;
-	struct reset_control *rst;
-	struct reset_control *rst_mc;
-	struct gen_pool *iram_pool;
-	struct completion decode_completion;
-	struct clk *clk;
-	struct iommu_domain *domain;
-	struct iommu_group *group;
-	struct iova_domain iova;
-	struct iova *iova_resv_static_addresses;
-	struct iova *iova_resv_last_page;
+काष्ठा tegra_vde अणु
+	व्योम __iomem *sxe;
+	व्योम __iomem *bsev;
+	व्योम __iomem *mbe;
+	व्योम __iomem *ppe;
+	व्योम __iomem *mce;
+	व्योम __iomem *tfe;
+	व्योम __iomem *ppb;
+	व्योम __iomem *vdma;
+	व्योम __iomem *frameid;
+	काष्ठा mutex lock;
+	काष्ठा mutex map_lock;
+	काष्ठा list_head map_list;
+	काष्ठा miscdevice miscdev;
+	काष्ठा reset_control *rst;
+	काष्ठा reset_control *rst_mc;
+	काष्ठा gen_pool *iram_pool;
+	काष्ठा completion decode_completion;
+	काष्ठा clk *clk;
+	काष्ठा iommu_करोमुख्य *करोमुख्य;
+	काष्ठा iommu_group *group;
+	काष्ठा iova_करोमुख्य iova;
+	काष्ठा iova *iova_resv_अटल_addresses;
+	काष्ठा iova *iova_resv_last_page;
 	dma_addr_t iram_lists_addr;
 	u32 *iram;
-};
+पूर्ण;
 
-int tegra_vde_iommu_init(struct tegra_vde *vde);
-void tegra_vde_iommu_deinit(struct tegra_vde *vde);
-int tegra_vde_iommu_map(struct tegra_vde *vde,
-			struct sg_table *sgt,
-			struct iova **iovap,
-			size_t size);
-void tegra_vde_iommu_unmap(struct tegra_vde *vde, struct iova *iova);
+पूर्णांक tegra_vde_iommu_init(काष्ठा tegra_vde *vde);
+व्योम tegra_vde_iommu_deinit(काष्ठा tegra_vde *vde);
+पूर्णांक tegra_vde_iommu_map(काष्ठा tegra_vde *vde,
+			काष्ठा sg_table *sgt,
+			काष्ठा iova **iovap,
+			माप_प्रकार size);
+व्योम tegra_vde_iommu_unmap(काष्ठा tegra_vde *vde, काष्ठा iova *iova);
 
-int tegra_vde_dmabuf_cache_map(struct tegra_vde *vde,
-			       struct dma_buf *dmabuf,
-			       enum dma_data_direction dma_dir,
-			       struct dma_buf_attachment **ap,
+पूर्णांक tegra_vde_dmabuf_cache_map(काष्ठा tegra_vde *vde,
+			       काष्ठा dma_buf *dmabuf,
+			       क्रमागत dma_data_direction dma_dir,
+			       काष्ठा dma_buf_attachment **ap,
 			       dma_addr_t *addrp);
-void tegra_vde_dmabuf_cache_unmap(struct tegra_vde *vde,
-				  struct dma_buf_attachment *a,
+व्योम tegra_vde_dmabuf_cache_unmap(काष्ठा tegra_vde *vde,
+				  काष्ठा dma_buf_attachment *a,
 				  bool release);
-void tegra_vde_dmabuf_cache_unmap_sync(struct tegra_vde *vde);
-void tegra_vde_dmabuf_cache_unmap_all(struct tegra_vde *vde);
+व्योम tegra_vde_dmabuf_cache_unmap_sync(काष्ठा tegra_vde *vde);
+व्योम tegra_vde_dmabuf_cache_unmap_all(काष्ठा tegra_vde *vde);
 
-static __maybe_unused char const *
-tegra_vde_reg_base_name(struct tegra_vde *vde, void __iomem *base)
-{
-	if (vde->sxe == base)
-		return "SXE";
+अटल __maybe_unused अक्षर स्थिर *
+tegra_vde_reg_base_name(काष्ठा tegra_vde *vde, व्योम __iomem *base)
+अणु
+	अगर (vde->sxe == base)
+		वापस "SXE";
 
-	if (vde->bsev == base)
-		return "BSEV";
+	अगर (vde->bsev == base)
+		वापस "BSEV";
 
-	if (vde->mbe == base)
-		return "MBE";
+	अगर (vde->mbe == base)
+		वापस "MBE";
 
-	if (vde->ppe == base)
-		return "PPE";
+	अगर (vde->ppe == base)
+		वापस "PPE";
 
-	if (vde->mce == base)
-		return "MCE";
+	अगर (vde->mce == base)
+		वापस "MCE";
 
-	if (vde->tfe == base)
-		return "TFE";
+	अगर (vde->tfe == base)
+		वापस "TFE";
 
-	if (vde->ppb == base)
-		return "PPB";
+	अगर (vde->ppb == base)
+		वापस "PPB";
 
-	if (vde->vdma == base)
-		return "VDMA";
+	अगर (vde->vdma == base)
+		वापस "VDMA";
 
-	if (vde->frameid == base)
-		return "FRAMEID";
+	अगर (vde->frameid == base)
+		वापस "FRAMEID";
 
-	return "???";
-}
+	वापस "???";
+पूर्ण
 
-#endif /* TEGRA_VDE_H */
+#पूर्ण_अगर /* TEGRA_VDE_H */

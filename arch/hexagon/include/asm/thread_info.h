@@ -1,117 +1,118 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Thread support for the Hexagon architecture
+ * Thपढ़ो support क्रम the Hexagon architecture
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_THREAD_INFO_H
-#define _ASM_THREAD_INFO_H
+#अगर_अघोषित _ASM_THREAD_INFO_H
+#घोषणा _ASM_THREAD_INFO_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#ifndef __ASSEMBLY__
-#include <asm/processor.h>
-#include <asm/registers.h>
-#include <asm/page.h>
-#endif
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/रेजिस्टरs.h>
+#समावेश <यंत्र/page.h>
+#पूर्ण_अगर
 
-#define THREAD_SHIFT		12
-#define THREAD_SIZE		(1<<THREAD_SHIFT)
-#define THREAD_SIZE_ORDER	(THREAD_SHIFT - PAGE_SHIFT)
+#घोषणा THREAD_SHIFT		12
+#घोषणा THREAD_SIZE		(1<<THREAD_SHIFT)
+#घोषणा THREAD_SIZE_ORDER	(THREAD_SHIFT - PAGE_SHIFT)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-typedef struct {
-	unsigned long seg;
-} mm_segment_t;
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ seg;
+पूर्ण mm_segment_t;
 
 /*
- * This is union'd with the "bottom" of the kernel stack.
- * It keeps track of thread info which is handy for routines
+ * This is जोड़'d with the "bottom" of the kernel stack.
+ * It keeps track of thपढ़ो info which is handy क्रम routines
  * to access quickly.
  */
 
-struct thread_info {
-	struct task_struct	*task;		/* main task structure */
-	unsigned long		flags;          /* low level flags */
+काष्ठा thपढ़ो_info अणु
+	काष्ठा task_काष्ठा	*task;		/* मुख्य task काष्ठाure */
+	अचिन्हित दीर्घ		flags;          /* low level flags */
 	__u32                   cpu;            /* current cpu */
-	int                     preempt_count;  /* 0=>preemptible,<0=>BUG */
+	पूर्णांक                     preempt_count;  /* 0=>preemptible,<0=>BUG */
 	mm_segment_t            addr_limit;     /* segmentation sux */
 	/*
-	 * used for syscalls somehow;
-	 * seems to have a function pointer and four arguments
+	 * used क्रम syscalls somehow;
+	 * seems to have a function poपूर्णांकer and four arguments
 	 */
-	/* Points to the current pt_regs frame  */
-	struct pt_regs		*regs;
+	/* Poपूर्णांकs to the current pt_regs frame  */
+	काष्ठा pt_regs		*regs;
 	/*
-	 * saved kernel sp at switch_to time;
-	 * not sure if this is used (it's not in the VM model it seems;
-	 * see thread_struct)
+	 * saved kernel sp at चयन_to समय;
+	 * not sure अगर this is used (it's not in the VM model it seems;
+	 * see thपढ़ो_काष्ठा)
 	 */
-	unsigned long		sp;
-};
+	अचिन्हित दीर्घ		sp;
+पूर्ण;
 
-#else /* !__ASSEMBLY__ */
+#अन्यथा /* !__ASSEMBLY__ */
 
-#include <asm/asm-offsets.h>
+#समावेश <यंत्र/यंत्र-offsets.h>
 
-#endif  /* __ASSEMBLY__  */
+#पूर्ण_अगर  /* __ASSEMBLY__  */
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#define INIT_THREAD_INFO(tsk)                   \
-{                                               \
+#घोषणा INIT_THREAD_INFO(tsk)                   \
+अणु                                               \
 	.task           = &tsk,                 \
 	.flags          = 0,                    \
 	.cpu            = 0,                    \
 	.preempt_count  = 1,                    \
 	.addr_limit     = KERNEL_DS,            \
 	.sp = 0,				\
-	.regs = NULL,			\
-}
+	.regs = शून्य,			\
+पूर्ण
 
 /* Tacky preprocessor trickery */
-#define	qqstr(s) qstr(s)
-#define qstr(s) #s
-#define QUOTED_THREADINFO_REG qqstr(THREADINFO_REG)
+#घोषणा	qqstr(s) qstr(s)
+#घोषणा qstr(s) #s
+#घोषणा QUOTED_THREADINFO_REG qqstr(THREADINFO_REG)
 
-register struct thread_info *__current_thread_info asm(QUOTED_THREADINFO_REG);
-#define current_thread_info()  __current_thread_info
+रेजिस्टर काष्ठा thपढ़ो_info *__current_thपढ़ो_info यंत्र(QUOTED_THREADINFO_REG);
+#घोषणा current_thपढ़ो_info()  __current_thपढ़ो_info
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
 /*
- * thread information flags
+ * thपढ़ो inक्रमmation flags
  * - these are process state flags that various assembly files
  *   may need to access
- * - pending work-to-be-done flags are in LSW
+ * - pending work-to-be-करोne flags are in LSW
  * - other flags in MSW
  */
 
-#define TIF_SYSCALL_TRACE       0       /* syscall trace active */
-#define TIF_NOTIFY_RESUME       1       /* resumption notification requested */
-#define TIF_SIGPENDING          2       /* signal pending */
-#define TIF_NEED_RESCHED        3       /* rescheduling necessary */
-#define TIF_SINGLESTEP          4       /* restore ss @ return to usr mode */
-#define TIF_RESTORE_SIGMASK     6       /* restore sig mask in do_signal() */
-#define TIF_NOTIFY_SIGNAL	7       /* signal notifications exist */
-/* true if poll_idle() is polling TIF_NEED_RESCHED */
-#define TIF_MEMDIE              17      /* OOM killer killed process */
+#घोषणा TIF_SYSCALL_TRACE       0       /* syscall trace active */
+#घोषणा TIF_NOTIFY_RESUME       1       /* resumption notअगरication requested */
+#घोषणा TIF_SIGPENDING          2       /* संकेत pending */
+#घोषणा TIF_NEED_RESCHED        3       /* rescheduling necessary */
+#घोषणा TIF_SINGLESTEP          4       /* restore ss @ वापस to usr mode */
+#घोषणा TIF_RESTORE_SIGMASK     6       /* restore sig mask in करो_संकेत() */
+#घोषणा TIF_NOTIFY_SIGNAL	7       /* संकेत notअगरications exist */
+/* true अगर poll_idle() is polling TIF_NEED_RESCHED */
+#घोषणा TIF_MEMDIE              17      /* OOM समाप्तer समाप्तed process */
 
-#define _TIF_SYSCALL_TRACE      (1 << TIF_SYSCALL_TRACE)
-#define _TIF_NOTIFY_RESUME      (1 << TIF_NOTIFY_RESUME)
-#define _TIF_SIGPENDING         (1 << TIF_SIGPENDING)
-#define _TIF_NEED_RESCHED       (1 << TIF_NEED_RESCHED)
-#define _TIF_SINGLESTEP         (1 << TIF_SINGLESTEP)
-#define _TIF_NOTIFY_SIGNAL	(1 << TIF_NOTIFY_SIGNAL)
+#घोषणा _TIF_SYSCALL_TRACE      (1 << TIF_SYSCALL_TRACE)
+#घोषणा _TIF_NOTIFY_RESUME      (1 << TIF_NOTIFY_RESUME)
+#घोषणा _TIF_SIGPENDING         (1 << TIF_SIGPENDING)
+#घोषणा _TIF_NEED_RESCHED       (1 << TIF_NEED_RESCHED)
+#घोषणा _TIF_SINGLESTEP         (1 << TIF_SINGLESTEP)
+#घोषणा _TIF_NOTIFY_SIGNAL	(1 << TIF_NOTIFY_SIGNAL)
 
-/* work to do on interrupt/exception return - All but TIF_SYSCALL_TRACE */
-#define _TIF_WORK_MASK          (0x0000FFFF & ~_TIF_SYSCALL_TRACE)
+/* work to करो on पूर्णांकerrupt/exception वापस - All but TIF_SYSCALL_TRACE */
+#घोषणा _TIF_WORK_MASK          (0x0000FFFF & ~_TIF_SYSCALL_TRACE)
 
-/* work to do on any return to u-space */
-#define _TIF_ALLWORK_MASK       0x0000FFFF
+/* work to करो on any वापस to u-space */
+#घोषणा _TIF_ALLWORK_MASK       0x0000FFFF
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif
+#पूर्ण_अगर

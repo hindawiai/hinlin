@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -17,28 +18,28 @@
  *
  */
 
-#ifndef _CQ_ENET_DESC_H_
-#define _CQ_ENET_DESC_H_
+#अगर_अघोषित _CQ_ENET_DESC_H_
+#घोषणा _CQ_ENET_DESC_H_
 
-#include "cq_desc.h"
+#समावेश "cq_desc.h"
 
 /* Ethernet completion queue descriptor: 16B */
-struct cq_enet_wq_desc {
+काष्ठा cq_enet_wq_desc अणु
 	__le16 completed_index;
 	__le16 q_number;
 	u8 reserved[11];
 	u8 type_color;
-};
+पूर्ण;
 
-static inline void cq_enet_wq_desc_dec(struct cq_enet_wq_desc *desc,
+अटल अंतरभूत व्योम cq_enet_wq_desc_dec(काष्ठा cq_enet_wq_desc *desc,
 	u8 *type, u8 *color, u16 *q_number, u16 *completed_index)
-{
-	cq_desc_dec((struct cq_desc *)desc, type,
+अणु
+	cq_desc_dec((काष्ठा cq_desc *)desc, type,
 		color, q_number, completed_index);
-}
+पूर्ण
 
 /* Completion queue descriptor: Ethernet receive queue, 16B */
-struct cq_enet_rq_desc {
+काष्ठा cq_enet_rq_desc अणु
 	__le16 completed_index_flags;
 	__le16 q_number_rss_type_flags;
 	__le32 rss_hash;
@@ -47,61 +48,61 @@ struct cq_enet_rq_desc {
 	__le16 checksum_fcoe;
 	u8 flags;
 	u8 type_color;
-};
+पूर्ण;
 
-#define CQ_ENET_RQ_DESC_FLAGS_INGRESS_PORT          (0x1 << 12)
-#define CQ_ENET_RQ_DESC_FLAGS_FCOE                  (0x1 << 13)
-#define CQ_ENET_RQ_DESC_FLAGS_EOP                   (0x1 << 14)
-#define CQ_ENET_RQ_DESC_FLAGS_SOP                   (0x1 << 15)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_INGRESS_PORT          (0x1 << 12)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_FCOE                  (0x1 << 13)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_EOP                   (0x1 << 14)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_SOP                   (0x1 << 15)
 
-#define CQ_ENET_RQ_DESC_RSS_TYPE_BITS               4
-#define CQ_ENET_RQ_DESC_RSS_TYPE_MASK \
+#घोषणा CQ_ENET_RQ_DESC_RSS_TYPE_BITS               4
+#घोषणा CQ_ENET_RQ_DESC_RSS_TYPE_MASK \
 	((1 << CQ_ENET_RQ_DESC_RSS_TYPE_BITS) - 1)
-#define CQ_ENET_RQ_DESC_RSS_TYPE_NONE               0
-#define CQ_ENET_RQ_DESC_RSS_TYPE_IPv4               1
-#define CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv4           2
-#define CQ_ENET_RQ_DESC_RSS_TYPE_IPv6               3
-#define CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv6           4
-#define CQ_ENET_RQ_DESC_RSS_TYPE_IPv6_EX            5
-#define CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv6_EX        6
+#घोषणा CQ_ENET_RQ_DESC_RSS_TYPE_NONE               0
+#घोषणा CQ_ENET_RQ_DESC_RSS_TYPE_IPv4               1
+#घोषणा CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv4           2
+#घोषणा CQ_ENET_RQ_DESC_RSS_TYPE_IPv6               3
+#घोषणा CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv6           4
+#घोषणा CQ_ENET_RQ_DESC_RSS_TYPE_IPv6_EX            5
+#घोषणा CQ_ENET_RQ_DESC_RSS_TYPE_TCP_IPv6_EX        6
 
-#define CQ_ENET_RQ_DESC_FLAGS_CSUM_NOT_CALC         (0x1 << 14)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_CSUM_NOT_CALC         (0x1 << 14)
 
-#define CQ_ENET_RQ_DESC_BYTES_WRITTEN_BITS          14
-#define CQ_ENET_RQ_DESC_BYTES_WRITTEN_MASK \
+#घोषणा CQ_ENET_RQ_DESC_BYTES_WRITTEN_BITS          14
+#घोषणा CQ_ENET_RQ_DESC_BYTES_WRITTEN_MASK \
 	((1 << CQ_ENET_RQ_DESC_BYTES_WRITTEN_BITS) - 1)
-#define CQ_ENET_RQ_DESC_FLAGS_TRUNCATED             (0x1 << 14)
-#define CQ_ENET_RQ_DESC_FLAGS_VLAN_STRIPPED         (0x1 << 15)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_TRUNCATED             (0x1 << 14)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_VLAN_STRIPPED         (0x1 << 15)
 
-#define CQ_ENET_RQ_DESC_VLAN_TCI_VLAN_BITS          12
-#define CQ_ENET_RQ_DESC_VLAN_TCI_VLAN_MASK \
+#घोषणा CQ_ENET_RQ_DESC_VLAN_TCI_VLAN_BITS          12
+#घोषणा CQ_ENET_RQ_DESC_VLAN_TCI_VLAN_MASK \
 	((1 << CQ_ENET_RQ_DESC_VLAN_TCI_VLAN_BITS) - 1)
-#define CQ_ENET_RQ_DESC_VLAN_TCI_CFI_MASK           (0x1 << 12)
-#define CQ_ENET_RQ_DESC_VLAN_TCI_USER_PRIO_BITS     3
-#define CQ_ENET_RQ_DESC_VLAN_TCI_USER_PRIO_MASK \
+#घोषणा CQ_ENET_RQ_DESC_VLAN_TCI_CFI_MASK           (0x1 << 12)
+#घोषणा CQ_ENET_RQ_DESC_VLAN_TCI_USER_PRIO_BITS     3
+#घोषणा CQ_ENET_RQ_DESC_VLAN_TCI_USER_PRIO_MASK \
 	((1 << CQ_ENET_RQ_DESC_VLAN_TCI_USER_PRIO_BITS) - 1)
-#define CQ_ENET_RQ_DESC_VLAN_TCI_USER_PRIO_SHIFT    13
+#घोषणा CQ_ENET_RQ_DESC_VLAN_TCI_USER_PRIO_SHIFT    13
 
-#define CQ_ENET_RQ_DESC_FCOE_SOF_BITS               8
-#define CQ_ENET_RQ_DESC_FCOE_SOF_MASK \
+#घोषणा CQ_ENET_RQ_DESC_FCOE_SOF_BITS               8
+#घोषणा CQ_ENET_RQ_DESC_FCOE_SOF_MASK \
 	((1 << CQ_ENET_RQ_DESC_FCOE_SOF_BITS) - 1)
-#define CQ_ENET_RQ_DESC_FCOE_EOF_BITS               8
-#define CQ_ENET_RQ_DESC_FCOE_EOF_MASK \
-	((1 << CQ_ENET_RQ_DESC_FCOE_EOF_BITS) - 1)
-#define CQ_ENET_RQ_DESC_FCOE_EOF_SHIFT              8
+#घोषणा CQ_ENET_RQ_DESC_FCOE_खातापूर्ण_BITS               8
+#घोषणा CQ_ENET_RQ_DESC_FCOE_खातापूर्ण_MASK \
+	((1 << CQ_ENET_RQ_DESC_FCOE_खातापूर्ण_BITS) - 1)
+#घोषणा CQ_ENET_RQ_DESC_FCOE_खातापूर्ण_SHIFT              8
 
-#define CQ_ENET_RQ_DESC_FLAGS_TCP_UDP_CSUM_OK       (0x1 << 0)
-#define CQ_ENET_RQ_DESC_FCOE_FC_CRC_OK              (0x1 << 0)
-#define CQ_ENET_RQ_DESC_FLAGS_UDP                   (0x1 << 1)
-#define CQ_ENET_RQ_DESC_FCOE_ENC_ERROR              (0x1 << 1)
-#define CQ_ENET_RQ_DESC_FLAGS_TCP                   (0x1 << 2)
-#define CQ_ENET_RQ_DESC_FLAGS_IPV4_CSUM_OK          (0x1 << 3)
-#define CQ_ENET_RQ_DESC_FLAGS_IPV6                  (0x1 << 4)
-#define CQ_ENET_RQ_DESC_FLAGS_IPV4                  (0x1 << 5)
-#define CQ_ENET_RQ_DESC_FLAGS_IPV4_FRAGMENT         (0x1 << 6)
-#define CQ_ENET_RQ_DESC_FLAGS_FCS_OK                (0x1 << 7)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_TCP_UDP_CSUM_OK       (0x1 << 0)
+#घोषणा CQ_ENET_RQ_DESC_FCOE_FC_CRC_OK              (0x1 << 0)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_UDP                   (0x1 << 1)
+#घोषणा CQ_ENET_RQ_DESC_FCOE_ENC_ERROR              (0x1 << 1)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_TCP                   (0x1 << 2)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_IPV4_CSUM_OK          (0x1 << 3)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_IPV6                  (0x1 << 4)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_IPV4                  (0x1 << 5)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_IPV4_FRAGMENT         (0x1 << 6)
+#घोषणा CQ_ENET_RQ_DESC_FLAGS_FCS_OK                (0x1 << 7)
 
-static inline void cq_enet_rq_desc_dec(struct cq_enet_rq_desc *desc,
+अटल अंतरभूत व्योम cq_enet_rq_desc_dec(काष्ठा cq_enet_rq_desc *desc,
 	u8 *type, u8 *color, u16 *q_number, u16 *completed_index,
 	u8 *ingress_port, u8 *fcoe, u8 *eop, u8 *sop, u8 *rss_type,
 	u8 *csum_not_calc, u32 *rss_hash, u16 *bytes_written, u8 *packet_error,
@@ -109,12 +110,12 @@ static inline void cq_enet_rq_desc_dec(struct cq_enet_rq_desc *desc,
 	u8 *fcoe_fc_crc_ok, u8 *fcoe_enc_error, u8 *fcoe_eof,
 	u8 *tcp_udp_csum_ok, u8 *udp, u8 *tcp, u8 *ipv4_csum_ok,
 	u8 *ipv6, u8 *ipv4, u8 *ipv4_fragment, u8 *fcs_ok)
-{
+अणु
 	u16 completed_index_flags;
 	u16 q_number_rss_type_flags;
 	u16 bytes_written_flags;
 
-	cq_desc_dec((struct cq_desc *)desc, type,
+	cq_desc_dec((काष्ठा cq_desc *)desc, type,
 		color, q_number, completed_index);
 
 	completed_index_flags = le16_to_cpu(desc->completed_index_flags);
@@ -146,11 +147,11 @@ static inline void cq_enet_rq_desc_dec(struct cq_enet_rq_desc *desc,
 		CQ_ENET_RQ_DESC_FLAGS_VLAN_STRIPPED) ? 1 : 0;
 
 	/*
-	 * Tag Control Information(16) = user_priority(3) + cfi(1) + vlan(12)
+	 * Tag Control Inक्रमmation(16) = user_priority(3) + cfi(1) + vlan(12)
 	 */
 	*vlan_tci = le16_to_cpu(desc->vlan);
 
-	if (*fcoe) {
+	अगर (*fcoe) अणु
 		*fcoe_sof = (u8)(le16_to_cpu(desc->checksum_fcoe) &
 			CQ_ENET_RQ_DESC_FCOE_SOF_MASK);
 		*fcoe_fc_crc_ok = (desc->flags &
@@ -158,16 +159,16 @@ static inline void cq_enet_rq_desc_dec(struct cq_enet_rq_desc *desc,
 		*fcoe_enc_error = (desc->flags &
 			CQ_ENET_RQ_DESC_FCOE_ENC_ERROR) ? 1 : 0;
 		*fcoe_eof = (u8)((le16_to_cpu(desc->checksum_fcoe) >>
-			CQ_ENET_RQ_DESC_FCOE_EOF_SHIFT) &
-			CQ_ENET_RQ_DESC_FCOE_EOF_MASK);
+			CQ_ENET_RQ_DESC_FCOE_खातापूर्ण_SHIFT) &
+			CQ_ENET_RQ_DESC_FCOE_खातापूर्ण_MASK);
 		*checksum = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		*fcoe_sof = 0;
 		*fcoe_fc_crc_ok = 0;
 		*fcoe_enc_error = 0;
 		*fcoe_eof = 0;
 		*checksum = le16_to_cpu(desc->checksum_fcoe);
-	}
+	पूर्ण
 
 	*tcp_udp_csum_ok =
 		(desc->flags & CQ_ENET_RQ_DESC_FLAGS_TCP_UDP_CSUM_OK) ? 1 : 0;
@@ -180,6 +181,6 @@ static inline void cq_enet_rq_desc_dec(struct cq_enet_rq_desc *desc,
 	*ipv4_fragment =
 		(desc->flags & CQ_ENET_RQ_DESC_FLAGS_IPV4_FRAGMENT) ? 1 : 0;
 	*fcs_ok = (desc->flags & CQ_ENET_RQ_DESC_FLAGS_FCS_OK) ? 1 : 0;
-}
+पूर्ण
 
-#endif /* _CQ_ENET_DESC_H_ */
+#पूर्ण_अगर /* _CQ_ENET_DESC_H_ */

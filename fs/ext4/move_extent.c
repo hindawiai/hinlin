@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: LGPL-2.1
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
 /*
  * Copyright (c) 2008,2009 NEC Software Tohoku, Ltd.
  * Written by Takashi Sato <t-sato@yk.jp.nec.com>
  *            Akira Fujita <a-fujita@rs.jp.nec.com>
  */
 
-#include <linux/fs.h>
-#include <linux/quotaops.h>
-#include <linux/slab.h>
-#include "ext4_jbd2.h"
-#include "ext4.h"
-#include "ext4_extents.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/slab.h>
+#समावेश "ext4_jbd2.h"
+#समावेश "ext4.h"
+#समावेश "ext4_extents.h"
 
 /**
- * get_ext_path() - Find an extent path for designated logical block number.
+ * get_ext_path() - Find an extent path क्रम designated logical block number.
  * @inode:	inode to be searched
  * @lblock:	logical block number to find an extent path
- * @ppath:	pointer to an extent path pointer (for output)
+ * @ppath:	poपूर्णांकer to an extent path poपूर्णांकer (क्रम output)
  *
  * ext4_find_extent wrapper. Return 0 on success, or a negative error value
  * on failure.
  */
-static inline int
-get_ext_path(struct inode *inode, ext4_lblk_t lblock,
-		struct ext4_ext_path **ppath)
-{
-	struct ext4_ext_path *path;
+अटल अंतरभूत पूर्णांक
+get_ext_path(काष्ठा inode *inode, ext4_lblk_t lblock,
+		काष्ठा ext4_ext_path **ppath)
+अणु
+	काष्ठा ext4_ext_path *path;
 
 	path = ext4_find_extent(inode, lblock, ppath, EXT4_EX_NOCACHE);
-	if (IS_ERR(path))
-		return PTR_ERR(path);
-	if (path[ext_depth(inode)].p_ext == NULL) {
+	अगर (IS_ERR(path))
+		वापस PTR_ERR(path);
+	अगर (path[ext_depth(inode)].p_ext == शून्य) अणु
 		ext4_ext_drop_refs(path);
-		kfree(path);
-		*ppath = NULL;
-		return -ENODATA;
-	}
+		kमुक्त(path);
+		*ppath = शून्य;
+		वापस -ENODATA;
+	पूर्ण
 	*ppath = path;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ext4_double_down_write_data_sem() - write lock two inodes's i_data_sem
+ * ext4_द्विगुन_करोwn_ग_लिखो_data_sem() - ग_लिखो lock two inodes's i_data_sem
  * @first: inode to be locked
  * @second: inode to be locked
  *
- * Acquire write lock of i_data_sem of the two inodes
+ * Acquire ग_लिखो lock of i_data_sem of the two inodes
  */
-void
-ext4_double_down_write_data_sem(struct inode *first, struct inode *second)
-{
-	if (first < second) {
-		down_write(&EXT4_I(first)->i_data_sem);
-		down_write_nested(&EXT4_I(second)->i_data_sem, I_DATA_SEM_OTHER);
-	} else {
-		down_write(&EXT4_I(second)->i_data_sem);
-		down_write_nested(&EXT4_I(first)->i_data_sem, I_DATA_SEM_OTHER);
+व्योम
+ext4_द्विगुन_करोwn_ग_लिखो_data_sem(काष्ठा inode *first, काष्ठा inode *second)
+अणु
+	अगर (first < second) अणु
+		करोwn_ग_लिखो(&EXT4_I(first)->i_data_sem);
+		करोwn_ग_लिखो_nested(&EXT4_I(second)->i_data_sem, I_DATA_SEM_OTHER);
+	पूर्ण अन्यथा अणु
+		करोwn_ग_लिखो(&EXT4_I(second)->i_data_sem);
+		करोwn_ग_लिखो_nested(&EXT4_I(first)->i_data_sem, I_DATA_SEM_OTHER);
 
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ext4_double_up_write_data_sem - Release two inodes' write lock of i_data_sem
+ * ext4_द्विगुन_up_ग_लिखो_data_sem - Release two inodes' ग_लिखो lock of i_data_sem
  *
- * @orig_inode:		original inode structure to be released its lock first
- * @donor_inode:	donor inode structure to be released its lock second
- * Release write lock of i_data_sem of two inodes (orig and donor).
+ * @orig_inode:		original inode काष्ठाure to be released its lock first
+ * @करोnor_inode:	करोnor inode काष्ठाure to be released its lock second
+ * Release ग_लिखो lock of i_data_sem of two inodes (orig and करोnor).
  */
-void
-ext4_double_up_write_data_sem(struct inode *orig_inode,
-			      struct inode *donor_inode)
-{
-	up_write(&EXT4_I(orig_inode)->i_data_sem);
-	up_write(&EXT4_I(donor_inode)->i_data_sem);
-}
+व्योम
+ext4_द्विगुन_up_ग_लिखो_data_sem(काष्ठा inode *orig_inode,
+			      काष्ठा inode *करोnor_inode)
+अणु
+	up_ग_लिखो(&EXT4_I(orig_inode)->i_data_sem);
+	up_ग_लिखो(&EXT4_I(करोnor_inode)->i_data_sem);
+पूर्ण
 
 /**
  * mext_check_coverage - Check that all extents in range has the same type
@@ -82,315 +83,315 @@ ext4_double_up_write_data_sem(struct inode *orig_inode,
  * @from:		block offset of inode
  * @count:		block count to be checked
  * @unwritten:		extents expected to be unwritten
- * @err:		pointer to save error value
+ * @err:		poपूर्णांकer to save error value
  *
- * Return 1 if all extents in range has expected type, and zero otherwise.
+ * Return 1 अगर all extents in range has expected type, and zero otherwise.
  */
-static int
-mext_check_coverage(struct inode *inode, ext4_lblk_t from, ext4_lblk_t count,
-		    int unwritten, int *err)
-{
-	struct ext4_ext_path *path = NULL;
-	struct ext4_extent *ext;
-	int ret = 0;
+अटल पूर्णांक
+mext_check_coverage(काष्ठा inode *inode, ext4_lblk_t from, ext4_lblk_t count,
+		    पूर्णांक unwritten, पूर्णांक *err)
+अणु
+	काष्ठा ext4_ext_path *path = शून्य;
+	काष्ठा ext4_extent *ext;
+	पूर्णांक ret = 0;
 	ext4_lblk_t last = from + count;
-	while (from < last) {
+	जबतक (from < last) अणु
 		*err = get_ext_path(inode, from, &path);
-		if (*err)
-			goto out;
+		अगर (*err)
+			जाओ out;
 		ext = path[ext_depth(inode)].p_ext;
-		if (unwritten != ext4_ext_is_unwritten(ext))
-			goto out;
+		अगर (unwritten != ext4_ext_is_unwritten(ext))
+			जाओ out;
 		from += ext4_ext_get_actual_len(ext);
 		ext4_ext_drop_refs(path);
-	}
+	पूर्ण
 	ret = 1;
 out:
 	ext4_ext_drop_refs(path);
-	kfree(path);
-	return ret;
-}
+	kमुक्त(path);
+	वापस ret;
+पूर्ण
 
 /**
- * mext_page_double_lock - Grab and lock pages on both @inode1 and @inode2
+ * mext_page_द्विगुन_lock - Grab and lock pages on both @inode1 and @inode2
  *
- * @inode1:	the inode structure
- * @inode2:	the inode structure
+ * @inode1:	the inode काष्ठाure
+ * @inode2:	the inode काष्ठाure
  * @index1:	page index
  * @index2:	page index
  * @page:	result page vector
  *
- * Grab two locked pages for inode's by inode order
+ * Grab two locked pages क्रम inode's by inode order
  */
-static int
-mext_page_double_lock(struct inode *inode1, struct inode *inode2,
-		      pgoff_t index1, pgoff_t index2, struct page *page[2])
-{
-	struct address_space *mapping[2];
-	unsigned fl = AOP_FLAG_NOFS;
+अटल पूर्णांक
+mext_page_द्विगुन_lock(काष्ठा inode *inode1, काष्ठा inode *inode2,
+		      pgoff_t index1, pgoff_t index2, काष्ठा page *page[2])
+अणु
+	काष्ठा address_space *mapping[2];
+	अचिन्हित fl = AOP_FLAG_NOFS;
 
 	BUG_ON(!inode1 || !inode2);
-	if (inode1 < inode2) {
+	अगर (inode1 < inode2) अणु
 		mapping[0] = inode1->i_mapping;
 		mapping[1] = inode2->i_mapping;
-	} else {
+	पूर्ण अन्यथा अणु
 		swap(index1, index2);
 		mapping[0] = inode2->i_mapping;
 		mapping[1] = inode1->i_mapping;
-	}
+	पूर्ण
 
-	page[0] = grab_cache_page_write_begin(mapping[0], index1, fl);
-	if (!page[0])
-		return -ENOMEM;
+	page[0] = grab_cache_page_ग_लिखो_begin(mapping[0], index1, fl);
+	अगर (!page[0])
+		वापस -ENOMEM;
 
-	page[1] = grab_cache_page_write_begin(mapping[1], index2, fl);
-	if (!page[1]) {
+	page[1] = grab_cache_page_ग_लिखो_begin(mapping[1], index2, fl);
+	अगर (!page[1]) अणु
 		unlock_page(page[0]);
 		put_page(page[0]);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	/*
-	 * grab_cache_page_write_begin() may not wait on page's writeback if
+	 * grab_cache_page_ग_लिखो_begin() may not रुको on page's ग_लिखोback अगर
 	 * BDI not demand that. But it is reasonable to be very conservative
-	 * here and explicitly wait on page's writeback
+	 * here and explicitly रुको on page's ग_लिखोback
 	 */
-	wait_on_page_writeback(page[0]);
-	wait_on_page_writeback(page[1]);
-	if (inode1 > inode2)
+	रुको_on_page_ग_लिखोback(page[0]);
+	रुको_on_page_ग_लिखोback(page[1]);
+	अगर (inode1 > inode2)
 		swap(page[0], page[1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Force page buffers uptodate w/o dropping page's lock */
-static int
-mext_page_mkuptodate(struct page *page, unsigned from, unsigned to)
-{
-	struct inode *inode = page->mapping->host;
+अटल पूर्णांक
+mext_page_mkuptodate(काष्ठा page *page, अचिन्हित from, अचिन्हित to)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
 	sector_t block;
-	struct buffer_head *bh, *head, *arr[MAX_BUF_PER_PAGE];
-	unsigned int blocksize, block_start, block_end;
-	int i, err,  nr = 0, partial = 0;
+	काष्ठा buffer_head *bh, *head, *arr[MAX_BUF_PER_PAGE];
+	अचिन्हित पूर्णांक blocksize, block_start, block_end;
+	पूर्णांक i, err,  nr = 0, partial = 0;
 	BUG_ON(!PageLocked(page));
 	BUG_ON(PageWriteback(page));
 
-	if (PageUptodate(page))
-		return 0;
+	अगर (PageUptodate(page))
+		वापस 0;
 
 	blocksize = i_blocksize(inode);
-	if (!page_has_buffers(page))
+	अगर (!page_has_buffers(page))
 		create_empty_buffers(page, blocksize, 0);
 
 	head = page_buffers(page);
 	block = (sector_t)page->index << (PAGE_SHIFT - inode->i_blkbits);
-	for (bh = head, block_start = 0; bh != head || !block_start;
-	     block++, block_start = block_end, bh = bh->b_this_page) {
+	क्रम (bh = head, block_start = 0; bh != head || !block_start;
+	     block++, block_start = block_end, bh = bh->b_this_page) अणु
 		block_end = block_start + blocksize;
-		if (block_end <= from || block_start >= to) {
-			if (!buffer_uptodate(bh))
+		अगर (block_end <= from || block_start >= to) अणु
+			अगर (!buffer_uptodate(bh))
 				partial = 1;
-			continue;
-		}
-		if (buffer_uptodate(bh))
-			continue;
-		if (!buffer_mapped(bh)) {
+			जारी;
+		पूर्ण
+		अगर (buffer_uptodate(bh))
+			जारी;
+		अगर (!buffer_mapped(bh)) अणु
 			err = ext4_get_block(inode, block, bh, 0);
-			if (err) {
+			अगर (err) अणु
 				SetPageError(page);
-				return err;
-			}
-			if (!buffer_mapped(bh)) {
+				वापस err;
+			पूर्ण
+			अगर (!buffer_mapped(bh)) अणु
 				zero_user(page, block_start, blocksize);
 				set_buffer_uptodate(bh);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 		BUG_ON(nr >= MAX_BUF_PER_PAGE);
 		arr[nr++] = bh;
-	}
+	पूर्ण
 	/* No io required */
-	if (!nr)
-		goto out;
+	अगर (!nr)
+		जाओ out;
 
-	for (i = 0; i < nr; i++) {
+	क्रम (i = 0; i < nr; i++) अणु
 		bh = arr[i];
-		if (!bh_uptodate_or_lock(bh)) {
-			err = ext4_read_bh(bh, 0, NULL);
-			if (err)
-				return err;
-		}
-	}
+		अगर (!bh_uptodate_or_lock(bh)) अणु
+			err = ext4_पढ़ो_bh(bh, 0, शून्य);
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 out:
-	if (!partial)
+	अगर (!partial)
 		SetPageUptodate(page);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * move_extent_per_page - Move extent data per page
  *
- * @o_filp:			file structure of original file
- * @donor_inode:		donor inode
+ * @o_filp:			file काष्ठाure of original file
+ * @करोnor_inode:		करोnor inode
  * @orig_page_offset:		page index on original file
- * @donor_page_offset:		page index on donor file
+ * @करोnor_page_offset:		page index on करोnor file
  * @data_offset_in_page:	block index where data swapping starts
  * @block_len_in_page:		the number of blocks to be swapped
  * @unwritten:			orig extent is unwritten or not
- * @err:			pointer to save return value
+ * @err:			poपूर्णांकer to save वापस value
  *
  * Save the data in original inode blocks and replace original inode extents
- * with donor inode extents by calling ext4_swap_extents().
- * Finally, write out the saved data in new original inode blocks. Return
+ * with करोnor inode extents by calling ext4_swap_extents().
+ * Finally, ग_लिखो out the saved data in new original inode blocks. Return
  * replaced block count.
  */
-static int
-move_extent_per_page(struct file *o_filp, struct inode *donor_inode,
-		     pgoff_t orig_page_offset, pgoff_t donor_page_offset,
-		     int data_offset_in_page,
-		     int block_len_in_page, int unwritten, int *err)
-{
-	struct inode *orig_inode = file_inode(o_filp);
-	struct page *pagep[2] = {NULL, NULL};
+अटल पूर्णांक
+move_extent_per_page(काष्ठा file *o_filp, काष्ठा inode *करोnor_inode,
+		     pgoff_t orig_page_offset, pgoff_t करोnor_page_offset,
+		     पूर्णांक data_offset_in_page,
+		     पूर्णांक block_len_in_page, पूर्णांक unwritten, पूर्णांक *err)
+अणु
+	काष्ठा inode *orig_inode = file_inode(o_filp);
+	काष्ठा page *pagep[2] = अणुशून्य, शून्यपूर्ण;
 	handle_t *handle;
-	ext4_lblk_t orig_blk_offset, donor_blk_offset;
-	unsigned long blocksize = orig_inode->i_sb->s_blocksize;
-	unsigned int tmp_data_size, data_size, replaced_size;
-	int i, err2, jblocks, retries = 0;
-	int replaced_count = 0;
-	int from = data_offset_in_page << orig_inode->i_blkbits;
-	int blocks_per_page = PAGE_SIZE >> orig_inode->i_blkbits;
-	struct super_block *sb = orig_inode->i_sb;
-	struct buffer_head *bh = NULL;
+	ext4_lblk_t orig_blk_offset, करोnor_blk_offset;
+	अचिन्हित दीर्घ blocksize = orig_inode->i_sb->s_blocksize;
+	अचिन्हित पूर्णांक पंचांगp_data_size, data_size, replaced_size;
+	पूर्णांक i, err2, jblocks, retries = 0;
+	पूर्णांक replaced_count = 0;
+	पूर्णांक from = data_offset_in_page << orig_inode->i_blkbits;
+	पूर्णांक blocks_per_page = PAGE_SIZE >> orig_inode->i_blkbits;
+	काष्ठा super_block *sb = orig_inode->i_sb;
+	काष्ठा buffer_head *bh = शून्य;
 
 	/*
 	 * It needs twice the amount of ordinary journal buffers because
-	 * inode and donor_inode may change each different metadata blocks.
+	 * inode and करोnor_inode may change each dअगरferent metadata blocks.
 	 */
 again:
 	*err = 0;
-	jblocks = ext4_writepage_trans_blocks(orig_inode) * 2;
+	jblocks = ext4_ग_लिखोpage_trans_blocks(orig_inode) * 2;
 	handle = ext4_journal_start(orig_inode, EXT4_HT_MOVE_EXTENTS, jblocks);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		*err = PTR_ERR(handle);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	orig_blk_offset = orig_page_offset * blocks_per_page +
 		data_offset_in_page;
 
-	donor_blk_offset = donor_page_offset * blocks_per_page +
+	करोnor_blk_offset = करोnor_page_offset * blocks_per_page +
 		data_offset_in_page;
 
 	/* Calculate data_size */
-	if ((orig_blk_offset + block_len_in_page - 1) ==
-	    ((orig_inode->i_size - 1) >> orig_inode->i_blkbits)) {
+	अगर ((orig_blk_offset + block_len_in_page - 1) ==
+	    ((orig_inode->i_size - 1) >> orig_inode->i_blkbits)) अणु
 		/* Replace the last block */
-		tmp_data_size = orig_inode->i_size & (blocksize - 1);
+		पंचांगp_data_size = orig_inode->i_size & (blocksize - 1);
 		/*
 		 * If data_size equal zero, it shows data_size is multiples of
 		 * blocksize. So we set appropriate value.
 		 */
-		if (tmp_data_size == 0)
-			tmp_data_size = blocksize;
+		अगर (पंचांगp_data_size == 0)
+			पंचांगp_data_size = blocksize;
 
-		data_size = tmp_data_size +
+		data_size = पंचांगp_data_size +
 			((block_len_in_page - 1) << orig_inode->i_blkbits);
-	} else
+	पूर्ण अन्यथा
 		data_size = block_len_in_page << orig_inode->i_blkbits;
 
 	replaced_size = data_size;
 
-	*err = mext_page_double_lock(orig_inode, donor_inode, orig_page_offset,
-				     donor_page_offset, pagep);
-	if (unlikely(*err < 0))
-		goto stop_journal;
+	*err = mext_page_द्विगुन_lock(orig_inode, करोnor_inode, orig_page_offset,
+				     करोnor_page_offset, pagep);
+	अगर (unlikely(*err < 0))
+		जाओ stop_journal;
 	/*
 	 * If orig extent was unwritten it can become initialized
-	 * at any time after i_data_sem was dropped, in order to
-	 * serialize with delalloc we have recheck extent while we
-	 * hold page's lock, if it is still the case data copy is not
-	 * necessary, just swap data blocks between orig and donor.
+	 * at any समय after i_data_sem was dropped, in order to
+	 * serialize with delalloc we have recheck extent जबतक we
+	 * hold page's lock, अगर it is still the हाल data copy is not
+	 * necessary, just swap data blocks between orig and करोnor.
 	 */
-	if (unwritten) {
-		ext4_double_down_write_data_sem(orig_inode, donor_inode);
+	अगर (unwritten) अणु
+		ext4_द्विगुन_करोwn_ग_लिखो_data_sem(orig_inode, करोnor_inode);
 		/* If any of extents in range became initialized we have to
 		 * fallback to data copying */
 		unwritten = mext_check_coverage(orig_inode, orig_blk_offset,
 						block_len_in_page, 1, err);
-		if (*err)
-			goto drop_data_sem;
+		अगर (*err)
+			जाओ drop_data_sem;
 
-		unwritten &= mext_check_coverage(donor_inode, donor_blk_offset,
+		unwritten &= mext_check_coverage(करोnor_inode, करोnor_blk_offset,
 						 block_len_in_page, 1, err);
-		if (*err)
-			goto drop_data_sem;
+		अगर (*err)
+			जाओ drop_data_sem;
 
-		if (!unwritten) {
-			ext4_double_up_write_data_sem(orig_inode, donor_inode);
-			goto data_copy;
-		}
-		if ((page_has_private(pagep[0]) &&
+		अगर (!unwritten) अणु
+			ext4_द्विगुन_up_ग_लिखो_data_sem(orig_inode, करोnor_inode);
+			जाओ data_copy;
+		पूर्ण
+		अगर ((page_has_निजी(pagep[0]) &&
 		     !try_to_release_page(pagep[0], 0)) ||
-		    (page_has_private(pagep[1]) &&
-		     !try_to_release_page(pagep[1], 0))) {
+		    (page_has_निजी(pagep[1]) &&
+		     !try_to_release_page(pagep[1], 0))) अणु
 			*err = -EBUSY;
-			goto drop_data_sem;
-		}
+			जाओ drop_data_sem;
+		पूर्ण
 		replaced_count = ext4_swap_extents(handle, orig_inode,
-						   donor_inode, orig_blk_offset,
-						   donor_blk_offset,
+						   करोnor_inode, orig_blk_offset,
+						   करोnor_blk_offset,
 						   block_len_in_page, 1, err);
 	drop_data_sem:
-		ext4_double_up_write_data_sem(orig_inode, donor_inode);
-		goto unlock_pages;
-	}
+		ext4_द्विगुन_up_ग_लिखो_data_sem(orig_inode, करोnor_inode);
+		जाओ unlock_pages;
+	पूर्ण
 data_copy:
 	*err = mext_page_mkuptodate(pagep[0], from, from + replaced_size);
-	if (*err)
-		goto unlock_pages;
+	अगर (*err)
+		जाओ unlock_pages;
 
-	/* At this point all buffers in range are uptodate, old mapping layout
-	 * is no longer required, try to drop it now. */
-	if ((page_has_private(pagep[0]) && !try_to_release_page(pagep[0], 0)) ||
-	    (page_has_private(pagep[1]) && !try_to_release_page(pagep[1], 0))) {
+	/* At this poपूर्णांक all buffers in range are uptodate, old mapping layout
+	 * is no दीर्घer required, try to drop it now. */
+	अगर ((page_has_निजी(pagep[0]) && !try_to_release_page(pagep[0], 0)) ||
+	    (page_has_निजी(pagep[1]) && !try_to_release_page(pagep[1], 0))) अणु
 		*err = -EBUSY;
-		goto unlock_pages;
-	}
-	ext4_double_down_write_data_sem(orig_inode, donor_inode);
-	replaced_count = ext4_swap_extents(handle, orig_inode, donor_inode,
-					       orig_blk_offset, donor_blk_offset,
+		जाओ unlock_pages;
+	पूर्ण
+	ext4_द्विगुन_करोwn_ग_लिखो_data_sem(orig_inode, करोnor_inode);
+	replaced_count = ext4_swap_extents(handle, orig_inode, करोnor_inode,
+					       orig_blk_offset, करोnor_blk_offset,
 					   block_len_in_page, 1, err);
-	ext4_double_up_write_data_sem(orig_inode, donor_inode);
-	if (*err) {
-		if (replaced_count) {
+	ext4_द्विगुन_up_ग_लिखो_data_sem(orig_inode, करोnor_inode);
+	अगर (*err) अणु
+		अगर (replaced_count) अणु
 			block_len_in_page = replaced_count;
 			replaced_size =
 				block_len_in_page << orig_inode->i_blkbits;
-		} else
-			goto unlock_pages;
-	}
-	/* Perform all necessary steps similar write_begin()/write_end()
+		पूर्ण अन्यथा
+			जाओ unlock_pages;
+	पूर्ण
+	/* Perक्रमm all necessary steps similar ग_लिखो_begin()/ग_लिखो_end()
 	 * but keeping in mind that i_size will not change */
-	if (!page_has_buffers(pagep[0]))
+	अगर (!page_has_buffers(pagep[0]))
 		create_empty_buffers(pagep[0], 1 << orig_inode->i_blkbits, 0);
 	bh = page_buffers(pagep[0]);
-	for (i = 0; i < data_offset_in_page; i++)
+	क्रम (i = 0; i < data_offset_in_page; i++)
 		bh = bh->b_this_page;
-	for (i = 0; i < block_len_in_page; i++) {
+	क्रम (i = 0; i < block_len_in_page; i++) अणु
 		*err = ext4_get_block(orig_inode, orig_blk_offset + i, bh, 0);
-		if (*err < 0)
-			break;
+		अगर (*err < 0)
+			अवरोध;
 		bh = bh->b_this_page;
-	}
-	if (!*err)
-		*err = block_commit_write(pagep[0], from, from + replaced_size);
+	पूर्ण
+	अगर (!*err)
+		*err = block_commit_ग_लिखो(pagep[0], from, from + replaced_size);
 
-	if (unlikely(*err < 0))
-		goto repair_branches;
+	अगर (unlikely(*err < 0))
+		जाओ repair_branches;
 
-	/* Even in case of data=writeback it is reasonable to pin
+	/* Even in हाल of data=ग_लिखोback it is reasonable to pin
 	 * inode to transaction, to prevent unexpected data loss */
-	*err = ext4_jbd2_inode_add_write(handle, orig_inode,
+	*err = ext4_jbd2_inode_add_ग_लिखो(handle, orig_inode,
 			(loff_t)orig_page_offset << PAGE_SHIFT, replaced_size);
 
 unlock_pages:
@@ -400,300 +401,300 @@ unlock_pages:
 	put_page(pagep[1]);
 stop_journal:
 	ext4_journal_stop(handle);
-	if (*err == -ENOSPC &&
+	अगर (*err == -ENOSPC &&
 	    ext4_should_retry_alloc(sb, &retries))
-		goto again;
+		जाओ again;
 	/* Buffer was busy because probably is pinned to journal transaction,
-	 * force transaction commit may help to free it. */
-	if (*err == -EBUSY && retries++ < 4 && EXT4_SB(sb)->s_journal &&
-	    jbd2_journal_force_commit_nested(EXT4_SB(sb)->s_journal))
-		goto again;
-	return replaced_count;
+	 * क्रमce transaction commit may help to मुक्त it. */
+	अगर (*err == -EBUSY && retries++ < 4 && EXT4_SB(sb)->s_journal &&
+	    jbd2_journal_क्रमce_commit_nested(EXT4_SB(sb)->s_journal))
+		जाओ again;
+	वापस replaced_count;
 
 repair_branches:
 	/*
 	 * This should never ever happen!
-	 * Extents are swapped already, but we are not able to copy data.
+	 * Extents are swapped alपढ़ोy, but we are not able to copy data.
 	 * Try to swap extents to it's original places
 	 */
-	ext4_double_down_write_data_sem(orig_inode, donor_inode);
-	replaced_count = ext4_swap_extents(handle, donor_inode, orig_inode,
-					       orig_blk_offset, donor_blk_offset,
+	ext4_द्विगुन_करोwn_ग_लिखो_data_sem(orig_inode, करोnor_inode);
+	replaced_count = ext4_swap_extents(handle, करोnor_inode, orig_inode,
+					       orig_blk_offset, करोnor_blk_offset,
 					   block_len_in_page, 0, &err2);
-	ext4_double_up_write_data_sem(orig_inode, donor_inode);
-	if (replaced_count != block_len_in_page) {
+	ext4_द्विगुन_up_ग_लिखो_data_sem(orig_inode, करोnor_inode);
+	अगर (replaced_count != block_len_in_page) अणु
 		ext4_error_inode_block(orig_inode, (sector_t)(orig_blk_offset),
 				       EIO, "Unable to copy data block,"
 				       " data will be lost.");
 		*err = -EIO;
-	}
+	पूर्ण
 	replaced_count = 0;
-	goto unlock_pages;
-}
+	जाओ unlock_pages;
+पूर्ण
 
 /**
- * mext_check_arguments - Check whether move extent can be done
+ * mext_check_arguments - Check whether move extent can be करोne
  *
  * @orig_inode:		original inode
- * @donor_inode:	donor inode
- * @orig_start:		logical start offset in block for orig
- * @donor_start:	logical start offset in block for donor
+ * @करोnor_inode:	करोnor inode
+ * @orig_start:		logical start offset in block क्रम orig
+ * @करोnor_start:	logical start offset in block क्रम करोnor
  * @len:		the number of blocks to be moved
  *
  * Check the arguments of ext4_move_extents() whether the files can be
  * exchanged with each other.
  * Return 0 on success, or a negative error value on failure.
  */
-static int
-mext_check_arguments(struct inode *orig_inode,
-		     struct inode *donor_inode, __u64 orig_start,
-		     __u64 donor_start, __u64 *len)
-{
-	__u64 orig_eof, donor_eof;
-	unsigned int blkbits = orig_inode->i_blkbits;
-	unsigned int blocksize = 1 << blkbits;
+अटल पूर्णांक
+mext_check_arguments(काष्ठा inode *orig_inode,
+		     काष्ठा inode *करोnor_inode, __u64 orig_start,
+		     __u64 करोnor_start, __u64 *len)
+अणु
+	__u64 orig_eof, करोnor_eof;
+	अचिन्हित पूर्णांक blkbits = orig_inode->i_blkbits;
+	अचिन्हित पूर्णांक blocksize = 1 << blkbits;
 
-	orig_eof = (i_size_read(orig_inode) + blocksize - 1) >> blkbits;
-	donor_eof = (i_size_read(donor_inode) + blocksize - 1) >> blkbits;
+	orig_eof = (i_size_पढ़ो(orig_inode) + blocksize - 1) >> blkbits;
+	करोnor_eof = (i_size_पढ़ो(करोnor_inode) + blocksize - 1) >> blkbits;
 
 
-	if (donor_inode->i_mode & (S_ISUID|S_ISGID)) {
+	अगर (करोnor_inode->i_mode & (S_ISUID|S_ISGID)) अणु
 		ext4_debug("ext4 move extent: suid or sgid is set"
 			   " to donor file [ino:orig %lu, donor %lu]\n",
-			   orig_inode->i_ino, donor_inode->i_ino);
-		return -EINVAL;
-	}
+			   orig_inode->i_ino, करोnor_inode->i_ino);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (IS_IMMUTABLE(donor_inode) || IS_APPEND(donor_inode))
-		return -EPERM;
+	अगर (IS_IMMUTABLE(करोnor_inode) || IS_APPEND(करोnor_inode))
+		वापस -EPERM;
 
-	/* Ext4 move extent does not support swapfile */
-	if (IS_SWAPFILE(orig_inode) || IS_SWAPFILE(donor_inode)) {
+	/* Ext4 move extent करोes not support swapfile */
+	अगर (IS_SWAPखाता(orig_inode) || IS_SWAPखाता(करोnor_inode)) अणु
 		ext4_debug("ext4 move extent: The argument files should "
 			"not be swapfile [ino:orig %lu, donor %lu]\n",
-			orig_inode->i_ino, donor_inode->i_ino);
-		return -EBUSY;
-	}
+			orig_inode->i_ino, करोnor_inode->i_ino);
+		वापस -EBUSY;
+	पूर्ण
 
-	if (ext4_is_quota_file(orig_inode) && ext4_is_quota_file(donor_inode)) {
+	अगर (ext4_is_quota_file(orig_inode) && ext4_is_quota_file(करोnor_inode)) अणु
 		ext4_debug("ext4 move extent: The argument files should "
 			"not be quota files [ino:orig %lu, donor %lu]\n",
-			orig_inode->i_ino, donor_inode->i_ino);
-		return -EBUSY;
-	}
+			orig_inode->i_ino, करोnor_inode->i_ino);
+		वापस -EBUSY;
+	पूर्ण
 
 	/* Ext4 move extent supports only extent based file */
-	if (!(ext4_test_inode_flag(orig_inode, EXT4_INODE_EXTENTS))) {
+	अगर (!(ext4_test_inode_flag(orig_inode, EXT4_INODE_EXTENTS))) अणु
 		ext4_debug("ext4 move extent: orig file is not extents "
 			"based file [ino:orig %lu]\n", orig_inode->i_ino);
-		return -EOPNOTSUPP;
-	} else if (!(ext4_test_inode_flag(donor_inode, EXT4_INODE_EXTENTS))) {
+		वापस -EOPNOTSUPP;
+	पूर्ण अन्यथा अगर (!(ext4_test_inode_flag(करोnor_inode, EXT4_INODE_EXTENTS))) अणु
 		ext4_debug("ext4 move extent: donor file is not extents "
-			"based file [ino:donor %lu]\n", donor_inode->i_ino);
-		return -EOPNOTSUPP;
-	}
+			"based file [ino:donor %lu]\n", करोnor_inode->i_ino);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if ((!orig_inode->i_size) || (!donor_inode->i_size)) {
+	अगर ((!orig_inode->i_size) || (!करोnor_inode->i_size)) अणु
 		ext4_debug("ext4 move extent: File size is 0 byte\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Start offset should be same */
-	if ((orig_start & ~(PAGE_MASK >> orig_inode->i_blkbits)) !=
-	    (donor_start & ~(PAGE_MASK >> orig_inode->i_blkbits))) {
+	अगर ((orig_start & ~(PAGE_MASK >> orig_inode->i_blkbits)) !=
+	    (करोnor_start & ~(PAGE_MASK >> orig_inode->i_blkbits))) अणु
 		ext4_debug("ext4 move extent: orig and donor's start "
 			"offsets are not aligned [ino:orig %lu, donor %lu]\n",
-			orig_inode->i_ino, donor_inode->i_ino);
-		return -EINVAL;
-	}
+			orig_inode->i_ino, करोnor_inode->i_ino);
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((orig_start >= EXT_MAX_BLOCKS) ||
-	    (donor_start >= EXT_MAX_BLOCKS) ||
+	अगर ((orig_start >= EXT_MAX_BLOCKS) ||
+	    (करोnor_start >= EXT_MAX_BLOCKS) ||
 	    (*len > EXT_MAX_BLOCKS) ||
-	    (donor_start + *len >= EXT_MAX_BLOCKS) ||
-	    (orig_start + *len >= EXT_MAX_BLOCKS))  {
+	    (करोnor_start + *len >= EXT_MAX_BLOCKS) ||
+	    (orig_start + *len >= EXT_MAX_BLOCKS))  अणु
 		ext4_debug("ext4 move extent: Can't handle over [%u] blocks "
 			"[ino:orig %lu, donor %lu]\n", EXT_MAX_BLOCKS,
-			orig_inode->i_ino, donor_inode->i_ino);
-		return -EINVAL;
-	}
-	if (orig_eof <= orig_start)
+			orig_inode->i_ino, करोnor_inode->i_ino);
+		वापस -EINVAL;
+	पूर्ण
+	अगर (orig_eof <= orig_start)
 		*len = 0;
-	else if (orig_eof < orig_start + *len - 1)
+	अन्यथा अगर (orig_eof < orig_start + *len - 1)
 		*len = orig_eof - orig_start;
-	if (donor_eof <= donor_start)
+	अगर (करोnor_eof <= करोnor_start)
 		*len = 0;
-	else if (donor_eof < donor_start + *len - 1)
-		*len = donor_eof - donor_start;
-	if (!*len) {
+	अन्यथा अगर (करोnor_eof < करोnor_start + *len - 1)
+		*len = करोnor_eof - करोnor_start;
+	अगर (!*len) अणु
 		ext4_debug("ext4 move extent: len should not be 0 "
 			"[ino:orig %lu, donor %lu]\n", orig_inode->i_ino,
-			donor_inode->i_ino);
-		return -EINVAL;
-	}
+			करोnor_inode->i_ino);
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ext4_move_extents - Exchange the specified range of a file
+ * ext4_move_extents - Exchange the specअगरied range of a file
  *
- * @o_filp:		file structure of the original file
- * @d_filp:		file structure of the donor file
- * @orig_blk:		start offset in block for orig
- * @donor_blk:		start offset in block for donor
+ * @o_filp:		file काष्ठाure of the original file
+ * @d_filp:		file काष्ठाure of the करोnor file
+ * @orig_blk:		start offset in block क्रम orig
+ * @करोnor_blk:		start offset in block क्रम करोnor
  * @len:		the number of blocks to be moved
  * @moved_len:		moved block length
  *
- * This function returns 0 and moved block length is set in moved_len
- * if succeed, otherwise returns error value.
+ * This function वापसs 0 and moved block length is set in moved_len
+ * अगर succeed, otherwise वापसs error value.
  *
  */
-int
-ext4_move_extents(struct file *o_filp, struct file *d_filp, __u64 orig_blk,
-		  __u64 donor_blk, __u64 len, __u64 *moved_len)
-{
-	struct inode *orig_inode = file_inode(o_filp);
-	struct inode *donor_inode = file_inode(d_filp);
-	struct ext4_ext_path *path = NULL;
-	int blocks_per_page = PAGE_SIZE >> orig_inode->i_blkbits;
+पूर्णांक
+ext4_move_extents(काष्ठा file *o_filp, काष्ठा file *d_filp, __u64 orig_blk,
+		  __u64 करोnor_blk, __u64 len, __u64 *moved_len)
+अणु
+	काष्ठा inode *orig_inode = file_inode(o_filp);
+	काष्ठा inode *करोnor_inode = file_inode(d_filp);
+	काष्ठा ext4_ext_path *path = शून्य;
+	पूर्णांक blocks_per_page = PAGE_SIZE >> orig_inode->i_blkbits;
 	ext4_lblk_t o_end, o_start = orig_blk;
-	ext4_lblk_t d_start = donor_blk;
-	int ret;
+	ext4_lblk_t d_start = करोnor_blk;
+	पूर्णांक ret;
 
-	if (orig_inode->i_sb != donor_inode->i_sb) {
+	अगर (orig_inode->i_sb != करोnor_inode->i_sb) अणु
 		ext4_debug("ext4 move extent: The argument files "
 			"should be in same FS [ino:orig %lu, donor %lu]\n",
-			orig_inode->i_ino, donor_inode->i_ino);
-		return -EINVAL;
-	}
+			orig_inode->i_ino, करोnor_inode->i_ino);
+		वापस -EINVAL;
+	पूर्ण
 
-	/* orig and donor should be different inodes */
-	if (orig_inode == donor_inode) {
+	/* orig and करोnor should be dअगरferent inodes */
+	अगर (orig_inode == करोnor_inode) अणु
 		ext4_debug("ext4 move extent: The argument files should not "
 			"be same inode [ino:orig %lu, donor %lu]\n",
-			orig_inode->i_ino, donor_inode->i_ino);
-		return -EINVAL;
-	}
+			orig_inode->i_ino, करोnor_inode->i_ino);
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Regular file check */
-	if (!S_ISREG(orig_inode->i_mode) || !S_ISREG(donor_inode->i_mode)) {
+	अगर (!S_ISREG(orig_inode->i_mode) || !S_ISREG(करोnor_inode->i_mode)) अणु
 		ext4_debug("ext4 move extent: The argument files should be "
 			"regular file [ino:orig %lu, donor %lu]\n",
-			orig_inode->i_ino, donor_inode->i_ino);
-		return -EINVAL;
-	}
+			orig_inode->i_ino, करोnor_inode->i_ino);
+		वापस -EINVAL;
+	पूर्ण
 
-	/* TODO: it's not obvious how to swap blocks for inodes with full
+	/* TODO: it's not obvious how to swap blocks क्रम inodes with full
 	   journaling enabled */
-	if (ext4_should_journal_data(orig_inode) ||
-	    ext4_should_journal_data(donor_inode)) {
+	अगर (ext4_should_journal_data(orig_inode) ||
+	    ext4_should_journal_data(करोnor_inode)) अणु
 		ext4_msg(orig_inode->i_sb, KERN_ERR,
 			 "Online defrag not supported with data journaling");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (IS_ENCRYPTED(orig_inode) || IS_ENCRYPTED(donor_inode)) {
+	अगर (IS_ENCRYPTED(orig_inode) || IS_ENCRYPTED(करोnor_inode)) अणु
 		ext4_msg(orig_inode->i_sb, KERN_ERR,
 			 "Online defrag not supported for encrypted files");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	/* Protect orig and donor inodes against a truncate */
-	lock_two_nondirectories(orig_inode, donor_inode);
+	/* Protect orig and करोnor inodes against a truncate */
+	lock_two_nondirectories(orig_inode, करोnor_inode);
 
-	/* Wait for all existing dio workers */
-	inode_dio_wait(orig_inode);
-	inode_dio_wait(donor_inode);
+	/* Wait क्रम all existing dio workers */
+	inode_dio_रुको(orig_inode);
+	inode_dio_रुको(करोnor_inode);
 
 	/* Protect extent tree against block allocations via delalloc */
-	ext4_double_down_write_data_sem(orig_inode, donor_inode);
-	/* Check the filesystem environment whether move_extent can be done */
-	ret = mext_check_arguments(orig_inode, donor_inode, orig_blk,
-				    donor_blk, &len);
-	if (ret)
-		goto out;
+	ext4_द्विगुन_करोwn_ग_लिखो_data_sem(orig_inode, करोnor_inode);
+	/* Check the fileप्रणाली environment whether move_extent can be करोne */
+	ret = mext_check_arguments(orig_inode, करोnor_inode, orig_blk,
+				    करोnor_blk, &len);
+	अगर (ret)
+		जाओ out;
 	o_end = o_start + len;
 
-	while (o_start < o_end) {
-		struct ext4_extent *ex;
+	जबतक (o_start < o_end) अणु
+		काष्ठा ext4_extent *ex;
 		ext4_lblk_t cur_blk, next_blk;
-		pgoff_t orig_page_index, donor_page_index;
-		int offset_in_page;
-		int unwritten, cur_len;
+		pgoff_t orig_page_index, करोnor_page_index;
+		पूर्णांक offset_in_page;
+		पूर्णांक unwritten, cur_len;
 
 		ret = get_ext_path(orig_inode, o_start, &path);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 		ex = path[path->p_depth].p_ext;
 		next_blk = ext4_ext_next_allocated_block(path);
 		cur_blk = le32_to_cpu(ex->ee_block);
 		cur_len = ext4_ext_get_actual_len(ex);
-		/* Check hole before the start pos */
-		if (cur_blk + cur_len - 1 < o_start) {
-			if (next_blk == EXT_MAX_BLOCKS) {
+		/* Check hole beक्रमe the start pos */
+		अगर (cur_blk + cur_len - 1 < o_start) अणु
+			अगर (next_blk == EXT_MAX_BLOCKS) अणु
 				o_start = o_end;
 				ret = -ENODATA;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			d_start += next_blk - o_start;
 			o_start = next_blk;
-			continue;
+			जारी;
 		/* Check hole after the start pos */
-		} else if (cur_blk > o_start) {
+		पूर्ण अन्यथा अगर (cur_blk > o_start) अणु
 			/* Skip hole */
 			d_start += cur_blk - o_start;
 			o_start = cur_blk;
 			/* Extent inside requested range ?*/
-			if (cur_blk >= o_end)
-				goto out;
-		} else { /* in_range(o_start, o_blk, o_len) */
+			अगर (cur_blk >= o_end)
+				जाओ out;
+		पूर्ण अन्यथा अणु /* in_range(o_start, o_blk, o_len) */
 			cur_len += cur_blk - o_start;
-		}
+		पूर्ण
 		unwritten = ext4_ext_is_unwritten(ex);
-		if (o_end - o_start < cur_len)
+		अगर (o_end - o_start < cur_len)
 			cur_len = o_end - o_start;
 
 		orig_page_index = o_start >> (PAGE_SHIFT -
 					       orig_inode->i_blkbits);
-		donor_page_index = d_start >> (PAGE_SHIFT -
-					       donor_inode->i_blkbits);
+		करोnor_page_index = d_start >> (PAGE_SHIFT -
+					       करोnor_inode->i_blkbits);
 		offset_in_page = o_start % blocks_per_page;
-		if (cur_len > blocks_per_page- offset_in_page)
+		अगर (cur_len > blocks_per_page- offset_in_page)
 			cur_len = blocks_per_page - offset_in_page;
 		/*
-		 * Up semaphore to avoid following problems:
+		 * Up semaphore to aव्योम following problems:
 		 * a. transaction deadlock among ext4_journal_start,
-		 *    ->write_begin via pagefault, and jbd2_journal_commit
-		 * b. racing with ->readpage, ->write_begin, and ext4_get_block
+		 *    ->ग_लिखो_begin via pagefault, and jbd2_journal_commit
+		 * b. racing with ->पढ़ोpage, ->ग_लिखो_begin, and ext4_get_block
 		 *    in move_extent_per_page
 		 */
-		ext4_double_up_write_data_sem(orig_inode, donor_inode);
+		ext4_द्विगुन_up_ग_लिखो_data_sem(orig_inode, करोnor_inode);
 		/* Swap original branches with new branches */
-		move_extent_per_page(o_filp, donor_inode,
-				     orig_page_index, donor_page_index,
+		move_extent_per_page(o_filp, करोnor_inode,
+				     orig_page_index, करोnor_page_index,
 				     offset_in_page, cur_len,
 				     unwritten, &ret);
-		ext4_double_down_write_data_sem(orig_inode, donor_inode);
-		if (ret < 0)
-			break;
+		ext4_द्विगुन_करोwn_ग_लिखो_data_sem(orig_inode, करोnor_inode);
+		अगर (ret < 0)
+			अवरोध;
 		o_start += cur_len;
 		d_start += cur_len;
-	}
+	पूर्ण
 	*moved_len = o_start - orig_blk;
-	if (*moved_len > len)
+	अगर (*moved_len > len)
 		*moved_len = len;
 
 out:
-	if (*moved_len) {
-		ext4_discard_preallocations(orig_inode, 0);
-		ext4_discard_preallocations(donor_inode, 0);
-	}
+	अगर (*moved_len) अणु
+		ext4_discard_pपुनः_स्मृतिations(orig_inode, 0);
+		ext4_discard_pपुनः_स्मृतिations(करोnor_inode, 0);
+	पूर्ण
 
 	ext4_ext_drop_refs(path);
-	kfree(path);
-	ext4_double_up_write_data_sem(orig_inode, donor_inode);
-	unlock_two_nondirectories(orig_inode, donor_inode);
+	kमुक्त(path);
+	ext4_द्विगुन_up_ग_लिखो_data_sem(orig_inode, करोnor_inode);
+	unlock_two_nondirectories(orig_inode, करोnor_inode);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

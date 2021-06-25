@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PLATFORM_DATA_ETH_IXP4XX
-#define __PLATFORM_DATA_ETH_IXP4XX
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PLATFORM_DATA_ETH_IXP4XX
+#घोषणा __PLATFORM_DATA_ETH_IXP4XX
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define IXP4XX_ETH_NPEA		0x00
-#define IXP4XX_ETH_NPEB		0x10
-#define IXP4XX_ETH_NPEC		0x20
+#घोषणा IXP4XX_ETH_NPEA		0x00
+#घोषणा IXP4XX_ETH_NPEB		0x10
+#घोषणा IXP4XX_ETH_NPEC		0x20
 
-/* Information about built-in Ethernet MAC interfaces */
-struct eth_plat_info {
+/* Inक्रमmation about built-in Ethernet MAC पूर्णांकerfaces */
+काष्ठा eth_plat_info अणु
 	u8 phy;		/* MII PHY ID, 0 - 31 */
 	u8 rxq;		/* configurable, currently 0 - 31 only */
-	u8 txreadyq;
+	u8 txपढ़ोyq;
 	u8 hwaddr[6];
-	u8 npe;		/* NPE instance used by this interface */
+	u8 npe;		/* NPE instance used by this पूर्णांकerface */
 	bool has_mdio;	/* If this instance has an MDIO bus */
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * FILS AEAD for (Re)Association Request/Response frames
+ * FILS AEAD क्रम (Re)Association Request/Response frames
  * Copyright 2016, Qualcomm Atheros, Inc.
  */
 
-#include <crypto/aes.h>
-#include <crypto/algapi.h>
-#include <crypto/hash.h>
-#include <crypto/skcipher.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/hash.h>
+#समावेश <crypto/skcipher.h>
 
-#include "ieee80211_i.h"
-#include "aes_cmac.h"
-#include "fils_aead.h"
+#समावेश "ieee80211_i.h"
+#समावेश "aes_cmac.h"
+#समावेश "fils_aead.h"
 
-static void gf_mulx(u8 *pad)
-{
+अटल व्योम gf_mulx(u8 *pad)
+अणु
 	u64 a = get_unaligned_be64(pad);
 	u64 b = get_unaligned_be64(pad + 8);
 
 	put_unaligned_be64((a << 1) | (b >> 63), pad);
 	put_unaligned_be64((b << 1) ^ ((a >> 63) ? 0x87 : 0), pad + 8);
-}
+पूर्ण
 
-static int aes_s2v(struct crypto_shash *tfm,
-		   size_t num_elem, const u8 *addr[], size_t len[], u8 *v)
-{
-	u8 d[AES_BLOCK_SIZE], tmp[AES_BLOCK_SIZE] = {};
+अटल पूर्णांक aes_s2v(काष्ठा crypto_shash *tfm,
+		   माप_प्रकार num_elem, स्थिर u8 *addr[], माप_प्रकार len[], u8 *v)
+अणु
+	u8 d[AES_BLOCK_SIZE], पंचांगp[AES_BLOCK_SIZE] = अणुपूर्ण;
 	SHASH_DESC_ON_STACK(desc, tfm);
-	size_t i;
+	माप_प्रकार i;
 
 	desc->tfm = tfm;
 
 	/* D = AES-CMAC(K, <zero>) */
-	crypto_shash_digest(desc, tmp, AES_BLOCK_SIZE, d);
+	crypto_shash_digest(desc, पंचांगp, AES_BLOCK_SIZE, d);
 
-	for (i = 0; i < num_elem - 1; i++) {
+	क्रम (i = 0; i < num_elem - 1; i++) अणु
 		/* D = dbl(D) xor AES_CMAC(K, Si) */
 		gf_mulx(d); /* dbl */
-		crypto_shash_digest(desc, addr[i], len[i], tmp);
-		crypto_xor(d, tmp, AES_BLOCK_SIZE);
-	}
+		crypto_shash_digest(desc, addr[i], len[i], पंचांगp);
+		crypto_xor(d, पंचांगp, AES_BLOCK_SIZE);
+	पूर्ण
 
 	crypto_shash_init(desc);
 
-	if (len[i] >= AES_BLOCK_SIZE) {
+	अगर (len[i] >= AES_BLOCK_SIZE) अणु
 		/* len(Sn) >= 128 */
 		/* T = Sn xorend D */
 		crypto_shash_update(desc, addr[i], len[i] - AES_BLOCK_SIZE);
 		crypto_xor(d, addr[i] + len[i] - AES_BLOCK_SIZE,
 			   AES_BLOCK_SIZE);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* len(Sn) < 128 */
 		/* T = dbl(D) xor pad(Sn) */
 		gf_mulx(d); /* dbl */
 		crypto_xor(d, addr[i], len[i]);
 		d[len[i]] ^= 0x80;
-	}
+	पूर्ण
 	/* V = AES-CMAC(K, T) */
 	crypto_shash_finup(desc, d, AES_BLOCK_SIZE, v);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Note: addr[] and len[] needs to have one extra slot at the end. */
-static int aes_siv_encrypt(const u8 *key, size_t key_len,
-			   const u8 *plain, size_t plain_len,
-			   size_t num_elem, const u8 *addr[],
-			   size_t len[], u8 *out)
-{
+अटल पूर्णांक aes_siv_encrypt(स्थिर u8 *key, माप_प्रकार key_len,
+			   स्थिर u8 *plain, माप_प्रकार plain_len,
+			   माप_प्रकार num_elem, स्थिर u8 *addr[],
+			   माप_प्रकार len[], u8 *out)
+अणु
 	u8 v[AES_BLOCK_SIZE];
-	struct crypto_shash *tfm;
-	struct crypto_skcipher *tfm2;
-	struct skcipher_request *req;
-	int res;
-	struct scatterlist src[1], dst[1];
-	u8 *tmp;
+	काष्ठा crypto_shash *tfm;
+	काष्ठा crypto_skcipher *tfm2;
+	काष्ठा skcipher_request *req;
+	पूर्णांक res;
+	काष्ठा scatterlist src[1], dst[1];
+	u8 *पंचांगp;
 
 	key_len /= 2; /* S2V key || CTR key */
 
@@ -85,25 +86,25 @@ static int aes_siv_encrypt(const u8 *key, size_t key_len,
 	/* S2V */
 
 	tfm = crypto_alloc_shash("cmac(aes)", 0, 0);
-	if (IS_ERR(tfm))
-		return PTR_ERR(tfm);
-	/* K1 for S2V */
+	अगर (IS_ERR(tfm))
+		वापस PTR_ERR(tfm);
+	/* K1 क्रम S2V */
 	res = crypto_shash_setkey(tfm, key, key_len);
-	if (!res)
+	अगर (!res)
 		res = aes_s2v(tfm, num_elem, addr, len, v);
-	crypto_free_shash(tfm);
-	if (res)
-		return res;
+	crypto_मुक्त_shash(tfm);
+	अगर (res)
+		वापस res;
 
-	/* Use a temporary buffer of the plaintext to handle need for
+	/* Use a temporary buffer of the plaपूर्णांकext to handle need क्रम
 	 * overwriting this during AES-CTR.
 	 */
-	tmp = kmemdup(plain, plain_len, GFP_KERNEL);
-	if (!tmp)
-		return -ENOMEM;
+	पंचांगp = kmemdup(plain, plain_len, GFP_KERNEL);
+	अगर (!पंचांगp)
+		वापस -ENOMEM;
 
-	/* IV for CTR before encrypted data */
-	memcpy(out, v, AES_BLOCK_SIZE);
+	/* IV क्रम CTR beक्रमe encrypted data */
+	स_नकल(out, v, AES_BLOCK_SIZE);
 
 	/* Synthetic IV to be used as the initial counter in CTR:
 	 * Q = V bitand (1^64 || 0^1 || 1^31 || 0^1 || 1^31)
@@ -114,44 +115,44 @@ static int aes_siv_encrypt(const u8 *key, size_t key_len,
 	/* CTR */
 
 	tfm2 = crypto_alloc_skcipher("ctr(aes)", 0, CRYPTO_ALG_ASYNC);
-	if (IS_ERR(tfm2)) {
-		kfree(tmp);
-		return PTR_ERR(tfm2);
-	}
-	/* K2 for CTR */
+	अगर (IS_ERR(tfm2)) अणु
+		kमुक्त(पंचांगp);
+		वापस PTR_ERR(tfm2);
+	पूर्ण
+	/* K2 क्रम CTR */
 	res = crypto_skcipher_setkey(tfm2, key + key_len, key_len);
-	if (res)
-		goto fail;
+	अगर (res)
+		जाओ fail;
 
 	req = skcipher_request_alloc(tfm2, GFP_KERNEL);
-	if (!req) {
+	अगर (!req) अणु
 		res = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	sg_init_one(src, tmp, plain_len);
+	sg_init_one(src, पंचांगp, plain_len);
 	sg_init_one(dst, out + AES_BLOCK_SIZE, plain_len);
 	skcipher_request_set_crypt(req, src, dst, plain_len, v);
 	res = crypto_skcipher_encrypt(req);
-	skcipher_request_free(req);
+	skcipher_request_मुक्त(req);
 fail:
-	kfree(tmp);
-	crypto_free_skcipher(tfm2);
-	return res;
-}
+	kमुक्त(पंचांगp);
+	crypto_मुक्त_skcipher(tfm2);
+	वापस res;
+पूर्ण
 
 /* Note: addr[] and len[] needs to have one extra slot at the end. */
-static int aes_siv_decrypt(const u8 *key, size_t key_len,
-			   const u8 *iv_crypt, size_t iv_c_len,
-			   size_t num_elem, const u8 *addr[], size_t len[],
+अटल पूर्णांक aes_siv_decrypt(स्थिर u8 *key, माप_प्रकार key_len,
+			   स्थिर u8 *iv_crypt, माप_प्रकार iv_c_len,
+			   माप_प्रकार num_elem, स्थिर u8 *addr[], माप_प्रकार len[],
 			   u8 *out)
-{
-	struct crypto_shash *tfm;
-	struct crypto_skcipher *tfm2;
-	struct skcipher_request *req;
-	struct scatterlist src[1], dst[1];
-	size_t crypt_len;
-	int res;
+अणु
+	काष्ठा crypto_shash *tfm;
+	काष्ठा crypto_skcipher *tfm2;
+	काष्ठा skcipher_request *req;
+	काष्ठा scatterlist src[1], dst[1];
+	माप_प्रकार crypt_len;
+	पूर्णांक res;
 	u8 frame_iv[AES_BLOCK_SIZE], iv[AES_BLOCK_SIZE];
 	u8 check[AES_BLOCK_SIZE];
 
@@ -161,8 +162,8 @@ static int aes_siv_decrypt(const u8 *key, size_t key_len,
 	len[num_elem] = crypt_len;
 	num_elem++;
 
-	memcpy(iv, iv_crypt, AES_BLOCK_SIZE);
-	memcpy(frame_iv, iv_crypt, AES_BLOCK_SIZE);
+	स_नकल(iv, iv_crypt, AES_BLOCK_SIZE);
+	स_नकल(frame_iv, iv_crypt, AES_BLOCK_SIZE);
 
 	/* Synthetic IV to be used as the initial counter in CTR:
 	 * Q = V bitand (1^64 || 0^1 || 1^31 || 0^1 || 1^31)
@@ -173,68 +174,68 @@ static int aes_siv_decrypt(const u8 *key, size_t key_len,
 	/* CTR */
 
 	tfm2 = crypto_alloc_skcipher("ctr(aes)", 0, CRYPTO_ALG_ASYNC);
-	if (IS_ERR(tfm2))
-		return PTR_ERR(tfm2);
-	/* K2 for CTR */
+	अगर (IS_ERR(tfm2))
+		वापस PTR_ERR(tfm2);
+	/* K2 क्रम CTR */
 	res = crypto_skcipher_setkey(tfm2, key + key_len, key_len);
-	if (res) {
-		crypto_free_skcipher(tfm2);
-		return res;
-	}
+	अगर (res) अणु
+		crypto_मुक्त_skcipher(tfm2);
+		वापस res;
+	पूर्ण
 
 	req = skcipher_request_alloc(tfm2, GFP_KERNEL);
-	if (!req) {
-		crypto_free_skcipher(tfm2);
-		return -ENOMEM;
-	}
+	अगर (!req) अणु
+		crypto_मुक्त_skcipher(tfm2);
+		वापस -ENOMEM;
+	पूर्ण
 
 	sg_init_one(src, iv_crypt + AES_BLOCK_SIZE, crypt_len);
 	sg_init_one(dst, out, crypt_len);
 	skcipher_request_set_crypt(req, src, dst, crypt_len, iv);
 	res = crypto_skcipher_decrypt(req);
-	skcipher_request_free(req);
-	crypto_free_skcipher(tfm2);
-	if (res)
-		return res;
+	skcipher_request_मुक्त(req);
+	crypto_मुक्त_skcipher(tfm2);
+	अगर (res)
+		वापस res;
 
 	/* S2V */
 
 	tfm = crypto_alloc_shash("cmac(aes)", 0, 0);
-	if (IS_ERR(tfm))
-		return PTR_ERR(tfm);
-	/* K1 for S2V */
+	अगर (IS_ERR(tfm))
+		वापस PTR_ERR(tfm);
+	/* K1 क्रम S2V */
 	res = crypto_shash_setkey(tfm, key, key_len);
-	if (!res)
+	अगर (!res)
 		res = aes_s2v(tfm, num_elem, addr, len, check);
-	crypto_free_shash(tfm);
-	if (res)
-		return res;
-	if (memcmp(check, frame_iv, AES_BLOCK_SIZE) != 0)
-		return -EINVAL;
-	return 0;
-}
+	crypto_मुक्त_shash(tfm);
+	अगर (res)
+		वापस res;
+	अगर (स_भेद(check, frame_iv, AES_BLOCK_SIZE) != 0)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-int fils_encrypt_assoc_req(struct sk_buff *skb,
-			   struct ieee80211_mgd_assoc_data *assoc_data)
-{
-	struct ieee80211_mgmt *mgmt = (void *)skb->data;
+पूर्णांक fils_encrypt_assoc_req(काष्ठा sk_buff *skb,
+			   काष्ठा ieee80211_mgd_assoc_data *assoc_data)
+अणु
+	काष्ठा ieee80211_mgmt *mgmt = (व्योम *)skb->data;
 	u8 *capab, *ies, *encr;
-	const u8 *addr[5 + 1], *session;
-	size_t len[5 + 1];
-	size_t crypt_len;
+	स्थिर u8 *addr[5 + 1], *session;
+	माप_प्रकार len[5 + 1];
+	माप_प्रकार crypt_len;
 
-	if (ieee80211_is_reassoc_req(mgmt->frame_control)) {
+	अगर (ieee80211_is_reassoc_req(mgmt->frame_control)) अणु
 		capab = (u8 *)&mgmt->u.reassoc_req.capab_info;
 		ies = mgmt->u.reassoc_req.variable;
-	} else {
+	पूर्ण अन्यथा अणु
 		capab = (u8 *)&mgmt->u.assoc_req.capab_info;
 		ies = mgmt->u.assoc_req.variable;
-	}
+	पूर्ण
 
 	session = cfg80211_find_ext_ie(WLAN_EID_EXT_FILS_SESSION,
 				       ies, skb->data + skb->len - ies);
-	if (!session || session[1] != 1 + 8)
-		return -EINVAL;
+	अगर (!session || session[1] != 1 + 8)
+		वापस -EINVAL;
 	/* encrypt after FILS Session element */
 	encr = (u8 *)session + 2 + 1 + 8;
 
@@ -252,7 +253,7 @@ int fils_encrypt_assoc_req(struct sk_buff *skb,
 	/* The AP's nonce */
 	addr[3] = &assoc_data->fils_nonces[FILS_NONCE_LEN];
 	len[3] = FILS_NONCE_LEN;
-	/* The (Re)Association Request frame from the Capability Information
+	/* The (Re)Association Request frame from the Capability Inक्रमmation
 	 * field to the FILS Session element (both inclusive).
 	 */
 	addr[4] = capab;
@@ -260,34 +261,34 @@ int fils_encrypt_assoc_req(struct sk_buff *skb,
 
 	crypt_len = skb->data + skb->len - encr;
 	skb_put(skb, AES_BLOCK_SIZE);
-	return aes_siv_encrypt(assoc_data->fils_kek, assoc_data->fils_kek_len,
+	वापस aes_siv_encrypt(assoc_data->fils_kek, assoc_data->fils_kek_len,
 			       encr, crypt_len, 5, addr, len, encr);
-}
+पूर्ण
 
-int fils_decrypt_assoc_resp(struct ieee80211_sub_if_data *sdata,
-			    u8 *frame, size_t *frame_len,
-			    struct ieee80211_mgd_assoc_data *assoc_data)
-{
-	struct ieee80211_mgmt *mgmt = (void *)frame;
+पूर्णांक fils_decrypt_assoc_resp(काष्ठा ieee80211_sub_अगर_data *sdata,
+			    u8 *frame, माप_प्रकार *frame_len,
+			    काष्ठा ieee80211_mgd_assoc_data *assoc_data)
+अणु
+	काष्ठा ieee80211_mgmt *mgmt = (व्योम *)frame;
 	u8 *capab, *ies, *encr;
-	const u8 *addr[5 + 1], *session;
-	size_t len[5 + 1];
-	int res;
-	size_t crypt_len;
+	स्थिर u8 *addr[5 + 1], *session;
+	माप_प्रकार len[5 + 1];
+	पूर्णांक res;
+	माप_प्रकार crypt_len;
 
-	if (*frame_len < 24 + 6)
-		return -EINVAL;
+	अगर (*frame_len < 24 + 6)
+		वापस -EINVAL;
 
 	capab = (u8 *)&mgmt->u.assoc_resp.capab_info;
 	ies = mgmt->u.assoc_resp.variable;
 	session = cfg80211_find_ext_ie(WLAN_EID_EXT_FILS_SESSION,
 				       ies, frame + *frame_len - ies);
-	if (!session || session[1] != 1 + 8) {
+	अगर (!session || session[1] != 1 + 8) अणु
 		mlme_dbg(sdata,
 			 "No (valid) FILS Session element in (Re)Association Response frame from %pM",
 			 mgmt->sa);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	/* decrypt after FILS Session element */
 	encr = (u8 *)session + 2 + 1 + 8;
 
@@ -305,27 +306,27 @@ int fils_decrypt_assoc_resp(struct ieee80211_sub_if_data *sdata,
 	/* The STA's nonce */
 	addr[3] = assoc_data->fils_nonces;
 	len[3] = FILS_NONCE_LEN;
-	/* The (Re)Association Response frame from the Capability Information
+	/* The (Re)Association Response frame from the Capability Inक्रमmation
 	 * field to the FILS Session element (both inclusive).
 	 */
 	addr[4] = capab;
 	len[4] = encr - capab;
 
 	crypt_len = frame + *frame_len - encr;
-	if (crypt_len < AES_BLOCK_SIZE) {
+	अगर (crypt_len < AES_BLOCK_SIZE) अणु
 		mlme_dbg(sdata,
 			 "Not enough room for AES-SIV data after FILS Session element in (Re)Association Response frame from %pM",
 			 mgmt->sa);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	res = aes_siv_decrypt(assoc_data->fils_kek, assoc_data->fils_kek_len,
 			      encr, crypt_len, 5, addr, len, encr);
-	if (res != 0) {
+	अगर (res != 0) अणु
 		mlme_dbg(sdata,
 			 "AES-SIV decryption of (Re)Association Response frame from %pM failed",
 			 mgmt->sa);
-		return res;
-	}
+		वापस res;
+	पूर्ण
 	*frame_len -= AES_BLOCK_SIZE;
-	return 0;
-}
+	वापस 0;
+पूर्ण

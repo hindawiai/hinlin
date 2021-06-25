@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_DCACHE_H
-#define __LINUX_DCACHE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_DCACHE_H
+#घोषणा __LINUX_DCACHE_H
 
-#include <linux/atomic.h>
-#include <linux/list.h>
-#include <linux/math.h>
-#include <linux/rculist.h>
-#include <linux/rculist_bl.h>
-#include <linux/spinlock.h>
-#include <linux/seqlock.h>
-#include <linux/cache.h>
-#include <linux/rcupdate.h>
-#include <linux/lockref.h>
-#include <linux/stringhash.h>
-#include <linux/wait.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/list.h>
+#समावेश <linux/गणित.स>
+#समावेश <linux/rculist.h>
+#समावेश <linux/rculist_bl.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/seqlock.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/lockref.h>
+#समावेश <linux/stringhash.h>
+#समावेश <linux/रुको.h>
 
-struct path;
-struct vfsmount;
+काष्ठा path;
+काष्ठा vfsmount;
 
 /*
  * linux/include/linux/dcache.h
  *
- * Dirent cache data structures
+ * Dirent cache data काष्ठाures
  *
  * (C) Copyright 1997 Thomas Schoebel-Theuer,
  * with heavy changes by Linus Torvalds
  */
 
-#define IS_ROOT(x) ((x) == (x)->d_parent)
+#घोषणा IS_ROOT(x) ((x) == (x)->d_parent)
 
 /* The hash is always the low bits of hash_len */
-#ifdef __LITTLE_ENDIAN
- #define HASH_LEN_DECLARE u32 hash; u32 len
- #define bytemask_from_count(cnt)	(~(~0ul << (cnt)*8))
-#else
- #define HASH_LEN_DECLARE u32 len; u32 hash
- #define bytemask_from_count(cnt)	(~(~0ul >> (cnt)*8))
-#endif
+#अगर_घोषित __LITTLE_ENDIAN
+ #घोषणा HASH_LEN_DECLARE u32 hash; u32 len
+ #घोषणा bytemask_from_count(cnt)	(~(~0ul << (cnt)*8))
+#अन्यथा
+ #घोषणा HASH_LEN_DECLARE u32 len; u32 hash
+ #घोषणा bytemask_from_count(cnt)	(~(~0ul >> (cnt)*8))
+#पूर्ण_अगर
 
 /*
  * "quick string" -- eases parameter passing, but more importantly
@@ -45,82 +46,82 @@ struct vfsmount;
  * hash comes first so it snuggles against d_parent in the
  * dentry.
  */
-struct qstr {
-	union {
-		struct {
+काष्ठा qstr अणु
+	जोड़ अणु
+		काष्ठा अणु
 			HASH_LEN_DECLARE;
-		};
+		पूर्ण;
 		u64 hash_len;
-	};
-	const unsigned char *name;
-};
+	पूर्ण;
+	स्थिर अचिन्हित अक्षर *name;
+पूर्ण;
 
-#define QSTR_INIT(n,l) { { { .len = l } }, .name = n }
+#घोषणा QSTR_INIT(n,l) अणु अणु अणु .len = l पूर्ण पूर्ण, .name = n पूर्ण
 
-extern const struct qstr empty_name;
-extern const struct qstr slash_name;
-extern const struct qstr dotdot_name;
+बाह्य स्थिर काष्ठा qstr empty_name;
+बाह्य स्थिर काष्ठा qstr slash_name;
+बाह्य स्थिर काष्ठा qstr करोtकरोt_name;
 
-struct dentry_stat_t {
-	long nr_dentry;
-	long nr_unused;
-	long age_limit;		/* age in seconds */
-	long want_pages;	/* pages requested by system */
-	long nr_negative;	/* # of unused negative dentries */
-	long dummy;		/* Reserved for future use */
-};
-extern struct dentry_stat_t dentry_stat;
+काष्ठा dentry_stat_t अणु
+	दीर्घ nr_dentry;
+	दीर्घ nr_unused;
+	दीर्घ age_limit;		/* age in seconds */
+	दीर्घ want_pages;	/* pages requested by प्रणाली */
+	दीर्घ nr_negative;	/* # of unused negative dentries */
+	दीर्घ dummy;		/* Reserved क्रम future use */
+पूर्ण;
+बाह्य काष्ठा dentry_stat_t dentry_stat;
 
 /*
- * Try to keep struct dentry aligned on 64 byte cachelines (this will
- * give reasonable cacheline footprint with larger lines without the
- * large memory footprint increase).
+ * Try to keep काष्ठा dentry aligned on 64 byte cachelines (this will
+ * give reasonable cacheline footprपूर्णांक with larger lines without the
+ * large memory footprपूर्णांक increase).
  */
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 # define DNAME_INLINE_LEN 32 /* 192 bytes */
-#else
-# ifdef CONFIG_SMP
+#अन्यथा
+# अगरdef CONFIG_SMP
 #  define DNAME_INLINE_LEN 36 /* 128 bytes */
-# else
+# अन्यथा
 #  define DNAME_INLINE_LEN 40 /* 128 bytes */
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#define d_lock	d_lockref.lock
+#घोषणा d_lock	d_lockref.lock
 
-struct dentry {
+काष्ठा dentry अणु
 	/* RCU lookup touched fields */
-	unsigned int d_flags;		/* protected by d_lock */
+	अचिन्हित पूर्णांक d_flags;		/* रक्षित by d_lock */
 	seqcount_spinlock_t d_seq;	/* per dentry seqlock */
-	struct hlist_bl_node d_hash;	/* lookup hash list */
-	struct dentry *d_parent;	/* parent directory */
-	struct qstr d_name;
-	struct inode *d_inode;		/* Where the name belongs to - NULL is
+	काष्ठा hlist_bl_node d_hash;	/* lookup hash list */
+	काष्ठा dentry *d_parent;	/* parent directory */
+	काष्ठा qstr d_name;
+	काष्ठा inode *d_inode;		/* Where the name beदीर्घs to - शून्य is
 					 * negative */
-	unsigned char d_iname[DNAME_INLINE_LEN];	/* small names */
+	अचिन्हित अक्षर d_iname[DNAME_INLINE_LEN];	/* small names */
 
 	/* Ref lookup also touches following */
-	struct lockref d_lockref;	/* per-dentry lock and refcount */
-	const struct dentry_operations *d_op;
-	struct super_block *d_sb;	/* The root of the dentry tree */
-	unsigned long d_time;		/* used by d_revalidate */
-	void *d_fsdata;			/* fs-specific data */
+	काष्ठा lockref d_lockref;	/* per-dentry lock and refcount */
+	स्थिर काष्ठा dentry_operations *d_op;
+	काष्ठा super_block *d_sb;	/* The root of the dentry tree */
+	अचिन्हित दीर्घ d_समय;		/* used by d_revalidate */
+	व्योम *d_fsdata;			/* fs-specअगरic data */
 
-	union {
-		struct list_head d_lru;		/* LRU list */
-		wait_queue_head_t *d_wait;	/* in-lookup ones only */
-	};
-	struct list_head d_child;	/* child of parent list */
-	struct list_head d_subdirs;	/* our children */
+	जोड़ अणु
+		काष्ठा list_head d_lru;		/* LRU list */
+		रुको_queue_head_t *d_रुको;	/* in-lookup ones only */
+	पूर्ण;
+	काष्ठा list_head d_child;	/* child of parent list */
+	काष्ठा list_head d_subdirs;	/* our children */
 	/*
 	 * d_alias and d_rcu can share memory
 	 */
-	union {
-		struct hlist_node d_alias;	/* inode alias list */
-		struct hlist_bl_node d_in_lookup_hash;	/* only for in-lookup ones */
-	 	struct rcu_head d_rcu;
-	} d_u;
-} __randomize_layout;
+	जोड़ अणु
+		काष्ठा hlist_node d_alias;	/* inode alias list */
+		काष्ठा hlist_bl_node d_in_lookup_hash;	/* only क्रम in-lookup ones */
+	 	काष्ठा rcu_head d_rcu;
+	पूर्ण d_u;
+पूर्ण __अक्रमomize_layout;
 
 /*
  * dentry->d_lock spinlock nesting subclasses:
@@ -128,181 +129,181 @@ struct dentry {
  * 0: normal
  * 1: nested
  */
-enum dentry_d_lock_class
-{
+क्रमागत dentry_d_lock_class
+अणु
 	DENTRY_D_LOCK_NORMAL, /* implicitly used by plain spin_lock() APIs. */
 	DENTRY_D_LOCK_NESTED
-};
+पूर्ण;
 
-struct dentry_operations {
-	int (*d_revalidate)(struct dentry *, unsigned int);
-	int (*d_weak_revalidate)(struct dentry *, unsigned int);
-	int (*d_hash)(const struct dentry *, struct qstr *);
-	int (*d_compare)(const struct dentry *,
-			unsigned int, const char *, const struct qstr *);
-	int (*d_delete)(const struct dentry *);
-	int (*d_init)(struct dentry *);
-	void (*d_release)(struct dentry *);
-	void (*d_prune)(struct dentry *);
-	void (*d_iput)(struct dentry *, struct inode *);
-	char *(*d_dname)(struct dentry *, char *, int);
-	struct vfsmount *(*d_automount)(struct path *);
-	int (*d_manage)(const struct path *, bool);
-	struct dentry *(*d_real)(struct dentry *, const struct inode *);
-} ____cacheline_aligned;
+काष्ठा dentry_operations अणु
+	पूर्णांक (*d_revalidate)(काष्ठा dentry *, अचिन्हित पूर्णांक);
+	पूर्णांक (*d_weak_revalidate)(काष्ठा dentry *, अचिन्हित पूर्णांक);
+	पूर्णांक (*d_hash)(स्थिर काष्ठा dentry *, काष्ठा qstr *);
+	पूर्णांक (*d_compare)(स्थिर काष्ठा dentry *,
+			अचिन्हित पूर्णांक, स्थिर अक्षर *, स्थिर काष्ठा qstr *);
+	पूर्णांक (*d_delete)(स्थिर काष्ठा dentry *);
+	पूर्णांक (*d_init)(काष्ठा dentry *);
+	व्योम (*d_release)(काष्ठा dentry *);
+	व्योम (*d_prune)(काष्ठा dentry *);
+	व्योम (*d_iput)(काष्ठा dentry *, काष्ठा inode *);
+	अक्षर *(*d_dname)(काष्ठा dentry *, अक्षर *, पूर्णांक);
+	काष्ठा vfsmount *(*d_स्वतःmount)(काष्ठा path *);
+	पूर्णांक (*d_manage)(स्थिर काष्ठा path *, bool);
+	काष्ठा dentry *(*d_real)(काष्ठा dentry *, स्थिर काष्ठा inode *);
+पूर्ण ____cacheline_aligned;
 
 /*
- * Locking rules for dentry_operations callbacks are to be found in
- * Documentation/filesystems/locking.rst. Keep it updated!
+ * Locking rules क्रम dentry_operations callbacks are to be found in
+ * Documentation/fileप्रणालीs/locking.rst. Keep it updated!
  *
- * FUrther descriptions are found in Documentation/filesystems/vfs.rst.
+ * FUrther descriptions are found in Documentation/fileप्रणालीs/vfs.rst.
  * Keep it updated too!
  */
 
 /* d_flags entries */
-#define DCACHE_OP_HASH			0x00000001
-#define DCACHE_OP_COMPARE		0x00000002
-#define DCACHE_OP_REVALIDATE		0x00000004
-#define DCACHE_OP_DELETE		0x00000008
-#define DCACHE_OP_PRUNE			0x00000010
+#घोषणा DCACHE_OP_HASH			0x00000001
+#घोषणा DCACHE_OP_COMPARE		0x00000002
+#घोषणा DCACHE_OP_REVALIDATE		0x00000004
+#घोषणा DCACHE_OP_DELETE		0x00000008
+#घोषणा DCACHE_OP_PRUNE			0x00000010
 
-#define	DCACHE_DISCONNECTED		0x00000020
+#घोषणा	DCACHE_DISCONNECTED		0x00000020
      /* This dentry is possibly not currently connected to the dcache tree, in
-      * which case its parent will either be itself, or will have this flag as
+      * which हाल its parent will either be itself, or will have this flag as
       * well.  nfsd will not use a dentry with this bit set, but will first
       * endeavour to clear the bit either by discovering that it is connected,
-      * or by performing lookup operations.   Any filesystem which supports
-      * nfsd_operations MUST have a lookup function which, if it finds a
+      * or by perक्रमming lookup operations.   Any fileप्रणाली which supports
+      * nfsd_operations MUST have a lookup function which, अगर it finds a
       * directory inode with a DCACHE_DISCONNECTED dentry, will d_move that
-      * dentry into place and return that dentry rather than the passed one,
+      * dentry पूर्णांकo place and वापस that dentry rather than the passed one,
       * typically using d_splice_alias. */
 
-#define DCACHE_REFERENCED		0x00000040 /* Recently used, don't discard. */
+#घोषणा DCACHE_REFERENCED		0x00000040 /* Recently used, करोn't discard. */
 
-#define DCACHE_DONTCACHE		0x00000080 /* Purge from memory on final dput() */
+#घोषणा DCACHE_DONTCACHE		0x00000080 /* Purge from memory on final dput() */
 
-#define DCACHE_CANT_MOUNT		0x00000100
-#define DCACHE_GENOCIDE			0x00000200
-#define DCACHE_SHRINK_LIST		0x00000400
+#घोषणा DCACHE_CANT_MOUNT		0x00000100
+#घोषणा DCACHE_GENOCIDE			0x00000200
+#घोषणा DCACHE_SHRINK_LIST		0x00000400
 
-#define DCACHE_OP_WEAK_REVALIDATE	0x00000800
+#घोषणा DCACHE_OP_WEAK_REVALIDATE	0x00000800
 
-#define DCACHE_NFSFS_RENAMED		0x00001000
+#घोषणा DCACHE_NFSFS_RENAMED		0x00001000
      /* this dentry has been "silly renamed" and has to be deleted on the last
       * dput() */
-#define DCACHE_COOKIE			0x00002000 /* For use by dcookie subsystem */
-#define DCACHE_FSNOTIFY_PARENT_WATCHED	0x00004000
-     /* Parent inode is watched by some fsnotify listener */
+#घोषणा DCACHE_COOKIE			0x00002000 /* For use by dcookie subप्रणाली */
+#घोषणा DCACHE_FSNOTIFY_PARENT_WATCHED	0x00004000
+     /* Parent inode is watched by some fsnotअगरy listener */
 
-#define DCACHE_DENTRY_KILLED		0x00008000
+#घोषणा DCACHE_DENTRY_KILLED		0x00008000
 
-#define DCACHE_MOUNTED			0x00010000 /* is a mountpoint */
-#define DCACHE_NEED_AUTOMOUNT		0x00020000 /* handle automount on this dir */
-#define DCACHE_MANAGE_TRANSIT		0x00040000 /* manage transit from this dirent */
-#define DCACHE_MANAGED_DENTRY \
+#घोषणा DCACHE_MOUNTED			0x00010000 /* is a mountpoपूर्णांक */
+#घोषणा DCACHE_NEED_AUTOMOUNT		0x00020000 /* handle स्वतःmount on this dir */
+#घोषणा DCACHE_MANAGE_TRANSIT		0x00040000 /* manage transit from this dirent */
+#घोषणा DCACHE_MANAGED_DENTRY \
 	(DCACHE_MOUNTED|DCACHE_NEED_AUTOMOUNT|DCACHE_MANAGE_TRANSIT)
 
-#define DCACHE_LRU_LIST			0x00080000
+#घोषणा DCACHE_LRU_LIST			0x00080000
 
-#define DCACHE_ENTRY_TYPE		0x00700000
-#define DCACHE_MISS_TYPE		0x00000000 /* Negative dentry (maybe fallthru to nowhere) */
-#define DCACHE_WHITEOUT_TYPE		0x00100000 /* Whiteout dentry (stop pathwalk) */
-#define DCACHE_DIRECTORY_TYPE		0x00200000 /* Normal directory */
-#define DCACHE_AUTODIR_TYPE		0x00300000 /* Lookupless directory (presumed automount) */
-#define DCACHE_REGULAR_TYPE		0x00400000 /* Regular file type (or fallthru to such) */
-#define DCACHE_SPECIAL_TYPE		0x00500000 /* Other file type (or fallthru to such) */
-#define DCACHE_SYMLINK_TYPE		0x00600000 /* Symlink (or fallthru to such) */
+#घोषणा DCACHE_ENTRY_TYPE		0x00700000
+#घोषणा DCACHE_MISS_TYPE		0x00000000 /* Negative dentry (maybe fallthru to nowhere) */
+#घोषणा DCACHE_WHITEOUT_TYPE		0x00100000 /* Whiteout dentry (stop pathwalk) */
+#घोषणा DCACHE_सूचीECTORY_TYPE		0x00200000 /* Normal directory */
+#घोषणा DCACHE_AUTOसूची_TYPE		0x00300000 /* Lookupless directory (presumed स्वतःmount) */
+#घोषणा DCACHE_REGULAR_TYPE		0x00400000 /* Regular file type (or fallthru to such) */
+#घोषणा DCACHE_SPECIAL_TYPE		0x00500000 /* Other file type (or fallthru to such) */
+#घोषणा DCACHE_SYMLINK_TYPE		0x00600000 /* Symlink (or fallthru to such) */
 
-#define DCACHE_MAY_FREE			0x00800000
-#define DCACHE_FALLTHRU			0x01000000 /* Fall through to lower layer */
-#define DCACHE_NOKEY_NAME		0x02000000 /* Encrypted name encoded without key */
-#define DCACHE_OP_REAL			0x04000000
+#घोषणा DCACHE_MAY_FREE			0x00800000
+#घोषणा DCACHE_FALLTHRU			0x01000000 /* Fall through to lower layer */
+#घोषणा DCACHE_NOKEY_NAME		0x02000000 /* Encrypted name encoded without key */
+#घोषणा DCACHE_OP_REAL			0x04000000
 
-#define DCACHE_PAR_LOOKUP		0x10000000 /* being looked up (with parent locked shared) */
-#define DCACHE_DENTRY_CURSOR		0x20000000
-#define DCACHE_NORCU			0x40000000 /* No RCU delay for freeing */
+#घोषणा DCACHE_PAR_LOOKUP		0x10000000 /* being looked up (with parent locked shared) */
+#घोषणा DCACHE_DENTRY_CURSOR		0x20000000
+#घोषणा DCACHE_NORCU			0x40000000 /* No RCU delay क्रम मुक्तing */
 
-extern seqlock_t rename_lock;
+बाह्य seqlock_t नाम_lock;
 
 /*
- * These are the low-level FS interfaces to the dcache..
+ * These are the low-level FS पूर्णांकerfaces to the dcache..
  */
-extern void d_instantiate(struct dentry *, struct inode *);
-extern void d_instantiate_new(struct dentry *, struct inode *);
-extern struct dentry * d_instantiate_unique(struct dentry *, struct inode *);
-extern struct dentry * d_instantiate_anon(struct dentry *, struct inode *);
-extern void __d_drop(struct dentry *dentry);
-extern void d_drop(struct dentry *dentry);
-extern void d_delete(struct dentry *);
-extern void d_set_d_op(struct dentry *dentry, const struct dentry_operations *op);
+बाह्य व्योम d_instantiate(काष्ठा dentry *, काष्ठा inode *);
+बाह्य व्योम d_instantiate_new(काष्ठा dentry *, काष्ठा inode *);
+बाह्य काष्ठा dentry * d_instantiate_unique(काष्ठा dentry *, काष्ठा inode *);
+बाह्य काष्ठा dentry * d_instantiate_anon(काष्ठा dentry *, काष्ठा inode *);
+बाह्य व्योम __d_drop(काष्ठा dentry *dentry);
+बाह्य व्योम d_drop(काष्ठा dentry *dentry);
+बाह्य व्योम d_delete(काष्ठा dentry *);
+बाह्य व्योम d_set_d_op(काष्ठा dentry *dentry, स्थिर काष्ठा dentry_operations *op);
 
 /* allocate/de-allocate */
-extern struct dentry * d_alloc(struct dentry *, const struct qstr *);
-extern struct dentry * d_alloc_anon(struct super_block *);
-extern struct dentry * d_alloc_parallel(struct dentry *, const struct qstr *,
-					wait_queue_head_t *);
-extern struct dentry * d_splice_alias(struct inode *, struct dentry *);
-extern struct dentry * d_add_ci(struct dentry *, struct inode *, struct qstr *);
-extern struct dentry * d_exact_alias(struct dentry *, struct inode *);
-extern struct dentry *d_find_any_alias(struct inode *inode);
-extern struct dentry * d_obtain_alias(struct inode *);
-extern struct dentry * d_obtain_root(struct inode *);
-extern void shrink_dcache_sb(struct super_block *);
-extern void shrink_dcache_parent(struct dentry *);
-extern void shrink_dcache_for_umount(struct super_block *);
-extern void d_invalidate(struct dentry *);
+बाह्य काष्ठा dentry * d_alloc(काष्ठा dentry *, स्थिर काष्ठा qstr *);
+बाह्य काष्ठा dentry * d_alloc_anon(काष्ठा super_block *);
+बाह्य काष्ठा dentry * d_alloc_parallel(काष्ठा dentry *, स्थिर काष्ठा qstr *,
+					रुको_queue_head_t *);
+बाह्य काष्ठा dentry * d_splice_alias(काष्ठा inode *, काष्ठा dentry *);
+बाह्य काष्ठा dentry * d_add_ci(काष्ठा dentry *, काष्ठा inode *, काष्ठा qstr *);
+बाह्य काष्ठा dentry * d_exact_alias(काष्ठा dentry *, काष्ठा inode *);
+बाह्य काष्ठा dentry *d_find_any_alias(काष्ठा inode *inode);
+बाह्य काष्ठा dentry * d_obtain_alias(काष्ठा inode *);
+बाह्य काष्ठा dentry * d_obtain_root(काष्ठा inode *);
+बाह्य व्योम shrink_dcache_sb(काष्ठा super_block *);
+बाह्य व्योम shrink_dcache_parent(काष्ठा dentry *);
+बाह्य व्योम shrink_dcache_क्रम_umount(काष्ठा super_block *);
+बाह्य व्योम d_invalidate(काष्ठा dentry *);
 
-/* only used at mount-time */
-extern struct dentry * d_make_root(struct inode *);
+/* only used at mount-समय */
+बाह्य काष्ठा dentry * d_make_root(काष्ठा inode *);
 
 /* <clickety>-<click> the ramfs-type tree */
-extern void d_genocide(struct dentry *);
+बाह्य व्योम d_genocide(काष्ठा dentry *);
 
-extern void d_tmpfile(struct dentry *, struct inode *);
+बाह्य व्योम d_क्षणिक_ख(काष्ठा dentry *, काष्ठा inode *);
 
-extern struct dentry *d_find_alias(struct inode *);
-extern void d_prune_aliases(struct inode *);
+बाह्य काष्ठा dentry *d_find_alias(काष्ठा inode *);
+बाह्य व्योम d_prune_aliases(काष्ठा inode *);
 
-extern struct dentry *d_find_alias_rcu(struct inode *);
+बाह्य काष्ठा dentry *d_find_alias_rcu(काष्ठा inode *);
 
 /* test whether we have any submounts in a subdir tree */
-extern int path_has_submounts(const struct path *);
+बाह्य पूर्णांक path_has_submounts(स्थिर काष्ठा path *);
 
 /*
  * This adds the entry to the hash queues.
  */
-extern void d_rehash(struct dentry *);
+बाह्य व्योम d_rehash(काष्ठा dentry *);
  
-extern void d_add(struct dentry *, struct inode *);
+बाह्य व्योम d_add(काष्ठा dentry *, काष्ठा inode *);
 
-/* used for rename() and baskets */
-extern void d_move(struct dentry *, struct dentry *);
-extern void d_exchange(struct dentry *, struct dentry *);
-extern struct dentry *d_ancestor(struct dentry *, struct dentry *);
+/* used क्रम नाम() and baskets */
+बाह्य व्योम d_move(काष्ठा dentry *, काष्ठा dentry *);
+बाह्य व्योम d_exchange(काष्ठा dentry *, काष्ठा dentry *);
+बाह्य काष्ठा dentry *d_ancestor(काष्ठा dentry *, काष्ठा dentry *);
 
-/* appendix may either be NULL or be used for transname suffixes */
-extern struct dentry *d_lookup(const struct dentry *, const struct qstr *);
-extern struct dentry *d_hash_and_lookup(struct dentry *, struct qstr *);
-extern struct dentry *__d_lookup(const struct dentry *, const struct qstr *);
-extern struct dentry *__d_lookup_rcu(const struct dentry *parent,
-				const struct qstr *name, unsigned *seq);
+/* appendix may either be शून्य or be used क्रम transname suffixes */
+बाह्य काष्ठा dentry *d_lookup(स्थिर काष्ठा dentry *, स्थिर काष्ठा qstr *);
+बाह्य काष्ठा dentry *d_hash_and_lookup(काष्ठा dentry *, काष्ठा qstr *);
+बाह्य काष्ठा dentry *__d_lookup(स्थिर काष्ठा dentry *, स्थिर काष्ठा qstr *);
+बाह्य काष्ठा dentry *__d_lookup_rcu(स्थिर काष्ठा dentry *parent,
+				स्थिर काष्ठा qstr *name, अचिन्हित *seq);
 
-static inline unsigned d_count(const struct dentry *dentry)
-{
-	return dentry->d_lockref.count;
-}
+अटल अंतरभूत अचिन्हित d_count(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस dentry->d_lockref.count;
+पूर्ण
 
 /*
- * helper function for dentry_operations.d_dname() members
+ * helper function क्रम dentry_operations.d_dname() members
  */
-extern __printf(4, 5)
-char *dynamic_dname(struct dentry *, char *, int, const char *, ...);
+बाह्य __म_लिखो(4, 5)
+अक्षर *dynamic_dname(काष्ठा dentry *, अक्षर *, पूर्णांक, स्थिर अक्षर *, ...);
 
-extern char *__d_path(const struct path *, const struct path *, char *, int);
-extern char *d_absolute_path(const struct path *, char *, int);
-extern char *d_path(const struct path *, char *, int);
-extern char *dentry_path_raw(const struct dentry *, char *, int);
-extern char *dentry_path(const struct dentry *, char *, int);
+बाह्य अक्षर *__d_path(स्थिर काष्ठा path *, स्थिर काष्ठा path *, अक्षर *, पूर्णांक);
+बाह्य अक्षर *d_असलolute_path(स्थिर काष्ठा path *, अक्षर *, पूर्णांक);
+बाह्य अक्षर *d_path(स्थिर काष्ठा path *, अक्षर *, पूर्णांक);
+बाह्य अक्षर *dentry_path_raw(स्थिर काष्ठा dentry *, अक्षर *, पूर्णांक);
+बाह्य अक्षर *dentry_path(स्थिर काष्ठा dentry *, अक्षर *, पूर्णांक);
 
 /* Allocation counts.. */
 
@@ -310,303 +311,303 @@ extern char *dentry_path(const struct dentry *, char *, int);
  *	dget, dget_dlock -	get a reference to a dentry
  *	@dentry: dentry to get a reference to
  *
- *	Given a dentry or %NULL pointer increment the reference count
- *	if appropriate and return the dentry. A dentry will not be 
+ *	Given a dentry or %शून्य poपूर्णांकer increment the reference count
+ *	अगर appropriate and वापस the dentry. A dentry will not be 
  *	destroyed when it has references.
  */
-static inline struct dentry *dget_dlock(struct dentry *dentry)
-{
-	if (dentry)
+अटल अंतरभूत काष्ठा dentry *dget_dlock(काष्ठा dentry *dentry)
+अणु
+	अगर (dentry)
 		dentry->d_lockref.count++;
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
-static inline struct dentry *dget(struct dentry *dentry)
-{
-	if (dentry)
+अटल अंतरभूत काष्ठा dentry *dget(काष्ठा dentry *dentry)
+अणु
+	अगर (dentry)
 		lockref_get(&dentry->d_lockref);
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
-extern struct dentry *dget_parent(struct dentry *dentry);
+बाह्य काष्ठा dentry *dget_parent(काष्ठा dentry *dentry);
 
 /**
  *	d_unhashed -	is dentry hashed
  *	@dentry: entry to check
  *
- *	Returns true if the dentry passed is not currently hashed.
+ *	Returns true अगर the dentry passed is not currently hashed.
  */
  
-static inline int d_unhashed(const struct dentry *dentry)
-{
-	return hlist_bl_unhashed(&dentry->d_hash);
-}
+अटल अंतरभूत पूर्णांक d_unhashed(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस hlist_bl_unhashed(&dentry->d_hash);
+पूर्ण
 
-static inline int d_unlinked(const struct dentry *dentry)
-{
-	return d_unhashed(dentry) && !IS_ROOT(dentry);
-}
+अटल अंतरभूत पूर्णांक d_unlinked(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस d_unhashed(dentry) && !IS_ROOT(dentry);
+पूर्ण
 
-static inline int cant_mount(const struct dentry *dentry)
-{
-	return (dentry->d_flags & DCACHE_CANT_MOUNT);
-}
+अटल अंतरभूत पूर्णांक cant_mount(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस (dentry->d_flags & DCACHE_CANT_MOUNT);
+पूर्ण
 
-static inline void dont_mount(struct dentry *dentry)
-{
+अटल अंतरभूत व्योम करोnt_mount(काष्ठा dentry *dentry)
+अणु
 	spin_lock(&dentry->d_lock);
 	dentry->d_flags |= DCACHE_CANT_MOUNT;
 	spin_unlock(&dentry->d_lock);
-}
+पूर्ण
 
-extern void __d_lookup_done(struct dentry *);
+बाह्य व्योम __d_lookup_करोne(काष्ठा dentry *);
 
-static inline int d_in_lookup(const struct dentry *dentry)
-{
-	return dentry->d_flags & DCACHE_PAR_LOOKUP;
-}
+अटल अंतरभूत पूर्णांक d_in_lookup(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस dentry->d_flags & DCACHE_PAR_LOOKUP;
+पूर्ण
 
-static inline void d_lookup_done(struct dentry *dentry)
-{
-	if (unlikely(d_in_lookup(dentry))) {
+अटल अंतरभूत व्योम d_lookup_करोne(काष्ठा dentry *dentry)
+अणु
+	अगर (unlikely(d_in_lookup(dentry))) अणु
 		spin_lock(&dentry->d_lock);
-		__d_lookup_done(dentry);
+		__d_lookup_करोne(dentry);
 		spin_unlock(&dentry->d_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-extern void dput(struct dentry *);
+बाह्य व्योम dput(काष्ठा dentry *);
 
-static inline bool d_managed(const struct dentry *dentry)
-{
-	return dentry->d_flags & DCACHE_MANAGED_DENTRY;
-}
+अटल अंतरभूत bool d_managed(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस dentry->d_flags & DCACHE_MANAGED_DENTRY;
+पूर्ण
 
-static inline bool d_mountpoint(const struct dentry *dentry)
-{
-	return dentry->d_flags & DCACHE_MOUNTED;
-}
+अटल अंतरभूत bool d_mountpoपूर्णांक(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस dentry->d_flags & DCACHE_MOUNTED;
+पूर्ण
 
 /*
  * Directory cache entry type accessor functions.
  */
-static inline unsigned __d_entry_type(const struct dentry *dentry)
-{
-	return dentry->d_flags & DCACHE_ENTRY_TYPE;
-}
+अटल अंतरभूत अचिन्हित __d_entry_type(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस dentry->d_flags & DCACHE_ENTRY_TYPE;
+पूर्ण
 
-static inline bool d_is_miss(const struct dentry *dentry)
-{
-	return __d_entry_type(dentry) == DCACHE_MISS_TYPE;
-}
+अटल अंतरभूत bool d_is_miss(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस __d_entry_type(dentry) == DCACHE_MISS_TYPE;
+पूर्ण
 
-static inline bool d_is_whiteout(const struct dentry *dentry)
-{
-	return __d_entry_type(dentry) == DCACHE_WHITEOUT_TYPE;
-}
+अटल अंतरभूत bool d_is_whiteout(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस __d_entry_type(dentry) == DCACHE_WHITEOUT_TYPE;
+पूर्ण
 
-static inline bool d_can_lookup(const struct dentry *dentry)
-{
-	return __d_entry_type(dentry) == DCACHE_DIRECTORY_TYPE;
-}
+अटल अंतरभूत bool d_can_lookup(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस __d_entry_type(dentry) == DCACHE_सूचीECTORY_TYPE;
+पूर्ण
 
-static inline bool d_is_autodir(const struct dentry *dentry)
-{
-	return __d_entry_type(dentry) == DCACHE_AUTODIR_TYPE;
-}
+अटल अंतरभूत bool d_is_स्वतःdir(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस __d_entry_type(dentry) == DCACHE_AUTOसूची_TYPE;
+पूर्ण
 
-static inline bool d_is_dir(const struct dentry *dentry)
-{
-	return d_can_lookup(dentry) || d_is_autodir(dentry);
-}
+अटल अंतरभूत bool d_is_dir(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस d_can_lookup(dentry) || d_is_स्वतःdir(dentry);
+पूर्ण
 
-static inline bool d_is_symlink(const struct dentry *dentry)
-{
-	return __d_entry_type(dentry) == DCACHE_SYMLINK_TYPE;
-}
+अटल अंतरभूत bool d_is_symlink(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस __d_entry_type(dentry) == DCACHE_SYMLINK_TYPE;
+पूर्ण
 
-static inline bool d_is_reg(const struct dentry *dentry)
-{
-	return __d_entry_type(dentry) == DCACHE_REGULAR_TYPE;
-}
+अटल अंतरभूत bool d_is_reg(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस __d_entry_type(dentry) == DCACHE_REGULAR_TYPE;
+पूर्ण
 
-static inline bool d_is_special(const struct dentry *dentry)
-{
-	return __d_entry_type(dentry) == DCACHE_SPECIAL_TYPE;
-}
+अटल अंतरभूत bool d_is_special(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस __d_entry_type(dentry) == DCACHE_SPECIAL_TYPE;
+पूर्ण
 
-static inline bool d_is_file(const struct dentry *dentry)
-{
-	return d_is_reg(dentry) || d_is_special(dentry);
-}
+अटल अंतरभूत bool d_is_file(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस d_is_reg(dentry) || d_is_special(dentry);
+पूर्ण
 
-static inline bool d_is_negative(const struct dentry *dentry)
-{
+अटल अंतरभूत bool d_is_negative(स्थिर काष्ठा dentry *dentry)
+अणु
 	// TODO: check d_is_whiteout(dentry) also.
-	return d_is_miss(dentry);
-}
+	वापस d_is_miss(dentry);
+पूर्ण
 
-static inline bool d_flags_negative(unsigned flags)
-{
-	return (flags & DCACHE_ENTRY_TYPE) == DCACHE_MISS_TYPE;
-}
+अटल अंतरभूत bool d_flags_negative(अचिन्हित flags)
+अणु
+	वापस (flags & DCACHE_ENTRY_TYPE) == DCACHE_MISS_TYPE;
+पूर्ण
 
-static inline bool d_is_positive(const struct dentry *dentry)
-{
-	return !d_is_negative(dentry);
-}
+अटल अंतरभूत bool d_is_positive(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस !d_is_negative(dentry);
+पूर्ण
 
 /**
- * d_really_is_negative - Determine if a dentry is really negative (ignoring fallthroughs)
+ * d_really_is_negative - Determine अगर a dentry is really negative (ignoring fallthroughs)
  * @dentry: The dentry in question
  *
- * Returns true if the dentry represents either an absent name or a name that
- * doesn't map to an inode (ie. ->d_inode is NULL).  The dentry could represent
- * a true miss, a whiteout that isn't represented by a 0,0 chardev or a
+ * Returns true अगर the dentry represents either an असलent name or a name that
+ * करोesn't map to an inode (ie. ->d_inode is शून्य).  The dentry could represent
+ * a true miss, a whiteout that isn't represented by a 0,0 अक्षरdev or a
  * fallthrough marker in an opaque directory.
  *
- * Note!  (1) This should be used *only* by a filesystem to examine its own
- * dentries.  It should not be used to look at some other filesystem's
+ * Note!  (1) This should be used *only* by a fileप्रणाली to examine its own
+ * dentries.  It should not be used to look at some other fileप्रणाली's
  * dentries.  (2) It should also be used in combination with d_inode() to get
  * the inode.  (3) The dentry may have something attached to ->d_lower and the
  * type field of the flags may be set to something other than miss or whiteout.
  */
-static inline bool d_really_is_negative(const struct dentry *dentry)
-{
-	return dentry->d_inode == NULL;
-}
+अटल अंतरभूत bool d_really_is_negative(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस dentry->d_inode == शून्य;
+पूर्ण
 
 /**
- * d_really_is_positive - Determine if a dentry is really positive (ignoring fallthroughs)
+ * d_really_is_positive - Determine अगर a dentry is really positive (ignoring fallthroughs)
  * @dentry: The dentry in question
  *
- * Returns true if the dentry represents a name that maps to an inode
- * (ie. ->d_inode is not NULL).  The dentry might still represent a whiteout if
- * that is represented on medium as a 0,0 chardev.
+ * Returns true अगर the dentry represents a name that maps to an inode
+ * (ie. ->d_inode is not शून्य).  The dentry might still represent a whiteout अगर
+ * that is represented on medium as a 0,0 अक्षरdev.
  *
- * Note!  (1) This should be used *only* by a filesystem to examine its own
- * dentries.  It should not be used to look at some other filesystem's
+ * Note!  (1) This should be used *only* by a fileप्रणाली to examine its own
+ * dentries.  It should not be used to look at some other fileप्रणाली's
  * dentries.  (2) It should also be used in combination with d_inode() to get
  * the inode.
  */
-static inline bool d_really_is_positive(const struct dentry *dentry)
-{
-	return dentry->d_inode != NULL;
-}
+अटल अंतरभूत bool d_really_is_positive(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस dentry->d_inode != शून्य;
+पूर्ण
 
-static inline int simple_positive(const struct dentry *dentry)
-{
-	return d_really_is_positive(dentry) && !d_unhashed(dentry);
-}
+अटल अंतरभूत पूर्णांक simple_positive(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस d_really_is_positive(dentry) && !d_unhashed(dentry);
+पूर्ण
 
-extern void d_set_fallthru(struct dentry *dentry);
+बाह्य व्योम d_set_fallthru(काष्ठा dentry *dentry);
 
-static inline bool d_is_fallthru(const struct dentry *dentry)
-{
-	return dentry->d_flags & DCACHE_FALLTHRU;
-}
+अटल अंतरभूत bool d_is_fallthru(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस dentry->d_flags & DCACHE_FALLTHRU;
+पूर्ण
 
 
-extern int sysctl_vfs_cache_pressure;
+बाह्य पूर्णांक sysctl_vfs_cache_pressure;
 
-static inline unsigned long vfs_pressure_ratio(unsigned long val)
-{
-	return mult_frac(val, sysctl_vfs_cache_pressure, 100);
-}
+अटल अंतरभूत अचिन्हित दीर्घ vfs_pressure_ratio(अचिन्हित दीर्घ val)
+अणु
+	वापस mult_frac(val, sysctl_vfs_cache_pressure, 100);
+पूर्ण
 
 /**
  * d_inode - Get the actual inode of this dentry
  * @dentry: The dentry to query
  *
- * This is the helper normal filesystems should use to get at their own inodes
+ * This is the helper normal fileप्रणालीs should use to get at their own inodes
  * in their own dentries and ignore the layering superimposed upon them.
  */
-static inline struct inode *d_inode(const struct dentry *dentry)
-{
-	return dentry->d_inode;
-}
+अटल अंतरभूत काष्ठा inode *d_inode(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस dentry->d_inode;
+पूर्ण
 
 /**
  * d_inode_rcu - Get the actual inode of this dentry with READ_ONCE()
  * @dentry: The dentry to query
  *
- * This is the helper normal filesystems should use to get at their own inodes
+ * This is the helper normal fileप्रणालीs should use to get at their own inodes
  * in their own dentries and ignore the layering superimposed upon them.
  */
-static inline struct inode *d_inode_rcu(const struct dentry *dentry)
-{
-	return READ_ONCE(dentry->d_inode);
-}
+अटल अंतरभूत काष्ठा inode *d_inode_rcu(स्थिर काष्ठा dentry *dentry)
+अणु
+	वापस READ_ONCE(dentry->d_inode);
+पूर्ण
 
 /**
  * d_backing_inode - Get upper or lower inode we should be using
  * @upper: The upper layer
  *
  * This is the helper that should be used to get at the inode that will be used
- * if this dentry were to be opened as a file.  The inode may be on the upper
+ * अगर this dentry were to be खोलोed as a file.  The inode may be on the upper
  * dentry or it may be on a lower dentry pinned by the upper.
  *
- * Normal filesystems should not use this to access their own inodes.
+ * Normal fileप्रणालीs should not use this to access their own inodes.
  */
-static inline struct inode *d_backing_inode(const struct dentry *upper)
-{
-	struct inode *inode = upper->d_inode;
+अटल अंतरभूत काष्ठा inode *d_backing_inode(स्थिर काष्ठा dentry *upper)
+अणु
+	काष्ठा inode *inode = upper->d_inode;
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
 /**
  * d_backing_dentry - Get upper or lower dentry we should be using
  * @upper: The upper layer
  *
  * This is the helper that should be used to get the dentry of the inode that
- * will be used if this dentry were opened as a file.  It may be the upper
+ * will be used अगर this dentry were खोलोed as a file.  It may be the upper
  * dentry or it may be a lower dentry pinned by the upper.
  *
- * Normal filesystems should not use this to access their own dentries.
+ * Normal fileप्रणालीs should not use this to access their own dentries.
  */
-static inline struct dentry *d_backing_dentry(struct dentry *upper)
-{
-	return upper;
-}
+अटल अंतरभूत काष्ठा dentry *d_backing_dentry(काष्ठा dentry *upper)
+अणु
+	वापस upper;
+पूर्ण
 
 /**
  * d_real - Return the real dentry
  * @dentry: the dentry to query
- * @inode: inode to select the dentry from multiple layers (can be NULL)
+ * @inode: inode to select the dentry from multiple layers (can be शून्य)
  *
- * If dentry is on a union/overlay, then return the underlying, real dentry.
- * Otherwise return the dentry itself.
+ * If dentry is on a जोड़/overlay, then वापस the underlying, real dentry.
+ * Otherwise वापस the dentry itself.
  *
- * See also: Documentation/filesystems/vfs.rst
+ * See also: Documentation/fileप्रणालीs/vfs.rst
  */
-static inline struct dentry *d_real(struct dentry *dentry,
-				    const struct inode *inode)
-{
-	if (unlikely(dentry->d_flags & DCACHE_OP_REAL))
-		return dentry->d_op->d_real(dentry, inode);
-	else
-		return dentry;
-}
+अटल अंतरभूत काष्ठा dentry *d_real(काष्ठा dentry *dentry,
+				    स्थिर काष्ठा inode *inode)
+अणु
+	अगर (unlikely(dentry->d_flags & DCACHE_OP_REAL))
+		वापस dentry->d_op->d_real(dentry, inode);
+	अन्यथा
+		वापस dentry;
+पूर्ण
 
 /**
  * d_real_inode - Return the real inode
  * @dentry: The dentry to query
  *
- * If dentry is on a union/overlay, then return the underlying, real inode.
- * Otherwise return d_inode().
+ * If dentry is on a जोड़/overlay, then वापस the underlying, real inode.
+ * Otherwise वापस d_inode().
  */
-static inline struct inode *d_real_inode(const struct dentry *dentry)
-{
-	/* This usage of d_real() results in const dentry */
-	return d_backing_inode(d_real((struct dentry *) dentry, NULL));
-}
+अटल अंतरभूत काष्ठा inode *d_real_inode(स्थिर काष्ठा dentry *dentry)
+अणु
+	/* This usage of d_real() results in स्थिर dentry */
+	वापस d_backing_inode(d_real((काष्ठा dentry *) dentry, शून्य));
+पूर्ण
 
-struct name_snapshot {
-	struct qstr name;
-	unsigned char inline_name[DNAME_INLINE_LEN];
-};
-void take_dentry_name_snapshot(struct name_snapshot *, struct dentry *);
-void release_dentry_name_snapshot(struct name_snapshot *);
+काष्ठा name_snapshot अणु
+	काष्ठा qstr name;
+	अचिन्हित अक्षर अंतरभूत_name[DNAME_INLINE_LEN];
+पूर्ण;
+व्योम take_dentry_name_snapshot(काष्ठा name_snapshot *, काष्ठा dentry *);
+व्योम release_dentry_name_snapshot(काष्ठा name_snapshot *);
 
-#endif	/* __LINUX_DCACHE_H */
+#पूर्ण_अगर	/* __LINUX_DCACHE_H */

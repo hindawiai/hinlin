@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * RCU-based infrastructure for lightweight reader-writer locking
+ * RCU-based infraकाष्ठाure क्रम lightweight पढ़ोer-ग_लिखोr locking
  *
  * Copyright (c) 2015, Red Hat, Inc.
  *
  * Author: Oleg Nesterov <oleg@redhat.com>
  */
 
-#ifndef _LINUX_RCU_SYNC_H_
-#define _LINUX_RCU_SYNC_H_
+#अगर_अघोषित _LINUX_RCU_SYNC_H_
+#घोषणा _LINUX_RCU_SYNC_H_
 
-#include <linux/wait.h>
-#include <linux/rcupdate.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/rcupdate.h>
 
-/* Structure to mediate between updaters and fastpath-using readers.  */
-struct rcu_sync {
-	int			gp_state;
-	int			gp_count;
-	wait_queue_head_t	gp_wait;
+/* Structure to mediate between updaters and fastpath-using पढ़ोers.  */
+काष्ठा rcu_sync अणु
+	पूर्णांक			gp_state;
+	पूर्णांक			gp_count;
+	रुको_queue_head_t	gp_रुको;
 
-	struct rcu_head		cb_head;
-};
+	काष्ठा rcu_head		cb_head;
+पूर्ण;
 
 /**
- * rcu_sync_is_idle() - Are readers permitted to use their fastpaths?
- * @rsp: Pointer to rcu_sync structure to use for synchronization
+ * rcu_sync_is_idle() - Are पढ़ोers permitted to use their fastpaths?
+ * @rsp: Poपूर्णांकer to rcu_sync काष्ठाure to use क्रम synchronization
  *
- * Returns true if readers are permitted to use their fastpaths.  Must be
- * invoked within some flavor of RCU read-side critical section.
+ * Returns true अगर पढ़ोers are permitted to use their fastpaths.  Must be
+ * invoked within some flavor of RCU पढ़ो-side critical section.
  */
-static inline bool rcu_sync_is_idle(struct rcu_sync *rsp)
-{
-	RCU_LOCKDEP_WARN(!rcu_read_lock_any_held(),
+अटल अंतरभूत bool rcu_sync_is_idle(काष्ठा rcu_sync *rsp)
+अणु
+	RCU_LOCKDEP_WARN(!rcu_पढ़ो_lock_any_held(),
 			 "suspicious rcu_sync_is_idle() usage");
-	return !READ_ONCE(rsp->gp_state); /* GP_IDLE */
-}
+	वापस !READ_ONCE(rsp->gp_state); /* GP_IDLE */
+पूर्ण
 
-extern void rcu_sync_init(struct rcu_sync *);
-extern void rcu_sync_enter_start(struct rcu_sync *);
-extern void rcu_sync_enter(struct rcu_sync *);
-extern void rcu_sync_exit(struct rcu_sync *);
-extern void rcu_sync_dtor(struct rcu_sync *);
+बाह्य व्योम rcu_sync_init(काष्ठा rcu_sync *);
+बाह्य व्योम rcu_sync_enter_start(काष्ठा rcu_sync *);
+बाह्य व्योम rcu_sync_enter(काष्ठा rcu_sync *);
+बाह्य व्योम rcu_sync_निकास(काष्ठा rcu_sync *);
+बाह्य व्योम rcu_sync_dtor(काष्ठा rcu_sync *);
 
-#define __RCU_SYNC_INITIALIZER(name) {					\
+#घोषणा __RCU_SYNC_INITIALIZER(name) अणु					\
 		.gp_state = 0,						\
 		.gp_count = 0,						\
-		.gp_wait = __WAIT_QUEUE_HEAD_INITIALIZER(name.gp_wait),	\
-	}
+		.gp_रुको = __WAIT_QUEUE_HEAD_INITIALIZER(name.gp_रुको),	\
+	पूर्ण
 
-#define	DEFINE_RCU_SYNC(name)	\
-	struct rcu_sync name = __RCU_SYNC_INITIALIZER(name)
+#घोषणा	DEFINE_RCU_SYNC(name)	\
+	काष्ठा rcu_sync name = __RCU_SYNC_INITIALIZER(name)
 
-#endif /* _LINUX_RCU_SYNC_H_ */
+#पूर्ण_अगर /* _LINUX_RCU_SYNC_H_ */

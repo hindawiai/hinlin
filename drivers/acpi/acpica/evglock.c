@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: evglock - Global Lock support
@@ -7,16 +8,16 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acevents.h"
-#include "acinterp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acevents.h"
+#समावेश "acinterp.h"
 
-#define _COMPONENT          ACPI_EVENTS
+#घोषणा _COMPONENT          ACPI_EVENTS
 ACPI_MODULE_NAME("evglock")
-#if (!ACPI_REDUCED_HARDWARE)	/* Entire module */
+#अगर (!ACPI_REDUCED_HARDWARE)	/* Entire module */
 /* Local prototypes */
-static u32 acpi_ev_global_lock_handler(void *context);
+अटल u32 acpi_ev_global_lock_handler(व्योम *context);
 
 /*******************************************************************************
  *
@@ -26,130 +27,130 @@ static u32 acpi_ev_global_lock_handler(void *context);
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install a handler for the global lock release event
+ * DESCRIPTION: Install a handler क्रम the global lock release event
  *
  ******************************************************************************/
 
-acpi_status acpi_ev_init_global_lock_handler(void)
-{
+acpi_status acpi_ev_init_global_lock_handler(व्योम)
+अणु
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(ev_init_global_lock_handler);
 
 	/* If Hardware Reduced flag is set, there is no global lock */
 
-	if (acpi_gbl_reduced_hardware) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (acpi_gbl_reduced_hardware) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* Attempt installation of the global lock handler */
 
 	status = acpi_install_fixed_event_handler(ACPI_EVENT_GLOBAL,
 						  acpi_ev_global_lock_handler,
-						  NULL);
+						  शून्य);
 
 	/*
-	 * If the global lock does not exist on this platform, the attempt to
+	 * If the global lock करोes not exist on this platक्रमm, the attempt to
 	 * enable GBL_STATUS will fail (the GBL_ENABLE bit will not stick).
 	 * Map to AE_OK, but mark global lock as not present. Any attempt to
 	 * actually use the global lock will be flagged with an error.
 	 */
 	acpi_gbl_global_lock_present = FALSE;
-	if (status == AE_NO_HARDWARE_RESPONSE) {
+	अगर (status == AE_NO_HARDWARE_RESPONSE) अणु
 		ACPI_ERROR((AE_INFO,
 			    "No response from Global Lock hardware, disabling lock"));
 
-		return_ACPI_STATUS(AE_OK);
-	}
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	status = acpi_os_create_lock(&acpi_gbl_global_lock_pending_lock);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	acpi_gbl_global_lock_pending = FALSE;
 	acpi_gbl_global_lock_present = TRUE;
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ev_remove_global_lock_handler
+ * FUNCTION:    acpi_ev_हटाओ_global_lock_handler
  *
  * PARAMETERS:  None
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Remove the handler for the Global Lock
+ * DESCRIPTION: Remove the handler क्रम the Global Lock
  *
  ******************************************************************************/
 
-acpi_status acpi_ev_remove_global_lock_handler(void)
-{
+acpi_status acpi_ev_हटाओ_global_lock_handler(व्योम)
+अणु
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE(ev_remove_global_lock_handler);
+	ACPI_FUNCTION_TRACE(ev_हटाओ_global_lock_handler);
 
 	acpi_gbl_global_lock_present = FALSE;
-	status = acpi_remove_fixed_event_handler(ACPI_EVENT_GLOBAL,
+	status = acpi_हटाओ_fixed_event_handler(ACPI_EVENT_GLOBAL,
 						 acpi_ev_global_lock_handler);
 
 	acpi_os_delete_lock(acpi_gbl_global_lock_pending_lock);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_global_lock_handler
  *
- * PARAMETERS:  context         - From thread interface, not used
+ * PARAMETERS:  context         - From thपढ़ो पूर्णांकerface, not used
  *
  * RETURN:      ACPI_INTERRUPT_HANDLED
  *
  * DESCRIPTION: Invoked directly from the SCI handler when a global lock
- *              release interrupt occurs. If there is actually a pending
- *              request for the lock, signal the waiting thread.
+ *              release पूर्णांकerrupt occurs. If there is actually a pending
+ *              request क्रम the lock, संकेत the रुकोing thपढ़ो.
  *
  ******************************************************************************/
 
-static u32 acpi_ev_global_lock_handler(void *context)
-{
+अटल u32 acpi_ev_global_lock_handler(व्योम *context)
+अणु
 	acpi_status status;
 	acpi_cpu_flags flags;
 
 	flags = acpi_os_acquire_lock(acpi_gbl_global_lock_pending_lock);
 
 	/*
-	 * If a request for the global lock is not actually pending,
-	 * we are done. This handles "spurious" global lock interrupts
+	 * If a request क्रम the global lock is not actually pending,
+	 * we are करोne. This handles "spurious" global lock पूर्णांकerrupts
 	 * which are possible (and have been seen) with bad BIOSs.
 	 */
-	if (!acpi_gbl_global_lock_pending) {
-		goto cleanup_and_exit;
-	}
+	अगर (!acpi_gbl_global_lock_pending) अणु
+		जाओ cleanup_and_निकास;
+	पूर्ण
 
 	/*
 	 * Send a unit to the global lock semaphore. The actual acquisition
-	 * of the global lock will be performed by the waiting thread.
+	 * of the global lock will be perक्रमmed by the रुकोing thपढ़ो.
 	 */
-	status = acpi_os_signal_semaphore(acpi_gbl_global_lock_semaphore, 1);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_os_संकेत_semaphore(acpi_gbl_global_lock_semaphore, 1);
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_ERROR((AE_INFO, "Could not signal Global Lock semaphore"));
-	}
+	पूर्ण
 
 	acpi_gbl_global_lock_pending = FALSE;
 
-cleanup_and_exit:
+cleanup_and_निकास:
 
 	acpi_os_release_lock(acpi_gbl_global_lock_pending_lock, flags);
-	return (ACPI_INTERRUPT_HANDLED);
-}
+	वापस (ACPI_INTERRUPT_HANDLED);
+पूर्ण
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_ev_acquire_global_lock
  *
- * PARAMETERS:  timeout         - Max time to wait for the lock, in millisec.
+ * PARAMETERS:  समयout         - Max समय to रुको क्रम the lock, in millisec.
  *
  * RETURN:      Status
  *
@@ -157,18 +158,18 @@ cleanup_and_exit:
  *
  * MUTEX:       Interpreter must be locked
  *
- * Note: The original implementation allowed multiple threads to "acquire" the
- * Global Lock, and the OS would hold the lock until the last thread had
+ * Note: The original implementation allowed multiple thपढ़ोs to "acquire" the
+ * Global Lock, and the OS would hold the lock until the last thपढ़ो had
  * released it. However, this could potentially starve the BIOS out of the
- * lock, especially in the case where there is a tight handshake between the
- * Embedded Controller driver and the BIOS. Therefore, this implementation
- * allows only one thread to acquire the HW Global Lock at a time, and makes
+ * lock, especially in the हाल where there is a tight handshake between the
+ * Embedded Controller driver and the BIOS. Thereक्रमe, this implementation
+ * allows only one thपढ़ो to acquire the HW Global Lock at a समय, and makes
  * the global lock appear as a standard mutex on the OS side.
  *
  *****************************************************************************/
 
-acpi_status acpi_ev_acquire_global_lock(u16 timeout)
-{
+acpi_status acpi_ev_acquire_global_lock(u16 समयout)
+अणु
 	acpi_cpu_flags flags;
 	acpi_status status;
 	u8 acquired = FALSE;
@@ -176,56 +177,56 @@ acpi_status acpi_ev_acquire_global_lock(u16 timeout)
 	ACPI_FUNCTION_TRACE(ev_acquire_global_lock);
 
 	/*
-	 * Only one thread can acquire the GL at a time, the global_lock_mutex
-	 * enforces this. This interface releases the interpreter if we must wait.
+	 * Only one thपढ़ो can acquire the GL at a समय, the global_lock_mutex
+	 * enक्रमces this. This पूर्णांकerface releases the पूर्णांकerpreter अगर we must रुको.
 	 */
 	status =
-	    acpi_ex_system_wait_mutex(acpi_gbl_global_lock_mutex->mutex.
-				      os_mutex, timeout);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	    acpi_ex_प्रणाली_रुको_mutex(acpi_gbl_global_lock_mutex->mutex.
+				      os_mutex, समयout);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/*
-	 * Update the global lock handle and check for wraparound. The handle is
-	 * only used for the external global lock interfaces, but it is updated
-	 * here to properly handle the case where a single thread may acquire the
-	 * lock via both the AML and the acpi_acquire_global_lock interfaces. The
-	 * handle is therefore updated on the first acquire from a given thread
+	 * Update the global lock handle and check क्रम wraparound. The handle is
+	 * only used क्रम the बाह्यal global lock पूर्णांकerfaces, but it is updated
+	 * here to properly handle the हाल where a single thपढ़ो may acquire the
+	 * lock via both the AML and the acpi_acquire_global_lock पूर्णांकerfaces. The
+	 * handle is thereक्रमe updated on the first acquire from a given thपढ़ो
 	 * regardless of where the acquisition request originated.
 	 */
 	acpi_gbl_global_lock_handle++;
-	if (acpi_gbl_global_lock_handle == 0) {
+	अगर (acpi_gbl_global_lock_handle == 0) अणु
 		acpi_gbl_global_lock_handle = 1;
-	}
+	पूर्ण
 
 	/*
 	 * Make sure that a global lock actually exists. If not, just
 	 * treat the lock as a standard mutex.
 	 */
-	if (!acpi_gbl_global_lock_present) {
+	अगर (!acpi_gbl_global_lock_present) अणु
 		acpi_gbl_global_lock_acquired = TRUE;
-		return_ACPI_STATUS(AE_OK);
-	}
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	flags = acpi_os_acquire_lock(acpi_gbl_global_lock_pending_lock);
 
-	do {
+	करो अणु
 
 		/* Attempt to acquire the actual hardware lock */
 
 		ACPI_ACQUIRE_GLOBAL_LOCK(acpi_gbl_FACS, acquired);
-		if (acquired) {
+		अगर (acquired) अणु
 			acpi_gbl_global_lock_acquired = TRUE;
 			ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 					  "Acquired hardware Global Lock\n"));
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * Did not get the lock. The pending bit was set above, and
-		 * we must now wait until we receive the global lock
-		 * released interrupt.
+		 * we must now रुको until we receive the global lock
+		 * released पूर्णांकerrupt.
 		 */
 		acpi_gbl_global_lock_pending = TRUE;
 		acpi_os_release_lock(acpi_gbl_global_lock_pending_lock, flags);
@@ -234,22 +235,22 @@ acpi_status acpi_ev_acquire_global_lock(u16 timeout)
 				  "Waiting for hardware Global Lock\n"));
 
 		/*
-		 * Wait for handshake with the global lock interrupt handler.
-		 * This interface releases the interpreter if we must wait.
+		 * Wait क्रम handshake with the global lock पूर्णांकerrupt handler.
+		 * This पूर्णांकerface releases the पूर्णांकerpreter अगर we must रुको.
 		 */
 		status =
-		    acpi_ex_system_wait_semaphore
+		    acpi_ex_प्रणाली_रुको_semaphore
 		    (acpi_gbl_global_lock_semaphore, ACPI_WAIT_FOREVER);
 
 		flags = acpi_os_acquire_lock(acpi_gbl_global_lock_pending_lock);
 
-	} while (ACPI_SUCCESS(status));
+	पूर्ण जबतक (ACPI_SUCCESS(status));
 
 	acpi_gbl_global_lock_pending = FALSE;
 	acpi_os_release_lock(acpi_gbl_global_lock_pending_lock, flags);
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -263,48 +264,48 @@ acpi_status acpi_ev_acquire_global_lock(u16 timeout)
  *
  ******************************************************************************/
 
-acpi_status acpi_ev_release_global_lock(void)
-{
+acpi_status acpi_ev_release_global_lock(व्योम)
+अणु
 	u8 pending = FALSE;
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE(ev_release_global_lock);
 
-	/* Lock must be already acquired */
+	/* Lock must be alपढ़ोy acquired */
 
-	if (!acpi_gbl_global_lock_acquired) {
+	अगर (!acpi_gbl_global_lock_acquired) अणु
 		ACPI_WARNING((AE_INFO,
 			      "Cannot release the ACPI Global Lock, it has not been acquired"));
-		return_ACPI_STATUS(AE_NOT_ACQUIRED);
-	}
+		वापस_ACPI_STATUS(AE_NOT_ACQUIRED);
+	पूर्ण
 
-	if (acpi_gbl_global_lock_present) {
+	अगर (acpi_gbl_global_lock_present) अणु
 
-		/* Allow any thread to release the lock */
+		/* Allow any thपढ़ो to release the lock */
 
 		ACPI_RELEASE_GLOBAL_LOCK(acpi_gbl_FACS, pending);
 
 		/*
-		 * If the pending bit was set, we must write GBL_RLS to the control
-		 * register
+		 * If the pending bit was set, we must ग_लिखो GBL_RLS to the control
+		 * रेजिस्टर
 		 */
-		if (pending) {
+		अगर (pending) अणु
 			status =
-			    acpi_write_bit_register
+			    acpi_ग_लिखो_bit_रेजिस्टर
 			    (ACPI_BITREG_GLOBAL_LOCK_RELEASE,
 			     ACPI_ENABLE_EVENT);
-		}
+		पूर्ण
 
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "Released hardware Global Lock\n"));
-	}
+	पूर्ण
 
 	acpi_gbl_global_lock_acquired = FALSE;
 
 	/* Release the local GL mutex */
 
 	acpi_os_release_mutex(acpi_gbl_global_lock_mutex->mutex.os_mutex);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
-#endif				/* !ACPI_REDUCED_HARDWARE */
+#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */

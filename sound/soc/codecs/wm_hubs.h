@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * wm_hubs.h  --  WM899x common code
  *
  * Copyright 2009 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  */
 
-#ifndef _WM_HUBS_H
-#define _WM_HUBS_H
+#अगर_अघोषित _WM_HUBS_H
+#घोषणा _WM_HUBS_H
 
-#include <linux/completion.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <sound/control.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <sound/control.h>
 
-struct snd_soc_component;
+काष्ठा snd_soc_component;
 
-extern const unsigned int wm_hubs_spkmix_tlv[];
+बाह्य स्थिर अचिन्हित पूर्णांक wm_hubs_spkmix_tlv[];
 
-/* This *must* be the first element of the codec->private_data struct */
-struct wm_hubs_data {
-	int dcs_codes_l;
-	int dcs_codes_r;
-	int dcs_readback_mode;
-	int hp_startup_mode;
-	int series_startup;
-	int no_series_update;
+/* This *must* be the first element of the codec->निजी_data काष्ठा */
+काष्ठा wm_hubs_data अणु
+	पूर्णांक dcs_codes_l;
+	पूर्णांक dcs_codes_r;
+	पूर्णांक dcs_पढ़ोback_mode;
+	पूर्णांक hp_startup_mode;
+	पूर्णांक series_startup;
+	पूर्णांक no_series_update;
 	bool micd_scthr;
 
 	bool no_cache_dac_hp_direct;
-	struct list_head dcs_cache;
-	bool (*check_class_w_digital)(struct snd_soc_component *);
+	काष्ठा list_head dcs_cache;
+	bool (*check_class_w_digital)(काष्ठा snd_soc_component *);
 
-	int micb1_delay;
-	int micb2_delay;
+	पूर्णांक micb1_delay;
+	पूर्णांक micb2_delay;
 
 	bool lineout1_se;
 	bool lineout1n_ena;
@@ -44,28 +45,28 @@ struct wm_hubs_data {
 	bool lineout2n_ena;
 	bool lineout2p_ena;
 
-	bool dcs_done_irq;
-	struct completion dcs_done;
+	bool dcs_करोne_irq;
+	काष्ठा completion dcs_करोne;
 
-	struct snd_soc_component *component;
-};
+	काष्ठा snd_soc_component *component;
+पूर्ण;
 
-extern int wm_hubs_add_analogue_controls(struct snd_soc_component *);
-extern int wm_hubs_add_analogue_routes(struct snd_soc_component *, int, int);
-extern int wm_hubs_handle_analogue_pdata(struct snd_soc_component *,
-					 int lineout1_diff, int lineout2_diff,
-					 int lineout1fb, int lineout2fb,
-					 int jd_scthr, int jd_thr,
-					 int micbias1_delay, int micbias2_delay,
-					 int micbias1_lvl, int micbias2_lvl);
+बाह्य पूर्णांक wm_hubs_add_analogue_controls(काष्ठा snd_soc_component *);
+बाह्य पूर्णांक wm_hubs_add_analogue_routes(काष्ठा snd_soc_component *, पूर्णांक, पूर्णांक);
+बाह्य पूर्णांक wm_hubs_handle_analogue_pdata(काष्ठा snd_soc_component *,
+					 पूर्णांक lineout1_dअगरf, पूर्णांक lineout2_dअगरf,
+					 पूर्णांक lineout1fb, पूर्णांक lineout2fb,
+					 पूर्णांक jd_scthr, पूर्णांक jd_thr,
+					 पूर्णांक micbias1_delay, पूर्णांक micbias2_delay,
+					 पूर्णांक micbias1_lvl, पूर्णांक micbias2_lvl);
 
-extern irqreturn_t wm_hubs_dcs_done(int irq, void *data);
-extern void wm_hubs_vmid_ena(struct snd_soc_component *component);
-extern void wm_hubs_set_bias_level(struct snd_soc_component *component,
-				   enum snd_soc_bias_level level);
-extern void wm_hubs_update_class_w(struct snd_soc_component *component);
+बाह्य irqवापस_t wm_hubs_dcs_करोne(पूर्णांक irq, व्योम *data);
+बाह्य व्योम wm_hubs_vmid_ena(काष्ठा snd_soc_component *component);
+बाह्य व्योम wm_hubs_set_bias_level(काष्ठा snd_soc_component *component,
+				   क्रमागत snd_soc_bias_level level);
+बाह्य व्योम wm_hubs_update_class_w(काष्ठा snd_soc_component *component);
 
-extern const struct snd_kcontrol_new wm_hubs_hpl_mux;
-extern const struct snd_kcontrol_new wm_hubs_hpr_mux;
+बाह्य स्थिर काष्ठा snd_kcontrol_new wm_hubs_hpl_mux;
+बाह्य स्थिर काष्ठा snd_kcontrol_new wm_hubs_hpr_mux;
 
-#endif
+#पूर्ण_अगर

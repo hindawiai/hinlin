@@ -1,143 +1,144 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * include/asm-m68k/processor.h
+ * include/यंत्र-m68k/processor.h
  *
- * Copyright (C) 1995 Hamish Macdonald
+ * Copyright (C) 1995 Hamish Macकरोnald
  */
 
-#ifndef __ASM_M68K_PROCESSOR_H
-#define __ASM_M68K_PROCESSOR_H
+#अगर_अघोषित __ASM_M68K_PROCESSOR_H
+#घोषणा __ASM_M68K_PROCESSOR_H
 
-#include <linux/thread_info.h>
-#include <asm/segment.h>
-#include <asm/fpu.h>
-#include <asm/ptrace.h>
+#समावेश <linux/thपढ़ो_info.h>
+#समावेश <यंत्र/segment.h>
+#समावेश <यंत्र/fpu.h>
+#समावेश <यंत्र/ptrace.h>
 
-static inline unsigned long rdusp(void)
-{
-#ifdef CONFIG_COLDFIRE_SW_A7
-	extern unsigned int sw_usp;
-	return sw_usp;
-#else
-	register unsigned long usp __asm__("a0");
+अटल अंतरभूत अचिन्हित दीर्घ rdusp(व्योम)
+अणु
+#अगर_घोषित CONFIG_COLDFIRE_SW_A7
+	बाह्य अचिन्हित पूर्णांक sw_usp;
+	वापस sw_usp;
+#अन्यथा
+	रेजिस्टर अचिन्हित दीर्घ usp __यंत्र__("a0");
 	/* move %usp,%a0 */
-	__asm__ __volatile__(".word 0x4e68" : "=a" (usp));
-	return usp;
-#endif
-}
+	__यंत्र__ __अस्थिर__(".word 0x4e68" : "=a" (usp));
+	वापस usp;
+#पूर्ण_अगर
+पूर्ण
 
-static inline void wrusp(unsigned long usp)
-{
-#ifdef CONFIG_COLDFIRE_SW_A7
-	extern unsigned int sw_usp;
+अटल अंतरभूत व्योम wrusp(अचिन्हित दीर्घ usp)
+अणु
+#अगर_घोषित CONFIG_COLDFIRE_SW_A7
+	बाह्य अचिन्हित पूर्णांक sw_usp;
 	sw_usp = usp;
-#else
-	register unsigned long a0 __asm__("a0") = usp;
+#अन्यथा
+	रेजिस्टर अचिन्हित दीर्घ a0 __यंत्र__("a0") = usp;
 	/* move %a0,%usp */
-	__asm__ __volatile__(".word 0x4e60" : : "a" (a0) );
-#endif
-}
+	__यंत्र__ __अस्थिर__(".word 0x4e60" : : "a" (a0) );
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * User space process size: 3.75GB. This is hardcoded into a few places,
- * so don't change it unless you know what you are doing.
+ * User space process size: 3.75GB. This is hardcoded पूर्णांकo a few places,
+ * so करोn't change it unless you know what you are करोing.
  */
-#ifdef CONFIG_MMU
-#if defined(CONFIG_COLDFIRE)
-#define TASK_SIZE	(0xC0000000UL)
-#elif defined(CONFIG_SUN3)
-#define TASK_SIZE	(0x0E000000UL)
-#else
-#define TASK_SIZE	(0xF0000000UL)
-#endif
-#else
-#define TASK_SIZE	(0xFFFFFFFFUL)
-#endif
+#अगर_घोषित CONFIG_MMU
+#अगर defined(CONFIG_COLDFIRE)
+#घोषणा TASK_SIZE	(0xC0000000UL)
+#या_अगर defined(CONFIG_SUN3)
+#घोषणा TASK_SIZE	(0x0E000000UL)
+#अन्यथा
+#घोषणा TASK_SIZE	(0xF0000000UL)
+#पूर्ण_अगर
+#अन्यथा
+#घोषणा TASK_SIZE	(0xFFFFFFFFUL)
+#पूर्ण_अगर
 
-#ifdef __KERNEL__
-#define STACK_TOP	TASK_SIZE
-#define STACK_TOP_MAX	STACK_TOP
-#endif
+#अगर_घोषित __KERNEL__
+#घोषणा STACK_TOP	TASK_SIZE
+#घोषणा STACK_TOP_MAX	STACK_TOP
+#पूर्ण_अगर
 
-/* This decides where the kernel will search for a free chunk of vm
+/* This decides where the kernel will search क्रम a मुक्त chunk of vm
  * space during mmap's.
  */
-#ifdef CONFIG_MMU
-#if defined(CONFIG_COLDFIRE)
-#define TASK_UNMAPPED_BASE	0x60000000UL
-#elif defined(CONFIG_SUN3)
-#define TASK_UNMAPPED_BASE	0x0A000000UL
-#else
-#define TASK_UNMAPPED_BASE	0xC0000000UL
-#endif
-#define TASK_UNMAPPED_ALIGN(addr, off)	PAGE_ALIGN(addr)
-#else
-#define TASK_UNMAPPED_BASE	0
-#endif
+#अगर_घोषित CONFIG_MMU
+#अगर defined(CONFIG_COLDFIRE)
+#घोषणा TASK_UNMAPPED_BASE	0x60000000UL
+#या_अगर defined(CONFIG_SUN3)
+#घोषणा TASK_UNMAPPED_BASE	0x0A000000UL
+#अन्यथा
+#घोषणा TASK_UNMAPPED_BASE	0xC0000000UL
+#पूर्ण_अगर
+#घोषणा TASK_UNMAPPED_ALIGN(addr, off)	PAGE_ALIGN(addr)
+#अन्यथा
+#घोषणा TASK_UNMAPPED_BASE	0
+#पूर्ण_अगर
 
-struct thread_struct {
-	unsigned long  ksp;		/* kernel stack pointer */
-	unsigned long  usp;		/* user stack pointer */
-	unsigned short sr;		/* saved status register */
-	unsigned short fs;		/* saved fs (sfc, dfc) */
-	unsigned long  crp[2];		/* cpu root pointer */
-	unsigned long  esp0;		/* points to SR of stack frame */
-	unsigned long  faddr;		/* info about last fault */
-	int            signo, code;
-	unsigned long  fp[8*3];
-	unsigned long  fpcntl[3];	/* fp control regs */
-	unsigned char  fpstate[FPSTATESIZE];  /* floating point state */
-};
+काष्ठा thपढ़ो_काष्ठा अणु
+	अचिन्हित दीर्घ  ksp;		/* kernel stack poपूर्णांकer */
+	अचिन्हित दीर्घ  usp;		/* user stack poपूर्णांकer */
+	अचिन्हित लघु sr;		/* saved status रेजिस्टर */
+	अचिन्हित लघु fs;		/* saved fs (sfc, dfc) */
+	अचिन्हित दीर्घ  crp[2];		/* cpu root poपूर्णांकer */
+	अचिन्हित दीर्घ  esp0;		/* poपूर्णांकs to SR of stack frame */
+	अचिन्हित दीर्घ  faddr;		/* info about last fault */
+	पूर्णांक            signo, code;
+	अचिन्हित दीर्घ  fp[8*3];
+	अचिन्हित दीर्घ  fpcntl[3];	/* fp control regs */
+	अचिन्हित अक्षर  fpstate[FPSTATESIZE];  /* भग्नing poपूर्णांक state */
+पूर्ण;
 
-#define INIT_THREAD  {							\
-	.ksp	= sizeof(init_stack) + (unsigned long) init_stack,	\
+#घोषणा INIT_THREAD  अणु							\
+	.ksp	= माप(init_stack) + (अचिन्हित दीर्घ) init_stack,	\
 	.sr	= PS_S,							\
 	.fs	= __KERNEL_DS,						\
-}
+पूर्ण
 
 /*
- * ColdFire stack format sbould be 0x4 for an aligned usp (will always be
- * true on thread creation). We need to set this explicitly.
+ * ColdFire stack क्रमmat sbould be 0x4 क्रम an aligned usp (will always be
+ * true on thपढ़ो creation). We need to set this explicitly.
  */
-#ifdef CONFIG_COLDFIRE
-#define setframeformat(_regs)	do { (_regs)->format = 0x4; } while(0)
-#else
-#define setframeformat(_regs)	do { } while (0)
-#endif
+#अगर_घोषित CONFIG_COLDFIRE
+#घोषणा setframeक्रमmat(_regs)	करो अणु (_regs)->क्रमmat = 0x4; पूर्ण जबतक(0)
+#अन्यथा
+#घोषणा setframeक्रमmat(_regs)	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /*
- * Do necessary setup to start up a newly executed thread.
+ * Do necessary setup to start up a newly executed thपढ़ो.
  */
-static inline void start_thread(struct pt_regs * regs, unsigned long pc,
-				unsigned long usp)
-{
+अटल अंतरभूत व्योम start_thपढ़ो(काष्ठा pt_regs * regs, अचिन्हित दीर्घ pc,
+				अचिन्हित दीर्घ usp)
+अणु
 	regs->pc = pc;
 	regs->sr &= ~0x2000;
-	setframeformat(regs);
+	setframeक्रमmat(regs);
 	wrusp(usp);
-}
+पूर्ण
 
 /* Forward declaration, a strange C thing */
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-/* Free all resources held by a thread. */
-static inline void release_thread(struct task_struct *dead_task)
-{
-}
+/* Free all resources held by a thपढ़ो. */
+अटल अंतरभूत व्योम release_thपढ़ो(काष्ठा task_काष्ठा *dead_task)
+अणु
+पूर्ण
 
-unsigned long get_wchan(struct task_struct *p);
+अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
 
-#define	KSTK_EIP(tsk)	\
-    ({			\
-	unsigned long eip = 0;	 \
-	if ((tsk)->thread.esp0 > PAGE_SIZE && \
-	    (virt_addr_valid((tsk)->thread.esp0))) \
-	      eip = ((struct pt_regs *) (tsk)->thread.esp0)->pc; \
-	eip; })
-#define	KSTK_ESP(tsk)	((tsk) == current ? rdusp() : (tsk)->thread.usp)
+#घोषणा	KSTK_EIP(tsk)	\
+    (अणु			\
+	अचिन्हित दीर्घ eip = 0;	 \
+	अगर ((tsk)->thपढ़ो.esp0 > PAGE_SIZE && \
+	    (virt_addr_valid((tsk)->thपढ़ो.esp0))) \
+	      eip = ((काष्ठा pt_regs *) (tsk)->thपढ़ो.esp0)->pc; \
+	eip; पूर्ण)
+#घोषणा	KSTK_ESP(tsk)	((tsk) == current ? rdusp() : (tsk)->thपढ़ो.usp)
 
-#define task_pt_regs(tsk)	((struct pt_regs *) ((tsk)->thread.esp0))
+#घोषणा task_pt_regs(tsk)	((काष्ठा pt_regs *) ((tsk)->thपढ़ो.esp0))
 
-#define cpu_relax()	barrier()
+#घोषणा cpu_relax()	barrier()
 
-#endif
+#पूर्ण_अगर

@@ -1,180 +1,181 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * vivid-kthread-cap.h - video/vbi capture thread support functions.
+ * vivid-kthपढ़ो-cap.h - video/vbi capture thपढ़ो support functions.
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/font.h>
-#include <linux/mutex.h>
-#include <linux/videodev2.h>
-#include <linux/kthread.h>
-#include <linux/freezer.h>
-#include <linux/random.h>
-#include <linux/v4l2-dv-timings.h>
-#include <asm/div64.h>
-#include <media/videobuf2-vmalloc.h>
-#include <media/v4l2-dv-timings.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-fh.h>
-#include <media/v4l2-event.h>
-#include <media/v4l2-rect.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/font.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/v4l2-dv-timings.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश <media/videobuf2-vदो_स्मृति.h>
+#समावेश <media/v4l2-dv-timings.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-fh.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/v4l2-rect.h>
 
-#include "vivid-core.h"
-#include "vivid-vid-common.h"
-#include "vivid-vid-cap.h"
-#include "vivid-vid-out.h"
-#include "vivid-radio-common.h"
-#include "vivid-radio-rx.h"
-#include "vivid-radio-tx.h"
-#include "vivid-sdr-cap.h"
-#include "vivid-vbi-cap.h"
-#include "vivid-vbi-out.h"
-#include "vivid-osd.h"
-#include "vivid-ctrls.h"
-#include "vivid-kthread-cap.h"
-#include "vivid-meta-cap.h"
+#समावेश "vivid-core.h"
+#समावेश "vivid-vid-common.h"
+#समावेश "vivid-vid-cap.h"
+#समावेश "vivid-vid-out.h"
+#समावेश "vivid-radio-common.h"
+#समावेश "vivid-radio-rx.h"
+#समावेश "vivid-radio-tx.h"
+#समावेश "vivid-sdr-cap.h"
+#समावेश "vivid-vbi-cap.h"
+#समावेश "vivid-vbi-out.h"
+#समावेश "vivid-osd.h"
+#समावेश "vivid-ctrls.h"
+#समावेश "vivid-kthread-cap.h"
+#समावेश "vivid-meta-cap.h"
 
-static inline v4l2_std_id vivid_get_std_cap(const struct vivid_dev *dev)
-{
-	if (vivid_is_sdtv_cap(dev))
-		return dev->std_cap[dev->input];
-	return 0;
-}
+अटल अंतरभूत v4l2_std_id vivid_get_std_cap(स्थिर काष्ठा vivid_dev *dev)
+अणु
+	अगर (vivid_is_sdtv_cap(dev))
+		वापस dev->std_cap[dev->input];
+	वापस 0;
+पूर्ण
 
-static void copy_pix(struct vivid_dev *dev, int win_y, int win_x,
-			u16 *cap, const u16 *osd)
-{
+अटल व्योम copy_pix(काष्ठा vivid_dev *dev, पूर्णांक win_y, पूर्णांक win_x,
+			u16 *cap, स्थिर u16 *osd)
+अणु
 	u16 out;
-	int left = dev->overlay_out_left;
-	int top = dev->overlay_out_top;
-	int fb_x = win_x + left;
-	int fb_y = win_y + top;
-	int i;
+	पूर्णांक left = dev->overlay_out_left;
+	पूर्णांक top = dev->overlay_out_top;
+	पूर्णांक fb_x = win_x + left;
+	पूर्णांक fb_y = win_y + top;
+	पूर्णांक i;
 
 	out = *cap;
 	*cap = *osd;
-	if (dev->bitmap_out) {
-		const u8 *p = dev->bitmap_out;
-		unsigned stride = (dev->compose_out.width + 7) / 8;
+	अगर (dev->biपंचांगap_out) अणु
+		स्थिर u8 *p = dev->biपंचांगap_out;
+		अचिन्हित stride = (dev->compose_out.width + 7) / 8;
 
 		win_x -= dev->compose_out.left;
 		win_y -= dev->compose_out.top;
-		if (!(p[stride * win_y + win_x / 8] & (1 << (win_x & 7))))
-			return;
-	}
+		अगर (!(p[stride * win_y + win_x / 8] & (1 << (win_x & 7))))
+			वापस;
+	पूर्ण
 
-	for (i = 0; i < dev->clipcount_out; i++) {
-		struct v4l2_rect *r = &dev->clips_out[i].c;
+	क्रम (i = 0; i < dev->clipcount_out; i++) अणु
+		काष्ठा v4l2_rect *r = &dev->clips_out[i].c;
 
-		if (fb_y >= r->top && fb_y < r->top + r->height &&
+		अगर (fb_y >= r->top && fb_y < r->top + r->height &&
 		    fb_x >= r->left && fb_x < r->left + r->width)
-			return;
-	}
-	if ((dev->fbuf_out_flags & V4L2_FBUF_FLAG_CHROMAKEY) &&
+			वापस;
+	पूर्ण
+	अगर ((dev->fbuf_out_flags & V4L2_FBUF_FLAG_CHROMAKEY) &&
 	    *osd != dev->chromakey_out)
-		return;
-	if ((dev->fbuf_out_flags & V4L2_FBUF_FLAG_SRC_CHROMAKEY) &&
+		वापस;
+	अगर ((dev->fbuf_out_flags & V4L2_FBUF_FLAG_SRC_CHROMAKEY) &&
 	    out == dev->chromakey_out)
-		return;
-	if (dev->fmt_cap->alpha_mask) {
-		if ((dev->fbuf_out_flags & V4L2_FBUF_FLAG_GLOBAL_ALPHA) &&
+		वापस;
+	अगर (dev->fmt_cap->alpha_mask) अणु
+		अगर ((dev->fbuf_out_flags & V4L2_FBUF_FLAG_GLOBAL_ALPHA) &&
 		    dev->global_alpha_out)
-			return;
-		if ((dev->fbuf_out_flags & V4L2_FBUF_FLAG_LOCAL_ALPHA) &&
+			वापस;
+		अगर ((dev->fbuf_out_flags & V4L2_FBUF_FLAG_LOCAL_ALPHA) &&
 		    *cap & dev->fmt_cap->alpha_mask)
-			return;
-		if ((dev->fbuf_out_flags & V4L2_FBUF_FLAG_LOCAL_INV_ALPHA) &&
+			वापस;
+		अगर ((dev->fbuf_out_flags & V4L2_FBUF_FLAG_LOCAL_INV_ALPHA) &&
 		    !(*cap & dev->fmt_cap->alpha_mask))
-			return;
-	}
+			वापस;
+	पूर्ण
 	*cap = out;
-}
+पूर्ण
 
-static void blend_line(struct vivid_dev *dev, unsigned y_offset, unsigned x_offset,
-		u8 *vcapbuf, const u8 *vosdbuf,
-		unsigned width, unsigned pixsize)
-{
-	unsigned x;
+अटल व्योम blend_line(काष्ठा vivid_dev *dev, अचिन्हित y_offset, अचिन्हित x_offset,
+		u8 *vcapbuf, स्थिर u8 *vosdbuf,
+		अचिन्हित width, अचिन्हित pixsize)
+अणु
+	अचिन्हित x;
 
-	for (x = 0; x < width; x++, vcapbuf += pixsize, vosdbuf += pixsize) {
+	क्रम (x = 0; x < width; x++, vcapbuf += pixsize, vosdbuf += pixsize) अणु
 		copy_pix(dev, y_offset, x_offset + x,
-			 (u16 *)vcapbuf, (const u16 *)vosdbuf);
-	}
-}
+			 (u16 *)vcapbuf, (स्थिर u16 *)vosdbuf);
+	पूर्ण
+पूर्ण
 
-static void scale_line(const u8 *src, u8 *dst, unsigned srcw, unsigned dstw, unsigned twopixsize)
-{
+अटल व्योम scale_line(स्थिर u8 *src, u8 *dst, अचिन्हित srcw, अचिन्हित dstw, अचिन्हित twopixsize)
+अणु
 	/* Coarse scaling with Bresenham */
-	unsigned int_part;
-	unsigned fract_part;
-	unsigned src_x = 0;
-	unsigned error = 0;
-	unsigned x;
+	अचिन्हित पूर्णांक_part;
+	अचिन्हित fract_part;
+	अचिन्हित src_x = 0;
+	अचिन्हित error = 0;
+	अचिन्हित x;
 
 	/*
 	 * We always combine two pixels to prevent color bleed in the packed
-	 * yuv case.
+	 * yuv हाल.
 	 */
 	srcw /= 2;
 	dstw /= 2;
-	int_part = srcw / dstw;
+	पूर्णांक_part = srcw / dstw;
 	fract_part = srcw % dstw;
-	for (x = 0; x < dstw; x++, dst += twopixsize) {
-		memcpy(dst, src + src_x * twopixsize, twopixsize);
-		src_x += int_part;
+	क्रम (x = 0; x < dstw; x++, dst += twopixsize) अणु
+		स_नकल(dst, src + src_x * twopixsize, twopixsize);
+		src_x += पूर्णांक_part;
 		error += fract_part;
-		if (error >= dstw) {
+		अगर (error >= dstw) अणु
 			error -= dstw;
 			src_x++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Precalculate the rectangles needed to perform video looping:
+ * Precalculate the rectangles needed to perक्रमm video looping:
  *
  * The nominal pipeline is that the video output buffer is cropped by
  * crop_out, scaled to compose_out, overlaid with the output overlay,
  * cropped on the capture side by crop_cap and scaled again to the video
  * capture buffer using compose_cap.
  *
- * To keep things efficient we calculate the intersection of compose_out
+ * To keep things efficient we calculate the पूर्णांकersection of compose_out
  * and crop_cap (since that's the only part of the video that will
  * actually end up in the capture buffer), determine which part of the
  * video output buffer that is and which part of the video capture buffer
  * so we can scale the video straight from the output buffer to the capture
- * buffer without any intermediate steps.
+ * buffer without any पूर्णांकermediate steps.
  *
  * If we need to deal with an output overlay, then there is no choice and
- * that intermediate step still has to be taken. For the output overlay
- * support we calculate the intersection of the framebuffer and the overlay
- * window (which may be partially or wholly outside of the framebuffer
- * itself) and the intersection of that with loop_vid_copy (i.e. the part of
+ * that पूर्णांकermediate step still has to be taken. For the output overlay
+ * support we calculate the पूर्णांकersection of the framebuffer and the overlay
+ * winकरोw (which may be partially or wholly outside of the framebuffer
+ * itself) and the पूर्णांकersection of that with loop_vid_copy (i.e. the part of
  * the actual looped video that will be overlaid). The result is calculated
  * both in framebuffer coordinates (loop_fb_copy) and compose_out coordinates
  * (loop_vid_overlay). Finally calculate the part of the capture buffer that
  * will receive that overlaid video.
  */
-static void vivid_precalc_copy_rects(struct vivid_dev *dev)
-{
+अटल व्योम vivid_precalc_copy_rects(काष्ठा vivid_dev *dev)
+अणु
 	/* Framebuffer rectangle */
-	struct v4l2_rect r_fb = {
+	काष्ठा v4l2_rect r_fb = अणु
 		0, 0, dev->display_width, dev->display_height
-	};
-	/* Overlay window rectangle in framebuffer coordinates */
-	struct v4l2_rect r_overlay = {
+	पूर्ण;
+	/* Overlay winकरोw rectangle in framebuffer coordinates */
+	काष्ठा v4l2_rect r_overlay = अणु
 		dev->overlay_out_left, dev->overlay_out_top,
 		dev->compose_out.width, dev->compose_out.height
-	};
+	पूर्ण;
 
-	v4l2_rect_intersect(&dev->loop_vid_copy, &dev->crop_cap, &dev->compose_out);
+	v4l2_rect_पूर्णांकersect(&dev->loop_vid_copy, &dev->crop_cap, &dev->compose_out);
 
 	dev->loop_vid_out = dev->loop_vid_copy;
 	v4l2_rect_scale(&dev->loop_vid_out, &dev->compose_out, &dev->crop_out);
@@ -184,7 +185,7 @@ static void vivid_precalc_copy_rects(struct vivid_dev *dev)
 	dev->loop_vid_cap = dev->loop_vid_copy;
 	v4l2_rect_scale(&dev->loop_vid_cap, &dev->crop_cap, &dev->compose_cap);
 
-	dprintk(dev, 1,
+	dprपूर्णांकk(dev, 1,
 		"loop_vid_copy: %dx%d@%dx%d loop_vid_out: %dx%d@%dx%d loop_vid_cap: %dx%d@%dx%d\n",
 		dev->loop_vid_copy.width, dev->loop_vid_copy.height,
 		dev->loop_vid_copy.left, dev->loop_vid_copy.top,
@@ -193,23 +194,23 @@ static void vivid_precalc_copy_rects(struct vivid_dev *dev)
 		dev->loop_vid_cap.width, dev->loop_vid_cap.height,
 		dev->loop_vid_cap.left, dev->loop_vid_cap.top);
 
-	v4l2_rect_intersect(&r_overlay, &r_fb, &r_overlay);
+	v4l2_rect_पूर्णांकersect(&r_overlay, &r_fb, &r_overlay);
 
-	/* shift r_overlay to the same origin as compose_out */
+	/* shअगरt r_overlay to the same origin as compose_out */
 	r_overlay.left += dev->compose_out.left - dev->overlay_out_left;
 	r_overlay.top += dev->compose_out.top - dev->overlay_out_top;
 
-	v4l2_rect_intersect(&dev->loop_vid_overlay, &r_overlay, &dev->loop_vid_copy);
+	v4l2_rect_पूर्णांकersect(&dev->loop_vid_overlay, &r_overlay, &dev->loop_vid_copy);
 	dev->loop_fb_copy = dev->loop_vid_overlay;
 
-	/* shift dev->loop_fb_copy back again to the fb origin */
+	/* shअगरt dev->loop_fb_copy back again to the fb origin */
 	dev->loop_fb_copy.left -= dev->compose_out.left - dev->overlay_out_left;
 	dev->loop_fb_copy.top -= dev->compose_out.top - dev->overlay_out_top;
 
 	dev->loop_vid_overlay_cap = dev->loop_vid_overlay;
 	v4l2_rect_scale(&dev->loop_vid_overlay_cap, &dev->crop_cap, &dev->compose_cap);
 
-	dprintk(dev, 1,
+	dprपूर्णांकk(dev, 1,
 		"loop_fb_copy: %dx%d@%dx%d loop_vid_overlay: %dx%d@%dx%d loop_vid_overlay_cap: %dx%d@%dx%d\n",
 		dev->loop_fb_copy.width, dev->loop_fb_copy.height,
 		dev->loop_fb_copy.left, dev->loop_fb_copy.top,
@@ -217,145 +218,145 @@ static void vivid_precalc_copy_rects(struct vivid_dev *dev)
 		dev->loop_vid_overlay.left, dev->loop_vid_overlay.top,
 		dev->loop_vid_overlay_cap.width, dev->loop_vid_overlay_cap.height,
 		dev->loop_vid_overlay_cap.left, dev->loop_vid_overlay_cap.top);
-}
+पूर्ण
 
-static void *plane_vaddr(struct tpg_data *tpg, struct vivid_buffer *buf,
-			 unsigned p, unsigned bpl[TPG_MAX_PLANES], unsigned h)
-{
-	unsigned i;
-	void *vbuf;
+अटल व्योम *plane_vaddr(काष्ठा tpg_data *tpg, काष्ठा vivid_buffer *buf,
+			 अचिन्हित p, अचिन्हित bpl[TPG_MAX_PLANES], अचिन्हित h)
+अणु
+	अचिन्हित i;
+	व्योम *vbuf;
 
-	if (p == 0 || tpg_g_buffers(tpg) > 1)
-		return vb2_plane_vaddr(&buf->vb.vb2_buf, p);
+	अगर (p == 0 || tpg_g_buffers(tpg) > 1)
+		वापस vb2_plane_vaddr(&buf->vb.vb2_buf, p);
 	vbuf = vb2_plane_vaddr(&buf->vb.vb2_buf, 0);
-	for (i = 0; i < p; i++)
-		vbuf += bpl[i] * h / tpg->vdownsampling[i];
-	return vbuf;
-}
+	क्रम (i = 0; i < p; i++)
+		vbuf += bpl[i] * h / tpg->vकरोwnsampling[i];
+	वापस vbuf;
+पूर्ण
 
-static noinline_for_stack int vivid_copy_buffer(struct vivid_dev *dev, unsigned p,
-		u8 *vcapbuf, struct vivid_buffer *vid_cap_buf)
-{
+अटल noअंतरभूत_क्रम_stack पूर्णांक vivid_copy_buffer(काष्ठा vivid_dev *dev, अचिन्हित p,
+		u8 *vcapbuf, काष्ठा vivid_buffer *vid_cap_buf)
+अणु
 	bool blank = dev->must_blank[vid_cap_buf->vb.vb2_buf.index];
-	struct tpg_data *tpg = &dev->tpg;
-	struct vivid_buffer *vid_out_buf = NULL;
-	unsigned vdiv = dev->fmt_out->vdownsampling[p];
-	unsigned twopixsize = tpg_g_twopixelsize(tpg, p);
-	unsigned img_width = tpg_hdiv(tpg, p, dev->compose_cap.width);
-	unsigned img_height = dev->compose_cap.height;
-	unsigned stride_cap = tpg->bytesperline[p];
-	unsigned stride_out = dev->bytesperline_out[p];
-	unsigned stride_osd = dev->display_byte_stride;
-	unsigned hmax = (img_height * tpg->perc_fill) / 100;
+	काष्ठा tpg_data *tpg = &dev->tpg;
+	काष्ठा vivid_buffer *vid_out_buf = शून्य;
+	अचिन्हित vभाग = dev->fmt_out->vकरोwnsampling[p];
+	अचिन्हित twopixsize = tpg_g_twopixelsize(tpg, p);
+	अचिन्हित img_width = tpg_hभाग(tpg, p, dev->compose_cap.width);
+	अचिन्हित img_height = dev->compose_cap.height;
+	अचिन्हित stride_cap = tpg->bytesperline[p];
+	अचिन्हित stride_out = dev->bytesperline_out[p];
+	अचिन्हित stride_osd = dev->display_byte_stride;
+	अचिन्हित hmax = (img_height * tpg->perc_fill) / 100;
 	u8 *voutbuf;
-	u8 *vosdbuf = NULL;
-	unsigned y;
-	bool blend = dev->bitmap_out || dev->clipcount_out || dev->fbuf_out_flags;
+	u8 *vosdbuf = शून्य;
+	अचिन्हित y;
+	bool blend = dev->biपंचांगap_out || dev->clipcount_out || dev->fbuf_out_flags;
 	/* Coarse scaling with Bresenham */
-	unsigned vid_out_int_part;
-	unsigned vid_out_fract_part;
-	unsigned vid_out_y = 0;
-	unsigned vid_out_error = 0;
-	unsigned vid_overlay_int_part = 0;
-	unsigned vid_overlay_fract_part = 0;
-	unsigned vid_overlay_y = 0;
-	unsigned vid_overlay_error = 0;
-	unsigned vid_cap_left = tpg_hdiv(tpg, p, dev->loop_vid_cap.left);
-	unsigned vid_cap_right;
+	अचिन्हित vid_out_पूर्णांक_part;
+	अचिन्हित vid_out_fract_part;
+	अचिन्हित vid_out_y = 0;
+	अचिन्हित vid_out_error = 0;
+	अचिन्हित vid_overlay_पूर्णांक_part = 0;
+	अचिन्हित vid_overlay_fract_part = 0;
+	अचिन्हित vid_overlay_y = 0;
+	अचिन्हित vid_overlay_error = 0;
+	अचिन्हित vid_cap_left = tpg_hभाग(tpg, p, dev->loop_vid_cap.left);
+	अचिन्हित vid_cap_right;
 	bool quick;
 
-	vid_out_int_part = dev->loop_vid_out.height / dev->loop_vid_cap.height;
+	vid_out_पूर्णांक_part = dev->loop_vid_out.height / dev->loop_vid_cap.height;
 	vid_out_fract_part = dev->loop_vid_out.height % dev->loop_vid_cap.height;
 
-	if (!list_empty(&dev->vid_out_active))
+	अगर (!list_empty(&dev->vid_out_active))
 		vid_out_buf = list_entry(dev->vid_out_active.next,
-					 struct vivid_buffer, list);
-	if (vid_out_buf == NULL)
-		return -ENODATA;
+					 काष्ठा vivid_buffer, list);
+	अगर (vid_out_buf == शून्य)
+		वापस -ENODATA;
 
 	vid_cap_buf->vb.field = vid_out_buf->vb.field;
 
 	voutbuf = plane_vaddr(tpg, vid_out_buf, p,
 			      dev->bytesperline_out, dev->fmt_out_rect.height);
-	if (p < dev->fmt_out->buffers)
+	अगर (p < dev->fmt_out->buffers)
 		voutbuf += vid_out_buf->vb.vb2_buf.planes[p].data_offset;
-	voutbuf += tpg_hdiv(tpg, p, dev->loop_vid_out.left) +
-		(dev->loop_vid_out.top / vdiv) * stride_out;
-	vcapbuf += tpg_hdiv(tpg, p, dev->compose_cap.left) +
-		(dev->compose_cap.top / vdiv) * stride_cap;
+	voutbuf += tpg_hभाग(tpg, p, dev->loop_vid_out.left) +
+		(dev->loop_vid_out.top / vभाग) * stride_out;
+	vcapbuf += tpg_hभाग(tpg, p, dev->compose_cap.left) +
+		(dev->compose_cap.top / vभाग) * stride_cap;
 
-	if (dev->loop_vid_copy.width == 0 || dev->loop_vid_copy.height == 0) {
+	अगर (dev->loop_vid_copy.width == 0 || dev->loop_vid_copy.height == 0) अणु
 		/*
-		 * If there is nothing to copy, then just fill the capture window
+		 * If there is nothing to copy, then just fill the capture winकरोw
 		 * with black.
 		 */
-		for (y = 0; y < hmax / vdiv; y++, vcapbuf += stride_cap)
-			memcpy(vcapbuf, tpg->black_line[p], img_width);
-		return 0;
-	}
+		क्रम (y = 0; y < hmax / vभाग; y++, vcapbuf += stride_cap)
+			स_नकल(vcapbuf, tpg->black_line[p], img_width);
+		वापस 0;
+	पूर्ण
 
-	if (dev->overlay_out_enabled &&
-	    dev->loop_vid_overlay.width && dev->loop_vid_overlay.height) {
+	अगर (dev->overlay_out_enabled &&
+	    dev->loop_vid_overlay.width && dev->loop_vid_overlay.height) अणु
 		vosdbuf = dev->video_vbase;
 		vosdbuf += (dev->loop_fb_copy.left * twopixsize) / 2 +
 			   dev->loop_fb_copy.top * stride_osd;
-		vid_overlay_int_part = dev->loop_vid_overlay.height /
+		vid_overlay_पूर्णांक_part = dev->loop_vid_overlay.height /
 				       dev->loop_vid_overlay_cap.height;
 		vid_overlay_fract_part = dev->loop_vid_overlay.height %
 					 dev->loop_vid_overlay_cap.height;
-	}
+	पूर्ण
 
-	vid_cap_right = tpg_hdiv(tpg, p, dev->loop_vid_cap.left + dev->loop_vid_cap.width);
-	/* quick is true if no video scaling is needed */
+	vid_cap_right = tpg_hभाग(tpg, p, dev->loop_vid_cap.left + dev->loop_vid_cap.width);
+	/* quick is true अगर no video scaling is needed */
 	quick = dev->loop_vid_out.width == dev->loop_vid_cap.width;
 
 	dev->cur_scaled_line = dev->loop_vid_out.height;
-	for (y = 0; y < hmax; y += vdiv, vcapbuf += stride_cap) {
-		/* osdline is true if this line requires overlay blending */
+	क्रम (y = 0; y < hmax; y += vभाग, vcapbuf += stride_cap) अणु
+		/* osdline is true अगर this line requires overlay blending */
 		bool osdline = vosdbuf && y >= dev->loop_vid_overlay_cap.top &&
 			  y < dev->loop_vid_overlay_cap.top + dev->loop_vid_overlay_cap.height;
 
 		/*
-		 * If this line of the capture buffer doesn't get any video, then
+		 * If this line of the capture buffer करोesn't get any video, then
 		 * just fill with black.
 		 */
-		if (y < dev->loop_vid_cap.top ||
-		    y >= dev->loop_vid_cap.top + dev->loop_vid_cap.height) {
-			memcpy(vcapbuf, tpg->black_line[p], img_width);
-			continue;
-		}
+		अगर (y < dev->loop_vid_cap.top ||
+		    y >= dev->loop_vid_cap.top + dev->loop_vid_cap.height) अणु
+			स_नकल(vcapbuf, tpg->black_line[p], img_width);
+			जारी;
+		पूर्ण
 
 		/* fill the left border with black */
-		if (dev->loop_vid_cap.left)
-			memcpy(vcapbuf, tpg->black_line[p], vid_cap_left);
+		अगर (dev->loop_vid_cap.left)
+			स_नकल(vcapbuf, tpg->black_line[p], vid_cap_left);
 
 		/* fill the right border with black */
-		if (vid_cap_right < img_width)
-			memcpy(vcapbuf + vid_cap_right, tpg->black_line[p],
+		अगर (vid_cap_right < img_width)
+			स_नकल(vcapbuf + vid_cap_right, tpg->black_line[p],
 				img_width - vid_cap_right);
 
-		if (quick && !osdline) {
-			memcpy(vcapbuf + vid_cap_left,
+		अगर (quick && !osdline) अणु
+			स_नकल(vcapbuf + vid_cap_left,
 			       voutbuf + vid_out_y * stride_out,
-			       tpg_hdiv(tpg, p, dev->loop_vid_cap.width));
-			goto update_vid_out_y;
-		}
-		if (dev->cur_scaled_line == vid_out_y) {
-			memcpy(vcapbuf + vid_cap_left, dev->scaled_line,
-			       tpg_hdiv(tpg, p, dev->loop_vid_cap.width));
-			goto update_vid_out_y;
-		}
-		if (!osdline) {
+			       tpg_hभाग(tpg, p, dev->loop_vid_cap.width));
+			जाओ update_vid_out_y;
+		पूर्ण
+		अगर (dev->cur_scaled_line == vid_out_y) अणु
+			स_नकल(vcapbuf + vid_cap_left, dev->scaled_line,
+			       tpg_hभाग(tpg, p, dev->loop_vid_cap.width));
+			जाओ update_vid_out_y;
+		पूर्ण
+		अगर (!osdline) अणु
 			scale_line(voutbuf + vid_out_y * stride_out, dev->scaled_line,
-				tpg_hdiv(tpg, p, dev->loop_vid_out.width),
-				tpg_hdiv(tpg, p, dev->loop_vid_cap.width),
+				tpg_hभाग(tpg, p, dev->loop_vid_out.width),
+				tpg_hभाग(tpg, p, dev->loop_vid_cap.width),
 				tpg_g_twopixelsize(tpg, p));
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Offset in bytes within loop_vid_copy to the start of the
 			 * loop_vid_overlay rectangle.
 			 */
-			unsigned offset =
+			अचिन्हित offset =
 				((dev->loop_vid_overlay.left - dev->loop_vid_copy.left) *
 				 twopixsize) / 2;
 			u8 *osd = vosdbuf + vid_overlay_y * stride_osd;
@@ -363,123 +364,123 @@ static noinline_for_stack int vivid_copy_buffer(struct vivid_dev *dev, unsigned 
 			scale_line(voutbuf + vid_out_y * stride_out, dev->blended_line,
 				dev->loop_vid_out.width, dev->loop_vid_copy.width,
 				tpg_g_twopixelsize(tpg, p));
-			if (blend)
+			अगर (blend)
 				blend_line(dev, vid_overlay_y + dev->loop_vid_overlay.top,
 					   dev->loop_vid_overlay.left,
 					   dev->blended_line + offset, osd,
 					   dev->loop_vid_overlay.width, twopixsize / 2);
-			else
-				memcpy(dev->blended_line + offset,
+			अन्यथा
+				स_नकल(dev->blended_line + offset,
 				       osd, (dev->loop_vid_overlay.width * twopixsize) / 2);
 			scale_line(dev->blended_line, dev->scaled_line,
 					dev->loop_vid_copy.width, dev->loop_vid_cap.width,
 					tpg_g_twopixelsize(tpg, p));
-		}
+		पूर्ण
 		dev->cur_scaled_line = vid_out_y;
-		memcpy(vcapbuf + vid_cap_left, dev->scaled_line,
-		       tpg_hdiv(tpg, p, dev->loop_vid_cap.width));
+		स_नकल(vcapbuf + vid_cap_left, dev->scaled_line,
+		       tpg_hभाग(tpg, p, dev->loop_vid_cap.width));
 
 update_vid_out_y:
-		if (osdline) {
-			vid_overlay_y += vid_overlay_int_part;
+		अगर (osdline) अणु
+			vid_overlay_y += vid_overlay_पूर्णांक_part;
 			vid_overlay_error += vid_overlay_fract_part;
-			if (vid_overlay_error >= dev->loop_vid_overlay_cap.height) {
+			अगर (vid_overlay_error >= dev->loop_vid_overlay_cap.height) अणु
 				vid_overlay_error -= dev->loop_vid_overlay_cap.height;
 				vid_overlay_y++;
-			}
-		}
-		vid_out_y += vid_out_int_part;
+			पूर्ण
+		पूर्ण
+		vid_out_y += vid_out_पूर्णांक_part;
 		vid_out_error += vid_out_fract_part;
-		if (vid_out_error >= dev->loop_vid_cap.height / vdiv) {
-			vid_out_error -= dev->loop_vid_cap.height / vdiv;
+		अगर (vid_out_error >= dev->loop_vid_cap.height / vभाग) अणु
+			vid_out_error -= dev->loop_vid_cap.height / vभाग;
 			vid_out_y++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!blank)
-		return 0;
-	for (; y < img_height; y += vdiv, vcapbuf += stride_cap)
-		memcpy(vcapbuf, tpg->contrast_line[p], img_width);
-	return 0;
-}
+	अगर (!blank)
+		वापस 0;
+	क्रम (; y < img_height; y += vभाग, vcapbuf += stride_cap)
+		स_नकल(vcapbuf, tpg->contrast_line[p], img_width);
+	वापस 0;
+पूर्ण
 
-static void vivid_fillbuff(struct vivid_dev *dev, struct vivid_buffer *buf)
-{
-	struct tpg_data *tpg = &dev->tpg;
-	unsigned factor = V4L2_FIELD_HAS_T_OR_B(dev->field_cap) ? 2 : 1;
-	unsigned line_height = 16 / factor;
+अटल व्योम vivid_fillbuff(काष्ठा vivid_dev *dev, काष्ठा vivid_buffer *buf)
+अणु
+	काष्ठा tpg_data *tpg = &dev->tpg;
+	अचिन्हित factor = V4L2_FIELD_HAS_T_OR_B(dev->field_cap) ? 2 : 1;
+	अचिन्हित line_height = 16 / factor;
 	bool is_tv = vivid_is_sdtv_cap(dev);
 	bool is_60hz = is_tv && (dev->std_cap[dev->input] & V4L2_STD_525_60);
-	unsigned p;
-	int line = 1;
+	अचिन्हित p;
+	पूर्णांक line = 1;
 	u8 *basep[TPG_MAX_PLANES][2];
-	unsigned ms;
-	char str[100];
+	अचिन्हित ms;
+	अक्षर str[100];
 	s32 gain;
 	bool is_loop = false;
 
-	if (dev->loop_video && dev->can_loop_video &&
+	अगर (dev->loop_video && dev->can_loop_video &&
 		((vivid_is_svid_cap(dev) &&
-		!VIVID_INVALID_SIGNAL(dev->std_signal_mode[dev->input])) ||
+		!VIVID_INVALID_SIGNAL(dev->std_संकेत_mode[dev->input])) ||
 		(vivid_is_hdmi_cap(dev) &&
-		!VIVID_INVALID_SIGNAL(dev->dv_timings_signal_mode[dev->input]))))
+		!VIVID_INVALID_SIGNAL(dev->dv_timings_संकेत_mode[dev->input]))))
 		is_loop = true;
 
 	buf->vb.sequence = dev->vid_cap_seq_count;
-	v4l2_ctrl_s_ctrl(dev->ro_int32, buf->vb.sequence & 0xff);
-	if (dev->field_cap == V4L2_FIELD_ALTERNATE) {
+	v4l2_ctrl_s_ctrl(dev->ro_पूर्णांक32, buf->vb.sequence & 0xff);
+	अगर (dev->field_cap == V4L2_FIELD_ALTERNATE) अणु
 		/*
 		 * 60 Hz standards start with the bottom field, 50 Hz standards
-		 * with the top field. So if the 0-based seq_count is even,
-		 * then the field is TOP for 50 Hz and BOTTOM for 60 Hz
+		 * with the top field. So अगर the 0-based seq_count is even,
+		 * then the field is TOP क्रम 50 Hz and BOTTOM क्रम 60 Hz
 		 * standards.
 		 */
 		buf->vb.field = ((dev->vid_cap_seq_count & 1) ^ is_60hz) ?
 			V4L2_FIELD_BOTTOM : V4L2_FIELD_TOP;
 		/*
-		 * The sequence counter counts frames, not fields. So divide
+		 * The sequence counter counts frames, not fields. So भागide
 		 * by two.
 		 */
 		buf->vb.sequence /= 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		buf->vb.field = dev->field_cap;
-	}
+	पूर्ण
 	tpg_s_field(tpg, buf->vb.field,
 		    dev->field_cap == V4L2_FIELD_ALTERNATE);
 	tpg_s_perc_fill_blank(tpg, dev->must_blank[buf->vb.vb2_buf.index]);
 
 	vivid_precalc_copy_rects(dev);
 
-	for (p = 0; p < tpg_g_planes(tpg); p++) {
-		void *vbuf = plane_vaddr(tpg, buf, p,
+	क्रम (p = 0; p < tpg_g_planes(tpg); p++) अणु
+		व्योम *vbuf = plane_vaddr(tpg, buf, p,
 					 tpg->bytesperline, tpg->buf_height);
 
 		/*
-		 * The first plane of a multiplanar format has a non-zero
+		 * The first plane of a multiplanar क्रमmat has a non-zero
 		 * data_offset. This helps testing whether the application
 		 * correctly supports non-zero data offsets.
 		 */
-		if (p < tpg_g_buffers(tpg) && dev->fmt_cap->data_offset[p]) {
-			memset(vbuf, dev->fmt_cap->data_offset[p] & 0xff,
+		अगर (p < tpg_g_buffers(tpg) && dev->fmt_cap->data_offset[p]) अणु
+			स_रखो(vbuf, dev->fmt_cap->data_offset[p] & 0xff,
 			       dev->fmt_cap->data_offset[p]);
 			vbuf += dev->fmt_cap->data_offset[p];
-		}
+		पूर्ण
 		tpg_calc_text_basep(tpg, basep, p, vbuf);
-		if (!is_loop || vivid_copy_buffer(dev, p, vbuf, buf))
+		अगर (!is_loop || vivid_copy_buffer(dev, p, vbuf, buf))
 			tpg_fill_plane_buffer(tpg, vivid_get_std_cap(dev),
 					p, vbuf);
-	}
+	पूर्ण
 	dev->must_blank[buf->vb.vb2_buf.index] = false;
 
-	/* Updates stream time, only update at the start of a new frame. */
-	if (dev->field_cap != V4L2_FIELD_ALTERNATE ||
+	/* Updates stream समय, only update at the start of a new frame. */
+	अगर (dev->field_cap != V4L2_FIELD_ALTERNATE ||
 			(dev->vid_cap_seq_count & 1) == 0)
 		dev->ms_vid_cap =
-			jiffies_to_msecs(jiffies - dev->jiffies_vid_cap);
+			jअगरfies_to_msecs(jअगरfies - dev->jअगरfies_vid_cap);
 
 	ms = dev->ms_vid_cap;
-	if (dev->osd_mode <= 1) {
-		snprintf(str, sizeof(str), " %02d:%02d:%02d:%03d %u%s",
+	अगर (dev->osd_mode <= 1) अणु
+		snम_लिखो(str, माप(str), " %02d:%02d:%02d:%03d %u%s",
 				(ms / (60 * 60 * 1000)) % 24,
 				(ms / (60 * 1000)) % 60,
 				(ms / 1000) % 60,
@@ -489,298 +490,298 @@ static void vivid_fillbuff(struct vivid_dev *dev, struct vivid_buffer *buf)
 					(buf->vb.field == V4L2_FIELD_TOP ?
 					 " top" : " bottom") : "");
 		tpg_gen_text(tpg, basep, line++ * line_height, 16, str);
-	}
-	if (dev->osd_mode == 0) {
-		snprintf(str, sizeof(str), " %dx%d, input %d ",
+	पूर्ण
+	अगर (dev->osd_mode == 0) अणु
+		snम_लिखो(str, माप(str), " %dx%d, input %d ",
 				dev->src_rect.width, dev->src_rect.height, dev->input);
 		tpg_gen_text(tpg, basep, line++ * line_height, 16, str);
 
 		gain = v4l2_ctrl_g_ctrl(dev->gain);
 		mutex_lock(dev->ctrl_hdl_user_vid.lock);
-		snprintf(str, sizeof(str),
+		snम_लिखो(str, माप(str),
 			" brightness %3d, contrast %3d, saturation %3d, hue %d ",
 			dev->brightness->cur.val,
 			dev->contrast->cur.val,
 			dev->saturation->cur.val,
 			dev->hue->cur.val);
 		tpg_gen_text(tpg, basep, line++ * line_height, 16, str);
-		snprintf(str, sizeof(str),
+		snम_लिखो(str, माप(str),
 			" autogain %d, gain %3d, alpha 0x%02x ",
-			dev->autogain->cur.val, gain, dev->alpha->cur.val);
+			dev->स्वतःgain->cur.val, gain, dev->alpha->cur.val);
 		mutex_unlock(dev->ctrl_hdl_user_vid.lock);
 		tpg_gen_text(tpg, basep, line++ * line_height, 16, str);
 		mutex_lock(dev->ctrl_hdl_user_aud.lock);
-		snprintf(str, sizeof(str),
+		snम_लिखो(str, माप(str),
 			" volume %3d, mute %d ",
 			dev->volume->cur.val, dev->mute->cur.val);
 		mutex_unlock(dev->ctrl_hdl_user_aud.lock);
 		tpg_gen_text(tpg, basep, line++ * line_height, 16, str);
 		mutex_lock(dev->ctrl_hdl_user_gen.lock);
-		snprintf(str, sizeof(str), " int32 %d, ro_int32 %d, int64 %lld, bitmask %08x ",
-			 dev->int32->cur.val,
-			 dev->ro_int32->cur.val,
-			 *dev->int64->p_cur.p_s64,
-			 dev->bitmask->cur.val);
+		snम_लिखो(str, माप(str), " int32 %d, ro_int32 %d, int64 %lld, bitmask %08x ",
+			 dev->पूर्णांक32->cur.val,
+			 dev->ro_पूर्णांक32->cur.val,
+			 *dev->पूर्णांक64->p_cur.p_s64,
+			 dev->biपंचांगask->cur.val);
 		tpg_gen_text(tpg, basep, line++ * line_height, 16, str);
-		snprintf(str, sizeof(str), " boolean %d, menu %s, string \"%s\" ",
+		snम_लिखो(str, माप(str), " boolean %d, menu %s, string \"%s\" ",
 			dev->boolean->cur.val,
 			dev->menu->qmenu[dev->menu->cur.val],
-			dev->string->p_cur.p_char);
+			dev->string->p_cur.p_अक्षर);
 		tpg_gen_text(tpg, basep, line++ * line_height, 16, str);
-		snprintf(str, sizeof(str), " integer_menu %lld, value %d ",
-			dev->int_menu->qmenu_int[dev->int_menu->cur.val],
-			dev->int_menu->cur.val);
+		snम_लिखो(str, माप(str), " integer_menu %lld, value %d ",
+			dev->पूर्णांक_menu->qmenu_पूर्णांक[dev->पूर्णांक_menu->cur.val],
+			dev->पूर्णांक_menu->cur.val);
 		mutex_unlock(dev->ctrl_hdl_user_gen.lock);
 		tpg_gen_text(tpg, basep, line++ * line_height, 16, str);
-		if (dev->button_pressed) {
+		अगर (dev->button_pressed) अणु
 			dev->button_pressed--;
-			snprintf(str, sizeof(str), " button pressed!");
+			snम_लिखो(str, माप(str), " button pressed!");
 			tpg_gen_text(tpg, basep, line++ * line_height, 16, str);
-		}
-		if (dev->osd[0]) {
-			if (vivid_is_hdmi_cap(dev)) {
-				snprintf(str, sizeof(str),
+		पूर्ण
+		अगर (dev->osd[0]) अणु
+			अगर (vivid_is_hdmi_cap(dev)) अणु
+				snम_लिखो(str, माप(str),
 					 " OSD \"%s\"", dev->osd);
 				tpg_gen_text(tpg, basep, line++ * line_height,
 					     16, str);
-			}
-			if (dev->osd_jiffies &&
-			    time_is_before_jiffies(dev->osd_jiffies + 5 * HZ)) {
+			पूर्ण
+			अगर (dev->osd_jअगरfies &&
+			    समय_is_beक्रमe_jअगरfies(dev->osd_jअगरfies + 5 * HZ)) अणु
 				dev->osd[0] = 0;
-				dev->osd_jiffies = 0;
-			}
-		}
-	}
-}
+				dev->osd_jअगरfies = 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Return true if this pixel coordinate is a valid video pixel.
+ * Return true अगर this pixel coordinate is a valid video pixel.
  */
-static bool valid_pix(struct vivid_dev *dev, int win_y, int win_x, int fb_y, int fb_x)
-{
-	int i;
+अटल bool valid_pix(काष्ठा vivid_dev *dev, पूर्णांक win_y, पूर्णांक win_x, पूर्णांक fb_y, पूर्णांक fb_x)
+अणु
+	पूर्णांक i;
 
-	if (dev->bitmap_cap) {
+	अगर (dev->biपंचांगap_cap) अणु
 		/*
-		 * Only if the corresponding bit in the bitmap is set can
+		 * Only अगर the corresponding bit in the biपंचांगap is set can
 		 * the video pixel be shown. Coordinates are relative to
-		 * the overlay window set by VIDIOC_S_FMT.
+		 * the overlay winकरोw set by VIDIOC_S_FMT.
 		 */
-		const u8 *p = dev->bitmap_cap;
-		unsigned stride = (dev->compose_cap.width + 7) / 8;
+		स्थिर u8 *p = dev->biपंचांगap_cap;
+		अचिन्हित stride = (dev->compose_cap.width + 7) / 8;
 
-		if (!(p[stride * win_y + win_x / 8] & (1 << (win_x & 7))))
-			return false;
-	}
+		अगर (!(p[stride * win_y + win_x / 8] & (1 << (win_x & 7))))
+			वापस false;
+	पूर्ण
 
-	for (i = 0; i < dev->clipcount_cap; i++) {
+	क्रम (i = 0; i < dev->clipcount_cap; i++) अणु
 		/*
-		 * Only if the framebuffer coordinate is not in any of the
+		 * Only अगर the framebuffer coordinate is not in any of the
 		 * clip rectangles will be video pixel be shown.
 		 */
-		struct v4l2_rect *r = &dev->clips_cap[i].c;
+		काष्ठा v4l2_rect *r = &dev->clips_cap[i].c;
 
-		if (fb_y >= r->top && fb_y < r->top + r->height &&
+		अगर (fb_y >= r->top && fb_y < r->top + r->height &&
 		    fb_x >= r->left && fb_x < r->left + r->width)
-			return false;
-	}
-	return true;
-}
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /*
- * Draw the image into the overlay buffer.
+ * Draw the image पूर्णांकo the overlay buffer.
  * Note that the combination of overlay and multiplanar is not supported.
  */
-static void vivid_overlay(struct vivid_dev *dev, struct vivid_buffer *buf)
-{
-	struct tpg_data *tpg = &dev->tpg;
-	unsigned pixsize = tpg_g_twopixelsize(tpg, 0) / 2;
-	void *vbase = dev->fb_vbase_cap;
-	void *vbuf = vb2_plane_vaddr(&buf->vb.vb2_buf, 0);
-	unsigned img_width = dev->compose_cap.width;
-	unsigned img_height = dev->compose_cap.height;
-	unsigned stride = tpg->bytesperline[0];
-	/* if quick is true, then valid_pix() doesn't have to be called */
-	bool quick = dev->bitmap_cap == NULL && dev->clipcount_cap == 0;
-	int x, y, w, out_x = 0;
+अटल व्योम vivid_overlay(काष्ठा vivid_dev *dev, काष्ठा vivid_buffer *buf)
+अणु
+	काष्ठा tpg_data *tpg = &dev->tpg;
+	अचिन्हित pixsize = tpg_g_twopixelsize(tpg, 0) / 2;
+	व्योम *vbase = dev->fb_vbase_cap;
+	व्योम *vbuf = vb2_plane_vaddr(&buf->vb.vb2_buf, 0);
+	अचिन्हित img_width = dev->compose_cap.width;
+	अचिन्हित img_height = dev->compose_cap.height;
+	अचिन्हित stride = tpg->bytesperline[0];
+	/* अगर quick is true, then valid_pix() करोesn't have to be called */
+	bool quick = dev->biपंचांगap_cap == शून्य && dev->clipcount_cap == 0;
+	पूर्णांक x, y, w, out_x = 0;
 
 	/*
-	 * Overlay support is only supported for formats that have a twopixelsize
-	 * that's >= 2. Warn and bail out if that's not the case.
+	 * Overlay support is only supported क्रम क्रमmats that have a twopixelsize
+	 * that's >= 2. Warn and bail out if that's not the हाल.
 	 */
-	if (WARN_ON(pixsize == 0))
-		return;
-	if ((dev->overlay_cap_field == V4L2_FIELD_TOP ||
+	अगर (WARN_ON(pixsize == 0))
+		वापस;
+	अगर ((dev->overlay_cap_field == V4L2_FIELD_TOP ||
 	     dev->overlay_cap_field == V4L2_FIELD_BOTTOM) &&
 	    dev->overlay_cap_field != buf->vb.field)
-		return;
+		वापस;
 
 	vbuf += dev->compose_cap.left * pixsize + dev->compose_cap.top * stride;
 	x = dev->overlay_cap_left;
 	w = img_width;
-	if (x < 0) {
+	अगर (x < 0) अणु
 		out_x = -x;
 		w = w - out_x;
 		x = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		w = dev->fb_cap.fmt.width - x;
-		if (w > img_width)
+		अगर (w > img_width)
 			w = img_width;
-	}
-	if (w <= 0)
-		return;
-	if (dev->overlay_cap_top >= 0)
+	पूर्ण
+	अगर (w <= 0)
+		वापस;
+	अगर (dev->overlay_cap_top >= 0)
 		vbase += dev->overlay_cap_top * dev->fb_cap.fmt.bytesperline;
-	for (y = dev->overlay_cap_top;
-	     y < dev->overlay_cap_top + (int)img_height;
-	     y++, vbuf += stride) {
-		int px;
+	क्रम (y = dev->overlay_cap_top;
+	     y < dev->overlay_cap_top + (पूर्णांक)img_height;
+	     y++, vbuf += stride) अणु
+		पूर्णांक px;
 
-		if (y < 0 || y > dev->fb_cap.fmt.height)
-			continue;
-		if (quick) {
-			memcpy(vbase + x * pixsize,
+		अगर (y < 0 || y > dev->fb_cap.fmt.height)
+			जारी;
+		अगर (quick) अणु
+			स_नकल(vbase + x * pixsize,
 			       vbuf + out_x * pixsize, w * pixsize);
 			vbase += dev->fb_cap.fmt.bytesperline;
-			continue;
-		}
-		for (px = 0; px < w; px++) {
-			if (!valid_pix(dev, y - dev->overlay_cap_top,
+			जारी;
+		पूर्ण
+		क्रम (px = 0; px < w; px++) अणु
+			अगर (!valid_pix(dev, y - dev->overlay_cap_top,
 				       px + out_x, y, px + x))
-				continue;
-			memcpy(vbase + (px + x) * pixsize,
+				जारी;
+			स_नकल(vbase + (px + x) * pixsize,
 			       vbuf + (px + out_x) * pixsize,
 			       pixsize);
-		}
+		पूर्ण
 		vbase += dev->fb_cap.fmt.bytesperline;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vivid_cap_update_frame_period(struct vivid_dev *dev)
-{
+अटल व्योम vivid_cap_update_frame_period(काष्ठा vivid_dev *dev)
+अणु
 	u64 f_period;
 
-	f_period = (u64)dev->timeperframe_vid_cap.numerator * 1000000000;
-	if (WARN_ON(dev->timeperframe_vid_cap.denominator == 0))
-		dev->timeperframe_vid_cap.denominator = 1;
-	do_div(f_period, dev->timeperframe_vid_cap.denominator);
-	if (dev->field_cap == V4L2_FIELD_ALTERNATE)
+	f_period = (u64)dev->समयperframe_vid_cap.numerator * 1000000000;
+	अगर (WARN_ON(dev->समयperframe_vid_cap.denominator == 0))
+		dev->समयperframe_vid_cap.denominator = 1;
+	करो_भाग(f_period, dev->समयperframe_vid_cap.denominator);
+	अगर (dev->field_cap == V4L2_FIELD_ALTERNATE)
 		f_period >>= 1;
 	/*
-	 * If "End of Frame", then offset the exposure time by 0.9
+	 * If "End of Frame", then offset the exposure समय by 0.9
 	 * of the frame period.
 	 */
 	dev->cap_frame_eof_offset = f_period * 9;
-	do_div(dev->cap_frame_eof_offset, 10);
+	करो_भाग(dev->cap_frame_eof_offset, 10);
 	dev->cap_frame_period = f_period;
-}
+पूर्ण
 
-static noinline_for_stack void vivid_thread_vid_cap_tick(struct vivid_dev *dev,
-							 int dropped_bufs)
-{
-	struct vivid_buffer *vid_cap_buf = NULL;
-	struct vivid_buffer *vbi_cap_buf = NULL;
-	struct vivid_buffer *meta_cap_buf = NULL;
-	u64 f_time = 0;
+अटल noअंतरभूत_क्रम_stack व्योम vivid_thपढ़ो_vid_cap_tick(काष्ठा vivid_dev *dev,
+							 पूर्णांक dropped_bufs)
+अणु
+	काष्ठा vivid_buffer *vid_cap_buf = शून्य;
+	काष्ठा vivid_buffer *vbi_cap_buf = शून्य;
+	काष्ठा vivid_buffer *meta_cap_buf = शून्य;
+	u64 f_समय = 0;
 
-	dprintk(dev, 1, "Video Capture Thread Tick\n");
+	dprपूर्णांकk(dev, 1, "Video Capture Thread Tick\n");
 
-	while (dropped_bufs-- > 1)
+	जबतक (dropped_bufs-- > 1)
 		tpg_update_mv_count(&dev->tpg,
 				dev->field_cap == V4L2_FIELD_NONE ||
 				dev->field_cap == V4L2_FIELD_ALTERNATE);
 
 	/* Drop a certain percentage of buffers. */
-	if (dev->perc_dropped_buffers &&
-	    prandom_u32_max(100) < dev->perc_dropped_buffers)
-		goto update_mv;
+	अगर (dev->perc_dropped_buffers &&
+	    pअक्रमom_u32_max(100) < dev->perc_dropped_buffers)
+		जाओ update_mv;
 
 	spin_lock(&dev->slock);
-	if (!list_empty(&dev->vid_cap_active)) {
-		vid_cap_buf = list_entry(dev->vid_cap_active.next, struct vivid_buffer, list);
+	अगर (!list_empty(&dev->vid_cap_active)) अणु
+		vid_cap_buf = list_entry(dev->vid_cap_active.next, काष्ठा vivid_buffer, list);
 		list_del(&vid_cap_buf->list);
-	}
-	if (!list_empty(&dev->vbi_cap_active)) {
-		if (dev->field_cap != V4L2_FIELD_ALTERNATE ||
-		    (dev->vbi_cap_seq_count & 1)) {
+	पूर्ण
+	अगर (!list_empty(&dev->vbi_cap_active)) अणु
+		अगर (dev->field_cap != V4L2_FIELD_ALTERNATE ||
+		    (dev->vbi_cap_seq_count & 1)) अणु
 			vbi_cap_buf = list_entry(dev->vbi_cap_active.next,
-						 struct vivid_buffer, list);
+						 काष्ठा vivid_buffer, list);
 			list_del(&vbi_cap_buf->list);
-		}
-	}
-	if (!list_empty(&dev->meta_cap_active)) {
+		पूर्ण
+	पूर्ण
+	अगर (!list_empty(&dev->meta_cap_active)) अणु
 		meta_cap_buf = list_entry(dev->meta_cap_active.next,
-					  struct vivid_buffer, list);
+					  काष्ठा vivid_buffer, list);
 		list_del(&meta_cap_buf->list);
-	}
+	पूर्ण
 
 	spin_unlock(&dev->slock);
 
-	if (!vid_cap_buf && !vbi_cap_buf && !meta_cap_buf)
-		goto update_mv;
+	अगर (!vid_cap_buf && !vbi_cap_buf && !meta_cap_buf)
+		जाओ update_mv;
 
-	f_time = dev->cap_frame_period * dev->vid_cap_seq_count +
-		 dev->cap_stream_start + dev->time_wrap_offset;
+	f_समय = dev->cap_frame_period * dev->vid_cap_seq_count +
+		 dev->cap_stream_start + dev->समय_wrap_offset;
 
-	if (vid_cap_buf) {
+	अगर (vid_cap_buf) अणु
 		v4l2_ctrl_request_setup(vid_cap_buf->vb.vb2_buf.req_obj.req,
 					&dev->ctrl_hdl_vid_cap);
 		/* Fill buffer */
 		vivid_fillbuff(dev, vid_cap_buf);
-		dprintk(dev, 1, "filled buffer %d\n",
+		dprपूर्णांकk(dev, 1, "filled buffer %d\n",
 			vid_cap_buf->vb.vb2_buf.index);
 
 		/* Handle overlay */
-		if (dev->overlay_cap_owner && dev->fb_cap.base &&
-			dev->fb_cap.fmt.pixelformat == dev->fmt_cap->fourcc)
+		अगर (dev->overlay_cap_owner && dev->fb_cap.base &&
+			dev->fb_cap.fmt.pixelक्रमmat == dev->fmt_cap->fourcc)
 			vivid_overlay(dev, vid_cap_buf);
 
 		v4l2_ctrl_request_complete(vid_cap_buf->vb.vb2_buf.req_obj.req,
 					   &dev->ctrl_hdl_vid_cap);
-		vb2_buffer_done(&vid_cap_buf->vb.vb2_buf, dev->dqbuf_error ?
+		vb2_buffer_करोne(&vid_cap_buf->vb.vb2_buf, dev->dqbuf_error ?
 				VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
-		dprintk(dev, 2, "vid_cap buffer %d done\n",
+		dprपूर्णांकk(dev, 2, "vid_cap buffer %d done\n",
 				vid_cap_buf->vb.vb2_buf.index);
 
-		vid_cap_buf->vb.vb2_buf.timestamp = f_time;
-		if (!dev->tstamp_src_is_soe)
-			vid_cap_buf->vb.vb2_buf.timestamp += dev->cap_frame_eof_offset;
-	}
+		vid_cap_buf->vb.vb2_buf.बारtamp = f_समय;
+		अगर (!dev->tstamp_src_is_soe)
+			vid_cap_buf->vb.vb2_buf.बारtamp += dev->cap_frame_eof_offset;
+	पूर्ण
 
-	if (vbi_cap_buf) {
+	अगर (vbi_cap_buf) अणु
 		u64 vbi_period;
 
 		v4l2_ctrl_request_setup(vbi_cap_buf->vb.vb2_buf.req_obj.req,
 					&dev->ctrl_hdl_vbi_cap);
-		if (dev->stream_sliced_vbi_cap)
+		अगर (dev->stream_sliced_vbi_cap)
 			vivid_sliced_vbi_cap_process(dev, vbi_cap_buf);
-		else
+		अन्यथा
 			vivid_raw_vbi_cap_process(dev, vbi_cap_buf);
 		v4l2_ctrl_request_complete(vbi_cap_buf->vb.vb2_buf.req_obj.req,
 					   &dev->ctrl_hdl_vbi_cap);
-		vb2_buffer_done(&vbi_cap_buf->vb.vb2_buf, dev->dqbuf_error ?
+		vb2_buffer_करोne(&vbi_cap_buf->vb.vb2_buf, dev->dqbuf_error ?
 				VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
-		dprintk(dev, 2, "vbi_cap %d done\n",
+		dprपूर्णांकk(dev, 2, "vbi_cap %d done\n",
 				vbi_cap_buf->vb.vb2_buf.index);
 
 		/* If capturing a VBI, offset by 0.05 */
 		vbi_period = dev->cap_frame_period * 5;
-		do_div(vbi_period, 100);
-		vbi_cap_buf->vb.vb2_buf.timestamp = f_time + dev->cap_frame_eof_offset + vbi_period;
-	}
+		करो_भाग(vbi_period, 100);
+		vbi_cap_buf->vb.vb2_buf.बारtamp = f_समय + dev->cap_frame_eof_offset + vbi_period;
+	पूर्ण
 
-	if (meta_cap_buf) {
+	अगर (meta_cap_buf) अणु
 		v4l2_ctrl_request_setup(meta_cap_buf->vb.vb2_buf.req_obj.req,
 					&dev->ctrl_hdl_meta_cap);
-		vivid_meta_cap_fillbuff(dev, meta_cap_buf, f_time);
+		vivid_meta_cap_fillbuff(dev, meta_cap_buf, f_समय);
 		v4l2_ctrl_request_complete(meta_cap_buf->vb.vb2_buf.req_obj.req,
 					   &dev->ctrl_hdl_meta_cap);
-		vb2_buffer_done(&meta_cap_buf->vb.vb2_buf, dev->dqbuf_error ?
+		vb2_buffer_करोne(&meta_cap_buf->vb.vb2_buf, dev->dqbuf_error ?
 				VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
-		dprintk(dev, 2, "meta_cap %d done\n",
+		dprपूर्णांकk(dev, 2, "meta_cap %d done\n",
 			meta_cap_buf->vb.vb2_buf.index);
-		meta_cap_buf->vb.vb2_buf.timestamp = f_time + dev->cap_frame_eof_offset;
-	}
+		meta_cap_buf->vb.vb2_buf.बारtamp = f_समय + dev->cap_frame_eof_offset;
+	पूर्ण
 
 	dev->dqbuf_error = false;
 
@@ -788,84 +789,84 @@ update_mv:
 	/* Update the test pattern movement counters */
 	tpg_update_mv_count(&dev->tpg, dev->field_cap == V4L2_FIELD_NONE ||
 				       dev->field_cap == V4L2_FIELD_ALTERNATE);
-}
+पूर्ण
 
-static int vivid_thread_vid_cap(void *data)
-{
-	struct vivid_dev *dev = data;
+अटल पूर्णांक vivid_thपढ़ो_vid_cap(व्योम *data)
+अणु
+	काष्ठा vivid_dev *dev = data;
 	u64 numerators_since_start;
 	u64 buffers_since_start;
-	u64 next_jiffies_since_start;
-	unsigned long jiffies_since_start;
-	unsigned long cur_jiffies;
-	unsigned wait_jiffies;
-	unsigned numerator;
-	unsigned denominator;
-	int dropped_bufs;
+	u64 next_jअगरfies_since_start;
+	अचिन्हित दीर्घ jअगरfies_since_start;
+	अचिन्हित दीर्घ cur_jअगरfies;
+	अचिन्हित रुको_jअगरfies;
+	अचिन्हित numerator;
+	अचिन्हित denominator;
+	पूर्णांक dropped_bufs;
 
-	dprintk(dev, 1, "Video Capture Thread Start\n");
+	dprपूर्णांकk(dev, 1, "Video Capture Thread Start\n");
 
-	set_freezable();
+	set_मुक्तzable();
 
 	/* Resets frame counters */
 	dev->cap_seq_offset = 0;
 	dev->cap_seq_count = 0;
 	dev->cap_seq_resync = false;
-	dev->jiffies_vid_cap = jiffies;
-	dev->cap_stream_start = ktime_get_ns();
+	dev->jअगरfies_vid_cap = jअगरfies;
+	dev->cap_stream_start = kसमय_get_ns();
 	vivid_cap_update_frame_period(dev);
 
-	for (;;) {
-		try_to_freeze();
-		if (kthread_should_stop())
-			break;
+	क्रम (;;) अणु
+		try_to_मुक्तze();
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
 
-		if (!mutex_trylock(&dev->mutex)) {
+		अगर (!mutex_trylock(&dev->mutex)) अणु
 			schedule();
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		cur_jiffies = jiffies;
-		if (dev->cap_seq_resync) {
-			dev->jiffies_vid_cap = cur_jiffies;
+		cur_jअगरfies = jअगरfies;
+		अगर (dev->cap_seq_resync) अणु
+			dev->jअगरfies_vid_cap = cur_jअगरfies;
 			dev->cap_seq_offset = dev->cap_seq_count + 1;
 			dev->cap_seq_count = 0;
 			dev->cap_stream_start += dev->cap_frame_period *
 						 dev->cap_seq_offset;
 			vivid_cap_update_frame_period(dev);
 			dev->cap_seq_resync = false;
-		}
-		numerator = dev->timeperframe_vid_cap.numerator;
-		denominator = dev->timeperframe_vid_cap.denominator;
+		पूर्ण
+		numerator = dev->समयperframe_vid_cap.numerator;
+		denominator = dev->समयperframe_vid_cap.denominator;
 
-		if (dev->field_cap == V4L2_FIELD_ALTERNATE)
+		अगर (dev->field_cap == V4L2_FIELD_ALTERNATE)
 			denominator *= 2;
 
-		/* Calculate the number of jiffies since we started streaming */
-		jiffies_since_start = cur_jiffies - dev->jiffies_vid_cap;
+		/* Calculate the number of jअगरfies since we started streaming */
+		jअगरfies_since_start = cur_jअगरfies - dev->jअगरfies_vid_cap;
 		/* Get the number of buffers streamed since the start */
-		buffers_since_start = (u64)jiffies_since_start * denominator +
+		buffers_since_start = (u64)jअगरfies_since_start * denominator +
 				      (HZ * numerator) / 2;
-		do_div(buffers_since_start, HZ * numerator);
+		करो_भाग(buffers_since_start, HZ * numerator);
 
 		/*
-		 * After more than 0xf0000000 (rounded down to a multiple of
-		 * 'jiffies-per-day' to ease jiffies_to_msecs calculation)
-		 * jiffies have passed since we started streaming reset the
+		 * After more than 0xf0000000 (rounded करोwn to a multiple of
+		 * 'jiffies-per-day' to ease jअगरfies_to_msecs calculation)
+		 * jअगरfies have passed since we started streaming reset the
 		 * counters and keep track of the sequence offset.
 		 */
-		if (jiffies_since_start > JIFFIES_RESYNC) {
-			dev->jiffies_vid_cap = cur_jiffies;
+		अगर (jअगरfies_since_start > JIFFIES_RESYNC) अणु
+			dev->jअगरfies_vid_cap = cur_jअगरfies;
 			dev->cap_seq_offset = buffers_since_start;
 			buffers_since_start = 0;
-		}
+		पूर्ण
 		dropped_bufs = buffers_since_start + dev->cap_seq_offset - dev->cap_seq_count;
 		dev->cap_seq_count = buffers_since_start + dev->cap_seq_offset;
 		dev->vid_cap_seq_count = dev->cap_seq_count - dev->vid_cap_seq_start;
 		dev->vbi_cap_seq_count = dev->cap_seq_count - dev->vbi_cap_seq_start;
 		dev->meta_cap_seq_count = dev->cap_seq_count - dev->meta_cap_seq_start;
 
-		vivid_thread_vid_cap_tick(dev, dropped_bufs);
+		vivid_thपढ़ो_vid_cap_tick(dev, dropped_bufs);
 
 		/*
 		 * Calculate the number of 'numerators' streamed since we started,
@@ -873,54 +874,54 @@ static int vivid_thread_vid_cap(void *data)
 		 */
 		numerators_since_start = ++buffers_since_start * numerator;
 
-		/* And the number of jiffies since we started */
-		jiffies_since_start = jiffies - dev->jiffies_vid_cap;
+		/* And the number of jअगरfies since we started */
+		jअगरfies_since_start = jअगरfies - dev->jअगरfies_vid_cap;
 
 		mutex_unlock(&dev->mutex);
 
 		/*
 		 * Calculate when that next buffer is supposed to start
-		 * in jiffies since we started streaming.
+		 * in jअगरfies since we started streaming.
 		 */
-		next_jiffies_since_start = numerators_since_start * HZ +
+		next_jअगरfies_since_start = numerators_since_start * HZ +
 					   denominator / 2;
-		do_div(next_jiffies_since_start, denominator);
+		करो_भाग(next_jअगरfies_since_start, denominator);
 		/* If it is in the past, then just schedule asap */
-		if (next_jiffies_since_start < jiffies_since_start)
-			next_jiffies_since_start = jiffies_since_start;
+		अगर (next_jअगरfies_since_start < jअगरfies_since_start)
+			next_jअगरfies_since_start = jअगरfies_since_start;
 
-		wait_jiffies = next_jiffies_since_start - jiffies_since_start;
-		while (jiffies - cur_jiffies < wait_jiffies &&
-		       !kthread_should_stop())
+		रुको_jअगरfies = next_jअगरfies_since_start - jअगरfies_since_start;
+		जबतक (jअगरfies - cur_jअगरfies < रुको_jअगरfies &&
+		       !kthपढ़ो_should_stop())
 			schedule();
-	}
-	dprintk(dev, 1, "Video Capture Thread End\n");
-	return 0;
-}
+	पूर्ण
+	dprपूर्णांकk(dev, 1, "Video Capture Thread End\n");
+	वापस 0;
+पूर्ण
 
-static void vivid_grab_controls(struct vivid_dev *dev, bool grab)
-{
+अटल व्योम vivid_grab_controls(काष्ठा vivid_dev *dev, bool grab)
+अणु
 	v4l2_ctrl_grab(dev->ctrl_has_crop_cap, grab);
 	v4l2_ctrl_grab(dev->ctrl_has_compose_cap, grab);
 	v4l2_ctrl_grab(dev->ctrl_has_scaler_cap, grab);
-}
+पूर्ण
 
-int vivid_start_generating_vid_cap(struct vivid_dev *dev, bool *pstreaming)
-{
-	dprintk(dev, 1, "%s\n", __func__);
+पूर्णांक vivid_start_generating_vid_cap(काष्ठा vivid_dev *dev, bool *pstreaming)
+अणु
+	dprपूर्णांकk(dev, 1, "%s\n", __func__);
 
-	if (dev->kthread_vid_cap) {
+	अगर (dev->kthपढ़ो_vid_cap) अणु
 		u32 seq_count = dev->cap_seq_count + dev->seq_wrap * 128;
 
-		if (pstreaming == &dev->vid_cap_streaming)
+		अगर (pstreaming == &dev->vid_cap_streaming)
 			dev->vid_cap_seq_start = seq_count;
-		else if (pstreaming == &dev->vbi_cap_streaming)
+		अन्यथा अगर (pstreaming == &dev->vbi_cap_streaming)
 			dev->vbi_cap_seq_start = seq_count;
-		else
+		अन्यथा
 			dev->meta_cap_seq_start = seq_count;
 		*pstreaming = true;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Resets frame counters */
 	tpg_init_mv_count(&dev->tpg);
@@ -929,83 +930,83 @@ int vivid_start_generating_vid_cap(struct vivid_dev *dev, bool *pstreaming)
 	dev->vbi_cap_seq_start = dev->seq_wrap * 128;
 	dev->meta_cap_seq_start = dev->seq_wrap * 128;
 
-	dev->kthread_vid_cap = kthread_run(vivid_thread_vid_cap, dev,
+	dev->kthपढ़ो_vid_cap = kthपढ़ो_run(vivid_thपढ़ो_vid_cap, dev,
 			"%s-vid-cap", dev->v4l2_dev.name);
 
-	if (IS_ERR(dev->kthread_vid_cap)) {
-		int err = PTR_ERR(dev->kthread_vid_cap);
+	अगर (IS_ERR(dev->kthपढ़ो_vid_cap)) अणु
+		पूर्णांक err = PTR_ERR(dev->kthपढ़ो_vid_cap);
 
-		dev->kthread_vid_cap = NULL;
+		dev->kthपढ़ो_vid_cap = शून्य;
 		v4l2_err(&dev->v4l2_dev, "kernel_thread() failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	*pstreaming = true;
 	vivid_grab_controls(dev, true);
 
-	dprintk(dev, 1, "returning from %s\n", __func__);
-	return 0;
-}
+	dprपूर्णांकk(dev, 1, "returning from %s\n", __func__);
+	वापस 0;
+पूर्ण
 
-void vivid_stop_generating_vid_cap(struct vivid_dev *dev, bool *pstreaming)
-{
-	dprintk(dev, 1, "%s\n", __func__);
+व्योम vivid_stop_generating_vid_cap(काष्ठा vivid_dev *dev, bool *pstreaming)
+अणु
+	dprपूर्णांकk(dev, 1, "%s\n", __func__);
 
-	if (dev->kthread_vid_cap == NULL)
-		return;
+	अगर (dev->kthपढ़ो_vid_cap == शून्य)
+		वापस;
 
 	*pstreaming = false;
-	if (pstreaming == &dev->vid_cap_streaming) {
+	अगर (pstreaming == &dev->vid_cap_streaming) अणु
 		/* Release all active buffers */
-		while (!list_empty(&dev->vid_cap_active)) {
-			struct vivid_buffer *buf;
+		जबतक (!list_empty(&dev->vid_cap_active)) अणु
+			काष्ठा vivid_buffer *buf;
 
 			buf = list_entry(dev->vid_cap_active.next,
-					 struct vivid_buffer, list);
+					 काष्ठा vivid_buffer, list);
 			list_del(&buf->list);
 			v4l2_ctrl_request_complete(buf->vb.vb2_buf.req_obj.req,
 						   &dev->ctrl_hdl_vid_cap);
-			vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-			dprintk(dev, 2, "vid_cap buffer %d done\n",
+			vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+			dprपूर्णांकk(dev, 2, "vid_cap buffer %d done\n",
 				buf->vb.vb2_buf.index);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pstreaming == &dev->vbi_cap_streaming) {
-		while (!list_empty(&dev->vbi_cap_active)) {
-			struct vivid_buffer *buf;
+	अगर (pstreaming == &dev->vbi_cap_streaming) अणु
+		जबतक (!list_empty(&dev->vbi_cap_active)) अणु
+			काष्ठा vivid_buffer *buf;
 
 			buf = list_entry(dev->vbi_cap_active.next,
-					 struct vivid_buffer, list);
+					 काष्ठा vivid_buffer, list);
 			list_del(&buf->list);
 			v4l2_ctrl_request_complete(buf->vb.vb2_buf.req_obj.req,
 						   &dev->ctrl_hdl_vbi_cap);
-			vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-			dprintk(dev, 2, "vbi_cap buffer %d done\n",
+			vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+			dprपूर्णांकk(dev, 2, "vbi_cap buffer %d done\n",
 				buf->vb.vb2_buf.index);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pstreaming == &dev->meta_cap_streaming) {
-		while (!list_empty(&dev->meta_cap_active)) {
-			struct vivid_buffer *buf;
+	अगर (pstreaming == &dev->meta_cap_streaming) अणु
+		जबतक (!list_empty(&dev->meta_cap_active)) अणु
+			काष्ठा vivid_buffer *buf;
 
 			buf = list_entry(dev->meta_cap_active.next,
-					 struct vivid_buffer, list);
+					 काष्ठा vivid_buffer, list);
 			list_del(&buf->list);
 			v4l2_ctrl_request_complete(buf->vb.vb2_buf.req_obj.req,
 						   &dev->ctrl_hdl_meta_cap);
-			vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-			dprintk(dev, 2, "meta_cap buffer %d done\n",
+			vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+			dprपूर्णांकk(dev, 2, "meta_cap buffer %d done\n",
 				buf->vb.vb2_buf.index);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (dev->vid_cap_streaming || dev->vbi_cap_streaming ||
+	अगर (dev->vid_cap_streaming || dev->vbi_cap_streaming ||
 	    dev->meta_cap_streaming)
-		return;
+		वापस;
 
-	/* shutdown control thread */
+	/* shutकरोwn control thपढ़ो */
 	vivid_grab_controls(dev, false);
-	kthread_stop(dev->kthread_vid_cap);
-	dev->kthread_vid_cap = NULL;
-}
+	kthपढ़ो_stop(dev->kthपढ़ो_vid_cap);
+	dev->kthपढ़ो_vid_cap = शून्य;
+पूर्ण

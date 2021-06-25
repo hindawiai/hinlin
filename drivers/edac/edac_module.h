@@ -1,130 +1,131 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
 /*
  * edac_module.h
  *
- * For defining functions/data for within the EDAC_CORE module only
+ * For defining functions/data क्रम within the EDAC_CORE module only
  *
- * written by doug thompson <norsk5@xmission.h>
+ * written by करोug thompson <norsk5@xmission.h>
  */
 
-#ifndef	__EDAC_MODULE_H__
-#define	__EDAC_MODULE_H__
+#अगर_अघोषित	__EDAC_MODULE_H__
+#घोषणा	__EDAC_MODULE_H__
 
-#include "edac_mc.h"
-#include "edac_pci.h"
-#include "edac_device.h"
+#समावेश "edac_mc.h"
+#समावेश "edac_pci.h"
+#समावेश "edac_device.h"
 
 /*
  * INTERNAL EDAC MODULE:
- * EDAC memory controller sysfs create/remove functions
- * and setup/teardown functions
+ * EDAC memory controller sysfs create/हटाओ functions
+ * and setup/tearकरोwn functions
  *
  * edac_mc objects
  */
 	/* on edac_mc_sysfs.c */
-int edac_mc_sysfs_init(void);
-void edac_mc_sysfs_exit(void);
-extern int edac_create_sysfs_mci_device(struct mem_ctl_info *mci,
-					const struct attribute_group **groups);
-extern void edac_remove_sysfs_mci_device(struct mem_ctl_info *mci);
-extern int edac_get_log_ue(void);
-extern int edac_get_log_ce(void);
-extern int edac_get_panic_on_ue(void);
-extern int edac_mc_get_log_ue(void);
-extern int edac_mc_get_log_ce(void);
-extern int edac_mc_get_panic_on_ue(void);
-extern int edac_get_poll_msec(void);
-extern unsigned int edac_mc_get_poll_msec(void);
+पूर्णांक edac_mc_sysfs_init(व्योम);
+व्योम edac_mc_sysfs_निकास(व्योम);
+बाह्य पूर्णांक edac_create_sysfs_mci_device(काष्ठा mem_ctl_info *mci,
+					स्थिर काष्ठा attribute_group **groups);
+बाह्य व्योम edac_हटाओ_sysfs_mci_device(काष्ठा mem_ctl_info *mci);
+बाह्य पूर्णांक edac_get_log_ue(व्योम);
+बाह्य पूर्णांक edac_get_log_ce(व्योम);
+बाह्य पूर्णांक edac_get_panic_on_ue(व्योम);
+बाह्य पूर्णांक edac_mc_get_log_ue(व्योम);
+बाह्य पूर्णांक edac_mc_get_log_ce(व्योम);
+बाह्य पूर्णांक edac_mc_get_panic_on_ue(व्योम);
+बाह्य पूर्णांक edac_get_poll_msec(व्योम);
+बाह्य अचिन्हित पूर्णांक edac_mc_get_poll_msec(व्योम);
 
-unsigned edac_dimm_info_location(struct dimm_info *dimm, char *buf,
-				 unsigned len);
+अचिन्हित edac_dimm_info_location(काष्ठा dimm_info *dimm, अक्षर *buf,
+				 अचिन्हित len);
 
 	/* on edac_device.c */
-extern int edac_device_register_sysfs_main_kobj(
-				struct edac_device_ctl_info *edac_dev);
-extern void edac_device_unregister_sysfs_main_kobj(
-				struct edac_device_ctl_info *edac_dev);
-extern int edac_device_create_sysfs(struct edac_device_ctl_info *edac_dev);
-extern void edac_device_remove_sysfs(struct edac_device_ctl_info *edac_dev);
+बाह्य पूर्णांक edac_device_रेजिस्टर_sysfs_मुख्य_kobj(
+				काष्ठा edac_device_ctl_info *edac_dev);
+बाह्य व्योम edac_device_unरेजिस्टर_sysfs_मुख्य_kobj(
+				काष्ठा edac_device_ctl_info *edac_dev);
+बाह्य पूर्णांक edac_device_create_sysfs(काष्ठा edac_device_ctl_info *edac_dev);
+बाह्य व्योम edac_device_हटाओ_sysfs(काष्ठा edac_device_ctl_info *edac_dev);
 
 /* edac core workqueue: single CPU mode */
-int edac_workqueue_setup(void);
-void edac_workqueue_teardown(void);
-bool edac_queue_work(struct delayed_work *work, unsigned long delay);
-bool edac_stop_work(struct delayed_work *work);
-bool edac_mod_work(struct delayed_work *work, unsigned long delay);
+पूर्णांक edac_workqueue_setup(व्योम);
+व्योम edac_workqueue_tearकरोwn(व्योम);
+bool edac_queue_work(काष्ठा delayed_work *work, अचिन्हित दीर्घ delay);
+bool edac_stop_work(काष्ठा delayed_work *work);
+bool edac_mod_work(काष्ठा delayed_work *work, अचिन्हित दीर्घ delay);
 
-extern void edac_device_reset_delay_period(struct edac_device_ctl_info
-					   *edac_dev, unsigned long value);
-extern void edac_mc_reset_delay_period(unsigned long value);
+बाह्य व्योम edac_device_reset_delay_period(काष्ठा edac_device_ctl_info
+					   *edac_dev, अचिन्हित दीर्घ value);
+बाह्य व्योम edac_mc_reset_delay_period(अचिन्हित दीर्घ value);
 
-extern void *edac_align_ptr(void **p, unsigned size, int n_elems);
+बाह्य व्योम *edac_align_ptr(व्योम **p, अचिन्हित size, पूर्णांक n_elems);
 
 /*
  * EDAC debugfs functions
  */
 
-#define edac_debugfs_remove_recursive debugfs_remove_recursive
-#define edac_debugfs_remove debugfs_remove
-#ifdef CONFIG_EDAC_DEBUG
-void edac_debugfs_init(void);
-void edac_debugfs_exit(void);
-void edac_create_debugfs_nodes(struct mem_ctl_info *mci);
-struct dentry *edac_debugfs_create_dir(const char *dirname);
-struct dentry *
-edac_debugfs_create_dir_at(const char *dirname, struct dentry *parent);
-struct dentry *
-edac_debugfs_create_file(const char *name, umode_t mode, struct dentry *parent,
-			 void *data, const struct file_operations *fops);
-void edac_debugfs_create_x8(const char *name, umode_t mode,
-			    struct dentry *parent, u8 *value);
-void edac_debugfs_create_x16(const char *name, umode_t mode,
-			     struct dentry *parent, u16 *value);
-void edac_debugfs_create_x32(const char *name, umode_t mode,
-			     struct dentry *parent, u32 *value);
-#else
-static inline void edac_debugfs_init(void)					{ }
-static inline void edac_debugfs_exit(void)					{ }
-static inline void edac_create_debugfs_nodes(struct mem_ctl_info *mci)		{ }
-static inline struct dentry *edac_debugfs_create_dir(const char *dirname)	{ return NULL; }
-static inline struct dentry *
-edac_debugfs_create_dir_at(const char *dirname, struct dentry *parent)		{ return NULL; }
-static inline struct dentry *
-edac_debugfs_create_file(const char *name, umode_t mode, struct dentry *parent,
-			 void *data, const struct file_operations *fops)	{ return NULL; }
-static inline void edac_debugfs_create_x8(const char *name, umode_t mode,
-					  struct dentry *parent, u8 *value)	{ }
-static inline void edac_debugfs_create_x16(const char *name, umode_t mode,
-					   struct dentry *parent, u16 *value)	{ }
-static inline void edac_debugfs_create_x32(const char *name, umode_t mode,
-		       struct dentry *parent, u32 *value)			{ }
-#endif
+#घोषणा edac_debugfs_हटाओ_recursive debugfs_हटाओ_recursive
+#घोषणा edac_debugfs_हटाओ debugfs_हटाओ
+#अगर_घोषित CONFIG_EDAC_DEBUG
+व्योम edac_debugfs_init(व्योम);
+व्योम edac_debugfs_निकास(व्योम);
+व्योम edac_create_debugfs_nodes(काष्ठा mem_ctl_info *mci);
+काष्ठा dentry *edac_debugfs_create_dir(स्थिर अक्षर *स_नाम);
+काष्ठा dentry *
+edac_debugfs_create_dir_at(स्थिर अक्षर *स_नाम, काष्ठा dentry *parent);
+काष्ठा dentry *
+edac_debugfs_create_file(स्थिर अक्षर *name, umode_t mode, काष्ठा dentry *parent,
+			 व्योम *data, स्थिर काष्ठा file_operations *fops);
+व्योम edac_debugfs_create_x8(स्थिर अक्षर *name, umode_t mode,
+			    काष्ठा dentry *parent, u8 *value);
+व्योम edac_debugfs_create_x16(स्थिर अक्षर *name, umode_t mode,
+			     काष्ठा dentry *parent, u16 *value);
+व्योम edac_debugfs_create_x32(स्थिर अक्षर *name, umode_t mode,
+			     काष्ठा dentry *parent, u32 *value);
+#अन्यथा
+अटल अंतरभूत व्योम edac_debugfs_init(व्योम)					अणु पूर्ण
+अटल अंतरभूत व्योम edac_debugfs_निकास(व्योम)					अणु पूर्ण
+अटल अंतरभूत व्योम edac_create_debugfs_nodes(काष्ठा mem_ctl_info *mci)		अणु पूर्ण
+अटल अंतरभूत काष्ठा dentry *edac_debugfs_create_dir(स्थिर अक्षर *स_नाम)	अणु वापस शून्य; पूर्ण
+अटल अंतरभूत काष्ठा dentry *
+edac_debugfs_create_dir_at(स्थिर अक्षर *स_नाम, काष्ठा dentry *parent)		अणु वापस शून्य; पूर्ण
+अटल अंतरभूत काष्ठा dentry *
+edac_debugfs_create_file(स्थिर अक्षर *name, umode_t mode, काष्ठा dentry *parent,
+			 व्योम *data, स्थिर काष्ठा file_operations *fops)	अणु वापस शून्य; पूर्ण
+अटल अंतरभूत व्योम edac_debugfs_create_x8(स्थिर अक्षर *name, umode_t mode,
+					  काष्ठा dentry *parent, u8 *value)	अणु पूर्ण
+अटल अंतरभूत व्योम edac_debugfs_create_x16(स्थिर अक्षर *name, umode_t mode,
+					   काष्ठा dentry *parent, u16 *value)	अणु पूर्ण
+अटल अंतरभूत व्योम edac_debugfs_create_x32(स्थिर अक्षर *name, umode_t mode,
+		       काष्ठा dentry *parent, u32 *value)			अणु पूर्ण
+#पूर्ण_अगर
 
 /*
  * EDAC PCI functions
  */
-#ifdef	CONFIG_PCI
-extern void edac_pci_do_parity_check(void);
-extern void edac_pci_clear_parity_errors(void);
-extern int edac_sysfs_pci_setup(void);
-extern void edac_sysfs_pci_teardown(void);
-extern int edac_pci_get_check_errors(void);
-extern int edac_pci_get_poll_msec(void);
-extern void edac_pci_remove_sysfs(struct edac_pci_ctl_info *pci);
-extern void edac_pci_handle_pe(struct edac_pci_ctl_info *pci, const char *msg);
-extern void edac_pci_handle_npe(struct edac_pci_ctl_info *pci,
-				const char *msg);
-#else				/* CONFIG_PCI */
+#अगर_घोषित	CONFIG_PCI
+बाह्य व्योम edac_pci_करो_parity_check(व्योम);
+बाह्य व्योम edac_pci_clear_parity_errors(व्योम);
+बाह्य पूर्णांक edac_sysfs_pci_setup(व्योम);
+बाह्य व्योम edac_sysfs_pci_tearकरोwn(व्योम);
+बाह्य पूर्णांक edac_pci_get_check_errors(व्योम);
+बाह्य पूर्णांक edac_pci_get_poll_msec(व्योम);
+बाह्य व्योम edac_pci_हटाओ_sysfs(काष्ठा edac_pci_ctl_info *pci);
+बाह्य व्योम edac_pci_handle_pe(काष्ठा edac_pci_ctl_info *pci, स्थिर अक्षर *msg);
+बाह्य व्योम edac_pci_handle_npe(काष्ठा edac_pci_ctl_info *pci,
+				स्थिर अक्षर *msg);
+#अन्यथा				/* CONFIG_PCI */
 /* pre-process these away */
-#define edac_pci_do_parity_check()
-#define edac_pci_clear_parity_errors()
-#define edac_sysfs_pci_setup()  (0)
-#define edac_sysfs_pci_teardown()
-#define edac_pci_get_check_errors()
-#define edac_pci_get_poll_msec()
-#define edac_pci_handle_pe()
-#define edac_pci_handle_npe()
-#endif				/* CONFIG_PCI */
+#घोषणा edac_pci_करो_parity_check()
+#घोषणा edac_pci_clear_parity_errors()
+#घोषणा edac_sysfs_pci_setup()  (0)
+#घोषणा edac_sysfs_pci_tearकरोwn()
+#घोषणा edac_pci_get_check_errors()
+#घोषणा edac_pci_get_poll_msec()
+#घोषणा edac_pci_handle_pe()
+#घोषणा edac_pci_handle_npe()
+#पूर्ण_अगर				/* CONFIG_PCI */
 
-#endif				/* __EDAC_MODULE_H__ */
+#पूर्ण_अगर				/* __EDAC_MODULE_H__ */

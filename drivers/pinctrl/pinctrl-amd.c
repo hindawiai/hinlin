@@ -1,134 +1,135 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * GPIO driver for AMD
+ * GPIO driver क्रम AMD
  *
  * Copyright (c) 2014,2015 AMD Corporation.
  * Authors: Ken Xue <Ken.Xue@amd.com>
  *      Wu, Jeff <Jeff.Wu@amd.com>
  *
- * Contact Information: Nehal Shah <Nehal-bakulchandra.Shah@amd.com>
+ * Contact Inक्रमmation: Nehal Shah <Nehal-bakulchandra.Shah@amd.com>
  *			Shyam Sundar S K <Shyam-sundar.S-k@amd.com>
  */
 
-#include <linux/err.h>
-#include <linux/bug.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/compiler.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/log2.h>
-#include <linux/io.h>
-#include <linux/gpio/driver.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/mutex.h>
-#include <linux/acpi.h>
-#include <linux/seq_file.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/bitops.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/err.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/log2.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
 
-#include "core.h"
-#include "pinctrl-utils.h"
-#include "pinctrl-amd.h"
+#समावेश "core.h"
+#समावेश "pinctrl-utils.h"
+#समावेश "pinctrl-amd.h"
 
-static int amd_gpio_get_direction(struct gpio_chip *gc, unsigned offset)
-{
-	unsigned long flags;
+अटल पूर्णांक amd_gpio_get_direction(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 pin_reg;
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + offset * 4);
+	pin_reg = पढ़ोl(gpio_dev->base + offset * 4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 
-	if (pin_reg & BIT(OUTPUT_ENABLE_OFF))
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (pin_reg & BIT(OUTPUT_ENABLE_OFF))
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int amd_gpio_direction_input(struct gpio_chip *gc, unsigned offset)
-{
-	unsigned long flags;
+अटल पूर्णांक amd_gpio_direction_input(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 pin_reg;
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + offset * 4);
+	pin_reg = पढ़ोl(gpio_dev->base + offset * 4);
 	pin_reg &= ~BIT(OUTPUT_ENABLE_OFF);
-	writel(pin_reg, gpio_dev->base + offset * 4);
+	ग_लिखोl(pin_reg, gpio_dev->base + offset * 4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amd_gpio_direction_output(struct gpio_chip *gc, unsigned offset,
-		int value)
-{
+अटल पूर्णांक amd_gpio_direction_output(काष्ठा gpio_chip *gc, अचिन्हित offset,
+		पूर्णांक value)
+अणु
 	u32 pin_reg;
-	unsigned long flags;
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + offset * 4);
+	pin_reg = पढ़ोl(gpio_dev->base + offset * 4);
 	pin_reg |= BIT(OUTPUT_ENABLE_OFF);
-	if (value)
+	अगर (value)
 		pin_reg |= BIT(OUTPUT_VALUE_OFF);
-	else
+	अन्यथा
 		pin_reg &= ~BIT(OUTPUT_VALUE_OFF);
-	writel(pin_reg, gpio_dev->base + offset * 4);
+	ग_लिखोl(pin_reg, gpio_dev->base + offset * 4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amd_gpio_get_value(struct gpio_chip *gc, unsigned offset)
-{
+अटल पूर्णांक amd_gpio_get_value(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
 	u32 pin_reg;
-	unsigned long flags;
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + offset * 4);
+	pin_reg = पढ़ोl(gpio_dev->base + offset * 4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 
-	return !!(pin_reg & BIT(PIN_STS_OFF));
-}
+	वापस !!(pin_reg & BIT(PIN_STS_OFF));
+पूर्ण
 
-static void amd_gpio_set_value(struct gpio_chip *gc, unsigned offset, int value)
-{
+अटल व्योम amd_gpio_set_value(काष्ठा gpio_chip *gc, अचिन्हित offset, पूर्णांक value)
+अणु
 	u32 pin_reg;
-	unsigned long flags;
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + offset * 4);
-	if (value)
+	pin_reg = पढ़ोl(gpio_dev->base + offset * 4);
+	अगर (value)
 		pin_reg |= BIT(OUTPUT_VALUE_OFF);
-	else
+	अन्यथा
 		pin_reg &= ~BIT(OUTPUT_VALUE_OFF);
-	writel(pin_reg, gpio_dev->base + offset * 4);
+	ग_लिखोl(pin_reg, gpio_dev->base + offset * 4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
-}
+पूर्ण
 
-static int amd_gpio_set_debounce(struct gpio_chip *gc, unsigned offset,
-		unsigned debounce)
-{
-	u32 time;
+अटल पूर्णांक amd_gpio_set_debounce(काष्ठा gpio_chip *gc, अचिन्हित offset,
+		अचिन्हित debounce)
+अणु
+	u32 समय;
 	u32 pin_reg;
-	int ret = 0;
-	unsigned long flags;
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + offset * 4);
+	pin_reg = पढ़ोl(gpio_dev->base + offset * 4);
 
-	if (debounce) {
+	अगर (debounce) अणु
 		pin_reg |= DB_TYPE_REMOVE_GLITCH << DB_CNTRL_OFF;
 		pin_reg &= ~DB_TMR_OUT_MASK;
 		/*
@@ -141,411 +142,411 @@ static int amd_gpio_set_debounce(struct gpio_chip *gc, unsigned offset,
 		1	1	62.5 msec (2048 RtcClk)	1 sec
 		*/
 
-		if (debounce < 61) {
+		अगर (debounce < 61) अणु
 			pin_reg |= 1;
 			pin_reg &= ~BIT(DB_TMR_OUT_UNIT_OFF);
 			pin_reg &= ~BIT(DB_TMR_LARGE_OFF);
-		} else if (debounce < 976) {
-			time = debounce / 61;
-			pin_reg |= time & DB_TMR_OUT_MASK;
+		पूर्ण अन्यथा अगर (debounce < 976) अणु
+			समय = debounce / 61;
+			pin_reg |= समय & DB_TMR_OUT_MASK;
 			pin_reg &= ~BIT(DB_TMR_OUT_UNIT_OFF);
 			pin_reg &= ~BIT(DB_TMR_LARGE_OFF);
-		} else if (debounce < 3900) {
-			time = debounce / 244;
-			pin_reg |= time & DB_TMR_OUT_MASK;
+		पूर्ण अन्यथा अगर (debounce < 3900) अणु
+			समय = debounce / 244;
+			pin_reg |= समय & DB_TMR_OUT_MASK;
 			pin_reg |= BIT(DB_TMR_OUT_UNIT_OFF);
 			pin_reg &= ~BIT(DB_TMR_LARGE_OFF);
-		} else if (debounce < 250000) {
-			time = debounce / 15625;
-			pin_reg |= time & DB_TMR_OUT_MASK;
+		पूर्ण अन्यथा अगर (debounce < 250000) अणु
+			समय = debounce / 15625;
+			pin_reg |= समय & DB_TMR_OUT_MASK;
 			pin_reg &= ~BIT(DB_TMR_OUT_UNIT_OFF);
 			pin_reg |= BIT(DB_TMR_LARGE_OFF);
-		} else if (debounce < 1000000) {
-			time = debounce / 62500;
-			pin_reg |= time & DB_TMR_OUT_MASK;
+		पूर्ण अन्यथा अगर (debounce < 1000000) अणु
+			समय = debounce / 62500;
+			pin_reg |= समय & DB_TMR_OUT_MASK;
 			pin_reg |= BIT(DB_TMR_OUT_UNIT_OFF);
 			pin_reg |= BIT(DB_TMR_LARGE_OFF);
-		} else {
+		पूर्ण अन्यथा अणु
 			pin_reg &= ~(DB_CNTRl_MASK << DB_CNTRL_OFF);
 			ret = -EINVAL;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pin_reg &= ~BIT(DB_TMR_OUT_UNIT_OFF);
 		pin_reg &= ~BIT(DB_TMR_LARGE_OFF);
 		pin_reg &= ~DB_TMR_OUT_MASK;
 		pin_reg &= ~(DB_CNTRl_MASK << DB_CNTRL_OFF);
-	}
-	writel(pin_reg, gpio_dev->base + offset * 4);
+	पूर्ण
+	ग_लिखोl(pin_reg, gpio_dev->base + offset * 4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int amd_gpio_set_config(struct gpio_chip *gc, unsigned offset,
-			       unsigned long config)
-{
+अटल पूर्णांक amd_gpio_set_config(काष्ठा gpio_chip *gc, अचिन्हित offset,
+			       अचिन्हित दीर्घ config)
+अणु
 	u32 debounce;
 
-	if (pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE)
-		return -ENOTSUPP;
+	अगर (pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE)
+		वापस -ENOTSUPP;
 
 	debounce = pinconf_to_config_argument(config);
-	return amd_gpio_set_debounce(gc, offset, debounce);
-}
+	वापस amd_gpio_set_debounce(gc, offset, debounce);
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static void amd_gpio_dbg_show(struct seq_file *s, struct gpio_chip *gc)
-{
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल व्योम amd_gpio_dbg_show(काष्ठा seq_file *s, काष्ठा gpio_chip *gc)
+अणु
 	u32 pin_reg;
 	u32 db_cntrl;
-	unsigned long flags;
-	unsigned int bank, i, pin_num;
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक bank, i, pin_num;
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
-	bool tmr_out_unit;
-	unsigned int time;
-	unsigned int unit;
-	bool tmr_large;
+	bool पंचांगr_out_unit;
+	अचिन्हित पूर्णांक समय;
+	अचिन्हित पूर्णांक unit;
+	bool पंचांगr_large;
 
-	char *level_trig;
-	char *active_level;
-	char *interrupt_enable;
-	char *interrupt_mask;
-	char *wake_cntrl0;
-	char *wake_cntrl1;
-	char *wake_cntrl2;
-	char *pin_sts;
-	char *pull_up_sel;
-	char *pull_up_enable;
-	char *pull_down_enable;
-	char *output_value;
-	char *output_enable;
-	char debounce_value[40];
-	char *debounce_enable;
+	अक्षर *level_trig;
+	अक्षर *active_level;
+	अक्षर *पूर्णांकerrupt_enable;
+	अक्षर *पूर्णांकerrupt_mask;
+	अक्षर *wake_cntrl0;
+	अक्षर *wake_cntrl1;
+	अक्षर *wake_cntrl2;
+	अक्षर *pin_sts;
+	अक्षर *pull_up_sel;
+	अक्षर *pull_up_enable;
+	अक्षर *pull_करोwn_enable;
+	अक्षर *output_value;
+	अक्षर *output_enable;
+	अक्षर debounce_value[40];
+	अक्षर *debounce_enable;
 
-	for (bank = 0; bank < gpio_dev->hwbank_num; bank++) {
-		seq_printf(s, "GPIO bank%d\t", bank);
+	क्रम (bank = 0; bank < gpio_dev->hwbank_num; bank++) अणु
+		seq_म_लिखो(s, "GPIO bank%d\t", bank);
 
-		switch (bank) {
-		case 0:
+		चयन (bank) अणु
+		हाल 0:
 			i = 0;
 			pin_num = AMD_GPIO_PINS_BANK0;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			i = 64;
 			pin_num = AMD_GPIO_PINS_BANK1 + i;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			i = 128;
 			pin_num = AMD_GPIO_PINS_BANK2 + i;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			i = 192;
 			pin_num = AMD_GPIO_PINS_BANK3 + i;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/* Illegal bank number, ignore */
-			continue;
-		}
-		for (; i < pin_num; i++) {
-			seq_printf(s, "pin%d\t", i);
+			जारी;
+		पूर्ण
+		क्रम (; i < pin_num; i++) अणु
+			seq_म_लिखो(s, "pin%d\t", i);
 			raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-			pin_reg = readl(gpio_dev->base + i * 4);
+			pin_reg = पढ़ोl(gpio_dev->base + i * 4);
 			raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 
-			if (pin_reg & BIT(INTERRUPT_ENABLE_OFF)) {
+			अगर (pin_reg & BIT(INTERRUPT_ENABLE_OFF)) अणु
 				u8 level = (pin_reg >> ACTIVE_LEVEL_OFF) &
 						ACTIVE_LEVEL_MASK;
-				interrupt_enable = "interrupt is enabled|";
+				पूर्णांकerrupt_enable = "interrupt is enabled|";
 
-				if (level == ACTIVE_LEVEL_HIGH)
+				अगर (level == ACTIVE_LEVEL_HIGH)
 					active_level = "Active high|";
-				else if (level == ACTIVE_LEVEL_LOW)
+				अन्यथा अगर (level == ACTIVE_LEVEL_LOW)
 					active_level = "Active low|";
-				else if (!(pin_reg & BIT(LEVEL_TRIG_OFF)) &&
+				अन्यथा अगर (!(pin_reg & BIT(LEVEL_TRIG_OFF)) &&
 					 level == ACTIVE_LEVEL_BOTH)
 					active_level = "Active on both|";
-				else
+				अन्यथा
 					active_level = "Unknown Active level|";
 
-				if (pin_reg & BIT(LEVEL_TRIG_OFF))
+				अगर (pin_reg & BIT(LEVEL_TRIG_OFF))
 					level_trig = "Level trigger|";
-				else
+				अन्यथा
 					level_trig = "Edge trigger|";
 
-			} else {
-				interrupt_enable =
+			पूर्ण अन्यथा अणु
+				पूर्णांकerrupt_enable =
 					"interrupt is disabled|";
 				active_level = " ";
 				level_trig = " ";
-			}
+			पूर्ण
 
-			if (pin_reg & BIT(INTERRUPT_MASK_OFF))
-				interrupt_mask =
+			अगर (pin_reg & BIT(INTERRUPT_MASK_OFF))
+				पूर्णांकerrupt_mask =
 					"interrupt is unmasked|";
-			else
-				interrupt_mask =
+			अन्यथा
+				पूर्णांकerrupt_mask =
 					"interrupt is masked|";
 
-			if (pin_reg & BIT(WAKE_CNTRL_OFF_S0I3))
+			अगर (pin_reg & BIT(WAKE_CNTRL_OFF_S0I3))
 				wake_cntrl0 = "enable wakeup in S0i3 state|";
-			else
+			अन्यथा
 				wake_cntrl0 = "disable wakeup in S0i3 state|";
 
-			if (pin_reg & BIT(WAKE_CNTRL_OFF_S3))
+			अगर (pin_reg & BIT(WAKE_CNTRL_OFF_S3))
 				wake_cntrl1 = "enable wakeup in S3 state|";
-			else
+			अन्यथा
 				wake_cntrl1 = "disable wakeup in S3 state|";
 
-			if (pin_reg & BIT(WAKE_CNTRL_OFF_S4))
+			अगर (pin_reg & BIT(WAKE_CNTRL_OFF_S4))
 				wake_cntrl2 = "enable wakeup in S4/S5 state|";
-			else
+			अन्यथा
 				wake_cntrl2 = "disable wakeup in S4/S5 state|";
 
-			if (pin_reg & BIT(PULL_UP_ENABLE_OFF)) {
+			अगर (pin_reg & BIT(PULL_UP_ENABLE_OFF)) अणु
 				pull_up_enable = "pull-up is enabled|";
-				if (pin_reg & BIT(PULL_UP_SEL_OFF))
+				अगर (pin_reg & BIT(PULL_UP_SEL_OFF))
 					pull_up_sel = "8k pull-up|";
-				else
+				अन्यथा
 					pull_up_sel = "4k pull-up|";
-			} else {
+			पूर्ण अन्यथा अणु
 				pull_up_enable = "pull-up is disabled|";
 				pull_up_sel = " ";
-			}
+			पूर्ण
 
-			if (pin_reg & BIT(PULL_DOWN_ENABLE_OFF))
-				pull_down_enable = "pull-down is enabled|";
-			else
-				pull_down_enable = "Pull-down is disabled|";
+			अगर (pin_reg & BIT(PULL_DOWN_ENABLE_OFF))
+				pull_करोwn_enable = "pull-down is enabled|";
+			अन्यथा
+				pull_करोwn_enable = "Pull-down is disabled|";
 
-			if (pin_reg & BIT(OUTPUT_ENABLE_OFF)) {
+			अगर (pin_reg & BIT(OUTPUT_ENABLE_OFF)) अणु
 				pin_sts = " ";
 				output_enable = "output is enabled|";
-				if (pin_reg & BIT(OUTPUT_VALUE_OFF))
+				अगर (pin_reg & BIT(OUTPUT_VALUE_OFF))
 					output_value = "output is high|";
-				else
+				अन्यथा
 					output_value = "output is low|";
-			} else {
+			पूर्ण अन्यथा अणु
 				output_enable = "output is disabled|";
 				output_value = " ";
 
-				if (pin_reg & BIT(PIN_STS_OFF))
+				अगर (pin_reg & BIT(PIN_STS_OFF))
 					pin_sts = "input is high|";
-				else
+				अन्यथा
 					pin_sts = "input is low|";
-			}
+			पूर्ण
 
 			db_cntrl = (DB_CNTRl_MASK << DB_CNTRL_OFF) & pin_reg;
-			if (db_cntrl) {
-				tmr_out_unit = pin_reg & BIT(DB_TMR_OUT_UNIT_OFF);
-				tmr_large = pin_reg & BIT(DB_TMR_LARGE_OFF);
-				time = pin_reg & DB_TMR_OUT_MASK;
-				if (tmr_large) {
-					if (tmr_out_unit)
+			अगर (db_cntrl) अणु
+				पंचांगr_out_unit = pin_reg & BIT(DB_TMR_OUT_UNIT_OFF);
+				पंचांगr_large = pin_reg & BIT(DB_TMR_LARGE_OFF);
+				समय = pin_reg & DB_TMR_OUT_MASK;
+				अगर (पंचांगr_large) अणु
+					अगर (पंचांगr_out_unit)
 						unit = 62500;
-					else
+					अन्यथा
 						unit = 15625;
-				} else {
-					if (tmr_out_unit)
+				पूर्ण अन्यथा अणु
+					अगर (पंचांगr_out_unit)
 						unit = 244;
-					else
+					अन्यथा
 						unit = 61;
-				}
-				if ((DB_TYPE_REMOVE_GLITCH << DB_CNTRL_OFF) == db_cntrl)
+				पूर्ण
+				अगर ((DB_TYPE_REMOVE_GLITCH << DB_CNTRL_OFF) == db_cntrl)
 					debounce_enable = "debouncing filter (high and low) enabled|";
-				else if ((DB_TYPE_PRESERVE_LOW_GLITCH << DB_CNTRL_OFF) == db_cntrl)
+				अन्यथा अगर ((DB_TYPE_PRESERVE_LOW_GLITCH << DB_CNTRL_OFF) == db_cntrl)
 					debounce_enable = "debouncing filter (low) enabled|";
-				else
+				अन्यथा
 					debounce_enable = "debouncing filter (high) enabled|";
 
-				snprintf(debounce_value, sizeof(debounce_value),
-					 "debouncing timeout is %u (us)|", time * unit);
-			} else {
+				snम_लिखो(debounce_value, माप(debounce_value),
+					 "debouncing timeout is %u (us)|", समय * unit);
+			पूर्ण अन्यथा अणु
 				debounce_enable = "debouncing filter disabled|";
-				snprintf(debounce_value, sizeof(debounce_value), " ");
-			}
+				snम_लिखो(debounce_value, माप(debounce_value), " ");
+			पूर्ण
 
-			seq_printf(s, "%s %s %s %s %s %s\n"
+			seq_म_लिखो(s, "%s %s %s %s %s %s\n"
 				" %s %s %s %s %s %s %s %s %s 0x%x\n",
-				level_trig, active_level, interrupt_enable,
-				interrupt_mask, wake_cntrl0, wake_cntrl1,
+				level_trig, active_level, पूर्णांकerrupt_enable,
+				पूर्णांकerrupt_mask, wake_cntrl0, wake_cntrl1,
 				wake_cntrl2, pin_sts, pull_up_sel,
-				pull_up_enable, pull_down_enable,
+				pull_up_enable, pull_करोwn_enable,
 				output_value, output_enable,
 				debounce_enable, debounce_value, pin_reg);
-		}
-	}
-}
-#else
-#define amd_gpio_dbg_show NULL
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#अन्यथा
+#घोषणा amd_gpio_dbg_show शून्य
+#पूर्ण_अगर
 
-static void amd_gpio_irq_enable(struct irq_data *d)
-{
+अटल व्योम amd_gpio_irq_enable(काष्ठा irq_data *d)
+अणु
 	u32 pin_reg;
-	unsigned long flags;
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + (d->hwirq)*4);
+	pin_reg = पढ़ोl(gpio_dev->base + (d->hwirq)*4);
 	pin_reg |= BIT(INTERRUPT_ENABLE_OFF);
 	pin_reg |= BIT(INTERRUPT_MASK_OFF);
-	writel(pin_reg, gpio_dev->base + (d->hwirq)*4);
+	ग_लिखोl(pin_reg, gpio_dev->base + (d->hwirq)*4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
-}
+पूर्ण
 
-static void amd_gpio_irq_disable(struct irq_data *d)
-{
+अटल व्योम amd_gpio_irq_disable(काष्ठा irq_data *d)
+अणु
 	u32 pin_reg;
-	unsigned long flags;
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + (d->hwirq)*4);
+	pin_reg = पढ़ोl(gpio_dev->base + (d->hwirq)*4);
 	pin_reg &= ~BIT(INTERRUPT_ENABLE_OFF);
 	pin_reg &= ~BIT(INTERRUPT_MASK_OFF);
-	writel(pin_reg, gpio_dev->base + (d->hwirq)*4);
+	ग_लिखोl(pin_reg, gpio_dev->base + (d->hwirq)*4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
-}
+पूर्ण
 
-static void amd_gpio_irq_mask(struct irq_data *d)
-{
+अटल व्योम amd_gpio_irq_mask(काष्ठा irq_data *d)
+अणु
 	u32 pin_reg;
-	unsigned long flags;
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + (d->hwirq)*4);
+	pin_reg = पढ़ोl(gpio_dev->base + (d->hwirq)*4);
 	pin_reg &= ~BIT(INTERRUPT_MASK_OFF);
-	writel(pin_reg, gpio_dev->base + (d->hwirq)*4);
+	ग_लिखोl(pin_reg, gpio_dev->base + (d->hwirq)*4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
-}
+पूर्ण
 
-static void amd_gpio_irq_unmask(struct irq_data *d)
-{
+अटल व्योम amd_gpio_irq_unmask(काष्ठा irq_data *d)
+अणु
 	u32 pin_reg;
-	unsigned long flags;
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + (d->hwirq)*4);
+	pin_reg = पढ़ोl(gpio_dev->base + (d->hwirq)*4);
 	pin_reg |= BIT(INTERRUPT_MASK_OFF);
-	writel(pin_reg, gpio_dev->base + (d->hwirq)*4);
+	ग_लिखोl(pin_reg, gpio_dev->base + (d->hwirq)*4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
-}
+पूर्ण
 
-static void amd_gpio_irq_eoi(struct irq_data *d)
-{
+अटल व्योम amd_gpio_irq_eoi(काष्ठा irq_data *d)
+अणु
 	u32 reg;
-	unsigned long flags;
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	reg = readl(gpio_dev->base + WAKE_INT_MASTER_REG);
+	reg = पढ़ोl(gpio_dev->base + WAKE_INT_MASTER_REG);
 	reg |= EOI_MASK;
-	writel(reg, gpio_dev->base + WAKE_INT_MASTER_REG);
+	ग_लिखोl(reg, gpio_dev->base + WAKE_INT_MASTER_REG);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
-}
+पूर्ण
 
-static int amd_gpio_irq_set_type(struct irq_data *d, unsigned int type)
-{
-	int ret = 0;
+अटल पूर्णांक amd_gpio_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	पूर्णांक ret = 0;
 	u32 pin_reg, pin_reg_irq_en, mask;
-	unsigned long flags;
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct amd_gpio *gpio_dev = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा amd_gpio *gpio_dev = gpiochip_get_data(gc);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + (d->hwirq)*4);
+	pin_reg = पढ़ोl(gpio_dev->base + (d->hwirq)*4);
 
-	switch (type & IRQ_TYPE_SENSE_MASK) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type & IRQ_TYPE_SENSE_MASK) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		pin_reg &= ~BIT(LEVEL_TRIG_OFF);
 		pin_reg &= ~(ACTIVE_LEVEL_MASK << ACTIVE_LEVEL_OFF);
 		pin_reg |= ACTIVE_HIGH << ACTIVE_LEVEL_OFF;
 		irq_set_handler_locked(d, handle_edge_irq);
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_FALLING:
+	हाल IRQ_TYPE_EDGE_FALLING:
 		pin_reg &= ~BIT(LEVEL_TRIG_OFF);
 		pin_reg &= ~(ACTIVE_LEVEL_MASK << ACTIVE_LEVEL_OFF);
 		pin_reg |= ACTIVE_LOW << ACTIVE_LEVEL_OFF;
 		irq_set_handler_locked(d, handle_edge_irq);
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_BOTH:
+	हाल IRQ_TYPE_EDGE_BOTH:
 		pin_reg &= ~BIT(LEVEL_TRIG_OFF);
 		pin_reg &= ~(ACTIVE_LEVEL_MASK << ACTIVE_LEVEL_OFF);
 		pin_reg |= BOTH_EADGE << ACTIVE_LEVEL_OFF;
 		irq_set_handler_locked(d, handle_edge_irq);
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_HIGH:
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		pin_reg |= LEVEL_TRIGGER << LEVEL_TRIG_OFF;
 		pin_reg &= ~(ACTIVE_LEVEL_MASK << ACTIVE_LEVEL_OFF);
 		pin_reg |= ACTIVE_HIGH << ACTIVE_LEVEL_OFF;
 		irq_set_handler_locked(d, handle_level_irq);
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_LOW:
+	हाल IRQ_TYPE_LEVEL_LOW:
 		pin_reg |= LEVEL_TRIGGER << LEVEL_TRIG_OFF;
 		pin_reg &= ~(ACTIVE_LEVEL_MASK << ACTIVE_LEVEL_OFF);
 		pin_reg |= ACTIVE_LOW << ACTIVE_LEVEL_OFF;
 		irq_set_handler_locked(d, handle_level_irq);
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_NONE:
-		break;
+	हाल IRQ_TYPE_NONE:
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(&gpio_dev->pdev->dev, "Invalid type value\n");
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	pin_reg |= CLR_INTR_STAT << INTERRUPT_STS_OFF;
 	/*
-	 * If WAKE_INT_MASTER_REG.MaskStsEn is set, a software write to the
-	 * debounce registers of any GPIO will block wake/interrupt status
-	 * generation for *all* GPIOs for a length of time that depends on
+	 * If WAKE_INT_MASTER_REG.MaskStsEn is set, a software ग_लिखो to the
+	 * debounce रेजिस्टरs of any GPIO will block wake/पूर्णांकerrupt status
+	 * generation क्रम *all* GPIOs क्रम a length of समय that depends on
 	 * WAKE_INT_MASTER_REG.MaskStsLength[11:0].  During this period the
-	 * INTERRUPT_ENABLE bit will read as 0.
+	 * INTERRUPT_ENABLE bit will पढ़ो as 0.
 	 *
-	 * We temporarily enable irq for the GPIO whose configuration is
-	 * changing, and then wait for it to read back as 1 to know when
+	 * We temporarily enable irq क्रम the GPIO whose configuration is
+	 * changing, and then रुको क्रम it to पढ़ो back as 1 to know when
 	 * debounce has settled and then disable the irq again.
-	 * We do this polling with the spinlock held to ensure other GPIO
-	 * access routines do not read an incorrect value for the irq enable
-	 * bit of other GPIOs.  We keep the GPIO masked while polling to avoid
+	 * We करो this polling with the spinlock held to ensure other GPIO
+	 * access routines करो not पढ़ो an incorrect value क्रम the irq enable
+	 * bit of other GPIOs.  We keep the GPIO masked जबतक polling to aव्योम
 	 * spurious irqs, and disable the irq again after polling.
 	 */
 	mask = BIT(INTERRUPT_ENABLE_OFF);
 	pin_reg_irq_en = pin_reg;
 	pin_reg_irq_en |= mask;
 	pin_reg_irq_en &= ~BIT(INTERRUPT_MASK_OFF);
-	writel(pin_reg_irq_en, gpio_dev->base + (d->hwirq)*4);
-	while ((readl(gpio_dev->base + (d->hwirq)*4) & mask) != mask)
-		continue;
-	writel(pin_reg, gpio_dev->base + (d->hwirq)*4);
+	ग_लिखोl(pin_reg_irq_en, gpio_dev->base + (d->hwirq)*4);
+	जबतक ((पढ़ोl(gpio_dev->base + (d->hwirq)*4) & mask) != mask)
+		जारी;
+	ग_लिखोl(pin_reg, gpio_dev->base + (d->hwirq)*4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void amd_irq_ack(struct irq_data *d)
-{
+अटल व्योम amd_irq_ack(काष्ठा irq_data *d)
+अणु
 	/*
 	 * based on HW design,there is no need to ack HW
-	 * before handle current irq. But this routine is
-	 * necessary for handle_edge_irq
+	 * beक्रमe handle current irq. But this routine is
+	 * necessary क्रम handle_edge_irq
 	*/
-}
+पूर्ण
 
-static struct irq_chip amd_gpio_irqchip = {
+अटल काष्ठा irq_chip amd_gpio_irqchip = अणु
 	.name         = "amd_gpio",
 	.irq_ack      = amd_irq_ack,
 	.irq_enable   = amd_gpio_irq_enable,
@@ -555,360 +556,360 @@ static struct irq_chip amd_gpio_irqchip = {
 	.irq_eoi      = amd_gpio_irq_eoi,
 	.irq_set_type = amd_gpio_irq_set_type,
 	.flags        = IRQCHIP_SKIP_SET_WAKE,
-};
+पूर्ण;
 
-#define PIN_IRQ_PENDING	(BIT(INTERRUPT_STS_OFF) | BIT(WAKE_STS_OFF))
+#घोषणा PIN_IRQ_PENDING	(BIT(INTERRUPT_STS_OFF) | BIT(WAKE_STS_OFF))
 
-static irqreturn_t amd_gpio_irq_handler(int irq, void *dev_id)
-{
-	struct amd_gpio *gpio_dev = dev_id;
-	struct gpio_chip *gc = &gpio_dev->gc;
-	irqreturn_t ret = IRQ_NONE;
-	unsigned int i, irqnr;
-	unsigned long flags;
+अटल irqवापस_t amd_gpio_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा amd_gpio *gpio_dev = dev_id;
+	काष्ठा gpio_chip *gc = &gpio_dev->gc;
+	irqवापस_t ret = IRQ_NONE;
+	अचिन्हित पूर्णांक i, irqnr;
+	अचिन्हित दीर्घ flags;
 	u32 __iomem *regs;
 	u32  regval;
 	u64 status, mask;
 
 	/* Read the wake status */
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	status = readl(gpio_dev->base + WAKE_INT_STATUS_REG1);
+	status = पढ़ोl(gpio_dev->base + WAKE_INT_STATUS_REG1);
 	status <<= 32;
-	status |= readl(gpio_dev->base + WAKE_INT_STATUS_REG0);
+	status |= पढ़ोl(gpio_dev->base + WAKE_INT_STATUS_REG0);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 
 	/* Bit 0-45 contain the relevant status bits */
 	status &= (1ULL << 46) - 1;
 	regs = gpio_dev->base;
-	for (mask = 1, irqnr = 0; status; mask <<= 1, regs += 4, irqnr += 4) {
-		if (!(status & mask))
-			continue;
+	क्रम (mask = 1, irqnr = 0; status; mask <<= 1, regs += 4, irqnr += 4) अणु
+		अगर (!(status & mask))
+			जारी;
 		status &= ~mask;
 
 		/* Each status bit covers four pins */
-		for (i = 0; i < 4; i++) {
-			regval = readl(regs + i);
-			if (!(regval & PIN_IRQ_PENDING) ||
+		क्रम (i = 0; i < 4; i++) अणु
+			regval = पढ़ोl(regs + i);
+			अगर (!(regval & PIN_IRQ_PENDING) ||
 			    !(regval & BIT(INTERRUPT_MASK_OFF)))
-				continue;
-			irq = irq_find_mapping(gc->irq.domain, irqnr + i);
-			if (irq != 0)
+				जारी;
+			irq = irq_find_mapping(gc->irq.करोमुख्य, irqnr + i);
+			अगर (irq != 0)
 				generic_handle_irq(irq);
 
-			/* Clear interrupt.
-			 * We must read the pin register again, in case the
-			 * value was changed while executing
+			/* Clear पूर्णांकerrupt.
+			 * We must पढ़ो the pin रेजिस्टर again, in हाल the
+			 * value was changed जबतक executing
 			 * generic_handle_irq() above.
-			 * If we didn't find a mapping for the interrupt,
-			 * disable it in order to avoid a system hang caused
-			 * by an interrupt storm.
+			 * If we didn't find a mapping क्रम the पूर्णांकerrupt,
+			 * disable it in order to aव्योम a प्रणाली hang caused
+			 * by an पूर्णांकerrupt storm.
 			 */
 			raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-			regval = readl(regs + i);
-			if (irq == 0) {
+			regval = पढ़ोl(regs + i);
+			अगर (irq == 0) अणु
 				regval &= ~BIT(INTERRUPT_ENABLE_OFF);
 				dev_dbg(&gpio_dev->pdev->dev,
 					"Disabling spurious GPIO IRQ %d\n",
 					irqnr + i);
-			}
-			writel(regval, regs + i);
+			पूर्ण
+			ग_लिखोl(regval, regs + i);
 			raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 			ret = IRQ_HANDLED;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Signal EOI to the GPIO unit */
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	regval = readl(gpio_dev->base + WAKE_INT_MASTER_REG);
+	regval = पढ़ोl(gpio_dev->base + WAKE_INT_MASTER_REG);
 	regval |= EOI_MASK;
-	writel(regval, gpio_dev->base + WAKE_INT_MASTER_REG);
+	ग_लिखोl(regval, gpio_dev->base + WAKE_INT_MASTER_REG);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int amd_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct amd_gpio *gpio_dev = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक amd_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा amd_gpio *gpio_dev = pinctrl_dev_get_drvdata(pctldev);
 
-	return gpio_dev->ngroups;
-}
+	वापस gpio_dev->ngroups;
+पूर्ण
 
-static const char *amd_get_group_name(struct pinctrl_dev *pctldev,
-				      unsigned group)
-{
-	struct amd_gpio *gpio_dev = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *amd_get_group_name(काष्ठा pinctrl_dev *pctldev,
+				      अचिन्हित group)
+अणु
+	काष्ठा amd_gpio *gpio_dev = pinctrl_dev_get_drvdata(pctldev);
 
-	return gpio_dev->groups[group].name;
-}
+	वापस gpio_dev->groups[group].name;
+पूर्ण
 
-static int amd_get_group_pins(struct pinctrl_dev *pctldev,
-			      unsigned group,
-			      const unsigned **pins,
-			      unsigned *num_pins)
-{
-	struct amd_gpio *gpio_dev = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक amd_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+			      अचिन्हित group,
+			      स्थिर अचिन्हित **pins,
+			      अचिन्हित *num_pins)
+अणु
+	काष्ठा amd_gpio *gpio_dev = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = gpio_dev->groups[group].pins;
 	*num_pins = gpio_dev->groups[group].npins;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinctrl_ops amd_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops amd_pinctrl_ops = अणु
 	.get_groups_count	= amd_get_groups_count,
 	.get_group_name		= amd_get_group_name,
 	.get_group_pins		= amd_get_group_pins,
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 	.dt_node_to_map		= pinconf_generic_dt_node_to_map_group,
-	.dt_free_map		= pinctrl_utils_free_map,
-#endif
-};
+	.dt_मुक्त_map		= pinctrl_utils_मुक्त_map,
+#पूर्ण_अगर
+पूर्ण;
 
-static int amd_pinconf_get(struct pinctrl_dev *pctldev,
-			  unsigned int pin,
-			  unsigned long *config)
-{
+अटल पूर्णांक amd_pinconf_get(काष्ठा pinctrl_dev *pctldev,
+			  अचिन्हित पूर्णांक pin,
+			  अचिन्हित दीर्घ *config)
+अणु
 	u32 pin_reg;
-	unsigned arg;
-	unsigned long flags;
-	struct amd_gpio *gpio_dev = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param = pinconf_to_config_param(*config);
+	अचिन्हित arg;
+	अचिन्हित दीर्घ flags;
+	काष्ठा amd_gpio *gpio_dev = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	pin_reg = readl(gpio_dev->base + pin*4);
+	pin_reg = पढ़ोl(gpio_dev->base + pin*4);
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
-	switch (param) {
-	case PIN_CONFIG_INPUT_DEBOUNCE:
+	चयन (param) अणु
+	हाल PIN_CONFIG_INPUT_DEBOUNCE:
 		arg = pin_reg & DB_TMR_OUT_MASK;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		arg = (pin_reg >> PULL_DOWN_ENABLE_OFF) & BIT(0);
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
+	हाल PIN_CONFIG_BIAS_PULL_UP:
 		arg = (pin_reg >> PULL_UP_SEL_OFF) & (BIT(0) | BIT(1));
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_DRIVE_STRENGTH:
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
 		arg = (pin_reg >> DRV_STRENGTH_SEL_OFF) & DRV_STRENGTH_SEL_MASK;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(&gpio_dev->pdev->dev, "Invalid config param %04x\n",
 			param);
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amd_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
-				unsigned long *configs, unsigned num_configs)
-{
-	int i;
+अटल पूर्णांक amd_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+				अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
+अणु
+	पूर्णांक i;
 	u32 arg;
-	int ret = 0;
+	पूर्णांक ret = 0;
 	u32 pin_reg;
-	unsigned long flags;
-	enum pin_config_param param;
-	struct amd_gpio *gpio_dev = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित दीर्घ flags;
+	क्रमागत pin_config_param param;
+	काष्ठा amd_gpio *gpio_dev = pinctrl_dev_get_drvdata(pctldev);
 
 	raw_spin_lock_irqsave(&gpio_dev->lock, flags);
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
-		pin_reg = readl(gpio_dev->base + pin*4);
+		pin_reg = पढ़ोl(gpio_dev->base + pin*4);
 
-		switch (param) {
-		case PIN_CONFIG_INPUT_DEBOUNCE:
+		चयन (param) अणु
+		हाल PIN_CONFIG_INPUT_DEBOUNCE:
 			pin_reg &= ~DB_TMR_OUT_MASK;
 			pin_reg |= arg & DB_TMR_OUT_MASK;
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_BIAS_PULL_DOWN:
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
 			pin_reg &= ~BIT(PULL_DOWN_ENABLE_OFF);
 			pin_reg |= (arg & BIT(0)) << PULL_DOWN_ENABLE_OFF;
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_BIAS_PULL_UP:
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			pin_reg &= ~BIT(PULL_UP_SEL_OFF);
 			pin_reg |= (arg & BIT(0)) << PULL_UP_SEL_OFF;
 			pin_reg &= ~BIT(PULL_UP_ENABLE_OFF);
 			pin_reg |= ((arg>>1) & BIT(0)) << PULL_UP_ENABLE_OFF;
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_DRIVE_STRENGTH:
+		हाल PIN_CONFIG_DRIVE_STRENGTH:
 			pin_reg &= ~(DRV_STRENGTH_SEL_MASK
 					<< DRV_STRENGTH_SEL_OFF);
 			pin_reg |= (arg & DRV_STRENGTH_SEL_MASK)
 					<< DRV_STRENGTH_SEL_OFF;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(&gpio_dev->pdev->dev,
 				"Invalid config param %04x\n", param);
 			ret = -ENOTSUPP;
-		}
+		पूर्ण
 
-		writel(pin_reg, gpio_dev->base + pin*4);
-	}
+		ग_लिखोl(pin_reg, gpio_dev->base + pin*4);
+	पूर्ण
 	raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int amd_pinconf_group_get(struct pinctrl_dev *pctldev,
-				unsigned int group,
-				unsigned long *config)
-{
-	const unsigned *pins;
-	unsigned npins;
-	int ret;
-
-	ret = amd_get_group_pins(pctldev, group, &pins, &npins);
-	if (ret)
-		return ret;
-
-	if (amd_pinconf_get(pctldev, pins[0], config))
-			return -ENOTSUPP;
-
-	return 0;
-}
-
-static int amd_pinconf_group_set(struct pinctrl_dev *pctldev,
-				unsigned group, unsigned long *configs,
-				unsigned num_configs)
-{
-	const unsigned *pins;
-	unsigned npins;
-	int i, ret;
+अटल पूर्णांक amd_pinconf_group_get(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित पूर्णांक group,
+				अचिन्हित दीर्घ *config)
+अणु
+	स्थिर अचिन्हित *pins;
+	अचिन्हित npins;
+	पूर्णांक ret;
 
 	ret = amd_get_group_pins(pctldev, group, &pins, &npins);
-	if (ret)
-		return ret;
-	for (i = 0; i < npins; i++) {
-		if (amd_pinconf_set(pctldev, pins[i], configs, num_configs))
-			return -ENOTSUPP;
-	}
-	return 0;
-}
+	अगर (ret)
+		वापस ret;
 
-static const struct pinconf_ops amd_pinconf_ops = {
+	अगर (amd_pinconf_get(pctldev, pins[0], config))
+			वापस -ENOTSUPP;
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक amd_pinconf_group_set(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित group, अचिन्हित दीर्घ *configs,
+				अचिन्हित num_configs)
+अणु
+	स्थिर अचिन्हित *pins;
+	अचिन्हित npins;
+	पूर्णांक i, ret;
+
+	ret = amd_get_group_pins(pctldev, group, &pins, &npins);
+	अगर (ret)
+		वापस ret;
+	क्रम (i = 0; i < npins; i++) अणु
+		अगर (amd_pinconf_set(pctldev, pins[i], configs, num_configs))
+			वापस -ENOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
+
+अटल स्थिर काष्ठा pinconf_ops amd_pinconf_ops = अणु
 	.pin_config_get		= amd_pinconf_get,
 	.pin_config_set		= amd_pinconf_set,
 	.pin_config_group_get = amd_pinconf_group_get,
 	.pin_config_group_set = amd_pinconf_group_set,
-};
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
-static bool amd_gpio_should_save(struct amd_gpio *gpio_dev, unsigned int pin)
-{
-	const struct pin_desc *pd = pin_desc_get(gpio_dev->pctrl, pin);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल bool amd_gpio_should_save(काष्ठा amd_gpio *gpio_dev, अचिन्हित पूर्णांक pin)
+अणु
+	स्थिर काष्ठा pin_desc *pd = pin_desc_get(gpio_dev->pctrl, pin);
 
-	if (!pd)
-		return false;
+	अगर (!pd)
+		वापस false;
 
 	/*
-	 * Only restore the pin if it is actually in use by the kernel (or
+	 * Only restore the pin अगर it is actually in use by the kernel (or
 	 * by userspace).
 	 */
-	if (pd->mux_owner || pd->gpio_owner ||
+	अगर (pd->mux_owner || pd->gpio_owner ||
 	    gpiochip_line_is_irq(&gpio_dev->gc, pin))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int amd_gpio_suspend(struct device *dev)
-{
-	struct amd_gpio *gpio_dev = dev_get_drvdata(dev);
-	struct pinctrl_desc *desc = gpio_dev->pctrl->desc;
-	int i;
+अटल पूर्णांक amd_gpio_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा amd_gpio *gpio_dev = dev_get_drvdata(dev);
+	काष्ठा pinctrl_desc *desc = gpio_dev->pctrl->desc;
+	पूर्णांक i;
 
-	for (i = 0; i < desc->npins; i++) {
-		int pin = desc->pins[i].number;
+	क्रम (i = 0; i < desc->npins; i++) अणु
+		पूर्णांक pin = desc->pins[i].number;
 
-		if (!amd_gpio_should_save(gpio_dev, pin))
-			continue;
+		अगर (!amd_gpio_should_save(gpio_dev, pin))
+			जारी;
 
-		gpio_dev->saved_regs[i] = readl(gpio_dev->base + pin*4);
-	}
+		gpio_dev->saved_regs[i] = पढ़ोl(gpio_dev->base + pin*4);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amd_gpio_resume(struct device *dev)
-{
-	struct amd_gpio *gpio_dev = dev_get_drvdata(dev);
-	struct pinctrl_desc *desc = gpio_dev->pctrl->desc;
-	int i;
+अटल पूर्णांक amd_gpio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा amd_gpio *gpio_dev = dev_get_drvdata(dev);
+	काष्ठा pinctrl_desc *desc = gpio_dev->pctrl->desc;
+	पूर्णांक i;
 
-	for (i = 0; i < desc->npins; i++) {
-		int pin = desc->pins[i].number;
+	क्रम (i = 0; i < desc->npins; i++) अणु
+		पूर्णांक pin = desc->pins[i].number;
 
-		if (!amd_gpio_should_save(gpio_dev, pin))
-			continue;
+		अगर (!amd_gpio_should_save(gpio_dev, pin))
+			जारी;
 
-		writel(gpio_dev->saved_regs[i], gpio_dev->base + pin*4);
-	}
+		ग_लिखोl(gpio_dev->saved_regs[i], gpio_dev->base + pin*4);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops amd_gpio_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops amd_gpio_pm_ops = अणु
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(amd_gpio_suspend,
 				     amd_gpio_resume)
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static struct pinctrl_desc amd_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc amd_pinctrl_desc = अणु
 	.pins	= kerncz_pins,
 	.npins = ARRAY_SIZE(kerncz_pins),
 	.pctlops = &amd_pinctrl_ops,
 	.confops = &amd_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int amd_gpio_probe(struct platform_device *pdev)
-{
-	int ret = 0;
-	int irq_base;
-	struct resource *res;
-	struct amd_gpio *gpio_dev;
-	struct gpio_irq_chip *girq;
+अटल पूर्णांक amd_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक irq_base;
+	काष्ठा resource *res;
+	काष्ठा amd_gpio *gpio_dev;
+	काष्ठा gpio_irq_chip *girq;
 
 	gpio_dev = devm_kzalloc(&pdev->dev,
-				sizeof(struct amd_gpio), GFP_KERNEL);
-	if (!gpio_dev)
-		return -ENOMEM;
+				माप(काष्ठा amd_gpio), GFP_KERNEL);
+	अगर (!gpio_dev)
+		वापस -ENOMEM;
 
 	raw_spin_lock_init(&gpio_dev->lock);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "Failed to get gpio io resource.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	gpio_dev->base = devm_ioremap(&pdev->dev, res->start,
 						resource_size(res));
-	if (!gpio_dev->base)
-		return -ENOMEM;
+	अगर (!gpio_dev->base)
+		वापस -ENOMEM;
 
-	irq_base = platform_get_irq(pdev, 0);
-	if (irq_base < 0)
-		return irq_base;
+	irq_base = platक्रमm_get_irq(pdev, 0);
+	अगर (irq_base < 0)
+		वापस irq_base;
 
-#ifdef CONFIG_PM_SLEEP
-	gpio_dev->saved_regs = devm_kcalloc(&pdev->dev, amd_pinctrl_desc.npins,
-					    sizeof(*gpio_dev->saved_regs),
+#अगर_घोषित CONFIG_PM_SLEEP
+	gpio_dev->saved_regs = devm_kसुस्मृति(&pdev->dev, amd_pinctrl_desc.npins,
+					    माप(*gpio_dev->saved_regs),
 					    GFP_KERNEL);
-	if (!gpio_dev->saved_regs)
-		return -ENOMEM;
-#endif
+	अगर (!gpio_dev->saved_regs)
+		वापस -ENOMEM;
+#पूर्ण_अगर
 
 	gpio_dev->pdev = pdev;
 	gpio_dev->gc.get_direction	= amd_gpio_get_direction;
@@ -924,91 +925,91 @@ static int amd_gpio_probe(struct platform_device *pdev)
 	gpio_dev->gc.owner			= THIS_MODULE;
 	gpio_dev->gc.parent			= &pdev->dev;
 	gpio_dev->gc.ngpio			= resource_size(res) / 4;
-#if defined(CONFIG_OF_GPIO)
+#अगर defined(CONFIG_OF_GPIO)
 	gpio_dev->gc.of_node			= pdev->dev.of_node;
-#endif
+#पूर्ण_अगर
 
 	gpio_dev->hwbank_num = gpio_dev->gc.ngpio / 64;
 	gpio_dev->groups = kerncz_groups;
 	gpio_dev->ngroups = ARRAY_SIZE(kerncz_groups);
 
 	amd_pinctrl_desc.name = dev_name(&pdev->dev);
-	gpio_dev->pctrl = devm_pinctrl_register(&pdev->dev, &amd_pinctrl_desc,
+	gpio_dev->pctrl = devm_pinctrl_रेजिस्टर(&pdev->dev, &amd_pinctrl_desc,
 						gpio_dev);
-	if (IS_ERR(gpio_dev->pctrl)) {
+	अगर (IS_ERR(gpio_dev->pctrl)) अणु
 		dev_err(&pdev->dev, "Couldn't register pinctrl driver\n");
-		return PTR_ERR(gpio_dev->pctrl);
-	}
+		वापस PTR_ERR(gpio_dev->pctrl);
+	पूर्ण
 
 	girq = &gpio_dev->gc.irq;
 	girq->chip = &amd_gpio_irqchip;
 	/* This will let us handle the parent IRQ in the driver */
-	girq->parent_handler = NULL;
+	girq->parent_handler = शून्य;
 	girq->num_parents = 0;
-	girq->parents = NULL;
-	girq->default_type = IRQ_TYPE_NONE;
+	girq->parents = शून्य;
+	girq->शेष_type = IRQ_TYPE_NONE;
 	girq->handler = handle_simple_irq;
 
 	ret = gpiochip_add_data(&gpio_dev->gc, gpio_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = gpiochip_add_pin_range(&gpio_dev->gc, dev_name(&pdev->dev),
 				0, 0, gpio_dev->gc.ngpio);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to add pin range\n");
-		goto out2;
-	}
+		जाओ out2;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, irq_base, amd_gpio_irq_handler,
 			       IRQF_SHARED, KBUILD_MODNAME, gpio_dev);
-	if (ret)
-		goto out2;
+	अगर (ret)
+		जाओ out2;
 
-	platform_set_drvdata(pdev, gpio_dev);
+	platक्रमm_set_drvdata(pdev, gpio_dev);
 
 	dev_dbg(&pdev->dev, "amd gpio driver loaded\n");
-	return ret;
+	वापस ret;
 
 out2:
-	gpiochip_remove(&gpio_dev->gc);
+	gpiochip_हटाओ(&gpio_dev->gc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int amd_gpio_remove(struct platform_device *pdev)
-{
-	struct amd_gpio *gpio_dev;
+अटल पूर्णांक amd_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा amd_gpio *gpio_dev;
 
-	gpio_dev = platform_get_drvdata(pdev);
+	gpio_dev = platक्रमm_get_drvdata(pdev);
 
-	gpiochip_remove(&gpio_dev->gc);
+	gpiochip_हटाओ(&gpio_dev->gc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id amd_gpio_acpi_match[] = {
-	{ "AMD0030", 0 },
-	{ "AMDI0030", 0},
-	{ },
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id amd_gpio_acpi_match[] = अणु
+	अणु "AMD0030", 0 पूर्ण,
+	अणु "AMDI0030", 0पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, amd_gpio_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver amd_gpio_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver amd_gpio_driver = अणु
+	.driver		= अणु
 		.name	= "amd_gpio",
 		.acpi_match_table = ACPI_PTR(amd_gpio_acpi_match),
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 		.pm	= &amd_gpio_pm_ops,
-#endif
-	},
+#पूर्ण_अगर
+	पूर्ण,
 	.probe		= amd_gpio_probe,
-	.remove		= amd_gpio_remove,
-};
+	.हटाओ		= amd_gpio_हटाओ,
+पूर्ण;
 
-module_platform_driver(amd_gpio_driver);
+module_platक्रमm_driver(amd_gpio_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Ken Xue <Ken.Xue@amd.com>, Jeff Wu <Jeff.Wu@amd.com>");

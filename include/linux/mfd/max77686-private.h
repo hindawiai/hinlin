@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * max77686-private.h - Voltage regulator driver for the Maxim 77686/802
+ * max77686-निजी.h - Voltage regulator driver क्रम the Maxim 77686/802
  *
  *  Copyright (C) 2012 Samsung Electrnoics
  *  Chiwoong Byun <woong.byun@samsung.com>
  */
 
-#ifndef __LINUX_MFD_MAX77686_PRIV_H
-#define __LINUX_MFD_MAX77686_PRIV_H
+#अगर_अघोषित __LINUX_MFD_MAX77686_PRIV_H
+#घोषणा __LINUX_MFD_MAX77686_PRIV_H
 
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/module.h>
 
-#define MAX77686_REG_INVALID		(0xff)
+#घोषणा MAX77686_REG_INVALID		(0xff)
 
-/* MAX77686 PMIC registers */
-enum max77686_pmic_reg {
+/* MAX77686 PMIC रेजिस्टरs */
+क्रमागत max77686_pmic_reg अणु
 	MAX77686_REG_DEVICE_ID		= 0x00,
 	MAX77686_REG_INTSRC		= 0x01,
 	MAX77686_REG_INT1		= 0x02,
@@ -136,9 +137,9 @@ enum max77686_pmic_reg {
 	MAX77686_REG_32KHZ			= 0x7F,
 
 	MAX77686_REG_PMIC_END		= 0x80,
-};
+पूर्ण;
 
-enum max77686_rtc_reg {
+क्रमागत max77686_rtc_reg अणु
 	MAX77686_RTC_INT			= 0x00,
 	MAX77686_RTC_INTM			= 0x01,
 	MAX77686_RTC_CONTROLM		= 0x02,
@@ -167,10 +168,10 @@ enum max77686_rtc_reg {
 	MAX77686_ALARM2_MONTH		= 0x19,
 	MAX77686_ALARM2_YEAR		= 0x1A,
 	MAX77686_ALARM2_DATE		= 0x1B,
-};
+पूर्ण;
 
-/* MAX77802 PMIC registers */
-enum max77802_pmic_reg {
+/* MAX77802 PMIC रेजिस्टरs */
+क्रमागत max77802_pmic_reg अणु
 	MAX77802_REG_DEVICE_ID		= 0x00,
 	MAX77802_REG_INTSRC		= 0x01,
 	MAX77802_REG_INT1		= 0x02,
@@ -336,9 +337,9 @@ enum max77802_pmic_reg {
 	MAX77802_REG_32KHZ		= 0xB5,
 
 	MAX77802_REG_PMIC_END		= 0xB6,
-};
+पूर्ण;
 
-enum max77802_rtc_reg {
+क्रमागत max77802_rtc_reg अणु
 	MAX77802_RTC_INT		= 0xC0,
 	MAX77802_RTC_INTM		= 0xC1,
 	MAX77802_RTC_CONTROLM		= 0xC2,
@@ -371,17 +372,17 @@ enum max77802_rtc_reg {
 	MAX77802_ALARM2_DATE		= 0xDD,
 
 	MAX77802_RTC_END		= 0xDF,
-};
+पूर्ण;
 
-enum max77686_irq_source {
+क्रमागत max77686_irq_source अणु
 	PMIC_INT1 = 0,
 	PMIC_INT2,
 	RTC_INT,
 
 	MAX77686_IRQ_GROUP_NR,
-};
+पूर्ण;
 
-enum max77686_irq {
+क्रमागत max77686_irq अणु
 	MAX77686_PMICIRQ_PWRONF,
 	MAX77686_PMICIRQ_PWRONR,
 	MAX77686_PMICIRQ_JIGONBF,
@@ -400,49 +401,49 @@ enum max77686_irq {
 	MAX77686_RTCIRQ_SMPL,
 	MAX77686_RTCIRQ_RTC1S,
 	MAX77686_RTCIRQ_WTSR,
-};
+पूर्ण;
 
-#define MAX77686_INT1_PWRONF_MSK	BIT(0)
-#define MAX77686_INT1_PWRONR_MSK	BIT(1)
-#define MAX77686_INT1_JIGONBF_MSK	BIT(2)
-#define MAX77686_INT1_JIGONBR_MSK	BIT(3)
-#define MAX77686_INT1_ACOKBF_MSK	BIT(4)
-#define MAX77686_INT1_ACOKBR_MSK	BIT(5)
-#define MAX77686_INT1_ONKEY1S_MSK	BIT(6)
-#define MAX77686_INT1_MRSTB_MSK		BIT(7)
+#घोषणा MAX77686_INT1_PWRONF_MSK	BIT(0)
+#घोषणा MAX77686_INT1_PWRONR_MSK	BIT(1)
+#घोषणा MAX77686_INT1_JIGONBF_MSK	BIT(2)
+#घोषणा MAX77686_INT1_JIGONBR_MSK	BIT(3)
+#घोषणा MAX77686_INT1_ACOKBF_MSK	BIT(4)
+#घोषणा MAX77686_INT1_ACOKBR_MSK	BIT(5)
+#घोषणा MAX77686_INT1_ONKEY1S_MSK	BIT(6)
+#घोषणा MAX77686_INT1_MRSTB_MSK		BIT(7)
 
-#define MAX77686_INT2_140C_MSK		BIT(0)
-#define MAX77686_INT2_120C_MSK		BIT(1)
+#घोषणा MAX77686_INT2_140C_MSK		BIT(0)
+#घोषणा MAX77686_INT2_120C_MSK		BIT(1)
 
-#define MAX77686_RTCINT_RTC60S_MSK	BIT(0)
-#define MAX77686_RTCINT_RTCA1_MSK	BIT(1)
-#define MAX77686_RTCINT_RTCA2_MSK	BIT(2)
-#define MAX77686_RTCINT_SMPL_MSK	BIT(3)
-#define MAX77686_RTCINT_RTC1S_MSK	BIT(4)
-#define MAX77686_RTCINT_WTSR_MSK	BIT(5)
+#घोषणा MAX77686_RTCINT_RTC60S_MSK	BIT(0)
+#घोषणा MAX77686_RTCINT_RTCA1_MSK	BIT(1)
+#घोषणा MAX77686_RTCINT_RTCA2_MSK	BIT(2)
+#घोषणा MAX77686_RTCINT_SMPL_MSK	BIT(3)
+#घोषणा MAX77686_RTCINT_RTC1S_MSK	BIT(4)
+#घोषणा MAX77686_RTCINT_WTSR_MSK	BIT(5)
 
-struct max77686_dev {
-	struct device *dev;
-	struct i2c_client *i2c; /* 0xcc / PMIC, Battery Control, and FLASH */
+काष्ठा max77686_dev अणु
+	काष्ठा device *dev;
+	काष्ठा i2c_client *i2c; /* 0xcc / PMIC, Battery Control, and FLASH */
 
-	unsigned long type;
+	अचिन्हित दीर्घ type;
 
-	struct regmap *regmap;		/* regmap for mfd */
-	struct regmap_irq_chip_data *irq_data;
+	काष्ठा regmap *regmap;		/* regmap क्रम mfd */
+	काष्ठा regmap_irq_chip_data *irq_data;
 
-	int irq;
-	struct mutex irqlock;
-	int irq_masks_cur[MAX77686_IRQ_GROUP_NR];
-	int irq_masks_cache[MAX77686_IRQ_GROUP_NR];
-};
+	पूर्णांक irq;
+	काष्ठा mutex irqlock;
+	पूर्णांक irq_masks_cur[MAX77686_IRQ_GROUP_NR];
+	पूर्णांक irq_masks_cache[MAX77686_IRQ_GROUP_NR];
+पूर्ण;
 
-enum max77686_types {
+क्रमागत max77686_types अणु
 	TYPE_MAX77686,
 	TYPE_MAX77802,
-};
+पूर्ण;
 
-extern int max77686_irq_init(struct max77686_dev *max77686);
-extern void max77686_irq_exit(struct max77686_dev *max77686);
-extern int max77686_irq_resume(struct max77686_dev *max77686);
+बाह्य पूर्णांक max77686_irq_init(काष्ठा max77686_dev *max77686);
+बाह्य व्योम max77686_irq_निकास(काष्ठा max77686_dev *max77686);
+बाह्य पूर्णांक max77686_irq_resume(काष्ठा max77686_dev *max77686);
 
-#endif /*  __LINUX_MFD_MAX77686_PRIV_H */
+#पूर्ण_अगर /*  __LINUX_MFD_MAX77686_PRIV_H */

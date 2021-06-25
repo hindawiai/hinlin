@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// Driver for Amlogic Meson SPI flash controller (SPIFC)
+// Driver क्रम Amlogic Meson SPI flash controller (SPIFC)
 //
 // Copyright (C) 2014 Beniamino Galvani <b.galvani@gmail.com>
 //
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
-#include <linux/types.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/types.h>
 
-/* register map */
-#define REG_CMD			0x00
-#define REG_ADDR		0x04
-#define REG_CTRL		0x08
-#define REG_CTRL1		0x0c
-#define REG_STATUS		0x10
-#define REG_CTRL2		0x14
-#define REG_CLOCK		0x18
-#define REG_USER		0x1c
-#define REG_USER1		0x20
-#define REG_USER2		0x24
-#define REG_USER3		0x28
-#define REG_USER4		0x2c
-#define REG_SLAVE		0x30
-#define REG_SLAVE1		0x34
-#define REG_SLAVE2		0x38
-#define REG_SLAVE3		0x3c
-#define REG_C0			0x40
-#define REG_B8			0x60
-#define REG_MAX			0x7c
+/* रेजिस्टर map */
+#घोषणा REG_CMD			0x00
+#घोषणा REG_ADDR		0x04
+#घोषणा REG_CTRL		0x08
+#घोषणा REG_CTRL1		0x0c
+#घोषणा REG_STATUS		0x10
+#घोषणा REG_CTRL2		0x14
+#घोषणा REG_CLOCK		0x18
+#घोषणा REG_USER		0x1c
+#घोषणा REG_USER1		0x20
+#घोषणा REG_USER2		0x24
+#घोषणा REG_USER3		0x28
+#घोषणा REG_USER4		0x2c
+#घोषणा REG_SLAVE		0x30
+#घोषणा REG_SLAVE1		0x34
+#घोषणा REG_SLAVE2		0x38
+#घोषणा REG_SLAVE3		0x3c
+#घोषणा REG_C0			0x40
+#घोषणा REG_B8			0x60
+#घोषणा REG_MAX			0x7c
 
-/* register fields */
-#define CMD_USER		BIT(18)
-#define CTRL_ENABLE_AHB		BIT(17)
-#define CLOCK_SOURCE		BIT(31)
-#define CLOCK_DIV_SHIFT		12
-#define CLOCK_DIV_MASK		(0x3f << CLOCK_DIV_SHIFT)
-#define CLOCK_CNT_HIGH_SHIFT	6
-#define CLOCK_CNT_HIGH_MASK	(0x3f << CLOCK_CNT_HIGH_SHIFT)
-#define CLOCK_CNT_LOW_SHIFT	0
-#define CLOCK_CNT_LOW_MASK	(0x3f << CLOCK_CNT_LOW_SHIFT)
-#define USER_DIN_EN_MS		BIT(0)
-#define USER_CMP_MODE		BIT(2)
-#define USER_UC_DOUT_SEL	BIT(27)
-#define USER_UC_DIN_SEL		BIT(28)
-#define USER_UC_MASK		((BIT(5) - 1) << 27)
-#define USER1_BN_UC_DOUT_SHIFT	17
-#define USER1_BN_UC_DOUT_MASK	(0xff << 16)
-#define USER1_BN_UC_DIN_SHIFT	8
-#define USER1_BN_UC_DIN_MASK	(0xff << 8)
-#define USER4_CS_ACT		BIT(30)
-#define SLAVE_TRST_DONE		BIT(4)
-#define SLAVE_OP_MODE		BIT(30)
-#define SLAVE_SW_RST		BIT(31)
+/* रेजिस्टर fields */
+#घोषणा CMD_USER		BIT(18)
+#घोषणा CTRL_ENABLE_AHB		BIT(17)
+#घोषणा CLOCK_SOURCE		BIT(31)
+#घोषणा CLOCK_DIV_SHIFT		12
+#घोषणा CLOCK_DIV_MASK		(0x3f << CLOCK_DIV_SHIFT)
+#घोषणा CLOCK_CNT_HIGH_SHIFT	6
+#घोषणा CLOCK_CNT_HIGH_MASK	(0x3f << CLOCK_CNT_HIGH_SHIFT)
+#घोषणा CLOCK_CNT_LOW_SHIFT	0
+#घोषणा CLOCK_CNT_LOW_MASK	(0x3f << CLOCK_CNT_LOW_SHIFT)
+#घोषणा USER_DIN_EN_MS		BIT(0)
+#घोषणा USER_CMP_MODE		BIT(2)
+#घोषणा USER_UC_DOUT_SEL	BIT(27)
+#घोषणा USER_UC_DIN_SEL		BIT(28)
+#घोषणा USER_UC_MASK		((BIT(5) - 1) << 27)
+#घोषणा USER1_BN_UC_DOUT_SHIFT	17
+#घोषणा USER1_BN_UC_DOUT_MASK	(0xff << 16)
+#घोषणा USER1_BN_UC_DIN_SHIFT	8
+#घोषणा USER1_BN_UC_DIN_MASK	(0xff << 8)
+#घोषणा USER4_CS_ACT		BIT(30)
+#घोषणा SLAVE_TRST_DONE		BIT(4)
+#घोषणा SLAVE_OP_MODE		BIT(30)
+#घोषणा SLAVE_SW_RST		BIT(31)
 
-#define SPIFC_BUFFER_SIZE	64
+#घोषणा SPIFC_BUFFER_SIZE	64
 
 /**
- * struct meson_spifc
+ * काष्ठा meson_spअगरc
  * @master:	the SPI master
- * @regmap:	regmap for device registers
- * @clk:	input clock of the built-in baud rate generator
- * @dev:	the device structure
+ * @regmap:	regmap क्रम device रेजिस्टरs
+ * @clk:	input घड़ी of the built-in baud rate generator
+ * @dev:	the device काष्ठाure
  */
-struct meson_spifc {
-	struct spi_master *master;
-	struct regmap *regmap;
-	struct clk *clk;
-	struct device *dev;
-};
+काष्ठा meson_spअगरc अणु
+	काष्ठा spi_master *master;
+	काष्ठा regmap *regmap;
+	काष्ठा clk *clk;
+	काष्ठा device *dev;
+पूर्ण;
 
-static const struct regmap_config spifc_regmap_config = {
+अटल स्थिर काष्ठा regmap_config spअगरc_regmap_config = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = REG_MAX,
-};
+	.max_रेजिस्टर = REG_MAX,
+पूर्ण;
 
 /**
- * meson_spifc_wait_ready() - wait for the current operation to terminate
- * @spifc:	the Meson SPI device
+ * meson_spअगरc_रुको_पढ़ोy() - रुको क्रम the current operation to terminate
+ * @spअगरc:	the Meson SPI device
  * Return:	0 on success, a negative value on error
  */
-static int meson_spifc_wait_ready(struct meson_spifc *spifc)
-{
-	unsigned long deadline = jiffies + msecs_to_jiffies(5);
+अटल पूर्णांक meson_spअगरc_रुको_पढ़ोy(काष्ठा meson_spअगरc *spअगरc)
+अणु
+	अचिन्हित दीर्घ deadline = jअगरfies + msecs_to_jअगरfies(5);
 	u32 data;
 
-	do {
-		regmap_read(spifc->regmap, REG_SLAVE, &data);
-		if (data & SLAVE_TRST_DONE)
-			return 0;
+	करो अणु
+		regmap_पढ़ो(spअगरc->regmap, REG_SLAVE, &data);
+		अगर (data & SLAVE_TRST_DONE)
+			वापस 0;
 		cond_resched();
-	} while (!time_after(jiffies, deadline));
+	पूर्ण जबतक (!समय_after(jअगरfies, deadline));
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
 /**
- * meson_spifc_drain_buffer() - copy data from device buffer to memory
- * @spifc:	the Meson SPI device
+ * meson_spअगरc_drain_buffer() - copy data from device buffer to memory
+ * @spअगरc:	the Meson SPI device
  * @buf:	the destination buffer
  * @len:	number of bytes to copy
  */
-static void meson_spifc_drain_buffer(struct meson_spifc *spifc, u8 *buf,
-				     int len)
-{
+अटल व्योम meson_spअगरc_drain_buffer(काष्ठा meson_spअगरc *spअगरc, u8 *buf,
+				     पूर्णांक len)
+अणु
 	u32 data;
-	int i = 0;
+	पूर्णांक i = 0;
 
-	while (i < len) {
-		regmap_read(spifc->regmap, REG_C0 + i, &data);
+	जबतक (i < len) अणु
+		regmap_पढ़ो(spअगरc->regmap, REG_C0 + i, &data);
 
-		if (len - i >= 4) {
+		अगर (len - i >= 4) अणु
 			*((u32 *)buf) = data;
 			buf += 4;
-		} else {
-			memcpy(buf, &data, len - i);
-			break;
-		}
+		पूर्ण अन्यथा अणु
+			स_नकल(buf, &data, len - i);
+			अवरोध;
+		पूर्ण
 		i += 4;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * meson_spifc_fill_buffer() - copy data from memory to device buffer
- * @spifc:	the Meson SPI device
+ * meson_spअगरc_fill_buffer() - copy data from memory to device buffer
+ * @spअगरc:	the Meson SPI device
  * @buf:	the source buffer
  * @len:	number of bytes to copy
  */
-static void meson_spifc_fill_buffer(struct meson_spifc *spifc, const u8 *buf,
-				    int len)
-{
+अटल व्योम meson_spअगरc_fill_buffer(काष्ठा meson_spअगरc *spअगरc, स्थिर u8 *buf,
+				    पूर्णांक len)
+अणु
 	u32 data;
-	int i = 0;
+	पूर्णांक i = 0;
 
-	while (i < len) {
-		if (len - i >= 4)
+	जबतक (i < len) अणु
+		अगर (len - i >= 4)
 			data = *(u32 *)buf;
-		else
-			memcpy(&data, buf, len - i);
+		अन्यथा
+			स_नकल(&data, buf, len - i);
 
-		regmap_write(spifc->regmap, REG_C0 + i, data);
+		regmap_ग_लिखो(spअगरc->regmap, REG_C0 + i, data);
 
 		buf += 4;
 		i += 4;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * meson_spifc_setup_speed() - program the clock divider
- * @spifc:	the Meson SPI device
+ * meson_spअगरc_setup_speed() - program the घड़ी भागider
+ * @spअगरc:	the Meson SPI device
  * @speed:	desired speed in Hz
  */
-static void meson_spifc_setup_speed(struct meson_spifc *spifc, u32 speed)
-{
-	unsigned long parent, value;
-	int n;
+अटल व्योम meson_spअगरc_setup_speed(काष्ठा meson_spअगरc *spअगरc, u32 speed)
+अणु
+	अचिन्हित दीर्घ parent, value;
+	पूर्णांक n;
 
-	parent = clk_get_rate(spifc->clk);
-	n = max_t(int, parent / speed - 1, 1);
+	parent = clk_get_rate(spअगरc->clk);
+	n = max_t(पूर्णांक, parent / speed - 1, 1);
 
-	dev_dbg(spifc->dev, "parent %lu, speed %u, n %d\n", parent,
+	dev_dbg(spअगरc->dev, "parent %lu, speed %u, n %d\n", parent,
 		speed, n);
 
 	value = (n << CLOCK_DIV_SHIFT) & CLOCK_DIV_MASK;
@@ -178,12 +179,12 @@ static void meson_spifc_setup_speed(struct meson_spifc *spifc, u32 speed)
 	value |= (((n + 1) / 2 - 1) << CLOCK_CNT_HIGH_SHIFT) &
 		CLOCK_CNT_HIGH_MASK;
 
-	regmap_write(spifc->regmap, REG_CLOCK, value);
-}
+	regmap_ग_लिखो(spअगरc->regmap, REG_CLOCK, value);
+पूर्ण
 
 /**
- * meson_spifc_txrx() - transfer a chunk of data
- * @spifc:	the Meson SPI device
+ * meson_spअगरc_txrx() - transfer a chunk of data
+ * @spअगरc:	the Meson SPI device
  * @xfer:	the current SPI transfer
  * @offset:	offset of the data to transfer
  * @len:	length of the data to transfer
@@ -191,265 +192,265 @@ static void meson_spifc_setup_speed(struct meson_spifc *spifc, u32 speed)
  * @last_chunk:	whether this is the last chunk of the transfer
  * Return:	0 on success, a negative value on error
  */
-static int meson_spifc_txrx(struct meson_spifc *spifc,
-			    struct spi_transfer *xfer,
-			    int offset, int len, bool last_xfer,
+अटल पूर्णांक meson_spअगरc_txrx(काष्ठा meson_spअगरc *spअगरc,
+			    काष्ठा spi_transfer *xfer,
+			    पूर्णांक offset, पूर्णांक len, bool last_xfer,
 			    bool last_chunk)
-{
+अणु
 	bool keep_cs = true;
-	int ret;
+	पूर्णांक ret;
 
-	if (xfer->tx_buf)
-		meson_spifc_fill_buffer(spifc, xfer->tx_buf + offset, len);
+	अगर (xfer->tx_buf)
+		meson_spअगरc_fill_buffer(spअगरc, xfer->tx_buf + offset, len);
 
 	/* enable DOUT stage */
-	regmap_update_bits(spifc->regmap, REG_USER, USER_UC_MASK,
+	regmap_update_bits(spअगरc->regmap, REG_USER, USER_UC_MASK,
 			   USER_UC_DOUT_SEL);
-	regmap_write(spifc->regmap, REG_USER1,
+	regmap_ग_लिखो(spअगरc->regmap, REG_USER1,
 		     (8 * len - 1) << USER1_BN_UC_DOUT_SHIFT);
 
 	/* enable data input during DOUT */
-	regmap_update_bits(spifc->regmap, REG_USER, USER_DIN_EN_MS,
+	regmap_update_bits(spअगरc->regmap, REG_USER, USER_DIN_EN_MS,
 			   USER_DIN_EN_MS);
 
-	if (last_chunk) {
-		if (last_xfer)
+	अगर (last_chunk) अणु
+		अगर (last_xfer)
 			keep_cs = xfer->cs_change;
-		else
+		अन्यथा
 			keep_cs = !xfer->cs_change;
-	}
+	पूर्ण
 
-	regmap_update_bits(spifc->regmap, REG_USER4, USER4_CS_ACT,
+	regmap_update_bits(spअगरc->regmap, REG_USER4, USER4_CS_ACT,
 			   keep_cs ? USER4_CS_ACT : 0);
 
-	/* clear transition done bit */
-	regmap_update_bits(spifc->regmap, REG_SLAVE, SLAVE_TRST_DONE, 0);
+	/* clear transition करोne bit */
+	regmap_update_bits(spअगरc->regmap, REG_SLAVE, SLAVE_TRST_DONE, 0);
 	/* start transfer */
-	regmap_update_bits(spifc->regmap, REG_CMD, CMD_USER, CMD_USER);
+	regmap_update_bits(spअगरc->regmap, REG_CMD, CMD_USER, CMD_USER);
 
-	ret = meson_spifc_wait_ready(spifc);
+	ret = meson_spअगरc_रुको_पढ़ोy(spअगरc);
 
-	if (!ret && xfer->rx_buf)
-		meson_spifc_drain_buffer(spifc, xfer->rx_buf + offset, len);
+	अगर (!ret && xfer->rx_buf)
+		meson_spअगरc_drain_buffer(spअगरc, xfer->rx_buf + offset, len);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * meson_spifc_transfer_one() - perform a single transfer
+ * meson_spअगरc_transfer_one() - perक्रमm a single transfer
  * @master:	the SPI master
  * @spi:	the SPI device
  * @xfer:	the current SPI transfer
  * Return:	0 on success, a negative value on error
  */
-static int meson_spifc_transfer_one(struct spi_master *master,
-				    struct spi_device *spi,
-				    struct spi_transfer *xfer)
-{
-	struct meson_spifc *spifc = spi_master_get_devdata(master);
-	int len, done = 0, ret = 0;
+अटल पूर्णांक meson_spअगरc_transfer_one(काष्ठा spi_master *master,
+				    काष्ठा spi_device *spi,
+				    काष्ठा spi_transfer *xfer)
+अणु
+	काष्ठा meson_spअगरc *spअगरc = spi_master_get_devdata(master);
+	पूर्णांक len, करोne = 0, ret = 0;
 
-	meson_spifc_setup_speed(spifc, xfer->speed_hz);
+	meson_spअगरc_setup_speed(spअगरc, xfer->speed_hz);
 
-	regmap_update_bits(spifc->regmap, REG_CTRL, CTRL_ENABLE_AHB, 0);
+	regmap_update_bits(spअगरc->regmap, REG_CTRL, CTRL_ENABLE_AHB, 0);
 
-	while (done < xfer->len && !ret) {
-		len = min_t(int, xfer->len - done, SPIFC_BUFFER_SIZE);
-		ret = meson_spifc_txrx(spifc, xfer, done, len,
+	जबतक (करोne < xfer->len && !ret) अणु
+		len = min_t(पूर्णांक, xfer->len - करोne, SPIFC_BUFFER_SIZE);
+		ret = meson_spअगरc_txrx(spअगरc, xfer, करोne, len,
 				       spi_transfer_is_last(master, xfer),
-				       done + len >= xfer->len);
-		done += len;
-	}
+				       करोne + len >= xfer->len);
+		करोne += len;
+	पूर्ण
 
-	regmap_update_bits(spifc->regmap, REG_CTRL, CTRL_ENABLE_AHB,
+	regmap_update_bits(spअगरc->regmap, REG_CTRL, CTRL_ENABLE_AHB,
 			   CTRL_ENABLE_AHB);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * meson_spifc_hw_init() - reset and initialize the SPI controller
- * @spifc:	the Meson SPI device
+ * meson_spअगरc_hw_init() - reset and initialize the SPI controller
+ * @spअगरc:	the Meson SPI device
  */
-static void meson_spifc_hw_init(struct meson_spifc *spifc)
-{
+अटल व्योम meson_spअगरc_hw_init(काष्ठा meson_spअगरc *spअगरc)
+अणु
 	/* reset device */
-	regmap_update_bits(spifc->regmap, REG_SLAVE, SLAVE_SW_RST,
+	regmap_update_bits(spअगरc->regmap, REG_SLAVE, SLAVE_SW_RST,
 			   SLAVE_SW_RST);
 	/* disable compatible mode */
-	regmap_update_bits(spifc->regmap, REG_USER, USER_CMP_MODE, 0);
+	regmap_update_bits(spअगरc->regmap, REG_USER, USER_CMP_MODE, 0);
 	/* set master mode */
-	regmap_update_bits(spifc->regmap, REG_SLAVE, SLAVE_OP_MODE, 0);
-}
+	regmap_update_bits(spअगरc->regmap, REG_SLAVE, SLAVE_OP_MODE, 0);
+पूर्ण
 
-static int meson_spifc_probe(struct platform_device *pdev)
-{
-	struct spi_master *master;
-	struct meson_spifc *spifc;
-	void __iomem *base;
-	unsigned int rate;
-	int ret = 0;
+अटल पूर्णांक meson_spअगरc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master;
+	काष्ठा meson_spअगरc *spअगरc;
+	व्योम __iomem *base;
+	अचिन्हित पूर्णांक rate;
+	पूर्णांक ret = 0;
 
-	master = spi_alloc_master(&pdev->dev, sizeof(struct meson_spifc));
-	if (!master)
-		return -ENOMEM;
+	master = spi_alloc_master(&pdev->dev, माप(काष्ठा meson_spअगरc));
+	अगर (!master)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, master);
+	platक्रमm_set_drvdata(pdev, master);
 
-	spifc = spi_master_get_devdata(master);
-	spifc->dev = &pdev->dev;
+	spअगरc = spi_master_get_devdata(master);
+	spअगरc->dev = &pdev->dev;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base)) {
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base)) अणु
 		ret = PTR_ERR(base);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	spifc->regmap = devm_regmap_init_mmio(spifc->dev, base,
-					      &spifc_regmap_config);
-	if (IS_ERR(spifc->regmap)) {
-		ret = PTR_ERR(spifc->regmap);
-		goto out_err;
-	}
+	spअगरc->regmap = devm_regmap_init_mmio(spअगरc->dev, base,
+					      &spअगरc_regmap_config);
+	अगर (IS_ERR(spअगरc->regmap)) अणु
+		ret = PTR_ERR(spअगरc->regmap);
+		जाओ out_err;
+	पूर्ण
 
-	spifc->clk = devm_clk_get(spifc->dev, NULL);
-	if (IS_ERR(spifc->clk)) {
-		dev_err(spifc->dev, "missing clock\n");
-		ret = PTR_ERR(spifc->clk);
-		goto out_err;
-	}
+	spअगरc->clk = devm_clk_get(spअगरc->dev, शून्य);
+	अगर (IS_ERR(spअगरc->clk)) अणु
+		dev_err(spअगरc->dev, "missing clock\n");
+		ret = PTR_ERR(spअगरc->clk);
+		जाओ out_err;
+	पूर्ण
 
-	ret = clk_prepare_enable(spifc->clk);
-	if (ret) {
-		dev_err(spifc->dev, "can't prepare clock\n");
-		goto out_err;
-	}
+	ret = clk_prepare_enable(spअगरc->clk);
+	अगर (ret) अणु
+		dev_err(spअगरc->dev, "can't prepare clock\n");
+		जाओ out_err;
+	पूर्ण
 
-	rate = clk_get_rate(spifc->clk);
+	rate = clk_get_rate(spअगरc->clk);
 
 	master->num_chipselect = 1;
 	master->dev.of_node = pdev->dev.of_node;
 	master->bits_per_word_mask = SPI_BPW_MASK(8);
-	master->auto_runtime_pm = true;
-	master->transfer_one = meson_spifc_transfer_one;
+	master->स्वतः_runसमय_pm = true;
+	master->transfer_one = meson_spअगरc_transfer_one;
 	master->min_speed_hz = rate >> 6;
 	master->max_speed_hz = rate >> 1;
 
-	meson_spifc_hw_init(spifc);
+	meson_spअगरc_hw_init(spअगरc);
 
-	pm_runtime_set_active(spifc->dev);
-	pm_runtime_enable(spifc->dev);
+	pm_runसमय_set_active(spअगरc->dev);
+	pm_runसमय_enable(spअगरc->dev);
 
-	ret = devm_spi_register_master(spifc->dev, master);
-	if (ret) {
-		dev_err(spifc->dev, "failed to register spi master\n");
-		goto out_clk;
-	}
+	ret = devm_spi_रेजिस्टर_master(spअगरc->dev, master);
+	अगर (ret) अणु
+		dev_err(spअगरc->dev, "failed to register spi master\n");
+		जाओ out_clk;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out_clk:
-	clk_disable_unprepare(spifc->clk);
+	clk_disable_unprepare(spअगरc->clk);
 out_err:
 	spi_master_put(master);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int meson_spifc_remove(struct platform_device *pdev)
-{
-	struct spi_master *master = platform_get_drvdata(pdev);
-	struct meson_spifc *spifc = spi_master_get_devdata(master);
+अटल पूर्णांक meson_spअगरc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master = platक्रमm_get_drvdata(pdev);
+	काष्ठा meson_spअगरc *spअगरc = spi_master_get_devdata(master);
 
-	pm_runtime_get_sync(&pdev->dev);
-	clk_disable_unprepare(spifc->clk);
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_get_sync(&pdev->dev);
+	clk_disable_unprepare(spअगरc->clk);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int meson_spifc_suspend(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct meson_spifc *spifc = spi_master_get_devdata(master);
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक meson_spअगरc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा meson_spअगरc *spअगरc = spi_master_get_devdata(master);
+	पूर्णांक ret;
 
 	ret = spi_master_suspend(master);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!pm_runtime_suspended(dev))
-		clk_disable_unprepare(spifc->clk);
+	अगर (!pm_runसमय_suspended(dev))
+		clk_disable_unprepare(spअगरc->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson_spifc_resume(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct meson_spifc *spifc = spi_master_get_devdata(master);
-	int ret;
+अटल पूर्णांक meson_spअगरc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा meson_spअगरc *spअगरc = spi_master_get_devdata(master);
+	पूर्णांक ret;
 
-	if (!pm_runtime_suspended(dev)) {
-		ret = clk_prepare_enable(spifc->clk);
-		if (ret)
-			return ret;
-	}
+	अगर (!pm_runसमय_suspended(dev)) अणु
+		ret = clk_prepare_enable(spअगरc->clk);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	meson_spifc_hw_init(spifc);
+	meson_spअगरc_hw_init(spअगरc);
 
 	ret = spi_master_resume(master);
-	if (ret)
-		clk_disable_unprepare(spifc->clk);
+	अगर (ret)
+		clk_disable_unprepare(spअगरc->clk);
 
-	return ret;
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-#ifdef CONFIG_PM
-static int meson_spifc_runtime_suspend(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct meson_spifc *spifc = spi_master_get_devdata(master);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक meson_spअगरc_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा meson_spअगरc *spअगरc = spi_master_get_devdata(master);
 
-	clk_disable_unprepare(spifc->clk);
+	clk_disable_unprepare(spअगरc->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson_spifc_runtime_resume(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct meson_spifc *spifc = spi_master_get_devdata(master);
+अटल पूर्णांक meson_spअगरc_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा meson_spअगरc *spअगरc = spi_master_get_devdata(master);
 
-	return clk_prepare_enable(spifc->clk);
-}
-#endif /* CONFIG_PM */
+	वापस clk_prepare_enable(spअगरc->clk);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct dev_pm_ops meson_spifc_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(meson_spifc_suspend, meson_spifc_resume)
-	SET_RUNTIME_PM_OPS(meson_spifc_runtime_suspend,
-			   meson_spifc_runtime_resume,
-			   NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops meson_spअगरc_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(meson_spअगरc_suspend, meson_spअगरc_resume)
+	SET_RUNTIME_PM_OPS(meson_spअगरc_runसमय_suspend,
+			   meson_spअगरc_runसमय_resume,
+			   शून्य)
+पूर्ण;
 
-static const struct of_device_id meson_spifc_dt_match[] = {
-	{ .compatible = "amlogic,meson6-spifc", },
-	{ .compatible = "amlogic,meson-gxbb-spifc", },
-	{ },
-};
-MODULE_DEVICE_TABLE(of, meson_spifc_dt_match);
+अटल स्थिर काष्ठा of_device_id meson_spअगरc_dt_match[] = अणु
+	अणु .compatible = "amlogic,meson6-spifc", पूर्ण,
+	अणु .compatible = "amlogic,meson-gxbb-spifc", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, meson_spअगरc_dt_match);
 
-static struct platform_driver meson_spifc_driver = {
-	.probe	= meson_spifc_probe,
-	.remove	= meson_spifc_remove,
-	.driver	= {
+अटल काष्ठा platक्रमm_driver meson_spअगरc_driver = अणु
+	.probe	= meson_spअगरc_probe,
+	.हटाओ	= meson_spअगरc_हटाओ,
+	.driver	= अणु
 		.name		= "meson-spifc",
-		.of_match_table	= of_match_ptr(meson_spifc_dt_match),
-		.pm		= &meson_spifc_pm_ops,
-	},
-};
+		.of_match_table	= of_match_ptr(meson_spअगरc_dt_match),
+		.pm		= &meson_spअगरc_pm_ops,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(meson_spifc_driver);
+module_platक्रमm_driver(meson_spअगरc_driver);
 
 MODULE_AUTHOR("Beniamino Galvani <b.galvani@gmail.com>");
 MODULE_DESCRIPTION("Amlogic Meson SPIFC driver");

@@ -1,1 +1,2 @@
-#include "../../../include/linux/irqreturn.h"
+<शैली गुरु>
+#समावेश "../../../include/linux/irqreturn.h"

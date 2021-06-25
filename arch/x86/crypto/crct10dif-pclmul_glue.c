@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Cryptographic API.
  *
- * T10 Data Integrity Field CRC16 Crypto Transform using PCLMULQDQ Instructions
+ * T10 Data Integrity Field CRC16 Crypto Transक्रमm using PCLMULQDQ Inकाष्ठाions
  *
  * Copyright (C) 2013 Intel Corporation
- * Author: Tim Chen <tim.c.chen@linux.intel.com>
+ * Author: Tim Chen <tim.c.chen@linux.पूर्णांकel.com>
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
@@ -22,118 +23,118 @@
  *
  */
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/crc-t10dif.h>
-#include <crypto/internal/hash.h>
-#include <crypto/internal/simd.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <asm/cpufeatures.h>
-#include <asm/cpu_device_id.h>
-#include <asm/simd.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/crc-t10dअगर.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/cpufeatures.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/simd.h>
 
-asmlinkage u16 crc_t10dif_pcl(u16 init_crc, const u8 *buf, size_t len);
+यंत्रlinkage u16 crc_t10dअगर_pcl(u16 init_crc, स्थिर u8 *buf, माप_प्रकार len);
 
-struct chksum_desc_ctx {
+काष्ठा chksum_desc_ctx अणु
 	__u16 crc;
-};
+पूर्ण;
 
-static int chksum_init(struct shash_desc *desc)
-{
-	struct chksum_desc_ctx *ctx = shash_desc_ctx(desc);
+अटल पूर्णांक chksum_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा chksum_desc_ctx *ctx = shash_desc_ctx(desc);
 
 	ctx->crc = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chksum_update(struct shash_desc *desc, const u8 *data,
-			 unsigned int length)
-{
-	struct chksum_desc_ctx *ctx = shash_desc_ctx(desc);
+अटल पूर्णांक chksum_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			 अचिन्हित पूर्णांक length)
+अणु
+	काष्ठा chksum_desc_ctx *ctx = shash_desc_ctx(desc);
 
-	if (length >= 16 && crypto_simd_usable()) {
+	अगर (length >= 16 && crypto_simd_usable()) अणु
 		kernel_fpu_begin();
-		ctx->crc = crc_t10dif_pcl(ctx->crc, data, length);
+		ctx->crc = crc_t10dअगर_pcl(ctx->crc, data, length);
 		kernel_fpu_end();
-	} else
-		ctx->crc = crc_t10dif_generic(ctx->crc, data, length);
-	return 0;
-}
+	पूर्ण अन्यथा
+		ctx->crc = crc_t10dअगर_generic(ctx->crc, data, length);
+	वापस 0;
+पूर्ण
 
-static int chksum_final(struct shash_desc *desc, u8 *out)
-{
-	struct chksum_desc_ctx *ctx = shash_desc_ctx(desc);
+अटल पूर्णांक chksum_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा chksum_desc_ctx *ctx = shash_desc_ctx(desc);
 
 	*(__u16 *)out = ctx->crc;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __chksum_finup(__u16 crc, const u8 *data, unsigned int len, u8 *out)
-{
-	if (len >= 16 && crypto_simd_usable()) {
+अटल पूर्णांक __chksum_finup(__u16 crc, स्थिर u8 *data, अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	अगर (len >= 16 && crypto_simd_usable()) अणु
 		kernel_fpu_begin();
-		*(__u16 *)out = crc_t10dif_pcl(crc, data, len);
+		*(__u16 *)out = crc_t10dअगर_pcl(crc, data, len);
 		kernel_fpu_end();
-	} else
-		*(__u16 *)out = crc_t10dif_generic(crc, data, len);
-	return 0;
-}
+	पूर्ण अन्यथा
+		*(__u16 *)out = crc_t10dअगर_generic(crc, data, len);
+	वापस 0;
+पूर्ण
 
-static int chksum_finup(struct shash_desc *desc, const u8 *data,
-			unsigned int len, u8 *out)
-{
-	struct chksum_desc_ctx *ctx = shash_desc_ctx(desc);
+अटल पूर्णांक chksum_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	काष्ठा chksum_desc_ctx *ctx = shash_desc_ctx(desc);
 
-	return __chksum_finup(ctx->crc, data, len, out);
-}
+	वापस __chksum_finup(ctx->crc, data, len, out);
+पूर्ण
 
-static int chksum_digest(struct shash_desc *desc, const u8 *data,
-			 unsigned int length, u8 *out)
-{
-	return __chksum_finup(0, data, length, out);
-}
+अटल पूर्णांक chksum_digest(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			 अचिन्हित पूर्णांक length, u8 *out)
+अणु
+	वापस __chksum_finup(0, data, length, out);
+पूर्ण
 
-static struct shash_alg alg = {
+अटल काष्ठा shash_alg alg = अणु
 	.digestsize		=	CRC_T10DIF_DIGEST_SIZE,
 	.init		=	chksum_init,
 	.update		=	chksum_update,
 	.final		=	chksum_final,
 	.finup		=	chksum_finup,
 	.digest		=	chksum_digest,
-	.descsize		=	sizeof(struct chksum_desc_ctx),
-	.base			=	{
+	.descsize		=	माप(काष्ठा chksum_desc_ctx),
+	.base			=	अणु
 		.cra_name		=	"crct10dif",
 		.cra_driver_name	=	"crct10dif-pclmul",
 		.cra_priority		=	200,
 		.cra_blocksize		=	CRC_T10DIF_BLOCK_SIZE,
 		.cra_module		=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct x86_cpu_id crct10dif_cpu_id[] = {
-	X86_MATCH_FEATURE(X86_FEATURE_PCLMULQDQ, NULL),
-	{}
-};
-MODULE_DEVICE_TABLE(x86cpu, crct10dif_cpu_id);
+अटल स्थिर काष्ठा x86_cpu_id crct10dअगर_cpu_id[] = अणु
+	X86_MATCH_FEATURE(X86_FEATURE_PCLMULQDQ, शून्य),
+	अणुपूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(x86cpu, crct10dअगर_cpu_id);
 
-static int __init crct10dif_intel_mod_init(void)
-{
-	if (!x86_match_cpu(crct10dif_cpu_id))
-		return -ENODEV;
+अटल पूर्णांक __init crct10dअगर_पूर्णांकel_mod_init(व्योम)
+अणु
+	अगर (!x86_match_cpu(crct10dअगर_cpu_id))
+		वापस -ENODEV;
 
-	return crypto_register_shash(&alg);
-}
+	वापस crypto_रेजिस्टर_shash(&alg);
+पूर्ण
 
-static void __exit crct10dif_intel_mod_fini(void)
-{
-	crypto_unregister_shash(&alg);
-}
+अटल व्योम __निकास crct10dअगर_पूर्णांकel_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&alg);
+पूर्ण
 
-module_init(crct10dif_intel_mod_init);
-module_exit(crct10dif_intel_mod_fini);
+module_init(crct10dअगर_पूर्णांकel_mod_init);
+module_निकास(crct10dअगर_पूर्णांकel_mod_fini);
 
 MODULE_AUTHOR("Tim Chen <tim.c.chen@linux.intel.com>");
 MODULE_DESCRIPTION("T10 DIF CRC calculation accelerated with PCLMULQDQ.");

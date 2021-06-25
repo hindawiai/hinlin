@@ -1,9 +1,10 @@
+<शैली गुरु>
 /* Set tai offset
  *              by: John Stultz <john.stultz@linaro.org>
  *              (C) Copyright Linaro 2013
  *              Licensed under the GPLv2
  *
- *   This program is free software: you can redistribute it and/or modify
+ *   This program is मुक्त software: you can redistribute it and/or modअगरy
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -11,59 +12,59 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU General Public License क्रम more details.
  */
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/timex.h>
-#include <string.h>
-#include <signal.h>
-#include <unistd.h>
-#include "../kselftest.h"
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <समय.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/समयx.h>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश <unistd.h>
+#समावेश "../kselftest.h"
 
-int set_tai(int offset)
-{
-	struct timex tx;
+पूर्णांक set_tai(पूर्णांक offset)
+अणु
+	काष्ठा समयx tx;
 
-	memset(&tx, 0, sizeof(tx));
+	स_रखो(&tx, 0, माप(tx));
 
 	tx.modes = ADJ_TAI;
-	tx.constant = offset;
+	tx.स्थिरant = offset;
 
-	return adjtimex(&tx);
-}
+	वापस adjसमयx(&tx);
+पूर्ण
 
-int get_tai(void)
-{
-	struct timex tx;
+पूर्णांक get_tai(व्योम)
+अणु
+	काष्ठा समयx tx;
 
-	memset(&tx, 0, sizeof(tx));
+	स_रखो(&tx, 0, माप(tx));
 
-	adjtimex(&tx);
-	return tx.tai;
-}
+	adjसमयx(&tx);
+	वापस tx.tai;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	int i, ret;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक i, ret;
 
 	ret = get_tai();
-	printf("tai offset started at %i\n", ret);
+	म_लिखो("tai offset started at %i\n", ret);
 
-	printf("Checking tai offsets can be properly set: ");
-	fflush(stdout);
-	for (i = 1; i <= 60; i++) {
+	म_लिखो("Checking tai offsets can be properly set: ");
+	ख_साफ(मानक_निकास);
+	क्रम (i = 1; i <= 60; i++) अणु
 		ret = set_tai(i);
 		ret = get_tai();
-		if (ret != i) {
-			printf("[FAILED] expected: %i got %i\n", i, ret);
-			return ksft_exit_fail();
-		}
-	}
-	printf("[OK]\n");
-	return ksft_exit_pass();
-}
+		अगर (ret != i) अणु
+			म_लिखो("[FAILED] expected: %i got %i\n", i, ret);
+			वापस ksft_निकास_fail();
+		पूर्ण
+	पूर्ण
+	म_लिखो("[OK]\n");
+	वापस ksft_निकास_pass();
+पूर्ण

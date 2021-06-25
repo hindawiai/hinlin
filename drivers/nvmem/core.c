@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * nvmem framework core.
  *
  * Copyright (C) 2015 Srinivas Kandagatla <srinivas.kandagatla@linaro.org>
- * Copyright (C) 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright (C) 2013 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  */
 
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/fs.h>
-#include <linux/idr.h>
-#include <linux/init.h>
-#include <linux/kref.h>
-#include <linux/module.h>
-#include <linux/nvmem-consumer.h>
-#include <linux/nvmem-provider.h>
-#include <linux/gpio/consumer.h>
-#include <linux/of.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nvmem-consumer.h>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
 
-struct nvmem_device {
-	struct module		*owner;
-	struct device		dev;
-	int			stride;
-	int			word_size;
-	int			id;
-	struct kref		refcnt;
-	size_t			size;
-	bool			read_only;
+काष्ठा nvmem_device अणु
+	काष्ठा module		*owner;
+	काष्ठा device		dev;
+	पूर्णांक			stride;
+	पूर्णांक			word_size;
+	पूर्णांक			id;
+	काष्ठा kref		refcnt;
+	माप_प्रकार			size;
+	bool			पढ़ो_only;
 	bool			root_only;
-	int			flags;
-	enum nvmem_type		type;
-	struct bin_attribute	eeprom;
-	struct device		*base_dev;
-	struct list_head	cells;
-	const struct nvmem_keepout *keepout;
-	unsigned int		nkeepout;
-	nvmem_reg_read_t	reg_read;
-	nvmem_reg_write_t	reg_write;
-	struct gpio_desc	*wp_gpio;
-	void *priv;
-};
+	पूर्णांक			flags;
+	क्रमागत nvmem_type		type;
+	काष्ठा bin_attribute	eeprom;
+	काष्ठा device		*base_dev;
+	काष्ठा list_head	cells;
+	स्थिर काष्ठा nvmem_keepout *keepout;
+	अचिन्हित पूर्णांक		nkeepout;
+	nvmem_reg_पढ़ो_t	reg_पढ़ो;
+	nvmem_reg_ग_लिखो_t	reg_ग_लिखो;
+	काष्ठा gpio_desc	*wp_gpio;
+	व्योम *priv;
+पूर्ण;
 
-#define to_nvmem_device(d) container_of(d, struct nvmem_device, dev)
+#घोषणा to_nvmem_device(d) container_of(d, काष्ठा nvmem_device, dev)
 
-#define FLAG_COMPAT		BIT(0)
+#घोषणा FLAG_COMPAT		BIT(0)
 
-struct nvmem_cell {
-	const char		*name;
-	int			offset;
-	int			bytes;
-	int			bit_offset;
-	int			nbits;
-	struct device_node	*np;
-	struct nvmem_device	*nvmem;
-	struct list_head	node;
-};
+काष्ठा nvmem_cell अणु
+	स्थिर अक्षर		*name;
+	पूर्णांक			offset;
+	पूर्णांक			bytes;
+	पूर्णांक			bit_offset;
+	पूर्णांक			nbits;
+	काष्ठा device_node	*np;
+	काष्ठा nvmem_device	*nvmem;
+	काष्ठा list_head	node;
+पूर्ण;
 
-static DEFINE_MUTEX(nvmem_mutex);
-static DEFINE_IDA(nvmem_ida);
+अटल DEFINE_MUTEX(nvmem_mutex);
+अटल DEFINE_IDA(nvmem_ida);
 
-static DEFINE_MUTEX(nvmem_cell_mutex);
-static LIST_HEAD(nvmem_cell_tables);
+अटल DEFINE_MUTEX(nvmem_cell_mutex);
+अटल LIST_HEAD(nvmem_cell_tables);
 
-static DEFINE_MUTEX(nvmem_lookup_mutex);
-static LIST_HEAD(nvmem_lookup_list);
+अटल DEFINE_MUTEX(nvmem_lookup_mutex);
+अटल LIST_HEAD(nvmem_lookup_list);
 
-static BLOCKING_NOTIFIER_HEAD(nvmem_notifier);
+अटल BLOCKING_NOTIFIER_HEAD(nvmem_notअगरier);
 
-static int __nvmem_reg_read(struct nvmem_device *nvmem, unsigned int offset,
-			    void *val, size_t bytes)
-{
-	if (nvmem->reg_read)
-		return nvmem->reg_read(nvmem->priv, offset, val, bytes);
+अटल पूर्णांक __nvmem_reg_पढ़ो(काष्ठा nvmem_device *nvmem, अचिन्हित पूर्णांक offset,
+			    व्योम *val, माप_प्रकार bytes)
+अणु
+	अगर (nvmem->reg_पढ़ो)
+		वापस nvmem->reg_पढ़ो(nvmem->priv, offset, val, bytes);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int __nvmem_reg_write(struct nvmem_device *nvmem, unsigned int offset,
-			     void *val, size_t bytes)
-{
-	int ret;
+अटल पूर्णांक __nvmem_reg_ग_लिखो(काष्ठा nvmem_device *nvmem, अचिन्हित पूर्णांक offset,
+			     व्योम *val, माप_प्रकार bytes)
+अणु
+	पूर्णांक ret;
 
-	if (nvmem->reg_write) {
+	अगर (nvmem->reg_ग_लिखो) अणु
 		gpiod_set_value_cansleep(nvmem->wp_gpio, 0);
-		ret = nvmem->reg_write(nvmem->priv, offset, val, bytes);
+		ret = nvmem->reg_ग_लिखो(nvmem->priv, offset, val, bytes);
 		gpiod_set_value_cansleep(nvmem->wp_gpio, 1);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int nvmem_access_with_keepouts(struct nvmem_device *nvmem,
-				      unsigned int offset, void *val,
-				      size_t bytes, int write)
-{
+अटल पूर्णांक nvmem_access_with_keepouts(काष्ठा nvmem_device *nvmem,
+				      अचिन्हित पूर्णांक offset, व्योम *val,
+				      माप_प्रकार bytes, पूर्णांक ग_लिखो)
+अणु
 
-	unsigned int end = offset + bytes;
-	unsigned int kend, ksize;
-	const struct nvmem_keepout *keepout = nvmem->keepout;
-	const struct nvmem_keepout *keepoutend = keepout + nvmem->nkeepout;
-	int rc;
+	अचिन्हित पूर्णांक end = offset + bytes;
+	अचिन्हित पूर्णांक kend, ksize;
+	स्थिर काष्ठा nvmem_keepout *keepout = nvmem->keepout;
+	स्थिर काष्ठा nvmem_keepout *keepoutend = keepout + nvmem->nkeepout;
+	पूर्णांक rc;
 
 	/*
-	 * Skip all keepouts before the range being accessed.
+	 * Skip all keepouts beक्रमe the range being accessed.
 	 * Keepouts are sorted.
 	 */
-	while ((keepout < keepoutend) && (keepout->end <= offset))
+	जबतक ((keepout < keepoutend) && (keepout->end <= offset))
 		keepout++;
 
-	while ((offset < end) && (keepout < keepoutend)) {
-		/* Access the valid portion before the keepout. */
-		if (offset < keepout->start) {
+	जबतक ((offset < end) && (keepout < keepoutend)) अणु
+		/* Access the valid portion beक्रमe the keepout. */
+		अगर (offset < keepout->start) अणु
 			kend = min(end, keepout->start);
 			ksize = kend - offset;
-			if (write)
-				rc = __nvmem_reg_write(nvmem, offset, val, ksize);
-			else
-				rc = __nvmem_reg_read(nvmem, offset, val, ksize);
+			अगर (ग_लिखो)
+				rc = __nvmem_reg_ग_लिखो(nvmem, offset, val, ksize);
+			अन्यथा
+				rc = __nvmem_reg_पढ़ो(nvmem, offset, val, ksize);
 
-			if (rc)
-				return rc;
+			अगर (rc)
+				वापस rc;
 
 			offset += ksize;
 			val += ksize;
-		}
+		पूर्ण
 
 		/*
 		 * Now we're aligned to the start of this keepout zone. Go
@@ -133,322 +134,322 @@ static int nvmem_access_with_keepouts(struct nvmem_device *nvmem,
 		 */
 		kend = min(end, keepout->end);
 		ksize = kend - offset;
-		if (!write)
-			memset(val, keepout->value, ksize);
+		अगर (!ग_लिखो)
+			स_रखो(val, keepout->value, ksize);
 
 		val += ksize;
 		offset += ksize;
 		keepout++;
-	}
+	पूर्ण
 
 	/*
-	 * If we ran out of keepouts but there's still stuff to do, send it
-	 * down directly
+	 * If we ran out of keepouts but there's still stuff to करो, send it
+	 * करोwn directly
 	 */
-	if (offset < end) {
+	अगर (offset < end) अणु
 		ksize = end - offset;
-		if (write)
-			return __nvmem_reg_write(nvmem, offset, val, ksize);
-		else
-			return __nvmem_reg_read(nvmem, offset, val, ksize);
-	}
+		अगर (ग_लिखो)
+			वापस __nvmem_reg_ग_लिखो(nvmem, offset, val, ksize);
+		अन्यथा
+			वापस __nvmem_reg_पढ़ो(nvmem, offset, val, ksize);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nvmem_reg_read(struct nvmem_device *nvmem, unsigned int offset,
-			  void *val, size_t bytes)
-{
-	if (!nvmem->nkeepout)
-		return __nvmem_reg_read(nvmem, offset, val, bytes);
+अटल पूर्णांक nvmem_reg_पढ़ो(काष्ठा nvmem_device *nvmem, अचिन्हित पूर्णांक offset,
+			  व्योम *val, माप_प्रकार bytes)
+अणु
+	अगर (!nvmem->nkeepout)
+		वापस __nvmem_reg_पढ़ो(nvmem, offset, val, bytes);
 
-	return nvmem_access_with_keepouts(nvmem, offset, val, bytes, false);
-}
+	वापस nvmem_access_with_keepouts(nvmem, offset, val, bytes, false);
+पूर्ण
 
-static int nvmem_reg_write(struct nvmem_device *nvmem, unsigned int offset,
-			   void *val, size_t bytes)
-{
-	if (!nvmem->nkeepout)
-		return __nvmem_reg_write(nvmem, offset, val, bytes);
+अटल पूर्णांक nvmem_reg_ग_लिखो(काष्ठा nvmem_device *nvmem, अचिन्हित पूर्णांक offset,
+			   व्योम *val, माप_प्रकार bytes)
+अणु
+	अगर (!nvmem->nkeepout)
+		वापस __nvmem_reg_ग_लिखो(nvmem, offset, val, bytes);
 
-	return nvmem_access_with_keepouts(nvmem, offset, val, bytes, true);
-}
+	वापस nvmem_access_with_keepouts(nvmem, offset, val, bytes, true);
+पूर्ण
 
-#ifdef CONFIG_NVMEM_SYSFS
-static const char * const nvmem_type_str[] = {
+#अगर_घोषित CONFIG_NVMEM_SYSFS
+अटल स्थिर अक्षर * स्थिर nvmem_type_str[] = अणु
 	[NVMEM_TYPE_UNKNOWN] = "Unknown",
 	[NVMEM_TYPE_EEPROM] = "EEPROM",
 	[NVMEM_TYPE_OTP] = "OTP",
 	[NVMEM_TYPE_BATTERY_BACKED] = "Battery backed",
-};
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-static struct lock_class_key eeprom_lock_key;
-#endif
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+अटल काष्ठा lock_class_key eeprom_lock_key;
+#पूर्ण_अगर
 
-static ssize_t type_show(struct device *dev,
-			 struct device_attribute *attr, char *buf)
-{
-	struct nvmem_device *nvmem = to_nvmem_device(dev);
+अटल sमाप_प्रकार type_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvmem_device *nvmem = to_nvmem_device(dev);
 
-	return sprintf(buf, "%s\n", nvmem_type_str[nvmem->type]);
-}
+	वापस प्र_लिखो(buf, "%s\n", nvmem_type_str[nvmem->type]);
+पूर्ण
 
-static DEVICE_ATTR_RO(type);
+अटल DEVICE_ATTR_RO(type);
 
-static struct attribute *nvmem_attrs[] = {
+अटल काष्ठा attribute *nvmem_attrs[] = अणु
 	&dev_attr_type.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static ssize_t bin_attr_nvmem_read(struct file *filp, struct kobject *kobj,
-				   struct bin_attribute *attr, char *buf,
-				   loff_t pos, size_t count)
-{
-	struct device *dev;
-	struct nvmem_device *nvmem;
-	int rc;
+अटल sमाप_प्रकार bin_attr_nvmem_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+				   काष्ठा bin_attribute *attr, अक्षर *buf,
+				   loff_t pos, माप_प्रकार count)
+अणु
+	काष्ठा device *dev;
+	काष्ठा nvmem_device *nvmem;
+	पूर्णांक rc;
 
-	if (attr->private)
-		dev = attr->private;
-	else
+	अगर (attr->निजी)
+		dev = attr->निजी;
+	अन्यथा
 		dev = kobj_to_dev(kobj);
 	nvmem = to_nvmem_device(dev);
 
-	/* Stop the user from reading */
-	if (pos >= nvmem->size)
-		return 0;
+	/* Stop the user from पढ़ोing */
+	अगर (pos >= nvmem->size)
+		वापस 0;
 
-	if (!IS_ALIGNED(pos, nvmem->stride))
-		return -EINVAL;
+	अगर (!IS_ALIGNED(pos, nvmem->stride))
+		वापस -EINVAL;
 
-	if (count < nvmem->word_size)
-		return -EINVAL;
+	अगर (count < nvmem->word_size)
+		वापस -EINVAL;
 
-	if (pos + count > nvmem->size)
+	अगर (pos + count > nvmem->size)
 		count = nvmem->size - pos;
 
-	count = round_down(count, nvmem->word_size);
+	count = round_करोwn(count, nvmem->word_size);
 
-	if (!nvmem->reg_read)
-		return -EPERM;
+	अगर (!nvmem->reg_पढ़ो)
+		वापस -EPERM;
 
-	rc = nvmem_reg_read(nvmem, pos, buf, count);
+	rc = nvmem_reg_पढ़ो(nvmem, pos, buf, count);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t bin_attr_nvmem_write(struct file *filp, struct kobject *kobj,
-				    struct bin_attribute *attr, char *buf,
-				    loff_t pos, size_t count)
-{
-	struct device *dev;
-	struct nvmem_device *nvmem;
-	int rc;
+अटल sमाप_प्रकार bin_attr_nvmem_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
+				    काष्ठा bin_attribute *attr, अक्षर *buf,
+				    loff_t pos, माप_प्रकार count)
+अणु
+	काष्ठा device *dev;
+	काष्ठा nvmem_device *nvmem;
+	पूर्णांक rc;
 
-	if (attr->private)
-		dev = attr->private;
-	else
+	अगर (attr->निजी)
+		dev = attr->निजी;
+	अन्यथा
 		dev = kobj_to_dev(kobj);
 	nvmem = to_nvmem_device(dev);
 
 	/* Stop the user from writing */
-	if (pos >= nvmem->size)
-		return -EFBIG;
+	अगर (pos >= nvmem->size)
+		वापस -EFBIG;
 
-	if (!IS_ALIGNED(pos, nvmem->stride))
-		return -EINVAL;
+	अगर (!IS_ALIGNED(pos, nvmem->stride))
+		वापस -EINVAL;
 
-	if (count < nvmem->word_size)
-		return -EINVAL;
+	अगर (count < nvmem->word_size)
+		वापस -EINVAL;
 
-	if (pos + count > nvmem->size)
+	अगर (pos + count > nvmem->size)
 		count = nvmem->size - pos;
 
-	count = round_down(count, nvmem->word_size);
+	count = round_करोwn(count, nvmem->word_size);
 
-	if (!nvmem->reg_write)
-		return -EPERM;
+	अगर (!nvmem->reg_ग_लिखो)
+		वापस -EPERM;
 
-	rc = nvmem_reg_write(nvmem, pos, buf, count);
+	rc = nvmem_reg_ग_लिखो(nvmem, pos, buf, count);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static umode_t nvmem_bin_attr_get_umode(struct nvmem_device *nvmem)
-{
+अटल umode_t nvmem_bin_attr_get_umode(काष्ठा nvmem_device *nvmem)
+अणु
 	umode_t mode = 0400;
 
-	if (!nvmem->root_only)
+	अगर (!nvmem->root_only)
 		mode |= 0044;
 
-	if (!nvmem->read_only)
+	अगर (!nvmem->पढ़ो_only)
 		mode |= 0200;
 
-	if (!nvmem->reg_write)
+	अगर (!nvmem->reg_ग_लिखो)
 		mode &= ~0200;
 
-	if (!nvmem->reg_read)
+	अगर (!nvmem->reg_पढ़ो)
 		mode &= ~0444;
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static umode_t nvmem_bin_attr_is_visible(struct kobject *kobj,
-					 struct bin_attribute *attr, int i)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct nvmem_device *nvmem = to_nvmem_device(dev);
+अटल umode_t nvmem_bin_attr_is_visible(काष्ठा kobject *kobj,
+					 काष्ठा bin_attribute *attr, पूर्णांक i)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा nvmem_device *nvmem = to_nvmem_device(dev);
 
-	return nvmem_bin_attr_get_umode(nvmem);
-}
+	वापस nvmem_bin_attr_get_umode(nvmem);
+पूर्ण
 
-/* default read/write permissions */
-static struct bin_attribute bin_attr_rw_nvmem = {
-	.attr	= {
+/* शेष पढ़ो/ग_लिखो permissions */
+अटल काष्ठा bin_attribute bin_attr_rw_nvmem = अणु
+	.attr	= अणु
 		.name	= "nvmem",
 		.mode	= 0644,
-	},
-	.read	= bin_attr_nvmem_read,
-	.write	= bin_attr_nvmem_write,
-};
+	पूर्ण,
+	.पढ़ो	= bin_attr_nvmem_पढ़ो,
+	.ग_लिखो	= bin_attr_nvmem_ग_लिखो,
+पूर्ण;
 
-static struct bin_attribute *nvmem_bin_attributes[] = {
+अटल काष्ठा bin_attribute *nvmem_bin_attributes[] = अणु
 	&bin_attr_rw_nvmem,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group nvmem_bin_group = {
+अटल स्थिर काष्ठा attribute_group nvmem_bin_group = अणु
 	.bin_attrs	= nvmem_bin_attributes,
 	.attrs		= nvmem_attrs,
 	.is_bin_visible = nvmem_bin_attr_is_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *nvmem_dev_groups[] = {
+अटल स्थिर काष्ठा attribute_group *nvmem_dev_groups[] = अणु
 	&nvmem_bin_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct bin_attribute bin_attr_nvmem_eeprom_compat = {
-	.attr	= {
+अटल काष्ठा bin_attribute bin_attr_nvmem_eeprom_compat = अणु
+	.attr	= अणु
 		.name	= "eeprom",
-	},
-	.read	= bin_attr_nvmem_read,
-	.write	= bin_attr_nvmem_write,
-};
+	पूर्ण,
+	.पढ़ो	= bin_attr_nvmem_पढ़ो,
+	.ग_लिखो	= bin_attr_nvmem_ग_लिखो,
+पूर्ण;
 
 /*
  * nvmem_setup_compat() - Create an additional binary entry in
  * drivers sys directory, to be backwards compatible with the older
  * drivers/misc/eeprom drivers.
  */
-static int nvmem_sysfs_setup_compat(struct nvmem_device *nvmem,
-				    const struct nvmem_config *config)
-{
-	int rval;
+अटल पूर्णांक nvmem_sysfs_setup_compat(काष्ठा nvmem_device *nvmem,
+				    स्थिर काष्ठा nvmem_config *config)
+अणु
+	पूर्णांक rval;
 
-	if (!config->compat)
-		return 0;
+	अगर (!config->compat)
+		वापस 0;
 
-	if (!config->base_dev)
-		return -EINVAL;
+	अगर (!config->base_dev)
+		वापस -EINVAL;
 
 	nvmem->eeprom = bin_attr_nvmem_eeprom_compat;
 	nvmem->eeprom.attr.mode = nvmem_bin_attr_get_umode(nvmem);
 	nvmem->eeprom.size = nvmem->size;
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 	nvmem->eeprom.attr.key = &eeprom_lock_key;
-#endif
-	nvmem->eeprom.private = &nvmem->dev;
+#पूर्ण_अगर
+	nvmem->eeprom.निजी = &nvmem->dev;
 	nvmem->base_dev = config->base_dev;
 
 	rval = device_create_bin_file(nvmem->base_dev, &nvmem->eeprom);
-	if (rval) {
+	अगर (rval) अणु
 		dev_err(&nvmem->dev,
 			"Failed to create eeprom binary file %d\n", rval);
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
 	nvmem->flags |= FLAG_COMPAT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nvmem_sysfs_remove_compat(struct nvmem_device *nvmem,
-			      const struct nvmem_config *config)
-{
-	if (config->compat)
-		device_remove_bin_file(nvmem->base_dev, &nvmem->eeprom);
-}
+अटल व्योम nvmem_sysfs_हटाओ_compat(काष्ठा nvmem_device *nvmem,
+			      स्थिर काष्ठा nvmem_config *config)
+अणु
+	अगर (config->compat)
+		device_हटाओ_bin_file(nvmem->base_dev, &nvmem->eeprom);
+पूर्ण
 
-#else /* CONFIG_NVMEM_SYSFS */
+#अन्यथा /* CONFIG_NVMEM_SYSFS */
 
-static int nvmem_sysfs_setup_compat(struct nvmem_device *nvmem,
-				    const struct nvmem_config *config)
-{
-	return -ENOSYS;
-}
-static void nvmem_sysfs_remove_compat(struct nvmem_device *nvmem,
-				      const struct nvmem_config *config)
-{
-}
+अटल पूर्णांक nvmem_sysfs_setup_compat(काष्ठा nvmem_device *nvmem,
+				    स्थिर काष्ठा nvmem_config *config)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+अटल व्योम nvmem_sysfs_हटाओ_compat(काष्ठा nvmem_device *nvmem,
+				      स्थिर काष्ठा nvmem_config *config)
+अणु
+पूर्ण
 
-#endif /* CONFIG_NVMEM_SYSFS */
+#पूर्ण_अगर /* CONFIG_NVMEM_SYSFS */
 
-static void nvmem_release(struct device *dev)
-{
-	struct nvmem_device *nvmem = to_nvmem_device(dev);
+अटल व्योम nvmem_release(काष्ठा device *dev)
+अणु
+	काष्ठा nvmem_device *nvmem = to_nvmem_device(dev);
 
-	ida_free(&nvmem_ida, nvmem->id);
+	ida_मुक्त(&nvmem_ida, nvmem->id);
 	gpiod_put(nvmem->wp_gpio);
-	kfree(nvmem);
-}
+	kमुक्त(nvmem);
+पूर्ण
 
-static const struct device_type nvmem_provider_type = {
+अटल स्थिर काष्ठा device_type nvmem_provider_type = अणु
 	.release	= nvmem_release,
-};
+पूर्ण;
 
-static struct bus_type nvmem_bus_type = {
+अटल काष्ठा bus_type nvmem_bus_type = अणु
 	.name		= "nvmem",
-};
+पूर्ण;
 
-static void nvmem_cell_drop(struct nvmem_cell *cell)
-{
-	blocking_notifier_call_chain(&nvmem_notifier, NVMEM_CELL_REMOVE, cell);
+अटल व्योम nvmem_cell_drop(काष्ठा nvmem_cell *cell)
+अणु
+	blocking_notअगरier_call_chain(&nvmem_notअगरier, NVMEM_CELL_REMOVE, cell);
 	mutex_lock(&nvmem_mutex);
 	list_del(&cell->node);
 	mutex_unlock(&nvmem_mutex);
 	of_node_put(cell->np);
-	kfree_const(cell->name);
-	kfree(cell);
-}
+	kमुक्त_स्थिर(cell->name);
+	kमुक्त(cell);
+पूर्ण
 
-static void nvmem_device_remove_all_cells(const struct nvmem_device *nvmem)
-{
-	struct nvmem_cell *cell, *p;
+अटल व्योम nvmem_device_हटाओ_all_cells(स्थिर काष्ठा nvmem_device *nvmem)
+अणु
+	काष्ठा nvmem_cell *cell, *p;
 
-	list_for_each_entry_safe(cell, p, &nvmem->cells, node)
+	list_क्रम_each_entry_safe(cell, p, &nvmem->cells, node)
 		nvmem_cell_drop(cell);
-}
+पूर्ण
 
-static void nvmem_cell_add(struct nvmem_cell *cell)
-{
+अटल व्योम nvmem_cell_add(काष्ठा nvmem_cell *cell)
+अणु
 	mutex_lock(&nvmem_mutex);
 	list_add_tail(&cell->node, &cell->nvmem->cells);
 	mutex_unlock(&nvmem_mutex);
-	blocking_notifier_call_chain(&nvmem_notifier, NVMEM_CELL_ADD, cell);
-}
+	blocking_notअगरier_call_chain(&nvmem_notअगरier, NVMEM_CELL_ADD, cell);
+पूर्ण
 
-static int nvmem_cell_info_to_nvmem_cell_nodup(struct nvmem_device *nvmem,
-					const struct nvmem_cell_info *info,
-					struct nvmem_cell *cell)
-{
+अटल पूर्णांक nvmem_cell_info_to_nvmem_cell_nodup(काष्ठा nvmem_device *nvmem,
+					स्थिर काष्ठा nvmem_cell_info *info,
+					काष्ठा nvmem_cell *cell)
+अणु
 	cell->nvmem = nvmem;
 	cell->offset = info->offset;
 	cell->bytes = info->bytes;
@@ -457,39 +458,39 @@ static int nvmem_cell_info_to_nvmem_cell_nodup(struct nvmem_device *nvmem,
 	cell->bit_offset = info->bit_offset;
 	cell->nbits = info->nbits;
 
-	if (cell->nbits)
+	अगर (cell->nbits)
 		cell->bytes = DIV_ROUND_UP(cell->nbits + cell->bit_offset,
 					   BITS_PER_BYTE);
 
-	if (!IS_ALIGNED(cell->offset, nvmem->stride)) {
+	अगर (!IS_ALIGNED(cell->offset, nvmem->stride)) अणु
 		dev_err(&nvmem->dev,
 			"cell %s unaligned to nvmem stride %d\n",
 			cell->name ?: "<unknown>", nvmem->stride);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nvmem_cell_info_to_nvmem_cell(struct nvmem_device *nvmem,
-				const struct nvmem_cell_info *info,
-				struct nvmem_cell *cell)
-{
-	int err;
+अटल पूर्णांक nvmem_cell_info_to_nvmem_cell(काष्ठा nvmem_device *nvmem,
+				स्थिर काष्ठा nvmem_cell_info *info,
+				काष्ठा nvmem_cell *cell)
+अणु
+	पूर्णांक err;
 
 	err = nvmem_cell_info_to_nvmem_cell_nodup(nvmem, info, cell);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	cell->name = kstrdup_const(info->name, GFP_KERNEL);
-	if (!cell->name)
-		return -ENOMEM;
+	cell->name = kstrdup_स्थिर(info->name, GFP_KERNEL);
+	अगर (!cell->name)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nvmem_add_cells() - Add cell information to an nvmem device
+ * nvmem_add_cells() - Add cell inक्रमmation to an nvmem device
  *
  * @nvmem: nvmem device to add cells to.
  * @info: nvmem cell info to add to the device
@@ -497,284 +498,284 @@ static int nvmem_cell_info_to_nvmem_cell(struct nvmem_device *nvmem,
  *
  * Return: 0 or negative error code on failure.
  */
-static int nvmem_add_cells(struct nvmem_device *nvmem,
-		    const struct nvmem_cell_info *info,
-		    int ncells)
-{
-	struct nvmem_cell **cells;
-	int i, rval;
+अटल पूर्णांक nvmem_add_cells(काष्ठा nvmem_device *nvmem,
+		    स्थिर काष्ठा nvmem_cell_info *info,
+		    पूर्णांक ncells)
+अणु
+	काष्ठा nvmem_cell **cells;
+	पूर्णांक i, rval;
 
-	cells = kcalloc(ncells, sizeof(*cells), GFP_KERNEL);
-	if (!cells)
-		return -ENOMEM;
+	cells = kसुस्मृति(ncells, माप(*cells), GFP_KERNEL);
+	अगर (!cells)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ncells; i++) {
-		cells[i] = kzalloc(sizeof(**cells), GFP_KERNEL);
-		if (!cells[i]) {
+	क्रम (i = 0; i < ncells; i++) अणु
+		cells[i] = kzalloc(माप(**cells), GFP_KERNEL);
+		अगर (!cells[i]) अणु
 			rval = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		rval = nvmem_cell_info_to_nvmem_cell(nvmem, &info[i], cells[i]);
-		if (rval) {
-			kfree(cells[i]);
-			goto err;
-		}
+		अगर (rval) अणु
+			kमुक्त(cells[i]);
+			जाओ err;
+		पूर्ण
 
 		nvmem_cell_add(cells[i]);
-	}
+	पूर्ण
 
-	/* remove tmp array */
-	kfree(cells);
+	/* हटाओ पंचांगp array */
+	kमुक्त(cells);
 
-	return 0;
+	वापस 0;
 err:
-	while (i--)
+	जबतक (i--)
 		nvmem_cell_drop(cells[i]);
 
-	kfree(cells);
+	kमुक्त(cells);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 /**
- * nvmem_register_notifier() - Register a notifier block for nvmem events.
+ * nvmem_रेजिस्टर_notअगरier() - Register a notअगरier block क्रम nvmem events.
  *
- * @nb: notifier block to be called on nvmem events.
+ * @nb: notअगरier block to be called on nvmem events.
  *
  * Return: 0 on success, negative error number on failure.
  */
-int nvmem_register_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&nvmem_notifier, nb);
-}
-EXPORT_SYMBOL_GPL(nvmem_register_notifier);
+पूर्णांक nvmem_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&nvmem_notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_रेजिस्टर_notअगरier);
 
 /**
- * nvmem_unregister_notifier() - Unregister a notifier block for nvmem events.
+ * nvmem_unरेजिस्टर_notअगरier() - Unरेजिस्टर a notअगरier block क्रम nvmem events.
  *
- * @nb: notifier block to be unregistered.
+ * @nb: notअगरier block to be unरेजिस्टरed.
  *
  * Return: 0 on success, negative error number on failure.
  */
-int nvmem_unregister_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&nvmem_notifier, nb);
-}
-EXPORT_SYMBOL_GPL(nvmem_unregister_notifier);
+पूर्णांक nvmem_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&nvmem_notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_unरेजिस्टर_notअगरier);
 
-static int nvmem_add_cells_from_table(struct nvmem_device *nvmem)
-{
-	const struct nvmem_cell_info *info;
-	struct nvmem_cell_table *table;
-	struct nvmem_cell *cell;
-	int rval = 0, i;
+अटल पूर्णांक nvmem_add_cells_from_table(काष्ठा nvmem_device *nvmem)
+अणु
+	स्थिर काष्ठा nvmem_cell_info *info;
+	काष्ठा nvmem_cell_table *table;
+	काष्ठा nvmem_cell *cell;
+	पूर्णांक rval = 0, i;
 
 	mutex_lock(&nvmem_cell_mutex);
-	list_for_each_entry(table, &nvmem_cell_tables, node) {
-		if (strcmp(nvmem_dev_name(nvmem), table->nvmem_name) == 0) {
-			for (i = 0; i < table->ncells; i++) {
+	list_क्रम_each_entry(table, &nvmem_cell_tables, node) अणु
+		अगर (म_भेद(nvmem_dev_name(nvmem), table->nvmem_name) == 0) अणु
+			क्रम (i = 0; i < table->ncells; i++) अणु
 				info = &table->cells[i];
 
-				cell = kzalloc(sizeof(*cell), GFP_KERNEL);
-				if (!cell) {
+				cell = kzalloc(माप(*cell), GFP_KERNEL);
+				अगर (!cell) अणु
 					rval = -ENOMEM;
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 
 				rval = nvmem_cell_info_to_nvmem_cell(nvmem,
 								     info,
 								     cell);
-				if (rval) {
-					kfree(cell);
-					goto out;
-				}
+				अगर (rval) अणु
+					kमुक्त(cell);
+					जाओ out;
+				पूर्ण
 
 				nvmem_cell_add(cell);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out:
 	mutex_unlock(&nvmem_cell_mutex);
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static struct nvmem_cell *
-nvmem_find_cell_by_name(struct nvmem_device *nvmem, const char *cell_id)
-{
-	struct nvmem_cell *iter, *cell = NULL;
+अटल काष्ठा nvmem_cell *
+nvmem_find_cell_by_name(काष्ठा nvmem_device *nvmem, स्थिर अक्षर *cell_id)
+अणु
+	काष्ठा nvmem_cell *iter, *cell = शून्य;
 
 	mutex_lock(&nvmem_mutex);
-	list_for_each_entry(iter, &nvmem->cells, node) {
-		if (strcmp(cell_id, iter->name) == 0) {
+	list_क्रम_each_entry(iter, &nvmem->cells, node) अणु
+		अगर (म_भेद(cell_id, iter->name) == 0) अणु
 			cell = iter;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&nvmem_mutex);
 
-	return cell;
-}
+	वापस cell;
+पूर्ण
 
-static int nvmem_validate_keepouts(struct nvmem_device *nvmem)
-{
-	unsigned int cur = 0;
-	const struct nvmem_keepout *keepout = nvmem->keepout;
-	const struct nvmem_keepout *keepoutend = keepout + nvmem->nkeepout;
+अटल पूर्णांक nvmem_validate_keepouts(काष्ठा nvmem_device *nvmem)
+अणु
+	अचिन्हित पूर्णांक cur = 0;
+	स्थिर काष्ठा nvmem_keepout *keepout = nvmem->keepout;
+	स्थिर काष्ठा nvmem_keepout *keepoutend = keepout + nvmem->nkeepout;
 
-	while (keepout < keepoutend) {
-		/* Ensure keepouts are sorted and don't overlap. */
-		if (keepout->start < cur) {
+	जबतक (keepout < keepoutend) अणु
+		/* Ensure keepouts are sorted and करोn't overlap. */
+		अगर (keepout->start < cur) अणु
 			dev_err(&nvmem->dev,
 				"Keepout regions aren't sorted or overlap.\n");
 
-			return -ERANGE;
-		}
+			वापस -दुस्फल;
+		पूर्ण
 
-		if (keepout->end < keepout->start) {
+		अगर (keepout->end < keepout->start) अणु
 			dev_err(&nvmem->dev,
 				"Invalid keepout region.\n");
 
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
-		 * Validate keepouts (and holes between) don't violate
-		 * word_size constraints.
+		 * Validate keepouts (and holes between) करोn't violate
+		 * word_size स्थिरraपूर्णांकs.
 		 */
-		if ((keepout->end - keepout->start < nvmem->word_size) ||
+		अगर ((keepout->end - keepout->start < nvmem->word_size) ||
 		    ((keepout->start != cur) &&
-		     (keepout->start - cur < nvmem->word_size))) {
+		     (keepout->start - cur < nvmem->word_size))) अणु
 
 			dev_err(&nvmem->dev,
 				"Keepout regions violate word_size constraints.\n");
 
-			return -ERANGE;
-		}
+			वापस -दुस्फल;
+		पूर्ण
 
-		/* Validate keepouts don't violate stride (alignment). */
-		if (!IS_ALIGNED(keepout->start, nvmem->stride) ||
-		    !IS_ALIGNED(keepout->end, nvmem->stride)) {
+		/* Validate keepouts करोn't violate stride (alignment). */
+		अगर (!IS_ALIGNED(keepout->start, nvmem->stride) ||
+		    !IS_ALIGNED(keepout->end, nvmem->stride)) अणु
 
 			dev_err(&nvmem->dev,
 				"Keepout regions violate stride.\n");
 
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		cur = keepout->end;
 		keepout++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nvmem_add_cells_from_of(struct nvmem_device *nvmem)
-{
-	struct device_node *parent, *child;
-	struct device *dev = &nvmem->dev;
-	struct nvmem_cell *cell;
-	const __be32 *addr;
-	int len;
+अटल पूर्णांक nvmem_add_cells_from_of(काष्ठा nvmem_device *nvmem)
+अणु
+	काष्ठा device_node *parent, *child;
+	काष्ठा device *dev = &nvmem->dev;
+	काष्ठा nvmem_cell *cell;
+	स्थिर __be32 *addr;
+	पूर्णांक len;
 
 	parent = dev->of_node;
 
-	for_each_child_of_node(parent, child) {
+	क्रम_each_child_of_node(parent, child) अणु
 		addr = of_get_property(child, "reg", &len);
-		if (!addr)
-			continue;
-		if (len < 2 * sizeof(u32)) {
+		अगर (!addr)
+			जारी;
+		अगर (len < 2 * माप(u32)) अणु
 			dev_err(dev, "nvmem: invalid reg on %pOF\n", child);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		cell = kzalloc(sizeof(*cell), GFP_KERNEL);
-		if (!cell)
-			return -ENOMEM;
+		cell = kzalloc(माप(*cell), GFP_KERNEL);
+		अगर (!cell)
+			वापस -ENOMEM;
 
 		cell->nvmem = nvmem;
 		cell->np = of_node_get(child);
 		cell->offset = be32_to_cpup(addr++);
 		cell->bytes = be32_to_cpup(addr);
-		cell->name = kasprintf(GFP_KERNEL, "%pOFn", child);
+		cell->name = kaप्र_लिखो(GFP_KERNEL, "%pOFn", child);
 
 		addr = of_get_property(child, "bits", &len);
-		if (addr && len == (2 * sizeof(u32))) {
+		अगर (addr && len == (2 * माप(u32))) अणु
 			cell->bit_offset = be32_to_cpup(addr++);
 			cell->nbits = be32_to_cpup(addr);
-		}
+		पूर्ण
 
-		if (cell->nbits)
+		अगर (cell->nbits)
 			cell->bytes = DIV_ROUND_UP(
 					cell->nbits + cell->bit_offset,
 					BITS_PER_BYTE);
 
-		if (!IS_ALIGNED(cell->offset, nvmem->stride)) {
+		अगर (!IS_ALIGNED(cell->offset, nvmem->stride)) अणु
 			dev_err(dev, "cell %s unaligned to nvmem stride %d\n",
 				cell->name, nvmem->stride);
-			/* Cells already added will be freed later. */
-			kfree_const(cell->name);
+			/* Cells alपढ़ोy added will be मुक्तd later. */
+			kमुक्त_स्थिर(cell->name);
 			of_node_put(cell->np);
-			kfree(cell);
-			return -EINVAL;
-		}
+			kमुक्त(cell);
+			वापस -EINVAL;
+		पूर्ण
 
 		nvmem_cell_add(cell);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nvmem_register() - Register a nvmem device for given nvmem_config.
+ * nvmem_रेजिस्टर() - Register a nvmem device क्रम given nvmem_config.
  * Also creates a binary entry in /sys/bus/nvmem/devices/dev-name/nvmem
  *
  * @config: nvmem device configuration with which nvmem device is created.
  *
- * Return: Will be an ERR_PTR() on error or a valid pointer to nvmem_device
+ * Return: Will be an ERR_PTR() on error or a valid poपूर्णांकer to nvmem_device
  * on success.
  */
 
-struct nvmem_device *nvmem_register(const struct nvmem_config *config)
-{
-	struct nvmem_device *nvmem;
-	int rval;
+काष्ठा nvmem_device *nvmem_रेजिस्टर(स्थिर काष्ठा nvmem_config *config)
+अणु
+	काष्ठा nvmem_device *nvmem;
+	पूर्णांक rval;
 
-	if (!config->dev)
-		return ERR_PTR(-EINVAL);
+	अगर (!config->dev)
+		वापस ERR_PTR(-EINVAL);
 
-	if (!config->reg_read && !config->reg_write)
-		return ERR_PTR(-EINVAL);
+	अगर (!config->reg_पढ़ो && !config->reg_ग_लिखो)
+		वापस ERR_PTR(-EINVAL);
 
-	nvmem = kzalloc(sizeof(*nvmem), GFP_KERNEL);
-	if (!nvmem)
-		return ERR_PTR(-ENOMEM);
+	nvmem = kzalloc(माप(*nvmem), GFP_KERNEL);
+	अगर (!nvmem)
+		वापस ERR_PTR(-ENOMEM);
 
 	rval  = ida_alloc(&nvmem_ida, GFP_KERNEL);
-	if (rval < 0) {
-		kfree(nvmem);
-		return ERR_PTR(rval);
-	}
+	अगर (rval < 0) अणु
+		kमुक्त(nvmem);
+		वापस ERR_PTR(rval);
+	पूर्ण
 
-	if (config->wp_gpio)
+	अगर (config->wp_gpio)
 		nvmem->wp_gpio = config->wp_gpio;
-	else
+	अन्यथा
 		nvmem->wp_gpio = gpiod_get_optional(config->dev, "wp",
 						    GPIOD_OUT_HIGH);
-	if (IS_ERR(nvmem->wp_gpio)) {
-		ida_free(&nvmem_ida, nvmem->id);
+	अगर (IS_ERR(nvmem->wp_gpio)) अणु
+		ida_मुक्त(&nvmem_ida, nvmem->id);
 		rval = PTR_ERR(nvmem->wp_gpio);
-		kfree(nvmem);
-		return ERR_PTR(rval);
-	}
+		kमुक्त(nvmem);
+		वापस ERR_PTR(rval);
+	पूर्ण
 
 	kref_init(&nvmem->refcnt);
 	INIT_LIST_HEAD(&nvmem->cells);
 
 	nvmem->id = rval;
 	nvmem->owner = config->owner;
-	if (!nvmem->owner && config->dev->driver)
+	अगर (!nvmem->owner && config->dev->driver)
 		nvmem->owner = config->dev->driver->owner;
 	nvmem->stride = config->stride ?: 1;
 	nvmem->word_size = config->word_size ?: 1;
@@ -785,235 +786,235 @@ struct nvmem_device *nvmem_register(const struct nvmem_config *config)
 	nvmem->root_only = config->root_only;
 	nvmem->priv = config->priv;
 	nvmem->type = config->type;
-	nvmem->reg_read = config->reg_read;
-	nvmem->reg_write = config->reg_write;
+	nvmem->reg_पढ़ो = config->reg_पढ़ो;
+	nvmem->reg_ग_लिखो = config->reg_ग_लिखो;
 	nvmem->keepout = config->keepout;
 	nvmem->nkeepout = config->nkeepout;
-	if (!config->no_of_node)
+	अगर (!config->no_of_node)
 		nvmem->dev.of_node = config->dev->of_node;
 
-	switch (config->id) {
-	case NVMEM_DEVID_NONE:
+	चयन (config->id) अणु
+	हाल NVMEM_DEVID_NONE:
 		dev_set_name(&nvmem->dev, "%s", config->name);
-		break;
-	case NVMEM_DEVID_AUTO:
+		अवरोध;
+	हाल NVMEM_DEVID_AUTO:
 		dev_set_name(&nvmem->dev, "%s%d", config->name, nvmem->id);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_set_name(&nvmem->dev, "%s%d",
 			     config->name ? : "nvmem",
 			     config->name ? config->id : nvmem->id);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	nvmem->read_only = device_property_present(config->dev, "read-only") ||
-			   config->read_only || !nvmem->reg_write;
+	nvmem->पढ़ो_only = device_property_present(config->dev, "read-only") ||
+			   config->पढ़ो_only || !nvmem->reg_ग_लिखो;
 
-#ifdef CONFIG_NVMEM_SYSFS
+#अगर_घोषित CONFIG_NVMEM_SYSFS
 	nvmem->dev.groups = nvmem_dev_groups;
-#endif
+#पूर्ण_अगर
 
-	if (nvmem->nkeepout) {
+	अगर (nvmem->nkeepout) अणु
 		rval = nvmem_validate_keepouts(nvmem);
-		if (rval)
-			goto err_put_device;
-	}
+		अगर (rval)
+			जाओ err_put_device;
+	पूर्ण
 
 	dev_dbg(&nvmem->dev, "Registering nvmem device %s\n", config->name);
 
-	rval = device_register(&nvmem->dev);
-	if (rval)
-		goto err_put_device;
+	rval = device_रेजिस्टर(&nvmem->dev);
+	अगर (rval)
+		जाओ err_put_device;
 
-	if (config->compat) {
+	अगर (config->compat) अणु
 		rval = nvmem_sysfs_setup_compat(nvmem, config);
-		if (rval)
-			goto err_device_del;
-	}
+		अगर (rval)
+			जाओ err_device_del;
+	पूर्ण
 
-	if (config->cells) {
+	अगर (config->cells) अणु
 		rval = nvmem_add_cells(nvmem, config->cells, config->ncells);
-		if (rval)
-			goto err_teardown_compat;
-	}
+		अगर (rval)
+			जाओ err_tearकरोwn_compat;
+	पूर्ण
 
 	rval = nvmem_add_cells_from_table(nvmem);
-	if (rval)
-		goto err_remove_cells;
+	अगर (rval)
+		जाओ err_हटाओ_cells;
 
 	rval = nvmem_add_cells_from_of(nvmem);
-	if (rval)
-		goto err_remove_cells;
+	अगर (rval)
+		जाओ err_हटाओ_cells;
 
-	blocking_notifier_call_chain(&nvmem_notifier, NVMEM_ADD, nvmem);
+	blocking_notअगरier_call_chain(&nvmem_notअगरier, NVMEM_ADD, nvmem);
 
-	return nvmem;
+	वापस nvmem;
 
-err_remove_cells:
-	nvmem_device_remove_all_cells(nvmem);
-err_teardown_compat:
-	if (config->compat)
-		nvmem_sysfs_remove_compat(nvmem, config);
+err_हटाओ_cells:
+	nvmem_device_हटाओ_all_cells(nvmem);
+err_tearकरोwn_compat:
+	अगर (config->compat)
+		nvmem_sysfs_हटाओ_compat(nvmem, config);
 err_device_del:
 	device_del(&nvmem->dev);
 err_put_device:
 	put_device(&nvmem->dev);
 
-	return ERR_PTR(rval);
-}
-EXPORT_SYMBOL_GPL(nvmem_register);
+	वापस ERR_PTR(rval);
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_रेजिस्टर);
 
-static void nvmem_device_release(struct kref *kref)
-{
-	struct nvmem_device *nvmem;
+अटल व्योम nvmem_device_release(काष्ठा kref *kref)
+अणु
+	काष्ठा nvmem_device *nvmem;
 
-	nvmem = container_of(kref, struct nvmem_device, refcnt);
+	nvmem = container_of(kref, काष्ठा nvmem_device, refcnt);
 
-	blocking_notifier_call_chain(&nvmem_notifier, NVMEM_REMOVE, nvmem);
+	blocking_notअगरier_call_chain(&nvmem_notअगरier, NVMEM_REMOVE, nvmem);
 
-	if (nvmem->flags & FLAG_COMPAT)
-		device_remove_bin_file(nvmem->base_dev, &nvmem->eeprom);
+	अगर (nvmem->flags & FLAG_COMPAT)
+		device_हटाओ_bin_file(nvmem->base_dev, &nvmem->eeprom);
 
-	nvmem_device_remove_all_cells(nvmem);
-	device_unregister(&nvmem->dev);
-}
+	nvmem_device_हटाओ_all_cells(nvmem);
+	device_unरेजिस्टर(&nvmem->dev);
+पूर्ण
 
 /**
- * nvmem_unregister() - Unregister previously registered nvmem device
+ * nvmem_unरेजिस्टर() - Unरेजिस्टर previously रेजिस्टरed nvmem device
  *
- * @nvmem: Pointer to previously registered nvmem device.
+ * @nvmem: Poपूर्णांकer to previously रेजिस्टरed nvmem device.
  */
-void nvmem_unregister(struct nvmem_device *nvmem)
-{
+व्योम nvmem_unरेजिस्टर(काष्ठा nvmem_device *nvmem)
+अणु
 	kref_put(&nvmem->refcnt, nvmem_device_release);
-}
-EXPORT_SYMBOL_GPL(nvmem_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_unरेजिस्टर);
 
-static void devm_nvmem_release(struct device *dev, void *res)
-{
-	nvmem_unregister(*(struct nvmem_device **)res);
-}
+अटल व्योम devm_nvmem_release(काष्ठा device *dev, व्योम *res)
+अणु
+	nvmem_unरेजिस्टर(*(काष्ठा nvmem_device **)res);
+पूर्ण
 
 /**
- * devm_nvmem_register() - Register a managed nvmem device for given
+ * devm_nvmem_रेजिस्टर() - Register a managed nvmem device क्रम given
  * nvmem_config.
  * Also creates a binary entry in /sys/bus/nvmem/devices/dev-name/nvmem
  *
  * @dev: Device that uses the nvmem device.
  * @config: nvmem device configuration with which nvmem device is created.
  *
- * Return: Will be an ERR_PTR() on error or a valid pointer to nvmem_device
+ * Return: Will be an ERR_PTR() on error or a valid poपूर्णांकer to nvmem_device
  * on success.
  */
-struct nvmem_device *devm_nvmem_register(struct device *dev,
-					 const struct nvmem_config *config)
-{
-	struct nvmem_device **ptr, *nvmem;
+काष्ठा nvmem_device *devm_nvmem_रेजिस्टर(काष्ठा device *dev,
+					 स्थिर काष्ठा nvmem_config *config)
+अणु
+	काष्ठा nvmem_device **ptr, *nvmem;
 
-	ptr = devres_alloc(devm_nvmem_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_nvmem_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
-	nvmem = nvmem_register(config);
+	nvmem = nvmem_रेजिस्टर(config);
 
-	if (!IS_ERR(nvmem)) {
+	अगर (!IS_ERR(nvmem)) अणु
 		*ptr = nvmem;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return nvmem;
-}
-EXPORT_SYMBOL_GPL(devm_nvmem_register);
+	वापस nvmem;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_nvmem_रेजिस्टर);
 
-static int devm_nvmem_match(struct device *dev, void *res, void *data)
-{
-	struct nvmem_device **r = res;
+अटल पूर्णांक devm_nvmem_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा nvmem_device **r = res;
 
-	return *r == data;
-}
+	वापस *r == data;
+पूर्ण
 
 /**
- * devm_nvmem_unregister() - Unregister previously registered managed nvmem
+ * devm_nvmem_unरेजिस्टर() - Unरेजिस्टर previously रेजिस्टरed managed nvmem
  * device.
  *
  * @dev: Device that uses the nvmem device.
- * @nvmem: Pointer to previously registered nvmem device.
+ * @nvmem: Poपूर्णांकer to previously रेजिस्टरed nvmem device.
  *
  * Return: Will be negative on error or zero on success.
  */
-int devm_nvmem_unregister(struct device *dev, struct nvmem_device *nvmem)
-{
-	return devres_release(dev, devm_nvmem_release, devm_nvmem_match, nvmem);
-}
-EXPORT_SYMBOL(devm_nvmem_unregister);
+पूर्णांक devm_nvmem_unरेजिस्टर(काष्ठा device *dev, काष्ठा nvmem_device *nvmem)
+अणु
+	वापस devres_release(dev, devm_nvmem_release, devm_nvmem_match, nvmem);
+पूर्ण
+EXPORT_SYMBOL(devm_nvmem_unरेजिस्टर);
 
-static struct nvmem_device *__nvmem_device_get(void *data,
-			int (*match)(struct device *dev, const void *data))
-{
-	struct nvmem_device *nvmem = NULL;
-	struct device *dev;
+अटल काष्ठा nvmem_device *__nvmem_device_get(व्योम *data,
+			पूर्णांक (*match)(काष्ठा device *dev, स्थिर व्योम *data))
+अणु
+	काष्ठा nvmem_device *nvmem = शून्य;
+	काष्ठा device *dev;
 
 	mutex_lock(&nvmem_mutex);
-	dev = bus_find_device(&nvmem_bus_type, NULL, data, match);
-	if (dev)
+	dev = bus_find_device(&nvmem_bus_type, शून्य, data, match);
+	अगर (dev)
 		nvmem = to_nvmem_device(dev);
 	mutex_unlock(&nvmem_mutex);
-	if (!nvmem)
-		return ERR_PTR(-EPROBE_DEFER);
+	अगर (!nvmem)
+		वापस ERR_PTR(-EPROBE_DEFER);
 
-	if (!try_module_get(nvmem->owner)) {
+	अगर (!try_module_get(nvmem->owner)) अणु
 		dev_err(&nvmem->dev,
 			"could not increase module refcount for cell %s\n",
 			nvmem_dev_name(nvmem));
 
 		put_device(&nvmem->dev);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	kref_get(&nvmem->refcnt);
 
-	return nvmem;
-}
+	वापस nvmem;
+पूर्ण
 
-static void __nvmem_device_put(struct nvmem_device *nvmem)
-{
+अटल व्योम __nvmem_device_put(काष्ठा nvmem_device *nvmem)
+अणु
 	put_device(&nvmem->dev);
 	module_put(nvmem->owner);
 	kref_put(&nvmem->refcnt, nvmem_device_release);
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_OF)
+#अगर IS_ENABLED(CONFIG_OF)
 /**
  * of_nvmem_device_get() - Get nvmem device from a given id
  *
  * @np: Device tree node that uses the nvmem device.
  * @id: nvmem name from nvmem-names property.
  *
- * Return: ERR_PTR() on error or a valid pointer to a struct nvmem_device
+ * Return: ERR_PTR() on error or a valid poपूर्णांकer to a काष्ठा nvmem_device
  * on success.
  */
-struct nvmem_device *of_nvmem_device_get(struct device_node *np, const char *id)
-{
+काष्ठा nvmem_device *of_nvmem_device_get(काष्ठा device_node *np, स्थिर अक्षर *id)
+अणु
 
-	struct device_node *nvmem_np;
-	struct nvmem_device *nvmem;
-	int index = 0;
+	काष्ठा device_node *nvmem_np;
+	काष्ठा nvmem_device *nvmem;
+	पूर्णांक index = 0;
 
-	if (id)
+	अगर (id)
 		index = of_property_match_string(np, "nvmem-names", id);
 
 	nvmem_np = of_parse_phandle(np, "nvmem", index);
-	if (!nvmem_np)
-		return ERR_PTR(-ENOENT);
+	अगर (!nvmem_np)
+		वापस ERR_PTR(-ENOENT);
 
 	nvmem = __nvmem_device_get(nvmem_np, device_match_of_node);
 	of_node_put(nvmem_np);
-	return nvmem;
-}
+	वापस nvmem;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_nvmem_device_get);
-#endif
+#पूर्ण_अगर
 
 /**
  * nvmem_device_get() - Get nvmem device from a given id
@@ -1021,23 +1022,23 @@ EXPORT_SYMBOL_GPL(of_nvmem_device_get);
  * @dev: Device that uses the nvmem device.
  * @dev_name: name of the requested nvmem device.
  *
- * Return: ERR_PTR() on error or a valid pointer to a struct nvmem_device
+ * Return: ERR_PTR() on error or a valid poपूर्णांकer to a काष्ठा nvmem_device
  * on success.
  */
-struct nvmem_device *nvmem_device_get(struct device *dev, const char *dev_name)
-{
-	if (dev->of_node) { /* try dt first */
-		struct nvmem_device *nvmem;
+काष्ठा nvmem_device *nvmem_device_get(काष्ठा device *dev, स्थिर अक्षर *dev_name)
+अणु
+	अगर (dev->of_node) अणु /* try dt first */
+		काष्ठा nvmem_device *nvmem;
 
 		nvmem = of_nvmem_device_get(dev->of_node, dev_name);
 
-		if (!IS_ERR(nvmem) || PTR_ERR(nvmem) == -EPROBE_DEFER)
-			return nvmem;
+		अगर (!IS_ERR(nvmem) || PTR_ERR(nvmem) == -EPROBE_DEFER)
+			वापस nvmem;
 
-	}
+	पूर्ण
 
-	return __nvmem_device_get((void *)dev_name, device_match_name);
-}
+	वापस __nvmem_device_get((व्योम *)dev_name, device_match_name);
+पूर्ण
 EXPORT_SYMBOL_GPL(nvmem_device_get);
 
 /**
@@ -1046,270 +1047,270 @@ EXPORT_SYMBOL_GPL(nvmem_device_get);
  * @data: Data to pass to match function
  * @match: Callback function to check device
  *
- * Return: ERR_PTR() on error or a valid pointer to a struct nvmem_device
+ * Return: ERR_PTR() on error or a valid poपूर्णांकer to a काष्ठा nvmem_device
  * on success.
  */
-struct nvmem_device *nvmem_device_find(void *data,
-			int (*match)(struct device *dev, const void *data))
-{
-	return __nvmem_device_get(data, match);
-}
+काष्ठा nvmem_device *nvmem_device_find(व्योम *data,
+			पूर्णांक (*match)(काष्ठा device *dev, स्थिर व्योम *data))
+अणु
+	वापस __nvmem_device_get(data, match);
+पूर्ण
 EXPORT_SYMBOL_GPL(nvmem_device_find);
 
-static int devm_nvmem_device_match(struct device *dev, void *res, void *data)
-{
-	struct nvmem_device **nvmem = res;
+अटल पूर्णांक devm_nvmem_device_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा nvmem_device **nvmem = res;
 
-	if (WARN_ON(!nvmem || !*nvmem))
-		return 0;
+	अगर (WARN_ON(!nvmem || !*nvmem))
+		वापस 0;
 
-	return *nvmem == data;
-}
+	वापस *nvmem == data;
+पूर्ण
 
-static void devm_nvmem_device_release(struct device *dev, void *res)
-{
-	nvmem_device_put(*(struct nvmem_device **)res);
-}
+अटल व्योम devm_nvmem_device_release(काष्ठा device *dev, व्योम *res)
+अणु
+	nvmem_device_put(*(काष्ठा nvmem_device **)res);
+पूर्ण
 
 /**
  * devm_nvmem_device_put() - put alredy got nvmem device
  *
  * @dev: Device that uses the nvmem device.
- * @nvmem: pointer to nvmem device allocated by devm_nvmem_cell_get(),
+ * @nvmem: poपूर्णांकer to nvmem device allocated by devm_nvmem_cell_get(),
  * that needs to be released.
  */
-void devm_nvmem_device_put(struct device *dev, struct nvmem_device *nvmem)
-{
-	int ret;
+व्योम devm_nvmem_device_put(काष्ठा device *dev, काष्ठा nvmem_device *nvmem)
+अणु
+	पूर्णांक ret;
 
 	ret = devres_release(dev, devm_nvmem_device_release,
 			     devm_nvmem_device_match, nvmem);
 
 	WARN_ON(ret);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_nvmem_device_put);
 
 /**
  * nvmem_device_put() - put alredy got nvmem device
  *
- * @nvmem: pointer to nvmem device that needs to be released.
+ * @nvmem: poपूर्णांकer to nvmem device that needs to be released.
  */
-void nvmem_device_put(struct nvmem_device *nvmem)
-{
+व्योम nvmem_device_put(काष्ठा nvmem_device *nvmem)
+अणु
 	__nvmem_device_put(nvmem);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nvmem_device_put);
 
 /**
- * devm_nvmem_device_get() - Get nvmem cell of device form a given id
+ * devm_nvmem_device_get() - Get nvmem cell of device क्रमm a given id
  *
  * @dev: Device that requests the nvmem device.
- * @id: name id for the requested nvmem device.
+ * @id: name id क्रम the requested nvmem device.
  *
- * Return: ERR_PTR() on error or a valid pointer to a struct nvmem_cell
- * on success.  The nvmem_cell will be freed by the automatically once the
- * device is freed.
+ * Return: ERR_PTR() on error or a valid poपूर्णांकer to a काष्ठा nvmem_cell
+ * on success.  The nvmem_cell will be मुक्तd by the स्वतःmatically once the
+ * device is मुक्तd.
  */
-struct nvmem_device *devm_nvmem_device_get(struct device *dev, const char *id)
-{
-	struct nvmem_device **ptr, *nvmem;
+काष्ठा nvmem_device *devm_nvmem_device_get(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	काष्ठा nvmem_device **ptr, *nvmem;
 
-	ptr = devres_alloc(devm_nvmem_device_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_nvmem_device_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
 	nvmem = nvmem_device_get(dev, id);
-	if (!IS_ERR(nvmem)) {
+	अगर (!IS_ERR(nvmem)) अणु
 		*ptr = nvmem;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return nvmem;
-}
+	वापस nvmem;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_nvmem_device_get);
 
-static struct nvmem_cell *
-nvmem_cell_get_from_lookup(struct device *dev, const char *con_id)
-{
-	struct nvmem_cell *cell = ERR_PTR(-ENOENT);
-	struct nvmem_cell_lookup *lookup;
-	struct nvmem_device *nvmem;
-	const char *dev_id;
+अटल काष्ठा nvmem_cell *
+nvmem_cell_get_from_lookup(काष्ठा device *dev, स्थिर अक्षर *con_id)
+अणु
+	काष्ठा nvmem_cell *cell = ERR_PTR(-ENOENT);
+	काष्ठा nvmem_cell_lookup *lookup;
+	काष्ठा nvmem_device *nvmem;
+	स्थिर अक्षर *dev_id;
 
-	if (!dev)
-		return ERR_PTR(-EINVAL);
+	अगर (!dev)
+		वापस ERR_PTR(-EINVAL);
 
 	dev_id = dev_name(dev);
 
 	mutex_lock(&nvmem_lookup_mutex);
 
-	list_for_each_entry(lookup, &nvmem_lookup_list, node) {
-		if ((strcmp(lookup->dev_id, dev_id) == 0) &&
-		    (strcmp(lookup->con_id, con_id) == 0)) {
+	list_क्रम_each_entry(lookup, &nvmem_lookup_list, node) अणु
+		अगर ((म_भेद(lookup->dev_id, dev_id) == 0) &&
+		    (म_भेद(lookup->con_id, con_id) == 0)) अणु
 			/* This is the right entry. */
-			nvmem = __nvmem_device_get((void *)lookup->nvmem_name,
+			nvmem = __nvmem_device_get((व्योम *)lookup->nvmem_name,
 						   device_match_name);
-			if (IS_ERR(nvmem)) {
-				/* Provider may not be registered yet. */
+			अगर (IS_ERR(nvmem)) अणु
+				/* Provider may not be रेजिस्टरed yet. */
 				cell = ERR_CAST(nvmem);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			cell = nvmem_find_cell_by_name(nvmem,
 						       lookup->cell_name);
-			if (!cell) {
+			अगर (!cell) अणु
 				__nvmem_device_put(nvmem);
 				cell = ERR_PTR(-ENOENT);
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&nvmem_lookup_mutex);
-	return cell;
-}
+	वापस cell;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_OF)
-static struct nvmem_cell *
-nvmem_find_cell_by_node(struct nvmem_device *nvmem, struct device_node *np)
-{
-	struct nvmem_cell *iter, *cell = NULL;
+#अगर IS_ENABLED(CONFIG_OF)
+अटल काष्ठा nvmem_cell *
+nvmem_find_cell_by_node(काष्ठा nvmem_device *nvmem, काष्ठा device_node *np)
+अणु
+	काष्ठा nvmem_cell *iter, *cell = शून्य;
 
 	mutex_lock(&nvmem_mutex);
-	list_for_each_entry(iter, &nvmem->cells, node) {
-		if (np == iter->np) {
+	list_क्रम_each_entry(iter, &nvmem->cells, node) अणु
+		अगर (np == iter->np) अणु
 			cell = iter;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&nvmem_mutex);
 
-	return cell;
-}
+	वापस cell;
+पूर्ण
 
 /**
  * of_nvmem_cell_get() - Get a nvmem cell from given device node and cell id
  *
  * @np: Device tree node that uses the nvmem cell.
- * @id: nvmem cell name from nvmem-cell-names property, or NULL
- *      for the cell at index 0 (the lone cell with no accompanying
+ * @id: nvmem cell name from nvmem-cell-names property, or शून्य
+ *      क्रम the cell at index 0 (the lone cell with no accompanying
  *      nvmem-cell-names property).
  *
- * Return: Will be an ERR_PTR() on error or a valid pointer
- * to a struct nvmem_cell.  The nvmem_cell will be freed by the
+ * Return: Will be an ERR_PTR() on error or a valid poपूर्णांकer
+ * to a काष्ठा nvmem_cell.  The nvmem_cell will be मुक्तd by the
  * nvmem_cell_put().
  */
-struct nvmem_cell *of_nvmem_cell_get(struct device_node *np, const char *id)
-{
-	struct device_node *cell_np, *nvmem_np;
-	struct nvmem_device *nvmem;
-	struct nvmem_cell *cell;
-	int index = 0;
+काष्ठा nvmem_cell *of_nvmem_cell_get(काष्ठा device_node *np, स्थिर अक्षर *id)
+अणु
+	काष्ठा device_node *cell_np, *nvmem_np;
+	काष्ठा nvmem_device *nvmem;
+	काष्ठा nvmem_cell *cell;
+	पूर्णांक index = 0;
 
-	/* if cell name exists, find index to the name */
-	if (id)
+	/* अगर cell name exists, find index to the name */
+	अगर (id)
 		index = of_property_match_string(np, "nvmem-cell-names", id);
 
 	cell_np = of_parse_phandle(np, "nvmem-cells", index);
-	if (!cell_np)
-		return ERR_PTR(-ENOENT);
+	अगर (!cell_np)
+		वापस ERR_PTR(-ENOENT);
 
 	nvmem_np = of_get_next_parent(cell_np);
-	if (!nvmem_np)
-		return ERR_PTR(-EINVAL);
+	अगर (!nvmem_np)
+		वापस ERR_PTR(-EINVAL);
 
 	nvmem = __nvmem_device_get(nvmem_np, device_match_of_node);
 	of_node_put(nvmem_np);
-	if (IS_ERR(nvmem))
-		return ERR_CAST(nvmem);
+	अगर (IS_ERR(nvmem))
+		वापस ERR_CAST(nvmem);
 
 	cell = nvmem_find_cell_by_node(nvmem, cell_np);
-	if (!cell) {
+	अगर (!cell) अणु
 		__nvmem_device_put(nvmem);
-		return ERR_PTR(-ENOENT);
-	}
+		वापस ERR_PTR(-ENOENT);
+	पूर्ण
 
-	return cell;
-}
+	वापस cell;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_nvmem_cell_get);
-#endif
+#पूर्ण_अगर
 
 /**
- * nvmem_cell_get() - Get nvmem cell of device form a given cell name
+ * nvmem_cell_get() - Get nvmem cell of device क्रमm a given cell name
  *
  * @dev: Device that requests the nvmem cell.
  * @id: nvmem cell name to get (this corresponds with the name from the
- *      nvmem-cell-names property for DT systems and with the con_id from
- *      the lookup entry for non-DT systems).
+ *      nvmem-cell-names property क्रम DT प्रणालीs and with the con_id from
+ *      the lookup entry क्रम non-DT प्रणालीs).
  *
- * Return: Will be an ERR_PTR() on error or a valid pointer
- * to a struct nvmem_cell.  The nvmem_cell will be freed by the
+ * Return: Will be an ERR_PTR() on error or a valid poपूर्णांकer
+ * to a काष्ठा nvmem_cell.  The nvmem_cell will be मुक्तd by the
  * nvmem_cell_put().
  */
-struct nvmem_cell *nvmem_cell_get(struct device *dev, const char *id)
-{
-	struct nvmem_cell *cell;
+काष्ठा nvmem_cell *nvmem_cell_get(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	काष्ठा nvmem_cell *cell;
 
-	if (dev->of_node) { /* try dt first */
+	अगर (dev->of_node) अणु /* try dt first */
 		cell = of_nvmem_cell_get(dev->of_node, id);
-		if (!IS_ERR(cell) || PTR_ERR(cell) == -EPROBE_DEFER)
-			return cell;
-	}
+		अगर (!IS_ERR(cell) || PTR_ERR(cell) == -EPROBE_DEFER)
+			वापस cell;
+	पूर्ण
 
-	/* NULL cell id only allowed for device tree; invalid otherwise */
-	if (!id)
-		return ERR_PTR(-EINVAL);
+	/* शून्य cell id only allowed क्रम device tree; invalid otherwise */
+	अगर (!id)
+		वापस ERR_PTR(-EINVAL);
 
-	return nvmem_cell_get_from_lookup(dev, id);
-}
+	वापस nvmem_cell_get_from_lookup(dev, id);
+पूर्ण
 EXPORT_SYMBOL_GPL(nvmem_cell_get);
 
-static void devm_nvmem_cell_release(struct device *dev, void *res)
-{
-	nvmem_cell_put(*(struct nvmem_cell **)res);
-}
+अटल व्योम devm_nvmem_cell_release(काष्ठा device *dev, व्योम *res)
+अणु
+	nvmem_cell_put(*(काष्ठा nvmem_cell **)res);
+पूर्ण
 
 /**
- * devm_nvmem_cell_get() - Get nvmem cell of device form a given id
+ * devm_nvmem_cell_get() - Get nvmem cell of device क्रमm a given id
  *
  * @dev: Device that requests the nvmem cell.
  * @id: nvmem cell name id to get.
  *
- * Return: Will be an ERR_PTR() on error or a valid pointer
- * to a struct nvmem_cell.  The nvmem_cell will be freed by the
- * automatically once the device is freed.
+ * Return: Will be an ERR_PTR() on error or a valid poपूर्णांकer
+ * to a काष्ठा nvmem_cell.  The nvmem_cell will be मुक्तd by the
+ * स्वतःmatically once the device is मुक्तd.
  */
-struct nvmem_cell *devm_nvmem_cell_get(struct device *dev, const char *id)
-{
-	struct nvmem_cell **ptr, *cell;
+काष्ठा nvmem_cell *devm_nvmem_cell_get(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	काष्ठा nvmem_cell **ptr, *cell;
 
-	ptr = devres_alloc(devm_nvmem_cell_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_nvmem_cell_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
 	cell = nvmem_cell_get(dev, id);
-	if (!IS_ERR(cell)) {
+	अगर (!IS_ERR(cell)) अणु
 		*ptr = cell;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return cell;
-}
+	वापस cell;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_nvmem_cell_get);
 
-static int devm_nvmem_cell_match(struct device *dev, void *res, void *data)
-{
-	struct nvmem_cell **c = res;
+अटल पूर्णांक devm_nvmem_cell_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा nvmem_cell **c = res;
 
-	if (WARN_ON(!c || !*c))
-		return 0;
+	अगर (WARN_ON(!c || !*c))
+		वापस 0;
 
-	return *c == data;
-}
+	वापस *c == data;
+पूर्ण
 
 /**
  * devm_nvmem_cell_put() - Release previously allocated nvmem cell
@@ -1318,15 +1319,15 @@ static int devm_nvmem_cell_match(struct device *dev, void *res, void *data)
  * @dev: Device that requests the nvmem cell.
  * @cell: Previously allocated nvmem cell by devm_nvmem_cell_get().
  */
-void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell)
-{
-	int ret;
+व्योम devm_nvmem_cell_put(काष्ठा device *dev, काष्ठा nvmem_cell *cell)
+अणु
+	पूर्णांक ret;
 
 	ret = devres_release(dev, devm_nvmem_cell_release,
 				devm_nvmem_cell_match, cell);
 
 	WARN_ON(ret);
-}
+पूर्ण
 EXPORT_SYMBOL(devm_nvmem_cell_put);
 
 /**
@@ -1334,155 +1335,155 @@ EXPORT_SYMBOL(devm_nvmem_cell_put);
  *
  * @cell: Previously allocated nvmem cell by nvmem_cell_get().
  */
-void nvmem_cell_put(struct nvmem_cell *cell)
-{
-	struct nvmem_device *nvmem = cell->nvmem;
+व्योम nvmem_cell_put(काष्ठा nvmem_cell *cell)
+अणु
+	काष्ठा nvmem_device *nvmem = cell->nvmem;
 
 	__nvmem_device_put(nvmem);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nvmem_cell_put);
 
-static void nvmem_shift_read_buffer_in_place(struct nvmem_cell *cell, void *buf)
-{
+अटल व्योम nvmem_shअगरt_पढ़ो_buffer_in_place(काष्ठा nvmem_cell *cell, व्योम *buf)
+अणु
 	u8 *p, *b;
-	int i, extra, bit_offset = cell->bit_offset;
+	पूर्णांक i, extra, bit_offset = cell->bit_offset;
 
 	p = b = buf;
-	if (bit_offset) {
-		/* First shift */
+	अगर (bit_offset) अणु
+		/* First shअगरt */
 		*b++ >>= bit_offset;
 
-		/* setup rest of the bytes if any */
-		for (i = 1; i < cell->bytes; i++) {
-			/* Get bits from next byte and shift them towards msb */
+		/* setup rest of the bytes अगर any */
+		क्रम (i = 1; i < cell->bytes; i++) अणु
+			/* Get bits from next byte and shअगरt them towards msb */
 			*p |= *b << (BITS_PER_BYTE - bit_offset);
 
 			p = b;
 			*b++ >>= bit_offset;
-		}
-	} else {
-		/* point to the msb */
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* poपूर्णांक to the msb */
 		p += cell->bytes - 1;
-	}
+	पूर्ण
 
 	/* result fits in less bytes */
 	extra = cell->bytes - DIV_ROUND_UP(cell->nbits, BITS_PER_BYTE);
-	while (--extra >= 0)
+	जबतक (--extra >= 0)
 		*p-- = 0;
 
-	/* clear msb bits if any leftover in the last byte */
+	/* clear msb bits अगर any leftover in the last byte */
 	*p &= GENMASK((cell->nbits%BITS_PER_BYTE) - 1, 0);
-}
+पूर्ण
 
-static int __nvmem_cell_read(struct nvmem_device *nvmem,
-		      struct nvmem_cell *cell,
-		      void *buf, size_t *len)
-{
-	int rc;
+अटल पूर्णांक __nvmem_cell_पढ़ो(काष्ठा nvmem_device *nvmem,
+		      काष्ठा nvmem_cell *cell,
+		      व्योम *buf, माप_प्रकार *len)
+अणु
+	पूर्णांक rc;
 
-	rc = nvmem_reg_read(nvmem, cell->offset, buf, cell->bytes);
+	rc = nvmem_reg_पढ़ो(nvmem, cell->offset, buf, cell->bytes);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* shift bits in-place */
-	if (cell->bit_offset || cell->nbits)
-		nvmem_shift_read_buffer_in_place(cell, buf);
+	/* shअगरt bits in-place */
+	अगर (cell->bit_offset || cell->nbits)
+		nvmem_shअगरt_पढ़ो_buffer_in_place(cell, buf);
 
-	if (len)
+	अगर (len)
 		*len = cell->bytes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nvmem_cell_read() - Read a given nvmem cell
+ * nvmem_cell_पढ़ो() - Read a given nvmem cell
  *
- * @cell: nvmem cell to be read.
- * @len: pointer to length of cell which will be populated on successful read;
- *	 can be NULL.
+ * @cell: nvmem cell to be पढ़ो.
+ * @len: poपूर्णांकer to length of cell which will be populated on successful पढ़ो;
+ *	 can be शून्य.
  *
- * Return: ERR_PTR() on error or a valid pointer to a buffer on success. The
- * buffer should be freed by the consumer with a kfree().
+ * Return: ERR_PTR() on error or a valid poपूर्णांकer to a buffer on success. The
+ * buffer should be मुक्तd by the consumer with a kमुक्त().
  */
-void *nvmem_cell_read(struct nvmem_cell *cell, size_t *len)
-{
-	struct nvmem_device *nvmem = cell->nvmem;
+व्योम *nvmem_cell_पढ़ो(काष्ठा nvmem_cell *cell, माप_प्रकार *len)
+अणु
+	काष्ठा nvmem_device *nvmem = cell->nvmem;
 	u8 *buf;
-	int rc;
+	पूर्णांक rc;
 
-	if (!nvmem)
-		return ERR_PTR(-EINVAL);
+	अगर (!nvmem)
+		वापस ERR_PTR(-EINVAL);
 
 	buf = kzalloc(cell->bytes, GFP_KERNEL);
-	if (!buf)
-		return ERR_PTR(-ENOMEM);
+	अगर (!buf)
+		वापस ERR_PTR(-ENOMEM);
 
-	rc = __nvmem_cell_read(nvmem, cell, buf, len);
-	if (rc) {
-		kfree(buf);
-		return ERR_PTR(rc);
-	}
+	rc = __nvmem_cell_पढ़ो(nvmem, cell, buf, len);
+	अगर (rc) अणु
+		kमुक्त(buf);
+		वापस ERR_PTR(rc);
+	पूर्ण
 
-	return buf;
-}
-EXPORT_SYMBOL_GPL(nvmem_cell_read);
+	वापस buf;
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_cell_पढ़ो);
 
-static void *nvmem_cell_prepare_write_buffer(struct nvmem_cell *cell,
-					     u8 *_buf, int len)
-{
-	struct nvmem_device *nvmem = cell->nvmem;
-	int i, rc, nbits, bit_offset = cell->bit_offset;
+अटल व्योम *nvmem_cell_prepare_ग_लिखो_buffer(काष्ठा nvmem_cell *cell,
+					     u8 *_buf, पूर्णांक len)
+अणु
+	काष्ठा nvmem_device *nvmem = cell->nvmem;
+	पूर्णांक i, rc, nbits, bit_offset = cell->bit_offset;
 	u8 v, *p, *buf, *b, pbyte, pbits;
 
 	nbits = cell->nbits;
 	buf = kzalloc(cell->bytes, GFP_KERNEL);
-	if (!buf)
-		return ERR_PTR(-ENOMEM);
+	अगर (!buf)
+		वापस ERR_PTR(-ENOMEM);
 
-	memcpy(buf, _buf, len);
+	स_नकल(buf, _buf, len);
 	p = b = buf;
 
-	if (bit_offset) {
+	अगर (bit_offset) अणु
 		pbyte = *b;
 		*b <<= bit_offset;
 
 		/* setup the first byte with lsb bits from nvmem */
-		rc = nvmem_reg_read(nvmem, cell->offset, &v, 1);
-		if (rc)
-			goto err;
+		rc = nvmem_reg_पढ़ो(nvmem, cell->offset, &v, 1);
+		अगर (rc)
+			जाओ err;
 		*b++ |= GENMASK(bit_offset - 1, 0) & v;
 
-		/* setup rest of the byte if any */
-		for (i = 1; i < cell->bytes; i++) {
-			/* Get last byte bits and shift them towards lsb */
+		/* setup rest of the byte अगर any */
+		क्रम (i = 1; i < cell->bytes; i++) अणु
+			/* Get last byte bits and shअगरt them towards lsb */
 			pbits = pbyte >> (BITS_PER_BYTE - 1 - bit_offset);
 			pbyte = *b;
 			p = b;
 			*b <<= bit_offset;
 			*b++ |= pbits;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* if it's not end on byte boundary */
-	if ((nbits + bit_offset) % BITS_PER_BYTE) {
+	/* अगर it's not end on byte boundary */
+	अगर ((nbits + bit_offset) % BITS_PER_BYTE) अणु
 		/* setup the last byte with msb bits from nvmem */
-		rc = nvmem_reg_read(nvmem,
+		rc = nvmem_reg_पढ़ो(nvmem,
 				    cell->offset + cell->bytes - 1, &v, 1);
-		if (rc)
-			goto err;
+		अगर (rc)
+			जाओ err;
 		*p |= GENMASK(7, (nbits + bit_offset) % BITS_PER_BYTE) & v;
 
-	}
+	पूर्ण
 
-	return buf;
+	वापस buf;
 err:
-	kfree(buf);
-	return ERR_PTR(rc);
-}
+	kमुक्त(buf);
+	वापस ERR_PTR(rc);
+पूर्ण
 
 /**
- * nvmem_cell_write() - Write to a given nvmem cell
+ * nvmem_cell_ग_लिखो() - Write to a given nvmem cell
  *
  * @cell: nvmem cell to be written.
  * @buf: Buffer to be written.
@@ -1490,251 +1491,251 @@ err:
  *
  * Return: length of bytes written or negative on failure.
  */
-int nvmem_cell_write(struct nvmem_cell *cell, void *buf, size_t len)
-{
-	struct nvmem_device *nvmem = cell->nvmem;
-	int rc;
+पूर्णांक nvmem_cell_ग_लिखो(काष्ठा nvmem_cell *cell, व्योम *buf, माप_प्रकार len)
+अणु
+	काष्ठा nvmem_device *nvmem = cell->nvmem;
+	पूर्णांक rc;
 
-	if (!nvmem || nvmem->read_only ||
+	अगर (!nvmem || nvmem->पढ़ो_only ||
 	    (cell->bit_offset == 0 && len != cell->bytes))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (cell->bit_offset || cell->nbits) {
-		buf = nvmem_cell_prepare_write_buffer(cell, buf, len);
-		if (IS_ERR(buf))
-			return PTR_ERR(buf);
-	}
+	अगर (cell->bit_offset || cell->nbits) अणु
+		buf = nvmem_cell_prepare_ग_लिखो_buffer(cell, buf, len);
+		अगर (IS_ERR(buf))
+			वापस PTR_ERR(buf);
+	पूर्ण
 
-	rc = nvmem_reg_write(nvmem, cell->offset, buf, cell->bytes);
+	rc = nvmem_reg_ग_लिखो(nvmem, cell->offset, buf, cell->bytes);
 
-	/* free the tmp buffer */
-	if (cell->bit_offset || cell->nbits)
-		kfree(buf);
+	/* मुक्त the पंचांगp buffer */
+	अगर (cell->bit_offset || cell->nbits)
+		kमुक्त(buf);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return len;
-}
-EXPORT_SYMBOL_GPL(nvmem_cell_write);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_cell_ग_लिखो);
 
-static int nvmem_cell_read_common(struct device *dev, const char *cell_id,
-				  void *val, size_t count)
-{
-	struct nvmem_cell *cell;
-	void *buf;
-	size_t len;
+अटल पूर्णांक nvmem_cell_पढ़ो_common(काष्ठा device *dev, स्थिर अक्षर *cell_id,
+				  व्योम *val, माप_प्रकार count)
+अणु
+	काष्ठा nvmem_cell *cell;
+	व्योम *buf;
+	माप_प्रकार len;
 
 	cell = nvmem_cell_get(dev, cell_id);
-	if (IS_ERR(cell))
-		return PTR_ERR(cell);
+	अगर (IS_ERR(cell))
+		वापस PTR_ERR(cell);
 
-	buf = nvmem_cell_read(cell, &len);
-	if (IS_ERR(buf)) {
+	buf = nvmem_cell_पढ़ो(cell, &len);
+	अगर (IS_ERR(buf)) अणु
 		nvmem_cell_put(cell);
-		return PTR_ERR(buf);
-	}
-	if (len != count) {
-		kfree(buf);
+		वापस PTR_ERR(buf);
+	पूर्ण
+	अगर (len != count) अणु
+		kमुक्त(buf);
 		nvmem_cell_put(cell);
-		return -EINVAL;
-	}
-	memcpy(val, buf, count);
-	kfree(buf);
+		वापस -EINVAL;
+	पूर्ण
+	स_नकल(val, buf, count);
+	kमुक्त(buf);
 	nvmem_cell_put(cell);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nvmem_cell_read_u8() - Read a cell value as a u8
+ * nvmem_cell_पढ़ो_u8() - Read a cell value as a u8
  *
  * @dev: Device that requests the nvmem cell.
- * @cell_id: Name of nvmem cell to read.
- * @val: pointer to output value.
+ * @cell_id: Name of nvmem cell to पढ़ो.
+ * @val: poपूर्णांकer to output value.
  *
- * Return: 0 on success or negative errno.
+ * Return: 0 on success or negative त्रुटि_सं.
  */
-int nvmem_cell_read_u8(struct device *dev, const char *cell_id, u8 *val)
-{
-	return nvmem_cell_read_common(dev, cell_id, val, sizeof(*val));
-}
-EXPORT_SYMBOL_GPL(nvmem_cell_read_u8);
+पूर्णांक nvmem_cell_पढ़ो_u8(काष्ठा device *dev, स्थिर अक्षर *cell_id, u8 *val)
+अणु
+	वापस nvmem_cell_पढ़ो_common(dev, cell_id, val, माप(*val));
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_cell_पढ़ो_u8);
 
 /**
- * nvmem_cell_read_u16() - Read a cell value as a u16
+ * nvmem_cell_पढ़ो_u16() - Read a cell value as a u16
  *
  * @dev: Device that requests the nvmem cell.
- * @cell_id: Name of nvmem cell to read.
- * @val: pointer to output value.
+ * @cell_id: Name of nvmem cell to पढ़ो.
+ * @val: poपूर्णांकer to output value.
  *
- * Return: 0 on success or negative errno.
+ * Return: 0 on success or negative त्रुटि_सं.
  */
-int nvmem_cell_read_u16(struct device *dev, const char *cell_id, u16 *val)
-{
-	return nvmem_cell_read_common(dev, cell_id, val, sizeof(*val));
-}
-EXPORT_SYMBOL_GPL(nvmem_cell_read_u16);
+पूर्णांक nvmem_cell_पढ़ो_u16(काष्ठा device *dev, स्थिर अक्षर *cell_id, u16 *val)
+अणु
+	वापस nvmem_cell_पढ़ो_common(dev, cell_id, val, माप(*val));
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_cell_पढ़ो_u16);
 
 /**
- * nvmem_cell_read_u32() - Read a cell value as a u32
+ * nvmem_cell_पढ़ो_u32() - Read a cell value as a u32
  *
  * @dev: Device that requests the nvmem cell.
- * @cell_id: Name of nvmem cell to read.
- * @val: pointer to output value.
+ * @cell_id: Name of nvmem cell to पढ़ो.
+ * @val: poपूर्णांकer to output value.
  *
- * Return: 0 on success or negative errno.
+ * Return: 0 on success or negative त्रुटि_सं.
  */
-int nvmem_cell_read_u32(struct device *dev, const char *cell_id, u32 *val)
-{
-	return nvmem_cell_read_common(dev, cell_id, val, sizeof(*val));
-}
-EXPORT_SYMBOL_GPL(nvmem_cell_read_u32);
+पूर्णांक nvmem_cell_पढ़ो_u32(काष्ठा device *dev, स्थिर अक्षर *cell_id, u32 *val)
+अणु
+	वापस nvmem_cell_पढ़ो_common(dev, cell_id, val, माप(*val));
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_cell_पढ़ो_u32);
 
 /**
- * nvmem_cell_read_u64() - Read a cell value as a u64
+ * nvmem_cell_पढ़ो_u64() - Read a cell value as a u64
  *
  * @dev: Device that requests the nvmem cell.
- * @cell_id: Name of nvmem cell to read.
- * @val: pointer to output value.
+ * @cell_id: Name of nvmem cell to पढ़ो.
+ * @val: poपूर्णांकer to output value.
  *
- * Return: 0 on success or negative errno.
+ * Return: 0 on success or negative त्रुटि_सं.
  */
-int nvmem_cell_read_u64(struct device *dev, const char *cell_id, u64 *val)
-{
-	return nvmem_cell_read_common(dev, cell_id, val, sizeof(*val));
-}
-EXPORT_SYMBOL_GPL(nvmem_cell_read_u64);
+पूर्णांक nvmem_cell_पढ़ो_u64(काष्ठा device *dev, स्थिर अक्षर *cell_id, u64 *val)
+अणु
+	वापस nvmem_cell_पढ़ो_common(dev, cell_id, val, माप(*val));
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_cell_पढ़ो_u64);
 
-static void *nvmem_cell_read_variable_common(struct device *dev,
-					     const char *cell_id,
-					     size_t max_len, size_t *len)
-{
-	struct nvmem_cell *cell;
-	int nbits;
-	void *buf;
+अटल व्योम *nvmem_cell_पढ़ो_variable_common(काष्ठा device *dev,
+					     स्थिर अक्षर *cell_id,
+					     माप_प्रकार max_len, माप_प्रकार *len)
+अणु
+	काष्ठा nvmem_cell *cell;
+	पूर्णांक nbits;
+	व्योम *buf;
 
 	cell = nvmem_cell_get(dev, cell_id);
-	if (IS_ERR(cell))
-		return cell;
+	अगर (IS_ERR(cell))
+		वापस cell;
 
 	nbits = cell->nbits;
-	buf = nvmem_cell_read(cell, len);
+	buf = nvmem_cell_पढ़ो(cell, len);
 	nvmem_cell_put(cell);
-	if (IS_ERR(buf))
-		return buf;
+	अगर (IS_ERR(buf))
+		वापस buf;
 
 	/*
-	 * If nbits is set then nvmem_cell_read() can significantly exaggerate
+	 * If nbits is set then nvmem_cell_पढ़ो() can signअगरicantly exaggerate
 	 * the length of the real data. Throw away the extra junk.
 	 */
-	if (nbits)
+	अगर (nbits)
 		*len = DIV_ROUND_UP(nbits, 8);
 
-	if (*len > max_len) {
-		kfree(buf);
-		return ERR_PTR(-ERANGE);
-	}
+	अगर (*len > max_len) अणु
+		kमुक्त(buf);
+		वापस ERR_PTR(-दुस्फल);
+	पूर्ण
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
 /**
- * nvmem_cell_read_variable_le_u32() - Read up to 32-bits of data as a little endian number.
+ * nvmem_cell_पढ़ो_variable_le_u32() - Read up to 32-bits of data as a little endian number.
  *
  * @dev: Device that requests the nvmem cell.
- * @cell_id: Name of nvmem cell to read.
- * @val: pointer to output value.
+ * @cell_id: Name of nvmem cell to पढ़ो.
+ * @val: poपूर्णांकer to output value.
  *
- * Return: 0 on success or negative errno.
+ * Return: 0 on success or negative त्रुटि_सं.
  */
-int nvmem_cell_read_variable_le_u32(struct device *dev, const char *cell_id,
+पूर्णांक nvmem_cell_पढ़ो_variable_le_u32(काष्ठा device *dev, स्थिर अक्षर *cell_id,
 				    u32 *val)
-{
-	size_t len;
+अणु
+	माप_प्रकार len;
 	u8 *buf;
-	int i;
+	पूर्णांक i;
 
-	buf = nvmem_cell_read_variable_common(dev, cell_id, sizeof(*val), &len);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	buf = nvmem_cell_पढ़ो_variable_common(dev, cell_id, माप(*val), &len);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
 	/* Copy w/ implicit endian conversion */
 	*val = 0;
-	for (i = 0; i < len; i++)
+	क्रम (i = 0; i < len; i++)
 		*val |= buf[i] << (8 * i);
 
-	kfree(buf);
+	kमुक्त(buf);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nvmem_cell_read_variable_le_u32);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_cell_पढ़ो_variable_le_u32);
 
 /**
- * nvmem_cell_read_variable_le_u64() - Read up to 64-bits of data as a little endian number.
+ * nvmem_cell_पढ़ो_variable_le_u64() - Read up to 64-bits of data as a little endian number.
  *
  * @dev: Device that requests the nvmem cell.
- * @cell_id: Name of nvmem cell to read.
- * @val: pointer to output value.
+ * @cell_id: Name of nvmem cell to पढ़ो.
+ * @val: poपूर्णांकer to output value.
  *
- * Return: 0 on success or negative errno.
+ * Return: 0 on success or negative त्रुटि_सं.
  */
-int nvmem_cell_read_variable_le_u64(struct device *dev, const char *cell_id,
+पूर्णांक nvmem_cell_पढ़ो_variable_le_u64(काष्ठा device *dev, स्थिर अक्षर *cell_id,
 				    u64 *val)
-{
-	size_t len;
+अणु
+	माप_प्रकार len;
 	u8 *buf;
-	int i;
+	पूर्णांक i;
 
-	buf = nvmem_cell_read_variable_common(dev, cell_id, sizeof(*val), &len);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	buf = nvmem_cell_पढ़ो_variable_common(dev, cell_id, माप(*val), &len);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
 	/* Copy w/ implicit endian conversion */
 	*val = 0;
-	for (i = 0; i < len; i++)
-		*val |= (uint64_t)buf[i] << (8 * i);
+	क्रम (i = 0; i < len; i++)
+		*val |= (uपूर्णांक64_t)buf[i] << (8 * i);
 
-	kfree(buf);
+	kमुक्त(buf);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nvmem_cell_read_variable_le_u64);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_cell_पढ़ो_variable_le_u64);
 
 /**
- * nvmem_device_cell_read() - Read a given nvmem device and cell
+ * nvmem_device_cell_पढ़ो() - Read a given nvmem device and cell
  *
- * @nvmem: nvmem device to read from.
- * @info: nvmem cell info to be read.
- * @buf: buffer pointer which will be populated on successful read.
+ * @nvmem: nvmem device to पढ़ो from.
+ * @info: nvmem cell info to be पढ़ो.
+ * @buf: buffer poपूर्णांकer which will be populated on successful पढ़ो.
  *
- * Return: length of successful bytes read on success and negative
+ * Return: length of successful bytes पढ़ो on success and negative
  * error code on error.
  */
-ssize_t nvmem_device_cell_read(struct nvmem_device *nvmem,
-			   struct nvmem_cell_info *info, void *buf)
-{
-	struct nvmem_cell cell;
-	int rc;
-	ssize_t len;
+sमाप_प्रकार nvmem_device_cell_पढ़ो(काष्ठा nvmem_device *nvmem,
+			   काष्ठा nvmem_cell_info *info, व्योम *buf)
+अणु
+	काष्ठा nvmem_cell cell;
+	पूर्णांक rc;
+	sमाप_प्रकार len;
 
-	if (!nvmem)
-		return -EINVAL;
+	अगर (!nvmem)
+		वापस -EINVAL;
 
 	rc = nvmem_cell_info_to_nvmem_cell_nodup(nvmem, info, &cell);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	rc = __nvmem_cell_read(nvmem, &cell, buf, &len);
-	if (rc)
-		return rc;
+	rc = __nvmem_cell_पढ़ो(nvmem, &cell, buf, &len);
+	अगर (rc)
+		वापस rc;
 
-	return len;
-}
-EXPORT_SYMBOL_GPL(nvmem_device_cell_read);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_device_cell_पढ़ो);
 
 /**
- * nvmem_device_cell_write() - Write cell to a given nvmem device
+ * nvmem_device_cell_ग_लिखो() - Write cell to a given nvmem device
  *
  * @nvmem: nvmem device to be written to.
  * @info: nvmem cell info to be written.
@@ -1742,140 +1743,140 @@ EXPORT_SYMBOL_GPL(nvmem_device_cell_read);
  *
  * Return: length of bytes written or negative error code on failure.
  */
-int nvmem_device_cell_write(struct nvmem_device *nvmem,
-			    struct nvmem_cell_info *info, void *buf)
-{
-	struct nvmem_cell cell;
-	int rc;
+पूर्णांक nvmem_device_cell_ग_लिखो(काष्ठा nvmem_device *nvmem,
+			    काष्ठा nvmem_cell_info *info, व्योम *buf)
+अणु
+	काष्ठा nvmem_cell cell;
+	पूर्णांक rc;
 
-	if (!nvmem)
-		return -EINVAL;
+	अगर (!nvmem)
+		वापस -EINVAL;
 
 	rc = nvmem_cell_info_to_nvmem_cell_nodup(nvmem, info, &cell);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return nvmem_cell_write(&cell, buf, cell.bytes);
-}
-EXPORT_SYMBOL_GPL(nvmem_device_cell_write);
+	वापस nvmem_cell_ग_लिखो(&cell, buf, cell.bytes);
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_device_cell_ग_लिखो);
 
 /**
- * nvmem_device_read() - Read from a given nvmem device
+ * nvmem_device_पढ़ो() - Read from a given nvmem device
  *
- * @nvmem: nvmem device to read from.
+ * @nvmem: nvmem device to पढ़ो from.
  * @offset: offset in nvmem device.
- * @bytes: number of bytes to read.
- * @buf: buffer pointer which will be populated on successful read.
+ * @bytes: number of bytes to पढ़ो.
+ * @buf: buffer poपूर्णांकer which will be populated on successful पढ़ो.
  *
- * Return: length of successful bytes read on success and negative
+ * Return: length of successful bytes पढ़ो on success and negative
  * error code on error.
  */
-int nvmem_device_read(struct nvmem_device *nvmem,
-		      unsigned int offset,
-		      size_t bytes, void *buf)
-{
-	int rc;
+पूर्णांक nvmem_device_पढ़ो(काष्ठा nvmem_device *nvmem,
+		      अचिन्हित पूर्णांक offset,
+		      माप_प्रकार bytes, व्योम *buf)
+अणु
+	पूर्णांक rc;
 
-	if (!nvmem)
-		return -EINVAL;
+	अगर (!nvmem)
+		वापस -EINVAL;
 
-	rc = nvmem_reg_read(nvmem, offset, buf, bytes);
+	rc = nvmem_reg_पढ़ो(nvmem, offset, buf, bytes);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return bytes;
-}
-EXPORT_SYMBOL_GPL(nvmem_device_read);
+	वापस bytes;
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_device_पढ़ो);
 
 /**
- * nvmem_device_write() - Write cell to a given nvmem device
+ * nvmem_device_ग_लिखो() - Write cell to a given nvmem device
  *
  * @nvmem: nvmem device to be written to.
  * @offset: offset in nvmem device.
- * @bytes: number of bytes to write.
+ * @bytes: number of bytes to ग_लिखो.
  * @buf: buffer to be written.
  *
  * Return: length of bytes written or negative error code on failure.
  */
-int nvmem_device_write(struct nvmem_device *nvmem,
-		       unsigned int offset,
-		       size_t bytes, void *buf)
-{
-	int rc;
+पूर्णांक nvmem_device_ग_लिखो(काष्ठा nvmem_device *nvmem,
+		       अचिन्हित पूर्णांक offset,
+		       माप_प्रकार bytes, व्योम *buf)
+अणु
+	पूर्णांक rc;
 
-	if (!nvmem)
-		return -EINVAL;
+	अगर (!nvmem)
+		वापस -EINVAL;
 
-	rc = nvmem_reg_write(nvmem, offset, buf, bytes);
+	rc = nvmem_reg_ग_लिखो(nvmem, offset, buf, bytes);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 
-	return bytes;
-}
-EXPORT_SYMBOL_GPL(nvmem_device_write);
+	वापस bytes;
+पूर्ण
+EXPORT_SYMBOL_GPL(nvmem_device_ग_लिखो);
 
 /**
- * nvmem_add_cell_table() - register a table of cell info entries
+ * nvmem_add_cell_table() - रेजिस्टर a table of cell info entries
  *
  * @table: table of cell info entries
  */
-void nvmem_add_cell_table(struct nvmem_cell_table *table)
-{
+व्योम nvmem_add_cell_table(काष्ठा nvmem_cell_table *table)
+अणु
 	mutex_lock(&nvmem_cell_mutex);
 	list_add_tail(&table->node, &nvmem_cell_tables);
 	mutex_unlock(&nvmem_cell_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nvmem_add_cell_table);
 
 /**
- * nvmem_del_cell_table() - remove a previously registered cell info table
+ * nvmem_del_cell_table() - हटाओ a previously रेजिस्टरed cell info table
  *
  * @table: table of cell info entries
  */
-void nvmem_del_cell_table(struct nvmem_cell_table *table)
-{
+व्योम nvmem_del_cell_table(काष्ठा nvmem_cell_table *table)
+अणु
 	mutex_lock(&nvmem_cell_mutex);
 	list_del(&table->node);
 	mutex_unlock(&nvmem_cell_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nvmem_del_cell_table);
 
 /**
- * nvmem_add_cell_lookups() - register a list of cell lookup entries
+ * nvmem_add_cell_lookups() - रेजिस्टर a list of cell lookup entries
  *
  * @entries: array of cell lookup entries
  * @nentries: number of cell lookup entries in the array
  */
-void nvmem_add_cell_lookups(struct nvmem_cell_lookup *entries, size_t nentries)
-{
-	int i;
+व्योम nvmem_add_cell_lookups(काष्ठा nvmem_cell_lookup *entries, माप_प्रकार nentries)
+अणु
+	पूर्णांक i;
 
 	mutex_lock(&nvmem_lookup_mutex);
-	for (i = 0; i < nentries; i++)
+	क्रम (i = 0; i < nentries; i++)
 		list_add_tail(&entries[i].node, &nvmem_lookup_list);
 	mutex_unlock(&nvmem_lookup_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nvmem_add_cell_lookups);
 
 /**
- * nvmem_del_cell_lookups() - remove a list of previously added cell lookup
+ * nvmem_del_cell_lookups() - हटाओ a list of previously added cell lookup
  *                            entries
  *
  * @entries: array of cell lookup entries
  * @nentries: number of cell lookup entries in the array
  */
-void nvmem_del_cell_lookups(struct nvmem_cell_lookup *entries, size_t nentries)
-{
-	int i;
+व्योम nvmem_del_cell_lookups(काष्ठा nvmem_cell_lookup *entries, माप_प्रकार nentries)
+अणु
+	पूर्णांक i;
 
 	mutex_lock(&nvmem_lookup_mutex);
-	for (i = 0; i < nentries; i++)
+	क्रम (i = 0; i < nentries; i++)
 		list_del(&entries[i].node);
 	mutex_unlock(&nvmem_lookup_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nvmem_del_cell_lookups);
 
 /**
@@ -1885,24 +1886,24 @@ EXPORT_SYMBOL_GPL(nvmem_del_cell_lookups);
  *
  * Return: name of the nvmem device.
  */
-const char *nvmem_dev_name(struct nvmem_device *nvmem)
-{
-	return dev_name(&nvmem->dev);
-}
+स्थिर अक्षर *nvmem_dev_name(काष्ठा nvmem_device *nvmem)
+अणु
+	वापस dev_name(&nvmem->dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(nvmem_dev_name);
 
-static int __init nvmem_init(void)
-{
-	return bus_register(&nvmem_bus_type);
-}
+अटल पूर्णांक __init nvmem_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&nvmem_bus_type);
+पूर्ण
 
-static void __exit nvmem_exit(void)
-{
-	bus_unregister(&nvmem_bus_type);
-}
+अटल व्योम __निकास nvmem_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&nvmem_bus_type);
+पूर्ण
 
 subsys_initcall(nvmem_init);
-module_exit(nvmem_exit);
+module_निकास(nvmem_निकास);
 
 MODULE_AUTHOR("Srinivas Kandagatla <srinivas.kandagatla@linaro.org");
 MODULE_AUTHOR("Maxime Ripard <maxime.ripard@free-electrons.com");

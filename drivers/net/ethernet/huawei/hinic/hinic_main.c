@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Huawei HiNIC PCI Express Linux driver
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/pci.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/etherdevice.h>
-#include <linux/netdevice.h>
-#include <linux/slab.h>
-#include <linux/if_vlan.h>
-#include <linux/semaphore.h>
-#include <linux/workqueue.h>
-#include <net/ip.h>
-#include <net/devlink.h>
-#include <linux/bitops.h>
-#include <linux/bitmap.h>
-#include <linux/delay.h>
-#include <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/workqueue.h>
+#समावेश <net/ip.h>
+#समावेश <net/devlink.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
 
-#include "hinic_debugfs.h"
-#include "hinic_hw_qp.h"
-#include "hinic_hw_dev.h"
-#include "hinic_devlink.h"
-#include "hinic_port.h"
-#include "hinic_tx.h"
-#include "hinic_rx.h"
-#include "hinic_dev.h"
-#include "hinic_sriov.h"
+#समावेश "hinic_debugfs.h"
+#समावेश "hinic_hw_qp.h"
+#समावेश "hinic_hw_dev.h"
+#समावेश "hinic_devlink.h"
+#समावेश "hinic_port.h"
+#समावेश "hinic_tx.h"
+#समावेश "hinic_rx.h"
+#समावेश "hinic_dev.h"
+#समावेश "hinic_sriov.h"
 
 MODULE_AUTHOR("Huawei Technologies CO., Ltd");
 MODULE_DESCRIPTION("Huawei Intelligent NIC driver");
 MODULE_LICENSE("GPL");
 
-static unsigned int tx_weight = 64;
-module_param(tx_weight, uint, 0644);
+अटल अचिन्हित पूर्णांक tx_weight = 64;
+module_param(tx_weight, uपूर्णांक, 0644);
 MODULE_PARM_DESC(tx_weight, "Number Tx packets for NAPI budget (default=64)");
 
-static unsigned int rx_weight = 64;
-module_param(rx_weight, uint, 0644);
+अटल अचिन्हित पूर्णांक rx_weight = 64;
+module_param(rx_weight, uपूर्णांक, 0644);
 MODULE_PARM_DESC(rx_weight, "Number Rx packets for NAPI budget (default=64)");
 
-#define HINIC_DEV_ID_QUAD_PORT_25GE         0x1822
-#define HINIC_DEV_ID_DUAL_PORT_100GE        0x0200
-#define HINIC_DEV_ID_DUAL_PORT_100GE_MEZZ   0x0205
-#define HINIC_DEV_ID_QUAD_PORT_25GE_MEZZ    0x0210
-#define HINIC_DEV_ID_VF    0x375e
+#घोषणा HINIC_DEV_ID_QUAD_PORT_25GE         0x1822
+#घोषणा HINIC_DEV_ID_DUAL_PORT_100GE        0x0200
+#घोषणा HINIC_DEV_ID_DUAL_PORT_100GE_MEZZ   0x0205
+#घोषणा HINIC_DEV_ID_QUAD_PORT_25GE_MEZZ    0x0210
+#घोषणा HINIC_DEV_ID_VF    0x375e
 
-#define HINIC_WQ_NAME                   "hinic_dev"
+#घोषणा HINIC_WQ_NAME                   "hinic_dev"
 
-#define MSG_ENABLE_DEFAULT              (NETIF_MSG_DRV | NETIF_MSG_PROBE | \
+#घोषणा MSG_ENABLE_DEFAULT              (NETIF_MSG_DRV | NETIF_MSG_PROBE | \
 					 NETIF_MSG_IFUP |                  \
 					 NETIF_MSG_TX_ERR | NETIF_MSG_RX_ERR)
 
-#define HINIC_LRO_MAX_WQE_NUM_DEFAULT	8
+#घोषणा HINIC_LRO_MAX_WQE_NUM_DEFAULT	8
 
-#define HINIC_LRO_RX_TIMER_DEFAULT	16
+#घोषणा HINIC_LRO_RX_TIMER_DEFAULT	16
 
-#define VLAN_BITMAP_SIZE(nic_dev)       (ALIGN(VLAN_N_VID, 8) / 8)
+#घोषणा VLAN_BITMAP_SIZE(nic_dev)       (ALIGN(VLAN_N_VID, 8) / 8)
 
-#define work_to_rx_mode_work(work)      \
-		container_of(work, struct hinic_rx_mode_work, work)
+#घोषणा work_to_rx_mode_work(work)      \
+		container_of(work, काष्ठा hinic_rx_mode_work, work)
 
-#define rx_mode_work_to_nic_dev(rx_mode_work) \
-		container_of(rx_mode_work, struct hinic_dev, rx_mode_work)
+#घोषणा rx_mode_work_to_nic_dev(rx_mode_work) \
+		container_of(rx_mode_work, काष्ठा hinic_dev, rx_mode_work)
 
-#define HINIC_WAIT_SRIOV_CFG_TIMEOUT	15000
+#घोषणा HINIC_WAIT_SRIOV_CFG_TIMEOUT	15000
 
-#define HINIC_DEAULT_TXRX_MSIX_PENDING_LIMIT		2
-#define HINIC_DEAULT_TXRX_MSIX_COALESC_TIMER_CFG	32
-#define HINIC_DEAULT_TXRX_MSIX_RESEND_TIMER_CFG		7
+#घोषणा HINIC_DEAULT_TXRX_MSIX_PENDING_LIMIT		2
+#घोषणा HINIC_DEAULT_TXRX_MSIX_COALESC_TIMER_CFG	32
+#घोषणा HINIC_DEAULT_TXRX_MSIX_RESEND_TIMER_CFG		7
 
-static int change_mac_addr(struct net_device *netdev, const u8 *addr);
+अटल पूर्णांक change_mac_addr(काष्ठा net_device *netdev, स्थिर u8 *addr);
 
-static int set_features(struct hinic_dev *nic_dev,
+अटल पूर्णांक set_features(काष्ठा hinic_dev *nic_dev,
 			netdev_features_t pre_features,
-			netdev_features_t features, bool force_change);
+			netdev_features_t features, bool क्रमce_change);
 
-static void update_rx_stats(struct hinic_dev *nic_dev, struct hinic_rxq *rxq)
-{
-	struct hinic_rxq_stats *nic_rx_stats = &nic_dev->rx_stats;
-	struct hinic_rxq_stats rx_stats;
+अटल व्योम update_rx_stats(काष्ठा hinic_dev *nic_dev, काष्ठा hinic_rxq *rxq)
+अणु
+	काष्ठा hinic_rxq_stats *nic_rx_stats = &nic_dev->rx_stats;
+	काष्ठा hinic_rxq_stats rx_stats;
 
 	u64_stats_init(&rx_stats.syncp);
 
@@ -100,12 +101,12 @@ static void update_rx_stats(struct hinic_dev *nic_dev, struct hinic_rxq *rxq)
 	u64_stats_update_end(&nic_rx_stats->syncp);
 
 	hinic_rxq_clean_stats(rxq);
-}
+पूर्ण
 
-static void update_tx_stats(struct hinic_dev *nic_dev, struct hinic_txq *txq)
-{
-	struct hinic_txq_stats *nic_tx_stats = &nic_dev->tx_stats;
-	struct hinic_txq_stats tx_stats;
+अटल व्योम update_tx_stats(काष्ठा hinic_dev *nic_dev, काष्ठा hinic_txq *txq)
+अणु
+	काष्ठा hinic_txq_stats *nic_tx_stats = &nic_dev->tx_stats;
+	काष्ठा hinic_txq_stats tx_stats;
 
 	u64_stats_init(&tx_stats.syncp);
 
@@ -121,249 +122,249 @@ static void update_tx_stats(struct hinic_dev *nic_dev, struct hinic_txq *txq)
 	u64_stats_update_end(&nic_tx_stats->syncp);
 
 	hinic_txq_clean_stats(txq);
-}
+पूर्ण
 
-static void update_nic_stats(struct hinic_dev *nic_dev)
-{
-	int i, num_qps = hinic_hwdev_num_qps(nic_dev->hwdev);
+अटल व्योम update_nic_stats(काष्ठा hinic_dev *nic_dev)
+अणु
+	पूर्णांक i, num_qps = hinic_hwdev_num_qps(nic_dev->hwdev);
 
-	for (i = 0; i < num_qps; i++)
+	क्रम (i = 0; i < num_qps; i++)
 		update_rx_stats(nic_dev, &nic_dev->rxqs[i]);
 
-	for (i = 0; i < num_qps; i++)
+	क्रम (i = 0; i < num_qps; i++)
 		update_tx_stats(nic_dev, &nic_dev->txqs[i]);
-}
+पूर्ण
 
 /**
- * create_txqs - Create the Logical Tx Queues of specific NIC device
- * @nic_dev: the specific NIC device
+ * create_txqs - Create the Logical Tx Queues of specअगरic NIC device
+ * @nic_dev: the specअगरic NIC device
  *
  * Return 0 - Success, negative - Failure
  **/
-static int create_txqs(struct hinic_dev *nic_dev)
-{
-	int err, i, j, num_txqs = hinic_hwdev_num_qps(nic_dev->hwdev);
-	struct net_device *netdev = nic_dev->netdev;
-	size_t txq_size;
+अटल पूर्णांक create_txqs(काष्ठा hinic_dev *nic_dev)
+अणु
+	पूर्णांक err, i, j, num_txqs = hinic_hwdev_num_qps(nic_dev->hwdev);
+	काष्ठा net_device *netdev = nic_dev->netdev;
+	माप_प्रकार txq_size;
 
-	if (nic_dev->txqs)
-		return -EINVAL;
+	अगर (nic_dev->txqs)
+		वापस -EINVAL;
 
-	txq_size = num_txqs * sizeof(*nic_dev->txqs);
+	txq_size = num_txqs * माप(*nic_dev->txqs);
 	nic_dev->txqs = devm_kzalloc(&netdev->dev, txq_size, GFP_KERNEL);
-	if (!nic_dev->txqs)
-		return -ENOMEM;
+	अगर (!nic_dev->txqs)
+		वापस -ENOMEM;
 
 	hinic_sq_dbgfs_init(nic_dev);
 
-	for (i = 0; i < num_txqs; i++) {
-		struct hinic_sq *sq = hinic_hwdev_get_sq(nic_dev->hwdev, i);
+	क्रम (i = 0; i < num_txqs; i++) अणु
+		काष्ठा hinic_sq *sq = hinic_hwdev_get_sq(nic_dev->hwdev, i);
 
 		err = hinic_init_txq(&nic_dev->txqs[i], sq, netdev);
-		if (err) {
-			netif_err(nic_dev, drv, netdev,
+		अगर (err) अणु
+			netअगर_err(nic_dev, drv, netdev,
 				  "Failed to init Txq\n");
-			goto err_init_txq;
-		}
+			जाओ err_init_txq;
+		पूर्ण
 
 		err = hinic_sq_debug_add(nic_dev, i);
-		if (err) {
-			netif_err(nic_dev, drv, netdev,
+		अगर (err) अणु
+			netअगर_err(nic_dev, drv, netdev,
 				  "Failed to add SQ%d debug\n", i);
-			goto err_add_sq_dbg;
-		}
+			जाओ err_add_sq_dbg;
+		पूर्ण
 
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_add_sq_dbg:
 	hinic_clean_txq(&nic_dev->txqs[i]);
 err_init_txq:
-	for (j = 0; j < i; j++) {
+	क्रम (j = 0; j < i; j++) अणु
 		hinic_sq_debug_rem(nic_dev->txqs[j].sq);
 		hinic_clean_txq(&nic_dev->txqs[j]);
-	}
+	पूर्ण
 
 	hinic_sq_dbgfs_uninit(nic_dev);
 
-	devm_kfree(&netdev->dev, nic_dev->txqs);
-	return err;
-}
+	devm_kमुक्त(&netdev->dev, nic_dev->txqs);
+	वापस err;
+पूर्ण
 
-static void enable_txqs_napi(struct hinic_dev *nic_dev)
-{
-	int num_txqs = hinic_hwdev_num_qps(nic_dev->hwdev);
-	int i;
+अटल व्योम enable_txqs_napi(काष्ठा hinic_dev *nic_dev)
+अणु
+	पूर्णांक num_txqs = hinic_hwdev_num_qps(nic_dev->hwdev);
+	पूर्णांक i;
 
-	for (i = 0; i < num_txqs; i++)
+	क्रम (i = 0; i < num_txqs; i++)
 		napi_enable(&nic_dev->txqs[i].napi);
-}
+पूर्ण
 
-static void disable_txqs_napi(struct hinic_dev *nic_dev)
-{
-	int num_txqs = hinic_hwdev_num_qps(nic_dev->hwdev);
-	int i;
+अटल व्योम disable_txqs_napi(काष्ठा hinic_dev *nic_dev)
+अणु
+	पूर्णांक num_txqs = hinic_hwdev_num_qps(nic_dev->hwdev);
+	पूर्णांक i;
 
-	for (i = 0; i < num_txqs; i++)
+	क्रम (i = 0; i < num_txqs; i++)
 		napi_disable(&nic_dev->txqs[i].napi);
-}
+पूर्ण
 
 /**
- * free_txqs - Free the Logical Tx Queues of specific NIC device
- * @nic_dev: the specific NIC device
+ * मुक्त_txqs - Free the Logical Tx Queues of specअगरic NIC device
+ * @nic_dev: the specअगरic NIC device
  **/
-static void free_txqs(struct hinic_dev *nic_dev)
-{
-	int i, num_txqs = hinic_hwdev_num_qps(nic_dev->hwdev);
-	struct net_device *netdev = nic_dev->netdev;
+अटल व्योम मुक्त_txqs(काष्ठा hinic_dev *nic_dev)
+अणु
+	पूर्णांक i, num_txqs = hinic_hwdev_num_qps(nic_dev->hwdev);
+	काष्ठा net_device *netdev = nic_dev->netdev;
 
-	if (!nic_dev->txqs)
-		return;
+	अगर (!nic_dev->txqs)
+		वापस;
 
-	for (i = 0; i < num_txqs; i++) {
+	क्रम (i = 0; i < num_txqs; i++) अणु
 		hinic_sq_debug_rem(nic_dev->txqs[i].sq);
 		hinic_clean_txq(&nic_dev->txqs[i]);
-	}
+	पूर्ण
 
 	hinic_sq_dbgfs_uninit(nic_dev);
 
-	devm_kfree(&netdev->dev, nic_dev->txqs);
-	nic_dev->txqs = NULL;
-}
+	devm_kमुक्त(&netdev->dev, nic_dev->txqs);
+	nic_dev->txqs = शून्य;
+पूर्ण
 
 /**
- * create_txqs - Create the Logical Rx Queues of specific NIC device
- * @nic_dev: the specific NIC device
+ * create_txqs - Create the Logical Rx Queues of specअगरic NIC device
+ * @nic_dev: the specअगरic NIC device
  *
  * Return 0 - Success, negative - Failure
  **/
-static int create_rxqs(struct hinic_dev *nic_dev)
-{
-	int err, i, j, num_rxqs = hinic_hwdev_num_qps(nic_dev->hwdev);
-	struct net_device *netdev = nic_dev->netdev;
-	size_t rxq_size;
+अटल पूर्णांक create_rxqs(काष्ठा hinic_dev *nic_dev)
+अणु
+	पूर्णांक err, i, j, num_rxqs = hinic_hwdev_num_qps(nic_dev->hwdev);
+	काष्ठा net_device *netdev = nic_dev->netdev;
+	माप_प्रकार rxq_size;
 
-	if (nic_dev->rxqs)
-		return -EINVAL;
+	अगर (nic_dev->rxqs)
+		वापस -EINVAL;
 
-	rxq_size = num_rxqs * sizeof(*nic_dev->rxqs);
+	rxq_size = num_rxqs * माप(*nic_dev->rxqs);
 	nic_dev->rxqs = devm_kzalloc(&netdev->dev, rxq_size, GFP_KERNEL);
-	if (!nic_dev->rxqs)
-		return -ENOMEM;
+	अगर (!nic_dev->rxqs)
+		वापस -ENOMEM;
 
 	hinic_rq_dbgfs_init(nic_dev);
 
-	for (i = 0; i < num_rxqs; i++) {
-		struct hinic_rq *rq = hinic_hwdev_get_rq(nic_dev->hwdev, i);
+	क्रम (i = 0; i < num_rxqs; i++) अणु
+		काष्ठा hinic_rq *rq = hinic_hwdev_get_rq(nic_dev->hwdev, i);
 
 		err = hinic_init_rxq(&nic_dev->rxqs[i], rq, netdev);
-		if (err) {
-			netif_err(nic_dev, drv, netdev,
+		अगर (err) अणु
+			netअगर_err(nic_dev, drv, netdev,
 				  "Failed to init rxq\n");
-			goto err_init_rxq;
-		}
+			जाओ err_init_rxq;
+		पूर्ण
 
 		err = hinic_rq_debug_add(nic_dev, i);
-		if (err) {
-			netif_err(nic_dev, drv, netdev,
+		अगर (err) अणु
+			netअगर_err(nic_dev, drv, netdev,
 				  "Failed to add RQ%d debug\n", i);
-			goto err_add_rq_dbg;
-		}
-	}
+			जाओ err_add_rq_dbg;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_add_rq_dbg:
 	hinic_clean_rxq(&nic_dev->rxqs[i]);
 err_init_rxq:
-	for (j = 0; j < i; j++) {
+	क्रम (j = 0; j < i; j++) अणु
 		hinic_rq_debug_rem(nic_dev->rxqs[j].rq);
 		hinic_clean_rxq(&nic_dev->rxqs[j]);
-	}
+	पूर्ण
 
 	hinic_rq_dbgfs_uninit(nic_dev);
 
-	devm_kfree(&netdev->dev, nic_dev->rxqs);
-	return err;
-}
+	devm_kमुक्त(&netdev->dev, nic_dev->rxqs);
+	वापस err;
+पूर्ण
 
 /**
- * free_txqs - Free the Logical Rx Queues of specific NIC device
- * @nic_dev: the specific NIC device
+ * मुक्त_txqs - Free the Logical Rx Queues of specअगरic NIC device
+ * @nic_dev: the specअगरic NIC device
  **/
-static void free_rxqs(struct hinic_dev *nic_dev)
-{
-	int i, num_rxqs = hinic_hwdev_num_qps(nic_dev->hwdev);
-	struct net_device *netdev = nic_dev->netdev;
+अटल व्योम मुक्त_rxqs(काष्ठा hinic_dev *nic_dev)
+अणु
+	पूर्णांक i, num_rxqs = hinic_hwdev_num_qps(nic_dev->hwdev);
+	काष्ठा net_device *netdev = nic_dev->netdev;
 
-	if (!nic_dev->rxqs)
-		return;
+	अगर (!nic_dev->rxqs)
+		वापस;
 
-	for (i = 0; i < num_rxqs; i++) {
+	क्रम (i = 0; i < num_rxqs; i++) अणु
 		hinic_rq_debug_rem(nic_dev->rxqs[i].rq);
 		hinic_clean_rxq(&nic_dev->rxqs[i]);
-	}
+	पूर्ण
 
 	hinic_rq_dbgfs_uninit(nic_dev);
 
-	devm_kfree(&netdev->dev, nic_dev->rxqs);
-	nic_dev->rxqs = NULL;
-}
+	devm_kमुक्त(&netdev->dev, nic_dev->rxqs);
+	nic_dev->rxqs = शून्य;
+पूर्ण
 
-static int hinic_configure_max_qnum(struct hinic_dev *nic_dev)
-{
-	return hinic_set_max_qnum(nic_dev, nic_dev->hwdev->nic_cap.max_qps);
-}
+अटल पूर्णांक hinic_configure_max_qnum(काष्ठा hinic_dev *nic_dev)
+अणु
+	वापस hinic_set_max_qnum(nic_dev, nic_dev->hwdev->nic_cap.max_qps);
+पूर्ण
 
-static int hinic_rss_init(struct hinic_dev *nic_dev)
-{
-	u8 default_rss_key[HINIC_RSS_KEY_SIZE];
-	u8 tmpl_idx = nic_dev->rss_tmpl_idx;
+अटल पूर्णांक hinic_rss_init(काष्ठा hinic_dev *nic_dev)
+अणु
+	u8 शेष_rss_key[HINIC_RSS_KEY_SIZE];
+	u8 पंचांगpl_idx = nic_dev->rss_पंचांगpl_idx;
 	u32 *indir_tbl;
-	int err, i;
+	पूर्णांक err, i;
 
-	indir_tbl = kcalloc(HINIC_RSS_INDIR_SIZE, sizeof(u32), GFP_KERNEL);
-	if (!indir_tbl)
-		return -ENOMEM;
+	indir_tbl = kसुस्मृति(HINIC_RSS_INसूची_SIZE, माप(u32), GFP_KERNEL);
+	अगर (!indir_tbl)
+		वापस -ENOMEM;
 
-	netdev_rss_key_fill(default_rss_key, sizeof(default_rss_key));
-	for (i = 0; i < HINIC_RSS_INDIR_SIZE; i++)
-		indir_tbl[i] = ethtool_rxfh_indir_default(i, nic_dev->num_rss);
+	netdev_rss_key_fill(शेष_rss_key, माप(शेष_rss_key));
+	क्रम (i = 0; i < HINIC_RSS_INसूची_SIZE; i++)
+		indir_tbl[i] = ethtool_rxfh_indir_शेष(i, nic_dev->num_rss);
 
-	err = hinic_rss_set_template_tbl(nic_dev, tmpl_idx, default_rss_key);
-	if (err)
-		goto out;
+	err = hinic_rss_set_ढाँचा_tbl(nic_dev, पंचांगpl_idx, शेष_rss_key);
+	अगर (err)
+		जाओ out;
 
-	err = hinic_rss_set_indir_tbl(nic_dev, tmpl_idx, indir_tbl);
-	if (err)
-		goto out;
+	err = hinic_rss_set_indir_tbl(nic_dev, पंचांगpl_idx, indir_tbl);
+	अगर (err)
+		जाओ out;
 
-	err = hinic_set_rss_type(nic_dev, tmpl_idx, nic_dev->rss_type);
-	if (err)
-		goto out;
+	err = hinic_set_rss_type(nic_dev, पंचांगpl_idx, nic_dev->rss_type);
+	अगर (err)
+		जाओ out;
 
-	err = hinic_rss_set_hash_engine(nic_dev, tmpl_idx,
+	err = hinic_rss_set_hash_engine(nic_dev, पंचांगpl_idx,
 					nic_dev->rss_hash_engine);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = hinic_rss_cfg(nic_dev, 1, tmpl_idx);
-	if (err)
-		goto out;
+	err = hinic_rss_cfg(nic_dev, 1, पंचांगpl_idx);
+	अगर (err)
+		जाओ out;
 
 out:
-	kfree(indir_tbl);
-	return err;
-}
+	kमुक्त(indir_tbl);
+	वापस err;
+पूर्ण
 
-static void hinic_rss_deinit(struct hinic_dev *nic_dev)
-{
-	hinic_rss_cfg(nic_dev, 0, nic_dev->rss_tmpl_idx);
-}
+अटल व्योम hinic_rss_deinit(काष्ठा hinic_dev *nic_dev)
+अणु
+	hinic_rss_cfg(nic_dev, 0, nic_dev->rss_पंचांगpl_idx);
+पूर्ण
 
-static void hinic_init_rss_parameters(struct hinic_dev *nic_dev)
-{
+अटल व्योम hinic_init_rss_parameters(काष्ठा hinic_dev *nic_dev)
+अणु
 	nic_dev->rss_hash_engine = HINIC_RSS_HASH_ENGINE_TYPE_XOR;
 	nic_dev->rss_type.tcp_ipv6_ext = 1;
 	nic_dev->rss_type.ipv6_ext = 1;
@@ -373,29 +374,29 @@ static void hinic_init_rss_parameters(struct hinic_dev *nic_dev)
 	nic_dev->rss_type.ipv4 = 1;
 	nic_dev->rss_type.udp_ipv6 = 1;
 	nic_dev->rss_type.udp_ipv4 = 1;
-}
+पूर्ण
 
-static void hinic_enable_rss(struct hinic_dev *nic_dev)
-{
-	struct net_device *netdev = nic_dev->netdev;
-	struct hinic_hwdev *hwdev = nic_dev->hwdev;
-	struct hinic_hwif *hwif = hwdev->hwif;
-	struct pci_dev *pdev = hwif->pdev;
-	int i, node, err = 0;
+अटल व्योम hinic_enable_rss(काष्ठा hinic_dev *nic_dev)
+अणु
+	काष्ठा net_device *netdev = nic_dev->netdev;
+	काष्ठा hinic_hwdev *hwdev = nic_dev->hwdev;
+	काष्ठा hinic_hwअगर *hwअगर = hwdev->hwअगर;
+	काष्ठा pci_dev *pdev = hwअगर->pdev;
+	पूर्णांक i, node, err = 0;
 	u16 num_cpus = 0;
 
-	if (nic_dev->max_qps <= 1) {
+	अगर (nic_dev->max_qps <= 1) अणु
 		nic_dev->flags &= ~HINIC_RSS_ENABLE;
 		nic_dev->rss_limit = nic_dev->max_qps;
 		nic_dev->num_qps = nic_dev->max_qps;
 		nic_dev->num_rss = nic_dev->max_qps;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	err = hinic_rss_template_alloc(nic_dev, &nic_dev->rss_tmpl_idx);
-	if (err) {
-		netif_err(nic_dev, drv, netdev,
+	err = hinic_rss_ढाँचा_alloc(nic_dev, &nic_dev->rss_पंचांगpl_idx);
+	अगर (err) अणु
+		netअगर_err(nic_dev, drv, netdev,
 			  "Failed to alloc tmpl_idx for rss, can't enable rss for this function\n");
 		nic_dev->flags &= ~HINIC_RSS_ENABLE;
 		nic_dev->max_qps = 1;
@@ -403,18 +404,18 @@ static void hinic_enable_rss(struct hinic_dev *nic_dev)
 		nic_dev->num_qps = nic_dev->max_qps;
 		nic_dev->num_rss = nic_dev->max_qps;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	nic_dev->flags |= HINIC_RSS_ENABLE;
 
-	for (i = 0; i < num_online_cpus(); i++) {
+	क्रम (i = 0; i < num_online_cpus(); i++) अणु
 		node = cpu_to_node(i);
-		if (node == dev_to_node(&pdev->dev))
+		अगर (node == dev_to_node(&pdev->dev))
 			num_cpus++;
-	}
+	पूर्ण
 
-	if (!num_cpus)
+	अगर (!num_cpus)
 		num_cpus = num_online_cpus();
 
 	nic_dev->num_qps = hinic_hwdev_num_qps(hwdev);
@@ -425,242 +426,242 @@ static void hinic_enable_rss(struct hinic_dev *nic_dev)
 
 	hinic_init_rss_parameters(nic_dev);
 	err = hinic_rss_init(nic_dev);
-	if (err)
-		netif_err(nic_dev, drv, netdev, "Failed to init rss\n");
-}
+	अगर (err)
+		netअगर_err(nic_dev, drv, netdev, "Failed to init rss\n");
+पूर्ण
 
-int hinic_open(struct net_device *netdev)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
-	enum hinic_port_link_state link_state;
-	int err, ret;
+पूर्णांक hinic_खोलो(काष्ठा net_device *netdev)
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
+	क्रमागत hinic_port_link_state link_state;
+	पूर्णांक err, ret;
 
-	if (!(nic_dev->flags & HINIC_INTF_UP)) {
-		err = hinic_hwdev_ifup(nic_dev->hwdev, nic_dev->sq_depth,
+	अगर (!(nic_dev->flags & HINIC_INTF_UP)) अणु
+		err = hinic_hwdev_अगरup(nic_dev->hwdev, nic_dev->sq_depth,
 				       nic_dev->rq_depth);
-		if (err) {
-			netif_err(nic_dev, drv, netdev,
+		अगर (err) अणु
+			netअगर_err(nic_dev, drv, netdev,
 				  "Failed - HW interface up\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	err = create_txqs(nic_dev);
-	if (err) {
-		netif_err(nic_dev, drv, netdev,
+	अगर (err) अणु
+		netअगर_err(nic_dev, drv, netdev,
 			  "Failed to create Tx queues\n");
-		goto err_create_txqs;
-	}
+		जाओ err_create_txqs;
+	पूर्ण
 
 	enable_txqs_napi(nic_dev);
 
 	err = create_rxqs(nic_dev);
-	if (err) {
-		netif_err(nic_dev, drv, netdev,
+	अगर (err) अणु
+		netअगर_err(nic_dev, drv, netdev,
 			  "Failed to create Rx queues\n");
-		goto err_create_rxqs;
-	}
+		जाओ err_create_rxqs;
+	पूर्ण
 
 	hinic_enable_rss(nic_dev);
 
 	err = hinic_configure_max_qnum(nic_dev);
-	if (err) {
-		netif_err(nic_dev, drv, nic_dev->netdev,
+	अगर (err) अणु
+		netअगर_err(nic_dev, drv, nic_dev->netdev,
 			  "Failed to configure the maximum number of queues\n");
-		goto err_port_state;
-	}
+		जाओ err_port_state;
+	पूर्ण
 
-	netif_set_real_num_tx_queues(netdev, nic_dev->num_qps);
-	netif_set_real_num_rx_queues(netdev, nic_dev->num_qps);
+	netअगर_set_real_num_tx_queues(netdev, nic_dev->num_qps);
+	netअगर_set_real_num_rx_queues(netdev, nic_dev->num_qps);
 
 	err = hinic_port_set_state(nic_dev, HINIC_PORT_ENABLE);
-	if (err) {
-		netif_err(nic_dev, drv, netdev,
+	अगर (err) अणु
+		netअगर_err(nic_dev, drv, netdev,
 			  "Failed to set port state\n");
-		goto err_port_state;
-	}
+		जाओ err_port_state;
+	पूर्ण
 
 	err = hinic_port_set_func_state(nic_dev, HINIC_FUNC_PORT_ENABLE);
-	if (err) {
-		netif_err(nic_dev, drv, netdev,
+	अगर (err) अणु
+		netअगर_err(nic_dev, drv, netdev,
 			  "Failed to set func port state\n");
-		goto err_func_port_state;
-	}
+		जाओ err_func_port_state;
+	पूर्ण
 
-	down(&nic_dev->mgmt_lock);
+	करोwn(&nic_dev->mgmt_lock);
 
 	err = hinic_port_link_state(nic_dev, &link_state);
-	if (err) {
-		netif_err(nic_dev, drv, netdev, "Failed to get link state\n");
-		goto err_port_link;
-	}
+	अगर (err) अणु
+		netअगर_err(nic_dev, drv, netdev, "Failed to get link state\n");
+		जाओ err_port_link;
+	पूर्ण
 
-	if (!HINIC_IS_VF(nic_dev->hwdev->hwif))
-		hinic_notify_all_vfs_link_changed(nic_dev->hwdev, link_state);
+	अगर (!HINIC_IS_VF(nic_dev->hwdev->hwअगर))
+		hinic_notअगरy_all_vfs_link_changed(nic_dev->hwdev, link_state);
 
-	if (link_state == HINIC_LINK_STATE_UP) {
+	अगर (link_state == HINIC_LINK_STATE_UP) अणु
 		nic_dev->flags |= HINIC_LINK_UP;
 		nic_dev->cable_unplugged = false;
 		nic_dev->module_unrecognized = false;
-	}
+	पूर्ण
 
 	nic_dev->flags |= HINIC_INTF_UP;
 
-	if ((nic_dev->flags & (HINIC_LINK_UP | HINIC_INTF_UP)) ==
-	    (HINIC_LINK_UP | HINIC_INTF_UP)) {
-		netif_info(nic_dev, drv, netdev, "link + intf UP\n");
-		netif_carrier_on(netdev);
-		netif_tx_wake_all_queues(netdev);
-	}
+	अगर ((nic_dev->flags & (HINIC_LINK_UP | HINIC_INTF_UP)) ==
+	    (HINIC_LINK_UP | HINIC_INTF_UP)) अणु
+		netअगर_info(nic_dev, drv, netdev, "link + intf UP\n");
+		netअगर_carrier_on(netdev);
+		netअगर_tx_wake_all_queues(netdev);
+	पूर्ण
 
 	up(&nic_dev->mgmt_lock);
 
-	netif_info(nic_dev, drv, netdev, "HINIC_INTF is UP\n");
-	return 0;
+	netअगर_info(nic_dev, drv, netdev, "HINIC_INTF is UP\n");
+	वापस 0;
 
 err_port_link:
 	up(&nic_dev->mgmt_lock);
 	ret = hinic_port_set_func_state(nic_dev, HINIC_FUNC_PORT_DISABLE);
-	if (ret)
-		netif_warn(nic_dev, drv, netdev,
+	अगर (ret)
+		netअगर_warn(nic_dev, drv, netdev,
 			   "Failed to revert func port state\n");
 
 err_func_port_state:
 	ret = hinic_port_set_state(nic_dev, HINIC_PORT_DISABLE);
-	if (ret)
-		netif_warn(nic_dev, drv, netdev,
+	अगर (ret)
+		netअगर_warn(nic_dev, drv, netdev,
 			   "Failed to revert port state\n");
 err_port_state:
-	free_rxqs(nic_dev);
-	if (nic_dev->flags & HINIC_RSS_ENABLE) {
+	मुक्त_rxqs(nic_dev);
+	अगर (nic_dev->flags & HINIC_RSS_ENABLE) अणु
 		hinic_rss_deinit(nic_dev);
-		hinic_rss_template_free(nic_dev, nic_dev->rss_tmpl_idx);
-	}
+		hinic_rss_ढाँचा_मुक्त(nic_dev, nic_dev->rss_पंचांगpl_idx);
+	पूर्ण
 
 err_create_rxqs:
 	disable_txqs_napi(nic_dev);
-	free_txqs(nic_dev);
+	मुक्त_txqs(nic_dev);
 
 err_create_txqs:
-	if (!(nic_dev->flags & HINIC_INTF_UP))
-		hinic_hwdev_ifdown(nic_dev->hwdev);
-	return err;
-}
+	अगर (!(nic_dev->flags & HINIC_INTF_UP))
+		hinic_hwdev_अगरकरोwn(nic_dev->hwdev);
+	वापस err;
+पूर्ण
 
-int hinic_close(struct net_device *netdev)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
-	unsigned int flags;
+पूर्णांक hinic_बंद(काष्ठा net_device *netdev)
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
+	अचिन्हित पूर्णांक flags;
 
-	/* Disable txq napi firstly to aviod rewaking txq in free_tx_poll */
+	/* Disable txq napi firstly to aviod rewaking txq in मुक्त_tx_poll */
 	disable_txqs_napi(nic_dev);
 
-	down(&nic_dev->mgmt_lock);
+	करोwn(&nic_dev->mgmt_lock);
 
 	flags = nic_dev->flags;
 	nic_dev->flags &= ~HINIC_INTF_UP;
 
-	netif_carrier_off(netdev);
-	netif_tx_disable(netdev);
+	netअगर_carrier_off(netdev);
+	netअगर_tx_disable(netdev);
 
 	update_nic_stats(nic_dev);
 
 	up(&nic_dev->mgmt_lock);
 
-	if (!HINIC_IS_VF(nic_dev->hwdev->hwif))
-		hinic_notify_all_vfs_link_changed(nic_dev->hwdev, 0);
+	अगर (!HINIC_IS_VF(nic_dev->hwdev->hwअगर))
+		hinic_notअगरy_all_vfs_link_changed(nic_dev->hwdev, 0);
 
 	hinic_port_set_state(nic_dev, HINIC_PORT_DISABLE);
 
 	hinic_port_set_func_state(nic_dev, HINIC_FUNC_PORT_DISABLE);
 
-	if (nic_dev->flags & HINIC_RSS_ENABLE) {
+	अगर (nic_dev->flags & HINIC_RSS_ENABLE) अणु
 		hinic_rss_deinit(nic_dev);
-		hinic_rss_template_free(nic_dev, nic_dev->rss_tmpl_idx);
-	}
+		hinic_rss_ढाँचा_मुक्त(nic_dev, nic_dev->rss_पंचांगpl_idx);
+	पूर्ण
 
-	free_rxqs(nic_dev);
-	free_txqs(nic_dev);
+	मुक्त_rxqs(nic_dev);
+	मुक्त_txqs(nic_dev);
 
-	if (flags & HINIC_INTF_UP)
-		hinic_hwdev_ifdown(nic_dev->hwdev);
+	अगर (flags & HINIC_INTF_UP)
+		hinic_hwdev_अगरकरोwn(nic_dev->hwdev);
 
-	netif_info(nic_dev, drv, netdev, "HINIC_INTF is DOWN\n");
-	return 0;
-}
+	netअगर_info(nic_dev, drv, netdev, "HINIC_INTF is DOWN\n");
+	वापस 0;
+पूर्ण
 
-static int hinic_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
-	int err;
+अटल पूर्णांक hinic_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
+	पूर्णांक err;
 
-	netif_info(nic_dev, drv, netdev, "set_mtu = %d\n", new_mtu);
+	netअगर_info(nic_dev, drv, netdev, "set_mtu = %d\n", new_mtu);
 
 	err = hinic_port_set_mtu(nic_dev, new_mtu);
-	if (err)
-		netif_err(nic_dev, drv, netdev, "Failed to set port mtu\n");
-	else
+	अगर (err)
+		netअगर_err(nic_dev, drv, netdev, "Failed to set port mtu\n");
+	अन्यथा
 		netdev->mtu = new_mtu;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * change_mac_addr - change the main mac address of network device
+ * change_mac_addr - change the मुख्य mac address of network device
  * @netdev: network device
  * @addr: mac address to set
  *
  * Return 0 - Success, negative - Failure
  **/
-static int change_mac_addr(struct net_device *netdev, const u8 *addr)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
+अटल पूर्णांक change_mac_addr(काष्ठा net_device *netdev, स्थिर u8 *addr)
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
 	u16 vid = 0;
-	int err;
+	पूर्णांक err;
 
-	if (!is_valid_ether_addr(addr))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(addr))
+		वापस -EADDRNOTAVAIL;
 
-	netif_info(nic_dev, drv, netdev, "change mac addr = %02x %02x %02x %02x %02x %02x\n",
+	netअगर_info(nic_dev, drv, netdev, "change mac addr = %02x %02x %02x %02x %02x %02x\n",
 		   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 
-	down(&nic_dev->mgmt_lock);
+	करोwn(&nic_dev->mgmt_lock);
 
-	do {
+	करो अणु
 		err = hinic_port_del_mac(nic_dev, netdev->dev_addr, vid);
-		if (err) {
-			netif_err(nic_dev, drv, netdev,
+		अगर (err) अणु
+			netअगर_err(nic_dev, drv, netdev,
 				  "Failed to delete mac\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		err = hinic_port_add_mac(nic_dev, addr, vid);
-		if (err) {
-			netif_err(nic_dev, drv, netdev, "Failed to add mac\n");
-			break;
-		}
+		अगर (err) अणु
+			netअगर_err(nic_dev, drv, netdev, "Failed to add mac\n");
+			अवरोध;
+		पूर्ण
 
-		vid = find_next_bit(nic_dev->vlan_bitmap, VLAN_N_VID, vid + 1);
-	} while (vid != VLAN_N_VID);
+		vid = find_next_bit(nic_dev->vlan_biपंचांगap, VLAN_N_VID, vid + 1);
+	पूर्ण जबतक (vid != VLAN_N_VID);
 
 	up(&nic_dev->mgmt_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hinic_set_mac_addr(struct net_device *netdev, void *addr)
-{
-	unsigned char new_mac[ETH_ALEN];
-	struct sockaddr *saddr = addr;
-	int err;
+अटल पूर्णांक hinic_set_mac_addr(काष्ठा net_device *netdev, व्योम *addr)
+अणु
+	अचिन्हित अक्षर new_mac[ETH_ALEN];
+	काष्ठा sockaddr *saddr = addr;
+	पूर्णांक err;
 
-	memcpy(new_mac, saddr->sa_data, ETH_ALEN);
+	स_नकल(new_mac, saddr->sa_data, ETH_ALEN);
 
 	err = change_mac_addr(netdev, new_mac);
-	if (!err)
-		memcpy(netdev->dev_addr, new_mac, ETH_ALEN);
+	अगर (!err)
+		स_नकल(netdev->dev_addr, new_mac, ETH_ALEN);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * add_mac_addr - add mac address to network device
@@ -669,146 +670,146 @@ static int hinic_set_mac_addr(struct net_device *netdev, void *addr)
  *
  * Return 0 - Success, negative - Failure
  **/
-static int add_mac_addr(struct net_device *netdev, const u8 *addr)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
+अटल पूर्णांक add_mac_addr(काष्ठा net_device *netdev, स्थिर u8 *addr)
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
 	u16 vid = 0;
-	int err;
+	पूर्णांक err;
 
-	netif_info(nic_dev, drv, netdev, "set mac addr = %02x %02x %02x %02x %02x %02x\n",
+	netअगर_info(nic_dev, drv, netdev, "set mac addr = %02x %02x %02x %02x %02x %02x\n",
 		   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 
-	down(&nic_dev->mgmt_lock);
+	करोwn(&nic_dev->mgmt_lock);
 
-	do {
+	करो अणु
 		err = hinic_port_add_mac(nic_dev, addr, vid);
-		if (err) {
-			netif_err(nic_dev, drv, netdev, "Failed to add mac\n");
-			break;
-		}
+		अगर (err) अणु
+			netअगर_err(nic_dev, drv, netdev, "Failed to add mac\n");
+			अवरोध;
+		पूर्ण
 
-		vid = find_next_bit(nic_dev->vlan_bitmap, VLAN_N_VID, vid + 1);
-	} while (vid != VLAN_N_VID);
+		vid = find_next_bit(nic_dev->vlan_biपंचांगap, VLAN_N_VID, vid + 1);
+	पूर्ण जबतक (vid != VLAN_N_VID);
 
 	up(&nic_dev->mgmt_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * remove_mac_addr - remove mac address from network device
+ * हटाओ_mac_addr - हटाओ mac address from network device
  * @netdev: network device
- * @addr: mac address to remove
+ * @addr: mac address to हटाओ
  *
  * Return 0 - Success, negative - Failure
  **/
-static int remove_mac_addr(struct net_device *netdev, const u8 *addr)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
+अटल पूर्णांक हटाओ_mac_addr(काष्ठा net_device *netdev, स्थिर u8 *addr)
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
 	u16 vid = 0;
-	int err;
+	पूर्णांक err;
 
-	if (!is_valid_ether_addr(addr))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(addr))
+		वापस -EADDRNOTAVAIL;
 
-	netif_info(nic_dev, drv, netdev, "remove mac addr = %02x %02x %02x %02x %02x %02x\n",
+	netअगर_info(nic_dev, drv, netdev, "remove mac addr = %02x %02x %02x %02x %02x %02x\n",
 		   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 
-	down(&nic_dev->mgmt_lock);
+	करोwn(&nic_dev->mgmt_lock);
 
-	do {
+	करो अणु
 		err = hinic_port_del_mac(nic_dev, addr, vid);
-		if (err) {
-			netif_err(nic_dev, drv, netdev,
+		अगर (err) अणु
+			netअगर_err(nic_dev, drv, netdev,
 				  "Failed to delete mac\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		vid = find_next_bit(nic_dev->vlan_bitmap, VLAN_N_VID, vid + 1);
-	} while (vid != VLAN_N_VID);
+		vid = find_next_bit(nic_dev->vlan_biपंचांगap, VLAN_N_VID, vid + 1);
+	पूर्ण जबतक (vid != VLAN_N_VID);
 
 	up(&nic_dev->mgmt_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hinic_vlan_rx_add_vid(struct net_device *netdev,
+अटल पूर्णांक hinic_vlan_rx_add_vid(काष्ठा net_device *netdev,
 				 __always_unused __be16 proto, u16 vid)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
-	int ret, err;
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
+	पूर्णांक ret, err;
 
-	netif_info(nic_dev, drv, netdev, "add vid = %d\n", vid);
+	netअगर_info(nic_dev, drv, netdev, "add vid = %d\n", vid);
 
-	down(&nic_dev->mgmt_lock);
+	करोwn(&nic_dev->mgmt_lock);
 
 	err = hinic_port_add_vlan(nic_dev, vid);
-	if (err) {
-		netif_err(nic_dev, drv, netdev, "Failed to add vlan\n");
-		goto err_vlan_add;
-	}
+	अगर (err) अणु
+		netअगर_err(nic_dev, drv, netdev, "Failed to add vlan\n");
+		जाओ err_vlan_add;
+	पूर्ण
 
 	err = hinic_port_add_mac(nic_dev, netdev->dev_addr, vid);
-	if (err && err != HINIC_PF_SET_VF_ALREADY) {
-		netif_err(nic_dev, drv, netdev, "Failed to set mac\n");
-		goto err_add_mac;
-	}
+	अगर (err && err != HINIC_PF_SET_VF_ALREADY) अणु
+		netअगर_err(nic_dev, drv, netdev, "Failed to set mac\n");
+		जाओ err_add_mac;
+	पूर्ण
 
-	bitmap_set(nic_dev->vlan_bitmap, vid, 1);
+	biपंचांगap_set(nic_dev->vlan_biपंचांगap, vid, 1);
 
 	up(&nic_dev->mgmt_lock);
-	return 0;
+	वापस 0;
 
 err_add_mac:
 	ret = hinic_port_del_vlan(nic_dev, vid);
-	if (ret)
-		netif_err(nic_dev, drv, netdev,
+	अगर (ret)
+		netअगर_err(nic_dev, drv, netdev,
 			  "Failed to revert by removing vlan\n");
 
 err_vlan_add:
 	up(&nic_dev->mgmt_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hinic_vlan_rx_kill_vid(struct net_device *netdev,
+अटल पूर्णांक hinic_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev,
 				  __always_unused __be16 proto, u16 vid)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
-	int err;
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
+	पूर्णांक err;
 
-	netif_info(nic_dev, drv, netdev, "remove vid = %d\n", vid);
+	netअगर_info(nic_dev, drv, netdev, "remove vid = %d\n", vid);
 
-	down(&nic_dev->mgmt_lock);
+	करोwn(&nic_dev->mgmt_lock);
 
 	err = hinic_port_del_vlan(nic_dev, vid);
-	if (err) {
-		netif_err(nic_dev, drv, netdev, "Failed to delete vlan\n");
-		goto err_del_vlan;
-	}
+	अगर (err) अणु
+		netअगर_err(nic_dev, drv, netdev, "Failed to delete vlan\n");
+		जाओ err_del_vlan;
+	पूर्ण
 
-	bitmap_clear(nic_dev->vlan_bitmap, vid, 1);
+	biपंचांगap_clear(nic_dev->vlan_biपंचांगap, vid, 1);
 
 	up(&nic_dev->mgmt_lock);
-	return 0;
+	वापस 0;
 
 err_del_vlan:
 	up(&nic_dev->mgmt_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void set_rx_mode(struct work_struct *work)
-{
-	struct hinic_rx_mode_work *rx_mode_work = work_to_rx_mode_work(work);
-	struct hinic_dev *nic_dev = rx_mode_work_to_nic_dev(rx_mode_work);
+अटल व्योम set_rx_mode(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hinic_rx_mode_work *rx_mode_work = work_to_rx_mode_work(work);
+	काष्ठा hinic_dev *nic_dev = rx_mode_work_to_nic_dev(rx_mode_work);
 
 	hinic_port_set_rx_mode(nic_dev, rx_mode_work->rx_mode);
 
-	__dev_uc_sync(nic_dev->netdev, add_mac_addr, remove_mac_addr);
-	__dev_mc_sync(nic_dev->netdev, add_mac_addr, remove_mac_addr);
-}
+	__dev_uc_sync(nic_dev->netdev, add_mac_addr, हटाओ_mac_addr);
+	__dev_mc_sync(nic_dev->netdev, add_mac_addr, हटाओ_mac_addr);
+पूर्ण
 
-static void hinic_set_rx_mode(struct net_device *netdev)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
-	struct hinic_rx_mode_work *rx_mode_work;
+अटल व्योम hinic_set_rx_mode(काष्ठा net_device *netdev)
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
+	काष्ठा hinic_rx_mode_work *rx_mode_work;
 	u32 rx_mode;
 
 	rx_mode_work = &nic_dev->rx_mode_work;
@@ -817,56 +818,56 @@ static void hinic_set_rx_mode(struct net_device *netdev)
 		  HINIC_RX_MODE_MC |
 		  HINIC_RX_MODE_BC;
 
-	if (netdev->flags & IFF_PROMISC) {
-		if (!HINIC_IS_VF(nic_dev->hwdev->hwif))
+	अगर (netdev->flags & IFF_PROMISC) अणु
+		अगर (!HINIC_IS_VF(nic_dev->hwdev->hwअगर))
 			rx_mode |= HINIC_RX_MODE_PROMISC;
-	} else if (netdev->flags & IFF_ALLMULTI) {
+	पूर्ण अन्यथा अगर (netdev->flags & IFF_ALLMULTI) अणु
 		rx_mode |= HINIC_RX_MODE_MC_ALL;
-	}
+	पूर्ण
 
 	rx_mode_work->rx_mode = rx_mode;
 
 	queue_work(nic_dev->workq, &rx_mode_work->work);
-}
+पूर्ण
 
-static void hinic_tx_timeout(struct net_device *netdev, unsigned int txqueue)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
+अटल व्योम hinic_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
 	u16 sw_pi, hw_ci, sw_ci;
-	struct hinic_sq *sq;
+	काष्ठा hinic_sq *sq;
 	u16 num_sqs, q_id;
 
 	num_sqs = hinic_hwdev_num_qps(nic_dev->hwdev);
 
-	netif_err(nic_dev, drv, netdev, "Tx timeout\n");
+	netअगर_err(nic_dev, drv, netdev, "Tx timeout\n");
 
-	for (q_id = 0; q_id < num_sqs; q_id++) {
-		if (!netif_xmit_stopped(netdev_get_tx_queue(netdev, q_id)))
-			continue;
+	क्रम (q_id = 0; q_id < num_sqs; q_id++) अणु
+		अगर (!netअगर_xmit_stopped(netdev_get_tx_queue(netdev, q_id)))
+			जारी;
 
 		sq = hinic_hwdev_get_sq(nic_dev->hwdev, q_id);
-		sw_pi = atomic_read(&sq->wq->prod_idx) & sq->wq->mask;
+		sw_pi = atomic_पढ़ो(&sq->wq->prod_idx) & sq->wq->mask;
 		hw_ci = be16_to_cpu(*(u16 *)(sq->hw_ci_addr)) & sq->wq->mask;
-		sw_ci = atomic_read(&sq->wq->cons_idx) & sq->wq->mask;
-		netif_err(nic_dev, drv, netdev, "Txq%d: sw_pi: %d, hw_ci: %d, sw_ci: %d, napi->state: 0x%lx\n",
+		sw_ci = atomic_पढ़ो(&sq->wq->cons_idx) & sq->wq->mask;
+		netअगर_err(nic_dev, drv, netdev, "Txq%d: sw_pi: %d, hw_ci: %d, sw_ci: %d, napi->state: 0x%lx\n",
 			  q_id, sw_pi, hw_ci, sw_ci,
 			  nic_dev->txqs[q_id].napi.state);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void hinic_get_stats64(struct net_device *netdev,
-			      struct rtnl_link_stats64 *stats)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
-	struct hinic_rxq_stats *nic_rx_stats;
-	struct hinic_txq_stats *nic_tx_stats;
+अटल व्योम hinic_get_stats64(काष्ठा net_device *netdev,
+			      काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
+	काष्ठा hinic_rxq_stats *nic_rx_stats;
+	काष्ठा hinic_txq_stats *nic_tx_stats;
 
 	nic_rx_stats = &nic_dev->rx_stats;
 	nic_tx_stats = &nic_dev->tx_stats;
 
-	down(&nic_dev->mgmt_lock);
+	करोwn(&nic_dev->mgmt_lock);
 
-	if (nic_dev->flags & HINIC_INTF_UP)
+	अगर (nic_dev->flags & HINIC_INTF_UP)
 		update_nic_stats(nic_dev);
 
 	up(&nic_dev->mgmt_lock);
@@ -878,72 +879,72 @@ static void hinic_get_stats64(struct net_device *netdev,
 	stats->tx_bytes   = nic_tx_stats->bytes;
 	stats->tx_packets = nic_tx_stats->pkts;
 	stats->tx_errors  = nic_tx_stats->tx_dropped;
-}
+पूर्ण
 
-static int hinic_set_features(struct net_device *netdev,
+अटल पूर्णांक hinic_set_features(काष्ठा net_device *netdev,
 			      netdev_features_t features)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
 
-	return set_features(nic_dev, nic_dev->netdev->features,
+	वापस set_features(nic_dev, nic_dev->netdev->features,
 			    features, false);
-}
+पूर्ण
 
-static netdev_features_t hinic_fix_features(struct net_device *netdev,
+अटल netdev_features_t hinic_fix_features(काष्ठा net_device *netdev,
 					    netdev_features_t features)
-{
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
+अणु
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
 
 	/* If Rx checksum is disabled, then LRO should also be disabled */
-	if (!(features & NETIF_F_RXCSUM)) {
-		netif_info(nic_dev, drv, netdev, "disabling LRO as RXCSUM is off\n");
+	अगर (!(features & NETIF_F_RXCSUM)) अणु
+		netअगर_info(nic_dev, drv, netdev, "disabling LRO as RXCSUM is off\n");
 		features &= ~NETIF_F_LRO;
-	}
+	पूर्ण
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static const struct net_device_ops hinic_netdev_ops = {
-	.ndo_open = hinic_open,
-	.ndo_stop = hinic_close,
-	.ndo_change_mtu = hinic_change_mtu,
-	.ndo_set_mac_address = hinic_set_mac_addr,
-	.ndo_validate_addr = eth_validate_addr,
-	.ndo_vlan_rx_add_vid = hinic_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid = hinic_vlan_rx_kill_vid,
-	.ndo_set_rx_mode = hinic_set_rx_mode,
-	.ndo_start_xmit = hinic_xmit_frame,
-	.ndo_tx_timeout = hinic_tx_timeout,
-	.ndo_get_stats64 = hinic_get_stats64,
-	.ndo_fix_features = hinic_fix_features,
-	.ndo_set_features = hinic_set_features,
-	.ndo_set_vf_mac	= hinic_ndo_set_vf_mac,
-	.ndo_set_vf_vlan = hinic_ndo_set_vf_vlan,
-	.ndo_get_vf_config = hinic_ndo_get_vf_config,
-	.ndo_set_vf_trust = hinic_ndo_set_vf_trust,
-	.ndo_set_vf_rate = hinic_ndo_set_vf_bw,
-	.ndo_set_vf_spoofchk = hinic_ndo_set_vf_spoofchk,
-	.ndo_set_vf_link_state = hinic_ndo_set_vf_link_state,
-};
+अटल स्थिर काष्ठा net_device_ops hinic_netdev_ops = अणु
+	.nकरो_खोलो = hinic_खोलो,
+	.nकरो_stop = hinic_बंद,
+	.nकरो_change_mtu = hinic_change_mtu,
+	.nकरो_set_mac_address = hinic_set_mac_addr,
+	.nकरो_validate_addr = eth_validate_addr,
+	.nकरो_vlan_rx_add_vid = hinic_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid = hinic_vlan_rx_समाप्त_vid,
+	.nकरो_set_rx_mode = hinic_set_rx_mode,
+	.nकरो_start_xmit = hinic_xmit_frame,
+	.nकरो_tx_समयout = hinic_tx_समयout,
+	.nकरो_get_stats64 = hinic_get_stats64,
+	.nकरो_fix_features = hinic_fix_features,
+	.nकरो_set_features = hinic_set_features,
+	.nकरो_set_vf_mac	= hinic_nकरो_set_vf_mac,
+	.nकरो_set_vf_vlan = hinic_nकरो_set_vf_vlan,
+	.nकरो_get_vf_config = hinic_nकरो_get_vf_config,
+	.nकरो_set_vf_trust = hinic_nकरो_set_vf_trust,
+	.nकरो_set_vf_rate = hinic_nकरो_set_vf_bw,
+	.nकरो_set_vf_spoofchk = hinic_nकरो_set_vf_spoofchk,
+	.nकरो_set_vf_link_state = hinic_nकरो_set_vf_link_state,
+पूर्ण;
 
-static const struct net_device_ops hinicvf_netdev_ops = {
-	.ndo_open = hinic_open,
-	.ndo_stop = hinic_close,
-	.ndo_change_mtu = hinic_change_mtu,
-	.ndo_set_mac_address = hinic_set_mac_addr,
-	.ndo_validate_addr = eth_validate_addr,
-	.ndo_vlan_rx_add_vid = hinic_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid = hinic_vlan_rx_kill_vid,
-	.ndo_set_rx_mode = hinic_set_rx_mode,
-	.ndo_start_xmit = hinic_xmit_frame,
-	.ndo_tx_timeout = hinic_tx_timeout,
-	.ndo_get_stats64 = hinic_get_stats64,
-	.ndo_fix_features = hinic_fix_features,
-	.ndo_set_features = hinic_set_features,
-};
+अटल स्थिर काष्ठा net_device_ops hinicvf_netdev_ops = अणु
+	.nकरो_खोलो = hinic_खोलो,
+	.nकरो_stop = hinic_बंद,
+	.nकरो_change_mtu = hinic_change_mtu,
+	.nकरो_set_mac_address = hinic_set_mac_addr,
+	.nकरो_validate_addr = eth_validate_addr,
+	.nकरो_vlan_rx_add_vid = hinic_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid = hinic_vlan_rx_समाप्त_vid,
+	.nकरो_set_rx_mode = hinic_set_rx_mode,
+	.nकरो_start_xmit = hinic_xmit_frame,
+	.nकरो_tx_समयout = hinic_tx_समयout,
+	.nकरो_get_stats64 = hinic_get_stats64,
+	.nकरो_fix_features = hinic_fix_features,
+	.nकरो_set_features = hinic_set_features,
+पूर्ण;
 
-static void netdev_features_init(struct net_device *netdev)
-{
+अटल व्योम netdev_features_init(काष्ठा net_device *netdev)
+अणु
 	netdev->hw_features = NETIF_F_SG | NETIF_F_HIGHDMA | NETIF_F_IP_CSUM |
 			      NETIF_F_IPV6_CSUM | NETIF_F_TSO | NETIF_F_TSO6 |
 			      NETIF_F_RXCSUM | NETIF_F_LRO |
@@ -957,215 +958,215 @@ static void netdev_features_init(struct net_device *netdev)
 	netdev->hw_enc_features = NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM | NETIF_F_SCTP_CRC |
 				  NETIF_F_SG | NETIF_F_TSO | NETIF_F_TSO6 | NETIF_F_TSO_ECN |
 				  NETIF_F_GSO_UDP_TUNNEL_CSUM | NETIF_F_GSO_UDP_TUNNEL;
-}
+पूर्ण
 
-static void hinic_refresh_nic_cfg(struct hinic_dev *nic_dev)
-{
-	struct hinic_nic_cfg *nic_cfg = &nic_dev->hwdev->func_to_io.nic_cfg;
-	struct hinic_pause_config pause_info = {0};
-	struct hinic_port_cap port_cap = {0};
+अटल व्योम hinic_refresh_nic_cfg(काष्ठा hinic_dev *nic_dev)
+अणु
+	काष्ठा hinic_nic_cfg *nic_cfg = &nic_dev->hwdev->func_to_io.nic_cfg;
+	काष्ठा hinic_छोड़ो_config छोड़ो_info = अणु0पूर्ण;
+	काष्ठा hinic_port_cap port_cap = अणु0पूर्ण;
 
-	if (hinic_port_get_cap(nic_dev, &port_cap))
-		return;
+	अगर (hinic_port_get_cap(nic_dev, &port_cap))
+		वापस;
 
 	mutex_lock(&nic_cfg->cfg_mutex);
-	if (nic_cfg->pause_set || !port_cap.autoneg_state) {
-		nic_cfg->auto_neg = port_cap.autoneg_state;
-		pause_info.auto_neg = nic_cfg->auto_neg;
-		pause_info.rx_pause = nic_cfg->rx_pause;
-		pause_info.tx_pause = nic_cfg->tx_pause;
-		hinic_set_hw_pause_info(nic_dev->hwdev, &pause_info);
-	}
+	अगर (nic_cfg->छोड़ो_set || !port_cap.स्वतःneg_state) अणु
+		nic_cfg->स्वतः_neg = port_cap.स्वतःneg_state;
+		छोड़ो_info.स्वतः_neg = nic_cfg->स्वतः_neg;
+		छोड़ो_info.rx_छोड़ो = nic_cfg->rx_छोड़ो;
+		छोड़ो_info.tx_छोड़ो = nic_cfg->tx_छोड़ो;
+		hinic_set_hw_छोड़ो_info(nic_dev->hwdev, &छोड़ो_info);
+	पूर्ण
 	mutex_unlock(&nic_cfg->cfg_mutex);
-}
+पूर्ण
 
 /**
  * link_status_event_handler - link event handler
- * @handle: nic device for the handler
+ * @handle: nic device क्रम the handler
  * @buf_in: input buffer
  * @in_size: input size
  * @buf_out: output buffer
- * @out_size: returned output size
+ * @out_size: वापसed output size
  *
  * Return 0 - Success, negative - Failure
  **/
-static void link_status_event_handler(void *handle, void *buf_in, u16 in_size,
-				      void *buf_out, u16 *out_size)
-{
-	struct hinic_port_link_status *link_status, *ret_link_status;
-	struct hinic_dev *nic_dev = handle;
+अटल व्योम link_status_event_handler(व्योम *handle, व्योम *buf_in, u16 in_size,
+				      व्योम *buf_out, u16 *out_size)
+अणु
+	काष्ठा hinic_port_link_status *link_status, *ret_link_status;
+	काष्ठा hinic_dev *nic_dev = handle;
 
 	link_status = buf_in;
 
-	if (link_status->link == HINIC_LINK_STATE_UP) {
-		down(&nic_dev->mgmt_lock);
+	अगर (link_status->link == HINIC_LINK_STATE_UP) अणु
+		करोwn(&nic_dev->mgmt_lock);
 
 		nic_dev->flags |= HINIC_LINK_UP;
 		nic_dev->cable_unplugged = false;
 		nic_dev->module_unrecognized = false;
 
-		if ((nic_dev->flags & (HINIC_LINK_UP | HINIC_INTF_UP)) ==
-		    (HINIC_LINK_UP | HINIC_INTF_UP)) {
-			netif_carrier_on(nic_dev->netdev);
-			netif_tx_wake_all_queues(nic_dev->netdev);
-		}
+		अगर ((nic_dev->flags & (HINIC_LINK_UP | HINIC_INTF_UP)) ==
+		    (HINIC_LINK_UP | HINIC_INTF_UP)) अणु
+			netअगर_carrier_on(nic_dev->netdev);
+			netअगर_tx_wake_all_queues(nic_dev->netdev);
+		पूर्ण
 
 		up(&nic_dev->mgmt_lock);
 
-		if (!HINIC_IS_VF(nic_dev->hwdev->hwif))
+		अगर (!HINIC_IS_VF(nic_dev->hwdev->hwअगर))
 			hinic_refresh_nic_cfg(nic_dev);
 
-		netif_info(nic_dev, drv, nic_dev->netdev, "HINIC_Link is UP\n");
-	} else {
-		down(&nic_dev->mgmt_lock);
+		netअगर_info(nic_dev, drv, nic_dev->netdev, "HINIC_Link is UP\n");
+	पूर्ण अन्यथा अणु
+		करोwn(&nic_dev->mgmt_lock);
 
 		nic_dev->flags &= ~HINIC_LINK_UP;
 
-		netif_carrier_off(nic_dev->netdev);
-		netif_tx_disable(nic_dev->netdev);
+		netअगर_carrier_off(nic_dev->netdev);
+		netअगर_tx_disable(nic_dev->netdev);
 
 		up(&nic_dev->mgmt_lock);
 
-		netif_info(nic_dev, drv, nic_dev->netdev, "HINIC_Link is DOWN\n");
-	}
+		netअगर_info(nic_dev, drv, nic_dev->netdev, "HINIC_Link is DOWN\n");
+	पूर्ण
 
-	if (!HINIC_IS_VF(nic_dev->hwdev->hwif))
-		hinic_notify_all_vfs_link_changed(nic_dev->hwdev,
+	अगर (!HINIC_IS_VF(nic_dev->hwdev->hwअगर))
+		hinic_notअगरy_all_vfs_link_changed(nic_dev->hwdev,
 						  link_status->link);
 
 	ret_link_status = buf_out;
 	ret_link_status->status = 0;
 
-	*out_size = sizeof(*ret_link_status);
-}
+	*out_size = माप(*ret_link_status);
+पूर्ण
 
-static void cable_plug_event(void *handle,
-			     void *buf_in, u16 in_size,
-			     void *buf_out, u16 *out_size)
-{
-	struct hinic_cable_plug_event *plug_event = buf_in;
-	struct hinic_dev *nic_dev = handle;
+अटल व्योम cable_plug_event(व्योम *handle,
+			     व्योम *buf_in, u16 in_size,
+			     व्योम *buf_out, u16 *out_size)
+अणु
+	काष्ठा hinic_cable_plug_event *plug_event = buf_in;
+	काष्ठा hinic_dev *nic_dev = handle;
 
 	nic_dev->cable_unplugged = plug_event->plugged ? false : true;
 
-	*out_size = sizeof(*plug_event);
+	*out_size = माप(*plug_event);
 	plug_event = buf_out;
 	plug_event->status = 0;
-}
+पूर्ण
 
-static void link_err_event(void *handle,
-			   void *buf_in, u16 in_size,
-			   void *buf_out, u16 *out_size)
-{
-	struct hinic_link_err_event *link_err = buf_in;
-	struct hinic_dev *nic_dev = handle;
+अटल व्योम link_err_event(व्योम *handle,
+			   व्योम *buf_in, u16 in_size,
+			   व्योम *buf_out, u16 *out_size)
+अणु
+	काष्ठा hinic_link_err_event *link_err = buf_in;
+	काष्ठा hinic_dev *nic_dev = handle;
 
-	if (link_err->err_type >= LINK_ERR_NUM)
-		netif_info(nic_dev, link, nic_dev->netdev,
+	अगर (link_err->err_type >= LINK_ERR_NUM)
+		netअगर_info(nic_dev, link, nic_dev->netdev,
 			   "Link failed, Unknown error type: 0x%x\n",
 			   link_err->err_type);
-	else
+	अन्यथा
 		nic_dev->module_unrecognized = true;
 
-	*out_size = sizeof(*link_err);
+	*out_size = माप(*link_err);
 	link_err = buf_out;
 	link_err->status = 0;
-}
+पूर्ण
 
-static int set_features(struct hinic_dev *nic_dev,
+अटल पूर्णांक set_features(काष्ठा hinic_dev *nic_dev,
 			netdev_features_t pre_features,
-			netdev_features_t features, bool force_change)
-{
-	netdev_features_t changed = force_change ? ~0 : pre_features ^ features;
+			netdev_features_t features, bool क्रमce_change)
+अणु
+	netdev_features_t changed = क्रमce_change ? ~0 : pre_features ^ features;
 	u32 csum_en = HINIC_RX_CSUM_OFFLOAD_EN;
 	netdev_features_t failed_features = 0;
-	int ret = 0;
-	int err = 0;
+	पूर्णांक ret = 0;
+	पूर्णांक err = 0;
 
-	if (changed & NETIF_F_TSO) {
+	अगर (changed & NETIF_F_TSO) अणु
 		ret = hinic_port_set_tso(nic_dev, (features & NETIF_F_TSO) ?
 					 HINIC_TSO_ENABLE : HINIC_TSO_DISABLE);
-		if (ret) {
+		अगर (ret) अणु
 			err = ret;
 			failed_features |= NETIF_F_TSO;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (changed & NETIF_F_RXCSUM) {
+	अगर (changed & NETIF_F_RXCSUM) अणु
 		ret = hinic_set_rx_csum_offload(nic_dev, csum_en);
-		if (ret) {
+		अगर (ret) अणु
 			err = ret;
 			failed_features |= NETIF_F_RXCSUM;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (changed & NETIF_F_LRO) {
+	अगर (changed & NETIF_F_LRO) अणु
 		ret = hinic_set_rx_lro_state(nic_dev,
 					     !!(features & NETIF_F_LRO),
 					     HINIC_LRO_RX_TIMER_DEFAULT,
 					     HINIC_LRO_MAX_WQE_NUM_DEFAULT);
-		if (ret) {
+		अगर (ret) अणु
 			err = ret;
 			failed_features |= NETIF_F_LRO;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (changed & NETIF_F_HW_VLAN_CTAG_RX) {
+	अगर (changed & NETIF_F_HW_VLAN_CTAG_RX) अणु
 		ret = hinic_set_rx_vlan_offload(nic_dev,
 						!!(features &
 						   NETIF_F_HW_VLAN_CTAG_RX));
-		if (ret) {
+		अगर (ret) अणु
 			err = ret;
 			failed_features |= NETIF_F_HW_VLAN_CTAG_RX;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (err) {
+	अगर (err) अणु
 		nic_dev->netdev->features = features ^ failed_features;
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hinic_init_intr_coalesce(struct hinic_dev *nic_dev)
-{
+अटल पूर्णांक hinic_init_पूर्णांकr_coalesce(काष्ठा hinic_dev *nic_dev)
+अणु
 	u64 size;
 	u16 i;
 
-	size = sizeof(struct hinic_intr_coal_info) * nic_dev->max_qps;
-	nic_dev->rx_intr_coalesce = kzalloc(size, GFP_KERNEL);
-	if (!nic_dev->rx_intr_coalesce)
-		return -ENOMEM;
-	nic_dev->tx_intr_coalesce = kzalloc(size, GFP_KERNEL);
-	if (!nic_dev->tx_intr_coalesce) {
-		kfree(nic_dev->rx_intr_coalesce);
-		return -ENOMEM;
-	}
+	size = माप(काष्ठा hinic_पूर्णांकr_coal_info) * nic_dev->max_qps;
+	nic_dev->rx_पूर्णांकr_coalesce = kzalloc(size, GFP_KERNEL);
+	अगर (!nic_dev->rx_पूर्णांकr_coalesce)
+		वापस -ENOMEM;
+	nic_dev->tx_पूर्णांकr_coalesce = kzalloc(size, GFP_KERNEL);
+	अगर (!nic_dev->tx_पूर्णांकr_coalesce) अणु
+		kमुक्त(nic_dev->rx_पूर्णांकr_coalesce);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < nic_dev->max_qps; i++) {
-		nic_dev->rx_intr_coalesce[i].pending_limt =
+	क्रम (i = 0; i < nic_dev->max_qps; i++) अणु
+		nic_dev->rx_पूर्णांकr_coalesce[i].pending_limt =
 			HINIC_DEAULT_TXRX_MSIX_PENDING_LIMIT;
-		nic_dev->rx_intr_coalesce[i].coalesce_timer_cfg =
+		nic_dev->rx_पूर्णांकr_coalesce[i].coalesce_समयr_cfg =
 			HINIC_DEAULT_TXRX_MSIX_COALESC_TIMER_CFG;
-		nic_dev->rx_intr_coalesce[i].resend_timer_cfg =
+		nic_dev->rx_पूर्णांकr_coalesce[i].resend_समयr_cfg =
 			HINIC_DEAULT_TXRX_MSIX_RESEND_TIMER_CFG;
-		nic_dev->tx_intr_coalesce[i].pending_limt =
+		nic_dev->tx_पूर्णांकr_coalesce[i].pending_limt =
 			HINIC_DEAULT_TXRX_MSIX_PENDING_LIMIT;
-		nic_dev->tx_intr_coalesce[i].coalesce_timer_cfg =
+		nic_dev->tx_पूर्णांकr_coalesce[i].coalesce_समयr_cfg =
 			HINIC_DEAULT_TXRX_MSIX_COALESC_TIMER_CFG;
-		nic_dev->tx_intr_coalesce[i].resend_timer_cfg =
+		nic_dev->tx_पूर्णांकr_coalesce[i].resend_समयr_cfg =
 			HINIC_DEAULT_TXRX_MSIX_RESEND_TIMER_CFG;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hinic_free_intr_coalesce(struct hinic_dev *nic_dev)
-{
-	kfree(nic_dev->tx_intr_coalesce);
-	kfree(nic_dev->rx_intr_coalesce);
-}
+अटल व्योम hinic_मुक्त_पूर्णांकr_coalesce(काष्ठा hinic_dev *nic_dev)
+अणु
+	kमुक्त(nic_dev->tx_पूर्णांकr_coalesce);
+	kमुक्त(nic_dev->rx_पूर्णांकr_coalesce);
+पूर्ण
 
 /**
  * nic_dev_init - Initialize the NIC device
@@ -1173,47 +1174,47 @@ static void hinic_free_intr_coalesce(struct hinic_dev *nic_dev)
  *
  * Return 0 - Success, negative - Failure
  **/
-static int nic_dev_init(struct pci_dev *pdev)
-{
-	struct hinic_rx_mode_work *rx_mode_work;
-	struct hinic_txq_stats *tx_stats;
-	struct hinic_rxq_stats *rx_stats;
-	struct hinic_dev *nic_dev;
-	struct net_device *netdev;
-	struct hinic_hwdev *hwdev;
-	struct devlink *devlink;
-	int err, num_qps;
+अटल पूर्णांक nic_dev_init(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा hinic_rx_mode_work *rx_mode_work;
+	काष्ठा hinic_txq_stats *tx_stats;
+	काष्ठा hinic_rxq_stats *rx_stats;
+	काष्ठा hinic_dev *nic_dev;
+	काष्ठा net_device *netdev;
+	काष्ठा hinic_hwdev *hwdev;
+	काष्ठा devlink *devlink;
+	पूर्णांक err, num_qps;
 
 	devlink = hinic_devlink_alloc();
-	if (!devlink) {
+	अगर (!devlink) अणु
 		dev_err(&pdev->dev, "Hinic devlink alloc failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	hwdev = hinic_init_hwdev(pdev, devlink);
-	if (IS_ERR(hwdev)) {
+	अगर (IS_ERR(hwdev)) अणु
 		dev_err(&pdev->dev, "Failed to initialize HW device\n");
-		hinic_devlink_free(devlink);
-		return PTR_ERR(hwdev);
-	}
+		hinic_devlink_मुक्त(devlink);
+		वापस PTR_ERR(hwdev);
+	पूर्ण
 
 	num_qps = hinic_hwdev_num_qps(hwdev);
-	if (num_qps <= 0) {
+	अगर (num_qps <= 0) अणु
 		dev_err(&pdev->dev, "Invalid number of QPS\n");
 		err = -EINVAL;
-		goto err_num_qps;
-	}
+		जाओ err_num_qps;
+	पूर्ण
 
-	netdev = alloc_etherdev_mq(sizeof(*nic_dev), num_qps);
-	if (!netdev) {
+	netdev = alloc_etherdev_mq(माप(*nic_dev), num_qps);
+	अगर (!netdev) अणु
 		dev_err(&pdev->dev, "Failed to allocate Ethernet device\n");
 		err = -ENOMEM;
-		goto err_alloc_etherdev;
-	}
+		जाओ err_alloc_etherdev;
+	पूर्ण
 
-	if (!HINIC_IS_VF(hwdev->hwif))
+	अगर (!HINIC_IS_VF(hwdev->hwअगर))
 		netdev->netdev_ops = &hinic_netdev_ops;
-	else
+	अन्यथा
 		netdev->netdev_ops = &hinicvf_netdev_ops;
 
 	netdev->max_mtu = ETH_MAX_MTU;
@@ -1223,8 +1224,8 @@ static int nic_dev_init(struct pci_dev *pdev)
 	nic_dev->hwdev  = hwdev;
 	nic_dev->msg_enable = MSG_ENABLE_DEFAULT;
 	nic_dev->flags = 0;
-	nic_dev->txqs = NULL;
-	nic_dev->rxqs = NULL;
+	nic_dev->txqs = शून्य;
+	nic_dev->rxqs = शून्य;
 	nic_dev->tx_weight = tx_weight;
 	nic_dev->rx_weight = rx_weight;
 	nic_dev->sq_depth = HINIC_SQ_DEPTH;
@@ -1244,117 +1245,117 @@ static int nic_dev_init(struct pci_dev *pdev)
 	u64_stats_init(&tx_stats->syncp);
 	u64_stats_init(&rx_stats->syncp);
 
-	nic_dev->vlan_bitmap = devm_kzalloc(&pdev->dev,
+	nic_dev->vlan_biपंचांगap = devm_kzalloc(&pdev->dev,
 					    VLAN_BITMAP_SIZE(nic_dev),
 					    GFP_KERNEL);
-	if (!nic_dev->vlan_bitmap) {
+	अगर (!nic_dev->vlan_biपंचांगap) अणु
 		err = -ENOMEM;
-		goto err_vlan_bitmap;
-	}
+		जाओ err_vlan_biपंचांगap;
+	पूर्ण
 
-	nic_dev->workq = create_singlethread_workqueue(HINIC_WQ_NAME);
-	if (!nic_dev->workq) {
+	nic_dev->workq = create_singlethपढ़ो_workqueue(HINIC_WQ_NAME);
+	अगर (!nic_dev->workq) अणु
 		err = -ENOMEM;
-		goto err_workq;
-	}
+		जाओ err_workq;
+	पूर्ण
 
 	pci_set_drvdata(pdev, netdev);
 
 	err = hinic_port_get_mac(nic_dev, netdev->dev_addr);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to get mac address\n");
-		goto err_get_mac;
-	}
+		जाओ err_get_mac;
+	पूर्ण
 
-	if (!is_valid_ether_addr(netdev->dev_addr)) {
-		if (!HINIC_IS_VF(nic_dev->hwdev->hwif)) {
+	अगर (!is_valid_ether_addr(netdev->dev_addr)) अणु
+		अगर (!HINIC_IS_VF(nic_dev->hwdev->hwअगर)) अणु
 			dev_err(&pdev->dev, "Invalid MAC address\n");
 			err = -EIO;
-			goto err_add_mac;
-		}
+			जाओ err_add_mac;
+		पूर्ण
 
 		dev_info(&pdev->dev, "Invalid MAC address %pM, using random\n",
 			 netdev->dev_addr);
-		eth_hw_addr_random(netdev);
-	}
+		eth_hw_addr_अक्रमom(netdev);
+	पूर्ण
 
 	err = hinic_port_add_mac(nic_dev, netdev->dev_addr, 0);
-	if (err && err != HINIC_PF_SET_VF_ALREADY) {
+	अगर (err && err != HINIC_PF_SET_VF_ALREADY) अणु
 		dev_err(&pdev->dev, "Failed to add mac\n");
-		goto err_add_mac;
-	}
+		जाओ err_add_mac;
+	पूर्ण
 
 	err = hinic_port_set_mtu(nic_dev, netdev->mtu);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to set mtu\n");
-		goto err_set_mtu;
-	}
+		जाओ err_set_mtu;
+	पूर्ण
 
 	rx_mode_work = &nic_dev->rx_mode_work;
 	INIT_WORK(&rx_mode_work->work, set_rx_mode);
 
 	netdev_features_init(netdev);
 
-	netif_carrier_off(netdev);
+	netअगर_carrier_off(netdev);
 
-	hinic_hwdev_cb_register(nic_dev->hwdev, HINIC_MGMT_MSG_CMD_LINK_STATUS,
+	hinic_hwdev_cb_रेजिस्टर(nic_dev->hwdev, HINIC_MGMT_MSG_CMD_LINK_STATUS,
 				nic_dev, link_status_event_handler);
-	hinic_hwdev_cb_register(nic_dev->hwdev,
+	hinic_hwdev_cb_रेजिस्टर(nic_dev->hwdev,
 				HINIC_MGMT_MSG_CMD_CABLE_PLUG_EVENT,
 				nic_dev, cable_plug_event);
-	hinic_hwdev_cb_register(nic_dev->hwdev,
+	hinic_hwdev_cb_रेजिस्टर(nic_dev->hwdev,
 				HINIC_MGMT_MSG_CMD_LINK_ERR_EVENT,
 				nic_dev, link_err_event);
 
 	err = set_features(nic_dev, 0, nic_dev->netdev->features, true);
-	if (err)
-		goto err_set_features;
+	अगर (err)
+		जाओ err_set_features;
 
-	/* enable pause and disable pfc by default */
+	/* enable छोड़ो and disable pfc by शेष */
 	err = hinic_dcb_set_pfc(nic_dev->hwdev, 0, 0);
-	if (err)
-		goto err_set_pfc;
+	अगर (err)
+		जाओ err_set_pfc;
 
 	SET_NETDEV_DEV(netdev, &pdev->dev);
 
-	err = hinic_init_intr_coalesce(nic_dev);
-	if (err) {
+	err = hinic_init_पूर्णांकr_coalesce(nic_dev);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to init_intr_coalesce\n");
-		goto err_init_intr;
-	}
+		जाओ err_init_पूर्णांकr;
+	पूर्ण
 
 	hinic_dbg_init(nic_dev);
 
 	hinic_func_tbl_dbgfs_init(nic_dev);
 
 	err = hinic_func_table_debug_add(nic_dev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to add func_table debug\n");
-		goto err_add_func_table_dbg;
-	}
+		जाओ err_add_func_table_dbg;
+	पूर्ण
 
-	err = register_netdev(netdev);
-	if (err) {
+	err = रेजिस्टर_netdev(netdev);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to register netdev\n");
-		goto err_reg_netdev;
-	}
+		जाओ err_reg_netdev;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_reg_netdev:
 	hinic_func_table_debug_rem(nic_dev);
 err_add_func_table_dbg:
 	hinic_func_tbl_dbgfs_uninit(nic_dev);
 	hinic_dbg_uninit(nic_dev);
-	hinic_free_intr_coalesce(nic_dev);
-err_init_intr:
+	hinic_मुक्त_पूर्णांकr_coalesce(nic_dev);
+err_init_पूर्णांकr:
 err_set_pfc:
 err_set_features:
-	hinic_hwdev_cb_unregister(nic_dev->hwdev,
+	hinic_hwdev_cb_unरेजिस्टर(nic_dev->hwdev,
 				  HINIC_MGMT_MSG_CMD_LINK_ERR_EVENT);
-	hinic_hwdev_cb_unregister(nic_dev->hwdev,
+	hinic_hwdev_cb_unरेजिस्टर(nic_dev->hwdev,
 				  HINIC_MGMT_MSG_CMD_CABLE_PLUG_EVENT);
-	hinic_hwdev_cb_unregister(nic_dev->hwdev,
+	hinic_hwdev_cb_unरेजिस्टर(nic_dev->hwdev,
 				  HINIC_MGMT_MSG_CMD_LINK_STATUS);
 	cancel_work_sync(&rx_mode_work->work);
 
@@ -1362,67 +1363,67 @@ err_set_mtu:
 	hinic_port_del_mac(nic_dev, netdev->dev_addr, 0);
 err_add_mac:
 err_get_mac:
-	pci_set_drvdata(pdev, NULL);
+	pci_set_drvdata(pdev, शून्य);
 	destroy_workqueue(nic_dev->workq);
 err_workq:
-err_vlan_bitmap:
-	free_netdev(netdev);
+err_vlan_biपंचांगap:
+	मुक्त_netdev(netdev);
 
 err_alloc_etherdev:
 err_num_qps:
-	hinic_free_hwdev(hwdev);
-	hinic_devlink_free(devlink);
-	return err;
-}
+	hinic_मुक्त_hwdev(hwdev);
+	hinic_devlink_मुक्त(devlink);
+	वापस err;
+पूर्ण
 
-static int hinic_probe(struct pci_dev *pdev,
-		       const struct pci_device_id *id)
-{
-	int err = pci_enable_device(pdev);
+अटल पूर्णांक hinic_probe(काष्ठा pci_dev *pdev,
+		       स्थिर काष्ठा pci_device_id *id)
+अणु
+	पूर्णांक err = pci_enable_device(pdev);
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to enable PCI device\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = pci_request_regions(pdev, HINIC_DRV_NAME);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to request PCI regions\n");
-		goto err_pci_regions;
-	}
+		जाओ err_pci_regions;
+	पूर्ण
 
 	pci_set_master(pdev);
 
 	err = pci_set_dma_mask(pdev, DMA_BIT_MASK(64));
-	if (err) {
+	अगर (err) अणु
 		dev_warn(&pdev->dev, "Couldn't set 64-bit DMA mask\n");
 		err = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-		if (err) {
+		अगर (err) अणु
 			dev_err(&pdev->dev, "Failed to set DMA mask\n");
-			goto err_dma_mask;
-		}
-	}
+			जाओ err_dma_mask;
+		पूर्ण
+	पूर्ण
 
 	err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
-	if (err) {
+	अगर (err) अणु
 		dev_warn(&pdev->dev,
 			 "Couldn't set 64-bit consistent DMA mask\n");
 		err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
-		if (err) {
+		अगर (err) अणु
 			dev_err(&pdev->dev,
 				"Failed to set consistent DMA mask\n");
-			goto err_dma_consistent_mask;
-		}
-	}
+			जाओ err_dma_consistent_mask;
+		पूर्ण
+	पूर्ण
 
 	err = nic_dev_init(pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to initialize NIC device\n");
-		goto err_nic_dev_init;
-	}
+		जाओ err_nic_dev_init;
+	पूर्ण
 
 	dev_info(&pdev->dev, "HiNIC driver - probed\n");
-	return 0;
+	वापस 0;
 
 err_nic_dev_init:
 err_dma_consistent_mask:
@@ -1431,42 +1432,42 @@ err_dma_mask:
 
 err_pci_regions:
 	pci_disable_device(pdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#define HINIC_WAIT_SRIOV_CFG_TIMEOUT	15000
+#घोषणा HINIC_WAIT_SRIOV_CFG_TIMEOUT	15000
 
-static void wait_sriov_cfg_complete(struct hinic_dev *nic_dev)
-{
-	struct hinic_sriov_info *sriov_info = &nic_dev->sriov_info;
+अटल व्योम रुको_sriov_cfg_complete(काष्ठा hinic_dev *nic_dev)
+अणु
+	काष्ठा hinic_sriov_info *sriov_info = &nic_dev->sriov_info;
 	u32 loop_cnt = 0;
 
 	set_bit(HINIC_FUNC_REMOVE, &sriov_info->state);
 	usleep_range(9900, 10000);
 
-	while (loop_cnt < HINIC_WAIT_SRIOV_CFG_TIMEOUT) {
-		if (!test_bit(HINIC_SRIOV_ENABLE, &sriov_info->state) &&
+	जबतक (loop_cnt < HINIC_WAIT_SRIOV_CFG_TIMEOUT) अणु
+		अगर (!test_bit(HINIC_SRIOV_ENABLE, &sriov_info->state) &&
 		    !test_bit(HINIC_SRIOV_DISABLE, &sriov_info->state))
-			return;
+			वापस;
 
 		usleep_range(9900, 10000);
 		loop_cnt++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void hinic_remove(struct pci_dev *pdev)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct hinic_dev *nic_dev = netdev_priv(netdev);
-	struct devlink *devlink = nic_dev->devlink;
-	struct hinic_rx_mode_work *rx_mode_work;
+अटल व्योम hinic_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा hinic_dev *nic_dev = netdev_priv(netdev);
+	काष्ठा devlink *devlink = nic_dev->devlink;
+	काष्ठा hinic_rx_mode_work *rx_mode_work;
 
-	if (!HINIC_IS_VF(nic_dev->hwdev->hwif)) {
-		wait_sriov_cfg_complete(nic_dev);
+	अगर (!HINIC_IS_VF(nic_dev->hwdev->hwअगर)) अणु
+		रुको_sriov_cfg_complete(nic_dev);
 		hinic_pci_sriov_disable(pdev);
-	}
+	पूर्ण
 
-	unregister_netdev(netdev);
+	unरेजिस्टर_netdev(netdev);
 
 	hinic_func_table_debug_rem(nic_dev);
 
@@ -1474,71 +1475,71 @@ static void hinic_remove(struct pci_dev *pdev)
 
 	hinic_dbg_uninit(nic_dev);
 
-	hinic_free_intr_coalesce(nic_dev);
+	hinic_मुक्त_पूर्णांकr_coalesce(nic_dev);
 
 	hinic_port_del_mac(nic_dev, netdev->dev_addr, 0);
 
-	hinic_hwdev_cb_unregister(nic_dev->hwdev,
+	hinic_hwdev_cb_unरेजिस्टर(nic_dev->hwdev,
 				  HINIC_MGMT_MSG_CMD_LINK_ERR_EVENT);
-	hinic_hwdev_cb_unregister(nic_dev->hwdev,
+	hinic_hwdev_cb_unरेजिस्टर(nic_dev->hwdev,
 				  HINIC_MGMT_MSG_CMD_CABLE_PLUG_EVENT);
-	hinic_hwdev_cb_unregister(nic_dev->hwdev,
+	hinic_hwdev_cb_unरेजिस्टर(nic_dev->hwdev,
 				  HINIC_MGMT_MSG_CMD_LINK_STATUS);
 
 	rx_mode_work = &nic_dev->rx_mode_work;
 	cancel_work_sync(&rx_mode_work->work);
 
-	pci_set_drvdata(pdev, NULL);
+	pci_set_drvdata(pdev, शून्य);
 
 	destroy_workqueue(nic_dev->workq);
 
-	hinic_free_hwdev(nic_dev->hwdev);
+	hinic_मुक्त_hwdev(nic_dev->hwdev);
 
-	free_netdev(netdev);
+	मुक्त_netdev(netdev);
 
-	hinic_devlink_free(devlink);
+	hinic_devlink_मुक्त(devlink);
 
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
 
 	dev_info(&pdev->dev, "HiNIC driver - removed\n");
-}
+पूर्ण
 
-static void hinic_shutdown(struct pci_dev *pdev)
-{
+अटल व्योम hinic_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static const struct pci_device_id hinic_pci_table[] = {
-	{ PCI_VDEVICE(HUAWEI, HINIC_DEV_ID_QUAD_PORT_25GE), 0},
-	{ PCI_VDEVICE(HUAWEI, HINIC_DEV_ID_DUAL_PORT_100GE), 0},
-	{ PCI_VDEVICE(HUAWEI, HINIC_DEV_ID_DUAL_PORT_100GE_MEZZ), 0},
-	{ PCI_VDEVICE(HUAWEI, HINIC_DEV_ID_QUAD_PORT_25GE_MEZZ), 0},
-	{ PCI_VDEVICE(HUAWEI, HINIC_DEV_ID_VF), 0},
-	{ 0, 0}
-};
+अटल स्थिर काष्ठा pci_device_id hinic_pci_table[] = अणु
+	अणु PCI_VDEVICE(HUAWEI, HINIC_DEV_ID_QUAD_PORT_25GE), 0पूर्ण,
+	अणु PCI_VDEVICE(HUAWEI, HINIC_DEV_ID_DUAL_PORT_100GE), 0पूर्ण,
+	अणु PCI_VDEVICE(HUAWEI, HINIC_DEV_ID_DUAL_PORT_100GE_MEZZ), 0पूर्ण,
+	अणु PCI_VDEVICE(HUAWEI, HINIC_DEV_ID_QUAD_PORT_25GE_MEZZ), 0पूर्ण,
+	अणु PCI_VDEVICE(HUAWEI, HINIC_DEV_ID_VF), 0पूर्ण,
+	अणु 0, 0पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, hinic_pci_table);
 
-static struct pci_driver hinic_driver = {
+अटल काष्ठा pci_driver hinic_driver = अणु
 	.name           = HINIC_DRV_NAME,
 	.id_table       = hinic_pci_table,
 	.probe          = hinic_probe,
-	.remove         = hinic_remove,
-	.shutdown       = hinic_shutdown,
+	.हटाओ         = hinic_हटाओ,
+	.shutकरोwn       = hinic_shutकरोwn,
 	.sriov_configure = hinic_pci_sriov_configure,
-};
+पूर्ण;
 
-static int __init hinic_module_init(void)
-{
-	hinic_dbg_register_debugfs(HINIC_DRV_NAME);
-	return pci_register_driver(&hinic_driver);
-}
+अटल पूर्णांक __init hinic_module_init(व्योम)
+अणु
+	hinic_dbg_रेजिस्टर_debugfs(HINIC_DRV_NAME);
+	वापस pci_रेजिस्टर_driver(&hinic_driver);
+पूर्ण
 
-static void __exit hinic_module_exit(void)
-{
-	pci_unregister_driver(&hinic_driver);
-	hinic_dbg_unregister_debugfs();
-}
+अटल व्योम __निकास hinic_module_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&hinic_driver);
+	hinic_dbg_unरेजिस्टर_debugfs();
+पूर्ण
 
 module_init(hinic_module_init);
-module_exit(hinic_module_exit);
+module_निकास(hinic_module_निकास);

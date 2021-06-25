@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause */
 /*
  * Copyright (c) 2020, MIPI Alliance, Inc.
  *
@@ -7,26 +8,26 @@
  * Common DAT related stuff
  */
 
-#ifndef DAT_H
-#define DAT_H
+#अगर_अघोषित DAT_H
+#घोषणा DAT_H
 
 /* Global DAT flags */
-#define DAT_0_I2C_DEVICE		W0_BIT_(31)
-#define DAT_0_SIR_REJECT		W0_BIT_(13)
-#define DAT_0_IBI_PAYLOAD		W0_BIT_(12)
+#घोषणा DAT_0_I2C_DEVICE		W0_BIT_(31)
+#घोषणा DAT_0_SIR_REJECT		W0_BIT_(13)
+#घोषणा DAT_0_IBI_PAYLOAD		W0_BIT_(12)
 
-struct hci_dat_ops {
-	int (*init)(struct i3c_hci *hci);
-	void (*cleanup)(struct i3c_hci *hci);
-	int (*alloc_entry)(struct i3c_hci *hci);
-	void (*free_entry)(struct i3c_hci *hci, unsigned int dat_idx);
-	void (*set_dynamic_addr)(struct i3c_hci *hci, unsigned int dat_idx, u8 addr);
-	void (*set_static_addr)(struct i3c_hci *hci, unsigned int dat_idx, u8 addr);
-	void (*set_flags)(struct i3c_hci *hci, unsigned int dat_idx, u32 w0, u32 w1);
-	void (*clear_flags)(struct i3c_hci *hci, unsigned int dat_idx, u32 w0, u32 w1);
-	int (*get_index)(struct i3c_hci *hci, u8 address);
-};
+काष्ठा hci_dat_ops अणु
+	पूर्णांक (*init)(काष्ठा i3c_hci *hci);
+	व्योम (*cleanup)(काष्ठा i3c_hci *hci);
+	पूर्णांक (*alloc_entry)(काष्ठा i3c_hci *hci);
+	व्योम (*मुक्त_entry)(काष्ठा i3c_hci *hci, अचिन्हित पूर्णांक dat_idx);
+	व्योम (*set_dynamic_addr)(काष्ठा i3c_hci *hci, अचिन्हित पूर्णांक dat_idx, u8 addr);
+	व्योम (*set_अटल_addr)(काष्ठा i3c_hci *hci, अचिन्हित पूर्णांक dat_idx, u8 addr);
+	व्योम (*set_flags)(काष्ठा i3c_hci *hci, अचिन्हित पूर्णांक dat_idx, u32 w0, u32 w1);
+	व्योम (*clear_flags)(काष्ठा i3c_hci *hci, अचिन्हित पूर्णांक dat_idx, u32 w0, u32 w1);
+	पूर्णांक (*get_index)(काष्ठा i3c_hci *hci, u8 address);
+पूर्ण;
 
-extern const struct hci_dat_ops mipi_i3c_hci_dat_v1;
+बाह्य स्थिर काष्ठा hci_dat_ops mipi_i3c_hci_dat_v1;
 
-#endif
+#पूर्ण_अगर

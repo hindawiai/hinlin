@@ -1,231 +1,232 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/init.h>
-#include <linux/memblock.h>
-#include <linux/fs.h>
-#include <linux/sysfs.h>
-#include <linux/kobject.h>
-#include <linux/memory_hotplug.h>
-#include <linux/mm.h>
-#include <linux/mmzone.h>
-#include <linux/pagemap.h>
-#include <linux/rmap.h>
-#include <linux/mmu_notifier.h>
-#include <linux/page_ext.h>
-#include <linux/page_idle.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/memory_hotplug.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/rmap.h>
+#समावेश <linux/mmu_notअगरier.h>
+#समावेश <linux/page_ext.h>
+#समावेश <linux/page_idle.h>
 
-#define BITMAP_CHUNK_SIZE	sizeof(u64)
-#define BITMAP_CHUNK_BITS	(BITMAP_CHUNK_SIZE * BITS_PER_BYTE)
+#घोषणा BITMAP_CHUNK_SIZE	माप(u64)
+#घोषणा BITMAP_CHUNK_BITS	(BITMAP_CHUNK_SIZE * BITS_PER_BYTE)
 
 /*
- * Idle page tracking only considers user memory pages, for other types of
+ * Idle page tracking only considers user memory pages, क्रम other types of
  * pages the idle flag is always unset and an attempt to set it is silently
  * ignored.
  *
- * We treat a page as a user memory page if it is on an LRU list, because it is
- * always safe to pass such a page to rmap_walk(), which is essential for idle
+ * We treat a page as a user memory page अगर it is on an LRU list, because it is
+ * always safe to pass such a page to rmap_walk(), which is essential क्रम idle
  * page tracking. With such an indicator of user pages we can skip isolated
  * pages, but since there are not usually many of them, it will hardly affect
  * the overall result.
  *
  * This function tries to get a user memory page by pfn as described above.
  */
-static struct page *page_idle_get_page(unsigned long pfn)
-{
-	struct page *page = pfn_to_online_page(pfn);
+अटल काष्ठा page *page_idle_get_page(अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा page *page = pfn_to_online_page(pfn);
 
-	if (!page || !PageLRU(page) ||
+	अगर (!page || !PageLRU(page) ||
 	    !get_page_unless_zero(page))
-		return NULL;
+		वापस शून्य;
 
-	if (unlikely(!PageLRU(page))) {
+	अगर (unlikely(!PageLRU(page))) अणु
 		put_page(page);
-		page = NULL;
-	}
-	return page;
-}
+		page = शून्य;
+	पूर्ण
+	वापस page;
+पूर्ण
 
-static bool page_idle_clear_pte_refs_one(struct page *page,
-					struct vm_area_struct *vma,
-					unsigned long addr, void *arg)
-{
-	struct page_vma_mapped_walk pvmw = {
+अटल bool page_idle_clear_pte_refs_one(काष्ठा page *page,
+					काष्ठा vm_area_काष्ठा *vma,
+					अचिन्हित दीर्घ addr, व्योम *arg)
+अणु
+	काष्ठा page_vma_mapped_walk pvmw = अणु
 		.page = page,
 		.vma = vma,
 		.address = addr,
-	};
+	पूर्ण;
 	bool referenced = false;
 
-	while (page_vma_mapped_walk(&pvmw)) {
+	जबतक (page_vma_mapped_walk(&pvmw)) अणु
 		addr = pvmw.address;
-		if (pvmw.pte) {
+		अगर (pvmw.pte) अणु
 			/*
 			 * For PTE-mapped THP, one sub page is referenced,
 			 * the whole THP is referenced.
 			 */
-			if (ptep_clear_young_notify(vma, addr, pvmw.pte))
+			अगर (ptep_clear_young_notअगरy(vma, addr, pvmw.pte))
 				referenced = true;
-		} else if (IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE)) {
-			if (pmdp_clear_young_notify(vma, addr, pvmw.pmd))
+		पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE)) अणु
+			अगर (pmdp_clear_young_notअगरy(vma, addr, pvmw.pmd))
 				referenced = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* unexpected pmd-mapped page? */
 			WARN_ON_ONCE(1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (referenced) {
+	अगर (referenced) अणु
 		clear_page_idle(page);
 		/*
 		 * We cleared the referenced bit in a mapping to this page. To
-		 * avoid interference with page reclaim, mark it young so that
-		 * page_referenced() will return > 0.
+		 * aव्योम पूर्णांकerference with page reclaim, mark it young so that
+		 * page_referenced() will वापस > 0.
 		 */
 		set_page_young(page);
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void page_idle_clear_pte_refs(struct page *page)
-{
+अटल व्योम page_idle_clear_pte_refs(काष्ठा page *page)
+अणु
 	/*
 	 * Since rwc.arg is unused, rwc is effectively immutable, so we
-	 * can make it static const to save some cycles and stack.
+	 * can make it अटल स्थिर to save some cycles and stack.
 	 */
-	static const struct rmap_walk_control rwc = {
+	अटल स्थिर काष्ठा rmap_walk_control rwc = अणु
 		.rmap_one = page_idle_clear_pte_refs_one,
-		.anon_lock = page_lock_anon_vma_read,
-	};
+		.anon_lock = page_lock_anon_vma_पढ़ो,
+	पूर्ण;
 	bool need_lock;
 
-	if (!page_mapped(page) ||
+	अगर (!page_mapped(page) ||
 	    !page_rmapping(page))
-		return;
+		वापस;
 
 	need_lock = !PageAnon(page) || PageKsm(page);
-	if (need_lock && !trylock_page(page))
-		return;
+	अगर (need_lock && !trylock_page(page))
+		वापस;
 
-	rmap_walk(page, (struct rmap_walk_control *)&rwc);
+	rmap_walk(page, (काष्ठा rmap_walk_control *)&rwc);
 
-	if (need_lock)
+	अगर (need_lock)
 		unlock_page(page);
-}
+पूर्ण
 
-static ssize_t page_idle_bitmap_read(struct file *file, struct kobject *kobj,
-				     struct bin_attribute *attr, char *buf,
-				     loff_t pos, size_t count)
-{
+अटल sमाप_प्रकार page_idle_biपंचांगap_पढ़ो(काष्ठा file *file, काष्ठा kobject *kobj,
+				     काष्ठा bin_attribute *attr, अक्षर *buf,
+				     loff_t pos, माप_प्रकार count)
+अणु
 	u64 *out = (u64 *)buf;
-	struct page *page;
-	unsigned long pfn, end_pfn;
-	int bit;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ pfn, end_pfn;
+	पूर्णांक bit;
 
-	if (pos % BITMAP_CHUNK_SIZE || count % BITMAP_CHUNK_SIZE)
-		return -EINVAL;
+	अगर (pos % BITMAP_CHUNK_SIZE || count % BITMAP_CHUNK_SIZE)
+		वापस -EINVAL;
 
 	pfn = pos * BITS_PER_BYTE;
-	if (pfn >= max_pfn)
-		return 0;
+	अगर (pfn >= max_pfn)
+		वापस 0;
 
 	end_pfn = pfn + count * BITS_PER_BYTE;
-	if (end_pfn > max_pfn)
+	अगर (end_pfn > max_pfn)
 		end_pfn = max_pfn;
 
-	for (; pfn < end_pfn; pfn++) {
+	क्रम (; pfn < end_pfn; pfn++) अणु
 		bit = pfn % BITMAP_CHUNK_BITS;
-		if (!bit)
+		अगर (!bit)
 			*out = 0ULL;
 		page = page_idle_get_page(pfn);
-		if (page) {
-			if (page_is_idle(page)) {
+		अगर (page) अणु
+			अगर (page_is_idle(page)) अणु
 				/*
 				 * The page might have been referenced via a
-				 * pte, in which case it is not idle. Clear
+				 * pte, in which हाल it is not idle. Clear
 				 * refs and recheck.
 				 */
 				page_idle_clear_pte_refs(page);
-				if (page_is_idle(page))
+				अगर (page_is_idle(page))
 					*out |= 1ULL << bit;
-			}
+			पूर्ण
 			put_page(page);
-		}
-		if (bit == BITMAP_CHUNK_BITS - 1)
+		पूर्ण
+		अगर (bit == BITMAP_CHUNK_BITS - 1)
 			out++;
 		cond_resched();
-	}
-	return (char *)out - buf;
-}
+	पूर्ण
+	वापस (अक्षर *)out - buf;
+पूर्ण
 
-static ssize_t page_idle_bitmap_write(struct file *file, struct kobject *kobj,
-				      struct bin_attribute *attr, char *buf,
-				      loff_t pos, size_t count)
-{
-	const u64 *in = (u64 *)buf;
-	struct page *page;
-	unsigned long pfn, end_pfn;
-	int bit;
+अटल sमाप_प्रकार page_idle_biपंचांगap_ग_लिखो(काष्ठा file *file, काष्ठा kobject *kobj,
+				      काष्ठा bin_attribute *attr, अक्षर *buf,
+				      loff_t pos, माप_प्रकार count)
+अणु
+	स्थिर u64 *in = (u64 *)buf;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ pfn, end_pfn;
+	पूर्णांक bit;
 
-	if (pos % BITMAP_CHUNK_SIZE || count % BITMAP_CHUNK_SIZE)
-		return -EINVAL;
+	अगर (pos % BITMAP_CHUNK_SIZE || count % BITMAP_CHUNK_SIZE)
+		वापस -EINVAL;
 
 	pfn = pos * BITS_PER_BYTE;
-	if (pfn >= max_pfn)
-		return -ENXIO;
+	अगर (pfn >= max_pfn)
+		वापस -ENXIO;
 
 	end_pfn = pfn + count * BITS_PER_BYTE;
-	if (end_pfn > max_pfn)
+	अगर (end_pfn > max_pfn)
 		end_pfn = max_pfn;
 
-	for (; pfn < end_pfn; pfn++) {
+	क्रम (; pfn < end_pfn; pfn++) अणु
 		bit = pfn % BITMAP_CHUNK_BITS;
-		if ((*in >> bit) & 1) {
+		अगर ((*in >> bit) & 1) अणु
 			page = page_idle_get_page(pfn);
-			if (page) {
+			अगर (page) अणु
 				page_idle_clear_pte_refs(page);
 				set_page_idle(page);
 				put_page(page);
-			}
-		}
-		if (bit == BITMAP_CHUNK_BITS - 1)
+			पूर्ण
+		पूर्ण
+		अगर (bit == BITMAP_CHUNK_BITS - 1)
 			in++;
 		cond_resched();
-	}
-	return (char *)in - buf;
-}
+	पूर्ण
+	वापस (अक्षर *)in - buf;
+पूर्ण
 
-static struct bin_attribute page_idle_bitmap_attr =
-		__BIN_ATTR(bitmap, 0600,
-			   page_idle_bitmap_read, page_idle_bitmap_write, 0);
+अटल काष्ठा bin_attribute page_idle_biपंचांगap_attr =
+		__BIN_ATTR(biपंचांगap, 0600,
+			   page_idle_biपंचांगap_पढ़ो, page_idle_biपंचांगap_ग_लिखो, 0);
 
-static struct bin_attribute *page_idle_bin_attrs[] = {
-	&page_idle_bitmap_attr,
-	NULL,
-};
+अटल काष्ठा bin_attribute *page_idle_bin_attrs[] = अणु
+	&page_idle_biपंचांगap_attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group page_idle_attr_group = {
+अटल स्थिर काष्ठा attribute_group page_idle_attr_group = अणु
 	.bin_attrs = page_idle_bin_attrs,
 	.name = "page_idle",
-};
+पूर्ण;
 
-#ifndef CONFIG_64BIT
-static bool need_page_idle(void)
-{
-	return true;
-}
-struct page_ext_operations page_idle_ops = {
+#अगर_अघोषित CONFIG_64BIT
+अटल bool need_page_idle(व्योम)
+अणु
+	वापस true;
+पूर्ण
+काष्ठा page_ext_operations page_idle_ops = अणु
 	.need = need_page_idle,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static int __init page_idle_init(void)
-{
-	int err;
+अटल पूर्णांक __init page_idle_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = sysfs_create_group(mm_kobj, &page_idle_attr_group);
-	if (err) {
+	अगर (err) अणु
 		pr_err("page_idle: register sysfs failed\n");
-		return err;
-	}
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 subsys_initcall(page_idle_init);

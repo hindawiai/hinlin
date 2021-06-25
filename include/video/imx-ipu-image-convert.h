@@ -1,198 +1,199 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2012-2016 Mentor Graphics Inc.
  *
  * i.MX Queued image conversion support, with tiling and rotation.
  */
-#ifndef __IMX_IPU_IMAGE_CONVERT_H__
-#define __IMX_IPU_IMAGE_CONVERT_H__
+#अगर_अघोषित __IMX_IPU_IMAGE_CONVERT_H__
+#घोषणा __IMX_IPU_IMAGE_CONVERT_H__
 
-#include <video/imx-ipu-v3.h>
+#समावेश <video/imx-ipu-v3.h>
 
-struct ipu_image_convert_ctx;
+काष्ठा ipu_image_convert_ctx;
 
 /**
- * struct ipu_image_convert_run - image conversion run request struct
+ * काष्ठा ipu_image_convert_run - image conversion run request काष्ठा
  *
  * @ctx:	the conversion context
- * @in_phys:	dma addr of input image buffer for this run
- * @out_phys:	dma addr of output image buffer for this run
+ * @in_phys:	dma addr of input image buffer क्रम this run
+ * @out_phys:	dma addr of output image buffer क्रम this run
  * @status:	completion status of this run
  */
-struct ipu_image_convert_run {
-	struct ipu_image_convert_ctx *ctx;
+काष्ठा ipu_image_convert_run अणु
+	काष्ठा ipu_image_convert_ctx *ctx;
 
 	dma_addr_t in_phys;
 	dma_addr_t out_phys;
 
-	int status;
+	पूर्णांक status;
 
-	/* internal to image converter, callers don't touch */
-	struct list_head list;
-};
+	/* पूर्णांकernal to image converter, callers करोn't touch */
+	काष्ठा list_head list;
+पूर्ण;
 
 /**
  * ipu_image_convert_cb_t - conversion callback function prototype
  *
- * @run:	the completed conversion run pointer
- * @ctx:	a private context pointer for the callback
+ * @run:	the completed conversion run poपूर्णांकer
+ * @ctx:	a निजी context poपूर्णांकer क्रम the callback
  */
-typedef void (*ipu_image_convert_cb_t)(struct ipu_image_convert_run *run,
-				       void *ctx);
+प्रकार व्योम (*ipu_image_convert_cb_t)(काष्ठा ipu_image_convert_run *run,
+				       व्योम *ctx);
 
 /**
- * ipu_image_convert_enum_format() - enumerate the image converter's
- *	supported input and output pixel formats.
+ * ipu_image_convert_क्रमागत_क्रमmat() - क्रमागतerate the image converter's
+ *	supported input and output pixel क्रमmats.
  *
- * @index:	pixel format index
- * @fourcc:	v4l2 fourcc for this index
+ * @index:	pixel क्रमmat index
+ * @fourcc:	v4l2 fourcc क्रम this index
  *
  * Returns 0 with a valid index and fills in v4l2 fourcc, -EINVAL otherwise.
  *
- * In V4L2, drivers can call ipu_image_enum_format() in .enum_fmt.
+ * In V4L2, drivers can call ipu_image_क्रमागत_क्रमmat() in .क्रमागत_fmt.
  */
-int ipu_image_convert_enum_format(int index, u32 *fourcc);
+पूर्णांक ipu_image_convert_क्रमागत_क्रमmat(पूर्णांक index, u32 *fourcc);
 
 /**
  * ipu_image_convert_adjust() - adjust input/output images to IPU restrictions.
  *
- * @in:		input image format, adjusted on return
- * @out:	output image format, adjusted on return
+ * @in:		input image क्रमmat, adjusted on वापस
+ * @out:	output image क्रमmat, adjusted on वापस
  * @rot_mode:	rotation mode
  *
  * In V4L2, drivers can call ipu_image_convert_adjust() in .try_fmt.
  */
-void ipu_image_convert_adjust(struct ipu_image *in, struct ipu_image *out,
-			      enum ipu_rotate_mode rot_mode);
+व्योम ipu_image_convert_adjust(काष्ठा ipu_image *in, काष्ठा ipu_image *out,
+			      क्रमागत ipu_rotate_mode rot_mode);
 
 /**
- * ipu_image_convert_verify() - verify that input/output image formats
+ * ipu_image_convert_verअगरy() - verअगरy that input/output image क्रमmats
  *         and rotation mode meet IPU restrictions.
  *
- * @in:		input image format
- * @out:	output image format
+ * @in:		input image क्रमmat
+ * @out:	output image क्रमmat
  * @rot_mode:	rotation mode
  *
- * Returns 0 if the formats and rotation mode meet IPU restrictions,
+ * Returns 0 अगर the क्रमmats and rotation mode meet IPU restrictions,
  * -EINVAL otherwise.
  */
-int ipu_image_convert_verify(struct ipu_image *in, struct ipu_image *out,
-			     enum ipu_rotate_mode rot_mode);
+पूर्णांक ipu_image_convert_verअगरy(काष्ठा ipu_image *in, काष्ठा ipu_image *out,
+			     क्रमागत ipu_rotate_mode rot_mode);
 
 /**
  * ipu_image_convert_prepare() - prepare a conversion context.
  *
- * @ipu:	the IPU handle to use for the conversions
- * @ic_task:	the IC task to use for the conversions
- * @in:		input image format
- * @out:	output image format
+ * @ipu:	the IPU handle to use क्रम the conversions
+ * @ic_task:	the IC task to use क्रम the conversions
+ * @in:		input image क्रमmat
+ * @out:	output image क्रमmat
  * @rot_mode:	rotation mode
  * @complete:	run completion callback
- * @complete_context:	a context pointer for the completion callback
+ * @complete_context:	a context poपूर्णांकer क्रम the completion callback
  *
- * Returns an opaque conversion context pointer on success, error pointer
- * on failure. The input/output formats and rotation mode must already meet
+ * Returns an opaque conversion context poपूर्णांकer on success, error poपूर्णांकer
+ * on failure. The input/output क्रमmats and rotation mode must alपढ़ोy meet
  * IPU retrictions.
  *
  * In V4L2, drivers should call ipu_image_convert_prepare() at streamon.
  */
-struct ipu_image_convert_ctx *
-ipu_image_convert_prepare(struct ipu_soc *ipu, enum ipu_ic_task ic_task,
-			  struct ipu_image *in, struct ipu_image *out,
-			  enum ipu_rotate_mode rot_mode,
+काष्ठा ipu_image_convert_ctx *
+ipu_image_convert_prepare(काष्ठा ipu_soc *ipu, क्रमागत ipu_ic_task ic_task,
+			  काष्ठा ipu_image *in, काष्ठा ipu_image *out,
+			  क्रमागत ipu_rotate_mode rot_mode,
 			  ipu_image_convert_cb_t complete,
-			  void *complete_context);
+			  व्योम *complete_context);
 
 /**
  * ipu_image_convert_unprepare() - unprepare a conversion context.
  *
- * @ctx: the conversion context pointer to unprepare
+ * @ctx: the conversion context poपूर्णांकer to unprepare
  *
- * Aborts any active or pending conversions for this context and
- * frees the context. Any currently active or pending runs belonging
- * to this context are returned via the completion callback with an
+ * Aborts any active or pending conversions क्रम this context and
+ * मुक्तs the context. Any currently active or pending runs beदीर्घing
+ * to this context are वापसed via the completion callback with an
  * error run status.
  *
  * In V4L2, drivers should call ipu_image_convert_unprepare() at
  * streamoff.
  */
-void ipu_image_convert_unprepare(struct ipu_image_convert_ctx *ctx);
+व्योम ipu_image_convert_unprepare(काष्ठा ipu_image_convert_ctx *ctx);
 
 /**
  * ipu_image_convert_queue() - queue a conversion run
  *
- * @run: the run request pointer
+ * @run: the run request poपूर्णांकer
  *
  * ipu_image_convert_run must be dynamically allocated (_not_ as a local
  * var) by callers and filled in with a previously prepared conversion
  * context handle and the dma addr's of the input and output image buffers
- * for this conversion run.
+ * क्रम this conversion run.
  *
- * When this conversion completes, the run pointer is returned via the
- * completion callback. The caller is responsible for freeing the run
+ * When this conversion completes, the run poपूर्णांकer is वापसed via the
+ * completion callback. The caller is responsible क्रम मुक्तing the run
  * object after it completes.
  *
- * In V4L2, drivers should call ipu_image_convert_queue() while
+ * In V4L2, drivers should call ipu_image_convert_queue() जबतक
  * streaming to queue the conversion of a received input buffer.
  * For example mem2mem devices this would be called in .device_run.
  */
-int ipu_image_convert_queue(struct ipu_image_convert_run *run);
+पूर्णांक ipu_image_convert_queue(काष्ठा ipu_image_convert_run *run);
 
 /**
- * ipu_image_convert_abort() - abort conversions
+ * ipu_image_convert_पात() - पात conversions
  *
- * @ctx: the conversion context pointer
+ * @ctx: the conversion context poपूर्णांकer
  *
- * This will abort any active or pending conversions for this context.
- * Any currently active or pending runs belonging to this context are
- * returned via the completion callback with an error run status.
+ * This will पात any active or pending conversions क्रम this context.
+ * Any currently active or pending runs beदीर्घing to this context are
+ * वापसed via the completion callback with an error run status.
  */
-void ipu_image_convert_abort(struct ipu_image_convert_ctx *ctx);
+व्योम ipu_image_convert_पात(काष्ठा ipu_image_convert_ctx *ctx);
 
 /**
  * ipu_image_convert() - asynchronous image conversion request
  *
- * @ipu:	the IPU handle to use for the conversion
- * @ic_task:	the IC task to use for the conversion
- * @in:		input image format
- * @out:	output image format
+ * @ipu:	the IPU handle to use क्रम the conversion
+ * @ic_task:	the IC task to use क्रम the conversion
+ * @in:		input image क्रमmat
+ * @out:	output image क्रमmat
  * @rot_mode:	rotation mode
  * @complete:	run completion callback
- * @complete_context:	a context pointer for the completion callback
+ * @complete_context:	a context poपूर्णांकer क्रम the completion callback
  *
  * Request a single image conversion. Returns the run that has been queued.
- * A conversion context is automatically created and is available in run->ctx.
- * As with ipu_image_convert_prepare(), the input/output formats and rotation
- * mode must already meet IPU retrictions.
+ * A conversion context is स्वतःmatically created and is available in run->ctx.
+ * As with ipu_image_convert_prepare(), the input/output क्रमmats and rotation
+ * mode must alपढ़ोy meet IPU retrictions.
  *
- * On successful return the caller can queue more run requests if needed, using
- * the prepared context in run->ctx. The caller is responsible for unpreparing
+ * On successful वापस the caller can queue more run requests अगर needed, using
+ * the prepared context in run->ctx. The caller is responsible क्रम unpreparing
  * the context when no more conversion requests are needed.
  */
-struct ipu_image_convert_run *
-ipu_image_convert(struct ipu_soc *ipu, enum ipu_ic_task ic_task,
-		  struct ipu_image *in, struct ipu_image *out,
-		  enum ipu_rotate_mode rot_mode,
+काष्ठा ipu_image_convert_run *
+ipu_image_convert(काष्ठा ipu_soc *ipu, क्रमागत ipu_ic_task ic_task,
+		  काष्ठा ipu_image *in, काष्ठा ipu_image *out,
+		  क्रमागत ipu_rotate_mode rot_mode,
 		  ipu_image_convert_cb_t complete,
-		  void *complete_context);
+		  व्योम *complete_context);
 
 /**
  * ipu_image_convert_sync() - synchronous single image conversion request
  *
- * @ipu:	the IPU handle to use for the conversion
- * @ic_task:	the IC task to use for the conversion
- * @in:		input image format
- * @out:	output image format
+ * @ipu:	the IPU handle to use क्रम the conversion
+ * @ic_task:	the IC task to use क्रम the conversion
+ * @in:		input image क्रमmat
+ * @out:	output image क्रमmat
  * @rot_mode:	rotation mode
  *
  * Carry out a single image conversion. Returns when the conversion
- * completes. The input/output formats and rotation mode must already
- * meet IPU retrictions. The created context is automatically unprepared
- * and the run freed on return.
+ * completes. The input/output क्रमmats and rotation mode must alपढ़ोy
+ * meet IPU retrictions. The created context is स्वतःmatically unprepared
+ * and the run मुक्तd on वापस.
  */
-int ipu_image_convert_sync(struct ipu_soc *ipu, enum ipu_ic_task ic_task,
-			   struct ipu_image *in, struct ipu_image *out,
-			   enum ipu_rotate_mode rot_mode);
+पूर्णांक ipu_image_convert_sync(काष्ठा ipu_soc *ipu, क्रमागत ipu_ic_task ic_task,
+			   काष्ठा ipu_image *in, काष्ठा ipu_image *out,
+			   क्रमागत ipu_rotate_mode rot_mode);
 
 
-#endif /* __IMX_IPU_IMAGE_CONVERT_H__ */
+#पूर्ण_अगर /* __IMX_IPU_IMAGE_CONVERT_H__ */

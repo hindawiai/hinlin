@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Jasper Lake PCH pinctrl/GPIO driver
  *
  * Copyright (C) 2020, Intel Corporation
- * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define JSL_PAD_OWN	0x020
-#define JSL_PADCFGLOCK	0x080
-#define JSL_HOSTSW_OWN	0x0c0
-#define JSL_GPI_IS	0x100
-#define JSL_GPI_IE	0x120
+#घोषणा JSL_PAD_OWN	0x020
+#घोषणा JSL_PADCFGLOCK	0x080
+#घोषणा JSL_HOSTSW_OWN	0x0c0
+#घोषणा JSL_GPI_IS	0x100
+#घोषणा JSL_GPI_IE	0x120
 
-#define JSL_GPP(r, s, e, g)				\
-	{						\
+#घोषणा JSL_GPP(r, s, e, g)				\
+	अणु						\
 		.reg_num = (r),				\
 		.base = (s),				\
 		.size = ((e) - (s) + 1),		\
 		.gpio_base = (g),			\
-	}
+	पूर्ण
 
-#define JSL_COMMUNITY(b, s, e, g)			\
-	{						\
+#घोषणा JSL_COMMUNITY(b, s, e, g)			\
+	अणु						\
 		.barno = (b),				\
-		.padown_offset = JSL_PAD_OWN,		\
+		.paकरोwn_offset = JSL_PAD_OWN,		\
 		.padcfglock_offset = JSL_PADCFGLOCK,	\
 		.hostown_offset = JSL_HOSTSW_OWN,	\
 		.is_offset = JSL_GPI_IS,		\
@@ -40,10 +41,10 @@
 		.npins = ((e) - (s) + 1),		\
 		.gpps = (g),				\
 		.ngpps = ARRAY_SIZE(g),			\
-	}
+	पूर्ण
 
 /* Jasper Lake */
-static const struct pinctrl_pin_desc jsl_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc jsl_pins[] = अणु
 	/* GPP_F */
 	PINCTRL_PIN(0, "CNV_BRI_DT_UART0_RTSB"),
 	PINCTRL_PIN(1, "CNV_BRI_RSP_UART0_RXD"),
@@ -290,64 +291,64 @@ static const struct pinctrl_pin_desc jsl_pins[] = {
 	PINCTRL_PIN(230, "SD3_CDB"),
 	PINCTRL_PIN(231, "SD3_CLK"),
 	PINCTRL_PIN(232, "SD3_WP"),
-};
+पूर्ण;
 
-static const struct intel_padgroup jsl_community0_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup jsl_community0_gpps[] = अणु
 	JSL_GPP(0, 0, 19, 320),				/* GPP_F */
 	JSL_GPP(1, 20, 28, INTEL_GPIO_BASE_NOMAP),	/* SPI */
 	JSL_GPP(2, 29, 54, 32),				/* GPP_B */
 	JSL_GPP(3, 55, 75, 64),				/* GPP_A */
 	JSL_GPP(4, 76, 83, 96),				/* GPP_S */
 	JSL_GPP(5, 84, 91, 128),			/* GPP_R */
-};
+पूर्ण;
 
-static const struct intel_padgroup jsl_community1_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup jsl_community1_gpps[] = अणु
 	JSL_GPP(0, 92, 115, 160),			/* GPP_H */
 	JSL_GPP(1, 116, 141, 192),			/* GPP_D */
 	JSL_GPP(2, 142, 170, 224),			/* vGPIO */
 	JSL_GPP(3, 171, 194, 256),			/* GPP_C */
-};
+पूर्ण;
 
-static const struct intel_padgroup jsl_community4_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup jsl_community4_gpps[] = अणु
 	JSL_GPP(0, 195, 200, INTEL_GPIO_BASE_NOMAP),	/* HVCMOS */
 	JSL_GPP(1, 201, 224, 288),			/* GPP_E */
-};
+पूर्ण;
 
-static const struct intel_padgroup jsl_community5_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup jsl_community5_gpps[] = अणु
 	JSL_GPP(0, 225, 232, INTEL_GPIO_BASE_ZERO),	/* GPP_G */
-};
+पूर्ण;
 
-static const struct intel_community jsl_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community jsl_communities[] = अणु
 	JSL_COMMUNITY(0, 0, 91, jsl_community0_gpps),
 	JSL_COMMUNITY(1, 92, 194, jsl_community1_gpps),
 	JSL_COMMUNITY(2, 195, 224, jsl_community4_gpps),
 	JSL_COMMUNITY(3, 225, 232, jsl_community5_gpps),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data jsl_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data jsl_soc_data = अणु
 	.pins = jsl_pins,
 	.npins = ARRAY_SIZE(jsl_pins),
 	.communities = jsl_communities,
 	.ncommunities = ARRAY_SIZE(jsl_communities),
-};
+पूर्ण;
 
-static const struct acpi_device_id jsl_pinctrl_acpi_match[] = {
-	{ "INT34C8", (kernel_ulong_t)&jsl_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id jsl_pinctrl_acpi_match[] = अणु
+	अणु "INT34C8", (kernel_uदीर्घ_t)&jsl_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, jsl_pinctrl_acpi_match);
 
-static INTEL_PINCTRL_PM_OPS(jsl_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(jsl_pinctrl_pm_ops);
 
-static struct platform_driver jsl_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_hid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver jsl_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_hid,
+	.driver = अणु
 		.name = "jasperlake-pinctrl",
 		.acpi_match_table = jsl_pinctrl_acpi_match,
 		.pm = &jsl_pinctrl_pm_ops,
-	},
-};
-module_platform_driver(jsl_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(jsl_pinctrl_driver);
 
 MODULE_AUTHOR("Andy Shevchenko <andriy.shevchenko@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Jasper Lake PCH pinctrl/GPIO driver");

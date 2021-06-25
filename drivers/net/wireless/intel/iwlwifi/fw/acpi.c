@@ -1,749 +1,750 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2019-2021 Intel Corporation
  */
-#include <linux/uuid.h>
-#include "iwl-drv.h"
-#include "iwl-debug.h"
-#include "acpi.h"
-#include "fw/runtime.h"
+#समावेश <linux/uuid.h>
+#समावेश "iwl-drv.h"
+#समावेश "iwl-debug.h"
+#समावेश "acpi.h"
+#समावेश "fw/runtime.h"
 
-const guid_t iwl_guid = GUID_INIT(0xF21202BF, 0x8F78, 0x4DC6,
+स्थिर guid_t iwl_guid = GUID_INIT(0xF21202BF, 0x8F78, 0x4DC6,
 				  0xA5, 0xB3, 0x1F, 0x73,
 				  0x8E, 0x28, 0x5A, 0xDE);
 IWL_EXPORT_SYMBOL(iwl_guid);
 
-const guid_t iwl_rfi_guid = GUID_INIT(0x7266172C, 0x220B, 0x4B29,
+स्थिर guid_t iwl_rfi_guid = GUID_INIT(0x7266172C, 0x220B, 0x4B29,
 				      0x81, 0x4F, 0x75, 0xE4,
 				      0xDD, 0x26, 0xB5, 0xFD);
 IWL_EXPORT_SYMBOL(iwl_rfi_guid);
 
-static int iwl_acpi_get_handle(struct device *dev, acpi_string method,
+अटल पूर्णांक iwl_acpi_get_handle(काष्ठा device *dev, acpi_string method,
 			       acpi_handle *ret_handle)
-{
+अणु
 	acpi_handle root_handle;
 	acpi_status status;
 
 	root_handle = ACPI_HANDLE(dev);
-	if (!root_handle) {
+	अगर (!root_handle) अणु
 		IWL_DEBUG_DEV_RADIO(dev,
 				    "ACPI: Could not retrieve root port handle\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	status = acpi_get_handle(root_handle, method, ret_handle);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		IWL_DEBUG_DEV_RADIO(dev,
 				    "ACPI: %s method not found\n", method);
-		return -ENOENT;
-	}
-	return 0;
-}
+		वापस -ENOENT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void *iwl_acpi_get_object(struct device *dev, acpi_string method)
-{
-	struct acpi_buffer buf = {ACPI_ALLOCATE_BUFFER, NULL};
+व्योम *iwl_acpi_get_object(काष्ठा device *dev, acpi_string method)
+अणु
+	काष्ठा acpi_buffer buf = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
 	acpi_handle handle;
 	acpi_status status;
-	int ret;
+	पूर्णांक ret;
 
 	ret = iwl_acpi_get_handle(dev, method, &handle);
-	if (ret)
-		return ERR_PTR(-ENOENT);
+	अगर (ret)
+		वापस ERR_PTR(-ENOENT);
 
 	/* Call the method with no arguments */
-	status = acpi_evaluate_object(handle, NULL, NULL, &buf);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_object(handle, शून्य, शून्य, &buf);
+	अगर (ACPI_FAILURE(status)) अणु
 		IWL_DEBUG_DEV_RADIO(dev,
 				    "ACPI: %s method invocation failed (status: 0x%x)\n",
 				    method, status);
-		return ERR_PTR(-ENOENT);
-	}
-	return buf.pointer;
-}
+		वापस ERR_PTR(-ENOENT);
+	पूर्ण
+	वापस buf.poपूर्णांकer;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_acpi_get_object);
 
 /*
- * Generic function for evaluating a method defined in the device specific
- * method (DSM) interface. The returned acpi object must be freed by calling
+ * Generic function क्रम evaluating a method defined in the device specअगरic
+ * method (DSM) पूर्णांकerface. The वापसed acpi object must be मुक्तd by calling
  * function.
  */
-static void *iwl_acpi_get_dsm_object(struct device *dev, int rev, int func,
-				     union acpi_object *args,
-				     const guid_t *guid)
-{
-	union acpi_object *obj;
+अटल व्योम *iwl_acpi_get_dsm_object(काष्ठा device *dev, पूर्णांक rev, पूर्णांक func,
+				     जोड़ acpi_object *args,
+				     स्थिर guid_t *guid)
+अणु
+	जोड़ acpi_object *obj;
 
 	obj = acpi_evaluate_dsm(ACPI_HANDLE(dev), guid, rev, func,
 				args);
-	if (!obj) {
+	अगर (!obj) अणु
 		IWL_DEBUG_DEV_RADIO(dev,
 				    "ACPI: DSM method invocation failed (rev: %d, func:%d)\n",
 				    rev, func);
-		return ERR_PTR(-ENOENT);
-	}
-	return obj;
-}
+		वापस ERR_PTR(-ENOENT);
+	पूर्ण
+	वापस obj;
+पूर्ण
 
 /*
  * Generic function to evaluate a DSM with no arguments
- * and an integer return value,
- * (as an integer object or inside a buffer object),
- * verify and assign the value in the "value" parameter.
- * return 0 in success and the appropriate errno otherwise.
+ * and an पूर्णांकeger वापस value,
+ * (as an पूर्णांकeger object or inside a buffer object),
+ * verअगरy and assign the value in the "value" parameter.
+ * वापस 0 in success and the appropriate त्रुटि_सं otherwise.
  */
-static int iwl_acpi_get_dsm_integer(struct device *dev, int rev, int func,
-				    const guid_t *guid, u64 *value,
-				    size_t expected_size)
-{
-	union acpi_object *obj;
-	int ret = 0;
+अटल पूर्णांक iwl_acpi_get_dsm_पूर्णांकeger(काष्ठा device *dev, पूर्णांक rev, पूर्णांक func,
+				    स्थिर guid_t *guid, u64 *value,
+				    माप_प्रकार expected_size)
+अणु
+	जोड़ acpi_object *obj;
+	पूर्णांक ret = 0;
 
-	obj = iwl_acpi_get_dsm_object(dev, rev, func, NULL, guid);
-	if (IS_ERR(obj)) {
+	obj = iwl_acpi_get_dsm_object(dev, rev, func, शून्य, guid);
+	अगर (IS_ERR(obj)) अणु
 		IWL_DEBUG_DEV_RADIO(dev,
 				    "Failed to get  DSM object. func= %d\n",
 				    func);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	if (obj->type == ACPI_TYPE_INTEGER) {
-		*value = obj->integer.value;
-	} else if (obj->type == ACPI_TYPE_BUFFER) {
+	अगर (obj->type == ACPI_TYPE_INTEGER) अणु
+		*value = obj->पूर्णांकeger.value;
+	पूर्ण अन्यथा अगर (obj->type == ACPI_TYPE_BUFFER) अणु
 		__le64 le_value = 0;
 
-		if (WARN_ON_ONCE(expected_size > sizeof(le_value)))
-			return -EINVAL;
+		अगर (WARN_ON_ONCE(expected_size > माप(le_value)))
+			वापस -EINVAL;
 
-		/* if the buffer size doesn't match the expected size */
-		if (obj->buffer.length != expected_size)
+		/* अगर the buffer size करोesn't match the expected size */
+		अगर (obj->buffer.length != expected_size)
 			IWL_DEBUG_DEV_RADIO(dev,
 					    "ACPI: DSM invalid buffer size, padding or truncating (%d)\n",
 					    obj->buffer.length);
 
 		 /* assuming LE from Intel BIOS spec */
-		memcpy(&le_value, obj->buffer.pointer,
-		       min_t(size_t, expected_size, (size_t)obj->buffer.length));
+		स_नकल(&le_value, obj->buffer.poपूर्णांकer,
+		       min_t(माप_प्रकार, expected_size, (माप_प्रकार)obj->buffer.length));
 		*value = le64_to_cpu(le_value);
-	} else {
+	पूर्ण अन्यथा अणु
 		IWL_DEBUG_DEV_RADIO(dev,
 				    "ACPI: DSM method did not return a valid object, type=%d\n",
 				    obj->type);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	IWL_DEBUG_DEV_RADIO(dev,
 			    "ACPI: DSM method evaluated: func=%d, ret=%d\n",
 			    func, ret);
 out:
 	ACPI_FREE(obj);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Evaluate a DSM with no arguments and a u8 return value,
+ * Evaluate a DSM with no arguments and a u8 वापस value,
  */
-int iwl_acpi_get_dsm_u8(struct device *dev, int rev, int func,
-			const guid_t *guid, u8 *value)
-{
-	int ret;
+पूर्णांक iwl_acpi_get_dsm_u8(काष्ठा device *dev, पूर्णांक rev, पूर्णांक func,
+			स्थिर guid_t *guid, u8 *value)
+अणु
+	पूर्णांक ret;
 	u64 val;
 
-	ret = iwl_acpi_get_dsm_integer(dev, rev, func,
-				       guid, &val, sizeof(u8));
+	ret = iwl_acpi_get_dsm_पूर्णांकeger(dev, rev, func,
+				       guid, &val, माप(u8));
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* cast val (u64) to be u8 */
 	*value = (u8)val;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_acpi_get_dsm_u8);
 
-union acpi_object *iwl_acpi_get_wifi_pkg(struct device *dev,
-					 union acpi_object *data,
-					 int data_size, int *tbl_rev)
-{
-	int i;
-	union acpi_object *wifi_pkg;
+जोड़ acpi_object *iwl_acpi_get_wअगरi_pkg(काष्ठा device *dev,
+					 जोड़ acpi_object *data,
+					 पूर्णांक data_size, पूर्णांक *tbl_rev)
+अणु
+	पूर्णांक i;
+	जोड़ acpi_object *wअगरi_pkg;
 
 	/*
-	 * We need at least one entry in the wifi package that
-	 * describes the domain, and one more entry, otherwise there's
-	 * no point in reading it.
+	 * We need at least one entry in the wअगरi package that
+	 * describes the करोमुख्य, and one more entry, otherwise there's
+	 * no poपूर्णांक in पढ़ोing it.
 	 */
-	if (WARN_ON_ONCE(data_size < 2))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON_ONCE(data_size < 2))
+		वापस ERR_PTR(-EINVAL);
 
 	/*
-	 * We need at least two packages, one for the revision and one
-	 * for the data itself.  Also check that the revision is valid
-	 * (i.e. it is an integer (each caller has to check by itself
-	 * if the returned revision is supported)).
+	 * We need at least two packages, one क्रम the revision and one
+	 * क्रम the data itself.  Also check that the revision is valid
+	 * (i.e. it is an पूर्णांकeger (each caller has to check by itself
+	 * अगर the वापसed revision is supported)).
 	 */
-	if (data->type != ACPI_TYPE_PACKAGE ||
+	अगर (data->type != ACPI_TYPE_PACKAGE ||
 	    data->package.count < 2 ||
-	    data->package.elements[0].type != ACPI_TYPE_INTEGER) {
+	    data->package.elements[0].type != ACPI_TYPE_INTEGER) अणु
 		IWL_DEBUG_DEV_RADIO(dev, "Invalid packages structure\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	*tbl_rev = data->package.elements[0].integer.value;
+	*tbl_rev = data->package.elements[0].पूर्णांकeger.value;
 
-	/* loop through all the packages to find the one for WiFi */
-	for (i = 1; i < data->package.count; i++) {
-		union acpi_object *domain;
+	/* loop through all the packages to find the one क्रम WiFi */
+	क्रम (i = 1; i < data->package.count; i++) अणु
+		जोड़ acpi_object *करोमुख्य;
 
-		wifi_pkg = &data->package.elements[i];
+		wअगरi_pkg = &data->package.elements[i];
 
 		/* skip entries that are not a package with the right size */
-		if (wifi_pkg->type != ACPI_TYPE_PACKAGE ||
-		    wifi_pkg->package.count != data_size)
-			continue;
+		अगर (wअगरi_pkg->type != ACPI_TYPE_PACKAGE ||
+		    wअगरi_pkg->package.count != data_size)
+			जारी;
 
-		domain = &wifi_pkg->package.elements[0];
-		if (domain->type == ACPI_TYPE_INTEGER &&
-		    domain->integer.value == ACPI_WIFI_DOMAIN)
-			goto found;
-	}
+		करोमुख्य = &wअगरi_pkg->package.elements[0];
+		अगर (करोमुख्य->type == ACPI_TYPE_INTEGER &&
+		    करोमुख्य->पूर्णांकeger.value == ACPI_WIFI_DOMAIN)
+			जाओ found;
+	पूर्ण
 
-	return ERR_PTR(-ENOENT);
+	वापस ERR_PTR(-ENOENT);
 
 found:
-	return wifi_pkg;
-}
-IWL_EXPORT_SYMBOL(iwl_acpi_get_wifi_pkg);
+	वापस wअगरi_pkg;
+पूर्ण
+IWL_EXPORT_SYMBOL(iwl_acpi_get_wअगरi_pkg);
 
-int iwl_acpi_get_tas(struct iwl_fw_runtime *fwrt,
+पूर्णांक iwl_acpi_get_tas(काष्ठा iwl_fw_runसमय *fwrt,
 		     __le32 *block_list_array,
-		     int *block_list_size)
-{
-	union acpi_object *wifi_pkg, *data;
-	int ret, tbl_rev, i;
+		     पूर्णांक *block_list_size)
+अणु
+	जोड़ acpi_object *wअगरi_pkg, *data;
+	पूर्णांक ret, tbl_rev, i;
 	bool enabled;
 
 	data = iwl_acpi_get_object(fwrt->dev, ACPI_WTAS_METHOD);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	wifi_pkg = iwl_acpi_get_wifi_pkg(fwrt->dev, data,
+	wअगरi_pkg = iwl_acpi_get_wअगरi_pkg(fwrt->dev, data,
 					 ACPI_WTAS_WIFI_DATA_SIZE,
 					 &tbl_rev);
-	if (IS_ERR(wifi_pkg)) {
-		ret = PTR_ERR(wifi_pkg);
-		goto out_free;
-	}
+	अगर (IS_ERR(wअगरi_pkg)) अणु
+		ret = PTR_ERR(wअगरi_pkg);
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (wifi_pkg->package.elements[0].type != ACPI_TYPE_INTEGER ||
-	    tbl_rev != 0) {
+	अगर (wअगरi_pkg->package.elements[0].type != ACPI_TYPE_INTEGER ||
+	    tbl_rev != 0) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	enabled = !!wifi_pkg->package.elements[0].integer.value;
+	enabled = !!wअगरi_pkg->package.elements[0].पूर्णांकeger.value;
 
-	if (!enabled) {
+	अगर (!enabled) अणु
 		*block_list_size = -1;
 		IWL_DEBUG_RADIO(fwrt, "TAS not enabled\n");
 		ret = 0;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (wifi_pkg->package.elements[1].type != ACPI_TYPE_INTEGER ||
-	    wifi_pkg->package.elements[1].integer.value >
-	    APCI_WTAS_BLACK_LIST_MAX) {
+	अगर (wअगरi_pkg->package.elements[1].type != ACPI_TYPE_INTEGER ||
+	    wअगरi_pkg->package.elements[1].पूर्णांकeger.value >
+	    APCI_WTAS_BLACK_LIST_MAX) अणु
 		IWL_DEBUG_RADIO(fwrt, "TAS invalid array size %llu\n",
-				wifi_pkg->package.elements[1].integer.value);
+				wअगरi_pkg->package.elements[1].पूर्णांकeger.value);
 		ret = -EINVAL;
-		goto out_free;
-	}
-	*block_list_size = wifi_pkg->package.elements[1].integer.value;
+		जाओ out_मुक्त;
+	पूर्ण
+	*block_list_size = wअगरi_pkg->package.elements[1].पूर्णांकeger.value;
 
 	IWL_DEBUG_RADIO(fwrt, "TAS array size %d\n", *block_list_size);
-	if (*block_list_size > APCI_WTAS_BLACK_LIST_MAX) {
+	अगर (*block_list_size > APCI_WTAS_BLACK_LIST_MAX) अणु
 		IWL_DEBUG_RADIO(fwrt, "TAS invalid array size value %u\n",
 				*block_list_size);
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	for (i = 0; i < *block_list_size; i++) {
+	क्रम (i = 0; i < *block_list_size; i++) अणु
 		u32 country;
 
-		if (wifi_pkg->package.elements[2 + i].type !=
-		    ACPI_TYPE_INTEGER) {
+		अगर (wअगरi_pkg->package.elements[2 + i].type !=
+		    ACPI_TYPE_INTEGER) अणु
 			IWL_DEBUG_RADIO(fwrt,
 					"TAS invalid array elem %d\n", 2 + i);
 			ret = -EINVAL;
-			goto out_free;
-		}
+			जाओ out_मुक्त;
+		पूर्ण
 
-		country = wifi_pkg->package.elements[2 + i].integer.value;
+		country = wअगरi_pkg->package.elements[2 + i].पूर्णांकeger.value;
 		block_list_array[i] = cpu_to_le32(country);
 		IWL_DEBUG_RADIO(fwrt, "TAS block list country %d\n", country);
-	}
+	पूर्ण
 
 	ret = 0;
-out_free:
-	kfree(data);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(data);
+	वापस ret;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_acpi_get_tas);
 
-int iwl_acpi_get_mcc(struct device *dev, char *mcc)
-{
-	union acpi_object *wifi_pkg, *data;
+पूर्णांक iwl_acpi_get_mcc(काष्ठा device *dev, अक्षर *mcc)
+अणु
+	जोड़ acpi_object *wअगरi_pkg, *data;
 	u32 mcc_val;
-	int ret, tbl_rev;
+	पूर्णांक ret, tbl_rev;
 
 	data = iwl_acpi_get_object(dev, ACPI_WRDD_METHOD);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	wifi_pkg = iwl_acpi_get_wifi_pkg(dev, data, ACPI_WRDD_WIFI_DATA_SIZE,
+	wअगरi_pkg = iwl_acpi_get_wअगरi_pkg(dev, data, ACPI_WRDD_WIFI_DATA_SIZE,
 					 &tbl_rev);
-	if (IS_ERR(wifi_pkg)) {
-		ret = PTR_ERR(wifi_pkg);
-		goto out_free;
-	}
+	अगर (IS_ERR(wअगरi_pkg)) अणु
+		ret = PTR_ERR(wअगरi_pkg);
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (wifi_pkg->package.elements[1].type != ACPI_TYPE_INTEGER ||
-	    tbl_rev != 0) {
+	अगर (wअगरi_pkg->package.elements[1].type != ACPI_TYPE_INTEGER ||
+	    tbl_rev != 0) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	mcc_val = wifi_pkg->package.elements[1].integer.value;
+	mcc_val = wअगरi_pkg->package.elements[1].पूर्णांकeger.value;
 
 	mcc[0] = (mcc_val >> 8) & 0xff;
 	mcc[1] = mcc_val & 0xff;
 	mcc[2] = '\0';
 
 	ret = 0;
-out_free:
-	kfree(data);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(data);
+	वापस ret;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_acpi_get_mcc);
 
-u64 iwl_acpi_get_pwr_limit(struct device *dev)
-{
-	union acpi_object *data, *wifi_pkg;
+u64 iwl_acpi_get_pwr_limit(काष्ठा device *dev)
+अणु
+	जोड़ acpi_object *data, *wअगरi_pkg;
 	u64 dflt_pwr_limit;
-	int tbl_rev;
+	पूर्णांक tbl_rev;
 
 	data = iwl_acpi_get_object(dev, ACPI_SPLC_METHOD);
-	if (IS_ERR(data)) {
+	अगर (IS_ERR(data)) अणु
 		dflt_pwr_limit = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	wifi_pkg = iwl_acpi_get_wifi_pkg(dev, data,
+	wअगरi_pkg = iwl_acpi_get_wअगरi_pkg(dev, data,
 					 ACPI_SPLC_WIFI_DATA_SIZE, &tbl_rev);
-	if (IS_ERR(wifi_pkg) || tbl_rev != 0 ||
-	    wifi_pkg->package.elements[1].integer.value != ACPI_TYPE_INTEGER) {
+	अगर (IS_ERR(wअगरi_pkg) || tbl_rev != 0 ||
+	    wअगरi_pkg->package.elements[1].पूर्णांकeger.value != ACPI_TYPE_INTEGER) अणु
 		dflt_pwr_limit = 0;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	dflt_pwr_limit = wifi_pkg->package.elements[1].integer.value;
-out_free:
-	kfree(data);
+	dflt_pwr_limit = wअगरi_pkg->package.elements[1].पूर्णांकeger.value;
+out_मुक्त:
+	kमुक्त(data);
 out:
-	return dflt_pwr_limit;
-}
+	वापस dflt_pwr_limit;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_acpi_get_pwr_limit);
 
-int iwl_acpi_get_eckv(struct device *dev, u32 *extl_clk)
-{
-	union acpi_object *wifi_pkg, *data;
-	int ret, tbl_rev;
+पूर्णांक iwl_acpi_get_eckv(काष्ठा device *dev, u32 *extl_clk)
+अणु
+	जोड़ acpi_object *wअगरi_pkg, *data;
+	पूर्णांक ret, tbl_rev;
 
 	data = iwl_acpi_get_object(dev, ACPI_ECKV_METHOD);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	wifi_pkg = iwl_acpi_get_wifi_pkg(dev, data, ACPI_ECKV_WIFI_DATA_SIZE,
+	wअगरi_pkg = iwl_acpi_get_wअगरi_pkg(dev, data, ACPI_ECKV_WIFI_DATA_SIZE,
 					 &tbl_rev);
-	if (IS_ERR(wifi_pkg)) {
-		ret = PTR_ERR(wifi_pkg);
-		goto out_free;
-	}
+	अगर (IS_ERR(wअगरi_pkg)) अणु
+		ret = PTR_ERR(wअगरi_pkg);
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (wifi_pkg->package.elements[1].type != ACPI_TYPE_INTEGER ||
-	    tbl_rev != 0) {
+	अगर (wअगरi_pkg->package.elements[1].type != ACPI_TYPE_INTEGER ||
+	    tbl_rev != 0) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	*extl_clk = wifi_pkg->package.elements[1].integer.value;
+	*extl_clk = wअगरi_pkg->package.elements[1].पूर्णांकeger.value;
 
 	ret = 0;
 
-out_free:
-	kfree(data);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(data);
+	वापस ret;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_acpi_get_eckv);
 
-static int iwl_sar_set_profile(union acpi_object *table,
-			       struct iwl_sar_profile *profile,
+अटल पूर्णांक iwl_sar_set_profile(जोड़ acpi_object *table,
+			       काष्ठा iwl_sar_profile *profile,
 			       bool enabled)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
 	profile->enabled = enabled;
 
-	for (i = 0; i < ACPI_SAR_TABLE_SIZE; i++) {
-		if (table[i].type != ACPI_TYPE_INTEGER ||
-		    table[i].integer.value > U8_MAX)
-			return -EINVAL;
+	क्रम (i = 0; i < ACPI_SAR_TABLE_SIZE; i++) अणु
+		अगर (table[i].type != ACPI_TYPE_INTEGER ||
+		    table[i].पूर्णांकeger.value > U8_MAX)
+			वापस -EINVAL;
 
-		profile->table[i] = table[i].integer.value;
-	}
+		profile->table[i] = table[i].पूर्णांकeger.value;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iwl_sar_fill_table(struct iwl_fw_runtime *fwrt,
+अटल पूर्णांक iwl_sar_fill_table(काष्ठा iwl_fw_runसमय *fwrt,
 			      __le16 *per_chain, u32 n_subbands,
-			      int prof_a, int prof_b)
-{
-	int profs[ACPI_SAR_NUM_CHAIN_LIMITS] = { prof_a, prof_b };
-	int i, j, idx;
+			      पूर्णांक prof_a, पूर्णांक prof_b)
+अणु
+	पूर्णांक profs[ACPI_SAR_NUM_CHAIN_LIMITS] = अणु prof_a, prof_b पूर्ण;
+	पूर्णांक i, j, idx;
 
-	for (i = 0; i < ACPI_SAR_NUM_CHAIN_LIMITS; i++) {
-		struct iwl_sar_profile *prof;
+	क्रम (i = 0; i < ACPI_SAR_NUM_CHAIN_LIMITS; i++) अणु
+		काष्ठा iwl_sar_profile *prof;
 
-		/* don't allow SAR to be disabled (profile 0 means disable) */
-		if (profs[i] == 0)
-			return -EPERM;
+		/* करोn't allow SAR to be disabled (profile 0 means disable) */
+		अगर (profs[i] == 0)
+			वापस -EPERM;
 
-		/* we are off by one, so allow up to ACPI_SAR_PROFILE_NUM */
-		if (profs[i] > ACPI_SAR_PROFILE_NUM)
-			return -EINVAL;
+		/* we are off by one, so allow up to ACPI_SAR_PROखाता_NUM */
+		अगर (profs[i] > ACPI_SAR_PROखाता_NUM)
+			वापस -EINVAL;
 
 		/* profiles go from 1 to 4, so decrement to access the array */
 		prof = &fwrt->sar_profiles[profs[i] - 1];
 
-		/* if the profile is disabled, do nothing */
-		if (!prof->enabled) {
+		/* अगर the profile is disabled, करो nothing */
+		अगर (!prof->enabled) अणु
 			IWL_DEBUG_RADIO(fwrt, "SAR profile %d is disabled.\n",
 					profs[i]);
 			/*
-			 * if one of the profiles is disabled, we
-			 * ignore all of them and return 1 to
-			 * differentiate disabled from other failures.
+			 * अगर one of the profiles is disabled, we
+			 * ignore all of them and वापस 1 to
+			 * dअगरferentiate disabled from other failures.
 			 */
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		IWL_DEBUG_INFO(fwrt,
 			       "SAR EWRD: chain %d profile index %d\n",
 			       i, profs[i]);
 		IWL_DEBUG_RADIO(fwrt, "  Chain[%d]:\n", i);
-		for (j = 0; j < n_subbands; j++) {
+		क्रम (j = 0; j < n_subbands; j++) अणु
 			idx = i * ACPI_SAR_NUM_SUB_BANDS + j;
 			per_chain[i * n_subbands + j] =
 				cpu_to_le16(prof->table[idx]);
 			IWL_DEBUG_RADIO(fwrt, "    Band[%d] = %d * .125dBm\n",
 					j, prof->table[idx]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int iwl_sar_select_profile(struct iwl_fw_runtime *fwrt,
+पूर्णांक iwl_sar_select_profile(काष्ठा iwl_fw_runसमय *fwrt,
 			   __le16 *per_chain, u32 n_tables, u32 n_subbands,
-			   int prof_a, int prof_b)
-{
-	int i, ret = 0;
+			   पूर्णांक prof_a, पूर्णांक prof_b)
+अणु
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < n_tables; i++) {
+	क्रम (i = 0; i < n_tables; i++) अणु
 		ret = iwl_sar_fill_table(fwrt,
 			 &per_chain[i * n_subbands * ACPI_SAR_NUM_CHAIN_LIMITS],
 			 n_subbands, prof_a, prof_b);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_sar_select_profile);
 
-int iwl_sar_get_wrds_table(struct iwl_fw_runtime *fwrt)
-{
-	union acpi_object *wifi_pkg, *table, *data;
+पूर्णांक iwl_sar_get_wrds_table(काष्ठा iwl_fw_runसमय *fwrt)
+अणु
+	जोड़ acpi_object *wअगरi_pkg, *table, *data;
 	bool enabled;
-	int ret, tbl_rev;
+	पूर्णांक ret, tbl_rev;
 
 	data = iwl_acpi_get_object(fwrt->dev, ACPI_WRDS_METHOD);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	wifi_pkg = iwl_acpi_get_wifi_pkg(fwrt->dev, data,
+	wअगरi_pkg = iwl_acpi_get_wअगरi_pkg(fwrt->dev, data,
 					 ACPI_WRDS_WIFI_DATA_SIZE, &tbl_rev);
-	if (IS_ERR(wifi_pkg)) {
-		ret = PTR_ERR(wifi_pkg);
-		goto out_free;
-	}
+	अगर (IS_ERR(wअगरi_pkg)) अणु
+		ret = PTR_ERR(wअगरi_pkg);
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (tbl_rev != 0) {
+	अगर (tbl_rev != 0) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (wifi_pkg->package.elements[1].type != ACPI_TYPE_INTEGER) {
+	अगर (wअगरi_pkg->package.elements[1].type != ACPI_TYPE_INTEGER) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	enabled = !!(wifi_pkg->package.elements[1].integer.value);
+	enabled = !!(wअगरi_pkg->package.elements[1].पूर्णांकeger.value);
 
 	/* position of the actual table */
-	table = &wifi_pkg->package.elements[2];
+	table = &wअगरi_pkg->package.elements[2];
 
 	/* The profile from WRDS is officially profile 1, but goes
-	 * into sar_profiles[0] (because we don't have a profile 0).
+	 * पूर्णांकo sar_profiles[0] (because we करोn't have a profile 0).
 	 */
 	ret = iwl_sar_set_profile(table, &fwrt->sar_profiles[0], enabled);
-out_free:
-	kfree(data);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(data);
+	वापस ret;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_sar_get_wrds_table);
 
-int iwl_sar_get_ewrd_table(struct iwl_fw_runtime *fwrt)
-{
-	union acpi_object *wifi_pkg, *data;
+पूर्णांक iwl_sar_get_ewrd_table(काष्ठा iwl_fw_runसमय *fwrt)
+अणु
+	जोड़ acpi_object *wअगरi_pkg, *data;
 	bool enabled;
-	int i, n_profiles, tbl_rev, pos;
-	int ret = 0;
+	पूर्णांक i, n_profiles, tbl_rev, pos;
+	पूर्णांक ret = 0;
 
 	data = iwl_acpi_get_object(fwrt->dev, ACPI_EWRD_METHOD);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	wifi_pkg = iwl_acpi_get_wifi_pkg(fwrt->dev, data,
+	wअगरi_pkg = iwl_acpi_get_wअगरi_pkg(fwrt->dev, data,
 					 ACPI_EWRD_WIFI_DATA_SIZE, &tbl_rev);
-	if (IS_ERR(wifi_pkg)) {
-		ret = PTR_ERR(wifi_pkg);
-		goto out_free;
-	}
+	अगर (IS_ERR(wअगरi_pkg)) अणु
+		ret = PTR_ERR(wअगरi_pkg);
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (tbl_rev != 0) {
+	अगर (tbl_rev != 0) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (wifi_pkg->package.elements[1].type != ACPI_TYPE_INTEGER ||
-	    wifi_pkg->package.elements[2].type != ACPI_TYPE_INTEGER) {
+	अगर (wअगरi_pkg->package.elements[1].type != ACPI_TYPE_INTEGER ||
+	    wअगरi_pkg->package.elements[2].type != ACPI_TYPE_INTEGER) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	enabled = !!(wifi_pkg->package.elements[1].integer.value);
-	n_profiles = wifi_pkg->package.elements[2].integer.value;
+	enabled = !!(wअगरi_pkg->package.elements[1].पूर्णांकeger.value);
+	n_profiles = wअगरi_pkg->package.elements[2].पूर्णांकeger.value;
 
 	/*
 	 * Check the validity of n_profiles.  The EWRD profiles start
 	 * from index 1, so the maximum value allowed here is
-	 * ACPI_SAR_PROFILES_NUM - 1.
+	 * ACPI_SAR_PROखाताS_NUM - 1.
 	 */
-	if (n_profiles <= 0 || n_profiles >= ACPI_SAR_PROFILE_NUM) {
+	अगर (n_profiles <= 0 || n_profiles >= ACPI_SAR_PROखाता_NUM) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	/* the tables start at element 3 */
 	pos = 3;
 
-	for (i = 0; i < n_profiles; i++) {
+	क्रम (i = 0; i < n_profiles; i++) अणु
 		/* The EWRD profiles officially go from 2 to 4, but we
-		 * save them in sar_profiles[1-3] (because we don't
+		 * save them in sar_profiles[1-3] (because we करोn't
 		 * have profile 0).  So in the array we start from 1.
 		 */
-		ret = iwl_sar_set_profile(&wifi_pkg->package.elements[pos],
+		ret = iwl_sar_set_profile(&wअगरi_pkg->package.elements[pos],
 					  &fwrt->sar_profiles[i + 1],
 					  enabled);
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
 		/* go to the next table */
 		pos += ACPI_SAR_TABLE_SIZE;
-	}
+	पूर्ण
 
-out_free:
-	kfree(data);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(data);
+	वापस ret;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_sar_get_ewrd_table);
 
-int iwl_sar_get_wgds_table(struct iwl_fw_runtime *fwrt)
-{
-	union acpi_object *wifi_pkg, *data;
-	int i, j, ret, tbl_rev;
-	int idx = 1;
+पूर्णांक iwl_sar_get_wgds_table(काष्ठा iwl_fw_runसमय *fwrt)
+अणु
+	जोड़ acpi_object *wअगरi_pkg, *data;
+	पूर्णांक i, j, ret, tbl_rev;
+	पूर्णांक idx = 1;
 
 	data = iwl_acpi_get_object(fwrt->dev, ACPI_WGDS_METHOD);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	wifi_pkg = iwl_acpi_get_wifi_pkg(fwrt->dev, data,
+	wअगरi_pkg = iwl_acpi_get_wअगरi_pkg(fwrt->dev, data,
 					 ACPI_WGDS_WIFI_DATA_SIZE, &tbl_rev);
 
-	if (IS_ERR(wifi_pkg)) {
-		ret = PTR_ERR(wifi_pkg);
-		goto out_free;
-	}
+	अगर (IS_ERR(wअगरi_pkg)) अणु
+		ret = PTR_ERR(wअगरi_pkg);
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (tbl_rev > 1) {
+	अगर (tbl_rev > 1) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	fwrt->geo_rev = tbl_rev;
-	for (i = 0; i < ACPI_NUM_GEO_PROFILES; i++) {
-		for (j = 0; j < ACPI_GEO_TABLE_SIZE; j++) {
-			union acpi_object *entry;
+	क्रम (i = 0; i < ACPI_NUM_GEO_PROखाताS; i++) अणु
+		क्रम (j = 0; j < ACPI_GEO_TABLE_SIZE; j++) अणु
+			जोड़ acpi_object *entry;
 
-			entry = &wifi_pkg->package.elements[idx++];
-			if (entry->type != ACPI_TYPE_INTEGER ||
-			    entry->integer.value > U8_MAX) {
+			entry = &wअगरi_pkg->package.elements[idx++];
+			अगर (entry->type != ACPI_TYPE_INTEGER ||
+			    entry->पूर्णांकeger.value > U8_MAX) अणु
 				ret = -EINVAL;
-				goto out_free;
-			}
+				जाओ out_मुक्त;
+			पूर्ण
 
-			fwrt->geo_profiles[i].values[j] = entry->integer.value;
-		}
-	}
+			fwrt->geo_profiles[i].values[j] = entry->पूर्णांकeger.value;
+		पूर्ण
+	पूर्ण
 	ret = 0;
-out_free:
-	kfree(data);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(data);
+	वापस ret;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_sar_get_wgds_table);
 
-bool iwl_sar_geo_support(struct iwl_fw_runtime *fwrt)
-{
+bool iwl_sar_geo_support(काष्ठा iwl_fw_runसमय *fwrt)
+अणु
 	/*
 	 * The GEO_TX_POWER_LIMIT command is not supported on earlier
-	 * firmware versions.  Unfortunately, we don't have a TLV API
+	 * firmware versions.  Unक्रमtunately, we करोn't have a TLV API
 	 * flag to rely on, so rely on the major version which is in
 	 * the first byte of ucode_ver.  This was implemented
 	 * initially on version 38 and then backported to 17.  It was
-	 * also backported to 29, but only for 7265D devices.  The
-	 * intention was to have it in 36 as well, but not all 8000
+	 * also backported to 29, but only क्रम 7265D devices.  The
+	 * पूर्णांकention was to have it in 36 as well, but not all 8000
 	 * family got this feature enabled.  The 8000 family is the
 	 * only one using version 36, so skip this version entirely.
 	 */
-	return IWL_UCODE_SERIAL(fwrt->fw->ucode_ver) >= 38 ||
+	वापस IWL_UCODE_SERIAL(fwrt->fw->ucode_ver) >= 38 ||
 	       IWL_UCODE_SERIAL(fwrt->fw->ucode_ver) == 17 ||
 	       (IWL_UCODE_SERIAL(fwrt->fw->ucode_ver) == 29 &&
 		((fwrt->trans->hw_rev & CSR_HW_REV_TYPE_MSK) ==
 		 CSR_HW_REV_TYPE_7265D));
-}
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_sar_geo_support);
 
-int iwl_sar_geo_init(struct iwl_fw_runtime *fwrt,
-		     struct iwl_per_chain_offset *table, u32 n_bands)
-{
-	int ret, i, j;
+पूर्णांक iwl_sar_geo_init(काष्ठा iwl_fw_runसमय *fwrt,
+		     काष्ठा iwl_per_chain_offset *table, u32 n_bands)
+अणु
+	पूर्णांक ret, i, j;
 
-	if (!iwl_sar_geo_support(fwrt))
-		return -EOPNOTSUPP;
+	अगर (!iwl_sar_geo_support(fwrt))
+		वापस -EOPNOTSUPP;
 
 	ret = iwl_sar_get_wgds_table(fwrt);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		IWL_DEBUG_RADIO(fwrt,
 				"Geo SAR BIOS table invalid or unavailable. (%d)\n",
 				ret);
-		/* we don't fail if the table is not available */
-		return -ENOENT;
-	}
+		/* we करोn't fail अगर the table is not available */
+		वापस -ENOENT;
+	पूर्ण
 
-	for (i = 0; i < ACPI_NUM_GEO_PROFILES; i++) {
-		for (j = 0; j < n_bands; j++) {
-			struct iwl_per_chain_offset *chain =
+	क्रम (i = 0; i < ACPI_NUM_GEO_PROखाताS; i++) अणु
+		क्रम (j = 0; j < n_bands; j++) अणु
+			काष्ठा iwl_per_chain_offset *chain =
 				&table[i * n_bands + j];
 			u8 *value;
 
-			if (j * ACPI_GEO_PER_CHAIN_SIZE >=
+			अगर (j * ACPI_GEO_PER_CHAIN_SIZE >=
 			    ARRAY_SIZE(fwrt->geo_profiles[0].values))
 				/*
 				 * Currently we only store lb an hb values, and
-				 * don't have any special ones for uhb. So leave
-				 * those empty for the time being
+				 * करोn't have any special ones क्रम uhb. So leave
+				 * those empty क्रम the समय being
 				 */
-				break;
+				अवरोध;
 
 			value = &fwrt->geo_profiles[i].values[j *
 				ACPI_GEO_PER_CHAIN_SIZE];
-			chain->max_tx_power = cpu_to_le16(value[0]);
+			chain->max_tx_घातer = cpu_to_le16(value[0]);
 			chain->chain_a = value[1];
 			chain->chain_b = value[2];
 			IWL_DEBUG_RADIO(fwrt,
 					"SAR geographic profile[%d] Band[%d]: chain A = %d chain B = %d max_tx_power = %d\n",
 					i, j, value[1], value[2], value[0]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 IWL_EXPORT_SYMBOL(iwl_sar_geo_init);
 
-static u32 iwl_acpi_eval_dsm_func(struct device *dev, enum iwl_dsm_funcs_rev_0 eval_func)
-{
-	union acpi_object *obj;
+अटल u32 iwl_acpi_eval_dsm_func(काष्ठा device *dev, क्रमागत iwl_dsm_funcs_rev_0 eval_func)
+अणु
+	जोड़ acpi_object *obj;
 	u32 ret;
 
 	obj = iwl_acpi_get_dsm_object(dev, 0,
-				      eval_func, NULL,
+				      eval_func, शून्य,
 				      &iwl_guid);
 
-	if (IS_ERR(obj)) {
+	अगर (IS_ERR(obj)) अणु
 		IWL_DEBUG_DEV_RADIO(dev,
 				    "ACPI: DSM func '%d': Got Error in obj = %ld\n",
 				    eval_func,
 				    PTR_ERR(obj));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (obj->type != ACPI_TYPE_INTEGER) {
+	अगर (obj->type != ACPI_TYPE_INTEGER) अणु
 		IWL_DEBUG_DEV_RADIO(dev,
 				    "ACPI: DSM func '%d' did not return a valid object, type=%d\n",
 				    eval_func,
 				    obj->type);
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = obj->integer.value;
+	ret = obj->पूर्णांकeger.value;
 	IWL_DEBUG_DEV_RADIO(dev,
 			    "ACPI: DSM method evaluated: func='%d', ret=%d\n",
 			    eval_func,
 			    ret);
 out:
 	ACPI_FREE(obj);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-__le32 iwl_acpi_get_lari_config_bitmap(struct iwl_fw_runtime *fwrt)
-{
+__le32 iwl_acpi_get_lari_config_biपंचांगap(काष्ठा iwl_fw_runसमय *fwrt)
+अणु
 	u32 ret;
-	__le32 config_bitmap = 0;
+	__le32 config_biपंचांगap = 0;
 
 	/*
 	 ** Evaluate func 'DSM_FUNC_ENABLE_INDONESIA_5G2'
 	 */
 	ret = iwl_acpi_eval_dsm_func(fwrt->dev, DSM_FUNC_ENABLE_INDONESIA_5G2);
 
-	if (ret == DSM_VALUE_INDONESIA_ENABLE)
-		config_bitmap |=
+	अगर (ret == DSM_VALUE_INDONESIA_ENABLE)
+		config_biपंचांगap |=
 			cpu_to_le32(LARI_CONFIG_ENABLE_5G2_IN_INDONESIA_MSK);
 
 	/*
@@ -751,14 +752,14 @@ __le32 iwl_acpi_get_lari_config_bitmap(struct iwl_fw_runtime *fwrt)
 	 */
 	ret = iwl_acpi_eval_dsm_func(fwrt->dev, DSM_FUNC_DISABLE_SRD);
 
-	if (ret == DSM_VALUE_SRD_PASSIVE)
-		config_bitmap |=
+	अगर (ret == DSM_VALUE_SRD_PASSIVE)
+		config_biपंचांगap |=
 			cpu_to_le32(LARI_CONFIG_CHANGE_ETSI_TO_PASSIVE_MSK);
 
-	else if (ret == DSM_VALUE_SRD_DISABLE)
-		config_bitmap |=
+	अन्यथा अगर (ret == DSM_VALUE_SRD_DISABLE)
+		config_biपंचांगap |=
 			cpu_to_le32(LARI_CONFIG_CHANGE_ETSI_TO_DISABLED_MSK);
 
-	return config_bitmap;
-}
-IWL_EXPORT_SYMBOL(iwl_acpi_get_lari_config_bitmap);
+	वापस config_biपंचांगap;
+पूर्ण
+IWL_EXPORT_SYMBOL(iwl_acpi_get_lari_config_biपंचांगap);

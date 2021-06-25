@@ -1,239 +1,240 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2020 Oracle Corporation
  *
  * Module Author: Mike Christie
  */
-#include "dm-path-selector.h"
+#समावेश "dm-path-selector.h"
 
-#include <linux/device-mapper.h>
-#include <linux/module.h>
+#समावेश <linux/device-mapper.h>
+#समावेश <linux/module.h>
 
-#define DM_MSG_PREFIX "multipath io-affinity"
+#घोषणा DM_MSG_PREFIX "multipath io-affinity"
 
-struct path_info {
-	struct dm_path *path;
+काष्ठा path_info अणु
+	काष्ठा dm_path *path;
 	cpumask_var_t cpumask;
 	refcount_t refcount;
 	bool failed;
-};
+पूर्ण;
 
-struct selector {
-	struct path_info **path_map;
+काष्ठा selector अणु
+	काष्ठा path_info **path_map;
 	cpumask_var_t path_mask;
 	atomic_t map_misses;
-};
+पूर्ण;
 
-static void ioa_free_path(struct selector *s, unsigned int cpu)
-{
-	struct path_info *pi = s->path_map[cpu];
+अटल व्योम ioa_मुक्त_path(काष्ठा selector *s, अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा path_info *pi = s->path_map[cpu];
 
-	if (!pi)
-		return;
+	अगर (!pi)
+		वापस;
 
-	if (refcount_dec_and_test(&pi->refcount)) {
+	अगर (refcount_dec_and_test(&pi->refcount)) अणु
 		cpumask_clear_cpu(cpu, s->path_mask);
-		free_cpumask_var(pi->cpumask);
-		kfree(pi);
+		मुक्त_cpumask_var(pi->cpumask);
+		kमुक्त(pi);
 
-		s->path_map[cpu] = NULL;
-	}
-}
+		s->path_map[cpu] = शून्य;
+	पूर्ण
+पूर्ण
 
-static int ioa_add_path(struct path_selector *ps, struct dm_path *path,
-			int argc, char **argv, char **error)
-{
-	struct selector *s = ps->context;
-	struct path_info *pi = NULL;
-	unsigned int cpu;
-	int ret;
+अटल पूर्णांक ioa_add_path(काष्ठा path_selector *ps, काष्ठा dm_path *path,
+			पूर्णांक argc, अक्षर **argv, अक्षर **error)
+अणु
+	काष्ठा selector *s = ps->context;
+	काष्ठा path_info *pi = शून्य;
+	अचिन्हित पूर्णांक cpu;
+	पूर्णांक ret;
 
-	if (argc != 1) {
+	अगर (argc != 1) अणु
 		*error = "io-affinity ps: invalid number of arguments";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pi = kzalloc(sizeof(*pi), GFP_KERNEL);
-	if (!pi) {
+	pi = kzalloc(माप(*pi), GFP_KERNEL);
+	अगर (!pi) अणु
 		*error = "io-affinity ps: Error allocating path context";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pi->path = path;
 	path->pscontext = pi;
 	refcount_set(&pi->refcount, 1);
 
-	if (!zalloc_cpumask_var(&pi->cpumask, GFP_KERNEL)) {
+	अगर (!zalloc_cpumask_var(&pi->cpumask, GFP_KERNEL)) अणु
 		*error = "io-affinity ps: Error allocating cpumask context";
 		ret = -ENOMEM;
-		goto free_pi;
-	}
+		जाओ मुक्त_pi;
+	पूर्ण
 
 	ret = cpumask_parse(argv[0], pi->cpumask);
-	if (ret) {
+	अगर (ret) अणु
 		*error = "io-affinity ps: invalid cpumask";
 		ret = -EINVAL;
-		goto free_mask;
-	}
+		जाओ मुक्त_mask;
+	पूर्ण
 
-	for_each_cpu(cpu, pi->cpumask) {
-		if (cpu >= nr_cpu_ids) {
+	क्रम_each_cpu(cpu, pi->cpumask) अणु
+		अगर (cpu >= nr_cpu_ids) अणु
 			DMWARN_LIMIT("Ignoring mapping for CPU %u. Max CPU is %u",
 				     cpu, nr_cpu_ids);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (s->path_map[cpu]) {
+		अगर (s->path_map[cpu]) अणु
 			DMWARN("CPU mapping for %u exists. Ignoring.", cpu);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		cpumask_set_cpu(cpu, s->path_mask);
 		s->path_map[cpu] = pi;
 		refcount_inc(&pi->refcount);
-		continue;
-	}
+		जारी;
+	पूर्ण
 
-	if (refcount_dec_and_test(&pi->refcount)) {
+	अगर (refcount_dec_and_test(&pi->refcount)) अणु
 		*error = "io-affinity ps: No new/valid CPU mapping found";
 		ret = -EINVAL;
-		goto free_mask;
-	}
+		जाओ मुक्त_mask;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_mask:
-	free_cpumask_var(pi->cpumask);
-free_pi:
-	kfree(pi);
-	return ret;
-}
+मुक्त_mask:
+	मुक्त_cpumask_var(pi->cpumask);
+मुक्त_pi:
+	kमुक्त(pi);
+	वापस ret;
+पूर्ण
 
-static int ioa_create(struct path_selector *ps, unsigned argc, char **argv)
-{
-	struct selector *s;
+अटल पूर्णांक ioa_create(काष्ठा path_selector *ps, अचिन्हित argc, अक्षर **argv)
+अणु
+	काष्ठा selector *s;
 
-	s = kmalloc(sizeof(*s), GFP_KERNEL);
-	if (!s)
-		return -ENOMEM;
+	s = kदो_स्मृति(माप(*s), GFP_KERNEL);
+	अगर (!s)
+		वापस -ENOMEM;
 
-	s->path_map = kzalloc(nr_cpu_ids * sizeof(struct path_info *),
+	s->path_map = kzalloc(nr_cpu_ids * माप(काष्ठा path_info *),
 			      GFP_KERNEL);
-	if (!s->path_map)
-		goto free_selector;
+	अगर (!s->path_map)
+		जाओ मुक्त_selector;
 
-	if (!zalloc_cpumask_var(&s->path_mask, GFP_KERNEL))
-		goto free_map;
+	अगर (!zalloc_cpumask_var(&s->path_mask, GFP_KERNEL))
+		जाओ मुक्त_map;
 
 	atomic_set(&s->map_misses, 0);
 	ps->context = s;
-	return 0;
+	वापस 0;
 
-free_map:
-	kfree(s->path_map);
-free_selector:
-	kfree(s);
-	return -ENOMEM;
-}
+मुक्त_map:
+	kमुक्त(s->path_map);
+मुक्त_selector:
+	kमुक्त(s);
+	वापस -ENOMEM;
+पूर्ण
 
-static void ioa_destroy(struct path_selector *ps)
-{
-	struct selector *s = ps->context;
-	unsigned cpu;
+अटल व्योम ioa_destroy(काष्ठा path_selector *ps)
+अणु
+	काष्ठा selector *s = ps->context;
+	अचिन्हित cpu;
 
-	for_each_cpu(cpu, s->path_mask)
-		ioa_free_path(s, cpu);
+	क्रम_each_cpu(cpu, s->path_mask)
+		ioa_मुक्त_path(s, cpu);
 
-	free_cpumask_var(s->path_mask);
-	kfree(s->path_map);
-	kfree(s);
+	मुक्त_cpumask_var(s->path_mask);
+	kमुक्त(s->path_map);
+	kमुक्त(s);
 
-	ps->context = NULL;
-}
+	ps->context = शून्य;
+पूर्ण
 
-static int ioa_status(struct path_selector *ps, struct dm_path *path,
-		      status_type_t type, char *result, unsigned int maxlen)
-{
-	struct selector *s = ps->context;
-	struct path_info *pi;
-	int sz = 0;
+अटल पूर्णांक ioa_status(काष्ठा path_selector *ps, काष्ठा dm_path *path,
+		      status_type_t type, अक्षर *result, अचिन्हित पूर्णांक maxlen)
+अणु
+	काष्ठा selector *s = ps->context;
+	काष्ठा path_info *pi;
+	पूर्णांक sz = 0;
 
-	if (!path) {
+	अगर (!path) अणु
 		DMEMIT("0 ");
-		return sz;
-	}
+		वापस sz;
+	पूर्ण
 
-	switch(type) {
-	case STATUSTYPE_INFO:
-		DMEMIT("%d ", atomic_read(&s->map_misses));
-		break;
-	case STATUSTYPE_TABLE:
+	चयन(type) अणु
+	हाल STATUSTYPE_INFO:
+		DMEMIT("%d ", atomic_पढ़ो(&s->map_misses));
+		अवरोध;
+	हाल STATUSTYPE_TABLE:
 		pi = path->pscontext;
 		DMEMIT("%*pb ", cpumask_pr_args(pi->cpumask));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return sz;
-}
+	वापस sz;
+पूर्ण
 
-static void ioa_fail_path(struct path_selector *ps, struct dm_path *p)
-{
-	struct path_info *pi = p->pscontext;
+अटल व्योम ioa_fail_path(काष्ठा path_selector *ps, काष्ठा dm_path *p)
+अणु
+	काष्ठा path_info *pi = p->pscontext;
 
 	pi->failed = true;
-}
+पूर्ण
 
-static int ioa_reinstate_path(struct path_selector *ps, struct dm_path *p)
-{
-	struct path_info *pi = p->pscontext;
+अटल पूर्णांक ioa_reinstate_path(काष्ठा path_selector *ps, काष्ठा dm_path *p)
+अणु
+	काष्ठा path_info *pi = p->pscontext;
 
 	pi->failed = false;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dm_path *ioa_select_path(struct path_selector *ps,
-				       size_t nr_bytes)
-{
-	unsigned int cpu, node;
-	struct selector *s = ps->context;
-	const struct cpumask *cpumask;
-	struct path_info *pi;
-	int i;
+अटल काष्ठा dm_path *ioa_select_path(काष्ठा path_selector *ps,
+				       माप_प्रकार nr_bytes)
+अणु
+	अचिन्हित पूर्णांक cpu, node;
+	काष्ठा selector *s = ps->context;
+	स्थिर काष्ठा cpumask *cpumask;
+	काष्ठा path_info *pi;
+	पूर्णांक i;
 
 	cpu = get_cpu();
 
 	pi = s->path_map[cpu];
-	if (pi && !pi->failed)
-		goto done;
+	अगर (pi && !pi->failed)
+		जाओ करोne;
 
 	/*
 	 * Perf is not optimal, but we at least try the local node then just
 	 * try not to fail.
 	 */
-	if (!pi)
+	अगर (!pi)
 		atomic_inc(&s->map_misses);
 
 	node = cpu_to_node(cpu);
 	cpumask = cpumask_of_node(node);
-	for_each_cpu(i, cpumask) {
+	क्रम_each_cpu(i, cpumask) अणु
 		pi = s->path_map[i];
-		if (pi && !pi->failed)
-			goto done;
-	}
+		अगर (pi && !pi->failed)
+			जाओ करोne;
+	पूर्ण
 
-	for_each_cpu(i, s->path_mask) {
+	क्रम_each_cpu(i, s->path_mask) अणु
 		pi = s->path_map[i];
-		if (pi && !pi->failed)
-			goto done;
-	}
-	pi = NULL;
+		अगर (pi && !pi->failed)
+			जाओ करोne;
+	पूर्ण
+	pi = शून्य;
 
-done:
+करोne:
 	put_cpu();
-	return pi ? pi->path : NULL;
-}
+	वापस pi ? pi->path : शून्य;
+पूर्ण
 
-static struct path_selector_type ioa_ps = {
+अटल काष्ठा path_selector_type ioa_ps = अणु
 	.name		= "io-affinity",
 	.module		= THIS_MODULE,
 	.table_args	= 1,
@@ -245,27 +246,27 @@ static struct path_selector_type ioa_ps = {
 	.fail_path	= ioa_fail_path,
 	.reinstate_path	= ioa_reinstate_path,
 	.select_path	= ioa_select_path,
-};
+पूर्ण;
 
-static int __init dm_ioa_init(void)
-{
-	int ret = dm_register_path_selector(&ioa_ps);
+अटल पूर्णांक __init dm_ioa_init(व्योम)
+अणु
+	पूर्णांक ret = dm_रेजिस्टर_path_selector(&ioa_ps);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		DMERR("register failed %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit dm_ioa_exit(void)
-{
-	int ret = dm_unregister_path_selector(&ioa_ps);
+अटल व्योम __निकास dm_ioa_निकास(व्योम)
+अणु
+	पूर्णांक ret = dm_unरेजिस्टर_path_selector(&ioa_ps);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		DMERR("unregister failed %d", ret);
-}
+पूर्ण
 
 module_init(dm_ioa_init);
-module_exit(dm_ioa_exit);
+module_निकास(dm_ioa_निकास);
 
 MODULE_DESCRIPTION(DM_NAME " multipath path selector that selects paths based on the CPU IO is being executed on");
 MODULE_AUTHOR("Mike Christie <michael.christie@oracle.com>");

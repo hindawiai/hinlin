@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_MMU_H
-#define __ASM_MMU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_MMU_H
+#घोषणा __ASM_MMU_H
 
-#include <linux/atomic.h>
-#include <linux/spinlock.h>
-#include <linux/wait.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/रुको.h>
 
-typedef struct {
-	union {
+प्रकार काष्ठा अणु
+	जोड़ अणु
 		u64 asid[NR_CPUS];
 		atomic64_t mmid;
-	};
+	पूर्ण;
 
-	void *vdso;
+	व्योम *vdso;
 
-	/* lock to be held whilst modifying fp_bd_emupage_allocmap */
+	/* lock to be held whilst modअगरying fp_bd_emupage_allocmap */
 	spinlock_t bd_emupage_lock;
-	/* bitmap tracking allocation of fp_bd_emupage */
-	unsigned long *bd_emupage_allocmap;
-	/* wait queue for threads requiring an emuframe */
-	wait_queue_head_t bd_emupage_queue;
-} mm_context_t;
+	/* biपंचांगap tracking allocation of fp_bd_emupage */
+	अचिन्हित दीर्घ *bd_emupage_allocmap;
+	/* रुको queue क्रम thपढ़ोs requiring an emuframe */
+	रुको_queue_head_t bd_emupage_queue;
+पूर्ण mm_context_t;
 
-#endif /* __ASM_MMU_H */
+#पूर्ण_अगर /* __ASM_MMU_H */

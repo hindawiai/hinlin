@@ -1,1530 +1,1531 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * camss.c
  *
- * Qualcomm MSM Camera Subsystem - Core
+ * Qualcomm MSM Camera Subप्रणाली - Core
  *
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
-#include <linux/clk.h>
-#include <linux/media-bus-format.h>
-#include <linux/media.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_graph.h>
-#include <linux/pm_runtime.h>
-#include <linux/pm_domain.h>
-#include <linux/slab.h>
-#include <linux/videodev2.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/media-bus-क्रमmat.h>
+#समावेश <linux/media.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/videodev2.h>
 
-#include <media/media-device.h>
-#include <media/v4l2-async.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-mc.h>
-#include <media/v4l2-fwnode.h>
+#समावेश <media/media-device.h>
+#समावेश <media/v4l2-async.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-mc.h>
+#समावेश <media/v4l2-fwnode.h>
 
-#include "camss.h"
+#समावेश "camss.h"
 
-#define CAMSS_CLOCK_MARGIN_NUMERATOR 105
-#define CAMSS_CLOCK_MARGIN_DENOMINATOR 100
+#घोषणा CAMSS_CLOCK_MARGIN_NUMERATOR 105
+#घोषणा CAMSS_CLOCK_MARGIN_DENOMINATOR 100
 
-static const struct resources csiphy_res_8x16[] = {
+अटल स्थिर काष्ठा resources csiphy_res_8x16[] = अणु
 	/* CSIPHY0 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "ispif_ahb", "ahb", "csiphy0_timer" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000 } },
-		.reg = { "csiphy0", "csiphy0_clk_mux" },
-		.interrupt = { "csiphy0" }
-	},
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "ahb", "csiphy0_timer" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000 पूर्ण पूर्ण,
+		.reg = अणु "csiphy0", "csiphy0_clk_mux" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy0" पूर्ण
+	पूर्ण,
 
 	/* CSIPHY1 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "ispif_ahb", "ahb", "csiphy1_timer" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000 } },
-		.reg = { "csiphy1", "csiphy1_clk_mux" },
-		.interrupt = { "csiphy1" }
-	}
-};
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "ahb", "csiphy1_timer" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000 पूर्ण पूर्ण,
+		.reg = अणु "csiphy1", "csiphy1_clk_mux" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy1" पूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct resources csid_res_8x16[] = {
+अटल स्थिर काष्ठा resources csid_res_8x16[] = अणु
 	/* CSID0 */
-	{
-		.regulator = { "vdda" },
-		.clock = { "top_ahb", "ispif_ahb", "csi0_ahb", "ahb",
-			   "csi0", "csi0_phy", "csi0_pix", "csi0_rdi" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "csid0" },
-		.interrupt = { "csid0" }
-	},
+	अणु
+		.regulator = अणु "vdda" पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "csi0_ahb", "ahb",
+			   "csi0", "csi0_phy", "csi0_pix", "csi0_rdi" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csid0" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid0" पूर्ण
+	पूर्ण,
 
 	/* CSID1 */
-	{
-		.regulator = { "vdda" },
-		.clock = { "top_ahb", "ispif_ahb", "csi1_ahb", "ahb",
-			   "csi1", "csi1_phy", "csi1_pix", "csi1_rdi" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "csid1" },
-		.interrupt = { "csid1" }
-	},
-};
+	अणु
+		.regulator = अणु "vdda" पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "csi1_ahb", "ahb",
+			   "csi1", "csi1_phy", "csi1_pix", "csi1_rdi" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csid1" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid1" पूर्ण
+	पूर्ण,
+पूर्ण;
 
-static const struct resources_ispif ispif_res_8x16 = {
+अटल स्थिर काष्ठा resources_ispअगर ispअगर_res_8x16 = अणु
 	/* ISPIF */
-	.clock = { "top_ahb", "ahb", "ispif_ahb",
+	.घड़ी = अणु "top_ahb", "ahb", "ispif_ahb",
 		   "csi0", "csi0_pix", "csi0_rdi",
-		   "csi1", "csi1_pix", "csi1_rdi" },
-	.clock_for_reset = { "vfe0", "csi_vfe0" },
-	.reg = { "ispif", "csi_clk_mux" },
-	.interrupt = "ispif"
+		   "csi1", "csi1_pix", "csi1_rdi" पूर्ण,
+	.घड़ी_क्रम_reset = अणु "vfe0", "csi_vfe0" पूर्ण,
+	.reg = अणु "ispif", "csi_clk_mux" पूर्ण,
+	.पूर्णांकerrupt = "ispif"
 
-};
+पूर्ण;
 
-static const struct resources vfe_res_8x16[] = {
+अटल स्थिर काष्ठा resources vfe_res_8x16[] = अणु
 	/* VFE0 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "vfe0", "csi_vfe0",
-			   "vfe_ahb", "vfe_axi", "ahb" },
-		.clock_rate = { { 0 },
-				{ 50000000, 80000000, 100000000, 160000000,
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "vfe0", "csi_vfe0",
+			   "vfe_ahb", "vfe_axi", "ahb" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 50000000, 80000000, 100000000, 160000000,
 				  177780000, 200000000, 266670000, 320000000,
-				  400000000, 465000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "vfe0" },
-		.interrupt = { "vfe0" }
-	}
-};
+				  400000000, 465000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "vfe0" पूर्ण,
+		.पूर्णांकerrupt = अणु "vfe0" पूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct resources csiphy_res_8x96[] = {
+अटल स्थिर काष्ठा resources csiphy_res_8x96[] = अणु
 	/* CSIPHY0 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "ispif_ahb", "ahb", "csiphy0_timer" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 266666667 } },
-		.reg = { "csiphy0", "csiphy0_clk_mux" },
-		.interrupt = { "csiphy0" }
-	},
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "ahb", "csiphy0_timer" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 266666667 पूर्ण पूर्ण,
+		.reg = अणु "csiphy0", "csiphy0_clk_mux" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy0" पूर्ण
+	पूर्ण,
 
 	/* CSIPHY1 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "ispif_ahb", "ahb", "csiphy1_timer" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 266666667 } },
-		.reg = { "csiphy1", "csiphy1_clk_mux" },
-		.interrupt = { "csiphy1" }
-	},
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "ahb", "csiphy1_timer" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 266666667 पूर्ण पूर्ण,
+		.reg = अणु "csiphy1", "csiphy1_clk_mux" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy1" पूर्ण
+	पूर्ण,
 
 	/* CSIPHY2 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "ispif_ahb", "ahb", "csiphy2_timer" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 266666667 } },
-		.reg = { "csiphy2", "csiphy2_clk_mux" },
-		.interrupt = { "csiphy2" }
-	}
-};
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "ahb", "csiphy2_timer" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 266666667 पूर्ण पूर्ण,
+		.reg = अणु "csiphy2", "csiphy2_clk_mux" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy2" पूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct resources csid_res_8x96[] = {
+अटल स्थिर काष्ठा resources csid_res_8x96[] = अणु
 	/* CSID0 */
-	{
-		.regulator = { "vdda" },
-		.clock = { "top_ahb", "ispif_ahb", "csi0_ahb", "ahb",
-			   "csi0", "csi0_phy", "csi0_pix", "csi0_rdi" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 266666667 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "csid0" },
-		.interrupt = { "csid0" }
-	},
+	अणु
+		.regulator = अणु "vdda" पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "csi0_ahb", "ahb",
+			   "csi0", "csi0_phy", "csi0_pix", "csi0_rdi" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 266666667 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csid0" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid0" पूर्ण
+	पूर्ण,
 
 	/* CSID1 */
-	{
-		.regulator = { "vdda" },
-		.clock = { "top_ahb", "ispif_ahb", "csi1_ahb", "ahb",
-			   "csi1", "csi1_phy", "csi1_pix", "csi1_rdi" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 266666667 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "csid1" },
-		.interrupt = { "csid1" }
-	},
+	अणु
+		.regulator = अणु "vdda" पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "csi1_ahb", "ahb",
+			   "csi1", "csi1_phy", "csi1_pix", "csi1_rdi" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 266666667 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csid1" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid1" पूर्ण
+	पूर्ण,
 
 	/* CSID2 */
-	{
-		.regulator = { "vdda" },
-		.clock = { "top_ahb", "ispif_ahb", "csi2_ahb", "ahb",
-			   "csi2", "csi2_phy", "csi2_pix", "csi2_rdi" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 266666667 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "csid2" },
-		.interrupt = { "csid2" }
-	},
+	अणु
+		.regulator = अणु "vdda" पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "csi2_ahb", "ahb",
+			   "csi2", "csi2_phy", "csi2_pix", "csi2_rdi" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 266666667 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csid2" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid2" पूर्ण
+	पूर्ण,
 
 	/* CSID3 */
-	{
-		.regulator = { "vdda" },
-		.clock = { "top_ahb", "ispif_ahb", "csi3_ahb", "ahb",
-			   "csi3", "csi3_phy", "csi3_pix", "csi3_rdi" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 266666667 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "csid3" },
-		.interrupt = { "csid3" }
-	}
-};
+	अणु
+		.regulator = अणु "vdda" पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "csi3_ahb", "ahb",
+			   "csi3", "csi3_phy", "csi3_pix", "csi3_rdi" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 266666667 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csid3" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid3" पूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct resources_ispif ispif_res_8x96 = {
+अटल स्थिर काष्ठा resources_ispअगर ispअगर_res_8x96 = अणु
 	/* ISPIF */
-	.clock = { "top_ahb", "ahb", "ispif_ahb",
+	.घड़ी = अणु "top_ahb", "ahb", "ispif_ahb",
 		   "csi0", "csi0_pix", "csi0_rdi",
 		   "csi1", "csi1_pix", "csi1_rdi",
 		   "csi2", "csi2_pix", "csi2_rdi",
-		   "csi3", "csi3_pix", "csi3_rdi" },
-	.clock_for_reset = { "vfe0", "csi_vfe0", "vfe1", "csi_vfe1" },
-	.reg = { "ispif", "csi_clk_mux" },
-	.interrupt = "ispif"
-};
+		   "csi3", "csi3_pix", "csi3_rdi" पूर्ण,
+	.घड़ी_क्रम_reset = अणु "vfe0", "csi_vfe0", "vfe1", "csi_vfe1" पूर्ण,
+	.reg = अणु "ispif", "csi_clk_mux" पूर्ण,
+	.पूर्णांकerrupt = "ispif"
+पूर्ण;
 
-static const struct resources vfe_res_8x96[] = {
+अटल स्थिर काष्ठा resources vfe_res_8x96[] = अणु
 	/* VFE0 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "ahb", "vfe0", "csi_vfe0", "vfe_ahb",
-			   "vfe0_ahb", "vfe_axi", "vfe0_stream"},
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 75000000, 100000000, 300000000,
-				  320000000, 480000000, 600000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "vfe0" },
-		.interrupt = { "vfe0" }
-	},
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "ahb", "vfe0", "csi_vfe0", "vfe_ahb",
+			   "vfe0_ahb", "vfe_axi", "vfe0_stream"पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 75000000, 100000000, 300000000,
+				  320000000, 480000000, 600000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "vfe0" पूर्ण,
+		.पूर्णांकerrupt = अणु "vfe0" पूर्ण
+	पूर्ण,
 
 	/* VFE1 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "ahb", "vfe1", "csi_vfe1", "vfe_ahb",
-			   "vfe1_ahb", "vfe_axi", "vfe1_stream"},
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 75000000, 100000000, 300000000,
-				  320000000, 480000000, 600000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "vfe1" },
-		.interrupt = { "vfe1" }
-	}
-};
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "ahb", "vfe1", "csi_vfe1", "vfe_ahb",
+			   "vfe1_ahb", "vfe_axi", "vfe1_stream"पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 75000000, 100000000, 300000000,
+				  320000000, 480000000, 600000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "vfe1" पूर्ण,
+		.पूर्णांकerrupt = अणु "vfe1" पूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct resources csiphy_res_660[] = {
+अटल स्थिर काष्ठा resources csiphy_res_660[] = अणु
 	/* CSIPHY0 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "ispif_ahb", "ahb", "csiphy0_timer",
-			   "csi0_phy", "csiphy_ahb2crif" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 269333333 },
-				{ 0 } },
-		.reg = { "csiphy0", "csiphy0_clk_mux" },
-		.interrupt = { "csiphy0" }
-	},
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "ahb", "csiphy0_timer",
+			   "csi0_phy", "csiphy_ahb2crif" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 269333333 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csiphy0", "csiphy0_clk_mux" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy0" पूर्ण
+	पूर्ण,
 
 	/* CSIPHY1 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "ispif_ahb", "ahb", "csiphy1_timer",
-			   "csi1_phy", "csiphy_ahb2crif" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 269333333 },
-				{ 0 } },
-		.reg = { "csiphy1", "csiphy1_clk_mux" },
-		.interrupt = { "csiphy1" }
-	},
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "ahb", "csiphy1_timer",
+			   "csi1_phy", "csiphy_ahb2crif" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 269333333 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csiphy1", "csiphy1_clk_mux" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy1" पूर्ण
+	पूर्ण,
 
 	/* CSIPHY2 */
-	{
-		.regulator = { NULL },
-		.clock = { "top_ahb", "ispif_ahb", "ahb", "csiphy2_timer",
-			   "csi2_phy", "csiphy_ahb2crif" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 269333333 },
-				{ 0 } },
-		.reg = { "csiphy2", "csiphy2_clk_mux" },
-		.interrupt = { "csiphy2" }
-	}
-};
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "ahb", "csiphy2_timer",
+			   "csi2_phy", "csiphy_ahb2crif" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 269333333 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csiphy2", "csiphy2_clk_mux" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy2" पूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct resources csid_res_660[] = {
+अटल स्थिर काष्ठा resources csid_res_660[] = अणु
 	/* CSID0 */
-	{
-		.regulator = { "vdda", "vdd_sec" },
-		.clock = { "top_ahb", "ispif_ahb", "csi0_ahb", "ahb",
+	अणु
+		.regulator = अणु "vdda", "vdd_sec" पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "csi0_ahb", "ahb",
 			   "csi0", "csi0_phy", "csi0_pix", "csi0_rdi",
-			   "cphy_csid0" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 310000000,
-				  404000000, 465000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "csid0" },
-		.interrupt = { "csid0" }
-	},
+			   "cphy_csid0" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 310000000,
+				  404000000, 465000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csid0" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid0" पूर्ण
+	पूर्ण,
 
 	/* CSID1 */
-	{
-		.regulator = { "vdda", "vdd_sec" },
-		.clock = { "top_ahb", "ispif_ahb", "csi1_ahb", "ahb",
+	अणु
+		.regulator = अणु "vdda", "vdd_sec" पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "csi1_ahb", "ahb",
 			   "csi1", "csi1_phy", "csi1_pix", "csi1_rdi",
-			   "cphy_csid1" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 310000000,
-				  404000000, 465000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "csid1" },
-		.interrupt = { "csid1" }
-	},
+			   "cphy_csid1" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 310000000,
+				  404000000, 465000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csid1" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid1" पूर्ण
+	पूर्ण,
 
 	/* CSID2 */
-	{
-		.regulator = { "vdda", "vdd_sec" },
-		.clock = { "top_ahb", "ispif_ahb", "csi2_ahb", "ahb",
+	अणु
+		.regulator = अणु "vdda", "vdd_sec" पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "csi2_ahb", "ahb",
 			   "csi2", "csi2_phy", "csi2_pix", "csi2_rdi",
-			   "cphy_csid2" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 310000000,
-				  404000000, 465000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "csid2" },
-		.interrupt = { "csid2" }
-	},
+			   "cphy_csid2" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 310000000,
+				  404000000, 465000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csid2" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid2" पूर्ण
+	पूर्ण,
 
 	/* CSID3 */
-	{
-		.regulator = { "vdda", "vdd_sec" },
-		.clock = { "top_ahb", "ispif_ahb", "csi3_ahb", "ahb",
+	अणु
+		.regulator = अणु "vdda", "vdd_sec" पूर्ण,
+		.घड़ी = अणु "top_ahb", "ispif_ahb", "csi3_ahb", "ahb",
 			   "csi3", "csi3_phy", "csi3_pix", "csi3_rdi",
-			   "cphy_csid3" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 100000000, 200000000, 310000000,
-				  404000000, 465000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "csid3" },
-		.interrupt = { "csid3" }
-	}
-};
+			   "cphy_csid3" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 100000000, 200000000, 310000000,
+				  404000000, 465000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "csid3" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid3" पूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct resources_ispif ispif_res_660 = {
+अटल स्थिर काष्ठा resources_ispअगर ispअगर_res_660 = अणु
 	/* ISPIF */
-	.clock = { "top_ahb", "ahb", "ispif_ahb",
+	.घड़ी = अणु "top_ahb", "ahb", "ispif_ahb",
 		   "csi0", "csi0_pix", "csi0_rdi",
 		   "csi1", "csi1_pix", "csi1_rdi",
 		   "csi2", "csi2_pix", "csi2_rdi",
-		   "csi3", "csi3_pix", "csi3_rdi" },
-	.clock_for_reset = { "vfe0", "csi_vfe0", "vfe1", "csi_vfe1" },
-	.reg = { "ispif", "csi_clk_mux" },
-	.interrupt = "ispif"
-};
+		   "csi3", "csi3_pix", "csi3_rdi" पूर्ण,
+	.घड़ी_क्रम_reset = अणु "vfe0", "csi_vfe0", "vfe1", "csi_vfe1" पूर्ण,
+	.reg = अणु "ispif", "csi_clk_mux" पूर्ण,
+	.पूर्णांकerrupt = "ispif"
+पूर्ण;
 
-static const struct resources vfe_res_660[] = {
+अटल स्थिर काष्ठा resources vfe_res_660[] = अणु
 	/* VFE0 */
-	{
-		.regulator = { NULL },
-		.clock = { "throttle_axi", "top_ahb", "ahb", "vfe0",
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "throttle_axi", "top_ahb", "ahb", "vfe0",
 			   "csi_vfe0", "vfe_ahb", "vfe0_ahb", "vfe_axi",
-			   "vfe0_stream"},
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 120000000, 200000000, 256000000,
+			   "vfe0_stream"पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 120000000, 200000000, 256000000,
 				  300000000, 404000000, 480000000,
-				  540000000, 576000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "vfe0" },
-		.interrupt = { "vfe0" }
-	},
+				  540000000, 576000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "vfe0" पूर्ण,
+		.पूर्णांकerrupt = अणु "vfe0" पूर्ण
+	पूर्ण,
 
 	/* VFE1 */
-	{
-		.regulator = { NULL },
-		.clock = { "throttle_axi", "top_ahb", "ahb", "vfe1",
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "throttle_axi", "top_ahb", "ahb", "vfe1",
 			   "csi_vfe1", "vfe_ahb", "vfe1_ahb", "vfe_axi",
-			   "vfe1_stream"},
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 120000000, 200000000, 256000000,
+			   "vfe1_stream"पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 120000000, 200000000, 256000000,
 				  300000000, 404000000, 480000000,
-				  540000000, 576000000 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 } },
-		.reg = { "vfe1" },
-		.interrupt = { "vfe1" }
-	}
-};
+				  540000000, 576000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण पूर्ण,
+		.reg = अणु "vfe1" पूर्ण,
+		.पूर्णांकerrupt = अणु "vfe1" पूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct resources csiphy_res_845[] = {
+अटल स्थिर काष्ठा resources csiphy_res_845[] = अणु
 	/* CSIPHY0 */
-	{
-		.regulator = { NULL },
-		.clock = { "camnoc_axi", "soc_ahb", "slow_ahb_src",
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "camnoc_axi", "soc_ahb", "slow_ahb_src",
 				"cpas_ahb", "cphy_rx_src", "csiphy0",
-				"csiphy0_timer_src", "csiphy0_timer" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 19200000, 240000000, 269333333 } },
-		.reg = { "csiphy0" },
-		.interrupt = { "csiphy0" }
-	},
+				"csiphy0_timer_src", "csiphy0_timer" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 240000000, 269333333 पूर्ण पूर्ण,
+		.reg = अणु "csiphy0" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy0" पूर्ण
+	पूर्ण,
 
 	/* CSIPHY1 */
-	{
-		.regulator = { NULL },
-		.clock = { "camnoc_axi", "soc_ahb", "slow_ahb_src",
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "camnoc_axi", "soc_ahb", "slow_ahb_src",
 				"cpas_ahb", "cphy_rx_src", "csiphy1",
-				"csiphy1_timer_src", "csiphy1_timer" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 19200000, 240000000, 269333333 } },
-		.reg = { "csiphy1" },
-		.interrupt = { "csiphy1" }
-	},
+				"csiphy1_timer_src", "csiphy1_timer" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 240000000, 269333333 पूर्ण पूर्ण,
+		.reg = अणु "csiphy1" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy1" पूर्ण
+	पूर्ण,
 
 	/* CSIPHY2 */
-	{
-		.regulator = { NULL },
-		.clock = { "camnoc_axi", "soc_ahb", "slow_ahb_src",
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "camnoc_axi", "soc_ahb", "slow_ahb_src",
 				"cpas_ahb", "cphy_rx_src", "csiphy2",
-				"csiphy2_timer_src", "csiphy2_timer" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 19200000, 240000000, 269333333 } },
-		.reg = { "csiphy2" },
-		.interrupt = { "csiphy2" }
-	},
+				"csiphy2_timer_src", "csiphy2_timer" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 240000000, 269333333 पूर्ण पूर्ण,
+		.reg = अणु "csiphy2" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy2" पूर्ण
+	पूर्ण,
 
 	/* CSIPHY3 */
-	{
-		.regulator = { NULL },
-		.clock = { "camnoc_axi", "soc_ahb", "slow_ahb_src",
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "camnoc_axi", "soc_ahb", "slow_ahb_src",
 				"cpas_ahb", "cphy_rx_src", "csiphy3",
-				"csiphy3_timer_src", "csiphy3_timer" },
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 0 },
-				{ 19200000, 240000000, 269333333 } },
-		.reg = { "csiphy3" },
-		.interrupt = { "csiphy3" }
-	}
-};
+				"csiphy3_timer_src", "csiphy3_timer" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 240000000, 269333333 पूर्ण पूर्ण,
+		.reg = अणु "csiphy3" पूर्ण,
+		.पूर्णांकerrupt = अणु "csiphy3" पूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct resources csid_res_845[] = {
+अटल स्थिर काष्ठा resources csid_res_845[] = अणु
 	/* CSID0 */
-	{
-		.regulator = { "vdda-csi0" },
-		.clock = { "cpas_ahb", "cphy_rx_src", "slow_ahb_src",
+	अणु
+		.regulator = अणु "vdda-csi0" पूर्ण,
+		.घड़ी = अणु "cpas_ahb", "cphy_rx_src", "slow_ahb_src",
 				"soc_ahb", "vfe0", "vfe0_src",
 				"vfe0_cphy_rx", "csi0",
-				"csi0_src" },
-		.clock_rate = { { 0 },
-				{ 384000000 },
-				{ 80000000 },
-				{ 0 },
-				{ 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 },
-				{ 320000000 },
-				{ 0 },
-				{ 19200000, 75000000, 384000000, 538666667 },
-				{ 384000000 } },
-		.reg = { "csid0" },
-		.interrupt = { "csid0" }
-	},
+				"csi0_src" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 384000000 पूर्ण,
+				अणु 80000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 पूर्ण,
+				अणु 320000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 75000000, 384000000, 538666667 पूर्ण,
+				अणु 384000000 पूर्ण पूर्ण,
+		.reg = अणु "csid0" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid0" पूर्ण
+	पूर्ण,
 
 	/* CSID1 */
-	{
-		.regulator = { "vdda-csi1" },
-		.clock = { "cpas_ahb", "cphy_rx_src", "slow_ahb_src",
+	अणु
+		.regulator = अणु "vdda-csi1" पूर्ण,
+		.घड़ी = अणु "cpas_ahb", "cphy_rx_src", "slow_ahb_src",
 				"soc_ahb", "vfe1", "vfe1_src",
 				"vfe1_cphy_rx", "csi1",
-				"csi1_src" },
-		.clock_rate = { { 0 },
-				{ 384000000 },
-				{ 80000000 },
-				{ 0 },
-				{ 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 },
-				{ 320000000 },
-				{ 0 },
-				{ 19200000, 75000000, 384000000, 538666667 },
-				{ 384000000 } },
-		.reg = { "csid1" },
-		.interrupt = { "csid1" }
-	},
+				"csi1_src" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 384000000 पूर्ण,
+				अणु 80000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 पूर्ण,
+				अणु 320000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 75000000, 384000000, 538666667 पूर्ण,
+				अणु 384000000 पूर्ण पूर्ण,
+		.reg = अणु "csid1" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid1" पूर्ण
+	पूर्ण,
 
 	/* CSID2 */
-	{
-		.regulator = { "vdda-csi2" },
-		.clock = { "cpas_ahb", "cphy_rx_src", "slow_ahb_src",
+	अणु
+		.regulator = अणु "vdda-csi2" पूर्ण,
+		.घड़ी = अणु "cpas_ahb", "cphy_rx_src", "slow_ahb_src",
 				"soc_ahb", "vfe_lite", "vfe_lite_src",
 				"vfe_lite_cphy_rx", "csi2",
-				"csi2_src" },
-		.clock_rate = { { 0 },
-				{ 384000000 },
-				{ 80000000 },
-				{ 0 },
-				{ 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 },
-				{ 320000000 },
-				{ 0 },
-				{ 19200000, 75000000, 384000000, 538666667 },
-				{ 384000000 } },
-		.reg = { "csid2" },
-		.interrupt = { "csid2" }
-	}
-};
+				"csi2_src" पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 384000000 पूर्ण,
+				अणु 80000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 पूर्ण,
+				अणु 320000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 75000000, 384000000, 538666667 पूर्ण,
+				अणु 384000000 पूर्ण पूर्ण,
+		.reg = अणु "csid2" पूर्ण,
+		.पूर्णांकerrupt = अणु "csid2" पूर्ण
+	पूर्ण
+पूर्ण;
 
-static const struct resources vfe_res_845[] = {
+अटल स्थिर काष्ठा resources vfe_res_845[] = अणु
 	/* VFE0 */
-	{
-		.regulator = { NULL },
-		.clock = { "camnoc_axi", "cpas_ahb", "slow_ahb_src",
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "camnoc_axi", "cpas_ahb", "slow_ahb_src",
 				"soc_ahb", "vfe0", "vfe0_axi",
 				"vfe0_src", "csi0",
-				"csi0_src"},
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 80000000 },
-				{ 0 },
-				{ 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 },
-				{ 0 },
-				{ 320000000 },
-				{ 19200000, 75000000, 384000000, 538666667 },
-				{ 384000000 } },
-		.reg = { "vfe0" },
-		.interrupt = { "vfe0" }
-	},
+				"csi0_src"पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 80000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 320000000 पूर्ण,
+				अणु 19200000, 75000000, 384000000, 538666667 पूर्ण,
+				अणु 384000000 पूर्ण पूर्ण,
+		.reg = अणु "vfe0" पूर्ण,
+		.पूर्णांकerrupt = अणु "vfe0" पूर्ण
+	पूर्ण,
 
 	/* VFE1 */
-	{
-		.regulator = { NULL },
-		.clock = { "camnoc_axi", "cpas_ahb", "slow_ahb_src",
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "camnoc_axi", "cpas_ahb", "slow_ahb_src",
 				"soc_ahb", "vfe1", "vfe1_axi",
 				"vfe1_src", "csi1",
-				"csi1_src"},
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 80000000 },
-				{ 0 },
-				{ 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 },
-				{ 0 },
-				{ 320000000 },
-				{ 19200000, 75000000, 384000000, 538666667 },
-				{ 384000000 } },
-		.reg = { "vfe1" },
-		.interrupt = { "vfe1" }
-	},
+				"csi1_src"पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 80000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 320000000 पूर्ण,
+				अणु 19200000, 75000000, 384000000, 538666667 पूर्ण,
+				अणु 384000000 पूर्ण पूर्ण,
+		.reg = अणु "vfe1" पूर्ण,
+		.पूर्णांकerrupt = अणु "vfe1" पूर्ण
+	पूर्ण,
 
 	/* VFE-lite */
-	{
-		.regulator = { NULL },
-		.clock = { "camnoc_axi", "cpas_ahb", "slow_ahb_src",
+	अणु
+		.regulator = अणु शून्य पूर्ण,
+		.घड़ी = अणु "camnoc_axi", "cpas_ahb", "slow_ahb_src",
 				"soc_ahb", "vfe_lite",
 				"vfe_lite_src", "csi2",
-				"csi2_src"},
-		.clock_rate = { { 0 },
-				{ 0 },
-				{ 80000000 },
-				{ 0 },
-				{ 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 },
-				{ 320000000 },
-				{ 19200000, 75000000, 384000000, 538666667 },
-				{ 384000000 } },
-		.reg = { "vfe_lite" },
-		.interrupt = { "vfe_lite" }
-	}
-};
+				"csi2_src"पूर्ण,
+		.घड़ी_rate = अणु अणु 0 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 80000000 पूर्ण,
+				अणु 0 पूर्ण,
+				अणु 19200000, 100000000, 320000000, 404000000, 480000000, 600000000 पूर्ण,
+				अणु 320000000 पूर्ण,
+				अणु 19200000, 75000000, 384000000, 538666667 पूर्ण,
+				अणु 384000000 पूर्ण पूर्ण,
+		.reg = अणु "vfe_lite" पूर्ण,
+		.पूर्णांकerrupt = अणु "vfe_lite" पूर्ण
+	पूर्ण
+पूर्ण;
 
 /*
- * camss_add_clock_margin - Add margin to clock frequency rate
+ * camss_add_घड़ी_margin - Add margin to घड़ी frequency rate
  * @rate: Clock frequency rate
  *
- * When making calculations with physical clock frequency values
+ * When making calculations with physical घड़ी frequency values
  * some safety margin must be added. Add it.
  */
-inline void camss_add_clock_margin(u64 *rate)
-{
+अंतरभूत व्योम camss_add_घड़ी_margin(u64 *rate)
+अणु
 	*rate *= CAMSS_CLOCK_MARGIN_NUMERATOR;
-	*rate = div_u64(*rate, CAMSS_CLOCK_MARGIN_DENOMINATOR);
-}
+	*rate = भाग_u64(*rate, CAMSS_CLOCK_MARGIN_DENOMINATOR);
+पूर्ण
 
 /*
- * camss_enable_clocks - Enable multiple clocks
- * @nclocks: Number of clocks in clock array
- * @clock: Clock array
+ * camss_enable_घड़ीs - Enable multiple घड़ीs
+ * @nघड़ीs: Number of घड़ीs in घड़ी array
+ * @घड़ी: Clock array
  * @dev: Device
  *
  * Return 0 on success or a negative error code otherwise
  */
-int camss_enable_clocks(int nclocks, struct camss_clock *clock,
-			struct device *dev)
-{
-	int ret;
-	int i;
+पूर्णांक camss_enable_घड़ीs(पूर्णांक nघड़ीs, काष्ठा camss_घड़ी *घड़ी,
+			काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < nclocks; i++) {
-		ret = clk_prepare_enable(clock[i].clk);
-		if (ret) {
+	क्रम (i = 0; i < nघड़ीs; i++) अणु
+		ret = clk_prepare_enable(घड़ी[i].clk);
+		अगर (ret) अणु
 			dev_err(dev, "clock enable failed: %d\n", ret);
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	for (i--; i >= 0; i--)
-		clk_disable_unprepare(clock[i].clk);
+	क्रम (i--; i >= 0; i--)
+		clk_disable_unprepare(घड़ी[i].clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * camss_disable_clocks - Disable multiple clocks
- * @nclocks: Number of clocks in clock array
- * @clock: Clock array
+ * camss_disable_घड़ीs - Disable multiple घड़ीs
+ * @nघड़ीs: Number of घड़ीs in घड़ी array
+ * @घड़ी: Clock array
  */
-void camss_disable_clocks(int nclocks, struct camss_clock *clock)
-{
-	int i;
+व्योम camss_disable_घड़ीs(पूर्णांक nघड़ीs, काष्ठा camss_घड़ी *घड़ी)
+अणु
+	पूर्णांक i;
 
-	for (i = nclocks - 1; i >= 0; i--)
-		clk_disable_unprepare(clock[i].clk);
-}
+	क्रम (i = nघड़ीs - 1; i >= 0; i--)
+		clk_disable_unprepare(घड़ी[i].clk);
+पूर्ण
 
 /*
  * camss_find_sensor - Find a linked media entity which represents a sensor
  * @entity: Media entity to start searching from
  *
- * Return a pointer to sensor media entity or NULL if not found
+ * Return a poपूर्णांकer to sensor media entity or शून्य अगर not found
  */
-struct media_entity *camss_find_sensor(struct media_entity *entity)
-{
-	struct media_pad *pad;
+काष्ठा media_entity *camss_find_sensor(काष्ठा media_entity *entity)
+अणु
+	काष्ठा media_pad *pad;
 
-	while (1) {
+	जबतक (1) अणु
 		pad = &entity->pads[0];
-		if (!(pad->flags & MEDIA_PAD_FL_SINK))
-			return NULL;
+		अगर (!(pad->flags & MEDIA_PAD_FL_SINK))
+			वापस शून्य;
 
 		pad = media_entity_remote_pad(pad);
-		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-			return NULL;
+		अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+			वापस शून्य;
 
 		entity = pad->entity;
 
-		if (entity->function == MEDIA_ENT_F_CAM_SENSOR)
-			return entity;
-	}
-}
+		अगर (entity->function == MEDIA_ENT_F_CAM_SENSOR)
+			वापस entity;
+	पूर्ण
+पूर्ण
 
 /**
  * camss_get_link_freq - Get link frequency from sensor
  * @entity: Media entity in the current pipeline
- * @bpp: Number of bits per pixel for the current format
+ * @bpp: Number of bits per pixel क्रम the current क्रमmat
  * @lanes: Number of lanes in the link to the sensor
  *
  * Return link frequency on success or a negative error code otherwise
  */
-s64 camss_get_link_freq(struct media_entity *entity, unsigned int bpp,
-			unsigned int lanes)
-{
-	struct media_entity *sensor;
-	struct v4l2_subdev *subdev;
+s64 camss_get_link_freq(काष्ठा media_entity *entity, अचिन्हित पूर्णांक bpp,
+			अचिन्हित पूर्णांक lanes)
+अणु
+	काष्ठा media_entity *sensor;
+	काष्ठा v4l2_subdev *subdev;
 
 	sensor = camss_find_sensor(entity);
-	if (!sensor)
-		return -ENODEV;
+	अगर (!sensor)
+		वापस -ENODEV;
 
 	subdev = media_entity_to_v4l2_subdev(sensor);
 
-	return v4l2_get_link_freq(subdev->ctrl_handler, bpp, 2 * lanes);
-}
+	वापस v4l2_get_link_freq(subdev->ctrl_handler, bpp, 2 * lanes);
+पूर्ण
 
 /*
- * camss_get_pixel_clock - Get pixel clock rate from sensor
+ * camss_get_pixel_घड़ी - Get pixel घड़ी rate from sensor
  * @entity: Media entity in the current pipeline
- * @pixel_clock: Received pixel clock value
+ * @pixel_घड़ी: Received pixel घड़ी value
  *
  * Return 0 on success or a negative error code otherwise
  */
-int camss_get_pixel_clock(struct media_entity *entity, u64 *pixel_clock)
-{
-	struct media_entity *sensor;
-	struct v4l2_subdev *subdev;
-	struct v4l2_ctrl *ctrl;
+पूर्णांक camss_get_pixel_घड़ी(काष्ठा media_entity *entity, u64 *pixel_घड़ी)
+अणु
+	काष्ठा media_entity *sensor;
+	काष्ठा v4l2_subdev *subdev;
+	काष्ठा v4l2_ctrl *ctrl;
 
 	sensor = camss_find_sensor(entity);
-	if (!sensor)
-		return -ENODEV;
+	अगर (!sensor)
+		वापस -ENODEV;
 
 	subdev = media_entity_to_v4l2_subdev(sensor);
 
 	ctrl = v4l2_ctrl_find(subdev->ctrl_handler, V4L2_CID_PIXEL_RATE);
 
-	if (!ctrl)
-		return -EINVAL;
+	अगर (!ctrl)
+		वापस -EINVAL;
 
-	*pixel_clock = v4l2_ctrl_g_ctrl_int64(ctrl);
+	*pixel_घड़ी = v4l2_ctrl_g_ctrl_पूर्णांक64(ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int camss_pm_domain_on(struct camss *camss, int id)
-{
-	int ret = 0;
+पूर्णांक camss_pm_करोमुख्य_on(काष्ठा camss *camss, पूर्णांक id)
+अणु
+	पूर्णांक ret = 0;
 
-	if (id < camss->vfe_num) {
-		struct vfe_device *vfe = &camss->vfe[id];
+	अगर (id < camss->vfe_num) अणु
+		काष्ठा vfe_device *vfe = &camss->vfe[id];
 
-		ret = vfe->ops->pm_domain_on(vfe);
-	}
+		ret = vfe->ops->pm_करोमुख्य_on(vfe);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void camss_pm_domain_off(struct camss *camss, int id)
-{
-	if (id < camss->vfe_num) {
-		struct vfe_device *vfe = &camss->vfe[id];
+व्योम camss_pm_करोमुख्य_off(काष्ठा camss *camss, पूर्णांक id)
+अणु
+	अगर (id < camss->vfe_num) अणु
+		काष्ठा vfe_device *vfe = &camss->vfe[id];
 
-		vfe->ops->pm_domain_off(vfe);
-	}
-}
+		vfe->ops->pm_करोमुख्य_off(vfe);
+	पूर्ण
+पूर्ण
 
 /*
- * camss_of_parse_endpoint_node - Parse port endpoint node
+ * camss_of_parse_endpoपूर्णांक_node - Parse port endpoपूर्णांक node
  * @dev: Device
  * @node: Device node to be parsed
- * @csd: Parsed data from port endpoint node
+ * @csd: Parsed data from port endpoपूर्णांक node
  *
  * Return 0 on success or a negative error code on failure
  */
-static int camss_of_parse_endpoint_node(struct device *dev,
-					struct device_node *node,
-					struct camss_async_subdev *csd)
-{
-	struct csiphy_lanes_cfg *lncfg = &csd->interface.csi2.lane_cfg;
-	struct v4l2_fwnode_bus_mipi_csi2 *mipi_csi2;
-	struct v4l2_fwnode_endpoint vep = { { 0 } };
-	unsigned int i;
+अटल पूर्णांक camss_of_parse_endpoपूर्णांक_node(काष्ठा device *dev,
+					काष्ठा device_node *node,
+					काष्ठा camss_async_subdev *csd)
+अणु
+	काष्ठा csiphy_lanes_cfg *lncfg = &csd->पूर्णांकerface.csi2.lane_cfg;
+	काष्ठा v4l2_fwnode_bus_mipi_csi2 *mipi_csi2;
+	काष्ठा v4l2_fwnode_endpoपूर्णांक vep = अणु अणु 0 पूर्ण पूर्ण;
+	अचिन्हित पूर्णांक i;
 
-	v4l2_fwnode_endpoint_parse(of_fwnode_handle(node), &vep);
+	v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(node), &vep);
 
-	csd->interface.csiphy_id = vep.base.port;
+	csd->पूर्णांकerface.csiphy_id = vep.base.port;
 
 	mipi_csi2 = &vep.bus.mipi_csi2;
-	lncfg->clk.pos = mipi_csi2->clock_lane;
+	lncfg->clk.pos = mipi_csi2->घड़ी_lane;
 	lncfg->clk.pol = mipi_csi2->lane_polarities[0];
 	lncfg->num_data = mipi_csi2->num_data_lanes;
 
-	lncfg->data = devm_kcalloc(dev,
-				   lncfg->num_data, sizeof(*lncfg->data),
+	lncfg->data = devm_kसुस्मृति(dev,
+				   lncfg->num_data, माप(*lncfg->data),
 				   GFP_KERNEL);
-	if (!lncfg->data)
-		return -ENOMEM;
+	अगर (!lncfg->data)
+		वापस -ENOMEM;
 
-	for (i = 0; i < lncfg->num_data; i++) {
+	क्रम (i = 0; i < lncfg->num_data; i++) अणु
 		lncfg->data[i].pos = mipi_csi2->data_lanes[i];
 		lncfg->data[i].pol = mipi_csi2->lane_polarities[i + 1];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * camss_of_parse_ports - Parse ports node
  * @dev: Device
- * @notifier: v4l2_device notifier data
+ * @notअगरier: v4l2_device notअगरier data
  *
  * Return number of "port" nodes found in "ports" node
  */
-static int camss_of_parse_ports(struct camss *camss)
-{
-	struct device *dev = camss->dev;
-	struct device_node *node = NULL;
-	struct device_node *remote = NULL;
-	int ret, num_subdevs = 0;
+अटल पूर्णांक camss_of_parse_ports(काष्ठा camss *camss)
+अणु
+	काष्ठा device *dev = camss->dev;
+	काष्ठा device_node *node = शून्य;
+	काष्ठा device_node *remote = शून्य;
+	पूर्णांक ret, num_subdevs = 0;
 
-	for_each_endpoint_of_node(dev->of_node, node) {
-		struct camss_async_subdev *csd;
+	क्रम_each_endpoपूर्णांक_of_node(dev->of_node, node) अणु
+		काष्ठा camss_async_subdev *csd;
 
-		if (!of_device_is_available(node))
-			continue;
+		अगर (!of_device_is_available(node))
+			जारी;
 
 		remote = of_graph_get_remote_port_parent(node);
-		if (!remote) {
+		अगर (!remote) अणु
 			dev_err(dev, "Cannot get remote parent\n");
 			ret = -EINVAL;
-			goto err_cleanup;
-		}
+			जाओ err_cleanup;
+		पूर्ण
 
-		csd = v4l2_async_notifier_add_fwnode_subdev(
-			&camss->notifier, of_fwnode_handle(remote),
-			struct camss_async_subdev);
+		csd = v4l2_async_notअगरier_add_fwnode_subdev(
+			&camss->notअगरier, of_fwnode_handle(remote),
+			काष्ठा camss_async_subdev);
 		of_node_put(remote);
-		if (IS_ERR(csd)) {
+		अगर (IS_ERR(csd)) अणु
 			ret = PTR_ERR(csd);
-			goto err_cleanup;
-		}
+			जाओ err_cleanup;
+		पूर्ण
 
-		ret = camss_of_parse_endpoint_node(dev, node, csd);
-		if (ret < 0)
-			goto err_cleanup;
+		ret = camss_of_parse_endpoपूर्णांक_node(dev, node, csd);
+		अगर (ret < 0)
+			जाओ err_cleanup;
 
 		num_subdevs++;
-	}
+	पूर्ण
 
-	return num_subdevs;
+	वापस num_subdevs;
 
 err_cleanup:
 	of_node_put(node);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * camss_init_subdevices - Initialize subdev structures and resources
+ * camss_init_subdevices - Initialize subdev काष्ठाures and resources
  * @camss: CAMSS device
  *
  * Return 0 on success or a negative error code on failure
  */
-static int camss_init_subdevices(struct camss *camss)
-{
-	const struct resources *csiphy_res;
-	const struct resources *csid_res;
-	const struct resources_ispif *ispif_res;
-	const struct resources *vfe_res;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक camss_init_subdevices(काष्ठा camss *camss)
+अणु
+	स्थिर काष्ठा resources *csiphy_res;
+	स्थिर काष्ठा resources *csid_res;
+	स्थिर काष्ठा resources_ispअगर *ispअगर_res;
+	स्थिर काष्ठा resources *vfe_res;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	if (camss->version == CAMSS_8x16) {
+	अगर (camss->version == CAMSS_8x16) अणु
 		csiphy_res = csiphy_res_8x16;
 		csid_res = csid_res_8x16;
-		ispif_res = &ispif_res_8x16;
+		ispअगर_res = &ispअगर_res_8x16;
 		vfe_res = vfe_res_8x16;
-	} else if (camss->version == CAMSS_8x96) {
+	पूर्ण अन्यथा अगर (camss->version == CAMSS_8x96) अणु
 		csiphy_res = csiphy_res_8x96;
 		csid_res = csid_res_8x96;
-		ispif_res = &ispif_res_8x96;
+		ispअगर_res = &ispअगर_res_8x96;
 		vfe_res = vfe_res_8x96;
-	} else if (camss->version == CAMSS_660) {
+	पूर्ण अन्यथा अगर (camss->version == CAMSS_660) अणु
 		csiphy_res = csiphy_res_660;
 		csid_res = csid_res_660;
-		ispif_res = &ispif_res_660;
+		ispअगर_res = &ispअगर_res_660;
 		vfe_res = vfe_res_660;
-	}  else if (camss->version == CAMSS_845) {
+	पूर्ण  अन्यथा अगर (camss->version == CAMSS_845) अणु
 		csiphy_res = csiphy_res_845;
 		csid_res = csid_res_845;
-		/* Titan VFEs don't have an ISPIF  */
-		ispif_res = NULL;
+		/* Titan VFEs करोn't have an ISPIF  */
+		ispअगर_res = शून्य;
 		vfe_res = vfe_res_845;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < camss->csiphy_num; i++) {
+	क्रम (i = 0; i < camss->csiphy_num; i++) अणु
 		ret = msm_csiphy_subdev_init(camss, &camss->csiphy[i],
 					     &csiphy_res[i], i);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(camss->dev,
 				"Failed to init csiphy%d sub-device: %d\n",
 				i, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < camss->csid_num; i++) {
+	क्रम (i = 0; i < camss->csid_num; i++) अणु
 		ret = msm_csid_subdev_init(camss, &camss->csid[i],
 					   &csid_res[i], i);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(camss->dev,
 				"Failed to init csid%d sub-device: %d\n",
 				i, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	ret = msm_ispif_subdev_init(camss, ispif_res);
-	if (ret < 0) {
+	ret = msm_ispअगर_subdev_init(camss, ispअगर_res);
+	अगर (ret < 0) अणु
 		dev_err(camss->dev, "Failed to init ispif sub-device: %d\n",
 		ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < camss->vfe_num; i++) {
+	क्रम (i = 0; i < camss->vfe_num; i++) अणु
 		ret = msm_vfe_subdev_init(camss, &camss->vfe[i],
 					  &vfe_res[i], i);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(camss->dev,
 				"Fail to init vfe%d sub-device: %d\n", i, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * camss_register_entities - Register subdev nodes and create links
+ * camss_रेजिस्टर_entities - Register subdev nodes and create links
  * @camss: CAMSS device
  *
  * Return 0 on success or a negative error code on failure
  */
-static int camss_register_entities(struct camss *camss)
-{
-	int i, j, k;
-	int ret;
+अटल पूर्णांक camss_रेजिस्टर_entities(काष्ठा camss *camss)
+अणु
+	पूर्णांक i, j, k;
+	पूर्णांक ret;
 
-	for (i = 0; i < camss->csiphy_num; i++) {
-		ret = msm_csiphy_register_entity(&camss->csiphy[i],
+	क्रम (i = 0; i < camss->csiphy_num; i++) अणु
+		ret = msm_csiphy_रेजिस्टर_entity(&camss->csiphy[i],
 						 &camss->v4l2_dev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(camss->dev,
 				"Failed to register csiphy%d entity: %d\n",
 				i, ret);
-			goto err_reg_csiphy;
-		}
-	}
+			जाओ err_reg_csiphy;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < camss->csid_num; i++) {
-		ret = msm_csid_register_entity(&camss->csid[i],
+	क्रम (i = 0; i < camss->csid_num; i++) अणु
+		ret = msm_csid_रेजिस्टर_entity(&camss->csid[i],
 					       &camss->v4l2_dev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(camss->dev,
 				"Failed to register csid%d entity: %d\n",
 				i, ret);
-			goto err_reg_csid;
-		}
-	}
+			जाओ err_reg_csid;
+		पूर्ण
+	पूर्ण
 
-	ret = msm_ispif_register_entities(camss->ispif,
+	ret = msm_ispअगर_रेजिस्टर_entities(camss->ispअगर,
 					  &camss->v4l2_dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(camss->dev, "Failed to register ispif entities: %d\n",
 		ret);
-		goto err_reg_ispif;
-	}
+		जाओ err_reg_ispअगर;
+	पूर्ण
 
-	for (i = 0; i < camss->vfe_num; i++) {
-		ret = msm_vfe_register_entities(&camss->vfe[i],
+	क्रम (i = 0; i < camss->vfe_num; i++) अणु
+		ret = msm_vfe_रेजिस्टर_entities(&camss->vfe[i],
 						&camss->v4l2_dev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(camss->dev,
 				"Failed to register vfe%d entities: %d\n",
 				i, ret);
-			goto err_reg_vfe;
-		}
-	}
+			जाओ err_reg_vfe;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < camss->csiphy_num; i++) {
-		for (j = 0; j < camss->csid_num; j++) {
+	क्रम (i = 0; i < camss->csiphy_num; i++) अणु
+		क्रम (j = 0; j < camss->csid_num; j++) अणु
 			ret = media_create_pad_link(
 				&camss->csiphy[i].subdev.entity,
 				MSM_CSIPHY_PAD_SRC,
 				&camss->csid[j].subdev.entity,
 				MSM_CSID_PAD_SINK,
 				0);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(camss->dev,
 					"Failed to link %s->%s entities: %d\n",
 					camss->csiphy[i].subdev.entity.name,
 					camss->csid[j].subdev.entity.name,
 					ret);
-				goto err_link;
-			}
-		}
-	}
+				जाओ err_link;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (camss->ispif) {
-		for (i = 0; i < camss->csid_num; i++) {
-			for (j = 0; j < camss->ispif->line_num; j++) {
+	अगर (camss->ispअगर) अणु
+		क्रम (i = 0; i < camss->csid_num; i++) अणु
+			क्रम (j = 0; j < camss->ispअगर->line_num; j++) अणु
 				ret = media_create_pad_link(
 					&camss->csid[i].subdev.entity,
 					MSM_CSID_PAD_SRC,
-					&camss->ispif->line[j].subdev.entity,
+					&camss->ispअगर->line[j].subdev.entity,
 					MSM_ISPIF_PAD_SINK,
 					0);
-				if (ret < 0) {
+				अगर (ret < 0) अणु
 					dev_err(camss->dev,
 						"Failed to link %s->%s entities: %d\n",
 						camss->csid[i].subdev.entity.name,
-						camss->ispif->line[j].subdev.entity.name,
+						camss->ispअगर->line[j].subdev.entity.name,
 						ret);
-					goto err_link;
-				}
-			}
-		}
+					जाओ err_link;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		for (i = 0; i < camss->ispif->line_num; i++)
-			for (k = 0; k < camss->vfe_num; k++)
-				for (j = 0; j < camss->vfe[k].line_num; j++) {
-					struct v4l2_subdev *ispif = &camss->ispif->line[i].subdev;
-					struct v4l2_subdev *vfe = &camss->vfe[k].line[j].subdev;
+		क्रम (i = 0; i < camss->ispअगर->line_num; i++)
+			क्रम (k = 0; k < camss->vfe_num; k++)
+				क्रम (j = 0; j < camss->vfe[k].line_num; j++) अणु
+					काष्ठा v4l2_subdev *ispअगर = &camss->ispअगर->line[i].subdev;
+					काष्ठा v4l2_subdev *vfe = &camss->vfe[k].line[j].subdev;
 
-					ret = media_create_pad_link(&ispif->entity,
+					ret = media_create_pad_link(&ispअगर->entity,
 								    MSM_ISPIF_PAD_SRC,
 								    &vfe->entity,
 								    MSM_VFE_PAD_SINK,
 								    0);
-					if (ret < 0) {
+					अगर (ret < 0) अणु
 						dev_err(camss->dev,
 							"Failed to link %s->%s entities: %d\n",
-							ispif->entity.name,
+							ispअगर->entity.name,
 							vfe->entity.name,
 							ret);
-						goto err_link;
-					}
-				}
-	} else {
-		for (i = 0; i < camss->csid_num; i++)
-			for (k = 0; k < camss->vfe_num; k++)
-				for (j = 0; j < camss->vfe[k].line_num; j++) {
-					struct v4l2_subdev *csid = &camss->csid[i].subdev;
-					struct v4l2_subdev *vfe = &camss->vfe[k].line[j].subdev;
+						जाओ err_link;
+					पूर्ण
+				पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < camss->csid_num; i++)
+			क्रम (k = 0; k < camss->vfe_num; k++)
+				क्रम (j = 0; j < camss->vfe[k].line_num; j++) अणु
+					काष्ठा v4l2_subdev *csid = &camss->csid[i].subdev;
+					काष्ठा v4l2_subdev *vfe = &camss->vfe[k].line[j].subdev;
 
 					ret = media_create_pad_link(&csid->entity,
 								    MSM_CSID_PAD_SRC,
 								    &vfe->entity,
 								    MSM_VFE_PAD_SINK,
 								    0);
-					if (ret < 0) {
+					अगर (ret < 0) अणु
 						dev_err(camss->dev,
 							"Failed to link %s->%s entities: %d\n",
 							csid->entity.name,
 							vfe->entity.name,
 							ret);
-						goto err_link;
-					}
-				}
-	}
+						जाओ err_link;
+					पूर्ण
+				पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_link:
 	i = camss->vfe_num;
 err_reg_vfe:
-	for (i--; i >= 0; i--)
-		msm_vfe_unregister_entities(&camss->vfe[i]);
+	क्रम (i--; i >= 0; i--)
+		msm_vfe_unरेजिस्टर_entities(&camss->vfe[i]);
 
-err_reg_ispif:
-	msm_ispif_unregister_entities(camss->ispif);
+err_reg_ispअगर:
+	msm_ispअगर_unरेजिस्टर_entities(camss->ispअगर);
 
 	i = camss->csid_num;
 err_reg_csid:
-	for (i--; i >= 0; i--)
-		msm_csid_unregister_entity(&camss->csid[i]);
+	क्रम (i--; i >= 0; i--)
+		msm_csid_unरेजिस्टर_entity(&camss->csid[i]);
 
 	i = camss->csiphy_num;
 err_reg_csiphy:
-	for (i--; i >= 0; i--)
-		msm_csiphy_unregister_entity(&camss->csiphy[i]);
+	क्रम (i--; i >= 0; i--)
+		msm_csiphy_unरेजिस्टर_entity(&camss->csiphy[i]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * camss_unregister_entities - Unregister subdev nodes
+ * camss_unरेजिस्टर_entities - Unरेजिस्टर subdev nodes
  * @camss: CAMSS device
  *
  * Return 0 on success or a negative error code on failure
  */
-static void camss_unregister_entities(struct camss *camss)
-{
-	unsigned int i;
+अटल व्योम camss_unरेजिस्टर_entities(काष्ठा camss *camss)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < camss->csiphy_num; i++)
-		msm_csiphy_unregister_entity(&camss->csiphy[i]);
+	क्रम (i = 0; i < camss->csiphy_num; i++)
+		msm_csiphy_unरेजिस्टर_entity(&camss->csiphy[i]);
 
-	for (i = 0; i < camss->csid_num; i++)
-		msm_csid_unregister_entity(&camss->csid[i]);
+	क्रम (i = 0; i < camss->csid_num; i++)
+		msm_csid_unरेजिस्टर_entity(&camss->csid[i]);
 
-	msm_ispif_unregister_entities(camss->ispif);
+	msm_ispअगर_unरेजिस्टर_entities(camss->ispअगर);
 
-	for (i = 0; i < camss->vfe_num; i++)
-		msm_vfe_unregister_entities(&camss->vfe[i]);
-}
+	क्रम (i = 0; i < camss->vfe_num; i++)
+		msm_vfe_unरेजिस्टर_entities(&camss->vfe[i]);
+पूर्ण
 
-static int camss_subdev_notifier_bound(struct v4l2_async_notifier *async,
-				       struct v4l2_subdev *subdev,
-				       struct v4l2_async_subdev *asd)
-{
-	struct camss *camss = container_of(async, struct camss, notifier);
-	struct camss_async_subdev *csd =
-		container_of(asd, struct camss_async_subdev, asd);
-	u8 id = csd->interface.csiphy_id;
-	struct csiphy_device *csiphy = &camss->csiphy[id];
+अटल पूर्णांक camss_subdev_notअगरier_bound(काष्ठा v4l2_async_notअगरier *async,
+				       काष्ठा v4l2_subdev *subdev,
+				       काष्ठा v4l2_async_subdev *asd)
+अणु
+	काष्ठा camss *camss = container_of(async, काष्ठा camss, notअगरier);
+	काष्ठा camss_async_subdev *csd =
+		container_of(asd, काष्ठा camss_async_subdev, asd);
+	u8 id = csd->पूर्णांकerface.csiphy_id;
+	काष्ठा csiphy_device *csiphy = &camss->csiphy[id];
 
-	csiphy->cfg.csi2 = &csd->interface.csi2;
+	csiphy->cfg.csi2 = &csd->पूर्णांकerface.csi2;
 	subdev->host_priv = csiphy;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int camss_subdev_notifier_complete(struct v4l2_async_notifier *async)
-{
-	struct camss *camss = container_of(async, struct camss, notifier);
-	struct v4l2_device *v4l2_dev = &camss->v4l2_dev;
-	struct v4l2_subdev *sd;
-	int ret;
+अटल पूर्णांक camss_subdev_notअगरier_complete(काष्ठा v4l2_async_notअगरier *async)
+अणु
+	काष्ठा camss *camss = container_of(async, काष्ठा camss, notअगरier);
+	काष्ठा v4l2_device *v4l2_dev = &camss->v4l2_dev;
+	काष्ठा v4l2_subdev *sd;
+	पूर्णांक ret;
 
-	list_for_each_entry(sd, &v4l2_dev->subdevs, list) {
-		if (sd->host_priv) {
-			struct media_entity *sensor = &sd->entity;
-			struct csiphy_device *csiphy =
-					(struct csiphy_device *) sd->host_priv;
-			struct media_entity *input = &csiphy->subdev.entity;
-			unsigned int i;
+	list_क्रम_each_entry(sd, &v4l2_dev->subdevs, list) अणु
+		अगर (sd->host_priv) अणु
+			काष्ठा media_entity *sensor = &sd->entity;
+			काष्ठा csiphy_device *csiphy =
+					(काष्ठा csiphy_device *) sd->host_priv;
+			काष्ठा media_entity *input = &csiphy->subdev.entity;
+			अचिन्हित पूर्णांक i;
 
-			for (i = 0; i < sensor->num_pads; i++) {
-				if (sensor->pads[i].flags & MEDIA_PAD_FL_SOURCE)
-					break;
-			}
-			if (i == sensor->num_pads) {
+			क्रम (i = 0; i < sensor->num_pads; i++) अणु
+				अगर (sensor->pads[i].flags & MEDIA_PAD_FL_SOURCE)
+					अवरोध;
+			पूर्ण
+			अगर (i == sensor->num_pads) अणु
 				dev_err(camss->dev,
 					"No source pad in external entity\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			ret = media_create_pad_link(sensor, i,
 				input, MSM_CSIPHY_PAD_SINK,
 				MEDIA_LNK_FL_IMMUTABLE | MEDIA_LNK_FL_ENABLED);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(camss->dev,
 					"Failed to link %s->%s entities: %d\n",
 					sensor->name, input->name, ret);
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	ret = v4l2_device_register_subdev_nodes(&camss->v4l2_dev);
-	if (ret < 0)
-		return ret;
+	ret = v4l2_device_रेजिस्टर_subdev_nodes(&camss->v4l2_dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	return media_device_register(&camss->media_dev);
-}
+	वापस media_device_रेजिस्टर(&camss->media_dev);
+पूर्ण
 
-static const struct v4l2_async_notifier_operations camss_subdev_notifier_ops = {
-	.bound = camss_subdev_notifier_bound,
-	.complete = camss_subdev_notifier_complete,
-};
+अटल स्थिर काष्ठा v4l2_async_notअगरier_operations camss_subdev_notअगरier_ops = अणु
+	.bound = camss_subdev_notअगरier_bound,
+	.complete = camss_subdev_notअगरier_complete,
+पूर्ण;
 
-static const struct media_device_ops camss_media_ops = {
-	.link_notify = v4l2_pipeline_link_notify,
-};
+अटल स्थिर काष्ठा media_device_ops camss_media_ops = अणु
+	.link_notअगरy = v4l2_pipeline_link_notअगरy,
+पूर्ण;
 
-static int camss_configure_pd(struct camss *camss)
-{
-	int nbr_pm_domains = 0;
-	int last_pm_domain = 0;
-	int i;
-	int ret;
+अटल पूर्णांक camss_configure_pd(काष्ठा camss *camss)
+अणु
+	पूर्णांक nbr_pm_करोमुख्यs = 0;
+	पूर्णांक last_pm_करोमुख्य = 0;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	if (camss->version == CAMSS_8x96 ||
+	अगर (camss->version == CAMSS_8x96 ||
 	    camss->version == CAMSS_660)
-		nbr_pm_domains = PM_DOMAIN_GEN1_COUNT;
-	else if (camss->version == CAMSS_845)
-		nbr_pm_domains = PM_DOMAIN_GEN2_COUNT;
+		nbr_pm_करोमुख्यs = PM_DOMAIN_GEN1_COUNT;
+	अन्यथा अगर (camss->version == CAMSS_845)
+		nbr_pm_करोमुख्यs = PM_DOMAIN_GEN2_COUNT;
 
-	for (i = 0; i < nbr_pm_domains; i++) {
-		camss->genpd[i] = dev_pm_domain_attach_by_id(camss->dev, i);
-		if (IS_ERR(camss->genpd[i])) {
+	क्रम (i = 0; i < nbr_pm_करोमुख्यs; i++) अणु
+		camss->genpd[i] = dev_pm_करोमुख्य_attach_by_id(camss->dev, i);
+		अगर (IS_ERR(camss->genpd[i])) अणु
 			ret = PTR_ERR(camss->genpd[i]);
-			goto fail_pm;
-		}
+			जाओ fail_pm;
+		पूर्ण
 
 		camss->genpd_link[i] = device_link_add(camss->dev, camss->genpd[i],
 						       DL_FLAG_STATELESS | DL_FLAG_PM_RUNTIME |
 						       DL_FLAG_RPM_ACTIVE);
-		if (!camss->genpd_link[i]) {
-			dev_pm_domain_detach(camss->genpd[i], true);
+		अगर (!camss->genpd_link[i]) अणु
+			dev_pm_करोमुख्य_detach(camss->genpd[i], true);
 			ret = -EINVAL;
-			goto fail_pm;
-		}
+			जाओ fail_pm;
+		पूर्ण
 
-		last_pm_domain = i;
-	}
+		last_pm_करोमुख्य = i;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail_pm:
-	for (i = 0; i < last_pm_domain; i++) {
+	क्रम (i = 0; i < last_pm_करोमुख्य; i++) अणु
 		device_link_del(camss->genpd_link[i]);
-		dev_pm_domain_detach(camss->genpd[i], true);
-	}
+		dev_pm_करोमुख्य_detach(camss->genpd[i], true);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * camss_probe - Probe CAMSS platform device
- * @pdev: Pointer to CAMSS platform device
+ * camss_probe - Probe CAMSS platक्रमm device
+ * @pdev: Poपूर्णांकer to CAMSS platक्रमm device
  *
  * Return 0 on success or a negative error code on failure
  */
-static int camss_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct camss *camss;
-	int num_subdevs, ret;
+अटल पूर्णांक camss_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा camss *camss;
+	पूर्णांक num_subdevs, ret;
 
-	camss = kzalloc(sizeof(*camss), GFP_KERNEL);
-	if (!camss)
-		return -ENOMEM;
+	camss = kzalloc(माप(*camss), GFP_KERNEL);
+	अगर (!camss)
+		वापस -ENOMEM;
 
 	atomic_set(&camss->ref_count, 0);
 	camss->dev = dev;
-	platform_set_drvdata(pdev, camss);
+	platक्रमm_set_drvdata(pdev, camss);
 
-	if (of_device_is_compatible(dev->of_node, "qcom,msm8916-camss")) {
+	अगर (of_device_is_compatible(dev->of_node, "qcom,msm8916-camss")) अणु
 		camss->version = CAMSS_8x16;
 		camss->csiphy_num = 2;
 		camss->csid_num = 2;
 		camss->vfe_num = 1;
-	} else if (of_device_is_compatible(dev->of_node,
-					   "qcom,msm8996-camss")) {
+	पूर्ण अन्यथा अगर (of_device_is_compatible(dev->of_node,
+					   "qcom,msm8996-camss")) अणु
 		camss->version = CAMSS_8x96;
 		camss->csiphy_num = 3;
 		camss->csid_num = 4;
 		camss->vfe_num = 2;
-	} else if (of_device_is_compatible(dev->of_node,
-					   "qcom,sdm660-camss")) {
+	पूर्ण अन्यथा अगर (of_device_is_compatible(dev->of_node,
+					   "qcom,sdm660-camss")) अणु
 		camss->version = CAMSS_660;
 		camss->csiphy_num = 3;
 		camss->csid_num = 4;
 		camss->vfe_num = 2;
-	} else if (of_device_is_compatible(dev->of_node,
-					   "qcom,sdm845-camss")) {
+	पूर्ण अन्यथा अगर (of_device_is_compatible(dev->of_node,
+					   "qcom,sdm845-camss")) अणु
 		camss->version = CAMSS_845;
 		camss->csiphy_num = 4;
 		camss->csid_num = 3;
 		camss->vfe_num = 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	camss->csiphy = devm_kcalloc(dev, camss->csiphy_num,
-				     sizeof(*camss->csiphy), GFP_KERNEL);
-	if (!camss->csiphy) {
+	camss->csiphy = devm_kसुस्मृति(dev, camss->csiphy_num,
+				     माप(*camss->csiphy), GFP_KERNEL);
+	अगर (!camss->csiphy) अणु
 		ret = -ENOMEM;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	camss->csid = devm_kcalloc(dev, camss->csid_num, sizeof(*camss->csid),
+	camss->csid = devm_kसुस्मृति(dev, camss->csid_num, माप(*camss->csid),
 				   GFP_KERNEL);
-	if (!camss->csid) {
+	अगर (!camss->csid) अणु
 		ret = -ENOMEM;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	if (camss->version == CAMSS_8x16 ||
-	    camss->version == CAMSS_8x96) {
-		camss->ispif = devm_kcalloc(dev, 1, sizeof(*camss->ispif), GFP_KERNEL);
-		if (!camss->ispif) {
+	अगर (camss->version == CAMSS_8x16 ||
+	    camss->version == CAMSS_8x96) अणु
+		camss->ispअगर = devm_kसुस्मृति(dev, 1, माप(*camss->ispअगर), GFP_KERNEL);
+		अगर (!camss->ispअगर) अणु
 			ret = -ENOMEM;
-			goto err_free;
-		}
-	}
+			जाओ err_मुक्त;
+		पूर्ण
+	पूर्ण
 
-	camss->vfe = devm_kcalloc(dev, camss->vfe_num, sizeof(*camss->vfe),
+	camss->vfe = devm_kसुस्मृति(dev, camss->vfe_num, माप(*camss->vfe),
 				  GFP_KERNEL);
-	if (!camss->vfe) {
+	अगर (!camss->vfe) अणु
 		ret = -ENOMEM;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	v4l2_async_notifier_init(&camss->notifier);
+	v4l2_async_notअगरier_init(&camss->notअगरier);
 
 	num_subdevs = camss_of_parse_ports(camss);
-	if (num_subdevs < 0) {
+	अगर (num_subdevs < 0) अणु
 		ret = num_subdevs;
-		goto err_cleanup;
-	}
+		जाओ err_cleanup;
+	पूर्ण
 
 	ret = camss_init_subdevices(camss);
-	if (ret < 0)
-		goto err_cleanup;
+	अगर (ret < 0)
+		जाओ err_cleanup;
 
 	ret = dma_set_mask_and_coherent(dev, 0xffffffff);
-	if (ret)
-		goto err_cleanup;
+	अगर (ret)
+		जाओ err_cleanup;
 
 	camss->media_dev.dev = camss->dev;
 	strscpy(camss->media_dev.model, "Qualcomm Camera Subsystem",
-		sizeof(camss->media_dev.model));
+		माप(camss->media_dev.model));
 	camss->media_dev.ops = &camss_media_ops;
 	media_device_init(&camss->media_dev);
 
 	camss->v4l2_dev.mdev = &camss->media_dev;
-	ret = v4l2_device_register(camss->dev, &camss->v4l2_dev);
-	if (ret < 0) {
+	ret = v4l2_device_रेजिस्टर(camss->dev, &camss->v4l2_dev);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to register V4L2 device: %d\n", ret);
-		goto err_cleanup;
-	}
+		जाओ err_cleanup;
+	पूर्ण
 
-	ret = camss_register_entities(camss);
-	if (ret < 0)
-		goto err_register_entities;
+	ret = camss_रेजिस्टर_entities(camss);
+	अगर (ret < 0)
+		जाओ err_रेजिस्टर_entities;
 
-	if (num_subdevs) {
-		camss->notifier.ops = &camss_subdev_notifier_ops;
+	अगर (num_subdevs) अणु
+		camss->notअगरier.ops = &camss_subdev_notअगरier_ops;
 
-		ret = v4l2_async_notifier_register(&camss->v4l2_dev,
-						   &camss->notifier);
-		if (ret) {
+		ret = v4l2_async_notअगरier_रेजिस्टर(&camss->v4l2_dev,
+						   &camss->notअगरier);
+		अगर (ret) अणु
 			dev_err(dev,
 				"Failed to register async subdev nodes: %d\n",
 				ret);
-			goto err_register_subdevs;
-		}
-	} else {
-		ret = v4l2_device_register_subdev_nodes(&camss->v4l2_dev);
-		if (ret < 0) {
+			जाओ err_रेजिस्टर_subdevs;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ret = v4l2_device_रेजिस्टर_subdev_nodes(&camss->v4l2_dev);
+		अगर (ret < 0) अणु
 			dev_err(dev, "Failed to register subdev nodes: %d\n",
 				ret);
-			goto err_register_subdevs;
-		}
+			जाओ err_रेजिस्टर_subdevs;
+		पूर्ण
 
-		ret = media_device_register(&camss->media_dev);
-		if (ret < 0) {
+		ret = media_device_रेजिस्टर(&camss->media_dev);
+		अगर (ret < 0) अणु
 			dev_err(dev, "Failed to register media device: %d\n",
 				ret);
-			goto err_register_subdevs;
-		}
-	}
+			जाओ err_रेजिस्टर_subdevs;
+		पूर्ण
+	पूर्ण
 
 	ret = camss_configure_pd(camss);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to configure power domains: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pm_runtime_enable(dev);
+	pm_runसमय_enable(dev);
 
-	return 0;
+	वापस 0;
 
-err_register_subdevs:
-	camss_unregister_entities(camss);
-err_register_entities:
-	v4l2_device_unregister(&camss->v4l2_dev);
+err_रेजिस्टर_subdevs:
+	camss_unरेजिस्टर_entities(camss);
+err_रेजिस्टर_entities:
+	v4l2_device_unरेजिस्टर(&camss->v4l2_dev);
 err_cleanup:
-	v4l2_async_notifier_cleanup(&camss->notifier);
-err_free:
-	kfree(camss);
+	v4l2_async_notअगरier_cleanup(&camss->notअगरier);
+err_मुक्त:
+	kमुक्त(camss);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void camss_delete(struct camss *camss)
-{
-	int nbr_pm_domains = 0;
-	int i;
+व्योम camss_delete(काष्ठा camss *camss)
+अणु
+	पूर्णांक nbr_pm_करोमुख्यs = 0;
+	पूर्णांक i;
 
-	v4l2_device_unregister(&camss->v4l2_dev);
-	media_device_unregister(&camss->media_dev);
+	v4l2_device_unरेजिस्टर(&camss->v4l2_dev);
+	media_device_unरेजिस्टर(&camss->media_dev);
 	media_device_cleanup(&camss->media_dev);
 
-	pm_runtime_disable(camss->dev);
+	pm_runसमय_disable(camss->dev);
 
-	if (camss->version == CAMSS_8x96 ||
+	अगर (camss->version == CAMSS_8x96 ||
 	    camss->version == CAMSS_660)
-		nbr_pm_domains = PM_DOMAIN_GEN1_COUNT;
-	else if (camss->version == CAMSS_845)
-		nbr_pm_domains = PM_DOMAIN_GEN2_COUNT;
+		nbr_pm_करोमुख्यs = PM_DOMAIN_GEN1_COUNT;
+	अन्यथा अगर (camss->version == CAMSS_845)
+		nbr_pm_करोमुख्यs = PM_DOMAIN_GEN2_COUNT;
 
-	for (i = 0; i < nbr_pm_domains; i++) {
+	क्रम (i = 0; i < nbr_pm_करोमुख्यs; i++) अणु
 		device_link_del(camss->genpd_link[i]);
-		dev_pm_domain_detach(camss->genpd[i], true);
-	}
+		dev_pm_करोमुख्य_detach(camss->genpd[i], true);
+	पूर्ण
 
-	kfree(camss);
-}
+	kमुक्त(camss);
+पूर्ण
 
 /*
- * camss_remove - Remove CAMSS platform device
- * @pdev: Pointer to CAMSS platform device
+ * camss_हटाओ - Remove CAMSS platक्रमm device
+ * @pdev: Poपूर्णांकer to CAMSS platक्रमm device
  *
- * Always returns 0.
+ * Always वापसs 0.
  */
-static int camss_remove(struct platform_device *pdev)
-{
-	struct camss *camss = platform_get_drvdata(pdev);
+अटल पूर्णांक camss_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा camss *camss = platक्रमm_get_drvdata(pdev);
 
-	v4l2_async_notifier_unregister(&camss->notifier);
-	v4l2_async_notifier_cleanup(&camss->notifier);
-	camss_unregister_entities(camss);
+	v4l2_async_notअगरier_unरेजिस्टर(&camss->notअगरier);
+	v4l2_async_notअगरier_cleanup(&camss->notअगरier);
+	camss_unरेजिस्टर_entities(camss);
 
-	if (atomic_read(&camss->ref_count) == 0)
+	अगर (atomic_पढ़ो(&camss->ref_count) == 0)
 		camss_delete(camss);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id camss_dt_match[] = {
-	{ .compatible = "qcom,msm8916-camss" },
-	{ .compatible = "qcom,msm8996-camss" },
-	{ .compatible = "qcom,sdm660-camss" },
-	{ .compatible = "qcom,sdm845-camss" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id camss_dt_match[] = अणु
+	अणु .compatible = "qcom,msm8916-camss" पूर्ण,
+	अणु .compatible = "qcom,msm8996-camss" पूर्ण,
+	अणु .compatible = "qcom,sdm660-camss" पूर्ण,
+	अणु .compatible = "qcom,sdm845-camss" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, camss_dt_match);
 
-static int __maybe_unused camss_runtime_suspend(struct device *dev)
-{
-	return 0;
-}
+अटल पूर्णांक __maybe_unused camss_runसमय_suspend(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused camss_runtime_resume(struct device *dev)
-{
-	return 0;
-}
+अटल पूर्णांक __maybe_unused camss_runसमय_resume(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops camss_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-	SET_RUNTIME_PM_OPS(camss_runtime_suspend, camss_runtime_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops camss_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+	SET_RUNTIME_PM_OPS(camss_runसमय_suspend, camss_runसमय_resume, शून्य)
+पूर्ण;
 
-static struct platform_driver qcom_camss_driver = {
+अटल काष्ठा platक्रमm_driver qcom_camss_driver = अणु
 	.probe = camss_probe,
-	.remove = camss_remove,
-	.driver = {
+	.हटाओ = camss_हटाओ,
+	.driver = अणु
 		.name = "qcom-camss",
 		.of_match_table = camss_dt_match,
 		.pm = &camss_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(qcom_camss_driver);
+module_platक्रमm_driver(qcom_camss_driver);
 
 MODULE_ALIAS("platform:qcom-camss");
 MODULE_DESCRIPTION("Qualcomm Camera Subsystem driver");

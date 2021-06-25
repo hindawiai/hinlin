@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2014 by Ralf Baechle <ralf@linux-mips.org>
  */
-#ifndef __UAPI_ASM_BITFIELD_H
-#define __UAPI_ASM_BITFIELD_H
+#अगर_अघोषित __UAPI_ASM_BITFIELD_H
+#घोषणा __UAPI_ASM_BITFIELD_H
 
 /*
  *  * Damn ...  bitfields depend from byteorder :-(
  *   */
-#ifdef __MIPSEB__
-#define __BITFIELD_FIELD(field, more)					\
+#अगर_घोषित __MIPSEB__
+#घोषणा __BITFIELD_FIELD(field, more)					\
 	field;								\
 	more
 
-#elif defined(__MIPSEL__)
+#या_अगर defined(__MIPSEL__)
 
-#define __BITFIELD_FIELD(field, more)					\
+#घोषणा __BITFIELD_FIELD(field, more)					\
 	more								\
 	field;
 
-#else /* !defined (__MIPSEB__) && !defined (__MIPSEL__) */
-#error "MIPS but neither __MIPSEL__ nor __MIPSEB__?"
-#endif
+#अन्यथा /* !defined (__MIPSEB__) && !defined (__MIPSEL__) */
+#त्रुटि "MIPS but neither __MIPSEL__ nor __MIPSEB__?"
+#पूर्ण_अगर
 
-#endif /* __UAPI_ASM_BITFIELD_H */
+#पूर्ण_अगर /* __UAPI_ASM_BITFIELD_H */

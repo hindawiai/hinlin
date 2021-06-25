@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Generic DVI Connector driver
  *
@@ -6,20 +7,20 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include <drm/drm_edid.h>
+#समावेश <drm/drm_edid.h>
 
-#include <video/omapfb_dss.h>
+#समावेश <video/omapfb_dss.h>
 
-static const struct omap_video_timings dvic_default_timings = {
+अटल स्थिर काष्ठा omap_video_timings dvic_शेष_timings = अणु
 	.x_res		= 640,
 	.y_res		= 480,
 
-	.pixelclock	= 23500000,
+	.pixelघड़ी	= 23500000,
 
 	.hfp		= 48,
 	.hsw		= 32,
@@ -34,183 +35,183 @@ static const struct omap_video_timings dvic_default_timings = {
 	.data_pclk_edge	= OMAPDSS_DRIVE_SIG_RISING_EDGE,
 	.de_level	= OMAPDSS_SIG_ACTIVE_HIGH,
 	.sync_pclk_edge	= OMAPDSS_DRIVE_SIG_FALLING_EDGE,
-};
+पूर्ण;
 
-struct panel_drv_data {
-	struct omap_dss_device dssdev;
-	struct omap_dss_device *in;
+काष्ठा panel_drv_data अणु
+	काष्ठा omap_dss_device dssdev;
+	काष्ठा omap_dss_device *in;
 
-	struct omap_video_timings timings;
+	काष्ठा omap_video_timings timings;
 
-	struct i2c_adapter *i2c_adapter;
-};
+	काष्ठा i2c_adapter *i2c_adapter;
+पूर्ण;
 
-#define to_panel_data(x) container_of(x, struct panel_drv_data, dssdev)
+#घोषणा to_panel_data(x) container_of(x, काष्ठा panel_drv_data, dssdev)
 
-static int dvic_connect(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक dvic_connect(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	if (omapdss_device_is_connected(dssdev))
-		return 0;
+	अगर (omapdss_device_is_connected(dssdev))
+		वापस 0;
 
-	return in->ops.dvi->connect(in, dssdev);
-}
+	वापस in->ops.dvi->connect(in, dssdev);
+पूर्ण
 
-static void dvic_disconnect(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल व्योम dvic_disconnect(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	if (!omapdss_device_is_connected(dssdev))
-		return;
+	अगर (!omapdss_device_is_connected(dssdev))
+		वापस;
 
 	in->ops.dvi->disconnect(in, dssdev);
-}
+पूर्ण
 
-static int dvic_enable(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
-	int r;
+अटल पूर्णांक dvic_enable(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
+	पूर्णांक r;
 
-	if (!omapdss_device_is_connected(dssdev))
-		return -ENODEV;
+	अगर (!omapdss_device_is_connected(dssdev))
+		वापस -ENODEV;
 
-	if (omapdss_device_is_enabled(dssdev))
-		return 0;
+	अगर (omapdss_device_is_enabled(dssdev))
+		वापस 0;
 
 	in->ops.dvi->set_timings(in, &ddata->timings);
 
 	r = in->ops.dvi->enable(in);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	dssdev->state = OMAP_DSS_DISPLAY_ACTIVE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dvic_disable(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल व्योम dvic_disable(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	if (!omapdss_device_is_enabled(dssdev))
-		return;
+	अगर (!omapdss_device_is_enabled(dssdev))
+		वापस;
 
 	in->ops.dvi->disable(in);
 
 	dssdev->state = OMAP_DSS_DISPLAY_DISABLED;
-}
+पूर्ण
 
-static void dvic_set_timings(struct omap_dss_device *dssdev,
-		struct omap_video_timings *timings)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल व्योम dvic_set_timings(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_video_timings *timings)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
 	ddata->timings = *timings;
 	dssdev->panel.timings = *timings;
 
 	in->ops.dvi->set_timings(in, timings);
-}
+पूर्ण
 
-static void dvic_get_timings(struct omap_dss_device *dssdev,
-		struct omap_video_timings *timings)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
+अटल व्योम dvic_get_timings(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_video_timings *timings)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
 
 	*timings = ddata->timings;
-}
+पूर्ण
 
-static int dvic_check_timings(struct omap_dss_device *dssdev,
-		struct omap_video_timings *timings)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक dvic_check_timings(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_video_timings *timings)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	return in->ops.dvi->check_timings(in, timings);
-}
+	वापस in->ops.dvi->check_timings(in, timings);
+पूर्ण
 
-static int dvic_ddc_read(struct i2c_adapter *adapter,
-		unsigned char *buf, u16 count, u8 offset)
-{
-	int r, retries;
+अटल पूर्णांक dvic_ddc_पढ़ो(काष्ठा i2c_adapter *adapter,
+		अचिन्हित अक्षर *buf, u16 count, u8 offset)
+अणु
+	पूर्णांक r, retries;
 
-	for (retries = 3; retries > 0; retries--) {
-		struct i2c_msg msgs[] = {
-			{
+	क्रम (retries = 3; retries > 0; retries--) अणु
+		काष्ठा i2c_msg msgs[] = अणु
+			अणु
 				.addr   = DDC_ADDR,
 				.flags  = 0,
 				.len    = 1,
 				.buf    = &offset,
-			}, {
+			पूर्ण, अणु
 				.addr   = DDC_ADDR,
 				.flags  = I2C_M_RD,
 				.len    = count,
 				.buf    = buf,
-			}
-		};
+			पूर्ण
+		पूर्ण;
 
 		r = i2c_transfer(adapter, msgs, 2);
-		if (r == 2)
-			return 0;
+		अगर (r == 2)
+			वापस 0;
 
-		if (r != -EAGAIN)
-			break;
-	}
+		अगर (r != -EAGAIN)
+			अवरोध;
+	पूर्ण
 
-	return r < 0 ? r : -EIO;
-}
+	वापस r < 0 ? r : -EIO;
+पूर्ण
 
-static int dvic_read_edid(struct omap_dss_device *dssdev,
-		u8 *edid, int len)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	int r, l, bytes_read;
+अटल पूर्णांक dvic_पढ़ो_edid(काष्ठा omap_dss_device *dssdev,
+		u8 *edid, पूर्णांक len)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	पूर्णांक r, l, bytes_पढ़ो;
 
-	if (!ddata->i2c_adapter)
-		return -ENODEV;
+	अगर (!ddata->i2c_adapter)
+		वापस -ENODEV;
 
 	l = min(EDID_LENGTH, len);
-	r = dvic_ddc_read(ddata->i2c_adapter, edid, l, 0);
-	if (r)
-		return r;
+	r = dvic_ddc_पढ़ो(ddata->i2c_adapter, edid, l, 0);
+	अगर (r)
+		वापस r;
 
-	bytes_read = l;
+	bytes_पढ़ो = l;
 
-	/* if there are extensions, read second block */
-	if (len > EDID_LENGTH && edid[0x7e] > 0) {
+	/* अगर there are extensions, पढ़ो second block */
+	अगर (len > EDID_LENGTH && edid[0x7e] > 0) अणु
 		l = min(EDID_LENGTH, len - EDID_LENGTH);
 
-		r = dvic_ddc_read(ddata->i2c_adapter, edid + EDID_LENGTH,
+		r = dvic_ddc_पढ़ो(ddata->i2c_adapter, edid + EDID_LENGTH,
 				l, EDID_LENGTH);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 
-		bytes_read += l;
-	}
+		bytes_पढ़ो += l;
+	पूर्ण
 
-	return bytes_read;
-}
+	वापस bytes_पढ़ो;
+पूर्ण
 
-static bool dvic_detect(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	unsigned char out;
-	int r;
+अटल bool dvic_detect(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	अचिन्हित अक्षर out;
+	पूर्णांक r;
 
-	if (!ddata->i2c_adapter)
-		return true;
+	अगर (!ddata->i2c_adapter)
+		वापस true;
 
-	r = dvic_ddc_read(ddata->i2c_adapter, &out, 1, 0);
+	r = dvic_ddc_पढ़ो(ddata->i2c_adapter, &out, 1, 0);
 
-	return r == 0;
-}
+	वापस r == 0;
+पूर्ण
 
-static struct omap_dss_driver dvic_driver = {
+अटल काष्ठा omap_dss_driver dvic_driver = अणु
 	.connect	= dvic_connect,
 	.disconnect	= dvic_disconnect,
 
@@ -221,94 +222,94 @@ static struct omap_dss_driver dvic_driver = {
 	.get_timings	= dvic_get_timings,
 	.check_timings	= dvic_check_timings,
 
-	.get_resolution	= omapdss_default_get_resolution,
+	.get_resolution	= omapdss_शेष_get_resolution,
 
-	.read_edid	= dvic_read_edid,
+	.पढ़ो_edid	= dvic_पढ़ो_edid,
 	.detect		= dvic_detect,
-};
+पूर्ण;
 
-static int dvic_probe_of(struct platform_device *pdev)
-{
-	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
-	struct device_node *node = pdev->dev.of_node;
-	struct omap_dss_device *in;
-	struct device_node *adapter_node;
-	struct i2c_adapter *adapter;
+अटल पूर्णांक dvic_probe_of(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा omap_dss_device *in;
+	काष्ठा device_node *adapter_node;
+	काष्ठा i2c_adapter *adapter;
 
-	in = omapdss_of_find_source_for_first_ep(node);
-	if (IS_ERR(in)) {
+	in = omapdss_of_find_source_क्रम_first_ep(node);
+	अगर (IS_ERR(in)) अणु
 		dev_err(&pdev->dev, "failed to find video source\n");
-		return PTR_ERR(in);
-	}
+		वापस PTR_ERR(in);
+	पूर्ण
 
 	ddata->in = in;
 
 	adapter_node = of_parse_phandle(node, "ddc-i2c-bus", 0);
-	if (adapter_node) {
+	अगर (adapter_node) अणु
 		adapter = of_get_i2c_adapter_by_node(adapter_node);
-		if (adapter == NULL) {
+		अगर (adapter == शून्य) अणु
 			dev_err(&pdev->dev, "failed to parse ddc-i2c-bus\n");
 			omap_dss_put_device(ddata->in);
-			return -EPROBE_DEFER;
-		}
+			वापस -EPROBE_DEFER;
+		पूर्ण
 
 		ddata->i2c_adapter = adapter;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvic_probe(struct platform_device *pdev)
-{
-	struct panel_drv_data *ddata;
-	struct omap_dss_device *dssdev;
-	int r;
+अटल पूर्णांक dvic_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_drv_data *ddata;
+	काष्ठा omap_dss_device *dssdev;
+	पूर्णांक r;
 
-	if (!pdev->dev.of_node)
-		return -ENODEV;
+	अगर (!pdev->dev.of_node)
+		वापस -ENODEV;
 
-	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
-	if (!ddata)
-		return -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
+	अगर (!ddata)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, ddata);
+	platक्रमm_set_drvdata(pdev, ddata);
 
 	r = dvic_probe_of(pdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	ddata->timings = dvic_default_timings;
+	ddata->timings = dvic_शेष_timings;
 
 	dssdev = &ddata->dssdev;
 	dssdev->driver = &dvic_driver;
 	dssdev->dev = &pdev->dev;
 	dssdev->type = OMAP_DISPLAY_TYPE_DVI;
 	dssdev->owner = THIS_MODULE;
-	dssdev->panel.timings = dvic_default_timings;
+	dssdev->panel.timings = dvic_शेष_timings;
 
-	r = omapdss_register_display(dssdev);
-	if (r) {
+	r = omapdss_रेजिस्टर_display(dssdev);
+	अगर (r) अणु
 		dev_err(&pdev->dev, "Failed to register panel\n");
-		goto err_reg;
-	}
+		जाओ err_reg;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_reg:
 	omap_dss_put_device(ddata->in);
 
 	i2c_put_adapter(ddata->i2c_adapter);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int __exit dvic_remove(struct platform_device *pdev)
-{
-	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
-	struct omap_dss_device *dssdev = &ddata->dssdev;
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक __निकास dvic_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
+	काष्ठा omap_dss_device *dssdev = &ddata->dssdev;
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	omapdss_unregister_display(&ddata->dssdev);
+	omapdss_unरेजिस्टर_display(&ddata->dssdev);
 
 	dvic_disable(dssdev);
 	dvic_disconnect(dssdev);
@@ -317,27 +318,27 @@ static int __exit dvic_remove(struct platform_device *pdev)
 
 	i2c_put_adapter(ddata->i2c_adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id dvic_of_match[] = {
-	{ .compatible = "omapdss,dvi-connector", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id dvic_of_match[] = अणु
+	अणु .compatible = "omapdss,dvi-connector", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, dvic_of_match);
 
-static struct platform_driver dvi_connector_driver = {
+अटल काष्ठा platक्रमm_driver dvi_connector_driver = अणु
 	.probe	= dvic_probe,
-	.remove	= __exit_p(dvic_remove),
-	.driver	= {
+	.हटाओ	= __निकास_p(dvic_हटाओ),
+	.driver	= अणु
 		.name	= "connector-dvi",
 		.of_match_table = dvic_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(dvi_connector_driver);
+module_platक्रमm_driver(dvi_connector_driver);
 
 MODULE_AUTHOR("Tomi Valkeinen <tomi.valkeinen@ti.com>");
 MODULE_DESCRIPTION("Generic DVI Connector driver");

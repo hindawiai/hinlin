@@ -1,206 +1,207 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * socket_sysfs.c -- most of socket-related sysfs output
  *
- * (C) 2003 - 2004		Dominik Brodowski
+ * (C) 2003 - 2004		Dominik Broकरोwski
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/major.h>
-#include <linux/errno.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/timer.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/device.h>
-#include <linux/mutex.h>
-#include <asm/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/major.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mutex.h>
+#समावेश <यंत्र/irq.h>
 
-#include <pcmcia/ss.h>
-#include <pcmcia/cistpl.h>
-#include <pcmcia/cisreg.h>
-#include <pcmcia/ds.h>
-#include "cs_internal.h"
+#समावेश <pcmcia/ss.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/cisreg.h>
+#समावेश <pcmcia/ds.h>
+#समावेश "cs_internal.h"
 
-#define to_socket(_dev) container_of(_dev, struct pcmcia_socket, dev)
+#घोषणा to_socket(_dev) container_of(_dev, काष्ठा pcmcia_socket, dev)
 
-static ssize_t pccard_show_type(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct pcmcia_socket *s = to_socket(dev);
+अटल sमाप_प्रकार pccard_show_type(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
 
-	if (!(s->state & SOCKET_PRESENT))
-		return -ENODEV;
-	if (s->state & SOCKET_CARDBUS)
-		return sprintf(buf, "32-bit\n");
-	return sprintf(buf, "16-bit\n");
-}
-static DEVICE_ATTR(card_type, 0444, pccard_show_type, NULL);
+	अगर (!(s->state & SOCKET_PRESENT))
+		वापस -ENODEV;
+	अगर (s->state & SOCKET_CARDBUS)
+		वापस प्र_लिखो(buf, "32-bit\n");
+	वापस प्र_लिखो(buf, "16-bit\n");
+पूर्ण
+अटल DEVICE_ATTR(card_type, 0444, pccard_show_type, शून्य);
 
-static ssize_t pccard_show_voltage(struct device *dev, struct device_attribute *attr,
-				   char *buf)
-{
-	struct pcmcia_socket *s = to_socket(dev);
+अटल sमाप_प्रकार pccard_show_voltage(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				   अक्षर *buf)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
 
-	if (!(s->state & SOCKET_PRESENT))
-		return -ENODEV;
-	if (s->socket.Vcc)
-		return sprintf(buf, "%d.%dV\n", s->socket.Vcc / 10,
+	अगर (!(s->state & SOCKET_PRESENT))
+		वापस -ENODEV;
+	अगर (s->socket.Vcc)
+		वापस प्र_लिखो(buf, "%d.%dV\n", s->socket.Vcc / 10,
 			       s->socket.Vcc % 10);
-	return sprintf(buf, "X.XV\n");
-}
-static DEVICE_ATTR(card_voltage, 0444, pccard_show_voltage, NULL);
+	वापस प्र_लिखो(buf, "X.XV\n");
+पूर्ण
+अटल DEVICE_ATTR(card_voltage, 0444, pccard_show_voltage, शून्य);
 
-static ssize_t pccard_show_vpp(struct device *dev, struct device_attribute *attr,
-			       char *buf)
-{
-	struct pcmcia_socket *s = to_socket(dev);
-	if (!(s->state & SOCKET_PRESENT))
-		return -ENODEV;
-	return sprintf(buf, "%d.%dV\n", s->socket.Vpp / 10, s->socket.Vpp % 10);
-}
-static DEVICE_ATTR(card_vpp, 0444, pccard_show_vpp, NULL);
+अटल sमाप_प्रकार pccard_show_vpp(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
+	अगर (!(s->state & SOCKET_PRESENT))
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d.%dV\n", s->socket.Vpp / 10, s->socket.Vpp % 10);
+पूर्ण
+अटल DEVICE_ATTR(card_vpp, 0444, pccard_show_vpp, शून्य);
 
-static ssize_t pccard_show_vcc(struct device *dev, struct device_attribute *attr,
-			       char *buf)
-{
-	struct pcmcia_socket *s = to_socket(dev);
-	if (!(s->state & SOCKET_PRESENT))
-		return -ENODEV;
-	return sprintf(buf, "%d.%dV\n", s->socket.Vcc / 10, s->socket.Vcc % 10);
-}
-static DEVICE_ATTR(card_vcc, 0444, pccard_show_vcc, NULL);
+अटल sमाप_प्रकार pccard_show_vcc(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
+	अगर (!(s->state & SOCKET_PRESENT))
+		वापस -ENODEV;
+	वापस प्र_लिखो(buf, "%d.%dV\n", s->socket.Vcc / 10, s->socket.Vcc % 10);
+पूर्ण
+अटल DEVICE_ATTR(card_vcc, 0444, pccard_show_vcc, शून्य);
 
 
-static ssize_t pccard_store_insert(struct device *dev, struct device_attribute *attr,
-				   const char *buf, size_t count)
-{
-	struct pcmcia_socket *s = to_socket(dev);
+अटल sमाप_प्रकार pccard_store_insert(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
 
-	if (!count)
-		return -EINVAL;
+	अगर (!count)
+		वापस -EINVAL;
 
 	pcmcia_parse_uevents(s, PCMCIA_UEVENT_INSERT);
 
-	return count;
-}
-static DEVICE_ATTR(card_insert, 0200, NULL, pccard_store_insert);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR(card_insert, 0200, शून्य, pccard_store_insert);
 
 
-static ssize_t pccard_show_card_pm_state(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct pcmcia_socket *s = to_socket(dev);
-	return sprintf(buf, "%s\n", s->state & SOCKET_SUSPEND ? "off" : "on");
-}
+अटल sमाप_प्रकार pccard_show_card_pm_state(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
+	वापस प्र_लिखो(buf, "%s\n", s->state & SOCKET_SUSPEND ? "off" : "on");
+पूर्ण
 
-static ssize_t pccard_store_card_pm_state(struct device *dev,
-					  struct device_attribute *attr,
-					  const char *buf, size_t count)
-{
-	struct pcmcia_socket *s = to_socket(dev);
-	ssize_t ret = count;
+अटल sमाप_प्रकार pccard_store_card_pm_state(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
+	sमाप_प्रकार ret = count;
 
-	if (!count)
-		return -EINVAL;
+	अगर (!count)
+		वापस -EINVAL;
 
-	if (!strncmp(buf, "off", 3))
+	अगर (!म_भेदन(buf, "off", 3))
 		pcmcia_parse_uevents(s, PCMCIA_UEVENT_SUSPEND);
-	else {
-		if (!strncmp(buf, "on", 2))
+	अन्यथा अणु
+		अगर (!म_भेदन(buf, "on", 2))
 			pcmcia_parse_uevents(s, PCMCIA_UEVENT_RESUME);
-		else
+		अन्यथा
 			ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
-static DEVICE_ATTR(card_pm_state, 0644, pccard_show_card_pm_state, pccard_store_card_pm_state);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR(card_pm_state, 0644, pccard_show_card_pm_state, pccard_store_card_pm_state);
 
-static ssize_t pccard_store_eject(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t count)
-{
-	struct pcmcia_socket *s = to_socket(dev);
+अटल sमाप_प्रकार pccard_store_eject(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
 
-	if (!count)
-		return -EINVAL;
+	अगर (!count)
+		वापस -EINVAL;
 
 	pcmcia_parse_uevents(s, PCMCIA_UEVENT_EJECT);
 
-	return count;
-}
-static DEVICE_ATTR(card_eject, 0200, NULL, pccard_store_eject);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR(card_eject, 0200, शून्य, pccard_store_eject);
 
 
-static ssize_t pccard_show_irq_mask(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct pcmcia_socket *s = to_socket(dev);
-	return sprintf(buf, "0x%04x\n", s->irq_mask);
-}
+अटल sमाप_प्रकार pccard_show_irq_mask(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
+	वापस प्र_लिखो(buf, "0x%04x\n", s->irq_mask);
+पूर्ण
 
-static ssize_t pccard_store_irq_mask(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	ssize_t ret;
-	struct pcmcia_socket *s = to_socket(dev);
+अटल sमाप_प्रकार pccard_store_irq_mask(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	sमाप_प्रकार ret;
+	काष्ठा pcmcia_socket *s = to_socket(dev);
 	u32 mask;
 
-	if (!count)
-		return -EINVAL;
+	अगर (!count)
+		वापस -EINVAL;
 
-	ret = sscanf(buf, "0x%x\n", &mask);
+	ret = माला_पूछो(buf, "0x%x\n", &mask);
 
-	if (ret == 1) {
+	अगर (ret == 1) अणु
 		mutex_lock(&s->ops_mutex);
 		s->irq_mask &= mask;
 		mutex_unlock(&s->ops_mutex);
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret ? ret : count;
-}
-static DEVICE_ATTR(card_irq_mask, 0600, pccard_show_irq_mask, pccard_store_irq_mask);
+	वापस ret ? ret : count;
+पूर्ण
+अटल DEVICE_ATTR(card_irq_mask, 0600, pccard_show_irq_mask, pccard_store_irq_mask);
 
 
-static ssize_t pccard_show_resource(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct pcmcia_socket *s = to_socket(dev);
-	return sprintf(buf, "%s\n", s->resource_setup_done ? "yes" : "no");
-}
+अटल sमाप_प्रकार pccard_show_resource(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
+	वापस प्र_लिखो(buf, "%s\n", s->resource_setup_करोne ? "yes" : "no");
+पूर्ण
 
-static ssize_t pccard_store_resource(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct pcmcia_socket *s = to_socket(dev);
+अटल sमाप_प्रकार pccard_store_resource(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pcmcia_socket *s = to_socket(dev);
 
-	if (!count)
-		return -EINVAL;
+	अगर (!count)
+		वापस -EINVAL;
 
 	mutex_lock(&s->ops_mutex);
-	if (!s->resource_setup_done)
-		s->resource_setup_done = 1;
+	अगर (!s->resource_setup_करोne)
+		s->resource_setup_करोne = 1;
 	mutex_unlock(&s->ops_mutex);
 
 	pcmcia_parse_uevents(s, PCMCIA_UEVENT_REQUERY);
 
-	return count;
-}
-static DEVICE_ATTR(available_resources_setup_done, 0600, pccard_show_resource, pccard_store_resource);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR(available_resources_setup_करोne, 0600, pccard_show_resource, pccard_store_resource);
 
-static struct attribute *pccard_socket_attributes[] = {
+अटल काष्ठा attribute *pccard_socket_attributes[] = अणु
 	&dev_attr_card_type.attr,
 	&dev_attr_card_voltage.attr,
 	&dev_attr_card_vpp.attr,
@@ -209,20 +210,20 @@ static struct attribute *pccard_socket_attributes[] = {
 	&dev_attr_card_pm_state.attr,
 	&dev_attr_card_eject.attr,
 	&dev_attr_card_irq_mask.attr,
-	&dev_attr_available_resources_setup_done.attr,
-	NULL,
-};
+	&dev_attr_available_resources_setup_करोne.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group socket_attrs = {
+अटल स्थिर काष्ठा attribute_group socket_attrs = अणु
 	.attrs = pccard_socket_attributes,
-};
+पूर्ण;
 
-int pccard_sysfs_add_socket(struct device *dev)
-{
-	return sysfs_create_group(&dev->kobj, &socket_attrs);
-}
+पूर्णांक pccard_sysfs_add_socket(काष्ठा device *dev)
+अणु
+	वापस sysfs_create_group(&dev->kobj, &socket_attrs);
+पूर्ण
 
-void pccard_sysfs_remove_socket(struct device *dev)
-{
-	sysfs_remove_group(&dev->kobj, &socket_attrs);
-}
+व्योम pccard_sysfs_हटाओ_socket(काष्ठा device *dev)
+अणु
+	sysfs_हटाओ_group(&dev->kobj, &socket_attrs);
+पूर्ण

@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#ifndef __LIMA_GEM_H__
-#define __LIMA_GEM_H__
+#अगर_अघोषित __LIMA_GEM_H__
+#घोषणा __LIMA_GEM_H__
 
-#include <drm/drm_gem_shmem_helper.h>
+#समावेश <drm/drm_gem_shmem_helper.h>
 
-struct lima_submit;
-struct lima_vm;
+काष्ठा lima_submit;
+काष्ठा lima_vm;
 
-struct lima_bo {
-	struct drm_gem_shmem_object base;
+काष्ठा lima_bo अणु
+	काष्ठा drm_gem_shmem_object base;
 
-	struct mutex lock;
-	struct list_head va;
+	काष्ठा mutex lock;
+	काष्ठा list_head va;
 
-	size_t heap_size;
-};
+	माप_प्रकार heap_size;
+पूर्ण;
 
-static inline struct lima_bo *
-to_lima_bo(struct drm_gem_object *obj)
-{
-	return container_of(to_drm_gem_shmem_obj(obj), struct lima_bo, base);
-}
+अटल अंतरभूत काष्ठा lima_bo *
+to_lima_bo(काष्ठा drm_gem_object *obj)
+अणु
+	वापस container_of(to_drm_gem_shmem_obj(obj), काष्ठा lima_bo, base);
+पूर्ण
 
-static inline size_t lima_bo_size(struct lima_bo *bo)
-{
-	return bo->base.base.size;
-}
+अटल अंतरभूत माप_प्रकार lima_bo_size(काष्ठा lima_bo *bo)
+अणु
+	वापस bo->base.base.size;
+पूर्ण
 
-static inline struct dma_resv *lima_bo_resv(struct lima_bo *bo)
-{
-	return bo->base.base.resv;
-}
+अटल अंतरभूत काष्ठा dma_resv *lima_bo_resv(काष्ठा lima_bo *bo)
+अणु
+	वापस bo->base.base.resv;
+पूर्ण
 
-int lima_heap_alloc(struct lima_bo *bo, struct lima_vm *vm);
-struct drm_gem_object *lima_gem_create_object(struct drm_device *dev, size_t size);
-int lima_gem_create_handle(struct drm_device *dev, struct drm_file *file,
+पूर्णांक lima_heap_alloc(काष्ठा lima_bo *bo, काष्ठा lima_vm *vm);
+काष्ठा drm_gem_object *lima_gem_create_object(काष्ठा drm_device *dev, माप_प्रकार size);
+पूर्णांक lima_gem_create_handle(काष्ठा drm_device *dev, काष्ठा drm_file *file,
 			   u32 size, u32 flags, u32 *handle);
-int lima_gem_get_info(struct drm_file *file, u32 handle, u32 *va, u64 *offset);
-int lima_gem_submit(struct drm_file *file, struct lima_submit *submit);
-int lima_gem_wait(struct drm_file *file, u32 handle, u32 op, s64 timeout_ns);
+पूर्णांक lima_gem_get_info(काष्ठा drm_file *file, u32 handle, u32 *va, u64 *offset);
+पूर्णांक lima_gem_submit(काष्ठा drm_file *file, काष्ठा lima_submit *submit);
+पूर्णांक lima_gem_रुको(काष्ठा drm_file *file, u32 handle, u32 op, s64 समयout_ns);
 
-void lima_set_vma_flags(struct vm_area_struct *vma);
+व्योम lima_set_vma_flags(काष्ठा vm_area_काष्ठा *vma);
 
-#endif
+#पूर्ण_अगर

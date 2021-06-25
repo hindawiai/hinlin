@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for Linear Technology LTC4245 I2C Multiple Supply Hot Swap Controller
+ * Driver क्रम Linear Technology LTC4245 I2C Multiple Supply Hot Swap Controller
  *
  * Copyright (C) 2008 Ira W. Snyder <iws@ovro.caltech.edu>
  *
  * This driver is based on the ds1621 and ina209 drivers.
  *
  * Datasheet:
- * http://www.linear.com/pc/downloadDocument.do?navId=H0,C1,C1003,C1006,C1140,P19392,D13517
+ * http://www.linear.com/pc/करोwnloadDocument.करो?navId=H0,C1,C1003,C1006,C1140,P19392,D13517
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/jiffies.h>
-#include <linux/platform_data/ltc4245.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/platक्रमm_data/ltc4245.h>
 
-/* Here are names of the chip's registers (a.k.a. commands) */
-enum ltc4245_cmd {
-	LTC4245_STATUS			= 0x00, /* readonly */
+/* Here are names of the chip's रेजिस्टरs (a.k.a. commands) */
+क्रमागत ltc4245_cmd अणु
+	LTC4245_STATUS			= 0x00, /* पढ़ोonly */
 	LTC4245_ALERT			= 0x01,
 	LTC4245_CONTROL			= 0x02,
 	LTC4245_ON			= 0x03,
@@ -46,54 +47,54 @@ enum ltc4245_cmd {
 	LTC4245_VEESENSE		= 0x1a,
 	LTC4245_VEEOUT			= 0x1b,
 	LTC4245_GPIOADC			= 0x1c,
-};
+पूर्ण;
 
-struct ltc4245_data {
-	struct i2c_client *client;
+काष्ठा ltc4245_data अणु
+	काष्ठा i2c_client *client;
 
-	struct mutex update_lock;
+	काष्ठा mutex update_lock;
 	bool valid;
-	unsigned long last_updated; /* in jiffies */
+	अचिन्हित दीर्घ last_updated; /* in jअगरfies */
 
-	/* Control registers */
+	/* Control रेजिस्टरs */
 	u8 cregs[0x08];
 
-	/* Voltage registers */
+	/* Voltage रेजिस्टरs */
 	u8 vregs[0x0d];
 
-	/* GPIO ADC registers */
+	/* GPIO ADC रेजिस्टरs */
 	bool use_extra_gpios;
-	int gpios[3];
-};
+	पूर्णांक gpios[3];
+पूर्ण;
 
 /*
- * Update the readings from the GPIO pins. If the driver has been configured to
+ * Update the पढ़ोings from the GPIO pins. If the driver has been configured to
  * sample all GPIO's as analog voltages, a round-robin sampling method is used.
  * Otherwise, only the configured GPIO pin is sampled.
  *
  * LOCKING: must hold data->update_lock
  */
-static void ltc4245_update_gpios(struct device *dev)
-{
-	struct ltc4245_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
+अटल व्योम ltc4245_update_gpios(काष्ठा device *dev)
+अणु
+	काष्ठा ltc4245_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
 	u8 gpio_curr, gpio_next, gpio_reg;
-	int i;
+	पूर्णांक i;
 
-	/* no extra gpio support, we're basically done */
-	if (!data->use_extra_gpios) {
+	/* no extra gpio support, we're basically करोne */
+	अगर (!data->use_extra_gpios) अणु
 		data->gpios[0] = data->vregs[LTC4245_GPIOADC - 0x10];
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If the last reading was too long ago, then we mark all old GPIO
-	 * readings as stale by setting them to -EAGAIN
+	 * If the last पढ़ोing was too दीर्घ ago, then we mark all old GPIO
+	 * पढ़ोings as stale by setting them to -EAGAIN
 	 */
-	if (time_after(jiffies, data->last_updated + 5 * HZ)) {
-		for (i = 0; i < ARRAY_SIZE(data->gpios); i++)
+	अगर (समय_after(jअगरfies, data->last_updated + 5 * HZ)) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(data->gpios); i++)
 			data->gpios[i] = -EAGAIN;
-	}
+	पूर्ण
 
 	/*
 	 * Get the current GPIO pin
@@ -103,291 +104,291 @@ static void ltc4245_update_gpios(struct device *dev)
 	 * easier to think about.
 	 */
 	gpio_curr = (data->cregs[LTC4245_GPIO] & 0xc0) >> 6;
-	if (gpio_curr > 0)
+	अगर (gpio_curr > 0)
 		gpio_curr -= 1;
 
-	/* Read the GPIO voltage from the GPIOADC register */
+	/* Read the GPIO voltage from the GPIOADC रेजिस्टर */
 	data->gpios[gpio_curr] = data->vregs[LTC4245_GPIOADC - 0x10];
 
-	/* Find the next GPIO pin to read */
+	/* Find the next GPIO pin to पढ़ो */
 	gpio_next = (gpio_curr + 1) % ARRAY_SIZE(data->gpios);
 
 	/*
-	 * Calculate the correct setting for the GPIO register so it will
+	 * Calculate the correct setting क्रम the GPIO रेजिस्टर so it will
 	 * sample the next GPIO pin
 	 */
 	gpio_reg = (data->cregs[LTC4245_GPIO] & 0x3f) | ((gpio_next + 1) << 6);
 
-	/* Update the GPIO register */
-	i2c_smbus_write_byte_data(client, LTC4245_GPIO, gpio_reg);
+	/* Update the GPIO रेजिस्टर */
+	i2c_smbus_ग_लिखो_byte_data(client, LTC4245_GPIO, gpio_reg);
 
 	/* Update saved data */
 	data->cregs[LTC4245_GPIO] = gpio_reg;
-}
+पूर्ण
 
-static struct ltc4245_data *ltc4245_update_device(struct device *dev)
-{
-	struct ltc4245_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
+अटल काष्ठा ltc4245_data *ltc4245_update_device(काष्ठा device *dev)
+अणु
+	काष्ठा ltc4245_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
 	s32 val;
-	int i;
+	पूर्णांक i;
 
 	mutex_lock(&data->update_lock);
 
-	if (time_after(jiffies, data->last_updated + HZ) || !data->valid) {
+	अगर (समय_after(jअगरfies, data->last_updated + HZ) || !data->valid) अणु
 
-		/* Read control registers -- 0x00 to 0x07 */
-		for (i = 0; i < ARRAY_SIZE(data->cregs); i++) {
-			val = i2c_smbus_read_byte_data(client, i);
-			if (unlikely(val < 0))
+		/* Read control रेजिस्टरs -- 0x00 to 0x07 */
+		क्रम (i = 0; i < ARRAY_SIZE(data->cregs); i++) अणु
+			val = i2c_smbus_पढ़ो_byte_data(client, i);
+			अगर (unlikely(val < 0))
 				data->cregs[i] = 0;
-			else
+			अन्यथा
 				data->cregs[i] = val;
-		}
+		पूर्ण
 
-		/* Read voltage registers -- 0x10 to 0x1c */
-		for (i = 0; i < ARRAY_SIZE(data->vregs); i++) {
-			val = i2c_smbus_read_byte_data(client, i+0x10);
-			if (unlikely(val < 0))
+		/* Read voltage रेजिस्टरs -- 0x10 to 0x1c */
+		क्रम (i = 0; i < ARRAY_SIZE(data->vregs); i++) अणु
+			val = i2c_smbus_पढ़ो_byte_data(client, i+0x10);
+			अगर (unlikely(val < 0))
 				data->vregs[i] = 0;
-			else
+			अन्यथा
 				data->vregs[i] = val;
-		}
+		पूर्ण
 
-		/* Update GPIO readings */
+		/* Update GPIO पढ़ोings */
 		ltc4245_update_gpios(dev);
 
-		data->last_updated = jiffies;
+		data->last_updated = jअगरfies;
 		data->valid = true;
-	}
+	पूर्ण
 
 	mutex_unlock(&data->update_lock);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-/* Return the voltage from the given register in millivolts */
-static int ltc4245_get_voltage(struct device *dev, u8 reg)
-{
-	struct ltc4245_data *data = ltc4245_update_device(dev);
-	const u8 regval = data->vregs[reg - 0x10];
+/* Return the voltage from the given रेजिस्टर in millivolts */
+अटल पूर्णांक ltc4245_get_voltage(काष्ठा device *dev, u8 reg)
+अणु
+	काष्ठा ltc4245_data *data = ltc4245_update_device(dev);
+	स्थिर u8 regval = data->vregs[reg - 0x10];
 	u32 voltage = 0;
 
-	switch (reg) {
-	case LTC4245_12VIN:
-	case LTC4245_12VOUT:
+	चयन (reg) अणु
+	हाल LTC4245_12VIN:
+	हाल LTC4245_12VOUT:
 		voltage = regval * 55;
-		break;
-	case LTC4245_5VIN:
-	case LTC4245_5VOUT:
+		अवरोध;
+	हाल LTC4245_5VIN:
+	हाल LTC4245_5VOUT:
 		voltage = regval * 22;
-		break;
-	case LTC4245_3VIN:
-	case LTC4245_3VOUT:
+		अवरोध;
+	हाल LTC4245_3VIN:
+	हाल LTC4245_3VOUT:
 		voltage = regval * 15;
-		break;
-	case LTC4245_VEEIN:
-	case LTC4245_VEEOUT:
+		अवरोध;
+	हाल LTC4245_VEEIN:
+	हाल LTC4245_VEEOUT:
 		voltage = regval * -55;
-		break;
-	case LTC4245_GPIOADC:
+		अवरोध;
+	हाल LTC4245_GPIOADC:
 		voltage = regval * 10;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* If we get here, the developer messed up */
 		WARN_ON_ONCE(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return voltage;
-}
+	वापस voltage;
+पूर्ण
 
-/* Return the current in the given sense register in milliAmperes */
-static unsigned int ltc4245_get_current(struct device *dev, u8 reg)
-{
-	struct ltc4245_data *data = ltc4245_update_device(dev);
-	const u8 regval = data->vregs[reg - 0x10];
-	unsigned int voltage;
-	unsigned int curr;
+/* Return the current in the given sense रेजिस्टर in milliAmperes */
+अटल अचिन्हित पूर्णांक ltc4245_get_current(काष्ठा device *dev, u8 reg)
+अणु
+	काष्ठा ltc4245_data *data = ltc4245_update_device(dev);
+	स्थिर u8 regval = data->vregs[reg - 0x10];
+	अचिन्हित पूर्णांक voltage;
+	अचिन्हित पूर्णांक curr;
 
 	/*
-	 * The strange looking conversions that follow are fixed-point
-	 * math, since we cannot do floating point in the kernel.
+	 * The strange looking conversions that follow are fixed-poपूर्णांक
+	 * math, since we cannot करो भग्नing poपूर्णांक in the kernel.
 	 *
-	 * Step 1: convert sense register to microVolts
+	 * Step 1: convert sense रेजिस्टर to microVolts
 	 * Step 2: convert voltage to milliAmperes
 	 *
 	 * If you play around with the V=IR equation, you come up with
 	 * the following: X uV / Y mOhm == Z mA
 	 *
 	 * With the resistors that are fractions of a milliOhm, we multiply
-	 * the voltage and resistance by 10, to shift the decimal point.
-	 * Now we can use the normal division operator again.
+	 * the voltage and resistance by 10, to shअगरt the decimal poपूर्णांक.
+	 * Now we can use the normal भागision चालक again.
 	 */
 
-	switch (reg) {
-	case LTC4245_12VSENSE:
+	चयन (reg) अणु
+	हाल LTC4245_12VSENSE:
 		voltage = regval * 250; /* voltage in uV */
 		curr = voltage / 50; /* sense resistor 50 mOhm */
-		break;
-	case LTC4245_5VSENSE:
+		अवरोध;
+	हाल LTC4245_5VSENSE:
 		voltage = regval * 125; /* voltage in uV */
 		curr = (voltage * 10) / 35; /* sense resistor 3.5 mOhm */
-		break;
-	case LTC4245_3VSENSE:
+		अवरोध;
+	हाल LTC4245_3VSENSE:
 		voltage = regval * 125; /* voltage in uV */
 		curr = (voltage * 10) / 25; /* sense resistor 2.5 mOhm */
-		break;
-	case LTC4245_VEESENSE:
+		अवरोध;
+	हाल LTC4245_VEESENSE:
 		voltage = regval * 250; /* voltage in uV */
 		curr = voltage / 100; /* sense resistor 100 mOhm */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* If we get here, the developer messed up */
 		WARN_ON_ONCE(1);
 		curr = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return curr;
-}
+	वापस curr;
+पूर्ण
 
-/* Map from voltage channel index to voltage register */
+/* Map from voltage channel index to voltage रेजिस्टर */
 
-static const s8 ltc4245_in_regs[] = {
+अटल स्थिर s8 ltc4245_in_regs[] = अणु
 	LTC4245_12VIN, LTC4245_5VIN, LTC4245_3VIN, LTC4245_VEEIN,
 	LTC4245_12VOUT, LTC4245_5VOUT, LTC4245_3VOUT, LTC4245_VEEOUT,
-};
+पूर्ण;
 
-/* Map from current channel index to current register */
+/* Map from current channel index to current रेजिस्टर */
 
-static const s8 ltc4245_curr_regs[] = {
+अटल स्थिर s8 ltc4245_curr_regs[] = अणु
 	LTC4245_12VSENSE, LTC4245_5VSENSE, LTC4245_3VSENSE, LTC4245_VEESENSE,
-};
+पूर्ण;
 
-static int ltc4245_read_curr(struct device *dev, u32 attr, int channel,
-			     long *val)
-{
-	struct ltc4245_data *data = ltc4245_update_device(dev);
+अटल पूर्णांक ltc4245_पढ़ो_curr(काष्ठा device *dev, u32 attr, पूर्णांक channel,
+			     दीर्घ *val)
+अणु
+	काष्ठा ltc4245_data *data = ltc4245_update_device(dev);
 
-	switch (attr) {
-	case hwmon_curr_input:
+	चयन (attr) अणु
+	हाल hwmon_curr_input:
 		*val = ltc4245_get_current(dev, ltc4245_curr_regs[channel]);
-		return 0;
-	case hwmon_curr_max_alarm:
+		वापस 0;
+	हाल hwmon_curr_max_alarm:
 		*val = !!(data->cregs[LTC4245_FAULT1] & BIT(channel + 4));
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int ltc4245_read_in(struct device *dev, u32 attr, int channel, long *val)
-{
-	struct ltc4245_data *data = ltc4245_update_device(dev);
+अटल पूर्णांक ltc4245_पढ़ो_in(काष्ठा device *dev, u32 attr, पूर्णांक channel, दीर्घ *val)
+अणु
+	काष्ठा ltc4245_data *data = ltc4245_update_device(dev);
 
-	switch (attr) {
-	case hwmon_in_input:
-		if (channel < 8) {
+	चयन (attr) अणु
+	हाल hwmon_in_input:
+		अगर (channel < 8) अणु
 			*val = ltc4245_get_voltage(dev,
 						ltc4245_in_regs[channel]);
-		} else {
-			int regval = data->gpios[channel - 8];
+		पूर्ण अन्यथा अणु
+			पूर्णांक regval = data->gpios[channel - 8];
 
-			if (regval < 0)
-				return regval;
+			अगर (regval < 0)
+				वापस regval;
 			*val = regval * 10;
-		}
-		return 0;
-	case hwmon_in_min_alarm:
-		if (channel < 4)
+		पूर्ण
+		वापस 0;
+	हाल hwmon_in_min_alarm:
+		अगर (channel < 4)
 			*val = !!(data->cregs[LTC4245_FAULT1] & BIT(channel));
-		else
+		अन्यथा
 			*val = !!(data->cregs[LTC4245_FAULT2] &
 				  BIT(channel - 4));
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int ltc4245_read_power(struct device *dev, u32 attr, int channel,
-			      long *val)
-{
-	unsigned long curr;
-	long voltage;
+अटल पूर्णांक ltc4245_पढ़ो_घातer(काष्ठा device *dev, u32 attr, पूर्णांक channel,
+			      दीर्घ *val)
+अणु
+	अचिन्हित दीर्घ curr;
+	दीर्घ voltage;
 
-	switch (attr) {
-	case hwmon_power_input:
-		(void)ltc4245_update_device(dev);
+	चयन (attr) अणु
+	हाल hwmon_घातer_input:
+		(व्योम)ltc4245_update_device(dev);
 		curr = ltc4245_get_current(dev, ltc4245_curr_regs[channel]);
 		voltage = ltc4245_get_voltage(dev, ltc4245_in_regs[channel]);
-		*val = abs(curr * voltage);
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		*val = असल(curr * voltage);
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int ltc4245_read(struct device *dev, enum hwmon_sensor_types type,
-			u32 attr, int channel, long *val)
-{
+अटल पूर्णांक ltc4245_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+			u32 attr, पूर्णांक channel, दीर्घ *val)
+अणु
 
-	switch (type) {
-	case hwmon_curr:
-		return ltc4245_read_curr(dev, attr, channel, val);
-	case hwmon_power:
-		return ltc4245_read_power(dev, attr, channel, val);
-	case hwmon_in:
-		return ltc4245_read_in(dev, attr, channel - 1, val);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (type) अणु
+	हाल hwmon_curr:
+		वापस ltc4245_पढ़ो_curr(dev, attr, channel, val);
+	हाल hwmon_घातer:
+		वापस ltc4245_पढ़ो_घातer(dev, attr, channel, val);
+	हाल hwmon_in:
+		वापस ltc4245_पढ़ो_in(dev, attr, channel - 1, val);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static umode_t ltc4245_is_visible(const void *_data,
-				  enum hwmon_sensor_types type,
-				  u32 attr, int channel)
-{
-	const struct ltc4245_data *data = _data;
+अटल umode_t ltc4245_is_visible(स्थिर व्योम *_data,
+				  क्रमागत hwmon_sensor_types type,
+				  u32 attr, पूर्णांक channel)
+अणु
+	स्थिर काष्ठा ltc4245_data *data = _data;
 
-	switch (type) {
-	case hwmon_in:
-		if (channel == 0)
-			return 0;
-		switch (attr) {
-		case hwmon_in_input:
-			if (channel > 9 && !data->use_extra_gpios)
-				return 0;
-			return 0444;
-		case hwmon_in_min_alarm:
-			if (channel > 8)
-				return 0;
-			return 0444;
-		default:
-			return 0;
-		}
-	case hwmon_curr:
-		switch (attr) {
-		case hwmon_curr_input:
-		case hwmon_curr_max_alarm:
-			return 0444;
-		default:
-			return 0;
-		}
-	case hwmon_power:
-		switch (attr) {
-		case hwmon_power_input:
-			return 0444;
-		default:
-			return 0;
-		}
-	default:
-		return 0;
-	}
-}
+	चयन (type) अणु
+	हाल hwmon_in:
+		अगर (channel == 0)
+			वापस 0;
+		चयन (attr) अणु
+		हाल hwmon_in_input:
+			अगर (channel > 9 && !data->use_extra_gpios)
+				वापस 0;
+			वापस 0444;
+		हाल hwmon_in_min_alarm:
+			अगर (channel > 8)
+				वापस 0;
+			वापस 0444;
+		शेष:
+			वापस 0;
+		पूर्ण
+	हाल hwmon_curr:
+		चयन (attr) अणु
+		हाल hwmon_curr_input:
+		हाल hwmon_curr_max_alarm:
+			वापस 0444;
+		शेष:
+			वापस 0;
+		पूर्ण
+	हाल hwmon_घातer:
+		चयन (attr) अणु
+		हाल hwmon_घातer_input:
+			वापस 0444;
+		शेष:
+			वापस 0;
+		पूर्ण
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static const struct hwmon_channel_info *ltc4245_info[] = {
+अटल स्थिर काष्ठा hwmon_channel_info *ltc4245_info[] = अणु
 	HWMON_CHANNEL_INFO(in,
 			   HWMON_I_INPUT,
 			   HWMON_I_INPUT | HWMON_I_MIN_ALARM,
@@ -406,82 +407,82 @@ static const struct hwmon_channel_info *ltc4245_info[] = {
 			   HWMON_C_INPUT | HWMON_C_MAX_ALARM,
 			   HWMON_C_INPUT | HWMON_C_MAX_ALARM,
 			   HWMON_C_INPUT | HWMON_C_MAX_ALARM),
-	HWMON_CHANNEL_INFO(power,
+	HWMON_CHANNEL_INFO(घातer,
 			   HWMON_P_INPUT,
 			   HWMON_P_INPUT,
 			   HWMON_P_INPUT,
 			   HWMON_P_INPUT),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct hwmon_ops ltc4245_hwmon_ops = {
+अटल स्थिर काष्ठा hwmon_ops ltc4245_hwmon_ops = अणु
 	.is_visible = ltc4245_is_visible,
-	.read = ltc4245_read,
-};
+	.पढ़ो = ltc4245_पढ़ो,
+पूर्ण;
 
-static const struct hwmon_chip_info ltc4245_chip_info = {
+अटल स्थिर काष्ठा hwmon_chip_info ltc4245_chip_info = अणु
 	.ops = &ltc4245_hwmon_ops,
 	.info = ltc4245_info,
-};
+पूर्ण;
 
-static bool ltc4245_use_extra_gpios(struct i2c_client *client)
-{
-	struct ltc4245_platform_data *pdata = dev_get_platdata(&client->dev);
-	struct device_node *np = client->dev.of_node;
+अटल bool ltc4245_use_extra_gpios(काष्ठा i2c_client *client)
+अणु
+	काष्ठा ltc4245_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
+	काष्ठा device_node *np = client->dev.of_node;
 
-	/* prefer platform data */
-	if (pdata)
-		return pdata->use_extra_gpios;
+	/* prefer platक्रमm data */
+	अगर (pdata)
+		वापस pdata->use_extra_gpios;
 
 	/* fallback on OF */
-	if (of_find_property(np, "ltc4245,use-extra-gpios", NULL))
-		return true;
+	अगर (of_find_property(np, "ltc4245,use-extra-gpios", शून्य))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int ltc4245_probe(struct i2c_client *client)
-{
-	struct i2c_adapter *adapter = client->adapter;
-	struct ltc4245_data *data;
-	struct device *hwmon_dev;
+अटल पूर्णांक ltc4245_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
+	काष्ठा ltc4245_data *data;
+	काष्ठा device *hwmon_dev;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -ENODEV;
 
-	data = devm_kzalloc(&client->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&client->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->client = client;
 	mutex_init(&data->update_lock);
 	data->use_extra_gpios = ltc4245_use_extra_gpios(client);
 
 	/* Initialize the LTC4245 chip */
-	i2c_smbus_write_byte_data(client, LTC4245_FAULT1, 0x00);
-	i2c_smbus_write_byte_data(client, LTC4245_FAULT2, 0x00);
+	i2c_smbus_ग_लिखो_byte_data(client, LTC4245_FAULT1, 0x00);
+	i2c_smbus_ग_लिखो_byte_data(client, LTC4245_FAULT2, 0x00);
 
-	hwmon_dev = devm_hwmon_device_register_with_info(&client->dev,
+	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(&client->dev,
 							 client->name, data,
 							 &ltc4245_chip_info,
-							 NULL);
-	return PTR_ERR_OR_ZERO(hwmon_dev);
-}
+							 शून्य);
+	वापस PTR_ERR_OR_ZERO(hwmon_dev);
+पूर्ण
 
-static const struct i2c_device_id ltc4245_id[] = {
-	{ "ltc4245", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id ltc4245_id[] = अणु
+	अणु "ltc4245", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ltc4245_id);
 
 /* This is the driver that will be inserted */
-static struct i2c_driver ltc4245_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ltc4245_driver = अणु
+	.driver = अणु
 		.name	= "ltc4245",
-	},
+	पूर्ण,
 	.probe_new	= ltc4245_probe,
 	.id_table	= ltc4245_id,
-};
+पूर्ण;
 
 module_i2c_driver(ltc4245_driver);
 

@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef SOUND_FIREWIRE_AMDTP_H_INCLUDED
-#define SOUND_FIREWIRE_AMDTP_H_INCLUDED
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित SOUND_FIREWIRE_AMDTP_H_INCLUDED
+#घोषणा SOUND_FIREWIRE_AMDTP_H_INCLUDED
 
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/mutex.h>
-#include <linux/sched.h>
-#include <sound/asound.h>
-#include "packets-buffer.h"
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched.h>
+#समावेश <sound/asound.h>
+#समावेश "packets-buffer.h"
 
 /**
- * enum cip_flags - describes details of the streaming protocol
+ * क्रमागत cip_flags - describes details of the streaming protocol
  * @CIP_NONBLOCKING: In non-blocking mode, each packet contains
- *	sample_rate/8000 samples, with rounding up or down to adjust
- *	for clock skew and left-over fractional samples.  This should
- *	be used if supported by the device.
+ *	sample_rate/8000 samples, with rounding up or करोwn to adjust
+ *	क्रम घड़ी skew and left-over fractional samples.  This should
+ *	be used अगर supported by the device.
  * @CIP_BLOCKING: In blocking mode, each packet contains either zero or
  *	SYT_INTERVAL samples, with these two types alternating so that
  *	the overall sample rate comes out right.
- * @CIP_EMPTY_WITH_TAG0: Only for in-stream. Empty in-packets have TAG0.
+ * @CIP_EMPTY_WITH_TAG0: Only क्रम in-stream. Empty in-packets have TAG0.
  * @CIP_DBC_IS_END_EVENT: The value of dbc in an packet corresponds to the end
  * of event in the packet. Out of IEC 61883.
- * @CIP_WRONG_DBS: Only for in-stream. The value of dbs is wrong in in-packets.
+ * @CIP_WRONG_DBS: Only क्रम in-stream. The value of dbs is wrong in in-packets.
  *	The value of data_block_quadlets is used instead of reported value.
- * @CIP_SKIP_DBC_ZERO_CHECK: Only for in-stream.  Packets with zero in dbc is
- *	skipped for detecting discontinuity.
- * @CIP_EMPTY_HAS_WRONG_DBC: Only for in-stream. The value of dbc in empty
+ * @CIP_SKIP_DBC_ZERO_CHECK: Only क्रम in-stream.  Packets with zero in dbc is
+ *	skipped क्रम detecting discontinuity.
+ * @CIP_EMPTY_HAS_WRONG_DBC: Only क्रम in-stream. The value of dbc in empty
  *	packet is wrong but the others are correct.
- * @CIP_JUMBO_PAYLOAD: Only for in-stream. The number of data blocks in an
+ * @CIP_JUMBO_PAYLOAD: Only क्रम in-stream. The number of data blocks in an
  *	packet is larger than IEC 61883-6 defines. Current implementation
- *	allows 5 times as large as IEC 61883-6 defines.
- * @CIP_HEADER_WITHOUT_EOH: Only for in-stream. CIP Header doesn't include
+ *	allows 5 बार as large as IEC 61883-6 defines.
+ * @CIP_HEADER_WITHOUT_EOH: Only क्रम in-stream. CIP Header करोesn't include
  *	valid EOH.
  * @CIP_NO_HEADERS: a lack of headers in packets
- * @CIP_UNALIGHED_DBC: Only for in-stream. The value of dbc is not alighed to
+ * @CIP_UNALIGHED_DBC: Only क्रम in-stream. The value of dbc is not alighed to
  *	the value of current SYT_INTERVAL; e.g. initial value is not zero.
  */
-enum cip_flags {
+क्रमागत cip_flags अणु
 	CIP_NONBLOCKING		= 0x00,
 	CIP_BLOCKING		= 0x01,
 	CIP_EMPTY_WITH_TAG0	= 0x02,
@@ -48,10 +49,10 @@ enum cip_flags {
 	CIP_HEADER_WITHOUT_EOH	= 0x80,
 	CIP_NO_HEADER		= 0x100,
 	CIP_UNALIGHED_DBC	= 0x200,
-};
+पूर्ण;
 
 /**
- * enum cip_sfc - supported Sampling Frequency Codes (SFCs)
+ * क्रमागत cip_sfc - supported Sampling Frequency Codes (SFCs)
  * @CIP_SFC_32000:   32,000 data blocks
  * @CIP_SFC_44100:   44,100 data blocks
  * @CIP_SFC_48000:   48,000 data blocks
@@ -68,12 +69,12 @@ enum cip_flags {
  * stream.
  *
  * In IEC 61883-6:2005, some extensions were added to support more types of
- * data such as 'One Bit LInear Audio', therefore the meaning of SFC became
- * different depending on the types.
+ * data such as 'One Bit LInear Audio', thereक्रमe the meaning of SFC became
+ * dअगरferent depending on the types.
  *
  * Currently our implementation is compatible with IEC 61883-6:2002.
  */
-enum cip_sfc {
+क्रमागत cip_sfc अणु
 	CIP_SFC_32000  = 0,
 	CIP_SFC_44100  = 1,
 	CIP_SFC_48000  = 2,
@@ -82,241 +83,241 @@ enum cip_sfc {
 	CIP_SFC_176400 = 5,
 	CIP_SFC_192000 = 6,
 	CIP_SFC_COUNT
-};
+पूर्ण;
 
-struct fw_unit;
-struct fw_iso_context;
-struct snd_pcm_substream;
-struct snd_pcm_runtime;
+काष्ठा fw_unit;
+काष्ठा fw_iso_context;
+काष्ठा snd_pcm_substream;
+काष्ठा snd_pcm_runसमय;
 
-enum amdtp_stream_direction {
+क्रमागत amdtp_stream_direction अणु
 	AMDTP_OUT_STREAM = 0,
 	AMDTP_IN_STREAM
-};
+पूर्ण;
 
-struct pkt_desc {
+काष्ठा pkt_desc अणु
 	u32 cycle;
 	u32 syt;
-	unsigned int data_blocks;
-	unsigned int data_block_counter;
+	अचिन्हित पूर्णांक data_blocks;
+	अचिन्हित पूर्णांक data_block_counter;
 	__be32 *ctx_payload;
-};
+पूर्ण;
 
-struct amdtp_stream;
-typedef unsigned int (*amdtp_stream_process_ctx_payloads_t)(
-						struct amdtp_stream *s,
-						const struct pkt_desc *desc,
-						unsigned int packets,
-						struct snd_pcm_substream *pcm);
+काष्ठा amdtp_stream;
+प्रकार अचिन्हित पूर्णांक (*amdtp_stream_process_ctx_payloads_t)(
+						काष्ठा amdtp_stream *s,
+						स्थिर काष्ठा pkt_desc *desc,
+						अचिन्हित पूर्णांक packets,
+						काष्ठा snd_pcm_substream *pcm);
 
-struct amdtp_domain;
-struct amdtp_stream {
-	struct fw_unit *unit;
-	enum cip_flags flags;
-	enum amdtp_stream_direction direction;
-	struct mutex mutex;
+काष्ठा amdtp_करोमुख्य;
+काष्ठा amdtp_stream अणु
+	काष्ठा fw_unit *unit;
+	क्रमागत cip_flags flags;
+	क्रमागत amdtp_stream_direction direction;
+	काष्ठा mutex mutex;
 
 	/* For packet processing. */
-	struct fw_iso_context *context;
-	struct iso_packets_buffer buffer;
-	unsigned int queue_size;
-	int packet_index;
-	struct pkt_desc *pkt_descs;
-	int tag;
-	union {
-		struct {
-			unsigned int ctx_header_size;
+	काष्ठा fw_iso_context *context;
+	काष्ठा iso_packets_buffer buffer;
+	अचिन्हित पूर्णांक queue_size;
+	पूर्णांक packet_index;
+	काष्ठा pkt_desc *pkt_descs;
+	पूर्णांक tag;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित पूर्णांक ctx_header_size;
 
-			// limit for payload of iso packet.
-			unsigned int max_ctx_payload_length;
+			// limit क्रम payload of iso packet.
+			अचिन्हित पूर्णांक max_ctx_payload_length;
 
 			// For quirks of CIP headers.
-			// Fixed interval of dbc between previos/current
+			// Fixed पूर्णांकerval of dbc between previos/current
 			// packets.
-			unsigned int dbc_interval;
-		} tx;
-		struct {
+			अचिन्हित पूर्णांक dbc_पूर्णांकerval;
+		पूर्ण tx;
+		काष्ठा अणु
 			// To calculate CIP data blocks and tstamp.
-			unsigned int transfer_delay;
-			unsigned int seq_index;
+			अचिन्हित पूर्णांक transfer_delay;
+			अचिन्हित पूर्णांक seq_index;
 
 			// To generate CIP header.
-			unsigned int fdf;
-			int syt_override;
+			अचिन्हित पूर्णांक fdf;
+			पूर्णांक syt_override;
 
-			// To generate constant hardware IRQ.
-			unsigned int event_count;
-			unsigned int events_per_period;
-		} rx;
-	} ctx_data;
+			// To generate स्थिरant hardware IRQ.
+			अचिन्हित पूर्णांक event_count;
+			अचिन्हित पूर्णांक events_per_period;
+		पूर्ण rx;
+	पूर्ण ctx_data;
 
 	/* For CIP headers. */
-	unsigned int source_node_id_field;
-	unsigned int data_block_quadlets;
-	unsigned int data_block_counter;
-	unsigned int sph;
-	unsigned int fmt;
+	अचिन्हित पूर्णांक source_node_id_field;
+	अचिन्हित पूर्णांक data_block_quadlets;
+	अचिन्हित पूर्णांक data_block_counter;
+	अचिन्हित पूर्णांक sph;
+	अचिन्हित पूर्णांक fmt;
 
 	/* Internal flags. */
-	enum cip_sfc sfc;
-	unsigned int syt_interval;
+	क्रमागत cip_sfc sfc;
+	अचिन्हित पूर्णांक syt_पूर्णांकerval;
 
 	/* For a PCM substream processing. */
-	struct snd_pcm_substream *pcm;
-	struct work_struct period_work;
-	snd_pcm_uframes_t pcm_buffer_pointer;
-	unsigned int pcm_period_pointer;
+	काष्ठा snd_pcm_substream *pcm;
+	काष्ठा work_काष्ठा period_work;
+	snd_pcm_uframes_t pcm_buffer_poपूर्णांकer;
+	अचिन्हित पूर्णांक pcm_period_poपूर्णांकer;
 
-	/* To wait for first packet. */
+	/* To रुको क्रम first packet. */
 	bool callbacked;
-	wait_queue_head_t callback_wait;
+	रुको_queue_head_t callback_रुको;
 	u32 start_cycle;
 
 	/* For backends to process data blocks. */
-	void *protocol;
+	व्योम *protocol;
 	amdtp_stream_process_ctx_payloads_t process_ctx_payloads;
 
-	// For domain.
-	int channel;
-	int speed;
-	struct list_head list;
-	struct amdtp_domain *domain;
-};
+	// For करोमुख्य.
+	पूर्णांक channel;
+	पूर्णांक speed;
+	काष्ठा list_head list;
+	काष्ठा amdtp_करोमुख्य *करोमुख्य;
+पूर्ण;
 
-int amdtp_stream_init(struct amdtp_stream *s, struct fw_unit *unit,
-		      enum amdtp_stream_direction dir, enum cip_flags flags,
-		      unsigned int fmt,
+पूर्णांक amdtp_stream_init(काष्ठा amdtp_stream *s, काष्ठा fw_unit *unit,
+		      क्रमागत amdtp_stream_direction dir, क्रमागत cip_flags flags,
+		      अचिन्हित पूर्णांक fmt,
 		      amdtp_stream_process_ctx_payloads_t process_ctx_payloads,
-		      unsigned int protocol_size);
-void amdtp_stream_destroy(struct amdtp_stream *s);
+		      अचिन्हित पूर्णांक protocol_size);
+व्योम amdtp_stream_destroy(काष्ठा amdtp_stream *s);
 
-int amdtp_stream_set_parameters(struct amdtp_stream *s, unsigned int rate,
-				unsigned int data_block_quadlets);
-unsigned int amdtp_stream_get_max_payload(struct amdtp_stream *s);
+पूर्णांक amdtp_stream_set_parameters(काष्ठा amdtp_stream *s, अचिन्हित पूर्णांक rate,
+				अचिन्हित पूर्णांक data_block_quadlets);
+अचिन्हित पूर्णांक amdtp_stream_get_max_payload(काष्ठा amdtp_stream *s);
 
-void amdtp_stream_update(struct amdtp_stream *s);
+व्योम amdtp_stream_update(काष्ठा amdtp_stream *s);
 
-int amdtp_stream_add_pcm_hw_constraints(struct amdtp_stream *s,
-					struct snd_pcm_runtime *runtime);
+पूर्णांक amdtp_stream_add_pcm_hw_स्थिरraपूर्णांकs(काष्ठा amdtp_stream *s,
+					काष्ठा snd_pcm_runसमय *runसमय);
 
-void amdtp_stream_pcm_prepare(struct amdtp_stream *s);
-void amdtp_stream_pcm_abort(struct amdtp_stream *s);
+व्योम amdtp_stream_pcm_prepare(काष्ठा amdtp_stream *s);
+व्योम amdtp_stream_pcm_पात(काष्ठा amdtp_stream *s);
 
-extern const unsigned int amdtp_syt_intervals[CIP_SFC_COUNT];
-extern const unsigned int amdtp_rate_table[CIP_SFC_COUNT];
+बाह्य स्थिर अचिन्हित पूर्णांक amdtp_syt_पूर्णांकervals[CIP_SFC_COUNT];
+बाह्य स्थिर अचिन्हित पूर्णांक amdtp_rate_table[CIP_SFC_COUNT];
 
 /**
  * amdtp_stream_running - check stream is running or not
  * @s: the AMDTP stream
  *
- * If this function returns true, the stream is running.
+ * If this function वापसs true, the stream is running.
  */
-static inline bool amdtp_stream_running(struct amdtp_stream *s)
-{
-	return !IS_ERR(s->context);
-}
+अटल अंतरभूत bool amdtp_stream_running(काष्ठा amdtp_stream *s)
+अणु
+	वापस !IS_ERR(s->context);
+पूर्ण
 
 /**
- * amdtp_streaming_error - check for streaming error
+ * amdtp_streaming_error - check क्रम streaming error
  * @s: the AMDTP stream
  *
- * If this function returns true, the stream's packet queue has stopped due to
+ * If this function वापसs true, the stream's packet queue has stopped due to
  * an asynchronous error.
  */
-static inline bool amdtp_streaming_error(struct amdtp_stream *s)
-{
-	return s->packet_index < 0;
-}
+अटल अंतरभूत bool amdtp_streaming_error(काष्ठा amdtp_stream *s)
+अणु
+	वापस s->packet_index < 0;
+पूर्ण
 
 /**
  * amdtp_stream_pcm_running - check PCM substream is running or not
  * @s: the AMDTP stream
  *
- * If this function returns true, PCM substream in the AMDTP stream is running.
+ * If this function वापसs true, PCM substream in the AMDTP stream is running.
  */
-static inline bool amdtp_stream_pcm_running(struct amdtp_stream *s)
-{
-	return !!s->pcm;
-}
+अटल अंतरभूत bool amdtp_stream_pcm_running(काष्ठा amdtp_stream *s)
+अणु
+	वापस !!s->pcm;
+पूर्ण
 
 /**
  * amdtp_stream_pcm_trigger - start/stop playback from a PCM device
  * @s: the AMDTP stream
- * @pcm: the PCM device to be started, or %NULL to stop the current device
+ * @pcm: the PCM device to be started, or %शून्य to stop the current device
  *
  * Call this function on a running isochronous stream to enable the actual
  * transmission of PCM data.  This function should be called from the PCM
  * device's .trigger callback.
  */
-static inline void amdtp_stream_pcm_trigger(struct amdtp_stream *s,
-					    struct snd_pcm_substream *pcm)
-{
+अटल अंतरभूत व्योम amdtp_stream_pcm_trigger(काष्ठा amdtp_stream *s,
+					    काष्ठा snd_pcm_substream *pcm)
+अणु
 	WRITE_ONCE(s->pcm, pcm);
-}
+पूर्ण
 
-static inline bool cip_sfc_is_base_44100(enum cip_sfc sfc)
-{
-	return sfc & 1;
-}
+अटल अंतरभूत bool cip_sfc_is_base_44100(क्रमागत cip_sfc sfc)
+अणु
+	वापस sfc & 1;
+पूर्ण
 
 /**
- * amdtp_stream_wait_callback - sleep till callbacked or timeout
+ * amdtp_stream_रुको_callback - sleep till callbacked or समयout
  * @s: the AMDTP stream
- * @timeout: msec till timeout
+ * @समयout: msec till समयout
  *
- * If this function return false, the AMDTP stream should be stopped.
+ * If this function वापस false, the AMDTP stream should be stopped.
  */
-static inline bool amdtp_stream_wait_callback(struct amdtp_stream *s,
-					      unsigned int timeout)
-{
-	return wait_event_timeout(s->callback_wait,
+अटल अंतरभूत bool amdtp_stream_रुको_callback(काष्ठा amdtp_stream *s,
+					      अचिन्हित पूर्णांक समयout)
+अणु
+	वापस रुको_event_समयout(s->callback_रुको,
 				  s->callbacked,
-				  msecs_to_jiffies(timeout)) > 0;
-}
+				  msecs_to_jअगरfies(समयout)) > 0;
+पूर्ण
 
-struct seq_desc {
-	unsigned int syt_offset;
-	unsigned int data_blocks;
-};
+काष्ठा seq_desc अणु
+	अचिन्हित पूर्णांक syt_offset;
+	अचिन्हित पूर्णांक data_blocks;
+पूर्ण;
 
-struct amdtp_domain {
-	struct list_head streams;
+काष्ठा amdtp_करोमुख्य अणु
+	काष्ठा list_head streams;
 
-	unsigned int events_per_period;
-	unsigned int events_per_buffer;
+	अचिन्हित पूर्णांक events_per_period;
+	अचिन्हित पूर्णांक events_per_buffer;
 
-	struct amdtp_stream *irq_target;
+	काष्ठा amdtp_stream *irq_target;
 
-	struct seq_desc *seq_descs;
-	unsigned int seq_size;
-	unsigned int seq_tail;
+	काष्ठा seq_desc *seq_descs;
+	अचिन्हित पूर्णांक seq_size;
+	अचिन्हित पूर्णांक seq_tail;
 
-	unsigned int data_block_state;
-	unsigned int syt_offset_state;
-	unsigned int last_syt_offset;
-};
+	अचिन्हित पूर्णांक data_block_state;
+	अचिन्हित पूर्णांक syt_offset_state;
+	अचिन्हित पूर्णांक last_syt_offset;
+पूर्ण;
 
-int amdtp_domain_init(struct amdtp_domain *d);
-void amdtp_domain_destroy(struct amdtp_domain *d);
+पूर्णांक amdtp_करोमुख्य_init(काष्ठा amdtp_करोमुख्य *d);
+व्योम amdtp_करोमुख्य_destroy(काष्ठा amdtp_करोमुख्य *d);
 
-int amdtp_domain_add_stream(struct amdtp_domain *d, struct amdtp_stream *s,
-			    int channel, int speed);
+पूर्णांक amdtp_करोमुख्य_add_stream(काष्ठा amdtp_करोमुख्य *d, काष्ठा amdtp_stream *s,
+			    पूर्णांक channel, पूर्णांक speed);
 
-int amdtp_domain_start(struct amdtp_domain *d, unsigned int ir_delay_cycle);
-void amdtp_domain_stop(struct amdtp_domain *d);
+पूर्णांक amdtp_करोमुख्य_start(काष्ठा amdtp_करोमुख्य *d, अचिन्हित पूर्णांक ir_delay_cycle);
+व्योम amdtp_करोमुख्य_stop(काष्ठा amdtp_करोमुख्य *d);
 
-static inline int amdtp_domain_set_events_per_period(struct amdtp_domain *d,
-						unsigned int events_per_period,
-						unsigned int events_per_buffer)
-{
+अटल अंतरभूत पूर्णांक amdtp_करोमुख्य_set_events_per_period(काष्ठा amdtp_करोमुख्य *d,
+						अचिन्हित पूर्णांक events_per_period,
+						अचिन्हित पूर्णांक events_per_buffer)
+अणु
 	d->events_per_period = events_per_period;
 	d->events_per_buffer = events_per_buffer;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long amdtp_domain_stream_pcm_pointer(struct amdtp_domain *d,
-					      struct amdtp_stream *s);
-int amdtp_domain_stream_pcm_ack(struct amdtp_domain *d, struct amdtp_stream *s);
+अचिन्हित दीर्घ amdtp_करोमुख्य_stream_pcm_poपूर्णांकer(काष्ठा amdtp_करोमुख्य *d,
+					      काष्ठा amdtp_stream *s);
+पूर्णांक amdtp_करोमुख्य_stream_pcm_ack(काष्ठा amdtp_करोमुख्य *d, काष्ठा amdtp_stream *s);
 
-#endif
+#पूर्ण_अगर

@@ -1,146 +1,147 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/jiffies.h>
-#include <linux/timer.h>
-#include <linux/uaccess.h>
-#include <linux/sched/loadavg.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/sched/loadavg.h>
 
-#include <asm/auxio.h>
+#समावेश <यंत्र/auxपन.स>
 
-#define LED_MAX_LENGTH 8 /* maximum chars written to proc file */
+#घोषणा LED_MAX_LENGTH 8 /* maximum अक्षरs written to proc file */
 
-static inline void led_toggle(void)
-{
-	unsigned char val = get_auxio();
-	unsigned char on, off;
+अटल अंतरभूत व्योम led_toggle(व्योम)
+अणु
+	अचिन्हित अक्षर val = get_auxio();
+	अचिन्हित अक्षर on, off;
 
-	if (val & AUXIO_LED) {
+	अगर (val & AUXIO_LED) अणु
 		on = 0;
 		off = AUXIO_LED;
-	} else {
+	पूर्ण अन्यथा अणु
 		on = AUXIO_LED;
 		off = 0;
-	}
+	पूर्ण
 
 	set_auxio(on, off);
-}
+पूर्ण
 
-static struct timer_list led_blink_timer;
-static unsigned long led_blink_timer_timeout;
+अटल काष्ठा समयr_list led_blink_समयr;
+अटल अचिन्हित दीर्घ led_blink_समयr_समयout;
 
-static void led_blink(struct timer_list *unused)
-{
-	unsigned long timeout = led_blink_timer_timeout;
+अटल व्योम led_blink(काष्ठा समयr_list *unused)
+अणु
+	अचिन्हित दीर्घ समयout = led_blink_समयr_समयout;
 
 	led_toggle();
 
 	/* reschedule */
-	if (!timeout) { /* blink according to load */
-		led_blink_timer.expires = jiffies +
+	अगर (!समयout) अणु /* blink according to load */
+		led_blink_समयr.expires = jअगरfies +
 			((1 + (avenrun[0] >> FSHIFT)) * HZ);
-	} else { /* blink at user specified interval */
-		led_blink_timer.expires = jiffies + (timeout * HZ);
-	}
-	add_timer(&led_blink_timer);
-}
+	पूर्ण अन्यथा अणु /* blink at user specअगरied पूर्णांकerval */
+		led_blink_समयr.expires = jअगरfies + (समयout * HZ);
+	पूर्ण
+	add_समयr(&led_blink_समयr);
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-static int led_proc_show(struct seq_file *m, void *v)
-{
-	if (get_auxio() & AUXIO_LED)
-		seq_puts(m, "on\n");
-	else
-		seq_puts(m, "off\n");
-	return 0;
-}
+#अगर_घोषित CONFIG_PROC_FS
+अटल पूर्णांक led_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	अगर (get_auxio() & AUXIO_LED)
+		seq_माला_दो(m, "on\n");
+	अन्यथा
+		seq_माला_दो(m, "off\n");
+	वापस 0;
+पूर्ण
 
-static int led_proc_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, led_proc_show, NULL);
-}
+अटल पूर्णांक led_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, led_proc_show, शून्य);
+पूर्ण
 
-static ssize_t led_proc_write(struct file *file, const char __user *buffer,
-			      size_t count, loff_t *ppos)
-{
-	char *buf = NULL;
+अटल sमाप_प्रकार led_proc_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *buf = शून्य;
 
-	if (count > LED_MAX_LENGTH)
+	अगर (count > LED_MAX_LENGTH)
 		count = LED_MAX_LENGTH;
 
 	buf = memdup_user_nul(buffer, count);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
-	/* work around \n when echo'ing into proc */
-	if (buf[count - 1] == '\n')
+	/* work around \न when echo'ing पूर्णांकo proc */
+	अगर (buf[count - 1] == '\n')
 		buf[count - 1] = '\0';
 
-	/* before we change anything we want to stop any running timers,
+	/* beक्रमe we change anything we want to stop any running समयrs,
 	 * otherwise calls such as on will have no persistent effect
 	 */
-	del_timer_sync(&led_blink_timer);
+	del_समयr_sync(&led_blink_समयr);
 
-	if (!strcmp(buf, "on")) {
+	अगर (!म_भेद(buf, "on")) अणु
 		auxio_set_led(AUXIO_LED_ON);
-	} else if (!strcmp(buf, "toggle")) {
+	पूर्ण अन्यथा अगर (!म_भेद(buf, "toggle")) अणु
 		led_toggle();
-	} else if ((*buf > '0') && (*buf <= '9')) {
-		led_blink_timer_timeout = simple_strtoul(buf, NULL, 10);
-		led_blink(&led_blink_timer);
-	} else if (!strcmp(buf, "load")) {
-		led_blink_timer_timeout = 0;
-		led_blink(&led_blink_timer);
-	} else {
+	पूर्ण अन्यथा अगर ((*buf > '0') && (*buf <= '9')) अणु
+		led_blink_समयr_समयout = simple_म_से_अदीर्घ(buf, शून्य, 10);
+		led_blink(&led_blink_समयr);
+	पूर्ण अन्यथा अगर (!म_भेद(buf, "load")) अणु
+		led_blink_समयr_समयout = 0;
+		led_blink(&led_blink_समयr);
+	पूर्ण अन्यथा अणु
 		auxio_set_led(AUXIO_LED_OFF);
-	}
+	पूर्ण
 
-	kfree(buf);
+	kमुक्त(buf);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct proc_ops led_proc_ops = {
-	.proc_open	= led_proc_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops led_proc_ops = अणु
+	.proc_खोलो	= led_proc_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_write	= led_proc_write,
-};
-#endif
+	.proc_ग_लिखो	= led_proc_ग_लिखो,
+पूर्ण;
+#पूर्ण_अगर
 
-static struct proc_dir_entry *led;
+अटल काष्ठा proc_dir_entry *led;
 
-#define LED_VERSION	"0.1"
+#घोषणा LED_VERSION	"0.1"
 
-static int __init led_init(void)
-{
-	timer_setup(&led_blink_timer, led_blink, 0);
+अटल पूर्णांक __init led_init(व्योम)
+अणु
+	समयr_setup(&led_blink_समयr, led_blink, 0);
 
-	led = proc_create("led", 0, NULL, &led_proc_ops);
-	if (!led)
-		return -ENOMEM;
+	led = proc_create("led", 0, शून्य, &led_proc_ops);
+	अगर (!led)
+		वापस -ENOMEM;
 
-	printk(KERN_INFO
+	prपूर्णांकk(KERN_INFO
 	       "led: version %s, Lars Kotthoff <metalhead@metalhead.ws>\n",
 	       LED_VERSION);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit led_exit(void)
-{
-	remove_proc_entry("led", NULL);
-	del_timer_sync(&led_blink_timer);
-}
+अटल व्योम __निकास led_निकास(व्योम)
+अणु
+	हटाओ_proc_entry("led", शून्य);
+	del_समयr_sync(&led_blink_समयr);
+पूर्ण
 
 module_init(led_init);
-module_exit(led_exit);
+module_निकास(led_निकास);
 
 MODULE_AUTHOR("Lars Kotthoff <metalhead@metalhead.ws>");
 MODULE_DESCRIPTION("Provides control of the front LED on SPARC systems.");

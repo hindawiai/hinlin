@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Adapted from arm64 version.
  *
  * Copyright (C) 2012 ARM Limited
  */
-#ifndef __ASM_VDSO_DATAPAGE_H
-#define __ASM_VDSO_DATAPAGE_H
+#अगर_अघोषित __ASM_VDSO_DATAPAGE_H
+#घोषणा __ASM_VDSO_DATAPAGE_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <vdso/datapage.h>
-#include <asm/page.h>
+#समावेश <vdso/datapage.h>
+#समावेश <यंत्र/page.h>
 
-union vdso_data_store {
-	struct vdso_data	data[CS_BASES];
+जोड़ vdso_data_store अणु
+	काष्ठा vdso_data	data[CS_BASES];
 	u8			page[PAGE_SIZE];
-};
+पूर्ण;
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* __ASM_VDSO_DATAPAGE_H */
+#पूर्ण_अगर /* __ASM_VDSO_DATAPAGE_H */

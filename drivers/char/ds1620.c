@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * linux/drivers/char/ds1620.c: Dallas Semiconductors DS1620
+ * linux/drivers/अक्षर/ds1620.c: Dallas Semiconductors DS1620
  *   thermometer driver (as used in the Rebel.com NetWinder)
  */
-#include <linux/module.h>
-#include <linux/miscdevice.h>
-#include <linux/delay.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/capability.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
 
-#include <mach/hardware.h>
-#include <asm/mach-types.h>
-#include <linux/uaccess.h>
-#include <asm/therm.h>
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/therm.h>
 
-#ifdef CONFIG_PROC_FS
-/* define for /proc interface */
-#define THERM_USE_PROC
-#endif
+#अगर_घोषित CONFIG_PROC_FS
+/* define क्रम /proc पूर्णांकerface */
+#घोषणा THERM_USE_PROC
+#पूर्ण_अगर
 
-/* Definitions for DS1620 chip */
-#define THERM_START_CONVERT	0xee
-#define THERM_RESET		0xaf
-#define THERM_READ_CONFIG	0xac
-#define THERM_READ_TEMP		0xaa
-#define THERM_READ_TL		0xa2
-#define THERM_READ_TH		0xa1
-#define THERM_WRITE_CONFIG	0x0c
-#define THERM_WRITE_TL		0x02
-#define THERM_WRITE_TH		0x01
+/* Definitions क्रम DS1620 chip */
+#घोषणा THERM_START_CONVERT	0xee
+#घोषणा THERM_RESET		0xaf
+#घोषणा THERM_READ_CONFIG	0xac
+#घोषणा THERM_READ_TEMP		0xaa
+#घोषणा THERM_READ_TL		0xa2
+#घोषणा THERM_READ_TH		0xa1
+#घोषणा THERM_WRITE_CONFIG	0x0c
+#घोषणा THERM_WRITE_TL		0x02
+#घोषणा THERM_WRITE_TH		0x01
 
-#define CFG_CPU			2
-#define CFG_1SHOT		1
+#घोषणा CFG_CPU			2
+#घोषणा CFG_1SHOT		1
 
-static DEFINE_MUTEX(ds1620_mutex);
-static const char *fan_state[] = { "off", "on", "on (hardwired)" };
+अटल DEFINE_MUTEX(ds1620_mutex);
+अटल स्थिर अक्षर *fan_state[] = अणु "off", "on", "on (hardwired)" पूर्ण;
 
 /*
- * Start of NetWinder specifics
+ * Start of NetWinder specअगरics
  *  Note!  We have to hold the gpio lock with IRQs disabled over the
  *  whole of our transaction to the Dallas chip, since there is a
  *  chance that the WaveArtist driver could touch these bits to
  *  enable or disable the speaker.
  */
-extern unsigned int system_rev;
+बाह्य अचिन्हित पूर्णांक प्रणाली_rev;
 
-static inline void netwinder_ds1620_set_clk(int clk)
-{
-	nw_gpio_modify_op(GPIO_DSCLK, clk ? GPIO_DSCLK : 0);
-}
+अटल अंतरभूत व्योम netwinder_ds1620_set_clk(पूर्णांक clk)
+अणु
+	nw_gpio_modअगरy_op(GPIO_DSCLK, clk ? GPIO_DSCLK : 0);
+पूर्ण
 
-static inline void netwinder_ds1620_set_data(int dat)
-{
-	nw_gpio_modify_op(GPIO_DATA, dat ? GPIO_DATA : 0);
-}
+अटल अंतरभूत व्योम netwinder_ds1620_set_data(पूर्णांक dat)
+अणु
+	nw_gpio_modअगरy_op(GPIO_DATA, dat ? GPIO_DATA : 0);
+पूर्ण
 
-static inline int netwinder_ds1620_get_data(void)
-{
-	return nw_gpio_read() & GPIO_DATA;
-}
+अटल अंतरभूत पूर्णांक netwinder_ds1620_get_data(व्योम)
+अणु
+	वापस nw_gpio_पढ़ो() & GPIO_DATA;
+पूर्ण
 
-static inline void netwinder_ds1620_set_data_dir(int dir)
-{
-	nw_gpio_modify_io(GPIO_DATA, dir ? GPIO_DATA : 0);
-}
+अटल अंतरभूत व्योम netwinder_ds1620_set_data_dir(पूर्णांक dir)
+अणु
+	nw_gpio_modअगरy_io(GPIO_DATA, dir ? GPIO_DATA : 0);
+पूर्ण
 
-static inline void netwinder_ds1620_reset(void)
-{
-	nw_cpld_modify(CPLD_DS_ENABLE, 0);
-	nw_cpld_modify(CPLD_DS_ENABLE, CPLD_DS_ENABLE);
-}
+अटल अंतरभूत व्योम netwinder_ds1620_reset(व्योम)
+अणु
+	nw_cpld_modअगरy(CPLD_DS_ENABLE, 0);
+	nw_cpld_modअगरy(CPLD_DS_ENABLE, CPLD_DS_ENABLE);
+पूर्ण
 
-static inline void netwinder_lock(unsigned long *flags)
-{
+अटल अंतरभूत व्योम netwinder_lock(अचिन्हित दीर्घ *flags)
+अणु
 	raw_spin_lock_irqsave(&nw_gpio_lock, *flags);
-}
+पूर्ण
 
-static inline void netwinder_unlock(unsigned long *flags)
-{
+अटल अंतरभूत व्योम netwinder_unlock(अचिन्हित दीर्घ *flags)
+अणु
 	raw_spin_unlock_irqrestore(&nw_gpio_lock, *flags);
-}
+पूर्ण
 
-static inline void netwinder_set_fan(int i)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम netwinder_set_fan(पूर्णांक i)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&nw_gpio_lock, flags);
-	nw_gpio_modify_op(GPIO_FAN, i ? GPIO_FAN : 0);
+	nw_gpio_modअगरy_op(GPIO_FAN, i ? GPIO_FAN : 0);
 	raw_spin_unlock_irqrestore(&nw_gpio_lock, flags);
-}
+पूर्ण
 
-static inline int netwinder_get_fan(void)
-{
-	if ((system_rev & 0xf000) == 0x4000)
-		return FAN_ALWAYS_ON;
+अटल अंतरभूत पूर्णांक netwinder_get_fan(व्योम)
+अणु
+	अगर ((प्रणाली_rev & 0xf000) == 0x4000)
+		वापस FAN_ALWAYS_ON;
 
-	return (nw_gpio_read() & GPIO_FAN) ? FAN_ON : FAN_OFF;
-}
+	वापस (nw_gpio_पढ़ो() & GPIO_FAN) ? FAN_ON : FAN_OFF;
+पूर्ण
 
 /*
- * End of NetWinder specifics
+ * End of NetWinder specअगरics
  */
 
-static void ds1620_send_bits(int nr, int value)
-{
-	int i;
+अटल व्योम ds1620_send_bits(पूर्णांक nr, पूर्णांक value)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < nr; i++) {
+	क्रम (i = 0; i < nr; i++) अणु
 		netwinder_ds1620_set_data(value & 1);
 		netwinder_ds1620_set_clk(0);
 		udelay(1);
@@ -117,35 +118,35 @@ static void ds1620_send_bits(int nr, int value)
 		udelay(1);
 
 		value >>= 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int ds1620_recv_bits(int nr)
-{
-	unsigned int value = 0, mask = 1;
-	int i;
+अटल अचिन्हित पूर्णांक ds1620_recv_bits(पूर्णांक nr)
+अणु
+	अचिन्हित पूर्णांक value = 0, mask = 1;
+	पूर्णांक i;
 
 	netwinder_ds1620_set_data(0);
 
-	for (i = 0; i < nr; i++) {
+	क्रम (i = 0; i < nr; i++) अणु
 		netwinder_ds1620_set_clk(0);
 		udelay(1);
 
-		if (netwinder_ds1620_get_data())
+		अगर (netwinder_ds1620_get_data())
 			value |= mask;
 
 		mask <<= 1;
 
 		netwinder_ds1620_set_clk(1);
 		udelay(1);
-	}
+	पूर्ण
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static void ds1620_out(int cmd, int bits, int value)
-{
-	unsigned long flags;
+अटल व्योम ds1620_out(पूर्णांक cmd, पूर्णांक bits, पूर्णांक value)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	netwinder_lock(&flags);
 	netwinder_ds1620_set_clk(1);
@@ -155,7 +156,7 @@ static void ds1620_out(int cmd, int bits, int value)
 	udelay(1);
 
 	ds1620_send_bits(8, cmd);
-	if (bits)
+	अगर (bits)
 		ds1620_send_bits(bits, value);
 
 	udelay(1);
@@ -164,12 +165,12 @@ static void ds1620_out(int cmd, int bits, int value)
 	netwinder_unlock(&flags);
 
 	msleep(20);
-}
+पूर्ण
 
-static unsigned int ds1620_in(int cmd, int bits)
-{
-	unsigned long flags;
-	unsigned int value;
+अटल अचिन्हित पूर्णांक ds1620_in(पूर्णांक cmd, पूर्णांक bits)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक value;
 
 	netwinder_lock(&flags);
 	netwinder_ds1620_set_clk(1);
@@ -186,189 +187,189 @@ static unsigned int ds1620_in(int cmd, int bits)
 	netwinder_ds1620_reset();
 	netwinder_unlock(&flags);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static int cvt_9_to_int(unsigned int val)
-{
-	if (val & 0x100)
+अटल पूर्णांक cvt_9_to_पूर्णांक(अचिन्हित पूर्णांक val)
+अणु
+	अगर (val & 0x100)
 		val |= 0xfffffe00;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void ds1620_write_state(struct therm *therm)
-{
+अटल व्योम ds1620_ग_लिखो_state(काष्ठा therm *therm)
+अणु
 	ds1620_out(THERM_WRITE_CONFIG, 8, CFG_CPU);
 	ds1620_out(THERM_WRITE_TL, 9, therm->lo);
 	ds1620_out(THERM_WRITE_TH, 9, therm->hi);
 	ds1620_out(THERM_START_CONVERT, 0, 0);
-}
+पूर्ण
 
-static void ds1620_read_state(struct therm *therm)
-{
-	therm->lo = cvt_9_to_int(ds1620_in(THERM_READ_TL, 9));
-	therm->hi = cvt_9_to_int(ds1620_in(THERM_READ_TH, 9));
-}
+अटल व्योम ds1620_पढ़ो_state(काष्ठा therm *therm)
+अणु
+	therm->lo = cvt_9_to_पूर्णांक(ds1620_in(THERM_READ_TL, 9));
+	therm->hi = cvt_9_to_पूर्णांक(ds1620_in(THERM_READ_TH, 9));
+पूर्ण
 
-static int ds1620_open(struct inode *inode, struct file *file)
-{
-	return stream_open(inode, file);
-}
+अटल पूर्णांक ds1620_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static ssize_t
-ds1620_read(struct file *file, char __user *buf, size_t count, loff_t *ptr)
-{
-	signed int cur_temp;
-	signed char cur_temp_degF;
+अटल sमाप_प्रकार
+ds1620_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *ptr)
+अणु
+	चिन्हित पूर्णांक cur_temp;
+	चिन्हित अक्षर cur_temp_degF;
 
-	cur_temp = cvt_9_to_int(ds1620_in(THERM_READ_TEMP, 9)) >> 1;
+	cur_temp = cvt_9_to_पूर्णांक(ds1620_in(THERM_READ_TEMP, 9)) >> 1;
 
 	/* convert to Fahrenheit, as per wdt.c */
 	cur_temp_degF = (cur_temp * 9) / 5 + 32;
 
-	if (copy_to_user(buf, &cur_temp_degF, 1))
-		return -EFAULT;
+	अगर (copy_to_user(buf, &cur_temp_degF, 1))
+		वापस -EFAULT;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int
-ds1620_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct therm therm;
-	union {
-		struct therm __user *therm;
-		int __user *i;
-	} uarg;
-	int i;
+अटल पूर्णांक
+ds1620_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा therm therm;
+	जोड़ अणु
+		काष्ठा therm __user *therm;
+		पूर्णांक __user *i;
+	पूर्ण uarg;
+	पूर्णांक i;
 
-	uarg.i = (int __user *)arg;
+	uarg.i = (पूर्णांक __user *)arg;
 
-	switch(cmd) {
-	case CMD_SET_THERMOSTATE:
-	case CMD_SET_THERMOSTATE2:
-		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+	चयन(cmd) अणु
+	हाल CMD_SET_THERMOSTATE:
+	हाल CMD_SET_THERMOSTATE2:
+		अगर (!capable(CAP_SYS_ADMIN))
+			वापस -EPERM;
 
-		if (cmd == CMD_SET_THERMOSTATE) {
-			if (get_user(therm.hi, uarg.i))
-				return -EFAULT;
+		अगर (cmd == CMD_SET_THERMOSTATE) अणु
+			अगर (get_user(therm.hi, uarg.i))
+				वापस -EFAULT;
 			therm.lo = therm.hi - 3;
-		} else {
-			if (copy_from_user(&therm, uarg.therm, sizeof(therm)))
-				return -EFAULT;
-		}
+		पूर्ण अन्यथा अणु
+			अगर (copy_from_user(&therm, uarg.therm, माप(therm)))
+				वापस -EFAULT;
+		पूर्ण
 
 		therm.lo <<= 1;
 		therm.hi <<= 1;
 
-		ds1620_write_state(&therm);
-		break;
+		ds1620_ग_लिखो_state(&therm);
+		अवरोध;
 
-	case CMD_GET_THERMOSTATE:
-	case CMD_GET_THERMOSTATE2:
-		ds1620_read_state(&therm);
+	हाल CMD_GET_THERMOSTATE:
+	हाल CMD_GET_THERMOSTATE2:
+		ds1620_पढ़ो_state(&therm);
 
 		therm.lo >>= 1;
 		therm.hi >>= 1;
 
-		if (cmd == CMD_GET_THERMOSTATE) {
-			if (put_user(therm.hi, uarg.i))
-				return -EFAULT;
-		} else {
-			if (copy_to_user(uarg.therm, &therm, sizeof(therm)))
-				return -EFAULT;
-		}
-		break;
+		अगर (cmd == CMD_GET_THERMOSTATE) अणु
+			अगर (put_user(therm.hi, uarg.i))
+				वापस -EFAULT;
+		पूर्ण अन्यथा अणु
+			अगर (copy_to_user(uarg.therm, &therm, माप(therm)))
+				वापस -EFAULT;
+		पूर्ण
+		अवरोध;
 
-	case CMD_GET_TEMPERATURE:
-	case CMD_GET_TEMPERATURE2:
-		i = cvt_9_to_int(ds1620_in(THERM_READ_TEMP, 9));
+	हाल CMD_GET_TEMPERATURE:
+	हाल CMD_GET_TEMPERATURE2:
+		i = cvt_9_to_पूर्णांक(ds1620_in(THERM_READ_TEMP, 9));
 
-		if (cmd == CMD_GET_TEMPERATURE)
+		अगर (cmd == CMD_GET_TEMPERATURE)
 			i >>= 1;
 
-		return put_user(i, uarg.i) ? -EFAULT : 0;
+		वापस put_user(i, uarg.i) ? -EFAULT : 0;
 
-	case CMD_GET_STATUS:
+	हाल CMD_GET_STATUS:
 		i = ds1620_in(THERM_READ_CONFIG, 8) & 0xe3;
 
-		return put_user(i, uarg.i) ? -EFAULT : 0;
+		वापस put_user(i, uarg.i) ? -EFAULT : 0;
 
-	case CMD_GET_FAN:
+	हाल CMD_GET_FAN:
 		i = netwinder_get_fan();
 
-		return put_user(i, uarg.i) ? -EFAULT : 0;
+		वापस put_user(i, uarg.i) ? -EFAULT : 0;
 
-	case CMD_SET_FAN:
-		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+	हाल CMD_SET_FAN:
+		अगर (!capable(CAP_SYS_ADMIN))
+			वापस -EPERM;
 
-		if (get_user(i, uarg.i))
-			return -EFAULT;
+		अगर (get_user(i, uarg.i))
+			वापस -EFAULT;
 
 		netwinder_set_fan(i);
-		break;
+		अवरोध;
 		
-	default:
-		return -ENOIOCTLCMD;
-	}
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long
-ds1620_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	int ret;
+अटल दीर्घ
+ds1620_unlocked_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&ds1620_mutex);
 	ret = ds1620_ioctl(file, cmd, arg);
 	mutex_unlock(&ds1620_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef THERM_USE_PROC
-static int ds1620_proc_therm_show(struct seq_file *m, void *v)
-{
-	struct therm th;
-	int temp;
+#अगर_घोषित THERM_USE_PROC
+अटल पूर्णांक ds1620_proc_therm_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा therm th;
+	पूर्णांक temp;
 
-	ds1620_read_state(&th);
-	temp =  cvt_9_to_int(ds1620_in(THERM_READ_TEMP, 9));
+	ds1620_पढ़ो_state(&th);
+	temp =  cvt_9_to_पूर्णांक(ds1620_in(THERM_READ_TEMP, 9));
 
-	seq_printf(m, "Thermostat: HI %i.%i, LOW %i.%i; temperature: %i.%i C, fan %s\n",
+	seq_म_लिखो(m, "Thermostat: HI %i.%i, LOW %i.%i; temperature: %i.%i C, fan %s\n",
 		   th.hi >> 1, th.hi & 1 ? 5 : 0,
 		   th.lo >> 1, th.lo & 1 ? 5 : 0,
 		   temp  >> 1, temp  & 1 ? 5 : 0,
 		   fan_state[netwinder_get_fan()]);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct file_operations ds1620_fops = {
+अटल स्थिर काष्ठा file_operations ds1620_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= ds1620_open,
-	.read		= ds1620_read,
+	.खोलो		= ds1620_खोलो,
+	.पढ़ो		= ds1620_पढ़ो,
 	.unlocked_ioctl	= ds1620_unlocked_ioctl,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static struct miscdevice ds1620_miscdev = {
+अटल काष्ठा miscdevice ds1620_miscdev = अणु
 	TEMP_MINOR,
 	"temp",
 	&ds1620_fops
-};
+पूर्ण;
 
-static int __init ds1620_init(void)
-{
-	int ret;
-	struct therm th, th_start;
+अटल पूर्णांक __init ds1620_init(व्योम)
+अणु
+	पूर्णांक ret;
+	काष्ठा therm th, th_start;
 
-	if (!machine_is_netwinder())
-		return -ENODEV;
+	अगर (!machine_is_netwinder())
+		वापस -ENODEV;
 
 	ds1620_out(THERM_RESET, 0, 0);
 	ds1620_out(THERM_WRITE_CONFIG, 8, CFG_CPU);
@@ -376,49 +377,49 @@ static int __init ds1620_init(void)
 
 	/*
 	 * Trigger the fan to start by setting
-	 * temperature high point low.  This kicks
-	 * the fan into action.
+	 * temperature high poपूर्णांक low.  This kicks
+	 * the fan पूर्णांकo action.
 	 */
-	ds1620_read_state(&th);
+	ds1620_पढ़ो_state(&th);
 	th_start.lo = 0;
 	th_start.hi = 1;
-	ds1620_write_state(&th_start);
+	ds1620_ग_लिखो_state(&th_start);
 
 	msleep(2000);
 
-	ds1620_write_state(&th);
+	ds1620_ग_लिखो_state(&th);
 
-	ret = misc_register(&ds1620_miscdev);
-	if (ret < 0)
-		return ret;
+	ret = misc_रेजिस्टर(&ds1620_miscdev);
+	अगर (ret < 0)
+		वापस ret;
 
-#ifdef THERM_USE_PROC
-	if (!proc_create_single("therm", 0, NULL, ds1620_proc_therm_show))
-		printk(KERN_ERR "therm: unable to register /proc/therm\n");
-#endif
+#अगर_घोषित THERM_USE_PROC
+	अगर (!proc_create_single("therm", 0, शून्य, ds1620_proc_therm_show))
+		prपूर्णांकk(KERN_ERR "therm: unable to register /proc/therm\n");
+#पूर्ण_अगर
 
-	ds1620_read_state(&th);
-	ret = cvt_9_to_int(ds1620_in(THERM_READ_TEMP, 9));
+	ds1620_पढ़ो_state(&th);
+	ret = cvt_9_to_पूर्णांक(ds1620_in(THERM_READ_TEMP, 9));
 
-	printk(KERN_INFO "Thermostat: high %i.%i, low %i.%i, "
+	prपूर्णांकk(KERN_INFO "Thermostat: high %i.%i, low %i.%i, "
 	       "current %i.%i C, fan %s.\n",
 	       th.hi >> 1, th.hi & 1 ? 5 : 0,
 	       th.lo >> 1, th.lo & 1 ? 5 : 0,
 	       ret   >> 1, ret   & 1 ? 5 : 0,
 	       fan_state[netwinder_get_fan()]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit ds1620_exit(void)
-{
-#ifdef THERM_USE_PROC
-	remove_proc_entry("therm", NULL);
-#endif
-	misc_deregister(&ds1620_miscdev);
-}
+अटल व्योम __निकास ds1620_निकास(व्योम)
+अणु
+#अगर_घोषित THERM_USE_PROC
+	हटाओ_proc_entry("therm", शून्य);
+#पूर्ण_अगर
+	misc_deरेजिस्टर(&ds1620_miscdev);
+पूर्ण
 
 module_init(ds1620_init);
-module_exit(ds1620_exit);
+module_निकास(ds1620_निकास);
 
 MODULE_LICENSE("GPL");

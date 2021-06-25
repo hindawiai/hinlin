@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef B43_RFKILL_H_
-#define B43_RFKILL_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित B43_RFKILL_H_
+#घोषणा B43_RFKILL_H_
 
-struct ieee80211_hw;
-struct b43_wldev;
+काष्ठा ieee80211_hw;
+काष्ठा b43_wldev;
 
-void b43_rfkill_poll(struct ieee80211_hw *hw);
+व्योम b43_rfसमाप्त_poll(काष्ठा ieee80211_hw *hw);
 
-bool b43_is_hw_radio_enabled(struct b43_wldev *dev);
+bool b43_is_hw_radio_enabled(काष्ठा b43_wldev *dev);
 
-#endif /* B43_RFKILL_H_ */
+#पूर्ण_अगर /* B43_RFKILL_H_ */

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  * Author       Karsten Keil <kkeil@novell.com>
@@ -8,51 +9,51 @@
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
-#ifndef _MISDN_FSM_H
-#define _MISDN_FSM_H
+#अगर_अघोषित _MISDN_FSM_H
+#घोषणा _MISDN_FSM_H
 
-#include <linux/timer.h>
+#समावेश <linux/समयr.h>
 
 /* Statemachine */
 
-struct FsmInst;
+काष्ठा FsmInst;
 
-typedef void (*FSMFNPTR)(struct FsmInst *, int, void *);
+प्रकार व्योम (*FSMFNPTR)(काष्ठा FsmInst *, पूर्णांक, व्योम *);
 
-struct Fsm {
+काष्ठा Fsm अणु
 	FSMFNPTR *jumpmatrix;
-	int state_count, event_count;
-	char **strEvent, **strState;
-};
+	पूर्णांक state_count, event_count;
+	अक्षर **strEvent, **strState;
+पूर्ण;
 
-struct FsmInst {
-	struct Fsm *fsm;
-	int state;
-	int debug;
-	void *userdata;
-	int userint;
-	void (*printdebug) (struct FsmInst *, char *, ...);
-};
+काष्ठा FsmInst अणु
+	काष्ठा Fsm *fsm;
+	पूर्णांक state;
+	पूर्णांक debug;
+	व्योम *userdata;
+	पूर्णांक userपूर्णांक;
+	व्योम (*prपूर्णांकdebug) (काष्ठा FsmInst *, अक्षर *, ...);
+पूर्ण;
 
-struct FsmNode {
-	int state, event;
-	void (*routine) (struct FsmInst *, int, void *);
-};
+काष्ठा FsmNode अणु
+	पूर्णांक state, event;
+	व्योम (*routine) (काष्ठा FsmInst *, पूर्णांक, व्योम *);
+पूर्ण;
 
-struct FsmTimer {
-	struct FsmInst *fi;
-	struct timer_list tl;
-	int event;
-	void *arg;
-};
+काष्ठा FsmTimer अणु
+	काष्ठा FsmInst *fi;
+	काष्ठा समयr_list tl;
+	पूर्णांक event;
+	व्योम *arg;
+पूर्ण;
 
-extern int mISDN_FsmNew(struct Fsm *, struct FsmNode *, int);
-extern void mISDN_FsmFree(struct Fsm *);
-extern int mISDN_FsmEvent(struct FsmInst *, int , void *);
-extern void mISDN_FsmChangeState(struct FsmInst *, int);
-extern void mISDN_FsmInitTimer(struct FsmInst *, struct FsmTimer *);
-extern int mISDN_FsmAddTimer(struct FsmTimer *, int, int, void *, int);
-extern void mISDN_FsmRestartTimer(struct FsmTimer *, int, int, void *, int);
-extern void mISDN_FsmDelTimer(struct FsmTimer *, int);
+बाह्य पूर्णांक mISDN_FsmNew(काष्ठा Fsm *, काष्ठा FsmNode *, पूर्णांक);
+बाह्य व्योम mISDN_FsmFree(काष्ठा Fsm *);
+बाह्य पूर्णांक mISDN_FsmEvent(काष्ठा FsmInst *, पूर्णांक , व्योम *);
+बाह्य व्योम mISDN_FsmChangeState(काष्ठा FsmInst *, पूर्णांक);
+बाह्य व्योम mISDN_FsmInitTimer(काष्ठा FsmInst *, काष्ठा FsmTimer *);
+बाह्य पूर्णांक mISDN_FsmAddTimer(काष्ठा FsmTimer *, पूर्णांक, पूर्णांक, व्योम *, पूर्णांक);
+बाह्य व्योम mISDN_FsmRestartTimer(काष्ठा FsmTimer *, पूर्णांक, पूर्णांक, व्योम *, पूर्णांक);
+बाह्य व्योम mISDN_FsmDelTimer(काष्ठा FsmTimer *, पूर्णांक);
 
-#endif
+#पूर्ण_अगर

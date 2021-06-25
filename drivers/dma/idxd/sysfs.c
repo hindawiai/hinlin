@@ -1,250 +1,251 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2019 Intel Corporation. All rights rsvd. */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/device.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <uapi/linux/idxd.h>
-#include "registers.h"
-#include "idxd.h"
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/device.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <uapi/linux/idxd.h>
+#समावेश "registers.h"
+#समावेश "idxd.h"
 
-static char *idxd_wq_type_names[] = {
+अटल अक्षर *idxd_wq_type_names[] = अणु
 	[IDXD_WQT_NONE]		= "none",
 	[IDXD_WQT_KERNEL]	= "kernel",
 	[IDXD_WQT_USER]		= "user",
-};
+पूर्ण;
 
-static int idxd_config_bus_match(struct device *dev,
-				 struct device_driver *drv)
-{
-	int matched = 0;
+अटल पूर्णांक idxd_config_bus_match(काष्ठा device *dev,
+				 काष्ठा device_driver *drv)
+अणु
+	पूर्णांक matched = 0;
 
-	if (is_idxd_dev(dev)) {
-		struct idxd_device *idxd = confdev_to_idxd(dev);
+	अगर (is_idxd_dev(dev)) अणु
+		काष्ठा idxd_device *idxd = confdev_to_idxd(dev);
 
-		if (idxd->state != IDXD_DEV_CONF_READY)
-			return 0;
+		अगर (idxd->state != IDXD_DEV_CONF_READY)
+			वापस 0;
 		matched = 1;
-	} else if (is_idxd_wq_dev(dev)) {
-		struct idxd_wq *wq = confdev_to_wq(dev);
-		struct idxd_device *idxd = wq->idxd;
+	पूर्ण अन्यथा अगर (is_idxd_wq_dev(dev)) अणु
+		काष्ठा idxd_wq *wq = confdev_to_wq(dev);
+		काष्ठा idxd_device *idxd = wq->idxd;
 
-		if (idxd->state < IDXD_DEV_CONF_READY)
-			return 0;
+		अगर (idxd->state < IDXD_DEV_CONF_READY)
+			वापस 0;
 
-		if (wq->state != IDXD_WQ_DISABLED) {
+		अगर (wq->state != IDXD_WQ_DISABLED) अणु
 			dev_dbg(dev, "%s not disabled\n", dev_name(dev));
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		matched = 1;
-	}
+	पूर्ण
 
-	if (matched)
+	अगर (matched)
 		dev_dbg(dev, "%s matched\n", dev_name(dev));
 
-	return matched;
-}
+	वापस matched;
+पूर्ण
 
-static int enable_wq(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct device *dev = &idxd->pdev->dev;
-	unsigned long flags;
-	int rc;
+अटल पूर्णांक enable_wq(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
 	mutex_lock(&wq->wq_lock);
 
-	if (idxd->state != IDXD_DEV_ENABLED) {
+	अगर (idxd->state != IDXD_DEV_ENABLED) अणु
 		mutex_unlock(&wq->wq_lock);
 		dev_warn(dev, "Enabling while device not enabled.\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	if (wq->state != IDXD_WQ_DISABLED) {
+	अगर (wq->state != IDXD_WQ_DISABLED) अणु
 		mutex_unlock(&wq->wq_lock);
 		dev_warn(dev, "WQ %d already enabled.\n", wq->id);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!wq->group) {
+	अगर (!wq->group) अणु
 		mutex_unlock(&wq->wq_lock);
 		dev_warn(dev, "WQ not attached to group.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (strlen(wq->name) == 0) {
+	अगर (म_माप(wq->name) == 0) अणु
 		mutex_unlock(&wq->wq_lock);
 		dev_warn(dev, "WQ name not set.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Shared WQ checks */
-	if (wq_shared(wq)) {
-		if (!device_swq_supported(idxd)) {
+	अगर (wq_shared(wq)) अणु
+		अगर (!device_swq_supported(idxd)) अणु
 			dev_warn(dev, "PASID not enabled and shared WQ.\n");
 			mutex_unlock(&wq->wq_lock);
-			return -ENXIO;
-		}
+			वापस -ENXIO;
+		पूर्ण
 		/*
 		 * Shared wq with the threshold set to 0 means the user
 		 * did not set the threshold or transitioned from a
 		 * dedicated wq but did not set threshold. A value
 		 * of 0 would effectively disable the shared wq. The
-		 * driver does not allow a value of 0 to be set for
+		 * driver करोes not allow a value of 0 to be set क्रम
 		 * threshold via sysfs.
 		 */
-		if (wq->threshold == 0) {
+		अगर (wq->threshold == 0) अणु
 			dev_warn(dev, "Shared WQ and threshold 0.\n");
 			mutex_unlock(&wq->wq_lock);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	rc = idxd_wq_alloc_resources(wq);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		mutex_unlock(&wq->wq_lock);
 		dev_warn(dev, "WQ resource alloc failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	spin_lock_irqsave(&idxd->dev_lock, flags);
-	if (test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+	अगर (test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
 		rc = idxd_device_config(idxd);
 	spin_unlock_irqrestore(&idxd->dev_lock, flags);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		mutex_unlock(&wq->wq_lock);
 		dev_warn(dev, "Writing WQ %d config failed: %d\n", wq->id, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = idxd_wq_enable(wq);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		mutex_unlock(&wq->wq_lock);
 		dev_warn(dev, "WQ %d enabling failed: %d\n", wq->id, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = idxd_wq_map_portal(wq);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_warn(dev, "wq portal mapping failed: %d\n", rc);
 		rc = idxd_wq_disable(wq);
-		if (rc < 0)
+		अगर (rc < 0)
 			dev_warn(dev, "IDXD wq disable failed\n");
 		mutex_unlock(&wq->wq_lock);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	wq->client_count = 0;
 
-	if (wq->type == IDXD_WQT_KERNEL) {
+	अगर (wq->type == IDXD_WQT_KERNEL) अणु
 		rc = idxd_wq_init_percpu_ref(wq);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			dev_dbg(dev, "percpu_ref setup failed\n");
 			mutex_unlock(&wq->wq_lock);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	if (is_idxd_wq_dmaengine(wq)) {
-		rc = idxd_register_dma_channel(wq);
-		if (rc < 0) {
+	अगर (is_idxd_wq_dmaengine(wq)) अणु
+		rc = idxd_रेजिस्टर_dma_channel(wq);
+		अगर (rc < 0) अणु
 			dev_dbg(dev, "DMA channel register failed\n");
 			mutex_unlock(&wq->wq_lock);
-			return rc;
-		}
-	} else if (is_idxd_wq_cdev(wq)) {
+			वापस rc;
+		पूर्ण
+	पूर्ण अन्यथा अगर (is_idxd_wq_cdev(wq)) अणु
 		rc = idxd_wq_add_cdev(wq);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			dev_dbg(dev, "Cdev creation failed\n");
 			mutex_unlock(&wq->wq_lock);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&wq->wq_lock);
 	dev_info(dev, "wq %s enabled\n", dev_name(&wq->conf_dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int idxd_config_bus_probe(struct device *dev)
-{
-	int rc = 0;
-	unsigned long flags;
+अटल पूर्णांक idxd_config_bus_probe(काष्ठा device *dev)
+अणु
+	पूर्णांक rc = 0;
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(dev, "%s called\n", __func__);
 
-	if (is_idxd_dev(dev)) {
-		struct idxd_device *idxd = confdev_to_idxd(dev);
+	अगर (is_idxd_dev(dev)) अणु
+		काष्ठा idxd_device *idxd = confdev_to_idxd(dev);
 
-		if (idxd->state != IDXD_DEV_CONF_READY) {
+		अगर (idxd->state != IDXD_DEV_CONF_READY) अणु
 			dev_warn(dev, "Device not ready for config\n");
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
-		if (!try_module_get(THIS_MODULE))
-			return -ENXIO;
+		अगर (!try_module_get(THIS_MODULE))
+			वापस -ENXIO;
 
-		/* Perform IDXD configuration and enabling */
+		/* Perक्रमm IDXD configuration and enabling */
 		spin_lock_irqsave(&idxd->dev_lock, flags);
-		if (test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		अगर (test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
 			rc = idxd_device_config(idxd);
 		spin_unlock_irqrestore(&idxd->dev_lock, flags);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			module_put(THIS_MODULE);
 			dev_warn(dev, "Device config failed: %d\n", rc);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
 		/* start device */
 		rc = idxd_device_enable(idxd);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			module_put(THIS_MODULE);
 			dev_warn(dev, "Device enable failed: %d\n", rc);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
 		dev_info(dev, "Device %s enabled\n", dev_name(dev));
 
-		rc = idxd_register_dma_device(idxd);
-		if (rc < 0) {
+		rc = idxd_रेजिस्टर_dma_device(idxd);
+		अगर (rc < 0) अणु
 			module_put(THIS_MODULE);
 			dev_dbg(dev, "Failed to register dmaengine device\n");
-			return rc;
-		}
-		return 0;
-	} else if (is_idxd_wq_dev(dev)) {
-		struct idxd_wq *wq = confdev_to_wq(dev);
+			वापस rc;
+		पूर्ण
+		वापस 0;
+	पूर्ण अन्यथा अगर (is_idxd_wq_dev(dev)) अणु
+		काष्ठा idxd_wq *wq = confdev_to_wq(dev);
 
-		return enable_wq(wq);
-	}
+		वापस enable_wq(wq);
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void disable_wq(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct device *dev = &idxd->pdev->dev;
+अटल व्योम disable_wq(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
 
 	mutex_lock(&wq->wq_lock);
 	dev_dbg(dev, "%s removing WQ %s\n", __func__, dev_name(&wq->conf_dev));
-	if (wq->state == IDXD_WQ_DISABLED) {
+	अगर (wq->state == IDXD_WQ_DISABLED) अणु
 		mutex_unlock(&wq->wq_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (wq->type == IDXD_WQT_KERNEL)
+	अगर (wq->type == IDXD_WQT_KERNEL)
 		idxd_wq_quiesce(wq);
 
-	if (is_idxd_wq_dmaengine(wq))
-		idxd_unregister_dma_channel(wq);
-	else if (is_idxd_wq_cdev(wq))
+	अगर (is_idxd_wq_dmaengine(wq))
+		idxd_unरेजिस्टर_dma_channel(wq);
+	अन्यथा अगर (is_idxd_wq_cdev(wq))
 		idxd_wq_del_cdev(wq);
 
-	if (idxd_wq_refcount(wq))
+	अगर (idxd_wq_refcount(wq))
 		dev_warn(dev, "Clients has claim on wq %d: %d\n",
 			 wq->id, idxd_wq_refcount(wq));
 
@@ -253,471 +254,471 @@ static void disable_wq(struct idxd_wq *wq)
 	idxd_wq_drain(wq);
 	idxd_wq_reset(wq);
 
-	idxd_wq_free_resources(wq);
+	idxd_wq_मुक्त_resources(wq);
 	wq->client_count = 0;
 	mutex_unlock(&wq->wq_lock);
 
 	dev_info(dev, "wq %s disabled\n", dev_name(&wq->conf_dev));
-}
+पूर्ण
 
-static int idxd_config_bus_remove(struct device *dev)
-{
-	int rc;
+अटल पूर्णांक idxd_config_bus_हटाओ(काष्ठा device *dev)
+अणु
+	पूर्णांक rc;
 
 	dev_dbg(dev, "%s called for %s\n", __func__, dev_name(dev));
 
 	/* disable workqueue here */
-	if (is_idxd_wq_dev(dev)) {
-		struct idxd_wq *wq = confdev_to_wq(dev);
+	अगर (is_idxd_wq_dev(dev)) अणु
+		काष्ठा idxd_wq *wq = confdev_to_wq(dev);
 
 		disable_wq(wq);
-	} else if (is_idxd_dev(dev)) {
-		struct idxd_device *idxd = confdev_to_idxd(dev);
-		int i;
+	पूर्ण अन्यथा अगर (is_idxd_dev(dev)) अणु
+		काष्ठा idxd_device *idxd = confdev_to_idxd(dev);
+		पूर्णांक i;
 
 		dev_dbg(dev, "%s removing dev %s\n", __func__,
 			dev_name(&idxd->conf_dev));
-		for (i = 0; i < idxd->max_wqs; i++) {
-			struct idxd_wq *wq = idxd->wqs[i];
+		क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+			काष्ठा idxd_wq *wq = idxd->wqs[i];
 
-			if (wq->state == IDXD_WQ_DISABLED)
-				continue;
+			अगर (wq->state == IDXD_WQ_DISABLED)
+				जारी;
 			dev_warn(dev, "Active wq %d on disable %s.\n", i,
 				 dev_name(&idxd->conf_dev));
 			device_release_driver(&wq->conf_dev);
-		}
+		पूर्ण
 
-		idxd_unregister_dma_device(idxd);
+		idxd_unरेजिस्टर_dma_device(idxd);
 		rc = idxd_device_disable(idxd);
-		if (test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags)) {
-			for (i = 0; i < idxd->max_wqs; i++) {
-				struct idxd_wq *wq = idxd->wqs[i];
+		अगर (test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags)) अणु
+			क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+				काष्ठा idxd_wq *wq = idxd->wqs[i];
 
 				mutex_lock(&wq->wq_lock);
 				idxd_wq_disable_cleanup(wq);
 				mutex_unlock(&wq->wq_lock);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		module_put(THIS_MODULE);
-		if (rc < 0)
+		अगर (rc < 0)
 			dev_warn(dev, "Device disable failed\n");
-		else
+		अन्यथा
 			dev_info(dev, "Device %s disabled\n", dev_name(dev));
 
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void idxd_config_bus_shutdown(struct device *dev)
-{
+अटल व्योम idxd_config_bus_shutकरोwn(काष्ठा device *dev)
+अणु
 	dev_dbg(dev, "%s called\n", __func__);
-}
+पूर्ण
 
-struct bus_type dsa_bus_type = {
+काष्ठा bus_type dsa_bus_type = अणु
 	.name = "dsa",
 	.match = idxd_config_bus_match,
 	.probe = idxd_config_bus_probe,
-	.remove = idxd_config_bus_remove,
-	.shutdown = idxd_config_bus_shutdown,
-};
+	.हटाओ = idxd_config_bus_हटाओ,
+	.shutकरोwn = idxd_config_bus_shutकरोwn,
+पूर्ण;
 
-static struct idxd_device_driver dsa_drv = {
-	.drv = {
+अटल काष्ठा idxd_device_driver dsa_drv = अणु
+	.drv = अणु
 		.name = "dsa",
 		.bus = &dsa_bus_type,
 		.owner = THIS_MODULE,
 		.mod_name = KBUILD_MODNAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* IDXD generic driver setup */
-int idxd_register_driver(void)
-{
-	return driver_register(&dsa_drv.drv);
-}
+पूर्णांक idxd_रेजिस्टर_driver(व्योम)
+अणु
+	वापस driver_रेजिस्टर(&dsa_drv.drv);
+पूर्ण
 
-void idxd_unregister_driver(void)
-{
-	driver_unregister(&dsa_drv.drv);
-}
+व्योम idxd_unरेजिस्टर_driver(व्योम)
+अणु
+	driver_unरेजिस्टर(&dsa_drv.drv);
+पूर्ण
 
 /* IDXD engine attributes */
-static ssize_t engine_group_id_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct idxd_engine *engine =
-		container_of(dev, struct idxd_engine, conf_dev);
+अटल sमाप_प्रकार engine_group_id_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_engine *engine =
+		container_of(dev, काष्ठा idxd_engine, conf_dev);
 
-	if (engine->group)
-		return sysfs_emit(buf, "%d\n", engine->group->id);
-	else
-		return sysfs_emit(buf, "%d\n", -1);
-}
+	अगर (engine->group)
+		वापस sysfs_emit(buf, "%d\n", engine->group->id);
+	अन्यथा
+		वापस sysfs_emit(buf, "%d\n", -1);
+पूर्ण
 
-static ssize_t engine_group_id_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct idxd_engine *engine =
-		container_of(dev, struct idxd_engine, conf_dev);
-	struct idxd_device *idxd = engine->idxd;
-	long id;
-	int rc;
-	struct idxd_group *prevg;
+अटल sमाप_प्रकार engine_group_id_store(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_engine *engine =
+		container_of(dev, काष्ठा idxd_engine, conf_dev);
+	काष्ठा idxd_device *idxd = engine->idxd;
+	दीर्घ id;
+	पूर्णांक rc;
+	काष्ठा idxd_group *prevg;
 
-	rc = kstrtol(buf, 10, &id);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kम_से_दीर्घ(buf, 10, &id);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (id > idxd->max_groups - 1 || id < -1)
-		return -EINVAL;
+	अगर (id > idxd->max_groups - 1 || id < -1)
+		वापस -EINVAL;
 
-	if (id == -1) {
-		if (engine->group) {
+	अगर (id == -1) अणु
+		अगर (engine->group) अणु
 			engine->group->num_engines--;
-			engine->group = NULL;
-		}
-		return count;
-	}
+			engine->group = शून्य;
+		पूर्ण
+		वापस count;
+	पूर्ण
 
 	prevg = engine->group;
 
-	if (prevg)
+	अगर (prevg)
 		prevg->num_engines--;
 	engine->group = idxd->groups[id];
 	engine->group->num_engines++;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_engine_group =
+अटल काष्ठा device_attribute dev_attr_engine_group =
 		__ATTR(group_id, 0644, engine_group_id_show,
 		       engine_group_id_store);
 
-static struct attribute *idxd_engine_attributes[] = {
+अटल काष्ठा attribute *idxd_engine_attributes[] = अणु
 	&dev_attr_engine_group.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group idxd_engine_attribute_group = {
+अटल स्थिर काष्ठा attribute_group idxd_engine_attribute_group = अणु
 	.attrs = idxd_engine_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *idxd_engine_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *idxd_engine_attribute_groups[] = अणु
 	&idxd_engine_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void idxd_conf_engine_release(struct device *dev)
-{
-	struct idxd_engine *engine = container_of(dev, struct idxd_engine, conf_dev);
+अटल व्योम idxd_conf_engine_release(काष्ठा device *dev)
+अणु
+	काष्ठा idxd_engine *engine = container_of(dev, काष्ठा idxd_engine, conf_dev);
 
-	kfree(engine);
-}
+	kमुक्त(engine);
+पूर्ण
 
-struct device_type idxd_engine_device_type = {
+काष्ठा device_type idxd_engine_device_type = अणु
 	.name = "engine",
 	.release = idxd_conf_engine_release,
 	.groups = idxd_engine_attribute_groups,
-};
+पूर्ण;
 
 /* Group attributes */
 
-static void idxd_set_free_tokens(struct idxd_device *idxd)
-{
-	int i, tokens;
+अटल व्योम idxd_set_मुक्त_tokens(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i, tokens;
 
-	for (i = 0, tokens = 0; i < idxd->max_groups; i++) {
-		struct idxd_group *g = idxd->groups[i];
+	क्रम (i = 0, tokens = 0; i < idxd->max_groups; i++) अणु
+		काष्ठा idxd_group *g = idxd->groups[i];
 
 		tokens += g->tokens_reserved;
-	}
+	पूर्ण
 
 	idxd->nr_tokens = idxd->max_tokens - tokens;
-}
+पूर्ण
 
-static ssize_t group_tokens_reserved_show(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
+अटल sमाप_प्रकार group_tokens_reserved_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", group->tokens_reserved);
-}
+	वापस sysfs_emit(buf, "%u\n", group->tokens_reserved);
+पूर्ण
 
-static ssize_t group_tokens_reserved_store(struct device *dev,
-					   struct device_attribute *attr,
-					   const char *buf, size_t count)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
-	struct idxd_device *idxd = group->idxd;
-	unsigned long val;
-	int rc;
+अटल sमाप_प्रकार group_tokens_reserved_store(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
+	काष्ठा idxd_device *idxd = group->idxd;
+	अचिन्हित दीर्घ val;
+	पूर्णांक rc;
 
-	rc = kstrtoul(buf, 10, &val);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (idxd->data->type == IDXD_TYPE_IAX)
-		return -EOPNOTSUPP;
+	अगर (idxd->data->type == IDXD_TYPE_IAX)
+		वापस -EOPNOTSUPP;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (idxd->state == IDXD_DEV_ENABLED)
-		return -EPERM;
+	अगर (idxd->state == IDXD_DEV_ENABLED)
+		वापस -EPERM;
 
-	if (val > idxd->max_tokens)
-		return -EINVAL;
+	अगर (val > idxd->max_tokens)
+		वापस -EINVAL;
 
-	if (val > idxd->nr_tokens + group->tokens_reserved)
-		return -EINVAL;
+	अगर (val > idxd->nr_tokens + group->tokens_reserved)
+		वापस -EINVAL;
 
 	group->tokens_reserved = val;
-	idxd_set_free_tokens(idxd);
-	return count;
-}
+	idxd_set_मुक्त_tokens(idxd);
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_group_tokens_reserved =
+अटल काष्ठा device_attribute dev_attr_group_tokens_reserved =
 		__ATTR(tokens_reserved, 0644, group_tokens_reserved_show,
 		       group_tokens_reserved_store);
 
-static ssize_t group_tokens_allowed_show(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
+अटल sमाप_प्रकार group_tokens_allowed_show(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", group->tokens_allowed);
-}
+	वापस sysfs_emit(buf, "%u\n", group->tokens_allowed);
+पूर्ण
 
-static ssize_t group_tokens_allowed_store(struct device *dev,
-					  struct device_attribute *attr,
-					  const char *buf, size_t count)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
-	struct idxd_device *idxd = group->idxd;
-	unsigned long val;
-	int rc;
+अटल sमाप_प्रकार group_tokens_allowed_store(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
+	काष्ठा idxd_device *idxd = group->idxd;
+	अचिन्हित दीर्घ val;
+	पूर्णांक rc;
 
-	rc = kstrtoul(buf, 10, &val);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (idxd->data->type == IDXD_TYPE_IAX)
-		return -EOPNOTSUPP;
+	अगर (idxd->data->type == IDXD_TYPE_IAX)
+		वापस -EOPNOTSUPP;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (idxd->state == IDXD_DEV_ENABLED)
-		return -EPERM;
+	अगर (idxd->state == IDXD_DEV_ENABLED)
+		वापस -EPERM;
 
-	if (val < 4 * group->num_engines ||
+	अगर (val < 4 * group->num_engines ||
 	    val > group->tokens_reserved + idxd->nr_tokens)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	group->tokens_allowed = val;
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_group_tokens_allowed =
+अटल काष्ठा device_attribute dev_attr_group_tokens_allowed =
 		__ATTR(tokens_allowed, 0644, group_tokens_allowed_show,
 		       group_tokens_allowed_store);
 
-static ssize_t group_use_token_limit_show(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
+अटल sमाप_प्रकार group_use_token_limit_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", group->use_token_limit);
-}
+	वापस sysfs_emit(buf, "%u\n", group->use_token_limit);
+पूर्ण
 
-static ssize_t group_use_token_limit_store(struct device *dev,
-					   struct device_attribute *attr,
-					   const char *buf, size_t count)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
-	struct idxd_device *idxd = group->idxd;
-	unsigned long val;
-	int rc;
+अटल sमाप_प्रकार group_use_token_limit_store(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
+	काष्ठा idxd_device *idxd = group->idxd;
+	अचिन्हित दीर्घ val;
+	पूर्णांक rc;
 
-	rc = kstrtoul(buf, 10, &val);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (idxd->data->type == IDXD_TYPE_IAX)
-		return -EOPNOTSUPP;
+	अगर (idxd->data->type == IDXD_TYPE_IAX)
+		वापस -EOPNOTSUPP;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (idxd->state == IDXD_DEV_ENABLED)
-		return -EPERM;
+	अगर (idxd->state == IDXD_DEV_ENABLED)
+		वापस -EPERM;
 
-	if (idxd->token_limit == 0)
-		return -EPERM;
+	अगर (idxd->token_limit == 0)
+		वापस -EPERM;
 
 	group->use_token_limit = !!val;
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_group_use_token_limit =
+अटल काष्ठा device_attribute dev_attr_group_use_token_limit =
 		__ATTR(use_token_limit, 0644, group_use_token_limit_show,
 		       group_use_token_limit_store);
 
-static ssize_t group_engines_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
-	int i, rc = 0;
-	struct idxd_device *idxd = group->idxd;
+अटल sमाप_प्रकार group_engines_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
+	पूर्णांक i, rc = 0;
+	काष्ठा idxd_device *idxd = group->idxd;
 
-	for (i = 0; i < idxd->max_engines; i++) {
-		struct idxd_engine *engine = idxd->engines[i];
+	क्रम (i = 0; i < idxd->max_engines; i++) अणु
+		काष्ठा idxd_engine *engine = idxd->engines[i];
 
-		if (!engine->group)
-			continue;
+		अगर (!engine->group)
+			जारी;
 
-		if (engine->group->id == group->id)
+		अगर (engine->group->id == group->id)
 			rc += sysfs_emit_at(buf, rc, "engine%d.%d ", idxd->id, engine->id);
-	}
+	पूर्ण
 
-	if (!rc)
-		return 0;
+	अगर (!rc)
+		वापस 0;
 	rc--;
 	rc += sysfs_emit_at(buf, rc, "\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct device_attribute dev_attr_group_engines =
-		__ATTR(engines, 0444, group_engines_show, NULL);
+अटल काष्ठा device_attribute dev_attr_group_engines =
+		__ATTR(engines, 0444, group_engines_show, शून्य);
 
-static ssize_t group_work_queues_show(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
-	int i, rc = 0;
-	struct idxd_device *idxd = group->idxd;
+अटल sमाप_प्रकार group_work_queues_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
+	पूर्णांक i, rc = 0;
+	काष्ठा idxd_device *idxd = group->idxd;
 
-	for (i = 0; i < idxd->max_wqs; i++) {
-		struct idxd_wq *wq = idxd->wqs[i];
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+		काष्ठा idxd_wq *wq = idxd->wqs[i];
 
-		if (!wq->group)
-			continue;
+		अगर (!wq->group)
+			जारी;
 
-		if (wq->group->id == group->id)
+		अगर (wq->group->id == group->id)
 			rc += sysfs_emit_at(buf, rc, "wq%d.%d ", idxd->id, wq->id);
-	}
+	पूर्ण
 
-	if (!rc)
-		return 0;
+	अगर (!rc)
+		वापस 0;
 	rc--;
 	rc += sysfs_emit_at(buf, rc, "\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct device_attribute dev_attr_group_work_queues =
-		__ATTR(work_queues, 0444, group_work_queues_show, NULL);
+अटल काष्ठा device_attribute dev_attr_group_work_queues =
+		__ATTR(work_queues, 0444, group_work_queues_show, शून्य);
 
-static ssize_t group_traffic_class_a_show(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
+अटल sमाप_प्रकार group_traffic_class_a_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
 
-	return sysfs_emit(buf, "%d\n", group->tc_a);
-}
+	वापस sysfs_emit(buf, "%d\n", group->tc_a);
+पूर्ण
 
-static ssize_t group_traffic_class_a_store(struct device *dev,
-					   struct device_attribute *attr,
-					   const char *buf, size_t count)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
-	struct idxd_device *idxd = group->idxd;
-	long val;
-	int rc;
+अटल sमाप_प्रकार group_traffic_class_a_store(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
+	काष्ठा idxd_device *idxd = group->idxd;
+	दीर्घ val;
+	पूर्णांक rc;
 
-	rc = kstrtol(buf, 10, &val);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kम_से_दीर्घ(buf, 10, &val);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (idxd->state == IDXD_DEV_ENABLED)
-		return -EPERM;
+	अगर (idxd->state == IDXD_DEV_ENABLED)
+		वापस -EPERM;
 
-	if (val < 0 || val > 7)
-		return -EINVAL;
+	अगर (val < 0 || val > 7)
+		वापस -EINVAL;
 
 	group->tc_a = val;
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_group_traffic_class_a =
+अटल काष्ठा device_attribute dev_attr_group_traffic_class_a =
 		__ATTR(traffic_class_a, 0644, group_traffic_class_a_show,
 		       group_traffic_class_a_store);
 
-static ssize_t group_traffic_class_b_show(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
+अटल sमाप_प्रकार group_traffic_class_b_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
 
-	return sysfs_emit(buf, "%d\n", group->tc_b);
-}
+	वापस sysfs_emit(buf, "%d\n", group->tc_b);
+पूर्ण
 
-static ssize_t group_traffic_class_b_store(struct device *dev,
-					   struct device_attribute *attr,
-					   const char *buf, size_t count)
-{
-	struct idxd_group *group =
-		container_of(dev, struct idxd_group, conf_dev);
-	struct idxd_device *idxd = group->idxd;
-	long val;
-	int rc;
+अटल sमाप_प्रकार group_traffic_class_b_store(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_group *group =
+		container_of(dev, काष्ठा idxd_group, conf_dev);
+	काष्ठा idxd_device *idxd = group->idxd;
+	दीर्घ val;
+	पूर्णांक rc;
 
-	rc = kstrtol(buf, 10, &val);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kम_से_दीर्घ(buf, 10, &val);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (idxd->state == IDXD_DEV_ENABLED)
-		return -EPERM;
+	अगर (idxd->state == IDXD_DEV_ENABLED)
+		वापस -EPERM;
 
-	if (val < 0 || val > 7)
-		return -EINVAL;
+	अगर (val < 0 || val > 7)
+		वापस -EINVAL;
 
 	group->tc_b = val;
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_group_traffic_class_b =
+अटल काष्ठा device_attribute dev_attr_group_traffic_class_b =
 		__ATTR(traffic_class_b, 0644, group_traffic_class_b_show,
 		       group_traffic_class_b_store);
 
-static struct attribute *idxd_group_attributes[] = {
+अटल काष्ठा attribute *idxd_group_attributes[] = अणु
 	&dev_attr_group_work_queues.attr,
 	&dev_attr_group_engines.attr,
 	&dev_attr_group_use_token_limit.attr,
@@ -725,540 +726,540 @@ static struct attribute *idxd_group_attributes[] = {
 	&dev_attr_group_tokens_reserved.attr,
 	&dev_attr_group_traffic_class_a.attr,
 	&dev_attr_group_traffic_class_b.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group idxd_group_attribute_group = {
+अटल स्थिर काष्ठा attribute_group idxd_group_attribute_group = अणु
 	.attrs = idxd_group_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *idxd_group_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *idxd_group_attribute_groups[] = अणु
 	&idxd_group_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void idxd_conf_group_release(struct device *dev)
-{
-	struct idxd_group *group = container_of(dev, struct idxd_group, conf_dev);
+अटल व्योम idxd_conf_group_release(काष्ठा device *dev)
+अणु
+	काष्ठा idxd_group *group = container_of(dev, काष्ठा idxd_group, conf_dev);
 
-	kfree(group);
-}
+	kमुक्त(group);
+पूर्ण
 
-struct device_type idxd_group_device_type = {
+काष्ठा device_type idxd_group_device_type = अणु
 	.name = "group",
 	.release = idxd_conf_group_release,
 	.groups = idxd_group_attribute_groups,
-};
+पूर्ण;
 
 /* IDXD work queue attribs */
-static ssize_t wq_clients_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_clients_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	return sysfs_emit(buf, "%d\n", wq->client_count);
-}
+	वापस sysfs_emit(buf, "%d\n", wq->client_count);
+पूर्ण
 
-static struct device_attribute dev_attr_wq_clients =
-		__ATTR(clients, 0444, wq_clients_show, NULL);
+अटल काष्ठा device_attribute dev_attr_wq_clients =
+		__ATTR(clients, 0444, wq_clients_show, शून्य);
 
-static ssize_t wq_state_show(struct device *dev,
-			     struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_state_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	switch (wq->state) {
-	case IDXD_WQ_DISABLED:
-		return sysfs_emit(buf, "disabled\n");
-	case IDXD_WQ_ENABLED:
-		return sysfs_emit(buf, "enabled\n");
-	}
+	चयन (wq->state) अणु
+	हाल IDXD_WQ_DISABLED:
+		वापस sysfs_emit(buf, "disabled\n");
+	हाल IDXD_WQ_ENABLED:
+		वापस sysfs_emit(buf, "enabled\n");
+	पूर्ण
 
-	return sysfs_emit(buf, "unknown\n");
-}
+	वापस sysfs_emit(buf, "unknown\n");
+पूर्ण
 
-static struct device_attribute dev_attr_wq_state =
-		__ATTR(state, 0444, wq_state_show, NULL);
+अटल काष्ठा device_attribute dev_attr_wq_state =
+		__ATTR(state, 0444, wq_state_show, शून्य);
 
-static ssize_t wq_group_id_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_group_id_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	if (wq->group)
-		return sysfs_emit(buf, "%u\n", wq->group->id);
-	else
-		return sysfs_emit(buf, "-1\n");
-}
+	अगर (wq->group)
+		वापस sysfs_emit(buf, "%u\n", wq->group->id);
+	अन्यथा
+		वापस sysfs_emit(buf, "-1\n");
+पूर्ण
 
-static ssize_t wq_group_id_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	struct idxd_device *idxd = wq->idxd;
-	long id;
-	int rc;
-	struct idxd_group *prevg, *group;
+अटल sमाप_प्रकार wq_group_id_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	काष्ठा idxd_device *idxd = wq->idxd;
+	दीर्घ id;
+	पूर्णांक rc;
+	काष्ठा idxd_group *prevg, *group;
 
-	rc = kstrtol(buf, 10, &id);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kम_से_दीर्घ(buf, 10, &id);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (wq->state != IDXD_WQ_DISABLED)
-		return -EPERM;
+	अगर (wq->state != IDXD_WQ_DISABLED)
+		वापस -EPERM;
 
-	if (id > idxd->max_groups - 1 || id < -1)
-		return -EINVAL;
+	अगर (id > idxd->max_groups - 1 || id < -1)
+		वापस -EINVAL;
 
-	if (id == -1) {
-		if (wq->group) {
+	अगर (id == -1) अणु
+		अगर (wq->group) अणु
 			wq->group->num_wqs--;
-			wq->group = NULL;
-		}
-		return count;
-	}
+			wq->group = शून्य;
+		पूर्ण
+		वापस count;
+	पूर्ण
 
 	group = idxd->groups[id];
 	prevg = wq->group;
 
-	if (prevg)
+	अगर (prevg)
 		prevg->num_wqs--;
 	wq->group = group;
 	group->num_wqs++;
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_group_id =
+अटल काष्ठा device_attribute dev_attr_wq_group_id =
 		__ATTR(group_id, 0644, wq_group_id_show, wq_group_id_store);
 
-static ssize_t wq_mode_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_mode_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	return sysfs_emit(buf, "%s\n", wq_dedicated(wq) ? "dedicated" : "shared");
-}
+	वापस sysfs_emit(buf, "%s\n", wq_dedicated(wq) ? "dedicated" : "shared");
+पूर्ण
 
-static ssize_t wq_mode_store(struct device *dev,
-			     struct device_attribute *attr, const char *buf,
-			     size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	struct idxd_device *idxd = wq->idxd;
+अटल sमाप_प्रकार wq_mode_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+			     माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	काष्ठा idxd_device *idxd = wq->idxd;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (wq->state != IDXD_WQ_DISABLED)
-		return -EPERM;
+	अगर (wq->state != IDXD_WQ_DISABLED)
+		वापस -EPERM;
 
-	if (sysfs_streq(buf, "dedicated")) {
+	अगर (sysfs_streq(buf, "dedicated")) अणु
 		set_bit(WQ_FLAG_DEDICATED, &wq->flags);
 		wq->threshold = 0;
-	} else if (sysfs_streq(buf, "shared") && device_swq_supported(idxd)) {
+	पूर्ण अन्यथा अगर (sysfs_streq(buf, "shared") && device_swq_supported(idxd)) अणु
 		clear_bit(WQ_FLAG_DEDICATED, &wq->flags);
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_mode =
+अटल काष्ठा device_attribute dev_attr_wq_mode =
 		__ATTR(mode, 0644, wq_mode_show, wq_mode_store);
 
-static ssize_t wq_size_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_size_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", wq->size);
-}
+	वापस sysfs_emit(buf, "%u\n", wq->size);
+पूर्ण
 
-static int total_claimed_wq_size(struct idxd_device *idxd)
-{
-	int i;
-	int wq_size = 0;
+अटल पूर्णांक total_claimed_wq_size(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i;
+	पूर्णांक wq_size = 0;
 
-	for (i = 0; i < idxd->max_wqs; i++) {
-		struct idxd_wq *wq = idxd->wqs[i];
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+		काष्ठा idxd_wq *wq = idxd->wqs[i];
 
 		wq_size += wq->size;
-	}
+	पूर्ण
 
-	return wq_size;
-}
+	वापस wq_size;
+पूर्ण
 
-static ssize_t wq_size_store(struct device *dev,
-			     struct device_attribute *attr, const char *buf,
-			     size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	unsigned long size;
-	struct idxd_device *idxd = wq->idxd;
-	int rc;
+अटल sमाप_प्रकार wq_size_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+			     माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	अचिन्हित दीर्घ size;
+	काष्ठा idxd_device *idxd = wq->idxd;
+	पूर्णांक rc;
 
-	rc = kstrtoul(buf, 10, &size);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kम_से_अदीर्घ(buf, 10, &size);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (idxd->state == IDXD_DEV_ENABLED)
-		return -EPERM;
+	अगर (idxd->state == IDXD_DEV_ENABLED)
+		वापस -EPERM;
 
-	if (size + total_claimed_wq_size(idxd) - wq->size > idxd->max_wq_size)
-		return -EINVAL;
+	अगर (size + total_claimed_wq_size(idxd) - wq->size > idxd->max_wq_size)
+		वापस -EINVAL;
 
 	wq->size = size;
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_size =
+अटल काष्ठा device_attribute dev_attr_wq_size =
 		__ATTR(size, 0644, wq_size_show, wq_size_store);
 
-static ssize_t wq_priority_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_priority_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", wq->priority);
-}
+	वापस sysfs_emit(buf, "%u\n", wq->priority);
+पूर्ण
 
-static ssize_t wq_priority_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	unsigned long prio;
-	struct idxd_device *idxd = wq->idxd;
-	int rc;
+अटल sमाप_प्रकार wq_priority_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	अचिन्हित दीर्घ prio;
+	काष्ठा idxd_device *idxd = wq->idxd;
+	पूर्णांक rc;
 
-	rc = kstrtoul(buf, 10, &prio);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kम_से_अदीर्घ(buf, 10, &prio);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (wq->state != IDXD_WQ_DISABLED)
-		return -EPERM;
+	अगर (wq->state != IDXD_WQ_DISABLED)
+		वापस -EPERM;
 
-	if (prio > IDXD_MAX_PRIORITY)
-		return -EINVAL;
+	अगर (prio > IDXD_MAX_PRIORITY)
+		वापस -EINVAL;
 
 	wq->priority = prio;
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_priority =
+अटल काष्ठा device_attribute dev_attr_wq_priority =
 		__ATTR(priority, 0644, wq_priority_show, wq_priority_store);
 
-static ssize_t wq_block_on_fault_show(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_block_on_fault_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", test_bit(WQ_FLAG_BLOCK_ON_FAULT, &wq->flags));
-}
+	वापस sysfs_emit(buf, "%u\n", test_bit(WQ_FLAG_BLOCK_ON_FAULT, &wq->flags));
+पूर्ण
 
-static ssize_t wq_block_on_fault_store(struct device *dev,
-				       struct device_attribute *attr,
-				       const char *buf, size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	struct idxd_device *idxd = wq->idxd;
+अटल sमाप_प्रकार wq_block_on_fault_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	काष्ठा idxd_device *idxd = wq->idxd;
 	bool bof;
-	int rc;
+	पूर्णांक rc;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (wq->state != IDXD_WQ_DISABLED)
-		return -ENXIO;
+	अगर (wq->state != IDXD_WQ_DISABLED)
+		वापस -ENXIO;
 
 	rc = kstrtobool(buf, &bof);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	if (bof)
+	अगर (bof)
 		set_bit(WQ_FLAG_BLOCK_ON_FAULT, &wq->flags);
-	else
+	अन्यथा
 		clear_bit(WQ_FLAG_BLOCK_ON_FAULT, &wq->flags);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_block_on_fault =
+अटल काष्ठा device_attribute dev_attr_wq_block_on_fault =
 		__ATTR(block_on_fault, 0644, wq_block_on_fault_show,
 		       wq_block_on_fault_store);
 
-static ssize_t wq_threshold_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_threshold_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", wq->threshold);
-}
+	वापस sysfs_emit(buf, "%u\n", wq->threshold);
+पूर्ण
 
-static ssize_t wq_threshold_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	struct idxd_device *idxd = wq->idxd;
-	unsigned int val;
-	int rc;
+अटल sमाप_प्रकार wq_threshold_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	काष्ठा idxd_device *idxd = wq->idxd;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक rc;
 
-	rc = kstrtouint(buf, 0, &val);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kstrtouपूर्णांक(buf, 0, &val);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (val > wq->size || val <= 0)
-		return -EINVAL;
+	अगर (val > wq->size || val <= 0)
+		वापस -EINVAL;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (wq->state != IDXD_WQ_DISABLED)
-		return -ENXIO;
+	अगर (wq->state != IDXD_WQ_DISABLED)
+		वापस -ENXIO;
 
-	if (test_bit(WQ_FLAG_DEDICATED, &wq->flags))
-		return -EINVAL;
+	अगर (test_bit(WQ_FLAG_DEDICATED, &wq->flags))
+		वापस -EINVAL;
 
 	wq->threshold = val;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_threshold =
+अटल काष्ठा device_attribute dev_attr_wq_threshold =
 		__ATTR(threshold, 0644, wq_threshold_show, wq_threshold_store);
 
-static ssize_t wq_type_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_type_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	switch (wq->type) {
-	case IDXD_WQT_KERNEL:
-		return sysfs_emit(buf, "%s\n", idxd_wq_type_names[IDXD_WQT_KERNEL]);
-	case IDXD_WQT_USER:
-		return sysfs_emit(buf, "%s\n", idxd_wq_type_names[IDXD_WQT_USER]);
-	case IDXD_WQT_NONE:
-	default:
-		return sysfs_emit(buf, "%s\n", idxd_wq_type_names[IDXD_WQT_NONE]);
-	}
+	चयन (wq->type) अणु
+	हाल IDXD_WQT_KERNEL:
+		वापस sysfs_emit(buf, "%s\n", idxd_wq_type_names[IDXD_WQT_KERNEL]);
+	हाल IDXD_WQT_USER:
+		वापस sysfs_emit(buf, "%s\n", idxd_wq_type_names[IDXD_WQT_USER]);
+	हाल IDXD_WQT_NONE:
+	शेष:
+		वापस sysfs_emit(buf, "%s\n", idxd_wq_type_names[IDXD_WQT_NONE]);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t wq_type_store(struct device *dev,
-			     struct device_attribute *attr, const char *buf,
-			     size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	enum idxd_wq_type old_type;
+अटल sमाप_प्रकार wq_type_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+			     माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	क्रमागत idxd_wq_type old_type;
 
-	if (wq->state != IDXD_WQ_DISABLED)
-		return -EPERM;
+	अगर (wq->state != IDXD_WQ_DISABLED)
+		वापस -EPERM;
 
 	old_type = wq->type;
-	if (sysfs_streq(buf, idxd_wq_type_names[IDXD_WQT_NONE]))
+	अगर (sysfs_streq(buf, idxd_wq_type_names[IDXD_WQT_NONE]))
 		wq->type = IDXD_WQT_NONE;
-	else if (sysfs_streq(buf, idxd_wq_type_names[IDXD_WQT_KERNEL]))
+	अन्यथा अगर (sysfs_streq(buf, idxd_wq_type_names[IDXD_WQT_KERNEL]))
 		wq->type = IDXD_WQT_KERNEL;
-	else if (sysfs_streq(buf, idxd_wq_type_names[IDXD_WQT_USER]))
+	अन्यथा अगर (sysfs_streq(buf, idxd_wq_type_names[IDXD_WQT_USER]))
 		wq->type = IDXD_WQT_USER;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	/* If we are changing queue type, clear the name */
-	if (wq->type != old_type)
-		memset(wq->name, 0, WQ_NAME_SIZE + 1);
+	अगर (wq->type != old_type)
+		स_रखो(wq->name, 0, WQ_NAME_SIZE + 1);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_type =
+अटल काष्ठा device_attribute dev_attr_wq_type =
 		__ATTR(type, 0644, wq_type_show, wq_type_store);
 
-static ssize_t wq_name_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_name_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	return sysfs_emit(buf, "%s\n", wq->name);
-}
+	वापस sysfs_emit(buf, "%s\n", wq->name);
+पूर्ण
 
-static ssize_t wq_name_store(struct device *dev,
-			     struct device_attribute *attr, const char *buf,
-			     size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_name_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+			     माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	if (wq->state != IDXD_WQ_DISABLED)
-		return -EPERM;
+	अगर (wq->state != IDXD_WQ_DISABLED)
+		वापस -EPERM;
 
-	if (strlen(buf) > WQ_NAME_SIZE || strlen(buf) == 0)
-		return -EINVAL;
+	अगर (म_माप(buf) > WQ_NAME_SIZE || म_माप(buf) == 0)
+		वापस -EINVAL;
 
 	/*
-	 * This is temporarily placed here until we have SVM support for
+	 * This is temporarily placed here until we have SVM support क्रम
 	 * dmaengine.
 	 */
-	if (wq->type == IDXD_WQT_KERNEL && device_pasid_enabled(wq->idxd))
-		return -EOPNOTSUPP;
+	अगर (wq->type == IDXD_WQT_KERNEL && device_pasid_enabled(wq->idxd))
+		वापस -EOPNOTSUPP;
 
-	memset(wq->name, 0, WQ_NAME_SIZE + 1);
-	strncpy(wq->name, buf, WQ_NAME_SIZE);
+	स_रखो(wq->name, 0, WQ_NAME_SIZE + 1);
+	म_नकलन(wq->name, buf, WQ_NAME_SIZE);
 	strreplace(wq->name, '\n', '\0');
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_name =
+अटल काष्ठा device_attribute dev_attr_wq_name =
 		__ATTR(name, 0644, wq_name_show, wq_name_store);
 
-static ssize_t wq_cdev_minor_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	int minor = -1;
+अटल sमाप_प्रकार wq_cdev_minor_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	पूर्णांक minor = -1;
 
 	mutex_lock(&wq->wq_lock);
-	if (wq->idxd_cdev)
+	अगर (wq->idxd_cdev)
 		minor = wq->idxd_cdev->minor;
 	mutex_unlock(&wq->wq_lock);
 
-	if (minor == -1)
-		return -ENXIO;
-	return sysfs_emit(buf, "%d\n", minor);
-}
+	अगर (minor == -1)
+		वापस -ENXIO;
+	वापस sysfs_emit(buf, "%d\n", minor);
+पूर्ण
 
-static struct device_attribute dev_attr_wq_cdev_minor =
-		__ATTR(cdev_minor, 0444, wq_cdev_minor_show, NULL);
+अटल काष्ठा device_attribute dev_attr_wq_cdev_minor =
+		__ATTR(cdev_minor, 0444, wq_cdev_minor_show, शून्य);
 
-static int __get_sysfs_u64(const char *buf, u64 *val)
-{
-	int rc;
+अटल पूर्णांक __get_sysfs_u64(स्थिर अक्षर *buf, u64 *val)
+अणु
+	पूर्णांक rc;
 
 	rc = kstrtou64(buf, 0, val);
-	if (rc < 0)
-		return -EINVAL;
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (*val == 0)
-		return -EINVAL;
+	अगर (*val == 0)
+		वापस -EINVAL;
 
-	*val = roundup_pow_of_two(*val);
-	return 0;
-}
+	*val = roundup_घात_of_two(*val);
+	वापस 0;
+पूर्ण
 
-static ssize_t wq_max_transfer_size_show(struct device *dev, struct device_attribute *attr,
-					 char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_max_transfer_size_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	return sysfs_emit(buf, "%llu\n", wq->max_xfer_bytes);
-}
+	वापस sysfs_emit(buf, "%llu\n", wq->max_xfer_bytes);
+पूर्ण
 
-static ssize_t wq_max_transfer_size_store(struct device *dev, struct device_attribute *attr,
-					  const char *buf, size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	struct idxd_device *idxd = wq->idxd;
+अटल sमाप_प्रकार wq_max_transfer_size_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+					  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	काष्ठा idxd_device *idxd = wq->idxd;
 	u64 xfer_size;
-	int rc;
+	पूर्णांक rc;
 
-	if (wq->state != IDXD_WQ_DISABLED)
-		return -EPERM;
+	अगर (wq->state != IDXD_WQ_DISABLED)
+		वापस -EPERM;
 
 	rc = __get_sysfs_u64(buf, &xfer_size);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	if (xfer_size > idxd->max_xfer_bytes)
-		return -EINVAL;
+	अगर (xfer_size > idxd->max_xfer_bytes)
+		वापस -EINVAL;
 
 	wq->max_xfer_bytes = xfer_size;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_max_transfer_size =
+अटल काष्ठा device_attribute dev_attr_wq_max_transfer_size =
 		__ATTR(max_transfer_size, 0644,
 		       wq_max_transfer_size_show, wq_max_transfer_size_store);
 
-static ssize_t wq_max_batch_size_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_max_batch_size_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", wq->max_batch_size);
-}
+	वापस sysfs_emit(buf, "%u\n", wq->max_batch_size);
+पूर्ण
 
-static ssize_t wq_max_batch_size_store(struct device *dev, struct device_attribute *attr,
-				       const char *buf, size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	struct idxd_device *idxd = wq->idxd;
+अटल sमाप_प्रकार wq_max_batch_size_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	काष्ठा idxd_device *idxd = wq->idxd;
 	u64 batch_size;
-	int rc;
+	पूर्णांक rc;
 
-	if (wq->state != IDXD_WQ_DISABLED)
-		return -EPERM;
+	अगर (wq->state != IDXD_WQ_DISABLED)
+		वापस -EPERM;
 
 	rc = __get_sysfs_u64(buf, &batch_size);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	if (batch_size > idxd->max_batch_size)
-		return -EINVAL;
+	अगर (batch_size > idxd->max_batch_size)
+		वापस -EINVAL;
 
 	wq->max_batch_size = (u32)batch_size;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_max_batch_size =
+अटल काष्ठा device_attribute dev_attr_wq_max_batch_size =
 		__ATTR(max_batch_size, 0644, wq_max_batch_size_show, wq_max_batch_size_store);
 
-static ssize_t wq_ats_disable_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल sमाप_प्रकार wq_ats_disable_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", wq->ats_dis);
-}
+	वापस sysfs_emit(buf, "%u\n", wq->ats_dis);
+पूर्ण
 
-static ssize_t wq_ats_disable_store(struct device *dev, struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
-	struct idxd_device *idxd = wq->idxd;
+अटल sमाप_प्रकार wq_ats_disable_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
+	काष्ठा idxd_device *idxd = wq->idxd;
 	bool ats_dis;
-	int rc;
+	पूर्णांक rc;
 
-	if (wq->state != IDXD_WQ_DISABLED)
-		return -EPERM;
+	अगर (wq->state != IDXD_WQ_DISABLED)
+		वापस -EPERM;
 
-	if (!idxd->hw.wq_cap.wq_ats_support)
-		return -EOPNOTSUPP;
+	अगर (!idxd->hw.wq_cap.wq_ats_support)
+		वापस -EOPNOTSUPP;
 
 	rc = kstrtobool(buf, &ats_dis);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	wq->ats_dis = ats_dis;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute dev_attr_wq_ats_disable =
+अटल काष्ठा device_attribute dev_attr_wq_ats_disable =
 		__ATTR(ats_disable, 0644, wq_ats_disable_show, wq_ats_disable_store);
 
-static struct attribute *idxd_wq_attributes[] = {
+अटल काष्ठा attribute *idxd_wq_attributes[] = अणु
 	&dev_attr_wq_clients.attr,
 	&dev_attr_wq_state.attr,
 	&dev_attr_wq_group_id.attr,
@@ -1273,288 +1274,288 @@ static struct attribute *idxd_wq_attributes[] = {
 	&dev_attr_wq_max_transfer_size.attr,
 	&dev_attr_wq_max_batch_size.attr,
 	&dev_attr_wq_ats_disable.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group idxd_wq_attribute_group = {
+अटल स्थिर काष्ठा attribute_group idxd_wq_attribute_group = अणु
 	.attrs = idxd_wq_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *idxd_wq_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *idxd_wq_attribute_groups[] = अणु
 	&idxd_wq_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void idxd_conf_wq_release(struct device *dev)
-{
-	struct idxd_wq *wq = container_of(dev, struct idxd_wq, conf_dev);
+अटल व्योम idxd_conf_wq_release(काष्ठा device *dev)
+अणु
+	काष्ठा idxd_wq *wq = container_of(dev, काष्ठा idxd_wq, conf_dev);
 
-	kfree(wq->wqcfg);
-	kfree(wq);
-}
+	kमुक्त(wq->wqcfg);
+	kमुक्त(wq);
+पूर्ण
 
-struct device_type idxd_wq_device_type = {
+काष्ठा device_type idxd_wq_device_type = अणु
 	.name = "wq",
 	.release = idxd_conf_wq_release,
 	.groups = idxd_wq_attribute_groups,
-};
+पूर्ण;
 
 /* IDXD device attribs */
-static ssize_t version_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार version_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%#x\n", idxd->hw.version);
-}
-static DEVICE_ATTR_RO(version);
+	वापस sysfs_emit(buf, "%#x\n", idxd->hw.version);
+पूर्ण
+अटल DEVICE_ATTR_RO(version);
 
-static ssize_t max_work_queues_size_show(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार max_work_queues_size_show(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", idxd->max_wq_size);
-}
-static DEVICE_ATTR_RO(max_work_queues_size);
+	वापस sysfs_emit(buf, "%u\n", idxd->max_wq_size);
+पूर्ण
+अटल DEVICE_ATTR_RO(max_work_queues_size);
 
-static ssize_t max_groups_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार max_groups_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", idxd->max_groups);
-}
-static DEVICE_ATTR_RO(max_groups);
+	वापस sysfs_emit(buf, "%u\n", idxd->max_groups);
+पूर्ण
+अटल DEVICE_ATTR_RO(max_groups);
 
-static ssize_t max_work_queues_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार max_work_queues_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", idxd->max_wqs);
-}
-static DEVICE_ATTR_RO(max_work_queues);
+	वापस sysfs_emit(buf, "%u\n", idxd->max_wqs);
+पूर्ण
+अटल DEVICE_ATTR_RO(max_work_queues);
 
-static ssize_t max_engines_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार max_engines_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", idxd->max_engines);
-}
-static DEVICE_ATTR_RO(max_engines);
+	वापस sysfs_emit(buf, "%u\n", idxd->max_engines);
+पूर्ण
+अटल DEVICE_ATTR_RO(max_engines);
 
-static ssize_t numa_node_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार numa_node_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%d\n", dev_to_node(&idxd->pdev->dev));
-}
-static DEVICE_ATTR_RO(numa_node);
+	वापस sysfs_emit(buf, "%d\n", dev_to_node(&idxd->pdev->dev));
+पूर्ण
+अटल DEVICE_ATTR_RO(numa_node);
 
-static ssize_t max_batch_size_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार max_batch_size_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", idxd->max_batch_size);
-}
-static DEVICE_ATTR_RO(max_batch_size);
+	वापस sysfs_emit(buf, "%u\n", idxd->max_batch_size);
+पूर्ण
+अटल DEVICE_ATTR_RO(max_batch_size);
 
-static ssize_t max_transfer_size_show(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार max_transfer_size_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%llu\n", idxd->max_xfer_bytes);
-}
-static DEVICE_ATTR_RO(max_transfer_size);
+	वापस sysfs_emit(buf, "%llu\n", idxd->max_xfer_bytes);
+पूर्ण
+अटल DEVICE_ATTR_RO(max_transfer_size);
 
-static ssize_t op_cap_show(struct device *dev,
-			   struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
-	int i, rc = 0;
+अटल sमाप_प्रकार op_cap_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
+	पूर्णांक i, rc = 0;
 
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		rc += sysfs_emit_at(buf, rc, "%#llx ", idxd->hw.opcap.bits[i]);
 
 	rc--;
 	rc += sysfs_emit_at(buf, rc, "\n");
-	return rc;
-}
-static DEVICE_ATTR_RO(op_cap);
+	वापस rc;
+पूर्ण
+अटल DEVICE_ATTR_RO(op_cap);
 
-static ssize_t gen_cap_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार gen_cap_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%#llx\n", idxd->hw.gen_cap.bits);
-}
-static DEVICE_ATTR_RO(gen_cap);
+	वापस sysfs_emit(buf, "%#llx\n", idxd->hw.gen_cap.bits);
+पूर्ण
+अटल DEVICE_ATTR_RO(gen_cap);
 
-static ssize_t configurable_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार configurable_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags));
-}
-static DEVICE_ATTR_RO(configurable);
+	वापस sysfs_emit(buf, "%u\n", test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags));
+पूर्ण
+अटल DEVICE_ATTR_RO(configurable);
 
-static ssize_t clients_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
-	unsigned long flags;
-	int count = 0, i;
+अटल sमाप_प्रकार clients_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count = 0, i;
 
 	spin_lock_irqsave(&idxd->dev_lock, flags);
-	for (i = 0; i < idxd->max_wqs; i++) {
-		struct idxd_wq *wq = idxd->wqs[i];
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+		काष्ठा idxd_wq *wq = idxd->wqs[i];
 
 		count += wq->client_count;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&idxd->dev_lock, flags);
 
-	return sysfs_emit(buf, "%d\n", count);
-}
-static DEVICE_ATTR_RO(clients);
+	वापस sysfs_emit(buf, "%d\n", count);
+पूर्ण
+अटल DEVICE_ATTR_RO(clients);
 
-static ssize_t pasid_enabled_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार pasid_enabled_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", device_pasid_enabled(idxd));
-}
-static DEVICE_ATTR_RO(pasid_enabled);
+	वापस sysfs_emit(buf, "%u\n", device_pasid_enabled(idxd));
+पूर्ण
+अटल DEVICE_ATTR_RO(pasid_enabled);
 
-static ssize_t state_show(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार state_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	switch (idxd->state) {
-	case IDXD_DEV_DISABLED:
-	case IDXD_DEV_CONF_READY:
-		return sysfs_emit(buf, "disabled\n");
-	case IDXD_DEV_ENABLED:
-		return sysfs_emit(buf, "enabled\n");
-	case IDXD_DEV_HALTED:
-		return sysfs_emit(buf, "halted\n");
-	}
+	चयन (idxd->state) अणु
+	हाल IDXD_DEV_DISABLED:
+	हाल IDXD_DEV_CONF_READY:
+		वापस sysfs_emit(buf, "disabled\n");
+	हाल IDXD_DEV_ENABLED:
+		वापस sysfs_emit(buf, "enabled\n");
+	हाल IDXD_DEV_HALTED:
+		वापस sysfs_emit(buf, "halted\n");
+	पूर्ण
 
-	return sysfs_emit(buf, "unknown\n");
-}
-static DEVICE_ATTR_RO(state);
+	वापस sysfs_emit(buf, "unknown\n");
+पूर्ण
+अटल DEVICE_ATTR_RO(state);
 
-static ssize_t errors_show(struct device *dev,
-			   struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
-	int i, out = 0;
-	unsigned long flags;
+अटल sमाप_प्रकार errors_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
+	पूर्णांक i, out = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&idxd->dev_lock, flags);
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		out += sysfs_emit_at(buf, out, "%#018llx ", idxd->sw_err.bits[i]);
 	spin_unlock_irqrestore(&idxd->dev_lock, flags);
 	out--;
 	out += sysfs_emit_at(buf, out, "\n");
-	return out;
-}
-static DEVICE_ATTR_RO(errors);
+	वापस out;
+पूर्ण
+अटल DEVICE_ATTR_RO(errors);
 
-static ssize_t max_tokens_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार max_tokens_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", idxd->max_tokens);
-}
-static DEVICE_ATTR_RO(max_tokens);
+	वापस sysfs_emit(buf, "%u\n", idxd->max_tokens);
+पूर्ण
+अटल DEVICE_ATTR_RO(max_tokens);
 
-static ssize_t token_limit_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार token_limit_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", idxd->token_limit);
-}
+	वापस sysfs_emit(buf, "%u\n", idxd->token_limit);
+पूर्ण
 
-static ssize_t token_limit_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
-	unsigned long val;
-	int rc;
+अटल sमाप_प्रकार token_limit_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक rc;
 
-	rc = kstrtoul(buf, 10, &val);
-	if (rc < 0)
-		return -EINVAL;
+	rc = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (rc < 0)
+		वापस -EINVAL;
 
-	if (idxd->state == IDXD_DEV_ENABLED)
-		return -EPERM;
+	अगर (idxd->state == IDXD_DEV_ENABLED)
+		वापस -EPERM;
 
-	if (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
-		return -EPERM;
+	अगर (!test_bit(IDXD_FLAG_CONFIGURABLE, &idxd->flags))
+		वापस -EPERM;
 
-	if (!idxd->hw.group_cap.token_limit)
-		return -EPERM;
+	अगर (!idxd->hw.group_cap.token_limit)
+		वापस -EPERM;
 
-	if (val > idxd->hw.group_cap.total_tokens)
-		return -EINVAL;
+	अगर (val > idxd->hw.group_cap.total_tokens)
+		वापस -EINVAL;
 
 	idxd->token_limit = val;
-	return count;
-}
-static DEVICE_ATTR_RW(token_limit);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(token_limit);
 
-static ssize_t cdev_major_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd =
-		container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार cdev_major_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd =
+		container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%u\n", idxd->major);
-}
-static DEVICE_ATTR_RO(cdev_major);
+	वापस sysfs_emit(buf, "%u\n", idxd->major);
+पूर्ण
+अटल DEVICE_ATTR_RO(cdev_major);
 
-static ssize_t cmd_status_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct idxd_device *idxd = container_of(dev, struct idxd_device, conf_dev);
+अटल sमाप_प्रकार cmd_status_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा idxd_device *idxd = container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	return sysfs_emit(buf, "%#x\n", idxd->cmd_status);
-}
-static DEVICE_ATTR_RO(cmd_status);
+	वापस sysfs_emit(buf, "%#x\n", idxd->cmd_status);
+पूर्ण
+अटल DEVICE_ATTR_RO(cmd_status);
 
-static struct attribute *idxd_device_attributes[] = {
+अटल काष्ठा attribute *idxd_device_attributes[] = अणु
 	&dev_attr_version.attr,
 	&dev_attr_max_groups.attr,
 	&dev_attr_max_work_queues.attr,
@@ -1574,186 +1575,186 @@ static struct attribute *idxd_device_attributes[] = {
 	&dev_attr_token_limit.attr,
 	&dev_attr_cdev_major.attr,
 	&dev_attr_cmd_status.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group idxd_device_attribute_group = {
+अटल स्थिर काष्ठा attribute_group idxd_device_attribute_group = अणु
 	.attrs = idxd_device_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *idxd_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *idxd_attribute_groups[] = अणु
 	&idxd_device_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void idxd_conf_device_release(struct device *dev)
-{
-	struct idxd_device *idxd = container_of(dev, struct idxd_device, conf_dev);
+अटल व्योम idxd_conf_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा idxd_device *idxd = container_of(dev, काष्ठा idxd_device, conf_dev);
 
-	kfree(idxd->groups);
-	kfree(idxd->wqs);
-	kfree(idxd->engines);
-	kfree(idxd->irq_entries);
-	kfree(idxd->int_handles);
-	ida_free(&idxd_ida, idxd->id);
-	kfree(idxd);
-}
+	kमुक्त(idxd->groups);
+	kमुक्त(idxd->wqs);
+	kमुक्त(idxd->engines);
+	kमुक्त(idxd->irq_entries);
+	kमुक्त(idxd->पूर्णांक_handles);
+	ida_मुक्त(&idxd_ida, idxd->id);
+	kमुक्त(idxd);
+पूर्ण
 
-struct device_type dsa_device_type = {
+काष्ठा device_type dsa_device_type = अणु
 	.name = "dsa",
 	.release = idxd_conf_device_release,
 	.groups = idxd_attribute_groups,
-};
+पूर्ण;
 
-struct device_type iax_device_type = {
+काष्ठा device_type iax_device_type = अणु
 	.name = "iax",
 	.release = idxd_conf_device_release,
 	.groups = idxd_attribute_groups,
-};
+पूर्ण;
 
-static int idxd_register_engine_devices(struct idxd_device *idxd)
-{
-	int i, j, rc;
+अटल पूर्णांक idxd_रेजिस्टर_engine_devices(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i, j, rc;
 
-	for (i = 0; i < idxd->max_engines; i++) {
-		struct idxd_engine *engine = idxd->engines[i];
+	क्रम (i = 0; i < idxd->max_engines; i++) अणु
+		काष्ठा idxd_engine *engine = idxd->engines[i];
 
 		rc = device_add(&engine->conf_dev);
-		if (rc < 0)
-			goto cleanup;
-	}
+		अगर (rc < 0)
+			जाओ cleanup;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup:
 	j = i - 1;
-	for (; i < idxd->max_engines; i++)
+	क्रम (; i < idxd->max_engines; i++)
 		put_device(&idxd->engines[i]->conf_dev);
 
-	while (j--)
-		device_unregister(&idxd->engines[j]->conf_dev);
-	return rc;
-}
+	जबतक (j--)
+		device_unरेजिस्टर(&idxd->engines[j]->conf_dev);
+	वापस rc;
+पूर्ण
 
-static int idxd_register_group_devices(struct idxd_device *idxd)
-{
-	int i, j, rc;
+अटल पूर्णांक idxd_रेजिस्टर_group_devices(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i, j, rc;
 
-	for (i = 0; i < idxd->max_groups; i++) {
-		struct idxd_group *group = idxd->groups[i];
+	क्रम (i = 0; i < idxd->max_groups; i++) अणु
+		काष्ठा idxd_group *group = idxd->groups[i];
 
 		rc = device_add(&group->conf_dev);
-		if (rc < 0)
-			goto cleanup;
-	}
+		अगर (rc < 0)
+			जाओ cleanup;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup:
 	j = i - 1;
-	for (; i < idxd->max_groups; i++)
+	क्रम (; i < idxd->max_groups; i++)
 		put_device(&idxd->groups[i]->conf_dev);
 
-	while (j--)
-		device_unregister(&idxd->groups[j]->conf_dev);
-	return rc;
-}
+	जबतक (j--)
+		device_unरेजिस्टर(&idxd->groups[j]->conf_dev);
+	वापस rc;
+पूर्ण
 
-static int idxd_register_wq_devices(struct idxd_device *idxd)
-{
-	int i, rc, j;
+अटल पूर्णांक idxd_रेजिस्टर_wq_devices(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i, rc, j;
 
-	for (i = 0; i < idxd->max_wqs; i++) {
-		struct idxd_wq *wq = idxd->wqs[i];
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+		काष्ठा idxd_wq *wq = idxd->wqs[i];
 
 		rc = device_add(&wq->conf_dev);
-		if (rc < 0)
-			goto cleanup;
-	}
+		अगर (rc < 0)
+			जाओ cleanup;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup:
 	j = i - 1;
-	for (; i < idxd->max_wqs; i++)
+	क्रम (; i < idxd->max_wqs; i++)
 		put_device(&idxd->wqs[i]->conf_dev);
 
-	while (j--)
-		device_unregister(&idxd->wqs[j]->conf_dev);
-	return rc;
-}
+	जबतक (j--)
+		device_unरेजिस्टर(&idxd->wqs[j]->conf_dev);
+	वापस rc;
+पूर्ण
 
-int idxd_register_devices(struct idxd_device *idxd)
-{
-	struct device *dev = &idxd->pdev->dev;
-	int rc, i;
+पूर्णांक idxd_रेजिस्टर_devices(काष्ठा idxd_device *idxd)
+अणु
+	काष्ठा device *dev = &idxd->pdev->dev;
+	पूर्णांक rc, i;
 
 	rc = device_add(&idxd->conf_dev);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	rc = idxd_register_wq_devices(idxd);
-	if (rc < 0) {
+	rc = idxd_रेजिस्टर_wq_devices(idxd);
+	अगर (rc < 0) अणु
 		dev_dbg(dev, "WQ devices registering failed: %d\n", rc);
-		goto err_wq;
-	}
+		जाओ err_wq;
+	पूर्ण
 
-	rc = idxd_register_engine_devices(idxd);
-	if (rc < 0) {
+	rc = idxd_रेजिस्टर_engine_devices(idxd);
+	अगर (rc < 0) अणु
 		dev_dbg(dev, "Engine devices registering failed: %d\n", rc);
-		goto err_engine;
-	}
+		जाओ err_engine;
+	पूर्ण
 
-	rc = idxd_register_group_devices(idxd);
-	if (rc < 0) {
+	rc = idxd_रेजिस्टर_group_devices(idxd);
+	अगर (rc < 0) अणु
 		dev_dbg(dev, "Group device registering failed: %d\n", rc);
-		goto err_group;
-	}
+		जाओ err_group;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  err_group:
-	for (i = 0; i < idxd->max_engines; i++)
-		device_unregister(&idxd->engines[i]->conf_dev);
+	क्रम (i = 0; i < idxd->max_engines; i++)
+		device_unरेजिस्टर(&idxd->engines[i]->conf_dev);
  err_engine:
-	for (i = 0; i < idxd->max_wqs; i++)
-		device_unregister(&idxd->wqs[i]->conf_dev);
+	क्रम (i = 0; i < idxd->max_wqs; i++)
+		device_unरेजिस्टर(&idxd->wqs[i]->conf_dev);
  err_wq:
 	device_del(&idxd->conf_dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void idxd_unregister_devices(struct idxd_device *idxd)
-{
-	int i;
+व्योम idxd_unरेजिस्टर_devices(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < idxd->max_wqs; i++) {
-		struct idxd_wq *wq = idxd->wqs[i];
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+		काष्ठा idxd_wq *wq = idxd->wqs[i];
 
-		device_unregister(&wq->conf_dev);
-	}
+		device_unरेजिस्टर(&wq->conf_dev);
+	पूर्ण
 
-	for (i = 0; i < idxd->max_engines; i++) {
-		struct idxd_engine *engine = idxd->engines[i];
+	क्रम (i = 0; i < idxd->max_engines; i++) अणु
+		काष्ठा idxd_engine *engine = idxd->engines[i];
 
-		device_unregister(&engine->conf_dev);
-	}
+		device_unरेजिस्टर(&engine->conf_dev);
+	पूर्ण
 
-	for (i = 0; i < idxd->max_groups; i++) {
-		struct idxd_group *group = idxd->groups[i];
+	क्रम (i = 0; i < idxd->max_groups; i++) अणु
+		काष्ठा idxd_group *group = idxd->groups[i];
 
-		device_unregister(&group->conf_dev);
-	}
+		device_unरेजिस्टर(&group->conf_dev);
+	पूर्ण
 
-	device_unregister(&idxd->conf_dev);
-}
+	device_unरेजिस्टर(&idxd->conf_dev);
+पूर्ण
 
-int idxd_register_bus_type(void)
-{
-	return bus_register(&dsa_bus_type);
-}
+पूर्णांक idxd_रेजिस्टर_bus_type(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&dsa_bus_type);
+पूर्ण
 
-void idxd_unregister_bus_type(void)
-{
-	bus_unregister(&dsa_bus_type);
-}
+व्योम idxd_unरेजिस्टर_bus_type(व्योम)
+अणु
+	bus_unरेजिस्टर(&dsa_bus_type);
+पूर्ण

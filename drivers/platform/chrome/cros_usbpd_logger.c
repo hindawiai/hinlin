@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Logging driver for ChromeOS EC based USBPD Charger.
+ * Logging driver क्रम ChromeOS EC based USBPD Charger.
  *
  * Copyright 2018 Google LLC.
  */
 
-#include <linux/ktime.h>
-#include <linux/math64.h>
-#include <linux/module.h>
-#include <linux/platform_data/cros_ec_commands.h>
-#include <linux/platform_data/cros_ec_proto.h>
-#include <linux/platform_device.h>
-#include <linux/rtc.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/math64.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/cros_ec_commands.h>
+#समावेश <linux/platक्रमm_data/cros_ec_proto.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/rtc.h>
 
-#define DRV_NAME "cros-usbpd-logger"
+#घोषणा DRV_NAME "cros-usbpd-logger"
 
-#define CROS_USBPD_MAX_LOG_ENTRIES	30
-#define CROS_USBPD_LOG_UPDATE_DELAY	msecs_to_jiffies(60000)
-#define CROS_USBPD_DATA_SIZE		16
-#define CROS_USBPD_LOG_RESP_SIZE	(sizeof(struct ec_response_pd_log) + \
+#घोषणा CROS_USBPD_MAX_LOG_ENTRIES	30
+#घोषणा CROS_USBPD_LOG_UPDATE_DELAY	msecs_to_jअगरfies(60000)
+#घोषणा CROS_USBPD_DATA_SIZE		16
+#घोषणा CROS_USBPD_LOG_RESP_SIZE	(माप(काष्ठा ec_response_pd_log) + \
 					 CROS_USBPD_DATA_SIZE)
-#define CROS_USBPD_BUFFER_SIZE		(sizeof(struct cros_ec_command) + \
+#घोषणा CROS_USBPD_BUFFER_SIZE		(माप(काष्ठा cros_ec_command) + \
 					 CROS_USBPD_LOG_RESP_SIZE)
-/* Buffer for building the PDLOG string */
-#define BUF_SIZE	80
+/* Buffer क्रम building the PDLOG string */
+#घोषणा BUF_SIZE	80
 
-struct logger_data {
-	struct device *dev;
-	struct cros_ec_dev *ec_dev;
+काष्ठा logger_data अणु
+	काष्ठा device *dev;
+	काष्ठा cros_ec_dev *ec_dev;
 	u8 ec_buffer[CROS_USBPD_BUFFER_SIZE];
-	struct delayed_work log_work;
-	struct workqueue_struct *log_workqueue;
-};
+	काष्ठा delayed_work log_work;
+	काष्ठा workqueue_काष्ठा *log_workqueue;
+पूर्ण;
 
-static const char * const chg_type_names[] = {
+अटल स्थिर अक्षर * स्थिर chg_type_names[] = अणु
 	"None", "PD", "Type-C", "Proprietary", "DCP", "CDP", "SDP",
 	"Other", "VBUS"
-};
+पूर्ण;
 
-static const char * const role_names[] = {
+अटल स्थिर अक्षर * स्थिर role_names[] = अणु
 	"Disconnected", "SRC", "SNK", "SNK (not charging)"
-};
+पूर्ण;
 
-static const char * const fault_names[] = {
+अटल स्थिर अक्षर * स्थिर fault_names[] = अणु
 	"---", "OCP", "fast OCP", "OVP", "Discharge"
-};
+पूर्ण;
 
-__printf(3, 4)
-static int append_str(char *buf, int pos, const char *fmt, ...)
-{
-	va_list args;
-	int i;
+__म_लिखो(3, 4)
+अटल पूर्णांक append_str(अक्षर *buf, पूर्णांक pos, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक i;
 
-	va_start(args, fmt);
-	i = vsnprintf(buf + pos, BUF_SIZE - pos, fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	i = vsnम_लिखो(buf + pos, BUF_SIZE - pos, fmt, args);
+	बहु_पूर्ण(args);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static struct ec_response_pd_log *ec_get_log_entry(struct logger_data *logger)
-{
-	struct cros_ec_dev *ec_dev = logger->ec_dev;
-	struct cros_ec_command *msg;
-	int ret;
+अटल काष्ठा ec_response_pd_log *ec_get_log_entry(काष्ठा logger_data *logger)
+अणु
+	काष्ठा cros_ec_dev *ec_dev = logger->ec_dev;
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक ret;
 
-	msg = (struct cros_ec_command *)logger->ec_buffer;
+	msg = (काष्ठा cros_ec_command *)logger->ec_buffer;
 
 	msg->command = ec_dev->cmd_offset + EC_CMD_PD_GET_LOG_ENTRY;
 	msg->insize = CROS_USBPD_LOG_RESP_SIZE;
 
 	ret = cros_ec_cmd_xfer_status(ec_dev->ec_dev, msg);
-	if (ret < 0)
-		return ERR_PTR(ret);
+	अगर (ret < 0)
+		वापस ERR_PTR(ret);
 
-	return (struct ec_response_pd_log *)msg->data;
-}
+	वापस (काष्ठा ec_response_pd_log *)msg->data;
+पूर्ण
 
-static void cros_usbpd_print_log_entry(struct ec_response_pd_log *r,
-				       ktime_t tstamp)
-{
-	const char *fault, *role, *chg_type;
-	struct usb_chg_measures *meas;
-	struct mcdp_info *minfo;
-	int role_idx, type_idx;
-	char buf[BUF_SIZE + 1];
-	struct rtc_time rt;
-	int len = 0;
+अटल व्योम cros_usbpd_prपूर्णांक_log_entry(काष्ठा ec_response_pd_log *r,
+				       kसमय_प्रकार tstamp)
+अणु
+	स्थिर अक्षर *fault, *role, *chg_type;
+	काष्ठा usb_chg_measures *meas;
+	काष्ठा mcdp_info *minfo;
+	पूर्णांक role_idx, type_idx;
+	अक्षर buf[BUF_SIZE + 1];
+	काष्ठा rtc_समय rt;
+	पूर्णांक len = 0;
 	s32 rem;
-	int i;
+	पूर्णांक i;
 
-	/* The timestamp is the number of 1024th of seconds in the past */
-	tstamp = ktime_sub_us(tstamp, r->timestamp << PD_LOG_TIMESTAMP_SHIFT);
-	rt = rtc_ktime_to_tm(tstamp);
+	/* The बारtamp is the number of 1024th of seconds in the past */
+	tstamp = kसमय_sub_us(tstamp, r->बारtamp << PD_LOG_TIMESTAMP_SHIFT);
+	rt = rtc_kसमय_प्रकारo_पंचांग(tstamp);
 
-	switch (r->type) {
-	case PD_EVENT_MCU_CHARGE:
-		if (r->data & CHARGE_FLAGS_OVERRIDE)
+	चयन (r->type) अणु
+	हाल PD_EVENT_MCU_CHARGE:
+		अगर (r->data & CHARGE_FLAGS_OVERRIDE)
 			len += append_str(buf, len, "override ");
 
-		if (r->data & CHARGE_FLAGS_DELAYED_OVERRIDE)
+		अगर (r->data & CHARGE_FLAGS_DELAYED_OVERRIDE)
 			len += append_str(buf, len, "pending_override ");
 
 		role_idx = r->data & CHARGE_FLAGS_ROLE_MASK;
@@ -112,33 +113,33 @@ static void cros_usbpd_print_log_entry(struct ec_response_pd_log *r,
 		chg_type = type_idx < ARRAY_SIZE(chg_type_names) ?
 			chg_type_names[type_idx] : "???";
 
-		if (role_idx == USB_PD_PORT_POWER_DISCONNECTED ||
-		    role_idx == USB_PD_PORT_POWER_SOURCE) {
+		अगर (role_idx == USB_PD_PORT_POWER_DISCONNECTED ||
+		    role_idx == USB_PD_PORT_POWER_SOURCE) अणु
 			len += append_str(buf, len, "%s", role);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		meas = (struct usb_chg_measures *)r->payload;
+		meas = (काष्ठा usb_chg_measures *)r->payload;
 		len += append_str(buf, len, "%s %s %s %dmV max %dmV / %dmA",
 				  role,	r->data & CHARGE_FLAGS_DUAL_ROLE ?
 				  "DRP" : "Charger",
 				  chg_type, meas->voltage_now,
 				  meas->voltage_max, meas->current_max);
-		break;
-	case PD_EVENT_ACC_RW_FAIL:
+		अवरोध;
+	हाल PD_EVENT_ACC_RW_FAIL:
 		len += append_str(buf, len, "RW signature check failed");
-		break;
-	case PD_EVENT_PS_FAULT:
+		अवरोध;
+	हाल PD_EVENT_PS_FAULT:
 		fault = r->data < ARRAY_SIZE(fault_names) ? fault_names[r->data]
 							  : "???";
 		len += append_str(buf, len, "Power supply fault: %s", fault);
-		break;
-	case PD_EVENT_VIDEO_DP_MODE:
+		अवरोध;
+	हाल PD_EVENT_VIDEO_DP_MODE:
 		len += append_str(buf, len, "DP mode %sabled", r->data == 1 ?
 				  "en" : "dis");
-		break;
-	case PD_EVENT_VIDEO_CODEC:
-		minfo = (struct mcdp_info *)r->payload;
+		अवरोध;
+	हाल PD_EVENT_VIDEO_CODEC:
+		minfo = (काष्ठा mcdp_info *)r->payload;
 		len += append_str(buf, len, "HDMI info: family:%04x chipid:%04x ",
 				  MCDP_FAMILY(minfo->family),
 				  MCDP_CHIPID(minfo->chipid));
@@ -146,121 +147,121 @@ static void cros_usbpd_print_log_entry(struct ec_response_pd_log *r,
 				  minfo->irom.major, minfo->irom.minor,
 				  minfo->irom.build, minfo->fw.major,
 				  minfo->fw.minor, minfo->fw.build);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		len += append_str(buf, len, "Event %02x (%04x) [", r->type,
 				  r->data);
 
-		for (i = 0; i < PD_LOG_SIZE(r->size_port); i++)
+		क्रम (i = 0; i < PD_LOG_SIZE(r->size_port); i++)
 			len += append_str(buf, len, "%02x ", r->payload[i]);
 
 		len += append_str(buf, len, "]");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	div_s64_rem(ktime_to_ms(tstamp), MSEC_PER_SEC, &rem);
+	भाग_s64_rem(kसमय_प्रकारo_ms(tstamp), MSEC_PER_SEC, &rem);
 	pr_info("PDLOG %d/%02d/%02d %02d:%02d:%02d.%03d P%d %s\n",
-		rt.tm_year + 1900, rt.tm_mon + 1, rt.tm_mday,
-		rt.tm_hour, rt.tm_min, rt.tm_sec, rem,
+		rt.पंचांग_year + 1900, rt.पंचांग_mon + 1, rt.पंचांग_mday,
+		rt.पंचांग_hour, rt.पंचांग_min, rt.पंचांग_sec, rem,
 		PD_LOG_PORT(r->size_port), buf);
-}
+पूर्ण
 
-static void cros_usbpd_log_check(struct work_struct *work)
-{
-	struct logger_data *logger = container_of(to_delayed_work(work),
-						  struct logger_data,
+अटल व्योम cros_usbpd_log_check(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा logger_data *logger = container_of(to_delayed_work(work),
+						  काष्ठा logger_data,
 						  log_work);
-	struct device *dev = logger->dev;
-	struct ec_response_pd_log *r;
-	int entries = 0;
-	ktime_t now;
+	काष्ठा device *dev = logger->dev;
+	काष्ठा ec_response_pd_log *r;
+	पूर्णांक entries = 0;
+	kसमय_प्रकार now;
 
-	while (entries++ < CROS_USBPD_MAX_LOG_ENTRIES) {
+	जबतक (entries++ < CROS_USBPD_MAX_LOG_ENTRIES) अणु
 		r = ec_get_log_entry(logger);
-		now = ktime_get_real();
-		if (IS_ERR(r)) {
+		now = kसमय_get_real();
+		अगर (IS_ERR(r)) अणु
 			dev_dbg(dev, "Cannot get PD log %ld\n", PTR_ERR(r));
-			break;
-		}
-		if (r->type == PD_EVENT_NO_ENTRY)
-			break;
+			अवरोध;
+		पूर्ण
+		अगर (r->type == PD_EVENT_NO_ENTRY)
+			अवरोध;
 
-		cros_usbpd_print_log_entry(r, now);
-	}
+		cros_usbpd_prपूर्णांक_log_entry(r, now);
+	पूर्ण
 
 	queue_delayed_work(logger->log_workqueue, &logger->log_work,
 			   CROS_USBPD_LOG_UPDATE_DELAY);
-}
+पूर्ण
 
-static int cros_usbpd_logger_probe(struct platform_device *pd)
-{
-	struct cros_ec_dev *ec_dev = dev_get_drvdata(pd->dev.parent);
-	struct device *dev = &pd->dev;
-	struct logger_data *logger;
+अटल पूर्णांक cros_usbpd_logger_probe(काष्ठा platक्रमm_device *pd)
+अणु
+	काष्ठा cros_ec_dev *ec_dev = dev_get_drvdata(pd->dev.parent);
+	काष्ठा device *dev = &pd->dev;
+	काष्ठा logger_data *logger;
 
-	logger = devm_kzalloc(dev, sizeof(*logger), GFP_KERNEL);
-	if (!logger)
-		return -ENOMEM;
+	logger = devm_kzalloc(dev, माप(*logger), GFP_KERNEL);
+	अगर (!logger)
+		वापस -ENOMEM;
 
 	logger->dev = dev;
 	logger->ec_dev = ec_dev;
 
-	platform_set_drvdata(pd, logger);
+	platक्रमm_set_drvdata(pd, logger);
 
 	/* Retrieve PD event logs periodically */
 	INIT_DELAYED_WORK(&logger->log_work, cros_usbpd_log_check);
-	logger->log_workqueue =	create_singlethread_workqueue("cros_usbpd_log");
-	if (!logger->log_workqueue)
-		return -ENOMEM;
+	logger->log_workqueue =	create_singlethपढ़ो_workqueue("cros_usbpd_log");
+	अगर (!logger->log_workqueue)
+		वापस -ENOMEM;
 
 	queue_delayed_work(logger->log_workqueue, &logger->log_work,
 			   CROS_USBPD_LOG_UPDATE_DELAY);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cros_usbpd_logger_remove(struct platform_device *pd)
-{
-	struct logger_data *logger = platform_get_drvdata(pd);
+अटल पूर्णांक cros_usbpd_logger_हटाओ(काष्ठा platक्रमm_device *pd)
+अणु
+	काष्ठा logger_data *logger = platक्रमm_get_drvdata(pd);
 
 	cancel_delayed_work_sync(&logger->log_work);
 	destroy_workqueue(logger->log_workqueue);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused cros_usbpd_logger_resume(struct device *dev)
-{
-	struct logger_data *logger = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused cros_usbpd_logger_resume(काष्ठा device *dev)
+अणु
+	काष्ठा logger_data *logger = dev_get_drvdata(dev);
 
 	queue_delayed_work(logger->log_workqueue, &logger->log_work,
 			   CROS_USBPD_LOG_UPDATE_DELAY);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused cros_usbpd_logger_suspend(struct device *dev)
-{
-	struct logger_data *logger = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused cros_usbpd_logger_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा logger_data *logger = dev_get_drvdata(dev);
 
 	cancel_delayed_work_sync(&logger->log_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(cros_usbpd_logger_pm_ops, cros_usbpd_logger_suspend,
+अटल SIMPLE_DEV_PM_OPS(cros_usbpd_logger_pm_ops, cros_usbpd_logger_suspend,
 			 cros_usbpd_logger_resume);
 
-static struct platform_driver cros_usbpd_logger_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cros_usbpd_logger_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
 		.pm = &cros_usbpd_logger_pm_ops,
-	},
+	पूर्ण,
 	.probe = cros_usbpd_logger_probe,
-	.remove = cros_usbpd_logger_remove,
-};
+	.हटाओ = cros_usbpd_logger_हटाओ,
+पूर्ण;
 
-module_platform_driver(cros_usbpd_logger_driver);
+module_platक्रमm_driver(cros_usbpd_logger_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Logging driver for ChromeOS EC USBPD Charger.");

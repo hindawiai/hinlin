@@ -1,363 +1,364 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Extended attribute handling for AFS.  We use xattrs to get and set metadata
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Extended attribute handling क्रम AFS.  We use xattrs to get and set metadata
  * instead of providing pioctl().
  *
  * Copyright (C) 2017 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/xattr.h>
-#include "internal.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/xattr.h>
+#समावेश "internal.h"
 
 /*
  * Deal with the result of a successful fetch ACL operation.
  */
-static void afs_acl_success(struct afs_operation *op)
-{
+अटल व्योम afs_acl_success(काष्ठा afs_operation *op)
+अणु
 	afs_vnode_commit_status(op, &op->file[0]);
-}
+पूर्ण
 
-static void afs_acl_put(struct afs_operation *op)
-{
-	kfree(op->acl);
-}
+अटल व्योम afs_acl_put(काष्ठा afs_operation *op)
+अणु
+	kमुक्त(op->acl);
+पूर्ण
 
-static const struct afs_operation_ops afs_fetch_acl_operation = {
+अटल स्थिर काष्ठा afs_operation_ops afs_fetch_acl_operation = अणु
 	.issue_afs_rpc	= afs_fs_fetch_acl,
 	.success	= afs_acl_success,
 	.put		= afs_acl_put,
-};
+पूर्ण;
 
 /*
  * Get a file's ACL.
  */
-static int afs_xattr_get_acl(const struct xattr_handler *handler,
-			     struct dentry *dentry,
-			     struct inode *inode, const char *name,
-			     void *buffer, size_t size)
-{
-	struct afs_operation *op;
-	struct afs_vnode *vnode = AFS_FS_I(inode);
-	struct afs_acl *acl = NULL;
-	int ret;
+अटल पूर्णांक afs_xattr_get_acl(स्थिर काष्ठा xattr_handler *handler,
+			     काष्ठा dentry *dentry,
+			     काष्ठा inode *inode, स्थिर अक्षर *name,
+			     व्योम *buffer, माप_प्रकार size)
+अणु
+	काष्ठा afs_operation *op;
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
+	काष्ठा afs_acl *acl = शून्य;
+	पूर्णांक ret;
 
-	op = afs_alloc_operation(NULL, vnode->volume);
-	if (IS_ERR(op))
-		return -ENOMEM;
+	op = afs_alloc_operation(शून्य, vnode->volume);
+	अगर (IS_ERR(op))
+		वापस -ENOMEM;
 
 	afs_op_set_vnode(op, 0, vnode);
 	op->ops = &afs_fetch_acl_operation;
 
 	afs_begin_vnode_operation(op);
-	afs_wait_for_operation(op);
+	afs_रुको_क्रम_operation(op);
 	acl = op->acl;
-	op->acl = NULL;
+	op->acl = शून्य;
 	ret = afs_put_operation(op);
 
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		ret = acl->size;
-		if (size > 0) {
-			if (acl->size <= size)
-				memcpy(buffer, acl->data, acl->size);
-			else
-				ret = -ERANGE;
-		}
-	}
+		अगर (size > 0) अणु
+			अगर (acl->size <= size)
+				स_नकल(buffer, acl->data, acl->size);
+			अन्यथा
+				ret = -दुस्फल;
+		पूर्ण
+	पूर्ण
 
-	kfree(acl);
-	return ret;
-}
+	kमुक्त(acl);
+	वापस ret;
+पूर्ण
 
-static bool afs_make_acl(struct afs_operation *op,
-			 const void *buffer, size_t size)
-{
-	struct afs_acl *acl;
+अटल bool afs_make_acl(काष्ठा afs_operation *op,
+			 स्थिर व्योम *buffer, माप_प्रकार size)
+अणु
+	काष्ठा afs_acl *acl;
 
-	acl = kmalloc(sizeof(*acl) + size, GFP_KERNEL);
-	if (!acl) {
+	acl = kदो_स्मृति(माप(*acl) + size, GFP_KERNEL);
+	अगर (!acl) अणु
 		afs_op_nomem(op);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	acl->size = size;
-	memcpy(acl->data, buffer, size);
+	स_नकल(acl->data, buffer, size);
 	op->acl = acl;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static const struct afs_operation_ops afs_store_acl_operation = {
+अटल स्थिर काष्ठा afs_operation_ops afs_store_acl_operation = अणु
 	.issue_afs_rpc	= afs_fs_store_acl,
 	.success	= afs_acl_success,
 	.put		= afs_acl_put,
-};
+पूर्ण;
 
 /*
  * Set a file's AFS3 ACL.
  */
-static int afs_xattr_set_acl(const struct xattr_handler *handler,
-			     struct user_namespace *mnt_userns,
-                             struct dentry *dentry,
-                             struct inode *inode, const char *name,
-                             const void *buffer, size_t size, int flags)
-{
-	struct afs_operation *op;
-	struct afs_vnode *vnode = AFS_FS_I(inode);
+अटल पूर्णांक afs_xattr_set_acl(स्थिर काष्ठा xattr_handler *handler,
+			     काष्ठा user_namespace *mnt_userns,
+                             काष्ठा dentry *dentry,
+                             काष्ठा inode *inode, स्थिर अक्षर *name,
+                             स्थिर व्योम *buffer, माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा afs_operation *op;
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
 
-	if (flags == XATTR_CREATE)
-		return -EINVAL;
+	अगर (flags == XATTR_CREATE)
+		वापस -EINVAL;
 
-	op = afs_alloc_operation(NULL, vnode->volume);
-	if (IS_ERR(op))
-		return -ENOMEM;
+	op = afs_alloc_operation(शून्य, vnode->volume);
+	अगर (IS_ERR(op))
+		वापस -ENOMEM;
 
 	afs_op_set_vnode(op, 0, vnode);
-	if (!afs_make_acl(op, buffer, size))
-		return afs_put_operation(op);
+	अगर (!afs_make_acl(op, buffer, size))
+		वापस afs_put_operation(op);
 
 	op->ops = &afs_store_acl_operation;
-	return afs_do_sync_operation(op);
-}
+	वापस afs_करो_sync_operation(op);
+पूर्ण
 
-static const struct xattr_handler afs_xattr_afs_acl_handler = {
+अटल स्थिर काष्ठा xattr_handler afs_xattr_afs_acl_handler = अणु
 	.name   = "afs.acl",
 	.get    = afs_xattr_get_acl,
 	.set    = afs_xattr_set_acl,
-};
+पूर्ण;
 
-static const struct afs_operation_ops yfs_fetch_opaque_acl_operation = {
+अटल स्थिर काष्ठा afs_operation_ops yfs_fetch_opaque_acl_operation = अणु
 	.issue_yfs_rpc	= yfs_fs_fetch_opaque_acl,
 	.success	= afs_acl_success,
-	/* Don't free op->yacl in .put here */
-};
+	/* Don't मुक्त op->yacl in .put here */
+पूर्ण;
 
 /*
  * Get a file's YFS ACL.
  */
-static int afs_xattr_get_yfs(const struct xattr_handler *handler,
-			     struct dentry *dentry,
-			     struct inode *inode, const char *name,
-			     void *buffer, size_t size)
-{
-	struct afs_operation *op;
-	struct afs_vnode *vnode = AFS_FS_I(inode);
-	struct yfs_acl *yacl = NULL;
-	char buf[16], *data;
-	int which = 0, dsize, ret = -ENOMEM;
+अटल पूर्णांक afs_xattr_get_yfs(स्थिर काष्ठा xattr_handler *handler,
+			     काष्ठा dentry *dentry,
+			     काष्ठा inode *inode, स्थिर अक्षर *name,
+			     व्योम *buffer, माप_प्रकार size)
+अणु
+	काष्ठा afs_operation *op;
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
+	काष्ठा yfs_acl *yacl = शून्य;
+	अक्षर buf[16], *data;
+	पूर्णांक which = 0, dsize, ret = -ENOMEM;
 
-	if (strcmp(name, "acl") == 0)
+	अगर (म_भेद(name, "acl") == 0)
 		which = 0;
-	else if (strcmp(name, "acl_inherited") == 0)
+	अन्यथा अगर (म_भेद(name, "acl_inherited") == 0)
 		which = 1;
-	else if (strcmp(name, "acl_num_cleaned") == 0)
+	अन्यथा अगर (म_भेद(name, "acl_num_cleaned") == 0)
 		which = 2;
-	else if (strcmp(name, "vol_acl") == 0)
+	अन्यथा अगर (म_भेद(name, "vol_acl") == 0)
 		which = 3;
-	else
-		return -EOPNOTSUPP;
+	अन्यथा
+		वापस -EOPNOTSUPP;
 
-	yacl = kzalloc(sizeof(struct yfs_acl), GFP_KERNEL);
-	if (!yacl)
-		goto error;
+	yacl = kzalloc(माप(काष्ठा yfs_acl), GFP_KERNEL);
+	अगर (!yacl)
+		जाओ error;
 
-	if (which == 0)
+	अगर (which == 0)
 		yacl->flags |= YFS_ACL_WANT_ACL;
-	else if (which == 3)
+	अन्यथा अगर (which == 3)
 		yacl->flags |= YFS_ACL_WANT_VOL_ACL;
 
-	op = afs_alloc_operation(NULL, vnode->volume);
-	if (IS_ERR(op))
-		goto error_yacl;
+	op = afs_alloc_operation(शून्य, vnode->volume);
+	अगर (IS_ERR(op))
+		जाओ error_yacl;
 
 	afs_op_set_vnode(op, 0, vnode);
 	op->yacl = yacl;
 	op->ops = &yfs_fetch_opaque_acl_operation;
 
 	afs_begin_vnode_operation(op);
-	afs_wait_for_operation(op);
+	afs_रुको_क्रम_operation(op);
 	ret = afs_put_operation(op);
 
-	if (ret == 0) {
-		switch (which) {
-		case 0:
+	अगर (ret == 0) अणु
+		चयन (which) अणु
+		हाल 0:
 			data = yacl->acl->data;
 			dsize = yacl->acl->size;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			data = buf;
-			dsize = scnprintf(buf, sizeof(buf), "%u", yacl->inherit_flag);
-			break;
-		case 2:
+			dsize = scnम_लिखो(buf, माप(buf), "%u", yacl->inherit_flag);
+			अवरोध;
+		हाल 2:
 			data = buf;
-			dsize = scnprintf(buf, sizeof(buf), "%u", yacl->num_cleaned);
-			break;
-		case 3:
+			dsize = scnम_लिखो(buf, माप(buf), "%u", yacl->num_cleaned);
+			अवरोध;
+		हाल 3:
 			data = yacl->vol_acl->data;
 			dsize = yacl->vol_acl->size;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EOPNOTSUPP;
-			goto error_yacl;
-		}
+			जाओ error_yacl;
+		पूर्ण
 
 		ret = dsize;
-		if (size > 0) {
-			if (dsize <= size)
-				memcpy(buffer, data, dsize);
-			else
-				ret = -ERANGE;
-		}
-	} else if (ret == -ENOTSUPP) {
+		अगर (size > 0) अणु
+			अगर (dsize <= size)
+				स_नकल(buffer, data, dsize);
+			अन्यथा
+				ret = -दुस्फल;
+		पूर्ण
+	पूर्ण अन्यथा अगर (ret == -ENOTSUPP) अणु
 		ret = -ENODATA;
-	}
+	पूर्ण
 
 error_yacl:
-	yfs_free_opaque_acl(yacl);
+	yfs_मुक्त_opaque_acl(yacl);
 error:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct afs_operation_ops yfs_store_opaque_acl2_operation = {
+अटल स्थिर काष्ठा afs_operation_ops yfs_store_opaque_acl2_operation = अणु
 	.issue_yfs_rpc	= yfs_fs_store_opaque_acl2,
 	.success	= afs_acl_success,
 	.put		= afs_acl_put,
-};
+पूर्ण;
 
 /*
  * Set a file's YFS ACL.
  */
-static int afs_xattr_set_yfs(const struct xattr_handler *handler,
-			     struct user_namespace *mnt_userns,
-                             struct dentry *dentry,
-                             struct inode *inode, const char *name,
-                             const void *buffer, size_t size, int flags)
-{
-	struct afs_operation *op;
-	struct afs_vnode *vnode = AFS_FS_I(inode);
-	int ret;
+अटल पूर्णांक afs_xattr_set_yfs(स्थिर काष्ठा xattr_handler *handler,
+			     काष्ठा user_namespace *mnt_userns,
+                             काष्ठा dentry *dentry,
+                             काष्ठा inode *inode, स्थिर अक्षर *name,
+                             स्थिर व्योम *buffer, माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा afs_operation *op;
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
+	पूर्णांक ret;
 
-	if (flags == XATTR_CREATE ||
-	    strcmp(name, "acl") != 0)
-		return -EINVAL;
+	अगर (flags == XATTR_CREATE ||
+	    म_भेद(name, "acl") != 0)
+		वापस -EINVAL;
 
-	op = afs_alloc_operation(NULL, vnode->volume);
-	if (IS_ERR(op))
-		return -ENOMEM;
+	op = afs_alloc_operation(शून्य, vnode->volume);
+	अगर (IS_ERR(op))
+		वापस -ENOMEM;
 
 	afs_op_set_vnode(op, 0, vnode);
-	if (!afs_make_acl(op, buffer, size))
-		return afs_put_operation(op);
+	अगर (!afs_make_acl(op, buffer, size))
+		वापस afs_put_operation(op);
 
 	op->ops = &yfs_store_opaque_acl2_operation;
-	ret = afs_do_sync_operation(op);
-	if (ret == -ENOTSUPP)
+	ret = afs_करो_sync_operation(op);
+	अगर (ret == -ENOTSUPP)
 		ret = -ENODATA;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct xattr_handler afs_xattr_yfs_handler = {
+अटल स्थिर काष्ठा xattr_handler afs_xattr_yfs_handler = अणु
 	.prefix	= "afs.yfs.",
 	.get	= afs_xattr_get_yfs,
 	.set	= afs_xattr_set_yfs,
-};
+पूर्ण;
 
 /*
  * Get the name of the cell on which a file resides.
  */
-static int afs_xattr_get_cell(const struct xattr_handler *handler,
-			      struct dentry *dentry,
-			      struct inode *inode, const char *name,
-			      void *buffer, size_t size)
-{
-	struct afs_vnode *vnode = AFS_FS_I(inode);
-	struct afs_cell *cell = vnode->volume->cell;
-	size_t namelen;
+अटल पूर्णांक afs_xattr_get_cell(स्थिर काष्ठा xattr_handler *handler,
+			      काष्ठा dentry *dentry,
+			      काष्ठा inode *inode, स्थिर अक्षर *name,
+			      व्योम *buffer, माप_प्रकार size)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
+	काष्ठा afs_cell *cell = vnode->volume->cell;
+	माप_प्रकार namelen;
 
 	namelen = cell->name_len;
-	if (size == 0)
-		return namelen;
-	if (namelen > size)
-		return -ERANGE;
-	memcpy(buffer, cell->name, namelen);
-	return namelen;
-}
+	अगर (size == 0)
+		वापस namelen;
+	अगर (namelen > size)
+		वापस -दुस्फल;
+	स_नकल(buffer, cell->name, namelen);
+	वापस namelen;
+पूर्ण
 
-static const struct xattr_handler afs_xattr_afs_cell_handler = {
+अटल स्थिर काष्ठा xattr_handler afs_xattr_afs_cell_handler = अणु
 	.name	= "afs.cell",
 	.get	= afs_xattr_get_cell,
-};
+पूर्ण;
 
 /*
- * Get the volume ID, vnode ID and vnode uniquifier of a file as a sequence of
+ * Get the volume ID, vnode ID and vnode uniquअगरier of a file as a sequence of
  * hex numbers separated by colons.
  */
-static int afs_xattr_get_fid(const struct xattr_handler *handler,
-			     struct dentry *dentry,
-			     struct inode *inode, const char *name,
-			     void *buffer, size_t size)
-{
-	struct afs_vnode *vnode = AFS_FS_I(inode);
-	char text[16 + 1 + 24 + 1 + 8 + 1];
-	size_t len;
+अटल पूर्णांक afs_xattr_get_fid(स्थिर काष्ठा xattr_handler *handler,
+			     काष्ठा dentry *dentry,
+			     काष्ठा inode *inode, स्थिर अक्षर *name,
+			     व्योम *buffer, माप_प्रकार size)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
+	अक्षर text[16 + 1 + 24 + 1 + 8 + 1];
+	माप_प्रकार len;
 
 	/* The volume ID is 64-bit, the vnode ID is 96-bit and the
-	 * uniquifier is 32-bit.
+	 * uniquअगरier is 32-bit.
 	 */
-	len = scnprintf(text, sizeof(text), "%llx:", vnode->fid.vid);
-	if (vnode->fid.vnode_hi)
-		len += scnprintf(text + len, sizeof(text) - len, "%x%016llx",
+	len = scnम_लिखो(text, माप(text), "%llx:", vnode->fid.vid);
+	अगर (vnode->fid.vnode_hi)
+		len += scnम_लिखो(text + len, माप(text) - len, "%x%016llx",
 				vnode->fid.vnode_hi, vnode->fid.vnode);
-	else
-		len += scnprintf(text + len, sizeof(text) - len, "%llx",
+	अन्यथा
+		len += scnम_लिखो(text + len, माप(text) - len, "%llx",
 				 vnode->fid.vnode);
-	len += scnprintf(text + len, sizeof(text) - len, ":%x",
+	len += scnम_लिखो(text + len, माप(text) - len, ":%x",
 			 vnode->fid.unique);
 
-	if (size == 0)
-		return len;
-	if (len > size)
-		return -ERANGE;
-	memcpy(buffer, text, len);
-	return len;
-}
+	अगर (size == 0)
+		वापस len;
+	अगर (len > size)
+		वापस -दुस्फल;
+	स_नकल(buffer, text, len);
+	वापस len;
+पूर्ण
 
-static const struct xattr_handler afs_xattr_afs_fid_handler = {
+अटल स्थिर काष्ठा xattr_handler afs_xattr_afs_fid_handler = अणु
 	.name	= "afs.fid",
 	.get	= afs_xattr_get_fid,
-};
+पूर्ण;
 
 /*
  * Get the name of the volume on which a file resides.
  */
-static int afs_xattr_get_volume(const struct xattr_handler *handler,
-			      struct dentry *dentry,
-			      struct inode *inode, const char *name,
-			      void *buffer, size_t size)
-{
-	struct afs_vnode *vnode = AFS_FS_I(inode);
-	const char *volname = vnode->volume->name;
-	size_t namelen;
+अटल पूर्णांक afs_xattr_get_volume(स्थिर काष्ठा xattr_handler *handler,
+			      काष्ठा dentry *dentry,
+			      काष्ठा inode *inode, स्थिर अक्षर *name,
+			      व्योम *buffer, माप_प्रकार size)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
+	स्थिर अक्षर *volname = vnode->volume->name;
+	माप_प्रकार namelen;
 
-	namelen = strlen(volname);
-	if (size == 0)
-		return namelen;
-	if (namelen > size)
-		return -ERANGE;
-	memcpy(buffer, volname, namelen);
-	return namelen;
-}
+	namelen = म_माप(volname);
+	अगर (size == 0)
+		वापस namelen;
+	अगर (namelen > size)
+		वापस -दुस्फल;
+	स_नकल(buffer, volname, namelen);
+	वापस namelen;
+पूर्ण
 
-static const struct xattr_handler afs_xattr_afs_volume_handler = {
+अटल स्थिर काष्ठा xattr_handler afs_xattr_afs_volume_handler = अणु
 	.name	= "afs.volume",
 	.get	= afs_xattr_get_volume,
-};
+पूर्ण;
 
-const struct xattr_handler *afs_xattr_handlers[] = {
+स्थिर काष्ठा xattr_handler *afs_xattr_handlers[] = अणु
 	&afs_xattr_afs_acl_handler,
 	&afs_xattr_afs_cell_handler,
 	&afs_xattr_afs_fid_handler,
 	&afs_xattr_afs_volume_handler,
 	&afs_xattr_yfs_handler,		/* afs.yfs. prefix */
-	NULL
-};
+	शून्य
+पूर्ण;

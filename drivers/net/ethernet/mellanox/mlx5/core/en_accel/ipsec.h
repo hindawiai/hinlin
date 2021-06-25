@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,23 +32,23 @@
  *
  */
 
-#ifndef __MLX5E_IPSEC_H__
-#define __MLX5E_IPSEC_H__
+#अगर_अघोषित __MLX5E_IPSEC_H__
+#घोषणा __MLX5E_IPSEC_H__
 
-#ifdef CONFIG_MLX5_EN_IPSEC
+#अगर_घोषित CONFIG_MLX5_EN_IPSEC
 
-#include <linux/mlx5/device.h>
-#include <net/xfrm.h>
-#include <linux/idr.h>
+#समावेश <linux/mlx5/device.h>
+#समावेश <net/xfrm.h>
+#समावेश <linux/idr.h>
 
-#include "accel/ipsec.h"
+#समावेश "accel/ipsec.h"
 
-#define MLX5E_IPSEC_SADB_RX_BITS 10
-#define MLX5E_IPSEC_ESN_SCOPE_MID 0x80000000L
+#घोषणा MLX5E_IPSEC_SADB_RX_BITS 10
+#घोषणा MLX5E_IPSEC_ESN_SCOPE_MID 0x80000000L
 
-struct mlx5e_priv;
+काष्ठा mlx5e_priv;
 
-struct mlx5e_ipsec_sw_stats {
+काष्ठा mlx5e_ipsec_sw_stats अणु
 	atomic64_t ipsec_rx_drop_sp_alloc;
 	atomic64_t ipsec_rx_drop_sadb_miss;
 	atomic64_t ipsec_rx_drop_syndrome;
@@ -56,9 +57,9 @@ struct mlx5e_ipsec_sw_stats {
 	atomic64_t ipsec_tx_drop_not_ip;
 	atomic64_t ipsec_tx_drop_trailer;
 	atomic64_t ipsec_tx_drop_metadata;
-};
+पूर्ण;
 
-struct mlx5e_ipsec_stats {
+काष्ठा mlx5e_ipsec_stats अणु
 	u64 ipsec_dec_in_packets;
 	u64 ipsec_dec_out_packets;
 	u64 ipsec_dec_bypass_packets;
@@ -73,76 +74,76 @@ struct mlx5e_ipsec_stats {
 	u64 ipsec_del_sa_success;
 	u64 ipsec_del_sa_fail;
 	u64 ipsec_cmd_drop;
-};
+पूर्ण;
 
-struct mlx5e_accel_fs_esp;
-struct mlx5e_ipsec_tx;
+काष्ठा mlx5e_accel_fs_esp;
+काष्ठा mlx5e_ipsec_tx;
 
-struct mlx5e_ipsec {
-	struct mlx5e_priv *en_priv;
+काष्ठा mlx5e_ipsec अणु
+	काष्ठा mlx5e_priv *en_priv;
 	DECLARE_HASHTABLE(sadb_rx, MLX5E_IPSEC_SADB_RX_BITS);
 	bool no_trailer;
 	spinlock_t sadb_rx_lock; /* Protects sadb_rx and halloc */
-	struct ida halloc;
-	struct mlx5e_ipsec_sw_stats sw_stats;
-	struct mlx5e_ipsec_stats stats;
-	struct workqueue_struct *wq;
-	struct mlx5e_accel_fs_esp *rx_fs;
-	struct mlx5e_ipsec_tx *tx_fs;
-};
+	काष्ठा ida halloc;
+	काष्ठा mlx5e_ipsec_sw_stats sw_stats;
+	काष्ठा mlx5e_ipsec_stats stats;
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा mlx5e_accel_fs_esp *rx_fs;
+	काष्ठा mlx5e_ipsec_tx *tx_fs;
+पूर्ण;
 
-struct mlx5e_ipsec_esn_state {
+काष्ठा mlx5e_ipsec_esn_state अणु
 	u32 esn;
 	u8 trigger: 1;
 	u8 overlap: 1;
-};
+पूर्ण;
 
-struct mlx5e_ipsec_rule {
-	struct mlx5_flow_handle *rule;
-	struct mlx5_modify_hdr *set_modify_hdr;
-};
+काष्ठा mlx5e_ipsec_rule अणु
+	काष्ठा mlx5_flow_handle *rule;
+	काष्ठा mlx5_modअगरy_hdr *set_modअगरy_hdr;
+पूर्ण;
 
-struct mlx5e_ipsec_sa_entry {
-	struct hlist_node hlist; /* Item in SADB_RX hashtable */
-	struct mlx5e_ipsec_esn_state esn_state;
-	unsigned int handle; /* Handle in SADB_RX */
-	struct xfrm_state *x;
-	struct mlx5e_ipsec *ipsec;
-	struct mlx5_accel_esp_xfrm *xfrm;
-	void *hw_context;
-	void (*set_iv_op)(struct sk_buff *skb, struct xfrm_state *x,
-			  struct xfrm_offload *xo);
+काष्ठा mlx5e_ipsec_sa_entry अणु
+	काष्ठा hlist_node hlist; /* Item in SADB_RX hashtable */
+	काष्ठा mlx5e_ipsec_esn_state esn_state;
+	अचिन्हित पूर्णांक handle; /* Handle in SADB_RX */
+	काष्ठा xfrm_state *x;
+	काष्ठा mlx5e_ipsec *ipsec;
+	काष्ठा mlx5_accel_esp_xfrm *xfrm;
+	व्योम *hw_context;
+	व्योम (*set_iv_op)(काष्ठा sk_buff *skb, काष्ठा xfrm_state *x,
+			  काष्ठा xfrm_offload *xo);
 	u32 ipsec_obj_id;
-	struct mlx5e_ipsec_rule ipsec_rule;
-};
+	काष्ठा mlx5e_ipsec_rule ipsec_rule;
+पूर्ण;
 
-void mlx5e_ipsec_build_inverse_table(void);
-int mlx5e_ipsec_init(struct mlx5e_priv *priv);
-void mlx5e_ipsec_cleanup(struct mlx5e_priv *priv);
-void mlx5e_ipsec_build_netdev(struct mlx5e_priv *priv);
+व्योम mlx5e_ipsec_build_inverse_table(व्योम);
+पूर्णांक mlx5e_ipsec_init(काष्ठा mlx5e_priv *priv);
+व्योम mlx5e_ipsec_cleanup(काष्ठा mlx5e_priv *priv);
+व्योम mlx5e_ipsec_build_netdev(काष्ठा mlx5e_priv *priv);
 
-struct xfrm_state *mlx5e_ipsec_sadb_rx_lookup(struct mlx5e_ipsec *dev,
-					      unsigned int handle);
+काष्ठा xfrm_state *mlx5e_ipsec_sadb_rx_lookup(काष्ठा mlx5e_ipsec *dev,
+					      अचिन्हित पूर्णांक handle);
 
-#else
+#अन्यथा
 
-static inline void mlx5e_ipsec_build_inverse_table(void)
-{
-}
+अटल अंतरभूत व्योम mlx5e_ipsec_build_inverse_table(व्योम)
+अणु
+पूर्ण
 
-static inline int mlx5e_ipsec_init(struct mlx5e_priv *priv)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mlx5e_ipsec_init(काष्ठा mlx5e_priv *priv)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mlx5e_ipsec_cleanup(struct mlx5e_priv *priv)
-{
-}
+अटल अंतरभूत व्योम mlx5e_ipsec_cleanup(काष्ठा mlx5e_priv *priv)
+अणु
+पूर्ण
 
-static inline void mlx5e_ipsec_build_netdev(struct mlx5e_priv *priv)
-{
-}
+अटल अंतरभूत व्योम mlx5e_ipsec_build_netdev(काष्ठा mlx5e_priv *priv)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif	/* __MLX5E_IPSEC_H__ */
+#पूर्ण_अगर	/* __MLX5E_IPSEC_H__ */

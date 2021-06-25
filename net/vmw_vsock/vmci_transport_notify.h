@@ -1,75 +1,76 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * VMware vSockets Driver
  *
  * Copyright (C) 2009-2013 VMware, Inc. All rights reserved.
  */
 
-#ifndef __VMCI_TRANSPORT_NOTIFY_H__
-#define __VMCI_TRANSPORT_NOTIFY_H__
+#अगर_अघोषित __VMCI_TRANSPORT_NOTIFY_H__
+#घोषणा __VMCI_TRANSPORT_NOTIFY_H__
 
-#include <linux/types.h>
-#include <linux/vmw_vmci_defs.h>
-#include <linux/vmw_vmci_api.h>
+#समावेश <linux/types.h>
+#समावेश <linux/vmw_vmci_defs.h>
+#समावेश <linux/vmw_vmci_api.h>
 
-#include "vmci_transport.h"
+#समावेश "vmci_transport.h"
 
 /* Comment this out to compare with old protocol. */
-#define VSOCK_OPTIMIZATION_WAITING_NOTIFY 1
-#if defined(VSOCK_OPTIMIZATION_WAITING_NOTIFY)
-/* Comment this out to remove flow control for "new" protocol */
-#define VSOCK_OPTIMIZATION_FLOW_CONTROL 1
-#endif
+#घोषणा VSOCK_OPTIMIZATION_WAITING_NOTIFY 1
+#अगर defined(VSOCK_OPTIMIZATION_WAITING_NOTIFY)
+/* Comment this out to हटाओ flow control क्रम "new" protocol */
+#घोषणा VSOCK_OPTIMIZATION_FLOW_CONTROL 1
+#पूर्ण_अगर
 
-#define VMCI_TRANSPORT_MAX_DGRAM_RESENDS       10
+#घोषणा VMCI_TRANSPORT_MAX_DGRAM_RESENDS       10
 
-struct vmci_transport_recv_notify_data {
+काष्ठा vmci_transport_recv_notअगरy_data अणु
 	u64 consume_head;
 	u64 produce_tail;
-	bool notify_on_block;
-};
+	bool notअगरy_on_block;
+पूर्ण;
 
-struct vmci_transport_send_notify_data {
+काष्ठा vmci_transport_send_notअगरy_data अणु
 	u64 consume_head;
 	u64 produce_tail;
-};
+पूर्ण;
 
-/* Socket notification callbacks. */
-struct vmci_transport_notify_ops {
-	void (*socket_init) (struct sock *sk);
-	void (*socket_destruct) (struct vsock_sock *vsk);
-	int (*poll_in) (struct sock *sk, size_t target,
-			  bool *data_ready_now);
-	int (*poll_out) (struct sock *sk, size_t target,
+/* Socket notअगरication callbacks. */
+काष्ठा vmci_transport_notअगरy_ops अणु
+	व्योम (*socket_init) (काष्ठा sock *sk);
+	व्योम (*socket_deकाष्ठा) (काष्ठा vsock_sock *vsk);
+	पूर्णांक (*poll_in) (काष्ठा sock *sk, माप_प्रकार target,
+			  bool *data_पढ़ोy_now);
+	पूर्णांक (*poll_out) (काष्ठा sock *sk, माप_प्रकार target,
 			   bool *space_avail_now);
-	void (*handle_notify_pkt) (struct sock *sk,
-				   struct vmci_transport_packet *pkt,
-				   bool bottom_half, struct sockaddr_vm *dst,
-				   struct sockaddr_vm *src,
+	व्योम (*handle_notअगरy_pkt) (काष्ठा sock *sk,
+				   काष्ठा vmci_transport_packet *pkt,
+				   bool bottom_half, काष्ठा sockaddr_vm *dst,
+				   काष्ठा sockaddr_vm *src,
 				   bool *pkt_processed);
-	int (*recv_init) (struct sock *sk, size_t target,
-			  struct vmci_transport_recv_notify_data *data);
-	int (*recv_pre_block) (struct sock *sk, size_t target,
-			       struct vmci_transport_recv_notify_data *data);
-	int (*recv_pre_dequeue) (struct sock *sk, size_t target,
-				 struct vmci_transport_recv_notify_data *data);
-	int (*recv_post_dequeue) (struct sock *sk, size_t target,
-				  ssize_t copied, bool data_read,
-				  struct vmci_transport_recv_notify_data *data);
-	int (*send_init) (struct sock *sk,
-			  struct vmci_transport_send_notify_data *data);
-	int (*send_pre_block) (struct sock *sk,
-			       struct vmci_transport_send_notify_data *data);
-	int (*send_pre_enqueue) (struct sock *sk,
-				 struct vmci_transport_send_notify_data *data);
-	int (*send_post_enqueue) (struct sock *sk, ssize_t written,
-				  struct vmci_transport_send_notify_data *data);
-	void (*process_request) (struct sock *sk);
-	void (*process_negotiate) (struct sock *sk);
-};
+	पूर्णांक (*recv_init) (काष्ठा sock *sk, माप_प्रकार target,
+			  काष्ठा vmci_transport_recv_notअगरy_data *data);
+	पूर्णांक (*recv_pre_block) (काष्ठा sock *sk, माप_प्रकार target,
+			       काष्ठा vmci_transport_recv_notअगरy_data *data);
+	पूर्णांक (*recv_pre_dequeue) (काष्ठा sock *sk, माप_प्रकार target,
+				 काष्ठा vmci_transport_recv_notअगरy_data *data);
+	पूर्णांक (*recv_post_dequeue) (काष्ठा sock *sk, माप_प्रकार target,
+				  sमाप_प्रकार copied, bool data_पढ़ो,
+				  काष्ठा vmci_transport_recv_notअगरy_data *data);
+	पूर्णांक (*send_init) (काष्ठा sock *sk,
+			  काष्ठा vmci_transport_send_notअगरy_data *data);
+	पूर्णांक (*send_pre_block) (काष्ठा sock *sk,
+			       काष्ठा vmci_transport_send_notअगरy_data *data);
+	पूर्णांक (*send_pre_enqueue) (काष्ठा sock *sk,
+				 काष्ठा vmci_transport_send_notअगरy_data *data);
+	पूर्णांक (*send_post_enqueue) (काष्ठा sock *sk, sमाप_प्रकार written,
+				  काष्ठा vmci_transport_send_notअगरy_data *data);
+	व्योम (*process_request) (काष्ठा sock *sk);
+	व्योम (*process_negotiate) (काष्ठा sock *sk);
+पूर्ण;
 
-extern const struct vmci_transport_notify_ops vmci_transport_notify_pkt_ops;
-extern const
-struct vmci_transport_notify_ops vmci_transport_notify_pkt_q_state_ops;
+बाह्य स्थिर काष्ठा vmci_transport_notअगरy_ops vmci_transport_notअगरy_pkt_ops;
+बाह्य स्थिर
+काष्ठा vmci_transport_notअगरy_ops vmci_transport_notअगरy_pkt_q_state_ops;
 
-#endif /* __VMCI_TRANSPORT_NOTIFY_H__ */
+#पूर्ण_अगर /* __VMCI_TRANSPORT_NOTIFY_H__ */

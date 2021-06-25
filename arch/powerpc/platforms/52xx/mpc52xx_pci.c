@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * PCI code for the Freescale MPC52xx embedded CPU.
+ * PCI code क्रम the Freescale MPC52xx embedded CPU.
  *
  * Copyright (C) 2006 Secret Lab Technologies Ltd.
  *                        Grant Likely <grant.likely@secretlab.ca>
@@ -10,57 +11,57 @@
  * kind, whether express or implied.
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/pci.h>
-#include <asm/mpc52xx.h>
-#include <asm/delay.h>
-#include <asm/machdep.h>
-#include <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <यंत्र/mpc52xx.h>
+#समावेश <यंत्र/delay.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <linux/kernel.h>
 
 
 /* ======================================================================== */
-/* Structures mapping & Defines for PCI Unit                                */
+/* Structures mapping & Defines क्रम PCI Unit                                */
 /* ======================================================================== */
 
-#define MPC52xx_PCI_GSCR_BM		0x40000000
-#define MPC52xx_PCI_GSCR_PE		0x20000000
-#define MPC52xx_PCI_GSCR_SE		0x10000000
-#define MPC52xx_PCI_GSCR_XLB2PCI_MASK	0x07000000
-#define MPC52xx_PCI_GSCR_XLB2PCI_SHIFT	24
-#define MPC52xx_PCI_GSCR_IPG2PCI_MASK	0x00070000
-#define MPC52xx_PCI_GSCR_IPG2PCI_SHIFT	16
-#define MPC52xx_PCI_GSCR_BME		0x00004000
-#define MPC52xx_PCI_GSCR_PEE		0x00002000
-#define MPC52xx_PCI_GSCR_SEE		0x00001000
-#define MPC52xx_PCI_GSCR_PR		0x00000001
+#घोषणा MPC52xx_PCI_GSCR_BM		0x40000000
+#घोषणा MPC52xx_PCI_GSCR_PE		0x20000000
+#घोषणा MPC52xx_PCI_GSCR_SE		0x10000000
+#घोषणा MPC52xx_PCI_GSCR_XLB2PCI_MASK	0x07000000
+#घोषणा MPC52xx_PCI_GSCR_XLB2PCI_SHIFT	24
+#घोषणा MPC52xx_PCI_GSCR_IPG2PCI_MASK	0x00070000
+#घोषणा MPC52xx_PCI_GSCR_IPG2PCI_SHIFT	16
+#घोषणा MPC52xx_PCI_GSCR_BME		0x00004000
+#घोषणा MPC52xx_PCI_GSCR_PEE		0x00002000
+#घोषणा MPC52xx_PCI_GSCR_SEE		0x00001000
+#घोषणा MPC52xx_PCI_GSCR_PR		0x00000001
 
 
-#define MPC52xx_PCI_IWBTAR_TRANSLATION(proc_ad,pci_ad,size)	  \
+#घोषणा MPC52xx_PCI_IWBTAR_TRANSLATION(proc_ad,pci_ad,size)	  \
 		( ( (proc_ad) & 0xff000000 )			| \
 		  ( (((size) - 1) >> 8) & 0x00ff0000 )		| \
 		  ( ((pci_ad) >> 16) & 0x0000ff00 ) )
 
-#define MPC52xx_PCI_IWCR_PACK(win0,win1,win2)	(((win0) << 24) | \
+#घोषणा MPC52xx_PCI_IWCR_PACK(win0,win1,win2)	(((win0) << 24) | \
 						 ((win1) << 16) | \
 						 ((win2) <<  8))
 
-#define MPC52xx_PCI_IWCR_DISABLE	0x0
-#define MPC52xx_PCI_IWCR_ENABLE		0x1
-#define MPC52xx_PCI_IWCR_READ		0x0
-#define MPC52xx_PCI_IWCR_READ_LINE	0x2
-#define MPC52xx_PCI_IWCR_READ_MULTI	0x4
-#define MPC52xx_PCI_IWCR_MEM		0x0
-#define MPC52xx_PCI_IWCR_IO		0x8
+#घोषणा MPC52xx_PCI_IWCR_DISABLE	0x0
+#घोषणा MPC52xx_PCI_IWCR_ENABLE		0x1
+#घोषणा MPC52xx_PCI_IWCR_READ		0x0
+#घोषणा MPC52xx_PCI_IWCR_READ_LINE	0x2
+#घोषणा MPC52xx_PCI_IWCR_READ_MULTI	0x4
+#घोषणा MPC52xx_PCI_IWCR_MEM		0x0
+#घोषणा MPC52xx_PCI_IWCR_IO		0x8
 
-#define MPC52xx_PCI_TCR_P		0x01000000
-#define MPC52xx_PCI_TCR_LD		0x00010000
-#define MPC52xx_PCI_TCR_WCT8		0x00000008
+#घोषणा MPC52xx_PCI_TCR_P		0x01000000
+#घोषणा MPC52xx_PCI_TCR_LD		0x00010000
+#घोषणा MPC52xx_PCI_TCR_WCT8		0x00000008
 
-#define MPC52xx_PCI_TBATR_DISABLE	0x0
-#define MPC52xx_PCI_TBATR_ENABLE	0x1
+#घोषणा MPC52xx_PCI_TBATR_DISABLE	0x0
+#घोषणा MPC52xx_PCI_TBATR_ENABLE	0x1
 
-struct mpc52xx_pci {
+काष्ठा mpc52xx_pci अणु
 	u32	idr;		/* PCI + 0x00 */
 	u32	scr;		/* PCI + 0x04 */
 	u32	ccrir;		/* PCI + 0x08 */
@@ -90,29 +91,29 @@ struct mpc52xx_pci {
 	u8	reserved5[104];	/* PCI + 0x90 */
 	u32	car;		/* PCI + 0xF8 */
 	u8	reserved6[4];	/* PCI + 0xFC */
-};
+पूर्ण;
 
 /* MPC5200 device tree match tables */
-const struct of_device_id mpc52xx_pci_ids[] __initconst = {
-	{ .type = "pci", .compatible = "fsl,mpc5200-pci", },
-	{ .type = "pci", .compatible = "mpc5200-pci", },
-	{}
-};
+स्थिर काष्ठा of_device_id mpc52xx_pci_ids[] __initस्थिर = अणु
+	अणु .type = "pci", .compatible = "fsl,mpc5200-pci", पूर्ण,
+	अणु .type = "pci", .compatible = "mpc5200-pci", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /* ======================================================================== */
 /* PCI configuration access                                                 */
 /* ======================================================================== */
 
-static int
-mpc52xx_pci_read_config(struct pci_bus *bus, unsigned int devfn,
-				int offset, int len, u32 *val)
-{
-	struct pci_controller *hose = pci_bus_to_host(bus);
+अटल पूर्णांक
+mpc52xx_pci_पढ़ो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				पूर्णांक offset, पूर्णांक len, u32 *val)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(bus);
 	u32 value;
 
-	if (ppc_md.pci_exclude_device)
-		if (ppc_md.pci_exclude_device(hose, bus->number, devfn))
-			return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (ppc_md.pci_exclude_device)
+		अगर (ppc_md.pci_exclude_device(hose, bus->number, devfn))
+			वापस PCIBIOS_DEVICE_NOT_FOUND;
 
 	out_be32(hose->cfg_addr,
 		(1 << 31) |
@@ -121,55 +122,55 @@ mpc52xx_pci_read_config(struct pci_bus *bus, unsigned int devfn,
 		(offset & 0xfc));
 	mb();
 
-#if defined(CONFIG_PPC_MPC5200_BUGFIX)
-	if (bus->number) {
-		/* workaround for the bug 435 of the MPC5200 (L25R);
-		 * Don't do 32 bits config access during type-1 cycles */
-		switch (len) {
-		      case 1:
+#अगर defined(CONFIG_PPC_MPC5200_BUGFIX)
+	अगर (bus->number) अणु
+		/* workaround क्रम the bug 435 of the MPC5200 (L25R);
+		 * Don't करो 32 bits config access during type-1 cycles */
+		चयन (len) अणु
+		      हाल 1:
 			value = in_8(((u8 __iomem *)hose->cfg_data) +
 			             (offset & 3));
-			break;
-		      case 2:
+			अवरोध;
+		      हाल 2:
 			value = in_le16(((u16 __iomem *)hose->cfg_data) +
 			                ((offset>>1) & 1));
-			break;
+			अवरोध;
 
-		      default:
+		      शेष:
 			value = in_le16((u16 __iomem *)hose->cfg_data) |
 				(in_le16(((u16 __iomem *)hose->cfg_data) + 1) << 16);
-			break;
-		}
-	}
-	else
-#endif
-	{
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अन्यथा
+#पूर्ण_अगर
+	अणु
 		value = in_le32(hose->cfg_data);
 
-		if (len != 4) {
+		अगर (len != 4) अणु
 			value >>= ((offset & 0x3) << 3);
 			value &= 0xffffffff >> (32 - (len << 3));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*val = value;
 
 	out_be32(hose->cfg_addr, 0);
 	mb();
 
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int
-mpc52xx_pci_write_config(struct pci_bus *bus, unsigned int devfn,
-				int offset, int len, u32 val)
-{
-	struct pci_controller *hose = pci_bus_to_host(bus);
+अटल पूर्णांक
+mpc52xx_pci_ग_लिखो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				पूर्णांक offset, पूर्णांक len, u32 val)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(bus);
 	u32 value, mask;
 
-	if (ppc_md.pci_exclude_device)
-		if (ppc_md.pci_exclude_device(hose, bus->number, devfn))
-			return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (ppc_md.pci_exclude_device)
+		अगर (ppc_md.pci_exclude_device(hose, bus->number, devfn))
+			वापस PCIBIOS_DEVICE_NOT_FOUND;
 
 	out_be32(hose->cfg_addr,
 		(1 << 31) |
@@ -178,32 +179,32 @@ mpc52xx_pci_write_config(struct pci_bus *bus, unsigned int devfn,
 		(offset & 0xfc));
 	mb();
 
-#if defined(CONFIG_PPC_MPC5200_BUGFIX)
-	if (bus->number) {
-		/* workaround for the bug 435 of the MPC5200 (L25R);
-		 * Don't do 32 bits config access during type-1 cycles */
-		switch (len) {
-		      case 1:
+#अगर defined(CONFIG_PPC_MPC5200_BUGFIX)
+	अगर (bus->number) अणु
+		/* workaround क्रम the bug 435 of the MPC5200 (L25R);
+		 * Don't करो 32 bits config access during type-1 cycles */
+		चयन (len) अणु
+		      हाल 1:
 			out_8(((u8 __iomem *)hose->cfg_data) +
 				(offset & 3), val);
-			break;
-		      case 2:
+			अवरोध;
+		      हाल 2:
 			out_le16(((u16 __iomem *)hose->cfg_data) +
 				((offset>>1) & 1), val);
-			break;
+			अवरोध;
 
-		      default:
+		      शेष:
 			out_le16((u16 __iomem *)hose->cfg_data,
 				(u16)val);
 			out_le16(((u16 __iomem *)hose->cfg_data) + 1,
 				(u16)(val>>16));
-			break;
-		}
-	}
-	else
-#endif
-	{
-		if (len != 4) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अन्यथा
+#पूर्ण_अगर
+	अणु
+		अगर (len != 4) अणु
 			value = in_le32(hose->cfg_data);
 
 			offset = (offset & 0x3) << 3;
@@ -212,91 +213,91 @@ mpc52xx_pci_write_config(struct pci_bus *bus, unsigned int devfn,
 
 			value &= ~mask;
 			val = value | ((val << offset) & mask);
-		}
+		पूर्ण
 
 		out_le32(hose->cfg_data, val);
-	}
+	पूर्ण
 	mb();
 
 	out_be32(hose->cfg_addr, 0);
 	mb();
 
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static struct pci_ops mpc52xx_pci_ops = {
-	.read  = mpc52xx_pci_read_config,
-	.write = mpc52xx_pci_write_config
-};
+अटल काष्ठा pci_ops mpc52xx_pci_ops = अणु
+	.पढ़ो  = mpc52xx_pci_पढ़ो_config,
+	.ग_लिखो = mpc52xx_pci_ग_लिखो_config
+पूर्ण;
 
 
 /* ======================================================================== */
 /* PCI setup                                                                */
 /* ======================================================================== */
 
-static void __init
-mpc52xx_pci_setup(struct pci_controller *hose,
-                  struct mpc52xx_pci __iomem *pci_regs, phys_addr_t pci_phys)
-{
-	struct resource *res;
-	u32 tmp;
-	int iwcr0 = 0, iwcr1 = 0, iwcr2 = 0;
+अटल व्योम __init
+mpc52xx_pci_setup(काष्ठा pci_controller *hose,
+                  काष्ठा mpc52xx_pci __iomem *pci_regs, phys_addr_t pci_phys)
+अणु
+	काष्ठा resource *res;
+	u32 पंचांगp;
+	पूर्णांक iwcr0 = 0, iwcr1 = 0, iwcr2 = 0;
 
 	pr_debug("mpc52xx_pci_setup(hose=%p, pci_regs=%p)\n", hose, pci_regs);
 
-	/* pci_process_bridge_OF_ranges() found all our addresses for us;
+	/* pci_process_bridge_OF_ranges() found all our addresses क्रम us;
 	 * now store them in the right places */
 	hose->cfg_addr = &pci_regs->car;
 	hose->cfg_data = hose->io_base_virt;
 
 	/* Control regs */
-	tmp = in_be32(&pci_regs->scr);
-	tmp |= PCI_COMMAND_MASTER | PCI_COMMAND_MEMORY;
-	out_be32(&pci_regs->scr, tmp);
+	पंचांगp = in_be32(&pci_regs->scr);
+	पंचांगp |= PCI_COMMAND_MASTER | PCI_COMMAND_MEMORY;
+	out_be32(&pci_regs->scr, पंचांगp);
 
-	/* Memory windows */
+	/* Memory winकरोws */
 	res = &hose->mem_resources[0];
-	if (res->flags) {
+	अगर (res->flags) अणु
 		pr_debug("mem_resource[0] = "
 		         "{.start=%llx, .end=%llx, .flags=%llx}\n",
-		         (unsigned long long)res->start,
-			 (unsigned long long)res->end,
-			 (unsigned long long)res->flags);
+		         (अचिन्हित दीर्घ दीर्घ)res->start,
+			 (अचिन्हित दीर्घ दीर्घ)res->end,
+			 (अचिन्हित दीर्घ दीर्घ)res->flags);
 		out_be32(&pci_regs->iw0btar,
 		         MPC52xx_PCI_IWBTAR_TRANSLATION(res->start, res->start,
 							resource_size(res)));
 		iwcr0 = MPC52xx_PCI_IWCR_ENABLE | MPC52xx_PCI_IWCR_MEM;
-		if (res->flags & IORESOURCE_PREFETCH)
+		अगर (res->flags & IORESOURCE_PREFETCH)
 			iwcr0 |= MPC52xx_PCI_IWCR_READ_MULTI;
-		else
+		अन्यथा
 			iwcr0 |= MPC52xx_PCI_IWCR_READ;
-	}
+	पूर्ण
 
 	res = &hose->mem_resources[1];
-	if (res->flags) {
+	अगर (res->flags) अणु
 		pr_debug("mem_resource[1] = {.start=%x, .end=%x, .flags=%lx}\n",
 		         res->start, res->end, res->flags);
 		out_be32(&pci_regs->iw1btar,
 		         MPC52xx_PCI_IWBTAR_TRANSLATION(res->start, res->start,
 							resource_size(res)));
 		iwcr1 = MPC52xx_PCI_IWCR_ENABLE | MPC52xx_PCI_IWCR_MEM;
-		if (res->flags & IORESOURCE_PREFETCH)
+		अगर (res->flags & IORESOURCE_PREFETCH)
 			iwcr1 |= MPC52xx_PCI_IWCR_READ_MULTI;
-		else
+		अन्यथा
 			iwcr1 |= MPC52xx_PCI_IWCR_READ;
-	}
+	पूर्ण
 
 	/* IO resources */
 	res = &hose->io_resource;
-	if (!res) {
-		printk(KERN_ERR "%s: Didn't find IO resources\n", __FILE__);
-		return;
-	}
+	अगर (!res) अणु
+		prपूर्णांकk(KERN_ERR "%s: Didn't find IO resources\n", __खाता__);
+		वापस;
+	पूर्ण
 	pr_debug(".io_resource={.start=%llx,.end=%llx,.flags=%llx} "
 	         ".io_base_phys=0x%p\n",
-	         (unsigned long long)res->start,
-		 (unsigned long long)res->end,
-		 (unsigned long long)res->flags, (void*)hose->io_base_phys);
+	         (अचिन्हित दीर्घ दीर्घ)res->start,
+		 (अचिन्हित दीर्घ दीर्घ)res->end,
+		 (अचिन्हित दीर्घ दीर्घ)res->flags, (व्योम*)hose->io_base_phys);
 	out_be32(&pci_regs->iw2btar,
 	         MPC52xx_PCI_IWBTAR_TRANSLATION(hose->io_base_phys,
 	                                        res->start,
@@ -307,7 +308,7 @@ mpc52xx_pci_setup(struct pci_controller *hose,
 	out_be32(&pci_regs->iwcr, MPC52xx_PCI_IWCR_PACK(iwcr0, iwcr1, iwcr2));
 
 	/* Map IMMR onto PCI bus */
-	pci_phys &= 0xfffc0000; /* bar0 has only 14 significant bits */
+	pci_phys &= 0xfffc0000; /* bar0 has only 14 signअगरicant bits */
 	out_be32(&pci_regs->tbatr0, MPC52xx_PCI_TBATR_ENABLE | pci_phys);
 	out_be32(&pci_regs->bar0, PCI_BASE_ADDRESS_MEM_PREFETCH | pci_phys);
 
@@ -317,85 +318,85 @@ mpc52xx_pci_setup(struct pci_controller *hose,
 
 	out_be32(&pci_regs->tcr, MPC52xx_PCI_TCR_LD | MPC52xx_PCI_TCR_WCT8);
 
-	tmp = in_be32(&pci_regs->gscr);
-#if 0
-	/* Reset the exteral bus ( internal PCI controller is NOT reset ) */
-	/* Not necessary and can be a bad thing if for example the bootloader
-	   is displaying a splash screen or ... Just left here for
-	   documentation purpose if anyone need it */
-	out_be32(&pci_regs->gscr, tmp | MPC52xx_PCI_GSCR_PR);
+	पंचांगp = in_be32(&pci_regs->gscr);
+#अगर 0
+	/* Reset the exteral bus ( पूर्णांकernal PCI controller is NOT reset ) */
+	/* Not necessary and can be a bad thing अगर क्रम example the bootloader
+	   is displaying a splash screen or ... Just left here क्रम
+	   करोcumentation purpose अगर anyone need it */
+	out_be32(&pci_regs->gscr, पंचांगp | MPC52xx_PCI_GSCR_PR);
 	udelay(50);
-#endif
+#पूर्ण_अगर
 
 	/* Make sure the PCI bridge is out of reset */
-	out_be32(&pci_regs->gscr, tmp & ~MPC52xx_PCI_GSCR_PR);
-}
+	out_be32(&pci_regs->gscr, पंचांगp & ~MPC52xx_PCI_GSCR_PR);
+पूर्ण
 
-static void
-mpc52xx_pci_fixup_resources(struct pci_dev *dev)
-{
-	int i;
+अटल व्योम
+mpc52xx_pci_fixup_resources(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक i;
 
 	pr_debug("mpc52xx_pci_fixup_resources() %.4x:%.4x\n",
-	         dev->vendor, dev->device);
+	         dev->venकरोr, dev->device);
 
-	/* We don't rely on boot loader for PCI and resets all
+	/* We करोn't rely on boot loader क्रम PCI and resets all
 	   devices */
-	for (i = 0; i < DEVICE_COUNT_RESOURCE; i++) {
-		struct resource *res = &dev->resource[i];
-		if (res->end > res->start) {	/* Only valid resources */
+	क्रम (i = 0; i < DEVICE_COUNT_RESOURCE; i++) अणु
+		काष्ठा resource *res = &dev->resource[i];
+		अगर (res->end > res->start) अणु	/* Only valid resources */
 			res->end -= res->start;
 			res->start = 0;
 			res->flags |= IORESOURCE_UNSET;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* The PCI Host bridge of MPC52xx has a prefetch memory resource
-	   fixed to 1Gb. Doesn't fit in the resource system so we remove it */
-	if ( (dev->vendor == PCI_VENDOR_ID_MOTOROLA) &&
+	   fixed to 1Gb. Doesn't fit in the resource प्रणाली so we हटाओ it */
+	अगर ( (dev->venकरोr == PCI_VENDOR_ID_MOTOROLA) &&
 	     (   dev->device == PCI_DEVICE_ID_MOTOROLA_MPC5200
-	      || dev->device == PCI_DEVICE_ID_MOTOROLA_MPC5200B) ) {
-		struct resource *res = &dev->resource[1];
+	      || dev->device == PCI_DEVICE_ID_MOTOROLA_MPC5200B) ) अणु
+		काष्ठा resource *res = &dev->resource[1];
 		res->start = res->end = res->flags = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int __init
-mpc52xx_add_bridge(struct device_node *node)
-{
-	int len;
-	struct mpc52xx_pci __iomem *pci_regs;
-	struct pci_controller *hose;
-	const int *bus_range;
-	struct resource rsrc;
+पूर्णांक __init
+mpc52xx_add_bridge(काष्ठा device_node *node)
+अणु
+	पूर्णांक len;
+	काष्ठा mpc52xx_pci __iomem *pci_regs;
+	काष्ठा pci_controller *hose;
+	स्थिर पूर्णांक *bus_range;
+	काष्ठा resource rsrc;
 
 	pr_debug("Adding MPC52xx PCI host bridge %pOF\n", node);
 
 	pci_add_flags(PCI_REASSIGN_ALL_BUS);
 
-	if (of_address_to_resource(node, 0, &rsrc) != 0) {
-		printk(KERN_ERR "Can't get %pOF resources\n", node);
-		return -EINVAL;
-	}
+	अगर (of_address_to_resource(node, 0, &rsrc) != 0) अणु
+		prपूर्णांकk(KERN_ERR "Can't get %pOF resources\n", node);
+		वापस -EINVAL;
+	पूर्ण
 
 	bus_range = of_get_property(node, "bus-range", &len);
-	if (bus_range == NULL || len < 2 * sizeof(int)) {
-		printk(KERN_WARNING "Can't get %pOF bus-range, assume bus 0\n",
+	अगर (bus_range == शून्य || len < 2 * माप(पूर्णांक)) अणु
+		prपूर्णांकk(KERN_WARNING "Can't get %pOF bus-range, assume bus 0\n",
 		       node);
-		bus_range = NULL;
-	}
+		bus_range = शून्य;
+	पूर्ण
 
-	/* There are some PCI quirks on the 52xx, register the hook to
+	/* There are some PCI quirks on the 52xx, रेजिस्टर the hook to
 	 * fix them. */
 	ppc_md.pcibios_fixup_resources = mpc52xx_pci_fixup_resources;
 
 	/* Alloc and initialize the pci controller.  Values in the device
 	 * tree are needed to configure the 52xx PCI controller.  Rather
 	 * than parse the tree here, let pci_process_bridge_OF_ranges()
-	 * do it for us and extract the values after the fact */
+	 * करो it क्रम us and extract the values after the fact */
 	hose = pcibios_alloc_controller(node);
-	if (!hose)
-		return -ENOMEM;
+	अगर (!hose)
+		वापस -ENOMEM;
 
 	hose->first_busno = bus_range ? bus_range[0] : 0;
 	hose->last_busno = bus_range ? bus_range[1] : 0xff;
@@ -403,8 +404,8 @@ mpc52xx_add_bridge(struct device_node *node)
 	hose->ops = &mpc52xx_pci_ops;
 
 	pci_regs = ioremap(rsrc.start, resource_size(&rsrc));
-	if (!pci_regs)
-		return -ENOMEM;
+	अगर (!pci_regs)
+		वापस -ENOMEM;
 
 	pci_process_bridge_OF_ranges(hose, node, 1);
 
@@ -412,17 +413,17 @@ mpc52xx_add_bridge(struct device_node *node)
 	 * pci_proces_bridge_OF_ranges */
 	mpc52xx_pci_setup(hose, pci_regs, rsrc.start);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init mpc52xx_setup_pci(void)
-{
-	struct device_node *pci;
+व्योम __init mpc52xx_setup_pci(व्योम)
+अणु
+	काष्ठा device_node *pci;
 
-	pci = of_find_matching_node(NULL, mpc52xx_pci_ids);
-	if (!pci)
-		return;
+	pci = of_find_matching_node(शून्य, mpc52xx_pci_ids);
+	अगर (!pci)
+		वापस;
 
 	mpc52xx_add_bridge(pci);
 	of_node_put(pci);
-}
+पूर्ण

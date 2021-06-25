@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * V9FS FID Management
  *
@@ -6,18 +7,18 @@
  *  Copyright (C) 2005, 2006 by Eric Van Hensbergen <ericvh@gmail.com>
  */
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/idr.h>
-#include <net/9p/9p.h>
-#include <net/9p/client.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/idr.h>
+#समावेश <net/9p/9p.h>
+#समावेश <net/9p/client.h>
 
-#include "v9fs.h"
-#include "v9fs_vfs.h"
-#include "fid.h"
+#समावेश "v9fs.h"
+#समावेश "v9fs_vfs.h"
+#समावेश "fid.h"
 
 /**
  * v9fs_fid_add - add a fid to a dentry
@@ -26,297 +27,297 @@
  *
  */
 
-static inline void __add_fid(struct dentry *dentry, struct p9_fid *fid)
-{
-	hlist_add_head(&fid->dlist, (struct hlist_head *)&dentry->d_fsdata);
-}
+अटल अंतरभूत व्योम __add_fid(काष्ठा dentry *dentry, काष्ठा p9_fid *fid)
+अणु
+	hlist_add_head(&fid->dlist, (काष्ठा hlist_head *)&dentry->d_fsdata);
+पूर्ण
 
-void v9fs_fid_add(struct dentry *dentry, struct p9_fid *fid)
-{
+व्योम v9fs_fid_add(काष्ठा dentry *dentry, काष्ठा p9_fid *fid)
+अणु
 	spin_lock(&dentry->d_lock);
 	__add_fid(dentry, fid);
 	spin_unlock(&dentry->d_lock);
-}
+पूर्ण
 
 /**
- * v9fs_fid_find_inode - search for an open fid off of the inode list
- * @inode: return a fid pointing to a specific inode
- * @uid: return a fid belonging to the specified user
+ * v9fs_fid_find_inode - search क्रम an खोलो fid off of the inode list
+ * @inode: वापस a fid poपूर्णांकing to a specअगरic inode
+ * @uid: वापस a fid beदीर्घing to the specअगरied user
  *
  */
 
-static struct p9_fid *v9fs_fid_find_inode(struct inode *inode, kuid_t uid)
-{
-	struct hlist_head *h;
-	struct p9_fid *fid, *ret = NULL;
+अटल काष्ठा p9_fid *v9fs_fid_find_inode(काष्ठा inode *inode, kuid_t uid)
+अणु
+	काष्ठा hlist_head *h;
+	काष्ठा p9_fid *fid, *ret = शून्य;
 
 	p9_debug(P9_DEBUG_VFS, " inode: %p\n", inode);
 
 	spin_lock(&inode->i_lock);
-	h = (struct hlist_head *)&inode->i_private;
-	hlist_for_each_entry(fid, h, ilist) {
-		if (uid_eq(fid->uid, uid)) {
+	h = (काष्ठा hlist_head *)&inode->i_निजी;
+	hlist_क्रम_each_entry(fid, h, ilist) अणु
+		अगर (uid_eq(fid->uid, uid)) अणु
 			refcount_inc(&fid->count);
 			ret = fid;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&inode->i_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * v9fs_open_fid_add - add an open fid to an inode
+ * v9fs_खोलो_fid_add - add an खोलो fid to an inode
  * @dentry: inode that the fid is being added to
  * @fid: fid to add
  *
  */
 
-void v9fs_open_fid_add(struct inode *inode, struct p9_fid *fid)
-{
+व्योम v9fs_खोलो_fid_add(काष्ठा inode *inode, काष्ठा p9_fid *fid)
+अणु
 	spin_lock(&inode->i_lock);
-	hlist_add_head(&fid->ilist, (struct hlist_head *)&inode->i_private);
+	hlist_add_head(&fid->ilist, (काष्ठा hlist_head *)&inode->i_निजी);
 	spin_unlock(&inode->i_lock);
-}
+पूर्ण
 
 
 /**
- * v9fs_fid_find - retrieve a fid that belongs to the specified uid
- * @dentry: dentry to look for fid in
- * @uid: return fid that belongs to the specified user
- * @any: if non-zero, return any fid associated with the dentry
+ * v9fs_fid_find - retrieve a fid that beदीर्घs to the specअगरied uid
+ * @dentry: dentry to look क्रम fid in
+ * @uid: वापस fid that beदीर्घs to the specअगरied user
+ * @any: अगर non-zero, वापस any fid associated with the dentry
  *
  */
 
-static struct p9_fid *v9fs_fid_find(struct dentry *dentry, kuid_t uid, int any)
-{
-	struct p9_fid *fid, *ret;
+अटल काष्ठा p9_fid *v9fs_fid_find(काष्ठा dentry *dentry, kuid_t uid, पूर्णांक any)
+अणु
+	काष्ठा p9_fid *fid, *ret;
 
 	p9_debug(P9_DEBUG_VFS, " dentry: %pd (%p) uid %d any %d\n",
 		 dentry, dentry, from_kuid(&init_user_ns, uid),
 		 any);
-	ret = NULL;
+	ret = शून्य;
 
-	if (d_inode(dentry))
+	अगर (d_inode(dentry))
 		ret = v9fs_fid_find_inode(d_inode(dentry), uid);
 
 	/* we'll recheck under lock if there's anything to look in */
-	if (!ret && dentry->d_fsdata) {
-		struct hlist_head *h = (struct hlist_head *)&dentry->d_fsdata;
+	अगर (!ret && dentry->d_fsdata) अणु
+		काष्ठा hlist_head *h = (काष्ठा hlist_head *)&dentry->d_fsdata;
 		spin_lock(&dentry->d_lock);
-		hlist_for_each_entry(fid, h, dlist) {
-			if (any || uid_eq(fid->uid, uid)) {
+		hlist_क्रम_each_entry(fid, h, dlist) अणु
+			अगर (any || uid_eq(fid->uid, uid)) अणु
 				ret = fid;
 				refcount_inc(&ret->count);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		spin_unlock(&dentry->d_lock);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * We need to hold v9ses->rename_sem as long as we hold references
- * to returned path array. Array element contain pointers to
+ * We need to hold v9ses->नाम_sem as दीर्घ as we hold references
+ * to वापसed path array. Array element contain poपूर्णांकers to
  * dentry names.
  */
-static int build_path_from_dentry(struct v9fs_session_info *v9ses,
-				  struct dentry *dentry, const unsigned char ***names)
-{
-	int n = 0, i;
-	const unsigned char **wnames;
-	struct dentry *ds;
+अटल पूर्णांक build_path_from_dentry(काष्ठा v9fs_session_info *v9ses,
+				  काष्ठा dentry *dentry, स्थिर अचिन्हित अक्षर ***names)
+अणु
+	पूर्णांक n = 0, i;
+	स्थिर अचिन्हित अक्षर **wnames;
+	काष्ठा dentry *ds;
 
-	for (ds = dentry; !IS_ROOT(ds); ds = ds->d_parent)
+	क्रम (ds = dentry; !IS_ROOT(ds); ds = ds->d_parent)
 		n++;
 
-	wnames = kmalloc_array(n, sizeof(char *), GFP_KERNEL);
-	if (!wnames)
-		goto err_out;
+	wnames = kदो_स्मृति_array(n, माप(अक्षर *), GFP_KERNEL);
+	अगर (!wnames)
+		जाओ err_out;
 
-	for (ds = dentry, i = (n-1); i >= 0; i--, ds = ds->d_parent)
+	क्रम (ds = dentry, i = (n-1); i >= 0; i--, ds = ds->d_parent)
 		wnames[i] = ds->d_name.name;
 
 	*names = wnames;
-	return n;
+	वापस n;
 err_out:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static struct p9_fid *v9fs_fid_lookup_with_uid(struct dentry *dentry,
-					       kuid_t uid, int any)
-{
-	struct dentry *ds;
-	const unsigned char **wnames, *uname;
-	int i, n, l, clone, access;
-	struct v9fs_session_info *v9ses;
-	struct p9_fid *fid, *old_fid = NULL;
+अटल काष्ठा p9_fid *v9fs_fid_lookup_with_uid(काष्ठा dentry *dentry,
+					       kuid_t uid, पूर्णांक any)
+अणु
+	काष्ठा dentry *ds;
+	स्थिर अचिन्हित अक्षर **wnames, *uname;
+	पूर्णांक i, n, l, clone, access;
+	काष्ठा v9fs_session_info *v9ses;
+	काष्ठा p9_fid *fid, *old_fid = शून्य;
 
 	v9ses = v9fs_dentry2v9ses(dentry);
 	access = v9ses->flags & V9FS_ACCESS_MASK;
 	fid = v9fs_fid_find(dentry, uid, any);
-	if (fid)
-		return fid;
+	अगर (fid)
+		वापस fid;
 	/*
-	 * we don't have a matching fid. To do a TWALK we need
-	 * parent fid. We need to prevent rename when we want to
+	 * we करोn't have a matching fid. To करो a TWALK we need
+	 * parent fid. We need to prevent नाम when we want to
 	 * look at the parent.
 	 */
-	down_read(&v9ses->rename_sem);
+	करोwn_पढ़ो(&v9ses->नाम_sem);
 	ds = dentry->d_parent;
 	fid = v9fs_fid_find(ds, uid, any);
-	if (fid) {
-		/* Found the parent fid do a lookup with that */
-		struct p9_fid *ofid = fid;
+	अगर (fid) अणु
+		/* Found the parent fid करो a lookup with that */
+		काष्ठा p9_fid *ofid = fid;
 
 		fid = p9_client_walk(ofid, 1, &dentry->d_name.name, 1);
 		p9_client_clunk(ofid);
-		goto fid_out;
-	}
-	up_read(&v9ses->rename_sem);
+		जाओ fid_out;
+	पूर्ण
+	up_पढ़ो(&v9ses->नाम_sem);
 
-	/* start from the root and try to do a lookup */
+	/* start from the root and try to करो a lookup */
 	fid = v9fs_fid_find(dentry->d_sb->s_root, uid, any);
-	if (!fid) {
+	अगर (!fid) अणु
 		/* the user is not attached to the fs yet */
-		if (access == V9FS_ACCESS_SINGLE)
-			return ERR_PTR(-EPERM);
+		अगर (access == V9FS_ACCESS_SINGLE)
+			वापस ERR_PTR(-EPERM);
 
-		if (v9fs_proto_dotu(v9ses) || v9fs_proto_dotl(v9ses))
-				uname = NULL;
-		else
+		अगर (v9fs_proto_करोtu(v9ses) || v9fs_proto_करोtl(v9ses))
+				uname = शून्य;
+		अन्यथा
 			uname = v9ses->uname;
 
-		fid = p9_client_attach(v9ses->clnt, NULL, uname, uid,
+		fid = p9_client_attach(v9ses->clnt, शून्य, uname, uid,
 				       v9ses->aname);
-		if (IS_ERR(fid))
-			return fid;
+		अगर (IS_ERR(fid))
+			वापस fid;
 
 		v9fs_fid_add(dentry->d_sb->s_root, fid);
-	}
-	/* If we are root ourself just return that */
-	if (dentry->d_sb->s_root == dentry) {
+	पूर्ण
+	/* If we are root ourself just वापस that */
+	अगर (dentry->d_sb->s_root == dentry) अणु
 		refcount_inc(&fid->count);
-		return fid;
-	}
+		वापस fid;
+	पूर्ण
 	/*
 	 * Do a multipath walk with attached root.
 	 * When walking parent we need to make sure we
-	 * don't have a parallel rename happening
+	 * करोn't have a parallel नाम happening
 	 */
-	down_read(&v9ses->rename_sem);
+	करोwn_पढ़ो(&v9ses->नाम_sem);
 	n  = build_path_from_dentry(v9ses, dentry, &wnames);
-	if (n < 0) {
+	अगर (n < 0) अणु
 		fid = ERR_PTR(n);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	clone = 1;
 	i = 0;
-	while (i < n) {
+	जबतक (i < n) अणु
 		l = min(n - i, P9_MAXWELEM);
 		/*
-		 * We need to hold rename lock when doing a multipath
+		 * We need to hold नाम lock when करोing a multipath
 		 * walk to ensure none of the patch component change
 		 */
 		fid = p9_client_walk(fid, l, &wnames[i], clone);
-		if (IS_ERR(fid)) {
-			if (old_fid) {
+		अगर (IS_ERR(fid)) अणु
+			अगर (old_fid) अणु
 				/*
 				 * If we fail, clunk fid which are mapping
 				 * to path component and not the last component
 				 * of the path.
 				 */
 				p9_client_clunk(old_fid);
-			}
-			kfree(wnames);
-			goto err_out;
-		}
+			पूर्ण
+			kमुक्त(wnames);
+			जाओ err_out;
+		पूर्ण
 		old_fid = fid;
 		i += l;
 		clone = 0;
-	}
-	kfree(wnames);
+	पूर्ण
+	kमुक्त(wnames);
 fid_out:
-	if (!IS_ERR(fid)) {
+	अगर (!IS_ERR(fid)) अणु
 		spin_lock(&dentry->d_lock);
-		if (d_unhashed(dentry)) {
+		अगर (d_unhashed(dentry)) अणु
 			spin_unlock(&dentry->d_lock);
 			p9_client_clunk(fid);
 			fid = ERR_PTR(-ENOENT);
-		} else {
+		पूर्ण अन्यथा अणु
 			__add_fid(dentry, fid);
 			refcount_inc(&fid->count);
 			spin_unlock(&dentry->d_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 err_out:
-	up_read(&v9ses->rename_sem);
-	return fid;
-}
+	up_पढ़ो(&v9ses->नाम_sem);
+	वापस fid;
+पूर्ण
 
 /**
- * v9fs_fid_lookup - lookup for a fid, try to walk if not found
- * @dentry: dentry to look for fid in
+ * v9fs_fid_lookup - lookup क्रम a fid, try to walk अगर not found
+ * @dentry: dentry to look क्रम fid in
  *
- * Look for a fid in the specified dentry for the current user.
+ * Look क्रम a fid in the specअगरied dentry क्रम the current user.
  * If no fid is found, try to create one walking from a fid from the parent
- * dentry (if it has one), or the root dentry. If the user haven't accessed
+ * dentry (अगर it has one), or the root dentry. If the user haven't accessed
  * the fs yet, attach now and walk from the root.
  */
 
-struct p9_fid *v9fs_fid_lookup(struct dentry *dentry)
-{
+काष्ठा p9_fid *v9fs_fid_lookup(काष्ठा dentry *dentry)
+अणु
 	kuid_t uid;
-	int  any, access;
-	struct v9fs_session_info *v9ses;
+	पूर्णांक  any, access;
+	काष्ठा v9fs_session_info *v9ses;
 
 	v9ses = v9fs_dentry2v9ses(dentry);
 	access = v9ses->flags & V9FS_ACCESS_MASK;
-	switch (access) {
-	case V9FS_ACCESS_SINGLE:
-	case V9FS_ACCESS_USER:
-	case V9FS_ACCESS_CLIENT:
+	चयन (access) अणु
+	हाल V9FS_ACCESS_SINGLE:
+	हाल V9FS_ACCESS_USER:
+	हाल V9FS_ACCESS_CLIENT:
 		uid = current_fsuid();
 		any = 0;
-		break;
+		अवरोध;
 
-	case V9FS_ACCESS_ANY:
+	हाल V9FS_ACCESS_ANY:
 		uid = v9ses->uid;
 		any = 1;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		uid = INVALID_UID;
 		any = 0;
-		break;
-	}
-	return v9fs_fid_lookup_with_uid(dentry, uid, any);
-}
+		अवरोध;
+	पूर्ण
+	वापस v9fs_fid_lookup_with_uid(dentry, uid, any);
+पूर्ण
 
-struct p9_fid *v9fs_writeback_fid(struct dentry *dentry)
-{
-	int err;
-	struct p9_fid *fid, *ofid;
+काष्ठा p9_fid *v9fs_ग_लिखोback_fid(काष्ठा dentry *dentry)
+अणु
+	पूर्णांक err;
+	काष्ठा p9_fid *fid, *ofid;
 
 	ofid = v9fs_fid_lookup_with_uid(dentry, GLOBAL_ROOT_UID, 0);
 	fid = clone_fid(ofid);
-	if (IS_ERR(fid))
-		goto error_out;
+	अगर (IS_ERR(fid))
+		जाओ error_out;
 	p9_client_clunk(ofid);
 	/*
-	 * writeback fid will only be used to write back the
-	 * dirty pages. We always request for the open fid in read-write
-	 * mode so that a partial page write which result in page
-	 * read can work.
+	 * ग_लिखोback fid will only be used to ग_लिखो back the
+	 * dirty pages. We always request क्रम the खोलो fid in पढ़ो-ग_लिखो
+	 * mode so that a partial page ग_लिखो which result in page
+	 * पढ़ो can work.
 	 */
-	err = p9_client_open(fid, O_RDWR);
-	if (err < 0) {
+	err = p9_client_खोलो(fid, O_RDWR);
+	अगर (err < 0) अणु
 		p9_client_clunk(fid);
 		fid = ERR_PTR(err);
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 error_out:
-	return fid;
-}
+	वापस fid;
+पूर्ण

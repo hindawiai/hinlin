@@ -1,216 +1,217 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /******************************************************************************
  *
- * Name: aclinux.h - OS specific defines, etc. for Linux
+ * Name: aclinux.h - OS specअगरic defines, etc. क्रम Linux
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#ifndef __ACLINUX_H__
-#define __ACLINUX_H__
+#अगर_अघोषित __ACLINUX_H__
+#घोषणा __ACLINUX_H__
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-/* ACPICA external files should not include ACPICA headers directly. */
+/* ACPICA बाह्यal files should not include ACPICA headers directly. */
 
-#if !defined(BUILDING_ACPICA) && !defined(_LINUX_ACPI_H)
-#error "Please don't include <acpi/acpi.h> directly, include <linux/acpi.h> instead."
-#endif
+#अगर !defined(BUILDING_ACPICA) && !defined(_LINUX_ACPI_H)
+#त्रुटि "Please don't include <acpi/acpi.h> directly, include <linux/acpi.h> instead."
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर
 
 /* Common (in-kernel/user-space) ACPICA configuration */
 
-#define ACPI_USE_SYSTEM_CLIBRARY
-#define ACPI_USE_DO_WHILE_0
-#define ACPI_IGNORE_PACKAGE_RESOLUTION_ERRORS
+#घोषणा ACPI_USE_SYSTEM_CLIBRARY
+#घोषणा ACPI_USE_DO_WHILE_0
+#घोषणा ACPI_IGNORE_PACKAGE_RESOLUTION_ERRORS
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#define ACPI_USE_SYSTEM_INTTYPES
-#define ACPI_USE_GPE_POLLING
+#घोषणा ACPI_USE_SYSTEM_INTTYPES
+#घोषणा ACPI_USE_GPE_POLLING
 
-/* Kernel specific ACPICA configuration */
+/* Kernel specअगरic ACPICA configuration */
 
-#ifdef CONFIG_PCI
-#define ACPI_PCI_CONFIGURED
-#endif
+#अगर_घोषित CONFIG_PCI
+#घोषणा ACPI_PCI_CONFIGURED
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_REDUCED_HARDWARE_ONLY
-#define ACPI_REDUCED_HARDWARE 1
-#endif
+#अगर_घोषित CONFIG_ACPI_REDUCED_HARDWARE_ONLY
+#घोषणा ACPI_REDUCED_HARDWARE 1
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_DEBUGGER
-#define ACPI_DEBUGGER
-#endif
+#अगर_घोषित CONFIG_ACPI_DEBUGGER
+#घोषणा ACPI_DEBUGGER
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_DEBUG
-#define ACPI_MUTEX_DEBUG
-#endif
+#अगर_घोषित CONFIG_ACPI_DEBUG
+#घोषणा ACPI_MUTEX_DEBUG
+#पूर्ण_अगर
 
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/ctype.h>
-#include <linux/sched.h>
-#include <linux/atomic.h>
-#include <linux/math64.h>
-#include <linux/slab.h>
-#include <linux/spinlock_types.h>
-#ifdef EXPORT_ACPI_INTERFACES
-#include <linux/export.h>
-#endif
-#ifdef CONFIG_ACPI
-#include <asm/acenv.h>
-#endif
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/math64.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock_types.h>
+#अगर_घोषित EXPORT_ACPI_INTERFACES
+#समावेश <linux/export.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ACPI
+#समावेश <यंत्र/acenv.h>
+#पूर्ण_अगर
 
-#define ACPI_INIT_FUNCTION __init
+#घोषणा ACPI_INIT_FUNCTION __init
 
-/* Use a specific bugging default separate from ACPICA */
+/* Use a specअगरic bugging शेष separate from ACPICA */
 
-#undef ACPI_DEBUG_DEFAULT
-#define ACPI_DEBUG_DEFAULT          (ACPI_LV_INFO | ACPI_LV_REPAIR)
+#अघोषित ACPI_DEBUG_DEFAULT
+#घोषणा ACPI_DEBUG_DEFAULT          (ACPI_LV_INFO | ACPI_LV_REPAIR)
 
-#ifndef CONFIG_ACPI
+#अगर_अघोषित CONFIG_ACPI
 
-/* External globals for __KERNEL__, stubs is needed */
+/* External globals क्रम __KERNEL__, stubs is needed */
 
-#define ACPI_GLOBAL(t,a)
-#define ACPI_INIT_GLOBAL(t,a,b)
+#घोषणा ACPI_GLOBAL(t,a)
+#घोषणा ACPI_INIT_GLOBAL(t,a,b)
 
-/* Generating stubs for configurable ACPICA macros */
+/* Generating stubs क्रम configurable ACPICA macros */
 
-#define ACPI_NO_MEM_ALLOCATIONS
+#घोषणा ACPI_NO_MEM_ALLOCATIONS
 
-/* Generating stubs for configurable ACPICA functions */
+/* Generating stubs क्रम configurable ACPICA functions */
 
-#define ACPI_NO_ERROR_MESSAGES
-#undef ACPI_DEBUG_OUTPUT
+#घोषणा ACPI_NO_ERROR_MESSAGES
+#अघोषित ACPI_DEBUG_OUTPUT
 
-/* External interface for __KERNEL__, stub is needed */
+/* External पूर्णांकerface क्रम __KERNEL__, stub is needed */
 
-#define ACPI_EXTERNAL_RETURN_STATUS(prototype) \
-	static ACPI_INLINE prototype {return(AE_NOT_CONFIGURED);}
-#define ACPI_EXTERNAL_RETURN_OK(prototype) \
-	static ACPI_INLINE prototype {return(AE_OK);}
-#define ACPI_EXTERNAL_RETURN_VOID(prototype) \
-	static ACPI_INLINE prototype {return;}
-#define ACPI_EXTERNAL_RETURN_UINT32(prototype) \
-	static ACPI_INLINE prototype {return(0);}
-#define ACPI_EXTERNAL_RETURN_PTR(prototype) \
-	static ACPI_INLINE prototype {return(NULL);}
+#घोषणा ACPI_EXTERNAL_RETURN_STATUS(prototype) \
+	अटल ACPI_INLINE prototype अणुवापस(AE_NOT_CONFIGURED);पूर्ण
+#घोषणा ACPI_EXTERNAL_RETURN_OK(prototype) \
+	अटल ACPI_INLINE prototype अणुवापस(AE_OK);पूर्ण
+#घोषणा ACPI_EXTERNAL_RETURN_VOID(prototype) \
+	अटल ACPI_INLINE prototype अणुवापस;पूर्ण
+#घोषणा ACPI_EXTERNAL_RETURN_UINT32(prototype) \
+	अटल ACPI_INLINE prototype अणुवापस(0);पूर्ण
+#घोषणा ACPI_EXTERNAL_RETURN_PTR(prototype) \
+	अटल ACPI_INLINE prototype अणुवापस(शून्य);पूर्ण
 
-#endif				/* CONFIG_ACPI */
+#पूर्ण_अगर				/* CONFIG_ACPI */
 
-/* Host-dependent types and defines for in-kernel ACPICA */
+/* Host-dependent types and defines क्रम in-kernel ACPICA */
 
-#define ACPI_MACHINE_WIDTH          BITS_PER_LONG
-#define ACPI_USE_NATIVE_MATH64
-#define ACPI_EXPORT_SYMBOL(symbol)  EXPORT_SYMBOL(symbol);
-#define strtoul                     simple_strtoul
+#घोषणा ACPI_MACHINE_WIDTH          BITS_PER_LONG
+#घोषणा ACPI_USE_NATIVE_MATH64
+#घोषणा ACPI_EXPORT_SYMBOL(symbol)  EXPORT_SYMBOL(symbol);
+#घोषणा म_से_अदीर्घ                     simple_म_से_अदीर्घ
 
-#define acpi_cache_t                        struct kmem_cache
-#define acpi_spinlock                       spinlock_t *
-#define acpi_raw_spinlock                   raw_spinlock_t *
-#define acpi_cpu_flags                      unsigned long
+#घोषणा acpi_cache_t                        काष्ठा kmem_cache
+#घोषणा acpi_spinlock                       spinlock_t *
+#घोषणा acpi_raw_spinlock                   raw_spinlock_t *
+#घोषणा acpi_cpu_flags                      अचिन्हित दीर्घ
 
 /* Use native linux version of acpi_os_allocate_zeroed */
 
-#define USE_NATIVE_ALLOCATE_ZEROED
+#घोषणा USE_NATIVE_ALLOCATE_ZEROED
 
-/* Use logical addresses for accessing GPE registers in system memory */
+/* Use logical addresses क्रम accessing GPE रेजिस्टरs in प्रणाली memory */
 
-#define ACPI_GPE_USE_LOGICAL_ADDRESSES
-
-/*
- * Overrides for in-kernel ACPICA
- */
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_initialize
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_terminate
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_allocate
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_allocate_zeroed
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_free
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_acquire_object
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_get_thread_id
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_create_lock
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_create_raw_lock
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_delete_raw_lock
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_acquire_raw_lock
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_release_raw_lock
+#घोषणा ACPI_GPE_USE_LOGICAL_ADDRESSES
 
 /*
- * OSL interfaces used by debugger/disassembler
+ * Overrides क्रम in-kernel ACPICA
  */
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_readable
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_writable
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_initialize_debugger
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_terminate_debugger
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_initialize
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_terminate
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_allocate
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_allocate_zeroed
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_मुक्त
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_acquire_object
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_get_thपढ़ो_id
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_create_lock
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_create_raw_lock
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_delete_raw_lock
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_acquire_raw_lock
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_release_raw_lock
 
 /*
- * OSL interfaces used by utilities
+ * OSL पूर्णांकerfaces used by debugger/disassembler
  */
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_redirect_output
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_get_table_by_name
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_get_table_by_index
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_get_table_by_address
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_open_directory
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_get_next_filename
-#define ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_close_directory
-
-#define ACPI_MSG_ERROR          KERN_ERR "ACPI Error: "
-#define ACPI_MSG_EXCEPTION      KERN_ERR "ACPI Exception: "
-#define ACPI_MSG_WARNING        KERN_WARNING "ACPI Warning: "
-#define ACPI_MSG_INFO           KERN_INFO "ACPI: "
-
-#define ACPI_MSG_BIOS_ERROR     KERN_ERR "ACPI BIOS Error (bug): "
-#define ACPI_MSG_BIOS_WARNING   KERN_WARNING "ACPI BIOS Warning (bug): "
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_पढ़ोable
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_writable
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_initialize_debugger
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_terminate_debugger
 
 /*
- * Linux wants to use designated initializers for function pointer structs.
+ * OSL पूर्णांकerfaces used by utilities
  */
-#define ACPI_STRUCT_INIT(field, value)	.field = value
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_redirect_output
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_get_table_by_name
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_get_table_by_index
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_get_table_by_address
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_खोलो_directory
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_get_next_filename
+#घोषणा ACPI_USE_ALTERNATE_PROTOTYPE_acpi_os_बंद_directory
 
-#else				/* !__KERNEL__ */
+#घोषणा ACPI_MSG_ERROR          KERN_ERR "ACPI Error: "
+#घोषणा ACPI_MSG_EXCEPTION      KERN_ERR "ACPI Exception: "
+#घोषणा ACPI_MSG_WARNING        KERN_WARNING "ACPI Warning: "
+#घोषणा ACPI_MSG_INFO           KERN_INFO "ACPI: "
 
-#define ACPI_USE_STANDARD_HEADERS
+#घोषणा ACPI_MSG_BIOS_ERROR     KERN_ERR "ACPI BIOS Error (bug): "
+#घोषणा ACPI_MSG_BIOS_WARNING   KERN_WARNING "ACPI BIOS Warning (bug): "
 
-#ifdef ACPI_USE_STANDARD_HEADERS
-#include <unistd.h>
-#endif
+/*
+ * Linux wants to use designated initializers क्रम function poपूर्णांकer काष्ठाs.
+ */
+#घोषणा ACPI_STRUCT_INIT(field, value)	.field = value
 
-/* Define/disable kernel-specific declarators */
+#अन्यथा				/* !__KERNEL__ */
 
-#ifndef __init
-#define __init
-#endif
-#ifndef __iomem
-#define __iomem
-#endif
+#घोषणा ACPI_USE_STANDARD_HEADERS
 
-/* Host-dependent types and defines for user-space ACPICA */
+#अगर_घोषित ACPI_USE_STANDARD_HEADERS
+#समावेश <unistd.h>
+#पूर्ण_अगर
 
-#define ACPI_FLUSH_CPU_CACHE()
-#define ACPI_CAST_PTHREAD_T(pthread) ((acpi_thread_id) (pthread))
+/* Define/disable kernel-specअगरic declarators */
 
-#if defined(__ia64__)    || (defined(__x86_64__) && !defined(__ILP32__)) ||\
+#अगर_अघोषित __init
+#घोषणा __init
+#पूर्ण_अगर
+#अगर_अघोषित __iomem
+#घोषणा __iomem
+#पूर्ण_अगर
+
+/* Host-dependent types and defines क्रम user-space ACPICA */
+
+#घोषणा ACPI_FLUSH_CPU_CACHE()
+#घोषणा ACPI_CAST_PTHREAD_T(pthपढ़ो) ((acpi_thपढ़ो_id) (pthपढ़ो))
+
+#अगर defined(__ia64__)    || (defined(__x86_64__) && !defined(__ILP32__)) ||\
 	defined(__aarch64__) || defined(__PPC64__) ||\
 	defined(__s390x__) ||\
 	(defined(__riscv) && (defined(__LP64__) || defined(_LP64)))
-#define ACPI_MACHINE_WIDTH          64
-#define COMPILER_DEPENDENT_INT64    long
-#define COMPILER_DEPENDENT_UINT64   unsigned long
-#else
-#define ACPI_MACHINE_WIDTH          32
-#define COMPILER_DEPENDENT_INT64    long long
-#define COMPILER_DEPENDENT_UINT64   unsigned long long
-#define ACPI_USE_NATIVE_DIVIDE
-#define ACPI_USE_NATIVE_MATH64
-#endif
+#घोषणा ACPI_MACHINE_WIDTH          64
+#घोषणा COMPILER_DEPENDENT_INT64    दीर्घ
+#घोषणा COMPILER_DEPENDENT_UINT64   अचिन्हित दीर्घ
+#अन्यथा
+#घोषणा ACPI_MACHINE_WIDTH          32
+#घोषणा COMPILER_DEPENDENT_INT64    दीर्घ दीर्घ
+#घोषणा COMPILER_DEPENDENT_UINT64   अचिन्हित दीर्घ दीर्घ
+#घोषणा ACPI_USE_NATIVE_DIVIDE
+#घोषणा ACPI_USE_NATIVE_MATH64
+#पूर्ण_अगर
 
-#ifndef __cdecl
-#define __cdecl
-#endif
+#अगर_अघोषित __cdecl
+#घोषणा __cdecl
+#पूर्ण_अगर
 
-#endif				/* __KERNEL__ */
+#पूर्ण_अगर				/* __KERNEL__ */
 
-#endif				/* __ACLINUX_H__ */
+#पूर्ण_अगर				/* __ACLINUX_H__ */

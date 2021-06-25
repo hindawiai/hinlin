@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* FTP extension for connection tracking. */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* FTP extension क्रम connection tracking. */
 
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
@@ -7,26 +8,26 @@
  * (C) 2006-2012 Patrick McHardy <kaber@trash.net>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/netfilter.h>
-#include <linux/ip.h>
-#include <linux/slab.h>
-#include <linux/ipv6.h>
-#include <linux/ctype.h>
-#include <linux/inet.h>
-#include <net/checksum.h>
-#include <net/tcp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/inet.h>
+#समावेश <net/checksum.h>
+#समावेश <net/tcp.h>
 
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_expect.h>
-#include <net/netfilter/nf_conntrack_ecache.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <linux/netfilter/nf_conntrack_ftp.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
+#समावेश <net/netfilter/nf_conntrack_ecache.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <linux/netfilter/nf_conntrack_ftp.h>
 
-#define HELPER_NAME "ftp"
+#घोषणा HELPER_NAME "ftp"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Rusty Russell <rusty@rustcorp.com.au>");
@@ -35,418 +36,418 @@ MODULE_ALIAS("ip_conntrack_ftp");
 MODULE_ALIAS_NFCT_HELPER(HELPER_NAME);
 
 /* This is slow, but it's simple. --RR */
-static char *ftp_buffer;
+अटल अक्षर *ftp_buffer;
 
-static DEFINE_SPINLOCK(nf_ftp_lock);
+अटल DEFINE_SPINLOCK(nf_ftp_lock);
 
-#define MAX_PORTS 8
-static u_int16_t ports[MAX_PORTS];
-static unsigned int ports_c;
-module_param_array(ports, ushort, &ports_c, 0400);
+#घोषणा MAX_PORTS 8
+अटल u_पूर्णांक16_t ports[MAX_PORTS];
+अटल अचिन्हित पूर्णांक ports_c;
+module_param_array(ports, uलघु, &ports_c, 0400);
 
-static bool loose;
+अटल bool loose;
 module_param(loose, bool, 0600);
 
-unsigned int (*nf_nat_ftp_hook)(struct sk_buff *skb,
-				enum ip_conntrack_info ctinfo,
-				enum nf_ct_ftp_type type,
-				unsigned int protoff,
-				unsigned int matchoff,
-				unsigned int matchlen,
-				struct nf_conntrack_expect *exp);
+अचिन्हित पूर्णांक (*nf_nat_ftp_hook)(काष्ठा sk_buff *skb,
+				क्रमागत ip_conntrack_info ctinfo,
+				क्रमागत nf_ct_ftp_type type,
+				अचिन्हित पूर्णांक protoff,
+				अचिन्हित पूर्णांक matchoff,
+				अचिन्हित पूर्णांक matchlen,
+				काष्ठा nf_conntrack_expect *exp);
 EXPORT_SYMBOL_GPL(nf_nat_ftp_hook);
 
-static int try_rfc959(const char *, size_t, struct nf_conntrack_man *,
-		      char, unsigned int *);
-static int try_rfc1123(const char *, size_t, struct nf_conntrack_man *,
-		       char, unsigned int *);
-static int try_eprt(const char *, size_t, struct nf_conntrack_man *,
-		    char, unsigned int *);
-static int try_epsv_response(const char *, size_t, struct nf_conntrack_man *,
-			     char, unsigned int *);
+अटल पूर्णांक try_rfc959(स्थिर अक्षर *, माप_प्रकार, काष्ठा nf_conntrack_man *,
+		      अक्षर, अचिन्हित पूर्णांक *);
+अटल पूर्णांक try_rfc1123(स्थिर अक्षर *, माप_प्रकार, काष्ठा nf_conntrack_man *,
+		       अक्षर, अचिन्हित पूर्णांक *);
+अटल पूर्णांक try_eprt(स्थिर अक्षर *, माप_प्रकार, काष्ठा nf_conntrack_man *,
+		    अक्षर, अचिन्हित पूर्णांक *);
+अटल पूर्णांक try_epsv_response(स्थिर अक्षर *, माप_प्रकार, काष्ठा nf_conntrack_man *,
+			     अक्षर, अचिन्हित पूर्णांक *);
 
-static struct ftp_search {
-	const char *pattern;
-	size_t plen;
-	char skip;
-	char term;
-	enum nf_ct_ftp_type ftptype;
-	int (*getnum)(const char *, size_t, struct nf_conntrack_man *, char, unsigned int *);
-} search[IP_CT_DIR_MAX][2] = {
-	[IP_CT_DIR_ORIGINAL] = {
-		{
+अटल काष्ठा ftp_search अणु
+	स्थिर अक्षर *pattern;
+	माप_प्रकार plen;
+	अक्षर skip;
+	अक्षर term;
+	क्रमागत nf_ct_ftp_type ftptype;
+	पूर्णांक (*getnum)(स्थिर अक्षर *, माप_प्रकार, काष्ठा nf_conntrack_man *, अक्षर, अचिन्हित पूर्णांक *);
+पूर्ण search[IP_CT_सूची_MAX][2] = अणु
+	[IP_CT_सूची_ORIGINAL] = अणु
+		अणु
 			.pattern	= "PORT",
-			.plen		= sizeof("PORT") - 1,
+			.plen		= माप("PORT") - 1,
 			.skip		= ' ',
 			.term		= '\r',
 			.ftptype	= NF_CT_FTP_PORT,
 			.getnum		= try_rfc959,
-		},
-		{
+		पूर्ण,
+		अणु
 			.pattern	= "EPRT",
-			.plen		= sizeof("EPRT") - 1,
+			.plen		= माप("EPRT") - 1,
 			.skip		= ' ',
 			.term		= '\r',
 			.ftptype	= NF_CT_FTP_EPRT,
 			.getnum		= try_eprt,
-		},
-	},
-	[IP_CT_DIR_REPLY] = {
-		{
+		पूर्ण,
+	पूर्ण,
+	[IP_CT_सूची_REPLY] = अणु
+		अणु
 			.pattern	= "227 ",
-			.plen		= sizeof("227 ") - 1,
+			.plen		= माप("227 ") - 1,
 			.ftptype	= NF_CT_FTP_PASV,
 			.getnum		= try_rfc1123,
-		},
-		{
+		पूर्ण,
+		अणु
 			.pattern	= "229 ",
-			.plen		= sizeof("229 ") - 1,
+			.plen		= माप("229 ") - 1,
 			.skip		= '(',
 			.term		= ')',
 			.ftptype	= NF_CT_FTP_EPSV,
 			.getnum		= try_epsv_response,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int
-get_ipv6_addr(const char *src, size_t dlen, struct in6_addr *dst, u_int8_t term)
-{
-	const char *end;
-	int ret = in6_pton(src, min_t(size_t, dlen, 0xffff), (u8 *)dst, term, &end);
-	if (ret > 0)
-		return (int)(end - src);
-	return 0;
-}
+अटल पूर्णांक
+get_ipv6_addr(स्थिर अक्षर *src, माप_प्रकार dlen, काष्ठा in6_addr *dst, u_पूर्णांक8_t term)
+अणु
+	स्थिर अक्षर *end;
+	पूर्णांक ret = in6_pton(src, min_t(माप_प्रकार, dlen, 0xffff), (u8 *)dst, term, &end);
+	अगर (ret > 0)
+		वापस (पूर्णांक)(end - src);
+	वापस 0;
+पूर्ण
 
-static int try_number(const char *data, size_t dlen, u_int32_t array[],
-		      int array_size, char sep, char term)
-{
-	u_int32_t i, len;
+अटल पूर्णांक try_number(स्थिर अक्षर *data, माप_प्रकार dlen, u_पूर्णांक32_t array[],
+		      पूर्णांक array_size, अक्षर sep, अक्षर term)
+अणु
+	u_पूर्णांक32_t i, len;
 
-	memset(array, 0, sizeof(array[0])*array_size);
+	स_रखो(array, 0, माप(array[0])*array_size);
 
-	/* Keep data pointing at next char. */
-	for (i = 0, len = 0; len < dlen && i < array_size; len++, data++) {
-		if (*data >= '0' && *data <= '9') {
+	/* Keep data poपूर्णांकing at next अक्षर. */
+	क्रम (i = 0, len = 0; len < dlen && i < array_size; len++, data++) अणु
+		अगर (*data >= '0' && *data <= '9') अणु
 			array[i] = array[i]*10 + *data - '0';
-		}
-		else if (*data == sep)
+		पूर्ण
+		अन्यथा अगर (*data == sep)
 			i++;
-		else {
-			/* Unexpected character; true if it's the
-			   terminator (or we don't care about one)
+		अन्यथा अणु
+			/* Unexpected अक्षरacter; true अगर it's the
+			   terminator (or we करोn't care about one)
 			   and we're finished. */
-			if ((*data == term || !term) && i == array_size - 1)
-				return len;
+			अगर ((*data == term || !term) && i == array_size - 1)
+				वापस len;
 
 			pr_debug("Char %u (got %u nums) `%u' unexpected\n",
 				 len, i, *data);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	pr_debug("Failed to fill %u numbers separated by %c\n",
 		 array_size, sep);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Returns 0, or length of numbers: 192,168,1,1,5,6 */
-static int try_rfc959(const char *data, size_t dlen,
-		      struct nf_conntrack_man *cmd, char term,
-		      unsigned int *offset)
-{
-	int length;
-	u_int32_t array[6];
+अटल पूर्णांक try_rfc959(स्थिर अक्षर *data, माप_प्रकार dlen,
+		      काष्ठा nf_conntrack_man *cmd, अक्षर term,
+		      अचिन्हित पूर्णांक *offset)
+अणु
+	पूर्णांक length;
+	u_पूर्णांक32_t array[6];
 
 	length = try_number(data, dlen, array, 6, ',', term);
-	if (length == 0)
-		return 0;
+	अगर (length == 0)
+		वापस 0;
 
 	cmd->u3.ip = htonl((array[0] << 24) | (array[1] << 16) |
 				    (array[2] << 8) | array[3]);
 	cmd->u.tcp.port = htons((array[4] << 8) | array[5]);
-	return length;
-}
+	वापस length;
+पूर्ण
 
 /*
  * From RFC 1123:
- * The format of the 227 reply to a PASV command is not
+ * The क्रमmat of the 227 reply to a PASV command is not
  * well standardized.  In particular, an FTP client cannot
  * assume that the parentheses shown on page 40 of RFC-959
  * will be present (and in fact, Figure 3 on page 43 omits
- * them).  Therefore, a User-FTP program that interprets
- * the PASV reply must scan the reply for the first digit
+ * them).  Thereक्रमe, a User-FTP program that पूर्णांकerprets
+ * the PASV reply must scan the reply क्रम the first digit
  * of the host and port numbers.
  */
-static int try_rfc1123(const char *data, size_t dlen,
-		       struct nf_conntrack_man *cmd, char term,
-		       unsigned int *offset)
-{
-	int i;
-	for (i = 0; i < dlen; i++)
-		if (isdigit(data[i]))
-			break;
+अटल पूर्णांक try_rfc1123(स्थिर अक्षर *data, माप_प्रकार dlen,
+		       काष्ठा nf_conntrack_man *cmd, अक्षर term,
+		       अचिन्हित पूर्णांक *offset)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < dlen; i++)
+		अगर (है_अंक(data[i]))
+			अवरोध;
 
-	if (i == dlen)
-		return 0;
+	अगर (i == dlen)
+		वापस 0;
 
 	*offset += i;
 
-	return try_rfc959(data + i, dlen - i, cmd, 0, offset);
-}
+	वापस try_rfc959(data + i, dlen - i, cmd, 0, offset);
+पूर्ण
 
 /* Grab port: number up to delimiter */
-static int get_port(const char *data, int start, size_t dlen, char delim,
+अटल पूर्णांक get_port(स्थिर अक्षर *data, पूर्णांक start, माप_प्रकार dlen, अक्षर delim,
 		    __be16 *port)
-{
-	u_int16_t tmp_port = 0;
-	int i;
+अणु
+	u_पूर्णांक16_t पंचांगp_port = 0;
+	पूर्णांक i;
 
-	for (i = start; i < dlen; i++) {
+	क्रम (i = start; i < dlen; i++) अणु
 		/* Finished? */
-		if (data[i] == delim) {
-			if (tmp_port == 0)
-				break;
-			*port = htons(tmp_port);
-			pr_debug("get_port: return %d\n", tmp_port);
-			return i + 1;
-		}
-		else if (data[i] >= '0' && data[i] <= '9')
-			tmp_port = tmp_port*10 + data[i] - '0';
-		else { /* Some other crap */
+		अगर (data[i] == delim) अणु
+			अगर (पंचांगp_port == 0)
+				अवरोध;
+			*port = htons(पंचांगp_port);
+			pr_debug("get_port: return %d\n", पंचांगp_port);
+			वापस i + 1;
+		पूर्ण
+		अन्यथा अगर (data[i] >= '0' && data[i] <= '9')
+			पंचांगp_port = पंचांगp_port*10 + data[i] - '0';
+		अन्यथा अणु /* Some other crap */
 			pr_debug("get_port: invalid char.\n");
-			break;
-		}
-	}
-	return 0;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Returns 0, or length of numbers: |1|132.235.1.2|6275| or |2|3ffe::1|6275| */
-static int try_eprt(const char *data, size_t dlen, struct nf_conntrack_man *cmd,
-		    char term, unsigned int *offset)
-{
-	char delim;
-	int length;
+अटल पूर्णांक try_eprt(स्थिर अक्षर *data, माप_प्रकार dlen, काष्ठा nf_conntrack_man *cmd,
+		    अक्षर term, अचिन्हित पूर्णांक *offset)
+अणु
+	अक्षर delim;
+	पूर्णांक length;
 
-	/* First character is delimiter, then "1" for IPv4 or "2" for IPv6,
+	/* First अक्षरacter is delimiter, then "1" क्रम IPv4 or "2" क्रम IPv6,
 	   then delimiter again. */
-	if (dlen <= 3) {
+	अगर (dlen <= 3) अणु
 		pr_debug("EPRT: too short\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	delim = data[0];
-	if (isdigit(delim) || delim < 33 || delim > 126 || data[2] != delim) {
+	अगर (है_अंक(delim) || delim < 33 || delim > 126 || data[2] != delim) अणु
 		pr_debug("try_eprt: invalid delimiter.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if ((cmd->l3num == PF_INET && data[1] != '1') ||
-	    (cmd->l3num == PF_INET6 && data[1] != '2')) {
+	अगर ((cmd->l3num == PF_INET && data[1] != '1') ||
+	    (cmd->l3num == PF_INET6 && data[1] != '2')) अणु
 		pr_debug("EPRT: invalid protocol number.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	pr_debug("EPRT: Got %c%c%c\n", delim, data[1], delim);
 
-	if (data[1] == '1') {
-		u_int32_t array[4];
+	अगर (data[1] == '1') अणु
+		u_पूर्णांक32_t array[4];
 
 		/* Now we have IP address. */
 		length = try_number(data + 3, dlen - 3, array, 4, '.', delim);
-		if (length != 0)
+		अगर (length != 0)
 			cmd->u3.ip = htonl((array[0] << 24) | (array[1] << 16)
 					   | (array[2] << 8) | array[3]);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Now we have IPv6 address. */
 		length = get_ipv6_addr(data + 3, dlen - 3,
-				       (struct in6_addr *)cmd->u3.ip6, delim);
-	}
+				       (काष्ठा in6_addr *)cmd->u3.ip6, delim);
+	पूर्ण
 
-	if (length == 0)
-		return 0;
+	अगर (length == 0)
+		वापस 0;
 	pr_debug("EPRT: Got IP address!\n");
 	/* Start offset includes initial "|1|", and trailing delimiter */
-	return get_port(data, 3 + length + 1, dlen, delim, &cmd->u.tcp.port);
-}
+	वापस get_port(data, 3 + length + 1, dlen, delim, &cmd->u.tcp.port);
+पूर्ण
 
 /* Returns 0, or length of numbers: |||6446| */
-static int try_epsv_response(const char *data, size_t dlen,
-			     struct nf_conntrack_man *cmd, char term,
-			     unsigned int *offset)
-{
-	char delim;
+अटल पूर्णांक try_epsv_response(स्थिर अक्षर *data, माप_प्रकार dlen,
+			     काष्ठा nf_conntrack_man *cmd, अक्षर term,
+			     अचिन्हित पूर्णांक *offset)
+अणु
+	अक्षर delim;
 
 	/* Three delimiters. */
-	if (dlen <= 3) return 0;
+	अगर (dlen <= 3) वापस 0;
 	delim = data[0];
-	if (isdigit(delim) || delim < 33 || delim > 126 ||
+	अगर (है_अंक(delim) || delim < 33 || delim > 126 ||
 	    data[1] != delim || data[2] != delim)
-		return 0;
+		वापस 0;
 
-	return get_port(data, 3, dlen, delim, &cmd->u.tcp.port);
-}
+	वापस get_port(data, 3, dlen, delim, &cmd->u.tcp.port);
+पूर्ण
 
-/* Return 1 for match, 0 for accept, -1 for partial. */
-static int find_pattern(const char *data, size_t dlen,
-			const char *pattern, size_t plen,
-			char skip, char term,
-			unsigned int *numoff,
-			unsigned int *numlen,
-			struct nf_conntrack_man *cmd,
-			int (*getnum)(const char *, size_t,
-				      struct nf_conntrack_man *, char,
-				      unsigned int *))
-{
-	size_t i = plen;
+/* Return 1 क्रम match, 0 क्रम accept, -1 क्रम partial. */
+अटल पूर्णांक find_pattern(स्थिर अक्षर *data, माप_प्रकार dlen,
+			स्थिर अक्षर *pattern, माप_प्रकार plen,
+			अक्षर skip, अक्षर term,
+			अचिन्हित पूर्णांक *numoff,
+			अचिन्हित पूर्णांक *numlen,
+			काष्ठा nf_conntrack_man *cmd,
+			पूर्णांक (*getnum)(स्थिर अक्षर *, माप_प्रकार,
+				      काष्ठा nf_conntrack_man *, अक्षर,
+				      अचिन्हित पूर्णांक *))
+अणु
+	माप_प्रकार i = plen;
 
 	pr_debug("find_pattern `%s': dlen = %zu\n", pattern, dlen);
 
-	if (dlen <= plen) {
-		/* Short packet: try for partial? */
-		if (strncasecmp(data, pattern, dlen) == 0)
-			return -1;
-		else return 0;
-	}
+	अगर (dlen <= plen) अणु
+		/* Short packet: try क्रम partial? */
+		अगर (strnहालcmp(data, pattern, dlen) == 0)
+			वापस -1;
+		अन्यथा वापस 0;
+	पूर्ण
 
-	if (strncasecmp(data, pattern, plen) != 0)
-		return 0;
+	अगर (strnहालcmp(data, pattern, plen) != 0)
+		वापस 0;
 
 	pr_debug("Pattern matches!\n");
-	/* Now we've found the constant string, try to skip
-	   to the 'skip' character */
-	if (skip) {
-		for (i = plen; data[i] != skip; i++)
-			if (i == dlen - 1) return -1;
+	/* Now we've found the स्थिरant string, try to skip
+	   to the 'skip' अक्षरacter */
+	अगर (skip) अणु
+		क्रम (i = plen; data[i] != skip; i++)
+			अगर (i == dlen - 1) वापस -1;
 
-		/* Skip over the last character */
+		/* Skip over the last अक्षरacter */
 		i++;
-	}
+	पूर्ण
 
 	pr_debug("Skipped up to 0x%hhx delimiter!\n", skip);
 
 	*numoff = i;
 	*numlen = getnum(data + i, dlen - i, cmd, term, numoff);
-	if (!*numlen)
-		return -1;
+	अगर (!*numlen)
+		वापस -1;
 
 	pr_debug("Match succeeded!\n");
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Look up to see if we're just after a \n. */
-static int find_nl_seq(u32 seq, const struct nf_ct_ftp_master *info, int dir)
-{
-	unsigned int i;
+/* Look up to see अगर we're just after a \न. */
+अटल पूर्णांक find_nl_seq(u32 seq, स्थिर काष्ठा nf_ct_ftp_master *info, पूर्णांक dir)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < info->seq_aft_nl_num[dir]; i++)
-		if (info->seq_aft_nl[dir][i] == seq)
-			return 1;
-	return 0;
-}
+	क्रम (i = 0; i < info->seq_aft_nl_num[dir]; i++)
+		अगर (info->seq_aft_nl[dir][i] == seq)
+			वापस 1;
+	वापस 0;
+पूर्ण
 
-/* We don't update if it's older than what we have. */
-static void update_nl_seq(struct nf_conn *ct, u32 nl_seq,
-			  struct nf_ct_ftp_master *info, int dir,
-			  struct sk_buff *skb)
-{
-	unsigned int i, oldest;
+/* We करोn't update if it's older than what we have. */
+अटल व्योम update_nl_seq(काष्ठा nf_conn *ct, u32 nl_seq,
+			  काष्ठा nf_ct_ftp_master *info, पूर्णांक dir,
+			  काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक i, oldest;
 
-	/* Look for oldest: if we find exact match, we're done. */
-	for (i = 0; i < info->seq_aft_nl_num[dir]; i++) {
-		if (info->seq_aft_nl[dir][i] == nl_seq)
-			return;
-	}
+	/* Look क्रम oldest: अगर we find exact match, we're करोne. */
+	क्रम (i = 0; i < info->seq_aft_nl_num[dir]; i++) अणु
+		अगर (info->seq_aft_nl[dir][i] == nl_seq)
+			वापस;
+	पूर्ण
 
-	if (info->seq_aft_nl_num[dir] < NUM_SEQ_TO_REMEMBER) {
+	अगर (info->seq_aft_nl_num[dir] < NUM_SEQ_TO_REMEMBER) अणु
 		info->seq_aft_nl[dir][info->seq_aft_nl_num[dir]++] = nl_seq;
-	} else {
-		if (before(info->seq_aft_nl[dir][0], info->seq_aft_nl[dir][1]))
+	पूर्ण अन्यथा अणु
+		अगर (beक्रमe(info->seq_aft_nl[dir][0], info->seq_aft_nl[dir][1]))
 			oldest = 0;
-		else
+		अन्यथा
 			oldest = 1;
 
-		if (after(nl_seq, info->seq_aft_nl[dir][oldest]))
+		अगर (after(nl_seq, info->seq_aft_nl[dir][oldest]))
 			info->seq_aft_nl[dir][oldest] = nl_seq;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int help(struct sk_buff *skb,
-		unsigned int protoff,
-		struct nf_conn *ct,
-		enum ip_conntrack_info ctinfo)
-{
-	unsigned int dataoff, datalen;
-	const struct tcphdr *th;
-	struct tcphdr _tcph;
-	const char *fb_ptr;
-	int ret;
+अटल पूर्णांक help(काष्ठा sk_buff *skb,
+		अचिन्हित पूर्णांक protoff,
+		काष्ठा nf_conn *ct,
+		क्रमागत ip_conntrack_info ctinfo)
+अणु
+	अचिन्हित पूर्णांक dataoff, datalen;
+	स्थिर काष्ठा tcphdr *th;
+	काष्ठा tcphdr _tcph;
+	स्थिर अक्षर *fb_ptr;
+	पूर्णांक ret;
 	u32 seq;
-	int dir = CTINFO2DIR(ctinfo);
-	unsigned int matchlen, matchoff;
-	struct nf_ct_ftp_master *ct_ftp_info = nfct_help_data(ct);
-	struct nf_conntrack_expect *exp;
-	union nf_inet_addr *daddr;
-	struct nf_conntrack_man cmd = {};
-	unsigned int i;
-	int found = 0, ends_in_nl;
+	पूर्णांक dir = CTINFO2सूची(ctinfo);
+	अचिन्हित पूर्णांक matchlen, matchoff;
+	काष्ठा nf_ct_ftp_master *ct_ftp_info = nfct_help_data(ct);
+	काष्ठा nf_conntrack_expect *exp;
+	जोड़ nf_inet_addr *daddr;
+	काष्ठा nf_conntrack_man cmd = अणुपूर्ण;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक found = 0, ends_in_nl;
 	typeof(nf_nat_ftp_hook) nf_nat_ftp;
 
 	/* Until there's been traffic both ways, don't look in packets. */
-	if (ctinfo != IP_CT_ESTABLISHED &&
-	    ctinfo != IP_CT_ESTABLISHED_REPLY) {
+	अगर (ctinfo != IP_CT_ESTABLISHED &&
+	    ctinfo != IP_CT_ESTABLISHED_REPLY) अणु
 		pr_debug("ftp: Conntrackinfo = %u\n", ctinfo);
-		return NF_ACCEPT;
-	}
+		वापस NF_ACCEPT;
+	पूर्ण
 
-	th = skb_header_pointer(skb, protoff, sizeof(_tcph), &_tcph);
-	if (th == NULL)
-		return NF_ACCEPT;
+	th = skb_header_poपूर्णांकer(skb, protoff, माप(_tcph), &_tcph);
+	अगर (th == शून्य)
+		वापस NF_ACCEPT;
 
-	dataoff = protoff + th->doff * 4;
+	dataoff = protoff + th->करोff * 4;
 	/* No data? */
-	if (dataoff >= skb->len) {
+	अगर (dataoff >= skb->len) अणु
 		pr_debug("ftp: dataoff(%u) >= skblen(%u)\n", dataoff,
 			 skb->len);
-		return NF_ACCEPT;
-	}
+		वापस NF_ACCEPT;
+	पूर्ण
 	datalen = skb->len - dataoff;
 
 	spin_lock_bh(&nf_ftp_lock);
-	fb_ptr = skb_header_pointer(skb, dataoff, datalen, ftp_buffer);
-	if (!fb_ptr) {
+	fb_ptr = skb_header_poपूर्णांकer(skb, dataoff, datalen, ftp_buffer);
+	अगर (!fb_ptr) अणु
 		spin_unlock_bh(&nf_ftp_lock);
-		return NF_ACCEPT;
-	}
+		वापस NF_ACCEPT;
+	पूर्ण
 
 	ends_in_nl = (fb_ptr[datalen - 1] == '\n');
 	seq = ntohl(th->seq) + datalen;
 
-	/* Look up to see if we're just after a \n. */
-	if (!find_nl_seq(ntohl(th->seq), ct_ftp_info, dir)) {
-		/* We're picking up this, clear flags and let it continue */
-		if (unlikely(ct_ftp_info->flags[dir] & NF_CT_FTP_SEQ_PICKUP)) {
+	/* Look up to see अगर we're just after a \न. */
+	अगर (!find_nl_seq(ntohl(th->seq), ct_ftp_info, dir)) अणु
+		/* We're picking up this, clear flags and let it जारी */
+		अगर (unlikely(ct_ftp_info->flags[dir] & NF_CT_FTP_SEQ_PICKUP)) अणु
 			ct_ftp_info->flags[dir] ^= NF_CT_FTP_SEQ_PICKUP;
-			goto skip_nl_seq;
-		}
+			जाओ skip_nl_seq;
+		पूर्ण
 
-		/* Now if this ends in \n, update ftp info. */
+		/* Now अगर this ends in \न, update ftp info. */
 		pr_debug("nf_conntrack_ftp: wrong seq pos %s(%u) or %s(%u)\n",
 			 ct_ftp_info->seq_aft_nl_num[dir] > 0 ? "" : "(UNSET)",
 			 ct_ftp_info->seq_aft_nl[dir][0],
 			 ct_ftp_info->seq_aft_nl_num[dir] > 1 ? "" : "(UNSET)",
 			 ct_ftp_info->seq_aft_nl[dir][1]);
 		ret = NF_ACCEPT;
-		goto out_update_nl;
-	}
+		जाओ out_update_nl;
+	पूर्ण
 
 skip_nl_seq:
 	/* Initialize IP/IPv6 addr to expected address (it's not mentioned
 	   in EPSV responses) */
 	cmd.l3num = nf_ct_l3num(ct);
-	memcpy(cmd.u3.all, &ct->tuplehash[dir].tuple.src.u3.all,
-	       sizeof(cmd.u3.all));
+	स_नकल(cmd.u3.all, &ct->tuplehash[dir].tuple.src.u3.all,
+	       माप(cmd.u3.all));
 
-	for (i = 0; i < ARRAY_SIZE(search[dir]); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(search[dir]); i++) अणु
 		found = find_pattern(fb_ptr, datalen,
 				     search[dir][i].pattern,
 				     search[dir][i].plen,
@@ -455,32 +456,32 @@ skip_nl_seq:
 				     &matchoff, &matchlen,
 				     &cmd,
 				     search[dir][i].getnum);
-		if (found) break;
-	}
-	if (found == -1) {
-		/* We don't usually drop packets.  After all, this is
+		अगर (found) अवरोध;
+	पूर्ण
+	अगर (found == -1) अणु
+		/* We करोn't usually drop packets.  After all, this is
 		   connection tracking, not packet filtering.
-		   However, it is necessary for accurate tracking in
-		   this case. */
+		   However, it is necessary क्रम accurate tracking in
+		   this हाल. */
 		nf_ct_helper_log(skb, ct, "partial matching of `%s'",
 			         search[dir][i].pattern);
 		ret = NF_DROP;
-		goto out;
-	} else if (found == 0) { /* No match */
+		जाओ out;
+	पूर्ण अन्यथा अगर (found == 0) अणु /* No match */
 		ret = NF_ACCEPT;
-		goto out_update_nl;
-	}
+		जाओ out_update_nl;
+	पूर्ण
 
 	pr_debug("conntrack_ftp: match `%.*s' (%u bytes at %u)\n",
 		 matchlen, fb_ptr + matchoff,
 		 matchlen, ntohl(th->seq) + matchoff);
 
 	exp = nf_ct_expect_alloc(ct);
-	if (exp == NULL) {
+	अगर (exp == शून्य) अणु
 		nf_ct_helper_log(skb, ct, "cannot alloc expectation");
 		ret = NF_DROP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* We refer to the reverse direction ("!dir") tuples here,
 	 * because we're expecting something in the other direction.
@@ -488,108 +489,108 @@ skip_nl_seq:
 	daddr = &ct->tuplehash[!dir].tuple.dst.u3;
 
 	/* Update the ftp info */
-	if ((cmd.l3num == nf_ct_l3num(ct)) &&
-	    memcmp(&cmd.u3.all, &ct->tuplehash[dir].tuple.src.u3.all,
-		     sizeof(cmd.u3.all))) {
+	अगर ((cmd.l3num == nf_ct_l3num(ct)) &&
+	    स_भेद(&cmd.u3.all, &ct->tuplehash[dir].tuple.src.u3.all,
+		     माप(cmd.u3.all))) अणु
 		/* Enrico Scholz's passive FTP to partially RNAT'd ftp
 		   server: it really wants us to connect to a
-		   different IP address.  Simply don't record it for
+		   dअगरferent IP address.  Simply करोn't record it क्रम
 		   NAT. */
-		if (cmd.l3num == PF_INET) {
+		अगर (cmd.l3num == PF_INET) अणु
 			pr_debug("NOT RECORDING: %pI4 != %pI4\n",
 				 &cmd.u3.ip,
 				 &ct->tuplehash[dir].tuple.src.u3.ip);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_debug("NOT RECORDING: %pI6 != %pI6\n",
 				 cmd.u3.ip6,
 				 ct->tuplehash[dir].tuple.src.u3.ip6);
-		}
+		पूर्ण
 
 		/* Thanks to Cristiano Lincoln Mattos
-		   <lincoln@cesar.org.br> for reporting this potential
-		   problem (DMZ machines opening holes to internal
+		   <lincoln@cesar.org.br> क्रम reporting this potential
+		   problem (DMZ machines खोलोing holes to पूर्णांकernal
 		   networks, or the packet filter itself). */
-		if (!loose) {
+		अगर (!loose) अणु
 			ret = NF_ACCEPT;
-			goto out_put_expect;
-		}
+			जाओ out_put_expect;
+		पूर्ण
 		daddr = &cmd.u3;
-	}
+	पूर्ण
 
 	nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT, cmd.l3num,
 			  &ct->tuplehash[!dir].tuple.src.u3, daddr,
-			  IPPROTO_TCP, NULL, &cmd.u.tcp.port);
+			  IPPROTO_TCP, शून्य, &cmd.u.tcp.port);
 
-	/* Now, NAT might want to mangle the packet, and register the
+	/* Now, NAT might want to mangle the packet, and रेजिस्टर the
 	 * (possibly changed) expectation itself. */
 	nf_nat_ftp = rcu_dereference(nf_nat_ftp_hook);
-	if (nf_nat_ftp && ct->status & IPS_NAT_MASK)
+	अगर (nf_nat_ftp && ct->status & IPS_NAT_MASK)
 		ret = nf_nat_ftp(skb, ctinfo, search[dir][i].ftptype,
 				 protoff, matchoff, matchlen, exp);
-	else {
+	अन्यथा अणु
 		/* Can't expect this?  Best to drop packet now. */
-		if (nf_ct_expect_related(exp, 0) != 0) {
+		अगर (nf_ct_expect_related(exp, 0) != 0) अणु
 			nf_ct_helper_log(skb, ct, "cannot add expectation");
 			ret = NF_DROP;
-		} else
+		पूर्ण अन्यथा
 			ret = NF_ACCEPT;
-	}
+	पूर्ण
 
 out_put_expect:
 	nf_ct_expect_put(exp);
 
 out_update_nl:
-	/* Now if this ends in \n, update ftp info.  Seq may have been
+	/* Now अगर this ends in \न, update ftp info.  Seq may have been
 	 * adjusted by NAT code. */
-	if (ends_in_nl)
+	अगर (ends_in_nl)
 		update_nl_seq(ct, seq, ct_ftp_info, dir, skb);
  out:
 	spin_unlock_bh(&nf_ftp_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nf_ct_ftp_from_nlattr(struct nlattr *attr, struct nf_conn *ct)
-{
-	struct nf_ct_ftp_master *ftp = nfct_help_data(ct);
+अटल पूर्णांक nf_ct_ftp_from_nlattr(काष्ठा nlattr *attr, काष्ठा nf_conn *ct)
+अणु
+	काष्ठा nf_ct_ftp_master *ftp = nfct_help_data(ct);
 
 	/* This conntrack has been injected from user-space, always pick up
 	 * sequence tracking. Otherwise, the first FTP command after the
-	 * failover breaks.
+	 * failover अवरोधs.
 	 */
-	ftp->flags[IP_CT_DIR_ORIGINAL] |= NF_CT_FTP_SEQ_PICKUP;
-	ftp->flags[IP_CT_DIR_REPLY] |= NF_CT_FTP_SEQ_PICKUP;
-	return 0;
-}
+	ftp->flags[IP_CT_सूची_ORIGINAL] |= NF_CT_FTP_SEQ_PICKUP;
+	ftp->flags[IP_CT_सूची_REPLY] |= NF_CT_FTP_SEQ_PICKUP;
+	वापस 0;
+पूर्ण
 
-static struct nf_conntrack_helper ftp[MAX_PORTS * 2] __read_mostly;
+अटल काष्ठा nf_conntrack_helper ftp[MAX_PORTS * 2] __पढ़ो_mostly;
 
-static const struct nf_conntrack_expect_policy ftp_exp_policy = {
+अटल स्थिर काष्ठा nf_conntrack_expect_policy ftp_exp_policy = अणु
 	.max_expected	= 1,
-	.timeout	= 5 * 60,
-};
+	.समयout	= 5 * 60,
+पूर्ण;
 
-static void __exit nf_conntrack_ftp_fini(void)
-{
-	nf_conntrack_helpers_unregister(ftp, ports_c * 2);
-	kfree(ftp_buffer);
-}
+अटल व्योम __निकास nf_conntrack_ftp_fini(व्योम)
+अणु
+	nf_conntrack_helpers_unरेजिस्टर(ftp, ports_c * 2);
+	kमुक्त(ftp_buffer);
+पूर्ण
 
-static int __init nf_conntrack_ftp_init(void)
-{
-	int i, ret = 0;
+अटल पूर्णांक __init nf_conntrack_ftp_init(व्योम)
+अणु
+	पूर्णांक i, ret = 0;
 
-	NF_CT_HELPER_BUILD_BUG_ON(sizeof(struct nf_ct_ftp_master));
+	NF_CT_HELPER_BUILD_BUG_ON(माप(काष्ठा nf_ct_ftp_master));
 
-	ftp_buffer = kmalloc(65536, GFP_KERNEL);
-	if (!ftp_buffer)
-		return -ENOMEM;
+	ftp_buffer = kदो_स्मृति(65536, GFP_KERNEL);
+	अगर (!ftp_buffer)
+		वापस -ENOMEM;
 
-	if (ports_c == 0)
+	अगर (ports_c == 0)
 		ports[ports_c++] = FTP_PORT;
 
 	/* FIXME should be configurable whether IPv4 and IPv6 FTP connections
 		 are tracked or not - YK */
-	for (i = 0; i < ports_c; i++) {
+	क्रम (i = 0; i < ports_c; i++) अणु
 		nf_ct_helper_init(&ftp[2 * i], AF_INET, IPPROTO_TCP,
 				  HELPER_NAME, FTP_PORT, ports[i], ports[i],
 				  &ftp_exp_policy, 0, help,
@@ -598,17 +599,17 @@ static int __init nf_conntrack_ftp_init(void)
 				  HELPER_NAME, FTP_PORT, ports[i], ports[i],
 				  &ftp_exp_policy, 0, help,
 				  nf_ct_ftp_from_nlattr, THIS_MODULE);
-	}
+	पूर्ण
 
-	ret = nf_conntrack_helpers_register(ftp, ports_c * 2);
-	if (ret < 0) {
+	ret = nf_conntrack_helpers_रेजिस्टर(ftp, ports_c * 2);
+	अगर (ret < 0) अणु
 		pr_err("failed to register helpers\n");
-		kfree(ftp_buffer);
-		return ret;
-	}
+		kमुक्त(ftp_buffer);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(nf_conntrack_ftp_init);
-module_exit(nf_conntrack_ftp_fini);
+module_निकास(nf_conntrack_ftp_fini);

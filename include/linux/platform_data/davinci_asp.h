@@ -1,55 +1,56 @@
+<शैली गुरु>
 /*
  * TI DaVinci Audio Serial Port support
  *
  * Copyright (C) 2012 Texas Instruments Incorporated - https://www.ti.com/
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#ifndef __DAVINCI_ASP_H
-#define __DAVINCI_ASP_H
+#अगर_अघोषित __DAVINCI_ASP_H
+#घोषणा __DAVINCI_ASP_H
 
-#include <linux/genalloc.h>
+#समावेश <linux/genभाग.स>
 
-struct davinci_mcasp_pdata {
+काष्ठा davinci_mcasp_pdata अणु
 	u32 tx_dma_offset;
 	u32 rx_dma_offset;
-	int asp_chan_q;	/* event queue number for ASP channel */
-	int ram_chan_q;	/* event queue number for RAM channel */
+	पूर्णांक asp_chan_q;	/* event queue number क्रम ASP channel */
+	पूर्णांक ram_chan_q;	/* event queue number क्रम RAM channel */
 	/*
 	 * Allowing this is more efficient and eliminates left and right swaps
 	 * caused by underruns, but will swap the left and right channels
 	 * when compared to previous behavior.
 	 */
-	unsigned enable_channel_combine:1;
-	unsigned sram_size_playback;
-	unsigned sram_size_capture;
-	struct gen_pool *sram_pool;
+	अचिन्हित enable_channel_combine:1;
+	अचिन्हित sram_size_playback;
+	अचिन्हित sram_size_capture;
+	काष्ठा gen_pool *sram_pool;
 
 	/*
-	 * If McBSP peripheral gets the clock from an external pin,
+	 * If McBSP peripheral माला_लो the घड़ी from an बाह्यal pin,
 	 * there are three chooses, that are MCBSP_CLKX, MCBSP_CLKR
 	 * and MCBSP_CLKS.
-	 * Depending on different hardware connections it is possible
+	 * Depending on dअगरferent hardware connections it is possible
 	 * to use this setting to change the behaviour of McBSP
 	 * driver.
 	 */
-	int clk_input_pin;
+	पूर्णांक clk_input_pin;
 
 	/*
-	 * This flag works when both clock and FS are outputs for the cpu
-	 * and makes clock more accurate (FS is not symmetrical and the
-	 * clock is very fast.
-	 * The clock becoming faster is named
-	 * i2s continuous serial clock (I2S_SCK) and it is an externally
-	 * visible bit clock.
+	 * This flag works when both घड़ी and FS are outमाला_दो क्रम the cpu
+	 * and makes घड़ी more accurate (FS is not symmetrical and the
+	 * घड़ी is very fast.
+	 * The घड़ी becoming faster is named
+	 * i2s continuous serial घड़ी (I2S_SCK) and it is an बाह्यally
+	 * visible bit घड़ी.
 	 *
 	 * first line : WordSelect
 	 * second line : ContinuousSerialClock
@@ -76,8 +77,8 @@ struct davinci_mcasp_pdata {
 	 */
 	bool i2s_accurate_sck;
 
-	/* McASP specific fields */
-	int tdm_slots;
+	/* McASP specअगरic fields */
+	पूर्णांक tdm_slots;
 	u8 op_mode;
 	u8 dismod;
 	u8 num_serializer;
@@ -85,29 +86,29 @@ struct davinci_mcasp_pdata {
 	u8 version;
 	u8 txnumevt;
 	u8 rxnumevt;
-	int tx_dma_channel;
-	int rx_dma_channel;
-};
-/* TODO: Fix arch/arm/mach-davinci/ users and remove this define */
-#define snd_platform_data davinci_mcasp_pdata
+	पूर्णांक tx_dma_channel;
+	पूर्णांक rx_dma_channel;
+पूर्ण;
+/* TODO: Fix arch/arm/mach-davinci/ users and हटाओ this define */
+#घोषणा snd_platक्रमm_data davinci_mcasp_pdata
 
-enum {
+क्रमागत अणु
 	MCASP_VERSION_1 = 0,	/* DM646x */
 	MCASP_VERSION_2,	/* DA8xx/OMAPL1x */
 	MCASP_VERSION_3,        /* TI81xx/AM33xx */
 	MCASP_VERSION_4,	/* DRA7xxx */
-};
+पूर्ण;
 
-enum mcbsp_clk_input_pin {
+क्रमागत mcbsp_clk_input_pin अणु
 	MCBSP_CLKR = 0,		/* as in DM365 */
 	MCBSP_CLKS,
-};
+पूर्ण;
 
-#define INACTIVE_MODE	0
-#define TX_MODE		1
-#define RX_MODE		2
+#घोषणा INACTIVE_MODE	0
+#घोषणा TX_MODE		1
+#घोषणा RX_MODE		2
 
-#define DAVINCI_MCASP_IIS_MODE	0
-#define DAVINCI_MCASP_DIT_MODE	1
+#घोषणा DAVINCI_MCASP_IIS_MODE	0
+#घोषणा DAVINCI_MCASP_DIT_MODE	1
 
-#endif
+#पूर्ण_अगर

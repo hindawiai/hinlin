@@ -1,15 +1,16 @@
+<शैली गुरु>
 /*
  * This application is Copyright 2012 Red Hat, Inc.
- *	Doug Ledford <dledford@redhat.com>
+ *	Doug Ledक्रमd <dledक्रमd@redhat.com>
  *
- * mq_perf_tests is free software: you can redistribute it and/or modify
+ * mq_perf_tests is मुक्त software: you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, version 3.
  *
  * mq_perf_tests is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * For the full text of the license, see <http://www.gnu.org/licenses/>.
  *
@@ -17,31 +18,31 @@
  *   Tests various types of message queue workloads, concentrating on those
  *   situations that invole large message sizes, large message queue depths,
  *   or both, and reports back useful metrics about kernel message queue
- *   performance.
+ *   perक्रमmance.
  *
  */
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-#include <limits.h>
-#include <errno.h>
-#include <signal.h>
-#include <pthread.h>
-#include <sched.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/stat.h>
-#include <mqueue.h>
-#include <popt.h>
-#include <error.h>
+#घोषणा _GNU_SOURCE
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <fcntl.h>
+#समावेश <माला.स>
+#समावेश <सीमा.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <संकेत.स>
+#समावेश <pthपढ़ो.h>
+#समावेश <sched.h>
+#समावेश <sys/types.h>
+#समावेश <sys/समय.स>
+#समावेश <sys/resource.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <mqueue.h>
+#समावेश <popt.h>
+#समावेश <error.h>
 
-#include "../kselftest.h"
+#समावेश "../kselftest.h"
 
-static char *usage =
+अटल अक्षर *usage =
 "Usage:\n"
 "  %s [-c #[,#..] -f] path\n"
 "\n"
@@ -70,40 +71,40 @@ static char *usage =
 "	Note: this program must be run as root in order to enable all tests\n"
 "\n";
 
-char *MAX_MSGS = "/proc/sys/fs/mqueue/msg_max";
-char *MAX_MSGSIZE = "/proc/sys/fs/mqueue/msgsize_max";
+अक्षर *MAX_MSGS = "/proc/sys/fs/mqueue/msg_max";
+अक्षर *MAX_MSGSIZE = "/proc/sys/fs/mqueue/msgsize_max";
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#define MAX_CPUS 64
-char *cpu_option_string;
-int cpus_to_pin[MAX_CPUS];
-int num_cpus_to_pin;
-pthread_t cpu_threads[MAX_CPUS];
-pthread_t main_thread;
+#घोषणा min(a, b) ((a) < (b) ? (a) : (b))
+#घोषणा MAX_CPUS 64
+अक्षर *cpu_option_string;
+पूर्णांक cpus_to_pin[MAX_CPUS];
+पूर्णांक num_cpus_to_pin;
+pthपढ़ो_t cpu_thपढ़ोs[MAX_CPUS];
+pthपढ़ो_t मुख्य_thपढ़ो;
 cpu_set_t *cpu_set;
-int cpu_set_size;
-int cpus_online;
+पूर्णांक cpu_set_size;
+पूर्णांक cpus_online;
 
-#define MSG_SIZE 16
-#define TEST1_LOOPS 10000000
-#define TEST2_LOOPS 100000
-int continuous_mode;
-int continuous_mode_fake;
+#घोषणा MSG_SIZE 16
+#घोषणा TEST1_LOOPS 10000000
+#घोषणा TEST2_LOOPS 100000
+पूर्णांक continuous_mode;
+पूर्णांक continuous_mode_fake;
 
-struct rlimit saved_limits, cur_limits;
-int saved_max_msgs, saved_max_msgsize;
-int cur_max_msgs, cur_max_msgsize;
-FILE *max_msgs, *max_msgsize;
-int cur_nice;
-char *queue_path = "/mq_perf_tests";
+काष्ठा rlimit saved_limits, cur_limits;
+पूर्णांक saved_max_msgs, saved_max_msgsize;
+पूर्णांक cur_max_msgs, cur_max_msgsize;
+खाता *max_msgs, *max_msgsize;
+पूर्णांक cur_nice;
+अक्षर *queue_path = "/mq_perf_tests";
 mqd_t queue = -1;
-struct mq_attr result;
-int mq_prio_max;
+काष्ठा mq_attr result;
+पूर्णांक mq_prio_max;
 
-const struct poptOption options[] = {
-	{
-		.longName = "continuous",
-		.shortName = 'c',
+स्थिर काष्ठा poptOption options[] = अणु
+	अणु
+		.दीर्घName = "continuous",
+		.लघुName = 'c',
 		.argInfo = POPT_ARG_STRING,
 		.arg = &cpu_option_string,
 		.val = 'c',
@@ -121,10 +122,10 @@ const struct poptOption options[] = {
 			"the difference in time required to perform the CPU "
 			"intensive task",
 		.argDescrip = "cpu[,cpu]",
-	},
-	{
-		.longName = "fake",
-		.shortName = 'f',
+	पूर्ण,
+	अणु
+		.दीर्घName = "fake",
+		.लघुName = 'f',
 		.argInfo = POPT_ARG_NONE,
 		.arg = &continuous_mode_fake,
 		.val = 0,
@@ -134,610 +135,610 @@ const struct poptOption options[] = {
 			"system level tasks as this would free up resources on "
 			"the other CPU cores and skew the comparison between "
 			"the no-mqueue work and mqueue work tests",
-		.argDescrip = NULL,
-	},
-	{
-		.longName = "path",
-		.shortName = 'p',
+		.argDescrip = शून्य,
+	पूर्ण,
+	अणु
+		.दीर्घName = "path",
+		.लघुName = 'p',
 		.argInfo = POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT,
 		.arg = &queue_path,
 		.val = 'p',
 		.descrip = "The name of the path to use in the mqueue "
 			"filesystem for our tests",
 		.argDescrip = "pathname",
-	},
+	पूर्ण,
 	POPT_AUTOHELP
 	POPT_TABLEEND
-};
+पूर्ण;
 
-static inline void __set(FILE *stream, int value, char *err_msg);
-void shutdown(int exit_val, char *err_cause, int line_no);
-void sig_action_SIGUSR1(int signum, siginfo_t *info, void *context);
-void sig_action(int signum, siginfo_t *info, void *context);
-static inline int get(FILE *stream);
-static inline void set(FILE *stream, int value);
-static inline int try_set(FILE *stream, int value);
-static inline void getr(int type, struct rlimit *rlim);
-static inline void setr(int type, struct rlimit *rlim);
-static inline void open_queue(struct mq_attr *attr);
-void increase_limits(void);
+अटल अंतरभूत व्योम __set(खाता *stream, पूर्णांक value, अक्षर *err_msg);
+व्योम shutकरोwn(पूर्णांक निकास_val, अक्षर *err_cause, पूर्णांक line_no);
+व्योम sig_action_SIGUSR1(पूर्णांक signum, siginfo_t *info, व्योम *context);
+व्योम sig_action(पूर्णांक signum, siginfo_t *info, व्योम *context);
+अटल अंतरभूत पूर्णांक get(खाता *stream);
+अटल अंतरभूत व्योम set(खाता *stream, पूर्णांक value);
+अटल अंतरभूत पूर्णांक try_set(खाता *stream, पूर्णांक value);
+अटल अंतरभूत व्योम getr(पूर्णांक type, काष्ठा rlimit *rlim);
+अटल अंतरभूत व्योम setr(पूर्णांक type, काष्ठा rlimit *rlim);
+अटल अंतरभूत व्योम खोलो_queue(काष्ठा mq_attr *attr);
+व्योम increase_limits(व्योम);
 
-static inline void __set(FILE *stream, int value, char *err_msg)
-{
-	rewind(stream);
-	if (fprintf(stream, "%d", value) < 0)
-		perror(err_msg);
-}
+अटल अंतरभूत व्योम __set(खाता *stream, पूर्णांक value, अक्षर *err_msg)
+अणु
+	शुरुआत(stream);
+	अगर (ख_लिखो(stream, "%d", value) < 0)
+		लिखो_त्रुटि(err_msg);
+पूर्ण
 
 
-void shutdown(int exit_val, char *err_cause, int line_no)
-{
-	static int in_shutdown = 0;
-	int errno_at_shutdown = errno;
-	int i;
+व्योम shutकरोwn(पूर्णांक निकास_val, अक्षर *err_cause, पूर्णांक line_no)
+अणु
+	अटल पूर्णांक in_shutकरोwn = 0;
+	पूर्णांक त्रुटि_सं_at_shutकरोwn = त्रुटि_सं;
+	पूर्णांक i;
 
-	/* In case we get called by multiple threads or from an sighandler */
-	if (in_shutdown++)
-		return;
+	/* In हाल we get called by multiple thपढ़ोs or from an sighandler */
+	अगर (in_shutकरोwn++)
+		वापस;
 
-	for (i = 0; i < num_cpus_to_pin; i++)
-		if (cpu_threads[i]) {
-			pthread_kill(cpu_threads[i], SIGUSR1);
-			pthread_join(cpu_threads[i], NULL);
-		}
+	क्रम (i = 0; i < num_cpus_to_pin; i++)
+		अगर (cpu_thपढ़ोs[i]) अणु
+			pthपढ़ो_समाप्त(cpu_thपढ़ोs[i], SIGUSR1);
+			pthपढ़ो_join(cpu_thपढ़ोs[i], शून्य);
+		पूर्ण
 
-	if (queue != -1)
-		if (mq_close(queue))
-			perror("mq_close() during shutdown");
-	if (queue_path)
+	अगर (queue != -1)
+		अगर (mq_बंद(queue))
+			लिखो_त्रुटि("mq_close() during shutdown");
+	अगर (queue_path)
 		/*
-		 * Be silent if this fails, if we cleaned up already it's
+		 * Be silent अगर this fails, अगर we cleaned up alपढ़ोy it's
 		 * expected to fail
 		 */
 		mq_unlink(queue_path);
-	if (saved_max_msgs)
+	अगर (saved_max_msgs)
 		__set(max_msgs, saved_max_msgs,
 		      "failed to restore saved_max_msgs");
-	if (saved_max_msgsize)
+	अगर (saved_max_msgsize)
 		__set(max_msgsize, saved_max_msgsize,
 		      "failed to restore saved_max_msgsize");
-	if (exit_val)
-		error(exit_val, errno_at_shutdown, "%s at %d",
+	अगर (निकास_val)
+		error(निकास_val, त्रुटि_सं_at_shutकरोwn, "%s at %d",
 		      err_cause, line_no);
-	exit(0);
-}
+	निकास(0);
+पूर्ण
 
-void sig_action_SIGUSR1(int signum, siginfo_t *info, void *context)
-{
-	if (pthread_self() != main_thread)
-		pthread_exit(0);
-	else {
-		fprintf(stderr, "Caught signal %d in SIGUSR1 handler, "
+व्योम sig_action_SIGUSR1(पूर्णांक signum, siginfo_t *info, व्योम *context)
+अणु
+	अगर (pthपढ़ो_self() != मुख्य_thपढ़ो)
+		pthपढ़ो_निकास(0);
+	अन्यथा अणु
+		ख_लिखो(मानक_त्रुटि, "Caught signal %d in SIGUSR1 handler, "
 				"exiting\n", signum);
-		shutdown(0, "", 0);
-		fprintf(stderr, "\n\nReturned from shutdown?!?!\n\n");
-		exit(0);
-	}
-}
+		shutकरोwn(0, "", 0);
+		ख_लिखो(मानक_त्रुटि, "\n\nReturned from shutdown?!?!\n\n");
+		निकास(0);
+	पूर्ण
+पूर्ण
 
-void sig_action(int signum, siginfo_t *info, void *context)
-{
-	if (pthread_self() != main_thread)
-		pthread_kill(main_thread, signum);
-	else {
-		fprintf(stderr, "Caught signal %d, exiting\n", signum);
-		shutdown(0, "", 0);
-		fprintf(stderr, "\n\nReturned from shutdown?!?!\n\n");
-		exit(0);
-	}
-}
+व्योम sig_action(पूर्णांक signum, siginfo_t *info, व्योम *context)
+अणु
+	अगर (pthपढ़ो_self() != मुख्य_thपढ़ो)
+		pthपढ़ो_समाप्त(मुख्य_thपढ़ो, signum);
+	अन्यथा अणु
+		ख_लिखो(मानक_त्रुटि, "Caught signal %d, exiting\n", signum);
+		shutकरोwn(0, "", 0);
+		ख_लिखो(मानक_त्रुटि, "\n\nReturned from shutdown?!?!\n\n");
+		निकास(0);
+	पूर्ण
+पूर्ण
 
-static inline int get(FILE *stream)
-{
-	int value;
-	rewind(stream);
-	if (fscanf(stream, "%d", &value) != 1)
-		shutdown(4, "Error reading /proc entry", __LINE__);
-	return value;
-}
+अटल अंतरभूत पूर्णांक get(खाता *stream)
+अणु
+	पूर्णांक value;
+	शुरुआत(stream);
+	अगर (ख_पूछो(stream, "%d", &value) != 1)
+		shutकरोwn(4, "Error reading /proc entry", __LINE__);
+	वापस value;
+पूर्ण
 
-static inline void set(FILE *stream, int value)
-{
-	int new_value;
+अटल अंतरभूत व्योम set(खाता *stream, पूर्णांक value)
+अणु
+	पूर्णांक new_value;
 
-	rewind(stream);
-	if (fprintf(stream, "%d", value) < 0)
-		return shutdown(5, "Failed writing to /proc file", __LINE__);
+	शुरुआत(stream);
+	अगर (ख_लिखो(stream, "%d", value) < 0)
+		वापस shutकरोwn(5, "Failed writing to /proc file", __LINE__);
 	new_value = get(stream);
-	if (new_value != value)
-		return shutdown(5, "We didn't get what we wrote to /proc back",
+	अगर (new_value != value)
+		वापस shutकरोwn(5, "We didn't get what we wrote to /proc back",
 				__LINE__);
-}
+पूर्ण
 
-static inline int try_set(FILE *stream, int value)
-{
-	int new_value;
+अटल अंतरभूत पूर्णांक try_set(खाता *stream, पूर्णांक value)
+अणु
+	पूर्णांक new_value;
 
-	rewind(stream);
-	fprintf(stream, "%d", value);
+	शुरुआत(stream);
+	ख_लिखो(stream, "%d", value);
 	new_value = get(stream);
-	return new_value == value;
-}
+	वापस new_value == value;
+पूर्ण
 
-static inline void getr(int type, struct rlimit *rlim)
-{
-	if (getrlimit(type, rlim))
-		shutdown(6, "getrlimit()", __LINE__);
-}
+अटल अंतरभूत व्योम getr(पूर्णांक type, काष्ठा rlimit *rlim)
+अणु
+	अगर (getrlimit(type, rlim))
+		shutकरोwn(6, "getrlimit()", __LINE__);
+पूर्ण
 
-static inline void setr(int type, struct rlimit *rlim)
-{
-	if (setrlimit(type, rlim))
-		shutdown(7, "setrlimit()", __LINE__);
-}
+अटल अंतरभूत व्योम setr(पूर्णांक type, काष्ठा rlimit *rlim)
+अणु
+	अगर (setrlimit(type, rlim))
+		shutकरोwn(7, "setrlimit()", __LINE__);
+पूर्ण
 
 /**
- * open_queue - open the global queue for testing
- * @attr - An attr struct specifying the desired queue traits
- * @result - An attr struct that lists the actual traits the queue has
+ * खोलो_queue - खोलो the global queue क्रम testing
+ * @attr - An attr काष्ठा specअगरying the desired queue traits
+ * @result - An attr काष्ठा that lists the actual traits the queue has
  *
- * This open is not allowed to fail, failure will result in an orderly
- * shutdown of the program.  The global queue_path is used to set what
- * queue to open, the queue descriptor is saved in the global queue
+ * This खोलो is not allowed to fail, failure will result in an orderly
+ * shutकरोwn of the program.  The global queue_path is used to set what
+ * queue to खोलो, the queue descriptor is saved in the global queue
  * variable.
  */
-static inline void open_queue(struct mq_attr *attr)
-{
-	int flags = O_RDWR | O_EXCL | O_CREAT | O_NONBLOCK;
-	int perms = DEFFILEMODE;
+अटल अंतरभूत व्योम खोलो_queue(काष्ठा mq_attr *attr)
+अणु
+	पूर्णांक flags = O_RDWR | O_EXCL | O_CREAT | O_NONBLOCK;
+	पूर्णांक perms = DEFखाताMODE;
 
-	queue = mq_open(queue_path, flags, perms, attr);
-	if (queue == -1)
-		shutdown(1, "mq_open()", __LINE__);
-	if (mq_getattr(queue, &result))
-		shutdown(1, "mq_getattr()", __LINE__);
-	printf("\n\tQueue %s created:\n", queue_path);
-	printf("\t\tmq_flags:\t\t\t%s\n", result.mq_flags & O_NONBLOCK ?
+	queue = mq_खोलो(queue_path, flags, perms, attr);
+	अगर (queue == -1)
+		shutकरोwn(1, "mq_open()", __LINE__);
+	अगर (mq_getattr(queue, &result))
+		shutकरोwn(1, "mq_getattr()", __LINE__);
+	म_लिखो("\n\tQueue %s created:\n", queue_path);
+	म_लिखो("\t\tmq_flags:\t\t\t%s\n", result.mq_flags & O_NONBLOCK ?
 	       "O_NONBLOCK" : "(null)");
-	printf("\t\tmq_maxmsg:\t\t\t%lu\n", result.mq_maxmsg);
-	printf("\t\tmq_msgsize:\t\t\t%lu\n", result.mq_msgsize);
-	printf("\t\tmq_curmsgs:\t\t\t%lu\n", result.mq_curmsgs);
-}
+	म_लिखो("\t\tmq_maxmsg:\t\t\t%lu\n", result.mq_maxmsg);
+	म_लिखो("\t\tmq_msgsize:\t\t\t%lu\n", result.mq_msgsize);
+	म_लिखो("\t\tmq_curmsgs:\t\t\t%lu\n", result.mq_curmsgs);
+पूर्ण
 
-void *fake_cont_thread(void *arg)
-{
-	int i;
+व्योम *fake_cont_thपढ़ो(व्योम *arg)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_cpus_to_pin; i++)
-		if (cpu_threads[i] == pthread_self())
-			break;
-	printf("\tStarted fake continuous mode thread %d on CPU %d\n", i,
+	क्रम (i = 0; i < num_cpus_to_pin; i++)
+		अगर (cpu_thपढ़ोs[i] == pthपढ़ो_self())
+			अवरोध;
+	म_लिखो("\tStarted fake continuous mode thread %d on CPU %d\n", i,
 	       cpus_to_pin[i]);
-	while (1)
+	जबतक (1)
 		;
-}
+पूर्ण
 
-void *cont_thread(void *arg)
-{
-	char buff[MSG_SIZE];
-	int i, priority;
+व्योम *cont_thपढ़ो(व्योम *arg)
+अणु
+	अक्षर buff[MSG_SIZE];
+	पूर्णांक i, priority;
 
-	for (i = 0; i < num_cpus_to_pin; i++)
-		if (cpu_threads[i] == pthread_self())
-			break;
-	printf("\tStarted continuous mode thread %d on CPU %d\n", i,
+	क्रम (i = 0; i < num_cpus_to_pin; i++)
+		अगर (cpu_thपढ़ोs[i] == pthपढ़ो_self())
+			अवरोध;
+	म_लिखो("\tStarted continuous mode thread %d on CPU %d\n", i,
 	       cpus_to_pin[i]);
-	while (1) {
-		while (mq_send(queue, buff, sizeof(buff), 0) == 0)
+	जबतक (1) अणु
+		जबतक (mq_send(queue, buff, माप(buff), 0) == 0)
 			;
-		mq_receive(queue, buff, sizeof(buff), &priority);
-	}
-}
+		mq_receive(queue, buff, माप(buff), &priority);
+	पूर्ण
+पूर्ण
 
-#define drain_queue() \
-	while (mq_receive(queue, buff, MSG_SIZE, &prio_in) == MSG_SIZE)
+#घोषणा drain_queue() \
+	जबतक (mq_receive(queue, buff, MSG_SIZE, &prio_in) == MSG_SIZE)
 
-#define do_untimed_send() \
-	do { \
-		if (mq_send(queue, buff, MSG_SIZE, prio_out)) \
-			shutdown(3, "Test send failure", __LINE__); \
-	} while (0)
+#घोषणा करो_unसमयd_send() \
+	करो अणु \
+		अगर (mq_send(queue, buff, MSG_SIZE, prio_out)) \
+			shutकरोwn(3, "Test send failure", __LINE__); \
+	पूर्ण जबतक (0)
 
-#define do_send_recv() \
-	do { \
-		clock_gettime(clock, &start); \
-		if (mq_send(queue, buff, MSG_SIZE, prio_out)) \
-			shutdown(3, "Test send failure", __LINE__); \
-		clock_gettime(clock, &middle); \
-		if (mq_receive(queue, buff, MSG_SIZE, &prio_in) != MSG_SIZE) \
-			shutdown(3, "Test receive failure", __LINE__); \
-		clock_gettime(clock, &end); \
+#घोषणा करो_send_recv() \
+	करो अणु \
+		घड़ी_समय_लो(घड़ी, &start); \
+		अगर (mq_send(queue, buff, MSG_SIZE, prio_out)) \
+			shutकरोwn(3, "Test send failure", __LINE__); \
+		घड़ी_समय_लो(घड़ी, &middle); \
+		अगर (mq_receive(queue, buff, MSG_SIZE, &prio_in) != MSG_SIZE) \
+			shutकरोwn(3, "Test receive failure", __LINE__); \
+		घड़ी_समय_लो(घड़ी, &end); \
 		nsec = ((middle.tv_sec - start.tv_sec) * 1000000000) + \
 			(middle.tv_nsec - start.tv_nsec); \
 		send_total.tv_nsec += nsec; \
-		if (send_total.tv_nsec >= 1000000000) { \
+		अगर (send_total.tv_nsec >= 1000000000) अणु \
 			send_total.tv_sec++; \
 			send_total.tv_nsec -= 1000000000; \
-		} \
+		पूर्ण \
 		nsec = ((end.tv_sec - middle.tv_sec) * 1000000000) + \
 			(end.tv_nsec - middle.tv_nsec); \
 		recv_total.tv_nsec += nsec; \
-		if (recv_total.tv_nsec >= 1000000000) { \
+		अगर (recv_total.tv_nsec >= 1000000000) अणु \
 			recv_total.tv_sec++; \
 			recv_total.tv_nsec -= 1000000000; \
-		} \
-	} while (0)
+		पूर्ण \
+	पूर्ण जबतक (0)
 
-struct test {
-	char *desc;
-	void (*func)(int *);
-};
+काष्ठा test अणु
+	अक्षर *desc;
+	व्योम (*func)(पूर्णांक *);
+पूर्ण;
 
-void const_prio(int *prio)
-{
-	return;
-}
+व्योम स्थिर_prio(पूर्णांक *prio)
+अणु
+	वापस;
+पूर्ण
 
-void inc_prio(int *prio)
-{
-	if (++*prio == mq_prio_max)
+व्योम inc_prio(पूर्णांक *prio)
+अणु
+	अगर (++*prio == mq_prio_max)
 		*prio = 0;
-}
+पूर्ण
 
-void dec_prio(int *prio)
-{
-	if (--*prio < 0)
+व्योम dec_prio(पूर्णांक *prio)
+अणु
+	अगर (--*prio < 0)
 		*prio = mq_prio_max - 1;
-}
+पूर्ण
 
-void random_prio(int *prio)
-{
-	*prio = random() % mq_prio_max;
-}
+व्योम अक्रमom_prio(पूर्णांक *prio)
+अणु
+	*prio = अक्रमom() % mq_prio_max;
+पूर्ण
 
-struct test test2[] = {
-	{"\n\tTest #2a: Time send/recv message, queue full, constant prio\n",
-		const_prio},
-	{"\n\tTest #2b: Time send/recv message, queue full, increasing prio\n",
-		inc_prio},
-	{"\n\tTest #2c: Time send/recv message, queue full, decreasing prio\n",
-		dec_prio},
-	{"\n\tTest #2d: Time send/recv message, queue full, random prio\n",
-		random_prio},
-	{NULL, NULL}
-};
+काष्ठा test test2[] = अणु
+	अणु"\n\tTest #2a: Time send/recv message, queue full, constant prio\n",
+		स्थिर_prioपूर्ण,
+	अणु"\n\tTest #2b: Time send/recv message, queue full, increasing prio\n",
+		inc_prioपूर्ण,
+	अणु"\n\tTest #2c: Time send/recv message, queue full, decreasing prio\n",
+		dec_prioपूर्ण,
+	अणु"\n\tTest #2d: Time send/recv message, queue full, random prio\n",
+		अक्रमom_prioपूर्ण,
+	अणुशून्य, शून्यपूर्ण
+पूर्ण;
 
 /**
- * Tests to perform (all done with MSG_SIZE messages):
+ * Tests to perक्रमm (all करोne with MSG_SIZE messages):
  *
- * 1) Time to add/remove message with 0 messages on queue
- * 1a) with constant prio
- * 2) Time to add/remove message when queue close to capacity:
- * 2a) with constant prio
+ * 1) Time to add/हटाओ message with 0 messages on queue
+ * 1a) with स्थिरant prio
+ * 2) Time to add/हटाओ message when queue बंद to capacity:
+ * 2a) with स्थिरant prio
  * 2b) with increasing prio
  * 2c) with decreasing prio
- * 2d) with random prio
- * 3) Test limits of priorities honored (double check _SC_MQ_PRIO_MAX)
+ * 2d) with अक्रमom prio
+ * 3) Test limits of priorities honored (द्विगुन check _SC_MQ_PRIO_MAX)
  */
-void *perf_test_thread(void *arg)
-{
-	char buff[MSG_SIZE];
-	int prio_out, prio_in;
-	int i;
-	clockid_t clock;
-	pthread_t *t;
-	struct timespec res, start, middle, end, send_total, recv_total;
-	unsigned long long nsec;
-	struct test *cur_test;
+व्योम *perf_test_thपढ़ो(व्योम *arg)
+अणु
+	अक्षर buff[MSG_SIZE];
+	पूर्णांक prio_out, prio_in;
+	पूर्णांक i;
+	घड़ीid_t घड़ी;
+	pthपढ़ो_t *t;
+	काष्ठा बारpec res, start, middle, end, send_total, recv_total;
+	अचिन्हित दीर्घ दीर्घ nsec;
+	काष्ठा test *cur_test;
 
-	t = &cpu_threads[0];
-	printf("\n\tStarted mqueue performance test thread on CPU %d\n",
+	t = &cpu_thपढ़ोs[0];
+	म_लिखो("\n\tStarted mqueue performance test thread on CPU %d\n",
 	       cpus_to_pin[0]);
 	mq_prio_max = sysconf(_SC_MQ_PRIO_MAX);
-	if (mq_prio_max == -1)
-		shutdown(2, "sysconf(_SC_MQ_PRIO_MAX)", __LINE__);
-	if (pthread_getcpuclockid(cpu_threads[0], &clock) != 0)
-		shutdown(2, "pthread_getcpuclockid", __LINE__);
+	अगर (mq_prio_max == -1)
+		shutकरोwn(2, "sysconf(_SC_MQ_PRIO_MAX)", __LINE__);
+	अगर (pthपढ़ो_अ_लोpuघड़ीid(cpu_thपढ़ोs[0], &घड़ी) != 0)
+		shutकरोwn(2, "pthread_getcpuclockid", __LINE__);
 
-	if (clock_getres(clock, &res))
-		shutdown(2, "clock_getres()", __LINE__);
+	अगर (घड़ी_getres(घड़ी, &res))
+		shutकरोwn(2, "clock_getres()", __LINE__);
 
-	printf("\t\tMax priorities:\t\t\t%d\n", mq_prio_max);
-	printf("\t\tClock resolution:\t\t%lu nsec%s\n", res.tv_nsec,
+	म_लिखो("\t\tMax priorities:\t\t\t%d\n", mq_prio_max);
+	म_लिखो("\t\tClock resolution:\t\t%lu nsec%s\n", res.tv_nsec,
 	       res.tv_nsec > 1 ? "s" : "");
 
 
 
-	printf("\n\tTest #1: Time send/recv message, queue empty\n");
-	printf("\t\t(%d iterations)\n", TEST1_LOOPS);
+	म_लिखो("\n\tTest #1: Time send/recv message, queue empty\n");
+	म_लिखो("\t\t(%d iterations)\n", TEST1_LOOPS);
 	prio_out = 0;
 	send_total.tv_sec = 0;
 	send_total.tv_nsec = 0;
 	recv_total.tv_sec = 0;
 	recv_total.tv_nsec = 0;
-	for (i = 0; i < TEST1_LOOPS; i++)
-		do_send_recv();
-	printf("\t\tSend msg:\t\t\t%ld.%lus total time\n",
+	क्रम (i = 0; i < TEST1_LOOPS; i++)
+		करो_send_recv();
+	म_लिखो("\t\tSend msg:\t\t\t%ld.%lus total time\n",
 	       send_total.tv_sec, send_total.tv_nsec);
-	nsec = ((unsigned long long)send_total.tv_sec * 1000000000 +
+	nsec = ((अचिन्हित दीर्घ दीर्घ)send_total.tv_sec * 1000000000 +
 		 send_total.tv_nsec) / TEST1_LOOPS;
-	printf("\t\t\t\t\t\t%lld nsec/msg\n", nsec);
-	printf("\t\tRecv msg:\t\t\t%ld.%lus total time\n",
+	म_लिखो("\t\t\t\t\t\t%lld nsec/msg\n", nsec);
+	म_लिखो("\t\tRecv msg:\t\t\t%ld.%lus total time\n",
 	       recv_total.tv_sec, recv_total.tv_nsec);
-	nsec = ((unsigned long long)recv_total.tv_sec * 1000000000 +
+	nsec = ((अचिन्हित दीर्घ दीर्घ)recv_total.tv_sec * 1000000000 +
 		recv_total.tv_nsec) / TEST1_LOOPS;
-	printf("\t\t\t\t\t\t%lld nsec/msg\n", nsec);
+	म_लिखो("\t\t\t\t\t\t%lld nsec/msg\n", nsec);
 
 
-	for (cur_test = test2; cur_test->desc != NULL; cur_test++) {
-		printf("%s:\n", cur_test->desc);
-		printf("\t\t(%d iterations)\n", TEST2_LOOPS);
+	क्रम (cur_test = test2; cur_test->desc != शून्य; cur_test++) अणु
+		म_लिखो("%s:\n", cur_test->desc);
+		म_लिखो("\t\t(%d iterations)\n", TEST2_LOOPS);
 		prio_out = 0;
 		send_total.tv_sec = 0;
 		send_total.tv_nsec = 0;
 		recv_total.tv_sec = 0;
 		recv_total.tv_nsec = 0;
-		printf("\t\tFilling queue...");
-		fflush(stdout);
-		clock_gettime(clock, &start);
-		for (i = 0; i < result.mq_maxmsg - 1; i++) {
-			do_untimed_send();
+		म_लिखो("\t\tFilling queue...");
+		ख_साफ(मानक_निकास);
+		घड़ी_समय_लो(घड़ी, &start);
+		क्रम (i = 0; i < result.mq_maxmsg - 1; i++) अणु
+			करो_unसमयd_send();
 			cur_test->func(&prio_out);
-		}
-		clock_gettime(clock, &end);
-		nsec = ((unsigned long long)(end.tv_sec - start.tv_sec) *
+		पूर्ण
+		घड़ी_समय_लो(घड़ी, &end);
+		nsec = ((अचिन्हित दीर्घ दीर्घ)(end.tv_sec - start.tv_sec) *
 			1000000000) + (end.tv_nsec - start.tv_nsec);
-		printf("done.\t\t%lld.%llds\n", nsec / 1000000000,
+		म_लिखो("done.\t\t%lld.%llds\n", nsec / 1000000000,
 		       nsec % 1000000000);
-		printf("\t\tTesting...");
-		fflush(stdout);
-		for (i = 0; i < TEST2_LOOPS; i++) {
-			do_send_recv();
+		म_लिखो("\t\tTesting...");
+		ख_साफ(मानक_निकास);
+		क्रम (i = 0; i < TEST2_LOOPS; i++) अणु
+			करो_send_recv();
 			cur_test->func(&prio_out);
-		}
-		printf("done.\n");
-		printf("\t\tSend msg:\t\t\t%ld.%lus total time\n",
+		पूर्ण
+		म_लिखो("done.\n");
+		म_लिखो("\t\tSend msg:\t\t\t%ld.%lus total time\n",
 		       send_total.tv_sec, send_total.tv_nsec);
-		nsec = ((unsigned long long)send_total.tv_sec * 1000000000 +
+		nsec = ((अचिन्हित दीर्घ दीर्घ)send_total.tv_sec * 1000000000 +
 			 send_total.tv_nsec) / TEST2_LOOPS;
-		printf("\t\t\t\t\t\t%lld nsec/msg\n", nsec);
-		printf("\t\tRecv msg:\t\t\t%ld.%lus total time\n",
+		म_लिखो("\t\t\t\t\t\t%lld nsec/msg\n", nsec);
+		म_लिखो("\t\tRecv msg:\t\t\t%ld.%lus total time\n",
 		       recv_total.tv_sec, recv_total.tv_nsec);
-		nsec = ((unsigned long long)recv_total.tv_sec * 1000000000 +
+		nsec = ((अचिन्हित दीर्घ दीर्घ)recv_total.tv_sec * 1000000000 +
 			recv_total.tv_nsec) / TEST2_LOOPS;
-		printf("\t\t\t\t\t\t%lld nsec/msg\n", nsec);
-		printf("\t\tDraining queue...");
-		fflush(stdout);
-		clock_gettime(clock, &start);
+		म_लिखो("\t\t\t\t\t\t%lld nsec/msg\n", nsec);
+		म_लिखो("\t\tDraining queue...");
+		ख_साफ(मानक_निकास);
+		घड़ी_समय_लो(घड़ी, &start);
 		drain_queue();
-		clock_gettime(clock, &end);
-		nsec = ((unsigned long long)(end.tv_sec - start.tv_sec) *
+		घड़ी_समय_लो(घड़ी, &end);
+		nsec = ((अचिन्हित दीर्घ दीर्घ)(end.tv_sec - start.tv_sec) *
 			1000000000) + (end.tv_nsec - start.tv_nsec);
-		printf("done.\t\t%lld.%llds\n", nsec / 1000000000,
+		म_लिखो("done.\t\t%lld.%llds\n", nsec / 1000000000,
 		       nsec % 1000000000);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void increase_limits(void)
-{
-	cur_limits.rlim_cur = RLIM_INFINITY;
-	cur_limits.rlim_max = RLIM_INFINITY;
+व्योम increase_limits(व्योम)
+अणु
+	cur_limits.rlim_cur = RLIM_अनन्त;
+	cur_limits.rlim_max = RLIM_अनन्त;
 	setr(RLIMIT_MSGQUEUE, &cur_limits);
-	while (try_set(max_msgs, cur_max_msgs += 10))
+	जबतक (try_set(max_msgs, cur_max_msgs += 10))
 		;
 	cur_max_msgs = get(max_msgs);
-	while (try_set(max_msgsize, cur_max_msgsize += 1024))
+	जबतक (try_set(max_msgsize, cur_max_msgsize += 1024))
 		;
 	cur_max_msgsize = get(max_msgsize);
-	if (setpriority(PRIO_PROCESS, 0, -20) != 0)
-		shutdown(2, "setpriority()", __LINE__);
+	अगर (setpriority(PRIO_PROCESS, 0, -20) != 0)
+		shutकरोwn(2, "setpriority()", __LINE__);
 	cur_nice = -20;
-}
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	struct mq_attr attr;
-	char *option, *next_option;
-	int i, cpu, rc;
-	struct sigaction sa;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	काष्ठा mq_attr attr;
+	अक्षर *option, *next_option;
+	पूर्णांक i, cpu, rc;
+	काष्ठा sigaction sa;
 	poptContext popt_context;
-	void *retval;
+	व्योम *retval;
 
-	main_thread = pthread_self();
+	मुख्य_thपढ़ो = pthपढ़ो_self();
 	num_cpus_to_pin = 0;
 
-	if (sysconf(_SC_NPROCESSORS_ONLN) == -1) {
-		perror("sysconf(_SC_NPROCESSORS_ONLN)");
-		exit(1);
-	}
+	अगर (sysconf(_SC_NPROCESSORS_ONLN) == -1) अणु
+		लिखो_त्रुटि("sysconf(_SC_NPROCESSORS_ONLN)");
+		निकास(1);
+	पूर्ण
 	cpus_online = min(MAX_CPUS, sysconf(_SC_NPROCESSORS_ONLN));
 	cpu_set = CPU_ALLOC(cpus_online);
-	if (cpu_set == NULL) {
-		perror("CPU_ALLOC()");
-		exit(1);
-	}
+	अगर (cpu_set == शून्य) अणु
+		लिखो_त्रुटि("CPU_ALLOC()");
+		निकास(1);
+	पूर्ण
 	cpu_set_size = CPU_ALLOC_SIZE(cpus_online);
 	CPU_ZERO_S(cpu_set_size, cpu_set);
 
-	popt_context = poptGetContext(NULL, argc, (const char **)argv,
+	popt_context = poptGetContext(शून्य, argc, (स्थिर अक्षर **)argv,
 				      options, 0);
 
-	while ((rc = poptGetNextOpt(popt_context)) > 0) {
-		switch (rc) {
-		case 'c':
+	जबतक ((rc = poptGetNextOpt(popt_context)) > 0) अणु
+		चयन (rc) अणु
+		हाल 'c':
 			continuous_mode = 1;
 			option = cpu_option_string;
-			do {
-				next_option = strchr(option, ',');
-				if (next_option)
+			करो अणु
+				next_option = म_अक्षर(option, ',');
+				अगर (next_option)
 					*next_option = '\0';
-				cpu = atoi(option);
-				if (cpu >= cpus_online)
-					fprintf(stderr, "CPU %d exceeds "
+				cpu = म_से_प(option);
+				अगर (cpu >= cpus_online)
+					ख_लिखो(मानक_त्रुटि, "CPU %d exceeds "
 						"cpus online, ignoring.\n",
 						cpu);
-				else
+				अन्यथा
 					cpus_to_pin[num_cpus_to_pin++] = cpu;
-				if (next_option)
+				अगर (next_option)
 					option = ++next_option;
-			} while (next_option && num_cpus_to_pin < MAX_CPUS);
+			पूर्ण जबतक (next_option && num_cpus_to_pin < MAX_CPUS);
 			/* Double check that they didn't give us the same CPU
 			 * more than once */
-			for (cpu = 0; cpu < num_cpus_to_pin; cpu++) {
-				if (CPU_ISSET_S(cpus_to_pin[cpu], cpu_set_size,
-						cpu_set)) {
-					fprintf(stderr, "Any given CPU may "
+			क्रम (cpu = 0; cpu < num_cpus_to_pin; cpu++) अणु
+				अगर (CPU_ISSET_S(cpus_to_pin[cpu], cpu_set_size,
+						cpu_set)) अणु
+					ख_लिखो(मानक_त्रुटि, "Any given CPU may "
 						"only be given once.\n");
-					exit(1);
-				} else
+					निकास(1);
+				पूर्ण अन्यथा
 					CPU_SET_S(cpus_to_pin[cpu],
 						  cpu_set_size, cpu_set);
-			}
-			break;
-		case 'p':
+			पूर्ण
+			अवरोध;
+		हाल 'p':
 			/*
 			 * Although we can create a msg queue with a
-			 * non-absolute path name, unlink will fail.  So,
-			 * if the name doesn't start with a /, add one
+			 * non-असलolute path name, unlink will fail.  So,
+			 * अगर the name करोesn't start with a /, add one
 			 * when we save it.
 			 */
 			option = queue_path;
-			if (*option != '/') {
-				queue_path = malloc(strlen(option) + 2);
-				if (!queue_path) {
-					perror("malloc()");
-					exit(1);
-				}
+			अगर (*option != '/') अणु
+				queue_path = दो_स्मृति(म_माप(option) + 2);
+				अगर (!queue_path) अणु
+					लिखो_त्रुटि("malloc()");
+					निकास(1);
+				पूर्ण
 				queue_path[0] = '/';
 				queue_path[1] = 0;
-				strcat(queue_path, option);
-				free(option);
-			}
-			break;
-		}
-	}
+				म_जोड़ो(queue_path, option);
+				मुक्त(option);
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (continuous_mode && num_cpus_to_pin == 0) {
-		fprintf(stderr, "Must pass at least one CPU to continuous "
+	अगर (continuous_mode && num_cpus_to_pin == 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Must pass at least one CPU to continuous "
 			"mode.\n");
-		poptPrintUsage(popt_context, stderr, 0);
-		exit(1);
-	} else if (!continuous_mode) {
+		poptPrपूर्णांकUsage(popt_context, मानक_त्रुटि, 0);
+		निकास(1);
+	पूर्ण अन्यथा अगर (!continuous_mode) अणु
 		num_cpus_to_pin = 1;
 		cpus_to_pin[0] = cpus_online - 1;
-	}
+	पूर्ण
 
-	if (getuid() != 0)
-		ksft_exit_skip("Not running as root, but almost all tests "
+	अगर (getuid() != 0)
+		ksft_निकास_skip("Not running as root, but almost all tests "
 			"require root in order to modify\nsystem settings.  "
 			"Exiting.\n");
 
-	max_msgs = fopen(MAX_MSGS, "r+");
-	max_msgsize = fopen(MAX_MSGSIZE, "r+");
-	if (!max_msgs)
-		shutdown(2, "Failed to open msg_max", __LINE__);
-	if (!max_msgsize)
-		shutdown(2, "Failed to open msgsize_max", __LINE__);
+	max_msgs = ख_खोलो(MAX_MSGS, "r+");
+	max_msgsize = ख_खोलो(MAX_MSGSIZE, "r+");
+	अगर (!max_msgs)
+		shutकरोwn(2, "Failed to open msg_max", __LINE__);
+	अगर (!max_msgsize)
+		shutकरोwn(2, "Failed to open msgsize_max", __LINE__);
 
-	/* Load up the current system values for everything we can */
+	/* Load up the current प्रणाली values क्रम everything we can */
 	getr(RLIMIT_MSGQUEUE, &saved_limits);
 	cur_limits = saved_limits;
 	saved_max_msgs = cur_max_msgs = get(max_msgs);
 	saved_max_msgsize = cur_max_msgsize = get(max_msgsize);
-	errno = 0;
+	त्रुटि_सं = 0;
 	cur_nice = getpriority(PRIO_PROCESS, 0);
-	if (errno)
-		shutdown(2, "getpriority()", __LINE__);
+	अगर (त्रुटि_सं)
+		shutकरोwn(2, "getpriority()", __LINE__);
 
 	/* Tell the user our initial state */
-	printf("\nInitial system state:\n");
-	printf("\tUsing queue path:\t\t\t%s\n", queue_path);
-	printf("\tRLIMIT_MSGQUEUE(soft):\t\t\t%ld\n",
-		(long) saved_limits.rlim_cur);
-	printf("\tRLIMIT_MSGQUEUE(hard):\t\t\t%ld\n",
-		(long) saved_limits.rlim_max);
-	printf("\tMaximum Message Size:\t\t\t%d\n", saved_max_msgsize);
-	printf("\tMaximum Queue Size:\t\t\t%d\n", saved_max_msgs);
-	printf("\tNice value:\t\t\t\t%d\n", cur_nice);
-	printf("\n");
+	म_लिखो("\nInitial system state:\n");
+	म_लिखो("\tUsing queue path:\t\t\t%s\n", queue_path);
+	म_लिखो("\tRLIMIT_MSGQUEUE(soft):\t\t\t%ld\n",
+		(दीर्घ) saved_limits.rlim_cur);
+	म_लिखो("\tRLIMIT_MSGQUEUE(hard):\t\t\t%ld\n",
+		(दीर्घ) saved_limits.rlim_max);
+	म_लिखो("\tMaximum Message Size:\t\t\t%d\n", saved_max_msgsize);
+	म_लिखो("\tMaximum Queue Size:\t\t\t%d\n", saved_max_msgs);
+	म_लिखो("\tNice value:\t\t\t\t%d\n", cur_nice);
+	म_लिखो("\n");
 
 	increase_limits();
 
-	printf("Adjusted system state for testing:\n");
-	if (cur_limits.rlim_cur == RLIM_INFINITY) {
-		printf("\tRLIMIT_MSGQUEUE(soft):\t\t\t(unlimited)\n");
-		printf("\tRLIMIT_MSGQUEUE(hard):\t\t\t(unlimited)\n");
-	} else {
-		printf("\tRLIMIT_MSGQUEUE(soft):\t\t\t%ld\n",
-		       (long) cur_limits.rlim_cur);
-		printf("\tRLIMIT_MSGQUEUE(hard):\t\t\t%ld\n",
-		       (long) cur_limits.rlim_max);
-	}
-	printf("\tMaximum Message Size:\t\t\t%d\n", cur_max_msgsize);
-	printf("\tMaximum Queue Size:\t\t\t%d\n", cur_max_msgs);
-	printf("\tNice value:\t\t\t\t%d\n", cur_nice);
-	printf("\tContinuous mode:\t\t\t(%s)\n", continuous_mode ?
+	म_लिखो("Adjusted system state for testing:\n");
+	अगर (cur_limits.rlim_cur == RLIM_अनन्त) अणु
+		म_लिखो("\tRLIMIT_MSGQUEUE(soft):\t\t\t(unlimited)\n");
+		म_लिखो("\tRLIMIT_MSGQUEUE(hard):\t\t\t(unlimited)\n");
+	पूर्ण अन्यथा अणु
+		म_लिखो("\tRLIMIT_MSGQUEUE(soft):\t\t\t%ld\n",
+		       (दीर्घ) cur_limits.rlim_cur);
+		म_लिखो("\tRLIMIT_MSGQUEUE(hard):\t\t\t%ld\n",
+		       (दीर्घ) cur_limits.rlim_max);
+	पूर्ण
+	म_लिखो("\tMaximum Message Size:\t\t\t%d\n", cur_max_msgsize);
+	म_लिखो("\tMaximum Queue Size:\t\t\t%d\n", cur_max_msgs);
+	म_लिखो("\tNice value:\t\t\t\t%d\n", cur_nice);
+	म_लिखो("\tContinuous mode:\t\t\t(%s)\n", continuous_mode ?
 	       (continuous_mode_fake ? "fake mode" : "enabled") :
 	       "disabled");
-	printf("\tCPUs to pin:\t\t\t\t%d", cpus_to_pin[0]);
-	for (cpu = 1; cpu < num_cpus_to_pin; cpu++)
-			printf(",%d", cpus_to_pin[cpu]);
-	printf("\n");
+	म_लिखो("\tCPUs to pin:\t\t\t\t%d", cpus_to_pin[0]);
+	क्रम (cpu = 1; cpu < num_cpus_to_pin; cpu++)
+			म_लिखो(",%d", cpus_to_pin[cpu]);
+	म_लिखो("\n");
 
 	sa.sa_sigaction = sig_action_SIGUSR1;
 	sigemptyset(&sa.sa_mask);
 	sigaddset(&sa.sa_mask, SIGHUP);
-	sigaddset(&sa.sa_mask, SIGINT);
+	sigaddset(&sa.sa_mask, संक_विघ्न);
 	sigaddset(&sa.sa_mask, SIGQUIT);
-	sigaddset(&sa.sa_mask, SIGTERM);
+	sigaddset(&sa.sa_mask, संक_इति);
 	sa.sa_flags = SA_SIGINFO;
-	if (sigaction(SIGUSR1, &sa, NULL) == -1)
-		shutdown(1, "sigaction(SIGUSR1)", __LINE__);
+	अगर (sigaction(SIGUSR1, &sa, शून्य) == -1)
+		shutकरोwn(1, "sigaction(SIGUSR1)", __LINE__);
 	sa.sa_sigaction = sig_action;
-	if (sigaction(SIGHUP, &sa, NULL) == -1)
-		shutdown(1, "sigaction(SIGHUP)", __LINE__);
-	if (sigaction(SIGINT, &sa, NULL) == -1)
-		shutdown(1, "sigaction(SIGINT)", __LINE__);
-	if (sigaction(SIGQUIT, &sa, NULL) == -1)
-		shutdown(1, "sigaction(SIGQUIT)", __LINE__);
-	if (sigaction(SIGTERM, &sa, NULL) == -1)
-		shutdown(1, "sigaction(SIGTERM)", __LINE__);
+	अगर (sigaction(SIGHUP, &sa, शून्य) == -1)
+		shutकरोwn(1, "sigaction(SIGHUP)", __LINE__);
+	अगर (sigaction(संक_विघ्न, &sa, शून्य) == -1)
+		shutकरोwn(1, "sigaction(SIGINT)", __LINE__);
+	अगर (sigaction(SIGQUIT, &sa, शून्य) == -1)
+		shutकरोwn(1, "sigaction(SIGQUIT)", __LINE__);
+	अगर (sigaction(संक_इति, &sa, शून्य) == -1)
+		shutकरोwn(1, "sigaction(SIGTERM)", __LINE__);
 
-	if (!continuous_mode_fake) {
+	अगर (!continuous_mode_fake) अणु
 		attr.mq_flags = O_NONBLOCK;
 		attr.mq_maxmsg = cur_max_msgs;
 		attr.mq_msgsize = MSG_SIZE;
-		open_queue(&attr);
-	}
-	for (i = 0; i < num_cpus_to_pin; i++) {
-		pthread_attr_t thread_attr;
-		void *thread_func;
+		खोलो_queue(&attr);
+	पूर्ण
+	क्रम (i = 0; i < num_cpus_to_pin; i++) अणु
+		pthपढ़ो_attr_t thपढ़ो_attr;
+		व्योम *thपढ़ो_func;
 
-		if (continuous_mode_fake)
-			thread_func = &fake_cont_thread;
-		else if (continuous_mode)
-			thread_func = &cont_thread;
-		else
-			thread_func = &perf_test_thread;
+		अगर (continuous_mode_fake)
+			thपढ़ो_func = &fake_cont_thपढ़ो;
+		अन्यथा अगर (continuous_mode)
+			thपढ़ो_func = &cont_thपढ़ो;
+		अन्यथा
+			thपढ़ो_func = &perf_test_thपढ़ो;
 
 		CPU_ZERO_S(cpu_set_size, cpu_set);
 		CPU_SET_S(cpus_to_pin[i], cpu_set_size, cpu_set);
-		pthread_attr_init(&thread_attr);
-		pthread_attr_setaffinity_np(&thread_attr, cpu_set_size,
+		pthपढ़ो_attr_init(&thपढ़ो_attr);
+		pthपढ़ो_attr_setaffinity_np(&thपढ़ो_attr, cpu_set_size,
 					    cpu_set);
-		if (pthread_create(&cpu_threads[i], &thread_attr, thread_func,
-				   NULL))
-			shutdown(1, "pthread_create()", __LINE__);
-		pthread_attr_destroy(&thread_attr);
-	}
+		अगर (pthपढ़ो_create(&cpu_thपढ़ोs[i], &thपढ़ो_attr, thपढ़ो_func,
+				   शून्य))
+			shutकरोwn(1, "pthread_create()", __LINE__);
+		pthपढ़ो_attr_destroy(&thपढ़ो_attr);
+	पूर्ण
 
-	if (!continuous_mode) {
-		pthread_join(cpu_threads[0], &retval);
-		shutdown((long)retval, "perf_test_thread()", __LINE__);
-	} else {
-		while (1)
+	अगर (!continuous_mode) अणु
+		pthपढ़ो_join(cpu_thपढ़ोs[0], &retval);
+		shutकरोwn((दीर्घ)retval, "perf_test_thread()", __LINE__);
+	पूर्ण अन्यथा अणु
+		जबतक (1)
 			sleep(1);
-	}
-	shutdown(0, "", 0);
-}
+	पूर्ण
+	shutकरोwn(0, "", 0);
+पूर्ण

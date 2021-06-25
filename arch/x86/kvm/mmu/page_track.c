@@ -1,263 +1,264 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Support KVM gust page tracking
  *
  * This feature allows us to track page access in guest. Currently, only
- * write access is tracked.
+ * ग_लिखो access is tracked.
  *
  * Copyright(C) 2015 Intel Corporation.
  *
  * Author:
- *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
+ *   Xiao Guangrong <guangrong.xiao@linux.पूर्णांकel.com>
  */
 
-#include <linux/kvm_host.h>
-#include <linux/rculist.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/rculist.h>
 
-#include <asm/kvm_page_track.h>
+#समावेश <यंत्र/kvm_page_track.h>
 
-#include "mmu_internal.h"
+#समावेश "mmu_internal.h"
 
-void kvm_page_track_free_memslot(struct kvm_memory_slot *slot)
-{
-	int i;
+व्योम kvm_page_track_मुक्त_memslot(काष्ठा kvm_memory_slot *slot)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < KVM_PAGE_TRACK_MAX; i++) {
-		kvfree(slot->arch.gfn_track[i]);
-		slot->arch.gfn_track[i] = NULL;
-	}
-}
+	क्रम (i = 0; i < KVM_PAGE_TRACK_MAX; i++) अणु
+		kvमुक्त(slot->arch.gfn_track[i]);
+		slot->arch.gfn_track[i] = शून्य;
+	पूर्ण
+पूर्ण
 
-int kvm_page_track_create_memslot(struct kvm_memory_slot *slot,
-				  unsigned long npages)
-{
-	int  i;
+पूर्णांक kvm_page_track_create_memslot(काष्ठा kvm_memory_slot *slot,
+				  अचिन्हित दीर्घ npages)
+अणु
+	पूर्णांक  i;
 
-	for (i = 0; i < KVM_PAGE_TRACK_MAX; i++) {
+	क्रम (i = 0; i < KVM_PAGE_TRACK_MAX; i++) अणु
 		slot->arch.gfn_track[i] =
-			kvcalloc(npages, sizeof(*slot->arch.gfn_track[i]),
+			kvसुस्मृति(npages, माप(*slot->arch.gfn_track[i]),
 				 GFP_KERNEL_ACCOUNT);
-		if (!slot->arch.gfn_track[i])
-			goto track_free;
-	}
+		अगर (!slot->arch.gfn_track[i])
+			जाओ track_मुक्त;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-track_free:
-	kvm_page_track_free_memslot(slot);
-	return -ENOMEM;
-}
+track_मुक्त:
+	kvm_page_track_मुक्त_memslot(slot);
+	वापस -ENOMEM;
+पूर्ण
 
-static inline bool page_track_mode_is_valid(enum kvm_page_track_mode mode)
-{
-	if (mode < 0 || mode >= KVM_PAGE_TRACK_MAX)
-		return false;
+अटल अंतरभूत bool page_track_mode_is_valid(क्रमागत kvm_page_track_mode mode)
+अणु
+	अगर (mode < 0 || mode >= KVM_PAGE_TRACK_MAX)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void update_gfn_track(struct kvm_memory_slot *slot, gfn_t gfn,
-			     enum kvm_page_track_mode mode, short count)
-{
-	int index, val;
+अटल व्योम update_gfn_track(काष्ठा kvm_memory_slot *slot, gfn_t gfn,
+			     क्रमागत kvm_page_track_mode mode, लघु count)
+अणु
+	पूर्णांक index, val;
 
 	index = gfn_to_index(gfn, slot->base_gfn, PG_LEVEL_4K);
 
 	val = slot->arch.gfn_track[mode][index];
 
-	if (WARN_ON(val + count < 0 || val + count > USHRT_MAX))
-		return;
+	अगर (WARN_ON(val + count < 0 || val + count > अच_लघु_उच्च))
+		वापस;
 
 	slot->arch.gfn_track[mode][index] += count;
-}
+पूर्ण
 
 /*
  * add guest page to the tracking pool so that corresponding access on that
- * page will be intercepted.
+ * page will be पूर्णांकercepted.
  *
  * It should be called under the protection both of mmu-lock and kvm->srcu
  * or kvm->slots_lock.
  *
- * @kvm: the guest instance we are interested in.
- * @slot: the @gfn belongs to.
+ * @kvm: the guest instance we are पूर्णांकerested in.
+ * @slot: the @gfn beदीर्घs to.
  * @gfn: the guest page.
- * @mode: tracking mode, currently only write track is supported.
+ * @mode: tracking mode, currently only ग_लिखो track is supported.
  */
-void kvm_slot_page_track_add_page(struct kvm *kvm,
-				  struct kvm_memory_slot *slot, gfn_t gfn,
-				  enum kvm_page_track_mode mode)
-{
+व्योम kvm_slot_page_track_add_page(काष्ठा kvm *kvm,
+				  काष्ठा kvm_memory_slot *slot, gfn_t gfn,
+				  क्रमागत kvm_page_track_mode mode)
+अणु
 
-	if (WARN_ON(!page_track_mode_is_valid(mode)))
-		return;
+	अगर (WARN_ON(!page_track_mode_is_valid(mode)))
+		वापस;
 
 	update_gfn_track(slot, gfn, mode, 1);
 
 	/*
-	 * new track stops large page mapping for the
+	 * new track stops large page mapping क्रम the
 	 * tracked page.
 	 */
 	kvm_mmu_gfn_disallow_lpage(slot, gfn);
 
-	if (mode == KVM_PAGE_TRACK_WRITE)
-		if (kvm_mmu_slot_gfn_write_protect(kvm, slot, gfn))
+	अगर (mode == KVM_PAGE_TRACK_WRITE)
+		अगर (kvm_mmu_slot_gfn_ग_लिखो_protect(kvm, slot, gfn))
 			kvm_flush_remote_tlbs(kvm);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(kvm_slot_page_track_add_page);
 
 /*
- * remove the guest page from the tracking pool which stops the interception
+ * हटाओ the guest page from the tracking pool which stops the पूर्णांकerception
  * of corresponding access on that page. It is the opposed operation of
  * kvm_slot_page_track_add_page().
  *
  * It should be called under the protection both of mmu-lock and kvm->srcu
  * or kvm->slots_lock.
  *
- * @kvm: the guest instance we are interested in.
- * @slot: the @gfn belongs to.
+ * @kvm: the guest instance we are पूर्णांकerested in.
+ * @slot: the @gfn beदीर्घs to.
  * @gfn: the guest page.
- * @mode: tracking mode, currently only write track is supported.
+ * @mode: tracking mode, currently only ग_लिखो track is supported.
  */
-void kvm_slot_page_track_remove_page(struct kvm *kvm,
-				     struct kvm_memory_slot *slot, gfn_t gfn,
-				     enum kvm_page_track_mode mode)
-{
-	if (WARN_ON(!page_track_mode_is_valid(mode)))
-		return;
+व्योम kvm_slot_page_track_हटाओ_page(काष्ठा kvm *kvm,
+				     काष्ठा kvm_memory_slot *slot, gfn_t gfn,
+				     क्रमागत kvm_page_track_mode mode)
+अणु
+	अगर (WARN_ON(!page_track_mode_is_valid(mode)))
+		वापस;
 
 	update_gfn_track(slot, gfn, mode, -1);
 
 	/*
-	 * allow large page mapping for the tracked page
+	 * allow large page mapping क्रम the tracked page
 	 * after the tracker is gone.
 	 */
 	kvm_mmu_gfn_allow_lpage(slot, gfn);
-}
-EXPORT_SYMBOL_GPL(kvm_slot_page_track_remove_page);
+पूर्ण
+EXPORT_SYMBOL_GPL(kvm_slot_page_track_हटाओ_page);
 
 /*
- * check if the corresponding access on the specified guest page is tracked.
+ * check अगर the corresponding access on the specअगरied guest page is tracked.
  */
-bool kvm_page_track_is_active(struct kvm_vcpu *vcpu, gfn_t gfn,
-			      enum kvm_page_track_mode mode)
-{
-	struct kvm_memory_slot *slot;
-	int index;
+bool kvm_page_track_is_active(काष्ठा kvm_vcpu *vcpu, gfn_t gfn,
+			      क्रमागत kvm_page_track_mode mode)
+अणु
+	काष्ठा kvm_memory_slot *slot;
+	पूर्णांक index;
 
-	if (WARN_ON(!page_track_mode_is_valid(mode)))
-		return false;
+	अगर (WARN_ON(!page_track_mode_is_valid(mode)))
+		वापस false;
 
 	slot = kvm_vcpu_gfn_to_memslot(vcpu, gfn);
-	if (!slot)
-		return false;
+	अगर (!slot)
+		वापस false;
 
 	index = gfn_to_index(gfn, slot->base_gfn, PG_LEVEL_4K);
-	return !!READ_ONCE(slot->arch.gfn_track[mode][index]);
-}
+	वापस !!READ_ONCE(slot->arch.gfn_track[mode][index]);
+पूर्ण
 
-void kvm_page_track_cleanup(struct kvm *kvm)
-{
-	struct kvm_page_track_notifier_head *head;
+व्योम kvm_page_track_cleanup(काष्ठा kvm *kvm)
+अणु
+	काष्ठा kvm_page_track_notअगरier_head *head;
 
-	head = &kvm->arch.track_notifier_head;
-	cleanup_srcu_struct(&head->track_srcu);
-}
+	head = &kvm->arch.track_notअगरier_head;
+	cleanup_srcu_काष्ठा(&head->track_srcu);
+पूर्ण
 
-void kvm_page_track_init(struct kvm *kvm)
-{
-	struct kvm_page_track_notifier_head *head;
+व्योम kvm_page_track_init(काष्ठा kvm *kvm)
+अणु
+	काष्ठा kvm_page_track_notअगरier_head *head;
 
-	head = &kvm->arch.track_notifier_head;
-	init_srcu_struct(&head->track_srcu);
-	INIT_HLIST_HEAD(&head->track_notifier_list);
-}
+	head = &kvm->arch.track_notअगरier_head;
+	init_srcu_काष्ठा(&head->track_srcu);
+	INIT_HLIST_HEAD(&head->track_notअगरier_list);
+पूर्ण
 
 /*
- * register the notifier so that event interception for the tracked guest
+ * रेजिस्टर the notअगरier so that event पूर्णांकerception क्रम the tracked guest
  * pages can be received.
  */
-void
-kvm_page_track_register_notifier(struct kvm *kvm,
-				 struct kvm_page_track_notifier_node *n)
-{
-	struct kvm_page_track_notifier_head *head;
+व्योम
+kvm_page_track_रेजिस्टर_notअगरier(काष्ठा kvm *kvm,
+				 काष्ठा kvm_page_track_notअगरier_node *n)
+अणु
+	काष्ठा kvm_page_track_notअगरier_head *head;
 
-	head = &kvm->arch.track_notifier_head;
+	head = &kvm->arch.track_notअगरier_head;
 
-	write_lock(&kvm->mmu_lock);
-	hlist_add_head_rcu(&n->node, &head->track_notifier_list);
-	write_unlock(&kvm->mmu_lock);
-}
-EXPORT_SYMBOL_GPL(kvm_page_track_register_notifier);
+	ग_लिखो_lock(&kvm->mmu_lock);
+	hlist_add_head_rcu(&n->node, &head->track_notअगरier_list);
+	ग_लिखो_unlock(&kvm->mmu_lock);
+पूर्ण
+EXPORT_SYMBOL_GPL(kvm_page_track_रेजिस्टर_notअगरier);
 
 /*
- * stop receiving the event interception. It is the opposed operation of
- * kvm_page_track_register_notifier().
+ * stop receiving the event पूर्णांकerception. It is the opposed operation of
+ * kvm_page_track_रेजिस्टर_notअगरier().
  */
-void
-kvm_page_track_unregister_notifier(struct kvm *kvm,
-				   struct kvm_page_track_notifier_node *n)
-{
-	struct kvm_page_track_notifier_head *head;
+व्योम
+kvm_page_track_unरेजिस्टर_notअगरier(काष्ठा kvm *kvm,
+				   काष्ठा kvm_page_track_notअगरier_node *n)
+अणु
+	काष्ठा kvm_page_track_notअगरier_head *head;
 
-	head = &kvm->arch.track_notifier_head;
+	head = &kvm->arch.track_notअगरier_head;
 
-	write_lock(&kvm->mmu_lock);
+	ग_लिखो_lock(&kvm->mmu_lock);
 	hlist_del_rcu(&n->node);
-	write_unlock(&kvm->mmu_lock);
+	ग_लिखो_unlock(&kvm->mmu_lock);
 	synchronize_srcu(&head->track_srcu);
-}
-EXPORT_SYMBOL_GPL(kvm_page_track_unregister_notifier);
+पूर्ण
+EXPORT_SYMBOL_GPL(kvm_page_track_unरेजिस्टर_notअगरier);
 
 /*
- * Notify the node that write access is intercepted and write emulation is
- * finished at this time.
+ * Notअगरy the node that ग_लिखो access is पूर्णांकercepted and ग_लिखो emulation is
+ * finished at this समय.
  *
- * The node should figure out if the written page is the one that node is
- * interested in by itself.
+ * The node should figure out अगर the written page is the one that node is
+ * पूर्णांकerested in by itself.
  */
-void kvm_page_track_write(struct kvm_vcpu *vcpu, gpa_t gpa, const u8 *new,
-			  int bytes)
-{
-	struct kvm_page_track_notifier_head *head;
-	struct kvm_page_track_notifier_node *n;
-	int idx;
+व्योम kvm_page_track_ग_लिखो(काष्ठा kvm_vcpu *vcpu, gpa_t gpa, स्थिर u8 *new,
+			  पूर्णांक bytes)
+अणु
+	काष्ठा kvm_page_track_notअगरier_head *head;
+	काष्ठा kvm_page_track_notअगरier_node *n;
+	पूर्णांक idx;
 
-	head = &vcpu->kvm->arch.track_notifier_head;
+	head = &vcpu->kvm->arch.track_notअगरier_head;
 
-	if (hlist_empty(&head->track_notifier_list))
-		return;
+	अगर (hlist_empty(&head->track_notअगरier_list))
+		वापस;
 
-	idx = srcu_read_lock(&head->track_srcu);
-	hlist_for_each_entry_srcu(n, &head->track_notifier_list, node,
-				srcu_read_lock_held(&head->track_srcu))
-		if (n->track_write)
-			n->track_write(vcpu, gpa, new, bytes, n);
-	srcu_read_unlock(&head->track_srcu, idx);
-}
+	idx = srcu_पढ़ो_lock(&head->track_srcu);
+	hlist_क्रम_each_entry_srcu(n, &head->track_notअगरier_list, node,
+				srcu_पढ़ो_lock_held(&head->track_srcu))
+		अगर (n->track_ग_लिखो)
+			n->track_ग_लिखो(vcpu, gpa, new, bytes, n);
+	srcu_पढ़ो_unlock(&head->track_srcu, idx);
+पूर्ण
 
 /*
- * Notify the node that memory slot is being removed or moved so that it can
- * drop write-protection for the pages in the memory slot.
+ * Notअगरy the node that memory slot is being हटाओd or moved so that it can
+ * drop ग_लिखो-protection क्रम the pages in the memory slot.
  *
- * The node should figure out it has any write-protected pages in this slot
+ * The node should figure out it has any ग_लिखो-रक्षित pages in this slot
  * by itself.
  */
-void kvm_page_track_flush_slot(struct kvm *kvm, struct kvm_memory_slot *slot)
-{
-	struct kvm_page_track_notifier_head *head;
-	struct kvm_page_track_notifier_node *n;
-	int idx;
+व्योम kvm_page_track_flush_slot(काष्ठा kvm *kvm, काष्ठा kvm_memory_slot *slot)
+अणु
+	काष्ठा kvm_page_track_notअगरier_head *head;
+	काष्ठा kvm_page_track_notअगरier_node *n;
+	पूर्णांक idx;
 
-	head = &kvm->arch.track_notifier_head;
+	head = &kvm->arch.track_notअगरier_head;
 
-	if (hlist_empty(&head->track_notifier_list))
-		return;
+	अगर (hlist_empty(&head->track_notअगरier_list))
+		वापस;
 
-	idx = srcu_read_lock(&head->track_srcu);
-	hlist_for_each_entry_srcu(n, &head->track_notifier_list, node,
-				srcu_read_lock_held(&head->track_srcu))
-		if (n->track_flush_slot)
+	idx = srcu_पढ़ो_lock(&head->track_srcu);
+	hlist_क्रम_each_entry_srcu(n, &head->track_notअगरier_list, node,
+				srcu_पढ़ो_lock_held(&head->track_srcu))
+		अगर (n->track_flush_slot)
 			n->track_flush_slot(kvm, slot, n);
-	srcu_read_unlock(&head->track_srcu, idx);
-}
+	srcu_पढ़ो_unlock(&head->track_srcu, idx);
+पूर्ण

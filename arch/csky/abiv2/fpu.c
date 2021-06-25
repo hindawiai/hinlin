@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/ptrace.h>
-#include <linux/uaccess.h>
-#include <abi/reg_ops.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/uaccess.h>
+#समावेश <abi/reg_ops.h>
 
-#define MTCR_MASK	0xFC00FFE0
-#define MFCR_MASK	0xFC00FFE0
-#define MTCR_DIST	0xC0006420
-#define MFCR_DIST	0xC0006020
+#घोषणा MTCR_MASK	0xFC00FFE0
+#घोषणा MFCR_MASK	0xFC00FFE0
+#घोषणा MTCR_DIST	0xC0006420
+#घोषणा MFCR_DIST	0xC0006020
 
 /*
  * fpu_libc_helper() is to help libc to excute:
@@ -17,153 +18,153 @@
  *  - mtcr %a, cr<1, 2>
  *  - mtcr %a, cr<2, 2>
  */
-int fpu_libc_helper(struct pt_regs *regs)
-{
-	int fault;
-	unsigned long instrptr, regx = 0;
-	unsigned long index = 0, tmp = 0;
-	unsigned long tinstr = 0;
+पूर्णांक fpu_libc_helper(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक fault;
+	अचिन्हित दीर्घ instrptr, regx = 0;
+	अचिन्हित दीर्घ index = 0, पंचांगp = 0;
+	अचिन्हित दीर्घ tinstr = 0;
 	u16 instr_hi, instr_low;
 
-	instrptr = instruction_pointer(regs);
-	if (instrptr & 1)
-		return 0;
+	instrptr = inकाष्ठाion_poपूर्णांकer(regs);
+	अगर (instrptr & 1)
+		वापस 0;
 
 	fault = __get_user(instr_low, (u16 *)instrptr);
-	if (fault)
-		return 0;
+	अगर (fault)
+		वापस 0;
 
 	fault = __get_user(instr_hi, (u16 *)(instrptr + 2));
-	if (fault)
-		return 0;
+	अगर (fault)
+		वापस 0;
 
-	tinstr = instr_hi | ((unsigned long)instr_low << 16);
+	tinstr = instr_hi | ((अचिन्हित दीर्घ)instr_low << 16);
 
-	if (((tinstr >> 21) & 0x1F) != 2)
-		return 0;
+	अगर (((tinstr >> 21) & 0x1F) != 2)
+		वापस 0;
 
-	if ((tinstr & MTCR_MASK) == MTCR_DIST) {
+	अगर ((tinstr & MTCR_MASK) == MTCR_DIST) अणु
 		index = (tinstr >> 16) & 0x1F;
-		if (index > 13)
-			return 0;
+		अगर (index > 13)
+			वापस 0;
 
-		tmp = tinstr & 0x1F;
-		if (tmp > 2)
-			return 0;
+		पंचांगp = tinstr & 0x1F;
+		अगर (पंचांगp > 2)
+			वापस 0;
 
 		regx =  *(&regs->a0 + index);
 
-		if (tmp == 1)
+		अगर (पंचांगp == 1)
 			mtcr("cr<1, 2>", regx);
-		else if (tmp == 2)
+		अन्यथा अगर (पंचांगp == 2)
 			mtcr("cr<2, 2>", regx);
-		else
-			return 0;
+		अन्यथा
+			वापस 0;
 
 		regs->pc += 4;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if ((tinstr & MFCR_MASK) == MFCR_DIST) {
+	अगर ((tinstr & MFCR_MASK) == MFCR_DIST) अणु
 		index = tinstr & 0x1F;
-		if (index > 13)
-			return 0;
+		अगर (index > 13)
+			वापस 0;
 
-		tmp = ((tinstr >> 16) & 0x1F);
-		if (tmp > 2)
-			return 0;
+		पंचांगp = ((tinstr >> 16) & 0x1F);
+		अगर (पंचांगp > 2)
+			वापस 0;
 
-		if (tmp == 1)
+		अगर (पंचांगp == 1)
 			regx = mfcr("cr<1, 2>");
-		else if (tmp == 2)
+		अन्यथा अगर (पंचांगp == 2)
 			regx = mfcr("cr<2, 2>");
-		else
-			return 0;
+		अन्यथा
+			वापस 0;
 
 		*(&regs->a0 + index) = regx;
 
 		regs->pc += 4;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void fpu_fpe(struct pt_regs *regs)
-{
-	int sig, code;
-	unsigned int fesr;
+व्योम fpu_fpe(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक sig, code;
+	अचिन्हित पूर्णांक fesr;
 
 	fesr = mfcr("cr<2, 2>");
 
-	sig = SIGFPE;
+	sig = संक_भ_त्रुटि;
 	code = FPE_FLTUNK;
 
-	if (fesr & FPE_ILLE) {
-		sig = SIGILL;
+	अगर (fesr & FPE_ILLE) अणु
+		sig = संक_अवैध;
 		code = ILL_ILLOPC;
-	} else if (fesr & FPE_IDC) {
-		sig = SIGILL;
+	पूर्ण अन्यथा अगर (fesr & FPE_IDC) अणु
+		sig = संक_अवैध;
 		code = ILL_ILLOPN;
-	} else if (fesr & FPE_FEC) {
-		sig = SIGFPE;
-		if (fesr & FPE_IOC)
+	पूर्ण अन्यथा अगर (fesr & FPE_FEC) अणु
+		sig = संक_भ_त्रुटि;
+		अगर (fesr & FPE_IOC)
 			code = FPE_FLTINV;
-		else if (fesr & FPE_DZC)
+		अन्यथा अगर (fesr & FPE_DZC)
 			code = FPE_FLTDIV;
-		else if (fesr & FPE_UFC)
+		अन्यथा अगर (fesr & FPE_UFC)
 			code = FPE_FLTUND;
-		else if (fesr & FPE_OFC)
+		अन्यथा अगर (fesr & FPE_OFC)
 			code = FPE_FLTOVF;
-		else if (fesr & FPE_IXC)
+		अन्यथा अगर (fesr & FPE_IXC)
 			code = FPE_FLTRES;
-	}
+	पूर्ण
 
-	force_sig_fault(sig, code, (void __user *)regs->pc);
-}
+	क्रमce_sig_fault(sig, code, (व्योम __user *)regs->pc);
+पूर्ण
 
-#define FMFVR_FPU_REGS(vrx, vry)	\
+#घोषणा FMFVR_FPU_REGS(vrx, vry)	\
 	"fmfvrl %0, "#vrx"\n"		\
 	"fmfvrh %1, "#vrx"\n"		\
 	"fmfvrl %2, "#vry"\n"		\
 	"fmfvrh %3, "#vry"\n"
 
-#define FMTVR_FPU_REGS(vrx, vry)	\
+#घोषणा FMTVR_FPU_REGS(vrx, vry)	\
 	"fmtvrl "#vrx", %0\n"		\
 	"fmtvrh "#vrx", %1\n"		\
 	"fmtvrl "#vry", %2\n"		\
 	"fmtvrh "#vry", %3\n"
 
-#define STW_FPU_REGS(a, b, c, d)	\
+#घोषणा STW_FPU_REGS(a, b, c, d)	\
 	"stw    %0, (%4, "#a")\n"	\
 	"stw    %1, (%4, "#b")\n"	\
 	"stw    %2, (%4, "#c")\n"	\
 	"stw    %3, (%4, "#d")\n"
 
-#define LDW_FPU_REGS(a, b, c, d)	\
+#घोषणा LDW_FPU_REGS(a, b, c, d)	\
 	"ldw    %0, (%4, "#a")\n"	\
 	"ldw    %1, (%4, "#b")\n"	\
 	"ldw    %2, (%4, "#c")\n"	\
 	"ldw    %3, (%4, "#d")\n"
 
-void save_to_user_fp(struct user_fp *user_fp)
-{
-	unsigned long flg;
-	unsigned long tmp1, tmp2;
-	unsigned long *fpregs;
+व्योम save_to_user_fp(काष्ठा user_fp *user_fp)
+अणु
+	अचिन्हित दीर्घ flg;
+	अचिन्हित दीर्घ पंचांगp1, पंचांगp2;
+	अचिन्हित दीर्घ *fpregs;
 
 	local_irq_save(flg);
 
-	tmp1 = mfcr("cr<1, 2>");
-	tmp2 = mfcr("cr<2, 2>");
+	पंचांगp1 = mfcr("cr<1, 2>");
+	पंचांगp2 = mfcr("cr<2, 2>");
 
-	user_fp->fcr = tmp1;
-	user_fp->fesr = tmp2;
+	user_fp->fcr = पंचांगp1;
+	user_fp->fesr = पंचांगp2;
 
 	fpregs = &user_fp->vr[0];
-#ifdef CONFIG_CPU_HAS_FPUV2
-#ifdef CONFIG_CPU_HAS_VDSP
-	asm volatile(
+#अगर_घोषित CONFIG_CPU_HAS_FPUV2
+#अगर_घोषित CONFIG_CPU_HAS_VDSP
+	यंत्र अस्थिर(
 		"vstmu.32    vr0-vr3,   (%0)\n"
 		"vstmu.32    vr4-vr7,   (%0)\n"
 		"vstmu.32    vr8-vr11,  (%0)\n"
@@ -171,17 +172,17 @@ void save_to_user_fp(struct user_fp *user_fp)
 		"fstmu.64    vr16-vr31, (%0)\n"
 		: "+a"(fpregs)
 		::"memory");
-#else
-	asm volatile(
+#अन्यथा
+	यंत्र अस्थिर(
 		"fstmu.64    vr0-vr31,  (%0)\n"
 		: "+a"(fpregs)
 		::"memory");
-#endif
-#else
-	{
-	unsigned long tmp3, tmp4;
+#पूर्ण_अगर
+#अन्यथा
+	अणु
+	अचिन्हित दीर्घ पंचांगp3, पंचांगp4;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		FMFVR_FPU_REGS(vr0, vr1)
 		STW_FPU_REGS(0, 4, 16, 20)
 		FMFVR_FPU_REGS(vr2, vr3)
@@ -199,33 +200,33 @@ void save_to_user_fp(struct user_fp *user_fp)
 		STW_FPU_REGS(64, 68, 80, 84)
 		FMFVR_FPU_REGS(vr14, vr15)
 		STW_FPU_REGS(96, 100, 112, 116)
-		: "=a"(tmp1), "=a"(tmp2), "=a"(tmp3),
-		  "=a"(tmp4), "+a"(fpregs)
+		: "=a"(पंचांगp1), "=a"(पंचांगp2), "=a"(पंचांगp3),
+		  "=a"(पंचांगp4), "+a"(fpregs)
 		::"memory");
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	local_irq_restore(flg);
-}
+पूर्ण
 
-void restore_from_user_fp(struct user_fp *user_fp)
-{
-	unsigned long flg;
-	unsigned long tmp1, tmp2;
-	unsigned long *fpregs;
+व्योम restore_from_user_fp(काष्ठा user_fp *user_fp)
+अणु
+	अचिन्हित दीर्घ flg;
+	अचिन्हित दीर्घ पंचांगp1, पंचांगp2;
+	अचिन्हित दीर्घ *fpregs;
 
 	local_irq_save(flg);
 
-	tmp1 = user_fp->fcr;
-	tmp2 = user_fp->fesr;
+	पंचांगp1 = user_fp->fcr;
+	पंचांगp2 = user_fp->fesr;
 
-	mtcr("cr<1, 2>", tmp1);
-	mtcr("cr<2, 2>", tmp2);
+	mtcr("cr<1, 2>", पंचांगp1);
+	mtcr("cr<2, 2>", पंचांगp2);
 
 	fpregs = &user_fp->vr[0];
-#ifdef CONFIG_CPU_HAS_FPUV2
-#ifdef CONFIG_CPU_HAS_VDSP
-	asm volatile(
+#अगर_घोषित CONFIG_CPU_HAS_FPUV2
+#अगर_घोषित CONFIG_CPU_HAS_VDSP
+	यंत्र अस्थिर(
 		"vldmu.32    vr0-vr3,   (%0)\n"
 		"vldmu.32    vr4-vr7,   (%0)\n"
 		"vldmu.32    vr8-vr11,  (%0)\n"
@@ -233,17 +234,17 @@ void restore_from_user_fp(struct user_fp *user_fp)
 		"fldmu.64    vr16-vr31, (%0)\n"
 		: "+a"(fpregs)
 		::"memory");
-#else
-	asm volatile(
+#अन्यथा
+	यंत्र अस्थिर(
 		"fldmu.64    vr0-vr31,  (%0)\n"
 		: "+a"(fpregs)
 		::"memory");
-#endif
-#else
-	{
-	unsigned long tmp3, tmp4;
+#पूर्ण_अगर
+#अन्यथा
+	अणु
+	अचिन्हित दीर्घ पंचांगp3, पंचांगp4;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		LDW_FPU_REGS(0, 4, 16, 20)
 		FMTVR_FPU_REGS(vr0, vr1)
 		LDW_FPU_REGS(32, 36, 48, 52)
@@ -261,10 +262,10 @@ void restore_from_user_fp(struct user_fp *user_fp)
 		FMTVR_FPU_REGS(vr12, vr13)
 		LDW_FPU_REGS(96, 100, 112, 116)
 		FMTVR_FPU_REGS(vr14, vr15)
-		: "=a"(tmp1), "=a"(tmp2), "=a"(tmp3),
-		  "=a"(tmp4), "+a"(fpregs)
+		: "=a"(पंचांगp1), "=a"(पंचांगp2), "=a"(पंचांगp3),
+		  "=a"(पंचांगp4), "+a"(fpregs)
 		::"memory");
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	local_irq_restore(flg);
-}
+पूर्ण

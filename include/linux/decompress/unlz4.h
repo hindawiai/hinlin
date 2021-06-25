@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef DECOMPRESS_UNLZ4_H
-#define DECOMPRESS_UNLZ4_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित DECOMPRESS_UNLZ4_H
+#घोषणा DECOMPRESS_UNLZ4_H
 
-int unlz4(unsigned char *inbuf, long len,
-	long (*fill)(void*, unsigned long),
-	long (*flush)(void*, unsigned long),
-	unsigned char *output,
-	long *pos,
-	void(*error)(char *x));
-#endif
+पूर्णांक unlz4(अचिन्हित अक्षर *inbuf, दीर्घ len,
+	दीर्घ (*fill)(व्योम*, अचिन्हित दीर्घ),
+	दीर्घ (*flush)(व्योम*, अचिन्हित दीर्घ),
+	अचिन्हित अक्षर *output,
+	दीर्घ *pos,
+	व्योम(*error)(अक्षर *x));
+#पूर्ण_अगर

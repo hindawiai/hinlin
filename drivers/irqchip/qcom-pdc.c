@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/irqdomain.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/soc/qcom/irq.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/types.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/soc/qcom/irq.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
 
-#define PDC_MAX_IRQS		168
-#define PDC_MAX_GPIO_IRQS	256
+#घोषणा PDC_MAX_IRQS		168
+#घोषणा PDC_MAX_GPIO_IRQS	256
 
-#define CLEAR_INTR(reg, intr)	(reg & ~(1 << intr))
-#define ENABLE_INTR(reg, intr)	(reg | (1 << intr))
+#घोषणा CLEAR_INTR(reg, पूर्णांकr)	(reg & ~(1 << पूर्णांकr))
+#घोषणा ENABLE_INTR(reg, पूर्णांकr)	(reg | (1 << पूर्णांकr))
 
-#define IRQ_ENABLE_BANK		0x10
-#define IRQ_i_CFG		0x110
+#घोषणा IRQ_ENABLE_BANK		0x10
+#घोषणा IRQ_i_CFG		0x110
 
-#define PDC_NO_PARENT_IRQ	~0UL
+#घोषणा PDC_NO_PARENT_IRQ	~0UL
 
-struct pdc_pin_region {
+काष्ठा pdc_pin_region अणु
 	u32 pin_base;
 	u32 parent_base;
 	u32 cnt;
-};
+पूर्ण;
 
-static DEFINE_RAW_SPINLOCK(pdc_lock);
-static void __iomem *pdc_base;
-static struct pdc_pin_region *pdc_region;
-static int pdc_region_cnt;
+अटल DEFINE_RAW_SPINLOCK(pdc_lock);
+अटल व्योम __iomem *pdc_base;
+अटल काष्ठा pdc_pin_region *pdc_region;
+अटल पूर्णांक pdc_region_cnt;
 
-static void pdc_reg_write(int reg, u32 i, u32 val)
-{
-	writel_relaxed(val, pdc_base + reg + i * sizeof(u32));
-}
+अटल व्योम pdc_reg_ग_लिखो(पूर्णांक reg, u32 i, u32 val)
+अणु
+	ग_लिखोl_relaxed(val, pdc_base + reg + i * माप(u32));
+पूर्ण
 
-static u32 pdc_reg_read(int reg, u32 i)
-{
-	return readl_relaxed(pdc_base + reg + i * sizeof(u32));
-}
+अटल u32 pdc_reg_पढ़ो(पूर्णांक reg, u32 i)
+अणु
+	वापस पढ़ोl_relaxed(pdc_base + reg + i * माप(u32));
+पूर्ण
 
-static int qcom_pdc_gic_get_irqchip_state(struct irq_data *d,
-					  enum irqchip_irq_state which,
+अटल पूर्णांक qcom_pdc_gic_get_irqchip_state(काष्ठा irq_data *d,
+					  क्रमागत irqchip_irq_state which,
 					  bool *state)
-{
-	if (d->hwirq == GPIO_NO_WAKE_IRQ)
-		return 0;
+अणु
+	अगर (d->hwirq == GPIO_NO_WAKE_IRQ)
+		वापस 0;
 
-	return irq_chip_get_parent_state(d, which, state);
-}
+	वापस irq_chip_get_parent_state(d, which, state);
+पूर्ण
 
-static int qcom_pdc_gic_set_irqchip_state(struct irq_data *d,
-					  enum irqchip_irq_state which,
+अटल पूर्णांक qcom_pdc_gic_set_irqchip_state(काष्ठा irq_data *d,
+					  क्रमागत irqchip_irq_state which,
 					  bool value)
-{
-	if (d->hwirq == GPIO_NO_WAKE_IRQ)
-		return 0;
+अणु
+	अगर (d->hwirq == GPIO_NO_WAKE_IRQ)
+		वापस 0;
 
-	return irq_chip_set_parent_state(d, which, value);
-}
+	वापस irq_chip_set_parent_state(d, which, value);
+पूर्ण
 
-static void pdc_enable_intr(struct irq_data *d, bool on)
-{
-	int pin_out = d->hwirq;
+अटल व्योम pdc_enable_पूर्णांकr(काष्ठा irq_data *d, bool on)
+अणु
+	पूर्णांक pin_out = d->hwirq;
 	u32 index, mask;
 	u32 enable;
 
@@ -81,51 +82,51 @@ static void pdc_enable_intr(struct irq_data *d, bool on)
 	mask = pin_out % 32;
 
 	raw_spin_lock(&pdc_lock);
-	enable = pdc_reg_read(IRQ_ENABLE_BANK, index);
+	enable = pdc_reg_पढ़ो(IRQ_ENABLE_BANK, index);
 	enable = on ? ENABLE_INTR(enable, mask) : CLEAR_INTR(enable, mask);
-	pdc_reg_write(IRQ_ENABLE_BANK, index, enable);
+	pdc_reg_ग_लिखो(IRQ_ENABLE_BANK, index, enable);
 	raw_spin_unlock(&pdc_lock);
-}
+पूर्ण
 
-static void qcom_pdc_gic_disable(struct irq_data *d)
-{
-	if (d->hwirq == GPIO_NO_WAKE_IRQ)
-		return;
+अटल व्योम qcom_pdc_gic_disable(काष्ठा irq_data *d)
+अणु
+	अगर (d->hwirq == GPIO_NO_WAKE_IRQ)
+		वापस;
 
-	pdc_enable_intr(d, false);
+	pdc_enable_पूर्णांकr(d, false);
 	irq_chip_disable_parent(d);
-}
+पूर्ण
 
-static void qcom_pdc_gic_enable(struct irq_data *d)
-{
-	if (d->hwirq == GPIO_NO_WAKE_IRQ)
-		return;
+अटल व्योम qcom_pdc_gic_enable(काष्ठा irq_data *d)
+अणु
+	अगर (d->hwirq == GPIO_NO_WAKE_IRQ)
+		वापस;
 
-	pdc_enable_intr(d, true);
+	pdc_enable_पूर्णांकr(d, true);
 	irq_chip_enable_parent(d);
-}
+पूर्ण
 
-static void qcom_pdc_gic_mask(struct irq_data *d)
-{
-	if (d->hwirq == GPIO_NO_WAKE_IRQ)
-		return;
+अटल व्योम qcom_pdc_gic_mask(काष्ठा irq_data *d)
+अणु
+	अगर (d->hwirq == GPIO_NO_WAKE_IRQ)
+		वापस;
 
 	irq_chip_mask_parent(d);
-}
+पूर्ण
 
-static void qcom_pdc_gic_unmask(struct irq_data *d)
-{
-	if (d->hwirq == GPIO_NO_WAKE_IRQ)
-		return;
+अटल व्योम qcom_pdc_gic_unmask(काष्ठा irq_data *d)
+अणु
+	अगर (d->hwirq == GPIO_NO_WAKE_IRQ)
+		वापस;
 
 	irq_chip_unmask_parent(d);
-}
+पूर्ण
 
 /*
- * GIC does not handle falling edge or active low. To allow falling edge and
- * active low interrupts to be handled at GIC, PDC has an inverter that inverts
- * falling edge into a rising edge and active low into an active high.
- * For the inverter to work, the polarity bit in the IRQ_CONFIG register has to
+ * GIC करोes not handle falling edge or active low. To allow falling edge and
+ * active low पूर्णांकerrupts to be handled at GIC, PDC has an inverter that inverts
+ * falling edge पूर्णांकo a rising edge and active low पूर्णांकo an active high.
+ * For the inverter to work, the polarity bit in the IRQ_CONFIG रेजिस्टर has to
  * set as per the table below.
  * Level sensitive active low    LOW
  * Rising edge sensitive         NOT USED
@@ -136,82 +137,82 @@ static void qcom_pdc_gic_unmask(struct irq_data *d)
  * Rising edge sensitive         HIGH
  * Dual Edge sensitive           HIGH
  */
-enum pdc_irq_config_bits {
+क्रमागत pdc_irq_config_bits अणु
 	PDC_LEVEL_LOW		= 0b000,
 	PDC_EDGE_FALLING	= 0b010,
 	PDC_LEVEL_HIGH		= 0b100,
 	PDC_EDGE_RISING		= 0b110,
 	PDC_EDGE_DUAL		= 0b111,
-};
+पूर्ण;
 
 /**
- * qcom_pdc_gic_set_type: Configure PDC for the interrupt
+ * qcom_pdc_gic_set_type: Configure PDC क्रम the पूर्णांकerrupt
  *
- * @d: the interrupt data
- * @type: the interrupt type
+ * @d: the पूर्णांकerrupt data
+ * @type: the पूर्णांकerrupt type
  *
- * If @type is edge triggered, forward that as Rising edge as PDC
- * takes care of converting falling edge to rising edge signal
- * If @type is level, then forward that as level high as PDC
- * takes care of converting falling edge to rising edge signal
+ * If @type is edge triggered, क्रमward that as Rising edge as PDC
+ * takes care of converting falling edge to rising edge संकेत
+ * If @type is level, then क्रमward that as level high as PDC
+ * takes care of converting falling edge to rising edge संकेत
  */
-static int qcom_pdc_gic_set_type(struct irq_data *d, unsigned int type)
-{
-	int pin_out = d->hwirq;
-	enum pdc_irq_config_bits pdc_type;
-	enum pdc_irq_config_bits old_pdc_type;
-	int ret;
+अटल पूर्णांक qcom_pdc_gic_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	पूर्णांक pin_out = d->hwirq;
+	क्रमागत pdc_irq_config_bits pdc_type;
+	क्रमागत pdc_irq_config_bits old_pdc_type;
+	पूर्णांक ret;
 
-	if (pin_out == GPIO_NO_WAKE_IRQ)
-		return 0;
+	अगर (pin_out == GPIO_NO_WAKE_IRQ)
+		वापस 0;
 
-	switch (type) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		pdc_type = PDC_EDGE_RISING;
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
 		pdc_type = PDC_EDGE_FALLING;
 		type = IRQ_TYPE_EDGE_RISING;
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
 		pdc_type = PDC_EDGE_DUAL;
 		type = IRQ_TYPE_EDGE_RISING;
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		pdc_type = PDC_LEVEL_HIGH;
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		pdc_type = PDC_LEVEL_LOW;
 		type = IRQ_TYPE_LEVEL_HIGH;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	old_pdc_type = pdc_reg_read(IRQ_i_CFG, pin_out);
-	pdc_reg_write(IRQ_i_CFG, pin_out, pdc_type);
+	old_pdc_type = pdc_reg_पढ़ो(IRQ_i_CFG, pin_out);
+	pdc_reg_ग_लिखो(IRQ_i_CFG, pin_out, pdc_type);
 
 	ret = irq_chip_set_type_parent(d, type);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * When we change types the PDC can give a phantom interrupt.
-	 * Clear it.  Specifically the phantom shows up when reconfiguring
-	 * polarity of interrupt without changing the state of the signal
+	 * When we change types the PDC can give a phantom पूर्णांकerrupt.
+	 * Clear it.  Specअगरically the phantom shows up when reconfiguring
+	 * polarity of पूर्णांकerrupt without changing the state of the संकेत
 	 * but let's be consistent and clear it always.
 	 *
 	 * Doing this works because we have IRQCHIP_SET_TYPE_MASKED so the
-	 * interrupt will be cleared before the rest of the system sees it.
+	 * पूर्णांकerrupt will be cleared beक्रमe the rest of the प्रणाली sees it.
 	 */
-	if (old_pdc_type != pdc_type)
+	अगर (old_pdc_type != pdc_type)
 		irq_chip_set_parent_state(d, IRQCHIP_STATE_PENDING, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip qcom_pdc_gic_chip = {
+अटल काष्ठा irq_chip qcom_pdc_gic_chip = अणु
 	.name			= "PDC",
 	.irq_eoi		= irq_chip_eoi_parent,
 	.irq_mask		= qcom_pdc_gic_mask,
@@ -228,235 +229,235 @@ static struct irq_chip qcom_pdc_gic_chip = {
 				  IRQCHIP_ENABLE_WAKEUP_ON_SUSPEND,
 	.irq_set_vcpu_affinity	= irq_chip_set_vcpu_affinity_parent,
 	.irq_set_affinity	= irq_chip_set_affinity_parent,
-};
+पूर्ण;
 
-static irq_hw_number_t get_parent_hwirq(int pin)
-{
-	int i;
-	struct pdc_pin_region *region;
+अटल irq_hw_number_t get_parent_hwirq(पूर्णांक pin)
+अणु
+	पूर्णांक i;
+	काष्ठा pdc_pin_region *region;
 
-	for (i = 0; i < pdc_region_cnt; i++) {
+	क्रम (i = 0; i < pdc_region_cnt; i++) अणु
 		region = &pdc_region[i];
-		if (pin >= region->pin_base &&
+		अगर (pin >= region->pin_base &&
 		    pin < region->pin_base + region->cnt)
-			return (region->parent_base + pin - region->pin_base);
-	}
+			वापस (region->parent_base + pin - region->pin_base);
+	पूर्ण
 
-	return PDC_NO_PARENT_IRQ;
-}
+	वापस PDC_NO_PARENT_IRQ;
+पूर्ण
 
-static int qcom_pdc_translate(struct irq_domain *d, struct irq_fwspec *fwspec,
-			      unsigned long *hwirq, unsigned int *type)
-{
-	if (is_of_node(fwspec->fwnode)) {
-		if (fwspec->param_count != 2)
-			return -EINVAL;
+अटल पूर्णांक qcom_pdc_translate(काष्ठा irq_करोमुख्य *d, काष्ठा irq_fwspec *fwspec,
+			      अचिन्हित दीर्घ *hwirq, अचिन्हित पूर्णांक *type)
+अणु
+	अगर (is_of_node(fwspec->fwnode)) अणु
+		अगर (fwspec->param_count != 2)
+			वापस -EINVAL;
 
 		*hwirq = fwspec->param[0];
 		*type = fwspec->param[1] & IRQ_TYPE_SENSE_MASK;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int qcom_pdc_alloc(struct irq_domain *domain, unsigned int virq,
-			  unsigned int nr_irqs, void *data)
-{
-	struct irq_fwspec *fwspec = data;
-	struct irq_fwspec parent_fwspec;
+अटल पूर्णांक qcom_pdc_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+			  अचिन्हित पूर्णांक nr_irqs, व्योम *data)
+अणु
+	काष्ठा irq_fwspec *fwspec = data;
+	काष्ठा irq_fwspec parent_fwspec;
 	irq_hw_number_t hwirq, parent_hwirq;
-	unsigned int type;
-	int ret;
+	अचिन्हित पूर्णांक type;
+	पूर्णांक ret;
 
-	ret = qcom_pdc_translate(domain, fwspec, &hwirq, &type);
-	if (ret)
-		return ret;
+	ret = qcom_pdc_translate(करोमुख्य, fwspec, &hwirq, &type);
+	अगर (ret)
+		वापस ret;
 
-	ret  = irq_domain_set_hwirq_and_chip(domain, virq, hwirq,
-					     &qcom_pdc_gic_chip, NULL);
-	if (ret)
-		return ret;
+	ret  = irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq, hwirq,
+					     &qcom_pdc_gic_chip, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	parent_hwirq = get_parent_hwirq(hwirq);
-	if (parent_hwirq == PDC_NO_PARENT_IRQ)
-		return 0;
+	अगर (parent_hwirq == PDC_NO_PARENT_IRQ)
+		वापस 0;
 
-	if (type & IRQ_TYPE_EDGE_BOTH)
+	अगर (type & IRQ_TYPE_EDGE_BOTH)
 		type = IRQ_TYPE_EDGE_RISING;
 
-	if (type & IRQ_TYPE_LEVEL_MASK)
+	अगर (type & IRQ_TYPE_LEVEL_MASK)
 		type = IRQ_TYPE_LEVEL_HIGH;
 
-	parent_fwspec.fwnode      = domain->parent->fwnode;
+	parent_fwspec.fwnode      = करोमुख्य->parent->fwnode;
 	parent_fwspec.param_count = 3;
 	parent_fwspec.param[0]    = 0;
 	parent_fwspec.param[1]    = parent_hwirq;
 	parent_fwspec.param[2]    = type;
 
-	return irq_domain_alloc_irqs_parent(domain, virq, nr_irqs,
+	वापस irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, nr_irqs,
 					    &parent_fwspec);
-}
+पूर्ण
 
-static const struct irq_domain_ops qcom_pdc_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops qcom_pdc_ops = अणु
 	.translate	= qcom_pdc_translate,
 	.alloc		= qcom_pdc_alloc,
-	.free		= irq_domain_free_irqs_common,
-};
+	.मुक्त		= irq_करोमुख्य_मुक्त_irqs_common,
+पूर्ण;
 
-static int qcom_pdc_gpio_alloc(struct irq_domain *domain, unsigned int virq,
-			       unsigned int nr_irqs, void *data)
-{
-	struct irq_fwspec *fwspec = data;
-	struct irq_fwspec parent_fwspec;
+अटल पूर्णांक qcom_pdc_gpio_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+			       अचिन्हित पूर्णांक nr_irqs, व्योम *data)
+अणु
+	काष्ठा irq_fwspec *fwspec = data;
+	काष्ठा irq_fwspec parent_fwspec;
 	irq_hw_number_t hwirq, parent_hwirq;
-	unsigned int type;
-	int ret;
+	अचिन्हित पूर्णांक type;
+	पूर्णांक ret;
 
-	ret = qcom_pdc_translate(domain, fwspec, &hwirq, &type);
-	if (ret)
-		return ret;
+	ret = qcom_pdc_translate(करोमुख्य, fwspec, &hwirq, &type);
+	अगर (ret)
+		वापस ret;
 
-	ret = irq_domain_set_hwirq_and_chip(domain, virq, hwirq,
-					    &qcom_pdc_gic_chip, NULL);
-	if (ret)
-		return ret;
+	ret = irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq, hwirq,
+					    &qcom_pdc_gic_chip, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	if (hwirq == GPIO_NO_WAKE_IRQ)
-		return 0;
+	अगर (hwirq == GPIO_NO_WAKE_IRQ)
+		वापस 0;
 
 	parent_hwirq = get_parent_hwirq(hwirq);
-	if (parent_hwirq == PDC_NO_PARENT_IRQ)
-		return 0;
+	अगर (parent_hwirq == PDC_NO_PARENT_IRQ)
+		वापस 0;
 
-	if (type & IRQ_TYPE_EDGE_BOTH)
+	अगर (type & IRQ_TYPE_EDGE_BOTH)
 		type = IRQ_TYPE_EDGE_RISING;
 
-	if (type & IRQ_TYPE_LEVEL_MASK)
+	अगर (type & IRQ_TYPE_LEVEL_MASK)
 		type = IRQ_TYPE_LEVEL_HIGH;
 
-	parent_fwspec.fwnode      = domain->parent->fwnode;
+	parent_fwspec.fwnode      = करोमुख्य->parent->fwnode;
 	parent_fwspec.param_count = 3;
 	parent_fwspec.param[0]    = 0;
 	parent_fwspec.param[1]    = parent_hwirq;
 	parent_fwspec.param[2]    = type;
 
-	return irq_domain_alloc_irqs_parent(domain, virq, nr_irqs,
+	वापस irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, nr_irqs,
 					    &parent_fwspec);
-}
+पूर्ण
 
-static int qcom_pdc_gpio_domain_select(struct irq_domain *d,
-				       struct irq_fwspec *fwspec,
-				       enum irq_domain_bus_token bus_token)
-{
-	return bus_token == DOMAIN_BUS_WAKEUP;
-}
+अटल पूर्णांक qcom_pdc_gpio_करोमुख्य_select(काष्ठा irq_करोमुख्य *d,
+				       काष्ठा irq_fwspec *fwspec,
+				       क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
+	वापस bus_token == DOMAIN_BUS_WAKEUP;
+पूर्ण
 
-static const struct irq_domain_ops qcom_pdc_gpio_ops = {
-	.select		= qcom_pdc_gpio_domain_select,
+अटल स्थिर काष्ठा irq_करोमुख्य_ops qcom_pdc_gpio_ops = अणु
+	.select		= qcom_pdc_gpio_करोमुख्य_select,
 	.alloc		= qcom_pdc_gpio_alloc,
-	.free		= irq_domain_free_irqs_common,
-};
+	.मुक्त		= irq_करोमुख्य_मुक्त_irqs_common,
+पूर्ण;
 
-static int pdc_setup_pin_mapping(struct device_node *np)
-{
-	int ret, n, i;
+अटल पूर्णांक pdc_setup_pin_mapping(काष्ठा device_node *np)
+अणु
+	पूर्णांक ret, n, i;
 	u32 irq_index, reg_index, val;
 
-	n = of_property_count_elems_of_size(np, "qcom,pdc-ranges", sizeof(u32));
-	if (n <= 0 || n % 3)
-		return -EINVAL;
+	n = of_property_count_elems_of_size(np, "qcom,pdc-ranges", माप(u32));
+	अगर (n <= 0 || n % 3)
+		वापस -EINVAL;
 
 	pdc_region_cnt = n / 3;
-	pdc_region = kcalloc(pdc_region_cnt, sizeof(*pdc_region), GFP_KERNEL);
-	if (!pdc_region) {
+	pdc_region = kसुस्मृति(pdc_region_cnt, माप(*pdc_region), GFP_KERNEL);
+	अगर (!pdc_region) अणु
 		pdc_region_cnt = 0;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (n = 0; n < pdc_region_cnt; n++) {
-		ret = of_property_read_u32_index(np, "qcom,pdc-ranges",
+	क्रम (n = 0; n < pdc_region_cnt; n++) अणु
+		ret = of_property_पढ़ो_u32_index(np, "qcom,pdc-ranges",
 						 n * 3 + 0,
 						 &pdc_region[n].pin_base);
-		if (ret)
-			return ret;
-		ret = of_property_read_u32_index(np, "qcom,pdc-ranges",
+		अगर (ret)
+			वापस ret;
+		ret = of_property_पढ़ो_u32_index(np, "qcom,pdc-ranges",
 						 n * 3 + 1,
 						 &pdc_region[n].parent_base);
-		if (ret)
-			return ret;
-		ret = of_property_read_u32_index(np, "qcom,pdc-ranges",
+		अगर (ret)
+			वापस ret;
+		ret = of_property_पढ़ो_u32_index(np, "qcom,pdc-ranges",
 						 n * 3 + 2,
 						 &pdc_region[n].cnt);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		for (i = 0; i < pdc_region[n].cnt; i++) {
+		क्रम (i = 0; i < pdc_region[n].cnt; i++) अणु
 			reg_index = (i + pdc_region[n].pin_base) >> 5;
 			irq_index = (i + pdc_region[n].pin_base) & 0x1f;
-			val = pdc_reg_read(IRQ_ENABLE_BANK, reg_index);
+			val = pdc_reg_पढ़ो(IRQ_ENABLE_BANK, reg_index);
 			val &= ~BIT(irq_index);
-			pdc_reg_write(IRQ_ENABLE_BANK, reg_index, val);
-		}
-	}
+			pdc_reg_ग_लिखो(IRQ_ENABLE_BANK, reg_index, val);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_pdc_init(struct device_node *node, struct device_node *parent)
-{
-	struct irq_domain *parent_domain, *pdc_domain, *pdc_gpio_domain;
-	int ret;
+अटल पूर्णांक qcom_pdc_init(काष्ठा device_node *node, काष्ठा device_node *parent)
+अणु
+	काष्ठा irq_करोमुख्य *parent_करोमुख्य, *pdc_करोमुख्य, *pdc_gpio_करोमुख्य;
+	पूर्णांक ret;
 
 	pdc_base = of_iomap(node, 0);
-	if (!pdc_base) {
+	अगर (!pdc_base) अणु
 		pr_err("%pOF: unable to map PDC registers\n", node);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	parent_domain = irq_find_host(parent);
-	if (!parent_domain) {
+	parent_करोमुख्य = irq_find_host(parent);
+	अगर (!parent_करोमुख्य) अणु
 		pr_err("%pOF: unable to find PDC's parent domain\n", node);
 		ret = -ENXIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	ret = pdc_setup_pin_mapping(node);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%pOF: failed to init PDC pin-hwirq mapping\n", node);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	pdc_domain = irq_domain_create_hierarchy(parent_domain, 0, PDC_MAX_IRQS,
+	pdc_करोमुख्य = irq_करोमुख्य_create_hierarchy(parent_करोमुख्य, 0, PDC_MAX_IRQS,
 						 of_fwnode_handle(node),
-						 &qcom_pdc_ops, NULL);
-	if (!pdc_domain) {
+						 &qcom_pdc_ops, शून्य);
+	अगर (!pdc_करोमुख्य) अणु
 		pr_err("%pOF: GIC domain add failed\n", node);
 		ret = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	pdc_gpio_domain = irq_domain_create_hierarchy(parent_domain,
+	pdc_gpio_करोमुख्य = irq_करोमुख्य_create_hierarchy(parent_करोमुख्य,
 					IRQ_DOMAIN_FLAG_QCOM_PDC_WAKEUP,
 					PDC_MAX_GPIO_IRQS,
 					of_fwnode_handle(node),
-					&qcom_pdc_gpio_ops, NULL);
-	if (!pdc_gpio_domain) {
+					&qcom_pdc_gpio_ops, शून्य);
+	अगर (!pdc_gpio_करोमुख्य) अणु
 		pr_err("%pOF: PDC domain add failed for GPIO domain\n", node);
 		ret = -ENOMEM;
-		goto remove;
-	}
+		जाओ हटाओ;
+	पूर्ण
 
-	irq_domain_update_bus_token(pdc_gpio_domain, DOMAIN_BUS_WAKEUP);
+	irq_करोमुख्य_update_bus_token(pdc_gpio_करोमुख्य, DOMAIN_BUS_WAKEUP);
 
-	return 0;
+	वापस 0;
 
-remove:
-	irq_domain_remove(pdc_domain);
+हटाओ:
+	irq_करोमुख्य_हटाओ(pdc_करोमुख्य);
 fail:
-	kfree(pdc_region);
+	kमुक्त(pdc_region);
 	iounmap(pdc_base);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 IRQCHIP_DECLARE(qcom_pdc, "qcom,pdc", qcom_pdc_init);

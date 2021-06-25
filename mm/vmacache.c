@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2014 Davidlohr Bueso.
  */
-#include <linux/sched/signal.h>
-#include <linux/sched/task.h>
-#include <linux/mm.h>
-#include <linux/vmacache.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/vmacache.h>
 
 /*
- * Hash based on the pmd of addr if configured with MMU, which provides a good
- * hit rate for workloads with spatial locality.  Otherwise, use pages.
+ * Hash based on the pmd of addr अगर configured with MMU, which provides a good
+ * hit rate क्रम workloads with spatial locality.  Otherwise, use pages.
  */
-#ifdef CONFIG_MMU
-#define VMACACHE_SHIFT	PMD_SHIFT
-#else
-#define VMACACHE_SHIFT	PAGE_SHIFT
-#endif
-#define VMACACHE_HASH(addr) ((addr >> VMACACHE_SHIFT) & VMACACHE_MASK)
+#अगर_घोषित CONFIG_MMU
+#घोषणा VMACACHE_SHIFT	PMD_SHIFT
+#अन्यथा
+#घोषणा VMACACHE_SHIFT	PAGE_SHIFT
+#पूर्ण_अगर
+#घोषणा VMACACHE_HASH(addr) ((addr >> VMACACHE_SHIFT) & VMACACHE_MASK)
 
 /*
- * This task may be accessing a foreign mm via (for example)
+ * This task may be accessing a क्रमeign mm via (क्रम example)
  * get_user_pages()->find_vma().  The vmacache is task-local and this
- * task's vmacache pertains to a different mm (ie, its own).  There is
- * nothing we can do here.
+ * task's vmacache pertains to a dअगरferent mm (ie, its own).  There is
+ * nothing we can करो here.
  *
- * Also handle the case where a kernel thread has adopted this mm via
- * kthread_use_mm(). That kernel thread's vmacache is not applicable to this mm.
+ * Also handle the हाल where a kernel thपढ़ो has aकरोpted this mm via
+ * kthपढ़ो_use_mm(). That kernel thपढ़ो's vmacache is not applicable to this mm.
  */
-static inline bool vmacache_valid_mm(struct mm_struct *mm)
-{
-	return current->mm == mm && !(current->flags & PF_KTHREAD);
-}
+अटल अंतरभूत bool vmacache_valid_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस current->mm == mm && !(current->flags & PF_KTHREAD);
+पूर्ण
 
-void vmacache_update(unsigned long addr, struct vm_area_struct *newvma)
-{
-	if (vmacache_valid_mm(newvma->vm_mm))
+व्योम vmacache_update(अचिन्हित दीर्घ addr, काष्ठा vm_area_काष्ठा *newvma)
+अणु
+	अगर (vmacache_valid_mm(newvma->vm_mm))
 		current->vmacache.vmas[VMACACHE_HASH(addr)] = newvma;
-}
+पूर्ण
 
-static bool vmacache_valid(struct mm_struct *mm)
-{
-	struct task_struct *curr;
+अटल bool vmacache_valid(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा task_काष्ठा *curr;
 
-	if (!vmacache_valid_mm(mm))
-		return false;
+	अगर (!vmacache_valid_mm(mm))
+		वापस false;
 
 	curr = current;
-	if (mm->vmacache_seqnum != curr->vmacache.seqnum) {
+	अगर (mm->vmacache_seqnum != curr->vmacache.seqnum) अणु
 		/*
 		 * First attempt will always be invalid, initialize
-		 * the new cache for this task here.
+		 * the new cache क्रम this task here.
 		 */
 		curr->vmacache.seqnum = mm->vmacache_seqnum;
 		vmacache_flush(curr);
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-struct vm_area_struct *vmacache_find(struct mm_struct *mm, unsigned long addr)
-{
-	int idx = VMACACHE_HASH(addr);
-	int i;
+काष्ठा vm_area_काष्ठा *vmacache_find(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक idx = VMACACHE_HASH(addr);
+	पूर्णांक i;
 
 	count_vm_vmacache_event(VMACACHE_FIND_CALLS);
 
-	if (!vmacache_valid(mm))
-		return NULL;
+	अगर (!vmacache_valid(mm))
+		वापस शून्य;
 
-	for (i = 0; i < VMACACHE_SIZE; i++) {
-		struct vm_area_struct *vma = current->vmacache.vmas[idx];
+	क्रम (i = 0; i < VMACACHE_SIZE; i++) अणु
+		काष्ठा vm_area_काष्ठा *vma = current->vmacache.vmas[idx];
 
-		if (vma) {
-#ifdef CONFIG_DEBUG_VM_VMACACHE
-			if (WARN_ON_ONCE(vma->vm_mm != mm))
-				break;
-#endif
-			if (vma->vm_start <= addr && vma->vm_end > addr) {
+		अगर (vma) अणु
+#अगर_घोषित CONFIG_DEBUG_VM_VMACACHE
+			अगर (WARN_ON_ONCE(vma->vm_mm != mm))
+				अवरोध;
+#पूर्ण_अगर
+			अगर (vma->vm_start <= addr && vma->vm_end > addr) अणु
 				count_vm_vmacache_event(VMACACHE_FIND_HITS);
-				return vma;
-			}
-		}
-		if (++idx == VMACACHE_SIZE)
+				वापस vma;
+			पूर्ण
+		पूर्ण
+		अगर (++idx == VMACACHE_SIZE)
 			idx = 0;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#ifndef CONFIG_MMU
-struct vm_area_struct *vmacache_find_exact(struct mm_struct *mm,
-					   unsigned long start,
-					   unsigned long end)
-{
-	int idx = VMACACHE_HASH(start);
-	int i;
+#अगर_अघोषित CONFIG_MMU
+काष्ठा vm_area_काष्ठा *vmacache_find_exact(काष्ठा mm_काष्ठा *mm,
+					   अचिन्हित दीर्घ start,
+					   अचिन्हित दीर्घ end)
+अणु
+	पूर्णांक idx = VMACACHE_HASH(start);
+	पूर्णांक i;
 
 	count_vm_vmacache_event(VMACACHE_FIND_CALLS);
 
-	if (!vmacache_valid(mm))
-		return NULL;
+	अगर (!vmacache_valid(mm))
+		वापस शून्य;
 
-	for (i = 0; i < VMACACHE_SIZE; i++) {
-		struct vm_area_struct *vma = current->vmacache.vmas[idx];
+	क्रम (i = 0; i < VMACACHE_SIZE; i++) अणु
+		काष्ठा vm_area_काष्ठा *vma = current->vmacache.vmas[idx];
 
-		if (vma && vma->vm_start == start && vma->vm_end == end) {
+		अगर (vma && vma->vm_start == start && vma->vm_end == end) अणु
 			count_vm_vmacache_event(VMACACHE_FIND_HITS);
-			return vma;
-		}
-		if (++idx == VMACACHE_SIZE)
+			वापस vma;
+		पूर्ण
+		अगर (++idx == VMACACHE_SIZE)
 			idx = 0;
-	}
+	पूर्ण
 
-	return NULL;
-}
-#endif
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर

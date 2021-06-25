@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *    Copyright IBM Corp. 2007, 2012
  *    Author(s): Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
-#ifndef S390_IDSET_H
-#define S390_IDSET_H
+#अगर_अघोषित S390_IDSET_H
+#घोषणा S390_IDSET_H
 
-#include <asm/schid.h>
+#समावेश <यंत्र/schid.h>
 
-struct idset;
+काष्ठा idset;
 
-void idset_free(struct idset *set);
-void idset_fill(struct idset *set);
+व्योम idset_मुक्त(काष्ठा idset *set);
+व्योम idset_fill(काष्ठा idset *set);
 
-struct idset *idset_sch_new(void);
-void idset_sch_add(struct idset *set, struct subchannel_id id);
-void idset_sch_del(struct idset *set, struct subchannel_id id);
-void idset_sch_del_subseq(struct idset *set, struct subchannel_id schid);
-int idset_sch_contains(struct idset *set, struct subchannel_id id);
-int idset_is_empty(struct idset *set);
-void idset_add_set(struct idset *to, struct idset *from);
+काष्ठा idset *idset_sch_new(व्योम);
+व्योम idset_sch_add(काष्ठा idset *set, काष्ठा subchannel_id id);
+व्योम idset_sch_del(काष्ठा idset *set, काष्ठा subchannel_id id);
+व्योम idset_sch_del_subseq(काष्ठा idset *set, काष्ठा subchannel_id schid);
+पूर्णांक idset_sch_contains(काष्ठा idset *set, काष्ठा subchannel_id id);
+पूर्णांक idset_is_empty(काष्ठा idset *set);
+व्योम idset_add_set(काष्ठा idset *to, काष्ठा idset *from);
 
-#endif /* S390_IDSET_H */
+#पूर्ण_अगर /* S390_IDSET_H */

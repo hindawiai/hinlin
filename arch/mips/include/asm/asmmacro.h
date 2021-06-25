@@ -1,50 +1,51 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2003 Ralf Baechle
  */
-#ifndef _ASM_ASMMACRO_H
-#define _ASM_ASMMACRO_H
+#अगर_अघोषित _ASM_ASMMACRO_H
+#घोषणा _ASM_ASMMACRO_H
 
-#include <asm/hazards.h>
-#include <asm/asm-offsets.h>
-#include <asm/msa.h>
+#समावेश <यंत्र/hazards.h>
+#समावेश <यंत्र/यंत्र-offsets.h>
+#समावेश <यंत्र/msa.h>
 
-#ifdef CONFIG_32BIT
-#include <asm/asmmacro-32.h>
-#endif
-#ifdef CONFIG_64BIT
-#include <asm/asmmacro-64.h>
-#endif
+#अगर_घोषित CONFIG_32BIT
+#समावेश <यंत्र/यंत्रmacro-32.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_64BIT
+#समावेश <यंत्र/यंत्रmacro-64.h>
+#पूर्ण_अगर
 
 /* preprocessor replaces the fp in ".set fp=64" with $30 otherwise */
-#undef fp
+#अघोषित fp
 
 /*
- * Helper macros for generating raw instruction encodings.
+ * Helper macros क्रम generating raw inकाष्ठाion encodings.
  */
-#ifdef CONFIG_CPU_MICROMIPS
-	.macro	insn32_if_mm enc
+#अगर_घोषित CONFIG_CPU_MICROMIPS
+	.macro	insn32_अगर_mm enc
 	.insn
 	.hword ((\enc) >> 16)
 	.hword ((\enc) & 0xffff)
 	.endm
 
-	.macro	insn_if_mips enc
+	.macro	insn_अगर_mips enc
 	.endm
-#else
-	.macro	insn32_if_mm enc
+#अन्यथा
+	.macro	insn32_अगर_mm enc
 	.endm
 
-	.macro	insn_if_mips enc
+	.macro	insn_अगर_mips enc
 	.insn
 	.word (\enc)
 	.endm
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_HAS_DIEI
+#अगर_घोषित CONFIG_CPU_HAS_DIEI
 	.macro	local_irq_enable reg=t0
 	ei
 	irq_enable_hazard
@@ -54,198 +55,198 @@
 	di
 	irq_disable_hazard
 	.endm
-#else /* !CONFIG_CPU_MIPSR2 && !CONFIG_CPU_MIPSR5 && !CONFIG_CPU_MIPSR6 */
+#अन्यथा /* !CONFIG_CPU_MIPSR2 && !CONFIG_CPU_MIPSR5 && !CONFIG_CPU_MIPSR6 */
 	.macro	local_irq_enable reg=t0
-	mfc0	\reg, CP0_STATUS
-	ori	\reg, \reg, 1
-	mtc0	\reg, CP0_STATUS
+	mfc0	\लeg, CP0_STATUS
+	ori	\लeg, \लeg, 1
+	mtc0	\लeg, CP0_STATUS
 	irq_enable_hazard
 	.endm
 
 	.macro	local_irq_disable reg=t0
-#ifdef CONFIG_PREEMPTION
-	lw      \reg, TI_PRE_COUNT($28)
-	addi    \reg, \reg, 1
-	sw      \reg, TI_PRE_COUNT($28)
-#endif
-	mfc0	\reg, CP0_STATUS
-	ori	\reg, \reg, 1
-	xori	\reg, \reg, 1
-	mtc0	\reg, CP0_STATUS
+#अगर_घोषित CONFIG_PREEMPTION
+	lw      \लeg, TI_PRE_COUNT($28)
+	addi    \लeg, \लeg, 1
+	sw      \लeg, TI_PRE_COUNT($28)
+#पूर्ण_अगर
+	mfc0	\लeg, CP0_STATUS
+	ori	\लeg, \लeg, 1
+	xori	\लeg, \लeg, 1
+	mtc0	\लeg, CP0_STATUS
 	irq_disable_hazard
-#ifdef CONFIG_PREEMPTION
-	lw      \reg, TI_PRE_COUNT($28)
-	addi    \reg, \reg, -1
-	sw      \reg, TI_PRE_COUNT($28)
-#endif
+#अगर_घोषित CONFIG_PREEMPTION
+	lw      \लeg, TI_PRE_COUNT($28)
+	addi    \लeg, \लeg, -1
+	sw      \लeg, TI_PRE_COUNT($28)
+#पूर्ण_अगर
 	.endm
-#endif  /* !CONFIG_CPU_MIPSR2 && !CONFIG_CPU_MIPSR5 && !CONFIG_CPU_MIPSR6 */
+#पूर्ण_अगर  /* !CONFIG_CPU_MIPSR2 && !CONFIG_CPU_MIPSR5 && !CONFIG_CPU_MIPSR6 */
 
-	.macro	fpu_save_16even thread tmp=t0
+	.macro	fpu_save_16even thपढ़ो पंचांगp=t0
 	.set	push
 	SET_HARDFLOAT
-	cfc1	\tmp, fcr31
-	sdc1	$f0,  THREAD_FPR0(\thread)
-	sdc1	$f2,  THREAD_FPR2(\thread)
-	sdc1	$f4,  THREAD_FPR4(\thread)
-	sdc1	$f6,  THREAD_FPR6(\thread)
-	sdc1	$f8,  THREAD_FPR8(\thread)
-	sdc1	$f10, THREAD_FPR10(\thread)
-	sdc1	$f12, THREAD_FPR12(\thread)
-	sdc1	$f14, THREAD_FPR14(\thread)
-	sdc1	$f16, THREAD_FPR16(\thread)
-	sdc1	$f18, THREAD_FPR18(\thread)
-	sdc1	$f20, THREAD_FPR20(\thread)
-	sdc1	$f22, THREAD_FPR22(\thread)
-	sdc1	$f24, THREAD_FPR24(\thread)
-	sdc1	$f26, THREAD_FPR26(\thread)
-	sdc1	$f28, THREAD_FPR28(\thread)
-	sdc1	$f30, THREAD_FPR30(\thread)
-	sw	\tmp, THREAD_FCR31(\thread)
+	cfc1	\टmp, fcr31
+	sdc1	$f0,  THREAD_FPR0(\टhपढ़ो)
+	sdc1	$f2,  THREAD_FPR2(\टhपढ़ो)
+	sdc1	$f4,  THREAD_FPR4(\टhपढ़ो)
+	sdc1	$f6,  THREAD_FPR6(\टhपढ़ो)
+	sdc1	$f8,  THREAD_FPR8(\टhपढ़ो)
+	sdc1	$f10, THREAD_FPR10(\टhपढ़ो)
+	sdc1	$f12, THREAD_FPR12(\टhपढ़ो)
+	sdc1	$f14, THREAD_FPR14(\टhपढ़ो)
+	sdc1	$f16, THREAD_FPR16(\टhपढ़ो)
+	sdc1	$f18, THREAD_FPR18(\टhपढ़ो)
+	sdc1	$f20, THREAD_FPR20(\टhपढ़ो)
+	sdc1	$f22, THREAD_FPR22(\टhपढ़ो)
+	sdc1	$f24, THREAD_FPR24(\टhपढ़ो)
+	sdc1	$f26, THREAD_FPR26(\टhपढ़ो)
+	sdc1	$f28, THREAD_FPR28(\टhपढ़ो)
+	sdc1	$f30, THREAD_FPR30(\टhपढ़ो)
+	sw	\टmp, THREAD_FCR31(\टhपढ़ो)
 	.set	pop
 	.endm
 
-	.macro	fpu_save_16odd thread
-	.set	push
-	.set	mips64r2
-	.set	fp=64
-	SET_HARDFLOAT
-	sdc1	$f1,  THREAD_FPR1(\thread)
-	sdc1	$f3,  THREAD_FPR3(\thread)
-	sdc1	$f5,  THREAD_FPR5(\thread)
-	sdc1	$f7,  THREAD_FPR7(\thread)
-	sdc1	$f9,  THREAD_FPR9(\thread)
-	sdc1	$f11, THREAD_FPR11(\thread)
-	sdc1	$f13, THREAD_FPR13(\thread)
-	sdc1	$f15, THREAD_FPR15(\thread)
-	sdc1	$f17, THREAD_FPR17(\thread)
-	sdc1	$f19, THREAD_FPR19(\thread)
-	sdc1	$f21, THREAD_FPR21(\thread)
-	sdc1	$f23, THREAD_FPR23(\thread)
-	sdc1	$f25, THREAD_FPR25(\thread)
-	sdc1	$f27, THREAD_FPR27(\thread)
-	sdc1	$f29, THREAD_FPR29(\thread)
-	sdc1	$f31, THREAD_FPR31(\thread)
-	.set	pop
-	.endm
-
-	.macro	fpu_save_double thread status tmp
-#if defined(CONFIG_64BIT) || defined(CONFIG_CPU_MIPSR2) || \
-    defined(CONFIG_CPU_MIPSR5) || defined(CONFIG_CPU_MIPSR6)
-	sll	\tmp, \status, 5
-	bgez	\tmp, 10f
-	fpu_save_16odd \thread
-10:
-#endif
-	fpu_save_16even \thread \tmp
-	.endm
-
-	.macro	fpu_restore_16even thread tmp=t0
-	.set	push
-	SET_HARDFLOAT
-	lw	\tmp, THREAD_FCR31(\thread)
-	ldc1	$f0,  THREAD_FPR0(\thread)
-	ldc1	$f2,  THREAD_FPR2(\thread)
-	ldc1	$f4,  THREAD_FPR4(\thread)
-	ldc1	$f6,  THREAD_FPR6(\thread)
-	ldc1	$f8,  THREAD_FPR8(\thread)
-	ldc1	$f10, THREAD_FPR10(\thread)
-	ldc1	$f12, THREAD_FPR12(\thread)
-	ldc1	$f14, THREAD_FPR14(\thread)
-	ldc1	$f16, THREAD_FPR16(\thread)
-	ldc1	$f18, THREAD_FPR18(\thread)
-	ldc1	$f20, THREAD_FPR20(\thread)
-	ldc1	$f22, THREAD_FPR22(\thread)
-	ldc1	$f24, THREAD_FPR24(\thread)
-	ldc1	$f26, THREAD_FPR26(\thread)
-	ldc1	$f28, THREAD_FPR28(\thread)
-	ldc1	$f30, THREAD_FPR30(\thread)
-	ctc1	\tmp, fcr31
-	.set	pop
-	.endm
-
-	.macro	fpu_restore_16odd thread
+	.macro	fpu_save_16odd thपढ़ो
 	.set	push
 	.set	mips64r2
 	.set	fp=64
 	SET_HARDFLOAT
-	ldc1	$f1,  THREAD_FPR1(\thread)
-	ldc1	$f3,  THREAD_FPR3(\thread)
-	ldc1	$f5,  THREAD_FPR5(\thread)
-	ldc1	$f7,  THREAD_FPR7(\thread)
-	ldc1	$f9,  THREAD_FPR9(\thread)
-	ldc1	$f11, THREAD_FPR11(\thread)
-	ldc1	$f13, THREAD_FPR13(\thread)
-	ldc1	$f15, THREAD_FPR15(\thread)
-	ldc1	$f17, THREAD_FPR17(\thread)
-	ldc1	$f19, THREAD_FPR19(\thread)
-	ldc1	$f21, THREAD_FPR21(\thread)
-	ldc1	$f23, THREAD_FPR23(\thread)
-	ldc1	$f25, THREAD_FPR25(\thread)
-	ldc1	$f27, THREAD_FPR27(\thread)
-	ldc1	$f29, THREAD_FPR29(\thread)
-	ldc1	$f31, THREAD_FPR31(\thread)
+	sdc1	$f1,  THREAD_FPR1(\टhपढ़ो)
+	sdc1	$f3,  THREAD_FPR3(\टhपढ़ो)
+	sdc1	$f5,  THREAD_FPR5(\टhपढ़ो)
+	sdc1	$f7,  THREAD_FPR7(\टhपढ़ो)
+	sdc1	$f9,  THREAD_FPR9(\टhपढ़ो)
+	sdc1	$f11, THREAD_FPR11(\टhपढ़ो)
+	sdc1	$f13, THREAD_FPR13(\टhपढ़ो)
+	sdc1	$f15, THREAD_FPR15(\टhपढ़ो)
+	sdc1	$f17, THREAD_FPR17(\टhपढ़ो)
+	sdc1	$f19, THREAD_FPR19(\टhपढ़ो)
+	sdc1	$f21, THREAD_FPR21(\टhपढ़ो)
+	sdc1	$f23, THREAD_FPR23(\टhपढ़ो)
+	sdc1	$f25, THREAD_FPR25(\टhपढ़ो)
+	sdc1	$f27, THREAD_FPR27(\टhपढ़ो)
+	sdc1	$f29, THREAD_FPR29(\टhपढ़ो)
+	sdc1	$f31, THREAD_FPR31(\टhपढ़ो)
 	.set	pop
 	.endm
 
-	.macro	fpu_restore_double thread status tmp
-#if defined(CONFIG_64BIT) || defined(CONFIG_CPU_MIPSR2) || \
+	.macro	fpu_save_द्विगुन thपढ़ो status पंचांगp
+#अगर defined(CONFIG_64BIT) || defined(CONFIG_CPU_MIPSR2) || \
     defined(CONFIG_CPU_MIPSR5) || defined(CONFIG_CPU_MIPSR6)
-	sll	\tmp, \status, 5
-	bgez	\tmp, 10f				# 16 register mode?
-
-	fpu_restore_16odd \thread
+	sll	\टmp, \status, 5
+	bgez	\टmp, 10f
+	fpu_save_16odd \टhपढ़ो
 10:
-#endif
-	fpu_restore_16even \thread \tmp
+#पूर्ण_अगर
+	fpu_save_16even \टhपढ़ो \टmp
 	.endm
 
-#if defined(CONFIG_CPU_MIPSR2) || defined(CONFIG_CPU_MIPSR5) || \
+	.macro	fpu_restore_16even thपढ़ो पंचांगp=t0
+	.set	push
+	SET_HARDFLOAT
+	lw	\टmp, THREAD_FCR31(\टhपढ़ो)
+	ldc1	$f0,  THREAD_FPR0(\टhपढ़ो)
+	ldc1	$f2,  THREAD_FPR2(\टhपढ़ो)
+	ldc1	$f4,  THREAD_FPR4(\टhपढ़ो)
+	ldc1	$f6,  THREAD_FPR6(\टhपढ़ो)
+	ldc1	$f8,  THREAD_FPR8(\टhपढ़ो)
+	ldc1	$f10, THREAD_FPR10(\टhपढ़ो)
+	ldc1	$f12, THREAD_FPR12(\टhपढ़ो)
+	ldc1	$f14, THREAD_FPR14(\टhपढ़ो)
+	ldc1	$f16, THREAD_FPR16(\टhपढ़ो)
+	ldc1	$f18, THREAD_FPR18(\टhपढ़ो)
+	ldc1	$f20, THREAD_FPR20(\टhपढ़ो)
+	ldc1	$f22, THREAD_FPR22(\टhपढ़ो)
+	ldc1	$f24, THREAD_FPR24(\टhपढ़ो)
+	ldc1	$f26, THREAD_FPR26(\टhपढ़ो)
+	ldc1	$f28, THREAD_FPR28(\टhपढ़ो)
+	ldc1	$f30, THREAD_FPR30(\टhपढ़ो)
+	ctc1	\टmp, fcr31
+	.set	pop
+	.endm
+
+	.macro	fpu_restore_16odd thपढ़ो
+	.set	push
+	.set	mips64r2
+	.set	fp=64
+	SET_HARDFLOAT
+	ldc1	$f1,  THREAD_FPR1(\टhपढ़ो)
+	ldc1	$f3,  THREAD_FPR3(\टhपढ़ो)
+	ldc1	$f5,  THREAD_FPR5(\टhपढ़ो)
+	ldc1	$f7,  THREAD_FPR7(\टhपढ़ो)
+	ldc1	$f9,  THREAD_FPR9(\टhपढ़ो)
+	ldc1	$f11, THREAD_FPR11(\टhपढ़ो)
+	ldc1	$f13, THREAD_FPR13(\टhपढ़ो)
+	ldc1	$f15, THREAD_FPR15(\टhपढ़ो)
+	ldc1	$f17, THREAD_FPR17(\टhपढ़ो)
+	ldc1	$f19, THREAD_FPR19(\टhपढ़ो)
+	ldc1	$f21, THREAD_FPR21(\टhपढ़ो)
+	ldc1	$f23, THREAD_FPR23(\टhपढ़ो)
+	ldc1	$f25, THREAD_FPR25(\टhपढ़ो)
+	ldc1	$f27, THREAD_FPR27(\टhपढ़ो)
+	ldc1	$f29, THREAD_FPR29(\टhपढ़ो)
+	ldc1	$f31, THREAD_FPR31(\टhपढ़ो)
+	.set	pop
+	.endm
+
+	.macro	fpu_restore_द्विगुन thपढ़ो status पंचांगp
+#अगर defined(CONFIG_64BIT) || defined(CONFIG_CPU_MIPSR2) || \
+    defined(CONFIG_CPU_MIPSR5) || defined(CONFIG_CPU_MIPSR6)
+	sll	\टmp, \status, 5
+	bgez	\टmp, 10f				# 16 रेजिस्टर mode?
+
+	fpu_restore_16odd \टhपढ़ो
+10:
+#पूर्ण_अगर
+	fpu_restore_16even \टhपढ़ो \टmp
+	.endm
+
+#अगर defined(CONFIG_CPU_MIPSR2) || defined(CONFIG_CPU_MIPSR5) || \
     defined(CONFIG_CPU_MIPSR6)
 	.macro	_EXT	rd, rs, p, s
-	ext	\rd, \rs, \p, \s
+	ext	\लd, \लs, \p, \s
 	.endm
-#else /* !CONFIG_CPU_MIPSR2 && !CONFIG_CPU_MIPSR5 && !CONFIG_CPU_MIPSR6 */
+#अन्यथा /* !CONFIG_CPU_MIPSR2 && !CONFIG_CPU_MIPSR5 && !CONFIG_CPU_MIPSR6 */
 	.macro	_EXT	rd, rs, p, s
-	srl	\rd, \rs, \p
-	andi	\rd, \rd, (1 << \s) - 1
+	srl	\लd, \लs, \p
+	andi	\लd, \लd, (1 << \s) - 1
 	.endm
-#endif /* !CONFIG_CPU_MIPSR2 && !CONFIG_CPU_MIPSR5 && !CONFIG_CPU_MIPSR6 */
+#पूर्ण_अगर /* !CONFIG_CPU_MIPSR2 && !CONFIG_CPU_MIPSR5 && !CONFIG_CPU_MIPSR6 */
 
 /*
  * Temporary until all gas have MT ASE support
  */
 	.macro	DMT	reg=0
-	.word	0x41600bc1 | (\reg << 16)
+	.word	0x41600bc1 | (\लeg << 16)
 	.endm
 
 	.macro	EMT	reg=0
-	.word	0x41600be1 | (\reg << 16)
+	.word	0x41600be1 | (\लeg << 16)
 	.endm
 
 	.macro	DVPE	reg=0
-	.word	0x41600001 | (\reg << 16)
+	.word	0x41600001 | (\लeg << 16)
 	.endm
 
 	.macro	EVPE	reg=0
-	.word	0x41600021 | (\reg << 16)
+	.word	0x41600021 | (\लeg << 16)
 	.endm
 
 	.macro	MFTR	rt=0, rd=0, u=0, sel=0
-	 .word	0x41000000 | (\rt << 16) | (\rd << 11) | (\u << 5) | (\sel)
+	 .word	0x41000000 | (\लt << 16) | (\लd << 11) | (\u << 5) | (\sel)
 	.endm
 
 	.macro	MTTR	rt=0, rd=0, u=0, sel=0
-	 .word	0x41800000 | (\rt << 16) | (\rd << 11) | (\u << 5) | (\sel)
+	 .word	0x41800000 | (\लt << 16) | (\लd << 11) | (\u << 5) | (\sel)
 	.endm
 
-#ifdef TOOLCHAIN_SUPPORTS_MSA
+#अगर_घोषित TOOLCHAIN_SUPPORTS_MSA
 	.macro	_cfcmsa	rd, cs
 	.set	push
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	cfcmsa	\rd, $\cs
+	cfcmsa	\लd, $\cs
 	.set	pop
 	.endm
 
@@ -254,7 +255,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	ctcmsa	$\cd, \rs
+	ctcmsa	$\cd, \लs
 	.set	pop
 	.endm
 
@@ -263,7 +264,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	ld.b	$w\wd, \off(\base)
+	ld.b	$w\wd, \off(\मase)
 	.set	pop
 	.endm
 
@@ -272,7 +273,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	ld.h	$w\wd, \off(\base)
+	ld.h	$w\wd, \off(\मase)
 	.set	pop
 	.endm
 
@@ -281,7 +282,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	ld.w	$w\wd, \off(\base)
+	ld.w	$w\wd, \off(\मase)
 	.set	pop
 	.endm
 
@@ -290,7 +291,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	ld.d	$w\wd, \off(\base)
+	ld.d	$w\wd, \off(\मase)
 	.set	pop
 	.endm
 
@@ -299,7 +300,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	st.b	$w\wd, \off(\base)
+	st.b	$w\wd, \off(\मase)
 	.set	pop
 	.endm
 
@@ -308,7 +309,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	st.h	$w\wd, \off(\base)
+	st.h	$w\wd, \off(\मase)
 	.set	pop
 	.endm
 
@@ -317,7 +318,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	st.w	$w\wd, \off(\base)
+	st.w	$w\wd, \off(\मase)
 	.set	pop
 	.endm
 
@@ -326,7 +327,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	st.d	$w\wd, \off(\base)
+	st.d	$w\wd, \off(\मase)
 	.set	pop
 	.endm
 
@@ -335,7 +336,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	copy_s.w $1, $w\ws[\n]
+	copy_s.w $1, $w\ws[\न]
 	.set	pop
 	.endm
 
@@ -344,7 +345,7 @@
 	.set	mips64r2
 	.set	fp=64
 	.set	msa
-	copy_s.d $1, $w\ws[\n]
+	copy_s.d $1, $w\ws[\न]
 	.set	pop
 	.endm
 
@@ -353,7 +354,7 @@
 	.set	mips32r2
 	.set	fp=64
 	.set	msa
-	insert.w $w\wd[\n], $1
+	insert.w $w\wd[\न], $1
 	.set	pop
 	.endm
 
@@ -362,10 +363,10 @@
 	.set	mips64r2
 	.set	fp=64
 	.set	msa
-	insert.d $w\wd[\n], $1
+	insert.d $w\wd[\न], $1
 	.set	pop
 	.endm
-#else
+#अन्यथा
 
 	/*
 	 * Temporary until all toolchains in use include MSA support.
@@ -374,9 +375,9 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	insn_if_mips 0x787e0059 | (\cs << 11)
-	insn32_if_mm 0x587e0056 | (\cs << 11)
-	move	\rd, $1
+	insn_अगर_mips 0x787e0059 | (\cs << 11)
+	insn32_अगर_mm 0x587e0056 | (\cs << 11)
+	move	\लd, $1
 	.set	pop
 	.endm
 
@@ -384,9 +385,9 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	move	$1, \rs
-	insn_if_mips 0x783e0819 | (\cd << 6)
-	insn32_if_mm 0x583e0816 | (\cd << 6)
+	move	$1, \लs
+	insn_अगर_mips 0x783e0819 | (\cd << 6)
+	insn32_अगर_mm 0x583e0816 | (\cd << 6)
 	.set	pop
 	.endm
 
@@ -394,9 +395,9 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	PTR_ADDU $1, \base, \off
-	insn_if_mips 0x78000820 | (\wd << 6)
-	insn32_if_mm 0x58000807 | (\wd << 6)
+	PTR_ADDU $1, \मase, \off
+	insn_अगर_mips 0x78000820 | (\wd << 6)
+	insn32_अगर_mm 0x58000807 | (\wd << 6)
 	.set	pop
 	.endm
 
@@ -404,9 +405,9 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	PTR_ADDU $1, \base, \off
-	insn_if_mips 0x78000821 | (\wd << 6)
-	insn32_if_mm 0x58000817 | (\wd << 6)
+	PTR_ADDU $1, \मase, \off
+	insn_अगर_mips 0x78000821 | (\wd << 6)
+	insn32_अगर_mm 0x58000817 | (\wd << 6)
 	.set	pop
 	.endm
 
@@ -414,9 +415,9 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	PTR_ADDU $1, \base, \off
-	insn_if_mips 0x78000822 | (\wd << 6)
-	insn32_if_mm 0x58000827 | (\wd << 6)
+	PTR_ADDU $1, \मase, \off
+	insn_अगर_mips 0x78000822 | (\wd << 6)
+	insn32_अगर_mm 0x58000827 | (\wd << 6)
 	.set	pop
 	.endm
 
@@ -424,9 +425,9 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	PTR_ADDU $1, \base, \off
-	insn_if_mips 0x78000823 | (\wd << 6)
-	insn32_if_mm 0x58000837 | (\wd << 6)
+	PTR_ADDU $1, \मase, \off
+	insn_अगर_mips 0x78000823 | (\wd << 6)
+	insn32_अगर_mm 0x58000837 | (\wd << 6)
 	.set	pop
 	.endm
 
@@ -434,9 +435,9 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	PTR_ADDU $1, \base, \off
-	insn_if_mips 0x78000824 | (\wd << 6)
-	insn32_if_mm 0x5800080f | (\wd << 6)
+	PTR_ADDU $1, \मase, \off
+	insn_अगर_mips 0x78000824 | (\wd << 6)
+	insn32_अगर_mm 0x5800080f | (\wd << 6)
 	.set	pop
 	.endm
 
@@ -444,9 +445,9 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	PTR_ADDU $1, \base, \off
-	insn_if_mips 0x78000825 | (\wd << 6)
-	insn32_if_mm 0x5800081f | (\wd << 6)
+	PTR_ADDU $1, \मase, \off
+	insn_अगर_mips 0x78000825 | (\wd << 6)
+	insn32_अगर_mm 0x5800081f | (\wd << 6)
 	.set	pop
 	.endm
 
@@ -454,9 +455,9 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	PTR_ADDU $1, \base, \off
-	insn_if_mips 0x78000826 | (\wd << 6)
-	insn32_if_mm 0x5800082f | (\wd << 6)
+	PTR_ADDU $1, \मase, \off
+	insn_अगर_mips 0x78000826 | (\wd << 6)
+	insn32_अगर_mm 0x5800082f | (\wd << 6)
 	.set	pop
 	.endm
 
@@ -464,9 +465,9 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	PTR_ADDU $1, \base, \off
-	insn_if_mips 0x78000827 | (\wd << 6)
-	insn32_if_mm 0x5800083f | (\wd << 6)
+	PTR_ADDU $1, \मase, \off
+	insn_अगर_mips 0x78000827 | (\wd << 6)
+	insn32_अगर_mm 0x5800083f | (\wd << 6)
 	.set	pop
 	.endm
 
@@ -474,8 +475,8 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	insn_if_mips 0x78b00059 | (\n << 16) | (\ws << 11)
-	insn32_if_mm 0x58b00056 | (\n << 16) | (\ws << 11)
+	insn_अगर_mips 0x78b00059 | (\न << 16) | (\ws << 11)
+	insn32_अगर_mm 0x58b00056 | (\न << 16) | (\ws << 11)
 	.set	pop
 	.endm
 
@@ -483,8 +484,8 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	insn_if_mips 0x78b80059 | (\n << 16) | (\ws << 11)
-	insn32_if_mm 0x58b80056 | (\n << 16) | (\ws << 11)
+	insn_अगर_mips 0x78b80059 | (\न << 16) | (\ws << 11)
+	insn32_अगर_mm 0x58b80056 | (\न << 16) | (\ws << 11)
 	.set	pop
 	.endm
 
@@ -492,8 +493,8 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	insn_if_mips 0x79300819 | (\n << 16) | (\wd << 6)
-	insn32_if_mm 0x59300816 | (\n << 16) | (\wd << 6)
+	insn_अगर_mips 0x79300819 | (\न << 16) | (\wd << 6)
+	insn32_अगर_mm 0x59300816 | (\न << 16) | (\wd << 6)
 	.set	pop
 	.endm
 
@@ -501,26 +502,26 @@
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	insn_if_mips 0x79380819 | (\n << 16) | (\wd << 6)
-	insn32_if_mm 0x59380816 | (\n << 16) | (\wd << 6)
+	insn_अगर_mips 0x79380819 | (\न << 16) | (\wd << 6)
+	insn32_अगर_mm 0x59380816 | (\न << 16) | (\wd << 6)
 	.set	pop
 	.endm
-#endif
+#पूर्ण_अगर
 
-#ifdef TOOLCHAIN_SUPPORTS_MSA
-#define FPR_BASE_OFFS	THREAD_FPR0
-#define FPR_BASE	$1
-#else
-#define FPR_BASE_OFFS	0
-#define FPR_BASE	\thread
-#endif
+#अगर_घोषित TOOLCHAIN_SUPPORTS_MSA
+#घोषणा FPR_BASE_OFFS	THREAD_FPR0
+#घोषणा FPR_BASE	$1
+#अन्यथा
+#घोषणा FPR_BASE_OFFS	0
+#घोषणा FPR_BASE	\टhपढ़ो
+#पूर्ण_अगर
 
-	.macro	msa_save_all	thread
+	.macro	msa_save_all	thपढ़ो
 	.set	push
 	.set	noat
-#ifdef TOOLCHAIN_SUPPORTS_MSA
-	PTR_ADDU FPR_BASE, \thread, FPR_BASE_OFFS
-#endif
+#अगर_घोषित TOOLCHAIN_SUPPORTS_MSA
+	PTR_ADDU FPR_BASE, \टhपढ़ो, FPR_BASE_OFFS
+#पूर्ण_अगर
 	st_d	 0, THREAD_FPR0  - FPR_BASE_OFFS, FPR_BASE
 	st_d	 1, THREAD_FPR1  - FPR_BASE_OFFS, FPR_BASE
 	st_d	 2, THREAD_FPR2  - FPR_BASE_OFFS, FPR_BASE
@@ -555,19 +556,19 @@
 	st_d	31, THREAD_FPR31 - FPR_BASE_OFFS, FPR_BASE
 	SET_HARDFLOAT
 	_cfcmsa	$1, MSA_CSR
-	sw	$1, THREAD_MSA_CSR(\thread)
+	sw	$1, THREAD_MSA_CSR(\टhपढ़ो)
 	.set	pop
 	.endm
 
-	.macro	msa_restore_all	thread
+	.macro	msa_restore_all	thपढ़ो
 	.set	push
 	.set	noat
 	SET_HARDFLOAT
-	lw	$1, THREAD_MSA_CSR(\thread)
+	lw	$1, THREAD_MSA_CSR(\टhपढ़ो)
 	_ctcmsa	MSA_CSR, $1
-#ifdef TOOLCHAIN_SUPPORTS_MSA
-	PTR_ADDU FPR_BASE, \thread, FPR_BASE_OFFS
-#endif
+#अगर_घोषित TOOLCHAIN_SUPPORTS_MSA
+	PTR_ADDU FPR_BASE, \टhपढ़ो, FPR_BASE_OFFS
+#पूर्ण_अगर
 	ld_d	 0, THREAD_FPR0  - FPR_BASE_OFFS, FPR_BASE
 	ld_d	 1, THREAD_FPR1  - FPR_BASE_OFFS, FPR_BASE
 	ld_d	 2, THREAD_FPR2  - FPR_BASE_OFFS, FPR_BASE
@@ -603,16 +604,16 @@
 	.set pop
 	.endm
 
-#undef FPR_BASE_OFFS
-#undef FPR_BASE
+#अघोषित FPR_BASE_OFFS
+#अघोषित FPR_BASE
 
 	.macro	msa_init_upper wd
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 	insert_d \wd, 1
-#else
+#अन्यथा
 	insert_w \wd, 2
 	insert_w \wd, 3
-#endif
+#पूर्ण_अगर
 	.endm
 
 	.macro	msa_init_all_upper
@@ -655,4 +656,4 @@
 	.set	pop
 	.endm
 
-#endif /* _ASM_ASMMACRO_H */
+#पूर्ण_अगर /* _ASM_ASMMACRO_H */

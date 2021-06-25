@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_REGS_H
-#define __PERF_REGS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_REGS_H
+#घोषणा __PERF_REGS_H
 
-#include <linux/types.h>
-#include <linux/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <linux/compiler.h>
 
-struct regs_dump;
+काष्ठा regs_dump;
 
-struct sample_reg {
-	const char *name;
-	uint64_t mask;
-};
-#define SMPL_REG(n, b) { .name = #n, .mask = 1ULL << (b) }
-#define SMPL_REG2(n, b) { .name = #n, .mask = 3ULL << (b) }
-#define SMPL_REG_END { .name = NULL }
+काष्ठा sample_reg अणु
+	स्थिर अक्षर *name;
+	uपूर्णांक64_t mask;
+पूर्ण;
+#घोषणा SMPL_REG(n, b) अणु .name = #n, .mask = 1ULL << (b) पूर्ण
+#घोषणा SMPL_REG2(n, b) अणु .name = #n, .mask = 3ULL << (b) पूर्ण
+#घोषणा SMPL_REG_END अणु .name = शून्य पूर्ण
 
-enum {
+क्रमागत अणु
 	SDT_ARG_VALID = 0,
 	SDT_ARG_SKIP,
-};
+पूर्ण;
 
-int arch_sdt_arg_parse_op(char *old_op, char **new_op);
-uint64_t arch__intr_reg_mask(void);
-uint64_t arch__user_reg_mask(void);
+पूर्णांक arch_sdt_arg_parse_op(अक्षर *old_op, अक्षर **new_op);
+uपूर्णांक64_t arch__पूर्णांकr_reg_mask(व्योम);
+uपूर्णांक64_t arch__user_reg_mask(व्योम);
 
-#ifdef HAVE_PERF_REGS_SUPPORT
-extern const struct sample_reg sample_reg_masks[];
+#अगर_घोषित HAVE_PERF_REGS_SUPPORT
+बाह्य स्थिर काष्ठा sample_reg sample_reg_masks[];
 
-#include <perf_regs.h>
+#समावेश <perf_regs.h>
 
-#define DWARF_MINIMAL_REGS ((1ULL << PERF_REG_IP) | (1ULL << PERF_REG_SP))
+#घोषणा DWARF_MINIMAL_REGS ((1ULL << PERF_REG_IP) | (1ULL << PERF_REG_SP))
 
-int perf_reg_value(u64 *valp, struct regs_dump *regs, int id);
+पूर्णांक perf_reg_value(u64 *valp, काष्ठा regs_dump *regs, पूर्णांक id);
 
-static inline const char *perf_reg_name(int id)
-{
-	const char *reg_name = __perf_reg_name(id);
+अटल अंतरभूत स्थिर अक्षर *perf_reg_name(पूर्णांक id)
+अणु
+	स्थिर अक्षर *reg_name = __perf_reg_name(id);
 
-	return reg_name ?: "unknown";
-}
+	वापस reg_name ?: "unknown";
+पूर्ण
 
-#else
-#define PERF_REGS_MASK	0
-#define PERF_REGS_MAX	0
+#अन्यथा
+#घोषणा PERF_REGS_MASK	0
+#घोषणा PERF_REGS_MAX	0
 
-#define DWARF_MINIMAL_REGS PERF_REGS_MASK
+#घोषणा DWARF_MINIMAL_REGS PERF_REGS_MASK
 
-static inline const char *perf_reg_name(int id __maybe_unused)
-{
-	return "unknown";
-}
+अटल अंतरभूत स्थिर अक्षर *perf_reg_name(पूर्णांक id __maybe_unused)
+अणु
+	वापस "unknown";
+पूर्ण
 
-static inline int perf_reg_value(u64 *valp __maybe_unused,
-				 struct regs_dump *regs __maybe_unused,
-				 int id __maybe_unused)
-{
-	return 0;
-}
-#endif /* HAVE_PERF_REGS_SUPPORT */
-#endif /* __PERF_REGS_H */
+अटल अंतरभूत पूर्णांक perf_reg_value(u64 *valp __maybe_unused,
+				 काष्ठा regs_dump *regs __maybe_unused,
+				 पूर्णांक id __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* HAVE_PERF_REGS_SUPPORT */
+#पूर्ण_अगर /* __PERF_REGS_H */

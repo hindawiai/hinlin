@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Maxim MAX197 A/D Converter Driver
  *
  * Copyright (c) 2012 Savoir-faire Linux Inc.
  *          Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
- * For further information, see the Documentation/hwmon/max197.rst file.
+ * For further inक्रमmation, see the Documentation/hwmon/max197.rst file.
  */
 
-#ifndef _PDATA_MAX197_H
-#define _PDATA_MAX197_H
+#अगर_अघोषित _PDATA_MAX197_H
+#घोषणा _PDATA_MAX197_H
 
 /**
- * struct max197_platform_data - MAX197 connectivity info
+ * काष्ठा max197_platक्रमm_data - MAX197 connectivity info
  * @convert:	Function used to start a conversion with control byte ctrl.
- *		It must return the raw data, or a negative error code.
+ *		It must वापस the raw data, or a negative error code.
  */
-struct max197_platform_data {
-	int (*convert)(u8 ctrl);
-};
+काष्ठा max197_platक्रमm_data अणु
+	पूर्णांक (*convert)(u8 ctrl);
+पूर्ण;
 
-#endif /* _PDATA_MAX197_H */
+#पूर्ण_अगर /* _PDATA_MAX197_H */

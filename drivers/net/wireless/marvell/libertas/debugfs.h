@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LBS_DEBUGFS_H_
-#define _LBS_DEBUGFS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LBS_DEBUGFS_H_
+#घोषणा _LBS_DEBUGFS_H_
 
-void lbs_debugfs_init(void);
-void lbs_debugfs_remove(void);
+व्योम lbs_debugfs_init(व्योम);
+व्योम lbs_debugfs_हटाओ(व्योम);
 
-void lbs_debugfs_init_one(struct lbs_private *priv, struct net_device *dev);
-void lbs_debugfs_remove_one(struct lbs_private *priv);
+व्योम lbs_debugfs_init_one(काष्ठा lbs_निजी *priv, काष्ठा net_device *dev);
+व्योम lbs_debugfs_हटाओ_one(काष्ठा lbs_निजी *priv);
 
-#endif
+#पूर्ण_अगर

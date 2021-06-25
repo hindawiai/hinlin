@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SELINUX_POLICYCAP_NAMES_H_
-#define _SELINUX_POLICYCAP_NAMES_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SELINUX_POLICYCAP_NAMES_H_
+#घोषणा _SELINUX_POLICYCAP_NAMES_H_
 
-#include "policycap.h"
+#समावेश "policycap.h"
 
 /* Policy capability names */
-const char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX] = {
+स्थिर अक्षर *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX] = अणु
 	"network_peer_controls",
 	"open_perms",
 	"extended_socket_class",
@@ -13,6 +14,6 @@ const char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX] = {
 	"cgroup_seclabel",
 	"nnp_nosuid_transition",
 	"genfs_seclabel_symlinks"
-};
+पूर्ण;
 
-#endif /* _SELINUX_POLICYCAP_NAMES_H_ */
+#पूर्ण_अगर /* _SELINUX_POLICYCAP_NAMES_H_ */

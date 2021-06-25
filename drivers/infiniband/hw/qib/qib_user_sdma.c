@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2007, 2008, 2009 QLogic Corporation. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -29,94 +30,94 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/dmapool.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/highmem.h>
-#include <linux/io.h>
-#include <linux/uio.h>
-#include <linux/rbtree.h>
-#include <linux/spinlock.h>
-#include <linux/delay.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/uपन.स>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/delay.h>
 
-#include "qib.h"
-#include "qib_user_sdma.h"
+#समावेश "qib.h"
+#समावेश "qib_user_sdma.h"
 
 /* minimum size of header */
-#define QIB_USER_SDMA_MIN_HEADER_LENGTH 64
-/* expected size of headers (for dma_pool) */
-#define QIB_USER_SDMA_EXP_HEADER_LENGTH 64
-/* attempt to drain the queue for 5secs */
-#define QIB_USER_SDMA_DRAIN_TIMEOUT 250
+#घोषणा QIB_USER_SDMA_MIN_HEADER_LENGTH 64
+/* expected size of headers (क्रम dma_pool) */
+#घोषणा QIB_USER_SDMA_EXP_HEADER_LENGTH 64
+/* attempt to drain the queue क्रम 5secs */
+#घोषणा QIB_USER_SDMA_DRAIN_TIMEOUT 250
 
 /*
- * track how many times a process open this driver.
+ * track how many बार a process खोलो this driver.
  */
-static struct rb_root qib_user_sdma_rb_root = RB_ROOT;
+अटल काष्ठा rb_root qib_user_sdma_rb_root = RB_ROOT;
 
-struct qib_user_sdma_rb_node {
-	struct rb_node node;
-	int refcount;
+काष्ठा qib_user_sdma_rb_node अणु
+	काष्ठा rb_node node;
+	पूर्णांक refcount;
 	pid_t pid;
-};
+पूर्ण;
 
-struct qib_user_sdma_pkt {
-	struct list_head list;  /* list element */
+काष्ठा qib_user_sdma_pkt अणु
+	काष्ठा list_head list;  /* list element */
 
-	u8  tiddma;		/* if this is NEW tid-sdma */
-	u8  largepkt;		/* this is large pkt from kmalloc */
+	u8  tiddma;		/* अगर this is NEW tid-sdma */
+	u8  largepkt;		/* this is large pkt from kदो_स्मृति */
 	u16 frag_size;		/* frag size used by PSM */
 	u16 index;              /* last header index or push index */
 	u16 naddr;              /* dimension of addr (1..3) ... */
 	u16 addrlimit;		/* addr array size */
 	u16 tidsmidx;		/* current tidsm index */
 	u16 tidsmcount;		/* tidsm array item count */
-	u16 payload_size;	/* payload size so far for header */
-	u32 bytes_togo;		/* bytes for processing */
-	u32 counter;            /* sdma pkts queued counter for this entry */
-	struct qib_tid_session_member *tidsm;	/* tid session member array */
-	struct qib_user_sdma_queue *pq;	/* which pq this pkt belongs to */
+	u16 payload_size;	/* payload size so far क्रम header */
+	u32 bytes_togo;		/* bytes क्रम processing */
+	u32 counter;            /* sdma pkts queued counter क्रम this entry */
+	काष्ठा qib_tid_session_member *tidsm;	/* tid session member array */
+	काष्ठा qib_user_sdma_queue *pq;	/* which pq this pkt beदीर्घs to */
 	u64 added;              /* global descq number of entries */
 
-	struct {
-		u16 offset;                     /* offset for kvaddr, addr */
+	काष्ठा अणु
+		u16 offset;                     /* offset क्रम kvaddr, addr */
 		u16 length;                     /* length in page */
 		u16 first_desc;			/* first desc */
 		u16 last_desc;			/* last desc */
 		u16 put_page;                   /* should we put_page? */
 		u16 dma_mapped;                 /* is page dma_mapped? */
-		u16 dma_length;			/* for dma_unmap_page() */
+		u16 dma_length;			/* क्रम dma_unmap_page() */
 		u16 padding;
-		struct page *page;              /* may be NULL (coherent mem) */
-		void *kvaddr;                   /* FIXME: only for pio hack */
+		काष्ठा page *page;              /* may be शून्य (coherent mem) */
+		व्योम *kvaddr;                   /* FIXME: only क्रम pio hack */
 		dma_addr_t addr;
-	} addr[4];   /* max pages, any more and we coalesce */
-};
+	पूर्ण addr[4];   /* max pages, any more and we coalesce */
+पूर्ण;
 
-struct qib_user_sdma_queue {
+काष्ठा qib_user_sdma_queue अणु
 	/*
 	 * pkts sent to dma engine are queued on this
 	 * list head.  the type of the elements of this
-	 * list are struct qib_user_sdma_pkt...
+	 * list are काष्ठा qib_user_sdma_pkt...
 	 */
-	struct list_head sent;
+	काष्ठा list_head sent;
 
 	/*
 	 * Because above list will be accessed by both process and
-	 * signal handler, we need a spinlock for it.
+	 * संकेत handler, we need a spinlock क्रम it.
 	 */
 	spinlock_t sent_lock ____cacheline_aligned_in_smp;
 
 	/* headers with expected length are allocated from here... */
-	char header_cache_name[64];
-	struct dma_pool *header_cache;
+	अक्षर header_cache_name[64];
+	काष्ठा dma_pool *header_cache;
 
 	/* packets are allocated from the slab cache... */
-	char pkt_slab_name[64];
-	struct kmem_cache *pkt_slab;
+	अक्षर pkt_slab_name[64];
+	काष्ठा kmem_cache *pkt_slab;
 
 	/* as packets go on the queued queue, they are counted... */
 	u32 counter;
@@ -129,135 +130,135 @@ struct qib_user_sdma_queue {
 	u64 added;
 
 	/* dma page table */
-	struct rb_root dma_pages_root;
+	काष्ठा rb_root dma_pages_root;
 
-	struct qib_user_sdma_rb_node *sdma_rb_node;
+	काष्ठा qib_user_sdma_rb_node *sdma_rb_node;
 
 	/* protect everything above... */
-	struct mutex lock;
-};
+	काष्ठा mutex lock;
+पूर्ण;
 
-static struct qib_user_sdma_rb_node *
-qib_user_sdma_rb_search(struct rb_root *root, pid_t pid)
-{
-	struct qib_user_sdma_rb_node *sdma_rb_node;
-	struct rb_node *node = root->rb_node;
+अटल काष्ठा qib_user_sdma_rb_node *
+qib_user_sdma_rb_search(काष्ठा rb_root *root, pid_t pid)
+अणु
+	काष्ठा qib_user_sdma_rb_node *sdma_rb_node;
+	काष्ठा rb_node *node = root->rb_node;
 
-	while (node) {
-		sdma_rb_node = rb_entry(node, struct qib_user_sdma_rb_node,
+	जबतक (node) अणु
+		sdma_rb_node = rb_entry(node, काष्ठा qib_user_sdma_rb_node,
 					node);
-		if (pid < sdma_rb_node->pid)
+		अगर (pid < sdma_rb_node->pid)
 			node = node->rb_left;
-		else if (pid > sdma_rb_node->pid)
+		अन्यथा अगर (pid > sdma_rb_node->pid)
 			node = node->rb_right;
-		else
-			return sdma_rb_node;
-	}
-	return NULL;
-}
+		अन्यथा
+			वापस sdma_rb_node;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int
-qib_user_sdma_rb_insert(struct rb_root *root, struct qib_user_sdma_rb_node *new)
-{
-	struct rb_node **node = &(root->rb_node);
-	struct rb_node *parent = NULL;
-	struct qib_user_sdma_rb_node *got;
+अटल पूर्णांक
+qib_user_sdma_rb_insert(काष्ठा rb_root *root, काष्ठा qib_user_sdma_rb_node *new)
+अणु
+	काष्ठा rb_node **node = &(root->rb_node);
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा qib_user_sdma_rb_node *got;
 
-	while (*node) {
-		got = rb_entry(*node, struct qib_user_sdma_rb_node, node);
+	जबतक (*node) अणु
+		got = rb_entry(*node, काष्ठा qib_user_sdma_rb_node, node);
 		parent = *node;
-		if (new->pid < got->pid)
+		अगर (new->pid < got->pid)
 			node = &((*node)->rb_left);
-		else if (new->pid > got->pid)
+		अन्यथा अगर (new->pid > got->pid)
 			node = &((*node)->rb_right);
-		else
-			return 0;
-	}
+		अन्यथा
+			वापस 0;
+	पूर्ण
 
 	rb_link_node(&new->node, parent, node);
 	rb_insert_color(&new->node, root);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-struct qib_user_sdma_queue *
-qib_user_sdma_queue_create(struct device *dev, int unit, int ctxt, int sctxt)
-{
-	struct qib_user_sdma_queue *pq =
-		kmalloc(sizeof(struct qib_user_sdma_queue), GFP_KERNEL);
-	struct qib_user_sdma_rb_node *sdma_rb_node;
+काष्ठा qib_user_sdma_queue *
+qib_user_sdma_queue_create(काष्ठा device *dev, पूर्णांक unit, पूर्णांक ctxt, पूर्णांक sctxt)
+अणु
+	काष्ठा qib_user_sdma_queue *pq =
+		kदो_स्मृति(माप(काष्ठा qib_user_sdma_queue), GFP_KERNEL);
+	काष्ठा qib_user_sdma_rb_node *sdma_rb_node;
 
-	if (!pq)
-		goto done;
+	अगर (!pq)
+		जाओ करोne;
 
 	pq->counter = 0;
 	pq->sent_counter = 0;
 	pq->num_pending = 0;
 	pq->num_sending = 0;
 	pq->added = 0;
-	pq->sdma_rb_node = NULL;
+	pq->sdma_rb_node = शून्य;
 
 	INIT_LIST_HEAD(&pq->sent);
 	spin_lock_init(&pq->sent_lock);
 	mutex_init(&pq->lock);
 
-	snprintf(pq->pkt_slab_name, sizeof(pq->pkt_slab_name),
+	snम_लिखो(pq->pkt_slab_name, माप(pq->pkt_slab_name),
 		 "qib-user-sdma-pkts-%u-%02u.%02u", unit, ctxt, sctxt);
 	pq->pkt_slab = kmem_cache_create(pq->pkt_slab_name,
-					 sizeof(struct qib_user_sdma_pkt),
-					 0, 0, NULL);
+					 माप(काष्ठा qib_user_sdma_pkt),
+					 0, 0, शून्य);
 
-	if (!pq->pkt_slab)
-		goto err_kfree;
+	अगर (!pq->pkt_slab)
+		जाओ err_kमुक्त;
 
-	snprintf(pq->header_cache_name, sizeof(pq->header_cache_name),
+	snम_लिखो(pq->header_cache_name, माप(pq->header_cache_name),
 		 "qib-user-sdma-headers-%u-%02u.%02u", unit, ctxt, sctxt);
 	pq->header_cache = dma_pool_create(pq->header_cache_name,
 					   dev,
 					   QIB_USER_SDMA_EXP_HEADER_LENGTH,
 					   4, 0);
-	if (!pq->header_cache)
-		goto err_slab;
+	अगर (!pq->header_cache)
+		जाओ err_slab;
 
 	pq->dma_pages_root = RB_ROOT;
 
 	sdma_rb_node = qib_user_sdma_rb_search(&qib_user_sdma_rb_root,
 					current->pid);
-	if (sdma_rb_node) {
+	अगर (sdma_rb_node) अणु
 		sdma_rb_node->refcount++;
-	} else {
-		sdma_rb_node = kmalloc(sizeof(
-			struct qib_user_sdma_rb_node), GFP_KERNEL);
-		if (!sdma_rb_node)
-			goto err_rb;
+	पूर्ण अन्यथा अणु
+		sdma_rb_node = kदो_स्मृति(माप(
+			काष्ठा qib_user_sdma_rb_node), GFP_KERNEL);
+		अगर (!sdma_rb_node)
+			जाओ err_rb;
 
 		sdma_rb_node->refcount = 1;
 		sdma_rb_node->pid = current->pid;
 
 		qib_user_sdma_rb_insert(&qib_user_sdma_rb_root, sdma_rb_node);
-	}
+	पूर्ण
 	pq->sdma_rb_node = sdma_rb_node;
 
-	goto done;
+	जाओ करोne;
 
 err_rb:
 	dma_pool_destroy(pq->header_cache);
 err_slab:
 	kmem_cache_destroy(pq->pkt_slab);
-err_kfree:
-	kfree(pq);
-	pq = NULL;
+err_kमुक्त:
+	kमुक्त(pq);
+	pq = शून्य;
 
-done:
-	return pq;
-}
+करोne:
+	वापस pq;
+पूर्ण
 
-static void qib_user_sdma_init_frag(struct qib_user_sdma_pkt *pkt,
-				    int i, u16 offset, u16 len,
+अटल व्योम qib_user_sdma_init_frag(काष्ठा qib_user_sdma_pkt *pkt,
+				    पूर्णांक i, u16 offset, u16 len,
 				    u16 first_desc, u16 last_desc,
 				    u16 put_page, u16 dma_mapped,
-				    struct page *page, void *kvaddr,
+				    काष्ठा page *page, व्योम *kvaddr,
 				    dma_addr_t dma_addr, u16 dma_length)
-{
+अणु
 	pkt->addr[i].offset = offset;
 	pkt->addr[i].length = len;
 	pkt->addr[i].first_desc = first_desc;
@@ -268,64 +269,64 @@ static void qib_user_sdma_init_frag(struct qib_user_sdma_pkt *pkt,
 	pkt->addr[i].kvaddr = kvaddr;
 	pkt->addr[i].addr = dma_addr;
 	pkt->addr[i].dma_length = dma_length;
-}
+पूर्ण
 
-static void *qib_user_sdma_alloc_header(struct qib_user_sdma_queue *pq,
-				size_t len, dma_addr_t *dma_addr)
-{
-	void *hdr;
+अटल व्योम *qib_user_sdma_alloc_header(काष्ठा qib_user_sdma_queue *pq,
+				माप_प्रकार len, dma_addr_t *dma_addr)
+अणु
+	व्योम *hdr;
 
-	if (len == QIB_USER_SDMA_EXP_HEADER_LENGTH)
+	अगर (len == QIB_USER_SDMA_EXP_HEADER_LENGTH)
 		hdr = dma_pool_alloc(pq->header_cache, GFP_KERNEL,
 					     dma_addr);
-	else
-		hdr = NULL;
+	अन्यथा
+		hdr = शून्य;
 
-	if (!hdr) {
-		hdr = kmalloc(len, GFP_KERNEL);
-		if (!hdr)
-			return NULL;
+	अगर (!hdr) अणु
+		hdr = kदो_स्मृति(len, GFP_KERNEL);
+		अगर (!hdr)
+			वापस शून्य;
 
 		*dma_addr = 0;
-	}
+	पूर्ण
 
-	return hdr;
-}
+	वापस hdr;
+पूर्ण
 
-static int qib_user_sdma_page_to_frags(const struct qib_devdata *dd,
-				       struct qib_user_sdma_queue *pq,
-				       struct qib_user_sdma_pkt *pkt,
-				       struct page *page, u16 put,
-				       u16 offset, u16 len, void *kvaddr)
-{
+अटल पूर्णांक qib_user_sdma_page_to_frags(स्थिर काष्ठा qib_devdata *dd,
+				       काष्ठा qib_user_sdma_queue *pq,
+				       काष्ठा qib_user_sdma_pkt *pkt,
+				       काष्ठा page *page, u16 put,
+				       u16 offset, u16 len, व्योम *kvaddr)
+अणु
 	__le16 *pbc16;
-	void *pbcvaddr;
-	struct qib_message_header *hdr;
+	व्योम *pbcvaddr;
+	काष्ठा qib_message_header *hdr;
 	u16 newlen, pbclen, lastdesc, dma_mapped;
 	u32 vcto;
-	union qib_seqnum seqnum;
+	जोड़ qib_seqnum seqnum;
 	dma_addr_t pbcdaddr;
 	dma_addr_t dma_addr =
 		dma_map_page(&dd->pcidev->dev,
 			page, offset, len, DMA_TO_DEVICE);
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (dma_mapping_error(&dd->pcidev->dev, dma_addr)) {
+	अगर (dma_mapping_error(&dd->pcidev->dev, dma_addr)) अणु
 		/*
 		 * dma mapping error, pkt has not managed
-		 * this page yet, return the page here so
+		 * this page yet, वापस the page here so
 		 * the caller can ignore this page.
 		 */
-		if (put) {
+		अगर (put) अणु
 			unpin_user_page(page);
-		} else {
-			/* coalesce case */
+		पूर्ण अन्यथा अणु
+			/* coalesce हाल */
 			kunmap(page);
-			__free_page(page);
-		}
+			__मुक्त_page(page);
+		पूर्ण
 		ret = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	offset = 0;
 	dma_mapped = 1;
 
@@ -336,111 +337,111 @@ next_fragment:
 	 * In tid-sdma, the transfer length is restricted by
 	 * receiver side current tid page length.
 	 */
-	if (pkt->tiddma && len > pkt->tidsm[pkt->tidsmidx].length)
+	अगर (pkt->tiddma && len > pkt->tidsm[pkt->tidsmidx].length)
 		newlen = pkt->tidsm[pkt->tidsmidx].length;
-	else
+	अन्यथा
 		newlen = len;
 
 	/*
 	 * Then the transfer length is restricted by MTU.
 	 * the last descriptor flag is determined by:
 	 * 1. the current packet is at frag size length.
-	 * 2. the current tid page is done if tid-sdma.
-	 * 3. there is no more byte togo if sdma.
+	 * 2. the current tid page is करोne अगर tid-sdma.
+	 * 3. there is no more byte togo अगर sdma.
 	 */
 	lastdesc = 0;
-	if ((pkt->payload_size + newlen) >= pkt->frag_size) {
+	अगर ((pkt->payload_size + newlen) >= pkt->frag_size) अणु
 		newlen = pkt->frag_size - pkt->payload_size;
 		lastdesc = 1;
-	} else if (pkt->tiddma) {
-		if (newlen == pkt->tidsm[pkt->tidsmidx].length)
+	पूर्ण अन्यथा अगर (pkt->tiddma) अणु
+		अगर (newlen == pkt->tidsm[pkt->tidsmidx].length)
 			lastdesc = 1;
-	} else {
-		if (newlen == pkt->bytes_togo)
+	पूर्ण अन्यथा अणु
+		अगर (newlen == pkt->bytes_togo)
 			lastdesc = 1;
-	}
+	पूर्ण
 
 	/* fill the next fragment in this page */
 	qib_user_sdma_init_frag(pkt, pkt->naddr, /* index */
 		offset, newlen,		/* offset, len */
 		0, lastdesc,		/* first last desc */
 		put, dma_mapped,	/* put page, dma mapped */
-		page, kvaddr,		/* struct page, virt addr */
+		page, kvaddr,		/* काष्ठा page, virt addr */
 		dma_addr, len);		/* dma addr, dma length */
 	pkt->bytes_togo -= newlen;
 	pkt->payload_size += newlen;
 	pkt->naddr++;
-	if (pkt->naddr == pkt->addrlimit) {
+	अगर (pkt->naddr == pkt->addrlimit) अणु
 		ret = -EFAULT;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* If there is no more byte togo. (lastdesc==1) */
-	if (pkt->bytes_togo == 0) {
-		/* The packet is done, header is not dma mapped yet.
-		 * it should be from kmalloc */
-		if (!pkt->addr[pkt->index].addr) {
+	अगर (pkt->bytes_togo == 0) अणु
+		/* The packet is करोne, header is not dma mapped yet.
+		 * it should be from kदो_स्मृति */
+		अगर (!pkt->addr[pkt->index].addr) अणु
 			pkt->addr[pkt->index].addr =
 				dma_map_single(&dd->pcidev->dev,
 					pkt->addr[pkt->index].kvaddr,
 					pkt->addr[pkt->index].dma_length,
 					DMA_TO_DEVICE);
-			if (dma_mapping_error(&dd->pcidev->dev,
-					pkt->addr[pkt->index].addr)) {
+			अगर (dma_mapping_error(&dd->pcidev->dev,
+					pkt->addr[pkt->index].addr)) अणु
 				ret = -ENOMEM;
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 			pkt->addr[pkt->index].dma_mapped = 1;
-		}
+		पूर्ण
 
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* If tid-sdma, advance tid info. */
-	if (pkt->tiddma) {
+	अगर (pkt->tiddma) अणु
 		pkt->tidsm[pkt->tidsmidx].length -= newlen;
-		if (pkt->tidsm[pkt->tidsmidx].length) {
+		अगर (pkt->tidsm[pkt->tidsmidx].length) अणु
 			pkt->tidsm[pkt->tidsmidx].offset += newlen;
-		} else {
+		पूर्ण अन्यथा अणु
 			pkt->tidsmidx++;
-			if (pkt->tidsmidx == pkt->tidsmcount) {
+			अगर (pkt->tidsmidx == pkt->tidsmcount) अणु
 				ret = -EFAULT;
-				goto done;
-			}
-		}
-	}
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If this is NOT the last descriptor. (newlen==len)
-	 * the current packet is not done yet, but the current
-	 * send side page is done.
+	 * the current packet is not करोne yet, but the current
+	 * send side page is करोne.
 	 */
-	if (lastdesc == 0)
-		goto done;
+	अगर (lastdesc == 0)
+		जाओ करोne;
 
 	/*
 	 * If running this driver under PSM with message size
-	 * fitting into one transfer unit, it is not possible
+	 * fitting पूर्णांकo one transfer unit, it is not possible
 	 * to pass this line. otherwise, it is a buggggg.
 	 */
 
 	/*
-	 * Since the current packet is done, and there are more
+	 * Since the current packet is करोne, and there are more
 	 * bytes togo, we need to create a new sdma header, copying
-	 * from previous sdma header and modify both.
+	 * from previous sdma header and modअगरy both.
 	 */
 	pbclen = pkt->addr[pkt->index].length;
 	pbcvaddr = qib_user_sdma_alloc_header(pq, pbclen, &pbcdaddr);
-	if (!pbcvaddr) {
+	अगर (!pbcvaddr) अणु
 		ret = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	/* Copy the previous sdma header to new sdma header */
 	pbc16 = (__le16 *)pkt->addr[pkt->index].kvaddr;
-	memcpy(pbcvaddr, pbc16, pbclen);
+	स_नकल(pbcvaddr, pbc16, pbclen);
 
-	/* Modify the previous sdma header */
-	hdr = (struct qib_message_header *)&pbc16[4];
+	/* Modअगरy the previous sdma header */
+	hdr = (काष्ठा qib_message_header *)&pbc16[4];
 
 	/* New pbc length */
 	pbc16[0] = cpu_to_le16(le16_to_cpu(pbc16[0])-(pkt->bytes_togo>>2));
@@ -448,18 +449,18 @@ next_fragment:
 	/* New packet length */
 	hdr->lrh[2] = cpu_to_be16(le16_to_cpu(pbc16[0]));
 
-	if (pkt->tiddma) {
+	अगर (pkt->tiddma) अणु
 		/* turn on the header suppression */
 		hdr->iph.pkt_flags =
 			cpu_to_le16(le16_to_cpu(hdr->iph.pkt_flags)|0x2);
 		/* turn off ACK_REQ: 0x04 and EXPECTED_DONE: 0x20 */
 		hdr->flags &= ~(0x04|0x20);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* turn off extra bytes: 20-21 bits */
 		hdr->bth[0] = cpu_to_be32(be32_to_cpu(hdr->bth[0])&0xFFCFFFFF);
 		/* turn off ACK_REQ: 0x04 */
 		hdr->flags &= ~(0x04);
-	}
+	पूर्ण
 
 	/* New kdeth checksum */
 	vcto = le32_to_cpu(hdr->iph.ver_ctxt_tid_offset);
@@ -468,25 +469,25 @@ next_fragment:
 		((vcto>>16)&0xFFFF) - (vcto&0xFFFF) -
 		le16_to_cpu(hdr->iph.pkt_flags));
 
-	/* The packet is done, header is not dma mapped yet.
-	 * it should be from kmalloc */
-	if (!pkt->addr[pkt->index].addr) {
+	/* The packet is करोne, header is not dma mapped yet.
+	 * it should be from kदो_स्मृति */
+	अगर (!pkt->addr[pkt->index].addr) अणु
 		pkt->addr[pkt->index].addr =
 			dma_map_single(&dd->pcidev->dev,
 				pkt->addr[pkt->index].kvaddr,
 				pkt->addr[pkt->index].dma_length,
 				DMA_TO_DEVICE);
-		if (dma_mapping_error(&dd->pcidev->dev,
-				pkt->addr[pkt->index].addr)) {
+		अगर (dma_mapping_error(&dd->pcidev->dev,
+				pkt->addr[pkt->index].addr)) अणु
 			ret = -ENOMEM;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		pkt->addr[pkt->index].dma_mapped = 1;
-	}
+	पूर्ण
 
-	/* Modify the new sdma header */
+	/* Modअगरy the new sdma header */
 	pbc16 = (__le16 *)pbcvaddr;
-	hdr = (struct qib_message_header *)&pbc16[4];
+	hdr = (काष्ठा qib_message_header *)&pbc16[4];
 
 	/* New pbc length */
 	pbc16[0] = cpu_to_le16(le16_to_cpu(pbc16[0])-(pkt->payload_size>>2));
@@ -494,16 +495,16 @@ next_fragment:
 	/* New packet length */
 	hdr->lrh[2] = cpu_to_be16(le16_to_cpu(pbc16[0]));
 
-	if (pkt->tiddma) {
-		/* Set new tid and offset for new sdma header */
+	अगर (pkt->tiddma) अणु
+		/* Set new tid and offset क्रम new sdma header */
 		hdr->iph.ver_ctxt_tid_offset = cpu_to_le32(
 			(le32_to_cpu(hdr->iph.ver_ctxt_tid_offset)&0xFF000000) +
 			(pkt->tidsm[pkt->tidsmidx].tid<<QLOGIC_IB_I_TID_SHIFT) +
 			(pkt->tidsm[pkt->tidsmidx].offset>>2));
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Middle protocol new packet offset */
 		hdr->uwords[2] += pkt->payload_size;
-	}
+	पूर्ण
 
 	/* New kdeth checksum */
 	vcto = le32_to_cpu(hdr->iph.ver_ctxt_tid_offset);
@@ -514,9 +515,9 @@ next_fragment:
 
 	/* Next sequence number in new sdma header */
 	seqnum.val = be32_to_cpu(hdr->bth[2]);
-	if (pkt->tiddma)
+	अगर (pkt->tiddma)
 		seqnum.seq++;
-	else
+	अन्यथा
 		seqnum.pkt++;
 	hdr->bth[2] = cpu_to_be32(seqnum.val);
 
@@ -525,330 +526,330 @@ next_fragment:
 		0, pbclen,		/* offset, len */
 		1, 0,			/* first last desc */
 		0, 0,			/* put page, dma mapped */
-		NULL, pbcvaddr,		/* struct page, virt addr */
+		शून्य, pbcvaddr,		/* काष्ठा page, virt addr */
 		pbcdaddr, pbclen);	/* dma addr, dma length */
 	pkt->index = pkt->naddr;
 	pkt->payload_size = 0;
 	pkt->naddr++;
-	if (pkt->naddr == pkt->addrlimit) {
+	अगर (pkt->naddr == pkt->addrlimit) अणु
 		ret = -EFAULT;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* Prepare for next fragment in this page */
-	if (newlen != len) {
-		if (dma_mapped) {
+	/* Prepare क्रम next fragment in this page */
+	अगर (newlen != len) अणु
+		अगर (dma_mapped) अणु
 			put = 0;
 			dma_mapped = 0;
-			page = NULL;
-			kvaddr = NULL;
-		}
+			page = शून्य;
+			kvaddr = शून्य;
+		पूर्ण
 		len -= newlen;
 		offset += newlen;
 
-		goto next_fragment;
-	}
+		जाओ next_fragment;
+	पूर्ण
 
-done:
-	return ret;
-}
+करोne:
+	वापस ret;
+पूर्ण
 
 /* we've too many pages in the iovec, coalesce to a single page */
-static int qib_user_sdma_coalesce(const struct qib_devdata *dd,
-				  struct qib_user_sdma_queue *pq,
-				  struct qib_user_sdma_pkt *pkt,
-				  const struct iovec *iov,
-				  unsigned long niov)
-{
-	int ret = 0;
-	struct page *page = alloc_page(GFP_KERNEL);
-	void *mpage_save;
-	char *mpage;
-	int i;
-	int len = 0;
+अटल पूर्णांक qib_user_sdma_coalesce(स्थिर काष्ठा qib_devdata *dd,
+				  काष्ठा qib_user_sdma_queue *pq,
+				  काष्ठा qib_user_sdma_pkt *pkt,
+				  स्थिर काष्ठा iovec *iov,
+				  अचिन्हित दीर्घ niov)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा page *page = alloc_page(GFP_KERNEL);
+	व्योम *mpage_save;
+	अक्षर *mpage;
+	पूर्णांक i;
+	पूर्णांक len = 0;
 
-	if (!page) {
+	अगर (!page) अणु
 		ret = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	mpage = kmap(page);
 	mpage_save = mpage;
-	for (i = 0; i < niov; i++) {
-		int cfur;
+	क्रम (i = 0; i < niov; i++) अणु
+		पूर्णांक cfur;
 
 		cfur = copy_from_user(mpage,
 				      iov[i].iov_base, iov[i].iov_len);
-		if (cfur) {
+		अगर (cfur) अणु
 			ret = -EFAULT;
-			goto free_unmap;
-		}
+			जाओ मुक्त_unmap;
+		पूर्ण
 
 		mpage += iov[i].iov_len;
 		len += iov[i].iov_len;
-	}
+	पूर्ण
 
 	ret = qib_user_sdma_page_to_frags(dd, pq, pkt,
 			page, 0, 0, len, mpage_save);
-	goto done;
+	जाओ करोne;
 
-free_unmap:
+मुक्त_unmap:
 	kunmap(page);
-	__free_page(page);
-done:
-	return ret;
-}
+	__मुक्त_page(page);
+करोne:
+	वापस ret;
+पूर्ण
 
 /*
  * How many pages in this iovec element?
  */
-static int qib_user_sdma_num_pages(const struct iovec *iov)
-{
-	const unsigned long addr  = (unsigned long) iov->iov_base;
-	const unsigned long  len  = iov->iov_len;
-	const unsigned long spage = addr & PAGE_MASK;
-	const unsigned long epage = (addr + len - 1) & PAGE_MASK;
+अटल पूर्णांक qib_user_sdma_num_pages(स्थिर काष्ठा iovec *iov)
+अणु
+	स्थिर अचिन्हित दीर्घ addr  = (अचिन्हित दीर्घ) iov->iov_base;
+	स्थिर अचिन्हित दीर्घ  len  = iov->iov_len;
+	स्थिर अचिन्हित दीर्घ spage = addr & PAGE_MASK;
+	स्थिर अचिन्हित दीर्घ epage = (addr + len - 1) & PAGE_MASK;
 
-	return 1 + ((epage - spage) >> PAGE_SHIFT);
-}
+	वापस 1 + ((epage - spage) >> PAGE_SHIFT);
+पूर्ण
 
-static void qib_user_sdma_free_pkt_frag(struct device *dev,
-					struct qib_user_sdma_queue *pq,
-					struct qib_user_sdma_pkt *pkt,
-					int frag)
-{
-	const int i = frag;
+अटल व्योम qib_user_sdma_मुक्त_pkt_frag(काष्ठा device *dev,
+					काष्ठा qib_user_sdma_queue *pq,
+					काष्ठा qib_user_sdma_pkt *pkt,
+					पूर्णांक frag)
+अणु
+	स्थिर पूर्णांक i = frag;
 
-	if (pkt->addr[i].page) {
+	अगर (pkt->addr[i].page) अणु
 		/* only user data has page */
-		if (pkt->addr[i].dma_mapped)
+		अगर (pkt->addr[i].dma_mapped)
 			dma_unmap_page(dev,
 				       pkt->addr[i].addr,
 				       pkt->addr[i].dma_length,
 				       DMA_TO_DEVICE);
 
-		if (pkt->addr[i].kvaddr)
+		अगर (pkt->addr[i].kvaddr)
 			kunmap(pkt->addr[i].page);
 
-		if (pkt->addr[i].put_page)
+		अगर (pkt->addr[i].put_page)
 			unpin_user_page(pkt->addr[i].page);
-		else
-			__free_page(pkt->addr[i].page);
-	} else if (pkt->addr[i].kvaddr) {
-		/* for headers */
-		if (pkt->addr[i].dma_mapped) {
-			/* from kmalloc & dma mapped */
+		अन्यथा
+			__मुक्त_page(pkt->addr[i].page);
+	पूर्ण अन्यथा अगर (pkt->addr[i].kvaddr) अणु
+		/* क्रम headers */
+		अगर (pkt->addr[i].dma_mapped) अणु
+			/* from kदो_स्मृति & dma mapped */
 			dma_unmap_single(dev,
 				       pkt->addr[i].addr,
 				       pkt->addr[i].dma_length,
 				       DMA_TO_DEVICE);
-			kfree(pkt->addr[i].kvaddr);
-		} else if (pkt->addr[i].addr) {
-			/* free coherent mem from cache... */
-			dma_pool_free(pq->header_cache,
+			kमुक्त(pkt->addr[i].kvaddr);
+		पूर्ण अन्यथा अगर (pkt->addr[i].addr) अणु
+			/* मुक्त coherent mem from cache... */
+			dma_pool_मुक्त(pq->header_cache,
 			      pkt->addr[i].kvaddr, pkt->addr[i].addr);
-		} else {
-			/* from kmalloc but not dma mapped */
-			kfree(pkt->addr[i].kvaddr);
-		}
-	}
-}
+		पूर्ण अन्यथा अणु
+			/* from kदो_स्मृति but not dma mapped */
+			kमुक्त(pkt->addr[i].kvaddr);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* return number of pages pinned... */
-static int qib_user_sdma_pin_pages(const struct qib_devdata *dd,
-				   struct qib_user_sdma_queue *pq,
-				   struct qib_user_sdma_pkt *pkt,
-				   unsigned long addr, int tlen, int npages)
-{
-	struct page *pages[8];
-	int i, j;
-	int ret = 0;
+/* वापस number of pages pinned... */
+अटल पूर्णांक qib_user_sdma_pin_pages(स्थिर काष्ठा qib_devdata *dd,
+				   काष्ठा qib_user_sdma_queue *pq,
+				   काष्ठा qib_user_sdma_pkt *pkt,
+				   अचिन्हित दीर्घ addr, पूर्णांक tlen, पूर्णांक npages)
+अणु
+	काष्ठा page *pages[8];
+	पूर्णांक i, j;
+	पूर्णांक ret = 0;
 
-	while (npages) {
-		if (npages > 8)
+	जबतक (npages) अणु
+		अगर (npages > 8)
 			j = 8;
-		else
+		अन्यथा
 			j = npages;
 
 		ret = pin_user_pages_fast(addr, j, FOLL_LONGTERM, pages);
-		if (ret != j) {
+		अगर (ret != j) अणु
 			i = 0;
 			j = ret;
 			ret = -ENOMEM;
-			goto free_pages;
-		}
+			जाओ मुक्त_pages;
+		पूर्ण
 
-		for (i = 0; i < j; i++) {
+		क्रम (i = 0; i < j; i++) अणु
 			/* map the pages... */
-			unsigned long fofs = addr & ~PAGE_MASK;
-			int flen = ((fofs + tlen) > PAGE_SIZE) ?
+			अचिन्हित दीर्घ fofs = addr & ~PAGE_MASK;
+			पूर्णांक flen = ((fofs + tlen) > PAGE_SIZE) ?
 				(PAGE_SIZE - fofs) : tlen;
 
 			ret = qib_user_sdma_page_to_frags(dd, pq, pkt,
-				pages[i], 1, fofs, flen, NULL);
-			if (ret < 0) {
+				pages[i], 1, fofs, flen, शून्य);
+			अगर (ret < 0) अणु
 				/* current page has beed taken
 				 * care of inside above call.
 				 */
 				i++;
-				goto free_pages;
-			}
+				जाओ मुक्त_pages;
+			पूर्ण
 
 			addr += flen;
 			tlen -= flen;
-		}
+		पूर्ण
 
 		npages -= j;
-	}
+	पूर्ण
 
-	goto done;
+	जाओ करोne;
 
-	/* if error, return all pages not managed by pkt */
-free_pages:
-	while (i < j)
+	/* अगर error, वापस all pages not managed by pkt */
+मुक्त_pages:
+	जबतक (i < j)
 		unpin_user_page(pages[i++]);
 
-done:
-	return ret;
-}
+करोne:
+	वापस ret;
+पूर्ण
 
-static int qib_user_sdma_pin_pkt(const struct qib_devdata *dd,
-				 struct qib_user_sdma_queue *pq,
-				 struct qib_user_sdma_pkt *pkt,
-				 const struct iovec *iov,
-				 unsigned long niov)
-{
-	int ret = 0;
-	unsigned long idx;
+अटल पूर्णांक qib_user_sdma_pin_pkt(स्थिर काष्ठा qib_devdata *dd,
+				 काष्ठा qib_user_sdma_queue *pq,
+				 काष्ठा qib_user_sdma_pkt *pkt,
+				 स्थिर काष्ठा iovec *iov,
+				 अचिन्हित दीर्घ niov)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ idx;
 
-	for (idx = 0; idx < niov; idx++) {
-		const int npages = qib_user_sdma_num_pages(iov + idx);
-		const unsigned long addr = (unsigned long) iov[idx].iov_base;
+	क्रम (idx = 0; idx < niov; idx++) अणु
+		स्थिर पूर्णांक npages = qib_user_sdma_num_pages(iov + idx);
+		स्थिर अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) iov[idx].iov_base;
 
 		ret = qib_user_sdma_pin_pages(dd, pq, pkt, addr,
 					      iov[idx].iov_len, npages);
-		if (ret < 0)
-			goto free_pkt;
-	}
+		अगर (ret < 0)
+			जाओ मुक्त_pkt;
+	पूर्ण
 
-	goto done;
+	जाओ करोne;
 
-free_pkt:
+मुक्त_pkt:
 	/* we need to ignore the first entry here */
-	for (idx = 1; idx < pkt->naddr; idx++)
-		qib_user_sdma_free_pkt_frag(&dd->pcidev->dev, pq, pkt, idx);
+	क्रम (idx = 1; idx < pkt->naddr; idx++)
+		qib_user_sdma_मुक्त_pkt_frag(&dd->pcidev->dev, pq, pkt, idx);
 
 	/* need to dma unmap the first entry, this is to restore to
-	 * the original state so that caller can free the memory in
-	 * error condition. Caller does not know if dma mapped or not*/
-	if (pkt->addr[0].dma_mapped) {
+	 * the original state so that caller can मुक्त the memory in
+	 * error condition. Caller करोes not know अगर dma mapped or not*/
+	अगर (pkt->addr[0].dma_mapped) अणु
 		dma_unmap_single(&dd->pcidev->dev,
 		       pkt->addr[0].addr,
 		       pkt->addr[0].dma_length,
 		       DMA_TO_DEVICE);
 		pkt->addr[0].addr = 0;
 		pkt->addr[0].dma_mapped = 0;
-	}
+	पूर्ण
 
-done:
-	return ret;
-}
+करोne:
+	वापस ret;
+पूर्ण
 
-static int qib_user_sdma_init_payload(const struct qib_devdata *dd,
-				      struct qib_user_sdma_queue *pq,
-				      struct qib_user_sdma_pkt *pkt,
-				      const struct iovec *iov,
-				      unsigned long niov, int npages)
-{
-	int ret = 0;
+अटल पूर्णांक qib_user_sdma_init_payload(स्थिर काष्ठा qib_devdata *dd,
+				      काष्ठा qib_user_sdma_queue *pq,
+				      काष्ठा qib_user_sdma_pkt *pkt,
+				      स्थिर काष्ठा iovec *iov,
+				      अचिन्हित दीर्घ niov, पूर्णांक npages)
+अणु
+	पूर्णांक ret = 0;
 
-	if (pkt->frag_size == pkt->bytes_togo &&
+	अगर (pkt->frag_size == pkt->bytes_togo &&
 			npages >= ARRAY_SIZE(pkt->addr))
 		ret = qib_user_sdma_coalesce(dd, pq, pkt, iov, niov);
-	else
+	अन्यथा
 		ret = qib_user_sdma_pin_pkt(dd, pq, pkt, iov, niov);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* free a packet list -- return counter value of last packet */
-static void qib_user_sdma_free_pkt_list(struct device *dev,
-					struct qib_user_sdma_queue *pq,
-					struct list_head *list)
-{
-	struct qib_user_sdma_pkt *pkt, *pkt_next;
+/* मुक्त a packet list -- वापस counter value of last packet */
+अटल व्योम qib_user_sdma_मुक्त_pkt_list(काष्ठा device *dev,
+					काष्ठा qib_user_sdma_queue *pq,
+					काष्ठा list_head *list)
+अणु
+	काष्ठा qib_user_sdma_pkt *pkt, *pkt_next;
 
-	list_for_each_entry_safe(pkt, pkt_next, list, list) {
-		int i;
+	list_क्रम_each_entry_safe(pkt, pkt_next, list, list) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < pkt->naddr; i++)
-			qib_user_sdma_free_pkt_frag(dev, pq, pkt, i);
+		क्रम (i = 0; i < pkt->naddr; i++)
+			qib_user_sdma_मुक्त_pkt_frag(dev, pq, pkt, i);
 
-		if (pkt->largepkt)
-			kfree(pkt);
-		else
-			kmem_cache_free(pq->pkt_slab, pkt);
-	}
+		अगर (pkt->largepkt)
+			kमुक्त(pkt);
+		अन्यथा
+			kmem_cache_मुक्त(pq->pkt_slab, pkt);
+	पूर्ण
 	INIT_LIST_HEAD(list);
-}
+पूर्ण
 
 /*
  * copy headers, coalesce etc -- pq->lock must be held
  *
- * we queue all the packets to list, returning the
+ * we queue all the packets to list, वापसing the
  * number of bytes total.  list must be empty initially,
- * as, if there is an error we clean it...
+ * as, अगर there is an error we clean it...
  */
-static int qib_user_sdma_queue_pkts(const struct qib_devdata *dd,
-				    struct qib_pportdata *ppd,
-				    struct qib_user_sdma_queue *pq,
-				    const struct iovec *iov,
-				    unsigned long niov,
-				    struct list_head *list,
-				    int *maxpkts, int *ndesc)
-{
-	unsigned long idx = 0;
-	int ret = 0;
-	int npkts = 0;
+अटल पूर्णांक qib_user_sdma_queue_pkts(स्थिर काष्ठा qib_devdata *dd,
+				    काष्ठा qib_pportdata *ppd,
+				    काष्ठा qib_user_sdma_queue *pq,
+				    स्थिर काष्ठा iovec *iov,
+				    अचिन्हित दीर्घ niov,
+				    काष्ठा list_head *list,
+				    पूर्णांक *maxpkts, पूर्णांक *ndesc)
+अणु
+	अचिन्हित दीर्घ idx = 0;
+	पूर्णांक ret = 0;
+	पूर्णांक npkts = 0;
 	__le32 *pbc;
 	dma_addr_t dma_addr;
-	struct qib_user_sdma_pkt *pkt = NULL;
-	size_t len;
-	size_t nw;
+	काष्ठा qib_user_sdma_pkt *pkt = शून्य;
+	माप_प्रकार len;
+	माप_प्रकार nw;
 	u32 counter = pq->counter;
 	u16 frag_size;
 
-	while (idx < niov && npkts < *maxpkts) {
-		const unsigned long addr = (unsigned long) iov[idx].iov_base;
-		const unsigned long idx_save = idx;
-		unsigned pktnw;
-		unsigned pktnwc;
-		int nfrags = 0;
-		int npages = 0;
-		int bytes_togo = 0;
-		int tiddma = 0;
-		int cfur;
+	जबतक (idx < niov && npkts < *maxpkts) अणु
+		स्थिर अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) iov[idx].iov_base;
+		स्थिर अचिन्हित दीर्घ idx_save = idx;
+		अचिन्हित pktnw;
+		अचिन्हित pktnwc;
+		पूर्णांक nfrags = 0;
+		पूर्णांक npages = 0;
+		पूर्णांक bytes_togo = 0;
+		पूर्णांक tiddma = 0;
+		पूर्णांक cfur;
 
 		len = iov[idx].iov_len;
 		nw = len >> 2;
 
-		if (len < QIB_USER_SDMA_MIN_HEADER_LENGTH ||
-		    len > PAGE_SIZE || len & 3 || addr & 3) {
+		अगर (len < QIB_USER_SDMA_MIN_HEADER_LENGTH ||
+		    len > PAGE_SIZE || len & 3 || addr & 3) अणु
 			ret = -EINVAL;
-			goto free_list;
-		}
+			जाओ मुक्त_list;
+		पूर्ण
 
 		pbc = qib_user_sdma_alloc_header(pq, len, &dma_addr);
-		if (!pbc) {
+		अगर (!pbc) अणु
 			ret = -ENOMEM;
-			goto free_list;
-		}
+			जाओ मुक्त_list;
+		पूर्ण
 
 		cfur = copy_from_user(pbc, iov[idx].iov_base, len);
-		if (cfur) {
+		अगर (cfur) अणु
 			ret = -EFAULT;
-			goto free_pbc;
-		}
+			जाओ मुक्त_pbc;
+		पूर्ण
 
 		/*
 		 * This assignment is a bit strange.  it's because the
@@ -863,25 +864,25 @@ static int qib_user_sdma_queue_pkts(const struct qib_devdata *dd,
 		 * this is one less than the total number of words that
 		 * goes to the send DMA engine as the first 32 bit word
 		 * of the PBC itself is not counted.  Armed with this count,
-		 * we can verify that the packet is consistent with the
+		 * we can verअगरy that the packet is consistent with the
 		 * iovec lengths.
 		 */
 		pktnw = le32_to_cpu(*pbc) & 0xFFFF;
-		if (pktnw < pktnwc) {
+		अगर (pktnw < pktnwc) अणु
 			ret = -EINVAL;
-			goto free_pbc;
-		}
+			जाओ मुक्त_pbc;
+		पूर्ण
 
 		idx++;
-		while (pktnwc < pktnw && idx < niov) {
-			const size_t slen = iov[idx].iov_len;
-			const unsigned long faddr =
-				(unsigned long) iov[idx].iov_base;
+		जबतक (pktnwc < pktnw && idx < niov) अणु
+			स्थिर माप_प्रकार slen = iov[idx].iov_len;
+			स्थिर अचिन्हित दीर्घ faddr =
+				(अचिन्हित दीर्घ) iov[idx].iov_base;
 
-			if (slen & 3 || faddr & 3 || !slen) {
+			अगर (slen & 3 || faddr & 3 || !slen) अणु
 				ret = -EINVAL;
-				goto free_pbc;
-			}
+				जाओ मुक्त_pbc;
+			पूर्ण
 
 			npages += qib_user_sdma_num_pages(&iov[idx]);
 
@@ -889,65 +890,65 @@ static int qib_user_sdma_queue_pkts(const struct qib_devdata *dd,
 			pktnwc += slen >> 2;
 			idx++;
 			nfrags++;
-		}
+		पूर्ण
 
-		if (pktnwc != pktnw) {
+		अगर (pktnwc != pktnw) अणु
 			ret = -EINVAL;
-			goto free_pbc;
-		}
+			जाओ मुक्त_pbc;
+		पूर्ण
 
 		frag_size = ((le32_to_cpu(*pbc))>>16) & 0xFFFF;
-		if (((frag_size ? frag_size : bytes_togo) + len) >
-						ppd->ibmaxlen) {
+		अगर (((frag_size ? frag_size : bytes_togo) + len) >
+						ppd->ibmaxlen) अणु
 			ret = -EINVAL;
-			goto free_pbc;
-		}
+			जाओ मुक्त_pbc;
+		पूर्ण
 
-		if (frag_size) {
-			int tidsmsize, n;
-			size_t pktsize;
+		अगर (frag_size) अणु
+			पूर्णांक tidsmsize, n;
+			माप_प्रकार pktsize;
 
 			n = npages*((2*PAGE_SIZE/frag_size)+1);
-			pktsize = struct_size(pkt, addr, n);
+			pktsize = काष्ठा_size(pkt, addr, n);
 
 			/*
-			 * Determine if this is tid-sdma or just sdma.
+			 * Determine अगर this is tid-sdma or just sdma.
 			 */
 			tiddma = (((le32_to_cpu(pbc[7])>>
 				QLOGIC_IB_I_TID_SHIFT)&
 				QLOGIC_IB_I_TID_MASK) !=
 				QLOGIC_IB_I_TID_MASK);
 
-			if (tiddma)
+			अगर (tiddma)
 				tidsmsize = iov[idx].iov_len;
-			else
+			अन्यथा
 				tidsmsize = 0;
 
-			pkt = kmalloc(pktsize+tidsmsize, GFP_KERNEL);
-			if (!pkt) {
+			pkt = kदो_स्मृति(pktsize+tidsmsize, GFP_KERNEL);
+			अगर (!pkt) अणु
 				ret = -ENOMEM;
-				goto free_pbc;
-			}
+				जाओ मुक्त_pbc;
+			पूर्ण
 			pkt->largepkt = 1;
 			pkt->frag_size = frag_size;
 			pkt->addrlimit = n + ARRAY_SIZE(pkt->addr);
 
-			if (tiddma) {
-				char *tidsm = (char *)pkt + pktsize;
+			अगर (tiddma) अणु
+				अक्षर *tidsm = (अक्षर *)pkt + pktsize;
 
 				cfur = copy_from_user(tidsm,
 					iov[idx].iov_base, tidsmsize);
-				if (cfur) {
+				अगर (cfur) अणु
 					ret = -EFAULT;
-					goto free_pkt;
-				}
+					जाओ मुक्त_pkt;
+				पूर्ण
 				pkt->tidsm =
-					(struct qib_tid_session_member *)tidsm;
+					(काष्ठा qib_tid_session_member *)tidsm;
 				pkt->tidsmcount = tidsmsize/
-					sizeof(struct qib_tid_session_member);
+					माप(काष्ठा qib_tid_session_member);
 				pkt->tidsmidx = 0;
 				idx++;
-			}
+			पूर्ण
 
 			/*
 			 * pbc 'fill1' field is borrowed to pass frag size,
@@ -955,16 +956,16 @@ static int qib_user_sdma_queue_pkts(const struct qib_devdata *dd,
 			 * hardware requires this field to be zero.
 			 */
 			*pbc = cpu_to_le32(le32_to_cpu(*pbc) & 0x0000FFFF);
-		} else {
+		पूर्ण अन्यथा अणु
 			pkt = kmem_cache_alloc(pq->pkt_slab, GFP_KERNEL);
-			if (!pkt) {
+			अगर (!pkt) अणु
 				ret = -ENOMEM;
-				goto free_pbc;
-			}
+				जाओ मुक्त_pbc;
+			पूर्ण
 			pkt->largepkt = 0;
 			pkt->frag_size = bytes_togo;
 			pkt->addrlimit = ARRAY_SIZE(pkt->addr);
-		}
+		पूर्ण
 		pkt->bytes_togo = bytes_togo;
 		pkt->payload_size = 0;
 		pkt->counter = counter;
@@ -975,210 +976,210 @@ static int qib_user_sdma_queue_pkts(const struct qib_devdata *dd,
 			0, len,		/* offset, len */
 			1, 0,		/* first last desc */
 			0, 0,		/* put page, dma mapped */
-			NULL, pbc,	/* struct page, virt addr */
+			शून्य, pbc,	/* काष्ठा page, virt addr */
 			dma_addr, len);	/* dma addr, dma length */
 		pkt->index = 0;
 		pkt->naddr = 1;
 
-		if (nfrags) {
+		अगर (nfrags) अणु
 			ret = qib_user_sdma_init_payload(dd, pq, pkt,
 							 iov + idx_save + 1,
 							 nfrags, npages);
-			if (ret < 0)
-				goto free_pkt;
-		} else {
+			अगर (ret < 0)
+				जाओ मुक्त_pkt;
+		पूर्ण अन्यथा अणु
 			/* since there is no payload, mark the
 			 * header as the last desc. */
 			pkt->addr[0].last_desc = 1;
 
-			if (dma_addr == 0) {
+			अगर (dma_addr == 0) अणु
 				/*
 				 * the header is not dma mapped yet.
-				 * it should be from kmalloc.
+				 * it should be from kदो_स्मृति.
 				 */
 				dma_addr = dma_map_single(&dd->pcidev->dev,
 					pbc, len, DMA_TO_DEVICE);
-				if (dma_mapping_error(&dd->pcidev->dev,
-								dma_addr)) {
+				अगर (dma_mapping_error(&dd->pcidev->dev,
+								dma_addr)) अणु
 					ret = -ENOMEM;
-					goto free_pkt;
-				}
+					जाओ मुक्त_pkt;
+				पूर्ण
 				pkt->addr[0].addr = dma_addr;
 				pkt->addr[0].dma_mapped = 1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		counter++;
 		npkts++;
 		pkt->pq = pq;
-		pkt->index = 0; /* reset index for push on hw */
+		pkt->index = 0; /* reset index क्रम push on hw */
 		*ndesc += pkt->naddr;
 
 		list_add_tail(&pkt->list, list);
-	}
+	पूर्ण
 
 	*maxpkts = npkts;
 	ret = idx;
-	goto done;
+	जाओ करोne;
 
-free_pkt:
-	if (pkt->largepkt)
-		kfree(pkt);
-	else
-		kmem_cache_free(pq->pkt_slab, pkt);
-free_pbc:
-	if (dma_addr)
-		dma_pool_free(pq->header_cache, pbc, dma_addr);
-	else
-		kfree(pbc);
-free_list:
-	qib_user_sdma_free_pkt_list(&dd->pcidev->dev, pq, list);
-done:
-	return ret;
-}
+मुक्त_pkt:
+	अगर (pkt->largepkt)
+		kमुक्त(pkt);
+	अन्यथा
+		kmem_cache_मुक्त(pq->pkt_slab, pkt);
+मुक्त_pbc:
+	अगर (dma_addr)
+		dma_pool_मुक्त(pq->header_cache, pbc, dma_addr);
+	अन्यथा
+		kमुक्त(pbc);
+मुक्त_list:
+	qib_user_sdma_मुक्त_pkt_list(&dd->pcidev->dev, pq, list);
+करोne:
+	वापस ret;
+पूर्ण
 
-static void qib_user_sdma_set_complete_counter(struct qib_user_sdma_queue *pq,
+अटल व्योम qib_user_sdma_set_complete_counter(काष्ठा qib_user_sdma_queue *pq,
 					       u32 c)
-{
+अणु
 	pq->sent_counter = c;
-}
+पूर्ण
 
 /* try to clean out queue -- needs pq->lock */
-static int qib_user_sdma_queue_clean(struct qib_pportdata *ppd,
-				     struct qib_user_sdma_queue *pq)
-{
-	struct qib_devdata *dd = ppd->dd;
-	struct list_head free_list;
-	struct qib_user_sdma_pkt *pkt;
-	struct qib_user_sdma_pkt *pkt_prev;
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक qib_user_sdma_queue_clean(काष्ठा qib_pportdata *ppd,
+				     काष्ठा qib_user_sdma_queue *pq)
+अणु
+	काष्ठा qib_devdata *dd = ppd->dd;
+	काष्ठा list_head मुक्त_list;
+	काष्ठा qib_user_sdma_pkt *pkt;
+	काष्ठा qib_user_sdma_pkt *pkt_prev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	if (!pq->num_sending)
-		return 0;
+	अगर (!pq->num_sending)
+		वापस 0;
 
-	INIT_LIST_HEAD(&free_list);
+	INIT_LIST_HEAD(&मुक्त_list);
 
 	/*
-	 * We need this spin lock here because interrupt handler
-	 * might modify this list in qib_user_sdma_send_desc(), also
-	 * we can not get interrupted, otherwise it is a deadlock.
+	 * We need this spin lock here because पूर्णांकerrupt handler
+	 * might modअगरy this list in qib_user_sdma_send_desc(), also
+	 * we can not get पूर्णांकerrupted, otherwise it is a deadlock.
 	 */
 	spin_lock_irqsave(&pq->sent_lock, flags);
-	list_for_each_entry_safe(pkt, pkt_prev, &pq->sent, list) {
-		s64 descd = ppd->sdma_descq_removed - pkt->added;
+	list_क्रम_each_entry_safe(pkt, pkt_prev, &pq->sent, list) अणु
+		s64 descd = ppd->sdma_descq_हटाओd - pkt->added;
 
-		if (descd < 0)
-			break;
+		अगर (descd < 0)
+			अवरोध;
 
-		list_move_tail(&pkt->list, &free_list);
+		list_move_tail(&pkt->list, &मुक्त_list);
 
 		/* one more packet cleaned */
 		ret++;
 		pq->num_sending--;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&pq->sent_lock, flags);
 
-	if (!list_empty(&free_list)) {
+	अगर (!list_empty(&मुक्त_list)) अणु
 		u32 counter;
 
-		pkt = list_entry(free_list.prev,
-				 struct qib_user_sdma_pkt, list);
+		pkt = list_entry(मुक्त_list.prev,
+				 काष्ठा qib_user_sdma_pkt, list);
 		counter = pkt->counter;
 
-		qib_user_sdma_free_pkt_list(&dd->pcidev->dev, pq, &free_list);
+		qib_user_sdma_मुक्त_pkt_list(&dd->pcidev->dev, pq, &मुक्त_list);
 		qib_user_sdma_set_complete_counter(pq, counter);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void qib_user_sdma_queue_destroy(struct qib_user_sdma_queue *pq)
-{
-	if (!pq)
-		return;
+व्योम qib_user_sdma_queue_destroy(काष्ठा qib_user_sdma_queue *pq)
+अणु
+	अगर (!pq)
+		वापस;
 
 	pq->sdma_rb_node->refcount--;
-	if (pq->sdma_rb_node->refcount == 0) {
+	अगर (pq->sdma_rb_node->refcount == 0) अणु
 		rb_erase(&pq->sdma_rb_node->node, &qib_user_sdma_rb_root);
-		kfree(pq->sdma_rb_node);
-	}
+		kमुक्त(pq->sdma_rb_node);
+	पूर्ण
 	dma_pool_destroy(pq->header_cache);
 	kmem_cache_destroy(pq->pkt_slab);
-	kfree(pq);
-}
+	kमुक्त(pq);
+पूर्ण
 
-/* clean descriptor queue, returns > 0 if some elements cleaned */
-static int qib_user_sdma_hwqueue_clean(struct qib_pportdata *ppd)
-{
-	int ret;
-	unsigned long flags;
+/* clean descriptor queue, वापसs > 0 अगर some elements cleaned */
+अटल पूर्णांक qib_user_sdma_hwqueue_clean(काष्ठा qib_pportdata *ppd)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ppd->sdma_lock, flags);
 	ret = qib_sdma_make_progress(ppd);
 	spin_unlock_irqrestore(&ppd->sdma_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* we're in close, drain packets so that we can cleanup successfully... */
-void qib_user_sdma_queue_drain(struct qib_pportdata *ppd,
-			       struct qib_user_sdma_queue *pq)
-{
-	struct qib_devdata *dd = ppd->dd;
-	unsigned long flags;
-	int i;
+/* we're in बंद, drain packets so that we can cleanup successfully... */
+व्योम qib_user_sdma_queue_drain(काष्ठा qib_pportdata *ppd,
+			       काष्ठा qib_user_sdma_queue *pq)
+अणु
+	काष्ठा qib_devdata *dd = ppd->dd;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	if (!pq)
-		return;
+	अगर (!pq)
+		वापस;
 
-	for (i = 0; i < QIB_USER_SDMA_DRAIN_TIMEOUT; i++) {
+	क्रम (i = 0; i < QIB_USER_SDMA_DRAIN_TIMEOUT; i++) अणु
 		mutex_lock(&pq->lock);
-		if (!pq->num_pending && !pq->num_sending) {
+		अगर (!pq->num_pending && !pq->num_sending) अणु
 			mutex_unlock(&pq->lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		qib_user_sdma_hwqueue_clean(ppd);
 		qib_user_sdma_queue_clean(ppd, pq);
 		mutex_unlock(&pq->lock);
 		msleep(20);
-	}
+	पूर्ण
 
-	if (pq->num_pending || pq->num_sending) {
-		struct qib_user_sdma_pkt *pkt;
-		struct qib_user_sdma_pkt *pkt_prev;
-		struct list_head free_list;
+	अगर (pq->num_pending || pq->num_sending) अणु
+		काष्ठा qib_user_sdma_pkt *pkt;
+		काष्ठा qib_user_sdma_pkt *pkt_prev;
+		काष्ठा list_head मुक्त_list;
 
 		mutex_lock(&pq->lock);
 		spin_lock_irqsave(&ppd->sdma_lock, flags);
 		/*
 		 * Since we hold sdma_lock, it is safe without sent_lock.
 		 */
-		if (pq->num_pending) {
-			list_for_each_entry_safe(pkt, pkt_prev,
-					&ppd->sdma_userpending, list) {
-				if (pkt->pq == pq) {
+		अगर (pq->num_pending) अणु
+			list_क्रम_each_entry_safe(pkt, pkt_prev,
+					&ppd->sdma_userpending, list) अणु
+				अगर (pkt->pq == pq) अणु
 					list_move_tail(&pkt->list, &pq->sent);
 					pq->num_pending--;
 					pq->num_sending++;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 		spin_unlock_irqrestore(&ppd->sdma_lock, flags);
 
 		qib_dev_err(dd, "user sdma lists not empty: forcing!\n");
-		INIT_LIST_HEAD(&free_list);
-		list_splice_init(&pq->sent, &free_list);
+		INIT_LIST_HEAD(&मुक्त_list);
+		list_splice_init(&pq->sent, &मुक्त_list);
 		pq->num_sending = 0;
-		qib_user_sdma_free_pkt_list(&dd->pcidev->dev, pq, &free_list);
+		qib_user_sdma_मुक्त_pkt_list(&dd->pcidev->dev, pq, &मुक्त_list);
 		mutex_unlock(&pq->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline __le64 qib_sdma_make_desc0(u8 gen,
+अटल अंतरभूत __le64 qib_sdma_make_desc0(u8 gen,
 					 u64 addr, u64 dwlen, u64 dwoffset)
-{
-	return cpu_to_le64(/* SDmaPhyAddr[31:0] */
+अणु
+	वापस cpu_to_le64(/* SDmaPhyAddr[31:0] */
 			   ((addr & 0xfffffffcULL) << 32) |
 			   /* SDmaGeneration[1:0] */
 			   ((gen & 3ULL) << 30) |
@@ -1186,90 +1187,90 @@ static inline __le64 qib_sdma_make_desc0(u8 gen,
 			   ((dwlen & 0x7ffULL) << 16) |
 			   /* SDmaBufOffset[12:2] */
 			   (dwoffset & 0x7ffULL));
-}
+पूर्ण
 
-static inline __le64 qib_sdma_make_first_desc0(__le64 descq)
-{
-	return descq | cpu_to_le64(1ULL << 12);
-}
+अटल अंतरभूत __le64 qib_sdma_make_first_desc0(__le64 descq)
+अणु
+	वापस descq | cpu_to_le64(1ULL << 12);
+पूर्ण
 
-static inline __le64 qib_sdma_make_last_desc0(__le64 descq)
-{
+अटल अंतरभूत __le64 qib_sdma_make_last_desc0(__le64 descq)
+अणु
 					      /* last */  /* dma head */
-	return descq | cpu_to_le64(1ULL << 11 | 1ULL << 13);
-}
+	वापस descq | cpu_to_le64(1ULL << 11 | 1ULL << 13);
+पूर्ण
 
-static inline __le64 qib_sdma_make_desc1(u64 addr)
-{
+अटल अंतरभूत __le64 qib_sdma_make_desc1(u64 addr)
+अणु
 	/* SDmaPhyAddr[47:32] */
-	return cpu_to_le64(addr >> 32);
-}
+	वापस cpu_to_le64(addr >> 32);
+पूर्ण
 
-static void qib_user_sdma_send_frag(struct qib_pportdata *ppd,
-				    struct qib_user_sdma_pkt *pkt, int idx,
-				    unsigned ofs, u16 tail, u8 gen)
-{
-	const u64 addr = (u64) pkt->addr[idx].addr +
+अटल व्योम qib_user_sdma_send_frag(काष्ठा qib_pportdata *ppd,
+				    काष्ठा qib_user_sdma_pkt *pkt, पूर्णांक idx,
+				    अचिन्हित ofs, u16 tail, u8 gen)
+अणु
+	स्थिर u64 addr = (u64) pkt->addr[idx].addr +
 		(u64) pkt->addr[idx].offset;
-	const u64 dwlen = (u64) pkt->addr[idx].length / 4;
+	स्थिर u64 dwlen = (u64) pkt->addr[idx].length / 4;
 	__le64 *descqp;
 	__le64 descq0;
 
 	descqp = &ppd->sdma_descq[tail].qw[0];
 
 	descq0 = qib_sdma_make_desc0(gen, addr, dwlen, ofs);
-	if (pkt->addr[idx].first_desc)
+	अगर (pkt->addr[idx].first_desc)
 		descq0 = qib_sdma_make_first_desc0(descq0);
-	if (pkt->addr[idx].last_desc) {
+	अगर (pkt->addr[idx].last_desc) अणु
 		descq0 = qib_sdma_make_last_desc0(descq0);
-		if (ppd->sdma_intrequest) {
+		अगर (ppd->sdma_पूर्णांकrequest) अणु
 			descq0 |= cpu_to_le64(1ULL << 15);
-			ppd->sdma_intrequest = 0;
-		}
-	}
+			ppd->sdma_पूर्णांकrequest = 0;
+		पूर्ण
+	पूर्ण
 
 	descqp[0] = descq0;
 	descqp[1] = qib_sdma_make_desc1(addr);
-}
+पूर्ण
 
-void qib_user_sdma_send_desc(struct qib_pportdata *ppd,
-				struct list_head *pktlist)
-{
-	struct qib_devdata *dd = ppd->dd;
-	u16 nfree, nsent;
+व्योम qib_user_sdma_send_desc(काष्ठा qib_pportdata *ppd,
+				काष्ठा list_head *pktlist)
+अणु
+	काष्ठा qib_devdata *dd = ppd->dd;
+	u16 nमुक्त, nsent;
 	u16 tail, tail_c;
 	u8 gen, gen_c;
 
-	nfree = qib_sdma_descq_freecnt(ppd);
-	if (!nfree)
-		return;
+	nमुक्त = qib_sdma_descq_मुक्तcnt(ppd);
+	अगर (!nमुक्त)
+		वापस;
 
 retry:
 	nsent = 0;
 	tail_c = tail = ppd->sdma_descq_tail;
 	gen_c = gen = ppd->sdma_generation;
-	while (!list_empty(pktlist)) {
-		struct qib_user_sdma_pkt *pkt =
-			list_entry(pktlist->next, struct qib_user_sdma_pkt,
+	जबतक (!list_empty(pktlist)) अणु
+		काष्ठा qib_user_sdma_pkt *pkt =
+			list_entry(pktlist->next, काष्ठा qib_user_sdma_pkt,
 				   list);
-		int i, j, c = 0;
-		unsigned ofs = 0;
+		पूर्णांक i, j, c = 0;
+		अचिन्हित ofs = 0;
 		u16 dtail = tail;
 
-		for (i = pkt->index; i < pkt->naddr && nfree; i++) {
+		क्रम (i = pkt->index; i < pkt->naddr && nमुक्त; i++) अणु
 			qib_user_sdma_send_frag(ppd, pkt, i, ofs, tail, gen);
 			ofs += pkt->addr[i].length >> 2;
 
-			if (++tail == ppd->sdma_descq_cnt) {
+			अगर (++tail == ppd->sdma_descq_cnt) अणु
 				tail = 0;
 				++gen;
-				ppd->sdma_intrequest = 1;
-			} else if (tail == (ppd->sdma_descq_cnt>>1)) {
-				ppd->sdma_intrequest = 1;
-			}
-			nfree--;
-			if (pkt->addr[i].last_desc == 0)
-				continue;
+				ppd->sdma_पूर्णांकrequest = 1;
+			पूर्ण अन्यथा अगर (tail == (ppd->sdma_descq_cnt>>1)) अणु
+				ppd->sdma_पूर्णांकrequest = 1;
+			पूर्ण
+			nमुक्त--;
+			अगर (pkt->addr[i].last_desc == 0)
+				जारी;
 
 			/*
 			 * If the packet is >= 2KB mtu equivalent, we
@@ -1277,24 +1278,24 @@ retry:
 			 * mark each descriptor as part of a large
 			 * buffer packet.
 			 */
-			if (ofs > dd->piosize2kmax_dwords) {
-				for (j = pkt->index; j <= i; j++) {
+			अगर (ofs > dd->piosize2kmax_dwords) अणु
+				क्रम (j = pkt->index; j <= i; j++) अणु
 					ppd->sdma_descq[dtail].qw[0] |=
 						cpu_to_le64(1ULL << 14);
-					if (++dtail == ppd->sdma_descq_cnt)
+					अगर (++dtail == ppd->sdma_descq_cnt)
 						dtail = 0;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			c += i + 1 - pkt->index;
-			pkt->index = i + 1; /* index for next first */
+			pkt->index = i + 1; /* index क्रम next first */
 			tail_c = dtail = tail;
 			gen_c = gen;
-			ofs = 0;  /* reset for next packet */
-		}
+			ofs = 0;  /* reset क्रम next packet */
+		पूर्ण
 
 		ppd->sdma_descq_added += c;
 		nsent += c;
-		if (pkt->index == pkt->naddr) {
+		अगर (pkt->index == pkt->naddr) अणु
 			pkt->added = ppd->sdma_descq_added;
 			pkt->pq->added = pkt->added;
 			pkt->pq->num_pending--;
@@ -1302,161 +1303,161 @@ retry:
 			pkt->pq->num_sending++;
 			list_move_tail(&pkt->list, &pkt->pq->sent);
 			spin_unlock(&pkt->pq->sent_lock);
-		}
-		if (!nfree || (nsent<<2) > ppd->sdma_descq_cnt)
-			break;
-	}
+		पूर्ण
+		अगर (!nमुक्त || (nsent<<2) > ppd->sdma_descq_cnt)
+			अवरोध;
+	पूर्ण
 
-	/* advance the tail on the chip if necessary */
-	if (ppd->sdma_descq_tail != tail_c) {
+	/* advance the tail on the chip अगर necessary */
+	अगर (ppd->sdma_descq_tail != tail_c) अणु
 		ppd->sdma_generation = gen_c;
 		dd->f_sdma_update_tail(ppd, tail_c);
-	}
+	पूर्ण
 
-	if (nfree && !list_empty(pktlist))
-		goto retry;
-}
+	अगर (nमुक्त && !list_empty(pktlist))
+		जाओ retry;
+पूर्ण
 
 /* pq->lock must be held, get packets on the wire... */
-static int qib_user_sdma_push_pkts(struct qib_pportdata *ppd,
-				 struct qib_user_sdma_queue *pq,
-				 struct list_head *pktlist, int count)
-{
-	unsigned long flags;
+अटल पूर्णांक qib_user_sdma_push_pkts(काष्ठा qib_pportdata *ppd,
+				 काष्ठा qib_user_sdma_queue *pq,
+				 काष्ठा list_head *pktlist, पूर्णांक count)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!(ppd->lflags & QIBL_LINKACTIVE)))
-		return -ECOMM;
+	अगर (unlikely(!(ppd->lflags & QIBL_LINKACTIVE)))
+		वापस -ECOMM;
 
 	/* non-blocking mode */
-	if (pq->sdma_rb_node->refcount > 1) {
+	अगर (pq->sdma_rb_node->refcount > 1) अणु
 		spin_lock_irqsave(&ppd->sdma_lock, flags);
-		if (unlikely(!__qib_sdma_running(ppd))) {
+		अगर (unlikely(!__qib_sdma_running(ppd))) अणु
 			spin_unlock_irqrestore(&ppd->sdma_lock, flags);
-			return -ECOMM;
-		}
+			वापस -ECOMM;
+		पूर्ण
 		pq->num_pending += count;
 		list_splice_tail_init(pktlist, &ppd->sdma_userpending);
 		qib_user_sdma_send_desc(ppd, &ppd->sdma_userpending);
 		spin_unlock_irqrestore(&ppd->sdma_lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* In this case, descriptors from this process are not
-	 * linked to ppd pending queue, interrupt handler
+	/* In this हाल, descriptors from this process are not
+	 * linked to ppd pending queue, पूर्णांकerrupt handler
 	 * won't update this process, it is OK to directly
-	 * modify without sdma lock.
+	 * modअगरy without sdma lock.
 	 */
 
 
 	pq->num_pending += count;
 	/*
-	 * Blocking mode for single rail process, we must
+	 * Blocking mode क्रम single rail process, we must
 	 * release/regain sdma_lock to give other process
-	 * chance to make progress. This is important for
-	 * performance.
+	 * chance to make progress. This is important क्रम
+	 * perक्रमmance.
 	 */
-	do {
+	करो अणु
 		spin_lock_irqsave(&ppd->sdma_lock, flags);
-		if (unlikely(!__qib_sdma_running(ppd))) {
+		अगर (unlikely(!__qib_sdma_running(ppd))) अणु
 			spin_unlock_irqrestore(&ppd->sdma_lock, flags);
-			return -ECOMM;
-		}
+			वापस -ECOMM;
+		पूर्ण
 		qib_user_sdma_send_desc(ppd, pktlist);
-		if (!list_empty(pktlist))
+		अगर (!list_empty(pktlist))
 			qib_sdma_make_progress(ppd);
 		spin_unlock_irqrestore(&ppd->sdma_lock, flags);
-	} while (!list_empty(pktlist));
+	पूर्ण जबतक (!list_empty(pktlist));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int qib_user_sdma_writev(struct qib_ctxtdata *rcd,
-			 struct qib_user_sdma_queue *pq,
-			 const struct iovec *iov,
-			 unsigned long dim)
-{
-	struct qib_devdata *dd = rcd->dd;
-	struct qib_pportdata *ppd = rcd->ppd;
-	int ret = 0;
-	struct list_head list;
-	int npkts = 0;
+पूर्णांक qib_user_sdma_ग_लिखोv(काष्ठा qib_ctxtdata *rcd,
+			 काष्ठा qib_user_sdma_queue *pq,
+			 स्थिर काष्ठा iovec *iov,
+			 अचिन्हित दीर्घ dim)
+अणु
+	काष्ठा qib_devdata *dd = rcd->dd;
+	काष्ठा qib_pportdata *ppd = rcd->ppd;
+	पूर्णांक ret = 0;
+	काष्ठा list_head list;
+	पूर्णांक npkts = 0;
 
 	INIT_LIST_HEAD(&list);
 
 	mutex_lock(&pq->lock);
 
 	/* why not -ECOMM like qib_user_sdma_push_pkts() below? */
-	if (!qib_sdma_running(ppd))
-		goto done_unlock;
+	अगर (!qib_sdma_running(ppd))
+		जाओ करोne_unlock;
 
-	/* if I have packets not complete yet */
-	if (pq->added > ppd->sdma_descq_removed)
+	/* अगर I have packets not complete yet */
+	अगर (pq->added > ppd->sdma_descq_हटाओd)
 		qib_user_sdma_hwqueue_clean(ppd);
-	/* if I have complete packets to be freed */
-	if (pq->num_sending)
+	/* अगर I have complete packets to be मुक्तd */
+	अगर (pq->num_sending)
 		qib_user_sdma_queue_clean(ppd, pq);
 
-	while (dim) {
-		int mxp = 1;
-		int ndesc = 0;
+	जबतक (dim) अणु
+		पूर्णांक mxp = 1;
+		पूर्णांक ndesc = 0;
 
 		ret = qib_user_sdma_queue_pkts(dd, ppd, pq,
 				iov, dim, &list, &mxp, &ndesc);
-		if (ret < 0)
-			goto done_unlock;
-		else {
+		अगर (ret < 0)
+			जाओ करोne_unlock;
+		अन्यथा अणु
 			dim -= ret;
 			iov += ret;
-		}
+		पूर्ण
 
-		/* force packets onto the sdma hw queue... */
-		if (!list_empty(&list)) {
+		/* क्रमce packets onto the sdma hw queue... */
+		अगर (!list_empty(&list)) अणु
 			/*
 			 * Lazily clean hw queue.
 			 */
-			if (qib_sdma_descq_freecnt(ppd) < ndesc) {
+			अगर (qib_sdma_descq_मुक्तcnt(ppd) < ndesc) अणु
 				qib_user_sdma_hwqueue_clean(ppd);
-				if (pq->num_sending)
+				अगर (pq->num_sending)
 					qib_user_sdma_queue_clean(ppd, pq);
-			}
+			पूर्ण
 
 			ret = qib_user_sdma_push_pkts(ppd, pq, &list, mxp);
-			if (ret < 0)
-				goto done_unlock;
-			else {
+			अगर (ret < 0)
+				जाओ करोne_unlock;
+			अन्यथा अणु
 				npkts += mxp;
 				pq->counter += mxp;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-done_unlock:
-	if (!list_empty(&list))
-		qib_user_sdma_free_pkt_list(&dd->pcidev->dev, pq, &list);
+करोne_unlock:
+	अगर (!list_empty(&list))
+		qib_user_sdma_मुक्त_pkt_list(&dd->pcidev->dev, pq, &list);
 	mutex_unlock(&pq->lock);
 
-	return (ret < 0) ? ret : npkts;
-}
+	वापस (ret < 0) ? ret : npkts;
+पूर्ण
 
-int qib_user_sdma_make_progress(struct qib_pportdata *ppd,
-				struct qib_user_sdma_queue *pq)
-{
-	int ret = 0;
+पूर्णांक qib_user_sdma_make_progress(काष्ठा qib_pportdata *ppd,
+				काष्ठा qib_user_sdma_queue *pq)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&pq->lock);
 	qib_user_sdma_hwqueue_clean(ppd);
 	ret = qib_user_sdma_queue_clean(ppd, pq);
 	mutex_unlock(&pq->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-u32 qib_user_sdma_complete_counter(const struct qib_user_sdma_queue *pq)
-{
-	return pq ? pq->sent_counter : 0;
-}
+u32 qib_user_sdma_complete_counter(स्थिर काष्ठा qib_user_sdma_queue *pq)
+अणु
+	वापस pq ? pq->sent_counter : 0;
+पूर्ण
 
-u32 qib_user_sdma_inflight_counter(struct qib_user_sdma_queue *pq)
-{
-	return pq ? pq->counter : 0;
-}
+u32 qib_user_sdma_inflight_counter(काष्ठा qib_user_sdma_queue *pq)
+अणु
+	वापस pq ? pq->counter : 0;
+पूर्ण

@@ -1,176 +1,177 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _VT_KERN_H
-#define _VT_KERN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _VT_KERN_H
+#घोषणा _VT_KERN_H
 
 /*
- * this really is an extension of the vc_cons structure in console.c, but
- * with information needed by the vt package
+ * this really is an extension of the vc_cons काष्ठाure in console.c, but
+ * with inक्रमmation needed by the vt package
  */
 
-#include <linux/vt.h>
-#include <linux/kd.h>
-#include <linux/tty.h>
-#include <linux/mutex.h>
-#include <linux/console_struct.h>
-#include <linux/mm.h>
-#include <linux/consolemap.h>
-#include <linux/notifier.h>
+#समावेश <linux/vt.h>
+#समावेश <linux/kd.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/console_काष्ठा.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/consolemap.h>
+#समावेश <linux/notअगरier.h>
 
-void kd_mksound(unsigned int hz, unsigned int ticks);
-int kbd_rate(struct kbd_repeat *rep);
+व्योम kd_mksound(अचिन्हित पूर्णांक hz, अचिन्हित पूर्णांक ticks);
+पूर्णांक kbd_rate(काष्ठा kbd_repeat *rep);
 
-extern int fg_console, last_console, want_console;
+बाह्य पूर्णांक fg_console, last_console, want_console;
 
 /* console.c */
 
-int vc_allocate(unsigned int console);
-int vc_cons_allocated(unsigned int console);
-int vc_resize(struct vc_data *vc, unsigned int cols, unsigned int lines);
-struct vc_data *vc_deallocate(unsigned int console);
-void reset_palette(struct vc_data *vc);
-void do_blank_screen(int entering_gfx);
-void do_unblank_screen(int leaving_gfx);
-void unblank_screen(void);
-void poke_blanked_console(void);
-int con_font_op(struct vc_data *vc, struct console_font_op *op);
-int con_set_cmap(unsigned char __user *cmap);
-int con_get_cmap(unsigned char __user *cmap);
-void scrollback(struct vc_data *vc);
-void scrollfront(struct vc_data *vc, int lines);
-void clear_buffer_attributes(struct vc_data *vc);
-void update_region(struct vc_data *vc, unsigned long start, int count);
-void redraw_screen(struct vc_data *vc, int is_switch);
-#define update_screen(x) redraw_screen(x, 0)
-#define switch_screen(x) redraw_screen(x, 1)
+पूर्णांक vc_allocate(अचिन्हित पूर्णांक console);
+पूर्णांक vc_cons_allocated(अचिन्हित पूर्णांक console);
+पूर्णांक vc_resize(काष्ठा vc_data *vc, अचिन्हित पूर्णांक cols, अचिन्हित पूर्णांक lines);
+काष्ठा vc_data *vc_deallocate(अचिन्हित पूर्णांक console);
+व्योम reset_palette(काष्ठा vc_data *vc);
+व्योम करो_blank_screen(पूर्णांक entering_gfx);
+व्योम करो_unblank_screen(पूर्णांक leaving_gfx);
+व्योम unblank_screen(व्योम);
+व्योम poke_blanked_console(व्योम);
+पूर्णांक con_font_op(काष्ठा vc_data *vc, काष्ठा console_font_op *op);
+पूर्णांक con_set_cmap(अचिन्हित अक्षर __user *cmap);
+पूर्णांक con_get_cmap(अचिन्हित अक्षर __user *cmap);
+व्योम scrollback(काष्ठा vc_data *vc);
+व्योम scrollfront(काष्ठा vc_data *vc, पूर्णांक lines);
+व्योम clear_buffer_attributes(काष्ठा vc_data *vc);
+व्योम update_region(काष्ठा vc_data *vc, अचिन्हित दीर्घ start, पूर्णांक count);
+व्योम redraw_screen(काष्ठा vc_data *vc, पूर्णांक is_चयन);
+#घोषणा update_screen(x) redraw_screen(x, 0)
+#घोषणा चयन_screen(x) redraw_screen(x, 1)
 
-struct tty_struct;
-int tioclinux(struct tty_struct *tty, unsigned long arg);
+काष्ठा tty_काष्ठा;
+पूर्णांक tioclinux(काष्ठा tty_काष्ठा *tty, अचिन्हित दीर्घ arg);
 
-#ifdef CONFIG_CONSOLE_TRANSLATIONS
+#अगर_घोषित CONFIG_CONSOLE_TRANSLATIONS
 /* consolemap.c */
 
-struct unipair;
+काष्ठा unipair;
 
-int con_set_trans_old(unsigned char __user * table);
-int con_get_trans_old(unsigned char __user * table);
-int con_set_trans_new(unsigned short __user * table);
-int con_get_trans_new(unsigned short __user * table);
-int con_clear_unimap(struct vc_data *vc);
-int con_set_unimap(struct vc_data *vc, ushort ct, struct unipair __user *list);
-int con_get_unimap(struct vc_data *vc, ushort ct, ushort __user *uct, struct unipair __user *list);
-int con_set_default_unimap(struct vc_data *vc);
-void con_free_unimap(struct vc_data *vc);
-int con_copy_unimap(struct vc_data *dst_vc, struct vc_data *src_vc);
+पूर्णांक con_set_trans_old(अचिन्हित अक्षर __user * table);
+पूर्णांक con_get_trans_old(अचिन्हित अक्षर __user * table);
+पूर्णांक con_set_trans_new(अचिन्हित लघु __user * table);
+पूर्णांक con_get_trans_new(अचिन्हित लघु __user * table);
+पूर्णांक con_clear_unimap(काष्ठा vc_data *vc);
+पूर्णांक con_set_unimap(काष्ठा vc_data *vc, uलघु ct, काष्ठा unipair __user *list);
+पूर्णांक con_get_unimap(काष्ठा vc_data *vc, uलघु ct, uलघु __user *uct, काष्ठा unipair __user *list);
+पूर्णांक con_set_शेष_unimap(काष्ठा vc_data *vc);
+व्योम con_मुक्त_unimap(काष्ठा vc_data *vc);
+पूर्णांक con_copy_unimap(काष्ठा vc_data *dst_vc, काष्ठा vc_data *src_vc);
 
-#else
-static inline int con_set_trans_old(unsigned char __user *table)
-{
-	return 0;
-}
-static inline int con_get_trans_old(unsigned char __user *table)
-{
-	return -EINVAL;
-}
-static inline int con_set_trans_new(unsigned short __user *table)
-{
-	return 0;
-}
-static inline int con_get_trans_new(unsigned short __user *table)
-{
-	return -EINVAL;
-}
-static inline int con_clear_unimap(struct vc_data *vc)
-{
-	return 0;
-}
-static inline
-int con_set_unimap(struct vc_data *vc, ushort ct, struct unipair __user *list)
-{
-	return 0;
-}
-static inline
-int con_get_unimap(struct vc_data *vc, ushort ct, ushort __user *uct,
-		   struct unipair __user *list)
-{
-	return -EINVAL;
-}
-static inline int con_set_default_unimap(struct vc_data *vc)
-{
-	return 0;
-}
-static inline void con_free_unimap(struct vc_data *vc)
-{
-}
-static inline void con_protect_unimap(struct vc_data *vc, int rdonly)
-{
-}
-static inline
-int con_copy_unimap(struct vc_data *dst_vc, struct vc_data *src_vc)
-{
-	return 0;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक con_set_trans_old(अचिन्हित अक्षर __user *table)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक con_get_trans_old(अचिन्हित अक्षर __user *table)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक con_set_trans_new(अचिन्हित लघु __user *table)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक con_get_trans_new(अचिन्हित लघु __user *table)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक con_clear_unimap(काष्ठा vc_data *vc)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत
+पूर्णांक con_set_unimap(काष्ठा vc_data *vc, uलघु ct, काष्ठा unipair __user *list)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत
+पूर्णांक con_get_unimap(काष्ठा vc_data *vc, uलघु ct, uलघु __user *uct,
+		   काष्ठा unipair __user *list)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक con_set_शेष_unimap(काष्ठा vc_data *vc)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम con_मुक्त_unimap(काष्ठा vc_data *vc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम con_protect_unimap(काष्ठा vc_data *vc, पूर्णांक rकरोnly)
+अणु
+पूर्ण
+अटल अंतरभूत
+पूर्णांक con_copy_unimap(काष्ठा vc_data *dst_vc, काष्ठा vc_data *src_vc)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /* vt.c */
-void vt_event_post(unsigned int event, unsigned int old, unsigned int new);
-int vt_waitactive(int n);
-void change_console(struct vc_data *new_vc);
-void reset_vc(struct vc_data *vc);
-int do_unbind_con_driver(const struct consw *csw, int first, int last,
-			 int deflt);
-int vty_init(const struct file_operations *console_fops);
+व्योम vt_event_post(अचिन्हित पूर्णांक event, अचिन्हित पूर्णांक old, अचिन्हित पूर्णांक new);
+पूर्णांक vt_रुकोactive(पूर्णांक n);
+व्योम change_console(काष्ठा vc_data *new_vc);
+व्योम reset_vc(काष्ठा vc_data *vc);
+पूर्णांक करो_unbind_con_driver(स्थिर काष्ठा consw *csw, पूर्णांक first, पूर्णांक last,
+			 पूर्णांक deflt);
+पूर्णांक vty_init(स्थिर काष्ठा file_operations *console_fops);
 
-extern bool vt_dont_switch;
-extern int default_utf8;
-extern int global_cursor_default;
+बाह्य bool vt_करोnt_चयन;
+बाह्य पूर्णांक शेष_utf8;
+बाह्य पूर्णांक global_cursor_शेष;
 
-struct vt_spawn_console {
+काष्ठा vt_spawn_console अणु
 	spinlock_t lock;
-	struct pid *pid;
-	int sig;
-};
-extern struct vt_spawn_console vt_spawn_con;
+	काष्ठा pid *pid;
+	पूर्णांक sig;
+पूर्ण;
+बाह्य काष्ठा vt_spawn_console vt_spawn_con;
 
-int vt_move_to_console(unsigned int vt, int alloc);
+पूर्णांक vt_move_to_console(अचिन्हित पूर्णांक vt, पूर्णांक alloc);
 
-/* Interfaces for VC notification of character events (for accessibility etc) */
+/* Interfaces क्रम VC notअगरication of अक्षरacter events (क्रम accessibility etc) */
 
-struct vt_notifier_param {
-	struct vc_data *vc;	/* VC on which the update happened */
-	unsigned int c;		/* Printed char */
-};
+काष्ठा vt_notअगरier_param अणु
+	काष्ठा vc_data *vc;	/* VC on which the update happened */
+	अचिन्हित पूर्णांक c;		/* Prपूर्णांकed अक्षर */
+पूर्ण;
 
-int register_vt_notifier(struct notifier_block *nb);
-int unregister_vt_notifier(struct notifier_block *nb);
+पूर्णांक रेजिस्टर_vt_notअगरier(काष्ठा notअगरier_block *nb);
+पूर्णांक unरेजिस्टर_vt_notअगरier(काष्ठा notअगरier_block *nb);
 
-void hide_boot_cursor(bool hide);
+व्योम hide_boot_cursor(bool hide);
 
-/* keyboard  provided interfaces */
-int vt_do_diacrit(unsigned int cmd, void __user *up, int eperm);
-int vt_do_kdskbmode(int console, unsigned int arg);
-int vt_do_kdskbmeta(int console, unsigned int arg);
-int vt_do_kbkeycode_ioctl(int cmd, struct kbkeycode __user *user_kbkc,
-			  int perm);
-int vt_do_kdsk_ioctl(int cmd, struct kbentry __user *user_kbe, int perm,
-		     int console);
-int vt_do_kdgkb_ioctl(int cmd, struct kbsentry __user *user_kdgkb, int perm);
-int vt_do_kdskled(int console, int cmd, unsigned long arg, int perm);
-int vt_do_kdgkbmode(int console);
-int vt_do_kdgkbmeta(int console);
-void vt_reset_unicode(int console);
-int vt_get_shift_state(void);
-void vt_reset_keyboard(int console);
-int vt_get_leds(int console, int flag);
-int vt_get_kbd_mode_bit(int console, int bit);
-void vt_set_kbd_mode_bit(int console, int bit);
-void vt_clr_kbd_mode_bit(int console, int bit);
-void vt_set_led_state(int console, int leds);
-void vt_set_led_state(int console, int leds);
-void vt_kbd_con_start(int console);
-void vt_kbd_con_stop(int console);
+/* keyboard  provided पूर्णांकerfaces */
+पूर्णांक vt_करो_diacrit(अचिन्हित पूर्णांक cmd, व्योम __user *up, पूर्णांक eperm);
+पूर्णांक vt_करो_kdskbmode(पूर्णांक console, अचिन्हित पूर्णांक arg);
+पूर्णांक vt_करो_kdskbmeta(पूर्णांक console, अचिन्हित पूर्णांक arg);
+पूर्णांक vt_करो_kbkeycode_ioctl(पूर्णांक cmd, काष्ठा kbkeycode __user *user_kbkc,
+			  पूर्णांक perm);
+पूर्णांक vt_करो_kdsk_ioctl(पूर्णांक cmd, काष्ठा kbentry __user *user_kbe, पूर्णांक perm,
+		     पूर्णांक console);
+पूर्णांक vt_करो_kdgkb_ioctl(पूर्णांक cmd, काष्ठा kbsentry __user *user_kdgkb, पूर्णांक perm);
+पूर्णांक vt_करो_kdskled(पूर्णांक console, पूर्णांक cmd, अचिन्हित दीर्घ arg, पूर्णांक perm);
+पूर्णांक vt_करो_kdgkbmode(पूर्णांक console);
+पूर्णांक vt_करो_kdgkbmeta(पूर्णांक console);
+व्योम vt_reset_unicode(पूर्णांक console);
+पूर्णांक vt_get_shअगरt_state(व्योम);
+व्योम vt_reset_keyboard(पूर्णांक console);
+पूर्णांक vt_get_leds(पूर्णांक console, पूर्णांक flag);
+पूर्णांक vt_get_kbd_mode_bit(पूर्णांक console, पूर्णांक bit);
+व्योम vt_set_kbd_mode_bit(पूर्णांक console, पूर्णांक bit);
+व्योम vt_clr_kbd_mode_bit(पूर्णांक console, पूर्णांक bit);
+व्योम vt_set_led_state(पूर्णांक console, पूर्णांक leds);
+व्योम vt_set_led_state(पूर्णांक console, पूर्णांक leds);
+व्योम vt_kbd_con_start(पूर्णांक console);
+व्योम vt_kbd_con_stop(पूर्णांक console);
 
-void vc_scrolldelta_helper(struct vc_data *c, int lines,
-		unsigned int rolled_over, void *_base, unsigned int size);
+व्योम vc_scrolldelta_helper(काष्ठा vc_data *c, पूर्णांक lines,
+		अचिन्हित पूर्णांक rolled_over, व्योम *_base, अचिन्हित पूर्णांक size);
 
-#endif /* _VT_KERN_H */
+#पूर्ण_अगर /* _VT_KERN_H */

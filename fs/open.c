@@ -1,654 +1,655 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/fs/open.c
+ *  linux/fs/खोलो.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/file.h>
-#include <linux/fdtable.h>
-#include <linux/fsnotify.h>
-#include <linux/module.h>
-#include <linux/tty.h>
-#include <linux/namei.h>
-#include <linux/backing-dev.h>
-#include <linux/capability.h>
-#include <linux/securebits.h>
-#include <linux/security.h>
-#include <linux/mount.h>
-#include <linux/fcntl.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/fs.h>
-#include <linux/personality.h>
-#include <linux/pagemap.h>
-#include <linux/syscalls.h>
-#include <linux/rcupdate.h>
-#include <linux/audit.h>
-#include <linux/falloc.h>
-#include <linux/fs_struct.h>
-#include <linux/ima.h>
-#include <linux/dnotify.h>
-#include <linux/compat.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fdtable.h>
+#समावेश <linux/fsnotअगरy.h>
+#समावेश <linux/module.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/securebits.h>
+#समावेश <linux/security.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/fभाग.स>
+#समावेश <linux/fs_काष्ठा.h>
+#समावेश <linux/ima.h>
+#समावेश <linux/dnotअगरy.h>
+#समावेश <linux/compat.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-int do_truncate(struct user_namespace *mnt_userns, struct dentry *dentry,
-		loff_t length, unsigned int time_attrs, struct file *filp)
-{
-	int ret;
-	struct iattr newattrs;
+पूर्णांक करो_truncate(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		loff_t length, अचिन्हित पूर्णांक समय_attrs, काष्ठा file *filp)
+अणु
+	पूर्णांक ret;
+	काष्ठा iattr newattrs;
 
-	/* Not pretty: "inode->i_size" shouldn't really be signed. But it is. */
-	if (length < 0)
-		return -EINVAL;
+	/* Not pretty: "inode->i_size" shouldn't really be चिन्हित. But it is. */
+	अगर (length < 0)
+		वापस -EINVAL;
 
 	newattrs.ia_size = length;
-	newattrs.ia_valid = ATTR_SIZE | time_attrs;
-	if (filp) {
+	newattrs.ia_valid = ATTR_SIZE | समय_attrs;
+	अगर (filp) अणु
 		newattrs.ia_file = filp;
-		newattrs.ia_valid |= ATTR_FILE;
-	}
+		newattrs.ia_valid |= ATTR_खाता;
+	पूर्ण
 
 	/* Remove suid, sgid, and file capabilities on truncate too */
-	ret = dentry_needs_remove_privs(dentry);
-	if (ret < 0)
-		return ret;
-	if (ret)
+	ret = dentry_needs_हटाओ_privs(dentry);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret)
 		newattrs.ia_valid |= ret | ATTR_FORCE;
 
 	inode_lock(dentry->d_inode);
-	/* Note any delegations or leases have already been broken: */
-	ret = notify_change(mnt_userns, dentry, &newattrs, NULL);
+	/* Note any delegations or leases have alपढ़ोy been broken: */
+	ret = notअगरy_change(mnt_userns, dentry, &newattrs, शून्य);
 	inode_unlock(dentry->d_inode);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-long vfs_truncate(const struct path *path, loff_t length)
-{
-	struct user_namespace *mnt_userns;
-	struct inode *inode;
-	long error;
+दीर्घ vfs_truncate(स्थिर काष्ठा path *path, loff_t length)
+अणु
+	काष्ठा user_namespace *mnt_userns;
+	काष्ठा inode *inode;
+	दीर्घ error;
 
 	inode = path->dentry->d_inode;
 
-	/* For directories it's -EISDIR, for other non-regulars - -EINVAL */
-	if (S_ISDIR(inode->i_mode))
-		return -EISDIR;
-	if (!S_ISREG(inode->i_mode))
-		return -EINVAL;
+	/* For directories it's -EISसूची, क्रम other non-regulars - -EINVAL */
+	अगर (S_ISसूची(inode->i_mode))
+		वापस -EISसूची;
+	अगर (!S_ISREG(inode->i_mode))
+		वापस -EINVAL;
 
-	error = mnt_want_write(path->mnt);
-	if (error)
-		goto out;
+	error = mnt_want_ग_लिखो(path->mnt);
+	अगर (error)
+		जाओ out;
 
 	mnt_userns = mnt_user_ns(path->mnt);
 	error = inode_permission(mnt_userns, inode, MAY_WRITE);
-	if (error)
-		goto mnt_drop_write_and_out;
+	अगर (error)
+		जाओ mnt_drop_ग_लिखो_and_out;
 
 	error = -EPERM;
-	if (IS_APPEND(inode))
-		goto mnt_drop_write_and_out;
+	अगर (IS_APPEND(inode))
+		जाओ mnt_drop_ग_लिखो_and_out;
 
-	error = get_write_access(inode);
-	if (error)
-		goto mnt_drop_write_and_out;
+	error = get_ग_लिखो_access(inode);
+	अगर (error)
+		जाओ mnt_drop_ग_लिखो_and_out;
 
 	/*
-	 * Make sure that there are no leases.  get_write_access() protects
+	 * Make sure that there are no leases.  get_ग_लिखो_access() protects
 	 * against the truncate racing with a lease-granting setlease().
 	 */
-	error = break_lease(inode, O_WRONLY);
-	if (error)
-		goto put_write_and_out;
+	error = अवरोध_lease(inode, O_WRONLY);
+	अगर (error)
+		जाओ put_ग_लिखो_and_out;
 
-	error = locks_verify_truncate(inode, NULL, length);
-	if (!error)
+	error = locks_verअगरy_truncate(inode, शून्य, length);
+	अगर (!error)
 		error = security_path_truncate(path);
-	if (!error)
-		error = do_truncate(mnt_userns, path->dentry, length, 0, NULL);
+	अगर (!error)
+		error = करो_truncate(mnt_userns, path->dentry, length, 0, शून्य);
 
-put_write_and_out:
-	put_write_access(inode);
-mnt_drop_write_and_out:
-	mnt_drop_write(path->mnt);
+put_ग_लिखो_and_out:
+	put_ग_लिखो_access(inode);
+mnt_drop_ग_लिखो_and_out:
+	mnt_drop_ग_लिखो(path->mnt);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL_GPL(vfs_truncate);
 
-long do_sys_truncate(const char __user *pathname, loff_t length)
-{
-	unsigned int lookup_flags = LOOKUP_FOLLOW;
-	struct path path;
-	int error;
+दीर्घ करो_sys_truncate(स्थिर अक्षर __user *pathname, loff_t length)
+अणु
+	अचिन्हित पूर्णांक lookup_flags = LOOKUP_FOLLOW;
+	काष्ठा path path;
+	पूर्णांक error;
 
-	if (length < 0)	/* sorry, but loff_t says... */
-		return -EINVAL;
+	अगर (length < 0)	/* sorry, but loff_t says... */
+		वापस -EINVAL;
 
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
-	if (!error) {
+	अगर (!error) अणु
 		error = vfs_truncate(&path, length);
 		path_put(&path);
-	}
-	if (retry_estale(error, lookup_flags)) {
+	पूर्ण
+	अगर (retry_estale(error, lookup_flags)) अणु
 		lookup_flags |= LOOKUP_REVAL;
-		goto retry;
-	}
-	return error;
-}
+		जाओ retry;
+	पूर्ण
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE2(truncate, const char __user *, path, long, length)
-{
-	return do_sys_truncate(path, length);
-}
+SYSCALL_DEFINE2(truncate, स्थिर अक्षर __user *, path, दीर्घ, length)
+अणु
+	वापस करो_sys_truncate(path, length);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE2(truncate, const char __user *, path, compat_off_t, length)
-{
-	return do_sys_truncate(path, length);
-}
-#endif
+#अगर_घोषित CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE2(truncate, स्थिर अक्षर __user *, path, compat_off_t, length)
+अणु
+	वापस करो_sys_truncate(path, length);
+पूर्ण
+#पूर्ण_अगर
 
-long do_sys_ftruncate(unsigned int fd, loff_t length, int small)
-{
-	struct inode *inode;
-	struct dentry *dentry;
-	struct fd f;
-	int error;
+दीर्घ करो_sys_ftruncate(अचिन्हित पूर्णांक fd, loff_t length, पूर्णांक small)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा dentry *dentry;
+	काष्ठा fd f;
+	पूर्णांक error;
 
 	error = -EINVAL;
-	if (length < 0)
-		goto out;
+	अगर (length < 0)
+		जाओ out;
 	error = -EBADF;
 	f = fdget(fd);
-	if (!f.file)
-		goto out;
+	अगर (!f.file)
+		जाओ out;
 
-	/* explicitly opened as large or we are on 64-bit box */
-	if (f.file->f_flags & O_LARGEFILE)
+	/* explicitly खोलोed as large or we are on 64-bit box */
+	अगर (f.file->f_flags & O_LARGEखाता)
 		small = 0;
 
 	dentry = f.file->f_path.dentry;
 	inode = dentry->d_inode;
 	error = -EINVAL;
-	if (!S_ISREG(inode->i_mode) || !(f.file->f_mode & FMODE_WRITE))
-		goto out_putf;
+	अगर (!S_ISREG(inode->i_mode) || !(f.file->f_mode & FMODE_WRITE))
+		जाओ out_putf;
 
 	error = -EINVAL;
 	/* Cannot ftruncate over 2^31 bytes without large file support */
-	if (small && length > MAX_NON_LFS)
-		goto out_putf;
+	अगर (small && length > MAX_NON_LFS)
+		जाओ out_putf;
 
 	error = -EPERM;
 	/* Check IS_APPEND on real upper inode */
-	if (IS_APPEND(file_inode(f.file)))
-		goto out_putf;
-	sb_start_write(inode->i_sb);
-	error = locks_verify_truncate(inode, f.file, length);
-	if (!error)
+	अगर (IS_APPEND(file_inode(f.file)))
+		जाओ out_putf;
+	sb_start_ग_लिखो(inode->i_sb);
+	error = locks_verअगरy_truncate(inode, f.file, length);
+	अगर (!error)
 		error = security_path_truncate(&f.file->f_path);
-	if (!error)
-		error = do_truncate(file_mnt_user_ns(f.file), dentry, length,
+	अगर (!error)
+		error = करो_truncate(file_mnt_user_ns(f.file), dentry, length,
 				    ATTR_MTIME | ATTR_CTIME, f.file);
-	sb_end_write(inode->i_sb);
+	sb_end_ग_लिखो(inode->i_sb);
 out_putf:
 	fdput(f);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE2(ftruncate, unsigned int, fd, unsigned long, length)
-{
-	return do_sys_ftruncate(fd, length, 1);
-}
+SYSCALL_DEFINE2(ftruncate, अचिन्हित पूर्णांक, fd, अचिन्हित दीर्घ, length)
+अणु
+	वापस करो_sys_ftruncate(fd, length, 1);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE2(ftruncate, unsigned int, fd, compat_ulong_t, length)
-{
-	return do_sys_ftruncate(fd, length, 1);
-}
-#endif
+#अगर_घोषित CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE2(ftruncate, अचिन्हित पूर्णांक, fd, compat_uदीर्घ_t, length)
+अणु
+	वापस करो_sys_ftruncate(fd, length, 1);
+पूर्ण
+#पूर्ण_अगर
 
 /* LFS versions of truncate are only needed on 32 bit machines */
-#if BITS_PER_LONG == 32
-SYSCALL_DEFINE2(truncate64, const char __user *, path, loff_t, length)
-{
-	return do_sys_truncate(path, length);
-}
+#अगर BITS_PER_LONG == 32
+SYSCALL_DEFINE2(truncate64, स्थिर अक्षर __user *, path, loff_t, length)
+अणु
+	वापस करो_sys_truncate(path, length);
+पूर्ण
 
-SYSCALL_DEFINE2(ftruncate64, unsigned int, fd, loff_t, length)
-{
-	return do_sys_ftruncate(fd, length, 0);
-}
-#endif /* BITS_PER_LONG == 32 */
+SYSCALL_DEFINE2(ftruncate64, अचिन्हित पूर्णांक, fd, loff_t, length)
+अणु
+	वापस करो_sys_ftruncate(fd, length, 0);
+पूर्ण
+#पूर्ण_अगर /* BITS_PER_LONG == 32 */
 
 
-int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
-{
-	struct inode *inode = file_inode(file);
-	long ret;
+पूर्णांक vfs_fallocate(काष्ठा file *file, पूर्णांक mode, loff_t offset, loff_t len)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	दीर्घ ret;
 
-	if (offset < 0 || len <= 0)
-		return -EINVAL;
+	अगर (offset < 0 || len <= 0)
+		वापस -EINVAL;
 
-	/* Return error if mode is not supported */
-	if (mode & ~FALLOC_FL_SUPPORTED_MASK)
-		return -EOPNOTSUPP;
+	/* Return error अगर mode is not supported */
+	अगर (mode & ~FALLOC_FL_SUPPORTED_MASK)
+		वापस -EOPNOTSUPP;
 
 	/* Punch hole and zero range are mutually exclusive */
-	if ((mode & (FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE)) ==
+	अगर ((mode & (FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE)) ==
 	    (FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	/* Punch hole must have keep size set */
-	if ((mode & FALLOC_FL_PUNCH_HOLE) &&
+	अगर ((mode & FALLOC_FL_PUNCH_HOLE) &&
 	    !(mode & FALLOC_FL_KEEP_SIZE))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	/* Collapse range should only be used exclusively. */
-	if ((mode & FALLOC_FL_COLLAPSE_RANGE) &&
+	अगर ((mode & FALLOC_FL_COLLAPSE_RANGE) &&
 	    (mode & ~FALLOC_FL_COLLAPSE_RANGE))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Insert range should only be used exclusively. */
-	if ((mode & FALLOC_FL_INSERT_RANGE) &&
+	अगर ((mode & FALLOC_FL_INSERT_RANGE) &&
 	    (mode & ~FALLOC_FL_INSERT_RANGE))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Unshare range should only be used with allocate mode. */
-	if ((mode & FALLOC_FL_UNSHARE_RANGE) &&
+	अगर ((mode & FALLOC_FL_UNSHARE_RANGE) &&
 	    (mode & ~(FALLOC_FL_UNSHARE_RANGE | FALLOC_FL_KEEP_SIZE)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!(file->f_mode & FMODE_WRITE))
-		return -EBADF;
+	अगर (!(file->f_mode & FMODE_WRITE))
+		वापस -EBADF;
 
 	/*
 	 * We can only allow pure fallocate on append only files
 	 */
-	if ((mode & ~FALLOC_FL_KEEP_SIZE) && IS_APPEND(inode))
-		return -EPERM;
+	अगर ((mode & ~FALLOC_FL_KEEP_SIZE) && IS_APPEND(inode))
+		वापस -EPERM;
 
-	if (IS_IMMUTABLE(inode))
-		return -EPERM;
+	अगर (IS_IMMUTABLE(inode))
+		वापस -EPERM;
 
 	/*
 	 * We cannot allow any fallocate operation on an active swapfile
 	 */
-	if (IS_SWAPFILE(inode))
-		return -ETXTBSY;
+	अगर (IS_SWAPखाता(inode))
+		वापस -ETXTBSY;
 
 	/*
-	 * Revalidate the write permissions, in case security policy has
-	 * changed since the files were opened.
+	 * Revalidate the ग_लिखो permissions, in हाल security policy has
+	 * changed since the files were खोलोed.
 	 */
 	ret = security_file_permission(file, MAY_WRITE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (S_ISFIFO(inode->i_mode))
-		return -ESPIPE;
+	अगर (S_ISFIFO(inode->i_mode))
+		वापस -ESPIPE;
 
-	if (S_ISDIR(inode->i_mode))
-		return -EISDIR;
+	अगर (S_ISसूची(inode->i_mode))
+		वापस -EISसूची;
 
-	if (!S_ISREG(inode->i_mode) && !S_ISBLK(inode->i_mode))
-		return -ENODEV;
+	अगर (!S_ISREG(inode->i_mode) && !S_ISBLK(inode->i_mode))
+		वापस -ENODEV;
 
-	/* Check for wrap through zero too */
-	if (((offset + len) > inode->i_sb->s_maxbytes) || ((offset + len) < 0))
-		return -EFBIG;
+	/* Check क्रम wrap through zero too */
+	अगर (((offset + len) > inode->i_sb->s_maxbytes) || ((offset + len) < 0))
+		वापस -EFBIG;
 
-	if (!file->f_op->fallocate)
-		return -EOPNOTSUPP;
+	अगर (!file->f_op->fallocate)
+		वापस -EOPNOTSUPP;
 
-	file_start_write(file);
+	file_start_ग_लिखो(file);
 	ret = file->f_op->fallocate(file, mode, offset, len);
 
 	/*
-	 * Create inotify and fanotify events.
+	 * Create inotअगरy and fanotअगरy events.
 	 *
-	 * To keep the logic simple always create events if fallocate succeeds.
-	 * This implies that events are even created if the file size remains
+	 * To keep the logic simple always create events अगर fallocate succeeds.
+	 * This implies that events are even created अगर the file size reमुख्यs
 	 * unchanged, e.g. when using flag FALLOC_FL_KEEP_SIZE.
 	 */
-	if (ret == 0)
-		fsnotify_modify(file);
+	अगर (ret == 0)
+		fsnotअगरy_modअगरy(file);
 
-	file_end_write(file);
-	return ret;
-}
+	file_end_ग_लिखो(file);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(vfs_fallocate);
 
-int ksys_fallocate(int fd, int mode, loff_t offset, loff_t len)
-{
-	struct fd f = fdget(fd);
-	int error = -EBADF;
+पूर्णांक ksys_fallocate(पूर्णांक fd, पूर्णांक mode, loff_t offset, loff_t len)
+अणु
+	काष्ठा fd f = fdget(fd);
+	पूर्णांक error = -EBADF;
 
-	if (f.file) {
+	अगर (f.file) अणु
 		error = vfs_fallocate(f.file, mode, offset, len);
 		fdput(f);
-	}
-	return error;
-}
+	पूर्ण
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE4(fallocate, int, fd, int, mode, loff_t, offset, loff_t, len)
-{
-	return ksys_fallocate(fd, mode, offset, len);
-}
+SYSCALL_DEFINE4(fallocate, पूर्णांक, fd, पूर्णांक, mode, loff_t, offset, loff_t, len)
+अणु
+	वापस ksys_fallocate(fd, mode, offset, len);
+पूर्ण
 
 /*
  * access() needs to use the real uid/gid, not the effective uid/gid.
- * We do this by temporarily clearing all FS-related capabilities and
- * switching the fsuid/fsgid around to the real ones.
+ * We करो this by temporarily clearing all FS-related capabilities and
+ * चयनing the fsuid/fsgid around to the real ones.
  */
-static const struct cred *access_override_creds(void)
-{
-	const struct cred *old_cred;
-	struct cred *override_cred;
+अटल स्थिर काष्ठा cred *access_override_creds(व्योम)
+अणु
+	स्थिर काष्ठा cred *old_cred;
+	काष्ठा cred *override_cred;
 
 	override_cred = prepare_creds();
-	if (!override_cred)
-		return NULL;
+	अगर (!override_cred)
+		वापस शून्य;
 
 	override_cred->fsuid = override_cred->uid;
 	override_cred->fsgid = override_cred->gid;
 
-	if (!issecure(SECURE_NO_SETUID_FIXUP)) {
-		/* Clear the capabilities if we switch to a non-root user */
+	अगर (!issecure(SECURE_NO_SETUID_FIXUP)) अणु
+		/* Clear the capabilities अगर we चयन to a non-root user */
 		kuid_t root_uid = make_kuid(override_cred->user_ns, 0);
-		if (!uid_eq(override_cred->uid, root_uid))
+		अगर (!uid_eq(override_cred->uid, root_uid))
 			cap_clear(override_cred->cap_effective);
-		else
+		अन्यथा
 			override_cred->cap_effective =
 				override_cred->cap_permitted;
-	}
+	पूर्ण
 
 	/*
 	 * The new set of credentials can *only* be used in
-	 * task-synchronous circumstances, and does not need
-	 * RCU freeing, unless somebody then takes a separate
+	 * task-synchronous circumstances, and करोes not need
+	 * RCU मुक्तing, unless somebody then takes a separate
 	 * reference to it.
 	 *
 	 * NOTE! This is _only_ true because this credential
-	 * is used purely for override_creds() that installs
-	 * it as the subjective cred. Other threads will be
+	 * is used purely क्रम override_creds() that installs
+	 * it as the subjective cred. Other thपढ़ोs will be
 	 * accessing ->real_cred, not the subjective cred.
 	 *
-	 * If somebody _does_ make a copy of this (using the
+	 * If somebody _करोes_ make a copy of this (using the
 	 * 'get_current_cred()' function), that will clear the
 	 * non_rcu field, because now that other user may be
-	 * expecting RCU freeing. But normal thread-synchronous
+	 * expecting RCU मुक्तing. But normal thपढ़ो-synchronous
 	 * cred accesses will keep things non-RCY.
 	 */
 	override_cred->non_rcu = 1;
 
 	old_cred = override_creds(override_cred);
 
-	/* override_cred() gets its own ref */
+	/* override_cred() माला_लो its own ref */
 	put_cred(override_cred);
 
-	return old_cred;
-}
+	वापस old_cred;
+पूर्ण
 
-static long do_faccessat(int dfd, const char __user *filename, int mode, int flags)
-{
-	struct path path;
-	struct inode *inode;
-	int res;
-	unsigned int lookup_flags = LOOKUP_FOLLOW;
-	const struct cred *old_cred = NULL;
+अटल दीर्घ करो_faccessat(पूर्णांक dfd, स्थिर अक्षर __user *filename, पूर्णांक mode, पूर्णांक flags)
+अणु
+	काष्ठा path path;
+	काष्ठा inode *inode;
+	पूर्णांक res;
+	अचिन्हित पूर्णांक lookup_flags = LOOKUP_FOLLOW;
+	स्थिर काष्ठा cred *old_cred = शून्य;
 
-	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
-		return -EINVAL;
+	अगर (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
+		वापस -EINVAL;
 
-	if (flags & ~(AT_EACCESS | AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH))
-		return -EINVAL;
+	अगर (flags & ~(AT_EACCESS | AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH))
+		वापस -EINVAL;
 
-	if (flags & AT_SYMLINK_NOFOLLOW)
+	अगर (flags & AT_SYMLINK_NOFOLLOW)
 		lookup_flags &= ~LOOKUP_FOLLOW;
-	if (flags & AT_EMPTY_PATH)
+	अगर (flags & AT_EMPTY_PATH)
 		lookup_flags |= LOOKUP_EMPTY;
 
-	if (!(flags & AT_EACCESS)) {
+	अगर (!(flags & AT_EACCESS)) अणु
 		old_cred = access_override_creds();
-		if (!old_cred)
-			return -ENOMEM;
-	}
+		अगर (!old_cred)
+			वापस -ENOMEM;
+	पूर्ण
 
 retry:
 	res = user_path_at(dfd, filename, lookup_flags, &path);
-	if (res)
-		goto out;
+	अगर (res)
+		जाओ out;
 
 	inode = d_backing_inode(path.dentry);
 
-	if ((mode & MAY_EXEC) && S_ISREG(inode->i_mode)) {
+	अगर ((mode & MAY_EXEC) && S_ISREG(inode->i_mode)) अणु
 		/*
-		 * MAY_EXEC on regular files is denied if the fs is mounted
+		 * MAY_EXEC on regular files is denied अगर the fs is mounted
 		 * with the "noexec" flag.
 		 */
 		res = -EACCES;
-		if (path_noexec(&path))
-			goto out_path_release;
-	}
+		अगर (path_noexec(&path))
+			जाओ out_path_release;
+	पूर्ण
 
 	res = inode_permission(mnt_user_ns(path.mnt), inode, mode | MAY_ACCESS);
-	/* SuS v2 requires we report a read only fs too */
-	if (res || !(mode & S_IWOTH) || special_file(inode->i_mode))
-		goto out_path_release;
+	/* SuS v2 requires we report a पढ़ो only fs too */
+	अगर (res || !(mode & S_IWOTH) || special_file(inode->i_mode))
+		जाओ out_path_release;
 	/*
-	 * This is a rare case where using __mnt_is_readonly()
-	 * is OK without a mnt_want/drop_write() pair.  Since
-	 * no actual write to the fs is performed here, we do
+	 * This is a rare हाल where using __mnt_is_पढ़ोonly()
+	 * is OK without a mnt_want/drop_ग_लिखो() pair.  Since
+	 * no actual ग_लिखो to the fs is perक्रमmed here, we करो
 	 * not need to telegraph to that to anyone.
 	 *
-	 * By doing this, we accept that this access is
+	 * By करोing this, we accept that this access is
 	 * inherently racy and know that the fs may change
-	 * state before we even see this result.
+	 * state beक्रमe we even see this result.
 	 */
-	if (__mnt_is_readonly(path.mnt))
+	अगर (__mnt_is_पढ़ोonly(path.mnt))
 		res = -EROFS;
 
 out_path_release:
 	path_put(&path);
-	if (retry_estale(res, lookup_flags)) {
+	अगर (retry_estale(res, lookup_flags)) अणु
 		lookup_flags |= LOOKUP_REVAL;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 out:
-	if (old_cred)
+	अगर (old_cred)
 		revert_creds(old_cred);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-SYSCALL_DEFINE3(faccessat, int, dfd, const char __user *, filename, int, mode)
-{
-	return do_faccessat(dfd, filename, mode, 0);
-}
+SYSCALL_DEFINE3(faccessat, पूर्णांक, dfd, स्थिर अक्षर __user *, filename, पूर्णांक, mode)
+अणु
+	वापस करो_faccessat(dfd, filename, mode, 0);
+पूर्ण
 
-SYSCALL_DEFINE4(faccessat2, int, dfd, const char __user *, filename, int, mode,
-		int, flags)
-{
-	return do_faccessat(dfd, filename, mode, flags);
-}
+SYSCALL_DEFINE4(faccessat2, पूर्णांक, dfd, स्थिर अक्षर __user *, filename, पूर्णांक, mode,
+		पूर्णांक, flags)
+अणु
+	वापस करो_faccessat(dfd, filename, mode, flags);
+पूर्ण
 
-SYSCALL_DEFINE2(access, const char __user *, filename, int, mode)
-{
-	return do_faccessat(AT_FDCWD, filename, mode, 0);
-}
+SYSCALL_DEFINE2(access, स्थिर अक्षर __user *, filename, पूर्णांक, mode)
+अणु
+	वापस करो_faccessat(AT_FDCWD, filename, mode, 0);
+पूर्ण
 
-SYSCALL_DEFINE1(chdir, const char __user *, filename)
-{
-	struct path path;
-	int error;
-	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
+SYSCALL_DEFINE1(स_बदलो, स्थिर अक्षर __user *, filename)
+अणु
+	काष्ठा path path;
+	पूर्णांक error;
+	अचिन्हित पूर्णांक lookup_flags = LOOKUP_FOLLOW | LOOKUP_सूचीECTORY;
 retry:
 	error = user_path_at(AT_FDCWD, filename, lookup_flags, &path);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	error = path_permission(&path, MAY_EXEC | MAY_CHDIR);
-	if (error)
-		goto dput_and_out;
+	error = path_permission(&path, MAY_EXEC | MAY_CHसूची);
+	अगर (error)
+		जाओ dput_and_out;
 
 	set_fs_pwd(current->fs, &path);
 
 dput_and_out:
 	path_put(&path);
-	if (retry_estale(error, lookup_flags)) {
+	अगर (retry_estale(error, lookup_flags)) अणु
 		lookup_flags |= LOOKUP_REVAL;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE1(fchdir, unsigned int, fd)
-{
-	struct fd f = fdget_raw(fd);
-	int error;
+SYSCALL_DEFINE1(fस_बदलो, अचिन्हित पूर्णांक, fd)
+अणु
+	काष्ठा fd f = fdget_raw(fd);
+	पूर्णांक error;
 
 	error = -EBADF;
-	if (!f.file)
-		goto out;
+	अगर (!f.file)
+		जाओ out;
 
-	error = -ENOTDIR;
-	if (!d_can_lookup(f.file->f_path.dentry))
-		goto out_putf;
+	error = -ENOTसूची;
+	अगर (!d_can_lookup(f.file->f_path.dentry))
+		जाओ out_putf;
 
-	error = file_permission(f.file, MAY_EXEC | MAY_CHDIR);
-	if (!error)
+	error = file_permission(f.file, MAY_EXEC | MAY_CHसूची);
+	अगर (!error)
 		set_fs_pwd(current->fs, &f.file->f_path);
 out_putf:
 	fdput(f);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE1(chroot, const char __user *, filename)
-{
-	struct path path;
-	int error;
-	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
+SYSCALL_DEFINE1(chroot, स्थिर अक्षर __user *, filename)
+अणु
+	काष्ठा path path;
+	पूर्णांक error;
+	अचिन्हित पूर्णांक lookup_flags = LOOKUP_FOLLOW | LOOKUP_सूचीECTORY;
 retry:
 	error = user_path_at(AT_FDCWD, filename, lookup_flags, &path);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	error = path_permission(&path, MAY_EXEC | MAY_CHDIR);
-	if (error)
-		goto dput_and_out;
+	error = path_permission(&path, MAY_EXEC | MAY_CHसूची);
+	अगर (error)
+		जाओ dput_and_out;
 
 	error = -EPERM;
-	if (!ns_capable(current_user_ns(), CAP_SYS_CHROOT))
-		goto dput_and_out;
+	अगर (!ns_capable(current_user_ns(), CAP_SYS_CHROOT))
+		जाओ dput_and_out;
 	error = security_path_chroot(&path);
-	if (error)
-		goto dput_and_out;
+	अगर (error)
+		जाओ dput_and_out;
 
 	set_fs_root(current->fs, &path);
 	error = 0;
 dput_and_out:
 	path_put(&path);
-	if (retry_estale(error, lookup_flags)) {
+	अगर (retry_estale(error, lookup_flags)) अणु
 		lookup_flags |= LOOKUP_REVAL;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int chmod_common(const struct path *path, umode_t mode)
-{
-	struct inode *inode = path->dentry->d_inode;
-	struct inode *delegated_inode = NULL;
-	struct iattr newattrs;
-	int error;
+पूर्णांक chmod_common(स्थिर काष्ठा path *path, umode_t mode)
+अणु
+	काष्ठा inode *inode = path->dentry->d_inode;
+	काष्ठा inode *delegated_inode = शून्य;
+	काष्ठा iattr newattrs;
+	पूर्णांक error;
 
-	error = mnt_want_write(path->mnt);
-	if (error)
-		return error;
+	error = mnt_want_ग_लिखो(path->mnt);
+	अगर (error)
+		वापस error;
 retry_deleg:
 	inode_lock(inode);
 	error = security_path_chmod(path, mode);
-	if (error)
-		goto out_unlock;
+	अगर (error)
+		जाओ out_unlock;
 	newattrs.ia_mode = (mode & S_IALLUGO) | (inode->i_mode & ~S_IALLUGO);
 	newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
-	error = notify_change(mnt_user_ns(path->mnt), path->dentry,
+	error = notअगरy_change(mnt_user_ns(path->mnt), path->dentry,
 			      &newattrs, &delegated_inode);
 out_unlock:
 	inode_unlock(inode);
-	if (delegated_inode) {
-		error = break_deleg_wait(&delegated_inode);
-		if (!error)
-			goto retry_deleg;
-	}
-	mnt_drop_write(path->mnt);
-	return error;
-}
+	अगर (delegated_inode) अणु
+		error = अवरोध_deleg_रुको(&delegated_inode);
+		अगर (!error)
+			जाओ retry_deleg;
+	पूर्ण
+	mnt_drop_ग_लिखो(path->mnt);
+	वापस error;
+पूर्ण
 
-int vfs_fchmod(struct file *file, umode_t mode)
-{
+पूर्णांक vfs_fchmod(काष्ठा file *file, umode_t mode)
+अणु
 	audit_file(file);
-	return chmod_common(&file->f_path, mode);
-}
+	वापस chmod_common(&file->f_path, mode);
+पूर्ण
 
-SYSCALL_DEFINE2(fchmod, unsigned int, fd, umode_t, mode)
-{
-	struct fd f = fdget(fd);
-	int err = -EBADF;
+SYSCALL_DEFINE2(fchmod, अचिन्हित पूर्णांक, fd, umode_t, mode)
+अणु
+	काष्ठा fd f = fdget(fd);
+	पूर्णांक err = -EBADF;
 
-	if (f.file) {
+	अगर (f.file) अणु
 		err = vfs_fchmod(f.file, mode);
 		fdput(f);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int do_fchmodat(int dfd, const char __user *filename, umode_t mode)
-{
-	struct path path;
-	int error;
-	unsigned int lookup_flags = LOOKUP_FOLLOW;
+अटल पूर्णांक करो_fchmodat(पूर्णांक dfd, स्थिर अक्षर __user *filename, umode_t mode)
+अणु
+	काष्ठा path path;
+	पूर्णांक error;
+	अचिन्हित पूर्णांक lookup_flags = LOOKUP_FOLLOW;
 retry:
 	error = user_path_at(dfd, filename, lookup_flags, &path);
-	if (!error) {
+	अगर (!error) अणु
 		error = chmod_common(&path, mode);
 		path_put(&path);
-		if (retry_estale(error, lookup_flags)) {
+		अगर (retry_estale(error, lookup_flags)) अणु
 			lookup_flags |= LOOKUP_REVAL;
-			goto retry;
-		}
-	}
-	return error;
-}
+			जाओ retry;
+		पूर्ण
+	पूर्ण
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE3(fchmodat, int, dfd, const char __user *, filename,
+SYSCALL_DEFINE3(fchmodat, पूर्णांक, dfd, स्थिर अक्षर __user *, filename,
 		umode_t, mode)
-{
-	return do_fchmodat(dfd, filename, mode);
-}
+अणु
+	वापस करो_fchmodat(dfd, filename, mode);
+पूर्ण
 
-SYSCALL_DEFINE2(chmod, const char __user *, filename, umode_t, mode)
-{
-	return do_fchmodat(AT_FDCWD, filename, mode);
-}
+SYSCALL_DEFINE2(chmod, स्थिर अक्षर __user *, filename, umode_t, mode)
+अणु
+	वापस करो_fchmodat(AT_FDCWD, filename, mode);
+पूर्ण
 
-int chown_common(const struct path *path, uid_t user, gid_t group)
-{
-	struct user_namespace *mnt_userns;
-	struct inode *inode = path->dentry->d_inode;
-	struct inode *delegated_inode = NULL;
-	int error;
-	struct iattr newattrs;
+पूर्णांक chown_common(स्थिर काष्ठा path *path, uid_t user, gid_t group)
+अणु
+	काष्ठा user_namespace *mnt_userns;
+	काष्ठा inode *inode = path->dentry->d_inode;
+	काष्ठा inode *delegated_inode = शून्य;
+	पूर्णांक error;
+	काष्ठा iattr newattrs;
 	kuid_t uid;
 	kgid_t gid;
 
@@ -661,120 +662,120 @@ int chown_common(const struct path *path, uid_t user, gid_t group)
 
 retry_deleg:
 	newattrs.ia_valid =  ATTR_CTIME;
-	if (user != (uid_t) -1) {
-		if (!uid_valid(uid))
-			return -EINVAL;
+	अगर (user != (uid_t) -1) अणु
+		अगर (!uid_valid(uid))
+			वापस -EINVAL;
 		newattrs.ia_valid |= ATTR_UID;
 		newattrs.ia_uid = uid;
-	}
-	if (group != (gid_t) -1) {
-		if (!gid_valid(gid))
-			return -EINVAL;
+	पूर्ण
+	अगर (group != (gid_t) -1) अणु
+		अगर (!gid_valid(gid))
+			वापस -EINVAL;
 		newattrs.ia_valid |= ATTR_GID;
 		newattrs.ia_gid = gid;
-	}
-	if (!S_ISDIR(inode->i_mode))
+	पूर्ण
+	अगर (!S_ISसूची(inode->i_mode))
 		newattrs.ia_valid |=
 			ATTR_KILL_SUID | ATTR_KILL_SGID | ATTR_KILL_PRIV;
 	inode_lock(inode);
 	error = security_path_chown(path, uid, gid);
-	if (!error)
-		error = notify_change(mnt_userns, path->dentry, &newattrs,
+	अगर (!error)
+		error = notअगरy_change(mnt_userns, path->dentry, &newattrs,
 				      &delegated_inode);
 	inode_unlock(inode);
-	if (delegated_inode) {
-		error = break_deleg_wait(&delegated_inode);
-		if (!error)
-			goto retry_deleg;
-	}
-	return error;
-}
+	अगर (delegated_inode) अणु
+		error = अवरोध_deleg_रुको(&delegated_inode);
+		अगर (!error)
+			जाओ retry_deleg;
+	पूर्ण
+	वापस error;
+पूर्ण
 
-int do_fchownat(int dfd, const char __user *filename, uid_t user, gid_t group,
-		int flag)
-{
-	struct path path;
-	int error = -EINVAL;
-	int lookup_flags;
+पूर्णांक करो_fchownat(पूर्णांक dfd, स्थिर अक्षर __user *filename, uid_t user, gid_t group,
+		पूर्णांक flag)
+अणु
+	काष्ठा path path;
+	पूर्णांक error = -EINVAL;
+	पूर्णांक lookup_flags;
 
-	if ((flag & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
-		goto out;
+	अगर ((flag & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
+		जाओ out;
 
 	lookup_flags = (flag & AT_SYMLINK_NOFOLLOW) ? 0 : LOOKUP_FOLLOW;
-	if (flag & AT_EMPTY_PATH)
+	अगर (flag & AT_EMPTY_PATH)
 		lookup_flags |= LOOKUP_EMPTY;
 retry:
 	error = user_path_at(dfd, filename, lookup_flags, &path);
-	if (error)
-		goto out;
-	error = mnt_want_write(path.mnt);
-	if (error)
-		goto out_release;
+	अगर (error)
+		जाओ out;
+	error = mnt_want_ग_लिखो(path.mnt);
+	अगर (error)
+		जाओ out_release;
 	error = chown_common(&path, user, group);
-	mnt_drop_write(path.mnt);
+	mnt_drop_ग_लिखो(path.mnt);
 out_release:
 	path_put(&path);
-	if (retry_estale(error, lookup_flags)) {
+	अगर (retry_estale(error, lookup_flags)) अणु
 		lookup_flags |= LOOKUP_REVAL;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE5(fchownat, int, dfd, const char __user *, filename, uid_t, user,
-		gid_t, group, int, flag)
-{
-	return do_fchownat(dfd, filename, user, group, flag);
-}
+SYSCALL_DEFINE5(fchownat, पूर्णांक, dfd, स्थिर अक्षर __user *, filename, uid_t, user,
+		gid_t, group, पूर्णांक, flag)
+अणु
+	वापस करो_fchownat(dfd, filename, user, group, flag);
+पूर्ण
 
-SYSCALL_DEFINE3(chown, const char __user *, filename, uid_t, user, gid_t, group)
-{
-	return do_fchownat(AT_FDCWD, filename, user, group, 0);
-}
+SYSCALL_DEFINE3(chown, स्थिर अक्षर __user *, filename, uid_t, user, gid_t, group)
+अणु
+	वापस करो_fchownat(AT_FDCWD, filename, user, group, 0);
+पूर्ण
 
-SYSCALL_DEFINE3(lchown, const char __user *, filename, uid_t, user, gid_t, group)
-{
-	return do_fchownat(AT_FDCWD, filename, user, group,
+SYSCALL_DEFINE3(lchown, स्थिर अक्षर __user *, filename, uid_t, user, gid_t, group)
+अणु
+	वापस करो_fchownat(AT_FDCWD, filename, user, group,
 			   AT_SYMLINK_NOFOLLOW);
-}
+पूर्ण
 
-int vfs_fchown(struct file *file, uid_t user, gid_t group)
-{
-	int error;
+पूर्णांक vfs_fchown(काष्ठा file *file, uid_t user, gid_t group)
+अणु
+	पूर्णांक error;
 
-	error = mnt_want_write_file(file);
-	if (error)
-		return error;
+	error = mnt_want_ग_लिखो_file(file);
+	अगर (error)
+		वापस error;
 	audit_file(file);
 	error = chown_common(&file->f_path, user, group);
-	mnt_drop_write_file(file);
-	return error;
-}
+	mnt_drop_ग_लिखो_file(file);
+	वापस error;
+पूर्ण
 
-int ksys_fchown(unsigned int fd, uid_t user, gid_t group)
-{
-	struct fd f = fdget(fd);
-	int error = -EBADF;
+पूर्णांक ksys_fchown(अचिन्हित पूर्णांक fd, uid_t user, gid_t group)
+अणु
+	काष्ठा fd f = fdget(fd);
+	पूर्णांक error = -EBADF;
 
-	if (f.file) {
+	अगर (f.file) अणु
 		error = vfs_fchown(f.file, user, group);
 		fdput(f);
-	}
-	return error;
-}
+	पूर्ण
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE3(fchown, unsigned int, fd, uid_t, user, gid_t, group)
-{
-	return ksys_fchown(fd, user, group);
-}
+SYSCALL_DEFINE3(fchown, अचिन्हित पूर्णांक, fd, uid_t, user, gid_t, group)
+अणु
+	वापस ksys_fchown(fd, user, group);
+पूर्ण
 
-static int do_dentry_open(struct file *f,
-			  struct inode *inode,
-			  int (*open)(struct inode *, struct file *))
-{
-	static const struct file_operations empty_fops = {};
-	int error;
+अटल पूर्णांक करो_dentry_खोलो(काष्ठा file *f,
+			  काष्ठा inode *inode,
+			  पूर्णांक (*खोलो)(काष्ठा inode *, काष्ठा file *))
+अणु
+	अटल स्थिर काष्ठा file_operations empty_fops = अणुपूर्ण;
+	पूर्णांक error;
 
 	path_get(&f->f_path);
 	f->f_inode = inode;
@@ -782,621 +783,621 @@ static int do_dentry_open(struct file *f,
 	f->f_wb_err = filemap_sample_wb_err(f->f_mapping);
 	f->f_sb_err = file_sample_sb_err(f);
 
-	if (unlikely(f->f_flags & O_PATH)) {
+	अगर (unlikely(f->f_flags & O_PATH)) अणु
 		f->f_mode = FMODE_PATH | FMODE_OPENED;
 		f->f_op = &empty_fops;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (f->f_mode & FMODE_WRITE && !special_file(inode->i_mode)) {
-		error = get_write_access(inode);
-		if (unlikely(error))
-			goto cleanup_file;
-		error = __mnt_want_write(f->f_path.mnt);
-		if (unlikely(error)) {
-			put_write_access(inode);
-			goto cleanup_file;
-		}
+	अगर (f->f_mode & FMODE_WRITE && !special_file(inode->i_mode)) अणु
+		error = get_ग_लिखो_access(inode);
+		अगर (unlikely(error))
+			जाओ cleanup_file;
+		error = __mnt_want_ग_लिखो(f->f_path.mnt);
+		अगर (unlikely(error)) अणु
+			put_ग_लिखो_access(inode);
+			जाओ cleanup_file;
+		पूर्ण
 		f->f_mode |= FMODE_WRITER;
-	}
+	पूर्ण
 
 	/* POSIX.1-2008/SUSv4 Section XSI 2.9.7 */
-	if (S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode))
+	अगर (S_ISREG(inode->i_mode) || S_ISसूची(inode->i_mode))
 		f->f_mode |= FMODE_ATOMIC_POS;
 
 	f->f_op = fops_get(inode->i_fop);
-	if (WARN_ON(!f->f_op)) {
+	अगर (WARN_ON(!f->f_op)) अणु
 		error = -ENODEV;
-		goto cleanup_all;
-	}
+		जाओ cleanup_all;
+	पूर्ण
 
-	error = security_file_open(f);
-	if (error)
-		goto cleanup_all;
+	error = security_file_खोलो(f);
+	अगर (error)
+		जाओ cleanup_all;
 
-	error = break_lease(locks_inode(f), f->f_flags);
-	if (error)
-		goto cleanup_all;
+	error = अवरोध_lease(locks_inode(f), f->f_flags);
+	अगर (error)
+		जाओ cleanup_all;
 
-	/* normally all 3 are set; ->open() can clear them if needed */
+	/* normally all 3 are set; ->खोलो() can clear them अगर needed */
 	f->f_mode |= FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE;
-	if (!open)
-		open = f->f_op->open;
-	if (open) {
-		error = open(inode, f);
-		if (error)
-			goto cleanup_all;
-	}
+	अगर (!खोलो)
+		खोलो = f->f_op->खोलो;
+	अगर (खोलो) अणु
+		error = खोलो(inode, f);
+		अगर (error)
+			जाओ cleanup_all;
+	पूर्ण
 	f->f_mode |= FMODE_OPENED;
-	if ((f->f_mode & (FMODE_READ | FMODE_WRITE)) == FMODE_READ)
-		i_readcount_inc(inode);
-	if ((f->f_mode & FMODE_READ) &&
-	     likely(f->f_op->read || f->f_op->read_iter))
+	अगर ((f->f_mode & (FMODE_READ | FMODE_WRITE)) == FMODE_READ)
+		i_पढ़ोcount_inc(inode);
+	अगर ((f->f_mode & FMODE_READ) &&
+	     likely(f->f_op->पढ़ो || f->f_op->पढ़ो_iter))
 		f->f_mode |= FMODE_CAN_READ;
-	if ((f->f_mode & FMODE_WRITE) &&
-	     likely(f->f_op->write || f->f_op->write_iter))
+	अगर ((f->f_mode & FMODE_WRITE) &&
+	     likely(f->f_op->ग_लिखो || f->f_op->ग_लिखो_iter))
 		f->f_mode |= FMODE_CAN_WRITE;
 
-	f->f_write_hint = WRITE_LIFE_NOT_SET;
+	f->f_ग_लिखो_hपूर्णांक = WRITE_LIFE_NOT_SET;
 	f->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
 
 	file_ra_state_init(&f->f_ra, f->f_mapping->host->i_mapping);
 
-	/* NB: we're sure to have correct a_ops only after f_op->open */
-	if (f->f_flags & O_DIRECT) {
-		if (!f->f_mapping->a_ops || !f->f_mapping->a_ops->direct_IO)
-			return -EINVAL;
-	}
+	/* NB: we're sure to have correct a_ops only after f_op->खोलो */
+	अगर (f->f_flags & O_सूचीECT) अणु
+		अगर (!f->f_mapping->a_ops || !f->f_mapping->a_ops->direct_IO)
+			वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * XXX: Huge page cache doesn't support writing yet. Drop all page
-	 * cache for this file before processing writes.
+	 * XXX: Huge page cache करोesn't support writing yet. Drop all page
+	 * cache क्रम this file beक्रमe processing ग_लिखोs.
 	 */
-	if ((f->f_mode & FMODE_WRITE) && filemap_nr_thps(inode->i_mapping))
+	अगर ((f->f_mode & FMODE_WRITE) && filemap_nr_thps(inode->i_mapping))
 		truncate_pagecache(inode, 0);
 
-	return 0;
+	वापस 0;
 
 cleanup_all:
-	if (WARN_ON_ONCE(error > 0))
+	अगर (WARN_ON_ONCE(error > 0))
 		error = -EINVAL;
 	fops_put(f->f_op);
-	if (f->f_mode & FMODE_WRITER) {
-		put_write_access(inode);
-		__mnt_drop_write(f->f_path.mnt);
-	}
+	अगर (f->f_mode & FMODE_WRITER) अणु
+		put_ग_लिखो_access(inode);
+		__mnt_drop_ग_लिखो(f->f_path.mnt);
+	पूर्ण
 cleanup_file:
 	path_put(&f->f_path);
-	f->f_path.mnt = NULL;
-	f->f_path.dentry = NULL;
-	f->f_inode = NULL;
-	return error;
-}
+	f->f_path.mnt = शून्य;
+	f->f_path.dentry = शून्य;
+	f->f_inode = शून्य;
+	वापस error;
+पूर्ण
 
 /**
- * finish_open - finish opening a file
- * @file: file pointer
- * @dentry: pointer to dentry
- * @open: open callback
- * @opened: state of open
+ * finish_खोलो - finish खोलोing a file
+ * @file: file poपूर्णांकer
+ * @dentry: poपूर्णांकer to dentry
+ * @खोलो: खोलो callback
+ * @खोलोed: state of खोलो
  *
- * This can be used to finish opening a file passed to i_op->atomic_open().
+ * This can be used to finish खोलोing a file passed to i_op->atomic_खोलो().
  *
- * If the open callback is set to NULL, then the standard f_op->open()
- * filesystem callback is substituted.
+ * If the खोलो callback is set to शून्य, then the standard f_op->खोलो()
+ * fileप्रणाली callback is substituted.
  *
- * NB: the dentry reference is _not_ consumed.  If, for example, the dentry is
- * the return value of d_splice_alias(), then the caller needs to perform dput()
- * on it after finish_open().
+ * NB: the dentry reference is _not_ consumed.  If, क्रम example, the dentry is
+ * the वापस value of d_splice_alias(), then the caller needs to perक्रमm dput()
+ * on it after finish_खोलो().
  *
- * Returns zero on success or -errno if the open failed.
+ * Returns zero on success or -त्रुटि_सं अगर the खोलो failed.
  */
-int finish_open(struct file *file, struct dentry *dentry,
-		int (*open)(struct inode *, struct file *))
-{
-	BUG_ON(file->f_mode & FMODE_OPENED); /* once it's opened, it's opened */
+पूर्णांक finish_खोलो(काष्ठा file *file, काष्ठा dentry *dentry,
+		पूर्णांक (*खोलो)(काष्ठा inode *, काष्ठा file *))
+अणु
+	BUG_ON(file->f_mode & FMODE_OPENED); /* once it's opened, it's खोलोed */
 
 	file->f_path.dentry = dentry;
-	return do_dentry_open(file, d_backing_inode(dentry), open);
-}
-EXPORT_SYMBOL(finish_open);
+	वापस करो_dentry_खोलो(file, d_backing_inode(dentry), खोलो);
+पूर्ण
+EXPORT_SYMBOL(finish_खोलो);
 
 /**
- * finish_no_open - finish ->atomic_open() without opening the file
+ * finish_no_खोलो - finish ->atomic_खोलो() without खोलोing the file
  *
- * @file: file pointer
- * @dentry: dentry or NULL (as returned from ->lookup())
+ * @file: file poपूर्णांकer
+ * @dentry: dentry or शून्य (as वापसed from ->lookup())
  *
- * This can be used to set the result of a successful lookup in ->atomic_open().
+ * This can be used to set the result of a successful lookup in ->atomic_खोलो().
  *
- * NB: unlike finish_open() this function does consume the dentry reference and
+ * NB: unlike finish_खोलो() this function करोes consume the dentry reference and
  * the caller need not dput() it.
  *
- * Returns "0" which must be the return value of ->atomic_open() after having
+ * Returns "0" which must be the वापस value of ->atomic_खोलो() after having
  * called this function.
  */
-int finish_no_open(struct file *file, struct dentry *dentry)
-{
+पूर्णांक finish_no_खोलो(काष्ठा file *file, काष्ठा dentry *dentry)
+अणु
 	file->f_path.dentry = dentry;
-	return 0;
-}
-EXPORT_SYMBOL(finish_no_open);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(finish_no_खोलो);
 
-char *file_path(struct file *filp, char *buf, int buflen)
-{
-	return d_path(&filp->f_path, buf, buflen);
-}
+अक्षर *file_path(काष्ठा file *filp, अक्षर *buf, पूर्णांक buflen)
+अणु
+	वापस d_path(&filp->f_path, buf, buflen);
+पूर्ण
 EXPORT_SYMBOL(file_path);
 
 /**
- * vfs_open - open the file at the given path
- * @path: path to open
+ * vfs_खोलो - खोलो the file at the given path
+ * @path: path to खोलो
  * @file: newly allocated file with f_flag initialized
  * @cred: credentials to use
  */
-int vfs_open(const struct path *path, struct file *file)
-{
+पूर्णांक vfs_खोलो(स्थिर काष्ठा path *path, काष्ठा file *file)
+अणु
 	file->f_path = *path;
-	return do_dentry_open(file, d_backing_inode(path->dentry), NULL);
-}
+	वापस करो_dentry_खोलो(file, d_backing_inode(path->dentry), शून्य);
+पूर्ण
 
-struct file *dentry_open(const struct path *path, int flags,
-			 const struct cred *cred)
-{
-	int error;
-	struct file *f;
+काष्ठा file *dentry_खोलो(स्थिर काष्ठा path *path, पूर्णांक flags,
+			 स्थिर काष्ठा cred *cred)
+अणु
+	पूर्णांक error;
+	काष्ठा file *f;
 
 	validate_creds(cred);
 
-	/* We must always pass in a valid mount pointer. */
+	/* We must always pass in a valid mount poपूर्णांकer. */
 	BUG_ON(!path->mnt);
 
 	f = alloc_empty_file(flags, cred);
-	if (!IS_ERR(f)) {
-		error = vfs_open(path, f);
-		if (error) {
+	अगर (!IS_ERR(f)) अणु
+		error = vfs_खोलो(path, f);
+		अगर (error) अणु
 			fput(f);
 			f = ERR_PTR(error);
-		}
-	}
-	return f;
-}
-EXPORT_SYMBOL(dentry_open);
+		पूर्ण
+	पूर्ण
+	वापस f;
+पूर्ण
+EXPORT_SYMBOL(dentry_खोलो);
 
-struct file *open_with_fake_path(const struct path *path, int flags,
-				struct inode *inode, const struct cred *cred)
-{
-	struct file *f = alloc_empty_file_noaccount(flags, cred);
-	if (!IS_ERR(f)) {
-		int error;
+काष्ठा file *खोलो_with_fake_path(स्थिर काष्ठा path *path, पूर्णांक flags,
+				काष्ठा inode *inode, स्थिर काष्ठा cred *cred)
+अणु
+	काष्ठा file *f = alloc_empty_file_noaccount(flags, cred);
+	अगर (!IS_ERR(f)) अणु
+		पूर्णांक error;
 
 		f->f_path = *path;
-		error = do_dentry_open(f, inode, NULL);
-		if (error) {
+		error = करो_dentry_खोलो(f, inode, शून्य);
+		अगर (error) अणु
 			fput(f);
 			f = ERR_PTR(error);
-		}
-	}
-	return f;
-}
-EXPORT_SYMBOL(open_with_fake_path);
+		पूर्ण
+	पूर्ण
+	वापस f;
+पूर्ण
+EXPORT_SYMBOL(खोलो_with_fake_path);
 
-#define WILL_CREATE(flags)	(flags & (O_CREAT | __O_TMPFILE))
-#define O_PATH_FLAGS		(O_DIRECTORY | O_NOFOLLOW | O_PATH | O_CLOEXEC)
+#घोषणा WILL_CREATE(flags)	(flags & (O_CREAT | __O_TMPखाता))
+#घोषणा O_PATH_FLAGS		(O_सूचीECTORY | O_NOFOLLOW | O_PATH | O_CLOEXEC)
 
-inline struct open_how build_open_how(int flags, umode_t mode)
-{
-	struct open_how how = {
+अंतरभूत काष्ठा खोलो_how build_खोलो_how(पूर्णांक flags, umode_t mode)
+अणु
+	काष्ठा खोलो_how how = अणु
 		.flags = flags & VALID_OPEN_FLAGS,
 		.mode = mode & S_IALLUGO,
-	};
+	पूर्ण;
 
-	/* O_PATH beats everything else. */
-	if (how.flags & O_PATH)
+	/* O_PATH beats everything अन्यथा. */
+	अगर (how.flags & O_PATH)
 		how.flags &= O_PATH_FLAGS;
-	/* Modes should only be set for create-like flags. */
-	if (!WILL_CREATE(how.flags))
+	/* Modes should only be set क्रम create-like flags. */
+	अगर (!WILL_CREATE(how.flags))
 		how.mode = 0;
-	return how;
-}
+	वापस how;
+पूर्ण
 
-inline int build_open_flags(const struct open_how *how, struct open_flags *op)
-{
-	int flags = how->flags;
-	int lookup_flags = 0;
-	int acc_mode = ACC_MODE(flags);
+अंतरभूत पूर्णांक build_खोलो_flags(स्थिर काष्ठा खोलो_how *how, काष्ठा खोलो_flags *op)
+अणु
+	पूर्णांक flags = how->flags;
+	पूर्णांक lookup_flags = 0;
+	पूर्णांक acc_mode = ACC_MODE(flags);
 
 	/* Must never be set by userspace */
 	flags &= ~(FMODE_NONOTIFY | O_CLOEXEC);
 
 	/*
 	 * Older syscalls implicitly clear all of the invalid flags or argument
-	 * values before calling build_open_flags(), but openat2(2) checks all
+	 * values beक्रमe calling build_खोलो_flags(), but खोलोat2(2) checks all
 	 * of its arguments.
 	 */
-	if (flags & ~VALID_OPEN_FLAGS)
-		return -EINVAL;
-	if (how->resolve & ~VALID_RESOLVE_FLAGS)
-		return -EINVAL;
+	अगर (flags & ~VALID_OPEN_FLAGS)
+		वापस -EINVAL;
+	अगर (how->resolve & ~VALID_RESOLVE_FLAGS)
+		वापस -EINVAL;
 
 	/* Scoping flags are mutually exclusive. */
-	if ((how->resolve & RESOLVE_BENEATH) && (how->resolve & RESOLVE_IN_ROOT))
-		return -EINVAL;
+	अगर ((how->resolve & RESOLVE_BENEATH) && (how->resolve & RESOLVE_IN_ROOT))
+		वापस -EINVAL;
 
 	/* Deal with the mode. */
-	if (WILL_CREATE(flags)) {
-		if (how->mode & ~S_IALLUGO)
-			return -EINVAL;
+	अगर (WILL_CREATE(flags)) अणु
+		अगर (how->mode & ~S_IALLUGO)
+			वापस -EINVAL;
 		op->mode = how->mode | S_IFREG;
-	} else {
-		if (how->mode != 0)
-			return -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (how->mode != 0)
+			वापस -EINVAL;
 		op->mode = 0;
-	}
+	पूर्ण
 
 	/*
 	 * In order to ensure programs get explicit errors when trying to use
-	 * O_TMPFILE on old kernels, O_TMPFILE is implemented such that it
-	 * looks like (O_DIRECTORY|O_RDWR & ~O_CREAT) to old kernels. But we
+	 * O_TMPखाता on old kernels, O_TMPखाता is implemented such that it
+	 * looks like (O_सूचीECTORY|O_RDWR & ~O_CREAT) to old kernels. But we
 	 * have to require userspace to explicitly set it.
 	 */
-	if (flags & __O_TMPFILE) {
-		if ((flags & O_TMPFILE_MASK) != O_TMPFILE)
-			return -EINVAL;
-		if (!(acc_mode & MAY_WRITE))
-			return -EINVAL;
-	}
-	if (flags & O_PATH) {
+	अगर (flags & __O_TMPखाता) अणु
+		अगर ((flags & O_TMPखाता_MASK) != O_TMPखाता)
+			वापस -EINVAL;
+		अगर (!(acc_mode & MAY_WRITE))
+			वापस -EINVAL;
+	पूर्ण
+	अगर (flags & O_PATH) अणु
 		/* O_PATH only permits certain other flags to be set. */
-		if (flags & ~O_PATH_FLAGS)
-			return -EINVAL;
+		अगर (flags & ~O_PATH_FLAGS)
+			वापस -EINVAL;
 		acc_mode = 0;
-	}
+	पूर्ण
 
 	/*
 	 * O_SYNC is implemented as __O_SYNC|O_DSYNC.  As many places only
-	 * check for O_DSYNC if the need any syncing at all we enforce it's
+	 * check क्रम O_DSYNC अगर the need any syncing at all we enक्रमce it's
 	 * always set instead of having to deal with possibly weird behaviour
-	 * for malicious applications setting only __O_SYNC.
+	 * क्रम malicious applications setting only __O_SYNC.
 	 */
-	if (flags & __O_SYNC)
+	अगर (flags & __O_SYNC)
 		flags |= O_DSYNC;
 
-	op->open_flag = flags;
+	op->खोलो_flag = flags;
 
-	/* O_TRUNC implies we need access checks for write permissions */
-	if (flags & O_TRUNC)
+	/* O_TRUNC implies we need access checks क्रम ग_लिखो permissions */
+	अगर (flags & O_TRUNC)
 		acc_mode |= MAY_WRITE;
 
 	/* Allow the LSM permission hook to distinguish append
-	   access from general write access. */
-	if (flags & O_APPEND)
+	   access from general ग_लिखो access. */
+	अगर (flags & O_APPEND)
 		acc_mode |= MAY_APPEND;
 
 	op->acc_mode = acc_mode;
 
-	op->intent = flags & O_PATH ? 0 : LOOKUP_OPEN;
+	op->पूर्णांकent = flags & O_PATH ? 0 : LOOKUP_OPEN;
 
-	if (flags & O_CREAT) {
-		op->intent |= LOOKUP_CREATE;
-		if (flags & O_EXCL) {
-			op->intent |= LOOKUP_EXCL;
+	अगर (flags & O_CREAT) अणु
+		op->पूर्णांकent |= LOOKUP_CREATE;
+		अगर (flags & O_EXCL) अणु
+			op->पूर्णांकent |= LOOKUP_EXCL;
 			flags |= O_NOFOLLOW;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (flags & O_DIRECTORY)
-		lookup_flags |= LOOKUP_DIRECTORY;
-	if (!(flags & O_NOFOLLOW))
+	अगर (flags & O_सूचीECTORY)
+		lookup_flags |= LOOKUP_सूचीECTORY;
+	अगर (!(flags & O_NOFOLLOW))
 		lookup_flags |= LOOKUP_FOLLOW;
 
-	if (how->resolve & RESOLVE_NO_XDEV)
+	अगर (how->resolve & RESOLVE_NO_XDEV)
 		lookup_flags |= LOOKUP_NO_XDEV;
-	if (how->resolve & RESOLVE_NO_MAGICLINKS)
+	अगर (how->resolve & RESOLVE_NO_MAGICLINKS)
 		lookup_flags |= LOOKUP_NO_MAGICLINKS;
-	if (how->resolve & RESOLVE_NO_SYMLINKS)
+	अगर (how->resolve & RESOLVE_NO_SYMLINKS)
 		lookup_flags |= LOOKUP_NO_SYMLINKS;
-	if (how->resolve & RESOLVE_BENEATH)
+	अगर (how->resolve & RESOLVE_BENEATH)
 		lookup_flags |= LOOKUP_BENEATH;
-	if (how->resolve & RESOLVE_IN_ROOT)
+	अगर (how->resolve & RESOLVE_IN_ROOT)
 		lookup_flags |= LOOKUP_IN_ROOT;
-	if (how->resolve & RESOLVE_CACHED) {
-		/* Don't bother even trying for create/truncate/tmpfile open */
-		if (flags & (O_TRUNC | O_CREAT | O_TMPFILE))
-			return -EAGAIN;
+	अगर (how->resolve & RESOLVE_CACHED) अणु
+		/* Don't bother even trying क्रम create/truncate/क्षणिक_ख खोलो */
+		अगर (flags & (O_TRUNC | O_CREAT | O_TMPखाता))
+			वापस -EAGAIN;
 		lookup_flags |= LOOKUP_CACHED;
-	}
+	पूर्ण
 
 	op->lookup_flags = lookup_flags;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * file_open_name - open file and return file pointer
+ * file_खोलो_name - खोलो file and वापस file poपूर्णांकer
  *
- * @name:	struct filename containing path to open
- * @flags:	open flags as per the open(2) second argument
- * @mode:	mode for the new file if O_CREAT is set, else ignored
+ * @name:	काष्ठा filename containing path to खोलो
+ * @flags:	खोलो flags as per the खोलो(2) second argument
+ * @mode:	mode क्रम the new file अगर O_CREAT is set, अन्यथा ignored
  *
- * This is the helper to open a file from kernelspace if you really
- * have to.  But in generally you should not do this, so please move
- * along, nothing to see here..
+ * This is the helper to खोलो a file from kernelspace अगर you really
+ * have to.  But in generally you should not करो this, so please move
+ * aदीर्घ, nothing to see here..
  */
-struct file *file_open_name(struct filename *name, int flags, umode_t mode)
-{
-	struct open_flags op;
-	struct open_how how = build_open_how(flags, mode);
-	int err = build_open_flags(&how, &op);
-	if (err)
-		return ERR_PTR(err);
-	return do_filp_open(AT_FDCWD, name, &op);
-}
+काष्ठा file *file_खोलो_name(काष्ठा filename *name, पूर्णांक flags, umode_t mode)
+अणु
+	काष्ठा खोलो_flags op;
+	काष्ठा खोलो_how how = build_खोलो_how(flags, mode);
+	पूर्णांक err = build_खोलो_flags(&how, &op);
+	अगर (err)
+		वापस ERR_PTR(err);
+	वापस करो_filp_खोलो(AT_FDCWD, name, &op);
+पूर्ण
 
 /**
- * filp_open - open file and return file pointer
+ * filp_खोलो - खोलो file and वापस file poपूर्णांकer
  *
- * @filename:	path to open
- * @flags:	open flags as per the open(2) second argument
- * @mode:	mode for the new file if O_CREAT is set, else ignored
+ * @filename:	path to खोलो
+ * @flags:	खोलो flags as per the खोलो(2) second argument
+ * @mode:	mode क्रम the new file अगर O_CREAT is set, अन्यथा ignored
  *
- * This is the helper to open a file from kernelspace if you really
- * have to.  But in generally you should not do this, so please move
- * along, nothing to see here..
+ * This is the helper to खोलो a file from kernelspace अगर you really
+ * have to.  But in generally you should not करो this, so please move
+ * aदीर्घ, nothing to see here..
  */
-struct file *filp_open(const char *filename, int flags, umode_t mode)
-{
-	struct filename *name = getname_kernel(filename);
-	struct file *file = ERR_CAST(name);
+काष्ठा file *filp_खोलो(स्थिर अक्षर *filename, पूर्णांक flags, umode_t mode)
+अणु
+	काष्ठा filename *name = getname_kernel(filename);
+	काष्ठा file *file = ERR_CAST(name);
 	
-	if (!IS_ERR(name)) {
-		file = file_open_name(name, flags, mode);
+	अगर (!IS_ERR(name)) अणु
+		file = file_खोलो_name(name, flags, mode);
 		putname(name);
-	}
-	return file;
-}
-EXPORT_SYMBOL(filp_open);
+	पूर्ण
+	वापस file;
+पूर्ण
+EXPORT_SYMBOL(filp_खोलो);
 
-struct file *file_open_root(struct dentry *dentry, struct vfsmount *mnt,
-			    const char *filename, int flags, umode_t mode)
-{
-	struct open_flags op;
-	struct open_how how = build_open_how(flags, mode);
-	int err = build_open_flags(&how, &op);
-	if (err)
-		return ERR_PTR(err);
-	return do_file_open_root(dentry, mnt, filename, &op);
-}
-EXPORT_SYMBOL(file_open_root);
+काष्ठा file *file_खोलो_root(काष्ठा dentry *dentry, काष्ठा vfsmount *mnt,
+			    स्थिर अक्षर *filename, पूर्णांक flags, umode_t mode)
+अणु
+	काष्ठा खोलो_flags op;
+	काष्ठा खोलो_how how = build_खोलो_how(flags, mode);
+	पूर्णांक err = build_खोलो_flags(&how, &op);
+	अगर (err)
+		वापस ERR_PTR(err);
+	वापस करो_file_खोलो_root(dentry, mnt, filename, &op);
+पूर्ण
+EXPORT_SYMBOL(file_खोलो_root);
 
-static long do_sys_openat2(int dfd, const char __user *filename,
-			   struct open_how *how)
-{
-	struct open_flags op;
-	int fd = build_open_flags(how, &op);
-	struct filename *tmp;
+अटल दीर्घ करो_sys_खोलोat2(पूर्णांक dfd, स्थिर अक्षर __user *filename,
+			   काष्ठा खोलो_how *how)
+अणु
+	काष्ठा खोलो_flags op;
+	पूर्णांक fd = build_खोलो_flags(how, &op);
+	काष्ठा filename *पंचांगp;
 
-	if (fd)
-		return fd;
+	अगर (fd)
+		वापस fd;
 
-	tmp = getname(filename);
-	if (IS_ERR(tmp))
-		return PTR_ERR(tmp);
+	पंचांगp = getname(filename);
+	अगर (IS_ERR(पंचांगp))
+		वापस PTR_ERR(पंचांगp);
 
 	fd = get_unused_fd_flags(how->flags);
-	if (fd >= 0) {
-		struct file *f = do_filp_open(dfd, tmp, &op);
-		if (IS_ERR(f)) {
+	अगर (fd >= 0) अणु
+		काष्ठा file *f = करो_filp_खोलो(dfd, पंचांगp, &op);
+		अगर (IS_ERR(f)) अणु
 			put_unused_fd(fd);
 			fd = PTR_ERR(f);
-		} else {
-			fsnotify_open(f);
+		पूर्ण अन्यथा अणु
+			fsnotअगरy_खोलो(f);
 			fd_install(fd, f);
-		}
-	}
-	putname(tmp);
-	return fd;
-}
+		पूर्ण
+	पूर्ण
+	putname(पंचांगp);
+	वापस fd;
+पूर्ण
 
-long do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
-{
-	struct open_how how = build_open_how(flags, mode);
-	return do_sys_openat2(dfd, filename, &how);
-}
+दीर्घ करो_sys_खोलो(पूर्णांक dfd, स्थिर अक्षर __user *filename, पूर्णांक flags, umode_t mode)
+अणु
+	काष्ठा खोलो_how how = build_खोलो_how(flags, mode);
+	वापस करो_sys_खोलोat2(dfd, filename, &how);
+पूर्ण
 
 
-SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
-{
-	if (force_o_largefile())
-		flags |= O_LARGEFILE;
-	return do_sys_open(AT_FDCWD, filename, flags, mode);
-}
+SYSCALL_DEFINE3(खोलो, स्थिर अक्षर __user *, filename, पूर्णांक, flags, umode_t, mode)
+अणु
+	अगर (क्रमce_o_largefile())
+		flags |= O_LARGEखाता;
+	वापस करो_sys_खोलो(AT_FDCWD, filename, flags, mode);
+पूर्ण
 
-SYSCALL_DEFINE4(openat, int, dfd, const char __user *, filename, int, flags,
+SYSCALL_DEFINE4(खोलोat, पूर्णांक, dfd, स्थिर अक्षर __user *, filename, पूर्णांक, flags,
 		umode_t, mode)
-{
-	if (force_o_largefile())
-		flags |= O_LARGEFILE;
-	return do_sys_open(dfd, filename, flags, mode);
-}
+अणु
+	अगर (क्रमce_o_largefile())
+		flags |= O_LARGEखाता;
+	वापस करो_sys_खोलो(dfd, filename, flags, mode);
+पूर्ण
 
-SYSCALL_DEFINE4(openat2, int, dfd, const char __user *, filename,
-		struct open_how __user *, how, size_t, usize)
-{
-	int err;
-	struct open_how tmp;
+SYSCALL_DEFINE4(खोलोat2, पूर्णांक, dfd, स्थिर अक्षर __user *, filename,
+		काष्ठा खोलो_how __user *, how, माप_प्रकार, usize)
+अणु
+	पूर्णांक err;
+	काष्ठा खोलो_how पंचांगp;
 
-	BUILD_BUG_ON(sizeof(struct open_how) < OPEN_HOW_SIZE_VER0);
-	BUILD_BUG_ON(sizeof(struct open_how) != OPEN_HOW_SIZE_LATEST);
+	BUILD_BUG_ON(माप(काष्ठा खोलो_how) < OPEN_HOW_SIZE_VER0);
+	BUILD_BUG_ON(माप(काष्ठा खोलो_how) != OPEN_HOW_SIZE_LATEST);
 
-	if (unlikely(usize < OPEN_HOW_SIZE_VER0))
-		return -EINVAL;
+	अगर (unlikely(usize < OPEN_HOW_SIZE_VER0))
+		वापस -EINVAL;
 
-	err = copy_struct_from_user(&tmp, sizeof(tmp), how, usize);
-	if (err)
-		return err;
+	err = copy_काष्ठा_from_user(&पंचांगp, माप(पंचांगp), how, usize);
+	अगर (err)
+		वापस err;
 
-	/* O_LARGEFILE is only allowed for non-O_PATH. */
-	if (!(tmp.flags & O_PATH) && force_o_largefile())
-		tmp.flags |= O_LARGEFILE;
+	/* O_LARGEखाता is only allowed क्रम non-O_PATH. */
+	अगर (!(पंचांगp.flags & O_PATH) && क्रमce_o_largefile())
+		पंचांगp.flags |= O_LARGEखाता;
 
-	return do_sys_openat2(dfd, filename, &tmp);
-}
+	वापस करो_sys_खोलोat2(dfd, filename, &पंचांगp);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 /*
- * Exactly like sys_open(), except that it doesn't set the
- * O_LARGEFILE flag.
+ * Exactly like sys_खोलो(), except that it करोesn't set the
+ * O_LARGEखाता flag.
  */
-COMPAT_SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
-{
-	return do_sys_open(AT_FDCWD, filename, flags, mode);
-}
+COMPAT_SYSCALL_DEFINE3(खोलो, स्थिर अक्षर __user *, filename, पूर्णांक, flags, umode_t, mode)
+अणु
+	वापस करो_sys_खोलो(AT_FDCWD, filename, flags, mode);
+पूर्ण
 
 /*
- * Exactly like sys_openat(), except that it doesn't set the
- * O_LARGEFILE flag.
+ * Exactly like sys_खोलोat(), except that it करोesn't set the
+ * O_LARGEखाता flag.
  */
-COMPAT_SYSCALL_DEFINE4(openat, int, dfd, const char __user *, filename, int, flags, umode_t, mode)
-{
-	return do_sys_open(dfd, filename, flags, mode);
-}
-#endif
+COMPAT_SYSCALL_DEFINE4(खोलोat, पूर्णांक, dfd, स्थिर अक्षर __user *, filename, पूर्णांक, flags, umode_t, mode)
+अणु
+	वापस करो_sys_खोलो(dfd, filename, flags, mode);
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef __alpha__
+#अगर_अघोषित __alpha__
 
 /*
  * For backward compatibility?  Maybe this should be moved
- * into arch/i386 instead?
+ * पूर्णांकo arch/i386 instead?
  */
-SYSCALL_DEFINE2(creat, const char __user *, pathname, umode_t, mode)
-{
-	int flags = O_CREAT | O_WRONLY | O_TRUNC;
+SYSCALL_DEFINE2(creat, स्थिर अक्षर __user *, pathname, umode_t, mode)
+अणु
+	पूर्णांक flags = O_CREAT | O_WRONLY | O_TRUNC;
 
-	if (force_o_largefile())
-		flags |= O_LARGEFILE;
-	return do_sys_open(AT_FDCWD, pathname, flags, mode);
-}
-#endif
+	अगर (क्रमce_o_largefile())
+		flags |= O_LARGEखाता;
+	वापस करो_sys_खोलो(AT_FDCWD, pathname, flags, mode);
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * "id" is the POSIX thread ID. We use the
- * files pointer for this..
+ * "id" is the POSIX thपढ़ो ID. We use the
+ * files poपूर्णांकer क्रम this..
  */
-int filp_close(struct file *filp, fl_owner_t id)
-{
-	int retval = 0;
+पूर्णांक filp_बंद(काष्ठा file *filp, fl_owner_t id)
+अणु
+	पूर्णांक retval = 0;
 
-	if (!file_count(filp)) {
-		printk(KERN_ERR "VFS: Close: file count is 0\n");
-		return 0;
-	}
+	अगर (!file_count(filp)) अणु
+		prपूर्णांकk(KERN_ERR "VFS: Close: file count is 0\n");
+		वापस 0;
+	पूर्ण
 
-	if (filp->f_op->flush)
+	अगर (filp->f_op->flush)
 		retval = filp->f_op->flush(filp, id);
 
-	if (likely(!(filp->f_mode & FMODE_PATH))) {
-		dnotify_flush(filp, id);
-		locks_remove_posix(filp, id);
-	}
+	अगर (likely(!(filp->f_mode & FMODE_PATH))) अणु
+		dnotअगरy_flush(filp, id);
+		locks_हटाओ_posix(filp, id);
+	पूर्ण
 	fput(filp);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-EXPORT_SYMBOL(filp_close);
+EXPORT_SYMBOL(filp_बंद);
 
 /*
- * Careful here! We test whether the file pointer is NULL before
+ * Careful here! We test whether the file poपूर्णांकer is शून्य beक्रमe
  * releasing the fd. This ensures that one clone task can't release
- * an fd while another clone is opening it.
+ * an fd जबतक another clone is खोलोing it.
  */
-SYSCALL_DEFINE1(close, unsigned int, fd)
-{
-	int retval = close_fd(fd);
+SYSCALL_DEFINE1(बंद, अचिन्हित पूर्णांक, fd)
+अणु
+	पूर्णांक retval = बंद_fd(fd);
 
-	/* can't restart close syscall because file table entry was cleared */
-	if (unlikely(retval == -ERESTARTSYS ||
+	/* can't restart बंद syscall because file table entry was cleared */
+	अगर (unlikely(retval == -ERESTARTSYS ||
 		     retval == -ERESTARTNOINTR ||
 		     retval == -ERESTARTNOHAND ||
 		     retval == -ERESTART_RESTARTBLOCK))
 		retval = -EINTR;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /**
- * close_range() - Close all file descriptors in a given range.
+ * बंद_range() - Close all file descriptors in a given range.
  *
- * @fd:     starting file descriptor to close
- * @max_fd: last file descriptor to close
- * @flags:  reserved for future extensions
+ * @fd:     starting file descriptor to बंद
+ * @max_fd: last file descriptor to बंद
+ * @flags:  reserved क्रम future extensions
  *
- * This closes a range of file descriptors. All file descriptors
- * from @fd up to and including @max_fd are closed.
- * Currently, errors to close a given file descriptor are ignored.
+ * This बंदs a range of file descriptors. All file descriptors
+ * from @fd up to and including @max_fd are बंदd.
+ * Currently, errors to बंद a given file descriptor are ignored.
  */
-SYSCALL_DEFINE3(close_range, unsigned int, fd, unsigned int, max_fd,
-		unsigned int, flags)
-{
-	return __close_range(fd, max_fd, flags);
-}
+SYSCALL_DEFINE3(बंद_range, अचिन्हित पूर्णांक, fd, अचिन्हित पूर्णांक, max_fd,
+		अचिन्हित पूर्णांक, flags)
+अणु
+	वापस __बंद_range(fd, max_fd, flags);
+पूर्ण
 
 /*
  * This routine simulates a hangup on the tty, to arrange that users
- * are given clean terminals at login time.
+ * are given clean terminals at login समय.
  */
 SYSCALL_DEFINE0(vhangup)
-{
-	if (capable(CAP_SYS_TTY_CONFIG)) {
+अणु
+	अगर (capable(CAP_SYS_TTY_CONFIG)) अणु
 		tty_vhangup_self();
-		return 0;
-	}
-	return -EPERM;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EPERM;
+पूर्ण
 
 /*
- * Called when an inode is about to be open.
- * We use this to disallow opening large files on 32bit systems if
- * the caller didn't specify O_LARGEFILE.  On 64bit systems we force
- * on this flag in sys_open.
+ * Called when an inode is about to be खोलो.
+ * We use this to disallow खोलोing large files on 32bit प्रणालीs अगर
+ * the caller didn't specअगरy O_LARGEखाता.  On 64bit प्रणालीs we क्रमce
+ * on this flag in sys_खोलो.
  */
-int generic_file_open(struct inode * inode, struct file * filp)
-{
-	if (!(filp->f_flags & O_LARGEFILE) && i_size_read(inode) > MAX_NON_LFS)
-		return -EOVERFLOW;
-	return 0;
-}
+पूर्णांक generic_file_खोलो(काष्ठा inode * inode, काष्ठा file * filp)
+अणु
+	अगर (!(filp->f_flags & O_LARGEखाता) && i_size_पढ़ो(inode) > MAX_NON_LFS)
+		वापस -EOVERFLOW;
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(generic_file_open);
+EXPORT_SYMBOL(generic_file_खोलो);
 
 /*
- * This is used by subsystems that don't want seekable
+ * This is used by subप्रणालीs that करोn't want seekable
  * file descriptors. The function is not supposed to ever fail, the only
- * reason it returns an 'int' and not 'void' is so that it can be plugged
- * directly into file_operations structure.
+ * reason it वापसs an 'int' and not 'void' is so that it can be plugged
+ * directly पूर्णांकo file_operations काष्ठाure.
  */
-int nonseekable_open(struct inode *inode, struct file *filp)
-{
+पूर्णांक nonseekable_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
 	filp->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(nonseekable_open);
+EXPORT_SYMBOL(nonseekable_खोलो);
 
 /*
- * stream_open is used by subsystems that want stream-like file descriptors.
- * Such file descriptors are not seekable and don't have notion of position
- * (file.f_pos is always 0 and ppos passed to .read()/.write() is always NULL).
- * Contrary to file descriptors of other regular files, .read() and .write()
+ * stream_खोलो is used by subप्रणालीs that want stream-like file descriptors.
+ * Such file descriptors are not seekable and करोn't have notion of position
+ * (file.f_pos is always 0 and ppos passed to .पढ़ो()/.ग_लिखो() is always शून्य).
+ * Contrary to file descriptors of other regular files, .पढ़ो() and .ग_लिखो()
  * can run simultaneously.
  *
- * stream_open never fails and is marked to return int so that it could be
- * directly used as file_operations.open .
+ * stream_खोलो never fails and is marked to वापस पूर्णांक so that it could be
+ * directly used as file_operations.खोलो .
  */
-int stream_open(struct inode *inode, struct file *filp)
-{
+पूर्णांक stream_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
 	filp->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE | FMODE_ATOMIC_POS);
 	filp->f_mode |= FMODE_STREAM;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(stream_open);
+EXPORT_SYMBOL(stream_खोलो);

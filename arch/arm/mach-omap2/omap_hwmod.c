@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * omap_hwmod implementation for OMAP2/3/4
+ * omap_hwmod implementation क्रम OMAP2/3/4
  *
  * Copyright (C) 2009-2011 Nokia Corporation
  * Copyright (C) 2011-2012 Texas Instruments, Inc.
  *
- * Paul Walmsley, Benoît Cousson, Kevin Hilman
+ * Paul Walmsley, Benoथऍt Cousson, Kevin Hilman
  *
  * Created in collaboration with (alphabetical order): Thara Gopinath,
  * Tony Lindgren, Rajendra Nayak, Vikram Pandita, Sakari Poussa, Anand
- * Sawant, Santosh Shilimkar, Richard Woodruff
+ * Sawant, Santosh Shilimkar, Riअक्षरd Woodruff
  *
  * Introduction
  * ------------
  * One way to view an OMAP SoC is as a collection of largely unrelated
- * IP blocks connected by interconnects.  The IP blocks include
- * devices such as ARM processors, audio serial interfaces, UARTs,
+ * IP blocks connected by पूर्णांकerconnects.  The IP blocks include
+ * devices such as ARM processors, audio serial पूर्णांकerfaces, UARTs,
  * etc.  Some of these devices, like the DSP, are created by TI;
- * others, like the SGX, largely originate from external vendors.  In
- * TI's documentation, on-chip devices are referred to as "OMAP
+ * others, like the SGX, largely originate from बाह्यal venकरोrs.  In
+ * TI's करोcumentation, on-chip devices are referred to as "OMAP
  * modules."  Some of these IP blocks are identical across several
  * OMAP versions.  Others are revised frequently.
  *
- * These OMAP modules are tied together by various interconnects.
+ * These OMAP modules are tied together by various पूर्णांकerconnects.
  * Most of the address and data flow between modules is via OCP-based
- * interconnects such as the L3 and L4 buses; but there are other
- * interconnects that distribute the hardware clock tree, handle idle
- * and reset signaling, supply power, and connect the modules to
+ * पूर्णांकerconnects such as the L3 and L4 buses; but there are other
+ * पूर्णांकerconnects that distribute the hardware घड़ी tree, handle idle
+ * and reset संकेतing, supply घातer, and connect the modules to
  * various pads or balls on the OMAP package.
  *
  * OMAP hwmod provides a consistent way to describe the on-chip
- * hardware blocks and their integration into the rest of the chip.
- * This description can be automatically generated from the TI
+ * hardware blocks and their पूर्णांकegration पूर्णांकo the rest of the chip.
+ * This description can be स्वतःmatically generated from the TI
  * hardware database.  OMAP hwmod provides a standard, consistent API
  * to reset, enable, idle, and disable these hardware blocks.  And
- * hwmod provides a way for other core code, such as the Linux device
- * code or the OMAP power management and address space mapping code,
+ * hwmod provides a way क्रम other core code, such as the Linux device
+ * code or the OMAP घातer management and address space mapping code,
  * to query the hardware database.
  *
  * Using hwmod
  * -----------
- * Drivers won't call hwmod functions directly.  That is done by the
- * omap_device code, and in rare occasions, by custom integration code
+ * Drivers won't call hwmod functions directly.  That is करोne by the
+ * omap_device code, and in rare occasions, by custom पूर्णांकegration code
  * in arch/arm/ *omap*.  The omap_device code includes functions to
- * build a struct platform_device using omap_hwmod data, and that is
+ * build a काष्ठा platक्रमm_device using omap_hwmod data, and that is
  * currently how hwmod data is communicated to drivers and to the
  * Linux driver model.  Most drivers will call omap_hwmod functions only
- * indirectly, via pm_runtime*() functions.
+ * indirectly, via pm_runसमय*() functions.
  *
  * From a layering perspective, here is where the OMAP hwmod code
- * fits into the kernel software stack:
+ * fits पूर्णांकo the kernel software stack:
  *
  *            +-------------------------------+
  *            |      Device driver code       |
  *            |      (e.g., drivers/)         |
  *            +-------------------------------+
  *            |      Linux driver model       |
- *            |     (platform_device /        |
- *            |  platform_driver data/code)   |
+ *            |     (platक्रमm_device /        |
+ *            |  platक्रमm_driver data/code)   |
  *            +-------------------------------+
- *            | OMAP core-driver integration  |
+ *            | OMAP core-driver पूर्णांकegration  |
  *            |(arch/arm/mach-omap2/devices.c)|
  *            +-------------------------------+
  *            |      omap_device code         |
@@ -68,729 +69,729 @@
  *   ---->    |    omap_hwmod code/data       |    <-----
  *            | (../mach-omap2/omap_hwmod*)   |
  *            +-------------------------------+
- *            | OMAP clock/PRCM/register fns  |
- *            | ({read,write}l_relaxed, clk*) |
+ *            | OMAP घड़ी/PRCM/रेजिस्टर fns  |
+ *            | (अणुपढ़ो,ग_लिखोपूर्णl_relaxed, clk*) |
  *            +-------------------------------+
  *
- * Device drivers should not contain any OMAP-specific code or data in
+ * Device drivers should not contain any OMAP-specअगरic code or data in
  * them.  They should only contain code to operate the IP block that
- * the driver is responsible for.  This is because these IP blocks can
+ * the driver is responsible क्रम.  This is because these IP blocks can
  * also appear in other SoCs, either from TI (such as DaVinci) or from
  * other manufacturers; and drivers should be reusable across other
- * platforms.
+ * platक्रमms.
  *
  * The OMAP hwmod code also will attempt to reset and idle all on-chip
- * devices upon boot.  The goal here is for the kernel to be
+ * devices upon boot.  The goal here is क्रम the kernel to be
  * completely self-reliant and independent from bootloaders.  This is
  * to ensure a repeatable configuration, both to ensure consistent
- * runtime behavior, and to make it easier for others to reproduce
+ * runसमय behavior, and to make it easier क्रम others to reproduce
  * bugs.
  *
  * OMAP module activity states
  * ---------------------------
  * The hwmod code considers modules to be in one of several activity
  * states.  IP blocks start out in an UNKNOWN state, then once they
- * are registered via the hwmod code, proceed to the REGISTERED state.
- * Once their clock names are resolved to clock pointers, the module
+ * are रेजिस्टरed via the hwmod code, proceed to the REGISTERED state.
+ * Once their घड़ी names are resolved to घड़ी poपूर्णांकers, the module
  * enters the CLKS_INITED state; and finally, once the module has been
- * reset and the integration registers programmed, the INITIALIZED state
- * is entered.  The hwmod code will then place the module into either
- * the IDLE state to save power, or in the case of a critical system
+ * reset and the पूर्णांकegration रेजिस्टरs programmed, the INITIALIZED state
+ * is entered.  The hwmod code will then place the module पूर्णांकo either
+ * the IDLE state to save घातer, or in the हाल of a critical प्रणाली
  * module, the ENABLED state.
  *
- * OMAP core integration code can then call omap_hwmod*() functions
+ * OMAP core पूर्णांकegration code can then call omap_hwmod*() functions
  * directly to move the module between the IDLE, ENABLED, and DISABLED
- * states, as needed.  This is done during both the PM idle loop, and
- * in the OMAP core integration code's implementation of the PM runtime
+ * states, as needed.  This is करोne during both the PM idle loop, and
+ * in the OMAP core पूर्णांकegration code's implementation of the PM runसमय
  * functions.
  *
  * References
  * ----------
  * This is a partial list.
- * - OMAP2420 Multimedia Processor Silicon Revision 2.1.1, 2.2 (SWPU064)
- * - OMAP2430 Multimedia Device POP Silicon Revision 2.1 (SWPU090)
- * - OMAP34xx Multimedia Device Silicon Revision 3.1 (SWPU108)
- * - OMAP4430 Multimedia Device Silicon Revision 1.0 (SWPU140)
- * - Open Core Protocol Specification 2.2
+ * - OMAP2420 Mulसमयdia Processor Silicon Revision 2.1.1, 2.2 (SWPU064)
+ * - OMAP2430 Mulसमयdia Device POP Silicon Revision 2.1 (SWPU090)
+ * - OMAP34xx Mulसमयdia Device Silicon Revision 3.1 (SWPU108)
+ * - OMAP4430 Mulसमयdia Device Silicon Revision 1.0 (SWPU140)
+ * - Open Core Protocol Specअगरication 2.2
  *
- * To do:
+ * To करो:
  * - handle IO mapping
  * - bus throughput & module latency measurement code
  *
  * XXX add tests at the beginning of each function to ensure the hwmod is
  * in the appropriate state
- * XXX error return values should be checked to ensure that they are
+ * XXX error वापस values should be checked to ensure that they are
  * appropriate
  */
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/cpu.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/memblock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/memblock.h>
 
-#include <linux/platform_data/ti-sysc.h>
+#समावेश <linux/platक्रमm_data/ti-sysc.h>
 
-#include <dt-bindings/bus/ti-sysc.h>
+#समावेश <dt-bindings/bus/ti-sysc.h>
 
-#include <asm/system_misc.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#include "clock.h"
-#include "omap_hwmod.h"
+#समावेश "clock.h"
+#समावेश "omap_hwmod.h"
 
-#include "soc.h"
-#include "common.h"
-#include "clockdomain.h"
-#include "hdq1w.h"
-#include "mmc.h"
-#include "powerdomain.h"
-#include "cm2xxx.h"
-#include "cm3xxx.h"
-#include "cm33xx.h"
-#include "prm.h"
-#include "prm3xxx.h"
-#include "prm44xx.h"
-#include "prm33xx.h"
-#include "prminst44xx.h"
-#include "pm.h"
-#include "wd_timer.h"
+#समावेश "soc.h"
+#समावेश "common.h"
+#समावेश "clockdomain.h"
+#समावेश "hdq1w.h"
+#समावेश "mmc.h"
+#समावेश "powerdomain.h"
+#समावेश "cm2xxx.h"
+#समावेश "cm3xxx.h"
+#समावेश "cm33xx.h"
+#समावेश "prm.h"
+#समावेश "prm3xxx.h"
+#समावेश "prm44xx.h"
+#समावेश "prm33xx.h"
+#समावेश "prminst44xx.h"
+#समावेश "pm.h"
+#समावेश "wd_timer.h"
 
-/* Name of the OMAP hwmod for the MPU */
-#define MPU_INITIATOR_NAME		"mpu"
+/* Name of the OMAP hwmod क्रम the MPU */
+#घोषणा MPU_INITIATOR_NAME		"mpu"
 
 /*
- * Number of struct omap_hwmod_link records per struct
- * omap_hwmod_ocp_if record (master->slave and slave->master)
+ * Number of काष्ठा omap_hwmod_link records per काष्ठा
+ * omap_hwmod_ocp_अगर record (master->slave and slave->master)
  */
-#define LINKS_PER_OCP_IF		2
+#घोषणा LINKS_PER_OCP_IF		2
 
 /*
  * Address offset (in bytes) between the reset control and the reset
- * status registers: 4 bytes on OMAP4
+ * status रेजिस्टरs: 4 bytes on OMAP4
  */
-#define OMAP4_RST_CTRL_ST_OFFSET	4
+#घोषणा OMAP4_RST_CTRL_ST_OFFSET	4
 
 /*
- * Maximum length for module clock handle names
+ * Maximum length क्रम module घड़ी handle names
  */
-#define MOD_CLK_MAX_NAME_LEN		32
+#घोषणा MOD_CLK_MAX_NAME_LEN		32
 
 /**
- * struct clkctrl_provider - clkctrl provider mapping data
- * @num_addrs: number of base address ranges for the provider
- * @addr: base address(es) for the provider
+ * काष्ठा clkctrl_provider - clkctrl provider mapping data
+ * @num_addrs: number of base address ranges क्रम the provider
+ * @addr: base address(es) क्रम the provider
  * @size: size(s) of the provider address space(s)
  * @node: device node associated with the provider
  * @link: list link
  */
-struct clkctrl_provider {
-	int			num_addrs;
+काष्ठा clkctrl_provider अणु
+	पूर्णांक			num_addrs;
 	u32			*addr;
 	u32			*size;
-	struct device_node	*node;
-	struct list_head	link;
-};
+	काष्ठा device_node	*node;
+	काष्ठा list_head	link;
+पूर्ण;
 
-static LIST_HEAD(clkctrl_providers);
+अटल LIST_HEAD(clkctrl_providers);
 
 /**
- * struct omap_hwmod_reset - IP specific reset functions
+ * काष्ठा omap_hwmod_reset - IP specअगरic reset functions
  * @match: string to match against the module name
- * @len: number of characters to match
- * @reset: IP specific reset function
+ * @len: number of अक्षरacters to match
+ * @reset: IP specअगरic reset function
  *
- * Used only in cases where struct omap_hwmod is dynamically allocated.
+ * Used only in हालs where काष्ठा omap_hwmod is dynamically allocated.
  */
-struct omap_hwmod_reset {
-	const char *match;
-	int len;
-	int (*reset)(struct omap_hwmod *oh);
-};
+काष्ठा omap_hwmod_reset अणु
+	स्थिर अक्षर *match;
+	पूर्णांक len;
+	पूर्णांक (*reset)(काष्ठा omap_hwmod *oh);
+पूर्ण;
 
 /**
- * struct omap_hwmod_soc_ops - fn ptrs for some SoC-specific operations
+ * काष्ठा omap_hwmod_soc_ops - fn ptrs क्रम some SoC-specअगरic operations
  * @enable_module: function to enable a module (via MODULEMODE)
  * @disable_module: function to disable a module (via MODULEMODE)
  *
  * XXX Eventually this functionality will be hidden inside the PRM/CM
- * device drivers.  Until then, this should avoid huge blocks of cpu_is_*()
+ * device drivers.  Until then, this should aव्योम huge blocks of cpu_is_*()
  * conditionals in this code.
  */
-struct omap_hwmod_soc_ops {
-	void (*enable_module)(struct omap_hwmod *oh);
-	int (*disable_module)(struct omap_hwmod *oh);
-	int (*wait_target_ready)(struct omap_hwmod *oh);
-	int (*assert_hardreset)(struct omap_hwmod *oh,
-				struct omap_hwmod_rst_info *ohri);
-	int (*deassert_hardreset)(struct omap_hwmod *oh,
-				  struct omap_hwmod_rst_info *ohri);
-	int (*is_hardreset_asserted)(struct omap_hwmod *oh,
-				     struct omap_hwmod_rst_info *ohri);
-	int (*init_clkdm)(struct omap_hwmod *oh);
-	void (*update_context_lost)(struct omap_hwmod *oh);
-	int (*get_context_lost)(struct omap_hwmod *oh);
-	int (*disable_direct_prcm)(struct omap_hwmod *oh);
-	u32 (*xlate_clkctrl)(struct omap_hwmod *oh);
-};
+काष्ठा omap_hwmod_soc_ops अणु
+	व्योम (*enable_module)(काष्ठा omap_hwmod *oh);
+	पूर्णांक (*disable_module)(काष्ठा omap_hwmod *oh);
+	पूर्णांक (*रुको_target_पढ़ोy)(काष्ठा omap_hwmod *oh);
+	पूर्णांक (*निश्चित_hardreset)(काष्ठा omap_hwmod *oh,
+				काष्ठा omap_hwmod_rst_info *ohri);
+	पूर्णांक (*deनिश्चित_hardreset)(काष्ठा omap_hwmod *oh,
+				  काष्ठा omap_hwmod_rst_info *ohri);
+	पूर्णांक (*is_hardreset_निश्चितed)(काष्ठा omap_hwmod *oh,
+				     काष्ठा omap_hwmod_rst_info *ohri);
+	पूर्णांक (*init_clkdm)(काष्ठा omap_hwmod *oh);
+	व्योम (*update_context_lost)(काष्ठा omap_hwmod *oh);
+	पूर्णांक (*get_context_lost)(काष्ठा omap_hwmod *oh);
+	पूर्णांक (*disable_direct_prcm)(काष्ठा omap_hwmod *oh);
+	u32 (*xlate_clkctrl)(काष्ठा omap_hwmod *oh);
+पूर्ण;
 
 /* soc_ops: adapts the omap_hwmod code to the currently-booted SoC */
-static struct omap_hwmod_soc_ops soc_ops;
+अटल काष्ठा omap_hwmod_soc_ops soc_ops;
 
-/* omap_hwmod_list contains all registered struct omap_hwmods */
-static LIST_HEAD(omap_hwmod_list);
-static DEFINE_MUTEX(list_lock);
+/* omap_hwmod_list contains all रेजिस्टरed काष्ठा omap_hwmods */
+अटल LIST_HEAD(omap_hwmod_list);
+अटल DEFINE_MUTEX(list_lock);
 
-/* mpu_oh: used to add/remove MPU initiator from sleepdep list */
-static struct omap_hwmod *mpu_oh;
+/* mpu_oh: used to add/हटाओ MPU initiator from sleepdep list */
+अटल काष्ठा omap_hwmod *mpu_oh;
 
 /* inited: set to true once the hwmod code is initialized */
-static bool inited;
+अटल bool inited;
 
 /* Private functions */
 
 /**
- * _update_sysc_cache - return the module OCP_SYSCONFIG register, keep copy
- * @oh: struct omap_hwmod *
+ * _update_sysc_cache - वापस the module OCP_SYSCONFIG रेजिस्टर, keep copy
+ * @oh: काष्ठा omap_hwmod *
  *
- * Load the current value of the hwmod OCP_SYSCONFIG register into the
- * struct omap_hwmod for later use.  Returns -EINVAL if the hwmod has no
- * OCP_SYSCONFIG register or 0 upon success.
+ * Load the current value of the hwmod OCP_SYSCONFIG रेजिस्टर पूर्णांकo the
+ * काष्ठा omap_hwmod क्रम later use.  Returns -EINVAL अगर the hwmod has no
+ * OCP_SYSCONFIG रेजिस्टर or 0 upon success.
  */
-static int _update_sysc_cache(struct omap_hwmod *oh)
-{
-	if (!oh->class->sysc) {
+अटल पूर्णांक _update_sysc_cache(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh->class->sysc) अणु
 		WARN(1, "omap_hwmod: %s: cannot read OCP_SYSCONFIG: not defined on hwmod's class\n", oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* XXX ensure module interface clock is up */
+	/* XXX ensure module पूर्णांकerface घड़ी is up */
 
-	oh->_sysc_cache = omap_hwmod_read(oh, oh->class->sysc->sysc_offs);
+	oh->_sysc_cache = omap_hwmod_पढ़ो(oh, oh->class->sysc->sysc_offs);
 
-	if (!(oh->class->sysc->sysc_flags & SYSC_NO_CACHE))
-		oh->_int_flags |= _HWMOD_SYSCONFIG_LOADED;
+	अगर (!(oh->class->sysc->sysc_flags & SYSC_NO_CACHE))
+		oh->_पूर्णांक_flags |= _HWMOD_SYSCONFIG_LOADED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _write_sysconfig - write a value to the module's OCP_SYSCONFIG register
- * @v: OCP_SYSCONFIG value to write
- * @oh: struct omap_hwmod *
+ * _ग_लिखो_sysconfig - ग_लिखो a value to the module's OCP_SYSCONFIG रेजिस्टर
+ * @v: OCP_SYSCONFIG value to ग_लिखो
+ * @oh: काष्ठा omap_hwmod *
  *
- * Write @v into the module class' OCP_SYSCONFIG register, if it has
- * one.  No return value.
+ * Write @v पूर्णांकo the module class' OCP_SYSCONFIG रेजिस्टर, अगर it has
+ * one.  No वापस value.
  */
-static void _write_sysconfig(u32 v, struct omap_hwmod *oh)
-{
-	if (!oh->class->sysc) {
+अटल व्योम _ग_लिखो_sysconfig(u32 v, काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh->class->sysc) अणु
 		WARN(1, "omap_hwmod: %s: cannot write OCP_SYSCONFIG: not defined on hwmod's class\n", oh->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* XXX ensure module interface clock is up */
+	/* XXX ensure module पूर्णांकerface घड़ी is up */
 
-	/* Module might have lost context, always update cache and register */
+	/* Module might have lost context, always update cache and रेजिस्टर */
 	oh->_sysc_cache = v;
 
 	/*
-	 * Some IP blocks (such as RTC) require unlocking of IP before
-	 * accessing its registers. If a function pointer is present
-	 * to unlock, then call it before accessing sysconfig and
+	 * Some IP blocks (such as RTC) require unlocking of IP beक्रमe
+	 * accessing its रेजिस्टरs. If a function poपूर्णांकer is present
+	 * to unlock, then call it beक्रमe accessing sysconfig and
 	 * call lock after writing sysconfig.
 	 */
-	if (oh->class->unlock)
+	अगर (oh->class->unlock)
 		oh->class->unlock(oh);
 
-	omap_hwmod_write(v, oh, oh->class->sysc->sysc_offs);
+	omap_hwmod_ग_लिखो(v, oh, oh->class->sysc->sysc_offs);
 
-	if (oh->class->lock)
+	अगर (oh->class->lock)
 		oh->class->lock(oh);
-}
+पूर्ण
 
 /**
  * _set_master_standbymode: set the OCP_SYSCONFIG MIDLEMODE field in @v
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  * @standbymode: MIDLEMODE field bits
- * @v: pointer to register contents to modify
+ * @v: poपूर्णांकer to रेजिस्टर contents to modअगरy
  *
- * Update the master standby mode bits in @v to be @standbymode for
- * the @oh hwmod.  Does not write to the hardware.  Returns -EINVAL
+ * Update the master standby mode bits in @v to be @standbymode क्रम
+ * the @oh hwmod.  Does not ग_लिखो to the hardware.  Returns -EINVAL
  * upon error or 0 upon success.
  */
-static int _set_master_standbymode(struct omap_hwmod *oh, u8 standbymode,
+अटल पूर्णांक _set_master_standbymode(काष्ठा omap_hwmod *oh, u8 standbymode,
 				   u32 *v)
-{
+अणु
 	u32 mstandby_mask;
-	u8 mstandby_shift;
+	u8 mstandby_shअगरt;
 
-	if (!oh->class->sysc ||
+	अगर (!oh->class->sysc ||
 	    !(oh->class->sysc->sysc_flags & SYSC_HAS_MIDLEMODE))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!oh->class->sysc->sysc_fields) {
+	अगर (!oh->class->sysc->sysc_fields) अणु
 		WARN(1, "omap_hwmod: %s: offset struct for sysconfig not provided in class\n", oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	mstandby_shift = oh->class->sysc->sysc_fields->midle_shift;
-	mstandby_mask = (0x3 << mstandby_shift);
+	mstandby_shअगरt = oh->class->sysc->sysc_fields->midle_shअगरt;
+	mstandby_mask = (0x3 << mstandby_shअगरt);
 
 	*v &= ~mstandby_mask;
-	*v |= __ffs(standbymode) << mstandby_shift;
+	*v |= __ffs(standbymode) << mstandby_shअगरt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _set_slave_idlemode: set the OCP_SYSCONFIG SIDLEMODE field in @v
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  * @idlemode: SIDLEMODE field bits
- * @v: pointer to register contents to modify
+ * @v: poपूर्णांकer to रेजिस्टर contents to modअगरy
  *
- * Update the slave idle mode bits in @v to be @idlemode for the @oh
- * hwmod.  Does not write to the hardware.  Returns -EINVAL upon error
+ * Update the slave idle mode bits in @v to be @idlemode क्रम the @oh
+ * hwmod.  Does not ग_लिखो to the hardware.  Returns -EINVAL upon error
  * or 0 upon success.
  */
-static int _set_slave_idlemode(struct omap_hwmod *oh, u8 idlemode, u32 *v)
-{
+अटल पूर्णांक _set_slave_idlemode(काष्ठा omap_hwmod *oh, u8 idlemode, u32 *v)
+अणु
 	u32 sidle_mask;
-	u8 sidle_shift;
+	u8 sidle_shअगरt;
 
-	if (!oh->class->sysc ||
+	अगर (!oh->class->sysc ||
 	    !(oh->class->sysc->sysc_flags & SYSC_HAS_SIDLEMODE))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!oh->class->sysc->sysc_fields) {
+	अगर (!oh->class->sysc->sysc_fields) अणु
 		WARN(1, "omap_hwmod: %s: offset struct for sysconfig not provided in class\n", oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	sidle_shift = oh->class->sysc->sysc_fields->sidle_shift;
-	sidle_mask = (0x3 << sidle_shift);
+	sidle_shअगरt = oh->class->sysc->sysc_fields->sidle_shअगरt;
+	sidle_mask = (0x3 << sidle_shअगरt);
 
 	*v &= ~sidle_mask;
-	*v |= __ffs(idlemode) << sidle_shift;
+	*v |= __ffs(idlemode) << sidle_shअगरt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _set_clockactivity: set OCP_SYSCONFIG.CLOCKACTIVITY bits in @v
- * @oh: struct omap_hwmod *
- * @clockact: CLOCKACTIVITY field bits
- * @v: pointer to register contents to modify
+ * _set_घड़ीactivity: set OCP_SYSCONFIG.CLOCKACTIVITY bits in @v
+ * @oh: काष्ठा omap_hwmod *
+ * @घड़ीact: CLOCKACTIVITY field bits
+ * @v: poपूर्णांकer to रेजिस्टर contents to modअगरy
  *
- * Update the clockactivity mode bits in @v to be @clockact for the
- * @oh hwmod.  Used for additional powersaving on some modules.  Does
- * not write to the hardware.  Returns -EINVAL upon error or 0 upon
+ * Update the घड़ीactivity mode bits in @v to be @घड़ीact क्रम the
+ * @oh hwmod.  Used क्रम additional घातersaving on some modules.  Does
+ * not ग_लिखो to the hardware.  Returns -EINVAL upon error or 0 upon
  * success.
  */
-static int _set_clockactivity(struct omap_hwmod *oh, u8 clockact, u32 *v)
-{
+अटल पूर्णांक _set_घड़ीactivity(काष्ठा omap_hwmod *oh, u8 घड़ीact, u32 *v)
+अणु
 	u32 clkact_mask;
-	u8  clkact_shift;
+	u8  clkact_shअगरt;
 
-	if (!oh->class->sysc ||
+	अगर (!oh->class->sysc ||
 	    !(oh->class->sysc->sysc_flags & SYSC_HAS_CLOCKACTIVITY))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!oh->class->sysc->sysc_fields) {
+	अगर (!oh->class->sysc->sysc_fields) अणु
 		WARN(1, "omap_hwmod: %s: offset struct for sysconfig not provided in class\n", oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	clkact_shift = oh->class->sysc->sysc_fields->clkact_shift;
-	clkact_mask = (0x3 << clkact_shift);
+	clkact_shअगरt = oh->class->sysc->sysc_fields->clkact_shअगरt;
+	clkact_mask = (0x3 << clkact_shअगरt);
 
 	*v &= ~clkact_mask;
-	*v |= clockact << clkact_shift;
+	*v |= घड़ीact << clkact_shअगरt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _set_softreset: set OCP_SYSCONFIG.SOFTRESET bit in @v
- * @oh: struct omap_hwmod *
- * @v: pointer to register contents to modify
+ * @oh: काष्ठा omap_hwmod *
+ * @v: poपूर्णांकer to रेजिस्टर contents to modअगरy
  *
- * Set the SOFTRESET bit in @v for hwmod @oh.  Returns -EINVAL upon
+ * Set the SOFTRESET bit in @v क्रम hwmod @oh.  Returns -EINVAL upon
  * error or 0 upon success.
  */
-static int _set_softreset(struct omap_hwmod *oh, u32 *v)
-{
+अटल पूर्णांक _set_softreset(काष्ठा omap_hwmod *oh, u32 *v)
+अणु
 	u32 softrst_mask;
 
-	if (!oh->class->sysc ||
+	अगर (!oh->class->sysc ||
 	    !(oh->class->sysc->sysc_flags & SYSC_HAS_SOFTRESET))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!oh->class->sysc->sysc_fields) {
+	अगर (!oh->class->sysc->sysc_fields) अणु
 		WARN(1, "omap_hwmod: %s: offset struct for sysconfig not provided in class\n", oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	softrst_mask = (0x1 << oh->class->sysc->sysc_fields->srst_shift);
+	softrst_mask = (0x1 << oh->class->sysc->sysc_fields->srst_shअगरt);
 
 	*v |= softrst_mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _clear_softreset: clear OCP_SYSCONFIG.SOFTRESET bit in @v
- * @oh: struct omap_hwmod *
- * @v: pointer to register contents to modify
+ * @oh: काष्ठा omap_hwmod *
+ * @v: poपूर्णांकer to रेजिस्टर contents to modअगरy
  *
- * Clear the SOFTRESET bit in @v for hwmod @oh.  Returns -EINVAL upon
+ * Clear the SOFTRESET bit in @v क्रम hwmod @oh.  Returns -EINVAL upon
  * error or 0 upon success.
  */
-static int _clear_softreset(struct omap_hwmod *oh, u32 *v)
-{
+अटल पूर्णांक _clear_softreset(काष्ठा omap_hwmod *oh, u32 *v)
+अणु
 	u32 softrst_mask;
 
-	if (!oh->class->sysc ||
+	अगर (!oh->class->sysc ||
 	    !(oh->class->sysc->sysc_flags & SYSC_HAS_SOFTRESET))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!oh->class->sysc->sysc_fields) {
+	अगर (!oh->class->sysc->sysc_fields) अणु
 		WARN(1,
 		     "omap_hwmod: %s: sysc_fields absent for sysconfig class\n",
 		     oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	softrst_mask = (0x1 << oh->class->sysc->sysc_fields->srst_shift);
+	softrst_mask = (0x1 << oh->class->sysc->sysc_fields->srst_shअगरt);
 
 	*v &= ~softrst_mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _wait_softreset_complete - wait for an OCP softreset to complete
- * @oh: struct omap_hwmod * to wait on
+ * _रुको_softreset_complete - रुको क्रम an OCP softreset to complete
+ * @oh: काष्ठा omap_hwmod * to रुको on
  *
  * Wait until the IP block represented by @oh reports that its OCP
  * softreset is complete.  This can be triggered by software (see
- * _ocp_softreset()) or by hardware upon returning from off-mode (one
- * example is HSMMC).  Waits for up to MAX_MODULE_SOFTRESET_WAIT
- * microseconds.  Returns the number of microseconds waited.
+ * _ocp_softreset()) or by hardware upon वापसing from off-mode (one
+ * example is HSMMC).  Waits क्रम up to MAX_MODULE_SOFTRESET_WAIT
+ * microseconds.  Returns the number of microseconds रुकोed.
  */
-static int _wait_softreset_complete(struct omap_hwmod *oh)
-{
-	struct omap_hwmod_class_sysconfig *sysc;
+अटल पूर्णांक _रुको_softreset_complete(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा omap_hwmod_class_sysconfig *sysc;
 	u32 softrst_mask;
-	int c = 0;
+	पूर्णांक c = 0;
 
 	sysc = oh->class->sysc;
 
-	if (sysc->sysc_flags & SYSS_HAS_RESET_STATUS && sysc->syss_offs > 0)
-		omap_test_timeout((omap_hwmod_read(oh, sysc->syss_offs)
+	अगर (sysc->sysc_flags & SYSS_HAS_RESET_STATUS && sysc->syss_offs > 0)
+		omap_test_समयout((omap_hwmod_पढ़ो(oh, sysc->syss_offs)
 				   & SYSS_RESETDONE_MASK),
 				  MAX_MODULE_SOFTRESET_WAIT, c);
-	else if (sysc->sysc_flags & SYSC_HAS_RESET_STATUS) {
-		softrst_mask = (0x1 << sysc->sysc_fields->srst_shift);
-		omap_test_timeout(!(omap_hwmod_read(oh, sysc->sysc_offs)
+	अन्यथा अगर (sysc->sysc_flags & SYSC_HAS_RESET_STATUS) अणु
+		softrst_mask = (0x1 << sysc->sysc_fields->srst_shअगरt);
+		omap_test_समयout(!(omap_hwmod_पढ़ो(oh, sysc->sysc_offs)
 				    & softrst_mask),
 				  MAX_MODULE_SOFTRESET_WAIT, c);
-	}
+	पूर्ण
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
 /**
  * _set_dmadisable: set OCP_SYSCONFIG.DMADISABLE bit in @v
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
- * The DMADISABLE bit is a semi-automatic bit present in sysconfig register
- * of some modules. When the DMA must perform read/write accesses, the
+ * The DMADISABLE bit is a semi-स्वतःmatic bit present in sysconfig रेजिस्टर
+ * of some modules. When the DMA must perक्रमm पढ़ो/ग_लिखो accesses, the
  * DMADISABLE bit is cleared by the hardware. But when the DMA must stop
- * for power management, software must set the DMADISABLE bit back to 1.
+ * क्रम घातer management, software must set the DMADISABLE bit back to 1.
  *
- * Set the DMADISABLE bit in @v for hwmod @oh.  Returns -EINVAL upon
+ * Set the DMADISABLE bit in @v क्रम hwmod @oh.  Returns -EINVAL upon
  * error or 0 upon success.
  */
-static int _set_dmadisable(struct omap_hwmod *oh)
-{
+अटल पूर्णांक _set_dmadisable(काष्ठा omap_hwmod *oh)
+अणु
 	u32 v;
 	u32 dmadisable_mask;
 
-	if (!oh->class->sysc ||
+	अगर (!oh->class->sysc ||
 	    !(oh->class->sysc->sysc_flags & SYSC_HAS_DMADISABLE))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!oh->class->sysc->sysc_fields) {
+	अगर (!oh->class->sysc->sysc_fields) अणु
 		WARN(1, "omap_hwmod: %s: offset struct for sysconfig not provided in class\n", oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* clocks must be on for this operation */
-	if (oh->_state != _HWMOD_STATE_ENABLED) {
+	/* घड़ीs must be on क्रम this operation */
+	अगर (oh->_state != _HWMOD_STATE_ENABLED) अणु
 		pr_warn("omap_hwmod: %s: dma can be disabled only from enabled state\n", oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pr_debug("omap_hwmod: %s: setting DMADISABLE\n", oh->name);
 
 	v = oh->_sysc_cache;
 	dmadisable_mask =
-		(0x1 << oh->class->sysc->sysc_fields->dmadisable_shift);
+		(0x1 << oh->class->sysc->sysc_fields->dmadisable_shअगरt);
 	v |= dmadisable_mask;
-	_write_sysconfig(v, oh);
+	_ग_लिखो_sysconfig(v, oh);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _set_module_autoidle: set the OCP_SYSCONFIG AUTOIDLE field in @v
- * @oh: struct omap_hwmod *
- * @autoidle: desired AUTOIDLE bitfield value (0 or 1)
- * @v: pointer to register contents to modify
+ * _set_module_स्वतःidle: set the OCP_SYSCONFIG AUTOIDLE field in @v
+ * @oh: काष्ठा omap_hwmod *
+ * @स्वतःidle: desired AUTOIDLE bitfield value (0 or 1)
+ * @v: poपूर्णांकer to रेजिस्टर contents to modअगरy
  *
- * Update the module autoidle bit in @v to be @autoidle for the @oh
- * hwmod.  The autoidle bit controls whether the module can gate
- * internal clocks automatically when it isn't doing anything; the
+ * Update the module स्वतःidle bit in @v to be @स्वतःidle क्रम the @oh
+ * hwmod.  The स्वतःidle bit controls whether the module can gate
+ * पूर्णांकernal घड़ीs स्वतःmatically when it isn't करोing anything; the
  * exact function of this bit varies on a per-module basis.  This
- * function does not write to the hardware.  Returns -EINVAL upon
+ * function करोes not ग_लिखो to the hardware.  Returns -EINVAL upon
  * error or 0 upon success.
  */
-static int _set_module_autoidle(struct omap_hwmod *oh, u8 autoidle,
+अटल पूर्णांक _set_module_स्वतःidle(काष्ठा omap_hwmod *oh, u8 स्वतःidle,
 				u32 *v)
-{
-	u32 autoidle_mask;
-	u8 autoidle_shift;
+अणु
+	u32 स्वतःidle_mask;
+	u8 स्वतःidle_shअगरt;
 
-	if (!oh->class->sysc ||
+	अगर (!oh->class->sysc ||
 	    !(oh->class->sysc->sysc_flags & SYSC_HAS_AUTOIDLE))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!oh->class->sysc->sysc_fields) {
+	अगर (!oh->class->sysc->sysc_fields) अणु
 		WARN(1, "omap_hwmod: %s: offset struct for sysconfig not provided in class\n", oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	autoidle_shift = oh->class->sysc->sysc_fields->autoidle_shift;
-	autoidle_mask = (0x1 << autoidle_shift);
+	स्वतःidle_shअगरt = oh->class->sysc->sysc_fields->स्वतःidle_shअगरt;
+	स्वतःidle_mask = (0x1 << स्वतःidle_shअगरt);
 
-	*v &= ~autoidle_mask;
-	*v |= autoidle << autoidle_shift;
+	*v &= ~स्वतःidle_mask;
+	*v |= स्वतःidle << स्वतःidle_shअगरt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _enable_wakeup: set OCP_SYSCONFIG.ENAWAKEUP bit in the hardware
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Allow the hardware module @oh to send wakeups.  Returns -EINVAL
  * upon error or 0 upon success.
  */
-static int _enable_wakeup(struct omap_hwmod *oh, u32 *v)
-{
-	if (!oh->class->sysc ||
+अटल पूर्णांक _enable_wakeup(काष्ठा omap_hwmod *oh, u32 *v)
+अणु
+	अगर (!oh->class->sysc ||
 	    !((oh->class->sysc->sysc_flags & SYSC_HAS_ENAWAKEUP) ||
 	      (oh->class->sysc->idlemodes & SIDLE_SMART_WKUP) ||
 	      (oh->class->sysc->idlemodes & MSTANDBY_SMART_WKUP)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!oh->class->sysc->sysc_fields) {
+	अगर (!oh->class->sysc->sysc_fields) अणु
 		WARN(1, "omap_hwmod: %s: offset struct for sysconfig not provided in class\n", oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (oh->class->sysc->sysc_flags & SYSC_HAS_ENAWAKEUP)
-		*v |= 0x1 << oh->class->sysc->sysc_fields->enwkup_shift;
+	अगर (oh->class->sysc->sysc_flags & SYSC_HAS_ENAWAKEUP)
+		*v |= 0x1 << oh->class->sysc->sysc_fields->enwkup_shअगरt;
 
-	if (oh->class->sysc->idlemodes & SIDLE_SMART_WKUP)
+	अगर (oh->class->sysc->idlemodes & SIDLE_SMART_WKUP)
 		_set_slave_idlemode(oh, HWMOD_IDLEMODE_SMART_WKUP, v);
-	if (oh->class->sysc->idlemodes & MSTANDBY_SMART_WKUP)
+	अगर (oh->class->sysc->idlemodes & MSTANDBY_SMART_WKUP)
 		_set_master_standbymode(oh, HWMOD_IDLEMODE_SMART_WKUP, v);
 
-	/* XXX test pwrdm_get_wken for this hwmod's subsystem */
+	/* XXX test pwrdm_get_wken क्रम this hwmod's subप्रणाली */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct clockdomain *_get_clkdm(struct omap_hwmod *oh)
-{
-	struct clk_hw_omap *clk;
+अटल काष्ठा घड़ीकरोमुख्य *_get_clkdm(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा clk_hw_omap *clk;
 
-	if (!oh)
-		return NULL;
+	अगर (!oh)
+		वापस शून्य;
 
-	if (oh->clkdm) {
-		return oh->clkdm;
-	} else if (oh->_clk) {
-		if (!omap2_clk_is_hw_omap(__clk_get_hw(oh->_clk)))
-			return NULL;
+	अगर (oh->clkdm) अणु
+		वापस oh->clkdm;
+	पूर्ण अन्यथा अगर (oh->_clk) अणु
+		अगर (!omap2_clk_is_hw_omap(__clk_get_hw(oh->_clk)))
+			वापस शून्य;
 		clk = to_clk_hw_omap(__clk_get_hw(oh->_clk));
-		return clk->clkdm;
-	}
-	return NULL;
-}
+		वापस clk->clkdm;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * _add_initiator_dep: prevent @oh from smart-idling while @init_oh is active
- * @oh: struct omap_hwmod *
+ * _add_initiator_dep: prevent @oh from smart-idling जबतक @init_oh is active
+ * @oh: काष्ठा omap_hwmod *
  *
- * Prevent the hardware module @oh from entering idle while the
+ * Prevent the hardware module @oh from entering idle जबतक the
  * hardare module initiator @init_oh is active.  Useful when a module
- * will be accessed by a particular initiator (e.g., if a module will
+ * will be accessed by a particular initiator (e.g., अगर a module will
  * be accessed by the IVA, there should be a sleepdep between the IVA
  * initiator and the module).  Only applies to modules in smart-idle
- * mode.  If the clockdomain is marked as not needing autodeps, return
- * 0 without doing anything.  Otherwise, returns -EINVAL upon error or
- * passes along clkdm_add_sleepdep() value upon success.
+ * mode.  If the घड़ीकरोमुख्य is marked as not needing स्वतःdeps, वापस
+ * 0 without करोing anything.  Otherwise, वापसs -EINVAL upon error or
+ * passes aदीर्घ clkdm_add_sleepdep() value upon success.
  */
-static int _add_initiator_dep(struct omap_hwmod *oh, struct omap_hwmod *init_oh)
-{
-	struct clockdomain *clkdm, *init_clkdm;
+अटल पूर्णांक _add_initiator_dep(काष्ठा omap_hwmod *oh, काष्ठा omap_hwmod *init_oh)
+अणु
+	काष्ठा घड़ीकरोमुख्य *clkdm, *init_clkdm;
 
 	clkdm = _get_clkdm(oh);
 	init_clkdm = _get_clkdm(init_oh);
 
-	if (!clkdm || !init_clkdm)
-		return -EINVAL;
+	अगर (!clkdm || !init_clkdm)
+		वापस -EINVAL;
 
-	if (clkdm && clkdm->flags & CLKDM_NO_AUTODEPS)
-		return 0;
+	अगर (clkdm && clkdm->flags & CLKDM_NO_AUTODEPS)
+		वापस 0;
 
-	return clkdm_add_sleepdep(clkdm, init_clkdm);
-}
+	वापस clkdm_add_sleepdep(clkdm, init_clkdm);
+पूर्ण
 
 /**
- * _del_initiator_dep: allow @oh to smart-idle even if @init_oh is active
- * @oh: struct omap_hwmod *
+ * _del_initiator_dep: allow @oh to smart-idle even अगर @init_oh is active
+ * @oh: काष्ठा omap_hwmod *
  *
- * Allow the hardware module @oh to enter idle while the hardare
+ * Allow the hardware module @oh to enter idle जबतक the hardare
  * module initiator @init_oh is active.  Useful when a module will not
- * be accessed by a particular initiator (e.g., if a module will not
+ * be accessed by a particular initiator (e.g., अगर a module will not
  * be accessed by the IVA, there should be no sleepdep between the IVA
  * initiator and the module).  Only applies to modules in smart-idle
- * mode.  If the clockdomain is marked as not needing autodeps, return
- * 0 without doing anything.  Returns -EINVAL upon error or passes
- * along clkdm_del_sleepdep() value upon success.
+ * mode.  If the घड़ीकरोमुख्य is marked as not needing स्वतःdeps, वापस
+ * 0 without करोing anything.  Returns -EINVAL upon error or passes
+ * aदीर्घ clkdm_del_sleepdep() value upon success.
  */
-static int _del_initiator_dep(struct omap_hwmod *oh, struct omap_hwmod *init_oh)
-{
-	struct clockdomain *clkdm, *init_clkdm;
+अटल पूर्णांक _del_initiator_dep(काष्ठा omap_hwmod *oh, काष्ठा omap_hwmod *init_oh)
+अणु
+	काष्ठा घड़ीकरोमुख्य *clkdm, *init_clkdm;
 
 	clkdm = _get_clkdm(oh);
 	init_clkdm = _get_clkdm(init_oh);
 
-	if (!clkdm || !init_clkdm)
-		return -EINVAL;
+	अगर (!clkdm || !init_clkdm)
+		वापस -EINVAL;
 
-	if (clkdm && clkdm->flags & CLKDM_NO_AUTODEPS)
-		return 0;
+	अगर (clkdm && clkdm->flags & CLKDM_NO_AUTODEPS)
+		वापस 0;
 
-	return clkdm_del_sleepdep(clkdm, init_clkdm);
-}
+	वापस clkdm_del_sleepdep(clkdm, init_clkdm);
+पूर्ण
 
-static const struct of_device_id ti_clkctrl_match_table[] __initconst = {
-	{ .compatible = "ti,clkctrl" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id ti_clkctrl_match_table[] __initस्थिर = अणु
+	अणु .compatible = "ti,clkctrl" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int __init _setup_clkctrl_provider(struct device_node *np)
-{
-	const __be32 *addrp;
-	struct clkctrl_provider *provider;
+अटल पूर्णांक __init _setup_clkctrl_provider(काष्ठा device_node *np)
+अणु
+	स्थिर __be32 *addrp;
+	काष्ठा clkctrl_provider *provider;
 	u64 size;
-	int i;
+	पूर्णांक i;
 
-	provider = memblock_alloc(sizeof(*provider), SMP_CACHE_BYTES);
-	if (!provider)
-		return -ENOMEM;
+	provider = memblock_alloc(माप(*provider), SMP_CACHE_BYTES);
+	अगर (!provider)
+		वापस -ENOMEM;
 
 	provider->node = np;
 
 	provider->num_addrs =
-		of_property_count_elems_of_size(np, "reg", sizeof(u32)) / 2;
+		of_property_count_elems_of_size(np, "reg", माप(u32)) / 2;
 
 	provider->addr =
-		memblock_alloc(sizeof(void *) * provider->num_addrs,
+		memblock_alloc(माप(व्योम *) * provider->num_addrs,
 			       SMP_CACHE_BYTES);
-	if (!provider->addr)
-		return -ENOMEM;
+	अगर (!provider->addr)
+		वापस -ENOMEM;
 
 	provider->size =
-		memblock_alloc(sizeof(u32) * provider->num_addrs,
+		memblock_alloc(माप(u32) * provider->num_addrs,
 			       SMP_CACHE_BYTES);
-	if (!provider->size)
-		return -ENOMEM;
+	अगर (!provider->size)
+		वापस -ENOMEM;
 
-	for (i = 0; i < provider->num_addrs; i++) {
-		addrp = of_get_address(np, i, &size, NULL);
+	क्रम (i = 0; i < provider->num_addrs; i++) अणु
+		addrp = of_get_address(np, i, &size, शून्य);
 		provider->addr[i] = (u32)of_translate_address(np, addrp);
 		provider->size[i] = size;
 		pr_debug("%s: %pOF: %x...%x\n", __func__, np, provider->addr[i],
 			 provider->addr[i] + provider->size[i]);
-	}
+	पूर्ण
 
 	list_add(&provider->link, &clkctrl_providers);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init _init_clkctrl_providers(void)
-{
-	struct device_node *np;
-	int ret = 0;
+अटल पूर्णांक __init _init_clkctrl_providers(व्योम)
+अणु
+	काष्ठा device_node *np;
+	पूर्णांक ret = 0;
 
-	for_each_matching_node(np, ti_clkctrl_match_table) {
+	क्रम_each_matching_node(np, ti_clkctrl_match_table) अणु
 		ret = _setup_clkctrl_provider(np);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 _omap4_xlate_clkctrl(struct omap_hwmod *oh)
-{
-	if (!oh->prcm.omap4.modulemode)
-		return 0;
+अटल u32 _omap4_xlate_clkctrl(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh->prcm.omap4.modulemode)
+		वापस 0;
 
-	return omap_cm_xlate_clkctrl(oh->clkdm->prcm_partition,
+	वापस omap_cm_xlate_clkctrl(oh->clkdm->prcm_partition,
 				     oh->clkdm->cm_inst,
 				     oh->prcm.omap4.clkctrl_offs);
-}
+पूर्ण
 
-static struct clk *_lookup_clkctrl_clk(struct omap_hwmod *oh)
-{
-	struct clkctrl_provider *provider;
-	struct clk *clk;
+अटल काष्ठा clk *_lookup_clkctrl_clk(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा clkctrl_provider *provider;
+	काष्ठा clk *clk;
 	u32 addr;
 
-	if (!soc_ops.xlate_clkctrl)
-		return NULL;
+	अगर (!soc_ops.xlate_clkctrl)
+		वापस शून्य;
 
 	addr = soc_ops.xlate_clkctrl(oh);
-	if (!addr)
-		return NULL;
+	अगर (!addr)
+		वापस शून्य;
 
 	pr_debug("%s: %s: addr=%x\n", __func__, oh->name, addr);
 
-	list_for_each_entry(provider, &clkctrl_providers, link) {
-		int i;
+	list_क्रम_each_entry(provider, &clkctrl_providers, link) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < provider->num_addrs; i++) {
-			if (provider->addr[i] <= addr &&
-			    provider->addr[i] + provider->size[i] > addr) {
-				struct of_phandle_args clkspec;
+		क्रम (i = 0; i < provider->num_addrs; i++) अणु
+			अगर (provider->addr[i] <= addr &&
+			    provider->addr[i] + provider->size[i] > addr) अणु
+				काष्ठा of_phandle_args clkspec;
 
 				clkspec.np = provider->node;
 				clkspec.args_count = 2;
@@ -803,271 +804,271 @@ static struct clk *_lookup_clkctrl_clk(struct omap_hwmod *oh)
 					 __func__, oh->name, clk,
 					 clkspec.args[0], provider->node);
 
-				return clk;
-			}
-		}
-	}
+				वापस clk;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * _init_main_clk - get a struct clk * for the the hwmod's main functional clk
- * @oh: struct omap_hwmod *
+ * _init_मुख्य_clk - get a काष्ठा clk * क्रम the the hwmod's मुख्य functional clk
+ * @oh: काष्ठा omap_hwmod *
  *
- * Called from _init_clocks().  Populates the @oh _clk (main
- * functional clock pointer) if a clock matching the hwmod name is found,
- * or a main_clk is present.  Returns 0 on success or -EINVAL on error.
+ * Called from _init_घड़ीs().  Populates the @oh _clk (मुख्य
+ * functional घड़ी poपूर्णांकer) अगर a घड़ी matching the hwmod name is found,
+ * or a मुख्य_clk is present.  Returns 0 on success or -EINVAL on error.
  */
-static int _init_main_clk(struct omap_hwmod *oh)
-{
-	int ret = 0;
-	struct clk *clk = NULL;
+अटल पूर्णांक _init_मुख्य_clk(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा clk *clk = शून्य;
 
 	clk = _lookup_clkctrl_clk(oh);
 
-	if (!IS_ERR_OR_NULL(clk)) {
+	अगर (!IS_ERR_OR_शून्य(clk)) अणु
 		pr_debug("%s: mapped main_clk %s for %s\n", __func__,
 			 __clk_get_name(clk), oh->name);
-		oh->main_clk = __clk_get_name(clk);
+		oh->मुख्य_clk = __clk_get_name(clk);
 		oh->_clk = clk;
 		soc_ops.disable_direct_prcm(oh);
-	} else {
-		if (!oh->main_clk)
-			return 0;
+	पूर्ण अन्यथा अणु
+		अगर (!oh->मुख्य_clk)
+			वापस 0;
 
-		oh->_clk = clk_get(NULL, oh->main_clk);
-	}
+		oh->_clk = clk_get(शून्य, oh->मुख्य_clk);
+	पूर्ण
 
-	if (IS_ERR(oh->_clk)) {
+	अगर (IS_ERR(oh->_clk)) अणु
 		pr_warn("omap_hwmod: %s: cannot clk_get main_clk %s\n",
-			oh->name, oh->main_clk);
-		return -EINVAL;
-	}
+			oh->name, oh->मुख्य_clk);
+		वापस -EINVAL;
+	पूर्ण
 	/*
 	 * HACK: This needs a re-visit once clk_prepare() is implemented
-	 * to do something meaningful. Today its just a no-op.
-	 * If clk_prepare() is used at some point to do things like
+	 * to करो something meaningful. Today its just a no-op.
+	 * If clk_prepare() is used at some poपूर्णांक to करो things like
 	 * voltage scaling etc, then this would have to be moved to
-	 * some point where subsystems like i2c and pmic become
+	 * some poपूर्णांक where subप्रणालीs like i2c and pmic become
 	 * available.
 	 */
 	clk_prepare(oh->_clk);
 
-	if (!_get_clkdm(oh))
+	अगर (!_get_clkdm(oh))
 		pr_debug("omap_hwmod: %s: missing clockdomain for %s.\n",
-			   oh->name, oh->main_clk);
+			   oh->name, oh->मुख्य_clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * _init_interface_clks - get a struct clk * for the the hwmod's interface clks
- * @oh: struct omap_hwmod *
+ * _init_पूर्णांकerface_clks - get a काष्ठा clk * क्रम the the hwmod's पूर्णांकerface clks
+ * @oh: काष्ठा omap_hwmod *
  *
- * Called from _init_clocks().  Populates the @oh OCP slave interface
- * clock pointers.  Returns 0 on success or -EINVAL on error.
+ * Called from _init_घड़ीs().  Populates the @oh OCP slave पूर्णांकerface
+ * घड़ी poपूर्णांकers.  Returns 0 on success or -EINVAL on error.
  */
-static int _init_interface_clks(struct omap_hwmod *oh)
-{
-	struct omap_hwmod_ocp_if *os;
-	struct clk *c;
-	int ret = 0;
+अटल पूर्णांक _init_पूर्णांकerface_clks(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा omap_hwmod_ocp_अगर *os;
+	काष्ठा clk *c;
+	पूर्णांक ret = 0;
 
-	list_for_each_entry(os, &oh->slave_ports, node) {
-		if (!os->clk)
-			continue;
+	list_क्रम_each_entry(os, &oh->slave_ports, node) अणु
+		अगर (!os->clk)
+			जारी;
 
-		c = clk_get(NULL, os->clk);
-		if (IS_ERR(c)) {
+		c = clk_get(शून्य, os->clk);
+		अगर (IS_ERR(c)) अणु
 			pr_warn("omap_hwmod: %s: cannot clk_get interface_clk %s\n",
 				oh->name, os->clk);
 			ret = -EINVAL;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		os->_clk = c;
 		/*
 		 * HACK: This needs a re-visit once clk_prepare() is implemented
-		 * to do something meaningful. Today its just a no-op.
-		 * If clk_prepare() is used at some point to do things like
+		 * to करो something meaningful. Today its just a no-op.
+		 * If clk_prepare() is used at some poपूर्णांक to करो things like
 		 * voltage scaling etc, then this would have to be moved to
-		 * some point where subsystems like i2c and pmic become
+		 * some poपूर्णांक where subप्रणालीs like i2c and pmic become
 		 * available.
 		 */
 		clk_prepare(os->_clk);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * _init_opt_clk - get a struct clk * for the the hwmod's optional clocks
- * @oh: struct omap_hwmod *
+ * _init_opt_clk - get a काष्ठा clk * क्रम the the hwmod's optional घड़ीs
+ * @oh: काष्ठा omap_hwmod *
  *
- * Called from _init_clocks().  Populates the @oh omap_hwmod_opt_clk
- * clock pointers.  Returns 0 on success or -EINVAL on error.
+ * Called from _init_घड़ीs().  Populates the @oh omap_hwmod_opt_clk
+ * घड़ी poपूर्णांकers.  Returns 0 on success or -EINVAL on error.
  */
-static int _init_opt_clks(struct omap_hwmod *oh)
-{
-	struct omap_hwmod_opt_clk *oc;
-	struct clk *c;
-	int i;
-	int ret = 0;
+अटल पूर्णांक _init_opt_clks(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा omap_hwmod_opt_clk *oc;
+	काष्ठा clk *c;
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	for (i = oh->opt_clks_cnt, oc = oh->opt_clks; i > 0; i--, oc++) {
-		c = clk_get(NULL, oc->clk);
-		if (IS_ERR(c)) {
+	क्रम (i = oh->opt_clks_cnt, oc = oh->opt_clks; i > 0; i--, oc++) अणु
+		c = clk_get(शून्य, oc->clk);
+		अगर (IS_ERR(c)) अणु
 			pr_warn("omap_hwmod: %s: cannot clk_get opt_clk %s\n",
 				oh->name, oc->clk);
 			ret = -EINVAL;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		oc->_clk = c;
 		/*
 		 * HACK: This needs a re-visit once clk_prepare() is implemented
-		 * to do something meaningful. Today its just a no-op.
-		 * If clk_prepare() is used at some point to do things like
+		 * to करो something meaningful. Today its just a no-op.
+		 * If clk_prepare() is used at some poपूर्णांक to करो things like
 		 * voltage scaling etc, then this would have to be moved to
-		 * some point where subsystems like i2c and pmic become
+		 * some poपूर्णांक where subप्रणालीs like i2c and pmic become
 		 * available.
 		 */
 		clk_prepare(oc->_clk);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void _enable_optional_clocks(struct omap_hwmod *oh)
-{
-	struct omap_hwmod_opt_clk *oc;
-	int i;
+अटल व्योम _enable_optional_घड़ीs(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा omap_hwmod_opt_clk *oc;
+	पूर्णांक i;
 
 	pr_debug("omap_hwmod: %s: enabling optional clocks\n", oh->name);
 
-	for (i = oh->opt_clks_cnt, oc = oh->opt_clks; i > 0; i--, oc++)
-		if (oc->_clk) {
+	क्रम (i = oh->opt_clks_cnt, oc = oh->opt_clks; i > 0; i--, oc++)
+		अगर (oc->_clk) अणु
 			pr_debug("omap_hwmod: enable %s:%s\n", oc->role,
 				 __clk_get_name(oc->_clk));
 			clk_enable(oc->_clk);
-		}
-}
+		पूर्ण
+पूर्ण
 
-static void _disable_optional_clocks(struct omap_hwmod *oh)
-{
-	struct omap_hwmod_opt_clk *oc;
-	int i;
+अटल व्योम _disable_optional_घड़ीs(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा omap_hwmod_opt_clk *oc;
+	पूर्णांक i;
 
 	pr_debug("omap_hwmod: %s: disabling optional clocks\n", oh->name);
 
-	for (i = oh->opt_clks_cnt, oc = oh->opt_clks; i > 0; i--, oc++)
-		if (oc->_clk) {
+	क्रम (i = oh->opt_clks_cnt, oc = oh->opt_clks; i > 0; i--, oc++)
+		अगर (oc->_clk) अणु
 			pr_debug("omap_hwmod: disable %s:%s\n", oc->role,
 				 __clk_get_name(oc->_clk));
 			clk_disable(oc->_clk);
-		}
-}
+		पूर्ण
+पूर्ण
 
 /**
- * _enable_clocks - enable hwmod main clock and interface clocks
- * @oh: struct omap_hwmod *
+ * _enable_घड़ीs - enable hwmod मुख्य घड़ी and पूर्णांकerface घड़ीs
+ * @oh: काष्ठा omap_hwmod *
  *
- * Enables all clocks necessary for register reads and writes to succeed
+ * Enables all घड़ीs necessary क्रम रेजिस्टर पढ़ोs and ग_लिखोs to succeed
  * on the hwmod @oh.  Returns 0.
  */
-static int _enable_clocks(struct omap_hwmod *oh)
-{
-	struct omap_hwmod_ocp_if *os;
+अटल पूर्णांक _enable_घड़ीs(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा omap_hwmod_ocp_अगर *os;
 
 	pr_debug("omap_hwmod: %s: enabling clocks\n", oh->name);
 
-	if (oh->flags & HWMOD_OPT_CLKS_NEEDED)
-		_enable_optional_clocks(oh);
+	अगर (oh->flags & HWMOD_OPT_CLKS_NEEDED)
+		_enable_optional_घड़ीs(oh);
 
-	if (oh->_clk)
+	अगर (oh->_clk)
 		clk_enable(oh->_clk);
 
-	list_for_each_entry(os, &oh->slave_ports, node) {
-		if (os->_clk && (os->flags & OCPIF_SWSUP_IDLE)) {
+	list_क्रम_each_entry(os, &oh->slave_ports, node) अणु
+		अगर (os->_clk && (os->flags & OCPIF_SWSUP_IDLE)) अणु
 			omap2_clk_deny_idle(os->_clk);
 			clk_enable(os->_clk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* The opt clocks are controlled by the device driver. */
+	/* The opt घड़ीs are controlled by the device driver. */
 
-	return 0;
-}
-
-/**
- * _omap4_clkctrl_managed_by_clkfwk - true if clkctrl managed by clock framework
- * @oh: struct omap_hwmod *
- */
-static bool _omap4_clkctrl_managed_by_clkfwk(struct omap_hwmod *oh)
-{
-	if (oh->prcm.omap4.flags & HWMOD_OMAP4_CLKFWK_CLKCTR_CLOCK)
-		return true;
-
-	return false;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _omap4_has_clkctrl_clock - returns true if a module has clkctrl clock
- * @oh: struct omap_hwmod *
+ * _omap4_clkctrl_managed_by_clkfwk - true अगर clkctrl managed by घड़ी framework
+ * @oh: काष्ठा omap_hwmod *
  */
-static bool _omap4_has_clkctrl_clock(struct omap_hwmod *oh)
-{
-	if (oh->prcm.omap4.clkctrl_offs)
-		return true;
+अटल bool _omap4_clkctrl_managed_by_clkfwk(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (oh->prcm.omap4.flags & HWMOD_OMAP4_CLKFWK_CLKCTR_CLOCK)
+		वापस true;
 
-	if (!oh->prcm.omap4.clkctrl_offs &&
+	वापस false;
+पूर्ण
+
+/**
+ * _omap4_has_clkctrl_घड़ी - वापसs true अगर a module has clkctrl घड़ी
+ * @oh: काष्ठा omap_hwmod *
+ */
+अटल bool _omap4_has_clkctrl_घड़ी(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (oh->prcm.omap4.clkctrl_offs)
+		वापस true;
+
+	अगर (!oh->prcm.omap4.clkctrl_offs &&
 	    oh->prcm.omap4.flags & HWMOD_OMAP4_ZERO_CLKCTRL_OFFSET)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * _disable_clocks - disable hwmod main clock and interface clocks
- * @oh: struct omap_hwmod *
+ * _disable_घड़ीs - disable hwmod मुख्य घड़ी and पूर्णांकerface घड़ीs
+ * @oh: काष्ठा omap_hwmod *
  *
- * Disables the hwmod @oh main functional and interface clocks.  Returns 0.
+ * Disables the hwmod @oh मुख्य functional and पूर्णांकerface घड़ीs.  Returns 0.
  */
-static int _disable_clocks(struct omap_hwmod *oh)
-{
-	struct omap_hwmod_ocp_if *os;
+अटल पूर्णांक _disable_घड़ीs(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा omap_hwmod_ocp_अगर *os;
 
 	pr_debug("omap_hwmod: %s: disabling clocks\n", oh->name);
 
-	if (oh->_clk)
+	अगर (oh->_clk)
 		clk_disable(oh->_clk);
 
-	list_for_each_entry(os, &oh->slave_ports, node) {
-		if (os->_clk && (os->flags & OCPIF_SWSUP_IDLE)) {
+	list_क्रम_each_entry(os, &oh->slave_ports, node) अणु
+		अगर (os->_clk && (os->flags & OCPIF_SWSUP_IDLE)) अणु
 			clk_disable(os->_clk);
 			omap2_clk_allow_idle(os->_clk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (oh->flags & HWMOD_OPT_CLKS_NEEDED)
-		_disable_optional_clocks(oh);
+	अगर (oh->flags & HWMOD_OPT_CLKS_NEEDED)
+		_disable_optional_घड़ीs(oh);
 
-	/* The opt clocks are controlled by the device driver. */
+	/* The opt घड़ीs are controlled by the device driver. */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _omap4_enable_module - enable CLKCTRL modulemode on OMAP4
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Enables the PRCM module mode related to the hwmod @oh.
- * No return value.
+ * No वापस value.
  */
-static void _omap4_enable_module(struct omap_hwmod *oh)
-{
-	if (!oh->clkdm || !oh->prcm.omap4.modulemode ||
+अटल व्योम _omap4_enable_module(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh->clkdm || !oh->prcm.omap4.modulemode ||
 	    _omap4_clkctrl_managed_by_clkfwk(oh))
-		return;
+		वापस;
 
 	pr_debug("omap_hwmod: %s: %s: %d\n",
 		 oh->name, __func__, oh->prcm.omap4.modulemode);
@@ -1075,797 +1076,797 @@ static void _omap4_enable_module(struct omap_hwmod *oh)
 	omap_cm_module_enable(oh->prcm.omap4.modulemode,
 			      oh->clkdm->prcm_partition,
 			      oh->clkdm->cm_inst, oh->prcm.omap4.clkctrl_offs);
-}
+पूर्ण
 
 /**
- * _omap4_wait_target_disable - wait for a module to be disabled on OMAP4
- * @oh: struct omap_hwmod *
+ * _omap4_रुको_target_disable - रुको क्रम a module to be disabled on OMAP4
+ * @oh: काष्ठा omap_hwmod *
  *
- * Wait for a module @oh to enter slave idle.  Returns 0 if the module
- * does not have an IDLEST bit or if the module successfully enters
- * slave idle; otherwise, pass along the return value of the
- * appropriate *_cm*_wait_module_idle() function.
+ * Wait क्रम a module @oh to enter slave idle.  Returns 0 अगर the module
+ * करोes not have an IDLEST bit or अगर the module successfully enters
+ * slave idle; otherwise, pass aदीर्घ the वापस value of the
+ * appropriate *_cm*_रुको_module_idle() function.
  */
-static int _omap4_wait_target_disable(struct omap_hwmod *oh)
-{
-	if (!oh)
-		return -EINVAL;
+अटल पूर्णांक _omap4_रुको_target_disable(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh)
+		वापस -EINVAL;
 
-	if (oh->_int_flags & _HWMOD_NO_MPU_PORT || !oh->clkdm)
-		return 0;
+	अगर (oh->_पूर्णांक_flags & _HWMOD_NO_MPU_PORT || !oh->clkdm)
+		वापस 0;
 
-	if (oh->flags & HWMOD_NO_IDLEST)
-		return 0;
+	अगर (oh->flags & HWMOD_NO_IDLEST)
+		वापस 0;
 
-	if (_omap4_clkctrl_managed_by_clkfwk(oh))
-		return 0;
+	अगर (_omap4_clkctrl_managed_by_clkfwk(oh))
+		वापस 0;
 
-	if (!_omap4_has_clkctrl_clock(oh))
-		return 0;
+	अगर (!_omap4_has_clkctrl_घड़ी(oh))
+		वापस 0;
 
-	return omap_cm_wait_module_idle(oh->clkdm->prcm_partition,
+	वापस omap_cm_रुको_module_idle(oh->clkdm->prcm_partition,
 					oh->clkdm->cm_inst,
 					oh->prcm.omap4.clkctrl_offs, 0);
-}
+पूर्ण
 
 /**
  * _save_mpu_port_index - find and save the index to @oh's MPU port
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Determines the array index of the OCP slave port that the MPU uses
- * to address the device, and saves it into the struct omap_hwmod.
- * Intended to be called during hwmod registration only. No return
+ * to address the device, and saves it पूर्णांकo the काष्ठा omap_hwmod.
+ * Intended to be called during hwmod registration only. No वापस
  * value.
  */
-static void __init _save_mpu_port_index(struct omap_hwmod *oh)
-{
-	struct omap_hwmod_ocp_if *os = NULL;
+अटल व्योम __init _save_mpu_port_index(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा omap_hwmod_ocp_अगर *os = शून्य;
 
-	if (!oh)
-		return;
+	अगर (!oh)
+		वापस;
 
-	oh->_int_flags |= _HWMOD_NO_MPU_PORT;
+	oh->_पूर्णांक_flags |= _HWMOD_NO_MPU_PORT;
 
-	list_for_each_entry(os, &oh->slave_ports, node) {
-		if (os->user & OCP_USER_MPU) {
+	list_क्रम_each_entry(os, &oh->slave_ports, node) अणु
+		अगर (os->user & OCP_USER_MPU) अणु
 			oh->_mpu_port = os;
-			oh->_int_flags &= ~_HWMOD_NO_MPU_PORT;
-			break;
-		}
-	}
+			oh->_पूर्णांक_flags &= ~_HWMOD_NO_MPU_PORT;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
- * _find_mpu_rt_port - return omap_hwmod_ocp_if accessible by the MPU
- * @oh: struct omap_hwmod *
+ * _find_mpu_rt_port - वापस omap_hwmod_ocp_अगर accessible by the MPU
+ * @oh: काष्ठा omap_hwmod *
  *
- * Given a pointer to a struct omap_hwmod record @oh, return a pointer
- * to the struct omap_hwmod_ocp_if record that is used by the MPU to
- * communicate with the IP block.  This interface need not be directly
+ * Given a poपूर्णांकer to a काष्ठा omap_hwmod record @oh, वापस a poपूर्णांकer
+ * to the काष्ठा omap_hwmod_ocp_अगर record that is used by the MPU to
+ * communicate with the IP block.  This पूर्णांकerface need not be directly
  * connected to the MPU (and almost certainly is not), but is directly
- * connected to the IP block represented by @oh.  Returns a pointer
- * to the struct omap_hwmod_ocp_if * upon success, or returns NULL upon
- * error or if there does not appear to be a path from the MPU to this
+ * connected to the IP block represented by @oh.  Returns a poपूर्णांकer
+ * to the काष्ठा omap_hwmod_ocp_अगर * upon success, or वापसs शून्य upon
+ * error or अगर there करोes not appear to be a path from the MPU to this
  * IP block.
  */
-static struct omap_hwmod_ocp_if *_find_mpu_rt_port(struct omap_hwmod *oh)
-{
-	if (!oh || oh->_int_flags & _HWMOD_NO_MPU_PORT || oh->slaves_cnt == 0)
-		return NULL;
+अटल काष्ठा omap_hwmod_ocp_अगर *_find_mpu_rt_port(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh || oh->_पूर्णांक_flags & _HWMOD_NO_MPU_PORT || oh->slaves_cnt == 0)
+		वापस शून्य;
 
-	return oh->_mpu_port;
-};
+	वापस oh->_mpu_port;
+पूर्ण;
 
 /**
  * _enable_sysc - try to bring a module out of idle via OCP_SYSCONFIG
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
- * Ensure that the OCP_SYSCONFIG register for the IP block represented
+ * Ensure that the OCP_SYSCONFIG रेजिस्टर क्रम the IP block represented
  * by @oh is set to indicate to the PRCM that the IP block is active.
- * Usually this means placing the module into smart-idle mode and
- * smart-standby, but if there is a bug in the automatic idle handling
- * for the IP block, it may need to be placed into the force-idle or
- * no-idle variants of these modes.  No return value.
+ * Usually this means placing the module पूर्णांकo smart-idle mode and
+ * smart-standby, but अगर there is a bug in the स्वतःmatic idle handling
+ * क्रम the IP block, it may need to be placed पूर्णांकo the क्रमce-idle or
+ * no-idle variants of these modes.  No वापस value.
  */
-static void _enable_sysc(struct omap_hwmod *oh)
-{
+अटल व्योम _enable_sysc(काष्ठा omap_hwmod *oh)
+अणु
 	u8 idlemode, sf;
 	u32 v;
 	bool clkdm_act;
-	struct clockdomain *clkdm;
+	काष्ठा घड़ीकरोमुख्य *clkdm;
 
-	if (!oh->class->sysc)
-		return;
+	अगर (!oh->class->sysc)
+		वापस;
 
 	/*
 	 * Wait until reset has completed, this is needed as the IP
-	 * block is reset automatically by hardware in some cases
-	 * (off-mode for example), and the drivers require the
-	 * IP to be ready when they access it
+	 * block is reset स्वतःmatically by hardware in some हालs
+	 * (off-mode क्रम example), and the drivers require the
+	 * IP to be पढ़ोy when they access it
 	 */
-	if (oh->flags & HWMOD_CONTROL_OPT_CLKS_IN_RESET)
-		_enable_optional_clocks(oh);
-	_wait_softreset_complete(oh);
-	if (oh->flags & HWMOD_CONTROL_OPT_CLKS_IN_RESET)
-		_disable_optional_clocks(oh);
+	अगर (oh->flags & HWMOD_CONTROL_OPT_CLKS_IN_RESET)
+		_enable_optional_घड़ीs(oh);
+	_रुको_softreset_complete(oh);
+	अगर (oh->flags & HWMOD_CONTROL_OPT_CLKS_IN_RESET)
+		_disable_optional_घड़ीs(oh);
 
 	v = oh->_sysc_cache;
 	sf = oh->class->sysc->sysc_flags;
 
 	clkdm = _get_clkdm(oh);
-	if (sf & SYSC_HAS_SIDLEMODE) {
-		if (oh->flags & HWMOD_SWSUP_SIDLE ||
-		    oh->flags & HWMOD_SWSUP_SIDLE_ACT) {
+	अगर (sf & SYSC_HAS_SIDLEMODE) अणु
+		अगर (oh->flags & HWMOD_SWSUP_SIDLE ||
+		    oh->flags & HWMOD_SWSUP_SIDLE_ACT) अणु
 			idlemode = HWMOD_IDLEMODE_NO;
-		} else {
-			if (sf & SYSC_HAS_ENAWAKEUP)
+		पूर्ण अन्यथा अणु
+			अगर (sf & SYSC_HAS_ENAWAKEUP)
 				_enable_wakeup(oh, &v);
-			if (oh->class->sysc->idlemodes & SIDLE_SMART_WKUP)
+			अगर (oh->class->sysc->idlemodes & SIDLE_SMART_WKUP)
 				idlemode = HWMOD_IDLEMODE_SMART_WKUP;
-			else
+			अन्यथा
 				idlemode = HWMOD_IDLEMODE_SMART;
-		}
+		पूर्ण
 
 		/*
-		 * This is special handling for some IPs like
-		 * 32k sync timer. Force them to idle!
+		 * This is special handling क्रम some IPs like
+		 * 32k sync समयr. Force them to idle!
 		 */
 		clkdm_act = (clkdm && clkdm->flags & CLKDM_ACTIVE_WITH_MPU);
-		if (clkdm_act && !(oh->class->sysc->idlemodes &
+		अगर (clkdm_act && !(oh->class->sysc->idlemodes &
 				   (SIDLE_SMART | SIDLE_SMART_WKUP)))
 			idlemode = HWMOD_IDLEMODE_FORCE;
 
 		_set_slave_idlemode(oh, idlemode, &v);
-	}
+	पूर्ण
 
-	if (sf & SYSC_HAS_MIDLEMODE) {
-		if (oh->flags & HWMOD_FORCE_MSTANDBY) {
+	अगर (sf & SYSC_HAS_MIDLEMODE) अणु
+		अगर (oh->flags & HWMOD_FORCE_MSTANDBY) अणु
 			idlemode = HWMOD_IDLEMODE_FORCE;
-		} else if (oh->flags & HWMOD_SWSUP_MSTANDBY) {
+		पूर्ण अन्यथा अगर (oh->flags & HWMOD_SWSUP_MSTANDBY) अणु
 			idlemode = HWMOD_IDLEMODE_NO;
-		} else {
-			if (sf & SYSC_HAS_ENAWAKEUP)
+		पूर्ण अन्यथा अणु
+			अगर (sf & SYSC_HAS_ENAWAKEUP)
 				_enable_wakeup(oh, &v);
-			if (oh->class->sysc->idlemodes & MSTANDBY_SMART_WKUP)
+			अगर (oh->class->sysc->idlemodes & MSTANDBY_SMART_WKUP)
 				idlemode = HWMOD_IDLEMODE_SMART_WKUP;
-			else
+			अन्यथा
 				idlemode = HWMOD_IDLEMODE_SMART;
-		}
+		पूर्ण
 		_set_master_standbymode(oh, idlemode, &v);
-	}
+	पूर्ण
 
 	/*
-	 * XXX The clock framework should handle this, by
-	 * calling into this code.  But this must wait until the
-	 * clock structures are tagged with omap_hwmod entries
+	 * XXX The घड़ी framework should handle this, by
+	 * calling पूर्णांकo this code.  But this must रुको until the
+	 * घड़ी काष्ठाures are tagged with omap_hwmod entries
 	 */
-	if ((oh->flags & HWMOD_SET_DEFAULT_CLOCKACT) &&
+	अगर ((oh->flags & HWMOD_SET_DEFAULT_CLOCKACT) &&
 	    (sf & SYSC_HAS_CLOCKACTIVITY))
-		_set_clockactivity(oh, CLOCKACT_TEST_ICLK, &v);
+		_set_घड़ीactivity(oh, CLOCKACT_TEST_ICLK, &v);
 
-	_write_sysconfig(v, oh);
+	_ग_लिखो_sysconfig(v, oh);
 
 	/*
-	 * Set the autoidle bit only after setting the smartidle bit
+	 * Set the स्वतःidle bit only after setting the smartidle bit
 	 * Setting this will not have any impact on the other modules.
 	 */
-	if (sf & SYSC_HAS_AUTOIDLE) {
+	अगर (sf & SYSC_HAS_AUTOIDLE) अणु
 		idlemode = (oh->flags & HWMOD_NO_OCP_AUTOIDLE) ?
 			0 : 1;
-		_set_module_autoidle(oh, idlemode, &v);
-		_write_sysconfig(v, oh);
-	}
-}
+		_set_module_स्वतःidle(oh, idlemode, &v);
+		_ग_लिखो_sysconfig(v, oh);
+	पूर्ण
+पूर्ण
 
 /**
- * _idle_sysc - try to put a module into idle via OCP_SYSCONFIG
- * @oh: struct omap_hwmod *
+ * _idle_sysc - try to put a module पूर्णांकo idle via OCP_SYSCONFIG
+ * @oh: काष्ठा omap_hwmod *
  *
- * If module is marked as SWSUP_SIDLE, force the module into slave
- * idle; otherwise, configure it for smart-idle.  If module is marked
- * as SWSUP_MSUSPEND, force the module into master standby; otherwise,
- * configure it for smart-standby.  No return value.
+ * If module is marked as SWSUP_SIDLE, क्रमce the module पूर्णांकo slave
+ * idle; otherwise, configure it क्रम smart-idle.  If module is marked
+ * as SWSUP_MSUSPEND, क्रमce the module पूर्णांकo master standby; otherwise,
+ * configure it क्रम smart-standby.  No वापस value.
  */
-static void _idle_sysc(struct omap_hwmod *oh)
-{
+अटल व्योम _idle_sysc(काष्ठा omap_hwmod *oh)
+अणु
 	u8 idlemode, sf;
 	u32 v;
 
-	if (!oh->class->sysc)
-		return;
+	अगर (!oh->class->sysc)
+		वापस;
 
 	v = oh->_sysc_cache;
 	sf = oh->class->sysc->sysc_flags;
 
-	if (sf & SYSC_HAS_SIDLEMODE) {
-		if (oh->flags & HWMOD_SWSUP_SIDLE) {
+	अगर (sf & SYSC_HAS_SIDLEMODE) अणु
+		अगर (oh->flags & HWMOD_SWSUP_SIDLE) अणु
 			idlemode = HWMOD_IDLEMODE_FORCE;
-		} else {
-			if (sf & SYSC_HAS_ENAWAKEUP)
+		पूर्ण अन्यथा अणु
+			अगर (sf & SYSC_HAS_ENAWAKEUP)
 				_enable_wakeup(oh, &v);
-			if (oh->class->sysc->idlemodes & SIDLE_SMART_WKUP)
+			अगर (oh->class->sysc->idlemodes & SIDLE_SMART_WKUP)
 				idlemode = HWMOD_IDLEMODE_SMART_WKUP;
-			else
+			अन्यथा
 				idlemode = HWMOD_IDLEMODE_SMART;
-		}
+		पूर्ण
 		_set_slave_idlemode(oh, idlemode, &v);
-	}
+	पूर्ण
 
-	if (sf & SYSC_HAS_MIDLEMODE) {
-		if ((oh->flags & HWMOD_SWSUP_MSTANDBY) ||
-		    (oh->flags & HWMOD_FORCE_MSTANDBY)) {
+	अगर (sf & SYSC_HAS_MIDLEMODE) अणु
+		अगर ((oh->flags & HWMOD_SWSUP_MSTANDBY) ||
+		    (oh->flags & HWMOD_FORCE_MSTANDBY)) अणु
 			idlemode = HWMOD_IDLEMODE_FORCE;
-		} else {
-			if (sf & SYSC_HAS_ENAWAKEUP)
+		पूर्ण अन्यथा अणु
+			अगर (sf & SYSC_HAS_ENAWAKEUP)
 				_enable_wakeup(oh, &v);
-			if (oh->class->sysc->idlemodes & MSTANDBY_SMART_WKUP)
+			अगर (oh->class->sysc->idlemodes & MSTANDBY_SMART_WKUP)
 				idlemode = HWMOD_IDLEMODE_SMART_WKUP;
-			else
+			अन्यथा
 				idlemode = HWMOD_IDLEMODE_SMART;
-		}
+		पूर्ण
 		_set_master_standbymode(oh, idlemode, &v);
-	}
+	पूर्ण
 
-	/* If the cached value is the same as the new value, skip the write */
-	if (oh->_sysc_cache != v)
-		_write_sysconfig(v, oh);
-}
+	/* If the cached value is the same as the new value, skip the ग_लिखो */
+	अगर (oh->_sysc_cache != v)
+		_ग_लिखो_sysconfig(v, oh);
+पूर्ण
 
 /**
- * _shutdown_sysc - force a module into idle via OCP_SYSCONFIG
- * @oh: struct omap_hwmod *
+ * _shutकरोwn_sysc - क्रमce a module पूर्णांकo idle via OCP_SYSCONFIG
+ * @oh: काष्ठा omap_hwmod *
  *
- * Force the module into slave idle and master suspend. No return
+ * Force the module पूर्णांकo slave idle and master suspend. No वापस
  * value.
  */
-static void _shutdown_sysc(struct omap_hwmod *oh)
-{
+अटल व्योम _shutकरोwn_sysc(काष्ठा omap_hwmod *oh)
+अणु
 	u32 v;
 	u8 sf;
 
-	if (!oh->class->sysc)
-		return;
+	अगर (!oh->class->sysc)
+		वापस;
 
 	v = oh->_sysc_cache;
 	sf = oh->class->sysc->sysc_flags;
 
-	if (sf & SYSC_HAS_SIDLEMODE)
+	अगर (sf & SYSC_HAS_SIDLEMODE)
 		_set_slave_idlemode(oh, HWMOD_IDLEMODE_FORCE, &v);
 
-	if (sf & SYSC_HAS_MIDLEMODE)
+	अगर (sf & SYSC_HAS_MIDLEMODE)
 		_set_master_standbymode(oh, HWMOD_IDLEMODE_FORCE, &v);
 
-	if (sf & SYSC_HAS_AUTOIDLE)
-		_set_module_autoidle(oh, 1, &v);
+	अगर (sf & SYSC_HAS_AUTOIDLE)
+		_set_module_स्वतःidle(oh, 1, &v);
 
-	_write_sysconfig(v, oh);
-}
+	_ग_लिखो_sysconfig(v, oh);
+पूर्ण
 
 /**
  * _lookup - find an omap_hwmod by name
  * @name: find an omap_hwmod by name
  *
- * Return a pointer to an omap_hwmod by name, or NULL if not found.
+ * Return a poपूर्णांकer to an omap_hwmod by name, or शून्य अगर not found.
  */
-static struct omap_hwmod *_lookup(const char *name)
-{
-	struct omap_hwmod *oh, *temp_oh;
+अटल काष्ठा omap_hwmod *_lookup(स्थिर अक्षर *name)
+अणु
+	काष्ठा omap_hwmod *oh, *temp_oh;
 
-	oh = NULL;
+	oh = शून्य;
 
-	list_for_each_entry(temp_oh, &omap_hwmod_list, node) {
-		if (!strcmp(name, temp_oh->name)) {
+	list_क्रम_each_entry(temp_oh, &omap_hwmod_list, node) अणु
+		अगर (!म_भेद(name, temp_oh->name)) अणु
 			oh = temp_oh;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return oh;
-}
+	वापस oh;
+पूर्ण
 
 /**
- * _init_clkdm - look up a clockdomain name, store pointer in omap_hwmod
- * @oh: struct omap_hwmod *
+ * _init_clkdm - look up a घड़ीकरोमुख्य name, store poपूर्णांकer in omap_hwmod
+ * @oh: काष्ठा omap_hwmod *
  *
- * Convert a clockdomain name stored in a struct omap_hwmod into a
- * clockdomain pointer, and save it into the struct omap_hwmod.
- * Return -EINVAL if the clkdm_name lookup failed.
+ * Convert a घड़ीकरोमुख्य name stored in a काष्ठा omap_hwmod पूर्णांकo a
+ * घड़ीकरोमुख्य poपूर्णांकer, and save it पूर्णांकo the काष्ठा omap_hwmod.
+ * Return -EINVAL अगर the clkdm_name lookup failed.
  */
-static int _init_clkdm(struct omap_hwmod *oh)
-{
-	if (!oh->clkdm_name) {
+अटल पूर्णांक _init_clkdm(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh->clkdm_name) अणु
 		pr_debug("omap_hwmod: %s: missing clockdomain\n", oh->name);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	oh->clkdm = clkdm_lookup(oh->clkdm_name);
-	if (!oh->clkdm) {
+	अगर (!oh->clkdm) अणु
 		pr_warn("omap_hwmod: %s: could not associate to clkdm %s\n",
 			oh->name, oh->clkdm_name);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	pr_debug("omap_hwmod: %s: associated to clkdm %s\n",
 		oh->name, oh->clkdm_name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _init_clocks - clk_get() all clocks associated with this hwmod. Retrieve as
- * well the clockdomain.
- * @oh: struct omap_hwmod *
+ * _init_घड़ीs - clk_get() all घड़ीs associated with this hwmod. Retrieve as
+ * well the घड़ीकरोमुख्य.
+ * @oh: काष्ठा omap_hwmod *
  * @np: device_node mapped to this hwmod
  *
  * Called by omap_hwmod_setup_*() (after omap2_clk_init()).
- * Resolves all clock names embedded in the hwmod.  Returns 0 on
+ * Resolves all घड़ी names embedded in the hwmod.  Returns 0 on
  * success, or a negative error code on failure.
  */
-static int _init_clocks(struct omap_hwmod *oh, struct device_node *np)
-{
-	int ret = 0;
+अटल पूर्णांक _init_घड़ीs(काष्ठा omap_hwmod *oh, काष्ठा device_node *np)
+अणु
+	पूर्णांक ret = 0;
 
-	if (oh->_state != _HWMOD_STATE_REGISTERED)
-		return 0;
+	अगर (oh->_state != _HWMOD_STATE_REGISTERED)
+		वापस 0;
 
 	pr_debug("omap_hwmod: %s: looking up clocks\n", oh->name);
 
-	if (soc_ops.init_clkdm)
+	अगर (soc_ops.init_clkdm)
 		ret |= soc_ops.init_clkdm(oh);
 
-	ret |= _init_main_clk(oh);
-	ret |= _init_interface_clks(oh);
+	ret |= _init_मुख्य_clk(oh);
+	ret |= _init_पूर्णांकerface_clks(oh);
 	ret |= _init_opt_clks(oh);
 
-	if (!ret)
+	अगर (!ret)
 		oh->_state = _HWMOD_STATE_CLKS_INITED;
-	else
+	अन्यथा
 		pr_warn("omap_hwmod: %s: cannot _init_clocks\n", oh->name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * _lookup_hardreset - fill register bit info for this hwmod/reset line
- * @oh: struct omap_hwmod *
+ * _lookup_hardreset - fill रेजिस्टर bit info क्रम this hwmod/reset line
+ * @oh: काष्ठा omap_hwmod *
  * @name: name of the reset line in the context of this hwmod
- * @ohri: struct omap_hwmod_rst_info * that this function will fill in
+ * @ohri: काष्ठा omap_hwmod_rst_info * that this function will fill in
  *
  * Return the bit position of the reset line that match the
- * input name. Return -ENOENT if not found.
+ * input name. Return -ENOENT अगर not found.
  */
-static int _lookup_hardreset(struct omap_hwmod *oh, const char *name,
-			     struct omap_hwmod_rst_info *ohri)
-{
-	int i;
+अटल पूर्णांक _lookup_hardreset(काष्ठा omap_hwmod *oh, स्थिर अक्षर *name,
+			     काष्ठा omap_hwmod_rst_info *ohri)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < oh->rst_lines_cnt; i++) {
-		const char *rst_line = oh->rst_lines[i].name;
-		if (!strcmp(rst_line, name)) {
-			ohri->rst_shift = oh->rst_lines[i].rst_shift;
-			ohri->st_shift = oh->rst_lines[i].st_shift;
+	क्रम (i = 0; i < oh->rst_lines_cnt; i++) अणु
+		स्थिर अक्षर *rst_line = oh->rst_lines[i].name;
+		अगर (!म_भेद(rst_line, name)) अणु
+			ohri->rst_shअगरt = oh->rst_lines[i].rst_shअगरt;
+			ohri->st_shअगरt = oh->rst_lines[i].st_shअगरt;
 			pr_debug("omap_hwmod: %s: %s: %s: rst %d st %d\n",
-				 oh->name, __func__, rst_line, ohri->rst_shift,
-				 ohri->st_shift);
+				 oh->name, __func__, rst_line, ohri->rst_shअगरt,
+				 ohri->st_shअगरt);
 
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
 /**
- * _assert_hardreset - assert the HW reset line of submodules
+ * _निश्चित_hardreset - निश्चित the HW reset line of submodules
  * contained in the hwmod module.
- * @oh: struct omap_hwmod *
- * @name: name of the reset line to lookup and assert
+ * @oh: काष्ठा omap_hwmod *
+ * @name: name of the reset line to lookup and निश्चित
  *
  * Some IP like dsp, ipu or iva contain processor that require an HW
- * reset line to be assert / deassert in order to enable fully the IP.
- * Returns -EINVAL if @oh is null, -ENOSYS if we have no way of
- * asserting the hardreset line on the currently-booted SoC, or passes
- * along the return value from _lookup_hardreset() or the SoC's
- * assert_hardreset code.
+ * reset line to be निश्चित / deनिश्चित in order to enable fully the IP.
+ * Returns -EINVAL अगर @oh is null, -ENOSYS अगर we have no way of
+ * निश्चितing the hardreset line on the currently-booted SoC, or passes
+ * aदीर्घ the वापस value from _lookup_hardreset() or the SoC's
+ * निश्चित_hardreset code.
  */
-static int _assert_hardreset(struct omap_hwmod *oh, const char *name)
-{
-	struct omap_hwmod_rst_info ohri;
-	int ret = -EINVAL;
+अटल पूर्णांक _निश्चित_hardreset(काष्ठा omap_hwmod *oh, स्थिर अक्षर *name)
+अणु
+	काष्ठा omap_hwmod_rst_info ohri;
+	पूर्णांक ret = -EINVAL;
 
-	if (!oh)
-		return -EINVAL;
+	अगर (!oh)
+		वापस -EINVAL;
 
-	if (!soc_ops.assert_hardreset)
-		return -ENOSYS;
+	अगर (!soc_ops.निश्चित_hardreset)
+		वापस -ENOSYS;
 
 	ret = _lookup_hardreset(oh, name, &ohri);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = soc_ops.assert_hardreset(oh, &ohri);
+	ret = soc_ops.निश्चित_hardreset(oh, &ohri);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * _deassert_hardreset - deassert the HW reset line of submodules contained
+ * _deनिश्चित_hardreset - deनिश्चित the HW reset line of submodules contained
  * in the hwmod module.
- * @oh: struct omap_hwmod *
- * @name: name of the reset line to look up and deassert
+ * @oh: काष्ठा omap_hwmod *
+ * @name: name of the reset line to look up and deनिश्चित
  *
  * Some IP like dsp, ipu or iva contain processor that require an HW
- * reset line to be assert / deassert in order to enable fully the IP.
- * Returns -EINVAL if @oh is null, -ENOSYS if we have no way of
- * deasserting the hardreset line on the currently-booted SoC, or passes
- * along the return value from _lookup_hardreset() or the SoC's
- * deassert_hardreset code.
+ * reset line to be निश्चित / deनिश्चित in order to enable fully the IP.
+ * Returns -EINVAL अगर @oh is null, -ENOSYS अगर we have no way of
+ * deनिश्चितing the hardreset line on the currently-booted SoC, or passes
+ * aदीर्घ the वापस value from _lookup_hardreset() or the SoC's
+ * deनिश्चित_hardreset code.
  */
-static int _deassert_hardreset(struct omap_hwmod *oh, const char *name)
-{
-	struct omap_hwmod_rst_info ohri;
-	int ret = -EINVAL;
+अटल पूर्णांक _deनिश्चित_hardreset(काष्ठा omap_hwmod *oh, स्थिर अक्षर *name)
+अणु
+	काष्ठा omap_hwmod_rst_info ohri;
+	पूर्णांक ret = -EINVAL;
 
-	if (!oh)
-		return -EINVAL;
+	अगर (!oh)
+		वापस -EINVAL;
 
-	if (!soc_ops.deassert_hardreset)
-		return -ENOSYS;
+	अगर (!soc_ops.deनिश्चित_hardreset)
+		वापस -ENOSYS;
 
 	ret = _lookup_hardreset(oh, name, &ohri);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (oh->clkdm) {
+	अगर (oh->clkdm) अणु
 		/*
-		 * A clockdomain must be in SW_SUP otherwise reset
-		 * might not be completed. The clockdomain can be set
-		 * in HW_AUTO only when the module become ready.
+		 * A घड़ीकरोमुख्य must be in SW_SUP otherwise reset
+		 * might not be completed. The घड़ीकरोमुख्य can be set
+		 * in HW_AUTO only when the module become पढ़ोy.
 		 */
 		clkdm_deny_idle(oh->clkdm);
 		ret = clkdm_hwmod_enable(oh->clkdm, oh);
-		if (ret) {
+		अगर (ret) अणु
 			WARN(1, "omap_hwmod: %s: could not enable clockdomain %s: %d\n",
 			     oh->name, oh->clkdm->name, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	_enable_clocks(oh);
-	if (soc_ops.enable_module)
+	_enable_घड़ीs(oh);
+	अगर (soc_ops.enable_module)
 		soc_ops.enable_module(oh);
 
-	ret = soc_ops.deassert_hardreset(oh, &ohri);
+	ret = soc_ops.deनिश्चित_hardreset(oh, &ohri);
 
-	if (soc_ops.disable_module)
+	अगर (soc_ops.disable_module)
 		soc_ops.disable_module(oh);
-	_disable_clocks(oh);
+	_disable_घड़ीs(oh);
 
-	if (ret == -EBUSY)
+	अगर (ret == -EBUSY)
 		pr_warn("omap_hwmod: %s: failed to hardreset\n", oh->name);
 
-	if (oh->clkdm) {
+	अगर (oh->clkdm) अणु
 		/*
-		 * Set the clockdomain to HW_AUTO, assuming that the
+		 * Set the घड़ीकरोमुख्य to HW_AUTO, assuming that the
 		 * previous state was HW_AUTO.
 		 */
 		clkdm_allow_idle(oh->clkdm);
 
 		clkdm_hwmod_disable(oh->clkdm, oh);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * _read_hardreset - read the HW reset line state of submodules
+ * _पढ़ो_hardreset - पढ़ो the HW reset line state of submodules
  * contained in the hwmod module
- * @oh: struct omap_hwmod *
- * @name: name of the reset line to look up and read
+ * @oh: काष्ठा omap_hwmod *
+ * @name: name of the reset line to look up and पढ़ो
  *
- * Return the state of the reset line.  Returns -EINVAL if @oh is
- * null, -ENOSYS if we have no way of reading the hardreset line
- * status on the currently-booted SoC, or passes along the return
- * value from _lookup_hardreset() or the SoC's is_hardreset_asserted
+ * Return the state of the reset line.  Returns -EINVAL अगर @oh is
+ * null, -ENOSYS अगर we have no way of पढ़ोing the hardreset line
+ * status on the currently-booted SoC, or passes aदीर्घ the वापस
+ * value from _lookup_hardreset() or the SoC's is_hardreset_निश्चितed
  * code.
  */
-static int _read_hardreset(struct omap_hwmod *oh, const char *name)
-{
-	struct omap_hwmod_rst_info ohri;
-	int ret = -EINVAL;
+अटल पूर्णांक _पढ़ो_hardreset(काष्ठा omap_hwmod *oh, स्थिर अक्षर *name)
+अणु
+	काष्ठा omap_hwmod_rst_info ohri;
+	पूर्णांक ret = -EINVAL;
 
-	if (!oh)
-		return -EINVAL;
+	अगर (!oh)
+		वापस -EINVAL;
 
-	if (!soc_ops.is_hardreset_asserted)
-		return -ENOSYS;
+	अगर (!soc_ops.is_hardreset_निश्चितed)
+		वापस -ENOSYS;
 
 	ret = _lookup_hardreset(oh, name, &ohri);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return soc_ops.is_hardreset_asserted(oh, &ohri);
-}
+	वापस soc_ops.is_hardreset_निश्चितed(oh, &ohri);
+पूर्ण
 
 /**
- * _are_all_hardreset_lines_asserted - return true if the @oh is hard-reset
- * @oh: struct omap_hwmod *
+ * _are_all_hardreset_lines_निश्चितed - वापस true अगर the @oh is hard-reset
+ * @oh: काष्ठा omap_hwmod *
  *
- * If all hardreset lines associated with @oh are asserted, then return true.
- * Otherwise, if part of @oh is out hardreset or if no hardreset lines
- * associated with @oh are asserted, then return false.
- * This function is used to avoid executing some parts of the IP block
- * enable/disable sequence if its hardreset line is set.
+ * If all hardreset lines associated with @oh are निश्चितed, then वापस true.
+ * Otherwise, अगर part of @oh is out hardreset or अगर no hardreset lines
+ * associated with @oh are निश्चितed, then वापस false.
+ * This function is used to aव्योम executing some parts of the IP block
+ * enable/disable sequence अगर its hardreset line is set.
  */
-static bool _are_all_hardreset_lines_asserted(struct omap_hwmod *oh)
-{
-	int i, rst_cnt = 0;
+अटल bool _are_all_hardreset_lines_निश्चितed(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक i, rst_cnt = 0;
 
-	if (oh->rst_lines_cnt == 0)
-		return false;
+	अगर (oh->rst_lines_cnt == 0)
+		वापस false;
 
-	for (i = 0; i < oh->rst_lines_cnt; i++)
-		if (_read_hardreset(oh, oh->rst_lines[i].name) > 0)
+	क्रम (i = 0; i < oh->rst_lines_cnt; i++)
+		अगर (_पढ़ो_hardreset(oh, oh->rst_lines[i].name) > 0)
 			rst_cnt++;
 
-	if (oh->rst_lines_cnt == rst_cnt)
-		return true;
+	अगर (oh->rst_lines_cnt == rst_cnt)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * _are_any_hardreset_lines_asserted - return true if any part of @oh is
+ * _are_any_hardreset_lines_निश्चितed - वापस true अगर any part of @oh is
  * hard-reset
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
- * If any hardreset lines associated with @oh are asserted, then
- * return true.  Otherwise, if no hardreset lines associated with @oh
- * are asserted, or if @oh has no hardreset lines, then return false.
- * This function is used to avoid executing some parts of the IP block
- * enable/disable sequence if any hardreset line is set.
+ * If any hardreset lines associated with @oh are निश्चितed, then
+ * वापस true.  Otherwise, अगर no hardreset lines associated with @oh
+ * are निश्चितed, or अगर @oh has no hardreset lines, then वापस false.
+ * This function is used to aव्योम executing some parts of the IP block
+ * enable/disable sequence अगर any hardreset line is set.
  */
-static bool _are_any_hardreset_lines_asserted(struct omap_hwmod *oh)
-{
-	int rst_cnt = 0;
-	int i;
+अटल bool _are_any_hardreset_lines_निश्चितed(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक rst_cnt = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < oh->rst_lines_cnt && rst_cnt == 0; i++)
-		if (_read_hardreset(oh, oh->rst_lines[i].name) > 0)
+	क्रम (i = 0; i < oh->rst_lines_cnt && rst_cnt == 0; i++)
+		अगर (_पढ़ो_hardreset(oh, oh->rst_lines[i].name) > 0)
 			rst_cnt++;
 
-	return (rst_cnt) ? true : false;
-}
+	वापस (rst_cnt) ? true : false;
+पूर्ण
 
 /**
  * _omap4_disable_module - enable CLKCTRL modulemode on OMAP4
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Disable the PRCM module mode related to the hwmod @oh.
- * Return EINVAL if the modulemode is not supported and 0 in case of success.
+ * Return EINVAL अगर the modulemode is not supported and 0 in हाल of success.
  */
-static int _omap4_disable_module(struct omap_hwmod *oh)
-{
-	int v;
+अटल पूर्णांक _omap4_disable_module(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक v;
 
-	if (!oh->clkdm || !oh->prcm.omap4.modulemode ||
+	अगर (!oh->clkdm || !oh->prcm.omap4.modulemode ||
 	    _omap4_clkctrl_managed_by_clkfwk(oh))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/*
-	 * Since integration code might still be doing something, only
-	 * disable if all lines are under hardreset.
+	 * Since पूर्णांकegration code might still be करोing something, only
+	 * disable अगर all lines are under hardreset.
 	 */
-	if (_are_any_hardreset_lines_asserted(oh))
-		return 0;
+	अगर (_are_any_hardreset_lines_निश्चितed(oh))
+		वापस 0;
 
 	pr_debug("omap_hwmod: %s: %s\n", oh->name, __func__);
 
 	omap_cm_module_disable(oh->clkdm->prcm_partition, oh->clkdm->cm_inst,
 			       oh->prcm.omap4.clkctrl_offs);
 
-	v = _omap4_wait_target_disable(oh);
-	if (v)
+	v = _omap4_रुको_target_disable(oh);
+	अगर (v)
 		pr_warn("omap_hwmod: %s: _wait_target_disable failed\n",
 			oh->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _ocp_softreset - reset an omap_hwmod via the OCP_SYSCONFIG bit
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Resets an omap_hwmod @oh via the OCP_SYSCONFIG bit.  hwmod must be
- * enabled for this to work.  Returns -ENOENT if the hwmod cannot be
- * reset this way, -EINVAL if the hwmod is in the wrong state,
- * -ETIMEDOUT if the module did not reset in time, or 0 upon success.
+ * enabled क्रम this to work.  Returns -ENOENT अगर the hwmod cannot be
+ * reset this way, -EINVAL अगर the hwmod is in the wrong state,
+ * -ETIMEDOUT अगर the module did not reset in समय, or 0 upon success.
  *
- * In OMAP3 a specific SYSSTATUS register is used to get the reset status.
- * Starting in OMAP4, some IPs do not have SYSSTATUS registers and instead
+ * In OMAP3 a specअगरic SYSSTATUS रेजिस्टर is used to get the reset status.
+ * Starting in OMAP4, some IPs करो not have SYSSTATUS रेजिस्टरs and instead
  * use the SYSCONFIG softreset bit to provide the status.
  *
- * Note that some IP like McBSP do have reset control but don't have
+ * Note that some IP like McBSP करो have reset control but करोn't have
  * reset status.
  */
-static int _ocp_softreset(struct omap_hwmod *oh)
-{
+अटल पूर्णांक _ocp_softreset(काष्ठा omap_hwmod *oh)
+अणु
 	u32 v;
-	int c = 0;
-	int ret = 0;
+	पूर्णांक c = 0;
+	पूर्णांक ret = 0;
 
-	if (!oh->class->sysc ||
+	अगर (!oh->class->sysc ||
 	    !(oh->class->sysc->sysc_flags & SYSC_HAS_SOFTRESET))
-		return -ENOENT;
+		वापस -ENOENT;
 
-	/* clocks must be on for this operation */
-	if (oh->_state != _HWMOD_STATE_ENABLED) {
+	/* घड़ीs must be on क्रम this operation */
+	अगर (oh->_state != _HWMOD_STATE_ENABLED) अणु
 		pr_warn("omap_hwmod: %s: reset can only be entered from enabled state\n",
 			oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* For some modules, all optionnal clocks need to be enabled as well */
-	if (oh->flags & HWMOD_CONTROL_OPT_CLKS_IN_RESET)
-		_enable_optional_clocks(oh);
+	/* For some modules, all optionnal घड़ीs need to be enabled as well */
+	अगर (oh->flags & HWMOD_CONTROL_OPT_CLKS_IN_RESET)
+		_enable_optional_घड़ीs(oh);
 
 	pr_debug("omap_hwmod: %s: resetting via OCP SOFTRESET\n", oh->name);
 
 	v = oh->_sysc_cache;
 	ret = _set_softreset(oh, &v);
-	if (ret)
-		goto dis_opt_clks;
+	अगर (ret)
+		जाओ dis_opt_clks;
 
-	_write_sysconfig(v, oh);
+	_ग_लिखो_sysconfig(v, oh);
 
-	if (oh->class->sysc->srst_udelay)
+	अगर (oh->class->sysc->srst_udelay)
 		udelay(oh->class->sysc->srst_udelay);
 
-	c = _wait_softreset_complete(oh);
-	if (c == MAX_MODULE_SOFTRESET_WAIT) {
+	c = _रुको_softreset_complete(oh);
+	अगर (c == MAX_MODULE_SOFTRESET_WAIT) अणु
 		pr_warn("omap_hwmod: %s: softreset failed (waited %d usec)\n",
 			oh->name, MAX_MODULE_SOFTRESET_WAIT);
 		ret = -ETIMEDOUT;
-		goto dis_opt_clks;
-	} else {
+		जाओ dis_opt_clks;
+	पूर्ण अन्यथा अणु
 		pr_debug("omap_hwmod: %s: softreset in %d usec\n", oh->name, c);
-	}
+	पूर्ण
 
 	ret = _clear_softreset(oh, &v);
-	if (ret)
-		goto dis_opt_clks;
+	अगर (ret)
+		जाओ dis_opt_clks;
 
-	_write_sysconfig(v, oh);
+	_ग_लिखो_sysconfig(v, oh);
 
 	/*
-	 * XXX add _HWMOD_STATE_WEDGED for modules that don't come back from
-	 * _wait_target_ready() or _reset()
+	 * XXX add _HWMOD_STATE_WEDGED क्रम modules that करोn't come back from
+	 * _रुको_target_पढ़ोy() or _reset()
 	 */
 
 dis_opt_clks:
-	if (oh->flags & HWMOD_CONTROL_OPT_CLKS_IN_RESET)
-		_disable_optional_clocks(oh);
+	अगर (oh->flags & HWMOD_CONTROL_OPT_CLKS_IN_RESET)
+		_disable_optional_घड़ीs(oh);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * _reset - reset an omap_hwmod
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Resets an omap_hwmod @oh.  If the module has a custom reset
- * function pointer defined, then call it to reset the IP block, and
- * pass along its return value to the caller.  Otherwise, if the IP
- * block has an OCP_SYSCONFIG register with a SOFTRESET bitfield
+ * function poपूर्णांकer defined, then call it to reset the IP block, and
+ * pass aदीर्घ its वापस value to the caller.  Otherwise, अगर the IP
+ * block has an OCP_SYSCONFIG रेजिस्टर with a SOFTRESET bitfield
  * associated with it, call a function to reset the IP block via that
- * method, and pass along the return value to the caller.  Finally, if
- * the IP block has some hardreset lines associated with it, assert
- * all of those, but do _not_ deassert them. (This is because driver
+ * method, and pass aदीर्घ the वापस value to the caller.  Finally, अगर
+ * the IP block has some hardreset lines associated with it, निश्चित
+ * all of those, but करो _not_ deनिश्चित them. (This is because driver
  * authors have expressed an apparent requirement to control the
- * deassertion of the hardreset lines themselves.)
+ * deनिश्चितion of the hardreset lines themselves.)
  *
- * The default software reset mechanism for most OMAP IP blocks is
+ * The शेष software reset mechanism क्रम most OMAP IP blocks is
  * triggered via the OCP_SYSCONFIG.SOFTRESET bit.  However, some
- * hwmods cannot be reset via this method.  Some are not targets and
- * therefore have no OCP header registers to access.  Others (like the
- * IVA) have idiosyncratic reset sequences.  So for these relatively
- * rare cases, custom reset code can be supplied in the struct
- * omap_hwmod_class .reset function pointer.
+ * hwmods cannot be reset via this method.  Some are not tarमाला_लो and
+ * thereक्रमe have no OCP header रेजिस्टरs to access.  Others (like the
+ * IVA) have idiosyncratic reset sequences.  So क्रम these relatively
+ * rare हालs, custom reset code can be supplied in the काष्ठा
+ * omap_hwmod_class .reset function poपूर्णांकer.
  *
  * _set_dmadisable() is called to set the DMADISABLE bit so that it
- * does not prevent idling of the system. This is necessary for cases
+ * करोes not prevent idling of the प्रणाली. This is necessary क्रम हालs
  * where ROMCODE/BOOTLOADER uses dma and transfers control to the
  * kernel without disabling dma.
  *
- * Passes along the return value from either _ocp_softreset() or the
- * custom reset function - these must return -EINVAL if the hwmod
- * cannot be reset this way or if the hwmod is in the wrong state,
- * -ETIMEDOUT if the module did not reset in time, or 0 upon success.
+ * Passes aदीर्घ the वापस value from either _ocp_softreset() or the
+ * custom reset function - these must वापस -EINVAL अगर the hwmod
+ * cannot be reset this way or अगर the hwmod is in the wrong state,
+ * -ETIMEDOUT अगर the module did not reset in समय, or 0 upon success.
  */
-static int _reset(struct omap_hwmod *oh)
-{
-	int i, r;
+अटल पूर्णांक _reset(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक i, r;
 
 	pr_debug("omap_hwmod: %s: resetting\n", oh->name);
 
-	if (oh->class->reset) {
+	अगर (oh->class->reset) अणु
 		r = oh->class->reset(oh);
-	} else {
-		if (oh->rst_lines_cnt > 0) {
-			for (i = 0; i < oh->rst_lines_cnt; i++)
-				_assert_hardreset(oh, oh->rst_lines[i].name);
-			return 0;
-		} else {
+	पूर्ण अन्यथा अणु
+		अगर (oh->rst_lines_cnt > 0) अणु
+			क्रम (i = 0; i < oh->rst_lines_cnt; i++)
+				_निश्चित_hardreset(oh, oh->rst_lines[i].name);
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			r = _ocp_softreset(oh);
-			if (r == -ENOENT)
+			अगर (r == -ENOENT)
 				r = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	_set_dmadisable(oh);
 
 	/*
 	 * OCP_SYSCONFIG bits need to be reprogrammed after a
-	 * softreset.  The _enable() function should be split to avoid
-	 * the rewrite of the OCP_SYSCONFIG register.
+	 * softreset.  The _enable() function should be split to aव्योम
+	 * the reग_लिखो of the OCP_SYSCONFIG रेजिस्टर.
 	 */
-	if (oh->class->sysc) {
+	अगर (oh->class->sysc) अणु
 		_update_sysc_cache(oh);
 		_enable_sysc(oh);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * _omap4_update_context_lost - increment hwmod context loss counter if
+ * _omap4_update_context_lost - increment hwmod context loss counter अगर
  * hwmod context was lost, and clear hardware context loss reg
- * @oh: hwmod to check for context loss
+ * @oh: hwmod to check क्रम context loss
  *
  * If the PRCM indicates that the hwmod @oh lost context, increment
  * our in-memory context loss counter, and clear the RM_*_CONTEXT
- * bits. No return value.
+ * bits. No वापस value.
  */
-static void _omap4_update_context_lost(struct omap_hwmod *oh)
-{
-	if (oh->prcm.omap4.flags & HWMOD_OMAP4_NO_CONTEXT_LOSS_BIT)
-		return;
+अटल व्योम _omap4_update_context_lost(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (oh->prcm.omap4.flags & HWMOD_OMAP4_NO_CONTEXT_LOSS_BIT)
+		वापस;
 
-	if (!prm_was_any_context_lost_old(oh->clkdm->pwrdm.ptr->prcm_partition,
+	अगर (!prm_was_any_context_lost_old(oh->clkdm->pwrdm.ptr->prcm_partition,
 					  oh->clkdm->pwrdm.ptr->prcm_offs,
 					  oh->prcm.omap4.context_offs))
-		return;
+		वापस;
 
 	oh->prcm.omap4.context_lost_counter++;
 	prm_clear_context_loss_flags_old(oh->clkdm->pwrdm.ptr->prcm_partition,
 					 oh->clkdm->pwrdm.ptr->prcm_offs,
 					 oh->prcm.omap4.context_offs);
-}
+पूर्ण
 
 /**
- * _omap4_get_context_lost - get context loss counter for a hwmod
- * @oh: hwmod to get context loss counter for
+ * _omap4_get_context_lost - get context loss counter क्रम a hwmod
+ * @oh: hwmod to get context loss counter क्रम
  *
- * Returns the in-memory context loss counter for a hwmod.
+ * Returns the in-memory context loss counter क्रम a hwmod.
  */
-static int _omap4_get_context_lost(struct omap_hwmod *oh)
-{
-	return oh->prcm.omap4.context_lost_counter;
-}
+अटल पूर्णांक _omap4_get_context_lost(काष्ठा omap_hwmod *oh)
+अणु
+	वापस oh->prcm.omap4.context_lost_counter;
+पूर्ण
 
 /**
  * _enable - enable an omap_hwmod
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Enables an omap_hwmod @oh such that the MPU can access the hwmod's
- * register target.  Returns -EINVAL if the hwmod is in the wrong
- * state or passes along the return value of _wait_target_ready().
+ * रेजिस्टर target.  Returns -EINVAL अगर the hwmod is in the wrong
+ * state or passes aदीर्घ the वापस value of _रुको_target_पढ़ोy().
  */
-static int _enable(struct omap_hwmod *oh)
-{
-	int r;
+अटल पूर्णांक _enable(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक r;
 
 	pr_debug("omap_hwmod: %s: enabling\n", oh->name);
 
@@ -1873,366 +1874,366 @@ static int _enable(struct omap_hwmod *oh)
 	 * hwmods with HWMOD_INIT_NO_IDLE flag set are left in enabled
 	 * state at init.
 	 */
-	if (oh->_int_flags & _HWMOD_SKIP_ENABLE) {
-		oh->_int_flags &= ~_HWMOD_SKIP_ENABLE;
-		return 0;
-	}
+	अगर (oh->_पूर्णांक_flags & _HWMOD_SKIP_ENABLE) अणु
+		oh->_पूर्णांक_flags &= ~_HWMOD_SKIP_ENABLE;
+		वापस 0;
+	पूर्ण
 
-	if (oh->_state != _HWMOD_STATE_INITIALIZED &&
+	अगर (oh->_state != _HWMOD_STATE_INITIALIZED &&
 	    oh->_state != _HWMOD_STATE_IDLE &&
-	    oh->_state != _HWMOD_STATE_DISABLED) {
+	    oh->_state != _HWMOD_STATE_DISABLED) अणु
 		WARN(1, "omap_hwmod: %s: enabled state can only be entered from initialized, idle, or disabled state\n",
 			oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * If an IP block contains HW reset lines and all of them are
-	 * asserted, we let integration code associated with that
+	 * निश्चितed, we let पूर्णांकegration code associated with that
 	 * block handle the enable.  We've received very little
-	 * information on what those driver authors need, and until
-	 * detailed information is provided and the driver code is
-	 * posted to the public lists, this is probably the best we
-	 * can do.
+	 * inक्रमmation on what those driver authors need, and until
+	 * detailed inक्रमmation is provided and the driver code is
+	 * posted to the खुला lists, this is probably the best we
+	 * can करो.
 	 */
-	if (_are_all_hardreset_lines_asserted(oh))
-		return 0;
+	अगर (_are_all_hardreset_lines_निश्चितed(oh))
+		वापस 0;
 
 	_add_initiator_dep(oh, mpu_oh);
 
-	if (oh->clkdm) {
+	अगर (oh->clkdm) अणु
 		/*
-		 * A clockdomain must be in SW_SUP before enabling
-		 * completely the module. The clockdomain can be set
-		 * in HW_AUTO only when the module become ready.
+		 * A घड़ीकरोमुख्य must be in SW_SUP beक्रमe enabling
+		 * completely the module. The घड़ीकरोमुख्य can be set
+		 * in HW_AUTO only when the module become पढ़ोy.
 		 */
 		clkdm_deny_idle(oh->clkdm);
 		r = clkdm_hwmod_enable(oh->clkdm, oh);
-		if (r) {
+		अगर (r) अणु
 			WARN(1, "omap_hwmod: %s: could not enable clockdomain %s: %d\n",
 			     oh->name, oh->clkdm->name, r);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
-	_enable_clocks(oh);
-	if (soc_ops.enable_module)
+	_enable_घड़ीs(oh);
+	अगर (soc_ops.enable_module)
 		soc_ops.enable_module(oh);
-	if (oh->flags & HWMOD_BLOCK_WFI)
+	अगर (oh->flags & HWMOD_BLOCK_WFI)
 		cpu_idle_poll_ctrl(true);
 
-	if (soc_ops.update_context_lost)
+	अगर (soc_ops.update_context_lost)
 		soc_ops.update_context_lost(oh);
 
-	r = (soc_ops.wait_target_ready) ? soc_ops.wait_target_ready(oh) :
+	r = (soc_ops.रुको_target_पढ़ोy) ? soc_ops.रुको_target_पढ़ोy(oh) :
 		-EINVAL;
-	if (oh->clkdm && !(oh->flags & HWMOD_CLKDM_NOAUTO))
+	अगर (oh->clkdm && !(oh->flags & HWMOD_CLKDM_NOAUTO))
 		clkdm_allow_idle(oh->clkdm);
 
-	if (!r) {
+	अगर (!r) अणु
 		oh->_state = _HWMOD_STATE_ENABLED;
 
-		/* Access the sysconfig only if the target is ready */
-		if (oh->class->sysc) {
-			if (!(oh->_int_flags & _HWMOD_SYSCONFIG_LOADED))
+		/* Access the sysconfig only अगर the target is पढ़ोy */
+		अगर (oh->class->sysc) अणु
+			अगर (!(oh->_पूर्णांक_flags & _HWMOD_SYSCONFIG_LOADED))
 				_update_sysc_cache(oh);
 			_enable_sysc(oh);
-		}
-	} else {
-		if (soc_ops.disable_module)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (soc_ops.disable_module)
 			soc_ops.disable_module(oh);
-		_disable_clocks(oh);
+		_disable_घड़ीs(oh);
 		pr_err("omap_hwmod: %s: _wait_target_ready failed: %d\n",
 		       oh->name, r);
 
-		if (oh->clkdm)
+		अगर (oh->clkdm)
 			clkdm_hwmod_disable(oh->clkdm, oh);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * _idle - idle an omap_hwmod
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Idles an omap_hwmod @oh.  This should be called once the hwmod has
- * no further work.  Returns -EINVAL if the hwmod is in the wrong
- * state or returns 0.
+ * no further work.  Returns -EINVAL अगर the hwmod is in the wrong
+ * state or वापसs 0.
  */
-static int _idle(struct omap_hwmod *oh)
-{
-	if (oh->flags & HWMOD_NO_IDLE) {
-		oh->_int_flags |= _HWMOD_SKIP_ENABLE;
-		return 0;
-	}
+अटल पूर्णांक _idle(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (oh->flags & HWMOD_NO_IDLE) अणु
+		oh->_पूर्णांक_flags |= _HWMOD_SKIP_ENABLE;
+		वापस 0;
+	पूर्ण
 
 	pr_debug("omap_hwmod: %s: idling\n", oh->name);
 
-	if (_are_all_hardreset_lines_asserted(oh))
-		return 0;
+	अगर (_are_all_hardreset_lines_निश्चितed(oh))
+		वापस 0;
 
-	if (oh->_state != _HWMOD_STATE_ENABLED) {
+	अगर (oh->_state != _HWMOD_STATE_ENABLED) अणु
 		WARN(1, "omap_hwmod: %s: idle state can only be entered from enabled state\n",
 			oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (oh->class->sysc)
+	अगर (oh->class->sysc)
 		_idle_sysc(oh);
 	_del_initiator_dep(oh, mpu_oh);
 
 	/*
-	 * If HWMOD_CLKDM_NOAUTO is set then we don't
-	 * deny idle the clkdm again since idle was already denied
+	 * If HWMOD_CLKDM_NOAUTO is set then we करोn't
+	 * deny idle the clkdm again since idle was alपढ़ोy denied
 	 * in _enable()
 	 */
-	if (oh->clkdm && !(oh->flags & HWMOD_CLKDM_NOAUTO))
+	अगर (oh->clkdm && !(oh->flags & HWMOD_CLKDM_NOAUTO))
 		clkdm_deny_idle(oh->clkdm);
 
-	if (oh->flags & HWMOD_BLOCK_WFI)
+	अगर (oh->flags & HWMOD_BLOCK_WFI)
 		cpu_idle_poll_ctrl(false);
-	if (soc_ops.disable_module)
+	अगर (soc_ops.disable_module)
 		soc_ops.disable_module(oh);
 
 	/*
-	 * The module must be in idle mode before disabling any parents
-	 * clocks. Otherwise, the parent clock might be disabled before
-	 * the module transition is done, and thus will prevent the
+	 * The module must be in idle mode beक्रमe disabling any parents
+	 * घड़ीs. Otherwise, the parent घड़ी might be disabled beक्रमe
+	 * the module transition is करोne, and thus will prevent the
 	 * transition to complete properly.
 	 */
-	_disable_clocks(oh);
-	if (oh->clkdm) {
+	_disable_घड़ीs(oh);
+	अगर (oh->clkdm) अणु
 		clkdm_allow_idle(oh->clkdm);
 		clkdm_hwmod_disable(oh->clkdm, oh);
-	}
+	पूर्ण
 
 	oh->_state = _HWMOD_STATE_IDLE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _shutdown - shutdown an omap_hwmod
- * @oh: struct omap_hwmod *
+ * _shutकरोwn - shutकरोwn an omap_hwmod
+ * @oh: काष्ठा omap_hwmod *
  *
- * Shut down an omap_hwmod @oh.  This should be called when the driver
- * used for the hwmod is removed or unloaded or if the driver is not
- * used by the system.  Returns -EINVAL if the hwmod is in the wrong
- * state or returns 0.
+ * Shut करोwn an omap_hwmod @oh.  This should be called when the driver
+ * used क्रम the hwmod is हटाओd or unloaded or अगर the driver is not
+ * used by the प्रणाली.  Returns -EINVAL अगर the hwmod is in the wrong
+ * state or वापसs 0.
  */
-static int _shutdown(struct omap_hwmod *oh)
-{
-	int ret, i;
+अटल पूर्णांक _shutकरोwn(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक ret, i;
 	u8 prev_state;
 
-	if (_are_all_hardreset_lines_asserted(oh))
-		return 0;
+	अगर (_are_all_hardreset_lines_निश्चितed(oh))
+		वापस 0;
 
-	if (oh->_state != _HWMOD_STATE_IDLE &&
-	    oh->_state != _HWMOD_STATE_ENABLED) {
+	अगर (oh->_state != _HWMOD_STATE_IDLE &&
+	    oh->_state != _HWMOD_STATE_ENABLED) अणु
 		WARN(1, "omap_hwmod: %s: disabled state can only be entered from idle, or enabled state\n",
 			oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pr_debug("omap_hwmod: %s: disabling\n", oh->name);
 
-	if (oh->class->pre_shutdown) {
+	अगर (oh->class->pre_shutकरोwn) अणु
 		prev_state = oh->_state;
-		if (oh->_state == _HWMOD_STATE_IDLE)
+		अगर (oh->_state == _HWMOD_STATE_IDLE)
 			_enable(oh);
-		ret = oh->class->pre_shutdown(oh);
-		if (ret) {
-			if (prev_state == _HWMOD_STATE_IDLE)
+		ret = oh->class->pre_shutकरोwn(oh);
+		अगर (ret) अणु
+			अगर (prev_state == _HWMOD_STATE_IDLE)
 				_idle(oh);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (oh->class->sysc) {
-		if (oh->_state == _HWMOD_STATE_IDLE)
+	अगर (oh->class->sysc) अणु
+		अगर (oh->_state == _HWMOD_STATE_IDLE)
 			_enable(oh);
-		_shutdown_sysc(oh);
-	}
+		_shutकरोwn_sysc(oh);
+	पूर्ण
 
-	/* clocks and deps are already disabled in idle */
-	if (oh->_state == _HWMOD_STATE_ENABLED) {
+	/* घड़ीs and deps are alपढ़ोy disabled in idle */
+	अगर (oh->_state == _HWMOD_STATE_ENABLED) अणु
 		_del_initiator_dep(oh, mpu_oh);
-		/* XXX what about the other system initiators here? dma, dsp */
-		if (oh->flags & HWMOD_BLOCK_WFI)
+		/* XXX what about the other प्रणाली initiators here? dma, dsp */
+		अगर (oh->flags & HWMOD_BLOCK_WFI)
 			cpu_idle_poll_ctrl(false);
-		if (soc_ops.disable_module)
+		अगर (soc_ops.disable_module)
 			soc_ops.disable_module(oh);
-		_disable_clocks(oh);
-		if (oh->clkdm)
+		_disable_घड़ीs(oh);
+		अगर (oh->clkdm)
 			clkdm_hwmod_disable(oh->clkdm, oh);
-	}
-	/* XXX Should this code also force-disable the optional clocks? */
+	पूर्ण
+	/* XXX Should this code also क्रमce-disable the optional घड़ीs? */
 
-	for (i = 0; i < oh->rst_lines_cnt; i++)
-		_assert_hardreset(oh, oh->rst_lines[i].name);
+	क्रम (i = 0; i < oh->rst_lines_cnt; i++)
+		_निश्चित_hardreset(oh, oh->rst_lines[i].name);
 
 	oh->_state = _HWMOD_STATE_DISABLED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int of_dev_find_hwmod(struct device_node *np,
-			     struct omap_hwmod *oh)
-{
-	int count, i, res;
-	const char *p;
+अटल पूर्णांक of_dev_find_hwmod(काष्ठा device_node *np,
+			     काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक count, i, res;
+	स्थिर अक्षर *p;
 
 	count = of_property_count_strings(np, "ti,hwmods");
-	if (count < 1)
-		return -ENODEV;
+	अगर (count < 1)
+		वापस -ENODEV;
 
-	for (i = 0; i < count; i++) {
-		res = of_property_read_string_index(np, "ti,hwmods",
+	क्रम (i = 0; i < count; i++) अणु
+		res = of_property_पढ़ो_string_index(np, "ti,hwmods",
 						    i, &p);
-		if (res)
-			continue;
-		if (!strcmp(p, oh->name)) {
+		अगर (res)
+			जारी;
+		अगर (!म_भेद(p, oh->name)) अणु
 			pr_debug("omap_hwmod: dt %pOFn[%i] uses hwmod %s\n",
 				 np, i, oh->name);
-			return i;
-		}
-	}
+			वापस i;
+		पूर्ण
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /**
  * of_dev_hwmod_lookup - look up needed hwmod from dt blob
- * @np: struct device_node *
- * @oh: struct omap_hwmod *
+ * @np: काष्ठा device_node *
+ * @oh: काष्ठा omap_hwmod *
  * @index: index of the entry found
- * @found: struct device_node * found or NULL
+ * @found: काष्ठा device_node * found or शून्य
  *
  * Parse the dt blob and find out needed hwmod. Recursive function is
  * implemented to take care hierarchical dt blob parsing.
  * Return: Returns 0 on success, -ENODEV when not found.
  */
-static int of_dev_hwmod_lookup(struct device_node *np,
-			       struct omap_hwmod *oh,
-			       int *index,
-			       struct device_node **found)
-{
-	struct device_node *np0 = NULL;
-	int res;
+अटल पूर्णांक of_dev_hwmod_lookup(काष्ठा device_node *np,
+			       काष्ठा omap_hwmod *oh,
+			       पूर्णांक *index,
+			       काष्ठा device_node **found)
+अणु
+	काष्ठा device_node *np0 = शून्य;
+	पूर्णांक res;
 
 	res = of_dev_find_hwmod(np, oh);
-	if (res >= 0) {
+	अगर (res >= 0) अणु
 		*found = np;
 		*index = res;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for_each_child_of_node(np, np0) {
-		struct device_node *fc;
-		int i;
+	क्रम_each_child_of_node(np, np0) अणु
+		काष्ठा device_node *fc;
+		पूर्णांक i;
 
 		res = of_dev_hwmod_lookup(np0, oh, &i, &fc);
-		if (res == 0) {
+		अगर (res == 0) अणु
 			*found = fc;
 			*index = i;
 			of_node_put(np0);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	*found = NULL;
+	*found = शून्य;
 	*index = 0;
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /**
- * omap_hwmod_fix_mpu_rt_idx - fix up mpu_rt_idx register offsets
+ * omap_hwmod_fix_mpu_rt_idx - fix up mpu_rt_idx रेजिस्टर offsets
  *
- * @oh: struct omap_hwmod *
- * @np: struct device_node *
+ * @oh: काष्ठा omap_hwmod *
+ * @np: काष्ठा device_node *
  *
- * Fix up module register offsets for modules with mpu_rt_idx.
- * Only needed for cpsw with interconnect target module defined
- * in device tree while still using legacy hwmod platform data
- * for rev, sysc and syss registers.
+ * Fix up module रेजिस्टर offsets क्रम modules with mpu_rt_idx.
+ * Only needed क्रम cpsw with पूर्णांकerconnect target module defined
+ * in device tree जबतक still using legacy hwmod platक्रमm data
+ * क्रम rev, sysc and syss रेजिस्टरs.
  *
- * Can be removed when all cpsw hwmod platform data has been
+ * Can be हटाओd when all cpsw hwmod platक्रमm data has been
  * dropped.
  */
-static void omap_hwmod_fix_mpu_rt_idx(struct omap_hwmod *oh,
-				      struct device_node *np,
-				      struct resource *res)
-{
-	struct device_node *child = NULL;
-	int error;
+अटल व्योम omap_hwmod_fix_mpu_rt_idx(काष्ठा omap_hwmod *oh,
+				      काष्ठा device_node *np,
+				      काष्ठा resource *res)
+अणु
+	काष्ठा device_node *child = शून्य;
+	पूर्णांक error;
 
 	child = of_get_next_child(np, child);
-	if (!child)
-		return;
+	अगर (!child)
+		वापस;
 
 	error = of_address_to_resource(child, oh->mpu_rt_idx, res);
-	if (error)
+	अगर (error)
 		pr_err("%s: error mapping mpu_rt_idx: %i\n",
 		       __func__, error);
-}
+पूर्ण
 
 /**
  * omap_hwmod_parse_module_range - map module IO range from device tree
- * @oh: struct omap_hwmod *
- * @np: struct device_node *
+ * @oh: काष्ठा omap_hwmod *
+ * @np: काष्ठा device_node *
  *
- * Parse the device tree range an interconnect target module provides
- * for it's child device IP blocks. This way we can support the old
- * "ti,hwmods" property with just dts data without a need for platform
- * data for IO resources. And we don't need all the child IP device
+ * Parse the device tree range an पूर्णांकerconnect target module provides
+ * क्रम it's child device IP blocks. This way we can support the old
+ * "ti,hwmods" property with just dts data without a need क्रम platक्रमm
+ * data क्रम IO resources. And we करोn't need all the child IP device
  * nodes available in the dts.
  */
-int omap_hwmod_parse_module_range(struct omap_hwmod *oh,
-				  struct device_node *np,
-				  struct resource *res)
-{
-	struct property *prop;
-	const __be32 *ranges;
-	const char *name;
+पूर्णांक omap_hwmod_parse_module_range(काष्ठा omap_hwmod *oh,
+				  काष्ठा device_node *np,
+				  काष्ठा resource *res)
+अणु
+	काष्ठा property *prop;
+	स्थिर __be32 *ranges;
+	स्थिर अक्षर *name;
 	u32 nr_addr, nr_size;
 	u64 base, size;
-	int len, error;
+	पूर्णांक len, error;
 
-	if (!res)
-		return -EINVAL;
+	अगर (!res)
+		वापस -EINVAL;
 
 	ranges = of_get_property(np, "ranges", &len);
-	if (!ranges)
-		return -ENOENT;
+	अगर (!ranges)
+		वापस -ENOENT;
 
-	len /= sizeof(*ranges);
+	len /= माप(*ranges);
 
-	if (len < 3)
-		return -EINVAL;
+	अगर (len < 3)
+		वापस -EINVAL;
 
-	of_property_for_each_string(np, "compatible", prop, name)
-		if (!strncmp("ti,sysc-", name, 8))
-			break;
+	of_property_क्रम_each_string(np, "compatible", prop, name)
+		अगर (!म_भेदन("ti,sysc-", name, 8))
+			अवरोध;
 
-	if (!name)
-		return -ENOENT;
+	अगर (!name)
+		वापस -ENOENT;
 
-	error = of_property_read_u32(np, "#address-cells", &nr_addr);
-	if (error)
-		return -ENOENT;
+	error = of_property_पढ़ो_u32(np, "#address-cells", &nr_addr);
+	अगर (error)
+		वापस -ENOENT;
 
-	error = of_property_read_u32(np, "#size-cells", &nr_size);
-	if (error)
-		return -ENOENT;
+	error = of_property_पढ़ो_u32(np, "#size-cells", &nr_size);
+	अगर (error)
+		वापस -ENOENT;
 
-	if (nr_addr != 1 || nr_size != 1) {
+	अगर (nr_addr != 1 || nr_size != 1) अणु
 		pr_err("%s: invalid range for %s->%pOFn\n", __func__,
 		       oh->name, np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ranges++;
 	base = of_translate_address(np, ranges++);
@@ -2241,367 +2242,367 @@ int omap_hwmod_parse_module_range(struct omap_hwmod *oh,
 	pr_debug("omap_hwmod: %s %pOFn at 0x%llx size 0x%llx\n",
 		 oh->name, np, base, size);
 
-	if (oh && oh->mpu_rt_idx) {
+	अगर (oh && oh->mpu_rt_idx) अणु
 		omap_hwmod_fix_mpu_rt_idx(oh, np, res);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	res->start = base;
 	res->end = base + size - 1;
 	res->flags = IORESOURCE_MEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _init_mpu_rt_base - populate the virtual address for a hwmod
- * @oh: struct omap_hwmod * to locate the virtual address
- * @data: (unused, caller should pass NULL)
+ * _init_mpu_rt_base - populate the भव address क्रम a hwmod
+ * @oh: काष्ठा omap_hwmod * to locate the भव address
+ * @data: (unused, caller should pass शून्य)
  * @index: index of the reg entry iospace in device tree
- * @np: struct device_node * of the IP block's device node in the DT data
+ * @np: काष्ठा device_node * of the IP block's device node in the DT data
  *
- * Cache the virtual address used by the MPU to access this IP block's
- * registers.  This address is needed early so the OCP registers that
+ * Cache the भव address used by the MPU to access this IP block's
+ * रेजिस्टरs.  This address is needed early so the OCP रेजिस्टरs that
  * are part of the device's address space can be ioremapped properly.
  *
- * If SYSC access is not needed, the registers will not be remapped
+ * If SYSC access is not needed, the रेजिस्टरs will not be remapped
  * and non-availability of MPU access is not treated as an error.
  *
- * Returns 0 on success, -EINVAL if an invalid hwmod is passed, and
- * -ENXIO on absent or invalid register target address space.
+ * Returns 0 on success, -EINVAL अगर an invalid hwmod is passed, and
+ * -ENXIO on असलent or invalid रेजिस्टर target address space.
  */
-static int __init _init_mpu_rt_base(struct omap_hwmod *oh, void *data,
-				    int index, struct device_node *np)
-{
-	void __iomem *va_start = NULL;
-	struct resource res;
-	int error;
+अटल पूर्णांक __init _init_mpu_rt_base(काष्ठा omap_hwmod *oh, व्योम *data,
+				    पूर्णांक index, काष्ठा device_node *np)
+अणु
+	व्योम __iomem *बहु_शुरू = शून्य;
+	काष्ठा resource res;
+	पूर्णांक error;
 
-	if (!oh)
-		return -EINVAL;
+	अगर (!oh)
+		वापस -EINVAL;
 
 	_save_mpu_port_index(oh);
 
-	/* if we don't need sysc access we don't need to ioremap */
-	if (!oh->class->sysc)
-		return 0;
+	/* अगर we करोn't need sysc access we don't need to ioremap */
+	अगर (!oh->class->sysc)
+		वापस 0;
 
-	/* we can't continue without MPU PORT if we need sysc access */
-	if (oh->_int_flags & _HWMOD_NO_MPU_PORT)
-		return -ENXIO;
+	/* we can't जारी without MPU PORT अगर we need sysc access */
+	अगर (oh->_पूर्णांक_flags & _HWMOD_NO_MPU_PORT)
+		वापस -ENXIO;
 
-	if (!np) {
+	अगर (!np) अणु
 		pr_err("omap_hwmod: %s: no dt node\n", oh->name);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	/* Do we have a dts range for the interconnect target module? */
+	/* Do we have a dts range क्रम the पूर्णांकerconnect target module? */
 	error = omap_hwmod_parse_module_range(oh, np, &res);
-	if (!error)
-		va_start = ioremap(res.start, resource_size(&res));
+	अगर (!error)
+		बहु_शुरू = ioremap(res.start, resource_size(&res));
 
 	/* No ranges, rely on device reg entry */
-	if (!va_start)
-		va_start = of_iomap(np, index + oh->mpu_rt_idx);
-	if (!va_start) {
+	अगर (!बहु_शुरू)
+		बहु_शुरू = of_iomap(np, index + oh->mpu_rt_idx);
+	अगर (!बहु_शुरू) अणु
 		pr_err("omap_hwmod: %s: Missing dt reg%i for %pOF\n",
 		       oh->name, index, np);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	pr_debug("omap_hwmod: %s: MPU register target at va %p\n",
-		 oh->name, va_start);
+		 oh->name, बहु_शुरू);
 
-	oh->_mpu_rt_va = va_start;
-	return 0;
-}
+	oh->_mpu_rt_va = बहु_शुरू;
+	वापस 0;
+पूर्ण
 
-static void __init parse_module_flags(struct omap_hwmod *oh,
-				      struct device_node *np)
-{
-	if (of_find_property(np, "ti,no-reset-on-init", NULL))
+अटल व्योम __init parse_module_flags(काष्ठा omap_hwmod *oh,
+				      काष्ठा device_node *np)
+अणु
+	अगर (of_find_property(np, "ti,no-reset-on-init", शून्य))
 		oh->flags |= HWMOD_INIT_NO_RESET;
-	if (of_find_property(np, "ti,no-idle-on-init", NULL))
+	अगर (of_find_property(np, "ti,no-idle-on-init", शून्य))
 		oh->flags |= HWMOD_INIT_NO_IDLE;
-	if (of_find_property(np, "ti,no-idle", NULL))
+	अगर (of_find_property(np, "ti,no-idle", शून्य))
 		oh->flags |= HWMOD_NO_IDLE;
-}
+पूर्ण
 
 /**
- * _init - initialize internal data for the hwmod @oh
- * @oh: struct omap_hwmod *
+ * _init - initialize पूर्णांकernal data क्रम the hwmod @oh
+ * @oh: काष्ठा omap_hwmod *
  * @n: (unused)
  *
- * Look up the clocks and the address space used by the MPU to access
- * registers belonging to the hwmod @oh.  @oh must already be
- * registered at this point.  This is the first of two phases for
- * hwmod initialization.  Code called here does not touch any hardware
- * registers, it simply prepares internal data structures.  Returns 0
- * upon success or if the hwmod isn't registered or if the hwmod's
+ * Look up the घड़ीs and the address space used by the MPU to access
+ * रेजिस्टरs beदीर्घing to the hwmod @oh.  @oh must alपढ़ोy be
+ * रेजिस्टरed at this poपूर्णांक.  This is the first of two phases क्रम
+ * hwmod initialization.  Code called here करोes not touch any hardware
+ * रेजिस्टरs, it simply prepares पूर्णांकernal data काष्ठाures.  Returns 0
+ * upon success or अगर the hwmod isn't registered or if the hwmod's
  * address space is not defined, or -EINVAL upon failure.
  */
-static int __init _init(struct omap_hwmod *oh, void *data)
-{
-	int r, index;
-	struct device_node *np = NULL;
-	struct device_node *bus;
+अटल पूर्णांक __init _init(काष्ठा omap_hwmod *oh, व्योम *data)
+अणु
+	पूर्णांक r, index;
+	काष्ठा device_node *np = शून्य;
+	काष्ठा device_node *bus;
 
-	if (oh->_state != _HWMOD_STATE_REGISTERED)
-		return 0;
+	अगर (oh->_state != _HWMOD_STATE_REGISTERED)
+		वापस 0;
 
-	bus = of_find_node_by_name(NULL, "ocp");
-	if (!bus)
-		return -ENODEV;
+	bus = of_find_node_by_name(शून्य, "ocp");
+	अगर (!bus)
+		वापस -ENODEV;
 
 	r = of_dev_hwmod_lookup(bus, oh, &index, &np);
-	if (r)
+	अगर (r)
 		pr_debug("omap_hwmod: %s missing dt data\n", oh->name);
-	else if (np && index)
+	अन्यथा अगर (np && index)
 		pr_warn("omap_hwmod: %s using broken dt data from %pOFn\n",
 			oh->name, np);
 
-	r = _init_mpu_rt_base(oh, NULL, index, np);
-	if (r < 0) {
+	r = _init_mpu_rt_base(oh, शून्य, index, np);
+	अगर (r < 0) अणु
 		WARN(1, "omap_hwmod: %s: doesn't have mpu register target base\n",
 		     oh->name);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	r = _init_clocks(oh, np);
-	if (r < 0) {
+	r = _init_घड़ीs(oh, np);
+	अगर (r < 0) अणु
 		WARN(1, "omap_hwmod: %s: couldn't init clocks\n", oh->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (np) {
-		struct device_node *child;
+	अगर (np) अणु
+		काष्ठा device_node *child;
 
 		parse_module_flags(oh, np);
-		child = of_get_next_child(np, NULL);
-		if (child)
+		child = of_get_next_child(np, शून्य);
+		अगर (child)
 			parse_module_flags(oh, child);
-	}
+	पूर्ण
 
 	oh->_state = _HWMOD_STATE_INITIALIZED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _setup_iclk_autoidle - configure an IP block's interface clocks
- * @oh: struct omap_hwmod *
+ * _setup_iclk_स्वतःidle - configure an IP block's पूर्णांकerface घड़ीs
+ * @oh: काष्ठा omap_hwmod *
  *
- * Set up the module's interface clocks.  XXX This function is still mostly
- * a stub; implementing this properly requires iclk autoidle usecounting in
- * the clock code.   No return value.
+ * Set up the module's पूर्णांकerface घड़ीs.  XXX This function is still mostly
+ * a stub; implementing this properly requires iclk स्वतःidle usecounting in
+ * the घड़ी code.   No वापस value.
  */
-static void _setup_iclk_autoidle(struct omap_hwmod *oh)
-{
-	struct omap_hwmod_ocp_if *os;
+अटल व्योम _setup_iclk_स्वतःidle(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा omap_hwmod_ocp_अगर *os;
 
-	if (oh->_state != _HWMOD_STATE_INITIALIZED)
-		return;
+	अगर (oh->_state != _HWMOD_STATE_INITIALIZED)
+		वापस;
 
-	list_for_each_entry(os, &oh->slave_ports, node) {
-		if (!os->_clk)
-			continue;
+	list_क्रम_each_entry(os, &oh->slave_ports, node) अणु
+		अगर (!os->_clk)
+			जारी;
 
-		if (os->flags & OCPIF_SWSUP_IDLE) {
+		अगर (os->flags & OCPIF_SWSUP_IDLE) अणु
 			/*
 			 * we might have multiple users of one iclk with
-			 * different requirements, disable autoidle when
+			 * dअगरferent requirements, disable स्वतःidle when
 			 * the module is enabled, e.g. dss iclk
 			 */
-		} else {
-			/* we are enabling autoidle afterwards anyways */
+		पूर्ण अन्यथा अणु
+			/* we are enabling स्वतःidle afterwards anyways */
 			clk_enable(os->_clk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
  * _setup_reset - reset an IP block during the setup process
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Reset the IP block corresponding to the hwmod @oh during the setup
  * process.  The IP block is first enabled so it can be successfully
  * reset.  Returns 0 upon success or a negative error code upon
  * failure.
  */
-static int _setup_reset(struct omap_hwmod *oh)
-{
-	int r = 0;
+अटल पूर्णांक _setup_reset(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक r = 0;
 
-	if (oh->_state != _HWMOD_STATE_INITIALIZED)
-		return -EINVAL;
+	अगर (oh->_state != _HWMOD_STATE_INITIALIZED)
+		वापस -EINVAL;
 
-	if (oh->flags & HWMOD_EXT_OPT_MAIN_CLK)
-		return -EPERM;
+	अगर (oh->flags & HWMOD_EXT_OPT_MAIN_CLK)
+		वापस -EPERM;
 
-	if (oh->rst_lines_cnt == 0) {
+	अगर (oh->rst_lines_cnt == 0) अणु
 		r = _enable(oh);
-		if (r) {
+		अगर (r) अणु
 			pr_warn("omap_hwmod: %s: cannot be enabled for reset (%d)\n",
 				oh->name, oh->_state);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (!(oh->flags & HWMOD_INIT_NO_RESET))
+	अगर (!(oh->flags & HWMOD_INIT_NO_RESET))
 		r = _reset(oh);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * _setup_postsetup - transition to the appropriate state after _setup
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
- * Place an IP block represented by @oh into a "post-setup" state --
+ * Place an IP block represented by @oh पूर्णांकo a "post-setup" state --
  * either IDLE, ENABLED, or DISABLED.  ("post-setup" simply means that
  * this function is called at the end of _setup().)  The postsetup
- * state for an IP block can be changed by calling
+ * state क्रम an IP block can be changed by calling
  * omap_hwmod_enter_postsetup_state() early in the boot process,
- * before one of the omap_hwmod_setup*() functions are called for the
+ * beक्रमe one of the omap_hwmod_setup*() functions are called क्रम the
  * IP block.
  *
- * The IP block stays in this state until a PM runtime-based driver is
- * loaded for that IP block.  A post-setup state of IDLE is
- * appropriate for almost all IP blocks with runtime PM-enabled
+ * The IP block stays in this state until a PM runसमय-based driver is
+ * loaded क्रम that IP block.  A post-setup state of IDLE is
+ * appropriate क्रम almost all IP blocks with runसमय PM-enabled
  * drivers, since those drivers are able to enable the IP block.  A
- * post-setup state of ENABLED is appropriate for kernels with PM
- * runtime disabled.  The DISABLED state is appropriate for unusual IP
+ * post-setup state of ENABLED is appropriate क्रम kernels with PM
+ * runसमय disabled.  The DISABLED state is appropriate क्रम unusual IP
  * blocks such as the MPU WDTIMER on kernels without WDTIMER drivers
  * included, since the WDTIMER starts running on reset and will reset
- * the MPU if left active.
+ * the MPU अगर left active.
  *
  * This post-setup mechanism is deprecated.  Once all of the OMAP
- * drivers have been converted to use PM runtime, and all of the IP
- * block data and interconnect data is available to the hwmod code, it
+ * drivers have been converted to use PM runसमय, and all of the IP
+ * block data and पूर्णांकerconnect data is available to the hwmod code, it
  * should be possible to replace this mechanism with a "lazy reset"
  * arrangement.  In a "lazy reset" setup, each IP block is enabled
- * when the driver first probes, then all remaining IP blocks without
- * drivers are either shut down or enabled after the drivers have
+ * when the driver first probes, then all reमुख्यing IP blocks without
+ * drivers are either shut करोwn or enabled after the drivers have
  * loaded.  However, this cannot take place until the above
  * preconditions have been met, since otherwise the late reset code
  * has no way of knowing which IP blocks are in use by drivers, and
  * which ones are unused.
  *
- * No return value.
+ * No वापस value.
  */
-static void _setup_postsetup(struct omap_hwmod *oh)
-{
+अटल व्योम _setup_postsetup(काष्ठा omap_hwmod *oh)
+अणु
 	u8 postsetup_state;
 
-	if (oh->rst_lines_cnt > 0)
-		return;
+	अगर (oh->rst_lines_cnt > 0)
+		वापस;
 
 	postsetup_state = oh->_postsetup_state;
-	if (postsetup_state == _HWMOD_STATE_UNKNOWN)
+	अगर (postsetup_state == _HWMOD_STATE_UNKNOWN)
 		postsetup_state = _HWMOD_STATE_ENABLED;
 
 	/*
-	 * XXX HWMOD_INIT_NO_IDLE does not belong in hwmod data -
-	 * it should be set by the core code as a runtime flag during startup
+	 * XXX HWMOD_INIT_NO_IDLE करोes not beदीर्घ in hwmod data -
+	 * it should be set by the core code as a runसमय flag during startup
 	 */
-	if ((oh->flags & (HWMOD_INIT_NO_IDLE | HWMOD_NO_IDLE)) &&
-	    (postsetup_state == _HWMOD_STATE_IDLE)) {
-		oh->_int_flags |= _HWMOD_SKIP_ENABLE;
+	अगर ((oh->flags & (HWMOD_INIT_NO_IDLE | HWMOD_NO_IDLE)) &&
+	    (postsetup_state == _HWMOD_STATE_IDLE)) अणु
+		oh->_पूर्णांक_flags |= _HWMOD_SKIP_ENABLE;
 		postsetup_state = _HWMOD_STATE_ENABLED;
-	}
+	पूर्ण
 
-	if (postsetup_state == _HWMOD_STATE_IDLE)
+	अगर (postsetup_state == _HWMOD_STATE_IDLE)
 		_idle(oh);
-	else if (postsetup_state == _HWMOD_STATE_DISABLED)
-		_shutdown(oh);
-	else if (postsetup_state != _HWMOD_STATE_ENABLED)
+	अन्यथा अगर (postsetup_state == _HWMOD_STATE_DISABLED)
+		_shutकरोwn(oh);
+	अन्यथा अगर (postsetup_state != _HWMOD_STATE_ENABLED)
 		WARN(1, "hwmod: %s: unknown postsetup state %d! defaulting to enabled\n",
 		     oh->name, postsetup_state);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
- * _setup - prepare IP block hardware for use
- * @oh: struct omap_hwmod *
- * @n: (unused, pass NULL)
+ * _setup - prepare IP block hardware क्रम use
+ * @oh: काष्ठा omap_hwmod *
+ * @n: (unused, pass शून्य)
  *
  * Configure the IP block represented by @oh.  This may include
- * enabling the IP block, resetting it, and placing it into a
+ * enabling the IP block, resetting it, and placing it पूर्णांकo a
  * post-setup state, depending on the type of IP block and applicable
  * flags.  IP blocks are reset to prevent any previous configuration
- * by the bootloader or previous operating system from interfering
- * with power management or other parts of the system.  The reset can
- * be avoided; see omap_hwmod_no_setup_reset().  This is the second of
- * two phases for hwmod initialization.  Code called here generally
- * affects the IP block hardware, or system integration hardware
+ * by the bootloader or previous operating प्रणाली from पूर्णांकerfering
+ * with घातer management or other parts of the प्रणाली.  The reset can
+ * be aव्योमed; see omap_hwmod_no_setup_reset().  This is the second of
+ * two phases क्रम hwmod initialization.  Code called here generally
+ * affects the IP block hardware, or प्रणाली पूर्णांकegration hardware
  * associated with the IP block.  Returns 0.
  */
-static int _setup(struct omap_hwmod *oh, void *data)
-{
-	if (oh->_state != _HWMOD_STATE_INITIALIZED)
-		return 0;
+अटल पूर्णांक _setup(काष्ठा omap_hwmod *oh, व्योम *data)
+अणु
+	अगर (oh->_state != _HWMOD_STATE_INITIALIZED)
+		वापस 0;
 
-	if (oh->parent_hwmod) {
-		int r;
+	अगर (oh->parent_hwmod) अणु
+		पूर्णांक r;
 
 		r = _enable(oh->parent_hwmod);
 		WARN(r, "hwmod: %s: setup: failed to enable parent hwmod %s\n",
 		     oh->name, oh->parent_hwmod->name);
-	}
+	पूर्ण
 
-	_setup_iclk_autoidle(oh);
+	_setup_iclk_स्वतःidle(oh);
 
-	if (!_setup_reset(oh))
+	अगर (!_setup_reset(oh))
 		_setup_postsetup(oh);
 
-	if (oh->parent_hwmod) {
+	अगर (oh->parent_hwmod) अणु
 		u8 postsetup_state;
 
 		postsetup_state = oh->parent_hwmod->_postsetup_state;
 
-		if (postsetup_state == _HWMOD_STATE_IDLE)
+		अगर (postsetup_state == _HWMOD_STATE_IDLE)
 			_idle(oh->parent_hwmod);
-		else if (postsetup_state == _HWMOD_STATE_DISABLED)
-			_shutdown(oh->parent_hwmod);
-		else if (postsetup_state != _HWMOD_STATE_ENABLED)
+		अन्यथा अगर (postsetup_state == _HWMOD_STATE_DISABLED)
+			_shutकरोwn(oh->parent_hwmod);
+		अन्यथा अगर (postsetup_state != _HWMOD_STATE_ENABLED)
 			WARN(1, "hwmod: %s: unknown postsetup state %d! defaulting to enabled\n",
 			     oh->parent_hwmod->name, postsetup_state);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _register - register a struct omap_hwmod
- * @oh: struct omap_hwmod *
+ * _रेजिस्टर - रेजिस्टर a काष्ठा omap_hwmod
+ * @oh: काष्ठा omap_hwmod *
  *
- * Registers the omap_hwmod @oh.  Returns -EEXIST if an omap_hwmod
- * already has been registered by the same name; -EINVAL if the
- * omap_hwmod is in the wrong state, if @oh is NULL, if the
- * omap_hwmod's class field is NULL; if the omap_hwmod is missing a
- * name, or if the omap_hwmod's class is missing a name; or 0 upon
+ * Registers the omap_hwmod @oh.  Returns -EEXIST अगर an omap_hwmod
+ * alपढ़ोy has been रेजिस्टरed by the same name; -EINVAL अगर the
+ * omap_hwmod is in the wrong state, अगर @oh is शून्य, अगर the
+ * omap_hwmod's class field is शून्य; अगर the omap_hwmod is missing a
+ * name, or अगर the omap_hwmod's class is missing a name; or 0 upon
  * success.
  *
- * XXX The data should be copied into bootmem, so the original data
- * should be marked __initdata and freed after init.  This would allow
- * unneeded omap_hwmods to be freed on multi-OMAP configurations.  Note
+ * XXX The data should be copied पूर्णांकo booपंचांगem, so the original data
+ * should be marked __initdata and मुक्तd after init.  This would allow
+ * unneeded omap_hwmods to be मुक्तd on multi-OMAP configurations.  Note
  * that the copy process would be relatively complex due to the large number
- * of substructures.
+ * of subकाष्ठाures.
  */
-static int _register(struct omap_hwmod *oh)
-{
-	if (!oh || !oh->name || !oh->class || !oh->class->name ||
+अटल पूर्णांक _रेजिस्टर(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh || !oh->name || !oh->class || !oh->class->name ||
 	    (oh->_state != _HWMOD_STATE_UNKNOWN))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	pr_debug("omap_hwmod: %s: registering\n", oh->name);
 
-	if (_lookup(oh->name))
-		return -EEXIST;
+	अगर (_lookup(oh->name))
+		वापस -EEXIST;
 
 	list_add_tail(&oh->node, &omap_hwmod_list);
 
@@ -2612,820 +2613,820 @@ static int _register(struct omap_hwmod *oh)
 	oh->_state = _HWMOD_STATE_REGISTERED;
 
 	/*
-	 * XXX Rather than doing a strcmp(), this should test a flag
-	 * set in the hwmod data, inserted by the autogenerator code.
+	 * XXX Rather than करोing a म_भेद(), this should test a flag
+	 * set in the hwmod data, inserted by the स्वतःgenerator code.
 	 */
-	if (!strcmp(oh->name, MPU_INITIATOR_NAME))
+	अगर (!म_भेद(oh->name, MPU_INITIATOR_NAME))
 		mpu_oh = oh;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _add_link - add an interconnect between two IP blocks
- * @oi: pointer to a struct omap_hwmod_ocp_if record
+ * _add_link - add an पूर्णांकerconnect between two IP blocks
+ * @oi: poपूर्णांकer to a काष्ठा omap_hwmod_ocp_अगर record
  *
- * Add struct omap_hwmod_link records connecting the slave IP block
- * specified in @oi->slave to @oi.  This code is assumed to run before
- * preemption or SMP has been enabled, thus avoiding the need for
+ * Add काष्ठा omap_hwmod_link records connecting the slave IP block
+ * specअगरied in @oi->slave to @oi.  This code is assumed to run beक्रमe
+ * preemption or SMP has been enabled, thus aव्योमing the need क्रम
  * locking in this code.  Changes to this assumption will require
  * additional locking.  Returns 0.
  */
-static int _add_link(struct omap_hwmod_ocp_if *oi)
-{
+अटल पूर्णांक _add_link(काष्ठा omap_hwmod_ocp_अगर *oi)
+अणु
 	pr_debug("omap_hwmod: %s -> %s: adding link\n", oi->master->name,
 		 oi->slave->name);
 
 	list_add(&oi->node, &oi->slave->slave_ports);
 	oi->slave->slaves_cnt++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _register_link - register a struct omap_hwmod_ocp_if
- * @oi: struct omap_hwmod_ocp_if *
+ * _रेजिस्टर_link - रेजिस्टर a काष्ठा omap_hwmod_ocp_अगर
+ * @oi: काष्ठा omap_hwmod_ocp_अगर *
  *
- * Registers the omap_hwmod_ocp_if record @oi.  Returns -EEXIST if it
- * has already been registered; -EINVAL if @oi is NULL or if the
- * record pointed to by @oi is missing required fields; or 0 upon
+ * Registers the omap_hwmod_ocp_अगर record @oi.  Returns -EEXIST अगर it
+ * has alपढ़ोy been रेजिस्टरed; -EINVAL अगर @oi is शून्य or अगर the
+ * record poपूर्णांकed to by @oi is missing required fields; or 0 upon
  * success.
  *
- * XXX The data should be copied into bootmem, so the original data
- * should be marked __initdata and freed after init.  This would allow
- * unneeded omap_hwmods to be freed on multi-OMAP configurations.
+ * XXX The data should be copied पूर्णांकo booपंचांगem, so the original data
+ * should be marked __initdata and मुक्तd after init.  This would allow
+ * unneeded omap_hwmods to be मुक्तd on multi-OMAP configurations.
  */
-static int __init _register_link(struct omap_hwmod_ocp_if *oi)
-{
-	if (!oi || !oi->master || !oi->slave || !oi->user)
-		return -EINVAL;
+अटल पूर्णांक __init _रेजिस्टर_link(काष्ठा omap_hwmod_ocp_अगर *oi)
+अणु
+	अगर (!oi || !oi->master || !oi->slave || !oi->user)
+		वापस -EINVAL;
 
-	if (oi->_int_flags & _OCPIF_INT_FLAGS_REGISTERED)
-		return -EEXIST;
+	अगर (oi->_पूर्णांक_flags & _OCPIF_INT_FLAGS_REGISTERED)
+		वापस -EEXIST;
 
 	pr_debug("omap_hwmod: registering link from %s to %s\n",
 		 oi->master->name, oi->slave->name);
 
 	/*
-	 * Register the connected hwmods, if they haven't been
-	 * registered already
+	 * Register the connected hwmods, अगर they haven't been
+	 * रेजिस्टरed alपढ़ोy
 	 */
-	if (oi->master->_state != _HWMOD_STATE_REGISTERED)
-		_register(oi->master);
+	अगर (oi->master->_state != _HWMOD_STATE_REGISTERED)
+		_रेजिस्टर(oi->master);
 
-	if (oi->slave->_state != _HWMOD_STATE_REGISTERED)
-		_register(oi->slave);
+	अगर (oi->slave->_state != _HWMOD_STATE_REGISTERED)
+		_रेजिस्टर(oi->slave);
 
 	_add_link(oi);
 
-	oi->_int_flags |= _OCPIF_INT_FLAGS_REGISTERED;
+	oi->_पूर्णांक_flags |= _OCPIF_INT_FLAGS_REGISTERED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Static functions intended only for use in soc_ops field function pointers */
+/* Static functions पूर्णांकended only क्रम use in soc_ops field function poपूर्णांकers */
 
 /**
- * _omap2xxx_3xxx_wait_target_ready - wait for a module to leave slave idle
- * @oh: struct omap_hwmod *
+ * _omap2xxx_3xxx_रुको_target_पढ़ोy - रुको क्रम a module to leave slave idle
+ * @oh: काष्ठा omap_hwmod *
  *
- * Wait for a module @oh to leave slave idle.  Returns 0 if the module
- * does not have an IDLEST bit or if the module successfully leaves
- * slave idle; otherwise, pass along the return value of the
- * appropriate *_cm*_wait_module_ready() function.
+ * Wait क्रम a module @oh to leave slave idle.  Returns 0 अगर the module
+ * करोes not have an IDLEST bit or अगर the module successfully leaves
+ * slave idle; otherwise, pass aदीर्घ the वापस value of the
+ * appropriate *_cm*_रुको_module_पढ़ोy() function.
  */
-static int _omap2xxx_3xxx_wait_target_ready(struct omap_hwmod *oh)
-{
-	if (!oh)
-		return -EINVAL;
+अटल पूर्णांक _omap2xxx_3xxx_रुको_target_पढ़ोy(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh)
+		वापस -EINVAL;
 
-	if (oh->flags & HWMOD_NO_IDLEST)
-		return 0;
+	अगर (oh->flags & HWMOD_NO_IDLEST)
+		वापस 0;
 
-	if (!_find_mpu_rt_port(oh))
-		return 0;
+	अगर (!_find_mpu_rt_port(oh))
+		वापस 0;
 
-	/* XXX check module SIDLEMODE, hardreset status, enabled clocks */
+	/* XXX check module SIDLEMODE, hardreset status, enabled घड़ीs */
 
-	return omap_cm_wait_module_ready(0, oh->prcm.omap2.module_offs,
+	वापस omap_cm_रुको_module_पढ़ोy(0, oh->prcm.omap2.module_offs,
 					 oh->prcm.omap2.idlest_reg_id,
 					 oh->prcm.omap2.idlest_idle_bit);
-}
+पूर्ण
 
 /**
- * _omap4_wait_target_ready - wait for a module to leave slave idle
- * @oh: struct omap_hwmod *
+ * _omap4_रुको_target_पढ़ोy - रुको क्रम a module to leave slave idle
+ * @oh: काष्ठा omap_hwmod *
  *
- * Wait for a module @oh to leave slave idle.  Returns 0 if the module
- * does not have an IDLEST bit or if the module successfully leaves
- * slave idle; otherwise, pass along the return value of the
- * appropriate *_cm*_wait_module_ready() function.
+ * Wait क्रम a module @oh to leave slave idle.  Returns 0 अगर the module
+ * करोes not have an IDLEST bit or अगर the module successfully leaves
+ * slave idle; otherwise, pass aदीर्घ the वापस value of the
+ * appropriate *_cm*_रुको_module_पढ़ोy() function.
  */
-static int _omap4_wait_target_ready(struct omap_hwmod *oh)
-{
-	if (!oh)
-		return -EINVAL;
+अटल पूर्णांक _omap4_रुको_target_पढ़ोy(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh)
+		वापस -EINVAL;
 
-	if (oh->flags & HWMOD_NO_IDLEST || !oh->clkdm)
-		return 0;
+	अगर (oh->flags & HWMOD_NO_IDLEST || !oh->clkdm)
+		वापस 0;
 
-	if (!_find_mpu_rt_port(oh))
-		return 0;
+	अगर (!_find_mpu_rt_port(oh))
+		वापस 0;
 
-	if (_omap4_clkctrl_managed_by_clkfwk(oh))
-		return 0;
+	अगर (_omap4_clkctrl_managed_by_clkfwk(oh))
+		वापस 0;
 
-	if (!_omap4_has_clkctrl_clock(oh))
-		return 0;
+	अगर (!_omap4_has_clkctrl_घड़ी(oh))
+		वापस 0;
 
 	/* XXX check module SIDLEMODE, hardreset status */
 
-	return omap_cm_wait_module_ready(oh->clkdm->prcm_partition,
+	वापस omap_cm_रुको_module_पढ़ोy(oh->clkdm->prcm_partition,
 					 oh->clkdm->cm_inst,
 					 oh->prcm.omap4.clkctrl_offs, 0);
-}
+पूर्ण
 
 /**
- * _omap2_assert_hardreset - call OMAP2 PRM hardreset fn with hwmod args
- * @oh: struct omap_hwmod * to assert hardreset
+ * _omap2_निश्चित_hardreset - call OMAP2 PRM hardreset fn with hwmod args
+ * @oh: काष्ठा omap_hwmod * to निश्चित hardreset
  * @ohri: hardreset line data
  *
- * Call omap2_prm_assert_hardreset() with parameters extracted from
- * the hwmod @oh and the hardreset line data @ohri.  Only intended for
- * use as an soc_ops function pointer.  Passes along the return value
- * from omap2_prm_assert_hardreset().  XXX This function is scheduled
- * for removal when the PRM code is moved into drivers/.
+ * Call omap2_prm_निश्चित_hardreset() with parameters extracted from
+ * the hwmod @oh and the hardreset line data @ohri.  Only पूर्णांकended क्रम
+ * use as an soc_ops function poपूर्णांकer.  Passes aदीर्घ the वापस value
+ * from omap2_prm_निश्चित_hardreset().  XXX This function is scheduled
+ * क्रम removal when the PRM code is moved पूर्णांकo drivers/.
  */
-static int _omap2_assert_hardreset(struct omap_hwmod *oh,
-				   struct omap_hwmod_rst_info *ohri)
-{
-	return omap_prm_assert_hardreset(ohri->rst_shift, 0,
+अटल पूर्णांक _omap2_निश्चित_hardreset(काष्ठा omap_hwmod *oh,
+				   काष्ठा omap_hwmod_rst_info *ohri)
+अणु
+	वापस omap_prm_निश्चित_hardreset(ohri->rst_shअगरt, 0,
 					 oh->prcm.omap2.module_offs, 0);
-}
+पूर्ण
 
 /**
- * _omap2_deassert_hardreset - call OMAP2 PRM hardreset fn with hwmod args
- * @oh: struct omap_hwmod * to deassert hardreset
+ * _omap2_deनिश्चित_hardreset - call OMAP2 PRM hardreset fn with hwmod args
+ * @oh: काष्ठा omap_hwmod * to deनिश्चित hardreset
  * @ohri: hardreset line data
  *
- * Call omap2_prm_deassert_hardreset() with parameters extracted from
- * the hwmod @oh and the hardreset line data @ohri.  Only intended for
- * use as an soc_ops function pointer.  Passes along the return value
- * from omap2_prm_deassert_hardreset().  XXX This function is
- * scheduled for removal when the PRM code is moved into drivers/.
+ * Call omap2_prm_deनिश्चित_hardreset() with parameters extracted from
+ * the hwmod @oh and the hardreset line data @ohri.  Only पूर्णांकended क्रम
+ * use as an soc_ops function poपूर्णांकer.  Passes aदीर्घ the वापस value
+ * from omap2_prm_deनिश्चित_hardreset().  XXX This function is
+ * scheduled क्रम removal when the PRM code is moved पूर्णांकo drivers/.
  */
-static int _omap2_deassert_hardreset(struct omap_hwmod *oh,
-				     struct omap_hwmod_rst_info *ohri)
-{
-	return omap_prm_deassert_hardreset(ohri->rst_shift, ohri->st_shift, 0,
+अटल पूर्णांक _omap2_deनिश्चित_hardreset(काष्ठा omap_hwmod *oh,
+				     काष्ठा omap_hwmod_rst_info *ohri)
+अणु
+	वापस omap_prm_deनिश्चित_hardreset(ohri->rst_shअगरt, ohri->st_shअगरt, 0,
 					   oh->prcm.omap2.module_offs, 0, 0);
-}
+पूर्ण
 
 /**
- * _omap2_is_hardreset_asserted - call OMAP2 PRM hardreset fn with hwmod args
- * @oh: struct omap_hwmod * to test hardreset
+ * _omap2_is_hardreset_निश्चितed - call OMAP2 PRM hardreset fn with hwmod args
+ * @oh: काष्ठा omap_hwmod * to test hardreset
  * @ohri: hardreset line data
  *
- * Call omap2_prm_is_hardreset_asserted() with parameters extracted
+ * Call omap2_prm_is_hardreset_निश्चितed() with parameters extracted
  * from the hwmod @oh and the hardreset line data @ohri.  Only
- * intended for use as an soc_ops function pointer.  Passes along the
- * return value from omap2_prm_is_hardreset_asserted().  XXX This
- * function is scheduled for removal when the PRM code is moved into
+ * पूर्णांकended क्रम use as an soc_ops function poपूर्णांकer.  Passes aदीर्घ the
+ * वापस value from omap2_prm_is_hardreset_निश्चितed().  XXX This
+ * function is scheduled क्रम removal when the PRM code is moved पूर्णांकo
  * drivers/.
  */
-static int _omap2_is_hardreset_asserted(struct omap_hwmod *oh,
-					struct omap_hwmod_rst_info *ohri)
-{
-	return omap_prm_is_hardreset_asserted(ohri->st_shift, 0,
+अटल पूर्णांक _omap2_is_hardreset_निश्चितed(काष्ठा omap_hwmod *oh,
+					काष्ठा omap_hwmod_rst_info *ohri)
+अणु
+	वापस omap_prm_is_hardreset_निश्चितed(ohri->st_shअगरt, 0,
 					      oh->prcm.omap2.module_offs, 0);
-}
+पूर्ण
 
 /**
- * _omap4_assert_hardreset - call OMAP4 PRM hardreset fn with hwmod args
- * @oh: struct omap_hwmod * to assert hardreset
+ * _omap4_निश्चित_hardreset - call OMAP4 PRM hardreset fn with hwmod args
+ * @oh: काष्ठा omap_hwmod * to निश्चित hardreset
  * @ohri: hardreset line data
  *
- * Call omap4_prminst_assert_hardreset() with parameters extracted
+ * Call omap4_prminst_निश्चित_hardreset() with parameters extracted
  * from the hwmod @oh and the hardreset line data @ohri.  Only
- * intended for use as an soc_ops function pointer.  Passes along the
- * return value from omap4_prminst_assert_hardreset().  XXX This
- * function is scheduled for removal when the PRM code is moved into
+ * पूर्णांकended क्रम use as an soc_ops function poपूर्णांकer.  Passes aदीर्घ the
+ * वापस value from omap4_prminst_निश्चित_hardreset().  XXX This
+ * function is scheduled क्रम removal when the PRM code is moved पूर्णांकo
  * drivers/.
  */
-static int _omap4_assert_hardreset(struct omap_hwmod *oh,
-				   struct omap_hwmod_rst_info *ohri)
-{
-	if (!oh->clkdm)
-		return -EINVAL;
+अटल पूर्णांक _omap4_निश्चित_hardreset(काष्ठा omap_hwmod *oh,
+				   काष्ठा omap_hwmod_rst_info *ohri)
+अणु
+	अगर (!oh->clkdm)
+		वापस -EINVAL;
 
-	return omap_prm_assert_hardreset(ohri->rst_shift,
+	वापस omap_prm_निश्चित_hardreset(ohri->rst_shअगरt,
 					 oh->clkdm->pwrdm.ptr->prcm_partition,
 					 oh->clkdm->pwrdm.ptr->prcm_offs,
 					 oh->prcm.omap4.rstctrl_offs);
-}
+पूर्ण
 
 /**
- * _omap4_deassert_hardreset - call OMAP4 PRM hardreset fn with hwmod args
- * @oh: struct omap_hwmod * to deassert hardreset
+ * _omap4_deनिश्चित_hardreset - call OMAP4 PRM hardreset fn with hwmod args
+ * @oh: काष्ठा omap_hwmod * to deनिश्चित hardreset
  * @ohri: hardreset line data
  *
- * Call omap4_prminst_deassert_hardreset() with parameters extracted
+ * Call omap4_prminst_deनिश्चित_hardreset() with parameters extracted
  * from the hwmod @oh and the hardreset line data @ohri.  Only
- * intended for use as an soc_ops function pointer.  Passes along the
- * return value from omap4_prminst_deassert_hardreset().  XXX This
- * function is scheduled for removal when the PRM code is moved into
+ * पूर्णांकended क्रम use as an soc_ops function poपूर्णांकer.  Passes aदीर्घ the
+ * वापस value from omap4_prminst_deनिश्चित_hardreset().  XXX This
+ * function is scheduled क्रम removal when the PRM code is moved पूर्णांकo
  * drivers/.
  */
-static int _omap4_deassert_hardreset(struct omap_hwmod *oh,
-				     struct omap_hwmod_rst_info *ohri)
-{
-	if (!oh->clkdm)
-		return -EINVAL;
+अटल पूर्णांक _omap4_deनिश्चित_hardreset(काष्ठा omap_hwmod *oh,
+				     काष्ठा omap_hwmod_rst_info *ohri)
+अणु
+	अगर (!oh->clkdm)
+		वापस -EINVAL;
 
-	if (ohri->st_shift)
+	अगर (ohri->st_shअगरt)
 		pr_err("omap_hwmod: %s: %s: hwmod data error: OMAP4 does not support st_shift\n",
 		       oh->name, ohri->name);
-	return omap_prm_deassert_hardreset(ohri->rst_shift, ohri->rst_shift,
+	वापस omap_prm_deनिश्चित_hardreset(ohri->rst_shअगरt, ohri->rst_shअगरt,
 					   oh->clkdm->pwrdm.ptr->prcm_partition,
 					   oh->clkdm->pwrdm.ptr->prcm_offs,
 					   oh->prcm.omap4.rstctrl_offs,
 					   oh->prcm.omap4.rstctrl_offs +
 					   OMAP4_RST_CTRL_ST_OFFSET);
-}
+पूर्ण
 
 /**
- * _omap4_is_hardreset_asserted - call OMAP4 PRM hardreset fn with hwmod args
- * @oh: struct omap_hwmod * to test hardreset
+ * _omap4_is_hardreset_निश्चितed - call OMAP4 PRM hardreset fn with hwmod args
+ * @oh: काष्ठा omap_hwmod * to test hardreset
  * @ohri: hardreset line data
  *
- * Call omap4_prminst_is_hardreset_asserted() with parameters
+ * Call omap4_prminst_is_hardreset_निश्चितed() with parameters
  * extracted from the hwmod @oh and the hardreset line data @ohri.
- * Only intended for use as an soc_ops function pointer.  Passes along
- * the return value from omap4_prminst_is_hardreset_asserted().  XXX
- * This function is scheduled for removal when the PRM code is moved
- * into drivers/.
+ * Only पूर्णांकended क्रम use as an soc_ops function poपूर्णांकer.  Passes aदीर्घ
+ * the वापस value from omap4_prminst_is_hardreset_निश्चितed().  XXX
+ * This function is scheduled क्रम removal when the PRM code is moved
+ * पूर्णांकo drivers/.
  */
-static int _omap4_is_hardreset_asserted(struct omap_hwmod *oh,
-					struct omap_hwmod_rst_info *ohri)
-{
-	if (!oh->clkdm)
-		return -EINVAL;
+अटल पूर्णांक _omap4_is_hardreset_निश्चितed(काष्ठा omap_hwmod *oh,
+					काष्ठा omap_hwmod_rst_info *ohri)
+अणु
+	अगर (!oh->clkdm)
+		वापस -EINVAL;
 
-	return omap_prm_is_hardreset_asserted(ohri->rst_shift,
+	वापस omap_prm_is_hardreset_निश्चितed(ohri->rst_shअगरt,
 					      oh->clkdm->pwrdm.ptr->
 					      prcm_partition,
 					      oh->clkdm->pwrdm.ptr->prcm_offs,
 					      oh->prcm.omap4.rstctrl_offs);
-}
+पूर्ण
 
 /**
- * _omap4_disable_direct_prcm - disable direct PRCM control for hwmod
- * @oh: struct omap_hwmod * to disable control for
+ * _omap4_disable_direct_prcm - disable direct PRCM control क्रम hwmod
+ * @oh: काष्ठा omap_hwmod * to disable control क्रम
  *
- * Disables direct PRCM clkctrl done by hwmod core. Instead, the hwmod
- * will be using its main_clk to enable/disable the module. Returns
- * 0 if successful.
+ * Disables direct PRCM clkctrl करोne by hwmod core. Instead, the hwmod
+ * will be using its मुख्य_clk to enable/disable the module. Returns
+ * 0 अगर successful.
  */
-static int _omap4_disable_direct_prcm(struct omap_hwmod *oh)
-{
-	if (!oh)
-		return -EINVAL;
+अटल पूर्णांक _omap4_disable_direct_prcm(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh)
+		वापस -EINVAL;
 
 	oh->prcm.omap4.flags |= HWMOD_OMAP4_CLKFWK_CLKCTR_CLOCK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * _am33xx_deassert_hardreset - call AM33XX PRM hardreset fn with hwmod args
- * @oh: struct omap_hwmod * to deassert hardreset
+ * _am33xx_deनिश्चित_hardreset - call AM33XX PRM hardreset fn with hwmod args
+ * @oh: काष्ठा omap_hwmod * to deनिश्चित hardreset
  * @ohri: hardreset line data
  *
- * Call am33xx_prminst_deassert_hardreset() with parameters extracted
+ * Call am33xx_prminst_deनिश्चित_hardreset() with parameters extracted
  * from the hwmod @oh and the hardreset line data @ohri.  Only
- * intended for use as an soc_ops function pointer.  Passes along the
- * return value from am33xx_prminst_deassert_hardreset().  XXX This
- * function is scheduled for removal when the PRM code is moved into
+ * पूर्णांकended क्रम use as an soc_ops function poपूर्णांकer.  Passes aदीर्घ the
+ * वापस value from am33xx_prminst_deनिश्चित_hardreset().  XXX This
+ * function is scheduled क्रम removal when the PRM code is moved पूर्णांकo
  * drivers/.
  */
-static int _am33xx_deassert_hardreset(struct omap_hwmod *oh,
-				     struct omap_hwmod_rst_info *ohri)
-{
-	return omap_prm_deassert_hardreset(ohri->rst_shift, ohri->st_shift,
+अटल पूर्णांक _am33xx_deनिश्चित_hardreset(काष्ठा omap_hwmod *oh,
+				     काष्ठा omap_hwmod_rst_info *ohri)
+अणु
+	वापस omap_prm_deनिश्चित_hardreset(ohri->rst_shअगरt, ohri->st_shअगरt,
 					   oh->clkdm->pwrdm.ptr->prcm_partition,
 					   oh->clkdm->pwrdm.ptr->prcm_offs,
 					   oh->prcm.omap4.rstctrl_offs,
 					   oh->prcm.omap4.rstst_offs);
-}
+पूर्ण
 
 /* Public functions */
 
-u32 omap_hwmod_read(struct omap_hwmod *oh, u16 reg_offs)
-{
-	if (oh->flags & HWMOD_16BIT_REG)
-		return readw_relaxed(oh->_mpu_rt_va + reg_offs);
-	else
-		return readl_relaxed(oh->_mpu_rt_va + reg_offs);
-}
+u32 omap_hwmod_पढ़ो(काष्ठा omap_hwmod *oh, u16 reg_offs)
+अणु
+	अगर (oh->flags & HWMOD_16BIT_REG)
+		वापस पढ़ोw_relaxed(oh->_mpu_rt_va + reg_offs);
+	अन्यथा
+		वापस पढ़ोl_relaxed(oh->_mpu_rt_va + reg_offs);
+पूर्ण
 
-void omap_hwmod_write(u32 v, struct omap_hwmod *oh, u16 reg_offs)
-{
-	if (oh->flags & HWMOD_16BIT_REG)
-		writew_relaxed(v, oh->_mpu_rt_va + reg_offs);
-	else
-		writel_relaxed(v, oh->_mpu_rt_va + reg_offs);
-}
+व्योम omap_hwmod_ग_लिखो(u32 v, काष्ठा omap_hwmod *oh, u16 reg_offs)
+अणु
+	अगर (oh->flags & HWMOD_16BIT_REG)
+		ग_लिखोw_relaxed(v, oh->_mpu_rt_va + reg_offs);
+	अन्यथा
+		ग_लिखोl_relaxed(v, oh->_mpu_rt_va + reg_offs);
+पूर्ण
 
 /**
  * omap_hwmod_softreset - reset a module via SYSCONFIG.SOFTRESET bit
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
- * This is a public function exposed to drivers. Some drivers may need to do
- * some settings before and after resetting the device.  Those drivers after
- * doing the necessary settings could use this function to start a reset by
+ * This is a खुला function exposed to drivers. Some drivers may need to करो
+ * some settings beक्रमe and after resetting the device.  Those drivers after
+ * करोing the necessary settings could use this function to start a reset by
  * setting the SYSCONFIG.SOFTRESET bit.
  */
-int omap_hwmod_softreset(struct omap_hwmod *oh)
-{
+पूर्णांक omap_hwmod_softreset(काष्ठा omap_hwmod *oh)
+अणु
 	u32 v;
-	int ret;
+	पूर्णांक ret;
 
-	if (!oh || !(oh->_sysc_cache))
-		return -EINVAL;
+	अगर (!oh || !(oh->_sysc_cache))
+		वापस -EINVAL;
 
 	v = oh->_sysc_cache;
 	ret = _set_softreset(oh, &v);
-	if (ret)
-		goto error;
-	_write_sysconfig(v, oh);
+	अगर (ret)
+		जाओ error;
+	_ग_लिखो_sysconfig(v, oh);
 
 	ret = _clear_softreset(oh, &v);
-	if (ret)
-		goto error;
-	_write_sysconfig(v, oh);
+	अगर (ret)
+		जाओ error;
+	_ग_लिखो_sysconfig(v, oh);
 
 error:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * omap_hwmod_lookup - look up a registered omap_hwmod by name
+ * omap_hwmod_lookup - look up a रेजिस्टरed omap_hwmod by name
  * @name: name of the omap_hwmod to look up
  *
- * Given a @name of an omap_hwmod, return a pointer to the registered
- * struct omap_hwmod *, or NULL upon error.
+ * Given a @name of an omap_hwmod, वापस a poपूर्णांकer to the रेजिस्टरed
+ * काष्ठा omap_hwmod *, or शून्य upon error.
  */
-struct omap_hwmod *omap_hwmod_lookup(const char *name)
-{
-	struct omap_hwmod *oh;
+काष्ठा omap_hwmod *omap_hwmod_lookup(स्थिर अक्षर *name)
+अणु
+	काष्ठा omap_hwmod *oh;
 
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
 	oh = _lookup(name);
 
-	return oh;
-}
+	वापस oh;
+पूर्ण
 
 /**
- * omap_hwmod_for_each - call function for each registered omap_hwmod
- * @fn: pointer to a callback function
- * @data: void * data to pass to callback function
+ * omap_hwmod_क्रम_each - call function क्रम each रेजिस्टरed omap_hwmod
+ * @fn: poपूर्णांकer to a callback function
+ * @data: व्योम * data to pass to callback function
  *
- * Call @fn for each registered omap_hwmod, passing @data to each
- * function.  @fn must return 0 for success or any other value for
- * failure.  If @fn returns non-zero, the iteration across omap_hwmods
- * will stop and the non-zero return value will be passed to the
- * caller of omap_hwmod_for_each().  @fn is called with
- * omap_hwmod_for_each() held.
+ * Call @fn क्रम each रेजिस्टरed omap_hwmod, passing @data to each
+ * function.  @fn must वापस 0 क्रम success or any other value क्रम
+ * failure.  If @fn वापसs non-zero, the iteration across omap_hwmods
+ * will stop and the non-zero वापस value will be passed to the
+ * caller of omap_hwmod_क्रम_each().  @fn is called with
+ * omap_hwmod_क्रम_each() held.
  */
-int omap_hwmod_for_each(int (*fn)(struct omap_hwmod *oh, void *data),
-			void *data)
-{
-	struct omap_hwmod *temp_oh;
-	int ret = 0;
+पूर्णांक omap_hwmod_क्रम_each(पूर्णांक (*fn)(काष्ठा omap_hwmod *oh, व्योम *data),
+			व्योम *data)
+अणु
+	काष्ठा omap_hwmod *temp_oh;
+	पूर्णांक ret = 0;
 
-	if (!fn)
-		return -EINVAL;
+	अगर (!fn)
+		वापस -EINVAL;
 
-	list_for_each_entry(temp_oh, &omap_hwmod_list, node) {
+	list_क्रम_each_entry(temp_oh, &omap_hwmod_list, node) अणु
 		ret = (*fn)(temp_oh, data);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * omap_hwmod_register_links - register an array of hwmod links
- * @ois: pointer to an array of omap_hwmod_ocp_if to register
+ * omap_hwmod_रेजिस्टर_links - रेजिस्टर an array of hwmod links
+ * @ois: poपूर्णांकer to an array of omap_hwmod_ocp_अगर to रेजिस्टर
  *
- * Intended to be called early in boot before the clock framework is
- * initialized.  If @ois is not null, will register all omap_hwmods
- * listed in @ois that are valid for this chip.  Returns -EINVAL if
- * omap_hwmod_init() hasn't been called before calling this function,
- * -ENOMEM if the link memory area can't be allocated, or 0 upon
+ * Intended to be called early in boot beक्रमe the घड़ी framework is
+ * initialized.  If @ois is not null, will रेजिस्टर all omap_hwmods
+ * listed in @ois that are valid क्रम this chip.  Returns -EINVAL अगर
+ * omap_hwmod_init() hasn't been called beक्रमe calling this function,
+ * -ENOMEM अगर the link memory area can't be allocated, or 0 upon
  * success.
  */
-int __init omap_hwmod_register_links(struct omap_hwmod_ocp_if **ois)
-{
-	int r, i;
+पूर्णांक __init omap_hwmod_रेजिस्टर_links(काष्ठा omap_hwmod_ocp_अगर **ois)
+अणु
+	पूर्णांक r, i;
 
-	if (!inited)
-		return -EINVAL;
+	अगर (!inited)
+		वापस -EINVAL;
 
-	if (!ois)
-		return 0;
+	अगर (!ois)
+		वापस 0;
 
-	if (ois[0] == NULL) /* Empty list */
-		return 0;
+	अगर (ois[0] == शून्य) /* Empty list */
+		वापस 0;
 
 	i = 0;
-	do {
-		r = _register_link(ois[i]);
+	करो अणु
+		r = _रेजिस्टर_link(ois[i]);
 		WARN(r && r != -EEXIST,
 		     "omap_hwmod: _register_link(%s -> %s) returned %d\n",
 		     ois[i]->master->name, ois[i]->slave->name, r);
-	} while (ois[++i]);
+	पूर्ण जबतक (ois[++i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _ensure_mpu_hwmod_is_setup - ensure the MPU SS hwmod is init'ed and set up
- * @oh: pointer to the hwmod currently being set up (usually not the MPU)
+ * @oh: poपूर्णांकer to the hwmod currently being set up (usually not the MPU)
  *
- * If the hwmod data corresponding to the MPU subsystem IP block
- * hasn't been initialized and set up yet, do so now.  This must be
- * done first since sleep dependencies may be added from other hwmods
+ * If the hwmod data corresponding to the MPU subप्रणाली IP block
+ * hasn't been initialized and set up yet, करो so now.  This must be
+ * करोne first since sleep dependencies may be added from other hwmods
  * to the MPU.  Intended to be called only by omap_hwmod_setup*().  No
- * return value.
+ * वापस value.
  */
-static void __init _ensure_mpu_hwmod_is_setup(struct omap_hwmod *oh)
-{
-	if (!mpu_oh || mpu_oh->_state == _HWMOD_STATE_UNKNOWN)
+अटल व्योम __init _ensure_mpu_hwmod_is_setup(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!mpu_oh || mpu_oh->_state == _HWMOD_STATE_UNKNOWN)
 		pr_err("omap_hwmod: %s: MPU initiator hwmod %s not yet registered\n",
 		       __func__, MPU_INITIATOR_NAME);
-	else if (mpu_oh->_state == _HWMOD_STATE_REGISTERED && oh != mpu_oh)
+	अन्यथा अगर (mpu_oh->_state == _HWMOD_STATE_REGISTERED && oh != mpu_oh)
 		omap_hwmod_setup_one(MPU_INITIATOR_NAME);
-}
+पूर्ण
 
 /**
  * omap_hwmod_setup_one - set up a single hwmod
- * @oh_name: const char * name of the already-registered hwmod to set up
+ * @oh_name: स्थिर अक्षर * name of the alपढ़ोy-रेजिस्टरed hwmod to set up
  *
- * Initialize and set up a single hwmod.  Intended to be used for a
- * small number of early devices, such as the timer IP blocks used for
- * the scheduler clock.  Must be called after omap2_clk_init().
- * Resolves the struct clk names to struct clk pointers for each
- * registered omap_hwmod.  Also calls _setup() on each hwmod.  Returns
+ * Initialize and set up a single hwmod.  Intended to be used क्रम a
+ * small number of early devices, such as the समयr IP blocks used क्रम
+ * the scheduler घड़ी.  Must be called after omap2_clk_init().
+ * Resolves the काष्ठा clk names to काष्ठा clk poपूर्णांकers क्रम each
+ * रेजिस्टरed omap_hwmod.  Also calls _setup() on each hwmod.  Returns
  * -EINVAL upon error or 0 upon success.
  */
-int __init omap_hwmod_setup_one(const char *oh_name)
-{
-	struct omap_hwmod *oh;
+पूर्णांक __init omap_hwmod_setup_one(स्थिर अक्षर *oh_name)
+अणु
+	काष्ठा omap_hwmod *oh;
 
 	pr_debug("omap_hwmod: %s: %s\n", oh_name, __func__);
 
 	oh = _lookup(oh_name);
-	if (!oh) {
+	अगर (!oh) अणु
 		WARN(1, "omap_hwmod: %s: hwmod not yet registered\n", oh_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	_ensure_mpu_hwmod_is_setup(oh);
 
-	_init(oh, NULL);
-	_setup(oh, NULL);
+	_init(oh, शून्य);
+	_setup(oh, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void omap_hwmod_check_one(struct device *dev,
-				 const char *name, s8 v1, u8 v2)
-{
-	if (v1 < 0)
-		return;
+अटल व्योम omap_hwmod_check_one(काष्ठा device *dev,
+				 स्थिर अक्षर *name, s8 v1, u8 v2)
+अणु
+	अगर (v1 < 0)
+		वापस;
 
-	if (v1 != v2)
+	अगर (v1 != v2)
 		dev_warn(dev, "%s %d != %d\n", name, v1, v2);
-}
+पूर्ण
 
 /**
- * omap_hwmod_check_sysc - check sysc against platform sysc
- * @dev: struct device
+ * omap_hwmod_check_sysc - check sysc against platक्रमm sysc
+ * @dev: काष्ठा device
  * @data: module data
  * @sysc_fields: new sysc configuration
  */
-static int omap_hwmod_check_sysc(struct device *dev,
-				 const struct ti_sysc_module_data *data,
-				 struct sysc_regbits *sysc_fields)
-{
-	const struct sysc_regbits *regbits = data->cap->regbits;
+अटल पूर्णांक omap_hwmod_check_sysc(काष्ठा device *dev,
+				 स्थिर काष्ठा ti_sysc_module_data *data,
+				 काष्ठा sysc_regbits *sysc_fields)
+अणु
+	स्थिर काष्ठा sysc_regbits *regbits = data->cap->regbits;
 
 	omap_hwmod_check_one(dev, "dmadisable_shift",
-			     regbits->dmadisable_shift,
-			     sysc_fields->dmadisable_shift);
+			     regbits->dmadisable_shअगरt,
+			     sysc_fields->dmadisable_shअगरt);
 	omap_hwmod_check_one(dev, "midle_shift",
-			     regbits->midle_shift,
-			     sysc_fields->midle_shift);
+			     regbits->midle_shअगरt,
+			     sysc_fields->midle_shअगरt);
 	omap_hwmod_check_one(dev, "sidle_shift",
-			     regbits->sidle_shift,
-			     sysc_fields->sidle_shift);
+			     regbits->sidle_shअगरt,
+			     sysc_fields->sidle_shअगरt);
 	omap_hwmod_check_one(dev, "clkact_shift",
-			     regbits->clkact_shift,
-			     sysc_fields->clkact_shift);
+			     regbits->clkact_shअगरt,
+			     sysc_fields->clkact_shअगरt);
 	omap_hwmod_check_one(dev, "enwkup_shift",
-			     regbits->enwkup_shift,
-			     sysc_fields->enwkup_shift);
+			     regbits->enwkup_shअगरt,
+			     sysc_fields->enwkup_shअगरt);
 	omap_hwmod_check_one(dev, "srst_shift",
-			     regbits->srst_shift,
-			     sysc_fields->srst_shift);
+			     regbits->srst_shअगरt,
+			     sysc_fields->srst_shअगरt);
 	omap_hwmod_check_one(dev, "autoidle_shift",
-			     regbits->autoidle_shift,
-			     sysc_fields->autoidle_shift);
+			     regbits->स्वतःidle_shअगरt,
+			     sysc_fields->स्वतःidle_shअगरt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * omap_hwmod_init_regbits - init sysconfig specific register bits
- * @dev: struct device
+ * omap_hwmod_init_regbits - init sysconfig specअगरic रेजिस्टर bits
+ * @dev: काष्ठा device
  * @oh: module
  * @data: module data
  * @sysc_fields: new sysc configuration
  */
-static int omap_hwmod_init_regbits(struct device *dev, struct omap_hwmod *oh,
-				   const struct ti_sysc_module_data *data,
-				   struct sysc_regbits **sysc_fields)
-{
-	switch (data->cap->type) {
-	case TI_SYSC_OMAP2:
-	case TI_SYSC_OMAP2_TIMER:
+अटल पूर्णांक omap_hwmod_init_regbits(काष्ठा device *dev, काष्ठा omap_hwmod *oh,
+				   स्थिर काष्ठा ti_sysc_module_data *data,
+				   काष्ठा sysc_regbits **sysc_fields)
+अणु
+	चयन (data->cap->type) अणु
+	हाल TI_SYSC_OMAP2:
+	हाल TI_SYSC_OMAP2_TIMER:
 		*sysc_fields = &omap_hwmod_sysc_type1;
-		break;
-	case TI_SYSC_OMAP3_SHAM:
+		अवरोध;
+	हाल TI_SYSC_OMAP3_SHAM:
 		*sysc_fields = &omap3_sham_sysc_fields;
-		break;
-	case TI_SYSC_OMAP3_AES:
+		अवरोध;
+	हाल TI_SYSC_OMAP3_AES:
 		*sysc_fields = &omap3xxx_aes_sysc_fields;
-		break;
-	case TI_SYSC_OMAP4:
-	case TI_SYSC_OMAP4_TIMER:
+		अवरोध;
+	हाल TI_SYSC_OMAP4:
+	हाल TI_SYSC_OMAP4_TIMER:
 		*sysc_fields = &omap_hwmod_sysc_type2;
-		break;
-	case TI_SYSC_OMAP4_SIMPLE:
+		अवरोध;
+	हाल TI_SYSC_OMAP4_SIMPLE:
 		*sysc_fields = &omap_hwmod_sysc_type3;
-		break;
-	case TI_SYSC_OMAP34XX_SR:
+		अवरोध;
+	हाल TI_SYSC_OMAP34XX_SR:
 		*sysc_fields = &omap34xx_sr_sysc_fields;
-		break;
-	case TI_SYSC_OMAP36XX_SR:
+		अवरोध;
+	हाल TI_SYSC_OMAP36XX_SR:
 		*sysc_fields = &omap36xx_sr_sysc_fields;
-		break;
-	case TI_SYSC_OMAP4_SR:
+		अवरोध;
+	हाल TI_SYSC_OMAP4_SR:
 		*sysc_fields = &omap36xx_sr_sysc_fields;
-		break;
-	case TI_SYSC_OMAP4_MCASP:
+		अवरोध;
+	हाल TI_SYSC_OMAP4_MCASP:
 		*sysc_fields = &omap_hwmod_sysc_type_mcasp;
-		break;
-	case TI_SYSC_OMAP4_USB_HOST_FS:
+		अवरोध;
+	हाल TI_SYSC_OMAP4_USB_HOST_FS:
 		*sysc_fields = &omap_hwmod_sysc_type_usb_host_fs;
-		break;
-	default:
-		*sysc_fields = NULL;
-		if (!oh->class->sysc->sysc_fields)
-			return 0;
+		अवरोध;
+	शेष:
+		*sysc_fields = शून्य;
+		अगर (!oh->class->sysc->sysc_fields)
+			वापस 0;
 
 		dev_err(dev, "sysc_fields not found\n");
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return omap_hwmod_check_sysc(dev, data, *sysc_fields);
-}
+	वापस omap_hwmod_check_sysc(dev, data, *sysc_fields);
+पूर्ण
 
 /**
- * omap_hwmod_init_reg_offs - initialize sysconfig register offsets
- * @dev: struct device
+ * omap_hwmod_init_reg_offs - initialize sysconfig रेजिस्टर offsets
+ * @dev: काष्ठा device
  * @data: module data
- * @rev_offs: revision register offset
- * @sysc_offs: sysc register offset
- * @syss_offs: syss register offset
+ * @rev_offs: revision रेजिस्टर offset
+ * @sysc_offs: sysc रेजिस्टर offset
+ * @syss_offs: syss रेजिस्टर offset
  */
-static int omap_hwmod_init_reg_offs(struct device *dev,
-				    const struct ti_sysc_module_data *data,
+अटल पूर्णांक omap_hwmod_init_reg_offs(काष्ठा device *dev,
+				    स्थिर काष्ठा ti_sysc_module_data *data,
 				    s32 *rev_offs, s32 *sysc_offs,
 				    s32 *syss_offs)
-{
+अणु
 	*rev_offs = -ENODEV;
 	*sysc_offs = 0;
 	*syss_offs = 0;
 
-	if (data->offsets[SYSC_REVISION] >= 0)
+	अगर (data->offsets[SYSC_REVISION] >= 0)
 		*rev_offs = data->offsets[SYSC_REVISION];
 
-	if (data->offsets[SYSC_SYSCONFIG] >= 0)
+	अगर (data->offsets[SYSC_SYSCONFIG] >= 0)
 		*sysc_offs = data->offsets[SYSC_SYSCONFIG];
 
-	if (data->offsets[SYSC_SYSSTATUS] >= 0)
+	अगर (data->offsets[SYSC_SYSSTATUS] >= 0)
 		*syss_offs = data->offsets[SYSC_SYSSTATUS];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * omap_hwmod_init_sysc_flags - initialize sysconfig features
- * @dev: struct device
+ * @dev: काष्ठा device
  * @data: module data
  * @sysc_flags: module configuration
  */
-static int omap_hwmod_init_sysc_flags(struct device *dev,
-				      const struct ti_sysc_module_data *data,
+अटल पूर्णांक omap_hwmod_init_sysc_flags(काष्ठा device *dev,
+				      स्थिर काष्ठा ti_sysc_module_data *data,
 				      u32 *sysc_flags)
-{
+अणु
 	*sysc_flags = 0;
 
-	switch (data->cap->type) {
-	case TI_SYSC_OMAP2:
-	case TI_SYSC_OMAP2_TIMER:
+	चयन (data->cap->type) अणु
+	हाल TI_SYSC_OMAP2:
+	हाल TI_SYSC_OMAP2_TIMER:
 		/* See SYSC_OMAP2_* in include/dt-bindings/bus/ti-sysc.h */
-		if (data->cfg->sysc_val & SYSC_OMAP2_CLOCKACTIVITY)
+		अगर (data->cfg->sysc_val & SYSC_OMAP2_CLOCKACTIVITY)
 			*sysc_flags |= SYSC_HAS_CLOCKACTIVITY;
-		if (data->cfg->sysc_val & SYSC_OMAP2_EMUFREE)
+		अगर (data->cfg->sysc_val & SYSC_OMAP2_EMUFREE)
 			*sysc_flags |= SYSC_HAS_EMUFREE;
-		if (data->cfg->sysc_val & SYSC_OMAP2_ENAWAKEUP)
+		अगर (data->cfg->sysc_val & SYSC_OMAP2_ENAWAKEUP)
 			*sysc_flags |= SYSC_HAS_ENAWAKEUP;
-		if (data->cfg->sysc_val & SYSC_OMAP2_SOFTRESET)
+		अगर (data->cfg->sysc_val & SYSC_OMAP2_SOFTRESET)
 			*sysc_flags |= SYSC_HAS_SOFTRESET;
-		if (data->cfg->sysc_val & SYSC_OMAP2_AUTOIDLE)
+		अगर (data->cfg->sysc_val & SYSC_OMAP2_AUTOIDLE)
 			*sysc_flags |= SYSC_HAS_AUTOIDLE;
-		break;
-	case TI_SYSC_OMAP4:
-	case TI_SYSC_OMAP4_TIMER:
+		अवरोध;
+	हाल TI_SYSC_OMAP4:
+	हाल TI_SYSC_OMAP4_TIMER:
 		/* See SYSC_OMAP4_* in include/dt-bindings/bus/ti-sysc.h */
-		if (data->cfg->sysc_val & SYSC_OMAP4_DMADISABLE)
+		अगर (data->cfg->sysc_val & SYSC_OMAP4_DMADISABLE)
 			*sysc_flags |= SYSC_HAS_DMADISABLE;
-		if (data->cfg->sysc_val & SYSC_OMAP4_FREEEMU)
+		अगर (data->cfg->sysc_val & SYSC_OMAP4_FREEEMU)
 			*sysc_flags |= SYSC_HAS_EMUFREE;
-		if (data->cfg->sysc_val & SYSC_OMAP4_SOFTRESET)
+		अगर (data->cfg->sysc_val & SYSC_OMAP4_SOFTRESET)
 			*sysc_flags |= SYSC_HAS_SOFTRESET;
-		break;
-	case TI_SYSC_OMAP34XX_SR:
-	case TI_SYSC_OMAP36XX_SR:
+		अवरोध;
+	हाल TI_SYSC_OMAP34XX_SR:
+	हाल TI_SYSC_OMAP36XX_SR:
 		/* See SYSC_OMAP3_SR_* in include/dt-bindings/bus/ti-sysc.h */
-		if (data->cfg->sysc_val & SYSC_OMAP3_SR_ENAWAKEUP)
+		अगर (data->cfg->sysc_val & SYSC_OMAP3_SR_ENAWAKEUP)
 			*sysc_flags |= SYSC_HAS_ENAWAKEUP;
-		break;
-	default:
-		if (data->cap->regbits->emufree_shift >= 0)
+		अवरोध;
+	शेष:
+		अगर (data->cap->regbits->emuमुक्त_shअगरt >= 0)
 			*sysc_flags |= SYSC_HAS_EMUFREE;
-		if (data->cap->regbits->enwkup_shift >= 0)
+		अगर (data->cap->regbits->enwkup_shअगरt >= 0)
 			*sysc_flags |= SYSC_HAS_ENAWAKEUP;
-		if (data->cap->regbits->srst_shift >= 0)
+		अगर (data->cap->regbits->srst_shअगरt >= 0)
 			*sysc_flags |= SYSC_HAS_SOFTRESET;
-		if (data->cap->regbits->autoidle_shift >= 0)
+		अगर (data->cap->regbits->स्वतःidle_shअगरt >= 0)
 			*sysc_flags |= SYSC_HAS_AUTOIDLE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (data->cap->regbits->midle_shift >= 0 &&
+	अगर (data->cap->regbits->midle_shअगरt >= 0 &&
 	    data->cfg->midlemodes)
 		*sysc_flags |= SYSC_HAS_MIDLEMODE;
 
-	if (data->cap->regbits->sidle_shift >= 0 &&
+	अगर (data->cap->regbits->sidle_shअगरt >= 0 &&
 	    data->cfg->sidlemodes)
 		*sysc_flags |= SYSC_HAS_SIDLEMODE;
 
-	if (data->cfg->quirks & SYSC_QUIRK_UNCACHED)
+	अगर (data->cfg->quirks & SYSC_QUIRK_UNCACHED)
 		*sysc_flags |= SYSC_NO_CACHE;
-	if (data->cfg->quirks & SYSC_QUIRK_RESET_STATUS)
+	अगर (data->cfg->quirks & SYSC_QUIRK_RESET_STATUS)
 		*sysc_flags |= SYSC_HAS_RESET_STATUS;
 
-	if (data->cfg->syss_mask & 1)
+	अगर (data->cfg->syss_mask & 1)
 		*sysc_flags |= SYSS_HAS_RESET_STATUS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * omap_hwmod_init_idlemodes - initialize module idle modes
- * @dev: struct device
+ * @dev: काष्ठा device
  * @data: module data
  * @idlemodes: module supported idle modes
  */
-static int omap_hwmod_init_idlemodes(struct device *dev,
-				     const struct ti_sysc_module_data *data,
+अटल पूर्णांक omap_hwmod_init_idlemodes(काष्ठा device *dev,
+				     स्थिर काष्ठा ti_sysc_module_data *data,
 				     u32 *idlemodes)
-{
+अणु
 	*idlemodes = 0;
 
-	if (data->cfg->midlemodes & BIT(SYSC_IDLE_FORCE))
+	अगर (data->cfg->midlemodes & BIT(SYSC_IDLE_FORCE))
 		*idlemodes |= MSTANDBY_FORCE;
-	if (data->cfg->midlemodes & BIT(SYSC_IDLE_NO))
+	अगर (data->cfg->midlemodes & BIT(SYSC_IDLE_NO))
 		*idlemodes |= MSTANDBY_NO;
-	if (data->cfg->midlemodes & BIT(SYSC_IDLE_SMART))
+	अगर (data->cfg->midlemodes & BIT(SYSC_IDLE_SMART))
 		*idlemodes |= MSTANDBY_SMART;
-	if (data->cfg->midlemodes & BIT(SYSC_IDLE_SMART_WKUP))
+	अगर (data->cfg->midlemodes & BIT(SYSC_IDLE_SMART_WKUP))
 		*idlemodes |= MSTANDBY_SMART_WKUP;
 
-	if (data->cfg->sidlemodes & BIT(SYSC_IDLE_FORCE))
+	अगर (data->cfg->sidlemodes & BIT(SYSC_IDLE_FORCE))
 		*idlemodes |= SIDLE_FORCE;
-	if (data->cfg->sidlemodes & BIT(SYSC_IDLE_NO))
+	अगर (data->cfg->sidlemodes & BIT(SYSC_IDLE_NO))
 		*idlemodes |= SIDLE_NO;
-	if (data->cfg->sidlemodes & BIT(SYSC_IDLE_SMART))
+	अगर (data->cfg->sidlemodes & BIT(SYSC_IDLE_SMART))
 		*idlemodes |= SIDLE_SMART;
-	if (data->cfg->sidlemodes & BIT(SYSC_IDLE_SMART_WKUP))
+	अगर (data->cfg->sidlemodes & BIT(SYSC_IDLE_SMART_WKUP))
 		*idlemodes |= SIDLE_SMART_WKUP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * omap_hwmod_check_module - check new module against platform data
- * @dev: struct device
+ * omap_hwmod_check_module - check new module against platक्रमm data
+ * @dev: काष्ठा device
  * @oh: module
  * @data: new module data
- * @sysc_fields: sysc register bits
- * @rev_offs: revision register offset
- * @sysc_offs: sysconfig register offset
- * @syss_offs: sysstatus register offset
- * @sysc_flags: sysc specific flags
+ * @sysc_fields: sysc रेजिस्टर bits
+ * @rev_offs: revision रेजिस्टर offset
+ * @sysc_offs: sysconfig रेजिस्टर offset
+ * @syss_offs: sysstatus रेजिस्टर offset
+ * @sysc_flags: sysc specअगरic flags
  * @idlemodes: sysc supported idlemodes
  */
-static int omap_hwmod_check_module(struct device *dev,
-				   struct omap_hwmod *oh,
-				   const struct ti_sysc_module_data *data,
-				   struct sysc_regbits *sysc_fields,
+अटल पूर्णांक omap_hwmod_check_module(काष्ठा device *dev,
+				   काष्ठा omap_hwmod *oh,
+				   स्थिर काष्ठा ti_sysc_module_data *data,
+				   काष्ठा sysc_regbits *sysc_fields,
 				   s32 rev_offs, s32 sysc_offs,
 				   s32 syss_offs, u32 sysc_flags,
 				   u32 idlemodes)
-{
-	if (!oh->class->sysc)
-		return -ENODEV;
+अणु
+	अगर (!oh->class->sysc)
+		वापस -ENODEV;
 
-	if (oh->class->sysc->sysc_fields &&
+	अगर (oh->class->sysc->sysc_fields &&
 	    sysc_fields != oh->class->sysc->sysc_fields)
 		dev_warn(dev, "sysc_fields mismatch\n");
 
-	if (rev_offs != oh->class->sysc->rev_offs)
+	अगर (rev_offs != oh->class->sysc->rev_offs)
 		dev_warn(dev, "rev_offs %08x != %08x\n", rev_offs,
 			 oh->class->sysc->rev_offs);
-	if (sysc_offs != oh->class->sysc->sysc_offs)
+	अगर (sysc_offs != oh->class->sysc->sysc_offs)
 		dev_warn(dev, "sysc_offs %08x != %08x\n", sysc_offs,
 			 oh->class->sysc->sysc_offs);
-	if (syss_offs != oh->class->sysc->syss_offs)
+	अगर (syss_offs != oh->class->sysc->syss_offs)
 		dev_warn(dev, "syss_offs %08x != %08x\n", syss_offs,
 			 oh->class->sysc->syss_offs);
 
-	if (sysc_flags != oh->class->sysc->sysc_flags)
+	अगर (sysc_flags != oh->class->sysc->sysc_flags)
 		dev_warn(dev, "sysc_flags %08x != %08x\n", sysc_flags,
 			 oh->class->sysc->sysc_flags);
 
-	if (idlemodes != oh->class->sysc->idlemodes)
+	अगर (idlemodes != oh->class->sysc->idlemodes)
 		dev_warn(dev, "idlemodes %08x != %08x\n", idlemodes,
 			 oh->class->sysc->idlemodes);
 
-	if (data->cfg->srst_udelay != oh->class->sysc->srst_udelay)
+	अगर (data->cfg->srst_udelay != oh->class->sysc->srst_udelay)
 		dev_warn(dev, "srst_udelay %i != %i\n",
 			 data->cfg->srst_udelay,
 			 oh->class->sysc->srst_udelay);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * omap_hwmod_allocate_module - allocate new module
- * @dev: struct device
+ * @dev: काष्ठा device
  * @oh: module
- * @sysc_fields: sysc register bits
- * @clockdomain: clockdomain
- * @rev_offs: revision register offset
- * @sysc_offs: sysconfig register offset
- * @syss_offs: sysstatus register offset
- * @sysc_flags: sysc specific flags
+ * @sysc_fields: sysc रेजिस्टर bits
+ * @घड़ीकरोमुख्य: घड़ीकरोमुख्य
+ * @rev_offs: revision रेजिस्टर offset
+ * @sysc_offs: sysconfig रेजिस्टर offset
+ * @syss_offs: sysstatus रेजिस्टर offset
+ * @sysc_flags: sysc specअगरic flags
  * @idlemodes: sysc supported idlemodes
  *
  * Note that the allocations here cannot use devm as ti-sysc can rebind.
  */
-static int omap_hwmod_allocate_module(struct device *dev, struct omap_hwmod *oh,
-				      const struct ti_sysc_module_data *data,
-				      struct sysc_regbits *sysc_fields,
-				      struct clockdomain *clkdm,
+अटल पूर्णांक omap_hwmod_allocate_module(काष्ठा device *dev, काष्ठा omap_hwmod *oh,
+				      स्थिर काष्ठा ti_sysc_module_data *data,
+				      काष्ठा sysc_regbits *sysc_fields,
+				      काष्ठा घड़ीकरोमुख्य *clkdm,
 				      s32 rev_offs, s32 sysc_offs,
 				      s32 syss_offs, u32 sysc_flags,
 				      u32 idlemodes)
-{
-	struct omap_hwmod_class_sysconfig *sysc;
-	struct omap_hwmod_class *class = NULL;
-	struct omap_hwmod_ocp_if *oi = NULL;
-	void __iomem *regs = NULL;
-	unsigned long flags;
+अणु
+	काष्ठा omap_hwmod_class_sysconfig *sysc;
+	काष्ठा omap_hwmod_class *class = शून्य;
+	काष्ठा omap_hwmod_ocp_अगर *oi = शून्य;
+	व्योम __iomem *regs = शून्य;
+	अचिन्हित दीर्घ flags;
 
-	sysc = kzalloc(sizeof(*sysc), GFP_KERNEL);
-	if (!sysc)
-		return -ENOMEM;
+	sysc = kzalloc(माप(*sysc), GFP_KERNEL);
+	अगर (!sysc)
+		वापस -ENOMEM;
 
 	sysc->sysc_fields = sysc_fields;
 	sysc->rev_offs = rev_offs;
@@ -3435,526 +3436,526 @@ static int omap_hwmod_allocate_module(struct device *dev, struct omap_hwmod *oh,
 	sysc->idlemodes = idlemodes;
 	sysc->srst_udelay = data->cfg->srst_udelay;
 
-	if (!oh->_mpu_rt_va) {
+	अगर (!oh->_mpu_rt_va) अणु
 		regs = ioremap(data->module_pa,
 			       data->module_size);
-		if (!regs)
-			goto out_free_sysc;
-	}
+		अगर (!regs)
+			जाओ out_मुक्त_sysc;
+	पूर्ण
 
 	/*
 	 * We may need a new oh->class as the other devices in the same class
-	 * may not yet have ioremapped their registers.
+	 * may not yet have ioremapped their रेजिस्टरs.
 	 */
-	if (oh->class->name && strcmp(oh->class->name, data->name)) {
-		class = kmemdup(oh->class, sizeof(*oh->class), GFP_KERNEL);
-		if (!class)
-			goto out_unmap;
-	}
+	अगर (oh->class->name && म_भेद(oh->class->name, data->name)) अणु
+		class = kmemdup(oh->class, माप(*oh->class), GFP_KERNEL);
+		अगर (!class)
+			जाओ out_unmap;
+	पूर्ण
 
-	if (list_empty(&oh->slave_ports)) {
-		oi = kcalloc(1, sizeof(*oi), GFP_KERNEL);
-		if (!oi)
-			goto out_free_class;
+	अगर (list_empty(&oh->slave_ports)) अणु
+		oi = kसुस्मृति(1, माप(*oi), GFP_KERNEL);
+		अगर (!oi)
+			जाओ out_मुक्त_class;
 
 		/*
-		 * Note that we assume interconnect interface clocks will be
-		 * managed by the interconnect driver for OCPIF_SWSUP_IDLE case
+		 * Note that we assume पूर्णांकerconnect पूर्णांकerface घड़ीs will be
+		 * managed by the पूर्णांकerconnect driver क्रम OCPIF_SWSUP_IDLE हाल
 		 * on omap24xx and omap3.
 		 */
 		oi->slave = oh;
 		oi->user = OCP_USER_MPU | OCP_USER_SDMA;
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&oh->_lock, flags);
-	if (regs)
+	अगर (regs)
 		oh->_mpu_rt_va = regs;
-	if (class)
+	अगर (class)
 		oh->class = class;
 	oh->class->sysc = sysc;
-	if (oi)
+	अगर (oi)
 		_add_link(oi);
-	if (clkdm)
+	अगर (clkdm)
 		oh->clkdm = clkdm;
 	oh->_state = _HWMOD_STATE_INITIALIZED;
 	oh->_postsetup_state = _HWMOD_STATE_DEFAULT;
-	_setup(oh, NULL);
+	_setup(oh, शून्य);
 	spin_unlock_irqrestore(&oh->_lock, flags);
 
-	return 0;
+	वापस 0;
 
-out_free_class:
-	kfree(class);
+out_मुक्त_class:
+	kमुक्त(class);
 out_unmap:
 	iounmap(regs);
-out_free_sysc:
-	kfree(sysc);
-	return -ENOMEM;
-}
+out_मुक्त_sysc:
+	kमुक्त(sysc);
+	वापस -ENOMEM;
+पूर्ण
 
-static const struct omap_hwmod_reset omap24xx_reset_quirks[] = {
-	{ .match = "msdi", .len = 4, .reset = omap_msdi_reset, },
-};
+अटल स्थिर काष्ठा omap_hwmod_reset omap24xx_reset_quirks[] = अणु
+	अणु .match = "msdi", .len = 4, .reset = omap_msdi_reset, पूर्ण,
+पूर्ण;
 
-static const struct omap_hwmod_reset omap_reset_quirks[] = {
-	{ .match = "dss_core", .len = 8, .reset = omap_dss_reset, },
-	{ .match = "hdq1w", .len = 5, .reset = omap_hdq1w_reset, },
-	{ .match = "i2c", .len = 3, .reset = omap_i2c_reset, },
-	{ .match = "wd_timer", .len = 8, .reset = omap2_wd_timer_reset, },
-};
+अटल स्थिर काष्ठा omap_hwmod_reset omap_reset_quirks[] = अणु
+	अणु .match = "dss_core", .len = 8, .reset = omap_dss_reset, पूर्ण,
+	अणु .match = "hdq1w", .len = 5, .reset = omap_hdq1w_reset, पूर्ण,
+	अणु .match = "i2c", .len = 3, .reset = omap_i2c_reset, पूर्ण,
+	अणु .match = "wd_timer", .len = 8, .reset = omap2_wd_समयr_reset, पूर्ण,
+पूर्ण;
 
-static void
-omap_hwmod_init_reset_quirk(struct device *dev, struct omap_hwmod *oh,
-			    const struct ti_sysc_module_data *data,
-			    const struct omap_hwmod_reset *quirks,
-			    int quirks_sz)
-{
-	const struct omap_hwmod_reset *quirk;
-	int i;
+अटल व्योम
+omap_hwmod_init_reset_quirk(काष्ठा device *dev, काष्ठा omap_hwmod *oh,
+			    स्थिर काष्ठा ti_sysc_module_data *data,
+			    स्थिर काष्ठा omap_hwmod_reset *quirks,
+			    पूर्णांक quirks_sz)
+अणु
+	स्थिर काष्ठा omap_hwmod_reset *quirk;
+	पूर्णांक i;
 
-	for (i = 0; i < quirks_sz; i++) {
+	क्रम (i = 0; i < quirks_sz; i++) अणु
 		quirk = &quirks[i];
-		if (!strncmp(data->name, quirk->match, quirk->len)) {
+		अगर (!म_भेदन(data->name, quirk->match, quirk->len)) अणु
 			oh->class->reset = quirk->reset;
 
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void
-omap_hwmod_init_reset_quirks(struct device *dev, struct omap_hwmod *oh,
-			     const struct ti_sysc_module_data *data)
-{
-	if (soc_is_omap24xx())
+अटल व्योम
+omap_hwmod_init_reset_quirks(काष्ठा device *dev, काष्ठा omap_hwmod *oh,
+			     स्थिर काष्ठा ti_sysc_module_data *data)
+अणु
+	अगर (soc_is_omap24xx())
 		omap_hwmod_init_reset_quirk(dev, oh, data,
 					    omap24xx_reset_quirks,
 					    ARRAY_SIZE(omap24xx_reset_quirks));
 
 	omap_hwmod_init_reset_quirk(dev, oh, data, omap_reset_quirks,
 				    ARRAY_SIZE(omap_reset_quirks));
-}
+पूर्ण
 
 /**
  * omap_hwmod_init_module - initialize new module
- * @dev: struct device
+ * @dev: काष्ठा device
  * @data: module data
- * @cookie: cookie for the caller to use for later calls
+ * @cookie: cookie क्रम the caller to use क्रम later calls
  */
-int omap_hwmod_init_module(struct device *dev,
-			   const struct ti_sysc_module_data *data,
-			   struct ti_sysc_cookie *cookie)
-{
-	struct omap_hwmod *oh;
-	struct sysc_regbits *sysc_fields;
+पूर्णांक omap_hwmod_init_module(काष्ठा device *dev,
+			   स्थिर काष्ठा ti_sysc_module_data *data,
+			   काष्ठा ti_sysc_cookie *cookie)
+अणु
+	काष्ठा omap_hwmod *oh;
+	काष्ठा sysc_regbits *sysc_fields;
 	s32 rev_offs, sysc_offs, syss_offs;
 	u32 sysc_flags, idlemodes;
-	int error;
+	पूर्णांक error;
 
-	if (!dev || !data || !data->name || !cookie)
-		return -EINVAL;
+	अगर (!dev || !data || !data->name || !cookie)
+		वापस -EINVAL;
 
 	oh = _lookup(data->name);
-	if (!oh) {
-		oh = kzalloc(sizeof(*oh), GFP_KERNEL);
-		if (!oh)
-			return -ENOMEM;
+	अगर (!oh) अणु
+		oh = kzalloc(माप(*oh), GFP_KERNEL);
+		अगर (!oh)
+			वापस -ENOMEM;
 
 		oh->name = data->name;
 		oh->_state = _HWMOD_STATE_UNKNOWN;
-		lockdep_register_key(&oh->hwmod_key);
+		lockdep_रेजिस्टर_key(&oh->hwmod_key);
 
 		/* Unused, can be handled by PRM driver handling resets */
 		oh->prcm.omap4.flags = HWMOD_OMAP4_NO_CONTEXT_LOSS_BIT;
 
-		oh->class = kzalloc(sizeof(*oh->class), GFP_KERNEL);
-		if (!oh->class) {
-			kfree(oh);
-			return -ENOMEM;
-		}
+		oh->class = kzalloc(माप(*oh->class), GFP_KERNEL);
+		अगर (!oh->class) अणु
+			kमुक्त(oh);
+			वापस -ENOMEM;
+		पूर्ण
 
 		omap_hwmod_init_reset_quirks(dev, oh, data);
 
 		oh->class->name = data->name;
 		mutex_lock(&list_lock);
-		error = _register(oh);
+		error = _रेजिस्टर(oh);
 		mutex_unlock(&list_lock);
-	}
+	पूर्ण
 
 	cookie->data = oh;
 
 	error = omap_hwmod_init_regbits(dev, oh, data, &sysc_fields);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = omap_hwmod_init_reg_offs(dev, data, &rev_offs,
 					 &sysc_offs, &syss_offs);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = omap_hwmod_init_sysc_flags(dev, data, &sysc_flags);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = omap_hwmod_init_idlemodes(dev, data, &idlemodes);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (data->cfg->quirks & SYSC_QUIRK_NO_IDLE)
+	अगर (data->cfg->quirks & SYSC_QUIRK_NO_IDLE)
 		oh->flags |= HWMOD_NO_IDLE;
-	if (data->cfg->quirks & SYSC_QUIRK_NO_IDLE_ON_INIT)
+	अगर (data->cfg->quirks & SYSC_QUIRK_NO_IDLE_ON_INIT)
 		oh->flags |= HWMOD_INIT_NO_IDLE;
-	if (data->cfg->quirks & SYSC_QUIRK_NO_RESET_ON_INIT)
+	अगर (data->cfg->quirks & SYSC_QUIRK_NO_RESET_ON_INIT)
 		oh->flags |= HWMOD_INIT_NO_RESET;
-	if (data->cfg->quirks & SYSC_QUIRK_USE_CLOCKACT)
+	अगर (data->cfg->quirks & SYSC_QUIRK_USE_CLOCKACT)
 		oh->flags |= HWMOD_SET_DEFAULT_CLOCKACT;
-	if (data->cfg->quirks & SYSC_QUIRK_SWSUP_SIDLE)
+	अगर (data->cfg->quirks & SYSC_QUIRK_SWSUP_SIDLE)
 		oh->flags |= HWMOD_SWSUP_SIDLE;
-	if (data->cfg->quirks & SYSC_QUIRK_SWSUP_SIDLE_ACT)
+	अगर (data->cfg->quirks & SYSC_QUIRK_SWSUP_SIDLE_ACT)
 		oh->flags |= HWMOD_SWSUP_SIDLE_ACT;
-	if (data->cfg->quirks & SYSC_QUIRK_SWSUP_MSTANDBY)
+	अगर (data->cfg->quirks & SYSC_QUIRK_SWSUP_MSTANDBY)
 		oh->flags |= HWMOD_SWSUP_MSTANDBY;
 
 	error = omap_hwmod_check_module(dev, oh, data, sysc_fields,
 					rev_offs, sysc_offs, syss_offs,
 					sysc_flags, idlemodes);
-	if (!error)
-		return error;
+	अगर (!error)
+		वापस error;
 
-	return omap_hwmod_allocate_module(dev, oh, data, sysc_fields,
+	वापस omap_hwmod_allocate_module(dev, oh, data, sysc_fields,
 					  cookie->clkdm, rev_offs,
 					  sysc_offs, syss_offs,
 					  sysc_flags, idlemodes);
-}
+पूर्ण
 
 /**
- * omap_hwmod_setup_earlycon_flags - set up flags for early console
+ * omap_hwmod_setup_earlycon_flags - set up flags क्रम early console
  *
- * Enable DEBUG_OMAPUART_FLAGS for uart hwmod that is being used as
- * early concole so that hwmod core doesn't reset and keep it in idle
- * that specific uart.
+ * Enable DEBUG_OMAPUART_FLAGS क्रम uart hwmod that is being used as
+ * early concole so that hwmod core करोesn't reset and keep it in idle
+ * that specअगरic uart.
  */
-#ifdef CONFIG_SERIAL_EARLYCON
-static void __init omap_hwmod_setup_earlycon_flags(void)
-{
-	struct device_node *np;
-	struct omap_hwmod *oh;
-	const char *uart;
+#अगर_घोषित CONFIG_SERIAL_EARLYCON
+अटल व्योम __init omap_hwmod_setup_earlycon_flags(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा omap_hwmod *oh;
+	स्थिर अक्षर *uart;
 
 	np = of_find_node_by_path("/chosen");
-	if (np) {
-		uart = of_get_property(np, "stdout-path", NULL);
-		if (uart) {
+	अगर (np) अणु
+		uart = of_get_property(np, "stdout-path", शून्य);
+		अगर (uart) अणु
 			np = of_find_node_by_path(uart);
-			if (np) {
-				uart = of_get_property(np, "ti,hwmods", NULL);
+			अगर (np) अणु
+				uart = of_get_property(np, "ti,hwmods", शून्य);
 				oh = omap_hwmod_lookup(uart);
-				if (!oh) {
+				अगर (!oh) अणु
 					uart = of_get_property(np->parent,
 							       "ti,hwmods",
-							       NULL);
+							       शून्य);
 					oh = omap_hwmod_lookup(uart);
-				}
-				if (oh)
+				पूर्ण
+				अगर (oh)
 					oh->flags |= DEBUG_OMAPUART_FLAGS;
-			}
-		}
-	}
-}
-#endif
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * omap_hwmod_setup_all - set up all registered IP blocks
+ * omap_hwmod_setup_all - set up all रेजिस्टरed IP blocks
  *
- * Initialize and set up all IP blocks registered with the hwmod code.
- * Must be called after omap2_clk_init().  Resolves the struct clk
- * names to struct clk pointers for each registered omap_hwmod.  Also
+ * Initialize and set up all IP blocks रेजिस्टरed with the hwmod code.
+ * Must be called after omap2_clk_init().  Resolves the काष्ठा clk
+ * names to काष्ठा clk poपूर्णांकers क्रम each रेजिस्टरed omap_hwmod.  Also
  * calls _setup() on each hwmod.  Returns 0 upon success.
  */
-static int __init omap_hwmod_setup_all(void)
-{
-	if (!inited)
-		return 0;
+अटल पूर्णांक __init omap_hwmod_setup_all(व्योम)
+अणु
+	अगर (!inited)
+		वापस 0;
 
-	_ensure_mpu_hwmod_is_setup(NULL);
+	_ensure_mpu_hwmod_is_setup(शून्य);
 
-	omap_hwmod_for_each(_init, NULL);
-#ifdef CONFIG_SERIAL_EARLYCON
+	omap_hwmod_क्रम_each(_init, शून्य);
+#अगर_घोषित CONFIG_SERIAL_EARLYCON
 	omap_hwmod_setup_earlycon_flags();
-#endif
-	omap_hwmod_for_each(_setup, NULL);
+#पूर्ण_अगर
+	omap_hwmod_क्रम_each(_setup, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 omap_postcore_initcall(omap_hwmod_setup_all);
 
 /**
  * omap_hwmod_enable - enable an omap_hwmod
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Enable an omap_hwmod @oh.  Intended to be called by omap_device_enable().
- * Returns -EINVAL on error or passes along the return value from _enable().
+ * Returns -EINVAL on error or passes aदीर्घ the वापस value from _enable().
  */
-int omap_hwmod_enable(struct omap_hwmod *oh)
-{
-	int r;
-	unsigned long flags;
+पूर्णांक omap_hwmod_enable(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक r;
+	अचिन्हित दीर्घ flags;
 
-	if (!oh)
-		return -EINVAL;
+	अगर (!oh)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&oh->_lock, flags);
 	r = _enable(oh);
 	spin_unlock_irqrestore(&oh->_lock, flags);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * omap_hwmod_idle - idle an omap_hwmod
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Idle an omap_hwmod @oh.  Intended to be called by omap_device_idle().
- * Returns -EINVAL on error or passes along the return value from _idle().
+ * Returns -EINVAL on error or passes aदीर्घ the वापस value from _idle().
  */
-int omap_hwmod_idle(struct omap_hwmod *oh)
-{
-	int r;
-	unsigned long flags;
+पूर्णांक omap_hwmod_idle(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक r;
+	अचिन्हित दीर्घ flags;
 
-	if (!oh)
-		return -EINVAL;
+	अगर (!oh)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&oh->_lock, flags);
 	r = _idle(oh);
 	spin_unlock_irqrestore(&oh->_lock, flags);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * omap_hwmod_shutdown - shutdown an omap_hwmod
- * @oh: struct omap_hwmod *
+ * omap_hwmod_shutकरोwn - shutकरोwn an omap_hwmod
+ * @oh: काष्ठा omap_hwmod *
  *
- * Shutdown an omap_hwmod @oh.  Intended to be called by
- * omap_device_shutdown().  Returns -EINVAL on error or passes along
- * the return value from _shutdown().
+ * Shutकरोwn an omap_hwmod @oh.  Intended to be called by
+ * omap_device_shutकरोwn().  Returns -EINVAL on error or passes aदीर्घ
+ * the वापस value from _shutकरोwn().
  */
-int omap_hwmod_shutdown(struct omap_hwmod *oh)
-{
-	int r;
-	unsigned long flags;
+पूर्णांक omap_hwmod_shutकरोwn(काष्ठा omap_hwmod *oh)
+अणु
+	पूर्णांक r;
+	अचिन्हित दीर्घ flags;
 
-	if (!oh)
-		return -EINVAL;
+	अगर (!oh)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&oh->_lock, flags);
-	r = _shutdown(oh);
+	r = _shutकरोwn(oh);
 	spin_unlock_irqrestore(&oh->_lock, flags);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * IP block data retrieval functions
  */
 
 /**
- * omap_hwmod_get_pwrdm - return pointer to this module's main powerdomain
- * @oh: struct omap_hwmod *
+ * omap_hwmod_get_pwrdm - वापस poपूर्णांकer to this module's मुख्य घातerकरोमुख्य
+ * @oh: काष्ठा omap_hwmod *
  *
- * Return the powerdomain pointer associated with the OMAP module
- * @oh's main clock.  If @oh does not have a main clk, return the
- * powerdomain associated with the interface clock associated with the
+ * Return the घातerकरोमुख्य poपूर्णांकer associated with the OMAP module
+ * @oh's मुख्य घड़ी.  If @oh करोes not have a मुख्य clk, वापस the
+ * घातerकरोमुख्य associated with the पूर्णांकerface घड़ी associated with the
  * module's MPU port. (XXX Perhaps this should use the SDMA port
- * instead?)  Returns NULL on error, or a struct powerdomain * on
+ * instead?)  Returns शून्य on error, or a काष्ठा घातerकरोमुख्य * on
  * success.
  */
-struct powerdomain *omap_hwmod_get_pwrdm(struct omap_hwmod *oh)
-{
-	struct clk *c;
-	struct omap_hwmod_ocp_if *oi;
-	struct clockdomain *clkdm;
-	struct clk_hw_omap *clk;
+काष्ठा घातerकरोमुख्य *omap_hwmod_get_pwrdm(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा clk *c;
+	काष्ठा omap_hwmod_ocp_अगर *oi;
+	काष्ठा घड़ीकरोमुख्य *clkdm;
+	काष्ठा clk_hw_omap *clk;
 
-	if (!oh)
-		return NULL;
+	अगर (!oh)
+		वापस शून्य;
 
-	if (oh->clkdm)
-		return oh->clkdm->pwrdm.ptr;
+	अगर (oh->clkdm)
+		वापस oh->clkdm->pwrdm.ptr;
 
-	if (oh->_clk) {
+	अगर (oh->_clk) अणु
 		c = oh->_clk;
-	} else {
+	पूर्ण अन्यथा अणु
 		oi = _find_mpu_rt_port(oh);
-		if (!oi)
-			return NULL;
+		अगर (!oi)
+			वापस शून्य;
 		c = oi->_clk;
-	}
+	पूर्ण
 
 	clk = to_clk_hw_omap(__clk_get_hw(c));
 	clkdm = clk->clkdm;
-	if (!clkdm)
-		return NULL;
+	अगर (!clkdm)
+		वापस शून्य;
 
-	return clkdm->pwrdm.ptr;
-}
+	वापस clkdm->pwrdm.ptr;
+पूर्ण
 
 /**
- * omap_hwmod_get_mpu_rt_va - return the module's base address (for the MPU)
- * @oh: struct omap_hwmod *
+ * omap_hwmod_get_mpu_rt_va - वापस the module's base address (क्रम the MPU)
+ * @oh: काष्ठा omap_hwmod *
  *
- * Returns the virtual address corresponding to the beginning of the
- * module's register target, in the address range that is intended to
- * be used by the MPU.  Returns the virtual address upon success or NULL
+ * Returns the भव address corresponding to the beginning of the
+ * module's रेजिस्टर target, in the address range that is पूर्णांकended to
+ * be used by the MPU.  Returns the भव address upon success or शून्य
  * upon error.
  */
-void __iomem *omap_hwmod_get_mpu_rt_va(struct omap_hwmod *oh)
-{
-	if (!oh)
-		return NULL;
+व्योम __iomem *omap_hwmod_get_mpu_rt_va(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh)
+		वापस शून्य;
 
-	if (oh->_int_flags & _HWMOD_NO_MPU_PORT)
-		return NULL;
+	अगर (oh->_पूर्णांक_flags & _HWMOD_NO_MPU_PORT)
+		वापस शून्य;
 
-	if (oh->_state == _HWMOD_STATE_UNKNOWN)
-		return NULL;
+	अगर (oh->_state == _HWMOD_STATE_UNKNOWN)
+		वापस शून्य;
 
-	return oh->_mpu_rt_va;
-}
+	वापस oh->_mpu_rt_va;
+पूर्ण
 
 /*
- * XXX what about functions for drivers to save/restore ocp_sysconfig
- * for context save/restore operations?
+ * XXX what about functions क्रम drivers to save/restore ocp_sysconfig
+ * क्रम context save/restore operations?
  */
 
 /**
- * omap_hwmod_assert_hardreset - assert the HW reset line of submodules
+ * omap_hwmod_निश्चित_hardreset - निश्चित the HW reset line of submodules
  * contained in the hwmod module.
- * @oh: struct omap_hwmod *
- * @name: name of the reset line to lookup and assert
+ * @oh: काष्ठा omap_hwmod *
+ * @name: name of the reset line to lookup and निश्चित
  *
  * Some IP like dsp, ipu or iva contain processor that require
- * an HW reset line to be assert / deassert in order to enable fully
- * the IP.  Returns -EINVAL if @oh is null or if the operation is not
- * yet supported on this OMAP; otherwise, passes along the return value
- * from _assert_hardreset().
+ * an HW reset line to be निश्चित / deनिश्चित in order to enable fully
+ * the IP.  Returns -EINVAL अगर @oh is null or अगर the operation is not
+ * yet supported on this OMAP; otherwise, passes aदीर्घ the वापस value
+ * from _निश्चित_hardreset().
  */
-int omap_hwmod_assert_hardreset(struct omap_hwmod *oh, const char *name)
-{
-	int ret;
-	unsigned long flags;
+पूर्णांक omap_hwmod_निश्चित_hardreset(काष्ठा omap_hwmod *oh, स्थिर अक्षर *name)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 
-	if (!oh)
-		return -EINVAL;
+	अगर (!oh)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&oh->_lock, flags);
-	ret = _assert_hardreset(oh, name);
+	ret = _निश्चित_hardreset(oh, name);
 	spin_unlock_irqrestore(&oh->_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * omap_hwmod_deassert_hardreset - deassert the HW reset line of submodules
+ * omap_hwmod_deनिश्चित_hardreset - deनिश्चित the HW reset line of submodules
  * contained in the hwmod module.
- * @oh: struct omap_hwmod *
- * @name: name of the reset line to look up and deassert
+ * @oh: काष्ठा omap_hwmod *
+ * @name: name of the reset line to look up and deनिश्चित
  *
  * Some IP like dsp, ipu or iva contain processor that require
- * an HW reset line to be assert / deassert in order to enable fully
- * the IP.  Returns -EINVAL if @oh is null or if the operation is not
- * yet supported on this OMAP; otherwise, passes along the return value
- * from _deassert_hardreset().
+ * an HW reset line to be निश्चित / deनिश्चित in order to enable fully
+ * the IP.  Returns -EINVAL अगर @oh is null or अगर the operation is not
+ * yet supported on this OMAP; otherwise, passes aदीर्घ the वापस value
+ * from _deनिश्चित_hardreset().
  */
-int omap_hwmod_deassert_hardreset(struct omap_hwmod *oh, const char *name)
-{
-	int ret;
-	unsigned long flags;
+पूर्णांक omap_hwmod_deनिश्चित_hardreset(काष्ठा omap_hwmod *oh, स्थिर अक्षर *name)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 
-	if (!oh)
-		return -EINVAL;
+	अगर (!oh)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&oh->_lock, flags);
-	ret = _deassert_hardreset(oh, name);
+	ret = _deनिश्चित_hardreset(oh, name);
 	spin_unlock_irqrestore(&oh->_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * omap_hwmod_for_each_by_class - call @fn for each hwmod of class @classname
- * @classname: struct omap_hwmod_class name to search for
- * @fn: callback function pointer to call for each hwmod in class @classname
+ * omap_hwmod_क्रम_each_by_class - call @fn क्रम each hwmod of class @classname
+ * @classname: काष्ठा omap_hwmod_class name to search क्रम
+ * @fn: callback function poपूर्णांकer to call क्रम each hwmod in class @classname
  * @user: arbitrary context data to pass to the callback function
  *
  * For each omap_hwmod of class @classname, call @fn.
- * If the callback function returns something other than
- * zero, the iterator is terminated, and the callback function's return
+ * If the callback function वापसs something other than
+ * zero, the iterator is terminated, and the callback function's वापस
  * value is passed back to the caller.  Returns 0 upon success, -EINVAL
- * if @classname or @fn are NULL, or passes back the error code from @fn.
+ * अगर @classname or @fn are शून्य, or passes back the error code from @fn.
  */
-int omap_hwmod_for_each_by_class(const char *classname,
-				 int (*fn)(struct omap_hwmod *oh,
-					   void *user),
-				 void *user)
-{
-	struct omap_hwmod *temp_oh;
-	int ret = 0;
+पूर्णांक omap_hwmod_क्रम_each_by_class(स्थिर अक्षर *classname,
+				 पूर्णांक (*fn)(काष्ठा omap_hwmod *oh,
+					   व्योम *user),
+				 व्योम *user)
+अणु
+	काष्ठा omap_hwmod *temp_oh;
+	पूर्णांक ret = 0;
 
-	if (!classname || !fn)
-		return -EINVAL;
+	अगर (!classname || !fn)
+		वापस -EINVAL;
 
 	pr_debug("omap_hwmod: %s: looking for modules of class %s\n",
 		 __func__, classname);
 
-	list_for_each_entry(temp_oh, &omap_hwmod_list, node) {
-		if (!strcmp(temp_oh->class->name, classname)) {
+	list_क्रम_each_entry(temp_oh, &omap_hwmod_list, node) अणु
+		अगर (!म_भेद(temp_oh->class->name, classname)) अणु
 			pr_debug("omap_hwmod: %s: %s: calling callback fn\n",
 				 __func__, temp_oh->name);
 			ret = (*fn)(temp_oh, user);
-			if (ret)
-				break;
-		}
-	}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		pr_debug("omap_hwmod: %s: iterator terminated early: %d\n",
 			 __func__, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * omap_hwmod_set_postsetup_state - set the post-_setup() state for this hwmod
- * @oh: struct omap_hwmod *
+ * omap_hwmod_set_postsetup_state - set the post-_setup() state क्रम this hwmod
+ * @oh: काष्ठा omap_hwmod *
  * @state: state that _setup() should leave the hwmod in
  *
  * Sets the hwmod state that @oh will enter at the end of _setup()
- * (called by omap_hwmod_setup_*()).  See also the documentation
- * for _setup_postsetup(), above.  Returns 0 upon success or
- * -EINVAL if there is a problem with the arguments or if the hwmod is
+ * (called by omap_hwmod_setup_*()).  See also the करोcumentation
+ * क्रम _setup_postsetup(), above.  Returns 0 upon success or
+ * -EINVAL अगर there is a problem with the arguments or अगर the hwmod is
  * in the wrong state.
  */
-int omap_hwmod_set_postsetup_state(struct omap_hwmod *oh, u8 state)
-{
-	int ret;
-	unsigned long flags;
+पूर्णांक omap_hwmod_set_postsetup_state(काष्ठा omap_hwmod *oh, u8 state)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 
-	if (!oh)
-		return -EINVAL;
+	अगर (!oh)
+		वापस -EINVAL;
 
-	if (state != _HWMOD_STATE_DISABLED &&
+	अगर (state != _HWMOD_STATE_DISABLED &&
 	    state != _HWMOD_STATE_ENABLED &&
 	    state != _HWMOD_STATE_IDLE)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&oh->_lock, flags);
 
-	if (oh->_state != _HWMOD_STATE_REGISTERED) {
+	अगर (oh->_state != _HWMOD_STATE_REGISTERED) अणु
 		ret = -EINVAL;
-		goto ohsps_unlock;
-	}
+		जाओ ohsps_unlock;
+	पूर्ण
 
 	oh->_postsetup_state = state;
 	ret = 0;
@@ -3962,98 +3963,98 @@ int omap_hwmod_set_postsetup_state(struct omap_hwmod *oh, u8 state)
 ohsps_unlock:
 	spin_unlock_irqrestore(&oh->_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * omap_hwmod_get_context_loss_count - get lost context count
- * @oh: struct omap_hwmod *
+ * @oh: काष्ठा omap_hwmod *
  *
  * Returns the context loss count of associated @oh
- * upon success, or zero if no context loss data is available.
+ * upon success, or zero अगर no context loss data is available.
  *
- * On OMAP4, this queries the per-hwmod context loss register,
+ * On OMAP4, this queries the per-hwmod context loss रेजिस्टर,
  * assuming one exists.  If not, or on OMAP2/3, this queries the
- * enclosing powerdomain context loss count.
+ * enclosing घातerकरोमुख्य context loss count.
  */
-int omap_hwmod_get_context_loss_count(struct omap_hwmod *oh)
-{
-	struct powerdomain *pwrdm;
-	int ret = 0;
+पूर्णांक omap_hwmod_get_context_loss_count(काष्ठा omap_hwmod *oh)
+अणु
+	काष्ठा घातerकरोमुख्य *pwrdm;
+	पूर्णांक ret = 0;
 
-	if (soc_ops.get_context_lost)
-		return soc_ops.get_context_lost(oh);
+	अगर (soc_ops.get_context_lost)
+		वापस soc_ops.get_context_lost(oh);
 
 	pwrdm = omap_hwmod_get_pwrdm(oh);
-	if (pwrdm)
+	अगर (pwrdm)
 		ret = pwrdm_get_context_loss_count(pwrdm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * omap_hwmod_init - initialize the hwmod code
  *
- * Sets up some function pointers needed by the hwmod code to operate on the
+ * Sets up some function poपूर्णांकers needed by the hwmod code to operate on the
  * currently-booted SoC.  Intended to be called once during kernel init
- * before any hwmods are registered.  No return value.
+ * beक्रमe any hwmods are रेजिस्टरed.  No वापस value.
  */
-void __init omap_hwmod_init(void)
-{
-	if (cpu_is_omap24xx()) {
-		soc_ops.wait_target_ready = _omap2xxx_3xxx_wait_target_ready;
-		soc_ops.assert_hardreset = _omap2_assert_hardreset;
-		soc_ops.deassert_hardreset = _omap2_deassert_hardreset;
-		soc_ops.is_hardreset_asserted = _omap2_is_hardreset_asserted;
-	} else if (cpu_is_omap34xx()) {
-		soc_ops.wait_target_ready = _omap2xxx_3xxx_wait_target_ready;
-		soc_ops.assert_hardreset = _omap2_assert_hardreset;
-		soc_ops.deassert_hardreset = _omap2_deassert_hardreset;
-		soc_ops.is_hardreset_asserted = _omap2_is_hardreset_asserted;
+व्योम __init omap_hwmod_init(व्योम)
+अणु
+	अगर (cpu_is_omap24xx()) अणु
+		soc_ops.रुको_target_पढ़ोy = _omap2xxx_3xxx_रुको_target_पढ़ोy;
+		soc_ops.निश्चित_hardreset = _omap2_निश्चित_hardreset;
+		soc_ops.deनिश्चित_hardreset = _omap2_deनिश्चित_hardreset;
+		soc_ops.is_hardreset_निश्चितed = _omap2_is_hardreset_निश्चितed;
+	पूर्ण अन्यथा अगर (cpu_is_omap34xx()) अणु
+		soc_ops.रुको_target_पढ़ोy = _omap2xxx_3xxx_रुको_target_पढ़ोy;
+		soc_ops.निश्चित_hardreset = _omap2_निश्चित_hardreset;
+		soc_ops.deनिश्चित_hardreset = _omap2_deनिश्चित_hardreset;
+		soc_ops.is_hardreset_निश्चितed = _omap2_is_hardreset_निश्चितed;
 		soc_ops.init_clkdm = _init_clkdm;
-	} else if (cpu_is_omap44xx() || soc_is_omap54xx() || soc_is_dra7xx()) {
+	पूर्ण अन्यथा अगर (cpu_is_omap44xx() || soc_is_omap54xx() || soc_is_dra7xx()) अणु
 		soc_ops.enable_module = _omap4_enable_module;
 		soc_ops.disable_module = _omap4_disable_module;
-		soc_ops.wait_target_ready = _omap4_wait_target_ready;
-		soc_ops.assert_hardreset = _omap4_assert_hardreset;
-		soc_ops.deassert_hardreset = _omap4_deassert_hardreset;
-		soc_ops.is_hardreset_asserted = _omap4_is_hardreset_asserted;
+		soc_ops.रुको_target_पढ़ोy = _omap4_रुको_target_पढ़ोy;
+		soc_ops.निश्चित_hardreset = _omap4_निश्चित_hardreset;
+		soc_ops.deनिश्चित_hardreset = _omap4_deनिश्चित_hardreset;
+		soc_ops.is_hardreset_निश्चितed = _omap4_is_hardreset_निश्चितed;
 		soc_ops.init_clkdm = _init_clkdm;
 		soc_ops.update_context_lost = _omap4_update_context_lost;
 		soc_ops.get_context_lost = _omap4_get_context_lost;
 		soc_ops.disable_direct_prcm = _omap4_disable_direct_prcm;
 		soc_ops.xlate_clkctrl = _omap4_xlate_clkctrl;
-	} else if (cpu_is_ti814x() || cpu_is_ti816x() || soc_is_am33xx() ||
-		   soc_is_am43xx()) {
+	पूर्ण अन्यथा अगर (cpu_is_ti814x() || cpu_is_ti816x() || soc_is_am33xx() ||
+		   soc_is_am43xx()) अणु
 		soc_ops.enable_module = _omap4_enable_module;
 		soc_ops.disable_module = _omap4_disable_module;
-		soc_ops.wait_target_ready = _omap4_wait_target_ready;
-		soc_ops.assert_hardreset = _omap4_assert_hardreset;
-		soc_ops.deassert_hardreset = _am33xx_deassert_hardreset;
-		soc_ops.is_hardreset_asserted = _omap4_is_hardreset_asserted;
+		soc_ops.रुको_target_पढ़ोy = _omap4_रुको_target_पढ़ोy;
+		soc_ops.निश्चित_hardreset = _omap4_निश्चित_hardreset;
+		soc_ops.deनिश्चित_hardreset = _am33xx_deनिश्चित_hardreset;
+		soc_ops.is_hardreset_निश्चितed = _omap4_is_hardreset_निश्चितed;
 		soc_ops.init_clkdm = _init_clkdm;
 		soc_ops.disable_direct_prcm = _omap4_disable_direct_prcm;
 		soc_ops.xlate_clkctrl = _omap4_xlate_clkctrl;
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN(1, "omap_hwmod: unknown SoC type\n");
-	}
+	पूर्ण
 
 	_init_clkctrl_providers();
 
 	inited = true;
-}
+पूर्ण
 
 /**
- * omap_hwmod_get_main_clk - get pointer to main clock name
- * @oh: struct omap_hwmod *
+ * omap_hwmod_get_मुख्य_clk - get poपूर्णांकer to मुख्य घड़ी name
+ * @oh: काष्ठा omap_hwmod *
  *
- * Returns the main clock name assocated with @oh upon success,
- * or NULL if @oh is NULL.
+ * Returns the मुख्य घड़ी name assocated with @oh upon success,
+ * or शून्य अगर @oh is शून्य.
  */
-const char *omap_hwmod_get_main_clk(struct omap_hwmod *oh)
-{
-	if (!oh)
-		return NULL;
+स्थिर अक्षर *omap_hwmod_get_मुख्य_clk(काष्ठा omap_hwmod *oh)
+अणु
+	अगर (!oh)
+		वापस शून्य;
 
-	return oh->main_clk;
-}
+	वापस oh->मुख्य_clk;
+पूर्ण

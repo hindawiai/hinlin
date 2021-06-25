@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2011 LAPIS Semiconductor Co., Ltd.
  */
-#include <linux/bits.h>
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
 
-#define PCH_EDGE_FALLING	0
-#define PCH_EDGE_RISING		1
-#define PCH_LEVEL_L		2
-#define PCH_LEVEL_H		3
-#define PCH_EDGE_BOTH		4
-#define PCH_IM_MASK		GENMASK(2, 0)
+#घोषणा PCH_EDGE_FALLING	0
+#घोषणा PCH_EDGE_RISING		1
+#घोषणा PCH_LEVEL_L		2
+#घोषणा PCH_LEVEL_H		3
+#घोषणा PCH_EDGE_BOTH		4
+#घोषणा PCH_IM_MASK		GENMASK(2, 0)
 
-#define PCH_IRQ_BASE		24
+#घोषणा PCH_IRQ_BASE		24
 
-struct pch_regs {
+काष्ठा pch_regs अणु
 	u32	ien;
 	u32	istatus;
 	u32	idisp;
@@ -35,33 +36,33 @@ struct pch_regs {
 	u32	reserved[3];
 	u32	gpio_use_sel;
 	u32	reset;
-};
+पूर्ण;
 
-enum pch_type_t {
+क्रमागत pch_type_t अणु
 	INTEL_EG20T_PCH,
 	OKISEMI_ML7223m_IOH, /* LAPIS Semiconductor ML7223 IOH PCIe Bus-m */
 	OKISEMI_ML7223n_IOH  /* LAPIS Semiconductor ML7223 IOH PCIe Bus-n */
-};
+पूर्ण;
 
-/* Specifies number of GPIO PINS */
-static int gpio_pins[] = {
+/* Specअगरies number of GPIO PINS */
+अटल पूर्णांक gpio_pins[] = अणु
 	[INTEL_EG20T_PCH] = 12,
 	[OKISEMI_ML7223m_IOH] = 8,
 	[OKISEMI_ML7223n_IOH] = 8,
-};
+पूर्ण;
 
 /**
- * struct pch_gpio_reg_data - The register store data.
- * @ien_reg:	To store contents of IEN register.
- * @imask_reg:	To store contents of IMASK register.
- * @po_reg:	To store contents of PO register.
- * @pm_reg:	To store contents of PM register.
- * @im0_reg:	To store contents of IM0 register.
- * @im1_reg:	To store contents of IM1 register.
- * @gpio_use_sel_reg : To store contents of GPIO_USE_SEL register.
+ * काष्ठा pch_gpio_reg_data - The रेजिस्टर store data.
+ * @ien_reg:	To store contents of IEN रेजिस्टर.
+ * @imask_reg:	To store contents of IMASK रेजिस्टर.
+ * @po_reg:	To store contents of PO रेजिस्टर.
+ * @pm_reg:	To store contents of PM रेजिस्टर.
+ * @im0_reg:	To store contents of IM0 रेजिस्टर.
+ * @im1_reg:	To store contents of IM1 रेजिस्टर.
+ * @gpio_use_sel_reg : To store contents of GPIO_USE_SEL रेजिस्टर.
  *		       (Only ML7223 Bus-n)
  */
-struct pch_gpio_reg_data {
+काष्ठा pch_gpio_reg_data अणु
 	u32 ien_reg;
 	u32 imask_reg;
 	u32 po_reg;
@@ -69,143 +70,143 @@ struct pch_gpio_reg_data {
 	u32 im0_reg;
 	u32 im1_reg;
 	u32 gpio_use_sel_reg;
-};
+पूर्ण;
 
 /**
- * struct pch_gpio - GPIO private data structure.
- * @base:			PCI base address of Memory mapped I/O register.
- * @reg:			Memory mapped PCH GPIO register list.
- * @dev:			Pointer to device structure.
- * @gpio:			Data for GPIO infrastructure.
+ * काष्ठा pch_gpio - GPIO निजी data काष्ठाure.
+ * @base:			PCI base address of Memory mapped I/O रेजिस्टर.
+ * @reg:			Memory mapped PCH GPIO रेजिस्टर list.
+ * @dev:			Poपूर्णांकer to device काष्ठाure.
+ * @gpio:			Data क्रम GPIO infraकाष्ठाure.
  * @pch_gpio_reg:		Memory mapped Register data is saved here
  *				when suspend.
- * @lock:			Used for register access protection
- * @irq_base:		Save base of IRQ number for interrupt
+ * @lock:			Used क्रम रेजिस्टर access protection
+ * @irq_base:		Save base of IRQ number क्रम पूर्णांकerrupt
  * @ioh:		IOH ID
- * @spinlock:		Used for register access protection
+ * @spinlock:		Used क्रम रेजिस्टर access protection
  */
-struct pch_gpio {
-	void __iomem *base;
-	struct pch_regs __iomem *reg;
-	struct device *dev;
-	struct gpio_chip gpio;
-	struct pch_gpio_reg_data pch_gpio_reg;
-	int irq_base;
-	enum pch_type_t ioh;
+काष्ठा pch_gpio अणु
+	व्योम __iomem *base;
+	काष्ठा pch_regs __iomem *reg;
+	काष्ठा device *dev;
+	काष्ठा gpio_chip gpio;
+	काष्ठा pch_gpio_reg_data pch_gpio_reg;
+	पूर्णांक irq_base;
+	क्रमागत pch_type_t ioh;
 	spinlock_t spinlock;
-};
+पूर्ण;
 
-static void pch_gpio_set(struct gpio_chip *gpio, unsigned int nr, int val)
-{
+अटल व्योम pch_gpio_set(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr, पूर्णांक val)
+अणु
 	u32 reg_val;
-	struct pch_gpio *chip =	gpiochip_get_data(gpio);
-	unsigned long flags;
+	काष्ठा pch_gpio *chip =	gpiochip_get_data(gpio);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chip->spinlock, flags);
-	reg_val = ioread32(&chip->reg->po);
-	if (val)
+	reg_val = ioपढ़ो32(&chip->reg->po);
+	अगर (val)
 		reg_val |= BIT(nr);
-	else
+	अन्यथा
 		reg_val &= ~BIT(nr);
 
-	iowrite32(reg_val, &chip->reg->po);
+	ioग_लिखो32(reg_val, &chip->reg->po);
 	spin_unlock_irqrestore(&chip->spinlock, flags);
-}
+पूर्ण
 
-static int pch_gpio_get(struct gpio_chip *gpio, unsigned int nr)
-{
-	struct pch_gpio *chip =	gpiochip_get_data(gpio);
+अटल पूर्णांक pch_gpio_get(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr)
+अणु
+	काष्ठा pch_gpio *chip =	gpiochip_get_data(gpio);
 
-	return !!(ioread32(&chip->reg->pi) & BIT(nr));
-}
+	वापस !!(ioपढ़ो32(&chip->reg->pi) & BIT(nr));
+पूर्ण
 
-static int pch_gpio_direction_output(struct gpio_chip *gpio, unsigned int nr,
-				     int val)
-{
-	struct pch_gpio *chip =	gpiochip_get_data(gpio);
+अटल पूर्णांक pch_gpio_direction_output(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr,
+				     पूर्णांक val)
+अणु
+	काष्ठा pch_gpio *chip =	gpiochip_get_data(gpio);
 	u32 pm;
 	u32 reg_val;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chip->spinlock, flags);
 
-	reg_val = ioread32(&chip->reg->po);
-	if (val)
+	reg_val = ioपढ़ो32(&chip->reg->po);
+	अगर (val)
 		reg_val |= BIT(nr);
-	else
+	अन्यथा
 		reg_val &= ~BIT(nr);
-	iowrite32(reg_val, &chip->reg->po);
+	ioग_लिखो32(reg_val, &chip->reg->po);
 
-	pm = ioread32(&chip->reg->pm);
+	pm = ioपढ़ो32(&chip->reg->pm);
 	pm &= BIT(gpio_pins[chip->ioh]) - 1;
 	pm |= BIT(nr);
-	iowrite32(pm, &chip->reg->pm);
+	ioग_लिखो32(pm, &chip->reg->pm);
 
 	spin_unlock_irqrestore(&chip->spinlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pch_gpio_direction_input(struct gpio_chip *gpio, unsigned int nr)
-{
-	struct pch_gpio *chip =	gpiochip_get_data(gpio);
+अटल पूर्णांक pch_gpio_direction_input(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक nr)
+अणु
+	काष्ठा pch_gpio *chip =	gpiochip_get_data(gpio);
 	u32 pm;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chip->spinlock, flags);
-	pm = ioread32(&chip->reg->pm);
+	pm = ioपढ़ो32(&chip->reg->pm);
 	pm &= BIT(gpio_pins[chip->ioh]) - 1;
 	pm &= ~BIT(nr);
-	iowrite32(pm, &chip->reg->pm);
+	ioग_लिखो32(pm, &chip->reg->pm);
 	spin_unlock_irqrestore(&chip->spinlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Save register configuration and disable interrupts.
+ * Save रेजिस्टर configuration and disable पूर्णांकerrupts.
  */
-static void __maybe_unused pch_gpio_save_reg_conf(struct pch_gpio *chip)
-{
-	chip->pch_gpio_reg.ien_reg = ioread32(&chip->reg->ien);
-	chip->pch_gpio_reg.imask_reg = ioread32(&chip->reg->imask);
-	chip->pch_gpio_reg.po_reg = ioread32(&chip->reg->po);
-	chip->pch_gpio_reg.pm_reg = ioread32(&chip->reg->pm);
-	chip->pch_gpio_reg.im0_reg = ioread32(&chip->reg->im0);
-	if (chip->ioh == INTEL_EG20T_PCH)
-		chip->pch_gpio_reg.im1_reg = ioread32(&chip->reg->im1);
-	if (chip->ioh == OKISEMI_ML7223n_IOH)
-		chip->pch_gpio_reg.gpio_use_sel_reg = ioread32(&chip->reg->gpio_use_sel);
-}
+अटल व्योम __maybe_unused pch_gpio_save_reg_conf(काष्ठा pch_gpio *chip)
+अणु
+	chip->pch_gpio_reg.ien_reg = ioपढ़ो32(&chip->reg->ien);
+	chip->pch_gpio_reg.imask_reg = ioपढ़ो32(&chip->reg->imask);
+	chip->pch_gpio_reg.po_reg = ioपढ़ो32(&chip->reg->po);
+	chip->pch_gpio_reg.pm_reg = ioपढ़ो32(&chip->reg->pm);
+	chip->pch_gpio_reg.im0_reg = ioपढ़ो32(&chip->reg->im0);
+	अगर (chip->ioh == INTEL_EG20T_PCH)
+		chip->pch_gpio_reg.im1_reg = ioपढ़ो32(&chip->reg->im1);
+	अगर (chip->ioh == OKISEMI_ML7223n_IOH)
+		chip->pch_gpio_reg.gpio_use_sel_reg = ioपढ़ो32(&chip->reg->gpio_use_sel);
+पूर्ण
 
 /*
- * This function restores the register configuration of the GPIO device.
+ * This function restores the रेजिस्टर configuration of the GPIO device.
  */
-static void __maybe_unused pch_gpio_restore_reg_conf(struct pch_gpio *chip)
-{
-	iowrite32(chip->pch_gpio_reg.ien_reg, &chip->reg->ien);
-	iowrite32(chip->pch_gpio_reg.imask_reg, &chip->reg->imask);
-	/* to store contents of PO register */
-	iowrite32(chip->pch_gpio_reg.po_reg, &chip->reg->po);
-	/* to store contents of PM register */
-	iowrite32(chip->pch_gpio_reg.pm_reg, &chip->reg->pm);
-	iowrite32(chip->pch_gpio_reg.im0_reg, &chip->reg->im0);
-	if (chip->ioh == INTEL_EG20T_PCH)
-		iowrite32(chip->pch_gpio_reg.im1_reg, &chip->reg->im1);
-	if (chip->ioh == OKISEMI_ML7223n_IOH)
-		iowrite32(chip->pch_gpio_reg.gpio_use_sel_reg, &chip->reg->gpio_use_sel);
-}
+अटल व्योम __maybe_unused pch_gpio_restore_reg_conf(काष्ठा pch_gpio *chip)
+अणु
+	ioग_लिखो32(chip->pch_gpio_reg.ien_reg, &chip->reg->ien);
+	ioग_लिखो32(chip->pch_gpio_reg.imask_reg, &chip->reg->imask);
+	/* to store contents of PO रेजिस्टर */
+	ioग_लिखो32(chip->pch_gpio_reg.po_reg, &chip->reg->po);
+	/* to store contents of PM रेजिस्टर */
+	ioग_लिखो32(chip->pch_gpio_reg.pm_reg, &chip->reg->pm);
+	ioग_लिखो32(chip->pch_gpio_reg.im0_reg, &chip->reg->im0);
+	अगर (chip->ioh == INTEL_EG20T_PCH)
+		ioग_लिखो32(chip->pch_gpio_reg.im1_reg, &chip->reg->im1);
+	अगर (chip->ioh == OKISEMI_ML7223n_IOH)
+		ioग_लिखो32(chip->pch_gpio_reg.gpio_use_sel_reg, &chip->reg->gpio_use_sel);
+पूर्ण
 
-static int pch_gpio_to_irq(struct gpio_chip *gpio, unsigned int offset)
-{
-	struct pch_gpio *chip = gpiochip_get_data(gpio);
+अटल पूर्णांक pch_gpio_to_irq(काष्ठा gpio_chip *gpio, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा pch_gpio *chip = gpiochip_get_data(gpio);
 
-	return chip->irq_base + offset;
-}
+	वापस chip->irq_base + offset;
+पूर्ण
 
-static void pch_gpio_setup(struct pch_gpio *chip)
-{
-	struct gpio_chip *gpio = &chip->gpio;
+अटल व्योम pch_gpio_setup(काष्ठा pch_gpio *chip)
+अणु
+	काष्ठा gpio_chip *gpio = &chip->gpio;
 
 	gpio->label = dev_name(chip->dev);
 	gpio->parent = chip->dev;
@@ -218,117 +219,117 @@ static void pch_gpio_setup(struct pch_gpio *chip)
 	gpio->ngpio = gpio_pins[chip->ioh];
 	gpio->can_sleep = false;
 	gpio->to_irq = pch_gpio_to_irq;
-}
+पूर्ण
 
-static int pch_irq_type(struct irq_data *d, unsigned int type)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	struct pch_gpio *chip = gc->private;
+अटल पूर्णांक pch_irq_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा pch_gpio *chip = gc->निजी;
 	u32 im, im_pos, val;
 	u32 __iomem *im_reg;
-	unsigned long flags;
-	int ch, irq = d->irq;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ch, irq = d->irq;
 
 	ch = irq - chip->irq_base;
-	if (irq < chip->irq_base + 8) {
+	अगर (irq < chip->irq_base + 8) अणु
 		im_reg = &chip->reg->im0;
 		im_pos = ch - 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		im_reg = &chip->reg->im1;
 		im_pos = ch - 8;
-	}
+	पूर्ण
 	dev_dbg(chip->dev, "irq=%d type=%d ch=%d pos=%d\n", irq, type, ch, im_pos);
 
-	switch (type) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		val = PCH_EDGE_RISING;
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
 		val = PCH_EDGE_FALLING;
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
 		val = PCH_EDGE_BOTH;
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		val = PCH_LEVEL_H;
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		val = PCH_LEVEL_L;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	spin_lock_irqsave(&chip->spinlock, flags);
 
-	/* Set interrupt mode */
-	im = ioread32(im_reg) & ~(PCH_IM_MASK << (im_pos * 4));
-	iowrite32(im | (val << (im_pos * 4)), im_reg);
+	/* Set पूर्णांकerrupt mode */
+	im = ioपढ़ो32(im_reg) & ~(PCH_IM_MASK << (im_pos * 4));
+	ioग_लिखो32(im | (val << (im_pos * 4)), im_reg);
 
 	/* And the handler */
-	if (type & IRQ_TYPE_LEVEL_MASK)
+	अगर (type & IRQ_TYPE_LEVEL_MASK)
 		irq_set_handler_locked(d, handle_level_irq);
-	else if (type & IRQ_TYPE_EDGE_BOTH)
+	अन्यथा अगर (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(d, handle_edge_irq);
 
 	spin_unlock_irqrestore(&chip->spinlock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pch_irq_unmask(struct irq_data *d)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	struct pch_gpio *chip = gc->private;
+अटल व्योम pch_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा pch_gpio *chip = gc->निजी;
 
-	iowrite32(BIT(d->irq - chip->irq_base), &chip->reg->imaskclr);
-}
+	ioग_लिखो32(BIT(d->irq - chip->irq_base), &chip->reg->imaskclr);
+पूर्ण
 
-static void pch_irq_mask(struct irq_data *d)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	struct pch_gpio *chip = gc->private;
+अटल व्योम pch_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा pch_gpio *chip = gc->निजी;
 
-	iowrite32(BIT(d->irq - chip->irq_base), &chip->reg->imask);
-}
+	ioग_लिखो32(BIT(d->irq - chip->irq_base), &chip->reg->imask);
+पूर्ण
 
-static void pch_irq_ack(struct irq_data *d)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	struct pch_gpio *chip = gc->private;
+अटल व्योम pch_irq_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा pch_gpio *chip = gc->निजी;
 
-	iowrite32(BIT(d->irq - chip->irq_base), &chip->reg->iclr);
-}
+	ioग_लिखो32(BIT(d->irq - chip->irq_base), &chip->reg->iclr);
+पूर्ण
 
-static irqreturn_t pch_gpio_handler(int irq, void *dev_id)
-{
-	struct pch_gpio *chip = dev_id;
-	unsigned long reg_val = ioread32(&chip->reg->istatus);
-	int i;
+अटल irqवापस_t pch_gpio_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा pch_gpio *chip = dev_id;
+	अचिन्हित दीर्घ reg_val = ioपढ़ो32(&chip->reg->istatus);
+	पूर्णांक i;
 
 	dev_vdbg(chip->dev, "irq=%d  status=0x%lx\n", irq, reg_val);
 
 	reg_val &= BIT(gpio_pins[chip->ioh]) - 1;
 
-	for_each_set_bit(i, &reg_val, gpio_pins[chip->ioh])
+	क्रम_each_set_bit(i, &reg_val, gpio_pins[chip->ioh])
 		generic_handle_irq(chip->irq_base + i);
 
-	return IRQ_RETVAL(reg_val);
-}
+	वापस IRQ_RETVAL(reg_val);
+पूर्ण
 
-static int pch_gpio_alloc_generic_chip(struct pch_gpio *chip,
-				       unsigned int irq_start,
-				       unsigned int num)
-{
-	struct irq_chip_generic *gc;
-	struct irq_chip_type *ct;
-	int rv;
+अटल पूर्णांक pch_gpio_alloc_generic_chip(काष्ठा pch_gpio *chip,
+				       अचिन्हित पूर्णांक irq_start,
+				       अचिन्हित पूर्णांक num)
+अणु
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा irq_chip_type *ct;
+	पूर्णांक rv;
 
 	gc = devm_irq_alloc_generic_chip(chip->dev, "pch_gpio", 1, irq_start,
 					 chip->base, handle_simple_irq);
-	if (!gc)
-		return -ENOMEM;
+	अगर (!gc)
+		वापस -ENOMEM;
 
-	gc->private = chip;
+	gc->निजी = chip;
 	ct = gc->chip_types;
 
 	ct->chip.irq_ack = pch_irq_ack;
@@ -340,40 +341,40 @@ static int pch_gpio_alloc_generic_chip(struct pch_gpio *chip,
 					 IRQ_GC_INIT_MASK_CACHE,
 					 IRQ_NOREQUEST | IRQ_NOPROBE, 0);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int pch_gpio_probe(struct pci_dev *pdev,
-				    const struct pci_device_id *id)
-{
+अटल पूर्णांक pch_gpio_probe(काष्ठा pci_dev *pdev,
+				    स्थिर काष्ठा pci_device_id *id)
+अणु
 	s32 ret;
-	struct pch_gpio *chip;
-	int irq_base;
+	काष्ठा pch_gpio *chip;
+	पूर्णांक irq_base;
 
-	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
-	if (chip == NULL)
-		return -ENOMEM;
+	chip = devm_kzalloc(&pdev->dev, माप(*chip), GFP_KERNEL);
+	अगर (chip == शून्य)
+		वापस -ENOMEM;
 
 	chip->dev = &pdev->dev;
 	ret = pcim_enable_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "pci_enable_device FAILED");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = pcim_iomap_regions(pdev, BIT(1), KBUILD_MODNAME);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "pci_request_regions FAILED-%d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	chip->base = pcim_iomap_table(pdev)[1];
 
-	if (pdev->device == 0x8803)
+	अगर (pdev->device == 0x8803)
 		chip->ioh = INTEL_EG20T_PCH;
-	else if (pdev->device == 0x8014)
+	अन्यथा अगर (pdev->device == 0x8014)
 		chip->ioh = OKISEMI_ML7223m_IOH;
-	else if (pdev->device == 0x8043)
+	अन्यथा अगर (pdev->device == 0x8043)
 		chip->ioh = OKISEMI_ML7223n_IOH;
 
 	chip->reg = chip->base;
@@ -382,79 +383,79 @@ static int pch_gpio_probe(struct pci_dev *pdev,
 	pch_gpio_setup(chip);
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &chip->gpio, chip);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "PCH gpio: Failed to register GPIO\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	irq_base = devm_irq_alloc_descs(&pdev->dev, -1, 0,
 					gpio_pins[chip->ioh], NUMA_NO_NODE);
-	if (irq_base < 0) {
+	अगर (irq_base < 0) अणु
 		dev_warn(&pdev->dev, "PCH gpio: Failed to get IRQ base num\n");
 		chip->irq_base = -1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	chip->irq_base = irq_base;
 
-	/* Mask all interrupts, but enable them */
-	iowrite32(BIT(gpio_pins[chip->ioh]) - 1, &chip->reg->imask);
-	iowrite32(BIT(gpio_pins[chip->ioh]) - 1, &chip->reg->ien);
+	/* Mask all पूर्णांकerrupts, but enable them */
+	ioग_लिखो32(BIT(gpio_pins[chip->ioh]) - 1, &chip->reg->imask);
+	ioग_लिखो32(BIT(gpio_pins[chip->ioh]) - 1, &chip->reg->ien);
 
 	ret = devm_request_irq(&pdev->dev, pdev->irq, pch_gpio_handler,
 			       IRQF_SHARED, KBUILD_MODNAME, chip);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "request_irq failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return pch_gpio_alloc_generic_chip(chip, irq_base, gpio_pins[chip->ioh]);
-}
+	वापस pch_gpio_alloc_generic_chip(chip, irq_base, gpio_pins[chip->ioh]);
+पूर्ण
 
-static int __maybe_unused pch_gpio_suspend(struct device *dev)
-{
-	struct pch_gpio *chip = dev_get_drvdata(dev);
-	unsigned long flags;
+अटल पूर्णांक __maybe_unused pch_gpio_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pch_gpio *chip = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chip->spinlock, flags);
 	pch_gpio_save_reg_conf(chip);
 	spin_unlock_irqrestore(&chip->spinlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused pch_gpio_resume(struct device *dev)
-{
-	struct pch_gpio *chip = dev_get_drvdata(dev);
-	unsigned long flags;
+अटल पूर्णांक __maybe_unused pch_gpio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pch_gpio *chip = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chip->spinlock, flags);
-	iowrite32(0x01, &chip->reg->reset);
-	iowrite32(0x00, &chip->reg->reset);
+	ioग_लिखो32(0x01, &chip->reg->reset);
+	ioग_लिखो32(0x00, &chip->reg->reset);
 	pch_gpio_restore_reg_conf(chip);
 	spin_unlock_irqrestore(&chip->spinlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(pch_gpio_pm_ops, pch_gpio_suspend, pch_gpio_resume);
+अटल SIMPLE_DEV_PM_OPS(pch_gpio_pm_ops, pch_gpio_suspend, pch_gpio_resume);
 
-static const struct pci_device_id pch_gpio_pcidev_id[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x8803) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ROHM, 0x8014) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ROHM, 0x8043) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_ROHM, 0x8803) },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id pch_gpio_pcidev_id[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x8803) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ROHM, 0x8014) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ROHM, 0x8043) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ROHM, 0x8803) पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, pch_gpio_pcidev_id);
 
-static struct pci_driver pch_gpio_driver = {
+अटल काष्ठा pci_driver pch_gpio_driver = अणु
 	.name = "pch_gpio",
 	.id_table = pch_gpio_pcidev_id,
 	.probe = pch_gpio_probe,
-	.driver = {
+	.driver = अणु
 		.pm = &pch_gpio_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_pci_driver(pch_gpio_driver);
 

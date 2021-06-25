@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/module.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/module.h>
 
-#include <net/sock.h>
-#include <linux/netlink.h>
-#include <linux/sock_diag.h>
-#include <linux/netlink_diag.h>
-#include <linux/rhashtable.h>
+#समावेश <net/sock.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/sock_diag.h>
+#समावेश <linux/netlink_diag.h>
+#समावेश <linux/rhashtable.h>
 
-#include "af_netlink.h"
+#समावेश "af_netlink.h"
 
-static int sk_diag_dump_groups(struct sock *sk, struct sk_buff *nlskb)
-{
-	struct netlink_sock *nlk = nlk_sk(sk);
+अटल पूर्णांक sk_diag_dump_groups(काष्ठा sock *sk, काष्ठा sk_buff *nlskb)
+अणु
+	काष्ठा netlink_sock *nlk = nlk_sk(sk);
 
-	if (nlk->groups == NULL)
-		return 0;
+	अगर (nlk->groups == शून्य)
+		वापस 0;
 
-	return nla_put(nlskb, NETLINK_DIAG_GROUPS, NLGRPSZ(nlk->ngroups),
+	वापस nla_put(nlskb, NETLINK_DIAG_GROUPS, NLGRPSZ(nlk->ngroups),
 		       nlk->groups);
-}
+पूर्ण
 
-static int sk_diag_put_flags(struct sock *sk, struct sk_buff *skb)
-{
-	struct netlink_sock *nlk = nlk_sk(sk);
+अटल पूर्णांक sk_diag_put_flags(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा netlink_sock *nlk = nlk_sk(sk);
 	u32 flags = 0;
 
-	if (nlk->cb_running)
+	अगर (nlk->cb_running)
 		flags |= NDIAG_FLAG_CB_RUNNING;
-	if (nlk->flags & NETLINK_F_RECV_PKTINFO)
+	अगर (nlk->flags & NETLINK_F_RECV_PKTINFO)
 		flags |= NDIAG_FLAG_PKTINFO;
-	if (nlk->flags & NETLINK_F_BROADCAST_SEND_ERROR)
+	अगर (nlk->flags & NETLINK_F_BROADCAST_SEND_ERROR)
 		flags |= NDIAG_FLAG_BROADCAST_ERROR;
-	if (nlk->flags & NETLINK_F_RECV_NO_ENOBUFS)
+	अगर (nlk->flags & NETLINK_F_RECV_NO_ENOBUFS)
 		flags |= NDIAG_FLAG_NO_ENOBUFS;
-	if (nlk->flags & NETLINK_F_LISTEN_ALL_NSID)
+	अगर (nlk->flags & NETLINK_F_LISTEN_ALL_NSID)
 		flags |= NDIAG_FLAG_LISTEN_ALL_NSID;
-	if (nlk->flags & NETLINK_F_CAP_ACK)
+	अगर (nlk->flags & NETLINK_F_CAP_ACK)
 		flags |= NDIAG_FLAG_CAP_ACK;
 
-	return nla_put_u32(skb, NETLINK_DIAG_FLAGS, flags);
-}
+	वापस nla_put_u32(skb, NETLINK_DIAG_FLAGS, flags);
+पूर्ण
 
-static int sk_diag_fill(struct sock *sk, struct sk_buff *skb,
-			struct netlink_diag_req *req,
-			u32 portid, u32 seq, u32 flags, int sk_ino)
-{
-	struct nlmsghdr *nlh;
-	struct netlink_diag_msg *rep;
-	struct netlink_sock *nlk = nlk_sk(sk);
+अटल पूर्णांक sk_diag_fill(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+			काष्ठा netlink_diag_req *req,
+			u32 portid, u32 seq, u32 flags, पूर्णांक sk_ino)
+अणु
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा netlink_diag_msg *rep;
+	काष्ठा netlink_sock *nlk = nlk_sk(sk);
 
-	nlh = nlmsg_put(skb, portid, seq, SOCK_DIAG_BY_FAMILY, sizeof(*rep),
+	nlh = nlmsg_put(skb, portid, seq, SOCK_DIAG_BY_FAMILY, माप(*rep),
 			flags);
-	if (!nlh)
-		return -EMSGSIZE;
+	अगर (!nlh)
+		वापस -EMSGSIZE;
 
 	rep = nlmsg_data(nlh);
 	rep->ndiag_family	= AF_NETLINK;
@@ -66,195 +67,195 @@ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb,
 	rep->ndiag_dst_group	= nlk->dst_group;
 	sock_diag_save_cookie(sk, rep->ndiag_cookie);
 
-	if ((req->ndiag_show & NDIAG_SHOW_GROUPS) &&
+	अगर ((req->ndiag_show & NDIAG_SHOW_GROUPS) &&
 	    sk_diag_dump_groups(sk, skb))
-		goto out_nlmsg_trim;
+		जाओ out_nlmsg_trim;
 
-	if ((req->ndiag_show & NDIAG_SHOW_MEMINFO) &&
+	अगर ((req->ndiag_show & NDIAG_SHOW_MEMINFO) &&
 	    sock_diag_put_meminfo(sk, skb, NETLINK_DIAG_MEMINFO))
-		goto out_nlmsg_trim;
+		जाओ out_nlmsg_trim;
 
-	if ((req->ndiag_show & NDIAG_SHOW_FLAGS) &&
+	अगर ((req->ndiag_show & NDIAG_SHOW_FLAGS) &&
 	    sk_diag_put_flags(sk, skb))
-		goto out_nlmsg_trim;
+		जाओ out_nlmsg_trim;
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 out_nlmsg_trim:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int __netlink_diag_dump(struct sk_buff *skb, struct netlink_callback *cb,
-				int protocol, int s_num)
-{
-	struct rhashtable_iter *hti = (void *)cb->args[2];
-	struct netlink_table *tbl = &nl_table[protocol];
-	struct net *net = sock_net(skb->sk);
-	struct netlink_diag_req *req;
-	struct netlink_sock *nlsk;
-	struct sock *sk;
-	int num = 2;
-	int ret = 0;
+अटल पूर्णांक __netlink_diag_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb,
+				पूर्णांक protocol, पूर्णांक s_num)
+अणु
+	काष्ठा rhashtable_iter *hti = (व्योम *)cb->args[2];
+	काष्ठा netlink_table *tbl = &nl_table[protocol];
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा netlink_diag_req *req;
+	काष्ठा netlink_sock *nlsk;
+	काष्ठा sock *sk;
+	पूर्णांक num = 2;
+	पूर्णांक ret = 0;
 
 	req = nlmsg_data(cb->nlh);
 
-	if (s_num > 1)
-		goto mc_list;
+	अगर (s_num > 1)
+		जाओ mc_list;
 
 	num--;
 
-	if (!hti) {
-		hti = kmalloc(sizeof(*hti), GFP_KERNEL);
-		if (!hti)
-			return -ENOMEM;
+	अगर (!hti) अणु
+		hti = kदो_स्मृति(माप(*hti), GFP_KERNEL);
+		अगर (!hti)
+			वापस -ENOMEM;
 
-		cb->args[2] = (long)hti;
-	}
+		cb->args[2] = (दीर्घ)hti;
+	पूर्ण
 
-	if (!s_num)
+	अगर (!s_num)
 		rhashtable_walk_enter(&tbl->hash, hti);
 
 	rhashtable_walk_start(hti);
 
-	while ((nlsk = rhashtable_walk_next(hti))) {
-		if (IS_ERR(nlsk)) {
+	जबतक ((nlsk = rhashtable_walk_next(hti))) अणु
+		अगर (IS_ERR(nlsk)) अणु
 			ret = PTR_ERR(nlsk);
-			if (ret == -EAGAIN) {
+			अगर (ret == -EAGAIN) अणु
 				ret = 0;
-				continue;
-			}
-			break;
-		}
+				जारी;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		sk = (struct sock *)nlsk;
+		sk = (काष्ठा sock *)nlsk;
 
-		if (!net_eq(sock_net(sk), net))
-			continue;
+		अगर (!net_eq(sock_net(sk), net))
+			जारी;
 
-		if (sk_diag_fill(sk, skb, req,
+		अगर (sk_diag_fill(sk, skb, req,
 				 NETLINK_CB(cb->skb).portid,
 				 cb->nlh->nlmsg_seq,
 				 NLM_F_MULTI,
-				 sock_i_ino(sk)) < 0) {
+				 sock_i_ino(sk)) < 0) अणु
 			ret = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	rhashtable_walk_stop(hti);
 
-	if (ret)
-		goto done;
+	अगर (ret)
+		जाओ करोne;
 
-	rhashtable_walk_exit(hti);
+	rhashtable_walk_निकास(hti);
 	num++;
 
 mc_list:
-	read_lock(&nl_table_lock);
-	sk_for_each_bound(sk, &tbl->mc_list) {
-		if (sk_hashed(sk))
-			continue;
-		if (!net_eq(sock_net(sk), net))
-			continue;
-		if (num < s_num) {
+	पढ़ो_lock(&nl_table_lock);
+	sk_क्रम_each_bound(sk, &tbl->mc_list) अणु
+		अगर (sk_hashed(sk))
+			जारी;
+		अगर (!net_eq(sock_net(sk), net))
+			जारी;
+		अगर (num < s_num) अणु
 			num++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (sk_diag_fill(sk, skb, req,
+		अगर (sk_diag_fill(sk, skb, req,
 				 NETLINK_CB(cb->skb).portid,
 				 cb->nlh->nlmsg_seq,
 				 NLM_F_MULTI,
-				 sock_i_ino(sk)) < 0) {
+				 sock_i_ino(sk)) < 0) अणु
 			ret = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		num++;
-	}
-	read_unlock(&nl_table_lock);
+	पूर्ण
+	पढ़ो_unlock(&nl_table_lock);
 
-done:
+करोne:
 	cb->args[0] = num;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int netlink_diag_dump(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct netlink_diag_req *req;
-	int s_num = cb->args[0];
-	int err = 0;
+अटल पूर्णांक netlink_diag_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा netlink_diag_req *req;
+	पूर्णांक s_num = cb->args[0];
+	पूर्णांक err = 0;
 
 	req = nlmsg_data(cb->nlh);
 
-	if (req->sdiag_protocol == NDIAG_PROTO_ALL) {
-		int i;
+	अगर (req->sdiag_protocol == NDIAG_PROTO_ALL) अणु
+		पूर्णांक i;
 
-		for (i = cb->args[1]; i < MAX_LINKS; i++) {
+		क्रम (i = cb->args[1]; i < MAX_LINKS; i++) अणु
 			err = __netlink_diag_dump(skb, cb, i, s_num);
-			if (err)
-				break;
+			अगर (err)
+				अवरोध;
 			s_num = 0;
-		}
+		पूर्ण
 		cb->args[1] = i;
-	} else {
-		if (req->sdiag_protocol >= MAX_LINKS)
-			return -ENOENT;
+	पूर्ण अन्यथा अणु
+		अगर (req->sdiag_protocol >= MAX_LINKS)
+			वापस -ENOENT;
 
 		err = __netlink_diag_dump(skb, cb, req->sdiag_protocol, s_num);
-	}
+	पूर्ण
 
-	return err < 0 ? err : skb->len;
-}
+	वापस err < 0 ? err : skb->len;
+पूर्ण
 
-static int netlink_diag_dump_done(struct netlink_callback *cb)
-{
-	struct rhashtable_iter *hti = (void *)cb->args[2];
+अटल पूर्णांक netlink_diag_dump_करोne(काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा rhashtable_iter *hti = (व्योम *)cb->args[2];
 
-	if (cb->args[0] == 1)
-		rhashtable_walk_exit(hti);
+	अगर (cb->args[0] == 1)
+		rhashtable_walk_निकास(hti);
 
-	kfree(hti);
+	kमुक्त(hti);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int netlink_diag_handler_dump(struct sk_buff *skb, struct nlmsghdr *h)
-{
-	int hdrlen = sizeof(struct netlink_diag_req);
-	struct net *net = sock_net(skb->sk);
+अटल पूर्णांक netlink_diag_handler_dump(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *h)
+अणु
+	पूर्णांक hdrlen = माप(काष्ठा netlink_diag_req);
+	काष्ठा net *net = sock_net(skb->sk);
 
-	if (nlmsg_len(h) < hdrlen)
-		return -EINVAL;
+	अगर (nlmsg_len(h) < hdrlen)
+		वापस -EINVAL;
 
-	if (h->nlmsg_flags & NLM_F_DUMP) {
-		struct netlink_dump_control c = {
+	अगर (h->nlmsg_flags & NLM_F_DUMP) अणु
+		काष्ठा netlink_dump_control c = अणु
 			.dump = netlink_diag_dump,
-			.done = netlink_diag_dump_done,
-		};
-		return netlink_dump_start(net->diag_nlsk, skb, h, &c);
-	} else
-		return -EOPNOTSUPP;
-}
+			.करोne = netlink_diag_dump_करोne,
+		पूर्ण;
+		वापस netlink_dump_start(net->diag_nlsk, skb, h, &c);
+	पूर्ण अन्यथा
+		वापस -EOPNOTSUPP;
+पूर्ण
 
-static const struct sock_diag_handler netlink_diag_handler = {
+अटल स्थिर काष्ठा sock_diag_handler netlink_diag_handler = अणु
 	.family = AF_NETLINK,
 	.dump = netlink_diag_handler_dump,
-};
+पूर्ण;
 
-static int __init netlink_diag_init(void)
-{
-	return sock_diag_register(&netlink_diag_handler);
-}
+अटल पूर्णांक __init netlink_diag_init(व्योम)
+अणु
+	वापस sock_diag_रेजिस्टर(&netlink_diag_handler);
+पूर्ण
 
-static void __exit netlink_diag_exit(void)
-{
-	sock_diag_unregister(&netlink_diag_handler);
-}
+अटल व्योम __निकास netlink_diag_निकास(व्योम)
+अणु
+	sock_diag_unरेजिस्टर(&netlink_diag_handler);
+पूर्ण
 
 module_init(netlink_diag_init);
-module_exit(netlink_diag_exit);
+module_निकास(netlink_diag_निकास);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_NETLINK, NETLINK_SOCK_DIAG, 16 /* AF_NETLINK */);

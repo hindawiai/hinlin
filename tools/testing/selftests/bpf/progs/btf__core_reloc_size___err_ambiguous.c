@@ -1,4 +1,5 @@
-#include "core_reloc_types.h"
+<शैली गुरु>
+#समावेश "core_reloc_types.h"
 
-void f(struct core_reloc_size___err_ambiguous1 x,
-       struct core_reloc_size___err_ambiguous2 y) {}
+व्योम f(काष्ठा core_reloc_size___err_ambiguous1 x,
+       काष्ठा core_reloc_size___err_ambiguous2 y) अणुपूर्ण

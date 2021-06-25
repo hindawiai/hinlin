@@ -1,281 +1,282 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/module.h>
-#include <linux/irqdomain.h>
-#include <linux/irqchip.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/smp.h>
-#include <linux/io.h>
-#include <asm/irq.h>
-#include <asm/traps.h>
-#include <asm/reg_ops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/module.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/reg_ops.h>
 
-static struct irq_domain *root_domain;
-static void __iomem *INTCG_base;
-static void __iomem *INTCL_base;
+अटल काष्ठा irq_करोमुख्य *root_करोमुख्य;
+अटल व्योम __iomem *INTCG_base;
+अटल व्योम __iomem *INTCL_base;
 
-#define IPI_IRQ		15
-#define INTC_IRQS	256
-#define COMM_IRQ_BASE	32
+#घोषणा IPI_IRQ		15
+#घोषणा INTC_IRQS	256
+#घोषणा COMM_IRQ_BASE	32
 
-#define INTCG_SIZE	0x8000
-#define INTCL_SIZE	0x1000
+#घोषणा INTCG_SIZE	0x8000
+#घोषणा INTCL_SIZE	0x1000
 
-#define INTCG_ICTLR	0x0
-#define INTCG_CICFGR	0x100
-#define INTCG_CIDSTR	0x1000
+#घोषणा INTCG_ICTLR	0x0
+#घोषणा INTCG_CICFGR	0x100
+#घोषणा INTCG_CIDSTR	0x1000
 
-#define INTCL_PICTLR	0x0
-#define INTCL_CFGR	0x14
-#define INTCL_SIGR	0x60
-#define INTCL_RDYIR	0x6c
-#define INTCL_SENR	0xa0
-#define INTCL_CENR	0xa4
-#define INTCL_CACR	0xb4
+#घोषणा INTCL_PICTLR	0x0
+#घोषणा INTCL_CFGR	0x14
+#घोषणा INTCL_SIGR	0x60
+#घोषणा INTCL_RDYIR	0x6c
+#घोषणा INTCL_SENR	0xa0
+#घोषणा INTCL_CENR	0xa4
+#घोषणा INTCL_CACR	0xb4
 
-static DEFINE_PER_CPU(void __iomem *, intcl_reg);
+अटल DEFINE_PER_CPU(व्योम __iomem *, पूर्णांकcl_reg);
 
-static unsigned long *__trigger;
+अटल अचिन्हित दीर्घ *__trigger;
 
-#define IRQ_OFFSET(irq) ((irq < COMM_IRQ_BASE) ? irq : (irq - COMM_IRQ_BASE))
+#घोषणा IRQ_OFFSET(irq) ((irq < COMM_IRQ_BASE) ? irq : (irq - COMM_IRQ_BASE))
 
-#define TRIG_BYTE_OFFSET(i)	((((i) * 2) / 32) * 4)
-#define TRIG_BIT_OFFSET(i)	 (((i) * 2) % 32)
+#घोषणा TRIG_BYTE_OFFSET(i)	((((i) * 2) / 32) * 4)
+#घोषणा TRIG_BIT_OFFSET(i)	 (((i) * 2) % 32)
 
-#define TRIG_VAL(trigger, irq)	(trigger << TRIG_BIT_OFFSET(IRQ_OFFSET(irq)))
-#define TRIG_VAL_MSK(irq)	    (~(3 << TRIG_BIT_OFFSET(IRQ_OFFSET(irq))))
+#घोषणा TRIG_VAL(trigger, irq)	(trigger << TRIG_BIT_OFFSET(IRQ_OFFSET(irq)))
+#घोषणा TRIG_VAL_MSK(irq)	    (~(3 << TRIG_BIT_OFFSET(IRQ_OFFSET(irq))))
 
-#define TRIG_BASE(irq) \
+#घोषणा TRIG_BASE(irq) \
 	(TRIG_BYTE_OFFSET(IRQ_OFFSET(irq)) + ((irq < COMM_IRQ_BASE) ? \
-	(this_cpu_read(intcl_reg) + INTCL_CFGR) : (INTCG_base + INTCG_CICFGR)))
+	(this_cpu_पढ़ो(पूर्णांकcl_reg) + INTCL_CFGR) : (INTCG_base + INTCG_CICFGR)))
 
-static DEFINE_SPINLOCK(setup_lock);
-static void setup_trigger(unsigned long irq, unsigned long trigger)
-{
-	unsigned int tmp;
+अटल DEFINE_SPINLOCK(setup_lock);
+अटल व्योम setup_trigger(अचिन्हित दीर्घ irq, अचिन्हित दीर्घ trigger)
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
 
 	spin_lock(&setup_lock);
 
 	/* setup trigger */
-	tmp = readl_relaxed(TRIG_BASE(irq)) & TRIG_VAL_MSK(irq);
+	पंचांगp = पढ़ोl_relaxed(TRIG_BASE(irq)) & TRIG_VAL_MSK(irq);
 
-	writel_relaxed(tmp | TRIG_VAL(trigger, irq), TRIG_BASE(irq));
+	ग_लिखोl_relaxed(पंचांगp | TRIG_VAL(trigger, irq), TRIG_BASE(irq));
 
 	spin_unlock(&setup_lock);
-}
+पूर्ण
 
-static void csky_mpintc_handler(struct pt_regs *regs)
-{
-	void __iomem *reg_base = this_cpu_read(intcl_reg);
+अटल व्योम csky_mpपूर्णांकc_handler(काष्ठा pt_regs *regs)
+अणु
+	व्योम __iomem *reg_base = this_cpu_पढ़ो(पूर्णांकcl_reg);
 
-	handle_domain_irq(root_domain,
-		readl_relaxed(reg_base + INTCL_RDYIR), regs);
-}
+	handle_करोमुख्य_irq(root_करोमुख्य,
+		पढ़ोl_relaxed(reg_base + INTCL_RDYIR), regs);
+पूर्ण
 
-static void csky_mpintc_enable(struct irq_data *d)
-{
-	void __iomem *reg_base = this_cpu_read(intcl_reg);
+अटल व्योम csky_mpपूर्णांकc_enable(काष्ठा irq_data *d)
+अणु
+	व्योम __iomem *reg_base = this_cpu_पढ़ो(पूर्णांकcl_reg);
 
 	setup_trigger(d->hwirq, __trigger[d->hwirq]);
 
-	writel_relaxed(d->hwirq, reg_base + INTCL_SENR);
-}
+	ग_लिखोl_relaxed(d->hwirq, reg_base + INTCL_SENR);
+पूर्ण
 
-static void csky_mpintc_disable(struct irq_data *d)
-{
-	void __iomem *reg_base = this_cpu_read(intcl_reg);
+अटल व्योम csky_mpपूर्णांकc_disable(काष्ठा irq_data *d)
+अणु
+	व्योम __iomem *reg_base = this_cpu_पढ़ो(पूर्णांकcl_reg);
 
-	writel_relaxed(d->hwirq, reg_base + INTCL_CENR);
-}
+	ग_लिखोl_relaxed(d->hwirq, reg_base + INTCL_CENR);
+पूर्ण
 
-static void csky_mpintc_eoi(struct irq_data *d)
-{
-	void __iomem *reg_base = this_cpu_read(intcl_reg);
+अटल व्योम csky_mpपूर्णांकc_eoi(काष्ठा irq_data *d)
+अणु
+	व्योम __iomem *reg_base = this_cpu_पढ़ो(पूर्णांकcl_reg);
 
-	writel_relaxed(d->hwirq, reg_base + INTCL_CACR);
-}
+	ग_लिखोl_relaxed(d->hwirq, reg_base + INTCL_CACR);
+पूर्ण
 
-static int csky_mpintc_set_type(struct irq_data *d, unsigned int type)
-{
-	switch (type & IRQ_TYPE_SENSE_MASK) {
-	case IRQ_TYPE_LEVEL_HIGH:
+अटल पूर्णांक csky_mpपूर्णांकc_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	चयन (type & IRQ_TYPE_SENSE_MASK) अणु
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		__trigger[d->hwirq] = 0;
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		__trigger[d->hwirq] = 1;
-		break;
-	case IRQ_TYPE_EDGE_RISING:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_RISING:
 		__trigger[d->hwirq] = 2;
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
 		__trigger[d->hwirq] = 3;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SMP
-static int csky_irq_set_affinity(struct irq_data *d,
-				 const struct cpumask *mask_val,
-				 bool force)
-{
-	unsigned int cpu;
-	unsigned int offset = 4 * (d->hwirq - COMM_IRQ_BASE);
+#अगर_घोषित CONFIG_SMP
+अटल पूर्णांक csky_irq_set_affinity(काष्ठा irq_data *d,
+				 स्थिर काष्ठा cpumask *mask_val,
+				 bool क्रमce)
+अणु
+	अचिन्हित पूर्णांक cpu;
+	अचिन्हित पूर्णांक offset = 4 * (d->hwirq - COMM_IRQ_BASE);
 
-	if (!force)
+	अगर (!क्रमce)
 		cpu = cpumask_any_and(mask_val, cpu_online_mask);
-	else
+	अन्यथा
 		cpu = cpumask_first(mask_val);
 
-	if (cpu >= nr_cpu_ids)
-		return -EINVAL;
+	अगर (cpu >= nr_cpu_ids)
+		वापस -EINVAL;
 
 	/*
-	 * The csky,mpintc could support auto irq deliver, but it only
-	 * could deliver external irq to one cpu or all cpus. So it
-	 * doesn't support deliver external irq to a group of cpus
+	 * The csky,mpपूर्णांकc could support स्वतः irq deliver, but it only
+	 * could deliver बाह्यal irq to one cpu or all cpus. So it
+	 * करोesn't support deliver बाह्यal irq to a group of cpus
 	 * with cpu_mask.
-	 * SO we only use auto deliver mode when affinity mask_val is
+	 * SO we only use स्वतः deliver mode when affinity mask_val is
 	 * equal to cpu_present_mask.
 	 *
 	 */
-	if (cpumask_equal(mask_val, cpu_present_mask))
+	अगर (cpumask_equal(mask_val, cpu_present_mask))
 		cpu = 0;
-	else
+	अन्यथा
 		cpu |= BIT(31);
 
-	writel_relaxed(cpu, INTCG_base + INTCG_CIDSTR + offset);
+	ग_लिखोl_relaxed(cpu, INTCG_base + INTCG_CIDSTR + offset);
 
 	irq_data_update_effective_affinity(d, cpumask_of(cpu));
 
-	return IRQ_SET_MASK_OK_DONE;
-}
-#endif
+	वापस IRQ_SET_MASK_OK_DONE;
+पूर्ण
+#पूर्ण_अगर
 
-static struct irq_chip csky_irq_chip = {
+अटल काष्ठा irq_chip csky_irq_chip = अणु
 	.name           = "C-SKY SMP Intc",
-	.irq_eoi	= csky_mpintc_eoi,
-	.irq_enable	= csky_mpintc_enable,
-	.irq_disable	= csky_mpintc_disable,
-	.irq_set_type	= csky_mpintc_set_type,
-#ifdef CONFIG_SMP
+	.irq_eoi	= csky_mpपूर्णांकc_eoi,
+	.irq_enable	= csky_mpपूर्णांकc_enable,
+	.irq_disable	= csky_mpपूर्णांकc_disable,
+	.irq_set_type	= csky_mpपूर्णांकc_set_type,
+#अगर_घोषित CONFIG_SMP
 	.irq_set_affinity = csky_irq_set_affinity,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int csky_irqdomain_map(struct irq_domain *d, unsigned int irq,
+अटल पूर्णांक csky_irqकरोमुख्य_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
 			      irq_hw_number_t hwirq)
-{
-	if (hwirq < COMM_IRQ_BASE) {
+अणु
+	अगर (hwirq < COMM_IRQ_BASE) अणु
 		irq_set_percpu_devid(irq);
 		irq_set_chip_and_handler(irq, &csky_irq_chip,
 					 handle_percpu_irq);
-	} else {
+	पूर्ण अन्यथा अणु
 		irq_set_chip_and_handler(irq, &csky_irq_chip,
 					 handle_fasteoi_irq);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int csky_irq_domain_xlate_cells(struct irq_domain *d,
-		struct device_node *ctrlr, const u32 *intspec,
-		unsigned int intsize, unsigned long *out_hwirq,
-		unsigned int *out_type)
-{
-	if (WARN_ON(intsize < 1))
-		return -EINVAL;
+अटल पूर्णांक csky_irq_करोमुख्य_xlate_cells(काष्ठा irq_करोमुख्य *d,
+		काष्ठा device_node *ctrlr, स्थिर u32 *पूर्णांकspec,
+		अचिन्हित पूर्णांक पूर्णांकsize, अचिन्हित दीर्घ *out_hwirq,
+		अचिन्हित पूर्णांक *out_type)
+अणु
+	अगर (WARN_ON(पूर्णांकsize < 1))
+		वापस -EINVAL;
 
-	*out_hwirq = intspec[0];
-	if (intsize > 1)
-		*out_type = intspec[1] & IRQ_TYPE_SENSE_MASK;
-	else
+	*out_hwirq = पूर्णांकspec[0];
+	अगर (पूर्णांकsize > 1)
+		*out_type = पूर्णांकspec[1] & IRQ_TYPE_SENSE_MASK;
+	अन्यथा
 		*out_type = IRQ_TYPE_LEVEL_HIGH;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops csky_irqdomain_ops = {
-	.map	= csky_irqdomain_map,
-	.xlate	= csky_irq_domain_xlate_cells,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops csky_irqकरोमुख्य_ops = अणु
+	.map	= csky_irqकरोमुख्य_map,
+	.xlate	= csky_irq_करोमुख्य_xlate_cells,
+पूर्ण;
 
-#ifdef CONFIG_SMP
-static void csky_mpintc_send_ipi(const struct cpumask *mask)
-{
-	void __iomem *reg_base = this_cpu_read(intcl_reg);
+#अगर_घोषित CONFIG_SMP
+अटल व्योम csky_mpपूर्णांकc_send_ipi(स्थिर काष्ठा cpumask *mask)
+अणु
+	व्योम __iomem *reg_base = this_cpu_पढ़ो(पूर्णांकcl_reg);
 
 	/*
 	 * INTCL_SIGR[3:0] INTID
 	 * INTCL_SIGR[8:15] CPUMASK
 	 */
-	writel_relaxed((*cpumask_bits(mask)) << 8 | IPI_IRQ,
+	ग_लिखोl_relaxed((*cpumask_bits(mask)) << 8 | IPI_IRQ,
 					reg_base + INTCL_SIGR);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-/* C-SKY multi processor interrupt controller */
-static int __init
-csky_mpintc_init(struct device_node *node, struct device_node *parent)
-{
-	int ret;
-	unsigned int cpu, nr_irq;
-#ifdef CONFIG_SMP
-	unsigned int ipi_irq;
-#endif
+/* C-SKY multi processor पूर्णांकerrupt controller */
+अटल पूर्णांक __init
+csky_mpपूर्णांकc_init(काष्ठा device_node *node, काष्ठा device_node *parent)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक cpu, nr_irq;
+#अगर_घोषित CONFIG_SMP
+	अचिन्हित पूर्णांक ipi_irq;
+#पूर्ण_अगर
 
-	if (parent)
-		return 0;
+	अगर (parent)
+		वापस 0;
 
-	ret = of_property_read_u32(node, "csky,num-irqs", &nr_irq);
-	if (ret < 0)
+	ret = of_property_पढ़ो_u32(node, "csky,num-irqs", &nr_irq);
+	अगर (ret < 0)
 		nr_irq = INTC_IRQS;
 
-	__trigger  = kcalloc(nr_irq, sizeof(unsigned long), GFP_KERNEL);
-	if (__trigger == NULL)
-		return -ENXIO;
+	__trigger  = kसुस्मृति(nr_irq, माप(अचिन्हित दीर्घ), GFP_KERNEL);
+	अगर (__trigger == शून्य)
+		वापस -ENXIO;
 
-	if (INTCG_base == NULL) {
+	अगर (INTCG_base == शून्य) अणु
 		INTCG_base = ioremap(mfcr("cr<31, 14>"),
 				     INTCL_SIZE*nr_cpu_ids + INTCG_SIZE);
-		if (INTCG_base == NULL)
-			return -EIO;
+		अगर (INTCG_base == शून्य)
+			वापस -EIO;
 
 		INTCL_base = INTCG_base + INTCG_SIZE;
 
-		writel_relaxed(BIT(0), INTCG_base + INTCG_ICTLR);
-	}
+		ग_लिखोl_relaxed(BIT(0), INTCG_base + INTCG_ICTLR);
+	पूर्ण
 
-	root_domain = irq_domain_add_linear(node, nr_irq, &csky_irqdomain_ops,
-					    NULL);
-	if (!root_domain)
-		return -ENXIO;
+	root_करोमुख्य = irq_करोमुख्य_add_linear(node, nr_irq, &csky_irqकरोमुख्य_ops,
+					    शून्य);
+	अगर (!root_करोमुख्य)
+		वापस -ENXIO;
 
-	/* for every cpu */
-	for_each_present_cpu(cpu) {
-		per_cpu(intcl_reg, cpu) = INTCL_base + (INTCL_SIZE * cpu);
-		writel_relaxed(BIT(0), per_cpu(intcl_reg, cpu) + INTCL_PICTLR);
-	}
+	/* क्रम every cpu */
+	क्रम_each_present_cpu(cpu) अणु
+		per_cpu(पूर्णांकcl_reg, cpu) = INTCL_base + (INTCL_SIZE * cpu);
+		ग_लिखोl_relaxed(BIT(0), per_cpu(पूर्णांकcl_reg, cpu) + INTCL_PICTLR);
+	पूर्ण
 
-	set_handle_irq(&csky_mpintc_handler);
+	set_handle_irq(&csky_mpपूर्णांकc_handler);
 
-#ifdef CONFIG_SMP
-	ipi_irq = irq_create_mapping(root_domain, IPI_IRQ);
-	if (!ipi_irq)
-		return -EIO;
+#अगर_घोषित CONFIG_SMP
+	ipi_irq = irq_create_mapping(root_करोमुख्य, IPI_IRQ);
+	अगर (!ipi_irq)
+		वापस -EIO;
 
-	set_send_ipi(&csky_mpintc_send_ipi, ipi_irq);
-#endif
+	set_send_ipi(&csky_mpपूर्णांकc_send_ipi, ipi_irq);
+#पूर्ण_अगर
 
-	return 0;
-}
-IRQCHIP_DECLARE(csky_mpintc, "csky,mpintc", csky_mpintc_init);
+	वापस 0;
+पूर्ण
+IRQCHIP_DECLARE(csky_mpपूर्णांकc, "csky,mpintc", csky_mpपूर्णांकc_init);

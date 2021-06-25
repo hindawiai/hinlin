@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _M68K_CURRENT_H
-#define _M68K_CURRENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _M68K_CURRENT_H
+#घोषणा _M68K_CURRENT_H
 
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 
-register struct task_struct *current __asm__("%a2");
+रेजिस्टर काष्ठा task_काष्ठा *current __यंत्र__("%a2");
 
-#else
+#अन्यथा
 
 /*
- *	Rather than dedicate a register (as the m68k source does), we
+ *	Rather than dedicate a रेजिस्टर (as the m68k source करोes), we
  *	just keep a global,  we should probably just change it all to be
  *	current and lose _current_task.
  */
-#include <linux/thread_info.h>
+#समावेश <linux/thपढ़ो_info.h>
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-static inline struct task_struct *get_current(void)
-{
-	return(current_thread_info()->task);
-}
+अटल अंतरभूत काष्ठा task_काष्ठा *get_current(व्योम)
+अणु
+	वापस(current_thपढ़ो_info()->task);
+पूर्ण
 
-#define	current	get_current()
+#घोषणा	current	get_current()
 
-#endif /* CONFNIG_MMU */
+#पूर्ण_अगर /* CONFNIG_MMU */
 
-#endif /* !(_M68K_CURRENT_H) */
+#पूर्ण_अगर /* !(_M68K_CURRENT_H) */

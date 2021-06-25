@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for USB ethernet port of Conexant CX82310-based ADSL routers
+ * Driver क्रम USB ethernet port of Conexant CX82310-based ADSL routers
  * Copyright (C) 2010 by Ondrej Zary
  * some parts inspired by the cxacru driver
  */
 
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/workqueue.h>
-#include <linux/mii.h>
-#include <linux/usb.h>
-#include <linux/usb/usbnet.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/usbnet.h>
 
-enum cx82310_cmd {
+क्रमागत cx82310_cmd अणु
 	CMD_START		= 0x84,	/* no effect? */
 	CMD_STOP		= 0x85,	/* no effect? */
-	CMD_GET_STATUS		= 0x90,	/* returns nothing? */
-	CMD_GET_MAC_ADDR	= 0x91,	/* read MAC address */
+	CMD_GET_STATUS		= 0x90,	/* वापसs nothing? */
+	CMD_GET_MAC_ADDR	= 0x91,	/* पढ़ो MAC address */
 	CMD_GET_LINK_STATUS	= 0x92,	/* not useful, link is always up */
 	CMD_ETHERNET_MODE	= 0x99,	/* unknown, needed during init */
-};
+पूर्ण;
 
-enum cx82310_status {
+क्रमागत cx82310_status अणु
 	STATUS_UNDEFINED,
 	STATUS_SUCCESS,
 	STATUS_ERROR,
@@ -31,136 +32,136 @@ enum cx82310_status {
 	STATUS_UNIMPLEMENTED,
 	STATUS_PARAMETER_ERROR,
 	STATUS_DBG_LOOPBACK,
-};
+पूर्ण;
 
-#define CMD_PACKET_SIZE	64
-#define CMD_TIMEOUT	100
-#define CMD_REPLY_RETRY 5
+#घोषणा CMD_PACKET_SIZE	64
+#घोषणा CMD_TIMEOUT	100
+#घोषणा CMD_REPLY_RETRY 5
 
-#define CX82310_MTU	1514
-#define CMD_EP		0x01
+#घोषणा CX82310_MTU	1514
+#घोषणा CMD_EP		0x01
 
-struct cx82310_priv {
-	struct work_struct reenable_work;
-	struct usbnet *dev;
-};
+काष्ठा cx82310_priv अणु
+	काष्ठा work_काष्ठा reenable_work;
+	काष्ठा usbnet *dev;
+पूर्ण;
 
 /*
  * execute control command
  *  - optionally send some data (command parameters)
- *  - optionally wait for the reply
- *  - optionally read some data from the reply
+ *  - optionally रुको क्रम the reply
+ *  - optionally पढ़ो some data from the reply
  */
-static int cx82310_cmd(struct usbnet *dev, enum cx82310_cmd cmd, bool reply,
-		       u8 *wdata, int wlen, u8 *rdata, int rlen)
-{
-	int actual_len, retries, ret;
-	struct usb_device *udev = dev->udev;
+अटल पूर्णांक cx82310_cmd(काष्ठा usbnet *dev, क्रमागत cx82310_cmd cmd, bool reply,
+		       u8 *wdata, पूर्णांक wlen, u8 *rdata, पूर्णांक rlen)
+अणु
+	पूर्णांक actual_len, retries, ret;
+	काष्ठा usb_device *udev = dev->udev;
 	u8 *buf = kzalloc(CMD_PACKET_SIZE, GFP_KERNEL);
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	/* create command packet */
 	buf[0] = cmd;
-	if (wdata)
-		memcpy(buf + 4, wdata, min_t(int, wlen, CMD_PACKET_SIZE - 4));
+	अगर (wdata)
+		स_नकल(buf + 4, wdata, min_t(पूर्णांक, wlen, CMD_PACKET_SIZE - 4));
 
 	/* send command packet */
 	ret = usb_bulk_msg(udev, usb_sndbulkpipe(udev, CMD_EP), buf,
 			   CMD_PACKET_SIZE, &actual_len, CMD_TIMEOUT);
-	if (ret < 0) {
-		if (cmd != CMD_GET_LINK_STATUS)
+	अगर (ret < 0) अणु
+		अगर (cmd != CMD_GET_LINK_STATUS)
 			netdev_err(dev->net, "send command %#x: error %d\n",
 				   cmd, ret);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (reply) {
-		/* wait for reply, retry if it's empty */
-		for (retries = 0; retries < CMD_REPLY_RETRY; retries++) {
+	अगर (reply) अणु
+		/* रुको क्रम reply, retry अगर it's empty */
+		क्रम (retries = 0; retries < CMD_REPLY_RETRY; retries++) अणु
 			ret = usb_bulk_msg(udev, usb_rcvbulkpipe(udev, CMD_EP),
 					   buf, CMD_PACKET_SIZE, &actual_len,
 					   CMD_TIMEOUT);
-			if (ret < 0) {
-				if (cmd != CMD_GET_LINK_STATUS)
+			अगर (ret < 0) अणु
+				अगर (cmd != CMD_GET_LINK_STATUS)
 					netdev_err(dev->net, "reply receive error %d\n",
 						   ret);
-				goto end;
-			}
-			if (actual_len > 0)
-				break;
-		}
-		if (actual_len == 0) {
+				जाओ end;
+			पूर्ण
+			अगर (actual_len > 0)
+				अवरोध;
+		पूर्ण
+		अगर (actual_len == 0) अणु
 			netdev_err(dev->net, "no reply to command %#x\n", cmd);
 			ret = -EIO;
-			goto end;
-		}
-		if (buf[0] != cmd) {
+			जाओ end;
+		पूर्ण
+		अगर (buf[0] != cmd) अणु
 			netdev_err(dev->net, "got reply to command %#x, expected: %#x\n",
 				   buf[0], cmd);
 			ret = -EIO;
-			goto end;
-		}
-		if (buf[1] != STATUS_SUCCESS) {
+			जाओ end;
+		पूर्ण
+		अगर (buf[1] != STATUS_SUCCESS) अणु
 			netdev_err(dev->net, "command %#x failed: %#x\n", cmd,
 				   buf[1]);
 			ret = -EIO;
-			goto end;
-		}
-		if (rdata)
-			memcpy(rdata, buf + 4,
-			       min_t(int, rlen, CMD_PACKET_SIZE - 4));
-	}
+			जाओ end;
+		पूर्ण
+		अगर (rdata)
+			स_नकल(rdata, buf + 4,
+			       min_t(पूर्णांक, rlen, CMD_PACKET_SIZE - 4));
+	पूर्ण
 end:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static int cx82310_enable_ethernet(struct usbnet *dev)
-{
-	int ret = cx82310_cmd(dev, CMD_ETHERNET_MODE, true, "\x01", 1, NULL, 0);
+अटल पूर्णांक cx82310_enable_ethernet(काष्ठा usbnet *dev)
+अणु
+	पूर्णांक ret = cx82310_cmd(dev, CMD_ETHERNET_MODE, true, "\x01", 1, शून्य, 0);
 
-	if (ret)
+	अगर (ret)
 		netdev_err(dev->net, "unable to enable ethernet mode: %d\n",
 			   ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cx82310_reenable_work(struct work_struct *work)
-{
-	struct cx82310_priv *priv = container_of(work, struct cx82310_priv,
+अटल व्योम cx82310_reenable_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cx82310_priv *priv = container_of(work, काष्ठा cx82310_priv,
 						 reenable_work);
 	cx82310_enable_ethernet(priv->dev);
-}
+पूर्ण
 
-#define partial_len	data[0]		/* length of partial packet data */
-#define partial_rem	data[1]		/* remaining (missing) data length */
-#define partial_data	data[2]		/* partial packet data */
+#घोषणा partial_len	data[0]		/* length of partial packet data */
+#घोषणा partial_rem	data[1]		/* reमुख्यing (missing) data length */
+#घोषणा partial_data	data[2]		/* partial packet data */
 
-static int cx82310_bind(struct usbnet *dev, struct usb_interface *intf)
-{
-	int ret;
-	char buf[15];
-	struct usb_device *udev = dev->udev;
+अटल पूर्णांक cx82310_bind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	पूर्णांक ret;
+	अक्षर buf[15];
+	काष्ठा usb_device *udev = dev->udev;
 	u8 link[3];
-	int timeout = 50;
-	struct cx82310_priv *priv;
+	पूर्णांक समयout = 50;
+	काष्ठा cx82310_priv *priv;
 
-	/* avoid ADSL modems - continue only if iProduct is "USB NET CARD" */
-	if (usb_string(udev, udev->descriptor.iProduct, buf, sizeof(buf)) > 0
-	    && strcmp(buf, "USB NET CARD")) {
+	/* aव्योम ADSL modems - जारी only अगर iProduct is "USB NET CARD" */
+	अगर (usb_string(udev, udev->descriptor.iProduct, buf, माप(buf)) > 0
+	    && म_भेद(buf, "USB NET CARD")) अणु
 		dev_info(&udev->dev, "ignoring: probably an ADSL modem\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = usbnet_get_endpoints(dev, intf);
-	if (ret)
-		return ret;
+	ret = usbnet_get_endpoपूर्णांकs(dev, पूर्णांकf);
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * this must not include ethernet header as the device can send partial
-	 * packets with no header (and sometimes even empty URBs)
+	 * packets with no header (and someबार even empty URBs)
 	 */
 	dev->net->hard_header_len = 0;
 	/* we can send at most 1514 bytes of data (+ 2-byte header) per URB */
@@ -168,196 +169,196 @@ static int cx82310_bind(struct usbnet *dev, struct usb_interface *intf)
 	/* we can receive URBs up to 4KB from the device */
 	dev->rx_urb_size = 4096;
 
-	dev->partial_data = (unsigned long) kmalloc(dev->hard_mtu, GFP_KERNEL);
-	if (!dev->partial_data)
-		return -ENOMEM;
+	dev->partial_data = (अचिन्हित दीर्घ) kदो_स्मृति(dev->hard_mtu, GFP_KERNEL);
+	अगर (!dev->partial_data)
+		वापस -ENOMEM;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv) {
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv) अणु
 		ret = -ENOMEM;
-		goto err_partial;
-	}
+		जाओ err_partial;
+	पूर्ण
 	dev->driver_priv = priv;
 	INIT_WORK(&priv->reenable_work, cx82310_reenable_work);
 	priv->dev = dev;
 
-	/* wait for firmware to become ready (indicated by the link being up) */
-	while (--timeout) {
-		ret = cx82310_cmd(dev, CMD_GET_LINK_STATUS, true, NULL, 0,
-				  link, sizeof(link));
-		/* the command can time out during boot - it's not an error */
-		if (!ret && link[0] == 1 && link[2] == 1)
-			break;
+	/* रुको क्रम firmware to become पढ़ोy (indicated by the link being up) */
+	जबतक (--समयout) अणु
+		ret = cx82310_cmd(dev, CMD_GET_LINK_STATUS, true, शून्य, 0,
+				  link, माप(link));
+		/* the command can समय out during boot - it's not an error */
+		अगर (!ret && link[0] == 1 && link[2] == 1)
+			अवरोध;
 		msleep(500);
-	}
-	if (!timeout) {
+	पूर्ण
+	अगर (!समयout) अणु
 		netdev_err(dev->net, "firmware not ready in time\n");
 		ret = -ETIMEDOUT;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* enable ethernet mode (?) */
 	ret = cx82310_enable_ethernet(dev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	/* get the MAC address */
-	ret = cx82310_cmd(dev, CMD_GET_MAC_ADDR, true, NULL, 0,
+	ret = cx82310_cmd(dev, CMD_GET_MAC_ADDR, true, शून्य, 0,
 			  dev->net->dev_addr, ETH_ALEN);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(dev->net, "unable to read MAC address: %d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* start (does not seem to have any effect?) */
-	ret = cx82310_cmd(dev, CMD_START, false, NULL, 0, NULL, 0);
-	if (ret)
-		goto err;
+	/* start (करोes not seem to have any effect?) */
+	ret = cx82310_cmd(dev, CMD_START, false, शून्य, 0, शून्य, 0);
+	अगर (ret)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 err:
-	kfree(dev->driver_priv);
+	kमुक्त(dev->driver_priv);
 err_partial:
-	kfree((void *)dev->partial_data);
-	return ret;
-}
+	kमुक्त((व्योम *)dev->partial_data);
+	वापस ret;
+पूर्ण
 
-static void cx82310_unbind(struct usbnet *dev, struct usb_interface *intf)
-{
-	struct cx82310_priv *priv = dev->driver_priv;
+अटल व्योम cx82310_unbind(काष्ठा usbnet *dev, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा cx82310_priv *priv = dev->driver_priv;
 
-	kfree((void *)dev->partial_data);
+	kमुक्त((व्योम *)dev->partial_data);
 	cancel_work_sync(&priv->reenable_work);
-	kfree(dev->driver_priv);
-}
+	kमुक्त(dev->driver_priv);
+पूर्ण
 
 /*
  * RX is NOT easy - we can receive multiple packets per skb, each having 2-byte
  * packet length at the beginning.
  * The last packet might be incomplete (when it crosses the 4KB URB size),
  * continuing in the next skb (without any headers).
- * If a packet has odd length, there is one extra byte at the end (before next
+ * If a packet has odd length, there is one extra byte at the end (beक्रमe next
  * packet or at the end of the URB).
  */
-static int cx82310_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
-{
-	int len;
-	struct sk_buff *skb2;
-	struct cx82310_priv *priv = dev->driver_priv;
+अटल पूर्णांक cx82310_rx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक len;
+	काष्ठा sk_buff *skb2;
+	काष्ठा cx82310_priv *priv = dev->driver_priv;
 
 	/*
 	 * If the last skb ended with an incomplete packet, this skb contains
 	 * end of that packet at the beginning.
 	 */
-	if (dev->partial_rem) {
+	अगर (dev->partial_rem) अणु
 		len = dev->partial_len + dev->partial_rem;
 		skb2 = alloc_skb(len, GFP_ATOMIC);
-		if (!skb2)
-			return 0;
+		अगर (!skb2)
+			वापस 0;
 		skb_put(skb2, len);
-		memcpy(skb2->data, (void *)dev->partial_data,
+		स_नकल(skb2->data, (व्योम *)dev->partial_data,
 		       dev->partial_len);
-		memcpy(skb2->data + dev->partial_len, skb->data,
+		स_नकल(skb2->data + dev->partial_len, skb->data,
 		       dev->partial_rem);
-		usbnet_skb_return(dev, skb2);
+		usbnet_skb_वापस(dev, skb2);
 		skb_pull(skb, (dev->partial_rem + 1) & ~1);
 		dev->partial_rem = 0;
-		if (skb->len < 2)
-			return 1;
-	}
+		अगर (skb->len < 2)
+			वापस 1;
+	पूर्ण
 
 	/* a skb can contain multiple packets */
-	while (skb->len > 1) {
+	जबतक (skb->len > 1) अणु
 		/* first two bytes are packet length */
 		len = skb->data[0] | (skb->data[1] << 8);
 		skb_pull(skb, 2);
 
-		/* if last packet in the skb, let usbnet to process it */
-		if (len == skb->len || len + 1 == skb->len) {
+		/* अगर last packet in the skb, let usbnet to process it */
+		अगर (len == skb->len || len + 1 == skb->len) अणु
 			skb_trim(skb, len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (len == 0xffff) {
+		अगर (len == 0xffff) अणु
 			netdev_info(dev->net, "router was rebooted, re-enabling ethernet mode");
 			schedule_work(&priv->reenable_work);
-		} else if (len > CX82310_MTU) {
+		पूर्ण अन्यथा अगर (len > CX82310_MTU) अणु
 			netdev_err(dev->net, "RX packet too long: %d B\n", len);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		/* incomplete packet, save it for the next skb */
-		if (len > skb->len) {
+		/* incomplete packet, save it क्रम the next skb */
+		अगर (len > skb->len) अणु
 			dev->partial_len = skb->len;
 			dev->partial_rem = len - skb->len;
-			memcpy((void *)dev->partial_data, skb->data,
+			स_नकल((व्योम *)dev->partial_data, skb->data,
 			       dev->partial_len);
 			skb_pull(skb, skb->len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		skb2 = alloc_skb(len, GFP_ATOMIC);
-		if (!skb2)
-			return 0;
+		अगर (!skb2)
+			वापस 0;
 		skb_put(skb2, len);
-		memcpy(skb2->data, skb->data, len);
+		स_नकल(skb2->data, skb->data, len);
 		/* process the packet */
-		usbnet_skb_return(dev, skb2);
+		usbnet_skb_वापस(dev, skb2);
 
 		skb_pull(skb, (len + 1) & ~1);
-	}
+	पूर्ण
 
 	/* let usbnet process the last packet */
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* TX is easy, just add 2 bytes of length at the beginning */
-static struct sk_buff *cx82310_tx_fixup(struct usbnet *dev, struct sk_buff *skb,
+अटल काष्ठा sk_buff *cx82310_tx_fixup(काष्ठा usbnet *dev, काष्ठा sk_buff *skb,
 				       gfp_t flags)
-{
-	int len = skb->len;
+अणु
+	पूर्णांक len = skb->len;
 
-	if (skb_cow_head(skb, 2)) {
-		dev_kfree_skb_any(skb);
-		return NULL;
-	}
+	अगर (skb_cow_head(skb, 2)) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस शून्य;
+	पूर्ण
 	skb_push(skb, 2);
 
 	skb->data[0] = len;
 	skb->data[1] = len >> 8;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 
-static const struct driver_info	cx82310_info = {
+अटल स्थिर काष्ठा driver_info	cx82310_info = अणु
 	.description	= "Conexant CX82310 USB ethernet",
 	.flags		= FLAG_ETHER,
 	.bind		= cx82310_bind,
 	.unbind		= cx82310_unbind,
 	.rx_fixup	= cx82310_rx_fixup,
 	.tx_fixup	= cx82310_tx_fixup,
-};
+पूर्ण;
 
-#define USB_DEVICE_CLASS(vend, prod, cl, sc, pr) \
+#घोषणा USB_DEVICE_CLASS(vend, prod, cl, sc, pr) \
 	.match_flags = USB_DEVICE_ID_MATCH_DEVICE | \
 		       USB_DEVICE_ID_MATCH_DEV_INFO, \
-	.idVendor = (vend), \
+	.idVenकरोr = (vend), \
 	.idProduct = (prod), \
 	.bDeviceClass = (cl), \
 	.bDeviceSubClass = (sc), \
 	.bDeviceProtocol = (pr)
 
-static const struct usb_device_id products[] = {
-	{
+अटल स्थिर काष्ठा usb_device_id products[] = अणु
+	अणु
 		USB_DEVICE_CLASS(0x0572, 0xcb01, 0xff, 0, 0),
-		.driver_info = (unsigned long) &cx82310_info
-	},
-	{ },
-};
+		.driver_info = (अचिन्हित दीर्घ) &cx82310_info
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, products);
 
-static struct usb_driver cx82310_driver = {
+अटल काष्ठा usb_driver cx82310_driver = अणु
 	.name		= "cx82310_eth",
 	.id_table	= products,
 	.probe		= usbnet_probe,
@@ -365,7 +366,7 @@ static struct usb_driver cx82310_driver = {
 	.suspend	= usbnet_suspend,
 	.resume		= usbnet_resume,
 	.disable_hub_initiated_lpm = 1,
-};
+पूर्ण;
 
 module_usb_driver(cx82310_driver);
 

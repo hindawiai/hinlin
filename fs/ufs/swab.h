@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  linux/fs/ufs/swab.h
  *
@@ -7,110 +8,110 @@
  * Copyright (C) 2001 Christoph Hellwig <hch@infradead.org>
  */
 
-#ifndef _UFS_SWAB_H
-#define _UFS_SWAB_H
+#अगर_अघोषित _UFS_SWAB_H
+#घोषणा _UFS_SWAB_H
 
 /*
  * Notes:
  *    HERE WE ASSUME EITHER BIG OR LITTLE ENDIAN UFSes
- *    in case there are ufs implementations that have strange bytesexes,
- *    you'll need to modify code here as well as in ufs_super.c and ufs_fs.h
+ *    in हाल there are ufs implementations that have strange bytesexes,
+ *    you'll need to modअगरy code here as well as in ufs_super.c and ufs_fs.h
  *    to support them.
  */
 
-enum {
+क्रमागत अणु
 	BYTESEX_LE,
 	BYTESEX_BE
-};
+पूर्ण;
 
-static inline u64
-fs64_to_cpu(struct super_block *sbp, __fs64 n)
-{
-	if (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
-		return le64_to_cpu((__force __le64)n);
-	else
-		return be64_to_cpu((__force __be64)n);
-}
+अटल अंतरभूत u64
+fs64_to_cpu(काष्ठा super_block *sbp, __fs64 n)
+अणु
+	अगर (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
+		वापस le64_to_cpu((__क्रमce __le64)n);
+	अन्यथा
+		वापस be64_to_cpu((__क्रमce __be64)n);
+पूर्ण
 
-static inline __fs64
-cpu_to_fs64(struct super_block *sbp, u64 n)
-{
-	if (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
-		return (__force __fs64)cpu_to_le64(n);
-	else
-		return (__force __fs64)cpu_to_be64(n);
-}
+अटल अंतरभूत __fs64
+cpu_to_fs64(काष्ठा super_block *sbp, u64 n)
+अणु
+	अगर (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
+		वापस (__क्रमce __fs64)cpu_to_le64(n);
+	अन्यथा
+		वापस (__क्रमce __fs64)cpu_to_be64(n);
+पूर्ण
 
-static inline u32
-fs32_to_cpu(struct super_block *sbp, __fs32 n)
-{
-	if (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
-		return le32_to_cpu((__force __le32)n);
-	else
-		return be32_to_cpu((__force __be32)n);
-}
+अटल अंतरभूत u32
+fs32_to_cpu(काष्ठा super_block *sbp, __fs32 n)
+अणु
+	अगर (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
+		वापस le32_to_cpu((__क्रमce __le32)n);
+	अन्यथा
+		वापस be32_to_cpu((__क्रमce __be32)n);
+पूर्ण
 
-static inline __fs32
-cpu_to_fs32(struct super_block *sbp, u32 n)
-{
-	if (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
-		return (__force __fs32)cpu_to_le32(n);
-	else
-		return (__force __fs32)cpu_to_be32(n);
-}
+अटल अंतरभूत __fs32
+cpu_to_fs32(काष्ठा super_block *sbp, u32 n)
+अणु
+	अगर (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
+		वापस (__क्रमce __fs32)cpu_to_le32(n);
+	अन्यथा
+		वापस (__क्रमce __fs32)cpu_to_be32(n);
+पूर्ण
 
-static inline void
-fs32_add(struct super_block *sbp, __fs32 *n, int d)
-{
-	if (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
+अटल अंतरभूत व्योम
+fs32_add(काष्ठा super_block *sbp, __fs32 *n, पूर्णांक d)
+अणु
+	अगर (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
 		le32_add_cpu((__le32 *)n, d);
-	else
+	अन्यथा
 		be32_add_cpu((__be32 *)n, d);
-}
+पूर्ण
 
-static inline void
-fs32_sub(struct super_block *sbp, __fs32 *n, int d)
-{
-	if (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
+अटल अंतरभूत व्योम
+fs32_sub(काष्ठा super_block *sbp, __fs32 *n, पूर्णांक d)
+अणु
+	अगर (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
 		le32_add_cpu((__le32 *)n, -d);
-	else
+	अन्यथा
 		be32_add_cpu((__be32 *)n, -d);
-}
+पूर्ण
 
-static inline u16
-fs16_to_cpu(struct super_block *sbp, __fs16 n)
-{
-	if (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
-		return le16_to_cpu((__force __le16)n);
-	else
-		return be16_to_cpu((__force __be16)n);
-}
+अटल अंतरभूत u16
+fs16_to_cpu(काष्ठा super_block *sbp, __fs16 n)
+अणु
+	अगर (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
+		वापस le16_to_cpu((__क्रमce __le16)n);
+	अन्यथा
+		वापस be16_to_cpu((__क्रमce __be16)n);
+पूर्ण
 
-static inline __fs16
-cpu_to_fs16(struct super_block *sbp, u16 n)
-{
-	if (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
-		return (__force __fs16)cpu_to_le16(n);
-	else
-		return (__force __fs16)cpu_to_be16(n);
-}
+अटल अंतरभूत __fs16
+cpu_to_fs16(काष्ठा super_block *sbp, u16 n)
+अणु
+	अगर (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
+		वापस (__क्रमce __fs16)cpu_to_le16(n);
+	अन्यथा
+		वापस (__क्रमce __fs16)cpu_to_be16(n);
+पूर्ण
 
-static inline void
-fs16_add(struct super_block *sbp, __fs16 *n, int d)
-{
-	if (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
+अटल अंतरभूत व्योम
+fs16_add(काष्ठा super_block *sbp, __fs16 *n, पूर्णांक d)
+अणु
+	अगर (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
 		le16_add_cpu((__le16 *)n, d);
-	else
+	अन्यथा
 		be16_add_cpu((__be16 *)n, d);
-}
+पूर्ण
 
-static inline void
-fs16_sub(struct super_block *sbp, __fs16 *n, int d)
-{
-	if (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
+अटल अंतरभूत व्योम
+fs16_sub(काष्ठा super_block *sbp, __fs16 *n, पूर्णांक d)
+अणु
+	अगर (UFS_SB(sbp)->s_bytesex == BYTESEX_LE)
 		le16_add_cpu((__le16 *)n, -d);
-	else
+	अन्यथा
 		be16_add_cpu((__be16 *)n, -d);
-}
+पूर्ण
 
-#endif /* _UFS_SWAB_H */
+#पूर्ण_अगर /* _UFS_SWAB_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
     V4L2 device support.
 
@@ -6,18 +7,18 @@
 
  */
 
-#include <linux/types.h>
-#include <linux/ioctl.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/videodev2.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ctrls.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/videodev2.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ctrls.h>
 
-int v4l2_device_register(struct device *dev, struct v4l2_device *v4l2_dev)
-{
-	if (v4l2_dev == NULL)
-		return -EINVAL;
+पूर्णांक v4l2_device_रेजिस्टर(काष्ठा device *dev, काष्ठा v4l2_device *v4l2_dev)
+अणु
+	अगर (v4l2_dev == शून्य)
+		वापस -EINVAL;
 
 	INIT_LIST_HEAD(&v4l2_dev->subdevs);
 	spin_lock_init(&v4l2_dev->lock);
@@ -25,246 +26,246 @@ int v4l2_device_register(struct device *dev, struct v4l2_device *v4l2_dev)
 	kref_init(&v4l2_dev->ref);
 	get_device(dev);
 	v4l2_dev->dev = dev;
-	if (dev == NULL) {
-		/* If dev == NULL, then name must be filled in by the caller */
-		if (WARN_ON(!v4l2_dev->name[0]))
-			return -EINVAL;
-		return 0;
-	}
+	अगर (dev == शून्य) अणु
+		/* If dev == शून्य, then name must be filled in by the caller */
+		अगर (WARN_ON(!v4l2_dev->name[0]))
+			वापस -EINVAL;
+		वापस 0;
+	पूर्ण
 
-	/* Set name to driver name + device name if it is empty. */
-	if (!v4l2_dev->name[0])
-		snprintf(v4l2_dev->name, sizeof(v4l2_dev->name), "%s %s",
+	/* Set name to driver name + device name अगर it is empty. */
+	अगर (!v4l2_dev->name[0])
+		snम_लिखो(v4l2_dev->name, माप(v4l2_dev->name), "%s %s",
 			dev->driver->name, dev_name(dev));
-	if (!dev_get_drvdata(dev))
+	अगर (!dev_get_drvdata(dev))
 		dev_set_drvdata(dev, v4l2_dev);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(v4l2_device_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_device_रेजिस्टर);
 
-static void v4l2_device_release(struct kref *ref)
-{
-	struct v4l2_device *v4l2_dev =
-		container_of(ref, struct v4l2_device, ref);
+अटल व्योम v4l2_device_release(काष्ठा kref *ref)
+अणु
+	काष्ठा v4l2_device *v4l2_dev =
+		container_of(ref, काष्ठा v4l2_device, ref);
 
-	if (v4l2_dev->release)
+	अगर (v4l2_dev->release)
 		v4l2_dev->release(v4l2_dev);
-}
+पूर्ण
 
-int v4l2_device_put(struct v4l2_device *v4l2_dev)
-{
-	return kref_put(&v4l2_dev->ref, v4l2_device_release);
-}
+पूर्णांक v4l2_device_put(काष्ठा v4l2_device *v4l2_dev)
+अणु
+	वापस kref_put(&v4l2_dev->ref, v4l2_device_release);
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_device_put);
 
-int v4l2_device_set_name(struct v4l2_device *v4l2_dev, const char *basename,
+पूर्णांक v4l2_device_set_name(काष्ठा v4l2_device *v4l2_dev, स्थिर अक्षर *basename,
 						atomic_t *instance)
-{
-	int num = atomic_inc_return(instance) - 1;
-	int len = strlen(basename);
+अणु
+	पूर्णांक num = atomic_inc_वापस(instance) - 1;
+	पूर्णांक len = म_माप(basename);
 
-	if (basename[len - 1] >= '0' && basename[len - 1] <= '9')
-		snprintf(v4l2_dev->name, sizeof(v4l2_dev->name),
+	अगर (basename[len - 1] >= '0' && basename[len - 1] <= '9')
+		snम_लिखो(v4l2_dev->name, माप(v4l2_dev->name),
 				"%s-%d", basename, num);
-	else
-		snprintf(v4l2_dev->name, sizeof(v4l2_dev->name),
+	अन्यथा
+		snम_लिखो(v4l2_dev->name, माप(v4l2_dev->name),
 				"%s%d", basename, num);
-	return num;
-}
+	वापस num;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_device_set_name);
 
-void v4l2_device_disconnect(struct v4l2_device *v4l2_dev)
-{
-	if (v4l2_dev->dev == NULL)
-		return;
+व्योम v4l2_device_disconnect(काष्ठा v4l2_device *v4l2_dev)
+अणु
+	अगर (v4l2_dev->dev == शून्य)
+		वापस;
 
-	if (dev_get_drvdata(v4l2_dev->dev) == v4l2_dev)
-		dev_set_drvdata(v4l2_dev->dev, NULL);
+	अगर (dev_get_drvdata(v4l2_dev->dev) == v4l2_dev)
+		dev_set_drvdata(v4l2_dev->dev, शून्य);
 	put_device(v4l2_dev->dev);
-	v4l2_dev->dev = NULL;
-}
+	v4l2_dev->dev = शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_device_disconnect);
 
-void v4l2_device_unregister(struct v4l2_device *v4l2_dev)
-{
-	struct v4l2_subdev *sd, *next;
+व्योम v4l2_device_unरेजिस्टर(काष्ठा v4l2_device *v4l2_dev)
+अणु
+	काष्ठा v4l2_subdev *sd, *next;
 
-	/* Just return if v4l2_dev is NULL or if it was already
-	 * unregistered before. */
-	if (v4l2_dev == NULL || !v4l2_dev->name[0])
-		return;
+	/* Just वापस अगर v4l2_dev is शून्य or अगर it was alपढ़ोy
+	 * unरेजिस्टरed beक्रमe. */
+	अगर (v4l2_dev == शून्य || !v4l2_dev->name[0])
+		वापस;
 	v4l2_device_disconnect(v4l2_dev);
 
-	/* Unregister subdevs */
-	list_for_each_entry_safe(sd, next, &v4l2_dev->subdevs, list) {
-		v4l2_device_unregister_subdev(sd);
-		if (sd->flags & V4L2_SUBDEV_FL_IS_I2C)
-			v4l2_i2c_subdev_unregister(sd);
-		else if (sd->flags & V4L2_SUBDEV_FL_IS_SPI)
-			v4l2_spi_subdev_unregister(sd);
-	}
-	/* Mark as unregistered, thus preventing duplicate unregistrations */
+	/* Unरेजिस्टर subdevs */
+	list_क्रम_each_entry_safe(sd, next, &v4l2_dev->subdevs, list) अणु
+		v4l2_device_unरेजिस्टर_subdev(sd);
+		अगर (sd->flags & V4L2_SUBDEV_FL_IS_I2C)
+			v4l2_i2c_subdev_unरेजिस्टर(sd);
+		अन्यथा अगर (sd->flags & V4L2_SUBDEV_FL_IS_SPI)
+			v4l2_spi_subdev_unरेजिस्टर(sd);
+	पूर्ण
+	/* Mark as unरेजिस्टरed, thus preventing duplicate unregistrations */
 	v4l2_dev->name[0] = '\0';
-}
-EXPORT_SYMBOL_GPL(v4l2_device_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_device_unरेजिस्टर);
 
-int v4l2_device_register_subdev(struct v4l2_device *v4l2_dev,
-				struct v4l2_subdev *sd)
-{
-	int err;
+पूर्णांक v4l2_device_रेजिस्टर_subdev(काष्ठा v4l2_device *v4l2_dev,
+				काष्ठा v4l2_subdev *sd)
+अणु
+	पूर्णांक err;
 
-	/* Check for valid input */
-	if (!v4l2_dev || !sd || sd->v4l2_dev || !sd->name[0])
-		return -EINVAL;
+	/* Check क्रम valid input */
+	अगर (!v4l2_dev || !sd || sd->v4l2_dev || !sd->name[0])
+		वापस -EINVAL;
 
 	/*
-	 * The reason to acquire the module here is to avoid unloading
-	 * a module of sub-device which is registered to a media
-	 * device. To make it possible to unload modules for media
-	 * devices that also register sub-devices, do not
+	 * The reason to acquire the module here is to aव्योम unloading
+	 * a module of sub-device which is रेजिस्टरed to a media
+	 * device. To make it possible to unload modules क्रम media
+	 * devices that also रेजिस्टर sub-devices, करो not
 	 * try_module_get() such sub-device owners.
 	 */
 	sd->owner_v4l2_dev = v4l2_dev->dev && v4l2_dev->dev->driver &&
 		sd->owner == v4l2_dev->dev->driver->owner;
 
-	if (!sd->owner_v4l2_dev && !try_module_get(sd->owner))
-		return -ENODEV;
+	अगर (!sd->owner_v4l2_dev && !try_module_get(sd->owner))
+		वापस -ENODEV;
 
 	sd->v4l2_dev = v4l2_dev;
-	/* This just returns 0 if either of the two args is NULL */
+	/* This just वापसs 0 अगर either of the two args is शून्य */
 	err = v4l2_ctrl_add_handler(v4l2_dev->ctrl_handler, sd->ctrl_handler,
-				    NULL, true);
-	if (err)
-		goto error_module;
+				    शून्य, true);
+	अगर (err)
+		जाओ error_module;
 
-#if defined(CONFIG_MEDIA_CONTROLLER)
+#अगर defined(CONFIG_MEDIA_CONTROLLER)
 	/* Register the entity. */
-	if (v4l2_dev->mdev) {
-		err = media_device_register_entity(v4l2_dev->mdev, &sd->entity);
-		if (err < 0)
-			goto error_module;
-	}
-#endif
+	अगर (v4l2_dev->mdev) अणु
+		err = media_device_रेजिस्टर_entity(v4l2_dev->mdev, &sd->entity);
+		अगर (err < 0)
+			जाओ error_module;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (sd->internal_ops && sd->internal_ops->registered) {
-		err = sd->internal_ops->registered(sd);
-		if (err)
-			goto error_unregister;
-	}
+	अगर (sd->पूर्णांकernal_ops && sd->पूर्णांकernal_ops->रेजिस्टरed) अणु
+		err = sd->पूर्णांकernal_ops->रेजिस्टरed(sd);
+		अगर (err)
+			जाओ error_unरेजिस्टर;
+	पूर्ण
 
 	spin_lock(&v4l2_dev->lock);
 	list_add_tail(&sd->list, &v4l2_dev->subdevs);
 	spin_unlock(&v4l2_dev->lock);
 
-	return 0;
+	वापस 0;
 
-error_unregister:
-#if defined(CONFIG_MEDIA_CONTROLLER)
-	media_device_unregister_entity(&sd->entity);
-#endif
+error_unरेजिस्टर:
+#अगर defined(CONFIG_MEDIA_CONTROLLER)
+	media_device_unरेजिस्टर_entity(&sd->entity);
+#पूर्ण_अगर
 error_module:
-	if (!sd->owner_v4l2_dev)
+	अगर (!sd->owner_v4l2_dev)
 		module_put(sd->owner);
-	sd->v4l2_dev = NULL;
-	return err;
-}
-EXPORT_SYMBOL_GPL(v4l2_device_register_subdev);
+	sd->v4l2_dev = शून्य;
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_device_रेजिस्टर_subdev);
 
-static void v4l2_subdev_release(struct v4l2_subdev *sd)
-{
-	struct module *owner = !sd->owner_v4l2_dev ? sd->owner : NULL;
+अटल व्योम v4l2_subdev_release(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा module *owner = !sd->owner_v4l2_dev ? sd->owner : शून्य;
 
-	if (sd->internal_ops && sd->internal_ops->release)
-		sd->internal_ops->release(sd);
-	sd->devnode = NULL;
+	अगर (sd->पूर्णांकernal_ops && sd->पूर्णांकernal_ops->release)
+		sd->पूर्णांकernal_ops->release(sd);
+	sd->devnode = शून्य;
 	module_put(owner);
-}
+पूर्ण
 
-static void v4l2_device_release_subdev_node(struct video_device *vdev)
-{
+अटल व्योम v4l2_device_release_subdev_node(काष्ठा video_device *vdev)
+अणु
 	v4l2_subdev_release(video_get_drvdata(vdev));
-	kfree(vdev);
-}
+	kमुक्त(vdev);
+पूर्ण
 
-int __v4l2_device_register_subdev_nodes(struct v4l2_device *v4l2_dev,
-					bool read_only)
-{
-	struct video_device *vdev;
-	struct v4l2_subdev *sd;
-	int err;
+पूर्णांक __v4l2_device_रेजिस्टर_subdev_nodes(काष्ठा v4l2_device *v4l2_dev,
+					bool पढ़ो_only)
+अणु
+	काष्ठा video_device *vdev;
+	काष्ठा v4l2_subdev *sd;
+	पूर्णांक err;
 
-	/* Register a device node for every subdev marked with the
+	/* Register a device node क्रम every subdev marked with the
 	 * V4L2_SUBDEV_FL_HAS_DEVNODE flag.
 	 */
-	list_for_each_entry(sd, &v4l2_dev->subdevs, list) {
-		if (!(sd->flags & V4L2_SUBDEV_FL_HAS_DEVNODE))
-			continue;
+	list_क्रम_each_entry(sd, &v4l2_dev->subdevs, list) अणु
+		अगर (!(sd->flags & V4L2_SUBDEV_FL_HAS_DEVNODE))
+			जारी;
 
-		if (sd->devnode)
-			continue;
+		अगर (sd->devnode)
+			जारी;
 
-		vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-		if (!vdev) {
+		vdev = kzalloc(माप(*vdev), GFP_KERNEL);
+		अगर (!vdev) अणु
 			err = -ENOMEM;
-			goto clean_up;
-		}
+			जाओ clean_up;
+		पूर्ण
 
 		video_set_drvdata(vdev, sd);
-		strscpy(vdev->name, sd->name, sizeof(vdev->name));
+		strscpy(vdev->name, sd->name, माप(vdev->name));
 		vdev->dev_parent = sd->dev;
 		vdev->v4l2_dev = v4l2_dev;
 		vdev->fops = &v4l2_subdev_fops;
 		vdev->release = v4l2_device_release_subdev_node;
 		vdev->ctrl_handler = sd->ctrl_handler;
-		if (read_only)
+		अगर (पढ़ो_only)
 			set_bit(V4L2_FL_SUBDEV_RO_DEVNODE, &vdev->flags);
 		sd->devnode = vdev;
-		err = __video_register_device(vdev, VFL_TYPE_SUBDEV, -1, 1,
+		err = __video_रेजिस्टर_device(vdev, VFL_TYPE_SUBDEV, -1, 1,
 					      sd->owner);
-		if (err < 0) {
-			sd->devnode = NULL;
-			kfree(vdev);
-			goto clean_up;
-		}
-#if defined(CONFIG_MEDIA_CONTROLLER)
+		अगर (err < 0) अणु
+			sd->devnode = शून्य;
+			kमुक्त(vdev);
+			जाओ clean_up;
+		पूर्ण
+#अगर defined(CONFIG_MEDIA_CONTROLLER)
 		sd->entity.info.dev.major = VIDEO_MAJOR;
 		sd->entity.info.dev.minor = vdev->minor;
 
-		/* Interface is created by __video_register_device() */
-		if (vdev->v4l2_dev->mdev) {
-			struct media_link *link;
+		/* Interface is created by __video_रेजिस्टर_device() */
+		अगर (vdev->v4l2_dev->mdev) अणु
+			काष्ठा media_link *link;
 
-			link = media_create_intf_link(&sd->entity,
-						      &vdev->intf_devnode->intf,
+			link = media_create_पूर्णांकf_link(&sd->entity,
+						      &vdev->पूर्णांकf_devnode->पूर्णांकf,
 						      MEDIA_LNK_FL_ENABLED |
 						      MEDIA_LNK_FL_IMMUTABLE);
-			if (!link) {
+			अगर (!link) अणु
 				err = -ENOMEM;
-				goto clean_up;
-			}
-		}
-#endif
-	}
-	return 0;
+				जाओ clean_up;
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
+	वापस 0;
 
 clean_up:
-	list_for_each_entry(sd, &v4l2_dev->subdevs, list) {
-		if (!sd->devnode)
-			break;
-		video_unregister_device(sd->devnode);
-	}
+	list_क्रम_each_entry(sd, &v4l2_dev->subdevs, list) अणु
+		अगर (!sd->devnode)
+			अवरोध;
+		video_unरेजिस्टर_device(sd->devnode);
+	पूर्ण
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(__v4l2_device_register_subdev_nodes);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(__v4l2_device_रेजिस्टर_subdev_nodes);
 
-void v4l2_device_unregister_subdev(struct v4l2_subdev *sd)
-{
-	struct v4l2_device *v4l2_dev;
+व्योम v4l2_device_unरेजिस्टर_subdev(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा v4l2_device *v4l2_dev;
 
-	/* return if it isn't registered */
-	if (sd == NULL || sd->v4l2_dev == NULL)
-		return;
+	/* वापस अगर it isn't रेजिस्टरed */
+	अगर (sd == शून्य || sd->v4l2_dev == शून्य)
+		वापस;
 
 	v4l2_dev = sd->v4l2_dev;
 
@@ -272,22 +273,22 @@ void v4l2_device_unregister_subdev(struct v4l2_subdev *sd)
 	list_del(&sd->list);
 	spin_unlock(&v4l2_dev->lock);
 
-	if (sd->internal_ops && sd->internal_ops->unregistered)
-		sd->internal_ops->unregistered(sd);
-	sd->v4l2_dev = NULL;
+	अगर (sd->पूर्णांकernal_ops && sd->पूर्णांकernal_ops->unरेजिस्टरed)
+		sd->पूर्णांकernal_ops->unरेजिस्टरed(sd);
+	sd->v4l2_dev = शून्य;
 
-#if defined(CONFIG_MEDIA_CONTROLLER)
-	if (v4l2_dev->mdev) {
+#अगर defined(CONFIG_MEDIA_CONTROLLER)
+	अगर (v4l2_dev->mdev) अणु
 		/*
-		 * No need to explicitly remove links, as both pads and
-		 * links are removed by the function below, in the right order
+		 * No need to explicitly हटाओ links, as both pads and
+		 * links are हटाओd by the function below, in the right order
 		 */
-		media_device_unregister_entity(&sd->entity);
-	}
-#endif
-	if (sd->devnode)
-		video_unregister_device(sd->devnode);
-	else
+		media_device_unरेजिस्टर_entity(&sd->entity);
+	पूर्ण
+#पूर्ण_अगर
+	अगर (sd->devnode)
+		video_unरेजिस्टर_device(sd->devnode);
+	अन्यथा
 		v4l2_subdev_release(sd);
-}
-EXPORT_SYMBOL_GPL(v4l2_device_unregister_subdev);
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_device_unरेजिस्टर_subdev);

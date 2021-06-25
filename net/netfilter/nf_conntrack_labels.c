@@ -1,98 +1,99 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * test/set flag bits stored in conntrack extension area.
  *
  * (C) 2013 Astaro GmbH & Co KG
  */
 
-#include <linux/export.h>
-#include <linux/types.h>
+#समावेश <linux/export.h>
+#समावेश <linux/types.h>
 
-#include <net/netfilter/nf_conntrack_ecache.h>
-#include <net/netfilter/nf_conntrack_labels.h>
+#समावेश <net/netfilter/nf_conntrack_ecache.h>
+#समावेश <net/netfilter/nf_conntrack_labels.h>
 
-static DEFINE_SPINLOCK(nf_connlabels_lock);
+अटल DEFINE_SPINLOCK(nf_connlabels_lock);
 
-static int replace_u32(u32 *address, u32 mask, u32 new)
-{
-	u32 old, tmp;
+अटल पूर्णांक replace_u32(u32 *address, u32 mask, u32 new)
+अणु
+	u32 old, पंचांगp;
 
-	do {
+	करो अणु
 		old = *address;
-		tmp = (old & mask) ^ new;
-		if (old == tmp)
-			return 0;
-	} while (cmpxchg(address, old, tmp) != old);
+		पंचांगp = (old & mask) ^ new;
+		अगर (old == पंचांगp)
+			वापस 0;
+	पूर्ण जबतक (cmpxchg(address, old, पंचांगp) != old);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int nf_connlabels_replace(struct nf_conn *ct,
-			  const u32 *data,
-			  const u32 *mask, unsigned int words32)
-{
-	struct nf_conn_labels *labels;
-	unsigned int size, i;
-	int changed = 0;
+पूर्णांक nf_connlabels_replace(काष्ठा nf_conn *ct,
+			  स्थिर u32 *data,
+			  स्थिर u32 *mask, अचिन्हित पूर्णांक words32)
+अणु
+	काष्ठा nf_conn_labels *labels;
+	अचिन्हित पूर्णांक size, i;
+	पूर्णांक changed = 0;
 	u32 *dst;
 
 	labels = nf_ct_labels_find(ct);
-	if (!labels)
-		return -ENOSPC;
+	अगर (!labels)
+		वापस -ENOSPC;
 
-	size = sizeof(labels->bits);
-	if (size < (words32 * sizeof(u32)))
-		words32 = size / sizeof(u32);
+	size = माप(labels->bits);
+	अगर (size < (words32 * माप(u32)))
+		words32 = size / माप(u32);
 
 	dst = (u32 *) labels->bits;
-	for (i = 0; i < words32; i++)
+	क्रम (i = 0; i < words32; i++)
 		changed |= replace_u32(&dst[i], mask ? ~mask[i] : 0, data[i]);
 
-	size /= sizeof(u32);
-	for (i = words32; i < size; i++) /* pad */
+	size /= माप(u32);
+	क्रम (i = words32; i < size; i++) /* pad */
 		replace_u32(&dst[i], 0, 0);
 
-	if (changed)
+	अगर (changed)
 		nf_conntrack_event_cache(IPCT_LABEL, ct);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_connlabels_replace);
 
-int nf_connlabels_get(struct net *net, unsigned int bits)
-{
-	if (BIT_WORD(bits) >= NF_CT_LABELS_MAX_SIZE / sizeof(long))
-		return -ERANGE;
+पूर्णांक nf_connlabels_get(काष्ठा net *net, अचिन्हित पूर्णांक bits)
+अणु
+	अगर (BIT_WORD(bits) >= NF_CT_LABELS_MAX_SIZE / माप(दीर्घ))
+		वापस -दुस्फल;
 
 	spin_lock(&nf_connlabels_lock);
 	net->ct.labels_used++;
 	spin_unlock(&nf_connlabels_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_connlabels_get);
 
-void nf_connlabels_put(struct net *net)
-{
+व्योम nf_connlabels_put(काष्ठा net *net)
+अणु
 	spin_lock(&nf_connlabels_lock);
 	net->ct.labels_used--;
 	spin_unlock(&nf_connlabels_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_connlabels_put);
 
-static const struct nf_ct_ext_type labels_extend = {
-	.len    = sizeof(struct nf_conn_labels),
-	.align  = __alignof__(struct nf_conn_labels),
+अटल स्थिर काष्ठा nf_ct_ext_type labels_extend = अणु
+	.len    = माप(काष्ठा nf_conn_labels),
+	.align  = __alignof__(काष्ठा nf_conn_labels),
 	.id     = NF_CT_EXT_LABELS,
-};
+पूर्ण;
 
-int nf_conntrack_labels_init(void)
-{
-	BUILD_BUG_ON(NF_CT_LABELS_MAX_SIZE / sizeof(long) >= U8_MAX);
+पूर्णांक nf_conntrack_labels_init(व्योम)
+अणु
+	BUILD_BUG_ON(NF_CT_LABELS_MAX_SIZE / माप(दीर्घ) >= U8_MAX);
 
-	return nf_ct_extend_register(&labels_extend);
-}
+	वापस nf_ct_extend_रेजिस्टर(&labels_extend);
+पूर्ण
 
-void nf_conntrack_labels_fini(void)
-{
-	nf_ct_extend_unregister(&labels_extend);
-}
+व्योम nf_conntrack_labels_fini(व्योम)
+अणु
+	nf_ct_extend_unरेजिस्टर(&labels_extend);
+पूर्ण

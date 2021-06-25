@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2009 Becky Bruce, Freescale Semiconductor
  */
 
-#ifndef __ASM_SWIOTLB_H
-#define __ASM_SWIOTLB_H
+#अगर_अघोषित __ASM_SWIOTLB_H
+#घोषणा __ASM_SWIOTLB_H
 
-#include <linux/swiotlb.h>
+#समावेश <linux/swiotlb.h>
 
-extern unsigned int ppc_swiotlb_enable;
+बाह्य अचिन्हित पूर्णांक ppc_swiotlb_enable;
 
-#ifdef CONFIG_SWIOTLB
-void swiotlb_detect_4g(void);
-#else
-static inline void swiotlb_detect_4g(void) {}
-#endif
+#अगर_घोषित CONFIG_SWIOTLB
+व्योम swiotlb_detect_4g(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम swiotlb_detect_4g(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* __ASM_SWIOTLB_H */
+#पूर्ण_अगर /* __ASM_SWIOTLB_H */

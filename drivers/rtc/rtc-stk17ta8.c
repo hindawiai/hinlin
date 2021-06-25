@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * A RTC driver for the Simtek STK17TA8
+ * A RTC driver क्रम the Simtek STK17TA8
  *
  * By Thomas Hommel <thomas.hommel@ge.com>
  *
@@ -8,329 +9,329 @@
  * Atsushi Nemoto <anemo@mba.ocn.ne.jp>
  */
 
-#include <linux/bcd.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/gfp.h>
-#include <linux/delay.h>
-#include <linux/jiffies.h>
-#include <linux/interrupt.h>
-#include <linux/rtc.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/module.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
 
-#define RTC_REG_SIZE		0x20000
-#define RTC_OFFSET		0x1fff0
+#घोषणा RTC_REG_SIZE		0x20000
+#घोषणा RTC_OFFSET		0x1fff0
 
-#define RTC_FLAGS		(RTC_OFFSET + 0)
-#define RTC_CENTURY		(RTC_OFFSET + 1)
-#define RTC_SECONDS_ALARM	(RTC_OFFSET + 2)
-#define RTC_MINUTES_ALARM	(RTC_OFFSET + 3)
-#define RTC_HOURS_ALARM		(RTC_OFFSET + 4)
-#define RTC_DATE_ALARM		(RTC_OFFSET + 5)
-#define RTC_INTERRUPTS		(RTC_OFFSET + 6)
-#define RTC_WATCHDOG		(RTC_OFFSET + 7)
-#define RTC_CALIBRATION		(RTC_OFFSET + 8)
-#define RTC_SECONDS		(RTC_OFFSET + 9)
-#define RTC_MINUTES		(RTC_OFFSET + 10)
-#define RTC_HOURS		(RTC_OFFSET + 11)
-#define RTC_DAY			(RTC_OFFSET + 12)
-#define RTC_DATE		(RTC_OFFSET + 13)
-#define RTC_MONTH		(RTC_OFFSET + 14)
-#define RTC_YEAR		(RTC_OFFSET + 15)
+#घोषणा RTC_FLAGS		(RTC_OFFSET + 0)
+#घोषणा RTC_CENTURY		(RTC_OFFSET + 1)
+#घोषणा RTC_SECONDS_ALARM	(RTC_OFFSET + 2)
+#घोषणा RTC_MINUTES_ALARM	(RTC_OFFSET + 3)
+#घोषणा RTC_HOURS_ALARM		(RTC_OFFSET + 4)
+#घोषणा RTC_DATE_ALARM		(RTC_OFFSET + 5)
+#घोषणा RTC_INTERRUPTS		(RTC_OFFSET + 6)
+#घोषणा RTC_WATCHDOG		(RTC_OFFSET + 7)
+#घोषणा RTC_CALIBRATION		(RTC_OFFSET + 8)
+#घोषणा RTC_SECONDS		(RTC_OFFSET + 9)
+#घोषणा RTC_MINUTES		(RTC_OFFSET + 10)
+#घोषणा RTC_HOURS		(RTC_OFFSET + 11)
+#घोषणा RTC_DAY			(RTC_OFFSET + 12)
+#घोषणा RTC_DATE		(RTC_OFFSET + 13)
+#घोषणा RTC_MONTH		(RTC_OFFSET + 14)
+#घोषणा RTC_YEAR		(RTC_OFFSET + 15)
 
-#define RTC_SECONDS_MASK	0x7f
-#define RTC_DAY_MASK		0x07
-#define RTC_CAL_MASK		0x3f
+#घोषणा RTC_SECONDS_MASK	0x7f
+#घोषणा RTC_DAY_MASK		0x07
+#घोषणा RTC_CAL_MASK		0x3f
 
-/* Bits in the Calibration register */
-#define RTC_STOP		0x80
+/* Bits in the Calibration रेजिस्टर */
+#घोषणा RTC_STOP		0x80
 
-/* Bits in the Flags register */
-#define RTC_FLAGS_AF		0x40
-#define RTC_FLAGS_PF		0x20
-#define RTC_WRITE		0x02
-#define RTC_READ		0x01
+/* Bits in the Flags रेजिस्टर */
+#घोषणा RTC_FLAGS_AF		0x40
+#घोषणा RTC_FLAGS_PF		0x20
+#घोषणा RTC_WRITE		0x02
+#घोषणा RTC_READ		0x01
 
-/* Bits in the Interrupts register */
-#define RTC_INTS_AIE		0x40
+/* Bits in the Interrupts रेजिस्टर */
+#घोषणा RTC_INTS_AIE		0x40
 
-struct rtc_plat_data {
-	struct rtc_device *rtc;
-	void __iomem *ioaddr;
-	unsigned long last_jiffies;
-	int irq;
-	unsigned int irqen;
-	int alrm_sec;
-	int alrm_min;
-	int alrm_hour;
-	int alrm_mday;
+काष्ठा rtc_plat_data अणु
+	काष्ठा rtc_device *rtc;
+	व्योम __iomem *ioaddr;
+	अचिन्हित दीर्घ last_jअगरfies;
+	पूर्णांक irq;
+	अचिन्हित पूर्णांक irqen;
+	पूर्णांक alrm_sec;
+	पूर्णांक alrm_min;
+	पूर्णांक alrm_hour;
+	पूर्णांक alrm_mday;
 	spinlock_t lock;
-};
+पूर्ण;
 
-static int stk17ta8_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct rtc_plat_data *pdata = dev_get_drvdata(dev);
-	void __iomem *ioaddr = pdata->ioaddr;
+अटल पूर्णांक stk17ta8_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा rtc_plat_data *pdata = dev_get_drvdata(dev);
+	व्योम __iomem *ioaddr = pdata->ioaddr;
 	u8 flags;
 
-	flags = readb(pdata->ioaddr + RTC_FLAGS);
-	writeb(flags | RTC_WRITE, pdata->ioaddr + RTC_FLAGS);
+	flags = पढ़ोb(pdata->ioaddr + RTC_FLAGS);
+	ग_लिखोb(flags | RTC_WRITE, pdata->ioaddr + RTC_FLAGS);
 
-	writeb(bin2bcd(tm->tm_year % 100), ioaddr + RTC_YEAR);
-	writeb(bin2bcd(tm->tm_mon + 1), ioaddr + RTC_MONTH);
-	writeb(bin2bcd(tm->tm_wday) & RTC_DAY_MASK, ioaddr + RTC_DAY);
-	writeb(bin2bcd(tm->tm_mday), ioaddr + RTC_DATE);
-	writeb(bin2bcd(tm->tm_hour), ioaddr + RTC_HOURS);
-	writeb(bin2bcd(tm->tm_min), ioaddr + RTC_MINUTES);
-	writeb(bin2bcd(tm->tm_sec) & RTC_SECONDS_MASK, ioaddr + RTC_SECONDS);
-	writeb(bin2bcd((tm->tm_year + 1900) / 100), ioaddr + RTC_CENTURY);
+	ग_लिखोb(bin2bcd(पंचांग->पंचांग_year % 100), ioaddr + RTC_YEAR);
+	ग_लिखोb(bin2bcd(पंचांग->पंचांग_mon + 1), ioaddr + RTC_MONTH);
+	ग_लिखोb(bin2bcd(पंचांग->पंचांग_wday) & RTC_DAY_MASK, ioaddr + RTC_DAY);
+	ग_लिखोb(bin2bcd(पंचांग->पंचांग_mday), ioaddr + RTC_DATE);
+	ग_लिखोb(bin2bcd(पंचांग->पंचांग_hour), ioaddr + RTC_HOURS);
+	ग_लिखोb(bin2bcd(पंचांग->पंचांग_min), ioaddr + RTC_MINUTES);
+	ग_लिखोb(bin2bcd(पंचांग->पंचांग_sec) & RTC_SECONDS_MASK, ioaddr + RTC_SECONDS);
+	ग_लिखोb(bin2bcd((पंचांग->पंचांग_year + 1900) / 100), ioaddr + RTC_CENTURY);
 
-	writeb(flags & ~RTC_WRITE, pdata->ioaddr + RTC_FLAGS);
-	return 0;
-}
+	ग_लिखोb(flags & ~RTC_WRITE, pdata->ioaddr + RTC_FLAGS);
+	वापस 0;
+पूर्ण
 
-static int stk17ta8_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct rtc_plat_data *pdata = dev_get_drvdata(dev);
-	void __iomem *ioaddr = pdata->ioaddr;
-	unsigned int year, month, day, hour, minute, second, week;
-	unsigned int century;
+अटल पूर्णांक stk17ta8_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा rtc_plat_data *pdata = dev_get_drvdata(dev);
+	व्योम __iomem *ioaddr = pdata->ioaddr;
+	अचिन्हित पूर्णांक year, month, day, hour, minute, second, week;
+	अचिन्हित पूर्णांक century;
 	u8 flags;
 
-	/* give enough time to update RTC in case of continuous read */
-	if (pdata->last_jiffies == jiffies)
+	/* give enough समय to update RTC in हाल of continuous पढ़ो */
+	अगर (pdata->last_jअगरfies == jअगरfies)
 		msleep(1);
-	pdata->last_jiffies = jiffies;
+	pdata->last_jअगरfies = jअगरfies;
 
-	flags = readb(pdata->ioaddr + RTC_FLAGS);
-	writeb(flags | RTC_READ, ioaddr + RTC_FLAGS);
-	second = readb(ioaddr + RTC_SECONDS) & RTC_SECONDS_MASK;
-	minute = readb(ioaddr + RTC_MINUTES);
-	hour = readb(ioaddr + RTC_HOURS);
-	day = readb(ioaddr + RTC_DATE);
-	week = readb(ioaddr + RTC_DAY) & RTC_DAY_MASK;
-	month = readb(ioaddr + RTC_MONTH);
-	year = readb(ioaddr + RTC_YEAR);
-	century = readb(ioaddr + RTC_CENTURY);
-	writeb(flags & ~RTC_READ, ioaddr + RTC_FLAGS);
-	tm->tm_sec = bcd2bin(second);
-	tm->tm_min = bcd2bin(minute);
-	tm->tm_hour = bcd2bin(hour);
-	tm->tm_mday = bcd2bin(day);
-	tm->tm_wday = bcd2bin(week);
-	tm->tm_mon = bcd2bin(month) - 1;
-	/* year is 1900 + tm->tm_year */
-	tm->tm_year = bcd2bin(year) + bcd2bin(century) * 100 - 1900;
+	flags = पढ़ोb(pdata->ioaddr + RTC_FLAGS);
+	ग_लिखोb(flags | RTC_READ, ioaddr + RTC_FLAGS);
+	second = पढ़ोb(ioaddr + RTC_SECONDS) & RTC_SECONDS_MASK;
+	minute = पढ़ोb(ioaddr + RTC_MINUTES);
+	hour = पढ़ोb(ioaddr + RTC_HOURS);
+	day = पढ़ोb(ioaddr + RTC_DATE);
+	week = पढ़ोb(ioaddr + RTC_DAY) & RTC_DAY_MASK;
+	month = पढ़ोb(ioaddr + RTC_MONTH);
+	year = पढ़ोb(ioaddr + RTC_YEAR);
+	century = पढ़ोb(ioaddr + RTC_CENTURY);
+	ग_लिखोb(flags & ~RTC_READ, ioaddr + RTC_FLAGS);
+	पंचांग->पंचांग_sec = bcd2bin(second);
+	पंचांग->पंचांग_min = bcd2bin(minute);
+	पंचांग->पंचांग_hour = bcd2bin(hour);
+	पंचांग->पंचांग_mday = bcd2bin(day);
+	पंचांग->पंचांग_wday = bcd2bin(week);
+	पंचांग->पंचांग_mon = bcd2bin(month) - 1;
+	/* year is 1900 + पंचांग->पंचांग_year */
+	पंचांग->पंचांग_year = bcd2bin(year) + bcd2bin(century) * 100 - 1900;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stk17ta8_rtc_update_alarm(struct rtc_plat_data *pdata)
-{
-	void __iomem *ioaddr = pdata->ioaddr;
-	unsigned long irqflags;
+अटल व्योम stk17ta8_rtc_update_alarm(काष्ठा rtc_plat_data *pdata)
+अणु
+	व्योम __iomem *ioaddr = pdata->ioaddr;
+	अचिन्हित दीर्घ irqflags;
 	u8 flags;
 
 	spin_lock_irqsave(&pdata->lock, irqflags);
 
-	flags = readb(ioaddr + RTC_FLAGS);
-	writeb(flags | RTC_WRITE, ioaddr + RTC_FLAGS);
+	flags = पढ़ोb(ioaddr + RTC_FLAGS);
+	ग_लिखोb(flags | RTC_WRITE, ioaddr + RTC_FLAGS);
 
-	writeb(pdata->alrm_mday < 0 || (pdata->irqen & RTC_UF) ?
+	ग_लिखोb(pdata->alrm_mday < 0 || (pdata->irqen & RTC_UF) ?
 	       0x80 : bin2bcd(pdata->alrm_mday),
 	       ioaddr + RTC_DATE_ALARM);
-	writeb(pdata->alrm_hour < 0 || (pdata->irqen & RTC_UF) ?
+	ग_लिखोb(pdata->alrm_hour < 0 || (pdata->irqen & RTC_UF) ?
 	       0x80 : bin2bcd(pdata->alrm_hour),
 	       ioaddr + RTC_HOURS_ALARM);
-	writeb(pdata->alrm_min < 0 || (pdata->irqen & RTC_UF) ?
+	ग_लिखोb(pdata->alrm_min < 0 || (pdata->irqen & RTC_UF) ?
 	       0x80 : bin2bcd(pdata->alrm_min),
 	       ioaddr + RTC_MINUTES_ALARM);
-	writeb(pdata->alrm_sec < 0 || (pdata->irqen & RTC_UF) ?
+	ग_लिखोb(pdata->alrm_sec < 0 || (pdata->irqen & RTC_UF) ?
 	       0x80 : bin2bcd(pdata->alrm_sec),
 	       ioaddr + RTC_SECONDS_ALARM);
-	writeb(pdata->irqen ? RTC_INTS_AIE : 0, ioaddr + RTC_INTERRUPTS);
-	readb(ioaddr + RTC_FLAGS);	/* clear interrupts */
-	writeb(flags & ~RTC_WRITE, ioaddr + RTC_FLAGS);
+	ग_लिखोb(pdata->irqen ? RTC_INTS_AIE : 0, ioaddr + RTC_INTERRUPTS);
+	पढ़ोb(ioaddr + RTC_FLAGS);	/* clear पूर्णांकerrupts */
+	ग_लिखोb(flags & ~RTC_WRITE, ioaddr + RTC_FLAGS);
 	spin_unlock_irqrestore(&pdata->lock, irqflags);
-}
+पूर्ण
 
-static int stk17ta8_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct rtc_plat_data *pdata = dev_get_drvdata(dev);
+अटल पूर्णांक stk17ta8_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा rtc_plat_data *pdata = dev_get_drvdata(dev);
 
-	if (pdata->irq <= 0)
-		return -EINVAL;
-	pdata->alrm_mday = alrm->time.tm_mday;
-	pdata->alrm_hour = alrm->time.tm_hour;
-	pdata->alrm_min = alrm->time.tm_min;
-	pdata->alrm_sec = alrm->time.tm_sec;
-	if (alrm->enabled)
+	अगर (pdata->irq <= 0)
+		वापस -EINVAL;
+	pdata->alrm_mday = alrm->समय.पंचांग_mday;
+	pdata->alrm_hour = alrm->समय.पंचांग_hour;
+	pdata->alrm_min = alrm->समय.पंचांग_min;
+	pdata->alrm_sec = alrm->समय.पंचांग_sec;
+	अगर (alrm->enabled)
 		pdata->irqen |= RTC_AF;
 	stk17ta8_rtc_update_alarm(pdata);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stk17ta8_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct rtc_plat_data *pdata = dev_get_drvdata(dev);
+अटल पूर्णांक stk17ta8_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा rtc_plat_data *pdata = dev_get_drvdata(dev);
 
-	if (pdata->irq <= 0)
-		return -EINVAL;
-	alrm->time.tm_mday = pdata->alrm_mday < 0 ? 0 : pdata->alrm_mday;
-	alrm->time.tm_hour = pdata->alrm_hour < 0 ? 0 : pdata->alrm_hour;
-	alrm->time.tm_min = pdata->alrm_min < 0 ? 0 : pdata->alrm_min;
-	alrm->time.tm_sec = pdata->alrm_sec < 0 ? 0 : pdata->alrm_sec;
+	अगर (pdata->irq <= 0)
+		वापस -EINVAL;
+	alrm->समय.पंचांग_mday = pdata->alrm_mday < 0 ? 0 : pdata->alrm_mday;
+	alrm->समय.पंचांग_hour = pdata->alrm_hour < 0 ? 0 : pdata->alrm_hour;
+	alrm->समय.पंचांग_min = pdata->alrm_min < 0 ? 0 : pdata->alrm_min;
+	alrm->समय.पंचांग_sec = pdata->alrm_sec < 0 ? 0 : pdata->alrm_sec;
 	alrm->enabled = (pdata->irqen & RTC_AF) ? 1 : 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t stk17ta8_rtc_interrupt(int irq, void *dev_id)
-{
-	struct platform_device *pdev = dev_id;
-	struct rtc_plat_data *pdata = platform_get_drvdata(pdev);
-	void __iomem *ioaddr = pdata->ioaddr;
-	unsigned long events = 0;
+अटल irqवापस_t stk17ta8_rtc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा platक्रमm_device *pdev = dev_id;
+	काष्ठा rtc_plat_data *pdata = platक्रमm_get_drvdata(pdev);
+	व्योम __iomem *ioaddr = pdata->ioaddr;
+	अचिन्हित दीर्घ events = 0;
 
 	spin_lock(&pdata->lock);
-	/* read and clear interrupt */
-	if (readb(ioaddr + RTC_FLAGS) & RTC_FLAGS_AF) {
+	/* पढ़ो and clear पूर्णांकerrupt */
+	अगर (पढ़ोb(ioaddr + RTC_FLAGS) & RTC_FLAGS_AF) अणु
 		events = RTC_IRQF;
-		if (readb(ioaddr + RTC_SECONDS_ALARM) & 0x80)
+		अगर (पढ़ोb(ioaddr + RTC_SECONDS_ALARM) & 0x80)
 			events |= RTC_UF;
-		else
+		अन्यथा
 			events |= RTC_AF;
 		rtc_update_irq(pdata->rtc, 1, events);
-	}
+	पूर्ण
 	spin_unlock(&pdata->lock);
-	return events ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस events ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static int stk17ta8_rtc_alarm_irq_enable(struct device *dev,
-	unsigned int enabled)
-{
-	struct rtc_plat_data *pdata = dev_get_drvdata(dev);
+अटल पूर्णांक stk17ta8_rtc_alarm_irq_enable(काष्ठा device *dev,
+	अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा rtc_plat_data *pdata = dev_get_drvdata(dev);
 
-	if (pdata->irq <= 0)
-		return -EINVAL;
-	if (enabled)
+	अगर (pdata->irq <= 0)
+		वापस -EINVAL;
+	अगर (enabled)
 		pdata->irqen |= RTC_AF;
-	else
+	अन्यथा
 		pdata->irqen &= ~RTC_AF;
 	stk17ta8_rtc_update_alarm(pdata);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops stk17ta8_rtc_ops = {
-	.read_time		= stk17ta8_rtc_read_time,
-	.set_time		= stk17ta8_rtc_set_time,
-	.read_alarm		= stk17ta8_rtc_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops stk17ta8_rtc_ops = अणु
+	.पढ़ो_समय		= stk17ta8_rtc_पढ़ो_समय,
+	.set_समय		= stk17ta8_rtc_set_समय,
+	.पढ़ो_alarm		= stk17ta8_rtc_पढ़ो_alarm,
 	.set_alarm		= stk17ta8_rtc_set_alarm,
 	.alarm_irq_enable	= stk17ta8_rtc_alarm_irq_enable,
-};
+पूर्ण;
 
-static int stk17ta8_nvram_read(void *priv, unsigned int pos, void *val,
-			       size_t bytes)
-{
-	struct rtc_plat_data *pdata = priv;
-	void __iomem *ioaddr = pdata->ioaddr;
+अटल पूर्णांक stk17ta8_nvram_पढ़ो(व्योम *priv, अचिन्हित पूर्णांक pos, व्योम *val,
+			       माप_प्रकार bytes)
+अणु
+	काष्ठा rtc_plat_data *pdata = priv;
+	व्योम __iomem *ioaddr = pdata->ioaddr;
 	u8 *buf = val;
 
-	for (; bytes; bytes--)
-		*buf++ = readb(ioaddr + pos++);
-	return 0;
-}
+	क्रम (; bytes; bytes--)
+		*buf++ = पढ़ोb(ioaddr + pos++);
+	वापस 0;
+पूर्ण
 
-static int stk17ta8_nvram_write(void *priv, unsigned int pos, void *val,
-				size_t bytes)
-{
-	struct rtc_plat_data *pdata = priv;
-	void __iomem *ioaddr = pdata->ioaddr;
+अटल पूर्णांक stk17ta8_nvram_ग_लिखो(व्योम *priv, अचिन्हित पूर्णांक pos, व्योम *val,
+				माप_प्रकार bytes)
+अणु
+	काष्ठा rtc_plat_data *pdata = priv;
+	व्योम __iomem *ioaddr = pdata->ioaddr;
 	u8 *buf = val;
 
-	for (; bytes; bytes--)
-		writeb(*buf++, ioaddr + pos++);
-	return 0;
-}
+	क्रम (; bytes; bytes--)
+		ग_लिखोb(*buf++, ioaddr + pos++);
+	वापस 0;
+पूर्ण
 
-static int stk17ta8_rtc_probe(struct platform_device *pdev)
-{
-	unsigned int cal;
-	unsigned int flags;
-	struct rtc_plat_data *pdata;
-	void __iomem *ioaddr;
-	int ret = 0;
-	struct nvmem_config nvmem_cfg = {
+अटल पूर्णांक stk17ta8_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	अचिन्हित पूर्णांक cal;
+	अचिन्हित पूर्णांक flags;
+	काष्ठा rtc_plat_data *pdata;
+	व्योम __iomem *ioaddr;
+	पूर्णांक ret = 0;
+	काष्ठा nvmem_config nvmem_cfg = अणु
 		.name = "stk17ta8_nvram",
 		.word_size = 1,
 		.stride = 1,
 		.size = RTC_OFFSET,
-		.reg_read = stk17ta8_nvram_read,
-		.reg_write = stk17ta8_nvram_write,
-	};
+		.reg_पढ़ो = stk17ta8_nvram_पढ़ो,
+		.reg_ग_लिखो = stk17ta8_nvram_ग_लिखो,
+	पूर्ण;
 
-	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस -ENOMEM;
 
-	ioaddr = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(ioaddr))
-		return PTR_ERR(ioaddr);
+	ioaddr = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(ioaddr))
+		वापस PTR_ERR(ioaddr);
 	pdata->ioaddr = ioaddr;
-	pdata->irq = platform_get_irq(pdev, 0);
+	pdata->irq = platक्रमm_get_irq(pdev, 0);
 
-	/* turn RTC on if it was not on */
-	cal = readb(ioaddr + RTC_CALIBRATION);
-	if (cal & RTC_STOP) {
+	/* turn RTC on अगर it was not on */
+	cal = पढ़ोb(ioaddr + RTC_CALIBRATION);
+	अगर (cal & RTC_STOP) अणु
 		cal &= RTC_CAL_MASK;
-		flags = readb(ioaddr + RTC_FLAGS);
-		writeb(flags | RTC_WRITE, ioaddr + RTC_FLAGS);
-		writeb(cal, ioaddr + RTC_CALIBRATION);
-		writeb(flags & ~RTC_WRITE, ioaddr + RTC_FLAGS);
-	}
-	if (readb(ioaddr + RTC_FLAGS) & RTC_FLAGS_PF)
+		flags = पढ़ोb(ioaddr + RTC_FLAGS);
+		ग_लिखोb(flags | RTC_WRITE, ioaddr + RTC_FLAGS);
+		ग_लिखोb(cal, ioaddr + RTC_CALIBRATION);
+		ग_लिखोb(flags & ~RTC_WRITE, ioaddr + RTC_FLAGS);
+	पूर्ण
+	अगर (पढ़ोb(ioaddr + RTC_FLAGS) & RTC_FLAGS_PF)
 		dev_warn(&pdev->dev, "voltage-low detected.\n");
 
 	spin_lock_init(&pdata->lock);
-	pdata->last_jiffies = jiffies;
-	platform_set_drvdata(pdev, pdata);
-	if (pdata->irq > 0) {
-		writeb(0, ioaddr + RTC_INTERRUPTS);
-		if (devm_request_irq(&pdev->dev, pdata->irq,
-				stk17ta8_rtc_interrupt,
+	pdata->last_jअगरfies = jअगरfies;
+	platक्रमm_set_drvdata(pdev, pdata);
+	अगर (pdata->irq > 0) अणु
+		ग_लिखोb(0, ioaddr + RTC_INTERRUPTS);
+		अगर (devm_request_irq(&pdev->dev, pdata->irq,
+				stk17ta8_rtc_पूर्णांकerrupt,
 				IRQF_SHARED,
-				pdev->name, pdev) < 0) {
+				pdev->name, pdev) < 0) अणु
 			dev_warn(&pdev->dev, "interrupt not available.\n");
 			pdata->irq = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	pdata->rtc = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(pdata->rtc))
-		return PTR_ERR(pdata->rtc);
+	अगर (IS_ERR(pdata->rtc))
+		वापस PTR_ERR(pdata->rtc);
 
 	pdata->rtc->ops = &stk17ta8_rtc_ops;
 
 	nvmem_cfg.priv = pdata;
-	ret = devm_rtc_nvmem_register(pdata->rtc, &nvmem_cfg);
-	if (ret)
-		return ret;
+	ret = devm_rtc_nvmem_रेजिस्टर(pdata->rtc, &nvmem_cfg);
+	अगर (ret)
+		वापस ret;
 
-	return devm_rtc_register_device(pdata->rtc);
-}
+	वापस devm_rtc_रेजिस्टर_device(pdata->rtc);
+पूर्ण
 
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:stk17ta8");
 
-static struct platform_driver stk17ta8_rtc_driver = {
+अटल काष्ठा platक्रमm_driver stk17ta8_rtc_driver = अणु
 	.probe		= stk17ta8_rtc_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "stk17ta8",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(stk17ta8_rtc_driver);
+module_platक्रमm_driver(stk17ta8_rtc_driver);
 
 MODULE_AUTHOR("Thomas Hommel <thomas.hommel@ge.com>");
 MODULE_DESCRIPTION("Simtek STK17TA8 RTC driver");

@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *      broadcast connection tracking helper
  *
  *      (c) 2005 Patrick McHardy <kaber@trash.net>
  */
 
-#include <linux/module.h>
-#include <linux/ip.h>
-#include <net/route.h>
-#include <linux/inetdevice.h>
-#include <linux/skbuff.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ip.h>
+#समावेश <net/route.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/skbuff.h>
 
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <net/netfilter/nf_conntrack_expect.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
 
-int nf_conntrack_broadcast_help(struct sk_buff *skb,
-				struct nf_conn *ct,
-				enum ip_conntrack_info ctinfo,
-				unsigned int timeout)
-{
-	struct nf_conntrack_expect *exp;
-	struct iphdr *iph = ip_hdr(skb);
-	struct rtable *rt = skb_rtable(skb);
-	struct in_device *in_dev;
-	struct nf_conn_help *help = nfct_help(ct);
+पूर्णांक nf_conntrack_broadcast_help(काष्ठा sk_buff *skb,
+				काष्ठा nf_conn *ct,
+				क्रमागत ip_conntrack_info ctinfo,
+				अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा nf_conntrack_expect *exp;
+	काष्ठा iphdr *iph = ip_hdr(skb);
+	काष्ठा rtable *rt = skb_rtable(skb);
+	काष्ठा in_device *in_dev;
+	काष्ठा nf_conn_help *help = nfct_help(ct);
 	__be32 mask = 0;
 
-	/* we're only interested in locally generated packets */
-	if (skb->sk == NULL || !net_eq(nf_ct_net(ct), sock_net(skb->sk)))
-		goto out;
-	if (rt == NULL || !(rt->rt_flags & RTCF_BROADCAST))
-		goto out;
-	if (CTINFO2DIR(ctinfo) != IP_CT_DIR_ORIGINAL)
-		goto out;
+	/* we're only पूर्णांकerested in locally generated packets */
+	अगर (skb->sk == शून्य || !net_eq(nf_ct_net(ct), sock_net(skb->sk)))
+		जाओ out;
+	अगर (rt == शून्य || !(rt->rt_flags & RTCF_BROADCAST))
+		जाओ out;
+	अगर (CTINFO2सूची(ctinfo) != IP_CT_सूची_ORIGINAL)
+		जाओ out;
 
 	in_dev = __in_dev_get_rcu(rt->dst.dev);
-	if (in_dev != NULL) {
-		const struct in_ifaddr *ifa;
+	अगर (in_dev != शून्य) अणु
+		स्थिर काष्ठा in_अगरaddr *अगरa;
 
-		in_dev_for_each_ifa_rcu(ifa, in_dev) {
-			if (ifa->ifa_flags & IFA_F_SECONDARY)
-				continue;
+		in_dev_क्रम_each_अगरa_rcu(अगरa, in_dev) अणु
+			अगर (अगरa->अगरa_flags & IFA_F_SECONDARY)
+				जारी;
 
-			if (ifa->ifa_broadcast == iph->daddr) {
-				mask = ifa->ifa_mask;
-				break;
-			}
-		}
-	}
+			अगर (अगरa->अगरa_broadcast == iph->daddr) अणु
+				mask = अगरa->अगरa_mask;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (mask == 0)
-		goto out;
+	अगर (mask == 0)
+		जाओ out;
 
 	exp = nf_ct_expect_alloc(ct);
-	if (exp == NULL)
-		goto out;
+	अगर (exp == शून्य)
+		जाओ out;
 
-	exp->tuple                = ct->tuplehash[IP_CT_DIR_REPLY].tuple;
+	exp->tuple                = ct->tuplehash[IP_CT_सूची_REPLY].tuple;
 	exp->tuple.src.u.udp.port = help->helper->tuple.src.u.udp.port;
 
 	exp->mask.src.u3.ip       = mask;
 	exp->mask.src.u.udp.port  = htons(0xFFFF);
 
-	exp->expectfn             = NULL;
+	exp->expectfn             = शून्य;
 	exp->flags                = NF_CT_EXPECT_PERMANENT;
 	exp->class		  = NF_CT_EXPECT_CLASS_DEFAULT;
-	exp->helper               = NULL;
+	exp->helper               = शून्य;
 
 	nf_ct_expect_related(exp, 0);
 	nf_ct_expect_put(exp);
 
-	nf_ct_refresh(ct, skb, timeout * HZ);
+	nf_ct_refresh(ct, skb, समयout * HZ);
 out:
-	return NF_ACCEPT;
-}
+	वापस NF_ACCEPT;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_conntrack_broadcast_help);
 
 MODULE_LICENSE("GPL");

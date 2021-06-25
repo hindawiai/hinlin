@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
@@ -9,205 +10,205 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
-#ifndef SMC_CDC_H
-#define SMC_CDC_H
+#अगर_अघोषित SMC_CDC_H
+#घोषणा SMC_CDC_H
 
-#include <linux/kernel.h> /* max_t */
-#include <linux/atomic.h>
-#include <linux/in.h>
-#include <linux/compiler.h>
+#समावेश <linux/kernel.h> /* max_t */
+#समावेश <linux/atomic.h>
+#समावेश <linux/in.h>
+#समावेश <linux/compiler.h>
 
-#include "smc.h"
-#include "smc_core.h"
-#include "smc_wr.h"
+#समावेश "smc.h"
+#समावेश "smc_core.h"
+#समावेश "smc_wr.h"
 
-#define	SMC_CDC_MSG_TYPE		0xFE
+#घोषणा	SMC_CDC_MSG_TYPE		0xFE
 
 /* in network byte order */
-union smc_cdc_cursor {		/* SMC cursor */
-	struct {
+जोड़ smc_cdc_cursor अणु		/* SMC cursor */
+	काष्ठा अणु
 		__be16	reserved;
 		__be16	wrap;
 		__be32	count;
-	};
-#ifdef KERNEL_HAS_ATOMIC64
-	atomic64_t	acurs;		/* for atomic processing */
-#else
-	u64		acurs;		/* for atomic processing */
-#endif
-} __aligned(8);
+	पूर्ण;
+#अगर_घोषित KERNEL_HAS_ATOMIC64
+	atomic64_t	acurs;		/* क्रम atomic processing */
+#अन्यथा
+	u64		acurs;		/* क्रम atomic processing */
+#पूर्ण_अगर
+पूर्ण __aligned(8);
 
 /* in network byte order */
-struct smc_cdc_msg {
-	struct smc_wr_rx_hdr		common; /* .type = 0xFE */
+काष्ठा smc_cdc_msg अणु
+	काष्ठा smc_wr_rx_hdr		common; /* .type = 0xFE */
 	u8				len;	/* 44 */
 	__be16				seqno;
 	__be32				token;
-	union smc_cdc_cursor		prod;
-	union smc_cdc_cursor		cons;	/* piggy backed "ack" */
-	struct smc_cdc_producer_flags	prod_flags;
-	struct smc_cdc_conn_state_flags	conn_state_flags;
+	जोड़ smc_cdc_cursor		prod;
+	जोड़ smc_cdc_cursor		cons;	/* piggy backed "ack" */
+	काष्ठा smc_cdc_producer_flags	prod_flags;
+	काष्ठा smc_cdc_conn_state_flags	conn_state_flags;
 	u8				reserved[18];
-};
+पूर्ण;
 
-/* SMC-D cursor format */
-union smcd_cdc_cursor {
-	struct {
+/* SMC-D cursor क्रमmat */
+जोड़ smcd_cdc_cursor अणु
+	काष्ठा अणु
 		u16	wrap;
 		u32	count;
-		struct smc_cdc_producer_flags	prod_flags;
-		struct smc_cdc_conn_state_flags	conn_state_flags;
-	} __packed;
-#ifdef KERNEL_HAS_ATOMIC64
-	atomic64_t		acurs;		/* for atomic processing */
-#else
-	u64			acurs;		/* for atomic processing */
-#endif
-} __aligned(8);
+		काष्ठा smc_cdc_producer_flags	prod_flags;
+		काष्ठा smc_cdc_conn_state_flags	conn_state_flags;
+	पूर्ण __packed;
+#अगर_घोषित KERNEL_HAS_ATOMIC64
+	atomic64_t		acurs;		/* क्रम atomic processing */
+#अन्यथा
+	u64			acurs;		/* क्रम atomic processing */
+#पूर्ण_अगर
+पूर्ण __aligned(8);
 
-/* CDC message for SMC-D */
-struct smcd_cdc_msg {
-	struct smc_wr_rx_hdr common;	/* Type = 0xFE */
+/* CDC message क्रम SMC-D */
+काष्ठा smcd_cdc_msg अणु
+	काष्ठा smc_wr_rx_hdr common;	/* Type = 0xFE */
 	u8 res1[7];
-	union smcd_cdc_cursor	prod;
-	union smcd_cdc_cursor	cons;
+	जोड़ smcd_cdc_cursor	prod;
+	जोड़ smcd_cdc_cursor	cons;
 	u8 res3[8];
-} __aligned(8);
+पूर्ण __aligned(8);
 
-static inline bool smc_cdc_rxed_any_close(struct smc_connection *conn)
-{
-	return conn->local_rx_ctrl.conn_state_flags.peer_conn_abort ||
-	       conn->local_rx_ctrl.conn_state_flags.peer_conn_closed;
-}
+अटल अंतरभूत bool smc_cdc_rxed_any_बंद(काष्ठा smc_connection *conn)
+अणु
+	वापस conn->local_rx_ctrl.conn_state_flags.peer_conn_पात ||
+	       conn->local_rx_ctrl.conn_state_flags.peer_conn_बंदd;
+पूर्ण
 
-static inline bool smc_cdc_rxed_any_close_or_senddone(
-	struct smc_connection *conn)
-{
-	return smc_cdc_rxed_any_close(conn) ||
-	       conn->local_rx_ctrl.conn_state_flags.peer_done_writing;
-}
+अटल अंतरभूत bool smc_cdc_rxed_any_बंद_or_sendकरोne(
+	काष्ठा smc_connection *conn)
+अणु
+	वापस smc_cdc_rxed_any_बंद(conn) ||
+	       conn->local_rx_ctrl.conn_state_flags.peer_करोne_writing;
+पूर्ण
 
-static inline void smc_curs_add(int size, union smc_host_cursor *curs,
-				int value)
-{
+अटल अंतरभूत व्योम smc_curs_add(पूर्णांक size, जोड़ smc_host_cursor *curs,
+				पूर्णांक value)
+अणु
 	curs->count += value;
-	if (curs->count >= size) {
+	अगर (curs->count >= size) अणु
 		curs->wrap++;
 		curs->count -= size;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Copy cursor src into tgt */
-static inline void smc_curs_copy(union smc_host_cursor *tgt,
-				 union smc_host_cursor *src,
-				 struct smc_connection *conn)
-{
-#ifndef KERNEL_HAS_ATOMIC64
-	unsigned long flags;
-
-	spin_lock_irqsave(&conn->acurs_lock, flags);
-	tgt->acurs = src->acurs;
-	spin_unlock_irqrestore(&conn->acurs_lock, flags);
-#else
-	atomic64_set(&tgt->acurs, atomic64_read(&src->acurs));
-#endif
-}
-
-static inline void smc_curs_copy_net(union smc_cdc_cursor *tgt,
-				     union smc_cdc_cursor *src,
-				     struct smc_connection *conn)
-{
-#ifndef KERNEL_HAS_ATOMIC64
-	unsigned long flags;
+/* Copy cursor src पूर्णांकo tgt */
+अटल अंतरभूत व्योम smc_curs_copy(जोड़ smc_host_cursor *tgt,
+				 जोड़ smc_host_cursor *src,
+				 काष्ठा smc_connection *conn)
+अणु
+#अगर_अघोषित KERNEL_HAS_ATOMIC64
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&conn->acurs_lock, flags);
 	tgt->acurs = src->acurs;
 	spin_unlock_irqrestore(&conn->acurs_lock, flags);
-#else
-	atomic64_set(&tgt->acurs, atomic64_read(&src->acurs));
-#endif
-}
+#अन्यथा
+	atomic64_set(&tgt->acurs, atomic64_पढ़ो(&src->acurs));
+#पूर्ण_अगर
+पूर्ण
 
-static inline void smcd_curs_copy(union smcd_cdc_cursor *tgt,
-				  union smcd_cdc_cursor *src,
-				  struct smc_connection *conn)
-{
-#ifndef KERNEL_HAS_ATOMIC64
-	unsigned long flags;
+अटल अंतरभूत व्योम smc_curs_copy_net(जोड़ smc_cdc_cursor *tgt,
+				     जोड़ smc_cdc_cursor *src,
+				     काष्ठा smc_connection *conn)
+अणु
+#अगर_अघोषित KERNEL_HAS_ATOMIC64
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&conn->acurs_lock, flags);
 	tgt->acurs = src->acurs;
 	spin_unlock_irqrestore(&conn->acurs_lock, flags);
-#else
-	atomic64_set(&tgt->acurs, atomic64_read(&src->acurs));
-#endif
-}
+#अन्यथा
+	atomic64_set(&tgt->acurs, atomic64_पढ़ो(&src->acurs));
+#पूर्ण_अगर
+पूर्ण
 
-/* calculate cursor difference between old and new, where old <= new and
- * difference cannot exceed size
+अटल अंतरभूत व्योम smcd_curs_copy(जोड़ smcd_cdc_cursor *tgt,
+				  जोड़ smcd_cdc_cursor *src,
+				  काष्ठा smc_connection *conn)
+अणु
+#अगर_अघोषित KERNEL_HAS_ATOMIC64
+	अचिन्हित दीर्घ flags;
+
+	spin_lock_irqsave(&conn->acurs_lock, flags);
+	tgt->acurs = src->acurs;
+	spin_unlock_irqrestore(&conn->acurs_lock, flags);
+#अन्यथा
+	atomic64_set(&tgt->acurs, atomic64_पढ़ो(&src->acurs));
+#पूर्ण_अगर
+पूर्ण
+
+/* calculate cursor dअगरference between old and new, where old <= new and
+ * dअगरference cannot exceed size
  */
-static inline int smc_curs_diff(unsigned int size,
-				union smc_host_cursor *old,
-				union smc_host_cursor *new)
-{
-	if (old->wrap != new->wrap)
-		return max_t(int, 0,
+अटल अंतरभूत पूर्णांक smc_curs_dअगरf(अचिन्हित पूर्णांक size,
+				जोड़ smc_host_cursor *old,
+				जोड़ smc_host_cursor *new)
+अणु
+	अगर (old->wrap != new->wrap)
+		वापस max_t(पूर्णांक, 0,
 			     ((size - old->count) + new->count));
 
-	return max_t(int, 0, (new->count - old->count));
-}
+	वापस max_t(पूर्णांक, 0, (new->count - old->count));
+पूर्ण
 
-/* calculate cursor difference between old and new - returns negative
- * value in case old > new
+/* calculate cursor dअगरference between old and new - वापसs negative
+ * value in हाल old > new
  */
-static inline int smc_curs_comp(unsigned int size,
-				union smc_host_cursor *old,
-				union smc_host_cursor *new)
-{
-	if (old->wrap > new->wrap ||
+अटल अंतरभूत पूर्णांक smc_curs_comp(अचिन्हित पूर्णांक size,
+				जोड़ smc_host_cursor *old,
+				जोड़ smc_host_cursor *new)
+अणु
+	अगर (old->wrap > new->wrap ||
 	    (old->wrap == new->wrap && old->count > new->count))
-		return -smc_curs_diff(size, new, old);
-	return smc_curs_diff(size, old, new);
-}
+		वापस -smc_curs_dअगरf(size, new, old);
+	वापस smc_curs_dअगरf(size, old, new);
+पूर्ण
 
-/* calculate cursor difference between old and new, where old <= new and
- * difference may exceed size
+/* calculate cursor dअगरference between old and new, where old <= new and
+ * dअगरference may exceed size
  */
-static inline int smc_curs_diff_large(unsigned int size,
-				      union smc_host_cursor *old,
-				      union smc_host_cursor *new)
-{
-	if (old->wrap < new->wrap)
-		return min_t(int,
+अटल अंतरभूत पूर्णांक smc_curs_dअगरf_large(अचिन्हित पूर्णांक size,
+				      जोड़ smc_host_cursor *old,
+				      जोड़ smc_host_cursor *new)
+अणु
+	अगर (old->wrap < new->wrap)
+		वापस min_t(पूर्णांक,
 			     (size - old->count) + new->count +
 			     (new->wrap - old->wrap - 1) * size,
 			     size);
 
-	if (old->wrap > new->wrap) /* wrap has switched from 0xffff to 0x0000 */
-		return min_t(int,
+	अगर (old->wrap > new->wrap) /* wrap has चयनed from 0xffff to 0x0000 */
+		वापस min_t(पूर्णांक,
 			     (size - old->count) + new->count +
 			     (new->wrap + 0xffff - old->wrap) * size,
 			     size);
 
-	return max_t(int, 0, (new->count - old->count));
-}
+	वापस max_t(पूर्णांक, 0, (new->count - old->count));
+पूर्ण
 
-static inline void smc_host_cursor_to_cdc(union smc_cdc_cursor *peer,
-					  union smc_host_cursor *local,
-					  union smc_host_cursor *save,
-					  struct smc_connection *conn)
-{
+अटल अंतरभूत व्योम smc_host_cursor_to_cdc(जोड़ smc_cdc_cursor *peer,
+					  जोड़ smc_host_cursor *local,
+					  जोड़ smc_host_cursor *save,
+					  काष्ठा smc_connection *conn)
+अणु
 	smc_curs_copy(save, local, conn);
 	peer->count = htonl(save->count);
 	peer->wrap = htons(save->wrap);
 	/* peer->reserved = htons(0); must be ensured by caller */
-}
+पूर्ण
 
-static inline void smc_host_msg_to_cdc(struct smc_cdc_msg *peer,
-				       struct smc_connection *conn,
-				       union smc_host_cursor *save)
-{
-	struct smc_host_cdc_msg *local = &conn->local_tx_ctrl;
+अटल अंतरभूत व्योम smc_host_msg_to_cdc(काष्ठा smc_cdc_msg *peer,
+				       काष्ठा smc_connection *conn,
+				       जोड़ smc_host_cursor *save)
+अणु
+	काष्ठा smc_host_cdc_msg *local = &conn->local_tx_ctrl;
 
 	peer->common.type = local->common.type;
 	peer->len = local->len;
@@ -217,31 +218,31 @@ static inline void smc_host_msg_to_cdc(struct smc_cdc_msg *peer,
 	smc_host_cursor_to_cdc(&peer->cons, &local->cons, save, conn);
 	peer->prod_flags = local->prod_flags;
 	peer->conn_state_flags = local->conn_state_flags;
-}
+पूर्ण
 
-static inline void smc_cdc_cursor_to_host(union smc_host_cursor *local,
-					  union smc_cdc_cursor *peer,
-					  struct smc_connection *conn)
-{
-	union smc_host_cursor temp, old;
-	union smc_cdc_cursor net;
+अटल अंतरभूत व्योम smc_cdc_cursor_to_host(जोड़ smc_host_cursor *local,
+					  जोड़ smc_cdc_cursor *peer,
+					  काष्ठा smc_connection *conn)
+अणु
+	जोड़ smc_host_cursor temp, old;
+	जोड़ smc_cdc_cursor net;
 
 	smc_curs_copy(&old, local, conn);
 	smc_curs_copy_net(&net, peer, conn);
 	temp.count = ntohl(net.count);
 	temp.wrap = ntohs(net.wrap);
-	if ((old.wrap > temp.wrap) && temp.wrap)
-		return;
-	if ((old.wrap == temp.wrap) &&
+	अगर ((old.wrap > temp.wrap) && temp.wrap)
+		वापस;
+	अगर ((old.wrap == temp.wrap) &&
 	    (old.count > temp.count))
-		return;
+		वापस;
 	smc_curs_copy(local, &temp, conn);
-}
+पूर्ण
 
-static inline void smcr_cdc_msg_to_host(struct smc_host_cdc_msg *local,
-					struct smc_cdc_msg *peer,
-					struct smc_connection *conn)
-{
+अटल अंतरभूत व्योम smcr_cdc_msg_to_host(काष्ठा smc_host_cdc_msg *local,
+					काष्ठा smc_cdc_msg *peer,
+					काष्ठा smc_connection *conn)
+अणु
 	local->common.type = peer->common.type;
 	local->len = peer->len;
 	local->seqno = ntohs(peer->seqno);
@@ -250,13 +251,13 @@ static inline void smcr_cdc_msg_to_host(struct smc_host_cdc_msg *local,
 	smc_cdc_cursor_to_host(&local->cons, &peer->cons, conn);
 	local->prod_flags = peer->prod_flags;
 	local->conn_state_flags = peer->conn_state_flags;
-}
+पूर्ण
 
-static inline void smcd_cdc_msg_to_host(struct smc_host_cdc_msg *local,
-					struct smcd_cdc_msg *peer,
-					struct smc_connection *conn)
-{
-	union smc_host_cursor temp;
+अटल अंतरभूत व्योम smcd_cdc_msg_to_host(काष्ठा smc_host_cdc_msg *local,
+					काष्ठा smcd_cdc_msg *peer,
+					काष्ठा smc_connection *conn)
+अणु
+	जोड़ smc_host_cursor temp;
 
 	temp.wrap = peer->prod.wrap;
 	temp.count = peer->prod.count;
@@ -267,39 +268,39 @@ static inline void smcd_cdc_msg_to_host(struct smc_host_cdc_msg *local,
 	smc_curs_copy(&local->cons, &temp, conn);
 	local->prod_flags = peer->cons.prod_flags;
 	local->conn_state_flags = peer->cons.conn_state_flags;
-}
+पूर्ण
 
-static inline void smc_cdc_msg_to_host(struct smc_host_cdc_msg *local,
-				       struct smc_cdc_msg *peer,
-				       struct smc_connection *conn)
-{
-	if (conn->lgr->is_smcd)
-		smcd_cdc_msg_to_host(local, (struct smcd_cdc_msg *)peer, conn);
-	else
+अटल अंतरभूत व्योम smc_cdc_msg_to_host(काष्ठा smc_host_cdc_msg *local,
+				       काष्ठा smc_cdc_msg *peer,
+				       काष्ठा smc_connection *conn)
+अणु
+	अगर (conn->lgr->is_smcd)
+		smcd_cdc_msg_to_host(local, (काष्ठा smcd_cdc_msg *)peer, conn);
+	अन्यथा
 		smcr_cdc_msg_to_host(local, peer, conn);
-}
+पूर्ण
 
-struct smc_cdc_tx_pend {
-	struct smc_connection	*conn;		/* socket connection */
-	union smc_host_cursor	cursor;		/* tx sndbuf cursor sent */
-	union smc_host_cursor	p_cursor;	/* rx RMBE cursor produced */
+काष्ठा smc_cdc_tx_pend अणु
+	काष्ठा smc_connection	*conn;		/* socket connection */
+	जोड़ smc_host_cursor	cursor;		/* tx sndbuf cursor sent */
+	जोड़ smc_host_cursor	p_cursor;	/* rx RMBE cursor produced */
 	u16			ctrl_seq;	/* conn. tx sequence # */
-};
+पूर्ण;
 
-int smc_cdc_get_free_slot(struct smc_connection *conn,
-			  struct smc_link *link,
-			  struct smc_wr_buf **wr_buf,
-			  struct smc_rdma_wr **wr_rdma_buf,
-			  struct smc_cdc_tx_pend **pend);
-void smc_cdc_tx_dismiss_slots(struct smc_connection *conn);
-int smc_cdc_msg_send(struct smc_connection *conn, struct smc_wr_buf *wr_buf,
-		     struct smc_cdc_tx_pend *pend);
-int smc_cdc_get_slot_and_msg_send(struct smc_connection *conn);
-int smcd_cdc_msg_send(struct smc_connection *conn);
-int smcr_cdc_msg_send_validation(struct smc_connection *conn,
-				 struct smc_cdc_tx_pend *pend,
-				 struct smc_wr_buf *wr_buf);
-int smc_cdc_init(void) __init;
-void smcd_cdc_rx_init(struct smc_connection *conn);
+पूर्णांक smc_cdc_get_मुक्त_slot(काष्ठा smc_connection *conn,
+			  काष्ठा smc_link *link,
+			  काष्ठा smc_wr_buf **wr_buf,
+			  काष्ठा smc_rdma_wr **wr_rdma_buf,
+			  काष्ठा smc_cdc_tx_pend **pend);
+व्योम smc_cdc_tx_dismiss_slots(काष्ठा smc_connection *conn);
+पूर्णांक smc_cdc_msg_send(काष्ठा smc_connection *conn, काष्ठा smc_wr_buf *wr_buf,
+		     काष्ठा smc_cdc_tx_pend *pend);
+पूर्णांक smc_cdc_get_slot_and_msg_send(काष्ठा smc_connection *conn);
+पूर्णांक smcd_cdc_msg_send(काष्ठा smc_connection *conn);
+पूर्णांक smcr_cdc_msg_send_validation(काष्ठा smc_connection *conn,
+				 काष्ठा smc_cdc_tx_pend *pend,
+				 काष्ठा smc_wr_buf *wr_buf);
+पूर्णांक smc_cdc_init(व्योम) __init;
+व्योम smcd_cdc_rx_init(काष्ठा smc_connection *conn);
 
-#endif /* SMC_CDC_H */
+#पूर्ण_अगर /* SMC_CDC_H */

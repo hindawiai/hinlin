@@ -1,144 +1,145 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2000  Ani Joshi <ajoshi@unixbox.com>
  * Copyright (C) 2000, 2001, 06	 Ralf Baechle <ralf@linux-mips.org>
- * swiped from i386, and cloned for MIPS by Geert, polished by Ralf.
+ * swiped from i386, and cloned क्रम MIPS by Geert, polished by Ralf.
  */
-#include <linux/dma-direct.h>
-#include <linux/dma-map-ops.h>
-#include <linux/highmem.h>
+#समावेश <linux/dma-direct.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/highस्मृति.स>
 
-#include <asm/cache.h>
-#include <asm/cpu-type.h>
-#include <asm/io.h>
+#समावेश <यंत्र/cache.h>
+#समावेश <यंत्र/cpu-type.h>
+#समावेश <यंत्र/पन.स>
 
 /*
  * The affected CPUs below in 'cpu_needs_post_dma_flush()' can speculatively
- * fill random cachelines with stale data at any time, requiring an extra
+ * fill अक्रमom cachelines with stale data at any समय, requiring an extra
  * flush post-DMA.
  *
  * Warning on the terminology - Linux calls an uncached area coherent;  MIPS
- * terminology calls memory areas with hardware maintained coherency coherent.
+ * terminology calls memory areas with hardware मुख्यtained coherency coherent.
  *
- * Note that the R14000 and R16000 should also be checked for in this condition.
- * However this function is only called on non-I/O-coherent systems and only the
- * R10000 and R12000 are used in such systems, the SGI IP28 Indigo² rsp.
+ * Note that the R14000 and R16000 should also be checked क्रम in this condition.
+ * However this function is only called on non-I/O-coherent प्रणालीs and only the
+ * R10000 and R12000 are used in such प्रणालीs, the SGI IP28 Indigoतऑ rsp.
  * SGI IP32 aka O2.
  */
-static inline bool cpu_needs_post_dma_flush(void)
-{
-	switch (boot_cpu_type()) {
-	case CPU_R10000:
-	case CPU_R12000:
-	case CPU_BMIPS5000:
-	case CPU_LOONGSON2EF:
-		return true;
-	default:
+अटल अंतरभूत bool cpu_needs_post_dma_flush(व्योम)
+अणु
+	चयन (boot_cpu_type()) अणु
+	हाल CPU_R10000:
+	हाल CPU_R12000:
+	हाल CPU_BMIPS5000:
+	हाल CPU_LOONGSON2EF:
+		वापस true;
+	शेष:
 		/*
 		 * Presence of MAARs suggests that the CPU supports
-		 * speculatively prefetching data, and therefore requires
+		 * speculatively prefetching data, and thereक्रमe requires
 		 * the post-DMA flush/invalidate.
 		 */
-		return cpu_has_maar;
-	}
-}
+		वापस cpu_has_maar;
+	पूर्ण
+पूर्ण
 
-void arch_dma_prep_coherent(struct page *page, size_t size)
-{
-	dma_cache_wback_inv((unsigned long)page_address(page), size);
-}
+व्योम arch_dma_prep_coherent(काष्ठा page *page, माप_प्रकार size)
+अणु
+	dma_cache_wback_inv((अचिन्हित दीर्घ)page_address(page), size);
+पूर्ण
 
-void *arch_dma_set_uncached(void *addr, size_t size)
-{
-	return (void *)(__pa(addr) + UNCAC_BASE);
-}
+व्योम *arch_dma_set_uncached(व्योम *addr, माप_प्रकार size)
+अणु
+	वापस (व्योम *)(__pa(addr) + UNCAC_BASE);
+पूर्ण
 
-static inline void dma_sync_virt_for_device(void *addr, size_t size,
-		enum dma_data_direction dir)
-{
-	switch (dir) {
-	case DMA_TO_DEVICE:
-		dma_cache_wback((unsigned long)addr, size);
-		break;
-	case DMA_FROM_DEVICE:
-		dma_cache_inv((unsigned long)addr, size);
-		break;
-	case DMA_BIDIRECTIONAL:
-		dma_cache_wback_inv((unsigned long)addr, size);
-		break;
-	default:
+अटल अंतरभूत व्योम dma_sync_virt_क्रम_device(व्योम *addr, माप_प्रकार size,
+		क्रमागत dma_data_direction dir)
+अणु
+	चयन (dir) अणु
+	हाल DMA_TO_DEVICE:
+		dma_cache_wback((अचिन्हित दीर्घ)addr, size);
+		अवरोध;
+	हाल DMA_FROM_DEVICE:
+		dma_cache_inv((अचिन्हित दीर्घ)addr, size);
+		अवरोध;
+	हाल DMA_BIसूचीECTIONAL:
+		dma_cache_wback_inv((अचिन्हित दीर्घ)addr, size);
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void dma_sync_virt_for_cpu(void *addr, size_t size,
-		enum dma_data_direction dir)
-{
-	switch (dir) {
-	case DMA_TO_DEVICE:
-		break;
-	case DMA_FROM_DEVICE:
-	case DMA_BIDIRECTIONAL:
-		dma_cache_inv((unsigned long)addr, size);
-		break;
-	default:
+अटल अंतरभूत व्योम dma_sync_virt_क्रम_cpu(व्योम *addr, माप_प्रकार size,
+		क्रमागत dma_data_direction dir)
+अणु
+	चयन (dir) अणु
+	हाल DMA_TO_DEVICE:
+		अवरोध;
+	हाल DMA_FROM_DEVICE:
+	हाल DMA_BIसूचीECTIONAL:
+		dma_cache_inv((अचिन्हित दीर्घ)addr, size);
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * A single sg entry may refer to multiple physically contiguous pages.  But
- * we still need to process highmem pages individually.  If highmem is not
- * configured then the bulk of this loop gets optimized out.
+ * we still need to process highmem pages inभागidually.  If highmem is not
+ * configured then the bulk of this loop माला_लो optimized out.
  */
-static inline void dma_sync_phys(phys_addr_t paddr, size_t size,
-		enum dma_data_direction dir, bool for_device)
-{
-	struct page *page = pfn_to_page(paddr >> PAGE_SHIFT);
-	unsigned long offset = paddr & ~PAGE_MASK;
-	size_t left = size;
+अटल अंतरभूत व्योम dma_sync_phys(phys_addr_t paddr, माप_प्रकार size,
+		क्रमागत dma_data_direction dir, bool क्रम_device)
+अणु
+	काष्ठा page *page = pfn_to_page(paddr >> PAGE_SHIFT);
+	अचिन्हित दीर्घ offset = paddr & ~PAGE_MASK;
+	माप_प्रकार left = size;
 
-	do {
-		size_t len = left;
-		void *addr;
+	करो अणु
+		माप_प्रकार len = left;
+		व्योम *addr;
 
-		if (PageHighMem(page)) {
-			if (offset + len > PAGE_SIZE)
+		अगर (PageHighMem(page)) अणु
+			अगर (offset + len > PAGE_SIZE)
 				len = PAGE_SIZE - offset;
-		}
+		पूर्ण
 
 		addr = kmap_atomic(page);
-		if (for_device)
-			dma_sync_virt_for_device(addr + offset, len, dir);
-		else
-			dma_sync_virt_for_cpu(addr + offset, len, dir);
+		अगर (क्रम_device)
+			dma_sync_virt_क्रम_device(addr + offset, len, dir);
+		अन्यथा
+			dma_sync_virt_क्रम_cpu(addr + offset, len, dir);
 		kunmap_atomic(addr);
 
 		offset = 0;
 		page++;
 		left -= len;
-	} while (left);
-}
+	पूर्ण जबतक (left);
+पूर्ण
 
-void arch_sync_dma_for_device(phys_addr_t paddr, size_t size,
-		enum dma_data_direction dir)
-{
+व्योम arch_sync_dma_क्रम_device(phys_addr_t paddr, माप_प्रकार size,
+		क्रमागत dma_data_direction dir)
+अणु
 	dma_sync_phys(paddr, size, dir, true);
-}
+पूर्ण
 
-#ifdef CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU
-void arch_sync_dma_for_cpu(phys_addr_t paddr, size_t size,
-		enum dma_data_direction dir)
-{
-	if (cpu_needs_post_dma_flush())
+#अगर_घोषित CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU
+व्योम arch_sync_dma_क्रम_cpu(phys_addr_t paddr, माप_प्रकार size,
+		क्रमागत dma_data_direction dir)
+अणु
+	अगर (cpu_needs_post_dma_flush())
 		dma_sync_phys(paddr, size, dir, false);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_HAS_SETUP_DMA_OPS
-void arch_setup_dma_ops(struct device *dev, u64 dma_base, u64 size,
-		const struct iommu_ops *iommu, bool coherent)
-{
+#अगर_घोषित CONFIG_ARCH_HAS_SETUP_DMA_OPS
+व्योम arch_setup_dma_ops(काष्ठा device *dev, u64 dma_base, u64 size,
+		स्थिर काष्ठा iommu_ops *iommu, bool coherent)
+अणु
 	dev->dma_coherent = coherent;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2013
  * Phillip Lougher <phillip@squashfs.org.uk>
  */
 
-#include <linux/fs.h>
-#include <linux/vfs.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/pagemap.h>
-#include <linux/mutex.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/mutex.h>
 
-#include "squashfs_fs.h"
-#include "squashfs_fs_sb.h"
-#include "squashfs_fs_i.h"
-#include "squashfs.h"
+#समावेश "squashfs_fs.h"
+#समावेश "squashfs_fs_sb.h"
+#समावेश "squashfs_fs_i.h"
+#समावेश "squashfs.h"
 
-/* Read separately compressed datablock and memcopy into page cache */
-int squashfs_readpage_block(struct page *page, u64 block, int bsize, int expected)
-{
-	struct inode *i = page->mapping->host;
-	struct squashfs_cache_entry *buffer = squashfs_get_datablock(i->i_sb,
+/* Read separately compressed datablock and memcopy पूर्णांकo page cache */
+पूर्णांक squashfs_पढ़ोpage_block(काष्ठा page *page, u64 block, पूर्णांक bsize, पूर्णांक expected)
+अणु
+	काष्ठा inode *i = page->mapping->host;
+	काष्ठा squashfs_cache_entry *buffer = squashfs_get_datablock(i->i_sb,
 		block, bsize);
-	int res = buffer->error;
+	पूर्णांक res = buffer->error;
 
-	if (res)
+	अगर (res)
 		ERROR("Unable to read page, block %llx, size %x\n", block,
 			bsize);
-	else
+	अन्यथा
 		squashfs_copy_cache(page, buffer, expected, 0);
 
 	squashfs_cache_put(buffer);
-	return res;
-}
+	वापस res;
+पूर्ण

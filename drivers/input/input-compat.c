@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * 32bit compatibility wrappers for the input subsystem.
+ * 32bit compatibility wrappers क्रम the input subप्रणाली.
  *
  * Very heavily based on evdev.c - Copyright (c) 1999-2002 Vojtech Pavlik
  */
 
-#include <linux/export.h>
-#include <linux/uaccess.h>
-#include "input-compat.h"
+#समावेश <linux/export.h>
+#समावेश <linux/uaccess.h>
+#समावेश "input-compat.h"
 
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 
-int input_event_from_user(const char __user *buffer,
-			  struct input_event *event)
-{
-	if (in_compat_syscall() && !COMPAT_USE_64BIT_TIME) {
-		struct input_event_compat compat_event;
+पूर्णांक input_event_from_user(स्थिर अक्षर __user *buffer,
+			  काष्ठा input_event *event)
+अणु
+	अगर (in_compat_syscall() && !COMPAT_USE_64BIT_TIME) अणु
+		काष्ठा input_event_compat compat_event;
 
-		if (copy_from_user(&compat_event, buffer,
-				   sizeof(struct input_event_compat)))
-			return -EFAULT;
+		अगर (copy_from_user(&compat_event, buffer,
+				   माप(काष्ठा input_event_compat)))
+			वापस -EFAULT;
 
 		event->input_event_sec = compat_event.sec;
 		event->input_event_usec = compat_event.usec;
@@ -27,19 +28,19 @@ int input_event_from_user(const char __user *buffer,
 		event->code = compat_event.code;
 		event->value = compat_event.value;
 
-	} else {
-		if (copy_from_user(event, buffer, sizeof(struct input_event)))
-			return -EFAULT;
-	}
+	पूर्ण अन्यथा अणु
+		अगर (copy_from_user(event, buffer, माप(काष्ठा input_event)))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int input_event_to_user(char __user *buffer,
-			const struct input_event *event)
-{
-	if (in_compat_syscall() && !COMPAT_USE_64BIT_TIME) {
-		struct input_event_compat compat_event;
+पूर्णांक input_event_to_user(अक्षर __user *buffer,
+			स्थिर काष्ठा input_event *event)
+अणु
+	अगर (in_compat_syscall() && !COMPAT_USE_64BIT_TIME) अणु
+		काष्ठा input_event_compat compat_event;
 
 		compat_event.sec = event->input_event_sec;
 		compat_event.usec = event->input_event_usec;
@@ -47,86 +48,86 @@ int input_event_to_user(char __user *buffer,
 		compat_event.code = event->code;
 		compat_event.value = event->value;
 
-		if (copy_to_user(buffer, &compat_event,
-				 sizeof(struct input_event_compat)))
-			return -EFAULT;
+		अगर (copy_to_user(buffer, &compat_event,
+				 माप(काष्ठा input_event_compat)))
+			वापस -EFAULT;
 
-	} else {
-		if (copy_to_user(buffer, event, sizeof(struct input_event)))
-			return -EFAULT;
-	}
+	पूर्ण अन्यथा अणु
+		अगर (copy_to_user(buffer, event, माप(काष्ठा input_event)))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int input_ff_effect_from_user(const char __user *buffer, size_t size,
-			      struct ff_effect *effect)
-{
-	if (in_compat_syscall()) {
-		struct ff_effect_compat *compat_effect;
+पूर्णांक input_ff_effect_from_user(स्थिर अक्षर __user *buffer, माप_प्रकार size,
+			      काष्ठा ff_effect *effect)
+अणु
+	अगर (in_compat_syscall()) अणु
+		काष्ठा ff_effect_compat *compat_effect;
 
-		if (size != sizeof(struct ff_effect_compat))
-			return -EINVAL;
+		अगर (size != माप(काष्ठा ff_effect_compat))
+			वापस -EINVAL;
 
 		/*
-		 * It so happens that the pointer which needs to be changed
-		 * is the last field in the structure, so we can retrieve the
-		 * whole thing and replace just the pointer.
+		 * It so happens that the poपूर्णांकer which needs to be changed
+		 * is the last field in the काष्ठाure, so we can retrieve the
+		 * whole thing and replace just the poपूर्णांकer.
 		 */
-		compat_effect = (struct ff_effect_compat *)effect;
+		compat_effect = (काष्ठा ff_effect_compat *)effect;
 
-		if (copy_from_user(compat_effect, buffer,
-				   sizeof(struct ff_effect_compat)))
-			return -EFAULT;
+		अगर (copy_from_user(compat_effect, buffer,
+				   माप(काष्ठा ff_effect_compat)))
+			वापस -EFAULT;
 
-		if (compat_effect->type == FF_PERIODIC &&
-		    compat_effect->u.periodic.waveform == FF_CUSTOM)
+		अगर (compat_effect->type == FF_PERIODIC &&
+		    compat_effect->u.periodic.waveक्रमm == FF_CUSTOM)
 			effect->u.periodic.custom_data =
 				compat_ptr(compat_effect->u.periodic.custom_data);
-	} else {
-		if (size != sizeof(struct ff_effect))
-			return -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (size != माप(काष्ठा ff_effect))
+			वापस -EINVAL;
 
-		if (copy_from_user(effect, buffer, sizeof(struct ff_effect)))
-			return -EFAULT;
-	}
+		अगर (copy_from_user(effect, buffer, माप(काष्ठा ff_effect)))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else
+#अन्यथा
 
-int input_event_from_user(const char __user *buffer,
-			 struct input_event *event)
-{
-	if (copy_from_user(event, buffer, sizeof(struct input_event)))
-		return -EFAULT;
+पूर्णांक input_event_from_user(स्थिर अक्षर __user *buffer,
+			 काष्ठा input_event *event)
+अणु
+	अगर (copy_from_user(event, buffer, माप(काष्ठा input_event)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int input_event_to_user(char __user *buffer,
-			const struct input_event *event)
-{
-	if (copy_to_user(buffer, event, sizeof(struct input_event)))
-		return -EFAULT;
+पूर्णांक input_event_to_user(अक्षर __user *buffer,
+			स्थिर काष्ठा input_event *event)
+अणु
+	अगर (copy_to_user(buffer, event, माप(काष्ठा input_event)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int input_ff_effect_from_user(const char __user *buffer, size_t size,
-			      struct ff_effect *effect)
-{
-	if (size != sizeof(struct ff_effect))
-		return -EINVAL;
+पूर्णांक input_ff_effect_from_user(स्थिर अक्षर __user *buffer, माप_प्रकार size,
+			      काष्ठा ff_effect *effect)
+अणु
+	अगर (size != माप(काष्ठा ff_effect))
+		वापस -EINVAL;
 
-	if (copy_from_user(effect, buffer, sizeof(struct ff_effect)))
-		return -EFAULT;
+	अगर (copy_from_user(effect, buffer, माप(काष्ठा ff_effect)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_COMPAT */
+#पूर्ण_अगर /* CONFIG_COMPAT */
 
 EXPORT_SYMBOL_GPL(input_event_from_user);
 EXPORT_SYMBOL_GPL(input_event_to_user);

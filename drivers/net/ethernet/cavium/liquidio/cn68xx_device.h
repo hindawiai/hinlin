@@ -1,3 +1,4 @@
+<शैली गुरु>
 /**********************************************************************
  * Author: Cavium, Inc.
  *
@@ -6,22 +7,22 @@
  *
  * Copyright (c) 2003-2016 Cavium, Inc.
  *
- * This file is free software; you can redistribute it and/or modify
+ * This file is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License for more details.
+ * NONINFRINGEMENT.  See the GNU General Public License क्रम more details.
  ***********************************************************************/
-/*! \file  cn68xx_device.h
- *  \brief Host Driver: Routines that perform CN68XX specific operations.
+/*! \पile  cn68xx_device.h
+ *  \मrief Host Driver: Routines that perक्रमm CN68XX specअगरic operations.
  */
 
-#ifndef __CN68XX_DEVICE_H__
-#define  __CN68XX_DEVICE_H__
+#अगर_अघोषित __CN68XX_DEVICE_H__
+#घोषणा  __CN68XX_DEVICE_H__
 
-int lio_setup_cn68xx_octeon_device(struct octeon_device *oct);
+पूर्णांक lio_setup_cn68xx_octeon_device(काष्ठा octeon_device *oct);
 
-#endif
+#पूर्ण_अगर

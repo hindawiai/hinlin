@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _S390_ASM_PCI_DEBUG_H
-#define _S390_ASM_PCI_DEBUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _S390_ASM_PCI_DEBUG_H
+#घोषणा _S390_ASM_PCI_DEBUG_H
 
-#include <asm/debug.h>
+#समावेश <यंत्र/debug.h>
 
-extern debug_info_t *pci_debug_msg_id;
-extern debug_info_t *pci_debug_err_id;
+बाह्य debug_info_t *pci_debug_msg_id;
+बाह्य debug_info_t *pci_debug_err_id;
 
-#define zpci_dbg(imp, fmt, args...)				\
-	debug_sprintf_event(pci_debug_msg_id, imp, fmt, ##args)
+#घोषणा zpci_dbg(imp, fmt, args...)				\
+	debug_प्र_लिखो_event(pci_debug_msg_id, imp, fmt, ##args)
 
-#define zpci_err(text...)							\
-	do {									\
-		char debug_buffer[16];						\
-		snprintf(debug_buffer, 16, text);				\
+#घोषणा zpci_err(text...)							\
+	करो अणु									\
+		अक्षर debug_buffer[16];						\
+		snम_लिखो(debug_buffer, 16, text);				\
 		debug_text_event(pci_debug_err_id, 0, debug_buffer);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-static inline void zpci_err_hex(void *addr, int len)
-{
+अटल अंतरभूत व्योम zpci_err_hex(व्योम *addr, पूर्णांक len)
+अणु
 	debug_event(pci_debug_err_id, 0, addr, len);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

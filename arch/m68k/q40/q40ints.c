@@ -1,75 +1,76 @@
+<शैली गुरु>
 /*
- * arch/m68k/q40/q40ints.c
+ * arch/m68k/q40/q40पूर्णांकs.c
  *
- * Copyright (C) 1999,2001 Richard Zidlicky
+ * Copyright (C) 1999,2001 Riअक्षरd Zidlicky
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * .. used to be loosely based on bvme6000ints.c
+ * .. used to be loosely based on bvme6000पूर्णांकs.c
  *
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
 
-#include <asm/machdep.h>
-#include <asm/ptrace.h>
-#include <asm/traps.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/traps.h>
 
-#include <asm/q40_master.h>
-#include <asm/q40ints.h>
+#समावेश <यंत्र/q40_master.h>
+#समावेश <यंत्र/q40पूर्णांकs.h>
 
 /*
  * Q40 IRQs are defined as follows:
  *            3,4,5,6,7,10,11,14,15 : ISA dev IRQs
  *            16-31: reserved
- *            32   : keyboard int
- *            33   : frame int (50/200 Hz periodic timer)
- *            34   : sample int (10/20 KHz periodic timer)
+ *            32   : keyboard पूर्णांक
+ *            33   : frame पूर्णांक (50/200 Hz periodic समयr)
+ *            34   : sample पूर्णांक (10/20 KHz periodic समयr)
  *
 */
 
-static void q40_irq_handler(unsigned int, struct pt_regs *fp);
-static void q40_irq_enable(struct irq_data *data);
-static void q40_irq_disable(struct irq_data *data);
+अटल व्योम q40_irq_handler(अचिन्हित पूर्णांक, काष्ठा pt_regs *fp);
+अटल व्योम q40_irq_enable(काष्ठा irq_data *data);
+अटल व्योम q40_irq_disable(काष्ठा irq_data *data);
 
-unsigned short q40_ablecount[35];
-unsigned short q40_state[35];
+अचिन्हित लघु q40_ablecount[35];
+अचिन्हित लघु q40_state[35];
 
-static unsigned int q40_irq_startup(struct irq_data *data)
-{
-	unsigned int irq = data->irq;
+अटल अचिन्हित पूर्णांक q40_irq_startup(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक irq = data->irq;
 
-	/* test for ISA ints not implemented by HW */
-	switch (irq) {
-	case 1: case 2: case 8: case 9:
-	case 11: case 12: case 13:
+	/* test क्रम ISA पूर्णांकs not implemented by HW */
+	चयन (irq) अणु
+	हाल 1: हाल 2: हाल 8: हाल 9:
+	हाल 11: हाल 12: हाल 13:
 		pr_warn("%s: ISA IRQ %d not implemented by HW\n", __func__,
 			irq);
-		/* FIXME return -ENXIO; */
-	}
-	return 0;
-}
+		/* FIXME वापस -ENXIO; */
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void q40_irq_shutdown(struct irq_data *data)
-{
-}
+अटल व्योम q40_irq_shutकरोwn(काष्ठा irq_data *data)
+अणु
+पूर्ण
 
-static struct irq_chip q40_irq_chip = {
+अटल काष्ठा irq_chip q40_irq_chip = अणु
 	.name		= "q40",
 	.irq_startup	= q40_irq_startup,
-	.irq_shutdown	= q40_irq_shutdown,
+	.irq_shutकरोwn	= q40_irq_shutकरोwn,
 	.irq_enable	= q40_irq_enable,
 	.irq_disable	= q40_irq_disable,
-};
+पूर्ण;
 
 /*
- * void q40_init_IRQ (void)
+ * व्योम q40_init_IRQ (व्योम)
  *
  * Parameters:	None
  *
@@ -79,254 +80,254 @@ static struct irq_chip q40_irq_chip = {
  * the q40 IRQ handling routines.
  */
 
-static int disabled;
+अटल पूर्णांक disabled;
 
-void __init q40_init_IRQ(void)
-{
+व्योम __init q40_init_IRQ(व्योम)
+अणु
 	m68k_setup_irq_controller(&q40_irq_chip, handle_simple_irq, 1,
 				  Q40_IRQ_MAX);
 
-	/* setup handler for ISA ints */
-	m68k_setup_auto_interrupt(q40_irq_handler);
+	/* setup handler क्रम ISA पूर्णांकs */
+	m68k_setup_स्वतः_पूर्णांकerrupt(q40_irq_handler);
 
 	m68k_irq_startup_irq(IRQ_AUTO_2);
 	m68k_irq_startup_irq(IRQ_AUTO_4);
 
-	/* now enable some ints.. */
+	/* now enable some पूर्णांकs.. */
 	master_outb(1, EXT_ENABLE_REG);  /* ISA IRQ 5-15 */
 
 	/* make sure keyboard IRQ is disabled */
 	master_outb(0, KEY_IRQ_ENABLE_REG);
-}
+पूर्ण
 
 
 /*
- * this stuff doesn't really belong here..
+ * this stuff करोesn't really beदीर्घ here..
  */
 
-int ql_ticks;              /* 200Hz ticks since last jiffie */
-static int sound_ticks;
+पूर्णांक ql_ticks;              /* 200Hz ticks since last jअगरfie */
+अटल पूर्णांक sound_ticks;
 
-#define SVOL 45
+#घोषणा SVOL 45
 
-void q40_mksound(unsigned int hz, unsigned int ticks)
-{
-	/* for now ignore hz, except that hz==0 switches off sound */
+व्योम q40_mksound(अचिन्हित पूर्णांक hz, अचिन्हित पूर्णांक ticks)
+अणु
+	/* क्रम now ignore hz, except that hz==0 चयनes off sound */
 	/* simply alternate the ampl (128-SVOL)-(128+SVOL)-..-.. at 200Hz */
-	if (hz == 0) {
-		if (sound_ticks)
+	अगर (hz == 0) अणु
+		अगर (sound_ticks)
 			sound_ticks = 1;
 
 		*DAC_LEFT = 128;
 		*DAC_RIGHT = 128;
 
-		return;
-	}
-	/* sound itself is done in q40_timer_int */
-	if (sound_ticks == 0)
-		sound_ticks = 1000; /* pretty long beep */
+		वापस;
+	पूर्ण
+	/* sound itself is करोne in q40_समयr_पूर्णांक */
+	अगर (sound_ticks == 0)
+		sound_ticks = 1000; /* pretty दीर्घ beep */
 	sound_ticks = ticks << 1;
-}
+पूर्ण
 
-static irqreturn_t q40_timer_int(int irq, void *dev_id)
-{
+अटल irqवापस_t q40_समयr_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
 	ql_ticks = ql_ticks ? 0 : 1;
-	if (sound_ticks) {
-		unsigned char sval=(sound_ticks & 1) ? 128-SVOL : 128+SVOL;
+	अगर (sound_ticks) अणु
+		अचिन्हित अक्षर sval=(sound_ticks & 1) ? 128-SVOL : 128+SVOL;
 		sound_ticks--;
 		*DAC_LEFT=sval;
 		*DAC_RIGHT=sval;
-	}
+	पूर्ण
 
-	if (!ql_ticks) {
-		unsigned long flags;
+	अगर (!ql_ticks) अणु
+		अचिन्हित दीर्घ flags;
 
 		local_irq_save(flags);
-		legacy_timer_tick(1);
-		timer_heartbeat();
+		legacy_समयr_tick(1);
+		समयr_heartbeat();
 		local_irq_restore(flags);
-	}
-	return IRQ_HANDLED;
-}
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void q40_sched_init (void)
-{
-	int timer_irq;
+व्योम q40_sched_init (व्योम)
+अणु
+	पूर्णांक समयr_irq;
 
-	timer_irq = Q40_IRQ_FRAME;
+	समयr_irq = Q40_IRQ_FRAME;
 
-	if (request_irq(timer_irq, q40_timer_int, 0, "timer", NULL))
+	अगर (request_irq(समयr_irq, q40_समयr_पूर्णांक, 0, "timer", शून्य))
 		panic("Couldn't register timer int");
 
 	master_outb(-1, FRAME_CLEAR_REG);
 	master_outb( 1, FRAME_RATE_REG);
-}
+पूर्ण
 
 
 /*
- * tables to translate bits into IRQ numbers
+ * tables to translate bits पूर्णांकo IRQ numbers
  * it is a good idea to order the entries by priority
  *
 */
 
-struct IRQ_TABLE{ unsigned mask; int irq ;};
-#if 0
-static struct IRQ_TABLE iirqs[]={
-  {Q40_IRQ_FRAME_MASK,Q40_IRQ_FRAME},
-  {Q40_IRQ_KEYB_MASK,Q40_IRQ_KEYBOARD},
-  {0,0}};
-#endif
-static struct IRQ_TABLE eirqs[] = {
-  { .mask = Q40_IRQ3_MASK,	.irq = 3 },	/* ser 1 */
-  { .mask = Q40_IRQ4_MASK,	.irq = 4 },	/* ser 2 */
-  { .mask = Q40_IRQ14_MASK,	.irq = 14 },	/* IDE 1 */
-  { .mask = Q40_IRQ15_MASK,	.irq = 15 },	/* IDE 2 */
-  { .mask = Q40_IRQ6_MASK,	.irq = 6 },	/* floppy, handled elsewhere */
-  { .mask = Q40_IRQ7_MASK,	.irq = 7 },	/* par */
-  { .mask = Q40_IRQ5_MASK,	.irq = 5 },
-  { .mask = Q40_IRQ10_MASK,	.irq = 10 },
-  {0,0}
-};
+काष्ठा IRQ_TABLEअणु अचिन्हित mask; पूर्णांक irq ;पूर्ण;
+#अगर 0
+अटल काष्ठा IRQ_TABLE iirqs[]=अणु
+  अणुQ40_IRQ_FRAME_MASK,Q40_IRQ_FRAMEपूर्ण,
+  अणुQ40_IRQ_KEYB_MASK,Q40_IRQ_KEYBOARDपूर्ण,
+  अणु0,0पूर्णपूर्ण;
+#पूर्ण_अगर
+अटल काष्ठा IRQ_TABLE eirqs[] = अणु
+  अणु .mask = Q40_IRQ3_MASK,	.irq = 3 पूर्ण,	/* ser 1 */
+  अणु .mask = Q40_IRQ4_MASK,	.irq = 4 पूर्ण,	/* ser 2 */
+  अणु .mask = Q40_IRQ14_MASK,	.irq = 14 पूर्ण,	/* IDE 1 */
+  अणु .mask = Q40_IRQ15_MASK,	.irq = 15 पूर्ण,	/* IDE 2 */
+  अणु .mask = Q40_IRQ6_MASK,	.irq = 6 पूर्ण,	/* floppy, handled अन्यथाwhere */
+  अणु .mask = Q40_IRQ7_MASK,	.irq = 7 पूर्ण,	/* par */
+  अणु .mask = Q40_IRQ5_MASK,	.irq = 5 पूर्ण,
+  अणु .mask = Q40_IRQ10_MASK,	.irq = 10 पूर्ण,
+  अणु0,0पूर्ण
+पूर्ण;
 
-/* complain only this many times about spurious ints : */
-static int ccleirq=60;    /* ISA dev IRQs*/
-/*static int cclirq=60;*/     /* internal */
+/* complain only this many बार about spurious पूर्णांकs : */
+अटल पूर्णांक ccleirq=60;    /* ISA dev IRQs*/
+/*अटल पूर्णांक cclirq=60;*/     /* पूर्णांकernal */
 
-/* FIXME: add shared ints,mask,unmask,probing.... */
+/* FIXME: add shared पूर्णांकs,mask,unmask,probing.... */
 
-#define IRQ_INPROGRESS 1
-/*static unsigned short saved_mask;*/
-//static int do_tint=0;
+#घोषणा IRQ_INPROGRESS 1
+/*अटल अचिन्हित लघु saved_mask;*/
+//अटल पूर्णांक करो_tपूर्णांक=0;
 
-#define DEBUG_Q40INT
-/*#define IP_USE_DISABLE *//* would be nice, but crashes ???? */
+#घोषणा DEBUG_Q40INT
+/*#घोषणा IP_USE_DISABLE *//* would be nice, but crashes ???? */
 
-static int mext_disabled=0;  /* ext irq disabled by master chip? */
-static int aliased_irq=0;  /* how many times inside handler ?*/
+अटल पूर्णांक mext_disabled=0;  /* ext irq disabled by master chip? */
+अटल पूर्णांक aliased_irq=0;  /* how many बार inside handler ?*/
 
 
-/* got interrupt, dispatch to ISA or keyboard/timer IRQs */
-static void q40_irq_handler(unsigned int irq, struct pt_regs *fp)
-{
-	unsigned mir, mer;
-	int i;
+/* got पूर्णांकerrupt, dispatch to ISA or keyboard/समयr IRQs */
+अटल व्योम q40_irq_handler(अचिन्हित पूर्णांक irq, काष्ठा pt_regs *fp)
+अणु
+	अचिन्हित mir, mer;
+	पूर्णांक i;
 
 //repeat:
 	mir = master_inb(IIRQ_REG);
-#ifdef CONFIG_BLK_DEV_FD
-	if ((mir & Q40_IRQ_EXT_MASK) &&
-	    (master_inb(EIRQ_REG) & Q40_IRQ6_MASK)) {
-		floppy_hardint();
-		return;
-	}
-#endif
-	switch (irq) {
-	case 4:
-	case 6:
-		do_IRQ(Q40_IRQ_SAMPLE, fp);
-		return;
-	}
-	if (mir & Q40_IRQ_FRAME_MASK) {
-		do_IRQ(Q40_IRQ_FRAME, fp);
+#अगर_घोषित CONFIG_BLK_DEV_FD
+	अगर ((mir & Q40_IRQ_EXT_MASK) &&
+	    (master_inb(EIRQ_REG) & Q40_IRQ6_MASK)) अणु
+		floppy_hardपूर्णांक();
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
+	चयन (irq) अणु
+	हाल 4:
+	हाल 6:
+		करो_IRQ(Q40_IRQ_SAMPLE, fp);
+		वापस;
+	पूर्ण
+	अगर (mir & Q40_IRQ_FRAME_MASK) अणु
+		करो_IRQ(Q40_IRQ_FRAME, fp);
 		master_outb(-1, FRAME_CLEAR_REG);
-	}
-	if ((mir & Q40_IRQ_SER_MASK) || (mir & Q40_IRQ_EXT_MASK)) {
+	पूर्ण
+	अगर ((mir & Q40_IRQ_SER_MASK) || (mir & Q40_IRQ_EXT_MASK)) अणु
 		mer = master_inb(EIRQ_REG);
-		for (i = 0; eirqs[i].mask; i++) {
-			if (mer & eirqs[i].mask) {
+		क्रम (i = 0; eirqs[i].mask; i++) अणु
+			अगर (mer & eirqs[i].mask) अणु
 				irq = eirqs[i].irq;
 /*
  * There is a little mess wrt which IRQ really caused this irq request. The
- * main problem is that IIRQ_REG and EIRQ_REG reflect the state when they
- * are read - which is long after the request came in. In theory IRQs should
- * not just go away but they occasionally do
+ * मुख्य problem is that IIRQ_REG and EIRQ_REG reflect the state when they
+ * are पढ़ो - which is दीर्घ after the request came in. In theory IRQs should
+ * not just go away but they occasionally करो
  */
-				if (irq > 4 && irq <= 15 && mext_disabled) {
+				अगर (irq > 4 && irq <= 15 && mext_disabled) अणु
 					/*aliased_irq++;*/
-					goto iirq;
-				}
-				if (q40_state[irq] & IRQ_INPROGRESS) {
-					/* some handlers do local_irq_enable() for irq latency reasons, */
+					जाओ iirq;
+				पूर्ण
+				अगर (q40_state[irq] & IRQ_INPROGRESS) अणु
+					/* some handlers करो local_irq_enable() क्रम irq latency reasons, */
 					/* however reentering an active irq handler is not permitted */
-#ifdef IP_USE_DISABLE
-					/* in theory this is the better way to do it because it still */
-					/* lets through eg the serial irqs, unfortunately it crashes */
+#अगर_घोषित IP_USE_DISABLE
+					/* in theory this is the better way to करो it because it still */
+					/* lets through eg the serial irqs, unक्रमtunately it crashes */
 					disable_irq(irq);
 					disabled = 1;
-#else
+#अन्यथा
 					/*pr_warn("IRQ_INPROGRESS detected for irq %d, disabling - %s disabled\n",
 						irq, disabled ? "already" : "not yet"); */
 					fp->sr = (((fp->sr) & (~0x700))+0x200);
 					disabled = 1;
-#endif
-					goto iirq;
-				}
+#पूर्ण_अगर
+					जाओ iirq;
+				पूर्ण
 				q40_state[irq] |= IRQ_INPROGRESS;
-				do_IRQ(irq, fp);
+				करो_IRQ(irq, fp);
 				q40_state[irq] &= ~IRQ_INPROGRESS;
 
-				/* naively enable everything, if that fails than    */
+				/* naively enable everything, अगर that fails than    */
 				/* this function will be reentered immediately thus */
 				/* getting another chance to disable the IRQ        */
 
-				if (disabled) {
-#ifdef IP_USE_DISABLE
-					if (irq > 4) {
+				अगर (disabled) अणु
+#अगर_घोषित IP_USE_DISABLE
+					अगर (irq > 4) अणु
 						disabled = 0;
 						enable_irq(irq);
-					}
-#else
+					पूर्ण
+#अन्यथा
 					disabled = 0;
 					/*pr_info("reenabling irq %d\n", irq); */
-#endif
-				}
-// used to do 'goto repeat;' here, this delayed bh processing too long
-				return;
-			}
-		}
-		if (mer && ccleirq > 0 && !aliased_irq) {
+#पूर्ण_अगर
+				पूर्ण
+// used to करो 'goto repeat;' here, this delayed bh processing too दीर्घ
+				वापस;
+			पूर्ण
+		पूर्ण
+		अगर (mer && ccleirq > 0 && !aliased_irq) अणु
 			pr_warn("ISA interrupt from unknown source? EIRQ_REG = %x\n",
 				mer);
 			ccleirq--;
-		}
-	}
+		पूर्ण
+	पूर्ण
  iirq:
 	mir = master_inb(IIRQ_REG);
-	/* should test whether keyboard irq is really enabled, doing it in defhand */
-	if (mir & Q40_IRQ_KEYB_MASK)
-		do_IRQ(Q40_IRQ_KEYBOARD, fp);
+	/* should test whether keyboard irq is really enabled, करोing it in defhand */
+	अगर (mir & Q40_IRQ_KEYB_MASK)
+		करो_IRQ(Q40_IRQ_KEYBOARD, fp);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-void q40_irq_enable(struct irq_data *data)
-{
-	unsigned int irq = data->irq;
+व्योम q40_irq_enable(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक irq = data->irq;
 
-	if (irq >= 5 && irq <= 15) {
+	अगर (irq >= 5 && irq <= 15) अणु
 		mext_disabled--;
-		if (mext_disabled > 0)
+		अगर (mext_disabled > 0)
 			pr_warn("q40_irq_enable : nested disable/enable\n");
-		if (mext_disabled == 0)
+		अगर (mext_disabled == 0)
 			master_outb(1, EXT_ENABLE_REG);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-void q40_irq_disable(struct irq_data *data)
-{
-	unsigned int irq = data->irq;
+व्योम q40_irq_disable(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक irq = data->irq;
 
-	/* disable ISA iqs : only do something if the driver has been
-	 * verified to be Q40 "compatible" - right now IDE, NE2K
+	/* disable ISA iqs : only करो something अगर the driver has been
+	 * verअगरied to be Q40 "compatible" - right now IDE, NE2K
 	 * Any driver should not attempt to sleep across disable_irq !!
 	 */
 
-	if (irq >= 5 && irq <= 15) {
+	अगर (irq >= 5 && irq <= 15) अणु
 		master_outb(0, EXT_ENABLE_REG);
 		mext_disabled++;
-		if (mext_disabled > 1)
+		अगर (mext_disabled > 1)
 			pr_info("disable_irq nesting count %d\n",
 				mext_disabled);
-	}
-}
+	पूर्ण
+पूर्ण

@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2017-2019 Mellanox Technologies. All rights reserved */
 
-#ifndef _MLXFW_MFA2_H
-#define _MLXFW_MFA2_H
+#अगर_अघोषित _MLXFW_MFA2_H
+#घोषणा _MLXFW_MFA2_H
 
-#include <linux/firmware.h>
-#include "mlxfw.h"
+#समावेश <linux/firmware.h>
+#समावेश "mlxfw.h"
 
-struct mlxfw_mfa2_component {
+काष्ठा mlxfw_mfa2_component अणु
 	u16 index;
 	u32 data_size;
 	u8 *data;
-};
+पूर्ण;
 
-struct mlxfw_mfa2_file;
+काष्ठा mlxfw_mfa2_file;
 
-bool mlxfw_mfa2_check(const struct firmware *fw);
+bool mlxfw_mfa2_check(स्थिर काष्ठा firmware *fw);
 
-struct mlxfw_mfa2_file *mlxfw_mfa2_file_init(const struct firmware *fw);
+काष्ठा mlxfw_mfa2_file *mlxfw_mfa2_file_init(स्थिर काष्ठा firmware *fw);
 
-int mlxfw_mfa2_file_component_count(const struct mlxfw_mfa2_file *mfa2_file,
-				    const char *psid, u32 psid_size,
+पूर्णांक mlxfw_mfa2_file_component_count(स्थिर काष्ठा mlxfw_mfa2_file *mfa2_file,
+				    स्थिर अक्षर *psid, u32 psid_size,
 				    u32 *p_count);
 
-struct mlxfw_mfa2_component *
-mlxfw_mfa2_file_component_get(const struct mlxfw_mfa2_file *mfa2_file,
-			      const char *psid, int psid_size,
-			      int component_index);
+काष्ठा mlxfw_mfa2_component *
+mlxfw_mfa2_file_component_get(स्थिर काष्ठा mlxfw_mfa2_file *mfa2_file,
+			      स्थिर अक्षर *psid, पूर्णांक psid_size,
+			      पूर्णांक component_index);
 
-void mlxfw_mfa2_file_component_put(struct mlxfw_mfa2_component *component);
+व्योम mlxfw_mfa2_file_component_put(काष्ठा mlxfw_mfa2_component *component);
 
-void mlxfw_mfa2_file_fini(struct mlxfw_mfa2_file *mfa2_file);
+व्योम mlxfw_mfa2_file_fini(काष्ठा mlxfw_mfa2_file *mfa2_file);
 
-#endif
+#पूर्ण_अगर

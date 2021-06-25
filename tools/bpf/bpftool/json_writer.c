@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-or-later OR BSD-2-Clause)
 /*
- * Simple streaming JSON writer
+ * Simple streaming JSON ग_लिखोr
  *
  * This takes care of the annoying bits of JSON syntax like the commas
  * after elements
@@ -8,322 +9,322 @@
  * Authors:	Stephen Hemminger <stephen@networkplumber.org>
  */
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <malloc.h>
-#include <inttypes.h>
-#include <stdint.h>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <मानकतर्क.स>
+#समावेश <निश्चित.स>
+#समावेश <दो_स्मृति.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानक_निवेशt.h>
 
-#include "json_writer.h"
+#समावेश "json_writer.h"
 
-struct json_writer {
-	FILE		*out;	/* output file */
-	unsigned	depth;  /* nesting */
+काष्ठा json_ग_लिखोr अणु
+	खाता		*out;	/* output file */
+	अचिन्हित	depth;  /* nesting */
 	bool		pretty; /* optional whitepace */
-	char		sep;	/* either nul or comma */
-};
+	अक्षर		sep;	/* either nul or comma */
+पूर्ण;
 
-/* indentation for pretty print */
-static void jsonw_indent(json_writer_t *self)
-{
-	unsigned i;
-	for (i = 0; i < self->depth; ++i)
-		fputs("    ", self->out);
-}
+/* indentation क्रम pretty prपूर्णांक */
+अटल व्योम jsonw_indent(json_ग_लिखोr_t *self)
+अणु
+	अचिन्हित i;
+	क्रम (i = 0; i < self->depth; ++i)
+		ख_माला_दो("    ", self->out);
+पूर्ण
 
-/* end current line and indent if pretty printing */
-static void jsonw_eol(json_writer_t *self)
-{
-	if (!self->pretty)
-		return;
+/* end current line and indent अगर pretty prपूर्णांकing */
+अटल व्योम jsonw_eol(json_ग_लिखोr_t *self)
+अणु
+	अगर (!self->pretty)
+		वापस;
 
-	putc('\n', self->out);
+	अ_दो('\n', self->out);
 	jsonw_indent(self);
-}
+पूर्ण
 
-/* If current object is not empty print a comma */
-static void jsonw_eor(json_writer_t *self)
-{
-	if (self->sep != '\0')
-		putc(self->sep, self->out);
+/* If current object is not empty prपूर्णांक a comma */
+अटल व्योम jsonw_eor(json_ग_लिखोr_t *self)
+अणु
+	अगर (self->sep != '\0')
+		अ_दो(self->sep, self->out);
 	self->sep = ',';
-}
+पूर्ण
 
 
 /* Output JSON encoded string */
-/* Handles C escapes, does not do Unicode */
-static void jsonw_puts(json_writer_t *self, const char *str)
-{
-	putc('"', self->out);
-	for (; *str; ++str)
-		switch (*str) {
-		case '\t':
-			fputs("\\t", self->out);
-			break;
-		case '\n':
-			fputs("\\n", self->out);
-			break;
-		case '\r':
-			fputs("\\r", self->out);
-			break;
-		case '\f':
-			fputs("\\f", self->out);
-			break;
-		case '\b':
-			fputs("\\b", self->out);
-			break;
-		case '\\':
-			fputs("\\n", self->out);
-			break;
-		case '"':
-			fputs("\\\"", self->out);
-			break;
-		case '\'':
-			fputs("\\\'", self->out);
-			break;
-		default:
-			putc(*str, self->out);
-		}
-	putc('"', self->out);
-}
+/* Handles C escapes, करोes not करो Unicode */
+अटल व्योम jsonw_माला_दो(json_ग_लिखोr_t *self, स्थिर अक्षर *str)
+अणु
+	अ_दो('"', self->out);
+	क्रम (; *str; ++str)
+		चयन (*str) अणु
+		हाल '\t':
+			ख_माला_दो("\\t", self->out);
+			अवरोध;
+		हाल '\n':
+			ख_माला_दो("\\n", self->out);
+			अवरोध;
+		हाल '\r':
+			ख_माला_दो("\\r", self->out);
+			अवरोध;
+		हाल '\f':
+			ख_माला_दो("\\f", self->out);
+			अवरोध;
+		हाल '\b':
+			ख_माला_दो("\\b", self->out);
+			अवरोध;
+		हाल '\\':
+			ख_माला_दो("\\n", self->out);
+			अवरोध;
+		हाल '"':
+			ख_माला_दो("\\\"", self->out);
+			अवरोध;
+		हाल '\'':
+			ख_माला_दो("\\\'", self->out);
+			अवरोध;
+		शेष:
+			अ_दो(*str, self->out);
+		पूर्ण
+	अ_दो('"', self->out);
+पूर्ण
 
 /* Create a new JSON stream */
-json_writer_t *jsonw_new(FILE *f)
-{
-	json_writer_t *self = malloc(sizeof(*self));
-	if (self) {
+json_ग_लिखोr_t *jsonw_new(खाता *f)
+अणु
+	json_ग_लिखोr_t *self = दो_स्मृति(माप(*self));
+	अगर (self) अणु
 		self->out = f;
 		self->depth = 0;
 		self->pretty = false;
 		self->sep = '\0';
-	}
-	return self;
-}
+	पूर्ण
+	वापस self;
+पूर्ण
 
 /* End output to JSON stream */
-void jsonw_destroy(json_writer_t **self_p)
-{
-	json_writer_t *self = *self_p;
+व्योम jsonw_destroy(json_ग_लिखोr_t **self_p)
+अणु
+	json_ग_लिखोr_t *self = *self_p;
 
-	assert(self->depth == 0);
-	fputs("\n", self->out);
-	fflush(self->out);
-	free(self);
-	*self_p = NULL;
-}
+	निश्चित(self->depth == 0);
+	ख_माला_दो("\n", self->out);
+	ख_साफ(self->out);
+	मुक्त(self);
+	*self_p = शून्य;
+पूर्ण
 
-void jsonw_pretty(json_writer_t *self, bool on)
-{
+व्योम jsonw_pretty(json_ग_लिखोr_t *self, bool on)
+अणु
 	self->pretty = on;
-}
+पूर्ण
 
-void jsonw_reset(json_writer_t *self)
-{
-	assert(self->depth == 0);
+व्योम jsonw_reset(json_ग_लिखोr_t *self)
+अणु
+	निश्चित(self->depth == 0);
 	self->sep = '\0';
-}
+पूर्ण
 
 /* Basic blocks */
-static void jsonw_begin(json_writer_t *self, int c)
-{
+अटल व्योम jsonw_begin(json_ग_लिखोr_t *self, पूर्णांक c)
+अणु
 	jsonw_eor(self);
-	putc(c, self->out);
+	अ_दो(c, self->out);
 	++self->depth;
 	self->sep = '\0';
-}
+पूर्ण
 
-static void jsonw_end(json_writer_t *self, int c)
-{
-	assert(self->depth > 0);
+अटल व्योम jsonw_end(json_ग_लिखोr_t *self, पूर्णांक c)
+अणु
+	निश्चित(self->depth > 0);
 
 	--self->depth;
-	if (self->sep != '\0')
+	अगर (self->sep != '\0')
 		jsonw_eol(self);
-	putc(c, self->out);
+	अ_दो(c, self->out);
 	self->sep = ',';
-}
+पूर्ण
 
 
 /* Add a JSON property name */
-void jsonw_name(json_writer_t *self, const char *name)
-{
+व्योम jsonw_name(json_ग_लिखोr_t *self, स्थिर अक्षर *name)
+अणु
 	jsonw_eor(self);
 	jsonw_eol(self);
 	self->sep = '\0';
-	jsonw_puts(self, name);
-	putc(':', self->out);
-	if (self->pretty)
-		putc(' ', self->out);
-}
+	jsonw_माला_दो(self, name);
+	अ_दो(':', self->out);
+	अगर (self->pretty)
+		अ_दो(' ', self->out);
+पूर्ण
 
-void jsonw_vprintf_enquote(json_writer_t *self, const char *fmt, va_list ap)
-{
+व्योम jsonw_भ_लिखो_enquote(json_ग_लिखोr_t *self, स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
 	jsonw_eor(self);
-	putc('"', self->out);
-	vfprintf(self->out, fmt, ap);
-	putc('"', self->out);
-}
+	अ_दो('"', self->out);
+	भख_लिखो(self->out, fmt, ap);
+	अ_दो('"', self->out);
+पूर्ण
 
-void jsonw_printf(json_writer_t *self, const char *fmt, ...)
-{
-	va_list ap;
+व्योम jsonw_म_लिखो(json_ग_लिखोr_t *self, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, fmt);
+	बहु_शुरू(ap, fmt);
 	jsonw_eor(self);
-	vfprintf(self->out, fmt, ap);
-	va_end(ap);
-}
+	भख_लिखो(self->out, fmt, ap);
+	बहु_पूर्ण(ap);
+पूर्ण
 
 /* Collections */
-void jsonw_start_object(json_writer_t *self)
-{
+व्योम jsonw_start_object(json_ग_लिखोr_t *self)
+अणु
 	jsonw_begin(self, '{');
-}
+पूर्ण
 
-void jsonw_end_object(json_writer_t *self)
-{
+व्योम jsonw_end_object(json_ग_लिखोr_t *self)
+अणु
 	jsonw_end(self, '}');
-}
+पूर्ण
 
-void jsonw_start_array(json_writer_t *self)
-{
+व्योम jsonw_start_array(json_ग_लिखोr_t *self)
+अणु
 	jsonw_begin(self, '[');
-}
+पूर्ण
 
-void jsonw_end_array(json_writer_t *self)
-{
+व्योम jsonw_end_array(json_ग_लिखोr_t *self)
+अणु
 	jsonw_end(self, ']');
-}
+पूर्ण
 
 /* JSON value types */
-void jsonw_string(json_writer_t *self, const char *value)
-{
+व्योम jsonw_string(json_ग_लिखोr_t *self, स्थिर अक्षर *value)
+अणु
 	jsonw_eor(self);
-	jsonw_puts(self, value);
-}
+	jsonw_माला_दो(self, value);
+पूर्ण
 
-void jsonw_bool(json_writer_t *self, bool val)
-{
-	jsonw_printf(self, "%s", val ? "true" : "false");
-}
+व्योम jsonw_bool(json_ग_लिखोr_t *self, bool val)
+अणु
+	jsonw_म_लिखो(self, "%s", val ? "true" : "false");
+पूर्ण
 
-void jsonw_null(json_writer_t *self)
-{
-	jsonw_printf(self, "null");
-}
+व्योम jsonw_null(json_ग_लिखोr_t *self)
+अणु
+	jsonw_म_लिखो(self, "null");
+पूर्ण
 
-void jsonw_float_fmt(json_writer_t *self, const char *fmt, double num)
-{
-	jsonw_printf(self, fmt, num);
-}
+व्योम jsonw_भग्न_fmt(json_ग_लिखोr_t *self, स्थिर अक्षर *fmt, द्विगुन num)
+अणु
+	jsonw_म_लिखो(self, fmt, num);
+पूर्ण
 
-#ifdef notused
-void jsonw_float(json_writer_t *self, double num)
-{
-	jsonw_printf(self, "%g", num);
-}
-#endif
+#अगर_घोषित notused
+व्योम jsonw_भग्न(json_ग_लिखोr_t *self, द्विगुन num)
+अणु
+	jsonw_म_लिखो(self, "%g", num);
+पूर्ण
+#पूर्ण_अगर
 
-void jsonw_hu(json_writer_t *self, unsigned short num)
-{
-	jsonw_printf(self, "%hu", num);
-}
+व्योम jsonw_hu(json_ग_लिखोr_t *self, अचिन्हित लघु num)
+अणु
+	jsonw_म_लिखो(self, "%hu", num);
+पूर्ण
 
-void jsonw_uint(json_writer_t *self, uint64_t num)
-{
-	jsonw_printf(self, "%"PRIu64, num);
-}
+व्योम jsonw_uपूर्णांक(json_ग_लिखोr_t *self, uपूर्णांक64_t num)
+अणु
+	jsonw_म_लिखो(self, "%"PRIu64, num);
+पूर्ण
 
-void jsonw_lluint(json_writer_t *self, unsigned long long int num)
-{
-	jsonw_printf(self, "%llu", num);
-}
+व्योम jsonw_lluपूर्णांक(json_ग_लिखोr_t *self, अचिन्हित दीर्घ दीर्घ पूर्णांक num)
+अणु
+	jsonw_म_लिखो(self, "%llu", num);
+पूर्ण
 
-void jsonw_int(json_writer_t *self, int64_t num)
-{
-	jsonw_printf(self, "%"PRId64, num);
-}
+व्योम jsonw_पूर्णांक(json_ग_लिखोr_t *self, पूर्णांक64_t num)
+अणु
+	jsonw_म_लिखो(self, "%"PRId64, num);
+पूर्ण
 
 /* Basic name/value objects */
-void jsonw_string_field(json_writer_t *self, const char *prop, const char *val)
-{
+व्योम jsonw_string_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, स्थिर अक्षर *val)
+अणु
 	jsonw_name(self, prop);
 	jsonw_string(self, val);
-}
+पूर्ण
 
-void jsonw_bool_field(json_writer_t *self, const char *prop, bool val)
-{
+व्योम jsonw_bool_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, bool val)
+अणु
 	jsonw_name(self, prop);
 	jsonw_bool(self, val);
-}
+पूर्ण
 
-#ifdef notused
-void jsonw_float_field(json_writer_t *self, const char *prop, double val)
-{
+#अगर_घोषित notused
+व्योम jsonw_भग्न_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, द्विगुन val)
+अणु
 	jsonw_name(self, prop);
-	jsonw_float(self, val);
-}
-#endif
+	jsonw_भग्न(self, val);
+पूर्ण
+#पूर्ण_अगर
 
-void jsonw_float_field_fmt(json_writer_t *self,
-			   const char *prop,
-			   const char *fmt,
-			   double val)
-{
+व्योम jsonw_भग्न_field_fmt(json_ग_लिखोr_t *self,
+			   स्थिर अक्षर *prop,
+			   स्थिर अक्षर *fmt,
+			   द्विगुन val)
+अणु
 	jsonw_name(self, prop);
-	jsonw_float_fmt(self, fmt, val);
-}
+	jsonw_भग्न_fmt(self, fmt, val);
+पूर्ण
 
-void jsonw_uint_field(json_writer_t *self, const char *prop, uint64_t num)
-{
+व्योम jsonw_uपूर्णांक_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, uपूर्णांक64_t num)
+अणु
 	jsonw_name(self, prop);
-	jsonw_uint(self, num);
-}
+	jsonw_uपूर्णांक(self, num);
+पूर्ण
 
-void jsonw_hu_field(json_writer_t *self, const char *prop, unsigned short num)
-{
+व्योम jsonw_hu_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, अचिन्हित लघु num)
+अणु
 	jsonw_name(self, prop);
 	jsonw_hu(self, num);
-}
+पूर्ण
 
-void jsonw_lluint_field(json_writer_t *self,
-			const char *prop,
-			unsigned long long int num)
-{
+व्योम jsonw_lluपूर्णांक_field(json_ग_लिखोr_t *self,
+			स्थिर अक्षर *prop,
+			अचिन्हित दीर्घ दीर्घ पूर्णांक num)
+अणु
 	jsonw_name(self, prop);
-	jsonw_lluint(self, num);
-}
+	jsonw_lluपूर्णांक(self, num);
+पूर्ण
 
-void jsonw_int_field(json_writer_t *self, const char *prop, int64_t num)
-{
+व्योम jsonw_पूर्णांक_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop, पूर्णांक64_t num)
+अणु
 	jsonw_name(self, prop);
-	jsonw_int(self, num);
-}
+	jsonw_पूर्णांक(self, num);
+पूर्ण
 
-void jsonw_null_field(json_writer_t *self, const char *prop)
-{
+व्योम jsonw_null_field(json_ग_लिखोr_t *self, स्थिर अक्षर *prop)
+अणु
 	jsonw_name(self, prop);
 	jsonw_null(self);
-}
+पूर्ण
 
-#ifdef TEST
-int main(int argc, char **argv)
-{
-	json_writer_t *wr = jsonw_new(stdout);
+#अगर_घोषित TEST
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	json_ग_लिखोr_t *wr = jsonw_new(मानक_निकास);
 
 	jsonw_start_object(wr);
 	jsonw_pretty(wr, true);
 	jsonw_name(wr, "Vyatta");
 	jsonw_start_object(wr);
 	jsonw_string_field(wr, "url", "http://vyatta.com");
-	jsonw_uint_field(wr, "downloads", 2000000ul);
-	jsonw_float_field(wr, "stock", 8.16);
+	jsonw_uपूर्णांक_field(wr, "downloads", 2000000ul);
+	jsonw_भग्न_field(wr, "stock", 8.16);
 
 	jsonw_name(wr, "ARGV");
 	jsonw_start_array(wr);
-	while (--argc)
+	जबतक (--argc)
 		jsonw_string(wr, *++argv);
 	jsonw_end_array(wr);
 
@@ -352,7 +353,7 @@ int main(int argc, char **argv)
 
 	jsonw_end_object(wr);
 	jsonw_destroy(&wr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

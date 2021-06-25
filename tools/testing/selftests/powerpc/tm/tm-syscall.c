@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2015, Sam Bobroff, IBM Corp.
  *
- * Test the kernel's system call code to ensure that a system call
- * made from within an active HTM transaction is aborted with the
+ * Test the kernel's प्रणाली call code to ensure that a प्रणाली call
+ * made from within an active HTM transaction is पातed with the
  * correct failure code.
- * Conversely, ensure that a system call made from within a
+ * Conversely, ensure that a प्रणाली call made from within a
  * suspended transaction can succeed.
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <asm/tm.h>
-#include <sys/time.h>
-#include <stdlib.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
+#समावेश <यंत्र/पंचांग.h>
+#समावेश <sys/समय.स>
+#समावेश <मानककोष.स>
 
-#include "utils.h"
-#include "tm.h"
+#समावेश "utils.h"
+#समावेश "tm.h"
 
-extern int getppid_tm_active(void);
-extern int getppid_tm_suspended(void);
+बाह्य पूर्णांक getppid_पंचांग_active(व्योम);
+बाह्य पूर्णांक getppid_पंचांग_suspended(व्योम);
 
-unsigned retries = 0;
+अचिन्हित retries = 0;
 
-#define TEST_DURATION 10 /* seconds */
-#define TM_RETRIES 100
+#घोषणा TEST_DURATION 10 /* seconds */
+#घोषणा TM_RETRIES 100
 
-pid_t getppid_tm(bool suspend)
-{
-	int i;
+pid_t getppid_पंचांग(bool suspend)
+अणु
+	पूर्णांक i;
 	pid_t pid;
 
-	for (i = 0; i < TM_RETRIES; i++) {
-		if (suspend)
-			pid = getppid_tm_suspended();
-		else
-			pid = getppid_tm_active();
+	क्रम (i = 0; i < TM_RETRIES; i++) अणु
+		अगर (suspend)
+			pid = getppid_पंचांग_suspended();
+		अन्यथा
+			pid = getppid_पंचांग_active();
 
-		if (pid >= 0)
-			return pid;
+		अगर (pid >= 0)
+			वापस pid;
 
-		if (failure_is_persistent()) {
-			if (failure_is_syscall())
-				return -1;
+		अगर (failure_is_persistent()) अणु
+			अगर (failure_is_syscall())
+				वापस -1;
 
-			printf("Unexpected persistent transaction failure.\n");
-			printf("TEXASR 0x%016lx, TFIAR 0x%016lx.\n",
+			म_लिखो("Unexpected persistent transaction failure.\n");
+			म_लिखो("TEXASR 0x%016lx, TFIAR 0x%016lx.\n",
 			       __builtin_get_texasr(), __builtin_get_tfiar());
-			exit(-1);
-		}
+			निकास(-1);
+		पूर्ण
 
 		retries++;
-	}
+	पूर्ण
 
-	printf("Exceeded limit of %d temporary transaction failures.\n", TM_RETRIES);
-	printf("TEXASR 0x%016lx, TFIAR 0x%016lx.\n",
+	म_लिखो("Exceeded limit of %d temporary transaction failures.\n", TM_RETRIES);
+	म_लिखो("TEXASR 0x%016lx, TFIAR 0x%016lx.\n",
 	       __builtin_get_texasr(), __builtin_get_tfiar());
 
-	exit(-1);
-}
+	निकास(-1);
+पूर्ण
 
-int tm_syscall(void)
-{
-	unsigned count = 0;
-	struct timeval end, now;
+पूर्णांक पंचांग_syscall(व्योम)
+अणु
+	अचिन्हित count = 0;
+	काष्ठा समयval end, now;
 
-	SKIP_IF(!have_htm_nosc());
+	SKIP_IF(!have_hपंचांग_nosc());
 
-	setbuf(stdout, NULL);
+	रखो_बफ(मानक_निकास, शून्य);
 
-	printf("Testing transactional syscalls for %d seconds...\n", TEST_DURATION);
+	म_लिखो("Testing transactional syscalls for %d seconds...\n", TEST_DURATION);
 
-	gettimeofday(&end, NULL);
+	समय_लोofday(&end, शून्य);
 	now.tv_sec = TEST_DURATION;
 	now.tv_usec = 0;
-	timeradd(&end, &now, &end);
+	समयradd(&end, &now, &end);
 
-	for (count = 0; timercmp(&now, &end, <); count++) {
+	क्रम (count = 0; समयrcmp(&now, &end, <); count++) अणु
 		/*
-		 * Test a syscall within a suspended transaction and verify
+		 * Test a syscall within a suspended transaction and verअगरy
 		 * that it succeeds.
 		 */
-		FAIL_IF(getppid_tm(true) == -1); /* Should succeed. */
+		FAIL_IF(getppid_पंचांग(true) == -1); /* Should succeed. */
 
 		/*
-		 * Test a syscall within an active transaction and verify that
+		 * Test a syscall within an active transaction and verअगरy that
 		 * it fails with the correct failure code.
 		 */
-		FAIL_IF(getppid_tm(false) != -1);  /* Should fail... */
+		FAIL_IF(getppid_पंचांग(false) != -1);  /* Should fail... */
 		FAIL_IF(!failure_is_persistent()); /* ...persistently... */
 		FAIL_IF(!failure_is_syscall());    /* ...with code syscall. */
-		gettimeofday(&now, 0);
-	}
+		समय_लोofday(&now, 0);
+	पूर्ण
 
-	printf("%d active and suspended transactions behaved correctly.\n", count);
-	printf("(There were %d transaction retries.)\n", retries);
+	म_लिखो("%d active and suspended transactions behaved correctly.\n", count);
+	म_लिखो("(There were %d transaction retries.)\n", retries);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(tm_syscall, "tm_syscall");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(पंचांग_syscall, "tm_syscall");
+पूर्ण

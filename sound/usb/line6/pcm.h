@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Line 6 Linux USB driver
  *
@@ -6,35 +7,35 @@
  */
 
 /*
-	PCM interface to POD series devices.
+	PCM पूर्णांकerface to POD series devices.
 */
 
-#ifndef PCM_H
-#define PCM_H
+#अगर_अघोषित PCM_H
+#घोषणा PCM_H
 
-#include <sound/pcm.h>
+#समावेश <sound/pcm.h>
 
-#include "driver.h"
+#समावेश "driver.h"
 
 /*
 	number of USB frames per URB
-	The Line 6 Windows driver always transmits two frames per packet, but
-	the Linux driver performs significantly better (i.e., lower latency)
+	The Line 6 Winकरोws driver always transmits two frames per packet, but
+	the Linux driver perक्रमms signअगरicantly better (i.e., lower latency)
 	with only one frame per packet.
 */
-#define LINE6_ISO_PACKETS	1
+#घोषणा LINE6_ISO_PACKETS	1
 
 /* in a "full speed" device (such as the PODxt Pro) this means 1ms,
- *  for "high speed" it's 1/8ms
+ *  क्रम "high speed" it's 1/8ms
  */
-#define LINE6_ISO_INTERVAL	1
+#घोषणा LINE6_ISO_INTERVAL	1
 
-#define LINE6_IMPULSE_DEFAULT_PERIOD 100
+#घोषणा LINE6_IMPULSE_DEFAULT_PERIOD 100
 
 /*
-	Get substream from Line 6 PCM data structure
+	Get substream from Line 6 PCM data काष्ठाure
 */
-#define get_substream(line6pcm, stream)	\
+#घोषणा get_substream(line6pcm, stream)	\
 		(line6pcm->pcm->streams[stream].substream)
 
 /*
@@ -43,20 +44,20 @@
 	There are several features of the Line 6 USB driver which require PCM
 	data to be exchanged with the device:
 	*) PCM playback and capture via ALSA
-	*) software monitoring (for devices without hardware monitoring)
+	*) software monitoring (क्रम devices without hardware monitoring)
 	*) optional impulse response measurement
-	However, from the device's point of view, there is just a single
+	However, from the device's poपूर्णांक of view, there is just a single
 	capture and playback stream, which must be shared between these
-	subsystems. It is therefore necessary to maintain the state of the
-	subsystems with respect to PCM usage.
+	subप्रणालीs. It is thereक्रमe necessary to मुख्यtain the state of the
+	subप्रणालीs with respect to PCM usage.
 
-	We define two bit flags, "opened" and "running", for each playback
+	We define two bit flags, "opened" and "running", क्रम each playback
 	or capture stream.  Both can contain the bit flag corresponding to
 	LINE6_STREAM_* type,
 	  LINE6_STREAM_PCM = ALSA PCM playback or capture
 	  LINE6_STREAM_MONITOR = software monitoring
 	  IMPULSE = optional impulse response measurement
-	The opened flag indicates whether the buffer is allocated while
+	The खोलोed flag indicates whether the buffer is allocated जबतक
 	the running flag indicates whether the stream is running.
 
 	For monitor or impulse operations, the driver needs to call
@@ -65,34 +66,34 @@
 */
 
 /* stream types */
-enum {
+क्रमागत अणु
 	LINE6_STREAM_PCM,
 	LINE6_STREAM_MONITOR,
 	LINE6_STREAM_IMPULSE,
 	LINE6_STREAM_CAPTURE_HELPER,
-};
+पूर्ण;
 
-/* misc bit flags for PCM operation */
-enum {
+/* misc bit flags क्रम PCM operation */
+क्रमागत अणु
 	LINE6_FLAG_PAUSE_PLAYBACK,
 	LINE6_FLAG_PREPARED,
-};
+पूर्ण;
 
-struct line6_pcm_properties {
-	struct snd_pcm_hardware playback_hw, capture_hw;
-	struct snd_pcm_hw_constraint_ratdens rates;
-	int bytes_per_channel;
-};
+काष्ठा line6_pcm_properties अणु
+	काष्ठा snd_pcm_hardware playback_hw, capture_hw;
+	काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_ratdens rates;
+	पूर्णांक bytes_per_channel;
+पूर्ण;
 
-struct line6_pcm_stream {
+काष्ठा line6_pcm_stream अणु
 	/* allocated URBs */
-	struct urb **urbs;
+	काष्ठा urb **urbs;
 
 	/* Temporary buffer;
 	 * Since the packet size is not known in advance, this buffer is
 	 * large enough to store maximum size packets.
 	 */
-	unsigned char *buffer;
+	अचिन्हित अक्षर *buffer;
 
 	/* Free frame position in the buffer. */
 	snd_pcm_uframes_t pos;
@@ -100,96 +101,96 @@ struct line6_pcm_stream {
 	/* Count processed bytes;
 	 * This is modulo period size (to determine when a period is finished).
 	 */
-	unsigned bytes;
+	अचिन्हित bytes;
 
 	/* Counter to create desired sample rate */
-	unsigned count;
+	अचिन्हित count;
 
 	/* period size in bytes */
-	unsigned period;
+	अचिन्हित period;
 
 	/* Processed frame position in the buffer;
 	 * The contents of the ring buffer have been consumed by the USB
-	 * subsystem (i.e., sent to the USB device) up to this position.
+	 * subप्रणाली (i.e., sent to the USB device) up to this position.
 	 */
-	snd_pcm_uframes_t pos_done;
+	snd_pcm_uframes_t pos_करोne;
 
 	/* Bit mask of active URBs */
-	unsigned long active_urbs;
+	अचिन्हित दीर्घ active_urbs;
 
 	/* Bit mask of URBs currently being unlinked */
-	unsigned long unlink_urbs;
+	अचिन्हित दीर्घ unlink_urbs;
 
 	/* Spin lock to protect updates of the buffer positions (not contents)
 	 */
 	spinlock_t lock;
 
-	/* Bit flags for operational stream types */
-	unsigned long opened;
+	/* Bit flags क्रम operational stream types */
+	अचिन्हित दीर्घ खोलोed;
 
-	/* Bit flags for running stream types */
-	unsigned long running;
+	/* Bit flags क्रम running stream types */
+	अचिन्हित दीर्घ running;
 
-	int last_frame;
-};
+	पूर्णांक last_frame;
+पूर्ण;
 
-struct snd_line6_pcm {
-	/* Pointer back to the Line 6 driver data structure */
-	struct usb_line6 *line6;
+काष्ठा snd_line6_pcm अणु
+	/* Poपूर्णांकer back to the Line 6 driver data काष्ठाure */
+	काष्ठा usb_line6 *line6;
 
 	/* Properties. */
-	struct line6_pcm_properties *properties;
+	काष्ठा line6_pcm_properties *properties;
 
 	/* ALSA pcm stream */
-	struct snd_pcm *pcm;
+	काष्ठा snd_pcm *pcm;
 
 	/* protection to state changes of in/out streams */
-	struct mutex state_mutex;
+	काष्ठा mutex state_mutex;
 
 	/* Capture and playback streams */
-	struct line6_pcm_stream in;
-	struct line6_pcm_stream out;
+	काष्ठा line6_pcm_stream in;
+	काष्ठा line6_pcm_stream out;
 
-	/* Previously captured frame (for software monitoring) */
-	unsigned char *prev_fbuf;
+	/* Previously captured frame (क्रम software monitoring) */
+	अचिन्हित अक्षर *prev_fbuf;
 
-	/* Size of previously captured frame (for software monitoring/sync) */
-	int prev_fsize;
+	/* Size of previously captured frame (क्रम software monitoring/sync) */
+	पूर्णांक prev_fsize;
 
 	/* Maximum size of USB packet */
-	int max_packet_size_in;
-	int max_packet_size_out;
+	पूर्णांक max_packet_size_in;
+	पूर्णांक max_packet_size_out;
 
 	/* PCM playback volume (left and right) */
-	int volume_playback[2];
+	पूर्णांक volume_playback[2];
 
 	/* PCM monitor volume */
-	int volume_monitor;
+	पूर्णांक volume_monitor;
 
-	/* Volume of impulse response test signal (if zero, test is disabled) */
-	int impulse_volume;
+	/* Volume of impulse response test संकेत (अगर zero, test is disabled) */
+	पूर्णांक impulse_volume;
 
-	/* Period of impulse response test signal */
-	int impulse_period;
+	/* Period of impulse response test संकेत */
+	पूर्णांक impulse_period;
 
-	/* Counter for impulse response test signal */
-	int impulse_count;
+	/* Counter क्रम impulse response test संकेत */
+	पूर्णांक impulse_count;
 
 	/* Several status bits (see LINE6_FLAG_*) */
-	unsigned long flags;
-};
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
-extern int line6_init_pcm(struct usb_line6 *line6,
-			  struct line6_pcm_properties *properties);
-extern int snd_line6_trigger(struct snd_pcm_substream *substream, int cmd);
-extern int snd_line6_prepare(struct snd_pcm_substream *substream);
-extern int snd_line6_hw_params(struct snd_pcm_substream *substream,
-			       struct snd_pcm_hw_params *hw_params);
-extern int snd_line6_hw_free(struct snd_pcm_substream *substream);
-extern snd_pcm_uframes_t snd_line6_pointer(struct snd_pcm_substream *substream);
-extern void line6_pcm_disconnect(struct snd_line6_pcm *line6pcm);
-extern int line6_pcm_acquire(struct snd_line6_pcm *line6pcm, int type,
+बाह्य पूर्णांक line6_init_pcm(काष्ठा usb_line6 *line6,
+			  काष्ठा line6_pcm_properties *properties);
+बाह्य पूर्णांक snd_line6_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd);
+बाह्य पूर्णांक snd_line6_prepare(काष्ठा snd_pcm_substream *substream);
+बाह्य पूर्णांक snd_line6_hw_params(काष्ठा snd_pcm_substream *substream,
+			       काष्ठा snd_pcm_hw_params *hw_params);
+बाह्य पूर्णांक snd_line6_hw_मुक्त(काष्ठा snd_pcm_substream *substream);
+बाह्य snd_pcm_uframes_t snd_line6_poपूर्णांकer(काष्ठा snd_pcm_substream *substream);
+बाह्य व्योम line6_pcm_disconnect(काष्ठा snd_line6_pcm *line6pcm);
+बाह्य पूर्णांक line6_pcm_acquire(काष्ठा snd_line6_pcm *line6pcm, पूर्णांक type,
 			       bool start);
-extern void line6_pcm_release(struct snd_line6_pcm *line6pcm, int type);
+बाह्य व्योम line6_pcm_release(काष्ठा snd_line6_pcm *line6pcm, पूर्णांक type);
 
-#endif
+#पूर्ण_अगर

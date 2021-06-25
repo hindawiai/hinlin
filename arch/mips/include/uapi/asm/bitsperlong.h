@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __ASM_MIPS_BITSPERLONG_H
-#define __ASM_MIPS_BITSPERLONG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __ASM_MIPS_BITSPERLONG_H
+#घोषणा __ASM_MIPS_BITSPERLONG_H
 
-#define __BITS_PER_LONG _MIPS_SZLONG
+#घोषणा __BITS_PER_LONG _MIPS_SZLONG
 
-#include <asm-generic/bitsperlong.h>
+#समावेश <यंत्र-generic/bitsperदीर्घ.h>
 
-#endif /* __ASM_MIPS_BITSPERLONG_H */
+#पूर्ण_अगर /* __ASM_MIPS_BITSPERLONG_H */

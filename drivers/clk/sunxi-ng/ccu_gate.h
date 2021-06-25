@@ -1,97 +1,98 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 Maxime Ripard. All rights reserved.
  */
 
-#ifndef _CCU_GATE_H_
-#define _CCU_GATE_H_
+#अगर_अघोषित _CCU_GATE_H_
+#घोषणा _CCU_GATE_H_
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-#include "ccu_common.h"
+#समावेश "ccu_common.h"
 
-struct ccu_gate {
+काष्ठा ccu_gate अणु
 	u32			enable;
 
-	struct ccu_common	common;
-};
+	काष्ठा ccu_common	common;
+पूर्ण;
 
-#define SUNXI_CCU_GATE(_struct, _name, _parent, _reg, _gate, _flags)	\
-	struct ccu_gate _struct = {					\
+#घोषणा SUNXI_CCU_GATE(_काष्ठा, _name, _parent, _reg, _gate, _flags)	\
+	काष्ठा ccu_gate _काष्ठा = अणु					\
 		.enable	= _gate,					\
-		.common	= {						\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
 						      &ccu_gate_ops,	\
 						      _flags),		\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
-#define SUNXI_CCU_GATE_HW(_struct, _name, _parent, _reg, _gate, _flags)	\
-	struct ccu_gate _struct = {					\
+#घोषणा SUNXI_CCU_GATE_HW(_काष्ठा, _name, _parent, _reg, _gate, _flags)	\
+	काष्ठा ccu_gate _काष्ठा = अणु					\
 		.enable	= _gate,					\
-		.common	= {						\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT_HW(_name,		\
 							 _parent,	\
 							 &ccu_gate_ops,	\
 							 _flags),	\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
-#define SUNXI_CCU_GATE_FW(_struct, _name, _parent, _reg, _gate, _flags)	\
-	struct ccu_gate _struct = {					\
+#घोषणा SUNXI_CCU_GATE_FW(_काष्ठा, _name, _parent, _reg, _gate, _flags)	\
+	काष्ठा ccu_gate _काष्ठा = अणु					\
 		.enable	= _gate,					\
-		.common	= {						\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT_FW_NAME(_name,	\
 							      _parent,	\
 							      &ccu_gate_ops, \
 							      _flags),	\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
 /*
- * The following two macros allow the re-use of the data structure
+ * The following two macros allow the re-use of the data काष्ठाure
  * holding the parent info.
  */
-#define SUNXI_CCU_GATE_HWS(_struct, _name, _parent, _reg, _gate, _flags) \
-	struct ccu_gate _struct = {					\
+#घोषणा SUNXI_CCU_GATE_HWS(_काष्ठा, _name, _parent, _reg, _gate, _flags) \
+	काष्ठा ccu_gate _काष्ठा = अणु					\
 		.enable	= _gate,					\
-		.common	= {						\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT_HWS(_name,	\
 							  _parent,	\
 							  &ccu_gate_ops, \
 							  _flags),	\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
-#define SUNXI_CCU_GATE_DATA(_struct, _name, _data, _reg, _gate, _flags)	\
-	struct ccu_gate _struct = {					\
+#घोषणा SUNXI_CCU_GATE_DATA(_काष्ठा, _name, _data, _reg, _gate, _flags)	\
+	काष्ठा ccu_gate _काष्ठा = अणु					\
 		.enable	= _gate,					\
-		.common	= {						\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.hw.init	=				\
 				CLK_HW_INIT_PARENTS_DATA(_name,		\
 							 _data,		\
 							 &ccu_gate_ops,	\
 							 _flags),	\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
-static inline struct ccu_gate *hw_to_ccu_gate(struct clk_hw *hw)
-{
-	struct ccu_common *common = hw_to_ccu_common(hw);
+अटल अंतरभूत काष्ठा ccu_gate *hw_to_ccu_gate(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_common *common = hw_to_ccu_common(hw);
 
-	return container_of(common, struct ccu_gate, common);
-}
+	वापस container_of(common, काष्ठा ccu_gate, common);
+पूर्ण
 
-void ccu_gate_helper_disable(struct ccu_common *common, u32 gate);
-int ccu_gate_helper_enable(struct ccu_common *common, u32 gate);
-int ccu_gate_helper_is_enabled(struct ccu_common *common, u32 gate);
+व्योम ccu_gate_helper_disable(काष्ठा ccu_common *common, u32 gate);
+पूर्णांक ccu_gate_helper_enable(काष्ठा ccu_common *common, u32 gate);
+पूर्णांक ccu_gate_helper_is_enabled(काष्ठा ccu_common *common, u32 gate);
 
-extern const struct clk_ops ccu_gate_ops;
+बाह्य स्थिर काष्ठा clk_ops ccu_gate_ops;
 
-#endif /* _CCU_GATE_H_ */
+#पूर्ण_अगर /* _CCU_GATE_H_ */

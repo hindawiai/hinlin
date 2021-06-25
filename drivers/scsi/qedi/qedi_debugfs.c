@@ -1,228 +1,229 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * QLogic iSCSI Offload Driver
  * Copyright (c) 2016 Cavium Inc.
  */
 
-#include "qedi.h"
-#include "qedi_dbg.h"
+#समावेश "qedi.h"
+#समावेश "qedi_dbg.h"
 
-#include <linux/uaccess.h>
-#include <linux/debugfs.h>
-#include <linux/module.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/module.h>
 
-int qedi_do_not_recover;
-static struct dentry *qedi_dbg_root;
+पूर्णांक qedi_करो_not_recover;
+अटल काष्ठा dentry *qedi_dbg_root;
 
-void
-qedi_dbg_host_init(struct qedi_dbg_ctx *qedi,
-		   const struct qedi_debugfs_ops *dops,
-		   const struct file_operations *fops)
-{
-	char host_dirname[32];
+व्योम
+qedi_dbg_host_init(काष्ठा qedi_dbg_ctx *qedi,
+		   स्थिर काष्ठा qedi_debugfs_ops *करोps,
+		   स्थिर काष्ठा file_operations *fops)
+अणु
+	अक्षर host_स_नाम[32];
 
-	sprintf(host_dirname, "host%u", qedi->host_no);
-	qedi->bdf_dentry = debugfs_create_dir(host_dirname, qedi_dbg_root);
+	प्र_लिखो(host_स_नाम, "host%u", qedi->host_no);
+	qedi->bdf_dentry = debugfs_create_dir(host_स_नाम, qedi_dbg_root);
 
-	while (dops) {
-		if (!(dops->name))
-			break;
+	जबतक (करोps) अणु
+		अगर (!(करोps->name))
+			अवरोध;
 
-		debugfs_create_file(dops->name, 0600, qedi->bdf_dentry, qedi,
+		debugfs_create_file(करोps->name, 0600, qedi->bdf_dentry, qedi,
 				    fops);
-		dops++;
+		करोps++;
 		fops++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-qedi_dbg_host_exit(struct qedi_dbg_ctx *qedi)
-{
-	debugfs_remove_recursive(qedi->bdf_dentry);
-	qedi->bdf_dentry = NULL;
-}
+व्योम
+qedi_dbg_host_निकास(काष्ठा qedi_dbg_ctx *qedi)
+अणु
+	debugfs_हटाओ_recursive(qedi->bdf_dentry);
+	qedi->bdf_dentry = शून्य;
+पूर्ण
 
-void
-qedi_dbg_init(char *drv_name)
-{
-	qedi_dbg_root = debugfs_create_dir(drv_name, NULL);
-}
+व्योम
+qedi_dbg_init(अक्षर *drv_name)
+अणु
+	qedi_dbg_root = debugfs_create_dir(drv_name, शून्य);
+पूर्ण
 
-void
-qedi_dbg_exit(void)
-{
-	debugfs_remove_recursive(qedi_dbg_root);
-	qedi_dbg_root = NULL;
-}
+व्योम
+qedi_dbg_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(qedi_dbg_root);
+	qedi_dbg_root = शून्य;
+पूर्ण
 
-static ssize_t
-qedi_dbg_do_not_recover_enable(struct qedi_dbg_ctx *qedi_dbg)
-{
-	if (!qedi_do_not_recover)
-		qedi_do_not_recover = 1;
-
-	QEDI_INFO(qedi_dbg, QEDI_LOG_DEBUGFS, "do_not_recover=%d\n",
-		  qedi_do_not_recover);
-	return 0;
-}
-
-static ssize_t
-qedi_dbg_do_not_recover_disable(struct qedi_dbg_ctx *qedi_dbg)
-{
-	if (qedi_do_not_recover)
-		qedi_do_not_recover = 0;
+अटल sमाप_प्रकार
+qedi_dbg_करो_not_recover_enable(काष्ठा qedi_dbg_ctx *qedi_dbg)
+अणु
+	अगर (!qedi_करो_not_recover)
+		qedi_करो_not_recover = 1;
 
 	QEDI_INFO(qedi_dbg, QEDI_LOG_DEBUGFS, "do_not_recover=%d\n",
-		  qedi_do_not_recover);
-	return 0;
-}
+		  qedi_करो_not_recover);
+	वापस 0;
+पूर्ण
 
-static struct qedi_list_of_funcs qedi_dbg_do_not_recover_ops[] = {
-	{ "enable", qedi_dbg_do_not_recover_enable },
-	{ "disable", qedi_dbg_do_not_recover_disable },
-	{ NULL, NULL }
-};
+अटल sमाप_प्रकार
+qedi_dbg_करो_not_recover_disable(काष्ठा qedi_dbg_ctx *qedi_dbg)
+अणु
+	अगर (qedi_करो_not_recover)
+		qedi_करो_not_recover = 0;
 
-const struct qedi_debugfs_ops qedi_debugfs_ops[] = {
-	{ "gbl_ctx", NULL },
-	{ "do_not_recover", qedi_dbg_do_not_recover_ops},
-	{ "io_trace", NULL },
-	{ NULL, NULL }
-};
+	QEDI_INFO(qedi_dbg, QEDI_LOG_DEBUGFS, "do_not_recover=%d\n",
+		  qedi_करो_not_recover);
+	वापस 0;
+पूर्ण
 
-static ssize_t
-qedi_dbg_do_not_recover_cmd_write(struct file *filp, const char __user *buffer,
-				  size_t count, loff_t *ppos)
-{
-	size_t cnt = 0;
-	struct qedi_dbg_ctx *qedi_dbg =
-			(struct qedi_dbg_ctx *)filp->private_data;
-	struct qedi_list_of_funcs *lof = qedi_dbg_do_not_recover_ops;
+अटल काष्ठा qedi_list_of_funcs qedi_dbg_करो_not_recover_ops[] = अणु
+	अणु "enable", qedi_dbg_करो_not_recover_enable पूर्ण,
+	अणु "disable", qedi_dbg_करो_not_recover_disable पूर्ण,
+	अणु शून्य, शून्य पूर्ण
+पूर्ण;
 
-	if (*ppos)
-		return 0;
+स्थिर काष्ठा qedi_debugfs_ops qedi_debugfs_ops[] = अणु
+	अणु "gbl_ctx", शून्य पूर्ण,
+	अणु "do_not_recover", qedi_dbg_करो_not_recover_opsपूर्ण,
+	अणु "io_trace", शून्य पूर्ण,
+	अणु शून्य, शून्य पूर्ण
+पूर्ण;
 
-	while (lof) {
-		if (!(lof->oper_str))
-			break;
+अटल sमाप_प्रकार
+qedi_dbg_करो_not_recover_cmd_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buffer,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	माप_प्रकार cnt = 0;
+	काष्ठा qedi_dbg_ctx *qedi_dbg =
+			(काष्ठा qedi_dbg_ctx *)filp->निजी_data;
+	काष्ठा qedi_list_of_funcs *lof = qedi_dbg_करो_not_recover_ops;
 
-		if (!strncmp(lof->oper_str, buffer, strlen(lof->oper_str))) {
+	अगर (*ppos)
+		वापस 0;
+
+	जबतक (lof) अणु
+		अगर (!(lof->oper_str))
+			अवरोध;
+
+		अगर (!म_भेदन(lof->oper_str, buffer, म_माप(lof->oper_str))) अणु
 			cnt = lof->oper_func(qedi_dbg);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		lof++;
-	}
-	return (count - cnt);
-}
+	पूर्ण
+	वापस (count - cnt);
+पूर्ण
 
-static ssize_t
-qedi_dbg_do_not_recover_cmd_read(struct file *filp, char __user *buffer,
-				 size_t count, loff_t *ppos)
-{
-	size_t cnt = 0;
+अटल sमाप_प्रकार
+qedi_dbg_करो_not_recover_cmd_पढ़ो(काष्ठा file *filp, अक्षर __user *buffer,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	माप_प्रकार cnt = 0;
 
-	if (*ppos)
-		return 0;
+	अगर (*ppos)
+		वापस 0;
 
-	cnt = sprintf(buffer, "do_not_recover=%d\n", qedi_do_not_recover);
-	cnt = min_t(int, count, cnt - *ppos);
+	cnt = प्र_लिखो(buffer, "do_not_recover=%d\n", qedi_करो_not_recover);
+	cnt = min_t(पूर्णांक, count, cnt - *ppos);
 	*ppos += cnt;
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static int
-qedi_gbl_ctx_show(struct seq_file *s, void *unused)
-{
-	struct qedi_fastpath *fp = NULL;
-	struct qed_sb_info *sb_info = NULL;
-	struct status_block_e4 *sb = NULL;
-	struct global_queue *que = NULL;
-	int id;
+अटल पूर्णांक
+qedi_gbl_ctx_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा qedi_fastpath *fp = शून्य;
+	काष्ठा qed_sb_info *sb_info = शून्य;
+	काष्ठा status_block_e4 *sb = शून्य;
+	काष्ठा global_queue *que = शून्य;
+	पूर्णांक id;
 	u16 prod_idx;
-	struct qedi_ctx *qedi = s->private;
-	unsigned long flags;
+	काष्ठा qedi_ctx *qedi = s->निजी;
+	अचिन्हित दीर्घ flags;
 
-	seq_puts(s, " DUMP CQ CONTEXT:\n");
+	seq_माला_दो(s, " DUMP CQ CONTEXT:\n");
 
-	for (id = 0; id < MIN_NUM_CPUS_MSIX(qedi); id++) {
+	क्रम (id = 0; id < MIN_NUM_CPUS_MSIX(qedi); id++) अणु
 		spin_lock_irqsave(&qedi->hba_lock, flags);
-		seq_printf(s, "=========FAST CQ PATH [%d] ==========\n", id);
+		seq_म_लिखो(s, "=========FAST CQ PATH [%d] ==========\n", id);
 		fp = &qedi->fp_array[id];
 		sb_info = fp->sb_info;
 		sb = sb_info->sb_virt;
 		prod_idx = (sb->pi_array[QEDI_PROTO_CQ_PROD_IDX] &
 			    STATUS_BLOCK_E4_PROD_INDEX_MASK);
-		seq_printf(s, "SB PROD IDX: %d\n", prod_idx);
+		seq_म_लिखो(s, "SB PROD IDX: %d\n", prod_idx);
 		que = qedi->global_queues[fp->sb_id];
-		seq_printf(s, "DRV CONS IDX: %d\n", que->cq_cons_idx);
-		seq_printf(s, "CQ complete host memory: %d\n", fp->sb_id);
-		seq_puts(s, "=========== END ==================\n\n\n");
+		seq_म_लिखो(s, "DRV CONS IDX: %d\n", que->cq_cons_idx);
+		seq_म_लिखो(s, "CQ complete host memory: %d\n", fp->sb_id);
+		seq_माला_दो(s, "=========== END ==================\n\n\n");
 		spin_unlock_irqrestore(&qedi->hba_lock, flags);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-qedi_dbg_gbl_ctx_open(struct inode *inode, struct file *file)
-{
-	struct qedi_dbg_ctx *qedi_dbg = inode->i_private;
-	struct qedi_ctx *qedi = container_of(qedi_dbg, struct qedi_ctx,
+अटल पूर्णांक
+qedi_dbg_gbl_ctx_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा qedi_dbg_ctx *qedi_dbg = inode->i_निजी;
+	काष्ठा qedi_ctx *qedi = container_of(qedi_dbg, काष्ठा qedi_ctx,
 					     dbg_ctx);
 
-	return single_open(file, qedi_gbl_ctx_show, qedi);
-}
+	वापस single_खोलो(file, qedi_gbl_ctx_show, qedi);
+पूर्ण
 
-static int
-qedi_io_trace_show(struct seq_file *s, void *unused)
-{
-	int id, idx = 0;
-	struct qedi_ctx *qedi = s->private;
-	struct qedi_io_log *io_log;
-	unsigned long flags;
+अटल पूर्णांक
+qedi_io_trace_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	पूर्णांक id, idx = 0;
+	काष्ठा qedi_ctx *qedi = s->निजी;
+	काष्ठा qedi_io_log *io_log;
+	अचिन्हित दीर्घ flags;
 
-	seq_puts(s, " DUMP IO LOGS:\n");
+	seq_माला_दो(s, " DUMP IO LOGS:\n");
 	spin_lock_irqsave(&qedi->io_trace_lock, flags);
 	idx = qedi->io_trace_idx;
-	for (id = 0; id < QEDI_IO_TRACE_SIZE; id++) {
+	क्रम (id = 0; id < QEDI_IO_TRACE_SIZE; id++) अणु
 		io_log = &qedi->io_trace_buf[idx];
-		seq_printf(s, "iodir-%d:", io_log->direction);
-		seq_printf(s, "tid-0x%x:", io_log->task_id);
-		seq_printf(s, "cid-0x%x:", io_log->cid);
-		seq_printf(s, "lun-%d:", io_log->lun);
-		seq_printf(s, "op-0x%02x:", io_log->op);
-		seq_printf(s, "0x%02x%02x%02x%02x:", io_log->lba[0],
+		seq_म_लिखो(s, "iodir-%d:", io_log->direction);
+		seq_म_लिखो(s, "tid-0x%x:", io_log->task_id);
+		seq_म_लिखो(s, "cid-0x%x:", io_log->cid);
+		seq_म_लिखो(s, "lun-%d:", io_log->lun);
+		seq_म_लिखो(s, "op-0x%02x:", io_log->op);
+		seq_म_लिखो(s, "0x%02x%02x%02x%02x:", io_log->lba[0],
 			   io_log->lba[1], io_log->lba[2], io_log->lba[3]);
-		seq_printf(s, "buflen-%d:", io_log->bufflen);
-		seq_printf(s, "sgcnt-%d:", io_log->sg_count);
-		seq_printf(s, "res-0x%08x:", io_log->result);
-		seq_printf(s, "jif-%lu:", io_log->jiffies);
-		seq_printf(s, "blk_req_cpu-%d:", io_log->blk_req_cpu);
-		seq_printf(s, "req_cpu-%d:", io_log->req_cpu);
-		seq_printf(s, "intr_cpu-%d:", io_log->intr_cpu);
-		seq_printf(s, "blk_rsp_cpu-%d\n", io_log->blk_rsp_cpu);
+		seq_म_लिखो(s, "buflen-%d:", io_log->bufflen);
+		seq_म_लिखो(s, "sgcnt-%d:", io_log->sg_count);
+		seq_म_लिखो(s, "res-0x%08x:", io_log->result);
+		seq_म_लिखो(s, "jif-%lu:", io_log->jअगरfies);
+		seq_म_लिखो(s, "blk_req_cpu-%d:", io_log->blk_req_cpu);
+		seq_म_लिखो(s, "req_cpu-%d:", io_log->req_cpu);
+		seq_म_लिखो(s, "intr_cpu-%d:", io_log->पूर्णांकr_cpu);
+		seq_म_लिखो(s, "blk_rsp_cpu-%d\n", io_log->blk_rsp_cpu);
 
 		idx++;
-		if (idx == QEDI_IO_TRACE_SIZE)
+		अगर (idx == QEDI_IO_TRACE_SIZE)
 			idx = 0;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&qedi->io_trace_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-qedi_dbg_io_trace_open(struct inode *inode, struct file *file)
-{
-	struct qedi_dbg_ctx *qedi_dbg = inode->i_private;
-	struct qedi_ctx *qedi = container_of(qedi_dbg, struct qedi_ctx,
+अटल पूर्णांक
+qedi_dbg_io_trace_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा qedi_dbg_ctx *qedi_dbg = inode->i_निजी;
+	काष्ठा qedi_ctx *qedi = container_of(qedi_dbg, काष्ठा qedi_ctx,
 					     dbg_ctx);
 
-	return single_open(file, qedi_io_trace_show, qedi);
-}
+	वापस single_खोलो(file, qedi_io_trace_show, qedi);
+पूर्ण
 
-const struct file_operations qedi_dbg_fops[] = {
+स्थिर काष्ठा file_operations qedi_dbg_fops[] = अणु
 	qedi_dbg_fileops_seq(qedi, gbl_ctx),
-	qedi_dbg_fileops(qedi, do_not_recover),
+	qedi_dbg_fileops(qedi, करो_not_recover),
 	qedi_dbg_fileops_seq(qedi, io_trace),
-	{ },
-};
+	अणु पूर्ण,
+पूर्ण;

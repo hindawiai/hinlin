@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,418 +27,418 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
  */
 
-#define pr_fmt(fmt) "[TTM] " fmt
+#घोषणा pr_fmt(fmt) "[TTM] " fmt
 
-#include <drm/ttm/ttm_bo_driver.h>
-#include <drm/ttm/ttm_placement.h>
-#include <linux/jiffies.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/mm.h>
-#include <linux/file.h>
-#include <linux/module.h>
-#include <linux/atomic.h>
-#include <linux/dma-resv.h>
+#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
+#समावेश <drm/tपंचांग/tपंचांग_placement.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/file.h>
+#समावेश <linux/module.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/dma-resv.h>
 
-#include "ttm_module.h"
+#समावेश "ttm_module.h"
 
-/* default destructor */
-static void ttm_bo_default_destroy(struct ttm_buffer_object *bo)
-{
-	kfree(bo);
-}
+/* शेष deकाष्ठाor */
+अटल व्योम tपंचांग_bo_शेष_destroy(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	kमुक्त(bo);
+पूर्ण
 
-static void ttm_bo_mem_space_debug(struct ttm_buffer_object *bo,
-					struct ttm_placement *placement)
-{
-	struct drm_printer p = drm_debug_printer(TTM_PFX);
-	struct ttm_resource_manager *man;
-	int i, mem_type;
+अटल व्योम tपंचांग_bo_mem_space_debug(काष्ठा tपंचांग_buffer_object *bo,
+					काष्ठा tपंचांग_placement *placement)
+अणु
+	काष्ठा drm_prपूर्णांकer p = drm_debug_prपूर्णांकer(TTM_PFX);
+	काष्ठा tपंचांग_resource_manager *man;
+	पूर्णांक i, mem_type;
 
-	drm_printf(&p, "No space for %p (%lu pages, %zuK, %zuM)\n",
+	drm_म_लिखो(&p, "No space for %p (%lu pages, %zuK, %zuM)\n",
 		   bo, bo->mem.num_pages, bo->base.size >> 10,
 		   bo->base.size >> 20);
-	for (i = 0; i < placement->num_placement; i++) {
+	क्रम (i = 0; i < placement->num_placement; i++) अणु
 		mem_type = placement->placement[i].mem_type;
-		drm_printf(&p, "  placement[%d]=0x%08X (%d)\n",
+		drm_म_लिखो(&p, "  placement[%d]=0x%08X (%d)\n",
 			   i, placement->placement[i].flags, mem_type);
-		man = ttm_manager_type(bo->bdev, mem_type);
-		ttm_resource_manager_debug(man, &p);
-	}
-}
+		man = tपंचांग_manager_type(bo->bdev, mem_type);
+		tपंचांग_resource_manager_debug(man, &p);
+	पूर्ण
+पूर्ण
 
-static void ttm_bo_del_from_lru(struct ttm_buffer_object *bo)
-{
-	struct ttm_device *bdev = bo->bdev;
+अटल व्योम tपंचांग_bo_del_from_lru(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
 
 	list_del_init(&bo->lru);
 
-	if (bdev->funcs->del_from_lru_notify)
-		bdev->funcs->del_from_lru_notify(bo);
-}
+	अगर (bdev->funcs->del_from_lru_notअगरy)
+		bdev->funcs->del_from_lru_notअगरy(bo);
+पूर्ण
 
-static void ttm_bo_bulk_move_set_pos(struct ttm_lru_bulk_move_pos *pos,
-				     struct ttm_buffer_object *bo)
-{
-	if (!pos->first)
+अटल व्योम tपंचांग_bo_bulk_move_set_pos(काष्ठा tपंचांग_lru_bulk_move_pos *pos,
+				     काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	अगर (!pos->first)
 		pos->first = bo;
 	pos->last = bo;
-}
+पूर्ण
 
-void ttm_bo_move_to_lru_tail(struct ttm_buffer_object *bo,
-			     struct ttm_resource *mem,
-			     struct ttm_lru_bulk_move *bulk)
-{
-	struct ttm_device *bdev = bo->bdev;
-	struct ttm_resource_manager *man;
+व्योम tपंचांग_bo_move_to_lru_tail(काष्ठा tपंचांग_buffer_object *bo,
+			     काष्ठा tपंचांग_resource *mem,
+			     काष्ठा tपंचांग_lru_bulk_move *bulk)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	काष्ठा tपंचांग_resource_manager *man;
 
-	if (!bo->deleted)
-		dma_resv_assert_held(bo->base.resv);
+	अगर (!bo->deleted)
+		dma_resv_निश्चित_held(bo->base.resv);
 
-	if (bo->pin_count) {
-		ttm_bo_del_from_lru(bo);
-		return;
-	}
+	अगर (bo->pin_count) अणु
+		tपंचांग_bo_del_from_lru(bo);
+		वापस;
+	पूर्ण
 
-	man = ttm_manager_type(bdev, mem->mem_type);
+	man = tपंचांग_manager_type(bdev, mem->mem_type);
 	list_move_tail(&bo->lru, &man->lru[bo->priority]);
 
-	if (bdev->funcs->del_from_lru_notify)
-		bdev->funcs->del_from_lru_notify(bo);
+	अगर (bdev->funcs->del_from_lru_notअगरy)
+		bdev->funcs->del_from_lru_notअगरy(bo);
 
-	if (bulk && !bo->pin_count) {
-		switch (bo->mem.mem_type) {
-		case TTM_PL_TT:
-			ttm_bo_bulk_move_set_pos(&bulk->tt[bo->priority], bo);
-			break;
+	अगर (bulk && !bo->pin_count) अणु
+		चयन (bo->mem.mem_type) अणु
+		हाल TTM_PL_TT:
+			tपंचांग_bo_bulk_move_set_pos(&bulk->tt[bo->priority], bo);
+			अवरोध;
 
-		case TTM_PL_VRAM:
-			ttm_bo_bulk_move_set_pos(&bulk->vram[bo->priority], bo);
-			break;
-		}
-	}
-}
-EXPORT_SYMBOL(ttm_bo_move_to_lru_tail);
+		हाल TTM_PL_VRAM:
+			tपंचांग_bo_bulk_move_set_pos(&bulk->vram[bo->priority], bo);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_move_to_lru_tail);
 
-void ttm_bo_bulk_move_lru_tail(struct ttm_lru_bulk_move *bulk)
-{
-	unsigned i;
+व्योम tपंचांग_bo_bulk_move_lru_tail(काष्ठा tपंचांग_lru_bulk_move *bulk)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < TTM_MAX_BO_PRIORITY; ++i) {
-		struct ttm_lru_bulk_move_pos *pos = &bulk->tt[i];
-		struct ttm_resource_manager *man;
+	क्रम (i = 0; i < TTM_MAX_BO_PRIORITY; ++i) अणु
+		काष्ठा tपंचांग_lru_bulk_move_pos *pos = &bulk->tt[i];
+		काष्ठा tपंचांग_resource_manager *man;
 
-		if (!pos->first)
-			continue;
+		अगर (!pos->first)
+			जारी;
 
-		dma_resv_assert_held(pos->first->base.resv);
-		dma_resv_assert_held(pos->last->base.resv);
+		dma_resv_निश्चित_held(pos->first->base.resv);
+		dma_resv_निश्चित_held(pos->last->base.resv);
 
-		man = ttm_manager_type(pos->first->bdev, TTM_PL_TT);
+		man = tपंचांग_manager_type(pos->first->bdev, TTM_PL_TT);
 		list_bulk_move_tail(&man->lru[i], &pos->first->lru,
 				    &pos->last->lru);
-	}
+	पूर्ण
 
-	for (i = 0; i < TTM_MAX_BO_PRIORITY; ++i) {
-		struct ttm_lru_bulk_move_pos *pos = &bulk->vram[i];
-		struct ttm_resource_manager *man;
+	क्रम (i = 0; i < TTM_MAX_BO_PRIORITY; ++i) अणु
+		काष्ठा tपंचांग_lru_bulk_move_pos *pos = &bulk->vram[i];
+		काष्ठा tपंचांग_resource_manager *man;
 
-		if (!pos->first)
-			continue;
+		अगर (!pos->first)
+			जारी;
 
-		dma_resv_assert_held(pos->first->base.resv);
-		dma_resv_assert_held(pos->last->base.resv);
+		dma_resv_निश्चित_held(pos->first->base.resv);
+		dma_resv_निश्चित_held(pos->last->base.resv);
 
-		man = ttm_manager_type(pos->first->bdev, TTM_PL_VRAM);
+		man = tपंचांग_manager_type(pos->first->bdev, TTM_PL_VRAM);
 		list_bulk_move_tail(&man->lru[i], &pos->first->lru,
 				    &pos->last->lru);
-	}
-}
-EXPORT_SYMBOL(ttm_bo_bulk_move_lru_tail);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_bulk_move_lru_tail);
 
-static int ttm_bo_handle_move_mem(struct ttm_buffer_object *bo,
-				  struct ttm_resource *mem, bool evict,
-				  struct ttm_operation_ctx *ctx,
-				  struct ttm_place *hop)
-{
-	struct ttm_device *bdev = bo->bdev;
-	struct ttm_resource_manager *old_man = ttm_manager_type(bdev, bo->mem.mem_type);
-	struct ttm_resource_manager *new_man = ttm_manager_type(bdev, mem->mem_type);
-	int ret;
+अटल पूर्णांक tपंचांग_bo_handle_move_mem(काष्ठा tपंचांग_buffer_object *bo,
+				  काष्ठा tपंचांग_resource *mem, bool evict,
+				  काष्ठा tपंचांग_operation_ctx *ctx,
+				  काष्ठा tपंचांग_place *hop)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	काष्ठा tपंचांग_resource_manager *old_man = tपंचांग_manager_type(bdev, bo->mem.mem_type);
+	काष्ठा tपंचांग_resource_manager *new_man = tपंचांग_manager_type(bdev, mem->mem_type);
+	पूर्णांक ret;
 
-	ttm_bo_unmap_virtual(bo);
+	tपंचांग_bo_unmap_भव(bo);
 
 	/*
-	 * Create and bind a ttm if required.
+	 * Create and bind a tपंचांग अगर required.
 	 */
 
-	if (new_man->use_tt) {
-		/* Zero init the new TTM structure if the old location should
+	अगर (new_man->use_tt) अणु
+		/* Zero init the new TTM काष्ठाure अगर the old location should
 		 * have used one as well.
 		 */
-		ret = ttm_tt_create(bo, old_man->use_tt);
-		if (ret)
-			goto out_err;
+		ret = tपंचांग_tt_create(bo, old_man->use_tt);
+		अगर (ret)
+			जाओ out_err;
 
-		if (mem->mem_type != TTM_PL_SYSTEM) {
-			ret = ttm_tt_populate(bo->bdev, bo->ttm, ctx);
-			if (ret)
-				goto out_err;
-		}
-	}
+		अगर (mem->mem_type != TTM_PL_SYSTEM) अणु
+			ret = tपंचांग_tt_populate(bo->bdev, bo->tपंचांग, ctx);
+			अगर (ret)
+				जाओ out_err;
+		पूर्ण
+	पूर्ण
 
 	ret = bdev->funcs->move(bo, evict, ctx, mem, hop);
-	if (ret) {
-		if (ret == -EMULTIHOP)
-			return ret;
-		goto out_err;
-	}
+	अगर (ret) अणु
+		अगर (ret == -EMULTIHOP)
+			वापस ret;
+		जाओ out_err;
+	पूर्ण
 
 	ctx->bytes_moved += bo->base.size;
-	return 0;
+	वापस 0;
 
 out_err:
-	new_man = ttm_manager_type(bdev, bo->mem.mem_type);
-	if (!new_man->use_tt)
-		ttm_bo_tt_destroy(bo);
+	new_man = tपंचांग_manager_type(bdev, bo->mem.mem_type);
+	अगर (!new_man->use_tt)
+		tपंचांग_bo_tt_destroy(bo);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Call bo::reserved.
- * Will release GPU memory type usage on destruction.
- * This is the place to put in driver specific hooks to release
- * driver private resources.
+ * Will release GPU memory type usage on deकाष्ठाion.
+ * This is the place to put in driver specअगरic hooks to release
+ * driver निजी resources.
  * Will release the bo::reserved lock.
  */
 
-static void ttm_bo_cleanup_memtype_use(struct ttm_buffer_object *bo)
-{
-	if (bo->bdev->funcs->delete_mem_notify)
-		bo->bdev->funcs->delete_mem_notify(bo);
+अटल व्योम tपंचांग_bo_cleanup_memtype_use(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	अगर (bo->bdev->funcs->delete_mem_notअगरy)
+		bo->bdev->funcs->delete_mem_notअगरy(bo);
 
-	ttm_bo_tt_destroy(bo);
-	ttm_resource_free(bo, &bo->mem);
-}
+	tपंचांग_bo_tt_destroy(bo);
+	tपंचांग_resource_मुक्त(bo, &bo->mem);
+पूर्ण
 
-static int ttm_bo_individualize_resv(struct ttm_buffer_object *bo)
-{
-	int r;
+अटल पूर्णांक tपंचांग_bo_inभागidualize_resv(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	पूर्णांक r;
 
-	if (bo->base.resv == &bo->base._resv)
-		return 0;
+	अगर (bo->base.resv == &bo->base._resv)
+		वापस 0;
 
 	BUG_ON(!dma_resv_trylock(&bo->base._resv));
 
 	r = dma_resv_copy_fences(&bo->base._resv, bo->base.resv);
 	dma_resv_unlock(&bo->base._resv);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	if (bo->type != ttm_bo_type_sg) {
+	अगर (bo->type != tपंचांग_bo_type_sg) अणु
 		/* This works because the BO is about to be destroyed and nobody
-		 * reference it any more. The only tricky case is the trylock on
-		 * the resv object while holding the lru_lock.
+		 * reference it any more. The only tricky हाल is the trylock on
+		 * the resv object जबतक holding the lru_lock.
 		 */
 		spin_lock(&bo->bdev->lru_lock);
 		bo->base.resv = &bo->base._resv;
 		spin_unlock(&bo->bdev->lru_lock);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void ttm_bo_flush_all_fences(struct ttm_buffer_object *bo)
-{
-	struct dma_resv *resv = &bo->base._resv;
-	struct dma_resv_list *fobj;
-	struct dma_fence *fence;
-	int i;
+अटल व्योम tपंचांग_bo_flush_all_fences(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	काष्ठा dma_resv *resv = &bo->base._resv;
+	काष्ठा dma_resv_list *fobj;
+	काष्ठा dma_fence *fence;
+	पूर्णांक i;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	fobj = rcu_dereference(resv->fence);
 	fence = rcu_dereference(resv->fence_excl);
-	if (fence && !fence->ops->signaled)
-		dma_fence_enable_sw_signaling(fence);
+	अगर (fence && !fence->ops->संकेतed)
+		dma_fence_enable_sw_संकेतing(fence);
 
-	for (i = 0; fobj && i < fobj->shared_count; ++i) {
+	क्रम (i = 0; fobj && i < fobj->shared_count; ++i) अणु
 		fence = rcu_dereference(fobj->shared[i]);
 
-		if (!fence->ops->signaled)
-			dma_fence_enable_sw_signaling(fence);
-	}
-	rcu_read_unlock();
-}
+		अगर (!fence->ops->संकेतed)
+			dma_fence_enable_sw_संकेतing(fence);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
- * function ttm_bo_cleanup_refs
- * If bo idle, remove from lru lists, and unref.
- * If not idle, block if possible.
+ * function tपंचांग_bo_cleanup_refs
+ * If bo idle, हटाओ from lru lists, and unref.
+ * If not idle, block अगर possible.
  *
  * Must be called with lru_lock and reservation held, this function
- * will drop the lru lock and optionally the reservation lock before returning.
+ * will drop the lru lock and optionally the reservation lock beक्रमe वापसing.
  *
  * @bo:                    The buffer object to clean-up
- * @interruptible:         Any sleeps should occur interruptibly.
- * @no_wait_gpu:           Never wait for gpu. Return -EBUSY instead.
+ * @पूर्णांकerruptible:         Any sleeps should occur पूर्णांकerruptibly.
+ * @no_रुको_gpu:           Never रुको क्रम gpu. Return -EBUSY instead.
  * @unlock_resv:           Unlock the reservation lock as well.
  */
 
-static int ttm_bo_cleanup_refs(struct ttm_buffer_object *bo,
-			       bool interruptible, bool no_wait_gpu,
+अटल पूर्णांक tपंचांग_bo_cleanup_refs(काष्ठा tपंचांग_buffer_object *bo,
+			       bool पूर्णांकerruptible, bool no_रुको_gpu,
 			       bool unlock_resv)
-{
-	struct dma_resv *resv = &bo->base._resv;
-	int ret;
+अणु
+	काष्ठा dma_resv *resv = &bo->base._resv;
+	पूर्णांक ret;
 
-	if (dma_resv_test_signaled_rcu(resv, true))
+	अगर (dma_resv_test_संकेतed_rcu(resv, true))
 		ret = 0;
-	else
+	अन्यथा
 		ret = -EBUSY;
 
-	if (ret && !no_wait_gpu) {
-		long lret;
+	अगर (ret && !no_रुको_gpu) अणु
+		दीर्घ lret;
 
-		if (unlock_resv)
+		अगर (unlock_resv)
 			dma_resv_unlock(bo->base.resv);
 		spin_unlock(&bo->bdev->lru_lock);
 
-		lret = dma_resv_wait_timeout_rcu(resv, true, interruptible,
+		lret = dma_resv_रुको_समयout_rcu(resv, true, पूर्णांकerruptible,
 						 30 * HZ);
 
-		if (lret < 0)
-			return lret;
-		else if (lret == 0)
-			return -EBUSY;
+		अगर (lret < 0)
+			वापस lret;
+		अन्यथा अगर (lret == 0)
+			वापस -EBUSY;
 
 		spin_lock(&bo->bdev->lru_lock);
-		if (unlock_resv && !dma_resv_trylock(bo->base.resv)) {
+		अगर (unlock_resv && !dma_resv_trylock(bo->base.resv)) अणु
 			/*
-			 * We raced, and lost, someone else holds the reservation now,
-			 * and is probably busy in ttm_bo_cleanup_memtype_use.
+			 * We raced, and lost, someone अन्यथा holds the reservation now,
+			 * and is probably busy in tपंचांग_bo_cleanup_memtype_use.
 			 *
-			 * Even if it's not the case, because we finished waiting any
-			 * delayed destruction would succeed, so just return success
+			 * Even अगर it's not the हाल, because we finished रुकोing any
+			 * delayed deकाष्ठाion would succeed, so just वापस success
 			 * here.
 			 */
 			spin_unlock(&bo->bdev->lru_lock);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		ret = 0;
-	}
+	पूर्ण
 
-	if (ret || unlikely(list_empty(&bo->ddestroy))) {
-		if (unlock_resv)
+	अगर (ret || unlikely(list_empty(&bo->ddestroy))) अणु
+		अगर (unlock_resv)
 			dma_resv_unlock(bo->base.resv);
 		spin_unlock(&bo->bdev->lru_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ttm_bo_del_from_lru(bo);
+	tपंचांग_bo_del_from_lru(bo);
 	list_del_init(&bo->ddestroy);
 	spin_unlock(&bo->bdev->lru_lock);
-	ttm_bo_cleanup_memtype_use(bo);
+	tपंचांग_bo_cleanup_memtype_use(bo);
 
-	if (unlock_resv)
+	अगर (unlock_resv)
 		dma_resv_unlock(bo->base.resv);
 
-	ttm_bo_put(bo);
+	tपंचांग_bo_put(bo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Traverse the delayed list, and call ttm_bo_cleanup_refs on all
+ * Traverse the delayed list, and call tपंचांग_bo_cleanup_refs on all
  * encountered buffers.
  */
-bool ttm_bo_delayed_delete(struct ttm_device *bdev, bool remove_all)
-{
-	struct list_head removed;
+bool tपंचांग_bo_delayed_delete(काष्ठा tपंचांग_device *bdev, bool हटाओ_all)
+अणु
+	काष्ठा list_head हटाओd;
 	bool empty;
 
-	INIT_LIST_HEAD(&removed);
+	INIT_LIST_HEAD(&हटाओd);
 
 	spin_lock(&bdev->lru_lock);
-	while (!list_empty(&bdev->ddestroy)) {
-		struct ttm_buffer_object *bo;
+	जबतक (!list_empty(&bdev->ddestroy)) अणु
+		काष्ठा tपंचांग_buffer_object *bo;
 
-		bo = list_first_entry(&bdev->ddestroy, struct ttm_buffer_object,
+		bo = list_first_entry(&bdev->ddestroy, काष्ठा tपंचांग_buffer_object,
 				      ddestroy);
-		list_move_tail(&bo->ddestroy, &removed);
-		if (!ttm_bo_get_unless_zero(bo))
-			continue;
+		list_move_tail(&bo->ddestroy, &हटाओd);
+		अगर (!tपंचांग_bo_get_unless_zero(bo))
+			जारी;
 
-		if (remove_all || bo->base.resv != &bo->base._resv) {
+		अगर (हटाओ_all || bo->base.resv != &bo->base._resv) अणु
 			spin_unlock(&bdev->lru_lock);
-			dma_resv_lock(bo->base.resv, NULL);
+			dma_resv_lock(bo->base.resv, शून्य);
 
 			spin_lock(&bdev->lru_lock);
-			ttm_bo_cleanup_refs(bo, false, !remove_all, true);
+			tपंचांग_bo_cleanup_refs(bo, false, !हटाओ_all, true);
 
-		} else if (dma_resv_trylock(bo->base.resv)) {
-			ttm_bo_cleanup_refs(bo, false, !remove_all, true);
-		} else {
+		पूर्ण अन्यथा अगर (dma_resv_trylock(bo->base.resv)) अणु
+			tपंचांग_bo_cleanup_refs(bo, false, !हटाओ_all, true);
+		पूर्ण अन्यथा अणु
 			spin_unlock(&bdev->lru_lock);
-		}
+		पूर्ण
 
-		ttm_bo_put(bo);
+		tपंचांग_bo_put(bo);
 		spin_lock(&bdev->lru_lock);
-	}
-	list_splice_tail(&removed, &bdev->ddestroy);
+	पूर्ण
+	list_splice_tail(&हटाओd, &bdev->ddestroy);
 	empty = list_empty(&bdev->ddestroy);
 	spin_unlock(&bdev->lru_lock);
 
-	return empty;
-}
+	वापस empty;
+पूर्ण
 
-static void ttm_bo_release(struct kref *kref)
-{
-	struct ttm_buffer_object *bo =
-	    container_of(kref, struct ttm_buffer_object, kref);
-	struct ttm_device *bdev = bo->bdev;
-	int ret;
+अटल व्योम tपंचांग_bo_release(काष्ठा kref *kref)
+अणु
+	काष्ठा tपंचांग_buffer_object *bo =
+	    container_of(kref, काष्ठा tपंचांग_buffer_object, kref);
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	पूर्णांक ret;
 
-	if (!bo->deleted) {
-		ret = ttm_bo_individualize_resv(bo);
-		if (ret) {
-			/* Last resort, if we fail to allocate memory for the
-			 * fences block for the BO to become idle
+	अगर (!bo->deleted) अणु
+		ret = tपंचांग_bo_inभागidualize_resv(bo);
+		अगर (ret) अणु
+			/* Last resort, अगर we fail to allocate memory क्रम the
+			 * fences block क्रम the BO to become idle
 			 */
-			dma_resv_wait_timeout_rcu(bo->base.resv, true, false,
+			dma_resv_रुको_समयout_rcu(bo->base.resv, true, false,
 						  30 * HZ);
-		}
+		पूर्ण
 
-		if (bo->bdev->funcs->release_notify)
-			bo->bdev->funcs->release_notify(bo);
+		अगर (bo->bdev->funcs->release_notअगरy)
+			bo->bdev->funcs->release_notअगरy(bo);
 
-		drm_vma_offset_remove(bdev->vma_manager, &bo->base.vma_node);
-		ttm_mem_io_free(bdev, &bo->mem);
-	}
+		drm_vma_offset_हटाओ(bdev->vma_manager, &bo->base.vma_node);
+		tपंचांग_mem_io_मुक्त(bdev, &bo->mem);
+	पूर्ण
 
-	if (!dma_resv_test_signaled_rcu(bo->base.resv, true) ||
-	    !dma_resv_trylock(bo->base.resv)) {
-		/* The BO is not idle, resurrect it for delayed destroy */
-		ttm_bo_flush_all_fences(bo);
+	अगर (!dma_resv_test_संकेतed_rcu(bo->base.resv, true) ||
+	    !dma_resv_trylock(bo->base.resv)) अणु
+		/* The BO is not idle, resurrect it क्रम delayed destroy */
+		tपंचांग_bo_flush_all_fences(bo);
 		bo->deleted = true;
 
 		spin_lock(&bo->bdev->lru_lock);
 
 		/*
 		 * Make pinned bos immediately available to
-		 * shrinkers, now that they are queued for
-		 * destruction.
+		 * shrinkers, now that they are queued क्रम
+		 * deकाष्ठाion.
 		 *
-		 * FIXME: QXL is triggering this. Can be removed when the
+		 * FIXME: QXL is triggering this. Can be हटाओd when the
 		 * driver is fixed.
 		 */
-		if (WARN_ON_ONCE(bo->pin_count)) {
+		अगर (WARN_ON_ONCE(bo->pin_count)) अणु
 			bo->pin_count = 0;
-			ttm_bo_move_to_lru_tail(bo, &bo->mem, NULL);
-		}
+			tपंचांग_bo_move_to_lru_tail(bo, &bo->mem, शून्य);
+		पूर्ण
 
 		kref_init(&bo->kref);
 		list_add_tail(&bo->ddestroy, &bdev->ddestroy);
@@ -445,593 +446,593 @@ static void ttm_bo_release(struct kref *kref)
 
 		schedule_delayed_work(&bdev->wq,
 				      ((HZ / 100) < 1) ? 1 : HZ / 100);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock(&bo->bdev->lru_lock);
-	ttm_bo_del_from_lru(bo);
+	tपंचांग_bo_del_from_lru(bo);
 	list_del(&bo->ddestroy);
 	spin_unlock(&bo->bdev->lru_lock);
 
-	ttm_bo_cleanup_memtype_use(bo);
+	tपंचांग_bo_cleanup_memtype_use(bo);
 	dma_resv_unlock(bo->base.resv);
 
-	atomic_dec(&ttm_glob.bo_count);
+	atomic_dec(&tपंचांग_glob.bo_count);
 	dma_fence_put(bo->moving);
-	if (!ttm_bo_uses_embedded_gem_object(bo))
+	अगर (!tपंचांग_bo_uses_embedded_gem_object(bo))
 		dma_resv_fini(&bo->base._resv);
 	bo->destroy(bo);
-}
+पूर्ण
 
-void ttm_bo_put(struct ttm_buffer_object *bo)
-{
-	kref_put(&bo->kref, ttm_bo_release);
-}
-EXPORT_SYMBOL(ttm_bo_put);
+व्योम tपंचांग_bo_put(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	kref_put(&bo->kref, tपंचांग_bo_release);
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_put);
 
-int ttm_bo_lock_delayed_workqueue(struct ttm_device *bdev)
-{
-	return cancel_delayed_work_sync(&bdev->wq);
-}
-EXPORT_SYMBOL(ttm_bo_lock_delayed_workqueue);
+पूर्णांक tपंचांग_bo_lock_delayed_workqueue(काष्ठा tपंचांग_device *bdev)
+अणु
+	वापस cancel_delayed_work_sync(&bdev->wq);
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_lock_delayed_workqueue);
 
-void ttm_bo_unlock_delayed_workqueue(struct ttm_device *bdev, int resched)
-{
-	if (resched)
+व्योम tपंचांग_bo_unlock_delayed_workqueue(काष्ठा tपंचांग_device *bdev, पूर्णांक resched)
+अणु
+	अगर (resched)
 		schedule_delayed_work(&bdev->wq,
 				      ((HZ / 100) < 1) ? 1 : HZ / 100);
-}
-EXPORT_SYMBOL(ttm_bo_unlock_delayed_workqueue);
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_unlock_delayed_workqueue);
 
-static int ttm_bo_evict(struct ttm_buffer_object *bo,
-			struct ttm_operation_ctx *ctx)
-{
-	struct ttm_device *bdev = bo->bdev;
-	struct ttm_resource evict_mem;
-	struct ttm_placement placement;
-	struct ttm_place hop;
-	int ret = 0;
+अटल पूर्णांक tपंचांग_bo_evict(काष्ठा tपंचांग_buffer_object *bo,
+			काष्ठा tपंचांग_operation_ctx *ctx)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	काष्ठा tपंचांग_resource evict_mem;
+	काष्ठा tपंचांग_placement placement;
+	काष्ठा tपंचांग_place hop;
+	पूर्णांक ret = 0;
 
-	memset(&hop, 0, sizeof(hop));
+	स_रखो(&hop, 0, माप(hop));
 
-	dma_resv_assert_held(bo->base.resv);
+	dma_resv_निश्चित_held(bo->base.resv);
 
 	placement.num_placement = 0;
 	placement.num_busy_placement = 0;
 	bdev->funcs->evict_flags(bo, &placement);
 
-	if (!placement.num_placement && !placement.num_busy_placement) {
-		ttm_bo_wait(bo, false, false);
+	अगर (!placement.num_placement && !placement.num_busy_placement) अणु
+		tपंचांग_bo_रुको(bo, false, false);
 
-		ttm_bo_cleanup_memtype_use(bo);
-		return ttm_tt_create(bo, false);
-	}
+		tपंचांग_bo_cleanup_memtype_use(bo);
+		वापस tपंचांग_tt_create(bo, false);
+	पूर्ण
 
 	evict_mem = bo->mem;
-	evict_mem.mm_node = NULL;
+	evict_mem.mm_node = शून्य;
 	evict_mem.bus.offset = 0;
-	evict_mem.bus.addr = NULL;
+	evict_mem.bus.addr = शून्य;
 
-	ret = ttm_bo_mem_space(bo, &placement, &evict_mem, ctx);
-	if (ret) {
-		if (ret != -ERESTARTSYS) {
+	ret = tपंचांग_bo_mem_space(bo, &placement, &evict_mem, ctx);
+	अगर (ret) अणु
+		अगर (ret != -ERESTARTSYS) अणु
 			pr_err("Failed to find memory space for buffer 0x%p eviction\n",
 			       bo);
-			ttm_bo_mem_space_debug(bo, &placement);
-		}
-		goto out;
-	}
+			tपंचांग_bo_mem_space_debug(bo, &placement);
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
-	ret = ttm_bo_handle_move_mem(bo, &evict_mem, true, ctx, &hop);
-	if (unlikely(ret)) {
+	ret = tपंचांग_bo_handle_move_mem(bo, &evict_mem, true, ctx, &hop);
+	अगर (unlikely(ret)) अणु
 		WARN(ret == -EMULTIHOP, "Unexpected multihop in eviction - likely driver bug\n");
-		if (ret != -ERESTARTSYS)
+		अगर (ret != -ERESTARTSYS)
 			pr_err("Buffer eviction failed\n");
-		ttm_resource_free(bo, &evict_mem);
-	}
+		tपंचांग_resource_मुक्त(bo, &evict_mem);
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool ttm_bo_eviction_valuable(struct ttm_buffer_object *bo,
-			      const struct ttm_place *place)
-{
+bool tपंचांग_bo_eviction_valuable(काष्ठा tपंचांग_buffer_object *bo,
+			      स्थिर काष्ठा tपंचांग_place *place)
+अणु
 	/* Don't evict this BO if it's outside of the
 	 * requested placement range
 	 */
-	if (place->fpfn >= (bo->mem.start + bo->mem.num_pages) ||
+	अगर (place->fpfn >= (bo->mem.start + bo->mem.num_pages) ||
 	    (place->lpfn && place->lpfn <= bo->mem.start))
-		return false;
+		वापस false;
 
-	return true;
-}
-EXPORT_SYMBOL(ttm_bo_eviction_valuable);
+	वापस true;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_eviction_valuable);
 
 /*
- * Check the target bo is allowable to be evicted or swapout, including cases:
+ * Check the target bo is allowable to be evicted or swapout, including हालs:
  *
- * a. if share same reservation object with ctx->resv, have assumption
- * reservation objects should already be locked, so not lock again and
- * return true directly when either the opreation allow_reserved_eviction
- * or the target bo already is in delayed free list;
+ * a. अगर share same reservation object with ctx->resv, have assumption
+ * reservation objects should alपढ़ोy be locked, so not lock again and
+ * वापस true directly when either the opreation allow_reserved_eviction
+ * or the target bo alपढ़ोy is in delayed मुक्त list;
  *
  * b. Otherwise, trylock it.
  */
-static bool ttm_bo_evict_swapout_allowable(struct ttm_buffer_object *bo,
-			struct ttm_operation_ctx *ctx, bool *locked, bool *busy)
-{
+अटल bool tपंचांग_bo_evict_swapout_allowable(काष्ठा tपंचांग_buffer_object *bo,
+			काष्ठा tपंचांग_operation_ctx *ctx, bool *locked, bool *busy)
+अणु
 	bool ret = false;
 
-	if (bo->base.resv == ctx->resv) {
-		dma_resv_assert_held(bo->base.resv);
-		if (ctx->allow_res_evict)
+	अगर (bo->base.resv == ctx->resv) अणु
+		dma_resv_निश्चित_held(bo->base.resv);
+		अगर (ctx->allow_res_evict)
 			ret = true;
 		*locked = false;
-		if (busy)
+		अगर (busy)
 			*busy = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = dma_resv_trylock(bo->base.resv);
 		*locked = ret;
-		if (busy)
+		अगर (busy)
 			*busy = !ret;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ttm_mem_evict_wait_busy - wait for a busy BO to become available
+ * tपंचांग_mem_evict_रुको_busy - रुको क्रम a busy BO to become available
  *
  * @busy_bo: BO which couldn't be locked with trylock
  * @ctx: operation context
  * @ticket: acquire ticket
  *
- * Try to lock a busy buffer object to avoid failing eviction.
+ * Try to lock a busy buffer object to aव्योम failing eviction.
  */
-static int ttm_mem_evict_wait_busy(struct ttm_buffer_object *busy_bo,
-				   struct ttm_operation_ctx *ctx,
-				   struct ww_acquire_ctx *ticket)
-{
-	int r;
+अटल पूर्णांक tपंचांग_mem_evict_रुको_busy(काष्ठा tपंचांग_buffer_object *busy_bo,
+				   काष्ठा tपंचांग_operation_ctx *ctx,
+				   काष्ठा ww_acquire_ctx *ticket)
+अणु
+	पूर्णांक r;
 
-	if (!busy_bo || !ticket)
-		return -EBUSY;
+	अगर (!busy_bo || !ticket)
+		वापस -EBUSY;
 
-	if (ctx->interruptible)
-		r = dma_resv_lock_interruptible(busy_bo->base.resv,
+	अगर (ctx->पूर्णांकerruptible)
+		r = dma_resv_lock_पूर्णांकerruptible(busy_bo->base.resv,
 							  ticket);
-	else
+	अन्यथा
 		r = dma_resv_lock(busy_bo->base.resv, ticket);
 
 	/*
 	 * TODO: It would be better to keep the BO locked until allocation is at
-	 * least tried one more time, but that would mean a much larger rework
+	 * least tried one more समय, but that would mean a much larger rework
 	 * of TTM.
 	 */
-	if (!r)
+	अगर (!r)
 		dma_resv_unlock(busy_bo->base.resv);
 
-	return r == -EDEADLK ? -EBUSY : r;
-}
+	वापस r == -EDEADLK ? -EBUSY : r;
+पूर्ण
 
-int ttm_mem_evict_first(struct ttm_device *bdev,
-			struct ttm_resource_manager *man,
-			const struct ttm_place *place,
-			struct ttm_operation_ctx *ctx,
-			struct ww_acquire_ctx *ticket)
-{
-	struct ttm_buffer_object *bo = NULL, *busy_bo = NULL;
+पूर्णांक tपंचांग_mem_evict_first(काष्ठा tपंचांग_device *bdev,
+			काष्ठा tपंचांग_resource_manager *man,
+			स्थिर काष्ठा tपंचांग_place *place,
+			काष्ठा tपंचांग_operation_ctx *ctx,
+			काष्ठा ww_acquire_ctx *ticket)
+अणु
+	काष्ठा tपंचांग_buffer_object *bo = शून्य, *busy_bo = शून्य;
 	bool locked = false;
-	unsigned i;
-	int ret;
+	अचिन्हित i;
+	पूर्णांक ret;
 
 	spin_lock(&bdev->lru_lock);
-	for (i = 0; i < TTM_MAX_BO_PRIORITY; ++i) {
-		list_for_each_entry(bo, &man->lru[i], lru) {
+	क्रम (i = 0; i < TTM_MAX_BO_PRIORITY; ++i) अणु
+		list_क्रम_each_entry(bo, &man->lru[i], lru) अणु
 			bool busy;
 
-			if (!ttm_bo_evict_swapout_allowable(bo, ctx, &locked,
-							    &busy)) {
-				if (busy && !busy_bo && ticket !=
+			अगर (!tपंचांग_bo_evict_swapout_allowable(bo, ctx, &locked,
+							    &busy)) अणु
+				अगर (busy && !busy_bo && ticket !=
 				    dma_resv_locking_ctx(bo->base.resv))
 					busy_bo = bo;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (place && !bdev->funcs->eviction_valuable(bo,
-								      place)) {
-				if (locked)
+			अगर (place && !bdev->funcs->eviction_valuable(bo,
+								      place)) अणु
+				अगर (locked)
 					dma_resv_unlock(bo->base.resv);
-				continue;
-			}
-			if (!ttm_bo_get_unless_zero(bo)) {
-				if (locked)
+				जारी;
+			पूर्ण
+			अगर (!tपंचांग_bo_get_unless_zero(bo)) अणु
+				अगर (locked)
 					dma_resv_unlock(bo->base.resv);
-				continue;
-			}
-			break;
-		}
+				जारी;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		/* If the inner loop terminated early, we have our candidate */
-		if (&bo->lru != &man->lru[i])
-			break;
+		अगर (&bo->lru != &man->lru[i])
+			अवरोध;
 
-		bo = NULL;
-	}
+		bo = शून्य;
+	पूर्ण
 
-	if (!bo) {
-		if (busy_bo && !ttm_bo_get_unless_zero(busy_bo))
-			busy_bo = NULL;
+	अगर (!bo) अणु
+		अगर (busy_bo && !tपंचांग_bo_get_unless_zero(busy_bo))
+			busy_bo = शून्य;
 		spin_unlock(&bdev->lru_lock);
-		ret = ttm_mem_evict_wait_busy(busy_bo, ctx, ticket);
-		if (busy_bo)
-			ttm_bo_put(busy_bo);
-		return ret;
-	}
+		ret = tपंचांग_mem_evict_रुको_busy(busy_bo, ctx, ticket);
+		अगर (busy_bo)
+			tपंचांग_bo_put(busy_bo);
+		वापस ret;
+	पूर्ण
 
-	if (bo->deleted) {
-		ret = ttm_bo_cleanup_refs(bo, ctx->interruptible,
-					  ctx->no_wait_gpu, locked);
-		ttm_bo_put(bo);
-		return ret;
-	}
+	अगर (bo->deleted) अणु
+		ret = tपंचांग_bo_cleanup_refs(bo, ctx->पूर्णांकerruptible,
+					  ctx->no_रुको_gpu, locked);
+		tपंचांग_bo_put(bo);
+		वापस ret;
+	पूर्ण
 
 	spin_unlock(&bdev->lru_lock);
 
-	ret = ttm_bo_evict(bo, ctx);
-	if (locked)
-		ttm_bo_unreserve(bo);
+	ret = tपंचांग_bo_evict(bo, ctx);
+	अगर (locked)
+		tपंचांग_bo_unreserve(bo);
 
-	ttm_bo_put(bo);
-	return ret;
-}
+	tपंचांग_bo_put(bo);
+	वापस ret;
+पूर्ण
 
 /*
  * Add the last move fence to the BO and reserve a new shared slot.
  */
-static int ttm_bo_add_move_fence(struct ttm_buffer_object *bo,
-				 struct ttm_resource_manager *man,
-				 struct ttm_resource *mem,
-				 bool no_wait_gpu)
-{
-	struct dma_fence *fence;
-	int ret;
+अटल पूर्णांक tपंचांग_bo_add_move_fence(काष्ठा tपंचांग_buffer_object *bo,
+				 काष्ठा tपंचांग_resource_manager *man,
+				 काष्ठा tपंचांग_resource *mem,
+				 bool no_रुको_gpu)
+अणु
+	काष्ठा dma_fence *fence;
+	पूर्णांक ret;
 
 	spin_lock(&man->move_lock);
 	fence = dma_fence_get(man->move);
 	spin_unlock(&man->move_lock);
 
-	if (!fence)
-		return 0;
+	अगर (!fence)
+		वापस 0;
 
-	if (no_wait_gpu) {
-		ret = dma_fence_is_signaled(fence) ? 0 : -EBUSY;
+	अगर (no_रुको_gpu) अणु
+		ret = dma_fence_is_संकेतed(fence) ? 0 : -EBUSY;
 		dma_fence_put(fence);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dma_resv_add_shared_fence(bo->base.resv, fence);
 
 	ret = dma_resv_reserve_shared(bo->base.resv, 1);
-	if (unlikely(ret)) {
+	अगर (unlikely(ret)) अणु
 		dma_fence_put(fence);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dma_fence_put(bo->moving);
 	bo->moving = fence;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Repeatedly evict memory from the LRU for @mem_type until we create enough
+ * Repeatedly evict memory from the LRU क्रम @mem_type until we create enough
  * space, or we've evicted everything and there isn't enough space.
  */
-static int ttm_bo_mem_force_space(struct ttm_buffer_object *bo,
-				  const struct ttm_place *place,
-				  struct ttm_resource *mem,
-				  struct ttm_operation_ctx *ctx)
-{
-	struct ttm_device *bdev = bo->bdev;
-	struct ttm_resource_manager *man = ttm_manager_type(bdev, mem->mem_type);
-	struct ww_acquire_ctx *ticket;
-	int ret;
+अटल पूर्णांक tपंचांग_bo_mem_क्रमce_space(काष्ठा tपंचांग_buffer_object *bo,
+				  स्थिर काष्ठा tपंचांग_place *place,
+				  काष्ठा tपंचांग_resource *mem,
+				  काष्ठा tपंचांग_operation_ctx *ctx)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(bdev, mem->mem_type);
+	काष्ठा ww_acquire_ctx *ticket;
+	पूर्णांक ret;
 
 	ticket = dma_resv_locking_ctx(bo->base.resv);
-	do {
-		ret = ttm_resource_alloc(bo, place, mem);
-		if (likely(!ret))
-			break;
-		if (unlikely(ret != -ENOSPC))
-			return ret;
-		ret = ttm_mem_evict_first(bdev, man, place, ctx,
+	करो अणु
+		ret = tपंचांग_resource_alloc(bo, place, mem);
+		अगर (likely(!ret))
+			अवरोध;
+		अगर (unlikely(ret != -ENOSPC))
+			वापस ret;
+		ret = tपंचांग_mem_evict_first(bdev, man, place, ctx,
 					  ticket);
-		if (unlikely(ret != 0))
-			return ret;
-	} while (1);
+		अगर (unlikely(ret != 0))
+			वापस ret;
+	पूर्ण जबतक (1);
 
-	return ttm_bo_add_move_fence(bo, man, mem, ctx->no_wait_gpu);
-}
+	वापस tपंचांग_bo_add_move_fence(bo, man, mem, ctx->no_रुको_gpu);
+पूर्ण
 
 /**
- * ttm_bo_mem_placement - check if placement is compatible
- * @bo: BO to find memory for
+ * tपंचांग_bo_mem_placement - check अगर placement is compatible
+ * @bo: BO to find memory क्रम
  * @place: where to search
  * @mem: the memory object to fill in
  *
- * Check if placement is compatible and fill in mem structure.
- * Returns -EBUSY if placement won't work or negative error code.
+ * Check अगर placement is compatible and fill in mem काष्ठाure.
+ * Returns -EBUSY अगर placement won't work or negative error code.
  * 0 when placement can be used.
  */
-static int ttm_bo_mem_placement(struct ttm_buffer_object *bo,
-				const struct ttm_place *place,
-				struct ttm_resource *mem)
-{
-	struct ttm_device *bdev = bo->bdev;
-	struct ttm_resource_manager *man;
+अटल पूर्णांक tपंचांग_bo_mem_placement(काष्ठा tपंचांग_buffer_object *bo,
+				स्थिर काष्ठा tपंचांग_place *place,
+				काष्ठा tपंचांग_resource *mem)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	काष्ठा tपंचांग_resource_manager *man;
 
-	man = ttm_manager_type(bdev, place->mem_type);
-	if (!man || !ttm_resource_manager_used(man))
-		return -EBUSY;
+	man = tपंचांग_manager_type(bdev, place->mem_type);
+	अगर (!man || !tपंचांग_resource_manager_used(man))
+		वापस -EBUSY;
 
 	mem->mem_type = place->mem_type;
 	mem->placement = place->flags;
 
 	spin_lock(&bo->bdev->lru_lock);
-	ttm_bo_move_to_lru_tail(bo, mem, NULL);
+	tपंचांग_bo_move_to_lru_tail(bo, mem, शून्य);
 	spin_unlock(&bo->bdev->lru_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Creates space for memory region @mem according to its type.
+ * Creates space क्रम memory region @mem according to its type.
  *
- * This function first searches for free space in compatible memory types in
- * the priority order defined by the driver.  If free space isn't found, then
- * ttm_bo_mem_force_space is attempted in priority order to evict and find
+ * This function first searches क्रम मुक्त space in compatible memory types in
+ * the priority order defined by the driver.  If मुक्त space isn't found, then
+ * tपंचांग_bo_mem_क्रमce_space is attempted in priority order to evict and find
  * space.
  */
-int ttm_bo_mem_space(struct ttm_buffer_object *bo,
-			struct ttm_placement *placement,
-			struct ttm_resource *mem,
-			struct ttm_operation_ctx *ctx)
-{
-	struct ttm_device *bdev = bo->bdev;
+पूर्णांक tपंचांग_bo_mem_space(काष्ठा tपंचांग_buffer_object *bo,
+			काष्ठा tपंचांग_placement *placement,
+			काष्ठा tपंचांग_resource *mem,
+			काष्ठा tपंचांग_operation_ctx *ctx)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
 	bool type_found = false;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	ret = dma_resv_reserve_shared(bo->base.resv, 1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	for (i = 0; i < placement->num_placement; ++i) {
-		const struct ttm_place *place = &placement->placement[i];
-		struct ttm_resource_manager *man;
+	क्रम (i = 0; i < placement->num_placement; ++i) अणु
+		स्थिर काष्ठा tपंचांग_place *place = &placement->placement[i];
+		काष्ठा tपंचांग_resource_manager *man;
 
-		ret = ttm_bo_mem_placement(bo, place, mem);
-		if (ret)
-			continue;
-
-		type_found = true;
-		ret = ttm_resource_alloc(bo, place, mem);
-		if (ret == -ENOSPC)
-			continue;
-		if (unlikely(ret))
-			goto error;
-
-		man = ttm_manager_type(bdev, mem->mem_type);
-		ret = ttm_bo_add_move_fence(bo, man, mem, ctx->no_wait_gpu);
-		if (unlikely(ret)) {
-			ttm_resource_free(bo, mem);
-			if (ret == -EBUSY)
-				continue;
-
-			goto error;
-		}
-		return 0;
-	}
-
-	for (i = 0; i < placement->num_busy_placement; ++i) {
-		const struct ttm_place *place = &placement->busy_placement[i];
-
-		ret = ttm_bo_mem_placement(bo, place, mem);
-		if (ret)
-			continue;
+		ret = tपंचांग_bo_mem_placement(bo, place, mem);
+		अगर (ret)
+			जारी;
 
 		type_found = true;
-		ret = ttm_bo_mem_force_space(bo, place, mem, ctx);
-		if (likely(!ret))
-			return 0;
+		ret = tपंचांग_resource_alloc(bo, place, mem);
+		अगर (ret == -ENOSPC)
+			जारी;
+		अगर (unlikely(ret))
+			जाओ error;
 
-		if (ret && ret != -EBUSY)
-			goto error;
-	}
+		man = tपंचांग_manager_type(bdev, mem->mem_type);
+		ret = tपंचांग_bo_add_move_fence(bo, man, mem, ctx->no_रुको_gpu);
+		अगर (unlikely(ret)) अणु
+			tपंचांग_resource_मुक्त(bo, mem);
+			अगर (ret == -EBUSY)
+				जारी;
+
+			जाओ error;
+		पूर्ण
+		वापस 0;
+	पूर्ण
+
+	क्रम (i = 0; i < placement->num_busy_placement; ++i) अणु
+		स्थिर काष्ठा tपंचांग_place *place = &placement->busy_placement[i];
+
+		ret = tपंचांग_bo_mem_placement(bo, place, mem);
+		अगर (ret)
+			जारी;
+
+		type_found = true;
+		ret = tपंचांग_bo_mem_क्रमce_space(bo, place, mem, ctx);
+		अगर (likely(!ret))
+			वापस 0;
+
+		अगर (ret && ret != -EBUSY)
+			जाओ error;
+	पूर्ण
 
 	ret = -ENOMEM;
-	if (!type_found) {
+	अगर (!type_found) अणु
 		pr_err(TTM_PFX "No compatible memory type found\n");
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 error:
-	if (bo->mem.mem_type == TTM_PL_SYSTEM && !bo->pin_count)
-		ttm_bo_move_to_lru_tail_unlocked(bo);
+	अगर (bo->mem.mem_type == TTM_PL_SYSTEM && !bo->pin_count)
+		tपंचांग_bo_move_to_lru_tail_unlocked(bo);
 
-	return ret;
-}
-EXPORT_SYMBOL(ttm_bo_mem_space);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_mem_space);
 
-static int ttm_bo_bounce_temp_buffer(struct ttm_buffer_object *bo,
-				     struct ttm_resource *mem,
-				     struct ttm_operation_ctx *ctx,
-				     struct ttm_place *hop)
-{
-	struct ttm_placement hop_placement;
-	int ret;
-	struct ttm_resource hop_mem = *mem;
+अटल पूर्णांक tपंचांग_bo_bounce_temp_buffer(काष्ठा tपंचांग_buffer_object *bo,
+				     काष्ठा tपंचांग_resource *mem,
+				     काष्ठा tपंचांग_operation_ctx *ctx,
+				     काष्ठा tपंचांग_place *hop)
+अणु
+	काष्ठा tपंचांग_placement hop_placement;
+	पूर्णांक ret;
+	काष्ठा tपंचांग_resource hop_mem = *mem;
 
-	hop_mem.mm_node = NULL;
+	hop_mem.mm_node = शून्य;
 	hop_mem.mem_type = TTM_PL_SYSTEM;
 	hop_mem.placement = 0;
 
 	hop_placement.num_placement = hop_placement.num_busy_placement = 1;
 	hop_placement.placement = hop_placement.busy_placement = hop;
 
-	/* find space in the bounce domain */
-	ret = ttm_bo_mem_space(bo, &hop_placement, &hop_mem, ctx);
-	if (ret)
-		return ret;
-	/* move to the bounce domain */
-	ret = ttm_bo_handle_move_mem(bo, &hop_mem, false, ctx, NULL);
-	if (ret) {
-		ttm_resource_free(bo, &hop_mem);
-		return ret;
-	}
-	return 0;
-}
+	/* find space in the bounce करोमुख्य */
+	ret = tपंचांग_bo_mem_space(bo, &hop_placement, &hop_mem, ctx);
+	अगर (ret)
+		वापस ret;
+	/* move to the bounce करोमुख्य */
+	ret = tपंचांग_bo_handle_move_mem(bo, &hop_mem, false, ctx, शून्य);
+	अगर (ret) अणु
+		tपंचांग_resource_मुक्त(bo, &hop_mem);
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ttm_bo_move_buffer(struct ttm_buffer_object *bo,
-			      struct ttm_placement *placement,
-			      struct ttm_operation_ctx *ctx)
-{
-	int ret = 0;
-	struct ttm_place hop;
-	struct ttm_resource mem;
+अटल पूर्णांक tपंचांग_bo_move_buffer(काष्ठा tपंचांग_buffer_object *bo,
+			      काष्ठा tपंचांग_placement *placement,
+			      काष्ठा tपंचांग_operation_ctx *ctx)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा tपंचांग_place hop;
+	काष्ठा tपंचांग_resource mem;
 
-	dma_resv_assert_held(bo->base.resv);
+	dma_resv_निश्चित_held(bo->base.resv);
 
-	memset(&hop, 0, sizeof(hop));
+	स_रखो(&hop, 0, माप(hop));
 
 	mem.num_pages = PAGE_ALIGN(bo->base.size) >> PAGE_SHIFT;
 	mem.page_alignment = bo->mem.page_alignment;
 	mem.bus.offset = 0;
-	mem.bus.addr = NULL;
-	mem.mm_node = NULL;
+	mem.bus.addr = शून्य;
+	mem.mm_node = शून्य;
 
 	/*
 	 * Determine where to move the buffer.
 	 *
 	 * If driver determines move is going to need
-	 * an extra step then it will return -EMULTIHOP
+	 * an extra step then it will वापस -EMULTIHOP
 	 * and the buffer will be moved to the temporary
 	 * stop and the driver will be called to make
 	 * the second hop.
 	 */
-	ret = ttm_bo_mem_space(bo, placement, &mem, ctx);
-	if (ret)
-		return ret;
+	ret = tपंचांग_bo_mem_space(bo, placement, &mem, ctx);
+	अगर (ret)
+		वापस ret;
 bounce:
-	ret = ttm_bo_handle_move_mem(bo, &mem, false, ctx, &hop);
-	if (ret == -EMULTIHOP) {
-		ret = ttm_bo_bounce_temp_buffer(bo, &mem, ctx, &hop);
-		if (ret)
-			goto out;
+	ret = tपंचांग_bo_handle_move_mem(bo, &mem, false, ctx, &hop);
+	अगर (ret == -EMULTIHOP) अणु
+		ret = tपंचांग_bo_bounce_temp_buffer(bo, &mem, ctx, &hop);
+		अगर (ret)
+			जाओ out;
 		/* try and move to final place now. */
-		goto bounce;
-	}
+		जाओ bounce;
+	पूर्ण
 out:
-	if (ret)
-		ttm_resource_free(bo, &mem);
-	return ret;
-}
+	अगर (ret)
+		tपंचांग_resource_मुक्त(bo, &mem);
+	वापस ret;
+पूर्ण
 
-static bool ttm_bo_places_compat(const struct ttm_place *places,
-				 unsigned num_placement,
-				 struct ttm_resource *mem,
-				 uint32_t *new_flags)
-{
-	unsigned i;
+अटल bool tपंचांग_bo_places_compat(स्थिर काष्ठा tपंचांग_place *places,
+				 अचिन्हित num_placement,
+				 काष्ठा tपंचांग_resource *mem,
+				 uपूर्णांक32_t *new_flags)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < num_placement; i++) {
-		const struct ttm_place *heap = &places[i];
+	क्रम (i = 0; i < num_placement; i++) अणु
+		स्थिर काष्ठा tपंचांग_place *heap = &places[i];
 
-		if ((mem->start < heap->fpfn ||
+		अगर ((mem->start < heap->fpfn ||
 		     (heap->lpfn != 0 && (mem->start + mem->num_pages) > heap->lpfn)))
-			continue;
+			जारी;
 
 		*new_flags = heap->flags;
-		if ((mem->mem_type == heap->mem_type) &&
+		अगर ((mem->mem_type == heap->mem_type) &&
 		    (!(*new_flags & TTM_PL_FLAG_CONTIGUOUS) ||
 		     (mem->placement & TTM_PL_FLAG_CONTIGUOUS)))
-			return true;
-	}
-	return false;
-}
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-bool ttm_bo_mem_compat(struct ttm_placement *placement,
-		       struct ttm_resource *mem,
-		       uint32_t *new_flags)
-{
-	if (ttm_bo_places_compat(placement->placement, placement->num_placement,
+bool tपंचांग_bo_mem_compat(काष्ठा tपंचांग_placement *placement,
+		       काष्ठा tपंचांग_resource *mem,
+		       uपूर्णांक32_t *new_flags)
+अणु
+	अगर (tपंचांग_bo_places_compat(placement->placement, placement->num_placement,
 				 mem, new_flags))
-		return true;
+		वापस true;
 
-	if ((placement->busy_placement != placement->placement ||
+	अगर ((placement->busy_placement != placement->placement ||
 	     placement->num_busy_placement > placement->num_placement) &&
-	    ttm_bo_places_compat(placement->busy_placement,
+	    tपंचांग_bo_places_compat(placement->busy_placement,
 				 placement->num_busy_placement,
 				 mem, new_flags))
-		return true;
+		वापस true;
 
-	return false;
-}
-EXPORT_SYMBOL(ttm_bo_mem_compat);
+	वापस false;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_mem_compat);
 
-int ttm_bo_validate(struct ttm_buffer_object *bo,
-		    struct ttm_placement *placement,
-		    struct ttm_operation_ctx *ctx)
-{
-	int ret;
-	uint32_t new_flags;
+पूर्णांक tपंचांग_bo_validate(काष्ठा tपंचांग_buffer_object *bo,
+		    काष्ठा tपंचांग_placement *placement,
+		    काष्ठा tपंचांग_operation_ctx *ctx)
+अणु
+	पूर्णांक ret;
+	uपूर्णांक32_t new_flags;
 
-	dma_resv_assert_held(bo->base.resv);
+	dma_resv_निश्चित_held(bo->base.resv);
 
 	/*
-	 * Remove the backing store if no placement is given.
+	 * Remove the backing store अगर no placement is given.
 	 */
-	if (!placement->num_placement && !placement->num_busy_placement) {
-		ret = ttm_bo_pipeline_gutting(bo);
-		if (ret)
-			return ret;
+	अगर (!placement->num_placement && !placement->num_busy_placement) अणु
+		ret = tपंचांग_bo_pipeline_gutting(bo);
+		अगर (ret)
+			वापस ret;
 
-		return ttm_tt_create(bo, false);
-	}
+		वापस tपंचांग_tt_create(bo, false);
+	पूर्ण
 
 	/*
 	 * Check whether we need to move buffer.
 	 */
-	if (!ttm_bo_mem_compat(placement, &bo->mem, &new_flags)) {
-		ret = ttm_bo_move_buffer(bo, placement, ctx);
-		if (ret)
-			return ret;
-	}
+	अगर (!tपंचांग_bo_mem_compat(placement, &bo->mem, &new_flags)) अणु
+		ret = tपंचांग_bo_move_buffer(bo, placement, ctx);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 	/*
 	 * We might need to add a TTM.
 	 */
-	if (bo->mem.mem_type == TTM_PL_SYSTEM) {
-		ret = ttm_tt_create(bo, true);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
-EXPORT_SYMBOL(ttm_bo_validate);
+	अगर (bo->mem.mem_type == TTM_PL_SYSTEM) अणु
+		ret = tपंचांग_tt_create(bo, true);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_validate);
 
-int ttm_bo_init_reserved(struct ttm_device *bdev,
-			 struct ttm_buffer_object *bo,
-			 size_t size,
-			 enum ttm_bo_type type,
-			 struct ttm_placement *placement,
-			 uint32_t page_alignment,
-			 struct ttm_operation_ctx *ctx,
-			 struct sg_table *sg,
-			 struct dma_resv *resv,
-			 void (*destroy) (struct ttm_buffer_object *))
-{
+पूर्णांक tपंचांग_bo_init_reserved(काष्ठा tपंचांग_device *bdev,
+			 काष्ठा tपंचांग_buffer_object *bo,
+			 माप_प्रकार size,
+			 क्रमागत tपंचांग_bo_type type,
+			 काष्ठा tपंचांग_placement *placement,
+			 uपूर्णांक32_t page_alignment,
+			 काष्ठा tपंचांग_operation_ctx *ctx,
+			 काष्ठा sg_table *sg,
+			 काष्ठा dma_resv *resv,
+			 व्योम (*destroy) (काष्ठा tपंचांग_buffer_object *))
+अणु
 	bool locked;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	bo->destroy = destroy ? destroy : ttm_bo_default_destroy;
+	bo->destroy = destroy ? destroy : tपंचांग_bo_शेष_destroy;
 
 	kref_init(&bo->kref);
 	INIT_LIST_HEAD(&bo->lru);
@@ -1040,213 +1041,213 @@ int ttm_bo_init_reserved(struct ttm_device *bdev,
 	bo->type = type;
 	bo->mem.mem_type = TTM_PL_SYSTEM;
 	bo->mem.num_pages = PAGE_ALIGN(size) >> PAGE_SHIFT;
-	bo->mem.mm_node = NULL;
+	bo->mem.mm_node = शून्य;
 	bo->mem.page_alignment = page_alignment;
 	bo->mem.bus.offset = 0;
-	bo->mem.bus.addr = NULL;
-	bo->moving = NULL;
+	bo->mem.bus.addr = शून्य;
+	bo->moving = शून्य;
 	bo->mem.placement = 0;
 	bo->pin_count = 0;
 	bo->sg = sg;
-	if (resv) {
+	अगर (resv) अणु
 		bo->base.resv = resv;
-		dma_resv_assert_held(bo->base.resv);
-	} else {
+		dma_resv_निश्चित_held(bo->base.resv);
+	पूर्ण अन्यथा अणु
 		bo->base.resv = &bo->base._resv;
-	}
-	if (!ttm_bo_uses_embedded_gem_object(bo)) {
+	पूर्ण
+	अगर (!tपंचांग_bo_uses_embedded_gem_object(bo)) अणु
 		/*
 		 * bo.base is not initialized, so we have to setup the
-		 * struct elements we want use regardless.
+		 * काष्ठा elements we want use regardless.
 		 */
 		bo->base.size = size;
 		dma_resv_init(&bo->base._resv);
 		drm_vma_node_reset(&bo->base.vma_node);
-	}
-	atomic_inc(&ttm_glob.bo_count);
+	पूर्ण
+	atomic_inc(&tपंचांग_glob.bo_count);
 
 	/*
-	 * For ttm_bo_type_device buffers, allocate
+	 * For tपंचांग_bo_type_device buffers, allocate
 	 * address space from the device.
 	 */
-	if (bo->type == ttm_bo_type_device ||
-	    bo->type == ttm_bo_type_sg)
+	अगर (bo->type == tपंचांग_bo_type_device ||
+	    bo->type == tपंचांग_bo_type_sg)
 		ret = drm_vma_offset_add(bdev->vma_manager, &bo->base.vma_node,
 					 bo->mem.num_pages);
 
-	/* passed reservation objects should already be locked,
+	/* passed reservation objects should alपढ़ोy be locked,
 	 * since otherwise lockdep will be angered in radeon.
 	 */
-	if (!resv) {
+	अगर (!resv) अणु
 		locked = dma_resv_trylock(bo->base.resv);
 		WARN_ON(!locked);
-	}
+	पूर्ण
 
-	if (likely(!ret))
-		ret = ttm_bo_validate(bo, placement, ctx);
+	अगर (likely(!ret))
+		ret = tपंचांग_bo_validate(bo, placement, ctx);
 
-	if (unlikely(ret)) {
-		if (!resv)
-			ttm_bo_unreserve(bo);
+	अगर (unlikely(ret)) अणु
+		अगर (!resv)
+			tपंचांग_bo_unreserve(bo);
 
-		ttm_bo_put(bo);
-		return ret;
-	}
+		tपंचांग_bo_put(bo);
+		वापस ret;
+	पूर्ण
 
-	ttm_bo_move_to_lru_tail_unlocked(bo);
+	tपंचांग_bo_move_to_lru_tail_unlocked(bo);
 
-	return ret;
-}
-EXPORT_SYMBOL(ttm_bo_init_reserved);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_init_reserved);
 
-int ttm_bo_init(struct ttm_device *bdev,
-		struct ttm_buffer_object *bo,
-		size_t size,
-		enum ttm_bo_type type,
-		struct ttm_placement *placement,
-		uint32_t page_alignment,
-		bool interruptible,
-		struct sg_table *sg,
-		struct dma_resv *resv,
-		void (*destroy) (struct ttm_buffer_object *))
-{
-	struct ttm_operation_ctx ctx = { interruptible, false };
-	int ret;
+पूर्णांक tपंचांग_bo_init(काष्ठा tपंचांग_device *bdev,
+		काष्ठा tपंचांग_buffer_object *bo,
+		माप_प्रकार size,
+		क्रमागत tपंचांग_bo_type type,
+		काष्ठा tपंचांग_placement *placement,
+		uपूर्णांक32_t page_alignment,
+		bool पूर्णांकerruptible,
+		काष्ठा sg_table *sg,
+		काष्ठा dma_resv *resv,
+		व्योम (*destroy) (काष्ठा tपंचांग_buffer_object *))
+अणु
+	काष्ठा tपंचांग_operation_ctx ctx = अणु पूर्णांकerruptible, false पूर्ण;
+	पूर्णांक ret;
 
-	ret = ttm_bo_init_reserved(bdev, bo, size, type, placement,
+	ret = tपंचांग_bo_init_reserved(bdev, bo, size, type, placement,
 				   page_alignment, &ctx, sg, resv, destroy);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!resv)
-		ttm_bo_unreserve(bo);
+	अगर (!resv)
+		tपंचांग_bo_unreserve(bo);
 
-	return 0;
-}
-EXPORT_SYMBOL(ttm_bo_init);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_init);
 
 /*
  * buffer object vm functions.
  */
 
-void ttm_bo_unmap_virtual(struct ttm_buffer_object *bo)
-{
-	struct ttm_device *bdev = bo->bdev;
+व्योम tपंचांग_bo_unmap_भव(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
 
 	drm_vma_node_unmap(&bo->base.vma_node, bdev->dev_mapping);
-	ttm_mem_io_free(bdev, &bo->mem);
-}
-EXPORT_SYMBOL(ttm_bo_unmap_virtual);
+	tपंचांग_mem_io_मुक्त(bdev, &bo->mem);
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_unmap_भव);
 
-int ttm_bo_wait(struct ttm_buffer_object *bo,
-		bool interruptible, bool no_wait)
-{
-	long timeout = 15 * HZ;
+पूर्णांक tपंचांग_bo_रुको(काष्ठा tपंचांग_buffer_object *bo,
+		bool पूर्णांकerruptible, bool no_रुको)
+अणु
+	दीर्घ समयout = 15 * HZ;
 
-	if (no_wait) {
-		if (dma_resv_test_signaled_rcu(bo->base.resv, true))
-			return 0;
-		else
-			return -EBUSY;
-	}
+	अगर (no_रुको) अणु
+		अगर (dma_resv_test_संकेतed_rcu(bo->base.resv, true))
+			वापस 0;
+		अन्यथा
+			वापस -EBUSY;
+	पूर्ण
 
-	timeout = dma_resv_wait_timeout_rcu(bo->base.resv, true,
-						      interruptible, timeout);
-	if (timeout < 0)
-		return timeout;
+	समयout = dma_resv_रुको_समयout_rcu(bo->base.resv, true,
+						      पूर्णांकerruptible, समयout);
+	अगर (समयout < 0)
+		वापस समयout;
 
-	if (timeout == 0)
-		return -EBUSY;
+	अगर (समयout == 0)
+		वापस -EBUSY;
 
-	dma_resv_add_excl_fence(bo->base.resv, NULL);
-	return 0;
-}
-EXPORT_SYMBOL(ttm_bo_wait);
+	dma_resv_add_excl_fence(bo->base.resv, शून्य);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_रुको);
 
-int ttm_bo_swapout(struct ttm_buffer_object *bo, struct ttm_operation_ctx *ctx,
+पूर्णांक tपंचांग_bo_swapout(काष्ठा tपंचांग_buffer_object *bo, काष्ठा tपंचांग_operation_ctx *ctx,
 		   gfp_t gfp_flags)
-{
+अणु
 	bool locked;
-	int ret;
+	पूर्णांक ret;
 
-	if (!ttm_bo_evict_swapout_allowable(bo, ctx, &locked, NULL))
-		return -EBUSY;
+	अगर (!tपंचांग_bo_evict_swapout_allowable(bo, ctx, &locked, शून्य))
+		वापस -EBUSY;
 
-	if (!bo->ttm || !ttm_tt_is_populated(bo->ttm) ||
-	    bo->ttm->page_flags & TTM_PAGE_FLAG_SG ||
-	    bo->ttm->page_flags & TTM_PAGE_FLAG_SWAPPED ||
-	    !ttm_bo_get_unless_zero(bo)) {
-		if (locked)
+	अगर (!bo->tपंचांग || !tपंचांग_tt_is_populated(bo->tपंचांग) ||
+	    bo->tपंचांग->page_flags & TTM_PAGE_FLAG_SG ||
+	    bo->tपंचांग->page_flags & TTM_PAGE_FLAG_SWAPPED ||
+	    !tपंचांग_bo_get_unless_zero(bo)) अणु
+		अगर (locked)
 			dma_resv_unlock(bo->base.resv);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (bo->deleted) {
-		ttm_bo_cleanup_refs(bo, false, false, locked);
-		ttm_bo_put(bo);
-		return 0;
-	}
+	अगर (bo->deleted) अणु
+		tपंचांग_bo_cleanup_refs(bo, false, false, locked);
+		tपंचांग_bo_put(bo);
+		वापस 0;
+	पूर्ण
 
-	ttm_bo_del_from_lru(bo);
+	tपंचांग_bo_del_from_lru(bo);
 	/* TODO: Cleanup the locking */
 	spin_unlock(&bo->bdev->lru_lock);
 
 	/*
-	 * Move to system cached
+	 * Move to प्रणाली cached
 	 */
-	if (bo->mem.mem_type != TTM_PL_SYSTEM) {
-		struct ttm_operation_ctx ctx = { false, false };
-		struct ttm_resource evict_mem;
-		struct ttm_place hop;
+	अगर (bo->mem.mem_type != TTM_PL_SYSTEM) अणु
+		काष्ठा tपंचांग_operation_ctx ctx = अणु false, false पूर्ण;
+		काष्ठा tपंचांग_resource evict_mem;
+		काष्ठा tपंचांग_place hop;
 
-		memset(&hop, 0, sizeof(hop));
+		स_रखो(&hop, 0, माप(hop));
 
 		evict_mem = bo->mem;
-		evict_mem.mm_node = NULL;
+		evict_mem.mm_node = शून्य;
 		evict_mem.placement = 0;
 		evict_mem.mem_type = TTM_PL_SYSTEM;
 
-		ret = ttm_bo_handle_move_mem(bo, &evict_mem, true, &ctx, &hop);
-		if (unlikely(ret != 0)) {
+		ret = tपंचांग_bo_handle_move_mem(bo, &evict_mem, true, &ctx, &hop);
+		अगर (unlikely(ret != 0)) अणु
 			WARN(ret == -EMULTIHOP, "Unexpected multihop in swaput - likely driver bug.\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Make sure BO is idle.
 	 */
-	ret = ttm_bo_wait(bo, false, false);
-	if (unlikely(ret != 0))
-		goto out;
+	ret = tपंचांग_bo_रुको(bo, false, false);
+	अगर (unlikely(ret != 0))
+		जाओ out;
 
-	ttm_bo_unmap_virtual(bo);
+	tपंचांग_bo_unmap_भव(bo);
 
 	/*
 	 * Swap out. Buffer will be swapped in again as soon as
-	 * anyone tries to access a ttm page.
+	 * anyone tries to access a tपंचांग page.
 	 */
-	if (bo->bdev->funcs->swap_notify)
-		bo->bdev->funcs->swap_notify(bo);
+	अगर (bo->bdev->funcs->swap_notअगरy)
+		bo->bdev->funcs->swap_notअगरy(bo);
 
-	ret = ttm_tt_swapout(bo->bdev, bo->ttm, gfp_flags);
+	ret = tपंचांग_tt_swapout(bo->bdev, bo->tपंचांग, gfp_flags);
 out:
 
 	/*
-	 * Unreserve without putting on LRU to avoid swapping out an
-	 * already swapped buffer.
+	 * Unreserve without putting on LRU to aव्योम swapping out an
+	 * alपढ़ोy swapped buffer.
 	 */
-	if (locked)
+	अगर (locked)
 		dma_resv_unlock(bo->base.resv);
-	ttm_bo_put(bo);
-	return ret;
-}
+	tपंचांग_bo_put(bo);
+	वापस ret;
+पूर्ण
 
-void ttm_bo_tt_destroy(struct ttm_buffer_object *bo)
-{
-	if (bo->ttm == NULL)
-		return;
+व्योम tपंचांग_bo_tt_destroy(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	अगर (bo->tपंचांग == शून्य)
+		वापस;
 
-	ttm_tt_destroy(bo->bdev, bo->ttm);
-	bo->ttm = NULL;
-}
+	tपंचांग_tt_destroy(bo->bdev, bo->tपंचांग);
+	bo->tपंचांग = शून्य;
+पूर्ण

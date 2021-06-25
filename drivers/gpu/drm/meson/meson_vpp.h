@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2016 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
@@ -6,23 +7,23 @@
 
 /* Video Post Process */
 
-#ifndef __MESON_VPP_H
-#define __MESON_VPP_H
+#अगर_अघोषित __MESON_VPP_H
+#घोषणा __MESON_VPP_H
 
-struct drm_rect;
-struct meson_drm;
+काष्ठा drm_rect;
+काष्ठा meson_drm;
 
 /* Mux VIU/VPP to ENCI */
-#define MESON_VIU_VPP_MUX_ENCI	0x5
+#घोषणा MESON_VIU_VPP_MUX_ENCI	0x5
 /* Mux VIU/VPP to ENCP */
-#define MESON_VIU_VPP_MUX_ENCP	0xA
+#घोषणा MESON_VIU_VPP_MUX_ENCP	0xA
 
-void meson_vpp_setup_mux(struct meson_drm *priv, unsigned int mux);
+व्योम meson_vpp_setup_mux(काष्ठा meson_drm *priv, अचिन्हित पूर्णांक mux);
 
-void meson_vpp_setup_interlace_vscaler_osd1(struct meson_drm *priv,
-					    struct drm_rect *input);
-void meson_vpp_disable_interlace_vscaler_osd1(struct meson_drm *priv);
+व्योम meson_vpp_setup_पूर्णांकerlace_vscaler_osd1(काष्ठा meson_drm *priv,
+					    काष्ठा drm_rect *input);
+व्योम meson_vpp_disable_पूर्णांकerlace_vscaler_osd1(काष्ठा meson_drm *priv);
 
-void meson_vpp_init(struct meson_drm *priv);
+व्योम meson_vpp_init(काष्ठा meson_drm *priv);
 
-#endif /* __MESON_VPP_H */
+#पूर्ण_अगर /* __MESON_VPP_H */

@@ -1,265 +1,266 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for CC770 and AN82527 CAN controllers on the platform bus
+ * Driver क्रम CC770 and AN82527 CAN controllers on the platक्रमm bus
  *
- * Copyright (C) 2009, 2011 Wolfgang Grandegger <wg@grandegger.com>
+ * Copyright (C) 2009, 2011 Wolfgang Gअक्रमegger <wg@gअक्रमegger.com>
  */
 
 /*
- * If platform data are used you should have similar definitions
- * in your board-specific code:
+ * If platक्रमm data are used you should have similar definitions
+ * in your board-specअगरic code:
  *
- *   static struct cc770_platform_data myboard_cc770_pdata = {
+ *   अटल काष्ठा cc770_platक्रमm_data myboard_cc770_pdata = अणु
  *           .osc_freq = 16000000,
  *           .cir = 0x41,
  *           .cor = 0x20,
  *           .bcr = 0x40,
- *   };
+ *   पूर्ण;
  *
- * Please see include/linux/can/platform/cc770.h for description of
+ * Please see include/linux/can/platक्रमm/cc770.h क्रम description of
  * above fields.
  *
  * If the device tree is used, you need a CAN node definition in your
  * DTS file similar to:
  *
- *   can@3,100 {
+ *   can@3,100 अणु
  *           compatible = "bosch,cc770";
  *           reg = <3 0x100 0x80>;
- *           interrupts = <2 0>;
- *           interrupt-parent = <&mpic>;
- *           bosch,external-clock-frequency = <16000000>;
- *   };
+ *           पूर्णांकerrupts = <2 0>;
+ *           पूर्णांकerrupt-parent = <&mpic>;
+ *           bosch,बाह्यal-घड़ी-frequency = <16000000>;
+ *   पूर्ण;
  *
- * See "Documentation/devicetree/bindings/net/can/cc770.txt" for further
- * information.
+ * See "Documentation/devicetree/bindings/net/can/cc770.txt" क्रम further
+ * inक्रमmation.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/netdevice.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/can.h>
-#include <linux/can/dev.h>
-#include <linux/can/platform/cc770.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/can.h>
+#समावेश <linux/can/dev.h>
+#समावेश <linux/can/platक्रमm/cc770.h>
 
-#include "cc770.h"
+#समावेश "cc770.h"
 
-#define DRV_NAME "cc770_platform"
+#घोषणा DRV_NAME "cc770_platform"
 
 MODULE_AUTHOR("Wolfgang Grandegger <wg@grandegger.com>");
 MODULE_DESCRIPTION("Socket-CAN driver for CC770 on the platform bus");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:" DRV_NAME);
 
-#define CC770_PLATFORM_CAN_CLOCK  16000000
+#घोषणा CC770_PLATFORM_CAN_CLOCK  16000000
 
-static u8 cc770_platform_read_reg(const struct cc770_priv *priv, int reg)
-{
-	return ioread8(priv->reg_base + reg);
-}
+अटल u8 cc770_platक्रमm_पढ़ो_reg(स्थिर काष्ठा cc770_priv *priv, पूर्णांक reg)
+अणु
+	वापस ioपढ़ो8(priv->reg_base + reg);
+पूर्ण
 
-static void cc770_platform_write_reg(const struct cc770_priv *priv, int reg,
+अटल व्योम cc770_platक्रमm_ग_लिखो_reg(स्थिर काष्ठा cc770_priv *priv, पूर्णांक reg,
 				     u8 val)
-{
-	iowrite8(val, priv->reg_base + reg);
-}
+अणु
+	ioग_लिखो8(val, priv->reg_base + reg);
+पूर्ण
 
-static int cc770_get_of_node_data(struct platform_device *pdev,
-				  struct cc770_priv *priv)
-{
-	struct device_node *np = pdev->dev.of_node;
-	const u32 *prop;
-	int prop_size;
+अटल पूर्णांक cc770_get_of_node_data(काष्ठा platक्रमm_device *pdev,
+				  काष्ठा cc770_priv *priv)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	स्थिर u32 *prop;
+	पूर्णांक prop_size;
 	u32 clkext;
 
 	prop = of_get_property(np, "bosch,external-clock-frequency",
 			       &prop_size);
-	if (prop && (prop_size ==  sizeof(u32)))
+	अगर (prop && (prop_size ==  माप(u32)))
 		clkext = *prop;
-	else
-		clkext = CC770_PLATFORM_CAN_CLOCK; /* default */
-	priv->can.clock.freq = clkext;
+	अन्यथा
+		clkext = CC770_PLATFORM_CAN_CLOCK; /* शेष */
+	priv->can.घड़ी.freq = clkext;
 
-	/* The system clock may not exceed 10 MHz */
-	if (priv->can.clock.freq > 10000000) {
-		priv->cpu_interface |= CPUIF_DSC;
-		priv->can.clock.freq /= 2;
-	}
+	/* The प्रणाली घड़ी may not exceed 10 MHz */
+	अगर (priv->can.घड़ी.freq > 10000000) अणु
+		priv->cpu_पूर्णांकerface |= CPUIF_DSC;
+		priv->can.घड़ी.freq /= 2;
+	पूर्ण
 
-	/* The memory clock may not exceed 8 MHz */
-	if (priv->can.clock.freq > 8000000)
-		priv->cpu_interface |= CPUIF_DMC;
+	/* The memory घड़ी may not exceed 8 MHz */
+	अगर (priv->can.घड़ी.freq > 8000000)
+		priv->cpu_पूर्णांकerface |= CPUIF_DMC;
 
-	if (of_get_property(np, "bosch,divide-memory-clock", NULL))
-		priv->cpu_interface |= CPUIF_DMC;
-	if (of_get_property(np, "bosch,iso-low-speed-mux", NULL))
-		priv->cpu_interface |= CPUIF_MUX;
+	अगर (of_get_property(np, "bosch,divide-memory-clock", शून्य))
+		priv->cpu_पूर्णांकerface |= CPUIF_DMC;
+	अगर (of_get_property(np, "bosch,iso-low-speed-mux", शून्य))
+		priv->cpu_पूर्णांकerface |= CPUIF_MUX;
 
-	if (!of_get_property(np, "bosch,no-comperator-bypass", NULL))
+	अगर (!of_get_property(np, "bosch,no-comperator-bypass", शून्य))
 		priv->bus_config |= BUSCFG_CBY;
-	if (of_get_property(np, "bosch,disconnect-rx0-input", NULL))
+	अगर (of_get_property(np, "bosch,disconnect-rx0-input", शून्य))
 		priv->bus_config |= BUSCFG_DR0;
-	if (of_get_property(np, "bosch,disconnect-rx1-input", NULL))
+	अगर (of_get_property(np, "bosch,disconnect-rx1-input", शून्य))
 		priv->bus_config |= BUSCFG_DR1;
-	if (of_get_property(np, "bosch,disconnect-tx1-output", NULL))
+	अगर (of_get_property(np, "bosch,disconnect-tx1-output", शून्य))
 		priv->bus_config |= BUSCFG_DT1;
-	if (of_get_property(np, "bosch,polarity-dominant", NULL))
+	अगर (of_get_property(np, "bosch,polarity-dominant", शून्य))
 		priv->bus_config |= BUSCFG_POL;
 
 	prop = of_get_property(np, "bosch,clock-out-frequency", &prop_size);
-	if (prop && (prop_size == sizeof(u32)) && *prop > 0) {
+	अगर (prop && (prop_size == माप(u32)) && *prop > 0) अणु
 		u32 cdv = clkext / *prop;
-		int slew;
+		पूर्णांक slew;
 
-		if (cdv > 0 && cdv < 16) {
-			priv->cpu_interface |= CPUIF_CEN;
+		अगर (cdv > 0 && cdv < 16) अणु
+			priv->cpu_पूर्णांकerface |= CPUIF_CEN;
 			priv->clkout |= (cdv - 1) & CLKOUT_CD_MASK;
 
 			prop = of_get_property(np, "bosch,slew-rate",
 					       &prop_size);
-			if (prop && (prop_size == sizeof(u32))) {
+			अगर (prop && (prop_size == माप(u32))) अणु
 				slew = *prop;
-			} else {
-				/* Determine default slew rate */
+			पूर्ण अन्यथा अणु
+				/* Determine शेष slew rate */
 				slew = (CLKOUT_SL_MASK >>
 					CLKOUT_SL_SHIFT) -
 					((cdv * clkext - 1) / 8000000);
-				if (slew < 0)
+				अगर (slew < 0)
 					slew = 0;
-			}
+			पूर्ण
 			priv->clkout |= (slew << CLKOUT_SL_SHIFT) &
 				CLKOUT_SL_MASK;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_dbg(&pdev->dev, "invalid clock-out-frequency\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cc770_get_platform_data(struct platform_device *pdev,
-				   struct cc770_priv *priv)
-{
+अटल पूर्णांक cc770_get_platक्रमm_data(काष्ठा platक्रमm_device *pdev,
+				   काष्ठा cc770_priv *priv)
+अणु
 
-	struct cc770_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा cc770_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
 
-	priv->can.clock.freq = pdata->osc_freq;
-	if (priv->cpu_interface & CPUIF_DSC)
-		priv->can.clock.freq /= 2;
+	priv->can.घड़ी.freq = pdata->osc_freq;
+	अगर (priv->cpu_पूर्णांकerface & CPUIF_DSC)
+		priv->can.घड़ी.freq /= 2;
 	priv->clkout = pdata->cor;
 	priv->bus_config = pdata->bcr;
-	priv->cpu_interface = pdata->cir;
+	priv->cpu_पूर्णांकerface = pdata->cir;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cc770_platform_probe(struct platform_device *pdev)
-{
-	struct net_device *dev;
-	struct cc770_priv *priv;
-	struct resource *mem;
-	resource_size_t mem_size;
-	void __iomem *base;
-	int err, irq;
+अटल पूर्णांक cc770_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा cc770_priv *priv;
+	काष्ठा resource *mem;
+	resource_माप_प्रकार mem_size;
+	व्योम __iomem *base;
+	पूर्णांक err, irq;
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	irq = platform_get_irq(pdev, 0);
-	if (!mem || irq <= 0)
-		return -ENODEV;
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (!mem || irq <= 0)
+		वापस -ENODEV;
 
 	mem_size = resource_size(mem);
-	if (!request_mem_region(mem->start, mem_size, pdev->name))
-		return -EBUSY;
+	अगर (!request_mem_region(mem->start, mem_size, pdev->name))
+		वापस -EBUSY;
 
 	base = ioremap(mem->start, mem_size);
-	if (!base) {
+	अगर (!base) अणु
 		err = -ENOMEM;
-		goto exit_release_mem;
-	}
+		जाओ निकास_release_mem;
+	पूर्ण
 
 	dev = alloc_cc770dev(0);
-	if (!dev) {
+	अगर (!dev) अणु
 		err = -ENOMEM;
-		goto exit_unmap_mem;
-	}
+		जाओ निकास_unmap_mem;
+	पूर्ण
 
 	dev->irq = irq;
 	priv = netdev_priv(dev);
-	priv->read_reg = cc770_platform_read_reg;
-	priv->write_reg = cc770_platform_write_reg;
+	priv->पढ़ो_reg = cc770_platक्रमm_पढ़ो_reg;
+	priv->ग_लिखो_reg = cc770_platक्रमm_ग_लिखो_reg;
 	priv->irq_flags = IRQF_SHARED;
 	priv->reg_base = base;
 
-	if (pdev->dev.of_node)
+	अगर (pdev->dev.of_node)
 		err = cc770_get_of_node_data(pdev, priv);
-	else if (dev_get_platdata(&pdev->dev))
-		err = cc770_get_platform_data(pdev, priv);
-	else
+	अन्यथा अगर (dev_get_platdata(&pdev->dev))
+		err = cc770_get_platक्रमm_data(pdev, priv);
+	अन्यथा
 		err = -ENODEV;
-	if (err)
-		goto exit_free_cc770;
+	अगर (err)
+		जाओ निकास_मुक्त_cc770;
 
 	dev_dbg(&pdev->dev,
 		 "reg_base=0x%p irq=%d clock=%d cpu_interface=0x%02x "
 		 "bus_config=0x%02x clkout=0x%02x\n",
-		 priv->reg_base, dev->irq, priv->can.clock.freq,
-		 priv->cpu_interface, priv->bus_config, priv->clkout);
+		 priv->reg_base, dev->irq, priv->can.घड़ी.freq,
+		 priv->cpu_पूर्णांकerface, priv->bus_config, priv->clkout);
 
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
-	err = register_cc770dev(dev);
-	if (err) {
+	err = रेजिस्टर_cc770dev(dev);
+	अगर (err) अणु
 		dev_err(&pdev->dev,
 			"couldn't register CC700 device (err=%d)\n", err);
-		goto exit_free_cc770;
-	}
+		जाओ निकास_मुक्त_cc770;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-exit_free_cc770:
-	free_cc770dev(dev);
-exit_unmap_mem:
+निकास_मुक्त_cc770:
+	मुक्त_cc770dev(dev);
+निकास_unmap_mem:
 	iounmap(base);
-exit_release_mem:
+निकास_release_mem:
 	release_mem_region(mem->start, mem_size);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int cc770_platform_remove(struct platform_device *pdev)
-{
-	struct net_device *dev = platform_get_drvdata(pdev);
-	struct cc770_priv *priv = netdev_priv(dev);
-	struct resource *mem;
+अटल पूर्णांक cc770_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा cc770_priv *priv = netdev_priv(dev);
+	काष्ठा resource *mem;
 
-	unregister_cc770dev(dev);
+	unरेजिस्टर_cc770dev(dev);
 	iounmap(priv->reg_base);
-	free_cc770dev(dev);
+	मुक्त_cc770dev(dev);
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	release_mem_region(mem->start, resource_size(mem));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id cc770_platform_table[] = {
-	{.compatible = "bosch,cc770"}, /* CC770 from Bosch */
-	{.compatible = "intc,82527"},  /* AN82527 from Intel CP */
-	{},
-};
-MODULE_DEVICE_TABLE(of, cc770_platform_table);
+अटल स्थिर काष्ठा of_device_id cc770_platक्रमm_table[] = अणु
+	अणु.compatible = "bosch,cc770"पूर्ण, /* CC770 from Bosch */
+	अणु.compatible = "intc,82527"पूर्ण,  /* AN82527 from Intel CP */
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, cc770_platक्रमm_table);
 
-static struct platform_driver cc770_platform_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cc770_platक्रमm_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
-		.of_match_table = cc770_platform_table,
-	},
-	.probe = cc770_platform_probe,
-	.remove = cc770_platform_remove,
-};
+		.of_match_table = cc770_platक्रमm_table,
+	पूर्ण,
+	.probe = cc770_platक्रमm_probe,
+	.हटाओ = cc770_platक्रमm_हटाओ,
+पूर्ण;
 
-module_platform_driver(cc770_platform_driver);
+module_platक्रमm_driver(cc770_platक्रमm_driver);

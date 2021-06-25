@@ -1,240 +1,241 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-sa1100/ssp.c
  *
  *  Copyright (C) 2003 Russell King.
  *
- *  Generic SSP driver.  This provides the generic core for simple
+ *  Generic SSP driver.  This provides the generic core क्रम simple
  *  IO-based SSP applications.
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
 
-#include <mach/hardware.h>
-#include <mach/irqs.h>
-#include <asm/hardware/ssp.h>
+#समावेश <mach/hardware.h>
+#समावेश <mach/irqs.h>
+#समावेश <यंत्र/hardware/ssp.h>
 
-#define TIMEOUT 100000
+#घोषणा TIMEOUT 100000
 
-static irqreturn_t ssp_interrupt(int irq, void *dev_id)
-{
-	unsigned int status = Ser4SSSR;
+अटल irqवापस_t ssp_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित पूर्णांक status = Ser4SSSR;
 
-	if (status & SSSR_ROR)
-		printk(KERN_WARNING "SSP: receiver overrun\n");
+	अगर (status & SSSR_ROR)
+		prपूर्णांकk(KERN_WARNING "SSP: receiver overrun\n");
 
 	Ser4SSSR = SSSR_ROR;
 
-	return status ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस status ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
 /**
- * ssp_write_word - write a word to the SSP port
- * @data: 16-bit, MSB justified data to write.
+ * ssp_ग_लिखो_word - ग_लिखो a word to the SSP port
+ * @data: 16-bit, MSB justअगरied data to ग_लिखो.
  *
- * Wait for a free entry in the SSP transmit FIFO, and write a data
- * word to the SSP port.  Wait for the SSP port to start sending
+ * Wait क्रम a मुक्त entry in the SSP transmit FIFO, and ग_लिखो a data
+ * word to the SSP port.  Wait क्रम the SSP port to start sending
  * the data.
  *
- * The caller is expected to perform the necessary locking.
+ * The caller is expected to perक्रमm the necessary locking.
  *
  * Returns:
- *   %-ETIMEDOUT	timeout occurred
+ *   %-ETIMEDOUT	समयout occurred
  *   0			success
  */
-int ssp_write_word(u16 data)
-{
-	int timeout = TIMEOUT;
+पूर्णांक ssp_ग_लिखो_word(u16 data)
+अणु
+	पूर्णांक समयout = TIMEOUT;
 
-	while (!(Ser4SSSR & SSSR_TNF)) {
-	        if (!--timeout)
-	        	return -ETIMEDOUT;
+	जबतक (!(Ser4SSSR & SSSR_TNF)) अणु
+	        अगर (!--समयout)
+	        	वापस -ETIMEDOUT;
 		cpu_relax();
-	}
+	पूर्ण
 
 	Ser4SSDR = data;
 
-	timeout = TIMEOUT;
-	while (!(Ser4SSSR & SSSR_BSY)) {
-	        if (!--timeout)
-	        	return -ETIMEDOUT;
+	समयout = TIMEOUT;
+	जबतक (!(Ser4SSSR & SSSR_BSY)) अणु
+	        अगर (!--समयout)
+	        	वापस -ETIMEDOUT;
 		cpu_relax();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ssp_read_word - read a word from the SSP port
+ * ssp_पढ़ो_word - पढ़ो a word from the SSP port
  *
- * Wait for a data word in the SSP receive FIFO, and return the
- * received data.  Data is LSB justified.
+ * Wait क्रम a data word in the SSP receive FIFO, and वापस the
+ * received data.  Data is LSB justअगरied.
  *
- * Note: Currently, if data is not expected to be received, this
- * function will wait for ever.
+ * Note: Currently, अगर data is not expected to be received, this
+ * function will रुको क्रम ever.
  *
- * The caller is expected to perform the necessary locking.
+ * The caller is expected to perक्रमm the necessary locking.
  *
  * Returns:
- *   %-ETIMEDOUT	timeout occurred
+ *   %-ETIMEDOUT	समयout occurred
  *   16-bit data	success
  */
-int ssp_read_word(u16 *data)
-{
-	int timeout = TIMEOUT;
+पूर्णांक ssp_पढ़ो_word(u16 *data)
+अणु
+	पूर्णांक समयout = TIMEOUT;
 
-	while (!(Ser4SSSR & SSSR_RNE)) {
-	        if (!--timeout)
-	        	return -ETIMEDOUT;
+	जबतक (!(Ser4SSSR & SSSR_RNE)) अणु
+	        अगर (!--समयout)
+	        	वापस -ETIMEDOUT;
 		cpu_relax();
-	}
+	पूर्ण
 
 	*data = (u16)Ser4SSDR;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ssp_flush - flush the transmit and receive FIFOs
  *
- * Wait for the SSP to idle, and ensure that the receive FIFO
+ * Wait क्रम the SSP to idle, and ensure that the receive FIFO
  * is empty.
  *
- * The caller is expected to perform the necessary locking.
+ * The caller is expected to perक्रमm the necessary locking.
  *
  * Returns:
- *   %-ETIMEDOUT	timeout occurred
+ *   %-ETIMEDOUT	समयout occurred
  *   0			success
  */
-int ssp_flush(void)
-{
-	int timeout = TIMEOUT * 2;
+पूर्णांक ssp_flush(व्योम)
+अणु
+	पूर्णांक समयout = TIMEOUT * 2;
 
-	do {
-		while (Ser4SSSR & SSSR_RNE) {
-		        if (!--timeout)
-		        	return -ETIMEDOUT;
-			(void) Ser4SSDR;
-		}
-	        if (!--timeout)
-	        	return -ETIMEDOUT;
-	} while (Ser4SSSR & SSSR_BSY);
+	करो अणु
+		जबतक (Ser4SSSR & SSSR_RNE) अणु
+		        अगर (!--समयout)
+		        	वापस -ETIMEDOUT;
+			(व्योम) Ser4SSDR;
+		पूर्ण
+	        अगर (!--समयout)
+	        	वापस -ETIMEDOUT;
+	पूर्ण जबतक (Ser4SSSR & SSSR_BSY);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ssp_enable - enable the SSP port
  *
  * Turn on the SSP port.
  */
-void ssp_enable(void)
-{
+व्योम ssp_enable(व्योम)
+अणु
 	Ser4SSCR0 |= SSCR0_SSE;
-}
+पूर्ण
 
 /**
- * ssp_disable - shut down the SSP port
+ * ssp_disable - shut करोwn the SSP port
  *
- * Turn off the SSP port, optionally powering it down.
+ * Turn off the SSP port, optionally घातering it करोwn.
  */
-void ssp_disable(void)
-{
+व्योम ssp_disable(व्योम)
+अणु
 	Ser4SSCR0 &= ~SSCR0_SSE;
-}
+पूर्ण
 
 /**
  * ssp_save_state - save the SSP configuration
- * @ssp: pointer to structure to save SSP configuration
+ * @ssp: poपूर्णांकer to काष्ठाure to save SSP configuration
  *
- * Save the configured SSP state for suspend.
+ * Save the configured SSP state क्रम suspend.
  */
-void ssp_save_state(struct ssp_state *ssp)
-{
+व्योम ssp_save_state(काष्ठा ssp_state *ssp)
+अणु
 	ssp->cr0 = Ser4SSCR0;
 	ssp->cr1 = Ser4SSCR1;
 
 	Ser4SSCR0 &= ~SSCR0_SSE;
-}
+पूर्ण
 
 /**
  * ssp_restore_state - restore a previously saved SSP configuration
- * @ssp: pointer to configuration saved by ssp_save_state
+ * @ssp: poपूर्णांकer to configuration saved by ssp_save_state
  *
  * Restore the SSP configuration saved previously by ssp_save_state.
  */
-void ssp_restore_state(struct ssp_state *ssp)
-{
+व्योम ssp_restore_state(काष्ठा ssp_state *ssp)
+अणु
 	Ser4SSSR = SSSR_ROR;
 
 	Ser4SSCR0 = ssp->cr0 & ~SSCR0_SSE;
 	Ser4SSCR1 = ssp->cr1;
 	Ser4SSCR0 = ssp->cr0;
-}
+पूर्ण
 
 /**
  * ssp_init - setup the SSP port
  *
- * initialise and claim resources for the SSP port.
+ * initialise and claim resources क्रम the SSP port.
  *
  * Returns:
- *   %-ENODEV	if the SSP port is unavailable
- *   %-EBUSY	if the resources are already in use
+ *   %-ENODEV	अगर the SSP port is unavailable
+ *   %-EBUSY	अगर the resources are alपढ़ोy in use
  *   %0		on success
  */
-int ssp_init(void)
-{
-	int ret;
+पूर्णांक ssp_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!(PPAR & PPAR_SPR) && (Ser4MCCR0 & MCCR0_MCE))
-		return -ENODEV;
+	अगर (!(PPAR & PPAR_SPR) && (Ser4MCCR0 & MCCR0_MCE))
+		वापस -ENODEV;
 
-	if (!request_mem_region(__PREG(Ser4SSCR0), 0x18, "SSP")) {
-		return -EBUSY;
-	}
+	अगर (!request_mem_region(__PREG(Ser4SSCR0), 0x18, "SSP")) अणु
+		वापस -EBUSY;
+	पूर्ण
 
 	Ser4SSSR = SSSR_ROR;
 
-	ret = request_irq(IRQ_Ser4SSP, ssp_interrupt, 0, "SSP", NULL);
-	if (ret)
-		goto out_region;
+	ret = request_irq(IRQ_Ser4SSP, ssp_पूर्णांकerrupt, 0, "SSP", शून्य);
+	अगर (ret)
+		जाओ out_region;
 
-	return 0;
+	वापस 0;
 
  out_region:
 	release_mem_region(__PREG(Ser4SSCR0), 0x18);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ssp_exit - undo the effects of ssp_init
+ * ssp_निकास - unकरो the effects of ssp_init
  *
- * release and free resources for the SSP port.
+ * release and मुक्त resources क्रम the SSP port.
  */
-void ssp_exit(void)
-{
+व्योम ssp_निकास(व्योम)
+अणु
 	Ser4SSCR0 &= ~SSCR0_SSE;
 
-	free_irq(IRQ_Ser4SSP, NULL);
+	मुक्त_irq(IRQ_Ser4SSP, शून्य);
 	release_mem_region(__PREG(Ser4SSCR0), 0x18);
-}
+पूर्ण
 
 MODULE_AUTHOR("Russell King");
 MODULE_DESCRIPTION("SA11x0 SSP PIO driver");
 MODULE_LICENSE("GPL");
 
-EXPORT_SYMBOL(ssp_write_word);
-EXPORT_SYMBOL(ssp_read_word);
+EXPORT_SYMBOL(ssp_ग_लिखो_word);
+EXPORT_SYMBOL(ssp_पढ़ो_word);
 EXPORT_SYMBOL(ssp_flush);
 EXPORT_SYMBOL(ssp_enable);
 EXPORT_SYMBOL(ssp_disable);
 EXPORT_SYMBOL(ssp_save_state);
 EXPORT_SYMBOL(ssp_restore_state);
 EXPORT_SYMBOL(ssp_init);
-EXPORT_SYMBOL(ssp_exit);
+EXPORT_SYMBOL(ssp_निकास);

@@ -1,205 +1,206 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * w1-gpio - GPIO w1 bus master driver
  *
  * Copyright (C) 2007 Ville Syrjala <syrjala@sci.fi>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/w1-gpio.h>
-#include <linux/gpio/consumer.h>
-#include <linux/of_platform.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/w1-gpपन.स>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/delay.h>
 
-#include <linux/w1.h>
+#समावेश <linux/w1.h>
 
-static u8 w1_gpio_set_pullup(void *data, int delay)
-{
-	struct w1_gpio_platform_data *pdata = data;
+अटल u8 w1_gpio_set_pullup(व्योम *data, पूर्णांक delay)
+अणु
+	काष्ठा w1_gpio_platक्रमm_data *pdata = data;
 
-	if (delay) {
+	अगर (delay) अणु
 		pdata->pullup_duration = delay;
-	} else {
-		if (pdata->pullup_duration) {
+	पूर्ण अन्यथा अणु
+		अगर (pdata->pullup_duration) अणु
 			/*
-			 * This will OVERRIDE open drain emulation and force-pull
-			 * the line high for some time.
+			 * This will OVERRIDE खोलो drain emulation and क्रमce-pull
+			 * the line high क्रम some समय.
 			 */
 			gpiod_set_raw_value(pdata->gpiod, 1);
 			msleep(pdata->pullup_duration);
 			/*
-			 * This will simply set the line as input since we are doing
-			 * open drain emulation in the GPIO library.
+			 * This will simply set the line as input since we are करोing
+			 * खोलो drain emulation in the GPIO library.
 			 */
 			gpiod_set_value(pdata->gpiod, 1);
-		}
+		पूर्ण
 		pdata->pullup_duration = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void w1_gpio_write_bit(void *data, u8 bit)
-{
-	struct w1_gpio_platform_data *pdata = data;
+अटल व्योम w1_gpio_ग_लिखो_bit(व्योम *data, u8 bit)
+अणु
+	काष्ठा w1_gpio_platक्रमm_data *pdata = data;
 
 	gpiod_set_value(pdata->gpiod, bit);
-}
+पूर्ण
 
-static u8 w1_gpio_read_bit(void *data)
-{
-	struct w1_gpio_platform_data *pdata = data;
+अटल u8 w1_gpio_पढ़ो_bit(व्योम *data)
+अणु
+	काष्ठा w1_gpio_platक्रमm_data *pdata = data;
 
-	return gpiod_get_value(pdata->gpiod) ? 1 : 0;
-}
+	वापस gpiod_get_value(pdata->gpiod) ? 1 : 0;
+पूर्ण
 
-#if defined(CONFIG_OF)
-static const struct of_device_id w1_gpio_dt_ids[] = {
-	{ .compatible = "w1-gpio" },
-	{}
-};
+#अगर defined(CONFIG_OF)
+अटल स्थिर काष्ठा of_device_id w1_gpio_dt_ids[] = अणु
+	अणु .compatible = "w1-gpio" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, w1_gpio_dt_ids);
-#endif
+#पूर्ण_अगर
 
-static int w1_gpio_probe(struct platform_device *pdev)
-{
-	struct w1_bus_master *master;
-	struct w1_gpio_platform_data *pdata;
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	/* Enforce open drain mode by default */
-	enum gpiod_flags gflags = GPIOD_OUT_LOW_OPEN_DRAIN;
-	int err;
+अटल पूर्णांक w1_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा w1_bus_master *master;
+	काष्ठा w1_gpio_platक्रमm_data *pdata;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	/* Enक्रमce खोलो drain mode by शेष */
+	क्रमागत gpiod_flags gflags = GPIOD_OUT_LOW_OPEN_DRAIN;
+	पूर्णांक err;
 
-	if (of_have_populated_dt()) {
-		pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
-		if (!pdata)
-			return -ENOMEM;
+	अगर (of_have_populated_dt()) अणु
+		pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
+		अगर (!pdata)
+			वापस -ENOMEM;
 
 		/*
-		 * This parameter means that something else than the gpiolib has
-		 * already set the line into open drain mode, so we should just
+		 * This parameter means that something अन्यथा than the gpiolib has
+		 * alपढ़ोy set the line पूर्णांकo खोलो drain mode, so we should just
 		 * driver it high/low like we are in full control of the line and
-		 * open drain will happen transparently.
+		 * खोलो drain will happen transparently.
 		 */
-		if (of_get_property(np, "linux,open-drain", NULL))
+		अगर (of_get_property(np, "linux,open-drain", शून्य))
 			gflags = GPIOD_OUT_LOW;
 
-		pdev->dev.platform_data = pdata;
-	}
+		pdev->dev.platक्रमm_data = pdata;
+	पूर्ण
 	pdata = dev_get_platdata(dev);
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(dev, "No configuration data\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	master = devm_kzalloc(dev, sizeof(struct w1_bus_master),
+	master = devm_kzalloc(dev, माप(काष्ठा w1_bus_master),
 			GFP_KERNEL);
-	if (!master) {
+	अगर (!master) अणु
 		dev_err(dev, "Out of memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	pdata->gpiod = devm_gpiod_get_index(dev, NULL, 0, gflags);
-	if (IS_ERR(pdata->gpiod)) {
+	pdata->gpiod = devm_gpiod_get_index(dev, शून्य, 0, gflags);
+	अगर (IS_ERR(pdata->gpiod)) अणु
 		dev_err(dev, "gpio_request (pin) failed\n");
-		return PTR_ERR(pdata->gpiod);
-	}
+		वापस PTR_ERR(pdata->gpiod);
+	पूर्ण
 
 	pdata->pullup_gpiod =
-		devm_gpiod_get_index_optional(dev, NULL, 1, GPIOD_OUT_LOW);
-	if (IS_ERR(pdata->pullup_gpiod)) {
+		devm_gpiod_get_index_optional(dev, शून्य, 1, GPIOD_OUT_LOW);
+	अगर (IS_ERR(pdata->pullup_gpiod)) अणु
 		dev_err(dev, "gpio_request_one "
 			"(ext_pullup_enable_pin) failed\n");
-		return PTR_ERR(pdata->pullup_gpiod);
-	}
+		वापस PTR_ERR(pdata->pullup_gpiod);
+	पूर्ण
 
 	master->data = pdata;
-	master->read_bit = w1_gpio_read_bit;
+	master->पढ़ो_bit = w1_gpio_पढ़ो_bit;
 	gpiod_direction_output(pdata->gpiod, 1);
-	master->write_bit = w1_gpio_write_bit;
+	master->ग_लिखो_bit = w1_gpio_ग_लिखो_bit;
 
 	/*
-	 * If we are using open drain emulation from the GPIO library,
+	 * If we are using खोलो drain emulation from the GPIO library,
 	 * we need to use this pullup function that hammers the line
-	 * high using a raw accessor to provide pull-up for the w1
+	 * high using a raw accessor to provide pull-up क्रम the w1
 	 * line.
 	 */
-	if (gflags == GPIOD_OUT_LOW_OPEN_DRAIN)
+	अगर (gflags == GPIOD_OUT_LOW_OPEN_DRAIN)
 		master->set_pullup = w1_gpio_set_pullup;
 
 	err = w1_add_master_device(master);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "w1_add_master device failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (pdata->enable_external_pullup)
-		pdata->enable_external_pullup(1);
+	अगर (pdata->enable_बाह्यal_pullup)
+		pdata->enable_बाह्यal_pullup(1);
 
-	if (pdata->pullup_gpiod)
+	अगर (pdata->pullup_gpiod)
 		gpiod_set_value(pdata->pullup_gpiod, 1);
 
-	platform_set_drvdata(pdev, master);
+	platक्रमm_set_drvdata(pdev, master);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int w1_gpio_remove(struct platform_device *pdev)
-{
-	struct w1_bus_master *master = platform_get_drvdata(pdev);
-	struct w1_gpio_platform_data *pdata = dev_get_platdata(&pdev->dev);
+अटल पूर्णांक w1_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा w1_bus_master *master = platक्रमm_get_drvdata(pdev);
+	काष्ठा w1_gpio_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
 
-	if (pdata->enable_external_pullup)
-		pdata->enable_external_pullup(0);
+	अगर (pdata->enable_बाह्यal_pullup)
+		pdata->enable_बाह्यal_pullup(0);
 
-	if (pdata->pullup_gpiod)
+	अगर (pdata->pullup_gpiod)
 		gpiod_set_value(pdata->pullup_gpiod, 0);
 
-	w1_remove_master_device(master);
+	w1_हटाओ_master_device(master);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused w1_gpio_suspend(struct device *dev)
-{
-	struct w1_gpio_platform_data *pdata = dev_get_platdata(dev);
+अटल पूर्णांक __maybe_unused w1_gpio_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा w1_gpio_platक्रमm_data *pdata = dev_get_platdata(dev);
 
-	if (pdata->enable_external_pullup)
-		pdata->enable_external_pullup(0);
+	अगर (pdata->enable_बाह्यal_pullup)
+		pdata->enable_बाह्यal_pullup(0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused w1_gpio_resume(struct device *dev)
-{
-	struct w1_gpio_platform_data *pdata = dev_get_platdata(dev);
+अटल पूर्णांक __maybe_unused w1_gpio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा w1_gpio_platक्रमm_data *pdata = dev_get_platdata(dev);
 
-	if (pdata->enable_external_pullup)
-		pdata->enable_external_pullup(1);
+	अगर (pdata->enable_बाह्यal_pullup)
+		pdata->enable_बाह्यal_pullup(1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(w1_gpio_pm_ops, w1_gpio_suspend, w1_gpio_resume);
+अटल SIMPLE_DEV_PM_OPS(w1_gpio_pm_ops, w1_gpio_suspend, w1_gpio_resume);
 
-static struct platform_driver w1_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver w1_gpio_driver = अणु
+	.driver = अणु
 		.name	= "w1-gpio",
 		.pm	= &w1_gpio_pm_ops,
 		.of_match_table = of_match_ptr(w1_gpio_dt_ids),
-	},
+	पूर्ण,
 	.probe = w1_gpio_probe,
-	.remove = w1_gpio_remove,
-};
+	.हटाओ = w1_gpio_हटाओ,
+पूर्ण;
 
-module_platform_driver(w1_gpio_driver);
+module_platक्रमm_driver(w1_gpio_driver);
 
 MODULE_DESCRIPTION("GPIO w1 bus master driver");
 MODULE_AUTHOR("Ville Syrjala <syrjala@sci.fi>");

@@ -1,182 +1,183 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * VIRTIO based driver for vDPA device
+ * VIRTIO based driver क्रम vDPA device
  *
  * Copyright (c) 2020, Red Hat. All rights reserved.
  *     Author: Jason Wang <jasowang@redhat.com>
  *
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/uuid.h>
-#include <linux/virtio.h>
-#include <linux/vdpa.h>
-#include <linux/virtio_config.h>
-#include <linux/virtio_ring.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uuid.h>
+#समावेश <linux/virtपन.स>
+#समावेश <linux/vdpa.h>
+#समावेश <linux/virtio_config.h>
+#समावेश <linux/virtio_ring.h>
 
-#define MOD_VERSION  "0.1"
-#define MOD_AUTHOR   "Jason Wang <jasowang@redhat.com>"
-#define MOD_DESC     "vDPA bus driver for virtio devices"
-#define MOD_LICENSE  "GPL v2"
+#घोषणा MOD_VERSION  "0.1"
+#घोषणा MOD_AUTHOR   "Jason Wang <jasowang@redhat.com>"
+#घोषणा MOD_DESC     "vDPA bus driver for virtio devices"
+#घोषणा MOD_LICENSE  "GPL v2"
 
-struct virtio_vdpa_device {
-	struct virtio_device vdev;
-	struct vdpa_device *vdpa;
+काष्ठा virtio_vdpa_device अणु
+	काष्ठा virtio_device vdev;
+	काष्ठा vdpa_device *vdpa;
 	u64 features;
 
 	/* The lock to protect virtqueue list */
 	spinlock_t lock;
 	/* List of virtio_vdpa_vq_info */
-	struct list_head virtqueues;
-};
+	काष्ठा list_head virtqueues;
+पूर्ण;
 
-struct virtio_vdpa_vq_info {
+काष्ठा virtio_vdpa_vq_info अणु
 	/* the actual virtqueue */
-	struct virtqueue *vq;
+	काष्ठा virtqueue *vq;
 
-	/* the list node for the virtqueues list */
-	struct list_head node;
-};
+	/* the list node क्रम the virtqueues list */
+	काष्ठा list_head node;
+पूर्ण;
 
-static inline struct virtio_vdpa_device *
-to_virtio_vdpa_device(struct virtio_device *dev)
-{
-	return container_of(dev, struct virtio_vdpa_device, vdev);
-}
+अटल अंतरभूत काष्ठा virtio_vdpa_device *
+to_virtio_vdpa_device(काष्ठा virtio_device *dev)
+अणु
+	वापस container_of(dev, काष्ठा virtio_vdpa_device, vdev);
+पूर्ण
 
-static struct vdpa_device *vd_get_vdpa(struct virtio_device *vdev)
-{
-	return to_virtio_vdpa_device(vdev)->vdpa;
-}
+अटल काष्ठा vdpa_device *vd_get_vdpa(काष्ठा virtio_device *vdev)
+अणु
+	वापस to_virtio_vdpa_device(vdev)->vdpa;
+पूर्ण
 
-static void virtio_vdpa_get(struct virtio_device *vdev, unsigned offset,
-			    void *buf, unsigned len)
-{
-	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
+अटल व्योम virtio_vdpa_get(काष्ठा virtio_device *vdev, अचिन्हित offset,
+			    व्योम *buf, अचिन्हित len)
+अणु
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vdev);
 
 	vdpa_get_config(vdpa, offset, buf, len);
-}
+पूर्ण
 
-static void virtio_vdpa_set(struct virtio_device *vdev, unsigned offset,
-			    const void *buf, unsigned len)
-{
-	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल व्योम virtio_vdpa_set(काष्ठा virtio_device *vdev, अचिन्हित offset,
+			    स्थिर व्योम *buf, अचिन्हित len)
+अणु
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vdev);
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 
 	ops->set_config(vdpa, offset, buf, len);
-}
+पूर्ण
 
-static u32 virtio_vdpa_generation(struct virtio_device *vdev)
-{
-	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल u32 virtio_vdpa_generation(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vdev);
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 
-	if (ops->get_generation)
-		return ops->get_generation(vdpa);
+	अगर (ops->get_generation)
+		वापस ops->get_generation(vdpa);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 virtio_vdpa_get_status(struct virtio_device *vdev)
-{
-	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल u8 virtio_vdpa_get_status(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vdev);
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 
-	return ops->get_status(vdpa);
-}
+	वापस ops->get_status(vdpa);
+पूर्ण
 
-static void virtio_vdpa_set_status(struct virtio_device *vdev, u8 status)
-{
-	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल व्योम virtio_vdpa_set_status(काष्ठा virtio_device *vdev, u8 status)
+अणु
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vdev);
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 
-	return ops->set_status(vdpa, status);
-}
+	वापस ops->set_status(vdpa, status);
+पूर्ण
 
-static void virtio_vdpa_reset(struct virtio_device *vdev)
-{
-	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
+अटल व्योम virtio_vdpa_reset(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vdev);
 
 	vdpa_reset(vdpa);
-}
+पूर्ण
 
-static bool virtio_vdpa_notify(struct virtqueue *vq)
-{
-	struct vdpa_device *vdpa = vd_get_vdpa(vq->vdev);
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल bool virtio_vdpa_notअगरy(काष्ठा virtqueue *vq)
+अणु
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vq->vdev);
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 
 	ops->kick_vq(vdpa, vq->index);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static irqreturn_t virtio_vdpa_config_cb(void *private)
-{
-	struct virtio_vdpa_device *vd_dev = private;
+अटल irqवापस_t virtio_vdpa_config_cb(व्योम *निजी)
+अणु
+	काष्ठा virtio_vdpa_device *vd_dev = निजी;
 
 	virtio_config_changed(&vd_dev->vdev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t virtio_vdpa_virtqueue_cb(void *private)
-{
-	struct virtio_vdpa_vq_info *info = private;
+अटल irqवापस_t virtio_vdpa_virtqueue_cb(व्योम *निजी)
+अणु
+	काष्ठा virtio_vdpa_vq_info *info = निजी;
 
-	return vring_interrupt(0, info->vq);
-}
+	वापस vring_पूर्णांकerrupt(0, info->vq);
+पूर्ण
 
-static struct virtqueue *
-virtio_vdpa_setup_vq(struct virtio_device *vdev, unsigned int index,
-		     void (*callback)(struct virtqueue *vq),
-		     const char *name, bool ctx)
-{
-	struct virtio_vdpa_device *vd_dev = to_virtio_vdpa_device(vdev);
-	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
-	const struct vdpa_config_ops *ops = vdpa->config;
-	struct virtio_vdpa_vq_info *info;
-	struct vdpa_callback cb;
-	struct virtqueue *vq;
+अटल काष्ठा virtqueue *
+virtio_vdpa_setup_vq(काष्ठा virtio_device *vdev, अचिन्हित पूर्णांक index,
+		     व्योम (*callback)(काष्ठा virtqueue *vq),
+		     स्थिर अक्षर *name, bool ctx)
+अणु
+	काष्ठा virtio_vdpa_device *vd_dev = to_virtio_vdpa_device(vdev);
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vdev);
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	काष्ठा virtio_vdpa_vq_info *info;
+	काष्ठा vdpa_callback cb;
+	काष्ठा virtqueue *vq;
 	u64 desc_addr, driver_addr, device_addr;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 align, num;
-	int err;
+	पूर्णांक err;
 
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
-	/* Queue shouldn't already be set up. */
-	if (ops->get_vq_ready(vdpa, index))
-		return ERR_PTR(-ENOENT);
+	/* Queue shouldn't alपढ़ोy be set up. */
+	अगर (ops->get_vq_पढ़ोy(vdpa, index))
+		वापस ERR_PTR(-ENOENT);
 
 	/* Allocate and fill out our active queue description */
-	info = kmalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return ERR_PTR(-ENOMEM);
+	info = kदो_स्मृति(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस ERR_PTR(-ENOMEM);
 
 	num = ops->get_vq_num_max(vdpa);
-	if (num == 0) {
+	अगर (num == 0) अणु
 		err = -ENOENT;
-		goto error_new_virtqueue;
-	}
+		जाओ error_new_virtqueue;
+	पूर्ण
 
 	/* Create the vring */
 	align = ops->get_vq_align(vdpa);
 	vq = vring_create_virtqueue(index, num, align, vdev,
 				    true, true, ctx,
-				    virtio_vdpa_notify, callback, name);
-	if (!vq) {
+				    virtio_vdpa_notअगरy, callback, name);
+	अगर (!vq) अणु
 		err = -ENOMEM;
-		goto error_new_virtqueue;
-	}
+		जाओ error_new_virtqueue;
+	पूर्ण
 
 	/* Setup virtqueue callback */
 	cb.callback = virtio_vdpa_virtqueue_cb;
-	cb.private = info;
+	cb.निजी = info;
 	ops->set_vq_cb(vdpa, index, &cb);
 	ops->set_vq_num(vdpa, index, virtqueue_get_vring_size(vq));
 
@@ -184,14 +185,14 @@ virtio_vdpa_setup_vq(struct virtio_device *vdev, unsigned int index,
 	driver_addr = virtqueue_get_avail_addr(vq);
 	device_addr = virtqueue_get_used_addr(vq);
 
-	if (ops->set_vq_address(vdpa, index,
+	अगर (ops->set_vq_address(vdpa, index,
 				desc_addr, driver_addr,
-				device_addr)) {
+				device_addr)) अणु
 		err = -EINVAL;
-		goto err_vq;
-	}
+		जाओ err_vq;
+	पूर्ण
 
-	ops->set_vq_ready(vdpa, index, 1);
+	ops->set_vq_पढ़ोy(vdpa, index, 1);
 
 	vq->priv = info;
 	info->vq = vq;
@@ -200,113 +201,113 @@ virtio_vdpa_setup_vq(struct virtio_device *vdev, unsigned int index,
 	list_add(&info->node, &vd_dev->virtqueues);
 	spin_unlock_irqrestore(&vd_dev->lock, flags);
 
-	return vq;
+	वापस vq;
 
 err_vq:
 	vring_del_virtqueue(vq);
 error_new_virtqueue:
-	ops->set_vq_ready(vdpa, index, 0);
+	ops->set_vq_पढ़ोy(vdpa, index, 0);
 	/* VDPA driver should make sure vq is stopeed here */
-	WARN_ON(ops->get_vq_ready(vdpa, index));
-	kfree(info);
-	return ERR_PTR(err);
-}
+	WARN_ON(ops->get_vq_पढ़ोy(vdpa, index));
+	kमुक्त(info);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void virtio_vdpa_del_vq(struct virtqueue *vq)
-{
-	struct virtio_vdpa_device *vd_dev = to_virtio_vdpa_device(vq->vdev);
-	struct vdpa_device *vdpa = vd_dev->vdpa;
-	const struct vdpa_config_ops *ops = vdpa->config;
-	struct virtio_vdpa_vq_info *info = vq->priv;
-	unsigned int index = vq->index;
-	unsigned long flags;
+अटल व्योम virtio_vdpa_del_vq(काष्ठा virtqueue *vq)
+अणु
+	काष्ठा virtio_vdpa_device *vd_dev = to_virtio_vdpa_device(vq->vdev);
+	काष्ठा vdpa_device *vdpa = vd_dev->vdpa;
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	काष्ठा virtio_vdpa_vq_info *info = vq->priv;
+	अचिन्हित पूर्णांक index = vq->index;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vd_dev->lock, flags);
 	list_del(&info->node);
 	spin_unlock_irqrestore(&vd_dev->lock, flags);
 
-	/* Select and deactivate the queue (best effort) */
-	ops->set_vq_ready(vdpa, index, 0);
+	/* Select and deactivate the queue (best efक्रमt) */
+	ops->set_vq_पढ़ोy(vdpa, index, 0);
 
 	vring_del_virtqueue(vq);
 
-	kfree(info);
-}
+	kमुक्त(info);
+पूर्ण
 
-static void virtio_vdpa_del_vqs(struct virtio_device *vdev)
-{
-	struct virtqueue *vq, *n;
+अटल व्योम virtio_vdpa_del_vqs(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtqueue *vq, *n;
 
-	list_for_each_entry_safe(vq, n, &vdev->vqs, list)
+	list_क्रम_each_entry_safe(vq, n, &vdev->vqs, list)
 		virtio_vdpa_del_vq(vq);
-}
+पूर्ण
 
-static int virtio_vdpa_find_vqs(struct virtio_device *vdev, unsigned nvqs,
-				struct virtqueue *vqs[],
+अटल पूर्णांक virtio_vdpa_find_vqs(काष्ठा virtio_device *vdev, अचिन्हित nvqs,
+				काष्ठा virtqueue *vqs[],
 				vq_callback_t *callbacks[],
-				const char * const names[],
-				const bool *ctx,
-				struct irq_affinity *desc)
-{
-	struct virtio_vdpa_device *vd_dev = to_virtio_vdpa_device(vdev);
-	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
-	const struct vdpa_config_ops *ops = vdpa->config;
-	struct vdpa_callback cb;
-	int i, err, queue_idx = 0;
+				स्थिर अक्षर * स्थिर names[],
+				स्थिर bool *ctx,
+				काष्ठा irq_affinity *desc)
+अणु
+	काष्ठा virtio_vdpa_device *vd_dev = to_virtio_vdpa_device(vdev);
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vdev);
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	काष्ठा vdpa_callback cb;
+	पूर्णांक i, err, queue_idx = 0;
 
-	for (i = 0; i < nvqs; ++i) {
-		if (!names[i]) {
-			vqs[i] = NULL;
-			continue;
-		}
+	क्रम (i = 0; i < nvqs; ++i) अणु
+		अगर (!names[i]) अणु
+			vqs[i] = शून्य;
+			जारी;
+		पूर्ण
 
 		vqs[i] = virtio_vdpa_setup_vq(vdev, queue_idx++,
 					      callbacks[i], names[i], ctx ?
 					      ctx[i] : false);
-		if (IS_ERR(vqs[i])) {
+		अगर (IS_ERR(vqs[i])) अणु
 			err = PTR_ERR(vqs[i]);
-			goto err_setup_vq;
-		}
-	}
+			जाओ err_setup_vq;
+		पूर्ण
+	पूर्ण
 
 	cb.callback = virtio_vdpa_config_cb;
-	cb.private = vd_dev;
+	cb.निजी = vd_dev;
 	ops->set_config_cb(vdpa, &cb);
 
-	return 0;
+	वापस 0;
 
 err_setup_vq:
 	virtio_vdpa_del_vqs(vdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u64 virtio_vdpa_get_features(struct virtio_device *vdev)
-{
-	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
-	const struct vdpa_config_ops *ops = vdpa->config;
+अटल u64 virtio_vdpa_get_features(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vdev);
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
 
-	return ops->get_features(vdpa);
-}
+	वापस ops->get_features(vdpa);
+पूर्ण
 
-static int virtio_vdpa_finalize_features(struct virtio_device *vdev)
-{
-	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
+अटल पूर्णांक virtio_vdpa_finalize_features(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा vdpa_device *vdpa = vd_get_vdpa(vdev);
 
 	/* Give virtio_ring a chance to accept features. */
 	vring_transport_features(vdev);
 
-	return vdpa_set_features(vdpa, vdev->features);
-}
+	वापस vdpa_set_features(vdpa, vdev->features);
+पूर्ण
 
-static const char *virtio_vdpa_bus_name(struct virtio_device *vdev)
-{
-	struct virtio_vdpa_device *vd_dev = to_virtio_vdpa_device(vdev);
-	struct vdpa_device *vdpa = vd_dev->vdpa;
+अटल स्थिर अक्षर *virtio_vdpa_bus_name(काष्ठा virtio_device *vdev)
+अणु
+	काष्ठा virtio_vdpa_device *vd_dev = to_virtio_vdpa_device(vdev);
+	काष्ठा vdpa_device *vdpa = vd_dev->vdpa;
 
-	return dev_name(&vdpa->dev);
-}
+	वापस dev_name(&vdpa->dev);
+पूर्ण
 
-static const struct virtio_config_ops virtio_vdpa_config_ops = {
+अटल स्थिर काष्ठा virtio_config_ops virtio_vdpa_config_ops = अणु
 	.get		= virtio_vdpa_get,
 	.set		= virtio_vdpa_set,
 	.generation	= virtio_vdpa_generation,
@@ -318,27 +319,27 @@ static const struct virtio_config_ops virtio_vdpa_config_ops = {
 	.get_features	= virtio_vdpa_get_features,
 	.finalize_features = virtio_vdpa_finalize_features,
 	.bus_name	= virtio_vdpa_bus_name,
-};
+पूर्ण;
 
-static void virtio_vdpa_release_dev(struct device *_d)
-{
-	struct virtio_device *vdev =
-	       container_of(_d, struct virtio_device, dev);
-	struct virtio_vdpa_device *vd_dev =
-	       container_of(vdev, struct virtio_vdpa_device, vdev);
+अटल व्योम virtio_vdpa_release_dev(काष्ठा device *_d)
+अणु
+	काष्ठा virtio_device *vdev =
+	       container_of(_d, काष्ठा virtio_device, dev);
+	काष्ठा virtio_vdpa_device *vd_dev =
+	       container_of(vdev, काष्ठा virtio_vdpa_device, vdev);
 
-	kfree(vd_dev);
-}
+	kमुक्त(vd_dev);
+पूर्ण
 
-static int virtio_vdpa_probe(struct vdpa_device *vdpa)
-{
-	const struct vdpa_config_ops *ops = vdpa->config;
-	struct virtio_vdpa_device *vd_dev, *reg_dev = NULL;
-	int ret = -EINVAL;
+अटल पूर्णांक virtio_vdpa_probe(काष्ठा vdpa_device *vdpa)
+अणु
+	स्थिर काष्ठा vdpa_config_ops *ops = vdpa->config;
+	काष्ठा virtio_vdpa_device *vd_dev, *reg_dev = शून्य;
+	पूर्णांक ret = -EINVAL;
 
-	vd_dev = kzalloc(sizeof(*vd_dev), GFP_KERNEL);
-	if (!vd_dev)
-		return -ENOMEM;
+	vd_dev = kzalloc(माप(*vd_dev), GFP_KERNEL);
+	अगर (!vd_dev)
+		वापस -ENOMEM;
 
 	vd_dev->vdev.dev.parent = vdpa_get_dma_dev(vdpa);
 	vd_dev->vdev.dev.release = virtio_vdpa_release_dev;
@@ -348,41 +349,41 @@ static int virtio_vdpa_probe(struct vdpa_device *vdpa)
 	spin_lock_init(&vd_dev->lock);
 
 	vd_dev->vdev.id.device = ops->get_device_id(vdpa);
-	if (vd_dev->vdev.id.device == 0)
-		goto err;
+	अगर (vd_dev->vdev.id.device == 0)
+		जाओ err;
 
-	vd_dev->vdev.id.vendor = ops->get_vendor_id(vdpa);
-	ret = register_virtio_device(&vd_dev->vdev);
+	vd_dev->vdev.id.venकरोr = ops->get_venकरोr_id(vdpa);
+	ret = रेजिस्टर_virtio_device(&vd_dev->vdev);
 	reg_dev = vd_dev;
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	vdpa_set_drvdata(vdpa, vd_dev);
 
-	return 0;
+	वापस 0;
 
 err:
-	if (reg_dev)
+	अगर (reg_dev)
 		put_device(&vd_dev->vdev.dev);
-	else
-		kfree(vd_dev);
-	return ret;
-}
+	अन्यथा
+		kमुक्त(vd_dev);
+	वापस ret;
+पूर्ण
 
-static void virtio_vdpa_remove(struct vdpa_device *vdpa)
-{
-	struct virtio_vdpa_device *vd_dev = vdpa_get_drvdata(vdpa);
+अटल व्योम virtio_vdpa_हटाओ(काष्ठा vdpa_device *vdpa)
+अणु
+	काष्ठा virtio_vdpa_device *vd_dev = vdpa_get_drvdata(vdpa);
 
-	unregister_virtio_device(&vd_dev->vdev);
-}
+	unरेजिस्टर_virtio_device(&vd_dev->vdev);
+पूर्ण
 
-static struct vdpa_driver virtio_vdpa_driver = {
-	.driver = {
+अटल काष्ठा vdpa_driver virtio_vdpa_driver = अणु
+	.driver = अणु
 		.name	= "virtio_vdpa",
-	},
+	पूर्ण,
 	.probe	= virtio_vdpa_probe,
-	.remove = virtio_vdpa_remove,
-};
+	.हटाओ = virtio_vdpa_हटाओ,
+पूर्ण;
 
 module_vdpa_driver(virtio_vdpa_driver);
 

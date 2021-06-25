@@ -1,227 +1,228 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	Intel 21285 watchdog driver
+ *	Intel 21285 watchकरोg driver
  *	Copyright (c) Phil Blundell <pb@nexus.co.uk>, 1998
  *
  *	based on
  *
- *	SoftDog	0.05:	A Software Watchdog Device
+ *	SoftDog	0.05:	A Software Watchकरोg Device
  *
  *	(c) Copyright 1996 Alan Cox <alan@lxorguk.ukuu.org.uk>,
  *						All Rights Reserved.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/miscdevice.h>
-#include <linux/watchdog.h>
-#include <linux/reboot.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/uaccess.h>
-#include <linux/irq.h>
-#include <mach/hardware.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/irq.h>
+#समावेश <mach/hardware.h>
 
-#include <asm/mach-types.h>
-#include <asm/system_info.h>
-#include <asm/hardware/dec21285.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/प्रणाली_info.h>
+#समावेश <यंत्र/hardware/dec21285.h>
 
 /*
- * Define this to stop the watchdog actually rebooting the machine.
+ * Define this to stop the watchकरोg actually rebooting the machine.
  */
-#undef ONLY_TESTING
+#अघोषित ONLY_TESTING
 
-static unsigned int soft_margin = 60;		/* in seconds */
-static unsigned int reload;
-static unsigned long timer_alive;
+अटल अचिन्हित पूर्णांक soft_margin = 60;		/* in seconds */
+अटल अचिन्हित पूर्णांक reload;
+अटल अचिन्हित दीर्घ समयr_alive;
 
-#ifdef ONLY_TESTING
+#अगर_घोषित ONLY_TESTING
 /*
- *	If the timer expires..
+ *	If the समयr expires..
  */
-static void watchdog_fire(int irq, void *dev_id)
-{
+अटल व्योम watchकरोg_fire(पूर्णांक irq, व्योम *dev_id)
+अणु
 	pr_crit("Would Reboot\n");
 	*CSR_TIMER4_CNTL = 0;
 	*CSR_TIMER4_CLR = 0;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
- *	Refresh the timer.
+ *	Refresh the समयr.
  */
-static void watchdog_ping(void)
-{
+अटल व्योम watchकरोg_ping(व्योम)
+अणु
 	*CSR_TIMER4_LOAD = reload;
-}
+पूर्ण
 
 /*
- *	Allow only one person to hold it open
+ *	Allow only one person to hold it खोलो
  */
-static int watchdog_open(struct inode *inode, struct file *file)
-{
-	int ret;
+अटल पूर्णांक watchकरोg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret;
 
-	if (*CSR_SA110_CNTL & (1 << 13))
-		return -EBUSY;
+	अगर (*CSR_SA110_CNTL & (1 << 13))
+		वापस -EBUSY;
 
-	if (test_and_set_bit(1, &timer_alive))
-		return -EBUSY;
+	अगर (test_and_set_bit(1, &समयr_alive))
+		वापस -EBUSY;
 
 	reload = soft_margin * (mem_fclk_21285 / 256);
 
 	*CSR_TIMER4_CLR = 0;
-	watchdog_ping();
+	watchकरोg_ping();
 	*CSR_TIMER4_CNTL = TIMER_CNTL_ENABLE | TIMER_CNTL_AUTORELOAD
 		| TIMER_CNTL_DIV256;
 
-#ifdef ONLY_TESTING
-	ret = request_irq(IRQ_TIMER4, watchdog_fire, 0, "watchdog", NULL);
-	if (ret) {
+#अगर_घोषित ONLY_TESTING
+	ret = request_irq(IRQ_TIMER4, watchकरोg_fire, 0, "watchdog", शून्य);
+	अगर (ret) अणु
 		*CSR_TIMER4_CNTL = 0;
-		clear_bit(1, &timer_alive);
-	}
-#else
+		clear_bit(1, &समयr_alive);
+	पूर्ण
+#अन्यथा
 	/*
 	 * Setting this bit is irreversible; once enabled, there is
-	 * no way to disable the watchdog.
+	 * no way to disable the watchकरोg.
 	 */
 	*CSR_SA110_CNTL |= 1 << 13;
 
 	ret = 0;
-#endif
-	stream_open(inode, file);
-	return ret;
-}
+#पूर्ण_अगर
+	stream_खोलो(inode, file);
+	वापस ret;
+पूर्ण
 
 /*
- *	Shut off the timer.
- *	Note: if we really have enabled the watchdog, there
+ *	Shut off the समयr.
+ *	Note: अगर we really have enabled the watchकरोg, there
  *	is no way to turn off.
  */
-static int watchdog_release(struct inode *inode, struct file *file)
-{
-#ifdef ONLY_TESTING
-	free_irq(IRQ_TIMER4, NULL);
-	clear_bit(1, &timer_alive);
-#endif
-	return 0;
-}
+अटल पूर्णांक watchकरोg_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+#अगर_घोषित ONLY_TESTING
+	मुक्त_irq(IRQ_TIMER4, शून्य);
+	clear_bit(1, &समयr_alive);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static ssize_t watchdog_write(struct file *file, const char __user *data,
-			      size_t len, loff_t *ppos)
-{
+अटल sमाप_प्रकार watchकरोg_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+			      माप_प्रकार len, loff_t *ppos)
+अणु
 	/*
-	 *	Refresh the timer.
+	 *	Refresh the समयr.
 	 */
-	if (len)
-		watchdog_ping();
+	अगर (len)
+		watchकरोg_ping();
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static const struct watchdog_info ident = {
+अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 	.options	= WDIOF_SETTIMEOUT,
 	.identity	= "Footbridge Watchdog",
-};
+पूर्ण;
 
-static long watchdog_ioctl(struct file *file, unsigned int cmd,
-			   unsigned long arg)
-{
-	int __user *int_arg = (int __user *)arg;
-	int new_margin, ret = -ENOTTY;
+अटल दीर्घ watchकरोg_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			   अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक __user *पूर्णांक_arg = (पूर्णांक __user *)arg;
+	पूर्णांक new_margin, ret = -ENOTTY;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
 		ret = 0;
-		if (copy_to_user((void __user *)arg, &ident, sizeof(ident)))
+		अगर (copy_to_user((व्योम __user *)arg, &ident, माप(ident)))
 			ret = -EFAULT;
-		break;
+		अवरोध;
 
-	case WDIOC_GETSTATUS:
-	case WDIOC_GETBOOTSTATUS:
-		ret = put_user(0, int_arg);
-		break;
+	हाल WDIOC_GETSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
+		ret = put_user(0, पूर्णांक_arg);
+		अवरोध;
 
-	case WDIOC_KEEPALIVE:
-		watchdog_ping();
+	हाल WDIOC_KEEPALIVE:
+		watchकरोg_ping();
 		ret = 0;
-		break;
+		अवरोध;
 
-	case WDIOC_SETTIMEOUT:
-		ret = get_user(new_margin, int_arg);
-		if (ret)
-			break;
+	हाल WDIOC_SETTIMEOUT:
+		ret = get_user(new_margin, पूर्णांक_arg);
+		अगर (ret)
+			अवरोध;
 
 		/* Arbitrary, can't find the card's limits */
-		if (new_margin < 0 || new_margin > 60) {
+		अगर (new_margin < 0 || new_margin > 60) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		soft_margin = new_margin;
 		reload = soft_margin * (mem_fclk_21285 / 256);
-		watchdog_ping();
+		watchकरोg_ping();
 		fallthrough;
-	case WDIOC_GETTIMEOUT:
-		ret = put_user(soft_margin, int_arg);
-		break;
-	}
-	return ret;
-}
+	हाल WDIOC_GETTIMEOUT:
+		ret = put_user(soft_margin, पूर्णांक_arg);
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct file_operations watchdog_fops = {
+अटल स्थिर काष्ठा file_operations watchकरोg_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.write		= watchdog_write,
-	.unlocked_ioctl	= watchdog_ioctl,
+	.ग_लिखो		= watchकरोg_ग_लिखो,
+	.unlocked_ioctl	= watchकरोg_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= watchdog_open,
-	.release	= watchdog_release,
-};
+	.खोलो		= watchकरोg_खोलो,
+	.release	= watchकरोg_release,
+पूर्ण;
 
-static struct miscdevice watchdog_miscdev = {
+अटल काष्ठा miscdevice watchकरोg_miscdev = अणु
 	.minor		= WATCHDOG_MINOR,
 	.name		= "watchdog",
-	.fops		= &watchdog_fops,
-};
+	.fops		= &watchकरोg_fops,
+पूर्ण;
 
-static int __init footbridge_watchdog_init(void)
-{
-	int retval;
+अटल पूर्णांक __init footbridge_watchकरोg_init(व्योम)
+अणु
+	पूर्णांक retval;
 
-	if (machine_is_netwinder())
-		return -ENODEV;
+	अगर (machine_is_netwinder())
+		वापस -ENODEV;
 
-	retval = misc_register(&watchdog_miscdev);
-	if (retval < 0)
-		return retval;
+	retval = misc_रेजिस्टर(&watchकरोg_miscdev);
+	अगर (retval < 0)
+		वापस retval;
 
 	pr_info("Footbridge Watchdog Timer: 0.01, timer margin: %d sec\n",
 		soft_margin);
 
-	if (machine_is_cats())
+	अगर (machine_is_cats())
 		pr_warn("Warning: Watchdog reset may not work on this machine\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit footbridge_watchdog_exit(void)
-{
-	misc_deregister(&watchdog_miscdev);
-}
+अटल व्योम __निकास footbridge_watchकरोg_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&watchकरोg_miscdev);
+पूर्ण
 
 MODULE_AUTHOR("Phil Blundell <pb@nexus.co.uk>");
 MODULE_DESCRIPTION("Footbridge watchdog driver");
 MODULE_LICENSE("GPL");
 
-module_param(soft_margin, int, 0);
+module_param(soft_margin, पूर्णांक, 0);
 MODULE_PARM_DESC(soft_margin, "Watchdog timeout in seconds");
 
-module_init(footbridge_watchdog_init);
-module_exit(footbridge_watchdog_exit);
+module_init(footbridge_watchकरोg_init);
+module_निकास(footbridge_watchकरोg_निकास);

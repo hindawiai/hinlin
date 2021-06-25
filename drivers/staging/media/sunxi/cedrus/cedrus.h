@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Cedrus VPU driver
  *
- * Copyright (C) 2016 Florent Revest <florent.revest@free-electrons.com>
+ * Copyright (C) 2016 Florent Revest <florent.revest@मुक्त-electrons.com>
  * Copyright (C) 2018 Paul Kocialkowski <paul.kocialkowski@bootlin.com>
  * Copyright (C) 2018 Bootlin
  *
@@ -13,246 +14,246 @@
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
 
-#ifndef _CEDRUS_H_
-#define _CEDRUS_H_
+#अगर_अघोषित _CEDRUS_H_
+#घोषणा _CEDRUS_H_
 
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-mem2mem.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/videobuf2-dma-contig.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-mem2स्मृति.स>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-#include <linux/iopoll.h>
-#include <linux/platform_device.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define CEDRUS_NAME			"cedrus"
+#घोषणा CEDRUS_NAME			"cedrus"
 
-#define CEDRUS_CAPABILITY_UNTILED	BIT(0)
-#define CEDRUS_CAPABILITY_H265_DEC	BIT(1)
-#define CEDRUS_CAPABILITY_H264_DEC	BIT(2)
-#define CEDRUS_CAPABILITY_MPEG2_DEC	BIT(3)
-#define CEDRUS_CAPABILITY_VP8_DEC	BIT(4)
+#घोषणा CEDRUS_CAPABILITY_UNTILED	BIT(0)
+#घोषणा CEDRUS_CAPABILITY_H265_DEC	BIT(1)
+#घोषणा CEDRUS_CAPABILITY_H264_DEC	BIT(2)
+#घोषणा CEDRUS_CAPABILITY_MPEG2_DEC	BIT(3)
+#घोषणा CEDRUS_CAPABILITY_VP8_DEC	BIT(4)
 
-enum cedrus_codec {
+क्रमागत cedrus_codec अणु
 	CEDRUS_CODEC_MPEG2,
 	CEDRUS_CODEC_H264,
 	CEDRUS_CODEC_H265,
 	CEDRUS_CODEC_VP8,
 	CEDRUS_CODEC_LAST,
-};
+पूर्ण;
 
-enum cedrus_irq_status {
+क्रमागत cedrus_irq_status अणु
 	CEDRUS_IRQ_NONE,
 	CEDRUS_IRQ_ERROR,
 	CEDRUS_IRQ_OK,
-};
+पूर्ण;
 
-enum cedrus_h264_pic_type {
+क्रमागत cedrus_h264_pic_type अणु
 	CEDRUS_H264_PIC_TYPE_FRAME	= 0,
 	CEDRUS_H264_PIC_TYPE_FIELD,
 	CEDRUS_H264_PIC_TYPE_MBAFF,
-};
+पूर्ण;
 
-struct cedrus_control {
-	struct v4l2_ctrl_config cfg;
-	enum cedrus_codec	codec;
-};
+काष्ठा cedrus_control अणु
+	काष्ठा v4l2_ctrl_config cfg;
+	क्रमागत cedrus_codec	codec;
+पूर्ण;
 
-struct cedrus_h264_run {
-	const struct v4l2_ctrl_h264_decode_params	*decode_params;
-	const struct v4l2_ctrl_h264_pps			*pps;
-	const struct v4l2_ctrl_h264_scaling_matrix	*scaling_matrix;
-	const struct v4l2_ctrl_h264_slice_params	*slice_params;
-	const struct v4l2_ctrl_h264_sps			*sps;
-	const struct v4l2_ctrl_h264_pred_weights	*pred_weights;
-};
+काष्ठा cedrus_h264_run अणु
+	स्थिर काष्ठा v4l2_ctrl_h264_decode_params	*decode_params;
+	स्थिर काष्ठा v4l2_ctrl_h264_pps			*pps;
+	स्थिर काष्ठा v4l2_ctrl_h264_scaling_matrix	*scaling_matrix;
+	स्थिर काष्ठा v4l2_ctrl_h264_slice_params	*slice_params;
+	स्थिर काष्ठा v4l2_ctrl_h264_sps			*sps;
+	स्थिर काष्ठा v4l2_ctrl_h264_pred_weights	*pred_weights;
+पूर्ण;
 
-struct cedrus_mpeg2_run {
-	const struct v4l2_ctrl_mpeg2_slice_params	*slice_params;
-	const struct v4l2_ctrl_mpeg2_quantization	*quantization;
-};
+काष्ठा cedrus_mpeg2_run अणु
+	स्थिर काष्ठा v4l2_ctrl_mpeg2_slice_params	*slice_params;
+	स्थिर काष्ठा v4l2_ctrl_mpeg2_quantization	*quantization;
+पूर्ण;
 
-struct cedrus_h265_run {
-	const struct v4l2_ctrl_hevc_sps			*sps;
-	const struct v4l2_ctrl_hevc_pps			*pps;
-	const struct v4l2_ctrl_hevc_slice_params	*slice_params;
-};
+काष्ठा cedrus_h265_run अणु
+	स्थिर काष्ठा v4l2_ctrl_hevc_sps			*sps;
+	स्थिर काष्ठा v4l2_ctrl_hevc_pps			*pps;
+	स्थिर काष्ठा v4l2_ctrl_hevc_slice_params	*slice_params;
+पूर्ण;
 
-struct cedrus_vp8_run {
-	const struct v4l2_ctrl_vp8_frame		*frame_params;
-};
+काष्ठा cedrus_vp8_run अणु
+	स्थिर काष्ठा v4l2_ctrl_vp8_frame		*frame_params;
+पूर्ण;
 
-struct cedrus_run {
-	struct vb2_v4l2_buffer	*src;
-	struct vb2_v4l2_buffer	*dst;
+काष्ठा cedrus_run अणु
+	काष्ठा vb2_v4l2_buffer	*src;
+	काष्ठा vb2_v4l2_buffer	*dst;
 
-	union {
-		struct cedrus_h264_run	h264;
-		struct cedrus_mpeg2_run	mpeg2;
-		struct cedrus_h265_run	h265;
-		struct cedrus_vp8_run	vp8;
-	};
-};
+	जोड़ अणु
+		काष्ठा cedrus_h264_run	h264;
+		काष्ठा cedrus_mpeg2_run	mpeg2;
+		काष्ठा cedrus_h265_run	h265;
+		काष्ठा cedrus_vp8_run	vp8;
+	पूर्ण;
+पूर्ण;
 
-struct cedrus_buffer {
-	struct v4l2_m2m_buffer          m2m_buf;
+काष्ठा cedrus_buffer अणु
+	काष्ठा v4l2_m2m_buffer          m2m_buf;
 
-	union {
-		struct {
-			unsigned int			position;
-			enum cedrus_h264_pic_type	pic_type;
-		} h264;
-	} codec;
-};
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित पूर्णांक			position;
+			क्रमागत cedrus_h264_pic_type	pic_type;
+		पूर्ण h264;
+	पूर्ण codec;
+पूर्ण;
 
-struct cedrus_ctx {
-	struct v4l2_fh			fh;
-	struct cedrus_dev		*dev;
+काष्ठा cedrus_ctx अणु
+	काष्ठा v4l2_fh			fh;
+	काष्ठा cedrus_dev		*dev;
 
-	struct v4l2_pix_format		src_fmt;
-	struct v4l2_pix_format		dst_fmt;
-	enum cedrus_codec		current_codec;
+	काष्ठा v4l2_pix_क्रमmat		src_fmt;
+	काष्ठा v4l2_pix_क्रमmat		dst_fmt;
+	क्रमागत cedrus_codec		current_codec;
 
-	struct v4l2_ctrl_handler	hdl;
-	struct v4l2_ctrl		**ctrls;
+	काष्ठा v4l2_ctrl_handler	hdl;
+	काष्ठा v4l2_ctrl		**ctrls;
 
-	union {
-		struct {
-			void		*mv_col_buf;
+	जोड़ अणु
+		काष्ठा अणु
+			व्योम		*mv_col_buf;
 			dma_addr_t	mv_col_buf_dma;
-			ssize_t		mv_col_buf_field_size;
-			ssize_t		mv_col_buf_size;
-			void		*pic_info_buf;
+			sमाप_प्रकार		mv_col_buf_field_size;
+			sमाप_प्रकार		mv_col_buf_size;
+			व्योम		*pic_info_buf;
 			dma_addr_t	pic_info_buf_dma;
-			ssize_t		pic_info_buf_size;
-			void		*neighbor_info_buf;
+			sमाप_प्रकार		pic_info_buf_size;
+			व्योम		*neighbor_info_buf;
 			dma_addr_t	neighbor_info_buf_dma;
-			void		*deblk_buf;
+			व्योम		*deblk_buf;
 			dma_addr_t	deblk_buf_dma;
-			ssize_t		deblk_buf_size;
-			void		*intra_pred_buf;
-			dma_addr_t	intra_pred_buf_dma;
-			ssize_t		intra_pred_buf_size;
-		} h264;
-		struct {
-			void		*mv_col_buf;
+			sमाप_प्रकार		deblk_buf_size;
+			व्योम		*पूर्णांकra_pred_buf;
+			dma_addr_t	पूर्णांकra_pred_buf_dma;
+			sमाप_प्रकार		पूर्णांकra_pred_buf_size;
+		पूर्ण h264;
+		काष्ठा अणु
+			व्योम		*mv_col_buf;
 			dma_addr_t	mv_col_buf_addr;
-			ssize_t		mv_col_buf_size;
-			ssize_t		mv_col_buf_unit_size;
-			void		*neighbor_info_buf;
+			sमाप_प्रकार		mv_col_buf_size;
+			sमाप_प्रकार		mv_col_buf_unit_size;
+			व्योम		*neighbor_info_buf;
 			dma_addr_t	neighbor_info_buf_addr;
-		} h265;
-		struct {
-			unsigned int	last_frame_p_type;
-			unsigned int	last_filter_type;
-			unsigned int	last_sharpness_level;
+		पूर्ण h265;
+		काष्ठा अणु
+			अचिन्हित पूर्णांक	last_frame_p_type;
+			अचिन्हित पूर्णांक	last_filter_type;
+			अचिन्हित पूर्णांक	last_sharpness_level;
 
 			u8		*entropy_probs_buf;
 			dma_addr_t	entropy_probs_buf_dma;
-		} vp8;
-	} codec;
-};
+		पूर्ण vp8;
+	पूर्ण codec;
+पूर्ण;
 
-struct cedrus_dec_ops {
-	void (*irq_clear)(struct cedrus_ctx *ctx);
-	void (*irq_disable)(struct cedrus_ctx *ctx);
-	enum cedrus_irq_status (*irq_status)(struct cedrus_ctx *ctx);
-	void (*setup)(struct cedrus_ctx *ctx, struct cedrus_run *run);
-	int (*start)(struct cedrus_ctx *ctx);
-	void (*stop)(struct cedrus_ctx *ctx);
-	void (*trigger)(struct cedrus_ctx *ctx);
-};
+काष्ठा cedrus_dec_ops अणु
+	व्योम (*irq_clear)(काष्ठा cedrus_ctx *ctx);
+	व्योम (*irq_disable)(काष्ठा cedrus_ctx *ctx);
+	क्रमागत cedrus_irq_status (*irq_status)(काष्ठा cedrus_ctx *ctx);
+	व्योम (*setup)(काष्ठा cedrus_ctx *ctx, काष्ठा cedrus_run *run);
+	पूर्णांक (*start)(काष्ठा cedrus_ctx *ctx);
+	व्योम (*stop)(काष्ठा cedrus_ctx *ctx);
+	व्योम (*trigger)(काष्ठा cedrus_ctx *ctx);
+पूर्ण;
 
-struct cedrus_variant {
-	unsigned int	capabilities;
-	unsigned int	mod_rate;
-};
+काष्ठा cedrus_variant अणु
+	अचिन्हित पूर्णांक	capabilities;
+	अचिन्हित पूर्णांक	mod_rate;
+पूर्ण;
 
-struct cedrus_dev {
-	struct v4l2_device	v4l2_dev;
-	struct video_device	vfd;
-	struct media_device	mdev;
-	struct media_pad	pad[2];
-	struct platform_device	*pdev;
-	struct device		*dev;
-	struct v4l2_m2m_dev	*m2m_dev;
-	struct cedrus_dec_ops	*dec_ops[CEDRUS_CODEC_LAST];
+काष्ठा cedrus_dev अणु
+	काष्ठा v4l2_device	v4l2_dev;
+	काष्ठा video_device	vfd;
+	काष्ठा media_device	mdev;
+	काष्ठा media_pad	pad[2];
+	काष्ठा platक्रमm_device	*pdev;
+	काष्ठा device		*dev;
+	काष्ठा v4l2_m2m_dev	*m2m_dev;
+	काष्ठा cedrus_dec_ops	*dec_ops[CEDRUS_CODEC_LAST];
 
 	/* Device file mutex */
-	struct mutex		dev_mutex;
+	काष्ठा mutex		dev_mutex;
 
-	void __iomem		*base;
+	व्योम __iomem		*base;
 
-	struct clk		*mod_clk;
-	struct clk		*ahb_clk;
-	struct clk		*ram_clk;
+	काष्ठा clk		*mod_clk;
+	काष्ठा clk		*ahb_clk;
+	काष्ठा clk		*ram_clk;
 
-	struct reset_control	*rstc;
+	काष्ठा reset_control	*rstc;
 
-	unsigned int		capabilities;
-};
+	अचिन्हित पूर्णांक		capabilities;
+पूर्ण;
 
-extern struct cedrus_dec_ops cedrus_dec_ops_mpeg2;
-extern struct cedrus_dec_ops cedrus_dec_ops_h264;
-extern struct cedrus_dec_ops cedrus_dec_ops_h265;
-extern struct cedrus_dec_ops cedrus_dec_ops_vp8;
+बाह्य काष्ठा cedrus_dec_ops cedrus_dec_ops_mpeg2;
+बाह्य काष्ठा cedrus_dec_ops cedrus_dec_ops_h264;
+बाह्य काष्ठा cedrus_dec_ops cedrus_dec_ops_h265;
+बाह्य काष्ठा cedrus_dec_ops cedrus_dec_ops_vp8;
 
-static inline void cedrus_write(struct cedrus_dev *dev, u32 reg, u32 val)
-{
-	writel(val, dev->base + reg);
-}
+अटल अंतरभूत व्योम cedrus_ग_लिखो(काष्ठा cedrus_dev *dev, u32 reg, u32 val)
+अणु
+	ग_लिखोl(val, dev->base + reg);
+पूर्ण
 
-static inline u32 cedrus_read(struct cedrus_dev *dev, u32 reg)
-{
-	return readl(dev->base + reg);
-}
+अटल अंतरभूत u32 cedrus_पढ़ो(काष्ठा cedrus_dev *dev, u32 reg)
+अणु
+	वापस पढ़ोl(dev->base + reg);
+पूर्ण
 
-static inline u32 cedrus_wait_for(struct cedrus_dev *dev, u32 reg, u32 flag)
-{
+अटल अंतरभूत u32 cedrus_रुको_क्रम(काष्ठा cedrus_dev *dev, u32 reg, u32 flag)
+अणु
 	u32 value;
 
-	return readl_poll_timeout_atomic(dev->base + reg, value,
+	वापस पढ़ोl_poll_समयout_atomic(dev->base + reg, value,
 			(value & flag) == 0, 10, 1000);
-}
+पूर्ण
 
-static inline dma_addr_t cedrus_buf_addr(struct vb2_buffer *buf,
-					 struct v4l2_pix_format *pix_fmt,
-					 unsigned int plane)
-{
+अटल अंतरभूत dma_addr_t cedrus_buf_addr(काष्ठा vb2_buffer *buf,
+					 काष्ठा v4l2_pix_क्रमmat *pix_fmt,
+					 अचिन्हित पूर्णांक plane)
+अणु
 	dma_addr_t addr = vb2_dma_contig_plane_dma_addr(buf, 0);
 
-	return addr + (pix_fmt ? (dma_addr_t)pix_fmt->bytesperline *
+	वापस addr + (pix_fmt ? (dma_addr_t)pix_fmt->bytesperline *
 	       pix_fmt->height * plane : 0);
-}
+पूर्ण
 
-static inline dma_addr_t cedrus_dst_buf_addr(struct cedrus_ctx *ctx,
-					     int index, unsigned int plane)
-{
-	struct vb2_buffer *buf = NULL;
-	struct vb2_queue *vq;
+अटल अंतरभूत dma_addr_t cedrus_dst_buf_addr(काष्ठा cedrus_ctx *ctx,
+					     पूर्णांक index, अचिन्हित पूर्णांक plane)
+अणु
+	काष्ठा vb2_buffer *buf = शून्य;
+	काष्ठा vb2_queue *vq;
 
-	if (index < 0)
-		return 0;
+	अगर (index < 0)
+		वापस 0;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, V4L2_BUF_TYPE_VIDEO_CAPTURE);
-	if (vq)
+	अगर (vq)
 		buf = vb2_get_buffer(vq, index);
 
-	return buf ? cedrus_buf_addr(buf, &ctx->dst_fmt, plane) : 0;
-}
+	वापस buf ? cedrus_buf_addr(buf, &ctx->dst_fmt, plane) : 0;
+पूर्ण
 
-static inline struct cedrus_buffer *
-vb2_v4l2_to_cedrus_buffer(const struct vb2_v4l2_buffer *p)
-{
-	return container_of(p, struct cedrus_buffer, m2m_buf.vb);
-}
+अटल अंतरभूत काष्ठा cedrus_buffer *
+vb2_v4l2_to_cedrus_buffer(स्थिर काष्ठा vb2_v4l2_buffer *p)
+अणु
+	वापस container_of(p, काष्ठा cedrus_buffer, m2m_buf.vb);
+पूर्ण
 
-static inline struct cedrus_buffer *
-vb2_to_cedrus_buffer(const struct vb2_buffer *p)
-{
-	return vb2_v4l2_to_cedrus_buffer(to_vb2_v4l2_buffer(p));
-}
+अटल अंतरभूत काष्ठा cedrus_buffer *
+vb2_to_cedrus_buffer(स्थिर काष्ठा vb2_buffer *p)
+अणु
+	वापस vb2_v4l2_to_cedrus_buffer(to_vb2_v4l2_buffer(p));
+पूर्ण
 
-void *cedrus_find_control_data(struct cedrus_ctx *ctx, u32 id);
+व्योम *cedrus_find_control_data(काष्ठा cedrus_ctx *ctx, u32 id);
 
-#endif
+#पूर्ण_अगर

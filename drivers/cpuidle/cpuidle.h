@@ -1,75 +1,76 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * cpuidle.h - The internal header file
+ * cpuidle.h - The पूर्णांकernal header file
  */
 
-#ifndef __DRIVER_CPUIDLE_H
-#define __DRIVER_CPUIDLE_H
+#अगर_अघोषित __DRIVER_CPUIDLE_H
+#घोषणा __DRIVER_CPUIDLE_H
 
-/* For internal use only */
-extern char param_governor[];
-extern struct cpuidle_governor *cpuidle_curr_governor;
-extern struct cpuidle_governor *cpuidle_prev_governor;
-extern struct list_head cpuidle_governors;
-extern struct list_head cpuidle_detected_devices;
-extern struct mutex cpuidle_lock;
-extern spinlock_t cpuidle_driver_lock;
-extern int cpuidle_disabled(void);
-extern int cpuidle_enter_state(struct cpuidle_device *dev,
-		struct cpuidle_driver *drv, int next_state);
+/* For पूर्णांकernal use only */
+बाह्य अक्षर param_governor[];
+बाह्य काष्ठा cpuidle_governor *cpuidle_curr_governor;
+बाह्य काष्ठा cpuidle_governor *cpuidle_prev_governor;
+बाह्य काष्ठा list_head cpuidle_governors;
+बाह्य काष्ठा list_head cpuidle_detected_devices;
+बाह्य काष्ठा mutex cpuidle_lock;
+बाह्य spinlock_t cpuidle_driver_lock;
+बाह्य पूर्णांक cpuidle_disabled(व्योम);
+बाह्य पूर्णांक cpuidle_enter_state(काष्ठा cpuidle_device *dev,
+		काष्ठा cpuidle_driver *drv, पूर्णांक next_state);
 
 /* idle loop */
-extern void cpuidle_install_idle_handler(void);
-extern void cpuidle_uninstall_idle_handler(void);
+बाह्य व्योम cpuidle_install_idle_handler(व्योम);
+बाह्य व्योम cpuidle_uninstall_idle_handler(व्योम);
 
 /* governors */
-extern struct cpuidle_governor *cpuidle_find_governor(const char *str);
-extern int cpuidle_switch_governor(struct cpuidle_governor *gov);
+बाह्य काष्ठा cpuidle_governor *cpuidle_find_governor(स्थिर अक्षर *str);
+बाह्य पूर्णांक cpuidle_चयन_governor(काष्ठा cpuidle_governor *gov);
 
 /* sysfs */
 
-struct device;
+काष्ठा device;
 
-extern int cpuidle_add_interface(struct device *dev);
-extern void cpuidle_remove_interface(struct device *dev);
-extern int cpuidle_add_device_sysfs(struct cpuidle_device *device);
-extern void cpuidle_remove_device_sysfs(struct cpuidle_device *device);
-extern int cpuidle_add_sysfs(struct cpuidle_device *dev);
-extern void cpuidle_remove_sysfs(struct cpuidle_device *dev);
+बाह्य पूर्णांक cpuidle_add_पूर्णांकerface(काष्ठा device *dev);
+बाह्य व्योम cpuidle_हटाओ_पूर्णांकerface(काष्ठा device *dev);
+बाह्य पूर्णांक cpuidle_add_device_sysfs(काष्ठा cpuidle_device *device);
+बाह्य व्योम cpuidle_हटाओ_device_sysfs(काष्ठा cpuidle_device *device);
+बाह्य पूर्णांक cpuidle_add_sysfs(काष्ठा cpuidle_device *dev);
+बाह्य व्योम cpuidle_हटाओ_sysfs(काष्ठा cpuidle_device *dev);
 
-#ifdef CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED
-bool cpuidle_state_is_coupled(struct cpuidle_driver *drv, int state);
-int cpuidle_coupled_state_verify(struct cpuidle_driver *drv);
-int cpuidle_enter_state_coupled(struct cpuidle_device *dev,
-		struct cpuidle_driver *drv, int next_state);
-int cpuidle_coupled_register_device(struct cpuidle_device *dev);
-void cpuidle_coupled_unregister_device(struct cpuidle_device *dev);
-#else
-static inline
-bool cpuidle_state_is_coupled(struct cpuidle_driver *drv, int state)
-{
-	return false;
-}
+#अगर_घोषित CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED
+bool cpuidle_state_is_coupled(काष्ठा cpuidle_driver *drv, पूर्णांक state);
+पूर्णांक cpuidle_coupled_state_verअगरy(काष्ठा cpuidle_driver *drv);
+पूर्णांक cpuidle_enter_state_coupled(काष्ठा cpuidle_device *dev,
+		काष्ठा cpuidle_driver *drv, पूर्णांक next_state);
+पूर्णांक cpuidle_coupled_रेजिस्टर_device(काष्ठा cpuidle_device *dev);
+व्योम cpuidle_coupled_unरेजिस्टर_device(काष्ठा cpuidle_device *dev);
+#अन्यथा
+अटल अंतरभूत
+bool cpuidle_state_is_coupled(काष्ठा cpuidle_driver *drv, पूर्णांक state)
+अणु
+	वापस false;
+पूर्ण
 
-static inline int cpuidle_coupled_state_verify(struct cpuidle_driver *drv)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक cpuidle_coupled_state_verअगरy(काष्ठा cpuidle_driver *drv)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int cpuidle_enter_state_coupled(struct cpuidle_device *dev,
-		struct cpuidle_driver *drv, int next_state)
-{
-	return -1;
-}
+अटल अंतरभूत पूर्णांक cpuidle_enter_state_coupled(काष्ठा cpuidle_device *dev,
+		काष्ठा cpuidle_driver *drv, पूर्णांक next_state)
+अणु
+	वापस -1;
+पूर्ण
 
-static inline int cpuidle_coupled_register_device(struct cpuidle_device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक cpuidle_coupled_रेजिस्टर_device(काष्ठा cpuidle_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void cpuidle_coupled_unregister_device(struct cpuidle_device *dev)
-{
-}
-#endif
+अटल अंतरभूत व्योम cpuidle_coupled_unरेजिस्टर_device(काष्ठा cpuidle_device *dev)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __DRIVER_CPUIDLE_H */
+#पूर्ण_अगर /* __DRIVER_CPUIDLE_H */

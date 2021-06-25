@@ -1,32 +1,33 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * Copyright (C) 1994 by Waldorf Electronics
+ * Copyright (C) 1994 by Walकरोrf Electronics
  * Copyright (C) 1995 - 2000, 01, 03 by Ralf Baechle
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 2007  Maciej W. Rozycki
  */
-#ifndef _ASM_DELAY_H
-#define _ASM_DELAY_H
+#अगर_अघोषित _ASM_DELAY_H
+#घोषणा _ASM_DELAY_H
 
-#include <linux/param.h>
+#समावेश <linux/param.h>
 
-extern void __delay(unsigned long loops);
-extern void __ndelay(unsigned long ns);
-extern void __udelay(unsigned long us);
+बाह्य व्योम __delay(अचिन्हित दीर्घ loops);
+बाह्य व्योम __ndelay(अचिन्हित दीर्घ ns);
+बाह्य व्योम __udelay(अचिन्हित दीर्घ us);
 
-#define ndelay(ns) __ndelay(ns)
-#define udelay(us) __udelay(us)
+#घोषणा ndelay(ns) __ndelay(ns)
+#घोषणा udelay(us) __udelay(us)
 
-/* make sure "usecs *= ..." in udelay do not overflow. */
-#if HZ >= 1000
-#define MAX_UDELAY_MS	1
-#elif HZ <= 200
-#define MAX_UDELAY_MS	5
-#else
-#define MAX_UDELAY_MS	(1000 / HZ)
-#endif
+/* make sure "usecs *= ..." in udelay करो not overflow. */
+#अगर HZ >= 1000
+#घोषणा MAX_UDELAY_MS	1
+#या_अगर HZ <= 200
+#घोषणा MAX_UDELAY_MS	5
+#अन्यथा
+#घोषणा MAX_UDELAY_MS	(1000 / HZ)
+#पूर्ण_अगर
 
-#endif /* _ASM_DELAY_H */
+#पूर्ण_अगर /* _ASM_DELAY_H */

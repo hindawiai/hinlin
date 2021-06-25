@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* exynos_drm_crtc.c
  *
  * Copyright (c) 2011 Samsung Electronics Co., Ltd.
@@ -8,106 +9,106 @@
  *	Seung-Woo Kim <sw0312.kim@samsung.com>
  */
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_encoder.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_encoder.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "exynos_drm_crtc.h"
-#include "exynos_drm_drv.h"
-#include "exynos_drm_plane.h"
+#समावेश "exynos_drm_crtc.h"
+#समावेश "exynos_drm_drv.h"
+#समावेश "exynos_drm_plane.h"
 
-static void exynos_drm_crtc_atomic_enable(struct drm_crtc *crtc,
-					  struct drm_atomic_state *state)
-{
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+अटल व्योम exynos_drm_crtc_atomic_enable(काष्ठा drm_crtc *crtc,
+					  काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
-	if (exynos_crtc->ops->atomic_enable)
+	अगर (exynos_crtc->ops->atomic_enable)
 		exynos_crtc->ops->atomic_enable(exynos_crtc);
 
 	drm_crtc_vblank_on(crtc);
-}
+पूर्ण
 
-static void exynos_drm_crtc_atomic_disable(struct drm_crtc *crtc,
-					   struct drm_atomic_state *state)
-{
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+अटल व्योम exynos_drm_crtc_atomic_disable(काष्ठा drm_crtc *crtc,
+					   काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
 	drm_crtc_vblank_off(crtc);
 
-	if (exynos_crtc->ops->atomic_disable)
+	अगर (exynos_crtc->ops->atomic_disable)
 		exynos_crtc->ops->atomic_disable(exynos_crtc);
 
-	if (crtc->state->event && !crtc->state->active) {
+	अगर (crtc->state->event && !crtc->state->active) अणु
 		spin_lock_irq(&crtc->dev->event_lock);
 		drm_crtc_send_vblank_event(crtc, crtc->state->event);
 		spin_unlock_irq(&crtc->dev->event_lock);
 
-		crtc->state->event = NULL;
-	}
-}
+		crtc->state->event = शून्य;
+	पूर्ण
+पूर्ण
 
-static int exynos_crtc_atomic_check(struct drm_crtc *crtc,
-				     struct drm_atomic_state *state)
-{
-	struct drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
+अटल पूर्णांक exynos_crtc_atomic_check(काष्ठा drm_crtc *crtc,
+				     काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
 									  crtc);
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
-	if (!crtc_state->enable)
-		return 0;
+	अगर (!crtc_state->enable)
+		वापस 0;
 
-	if (exynos_crtc->ops->atomic_check)
-		return exynos_crtc->ops->atomic_check(exynos_crtc, crtc_state);
+	अगर (exynos_crtc->ops->atomic_check)
+		वापस exynos_crtc->ops->atomic_check(exynos_crtc, crtc_state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void exynos_crtc_atomic_begin(struct drm_crtc *crtc,
-				     struct drm_atomic_state *state)
-{
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+अटल व्योम exynos_crtc_atomic_begin(काष्ठा drm_crtc *crtc,
+				     काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
-	if (exynos_crtc->ops->atomic_begin)
+	अगर (exynos_crtc->ops->atomic_begin)
 		exynos_crtc->ops->atomic_begin(exynos_crtc);
-}
+पूर्ण
 
-static void exynos_crtc_atomic_flush(struct drm_crtc *crtc,
-				     struct drm_atomic_state *state)
-{
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+अटल व्योम exynos_crtc_atomic_flush(काष्ठा drm_crtc *crtc,
+				     काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
-	if (exynos_crtc->ops->atomic_flush)
+	अगर (exynos_crtc->ops->atomic_flush)
 		exynos_crtc->ops->atomic_flush(exynos_crtc);
-}
+पूर्ण
 
-static enum drm_mode_status exynos_crtc_mode_valid(struct drm_crtc *crtc,
-	const struct drm_display_mode *mode)
-{
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+अटल क्रमागत drm_mode_status exynos_crtc_mode_valid(काष्ठा drm_crtc *crtc,
+	स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
-	if (exynos_crtc->ops->mode_valid)
-		return exynos_crtc->ops->mode_valid(exynos_crtc, mode);
+	अगर (exynos_crtc->ops->mode_valid)
+		वापस exynos_crtc->ops->mode_valid(exynos_crtc, mode);
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static bool exynos_crtc_mode_fixup(struct drm_crtc *crtc,
-		const struct drm_display_mode *mode,
-		struct drm_display_mode *adjusted_mode)
-{
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+अटल bool exynos_crtc_mode_fixup(काष्ठा drm_crtc *crtc,
+		स्थिर काष्ठा drm_display_mode *mode,
+		काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
-	if (exynos_crtc->ops->mode_fixup)
-		return exynos_crtc->ops->mode_fixup(exynos_crtc, mode,
+	अगर (exynos_crtc->ops->mode_fixup)
+		वापस exynos_crtc->ops->mode_fixup(exynos_crtc, mode,
 				adjusted_mode);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
-static const struct drm_crtc_helper_funcs exynos_crtc_helper_funcs = {
+अटल स्थिर काष्ठा drm_crtc_helper_funcs exynos_crtc_helper_funcs = अणु
 	.mode_valid	= exynos_crtc_mode_valid,
 	.mode_fixup	= exynos_crtc_mode_fixup,
 	.atomic_check	= exynos_crtc_atomic_check,
@@ -115,52 +116,52 @@ static const struct drm_crtc_helper_funcs exynos_crtc_helper_funcs = {
 	.atomic_flush	= exynos_crtc_atomic_flush,
 	.atomic_enable	= exynos_drm_crtc_atomic_enable,
 	.atomic_disable	= exynos_drm_crtc_atomic_disable,
-};
+पूर्ण;
 
-void exynos_crtc_handle_event(struct exynos_drm_crtc *exynos_crtc)
-{
-	struct drm_crtc *crtc = &exynos_crtc->base;
-	struct drm_pending_vblank_event *event = crtc->state->event;
-	unsigned long flags;
+व्योम exynos_crtc_handle_event(काष्ठा exynos_drm_crtc *exynos_crtc)
+अणु
+	काष्ठा drm_crtc *crtc = &exynos_crtc->base;
+	काष्ठा drm_pending_vblank_event *event = crtc->state->event;
+	अचिन्हित दीर्घ flags;
 
-	if (!event)
-		return;
-	crtc->state->event = NULL;
+	अगर (!event)
+		वापस;
+	crtc->state->event = शून्य;
 
 	WARN_ON(drm_crtc_vblank_get(crtc) != 0);
 
 	spin_lock_irqsave(&crtc->dev->event_lock, flags);
 	drm_crtc_arm_vblank_event(crtc, event);
 	spin_unlock_irqrestore(&crtc->dev->event_lock, flags);
-}
+पूर्ण
 
-static void exynos_drm_crtc_destroy(struct drm_crtc *crtc)
-{
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+अटल व्योम exynos_drm_crtc_destroy(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
 	drm_crtc_cleanup(crtc);
-	kfree(exynos_crtc);
-}
+	kमुक्त(exynos_crtc);
+पूर्ण
 
-static int exynos_drm_crtc_enable_vblank(struct drm_crtc *crtc)
-{
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+अटल पूर्णांक exynos_drm_crtc_enable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
-	if (exynos_crtc->ops->enable_vblank)
-		return exynos_crtc->ops->enable_vblank(exynos_crtc);
+	अगर (exynos_crtc->ops->enable_vblank)
+		वापस exynos_crtc->ops->enable_vblank(exynos_crtc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void exynos_drm_crtc_disable_vblank(struct drm_crtc *crtc)
-{
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+अटल व्योम exynos_drm_crtc_disable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
-	if (exynos_crtc->ops->disable_vblank)
+	अगर (exynos_crtc->ops->disable_vblank)
 		exynos_crtc->ops->disable_vblank(exynos_crtc);
-}
+पूर्ण
 
-static const struct drm_crtc_funcs exynos_crtc_funcs = {
+अटल स्थिर काष्ठा drm_crtc_funcs exynos_crtc_funcs = अणु
 	.set_config	= drm_atomic_helper_set_config,
 	.page_flip	= drm_atomic_helper_page_flip,
 	.destroy	= exynos_drm_crtc_destroy,
@@ -169,21 +170,21 @@ static const struct drm_crtc_funcs exynos_crtc_funcs = {
 	.atomic_destroy_state = drm_atomic_helper_crtc_destroy_state,
 	.enable_vblank = exynos_drm_crtc_enable_vblank,
 	.disable_vblank = exynos_drm_crtc_disable_vblank,
-};
+पूर्ण;
 
-struct exynos_drm_crtc *exynos_drm_crtc_create(struct drm_device *drm_dev,
-					struct drm_plane *plane,
-					enum exynos_drm_output_type type,
-					const struct exynos_drm_crtc_ops *ops,
-					void *ctx)
-{
-	struct exynos_drm_crtc *exynos_crtc;
-	struct drm_crtc *crtc;
-	int ret;
+काष्ठा exynos_drm_crtc *exynos_drm_crtc_create(काष्ठा drm_device *drm_dev,
+					काष्ठा drm_plane *plane,
+					क्रमागत exynos_drm_output_type type,
+					स्थिर काष्ठा exynos_drm_crtc_ops *ops,
+					व्योम *ctx)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc;
+	काष्ठा drm_crtc *crtc;
+	पूर्णांक ret;
 
-	exynos_crtc = kzalloc(sizeof(*exynos_crtc), GFP_KERNEL);
-	if (!exynos_crtc)
-		return ERR_PTR(-ENOMEM);
+	exynos_crtc = kzalloc(माप(*exynos_crtc), GFP_KERNEL);
+	अगर (!exynos_crtc)
+		वापस ERR_PTR(-ENOMEM);
 
 	exynos_crtc->type = type;
 	exynos_crtc->ops = ops;
@@ -191,51 +192,51 @@ struct exynos_drm_crtc *exynos_drm_crtc_create(struct drm_device *drm_dev,
 
 	crtc = &exynos_crtc->base;
 
-	ret = drm_crtc_init_with_planes(drm_dev, crtc, plane, NULL,
-					&exynos_crtc_funcs, NULL);
-	if (ret < 0)
-		goto err_crtc;
+	ret = drm_crtc_init_with_planes(drm_dev, crtc, plane, शून्य,
+					&exynos_crtc_funcs, शून्य);
+	अगर (ret < 0)
+		जाओ err_crtc;
 
 	drm_crtc_helper_add(crtc, &exynos_crtc_helper_funcs);
 
-	return exynos_crtc;
+	वापस exynos_crtc;
 
 err_crtc:
 	plane->funcs->destroy(plane);
-	kfree(exynos_crtc);
-	return ERR_PTR(ret);
-}
+	kमुक्त(exynos_crtc);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-struct exynos_drm_crtc *exynos_drm_crtc_get_by_type(struct drm_device *drm_dev,
-				       enum exynos_drm_output_type out_type)
-{
-	struct drm_crtc *crtc;
+काष्ठा exynos_drm_crtc *exynos_drm_crtc_get_by_type(काष्ठा drm_device *drm_dev,
+				       क्रमागत exynos_drm_output_type out_type)
+अणु
+	काष्ठा drm_crtc *crtc;
 
-	drm_for_each_crtc(crtc, drm_dev)
-		if (to_exynos_crtc(crtc)->type == out_type)
-			return to_exynos_crtc(crtc);
+	drm_क्रम_each_crtc(crtc, drm_dev)
+		अगर (to_exynos_crtc(crtc)->type == out_type)
+			वापस to_exynos_crtc(crtc);
 
-	return ERR_PTR(-ENODEV);
-}
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-int exynos_drm_set_possible_crtcs(struct drm_encoder *encoder,
-		enum exynos_drm_output_type out_type)
-{
-	struct exynos_drm_crtc *crtc = exynos_drm_crtc_get_by_type(encoder->dev,
+पूर्णांक exynos_drm_set_possible_crtcs(काष्ठा drm_encoder *encoder,
+		क्रमागत exynos_drm_output_type out_type)
+अणु
+	काष्ठा exynos_drm_crtc *crtc = exynos_drm_crtc_get_by_type(encoder->dev,
 						out_type);
 
-	if (IS_ERR(crtc))
-		return PTR_ERR(crtc);
+	अगर (IS_ERR(crtc))
+		वापस PTR_ERR(crtc);
 
 	encoder->possible_crtcs = drm_crtc_mask(&crtc->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void exynos_drm_crtc_te_handler(struct drm_crtc *crtc)
-{
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
+व्योम exynos_drm_crtc_te_handler(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(crtc);
 
-	if (exynos_crtc->ops->te_handler)
+	अगर (exynos_crtc->ops->te_handler)
 		exynos_crtc->ops->te_handler(exynos_crtc);
-}
+पूर्ण

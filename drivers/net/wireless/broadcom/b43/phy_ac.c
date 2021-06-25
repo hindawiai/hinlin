@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Broadcom B43 wireless driver
  * IEEE 802.11ac AC-PHY support
  *
- * Copyright (c) 2015 Rafał Miłecki <zajec5@gmail.com>
+ * Copyright (c) 2015 Rafaध Miधecki <zajec5@gmail.com>
  */
 
-#include "b43.h"
-#include "phy_ac.h"
+#समावेश "b43.h"
+#समावेश "phy_ac.h"
 
 /**************************************************
  * Basic PHY ops
  **************************************************/
 
-static int b43_phy_ac_op_allocate(struct b43_wldev *dev)
-{
-	struct b43_phy_ac *phy_ac;
+अटल पूर्णांक b43_phy_ac_op_allocate(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy_ac *phy_ac;
 
-	phy_ac = kzalloc(sizeof(*phy_ac), GFP_KERNEL);
-	if (!phy_ac)
-		return -ENOMEM;
+	phy_ac = kzalloc(माप(*phy_ac), GFP_KERNEL);
+	अगर (!phy_ac)
+		वापस -ENOMEM;
 	dev->phy.ac = phy_ac;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void b43_phy_ac_op_free(struct b43_wldev *dev)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct b43_phy_ac *phy_ac = phy->ac;
+अटल व्योम b43_phy_ac_op_मुक्त(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा b43_phy_ac *phy_ac = phy->ac;
 
-	kfree(phy_ac);
-	phy->ac = NULL;
-}
+	kमुक्त(phy_ac);
+	phy->ac = शून्य;
+पूर्ण
 
-static void b43_phy_ac_op_maskset(struct b43_wldev *dev, u16 reg, u16 mask,
+अटल व्योम b43_phy_ac_op_maskset(काष्ठा b43_wldev *dev, u16 reg, u16 mask,
 				  u16 set)
-{
-	b43_write16f(dev, B43_MMIO_PHY_CONTROL, reg);
-	b43_write16(dev, B43_MMIO_PHY_DATA,
-		    (b43_read16(dev, B43_MMIO_PHY_DATA) & mask) | set);
-}
+अणु
+	b43_ग_लिखो16f(dev, B43_MMIO_PHY_CONTROL, reg);
+	b43_ग_लिखो16(dev, B43_MMIO_PHY_DATA,
+		    (b43_पढ़ो16(dev, B43_MMIO_PHY_DATA) & mask) | set);
+पूर्ण
 
-static u16 b43_phy_ac_op_radio_read(struct b43_wldev *dev, u16 reg)
-{
-	b43_write16f(dev, B43_MMIO_RADIO24_CONTROL, reg);
-	return b43_read16(dev, B43_MMIO_RADIO24_DATA);
-}
+अटल u16 b43_phy_ac_op_radio_पढ़ो(काष्ठा b43_wldev *dev, u16 reg)
+अणु
+	b43_ग_लिखो16f(dev, B43_MMIO_RADIO24_CONTROL, reg);
+	वापस b43_पढ़ो16(dev, B43_MMIO_RADIO24_DATA);
+पूर्ण
 
-static void b43_phy_ac_op_radio_write(struct b43_wldev *dev, u16 reg,
+अटल व्योम b43_phy_ac_op_radio_ग_लिखो(काष्ठा b43_wldev *dev, u16 reg,
 				      u16 value)
-{
-	b43_write16f(dev, B43_MMIO_RADIO24_CONTROL, reg);
-	b43_write16(dev, B43_MMIO_RADIO24_DATA, value);
-}
+अणु
+	b43_ग_लिखो16f(dev, B43_MMIO_RADIO24_CONTROL, reg);
+	b43_ग_लिखो16(dev, B43_MMIO_RADIO24_DATA, value);
+पूर्ण
 
-static unsigned int b43_phy_ac_op_get_default_chan(struct b43_wldev *dev)
-{
-	if (b43_current_band(dev->wl) == NL80211_BAND_2GHZ)
-		return 11;
-	return 36;
-}
+अटल अचिन्हित पूर्णांक b43_phy_ac_op_get_शेष_chan(काष्ठा b43_wldev *dev)
+अणु
+	अगर (b43_current_band(dev->wl) == NL80211_BAND_2GHZ)
+		वापस 11;
+	वापस 36;
+पूर्ण
 
-static enum b43_txpwr_result
-b43_phy_ac_op_recalc_txpower(struct b43_wldev *dev, bool ignore_tssi)
-{
-	return B43_TXPWR_RES_DONE;
-}
+अटल क्रमागत b43_txpwr_result
+b43_phy_ac_op_recalc_txघातer(काष्ठा b43_wldev *dev, bool ignore_tssi)
+अणु
+	वापस B43_TXPWR_RES_DONE;
+पूर्ण
 
-static void b43_phy_ac_op_adjust_txpower(struct b43_wldev *dev)
-{
-}
+अटल व्योम b43_phy_ac_op_adjust_txघातer(काष्ठा b43_wldev *dev)
+अणु
+पूर्ण
 
 /**************************************************
- * PHY ops struct
+ * PHY ops काष्ठा
  **************************************************/
 
-const struct b43_phy_operations b43_phyops_ac = {
+स्थिर काष्ठा b43_phy_operations b43_phyops_ac = अणु
 	.allocate		= b43_phy_ac_op_allocate,
-	.free			= b43_phy_ac_op_free,
+	.मुक्त			= b43_phy_ac_op_मुक्त,
 	.phy_maskset		= b43_phy_ac_op_maskset,
-	.radio_read		= b43_phy_ac_op_radio_read,
-	.radio_write		= b43_phy_ac_op_radio_write,
-	.get_default_chan	= b43_phy_ac_op_get_default_chan,
-	.recalc_txpower		= b43_phy_ac_op_recalc_txpower,
-	.adjust_txpower		= b43_phy_ac_op_adjust_txpower,
-};
+	.radio_पढ़ो		= b43_phy_ac_op_radio_पढ़ो,
+	.radio_ग_लिखो		= b43_phy_ac_op_radio_ग_लिखो,
+	.get_शेष_chan	= b43_phy_ac_op_get_शेष_chan,
+	.recalc_txघातer		= b43_phy_ac_op_recalc_txघातer,
+	.adjust_txघातer		= b43_phy_ac_op_adjust_txघातer,
+पूर्ण;

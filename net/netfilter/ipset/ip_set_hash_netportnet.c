@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (C) 2003-2013 Jozsef Kadlecsik <kadlec@netfilter.org> */
 
 /* Kernel module implementing an IP set type: the hash:ip,port,net type */
 
-#include <linux/jhash.h>
-#include <linux/module.h>
-#include <linux/ip.h>
-#include <linux/skbuff.h>
-#include <linux/errno.h>
-#include <linux/random.h>
-#include <net/ip.h>
-#include <net/ipv6.h>
-#include <net/netlink.h>
-#include <net/tcp.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अक्रमom.h>
+#समावेश <net/ip.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/netlink.h>
+#समावेश <net/tcp.h>
 
-#include <linux/netfilter.h>
-#include <linux/netfilter/ipset/pfxlen.h>
-#include <linux/netfilter/ipset/ip_set.h>
-#include <linux/netfilter/ipset/ip_set_getport.h>
-#include <linux/netfilter/ipset/ip_set_hash.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/ipset/pfxlen.h>
+#समावेश <linux/netfilter/ipset/ip_set.h>
+#समावेश <linux/netfilter/ipset/ip_set_getport.h>
+#समावेश <linux/netfilter/ipset/ip_set_hash.h>
 
-#define IPSET_TYPE_REV_MIN	0
+#घोषणा IPSET_TYPE_REV_MIN	0
 /*				0    Comments support added */
 /*				1    Forceadd support added */
 /*				2    skbinfo support added */
-#define IPSET_TYPE_REV_MAX	3 /* bucketsize, initval support added */
+#घोषणा IPSET_TYPE_REV_MAX	3 /* bucketsize, initval support added */
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Oliver Smith <oliver@8.c.9.b.0.7.4.0.1.0.0.2.ip6.arpa>");
 IP_SET_MODULE_DESC("hash:net,port,net", IPSET_TYPE_REV_MIN, IPSET_TYPE_REV_MAX);
 MODULE_ALIAS("ip_set_hash:net,port,net");
 
-/* Type specific function prefix */
-#define HTYPE		hash_netportnet
-#define IP_SET_HASH_WITH_PROTO
-#define IP_SET_HASH_WITH_NETS
-#define IPSET_NET_COUNT 2
+/* Type specअगरic function prefix */
+#घोषणा HTYPE		hash_netportnet
+#घोषणा IP_SET_HASH_WITH_PROTO
+#घोषणा IP_SET_HASH_WITH_NETS
+#घोषणा IPSET_NET_COUNT 2
 
 /* IPv4 variant */
 
 /* Member elements */
-struct hash_netportnet4_elem {
-	union {
+काष्ठा hash_netportnet4_elem अणु
+	जोड़ अणु
 		__be32 ip[2];
 		__be64 ipcmp;
-	};
+	पूर्ण;
 	__be16 port;
-	union {
+	जोड़ अणु
 		u8 cidr[2];
 		u16 ccmp;
-	};
+	पूर्ण;
 	u16 padding;
 	u8 nomatch;
 	u8 proto;
-};
+पूर्ण;
 
 /* Common functions */
 
-static bool
-hash_netportnet4_data_equal(const struct hash_netportnet4_elem *ip1,
-			    const struct hash_netportnet4_elem *ip2,
+अटल bool
+hash_netportnet4_data_equal(स्थिर काष्ठा hash_netportnet4_elem *ip1,
+			    स्थिर काष्ठा hash_netportnet4_elem *ip2,
 			    u32 *multi)
-{
-	return ip1->ipcmp == ip2->ipcmp &&
+अणु
+	वापस ip1->ipcmp == ip2->ipcmp &&
 	       ip1->ccmp == ip2->ccmp &&
 	       ip1->port == ip2->port &&
 	       ip1->proto == ip2->proto;
-}
+पूर्ण
 
-static int
-hash_netportnet4_do_data_match(const struct hash_netportnet4_elem *elem)
-{
-	return elem->nomatch ? -ENOTEMPTY : 1;
-}
+अटल पूर्णांक
+hash_netportnet4_करो_data_match(स्थिर काष्ठा hash_netportnet4_elem *elem)
+अणु
+	वापस elem->nomatch ? -ENOTEMPTY : 1;
+पूर्ण
 
-static void
-hash_netportnet4_data_set_flags(struct hash_netportnet4_elem *elem, u32 flags)
-{
+अटल व्योम
+hash_netportnet4_data_set_flags(काष्ठा hash_netportnet4_elem *elem, u32 flags)
+अणु
 	elem->nomatch = !!((flags >> 16) & IPSET_FLAG_NOMATCH);
-}
+पूर्ण
 
-static void
-hash_netportnet4_data_reset_flags(struct hash_netportnet4_elem *elem, u8 *flags)
-{
+अटल व्योम
+hash_netportnet4_data_reset_flags(काष्ठा hash_netportnet4_elem *elem, u8 *flags)
+अणु
 	swap(*flags, elem->nomatch);
-}
+पूर्ण
 
-static void
-hash_netportnet4_data_reset_elem(struct hash_netportnet4_elem *elem,
-				 struct hash_netportnet4_elem *orig)
-{
+अटल व्योम
+hash_netportnet4_data_reset_elem(काष्ठा hash_netportnet4_elem *elem,
+				 काष्ठा hash_netportnet4_elem *orig)
+अणु
 	elem->ip[1] = orig->ip[1];
-}
+पूर्ण
 
-static void
-hash_netportnet4_data_netmask(struct hash_netportnet4_elem *elem,
+अटल व्योम
+hash_netportnet4_data_neपंचांगask(काष्ठा hash_netportnet4_elem *elem,
 			      u8 cidr, bool inner)
-{
-	if (inner) {
-		elem->ip[1] &= ip_set_netmask(cidr);
+अणु
+	अगर (inner) अणु
+		elem->ip[1] &= ip_set_neपंचांगask(cidr);
 		elem->cidr[1] = cidr;
-	} else {
-		elem->ip[0] &= ip_set_netmask(cidr);
+	पूर्ण अन्यथा अणु
+		elem->ip[0] &= ip_set_neपंचांगask(cidr);
 		elem->cidr[0] = cidr;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool
-hash_netportnet4_data_list(struct sk_buff *skb,
-			   const struct hash_netportnet4_elem *data)
-{
+अटल bool
+hash_netportnet4_data_list(काष्ठा sk_buff *skb,
+			   स्थिर काष्ठा hash_netportnet4_elem *data)
+अणु
 	u32 flags = data->nomatch ? IPSET_FLAG_NOMATCH : 0;
 
-	if (nla_put_ipaddr4(skb, IPSET_ATTR_IP, data->ip[0]) ||
+	अगर (nla_put_ipaddr4(skb, IPSET_ATTR_IP, data->ip[0]) ||
 	    nla_put_ipaddr4(skb, IPSET_ATTR_IP2, data->ip[1]) ||
 	    nla_put_net16(skb, IPSET_ATTR_PORT, data->port) ||
 	    nla_put_u8(skb, IPSET_ATTR_CIDR, data->cidr[0]) ||
@@ -120,275 +121,275 @@ hash_netportnet4_data_list(struct sk_buff *skb,
 	    nla_put_u8(skb, IPSET_ATTR_PROTO, data->proto) ||
 	    (flags &&
 	     nla_put_net32(skb, IPSET_ATTR_CADT_FLAGS, htonl(flags))))
-		goto nla_put_failure;
-	return false;
+		जाओ nla_put_failure;
+	वापस false;
 
 nla_put_failure:
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-hash_netportnet4_data_next(struct hash_netportnet4_elem *next,
-			   const struct hash_netportnet4_elem *d)
-{
+अटल व्योम
+hash_netportnet4_data_next(काष्ठा hash_netportnet4_elem *next,
+			   स्थिर काष्ठा hash_netportnet4_elem *d)
+अणु
 	next->ipcmp = d->ipcmp;
 	next->port = d->port;
-}
+पूर्ण
 
-#define MTYPE		hash_netportnet4
-#define HOST_MASK	32
-#include "ip_set_hash_gen.h"
+#घोषणा MTYPE		hash_netportnet4
+#घोषणा HOST_MASK	32
+#समावेश "ip_set_hash_gen.h"
 
-static void
-hash_netportnet4_init(struct hash_netportnet4_elem *e)
-{
+अटल व्योम
+hash_netportnet4_init(काष्ठा hash_netportnet4_elem *e)
+अणु
 	e->cidr[0] = HOST_MASK;
 	e->cidr[1] = HOST_MASK;
-}
+पूर्ण
 
-static int
-hash_netportnet4_kadt(struct ip_set *set, const struct sk_buff *skb,
-		      const struct xt_action_param *par,
-		      enum ipset_adt adt, struct ip_set_adt_opt *opt)
-{
-	const struct hash_netportnet4 *h = set->data;
+अटल पूर्णांक
+hash_netportnet4_kadt(काष्ठा ip_set *set, स्थिर काष्ठा sk_buff *skb,
+		      स्थिर काष्ठा xt_action_param *par,
+		      क्रमागत ipset_adt adt, काष्ठा ip_set_adt_opt *opt)
+अणु
+	स्थिर काष्ठा hash_netportnet4 *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	struct hash_netportnet4_elem e = { };
-	struct ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
+	काष्ठा hash_netportnet4_elem e = अणु पूर्ण;
+	काष्ठा ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
 
 	e.cidr[0] = INIT_CIDR(h->nets[0].cidr[0], HOST_MASK);
 	e.cidr[1] = INIT_CIDR(h->nets[0].cidr[1], HOST_MASK);
-	if (adt == IPSET_TEST)
-		e.ccmp = (HOST_MASK << (sizeof(e.cidr[0]) * 8)) | HOST_MASK;
+	अगर (adt == IPSET_TEST)
+		e.ccmp = (HOST_MASK << (माप(e.cidr[0]) * 8)) | HOST_MASK;
 
-	if (!ip_set_get_ip4_port(skb, opt->flags & IPSET_DIM_TWO_SRC,
+	अगर (!ip_set_get_ip4_port(skb, opt->flags & IPSET_DIM_TWO_SRC,
 				 &e.port, &e.proto))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ip4addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip[0]);
 	ip4addrptr(skb, opt->flags & IPSET_DIM_THREE_SRC, &e.ip[1]);
-	e.ip[0] &= ip_set_netmask(e.cidr[0]);
-	e.ip[1] &= ip_set_netmask(e.cidr[1]);
+	e.ip[0] &= ip_set_neपंचांगask(e.cidr[0]);
+	e.ip[1] &= ip_set_neपंचांगask(e.cidr[1]);
 
-	return adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
-}
+	वापस adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
+पूर्ण
 
-static int
-hash_netportnet4_uadt(struct ip_set *set, struct nlattr *tb[],
-		      enum ipset_adt adt, u32 *lineno, u32 flags, bool retried)
-{
-	const struct hash_netportnet4 *h = set->data;
+अटल पूर्णांक
+hash_netportnet4_uadt(काष्ठा ip_set *set, काष्ठा nlattr *tb[],
+		      क्रमागत ipset_adt adt, u32 *lineno, u32 flags, bool retried)
+अणु
+	स्थिर काष्ठा hash_netportnet4 *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	struct hash_netportnet4_elem e = { };
-	struct ip_set_ext ext = IP_SET_INIT_UEXT(set);
+	काष्ठा hash_netportnet4_elem e = अणु पूर्ण;
+	काष्ठा ip_set_ext ext = IP_SET_INIT_UEXT(set);
 	u32 ip = 0, ip_to = 0, p = 0, port, port_to;
 	u32 ip2_from = 0, ip2_to = 0, ip2;
 	bool with_ports = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (tb[IPSET_ATTR_LINENO])
+	अगर (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	hash_netportnet4_init(&e);
-	if (unlikely(!tb[IPSET_ATTR_IP] || !tb[IPSET_ATTR_IP2] ||
+	अगर (unlikely(!tb[IPSET_ATTR_IP] || !tb[IPSET_ATTR_IP2] ||
 		     !ip_set_attr_netorder(tb, IPSET_ATTR_PORT) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_PORT_TO) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_CADT_FLAGS)))
-		return -IPSET_ERR_PROTOCOL;
+		वापस -IPSET_ERR_PROTOCOL;
 
 	ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP], &ip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP2], &ip2_from);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ip_set_get_extensions(set, tb, &ext);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (tb[IPSET_ATTR_CIDR]) {
+	अगर (tb[IPSET_ATTR_CIDR]) अणु
 		e.cidr[0] = nla_get_u8(tb[IPSET_ATTR_CIDR]);
-		if (e.cidr[0] > HOST_MASK)
-			return -IPSET_ERR_INVALID_CIDR;
-	}
+		अगर (e.cidr[0] > HOST_MASK)
+			वापस -IPSET_ERR_INVALID_CIDR;
+	पूर्ण
 
-	if (tb[IPSET_ATTR_CIDR2]) {
+	अगर (tb[IPSET_ATTR_CIDR2]) अणु
 		e.cidr[1] = nla_get_u8(tb[IPSET_ATTR_CIDR2]);
-		if (e.cidr[1] > HOST_MASK)
-			return -IPSET_ERR_INVALID_CIDR;
-	}
+		अगर (e.cidr[1] > HOST_MASK)
+			वापस -IPSET_ERR_INVALID_CIDR;
+	पूर्ण
 
 	e.port = nla_get_be16(tb[IPSET_ATTR_PORT]);
 
-	if (tb[IPSET_ATTR_PROTO]) {
+	अगर (tb[IPSET_ATTR_PROTO]) अणु
 		e.proto = nla_get_u8(tb[IPSET_ATTR_PROTO]);
 		with_ports = ip_set_proto_with_ports(e.proto);
 
-		if (e.proto == 0)
-			return -IPSET_ERR_INVALID_PROTO;
-	} else {
-		return -IPSET_ERR_MISSING_PROTO;
-	}
+		अगर (e.proto == 0)
+			वापस -IPSET_ERR_INVALID_PROTO;
+	पूर्ण अन्यथा अणु
+		वापस -IPSET_ERR_MISSING_PROTO;
+	पूर्ण
 
-	if (!(with_ports || e.proto == IPPROTO_ICMP))
+	अगर (!(with_ports || e.proto == IPPROTO_ICMP))
 		e.port = 0;
 
-	if (tb[IPSET_ATTR_CADT_FLAGS]) {
+	अगर (tb[IPSET_ATTR_CADT_FLAGS]) अणु
 		u32 cadt_flags = ip_set_get_h32(tb[IPSET_ATTR_CADT_FLAGS]);
 
-		if (cadt_flags & IPSET_FLAG_NOMATCH)
+		अगर (cadt_flags & IPSET_FLAG_NOMATCH)
 			flags |= (IPSET_FLAG_NOMATCH << 16);
-	}
+	पूर्ण
 
 	with_ports = with_ports && tb[IPSET_ATTR_PORT_TO];
-	if (adt == IPSET_TEST ||
-	    !(tb[IPSET_ATTR_IP_TO] || with_ports || tb[IPSET_ATTR_IP2_TO])) {
-		e.ip[0] = htonl(ip & ip_set_hostmask(e.cidr[0]));
-		e.ip[1] = htonl(ip2_from & ip_set_hostmask(e.cidr[1]));
+	अगर (adt == IPSET_TEST ||
+	    !(tb[IPSET_ATTR_IP_TO] || with_ports || tb[IPSET_ATTR_IP2_TO])) अणु
+		e.ip[0] = htonl(ip & ip_set_hosपंचांगask(e.cidr[0]));
+		e.ip[1] = htonl(ip2_from & ip_set_hosपंचांगask(e.cidr[1]));
 		ret = adtfn(set, &e, &ext, &ext, flags);
-		return ip_set_enomatch(ret, flags, adt, set) ? -ret :
+		वापस ip_set_enomatch(ret, flags, adt, set) ? -ret :
 		       ip_set_eexist(ret, flags) ? 0 : ret;
-	}
+	पूर्ण
 
 	ip_to = ip;
-	if (tb[IPSET_ATTR_IP_TO]) {
+	अगर (tb[IPSET_ATTR_IP_TO]) अणु
 		ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP_TO], &ip_to);
-		if (ret)
-			return ret;
-		if (ip > ip_to)
+		अगर (ret)
+			वापस ret;
+		अगर (ip > ip_to)
 			swap(ip, ip_to);
-		if (unlikely(ip + UINT_MAX == ip_to))
-			return -IPSET_ERR_HASH_RANGE;
-	} else {
+		अगर (unlikely(ip + अच_पूर्णांक_उच्च == ip_to))
+			वापस -IPSET_ERR_HASH_RANGE;
+	पूर्ण अन्यथा अणु
 		ip_set_mask_from_to(ip, ip_to, e.cidr[0]);
-	}
+	पूर्ण
 
 	port_to = port = ntohs(e.port);
-	if (tb[IPSET_ATTR_PORT_TO]) {
+	अगर (tb[IPSET_ATTR_PORT_TO]) अणु
 		port_to = ip_set_get_h16(tb[IPSET_ATTR_PORT_TO]);
-		if (port > port_to)
+		अगर (port > port_to)
 			swap(port, port_to);
-	}
+	पूर्ण
 
 	ip2_to = ip2_from;
-	if (tb[IPSET_ATTR_IP2_TO]) {
+	अगर (tb[IPSET_ATTR_IP2_TO]) अणु
 		ret = ip_set_get_hostipaddr4(tb[IPSET_ATTR_IP2_TO], &ip2_to);
-		if (ret)
-			return ret;
-		if (ip2_from > ip2_to)
+		अगर (ret)
+			वापस ret;
+		अगर (ip2_from > ip2_to)
 			swap(ip2_from, ip2_to);
-		if (unlikely(ip2_from + UINT_MAX == ip2_to))
-			return -IPSET_ERR_HASH_RANGE;
-	} else {
+		अगर (unlikely(ip2_from + अच_पूर्णांक_उच्च == ip2_to))
+			वापस -IPSET_ERR_HASH_RANGE;
+	पूर्ण अन्यथा अणु
 		ip_set_mask_from_to(ip2_from, ip2_to, e.cidr[1]);
-	}
+	पूर्ण
 
-	if (retried) {
+	अगर (retried) अणु
 		ip = ntohl(h->next.ip[0]);
 		p = ntohs(h->next.port);
 		ip2 = ntohl(h->next.ip[1]);
-	} else {
+	पूर्ण अन्यथा अणु
 		p = port;
 		ip2 = ip2_from;
-	}
+	पूर्ण
 
-	do {
+	करो अणु
 		e.ip[0] = htonl(ip);
 		ip = ip_set_range_to_cidr(ip, ip_to, &e.cidr[0]);
-		for (; p <= port_to; p++) {
+		क्रम (; p <= port_to; p++) अणु
 			e.port = htons(p);
-			do {
+			करो अणु
 				e.ip[1] = htonl(ip2);
 				ip2 = ip_set_range_to_cidr(ip2, ip2_to,
 							   &e.cidr[1]);
 				ret = adtfn(set, &e, &ext, &ext, flags);
-				if (ret && !ip_set_eexist(ret, flags))
-					return ret;
+				अगर (ret && !ip_set_eexist(ret, flags))
+					वापस ret;
 
 				ret = 0;
-			} while (ip2++ < ip2_to);
+			पूर्ण जबतक (ip2++ < ip2_to);
 			ip2 = ip2_from;
-		}
+		पूर्ण
 		p = port;
-	} while (ip++ < ip_to);
-	return ret;
-}
+	पूर्ण जबतक (ip++ < ip_to);
+	वापस ret;
+पूर्ण
 
 /* IPv6 variant */
 
-struct hash_netportnet6_elem {
-	union nf_inet_addr ip[2];
+काष्ठा hash_netportnet6_elem अणु
+	जोड़ nf_inet_addr ip[2];
 	__be16 port;
-	union {
+	जोड़ अणु
 		u8 cidr[2];
 		u16 ccmp;
-	};
+	पूर्ण;
 	u16 padding;
 	u8 nomatch;
 	u8 proto;
-};
+पूर्ण;
 
 /* Common functions */
 
-static bool
-hash_netportnet6_data_equal(const struct hash_netportnet6_elem *ip1,
-			    const struct hash_netportnet6_elem *ip2,
+अटल bool
+hash_netportnet6_data_equal(स्थिर काष्ठा hash_netportnet6_elem *ip1,
+			    स्थिर काष्ठा hash_netportnet6_elem *ip2,
 			    u32 *multi)
-{
-	return ipv6_addr_equal(&ip1->ip[0].in6, &ip2->ip[0].in6) &&
+अणु
+	वापस ipv6_addr_equal(&ip1->ip[0].in6, &ip2->ip[0].in6) &&
 	       ipv6_addr_equal(&ip1->ip[1].in6, &ip2->ip[1].in6) &&
 	       ip1->ccmp == ip2->ccmp &&
 	       ip1->port == ip2->port &&
 	       ip1->proto == ip2->proto;
-}
+पूर्ण
 
-static int
-hash_netportnet6_do_data_match(const struct hash_netportnet6_elem *elem)
-{
-	return elem->nomatch ? -ENOTEMPTY : 1;
-}
+अटल पूर्णांक
+hash_netportnet6_करो_data_match(स्थिर काष्ठा hash_netportnet6_elem *elem)
+अणु
+	वापस elem->nomatch ? -ENOTEMPTY : 1;
+पूर्ण
 
-static void
-hash_netportnet6_data_set_flags(struct hash_netportnet6_elem *elem, u32 flags)
-{
+अटल व्योम
+hash_netportnet6_data_set_flags(काष्ठा hash_netportnet6_elem *elem, u32 flags)
+अणु
 	elem->nomatch = !!((flags >> 16) & IPSET_FLAG_NOMATCH);
-}
+पूर्ण
 
-static void
-hash_netportnet6_data_reset_flags(struct hash_netportnet6_elem *elem, u8 *flags)
-{
+अटल व्योम
+hash_netportnet6_data_reset_flags(काष्ठा hash_netportnet6_elem *elem, u8 *flags)
+अणु
 	swap(*flags, elem->nomatch);
-}
+पूर्ण
 
-static void
-hash_netportnet6_data_reset_elem(struct hash_netportnet6_elem *elem,
-				 struct hash_netportnet6_elem *orig)
-{
+अटल व्योम
+hash_netportnet6_data_reset_elem(काष्ठा hash_netportnet6_elem *elem,
+				 काष्ठा hash_netportnet6_elem *orig)
+अणु
 	elem->ip[1] = orig->ip[1];
-}
+पूर्ण
 
-static void
-hash_netportnet6_data_netmask(struct hash_netportnet6_elem *elem,
+अटल व्योम
+hash_netportnet6_data_neपंचांगask(काष्ठा hash_netportnet6_elem *elem,
 			      u8 cidr, bool inner)
-{
-	if (inner) {
-		ip6_netmask(&elem->ip[1], cidr);
+अणु
+	अगर (inner) अणु
+		ip6_neपंचांगask(&elem->ip[1], cidr);
 		elem->cidr[1] = cidr;
-	} else {
-		ip6_netmask(&elem->ip[0], cidr);
+	पूर्ण अन्यथा अणु
+		ip6_neपंचांगask(&elem->ip[0], cidr);
 		elem->cidr[0] = cidr;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool
-hash_netportnet6_data_list(struct sk_buff *skb,
-			   const struct hash_netportnet6_elem *data)
-{
+अटल bool
+hash_netportnet6_data_list(काष्ठा sk_buff *skb,
+			   स्थिर काष्ठा hash_netportnet6_elem *data)
+अणु
 	u32 flags = data->nomatch ? IPSET_FLAG_NOMATCH : 0;
 
-	if (nla_put_ipaddr6(skb, IPSET_ATTR_IP, &data->ip[0].in6) ||
+	अगर (nla_put_ipaddr6(skb, IPSET_ATTR_IP, &data->ip[0].in6) ||
 	    nla_put_ipaddr6(skb, IPSET_ATTR_IP2, &data->ip[1].in6) ||
 	    nla_put_net16(skb, IPSET_ATTR_PORT, data->port) ||
 	    nla_put_u8(skb, IPSET_ATTR_CIDR, data->cidr[0]) ||
@@ -396,161 +397,161 @@ hash_netportnet6_data_list(struct sk_buff *skb,
 	    nla_put_u8(skb, IPSET_ATTR_PROTO, data->proto) ||
 	    (flags &&
 	     nla_put_net32(skb, IPSET_ATTR_CADT_FLAGS, htonl(flags))))
-		goto nla_put_failure;
-	return false;
+		जाओ nla_put_failure;
+	वापस false;
 
 nla_put_failure:
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-hash_netportnet6_data_next(struct hash_netportnet6_elem *next,
-			   const struct hash_netportnet6_elem *d)
-{
+अटल व्योम
+hash_netportnet6_data_next(काष्ठा hash_netportnet6_elem *next,
+			   स्थिर काष्ठा hash_netportnet6_elem *d)
+अणु
 	next->port = d->port;
-}
+पूर्ण
 
-#undef MTYPE
-#undef HOST_MASK
+#अघोषित MTYPE
+#अघोषित HOST_MASK
 
-#define MTYPE		hash_netportnet6
-#define HOST_MASK	128
-#define IP_SET_EMIT_CREATE
-#include "ip_set_hash_gen.h"
+#घोषणा MTYPE		hash_netportnet6
+#घोषणा HOST_MASK	128
+#घोषणा IP_SET_EMIT_CREATE
+#समावेश "ip_set_hash_gen.h"
 
-static void
-hash_netportnet6_init(struct hash_netportnet6_elem *e)
-{
+अटल व्योम
+hash_netportnet6_init(काष्ठा hash_netportnet6_elem *e)
+अणु
 	e->cidr[0] = HOST_MASK;
 	e->cidr[1] = HOST_MASK;
-}
+पूर्ण
 
-static int
-hash_netportnet6_kadt(struct ip_set *set, const struct sk_buff *skb,
-		      const struct xt_action_param *par,
-		      enum ipset_adt adt, struct ip_set_adt_opt *opt)
-{
-	const struct hash_netportnet6 *h = set->data;
+अटल पूर्णांक
+hash_netportnet6_kadt(काष्ठा ip_set *set, स्थिर काष्ठा sk_buff *skb,
+		      स्थिर काष्ठा xt_action_param *par,
+		      क्रमागत ipset_adt adt, काष्ठा ip_set_adt_opt *opt)
+अणु
+	स्थिर काष्ठा hash_netportnet6 *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	struct hash_netportnet6_elem e = { };
-	struct ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
+	काष्ठा hash_netportnet6_elem e = अणु पूर्ण;
+	काष्ठा ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
 
 	e.cidr[0] = INIT_CIDR(h->nets[0].cidr[0], HOST_MASK);
 	e.cidr[1] = INIT_CIDR(h->nets[0].cidr[1], HOST_MASK);
-	if (adt == IPSET_TEST)
-		e.ccmp = (HOST_MASK << (sizeof(u8) * 8)) | HOST_MASK;
+	अगर (adt == IPSET_TEST)
+		e.ccmp = (HOST_MASK << (माप(u8) * 8)) | HOST_MASK;
 
-	if (!ip_set_get_ip6_port(skb, opt->flags & IPSET_DIM_TWO_SRC,
+	अगर (!ip_set_get_ip6_port(skb, opt->flags & IPSET_DIM_TWO_SRC,
 				 &e.port, &e.proto))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ip6addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip[0].in6);
 	ip6addrptr(skb, opt->flags & IPSET_DIM_THREE_SRC, &e.ip[1].in6);
-	ip6_netmask(&e.ip[0], e.cidr[0]);
-	ip6_netmask(&e.ip[1], e.cidr[1]);
+	ip6_neपंचांगask(&e.ip[0], e.cidr[0]);
+	ip6_neपंचांगask(&e.ip[1], e.cidr[1]);
 
-	return adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
-}
+	वापस adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
+पूर्ण
 
-static int
-hash_netportnet6_uadt(struct ip_set *set, struct nlattr *tb[],
-		      enum ipset_adt adt, u32 *lineno, u32 flags, bool retried)
-{
-	const struct hash_netportnet6 *h = set->data;
+अटल पूर्णांक
+hash_netportnet6_uadt(काष्ठा ip_set *set, काष्ठा nlattr *tb[],
+		      क्रमागत ipset_adt adt, u32 *lineno, u32 flags, bool retried)
+अणु
+	स्थिर काष्ठा hash_netportnet6 *h = set->data;
 	ipset_adtfn adtfn = set->variant->adt[adt];
-	struct hash_netportnet6_elem e = { };
-	struct ip_set_ext ext = IP_SET_INIT_UEXT(set);
+	काष्ठा hash_netportnet6_elem e = अणु पूर्ण;
+	काष्ठा ip_set_ext ext = IP_SET_INIT_UEXT(set);
 	u32 port, port_to;
 	bool with_ports = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (tb[IPSET_ATTR_LINENO])
+	अगर (tb[IPSET_ATTR_LINENO])
 		*lineno = nla_get_u32(tb[IPSET_ATTR_LINENO]);
 
 	hash_netportnet6_init(&e);
-	if (unlikely(!tb[IPSET_ATTR_IP] || !tb[IPSET_ATTR_IP2] ||
+	अगर (unlikely(!tb[IPSET_ATTR_IP] || !tb[IPSET_ATTR_IP2] ||
 		     !ip_set_attr_netorder(tb, IPSET_ATTR_PORT) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_PORT_TO) ||
 		     !ip_set_optattr_netorder(tb, IPSET_ATTR_CADT_FLAGS)))
-		return -IPSET_ERR_PROTOCOL;
-	if (unlikely(tb[IPSET_ATTR_IP_TO] || tb[IPSET_ATTR_IP2_TO]))
-		return -IPSET_ERR_HASH_RANGE_UNSUPPORTED;
+		वापस -IPSET_ERR_PROTOCOL;
+	अगर (unlikely(tb[IPSET_ATTR_IP_TO] || tb[IPSET_ATTR_IP2_TO]))
+		वापस -IPSET_ERR_HASH_RANGE_UNSUPPORTED;
 
 	ret = ip_set_get_ipaddr6(tb[IPSET_ATTR_IP], &e.ip[0]);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ip_set_get_ipaddr6(tb[IPSET_ATTR_IP2], &e.ip[1]);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ip_set_get_extensions(set, tb, &ext);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (tb[IPSET_ATTR_CIDR]) {
+	अगर (tb[IPSET_ATTR_CIDR]) अणु
 		e.cidr[0] = nla_get_u8(tb[IPSET_ATTR_CIDR]);
-		if (e.cidr[0] > HOST_MASK)
-			return -IPSET_ERR_INVALID_CIDR;
-	}
+		अगर (e.cidr[0] > HOST_MASK)
+			वापस -IPSET_ERR_INVALID_CIDR;
+	पूर्ण
 
-	if (tb[IPSET_ATTR_CIDR2]) {
+	अगर (tb[IPSET_ATTR_CIDR2]) अणु
 		e.cidr[1] = nla_get_u8(tb[IPSET_ATTR_CIDR2]);
-		if (e.cidr[1] > HOST_MASK)
-			return -IPSET_ERR_INVALID_CIDR;
-	}
+		अगर (e.cidr[1] > HOST_MASK)
+			वापस -IPSET_ERR_INVALID_CIDR;
+	पूर्ण
 
-	ip6_netmask(&e.ip[0], e.cidr[0]);
-	ip6_netmask(&e.ip[1], e.cidr[1]);
+	ip6_neपंचांगask(&e.ip[0], e.cidr[0]);
+	ip6_neपंचांगask(&e.ip[1], e.cidr[1]);
 
 	e.port = nla_get_be16(tb[IPSET_ATTR_PORT]);
 
-	if (tb[IPSET_ATTR_PROTO]) {
+	अगर (tb[IPSET_ATTR_PROTO]) अणु
 		e.proto = nla_get_u8(tb[IPSET_ATTR_PROTO]);
 		with_ports = ip_set_proto_with_ports(e.proto);
 
-		if (e.proto == 0)
-			return -IPSET_ERR_INVALID_PROTO;
-	} else {
-		return -IPSET_ERR_MISSING_PROTO;
-	}
+		अगर (e.proto == 0)
+			वापस -IPSET_ERR_INVALID_PROTO;
+	पूर्ण अन्यथा अणु
+		वापस -IPSET_ERR_MISSING_PROTO;
+	पूर्ण
 
-	if (!(with_ports || e.proto == IPPROTO_ICMPV6))
+	अगर (!(with_ports || e.proto == IPPROTO_ICMPV6))
 		e.port = 0;
 
-	if (tb[IPSET_ATTR_CADT_FLAGS]) {
+	अगर (tb[IPSET_ATTR_CADT_FLAGS]) अणु
 		u32 cadt_flags = ip_set_get_h32(tb[IPSET_ATTR_CADT_FLAGS]);
 
-		if (cadt_flags & IPSET_FLAG_NOMATCH)
+		अगर (cadt_flags & IPSET_FLAG_NOMATCH)
 			flags |= (IPSET_FLAG_NOMATCH << 16);
-	}
+	पूर्ण
 
-	if (adt == IPSET_TEST || !with_ports || !tb[IPSET_ATTR_PORT_TO]) {
+	अगर (adt == IPSET_TEST || !with_ports || !tb[IPSET_ATTR_PORT_TO]) अणु
 		ret = adtfn(set, &e, &ext, &ext, flags);
-		return ip_set_enomatch(ret, flags, adt, set) ? -ret :
+		वापस ip_set_enomatch(ret, flags, adt, set) ? -ret :
 		       ip_set_eexist(ret, flags) ? 0 : ret;
-	}
+	पूर्ण
 
 	port = ntohs(e.port);
 	port_to = ip_set_get_h16(tb[IPSET_ATTR_PORT_TO]);
-	if (port > port_to)
+	अगर (port > port_to)
 		swap(port, port_to);
 
-	if (retried)
+	अगर (retried)
 		port = ntohs(h->next.port);
-	for (; port <= port_to; port++) {
+	क्रम (; port <= port_to; port++) अणु
 		e.port = htons(port);
 		ret = adtfn(set, &e, &ext, &ext, flags);
 
-		if (ret && !ip_set_eexist(ret, flags))
-			return ret;
+		अगर (ret && !ip_set_eexist(ret, flags))
+			वापस ret;
 
 		ret = 0;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static struct ip_set_type hash_netportnet_type __read_mostly = {
+अटल काष्ठा ip_set_type hash_netportnet_type __पढ़ो_mostly = अणु
 	.name		= "hash:net,port,net",
 	.protocol	= IPSET_PROTOCOL,
 	.features	= IPSET_TYPE_IP | IPSET_TYPE_PORT | IPSET_TYPE_IP2 |
@@ -561,51 +562,51 @@ static struct ip_set_type hash_netportnet_type __read_mostly = {
 	.revision_max	= IPSET_TYPE_REV_MAX,
 	.create_flags[IPSET_TYPE_REV_MAX] = IPSET_CREATE_FLAG_BUCKETSIZE,
 	.create		= hash_netportnet_create,
-	.create_policy	= {
-		[IPSET_ATTR_HASHSIZE]	= { .type = NLA_U32 },
-		[IPSET_ATTR_MAXELEM]	= { .type = NLA_U32 },
-		[IPSET_ATTR_INITVAL]	= { .type = NLA_U32 },
-		[IPSET_ATTR_BUCKETSIZE]	= { .type = NLA_U8 },
-		[IPSET_ATTR_RESIZE]	= { .type = NLA_U8  },
-		[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
-		[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
-	},
-	.adt_policy	= {
-		[IPSET_ATTR_IP]		= { .type = NLA_NESTED },
-		[IPSET_ATTR_IP_TO]	= { .type = NLA_NESTED },
-		[IPSET_ATTR_IP2]	= { .type = NLA_NESTED },
-		[IPSET_ATTR_IP2_TO]	= { .type = NLA_NESTED },
-		[IPSET_ATTR_PORT]	= { .type = NLA_U16 },
-		[IPSET_ATTR_PORT_TO]	= { .type = NLA_U16 },
-		[IPSET_ATTR_CIDR]	= { .type = NLA_U8 },
-		[IPSET_ATTR_CIDR2]	= { .type = NLA_U8 },
-		[IPSET_ATTR_PROTO]	= { .type = NLA_U8 },
-		[IPSET_ATTR_CADT_FLAGS]	= { .type = NLA_U32 },
-		[IPSET_ATTR_TIMEOUT]	= { .type = NLA_U32 },
-		[IPSET_ATTR_LINENO]	= { .type = NLA_U32 },
-		[IPSET_ATTR_BYTES]	= { .type = NLA_U64 },
-		[IPSET_ATTR_PACKETS]	= { .type = NLA_U64 },
-		[IPSET_ATTR_COMMENT]	= { .type = NLA_NUL_STRING,
-					    .len  = IPSET_MAX_COMMENT_SIZE },
-		[IPSET_ATTR_SKBMARK]	= { .type = NLA_U64 },
-		[IPSET_ATTR_SKBPRIO]	= { .type = NLA_U32 },
-		[IPSET_ATTR_SKBQUEUE]	= { .type = NLA_U16 },
-	},
+	.create_policy	= अणु
+		[IPSET_ATTR_HASHSIZE]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_MAXELEM]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_INITVAL]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_BUCKETSIZE]	= अणु .type = NLA_U8 पूर्ण,
+		[IPSET_ATTR_RESIZE]	= अणु .type = NLA_U8  पूर्ण,
+		[IPSET_ATTR_TIMEOUT]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_CADT_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
+	पूर्ण,
+	.adt_policy	= अणु
+		[IPSET_ATTR_IP]		= अणु .type = NLA_NESTED पूर्ण,
+		[IPSET_ATTR_IP_TO]	= अणु .type = NLA_NESTED पूर्ण,
+		[IPSET_ATTR_IP2]	= अणु .type = NLA_NESTED पूर्ण,
+		[IPSET_ATTR_IP2_TO]	= अणु .type = NLA_NESTED पूर्ण,
+		[IPSET_ATTR_PORT]	= अणु .type = NLA_U16 पूर्ण,
+		[IPSET_ATTR_PORT_TO]	= अणु .type = NLA_U16 पूर्ण,
+		[IPSET_ATTR_CIDR]	= अणु .type = NLA_U8 पूर्ण,
+		[IPSET_ATTR_CIDR2]	= अणु .type = NLA_U8 पूर्ण,
+		[IPSET_ATTR_PROTO]	= अणु .type = NLA_U8 पूर्ण,
+		[IPSET_ATTR_CADT_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_TIMEOUT]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_LINENO]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_BYTES]	= अणु .type = NLA_U64 पूर्ण,
+		[IPSET_ATTR_PACKETS]	= अणु .type = NLA_U64 पूर्ण,
+		[IPSET_ATTR_COMMENT]	= अणु .type = NLA_NUL_STRING,
+					    .len  = IPSET_MAX_COMMENT_SIZE पूर्ण,
+		[IPSET_ATTR_SKBMARK]	= अणु .type = NLA_U64 पूर्ण,
+		[IPSET_ATTR_SKBPRIO]	= अणु .type = NLA_U32 पूर्ण,
+		[IPSET_ATTR_SKBQUEUE]	= अणु .type = NLA_U16 पूर्ण,
+	पूर्ण,
 	.me		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init
-hash_netportnet_init(void)
-{
-	return ip_set_type_register(&hash_netportnet_type);
-}
+अटल पूर्णांक __init
+hash_netportnet_init(व्योम)
+अणु
+	वापस ip_set_type_रेजिस्टर(&hash_netportnet_type);
+पूर्ण
 
-static void __exit
-hash_netportnet_fini(void)
-{
+अटल व्योम __निकास
+hash_netportnet_fini(व्योम)
+अणु
 	rcu_barrier();
-	ip_set_type_unregister(&hash_netportnet_type);
-}
+	ip_set_type_unरेजिस्टर(&hash_netportnet_type);
+पूर्ण
 
 module_init(hash_netportnet_init);
-module_exit(hash_netportnet_fini);
+module_निकास(hash_netportnet_fini);

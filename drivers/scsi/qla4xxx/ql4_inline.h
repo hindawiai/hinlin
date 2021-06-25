@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * QLogic iSCSI HBA Driver
  * Copyright (c)  2003-2013 QLogic Corporation
@@ -8,88 +9,88 @@
  *
  * qla4xxx_lookup_ddb_by_fw_index
  *	This routine locates a device handle given the firmware device
- *	database index.	 If device doesn't exist, returns NULL.
+ *	database index.	 If device करोesn't exist, वापसs शून्य.
  *
  * Input:
- *	ha - Pointer to host adapter structure.
+ *	ha - Poपूर्णांकer to host adapter काष्ठाure.
  *	fw_ddb_index - Firmware's device database index
  *
  * Returns:
- *	Pointer to the corresponding internal device database structure
+ *	Poपूर्णांकer to the corresponding पूर्णांकernal device database काष्ठाure
  */
-static inline struct ddb_entry *
-qla4xxx_lookup_ddb_by_fw_index(struct scsi_qla_host *ha, uint32_t fw_ddb_index)
-{
-	struct ddb_entry *ddb_entry = NULL;
+अटल अंतरभूत काष्ठा ddb_entry *
+qla4xxx_lookup_ddb_by_fw_index(काष्ठा scsi_qla_host *ha, uपूर्णांक32_t fw_ddb_index)
+अणु
+	काष्ठा ddb_entry *ddb_entry = शून्य;
 
-	if ((fw_ddb_index < MAX_DDB_ENTRIES) &&
+	अगर ((fw_ddb_index < MAX_DDB_ENTRIES) &&
 	    (ha->fw_ddb_index_map[fw_ddb_index] !=
-		(struct ddb_entry *) INVALID_ENTRY)) {
+		(काष्ठा ddb_entry *) INVALID_ENTRY)) अणु
 		ddb_entry = ha->fw_ddb_index_map[fw_ddb_index];
-	}
+	पूर्ण
 
-	DEBUG3(printk("scsi%d: %s: ddb [%d], ddb_entry = %p\n",
+	DEBUG3(prपूर्णांकk("scsi%d: %s: ddb [%d], ddb_entry = %p\n",
 	    ha->host_no, __func__, fw_ddb_index, ddb_entry));
 
-	return ddb_entry;
-}
+	वापस ddb_entry;
+पूर्ण
 
-static inline void
-__qla4xxx_enable_intrs(struct scsi_qla_host *ha)
-{
-	if (is_qla4022(ha) | is_qla4032(ha)) {
-		writel(set_rmask(IMR_SCSI_INTR_ENABLE),
-		       &ha->reg->u1.isp4022.intr_mask);
-		readl(&ha->reg->u1.isp4022.intr_mask);
-	} else {
-		writel(set_rmask(CSR_SCSI_INTR_ENABLE), &ha->reg->ctrl_status);
-		readl(&ha->reg->ctrl_status);
-	}
+अटल अंतरभूत व्योम
+__qla4xxx_enable_पूर्णांकrs(काष्ठा scsi_qla_host *ha)
+अणु
+	अगर (is_qla4022(ha) | is_qla4032(ha)) अणु
+		ग_लिखोl(set_rmask(IMR_SCSI_INTR_ENABLE),
+		       &ha->reg->u1.isp4022.पूर्णांकr_mask);
+		पढ़ोl(&ha->reg->u1.isp4022.पूर्णांकr_mask);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(set_rmask(CSR_SCSI_INTR_ENABLE), &ha->reg->ctrl_status);
+		पढ़ोl(&ha->reg->ctrl_status);
+	पूर्ण
 	set_bit(AF_INTERRUPTS_ON, &ha->flags);
-}
+पूर्ण
 
-static inline void
-__qla4xxx_disable_intrs(struct scsi_qla_host *ha)
-{
-	if (is_qla4022(ha) | is_qla4032(ha)) {
-		writel(clr_rmask(IMR_SCSI_INTR_ENABLE),
-		       &ha->reg->u1.isp4022.intr_mask);
-		readl(&ha->reg->u1.isp4022.intr_mask);
-	} else {
-		writel(clr_rmask(CSR_SCSI_INTR_ENABLE), &ha->reg->ctrl_status);
-		readl(&ha->reg->ctrl_status);
-	}
+अटल अंतरभूत व्योम
+__qla4xxx_disable_पूर्णांकrs(काष्ठा scsi_qla_host *ha)
+अणु
+	अगर (is_qla4022(ha) | is_qla4032(ha)) अणु
+		ग_लिखोl(clr_rmask(IMR_SCSI_INTR_ENABLE),
+		       &ha->reg->u1.isp4022.पूर्णांकr_mask);
+		पढ़ोl(&ha->reg->u1.isp4022.पूर्णांकr_mask);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(clr_rmask(CSR_SCSI_INTR_ENABLE), &ha->reg->ctrl_status);
+		पढ़ोl(&ha->reg->ctrl_status);
+	पूर्ण
 	clear_bit(AF_INTERRUPTS_ON, &ha->flags);
-}
+पूर्ण
 
-static inline void
-qla4xxx_enable_intrs(struct scsi_qla_host *ha)
-{
-	unsigned long flags;
-
-	spin_lock_irqsave(&ha->hardware_lock, flags);
-	__qla4xxx_enable_intrs(ha);
-	spin_unlock_irqrestore(&ha->hardware_lock, flags);
-}
-
-static inline void
-qla4xxx_disable_intrs(struct scsi_qla_host *ha)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम
+qla4xxx_enable_पूर्णांकrs(काष्ठा scsi_qla_host *ha)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ha->hardware_lock, flags);
-	__qla4xxx_disable_intrs(ha);
+	__qla4xxx_enable_पूर्णांकrs(ha);
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
-}
+पूर्ण
 
-static inline int qla4xxx_get_chap_type(struct ql4_chap_table *chap_entry)
-{
-	int type;
+अटल अंतरभूत व्योम
+qla4xxx_disable_पूर्णांकrs(काष्ठा scsi_qla_host *ha)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (chap_entry->flags & BIT_7)
+	spin_lock_irqsave(&ha->hardware_lock, flags);
+	__qla4xxx_disable_पूर्णांकrs(ha);
+	spin_unlock_irqrestore(&ha->hardware_lock, flags);
+पूर्ण
+
+अटल अंतरभूत पूर्णांक qla4xxx_get_chap_type(काष्ठा ql4_chap_table *chap_entry)
+अणु
+	पूर्णांक type;
+
+	अगर (chap_entry->flags & BIT_7)
 		type = LOCAL_CHAP;
-	else
+	अन्यथा
 		type = BIDI_CHAP;
 
-	return type;
-}
+	वापस type;
+पूर्ण

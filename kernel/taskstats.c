@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * taskstats.c - Export per-task statistics to userland
  *
@@ -6,160 +7,160 @@
  *           (C) Balbir Singh,   IBM Corp. 2006
  */
 
-#include <linux/kernel.h>
-#include <linux/taskstats_kern.h>
-#include <linux/tsacct_kern.h>
-#include <linux/delayacct.h>
-#include <linux/cpumask.h>
-#include <linux/percpu.h>
-#include <linux/slab.h>
-#include <linux/cgroupstats.h>
-#include <linux/cgroup.h>
-#include <linux/fs.h>
-#include <linux/file.h>
-#include <linux/pid_namespace.h>
-#include <net/genetlink.h>
-#include <linux/atomic.h>
-#include <linux/sched/cputime.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/taskstats_kern.h>
+#समावेश <linux/tsacct_kern.h>
+#समावेश <linux/delayacct.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cgroupstats.h>
+#समावेश <linux/cgroup.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/file.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <net/genetlink.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/sched/cpuसमय.स>
 
 /*
- * Maximum length of a cpumask that can be specified in
+ * Maximum length of a cpumask that can be specअगरied in
  * the TASKSTATS_CMD_ATTR_REGISTER/DEREGISTER_CPUMASK attribute
  */
-#define TASKSTATS_CPUMASK_MAXLEN	(100+6*NR_CPUS)
+#घोषणा TASKSTATS_CPUMASK_MAXLEN	(100+6*NR_CPUS)
 
-static DEFINE_PER_CPU(__u32, taskstats_seqnum);
-static int family_registered;
-struct kmem_cache *taskstats_cache;
+अटल DEFINE_PER_CPU(__u32, taskstats_seqnum);
+अटल पूर्णांक family_रेजिस्टरed;
+काष्ठा kmem_cache *taskstats_cache;
 
-static struct genl_family family;
+अटल काष्ठा genl_family family;
 
-static const struct nla_policy taskstats_cmd_get_policy[] = {
-	[TASKSTATS_CMD_ATTR_PID]  = { .type = NLA_U32 },
-	[TASKSTATS_CMD_ATTR_TGID] = { .type = NLA_U32 },
-	[TASKSTATS_CMD_ATTR_REGISTER_CPUMASK] = { .type = NLA_STRING },
-	[TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK] = { .type = NLA_STRING },};
+अटल स्थिर काष्ठा nla_policy taskstats_cmd_get_policy[] = अणु
+	[TASKSTATS_CMD_ATTR_PID]  = अणु .type = NLA_U32 पूर्ण,
+	[TASKSTATS_CMD_ATTR_TGID] = अणु .type = NLA_U32 पूर्ण,
+	[TASKSTATS_CMD_ATTR_REGISTER_CPUMASK] = अणु .type = NLA_STRING पूर्ण,
+	[TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK] = अणु .type = NLA_STRING पूर्ण,पूर्ण;
 
-static const struct nla_policy cgroupstats_cmd_get_policy[] = {
-	[CGROUPSTATS_CMD_ATTR_FD] = { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy cgroupstats_cmd_get_policy[] = अणु
+	[CGROUPSTATS_CMD_ATTR_FD] = अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-struct listener {
-	struct list_head list;
+काष्ठा listener अणु
+	काष्ठा list_head list;
 	pid_t pid;
-	char valid;
-};
+	अक्षर valid;
+पूर्ण;
 
-struct listener_list {
-	struct rw_semaphore sem;
-	struct list_head list;
-};
-static DEFINE_PER_CPU(struct listener_list, listener_array);
+काष्ठा listener_list अणु
+	काष्ठा rw_semaphore sem;
+	काष्ठा list_head list;
+पूर्ण;
+अटल DEFINE_PER_CPU(काष्ठा listener_list, listener_array);
 
-enum actions {
+क्रमागत actions अणु
 	REGISTER,
 	DEREGISTER,
 	CPU_DONT_CARE
-};
+पूर्ण;
 
-static int prepare_reply(struct genl_info *info, u8 cmd, struct sk_buff **skbp,
-				size_t size)
-{
-	struct sk_buff *skb;
-	void *reply;
+अटल पूर्णांक prepare_reply(काष्ठा genl_info *info, u8 cmd, काष्ठा sk_buff **skbp,
+				माप_प्रकार size)
+अणु
+	काष्ठा sk_buff *skb;
+	व्योम *reply;
 
 	/*
 	 * If new attributes are added, please revisit this allocation
 	 */
 	skb = genlmsg_new(size, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	if (!info) {
-		int seq = this_cpu_inc_return(taskstats_seqnum) - 1;
+	अगर (!info) अणु
+		पूर्णांक seq = this_cpu_inc_वापस(taskstats_seqnum) - 1;
 
 		reply = genlmsg_put(skb, 0, seq, &family, 0, cmd);
-	} else
+	पूर्ण अन्यथा
 		reply = genlmsg_put_reply(skb, info, &family, 0, cmd);
-	if (reply == NULL) {
-		nlmsg_free(skb);
-		return -EINVAL;
-	}
+	अगर (reply == शून्य) अणु
+		nlmsg_मुक्त(skb);
+		वापस -EINVAL;
+	पूर्ण
 
 	*skbp = skb;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Send taskstats data in @skb to listener with nl_pid @pid
  */
-static int send_reply(struct sk_buff *skb, struct genl_info *info)
-{
-	struct genlmsghdr *genlhdr = nlmsg_data(nlmsg_hdr(skb));
-	void *reply = genlmsg_data(genlhdr);
+अटल पूर्णांक send_reply(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा genlmsghdr *genlhdr = nlmsg_data(nlmsg_hdr(skb));
+	व्योम *reply = genlmsg_data(genlhdr);
 
 	genlmsg_end(skb, reply);
 
-	return genlmsg_reply(skb, info);
-}
+	वापस genlmsg_reply(skb, info);
+पूर्ण
 
 /*
- * Send taskstats data in @skb to listeners registered for @cpu's exit data
+ * Send taskstats data in @skb to listeners रेजिस्टरed क्रम @cpu's निकास data
  */
-static void send_cpu_listeners(struct sk_buff *skb,
-					struct listener_list *listeners)
-{
-	struct genlmsghdr *genlhdr = nlmsg_data(nlmsg_hdr(skb));
-	struct listener *s, *tmp;
-	struct sk_buff *skb_next, *skb_cur = skb;
-	void *reply = genlmsg_data(genlhdr);
-	int rc, delcount = 0;
+अटल व्योम send_cpu_listeners(काष्ठा sk_buff *skb,
+					काष्ठा listener_list *listeners)
+अणु
+	काष्ठा genlmsghdr *genlhdr = nlmsg_data(nlmsg_hdr(skb));
+	काष्ठा listener *s, *पंचांगp;
+	काष्ठा sk_buff *skb_next, *skb_cur = skb;
+	व्योम *reply = genlmsg_data(genlhdr);
+	पूर्णांक rc, delcount = 0;
 
 	genlmsg_end(skb, reply);
 
 	rc = 0;
-	down_read(&listeners->sem);
-	list_for_each_entry(s, &listeners->list, list) {
-		skb_next = NULL;
-		if (!list_is_last(&s->list, &listeners->list)) {
+	करोwn_पढ़ो(&listeners->sem);
+	list_क्रम_each_entry(s, &listeners->list, list) अणु
+		skb_next = शून्य;
+		अगर (!list_is_last(&s->list, &listeners->list)) अणु
 			skb_next = skb_clone(skb_cur, GFP_KERNEL);
-			if (!skb_next)
-				break;
-		}
+			अगर (!skb_next)
+				अवरोध;
+		पूर्ण
 		rc = genlmsg_unicast(&init_net, skb_cur, s->pid);
-		if (rc == -ECONNREFUSED) {
+		अगर (rc == -ECONNREFUSED) अणु
 			s->valid = 0;
 			delcount++;
-		}
+		पूर्ण
 		skb_cur = skb_next;
-	}
-	up_read(&listeners->sem);
+	पूर्ण
+	up_पढ़ो(&listeners->sem);
 
-	if (skb_cur)
-		nlmsg_free(skb_cur);
+	अगर (skb_cur)
+		nlmsg_मुक्त(skb_cur);
 
-	if (!delcount)
-		return;
+	अगर (!delcount)
+		वापस;
 
 	/* Delete invalidated entries */
-	down_write(&listeners->sem);
-	list_for_each_entry_safe(s, tmp, &listeners->list, list) {
-		if (!s->valid) {
+	करोwn_ग_लिखो(&listeners->sem);
+	list_क्रम_each_entry_safe(s, पंचांगp, &listeners->list, list) अणु
+		अगर (!s->valid) अणु
 			list_del(&s->list);
-			kfree(s);
-		}
-	}
-	up_write(&listeners->sem);
-}
+			kमुक्त(s);
+		पूर्ण
+	पूर्ण
+	up_ग_लिखो(&listeners->sem);
+पूर्ण
 
-static void fill_stats(struct user_namespace *user_ns,
-		       struct pid_namespace *pid_ns,
-		       struct task_struct *tsk, struct taskstats *stats)
-{
-	memset(stats, 0, sizeof(*stats));
+अटल व्योम fill_stats(काष्ठा user_namespace *user_ns,
+		       काष्ठा pid_namespace *pid_ns,
+		       काष्ठा task_काष्ठा *tsk, काष्ठा taskstats *stats)
+अणु
+	स_रखो(stats, 0, माप(*stats));
 	/*
-	 * Each accounting subsystem adds calls to its functions to
-	 * fill in relevant parts of struct taskstsats as follows
+	 * Each accounting subप्रणाली adds calls to its functions to
+	 * fill in relevant parts of काष्ठा taskstsats as follows
 	 *
 	 *	per-task-foo(stats, tsk);
 	 */
@@ -174,525 +175,525 @@ static void fill_stats(struct user_namespace *user_ns,
 
 	/* fill in extended acct fields */
 	xacct_add_tsk(stats, tsk);
-}
+पूर्ण
 
-static int fill_stats_for_pid(pid_t pid, struct taskstats *stats)
-{
-	struct task_struct *tsk;
+अटल पूर्णांक fill_stats_क्रम_pid(pid_t pid, काष्ठा taskstats *stats)
+अणु
+	काष्ठा task_काष्ठा *tsk;
 
 	tsk = find_get_task_by_vpid(pid);
-	if (!tsk)
-		return -ESRCH;
+	अगर (!tsk)
+		वापस -ESRCH;
 	fill_stats(current_user_ns(), task_active_pid_ns(current), tsk, stats);
-	put_task_struct(tsk);
-	return 0;
-}
+	put_task_काष्ठा(tsk);
+	वापस 0;
+पूर्ण
 
-static int fill_stats_for_tgid(pid_t tgid, struct taskstats *stats)
-{
-	struct task_struct *tsk, *first;
-	unsigned long flags;
-	int rc = -ESRCH;
-	u64 delta, utime, stime;
-	u64 start_time;
+अटल पूर्णांक fill_stats_क्रम_tgid(pid_t tgid, काष्ठा taskstats *stats)
+अणु
+	काष्ठा task_काष्ठा *tsk, *first;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc = -ESRCH;
+	u64 delta, uसमय, sसमय;
+	u64 start_समय;
 
 	/*
-	 * Add additional stats from live tasks except zombie thread group
-	 * leaders who are already counted with the dead tasks
+	 * Add additional stats from live tasks except zombie thपढ़ो group
+	 * leaders who are alपढ़ोy counted with the dead tasks
 	 */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	first = find_task_by_vpid(tgid);
 
-	if (!first || !lock_task_sighand(first, &flags))
-		goto out;
+	अगर (!first || !lock_task_sighand(first, &flags))
+		जाओ out;
 
-	if (first->signal->stats)
-		memcpy(stats, first->signal->stats, sizeof(*stats));
-	else
-		memset(stats, 0, sizeof(*stats));
+	अगर (first->संकेत->stats)
+		स_नकल(stats, first->संकेत->stats, माप(*stats));
+	अन्यथा
+		स_रखो(stats, 0, माप(*stats));
 
 	tsk = first;
-	start_time = ktime_get_ns();
-	do {
-		if (tsk->exit_state)
-			continue;
+	start_समय = kसमय_get_ns();
+	करो अणु
+		अगर (tsk->निकास_state)
+			जारी;
 		/*
-		 * Accounting subsystem can call its functions here to
-		 * fill in relevant parts of struct taskstsats as follows
+		 * Accounting subप्रणाली can call its functions here to
+		 * fill in relevant parts of काष्ठा taskstsats as follows
 		 *
 		 *	per-task-foo(stats, tsk);
 		 */
 		delayacct_add_tsk(stats, tsk);
 
-		/* calculate task elapsed time in nsec */
-		delta = start_time - tsk->start_time;
+		/* calculate task elapsed समय in nsec */
+		delta = start_समय - tsk->start_समय;
 		/* Convert to micro seconds */
-		do_div(delta, NSEC_PER_USEC);
-		stats->ac_etime += delta;
+		करो_भाग(delta, NSEC_PER_USEC);
+		stats->ac_eसमय += delta;
 
-		task_cputime(tsk, &utime, &stime);
-		stats->ac_utime += div_u64(utime, NSEC_PER_USEC);
-		stats->ac_stime += div_u64(stime, NSEC_PER_USEC);
+		task_cpuसमय(tsk, &uसमय, &sसमय);
+		stats->ac_uसमय += भाग_u64(uसमय, NSEC_PER_USEC);
+		stats->ac_sसमय += भाग_u64(sसमय, NSEC_PER_USEC);
 
 		stats->nvcsw += tsk->nvcsw;
 		stats->nivcsw += tsk->nivcsw;
-	} while_each_thread(first, tsk);
+	पूर्ण जबतक_each_thपढ़ो(first, tsk);
 
 	unlock_task_sighand(first, &flags);
 	rc = 0;
 out:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	stats->version = TASKSTATS_VERSION;
 	/*
-	 * Accounting subsystems can also add calls here to modify
+	 * Accounting subप्रणालीs can also add calls here to modअगरy
 	 * fields of taskstats.
 	 */
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void fill_tgid_exit(struct task_struct *tsk)
-{
-	unsigned long flags;
+अटल व्योम fill_tgid_निकास(काष्ठा task_काष्ठा *tsk)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&tsk->sighand->siglock, flags);
-	if (!tsk->signal->stats)
-		goto ret;
+	अगर (!tsk->संकेत->stats)
+		जाओ ret;
 
 	/*
-	 * Each accounting subsystem calls its functions here to
-	 * accumalate its per-task stats for tsk, into the per-tgid structure
+	 * Each accounting subप्रणाली calls its functions here to
+	 * accumalate its per-task stats क्रम tsk, पूर्णांकo the per-tgid काष्ठाure
 	 *
-	 *	per-task-foo(tsk->signal->stats, tsk);
+	 *	per-task-foo(tsk->संकेत->stats, tsk);
 	 */
-	delayacct_add_tsk(tsk->signal->stats, tsk);
+	delayacct_add_tsk(tsk->संकेत->stats, tsk);
 ret:
 	spin_unlock_irqrestore(&tsk->sighand->siglock, flags);
-	return;
-}
+	वापस;
+पूर्ण
 
-static int add_del_listener(pid_t pid, const struct cpumask *mask, int isadd)
-{
-	struct listener_list *listeners;
-	struct listener *s, *tmp, *s2;
-	unsigned int cpu;
-	int ret = 0;
+अटल पूर्णांक add_del_listener(pid_t pid, स्थिर काष्ठा cpumask *mask, पूर्णांक isadd)
+अणु
+	काष्ठा listener_list *listeners;
+	काष्ठा listener *s, *पंचांगp, *s2;
+	अचिन्हित पूर्णांक cpu;
+	पूर्णांक ret = 0;
 
-	if (!cpumask_subset(mask, cpu_possible_mask))
-		return -EINVAL;
+	अगर (!cpumask_subset(mask, cpu_possible_mask))
+		वापस -EINVAL;
 
-	if (current_user_ns() != &init_user_ns)
-		return -EINVAL;
+	अगर (current_user_ns() != &init_user_ns)
+		वापस -EINVAL;
 
-	if (task_active_pid_ns(current) != &init_pid_ns)
-		return -EINVAL;
+	अगर (task_active_pid_ns(current) != &init_pid_ns)
+		वापस -EINVAL;
 
-	if (isadd == REGISTER) {
-		for_each_cpu(cpu, mask) {
-			s = kmalloc_node(sizeof(struct listener),
+	अगर (isadd == REGISTER) अणु
+		क्रम_each_cpu(cpu, mask) अणु
+			s = kदो_स्मृति_node(माप(काष्ठा listener),
 					GFP_KERNEL, cpu_to_node(cpu));
-			if (!s) {
+			अगर (!s) अणु
 				ret = -ENOMEM;
-				goto cleanup;
-			}
+				जाओ cleanup;
+			पूर्ण
 			s->pid = pid;
 			s->valid = 1;
 
 			listeners = &per_cpu(listener_array, cpu);
-			down_write(&listeners->sem);
-			list_for_each_entry(s2, &listeners->list, list) {
-				if (s2->pid == pid && s2->valid)
-					goto exists;
-			}
+			करोwn_ग_लिखो(&listeners->sem);
+			list_क्रम_each_entry(s2, &listeners->list, list) अणु
+				अगर (s2->pid == pid && s2->valid)
+					जाओ exists;
+			पूर्ण
 			list_add(&s->list, &listeners->list);
-			s = NULL;
+			s = शून्य;
 exists:
-			up_write(&listeners->sem);
-			kfree(s); /* nop if NULL */
-		}
-		return 0;
-	}
+			up_ग_लिखो(&listeners->sem);
+			kमुक्त(s); /* nop अगर शून्य */
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	/* Deregister or cleanup */
+	/* Deरेजिस्टर or cleanup */
 cleanup:
-	for_each_cpu(cpu, mask) {
+	क्रम_each_cpu(cpu, mask) अणु
 		listeners = &per_cpu(listener_array, cpu);
-		down_write(&listeners->sem);
-		list_for_each_entry_safe(s, tmp, &listeners->list, list) {
-			if (s->pid == pid) {
+		करोwn_ग_लिखो(&listeners->sem);
+		list_क्रम_each_entry_safe(s, पंचांगp, &listeners->list, list) अणु
+			अगर (s->pid == pid) अणु
 				list_del(&s->list);
-				kfree(s);
-				break;
-			}
-		}
-		up_write(&listeners->sem);
-	}
-	return ret;
-}
+				kमुक्त(s);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		up_ग_लिखो(&listeners->sem);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int parse(struct nlattr *na, struct cpumask *mask)
-{
-	char *data;
-	int len;
-	int ret;
+अटल पूर्णांक parse(काष्ठा nlattr *na, काष्ठा cpumask *mask)
+अणु
+	अक्षर *data;
+	पूर्णांक len;
+	पूर्णांक ret;
 
-	if (na == NULL)
-		return 1;
+	अगर (na == शून्य)
+		वापस 1;
 	len = nla_len(na);
-	if (len > TASKSTATS_CPUMASK_MAXLEN)
-		return -E2BIG;
-	if (len < 1)
-		return -EINVAL;
-	data = kmalloc(len, GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (len > TASKSTATS_CPUMASK_MAXLEN)
+		वापस -E2BIG;
+	अगर (len < 1)
+		वापस -EINVAL;
+	data = kदो_स्मृति(len, GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 	nla_strscpy(data, na, len);
 	ret = cpulist_parse(data, mask);
-	kfree(data);
-	return ret;
-}
+	kमुक्त(data);
+	वापस ret;
+पूर्ण
 
-static struct taskstats *mk_reply(struct sk_buff *skb, int type, u32 pid)
-{
-	struct nlattr *na, *ret;
-	int aggr;
+अटल काष्ठा taskstats *mk_reply(काष्ठा sk_buff *skb, पूर्णांक type, u32 pid)
+अणु
+	काष्ठा nlattr *na, *ret;
+	पूर्णांक aggr;
 
 	aggr = (type == TASKSTATS_TYPE_PID)
 			? TASKSTATS_TYPE_AGGR_PID
 			: TASKSTATS_TYPE_AGGR_TGID;
 
 	na = nla_nest_start_noflag(skb, aggr);
-	if (!na)
-		goto err;
+	अगर (!na)
+		जाओ err;
 
-	if (nla_put(skb, type, sizeof(pid), &pid) < 0) {
+	अगर (nla_put(skb, type, माप(pid), &pid) < 0) अणु
 		nla_nest_cancel(skb, na);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	ret = nla_reserve_64bit(skb, TASKSTATS_TYPE_STATS,
-				sizeof(struct taskstats), TASKSTATS_TYPE_NULL);
-	if (!ret) {
+				माप(काष्ठा taskstats), TASKSTATS_TYPE_शून्य);
+	अगर (!ret) अणु
 		nla_nest_cancel(skb, na);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	nla_nest_end(skb, na);
 
-	return nla_data(ret);
+	वापस nla_data(ret);
 err:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int cgroupstats_user_cmd(struct sk_buff *skb, struct genl_info *info)
-{
-	int rc = 0;
-	struct sk_buff *rep_skb;
-	struct cgroupstats *stats;
-	struct nlattr *na;
-	size_t size;
+अटल पूर्णांक cgroupstats_user_cmd(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा sk_buff *rep_skb;
+	काष्ठा cgroupstats *stats;
+	काष्ठा nlattr *na;
+	माप_प्रकार size;
 	u32 fd;
-	struct fd f;
+	काष्ठा fd f;
 
 	na = info->attrs[CGROUPSTATS_CMD_ATTR_FD];
-	if (!na)
-		return -EINVAL;
+	अगर (!na)
+		वापस -EINVAL;
 
 	fd = nla_get_u32(info->attrs[CGROUPSTATS_CMD_ATTR_FD]);
 	f = fdget(fd);
-	if (!f.file)
-		return 0;
+	अगर (!f.file)
+		वापस 0;
 
-	size = nla_total_size(sizeof(struct cgroupstats));
+	size = nla_total_size(माप(काष्ठा cgroupstats));
 
 	rc = prepare_reply(info, CGROUPSTATS_CMD_NEW, &rep_skb,
 				size);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	na = nla_reserve(rep_skb, CGROUPSTATS_TYPE_CGROUP_STATS,
-				sizeof(struct cgroupstats));
-	if (na == NULL) {
-		nlmsg_free(rep_skb);
+				माप(काष्ठा cgroupstats));
+	अगर (na == शून्य) अणु
+		nlmsg_मुक्त(rep_skb);
 		rc = -EMSGSIZE;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	stats = nla_data(na);
-	memset(stats, 0, sizeof(*stats));
+	स_रखो(stats, 0, माप(*stats));
 
 	rc = cgroupstats_build(stats, f.file->f_path.dentry);
-	if (rc < 0) {
-		nlmsg_free(rep_skb);
-		goto err;
-	}
+	अगर (rc < 0) अणु
+		nlmsg_मुक्त(rep_skb);
+		जाओ err;
+	पूर्ण
 
 	rc = send_reply(rep_skb, info);
 
 err:
 	fdput(f);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cmd_attr_register_cpumask(struct genl_info *info)
-{
+अटल पूर्णांक cmd_attr_रेजिस्टर_cpumask(काष्ठा genl_info *info)
+अणु
 	cpumask_var_t mask;
-	int rc;
+	पूर्णांक rc;
 
-	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!alloc_cpumask_var(&mask, GFP_KERNEL))
+		वापस -ENOMEM;
 	rc = parse(info->attrs[TASKSTATS_CMD_ATTR_REGISTER_CPUMASK], mask);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 	rc = add_del_listener(info->snd_portid, mask, REGISTER);
 out:
-	free_cpumask_var(mask);
-	return rc;
-}
+	मुक्त_cpumask_var(mask);
+	वापस rc;
+पूर्ण
 
-static int cmd_attr_deregister_cpumask(struct genl_info *info)
-{
+अटल पूर्णांक cmd_attr_deरेजिस्टर_cpumask(काष्ठा genl_info *info)
+अणु
 	cpumask_var_t mask;
-	int rc;
+	पूर्णांक rc;
 
-	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!alloc_cpumask_var(&mask, GFP_KERNEL))
+		वापस -ENOMEM;
 	rc = parse(info->attrs[TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK], mask);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 	rc = add_del_listener(info->snd_portid, mask, DEREGISTER);
 out:
-	free_cpumask_var(mask);
-	return rc;
-}
+	मुक्त_cpumask_var(mask);
+	वापस rc;
+पूर्ण
 
-static size_t taskstats_packet_size(void)
-{
-	size_t size;
+अटल माप_प्रकार taskstats_packet_size(व्योम)
+अणु
+	माप_प्रकार size;
 
-	size = nla_total_size(sizeof(u32)) +
-		nla_total_size_64bit(sizeof(struct taskstats)) +
+	size = nla_total_size(माप(u32)) +
+		nla_total_size_64bit(माप(काष्ठा taskstats)) +
 		nla_total_size(0);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int cmd_attr_pid(struct genl_info *info)
-{
-	struct taskstats *stats;
-	struct sk_buff *rep_skb;
-	size_t size;
+अटल पूर्णांक cmd_attr_pid(काष्ठा genl_info *info)
+अणु
+	काष्ठा taskstats *stats;
+	काष्ठा sk_buff *rep_skb;
+	माप_प्रकार size;
 	u32 pid;
-	int rc;
+	पूर्णांक rc;
 
 	size = taskstats_packet_size();
 
 	rc = prepare_reply(info, TASKSTATS_CMD_NEW, &rep_skb, size);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = -EINVAL;
 	pid = nla_get_u32(info->attrs[TASKSTATS_CMD_ATTR_PID]);
 	stats = mk_reply(rep_skb, TASKSTATS_TYPE_PID, pid);
-	if (!stats)
-		goto err;
+	अगर (!stats)
+		जाओ err;
 
-	rc = fill_stats_for_pid(pid, stats);
-	if (rc < 0)
-		goto err;
-	return send_reply(rep_skb, info);
+	rc = fill_stats_क्रम_pid(pid, stats);
+	अगर (rc < 0)
+		जाओ err;
+	वापस send_reply(rep_skb, info);
 err:
-	nlmsg_free(rep_skb);
-	return rc;
-}
+	nlmsg_मुक्त(rep_skb);
+	वापस rc;
+पूर्ण
 
-static int cmd_attr_tgid(struct genl_info *info)
-{
-	struct taskstats *stats;
-	struct sk_buff *rep_skb;
-	size_t size;
+अटल पूर्णांक cmd_attr_tgid(काष्ठा genl_info *info)
+अणु
+	काष्ठा taskstats *stats;
+	काष्ठा sk_buff *rep_skb;
+	माप_प्रकार size;
 	u32 tgid;
-	int rc;
+	पूर्णांक rc;
 
 	size = taskstats_packet_size();
 
 	rc = prepare_reply(info, TASKSTATS_CMD_NEW, &rep_skb, size);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = -EINVAL;
 	tgid = nla_get_u32(info->attrs[TASKSTATS_CMD_ATTR_TGID]);
 	stats = mk_reply(rep_skb, TASKSTATS_TYPE_TGID, tgid);
-	if (!stats)
-		goto err;
+	अगर (!stats)
+		जाओ err;
 
-	rc = fill_stats_for_tgid(tgid, stats);
-	if (rc < 0)
-		goto err;
-	return send_reply(rep_skb, info);
+	rc = fill_stats_क्रम_tgid(tgid, stats);
+	अगर (rc < 0)
+		जाओ err;
+	वापस send_reply(rep_skb, info);
 err:
-	nlmsg_free(rep_skb);
-	return rc;
-}
+	nlmsg_मुक्त(rep_skb);
+	वापस rc;
+पूर्ण
 
-static int taskstats_user_cmd(struct sk_buff *skb, struct genl_info *info)
-{
-	if (info->attrs[TASKSTATS_CMD_ATTR_REGISTER_CPUMASK])
-		return cmd_attr_register_cpumask(info);
-	else if (info->attrs[TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK])
-		return cmd_attr_deregister_cpumask(info);
-	else if (info->attrs[TASKSTATS_CMD_ATTR_PID])
-		return cmd_attr_pid(info);
-	else if (info->attrs[TASKSTATS_CMD_ATTR_TGID])
-		return cmd_attr_tgid(info);
-	else
-		return -EINVAL;
-}
+अटल पूर्णांक taskstats_user_cmd(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	अगर (info->attrs[TASKSTATS_CMD_ATTR_REGISTER_CPUMASK])
+		वापस cmd_attr_रेजिस्टर_cpumask(info);
+	अन्यथा अगर (info->attrs[TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK])
+		वापस cmd_attr_deरेजिस्टर_cpumask(info);
+	अन्यथा अगर (info->attrs[TASKSTATS_CMD_ATTR_PID])
+		वापस cmd_attr_pid(info);
+	अन्यथा अगर (info->attrs[TASKSTATS_CMD_ATTR_TGID])
+		वापस cmd_attr_tgid(info);
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static struct taskstats *taskstats_tgid_alloc(struct task_struct *tsk)
-{
-	struct signal_struct *sig = tsk->signal;
-	struct taskstats *stats_new, *stats;
+अटल काष्ठा taskstats *taskstats_tgid_alloc(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा संकेत_काष्ठा *sig = tsk->संकेत;
+	काष्ठा taskstats *stats_new, *stats;
 
 	/* Pairs with smp_store_release() below. */
 	stats = smp_load_acquire(&sig->stats);
-	if (stats || thread_group_empty(tsk))
-		return stats;
+	अगर (stats || thपढ़ो_group_empty(tsk))
+		वापस stats;
 
-	/* No problem if kmem_cache_zalloc() fails */
+	/* No problem अगर kmem_cache_zalloc() fails */
 	stats_new = kmem_cache_zalloc(taskstats_cache, GFP_KERNEL);
 
 	spin_lock_irq(&tsk->sighand->siglock);
 	stats = sig->stats;
-	if (!stats) {
+	अगर (!stats) अणु
 		/*
 		 * Pairs with smp_store_release() above and order the
 		 * kmem_cache_zalloc().
 		 */
 		smp_store_release(&sig->stats, stats_new);
 		stats = stats_new;
-		stats_new = NULL;
-	}
+		stats_new = शून्य;
+	पूर्ण
 	spin_unlock_irq(&tsk->sighand->siglock);
 
-	if (stats_new)
-		kmem_cache_free(taskstats_cache, stats_new);
+	अगर (stats_new)
+		kmem_cache_मुक्त(taskstats_cache, stats_new);
 
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-/* Send pid data out on exit */
-void taskstats_exit(struct task_struct *tsk, int group_dead)
-{
-	int rc;
-	struct listener_list *listeners;
-	struct taskstats *stats;
-	struct sk_buff *rep_skb;
-	size_t size;
-	int is_thread_group;
+/* Send pid data out on निकास */
+व्योम taskstats_निकास(काष्ठा task_काष्ठा *tsk, पूर्णांक group_dead)
+अणु
+	पूर्णांक rc;
+	काष्ठा listener_list *listeners;
+	काष्ठा taskstats *stats;
+	काष्ठा sk_buff *rep_skb;
+	माप_प्रकार size;
+	पूर्णांक is_thपढ़ो_group;
 
-	if (!family_registered)
-		return;
+	अगर (!family_रेजिस्टरed)
+		वापस;
 
 	/*
-	 * Size includes space for nested attributes
+	 * Size includes space क्रम nested attributes
 	 */
 	size = taskstats_packet_size();
 
-	is_thread_group = !!taskstats_tgid_alloc(tsk);
-	if (is_thread_group) {
+	is_thपढ़ो_group = !!taskstats_tgid_alloc(tsk);
+	अगर (is_thपढ़ो_group) अणु
 		/* PID + STATS + TGID + STATS */
 		size = 2 * size;
-		/* fill the tsk->signal->stats structure */
-		fill_tgid_exit(tsk);
-	}
+		/* fill the tsk->संकेत->stats काष्ठाure */
+		fill_tgid_निकास(tsk);
+	पूर्ण
 
 	listeners = raw_cpu_ptr(&listener_array);
-	if (list_empty(&listeners->list))
-		return;
+	अगर (list_empty(&listeners->list))
+		वापस;
 
-	rc = prepare_reply(NULL, TASKSTATS_CMD_NEW, &rep_skb, size);
-	if (rc < 0)
-		return;
+	rc = prepare_reply(शून्य, TASKSTATS_CMD_NEW, &rep_skb, size);
+	अगर (rc < 0)
+		वापस;
 
 	stats = mk_reply(rep_skb, TASKSTATS_TYPE_PID,
 			 task_pid_nr_ns(tsk, &init_pid_ns));
-	if (!stats)
-		goto err;
+	अगर (!stats)
+		जाओ err;
 
 	fill_stats(&init_user_ns, &init_pid_ns, tsk, stats);
 
 	/*
-	 * Doesn't matter if tsk is the leader or the last group member leaving
+	 * Doesn't matter अगर tsk is the leader or the last group member leaving
 	 */
-	if (!is_thread_group || !group_dead)
-		goto send;
+	अगर (!is_thपढ़ो_group || !group_dead)
+		जाओ send;
 
 	stats = mk_reply(rep_skb, TASKSTATS_TYPE_TGID,
 			 task_tgid_nr_ns(tsk, &init_pid_ns));
-	if (!stats)
-		goto err;
+	अगर (!stats)
+		जाओ err;
 
-	memcpy(stats, tsk->signal->stats, sizeof(*stats));
+	स_नकल(stats, tsk->संकेत->stats, माप(*stats));
 
 send:
 	send_cpu_listeners(rep_skb, listeners);
-	return;
+	वापस;
 err:
-	nlmsg_free(rep_skb);
-}
+	nlmsg_मुक्त(rep_skb);
+पूर्ण
 
-static const struct genl_ops taskstats_ops[] = {
-	{
+अटल स्थिर काष्ठा genl_ops taskstats_ops[] = अणु
+	अणु
 		.cmd		= TASKSTATS_CMD_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit		= taskstats_user_cmd,
+		.करोit		= taskstats_user_cmd,
 		.policy		= taskstats_cmd_get_policy,
 		.maxattr	= ARRAY_SIZE(taskstats_cmd_get_policy) - 1,
 		.flags		= GENL_ADMIN_PERM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.cmd		= CGROUPSTATS_CMD_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit		= cgroupstats_user_cmd,
+		.करोit		= cgroupstats_user_cmd,
 		.policy		= cgroupstats_cmd_get_policy,
 		.maxattr	= ARRAY_SIZE(cgroupstats_cmd_get_policy) - 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct genl_family family __ro_after_init = {
+अटल काष्ठा genl_family family __ro_after_init = अणु
 	.name		= TASKSTATS_GENL_NAME,
 	.version	= TASKSTATS_GENL_VERSION,
 	.module		= THIS_MODULE,
 	.ops		= taskstats_ops,
 	.n_ops		= ARRAY_SIZE(taskstats_ops),
-};
+पूर्ण;
 
 /* Needed early in initialization */
-void __init taskstats_init_early(void)
-{
-	unsigned int i;
+व्योम __init taskstats_init_early(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	taskstats_cache = KMEM_CACHE(taskstats, SLAB_PANIC);
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		INIT_LIST_HEAD(&(per_cpu(listener_array, i).list));
 		init_rwsem(&(per_cpu(listener_array, i).sem));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init taskstats_init(void)
-{
-	int rc;
+अटल पूर्णांक __init taskstats_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = genl_register_family(&family);
-	if (rc)
-		return rc;
+	rc = genl_रेजिस्टर_family(&family);
+	अगर (rc)
+		वापस rc;
 
-	family_registered = 1;
+	family_रेजिस्टरed = 1;
 	pr_info("registered taskstats version %d\n", TASKSTATS_GENL_VERSION);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * late initcall ensures initialization of statistics collection
- * mechanisms precedes initialization of the taskstats interface
+ * mechanisms precedes initialization of the taskstats पूर्णांकerface
  */
 late_initcall(taskstats_init);

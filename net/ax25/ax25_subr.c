@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Alan Cox GW4PTS (alan@lxorguk.ukuu.org.uk)
@@ -6,195 +7,195 @@
  * Copyright (C) Joerg Reuter DL1BKE (jreuter@yaina.de)
  * Copyright (C) Frederic Rible F1OAT (frible@teaser.fr)
  */
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/slab.h>
-#include <net/ax25.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/slab.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
 /*
  *	This routine purges all the queues of frames.
  */
-void ax25_clear_queues(ax25_cb *ax25)
-{
-	skb_queue_purge(&ax25->write_queue);
+व्योम ax25_clear_queues(ax25_cb *ax25)
+अणु
+	skb_queue_purge(&ax25->ग_लिखो_queue);
 	skb_queue_purge(&ax25->ack_queue);
 	skb_queue_purge(&ax25->reseq_queue);
 	skb_queue_purge(&ax25->frag_queue);
-}
+पूर्ण
 
 /*
  * This routine purges the input queue of those frames that have been
  * acknowledged. This replaces the boxes labelled "V(a) <- N(r)" on the
  * SDL diagram.
  */
-void ax25_frames_acked(ax25_cb *ax25, unsigned short nr)
-{
-	struct sk_buff *skb;
+व्योम ax25_frames_acked(ax25_cb *ax25, अचिन्हित लघु nr)
+अणु
+	काष्ठा sk_buff *skb;
 
 	/*
 	 * Remove all the ack-ed frames from the ack queue.
 	 */
-	if (ax25->va != nr) {
-		while (skb_peek(&ax25->ack_queue) != NULL && ax25->va != nr) {
+	अगर (ax25->va != nr) अणु
+		जबतक (skb_peek(&ax25->ack_queue) != शून्य && ax25->va != nr) अणु
 			skb = skb_dequeue(&ax25->ack_queue);
-			kfree_skb(skb);
+			kमुक्त_skb(skb);
 			ax25->va = (ax25->va + 1) % ax25->modulus;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void ax25_requeue_frames(ax25_cb *ax25)
-{
-	struct sk_buff *skb;
+व्योम ax25_requeue_frames(ax25_cb *ax25)
+अणु
+	काष्ठा sk_buff *skb;
 
 	/*
 	 * Requeue all the un-ack-ed frames on the output queue to be picked
-	 * up by ax25_kick called from the timer. This arrangement handles the
+	 * up by ax25_kick called from the समयr. This arrangement handles the
 	 * possibility of an empty output queue.
 	 */
-	while ((skb = skb_dequeue_tail(&ax25->ack_queue)) != NULL)
-		skb_queue_head(&ax25->write_queue, skb);
-}
+	जबतक ((skb = skb_dequeue_tail(&ax25->ack_queue)) != शून्य)
+		skb_queue_head(&ax25->ग_लिखो_queue, skb);
+पूर्ण
 
 /*
  *	Validate that the value of nr is between va and vs. Return true or
- *	false for testing.
+ *	false क्रम testing.
  */
-int ax25_validate_nr(ax25_cb *ax25, unsigned short nr)
-{
-	unsigned short vc = ax25->va;
+पूर्णांक ax25_validate_nr(ax25_cb *ax25, अचिन्हित लघु nr)
+अणु
+	अचिन्हित लघु vc = ax25->va;
 
-	while (vc != ax25->vs) {
-		if (nr == vc) return 1;
+	जबतक (vc != ax25->vs) अणु
+		अगर (nr == vc) वापस 1;
 		vc = (vc + 1) % ax25->modulus;
-	}
+	पूर्ण
 
-	if (nr == ax25->vs) return 1;
+	अगर (nr == ax25->vs) वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	This routine is the centralised routine for parsing the control
- *	information for the different frame formats.
+ *	This routine is the centralised routine क्रम parsing the control
+ *	inक्रमmation क्रम the dअगरferent frame क्रमmats.
  */
-int ax25_decode(ax25_cb *ax25, struct sk_buff *skb, int *ns, int *nr, int *pf)
-{
-	unsigned char *frame;
-	int frametype = AX25_ILLEGAL;
+पूर्णांक ax25_decode(ax25_cb *ax25, काष्ठा sk_buff *skb, पूर्णांक *ns, पूर्णांक *nr, पूर्णांक *pf)
+अणु
+	अचिन्हित अक्षर *frame;
+	पूर्णांक frametype = AX25_ILLEGAL;
 
 	frame = skb->data;
 	*ns = *nr = *pf = 0;
 
-	if (ax25->modulus == AX25_MODULUS) {
-		if ((frame[0] & AX25_S) == 0) {
+	अगर (ax25->modulus == AX25_MODULUS) अणु
+		अगर ((frame[0] & AX25_S) == 0) अणु
 			frametype = AX25_I;			/* I frame - carries NR/NS/PF */
 			*ns = (frame[0] >> 1) & 0x07;
 			*nr = (frame[0] >> 5) & 0x07;
 			*pf = frame[0] & AX25_PF;
-		} else if ((frame[0] & AX25_U) == 1) { 	/* S frame - take out PF/NR */
+		पूर्ण अन्यथा अगर ((frame[0] & AX25_U) == 1) अणु 	/* S frame - take out PF/NR */
 			frametype = frame[0] & 0x0F;
 			*nr = (frame[0] >> 5) & 0x07;
 			*pf = frame[0] & AX25_PF;
-		} else if ((frame[0] & AX25_U) == 3) { 	/* U frame - take out PF */
+		पूर्ण अन्यथा अगर ((frame[0] & AX25_U) == 3) अणु 	/* U frame - take out PF */
 			frametype = frame[0] & ~AX25_PF;
 			*pf = frame[0] & AX25_PF;
-		}
+		पूर्ण
 		skb_pull(skb, 1);
-	} else {
-		if ((frame[0] & AX25_S) == 0) {
+	पूर्ण अन्यथा अणु
+		अगर ((frame[0] & AX25_S) == 0) अणु
 			frametype = AX25_I;			/* I frame - carries NR/NS/PF */
 			*ns = (frame[0] >> 1) & 0x7F;
 			*nr = (frame[1] >> 1) & 0x7F;
 			*pf = frame[1] & AX25_EPF;
 			skb_pull(skb, 2);
-		} else if ((frame[0] & AX25_U) == 1) { 	/* S frame - take out PF/NR */
+		पूर्ण अन्यथा अगर ((frame[0] & AX25_U) == 1) अणु 	/* S frame - take out PF/NR */
 			frametype = frame[0] & 0x0F;
 			*nr = (frame[1] >> 1) & 0x7F;
 			*pf = frame[1] & AX25_EPF;
 			skb_pull(skb, 2);
-		} else if ((frame[0] & AX25_U) == 3) { 	/* U frame - take out PF */
+		पूर्ण अन्यथा अगर ((frame[0] & AX25_U) == 3) अणु 	/* U frame - take out PF */
 			frametype = frame[0] & ~AX25_PF;
 			*pf = frame[0] & AX25_PF;
 			skb_pull(skb, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return frametype;
-}
+	वापस frametype;
+पूर्ण
 
 /*
- *	This routine is called when the HDLC layer internally  generates a
- *	command or  response  for  the remote machine ( eg. RR, UA etc. ).
+ *	This routine is called when the HDLC layer पूर्णांकernally  generates a
+ *	command or  response  क्रम  the remote machine ( eg. RR, UA etc. ).
  *	Only supervisory or unnumbered frames are processed.
  */
-void ax25_send_control(ax25_cb *ax25, int frametype, int poll_bit, int type)
-{
-	struct sk_buff *skb;
-	unsigned char  *dptr;
+व्योम ax25_send_control(ax25_cb *ax25, पूर्णांक frametype, पूर्णांक poll_bit, पूर्णांक type)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर  *dptr;
 
-	if ((skb = alloc_skb(ax25->ax25_dev->dev->hard_header_len + 2, GFP_ATOMIC)) == NULL)
-		return;
+	अगर ((skb = alloc_skb(ax25->ax25_dev->dev->hard_header_len + 2, GFP_ATOMIC)) == शून्य)
+		वापस;
 
 	skb_reserve(skb, ax25->ax25_dev->dev->hard_header_len);
 
 	skb_reset_network_header(skb);
 
-	/* Assume a response - address structure for DTE */
-	if (ax25->modulus == AX25_MODULUS) {
+	/* Assume a response - address काष्ठाure क्रम DTE */
+	अगर (ax25->modulus == AX25_MODULUS) अणु
 		dptr = skb_put(skb, 1);
 		*dptr = frametype;
 		*dptr |= (poll_bit) ? AX25_PF : 0;
-		if ((frametype & AX25_U) == AX25_S)		/* S frames carry NR */
+		अगर ((frametype & AX25_U) == AX25_S)		/* S frames carry NR */
 			*dptr |= (ax25->vr << 5);
-	} else {
-		if ((frametype & AX25_U) == AX25_U) {
+	पूर्ण अन्यथा अणु
+		अगर ((frametype & AX25_U) == AX25_U) अणु
 			dptr = skb_put(skb, 1);
 			*dptr = frametype;
 			*dptr |= (poll_bit) ? AX25_PF : 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			dptr = skb_put(skb, 2);
 			dptr[0] = frametype;
 			dptr[1] = (ax25->vr << 1);
 			dptr[1] |= (poll_bit) ? AX25_EPF : 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ax25_transmit_buffer(ax25, skb, type);
-}
+पूर्ण
 
 /*
  *	Send a 'DM' to an unknown connection attempt, or an invalid caller.
  *
  *	Note: src here is the sender, thus it's the target of the DM
  */
-void ax25_return_dm(struct net_device *dev, ax25_address *src, ax25_address *dest, ax25_digi *digi)
-{
-	struct sk_buff *skb;
-	char *dptr;
+व्योम ax25_वापस_dm(काष्ठा net_device *dev, ax25_address *src, ax25_address *dest, ax25_digi *digi)
+अणु
+	काष्ठा sk_buff *skb;
+	अक्षर *dptr;
 	ax25_digi retdigi;
 
-	if (dev == NULL)
-		return;
+	अगर (dev == शून्य)
+		वापस;
 
-	if ((skb = alloc_skb(dev->hard_header_len + 1, GFP_ATOMIC)) == NULL)
-		return;	/* Next SABM will get DM'd */
+	अगर ((skb = alloc_skb(dev->hard_header_len + 1, GFP_ATOMIC)) == शून्य)
+		वापस;	/* Next SABM will get DM'd */
 
 	skb_reserve(skb, dev->hard_header_len);
 	skb_reset_network_header(skb);
@@ -212,77 +213,77 @@ void ax25_return_dm(struct net_device *dev, ax25_address *src, ax25_address *des
 	dptr += ax25_addr_build(dptr, dest, src, &retdigi, AX25_RESPONSE, AX25_MODULUS);
 
 	ax25_queue_xmit(skb, dev);
-}
+पूर्ण
 
 /*
- *	Exponential backoff for AX.25
+ *	Exponential backoff क्रम AX.25
  */
-void ax25_calculate_t1(ax25_cb *ax25)
-{
-	int n, t = 2;
+व्योम ax25_calculate_t1(ax25_cb *ax25)
+अणु
+	पूर्णांक n, t = 2;
 
-	switch (ax25->backoff) {
-	case 0:
-		break;
+	चयन (ax25->backoff) अणु
+	हाल 0:
+		अवरोध;
 
-	case 1:
+	हाल 1:
 		t += 2 * ax25->n2count;
-		break;
+		अवरोध;
 
-	case 2:
-		for (n = 0; n < ax25->n2count; n++)
+	हाल 2:
+		क्रम (n = 0; n < ax25->n2count; n++)
 			t *= 2;
-		if (t > 8) t = 8;
-		break;
-	}
+		अगर (t > 8) t = 8;
+		अवरोध;
+	पूर्ण
 
 	ax25->t1 = t * ax25->rtt;
-}
+पूर्ण
 
 /*
  *	Calculate the Round Trip Time
  */
-void ax25_calculate_rtt(ax25_cb *ax25)
-{
-	if (ax25->backoff == 0)
-		return;
+व्योम ax25_calculate_rtt(ax25_cb *ax25)
+अणु
+	अगर (ax25->backoff == 0)
+		वापस;
 
-	if (ax25_t1timer_running(ax25) && ax25->n2count == 0)
-		ax25->rtt = (9 * ax25->rtt + ax25->t1 - ax25_display_timer(&ax25->t1timer)) / 10;
+	अगर (ax25_t1समयr_running(ax25) && ax25->n2count == 0)
+		ax25->rtt = (9 * ax25->rtt + ax25->t1 - ax25_display_समयr(&ax25->t1समयr)) / 10;
 
-	if (ax25->rtt < AX25_T1CLAMPLO)
+	अगर (ax25->rtt < AX25_T1CLAMPLO)
 		ax25->rtt = AX25_T1CLAMPLO;
 
-	if (ax25->rtt > AX25_T1CLAMPHI)
+	अगर (ax25->rtt > AX25_T1CLAMPHI)
 		ax25->rtt = AX25_T1CLAMPHI;
-}
+पूर्ण
 
-void ax25_disconnect(ax25_cb *ax25, int reason)
-{
+व्योम ax25_disconnect(ax25_cb *ax25, पूर्णांक reason)
+अणु
 	ax25_clear_queues(ax25);
 
-	if (!ax25->sk || !sock_flag(ax25->sk, SOCK_DESTROY))
+	अगर (!ax25->sk || !sock_flag(ax25->sk, SOCK_DESTROY))
 		ax25_stop_heartbeat(ax25);
-	ax25_stop_t1timer(ax25);
-	ax25_stop_t2timer(ax25);
-	ax25_stop_t3timer(ax25);
-	ax25_stop_idletimer(ax25);
+	ax25_stop_t1समयr(ax25);
+	ax25_stop_t2समयr(ax25);
+	ax25_stop_t3समयr(ax25);
+	ax25_stop_idleसमयr(ax25);
 
 	ax25->state = AX25_STATE_0;
 
 	ax25_link_failed(ax25, reason);
 
-	if (ax25->sk != NULL) {
+	अगर (ax25->sk != शून्य) अणु
 		local_bh_disable();
 		bh_lock_sock(ax25->sk);
 		ax25->sk->sk_state     = TCP_CLOSE;
 		ax25->sk->sk_err       = reason;
-		ax25->sk->sk_shutdown |= SEND_SHUTDOWN;
-		if (!sock_flag(ax25->sk, SOCK_DEAD)) {
+		ax25->sk->sk_shutकरोwn |= SEND_SHUTDOWN;
+		अगर (!sock_flag(ax25->sk, SOCK_DEAD)) अणु
 			ax25->sk->sk_state_change(ax25->sk);
 			sock_set_flag(ax25->sk, SOCK_DEAD);
-		}
+		पूर्ण
 		bh_unlock_sock(ax25->sk);
 		local_bh_enable();
-	}
-}
+	पूर्ण
+पूर्ण

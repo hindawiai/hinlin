@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  linux/drivers/message/fusion/mptlan.h
  *      IP Over Fibre Channel device driver.
@@ -10,29 +11,29 @@
  */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
-    This program is free software; you can redistribute it and/or modify
+    This program is मुक्त software; you can redistribute it and/or modअगरy
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; version 2 of the License.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU General Public License क्रम more details.
 
     NO WARRANTY
     THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
     CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
     LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
     MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
-    solely responsible for determining the appropriateness of using and
+    solely responsible क्रम determining the appropriateness of using and
     distributing the Program and assumes all risks associated with its
     exercise of rights under this Agreement, including but not limited to
     the risks and costs of program errors, damage to or loss of data,
-    programs or equipment, and unavailability or interruption of operations.
+    programs or equipment, and unavailability or पूर्णांकerruption of operations.
 
     DISCLAIMER OF LIABILITY
     NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
-    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
     DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
     TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -40,91 +41,91 @@
     HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
 
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
+    aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
 /* mptlan.h */
 
-#ifndef LINUX_MPTLAN_H_INCLUDED
-#define LINUX_MPTLAN_H_INCLUDED
+#अगर_अघोषित LINUX_MPTLAN_H_INCLUDED
+#घोषणा LINUX_MPTLAN_H_INCLUDED
 /*****************************************************************************/
 
-#if !defined(__GENKSYMS__)
-#include <linux/module.h>
-#endif
+#अगर !defined(__GENKSYMS__)
+#समावेश <linux/module.h>
+#पूर्ण_अगर
 
-#include <linux/netdevice.h>
-#include <linux/errno.h>
-// #include <linux/etherdevice.h>
-#include <linux/fcdevice.h>
-// #include <linux/fddidevice.h>
-#include <linux/skbuff.h>
-#include <linux/if_arp.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
-#include <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/त्रुटिसं.स>
+// #समावेश <linux/etherdevice.h>
+#समावेश <linux/fcdevice.h>
+// #समावेश <linux/fddidevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/delay.h>
 
-#include <linux/uaccess.h>
-#include <asm/io.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
 
     /* Override mptbase.h by pre-defining these! */
-#define MODULEAUTHOR	"LSI Corporation"
+#घोषणा MODULEAUTHOR	"LSI Corporation"
 
-#include "mptbase.h"
+#समावेश "mptbase.h"
 
 /*****************************************************************************/
-#define LANAME		"Fusion MPT LAN driver"
-#define LANVER		MPT_LINUX_VERSION_COMMON
+#घोषणा LANAME		"Fusion MPT LAN driver"
+#घोषणा LANVER		MPT_LINUX_VERSION_COMMON
 
-#ifdef MODULE
+#अगर_घोषित MODULE
 MODULE_AUTHOR(MODULEAUTHOR);
 MODULE_DESCRIPTION(LANAME);
-#endif
+#पूर्ण_अगर
 /*****************************************************************************/
 
-#define MPT_LAN_MAX_BUCKETS_OUT 256
-#define MPT_LAN_BUCKET_THRESH	18 /* 9 buckets in one message */
-#define MPT_LAN_BUCKETS_REMAIN_MISMATCH_THRESH 10
-#define MPT_LAN_RX_COPYBREAK	200
-#define MPT_LAN_TX_TIMEOUT	(1*HZ)
-#define MPT_TX_MAX_OUT_LIM      127
+#घोषणा MPT_LAN_MAX_BUCKETS_OUT 256
+#घोषणा MPT_LAN_BUCKET_THRESH	18 /* 9 buckets in one message */
+#घोषणा MPT_LAN_BUCKETS_REMAIN_MISMATCH_THRESH 10
+#घोषणा MPT_LAN_RX_COPYBREAK	200
+#घोषणा MPT_LAN_TX_TIMEOUT	(1*HZ)
+#घोषणा MPT_TX_MAX_OUT_LIM      127
 
-#define MPT_LAN_MIN_MTU		96		/* RFC2625 */
-#define MPT_LAN_MAX_MTU		65280		/* RFC2625 */
-#define MPT_LAN_MTU             13312		/* Max perf range + lower mem
+#घोषणा MPT_LAN_MIN_MTU		96		/* RFC2625 */
+#घोषणा MPT_LAN_MAX_MTU		65280		/* RFC2625 */
+#घोषणा MPT_LAN_MTU             13312		/* Max perf range + lower mem
 						   usage than 16128 */
 
-#define MPT_LAN_NAA_RFC2625     0x1
-#define MPT_LAN_NAA_QLOGIC      0x2
+#घोषणा MPT_LAN_NAA_RFC2625     0x1
+#घोषणा MPT_LAN_NAA_QLOGIC      0x2
 
 /* MPT LAN Reset and Suspend Resource Flags Defines */
 
-#define MPT_LAN_RESOURCE_FLAG_RETURN_POSTED_BUCKETS    0x01
-#define MPT_LAN_RESOURCE_FLAG_RETURN_PEND_TRANSMITS    0x02
+#घोषणा MPT_LAN_RESOURCE_FLAG_RETURN_POSTED_BUCKETS    0x01
+#घोषणा MPT_LAN_RESOURCE_FLAG_RETURN_PEND_TRANSMITS    0x02
 
 /*****************************************************************************/
-#ifdef MPT_LAN_IO_DEBUG
-#define dioprintk(x)  printk x
-#else
-#define dioprintk(x)  no_printk x
-#endif
+#अगर_घोषित MPT_LAN_IO_DEBUG
+#घोषणा dioprपूर्णांकk(x)  prपूर्णांकk x
+#अन्यथा
+#घोषणा dioprपूर्णांकk(x)  no_prपूर्णांकk x
+#पूर्ण_अगर
 
-#ifdef MPT_LAN_DEBUG
-#define dlprintk(x)  printk x
-#else
-#define dlprintk(x)  no_printk x
-#endif
+#अगर_घोषित MPT_LAN_DEBUG
+#घोषणा dlprपूर्णांकk(x)  prपूर्णांकk x
+#अन्यथा
+#घोषणा dlprपूर्णांकk(x)  no_prपूर्णांकk x
+#पूर्ण_अगर
 
-#define NETDEV_TO_LANPRIV_PTR(d)	((struct mpt_lan_priv *)netdev_priv(d))
-#define NETDEV_PTR_TO_IOC_NAME_s(d)	(NETDEV_TO_LANPRIV_PTR(d)->mpt_dev->name)
-#define IOC_AND_NETDEV_NAMES_s_s(d)	NETDEV_PTR_TO_IOC_NAME_s(d), (d)->name
+#घोषणा NETDEV_TO_LANPRIV_PTR(d)	((काष्ठा mpt_lan_priv *)netdev_priv(d))
+#घोषणा NETDEV_PTR_TO_IOC_NAME_s(d)	(NETDEV_TO_LANPRIV_PTR(d)->mpt_dev->name)
+#घोषणा IOC_AND_NETDEV_NAMES_s_s(d)	NETDEV_PTR_TO_IOC_NAME_s(d), (d)->name
 
 /*****************************************************************************/
-#endif
+#पूर्ण_अगर
 

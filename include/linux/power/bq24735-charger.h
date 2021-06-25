@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  */
 
-#ifndef __CHARGER_BQ24735_H_
-#define __CHARGER_BQ24735_H_
+#अगर_अघोषित __CHARGER_BQ24735_H_
+#घोषणा __CHARGER_BQ24735_H_
 
-#include <linux/types.h>
-#include <linux/power_supply.h>
+#समावेश <linux/types.h>
+#समावेश <linux/घातer_supply.h>
 
-struct bq24735_platform {
-	uint32_t charge_current;
-	uint32_t charge_voltage;
-	uint32_t input_current;
+काष्ठा bq24735_platक्रमm अणु
+	uपूर्णांक32_t अक्षरge_current;
+	uपूर्णांक32_t अक्षरge_voltage;
+	uपूर्णांक32_t input_current;
 
-	const char *name;
+	स्थिर अक्षर *name;
 
 	bool ext_control;
 
-	char **supplied_to;
-	size_t num_supplicants;
-};
+	अक्षर **supplied_to;
+	माप_प्रकार num_supplicants;
+पूर्ण;
 
-#endif /* __CHARGER_BQ24735_H_ */
+#पूर्ण_अगर /* __CHARGER_BQ24735_H_ */

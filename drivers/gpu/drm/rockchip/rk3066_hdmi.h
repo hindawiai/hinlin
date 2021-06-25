@@ -1,118 +1,119 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
  *    Zheng Yang <zhengyang@rock-chips.com>
  */
 
-#ifndef __RK3066_HDMI_H__
-#define __RK3066_HDMI_H__
+#अगर_अघोषित __RK3066_HDMI_H__
+#घोषणा __RK3066_HDMI_H__
 
-#define GRF_SOC_CON0				0x150
-#define HDMI_VIDEO_SEL				BIT(14)
+#घोषणा GRF_SOC_CON0				0x150
+#घोषणा HDMI_VIDEO_SEL				BIT(14)
 
-#define DDC_SEGMENT_ADDR			0x30
-#define HDMI_SCL_RATE				(50 * 1000)
-#define HDMI_MAXIMUM_INFO_FRAME_SIZE		0x11
+#घोषणा DDC_SEGMENT_ADDR			0x30
+#घोषणा HDMI_SCL_RATE				(50 * 1000)
+#घोषणा HDMI_MAXIMUM_INFO_FRAME_SIZE		0x11
 
-#define N_32K					0x1000
-#define N_441K					0x1880
-#define N_882K					0x3100
-#define N_1764K					0x6200
-#define N_48K					0x1800
-#define N_96K					0x3000
-#define N_192K					0x6000
+#घोषणा N_32K					0x1000
+#घोषणा N_441K					0x1880
+#घोषणा N_882K					0x3100
+#घोषणा N_1764K					0x6200
+#घोषणा N_48K					0x1800
+#घोषणा N_96K					0x3000
+#घोषणा N_192K					0x6000
 
-#define HDMI_SYS_CTRL				0x000
-#define HDMI_LR_SWAP_N3				0x004
-#define HDMI_N2					0x008
-#define HDMI_N1					0x00c
-#define HDMI_SPDIF_FS_CTS_INT3			0x010
-#define HDMI_CTS_INT2				0x014
-#define HDMI_CTS_INT1				0x018
-#define HDMI_CTS_EXT3				0x01c
-#define HDMI_CTS_EXT2				0x020
-#define HDMI_CTS_EXT1				0x024
-#define HDMI_AUDIO_CTRL1			0x028
-#define HDMI_AUDIO_CTRL2			0x02c
-#define HDMI_I2S_AUDIO_CTRL			0x030
-#define HDMI_I2S_SWAP				0x040
-#define HDMI_AUDIO_STA_BIT_CTRL1		0x044
-#define HDMI_AUDIO_STA_BIT_CTRL2		0x048
-#define HDMI_AUDIO_SRC_NUM_AND_LENGTH		0x050
-#define HDMI_AV_CTRL1				0x054
-#define HDMI_VIDEO_CTRL1			0x058
-#define HDMI_DEEP_COLOR_MODE			0x05c
+#घोषणा HDMI_SYS_CTRL				0x000
+#घोषणा HDMI_LR_SWAP_N3				0x004
+#घोषणा HDMI_N2					0x008
+#घोषणा HDMI_N1					0x00c
+#घोषणा HDMI_SPDIF_FS_CTS_INT3			0x010
+#घोषणा HDMI_CTS_INT2				0x014
+#घोषणा HDMI_CTS_INT1				0x018
+#घोषणा HDMI_CTS_EXT3				0x01c
+#घोषणा HDMI_CTS_EXT2				0x020
+#घोषणा HDMI_CTS_EXT1				0x024
+#घोषणा HDMI_AUDIO_CTRL1			0x028
+#घोषणा HDMI_AUDIO_CTRL2			0x02c
+#घोषणा HDMI_I2S_AUDIO_CTRL			0x030
+#घोषणा HDMI_I2S_SWAP				0x040
+#घोषणा HDMI_AUDIO_STA_BIT_CTRL1		0x044
+#घोषणा HDMI_AUDIO_STA_BIT_CTRL2		0x048
+#घोषणा HDMI_AUDIO_SRC_NUM_AND_LENGTH		0x050
+#घोषणा HDMI_AV_CTRL1				0x054
+#घोषणा HDMI_VIDEO_CTRL1			0x058
+#घोषणा HDMI_DEEP_COLOR_MODE			0x05c
 
-#define HDMI_EXT_VIDEO_PARA			0x0c0
-#define HDMI_EXT_HTOTAL_L			0x0c4
-#define HDMI_EXT_HTOTAL_H			0x0c8
-#define HDMI_EXT_HBLANK_L			0x0cc
-#define HDMI_EXT_HBLANK_H			0x0d0
-#define HDMI_EXT_HDELAY_L			0x0d4
-#define HDMI_EXT_HDELAY_H			0x0d8
-#define HDMI_EXT_HDURATION_L			0x0dc
-#define HDMI_EXT_HDURATION_H			0x0e0
-#define HDMI_EXT_VTOTAL_L			0x0e4
-#define HDMI_EXT_VTOTAL_H			0x0e8
-#define HDMI_AV_CTRL2				0x0ec
-#define HDMI_EXT_VBLANK_L			0x0f4
-#define HDMI_EXT_VBLANK_H			0x10c
-#define HDMI_EXT_VDELAY				0x0f8
-#define HDMI_EXT_VDURATION			0x0fc
+#घोषणा HDMI_EXT_VIDEO_PARA			0x0c0
+#घोषणा HDMI_EXT_HTOTAL_L			0x0c4
+#घोषणा HDMI_EXT_HTOTAL_H			0x0c8
+#घोषणा HDMI_EXT_HBLANK_L			0x0cc
+#घोषणा HDMI_EXT_HBLANK_H			0x0d0
+#घोषणा HDMI_EXT_HDELAY_L			0x0d4
+#घोषणा HDMI_EXT_HDELAY_H			0x0d8
+#घोषणा HDMI_EXT_HDURATION_L			0x0dc
+#घोषणा HDMI_EXT_HDURATION_H			0x0e0
+#घोषणा HDMI_EXT_VTOTAL_L			0x0e4
+#घोषणा HDMI_EXT_VTOTAL_H			0x0e8
+#घोषणा HDMI_AV_CTRL2				0x0ec
+#घोषणा HDMI_EXT_VBLANK_L			0x0f4
+#घोषणा HDMI_EXT_VBLANK_H			0x10c
+#घोषणा HDMI_EXT_VDELAY				0x0f8
+#घोषणा HDMI_EXT_VDURATION			0x0fc
 
-#define HDMI_CP_MANU_SEND_CTRL			0x100
-#define HDMI_CP_AUTO_SEND_CTRL			0x104
-#define HDMI_AUTO_CHECKSUM_OPT			0x108
+#घोषणा HDMI_CP_MANU_SEND_CTRL			0x100
+#घोषणा HDMI_CP_AUTO_SEND_CTRL			0x104
+#घोषणा HDMI_AUTO_CHECKSUM_OPT			0x108
 
-#define HDMI_VIDEO_CTRL2			0x114
+#घोषणा HDMI_VIDEO_CTRL2			0x114
 
-#define HDMI_PHY_OPTION				0x144
+#घोषणा HDMI_PHY_OPTION				0x144
 
-#define HDMI_CP_BUF_INDEX			0x17c
-#define HDMI_CP_BUF_ACC_HB0			0x180
-#define HDMI_CP_BUF_ACC_HB1			0x184
-#define HDMI_CP_BUF_ACC_HB2			0x188
-#define HDMI_CP_BUF_ACC_PB0			0x18c
+#घोषणा HDMI_CP_BUF_INDEX			0x17c
+#घोषणा HDMI_CP_BUF_ACC_HB0			0x180
+#घोषणा HDMI_CP_BUF_ACC_HB1			0x184
+#घोषणा HDMI_CP_BUF_ACC_HB2			0x188
+#घोषणा HDMI_CP_BUF_ACC_PB0			0x18c
 
-#define HDMI_DDC_READ_FIFO_ADDR			0x200
-#define HDMI_DDC_BUS_FREQ_L			0x204
-#define HDMI_DDC_BUS_FREQ_H			0x208
-#define HDMI_DDC_BUS_CTRL			0x2dc
-#define HDMI_DDC_I2C_LEN			0x278
-#define HDMI_DDC_I2C_OFFSET			0x280
-#define HDMI_DDC_I2C_CTRL			0x284
-#define HDMI_DDC_I2C_READ_BUF0			0x288
-#define HDMI_DDC_I2C_READ_BUF1			0x28c
-#define HDMI_DDC_I2C_READ_BUF2			0x290
-#define HDMI_DDC_I2C_READ_BUF3			0x294
-#define HDMI_DDC_I2C_WRITE_BUF0			0x298
-#define HDMI_DDC_I2C_WRITE_BUF1			0x29c
-#define HDMI_DDC_I2C_WRITE_BUF2			0x2a0
-#define HDMI_DDC_I2C_WRITE_BUF3			0x2a4
-#define HDMI_DDC_I2C_WRITE_BUF4			0x2ac
-#define HDMI_DDC_I2C_WRITE_BUF5			0x2b0
-#define HDMI_DDC_I2C_WRITE_BUF6			0x2b4
+#घोषणा HDMI_DDC_READ_FIFO_ADDR			0x200
+#घोषणा HDMI_DDC_BUS_FREQ_L			0x204
+#घोषणा HDMI_DDC_BUS_FREQ_H			0x208
+#घोषणा HDMI_DDC_BUS_CTRL			0x2dc
+#घोषणा HDMI_DDC_I2C_LEN			0x278
+#घोषणा HDMI_DDC_I2C_OFFSET			0x280
+#घोषणा HDMI_DDC_I2C_CTRL			0x284
+#घोषणा HDMI_DDC_I2C_READ_BUF0			0x288
+#घोषणा HDMI_DDC_I2C_READ_BUF1			0x28c
+#घोषणा HDMI_DDC_I2C_READ_BUF2			0x290
+#घोषणा HDMI_DDC_I2C_READ_BUF3			0x294
+#घोषणा HDMI_DDC_I2C_WRITE_BUF0			0x298
+#घोषणा HDMI_DDC_I2C_WRITE_BUF1			0x29c
+#घोषणा HDMI_DDC_I2C_WRITE_BUF2			0x2a0
+#घोषणा HDMI_DDC_I2C_WRITE_BUF3			0x2a4
+#घोषणा HDMI_DDC_I2C_WRITE_BUF4			0x2ac
+#घोषणा HDMI_DDC_I2C_WRITE_BUF5			0x2b0
+#घोषणा HDMI_DDC_I2C_WRITE_BUF6			0x2b4
 
-#define HDMI_INTR_MASK1				0x248
-#define HDMI_INTR_MASK2				0x24c
-#define HDMI_INTR_STATUS1			0x250
-#define HDMI_INTR_STATUS2			0x254
-#define HDMI_INTR_MASK3				0x258
-#define HDMI_INTR_MASK4				0x25c
-#define HDMI_INTR_STATUS3			0x260
-#define HDMI_INTR_STATUS4			0x264
+#घोषणा HDMI_INTR_MASK1				0x248
+#घोषणा HDMI_INTR_MASK2				0x24c
+#घोषणा HDMI_INTR_STATUS1			0x250
+#घोषणा HDMI_INTR_STATUS2			0x254
+#घोषणा HDMI_INTR_MASK3				0x258
+#घोषणा HDMI_INTR_MASK4				0x25c
+#घोषणा HDMI_INTR_STATUS3			0x260
+#घोषणा HDMI_INTR_STATUS4			0x264
 
-#define HDMI_HDCP_CTRL				0x2bc
+#घोषणा HDMI_HDCP_CTRL				0x2bc
 
-#define HDMI_EDID_SEGMENT_POINTER		0x310
-#define HDMI_EDID_WORD_ADDR			0x314
-#define HDMI_EDID_FIFO_ADDR			0x318
+#घोषणा HDMI_EDID_SEGMENT_POINTER		0x310
+#घोषणा HDMI_EDID_WORD_ADDR			0x314
+#घोषणा HDMI_EDID_FIFO_ADDR			0x318
 
-#define HDMI_HPG_MENS_STA			0x37c
+#घोषणा HDMI_HPG_MENS_STA			0x37c
 
-#define HDMI_INTERNAL_CLK_DIVIDER		0x800
+#घोषणा HDMI_INTERNAL_CLK_DIVIDER		0x800
 
-enum {
+क्रमागत अणु
 	/* HDMI_SYS_CTRL */
 	HDMI_SYS_POWER_MODE_MASK = 0xf0,
 	HDMI_SYS_POWER_MODE_A = 0x10,
@@ -224,6 +225,6 @@ enum {
 	/* HDMI_HPG_MENS_STA */
 	HDMI_HPG_IN_STATUS_HIGH = BIT(7),
 	HDMI_MSENS_IN_STATUS_HIGH = BIT(6),
-};
+पूर्ण;
 
-#endif /* __RK3066_HDMI_H__ */
+#पूर्ण_अगर /* __RK3066_HDMI_H__ */

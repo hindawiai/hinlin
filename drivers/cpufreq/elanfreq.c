@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	elanfreq:	cpufreq driver for the AMD ELAN family
+ *	elanfreq:	cpufreq driver क्रम the AMD ELAN family
  *
  *	(c) Copyright 2002 Robert Schwebel <r.schwebel@pengutronix.de>
  *
@@ -8,61 +9,61 @@
  *
  *      All Rights Reserved.
  *
- *	2002-02-13: - initial revision for 2.4.18-pre9 by Robert Schwebel
+ *	2002-02-13: - initial revision क्रम 2.4.18-pre9 by Robert Schwebel
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
 
-#include <linux/delay.h>
-#include <linux/cpufreq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/cpufreq.h>
 
-#include <asm/cpu_device_id.h>
-#include <asm/msr.h>
-#include <linux/timex.h>
-#include <linux/io.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/msr.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/पन.स>
 
-#define REG_CSCIR 0x22		/* Chip Setup and Control Index Register    */
-#define REG_CSCDR 0x23		/* Chip Setup and Control Data  Register    */
+#घोषणा REG_CSCIR 0x22		/* Chip Setup and Control Index Register    */
+#घोषणा REG_CSCDR 0x23		/* Chip Setup and Control Data  Register    */
 
 /* Module parameter */
-static int max_freq;
+अटल पूर्णांक max_freq;
 
-struct s_elan_multiplier {
-	int clock;		/* frequency in kHz                         */
-	int val40h;		/* PMU Force Mode register                  */
-	int val80h;		/* CPU Clock Speed Register                 */
-};
+काष्ठा s_elan_multiplier अणु
+	पूर्णांक घड़ी;		/* frequency in kHz                         */
+	पूर्णांक val40h;		/* PMU Force Mode रेजिस्टर                  */
+	पूर्णांक val80h;		/* CPU Clock Speed Register                 */
+पूर्ण;
 
 /*
  * It is important that the frequencies
  * are listed in ascending order here!
  */
-static struct s_elan_multiplier elan_multiplier[] = {
-	{1000,	0x02,	0x18},
-	{2000,	0x02,	0x10},
-	{4000,	0x02,	0x08},
-	{8000,	0x00,	0x00},
-	{16000,	0x00,	0x02},
-	{33000,	0x00,	0x04},
-	{66000,	0x01,	0x04},
-	{99000,	0x01,	0x05}
-};
+अटल काष्ठा s_elan_multiplier elan_multiplier[] = अणु
+	अणु1000,	0x02,	0x18पूर्ण,
+	अणु2000,	0x02,	0x10पूर्ण,
+	अणु4000,	0x02,	0x08पूर्ण,
+	अणु8000,	0x00,	0x00पूर्ण,
+	अणु16000,	0x00,	0x02पूर्ण,
+	अणु33000,	0x00,	0x04पूर्ण,
+	अणु66000,	0x01,	0x04पूर्ण,
+	अणु99000,	0x01,	0x05पूर्ण
+पूर्ण;
 
-static struct cpufreq_frequency_table elanfreq_table[] = {
-	{0, 0,	1000},
-	{0, 1,	2000},
-	{0, 2,	4000},
-	{0, 3,	8000},
-	{0, 4,	16000},
-	{0, 5,	33000},
-	{0, 6,	66000},
-	{0, 7,	99000},
-	{0, 0,	CPUFREQ_TABLE_END},
-};
+अटल काष्ठा cpufreq_frequency_table elanfreq_table[] = अणु
+	अणु0, 0,	1000पूर्ण,
+	अणु0, 1,	2000पूर्ण,
+	अणु0, 2,	4000पूर्ण,
+	अणु0, 3,	8000पूर्ण,
+	अणु0, 4,	16000पूर्ण,
+	अणु0, 5,	33000पूर्ण,
+	अणु0, 6,	66000पूर्ण,
+	अणु0, 7,	99000पूर्ण,
+	अणु0, 0,	CPUFREQ_TABLE_ENDपूर्ण,
+पूर्ण;
 
 
 /**
@@ -74,39 +75,39 @@ static struct cpufreq_frequency_table elanfreq_table[] = {
  *	and have the rest of the chip running with 33 MHz.
  */
 
-static unsigned int elanfreq_get_cpu_frequency(unsigned int cpu)
-{
-	u8 clockspeed_reg;    /* Clock Speed Register */
+अटल अचिन्हित पूर्णांक elanfreq_get_cpu_frequency(अचिन्हित पूर्णांक cpu)
+अणु
+	u8 घड़ीspeed_reg;    /* Clock Speed Register */
 
 	local_irq_disable();
 	outb_p(0x80, REG_CSCIR);
-	clockspeed_reg = inb_p(REG_CSCDR);
+	घड़ीspeed_reg = inb_p(REG_CSCDR);
 	local_irq_enable();
 
-	if ((clockspeed_reg & 0xE0) == 0xE0)
-		return 0;
+	अगर ((घड़ीspeed_reg & 0xE0) == 0xE0)
+		वापस 0;
 
-	/* Are we in CPU clock multiplied mode (66/99 MHz)? */
-	if ((clockspeed_reg & 0xE0) == 0xC0) {
-		if ((clockspeed_reg & 0x01) == 0)
-			return 66000;
-		else
-			return 99000;
-	}
+	/* Are we in CPU घड़ी multiplied mode (66/99 MHz)? */
+	अगर ((घड़ीspeed_reg & 0xE0) == 0xC0) अणु
+		अगर ((घड़ीspeed_reg & 0x01) == 0)
+			वापस 66000;
+		अन्यथा
+			वापस 99000;
+	पूर्ण
 
 	/* 33 MHz is not 32 MHz... */
-	if ((clockspeed_reg & 0xE0) == 0xA0)
-		return 33000;
+	अगर ((घड़ीspeed_reg & 0xE0) == 0xA0)
+		वापस 33000;
 
-	return (1<<((clockspeed_reg & 0xE0) >> 5)) * 1000;
-}
+	वापस (1<<((घड़ीspeed_reg & 0xE0) >> 5)) * 1000;
+पूर्ण
 
 
-static int elanfreq_target(struct cpufreq_policy *policy,
-			    unsigned int state)
-{
+अटल पूर्णांक elanfreq_target(काष्ठा cpufreq_policy *policy,
+			    अचिन्हित पूर्णांक state)
+अणु
 	/*
-	 * Access to the Elan's internal registers is indexed via
+	 * Access to the Elan's पूर्णांकernal रेजिस्टरs is indexed via
 	 * 0x22: Chip Setup & Control Register Index Register (CSCI)
 	 * 0x23: Chip Setup & Control Register Data  Register (CSCD)
 	 *
@@ -120,12 +121,12 @@ static int elanfreq_target(struct cpufreq_policy *policy,
 	local_irq_disable();
 	outb_p(0x40, REG_CSCIR);		/* Disable hyperspeed mode */
 	outb_p(0x00, REG_CSCDR);
-	local_irq_enable();		/* wait till internal pipelines and */
+	local_irq_enable();		/* रुको till पूर्णांकernal pipelines and */
 	udelay(1000);			/* buffers have cleaned up          */
 
 	local_irq_disable();
 
-	/* now, set the CPU clock speed register (0x80) */
+	/* now, set the CPU घड़ी speed रेजिस्टर (0x80) */
 	outb_p(0x80, REG_CSCIR);
 	outb_p(elan_multiplier[state].val80h, REG_CSCDR);
 
@@ -135,89 +136,89 @@ static int elanfreq_target(struct cpufreq_policy *policy,
 	udelay(10000);
 	local_irq_enable();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /*
- *	Module init and exit code
+ *	Module init and निकास code
  */
 
-static int elanfreq_cpu_init(struct cpufreq_policy *policy)
-{
-	struct cpuinfo_x86 *c = &cpu_data(0);
-	struct cpufreq_frequency_table *pos;
+अटल पूर्णांक elanfreq_cpu_init(काष्ठा cpufreq_policy *policy)
+अणु
+	काष्ठा cpuinfo_x86 *c = &cpu_data(0);
+	काष्ठा cpufreq_frequency_table *pos;
 
 	/* capability check */
-	if ((c->x86_vendor != X86_VENDOR_AMD) ||
+	अगर ((c->x86_venकरोr != X86_VENDOR_AMD) ||
 	    (c->x86 != 4) || (c->x86_model != 10))
-		return -ENODEV;
+		वापस -ENODEV;
 
 	/* max freq */
-	if (!max_freq)
+	अगर (!max_freq)
 		max_freq = elanfreq_get_cpu_frequency(0);
 
 	/* table init */
-	cpufreq_for_each_entry(pos, elanfreq_table)
-		if (pos->frequency > max_freq)
+	cpufreq_क्रम_each_entry(pos, elanfreq_table)
+		अगर (pos->frequency > max_freq)
 			pos->frequency = CPUFREQ_ENTRY_INVALID;
 
 	policy->freq_table = elanfreq_table;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-#ifndef MODULE
+#अगर_अघोषित MODULE
 /**
  * elanfreq_setup - elanfreq command line parameter parsing
  *
  * elanfreq command line parameter.  Use:
  *  elanfreq=66000
  * to set the maximum CPU frequency to 66 MHz. Note that in
- * case you do not give this boot parameter, the maximum
+ * हाल you करो not give this boot parameter, the maximum
  * frequency will fall back to _current_ CPU frequency which
  * might be lower. If you build this as a module, use the
  * max_freq module parameter instead.
  */
-static int __init elanfreq_setup(char *str)
-{
-	max_freq = simple_strtoul(str, &str, 0);
+अटल पूर्णांक __init elanfreq_setup(अक्षर *str)
+अणु
+	max_freq = simple_म_से_अदीर्घ(str, &str, 0);
 	pr_warn("You're using the deprecated elanfreq command line option. Use elanfreq.max_freq instead, please!\n");
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("elanfreq=", elanfreq_setup);
-#endif
+#पूर्ण_अगर
 
 
-static struct cpufreq_driver elanfreq_driver = {
+अटल काष्ठा cpufreq_driver elanfreq_driver = अणु
 	.get		= elanfreq_get_cpu_frequency,
 	.flags		= CPUFREQ_NO_AUTO_DYNAMIC_SWITCHING,
-	.verify		= cpufreq_generic_frequency_table_verify,
+	.verअगरy		= cpufreq_generic_frequency_table_verअगरy,
 	.target_index	= elanfreq_target,
 	.init		= elanfreq_cpu_init,
 	.name		= "elanfreq",
 	.attr		= cpufreq_generic_attr,
-};
+पूर्ण;
 
-static const struct x86_cpu_id elan_id[] = {
-	X86_MATCH_VENDOR_FAM_MODEL(AMD, 4, 10, NULL),
-	{}
-};
+अटल स्थिर काष्ठा x86_cpu_id elan_id[] = अणु
+	X86_MATCH_VENDOR_FAM_MODEL(AMD, 4, 10, शून्य),
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(x86cpu, elan_id);
 
-static int __init elanfreq_init(void)
-{
-	if (!x86_match_cpu(elan_id))
-		return -ENODEV;
-	return cpufreq_register_driver(&elanfreq_driver);
-}
+अटल पूर्णांक __init elanfreq_init(व्योम)
+अणु
+	अगर (!x86_match_cpu(elan_id))
+		वापस -ENODEV;
+	वापस cpufreq_रेजिस्टर_driver(&elanfreq_driver);
+पूर्ण
 
 
-static void __exit elanfreq_exit(void)
-{
-	cpufreq_unregister_driver(&elanfreq_driver);
-}
+अटल व्योम __निकास elanfreq_निकास(व्योम)
+अणु
+	cpufreq_unरेजिस्टर_driver(&elanfreq_driver);
+पूर्ण
 
 
-module_param(max_freq, int, 0444);
+module_param(max_freq, पूर्णांक, 0444);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Robert Schwebel <r.schwebel@pengutronix.de>, "
@@ -225,4 +226,4 @@ MODULE_AUTHOR("Robert Schwebel <r.schwebel@pengutronix.de>, "
 MODULE_DESCRIPTION("cpufreq driver for AMD's Elan CPUs");
 
 module_init(elanfreq_init);
-module_exit(elanfreq_exit);
+module_निकास(elanfreq_निकास);

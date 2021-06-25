@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
     Retrieve encoded MAC address from 24C16 serial 2-wire EEPROM,
-    decode it and store it in the associated adapter struct for
+    decode it and store it in the associated adapter काष्ठा क्रम
     use by dvb_net.c
 
-    This card appear to have the 24C16 write protect held to ground,
-    thus permitting normal read/write operation. Theoretically it
-    would be possible to write routines to burn a different (encoded)
-    MAC address into the EEPROM.
+    This card appear to have the 24C16 ग_लिखो protect held to ground,
+    thus permitting normal पढ़ो/ग_लिखो operation. Theoretically it
+    would be possible to ग_लिखो routines to burn a dअगरferent (encoded)
+    MAC address पूर्णांकo the EEPROM.
 
     Robert Schlabbach	GMX
     Michael Glaum	KVH Industries
@@ -19,79 +20,79 @@
 
 */
 
-#include <asm/errno.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/i2c.h>
-#include <linux/etherdevice.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/etherdevice.h>
 
-#include "ttpci-eeprom.h"
+#समावेश "ttpci-eeprom.h"
 
-#if 1
-#define dprintk(x...) do { printk(x); } while (0)
-#else
-#define dprintk(x...) do { } while (0)
-#endif
+#अगर 1
+#घोषणा dprपूर्णांकk(x...) करो अणु prपूर्णांकk(x); पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा dprपूर्णांकk(x...) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 
-static int check_mac_tt(u8 *buf)
-{
-	int i;
-	u16 tmp = 0xffff;
+अटल पूर्णांक check_mac_tt(u8 *buf)
+अणु
+	पूर्णांक i;
+	u16 पंचांगp = 0xffff;
 
-	for (i = 0; i < 8; i++) {
-		tmp  = (tmp << 8) | ((tmp >> 8) ^ buf[i]);
-		tmp ^= (tmp >> 4) & 0x0f;
-		tmp ^= (tmp << 12) ^ ((tmp & 0xff) << 5);
-	}
-	tmp ^= 0xffff;
-	return (((tmp >> 8) ^ buf[8]) | ((tmp & 0xff) ^ buf[9]));
-}
+	क्रम (i = 0; i < 8; i++) अणु
+		पंचांगp  = (पंचांगp << 8) | ((पंचांगp >> 8) ^ buf[i]);
+		पंचांगp ^= (पंचांगp >> 4) & 0x0f;
+		पंचांगp ^= (पंचांगp << 12) ^ ((पंचांगp & 0xff) << 5);
+	पूर्ण
+	पंचांगp ^= 0xffff;
+	वापस (((पंचांगp >> 8) ^ buf[8]) | ((पंचांगp & 0xff) ^ buf[9]));
+पूर्ण
 
-static int getmac_tt(u8 * decodedMAC, u8 * encodedMAC)
-{
-	u8 xor[20] = { 0x72, 0x23, 0x68, 0x19, 0x5c, 0xa8, 0x71, 0x2c,
+अटल पूर्णांक geपंचांगac_tt(u8 * decodedMAC, u8 * encodedMAC)
+अणु
+	u8 xor[20] = अणु 0x72, 0x23, 0x68, 0x19, 0x5c, 0xa8, 0x71, 0x2c,
 		       0x54, 0xd3, 0x7b, 0xf1, 0x9E, 0x23, 0x16, 0xf6,
-		       0x1d, 0x36, 0x64, 0x78};
+		       0x1d, 0x36, 0x64, 0x78पूर्ण;
 	u8 data[20];
-	int i;
+	पूर्णांक i;
 
-	/* In case there is a sig check failure have the orig contents available */
-	memcpy(data, encodedMAC, 20);
+	/* In हाल there is a sig check failure have the orig contents available */
+	स_नकल(data, encodedMAC, 20);
 
-	for (i = 0; i < 20; i++)
+	क्रम (i = 0; i < 20; i++)
 		data[i] ^= xor[i];
-	for (i = 0; i < 10; i++)
+	क्रम (i = 0; i < 10; i++)
 		data[i] = ((data[2 * i + 1] << 8) | data[2 * i])
 			>> ((data[2 * i + 1] >> 6) & 3);
 
-	if (check_mac_tt(data))
-		return -ENODEV;
+	अगर (check_mac_tt(data))
+		वापस -ENODEV;
 
 	decodedMAC[0] = data[2]; decodedMAC[1] = data[1]; decodedMAC[2] = data[0];
 	decodedMAC[3] = data[6]; decodedMAC[4] = data[5]; decodedMAC[5] = data[4];
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ttpci_eeprom_decode_mac(u8 *decodedMAC, u8 *encodedMAC)
-{
-	u8 xor[20] = { 0x72, 0x23, 0x68, 0x19, 0x5c, 0xa8, 0x71, 0x2c,
+पूर्णांक ttpci_eeprom_decode_mac(u8 *decodedMAC, u8 *encodedMAC)
+अणु
+	u8 xor[20] = अणु 0x72, 0x23, 0x68, 0x19, 0x5c, 0xa8, 0x71, 0x2c,
 		       0x54, 0xd3, 0x7b, 0xf1, 0x9E, 0x23, 0x16, 0xf6,
-		       0x1d, 0x36, 0x64, 0x78};
+		       0x1d, 0x36, 0x64, 0x78पूर्ण;
 	u8 data[20];
-	int i;
+	पूर्णांक i;
 
-	memcpy(data, encodedMAC, 20);
+	स_नकल(data, encodedMAC, 20);
 
-	for (i = 0; i < 20; i++)
+	क्रम (i = 0; i < 20; i++)
 		data[i] ^= xor[i];
-	for (i = 0; i < 10; i++)
+	क्रम (i = 0; i < 10; i++)
 		data[i] = ((data[2 * i + 1] << 8) | data[2 * i])
 			>> ((data[2 * i + 1] >> 6) & 3);
 
-	if (check_mac_tt(data))
-		return -ENODEV;
+	अगर (check_mac_tt(data))
+		वापस -ENODEV;
 
 	decodedMAC[0] = data[2];
 	decodedMAC[1] = data[1];
@@ -99,58 +100,58 @@ int ttpci_eeprom_decode_mac(u8 *decodedMAC, u8 *encodedMAC)
 	decodedMAC[3] = data[6];
 	decodedMAC[4] = data[5];
 	decodedMAC[5] = data[4];
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ttpci_eeprom_decode_mac);
 
-static int ttpci_eeprom_read_encodedMAC(struct i2c_adapter *adapter, u8 * encodedMAC)
-{
-	int ret;
-	u8 b0[] = { 0xcc };
+अटल पूर्णांक ttpci_eeprom_पढ़ो_encodedMAC(काष्ठा i2c_adapter *adapter, u8 * encodedMAC)
+अणु
+	पूर्णांक ret;
+	u8 b0[] = अणु 0xcc पूर्ण;
 
-	struct i2c_msg msg[] = {
-		{ .addr = 0x50, .flags = 0, .buf = b0, .len = 1 },
-		{ .addr = 0x50, .flags = I2C_M_RD, .buf = encodedMAC, .len = 20 }
-	};
+	काष्ठा i2c_msg msg[] = अणु
+		अणु .addr = 0x50, .flags = 0, .buf = b0, .len = 1 पूर्ण,
+		अणु .addr = 0x50, .flags = I2C_M_RD, .buf = encodedMAC, .len = 20 पूर्ण
+	पूर्ण;
 
-	/* dprintk("%s\n", __func__); */
+	/* dprपूर्णांकk("%s\n", __func__); */
 
 	ret = i2c_transfer(adapter, msg, 2);
 
-	if (ret != 2)		/* Assume EEPROM isn't there */
-		return (-ENODEV);
+	अगर (ret != 2)		/* Assume EEPROM isn't there */
+		वापस (-ENODEV);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int ttpci_eeprom_parse_mac(struct i2c_adapter *adapter, u8 *proposed_mac)
-{
-	int ret;
+पूर्णांक ttpci_eeprom_parse_mac(काष्ठा i2c_adapter *adapter, u8 *proposed_mac)
+अणु
+	पूर्णांक ret;
 	u8 encodedMAC[20];
 	u8 decodedMAC[6];
 
-	ret = ttpci_eeprom_read_encodedMAC(adapter, encodedMAC);
+	ret = ttpci_eeprom_पढ़ो_encodedMAC(adapter, encodedMAC);
 
-	if (ret != 0) {		/* Will only be -ENODEV */
-		dprintk("Couldn't read from EEPROM: not there?\n");
+	अगर (ret != 0) अणु		/* Will only be -ENODEV */
+		dprपूर्णांकk("Couldn't read from EEPROM: not there?\n");
 		eth_zero_addr(proposed_mac);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = getmac_tt(decodedMAC, encodedMAC);
-	if( ret != 0 ) {
-		dprintk("adapter failed MAC signature check\n");
-		dprintk("encoded MAC from EEPROM was %*phC",
-			(int)sizeof(encodedMAC), &encodedMAC);
+	ret = geपंचांगac_tt(decodedMAC, encodedMAC);
+	अगर( ret != 0 ) अणु
+		dprपूर्णांकk("adapter failed MAC signature check\n");
+		dprपूर्णांकk("encoded MAC from EEPROM was %*phC",
+			(पूर्णांक)माप(encodedMAC), &encodedMAC);
 		eth_zero_addr(proposed_mac);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	memcpy(proposed_mac, decodedMAC, 6);
-	dprintk("adapter has MAC addr = %pM\n", decodedMAC);
-	return 0;
-}
+	स_नकल(proposed_mac, decodedMAC, 6);
+	dprपूर्णांकk("adapter has MAC addr = %pM\n", decodedMAC);
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(ttpci_eeprom_parse_mac);
 

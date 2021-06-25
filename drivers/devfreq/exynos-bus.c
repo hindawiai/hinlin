@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Generic Exynos Bus frequency driver with DEVFREQ Framework
  *
@@ -9,186 +10,186 @@
  * DEVFREQ framework and is based on drivers/devfreq/exynos/exynos4_bus.c.
  */
 
-#include <linux/clk.h>
-#include <linux/devfreq.h>
-#include <linux/devfreq-event.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/pm_opp.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/devfreq.h>
+#समावेश <linux/devfreq-event.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pm_opp.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
 
-#define DEFAULT_SATURATION_RATIO	40
+#घोषणा DEFAULT_SATURATION_RATIO	40
 
-struct exynos_bus {
-	struct device *dev;
-	struct platform_device *icc_pdev;
+काष्ठा exynos_bus अणु
+	काष्ठा device *dev;
+	काष्ठा platक्रमm_device *icc_pdev;
 
-	struct devfreq *devfreq;
-	struct devfreq_event_dev **edev;
-	unsigned int edev_count;
-	struct mutex lock;
+	काष्ठा devfreq *devfreq;
+	काष्ठा devfreq_event_dev **edev;
+	अचिन्हित पूर्णांक edev_count;
+	काष्ठा mutex lock;
 
-	unsigned long curr_freq;
+	अचिन्हित दीर्घ curr_freq;
 
-	struct opp_table *opp_table;
-	struct clk *clk;
-	unsigned int ratio;
-};
+	काष्ठा opp_table *opp_table;
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक ratio;
+पूर्ण;
 
 /*
  * Control the devfreq-event device to get the current state of bus
  */
-#define exynos_bus_ops_edev(ops)				\
-static int exynos_bus_##ops(struct exynos_bus *bus)		\
-{								\
-	int i, ret;						\
+#घोषणा exynos_bus_ops_edev(ops)				\
+अटल पूर्णांक exynos_bus_##ops(काष्ठा exynos_bus *bus)		\
+अणु								\
+	पूर्णांक i, ret;						\
 								\
-	for (i = 0; i < bus->edev_count; i++) {			\
-		if (!bus->edev[i])				\
-			continue;				\
+	क्रम (i = 0; i < bus->edev_count; i++) अणु			\
+		अगर (!bus->edev[i])				\
+			जारी;				\
 		ret = devfreq_event_##ops(bus->edev[i]);	\
-		if (ret < 0)					\
-			return ret;				\
-	}							\
+		अगर (ret < 0)					\
+			वापस ret;				\
+	पूर्ण							\
 								\
-	return 0;						\
-}
+	वापस 0;						\
+पूर्ण
 exynos_bus_ops_edev(enable_edev);
 exynos_bus_ops_edev(disable_edev);
 exynos_bus_ops_edev(set_event);
 
-static int exynos_bus_get_event(struct exynos_bus *bus,
-				struct devfreq_event_data *edata)
-{
-	struct devfreq_event_data event_data;
-	unsigned long load_count = 0, total_count = 0;
-	int i, ret = 0;
+अटल पूर्णांक exynos_bus_get_event(काष्ठा exynos_bus *bus,
+				काष्ठा devfreq_event_data *edata)
+अणु
+	काष्ठा devfreq_event_data event_data;
+	अचिन्हित दीर्घ load_count = 0, total_count = 0;
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < bus->edev_count; i++) {
-		if (!bus->edev[i])
-			continue;
+	क्रम (i = 0; i < bus->edev_count; i++) अणु
+		अगर (!bus->edev[i])
+			जारी;
 
 		ret = devfreq_event_get_event(bus->edev[i], &event_data);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		if (i == 0 || event_data.load_count > load_count) {
+		अगर (i == 0 || event_data.load_count > load_count) अणु
 			load_count = event_data.load_count;
 			total_count = event_data.total_count;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	edata->load_count = load_count;
 	edata->total_count = total_count;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * devfreq function for both simple-ondemand and passive governor
+ * devfreq function क्रम both simple-ondemand and passive governor
  */
-static int exynos_bus_target(struct device *dev, unsigned long *freq, u32 flags)
-{
-	struct exynos_bus *bus = dev_get_drvdata(dev);
-	struct dev_pm_opp *new_opp;
-	int ret = 0;
+अटल पूर्णांक exynos_bus_target(काष्ठा device *dev, अचिन्हित दीर्घ *freq, u32 flags)
+अणु
+	काष्ठा exynos_bus *bus = dev_get_drvdata(dev);
+	काष्ठा dev_pm_opp *new_opp;
+	पूर्णांक ret = 0;
 
-	/* Get correct frequency for bus. */
+	/* Get correct frequency क्रम bus. */
 	new_opp = devfreq_recommended_opp(dev, freq, flags);
-	if (IS_ERR(new_opp)) {
+	अगर (IS_ERR(new_opp)) अणु
 		dev_err(dev, "failed to get recommended opp instance\n");
-		return PTR_ERR(new_opp);
-	}
+		वापस PTR_ERR(new_opp);
+	पूर्ण
 
 	dev_pm_opp_put(new_opp);
 
 	/* Change voltage and frequency according to new OPP level */
 	mutex_lock(&bus->lock);
 	ret = dev_pm_opp_set_rate(dev, *freq);
-	if (!ret)
+	अगर (!ret)
 		bus->curr_freq = *freq;
 
 	mutex_unlock(&bus->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int exynos_bus_get_dev_status(struct device *dev,
-				     struct devfreq_dev_status *stat)
-{
-	struct exynos_bus *bus = dev_get_drvdata(dev);
-	struct devfreq_event_data edata;
-	int ret;
+अटल पूर्णांक exynos_bus_get_dev_status(काष्ठा device *dev,
+				     काष्ठा devfreq_dev_status *stat)
+अणु
+	काष्ठा exynos_bus *bus = dev_get_drvdata(dev);
+	काष्ठा devfreq_event_data edata;
+	पूर्णांक ret;
 
 	stat->current_frequency = bus->curr_freq;
 
 	ret = exynos_bus_get_event(bus, &edata);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to get event from devfreq-event devices\n");
-		stat->total_time = stat->busy_time = 0;
-		goto err;
-	}
+		stat->total_समय = stat->busy_समय = 0;
+		जाओ err;
+	पूर्ण
 
-	stat->busy_time = (edata.load_count * 100) / bus->ratio;
-	stat->total_time = edata.total_count;
+	stat->busy_समय = (edata.load_count * 100) / bus->ratio;
+	stat->total_समय = edata.total_count;
 
-	dev_dbg(dev, "Usage of devfreq-event : %lu/%lu\n", stat->busy_time,
-							stat->total_time);
+	dev_dbg(dev, "Usage of devfreq-event : %lu/%lu\n", stat->busy_समय,
+							stat->total_समय);
 
 err:
 	ret = exynos_bus_set_event(bus);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to set event to devfreq-event devices\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void exynos_bus_exit(struct device *dev)
-{
-	struct exynos_bus *bus = dev_get_drvdata(dev);
-	int ret;
+अटल व्योम exynos_bus_निकास(काष्ठा device *dev)
+अणु
+	काष्ठा exynos_bus *bus = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = exynos_bus_disable_edev(bus);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_warn(dev, "failed to disable the devfreq-event devices\n");
 
-	platform_device_unregister(bus->icc_pdev);
+	platक्रमm_device_unरेजिस्टर(bus->icc_pdev);
 
-	dev_pm_opp_of_remove_table(dev);
+	dev_pm_opp_of_हटाओ_table(dev);
 	clk_disable_unprepare(bus->clk);
 	dev_pm_opp_put_regulators(bus->opp_table);
-	bus->opp_table = NULL;
-}
+	bus->opp_table = शून्य;
+पूर्ण
 
-static void exynos_bus_passive_exit(struct device *dev)
-{
-	struct exynos_bus *bus = dev_get_drvdata(dev);
+अटल व्योम exynos_bus_passive_निकास(काष्ठा device *dev)
+अणु
+	काष्ठा exynos_bus *bus = dev_get_drvdata(dev);
 
-	platform_device_unregister(bus->icc_pdev);
+	platक्रमm_device_unरेजिस्टर(bus->icc_pdev);
 
-	dev_pm_opp_of_remove_table(dev);
+	dev_pm_opp_of_हटाओ_table(dev);
 	clk_disable_unprepare(bus->clk);
-}
+पूर्ण
 
-static int exynos_bus_parent_parse_of(struct device_node *np,
-					struct exynos_bus *bus)
-{
-	struct device *dev = bus->dev;
-	struct opp_table *opp_table;
-	const char *vdd = "vdd";
-	int i, ret, count, size;
+अटल पूर्णांक exynos_bus_parent_parse_of(काष्ठा device_node *np,
+					काष्ठा exynos_bus *bus)
+अणु
+	काष्ठा device *dev = bus->dev;
+	काष्ठा opp_table *opp_table;
+	स्थिर अक्षर *vdd = "vdd";
+	पूर्णांक i, ret, count, size;
 
 	opp_table = dev_pm_opp_set_regulators(dev, &vdd, 1);
-	if (IS_ERR(opp_table)) {
+	अगर (IS_ERR(opp_table)) अणु
 		ret = PTR_ERR(opp_table);
 		dev_err(dev, "failed to set regulators %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	bus->opp_table = opp_table;
 
@@ -197,28 +198,28 @@ static int exynos_bus_parent_parse_of(struct device_node *np,
 	 * buses. This raw data will be used in devfreq ondemand governor.
 	 */
 	count = devfreq_event_get_edev_count(dev, "devfreq-events");
-	if (count < 0) {
+	अगर (count < 0) अणु
 		dev_err(dev, "failed to get the count of devfreq-event dev\n");
 		ret = count;
-		goto err_regulator;
-	}
+		जाओ err_regulator;
+	पूर्ण
 	bus->edev_count = count;
 
-	size = sizeof(*bus->edev) * count;
+	size = माप(*bus->edev) * count;
 	bus->edev = devm_kzalloc(dev, size, GFP_KERNEL);
-	if (!bus->edev) {
+	अगर (!bus->edev) अणु
 		ret = -ENOMEM;
-		goto err_regulator;
-	}
+		जाओ err_regulator;
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		bus->edev[i] = devfreq_event_get_edev_by_phandle(dev,
 							"devfreq-events", i);
-		if (IS_ERR(bus->edev[i])) {
+		अगर (IS_ERR(bus->edev[i])) अणु
 			ret = -EPROBE_DEFER;
-			goto err_regulator;
-		}
-	}
+			जाओ err_regulator;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Optionally, Get the saturation ratio according to Exynos SoC
@@ -228,224 +229,224 @@ static int exynos_bus_parent_parse_of(struct device_node *np,
 	 * simple-ondemand governor might not decide to change the current
 	 * frequency due to too utilization (= real cycle/total cycle).
 	 * So, this property is used to adjust the utilization when calculating
-	 * the busy_time in exynos_bus_get_dev_status().
+	 * the busy_समय in exynos_bus_get_dev_status().
 	 */
-	if (of_property_read_u32(np, "exynos,saturation-ratio", &bus->ratio))
+	अगर (of_property_पढ़ो_u32(np, "exynos,saturation-ratio", &bus->ratio))
 		bus->ratio = DEFAULT_SATURATION_RATIO;
 
-	return 0;
+	वापस 0;
 
 err_regulator:
 	dev_pm_opp_put_regulators(bus->opp_table);
-	bus->opp_table = NULL;
+	bus->opp_table = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int exynos_bus_parse_of(struct device_node *np,
-			      struct exynos_bus *bus)
-{
-	struct device *dev = bus->dev;
-	struct dev_pm_opp *opp;
-	unsigned long rate;
-	int ret;
+अटल पूर्णांक exynos_bus_parse_of(काष्ठा device_node *np,
+			      काष्ठा exynos_bus *bus)
+अणु
+	काष्ठा device *dev = bus->dev;
+	काष्ठा dev_pm_opp *opp;
+	अचिन्हित दीर्घ rate;
+	पूर्णांक ret;
 
-	/* Get the clock to provide each bus with source clock */
+	/* Get the घड़ी to provide each bus with source घड़ी */
 	bus->clk = devm_clk_get(dev, "bus");
-	if (IS_ERR(bus->clk)) {
+	अगर (IS_ERR(bus->clk)) अणु
 		dev_err(dev, "failed to get bus clock\n");
-		return PTR_ERR(bus->clk);
-	}
+		वापस PTR_ERR(bus->clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(bus->clk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to get enable clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Get the freq and voltage from OPP table to scale the bus freq */
 	ret = dev_pm_opp_of_add_table(dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to get OPP table\n");
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
 	rate = clk_get_rate(bus->clk);
 
 	opp = devfreq_recommended_opp(dev, &rate, 0);
-	if (IS_ERR(opp)) {
+	अगर (IS_ERR(opp)) अणु
 		dev_err(dev, "failed to find dev_pm_opp\n");
 		ret = PTR_ERR(opp);
-		goto err_opp;
-	}
+		जाओ err_opp;
+	पूर्ण
 	bus->curr_freq = dev_pm_opp_get_freq(opp);
 	dev_pm_opp_put(opp);
 
-	return 0;
+	वापस 0;
 
 err_opp:
-	dev_pm_opp_of_remove_table(dev);
+	dev_pm_opp_of_हटाओ_table(dev);
 err_clk:
 	clk_disable_unprepare(bus->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int exynos_bus_profile_init(struct exynos_bus *bus,
-				   struct devfreq_dev_profile *profile)
-{
-	struct device *dev = bus->dev;
-	struct devfreq_simple_ondemand_data *ondemand_data;
-	int ret;
+अटल पूर्णांक exynos_bus_profile_init(काष्ठा exynos_bus *bus,
+				   काष्ठा devfreq_dev_profile *profile)
+अणु
+	काष्ठा device *dev = bus->dev;
+	काष्ठा devfreq_simple_ondemand_data *ondemand_data;
+	पूर्णांक ret;
 
-	/* Initialize the struct profile and governor data for parent device */
+	/* Initialize the काष्ठा profile and governor data क्रम parent device */
 	profile->polling_ms = 50;
 	profile->target = exynos_bus_target;
 	profile->get_dev_status = exynos_bus_get_dev_status;
-	profile->exit = exynos_bus_exit;
+	profile->निकास = exynos_bus_निकास;
 
-	ondemand_data = devm_kzalloc(dev, sizeof(*ondemand_data), GFP_KERNEL);
-	if (!ondemand_data)
-		return -ENOMEM;
+	ondemand_data = devm_kzalloc(dev, माप(*ondemand_data), GFP_KERNEL);
+	अगर (!ondemand_data)
+		वापस -ENOMEM;
 
 	ondemand_data->upthreshold = 40;
-	ondemand_data->downdifferential = 5;
+	ondemand_data->करोwndअगरferential = 5;
 
 	/* Add devfreq device to monitor and handle the exynos bus */
 	bus->devfreq = devm_devfreq_add_device(dev, profile,
 						DEVFREQ_GOV_SIMPLE_ONDEMAND,
 						ondemand_data);
-	if (IS_ERR(bus->devfreq)) {
+	अगर (IS_ERR(bus->devfreq)) अणु
 		dev_err(dev, "failed to add devfreq device\n");
-		return PTR_ERR(bus->devfreq);
-	}
+		वापस PTR_ERR(bus->devfreq);
+	पूर्ण
 
-	/* Register opp_notifier to catch the change of OPP  */
-	ret = devm_devfreq_register_opp_notifier(dev, bus->devfreq);
-	if (ret < 0) {
+	/* Register opp_notअगरier to catch the change of OPP  */
+	ret = devm_devfreq_रेजिस्टर_opp_notअगरier(dev, bus->devfreq);
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to register opp notifier\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Enable devfreq-event to get raw data which is used to determine
 	 * current bus load.
 	 */
 	ret = exynos_bus_enable_edev(bus);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to enable devfreq-event devices\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = exynos_bus_set_event(bus);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to set event to devfreq-event devices\n");
-		goto err_edev;
-	}
+		जाओ err_edev;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_edev:
-	if (exynos_bus_disable_edev(bus))
+	अगर (exynos_bus_disable_edev(bus))
 		dev_warn(dev, "failed to disable the devfreq-event devices\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int exynos_bus_profile_init_passive(struct exynos_bus *bus,
-					   struct devfreq_dev_profile *profile)
-{
-	struct device *dev = bus->dev;
-	struct devfreq_passive_data *passive_data;
-	struct devfreq *parent_devfreq;
+अटल पूर्णांक exynos_bus_profile_init_passive(काष्ठा exynos_bus *bus,
+					   काष्ठा devfreq_dev_profile *profile)
+अणु
+	काष्ठा device *dev = bus->dev;
+	काष्ठा devfreq_passive_data *passive_data;
+	काष्ठा devfreq *parent_devfreq;
 
-	/* Initialize the struct profile and governor data for passive device */
+	/* Initialize the काष्ठा profile and governor data क्रम passive device */
 	profile->target = exynos_bus_target;
-	profile->exit = exynos_bus_passive_exit;
+	profile->निकास = exynos_bus_passive_निकास;
 
 	/* Get the instance of parent devfreq device */
 	parent_devfreq = devfreq_get_devfreq_by_phandle(dev, "devfreq", 0);
-	if (IS_ERR(parent_devfreq))
-		return -EPROBE_DEFER;
+	अगर (IS_ERR(parent_devfreq))
+		वापस -EPROBE_DEFER;
 
-	passive_data = devm_kzalloc(dev, sizeof(*passive_data), GFP_KERNEL);
-	if (!passive_data)
-		return -ENOMEM;
+	passive_data = devm_kzalloc(dev, माप(*passive_data), GFP_KERNEL);
+	अगर (!passive_data)
+		वापस -ENOMEM;
 
 	passive_data->parent = parent_devfreq;
 
-	/* Add devfreq device for exynos bus with passive governor */
+	/* Add devfreq device क्रम exynos bus with passive governor */
 	bus->devfreq = devm_devfreq_add_device(dev, profile, DEVFREQ_GOV_PASSIVE,
 						passive_data);
-	if (IS_ERR(bus->devfreq)) {
+	अगर (IS_ERR(bus->devfreq)) अणु
 		dev_err(dev,
 			"failed to add devfreq dev with passive governor\n");
-		return PTR_ERR(bus->devfreq);
-	}
+		वापस PTR_ERR(bus->devfreq);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exynos_bus_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node, *node;
-	struct devfreq_dev_profile *profile;
-	struct exynos_bus *bus;
-	int ret, max_state;
-	unsigned long min_freq, max_freq;
+अटल पूर्णांक exynos_bus_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node, *node;
+	काष्ठा devfreq_dev_profile *profile;
+	काष्ठा exynos_bus *bus;
+	पूर्णांक ret, max_state;
+	अचिन्हित दीर्घ min_freq, max_freq;
 	bool passive = false;
 
-	if (!np) {
+	अगर (!np) अणु
 		dev_err(dev, "failed to find devicetree node\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	bus = devm_kzalloc(&pdev->dev, sizeof(*bus), GFP_KERNEL);
-	if (!bus)
-		return -ENOMEM;
+	bus = devm_kzalloc(&pdev->dev, माप(*bus), GFP_KERNEL);
+	अगर (!bus)
+		वापस -ENOMEM;
 	mutex_init(&bus->lock);
 	bus->dev = &pdev->dev;
-	platform_set_drvdata(pdev, bus);
+	platक्रमm_set_drvdata(pdev, bus);
 
-	profile = devm_kzalloc(dev, sizeof(*profile), GFP_KERNEL);
-	if (!profile)
-		return -ENOMEM;
+	profile = devm_kzalloc(dev, माप(*profile), GFP_KERNEL);
+	अगर (!profile)
+		वापस -ENOMEM;
 
 	node = of_parse_phandle(dev->of_node, "devfreq", 0);
-	if (node) {
+	अगर (node) अणु
 		of_node_put(node);
 		passive = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = exynos_bus_parent_parse_of(np, bus);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	/* Parse the device-tree to get the resource information */
+	/* Parse the device-tree to get the resource inक्रमmation */
 	ret = exynos_bus_parse_of(np, bus);
-	if (ret < 0)
-		goto err_reg;
+	अगर (ret < 0)
+		जाओ err_reg;
 
-	if (passive)
+	अगर (passive)
 		ret = exynos_bus_profile_init_passive(bus, profile);
-	else
+	अन्यथा
 		ret = exynos_bus_profile_init(bus, profile);
 
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
-	/* Create child platform device for the interconnect provider */
-	if (of_get_property(dev->of_node, "#interconnect-cells", NULL)) {
-		bus->icc_pdev = platform_device_register_data(
+	/* Create child platक्रमm device क्रम the पूर्णांकerconnect provider */
+	अगर (of_get_property(dev->of_node, "#interconnect-cells", शून्य)) अणु
+		bus->icc_pdev = platक्रमm_device_रेजिस्टर_data(
 						dev, "exynos-generic-icc",
-						PLATFORM_DEVID_AUTO, NULL, 0);
+						PLATFORM_DEVID_AUTO, शून्य, 0);
 
-		if (IS_ERR(bus->icc_pdev)) {
+		अगर (IS_ERR(bus->icc_pdev)) अणु
 			ret = PTR_ERR(bus->icc_pdev);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	max_state = bus->devfreq->profile->max_state;
 	min_freq = (bus->devfreq->profile->freq_table[0] / 1000);
@@ -453,75 +454,75 @@ static int exynos_bus_probe(struct platform_device *pdev)
 	pr_info("exynos-bus: new bus device registered: %s (%6ld KHz ~ %6ld KHz)\n",
 			dev_name(dev), min_freq, max_freq);
 
-	return 0;
+	वापस 0;
 
 err:
-	dev_pm_opp_of_remove_table(dev);
+	dev_pm_opp_of_हटाओ_table(dev);
 	clk_disable_unprepare(bus->clk);
 err_reg:
 	dev_pm_opp_put_regulators(bus->opp_table);
-	bus->opp_table = NULL;
+	bus->opp_table = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void exynos_bus_shutdown(struct platform_device *pdev)
-{
-	struct exynos_bus *bus = dev_get_drvdata(&pdev->dev);
+अटल व्योम exynos_bus_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा exynos_bus *bus = dev_get_drvdata(&pdev->dev);
 
 	devfreq_suspend_device(bus->devfreq);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int exynos_bus_resume(struct device *dev)
-{
-	struct exynos_bus *bus = dev_get_drvdata(dev);
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक exynos_bus_resume(काष्ठा device *dev)
+अणु
+	काष्ठा exynos_bus *bus = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = exynos_bus_enable_edev(bus);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to enable the devfreq-event devices\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exynos_bus_suspend(struct device *dev)
-{
-	struct exynos_bus *bus = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक exynos_bus_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा exynos_bus *bus = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = exynos_bus_disable_edev(bus);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to disable the devfreq-event devices\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops exynos_bus_pm = {
+अटल स्थिर काष्ठा dev_pm_ops exynos_bus_pm = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(exynos_bus_suspend, exynos_bus_resume)
-};
+पूर्ण;
 
-static const struct of_device_id exynos_bus_of_match[] = {
-	{ .compatible = "samsung,exynos-bus", },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id exynos_bus_of_match[] = अणु
+	अणु .compatible = "samsung,exynos-bus", पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, exynos_bus_of_match);
 
-static struct platform_driver exynos_bus_platdrv = {
+अटल काष्ठा platक्रमm_driver exynos_bus_platdrv = अणु
 	.probe		= exynos_bus_probe,
-	.shutdown	= exynos_bus_shutdown,
-	.driver = {
+	.shutकरोwn	= exynos_bus_shutकरोwn,
+	.driver = अणु
 		.name	= "exynos-bus",
 		.pm	= &exynos_bus_pm,
 		.of_match_table = of_match_ptr(exynos_bus_of_match),
-	},
-};
-module_platform_driver(exynos_bus_platdrv);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(exynos_bus_platdrv);
 
 MODULE_DESCRIPTION("Generic Exynos Bus frequency driver");
 MODULE_AUTHOR("Chanwoo Choi <cw00.choi@samsung.com>");

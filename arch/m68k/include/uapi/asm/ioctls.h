@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __ARCH_M68K_IOCTLS_H__
-#define __ARCH_M68K_IOCTLS_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __ARCH_M68K_IOCTLS_H__
+#घोषणा __ARCH_M68K_IOCTLS_H__
 
-#define FIOQSIZE	0x545E
+#घोषणा FIOQSIZE	0x545E
 
-#include <asm-generic/ioctls.h>
+#समावेश <यंत्र-generic/ioctls.h>
 
-#endif /* __ARCH_M68K_IOCTLS_H__ */
+#पूर्ण_अगर /* __ARCH_M68K_IOCTLS_H__ */

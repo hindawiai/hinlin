@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wl12xx
  *
  * Copyright (C) 2011 Texas Instruments Inc.
  */
 
-#ifndef __WL12XX_CONF_H__
-#define __WL12XX_CONF_H__
+#अगर_अघोषित __WL12XX_CONF_H__
+#घोषणा __WL12XX_CONF_H__
 
-/* these are number of channels on the band divided by two, rounded up */
-#define CONF_TX_PWR_COMPENSATION_LEN_2 7
-#define CONF_TX_PWR_COMPENSATION_LEN_5 18
+/* these are number of channels on the band भागided by two, rounded up */
+#घोषणा CONF_TX_PWR_COMPENSATION_LEN_2 7
+#घोषणा CONF_TX_PWR_COMPENSATION_LEN_5 18
 
-struct wl12xx_conf_rf {
+काष्ठा wl12xx_conf_rf अणु
 	/*
-	 * Per channel power compensation for 2.4GHz
+	 * Per channel घातer compensation क्रम 2.4GHz
 	 *
 	 * Range: s8
 	 */
-	u8 tx_per_channel_power_compensation_2[CONF_TX_PWR_COMPENSATION_LEN_2];
+	u8 tx_per_channel_घातer_compensation_2[CONF_TX_PWR_COMPENSATION_LEN_2];
 
 	/*
-	 * Per channel power compensation for 5GHz
+	 * Per channel घातer compensation क्रम 5GHz
 	 *
 	 * Range: s8
 	 */
-	u8 tx_per_channel_power_compensation_5[CONF_TX_PWR_COMPENSATION_LEN_5];
-};
+	u8 tx_per_channel_घातer_compensation_5[CONF_TX_PWR_COMPENSATION_LEN_5];
+पूर्ण;
 
-struct wl12xx_priv_conf {
-	struct wl12xx_conf_rf rf;
-	struct conf_memory_settings mem_wl127x;
-};
+काष्ठा wl12xx_priv_conf अणु
+	काष्ठा wl12xx_conf_rf rf;
+	काष्ठा conf_memory_settings mem_wl127x;
+पूर्ण;
 
-enum wl12xx_sg_params {
+क्रमागत wl12xx_sg_params अणु
 	/*
-	* Configure the min and max time BT gains the antenna
+	* Configure the min and max समय BT gains the antenna
 	* in WLAN / BT master basic rate
 	*
 	* Range: 0 - 255 (ms)
@@ -44,7 +45,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_ACL_BT_MASTER_MAX_BR,
 
 	/*
-	* Configure the min and max time BT gains the antenna
+	* Configure the min and max समय BT gains the antenna
 	* in WLAN / BT slave basic rate
 	*
 	* Range: 0 - 255 (ms)
@@ -53,7 +54,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_ACL_BT_SLAVE_MAX_BR,
 
 	/*
-	* Configure the min and max time BT gains the antenna
+	* Configure the min and max समय BT gains the antenna
 	* in WLAN / BT master EDR
 	*
 	* Range: 0 - 255 (ms)
@@ -62,7 +63,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_ACL_BT_MASTER_MAX_EDR,
 
 	/*
-	* Configure the min and max time BT gains the antenna
+	* Configure the min and max समय BT gains the antenna
 	* in WLAN / BT slave EDR
 	*
 	* Range: 0 - 255 (ms)
@@ -71,7 +72,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_ACL_BT_SLAVE_MAX_EDR,
 
 	/*
-	* The maximum time WLAN can gain the antenna
+	* The maximum समय WLAN can gain the antenna
 	* in WLAN PSM / BT master/slave BR
 	*
 	* Range: 0 - 255 (ms)
@@ -80,7 +81,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_ACL_WLAN_PS_SLAVE_BR,
 
 	/*
-	* The maximum time WLAN can gain the antenna
+	* The maximum समय WLAN can gain the antenna
 	* in WLAN PSM / BT master/slave EDR
 	*
 	* Range: 0 - 255 (ms)
@@ -122,7 +123,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_ACTIVE_SCAN_DURATION_FACTOR_HV3,
 
 	/*
-	* Compensation percentage of WLAN active scan window if initiated
+	* Compensation percentage of WLAN active scan winकरोw अगर initiated
 	* during BT A2DP
 	*
 	* Range: 0 - 1000 (%)
@@ -130,7 +131,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_ACTIVE_SCAN_DURATION_FACTOR_A2DP,
 
 	/*
-	* Compensation percentage of WLAN passive scan window if initiated
+	* Compensation percentage of WLAN passive scan winकरोw अगर initiated
 	* during BT A2DP BR
 	*
 	* Range: 0 - 1000 (%)
@@ -138,7 +139,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_PASSIVE_SCAN_DUR_FACTOR_A2DP_BR,
 
 	/*
-	* Compensation percentage of WLAN passive scan window if initiated
+	* Compensation percentage of WLAN passive scan winकरोw अगर initiated
 	* during BT A2DP EDR
 	*
 	* Range: 0 - 1000 (%)
@@ -146,7 +147,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_PASSIVE_SCAN_DUR_FACTOR_A2DP_EDR,
 
 	/*
-	* Compensation percentage of WLAN passive scan window if initiated
+	* Compensation percentage of WLAN passive scan winकरोw अगर initiated
 	* during BT voice
 	*
 	* Range: 0 - 1000 (%)
@@ -159,9 +160,9 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_TX_RX_PROTECT_BW_IN_PASSIVE_SCAN,
 
 	/*
-	* Defines whether the SG will force WLAN host to enter/exit PSM
+	* Defines whether the SG will क्रमce WLAN host to enter/निकास PSM
 	*
-	* Range: 1 - SG can force, 0 - host handles PSM
+	* Range: 1 - SG can क्रमce, 0 - host handles PSM
 	*/
 	WL12XX_CONF_SG_STA_FORCE_PS_IN_BT_SCO,
 
@@ -173,7 +174,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_ANTENNA_CONFIGURATION,
 
 	/*
-	* The threshold (percent) of max consecutive beacon misses before
+	* The threshold (percent) of max consecutive beacon misses beक्रमe
 	* increasing priority of beacon reception.
 	*
 	* Range: 0 - 100 (%)
@@ -181,14 +182,14 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_BEACON_MISS_PERCENT,
 
 	/*
-	* Protection time of the DHCP procedure.
+	* Protection समय of the DHCP procedure.
 	*
 	* Range: 0 - 100000 (ms)
 	*/
 	WL12XX_CONF_SG_DHCP_TIME,
 
 	/*
-	* RX guard time before the beginning of a new BT voice frame during
+	* RX guard समय beक्रमe the beginning of a new BT voice frame during
 	* which no new WLAN trigger frame is transmitted.
 	*
 	* Range: 0 - 100000 (us)
@@ -196,7 +197,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_RXT,
 
 	/*
-	* TX guard time before the beginning of a new BT voice frame during
+	* TX guard समय beक्रमe the beginning of a new BT voice frame during
 	* which no new WLAN frame is transmitted.
 	*
 	* Range: 0 - 100000 (us)
@@ -215,7 +216,7 @@ enum wl12xx_sg_params {
 	WL12XX_CONF_SG_GENERAL_USAGE_BIT_MAP,
 
 	/*
-	* Number of consecutive BT voice frames not interrupted by WLAN
+	* Number of consecutive BT voice frames not पूर्णांकerrupted by WLAN
 	*
 	* Range: 0 - 100
 	*/
@@ -264,6 +265,6 @@ enum wl12xx_sg_params {
 
 	WL12XX_CONF_SG_PARAMS_MAX,
 	WL12XX_CONF_SG_PARAMS_ALL = 0xff
-};
+पूर्ण;
 
-#endif /* __WL12XX_CONF_H__ */
+#पूर्ण_अगर /* __WL12XX_CONF_H__ */

@@ -1,226 +1,227 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Encryption policy functions for per-file encryption support.
+ * Encryption policy functions क्रम per-file encryption support.
  *
  * Copyright (C) 2015, Google, Inc.
  * Copyright (C) 2015, Motorola Mobility.
  *
  * Originally written by Michael Halcrow, 2015.
- * Modified by Jaegeuk Kim, 2015.
- * Modified by Eric Biggers, 2019 for v2 policy support.
+ * Modअगरied by Jaegeuk Kim, 2015.
+ * Modअगरied by Eric Biggers, 2019 क्रम v2 policy support.
  */
 
-#include <linux/random.h>
-#include <linux/seq_file.h>
-#include <linux/string.h>
-#include <linux/mount.h>
-#include "fscrypt_private.h"
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mount.h>
+#समावेश "fscrypt_private.h"
 
 /**
  * fscrypt_policies_equal() - check whether two encryption policies are the same
  * @policy1: the first policy
  * @policy2: the second policy
  *
- * Return: %true if equal, else %false
+ * Return: %true अगर equal, अन्यथा %false
  */
-bool fscrypt_policies_equal(const union fscrypt_policy *policy1,
-			    const union fscrypt_policy *policy2)
-{
-	if (policy1->version != policy2->version)
-		return false;
+bool fscrypt_policies_equal(स्थिर जोड़ fscrypt_policy *policy1,
+			    स्थिर जोड़ fscrypt_policy *policy2)
+अणु
+	अगर (policy1->version != policy2->version)
+		वापस false;
 
-	return !memcmp(policy1, policy2, fscrypt_policy_size(policy1));
-}
+	वापस !स_भेद(policy1, policy2, fscrypt_policy_size(policy1));
+पूर्ण
 
-static const union fscrypt_policy *
-fscrypt_get_dummy_policy(struct super_block *sb)
-{
-	if (!sb->s_cop->get_dummy_policy)
-		return NULL;
-	return sb->s_cop->get_dummy_policy(sb);
-}
+अटल स्थिर जोड़ fscrypt_policy *
+fscrypt_get_dummy_policy(काष्ठा super_block *sb)
+अणु
+	अगर (!sb->s_cop->get_dummy_policy)
+		वापस शून्य;
+	वापस sb->s_cop->get_dummy_policy(sb);
+पूर्ण
 
-static bool fscrypt_valid_enc_modes(u32 contents_mode, u32 filenames_mode)
-{
-	if (contents_mode == FSCRYPT_MODE_AES_256_XTS &&
+अटल bool fscrypt_valid_enc_modes(u32 contents_mode, u32 filenames_mode)
+अणु
+	अगर (contents_mode == FSCRYPT_MODE_AES_256_XTS &&
 	    filenames_mode == FSCRYPT_MODE_AES_256_CTS)
-		return true;
+		वापस true;
 
-	if (contents_mode == FSCRYPT_MODE_AES_128_CBC &&
+	अगर (contents_mode == FSCRYPT_MODE_AES_128_CBC &&
 	    filenames_mode == FSCRYPT_MODE_AES_128_CTS)
-		return true;
+		वापस true;
 
-	if (contents_mode == FSCRYPT_MODE_ADIANTUM &&
+	अगर (contents_mode == FSCRYPT_MODE_ADIANTUM &&
 	    filenames_mode == FSCRYPT_MODE_ADIANTUM)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool supported_direct_key_modes(const struct inode *inode,
+अटल bool supported_direct_key_modes(स्थिर काष्ठा inode *inode,
 				       u32 contents_mode, u32 filenames_mode)
-{
-	const struct fscrypt_mode *mode;
+अणु
+	स्थिर काष्ठा fscrypt_mode *mode;
 
-	if (contents_mode != filenames_mode) {
+	अगर (contents_mode != filenames_mode) अणु
 		fscrypt_warn(inode,
 			     "Direct key flag not allowed with different contents and filenames modes");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	mode = &fscrypt_modes[contents_mode];
 
-	if (mode->ivsize < offsetofend(union fscrypt_iv, nonce)) {
+	अगर (mode->ivsize < दुरत्वend(जोड़ fscrypt_iv, nonce)) अणु
 		fscrypt_warn(inode, "Direct key flag not allowed with %s",
-			     mode->friendly_name);
-		return false;
-	}
-	return true;
-}
+			     mode->मित्रly_name);
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static bool supported_iv_ino_lblk_policy(const struct fscrypt_policy_v2 *policy,
-					 const struct inode *inode,
-					 const char *type,
-					 int max_ino_bits, int max_lblk_bits)
-{
-	struct super_block *sb = inode->i_sb;
-	int ino_bits = 64, lblk_bits = 64;
+अटल bool supported_iv_ino_lblk_policy(स्थिर काष्ठा fscrypt_policy_v2 *policy,
+					 स्थिर काष्ठा inode *inode,
+					 स्थिर अक्षर *type,
+					 पूर्णांक max_ino_bits, पूर्णांक max_lblk_bits)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	पूर्णांक ino_bits = 64, lblk_bits = 64;
 
 	/*
 	 * IV_INO_LBLK_* exist only because of hardware limitations, and
-	 * currently the only known use case for them involves AES-256-XTS.
-	 * That's also all we test currently.  For these reasons, for now only
-	 * allow AES-256-XTS here.  This can be relaxed later if a use case for
+	 * currently the only known use हाल क्रम them involves AES-256-XTS.
+	 * That's also all we test currently.  For these reasons, क्रम now only
+	 * allow AES-256-XTS here.  This can be relaxed later अगर a use हाल क्रम
 	 * IV_INO_LBLK_* with other encryption modes arises.
 	 */
-	if (policy->contents_encryption_mode != FSCRYPT_MODE_AES_256_XTS) {
+	अगर (policy->contents_encryption_mode != FSCRYPT_MODE_AES_256_XTS) अणु
 		fscrypt_warn(inode,
 			     "Can't use %s policy with contents mode other than AES-256-XTS",
 			     type);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/*
-	 * It's unsafe to include inode numbers in the IVs if the filesystem can
-	 * potentially renumber inodes, e.g. via filesystem shrinking.
+	 * It's unsafe to include inode numbers in the IVs अगर the fileप्रणाली can
+	 * potentially rक्रमागतber inodes, e.g. via fileप्रणाली shrinking.
 	 */
-	if (!sb->s_cop->has_stable_inodes ||
-	    !sb->s_cop->has_stable_inodes(sb)) {
+	अगर (!sb->s_cop->has_stable_inodes ||
+	    !sb->s_cop->has_stable_inodes(sb)) अणु
 		fscrypt_warn(inode,
 			     "Can't use %s policy on filesystem '%s' because it doesn't have stable inode numbers",
 			     type, sb->s_id);
-		return false;
-	}
-	if (sb->s_cop->get_ino_and_lblk_bits)
+		वापस false;
+	पूर्ण
+	अगर (sb->s_cop->get_ino_and_lblk_bits)
 		sb->s_cop->get_ino_and_lblk_bits(sb, &ino_bits, &lblk_bits);
-	if (ino_bits > max_ino_bits) {
+	अगर (ino_bits > max_ino_bits) अणु
 		fscrypt_warn(inode,
 			     "Can't use %s policy on filesystem '%s' because its inode numbers are too long",
 			     type, sb->s_id);
-		return false;
-	}
-	if (lblk_bits > max_lblk_bits) {
+		वापस false;
+	पूर्ण
+	अगर (lblk_bits > max_lblk_bits) अणु
 		fscrypt_warn(inode,
 			     "Can't use %s policy on filesystem '%s' because its block numbers are too long",
 			     type, sb->s_id);
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static bool fscrypt_supported_v1_policy(const struct fscrypt_policy_v1 *policy,
-					const struct inode *inode)
-{
-	if (!fscrypt_valid_enc_modes(policy->contents_encryption_mode,
-				     policy->filenames_encryption_mode)) {
+अटल bool fscrypt_supported_v1_policy(स्थिर काष्ठा fscrypt_policy_v1 *policy,
+					स्थिर काष्ठा inode *inode)
+अणु
+	अगर (!fscrypt_valid_enc_modes(policy->contents_encryption_mode,
+				     policy->filenames_encryption_mode)) अणु
 		fscrypt_warn(inode,
 			     "Unsupported encryption modes (contents %d, filenames %d)",
 			     policy->contents_encryption_mode,
 			     policy->filenames_encryption_mode);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (policy->flags & ~(FSCRYPT_POLICY_FLAGS_PAD_MASK |
-			      FSCRYPT_POLICY_FLAG_DIRECT_KEY)) {
+	अगर (policy->flags & ~(FSCRYPT_POLICY_FLAGS_PAD_MASK |
+			      FSCRYPT_POLICY_FLAG_सूचीECT_KEY)) अणु
 		fscrypt_warn(inode, "Unsupported encryption flags (0x%02x)",
 			     policy->flags);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if ((policy->flags & FSCRYPT_POLICY_FLAG_DIRECT_KEY) &&
+	अगर ((policy->flags & FSCRYPT_POLICY_FLAG_सूचीECT_KEY) &&
 	    !supported_direct_key_modes(inode, policy->contents_encryption_mode,
 					policy->filenames_encryption_mode))
-		return false;
+		वापस false;
 
-	if (IS_CASEFOLDED(inode)) {
+	अगर (IS_CASEFOLDED(inode)) अणु
 		/* With v1, there's no way to derive dirhash keys. */
 		fscrypt_warn(inode,
 			     "v1 policies can't be used on casefolded directories");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool fscrypt_supported_v2_policy(const struct fscrypt_policy_v2 *policy,
-					const struct inode *inode)
-{
-	int count = 0;
+अटल bool fscrypt_supported_v2_policy(स्थिर काष्ठा fscrypt_policy_v2 *policy,
+					स्थिर काष्ठा inode *inode)
+अणु
+	पूर्णांक count = 0;
 
-	if (!fscrypt_valid_enc_modes(policy->contents_encryption_mode,
-				     policy->filenames_encryption_mode)) {
+	अगर (!fscrypt_valid_enc_modes(policy->contents_encryption_mode,
+				     policy->filenames_encryption_mode)) अणु
 		fscrypt_warn(inode,
 			     "Unsupported encryption modes (contents %d, filenames %d)",
 			     policy->contents_encryption_mode,
 			     policy->filenames_encryption_mode);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (policy->flags & ~(FSCRYPT_POLICY_FLAGS_PAD_MASK |
-			      FSCRYPT_POLICY_FLAG_DIRECT_KEY |
+	अगर (policy->flags & ~(FSCRYPT_POLICY_FLAGS_PAD_MASK |
+			      FSCRYPT_POLICY_FLAG_सूचीECT_KEY |
 			      FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64 |
-			      FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32)) {
+			      FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32)) अणु
 		fscrypt_warn(inode, "Unsupported encryption flags (0x%02x)",
 			     policy->flags);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	count += !!(policy->flags & FSCRYPT_POLICY_FLAG_DIRECT_KEY);
+	count += !!(policy->flags & FSCRYPT_POLICY_FLAG_सूचीECT_KEY);
 	count += !!(policy->flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64);
 	count += !!(policy->flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32);
-	if (count > 1) {
+	अगर (count > 1) अणु
 		fscrypt_warn(inode, "Mutually exclusive encryption flags (0x%02x)",
 			     policy->flags);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if ((policy->flags & FSCRYPT_POLICY_FLAG_DIRECT_KEY) &&
+	अगर ((policy->flags & FSCRYPT_POLICY_FLAG_सूचीECT_KEY) &&
 	    !supported_direct_key_modes(inode, policy->contents_encryption_mode,
 					policy->filenames_encryption_mode))
-		return false;
+		वापस false;
 
-	if ((policy->flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64) &&
+	अगर ((policy->flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64) &&
 	    !supported_iv_ino_lblk_policy(policy, inode, "IV_INO_LBLK_64",
 					  32, 32))
-		return false;
+		वापस false;
 
 	/*
 	 * IV_INO_LBLK_32 hashes the inode number, so in principle it can
 	 * support any ino_bits.  However, currently the inode number is gotten
-	 * from inode::i_ino which is 'unsigned long'.  So for now the
+	 * from inode::i_ino which is 'unsigned long'.  So क्रम now the
 	 * implementation limit is 32 bits.
 	 */
-	if ((policy->flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32) &&
+	अगर ((policy->flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32) &&
 	    !supported_iv_ino_lblk_policy(policy, inode, "IV_INO_LBLK_32",
 					  32, 32))
-		return false;
+		वापस false;
 
-	if (memchr_inv(policy->__reserved, 0, sizeof(policy->__reserved))) {
+	अगर (स_प्रथम_inv(policy->__reserved, 0, माप(policy->__reserved))) अणु
 		fscrypt_warn(inode, "Reserved bits set in encryption policy");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * fscrypt_supported_policy() - check whether an encryption policy is supported
@@ -228,23 +229,23 @@ static bool fscrypt_supported_v2_policy(const struct fscrypt_policy_v2 *policy,
  * @inode: the inode on which the policy will be used
  *
  * Given an encryption policy, check whether all its encryption modes and other
- * settings are supported by this kernel on the given inode.  (But we don't
- * currently don't check for crypto API support here, so attempting to use an
- * algorithm not configured into the crypto API will still fail later.)
+ * settings are supported by this kernel on the given inode.  (But we करोn't
+ * currently करोn't check क्रम crypto API support here, so attempting to use an
+ * algorithm not configured पूर्णांकo the crypto API will still fail later.)
  *
- * Return: %true if supported, else %false
+ * Return: %true अगर supported, अन्यथा %false
  */
-bool fscrypt_supported_policy(const union fscrypt_policy *policy_u,
-			      const struct inode *inode)
-{
-	switch (policy_u->version) {
-	case FSCRYPT_POLICY_V1:
-		return fscrypt_supported_v1_policy(&policy_u->v1, inode);
-	case FSCRYPT_POLICY_V2:
-		return fscrypt_supported_v2_policy(&policy_u->v2, inode);
-	}
-	return false;
-}
+bool fscrypt_supported_policy(स्थिर जोड़ fscrypt_policy *policy_u,
+			      स्थिर काष्ठा inode *inode)
+अणु
+	चयन (policy_u->version) अणु
+	हाल FSCRYPT_POLICY_V1:
+		वापस fscrypt_supported_v1_policy(&policy_u->v1, inode);
+	हाल FSCRYPT_POLICY_V2:
+		वापस fscrypt_supported_v2_policy(&policy_u->v2, inode);
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
  * fscrypt_new_context() - create a new fscrypt_context
@@ -252,21 +253,21 @@ bool fscrypt_supported_policy(const union fscrypt_policy *policy_u,
  * @policy_u: input policy
  * @nonce: nonce to use
  *
- * Create an fscrypt_context for an inode that is being assigned the given
- * encryption policy.  @nonce must be a new random nonce.
+ * Create an fscrypt_context क्रम an inode that is being asचिन्हित the given
+ * encryption policy.  @nonce must be a new अक्रमom nonce.
  *
  * Return: the size of the new context in bytes.
  */
-static int fscrypt_new_context(union fscrypt_context *ctx_u,
-			       const union fscrypt_policy *policy_u,
-			       const u8 nonce[FSCRYPT_FILE_NONCE_SIZE])
-{
-	memset(ctx_u, 0, sizeof(*ctx_u));
+अटल पूर्णांक fscrypt_new_context(जोड़ fscrypt_context *ctx_u,
+			       स्थिर जोड़ fscrypt_policy *policy_u,
+			       स्थिर u8 nonce[FSCRYPT_खाता_NONCE_SIZE])
+अणु
+	स_रखो(ctx_u, 0, माप(*ctx_u));
 
-	switch (policy_u->version) {
-	case FSCRYPT_POLICY_V1: {
-		const struct fscrypt_policy_v1 *policy = &policy_u->v1;
-		struct fscrypt_context_v1 *ctx = &ctx_u->v1;
+	चयन (policy_u->version) अणु
+	हाल FSCRYPT_POLICY_V1: अणु
+		स्थिर काष्ठा fscrypt_policy_v1 *policy = &policy_u->v1;
+		काष्ठा fscrypt_context_v1 *ctx = &ctx_u->v1;
 
 		ctx->version = FSCRYPT_CONTEXT_V1;
 		ctx->contents_encryption_mode =
@@ -274,15 +275,15 @@ static int fscrypt_new_context(union fscrypt_context *ctx_u,
 		ctx->filenames_encryption_mode =
 			policy->filenames_encryption_mode;
 		ctx->flags = policy->flags;
-		memcpy(ctx->master_key_descriptor,
+		स_नकल(ctx->master_key_descriptor,
 		       policy->master_key_descriptor,
-		       sizeof(ctx->master_key_descriptor));
-		memcpy(ctx->nonce, nonce, FSCRYPT_FILE_NONCE_SIZE);
-		return sizeof(*ctx);
-	}
-	case FSCRYPT_POLICY_V2: {
-		const struct fscrypt_policy_v2 *policy = &policy_u->v2;
-		struct fscrypt_context_v2 *ctx = &ctx_u->v2;
+		       माप(ctx->master_key_descriptor));
+		स_नकल(ctx->nonce, nonce, FSCRYPT_खाता_NONCE_SIZE);
+		वापस माप(*ctx);
+	पूर्ण
+	हाल FSCRYPT_POLICY_V2: अणु
+		स्थिर काष्ठा fscrypt_policy_v2 *policy = &policy_u->v2;
+		काष्ठा fscrypt_context_v2 *ctx = &ctx_u->v2;
 
 		ctx->version = FSCRYPT_CONTEXT_V2;
 		ctx->contents_encryption_mode =
@@ -290,15 +291,15 @@ static int fscrypt_new_context(union fscrypt_context *ctx_u,
 		ctx->filenames_encryption_mode =
 			policy->filenames_encryption_mode;
 		ctx->flags = policy->flags;
-		memcpy(ctx->master_key_identifier,
-		       policy->master_key_identifier,
-		       sizeof(ctx->master_key_identifier));
-		memcpy(ctx->nonce, nonce, FSCRYPT_FILE_NONCE_SIZE);
-		return sizeof(*ctx);
-	}
-	}
+		स_नकल(ctx->master_key_identअगरier,
+		       policy->master_key_identअगरier,
+		       माप(ctx->master_key_identअगरier));
+		स_नकल(ctx->nonce, nonce, FSCRYPT_खाता_NONCE_SIZE);
+		वापस माप(*ctx);
+	पूर्ण
+	पूर्ण
 	BUG();
-}
+पूर्ण
 
 /**
  * fscrypt_policy_from_context() - convert an fscrypt_context to
@@ -309,25 +310,25 @@ static int fscrypt_new_context(union fscrypt_context *ctx_u,
  *
  * Given an fscrypt_context, build the corresponding fscrypt_policy.
  *
- * Return: 0 on success, or -EINVAL if the fscrypt_context has an unrecognized
+ * Return: 0 on success, or -EINVAL अगर the fscrypt_context has an unrecognized
  * version number or size.
  *
- * This does *not* validate the settings within the policy itself, e.g. the
- * modes, flags, and reserved bits.  Use fscrypt_supported_policy() for that.
+ * This करोes *not* validate the settings within the policy itself, e.g. the
+ * modes, flags, and reserved bits.  Use fscrypt_supported_policy() क्रम that.
  */
-int fscrypt_policy_from_context(union fscrypt_policy *policy_u,
-				const union fscrypt_context *ctx_u,
-				int ctx_size)
-{
-	memset(policy_u, 0, sizeof(*policy_u));
+पूर्णांक fscrypt_policy_from_context(जोड़ fscrypt_policy *policy_u,
+				स्थिर जोड़ fscrypt_context *ctx_u,
+				पूर्णांक ctx_size)
+अणु
+	स_रखो(policy_u, 0, माप(*policy_u));
 
-	if (!fscrypt_context_is_valid(ctx_u, ctx_size))
-		return -EINVAL;
+	अगर (!fscrypt_context_is_valid(ctx_u, ctx_size))
+		वापस -EINVAL;
 
-	switch (ctx_u->version) {
-	case FSCRYPT_CONTEXT_V1: {
-		const struct fscrypt_context_v1 *ctx = &ctx_u->v1;
-		struct fscrypt_policy_v1 *policy = &policy_u->v1;
+	चयन (ctx_u->version) अणु
+	हाल FSCRYPT_CONTEXT_V1: अणु
+		स्थिर काष्ठा fscrypt_context_v1 *ctx = &ctx_u->v1;
+		काष्ठा fscrypt_policy_v1 *policy = &policy_u->v1;
 
 		policy->version = FSCRYPT_POLICY_V1;
 		policy->contents_encryption_mode =
@@ -335,14 +336,14 @@ int fscrypt_policy_from_context(union fscrypt_policy *policy_u,
 		policy->filenames_encryption_mode =
 			ctx->filenames_encryption_mode;
 		policy->flags = ctx->flags;
-		memcpy(policy->master_key_descriptor,
+		स_नकल(policy->master_key_descriptor,
 		       ctx->master_key_descriptor,
-		       sizeof(policy->master_key_descriptor));
-		return 0;
-	}
-	case FSCRYPT_CONTEXT_V2: {
-		const struct fscrypt_context_v2 *ctx = &ctx_u->v2;
-		struct fscrypt_policy_v2 *policy = &policy_u->v2;
+		       माप(policy->master_key_descriptor));
+		वापस 0;
+	पूर्ण
+	हाल FSCRYPT_CONTEXT_V2: अणु
+		स्थिर काष्ठा fscrypt_context_v2 *ctx = &ctx_u->v2;
+		काष्ठा fscrypt_policy_v2 *policy = &policy_u->v2;
 
 		policy->version = FSCRYPT_POLICY_V2;
 		policy->contents_encryption_mode =
@@ -350,469 +351,469 @@ int fscrypt_policy_from_context(union fscrypt_policy *policy_u,
 		policy->filenames_encryption_mode =
 			ctx->filenames_encryption_mode;
 		policy->flags = ctx->flags;
-		memcpy(policy->__reserved, ctx->__reserved,
-		       sizeof(policy->__reserved));
-		memcpy(policy->master_key_identifier,
-		       ctx->master_key_identifier,
-		       sizeof(policy->master_key_identifier));
-		return 0;
-	}
-	}
+		स_नकल(policy->__reserved, ctx->__reserved,
+		       माप(policy->__reserved));
+		स_नकल(policy->master_key_identअगरier,
+		       ctx->master_key_identअगरier,
+		       माप(policy->master_key_identअगरier));
+		वापस 0;
+	पूर्ण
+	पूर्ण
 	/* unreachable */
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /* Retrieve an inode's encryption policy */
-static int fscrypt_get_policy(struct inode *inode, union fscrypt_policy *policy)
-{
-	const struct fscrypt_info *ci;
-	union fscrypt_context ctx;
-	int ret;
+अटल पूर्णांक fscrypt_get_policy(काष्ठा inode *inode, जोड़ fscrypt_policy *policy)
+अणु
+	स्थिर काष्ठा fscrypt_info *ci;
+	जोड़ fscrypt_context ctx;
+	पूर्णांक ret;
 
 	ci = fscrypt_get_info(inode);
-	if (ci) {
+	अगर (ci) अणु
 		/* key available, use the cached policy */
 		*policy = ci->ci_policy;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!IS_ENCRYPTED(inode))
-		return -ENODATA;
+	अगर (!IS_ENCRYPTED(inode))
+		वापस -ENODATA;
 
-	ret = inode->i_sb->s_cop->get_context(inode, &ctx, sizeof(ctx));
-	if (ret < 0)
-		return (ret == -ERANGE) ? -EINVAL : ret;
+	ret = inode->i_sb->s_cop->get_context(inode, &ctx, माप(ctx));
+	अगर (ret < 0)
+		वापस (ret == -दुस्फल) ? -EINVAL : ret;
 
-	return fscrypt_policy_from_context(policy, &ctx, ret);
-}
+	वापस fscrypt_policy_from_context(policy, &ctx, ret);
+पूर्ण
 
-static int set_encryption_policy(struct inode *inode,
-				 const union fscrypt_policy *policy)
-{
-	u8 nonce[FSCRYPT_FILE_NONCE_SIZE];
-	union fscrypt_context ctx;
-	int ctxsize;
-	int err;
+अटल पूर्णांक set_encryption_policy(काष्ठा inode *inode,
+				 स्थिर जोड़ fscrypt_policy *policy)
+अणु
+	u8 nonce[FSCRYPT_खाता_NONCE_SIZE];
+	जोड़ fscrypt_context ctx;
+	पूर्णांक ctxsize;
+	पूर्णांक err;
 
-	if (!fscrypt_supported_policy(policy, inode))
-		return -EINVAL;
+	अगर (!fscrypt_supported_policy(policy, inode))
+		वापस -EINVAL;
 
-	switch (policy->version) {
-	case FSCRYPT_POLICY_V1:
+	चयन (policy->version) अणु
+	हाल FSCRYPT_POLICY_V1:
 		/*
 		 * The original encryption policy version provided no way of
-		 * verifying that the correct master key was supplied, which was
+		 * verअगरying that the correct master key was supplied, which was
 		 * insecure in scenarios where multiple users have access to the
-		 * same encrypted files (even just read-only access).  The new
+		 * same encrypted files (even just पढ़ो-only access).  The new
 		 * encryption policy version fixes this and also implies use of
 		 * an improved key derivation function and allows non-root users
-		 * to securely remove keys.  So as long as compatibility with
+		 * to securely हटाओ keys.  So as दीर्घ as compatibility with
 		 * old kernels isn't required, it is recommended to use the new
-		 * policy version for all new encrypted directories.
+		 * policy version क्रम all new encrypted directories.
 		 */
 		pr_warn_once("%s (pid %d) is setting deprecated v1 encryption policy; recommend upgrading to v2.\n",
 			     current->comm, current->pid);
-		break;
-	case FSCRYPT_POLICY_V2:
-		err = fscrypt_verify_key_added(inode->i_sb,
-					       policy->v2.master_key_identifier);
-		if (err)
-			return err;
-		if (policy->v2.flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32)
+		अवरोध;
+	हाल FSCRYPT_POLICY_V2:
+		err = fscrypt_verअगरy_key_added(inode->i_sb,
+					       policy->v2.master_key_identअगरier);
+		अगर (err)
+			वापस err;
+		अगर (policy->v2.flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32)
 			pr_warn_once("%s (pid %d) is setting an IV_INO_LBLK_32 encryption policy.  This should only be used if there are certain hardware limitations.\n",
 				     current->comm, current->pid);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	get_random_bytes(nonce, FSCRYPT_FILE_NONCE_SIZE);
+	get_अक्रमom_bytes(nonce, FSCRYPT_खाता_NONCE_SIZE);
 	ctxsize = fscrypt_new_context(&ctx, policy, nonce);
 
-	return inode->i_sb->s_cop->set_context(inode, &ctx, ctxsize, NULL);
-}
+	वापस inode->i_sb->s_cop->set_context(inode, &ctx, ctxsize, शून्य);
+पूर्ण
 
-int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
-{
-	union fscrypt_policy policy;
-	union fscrypt_policy existing_policy;
-	struct inode *inode = file_inode(filp);
+पूर्णांक fscrypt_ioctl_set_policy(काष्ठा file *filp, स्थिर व्योम __user *arg)
+अणु
+	जोड़ fscrypt_policy policy;
+	जोड़ fscrypt_policy existing_policy;
+	काष्ठा inode *inode = file_inode(filp);
 	u8 version;
-	int size;
-	int ret;
+	पूर्णांक size;
+	पूर्णांक ret;
 
-	if (get_user(policy.version, (const u8 __user *)arg))
-		return -EFAULT;
+	अगर (get_user(policy.version, (स्थिर u8 __user *)arg))
+		वापस -EFAULT;
 
 	size = fscrypt_policy_size(&policy);
-	if (size <= 0)
-		return -EINVAL;
+	अगर (size <= 0)
+		वापस -EINVAL;
 
 	/*
-	 * We should just copy the remaining 'size - 1' bytes here, but a
+	 * We should just copy the reमुख्यing 'size - 1' bytes here, but a
 	 * bizarre bug in gcc 7 and earlier (fixed by gcc r255731) causes gcc to
 	 * think that size can be 0 here (despite the check above!) *and* that
-	 * it's a compile-time constant.  Thus it would think copy_from_user()
-	 * is passed compile-time constant ULONG_MAX, causing the compile-time
-	 * buffer overflow check to fail, breaking the build. This only occurred
+	 * it's a compile-समय स्थिरant.  Thus it would think copy_from_user()
+	 * is passed compile-समय स्थिरant अच_दीर्घ_उच्च, causing the compile-समय
+	 * buffer overflow check to fail, अवरोधing the build. This only occurred
 	 * when building an i386 kernel with -Os and branch profiling enabled.
 	 *
 	 * Work around it by just copying the first byte again...
 	 */
 	version = policy.version;
-	if (copy_from_user(&policy, arg, size))
-		return -EFAULT;
+	अगर (copy_from_user(&policy, arg, size))
+		वापस -EFAULT;
 	policy.version = version;
 
-	if (!inode_owner_or_capable(&init_user_ns, inode))
-		return -EACCES;
+	अगर (!inode_owner_or_capable(&init_user_ns, inode))
+		वापस -EACCES;
 
-	ret = mnt_want_write_file(filp);
-	if (ret)
-		return ret;
+	ret = mnt_want_ग_लिखो_file(filp);
+	अगर (ret)
+		वापस ret;
 
 	inode_lock(inode);
 
 	ret = fscrypt_get_policy(inode, &existing_policy);
-	if (ret == -ENODATA) {
-		if (!S_ISDIR(inode->i_mode))
-			ret = -ENOTDIR;
-		else if (IS_DEADDIR(inode))
+	अगर (ret == -ENODATA) अणु
+		अगर (!S_ISसूची(inode->i_mode))
+			ret = -ENOTसूची;
+		अन्यथा अगर (IS_DEADसूची(inode))
 			ret = -ENOENT;
-		else if (!inode->i_sb->s_cop->empty_dir(inode))
+		अन्यथा अगर (!inode->i_sb->s_cop->empty_dir(inode))
 			ret = -ENOTEMPTY;
-		else
+		अन्यथा
 			ret = set_encryption_policy(inode, &policy);
-	} else if (ret == -EINVAL ||
+	पूर्ण अन्यथा अगर (ret == -EINVAL ||
 		   (ret == 0 && !fscrypt_policies_equal(&policy,
-							&existing_policy))) {
-		/* The file already uses a different encryption policy. */
+							&existing_policy))) अणु
+		/* The file alपढ़ोy uses a dअगरferent encryption policy. */
 		ret = -EEXIST;
-	}
+	पूर्ण
 
 	inode_unlock(inode);
 
-	mnt_drop_write_file(filp);
-	return ret;
-}
+	mnt_drop_ग_लिखो_file(filp);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(fscrypt_ioctl_set_policy);
 
 /* Original ioctl version; can only get the original policy version */
-int fscrypt_ioctl_get_policy(struct file *filp, void __user *arg)
-{
-	union fscrypt_policy policy;
-	int err;
+पूर्णांक fscrypt_ioctl_get_policy(काष्ठा file *filp, व्योम __user *arg)
+अणु
+	जोड़ fscrypt_policy policy;
+	पूर्णांक err;
 
 	err = fscrypt_get_policy(file_inode(filp), &policy);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (policy.version != FSCRYPT_POLICY_V1)
-		return -EINVAL;
+	अगर (policy.version != FSCRYPT_POLICY_V1)
+		वापस -EINVAL;
 
-	if (copy_to_user(arg, &policy, sizeof(policy.v1)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(arg, &policy, माप(policy.v1)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(fscrypt_ioctl_get_policy);
 
 /* Extended ioctl version; can get policies of any version */
-int fscrypt_ioctl_get_policy_ex(struct file *filp, void __user *uarg)
-{
-	struct fscrypt_get_policy_ex_arg arg;
-	union fscrypt_policy *policy = (union fscrypt_policy *)&arg.policy;
-	size_t policy_size;
-	int err;
+पूर्णांक fscrypt_ioctl_get_policy_ex(काष्ठा file *filp, व्योम __user *uarg)
+अणु
+	काष्ठा fscrypt_get_policy_ex_arg arg;
+	जोड़ fscrypt_policy *policy = (जोड़ fscrypt_policy *)&arg.policy;
+	माप_प्रकार policy_size;
+	पूर्णांक err;
 
 	/* arg is policy_size, then policy */
-	BUILD_BUG_ON(offsetof(typeof(arg), policy_size) != 0);
-	BUILD_BUG_ON(offsetofend(typeof(arg), policy_size) !=
-		     offsetof(typeof(arg), policy));
-	BUILD_BUG_ON(sizeof(arg.policy) != sizeof(*policy));
+	BUILD_BUG_ON(दुरत्व(typeof(arg), policy_size) != 0);
+	BUILD_BUG_ON(दुरत्वend(typeof(arg), policy_size) !=
+		     दुरत्व(typeof(arg), policy));
+	BUILD_BUG_ON(माप(arg.policy) != माप(*policy));
 
 	err = fscrypt_get_policy(file_inode(filp), policy);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	policy_size = fscrypt_policy_size(policy);
 
-	if (copy_from_user(&arg, uarg, sizeof(arg.policy_size)))
-		return -EFAULT;
+	अगर (copy_from_user(&arg, uarg, माप(arg.policy_size)))
+		वापस -EFAULT;
 
-	if (policy_size > arg.policy_size)
-		return -EOVERFLOW;
+	अगर (policy_size > arg.policy_size)
+		वापस -EOVERFLOW;
 	arg.policy_size = policy_size;
 
-	if (copy_to_user(uarg, &arg, sizeof(arg.policy_size) + policy_size))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(uarg, &arg, माप(arg.policy_size) + policy_size))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(fscrypt_ioctl_get_policy_ex);
 
-/* FS_IOC_GET_ENCRYPTION_NONCE: retrieve file's encryption nonce for testing */
-int fscrypt_ioctl_get_nonce(struct file *filp, void __user *arg)
-{
-	struct inode *inode = file_inode(filp);
-	union fscrypt_context ctx;
-	int ret;
+/* FS_IOC_GET_ENCRYPTION_NONCE: retrieve file's encryption nonce क्रम testing */
+पूर्णांक fscrypt_ioctl_get_nonce(काष्ठा file *filp, व्योम __user *arg)
+अणु
+	काष्ठा inode *inode = file_inode(filp);
+	जोड़ fscrypt_context ctx;
+	पूर्णांक ret;
 
-	ret = inode->i_sb->s_cop->get_context(inode, &ctx, sizeof(ctx));
-	if (ret < 0)
-		return ret;
-	if (!fscrypt_context_is_valid(&ctx, ret))
-		return -EINVAL;
-	if (copy_to_user(arg, fscrypt_context_nonce(&ctx),
-			 FSCRYPT_FILE_NONCE_SIZE))
-		return -EFAULT;
-	return 0;
-}
+	ret = inode->i_sb->s_cop->get_context(inode, &ctx, माप(ctx));
+	अगर (ret < 0)
+		वापस ret;
+	अगर (!fscrypt_context_is_valid(&ctx, ret))
+		वापस -EINVAL;
+	अगर (copy_to_user(arg, fscrypt_context_nonce(&ctx),
+			 FSCRYPT_खाता_NONCE_SIZE))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(fscrypt_ioctl_get_nonce);
 
 /**
  * fscrypt_has_permitted_context() - is a file's encryption policy permitted
  *				     within its directory?
  *
- * @parent: inode for parent directory
- * @child: inode for file being looked up, opened, or linked into @parent
+ * @parent: inode क्रम parent directory
+ * @child: inode क्रम file being looked up, खोलोed, or linked पूर्णांकo @parent
  *
- * Filesystems must call this before permitting access to an inode in a
- * situation where the parent directory is encrypted (either before allowing
- * ->lookup() to succeed, or for a regular file before allowing it to be opened)
- * and before any operation that involves linking an inode into an encrypted
- * directory, including link, rename, and cross rename.  It enforces the
- * constraint that within a given encrypted directory tree, all files use the
+ * Fileप्रणालीs must call this beक्रमe permitting access to an inode in a
+ * situation where the parent directory is encrypted (either beक्रमe allowing
+ * ->lookup() to succeed, or क्रम a regular file beक्रमe allowing it to be खोलोed)
+ * and beक्रमe any operation that involves linking an inode पूर्णांकo an encrypted
+ * directory, including link, नाम, and cross नाम.  It enक्रमces the
+ * स्थिरraपूर्णांक that within a given encrypted directory tree, all files use the
  * same encryption policy.  The pre-access check is needed to detect potentially
- * malicious offline violations of this constraint, while the link and rename
- * checks are needed to prevent online violations of this constraint.
+ * malicious offline violations of this स्थिरraपूर्णांक, जबतक the link and नाम
+ * checks are needed to prevent online violations of this स्थिरraपूर्णांक.
  *
- * Return: 1 if permitted, 0 if forbidden.
+ * Return: 1 अगर permitted, 0 अगर क्रमbidden.
  */
-int fscrypt_has_permitted_context(struct inode *parent, struct inode *child)
-{
-	union fscrypt_policy parent_policy, child_policy;
-	int err, err1, err2;
+पूर्णांक fscrypt_has_permitted_context(काष्ठा inode *parent, काष्ठा inode *child)
+अणु
+	जोड़ fscrypt_policy parent_policy, child_policy;
+	पूर्णांक err, err1, err2;
 
 	/* No restrictions on file types which are never encrypted */
-	if (!S_ISREG(child->i_mode) && !S_ISDIR(child->i_mode) &&
+	अगर (!S_ISREG(child->i_mode) && !S_ISसूची(child->i_mode) &&
 	    !S_ISLNK(child->i_mode))
-		return 1;
+		वापस 1;
 
-	/* No restrictions if the parent directory is unencrypted */
-	if (!IS_ENCRYPTED(parent))
-		return 1;
+	/* No restrictions अगर the parent directory is unencrypted */
+	अगर (!IS_ENCRYPTED(parent))
+		वापस 1;
 
 	/* Encrypted directories must not contain unencrypted files */
-	if (!IS_ENCRYPTED(child))
-		return 0;
+	अगर (!IS_ENCRYPTED(child))
+		वापस 0;
 
 	/*
-	 * Both parent and child are encrypted, so verify they use the same
-	 * encryption policy.  Compare the fscrypt_info structs if the keys are
+	 * Both parent and child are encrypted, so verअगरy they use the same
+	 * encryption policy.  Compare the fscrypt_info काष्ठाs अगर the keys are
 	 * available, otherwise retrieve and compare the fscrypt_contexts.
 	 *
 	 * Note that the fscrypt_context retrieval will be required frequently
 	 * when accessing an encrypted directory tree without the key.
-	 * Performance-wise this is not a big deal because we already don't
-	 * really optimize for file access without the key (to the extent that
+	 * Perक्रमmance-wise this is not a big deal because we alपढ़ोy करोn't
+	 * really optimize क्रम file access without the key (to the extent that
 	 * such access is even possible), given that any attempted access
-	 * already causes a fscrypt_context retrieval and keyring search.
+	 * alपढ़ोy causes a fscrypt_context retrieval and keyring search.
 	 *
-	 * In any case, if an unexpected error occurs, fall back to "forbidden".
+	 * In any हाल, अगर an unexpected error occurs, fall back to "forbidden".
 	 */
 
 	err = fscrypt_get_encryption_info(parent, true);
-	if (err)
-		return 0;
+	अगर (err)
+		वापस 0;
 	err = fscrypt_get_encryption_info(child, true);
-	if (err)
-		return 0;
+	अगर (err)
+		वापस 0;
 
 	err1 = fscrypt_get_policy(parent, &parent_policy);
 	err2 = fscrypt_get_policy(child, &child_policy);
 
 	/*
-	 * Allow the case where the parent and child both have an unrecognized
+	 * Allow the हाल where the parent and child both have an unrecognized
 	 * encryption policy, so that files with an unrecognized encryption
 	 * policy can be deleted.
 	 */
-	if (err1 == -EINVAL && err2 == -EINVAL)
-		return 1;
+	अगर (err1 == -EINVAL && err2 == -EINVAL)
+		वापस 1;
 
-	if (err1 || err2)
-		return 0;
+	अगर (err1 || err2)
+		वापस 0;
 
-	return fscrypt_policies_equal(&parent_policy, &child_policy);
-}
+	वापस fscrypt_policies_equal(&parent_policy, &child_policy);
+पूर्ण
 EXPORT_SYMBOL(fscrypt_has_permitted_context);
 
 /*
  * Return the encryption policy that new files in the directory will inherit, or
- * NULL if none, or an ERR_PTR() on error.  If the directory is encrypted, also
+ * शून्य अगर none, or an ERR_PTR() on error.  If the directory is encrypted, also
  * ensure that its key is set up, so that the new filename can be encrypted.
  */
-const union fscrypt_policy *fscrypt_policy_to_inherit(struct inode *dir)
-{
-	int err;
+स्थिर जोड़ fscrypt_policy *fscrypt_policy_to_inherit(काष्ठा inode *dir)
+अणु
+	पूर्णांक err;
 
-	if (IS_ENCRYPTED(dir)) {
+	अगर (IS_ENCRYPTED(dir)) अणु
 		err = fscrypt_require_key(dir);
-		if (err)
-			return ERR_PTR(err);
-		return &dir->i_crypt_info->ci_policy;
-	}
+		अगर (err)
+			वापस ERR_PTR(err);
+		वापस &dir->i_crypt_info->ci_policy;
+	पूर्ण
 
-	return fscrypt_get_dummy_policy(dir->i_sb);
-}
+	वापस fscrypt_get_dummy_policy(dir->i_sb);
+पूर्ण
 
 /**
  * fscrypt_set_context() - Set the fscrypt context of a new inode
  * @inode: a new inode
- * @fs_data: private data given by FS and passed to ->set_context()
+ * @fs_data: निजी data given by FS and passed to ->set_context()
  *
  * This should be called after fscrypt_prepare_new_inode(), generally during a
- * filesystem transaction.  Everything here must be %GFP_NOFS-safe.
+ * fileप्रणाली transaction.  Everything here must be %GFP_NOFS-safe.
  *
- * Return: 0 on success, -errno on failure
+ * Return: 0 on success, -त्रुटि_सं on failure
  */
-int fscrypt_set_context(struct inode *inode, void *fs_data)
-{
-	struct fscrypt_info *ci = inode->i_crypt_info;
-	union fscrypt_context ctx;
-	int ctxsize;
+पूर्णांक fscrypt_set_context(काष्ठा inode *inode, व्योम *fs_data)
+अणु
+	काष्ठा fscrypt_info *ci = inode->i_crypt_info;
+	जोड़ fscrypt_context ctx;
+	पूर्णांक ctxsize;
 
-	/* fscrypt_prepare_new_inode() should have set up the key already. */
-	if (WARN_ON_ONCE(!ci))
-		return -ENOKEY;
+	/* fscrypt_prepare_new_inode() should have set up the key alपढ़ोy. */
+	अगर (WARN_ON_ONCE(!ci))
+		वापस -ENOKEY;
 
-	BUILD_BUG_ON(sizeof(ctx) != FSCRYPT_SET_CONTEXT_MAX_SIZE);
+	BUILD_BUG_ON(माप(ctx) != FSCRYPT_SET_CONTEXT_MAX_SIZE);
 	ctxsize = fscrypt_new_context(&ctx, &ci->ci_policy, ci->ci_nonce);
 
 	/*
-	 * This may be the first time the inode number is available, so do any
+	 * This may be the first समय the inode number is available, so करो any
 	 * delayed key setup that requires the inode number.
 	 */
-	if (ci->ci_policy.version == FSCRYPT_POLICY_V2 &&
-	    (ci->ci_policy.v2.flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32)) {
-		const struct fscrypt_master_key *mk =
+	अगर (ci->ci_policy.version == FSCRYPT_POLICY_V2 &&
+	    (ci->ci_policy.v2.flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32)) अणु
+		स्थिर काष्ठा fscrypt_master_key *mk =
 			ci->ci_master_key->payload.data[0];
 
 		fscrypt_hash_inode_number(ci, mk);
-	}
+	पूर्ण
 
-	return inode->i_sb->s_cop->set_context(inode, &ctx, ctxsize, fs_data);
-}
+	वापस inode->i_sb->s_cop->set_context(inode, &ctx, ctxsize, fs_data);
+पूर्ण
 EXPORT_SYMBOL_GPL(fscrypt_set_context);
 
 /**
  * fscrypt_set_test_dummy_encryption() - handle '-o test_dummy_encryption'
- * @sb: the filesystem on which test_dummy_encryption is being specified
- * @arg: the argument to the test_dummy_encryption option.  May be NULL.
- * @dummy_policy: the filesystem's current dummy policy (input/output, see
+ * @sb: the fileप्रणाली on which test_dummy_encryption is being specअगरied
+ * @arg: the argument to the test_dummy_encryption option.  May be शून्य.
+ * @dummy_policy: the fileप्रणाली's current dummy policy (input/output, see
  *		  below)
  *
  * Handle the test_dummy_encryption mount option by creating a dummy encryption
  * policy, saving it in @dummy_policy, and adding the corresponding dummy
- * encryption key to the filesystem.  If the @dummy_policy is already set, then
+ * encryption key to the fileप्रणाली.  If the @dummy_policy is alपढ़ोy set, then
  * instead validate that it matches @arg.  Don't support changing it via
- * remount, as that is difficult to do safely.
+ * remount, as that is dअगरficult to करो safely.
  *
- * Return: 0 on success (dummy policy set, or the same policy is already set);
- *         -EEXIST if a different dummy policy is already set;
- *         or another -errno value.
+ * Return: 0 on success (dummy policy set, or the same policy is alपढ़ोy set);
+ *         -EEXIST अगर a dअगरferent dummy policy is alपढ़ोy set;
+ *         or another -त्रुटि_सं value.
  */
-int fscrypt_set_test_dummy_encryption(struct super_block *sb, const char *arg,
-				      struct fscrypt_dummy_policy *dummy_policy)
-{
-	struct fscrypt_key_specifier key_spec = { 0 };
-	int version;
-	union fscrypt_policy *policy = NULL;
-	int err;
+पूर्णांक fscrypt_set_test_dummy_encryption(काष्ठा super_block *sb, स्थिर अक्षर *arg,
+				      काष्ठा fscrypt_dummy_policy *dummy_policy)
+अणु
+	काष्ठा fscrypt_key_specअगरier key_spec = अणु 0 पूर्ण;
+	पूर्णांक version;
+	जोड़ fscrypt_policy *policy = शून्य;
+	पूर्णांक err;
 
-	if (!arg)
+	अगर (!arg)
 		arg = "v2";
 
-	if (!strcmp(arg, "v1")) {
+	अगर (!म_भेद(arg, "v1")) अणु
 		version = FSCRYPT_POLICY_V1;
 		key_spec.type = FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR;
-		memset(key_spec.u.descriptor, 0x42,
+		स_रखो(key_spec.u.descriptor, 0x42,
 		       FSCRYPT_KEY_DESCRIPTOR_SIZE);
-	} else if (!strcmp(arg, "v2")) {
+	पूर्ण अन्यथा अगर (!म_भेद(arg, "v2")) अणु
 		version = FSCRYPT_POLICY_V2;
 		key_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
-		/* key_spec.u.identifier gets filled in when adding the key */
-	} else {
+		/* key_spec.u.identअगरier माला_लो filled in when adding the key */
+	पूर्ण अन्यथा अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	policy = kzalloc(sizeof(*policy), GFP_KERNEL);
-	if (!policy) {
+	policy = kzalloc(माप(*policy), GFP_KERNEL);
+	अगर (!policy) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = fscrypt_add_test_dummy_key(sb, &key_spec);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	policy->version = version;
-	switch (policy->version) {
-	case FSCRYPT_POLICY_V1:
+	चयन (policy->version) अणु
+	हाल FSCRYPT_POLICY_V1:
 		policy->v1.contents_encryption_mode = FSCRYPT_MODE_AES_256_XTS;
 		policy->v1.filenames_encryption_mode = FSCRYPT_MODE_AES_256_CTS;
-		memcpy(policy->v1.master_key_descriptor, key_spec.u.descriptor,
+		स_नकल(policy->v1.master_key_descriptor, key_spec.u.descriptor,
 		       FSCRYPT_KEY_DESCRIPTOR_SIZE);
-		break;
-	case FSCRYPT_POLICY_V2:
+		अवरोध;
+	हाल FSCRYPT_POLICY_V2:
 		policy->v2.contents_encryption_mode = FSCRYPT_MODE_AES_256_XTS;
 		policy->v2.filenames_encryption_mode = FSCRYPT_MODE_AES_256_CTS;
-		memcpy(policy->v2.master_key_identifier, key_spec.u.identifier,
+		स_नकल(policy->v2.master_key_identअगरier, key_spec.u.identअगरier,
 		       FSCRYPT_KEY_IDENTIFIER_SIZE);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (dummy_policy->policy) {
-		if (fscrypt_policies_equal(policy, dummy_policy->policy))
+	अगर (dummy_policy->policy) अणु
+		अगर (fscrypt_policies_equal(policy, dummy_policy->policy))
 			err = 0;
-		else
+		अन्यथा
 			err = -EEXIST;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	dummy_policy->policy = policy;
-	policy = NULL;
+	policy = शून्य;
 	err = 0;
 out:
-	kfree(policy);
-	return err;
-}
+	kमुक्त(policy);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(fscrypt_set_test_dummy_encryption);
 
 /**
  * fscrypt_show_test_dummy_encryption() - show '-o test_dummy_encryption'
- * @seq: the seq_file to print the option to
- * @sep: the separator character to use
- * @sb: the filesystem whose options are being shown
+ * @seq: the seq_file to prपूर्णांक the option to
+ * @sep: the separator अक्षरacter to use
+ * @sb: the fileप्रणाली whose options are being shown
  *
- * Show the test_dummy_encryption mount option, if it was specified.
- * This is mainly used for /proc/mounts.
+ * Show the test_dummy_encryption mount option, अगर it was specअगरied.
+ * This is मुख्यly used क्रम /proc/mounts.
  */
-void fscrypt_show_test_dummy_encryption(struct seq_file *seq, char sep,
-					struct super_block *sb)
-{
-	const union fscrypt_policy *policy = fscrypt_get_dummy_policy(sb);
-	int vers;
+व्योम fscrypt_show_test_dummy_encryption(काष्ठा seq_file *seq, अक्षर sep,
+					काष्ठा super_block *sb)
+अणु
+	स्थिर जोड़ fscrypt_policy *policy = fscrypt_get_dummy_policy(sb);
+	पूर्णांक vers;
 
-	if (!policy)
-		return;
+	अगर (!policy)
+		वापस;
 
 	vers = policy->version;
-	if (vers == FSCRYPT_POLICY_V1) /* Handle numbering quirk */
+	अगर (vers == FSCRYPT_POLICY_V1) /* Handle numbering quirk */
 		vers = 1;
 
-	seq_printf(seq, "%ctest_dummy_encryption=v%d", sep, vers);
-}
+	seq_म_लिखो(seq, "%ctest_dummy_encryption=v%d", sep, vers);
+पूर्ण
 EXPORT_SYMBOL_GPL(fscrypt_show_test_dummy_encryption);

@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0
-#define USE_HW_I2C
-#ifdef USE_HW_I2C
-#include "ddk750_chip.h"
-#include "ddk750_reg.h"
-#include "ddk750_hwi2c.h"
-#include "ddk750_power.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा USE_HW_I2C
+#अगर_घोषित USE_HW_I2C
+#समावेश "ddk750_chip.h"
+#समावेश "ddk750_reg.h"
+#समावेश "ddk750_hwi2c.h"
+#समावेश "ddk750_power.h"
 
-#define MAX_HWI2C_FIFO                  16
-#define HWI2C_WAIT_TIMEOUT              0xF0000
+#घोषणा MAX_HWI2C_FIFO                  16
+#घोषणा HWI2C_WAIT_TIMEOUT              0xF0000
 
-int sm750_hw_i2c_init(unsigned char bus_speed_mode)
-{
-	unsigned int value;
+पूर्णांक sm750_hw_i2c_init(अचिन्हित अक्षर bus_speed_mode)
+अणु
+	अचिन्हित पूर्णांक value;
 
-	/* Enable GPIO 30 & 31 as IIC clock & data */
+	/* Enable GPIO 30 & 31 as IIC घड़ी & data */
 	value = peek32(GPIO_MUX);
 
 	value |= (GPIO_MUX_30 | GPIO_MUX_31);
 	poke32(GPIO_MUX, value);
 
 	/*
-	 * Enable Hardware I2C power.
-	 * TODO: Check if we need to enable GPIO power?
+	 * Enable Hardware I2C घातer.
+	 * TODO: Check अगर we need to enable GPIO घातer?
 	 */
 	sm750_enable_i2c(1);
 
 	/* Enable the I2C Controller and set the bus speed mode */
 	value = peek32(I2C_CTRL) & ~(I2C_CTRL_MODE | I2C_CTRL_EN);
-	if (bus_speed_mode)
+	अगर (bus_speed_mode)
 		value |= I2C_CTRL_MODE;
 	value |= I2C_CTRL_EN;
 	poke32(I2C_CTRL, value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void sm750_hw_i2c_close(void)
-{
-	unsigned int value;
+व्योम sm750_hw_i2c_बंद(व्योम)
+अणु
+	अचिन्हित पूर्णांक value;
 
 	/* Disable I2C controller */
 	value = peek32(I2C_CTRL) & ~I2C_CTRL_EN;
@@ -51,25 +52,25 @@ void sm750_hw_i2c_close(void)
 	value &= ~GPIO_MUX_30;
 	value &= ~GPIO_MUX_31;
 	poke32(GPIO_MUX, value);
-}
+पूर्ण
 
-static long hw_i2c_wait_tx_done(void)
-{
-	unsigned int timeout;
+अटल दीर्घ hw_i2c_रुको_tx_करोne(व्योम)
+अणु
+	अचिन्हित पूर्णांक समयout;
 
 	/* Wait until the transfer is completed. */
-	timeout = HWI2C_WAIT_TIMEOUT;
-	while (!(peek32(I2C_STATUS) & I2C_STATUS_TX) && (timeout != 0))
-		timeout--;
+	समयout = HWI2C_WAIT_TIMEOUT;
+	जबतक (!(peek32(I2C_STATUS) & I2C_STATUS_TX) && (समयout != 0))
+		समयout--;
 
-	if (timeout == 0)
-		return -1;
+	अगर (समयout == 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *  This function writes data to the i2c slave device registers.
+ *  This function ग_लिखोs data to the i2c slave device रेजिस्टरs.
  *
  *  Parameters:
  *      addr            - i2c Slave device address
@@ -80,12 +81,12 @@ static long hw_i2c_wait_tx_done(void)
  *  Return Value:
  *      Total number of bytes those are actually written.
  */
-static unsigned int hw_i2c_write_data(unsigned char addr,
-				      unsigned int length,
-				      unsigned char *buf)
-{
-	unsigned char count, i;
-	unsigned int total_bytes = 0;
+अटल अचिन्हित पूर्णांक hw_i2c_ग_लिखो_data(अचिन्हित अक्षर addr,
+				      अचिन्हित पूर्णांक length,
+				      अचिन्हित अक्षर *buf)
+अणु
+	अचिन्हित अक्षर count, i;
+	अचिन्हित पूर्णांक total_bytes = 0;
 
 	/* Set the Device Address */
 	poke32(I2C_SLAVE_ADDRESS, addr & ~0x01);
@@ -93,32 +94,32 @@ static unsigned int hw_i2c_write_data(unsigned char addr,
 	/*
 	 * Write data.
 	 * Note:
-	 *      Only 16 byte can be accessed per i2c start instruction.
+	 *      Only 16 byte can be accessed per i2c start inकाष्ठाion.
 	 */
-	do {
+	करो अणु
 		/*
-		 * Reset I2C by writing 0 to I2C_RESET register to
+		 * Reset I2C by writing 0 to I2C_RESET रेजिस्टर to
 		 * clear the previous status.
 		 */
 		poke32(I2C_RESET, 0);
 
 		/* Set the number of bytes to be written */
-		if (length < MAX_HWI2C_FIFO)
+		अगर (length < MAX_HWI2C_FIFO)
 			count = length - 1;
-		else
+		अन्यथा
 			count = MAX_HWI2C_FIFO - 1;
 		poke32(I2C_BYTE_COUNT, count);
 
-		/* Move the data to the I2C data register */
-		for (i = 0; i <= count; i++)
+		/* Move the data to the I2C data रेजिस्टर */
+		क्रम (i = 0; i <= count; i++)
 			poke32(I2C_DATA0 + i, *buf++);
 
 		/* Start the I2C */
 		poke32(I2C_CTRL, peek32(I2C_CTRL) | I2C_CTRL_CTRL);
 
 		/* Wait until the transfer is completed. */
-		if (hw_i2c_wait_tx_done() != 0)
-			break;
+		अगर (hw_i2c_रुको_tx_करोne() != 0)
+			अवरोध;
 
 		/* Subtract length */
 		length -= (count + 1);
@@ -126,31 +127,31 @@ static unsigned int hw_i2c_write_data(unsigned char addr,
 		/* Total byte written */
 		total_bytes += (count + 1);
 
-	} while (length > 0);
+	पूर्ण जबतक (length > 0);
 
-	return total_bytes;
-}
+	वापस total_bytes;
+पूर्ण
 
 /*
- *  This function reads data from the slave device and stores them
+ *  This function पढ़ोs data from the slave device and stores them
  *  in the given buffer
  *
  *  Parameters:
  *      addr            - i2c Slave device address
- *      length          - Total number of bytes to be read
- *      buf             - Pointer to a buffer to be filled with the data read
+ *      length          - Total number of bytes to be पढ़ो
+ *      buf             - Poपूर्णांकer to a buffer to be filled with the data पढ़ो
  *                     from the slave device. It has to be the same size as the
- *                     length to make sure that it can keep all the data read.
+ *                     length to make sure that it can keep all the data पढ़ो.
  *
  *  Return Value:
- *      Total number of actual bytes read from the slave device
+ *      Total number of actual bytes पढ़ो from the slave device
  */
-static unsigned int hw_i2c_read_data(unsigned char addr,
-				     unsigned int length,
-				     unsigned char *buf)
-{
-	unsigned char count, i;
-	unsigned int total_bytes = 0;
+अटल अचिन्हित पूर्णांक hw_i2c_पढ़ो_data(अचिन्हित अक्षर addr,
+				     अचिन्हित पूर्णांक length,
+				     अचिन्हित अक्षर *buf)
+अणु
+	अचिन्हित अक्षर count, i;
+	अचिन्हित पूर्णांक total_bytes = 0;
 
 	/* Set the Device Address */
 	poke32(I2C_SLAVE_ADDRESS, addr | 0x01);
@@ -158,90 +159,90 @@ static unsigned int hw_i2c_read_data(unsigned char addr,
 	/*
 	 * Read data and save them to the buffer.
 	 * Note:
-	 *      Only 16 byte can be accessed per i2c start instruction.
+	 *      Only 16 byte can be accessed per i2c start inकाष्ठाion.
 	 */
-	do {
+	करो अणु
 		/*
-		 * Reset I2C by writing 0 to I2C_RESET register to
+		 * Reset I2C by writing 0 to I2C_RESET रेजिस्टर to
 		 * clear all the status.
 		 */
 		poke32(I2C_RESET, 0);
 
-		/* Set the number of bytes to be read */
-		if (length <= MAX_HWI2C_FIFO)
+		/* Set the number of bytes to be पढ़ो */
+		अगर (length <= MAX_HWI2C_FIFO)
 			count = length - 1;
-		else
+		अन्यथा
 			count = MAX_HWI2C_FIFO - 1;
 		poke32(I2C_BYTE_COUNT, count);
 
 		/* Start the I2C */
 		poke32(I2C_CTRL, peek32(I2C_CTRL) | I2C_CTRL_CTRL);
 
-		/* Wait until transaction done. */
-		if (hw_i2c_wait_tx_done() != 0)
-			break;
+		/* Wait until transaction करोne. */
+		अगर (hw_i2c_रुको_tx_करोne() != 0)
+			अवरोध;
 
 		/* Save the data to the given buffer */
-		for (i = 0; i <= count; i++)
+		क्रम (i = 0; i <= count; i++)
 			*buf++ = peek32(I2C_DATA0 + i);
 
 		/* Subtract length by 16 */
 		length -= (count + 1);
 
-		/* Number of bytes read. */
+		/* Number of bytes पढ़ो. */
 		total_bytes += (count + 1);
 
-	} while (length > 0);
+	पूर्ण जबतक (length > 0);
 
-	return total_bytes;
-}
+	वापस total_bytes;
+पूर्ण
 
 /*
- *  This function reads the slave device's register
+ *  This function पढ़ोs the slave device's रेजिस्टर
  *
  *  Parameters:
- *      deviceAddress   - i2c Slave device address which register
- *                        to be read from
- *      registerIndex   - Slave device's register to be read
+ *      deviceAddress   - i2c Slave device address which रेजिस्टर
+ *                        to be पढ़ो from
+ *      रेजिस्टरIndex   - Slave device's रेजिस्टर to be पढ़ो
  *
  *  Return Value:
  *      Register value
  */
-unsigned char sm750_hw_i2c_read_reg(unsigned char addr, unsigned char reg)
-{
-	unsigned char value = 0xFF;
+अचिन्हित अक्षर sm750_hw_i2c_पढ़ो_reg(अचिन्हित अक्षर addr, अचिन्हित अक्षर reg)
+अणु
+	अचिन्हित अक्षर value = 0xFF;
 
-	if (hw_i2c_write_data(addr, 1, &reg) == 1)
-		hw_i2c_read_data(addr, 1, &value);
+	अगर (hw_i2c_ग_लिखो_data(addr, 1, &reg) == 1)
+		hw_i2c_पढ़ो_data(addr, 1, &value);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
 /*
- *  This function writes a value to the slave device's register
+ *  This function ग_लिखोs a value to the slave device's रेजिस्टर
  *
  *  Parameters:
- *      deviceAddress   - i2c Slave device address which register
+ *      deviceAddress   - i2c Slave device address which रेजिस्टर
  *                        to be written
- *      registerIndex   - Slave device's register to be written
- *      data            - Data to be written to the register
+ *      रेजिस्टरIndex   - Slave device's रेजिस्टर to be written
+ *      data            - Data to be written to the रेजिस्टर
  *
  *  Result:
  *          0   - Success
  *         -1   - Fail
  */
-int sm750_hw_i2c_write_reg(unsigned char addr,
-			   unsigned char reg,
-			   unsigned char data)
-{
-	unsigned char value[2];
+पूर्णांक sm750_hw_i2c_ग_लिखो_reg(अचिन्हित अक्षर addr,
+			   अचिन्हित अक्षर reg,
+			   अचिन्हित अक्षर data)
+अणु
+	अचिन्हित अक्षर value[2];
 
 	value[0] = reg;
 	value[1] = data;
-	if (hw_i2c_write_data(addr, 2, value) == 2)
-		return 0;
+	अगर (hw_i2c_ग_लिखो_data(addr, 2, value) == 2)
+		वापस 0;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

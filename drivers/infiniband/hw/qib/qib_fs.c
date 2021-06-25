@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2012 Intel Corporation. All rights reserved.
  * Copyright (c) 2006 - 2012 QLogic Corporation. All rights reserved.
@@ -6,20 +7,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,48 +33,48 @@
  * SOFTWARE.
  */
 
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/fs_context.h>
-#include <linux/mount.h>
-#include <linux/pagemap.h>
-#include <linux/init.h>
-#include <linux/namei.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/fs_context.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/namei.h>
 
-#include "qib.h"
+#समावेश "qib.h"
 
-#define QIBFS_MAGIC 0x726a77
+#घोषणा QIBFS_MAGIC 0x726a77
 
-static struct super_block *qib_super;
+अटल काष्ठा super_block *qib_super;
 
-#define private2dd(file) (file_inode(file)->i_private)
+#घोषणा निजी2dd(file) (file_inode(file)->i_निजी)
 
-static int qibfs_mknod(struct inode *dir, struct dentry *dentry,
-		       umode_t mode, const struct file_operations *fops,
-		       void *data)
-{
-	int error;
-	struct inode *inode = new_inode(dir->i_sb);
+अटल पूर्णांक qibfs_mknod(काष्ठा inode *dir, काष्ठा dentry *dentry,
+		       umode_t mode, स्थिर काष्ठा file_operations *fops,
+		       व्योम *data)
+अणु
+	पूर्णांक error;
+	काष्ठा inode *inode = new_inode(dir->i_sb);
 
-	if (!inode) {
+	अगर (!inode) अणु
 		error = -EPERM;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	inode->i_ino = get_next_ino();
 	inode->i_mode = mode;
 	inode->i_uid = GLOBAL_ROOT_UID;
 	inode->i_gid = GLOBAL_ROOT_GID;
 	inode->i_blocks = 0;
-	inode->i_atime = current_time(inode);
-	inode->i_mtime = inode->i_atime;
-	inode->i_ctime = inode->i_atime;
-	inode->i_private = data;
-	if (S_ISDIR(mode)) {
+	inode->i_aसमय = current_समय(inode);
+	inode->i_mसमय = inode->i_aसमय;
+	inode->i_स_समय = inode->i_aसमय;
+	inode->i_निजी = data;
+	अगर (S_ISसूची(mode)) अणु
 		inode->i_op = &simple_dir_inode_operations;
 		inc_nlink(inode);
 		inc_nlink(dir);
-	}
+	पूर्ण
 
 	inode->i_fop = fops;
 
@@ -81,43 +82,43 @@ static int qibfs_mknod(struct inode *dir, struct dentry *dentry,
 	error = 0;
 
 bail:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int create_file(const char *name, umode_t mode,
-		       struct dentry *parent, struct dentry **dentry,
-		       const struct file_operations *fops, void *data)
-{
-	int error;
+अटल पूर्णांक create_file(स्थिर अक्षर *name, umode_t mode,
+		       काष्ठा dentry *parent, काष्ठा dentry **dentry,
+		       स्थिर काष्ठा file_operations *fops, व्योम *data)
+अणु
+	पूर्णांक error;
 
 	inode_lock(d_inode(parent));
-	*dentry = lookup_one_len(name, parent, strlen(name));
-	if (!IS_ERR(*dentry))
+	*dentry = lookup_one_len(name, parent, म_माप(name));
+	अगर (!IS_ERR(*dentry))
 		error = qibfs_mknod(d_inode(parent), *dentry,
 				    mode, fops, data);
-	else
+	अन्यथा
 		error = PTR_ERR(*dentry);
 	inode_unlock(d_inode(parent));
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static ssize_t driver_stats_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *ppos)
-{
-	qib_stats.sps_ints = qib_sps_ints();
-	return simple_read_from_buffer(buf, count, ppos, &qib_stats,
-				       sizeof(qib_stats));
-}
+अटल sमाप_प्रकार driver_stats_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	qib_stats.sps_पूर्णांकs = qib_sps_पूर्णांकs();
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, &qib_stats,
+				       माप(qib_stats));
+पूर्ण
 
 /*
  * driver stats field names, one line per stat, single string.  Used by
- * programs like ipathstats to print the stats in a way which works for
- * different versions of drivers, without changing program source.
- * if qlogic_ib_stats changes, this needs to change.  Names need to be
- * 12 chars or less (w/o newline), for proper display by ipathstats utility.
+ * programs like ipathstats to prपूर्णांक the stats in a way which works क्रम
+ * dअगरferent versions of drivers, without changing program source.
+ * अगर qlogic_ib_stats changes, this needs to change.  Names need to be
+ * 12 अक्षरs or less (w/o newline), क्रम proper display by ipathstats utility.
  */
-static const char qib_statnames[] =
+अटल स्थिर अक्षर qib_statnames[] =
 	"KernIntr\n"
 	"ErrorIntr\n"
 	"Tx_Errs\n"
@@ -130,420 +131,420 @@ static const char qib_statnames[] =
 	"EgrHdrFull\n"
 	;
 
-static ssize_t driver_names_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *ppos)
-{
-	return simple_read_from_buffer(buf, count, ppos, qib_statnames,
-		sizeof(qib_statnames) - 1); /* no null */
-}
+अटल sमाप_प्रकार driver_names_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, qib_statnames,
+		माप(qib_statnames) - 1); /* no null */
+पूर्ण
 
-static const struct file_operations driver_ops[] = {
-	{ .read = driver_stats_read, .llseek = generic_file_llseek, },
-	{ .read = driver_names_read, .llseek = generic_file_llseek, },
-};
+अटल स्थिर काष्ठा file_operations driver_ops[] = अणु
+	अणु .पढ़ो = driver_stats_पढ़ो, .llseek = generic_file_llseek, पूर्ण,
+	अणु .पढ़ो = driver_names_पढ़ो, .llseek = generic_file_llseek, पूर्ण,
+पूर्ण;
 
-/* read the per-device counters */
-static ssize_t dev_counters_read(struct file *file, char __user *buf,
-				 size_t count, loff_t *ppos)
-{
+/* पढ़ो the per-device counters */
+अटल sमाप_प्रकार dev_counters_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
 	u64 *counters;
-	size_t avail;
-	struct qib_devdata *dd = private2dd(file);
+	माप_प्रकार avail;
+	काष्ठा qib_devdata *dd = निजी2dd(file);
 
-	avail = dd->f_read_cntrs(dd, *ppos, NULL, &counters);
-	return simple_read_from_buffer(buf, count, ppos, counters, avail);
-}
+	avail = dd->f_पढ़ो_cntrs(dd, *ppos, शून्य, &counters);
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, counters, avail);
+पूर्ण
 
-/* read the per-device counters */
-static ssize_t dev_names_read(struct file *file, char __user *buf,
-			      size_t count, loff_t *ppos)
-{
-	char *names;
-	size_t avail;
-	struct qib_devdata *dd = private2dd(file);
+/* पढ़ो the per-device counters */
+अटल sमाप_प्रकार dev_names_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *names;
+	माप_प्रकार avail;
+	काष्ठा qib_devdata *dd = निजी2dd(file);
 
-	avail = dd->f_read_cntrs(dd, *ppos, &names, NULL);
-	return simple_read_from_buffer(buf, count, ppos, names, avail);
-}
+	avail = dd->f_पढ़ो_cntrs(dd, *ppos, &names, शून्य);
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, names, avail);
+पूर्ण
 
-static const struct file_operations cntr_ops[] = {
-	{ .read = dev_counters_read, .llseek = generic_file_llseek, },
-	{ .read = dev_names_read, .llseek = generic_file_llseek, },
-};
+अटल स्थिर काष्ठा file_operations cntr_ops[] = अणु
+	अणु .पढ़ो = dev_counters_पढ़ो, .llseek = generic_file_llseek, पूर्ण,
+	अणु .पढ़ो = dev_names_पढ़ो, .llseek = generic_file_llseek, पूर्ण,
+पूर्ण;
 
 /*
  * Could use file_inode(file)->i_ino to figure out which file,
- * instead of separate routine for each, but for now, this works...
+ * instead of separate routine क्रम each, but क्रम now, this works...
  */
 
-/* read the per-port names (same for each port) */
-static ssize_t portnames_read(struct file *file, char __user *buf,
-			      size_t count, loff_t *ppos)
-{
-	char *names;
-	size_t avail;
-	struct qib_devdata *dd = private2dd(file);
+/* पढ़ो the per-port names (same क्रम each port) */
+अटल sमाप_प्रकार portnames_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *names;
+	माप_प्रकार avail;
+	काष्ठा qib_devdata *dd = निजी2dd(file);
 
-	avail = dd->f_read_portcntrs(dd, *ppos, 0, &names, NULL);
-	return simple_read_from_buffer(buf, count, ppos, names, avail);
-}
+	avail = dd->f_पढ़ो_portcntrs(dd, *ppos, 0, &names, शून्य);
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, names, avail);
+पूर्ण
 
-/* read the per-port counters for port 1 (pidx 0) */
-static ssize_t portcntrs_1_read(struct file *file, char __user *buf,
-				size_t count, loff_t *ppos)
-{
+/* पढ़ो the per-port counters क्रम port 1 (pidx 0) */
+अटल sमाप_प्रकार portcntrs_1_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
 	u64 *counters;
-	size_t avail;
-	struct qib_devdata *dd = private2dd(file);
+	माप_प्रकार avail;
+	काष्ठा qib_devdata *dd = निजी2dd(file);
 
-	avail = dd->f_read_portcntrs(dd, *ppos, 0, NULL, &counters);
-	return simple_read_from_buffer(buf, count, ppos, counters, avail);
-}
+	avail = dd->f_पढ़ो_portcntrs(dd, *ppos, 0, शून्य, &counters);
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, counters, avail);
+पूर्ण
 
-/* read the per-port counters for port 2 (pidx 1) */
-static ssize_t portcntrs_2_read(struct file *file, char __user *buf,
-				size_t count, loff_t *ppos)
-{
+/* पढ़ो the per-port counters क्रम port 2 (pidx 1) */
+अटल sमाप_प्रकार portcntrs_2_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
 	u64 *counters;
-	size_t avail;
-	struct qib_devdata *dd = private2dd(file);
+	माप_प्रकार avail;
+	काष्ठा qib_devdata *dd = निजी2dd(file);
 
-	avail = dd->f_read_portcntrs(dd, *ppos, 1, NULL, &counters);
-	return simple_read_from_buffer(buf, count, ppos, counters, avail);
-}
+	avail = dd->f_पढ़ो_portcntrs(dd, *ppos, 1, शून्य, &counters);
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, counters, avail);
+पूर्ण
 
-static const struct file_operations portcntr_ops[] = {
-	{ .read = portnames_read, .llseek = generic_file_llseek, },
-	{ .read = portcntrs_1_read, .llseek = generic_file_llseek, },
-	{ .read = portcntrs_2_read, .llseek = generic_file_llseek, },
-};
+अटल स्थिर काष्ठा file_operations portcntr_ops[] = अणु
+	अणु .पढ़ो = portnames_पढ़ो, .llseek = generic_file_llseek, पूर्ण,
+	अणु .पढ़ो = portcntrs_1_पढ़ो, .llseek = generic_file_llseek, पूर्ण,
+	अणु .पढ़ो = portcntrs_2_पढ़ो, .llseek = generic_file_llseek, पूर्ण,
+पूर्ण;
 
 /*
- * read the per-port QSFP data for port 1 (pidx 0)
+ * पढ़ो the per-port QSFP data क्रम port 1 (pidx 0)
  */
-static ssize_t qsfp_1_read(struct file *file, char __user *buf,
-			   size_t count, loff_t *ppos)
-{
-	struct qib_devdata *dd = private2dd(file);
-	char *tmp;
-	int ret;
+अटल sमाप_प्रकार qsfp_1_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा qib_devdata *dd = निजी2dd(file);
+	अक्षर *पंचांगp;
+	पूर्णांक ret;
 
-	tmp = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!tmp)
-		return -ENOMEM;
+	पंचांगp = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!पंचांगp)
+		वापस -ENOMEM;
 
-	ret = qib_qsfp_dump(dd->pport, tmp, PAGE_SIZE);
-	if (ret > 0)
-		ret = simple_read_from_buffer(buf, count, ppos, tmp, ret);
-	kfree(tmp);
-	return ret;
-}
+	ret = qib_qsfp_dump(dd->pport, पंचांगp, PAGE_SIZE);
+	अगर (ret > 0)
+		ret = simple_पढ़ो_from_buffer(buf, count, ppos, पंचांगp, ret);
+	kमुक्त(पंचांगp);
+	वापस ret;
+पूर्ण
 
 /*
- * read the per-port QSFP data for port 2 (pidx 1)
+ * पढ़ो the per-port QSFP data क्रम port 2 (pidx 1)
  */
-static ssize_t qsfp_2_read(struct file *file, char __user *buf,
-			   size_t count, loff_t *ppos)
-{
-	struct qib_devdata *dd = private2dd(file);
-	char *tmp;
-	int ret;
+अटल sमाप_प्रकार qsfp_2_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा qib_devdata *dd = निजी2dd(file);
+	अक्षर *पंचांगp;
+	पूर्णांक ret;
 
-	if (dd->num_pports < 2)
-		return -ENODEV;
+	अगर (dd->num_pports < 2)
+		वापस -ENODEV;
 
-	tmp = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!tmp)
-		return -ENOMEM;
+	पंचांगp = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!पंचांगp)
+		वापस -ENOMEM;
 
-	ret = qib_qsfp_dump(dd->pport + 1, tmp, PAGE_SIZE);
-	if (ret > 0)
-		ret = simple_read_from_buffer(buf, count, ppos, tmp, ret);
-	kfree(tmp);
-	return ret;
-}
+	ret = qib_qsfp_dump(dd->pport + 1, पंचांगp, PAGE_SIZE);
+	अगर (ret > 0)
+		ret = simple_पढ़ो_from_buffer(buf, count, ppos, पंचांगp, ret);
+	kमुक्त(पंचांगp);
+	वापस ret;
+पूर्ण
 
-static const struct file_operations qsfp_ops[] = {
-	{ .read = qsfp_1_read, .llseek = generic_file_llseek, },
-	{ .read = qsfp_2_read, .llseek = generic_file_llseek, },
-};
+अटल स्थिर काष्ठा file_operations qsfp_ops[] = अणु
+	अणु .पढ़ो = qsfp_1_पढ़ो, .llseek = generic_file_llseek, पूर्ण,
+	अणु .पढ़ो = qsfp_2_पढ़ो, .llseek = generic_file_llseek, पूर्ण,
+पूर्ण;
 
-static ssize_t flash_read(struct file *file, char __user *buf,
-			  size_t count, loff_t *ppos)
-{
-	struct qib_devdata *dd;
-	ssize_t ret;
+अटल sमाप_प्रकार flash_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा qib_devdata *dd;
+	sमाप_प्रकार ret;
 	loff_t pos;
-	char *tmp;
+	अक्षर *पंचांगp;
 
 	pos = *ppos;
 
-	if (pos < 0) {
+	अगर (pos < 0) अणु
 		ret = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (pos >= sizeof(struct qib_flash)) {
+	अगर (pos >= माप(काष्ठा qib_flash)) अणु
 		ret = 0;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (count > sizeof(struct qib_flash) - pos)
-		count = sizeof(struct qib_flash) - pos;
+	अगर (count > माप(काष्ठा qib_flash) - pos)
+		count = माप(काष्ठा qib_flash) - pos;
 
-	tmp = kmalloc(count, GFP_KERNEL);
-	if (!tmp) {
+	पंचांगp = kदो_स्मृति(count, GFP_KERNEL);
+	अगर (!पंचांगp) अणु
 		ret = -ENOMEM;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	dd = private2dd(file);
-	if (qib_eeprom_read(dd, pos, tmp, count)) {
+	dd = निजी2dd(file);
+	अगर (qib_eeprom_पढ़ो(dd, pos, पंचांगp, count)) अणु
 		qib_dev_err(dd, "failed to read from flash\n");
 		ret = -ENXIO;
-		goto bail_tmp;
-	}
+		जाओ bail_पंचांगp;
+	पूर्ण
 
-	if (copy_to_user(buf, tmp, count)) {
+	अगर (copy_to_user(buf, पंचांगp, count)) अणु
 		ret = -EFAULT;
-		goto bail_tmp;
-	}
+		जाओ bail_पंचांगp;
+	पूर्ण
 
 	*ppos = pos + count;
 	ret = count;
 
-bail_tmp:
-	kfree(tmp);
+bail_पंचांगp:
+	kमुक्त(पंचांगp);
 
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t flash_write(struct file *file, const char __user *buf,
-			   size_t count, loff_t *ppos)
-{
-	struct qib_devdata *dd;
-	ssize_t ret;
+अटल sमाप_प्रकार flash_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा qib_devdata *dd;
+	sमाप_प्रकार ret;
 	loff_t pos;
-	char *tmp;
+	अक्षर *पंचांगp;
 
 	pos = *ppos;
 
-	if (pos != 0 || count != sizeof(struct qib_flash))
-		return -EINVAL;
+	अगर (pos != 0 || count != माप(काष्ठा qib_flash))
+		वापस -EINVAL;
 
-	tmp = memdup_user(buf, count);
-	if (IS_ERR(tmp))
-		return PTR_ERR(tmp);
+	पंचांगp = memdup_user(buf, count);
+	अगर (IS_ERR(पंचांगp))
+		वापस PTR_ERR(पंचांगp);
 
-	dd = private2dd(file);
-	if (qib_eeprom_write(dd, pos, tmp, count)) {
+	dd = निजी2dd(file);
+	अगर (qib_eeprom_ग_लिखो(dd, pos, पंचांगp, count)) अणु
 		ret = -ENXIO;
 		qib_dev_err(dd, "failed to write to flash\n");
-		goto bail_tmp;
-	}
+		जाओ bail_पंचांगp;
+	पूर्ण
 
 	*ppos = pos + count;
 	ret = count;
 
-bail_tmp:
-	kfree(tmp);
-	return ret;
-}
+bail_पंचांगp:
+	kमुक्त(पंचांगp);
+	वापस ret;
+पूर्ण
 
-static const struct file_operations flash_ops = {
-	.read = flash_read,
-	.write = flash_write,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations flash_ops = अणु
+	.पढ़ो = flash_पढ़ो,
+	.ग_लिखो = flash_ग_लिखो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static int add_cntr_files(struct super_block *sb, struct qib_devdata *dd)
-{
-	struct dentry *dir, *tmp;
-	char unit[10];
-	int ret, i;
+अटल पूर्णांक add_cntr_files(काष्ठा super_block *sb, काष्ठा qib_devdata *dd)
+अणु
+	काष्ठा dentry *dir, *पंचांगp;
+	अक्षर unit[10];
+	पूर्णांक ret, i;
 
 	/* create the per-unit directory */
-	snprintf(unit, sizeof(unit), "%u", dd->unit);
-	ret = create_file(unit, S_IFDIR|S_IRUGO|S_IXUGO, sb->s_root, &dir,
+	snम_लिखो(unit, माप(unit), "%u", dd->unit);
+	ret = create_file(unit, S_IFसूची|S_IRUGO|S_IXUGO, sb->s_root, &dir,
 			  &simple_dir_operations, dd);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("create_file(%s) failed: %d\n", unit, ret);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	/* create the files in the new directory */
-	ret = create_file("counters", S_IFREG|S_IRUGO, dir, &tmp,
+	ret = create_file("counters", S_IFREG|S_IRUGO, dir, &पंचांगp,
 			  &cntr_ops[0], dd);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("create_file(%s/counters) failed: %d\n",
 		       unit, ret);
-		goto bail;
-	}
-	ret = create_file("counter_names", S_IFREG|S_IRUGO, dir, &tmp,
+		जाओ bail;
+	पूर्ण
+	ret = create_file("counter_names", S_IFREG|S_IRUGO, dir, &पंचांगp,
 			  &cntr_ops[1], dd);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("create_file(%s/counter_names) failed: %d\n",
 		       unit, ret);
-		goto bail;
-	}
-	ret = create_file("portcounter_names", S_IFREG|S_IRUGO, dir, &tmp,
+		जाओ bail;
+	पूर्ण
+	ret = create_file("portcounter_names", S_IFREG|S_IRUGO, dir, &पंचांगp,
 			  &portcntr_ops[0], dd);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("create_file(%s/%s) failed: %d\n",
 		       unit, "portcounter_names", ret);
-		goto bail;
-	}
-	for (i = 1; i <= dd->num_pports; i++) {
-		char fname[24];
+		जाओ bail;
+	पूर्ण
+	क्रम (i = 1; i <= dd->num_pports; i++) अणु
+		अक्षर fname[24];
 
-		sprintf(fname, "port%dcounters", i);
+		प्र_लिखो(fname, "port%dcounters", i);
 		/* create the files in the new directory */
-		ret = create_file(fname, S_IFREG|S_IRUGO, dir, &tmp,
+		ret = create_file(fname, S_IFREG|S_IRUGO, dir, &पंचांगp,
 				  &portcntr_ops[i], dd);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("create_file(%s/%s) failed: %d\n",
 				unit, fname, ret);
-			goto bail;
-		}
-		if (!(dd->flags & QIB_HAS_QSFP))
-			continue;
-		sprintf(fname, "qsfp%d", i);
-		ret = create_file(fname, S_IFREG|S_IRUGO, dir, &tmp,
+			जाओ bail;
+		पूर्ण
+		अगर (!(dd->flags & QIB_HAS_QSFP))
+			जारी;
+		प्र_लिखो(fname, "qsfp%d", i);
+		ret = create_file(fname, S_IFREG|S_IRUGO, dir, &पंचांगp,
 				  &qsfp_ops[i - 1], dd);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("create_file(%s/%s) failed: %d\n",
 				unit, fname, ret);
-			goto bail;
-		}
-	}
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
-	ret = create_file("flash", S_IFREG|S_IWUSR|S_IRUGO, dir, &tmp,
+	ret = create_file("flash", S_IFREG|S_IWUSR|S_IRUGO, dir, &पंचांगp,
 			  &flash_ops, dd);
-	if (ret)
+	अगर (ret)
 		pr_err("create_file(%s/flash) failed: %d\n",
 			unit, ret);
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int remove_device_files(struct super_block *sb,
-			       struct qib_devdata *dd)
-{
-	struct dentry *dir;
-	char unit[10];
+अटल पूर्णांक हटाओ_device_files(काष्ठा super_block *sb,
+			       काष्ठा qib_devdata *dd)
+अणु
+	काष्ठा dentry *dir;
+	अक्षर unit[10];
 
-	snprintf(unit, sizeof(unit), "%u", dd->unit);
-	dir = lookup_one_len_unlocked(unit, sb->s_root, strlen(unit));
+	snम_लिखो(unit, माप(unit), "%u", dd->unit);
+	dir = lookup_one_len_unlocked(unit, sb->s_root, म_माप(unit));
 
-	if (IS_ERR(dir)) {
+	अगर (IS_ERR(dir)) अणु
 		pr_err("Lookup of %s failed\n", unit);
-		return PTR_ERR(dir);
-	}
-	simple_recursive_removal(dir, NULL);
-	return 0;
-}
+		वापस PTR_ERR(dir);
+	पूर्ण
+	simple_recursive_removal(dir, शून्य);
+	वापस 0;
+पूर्ण
 
 /*
  * This fills everything in when the fs is mounted, to handle umount/mount
  * after device init.  The direct add_cntr_files() call handles adding
- * them from the init code, when the fs is already mounted.
+ * them from the init code, when the fs is alपढ़ोy mounted.
  */
-static int qibfs_fill_super(struct super_block *sb, struct fs_context *fc)
-{
-	struct qib_devdata *dd;
-	unsigned long index;
-	int ret;
+अटल पूर्णांक qibfs_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	काष्ठा qib_devdata *dd;
+	अचिन्हित दीर्घ index;
+	पूर्णांक ret;
 
-	static const struct tree_descr files[] = {
-		[2] = {"driver_stats", &driver_ops[0], S_IRUGO},
-		[3] = {"driver_stats_names", &driver_ops[1], S_IRUGO},
-		{""},
-	};
+	अटल स्थिर काष्ठा tree_descr files[] = अणु
+		[2] = अणु"driver_stats", &driver_ops[0], S_IRUGOपूर्ण,
+		[3] = अणु"driver_stats_names", &driver_ops[1], S_IRUGOपूर्ण,
+		अणु""पूर्ण,
+	पूर्ण;
 
 	ret = simple_fill_super(sb, QIBFS_MAGIC, files);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("simple_fill_super failed: %d\n", ret);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	xa_for_each(&qib_dev_table, index, dd) {
+	xa_क्रम_each(&qib_dev_table, index, dd) अणु
 		ret = add_cntr_files(sb, dd);
-		if (ret)
-			goto bail;
-	}
+		अगर (ret)
+			जाओ bail;
+	पूर्ण
 
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qibfs_get_tree(struct fs_context *fc)
-{
-	int ret = get_tree_single(fc, qibfs_fill_super);
-	if (ret == 0)
+अटल पूर्णांक qibfs_get_tree(काष्ठा fs_context *fc)
+अणु
+	पूर्णांक ret = get_tree_single(fc, qibfs_fill_super);
+	अगर (ret == 0)
 		qib_super = fc->root->d_sb;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct fs_context_operations qibfs_context_ops = {
+अटल स्थिर काष्ठा fs_context_operations qibfs_context_ops = अणु
 	.get_tree	= qibfs_get_tree,
-};
+पूर्ण;
 
-static int qibfs_init_fs_context(struct fs_context *fc)
-{
+अटल पूर्णांक qibfs_init_fs_context(काष्ठा fs_context *fc)
+अणु
 	fc->ops = &qibfs_context_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qibfs_kill_super(struct super_block *s)
-{
-	kill_litter_super(s);
-	qib_super = NULL;
-}
+अटल व्योम qibfs_समाप्त_super(काष्ठा super_block *s)
+अणु
+	समाप्त_litter_super(s);
+	qib_super = शून्य;
+पूर्ण
 
-int qibfs_add(struct qib_devdata *dd)
-{
-	int ret;
+पूर्णांक qibfs_add(काष्ठा qib_devdata *dd)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * On first unit initialized, qib_super will not yet exist
-	 * because nobody has yet tried to mount the filesystem, so
-	 * we can't consider that to be an error; if an error occurs
-	 * during the mount, that will get a complaint, so this is OK.
-	 * add_cntr_files() for all units is done at mount from
+	 * because nobody has yet tried to mount the fileप्रणाली, so
+	 * we can't consider that to be an error; अगर an error occurs
+	 * during the mount, that will get a complaपूर्णांक, so this is OK.
+	 * add_cntr_files() क्रम all units is करोne at mount from
 	 * qibfs_fill_super(), so one way or another, everything works.
 	 */
-	if (qib_super == NULL)
+	अगर (qib_super == शून्य)
 		ret = 0;
-	else
+	अन्यथा
 		ret = add_cntr_files(qib_super, dd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int qibfs_remove(struct qib_devdata *dd)
-{
-	int ret = 0;
+पूर्णांक qibfs_हटाओ(काष्ठा qib_devdata *dd)
+अणु
+	पूर्णांक ret = 0;
 
-	if (qib_super)
-		ret = remove_device_files(qib_super, dd);
+	अगर (qib_super)
+		ret = हटाओ_device_files(qib_super, dd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct file_system_type qibfs_fs_type = {
+अटल काष्ठा file_प्रणाली_type qibfs_fs_type = अणु
 	.owner =        THIS_MODULE,
 	.name =         "ipathfs",
 	.init_fs_context = qibfs_init_fs_context,
-	.kill_sb =      qibfs_kill_super,
-};
+	.समाप्त_sb =      qibfs_समाप्त_super,
+पूर्ण;
 MODULE_ALIAS_FS("ipathfs");
 
-int __init qib_init_qibfs(void)
-{
-	return register_filesystem(&qibfs_fs_type);
-}
+पूर्णांक __init qib_init_qibfs(व्योम)
+अणु
+	वापस रेजिस्टर_fileप्रणाली(&qibfs_fs_type);
+पूर्ण
 
-int __exit qib_exit_qibfs(void)
-{
-	return unregister_filesystem(&qibfs_fs_type);
-}
+पूर्णांक __निकास qib_निकास_qibfs(व्योम)
+अणु
+	वापस unरेजिस्टर_fileप्रणाली(&qibfs_fs_type);
+पूर्ण

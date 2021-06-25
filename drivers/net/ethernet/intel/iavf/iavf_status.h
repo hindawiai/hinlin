@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
-#ifndef _IAVF_STATUS_H_
-#define _IAVF_STATUS_H_
+#अगर_अघोषित _IAVF_STATUS_H_
+#घोषणा _IAVF_STATUS_H_
 
 /* Error Codes */
-enum iavf_status {
+क्रमागत iavf_status अणु
 	IAVF_SUCCESS				= 0,
 	IAVF_ERR_NVM				= -1,
 	IAVF_ERR_NVM_CHECKSUM			= -2,
@@ -73,6 +74,6 @@ enum iavf_status {
 	IAVF_NOT_SUPPORTED			= -64,
 	IAVF_ERR_FIRMWARE_API_VERSION		= -65,
 	IAVF_ERR_ADMIN_QUEUE_CRITICAL_ERROR	= -66,
-};
+पूर्ण;
 
-#endif /* _IAVF_STATUS_H_ */
+#पूर्ण_अगर /* _IAVF_STATUS_H_ */

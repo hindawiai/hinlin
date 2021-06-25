@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*  Copyright(c) 2016-20 Intel Corporation. */
 
-#include <stddef.h>
-#include "defines.h"
+#समावेश <मानकघोष.स>
+#समावेश "defines.h"
 
-static void *memcpy(void *dest, const void *src, size_t n)
-{
-	size_t i;
+अटल व्योम *स_नकल(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n)
+अणु
+	माप_प्रकार i;
 
-	for (i = 0; i < n; i++)
-		((char *)dest)[i] = ((char *)src)[i];
+	क्रम (i = 0; i < n; i++)
+		((अक्षर *)dest)[i] = ((अक्षर *)src)[i];
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
-void encl_body(void *rdi, void *rsi)
-{
-	memcpy(rsi, rdi, 8);
-}
+व्योम encl_body(व्योम *rdi, व्योम *rsi)
+अणु
+	स_नकल(rsi, rdi, 8);
+पूर्ण

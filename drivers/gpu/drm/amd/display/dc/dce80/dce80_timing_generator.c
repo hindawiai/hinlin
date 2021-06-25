@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,22 +24,22 @@
  *
  */
 
-#include "dm_services.h"
+#समावेश "dm_services.h"
 
-/* include DCE8 register header files */
-#include "dce/dce_8_0_d.h"
-#include "dce/dce_8_0_sh_mask.h"
+/* include DCE8 रेजिस्टर header files */
+#समावेश "dce/dce_8_0_d.h"
+#समावेश "dce/dce_8_0_sh_mask.h"
 
-#include "dc_types.h"
+#समावेश "dc_types.h"
 
-#include "include/grph_object_id.h"
-#include "include/logger_interface.h"
-#include "../dce110/dce110_timing_generator.h"
-#include "dce80_timing_generator.h"
+#समावेश "include/grph_object_id.h"
+#समावेश "include/logger_interface.h"
+#समावेश "../dce110/dce110_timing_generator.h"
+#समावेश "dce80_timing_generator.h"
 
-#include "timing_generator.h"
+#समावेश "timing_generator.h"
 
-enum black_color_format {
+क्रमागत black_color_क्रमmat अणु
 	BLACK_COLOR_FORMAT_RGB_FULLRANGE = 0,	/* used as index in array */
 	BLACK_COLOR_FORMAT_RGB_LIMITED,
 	BLACK_COLOR_FORMAT_YUV_TV,
@@ -46,55 +47,55 @@ enum black_color_format {
 	BLACK_COLOR_FORMAT_YUV_SUPER_AA,
 
 	BLACK_COLOR_FORMAT_COUNT
-};
+पूर्ण;
 
-static const struct dce110_timing_generator_offsets reg_offsets[] = {
-{
+अटल स्थिर काष्ठा dce110_timing_generator_offsets reg_offsets[] = अणु
+अणु
 	.crtc = (mmCRTC0_DCFE_MEM_LIGHT_SLEEP_CNTL - mmCRTC0_DCFE_MEM_LIGHT_SLEEP_CNTL),
 	.dcp = (mmDCP0_GRPH_CONTROL - mmDCP0_GRPH_CONTROL),
-},
-{
+पूर्ण,
+अणु
 	.crtc = (mmCRTC1_DCFE_MEM_LIGHT_SLEEP_CNTL - mmCRTC0_DCFE_MEM_LIGHT_SLEEP_CNTL),
 	.dcp = (mmDCP1_GRPH_CONTROL - mmDCP0_GRPH_CONTROL),
-},
-{
+पूर्ण,
+अणु
 	.crtc = (mmCRTC2_DCFE_MEM_LIGHT_SLEEP_CNTL - mmCRTC0_DCFE_MEM_LIGHT_SLEEP_CNTL),
 	.dcp = (mmDCP2_GRPH_CONTROL - mmDCP0_GRPH_CONTROL),
-},
-{
+पूर्ण,
+अणु
 	.crtc = (mmCRTC3_DCFE_MEM_LIGHT_SLEEP_CNTL - mmCRTC0_DCFE_MEM_LIGHT_SLEEP_CNTL),
 	.dcp = (mmDCP3_GRPH_CONTROL - mmDCP0_GRPH_CONTROL),
-},
-{
+पूर्ण,
+अणु
 	.crtc = (mmCRTC4_DCFE_MEM_LIGHT_SLEEP_CNTL - mmCRTC0_DCFE_MEM_LIGHT_SLEEP_CNTL),
 	.dcp = (mmDCP4_GRPH_CONTROL - mmDCP0_GRPH_CONTROL),
-},
-{
+पूर्ण,
+अणु
 	.crtc = (mmCRTC5_DCFE_MEM_LIGHT_SLEEP_CNTL - mmCRTC0_DCFE_MEM_LIGHT_SLEEP_CNTL),
 	.dcp = (mmDCP5_GRPH_CONTROL - mmDCP0_GRPH_CONTROL),
-}
-};
+पूर्ण
+पूर्ण;
 
-#define NUMBER_OF_FRAME_TO_WAIT_ON_TRIGGERED_RESET 10
+#घोषणा NUMBER_OF_FRAME_TO_WAIT_ON_TRIGGERED_RESET 10
 
-#define MAX_H_TOTAL (CRTC_H_TOTAL__CRTC_H_TOTAL_MASK + 1)
-#define MAX_V_TOTAL (CRTC_V_TOTAL__CRTC_V_TOTAL_MASKhw + 1)
+#घोषणा MAX_H_TOTAL (CRTC_H_TOTAL__CRTC_H_TOTAL_MASK + 1)
+#घोषणा MAX_V_TOTAL (CRTC_V_TOTAL__CRTC_V_TOTAL_MASKhw + 1)
 
-#define CRTC_REG(reg) (reg + tg110->offsets.crtc)
-#define DCP_REG(reg) (reg + tg110->offsets.dcp)
-#define DMIF_REG(reg) (reg + tg110->offsets.dmif)
+#घोषणा CRTC_REG(reg) (reg + tg110->offsets.crtc)
+#घोषणा DCP_REG(reg) (reg + tg110->offsets.dcp)
+#घोषणा DMIF_REG(reg) (reg + tg110->offsets.dmअगर)
 
-static void program_pix_dur(struct timing_generator *tg, uint32_t pix_clk_100hz)
-{
-	uint64_t pix_dur;
-	uint32_t addr = mmDMIF_PG0_DPG_PIPE_ARBITRATION_CONTROL1
-					+ DCE110TG_FROM_TG(tg)->offsets.dmif;
-	uint32_t value = dm_read_reg(tg->ctx, addr);
+अटल व्योम program_pix_dur(काष्ठा timing_generator *tg, uपूर्णांक32_t pix_clk_100hz)
+अणु
+	uपूर्णांक64_t pix_dur;
+	uपूर्णांक32_t addr = mmDMIF_PG0_DPG_PIPE_ARBITRATION_CONTROL1
+					+ DCE110TG_FROM_TG(tg)->offsets.dmअगर;
+	uपूर्णांक32_t value = dm_पढ़ो_reg(tg->ctx, addr);
 
-	if (pix_clk_100hz == 0)
-		return;
+	अगर (pix_clk_100hz == 0)
+		वापस;
 
-	pix_dur = div_u64(10000000000ull, pix_clk_100hz);
+	pix_dur = भाग_u64(10000000000ull, pix_clk_100hz);
 
 	set_reg_field_value(
 		value,
@@ -102,48 +103,48 @@ static void program_pix_dur(struct timing_generator *tg, uint32_t pix_clk_100hz)
 		DPG_PIPE_ARBITRATION_CONTROL1,
 		PIXEL_DURATION);
 
-	dm_write_reg(tg->ctx, addr, value);
-}
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
+पूर्ण
 
-static void program_timing(struct timing_generator *tg,
-	const struct dc_crtc_timing *timing,
-	int vready_offset,
-	int vstartup_start,
-	int vupdate_offset,
-	int vupdate_width,
-	const enum signal_type signal,
+अटल व्योम program_timing(काष्ठा timing_generator *tg,
+	स्थिर काष्ठा dc_crtc_timing *timing,
+	पूर्णांक vपढ़ोy_offset,
+	पूर्णांक vstartup_start,
+	पूर्णांक vupdate_offset,
+	पूर्णांक vupdate_width,
+	स्थिर क्रमागत संकेत_type संकेत,
 	bool use_vbios)
-{
-	if (!use_vbios)
+अणु
+	अगर (!use_vbios)
 		program_pix_dur(tg, timing->pix_clk_100hz);
 
 	dce110_tg_program_timing(tg, timing, 0, 0, 0, 0, 0, use_vbios);
-}
+पूर्ण
 
-static void dce80_timing_generator_enable_advanced_request(
-	struct timing_generator *tg,
+अटल व्योम dce80_timing_generator_enable_advanced_request(
+	काष्ठा timing_generator *tg,
 	bool enable,
-	const struct dc_crtc_timing *timing)
-{
-	struct dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
-	uint32_t addr = CRTC_REG(mmCRTC_START_LINE_CONTROL);
-	uint32_t value = dm_read_reg(tg->ctx, addr);
+	स्थिर काष्ठा dc_crtc_timing *timing)
+अणु
+	काष्ठा dce110_timing_generator *tg110 = DCE110TG_FROM_TG(tg);
+	uपूर्णांक32_t addr = CRTC_REG(mmCRTC_START_LINE_CONTROL);
+	uपूर्णांक32_t value = dm_पढ़ो_reg(tg->ctx, addr);
 
-	if (enable) {
+	अगर (enable) अणु
 		set_reg_field_value(
 			value,
 			0,
 			CRTC_START_LINE_CONTROL,
 			CRTC_LEGACY_REQUESTOR_EN);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_reg_field_value(
 			value,
 			1,
 			CRTC_START_LINE_CONTROL,
 			CRTC_LEGACY_REQUESTOR_EN);
-	}
+	पूर्ण
 
-	if ((timing->v_sync_width + timing->v_front_porch) <= 3) {
+	अगर ((timing->v_sync_width + timing->v_front_porch) <= 3) अणु
 		set_reg_field_value(
 			value,
 			3,
@@ -154,7 +155,7 @@ static void dce80_timing_generator_enable_advanced_request(
 			0,
 			CRTC_START_LINE_CONTROL,
 			CRTC_PREFETCH_EN);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_reg_field_value(
 			value,
 			4,
@@ -165,7 +166,7 @@ static void dce80_timing_generator_enable_advanced_request(
 			1,
 			CRTC_START_LINE_CONTROL,
 			CRTC_PREFETCH_EN);
-	}
+	पूर्ण
 
 	set_reg_field_value(
 		value,
@@ -179,10 +180,10 @@ static void dce80_timing_generator_enable_advanced_request(
 		CRTC_START_LINE_CONTROL,
 		CRTC_INTERLACE_START_LINE_EARLY);
 
-	dm_write_reg(tg->ctx, addr, value);
-}
+	dm_ग_लिखो_reg(tg->ctx, addr, value);
+पूर्ण
 
-static const struct timing_generator_funcs dce80_tg_funcs = {
+अटल स्थिर काष्ठा timing_generator_funcs dce80_tg_funcs = अणु
 		.validate_timing = dce110_tg_validate_timing,
 		.program_timing = program_timing,
 		.enable_crtc = dce110_timing_generator_enable_crtc,
@@ -192,7 +193,7 @@ static const struct timing_generator_funcs dce80_tg_funcs = {
 		.get_frame_count = dce110_timing_generator_get_vblank_counter,
 		.get_scanoutpos = dce110_timing_generator_get_crtc_scanoutpos,
 		.set_early_control = dce110_timing_generator_set_early_control,
-		.wait_for_state = dce110_tg_wait_for_state,
+		.रुको_क्रम_state = dce110_tg_रुको_क्रम_state,
 		.set_blank = dce110_tg_set_blank,
 		.is_blanked = dce110_tg_is_blanked,
 		.set_colors = dce110_tg_set_colors,
@@ -206,27 +207,27 @@ static const struct timing_generator_funcs dce80_tg_funcs = {
 				dce110_timing_generator_setup_global_swap_lock,
 		.enable_reset_trigger = dce110_timing_generator_enable_reset_trigger,
 		.disable_reset_trigger = dce110_timing_generator_disable_reset_trigger,
-		.tear_down_global_swap_lock =
-				dce110_timing_generator_tear_down_global_swap_lock,
+		.tear_करोwn_global_swap_lock =
+				dce110_timing_generator_tear_करोwn_global_swap_lock,
 		.set_drr = dce110_timing_generator_set_drr,
-		.set_static_screen_control =
-			dce110_timing_generator_set_static_screen_control,
+		.set_अटल_screen_control =
+			dce110_timing_generator_set_अटल_screen_control,
 		.set_test_pattern = dce110_timing_generator_set_test_pattern,
-		.arm_vert_intr = dce110_arm_vert_intr,
+		.arm_vert_पूर्णांकr = dce110_arm_vert_पूर्णांकr,
 
 		/* DCE8.0 overrides */
 		.enable_advanced_request =
 				dce80_timing_generator_enable_advanced_request,
 		.configure_crc = dce110_configure_crc,
 		.get_crc = dce110_get_crc,
-};
+पूर्ण;
 
-void dce80_timing_generator_construct(
-	struct dce110_timing_generator *tg110,
-	struct dc_context *ctx,
-	uint32_t instance,
-	const struct dce110_timing_generator_offsets *offsets)
-{
+व्योम dce80_timing_generator_स्थिरruct(
+	काष्ठा dce110_timing_generator *tg110,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t instance,
+	स्थिर काष्ठा dce110_timing_generator_offsets *offsets)
+अणु
 	tg110->controller_id = CONTROLLER_ID_D0 + instance;
 	tg110->base.inst = instance;
 	tg110->offsets = *offsets;
@@ -243,5 +244,5 @@ void dce80_timing_generator_construct(
 	tg110->min_h_blank = 56;
 	tg110->min_h_front_porch = 4;
 	tg110->min_h_back_porch = 4;
-}
+पूर्ण
 

@@ -1,214 +1,215 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * HD audio interface patch for Conexant HDA audio codec
+ * HD audio पूर्णांकerface patch क्रम Conexant HDA audio codec
  *
  * Copyright (c) 2006 Pototskiy Akex <alex.pototskiy@gmail.com>
  * 		      Takashi Iwai <tiwai@suse.de>
  * 		      Tobin Davis  <tdavis@dsl-only.net>
  */
 
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/jack.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/jack.h>
 
-#include <sound/hda_codec.h>
-#include "hda_local.h"
-#include "hda_auto_parser.h"
-#include "hda_beep.h"
-#include "hda_jack.h"
-#include "hda_generic.h"
+#समावेश <sound/hda_codec.h>
+#समावेश "hda_local.h"
+#समावेश "hda_auto_parser.h"
+#समावेश "hda_beep.h"
+#समावेश "hda_jack.h"
+#समावेश "hda_generic.h"
 
-struct conexant_spec {
-	struct hda_gen_spec gen;
+काष्ठा conexant_spec अणु
+	काष्ठा hda_gen_spec gen;
 
 	/* extra EAPD pins */
-	unsigned int num_eapds;
+	अचिन्हित पूर्णांक num_eapds;
 	hda_nid_t eapds[4];
 	bool dynamic_eapd;
 	hda_nid_t mute_led_eapd;
 
-	unsigned int parse_flags; /* flag for snd_hda_parse_pin_defcfg() */
+	अचिन्हित पूर्णांक parse_flags; /* flag क्रम snd_hda_parse_pin_defcfg() */
 
-	/* OPLC XO specific */
+	/* OPLC XO specअगरic */
 	bool recording;
 	bool dc_enable;
-	unsigned int dc_input_bias; /* offset into olpc_xo_dc_bias */
-	struct nid_path *dc_mode_path;
+	अचिन्हित पूर्णांक dc_input_bias; /* offset पूर्णांकo olpc_xo_dc_bias */
+	काष्ठा nid_path *dc_mode_path;
 
-	int mute_led_polarity;
-	unsigned int gpio_led;
-	unsigned int gpio_mute_led_mask;
-	unsigned int gpio_mic_led_mask;
+	पूर्णांक mute_led_polarity;
+	अचिन्हित पूर्णांक gpio_led;
+	अचिन्हित पूर्णांक gpio_mute_led_mask;
+	अचिन्हित पूर्णांक gpio_mic_led_mask;
 
-};
+पूर्ण;
 
 
-#ifdef CONFIG_SND_HDA_INPUT_BEEP
-/* additional beep mixers; private_value will be overwritten */
-static const struct snd_kcontrol_new cxt_beep_mixer[] = {
+#अगर_घोषित CONFIG_SND_HDA_INPUT_BEEP
+/* additional beep mixers; निजी_value will be overwritten */
+अटल स्थिर काष्ठा snd_kcontrol_new cxt_beep_mixer[] = अणु
 	HDA_CODEC_VOLUME_MONO("Beep Playback Volume", 0, 1, 0, HDA_OUTPUT),
 	HDA_CODEC_MUTE_BEEP_MONO("Beep Playback Switch", 0, 1, 0, HDA_OUTPUT),
-};
+पूर्ण;
 
-static int set_beep_amp(struct conexant_spec *spec, hda_nid_t nid,
-			int idx, int dir)
-{
-	struct snd_kcontrol_new *knew;
-	unsigned int beep_amp = HDA_COMPOSE_AMP_VAL(nid, 1, idx, dir);
-	int i;
+अटल पूर्णांक set_beep_amp(काष्ठा conexant_spec *spec, hda_nid_t nid,
+			पूर्णांक idx, पूर्णांक dir)
+अणु
+	काष्ठा snd_kcontrol_new *knew;
+	अचिन्हित पूर्णांक beep_amp = HDA_COMPOSE_AMP_VAL(nid, 1, idx, dir);
+	पूर्णांक i;
 
 	spec->gen.beep_nid = nid;
-	for (i = 0; i < ARRAY_SIZE(cxt_beep_mixer); i++) {
-		knew = snd_hda_gen_add_kctl(&spec->gen, NULL,
+	क्रम (i = 0; i < ARRAY_SIZE(cxt_beep_mixer); i++) अणु
+		knew = snd_hda_gen_add_kctl(&spec->gen, शून्य,
 					    &cxt_beep_mixer[i]);
-		if (!knew)
-			return -ENOMEM;
-		knew->private_value = beep_amp;
-	}
-	return 0;
-}
+		अगर (!knew)
+			वापस -ENOMEM;
+		knew->निजी_value = beep_amp;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int cx_auto_parse_beep(struct hda_codec *codec)
-{
-	struct conexant_spec *spec = codec->spec;
+अटल पूर्णांक cx_स्वतः_parse_beep(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 	hda_nid_t nid;
 
-	for_each_hda_codec_node(nid, codec)
-		if (get_wcaps_type(get_wcaps(codec, nid)) == AC_WID_BEEP)
-			return set_beep_amp(spec, nid, 0, HDA_OUTPUT);
-	return 0;
-}
-#else
-#define cx_auto_parse_beep(codec)	0
-#endif
+	क्रम_each_hda_codec_node(nid, codec)
+		अगर (get_wcaps_type(get_wcaps(codec, nid)) == AC_WID_BEEP)
+			वापस set_beep_amp(spec, nid, 0, HDA_OUTPUT);
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा cx_स्वतः_parse_beep(codec)	0
+#पूर्ण_अगर
 
 /*
- * Automatic parser for CX20641 & co
+ * Automatic parser क्रम CX20641 & co
  */
 
 /* parse EAPDs */
-static void cx_auto_parse_eapd(struct hda_codec *codec)
-{
-	struct conexant_spec *spec = codec->spec;
+अटल व्योम cx_स्वतः_parse_eapd(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 	hda_nid_t nid;
 
-	for_each_hda_codec_node(nid, codec) {
-		if (get_wcaps_type(get_wcaps(codec, nid)) != AC_WID_PIN)
-			continue;
-		if (!(snd_hda_query_pin_caps(codec, nid) & AC_PINCAP_EAPD))
-			continue;
+	क्रम_each_hda_codec_node(nid, codec) अणु
+		अगर (get_wcaps_type(get_wcaps(codec, nid)) != AC_WID_PIN)
+			जारी;
+		अगर (!(snd_hda_query_pin_caps(codec, nid) & AC_PINCAP_EAPD))
+			जारी;
 		spec->eapds[spec->num_eapds++] = nid;
-		if (spec->num_eapds >= ARRAY_SIZE(spec->eapds))
-			break;
-	}
+		अगर (spec->num_eapds >= ARRAY_SIZE(spec->eapds))
+			अवरोध;
+	पूर्ण
 
-	/* NOTE: below is a wild guess; if we have more than two EAPDs,
+	/* NOTE: below is a wild guess; अगर we have more than two EAPDs,
 	 * it's a new chip, where EAPDs are supposed to be associated to
 	 * pins, and we can control EAPD per pin.
-	 * OTOH, if only one or two EAPDs are found, it's an old chip,
+	 * OTOH, अगर only one or two EAPDs are found, it's an old chip,
 	 * thus it might control over all pins.
 	 */
-	if (spec->num_eapds > 2)
+	अगर (spec->num_eapds > 2)
 		spec->dynamic_eapd = 1;
-}
+पूर्ण
 
-static void cx_auto_turn_eapd(struct hda_codec *codec, int num_pins,
-			      const hda_nid_t *pins, bool on)
-{
-	int i;
-	for (i = 0; i < num_pins; i++) {
-		if (snd_hda_query_pin_caps(codec, pins[i]) & AC_PINCAP_EAPD)
-			snd_hda_codec_write(codec, pins[i], 0,
+अटल व्योम cx_स्वतः_turn_eapd(काष्ठा hda_codec *codec, पूर्णांक num_pins,
+			      स्थिर hda_nid_t *pins, bool on)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < num_pins; i++) अणु
+		अगर (snd_hda_query_pin_caps(codec, pins[i]) & AC_PINCAP_EAPD)
+			snd_hda_codec_ग_लिखो(codec, pins[i], 0,
 					    AC_VERB_SET_EAPD_BTLENABLE,
 					    on ? 0x02 : 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* turn on/off EAPD according to Master switch */
-static void cx_auto_vmaster_hook(void *private_data, int enabled)
-{
-	struct hda_codec *codec = private_data;
-	struct conexant_spec *spec = codec->spec;
+/* turn on/off EAPD according to Master चयन */
+अटल व्योम cx_स्वतः_vmaster_hook(व्योम *निजी_data, पूर्णांक enabled)
+अणु
+	काष्ठा hda_codec *codec = निजी_data;
+	काष्ठा conexant_spec *spec = codec->spec;
 
-	cx_auto_turn_eapd(codec, spec->num_eapds, spec->eapds, enabled);
-}
+	cx_स्वतः_turn_eapd(codec, spec->num_eapds, spec->eapds, enabled);
+पूर्ण
 
-/* turn on/off EAPD according to Master switch (inversely!) for mute LED */
-static int cx_auto_vmaster_mute_led(struct led_classdev *led_cdev,
-				    enum led_brightness brightness)
-{
-	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
-	struct conexant_spec *spec = codec->spec;
+/* turn on/off EAPD according to Master चयन (inversely!) क्रम mute LED */
+अटल पूर्णांक cx_स्वतः_vmaster_mute_led(काष्ठा led_classdev *led_cdev,
+				    क्रमागत led_brightness brightness)
+अणु
+	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+	काष्ठा conexant_spec *spec = codec->spec;
 
-	snd_hda_codec_write(codec, spec->mute_led_eapd, 0,
+	snd_hda_codec_ग_लिखो(codec, spec->mute_led_eapd, 0,
 			    AC_VERB_SET_EAPD_BTLENABLE,
 			    brightness ? 0x02 : 0x00);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cxt_init_gpio_led(struct hda_codec *codec)
-{
-	struct conexant_spec *spec = codec->spec;
-	unsigned int mask = spec->gpio_mute_led_mask | spec->gpio_mic_led_mask;
+अटल व्योम cxt_init_gpio_led(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
+	अचिन्हित पूर्णांक mask = spec->gpio_mute_led_mask | spec->gpio_mic_led_mask;
 
-	if (mask) {
-		snd_hda_codec_write(codec, 0x01, 0, AC_VERB_SET_GPIO_MASK,
+	अगर (mask) अणु
+		snd_hda_codec_ग_लिखो(codec, 0x01, 0, AC_VERB_SET_GPIO_MASK,
 				    mask);
-		snd_hda_codec_write(codec, 0x01, 0, AC_VERB_SET_GPIO_DIRECTION,
+		snd_hda_codec_ग_लिखो(codec, 0x01, 0, AC_VERB_SET_GPIO_सूचीECTION,
 				    mask);
-		snd_hda_codec_write(codec, 0x01, 0, AC_VERB_SET_GPIO_DATA,
+		snd_hda_codec_ग_लिखो(codec, 0x01, 0, AC_VERB_SET_GPIO_DATA,
 				    spec->gpio_led);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cx_auto_init(struct hda_codec *codec)
-{
-	struct conexant_spec *spec = codec->spec;
+अटल पूर्णांक cx_स्वतः_init(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 	snd_hda_gen_init(codec);
-	if (!spec->dynamic_eapd)
-		cx_auto_turn_eapd(codec, spec->num_eapds, spec->eapds, true);
+	अगर (!spec->dynamic_eapd)
+		cx_स्वतः_turn_eapd(codec, spec->num_eapds, spec->eapds, true);
 
 	cxt_init_gpio_led(codec);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_INIT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cx_auto_reboot_notify(struct hda_codec *codec)
-{
-	struct conexant_spec *spec = codec->spec;
+अटल व्योम cx_स्वतः_reboot_notअगरy(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 
-	/* Turn the problematic codec into D3 to avoid spurious noises
-	   from the internal speaker during (and after) reboot */
-	cx_auto_turn_eapd(codec, spec->num_eapds, spec->eapds, false);
-	snd_hda_gen_reboot_notify(codec);
-}
+	/* Turn the problematic codec पूर्णांकo D3 to aव्योम spurious noises
+	   from the पूर्णांकernal speaker during (and after) reboot */
+	cx_स्वतः_turn_eapd(codec, spec->num_eapds, spec->eapds, false);
+	snd_hda_gen_reboot_notअगरy(codec);
+पूर्ण
 
-static void cx_auto_free(struct hda_codec *codec)
-{
-	cx_auto_reboot_notify(codec);
-	snd_hda_gen_free(codec);
-}
+अटल व्योम cx_स्वतः_मुक्त(काष्ठा hda_codec *codec)
+अणु
+	cx_स्वतः_reboot_notअगरy(codec);
+	snd_hda_gen_मुक्त(codec);
+पूर्ण
 
-static const struct hda_codec_ops cx_auto_patch_ops = {
+अटल स्थिर काष्ठा hda_codec_ops cx_स्वतः_patch_ops = अणु
 	.build_controls = snd_hda_gen_build_controls,
 	.build_pcms = snd_hda_gen_build_pcms,
-	.init = cx_auto_init,
-	.reboot_notify = cx_auto_reboot_notify,
-	.free = cx_auto_free,
+	.init = cx_स्वतः_init,
+	.reboot_notअगरy = cx_स्वतः_reboot_notअगरy,
+	.मुक्त = cx_स्वतः_मुक्त,
 	.unsol_event = snd_hda_jack_unsol_event,
-#ifdef CONFIG_PM
-	.check_power_status = snd_hda_gen_check_power_status,
-#endif
-};
+#अगर_घोषित CONFIG_PM
+	.check_घातer_status = snd_hda_gen_check_घातer_status,
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * pin fix-up
  */
-enum {
+क्रमागत अणु
 	CXT_PINCFG_LENOVO_X200,
 	CXT_PINCFG_LENOVO_TP410,
 	CXT_PINCFG_LEMOTE_A1004,
@@ -234,155 +235,155 @@ enum {
 	CXT_FIXUP_HP_ZBOOK_MUTE_LED,
 	CXT_FIXUP_HEADSET_MIC,
 	CXT_FIXUP_HP_MIC_NO_PRESENCE,
-};
+पूर्ण;
 
-/* for hda_fixup_thinkpad_acpi() */
-#include "thinkpad_helper.c"
+/* क्रम hda_fixup_thinkpad_acpi() */
+#समावेश "thinkpad_helper.c"
 
-static void cxt_fixup_stereo_dmic(struct hda_codec *codec,
-				  const struct hda_fixup *fix, int action)
-{
-	struct conexant_spec *spec = codec->spec;
+अटल व्योम cxt_fixup_stereo_dmic(काष्ठा hda_codec *codec,
+				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 	spec->gen.inv_dmic_split = 1;
-}
+पूर्ण
 
-static void cxt5066_increase_mic_boost(struct hda_codec *codec,
-				   const struct hda_fixup *fix, int action)
-{
-	if (action != HDA_FIXUP_ACT_PRE_PROBE)
-		return;
+अटल व्योम cxt5066_increase_mic_boost(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
+		वापस;
 
 	snd_hda_override_amp_caps(codec, 0x17, HDA_OUTPUT,
 				  (0x3 << AC_AMPCAP_OFFSET_SHIFT) |
 				  (0x4 << AC_AMPCAP_NUM_STEPS_SHIFT) |
 				  (0x27 << AC_AMPCAP_STEP_SIZE_SHIFT) |
 				  (0 << AC_AMPCAP_MUTE_SHIFT));
-}
+पूर्ण
 
-static void cxt_update_headset_mode(struct hda_codec *codec)
-{
+अटल व्योम cxt_update_headset_mode(काष्ठा hda_codec *codec)
+अणु
 	/* The verbs used in this function were tested on a Conexant CX20751/2 codec. */
-	int i;
+	पूर्णांक i;
 	bool mic_mode = false;
-	struct conexant_spec *spec = codec->spec;
-	struct auto_pin_cfg *cfg = &spec->gen.autocfg;
+	काष्ठा conexant_spec *spec = codec->spec;
+	काष्ठा स्वतः_pin_cfg *cfg = &spec->gen.स्वतःcfg;
 
 	hda_nid_t mux_pin = spec->gen.imux_pins[spec->gen.cur_mux[0]];
 
-	for (i = 0; i < cfg->num_inputs; i++)
-		if (cfg->inputs[i].pin == mux_pin) {
-			mic_mode = !!cfg->inputs[i].is_headphone_mic;
-			break;
-		}
+	क्रम (i = 0; i < cfg->num_inमाला_दो; i++)
+		अगर (cfg->inमाला_दो[i].pin == mux_pin) अणु
+			mic_mode = !!cfg->inमाला_दो[i].is_headphone_mic;
+			अवरोध;
+		पूर्ण
 
-	if (mic_mode) {
-		snd_hda_codec_write_cache(codec, 0x1c, 0, 0x410, 0x7c); /* enable merged mode for analog int-mic */
+	अगर (mic_mode) अणु
+		snd_hda_codec_ग_लिखो_cache(codec, 0x1c, 0, 0x410, 0x7c); /* enable merged mode क्रम analog पूर्णांक-mic */
 		spec->gen.hp_jack_present = false;
-	} else {
-		snd_hda_codec_write_cache(codec, 0x1c, 0, 0x410, 0x54); /* disable merged mode for analog int-mic */
-		spec->gen.hp_jack_present = snd_hda_jack_detect(codec, spec->gen.autocfg.hp_pins[0]);
-	}
+	पूर्ण अन्यथा अणु
+		snd_hda_codec_ग_लिखो_cache(codec, 0x1c, 0, 0x410, 0x54); /* disable merged mode क्रम analog पूर्णांक-mic */
+		spec->gen.hp_jack_present = snd_hda_jack_detect(codec, spec->gen.स्वतःcfg.hp_pins[0]);
+	पूर्ण
 
-	snd_hda_gen_update_outputs(codec);
-}
+	snd_hda_gen_update_outमाला_दो(codec);
+पूर्ण
 
-static void cxt_update_headset_mode_hook(struct hda_codec *codec,
-					 struct snd_kcontrol *kcontrol,
-					 struct snd_ctl_elem_value *ucontrol)
-{
+अटल व्योम cxt_update_headset_mode_hook(काष्ठा hda_codec *codec,
+					 काष्ठा snd_kcontrol *kcontrol,
+					 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
 	cxt_update_headset_mode(codec);
-}
+पूर्ण
 
-static void cxt_fixup_headphone_mic(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	struct conexant_spec *spec = codec->spec;
+अटल व्योम cxt_fixup_headphone_mic(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 
-	switch (action) {
-	case HDA_FIXUP_ACT_PRE_PROBE:
+	चयन (action) अणु
+	हाल HDA_FIXUP_ACT_PRE_PROBE:
 		spec->parse_flags |= HDA_PINCFG_HEADPHONE_MIC;
-		snd_hdac_regmap_add_vendor_verb(&codec->core, 0x410);
-		break;
-	case HDA_FIXUP_ACT_PROBE:
+		snd_hdac_regmap_add_venकरोr_verb(&codec->core, 0x410);
+		अवरोध;
+	हाल HDA_FIXUP_ACT_PROBE:
 		WARN_ON(spec->gen.cap_sync_hook);
 		spec->gen.cap_sync_hook = cxt_update_headset_mode_hook;
-		spec->gen.automute_hook = cxt_update_headset_mode;
-		break;
-	case HDA_FIXUP_ACT_INIT:
+		spec->gen.स्वतःmute_hook = cxt_update_headset_mode;
+		अवरोध;
+	हाल HDA_FIXUP_ACT_INIT:
 		cxt_update_headset_mode(codec);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void cxt_fixup_headset_mic(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	struct conexant_spec *spec = codec->spec;
+अटल व्योम cxt_fixup_headset_mic(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 
-	switch (action) {
-	case HDA_FIXUP_ACT_PRE_PROBE:
+	चयन (action) अणु
+	हाल HDA_FIXUP_ACT_PRE_PROBE:
 		spec->parse_flags |= HDA_PINCFG_HEADSET_MIC;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* OPLC XO 1.5 fixup */
 
-/* OLPC XO-1.5 supports DC input mode (e.g. for use with analog sensors)
+/* OLPC XO-1.5 supports DC input mode (e.g. क्रम use with analog sensors)
  * through the microphone jack.
- * When the user enables this through a mixer switch, both internal and
- * external microphones are disabled. Gain is fixed at 0dB. In this mode,
+ * When the user enables this through a mixer चयन, both पूर्णांकernal and
+ * बाह्यal microphones are disabled. Gain is fixed at 0dB. In this mode,
  * we also allow the bias to be configured through a separate mixer
  * control. */
 
-#define update_mic_pin(codec, nid, val)					\
-	snd_hda_codec_write_cache(codec, nid, 0,			\
+#घोषणा update_mic_pin(codec, nid, val)					\
+	snd_hda_codec_ग_लिखो_cache(codec, nid, 0,			\
 				   AC_VERB_SET_PIN_WIDGET_CONTROL, val)
 
-static const struct hda_input_mux olpc_xo_dc_bias = {
+अटल स्थिर काष्ठा hda_input_mux olpc_xo_dc_bias = अणु
 	.num_items = 3,
-	.items = {
-		{ "Off", PIN_IN },
-		{ "50%", PIN_VREF50 },
-		{ "80%", PIN_VREF80 },
-	},
-};
+	.items = अणु
+		अणु "Off", PIN_IN पूर्ण,
+		अणु "50%", PIN_VREF50 पूर्ण,
+		अणु "80%", PIN_VREF80 पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static void olpc_xo_update_mic_boost(struct hda_codec *codec)
-{
-	struct conexant_spec *spec = codec->spec;
-	int ch, val;
+अटल व्योम olpc_xo_update_mic_boost(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
+	पूर्णांक ch, val;
 
-	for (ch = 0; ch < 2; ch++) {
+	क्रम (ch = 0; ch < 2; ch++) अणु
 		val = AC_AMP_SET_OUTPUT |
 			(ch ? AC_AMP_SET_RIGHT : AC_AMP_SET_LEFT);
-		if (!spec->dc_enable)
-			val |= snd_hda_codec_amp_read(codec, 0x17, ch, HDA_OUTPUT, 0);
-		snd_hda_codec_write(codec, 0x17, 0,
+		अगर (!spec->dc_enable)
+			val |= snd_hda_codec_amp_पढ़ो(codec, 0x17, ch, HDA_OUTPUT, 0);
+		snd_hda_codec_ग_लिखो(codec, 0x17, 0,
 				    AC_VERB_SET_AMP_GAIN_MUTE, val);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void olpc_xo_update_mic_pins(struct hda_codec *codec)
-{
-	struct conexant_spec *spec = codec->spec;
-	int cur_input, val;
-	struct nid_path *path;
+अटल व्योम olpc_xo_update_mic_pins(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
+	पूर्णांक cur_input, val;
+	काष्ठा nid_path *path;
 
 	cur_input = spec->gen.input_paths[0][spec->gen.cur_mux[0]];
 
-	/* Set up mic pins for port-B, C and F dynamically as the recording
+	/* Set up mic pins क्रम port-B, C and F dynamically as the recording
 	 * LED is turned on/off by these pin controls
 	 */
-	if (!spec->dc_enable) {
-		/* disable DC bias path and pin for port F */
+	अगर (!spec->dc_enable) अणु
+		/* disable DC bias path and pin क्रम port F */
 		update_mic_pin(codec, 0x1e, 0);
 		snd_hda_activate_path(codec, spec->dc_mode_path, false, false);
 
-		/* update port B (ext mic) and C (int mic) */
+		/* update port B (ext mic) and C (पूर्णांक mic) */
 		/* OLPC defers mic widget control until when capture is
 		 * started because the microphone LED comes on as soon as
-		 * these settings are put in place. if we did this before
+		 * these settings are put in place. अगर we did this beक्रमe
 		 * recording, it would give the false indication that
 		 * recording is happening when it is not.
 		 */
@@ -392,495 +393,495 @@ static void olpc_xo_update_mic_pins(struct hda_codec *codec)
 			       snd_hda_codec_get_pin_target(codec, 0x1b) : 0);
 		/* enable normal mic path */
 		path = snd_hda_get_path_from_idx(codec, cur_input);
-		if (path)
+		अगर (path)
 			snd_hda_activate_path(codec, path, true, false);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* disable normal mic path */
 		path = snd_hda_get_path_from_idx(codec, cur_input);
-		if (path)
+		अगर (path)
 			snd_hda_activate_path(codec, path, false, false);
 
 		/* Even though port F is the DC input, the bias is controlled
 		 * on port B.  We also leave that port as an active input (but
-		 * unselected) in DC mode just in case that is necessary to
+		 * unselected) in DC mode just in हाल that is necessary to
 		 * make the bias setting take effect.
 		 */
-		if (spec->recording)
+		अगर (spec->recording)
 			val = olpc_xo_dc_bias.items[spec->dc_input_bias].index;
-		else
+		अन्यथा
 			val = 0;
 		update_mic_pin(codec, 0x1a, val);
 		update_mic_pin(codec, 0x1b, 0);
 		/* enable DC bias path and pin */
 		update_mic_pin(codec, 0x1e, spec->recording ? PIN_IN : 0);
 		snd_hda_activate_path(codec, spec->dc_mode_path, true, false);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* mic_autoswitch hook */
-static void olpc_xo_automic(struct hda_codec *codec,
-			    struct hda_jack_callback *jack)
-{
-	struct conexant_spec *spec = codec->spec;
+/* mic_स्वतःचयन hook */
+अटल व्योम olpc_xo_स्वतःmic(काष्ठा hda_codec *codec,
+			    काष्ठा hda_jack_callback *jack)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 
-	/* in DC mode, we don't handle automic */
-	if (!spec->dc_enable)
-		snd_hda_gen_mic_autoswitch(codec, jack);
+	/* in DC mode, we करोn't handle स्वतःmic */
+	अगर (!spec->dc_enable)
+		snd_hda_gen_mic_स्वतःचयन(codec, jack);
 	olpc_xo_update_mic_pins(codec);
-	if (spec->dc_enable)
+	अगर (spec->dc_enable)
 		olpc_xo_update_mic_boost(codec);
-}
+पूर्ण
 
 /* pcm_capture hook */
-static void olpc_xo_capture_hook(struct hda_pcm_stream *hinfo,
-				 struct hda_codec *codec,
-				 struct snd_pcm_substream *substream,
-				 int action)
-{
-	struct conexant_spec *spec = codec->spec;
+अटल व्योम olpc_xo_capture_hook(काष्ठा hda_pcm_stream *hinfo,
+				 काष्ठा hda_codec *codec,
+				 काष्ठा snd_pcm_substream *substream,
+				 पूर्णांक action)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 
 	/* toggle spec->recording flag and update mic pins accordingly
-	 * for turning on/off LED
+	 * क्रम turning on/off LED
 	 */
-	switch (action) {
-	case HDA_GEN_PCM_ACT_PREPARE:
+	चयन (action) अणु
+	हाल HDA_GEN_PCM_ACT_PREPARE:
 		spec->recording = 1;
 		olpc_xo_update_mic_pins(codec);
-		break;
-	case HDA_GEN_PCM_ACT_CLEANUP:
+		अवरोध;
+	हाल HDA_GEN_PCM_ACT_CLEANUP:
 		spec->recording = 0;
 		olpc_xo_update_mic_pins(codec);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int olpc_xo_dc_mode_get(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct conexant_spec *spec = codec->spec;
-	ucontrol->value.integer.value[0] = spec->dc_enable;
-	return 0;
-}
+अटल पूर्णांक olpc_xo_dc_mode_get(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा conexant_spec *spec = codec->spec;
+	ucontrol->value.पूर्णांकeger.value[0] = spec->dc_enable;
+	वापस 0;
+पूर्ण
 
-static int olpc_xo_dc_mode_put(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct conexant_spec *spec = codec->spec;
-	int dc_enable = !!ucontrol->value.integer.value[0];
+अटल पूर्णांक olpc_xo_dc_mode_put(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा conexant_spec *spec = codec->spec;
+	पूर्णांक dc_enable = !!ucontrol->value.पूर्णांकeger.value[0];
 
-	if (dc_enable == spec->dc_enable)
-		return 0;
+	अगर (dc_enable == spec->dc_enable)
+		वापस 0;
 
 	spec->dc_enable = dc_enable;
 	olpc_xo_update_mic_pins(codec);
 	olpc_xo_update_mic_boost(codec);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int olpc_xo_dc_bias_enum_get(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct conexant_spec *spec = codec->spec;
-	ucontrol->value.enumerated.item[0] = spec->dc_input_bias;
-	return 0;
-}
+अटल पूर्णांक olpc_xo_dc_bias_क्रमागत_get(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा conexant_spec *spec = codec->spec;
+	ucontrol->value.क्रमागतerated.item[0] = spec->dc_input_bias;
+	वापस 0;
+पूर्ण
 
-static int olpc_xo_dc_bias_enum_info(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_info *uinfo)
-{
-	return snd_hda_input_mux_info(&olpc_xo_dc_bias, uinfo);
-}
+अटल पूर्णांक olpc_xo_dc_bias_क्रमागत_info(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	वापस snd_hda_input_mux_info(&olpc_xo_dc_bias, uinfo);
+पूर्ण
 
-static int olpc_xo_dc_bias_enum_put(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct conexant_spec *spec = codec->spec;
-	const struct hda_input_mux *imux = &olpc_xo_dc_bias;
-	unsigned int idx;
+अटल पूर्णांक olpc_xo_dc_bias_क्रमागत_put(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा conexant_spec *spec = codec->spec;
+	स्थिर काष्ठा hda_input_mux *imux = &olpc_xo_dc_bias;
+	अचिन्हित पूर्णांक idx;
 
-	idx = ucontrol->value.enumerated.item[0];
-	if (idx >= imux->num_items)
+	idx = ucontrol->value.क्रमागतerated.item[0];
+	अगर (idx >= imux->num_items)
 		idx = imux->num_items - 1;
-	if (spec->dc_input_bias == idx)
-		return 0;
+	अगर (spec->dc_input_bias == idx)
+		वापस 0;
 
 	spec->dc_input_bias = idx;
-	if (spec->dc_enable)
+	अगर (spec->dc_enable)
 		olpc_xo_update_mic_pins(codec);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct snd_kcontrol_new olpc_xo_mixers[] = {
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new olpc_xo_mixers[] = अणु
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "DC Mode Enable Switch",
 		.info = snd_ctl_boolean_mono_info,
 		.get = olpc_xo_dc_mode_get,
 		.put = olpc_xo_dc_mode_put,
-	},
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	पूर्ण,
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "DC Input Bias Enum",
-		.info = olpc_xo_dc_bias_enum_info,
-		.get = olpc_xo_dc_bias_enum_get,
-		.put = olpc_xo_dc_bias_enum_put,
-	},
-	{}
-};
+		.info = olpc_xo_dc_bias_क्रमागत_info,
+		.get = olpc_xo_dc_bias_क्रमागत_get,
+		.put = olpc_xo_dc_bias_क्रमागत_put,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /* overriding mic boost put callback; update mic boost volume only when
  * DC mode is disabled
  */
-static int olpc_xo_mic_boost_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	struct conexant_spec *spec = codec->spec;
-	int ret = snd_hda_mixer_amp_volume_put(kcontrol, ucontrol);
-	if (ret > 0 && spec->dc_enable)
+अटल पूर्णांक olpc_xo_mic_boost_put(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	काष्ठा conexant_spec *spec = codec->spec;
+	पूर्णांक ret = snd_hda_mixer_amp_volume_put(kcontrol, ucontrol);
+	अगर (ret > 0 && spec->dc_enable)
 		olpc_xo_update_mic_boost(codec);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cxt_fixup_olpc_xo(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	struct conexant_spec *spec = codec->spec;
-	struct snd_kcontrol_new *kctl;
-	int i;
+अटल व्योम cxt_fixup_olpc_xo(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
+	काष्ठा snd_kcontrol_new *kctl;
+	पूर्णांक i;
 
-	if (action != HDA_FIXUP_ACT_PROBE)
-		return;
+	अगर (action != HDA_FIXUP_ACT_PROBE)
+		वापस;
 
-	spec->gen.mic_autoswitch_hook = olpc_xo_automic;
+	spec->gen.mic_स्वतःचयन_hook = olpc_xo_स्वतःmic;
 	spec->gen.pcm_capture_hook = olpc_xo_capture_hook;
 	spec->dc_mode_path = snd_hda_add_new_path(codec, 0x1e, 0x14, 0);
 
 	snd_hda_add_new_ctls(codec, olpc_xo_mixers);
 
-	/* OLPC's microphone port is DC coupled for use with external sensors,
-	 * therefore we use a 50% mic bias in order to center the input signal
+	/* OLPC's microphone port is DC coupled क्रम use with बाह्यal sensors,
+	 * thereक्रमe we use a 50% mic bias in order to center the input संकेत
 	 * with the DC input range of the codec.
 	 */
 	snd_hda_codec_set_pin_target(codec, 0x1a, PIN_VREF50);
 
 	/* override mic boost control */
-	snd_array_for_each(&spec->gen.kctls, i, kctl) {
-		if (!strcmp(kctl->name, "Mic Boost Volume")) {
+	snd_array_क्रम_each(&spec->gen.kctls, i, kctl) अणु
+		अगर (!म_भेद(kctl->name, "Mic Boost Volume")) अणु
 			kctl->put = olpc_xo_mic_boost_put;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void cxt_fixup_mute_led_eapd(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	struct conexant_spec *spec = codec->spec;
+अटल व्योम cxt_fixup_mute_led_eapd(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 
-	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
 		spec->mute_led_eapd = 0x1b;
 		spec->dynamic_eapd = true;
-		snd_hda_gen_add_mute_led_cdev(codec, cx_auto_vmaster_mute_led);
-	}
-}
+		snd_hda_gen_add_mute_led_cdev(codec, cx_स्वतः_vmaster_mute_led);
+	पूर्ण
+पूर्ण
 
 /*
  * Fix max input level on mixer widget to 0dB
  * (originally it has 0x2b steps with 0dB offset 0x14)
  */
-static void cxt_fixup_cap_mix_amp(struct hda_codec *codec,
-				  const struct hda_fixup *fix, int action)
-{
+अटल व्योम cxt_fixup_cap_mix_amp(काष्ठा hda_codec *codec,
+				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
 	snd_hda_override_amp_caps(codec, 0x17, HDA_INPUT,
 				  (0x14 << AC_AMPCAP_OFFSET_SHIFT) |
 				  (0x14 << AC_AMPCAP_NUM_STEPS_SHIFT) |
 				  (0x05 << AC_AMPCAP_STEP_SIZE_SHIFT) |
 				  (1 << AC_AMPCAP_MUTE_SHIFT));
-}
+पूर्ण
 
 /*
  * Fix max input level on mixer widget to 0dB
  * (originally it has 0x1e steps with 0 dB offset 0x17)
  */
-static void cxt_fixup_cap_mix_amp_5047(struct hda_codec *codec,
-				  const struct hda_fixup *fix, int action)
-{
+अटल व्योम cxt_fixup_cap_mix_amp_5047(काष्ठा hda_codec *codec,
+				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
 	snd_hda_override_amp_caps(codec, 0x10, HDA_INPUT,
 				  (0x17 << AC_AMPCAP_OFFSET_SHIFT) |
 				  (0x17 << AC_AMPCAP_NUM_STEPS_SHIFT) |
 				  (0x05 << AC_AMPCAP_STEP_SIZE_SHIFT) |
 				  (1 << AC_AMPCAP_MUTE_SHIFT));
-}
+पूर्ण
 
-static void cxt_fixup_hp_gate_mic_jack(struct hda_codec *codec,
-				       const struct hda_fixup *fix,
-				       int action)
-{
-	/* the mic pin (0x19) doesn't give an unsolicited event;
+अटल व्योम cxt_fixup_hp_gate_mic_jack(काष्ठा hda_codec *codec,
+				       स्थिर काष्ठा hda_fixup *fix,
+				       पूर्णांक action)
+अणु
+	/* the mic pin (0x19) करोesn't give an unsolicited event;
 	 * probe the mic pin together with the headphone pin (0x16)
 	 */
-	if (action == HDA_FIXUP_ACT_PROBE)
+	अगर (action == HDA_FIXUP_ACT_PROBE)
 		snd_hda_jack_set_gating_jack(codec, 0x19, 0x16);
-}
+पूर्ण
 
 /* update LED status via GPIO */
-static void cxt_update_gpio_led(struct hda_codec *codec, unsigned int mask,
+अटल व्योम cxt_update_gpio_led(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक mask,
 				bool led_on)
-{
-	struct conexant_spec *spec = codec->spec;
-	unsigned int oldval = spec->gpio_led;
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
+	अचिन्हित पूर्णांक oldval = spec->gpio_led;
 
-	if (spec->mute_led_polarity)
+	अगर (spec->mute_led_polarity)
 		led_on = !led_on;
 
-	if (led_on)
+	अगर (led_on)
 		spec->gpio_led |= mask;
-	else
+	अन्यथा
 		spec->gpio_led &= ~mask;
 	codec_dbg(codec, "mask:%d enabled:%d gpio_led:%d\n",
 			mask, led_on, spec->gpio_led);
-	if (spec->gpio_led != oldval)
-		snd_hda_codec_write(codec, 0x01, 0, AC_VERB_SET_GPIO_DATA,
+	अगर (spec->gpio_led != oldval)
+		snd_hda_codec_ग_लिखो(codec, 0x01, 0, AC_VERB_SET_GPIO_DATA,
 				    spec->gpio_led);
-}
+पूर्ण
 
 /* turn on/off mute LED via GPIO per vmaster hook */
-static int cxt_gpio_mute_update(struct led_classdev *led_cdev,
-				enum led_brightness brightness)
-{
-	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
-	struct conexant_spec *spec = codec->spec;
+अटल पूर्णांक cxt_gpio_mute_update(काष्ठा led_classdev *led_cdev,
+				क्रमागत led_brightness brightness)
+अणु
+	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+	काष्ठा conexant_spec *spec = codec->spec;
 
 	cxt_update_gpio_led(codec, spec->gpio_mute_led_mask, brightness);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* turn on/off mic-mute LED via GPIO per capture hook */
-static int cxt_gpio_micmute_update(struct led_classdev *led_cdev,
-				   enum led_brightness brightness)
-{
-	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
-	struct conexant_spec *spec = codec->spec;
+अटल पूर्णांक cxt_gpio_micmute_update(काष्ठा led_classdev *led_cdev,
+				   क्रमागत led_brightness brightness)
+अणु
+	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+	काष्ठा conexant_spec *spec = codec->spec;
 
 	cxt_update_gpio_led(codec, spec->gpio_mic_led_mask, brightness);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cxt_setup_mute_led(struct hda_codec *codec,
-			       unsigned int mute, unsigned int mic_mute)
-{
-	struct conexant_spec *spec = codec->spec;
+अटल व्योम cxt_setup_mute_led(काष्ठा hda_codec *codec,
+			       अचिन्हित पूर्णांक mute, अचिन्हित पूर्णांक mic_mute)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
 
 	spec->gpio_led = 0;
 	spec->mute_led_polarity = 0;
-	if (mute) {
+	अगर (mute) अणु
 		snd_hda_gen_add_mute_led_cdev(codec, cxt_gpio_mute_update);
 		spec->gpio_mute_led_mask = mute;
-	}
-	if (mic_mute) {
+	पूर्ण
+	अगर (mic_mute) अणु
 		snd_hda_gen_add_micmute_led_cdev(codec, cxt_gpio_micmute_update);
 		spec->gpio_mic_led_mask = mic_mute;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cxt_fixup_mute_led_gpio(struct hda_codec *codec,
-				const struct hda_fixup *fix, int action)
-{
-	if (action == HDA_FIXUP_ACT_PRE_PROBE)
+अटल व्योम cxt_fixup_mute_led_gpio(काष्ठा hda_codec *codec,
+				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
 		cxt_setup_mute_led(codec, 0x01, 0x02);
-}
+पूर्ण
 
-static void cxt_fixup_hp_zbook_mute_led(struct hda_codec *codec,
-					const struct hda_fixup *fix, int action)
-{
-	if (action == HDA_FIXUP_ACT_PRE_PROBE)
+अटल व्योम cxt_fixup_hp_zbook_mute_led(काष्ठा hda_codec *codec,
+					स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
 		cxt_setup_mute_led(codec, 0x10, 0x20);
-}
+पूर्ण
 
 /* ThinkPad X200 & co with cxt5051 */
-static const struct hda_pintbl cxt_pincfg_lenovo_x200[] = {
-	{ 0x16, 0x042140ff }, /* HP (seq# overridden) */
-	{ 0x17, 0x21a11000 }, /* dock-mic */
-	{ 0x19, 0x2121103f }, /* dock-HP */
-	{ 0x1c, 0x21440100 }, /* dock SPDIF out */
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl cxt_pincfg_lenovo_x200[] = अणु
+	अणु 0x16, 0x042140ff पूर्ण, /* HP (seq# overridden) */
+	अणु 0x17, 0x21a11000 पूर्ण, /* करोck-mic */
+	अणु 0x19, 0x2121103f पूर्ण, /* करोck-HP */
+	अणु 0x1c, 0x21440100 पूर्ण, /* करोck SPDIF out */
+	अणुपूर्ण
+पूर्ण;
 
 /* ThinkPad 410/420/510/520, X201 & co with cxt5066 */
-static const struct hda_pintbl cxt_pincfg_lenovo_tp410[] = {
-	{ 0x19, 0x042110ff }, /* HP (seq# overridden) */
-	{ 0x1a, 0x21a190f0 }, /* dock-mic */
-	{ 0x1c, 0x212140ff }, /* dock-HP */
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl cxt_pincfg_lenovo_tp410[] = अणु
+	अणु 0x19, 0x042110ff पूर्ण, /* HP (seq# overridden) */
+	अणु 0x1a, 0x21a190f0 पूर्ण, /* करोck-mic */
+	अणु 0x1c, 0x212140ff पूर्ण, /* करोck-HP */
+	अणुपूर्ण
+पूर्ण;
 
 /* Lemote A1004/A1205 with cxt5066 */
-static const struct hda_pintbl cxt_pincfg_lemote[] = {
-	{ 0x1a, 0x90a10020 }, /* Internal mic */
-	{ 0x1b, 0x03a11020 }, /* External mic */
-	{ 0x1d, 0x400101f0 }, /* Not used */
-	{ 0x1e, 0x40a701f0 }, /* Not used */
-	{ 0x20, 0x404501f0 }, /* Not used */
-	{ 0x22, 0x404401f0 }, /* Not used */
-	{ 0x23, 0x40a701f0 }, /* Not used */
-	{}
-};
+अटल स्थिर काष्ठा hda_pपूर्णांकbl cxt_pincfg_lemote[] = अणु
+	अणु 0x1a, 0x90a10020 पूर्ण, /* Internal mic */
+	अणु 0x1b, 0x03a11020 पूर्ण, /* External mic */
+	अणु 0x1d, 0x400101f0 पूर्ण, /* Not used */
+	अणु 0x1e, 0x40a701f0 पूर्ण, /* Not used */
+	अणु 0x20, 0x404501f0 पूर्ण, /* Not used */
+	अणु 0x22, 0x404401f0 पूर्ण, /* Not used */
+	अणु 0x23, 0x40a701f0 पूर्ण, /* Not used */
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_fixup cxt_fixups[] = {
-	[CXT_PINCFG_LENOVO_X200] = {
+अटल स्थिर काष्ठा hda_fixup cxt_fixups[] = अणु
+	[CXT_PINCFG_LENOVO_X200] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = cxt_pincfg_lenovo_x200,
-	},
-	[CXT_PINCFG_LENOVO_TP410] = {
+	पूर्ण,
+	[CXT_PINCFG_LENOVO_TP410] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = cxt_pincfg_lenovo_tp410,
 		.chained = true,
 		.chain_id = CXT_FIXUP_THINKPAD_ACPI,
-	},
-	[CXT_PINCFG_LEMOTE_A1004] = {
+	पूर्ण,
+	[CXT_PINCFG_LEMOTE_A1004] = अणु
 		.type = HDA_FIXUP_PINS,
 		.chained = true,
 		.chain_id = CXT_FIXUP_INC_MIC_BOOST,
 		.v.pins = cxt_pincfg_lemote,
-	},
-	[CXT_PINCFG_LEMOTE_A1205] = {
+	पूर्ण,
+	[CXT_PINCFG_LEMOTE_A1205] = अणु
 		.type = HDA_FIXUP_PINS,
 		.v.pins = cxt_pincfg_lemote,
-	},
-	[CXT_PINCFG_COMPAQ_CQ60] = {
+	पूर्ण,
+	[CXT_PINCFG_COMPAQ_CQ60] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
 			/* 0x17 was falsely set up as a mic, it should 0x1d */
-			{ 0x17, 0x400001f0 },
-			{ 0x1d, 0x97a70120 },
-			{ }
-		}
-	},
-	[CXT_FIXUP_STEREO_DMIC] = {
+			अणु 0x17, 0x400001f0 पूर्ण,
+			अणु 0x1d, 0x97a70120 पूर्ण,
+			अणु पूर्ण
+		पूर्ण
+	पूर्ण,
+	[CXT_FIXUP_STEREO_DMIC] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_stereo_dmic,
-	},
-	[CXT_FIXUP_INC_MIC_BOOST] = {
+	पूर्ण,
+	[CXT_FIXUP_INC_MIC_BOOST] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt5066_increase_mic_boost,
-	},
-	[CXT_FIXUP_HEADPHONE_MIC_PIN] = {
+	पूर्ण,
+	[CXT_FIXUP_HEADPHONE_MIC_PIN] = अणु
 		.type = HDA_FIXUP_PINS,
 		.chained = true,
 		.chain_id = CXT_FIXUP_HEADPHONE_MIC,
-		.v.pins = (const struct hda_pintbl[]) {
-			{ 0x18, 0x03a1913d }, /* use as headphone mic, without its own jack detect */
-			{ }
-		}
-	},
-	[CXT_FIXUP_HEADPHONE_MIC] = {
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+			अणु 0x18, 0x03a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
+			अणु पूर्ण
+		पूर्ण
+	पूर्ण,
+	[CXT_FIXUP_HEADPHONE_MIC] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_headphone_mic,
-	},
-	[CXT_FIXUP_GPIO1] = {
+	पूर्ण,
+	[CXT_FIXUP_GPIO1] = अणु
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (const struct hda_verb[]) {
-			{ 0x01, AC_VERB_SET_GPIO_MASK, 0x01 },
-			{ 0x01, AC_VERB_SET_GPIO_DIRECTION, 0x01 },
-			{ 0x01, AC_VERB_SET_GPIO_DATA, 0x01 },
-			{ }
-		},
-	},
-	[CXT_FIXUP_ASPIRE_DMIC] = {
+		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+			अणु 0x01, AC_VERB_SET_GPIO_MASK, 0x01 पूर्ण,
+			अणु 0x01, AC_VERB_SET_GPIO_सूचीECTION, 0x01 पूर्ण,
+			अणु 0x01, AC_VERB_SET_GPIO_DATA, 0x01 पूर्ण,
+			अणु पूर्ण
+		पूर्ण,
+	पूर्ण,
+	[CXT_FIXUP_ASPIRE_DMIC] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_stereo_dmic,
 		.chained = true,
 		.chain_id = CXT_FIXUP_GPIO1,
-	},
-	[CXT_FIXUP_THINKPAD_ACPI] = {
+	पूर्ण,
+	[CXT_FIXUP_THINKPAD_ACPI] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = hda_fixup_thinkpad_acpi,
-	},
-	[CXT_FIXUP_OLPC_XO] = {
+	पूर्ण,
+	[CXT_FIXUP_OLPC_XO] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_olpc_xo,
-	},
-	[CXT_FIXUP_CAP_MIX_AMP] = {
+	पूर्ण,
+	[CXT_FIXUP_CAP_MIX_AMP] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_cap_mix_amp,
-	},
-	[CXT_FIXUP_TOSHIBA_P105] = {
+	पूर्ण,
+	[CXT_FIXUP_TOSHIBA_P105] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
-			{ 0x10, 0x961701f0 }, /* speaker/hp */
-			{ 0x12, 0x02a1901e }, /* ext mic */
-			{ 0x14, 0x95a70110 }, /* int mic */
-			{}
-		},
-	},
-	[CXT_FIXUP_HP_530] = {
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+			अणु 0x10, 0x961701f0 पूर्ण, /* speaker/hp */
+			अणु 0x12, 0x02a1901e पूर्ण, /* ext mic */
+			अणु 0x14, 0x95a70110 पूर्ण, /* पूर्णांक mic */
+			अणुपूर्ण
+		पूर्ण,
+	पूर्ण,
+	[CXT_FIXUP_HP_530] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
-			{ 0x12, 0x90a60160 }, /* int mic */
-			{}
-		},
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+			अणु 0x12, 0x90a60160 पूर्ण, /* पूर्णांक mic */
+			अणुपूर्ण
+		पूर्ण,
 		.chained = true,
 		.chain_id = CXT_FIXUP_CAP_MIX_AMP,
-	},
-	[CXT_FIXUP_CAP_MIX_AMP_5047] = {
+	पूर्ण,
+	[CXT_FIXUP_CAP_MIX_AMP_5047] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_cap_mix_amp_5047,
-	},
-	[CXT_FIXUP_MUTE_LED_EAPD] = {
+	पूर्ण,
+	[CXT_FIXUP_MUTE_LED_EAPD] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_mute_led_eapd,
-	},
-	[CXT_FIXUP_HP_DOCK] = {
+	पूर्ण,
+	[CXT_FIXUP_HP_DOCK] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
-			{ 0x16, 0x21011020 }, /* line-out */
-			{ 0x18, 0x2181103f }, /* line-in */
-			{ }
-		},
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+			अणु 0x16, 0x21011020 पूर्ण, /* line-out */
+			अणु 0x18, 0x2181103f पूर्ण, /* line-in */
+			अणु पूर्ण
+		पूर्ण,
 		.chained = true,
 		.chain_id = CXT_FIXUP_MUTE_LED_GPIO,
-	},
-	[CXT_FIXUP_HP_SPECTRE] = {
+	पूर्ण,
+	[CXT_FIXUP_HP_SPECTRE] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
-			/* enable NID 0x1d for the speaker on top */
-			{ 0x1d, 0x91170111 },
-			{ }
-		}
-	},
-	[CXT_FIXUP_HP_GATE_MIC] = {
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+			/* enable NID 0x1d क्रम the speaker on top */
+			अणु 0x1d, 0x91170111 पूर्ण,
+			अणु पूर्ण
+		पूर्ण
+	पूर्ण,
+	[CXT_FIXUP_HP_GATE_MIC] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_hp_gate_mic_jack,
-	},
-	[CXT_FIXUP_MUTE_LED_GPIO] = {
+	पूर्ण,
+	[CXT_FIXUP_MUTE_LED_GPIO] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_mute_led_gpio,
-	},
-	[CXT_FIXUP_HP_ZBOOK_MUTE_LED] = {
+	पूर्ण,
+	[CXT_FIXUP_HP_ZBOOK_MUTE_LED] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_hp_zbook_mute_led,
-	},
-	[CXT_FIXUP_HEADSET_MIC] = {
+	पूर्ण,
+	[CXT_FIXUP_HEADSET_MIC] = अणु
 		.type = HDA_FIXUP_FUNC,
 		.v.func = cxt_fixup_headset_mic,
-	},
-	[CXT_FIXUP_HP_MIC_NO_PRESENCE] = {
+	पूर्ण,
+	[CXT_FIXUP_HP_MIC_NO_PRESENCE] = अणु
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (const struct hda_pintbl[]) {
-			{ 0x1a, 0x02a1113c },
-			{ }
-		},
+		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+			अणु 0x1a, 0x02a1113c पूर्ण,
+			अणु पूर्ण
+		पूर्ण,
 		.chained = true,
 		.chain_id = CXT_FIXUP_HEADSET_MIC,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct snd_pci_quirk cxt5045_fixups[] = {
+अटल स्थिर काष्ठा snd_pci_quirk cxt5045_fixups[] = अणु
 	SND_PCI_QUIRK(0x103c, 0x30d5, "HP 530", CXT_FIXUP_HP_530),
 	SND_PCI_QUIRK(0x1179, 0xff31, "Toshiba P105", CXT_FIXUP_TOSHIBA_P105),
 	/* HP, Packard Bell, Fujitsu-Siemens & Lenovo laptops have
@@ -890,40 +891,40 @@ static const struct snd_pci_quirk cxt5045_fixups[] = {
 	SND_PCI_QUIRK_VENDOR(0x1631, "Packard Bell", CXT_FIXUP_CAP_MIX_AMP),
 	SND_PCI_QUIRK_VENDOR(0x1734, "Fujitsu", CXT_FIXUP_CAP_MIX_AMP),
 	SND_PCI_QUIRK_VENDOR(0x17aa, "Lenovo", CXT_FIXUP_CAP_MIX_AMP),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_model_fixup cxt5045_fixup_models[] = {
-	{ .id = CXT_FIXUP_CAP_MIX_AMP, .name = "cap-mix-amp" },
-	{ .id = CXT_FIXUP_TOSHIBA_P105, .name = "toshiba-p105" },
-	{ .id = CXT_FIXUP_HP_530, .name = "hp-530" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup cxt5045_fixup_models[] = अणु
+	अणु .id = CXT_FIXUP_CAP_MIX_AMP, .name = "cap-mix-amp" पूर्ण,
+	अणु .id = CXT_FIXUP_TOSHIBA_P105, .name = "toshiba-p105" पूर्ण,
+	अणु .id = CXT_FIXUP_HP_530, .name = "hp-530" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk cxt5047_fixups[] = {
+अटल स्थिर काष्ठा snd_pci_quirk cxt5047_fixups[] = अणु
 	/* HP laptops have really bad sound over 0 dB on NID 0x10.
 	 */
 	SND_PCI_QUIRK_VENDOR(0x103c, "HP", CXT_FIXUP_CAP_MIX_AMP_5047),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_model_fixup cxt5047_fixup_models[] = {
-	{ .id = CXT_FIXUP_CAP_MIX_AMP_5047, .name = "cap-mix-amp" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup cxt5047_fixup_models[] = अणु
+	अणु .id = CXT_FIXUP_CAP_MIX_AMP_5047, .name = "cap-mix-amp" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk cxt5051_fixups[] = {
+अटल स्थिर काष्ठा snd_pci_quirk cxt5051_fixups[] = अणु
 	SND_PCI_QUIRK(0x103c, 0x360b, "Compaq CQ60", CXT_PINCFG_COMPAQ_CQ60),
 	SND_PCI_QUIRK(0x17aa, 0x20f2, "Lenovo X200", CXT_PINCFG_LENOVO_X200),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_model_fixup cxt5051_fixup_models[] = {
-	{ .id = CXT_PINCFG_LENOVO_X200, .name = "lenovo-x200" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup cxt5051_fixup_models[] = अणु
+	अणु .id = CXT_PINCFG_LENOVO_X200, .name = "lenovo-x200" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct snd_pci_quirk cxt5066_fixups[] = {
+अटल स्थिर काष्ठा snd_pci_quirk cxt5066_fixups[] = अणु
 	SND_PCI_QUIRK(0x1025, 0x0543, "Acer Aspire One 522", CXT_FIXUP_STEREO_DMIC),
 	SND_PCI_QUIRK(0x1025, 0x054c, "Acer Aspire 3830TG", CXT_FIXUP_ASPIRE_DMIC),
 	SND_PCI_QUIRK(0x1025, 0x054f, "Acer Aspire 4830T", CXT_FIXUP_ASPIRE_DMIC),
@@ -969,174 +970,174 @@ static const struct snd_pci_quirk cxt5066_fixups[] = {
 	SND_PCI_QUIRK_VENDOR(0x17aa, "Thinkpad", CXT_FIXUP_THINKPAD_ACPI),
 	SND_PCI_QUIRK(0x1c06, 0x2011, "Lemote A1004", CXT_PINCFG_LEMOTE_A1004),
 	SND_PCI_QUIRK(0x1c06, 0x2012, "Lemote A1205", CXT_PINCFG_LEMOTE_A1205),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static const struct hda_model_fixup cxt5066_fixup_models[] = {
-	{ .id = CXT_FIXUP_STEREO_DMIC, .name = "stereo-dmic" },
-	{ .id = CXT_FIXUP_GPIO1, .name = "gpio1" },
-	{ .id = CXT_FIXUP_HEADPHONE_MIC_PIN, .name = "headphone-mic-pin" },
-	{ .id = CXT_PINCFG_LENOVO_TP410, .name = "tp410" },
-	{ .id = CXT_FIXUP_THINKPAD_ACPI, .name = "thinkpad" },
-	{ .id = CXT_PINCFG_LEMOTE_A1004, .name = "lemote-a1004" },
-	{ .id = CXT_PINCFG_LEMOTE_A1205, .name = "lemote-a1205" },
-	{ .id = CXT_FIXUP_OLPC_XO, .name = "olpc-xo" },
-	{ .id = CXT_FIXUP_MUTE_LED_EAPD, .name = "mute-led-eapd" },
-	{ .id = CXT_FIXUP_HP_DOCK, .name = "hp-dock" },
-	{ .id = CXT_FIXUP_MUTE_LED_GPIO, .name = "mute-led-gpio" },
-	{ .id = CXT_FIXUP_HP_ZBOOK_MUTE_LED, .name = "hp-zbook-mute-led" },
-	{ .id = CXT_FIXUP_HP_MIC_NO_PRESENCE, .name = "hp-mic-fix" },
-	{}
-};
+अटल स्थिर काष्ठा hda_model_fixup cxt5066_fixup_models[] = अणु
+	अणु .id = CXT_FIXUP_STEREO_DMIC, .name = "stereo-dmic" पूर्ण,
+	अणु .id = CXT_FIXUP_GPIO1, .name = "gpio1" पूर्ण,
+	अणु .id = CXT_FIXUP_HEADPHONE_MIC_PIN, .name = "headphone-mic-pin" पूर्ण,
+	अणु .id = CXT_PINCFG_LENOVO_TP410, .name = "tp410" पूर्ण,
+	अणु .id = CXT_FIXUP_THINKPAD_ACPI, .name = "thinkpad" पूर्ण,
+	अणु .id = CXT_PINCFG_LEMOTE_A1004, .name = "lemote-a1004" पूर्ण,
+	अणु .id = CXT_PINCFG_LEMOTE_A1205, .name = "lemote-a1205" पूर्ण,
+	अणु .id = CXT_FIXUP_OLPC_XO, .name = "olpc-xo" पूर्ण,
+	अणु .id = CXT_FIXUP_MUTE_LED_EAPD, .name = "mute-led-eapd" पूर्ण,
+	अणु .id = CXT_FIXUP_HP_DOCK, .name = "hp-dock" पूर्ण,
+	अणु .id = CXT_FIXUP_MUTE_LED_GPIO, .name = "mute-led-gpio" पूर्ण,
+	अणु .id = CXT_FIXUP_HP_ZBOOK_MUTE_LED, .name = "hp-zbook-mute-led" पूर्ण,
+	अणु .id = CXT_FIXUP_HP_MIC_NO_PRESENCE, .name = "hp-mic-fix" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-/* add "fake" mute amp-caps to DACs on cx5051 so that mixer mute switches
+/* add "fake" mute amp-caps to DACs on cx5051 so that mixer mute चयनes
  * can be created (bko#42825)
  */
-static void add_cx5051_fake_mutes(struct hda_codec *codec)
-{
-	struct conexant_spec *spec = codec->spec;
-	static const hda_nid_t out_nids[] = {
+अटल व्योम add_cx5051_fake_mutes(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा conexant_spec *spec = codec->spec;
+	अटल स्थिर hda_nid_t out_nids[] = अणु
 		0x10, 0x11, 0
-	};
-	const hda_nid_t *p;
+	पूर्ण;
+	स्थिर hda_nid_t *p;
 
-	for (p = out_nids; *p; p++)
+	क्रम (p = out_nids; *p; p++)
 		snd_hda_override_amp_caps(codec, *p, HDA_OUTPUT,
 					  AC_AMPCAP_MIN_MUTE |
 					  query_amp_caps(codec, *p, HDA_OUTPUT));
 	spec->gen.dac_min_mute = true;
-}
+पूर्ण
 
-static int patch_conexant_auto(struct hda_codec *codec)
-{
-	struct conexant_spec *spec;
-	int err;
+अटल पूर्णांक patch_conexant_स्वतः(काष्ठा hda_codec *codec)
+अणु
+	काष्ठा conexant_spec *spec;
+	पूर्णांक err;
 
 	codec_info(codec, "%s: BIOS auto-probing.\n", codec->core.chip_name);
 
-	spec = kzalloc(sizeof(*spec), GFP_KERNEL);
-	if (!spec)
-		return -ENOMEM;
+	spec = kzalloc(माप(*spec), GFP_KERNEL);
+	अगर (!spec)
+		वापस -ENOMEM;
 	snd_hda_gen_spec_init(&spec->gen);
 	codec->spec = spec;
-	codec->patch_ops = cx_auto_patch_ops;
+	codec->patch_ops = cx_स्वतः_patch_ops;
 
-	cx_auto_parse_eapd(codec);
+	cx_स्वतः_parse_eapd(codec);
 	spec->gen.own_eapd_ctl = 1;
 
-	switch (codec->core.vendor_id) {
-	case 0x14f15045:
+	चयन (codec->core.venकरोr_id) अणु
+	हाल 0x14f15045:
 		codec->single_adc_amp = 1;
 		spec->gen.mixer_nid = 0x17;
 		spec->gen.add_stereo_mix_input = HDA_HINT_STEREO_MIX_AUTO;
 		snd_hda_pick_fixup(codec, cxt5045_fixup_models,
 				   cxt5045_fixups, cxt_fixups);
-		break;
-	case 0x14f15047:
+		अवरोध;
+	हाल 0x14f15047:
 		codec->pin_amp_workaround = 1;
 		spec->gen.mixer_nid = 0x19;
 		spec->gen.add_stereo_mix_input = HDA_HINT_STEREO_MIX_AUTO;
 		snd_hda_pick_fixup(codec, cxt5047_fixup_models,
 				   cxt5047_fixups, cxt_fixups);
-		break;
-	case 0x14f15051:
+		अवरोध;
+	हाल 0x14f15051:
 		add_cx5051_fake_mutes(codec);
 		codec->pin_amp_workaround = 1;
 		snd_hda_pick_fixup(codec, cxt5051_fixup_models,
 				   cxt5051_fixups, cxt_fixups);
-		break;
-	case 0x14f150f2:
-		codec->power_save_node = 1;
+		अवरोध;
+	हाल 0x14f150f2:
+		codec->घातer_save_node = 1;
 		fallthrough;
-	default:
+	शेष:
 		codec->pin_amp_workaround = 1;
 		snd_hda_pick_fixup(codec, cxt5066_fixup_models,
 				   cxt5066_fixups, cxt_fixups);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!spec->gen.vmaster_mute.hook && spec->dynamic_eapd)
-		spec->gen.vmaster_mute.hook = cx_auto_vmaster_hook;
+	अगर (!spec->gen.vmaster_mute.hook && spec->dynamic_eapd)
+		spec->gen.vmaster_mute.hook = cx_स्वतः_vmaster_hook;
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	err = snd_hda_parse_pin_defcfg(codec, &spec->gen.autocfg, NULL,
+	err = snd_hda_parse_pin_defcfg(codec, &spec->gen.स्वतःcfg, शून्य,
 				       spec->parse_flags);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	err = snd_hda_gen_parse_auto_config(codec, &spec->gen.autocfg);
-	if (err < 0)
-		goto error;
+	err = snd_hda_gen_parse_स्वतः_config(codec, &spec->gen.स्वतःcfg);
+	अगर (err < 0)
+		जाओ error;
 
-	err = cx_auto_parse_beep(codec);
-	if (err < 0)
-		goto error;
+	err = cx_स्वतः_parse_beep(codec);
+	अगर (err < 0)
+		जाओ error;
 
 	/* Some laptops with Conexant chips show stalls in S3 resume,
-	 * which falls into the single-cmd mode.
+	 * which falls पूर्णांकo the single-cmd mode.
 	 * Better to make reset, then.
 	 */
-	if (!codec->bus->core.sync_write) {
+	अगर (!codec->bus->core.sync_ग_लिखो) अणु
 		codec_info(codec,
 			   "Enable sync_write for stable communication\n");
-		codec->bus->core.sync_write = 1;
+		codec->bus->core.sync_ग_लिखो = 1;
 		codec->bus->allow_bus_reset = 1;
-	}
+	पूर्ण
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	return 0;
+	वापस 0;
 
  error:
-	cx_auto_free(codec);
-	return err;
-}
+	cx_स्वतः_मुक्त(codec);
+	वापस err;
+पूर्ण
 
 /*
  */
 
-static const struct hda_device_id snd_hda_id_conexant[] = {
-	HDA_CODEC_ENTRY(0x14f11f86, "CX8070", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f12008, "CX8200", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f120d0, "CX11970", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15045, "CX20549 (Venice)", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15047, "CX20551 (Waikiki)", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15051, "CX20561 (Hermosa)", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15066, "CX20582 (Pebble)", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15067, "CX20583 (Pebble HSF)", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15068, "CX20584", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15069, "CX20585", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f1506c, "CX20588", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f1506e, "CX20590", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15097, "CX20631", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15098, "CX20632", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f150a1, "CX20641", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f150a2, "CX20642", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f150ab, "CX20651", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f150ac, "CX20652", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f150b8, "CX20664", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f150b9, "CX20665", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f150f1, "CX21722", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f150f2, "CX20722", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f150f3, "CX21724", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f150f4, "CX20724", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f1510f, "CX20751/2", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15110, "CX20751/2", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15111, "CX20753/4", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15113, "CX20755", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15114, "CX20756", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f15115, "CX20757", patch_conexant_auto),
-	HDA_CODEC_ENTRY(0x14f151d7, "CX20952", patch_conexant_auto),
-	{} /* terminator */
-};
+अटल स्थिर काष्ठा hda_device_id snd_hda_id_conexant[] = अणु
+	HDA_CODEC_ENTRY(0x14f11f86, "CX8070", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f12008, "CX8200", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f120d0, "CX11970", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15045, "CX20549 (Venice)", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15047, "CX20551 (Waikiki)", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15051, "CX20561 (Hermosa)", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15066, "CX20582 (Pebble)", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15067, "CX20583 (Pebble HSF)", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15068, "CX20584", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15069, "CX20585", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f1506c, "CX20588", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f1506e, "CX20590", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15097, "CX20631", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15098, "CX20632", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f150a1, "CX20641", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f150a2, "CX20642", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f150ab, "CX20651", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f150ac, "CX20652", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f150b8, "CX20664", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f150b9, "CX20665", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f150f1, "CX21722", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f150f2, "CX20722", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f150f3, "CX21724", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f150f4, "CX20724", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f1510f, "CX20751/2", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15110, "CX20751/2", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15111, "CX20753/4", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15113, "CX20755", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15114, "CX20756", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f15115, "CX20757", patch_conexant_स्वतः),
+	HDA_CODEC_ENTRY(0x14f151d7, "CX20952", patch_conexant_स्वतः),
+	अणुपूर्ण /* terminator */
+पूर्ण;
 MODULE_DEVICE_TABLE(hdaudio, snd_hda_id_conexant);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Conexant HD-audio codec");
 
-static struct hda_codec_driver conexant_driver = {
+अटल काष्ठा hda_codec_driver conexant_driver = अणु
 	.id = snd_hda_id_conexant,
-};
+पूर्ण;
 
 module_hda_codec_driver(conexant_driver);

@@ -1,120 +1,121 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * ARM specific SMP header, this contains our implementation
+ * ARM specअगरic SMP header, this contains our implementation
  * details.
  */
-#ifndef __ASMARM_SMP_PLAT_H
-#define __ASMARM_SMP_PLAT_H
+#अगर_अघोषित __ASMARM_SMP_PLAT_H
+#घोषणा __ASMARM_SMP_PLAT_H
 
-#include <linux/cpumask.h>
-#include <linux/err.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/err.h>
 
-#include <asm/cpu.h>
-#include <asm/cputype.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/cputype.h>
 
 /*
- * Return true if we are running on a SMP platform
+ * Return true अगर we are running on a SMP platक्रमm
  */
-static inline bool is_smp(void)
-{
-#ifndef CONFIG_SMP
-	return false;
-#elif defined(CONFIG_SMP_ON_UP)
-	extern unsigned int smp_on_up;
-	return !!smp_on_up;
-#else
-	return true;
-#endif
-}
+अटल अंतरभूत bool is_smp(व्योम)
+अणु
+#अगर_अघोषित CONFIG_SMP
+	वापस false;
+#या_अगर defined(CONFIG_SMP_ON_UP)
+	बाह्य अचिन्हित पूर्णांक smp_on_up;
+	वापस !!smp_on_up;
+#अन्यथा
+	वापस true;
+#पूर्ण_अगर
+पूर्ण
 
 /**
- * smp_cpuid_part() - return part id for a given cpu
+ * smp_cpuid_part() - वापस part id क्रम a given cpu
  * @cpu:	logical cpu id.
  *
  * Return: part id of logical cpu passed as argument.
  */
-static inline unsigned int smp_cpuid_part(int cpu)
-{
-	struct cpuinfo_arm *cpu_info = &per_cpu(cpu_data, cpu);
+अटल अंतरभूत अचिन्हित पूर्णांक smp_cpuid_part(पूर्णांक cpu)
+अणु
+	काष्ठा cpuinfo_arm *cpu_info = &per_cpu(cpu_data, cpu);
 
-	return is_smp() ? cpu_info->cpuid & ARM_CPU_PART_MASK :
-			  read_cpuid_part();
-}
+	वापस is_smp() ? cpu_info->cpuid & ARM_CPU_PART_MASK :
+			  पढ़ो_cpuid_part();
+पूर्ण
 
-/* all SMP configurations have the extended CPUID registers */
-#ifndef CONFIG_MMU
-#define tlb_ops_need_broadcast()	0
-#else
-static inline int tlb_ops_need_broadcast(void)
-{
-	if (!is_smp())
-		return 0;
+/* all SMP configurations have the extended CPUID रेजिस्टरs */
+#अगर_अघोषित CONFIG_MMU
+#घोषणा tlb_ops_need_broadcast()	0
+#अन्यथा
+अटल अंतरभूत पूर्णांक tlb_ops_need_broadcast(व्योम)
+अणु
+	अगर (!is_smp())
+		वापस 0;
 
-	return ((read_cpuid_ext(CPUID_EXT_MMFR3) >> 12) & 0xf) < 2;
-}
-#endif
+	वापस ((पढ़ो_cpuid_ext(CPUID_EXT_MMFR3) >> 12) & 0xf) < 2;
+पूर्ण
+#पूर्ण_अगर
 
-#if !defined(CONFIG_SMP) || __LINUX_ARM_ARCH__ >= 7
-#define cache_ops_need_broadcast()	0
-#else
-static inline int cache_ops_need_broadcast(void)
-{
-	if (!is_smp())
-		return 0;
+#अगर !defined(CONFIG_SMP) || __LINUX_ARM_ARCH__ >= 7
+#घोषणा cache_ops_need_broadcast()	0
+#अन्यथा
+अटल अंतरभूत पूर्णांक cache_ops_need_broadcast(व्योम)
+अणु
+	अगर (!is_smp())
+		वापस 0;
 
-	return ((read_cpuid_ext(CPUID_EXT_MMFR3) >> 12) & 0xf) < 1;
-}
-#endif
+	वापस ((पढ़ो_cpuid_ext(CPUID_EXT_MMFR3) >> 12) & 0xf) < 1;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Logical CPU mapping.
  */
-extern u32 __cpu_logical_map[];
-#define cpu_logical_map(cpu)	__cpu_logical_map[cpu]
+बाह्य u32 __cpu_logical_map[];
+#घोषणा cpu_logical_map(cpu)	__cpu_logical_map[cpu]
 /*
  * Retrieve logical cpu index corresponding to a given MPIDR[23:0]
- *  - mpidr: MPIDR[23:0] to be used for the look-up
+ *  - mpidr: MPIDR[23:0] to be used क्रम the look-up
  *
  * Returns the cpu logical index or -EINVAL on look-up error
  */
-static inline int get_logical_index(u32 mpidr)
-{
-	int cpu;
-	for (cpu = 0; cpu < nr_cpu_ids; cpu++)
-		if (cpu_logical_map(cpu) == mpidr)
-			return cpu;
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक get_logical_index(u32 mpidr)
+अणु
+	पूर्णांक cpu;
+	क्रम (cpu = 0; cpu < nr_cpu_ids; cpu++)
+		अगर (cpu_logical_map(cpu) == mpidr)
+			वापस cpu;
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * NOTE ! Assembly code relies on the following
- * structure memory layout in order to carry out load
+ * काष्ठाure memory layout in order to carry out load
  * multiple from its base address. For more
- * information check arch/arm/kernel/sleep.S
+ * inक्रमmation check arch/arm/kernel/sleep.S
  */
-struct mpidr_hash {
+काष्ठा mpidr_hash अणु
 	u32	mask; /* used by sleep.S */
-	u32	shift_aff[3]; /* used by sleep.S */
+	u32	shअगरt_aff[3]; /* used by sleep.S */
 	u32	bits;
-};
+पूर्ण;
 
-extern struct mpidr_hash mpidr_hash;
+बाह्य काष्ठा mpidr_hash mpidr_hash;
 
-static inline u32 mpidr_hash_size(void)
-{
-	return 1 << mpidr_hash.bits;
-}
+अटल अंतरभूत u32 mpidr_hash_size(व्योम)
+अणु
+	वापस 1 << mpidr_hash.bits;
+पूर्ण
 
-extern int platform_can_secondary_boot(void);
-extern int platform_can_cpu_hotplug(void);
+बाह्य पूर्णांक platक्रमm_can_secondary_boot(व्योम);
+बाह्य पूर्णांक platक्रमm_can_cpu_hotplug(व्योम);
 
-#ifdef CONFIG_HOTPLUG_CPU
-extern int platform_can_hotplug_cpu(unsigned int cpu);
-#else
-static inline int platform_can_hotplug_cpu(unsigned int cpu)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+बाह्य पूर्णांक platक्रमm_can_hotplug_cpu(अचिन्हित पूर्णांक cpu);
+#अन्यथा
+अटल अंतरभूत पूर्णांक platक्रमm_can_hotplug_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

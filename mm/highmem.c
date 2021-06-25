@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * High memory handling common code and variables.
  *
@@ -6,30 +7,30 @@
  *          Gerhard Wichert, Siemens AG, Gerhard.Wichert@pdb.siemens.de
  *
  *
- * Redesigned the x86 32-bit VM architecture to deal with
+ * Redeचिन्हित the x86 32-bit VM architecture to deal with
  * 64-bit physical space. With current x86 CPUs this
  * means up to 64 Gigabytes physical RAM.
  *
- * Rewrote high memory support to move the page cache into
+ * Rewrote high memory support to move the page cache पूर्णांकo
  * high memory. Implemented permanent (schedulable) kmaps
  * based on Linus' idea.
  *
  * Copyright (C) 1999 Ingo Molnar <mingo@redhat.com>
  */
 
-#include <linux/mm.h>
-#include <linux/export.h>
-#include <linux/swap.h>
-#include <linux/bio.h>
-#include <linux/pagemap.h>
-#include <linux/mempool.h>
-#include <linux/blkdev.h>
-#include <linux/init.h>
-#include <linux/hash.h>
-#include <linux/highmem.h>
-#include <linux/kgdb.h>
-#include <asm/tlbflush.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/export.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/init.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/kgdb.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <linux/vदो_स्मृति.h>
 
 /*
  * Virtual_count is not a pure "count".
@@ -39,140 +40,140 @@
  *    since the last TLB flush - so we can't use it.
  *  n means that there are (n-1) current users of it.
  */
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 
 /*
  * Architecture with aliasing data cache may define the following family of
- * helper functions in its asm/highmem.h to control cache color of virtual
+ * helper functions in its यंत्र/highस्मृति.स to control cache color of भव
  * addresses where physical memory pages are mapped by kmap.
  */
-#ifndef get_pkmap_color
+#अगर_अघोषित get_pkmap_color
 
 /*
- * Determine color of virtual address where the page should be mapped.
+ * Determine color of भव address where the page should be mapped.
  */
-static inline unsigned int get_pkmap_color(struct page *page)
-{
-	return 0;
-}
-#define get_pkmap_color get_pkmap_color
+अटल अंतरभूत अचिन्हित पूर्णांक get_pkmap_color(काष्ठा page *page)
+अणु
+	वापस 0;
+पूर्ण
+#घोषणा get_pkmap_color get_pkmap_color
 
 /*
- * Get next index for mapping inside PKMAP region for page with given color.
+ * Get next index क्रम mapping inside PKMAP region क्रम page with given color.
  */
-static inline unsigned int get_next_pkmap_nr(unsigned int color)
-{
-	static unsigned int last_pkmap_nr;
+अटल अंतरभूत अचिन्हित पूर्णांक get_next_pkmap_nr(अचिन्हित पूर्णांक color)
+अणु
+	अटल अचिन्हित पूर्णांक last_pkmap_nr;
 
 	last_pkmap_nr = (last_pkmap_nr + 1) & LAST_PKMAP_MASK;
-	return last_pkmap_nr;
-}
+	वापस last_pkmap_nr;
+पूर्ण
 
 /*
- * Determine if page index inside PKMAP region (pkmap_nr) of given color
+ * Determine अगर page index inside PKMAP region (pkmap_nr) of given color
  * has wrapped around PKMAP region end. When this happens an attempt to
  * flush all unused PKMAP slots is made.
  */
-static inline int no_more_pkmaps(unsigned int pkmap_nr, unsigned int color)
-{
-	return pkmap_nr == 0;
-}
+अटल अंतरभूत पूर्णांक no_more_pkmaps(अचिन्हित पूर्णांक pkmap_nr, अचिन्हित पूर्णांक color)
+अणु
+	वापस pkmap_nr == 0;
+पूर्ण
 
 /*
- * Get the number of PKMAP entries of the given color. If no free slot is
- * found after checking that many entries, kmap will sleep waiting for
- * someone to call kunmap and free PKMAP slot.
+ * Get the number of PKMAP entries of the given color. If no मुक्त slot is
+ * found after checking that many entries, kmap will sleep रुकोing क्रम
+ * someone to call kunmap and मुक्त PKMAP slot.
  */
-static inline int get_pkmap_entries_count(unsigned int color)
-{
-	return LAST_PKMAP;
-}
+अटल अंतरभूत पूर्णांक get_pkmap_entries_count(अचिन्हित पूर्णांक color)
+अणु
+	वापस LAST_PKMAP;
+पूर्ण
 
 /*
- * Get head of a wait queue for PKMAP entries of the given color.
- * Wait queues for different mapping colors should be independent to avoid
- * unnecessary wakeups caused by freeing of slots of other colors.
+ * Get head of a रुको queue क्रम PKMAP entries of the given color.
+ * Wait queues क्रम dअगरferent mapping colors should be independent to aव्योम
+ * unnecessary wakeups caused by मुक्तing of slots of other colors.
  */
-static inline wait_queue_head_t *get_pkmap_wait_queue_head(unsigned int color)
-{
-	static DECLARE_WAIT_QUEUE_HEAD(pkmap_map_wait);
+अटल अंतरभूत रुको_queue_head_t *get_pkmap_रुको_queue_head(अचिन्हित पूर्णांक color)
+अणु
+	अटल DECLARE_WAIT_QUEUE_HEAD(pkmap_map_रुको);
 
-	return &pkmap_map_wait;
-}
-#endif
+	वापस &pkmap_map_रुको;
+पूर्ण
+#पूर्ण_अगर
 
-atomic_long_t _totalhigh_pages __read_mostly;
+atomic_दीर्घ_t _totalhigh_pages __पढ़ो_mostly;
 EXPORT_SYMBOL(_totalhigh_pages);
 
-unsigned int __nr_free_highpages(void)
-{
-	struct zone *zone;
-	unsigned int pages = 0;
+अचिन्हित पूर्णांक __nr_मुक्त_highpages(व्योम)
+अणु
+	काष्ठा zone *zone;
+	अचिन्हित पूर्णांक pages = 0;
 
-	for_each_populated_zone(zone) {
-		if (is_highmem(zone))
+	क्रम_each_populated_zone(zone) अणु
+		अगर (is_highmem(zone))
 			pages += zone_page_state(zone, NR_FREE_PAGES);
-	}
+	पूर्ण
 
-	return pages;
-}
+	वापस pages;
+पूर्ण
 
-static int pkmap_count[LAST_PKMAP];
-static  __cacheline_aligned_in_smp DEFINE_SPINLOCK(kmap_lock);
+अटल पूर्णांक pkmap_count[LAST_PKMAP];
+अटल  __cacheline_aligned_in_smp DEFINE_SPINLOCK(kmap_lock);
 
 pte_t *pkmap_page_table;
 
 /*
- * Most architectures have no use for kmap_high_get(), so let's abstract
- * the disabling of IRQ out of the locking in that case to save on a
+ * Most architectures have no use क्रम kmap_high_get(), so let's असलtract
+ * the disabling of IRQ out of the locking in that हाल to save on a
  * potential useless overhead.
  */
-#ifdef ARCH_NEEDS_KMAP_HIGH_GET
-#define lock_kmap()             spin_lock_irq(&kmap_lock)
-#define unlock_kmap()           spin_unlock_irq(&kmap_lock)
-#define lock_kmap_any(flags)    spin_lock_irqsave(&kmap_lock, flags)
-#define unlock_kmap_any(flags)  spin_unlock_irqrestore(&kmap_lock, flags)
-#else
-#define lock_kmap()             spin_lock(&kmap_lock)
-#define unlock_kmap()           spin_unlock(&kmap_lock)
-#define lock_kmap_any(flags)    \
-		do { spin_lock(&kmap_lock); (void)(flags); } while (0)
-#define unlock_kmap_any(flags)  \
-		do { spin_unlock(&kmap_lock); (void)(flags); } while (0)
-#endif
+#अगर_घोषित ARCH_NEEDS_KMAP_HIGH_GET
+#घोषणा lock_kmap()             spin_lock_irq(&kmap_lock)
+#घोषणा unlock_kmap()           spin_unlock_irq(&kmap_lock)
+#घोषणा lock_kmap_any(flags)    spin_lock_irqsave(&kmap_lock, flags)
+#घोषणा unlock_kmap_any(flags)  spin_unlock_irqrestore(&kmap_lock, flags)
+#अन्यथा
+#घोषणा lock_kmap()             spin_lock(&kmap_lock)
+#घोषणा unlock_kmap()           spin_unlock(&kmap_lock)
+#घोषणा lock_kmap_any(flags)    \
+		करो अणु spin_lock(&kmap_lock); (व्योम)(flags); पूर्ण जबतक (0)
+#घोषणा unlock_kmap_any(flags)  \
+		करो अणु spin_unlock(&kmap_lock); (व्योम)(flags); पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-struct page *__kmap_to_page(void *vaddr)
-{
-	unsigned long addr = (unsigned long)vaddr;
+काष्ठा page *__kmap_to_page(व्योम *vaddr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)vaddr;
 
-	if (addr >= PKMAP_ADDR(0) && addr < PKMAP_ADDR(LAST_PKMAP)) {
-		int i = PKMAP_NR(addr);
+	अगर (addr >= PKMAP_ADDR(0) && addr < PKMAP_ADDR(LAST_PKMAP)) अणु
+		पूर्णांक i = PKMAP_NR(addr);
 
-		return pte_page(pkmap_page_table[i]);
-	}
+		वापस pte_page(pkmap_page_table[i]);
+	पूर्ण
 
-	return virt_to_page(addr);
-}
+	वापस virt_to_page(addr);
+पूर्ण
 EXPORT_SYMBOL(__kmap_to_page);
 
-static void flush_all_zero_pkmaps(void)
-{
-	int i;
-	int need_flush = 0;
+अटल व्योम flush_all_zero_pkmaps(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक need_flush = 0;
 
 	flush_cache_kmaps();
 
-	for (i = 0; i < LAST_PKMAP; i++) {
-		struct page *page;
+	क्रम (i = 0; i < LAST_PKMAP; i++) अणु
+		काष्ठा page *page;
 
 		/*
-		 * zero means we don't have anything to do,
+		 * zero means we करोn't have anything to करो,
 		 * >1 means that it is still in use. Only
-		 * a count of 1 means that it is free but
+		 * a count of 1 means that it is मुक्त but
 		 * needs to be unmapped
 		 */
-		if (pkmap_count[i] != 1)
-			continue;
+		अगर (pkmap_count[i] != 1)
+			जारी;
 		pkmap_count[i] = 0;
 
 		/* sanity check */
@@ -181,344 +182,344 @@ static void flush_all_zero_pkmaps(void)
 		/*
 		 * Don't need an atomic fetch-and-clear op here;
 		 * no-one has the page mapped, and cannot get at
-		 * its virtual address (and hence PTE) without first
+		 * its भव address (and hence PTE) without first
 		 * getting the kmap_lock (which is held here).
 		 * So no dangers, even with speculative execution.
 		 */
 		page = pte_page(pkmap_page_table[i]);
 		pte_clear(&init_mm, PKMAP_ADDR(i), &pkmap_page_table[i]);
 
-		set_page_address(page, NULL);
+		set_page_address(page, शून्य);
 		need_flush = 1;
-	}
-	if (need_flush)
+	पूर्ण
+	अगर (need_flush)
 		flush_tlb_kernel_range(PKMAP_ADDR(0), PKMAP_ADDR(LAST_PKMAP));
-}
+पूर्ण
 
-void __kmap_flush_unused(void)
-{
+व्योम __kmap_flush_unused(व्योम)
+अणु
 	lock_kmap();
 	flush_all_zero_pkmaps();
 	unlock_kmap();
-}
+पूर्ण
 
-static inline unsigned long map_new_virtual(struct page *page)
-{
-	unsigned long vaddr;
-	int count;
-	unsigned int last_pkmap_nr;
-	unsigned int color = get_pkmap_color(page);
+अटल अंतरभूत अचिन्हित दीर्घ map_new_भव(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ vaddr;
+	पूर्णांक count;
+	अचिन्हित पूर्णांक last_pkmap_nr;
+	अचिन्हित पूर्णांक color = get_pkmap_color(page);
 
 start:
 	count = get_pkmap_entries_count(color);
 	/* Find an empty entry */
-	for (;;) {
+	क्रम (;;) अणु
 		last_pkmap_nr = get_next_pkmap_nr(color);
-		if (no_more_pkmaps(last_pkmap_nr, color)) {
+		अगर (no_more_pkmaps(last_pkmap_nr, color)) अणु
 			flush_all_zero_pkmaps();
 			count = get_pkmap_entries_count(color);
-		}
-		if (!pkmap_count[last_pkmap_nr])
-			break;	/* Found a usable entry */
-		if (--count)
-			continue;
+		पूर्ण
+		अगर (!pkmap_count[last_pkmap_nr])
+			अवरोध;	/* Found a usable entry */
+		अगर (--count)
+			जारी;
 
 		/*
-		 * Sleep for somebody else to unmap their entries
+		 * Sleep क्रम somebody अन्यथा to unmap their entries
 		 */
-		{
-			DECLARE_WAITQUEUE(wait, current);
-			wait_queue_head_t *pkmap_map_wait =
-				get_pkmap_wait_queue_head(color);
+		अणु
+			DECLARE_WAITQUEUE(रुको, current);
+			रुको_queue_head_t *pkmap_map_रुको =
+				get_pkmap_रुको_queue_head(color);
 
 			__set_current_state(TASK_UNINTERRUPTIBLE);
-			add_wait_queue(pkmap_map_wait, &wait);
+			add_रुको_queue(pkmap_map_रुको, &रुको);
 			unlock_kmap();
 			schedule();
-			remove_wait_queue(pkmap_map_wait, &wait);
+			हटाओ_रुको_queue(pkmap_map_रुको, &रुको);
 			lock_kmap();
 
-			/* Somebody else might have mapped it while we slept */
-			if (page_address(page))
-				return (unsigned long)page_address(page);
+			/* Somebody अन्यथा might have mapped it जबतक we slept */
+			अगर (page_address(page))
+				वापस (अचिन्हित दीर्घ)page_address(page);
 
 			/* Re-start */
-			goto start;
-		}
-	}
+			जाओ start;
+		पूर्ण
+	पूर्ण
 	vaddr = PKMAP_ADDR(last_pkmap_nr);
 	set_pte_at(&init_mm, vaddr,
 		   &(pkmap_page_table[last_pkmap_nr]), mk_pte(page, kmap_prot));
 
 	pkmap_count[last_pkmap_nr] = 1;
-	set_page_address(page, (void *)vaddr);
+	set_page_address(page, (व्योम *)vaddr);
 
-	return vaddr;
-}
+	वापस vaddr;
+पूर्ण
 
 /**
- * kmap_high - map a highmem page into memory
- * @page: &struct page to map
+ * kmap_high - map a highmem page पूर्णांकo memory
+ * @page: &काष्ठा page to map
  *
- * Returns the page's virtual memory address.
+ * Returns the page's भव memory address.
  *
- * We cannot call this from interrupts, as it may block.
+ * We cannot call this from पूर्णांकerrupts, as it may block.
  */
-void *kmap_high(struct page *page)
-{
-	unsigned long vaddr;
+व्योम *kmap_high(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ vaddr;
 
 	/*
 	 * For highmem pages, we can't trust "virtual" until
 	 * after we have the lock.
 	 */
 	lock_kmap();
-	vaddr = (unsigned long)page_address(page);
-	if (!vaddr)
-		vaddr = map_new_virtual(page);
+	vaddr = (अचिन्हित दीर्घ)page_address(page);
+	अगर (!vaddr)
+		vaddr = map_new_भव(page);
 	pkmap_count[PKMAP_NR(vaddr)]++;
 	BUG_ON(pkmap_count[PKMAP_NR(vaddr)] < 2);
 	unlock_kmap();
-	return (void *) vaddr;
-}
+	वापस (व्योम *) vaddr;
+पूर्ण
 EXPORT_SYMBOL(kmap_high);
 
-#ifdef ARCH_NEEDS_KMAP_HIGH_GET
+#अगर_घोषित ARCH_NEEDS_KMAP_HIGH_GET
 /**
- * kmap_high_get - pin a highmem page into memory
- * @page: &struct page to pin
+ * kmap_high_get - pin a highmem page पूर्णांकo memory
+ * @page: &काष्ठा page to pin
  *
- * Returns the page's current virtual memory address, or NULL if no mapping
- * exists.  If and only if a non null address is returned then a
+ * Returns the page's current भव memory address, or शून्य अगर no mapping
+ * exists.  If and only अगर a non null address is वापसed then a
  * matching call to kunmap_high() is necessary.
  *
  * This can be called from any context.
  */
-void *kmap_high_get(struct page *page)
-{
-	unsigned long vaddr, flags;
+व्योम *kmap_high_get(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ vaddr, flags;
 
 	lock_kmap_any(flags);
-	vaddr = (unsigned long)page_address(page);
-	if (vaddr) {
+	vaddr = (अचिन्हित दीर्घ)page_address(page);
+	अगर (vaddr) अणु
 		BUG_ON(pkmap_count[PKMAP_NR(vaddr)] < 1);
 		pkmap_count[PKMAP_NR(vaddr)]++;
-	}
+	पूर्ण
 	unlock_kmap_any(flags);
-	return (void *) vaddr;
-}
-#endif
+	वापस (व्योम *) vaddr;
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * kunmap_high - unmap a highmem page into memory
- * @page: &struct page to unmap
+ * kunmap_high - unmap a highmem page पूर्णांकo memory
+ * @page: &काष्ठा page to unmap
  *
  * If ARCH_NEEDS_KMAP_HIGH_GET is not defined then this may be called
  * only from user context.
  */
-void kunmap_high(struct page *page)
-{
-	unsigned long vaddr;
-	unsigned long nr;
-	unsigned long flags;
-	int need_wakeup;
-	unsigned int color = get_pkmap_color(page);
-	wait_queue_head_t *pkmap_map_wait;
+व्योम kunmap_high(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ vaddr;
+	अचिन्हित दीर्घ nr;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक need_wakeup;
+	अचिन्हित पूर्णांक color = get_pkmap_color(page);
+	रुको_queue_head_t *pkmap_map_रुको;
 
 	lock_kmap_any(flags);
-	vaddr = (unsigned long)page_address(page);
+	vaddr = (अचिन्हित दीर्घ)page_address(page);
 	BUG_ON(!vaddr);
 	nr = PKMAP_NR(vaddr);
 
 	/*
-	 * A count must never go down to zero
+	 * A count must never go करोwn to zero
 	 * without a TLB flush!
 	 */
 	need_wakeup = 0;
-	switch (--pkmap_count[nr]) {
-	case 0:
+	चयन (--pkmap_count[nr]) अणु
+	हाल 0:
 		BUG();
-	case 1:
+	हाल 1:
 		/*
-		 * Avoid an unnecessary wake_up() function call.
-		 * The common case is pkmap_count[] == 1, but
-		 * no waiters.
-		 * The tasks queued in the wait-queue are guarded
-		 * by both the lock in the wait-queue-head and by
+		 * Aव्योम an unnecessary wake_up() function call.
+		 * The common हाल is pkmap_count[] == 1, but
+		 * no रुकोers.
+		 * The tasks queued in the रुको-queue are guarded
+		 * by both the lock in the रुको-queue-head and by
 		 * the kmap_lock.  As the kmap_lock is held here,
-		 * no need for the wait-queue-head's lock.  Simply
-		 * test if the queue is empty.
+		 * no need क्रम the रुको-queue-head's lock.  Simply
+		 * test अगर the queue is empty.
 		 */
-		pkmap_map_wait = get_pkmap_wait_queue_head(color);
-		need_wakeup = waitqueue_active(pkmap_map_wait);
-	}
+		pkmap_map_रुको = get_pkmap_रुको_queue_head(color);
+		need_wakeup = रुकोqueue_active(pkmap_map_रुको);
+	पूर्ण
 	unlock_kmap_any(flags);
 
-	/* do wake-up, if needed, race-free outside of the spin lock */
-	if (need_wakeup)
-		wake_up(pkmap_map_wait);
-}
+	/* करो wake-up, अगर needed, race-मुक्त outside of the spin lock */
+	अगर (need_wakeup)
+		wake_up(pkmap_map_रुको);
+पूर्ण
 EXPORT_SYMBOL(kunmap_high);
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-void zero_user_segments(struct page *page, unsigned start1, unsigned end1,
-		unsigned start2, unsigned end2)
-{
-	unsigned int i;
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+व्योम zero_user_segments(काष्ठा page *page, अचिन्हित start1, अचिन्हित end1,
+		अचिन्हित start2, अचिन्हित end2)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	BUG_ON(end1 > page_size(page) || end2 > page_size(page));
 
-	if (start1 >= end1)
+	अगर (start1 >= end1)
 		start1 = end1 = 0;
-	if (start2 >= end2)
+	अगर (start2 >= end2)
 		start2 = end2 = 0;
 
-	for (i = 0; i < compound_nr(page); i++) {
-		void *kaddr = NULL;
+	क्रम (i = 0; i < compound_nr(page); i++) अणु
+		व्योम *kaddr = शून्य;
 
-		if (start1 >= PAGE_SIZE) {
+		अगर (start1 >= PAGE_SIZE) अणु
 			start1 -= PAGE_SIZE;
 			end1 -= PAGE_SIZE;
-		} else {
-			unsigned this_end = min_t(unsigned, end1, PAGE_SIZE);
+		पूर्ण अन्यथा अणु
+			अचिन्हित this_end = min_t(अचिन्हित, end1, PAGE_SIZE);
 
-			if (end1 > start1) {
+			अगर (end1 > start1) अणु
 				kaddr = kmap_atomic(page + i);
-				memset(kaddr + start1, 0, this_end - start1);
-			}
+				स_रखो(kaddr + start1, 0, this_end - start1);
+			पूर्ण
 			end1 -= this_end;
 			start1 = 0;
-		}
+		पूर्ण
 
-		if (start2 >= PAGE_SIZE) {
+		अगर (start2 >= PAGE_SIZE) अणु
 			start2 -= PAGE_SIZE;
 			end2 -= PAGE_SIZE;
-		} else {
-			unsigned this_end = min_t(unsigned, end2, PAGE_SIZE);
+		पूर्ण अन्यथा अणु
+			अचिन्हित this_end = min_t(अचिन्हित, end2, PAGE_SIZE);
 
-			if (end2 > start2) {
-				if (!kaddr)
+			अगर (end2 > start2) अणु
+				अगर (!kaddr)
 					kaddr = kmap_atomic(page + i);
-				memset(kaddr + start2, 0, this_end - start2);
-			}
+				स_रखो(kaddr + start2, 0, this_end - start2);
+			पूर्ण
 			end2 -= this_end;
 			start2 = 0;
-		}
+		पूर्ण
 
-		if (kaddr) {
+		अगर (kaddr) अणु
 			kunmap_atomic(kaddr);
 			flush_dcache_page(page + i);
-		}
+		पूर्ण
 
-		if (!end1 && !end2)
-			break;
-	}
+		अगर (!end1 && !end2)
+			अवरोध;
+	पूर्ण
 
 	BUG_ON((start1 | start2 | end1 | end2) != 0);
-}
+पूर्ण
 EXPORT_SYMBOL(zero_user_segments);
-#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
-#endif /* CONFIG_HIGHMEM */
+#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
+#पूर्ण_अगर /* CONFIG_HIGHMEM */
 
-#ifdef CONFIG_KMAP_LOCAL
+#अगर_घोषित CONFIG_KMAP_LOCAL
 
-#include <asm/kmap_size.h>
+#समावेश <यंत्र/kmap_size.h>
 
 /*
- * With DEBUG_KMAP_LOCAL the stack depth is doubled and every second
+ * With DEBUG_KMAP_LOCAL the stack depth is द्विगुनd and every second
  * slot is unused which acts as a guard page
  */
-#ifdef CONFIG_DEBUG_KMAP_LOCAL
+#अगर_घोषित CONFIG_DEBUG_KMAP_LOCAL
 # define KM_INCR	2
-#else
+#अन्यथा
 # define KM_INCR	1
-#endif
+#पूर्ण_अगर
 
-static inline int kmap_local_idx_push(void)
-{
+अटल अंतरभूत पूर्णांक kmap_local_idx_push(व्योम)
+अणु
 	WARN_ON_ONCE(in_irq() && !irqs_disabled());
 	current->kmap_ctrl.idx += KM_INCR;
 	BUG_ON(current->kmap_ctrl.idx >= KM_MAX_IDX);
-	return current->kmap_ctrl.idx - 1;
-}
+	वापस current->kmap_ctrl.idx - 1;
+पूर्ण
 
-static inline int kmap_local_idx(void)
-{
-	return current->kmap_ctrl.idx - 1;
-}
+अटल अंतरभूत पूर्णांक kmap_local_idx(व्योम)
+अणु
+	वापस current->kmap_ctrl.idx - 1;
+पूर्ण
 
-static inline void kmap_local_idx_pop(void)
-{
+अटल अंतरभूत व्योम kmap_local_idx_pop(व्योम)
+अणु
 	current->kmap_ctrl.idx -= KM_INCR;
 	BUG_ON(current->kmap_ctrl.idx < 0);
-}
+पूर्ण
 
-#ifndef arch_kmap_local_post_map
-# define arch_kmap_local_post_map(vaddr, pteval)	do { } while (0)
-#endif
+#अगर_अघोषित arch_kmap_local_post_map
+# define arch_kmap_local_post_map(vaddr, pteval)	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifndef arch_kmap_local_pre_unmap
-# define arch_kmap_local_pre_unmap(vaddr)		do { } while (0)
-#endif
+#अगर_अघोषित arch_kmap_local_pre_unmap
+# define arch_kmap_local_pre_unmap(vaddr)		करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifndef arch_kmap_local_post_unmap
-# define arch_kmap_local_post_unmap(vaddr)		do { } while (0)
-#endif
+#अगर_अघोषित arch_kmap_local_post_unmap
+# define arch_kmap_local_post_unmap(vaddr)		करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifndef arch_kmap_local_map_idx
-#define arch_kmap_local_map_idx(idx, pfn)	kmap_local_calc_idx(idx)
-#endif
+#अगर_अघोषित arch_kmap_local_map_idx
+#घोषणा arch_kmap_local_map_idx(idx, pfn)	kmap_local_calc_idx(idx)
+#पूर्ण_अगर
 
-#ifndef arch_kmap_local_unmap_idx
-#define arch_kmap_local_unmap_idx(idx, vaddr)	kmap_local_calc_idx(idx)
-#endif
+#अगर_अघोषित arch_kmap_local_unmap_idx
+#घोषणा arch_kmap_local_unmap_idx(idx, vaddr)	kmap_local_calc_idx(idx)
+#पूर्ण_अगर
 
-#ifndef arch_kmap_local_high_get
-static inline void *arch_kmap_local_high_get(struct page *page)
-{
-	return NULL;
-}
-#endif
+#अगर_अघोषित arch_kmap_local_high_get
+अटल अंतरभूत व्योम *arch_kmap_local_high_get(काष्ठा page *page)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef arch_kmap_local_set_pte
-#define arch_kmap_local_set_pte(mm, vaddr, ptep, ptev)	\
+#अगर_अघोषित arch_kmap_local_set_pte
+#घोषणा arch_kmap_local_set_pte(mm, vaddr, ptep, ptev)	\
 	set_pte_at(mm, vaddr, ptep, ptev)
-#endif
+#पूर्ण_अगर
 
 /* Unmap a local mapping which was obtained by kmap_high_get() */
-static inline bool kmap_high_unmap_local(unsigned long vaddr)
-{
-#ifdef ARCH_NEEDS_KMAP_HIGH_GET
-	if (vaddr >= PKMAP_ADDR(0) && vaddr < PKMAP_ADDR(LAST_PKMAP)) {
+अटल अंतरभूत bool kmap_high_unmap_local(अचिन्हित दीर्घ vaddr)
+अणु
+#अगर_घोषित ARCH_NEEDS_KMAP_HIGH_GET
+	अगर (vaddr >= PKMAP_ADDR(0) && vaddr < PKMAP_ADDR(LAST_PKMAP)) अणु
 		kunmap_high(pte_page(pkmap_page_table[PKMAP_NR(vaddr)]));
-		return true;
-	}
-#endif
-	return false;
-}
+		वापस true;
+	पूर्ण
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
 
-static inline int kmap_local_calc_idx(int idx)
-{
-	return idx + KM_MAX_IDX * smp_processor_id();
-}
+अटल अंतरभूत पूर्णांक kmap_local_calc_idx(पूर्णांक idx)
+अणु
+	वापस idx + KM_MAX_IDX * smp_processor_id();
+पूर्ण
 
-static pte_t *__kmap_pte;
+अटल pte_t *__kmap_pte;
 
-static pte_t *kmap_get_pte(void)
-{
-	if (!__kmap_pte)
+अटल pte_t *kmap_get_pte(व्योम)
+अणु
+	अगर (!__kmap_pte)
 		__kmap_pte = virt_to_kpte(__fix_to_virt(FIX_KMAP_BEGIN));
-	return __kmap_pte;
-}
+	वापस __kmap_pte;
+पूर्ण
 
-void *__kmap_local_pfn_prot(unsigned long pfn, pgprot_t prot)
-{
+व्योम *__kmap_local_pfn_prot(अचिन्हित दीर्घ pfn, pgprot_t prot)
+अणु
 	pte_t pteval, *kmap_pte = kmap_get_pte();
-	unsigned long vaddr;
-	int idx;
+	अचिन्हित दीर्घ vaddr;
+	पूर्णांक idx;
 
 	/*
-	 * Disable migration so resulting virtual address is stable
+	 * Disable migration so resulting भव address is stable
 	 * across preemption.
 	 */
 	migrate_disable();
@@ -532,54 +533,54 @@ void *__kmap_local_pfn_prot(unsigned long pfn, pgprot_t prot)
 	current->kmap_ctrl.pteval[kmap_local_idx()] = pteval;
 	preempt_enable();
 
-	return (void *)vaddr;
-}
+	वापस (व्योम *)vaddr;
+पूर्ण
 EXPORT_SYMBOL_GPL(__kmap_local_pfn_prot);
 
-void *__kmap_local_page_prot(struct page *page, pgprot_t prot)
-{
-	void *kmap;
+व्योम *__kmap_local_page_prot(काष्ठा page *page, pgprot_t prot)
+अणु
+	व्योम *kmap;
 
 	/*
 	 * To broaden the usage of the actual kmap_local() machinery always map
 	 * pages when debugging is enabled and the architecture has no problems
 	 * with alias mappings.
 	 */
-	if (!IS_ENABLED(CONFIG_DEBUG_KMAP_LOCAL_FORCE_MAP) && !PageHighMem(page))
-		return page_address(page);
+	अगर (!IS_ENABLED(CONFIG_DEBUG_KMAP_LOCAL_FORCE_MAP) && !PageHighMem(page))
+		वापस page_address(page);
 
-	/* Try kmap_high_get() if architecture has it enabled */
+	/* Try kmap_high_get() अगर architecture has it enabled */
 	kmap = arch_kmap_local_high_get(page);
-	if (kmap)
-		return kmap;
+	अगर (kmap)
+		वापस kmap;
 
-	return __kmap_local_pfn_prot(page_to_pfn(page), prot);
-}
+	वापस __kmap_local_pfn_prot(page_to_pfn(page), prot);
+पूर्ण
 EXPORT_SYMBOL(__kmap_local_page_prot);
 
-void kunmap_local_indexed(void *vaddr)
-{
-	unsigned long addr = (unsigned long) vaddr & PAGE_MASK;
+व्योम kunmap_local_indexed(व्योम *vaddr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) vaddr & PAGE_MASK;
 	pte_t *kmap_pte = kmap_get_pte();
-	int idx;
+	पूर्णांक idx;
 
-	if (addr < __fix_to_virt(FIX_KMAP_END) ||
-	    addr > __fix_to_virt(FIX_KMAP_BEGIN)) {
-		if (IS_ENABLED(CONFIG_DEBUG_KMAP_LOCAL_FORCE_MAP)) {
+	अगर (addr < __fix_to_virt(FIX_KMAP_END) ||
+	    addr > __fix_to_virt(FIX_KMAP_BEGIN)) अणु
+		अगर (IS_ENABLED(CONFIG_DEBUG_KMAP_LOCAL_FORCE_MAP)) अणु
 			/* This _should_ never happen! See above. */
 			WARN_ON_ONCE(1);
-			return;
-		}
+			वापस;
+		पूर्ण
 		/*
 		 * Handle mappings which were obtained by kmap_high_get()
-		 * first as the virtual address of such mappings is below
-		 * PAGE_OFFSET. Warn for all other addresses which are in
-		 * the user space part of the virtual address space.
+		 * first as the भव address of such mappings is below
+		 * PAGE_OFFSET. Warn क्रम all other addresses which are in
+		 * the user space part of the भव address space.
 		 */
-		if (!kmap_high_unmap_local(addr))
+		अगर (!kmap_high_unmap_local(addr))
 			WARN_ON_ONCE(addr < PAGE_OFFSET);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	preempt_disable();
 	idx = arch_kmap_local_unmap_idx(kmap_local_idx(), addr);
@@ -592,44 +593,44 @@ void kunmap_local_indexed(void *vaddr)
 	kmap_local_idx_pop();
 	preempt_enable();
 	migrate_enable();
-}
+पूर्ण
 EXPORT_SYMBOL(kunmap_local_indexed);
 
 /*
- * Invoked before switch_to(). This is safe even when during or after
- * clearing the maps an interrupt which needs a kmap_local happens because
- * the task::kmap_ctrl.idx is not modified by the unmapping code so a
+ * Invoked beक्रमe चयन_to(). This is safe even when during or after
+ * clearing the maps an पूर्णांकerrupt which needs a kmap_local happens because
+ * the task::kmap_ctrl.idx is not modअगरied by the unmapping code so a
  * nested kmap_local will use the next unused index and restore the index
- * on unmap. The already cleared kmaps of the outgoing task are irrelevant
- * because the interrupt context does not know about them. The same applies
- * when scheduling back in for an interrupt which happens before the
+ * on unmap. The alपढ़ोy cleared kmaps of the outgoing task are irrelevant
+ * because the पूर्णांकerrupt context करोes not know about them. The same applies
+ * when scheduling back in क्रम an पूर्णांकerrupt which happens beक्रमe the
  * restore is complete.
  */
-void __kmap_local_sched_out(void)
-{
-	struct task_struct *tsk = current;
+व्योम __kmap_local_sched_out(व्योम)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
 	pte_t *kmap_pte = kmap_get_pte();
-	int i;
+	पूर्णांक i;
 
 	/* Clear kmaps */
-	for (i = 0; i < tsk->kmap_ctrl.idx; i++) {
+	क्रम (i = 0; i < tsk->kmap_ctrl.idx; i++) अणु
 		pte_t pteval = tsk->kmap_ctrl.pteval[i];
-		unsigned long addr;
-		int idx;
+		अचिन्हित दीर्घ addr;
+		पूर्णांक idx;
 
 		/* With debug all even slots are unmapped and act as guard */
-		if (IS_ENABLED(CONFIG_DEBUG_KMAP_LOCAL) && !(i & 0x01)) {
+		अगर (IS_ENABLED(CONFIG_DEBUG_KMAP_LOCAL) && !(i & 0x01)) अणु
 			WARN_ON_ONCE(!pte_none(pteval));
-			continue;
-		}
-		if (WARN_ON_ONCE(pte_none(pteval)))
-			continue;
+			जारी;
+		पूर्ण
+		अगर (WARN_ON_ONCE(pte_none(pteval)))
+			जारी;
 
 		/*
-		 * This is a horrible hack for XTENSA to calculate the
-		 * coloured PTE index. Uses the PFN encoded into the pteval
+		 * This is a horrible hack क्रम XTENSA to calculate the
+		 * coloured PTE index. Uses the PFN encoded पूर्णांकo the pteval
 		 * and the map index calculation because the actual mapped
-		 * virtual address is not stored in task::kmap_ctrl.
+		 * भव address is not stored in task::kmap_ctrl.
 		 * For any sane architecture this is optimized out.
 		 */
 		idx = arch_kmap_local_map_idx(i, pte_pfn(pteval));
@@ -638,152 +639,152 @@ void __kmap_local_sched_out(void)
 		arch_kmap_local_pre_unmap(addr);
 		pte_clear(&init_mm, addr, kmap_pte - idx);
 		arch_kmap_local_post_unmap(addr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __kmap_local_sched_in(void)
-{
-	struct task_struct *tsk = current;
+व्योम __kmap_local_sched_in(व्योम)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
 	pte_t *kmap_pte = kmap_get_pte();
-	int i;
+	पूर्णांक i;
 
 	/* Restore kmaps */
-	for (i = 0; i < tsk->kmap_ctrl.idx; i++) {
+	क्रम (i = 0; i < tsk->kmap_ctrl.idx; i++) अणु
 		pte_t pteval = tsk->kmap_ctrl.pteval[i];
-		unsigned long addr;
-		int idx;
+		अचिन्हित दीर्घ addr;
+		पूर्णांक idx;
 
 		/* With debug all even slots are unmapped and act as guard */
-		if (IS_ENABLED(CONFIG_DEBUG_KMAP_LOCAL) && !(i & 0x01)) {
+		अगर (IS_ENABLED(CONFIG_DEBUG_KMAP_LOCAL) && !(i & 0x01)) अणु
 			WARN_ON_ONCE(!pte_none(pteval));
-			continue;
-		}
-		if (WARN_ON_ONCE(pte_none(pteval)))
-			continue;
+			जारी;
+		पूर्ण
+		अगर (WARN_ON_ONCE(pte_none(pteval)))
+			जारी;
 
 		/* See comment in __kmap_local_sched_out() */
 		idx = arch_kmap_local_map_idx(i, pte_pfn(pteval));
 		addr = __fix_to_virt(FIX_KMAP_BEGIN + idx);
 		set_pte_at(&init_mm, addr, kmap_pte - idx, pteval);
 		arch_kmap_local_post_map(addr, pteval);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void kmap_local_fork(struct task_struct *tsk)
-{
-	if (WARN_ON_ONCE(tsk->kmap_ctrl.idx))
-		memset(&tsk->kmap_ctrl, 0, sizeof(tsk->kmap_ctrl));
-}
+व्योम kmap_local_विभाजन(काष्ठा task_काष्ठा *tsk)
+अणु
+	अगर (WARN_ON_ONCE(tsk->kmap_ctrl.idx))
+		स_रखो(&tsk->kmap_ctrl, 0, माप(tsk->kmap_ctrl));
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#if defined(HASHED_PAGE_VIRTUAL)
+#अगर defined(HASHED_PAGE_VIRTUAL)
 
-#define PA_HASH_ORDER	7
+#घोषणा PA_HASH_ORDER	7
 
 /*
- * Describes one page->virtual association
+ * Describes one page->भव association
  */
-struct page_address_map {
-	struct page *page;
-	void *virtual;
-	struct list_head list;
-};
+काष्ठा page_address_map अणु
+	काष्ठा page *page;
+	व्योम *भव;
+	काष्ठा list_head list;
+पूर्ण;
 
-static struct page_address_map page_address_maps[LAST_PKMAP];
+अटल काष्ठा page_address_map page_address_maps[LAST_PKMAP];
 
 /*
  * Hash table bucket
  */
-static struct page_address_slot {
-	struct list_head lh;			/* List of page_address_maps */
+अटल काष्ठा page_address_slot अणु
+	काष्ठा list_head lh;			/* List of page_address_maps */
 	spinlock_t lock;			/* Protect this bucket's list */
-} ____cacheline_aligned_in_smp page_address_htable[1<<PA_HASH_ORDER];
+पूर्ण ____cacheline_aligned_in_smp page_address_htable[1<<PA_HASH_ORDER];
 
-static struct page_address_slot *page_slot(const struct page *page)
-{
-	return &page_address_htable[hash_ptr(page, PA_HASH_ORDER)];
-}
+अटल काष्ठा page_address_slot *page_slot(स्थिर काष्ठा page *page)
+अणु
+	वापस &page_address_htable[hash_ptr(page, PA_HASH_ORDER)];
+पूर्ण
 
 /**
- * page_address - get the mapped virtual address of a page
- * @page: &struct page to get the virtual address of
+ * page_address - get the mapped भव address of a page
+ * @page: &काष्ठा page to get the भव address of
  *
- * Returns the page's virtual address.
+ * Returns the page's भव address.
  */
-void *page_address(const struct page *page)
-{
-	unsigned long flags;
-	void *ret;
-	struct page_address_slot *pas;
+व्योम *page_address(स्थिर काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ flags;
+	व्योम *ret;
+	काष्ठा page_address_slot *pas;
 
-	if (!PageHighMem(page))
-		return lowmem_page_address(page);
+	अगर (!PageHighMem(page))
+		वापस lowmem_page_address(page);
 
 	pas = page_slot(page);
-	ret = NULL;
+	ret = शून्य;
 	spin_lock_irqsave(&pas->lock, flags);
-	if (!list_empty(&pas->lh)) {
-		struct page_address_map *pam;
+	अगर (!list_empty(&pas->lh)) अणु
+		काष्ठा page_address_map *pam;
 
-		list_for_each_entry(pam, &pas->lh, list) {
-			if (pam->page == page) {
-				ret = pam->virtual;
-				goto done;
-			}
-		}
-	}
-done:
+		list_क्रम_each_entry(pam, &pas->lh, list) अणु
+			अगर (pam->page == page) अणु
+				ret = pam->भव;
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+करोne:
 	spin_unlock_irqrestore(&pas->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(page_address);
 
 /**
- * set_page_address - set a page's virtual address
- * @page: &struct page to set
- * @virtual: virtual address to use
+ * set_page_address - set a page's भव address
+ * @page: &काष्ठा page to set
+ * @भव: भव address to use
  */
-void set_page_address(struct page *page, void *virtual)
-{
-	unsigned long flags;
-	struct page_address_slot *pas;
-	struct page_address_map *pam;
+व्योम set_page_address(काष्ठा page *page, व्योम *भव)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा page_address_slot *pas;
+	काष्ठा page_address_map *pam;
 
 	BUG_ON(!PageHighMem(page));
 
 	pas = page_slot(page);
-	if (virtual) {		/* Add */
-		pam = &page_address_maps[PKMAP_NR((unsigned long)virtual)];
+	अगर (भव) अणु		/* Add */
+		pam = &page_address_maps[PKMAP_NR((अचिन्हित दीर्घ)भव)];
 		pam->page = page;
-		pam->virtual = virtual;
+		pam->भव = भव;
 
 		spin_lock_irqsave(&pas->lock, flags);
 		list_add_tail(&pam->list, &pas->lh);
 		spin_unlock_irqrestore(&pas->lock, flags);
-	} else {		/* Remove */
+	पूर्ण अन्यथा अणु		/* Remove */
 		spin_lock_irqsave(&pas->lock, flags);
-		list_for_each_entry(pam, &pas->lh, list) {
-			if (pam->page == page) {
+		list_क्रम_each_entry(pam, &pas->lh, list) अणु
+			अगर (pam->page == page) अणु
 				list_del(&pam->list);
 				spin_unlock_irqrestore(&pas->lock, flags);
-				goto done;
-			}
-		}
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
 		spin_unlock_irqrestore(&pas->lock, flags);
-	}
-done:
-	return;
-}
+	पूर्ण
+करोne:
+	वापस;
+पूर्ण
 
-void __init page_address_init(void)
-{
-	int i;
+व्योम __init page_address_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(page_address_htable); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(page_address_htable); i++) अणु
 		INIT_LIST_HEAD(&page_address_htable[i].lh);
 		spin_lock_init(&page_address_htable[i].lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif	/* defined(HASHED_PAGE_VIRTUAL) */
+#पूर्ण_अगर	/* defined(HASHED_PAGE_VIRTUAL) */

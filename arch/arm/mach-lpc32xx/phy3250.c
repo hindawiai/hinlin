@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Platform support for LPC32xx SoC
+ * Platक्रमm support क्रम LPC32xx SoC
  *
  * Author: Kevin Wells <kevin.wells@nxp.com>
  *
@@ -8,81 +9,81 @@
  * Copyright (C) 2010 NXP Semiconductors
  */
 
-#include <linux/amba/pl08x.h>
-#include <linux/mtd/lpc32xx_mlc.h>
-#include <linux/mtd/lpc32xx_slc.h>
-#include <linux/of_platform.h>
+#समावेश <linux/amba/pl08x.h>
+#समावेश <linux/mtd/lpc32xx_mlc.h>
+#समावेश <linux/mtd/lpc32xx_slc.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/mach/arch.h>
-#include "common.h"
+#समावेश <यंत्र/mach/arch.h>
+#समावेश "common.h"
 
-static struct pl08x_channel_data pl08x_slave_channels[] = {
-	{
+अटल काष्ठा pl08x_channel_data pl08x_slave_channels[] = अणु
+	अणु
 		.bus_id = "nand-slc",
-		.min_signal = 1, /* SLC NAND Flash */
-		.max_signal = 1,
+		.min_संकेत = 1, /* SLC न_अंकD Flash */
+		.max_संकेत = 1,
 		.periph_buses = PL08X_AHB1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.bus_id = "nand-mlc",
-		.min_signal = 12, /* MLC NAND Flash */
-		.max_signal = 12,
+		.min_संकेत = 12, /* MLC न_अंकD Flash */
+		.max_संकेत = 12,
 		.periph_buses = PL08X_AHB1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int pl08x_get_signal(const struct pl08x_channel_data *cd)
-{
-	return cd->min_signal;
-}
+अटल पूर्णांक pl08x_get_संकेत(स्थिर काष्ठा pl08x_channel_data *cd)
+अणु
+	वापस cd->min_संकेत;
+पूर्ण
 
-static void pl08x_put_signal(const struct pl08x_channel_data *cd, int ch)
-{
-}
+अटल व्योम pl08x_put_संकेत(स्थिर काष्ठा pl08x_channel_data *cd, पूर्णांक ch)
+अणु
+पूर्ण
 
-static struct pl08x_platform_data pl08x_pd = {
-	/* Some reasonable memcpy defaults */
-	.memcpy_burst_size = PL08X_BURST_SZ_256,
-	.memcpy_bus_width = PL08X_BUS_WIDTH_32_BITS,
+अटल काष्ठा pl08x_platक्रमm_data pl08x_pd = अणु
+	/* Some reasonable स_नकल शेषs */
+	.स_नकल_burst_size = PL08X_BURST_SZ_256,
+	.स_नकल_bus_width = PL08X_BUS_WIDTH_32_BITS,
 	.slave_channels = &pl08x_slave_channels[0],
 	.num_slave_channels = ARRAY_SIZE(pl08x_slave_channels),
-	.get_xfer_signal = pl08x_get_signal,
-	.put_xfer_signal = pl08x_put_signal,
+	.get_xfer_संकेत = pl08x_get_संकेत,
+	.put_xfer_संकेत = pl08x_put_संकेत,
 	.lli_buses = PL08X_AHB1,
 	.mem_buses = PL08X_AHB1,
-};
+पूर्ण;
 
-static struct lpc32xx_slc_platform_data lpc32xx_slc_data = {
+अटल काष्ठा lpc32xx_slc_platक्रमm_data lpc32xx_slc_data = अणु
 	.dma_filter = pl08x_filter_id,
-};
+पूर्ण;
 
-static struct lpc32xx_mlc_platform_data lpc32xx_mlc_data = {
+अटल काष्ठा lpc32xx_mlc_platक्रमm_data lpc32xx_mlc_data = अणु
 	.dma_filter = pl08x_filter_id,
-};
+पूर्ण;
 
-static const struct of_dev_auxdata lpc32xx_auxdata_lookup[] __initconst = {
+अटल स्थिर काष्ठा of_dev_auxdata lpc32xx_auxdata_lookup[] __initस्थिर = अणु
 	OF_DEV_AUXDATA("arm,pl080", 0x31000000, "pl08xdmac", &pl08x_pd),
 	OF_DEV_AUXDATA("nxp,lpc3220-slc", 0x20020000, "20020000.flash",
 		       &lpc32xx_slc_data),
 	OF_DEV_AUXDATA("nxp,lpc3220-mlc", 0x200a8000, "200a8000.flash",
 		       &lpc32xx_mlc_data),
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 
-static void __init lpc3250_machine_init(void)
-{
+अटल व्योम __init lpc3250_machine_init(व्योम)
+अणु
 	lpc32xx_serial_init();
 
-	of_platform_default_populate(NULL, lpc32xx_auxdata_lookup, NULL);
-}
+	of_platक्रमm_शेष_populate(शून्य, lpc32xx_auxdata_lookup, शून्य);
+पूर्ण
 
-static const char *const lpc32xx_dt_compat[] __initconst = {
+अटल स्थिर अक्षर *स्थिर lpc32xx_dt_compat[] __initस्थिर = अणु
 	"nxp,lpc3220",
 	"nxp,lpc3230",
 	"nxp,lpc3240",
 	"nxp,lpc3250",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 DT_MACHINE_START(LPC32XX_DT, "LPC32XX SoC (Flattened Device Tree)")
 	.atag_offset	= 0x100,

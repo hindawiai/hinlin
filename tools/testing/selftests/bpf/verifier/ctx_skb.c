@@ -1,46 +1,47 @@
-{
+<शैली गुरु>
+अणु
 	"access skb fields ok",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, len)),
+		    दुरत्व(काष्ठा __sk_buff, len)),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 1),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, mark)),
+		    दुरत्व(काष्ठा __sk_buff, mark)),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 1),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, pkt_type)),
+		    दुरत्व(काष्ठा __sk_buff, pkt_type)),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 1),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, queue_mapping)),
+		    दुरत्व(काष्ठा __sk_buff, queue_mapping)),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, protocol)),
+		    दुरत्व(काष्ठा __sk_buff, protocol)),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, vlan_present)),
+		    दुरत्व(काष्ठा __sk_buff, vlan_present)),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, vlan_tci)),
+		    दुरत्व(काष्ठा __sk_buff, vlan_tci)),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, napi_id)),
+		    दुरत्व(काष्ठा __sk_buff, napi_id)),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"access skb fields bad1",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1, -4),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"access skb fields bad2",
-	.insns = {
+	.insns = अणु
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_1, 0, 9),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -51,20 +52,20 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, pkt_type)),
+		    दुरत्व(काष्ठा __sk_buff, pkt_type)),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 4 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 4 पूर्ण,
 	.errstr = "different pointers",
 	.errstr_unpriv = "R1 pointer comparison",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"access skb fields bad3",
-	.insns = {
+	.insns = अणु
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_1, 0, 2),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, pkt_type)),
+		    दुरत्व(काष्ठा __sk_buff, pkt_type)),
 	BPF_EXIT_INSN(),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
@@ -75,18 +76,18 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_JMP_IMM(BPF_JA, 0, 0, -12),
-	},
-	.fixup_map_hash_8b = { 6 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 6 पूर्ण,
 	.errstr = "different pointers",
 	.errstr_unpriv = "R1 pointer comparison",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"access skb fields bad4",
-	.insns = {
+	.insns = अणु
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_1, 0, 3),
 	BPF_LDX_MEM(BPF_W, BPF_REG_1, BPF_REG_1,
-		    offsetof(struct __sk_buff, len)),
+		    दुरत्व(काष्ठा __sk_buff, len)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
@@ -98,261 +99,261 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_JMP_IMM(BPF_JA, 0, 0, -13),
-	},
-	.fixup_map_hash_8b = { 7 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 7 पूर्ण,
 	.errstr = "different pointers",
 	.errstr_unpriv = "R1 pointer comparison",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"invalid access __sk_buff family",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, family)),
+		    दुरत्व(काष्ठा __sk_buff, family)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"invalid access __sk_buff remote_ip4",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, remote_ip4)),
+		    दुरत्व(काष्ठा __sk_buff, remote_ip4)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"invalid access __sk_buff local_ip4",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, local_ip4)),
+		    दुरत्व(काष्ठा __sk_buff, local_ip4)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"invalid access __sk_buff remote_ip6",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, remote_ip6)),
+		    दुरत्व(काष्ठा __sk_buff, remote_ip6)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"invalid access __sk_buff local_ip6",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, local_ip6)),
+		    दुरत्व(काष्ठा __sk_buff, local_ip6)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"invalid access __sk_buff remote_port",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, remote_port)),
+		    दुरत्व(काष्ठा __sk_buff, remote_port)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"invalid access __sk_buff remote_port",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, local_port)),
+		    दुरत्व(काष्ठा __sk_buff, local_port)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"valid access __sk_buff family",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, family)),
+		    दुरत्व(काष्ठा __sk_buff, family)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"valid access __sk_buff remote_ip4",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, remote_ip4)),
+		    दुरत्व(काष्ठा __sk_buff, remote_ip4)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"valid access __sk_buff local_ip4",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, local_ip4)),
+		    दुरत्व(काष्ठा __sk_buff, local_ip4)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"valid access __sk_buff remote_ip6",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, remote_ip6[0])),
+		    दुरत्व(काष्ठा __sk_buff, remote_ip6[0])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, remote_ip6[1])),
+		    दुरत्व(काष्ठा __sk_buff, remote_ip6[1])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, remote_ip6[2])),
+		    दुरत्व(काष्ठा __sk_buff, remote_ip6[2])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, remote_ip6[3])),
+		    दुरत्व(काष्ठा __sk_buff, remote_ip6[3])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"valid access __sk_buff local_ip6",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, local_ip6[0])),
+		    दुरत्व(काष्ठा __sk_buff, local_ip6[0])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, local_ip6[1])),
+		    दुरत्व(काष्ठा __sk_buff, local_ip6[1])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, local_ip6[2])),
+		    दुरत्व(काष्ठा __sk_buff, local_ip6[2])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, local_ip6[3])),
+		    दुरत्व(काष्ठा __sk_buff, local_ip6[3])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"valid access __sk_buff remote_port",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, remote_port)),
+		    दुरत्व(काष्ठा __sk_buff, remote_port)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"valid access __sk_buff remote_port",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, local_port)),
+		    दुरत्व(काष्ठा __sk_buff, local_port)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"invalid access of tc_classid for SK_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, tc_classid)),
+		    दुरत्व(काष्ठा __sk_buff, tc_classid)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
 	.errstr = "invalid bpf_context access",
-},
-{
+पूर्ण,
+अणु
 	"invalid access of skb->mark for SK_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, mark)),
+		    दुरत्व(काष्ठा __sk_buff, mark)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result =  REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
 	.errstr = "invalid bpf_context access",
-},
-{
+पूर्ण,
+अणु
 	"check skb->mark is not writeable by SK_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, mark)),
+		    दुरत्व(काष्ठा __sk_buff, mark)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result =  REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
 	.errstr = "invalid bpf_context access",
-},
-{
+पूर्ण,
+अणु
 	"check skb->tc_index is writeable by SK_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, tc_index)),
+		    दुरत्व(काष्ठा __sk_buff, tc_index)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"check skb->priority is writeable by SK_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, priority)),
+		    दुरत्व(काष्ठा __sk_buff, priority)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"direct packet read for SK_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1,
-		    offsetof(struct __sk_buff, data)),
+		    दुरत्व(काष्ठा __sk_buff, data)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_1,
-		    offsetof(struct __sk_buff, data_end)),
+		    दुरत्व(काष्ठा __sk_buff, data_end)),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 8),
 	BPF_JMP_REG(BPF_JGT, BPF_REG_0, BPF_REG_3, 1),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_2, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"direct packet write for SK_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1,
-		    offsetof(struct __sk_buff, data)),
+		    दुरत्व(काष्ठा __sk_buff, data)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_1,
-		    offsetof(struct __sk_buff, data_end)),
+		    दुरत्व(काष्ठा __sk_buff, data_end)),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 8),
 	BPF_JMP_REG(BPF_JGT, BPF_REG_0, BPF_REG_3, 1),
 	BPF_STX_MEM(BPF_B, BPF_REG_2, BPF_REG_2, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"overlapping checks for direct packet access SK_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1,
-		    offsetof(struct __sk_buff, data)),
+		    दुरत्व(काष्ठा __sk_buff, data)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_1,
-		    offsetof(struct __sk_buff, data_end)),
+		    दुरत्व(काष्ठा __sk_buff, data_end)),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 8),
 	BPF_JMP_REG(BPF_JGT, BPF_REG_0, BPF_REG_3, 4),
@@ -362,772 +363,772 @@
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_2, 6),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"check skb->mark is not writeable by sockets",
-	.insns = {
+	.insns = अणु
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_1,
-		    offsetof(struct __sk_buff, mark)),
+		    दुरत्व(काष्ठा __sk_buff, mark)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.errstr_unpriv = "R1 leaks addr",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"check skb->tc_index is not writeable by sockets",
-	.insns = {
+	.insns = अणु
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_1,
-		    offsetof(struct __sk_buff, tc_index)),
+		    दुरत्व(काष्ठा __sk_buff, tc_index)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.errstr_unpriv = "R1 leaks addr",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: byte",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 1),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 2),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 3),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[1])),
+		    दुरत्व(काष्ठा __sk_buff, cb[1])),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[1]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[1]) + 1),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[1]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[1]) + 2),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[1]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[1]) + 3),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[2])),
+		    दुरत्व(काष्ठा __sk_buff, cb[2])),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[2]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[2]) + 1),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[2]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[2]) + 2),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[2]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[2]) + 3),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[3])),
+		    दुरत्व(काष्ठा __sk_buff, cb[3])),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[3]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[3]) + 1),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[3]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[3]) + 2),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[3]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[3]) + 3),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4])),
+		    दुरत्व(काष्ठा __sk_buff, cb[4])),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 1),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 2),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 3),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 1),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 2),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 3),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[1])),
+		    दुरत्व(काष्ठा __sk_buff, cb[1])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[1]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[1]) + 1),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[1]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[1]) + 2),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[1]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[1]) + 3),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[2])),
+		    दुरत्व(काष्ठा __sk_buff, cb[2])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[2]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[2]) + 1),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[2]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[2]) + 2),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[2]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[2]) + 3),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[3])),
+		    दुरत्व(काष्ठा __sk_buff, cb[3])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[3]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[3]) + 1),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[3]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[3]) + 2),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[3]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[3]) + 3),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[4])),
+		    दुरत्व(काष्ठा __sk_buff, cb[4])),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[4]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 1),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[4]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 2),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[4]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 3),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"__sk_buff->hash, offset 0, byte store not permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, hash)),
+		    दुरत्व(काष्ठा __sk_buff, hash)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"__sk_buff->tc_index, offset 3, byte store not permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, tc_index) + 3),
+		    दुरत्व(काष्ठा __sk_buff, tc_index) + 3),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"check skb->hash byte load permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash)),
-#else
+		    दुरत्व(काष्ठा __sk_buff, hash)),
+#अन्यथा
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash) + 3),
-#endif
+		    दुरत्व(काष्ठा __sk_buff, hash) + 3),
+#पूर्ण_अगर
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"check skb->hash byte load permitted 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash) + 1),
+		    दुरत्व(काष्ठा __sk_buff, hash) + 1),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"check skb->hash byte load permitted 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash) + 2),
+		    दुरत्व(काष्ठा __sk_buff, hash) + 2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"check skb->hash byte load permitted 3",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash) + 3),
-#else
+		    दुरत्व(काष्ठा __sk_buff, hash) + 3),
+#अन्यथा
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash)),
-#endif
+		    दुरत्व(काष्ठा __sk_buff, hash)),
+#पूर्ण_अगर
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: byte, wrong type",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_B, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: half",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 2),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[1])),
+		    दुरत्व(काष्ठा __sk_buff, cb[1])),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[1]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[1]) + 2),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[2])),
+		    दुरत्व(काष्ठा __sk_buff, cb[2])),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[2]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[2]) + 2),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[3])),
+		    दुरत्व(काष्ठा __sk_buff, cb[3])),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[3]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[3]) + 2),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4])),
+		    दुरत्व(काष्ठा __sk_buff, cb[4])),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 2),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 2),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[1])),
+		    दुरत्व(काष्ठा __sk_buff, cb[1])),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[1]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[1]) + 2),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[2])),
+		    दुरत्व(काष्ठा __sk_buff, cb[2])),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[2]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[2]) + 2),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[3])),
+		    दुरत्व(काष्ठा __sk_buff, cb[3])),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[3]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[3]) + 2),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[4])),
+		    दुरत्व(काष्ठा __sk_buff, cb[4])),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[4]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: half, unaligned",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 1),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "misaligned context access",
 	.result = REJECT,
 	.flags = F_LOAD_WITH_STRICT_ALIGNMENT,
-},
-{
+पूर्ण,
+अणु
 	"check __sk_buff->hash, offset 0, half store not permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, hash)),
+		    दुरत्व(काष्ठा __sk_buff, hash)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"check __sk_buff->tc_index, offset 2, half store not permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, tc_index) + 2),
+		    दुरत्व(काष्ठा __sk_buff, tc_index) + 2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"check skb->hash half load permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash)),
-#else
+		    दुरत्व(काष्ठा __sk_buff, hash)),
+#अन्यथा
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash) + 2),
-#endif
+		    दुरत्व(काष्ठा __sk_buff, hash) + 2),
+#पूर्ण_अगर
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"check skb->hash half load permitted 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash) + 2),
-#else
+		    दुरत्व(काष्ठा __sk_buff, hash) + 2),
+#अन्यथा
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash)),
-#endif
+		    दुरत्व(काष्ठा __sk_buff, hash)),
+#पूर्ण_अगर
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"check skb->hash half load not permitted, unaligned 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash) + 1),
-#else
+		    दुरत्व(काष्ठा __sk_buff, hash) + 1),
+#अन्यथा
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash) + 3),
-#endif
+		    दुरत्व(काष्ठा __sk_buff, hash) + 3),
+#पूर्ण_अगर
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-},
-{
+पूर्ण,
+अणु
 	"check skb->hash half load not permitted, unaligned 3",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash) + 3),
-#else
+		    दुरत्व(काष्ठा __sk_buff, hash) + 3),
+#अन्यथा
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, hash) + 1),
-#endif
+		    दुरत्व(काष्ठा __sk_buff, hash) + 1),
+#पूर्ण_अगर
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: half, wrong type",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_H, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: word",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[1])),
+		    दुरत्व(काष्ठा __sk_buff, cb[1])),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[2])),
+		    दुरत्व(काष्ठा __sk_buff, cb[2])),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[3])),
+		    दुरत्व(काष्ठा __sk_buff, cb[3])),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4])),
+		    दुरत्व(काष्ठा __sk_buff, cb[4])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[1])),
+		    दुरत्व(काष्ठा __sk_buff, cb[1])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[2])),
+		    दुरत्व(काष्ठा __sk_buff, cb[2])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[3])),
+		    दुरत्व(काष्ठा __sk_buff, cb[3])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[4])),
+		    दुरत्व(काष्ठा __sk_buff, cb[4])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: word, unaligned 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "misaligned context access",
 	.result = REJECT,
 	.flags = F_LOAD_WITH_STRICT_ALIGNMENT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: word, unaligned 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4]) + 1),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 1),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "misaligned context access",
 	.result = REJECT,
 	.flags = F_LOAD_WITH_STRICT_ALIGNMENT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: word, unaligned 3",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4]) + 2),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "misaligned context access",
 	.result = REJECT,
 	.flags = F_LOAD_WITH_STRICT_ALIGNMENT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: word, unaligned 4",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4]) + 3),
+		    दुरत्व(काष्ठा __sk_buff, cb[4]) + 3),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "misaligned context access",
 	.result = REJECT,
 	.flags = F_LOAD_WITH_STRICT_ALIGNMENT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: double",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[2])),
+		    दुरत्व(काष्ठा __sk_buff, cb[2])),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[2])),
+		    दुरत्व(काष्ठा __sk_buff, cb[2])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: double, unaligned 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[1])),
+		    दुरत्व(काष्ठा __sk_buff, cb[1])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "misaligned context access",
 	.result = REJECT,
 	.flags = F_LOAD_WITH_STRICT_ALIGNMENT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: double, unaligned 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[3])),
+		    दुरत्व(काष्ठा __sk_buff, cb[3])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "misaligned context access",
 	.result = REJECT,
 	.flags = F_LOAD_WITH_STRICT_ALIGNMENT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: double, oob 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[4])),
+		    दुरत्व(काष्ठा __sk_buff, cb[4])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: double, oob 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[4])),
+		    दुरत्व(काष्ठा __sk_buff, cb[4])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"check __sk_buff->ifindex dw store not permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, ifindex)),
+		    दुरत्व(काष्ठा __sk_buff, अगरindex)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"check __sk_buff->ifindex dw load not permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, ifindex)),
+		    दुरत्व(काष्ठा __sk_buff, अगरindex)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"check cb access: double, wrong type",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SOCK,
-},
-{
+पूर्ण,
+अणु
 	"check out of range skb->cb access",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0]) + 256),
+		    दुरत्व(काष्ठा __sk_buff, cb[0]) + 256),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.errstr_unpriv = "",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SCHED_ACT,
-},
-{
+पूर्ण,
+अणु
 	"write skb fields from socket prog",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[4])),
+		    दुरत्व(काष्ठा __sk_buff, cb[4])),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 1),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, mark)),
+		    दुरत्व(काष्ठा __sk_buff, mark)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, tc_index)),
+		    दुरत्व(काष्ठा __sk_buff, tc_index)),
 	BPF_JMP_IMM(BPF_JGE, BPF_REG_0, 0, 1),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[2])),
+		    दुरत्व(काष्ठा __sk_buff, cb[2])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.errstr_unpriv = "R1 leaks addr",
 	.result_unpriv = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"write skb fields from tc_cls_act prog",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, cb[0])),
+		    दुरत्व(काष्ठा __sk_buff, cb[0])),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, mark)),
+		    दुरत्व(काष्ठा __sk_buff, mark)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, tc_index)),
+		    दुरत्व(काष्ठा __sk_buff, tc_index)),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, tc_index)),
+		    दुरत्व(काष्ठा __sk_buff, tc_index)),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, cb[3])),
+		    दुरत्व(काष्ठा __sk_buff, cb[3])),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, tstamp)),
+		    दुरत्व(काष्ठा __sk_buff, tstamp)),
 	BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, tstamp)),
+		    दुरत्व(काष्ठा __sk_buff, tstamp)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr_unpriv = "",
 	.result_unpriv = REJECT,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-},
-{
+पूर्ण,
+अणु
 	"check skb->data half load not permitted",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#अगर __BYTE_ORDER == __LITTLE_ENDIAN
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, data)),
-#else
+		    दुरत्व(काष्ठा __sk_buff, data)),
+#अन्यथा
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, data) + 2),
-#endif
+		    दुरत्व(काष्ठा __sk_buff, data) + 2),
+#पूर्ण_अगर
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.errstr = "invalid bpf_context access",
-},
-{
+पूर्ण,
+अणु
 	"read gso_segs from CGROUP_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, gso_segs)),
+		    दुरत्व(काष्ठा __sk_buff, gso_segs)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-},
-{
+पूर्ण,
+अणु
 	"read gso_segs from CGROUP_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_1, BPF_REG_1,
-		    offsetof(struct __sk_buff, gso_segs)),
+		    दुरत्व(काष्ठा __sk_buff, gso_segs)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-},
-{
+पूर्ण,
+अणु
 	"write gso_segs from CGROUP_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, gso_segs)),
+		    दुरत्व(काष्ठा __sk_buff, gso_segs)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.result_unpriv = REJECT,
 	.errstr = "invalid bpf_context access off=164 size=4",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-},
-{
+पूर्ण,
+अणु
 	"read gso_segs from CLS",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, gso_segs)),
+		    दुरत्व(काष्ठा __sk_buff, gso_segs)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-},
-{
+पूर्ण,
+अणु
 	"read gso_size from CGROUP_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, gso_size)),
+		    दुरत्व(काष्ठा __sk_buff, gso_size)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-},
-{
+पूर्ण,
+अणु
 	"read gso_size from CGROUP_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_1, BPF_REG_1,
-		    offsetof(struct __sk_buff, gso_size)),
+		    दुरत्व(काष्ठा __sk_buff, gso_size)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-},
-{
+पूर्ण,
+अणु
 	"write gso_size from CGROUP_SKB",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_0,
-		    offsetof(struct __sk_buff, gso_size)),
+		    दुरत्व(काष्ठा __sk_buff, gso_size)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.result_unpriv = REJECT,
 	.errstr = "invalid bpf_context access off=176 size=4",
 	.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
-},
-{
+पूर्ण,
+अणु
 	"read gso_size from CLS",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct __sk_buff, gso_size)),
+		    दुरत्व(काष्ठा __sk_buff, gso_size)),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-},
-{
+पूर्ण,
+अणु
 	"check wire_len is not readable by sockets",
-	.insns = {
+	.insns = अणु
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    offsetof(struct __sk_buff, wire_len)),
+			    दुरत्व(काष्ठा __sk_buff, wire_len)),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"check wire_len is readable by tc classifier",
-	.insns = {
+	.insns = अणु
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-			    offsetof(struct __sk_buff, wire_len)),
+			    दुरत्व(काष्ठा __sk_buff, wire_len)),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.result = ACCEPT,
-},
-{
+पूर्ण,
+अणु
 	"check wire_len is not writable by tc classifier",
-	.insns = {
+	.insns = अणु
 		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_1,
-			    offsetof(struct __sk_buff, wire_len)),
+			    दुरत्व(काष्ठा __sk_buff, wire_len)),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.errstr = "invalid bpf_context access",
 	.errstr_unpriv = "R1 leaks addr",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
        "pkt > pkt_end taken check",
-       .insns = {
+       .insns = अणु
        BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1,                //  0. r2 = *(u32 *)(r1 + data_end)
-                   offsetof(struct __sk_buff, data_end)),
+                   दुरत्व(काष्ठा __sk_buff, data_end)),
        BPF_LDX_MEM(BPF_W, BPF_REG_4, BPF_REG_1,                //  1. r4 = *(u32 *)(r1 + data)
-                   offsetof(struct __sk_buff, data)),
+                   दुरत्व(काष्ठा __sk_buff, data)),
        BPF_MOV64_REG(BPF_REG_3, BPF_REG_4),                    //  2. r3 = r4
        BPF_ALU64_IMM(BPF_ADD, BPF_REG_3, 42),                  //  3. r3 += 42
        BPF_MOV64_IMM(BPF_REG_1, 0),                            //  4. r1 = 0
-       BPF_JMP_REG(BPF_JGT, BPF_REG_3, BPF_REG_2, 2),          //  5. if r3 > r2 goto 8
+       BPF_JMP_REG(BPF_JGT, BPF_REG_3, BPF_REG_2, 2),          //  5. अगर r3 > r2 जाओ 8
        BPF_ALU64_IMM(BPF_ADD, BPF_REG_4, 14),                  //  6. r4 += 14
        BPF_MOV64_REG(BPF_REG_1, BPF_REG_4),                    //  7. r1 = r4
-       BPF_JMP_REG(BPF_JGT, BPF_REG_3, BPF_REG_2, 1),          //  8. if r3 > r2 goto 10
+       BPF_JMP_REG(BPF_JGT, BPF_REG_3, BPF_REG_2, 1),          //  8. अगर r3 > r2 जाओ 10
        BPF_LDX_MEM(BPF_H, BPF_REG_2, BPF_REG_1, 9),            //  9. r2 = *(u8 *)(r1 + 9)
        BPF_MOV64_IMM(BPF_REG_0, 0),                            // 10. r0 = 0
-       BPF_EXIT_INSN(),                                        // 11. exit
-       },
+       BPF_EXIT_INSN(),                                        // 11. निकास
+       पूर्ण,
        .result = ACCEPT,
        .prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
        "pkt_end < pkt taken check",
-       .insns = {
+       .insns = अणु
        BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1,                //  0. r2 = *(u32 *)(r1 + data_end)
-                   offsetof(struct __sk_buff, data_end)),
+                   दुरत्व(काष्ठा __sk_buff, data_end)),
        BPF_LDX_MEM(BPF_W, BPF_REG_4, BPF_REG_1,                //  1. r4 = *(u32 *)(r1 + data)
-                   offsetof(struct __sk_buff, data)),
+                   दुरत्व(काष्ठा __sk_buff, data)),
        BPF_MOV64_REG(BPF_REG_3, BPF_REG_4),                    //  2. r3 = r4
        BPF_ALU64_IMM(BPF_ADD, BPF_REG_3, 42),                  //  3. r3 += 42
        BPF_MOV64_IMM(BPF_REG_1, 0),                            //  4. r1 = 0
-       BPF_JMP_REG(BPF_JGT, BPF_REG_3, BPF_REG_2, 2),          //  5. if r3 > r2 goto 8
+       BPF_JMP_REG(BPF_JGT, BPF_REG_3, BPF_REG_2, 2),          //  5. अगर r3 > r2 जाओ 8
        BPF_ALU64_IMM(BPF_ADD, BPF_REG_4, 14),                  //  6. r4 += 14
        BPF_MOV64_REG(BPF_REG_1, BPF_REG_4),                    //  7. r1 = r4
-       BPF_JMP_REG(BPF_JLT, BPF_REG_2, BPF_REG_3, 1),          //  8. if r2 < r3 goto 10
+       BPF_JMP_REG(BPF_JLT, BPF_REG_2, BPF_REG_3, 1),          //  8. अगर r2 < r3 जाओ 10
        BPF_LDX_MEM(BPF_H, BPF_REG_2, BPF_REG_1, 9),            //  9. r2 = *(u8 *)(r1 + 9)
        BPF_MOV64_IMM(BPF_REG_0, 0),                            // 10. r0 = 0
-       BPF_EXIT_INSN(),                                        // 11. exit
-       },
+       BPF_EXIT_INSN(),                                        // 11. निकास
+       पूर्ण,
        .result = ACCEPT,
        .prog_type = BPF_PROG_TYPE_SK_SKB,
-},
+पूर्ण,

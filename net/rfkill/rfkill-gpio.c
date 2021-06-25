@@ -1,172 +1,173 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2011, NVIDIA Corporation.
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/rfkill.h>
-#include <linux/platform_device.h>
-#include <linux/clk.h>
-#include <linux/slab.h>
-#include <linux/acpi.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/rfसमाप्त.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/gpio/consumer.h>
 
-struct rfkill_gpio_data {
-	const char		*name;
-	enum rfkill_type	type;
-	struct gpio_desc	*reset_gpio;
-	struct gpio_desc	*shutdown_gpio;
+काष्ठा rfसमाप्त_gpio_data अणु
+	स्थिर अक्षर		*name;
+	क्रमागत rfसमाप्त_type	type;
+	काष्ठा gpio_desc	*reset_gpio;
+	काष्ठा gpio_desc	*shutकरोwn_gpio;
 
-	struct rfkill		*rfkill_dev;
-	struct clk		*clk;
+	काष्ठा rfसमाप्त		*rfसमाप्त_dev;
+	काष्ठा clk		*clk;
 
 	bool			clk_enabled;
-};
+पूर्ण;
 
-static int rfkill_gpio_set_power(void *data, bool blocked)
-{
-	struct rfkill_gpio_data *rfkill = data;
+अटल पूर्णांक rfसमाप्त_gpio_set_घातer(व्योम *data, bool blocked)
+अणु
+	काष्ठा rfसमाप्त_gpio_data *rfसमाप्त = data;
 
-	if (!blocked && !IS_ERR(rfkill->clk) && !rfkill->clk_enabled)
-		clk_enable(rfkill->clk);
+	अगर (!blocked && !IS_ERR(rfसमाप्त->clk) && !rfसमाप्त->clk_enabled)
+		clk_enable(rfसमाप्त->clk);
 
-	gpiod_set_value_cansleep(rfkill->shutdown_gpio, !blocked);
-	gpiod_set_value_cansleep(rfkill->reset_gpio, !blocked);
+	gpiod_set_value_cansleep(rfसमाप्त->shutकरोwn_gpio, !blocked);
+	gpiod_set_value_cansleep(rfसमाप्त->reset_gpio, !blocked);
 
-	if (blocked && !IS_ERR(rfkill->clk) && rfkill->clk_enabled)
-		clk_disable(rfkill->clk);
+	अगर (blocked && !IS_ERR(rfसमाप्त->clk) && rfसमाप्त->clk_enabled)
+		clk_disable(rfसमाप्त->clk);
 
-	rfkill->clk_enabled = !blocked;
+	rfसमाप्त->clk_enabled = !blocked;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rfkill_ops rfkill_gpio_ops = {
-	.set_block = rfkill_gpio_set_power,
-};
+अटल स्थिर काष्ठा rfसमाप्त_ops rfसमाप्त_gpio_ops = अणु
+	.set_block = rfसमाप्त_gpio_set_घातer,
+पूर्ण;
 
-static const struct acpi_gpio_params reset_gpios = { 0, 0, false };
-static const struct acpi_gpio_params shutdown_gpios = { 1, 0, false };
+अटल स्थिर काष्ठा acpi_gpio_params reset_gpios = अणु 0, 0, false पूर्ण;
+अटल स्थिर काष्ठा acpi_gpio_params shutकरोwn_gpios = अणु 1, 0, false पूर्ण;
 
-static const struct acpi_gpio_mapping acpi_rfkill_default_gpios[] = {
-	{ "reset-gpios", &reset_gpios, 1 },
-	{ "shutdown-gpios", &shutdown_gpios, 1 },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_gpio_mapping acpi_rfसमाप्त_शेष_gpios[] = अणु
+	अणु "reset-gpios", &reset_gpios, 1 पूर्ण,
+	अणु "shutdown-gpios", &shutकरोwn_gpios, 1 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int rfkill_gpio_acpi_probe(struct device *dev,
-				  struct rfkill_gpio_data *rfkill)
-{
-	const struct acpi_device_id *id;
+अटल पूर्णांक rfसमाप्त_gpio_acpi_probe(काष्ठा device *dev,
+				  काष्ठा rfसमाप्त_gpio_data *rfसमाप्त)
+अणु
+	स्थिर काष्ठा acpi_device_id *id;
 
 	id = acpi_match_device(dev->driver->acpi_match_table, dev);
-	if (!id)
-		return -ENODEV;
+	अगर (!id)
+		वापस -ENODEV;
 
-	rfkill->type = (unsigned)id->driver_data;
+	rfसमाप्त->type = (अचिन्हित)id->driver_data;
 
-	return devm_acpi_dev_add_driver_gpios(dev, acpi_rfkill_default_gpios);
-}
+	वापस devm_acpi_dev_add_driver_gpios(dev, acpi_rfसमाप्त_शेष_gpios);
+पूर्ण
 
-static int rfkill_gpio_probe(struct platform_device *pdev)
-{
-	struct rfkill_gpio_data *rfkill;
-	struct gpio_desc *gpio;
-	const char *type_name;
-	int ret;
+अटल पूर्णांक rfसमाप्त_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rfसमाप्त_gpio_data *rfसमाप्त;
+	काष्ठा gpio_desc *gpio;
+	स्थिर अक्षर *type_name;
+	पूर्णांक ret;
 
-	rfkill = devm_kzalloc(&pdev->dev, sizeof(*rfkill), GFP_KERNEL);
-	if (!rfkill)
-		return -ENOMEM;
+	rfसमाप्त = devm_kzalloc(&pdev->dev, माप(*rfसमाप्त), GFP_KERNEL);
+	अगर (!rfसमाप्त)
+		वापस -ENOMEM;
 
-	device_property_read_string(&pdev->dev, "name", &rfkill->name);
-	device_property_read_string(&pdev->dev, "type", &type_name);
+	device_property_पढ़ो_string(&pdev->dev, "name", &rfसमाप्त->name);
+	device_property_पढ़ो_string(&pdev->dev, "type", &type_name);
 
-	if (!rfkill->name)
-		rfkill->name = dev_name(&pdev->dev);
+	अगर (!rfसमाप्त->name)
+		rfसमाप्त->name = dev_name(&pdev->dev);
 
-	rfkill->type = rfkill_find_type(type_name);
+	rfसमाप्त->type = rfसमाप्त_find_type(type_name);
 
-	if (ACPI_HANDLE(&pdev->dev)) {
-		ret = rfkill_gpio_acpi_probe(&pdev->dev, rfkill);
-		if (ret)
-			return ret;
-	}
+	अगर (ACPI_HANDLE(&pdev->dev)) अणु
+		ret = rfसमाप्त_gpio_acpi_probe(&pdev->dev, rfसमाप्त);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	rfkill->clk = devm_clk_get(&pdev->dev, NULL);
+	rfसमाप्त->clk = devm_clk_get(&pdev->dev, शून्य);
 
 	gpio = devm_gpiod_get_optional(&pdev->dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(gpio))
-		return PTR_ERR(gpio);
+	अगर (IS_ERR(gpio))
+		वापस PTR_ERR(gpio);
 
-	rfkill->reset_gpio = gpio;
+	rfसमाप्त->reset_gpio = gpio;
 
 	gpio = devm_gpiod_get_optional(&pdev->dev, "shutdown", GPIOD_OUT_LOW);
-	if (IS_ERR(gpio))
-		return PTR_ERR(gpio);
+	अगर (IS_ERR(gpio))
+		वापस PTR_ERR(gpio);
 
-	rfkill->shutdown_gpio = gpio;
+	rfसमाप्त->shutकरोwn_gpio = gpio;
 
-	/* Make sure at-least one GPIO is defined for this instance */
-	if (!rfkill->reset_gpio && !rfkill->shutdown_gpio) {
+	/* Make sure at-least one GPIO is defined क्रम this instance */
+	अगर (!rfसमाप्त->reset_gpio && !rfसमाप्त->shutकरोwn_gpio) अणु
 		dev_err(&pdev->dev, "invalid platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	rfkill->rfkill_dev = rfkill_alloc(rfkill->name, &pdev->dev,
-					  rfkill->type, &rfkill_gpio_ops,
-					  rfkill);
-	if (!rfkill->rfkill_dev)
-		return -ENOMEM;
+	rfसमाप्त->rfसमाप्त_dev = rfसमाप्त_alloc(rfसमाप्त->name, &pdev->dev,
+					  rfसमाप्त->type, &rfसमाप्त_gpio_ops,
+					  rfसमाप्त);
+	अगर (!rfसमाप्त->rfसमाप्त_dev)
+		वापस -ENOMEM;
 
-	ret = rfkill_register(rfkill->rfkill_dev);
-	if (ret < 0)
-		goto err_destroy;
+	ret = rfसमाप्त_रेजिस्टर(rfसमाप्त->rfसमाप्त_dev);
+	अगर (ret < 0)
+		जाओ err_destroy;
 
-	platform_set_drvdata(pdev, rfkill);
+	platक्रमm_set_drvdata(pdev, rfसमाप्त);
 
-	dev_info(&pdev->dev, "%s device registered.\n", rfkill->name);
+	dev_info(&pdev->dev, "%s device registered.\n", rfसमाप्त->name);
 
-	return 0;
+	वापस 0;
 
 err_destroy:
-	rfkill_destroy(rfkill->rfkill_dev);
+	rfसमाप्त_destroy(rfसमाप्त->rfसमाप्त_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rfkill_gpio_remove(struct platform_device *pdev)
-{
-	struct rfkill_gpio_data *rfkill = platform_get_drvdata(pdev);
+अटल पूर्णांक rfसमाप्त_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rfसमाप्त_gpio_data *rfसमाप्त = platक्रमm_get_drvdata(pdev);
 
-	rfkill_unregister(rfkill->rfkill_dev);
-	rfkill_destroy(rfkill->rfkill_dev);
+	rfसमाप्त_unरेजिस्टर(rfसमाप्त->rfसमाप्त_dev);
+	rfसमाप्त_destroy(rfसमाप्त->rfसमाप्त_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id rfkill_acpi_match[] = {
-	{ "BCM4752", RFKILL_TYPE_GPS },
-	{ "LNV4752", RFKILL_TYPE_GPS },
-	{ },
-};
-MODULE_DEVICE_TABLE(acpi, rfkill_acpi_match);
-#endif
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id rfसमाप्त_acpi_match[] = अणु
+	अणु "BCM4752", RFKILL_TYPE_GPS पूर्ण,
+	अणु "LNV4752", RFKILL_TYPE_GPS पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(acpi, rfसमाप्त_acpi_match);
+#पूर्ण_अगर
 
-static struct platform_driver rfkill_gpio_driver = {
-	.probe = rfkill_gpio_probe,
-	.remove = rfkill_gpio_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver rfसमाप्त_gpio_driver = अणु
+	.probe = rfसमाप्त_gpio_probe,
+	.हटाओ = rfसमाप्त_gpio_हटाओ,
+	.driver = अणु
 		.name = "rfkill_gpio",
-		.acpi_match_table = ACPI_PTR(rfkill_acpi_match),
-	},
-};
+		.acpi_match_table = ACPI_PTR(rfसमाप्त_acpi_match),
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(rfkill_gpio_driver);
+module_platक्रमm_driver(rfसमाप्त_gpio_driver);
 
 MODULE_DESCRIPTION("gpio rfkill");
 MODULE_AUTHOR("NVIDIA");

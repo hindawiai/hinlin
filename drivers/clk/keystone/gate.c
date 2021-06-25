@@ -1,265 +1,266 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Clock driver for Keystone 2 based devices
+ * Clock driver क्रम Keystone 2 based devices
  *
  * Copyright (C) 2013 Texas Instruments.
  *	Murali Karicheri <m-karicheri2@ti.com>
  *	Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/of_address.h>
-#include <linux/of.h>
-#include <linux/module.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of.h>
+#समावेश <linux/module.h>
 
-/* PSC register offsets */
-#define PTCMD			0x120
-#define PTSTAT			0x128
-#define PDSTAT			0x200
-#define PDCTL			0x300
-#define MDSTAT			0x800
-#define MDCTL			0xa00
+/* PSC रेजिस्टर offsets */
+#घोषणा PTCMD			0x120
+#घोषणा PTSTAT			0x128
+#घोषणा PDSTAT			0x200
+#घोषणा PDCTL			0x300
+#घोषणा MDSTAT			0x800
+#घोषणा MDCTL			0xa00
 
 /* PSC module states */
-#define PSC_STATE_SWRSTDISABLE	0
-#define PSC_STATE_SYNCRST	1
-#define PSC_STATE_DISABLE	2
-#define PSC_STATE_ENABLE	3
+#घोषणा PSC_STATE_SWRSTDISABLE	0
+#घोषणा PSC_STATE_SYNCRST	1
+#घोषणा PSC_STATE_DISABLE	2
+#घोषणा PSC_STATE_ENABLE	3
 
-#define MDSTAT_STATE_MASK	0x3f
-#define MDSTAT_MCKOUT		BIT(12)
-#define PDSTAT_STATE_MASK	0x1f
-#define MDCTL_FORCE		BIT(31)
-#define MDCTL_LRESET		BIT(8)
-#define PDCTL_NEXT		BIT(0)
+#घोषणा MDSTAT_STATE_MASK	0x3f
+#घोषणा MDSTAT_MCKOUT		BIT(12)
+#घोषणा PDSTAT_STATE_MASK	0x1f
+#घोषणा MDCTL_FORCE		BIT(31)
+#घोषणा MDCTL_LRESET		BIT(8)
+#घोषणा PDCTL_NEXT		BIT(0)
 
-/* Maximum timeout to bail out state transition for module */
-#define STATE_TRANS_MAX_COUNT	0xffff
+/* Maximum समयout to bail out state transition क्रम module */
+#घोषणा STATE_TRANS_MAX_COUNT	0xffff
 
-static void __iomem *domain_transition_base;
+अटल व्योम __iomem *करोमुख्य_transition_base;
 
 /**
- * struct clk_psc_data - PSC data
- * @control_base: Base address for a PSC control
- * @domain_base: Base address for a PSC domain
- * @domain_id: PSC domain id number
+ * काष्ठा clk_psc_data - PSC data
+ * @control_base: Base address क्रम a PSC control
+ * @करोमुख्य_base: Base address क्रम a PSC करोमुख्य
+ * @करोमुख्य_id: PSC करोमुख्य id number
  */
-struct clk_psc_data {
-	void __iomem *control_base;
-	void __iomem *domain_base;
-	u32 domain_id;
-};
+काष्ठा clk_psc_data अणु
+	व्योम __iomem *control_base;
+	व्योम __iomem *करोमुख्य_base;
+	u32 करोमुख्य_id;
+पूर्ण;
 
 /**
- * struct clk_psc - PSC clock structure
- * @hw: clk_hw for the psc
- * @psc_data: PSC driver specific data
+ * काष्ठा clk_psc - PSC घड़ी काष्ठाure
+ * @hw: clk_hw क्रम the psc
+ * @psc_data: PSC driver specअगरic data
  * @lock: Spinlock used by the driver
  */
-struct clk_psc {
-	struct clk_hw hw;
-	struct clk_psc_data *psc_data;
+काष्ठा clk_psc अणु
+	काष्ठा clk_hw hw;
+	काष्ठा clk_psc_data *psc_data;
 	spinlock_t *lock;
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(psc_lock);
+अटल DEFINE_SPINLOCK(psc_lock);
 
-#define to_clk_psc(_hw) container_of(_hw, struct clk_psc, hw)
+#घोषणा to_clk_psc(_hw) container_of(_hw, काष्ठा clk_psc, hw)
 
-static void psc_config(void __iomem *control_base, void __iomem *domain_base,
-						u32 next_state, u32 domain_id)
-{
+अटल व्योम psc_config(व्योम __iomem *control_base, व्योम __iomem *करोमुख्य_base,
+						u32 next_state, u32 करोमुख्य_id)
+अणु
 	u32 ptcmd, pdstat, pdctl, mdstat, mdctl, ptstat;
 	u32 count = STATE_TRANS_MAX_COUNT;
 
-	mdctl = readl(control_base + MDCTL);
+	mdctl = पढ़ोl(control_base + MDCTL);
 	mdctl &= ~MDSTAT_STATE_MASK;
 	mdctl |= next_state;
 	/* For disable, we always put the module in local reset */
-	if (next_state == PSC_STATE_DISABLE)
+	अगर (next_state == PSC_STATE_DISABLE)
 		mdctl &= ~MDCTL_LRESET;
-	writel(mdctl, control_base + MDCTL);
+	ग_लिखोl(mdctl, control_base + MDCTL);
 
-	pdstat = readl(domain_base + PDSTAT);
-	if (!(pdstat & PDSTAT_STATE_MASK)) {
-		pdctl = readl(domain_base + PDCTL);
+	pdstat = पढ़ोl(करोमुख्य_base + PDSTAT);
+	अगर (!(pdstat & PDSTAT_STATE_MASK)) अणु
+		pdctl = पढ़ोl(करोमुख्य_base + PDCTL);
 		pdctl |= PDCTL_NEXT;
-		writel(pdctl, domain_base + PDCTL);
-	}
+		ग_लिखोl(pdctl, करोमुख्य_base + PDCTL);
+	पूर्ण
 
-	ptcmd = 1 << domain_id;
-	writel(ptcmd, domain_transition_base + PTCMD);
-	do {
-		ptstat = readl(domain_transition_base + PTSTAT);
-	} while (((ptstat >> domain_id) & 1) && count--);
+	ptcmd = 1 << करोमुख्य_id;
+	ग_लिखोl(ptcmd, करोमुख्य_transition_base + PTCMD);
+	करो अणु
+		ptstat = पढ़ोl(करोमुख्य_transition_base + PTSTAT);
+	पूर्ण जबतक (((ptstat >> करोमुख्य_id) & 1) && count--);
 
 	count = STATE_TRANS_MAX_COUNT;
-	do {
-		mdstat = readl(control_base + MDSTAT);
-	} while (!((mdstat & MDSTAT_STATE_MASK) == next_state) && count--);
-}
+	करो अणु
+		mdstat = पढ़ोl(control_base + MDSTAT);
+	पूर्ण जबतक (!((mdstat & MDSTAT_STATE_MASK) == next_state) && count--);
+पूर्ण
 
-static int keystone_clk_is_enabled(struct clk_hw *hw)
-{
-	struct clk_psc *psc = to_clk_psc(hw);
-	struct clk_psc_data *data = psc->psc_data;
-	u32 mdstat = readl(data->control_base + MDSTAT);
+अटल पूर्णांक keystone_clk_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_psc *psc = to_clk_psc(hw);
+	काष्ठा clk_psc_data *data = psc->psc_data;
+	u32 mdstat = पढ़ोl(data->control_base + MDSTAT);
 
-	return (mdstat & MDSTAT_MCKOUT) ? 1 : 0;
-}
+	वापस (mdstat & MDSTAT_MCKOUT) ? 1 : 0;
+पूर्ण
 
-static int keystone_clk_enable(struct clk_hw *hw)
-{
-	struct clk_psc *psc = to_clk_psc(hw);
-	struct clk_psc_data *data = psc->psc_data;
-	unsigned long flags = 0;
+अटल पूर्णांक keystone_clk_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_psc *psc = to_clk_psc(hw);
+	काष्ठा clk_psc_data *data = psc->psc_data;
+	अचिन्हित दीर्घ flags = 0;
 
-	if (psc->lock)
+	अगर (psc->lock)
 		spin_lock_irqsave(psc->lock, flags);
 
-	psc_config(data->control_base, data->domain_base,
-				PSC_STATE_ENABLE, data->domain_id);
+	psc_config(data->control_base, data->करोमुख्य_base,
+				PSC_STATE_ENABLE, data->करोमुख्य_id);
 
-	if (psc->lock)
+	अगर (psc->lock)
 		spin_unlock_irqrestore(psc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void keystone_clk_disable(struct clk_hw *hw)
-{
-	struct clk_psc *psc = to_clk_psc(hw);
-	struct clk_psc_data *data = psc->psc_data;
-	unsigned long flags = 0;
+अटल व्योम keystone_clk_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_psc *psc = to_clk_psc(hw);
+	काष्ठा clk_psc_data *data = psc->psc_data;
+	अचिन्हित दीर्घ flags = 0;
 
-	if (psc->lock)
+	अगर (psc->lock)
 		spin_lock_irqsave(psc->lock, flags);
 
-	psc_config(data->control_base, data->domain_base,
-				PSC_STATE_DISABLE, data->domain_id);
+	psc_config(data->control_base, data->करोमुख्य_base,
+				PSC_STATE_DISABLE, data->करोमुख्य_id);
 
-	if (psc->lock)
+	अगर (psc->lock)
 		spin_unlock_irqrestore(psc->lock, flags);
-}
+पूर्ण
 
-static const struct clk_ops clk_psc_ops = {
+अटल स्थिर काष्ठा clk_ops clk_psc_ops = अणु
 	.enable = keystone_clk_enable,
 	.disable = keystone_clk_disable,
 	.is_enabled = keystone_clk_is_enabled,
-};
+पूर्ण;
 
 /**
- * clk_register_psc - register psc clock
- * @dev: device that is registering this clock
- * @name: name of this clock
- * @parent_name: name of clock's parent
- * @psc_data: platform data to configure this clock
- * @lock: spinlock used by this clock
+ * clk_रेजिस्टर_psc - रेजिस्टर psc घड़ी
+ * @dev: device that is रेजिस्टरing this घड़ी
+ * @name: name of this घड़ी
+ * @parent_name: name of घड़ी's parent
+ * @psc_data: platक्रमm data to configure this घड़ी
+ * @lock: spinlock used by this घड़ी
  */
-static struct clk *clk_register_psc(struct device *dev,
-			const char *name,
-			const char *parent_name,
-			struct clk_psc_data *psc_data,
+अटल काष्ठा clk *clk_रेजिस्टर_psc(काष्ठा device *dev,
+			स्थिर अक्षर *name,
+			स्थिर अक्षर *parent_name,
+			काष्ठा clk_psc_data *psc_data,
 			spinlock_t *lock)
-{
-	struct clk_init_data init;
-	struct clk_psc *psc;
-	struct clk *clk;
+अणु
+	काष्ठा clk_init_data init;
+	काष्ठा clk_psc *psc;
+	काष्ठा clk *clk;
 
-	psc = kzalloc(sizeof(*psc), GFP_KERNEL);
-	if (!psc)
-		return ERR_PTR(-ENOMEM);
+	psc = kzalloc(माप(*psc), GFP_KERNEL);
+	अगर (!psc)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &clk_psc_ops;
 	init.flags = 0;
-	init.parent_names = (parent_name ? &parent_name : NULL);
+	init.parent_names = (parent_name ? &parent_name : शून्य);
 	init.num_parents = (parent_name ? 1 : 0);
 
 	psc->psc_data = psc_data;
 	psc->lock = lock;
 	psc->hw.init = &init;
 
-	clk = clk_register(NULL, &psc->hw);
-	if (IS_ERR(clk))
-		kfree(psc);
+	clk = clk_रेजिस्टर(शून्य, &psc->hw);
+	अगर (IS_ERR(clk))
+		kमुक्त(psc);
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
 /**
- * of_psc_clk_init - initialize psc clock through DT
- * @node: device tree node for this clock
- * @lock: spinlock used by this clock
+ * of_psc_clk_init - initialize psc घड़ी through DT
+ * @node: device tree node क्रम this घड़ी
+ * @lock: spinlock used by this घड़ी
  */
-static void __init of_psc_clk_init(struct device_node *node, spinlock_t *lock)
-{
-	const char *clk_name = node->name;
-	const char *parent_name;
-	struct clk_psc_data *data;
-	struct clk *clk;
-	int i;
+अटल व्योम __init of_psc_clk_init(काष्ठा device_node *node, spinlock_t *lock)
+अणु
+	स्थिर अक्षर *clk_name = node->name;
+	स्थिर अक्षर *parent_name;
+	काष्ठा clk_psc_data *data;
+	काष्ठा clk *clk;
+	पूर्णांक i;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data) {
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data) अणु
 		pr_err("%s: Out of memory\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	i = of_property_match_string(node, "reg-names", "control");
 	data->control_base = of_iomap(node, i);
-	if (!data->control_base) {
+	अगर (!data->control_base) अणु
 		pr_err("%s: control ioremap failed\n", __func__);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	i = of_property_match_string(node, "reg-names", "domain");
-	data->domain_base = of_iomap(node, i);
-	if (!data->domain_base) {
+	data->करोमुख्य_base = of_iomap(node, i);
+	अगर (!data->करोमुख्य_base) अणु
 		pr_err("%s: domain ioremap failed\n", __func__);
-		goto unmap_ctrl;
-	}
+		जाओ unmap_ctrl;
+	पूर्ण
 
-	of_property_read_u32(node, "domain-id", &data->domain_id);
+	of_property_पढ़ो_u32(node, "domain-id", &data->करोमुख्य_id);
 
-	/* Domain transition registers at fixed address space of domain_id 0 */
-	if (!domain_transition_base && !data->domain_id)
-		domain_transition_base = data->domain_base;
+	/* Doमुख्य transition रेजिस्टरs at fixed address space of करोमुख्य_id 0 */
+	अगर (!करोमुख्य_transition_base && !data->करोमुख्य_id)
+		करोमुख्य_transition_base = data->करोमुख्य_base;
 
-	of_property_read_string(node, "clock-output-names", &clk_name);
+	of_property_पढ़ो_string(node, "clock-output-names", &clk_name);
 	parent_name = of_clk_get_parent_name(node, 0);
-	if (!parent_name) {
+	अगर (!parent_name) अणु
 		pr_err("%s: Parent clock not found\n", __func__);
-		goto unmap_domain;
-	}
+		जाओ unmap_करोमुख्य;
+	पूर्ण
 
-	clk = clk_register_psc(NULL, clk_name, parent_name, data, lock);
-	if (!IS_ERR(clk)) {
+	clk = clk_रेजिस्टर_psc(शून्य, clk_name, parent_name, data, lock);
+	अगर (!IS_ERR(clk)) अणु
 		of_clk_add_provider(node, of_clk_src_simple_get, clk);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pr_err("%s: error registering clk %pOFn\n", __func__, node);
 
-unmap_domain:
-	iounmap(data->domain_base);
+unmap_करोमुख्य:
+	iounmap(data->करोमुख्य_base);
 unmap_ctrl:
 	iounmap(data->control_base);
 out:
-	kfree(data);
-	return;
-}
+	kमुक्त(data);
+	वापस;
+पूर्ण
 
 /**
- * of_keystone_psc_clk_init - initialize psc clock through DT
- * @node: device tree node for this clock
+ * of_keystone_psc_clk_init - initialize psc घड़ी through DT
+ * @node: device tree node क्रम this घड़ी
  */
-static void __init of_keystone_psc_clk_init(struct device_node *node)
-{
+अटल व्योम __init of_keystone_psc_clk_init(काष्ठा device_node *node)
+अणु
 	of_psc_clk_init(node, &psc_lock);
-}
+पूर्ण
 CLK_OF_DECLARE(keystone_gate_clk, "ti,keystone,psc-clock",
 					of_keystone_psc_clk_init);
 

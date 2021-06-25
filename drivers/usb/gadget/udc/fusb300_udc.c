@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Fusb300 UDC (USB gadget)
  *
@@ -6,219 +7,219 @@
  *
  * Author : Yuan-hsin Chen <yhchen@faraday-tech.com>
  */
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/gadget.h>
 
-#include "fusb300_udc.h"
+#समावेश "fusb300_udc.h"
 
 MODULE_DESCRIPTION("FUSB300  USB gadget driver");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Yuan-Hsin Chen, Feng-Hsin Chiang <john453@faraday-tech.com>");
 MODULE_ALIAS("platform:fusb300_udc");
 
-#define DRIVER_VERSION	"20 October 2010"
+#घोषणा DRIVER_VERSION	"20 October 2010"
 
-static const char udc_name[] = "fusb300_udc";
-static const char * const fusb300_ep_name[] = {
+अटल स्थिर अक्षर udc_name[] = "fusb300_udc";
+अटल स्थिर अक्षर * स्थिर fusb300_ep_name[] = अणु
 	"ep0", "ep1", "ep2", "ep3", "ep4", "ep5", "ep6", "ep7", "ep8", "ep9",
 	"ep10", "ep11", "ep12", "ep13", "ep14", "ep15"
-};
+पूर्ण;
 
-static void done(struct fusb300_ep *ep, struct fusb300_request *req,
-		 int status);
+अटल व्योम करोne(काष्ठा fusb300_ep *ep, काष्ठा fusb300_request *req,
+		 पूर्णांक status);
 
-static void fusb300_enable_bit(struct fusb300 *fusb300, u32 offset,
+अटल व्योम fusb300_enable_bit(काष्ठा fusb300 *fusb300, u32 offset,
 			       u32 value)
-{
-	u32 reg = ioread32(fusb300->reg + offset);
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + offset);
 
 	reg |= value;
-	iowrite32(reg, fusb300->reg + offset);
-}
+	ioग_लिखो32(reg, fusb300->reg + offset);
+पूर्ण
 
-static void fusb300_disable_bit(struct fusb300 *fusb300, u32 offset,
+अटल व्योम fusb300_disable_bit(काष्ठा fusb300 *fusb300, u32 offset,
 				u32 value)
-{
-	u32 reg = ioread32(fusb300->reg + offset);
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + offset);
 
 	reg &= ~value;
-	iowrite32(reg, fusb300->reg + offset);
-}
+	ioग_लिखो32(reg, fusb300->reg + offset);
+पूर्ण
 
 
-static void fusb300_ep_setting(struct fusb300_ep *ep,
-			       struct fusb300_ep_info info)
-{
+अटल व्योम fusb300_ep_setting(काष्ठा fusb300_ep *ep,
+			       काष्ठा fusb300_ep_info info)
+अणु
 	ep->epnum = info.epnum;
 	ep->type = info.type;
-}
+पूर्ण
 
-static int fusb300_ep_release(struct fusb300_ep *ep)
-{
-	if (!ep->epnum)
-		return 0;
+अटल पूर्णांक fusb300_ep_release(काष्ठा fusb300_ep *ep)
+अणु
+	अगर (!ep->epnum)
+		वापस 0;
 	ep->epnum = 0;
 	ep->stall = 0;
 	ep->wedged = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fusb300_set_fifo_entry(struct fusb300 *fusb300,
+अटल व्योम fusb300_set_fअगरo_entry(काष्ठा fusb300 *fusb300,
 				   u32 ep)
-{
-	u32 val = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
+अणु
+	u32 val = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
 
 	val &= ~FUSB300_EPSET1_FIFOENTRY_MSK;
 	val |= FUSB300_EPSET1_FIFOENTRY(FUSB300_FIFO_ENTRY_NUM);
-	iowrite32(val, fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
-}
+	ioग_लिखो32(val, fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
+पूर्ण
 
-static void fusb300_set_start_entry(struct fusb300 *fusb300,
+अटल व्योम fusb300_set_start_entry(काष्ठा fusb300 *fusb300,
 				    u8 ep)
-{
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
-	u32 start_entry = fusb300->fifo_entry_num * FUSB300_FIFO_ENTRY_NUM;
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
+	u32 start_entry = fusb300->fअगरo_entry_num * FUSB300_FIFO_ENTRY_NUM;
 
 	reg &= ~FUSB300_EPSET1_START_ENTRY_MSK	;
 	reg |= FUSB300_EPSET1_START_ENTRY(start_entry);
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
-	if (fusb300->fifo_entry_num == FUSB300_MAX_FIFO_ENTRY) {
-		fusb300->fifo_entry_num = 0;
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
+	अगर (fusb300->fअगरo_entry_num == FUSB300_MAX_FIFO_ENTRY) अणु
+		fusb300->fअगरo_entry_num = 0;
 		fusb300->addrofs = 0;
 		pr_err("fifo entry is over the maximum number!\n");
-	} else
-		fusb300->fifo_entry_num++;
-}
+	पूर्ण अन्यथा
+		fusb300->fअगरo_entry_num++;
+पूर्ण
 
-/* set fusb300_set_start_entry first before fusb300_set_epaddrofs */
-static void fusb300_set_epaddrofs(struct fusb300 *fusb300,
-				  struct fusb300_ep_info info)
-{
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET2(info.epnum));
+/* set fusb300_set_start_entry first beक्रमe fusb300_set_epaddrofs */
+अटल व्योम fusb300_set_epaddrofs(काष्ठा fusb300 *fusb300,
+				  काष्ठा fusb300_ep_info info)
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET2(info.epnum));
 
 	reg &= ~FUSB300_EPSET2_ADDROFS_MSK;
 	reg |= FUSB300_EPSET2_ADDROFS(fusb300->addrofs);
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_EPSET2(info.epnum));
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_EPSET2(info.epnum));
 	fusb300->addrofs += (info.maxpacket + 7) / 8 * FUSB300_FIFO_ENTRY_NUM;
-}
+पूर्ण
 
-static void ep_fifo_setting(struct fusb300 *fusb300,
-			    struct fusb300_ep_info info)
-{
-	fusb300_set_fifo_entry(fusb300, info.epnum);
+अटल व्योम ep_fअगरo_setting(काष्ठा fusb300 *fusb300,
+			    काष्ठा fusb300_ep_info info)
+अणु
+	fusb300_set_fअगरo_entry(fusb300, info.epnum);
 	fusb300_set_start_entry(fusb300, info.epnum);
 	fusb300_set_epaddrofs(fusb300, info);
-}
+पूर्ण
 
-static void fusb300_set_eptype(struct fusb300 *fusb300,
-			       struct fusb300_ep_info info)
-{
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
+अटल व्योम fusb300_set_eptype(काष्ठा fusb300 *fusb300,
+			       काष्ठा fusb300_ep_info info)
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
 
 	reg &= ~FUSB300_EPSET1_TYPE_MSK;
 	reg |= FUSB300_EPSET1_TYPE(info.type);
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
-}
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
+पूर्ण
 
-static void fusb300_set_epdir(struct fusb300 *fusb300,
-			      struct fusb300_ep_info info)
-{
+अटल व्योम fusb300_set_epdir(काष्ठा fusb300 *fusb300,
+			      काष्ठा fusb300_ep_info info)
+अणु
 	u32 reg;
 
-	if (!info.dir_in)
-		return;
-	reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
-	reg &= ~FUSB300_EPSET1_DIR_MSK;
-	reg |= FUSB300_EPSET1_DIRIN;
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
-}
+	अगर (!info.dir_in)
+		वापस;
+	reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
+	reg &= ~FUSB300_EPSET1_सूची_MSK;
+	reg |= FUSB300_EPSET1_सूचीIN;
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
+पूर्ण
 
-static void fusb300_set_ep_active(struct fusb300 *fusb300,
+अटल व्योम fusb300_set_ep_active(काष्ठा fusb300 *fusb300,
 			  u8 ep)
-{
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
 
 	reg |= FUSB300_EPSET1_ACTEN;
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
-}
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(ep));
+पूर्ण
 
-static void fusb300_set_epmps(struct fusb300 *fusb300,
-			      struct fusb300_ep_info info)
-{
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET2(info.epnum));
+अटल व्योम fusb300_set_epmps(काष्ठा fusb300 *fusb300,
+			      काष्ठा fusb300_ep_info info)
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET2(info.epnum));
 
 	reg &= ~FUSB300_EPSET2_MPS_MSK;
 	reg |= FUSB300_EPSET2_MPS(info.maxpacket);
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_EPSET2(info.epnum));
-}
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_EPSET2(info.epnum));
+पूर्ण
 
-static void fusb300_set_interval(struct fusb300 *fusb300,
-				 struct fusb300_ep_info info)
-{
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
+अटल व्योम fusb300_set_पूर्णांकerval(काष्ठा fusb300 *fusb300,
+				 काष्ठा fusb300_ep_info info)
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
 
 	reg &= ~FUSB300_EPSET1_INTERVAL(0x7);
-	reg |= FUSB300_EPSET1_INTERVAL(info.interval);
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
-}
+	reg |= FUSB300_EPSET1_INTERVAL(info.पूर्णांकerval);
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
+पूर्ण
 
-static void fusb300_set_bwnum(struct fusb300 *fusb300,
-			      struct fusb300_ep_info info)
-{
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
+अटल व्योम fusb300_set_bwnum(काष्ठा fusb300 *fusb300,
+			      काष्ठा fusb300_ep_info info)
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
 
 	reg &= ~FUSB300_EPSET1_BWNUM(0x3);
 	reg |= FUSB300_EPSET1_BWNUM(info.bw_num);
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
-}
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_EPSET1(info.epnum));
+पूर्ण
 
-static void set_ep_reg(struct fusb300 *fusb300,
-		      struct fusb300_ep_info info)
-{
+अटल व्योम set_ep_reg(काष्ठा fusb300 *fusb300,
+		      काष्ठा fusb300_ep_info info)
+अणु
 	fusb300_set_eptype(fusb300, info);
 	fusb300_set_epdir(fusb300, info);
 	fusb300_set_epmps(fusb300, info);
 
-	if (info.interval)
-		fusb300_set_interval(fusb300, info);
+	अगर (info.पूर्णांकerval)
+		fusb300_set_पूर्णांकerval(fusb300, info);
 
-	if (info.bw_num)
+	अगर (info.bw_num)
 		fusb300_set_bwnum(fusb300, info);
 
 	fusb300_set_ep_active(fusb300, info.epnum);
-}
+पूर्ण
 
-static int config_ep(struct fusb300_ep *ep,
-		     const struct usb_endpoint_descriptor *desc)
-{
-	struct fusb300 *fusb300 = ep->fusb300;
-	struct fusb300_ep_info info;
+अटल पूर्णांक config_ep(काष्ठा fusb300_ep *ep,
+		     स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
+अणु
+	काष्ठा fusb300 *fusb300 = ep->fusb300;
+	काष्ठा fusb300_ep_info info;
 
 	ep->ep.desc = desc;
 
-	info.interval = 0;
+	info.पूर्णांकerval = 0;
 	info.addrofs = 0;
 	info.bw_num = 0;
 
 	info.type = desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK;
-	info.dir_in = (desc->bEndpointAddress & USB_ENDPOINT_DIR_MASK) ? 1 : 0;
-	info.maxpacket = usb_endpoint_maxp(desc);
-	info.epnum = desc->bEndpointAddress & USB_ENDPOINT_NUMBER_MASK;
+	info.dir_in = (desc->bEndpoपूर्णांकAddress & USB_ENDPOINT_सूची_MASK) ? 1 : 0;
+	info.maxpacket = usb_endpoपूर्णांक_maxp(desc);
+	info.epnum = desc->bEndpoपूर्णांकAddress & USB_ENDPOINT_NUMBER_MASK;
 
-	if ((info.type == USB_ENDPOINT_XFER_INT) ||
-	   (info.type == USB_ENDPOINT_XFER_ISOC)) {
-		info.interval = desc->bInterval;
-		if (info.type == USB_ENDPOINT_XFER_ISOC)
-			info.bw_num = usb_endpoint_maxp_mult(desc);
-	}
+	अगर ((info.type == USB_ENDPOINT_XFER_INT) ||
+	   (info.type == USB_ENDPOINT_XFER_ISOC)) अणु
+		info.पूर्णांकerval = desc->bInterval;
+		अगर (info.type == USB_ENDPOINT_XFER_ISOC)
+			info.bw_num = usb_endpoपूर्णांक_maxp_mult(desc);
+	पूर्ण
 
-	ep_fifo_setting(fusb300, info);
+	ep_fअगरo_setting(fusb300, info);
 
 	set_ep_reg(fusb300, info);
 
@@ -226,213 +227,213 @@ static int config_ep(struct fusb300_ep *ep,
 
 	fusb300->ep[info.epnum] = ep;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fusb300_enable(struct usb_ep *_ep,
-			  const struct usb_endpoint_descriptor *desc)
-{
-	struct fusb300_ep *ep;
+अटल पूर्णांक fusb300_enable(काष्ठा usb_ep *_ep,
+			  स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
+अणु
+	काष्ठा fusb300_ep *ep;
 
-	ep = container_of(_ep, struct fusb300_ep, ep);
+	ep = container_of(_ep, काष्ठा fusb300_ep, ep);
 
-	if (ep->fusb300->reenum) {
-		ep->fusb300->fifo_entry_num = 0;
+	अगर (ep->fusb300->reक्रमागत) अणु
+		ep->fusb300->fअगरo_entry_num = 0;
 		ep->fusb300->addrofs = 0;
-		ep->fusb300->reenum = 0;
-	}
+		ep->fusb300->reक्रमागत = 0;
+	पूर्ण
 
-	return config_ep(ep, desc);
-}
+	वापस config_ep(ep, desc);
+पूर्ण
 
-static int fusb300_disable(struct usb_ep *_ep)
-{
-	struct fusb300_ep *ep;
-	struct fusb300_request *req;
-	unsigned long flags;
+अटल पूर्णांक fusb300_disable(काष्ठा usb_ep *_ep)
+अणु
+	काष्ठा fusb300_ep *ep;
+	काष्ठा fusb300_request *req;
+	अचिन्हित दीर्घ flags;
 
-	ep = container_of(_ep, struct fusb300_ep, ep);
+	ep = container_of(_ep, काष्ठा fusb300_ep, ep);
 
 	BUG_ON(!ep);
 
-	while (!list_empty(&ep->queue)) {
-		req = list_entry(ep->queue.next, struct fusb300_request, queue);
+	जबतक (!list_empty(&ep->queue)) अणु
+		req = list_entry(ep->queue.next, काष्ठा fusb300_request, queue);
 		spin_lock_irqsave(&ep->fusb300->lock, flags);
-		done(ep, req, -ECONNRESET);
+		करोne(ep, req, -ECONNRESET);
 		spin_unlock_irqrestore(&ep->fusb300->lock, flags);
-	}
+	पूर्ण
 
-	return fusb300_ep_release(ep);
-}
+	वापस fusb300_ep_release(ep);
+पूर्ण
 
-static struct usb_request *fusb300_alloc_request(struct usb_ep *_ep,
+अटल काष्ठा usb_request *fusb300_alloc_request(काष्ठा usb_ep *_ep,
 						gfp_t gfp_flags)
-{
-	struct fusb300_request *req;
+अणु
+	काष्ठा fusb300_request *req;
 
-	req = kzalloc(sizeof(struct fusb300_request), gfp_flags);
-	if (!req)
-		return NULL;
+	req = kzalloc(माप(काष्ठा fusb300_request), gfp_flags);
+	अगर (!req)
+		वापस शून्य;
 	INIT_LIST_HEAD(&req->queue);
 
-	return &req->req;
-}
+	वापस &req->req;
+पूर्ण
 
-static void fusb300_free_request(struct usb_ep *_ep, struct usb_request *_req)
-{
-	struct fusb300_request *req;
+अटल व्योम fusb300_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
+अणु
+	काष्ठा fusb300_request *req;
 
-	req = container_of(_req, struct fusb300_request, req);
-	kfree(req);
-}
+	req = container_of(_req, काष्ठा fusb300_request, req);
+	kमुक्त(req);
+पूर्ण
 
-static int enable_fifo_int(struct fusb300_ep *ep)
-{
-	struct fusb300 *fusb300 = ep->fusb300;
+अटल पूर्णांक enable_fअगरo_पूर्णांक(काष्ठा fusb300_ep *ep)
+अणु
+	काष्ठा fusb300 *fusb300 = ep->fusb300;
 
-	if (ep->epnum) {
+	अगर (ep->epnum) अणु
 		fusb300_enable_bit(fusb300, FUSB300_OFFSET_IGER0,
 			FUSB300_IGER0_EEPn_FIFO_INT(ep->epnum));
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("can't enable_fifo_int ep0\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int disable_fifo_int(struct fusb300_ep *ep)
-{
-	struct fusb300 *fusb300 = ep->fusb300;
+अटल पूर्णांक disable_fअगरo_पूर्णांक(काष्ठा fusb300_ep *ep)
+अणु
+	काष्ठा fusb300 *fusb300 = ep->fusb300;
 
-	if (ep->epnum) {
+	अगर (ep->epnum) अणु
 		fusb300_disable_bit(fusb300, FUSB300_OFFSET_IGER0,
 			FUSB300_IGER0_EEPn_FIFO_INT(ep->epnum));
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("can't disable_fifo_int ep0\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fusb300_set_cxlen(struct fusb300 *fusb300, u32 length)
-{
+अटल व्योम fusb300_set_cxlen(काष्ठा fusb300 *fusb300, u32 length)
+अणु
 	u32 reg;
 
-	reg = ioread32(fusb300->reg + FUSB300_OFFSET_CSR);
+	reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_CSR);
 	reg &= ~FUSB300_CSR_LEN_MSK;
 	reg |= FUSB300_CSR_LEN(length);
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_CSR);
-}
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_CSR);
+पूर्ण
 
-/* write data to cx fifo */
-static void fusb300_wrcxf(struct fusb300_ep *ep,
-		   struct fusb300_request *req)
-{
-	int i = 0;
-	u8 *tmp;
+/* ग_लिखो data to cx fअगरo */
+अटल व्योम fusb300_wrcxf(काष्ठा fusb300_ep *ep,
+		   काष्ठा fusb300_request *req)
+अणु
+	पूर्णांक i = 0;
+	u8 *पंचांगp;
 	u32 data;
-	struct fusb300 *fusb300 = ep->fusb300;
+	काष्ठा fusb300 *fusb300 = ep->fusb300;
 	u32 length = req->req.length - req->req.actual;
 
-	tmp = req->req.buf + req->req.actual;
+	पंचांगp = req->req.buf + req->req.actual;
 
-	if (length > SS_CTL_MAX_PACKET_SIZE) {
+	अगर (length > SS_CTL_MAX_PACKET_SIZE) अणु
 		fusb300_set_cxlen(fusb300, SS_CTL_MAX_PACKET_SIZE);
-		for (i = (SS_CTL_MAX_PACKET_SIZE >> 2); i > 0; i--) {
-			data = *tmp | *(tmp + 1) << 8 | *(tmp + 2) << 16 |
-				*(tmp + 3) << 24;
-			iowrite32(data, fusb300->reg + FUSB300_OFFSET_CXPORT);
-			tmp += 4;
-		}
+		क्रम (i = (SS_CTL_MAX_PACKET_SIZE >> 2); i > 0; i--) अणु
+			data = *पंचांगp | *(पंचांगp + 1) << 8 | *(पंचांगp + 2) << 16 |
+				*(पंचांगp + 3) << 24;
+			ioग_लिखो32(data, fusb300->reg + FUSB300_OFFSET_CXPORT);
+			पंचांगp += 4;
+		पूर्ण
 		req->req.actual += SS_CTL_MAX_PACKET_SIZE;
-	} else { /* length is less than max packet size */
+	पूर्ण अन्यथा अणु /* length is less than max packet size */
 		fusb300_set_cxlen(fusb300, length);
-		for (i = length >> 2; i > 0; i--) {
-			data = *tmp | *(tmp + 1) << 8 | *(tmp + 2) << 16 |
-				*(tmp + 3) << 24;
-			printk(KERN_DEBUG "    0x%x\n", data);
-			iowrite32(data, fusb300->reg + FUSB300_OFFSET_CXPORT);
-			tmp = tmp + 4;
-		}
-		switch (length % 4) {
-		case 1:
-			data = *tmp;
-			printk(KERN_DEBUG "    0x%x\n", data);
-			iowrite32(data, fusb300->reg + FUSB300_OFFSET_CXPORT);
-			break;
-		case 2:
-			data = *tmp | *(tmp + 1) << 8;
-			printk(KERN_DEBUG "    0x%x\n", data);
-			iowrite32(data, fusb300->reg + FUSB300_OFFSET_CXPORT);
-			break;
-		case 3:
-			data = *tmp | *(tmp + 1) << 8 | *(tmp + 2) << 16;
-			printk(KERN_DEBUG "    0x%x\n", data);
-			iowrite32(data, fusb300->reg + FUSB300_OFFSET_CXPORT);
-			break;
-		default:
-			break;
-		}
+		क्रम (i = length >> 2; i > 0; i--) अणु
+			data = *पंचांगp | *(पंचांगp + 1) << 8 | *(पंचांगp + 2) << 16 |
+				*(पंचांगp + 3) << 24;
+			prपूर्णांकk(KERN_DEBUG "    0x%x\n", data);
+			ioग_लिखो32(data, fusb300->reg + FUSB300_OFFSET_CXPORT);
+			पंचांगp = पंचांगp + 4;
+		पूर्ण
+		चयन (length % 4) अणु
+		हाल 1:
+			data = *पंचांगp;
+			prपूर्णांकk(KERN_DEBUG "    0x%x\n", data);
+			ioग_लिखो32(data, fusb300->reg + FUSB300_OFFSET_CXPORT);
+			अवरोध;
+		हाल 2:
+			data = *पंचांगp | *(पंचांगp + 1) << 8;
+			prपूर्णांकk(KERN_DEBUG "    0x%x\n", data);
+			ioग_लिखो32(data, fusb300->reg + FUSB300_OFFSET_CXPORT);
+			अवरोध;
+		हाल 3:
+			data = *पंचांगp | *(पंचांगp + 1) << 8 | *(पंचांगp + 2) << 16;
+			prपूर्णांकk(KERN_DEBUG "    0x%x\n", data);
+			ioग_लिखो32(data, fusb300->reg + FUSB300_OFFSET_CXPORT);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		req->req.actual += length;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fusb300_set_epnstall(struct fusb300 *fusb300, u8 ep)
-{
+अटल व्योम fusb300_set_epnstall(काष्ठा fusb300 *fusb300, u8 ep)
+अणु
 	fusb300_enable_bit(fusb300, FUSB300_OFFSET_EPSET0(ep),
 		FUSB300_EPSET0_STL);
-}
+पूर्ण
 
-static void fusb300_clear_epnstall(struct fusb300 *fusb300, u8 ep)
-{
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET0(ep));
+अटल व्योम fusb300_clear_epnstall(काष्ठा fusb300 *fusb300, u8 ep)
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET0(ep));
 
-	if (reg & FUSB300_EPSET0_STL) {
-		printk(KERN_DEBUG "EP%d stall... Clear!!\n", ep);
+	अगर (reg & FUSB300_EPSET0_STL) अणु
+		prपूर्णांकk(KERN_DEBUG "EP%d stall... Clear!!\n", ep);
 		reg |= FUSB300_EPSET0_STL_CLR;
-		iowrite32(reg, fusb300->reg + FUSB300_OFFSET_EPSET0(ep));
-	}
-}
+		ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_EPSET0(ep));
+	पूर्ण
+पूर्ण
 
-static void ep0_queue(struct fusb300_ep *ep, struct fusb300_request *req)
-{
-	if (ep->fusb300->ep0_dir) { /* if IN */
-		if (req->req.length) {
+अटल व्योम ep0_queue(काष्ठा fusb300_ep *ep, काष्ठा fusb300_request *req)
+अणु
+	अगर (ep->fusb300->ep0_dir) अणु /* अगर IN */
+		अगर (req->req.length) अणु
 			fusb300_wrcxf(ep, req);
-		} else
-			printk(KERN_DEBUG "%s : req->req.length = 0x%x\n",
+		पूर्ण अन्यथा
+			prपूर्णांकk(KERN_DEBUG "%s : req->req.length = 0x%x\n",
 				__func__, req->req.length);
-		if ((req->req.length == req->req.actual) ||
+		अगर ((req->req.length == req->req.actual) ||
 		    (req->req.actual < ep->ep.maxpacket))
-			done(ep, req, 0);
-	} else { /* OUT */
-		if (!req->req.length)
-			done(ep, req, 0);
-		else
+			करोne(ep, req, 0);
+	पूर्ण अन्यथा अणु /* OUT */
+		अगर (!req->req.length)
+			करोne(ep, req, 0);
+		अन्यथा
 			fusb300_enable_bit(ep->fusb300, FUSB300_OFFSET_IGER1,
 				FUSB300_IGER1_CX_OUT_INT);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int fusb300_queue(struct usb_ep *_ep, struct usb_request *_req,
+अटल पूर्णांक fusb300_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
 			 gfp_t gfp_flags)
-{
-	struct fusb300_ep *ep;
-	struct fusb300_request *req;
-	unsigned long flags;
-	int request  = 0;
+अणु
+	काष्ठा fusb300_ep *ep;
+	काष्ठा fusb300_request *req;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक request  = 0;
 
-	ep = container_of(_ep, struct fusb300_ep, ep);
-	req = container_of(_req, struct fusb300_request, req);
+	ep = container_of(_ep, काष्ठा fusb300_ep, ep);
+	req = container_of(_req, काष्ठा fusb300_request, req);
 
-	if (ep->fusb300->gadget.speed == USB_SPEED_UNKNOWN)
-		return -ESHUTDOWN;
+	अगर (ep->fusb300->gadget.speed == USB_SPEED_UNKNOWN)
+		वापस -ESHUTDOWN;
 
 	spin_lock_irqsave(&ep->fusb300->lock, flags);
 
-	if (list_empty(&ep->queue))
+	अगर (list_empty(&ep->queue))
 		request = 1;
 
 	list_add_tail(&req->queue, &ep->queue);
@@ -440,276 +441,276 @@ static int fusb300_queue(struct usb_ep *_ep, struct usb_request *_req,
 	req->req.actual = 0;
 	req->req.status = -EINPROGRESS;
 
-	if (ep->ep.desc == NULL) /* ep0 */
+	अगर (ep->ep.desc == शून्य) /* ep0 */
 		ep0_queue(ep, req);
-	else if (request && !ep->stall)
-		enable_fifo_int(ep);
+	अन्यथा अगर (request && !ep->stall)
+		enable_fअगरo_पूर्णांक(ep);
 
 	spin_unlock_irqrestore(&ep->fusb300->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fusb300_dequeue(struct usb_ep *_ep, struct usb_request *_req)
-{
-	struct fusb300_ep *ep;
-	struct fusb300_request *req;
-	unsigned long flags;
+अटल पूर्णांक fusb300_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
+अणु
+	काष्ठा fusb300_ep *ep;
+	काष्ठा fusb300_request *req;
+	अचिन्हित दीर्घ flags;
 
-	ep = container_of(_ep, struct fusb300_ep, ep);
-	req = container_of(_req, struct fusb300_request, req);
+	ep = container_of(_ep, काष्ठा fusb300_ep, ep);
+	req = container_of(_req, काष्ठा fusb300_request, req);
 
 	spin_lock_irqsave(&ep->fusb300->lock, flags);
-	if (!list_empty(&ep->queue))
-		done(ep, req, -ECONNRESET);
+	अगर (!list_empty(&ep->queue))
+		करोne(ep, req, -ECONNRESET);
 	spin_unlock_irqrestore(&ep->fusb300->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fusb300_set_halt_and_wedge(struct usb_ep *_ep, int value, int wedge)
-{
-	struct fusb300_ep *ep;
-	struct fusb300 *fusb300;
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक fusb300_set_halt_and_wedge(काष्ठा usb_ep *_ep, पूर्णांक value, पूर्णांक wedge)
+अणु
+	काष्ठा fusb300_ep *ep;
+	काष्ठा fusb300 *fusb300;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	ep = container_of(_ep, struct fusb300_ep, ep);
+	ep = container_of(_ep, काष्ठा fusb300_ep, ep);
 
 	fusb300 = ep->fusb300;
 
 	spin_lock_irqsave(&ep->fusb300->lock, flags);
 
-	if (!list_empty(&ep->queue)) {
+	अगर (!list_empty(&ep->queue)) अणु
 		ret = -EAGAIN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (value) {
+	अगर (value) अणु
 		fusb300_set_epnstall(fusb300, ep->epnum);
 		ep->stall = 1;
-		if (wedge)
+		अगर (wedge)
 			ep->wedged = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		fusb300_clear_epnstall(fusb300, ep->epnum);
 		ep->stall = 0;
 		ep->wedged = 0;
-	}
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&ep->fusb300->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fusb300_set_halt(struct usb_ep *_ep, int value)
-{
-	return fusb300_set_halt_and_wedge(_ep, value, 0);
-}
+अटल पूर्णांक fusb300_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
+अणु
+	वापस fusb300_set_halt_and_wedge(_ep, value, 0);
+पूर्ण
 
-static int fusb300_set_wedge(struct usb_ep *_ep)
-{
-	return fusb300_set_halt_and_wedge(_ep, 1, 1);
-}
+अटल पूर्णांक fusb300_set_wedge(काष्ठा usb_ep *_ep)
+अणु
+	वापस fusb300_set_halt_and_wedge(_ep, 1, 1);
+पूर्ण
 
-static void fusb300_fifo_flush(struct usb_ep *_ep)
-{
-}
+अटल व्योम fusb300_fअगरo_flush(काष्ठा usb_ep *_ep)
+अणु
+पूर्ण
 
-static const struct usb_ep_ops fusb300_ep_ops = {
+अटल स्थिर काष्ठा usb_ep_ops fusb300_ep_ops = अणु
 	.enable		= fusb300_enable,
 	.disable	= fusb300_disable,
 
 	.alloc_request	= fusb300_alloc_request,
-	.free_request	= fusb300_free_request,
+	.मुक्त_request	= fusb300_मुक्त_request,
 
 	.queue		= fusb300_queue,
 	.dequeue	= fusb300_dequeue,
 
 	.set_halt	= fusb300_set_halt,
-	.fifo_flush	= fusb300_fifo_flush,
+	.fअगरo_flush	= fusb300_fअगरo_flush,
 	.set_wedge	= fusb300_set_wedge,
-};
+पूर्ण;
 
 /*****************************************************************************/
-static void fusb300_clear_int(struct fusb300 *fusb300, u32 offset,
+अटल व्योम fusb300_clear_पूर्णांक(काष्ठा fusb300 *fusb300, u32 offset,
 		       u32 value)
-{
-	iowrite32(value, fusb300->reg + offset);
-}
+अणु
+	ioग_लिखो32(value, fusb300->reg + offset);
+पूर्ण
 
-static void fusb300_reset(void)
-{
-}
+अटल व्योम fusb300_reset(व्योम)
+अणु
+पूर्ण
 
-static void fusb300_set_cxstall(struct fusb300 *fusb300)
-{
+अटल व्योम fusb300_set_cxstall(काष्ठा fusb300 *fusb300)
+अणु
 	fusb300_enable_bit(fusb300, FUSB300_OFFSET_CSR,
 			   FUSB300_CSR_STL);
-}
+पूर्ण
 
-static void fusb300_set_cxdone(struct fusb300 *fusb300)
-{
+अटल व्योम fusb300_set_cxकरोne(काष्ठा fusb300 *fusb300)
+अणु
 	fusb300_enable_bit(fusb300, FUSB300_OFFSET_CSR,
 			   FUSB300_CSR_DONE);
-}
+पूर्ण
 
-/* read data from cx fifo */
-static void fusb300_rdcxf(struct fusb300 *fusb300,
+/* पढ़ो data from cx fअगरo */
+अटल व्योम fusb300_rdcxf(काष्ठा fusb300 *fusb300,
 		   u8 *buffer, u32 length)
-{
-	int i = 0;
-	u8 *tmp;
+अणु
+	पूर्णांक i = 0;
+	u8 *पंचांगp;
 	u32 data;
 
-	tmp = buffer;
+	पंचांगp = buffer;
 
-	for (i = (length >> 2); i > 0; i--) {
-		data = ioread32(fusb300->reg + FUSB300_OFFSET_CXPORT);
-		printk(KERN_DEBUG "    0x%x\n", data);
-		*tmp = data & 0xFF;
-		*(tmp + 1) = (data >> 8) & 0xFF;
-		*(tmp + 2) = (data >> 16) & 0xFF;
-		*(tmp + 3) = (data >> 24) & 0xFF;
-		tmp = tmp + 4;
-	}
+	क्रम (i = (length >> 2); i > 0; i--) अणु
+		data = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_CXPORT);
+		prपूर्णांकk(KERN_DEBUG "    0x%x\n", data);
+		*पंचांगp = data & 0xFF;
+		*(पंचांगp + 1) = (data >> 8) & 0xFF;
+		*(पंचांगp + 2) = (data >> 16) & 0xFF;
+		*(पंचांगp + 3) = (data >> 24) & 0xFF;
+		पंचांगp = पंचांगp + 4;
+	पूर्ण
 
-	switch (length % 4) {
-	case 1:
-		data = ioread32(fusb300->reg + FUSB300_OFFSET_CXPORT);
-		printk(KERN_DEBUG "    0x%x\n", data);
-		*tmp = data & 0xFF;
-		break;
-	case 2:
-		data = ioread32(fusb300->reg + FUSB300_OFFSET_CXPORT);
-		printk(KERN_DEBUG "    0x%x\n", data);
-		*tmp = data & 0xFF;
-		*(tmp + 1) = (data >> 8) & 0xFF;
-		break;
-	case 3:
-		data = ioread32(fusb300->reg + FUSB300_OFFSET_CXPORT);
-		printk(KERN_DEBUG "    0x%x\n", data);
-		*tmp = data & 0xFF;
-		*(tmp + 1) = (data >> 8) & 0xFF;
-		*(tmp + 2) = (data >> 16) & 0xFF;
-		break;
-	default:
-		break;
-	}
-}
+	चयन (length % 4) अणु
+	हाल 1:
+		data = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_CXPORT);
+		prपूर्णांकk(KERN_DEBUG "    0x%x\n", data);
+		*पंचांगp = data & 0xFF;
+		अवरोध;
+	हाल 2:
+		data = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_CXPORT);
+		prपूर्णांकk(KERN_DEBUG "    0x%x\n", data);
+		*पंचांगp = data & 0xFF;
+		*(पंचांगp + 1) = (data >> 8) & 0xFF;
+		अवरोध;
+	हाल 3:
+		data = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_CXPORT);
+		prपूर्णांकk(KERN_DEBUG "    0x%x\n", data);
+		*पंचांगp = data & 0xFF;
+		*(पंचांगp + 1) = (data >> 8) & 0xFF;
+		*(पंचांगp + 2) = (data >> 16) & 0xFF;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void fusb300_rdfifo(struct fusb300_ep *ep,
-			  struct fusb300_request *req,
+अटल व्योम fusb300_rdfअगरo(काष्ठा fusb300_ep *ep,
+			  काष्ठा fusb300_request *req,
 			  u32 length)
-{
-	int i = 0;
-	u8 *tmp;
+अणु
+	पूर्णांक i = 0;
+	u8 *पंचांगp;
 	u32 data, reg;
-	struct fusb300 *fusb300 = ep->fusb300;
+	काष्ठा fusb300 *fusb300 = ep->fusb300;
 
-	tmp = req->req.buf + req->req.actual;
+	पंचांगp = req->req.buf + req->req.actual;
 	req->req.actual += length;
 
-	if (req->req.actual > req->req.length)
-		printk(KERN_DEBUG "req->req.actual > req->req.length\n");
+	अगर (req->req.actual > req->req.length)
+		prपूर्णांकk(KERN_DEBUG "req->req.actual > req->req.length\n");
 
-	for (i = (length >> 2); i > 0; i--) {
-		data = ioread32(fusb300->reg +
+	क्रम (i = (length >> 2); i > 0; i--) अणु
+		data = ioपढ़ो32(fusb300->reg +
 			FUSB300_OFFSET_EPPORT(ep->epnum));
-		*tmp = data & 0xFF;
-		*(tmp + 1) = (data >> 8) & 0xFF;
-		*(tmp + 2) = (data >> 16) & 0xFF;
-		*(tmp + 3) = (data >> 24) & 0xFF;
-		tmp = tmp + 4;
-	}
+		*पंचांगp = data & 0xFF;
+		*(पंचांगp + 1) = (data >> 8) & 0xFF;
+		*(पंचांगp + 2) = (data >> 16) & 0xFF;
+		*(पंचांगp + 3) = (data >> 24) & 0xFF;
+		पंचांगp = पंचांगp + 4;
+	पूर्ण
 
-	switch (length % 4) {
-	case 1:
-		data = ioread32(fusb300->reg +
+	चयन (length % 4) अणु
+	हाल 1:
+		data = ioपढ़ो32(fusb300->reg +
 			FUSB300_OFFSET_EPPORT(ep->epnum));
-		*tmp = data & 0xFF;
-		break;
-	case 2:
-		data = ioread32(fusb300->reg +
+		*पंचांगp = data & 0xFF;
+		अवरोध;
+	हाल 2:
+		data = ioपढ़ो32(fusb300->reg +
 			FUSB300_OFFSET_EPPORT(ep->epnum));
-		*tmp = data & 0xFF;
-		*(tmp + 1) = (data >> 8) & 0xFF;
-		break;
-	case 3:
-		data = ioread32(fusb300->reg +
+		*पंचांगp = data & 0xFF;
+		*(पंचांगp + 1) = (data >> 8) & 0xFF;
+		अवरोध;
+	हाल 3:
+		data = ioपढ़ो32(fusb300->reg +
 			FUSB300_OFFSET_EPPORT(ep->epnum));
-		*tmp = data & 0xFF;
-		*(tmp + 1) = (data >> 8) & 0xFF;
-		*(tmp + 2) = (data >> 16) & 0xFF;
-		break;
-	default:
-		break;
-	}
+		*पंचांगp = data & 0xFF;
+		*(पंचांगp + 1) = (data >> 8) & 0xFF;
+		*(पंचांगp + 2) = (data >> 16) & 0xFF;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	do {
-		reg = ioread32(fusb300->reg + FUSB300_OFFSET_IGR1);
+	करो अणु
+		reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_IGR1);
 		reg &= FUSB300_IGR1_SYNF0_EMPTY_INT;
-		if (i)
-			printk(KERN_INFO "sync fifo is not empty!\n");
+		अगर (i)
+			prपूर्णांकk(KERN_INFO "sync fifo is not empty!\n");
 		i++;
-	} while (!reg);
-}
+	पूर्ण जबतक (!reg);
+पूर्ण
 
-static u8 fusb300_get_epnstall(struct fusb300 *fusb300, u8 ep)
-{
+अटल u8 fusb300_get_epnstall(काष्ठा fusb300 *fusb300, u8 ep)
+अणु
 	u8 value;
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPSET0(ep));
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPSET0(ep));
 
 	value = reg & FUSB300_EPSET0_STL;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static u8 fusb300_get_cxstall(struct fusb300 *fusb300)
-{
+अटल u8 fusb300_get_cxstall(काष्ठा fusb300 *fusb300)
+अणु
 	u8 value;
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_CSR);
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_CSR);
 
 	value = (reg & FUSB300_CSR_STL) >> 1;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static void request_error(struct fusb300 *fusb300)
-{
+अटल व्योम request_error(काष्ठा fusb300 *fusb300)
+अणु
 	fusb300_set_cxstall(fusb300);
-	printk(KERN_DEBUG "request error!!\n");
-}
+	prपूर्णांकk(KERN_DEBUG "request error!!\n");
+पूर्ण
 
-static void get_status(struct fusb300 *fusb300, struct usb_ctrlrequest *ctrl)
+अटल व्योम get_status(काष्ठा fusb300 *fusb300, काष्ठा usb_ctrlrequest *ctrl)
 __releases(fusb300->lock)
 __acquires(fusb300->lock)
-{
+अणु
 	u8 ep;
 	u16 status = 0;
 	u16 w_index = ctrl->wIndex;
 
-	switch (ctrl->bRequestType & USB_RECIP_MASK) {
-	case USB_RECIP_DEVICE:
+	चयन (ctrl->bRequestType & USB_RECIP_MASK) अणु
+	हाल USB_RECIP_DEVICE:
 		status = 1 << USB_DEVICE_SELF_POWERED;
-		break;
-	case USB_RECIP_INTERFACE:
+		अवरोध;
+	हाल USB_RECIP_INTERFACE:
 		status = 0;
-		break;
-	case USB_RECIP_ENDPOINT:
+		अवरोध;
+	हाल USB_RECIP_ENDPOINT:
 		ep = w_index & USB_ENDPOINT_NUMBER_MASK;
-		if (ep) {
-			if (fusb300_get_epnstall(fusb300, ep))
+		अगर (ep) अणु
+			अगर (fusb300_get_epnstall(fusb300, ep))
 				status = 1 << USB_ENDPOINT_HALT;
-		} else {
-			if (fusb300_get_cxstall(fusb300))
+		पूर्ण अन्यथा अणु
+			अगर (fusb300_get_cxstall(fusb300))
 				status = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		request_error(fusb300);
-		return;		/* exit */
-	}
+		वापस;		/* निकास */
+	पूर्ण
 
 	fusb300->ep0_data = cpu_to_le16(status);
 	fusb300->ep0_req->buf = &fusb300->ep0_data;
@@ -718,702 +719,702 @@ __acquires(fusb300->lock)
 	spin_unlock(&fusb300->lock);
 	fusb300_queue(fusb300->gadget.ep0, fusb300->ep0_req, GFP_KERNEL);
 	spin_lock(&fusb300->lock);
-}
+पूर्ण
 
-static void set_feature(struct fusb300 *fusb300, struct usb_ctrlrequest *ctrl)
-{
+अटल व्योम set_feature(काष्ठा fusb300 *fusb300, काष्ठा usb_ctrlrequest *ctrl)
+अणु
 	u8 ep;
 
-	switch (ctrl->bRequestType & USB_RECIP_MASK) {
-	case USB_RECIP_DEVICE:
-		fusb300_set_cxdone(fusb300);
-		break;
-	case USB_RECIP_INTERFACE:
-		fusb300_set_cxdone(fusb300);
-		break;
-	case USB_RECIP_ENDPOINT: {
+	चयन (ctrl->bRequestType & USB_RECIP_MASK) अणु
+	हाल USB_RECIP_DEVICE:
+		fusb300_set_cxकरोne(fusb300);
+		अवरोध;
+	हाल USB_RECIP_INTERFACE:
+		fusb300_set_cxकरोne(fusb300);
+		अवरोध;
+	हाल USB_RECIP_ENDPOINT: अणु
 		u16 w_index = le16_to_cpu(ctrl->wIndex);
 
 		ep = w_index & USB_ENDPOINT_NUMBER_MASK;
-		if (ep)
+		अगर (ep)
 			fusb300_set_epnstall(fusb300, ep);
-		else
+		अन्यथा
 			fusb300_set_cxstall(fusb300);
-		fusb300_set_cxdone(fusb300);
-		}
-		break;
-	default:
+		fusb300_set_cxकरोne(fusb300);
+		पूर्ण
+		अवरोध;
+	शेष:
 		request_error(fusb300);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void fusb300_clear_seqnum(struct fusb300 *fusb300, u8 ep)
-{
+अटल व्योम fusb300_clear_seqnum(काष्ठा fusb300 *fusb300, u8 ep)
+अणु
 	fusb300_enable_bit(fusb300, FUSB300_OFFSET_EPSET0(ep),
 			    FUSB300_EPSET0_CLRSEQNUM);
-}
+पूर्ण
 
-static void clear_feature(struct fusb300 *fusb300, struct usb_ctrlrequest *ctrl)
-{
-	struct fusb300_ep *ep =
+अटल व्योम clear_feature(काष्ठा fusb300 *fusb300, काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा fusb300_ep *ep =
 		fusb300->ep[ctrl->wIndex & USB_ENDPOINT_NUMBER_MASK];
 
-	switch (ctrl->bRequestType & USB_RECIP_MASK) {
-	case USB_RECIP_DEVICE:
-		fusb300_set_cxdone(fusb300);
-		break;
-	case USB_RECIP_INTERFACE:
-		fusb300_set_cxdone(fusb300);
-		break;
-	case USB_RECIP_ENDPOINT:
-		if (ctrl->wIndex & USB_ENDPOINT_NUMBER_MASK) {
-			if (ep->wedged) {
-				fusb300_set_cxdone(fusb300);
-				break;
-			}
-			if (ep->stall) {
+	चयन (ctrl->bRequestType & USB_RECIP_MASK) अणु
+	हाल USB_RECIP_DEVICE:
+		fusb300_set_cxकरोne(fusb300);
+		अवरोध;
+	हाल USB_RECIP_INTERFACE:
+		fusb300_set_cxकरोne(fusb300);
+		अवरोध;
+	हाल USB_RECIP_ENDPOINT:
+		अगर (ctrl->wIndex & USB_ENDPOINT_NUMBER_MASK) अणु
+			अगर (ep->wedged) अणु
+				fusb300_set_cxकरोne(fusb300);
+				अवरोध;
+			पूर्ण
+			अगर (ep->stall) अणु
 				ep->stall = 0;
 				fusb300_clear_seqnum(fusb300, ep->epnum);
 				fusb300_clear_epnstall(fusb300, ep->epnum);
-				if (!list_empty(&ep->queue))
-					enable_fifo_int(ep);
-			}
-		}
-		fusb300_set_cxdone(fusb300);
-		break;
-	default:
+				अगर (!list_empty(&ep->queue))
+					enable_fअगरo_पूर्णांक(ep);
+			पूर्ण
+		पूर्ण
+		fusb300_set_cxकरोne(fusb300);
+		अवरोध;
+	शेष:
 		request_error(fusb300);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void fusb300_set_dev_addr(struct fusb300 *fusb300, u16 addr)
-{
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_DAR);
+अटल व्योम fusb300_set_dev_addr(काष्ठा fusb300 *fusb300, u16 addr)
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_DAR);
 
 	reg &= ~FUSB300_DAR_DRVADDR_MSK;
 	reg |= FUSB300_DAR_DRVADDR(addr);
 
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_DAR);
-}
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_DAR);
+पूर्ण
 
-static void set_address(struct fusb300 *fusb300, struct usb_ctrlrequest *ctrl)
-{
-	if (ctrl->wValue >= 0x0100)
+अटल व्योम set_address(काष्ठा fusb300 *fusb300, काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	अगर (ctrl->wValue >= 0x0100)
 		request_error(fusb300);
-	else {
+	अन्यथा अणु
 		fusb300_set_dev_addr(fusb300, ctrl->wValue);
-		fusb300_set_cxdone(fusb300);
-	}
-}
+		fusb300_set_cxकरोne(fusb300);
+	पूर्ण
+पूर्ण
 
-#define UVC_COPY_DESCRIPTORS(mem, src) \
-	do { \
-		const struct usb_descriptor_header * const *__src; \
-		for (__src = src; *__src; ++__src) { \
-			memcpy(mem, *__src, (*__src)->bLength); \
+#घोषणा UVC_COPY_DESCRIPTORS(mem, src) \
+	करो अणु \
+		स्थिर काष्ठा usb_descriptor_header * स्थिर *__src; \
+		क्रम (__src = src; *__src; ++__src) अणु \
+			स_नकल(mem, *__src, (*__src)->bLength); \
 			mem += (*__src)->bLength; \
-		} \
-	} while (0)
+		पूर्ण \
+	पूर्ण जबतक (0)
 
-static int setup_packet(struct fusb300 *fusb300, struct usb_ctrlrequest *ctrl)
-{
+अटल पूर्णांक setup_packet(काष्ठा fusb300 *fusb300, काष्ठा usb_ctrlrequest *ctrl)
+अणु
 	u8 *p = (u8 *)ctrl;
 	u8 ret = 0;
 	u8 i = 0;
 
 	fusb300_rdcxf(fusb300, p, 8);
-	fusb300->ep0_dir = ctrl->bRequestType & USB_DIR_IN;
+	fusb300->ep0_dir = ctrl->bRequestType & USB_सूची_IN;
 	fusb300->ep0_length = ctrl->wLength;
 
 	/* check request */
-	if ((ctrl->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD) {
-		switch (ctrl->bRequest) {
-		case USB_REQ_GET_STATUS:
+	अगर ((ctrl->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD) अणु
+		चयन (ctrl->bRequest) अणु
+		हाल USB_REQ_GET_STATUS:
 			get_status(fusb300, ctrl);
-			break;
-		case USB_REQ_CLEAR_FEATURE:
+			अवरोध;
+		हाल USB_REQ_CLEAR_FEATURE:
 			clear_feature(fusb300, ctrl);
-			break;
-		case USB_REQ_SET_FEATURE:
+			अवरोध;
+		हाल USB_REQ_SET_FEATURE:
 			set_feature(fusb300, ctrl);
-			break;
-		case USB_REQ_SET_ADDRESS:
+			अवरोध;
+		हाल USB_REQ_SET_ADDRESS:
 			set_address(fusb300, ctrl);
-			break;
-		case USB_REQ_SET_CONFIGURATION:
+			अवरोध;
+		हाल USB_REQ_SET_CONFIGURATION:
 			fusb300_enable_bit(fusb300, FUSB300_OFFSET_DAR,
 					   FUSB300_DAR_SETCONFG);
 			/* clear sequence number */
-			for (i = 1; i <= FUSB300_MAX_NUM_EP; i++)
+			क्रम (i = 1; i <= FUSB300_MAX_NUM_EP; i++)
 				fusb300_clear_seqnum(fusb300, i);
-			fusb300->reenum = 1;
+			fusb300->reक्रमागत = 1;
 			ret = 1;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = 1;
-			break;
-		}
-	} else
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा
 		ret = 1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void done(struct fusb300_ep *ep, struct fusb300_request *req,
-		 int status)
-{
+अटल व्योम करोne(काष्ठा fusb300_ep *ep, काष्ठा fusb300_request *req,
+		 पूर्णांक status)
+अणु
 	list_del_init(&req->queue);
 
-	/* don't modify queue heads during completion callback */
-	if (ep->fusb300->gadget.speed == USB_SPEED_UNKNOWN)
+	/* करोn't modअगरy queue heads during completion callback */
+	अगर (ep->fusb300->gadget.speed == USB_SPEED_UNKNOWN)
 		req->req.status = -ESHUTDOWN;
-	else
+	अन्यथा
 		req->req.status = status;
 
 	spin_unlock(&ep->fusb300->lock);
 	usb_gadget_giveback_request(&ep->ep, &req->req);
 	spin_lock(&ep->fusb300->lock);
 
-	if (ep->epnum) {
-		disable_fifo_int(ep);
-		if (!list_empty(&ep->queue))
-			enable_fifo_int(ep);
-	} else
-		fusb300_set_cxdone(ep->fusb300);
-}
+	अगर (ep->epnum) अणु
+		disable_fअगरo_पूर्णांक(ep);
+		अगर (!list_empty(&ep->queue))
+			enable_fअगरo_पूर्णांक(ep);
+	पूर्ण अन्यथा
+		fusb300_set_cxकरोne(ep->fusb300);
+पूर्ण
 
-static void fusb300_fill_idma_prdtbl(struct fusb300_ep *ep, dma_addr_t d,
+अटल व्योम fusb300_fill_idma_prdtbl(काष्ठा fusb300_ep *ep, dma_addr_t d,
 		u32 len)
-{
+अणु
 	u32 value;
 	u32 reg;
 
-	/* wait SW owner */
-	do {
-		reg = ioread32(ep->fusb300->reg +
+	/* रुको SW owner */
+	करो अणु
+		reg = ioपढ़ो32(ep->fusb300->reg +
 			FUSB300_OFFSET_EPPRD_W0(ep->epnum));
 		reg &= FUSB300_EPPRD0_H;
-	} while (reg);
+	पूर्ण जबतक (reg);
 
-	iowrite32(d, ep->fusb300->reg + FUSB300_OFFSET_EPPRD_W1(ep->epnum));
+	ioग_लिखो32(d, ep->fusb300->reg + FUSB300_OFFSET_EPPRD_W1(ep->epnum));
 
 	value = FUSB300_EPPRD0_BTC(len) | FUSB300_EPPRD0_H |
 		FUSB300_EPPRD0_F | FUSB300_EPPRD0_L | FUSB300_EPPRD0_I;
-	iowrite32(value, ep->fusb300->reg + FUSB300_OFFSET_EPPRD_W0(ep->epnum));
+	ioग_लिखो32(value, ep->fusb300->reg + FUSB300_OFFSET_EPPRD_W0(ep->epnum));
 
-	iowrite32(0x0, ep->fusb300->reg + FUSB300_OFFSET_EPPRD_W2(ep->epnum));
+	ioग_लिखो32(0x0, ep->fusb300->reg + FUSB300_OFFSET_EPPRD_W2(ep->epnum));
 
 	fusb300_enable_bit(ep->fusb300, FUSB300_OFFSET_EPPRDRDY,
 		FUSB300_EPPRDR_EP_PRD_RDY(ep->epnum));
-}
+पूर्ण
 
-static void fusb300_wait_idma_finished(struct fusb300_ep *ep)
-{
+अटल व्योम fusb300_रुको_idma_finished(काष्ठा fusb300_ep *ep)
+अणु
 	u32 reg;
 
-	do {
-		reg = ioread32(ep->fusb300->reg + FUSB300_OFFSET_IGR1);
-		if ((reg & FUSB300_IGR1_VBUS_CHG_INT) ||
+	करो अणु
+		reg = ioपढ़ो32(ep->fusb300->reg + FUSB300_OFFSET_IGR1);
+		अगर ((reg & FUSB300_IGR1_VBUS_CHG_INT) ||
 		    (reg & FUSB300_IGR1_WARM_RST_INT) ||
 		    (reg & FUSB300_IGR1_HOT_RST_INT) ||
 		    (reg & FUSB300_IGR1_USBRST_INT)
 		)
-			goto IDMA_RESET;
-		reg = ioread32(ep->fusb300->reg + FUSB300_OFFSET_IGR0);
+			जाओ IDMA_RESET;
+		reg = ioपढ़ो32(ep->fusb300->reg + FUSB300_OFFSET_IGR0);
 		reg &= FUSB300_IGR0_EPn_PRD_INT(ep->epnum);
-	} while (!reg);
+	पूर्ण जबतक (!reg);
 
-	fusb300_clear_int(ep->fusb300, FUSB300_OFFSET_IGR0,
+	fusb300_clear_पूर्णांक(ep->fusb300, FUSB300_OFFSET_IGR0,
 		FUSB300_IGR0_EPn_PRD_INT(ep->epnum));
-	return;
+	वापस;
 
 IDMA_RESET:
-	reg = ioread32(ep->fusb300->reg + FUSB300_OFFSET_IGER0);
+	reg = ioपढ़ो32(ep->fusb300->reg + FUSB300_OFFSET_IGER0);
 	reg &= ~FUSB300_IGER0_EEPn_PRD_INT(ep->epnum);
-	iowrite32(reg, ep->fusb300->reg + FUSB300_OFFSET_IGER0);
-}
+	ioग_लिखो32(reg, ep->fusb300->reg + FUSB300_OFFSET_IGER0);
+पूर्ण
 
-static void fusb300_set_idma(struct fusb300_ep *ep,
-			struct fusb300_request *req)
-{
-	int ret;
+अटल व्योम fusb300_set_idma(काष्ठा fusb300_ep *ep,
+			काष्ठा fusb300_request *req)
+अणु
+	पूर्णांक ret;
 
 	ret = usb_gadget_map_request(&ep->fusb300->gadget,
 			&req->req, DMA_TO_DEVICE);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
 	fusb300_enable_bit(ep->fusb300, FUSB300_OFFSET_IGER0,
 		FUSB300_IGER0_EEPn_PRD_INT(ep->epnum));
 
 	fusb300_fill_idma_prdtbl(ep, req->req.dma, req->req.length);
-	/* check idma is done */
-	fusb300_wait_idma_finished(ep);
+	/* check idma is करोne */
+	fusb300_रुको_idma_finished(ep);
 
 	usb_gadget_unmap_request(&ep->fusb300->gadget,
 			&req->req, DMA_TO_DEVICE);
-}
+पूर्ण
 
-static void in_ep_fifo_handler(struct fusb300_ep *ep)
-{
-	struct fusb300_request *req = list_entry(ep->queue.next,
-					struct fusb300_request, queue);
+अटल व्योम in_ep_fअगरo_handler(काष्ठा fusb300_ep *ep)
+अणु
+	काष्ठा fusb300_request *req = list_entry(ep->queue.next,
+					काष्ठा fusb300_request, queue);
 
-	if (req->req.length)
+	अगर (req->req.length)
 		fusb300_set_idma(ep, req);
-	done(ep, req, 0);
-}
+	करोne(ep, req, 0);
+पूर्ण
 
-static void out_ep_fifo_handler(struct fusb300_ep *ep)
-{
-	struct fusb300 *fusb300 = ep->fusb300;
-	struct fusb300_request *req = list_entry(ep->queue.next,
-						 struct fusb300_request, queue);
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_EPFFR(ep->epnum));
+अटल व्योम out_ep_fअगरo_handler(काष्ठा fusb300_ep *ep)
+अणु
+	काष्ठा fusb300 *fusb300 = ep->fusb300;
+	काष्ठा fusb300_request *req = list_entry(ep->queue.next,
+						 काष्ठा fusb300_request, queue);
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_EPFFR(ep->epnum));
 	u32 length = reg & FUSB300_FFR_BYCNT;
 
-	fusb300_rdfifo(ep, req, length);
+	fusb300_rdfअगरo(ep, req, length);
 
 	/* finish out transfer */
-	if ((req->req.length == req->req.actual) || (length < ep->ep.maxpacket))
-		done(ep, req, 0);
-}
+	अगर ((req->req.length == req->req.actual) || (length < ep->ep.maxpacket))
+		करोne(ep, req, 0);
+पूर्ण
 
-static void check_device_mode(struct fusb300 *fusb300)
-{
-	u32 reg = ioread32(fusb300->reg + FUSB300_OFFSET_GCR);
+अटल व्योम check_device_mode(काष्ठा fusb300 *fusb300)
+अणु
+	u32 reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_GCR);
 
-	switch (reg & FUSB300_GCR_DEVEN_MSK) {
-	case FUSB300_GCR_DEVEN_SS:
+	चयन (reg & FUSB300_GCR_DEVEN_MSK) अणु
+	हाल FUSB300_GCR_DEVEN_SS:
 		fusb300->gadget.speed = USB_SPEED_SUPER;
-		break;
-	case FUSB300_GCR_DEVEN_HS:
+		अवरोध;
+	हाल FUSB300_GCR_DEVEN_HS:
 		fusb300->gadget.speed = USB_SPEED_HIGH;
-		break;
-	case FUSB300_GCR_DEVEN_FS:
+		अवरोध;
+	हाल FUSB300_GCR_DEVEN_FS:
 		fusb300->gadget.speed = USB_SPEED_FULL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fusb300->gadget.speed = USB_SPEED_UNKNOWN;
-		break;
-	}
-	printk(KERN_INFO "dev_mode = %d\n", (reg & FUSB300_GCR_DEVEN_MSK));
-}
+		अवरोध;
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "dev_mode = %d\n", (reg & FUSB300_GCR_DEVEN_MSK));
+पूर्ण
 
 
-static void fusb300_ep0out(struct fusb300 *fusb300)
-{
-	struct fusb300_ep *ep = fusb300->ep[0];
+अटल व्योम fusb300_ep0out(काष्ठा fusb300 *fusb300)
+अणु
+	काष्ठा fusb300_ep *ep = fusb300->ep[0];
 	u32 reg;
 
-	if (!list_empty(&ep->queue)) {
-		struct fusb300_request *req;
+	अगर (!list_empty(&ep->queue)) अणु
+		काष्ठा fusb300_request *req;
 
 		req = list_first_entry(&ep->queue,
-			struct fusb300_request, queue);
-		if (req->req.length)
+			काष्ठा fusb300_request, queue);
+		अगर (req->req.length)
 			fusb300_rdcxf(ep->fusb300, req->req.buf,
 				req->req.length);
-		done(ep, req, 0);
-		reg = ioread32(fusb300->reg + FUSB300_OFFSET_IGER1);
+		करोne(ep, req, 0);
+		reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_IGER1);
 		reg &= ~FUSB300_IGER1_CX_OUT_INT;
-		iowrite32(reg, fusb300->reg + FUSB300_OFFSET_IGER1);
-	} else
+		ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_IGER1);
+	पूर्ण अन्यथा
 		pr_err("%s : empty queue\n", __func__);
-}
+पूर्ण
 
-static void fusb300_ep0in(struct fusb300 *fusb300)
-{
-	struct fusb300_request *req;
-	struct fusb300_ep *ep = fusb300->ep[0];
+अटल व्योम fusb300_ep0in(काष्ठा fusb300 *fusb300)
+अणु
+	काष्ठा fusb300_request *req;
+	काष्ठा fusb300_ep *ep = fusb300->ep[0];
 
-	if ((!list_empty(&ep->queue)) && (fusb300->ep0_dir)) {
+	अगर ((!list_empty(&ep->queue)) && (fusb300->ep0_dir)) अणु
 		req = list_entry(ep->queue.next,
-				struct fusb300_request, queue);
-		if (req->req.length)
+				काष्ठा fusb300_request, queue);
+		अगर (req->req.length)
 			fusb300_wrcxf(ep, req);
-		if ((req->req.length - req->req.actual) < ep->ep.maxpacket)
-			done(ep, req, 0);
-	} else
-		fusb300_set_cxdone(fusb300);
-}
+		अगर ((req->req.length - req->req.actual) < ep->ep.maxpacket)
+			करोne(ep, req, 0);
+	पूर्ण अन्यथा
+		fusb300_set_cxकरोne(fusb300);
+पूर्ण
 
-static void fusb300_grp2_handler(void)
-{
-}
+अटल व्योम fusb300_grp2_handler(व्योम)
+अणु
+पूर्ण
 
-static void fusb300_grp3_handler(void)
-{
-}
+अटल व्योम fusb300_grp3_handler(व्योम)
+अणु
+पूर्ण
 
-static void fusb300_grp4_handler(void)
-{
-}
+अटल व्योम fusb300_grp4_handler(व्योम)
+अणु
+पूर्ण
 
-static void fusb300_grp5_handler(void)
-{
-}
+अटल व्योम fusb300_grp5_handler(व्योम)
+अणु
+पूर्ण
 
-static irqreturn_t fusb300_irq(int irq, void *_fusb300)
-{
-	struct fusb300 *fusb300 = _fusb300;
-	u32 int_grp1 = ioread32(fusb300->reg + FUSB300_OFFSET_IGR1);
-	u32 int_grp1_en = ioread32(fusb300->reg + FUSB300_OFFSET_IGER1);
-	u32 int_grp0 = ioread32(fusb300->reg + FUSB300_OFFSET_IGR0);
-	u32 int_grp0_en = ioread32(fusb300->reg + FUSB300_OFFSET_IGER0);
-	struct usb_ctrlrequest ctrl;
+अटल irqवापस_t fusb300_irq(पूर्णांक irq, व्योम *_fusb300)
+अणु
+	काष्ठा fusb300 *fusb300 = _fusb300;
+	u32 पूर्णांक_grp1 = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_IGR1);
+	u32 पूर्णांक_grp1_en = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_IGER1);
+	u32 पूर्णांक_grp0 = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_IGR0);
+	u32 पूर्णांक_grp0_en = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_IGER0);
+	काष्ठा usb_ctrlrequest ctrl;
 	u8 in;
 	u32 reg;
-	int i;
+	पूर्णांक i;
 
 	spin_lock(&fusb300->lock);
 
-	int_grp1 &= int_grp1_en;
-	int_grp0 &= int_grp0_en;
+	पूर्णांक_grp1 &= पूर्णांक_grp1_en;
+	पूर्णांक_grp0 &= पूर्णांक_grp0_en;
 
-	if (int_grp1 & FUSB300_IGR1_WARM_RST_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_WARM_RST_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_WARM_RST_INT);
-		printk(KERN_INFO"fusb300_warmreset\n");
+		prपूर्णांकk(KERN_INFO"fusb300_warmreset\n");
 		fusb300_reset();
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_HOT_RST_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_HOT_RST_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_HOT_RST_INT);
-		printk(KERN_INFO"fusb300_hotreset\n");
+		prपूर्णांकk(KERN_INFO"fusb300_hotreset\n");
 		fusb300_reset();
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_USBRST_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_USBRST_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_USBRST_INT);
 		fusb300_reset();
-	}
+	पूर्ण
 	/* COMABT_INT has a highest priority */
 
-	if (int_grp1 & FUSB300_IGR1_CX_COMABT_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_CX_COMABT_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_CX_COMABT_INT);
-		printk(KERN_INFO"fusb300_ep0abt\n");
-	}
+		prपूर्णांकk(KERN_INFO"fusb300_ep0abt\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_VBUS_CHG_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_VBUS_CHG_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_VBUS_CHG_INT);
-		printk(KERN_INFO"fusb300_vbus_change\n");
-	}
+		prपूर्णांकk(KERN_INFO"fusb300_vbus_change\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U3_EXIT_FAIL_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U3_EXIT_FAIL_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U3_EXIT_FAIL_INT);
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U2_EXIT_FAIL_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U2_EXIT_FAIL_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U2_EXIT_FAIL_INT);
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U1_EXIT_FAIL_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U1_EXIT_FAIL_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U1_EXIT_FAIL_INT);
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U2_ENTRY_FAIL_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U2_ENTRY_FAIL_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U2_ENTRY_FAIL_INT);
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U1_ENTRY_FAIL_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U1_ENTRY_FAIL_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U1_ENTRY_FAIL_INT);
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U3_EXIT_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U3_EXIT_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U3_EXIT_INT);
-		printk(KERN_INFO "FUSB300_IGR1_U3_EXIT_INT\n");
-	}
+		prपूर्णांकk(KERN_INFO "FUSB300_IGR1_U3_EXIT_INT\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U2_EXIT_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U2_EXIT_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U2_EXIT_INT);
-		printk(KERN_INFO "FUSB300_IGR1_U2_EXIT_INT\n");
-	}
+		prपूर्णांकk(KERN_INFO "FUSB300_IGR1_U2_EXIT_INT\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U1_EXIT_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U1_EXIT_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U1_EXIT_INT);
-		printk(KERN_INFO "FUSB300_IGR1_U1_EXIT_INT\n");
-	}
+		prपूर्णांकk(KERN_INFO "FUSB300_IGR1_U1_EXIT_INT\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U3_ENTRY_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U3_ENTRY_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U3_ENTRY_INT);
-		printk(KERN_INFO "FUSB300_IGR1_U3_ENTRY_INT\n");
+		prपूर्णांकk(KERN_INFO "FUSB300_IGR1_U3_ENTRY_INT\n");
 		fusb300_enable_bit(fusb300, FUSB300_OFFSET_SSCR1,
 				   FUSB300_SSCR1_GO_U3_DONE);
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U2_ENTRY_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U2_ENTRY_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U2_ENTRY_INT);
-		printk(KERN_INFO "FUSB300_IGR1_U2_ENTRY_INT\n");
-	}
+		prपूर्णांकk(KERN_INFO "FUSB300_IGR1_U2_ENTRY_INT\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_U1_ENTRY_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_U1_ENTRY_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_U1_ENTRY_INT);
-		printk(KERN_INFO "FUSB300_IGR1_U1_ENTRY_INT\n");
-	}
+		prपूर्णांकk(KERN_INFO "FUSB300_IGR1_U1_ENTRY_INT\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_RESM_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_RESM_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_RESM_INT);
-		printk(KERN_INFO "fusb300_resume\n");
-	}
+		prपूर्णांकk(KERN_INFO "fusb300_resume\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_SUSP_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_SUSP_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_SUSP_INT);
-		printk(KERN_INFO "fusb300_suspend\n");
-	}
+		prपूर्णांकk(KERN_INFO "fusb300_suspend\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_HS_LPM_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_HS_LPM_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_HS_LPM_INT);
-		printk(KERN_INFO "fusb300_HS_LPM_INT\n");
-	}
+		prपूर्णांकk(KERN_INFO "fusb300_HS_LPM_INT\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_DEV_MODE_CHG_INT) {
-		fusb300_clear_int(fusb300, FUSB300_OFFSET_IGR1,
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_DEV_MODE_CHG_INT) अणु
+		fusb300_clear_पूर्णांक(fusb300, FUSB300_OFFSET_IGR1,
 				  FUSB300_IGR1_DEV_MODE_CHG_INT);
 		check_device_mode(fusb300);
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_CX_COMFAIL_INT) {
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_CX_COMFAIL_INT) अणु
 		fusb300_set_cxstall(fusb300);
-		printk(KERN_INFO "fusb300_ep0fail\n");
-	}
+		prपूर्णांकk(KERN_INFO "fusb300_ep0fail\n");
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_CX_SETUP_INT) {
-		printk(KERN_INFO "fusb300_ep0setup\n");
-		if (setup_packet(fusb300, &ctrl)) {
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_CX_SETUP_INT) अणु
+		prपूर्णांकk(KERN_INFO "fusb300_ep0setup\n");
+		अगर (setup_packet(fusb300, &ctrl)) अणु
 			spin_unlock(&fusb300->lock);
-			if (fusb300->driver->setup(&fusb300->gadget, &ctrl) < 0)
+			अगर (fusb300->driver->setup(&fusb300->gadget, &ctrl) < 0)
 				fusb300_set_cxstall(fusb300);
 			spin_lock(&fusb300->lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_CX_CMDEND_INT)
-		printk(KERN_INFO "fusb300_cmdend\n");
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_CX_CMDEND_INT)
+		prपूर्णांकk(KERN_INFO "fusb300_cmdend\n");
 
 
-	if (int_grp1 & FUSB300_IGR1_CX_OUT_INT) {
-		printk(KERN_INFO "fusb300_cxout\n");
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_CX_OUT_INT) अणु
+		prपूर्णांकk(KERN_INFO "fusb300_cxout\n");
 		fusb300_ep0out(fusb300);
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_CX_IN_INT) {
-		printk(KERN_INFO "fusb300_cxin\n");
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_CX_IN_INT) अणु
+		prपूर्णांकk(KERN_INFO "fusb300_cxin\n");
 		fusb300_ep0in(fusb300);
-	}
+	पूर्ण
 
-	if (int_grp1 & FUSB300_IGR1_INTGRP5)
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_INTGRP5)
 		fusb300_grp5_handler();
 
-	if (int_grp1 & FUSB300_IGR1_INTGRP4)
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_INTGRP4)
 		fusb300_grp4_handler();
 
-	if (int_grp1 & FUSB300_IGR1_INTGRP3)
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_INTGRP3)
 		fusb300_grp3_handler();
 
-	if (int_grp1 & FUSB300_IGR1_INTGRP2)
+	अगर (पूर्णांक_grp1 & FUSB300_IGR1_INTGRP2)
 		fusb300_grp2_handler();
 
-	if (int_grp0) {
-		for (i = 1; i < FUSB300_MAX_NUM_EP; i++) {
-			if (int_grp0 & FUSB300_IGR0_EPn_FIFO_INT(i)) {
-				reg = ioread32(fusb300->reg +
+	अगर (पूर्णांक_grp0) अणु
+		क्रम (i = 1; i < FUSB300_MAX_NUM_EP; i++) अणु
+			अगर (पूर्णांक_grp0 & FUSB300_IGR0_EPn_FIFO_INT(i)) अणु
+				reg = ioपढ़ो32(fusb300->reg +
 					FUSB300_OFFSET_EPSET1(i));
-				in = (reg & FUSB300_EPSET1_DIRIN) ? 1 : 0;
-				if (in)
-					in_ep_fifo_handler(fusb300->ep[i]);
-				else
-					out_ep_fifo_handler(fusb300->ep[i]);
-			}
-		}
-	}
+				in = (reg & FUSB300_EPSET1_सूचीIN) ? 1 : 0;
+				अगर (in)
+					in_ep_fअगरo_handler(fusb300->ep[i]);
+				अन्यथा
+					out_ep_fअगरo_handler(fusb300->ep[i]);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&fusb300->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void fusb300_set_u2_timeout(struct fusb300 *fusb300,
-				   u32 time)
-{
+अटल व्योम fusb300_set_u2_समयout(काष्ठा fusb300 *fusb300,
+				   u32 समय)
+अणु
 	u32 reg;
 
-	reg = ioread32(fusb300->reg + FUSB300_OFFSET_TT);
+	reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_TT);
 	reg &= ~0xff;
-	reg |= FUSB300_SSCR2_U2TIMEOUT(time);
+	reg |= FUSB300_SSCR2_U2TIMEOUT(समय);
 
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_TT);
-}
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_TT);
+पूर्ण
 
-static void fusb300_set_u1_timeout(struct fusb300 *fusb300,
-				   u32 time)
-{
+अटल व्योम fusb300_set_u1_समयout(काष्ठा fusb300 *fusb300,
+				   u32 समय)
+अणु
 	u32 reg;
 
-	reg = ioread32(fusb300->reg + FUSB300_OFFSET_TT);
+	reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_TT);
 	reg &= ~(0xff << 8);
-	reg |= FUSB300_SSCR2_U1TIMEOUT(time);
+	reg |= FUSB300_SSCR2_U1TIMEOUT(समय);
 
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_TT);
-}
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_TT);
+पूर्ण
 
-static void init_controller(struct fusb300 *fusb300)
-{
+अटल व्योम init_controller(काष्ठा fusb300 *fusb300)
+अणु
 	u32 reg;
 	u32 mask = 0;
 	u32 val = 0;
 
 	/* split on */
 	mask = val = FUSB300_AHBBCR_S0_SPLIT_ON | FUSB300_AHBBCR_S1_SPLIT_ON;
-	reg = ioread32(fusb300->reg + FUSB300_OFFSET_AHBCR);
+	reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_AHBCR);
 	reg &= ~mask;
 	reg |= val;
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_AHBCR);
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_AHBCR);
 
 	/* enable high-speed LPM */
 	mask = val = FUSB300_HSCR_HS_LPM_PERMIT;
-	reg = ioread32(fusb300->reg + FUSB300_OFFSET_HSCR);
+	reg = ioपढ़ो32(fusb300->reg + FUSB300_OFFSET_HSCR);
 	reg &= ~mask;
 	reg |= val;
-	iowrite32(reg, fusb300->reg + FUSB300_OFFSET_HSCR);
+	ioग_लिखो32(reg, fusb300->reg + FUSB300_OFFSET_HSCR);
 
 	/*set u1 u2 timmer*/
-	fusb300_set_u2_timeout(fusb300, 0xff);
-	fusb300_set_u1_timeout(fusb300, 0xff);
+	fusb300_set_u2_समयout(fusb300, 0xff);
+	fusb300_set_u1_समयout(fusb300, 0xff);
 
-	/* enable all grp1 interrupt */
-	iowrite32(0xcfffff9f, fusb300->reg + FUSB300_OFFSET_IGER1);
-}
+	/* enable all grp1 पूर्णांकerrupt */
+	ioग_लिखो32(0xcfffff9f, fusb300->reg + FUSB300_OFFSET_IGER1);
+पूर्ण
 /*------------------------------------------------------------------------*/
-static int fusb300_udc_start(struct usb_gadget *g,
-		struct usb_gadget_driver *driver)
-{
-	struct fusb300 *fusb300 = to_fusb300(g);
+अटल पूर्णांक fusb300_udc_start(काष्ठा usb_gadget *g,
+		काष्ठा usb_gadget_driver *driver)
+अणु
+	काष्ठा fusb300 *fusb300 = to_fusb300(g);
 
 	/* hook up the driver */
-	driver->driver.bus = NULL;
+	driver->driver.bus = शून्य;
 	fusb300->driver = driver;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fusb300_udc_stop(struct usb_gadget *g)
-{
-	struct fusb300 *fusb300 = to_fusb300(g);
+अटल पूर्णांक fusb300_udc_stop(काष्ठा usb_gadget *g)
+अणु
+	काष्ठा fusb300 *fusb300 = to_fusb300(g);
 
 	init_controller(fusb300);
-	fusb300->driver = NULL;
+	fusb300->driver = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /*--------------------------------------------------------------------------*/
 
-static int fusb300_udc_pullup(struct usb_gadget *_gadget, int is_active)
-{
-	return 0;
-}
+अटल पूर्णांक fusb300_udc_pullup(काष्ठा usb_gadget *_gadget, पूर्णांक is_active)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct usb_gadget_ops fusb300_gadget_ops = {
+अटल स्थिर काष्ठा usb_gadget_ops fusb300_gadget_ops = अणु
 	.pullup		= fusb300_udc_pullup,
 	.udc_start	= fusb300_udc_start,
 	.udc_stop	= fusb300_udc_stop,
-};
+पूर्ण;
 
-static int fusb300_remove(struct platform_device *pdev)
-{
-	struct fusb300 *fusb300 = platform_get_drvdata(pdev);
-	int i;
+अटल पूर्णांक fusb300_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fusb300 *fusb300 = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
 
 	usb_del_gadget_udc(&fusb300->gadget);
 	iounmap(fusb300->reg);
-	free_irq(platform_get_irq(pdev, 0), fusb300);
+	मुक्त_irq(platक्रमm_get_irq(pdev, 0), fusb300);
 
-	fusb300_free_request(&fusb300->ep[0]->ep, fusb300->ep0_req);
-	for (i = 0; i < FUSB300_MAX_NUM_EP; i++)
-		kfree(fusb300->ep[i]);
-	kfree(fusb300);
+	fusb300_मुक्त_request(&fusb300->ep[0]->ep, fusb300->ep0_req);
+	क्रम (i = 0; i < FUSB300_MAX_NUM_EP; i++)
+		kमुक्त(fusb300->ep[i]);
+	kमुक्त(fusb300);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fusb300_probe(struct platform_device *pdev)
-{
-	struct resource *res, *ires, *ires1;
-	void __iomem *reg = NULL;
-	struct fusb300 *fusb300 = NULL;
-	struct fusb300_ep *_ep[FUSB300_MAX_NUM_EP];
-	int ret = 0;
-	int i;
+अटल पूर्णांक fusb300_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res, *ires, *ires1;
+	व्योम __iomem *reg = शून्य;
+	काष्ठा fusb300 *fusb300 = शून्य;
+	काष्ठा fusb300_ep *_ep[FUSB300_MAX_NUM_EP];
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		ret = -ENODEV;
 		pr_err("platform_get_resource error.\n");
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
-	ires = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!ires) {
+	ires = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (!ires) अणु
 		ret = -ENODEV;
 		dev_err(&pdev->dev,
 			"platform_get_resource IORESOURCE_IRQ error.\n");
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
-	ires1 = platform_get_resource(pdev, IORESOURCE_IRQ, 1);
-	if (!ires1) {
+	ires1 = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 1);
+	अगर (!ires1) अणु
 		ret = -ENODEV;
 		dev_err(&pdev->dev,
 			"platform_get_resource IORESOURCE_IRQ 1 error.\n");
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
 	reg = ioremap(res->start, resource_size(res));
-	if (reg == NULL) {
+	अगर (reg == शून्य) अणु
 		ret = -ENOMEM;
 		pr_err("ioremap error.\n");
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
 	/* initialize udc */
-	fusb300 = kzalloc(sizeof(struct fusb300), GFP_KERNEL);
-	if (fusb300 == NULL) {
+	fusb300 = kzalloc(माप(काष्ठा fusb300), GFP_KERNEL);
+	अगर (fusb300 == शून्य) अणु
 		ret = -ENOMEM;
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
-	for (i = 0; i < FUSB300_MAX_NUM_EP; i++) {
-		_ep[i] = kzalloc(sizeof(struct fusb300_ep), GFP_KERNEL);
-		if (_ep[i] == NULL) {
+	क्रम (i = 0; i < FUSB300_MAX_NUM_EP; i++) अणु
+		_ep[i] = kzalloc(माप(काष्ठा fusb300_ep), GFP_KERNEL);
+		अगर (_ep[i] == शून्य) अणु
 			ret = -ENOMEM;
-			goto clean_up;
-		}
+			जाओ clean_up;
+		पूर्ण
 		fusb300->ep[i] = _ep[i];
-	}
+	पूर्ण
 
 	spin_lock_init(&fusb300->lock);
 
-	platform_set_drvdata(pdev, fusb300);
+	platक्रमm_set_drvdata(pdev, fusb300);
 
 	fusb300->gadget.ops = &fusb300_gadget_ops;
 
@@ -1423,45 +1424,45 @@ static int fusb300_probe(struct platform_device *pdev)
 
 	ret = request_irq(ires->start, fusb300_irq, IRQF_SHARED,
 			  udc_name, fusb300);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("request_irq error (%d)\n", ret);
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
 	ret = request_irq(ires1->start, fusb300_irq,
 			IRQF_SHARED, udc_name, fusb300);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("request_irq1 error (%d)\n", ret);
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
 	INIT_LIST_HEAD(&fusb300->gadget.ep_list);
 
-	for (i = 0; i < FUSB300_MAX_NUM_EP ; i++) {
-		struct fusb300_ep *ep = fusb300->ep[i];
+	क्रम (i = 0; i < FUSB300_MAX_NUM_EP ; i++) अणु
+		काष्ठा fusb300_ep *ep = fusb300->ep[i];
 
-		if (i != 0) {
+		अगर (i != 0) अणु
 			INIT_LIST_HEAD(&fusb300->ep[i]->ep.ep_list);
 			list_add_tail(&fusb300->ep[i]->ep.ep_list,
 				     &fusb300->gadget.ep_list);
-		}
+		पूर्ण
 		ep->fusb300 = fusb300;
 		INIT_LIST_HEAD(&ep->queue);
 		ep->ep.name = fusb300_ep_name[i];
 		ep->ep.ops = &fusb300_ep_ops;
 		usb_ep_set_maxpacket_limit(&ep->ep, HS_BULK_MAX_PACKET_SIZE);
 
-		if (i == 0) {
+		अगर (i == 0) अणु
 			ep->ep.caps.type_control = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			ep->ep.caps.type_iso = true;
 			ep->ep.caps.type_bulk = true;
-			ep->ep.caps.type_int = true;
-		}
+			ep->ep.caps.type_पूर्णांक = true;
+		पूर्ण
 
 		ep->ep.caps.dir_in = true;
 		ep->ep.caps.dir_out = true;
-	}
+	पूर्ण
 	usb_ep_set_maxpacket_limit(&fusb300->ep[0]->ep, HS_CTL_MAX_PACKET_SIZE);
 	fusb300->ep[0]->epnum = 0;
 	fusb300->gadget.ep0 = &fusb300->ep[0]->ep;
@@ -1469,46 +1470,46 @@ static int fusb300_probe(struct platform_device *pdev)
 
 	fusb300->ep0_req = fusb300_alloc_request(&fusb300->ep[0]->ep,
 				GFP_KERNEL);
-	if (fusb300->ep0_req == NULL) {
+	अगर (fusb300->ep0_req == शून्य) अणु
 		ret = -ENOMEM;
-		goto clean_up3;
-	}
+		जाओ clean_up3;
+	पूर्ण
 
 	init_controller(fusb300);
 	ret = usb_add_gadget_udc(&pdev->dev, &fusb300->gadget);
-	if (ret)
-		goto err_add_udc;
+	अगर (ret)
+		जाओ err_add_udc;
 
 	dev_info(&pdev->dev, "version %s\n", DRIVER_VERSION);
 
-	return 0;
+	वापस 0;
 
 err_add_udc:
-	fusb300_free_request(&fusb300->ep[0]->ep, fusb300->ep0_req);
+	fusb300_मुक्त_request(&fusb300->ep[0]->ep, fusb300->ep0_req);
 
 clean_up3:
-	free_irq(ires->start, fusb300);
+	मुक्त_irq(ires->start, fusb300);
 
 clean_up:
-	if (fusb300) {
-		if (fusb300->ep0_req)
-			fusb300_free_request(&fusb300->ep[0]->ep,
+	अगर (fusb300) अणु
+		अगर (fusb300->ep0_req)
+			fusb300_मुक्त_request(&fusb300->ep[0]->ep,
 				fusb300->ep0_req);
-		for (i = 0; i < FUSB300_MAX_NUM_EP; i++)
-			kfree(fusb300->ep[i]);
-		kfree(fusb300);
-	}
-	if (reg)
+		क्रम (i = 0; i < FUSB300_MAX_NUM_EP; i++)
+			kमुक्त(fusb300->ep[i]);
+		kमुक्त(fusb300);
+	पूर्ण
+	अगर (reg)
 		iounmap(reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver fusb300_driver = {
-	.remove =	fusb300_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver fusb300_driver = अणु
+	.हटाओ =	fusb300_हटाओ,
+	.driver		= अणु
 		.name =	udc_name,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver_probe(fusb300_driver, fusb300_probe);
+module_platक्रमm_driver_probe(fusb300_driver, fusb300_probe);

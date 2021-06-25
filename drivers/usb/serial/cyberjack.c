@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *  REINER SCT cyberJack pinpad/e-com USB Chipcard Reader Driver
  *
@@ -8,413 +9,413 @@
  *  Contact: support@reiner-sct.com (see MAINTAINERS)
  *
  *  This program is largely derived from work by the linux-usb group
- *  and associated source files.  Please see the usb/serial files for
- *  individual credits and copyrights.
+ *  and associated source files.  Please see the usb/serial files क्रम
+ *  inभागidual credits and copyrights.
  *
- *  Thanks to Greg Kroah-Hartman (greg@kroah.com) for his help and
+ *  Thanks to Greg Kroah-Harपंचांगan (greg@kroah.com) क्रम his help and
  *  patience.
  *
- *  In case of problems, please write to the contact e-mail address
+ *  In हाल of problems, please ग_लिखो to the contact e-mail address
  *  mentioned above.
  *
- *  Please note that later models of the cyberjack reader family are
+ *  Please note that later models of the cyberjack पढ़ोer family are
  *  supported by a libusb-based userspace device driver.
  *
  *  Homepage: http://www.reiner-sct.de/support/treiber_cyberjack.php#linux
  */
 
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/tty_flip.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/uaccess.h>
-#include <linux/usb.h>
-#include <linux/usb/serial.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/serial.h>
 
-#define CYBERJACK_LOCAL_BUF_SIZE 32
+#घोषणा CYBERJACK_LOCAL_BUF_SIZE 32
 
-#define DRIVER_AUTHOR "Matthias Bruestle"
-#define DRIVER_DESC "REINER SCT cyberJack pinpad/e-com USB Chipcard Reader Driver"
+#घोषणा DRIVER_AUTHOR "Matthias Bruestle"
+#घोषणा DRIVER_DESC "REINER SCT cyberJack pinpad/e-com USB Chipcard Reader Driver"
 
 
-#define CYBERJACK_VENDOR_ID	0x0C4B
-#define CYBERJACK_PRODUCT_ID	0x0100
+#घोषणा CYBERJACK_VENDOR_ID	0x0C4B
+#घोषणा CYBERJACK_PRODUCT_ID	0x0100
 
 /* Function prototypes */
-static int cyberjack_port_probe(struct usb_serial_port *port);
-static void cyberjack_port_remove(struct usb_serial_port *port);
-static int  cyberjack_open(struct tty_struct *tty,
-	struct usb_serial_port *port);
-static void cyberjack_close(struct usb_serial_port *port);
-static int cyberjack_write(struct tty_struct *tty,
-	struct usb_serial_port *port, const unsigned char *buf, int count);
-static int cyberjack_write_room(struct tty_struct *tty);
-static void cyberjack_read_int_callback(struct urb *urb);
-static void cyberjack_read_bulk_callback(struct urb *urb);
-static void cyberjack_write_bulk_callback(struct urb *urb);
+अटल पूर्णांक cyberjack_port_probe(काष्ठा usb_serial_port *port);
+अटल व्योम cyberjack_port_हटाओ(काष्ठा usb_serial_port *port);
+अटल पूर्णांक  cyberjack_खोलो(काष्ठा tty_काष्ठा *tty,
+	काष्ठा usb_serial_port *port);
+अटल व्योम cyberjack_बंद(काष्ठा usb_serial_port *port);
+अटल पूर्णांक cyberjack_ग_लिखो(काष्ठा tty_काष्ठा *tty,
+	काष्ठा usb_serial_port *port, स्थिर अचिन्हित अक्षर *buf, पूर्णांक count);
+अटल पूर्णांक cyberjack_ग_लिखो_room(काष्ठा tty_काष्ठा *tty);
+अटल व्योम cyberjack_पढ़ो_पूर्णांक_callback(काष्ठा urb *urb);
+अटल व्योम cyberjack_पढ़ो_bulk_callback(काष्ठा urb *urb);
+अटल व्योम cyberjack_ग_लिखो_bulk_callback(काष्ठा urb *urb);
 
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(CYBERJACK_VENDOR_ID, CYBERJACK_PRODUCT_ID) },
-	{ }			/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(CYBERJACK_VENDOR_ID, CYBERJACK_PRODUCT_ID) पूर्ण,
+	अणु पूर्ण			/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, id_table);
 
-static struct usb_serial_driver cyberjack_device = {
-	.driver = {
+अटल काष्ठा usb_serial_driver cyberjack_device = अणु
+	.driver = अणु
 		.owner =	THIS_MODULE,
 		.name =		"cyberjack",
-	},
+	पूर्ण,
 	.description =		"Reiner SCT Cyberjack USB card reader",
 	.id_table =		id_table,
 	.num_ports =		1,
 	.num_bulk_out =		1,
 	.port_probe =		cyberjack_port_probe,
-	.port_remove =		cyberjack_port_remove,
-	.open =			cyberjack_open,
-	.close =		cyberjack_close,
-	.write =		cyberjack_write,
-	.write_room =		cyberjack_write_room,
-	.read_int_callback =	cyberjack_read_int_callback,
-	.read_bulk_callback =	cyberjack_read_bulk_callback,
-	.write_bulk_callback =	cyberjack_write_bulk_callback,
-};
+	.port_हटाओ =		cyberjack_port_हटाओ,
+	.खोलो =			cyberjack_खोलो,
+	.बंद =		cyberjack_बंद,
+	.ग_लिखो =		cyberjack_ग_लिखो,
+	.ग_लिखो_room =		cyberjack_ग_लिखो_room,
+	.पढ़ो_पूर्णांक_callback =	cyberjack_पढ़ो_पूर्णांक_callback,
+	.पढ़ो_bulk_callback =	cyberjack_पढ़ो_bulk_callback,
+	.ग_लिखो_bulk_callback =	cyberjack_ग_लिखो_bulk_callback,
+पूर्ण;
 
-static struct usb_serial_driver * const serial_drivers[] = {
-	&cyberjack_device, NULL
-};
+अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
+	&cyberjack_device, शून्य
+पूर्ण;
 
-struct cyberjack_private {
-	spinlock_t	lock;		/* Lock for SMP */
-	short		rdtodo;		/* Bytes still to read */
-	unsigned char	wrbuf[5*64];	/* Buffer for collecting data to write */
-	short		wrfilled;	/* Overall data size we already got */
-	short		wrsent;		/* Data already sent */
-};
+काष्ठा cyberjack_निजी अणु
+	spinlock_t	lock;		/* Lock क्रम SMP */
+	लघु		rdtoकरो;		/* Bytes still to पढ़ो */
+	अचिन्हित अक्षर	wrbuf[5*64];	/* Buffer क्रम collecting data to ग_लिखो */
+	लघु		wrfilled;	/* Overall data size we alपढ़ोy got */
+	लघु		wrsent;		/* Data alपढ़ोy sent */
+पूर्ण;
 
-static int cyberjack_port_probe(struct usb_serial_port *port)
-{
-	struct cyberjack_private *priv;
-	int result;
+अटल पूर्णांक cyberjack_port_probe(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा cyberjack_निजी *priv;
+	पूर्णांक result;
 
-	priv = kmalloc(sizeof(struct cyberjack_private), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kदो_स्मृति(माप(काष्ठा cyberjack_निजी), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	spin_lock_init(&priv->lock);
-	priv->rdtodo = 0;
+	priv->rdtoकरो = 0;
 	priv->wrfilled = 0;
 	priv->wrsent = 0;
 
 	usb_set_serial_port_data(port, priv);
 
-	result = usb_submit_urb(port->interrupt_in_urb, GFP_KERNEL);
-	if (result)
+	result = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_KERNEL);
+	अगर (result)
 		dev_err(&port->dev, "usb_submit_urb(read int) failed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cyberjack_port_remove(struct usb_serial_port *port)
-{
-	struct cyberjack_private *priv;
+अटल व्योम cyberjack_port_हटाओ(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा cyberjack_निजी *priv;
 
-	usb_kill_urb(port->interrupt_in_urb);
+	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
 
 	priv = usb_get_serial_port_data(port);
-	kfree(priv);
-}
+	kमुक्त(priv);
+पूर्ण
 
-static int  cyberjack_open(struct tty_struct *tty,
-					struct usb_serial_port *port)
-{
-	struct cyberjack_private *priv;
-	unsigned long flags;
+अटल पूर्णांक  cyberjack_खोलो(काष्ठा tty_काष्ठा *tty,
+					काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा cyberjack_निजी *priv;
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(&port->dev, "%s - usb_clear_halt\n", __func__);
-	usb_clear_halt(port->serial->dev, port->write_urb->pipe);
+	usb_clear_halt(port->serial->dev, port->ग_लिखो_urb->pipe);
 
 	priv = usb_get_serial_port_data(port);
 	spin_lock_irqsave(&priv->lock, flags);
-	priv->rdtodo = 0;
+	priv->rdtoकरो = 0;
 	priv->wrfilled = 0;
 	priv->wrsent = 0;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cyberjack_close(struct usb_serial_port *port)
-{
-	usb_kill_urb(port->write_urb);
-	usb_kill_urb(port->read_urb);
-}
+अटल व्योम cyberjack_बंद(काष्ठा usb_serial_port *port)
+अणु
+	usb_समाप्त_urb(port->ग_लिखो_urb);
+	usb_समाप्त_urb(port->पढ़ो_urb);
+पूर्ण
 
-static int cyberjack_write(struct tty_struct *tty,
-	struct usb_serial_port *port, const unsigned char *buf, int count)
-{
-	struct device *dev = &port->dev;
-	struct cyberjack_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
-	int result;
-	int wrexpected;
+अटल पूर्णांक cyberjack_ग_लिखो(काष्ठा tty_काष्ठा *tty,
+	काष्ठा usb_serial_port *port, स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	काष्ठा device *dev = &port->dev;
+	काष्ठा cyberjack_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result;
+	पूर्णांक wrexpected;
 
-	if (count == 0) {
+	अगर (count == 0) अणु
 		dev_dbg(dev, "%s - write request of 0 bytes\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!test_and_clear_bit(0, &port->write_urbs_free)) {
+	अगर (!test_and_clear_bit(0, &port->ग_लिखो_urbs_मुक्त)) अणु
 		dev_dbg(dev, "%s - already writing\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	if (count+priv->wrfilled > sizeof(priv->wrbuf)) {
-		/* To much data for buffer. Reset buffer. */
+	अगर (count+priv->wrfilled > माप(priv->wrbuf)) अणु
+		/* To much data क्रम buffer. Reset buffer. */
 		priv->wrfilled = 0;
 		spin_unlock_irqrestore(&priv->lock, flags);
-		set_bit(0, &port->write_urbs_free);
-		return 0;
-	}
+		set_bit(0, &port->ग_लिखो_urbs_मुक्त);
+		वापस 0;
+	पूर्ण
 
 	/* Copy data */
-	memcpy(priv->wrbuf + priv->wrfilled, buf, count);
+	स_नकल(priv->wrbuf + priv->wrfilled, buf, count);
 
 	usb_serial_debug_data(dev, __func__, count, priv->wrbuf + priv->wrfilled);
 	priv->wrfilled += count;
 
-	if (priv->wrfilled >= 3) {
-		wrexpected = ((int)priv->wrbuf[2]<<8)+priv->wrbuf[1]+3;
+	अगर (priv->wrfilled >= 3) अणु
+		wrexpected = ((पूर्णांक)priv->wrbuf[2]<<8)+priv->wrbuf[1]+3;
 		dev_dbg(dev, "%s - expected data: %d\n", __func__, wrexpected);
-	} else
-		wrexpected = sizeof(priv->wrbuf);
+	पूर्ण अन्यथा
+		wrexpected = माप(priv->wrbuf);
 
-	if (priv->wrfilled >= wrexpected) {
+	अगर (priv->wrfilled >= wrexpected) अणु
 		/* We have enough data to begin transmission */
-		int length;
+		पूर्णांक length;
 
 		dev_dbg(dev, "%s - transmitting data (frame 1)\n", __func__);
 		length = (wrexpected > port->bulk_out_size) ?
 					port->bulk_out_size : wrexpected;
 
-		memcpy(port->write_urb->transfer_buffer, priv->wrbuf, length);
+		स_नकल(port->ग_लिखो_urb->transfer_buffer, priv->wrbuf, length);
 		priv->wrsent = length;
 
 		/* set up our urb */
-		port->write_urb->transfer_buffer_length = length;
+		port->ग_लिखो_urb->transfer_buffer_length = length;
 
 		/* send the data out the bulk port */
-		result = usb_submit_urb(port->write_urb, GFP_ATOMIC);
-		if (result) {
+		result = usb_submit_urb(port->ग_लिखो_urb, GFP_ATOMIC);
+		अगर (result) अणु
 			dev_err(&port->dev,
 				"%s - failed submitting write urb, error %d\n",
 				__func__, result);
-			/* Throw away data. No better idea what to do with it. */
+			/* Throw away data. No better idea what to करो with it. */
 			priv->wrfilled = 0;
 			priv->wrsent = 0;
 			spin_unlock_irqrestore(&priv->lock, flags);
-			set_bit(0, &port->write_urbs_free);
-			return 0;
-		}
+			set_bit(0, &port->ग_लिखो_urbs_मुक्त);
+			वापस 0;
+		पूर्ण
 
 		dev_dbg(dev, "%s - priv->wrsent=%d\n", __func__, priv->wrsent);
 		dev_dbg(dev, "%s - priv->wrfilled=%d\n", __func__, priv->wrfilled);
 
-		if (priv->wrsent >= priv->wrfilled) {
+		अगर (priv->wrsent >= priv->wrfilled) अणु
 			dev_dbg(dev, "%s - buffer cleaned\n", __func__);
-			memset(priv->wrbuf, 0, sizeof(priv->wrbuf));
+			स_रखो(priv->wrbuf, 0, माप(priv->wrbuf));
 			priv->wrfilled = 0;
 			priv->wrsent = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int cyberjack_write_room(struct tty_struct *tty)
-{
+अटल पूर्णांक cyberjack_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
+अणु
 	/* FIXME: .... */
-	return CYBERJACK_LOCAL_BUF_SIZE;
-}
+	वापस CYBERJACK_LOCAL_BUF_SIZE;
+पूर्ण
 
-static void cyberjack_read_int_callback(struct urb *urb)
-{
-	struct usb_serial_port *port = urb->context;
-	struct cyberjack_private *priv = usb_get_serial_port_data(port);
-	struct device *dev = &port->dev;
-	unsigned char *data = urb->transfer_buffer;
-	int status = urb->status;
-	unsigned long flags;
-	int result;
+अटल व्योम cyberjack_पढ़ो_पूर्णांक_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_serial_port *port = urb->context;
+	काष्ठा cyberjack_निजी *priv = usb_get_serial_port_data(port);
+	काष्ठा device *dev = &port->dev;
+	अचिन्हित अक्षर *data = urb->transfer_buffer;
+	पूर्णांक status = urb->status;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result;
 
-	/* the urb might have been killed. */
-	if (status)
-		return;
+	/* the urb might have been समाप्तed. */
+	अगर (status)
+		वापस;
 
 	usb_serial_debug_data(dev, __func__, urb->actual_length, data);
 
-	/* React only to interrupts signaling a bulk_in transfer */
-	if (urb->actual_length == 4 && data[0] == 0x01) {
-		short old_rdtodo;
+	/* React only to पूर्णांकerrupts संकेतing a bulk_in transfer */
+	अगर (urb->actual_length == 4 && data[0] == 0x01) अणु
+		लघु old_rdtoकरो;
 
 		/* This is a announcement of coming bulk_ins. */
-		unsigned short size = ((unsigned short)data[3]<<8)+data[2]+3;
+		अचिन्हित लघु size = ((अचिन्हित लघु)data[3]<<8)+data[2]+3;
 
 		spin_lock_irqsave(&priv->lock, flags);
 
-		old_rdtodo = priv->rdtodo;
+		old_rdtoकरो = priv->rdtoकरो;
 
-		if (old_rdtodo > SHRT_MAX - size) {
+		अगर (old_rdtoकरो > लघु_उच्च - size) अणु
 			dev_dbg(dev, "Too many bulk_in urbs to do.\n");
 			spin_unlock_irqrestore(&priv->lock, flags);
-			goto resubmit;
-		}
+			जाओ resubmit;
+		पूर्ण
 
 		/* "+=" is probably more fault tolerant than "=" */
-		priv->rdtodo += size;
+		priv->rdtoकरो += size;
 
-		dev_dbg(dev, "%s - rdtodo: %d\n", __func__, priv->rdtodo);
+		dev_dbg(dev, "%s - rdtodo: %d\n", __func__, priv->rdtoकरो);
 
 		spin_unlock_irqrestore(&priv->lock, flags);
 
-		if (!old_rdtodo) {
-			result = usb_submit_urb(port->read_urb, GFP_ATOMIC);
-			if (result)
+		अगर (!old_rdtoकरो) अणु
+			result = usb_submit_urb(port->पढ़ो_urb, GFP_ATOMIC);
+			अगर (result)
 				dev_err(dev, "%s - failed resubmitting read urb, error %d\n",
 					__func__, result);
 			dev_dbg(dev, "%s - usb_submit_urb(read urb)\n", __func__);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 resubmit:
-	result = usb_submit_urb(port->interrupt_in_urb, GFP_ATOMIC);
-	if (result)
+	result = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_ATOMIC);
+	अगर (result)
 		dev_err(&port->dev, "usb_submit_urb(read int) failed\n");
 	dev_dbg(dev, "%s - usb_submit_urb(int urb)\n", __func__);
-}
+पूर्ण
 
-static void cyberjack_read_bulk_callback(struct urb *urb)
-{
-	struct usb_serial_port *port = urb->context;
-	struct cyberjack_private *priv = usb_get_serial_port_data(port);
-	struct device *dev = &port->dev;
-	unsigned char *data = urb->transfer_buffer;
-	unsigned long flags;
-	short todo;
-	int result;
-	int status = urb->status;
+अटल व्योम cyberjack_पढ़ो_bulk_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_serial_port *port = urb->context;
+	काष्ठा cyberjack_निजी *priv = usb_get_serial_port_data(port);
+	काष्ठा device *dev = &port->dev;
+	अचिन्हित अक्षर *data = urb->transfer_buffer;
+	अचिन्हित दीर्घ flags;
+	लघु toकरो;
+	पूर्णांक result;
+	पूर्णांक status = urb->status;
 
 	usb_serial_debug_data(dev, __func__, urb->actual_length, data);
-	if (status) {
+	अगर (status) अणु
 		dev_dbg(dev, "%s - nonzero read bulk status received: %d\n",
 			__func__, status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (urb->actual_length) {
+	अगर (urb->actual_length) अणु
 		tty_insert_flip_string(&port->port, data, urb->actual_length);
 		tty_flip_buffer_push(&port->port);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	/* Reduce urbs to do by one. */
-	priv->rdtodo -= urb->actual_length;
+	/* Reduce urbs to करो by one. */
+	priv->rdtoकरो -= urb->actual_length;
 	/* Just to be sure */
-	if (priv->rdtodo < 0)
-		priv->rdtodo = 0;
-	todo = priv->rdtodo;
+	अगर (priv->rdtoकरो < 0)
+		priv->rdtoकरो = 0;
+	toकरो = priv->rdtoकरो;
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	dev_dbg(dev, "%s - rdtodo: %d\n", __func__, todo);
+	dev_dbg(dev, "%s - rdtodo: %d\n", __func__, toकरो);
 
-	/* Continue to read if we have still urbs to do. */
-	if (todo /* || (urb->actual_length==port->bulk_in_endpointAddress)*/) {
-		result = usb_submit_urb(port->read_urb, GFP_ATOMIC);
-		if (result)
+	/* Continue to पढ़ो अगर we have still urbs to करो. */
+	अगर (toकरो /* || (urb->actual_length==port->bulk_in_endpoपूर्णांकAddress)*/) अणु
+		result = usb_submit_urb(port->पढ़ो_urb, GFP_ATOMIC);
+		अगर (result)
 			dev_err(dev, "%s - failed resubmitting read urb, error %d\n",
 				__func__, result);
 		dev_dbg(dev, "%s - usb_submit_urb(read urb)\n", __func__);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cyberjack_write_bulk_callback(struct urb *urb)
-{
-	struct usb_serial_port *port = urb->context;
-	struct cyberjack_private *priv = usb_get_serial_port_data(port);
-	struct device *dev = &port->dev;
-	int status = urb->status;
-	unsigned long flags;
+अटल व्योम cyberjack_ग_लिखो_bulk_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_serial_port *port = urb->context;
+	काष्ठा cyberjack_निजी *priv = usb_get_serial_port_data(port);
+	काष्ठा device *dev = &port->dev;
+	पूर्णांक status = urb->status;
+	अचिन्हित दीर्घ flags;
 	bool resubmitted = false;
 
-	if (status) {
+	अगर (status) अणु
 		dev_dbg(dev, "%s - nonzero write bulk status received: %d\n",
 			__func__, status);
-		set_bit(0, &port->write_urbs_free);
-		return;
-	}
+		set_bit(0, &port->ग_लिखो_urbs_मुक्त);
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	/* only do something if we have more data to send */
-	if (priv->wrfilled) {
-		int length, blksize, result;
+	/* only करो something अगर we have more data to send */
+	अगर (priv->wrfilled) अणु
+		पूर्णांक length, blksize, result;
 
 		dev_dbg(dev, "%s - transmitting data (frame n)\n", __func__);
 
 		length = ((priv->wrfilled - priv->wrsent) > port->bulk_out_size) ?
 			port->bulk_out_size : (priv->wrfilled - priv->wrsent);
 
-		memcpy(port->write_urb->transfer_buffer,
+		स_नकल(port->ग_लिखो_urb->transfer_buffer,
 					priv->wrbuf + priv->wrsent, length);
 		priv->wrsent += length;
 
 		/* set up our urb */
-		port->write_urb->transfer_buffer_length = length;
+		port->ग_लिखो_urb->transfer_buffer_length = length;
 
 		/* send the data out the bulk port */
-		result = usb_submit_urb(port->write_urb, GFP_ATOMIC);
-		if (result) {
+		result = usb_submit_urb(port->ग_लिखो_urb, GFP_ATOMIC);
+		अगर (result) अणु
 			dev_err(dev, "%s - failed submitting write urb, error %d\n",
 				__func__, result);
-			/* Throw away data. No better idea what to do with it. */
+			/* Throw away data. No better idea what to करो with it. */
 			priv->wrfilled = 0;
 			priv->wrsent = 0;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		resubmitted = true;
 
 		dev_dbg(dev, "%s - priv->wrsent=%d\n", __func__, priv->wrsent);
 		dev_dbg(dev, "%s - priv->wrfilled=%d\n", __func__, priv->wrfilled);
 
-		blksize = ((int)priv->wrbuf[2]<<8)+priv->wrbuf[1]+3;
+		blksize = ((पूर्णांक)priv->wrbuf[2]<<8)+priv->wrbuf[1]+3;
 
-		if (priv->wrsent >= priv->wrfilled ||
-					priv->wrsent >= blksize) {
+		अगर (priv->wrsent >= priv->wrfilled ||
+					priv->wrsent >= blksize) अणु
 			dev_dbg(dev, "%s - buffer cleaned\n", __func__);
-			memset(priv->wrbuf, 0, sizeof(priv->wrbuf));
+			स_रखो(priv->wrbuf, 0, माप(priv->wrbuf));
 			priv->wrfilled = 0;
 			priv->wrsent = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-exit:
+निकास:
 	spin_unlock_irqrestore(&priv->lock, flags);
-	if (!resubmitted)
-		set_bit(0, &port->write_urbs_free);
-	usb_serial_port_softint(port);
-}
+	अगर (!resubmitted)
+		set_bit(0, &port->ग_लिखो_urbs_मुक्त);
+	usb_serial_port_softपूर्णांक(port);
+पूर्ण
 
 module_usb_serial_driver(serial_drivers, id_table);
 

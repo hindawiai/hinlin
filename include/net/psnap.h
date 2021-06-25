@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NET_PSNAP_H
-#define _NET_PSNAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NET_PSNAP_H
+#घोषणा _NET_PSNAP_H
 
-struct datalink_proto *
-register_snap_client(const unsigned char *desc,
-		     int (*rcvfunc)(struct sk_buff *, struct net_device *,
-				    struct packet_type *,
-				    struct net_device *orig_dev));
-void unregister_snap_client(struct datalink_proto *proto);
+काष्ठा datalink_proto *
+रेजिस्टर_snap_client(स्थिर अचिन्हित अक्षर *desc,
+		     पूर्णांक (*rcvfunc)(काष्ठा sk_buff *, काष्ठा net_device *,
+				    काष्ठा packet_type *,
+				    काष्ठा net_device *orig_dev));
+व्योम unरेजिस्टर_snap_client(काष्ठा datalink_proto *proto);
 
-#endif
+#पूर्ण_अगर

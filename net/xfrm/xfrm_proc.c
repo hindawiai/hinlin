@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * xfrm_proc.c
  *
@@ -6,13 +7,13 @@
  *
  * Authors:	Masahide NAKAMURA <nakam@linux-ipv6.org>
  */
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/export.h>
-#include <net/snmp.h>
-#include <net/xfrm.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/export.h>
+#समावेश <net/snmp.h>
+#समावेश <net/xfrm.h>
 
-static const struct snmp_mib xfrm_mib_list[] = {
+अटल स्थिर काष्ठा snmp_mib xfrm_mib_list[] = अणु
 	SNMP_MIB_ITEM("XfrmInError", LINUX_MIB_XFRMINERROR),
 	SNMP_MIB_ITEM("XfrmInBufferError", LINUX_MIB_XFRMINBUFFERERROR),
 	SNMP_MIB_ITEM("XfrmInHdrError", LINUX_MIB_XFRMINHDRERROR),
@@ -42,34 +43,34 @@ static const struct snmp_mib xfrm_mib_list[] = {
 	SNMP_MIB_ITEM("XfrmOutStateInvalid", LINUX_MIB_XFRMOUTSTATEINVALID),
 	SNMP_MIB_ITEM("XfrmAcquireError", LINUX_MIB_XFRMACQUIREERROR),
 	SNMP_MIB_SENTINEL
-};
+पूर्ण;
 
-static int xfrm_statistics_seq_show(struct seq_file *seq, void *v)
-{
-	unsigned long buff[LINUX_MIB_XFRMMAX];
-	struct net *net = seq->private;
-	int i;
+अटल पूर्णांक xfrm_statistics_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	अचिन्हित दीर्घ buff[LINUX_MIB_XFRMMAX];
+	काष्ठा net *net = seq->निजी;
+	पूर्णांक i;
 
-	memset(buff, 0, sizeof(unsigned long) * LINUX_MIB_XFRMMAX);
+	स_रखो(buff, 0, माप(अचिन्हित दीर्घ) * LINUX_MIB_XFRMMAX);
 
 	snmp_get_cpu_field_batch(buff, xfrm_mib_list,
 				 net->mib.xfrm_statistics);
-	for (i = 0; xfrm_mib_list[i].name; i++)
-		seq_printf(seq, "%-24s\t%lu\n", xfrm_mib_list[i].name,
+	क्रम (i = 0; xfrm_mib_list[i].name; i++)
+		seq_म_लिखो(seq, "%-24s\t%lu\n", xfrm_mib_list[i].name,
 						buff[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __net_init xfrm_proc_init(struct net *net)
-{
-	if (!proc_create_net_single("xfrm_stat", 0444, net->proc_net,
-			 xfrm_statistics_seq_show, NULL))
-		return -ENOMEM;
-	return 0;
-}
+पूर्णांक __net_init xfrm_proc_init(काष्ठा net *net)
+अणु
+	अगर (!proc_create_net_single("xfrm_stat", 0444, net->proc_net,
+			 xfrm_statistics_seq_show, शून्य))
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-void xfrm_proc_fini(struct net *net)
-{
-	remove_proc_entry("xfrm_stat", net->proc_net);
-}
+व्योम xfrm_proc_fini(काष्ठा net *net)
+अणु
+	हटाओ_proc_entry("xfrm_stat", net->proc_net);
+पूर्ण

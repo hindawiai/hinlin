@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*---------------------------------------------------------------------------+
  |  reg_ld_str.c                                                             |
  |                                                                           |
@@ -14,73 +15,73 @@
 /*---------------------------------------------------------------------------+
  | Note:                                                                     |
  |    The file contains code which accesses user memory.                     |
- |    Emulator static data may change when user memory is accessed, due to   |
- |    other processes using the emulator while swapping is in progress.      |
+ |    Emulator अटल data may change when user memory is accessed, due to   |
+ |    other processes using the emulator जबतक swapping is in progress.      |
  +---------------------------------------------------------------------------*/
 
-#include "fpu_emu.h"
+#समावेश "fpu_emu.h"
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "fpu_system.h"
-#include "exception.h"
-#include "reg_constant.h"
-#include "control_w.h"
-#include "status_w.h"
+#समावेश "fpu_system.h"
+#समावेश "exception.h"
+#समावेश "reg_constant.h"
+#समावेश "control_w.h"
+#समावेश "status_w.h"
 
-#define DOUBLE_Emax 1023	/* largest valid exponent */
-#define DOUBLE_Ebias 1023
-#define DOUBLE_Emin (-1022)	/* smallest valid exponent */
+#घोषणा DOUBLE_Emax 1023	/* largest valid exponent */
+#घोषणा DOUBLE_Ebias 1023
+#घोषणा DOUBLE_Emin (-1022)	/* smallest valid exponent */
 
-#define SINGLE_Emax 127		/* largest valid exponent */
-#define SINGLE_Ebias 127
-#define SINGLE_Emin (-126)	/* smallest valid exponent */
+#घोषणा SINGLE_Emax 127		/* largest valid exponent */
+#घोषणा SINGLE_Ebias 127
+#घोषणा SINGLE_Emin (-126)	/* smallest valid exponent */
 
-static u_char normalize_no_excep(FPU_REG *r, int exp, int sign)
-{
-	u_char tag;
+अटल u_अक्षर normalize_no_excep(FPU_REG *r, पूर्णांक exp, पूर्णांक sign)
+अणु
+	u_अक्षर tag;
 
 	setexponent16(r, exp);
 
 	tag = FPU_normalize_nuo(r);
 	stdexp(r);
-	if (sign)
+	अगर (sign)
 		setnegative(r);
 
-	return tag;
-}
+	वापस tag;
+पूर्ण
 
-int FPU_tagof(FPU_REG *ptr)
-{
-	int exp;
+पूर्णांक FPU_tagof(FPU_REG *ptr)
+अणु
+	पूर्णांक exp;
 
 	exp = exponent16(ptr) & 0x7fff;
-	if (exp == 0) {
-		if (!(ptr->sigh | ptr->sigl)) {
-			return TAG_Zero;
-		}
-		/* The number is a de-normal or pseudodenormal. */
-		return TAG_Special;
-	}
+	अगर (exp == 0) अणु
+		अगर (!(ptr->sigh | ptr->sigl)) अणु
+			वापस TAG_Zero;
+		पूर्ण
+		/* The number is a de-normal or pseuकरोdenormal. */
+		वापस TAG_Special;
+	पूर्ण
 
-	if (exp == 0x7fff) {
+	अगर (exp == 0x7fff) अणु
 		/* Is an Infinity, a NaN, or an unsupported data type. */
-		return TAG_Special;
-	}
+		वापस TAG_Special;
+	पूर्ण
 
-	if (!(ptr->sigh & 0x80000000)) {
+	अगर (!(ptr->sigh & 0x80000000)) अणु
 		/* Unsupported data type. */
 		/* Valid numbers have the ms bit set to 1. */
 		/* Unnormal. */
-		return TAG_Special;
-	}
+		वापस TAG_Special;
+	पूर्ण
 
-	return TAG_Valid;
-}
+	वापस TAG_Valid;
+पूर्ण
 
-/* Get a long double from user memory */
-int FPU_load_extended(long double __user *s, int stnr)
-{
+/* Get a दीर्घ द्विगुन from user memory */
+पूर्णांक FPU_load_extended(दीर्घ द्विगुन __user *s, पूर्णांक stnr)
+अणु
 	FPU_REG *sti_ptr = &st(stnr);
 
 	RE_ENTRANT_CHECK_OFF;
@@ -88,225 +89,225 @@ int FPU_load_extended(long double __user *s, int stnr)
 	FPU_copy_from_user(sti_ptr, s, 10);
 	RE_ENTRANT_CHECK_ON;
 
-	return FPU_tagof(sti_ptr);
-}
+	वापस FPU_tagof(sti_ptr);
+पूर्ण
 
-/* Get a double from user memory */
-int FPU_load_double(double __user *dfloat, FPU_REG *loaded_data)
-{
-	int exp, tag, negative;
-	unsigned m64, l64;
+/* Get a द्विगुन from user memory */
+पूर्णांक FPU_load_द्विगुन(द्विगुन __user *dभग्न, FPU_REG *loaded_data)
+अणु
+	पूर्णांक exp, tag, negative;
+	अचिन्हित m64, l64;
 
 	RE_ENTRANT_CHECK_OFF;
-	FPU_access_ok(dfloat, 8);
-	FPU_get_user(m64, 1 + (unsigned long __user *)dfloat);
-	FPU_get_user(l64, (unsigned long __user *)dfloat);
+	FPU_access_ok(dभग्न, 8);
+	FPU_get_user(m64, 1 + (अचिन्हित दीर्घ __user *)dभग्न);
+	FPU_get_user(l64, (अचिन्हित दीर्घ __user *)dभग्न);
 	RE_ENTRANT_CHECK_ON;
 
 	negative = (m64 & 0x80000000) ? SIGN_Negative : SIGN_Positive;
 	exp = ((m64 & 0x7ff00000) >> 20) - DOUBLE_Ebias + EXTENDED_Ebias;
 	m64 &= 0xfffff;
-	if (exp > DOUBLE_Emax + EXTENDED_Ebias) {
+	अगर (exp > DOUBLE_Emax + EXTENDED_Ebias) अणु
 		/* Infinity or NaN */
-		if ((m64 == 0) && (l64 == 0)) {
+		अगर ((m64 == 0) && (l64 == 0)) अणु
 			/* +- infinity */
 			loaded_data->sigh = 0x80000000;
 			loaded_data->sigl = 0x00000000;
 			exp = EXP_Infinity + EXTENDED_Ebias;
 			tag = TAG_Special;
-		} else {
-			/* Must be a signaling or quiet NaN */
+		पूर्ण अन्यथा अणु
+			/* Must be a संकेतing or quiet NaN */
 			exp = EXP_NaN + EXTENDED_Ebias;
 			loaded_data->sigh = (m64 << 11) | 0x80000000;
 			loaded_data->sigh |= l64 >> 21;
 			loaded_data->sigl = l64 << 11;
-			tag = TAG_Special;	/* The calling function must look for NaNs */
-		}
-	} else if (exp < DOUBLE_Emin + EXTENDED_Ebias) {
+			tag = TAG_Special;	/* The calling function must look क्रम NaNs */
+		पूर्ण
+	पूर्ण अन्यथा अगर (exp < DOUBLE_Emin + EXTENDED_Ebias) अणु
 		/* Zero or de-normal */
-		if ((m64 == 0) && (l64 == 0)) {
+		अगर ((m64 == 0) && (l64 == 0)) अणु
 			/* Zero */
 			reg_copy(&CONST_Z, loaded_data);
 			exp = 0;
 			tag = TAG_Zero;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* De-normal */
 			loaded_data->sigh = m64 << 11;
 			loaded_data->sigh |= l64 >> 21;
 			loaded_data->sigl = l64 << 11;
 
-			return normalize_no_excep(loaded_data, DOUBLE_Emin,
+			वापस normalize_no_excep(loaded_data, DOUBLE_Emin,
 						  negative)
-			    | (denormal_operand() < 0 ? FPU_Exception : 0);
-		}
-	} else {
+			    | (denormal_opeअक्रम() < 0 ? FPU_Exception : 0);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		loaded_data->sigh = (m64 << 11) | 0x80000000;
 		loaded_data->sigh |= l64 >> 21;
 		loaded_data->sigl = l64 << 11;
 
 		tag = TAG_Valid;
-	}
+	पूर्ण
 
 	setexponent16(loaded_data, exp | negative);
 
-	return tag;
-}
+	वापस tag;
+पूर्ण
 
-/* Get a float from user memory */
-int FPU_load_single(float __user *single, FPU_REG *loaded_data)
-{
-	unsigned m32;
-	int exp, tag, negative;
+/* Get a भग्न from user memory */
+पूर्णांक FPU_load_single(भग्न __user *single, FPU_REG *loaded_data)
+अणु
+	अचिन्हित m32;
+	पूर्णांक exp, tag, negative;
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(single, 4);
-	FPU_get_user(m32, (unsigned long __user *)single);
+	FPU_get_user(m32, (अचिन्हित दीर्घ __user *)single);
 	RE_ENTRANT_CHECK_ON;
 
 	negative = (m32 & 0x80000000) ? SIGN_Negative : SIGN_Positive;
 
-	if (!(m32 & 0x7fffffff)) {
+	अगर (!(m32 & 0x7fffffff)) अणु
 		/* Zero */
 		reg_copy(&CONST_Z, loaded_data);
 		addexponent(loaded_data, negative);
-		return TAG_Zero;
-	}
+		वापस TAG_Zero;
+	पूर्ण
 	exp = ((m32 & 0x7f800000) >> 23) - SINGLE_Ebias + EXTENDED_Ebias;
 	m32 = (m32 & 0x7fffff) << 8;
-	if (exp < SINGLE_Emin + EXTENDED_Ebias) {
+	अगर (exp < SINGLE_Emin + EXTENDED_Ebias) अणु
 		/* De-normals */
 		loaded_data->sigh = m32;
 		loaded_data->sigl = 0;
 
-		return normalize_no_excep(loaded_data, SINGLE_Emin, negative)
-		    | (denormal_operand() < 0 ? FPU_Exception : 0);
-	} else if (exp > SINGLE_Emax + EXTENDED_Ebias) {
+		वापस normalize_no_excep(loaded_data, SINGLE_Emin, negative)
+		    | (denormal_opeअक्रम() < 0 ? FPU_Exception : 0);
+	पूर्ण अन्यथा अगर (exp > SINGLE_Emax + EXTENDED_Ebias) अणु
 		/* Infinity or NaN */
-		if (m32 == 0) {
+		अगर (m32 == 0) अणु
 			/* +- infinity */
 			loaded_data->sigh = 0x80000000;
 			loaded_data->sigl = 0x00000000;
 			exp = EXP_Infinity + EXTENDED_Ebias;
 			tag = TAG_Special;
-		} else {
-			/* Must be a signaling or quiet NaN */
+		पूर्ण अन्यथा अणु
+			/* Must be a संकेतing or quiet NaN */
 			exp = EXP_NaN + EXTENDED_Ebias;
 			loaded_data->sigh = m32 | 0x80000000;
 			loaded_data->sigl = 0;
-			tag = TAG_Special;	/* The calling function must look for NaNs */
-		}
-	} else {
+			tag = TAG_Special;	/* The calling function must look क्रम NaNs */
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		loaded_data->sigh = m32 | 0x80000000;
 		loaded_data->sigl = 0;
 		tag = TAG_Valid;
-	}
+	पूर्ण
 
 	setexponent16(loaded_data, exp | negative);	/* Set the sign. */
 
-	return tag;
-}
+	वापस tag;
+पूर्ण
 
-/* Get a long long from user memory */
-int FPU_load_int64(long long __user *_s)
-{
-	long long s;
-	int sign;
+/* Get a दीर्घ दीर्घ from user memory */
+पूर्णांक FPU_load_पूर्णांक64(दीर्घ दीर्घ __user *_s)
+अणु
+	दीर्घ दीर्घ s;
+	पूर्णांक sign;
 	FPU_REG *st0_ptr = &st(0);
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(_s, 8);
-	if (copy_from_user(&s, _s, 8))
-		FPU_abort;
+	अगर (copy_from_user(&s, _s, 8))
+		FPU_पात;
 	RE_ENTRANT_CHECK_ON;
 
-	if (s == 0) {
+	अगर (s == 0) अणु
 		reg_copy(&CONST_Z, st0_ptr);
-		return TAG_Zero;
-	}
+		वापस TAG_Zero;
+	पूर्ण
 
-	if (s > 0)
+	अगर (s > 0)
 		sign = SIGN_Positive;
-	else {
+	अन्यथा अणु
 		s = -s;
 		sign = SIGN_Negative;
-	}
+	पूर्ण
 
-	significand(st0_ptr) = s;
+	signअगरicand(st0_ptr) = s;
 
-	return normalize_no_excep(st0_ptr, 63, sign);
-}
+	वापस normalize_no_excep(st0_ptr, 63, sign);
+पूर्ण
 
-/* Get a long from user memory */
-int FPU_load_int32(long __user *_s, FPU_REG *loaded_data)
-{
-	long s;
-	int negative;
+/* Get a दीर्घ from user memory */
+पूर्णांक FPU_load_पूर्णांक32(दीर्घ __user *_s, FPU_REG *loaded_data)
+अणु
+	दीर्घ s;
+	पूर्णांक negative;
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(_s, 4);
 	FPU_get_user(s, _s);
 	RE_ENTRANT_CHECK_ON;
 
-	if (s == 0) {
+	अगर (s == 0) अणु
 		reg_copy(&CONST_Z, loaded_data);
-		return TAG_Zero;
-	}
+		वापस TAG_Zero;
+	पूर्ण
 
-	if (s > 0)
+	अगर (s > 0)
 		negative = SIGN_Positive;
-	else {
+	अन्यथा अणु
 		s = -s;
 		negative = SIGN_Negative;
-	}
+	पूर्ण
 
 	loaded_data->sigh = s;
 	loaded_data->sigl = 0;
 
-	return normalize_no_excep(loaded_data, 31, negative);
-}
+	वापस normalize_no_excep(loaded_data, 31, negative);
+पूर्ण
 
-/* Get a short from user memory */
-int FPU_load_int16(short __user *_s, FPU_REG *loaded_data)
-{
-	int s, negative;
+/* Get a लघु from user memory */
+पूर्णांक FPU_load_पूर्णांक16(लघु __user *_s, FPU_REG *loaded_data)
+अणु
+	पूर्णांक s, negative;
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(_s, 2);
-	/* Cast as short to get the sign extended. */
+	/* Cast as लघु to get the sign extended. */
 	FPU_get_user(s, _s);
 	RE_ENTRANT_CHECK_ON;
 
-	if (s == 0) {
+	अगर (s == 0) अणु
 		reg_copy(&CONST_Z, loaded_data);
-		return TAG_Zero;
-	}
+		वापस TAG_Zero;
+	पूर्ण
 
-	if (s > 0)
+	अगर (s > 0)
 		negative = SIGN_Positive;
-	else {
+	अन्यथा अणु
 		s = -s;
 		negative = SIGN_Negative;
-	}
+	पूर्ण
 
 	loaded_data->sigh = s << 16;
 	loaded_data->sigl = 0;
 
-	return normalize_no_excep(loaded_data, 15, negative);
-}
+	वापस normalize_no_excep(loaded_data, 15, negative);
+पूर्ण
 
 /* Get a packed bcd array from user memory */
-int FPU_load_bcd(u_char __user *s)
-{
+पूर्णांक FPU_load_bcd(u_अक्षर __user *s)
+अणु
 	FPU_REG *st0_ptr = &st(0);
-	int pos;
-	u_char bcd;
-	long long l = 0;
-	int sign;
+	पूर्णांक pos;
+	u_अक्षर bcd;
+	दीर्घ दीर्घ l = 0;
+	पूर्णांक sign;
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(s, 10);
 	RE_ENTRANT_CHECK_ON;
-	for (pos = 8; pos >= 0; pos--) {
+	क्रम (pos = 8; pos >= 0; pos--) अणु
 		l *= 10;
 		RE_ENTRANT_CHECK_OFF;
 		FPU_get_user(bcd, s + pos);
@@ -314,868 +315,868 @@ int FPU_load_bcd(u_char __user *s)
 		l += bcd >> 4;
 		l *= 10;
 		l += bcd & 0x0f;
-	}
+	पूर्ण
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_get_user(sign, s + 9);
 	sign = sign & 0x80 ? SIGN_Negative : SIGN_Positive;
 	RE_ENTRANT_CHECK_ON;
 
-	if (l == 0) {
+	अगर (l == 0) अणु
 		reg_copy(&CONST_Z, st0_ptr);
 		addexponent(st0_ptr, sign);	/* Set the sign. */
-		return TAG_Zero;
-	} else {
-		significand(st0_ptr) = l;
-		return normalize_no_excep(st0_ptr, 63, sign);
-	}
-}
+		वापस TAG_Zero;
+	पूर्ण अन्यथा अणु
+		signअगरicand(st0_ptr) = l;
+		वापस normalize_no_excep(st0_ptr, 63, sign);
+	पूर्ण
+पूर्ण
 
 /*===========================================================================*/
 
-/* Put a long double into user memory */
-int FPU_store_extended(FPU_REG *st0_ptr, u_char st0_tag,
-		       long double __user * d)
-{
+/* Put a दीर्घ द्विगुन पूर्णांकo user memory */
+पूर्णांक FPU_store_extended(FPU_REG *st0_ptr, u_अक्षर st0_tag,
+		       दीर्घ द्विगुन __user * d)
+अणु
 	/*
-	   The only exception raised by an attempt to store to an
-	   extended format is the Invalid Stack exception, i.e.
-	   attempting to store from an empty register.
+	   The only exception उठाओd by an attempt to store to an
+	   extended क्रमmat is the Invalid Stack exception, i.e.
+	   attempting to store from an empty रेजिस्टर.
 	 */
 
-	if (st0_tag != TAG_Empty) {
+	अगर (st0_tag != TAG_Empty) अणु
 		RE_ENTRANT_CHECK_OFF;
 		FPU_access_ok(d, 10);
 
-		FPU_put_user(st0_ptr->sigl, (unsigned long __user *)d);
+		FPU_put_user(st0_ptr->sigl, (अचिन्हित दीर्घ __user *)d);
 		FPU_put_user(st0_ptr->sigh,
-			     (unsigned long __user *)((u_char __user *) d + 4));
+			     (अचिन्हित दीर्घ __user *)((u_अक्षर __user *) d + 4));
 		FPU_put_user(exponent16(st0_ptr),
-			     (unsigned short __user *)((u_char __user *) d +
+			     (अचिन्हित लघु __user *)((u_अक्षर __user *) d +
 						       8));
 		RE_ENTRANT_CHECK_ON;
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* Empty register (stack underflow) */
+	/* Empty रेजिस्टर (stack underflow) */
 	EXCEPTION(EX_StackUnder);
-	if (control_word & CW_Invalid) {
+	अगर (control_word & CW_Invalid) अणु
 		/* The masked response */
 		/* Put out the QNaN indefinite */
 		RE_ENTRANT_CHECK_OFF;
 		FPU_access_ok(d, 10);
-		FPU_put_user(0, (unsigned long __user *)d);
-		FPU_put_user(0xc0000000, 1 + (unsigned long __user *)d);
-		FPU_put_user(0xffff, 4 + (short __user *)d);
+		FPU_put_user(0, (अचिन्हित दीर्घ __user *)d);
+		FPU_put_user(0xc0000000, 1 + (अचिन्हित दीर्घ __user *)d);
+		FPU_put_user(0xffff, 4 + (लघु __user *)d);
 		RE_ENTRANT_CHECK_ON;
-		return 1;
-	} else
-		return 0;
+		वापस 1;
+	पूर्ण अन्यथा
+		वापस 0;
 
-}
+पूर्ण
 
-/* Put a double into user memory */
-int FPU_store_double(FPU_REG *st0_ptr, u_char st0_tag, double __user *dfloat)
-{
-	unsigned long l[2];
-	unsigned long increment = 0;	/* avoid gcc warnings */
-	int precision_loss;
-	int exp;
-	FPU_REG tmp;
+/* Put a द्विगुन पूर्णांकo user memory */
+पूर्णांक FPU_store_द्विगुन(FPU_REG *st0_ptr, u_अक्षर st0_tag, द्विगुन __user *dभग्न)
+अणु
+	अचिन्हित दीर्घ l[2];
+	अचिन्हित दीर्घ increment = 0;	/* aव्योम gcc warnings */
+	पूर्णांक precision_loss;
+	पूर्णांक exp;
+	FPU_REG पंचांगp;
 
 	l[0] = 0;
 	l[1] = 0;
-	if (st0_tag == TAG_Valid) {
-		reg_copy(st0_ptr, &tmp);
-		exp = exponent(&tmp);
+	अगर (st0_tag == TAG_Valid) अणु
+		reg_copy(st0_ptr, &पंचांगp);
+		exp = exponent(&पंचांगp);
 
-		if (exp < DOUBLE_Emin) {	/* It may be a denormal */
-			addexponent(&tmp, -DOUBLE_Emin + 52);	/* largest exp to be 51 */
+		अगर (exp < DOUBLE_Emin) अणु	/* It may be a denormal */
+			addexponent(&पंचांगp, -DOUBLE_Emin + 52);	/* largest exp to be 51 */
 denormal_arg:
-			if ((precision_loss = FPU_round_to_int(&tmp, st0_tag))) {
-#ifdef PECULIAR_486
+			अगर ((precision_loss = FPU_round_to_पूर्णांक(&पंचांगp, st0_tag))) अणु
+#अगर_घोषित PECULIAR_486
 				/* Did it round to a non-denormal ? */
 				/* This behaviour might be regarded as peculiar, it appears
 				   that the 80486 rounds to the dest precision, then
 				   converts to decide underflow. */
-				if (!
-				    ((tmp.sigh == 0x00100000) && (tmp.sigl == 0)
+				अगर (!
+				    ((पंचांगp.sigh == 0x00100000) && (पंचांगp.sigl == 0)
 				     && (st0_ptr->sigl & 0x000007ff)))
-#endif /* PECULIAR_486 */
-				{
+#पूर्ण_अगर /* PECULIAR_486 */
+				अणु
 					EXCEPTION(EX_Underflow);
-					/* This is a special case: see sec 16.2.5.1 of
+					/* This is a special हाल: see sec 16.2.5.1 of
 					   the 80486 book */
-					if (!(control_word & CW_Underflow))
-						return 0;
-				}
+					अगर (!(control_word & CW_Underflow))
+						वापस 0;
+				पूर्ण
 				EXCEPTION(precision_loss);
-				if (!(control_word & CW_Precision))
-					return 0;
-			}
-			l[0] = tmp.sigl;
-			l[1] = tmp.sigh;
-		} else {
-			if (tmp.sigl & 0x000007ff) {
+				अगर (!(control_word & CW_Precision))
+					वापस 0;
+			पूर्ण
+			l[0] = पंचांगp.sigl;
+			l[1] = पंचांगp.sigh;
+		पूर्ण अन्यथा अणु
+			अगर (पंचांगp.sigl & 0x000007ff) अणु
 				precision_loss = 1;
-				switch (control_word & CW_RC) {
-				case RC_RND:
+				चयन (control_word & CW_RC) अणु
+				हाल RC_RND:
 					/* Rounding can get a little messy.. */
-					increment = ((tmp.sigl & 0x7ff) > 0x400) |	/* nearest */
-					    ((tmp.sigl & 0xc00) == 0xc00);	/* odd -> even */
-					break;
-				case RC_DOWN:	/* towards -infinity */
+					increment = ((पंचांगp.sigl & 0x7ff) > 0x400) |	/* nearest */
+					    ((पंचांगp.sigl & 0xc00) == 0xc00);	/* odd -> even */
+					अवरोध;
+				हाल RC_DOWN:	/* towards -infinity */
 					increment =
-					    signpositive(&tmp) ? 0 : tmp.
+					    signpositive(&पंचांगp) ? 0 : पंचांगp.
 					    sigl & 0x7ff;
-					break;
-				case RC_UP:	/* towards +infinity */
+					अवरोध;
+				हाल RC_UP:	/* towards +infinity */
 					increment =
-					    signpositive(&tmp) ? tmp.
+					    signpositive(&पंचांगp) ? पंचांगp.
 					    sigl & 0x7ff : 0;
-					break;
-				case RC_CHOP:
+					अवरोध;
+				हाल RC_CHOP:
 					increment = 0;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				/* Truncate the mantissa */
-				tmp.sigl &= 0xfffff800;
+				पंचांगp.sigl &= 0xfffff800;
 
-				if (increment) {
-					if (tmp.sigl >= 0xfffff800) {
+				अगर (increment) अणु
+					अगर (पंचांगp.sigl >= 0xfffff800) अणु
 						/* the sigl part overflows */
-						if (tmp.sigh == 0xffffffff) {
+						अगर (पंचांगp.sigh == 0xffffffff) अणु
 							/* The sigh part overflows */
-							tmp.sigh = 0x80000000;
+							पंचांगp.sigh = 0x80000000;
 							exp++;
-							if (exp >= EXP_OVER)
-								goto overflow;
-						} else {
-							tmp.sigh++;
-						}
-						tmp.sigl = 0x00000000;
-					} else {
+							अगर (exp >= EXP_OVER)
+								जाओ overflow;
+						पूर्ण अन्यथा अणु
+							पंचांगp.sigh++;
+						पूर्ण
+						पंचांगp.sigl = 0x00000000;
+					पूर्ण अन्यथा अणु
 						/* We only need to increment sigl */
-						tmp.sigl += 0x00000800;
-					}
-				}
-			} else
+						पंचांगp.sigl += 0x00000800;
+					पूर्ण
+				पूर्ण
+			पूर्ण अन्यथा
 				precision_loss = 0;
 
-			l[0] = (tmp.sigl >> 11) | (tmp.sigh << 21);
-			l[1] = ((tmp.sigh >> 11) & 0xfffff);
+			l[0] = (पंचांगp.sigl >> 11) | (पंचांगp.sigh << 21);
+			l[1] = ((पंचांगp.sigh >> 11) & 0xfffff);
 
-			if (exp > DOUBLE_Emax) {
+			अगर (exp > DOUBLE_Emax) अणु
 			      overflow:
 				EXCEPTION(EX_Overflow);
-				if (!(control_word & CW_Overflow))
-					return 0;
+				अगर (!(control_word & CW_Overflow))
+					वापस 0;
 				set_precision_flag_up();
-				if (!(control_word & CW_Precision))
-					return 0;
+				अगर (!(control_word & CW_Precision))
+					वापस 0;
 
-				/* This is a special case: see sec 16.2.5.1 of the 80486 book */
+				/* This is a special हाल: see sec 16.2.5.1 of the 80486 book */
 				/* Overflow to infinity */
 				l[1] = 0x7ff00000;	/* Set to + INF */
-			} else {
-				if (precision_loss) {
-					if (increment)
+			पूर्ण अन्यथा अणु
+				अगर (precision_loss) अणु
+					अगर (increment)
 						set_precision_flag_up();
-					else
-						set_precision_flag_down();
-				}
+					अन्यथा
+						set_precision_flag_करोwn();
+				पूर्ण
 				/* Add the exponent */
 				l[1] |= (((exp + DOUBLE_Ebias) & 0x7ff) << 20);
-			}
-		}
-	} else if (st0_tag == TAG_Zero) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Zero) अणु
 		/* Number is zero */
-	} else if (st0_tag == TAG_Special) {
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Special) अणु
 		st0_tag = FPU_Special(st0_ptr);
-		if (st0_tag == TW_Denormal) {
+		अगर (st0_tag == TW_Denormal) अणु
 			/* A denormal will always underflow. */
-#ifndef PECULIAR_486
+#अगर_अघोषित PECULIAR_486
 			/* An 80486 is supposed to be able to generate
 			   a denormal exception here, but... */
 			/* Underflow has priority. */
-			if (control_word & CW_Underflow)
-				denormal_operand();
-#endif /* PECULIAR_486 */
-			reg_copy(st0_ptr, &tmp);
-			goto denormal_arg;
-		} else if (st0_tag == TW_Infinity) {
+			अगर (control_word & CW_Underflow)
+				denormal_opeअक्रम();
+#पूर्ण_अगर /* PECULIAR_486 */
+			reg_copy(st0_ptr, &पंचांगp);
+			जाओ denormal_arg;
+		पूर्ण अन्यथा अगर (st0_tag == TW_Infinity) अणु
 			l[1] = 0x7ff00000;
-		} else if (st0_tag == TW_NaN) {
+		पूर्ण अन्यथा अगर (st0_tag == TW_NaN) अणु
 			/* Is it really a NaN ? */
-			if ((exponent(st0_ptr) == EXP_OVER)
-			    && (st0_ptr->sigh & 0x80000000)) {
-				/* See if we can get a valid NaN from the FPU_REG */
+			अगर ((exponent(st0_ptr) == EXP_OVER)
+			    && (st0_ptr->sigh & 0x80000000)) अणु
+				/* See अगर we can get a valid NaN from the FPU_REG */
 				l[0] =
 				    (st0_ptr->sigl >> 11) | (st0_ptr->
 							     sigh << 21);
 				l[1] = ((st0_ptr->sigh >> 11) & 0xfffff);
-				if (!(st0_ptr->sigh & 0x40000000)) {
-					/* It is a signalling NaN */
+				अगर (!(st0_ptr->sigh & 0x40000000)) अणु
+					/* It is a संकेतling NaN */
 					EXCEPTION(EX_Invalid);
-					if (!(control_word & CW_Invalid))
-						return 0;
+					अगर (!(control_word & CW_Invalid))
+						वापस 0;
 					l[1] |= (0x40000000 >> 11);
-				}
+				पूर्ण
 				l[1] |= 0x7ff00000;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* It is an unsupported data type */
 				EXCEPTION(EX_Invalid);
-				if (!(control_word & CW_Invalid))
-					return 0;
+				अगर (!(control_word & CW_Invalid))
+					वापस 0;
 				l[1] = 0xfff80000;
-			}
-		}
-	} else if (st0_tag == TAG_Empty) {
-		/* Empty register (stack underflow) */
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Empty) अणु
+		/* Empty रेजिस्टर (stack underflow) */
 		EXCEPTION(EX_StackUnder);
-		if (control_word & CW_Invalid) {
+		अगर (control_word & CW_Invalid) अणु
 			/* The masked response */
 			/* Put out the QNaN indefinite */
 			RE_ENTRANT_CHECK_OFF;
-			FPU_access_ok(dfloat, 8);
-			FPU_put_user(0, (unsigned long __user *)dfloat);
+			FPU_access_ok(dभग्न, 8);
+			FPU_put_user(0, (अचिन्हित दीर्घ __user *)dभग्न);
 			FPU_put_user(0xfff80000,
-				     1 + (unsigned long __user *)dfloat);
+				     1 + (अचिन्हित दीर्घ __user *)dभग्न);
 			RE_ENTRANT_CHECK_ON;
-			return 1;
-		} else
-			return 0;
-	}
-	if (getsign(st0_ptr))
+			वापस 1;
+		पूर्ण अन्यथा
+			वापस 0;
+	पूर्ण
+	अगर (माला_लोign(st0_ptr))
 		l[1] |= 0x80000000;
 
 	RE_ENTRANT_CHECK_OFF;
-	FPU_access_ok(dfloat, 8);
-	FPU_put_user(l[0], (unsigned long __user *)dfloat);
-	FPU_put_user(l[1], 1 + (unsigned long __user *)dfloat);
+	FPU_access_ok(dभग्न, 8);
+	FPU_put_user(l[0], (अचिन्हित दीर्घ __user *)dभग्न);
+	FPU_put_user(l[1], 1 + (अचिन्हित दीर्घ __user *)dभग्न);
 	RE_ENTRANT_CHECK_ON;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Put a float into user memory */
-int FPU_store_single(FPU_REG *st0_ptr, u_char st0_tag, float __user *single)
-{
-	long templ = 0;
-	unsigned long increment = 0;	/* avoid gcc warnings */
-	int precision_loss;
-	int exp;
-	FPU_REG tmp;
+/* Put a भग्न पूर्णांकo user memory */
+पूर्णांक FPU_store_single(FPU_REG *st0_ptr, u_अक्षर st0_tag, भग्न __user *single)
+अणु
+	दीर्घ templ = 0;
+	अचिन्हित दीर्घ increment = 0;	/* aव्योम gcc warnings */
+	पूर्णांक precision_loss;
+	पूर्णांक exp;
+	FPU_REG पंचांगp;
 
-	if (st0_tag == TAG_Valid) {
+	अगर (st0_tag == TAG_Valid) अणु
 
-		reg_copy(st0_ptr, &tmp);
-		exp = exponent(&tmp);
+		reg_copy(st0_ptr, &पंचांगp);
+		exp = exponent(&पंचांगp);
 
-		if (exp < SINGLE_Emin) {
-			addexponent(&tmp, -SINGLE_Emin + 23);	/* largest exp to be 22 */
+		अगर (exp < SINGLE_Emin) अणु
+			addexponent(&पंचांगp, -SINGLE_Emin + 23);	/* largest exp to be 22 */
 
 		      denormal_arg:
 
-			if ((precision_loss = FPU_round_to_int(&tmp, st0_tag))) {
-#ifdef PECULIAR_486
+			अगर ((precision_loss = FPU_round_to_पूर्णांक(&पंचांगp, st0_tag))) अणु
+#अगर_घोषित PECULIAR_486
 				/* Did it round to a non-denormal ? */
 				/* This behaviour might be regarded as peculiar, it appears
 				   that the 80486 rounds to the dest precision, then
 				   converts to decide underflow. */
-				if (!((tmp.sigl == 0x00800000) &&
+				अगर (!((पंचांगp.sigl == 0x00800000) &&
 				      ((st0_ptr->sigh & 0x000000ff)
 				       || st0_ptr->sigl)))
-#endif /* PECULIAR_486 */
-				{
+#पूर्ण_अगर /* PECULIAR_486 */
+				अणु
 					EXCEPTION(EX_Underflow);
-					/* This is a special case: see sec 16.2.5.1 of
+					/* This is a special हाल: see sec 16.2.5.1 of
 					   the 80486 book */
-					if (!(control_word & CW_Underflow))
-						return 0;
-				}
+					अगर (!(control_word & CW_Underflow))
+						वापस 0;
+				पूर्ण
 				EXCEPTION(precision_loss);
-				if (!(control_word & CW_Precision))
-					return 0;
-			}
-			templ = tmp.sigl;
-		} else {
-			if (tmp.sigl | (tmp.sigh & 0x000000ff)) {
-				unsigned long sigh = tmp.sigh;
-				unsigned long sigl = tmp.sigl;
+				अगर (!(control_word & CW_Precision))
+					वापस 0;
+			पूर्ण
+			templ = पंचांगp.sigl;
+		पूर्ण अन्यथा अणु
+			अगर (पंचांगp.sigl | (पंचांगp.sigh & 0x000000ff)) अणु
+				अचिन्हित दीर्घ sigh = पंचांगp.sigh;
+				अचिन्हित दीर्घ sigl = पंचांगp.sigl;
 
 				precision_loss = 1;
-				switch (control_word & CW_RC) {
-				case RC_RND:
+				चयन (control_word & CW_RC) अणु
+				हाल RC_RND:
 					increment = ((sigh & 0xff) > 0x80)	/* more than half */
 					    ||(((sigh & 0xff) == 0x80) && sigl)	/* more than half */
 					    ||((sigh & 0x180) == 0x180);	/* round to even */
-					break;
-				case RC_DOWN:	/* towards -infinity */
-					increment = signpositive(&tmp)
+					अवरोध;
+				हाल RC_DOWN:	/* towards -infinity */
+					increment = signpositive(&पंचांगp)
 					    ? 0 : (sigl | (sigh & 0xff));
-					break;
-				case RC_UP:	/* towards +infinity */
-					increment = signpositive(&tmp)
+					अवरोध;
+				हाल RC_UP:	/* towards +infinity */
+					increment = signpositive(&पंचांगp)
 					    ? (sigl | (sigh & 0xff)) : 0;
-					break;
-				case RC_CHOP:
+					अवरोध;
+				हाल RC_CHOP:
 					increment = 0;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				/* Truncate part of the mantissa */
-				tmp.sigl = 0;
+				पंचांगp.sigl = 0;
 
-				if (increment) {
-					if (sigh >= 0xffffff00) {
+				अगर (increment) अणु
+					अगर (sigh >= 0xffffff00) अणु
 						/* The sigh part overflows */
-						tmp.sigh = 0x80000000;
+						पंचांगp.sigh = 0x80000000;
 						exp++;
-						if (exp >= EXP_OVER)
-							goto overflow;
-					} else {
-						tmp.sigh &= 0xffffff00;
-						tmp.sigh += 0x100;
-					}
-				} else {
-					tmp.sigh &= 0xffffff00;	/* Finish the truncation */
-				}
-			} else
+						अगर (exp >= EXP_OVER)
+							जाओ overflow;
+					पूर्ण अन्यथा अणु
+						पंचांगp.sigh &= 0xffffff00;
+						पंचांगp.sigh += 0x100;
+					पूर्ण
+				पूर्ण अन्यथा अणु
+					पंचांगp.sigh &= 0xffffff00;	/* Finish the truncation */
+				पूर्ण
+			पूर्ण अन्यथा
 				precision_loss = 0;
 
-			templ = (tmp.sigh >> 8) & 0x007fffff;
+			templ = (पंचांगp.sigh >> 8) & 0x007fffff;
 
-			if (exp > SINGLE_Emax) {
+			अगर (exp > SINGLE_Emax) अणु
 			      overflow:
 				EXCEPTION(EX_Overflow);
-				if (!(control_word & CW_Overflow))
-					return 0;
+				अगर (!(control_word & CW_Overflow))
+					वापस 0;
 				set_precision_flag_up();
-				if (!(control_word & CW_Precision))
-					return 0;
+				अगर (!(control_word & CW_Precision))
+					वापस 0;
 
-				/* This is a special case: see sec 16.2.5.1 of the 80486 book. */
+				/* This is a special हाल: see sec 16.2.5.1 of the 80486 book. */
 				/* Masked response is overflow to infinity. */
 				templ = 0x7f800000;
-			} else {
-				if (precision_loss) {
-					if (increment)
+			पूर्ण अन्यथा अणु
+				अगर (precision_loss) अणु
+					अगर (increment)
 						set_precision_flag_up();
-					else
-						set_precision_flag_down();
-				}
+					अन्यथा
+						set_precision_flag_करोwn();
+				पूर्ण
 				/* Add the exponent */
 				templ |= ((exp + SINGLE_Ebias) & 0xff) << 23;
-			}
-		}
-	} else if (st0_tag == TAG_Zero) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Zero) अणु
 		templ = 0;
-	} else if (st0_tag == TAG_Special) {
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Special) अणु
 		st0_tag = FPU_Special(st0_ptr);
-		if (st0_tag == TW_Denormal) {
-			reg_copy(st0_ptr, &tmp);
+		अगर (st0_tag == TW_Denormal) अणु
+			reg_copy(st0_ptr, &पंचांगp);
 
 			/* A denormal will always underflow. */
-#ifndef PECULIAR_486
+#अगर_अघोषित PECULIAR_486
 			/* An 80486 is supposed to be able to generate
 			   a denormal exception here, but... */
 			/* Underflow has priority. */
-			if (control_word & CW_Underflow)
-				denormal_operand();
-#endif /* PECULIAR_486 */
-			goto denormal_arg;
-		} else if (st0_tag == TW_Infinity) {
+			अगर (control_word & CW_Underflow)
+				denormal_opeअक्रम();
+#पूर्ण_अगर /* PECULIAR_486 */
+			जाओ denormal_arg;
+		पूर्ण अन्यथा अगर (st0_tag == TW_Infinity) अणु
 			templ = 0x7f800000;
-		} else if (st0_tag == TW_NaN) {
+		पूर्ण अन्यथा अगर (st0_tag == TW_NaN) अणु
 			/* Is it really a NaN ? */
-			if ((exponent(st0_ptr) == EXP_OVER)
-			    && (st0_ptr->sigh & 0x80000000)) {
-				/* See if we can get a valid NaN from the FPU_REG */
+			अगर ((exponent(st0_ptr) == EXP_OVER)
+			    && (st0_ptr->sigh & 0x80000000)) अणु
+				/* See अगर we can get a valid NaN from the FPU_REG */
 				templ = st0_ptr->sigh >> 8;
-				if (!(st0_ptr->sigh & 0x40000000)) {
-					/* It is a signalling NaN */
+				अगर (!(st0_ptr->sigh & 0x40000000)) अणु
+					/* It is a संकेतling NaN */
 					EXCEPTION(EX_Invalid);
-					if (!(control_word & CW_Invalid))
-						return 0;
+					अगर (!(control_word & CW_Invalid))
+						वापस 0;
 					templ |= (0x40000000 >> 8);
-				}
+				पूर्ण
 				templ |= 0x7f800000;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* It is an unsupported data type */
 				EXCEPTION(EX_Invalid);
-				if (!(control_word & CW_Invalid))
-					return 0;
+				अगर (!(control_word & CW_Invalid))
+					वापस 0;
 				templ = 0xffc00000;
-			}
-		}
-#ifdef PARANOID
-		else {
+			पूर्ण
+		पूर्ण
+#अगर_घोषित PARANOID
+		अन्यथा अणु
 			EXCEPTION(EX_INTERNAL | 0x164);
-			return 0;
-		}
-#endif
-	} else if (st0_tag == TAG_Empty) {
-		/* Empty register (stack underflow) */
+			वापस 0;
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Empty) अणु
+		/* Empty रेजिस्टर (stack underflow) */
 		EXCEPTION(EX_StackUnder);
-		if (control_word & EX_Invalid) {
+		अगर (control_word & EX_Invalid) अणु
 			/* The masked response */
 			/* Put out the QNaN indefinite */
 			RE_ENTRANT_CHECK_OFF;
 			FPU_access_ok(single, 4);
 			FPU_put_user(0xffc00000,
-				     (unsigned long __user *)single);
+				     (अचिन्हित दीर्घ __user *)single);
 			RE_ENTRANT_CHECK_ON;
-			return 1;
-		} else
-			return 0;
-	}
-#ifdef PARANOID
-	else {
+			वापस 1;
+		पूर्ण अन्यथा
+			वापस 0;
+	पूर्ण
+#अगर_घोषित PARANOID
+	अन्यथा अणु
 		EXCEPTION(EX_INTERNAL | 0x163);
-		return 0;
-	}
-#endif
-	if (getsign(st0_ptr))
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (माला_लोign(st0_ptr))
 		templ |= 0x80000000;
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(single, 4);
-	FPU_put_user(templ, (unsigned long __user *)single);
+	FPU_put_user(templ, (अचिन्हित दीर्घ __user *)single);
 	RE_ENTRANT_CHECK_ON;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Put a long long into user memory */
-int FPU_store_int64(FPU_REG *st0_ptr, u_char st0_tag, long long __user *d)
-{
+/* Put a दीर्घ दीर्घ पूर्णांकo user memory */
+पूर्णांक FPU_store_पूर्णांक64(FPU_REG *st0_ptr, u_अक्षर st0_tag, दीर्घ दीर्घ __user *d)
+अणु
 	FPU_REG t;
-	long long tll;
-	int precision_loss;
+	दीर्घ दीर्घ tll;
+	पूर्णांक precision_loss;
 
-	if (st0_tag == TAG_Empty) {
-		/* Empty register (stack underflow) */
+	अगर (st0_tag == TAG_Empty) अणु
+		/* Empty रेजिस्टर (stack underflow) */
 		EXCEPTION(EX_StackUnder);
-		goto invalid_operand;
-	} else if (st0_tag == TAG_Special) {
+		जाओ invalid_opeअक्रम;
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Special) अणु
 		st0_tag = FPU_Special(st0_ptr);
-		if ((st0_tag == TW_Infinity) || (st0_tag == TW_NaN)) {
+		अगर ((st0_tag == TW_Infinity) || (st0_tag == TW_NaN)) अणु
 			EXCEPTION(EX_Invalid);
-			goto invalid_operand;
-		}
-	}
+			जाओ invalid_opeअक्रम;
+		पूर्ण
+	पूर्ण
 
 	reg_copy(st0_ptr, &t);
-	precision_loss = FPU_round_to_int(&t, st0_tag);
-	((long *)&tll)[0] = t.sigl;
-	((long *)&tll)[1] = t.sigh;
-	if ((precision_loss == 1) ||
+	precision_loss = FPU_round_to_पूर्णांक(&t, st0_tag);
+	((दीर्घ *)&tll)[0] = t.sigl;
+	((दीर्घ *)&tll)[1] = t.sigh;
+	अगर ((precision_loss == 1) ||
 	    ((t.sigh & 0x80000000) &&
-	     !((t.sigh == 0x80000000) && (t.sigl == 0) && signnegative(&t)))) {
+	     !((t.sigh == 0x80000000) && (t.sigl == 0) && signnegative(&t)))) अणु
 		EXCEPTION(EX_Invalid);
-		/* This is a special case: see sec 16.2.5.1 of the 80486 book */
-	      invalid_operand:
-		if (control_word & EX_Invalid) {
+		/* This is a special हाल: see sec 16.2.5.1 of the 80486 book */
+	      invalid_opeअक्रम:
+		अगर (control_word & EX_Invalid) अणु
 			/* Produce something like QNaN "indefinite" */
 			tll = 0x8000000000000000LL;
-		} else
-			return 0;
-	} else {
-		if (precision_loss)
+		पूर्ण अन्यथा
+			वापस 0;
+	पूर्ण अन्यथा अणु
+		अगर (precision_loss)
 			set_precision_flag(precision_loss);
-		if (signnegative(&t))
+		अगर (signnegative(&t))
 			tll = -tll;
-	}
+	पूर्ण
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(d, 8);
-	if (copy_to_user(d, &tll, 8))
-		FPU_abort;
+	अगर (copy_to_user(d, &tll, 8))
+		FPU_पात;
 	RE_ENTRANT_CHECK_ON;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Put a long into user memory */
-int FPU_store_int32(FPU_REG *st0_ptr, u_char st0_tag, long __user *d)
-{
+/* Put a दीर्घ पूर्णांकo user memory */
+पूर्णांक FPU_store_पूर्णांक32(FPU_REG *st0_ptr, u_अक्षर st0_tag, दीर्घ __user *d)
+अणु
 	FPU_REG t;
-	int precision_loss;
+	पूर्णांक precision_loss;
 
-	if (st0_tag == TAG_Empty) {
-		/* Empty register (stack underflow) */
+	अगर (st0_tag == TAG_Empty) अणु
+		/* Empty रेजिस्टर (stack underflow) */
 		EXCEPTION(EX_StackUnder);
-		goto invalid_operand;
-	} else if (st0_tag == TAG_Special) {
+		जाओ invalid_opeअक्रम;
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Special) अणु
 		st0_tag = FPU_Special(st0_ptr);
-		if ((st0_tag == TW_Infinity) || (st0_tag == TW_NaN)) {
+		अगर ((st0_tag == TW_Infinity) || (st0_tag == TW_NaN)) अणु
 			EXCEPTION(EX_Invalid);
-			goto invalid_operand;
-		}
-	}
+			जाओ invalid_opeअक्रम;
+		पूर्ण
+	पूर्ण
 
 	reg_copy(st0_ptr, &t);
-	precision_loss = FPU_round_to_int(&t, st0_tag);
-	if (t.sigh ||
+	precision_loss = FPU_round_to_पूर्णांक(&t, st0_tag);
+	अगर (t.sigh ||
 	    ((t.sigl & 0x80000000) &&
-	     !((t.sigl == 0x80000000) && signnegative(&t)))) {
+	     !((t.sigl == 0x80000000) && signnegative(&t)))) अणु
 		EXCEPTION(EX_Invalid);
-		/* This is a special case: see sec 16.2.5.1 of the 80486 book */
-	      invalid_operand:
-		if (control_word & EX_Invalid) {
+		/* This is a special हाल: see sec 16.2.5.1 of the 80486 book */
+	      invalid_opeअक्रम:
+		अगर (control_word & EX_Invalid) अणु
 			/* Produce something like QNaN "indefinite" */
 			t.sigl = 0x80000000;
-		} else
-			return 0;
-	} else {
-		if (precision_loss)
+		पूर्ण अन्यथा
+			वापस 0;
+	पूर्ण अन्यथा अणु
+		अगर (precision_loss)
 			set_precision_flag(precision_loss);
-		if (signnegative(&t))
-			t.sigl = -(long)t.sigl;
-	}
+		अगर (signnegative(&t))
+			t.sigl = -(दीर्घ)t.sigl;
+	पूर्ण
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(d, 4);
-	FPU_put_user(t.sigl, (unsigned long __user *)d);
+	FPU_put_user(t.sigl, (अचिन्हित दीर्घ __user *)d);
 	RE_ENTRANT_CHECK_ON;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Put a short into user memory */
-int FPU_store_int16(FPU_REG *st0_ptr, u_char st0_tag, short __user *d)
-{
+/* Put a लघु पूर्णांकo user memory */
+पूर्णांक FPU_store_पूर्णांक16(FPU_REG *st0_ptr, u_अक्षर st0_tag, लघु __user *d)
+अणु
 	FPU_REG t;
-	int precision_loss;
+	पूर्णांक precision_loss;
 
-	if (st0_tag == TAG_Empty) {
-		/* Empty register (stack underflow) */
+	अगर (st0_tag == TAG_Empty) अणु
+		/* Empty रेजिस्टर (stack underflow) */
 		EXCEPTION(EX_StackUnder);
-		goto invalid_operand;
-	} else if (st0_tag == TAG_Special) {
+		जाओ invalid_opeअक्रम;
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Special) अणु
 		st0_tag = FPU_Special(st0_ptr);
-		if ((st0_tag == TW_Infinity) || (st0_tag == TW_NaN)) {
+		अगर ((st0_tag == TW_Infinity) || (st0_tag == TW_NaN)) अणु
 			EXCEPTION(EX_Invalid);
-			goto invalid_operand;
-		}
-	}
+			जाओ invalid_opeअक्रम;
+		पूर्ण
+	पूर्ण
 
 	reg_copy(st0_ptr, &t);
-	precision_loss = FPU_round_to_int(&t, st0_tag);
-	if (t.sigh ||
+	precision_loss = FPU_round_to_पूर्णांक(&t, st0_tag);
+	अगर (t.sigh ||
 	    ((t.sigl & 0xffff8000) &&
-	     !((t.sigl == 0x8000) && signnegative(&t)))) {
+	     !((t.sigl == 0x8000) && signnegative(&t)))) अणु
 		EXCEPTION(EX_Invalid);
-		/* This is a special case: see sec 16.2.5.1 of the 80486 book */
-	      invalid_operand:
-		if (control_word & EX_Invalid) {
+		/* This is a special हाल: see sec 16.2.5.1 of the 80486 book */
+	      invalid_opeअक्रम:
+		अगर (control_word & EX_Invalid) अणु
 			/* Produce something like QNaN "indefinite" */
 			t.sigl = 0x8000;
-		} else
-			return 0;
-	} else {
-		if (precision_loss)
+		पूर्ण अन्यथा
+			वापस 0;
+	पूर्ण अन्यथा अणु
+		अगर (precision_loss)
 			set_precision_flag(precision_loss);
-		if (signnegative(&t))
+		अगर (signnegative(&t))
 			t.sigl = -t.sigl;
-	}
+	पूर्ण
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(d, 2);
-	FPU_put_user((short)t.sigl, d);
+	FPU_put_user((लघु)t.sigl, d);
 	RE_ENTRANT_CHECK_ON;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Put a packed bcd array into user memory */
-int FPU_store_bcd(FPU_REG *st0_ptr, u_char st0_tag, u_char __user *d)
-{
+/* Put a packed bcd array पूर्णांकo user memory */
+पूर्णांक FPU_store_bcd(FPU_REG *st0_ptr, u_अक्षर st0_tag, u_अक्षर __user *d)
+अणु
 	FPU_REG t;
-	unsigned long long ll;
-	u_char b;
-	int i, precision_loss;
-	u_char sign = (getsign(st0_ptr) == SIGN_NEG) ? 0x80 : 0;
+	अचिन्हित दीर्घ दीर्घ ll;
+	u_अक्षर b;
+	पूर्णांक i, precision_loss;
+	u_अक्षर sign = (माला_लोign(st0_ptr) == SIGN_NEG) ? 0x80 : 0;
 
-	if (st0_tag == TAG_Empty) {
-		/* Empty register (stack underflow) */
+	अगर (st0_tag == TAG_Empty) अणु
+		/* Empty रेजिस्टर (stack underflow) */
 		EXCEPTION(EX_StackUnder);
-		goto invalid_operand;
-	} else if (st0_tag == TAG_Special) {
+		जाओ invalid_opeअक्रम;
+	पूर्ण अन्यथा अगर (st0_tag == TAG_Special) अणु
 		st0_tag = FPU_Special(st0_ptr);
-		if ((st0_tag == TW_Infinity) || (st0_tag == TW_NaN)) {
+		अगर ((st0_tag == TW_Infinity) || (st0_tag == TW_NaN)) अणु
 			EXCEPTION(EX_Invalid);
-			goto invalid_operand;
-		}
-	}
+			जाओ invalid_opeअक्रम;
+		पूर्ण
+	पूर्ण
 
 	reg_copy(st0_ptr, &t);
-	precision_loss = FPU_round_to_int(&t, st0_tag);
-	ll = significand(&t);
+	precision_loss = FPU_round_to_पूर्णांक(&t, st0_tag);
+	ll = signअगरicand(&t);
 
-	/* Check for overflow, by comparing with 999999999999999999 decimal. */
-	if ((t.sigh > 0x0de0b6b3) ||
-	    ((t.sigh == 0x0de0b6b3) && (t.sigl > 0xa763ffff))) {
+	/* Check क्रम overflow, by comparing with 999999999999999999 decimal. */
+	अगर ((t.sigh > 0x0de0b6b3) ||
+	    ((t.sigh == 0x0de0b6b3) && (t.sigl > 0xa763ffff))) अणु
 		EXCEPTION(EX_Invalid);
-		/* This is a special case: see sec 16.2.5.1 of the 80486 book */
-	      invalid_operand:
-		if (control_word & CW_Invalid) {
+		/* This is a special हाल: see sec 16.2.5.1 of the 80486 book */
+	      invalid_opeअक्रम:
+		अगर (control_word & CW_Invalid) अणु
 			/* Produce the QNaN "indefinite" */
 			RE_ENTRANT_CHECK_OFF;
 			FPU_access_ok(d, 10);
-			for (i = 0; i < 7; i++)
+			क्रम (i = 0; i < 7; i++)
 				FPU_put_user(0, d + i);	/* These bytes "undefined" */
 			FPU_put_user(0xc0, d + 7);	/* This byte "undefined" */
 			FPU_put_user(0xff, d + 8);
 			FPU_put_user(0xff, d + 9);
 			RE_ENTRANT_CHECK_ON;
-			return 1;
-		} else
-			return 0;
-	} else if (precision_loss) {
-		/* Precision loss doesn't stop the data transfer */
+			वापस 1;
+		पूर्ण अन्यथा
+			वापस 0;
+	पूर्ण अन्यथा अगर (precision_loss) अणु
+		/* Precision loss करोesn't stop the data transfer */
 		set_precision_flag(precision_loss);
-	}
+	पूर्ण
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(d, 10);
 	RE_ENTRANT_CHECK_ON;
-	for (i = 0; i < 9; i++) {
-		b = FPU_div_small(&ll, 10);
-		b |= (FPU_div_small(&ll, 10)) << 4;
+	क्रम (i = 0; i < 9; i++) अणु
+		b = FPU_भाग_small(&ll, 10);
+		b |= (FPU_भाग_small(&ll, 10)) << 4;
 		RE_ENTRANT_CHECK_OFF;
 		FPU_put_user(b, d + i);
 		RE_ENTRANT_CHECK_ON;
-	}
+	पूर्ण
 	RE_ENTRANT_CHECK_OFF;
 	FPU_put_user(sign, d + 9);
 	RE_ENTRANT_CHECK_ON;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*===========================================================================*/
 
-/* r gets mangled such that sig is int, sign: 
+/* r माला_लो mangled such that sig is पूर्णांक, sign: 
    it is NOT normalized */
-/* The return value (in eax) is zero if the result is exact,
-   if bits are changed due to rounding, truncation, etc, then
-   a non-zero value is returned */
-/* Overflow is signaled by a non-zero return value (in eax).
-   In the case of overflow, the returned significand always has the
+/* The वापस value (in eax) is zero अगर the result is exact,
+   अगर bits are changed due to rounding, truncation, etc, then
+   a non-zero value is वापसed */
+/* Overflow is संकेतed by a non-zero वापस value (in eax).
+   In the हाल of overflow, the वापसed signअगरicand always has the
    largest possible value */
-int FPU_round_to_int(FPU_REG *r, u_char tag)
-{
-	u_char very_big;
-	unsigned eax;
+पूर्णांक FPU_round_to_पूर्णांक(FPU_REG *r, u_अक्षर tag)
+अणु
+	u_अक्षर very_big;
+	अचिन्हित eax;
 
-	if (tag == TAG_Zero) {
-		/* Make sure that zero is returned */
-		significand(r) = 0;
-		return 0;	/* o.k. */
-	}
+	अगर (tag == TAG_Zero) अणु
+		/* Make sure that zero is वापसed */
+		signअगरicand(r) = 0;
+		वापस 0;	/* o.k. */
+	पूर्ण
 
-	if (exponent(r) > 63) {
+	अगर (exponent(r) > 63) अणु
 		r->sigl = r->sigh = ~0;	/* The largest representable number */
-		return 1;	/* overflow */
-	}
+		वापस 1;	/* overflow */
+	पूर्ण
 
 	eax = FPU_shrxs(&r->sigl, 63 - exponent(r));
-	very_big = !(~(r->sigh) | ~(r->sigl));	/* test for 0xfff...fff */
-#define	half_or_more	(eax & 0x80000000)
-#define	frac_part	(eax)
-#define more_than_half  ((eax & 0x80000001) == 0x80000001)
-	switch (control_word & CW_RC) {
-	case RC_RND:
-		if (more_than_half	/* nearest */
-		    || (half_or_more && (r->sigl & 1))) {	/* odd -> even */
-			if (very_big)
-				return 1;	/* overflow */
-			significand(r)++;
-			return PRECISION_LOST_UP;
-		}
-		break;
-	case RC_DOWN:
-		if (frac_part && getsign(r)) {
-			if (very_big)
-				return 1;	/* overflow */
-			significand(r)++;
-			return PRECISION_LOST_UP;
-		}
-		break;
-	case RC_UP:
-		if (frac_part && !getsign(r)) {
-			if (very_big)
-				return 1;	/* overflow */
-			significand(r)++;
-			return PRECISION_LOST_UP;
-		}
-		break;
-	case RC_CHOP:
-		break;
-	}
+	very_big = !(~(r->sigh) | ~(r->sigl));	/* test क्रम 0xfff...fff */
+#घोषणा	half_or_more	(eax & 0x80000000)
+#घोषणा	frac_part	(eax)
+#घोषणा more_than_half  ((eax & 0x80000001) == 0x80000001)
+	चयन (control_word & CW_RC) अणु
+	हाल RC_RND:
+		अगर (more_than_half	/* nearest */
+		    || (half_or_more && (r->sigl & 1))) अणु	/* odd -> even */
+			अगर (very_big)
+				वापस 1;	/* overflow */
+			signअगरicand(r)++;
+			वापस PRECISION_LOST_UP;
+		पूर्ण
+		अवरोध;
+	हाल RC_DOWN:
+		अगर (frac_part && माला_लोign(r)) अणु
+			अगर (very_big)
+				वापस 1;	/* overflow */
+			signअगरicand(r)++;
+			वापस PRECISION_LOST_UP;
+		पूर्ण
+		अवरोध;
+	हाल RC_UP:
+		अगर (frac_part && !माला_लोign(r)) अणु
+			अगर (very_big)
+				वापस 1;	/* overflow */
+			signअगरicand(r)++;
+			वापस PRECISION_LOST_UP;
+		पूर्ण
+		अवरोध;
+	हाल RC_CHOP:
+		अवरोध;
+	पूर्ण
 
-	return eax ? PRECISION_LOST_DOWN : 0;
+	वापस eax ? PRECISION_LOST_DOWN : 0;
 
-}
+पूर्ण
 
 /*===========================================================================*/
 
-u_char __user *fldenv(fpu_addr_modes addr_modes, u_char __user *s)
-{
-	unsigned short tag_word = 0;
-	u_char tag;
-	int i;
+u_अक्षर __user *fldenv(fpu_addr_modes addr_modes, u_अक्षर __user *s)
+अणु
+	अचिन्हित लघु tag_word = 0;
+	u_अक्षर tag;
+	पूर्णांक i;
 
-	if ((addr_modes.default_mode == VM86) ||
-	    ((addr_modes.default_mode == PM16)
-	     ^ (addr_modes.override.operand_size == OP_SIZE_PREFIX))) {
+	अगर ((addr_modes.शेष_mode == VM86) ||
+	    ((addr_modes.शेष_mode == PM16)
+	     ^ (addr_modes.override.opeअक्रम_size == OP_SIZE_PREFIX))) अणु
 		RE_ENTRANT_CHECK_OFF;
 		FPU_access_ok(s, 0x0e);
-		FPU_get_user(control_word, (unsigned short __user *)s);
-		FPU_get_user(partial_status, (unsigned short __user *)(s + 2));
-		FPU_get_user(tag_word, (unsigned short __user *)(s + 4));
-		FPU_get_user(instruction_address.offset,
-			     (unsigned short __user *)(s + 6));
-		FPU_get_user(instruction_address.selector,
-			     (unsigned short __user *)(s + 8));
-		FPU_get_user(operand_address.offset,
-			     (unsigned short __user *)(s + 0x0a));
-		FPU_get_user(operand_address.selector,
-			     (unsigned short __user *)(s + 0x0c));
+		FPU_get_user(control_word, (अचिन्हित लघु __user *)s);
+		FPU_get_user(partial_status, (अचिन्हित लघु __user *)(s + 2));
+		FPU_get_user(tag_word, (अचिन्हित लघु __user *)(s + 4));
+		FPU_get_user(inकाष्ठाion_address.offset,
+			     (अचिन्हित लघु __user *)(s + 6));
+		FPU_get_user(inकाष्ठाion_address.selector,
+			     (अचिन्हित लघु __user *)(s + 8));
+		FPU_get_user(opeअक्रम_address.offset,
+			     (अचिन्हित लघु __user *)(s + 0x0a));
+		FPU_get_user(opeअक्रम_address.selector,
+			     (अचिन्हित लघु __user *)(s + 0x0c));
 		RE_ENTRANT_CHECK_ON;
 		s += 0x0e;
-		if (addr_modes.default_mode == VM86) {
-			instruction_address.offset
-			    += (instruction_address.selector & 0xf000) << 4;
-			operand_address.offset +=
-			    (operand_address.selector & 0xf000) << 4;
-		}
-	} else {
+		अगर (addr_modes.शेष_mode == VM86) अणु
+			inकाष्ठाion_address.offset
+			    += (inकाष्ठाion_address.selector & 0xf000) << 4;
+			opeअक्रम_address.offset +=
+			    (opeअक्रम_address.selector & 0xf000) << 4;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		RE_ENTRANT_CHECK_OFF;
 		FPU_access_ok(s, 0x1c);
-		FPU_get_user(control_word, (unsigned short __user *)s);
-		FPU_get_user(partial_status, (unsigned short __user *)(s + 4));
-		FPU_get_user(tag_word, (unsigned short __user *)(s + 8));
-		FPU_get_user(instruction_address.offset,
-			     (unsigned long __user *)(s + 0x0c));
-		FPU_get_user(instruction_address.selector,
-			     (unsigned short __user *)(s + 0x10));
-		FPU_get_user(instruction_address.opcode,
-			     (unsigned short __user *)(s + 0x12));
-		FPU_get_user(operand_address.offset,
-			     (unsigned long __user *)(s + 0x14));
-		FPU_get_user(operand_address.selector,
-			     (unsigned long __user *)(s + 0x18));
+		FPU_get_user(control_word, (अचिन्हित लघु __user *)s);
+		FPU_get_user(partial_status, (अचिन्हित लघु __user *)(s + 4));
+		FPU_get_user(tag_word, (अचिन्हित लघु __user *)(s + 8));
+		FPU_get_user(inकाष्ठाion_address.offset,
+			     (अचिन्हित दीर्घ __user *)(s + 0x0c));
+		FPU_get_user(inकाष्ठाion_address.selector,
+			     (अचिन्हित लघु __user *)(s + 0x10));
+		FPU_get_user(inकाष्ठाion_address.opcode,
+			     (अचिन्हित लघु __user *)(s + 0x12));
+		FPU_get_user(opeअक्रम_address.offset,
+			     (अचिन्हित दीर्घ __user *)(s + 0x14));
+		FPU_get_user(opeअक्रम_address.selector,
+			     (अचिन्हित दीर्घ __user *)(s + 0x18));
 		RE_ENTRANT_CHECK_ON;
 		s += 0x1c;
-	}
+	पूर्ण
 
-#ifdef PECULIAR_486
+#अगर_घोषित PECULIAR_486
 	control_word &= ~0xe080;
-#endif /* PECULIAR_486 */
+#पूर्ण_अगर /* PECULIAR_486 */
 
-	top = (partial_status >> SW_Top_Shift) & 7;
+	top = (partial_status >> SW_Top_Shअगरt) & 7;
 
-	if (partial_status & ~control_word & CW_Exceptions)
+	अगर (partial_status & ~control_word & CW_Exceptions)
 		partial_status |= (SW_Summary | SW_Backward);
-	else
+	अन्यथा
 		partial_status &= ~(SW_Summary | SW_Backward);
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		tag = tag_word & 3;
 		tag_word >>= 2;
 
-		if (tag == TAG_Empty)
+		अगर (tag == TAG_Empty)
 			/* New tag is empty.  Accept it */
 			FPU_settag(i, TAG_Empty);
-		else if (FPU_gettag(i) == TAG_Empty) {
+		अन्यथा अगर (FPU_gettag(i) == TAG_Empty) अणु
 			/* Old tag is empty and new tag is not empty.  New tag is determined
 			   by old reg contents */
-			if (exponent(&fpu_register(i)) == -EXTENDED_Ebias) {
-				if (!
-				    (fpu_register(i).sigl | fpu_register(i).
+			अगर (exponent(&fpu_रेजिस्टर(i)) == -EXTENDED_Ebias) अणु
+				अगर (!
+				    (fpu_रेजिस्टर(i).sigl | fpu_रेजिस्टर(i).
 				     sigh))
 					FPU_settag(i, TAG_Zero);
-				else
+				अन्यथा
 					FPU_settag(i, TAG_Special);
-			} else if (exponent(&fpu_register(i)) ==
-				   0x7fff - EXTENDED_Ebias) {
+			पूर्ण अन्यथा अगर (exponent(&fpu_रेजिस्टर(i)) ==
+				   0x7fff - EXTENDED_Ebias) अणु
 				FPU_settag(i, TAG_Special);
-			} else if (fpu_register(i).sigh & 0x80000000)
+			पूर्ण अन्यथा अगर (fpu_रेजिस्टर(i).sigh & 0x80000000)
 				FPU_settag(i, TAG_Valid);
-			else
+			अन्यथा
 				FPU_settag(i, TAG_Special);	/* An Un-normal */
-		}
+		पूर्ण
 		/* Else old tag is not empty and new tag is not empty.  Old tag
-		   remains correct */
-	}
+		   reमुख्यs correct */
+	पूर्ण
 
-	return s;
-}
+	वापस s;
+पूर्ण
 
-void frstor(fpu_addr_modes addr_modes, u_char __user *data_address)
-{
-	int i, regnr;
-	u_char __user *s = fldenv(addr_modes, data_address);
-	int offset = (top & 7) * 10, other = 80 - offset;
+व्योम frstor(fpu_addr_modes addr_modes, u_अक्षर __user *data_address)
+अणु
+	पूर्णांक i, regnr;
+	u_अक्षर __user *s = fldenv(addr_modes, data_address);
+	पूर्णांक offset = (top & 7) * 10, other = 80 - offset;
 
-	/* Copy all registers in stack order. */
+	/* Copy all रेजिस्टरs in stack order. */
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(s, 80);
-	FPU_copy_from_user(register_base + offset, s, other);
-	if (offset)
-		FPU_copy_from_user(register_base, s + other, offset);
+	FPU_copy_from_user(रेजिस्टर_base + offset, s, other);
+	अगर (offset)
+		FPU_copy_from_user(रेजिस्टर_base, s + other, offset);
 	RE_ENTRANT_CHECK_ON;
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		regnr = (i + top) & 7;
-		if (FPU_gettag(regnr) != TAG_Empty)
-			/* The loaded data over-rides all other cases. */
+		अगर (FPU_gettag(regnr) != TAG_Empty)
+			/* The loaded data over-rides all other हालs. */
 			FPU_settag(regnr, FPU_tagof(&st(i)));
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-u_char __user *fstenv(fpu_addr_modes addr_modes, u_char __user *d)
-{
-	if ((addr_modes.default_mode == VM86) ||
-	    ((addr_modes.default_mode == PM16)
-	     ^ (addr_modes.override.operand_size == OP_SIZE_PREFIX))) {
+u_अक्षर __user *fstenv(fpu_addr_modes addr_modes, u_अक्षर __user *d)
+अणु
+	अगर ((addr_modes.शेष_mode == VM86) ||
+	    ((addr_modes.शेष_mode == PM16)
+	     ^ (addr_modes.override.opeअक्रम_size == OP_SIZE_PREFIX))) अणु
 		RE_ENTRANT_CHECK_OFF;
 		FPU_access_ok(d, 14);
-#ifdef PECULIAR_486
-		FPU_put_user(control_word & ~0xe080, (unsigned long __user *)d);
-#else
-		FPU_put_user(control_word, (unsigned short __user *)d);
-#endif /* PECULIAR_486 */
-		FPU_put_user(status_word(), (unsigned short __user *)(d + 2));
-		FPU_put_user(fpu_tag_word, (unsigned short __user *)(d + 4));
-		FPU_put_user(instruction_address.offset,
-			     (unsigned short __user *)(d + 6));
-		FPU_put_user(operand_address.offset,
-			     (unsigned short __user *)(d + 0x0a));
-		if (addr_modes.default_mode == VM86) {
-			FPU_put_user((instruction_address.
+#अगर_घोषित PECULIAR_486
+		FPU_put_user(control_word & ~0xe080, (अचिन्हित दीर्घ __user *)d);
+#अन्यथा
+		FPU_put_user(control_word, (अचिन्हित लघु __user *)d);
+#पूर्ण_अगर /* PECULIAR_486 */
+		FPU_put_user(status_word(), (अचिन्हित लघु __user *)(d + 2));
+		FPU_put_user(fpu_tag_word, (अचिन्हित लघु __user *)(d + 4));
+		FPU_put_user(inकाष्ठाion_address.offset,
+			     (अचिन्हित लघु __user *)(d + 6));
+		FPU_put_user(opeअक्रम_address.offset,
+			     (अचिन्हित लघु __user *)(d + 0x0a));
+		अगर (addr_modes.शेष_mode == VM86) अणु
+			FPU_put_user((inकाष्ठाion_address.
 				      offset & 0xf0000) >> 4,
-				     (unsigned short __user *)(d + 8));
-			FPU_put_user((operand_address.offset & 0xf0000) >> 4,
-				     (unsigned short __user *)(d + 0x0c));
-		} else {
-			FPU_put_user(instruction_address.selector,
-				     (unsigned short __user *)(d + 8));
-			FPU_put_user(operand_address.selector,
-				     (unsigned short __user *)(d + 0x0c));
-		}
+				     (अचिन्हित लघु __user *)(d + 8));
+			FPU_put_user((opeअक्रम_address.offset & 0xf0000) >> 4,
+				     (अचिन्हित लघु __user *)(d + 0x0c));
+		पूर्ण अन्यथा अणु
+			FPU_put_user(inकाष्ठाion_address.selector,
+				     (अचिन्हित लघु __user *)(d + 8));
+			FPU_put_user(opeअक्रम_address.selector,
+				     (अचिन्हित लघु __user *)(d + 0x0c));
+		पूर्ण
 		RE_ENTRANT_CHECK_ON;
 		d += 0x0e;
-	} else {
+	पूर्ण अन्यथा अणु
 		RE_ENTRANT_CHECK_OFF;
 		FPU_access_ok(d, 7 * 4);
-#ifdef PECULIAR_486
+#अगर_घोषित PECULIAR_486
 		control_word &= ~0xe080;
 		/* An 80486 sets nearly all of the reserved bits to 1. */
 		control_word |= 0xffff0040;
@@ -1183,38 +1184,38 @@ u_char __user *fstenv(fpu_addr_modes addr_modes, u_char __user *d)
 		fpu_tag_word |= 0xffff0000;
 		I387->soft.fcs &= ~0xf8000000;
 		I387->soft.fos |= 0xffff0000;
-#endif /* PECULIAR_486 */
-		if (__copy_to_user(d, &control_word, 7 * 4))
-			FPU_abort;
+#पूर्ण_अगर /* PECULIAR_486 */
+		अगर (__copy_to_user(d, &control_word, 7 * 4))
+			FPU_पात;
 		RE_ENTRANT_CHECK_ON;
 		d += 0x1c;
-	}
+	पूर्ण
 
 	control_word |= CW_Exceptions;
 	partial_status &= ~(SW_Summary | SW_Backward);
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-void fsave(fpu_addr_modes addr_modes, u_char __user *data_address)
-{
-	u_char __user *d;
-	int offset = (top & 7) * 10, other = 80 - offset;
+व्योम fsave(fpu_addr_modes addr_modes, u_अक्षर __user *data_address)
+अणु
+	u_अक्षर __user *d;
+	पूर्णांक offset = (top & 7) * 10, other = 80 - offset;
 
 	d = fstenv(addr_modes, data_address);
 
 	RE_ENTRANT_CHECK_OFF;
 	FPU_access_ok(d, 80);
 
-	/* Copy all registers in stack order. */
-	if (__copy_to_user(d, register_base + offset, other))
-		FPU_abort;
-	if (offset)
-		if (__copy_to_user(d + other, register_base, offset))
-			FPU_abort;
+	/* Copy all रेजिस्टरs in stack order. */
+	अगर (__copy_to_user(d, रेजिस्टर_base + offset, other))
+		FPU_पात;
+	अगर (offset)
+		अगर (__copy_to_user(d + other, रेजिस्टर_base, offset))
+			FPU_पात;
 	RE_ENTRANT_CHECK_ON;
 
 	finit();
-}
+पूर्ण
 
 /*===========================================================================*/

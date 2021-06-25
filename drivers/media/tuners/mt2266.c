@@ -1,341 +1,342 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for Microtune MT2266 "Direct conversion low power broadband tuner"
+ *  Driver क्रम Microtune MT2266 "Direct conversion low power broadband tuner"
  *
  *  Copyright (c) 2007 Olivier DANET <odanet@caramail.com>
  */
 
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/dvb/frontend.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
 
-#include <media/dvb_frontend.h>
-#include "mt2266.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "mt2266.h"
 
-#define I2C_ADDRESS 0x60
+#घोषणा I2C_ADDRESS 0x60
 
-#define REG_PART_REV   0
-#define REG_TUNE       1
-#define REG_BAND       6
-#define REG_BANDWIDTH  8
-#define REG_LOCK       0x12
+#घोषणा REG_PART_REV   0
+#घोषणा REG_TUNE       1
+#घोषणा REG_BAND       6
+#घोषणा REG_BANDWIDTH  8
+#घोषणा REG_LOCK       0x12
 
-#define PART_REV 0x85
+#घोषणा PART_REV 0x85
 
-struct mt2266_priv {
-	struct mt2266_config *cfg;
-	struct i2c_adapter   *i2c;
+काष्ठा mt2266_priv अणु
+	काष्ठा mt2266_config *cfg;
+	काष्ठा i2c_adapter   *i2c;
 
 	u32 frequency;
 	u32 bandwidth;
 	u8 band;
-};
+पूर्ण;
 
-#define MT2266_VHF 1
-#define MT2266_UHF 0
+#घोषणा MT2266_VHF 1
+#घोषणा MT2266_UHF 0
 
-/* Here, frequencies are expressed in kiloHertz to avoid 32 bits overflows */
+/* Here, frequencies are expressed in kiloHertz to aव्योम 32 bits overflows */
 
-static int debug;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off debugging (default:off).");
 
-#define dprintk(args...) do { if (debug) {printk(KERN_DEBUG "MT2266: " args); printk("\n"); }} while (0)
+#घोषणा dprपूर्णांकk(args...) करो अणु अगर (debug) अणुprपूर्णांकk(KERN_DEBUG "MT2266: " args); prपूर्णांकk("\n"); पूर्णपूर्ण जबतक (0)
 
-// Reads a single register
-static int mt2266_readreg(struct mt2266_priv *priv, u8 reg, u8 *val)
-{
-	struct i2c_msg msg[2] = {
-		{ .addr = priv->cfg->i2c_address, .flags = 0,        .buf = &reg, .len = 1 },
-		{ .addr = priv->cfg->i2c_address, .flags = I2C_M_RD, .buf = val,  .len = 1 },
-	};
-	if (i2c_transfer(priv->i2c, msg, 2) != 2) {
-		printk(KERN_WARNING "MT2266 I2C read failed\n");
-		return -EREMOTEIO;
-	}
-	return 0;
-}
+// Reads a single रेजिस्टर
+अटल पूर्णांक mt2266_पढ़ोreg(काष्ठा mt2266_priv *priv, u8 reg, u8 *val)
+अणु
+	काष्ठा i2c_msg msg[2] = अणु
+		अणु .addr = priv->cfg->i2c_address, .flags = 0,        .buf = &reg, .len = 1 पूर्ण,
+		अणु .addr = priv->cfg->i2c_address, .flags = I2C_M_RD, .buf = val,  .len = 1 पूर्ण,
+	पूर्ण;
+	अगर (i2c_transfer(priv->i2c, msg, 2) != 2) अणु
+		prपूर्णांकk(KERN_WARNING "MT2266 I2C read failed\n");
+		वापस -EREMOTEIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-// Writes a single register
-static int mt2266_writereg(struct mt2266_priv *priv, u8 reg, u8 val)
-{
-	u8 buf[2] = { reg, val };
-	struct i2c_msg msg = {
+// Writes a single रेजिस्टर
+अटल पूर्णांक mt2266_ग_लिखोreg(काष्ठा mt2266_priv *priv, u8 reg, u8 val)
+अणु
+	u8 buf[2] = अणु reg, val पूर्ण;
+	काष्ठा i2c_msg msg = अणु
 		.addr = priv->cfg->i2c_address, .flags = 0, .buf = buf, .len = 2
-	};
-	if (i2c_transfer(priv->i2c, &msg, 1) != 1) {
-		printk(KERN_WARNING "MT2266 I2C write failed\n");
-		return -EREMOTEIO;
-	}
-	return 0;
-}
+	पूर्ण;
+	अगर (i2c_transfer(priv->i2c, &msg, 1) != 1) अणु
+		prपूर्णांकk(KERN_WARNING "MT2266 I2C write failed\n");
+		वापस -EREMOTEIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-// Writes a set of consecutive registers
-static int mt2266_writeregs(struct mt2266_priv *priv,u8 *buf, u8 len)
-{
-	struct i2c_msg msg = {
+// Writes a set of consecutive रेजिस्टरs
+अटल पूर्णांक mt2266_ग_लिखोregs(काष्ठा mt2266_priv *priv,u8 *buf, u8 len)
+अणु
+	काष्ठा i2c_msg msg = अणु
 		.addr = priv->cfg->i2c_address, .flags = 0, .buf = buf, .len = len
-	};
-	if (i2c_transfer(priv->i2c, &msg, 1) != 1) {
-		printk(KERN_WARNING "MT2266 I2C write failed (len=%i)\n",(int)len);
-		return -EREMOTEIO;
-	}
-	return 0;
-}
+	पूर्ण;
+	अगर (i2c_transfer(priv->i2c, &msg, 1) != 1) अणु
+		prपूर्णांकk(KERN_WARNING "MT2266 I2C write failed (len=%i)\n",(पूर्णांक)len);
+		वापस -EREMOTEIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 // Initialisation sequences
-static u8 mt2266_init1[] = { REG_TUNE, 0x00, 0x00, 0x28,
-				 0x00, 0x52, 0x99, 0x3f };
+अटल u8 mt2266_init1[] = अणु REG_TUNE, 0x00, 0x00, 0x28,
+				 0x00, 0x52, 0x99, 0x3f पूर्ण;
 
-static u8 mt2266_init2[] = {
+अटल u8 mt2266_init2[] = अणु
     0x17, 0x6d, 0x71, 0x61, 0xc0, 0xbf, 0xff, 0xdc, 0x00, 0x0a, 0xd4,
     0x03, 0x64, 0x64, 0x64, 0x64, 0x22, 0xaa, 0xf2, 0x1e, 0x80, 0x14,
     0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x7f, 0x5e, 0x3f, 0xff, 0xff,
     0xff, 0x00, 0x77, 0x0f, 0x2d
-};
+पूर्ण;
 
-static u8 mt2266_init_8mhz[] = { REG_BANDWIDTH, 0x22, 0x22, 0x22, 0x22,
-						0x22, 0x22, 0x22, 0x22 };
+अटल u8 mt2266_init_8mhz[] = अणु REG_BANDWIDTH, 0x22, 0x22, 0x22, 0x22,
+						0x22, 0x22, 0x22, 0x22 पूर्ण;
 
-static u8 mt2266_init_7mhz[] = { REG_BANDWIDTH, 0x32, 0x32, 0x32, 0x32,
-						0x32, 0x32, 0x32, 0x32 };
+अटल u8 mt2266_init_7mhz[] = अणु REG_BANDWIDTH, 0x32, 0x32, 0x32, 0x32,
+						0x32, 0x32, 0x32, 0x32 पूर्ण;
 
-static u8 mt2266_init_6mhz[] = { REG_BANDWIDTH, 0xa7, 0xa7, 0xa7, 0xa7,
-						0xa7, 0xa7, 0xa7, 0xa7 };
+अटल u8 mt2266_init_6mhz[] = अणु REG_BANDWIDTH, 0xa7, 0xa7, 0xa7, 0xa7,
+						0xa7, 0xa7, 0xa7, 0xa7 पूर्ण;
 
-static u8 mt2266_uhf[] = { 0x1d, 0xdc, 0x00, 0x0a, 0xd4, 0x03, 0x64, 0x64,
-			   0x64, 0x64, 0x22, 0xaa, 0xf2, 0x1e, 0x80, 0x14 };
+अटल u8 mt2266_uhf[] = अणु 0x1d, 0xdc, 0x00, 0x0a, 0xd4, 0x03, 0x64, 0x64,
+			   0x64, 0x64, 0x22, 0xaa, 0xf2, 0x1e, 0x80, 0x14 पूर्ण;
 
-static u8 mt2266_vhf[] = { 0x1d, 0xfe, 0x00, 0x00, 0xb4, 0x03, 0xa5, 0xa5,
-			   0xa5, 0xa5, 0x82, 0xaa, 0xf1, 0x17, 0x80, 0x1f };
+अटल u8 mt2266_vhf[] = अणु 0x1d, 0xfe, 0x00, 0x00, 0xb4, 0x03, 0xa5, 0xa5,
+			   0xa5, 0xa5, 0x82, 0xaa, 0xf1, 0x17, 0x80, 0x1f पूर्ण;
 
-#define FREF 30000       // Quartz oscillator 30 MHz
+#घोषणा FREF 30000       // Quartz oscillator 30 MHz
 
-static int mt2266_set_params(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	struct mt2266_priv *priv;
-	int ret=0;
+अटल पूर्णांक mt2266_set_params(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	काष्ठा mt2266_priv *priv;
+	पूर्णांक ret=0;
 	u32 freq;
 	u32 tune;
 	u8  lnaband;
 	u8  b[10];
-	int i;
+	पूर्णांक i;
 	u8 band;
 
 	priv = fe->tuner_priv;
 
 	freq = priv->frequency / 1000; /* Hz -> kHz */
-	if (freq < 470000 && freq > 230000)
-		return -EINVAL; /* Gap between VHF and UHF bands */
+	अगर (freq < 470000 && freq > 230000)
+		वापस -EINVAL; /* Gap between VHF and UHF bands */
 
 	priv->frequency = c->frequency;
 	tune = 2 * freq * (8192/16) / (FREF/16);
 	band = (freq < 300000) ? MT2266_VHF : MT2266_UHF;
-	if (band == MT2266_VHF)
+	अगर (band == MT2266_VHF)
 		tune *= 2;
 
-	switch (c->bandwidth_hz) {
-	case 6000000:
-		mt2266_writeregs(priv, mt2266_init_6mhz,
-				 sizeof(mt2266_init_6mhz));
-		break;
-	case 8000000:
-		mt2266_writeregs(priv, mt2266_init_8mhz,
-				 sizeof(mt2266_init_8mhz));
-		break;
-	case 7000000:
-	default:
-		mt2266_writeregs(priv, mt2266_init_7mhz,
-				 sizeof(mt2266_init_7mhz));
-		break;
-	}
+	चयन (c->bandwidth_hz) अणु
+	हाल 6000000:
+		mt2266_ग_लिखोregs(priv, mt2266_init_6mhz,
+				 माप(mt2266_init_6mhz));
+		अवरोध;
+	हाल 8000000:
+		mt2266_ग_लिखोregs(priv, mt2266_init_8mhz,
+				 माप(mt2266_init_8mhz));
+		अवरोध;
+	हाल 7000000:
+	शेष:
+		mt2266_ग_लिखोregs(priv, mt2266_init_7mhz,
+				 माप(mt2266_init_7mhz));
+		अवरोध;
+	पूर्ण
 	priv->bandwidth = c->bandwidth_hz;
 
-	if (band == MT2266_VHF && priv->band == MT2266_UHF) {
-		dprintk("Switch from UHF to VHF");
-		mt2266_writereg(priv, 0x05, 0x04);
-		mt2266_writereg(priv, 0x19, 0x61);
-		mt2266_writeregs(priv, mt2266_vhf, sizeof(mt2266_vhf));
-	} else if (band == MT2266_UHF && priv->band == MT2266_VHF) {
-		dprintk("Switch from VHF to UHF");
-		mt2266_writereg(priv, 0x05, 0x52);
-		mt2266_writereg(priv, 0x19, 0x61);
-		mt2266_writeregs(priv, mt2266_uhf, sizeof(mt2266_uhf));
-	}
+	अगर (band == MT2266_VHF && priv->band == MT2266_UHF) अणु
+		dprपूर्णांकk("Switch from UHF to VHF");
+		mt2266_ग_लिखोreg(priv, 0x05, 0x04);
+		mt2266_ग_लिखोreg(priv, 0x19, 0x61);
+		mt2266_ग_लिखोregs(priv, mt2266_vhf, माप(mt2266_vhf));
+	पूर्ण अन्यथा अगर (band == MT2266_UHF && priv->band == MT2266_VHF) अणु
+		dprपूर्णांकk("Switch from VHF to UHF");
+		mt2266_ग_लिखोreg(priv, 0x05, 0x52);
+		mt2266_ग_लिखोreg(priv, 0x19, 0x61);
+		mt2266_ग_लिखोregs(priv, mt2266_uhf, माप(mt2266_uhf));
+	पूर्ण
 	msleep(10);
 
-	if (freq <= 495000)
+	अगर (freq <= 495000)
 		lnaband = 0xEE;
-	else if (freq <= 525000)
+	अन्यथा अगर (freq <= 525000)
 		lnaband = 0xDD;
-	else if (freq <= 550000)
+	अन्यथा अगर (freq <= 550000)
 		lnaband = 0xCC;
-	else if (freq <= 580000)
+	अन्यथा अगर (freq <= 580000)
 		lnaband = 0xBB;
-	else if (freq <= 605000)
+	अन्यथा अगर (freq <= 605000)
 		lnaband = 0xAA;
-	else if (freq <= 630000)
+	अन्यथा अगर (freq <= 630000)
 		lnaband = 0x99;
-	else if (freq <= 655000)
+	अन्यथा अगर (freq <= 655000)
 		lnaband = 0x88;
-	else if (freq <= 685000)
+	अन्यथा अगर (freq <= 685000)
 		lnaband = 0x77;
-	else if (freq <= 710000)
+	अन्यथा अगर (freq <= 710000)
 		lnaband = 0x66;
-	else if (freq <= 735000)
+	अन्यथा अगर (freq <= 735000)
 		lnaband = 0x55;
-	else if (freq <= 765000)
+	अन्यथा अगर (freq <= 765000)
 		lnaband = 0x44;
-	else if (freq <= 802000)
+	अन्यथा अगर (freq <= 802000)
 		lnaband = 0x33;
-	else if (freq <= 840000)
+	अन्यथा अगर (freq <= 840000)
 		lnaband = 0x22;
-	else
+	अन्यथा
 		lnaband = 0x11;
 
 	b[0] = REG_TUNE;
 	b[1] = (tune >> 8) & 0x1F;
 	b[2] = tune & 0xFF;
 	b[3] = tune >> 13;
-	mt2266_writeregs(priv,b,4);
+	mt2266_ग_लिखोregs(priv,b,4);
 
-	dprintk("set_parms: tune=%d band=%d %s",
-		(int) tune, (int) lnaband,
+	dprपूर्णांकk("set_parms: tune=%d band=%d %s",
+		(पूर्णांक) tune, (पूर्णांक) lnaband,
 		(band == MT2266_UHF) ? "UHF" : "VHF");
-	dprintk("set_parms: [1..3]: %2x %2x %2x",
-		(int) b[1], (int) b[2], (int)b[3]);
+	dprपूर्णांकk("set_parms: [1..3]: %2x %2x %2x",
+		(पूर्णांक) b[1], (पूर्णांक) b[2], (पूर्णांक)b[3]);
 
-	if (band == MT2266_UHF) {
+	अगर (band == MT2266_UHF) अणु
 		b[0] = 0x05;
 		b[1] = (priv->band == MT2266_VHF) ? 0x52 : 0x62;
 		b[2] = lnaband;
-		mt2266_writeregs(priv, b, 3);
-	}
+		mt2266_ग_लिखोregs(priv, b, 3);
+	पूर्ण
 
-	/* Wait for pll lock or timeout */
+	/* Wait क्रम pll lock or समयout */
 	i = 0;
-	do {
-		mt2266_readreg(priv,REG_LOCK,b);
-		if (b[0] & 0x40)
-			break;
+	करो अणु
+		mt2266_पढ़ोreg(priv,REG_LOCK,b);
+		अगर (b[0] & 0x40)
+			अवरोध;
 		msleep(10);
 		i++;
-	} while (i<10);
-	dprintk("Lock when i=%i",(int)i);
+	पूर्ण जबतक (i<10);
+	dprपूर्णांकk("Lock when i=%i",(पूर्णांक)i);
 
-	if (band == MT2266_UHF && priv->band == MT2266_VHF)
-		mt2266_writereg(priv, 0x05, 0x62);
+	अगर (band == MT2266_UHF && priv->band == MT2266_VHF)
+		mt2266_ग_लिखोreg(priv, 0x05, 0x62);
 
 	priv->band = band;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mt2266_calibrate(struct mt2266_priv *priv)
-{
-	mt2266_writereg(priv, 0x11, 0x03);
-	mt2266_writereg(priv, 0x11, 0x01);
-	mt2266_writeregs(priv, mt2266_init1, sizeof(mt2266_init1));
-	mt2266_writeregs(priv, mt2266_init2, sizeof(mt2266_init2));
-	mt2266_writereg(priv, 0x33, 0x5e);
-	mt2266_writereg(priv, 0x10, 0x10);
-	mt2266_writereg(priv, 0x10, 0x00);
-	mt2266_writeregs(priv, mt2266_init_8mhz, sizeof(mt2266_init_8mhz));
+अटल व्योम mt2266_calibrate(काष्ठा mt2266_priv *priv)
+अणु
+	mt2266_ग_लिखोreg(priv, 0x11, 0x03);
+	mt2266_ग_लिखोreg(priv, 0x11, 0x01);
+	mt2266_ग_लिखोregs(priv, mt2266_init1, माप(mt2266_init1));
+	mt2266_ग_लिखोregs(priv, mt2266_init2, माप(mt2266_init2));
+	mt2266_ग_लिखोreg(priv, 0x33, 0x5e);
+	mt2266_ग_लिखोreg(priv, 0x10, 0x10);
+	mt2266_ग_लिखोreg(priv, 0x10, 0x00);
+	mt2266_ग_लिखोregs(priv, mt2266_init_8mhz, माप(mt2266_init_8mhz));
 	msleep(25);
-	mt2266_writereg(priv, 0x17, 0x6d);
-	mt2266_writereg(priv, 0x1c, 0x00);
+	mt2266_ग_लिखोreg(priv, 0x17, 0x6d);
+	mt2266_ग_लिखोreg(priv, 0x1c, 0x00);
 	msleep(75);
-	mt2266_writereg(priv, 0x17, 0x6d);
-	mt2266_writereg(priv, 0x1c, 0xff);
-}
+	mt2266_ग_लिखोreg(priv, 0x17, 0x6d);
+	mt2266_ग_लिखोreg(priv, 0x1c, 0xff);
+पूर्ण
 
-static int mt2266_get_frequency(struct dvb_frontend *fe, u32 *frequency)
-{
-	struct mt2266_priv *priv = fe->tuner_priv;
+अटल पूर्णांक mt2266_get_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
+अणु
+	काष्ठा mt2266_priv *priv = fe->tuner_priv;
 	*frequency = priv->frequency;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt2266_get_bandwidth(struct dvb_frontend *fe, u32 *bandwidth)
-{
-	struct mt2266_priv *priv = fe->tuner_priv;
+अटल पूर्णांक mt2266_get_bandwidth(काष्ठा dvb_frontend *fe, u32 *bandwidth)
+अणु
+	काष्ठा mt2266_priv *priv = fe->tuner_priv;
 	*bandwidth = priv->bandwidth;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt2266_init(struct dvb_frontend *fe)
-{
-	int ret;
-	struct mt2266_priv *priv = fe->tuner_priv;
-	ret = mt2266_writereg(priv, 0x17, 0x6d);
-	if (ret < 0)
-		return ret;
-	ret = mt2266_writereg(priv, 0x1c, 0xff);
-	if (ret < 0)
-		return ret;
-	return 0;
-}
+अटल पूर्णांक mt2266_init(काष्ठा dvb_frontend *fe)
+अणु
+	पूर्णांक ret;
+	काष्ठा mt2266_priv *priv = fe->tuner_priv;
+	ret = mt2266_ग_लिखोreg(priv, 0x17, 0x6d);
+	अगर (ret < 0)
+		वापस ret;
+	ret = mt2266_ग_लिखोreg(priv, 0x1c, 0xff);
+	अगर (ret < 0)
+		वापस ret;
+	वापस 0;
+पूर्ण
 
-static int mt2266_sleep(struct dvb_frontend *fe)
-{
-	struct mt2266_priv *priv = fe->tuner_priv;
-	mt2266_writereg(priv, 0x17, 0x6d);
-	mt2266_writereg(priv, 0x1c, 0x00);
-	return 0;
-}
+अटल पूर्णांक mt2266_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mt2266_priv *priv = fe->tuner_priv;
+	mt2266_ग_लिखोreg(priv, 0x17, 0x6d);
+	mt2266_ग_लिखोreg(priv, 0x1c, 0x00);
+	वापस 0;
+पूर्ण
 
-static void mt2266_release(struct dvb_frontend *fe)
-{
-	kfree(fe->tuner_priv);
-	fe->tuner_priv = NULL;
-}
+अटल व्योम mt2266_release(काष्ठा dvb_frontend *fe)
+अणु
+	kमुक्त(fe->tuner_priv);
+	fe->tuner_priv = शून्य;
+पूर्ण
 
-static const struct dvb_tuner_ops mt2266_tuner_ops = {
-	.info = {
+अटल स्थिर काष्ठा dvb_tuner_ops mt2266_tuner_ops = अणु
+	.info = अणु
 		.name              = "Microtune MT2266",
 		.frequency_min_hz  = 174 * MHz,
 		.frequency_max_hz  = 862 * MHz,
 		.frequency_step_hz =  50 * kHz,
-	},
+	पूर्ण,
 	.release       = mt2266_release,
 	.init          = mt2266_init,
 	.sleep         = mt2266_sleep,
 	.set_params    = mt2266_set_params,
 	.get_frequency = mt2266_get_frequency,
 	.get_bandwidth = mt2266_get_bandwidth
-};
+पूर्ण;
 
-struct dvb_frontend * mt2266_attach(struct dvb_frontend *fe, struct i2c_adapter *i2c, struct mt2266_config *cfg)
-{
-	struct mt2266_priv *priv = NULL;
+काष्ठा dvb_frontend * mt2266_attach(काष्ठा dvb_frontend *fe, काष्ठा i2c_adapter *i2c, काष्ठा mt2266_config *cfg)
+अणु
+	काष्ठा mt2266_priv *priv = शून्य;
 	u8 id = 0;
 
-	priv = kzalloc(sizeof(struct mt2266_priv), GFP_KERNEL);
-	if (priv == NULL)
-		return NULL;
+	priv = kzalloc(माप(काष्ठा mt2266_priv), GFP_KERNEL);
+	अगर (priv == शून्य)
+		वापस शून्य;
 
 	priv->cfg      = cfg;
 	priv->i2c      = i2c;
 	priv->band     = MT2266_UHF;
 
-	if (mt2266_readreg(priv, 0, &id)) {
-		kfree(priv);
-		return NULL;
-	}
-	if (id != PART_REV) {
-		kfree(priv);
-		return NULL;
-	}
-	printk(KERN_INFO "MT2266: successfully identified\n");
-	memcpy(&fe->ops.tuner_ops, &mt2266_tuner_ops, sizeof(struct dvb_tuner_ops));
+	अगर (mt2266_पढ़ोreg(priv, 0, &id)) अणु
+		kमुक्त(priv);
+		वापस शून्य;
+	पूर्ण
+	अगर (id != PART_REV) अणु
+		kमुक्त(priv);
+		वापस शून्य;
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "MT2266: successfully identified\n");
+	स_नकल(&fe->ops.tuner_ops, &mt2266_tuner_ops, माप(काष्ठा dvb_tuner_ops));
 
 	fe->tuner_priv = priv;
 	mt2266_calibrate(priv);
-	return fe;
-}
+	वापस fe;
+पूर्ण
 EXPORT_SYMBOL(mt2266_attach);
 
 MODULE_AUTHOR("Olivier DANET");

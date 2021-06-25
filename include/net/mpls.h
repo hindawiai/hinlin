@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2014 Nicira, Inc.
  */
 
-#ifndef _NET_MPLS_H
-#define _NET_MPLS_H 1
+#अगर_अघोषित _NET_MPLS_H
+#घोषणा _NET_MPLS_H 1
 
-#include <linux/if_ether.h>
-#include <linux/netdevice.h>
-#include <linux/mpls.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/mpls.h>
 
-#define MPLS_HLEN 4
+#घोषणा MPLS_HLEN 4
 
-struct mpls_shim_hdr {
+काष्ठा mpls_shim_hdr अणु
 	__be32 label_stack_entry;
-};
+पूर्ण;
 
-static inline bool eth_p_mpls(__be16 eth_type)
-{
-	return eth_type == htons(ETH_P_MPLS_UC) ||
+अटल अंतरभूत bool eth_p_mpls(__be16 eth_type)
+अणु
+	वापस eth_type == htons(ETH_P_MPLS_UC) ||
 		eth_type == htons(ETH_P_MPLS_MC);
-}
+पूर्ण
 
-static inline struct mpls_shim_hdr *mpls_hdr(const struct sk_buff *skb)
-{
-	return (struct mpls_shim_hdr *)skb_network_header(skb);
-}
+अटल अंतरभूत काष्ठा mpls_shim_hdr *mpls_hdr(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा mpls_shim_hdr *)skb_network_header(skb);
+पूर्ण
 
-static inline struct mpls_shim_hdr mpls_entry_encode(u32 label,
-						     unsigned int ttl,
-						     unsigned int tc,
+अटल अंतरभूत काष्ठा mpls_shim_hdr mpls_entry_encode(u32 label,
+						     अचिन्हित पूर्णांक ttl,
+						     अचिन्हित पूर्णांक tc,
 						     bool bos)
-{
-	struct mpls_shim_hdr result;
+अणु
+	काष्ठा mpls_shim_hdr result;
 
 	result.label_stack_entry =
 		cpu_to_be32((label << MPLS_LS_LABEL_SHIFT) |
 			    (tc << MPLS_LS_TC_SHIFT) |
 			    (bos ? (1 << MPLS_LS_S_SHIFT) : 0) |
 			    (ttl << MPLS_LS_TTL_SHIFT));
-	return result;
-}
+	वापस result;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

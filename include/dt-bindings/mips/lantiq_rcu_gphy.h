@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  *  Copyright (C) 2016 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  *  Copyright (C) 2017 Hauke Mehrtens <hauke@hauke-m.de>
  */
-#ifndef _DT_BINDINGS_MIPS_LANTIQ_RCU_GPHY_H
-#define _DT_BINDINGS_MIPS_LANTIQ_RCU_GPHY_H
+#अगर_अघोषित _DT_BINDINGS_MIPS_LANTIQ_RCU_GPHY_H
+#घोषणा _DT_BINDINGS_MIPS_LANTIQ_RCU_GPHY_H
 
-#define GPHY_MODE_GE	1
-#define GPHY_MODE_FE	2
+#घोषणा GPHY_MODE_GE	1
+#घोषणा GPHY_MODE_FE	2
 
-#endif /* _DT_BINDINGS_MIPS_LANTIQ_RCU_GPHY_H */
+#पूर्ण_अगर /* _DT_BINDINGS_MIPS_LANTIQ_RCU_GPHY_H */

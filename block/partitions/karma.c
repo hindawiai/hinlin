@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  fs/partitions/karma.c
  *  Rio Karma partition info.
@@ -7,54 +8,54 @@
  *  based on osf.c
  */
 
-#include "check.h"
-#include <linux/compiler.h>
+#समावेश "check.h"
+#समावेश <linux/compiler.h>
 
-#define KARMA_LABEL_MAGIC		0xAB56
+#घोषणा KARMA_LABEL_MAGIC		0xAB56
 
-int karma_partition(struct parsed_partitions *state)
-{
-	int i;
-	int slot = 1;
+पूर्णांक karma_partition(काष्ठा parsed_partitions *state)
+अणु
+	पूर्णांक i;
+	पूर्णांक slot = 1;
 	Sector sect;
-	unsigned char *data;
-	struct disklabel {
+	अचिन्हित अक्षर *data;
+	काष्ठा disklabel अणु
 		u8 d_reserved[270];
-		struct d_partition {
+		काष्ठा d_partition अणु
 			__le32 p_res;
 			u8 p_fstype;
 			u8 p_res2[3];
 			__le32 p_offset;
 			__le32 p_size;
-		} d_partitions[2];
+		पूर्ण d_partitions[2];
 		u8 d_blank[208];
 		__le16 d_magic;
-	} __packed *label;
-	struct d_partition *p;
+	पूर्ण __packed *label;
+	काष्ठा d_partition *p;
 
-	data = read_part_sector(state, 0, &sect);
-	if (!data)
-		return -1;
+	data = पढ़ो_part_sector(state, 0, &sect);
+	अगर (!data)
+		वापस -1;
 
-	label = (struct disklabel *)data;
-	if (le16_to_cpu(label->d_magic) != KARMA_LABEL_MAGIC) {
+	label = (काष्ठा disklabel *)data;
+	अगर (le16_to_cpu(label->d_magic) != KARMA_LABEL_MAGIC) अणु
 		put_dev_sector(sect);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	p = label->d_partitions;
-	for (i = 0 ; i < 2; i++, p++) {
-		if (slot == state->limit)
-			break;
+	क्रम (i = 0 ; i < 2; i++, p++) अणु
+		अगर (slot == state->limit)
+			अवरोध;
 
-		if (p->p_fstype == 0x4d && le32_to_cpu(p->p_size)) {
+		अगर (p->p_fstype == 0x4d && le32_to_cpu(p->p_size)) अणु
 			put_partition(state, slot, le32_to_cpu(p->p_offset),
 				le32_to_cpu(p->p_size));
-		}
+		पूर्ण
 		slot++;
-	}
+	पूर्ण
 	strlcat(state->pp_buf, "\n", PAGE_SIZE);
 	put_dev_sector(sect);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 

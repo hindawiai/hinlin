@@ -1,164 +1,165 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /**
  * tpci200.h
  *
- * driver for the carrier TEWS TPCI-200
+ * driver क्रम the carrier TEWS TPCI-200
  *
  * Copyright (C) 2009-2012 CERN (www.cern.ch)
  * Author: Nicolas Serafini, EIC2 SA
  * Author: Samuel Iglesias Gonsalvez <siglesias@igalia.com>
  */
 
-#ifndef _TPCI200_H_
-#define _TPCI200_H_
+#अगर_अघोषित _TPCI200_H_
+#घोषणा _TPCI200_H_
 
-#include <linux/limits.h>
-#include <linux/pci.h>
-#include <linux/spinlock.h>
-#include <linux/swab.h>
-#include <linux/io.h>
-#include <linux/ipack.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/swab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ipack.h>
 
-#define TPCI200_NB_SLOT               0x4
-#define TPCI200_NB_BAR                0x6
+#घोषणा TPCI200_NB_SLOT               0x4
+#घोषणा TPCI200_NB_BAR                0x6
 
-#define TPCI200_VENDOR_ID             0x1498
-#define TPCI200_DEVICE_ID             0x30C8
-#define TPCI200_SUBVENDOR_ID          0x1498
-#define TPCI200_SUBDEVICE_ID          0x300A
+#घोषणा TPCI200_VENDOR_ID             0x1498
+#घोषणा TPCI200_DEVICE_ID             0x30C8
+#घोषणा TPCI200_SUBVENDOR_ID          0x1498
+#घोषणा TPCI200_SUBDEVICE_ID          0x300A
 
-#define TPCI200_CFG_MEM_BAR           0
-#define TPCI200_IP_INTERFACE_BAR      2
-#define TPCI200_IO_ID_INT_SPACES_BAR  3
-#define TPCI200_MEM16_SPACE_BAR       4
-#define TPCI200_MEM8_SPACE_BAR        5
+#घोषणा TPCI200_CFG_MEM_BAR           0
+#घोषणा TPCI200_IP_INTERFACE_BAR      2
+#घोषणा TPCI200_IO_ID_INT_SPACES_BAR  3
+#घोषणा TPCI200_MEM16_SPACE_BAR       4
+#घोषणा TPCI200_MEM8_SPACE_BAR        5
 
-struct tpci200_regs {
+काष्ठा tpci200_regs अणु
 	__le16	revision;
-	/* writes to control should occur with the mutex held to protect
-	 * read-modify-write operations */
+	/* ग_लिखोs to control should occur with the mutex held to protect
+	 * पढ़ो-modअगरy-ग_लिखो operations */
 	__le16  control[4];
 	__le16	reset;
 	__le16	status;
 	u8	reserved[242];
-} __packed;
+पूर्ण __packed;
 
-#define TPCI200_IFACE_SIZE            0x100
+#घोषणा TPCI200_IFACE_SIZE            0x100
 
-#define TPCI200_IO_SPACE_OFF          0x0000
-#define TPCI200_IO_SPACE_INTERVAL     0x0100
-#define TPCI200_IO_SPACE_SIZE         0x0080
-#define TPCI200_ID_SPACE_OFF          0x0080
-#define TPCI200_ID_SPACE_INTERVAL     0x0100
-#define TPCI200_ID_SPACE_SIZE         0x0040
-#define TPCI200_INT_SPACE_OFF         0x00C0
-#define TPCI200_INT_SPACE_INTERVAL    0x0100
-#define TPCI200_INT_SPACE_SIZE        0x0040
-#define TPCI200_IOIDINT_SIZE          0x0400
+#घोषणा TPCI200_IO_SPACE_OFF          0x0000
+#घोषणा TPCI200_IO_SPACE_INTERVAL     0x0100
+#घोषणा TPCI200_IO_SPACE_SIZE         0x0080
+#घोषणा TPCI200_ID_SPACE_OFF          0x0080
+#घोषणा TPCI200_ID_SPACE_INTERVAL     0x0100
+#घोषणा TPCI200_ID_SPACE_SIZE         0x0040
+#घोषणा TPCI200_INT_SPACE_OFF         0x00C0
+#घोषणा TPCI200_INT_SPACE_INTERVAL    0x0100
+#घोषणा TPCI200_INT_SPACE_SIZE        0x0040
+#घोषणा TPCI200_IOIDINT_SIZE          0x0400
 
-#define TPCI200_MEM8_SPACE_INTERVAL   0x00400000
-#define TPCI200_MEM8_SPACE_SIZE       0x00400000
-#define TPCI200_MEM16_SPACE_INTERVAL  0x00800000
-#define TPCI200_MEM16_SPACE_SIZE      0x00800000
+#घोषणा TPCI200_MEM8_SPACE_INTERVAL   0x00400000
+#घोषणा TPCI200_MEM8_SPACE_SIZE       0x00400000
+#घोषणा TPCI200_MEM16_SPACE_INTERVAL  0x00800000
+#घोषणा TPCI200_MEM16_SPACE_SIZE      0x00800000
 
 /* control field in tpci200_regs */
-#define TPCI200_INT0_EN               0x0040
-#define TPCI200_INT1_EN               0x0080
-#define TPCI200_INT0_EDGE             0x0010
-#define TPCI200_INT1_EDGE             0x0020
-#define TPCI200_ERR_INT_EN            0x0008
-#define TPCI200_TIME_INT_EN           0x0004
-#define TPCI200_RECOVER_EN            0x0002
-#define TPCI200_CLK32                 0x0001
+#घोषणा TPCI200_INT0_EN               0x0040
+#घोषणा TPCI200_INT1_EN               0x0080
+#घोषणा TPCI200_INT0_EDGE             0x0010
+#घोषणा TPCI200_INT1_EDGE             0x0020
+#घोषणा TPCI200_ERR_INT_EN            0x0008
+#घोषणा TPCI200_TIME_INT_EN           0x0004
+#घोषणा TPCI200_RECOVER_EN            0x0002
+#घोषणा TPCI200_CLK32                 0x0001
 
 /* reset field in tpci200_regs */
-#define TPCI200_A_RESET               0x0001
-#define TPCI200_B_RESET               0x0002
-#define TPCI200_C_RESET               0x0004
-#define TPCI200_D_RESET               0x0008
+#घोषणा TPCI200_A_RESET               0x0001
+#घोषणा TPCI200_B_RESET               0x0002
+#घोषणा TPCI200_C_RESET               0x0004
+#घोषणा TPCI200_D_RESET               0x0008
 
 /* status field in tpci200_regs */
-#define TPCI200_A_TIMEOUT             0x1000
-#define TPCI200_B_TIMEOUT             0x2000
-#define TPCI200_C_TIMEOUT             0x4000
-#define TPCI200_D_TIMEOUT             0x8000
+#घोषणा TPCI200_A_TIMEOUT             0x1000
+#घोषणा TPCI200_B_TIMEOUT             0x2000
+#घोषणा TPCI200_C_TIMEOUT             0x4000
+#घोषणा TPCI200_D_TIMEOUT             0x8000
 
-#define TPCI200_A_ERROR               0x0100
-#define TPCI200_B_ERROR               0x0200
-#define TPCI200_C_ERROR               0x0400
-#define TPCI200_D_ERROR               0x0800
+#घोषणा TPCI200_A_ERROR               0x0100
+#घोषणा TPCI200_B_ERROR               0x0200
+#घोषणा TPCI200_C_ERROR               0x0400
+#घोषणा TPCI200_D_ERROR               0x0800
 
-#define TPCI200_A_INT0                0x0001
-#define TPCI200_A_INT1                0x0002
-#define TPCI200_B_INT0                0x0004
-#define TPCI200_B_INT1                0x0008
-#define TPCI200_C_INT0                0x0010
-#define TPCI200_C_INT1                0x0020
-#define TPCI200_D_INT0                0x0040
-#define TPCI200_D_INT1                0x0080
+#घोषणा TPCI200_A_INT0                0x0001
+#घोषणा TPCI200_A_INT1                0x0002
+#घोषणा TPCI200_B_INT0                0x0004
+#घोषणा TPCI200_B_INT1                0x0008
+#घोषणा TPCI200_C_INT0                0x0010
+#घोषणा TPCI200_C_INT1                0x0020
+#घोषणा TPCI200_D_INT0                0x0040
+#घोषणा TPCI200_D_INT1                0x0080
 
-#define TPCI200_SLOT_INT_MASK         0x00FF
+#घोषणा TPCI200_SLOT_INT_MASK         0x00FF
 
-/* PCI Configuration registers. The PCI bridge is a PLX Technology PCI9030. */
-#define LAS1_DESC		      0x2C
-#define LAS2_DESC		      0x30
+/* PCI Configuration रेजिस्टरs. The PCI bridge is a PLX Technology PCI9030. */
+#घोषणा LAS1_DESC		      0x2C
+#घोषणा LAS2_DESC		      0x30
 
-/* Bits in the LAS?_DESC registers */
-#define LAS_BIT_BIGENDIAN	      24
+/* Bits in the LAS?_DESC रेजिस्टरs */
+#घोषणा LAS_BIT_BIGENDIAN	      24
 
-#define VME_IOID_SPACE  "IOID"
-#define VME_MEM_SPACE  "MEM"
+#घोषणा VME_IOID_SPACE  "IOID"
+#घोषणा VME_MEM_SPACE  "MEM"
 
 /**
- * struct slot_irq - slot IRQ definition.
+ * काष्ठा slot_irq - slot IRQ definition.
  * @vector	Vector number
  * @handler	Handler called when IRQ arrives
  * @arg		Handler argument
  *
  */
-struct slot_irq {
-	struct ipack_device *holder;
-	int		vector;
-	irqreturn_t	(*handler)(void *);
-	void		*arg;
-};
+काष्ठा slot_irq अणु
+	काष्ठा ipack_device *holder;
+	पूर्णांक		vector;
+	irqवापस_t	(*handler)(व्योम *);
+	व्योम		*arg;
+पूर्ण;
 
 /**
- * struct tpci200_slot - data specific to the tpci200 slot.
- * @slot_id	Slot identification gived to external interface
+ * काष्ठा tpci200_slot - data specअगरic to the tpci200 slot.
+ * @slot_id	Slot identअगरication gived to बाह्यal पूर्णांकerface
  * @irq		Slot IRQ infos
- * @io_phys	IO physical base address register of the slot
- * @id_phys	ID physical base address register of the slot
- * @int_phys	INT physical base address register of the slot
- * @mem_phys	MEM physical base address register of the slot
+ * @io_phys	IO physical base address रेजिस्टर of the slot
+ * @id_phys	ID physical base address रेजिस्टर of the slot
+ * @पूर्णांक_phys	INT physical base address रेजिस्टर of the slot
+ * @mem_phys	MEM physical base address रेजिस्टर of the slot
  *
  */
-struct tpci200_slot {
-	struct slot_irq	    *irq;
-};
+काष्ठा tpci200_slot अणु
+	काष्ठा slot_irq	    *irq;
+पूर्ण;
 
 /**
- * struct tpci200_infos - informations specific of the TPCI200 tpci200.
+ * काष्ठा tpci200_infos - inक्रमmations specअगरic of the TPCI200 tpci200.
  * @pci_dev		PCI device
- * @interface_regs	Pointer to IP interface space (Bar 2)
- * @ioidint_space	Pointer to IP ID, IO and INT space (Bar 3)
- * @mem8_space		Pointer to MEM space (Bar 4)
+ * @पूर्णांकerface_regs	Poपूर्णांकer to IP पूर्णांकerface space (Bar 2)
+ * @ioidपूर्णांक_space	Poपूर्णांकer to IP ID, IO and INT space (Bar 3)
+ * @mem8_space		Poपूर्णांकer to MEM space (Bar 4)
  *
  */
-struct tpci200_infos {
-	struct pci_dev			*pdev;
-	struct pci_device_id		*id_table;
-	struct tpci200_regs __iomem	*interface_regs;
-	void __iomem			*cfg_regs;
-	struct ipack_bus_device		*ipack_bus;
-};
-struct tpci200_board {
-	unsigned int		number;
-	struct mutex		mutex;
+काष्ठा tpci200_infos अणु
+	काष्ठा pci_dev			*pdev;
+	काष्ठा pci_device_id		*id_table;
+	काष्ठा tpci200_regs __iomem	*पूर्णांकerface_regs;
+	व्योम __iomem			*cfg_regs;
+	काष्ठा ipack_bus_device		*ipack_bus;
+पूर्ण;
+काष्ठा tpci200_board अणु
+	अचिन्हित पूर्णांक		number;
+	काष्ठा mutex		mutex;
 	spinlock_t		regs_lock;
-	struct tpci200_slot	*slots;
-	struct tpci200_infos	*info;
+	काष्ठा tpci200_slot	*slots;
+	काष्ठा tpci200_infos	*info;
 	phys_addr_t             mod_mem[IPACK_SPACE_COUNT];
-};
+पूर्ण;
 
-#endif /* _TPCI200_H_ */
+#पूर्ण_अगर /* _TPCI200_H_ */

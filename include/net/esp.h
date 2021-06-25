@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NET_ESP_H
-#define _NET_ESP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NET_ESP_H
+#घोषणा _NET_ESP_H
 
-#include <linux/skbuff.h>
+#समावेश <linux/skbuff.h>
 
-struct ip_esp_hdr;
+काष्ठा ip_esp_hdr;
 
-static inline struct ip_esp_hdr *ip_esp_hdr(const struct sk_buff *skb)
-{
-	return (struct ip_esp_hdr *)skb_transport_header(skb);
-}
+अटल अंतरभूत काष्ठा ip_esp_hdr *ip_esp_hdr(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा ip_esp_hdr *)skb_transport_header(skb);
+पूर्ण
 
-static inline void esp_output_fill_trailer(u8 *tail, int tfclen, int plen, __u8 proto)
-{
+अटल अंतरभूत व्योम esp_output_fill_trailer(u8 *tail, पूर्णांक tfclen, पूर्णांक plen, __u8 proto)
+अणु
 	/* Fill padding... */
-	if (tfclen) {
-		memset(tail, 0, tfclen);
+	अगर (tfclen) अणु
+		स_रखो(tail, 0, tfclen);
 		tail += tfclen;
-	}
-	do {
-		int i;
-		for (i = 0; i < plen - 2; i++)
+	पूर्ण
+	करो अणु
+		पूर्णांक i;
+		क्रम (i = 0; i < plen - 2; i++)
 			tail[i] = i + 1;
-	} while (0);
+	पूर्ण जबतक (0);
 	tail[plen - 2] = plen - 2;
 	tail[plen - 1] = proto;
-}
+पूर्ण
 
-struct esp_info {
-	struct	ip_esp_hdr *esph;
+काष्ठा esp_info अणु
+	काष्ठा	ip_esp_hdr *esph;
 	__be64	seqno;
-	int	tfclen;
-	int	tailen;
-	int	plen;
-	int	clen;
-	int 	len;
-	int 	nfrags;
+	पूर्णांक	tfclen;
+	पूर्णांक	tailen;
+	पूर्णांक	plen;
+	पूर्णांक	clen;
+	पूर्णांक 	len;
+	पूर्णांक 	nfrags;
 	__u8	proto;
 	bool	inplace;
-};
+पूर्ण;
 
-int esp_output_head(struct xfrm_state *x, struct sk_buff *skb, struct esp_info *esp);
-int esp_output_tail(struct xfrm_state *x, struct sk_buff *skb, struct esp_info *esp);
-int esp_input_done2(struct sk_buff *skb, int err);
-int esp6_output_head(struct xfrm_state *x, struct sk_buff *skb, struct esp_info *esp);
-int esp6_output_tail(struct xfrm_state *x, struct sk_buff *skb, struct esp_info *esp);
-int esp6_input_done2(struct sk_buff *skb, int err);
-#endif
+पूर्णांक esp_output_head(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb, काष्ठा esp_info *esp);
+पूर्णांक esp_output_tail(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb, काष्ठा esp_info *esp);
+पूर्णांक esp_input_करोne2(काष्ठा sk_buff *skb, पूर्णांक err);
+पूर्णांक esp6_output_head(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb, काष्ठा esp_info *esp);
+पूर्णांक esp6_output_tail(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb, काष्ठा esp_info *esp);
+पूर्णांक esp6_input_करोne2(काष्ठा sk_buff *skb, पूर्णांक err);
+#पूर्ण_अगर

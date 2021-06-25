@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /******************************************************************************
  *
- *   Copyright © International Business Machines  Corp., 2009
+ *   Copyright तऊ International Business Machines  Corp., 2009
  *
  * DESCRIPTION
- *      Test if FUTEX_WAIT op returns -EWOULDBLOCK if the futex value differs
+ *      Test अगर FUTEX_WAIT op वापसs -EWOULDBLOCK अगर the futex value dअगरfers
  *      from the expected one.
  *
  * AUTHOR
@@ -15,64 +16,64 @@
  *
  *****************************************************************************/
 
-#include <errno.h>
-#include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include "futextest.h"
-#include "logging.h"
+#समावेश <त्रुटिसं.स>
+#समावेश <getopt.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <समय.स>
+#समावेश "futextest.h"
+#समावेश "logging.h"
 
-#define TEST_NAME "futex-wait-wouldblock"
-#define timeout_ns 100000
+#घोषणा TEST_NAME "futex-wait-wouldblock"
+#घोषणा समयout_ns 100000
 
-void usage(char *prog)
-{
-	printf("Usage: %s\n", prog);
-	printf("  -c	Use color\n");
-	printf("  -h	Display this help message\n");
-	printf("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
+व्योम usage(अक्षर *prog)
+अणु
+	म_लिखो("Usage: %s\n", prog);
+	म_लिखो("  -c	Use color\n");
+	म_लिखो("  -h	Display this help message\n");
+	म_लिखो("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
 	       VQUIET, VCRITICAL, VINFO);
-}
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	struct timespec to = {.tv_sec = 0, .tv_nsec = timeout_ns};
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	काष्ठा बारpec to = अणु.tv_sec = 0, .tv_nsec = समयout_nsपूर्ण;
 	futex_t f1 = FUTEX_INITIALIZER;
-	int res, ret = RET_PASS;
-	int c;
+	पूर्णांक res, ret = RET_PASS;
+	पूर्णांक c;
 
-	while ((c = getopt(argc, argv, "cht:v:")) != -1) {
-		switch (c) {
-		case 'c':
+	जबतक ((c = getopt(argc, argv, "cht:v:")) != -1) अणु
+		चयन (c) अणु
+		हाल 'c':
 			log_color(1);
-			break;
-		case 'h':
+			अवरोध;
+		हाल 'h':
 			usage(basename(argv[0]));
-			exit(0);
-		case 'v':
-			log_verbosity(atoi(optarg));
-			break;
-		default:
+			निकास(0);
+		हाल 'v':
+			log_verbosity(म_से_प(optarg));
+			अवरोध;
+		शेष:
 			usage(basename(argv[0]));
-			exit(1);
-		}
-	}
+			निकास(1);
+		पूर्ण
+	पूर्ण
 
-	ksft_print_header();
+	ksft_prपूर्णांक_header();
 	ksft_set_plan(1);
-	ksft_print_msg("%s: Test the unexpected futex value in FUTEX_WAIT\n",
+	ksft_prपूर्णांक_msg("%s: Test the unexpected futex value in FUTEX_WAIT\n",
 	       basename(argv[0]));
 
 	info("Calling futex_wait on f1: %u @ %p with val=%u\n", f1, &f1, f1+1);
-	res = futex_wait(&f1, f1+1, &to, FUTEX_PRIVATE_FLAG);
-	if (!res || errno != EWOULDBLOCK) {
+	res = futex_रुको(&f1, f1+1, &to, FUTEX_PRIVATE_FLAG);
+	अगर (!res || त्रुटि_सं != EWOULDBLOCK) अणु
 		fail("futex_wait returned: %d %s\n",
-		     res ? errno : res, res ? strerror(errno) : "");
+		     res ? त्रुटि_सं : res, res ? म_त्रुटि(त्रुटि_सं) : "");
 		ret = RET_FAIL;
-	}
+	पूर्ण
 
-	print_result(TEST_NAME, ret);
-	return ret;
-}
+	prपूर्णांक_result(TEST_NAME, ret);
+	वापस ret;
+पूर्ण

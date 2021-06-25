@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <elfutils/debuginfod.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <elfutils/debuginfod.h>
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	debuginfod_client* c = debuginfod_begin();
-	return (long)c;
-}
+	वापस (दीर्घ)c;
+पूर्ण

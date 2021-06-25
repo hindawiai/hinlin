@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
@@ -7,213 +8,213 @@
  * Common types *
  */
 
-#ifndef BRCMFMAC_CORE_H
-#define BRCMFMAC_CORE_H
+#अगर_अघोषित BRCMFMAC_CORE_H
+#घोषणा BRCMFMAC_CORE_H
 
-#include <net/cfg80211.h>
-#include "fweh.h"
+#समावेश <net/cfg80211.h>
+#समावेश "fweh.h"
 
-#define TOE_TX_CSUM_OL		0x00000001
-#define TOE_RX_CSUM_OL		0x00000002
+#घोषणा TOE_TX_CSUM_OL		0x00000001
+#घोषणा TOE_RX_CSUM_OL		0x00000002
 
-/* For supporting multiple interfaces */
-#define BRCMF_MAX_IFS	16
+/* For supporting multiple पूर्णांकerfaces */
+#घोषणा BRCMF_MAX_IFS	16
 
-/* Small, medium and maximum buffer size for dcmd
+/* Small, medium and maximum buffer size क्रम dcmd
  */
-#define BRCMF_DCMD_SMLEN	256
-#define BRCMF_DCMD_MEDLEN	1536
-#define BRCMF_DCMD_MAXLEN	8192
+#घोषणा BRCMF_DCMD_SMLEN	256
+#घोषणा BRCMF_DCMD_MEDLEN	1536
+#घोषणा BRCMF_DCMD_MAXLEN	8192
 
 /* IOCTL from host to device are limited in length. A device can only handle
  * ethernet frame size. This limitation is to be applied by protocol layer.
  */
-#define BRCMF_TX_IOCTL_MAX_MSG_SIZE	(ETH_FRAME_LEN+ETH_FCS_LEN)
+#घोषणा BRCMF_TX_IOCTL_MAX_MSG_SIZE	(ETH_FRAME_LEN+ETH_FCS_LEN)
 
-#define BRCMF_AMPDU_RX_REORDER_MAXFLOWS		256
+#घोषणा BRCMF_AMPDU_RX_REORDER_MAXFLOWS		256
 
-/* Length of firmware version string stored for
+/* Length of firmware version string stored क्रम
  * ethtool driver info which uses 32 bytes as well.
  */
-#define BRCMF_DRIVER_FIRMWARE_VERSION_LEN	32
+#घोषणा BRCMF_DRIVER_FIRMWARE_VERSION_LEN	32
 
-#define NDOL_MAX_ENTRIES	8
+#घोषणा NDOL_MAX_ENTRIES	8
 
 /**
- * struct brcmf_ampdu_rx_reorder - AMPDU receive reorder info
+ * काष्ठा brcmf_ampdu_rx_reorder - AMPDU receive reorder info
  *
- * @pktslots: dynamic allocated array for ordering AMPDU packets.
- * @flow_id: AMPDU flow identifier.
+ * @pktslots: dynamic allocated array क्रम ordering AMPDU packets.
+ * @flow_id: AMPDU flow identअगरier.
  * @cur_idx: last AMPDU index from firmware.
  * @exp_idx: expected next AMPDU index.
  * @max_idx: maximum amount of packets per AMPDU.
  * @pend_pkts: number of packets currently in @pktslots.
  */
-struct brcmf_ampdu_rx_reorder {
-	struct sk_buff **pktslots;
+काष्ठा brcmf_ampdu_rx_reorder अणु
+	काष्ठा sk_buff **pktslots;
 	u8 flow_id;
 	u8 cur_idx;
 	u8 exp_idx;
 	u8 max_idx;
 	u8 pend_pkts;
-};
+पूर्ण;
 
-/* Forward decls for struct brcmf_pub (see below) */
-struct brcmf_proto;	/* device communication protocol info */
-struct brcmf_fws_info;	/* firmware signalling info */
-struct brcmf_mp_device;	/* module paramateres, device specific */
+/* Forward decls क्रम काष्ठा brcmf_pub (see below) */
+काष्ठा brcmf_proto;	/* device communication protocol info */
+काष्ठा brcmf_fws_info;	/* firmware संकेतling info */
+काष्ठा brcmf_mp_device;	/* module paramateres, device specअगरic */
 
 /*
- * struct brcmf_rev_info
+ * काष्ठा brcmf_rev_info
  *
  * The result field stores the error code of the
  * revision info request from firmware. For the
- * other fields see struct brcmf_rev_info_le in
+ * other fields see काष्ठा brcmf_rev_info_le in
  * fwil_types.h
  */
-struct brcmf_rev_info {
-	int result;
-	u32 vendorid;
+काष्ठा brcmf_rev_info अणु
+	पूर्णांक result;
+	u32 venकरोrid;
 	u32 deviceid;
 	u32 radiorev;
 	u32 corerev;
 	u32 boardid;
-	u32 boardvendor;
+	u32 boardvenकरोr;
 	u32 boardrev;
 	u32 driverrev;
 	u32 ucoderev;
 	u32 bus;
-	char chipname[12];
+	अक्षर chipname[12];
 	u32 phytype;
 	u32 phyrev;
 	u32 anarev;
 	u32 chippkg;
 	u32 nvramrev;
-};
+पूर्ण;
 
-/* Common structure for module and instance linkage */
-struct brcmf_pub {
+/* Common काष्ठाure क्रम module and instance linkage */
+काष्ठा brcmf_pub अणु
 	/* Linkage ponters */
-	struct brcmf_bus *bus_if;
-	struct brcmf_proto *proto;
-	struct wiphy *wiphy;
-	struct cfg80211_ops *ops;
-	struct brcmf_cfg80211_info *config;
+	काष्ठा brcmf_bus *bus_अगर;
+	काष्ठा brcmf_proto *proto;
+	काष्ठा wiphy *wiphy;
+	काष्ठा cfg80211_ops *ops;
+	काष्ठा brcmf_cfg80211_info *config;
 
 	/* Internal brcmf items */
-	uint hdrlen;		/* Total BRCMF header length (proto + bus) */
+	uपूर्णांक hdrlen;		/* Total BRCMF header length (proto + bus) */
 
 	/* Dongle media info */
-	char fwver[BRCMF_DRIVER_FIRMWARE_VERSION_LEN];
-	u8 mac[ETH_ALEN];		/* MAC address obtained from dongle */
+	अक्षर fwver[BRCMF_DRIVER_FIRMWARE_VERSION_LEN];
+	u8 mac[ETH_ALEN];		/* MAC address obtained from करोngle */
 
-	struct mac_address addresses[BRCMF_MAX_IFS];
+	काष्ठा mac_address addresses[BRCMF_MAX_IFS];
 
-	struct brcmf_if *iflist[BRCMF_MAX_IFS];
-	s32 if2bss[BRCMF_MAX_IFS];
-	struct brcmf_if *mon_if;
+	काष्ठा brcmf_अगर *अगरlist[BRCMF_MAX_IFS];
+	s32 अगर2bss[BRCMF_MAX_IFS];
+	काष्ठा brcmf_अगर *mon_अगर;
 
-	struct mutex proto_block;
-	unsigned char proto_buf[BRCMF_DCMD_MAXLEN];
+	काष्ठा mutex proto_block;
+	अचिन्हित अक्षर proto_buf[BRCMF_DCMD_MAXLEN];
 
-	struct brcmf_fweh_info fweh;
+	काष्ठा brcmf_fweh_info fweh;
 
-	struct brcmf_ampdu_rx_reorder
+	काष्ठा brcmf_ampdu_rx_reorder
 		*reorder_flows[BRCMF_AMPDU_RX_REORDER_MAXFLOWS];
 
 	u32 feat_flags;
 	u32 chip_quirks;
 
-	struct brcmf_rev_info revinfo;
-#ifdef DEBUG
-	struct dentry *dbgfs_dir;
-#endif
+	काष्ठा brcmf_rev_info revinfo;
+#अगर_घोषित DEBUG
+	काष्ठा dentry *dbgfs_dir;
+#पूर्ण_अगर
 
-	struct notifier_block inetaddr_notifier;
-	struct notifier_block inet6addr_notifier;
-	struct brcmf_mp_device *settings;
+	काष्ठा notअगरier_block inetaddr_notअगरier;
+	काष्ठा notअगरier_block inet6addr_notअगरier;
+	काष्ठा brcmf_mp_device *settings;
 
-	struct work_struct bus_reset;
+	काष्ठा work_काष्ठा bus_reset;
 
 	u8 clmver[BRCMF_DCMD_SMLEN];
-};
+पूर्ण;
 
-/* forward declarations */
-struct brcmf_cfg80211_vif;
-struct brcmf_fws_mac_descriptor;
+/* क्रमward declarations */
+काष्ठा brcmf_cfg80211_vअगर;
+काष्ठा brcmf_fws_mac_descriptor;
 
 /**
- * enum brcmf_netif_stop_reason - reason for stopping netif queue.
+ * क्रमागत brcmf_netअगर_stop_reason - reason क्रम stopping netअगर queue.
  *
  * @BRCMF_NETIF_STOP_REASON_FWS_FC:
- *	netif stopped due to firmware signalling flow control.
+ *	netअगर stopped due to firmware संकेतling flow control.
  * @BRCMF_NETIF_STOP_REASON_FLOW:
- *	netif stopped due to flowring full.
+ *	netअगर stopped due to flowring full.
  * @BRCMF_NETIF_STOP_REASON_DISCONNECTED:
- *	netif stopped due to not being connected (STA mode).
+ *	netअगर stopped due to not being connected (STA mode).
  */
-enum brcmf_netif_stop_reason {
+क्रमागत brcmf_netअगर_stop_reason अणु
 	BRCMF_NETIF_STOP_REASON_FWS_FC = BIT(0),
 	BRCMF_NETIF_STOP_REASON_FLOW = BIT(1),
 	BRCMF_NETIF_STOP_REASON_DISCONNECTED = BIT(2)
-};
+पूर्ण;
 
 /**
- * struct brcmf_if - interface control information.
+ * काष्ठा brcmf_अगर - पूर्णांकerface control inक्रमmation.
  *
- * @drvr: points to device related information.
- * @vif: points to cfg80211 specific interface information.
+ * @drvr: poपूर्णांकs to device related inक्रमmation.
+ * @vअगर: poपूर्णांकs to cfg80211 specअगरic पूर्णांकerface inक्रमmation.
  * @ndev: associated network device.
- * @multicast_work: worker object for multicast provisioning.
- * @ndoffload_work: worker object for neighbor discovery offload configuration.
- * @fws_desc: interface specific firmware-signalling descriptor.
- * @ifidx: interface index in device firmware.
- * @bsscfgidx: index of bss associated with this interface.
- * @mac_addr: assigned mac address.
- * @netif_stop: bitmap indicates reason why netif queues are stopped.
- * @netif_stop_lock: spinlock for update netif_stop from multiple sources.
+ * @multicast_work: worker object क्रम multicast provisioning.
+ * @nकरोffload_work: worker object क्रम neighbor discovery offload configuration.
+ * @fws_desc: पूर्णांकerface specअगरic firmware-संकेतling descriptor.
+ * @अगरidx: पूर्णांकerface index in device firmware.
+ * @bsscfgidx: index of bss associated with this पूर्णांकerface.
+ * @mac_addr: asचिन्हित mac address.
+ * @netअगर_stop: biपंचांगap indicates reason why netअगर queues are stopped.
+ * @netअगर_stop_lock: spinlock क्रम update netअगर_stop from multiple sources.
  * @pend_8021x_cnt: tracks outstanding number of 802.1x frames.
- * @pend_8021x_wait: used for signalling change in count.
- * @fwil_fwerr: flag indicating fwil layer should return firmware error codes.
+ * @pend_8021x_रुको: used क्रम संकेतling change in count.
+ * @fwil_fwerr: flag indicating fwil layer should वापस firmware error codes.
  */
-struct brcmf_if {
-	struct brcmf_pub *drvr;
-	struct brcmf_cfg80211_vif *vif;
-	struct net_device *ndev;
-	struct work_struct multicast_work;
-	struct work_struct ndoffload_work;
-	struct brcmf_fws_mac_descriptor *fws_desc;
-	int ifidx;
+काष्ठा brcmf_अगर अणु
+	काष्ठा brcmf_pub *drvr;
+	काष्ठा brcmf_cfg80211_vअगर *vअगर;
+	काष्ठा net_device *ndev;
+	काष्ठा work_काष्ठा multicast_work;
+	काष्ठा work_काष्ठा nकरोffload_work;
+	काष्ठा brcmf_fws_mac_descriptor *fws_desc;
+	पूर्णांक अगरidx;
 	s32 bsscfgidx;
 	u8 mac_addr[ETH_ALEN];
-	u8 netif_stop;
-	spinlock_t netif_stop_lock;
+	u8 netअगर_stop;
+	spinlock_t netअगर_stop_lock;
 	atomic_t pend_8021x_cnt;
-	wait_queue_head_t pend_8021x_wait;
-	struct in6_addr ipv6_addr_tbl[NDOL_MAX_ENTRIES];
+	रुको_queue_head_t pend_8021x_रुको;
+	काष्ठा in6_addr ipv6_addr_tbl[NDOL_MAX_ENTRIES];
 	u8 ipv6addr_idx;
 	bool fwil_fwerr;
-};
+पूर्ण;
 
-int brcmf_netdev_wait_pend8021x(struct brcmf_if *ifp);
+पूर्णांक brcmf_netdev_रुको_pend8021x(काष्ठा brcmf_अगर *अगरp);
 
-/* Return pointer to interface name */
-char *brcmf_ifname(struct brcmf_if *ifp);
-struct brcmf_if *brcmf_get_ifp(struct brcmf_pub *drvr, int ifidx);
-void brcmf_configure_arp_nd_offload(struct brcmf_if *ifp, bool enable);
-int brcmf_net_attach(struct brcmf_if *ifp, bool locked);
-struct brcmf_if *brcmf_add_if(struct brcmf_pub *drvr, s32 bsscfgidx, s32 ifidx,
-			      bool is_p2pdev, const char *name, u8 *mac_addr);
-void brcmf_remove_interface(struct brcmf_if *ifp, bool locked);
-void brcmf_txflowblock_if(struct brcmf_if *ifp,
-			  enum brcmf_netif_stop_reason reason, bool state);
-void brcmf_txfinalize(struct brcmf_if *ifp, struct sk_buff *txp, bool success);
-void brcmf_netif_rx(struct brcmf_if *ifp, struct sk_buff *skb, bool inirq);
-void brcmf_netif_mon_rx(struct brcmf_if *ifp, struct sk_buff *skb);
-void brcmf_net_detach(struct net_device *ndev, bool locked);
-int brcmf_net_mon_attach(struct brcmf_if *ifp);
-void brcmf_net_setcarrier(struct brcmf_if *ifp, bool on);
-int __init brcmf_core_init(void);
-void __exit brcmf_core_exit(void);
+/* Return poपूर्णांकer to पूर्णांकerface name */
+अक्षर *brcmf_अगरname(काष्ठा brcmf_अगर *अगरp);
+काष्ठा brcmf_अगर *brcmf_get_अगरp(काष्ठा brcmf_pub *drvr, पूर्णांक अगरidx);
+व्योम brcmf_configure_arp_nd_offload(काष्ठा brcmf_अगर *अगरp, bool enable);
+पूर्णांक brcmf_net_attach(काष्ठा brcmf_अगर *अगरp, bool locked);
+काष्ठा brcmf_अगर *brcmf_add_अगर(काष्ठा brcmf_pub *drvr, s32 bsscfgidx, s32 अगरidx,
+			      bool is_p2pdev, स्थिर अक्षर *name, u8 *mac_addr);
+व्योम brcmf_हटाओ_पूर्णांकerface(काष्ठा brcmf_अगर *अगरp, bool locked);
+व्योम brcmf_txflowblock_अगर(काष्ठा brcmf_अगर *अगरp,
+			  क्रमागत brcmf_netअगर_stop_reason reason, bool state);
+व्योम brcmf_txfinalize(काष्ठा brcmf_अगर *अगरp, काष्ठा sk_buff *txp, bool success);
+व्योम brcmf_netअगर_rx(काष्ठा brcmf_अगर *अगरp, काष्ठा sk_buff *skb, bool inirq);
+व्योम brcmf_netअगर_mon_rx(काष्ठा brcmf_अगर *अगरp, काष्ठा sk_buff *skb);
+व्योम brcmf_net_detach(काष्ठा net_device *ndev, bool locked);
+पूर्णांक brcmf_net_mon_attach(काष्ठा brcmf_अगर *अगरp);
+व्योम brcmf_net_setcarrier(काष्ठा brcmf_अगर *अगरp, bool on);
+पूर्णांक __init brcmf_core_init(व्योम);
+व्योम __निकास brcmf_core_निकास(व्योम);
 
-#endif /* BRCMFMAC_CORE_H */
+#पूर्ण_अगर /* BRCMFMAC_CORE_H */

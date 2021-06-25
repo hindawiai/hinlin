@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Platform data for the TI bq24190 battery charger driver.
+ * Platक्रमm data क्रम the TI bq24190 battery अक्षरger driver.
  */
 
-#ifndef _BQ24190_CHARGER_H_
-#define _BQ24190_CHARGER_H_
+#अगर_अघोषित _BQ24190_CHARGER_H_
+#घोषणा _BQ24190_CHARGER_H_
 
-#include <linux/regulator/machine.h>
+#समावेश <linux/regulator/machine.h>
 
-struct bq24190_platform_data {
-	const struct regulator_init_data *regulator_init_data;
-};
+काष्ठा bq24190_platक्रमm_data अणु
+	स्थिर काष्ठा regulator_init_data *regulator_init_data;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

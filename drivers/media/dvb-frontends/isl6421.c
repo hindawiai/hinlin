@@ -1,204 +1,205 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * isl6421.h - driver for lnb supply and control ic ISL6421
+ * isl6421.h - driver क्रम lnb supply and control ic ISL6421
  *
  * Copyright (C) 2006 Andrew de Quincey
  * Copyright (C) 2006 Oliver Endriss
  *
  * the project's page is at https://linuxtv.org
  */
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
 
-#include <media/dvb_frontend.h>
-#include "isl6421.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "isl6421.h"
 
-struct isl6421 {
+काष्ठा isl6421 अणु
 	u8			config;
 	u8			override_or;
 	u8			override_and;
-	struct i2c_adapter	*i2c;
+	काष्ठा i2c_adapter	*i2c;
 	u8			i2c_addr;
 	bool			is_off;
-};
+पूर्ण;
 
-static int isl6421_set_voltage(struct dvb_frontend *fe,
-			       enum fe_sec_voltage voltage)
-{
-	int ret;
+अटल पूर्णांक isl6421_set_voltage(काष्ठा dvb_frontend *fe,
+			       क्रमागत fe_sec_voltage voltage)
+अणु
+	पूर्णांक ret;
 	u8 buf;
 	bool is_off;
-	struct isl6421 *isl6421 = (struct isl6421 *) fe->sec_priv;
-	struct i2c_msg msg[2] = {
-		{
+	काष्ठा isl6421 *isl6421 = (काष्ठा isl6421 *) fe->sec_priv;
+	काष्ठा i2c_msg msg[2] = अणु
+		अणु
 		  .addr = isl6421->i2c_addr,
 		  .flags = 0,
 		  .buf = &isl6421->config,
 		  .len = 1,
-		}, {
+		पूर्ण, अणु
 		  .addr = isl6421->i2c_addr,
 		  .flags = I2C_M_RD,
 		  .buf = &buf,
 		  .len = 1,
-		}
+		पूर्ण
 
-	};
+	पूर्ण;
 
 	isl6421->config &= ~(ISL6421_VSEL1 | ISL6421_EN1);
 
-	switch(voltage) {
-	case SEC_VOLTAGE_OFF:
+	चयन(voltage) अणु
+	हाल SEC_VOLTAGE_OFF:
 		is_off = true;
-		break;
-	case SEC_VOLTAGE_13:
+		अवरोध;
+	हाल SEC_VOLTAGE_13:
 		is_off = false;
 		isl6421->config |= ISL6421_EN1;
-		break;
-	case SEC_VOLTAGE_18:
+		अवरोध;
+	हाल SEC_VOLTAGE_18:
 		is_off = false;
 		isl6421->config |= (ISL6421_EN1 | ISL6421_VSEL1);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * If LNBf were not powered on, disable dynamic current limit, as,
+	 * If LNBf were not घातered on, disable dynamic current limit, as,
 	 * according with datasheet, highly capacitive load on the output may
-	 * cause a difficult start-up.
+	 * cause a dअगरficult start-up.
 	 */
-	if (isl6421->is_off && !is_off)
+	अगर (isl6421->is_off && !is_off)
 		isl6421->config |= ISL6421_DCL;
 
 	isl6421->config |= isl6421->override_or;
 	isl6421->config &= isl6421->override_and;
 
 	ret = i2c_transfer(isl6421->i2c, msg, 2);
-	if (ret < 0)
-		return ret;
-	if (ret != 2)
-		return -EIO;
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret != 2)
+		वापस -EIO;
 
-	/* Store off status now in case future commands fail */
+	/* Store off status now in हाल future commands fail */
 	isl6421->is_off = is_off;
 
 	/* On overflow, the device will try again after 900 ms (typically) */
-	if (!is_off && (buf & ISL6421_OLF1))
+	अगर (!is_off && (buf & ISL6421_OLF1))
 		msleep(1000);
 
 	/* Re-enable dynamic current limit */
-	if ((isl6421->config & ISL6421_DCL) &&
-	    !(isl6421->override_or & ISL6421_DCL)) {
+	अगर ((isl6421->config & ISL6421_DCL) &&
+	    !(isl6421->override_or & ISL6421_DCL)) अणु
 		isl6421->config &= ~ISL6421_DCL;
 
 		ret = i2c_transfer(isl6421->i2c, msg, 2);
-		if (ret < 0)
-			return ret;
-		if (ret != 2)
-			return -EIO;
-	}
+		अगर (ret < 0)
+			वापस ret;
+		अगर (ret != 2)
+			वापस -EIO;
+	पूर्ण
 
-	/* Check if overload flag is active. If so, disable power */
-	if (!is_off && (buf & ISL6421_OLF1)) {
+	/* Check अगर overload flag is active. If so, disable घातer */
+	अगर (!is_off && (buf & ISL6421_OLF1)) अणु
 		isl6421->config &= ~(ISL6421_VSEL1 | ISL6421_EN1);
 		ret = i2c_transfer(isl6421->i2c, msg, 1);
-		if (ret < 0)
-			return ret;
-		if (ret != 1)
-			return -EIO;
+		अगर (ret < 0)
+			वापस ret;
+		अगर (ret != 1)
+			वापस -EIO;
 		isl6421->is_off = true;
 
 		dev_warn(&isl6421->i2c->dev,
 			 "Overload current detected. disabling LNBf power\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isl6421_enable_high_lnb_voltage(struct dvb_frontend *fe, long arg)
-{
-	struct isl6421 *isl6421 = (struct isl6421 *) fe->sec_priv;
-	struct i2c_msg msg = {	.addr = isl6421->i2c_addr, .flags = 0,
+अटल पूर्णांक isl6421_enable_high_lnb_voltage(काष्ठा dvb_frontend *fe, दीर्घ arg)
+अणु
+	काष्ठा isl6421 *isl6421 = (काष्ठा isl6421 *) fe->sec_priv;
+	काष्ठा i2c_msg msg = अणु	.addr = isl6421->i2c_addr, .flags = 0,
 				.buf = &isl6421->config,
-				.len = sizeof(isl6421->config) };
+				.len = माप(isl6421->config) पूर्ण;
 
-	if (arg)
+	अगर (arg)
 		isl6421->config |= ISL6421_LLC1;
-	else
+	अन्यथा
 		isl6421->config &= ~ISL6421_LLC1;
 
 	isl6421->config |= isl6421->override_or;
 	isl6421->config &= isl6421->override_and;
 
-	return (i2c_transfer(isl6421->i2c, &msg, 1) == 1) ? 0 : -EIO;
-}
+	वापस (i2c_transfer(isl6421->i2c, &msg, 1) == 1) ? 0 : -EIO;
+पूर्ण
 
-static int isl6421_set_tone(struct dvb_frontend *fe,
-			    enum fe_sec_tone_mode tone)
-{
-	struct isl6421 *isl6421 = (struct isl6421 *) fe->sec_priv;
-	struct i2c_msg msg = { .addr = isl6421->i2c_addr, .flags = 0,
+अटल पूर्णांक isl6421_set_tone(काष्ठा dvb_frontend *fe,
+			    क्रमागत fe_sec_tone_mode tone)
+अणु
+	काष्ठा isl6421 *isl6421 = (काष्ठा isl6421 *) fe->sec_priv;
+	काष्ठा i2c_msg msg = अणु .addr = isl6421->i2c_addr, .flags = 0,
 			       .buf = &isl6421->config,
-			       .len = sizeof(isl6421->config) };
+			       .len = माप(isl6421->config) पूर्ण;
 
-	switch (tone) {
-	case SEC_TONE_ON:
+	चयन (tone) अणु
+	हाल SEC_TONE_ON:
 		isl6421->config |= ISL6421_ENT1;
-		break;
-	case SEC_TONE_OFF:
+		अवरोध;
+	हाल SEC_TONE_OFF:
 		isl6421->config &= ~ISL6421_ENT1;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	isl6421->config |= isl6421->override_or;
 	isl6421->config &= isl6421->override_and;
 
-	return (i2c_transfer(isl6421->i2c, &msg, 1) == 1) ? 0 : -EIO;
-}
+	वापस (i2c_transfer(isl6421->i2c, &msg, 1) == 1) ? 0 : -EIO;
+पूर्ण
 
-static void isl6421_release(struct dvb_frontend *fe)
-{
-	/* power off */
+अटल व्योम isl6421_release(काष्ठा dvb_frontend *fe)
+अणु
+	/* घातer off */
 	isl6421_set_voltage(fe, SEC_VOLTAGE_OFF);
 
-	/* free */
-	kfree(fe->sec_priv);
-	fe->sec_priv = NULL;
-}
+	/* मुक्त */
+	kमुक्त(fe->sec_priv);
+	fe->sec_priv = शून्य;
+पूर्ण
 
-struct dvb_frontend *isl6421_attach(struct dvb_frontend *fe, struct i2c_adapter *i2c, u8 i2c_addr,
+काष्ठा dvb_frontend *isl6421_attach(काष्ठा dvb_frontend *fe, काष्ठा i2c_adapter *i2c, u8 i2c_addr,
 		   u8 override_set, u8 override_clear, bool override_tone)
-{
-	struct isl6421 *isl6421 = kmalloc(sizeof(struct isl6421), GFP_KERNEL);
-	if (!isl6421)
-		return NULL;
+अणु
+	काष्ठा isl6421 *isl6421 = kदो_स्मृति(माप(काष्ठा isl6421), GFP_KERNEL);
+	अगर (!isl6421)
+		वापस शून्य;
 
-	/* default configuration */
+	/* शेष configuration */
 	isl6421->config = ISL6421_ISEL1;
 	isl6421->i2c = i2c;
 	isl6421->i2c_addr = i2c_addr;
 	fe->sec_priv = isl6421;
 
-	/* bits which should be forced to '1' */
+	/* bits which should be क्रमced to '1' */
 	isl6421->override_or = override_set;
 
-	/* bits which should be forced to '0' */
+	/* bits which should be क्रमced to '0' */
 	isl6421->override_and = ~override_clear;
 
-	/* detect if it is present or not */
-	if (isl6421_set_voltage(fe, SEC_VOLTAGE_OFF)) {
-		kfree(isl6421);
-		fe->sec_priv = NULL;
-		return NULL;
-	}
+	/* detect अगर it is present or not */
+	अगर (isl6421_set_voltage(fe, SEC_VOLTAGE_OFF)) अणु
+		kमुक्त(isl6421);
+		fe->sec_priv = शून्य;
+		वापस शून्य;
+	पूर्ण
 
 	isl6421->is_off = true;
 
@@ -208,11 +209,11 @@ struct dvb_frontend *isl6421_attach(struct dvb_frontend *fe, struct i2c_adapter 
 	/* override frontend ops */
 	fe->ops.set_voltage = isl6421_set_voltage;
 	fe->ops.enable_high_lnb_voltage = isl6421_enable_high_lnb_voltage;
-	if (override_tone)
+	अगर (override_tone)
 		fe->ops.set_tone = isl6421_set_tone;
 
-	return fe;
-}
+	वापस fe;
+पूर्ण
 EXPORT_SYMBOL(isl6421_attach);
 
 MODULE_DESCRIPTION("Driver for lnb supply and control ic isl6421");

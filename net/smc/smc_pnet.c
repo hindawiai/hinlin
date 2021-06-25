@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
@@ -6,195 +7,195 @@
  *
  *  Copyright IBM Corp. 2016
  *
- *  Author(s):  Thomas Richter <tmricht@linux.vnet.ibm.com>
+ *  Author(s):  Thomas Richter <पंचांगricht@linux.vnet.ibm.com>
  */
 
-#include <linux/module.h>
-#include <linux/list.h>
-#include <linux/ctype.h>
-#include <linux/mutex.h>
-#include <net/netlink.h>
-#include <net/genetlink.h>
+#समावेश <linux/module.h>
+#समावेश <linux/list.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/mutex.h>
+#समावेश <net/netlink.h>
+#समावेश <net/genetlink.h>
 
-#include <uapi/linux/if.h>
-#include <uapi/linux/smc.h>
+#समावेश <uapi/linux/अगर.h>
+#समावेश <uapi/linux/smc.h>
 
-#include <rdma/ib_verbs.h>
+#समावेश <rdma/ib_verbs.h>
 
-#include <net/netns/generic.h>
-#include "smc_netns.h"
+#समावेश <net/netns/generic.h>
+#समावेश "smc_netns.h"
 
-#include "smc_pnet.h"
-#include "smc_ib.h"
-#include "smc_ism.h"
-#include "smc_core.h"
+#समावेश "smc_pnet.h"
+#समावेश "smc_ib.h"
+#समावेश "smc_ism.h"
+#समावेश "smc_core.h"
 
-static struct net_device *__pnet_find_base_ndev(struct net_device *ndev);
-static struct net_device *pnet_find_base_ndev(struct net_device *ndev);
+अटल काष्ठा net_device *__pnet_find_base_ndev(काष्ठा net_device *ndev);
+अटल काष्ठा net_device *pnet_find_base_ndev(काष्ठा net_device *ndev);
 
-static const struct nla_policy smc_pnet_policy[SMC_PNETID_MAX + 1] = {
-	[SMC_PNETID_NAME] = {
+अटल स्थिर काष्ठा nla_policy smc_pnet_policy[SMC_PNETID_MAX + 1] = अणु
+	[SMC_PNETID_NAME] = अणु
 		.type = NLA_NUL_STRING,
 		.len = SMC_MAX_PNETID_LEN
-	},
-	[SMC_PNETID_ETHNAME] = {
+	पूर्ण,
+	[SMC_PNETID_ETHNAME] = अणु
 		.type = NLA_NUL_STRING,
 		.len = IFNAMSIZ - 1
-	},
-	[SMC_PNETID_IBNAME] = {
+	पूर्ण,
+	[SMC_PNETID_IBNAME] = अणु
 		.type = NLA_NUL_STRING,
 		.len = IB_DEVICE_NAME_MAX - 1
-	},
-	[SMC_PNETID_IBPORT] = { .type = NLA_U8 }
-};
+	पूर्ण,
+	[SMC_PNETID_IBPORT] = अणु .type = NLA_U8 पूर्ण
+पूर्ण;
 
-static struct genl_family smc_pnet_nl_family;
+अटल काष्ठा genl_family smc_pnet_nl_family;
 
-enum smc_pnet_nametype {
+क्रमागत smc_pnet_nametype अणु
 	SMC_PNET_ETH	= 1,
 	SMC_PNET_IB	= 2,
-};
+पूर्ण;
 
 /* pnet entry stored in pnet table */
-struct smc_pnetentry {
-	struct list_head list;
-	char pnet_name[SMC_MAX_PNETID_LEN + 1];
-	enum smc_pnet_nametype type;
-	union {
-		struct {
-			char eth_name[IFNAMSIZ + 1];
-			struct net_device *ndev;
-		};
-		struct {
-			char ib_name[IB_DEVICE_NAME_MAX + 1];
+काष्ठा smc_pnetentry अणु
+	काष्ठा list_head list;
+	अक्षर pnet_name[SMC_MAX_PNETID_LEN + 1];
+	क्रमागत smc_pnet_nametype type;
+	जोड़ अणु
+		काष्ठा अणु
+			अक्षर eth_name[IFNAMSIZ + 1];
+			काष्ठा net_device *ndev;
+		पूर्ण;
+		काष्ठा अणु
+			अक्षर ib_name[IB_DEVICE_NAME_MAX + 1];
 			u8 ib_port;
-		};
-	};
-};
+		पूर्ण;
+	पूर्ण;
+पूर्ण;
 
-/* Check if the pnetid is set */
+/* Check अगर the pnetid is set */
 bool smc_pnet_is_pnetid_set(u8 *pnetid)
-{
-	if (pnetid[0] == 0 || pnetid[0] == _S)
-		return false;
-	return true;
-}
+अणु
+	अगर (pnetid[0] == 0 || pnetid[0] == _S)
+		वापस false;
+	वापस true;
+पूर्ण
 
-/* Check if two given pnetids match */
-static bool smc_pnet_match(u8 *pnetid1, u8 *pnetid2)
-{
-	int i;
+/* Check अगर two given pnetids match */
+अटल bool smc_pnet_match(u8 *pnetid1, u8 *pnetid2)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SMC_MAX_PNETID_LEN; i++) {
-		if ((pnetid1[i] == 0 || pnetid1[i] == _S) &&
+	क्रम (i = 0; i < SMC_MAX_PNETID_LEN; i++) अणु
+		अगर ((pnetid1[i] == 0 || pnetid1[i] == _S) &&
 		    (pnetid2[i] == 0 || pnetid2[i] == _S))
-			break;
-		if (pnetid1[i] != pnetid2[i])
-			return false;
-	}
-	return true;
-}
+			अवरोध;
+		अगर (pnetid1[i] != pnetid2[i])
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /* Remove a pnetid from the pnet table.
  */
-static int smc_pnet_remove_by_pnetid(struct net *net, char *pnet_name)
-{
-	struct smc_pnetentry *pnetelem, *tmp_pe;
-	struct smc_pnettable *pnettable;
-	struct smc_ib_device *ibdev;
-	struct smcd_dev *smcd_dev;
-	struct smc_net *sn;
-	int rc = -ENOENT;
-	int ibport;
+अटल पूर्णांक smc_pnet_हटाओ_by_pnetid(काष्ठा net *net, अक्षर *pnet_name)
+अणु
+	काष्ठा smc_pnetentry *pnetelem, *पंचांगp_pe;
+	काष्ठा smc_pnettable *pnettable;
+	काष्ठा smc_ib_device *ibdev;
+	काष्ठा smcd_dev *smcd_dev;
+	काष्ठा smc_net *sn;
+	पूर्णांक rc = -ENOENT;
+	पूर्णांक ibport;
 
-	/* get pnettable for namespace */
+	/* get pnettable क्रम namespace */
 	sn = net_generic(net, smc_net_id);
 	pnettable = &sn->pnettable;
 
-	/* remove table entry */
-	write_lock(&pnettable->lock);
-	list_for_each_entry_safe(pnetelem, tmp_pe, &pnettable->pnetlist,
-				 list) {
-		if (!pnet_name ||
-		    smc_pnet_match(pnetelem->pnet_name, pnet_name)) {
+	/* हटाओ table entry */
+	ग_लिखो_lock(&pnettable->lock);
+	list_क्रम_each_entry_safe(pnetelem, पंचांगp_pe, &pnettable->pnetlist,
+				 list) अणु
+		अगर (!pnet_name ||
+		    smc_pnet_match(pnetelem->pnet_name, pnet_name)) अणु
 			list_del(&pnetelem->list);
-			if (pnetelem->type == SMC_PNET_ETH && pnetelem->ndev) {
+			अगर (pnetelem->type == SMC_PNET_ETH && pnetelem->ndev) अणु
 				dev_put(pnetelem->ndev);
 				pr_warn_ratelimited("smc: net device %s "
 						    "erased user defined "
 						    "pnetid %.16s\n",
 						    pnetelem->eth_name,
 						    pnetelem->pnet_name);
-			}
-			kfree(pnetelem);
+			पूर्ण
+			kमुक्त(pnetelem);
 			rc = 0;
-		}
-	}
-	write_unlock(&pnettable->lock);
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock(&pnettable->lock);
 
-	/* if this is not the initial namespace, stop here */
-	if (net != &init_net)
-		return rc;
+	/* अगर this is not the initial namespace, stop here */
+	अगर (net != &init_net)
+		वापस rc;
 
-	/* remove ib devices */
+	/* हटाओ ib devices */
 	mutex_lock(&smc_ib_devices.mutex);
-	list_for_each_entry(ibdev, &smc_ib_devices.list, list) {
-		for (ibport = 0; ibport < SMC_MAX_PORTS; ibport++) {
-			if (ibdev->pnetid_by_user[ibport] &&
+	list_क्रम_each_entry(ibdev, &smc_ib_devices.list, list) अणु
+		क्रम (ibport = 0; ibport < SMC_MAX_PORTS; ibport++) अणु
+			अगर (ibdev->pnetid_by_user[ibport] &&
 			    (!pnet_name ||
 			     smc_pnet_match(pnet_name,
-					    ibdev->pnetid[ibport]))) {
+					    ibdev->pnetid[ibport]))) अणु
 				pr_warn_ratelimited("smc: ib device %s ibport "
 						    "%d erased user defined "
 						    "pnetid %.16s\n",
 						    ibdev->ibdev->name,
 						    ibport + 1,
 						    ibdev->pnetid[ibport]);
-				memset(ibdev->pnetid[ibport], 0,
+				स_रखो(ibdev->pnetid[ibport], 0,
 				       SMC_MAX_PNETID_LEN);
 				ibdev->pnetid_by_user[ibport] = false;
 				rc = 0;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&smc_ib_devices.mutex);
-	/* remove smcd devices */
+	/* हटाओ smcd devices */
 	mutex_lock(&smcd_dev_list.mutex);
-	list_for_each_entry(smcd_dev, &smcd_dev_list.list, list) {
-		if (smcd_dev->pnetid_by_user &&
+	list_क्रम_each_entry(smcd_dev, &smcd_dev_list.list, list) अणु
+		अगर (smcd_dev->pnetid_by_user &&
 		    (!pnet_name ||
-		     smc_pnet_match(pnet_name, smcd_dev->pnetid))) {
+		     smc_pnet_match(pnet_name, smcd_dev->pnetid))) अणु
 			pr_warn_ratelimited("smc: smcd device %s "
 					    "erased user defined pnetid "
 					    "%.16s\n", dev_name(&smcd_dev->dev),
 					    smcd_dev->pnetid);
-			memset(smcd_dev->pnetid, 0, SMC_MAX_PNETID_LEN);
+			स_रखो(smcd_dev->pnetid, 0, SMC_MAX_PNETID_LEN);
 			smcd_dev->pnetid_by_user = false;
 			rc = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&smcd_dev_list.mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Add the reference to a given network device to the pnet table.
  */
-static int smc_pnet_add_by_ndev(struct net_device *ndev)
-{
-	struct smc_pnetentry *pnetelem, *tmp_pe;
-	struct smc_pnettable *pnettable;
-	struct net *net = dev_net(ndev);
-	struct smc_net *sn;
-	int rc = -ENOENT;
+अटल पूर्णांक smc_pnet_add_by_ndev(काष्ठा net_device *ndev)
+अणु
+	काष्ठा smc_pnetentry *pnetelem, *पंचांगp_pe;
+	काष्ठा smc_pnettable *pnettable;
+	काष्ठा net *net = dev_net(ndev);
+	काष्ठा smc_net *sn;
+	पूर्णांक rc = -ENOENT;
 
-	/* get pnettable for namespace */
+	/* get pnettable क्रम namespace */
 	sn = net_generic(net, smc_net_id);
 	pnettable = &sn->pnettable;
 
-	write_lock(&pnettable->lock);
-	list_for_each_entry_safe(pnetelem, tmp_pe, &pnettable->pnetlist, list) {
-		if (pnetelem->type == SMC_PNET_ETH && !pnetelem->ndev &&
-		    !strncmp(pnetelem->eth_name, ndev->name, IFNAMSIZ)) {
+	ग_लिखो_lock(&pnettable->lock);
+	list_क्रम_each_entry_safe(pnetelem, पंचांगp_pe, &pnettable->pnetlist, list) अणु
+		अगर (pnetelem->type == SMC_PNET_ETH && !pnetelem->ndev &&
+		    !म_भेदन(pnetelem->eth_name, ndev->name, IFNAMSIZ)) अणु
 			dev_hold(ndev);
 			pnetelem->ndev = ndev;
 			rc = 0;
@@ -202,450 +203,450 @@ static int smc_pnet_add_by_ndev(struct net_device *ndev)
 					    "user defined pnetid %.16s\n",
 					    pnetelem->eth_name,
 					    pnetelem->pnet_name);
-			break;
-		}
-	}
-	write_unlock(&pnettable->lock);
-	return rc;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock(&pnettable->lock);
+	वापस rc;
+पूर्ण
 
 /* Remove the reference to a given network device from the pnet table.
  */
-static int smc_pnet_remove_by_ndev(struct net_device *ndev)
-{
-	struct smc_pnetentry *pnetelem, *tmp_pe;
-	struct smc_pnettable *pnettable;
-	struct net *net = dev_net(ndev);
-	struct smc_net *sn;
-	int rc = -ENOENT;
+अटल पूर्णांक smc_pnet_हटाओ_by_ndev(काष्ठा net_device *ndev)
+अणु
+	काष्ठा smc_pnetentry *pnetelem, *पंचांगp_pe;
+	काष्ठा smc_pnettable *pnettable;
+	काष्ठा net *net = dev_net(ndev);
+	काष्ठा smc_net *sn;
+	पूर्णांक rc = -ENOENT;
 
-	/* get pnettable for namespace */
+	/* get pnettable क्रम namespace */
 	sn = net_generic(net, smc_net_id);
 	pnettable = &sn->pnettable;
 
-	write_lock(&pnettable->lock);
-	list_for_each_entry_safe(pnetelem, tmp_pe, &pnettable->pnetlist, list) {
-		if (pnetelem->type == SMC_PNET_ETH && pnetelem->ndev == ndev) {
+	ग_लिखो_lock(&pnettable->lock);
+	list_क्रम_each_entry_safe(pnetelem, पंचांगp_pe, &pnettable->pnetlist, list) अणु
+		अगर (pnetelem->type == SMC_PNET_ETH && pnetelem->ndev == ndev) अणु
 			dev_put(pnetelem->ndev);
-			pnetelem->ndev = NULL;
+			pnetelem->ndev = शून्य;
 			rc = 0;
 			pr_warn_ratelimited("smc: removing net device %s with "
 					    "user defined pnetid %.16s\n",
 					    pnetelem->eth_name,
 					    pnetelem->pnet_name);
-			break;
-		}
-	}
-	write_unlock(&pnettable->lock);
-	return rc;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock(&pnettable->lock);
+	वापस rc;
+पूर्ण
 
 /* Apply pnetid to ib device when no pnetid is set.
  */
-static bool smc_pnet_apply_ib(struct smc_ib_device *ib_dev, u8 ib_port,
-			      char *pnet_name)
-{
+अटल bool smc_pnet_apply_ib(काष्ठा smc_ib_device *ib_dev, u8 ib_port,
+			      अक्षर *pnet_name)
+अणु
 	bool applied = false;
 
 	mutex_lock(&smc_ib_devices.mutex);
-	if (!smc_pnet_is_pnetid_set(ib_dev->pnetid[ib_port - 1])) {
-		memcpy(ib_dev->pnetid[ib_port - 1], pnet_name,
+	अगर (!smc_pnet_is_pnetid_set(ib_dev->pnetid[ib_port - 1])) अणु
+		स_नकल(ib_dev->pnetid[ib_port - 1], pnet_name,
 		       SMC_MAX_PNETID_LEN);
 		ib_dev->pnetid_by_user[ib_port - 1] = true;
 		applied = true;
-	}
+	पूर्ण
 	mutex_unlock(&smc_ib_devices.mutex);
-	return applied;
-}
+	वापस applied;
+पूर्ण
 
 /* Apply pnetid to smcd device when no pnetid is set.
  */
-static bool smc_pnet_apply_smcd(struct smcd_dev *smcd_dev, char *pnet_name)
-{
+अटल bool smc_pnet_apply_smcd(काष्ठा smcd_dev *smcd_dev, अक्षर *pnet_name)
+अणु
 	bool applied = false;
 
 	mutex_lock(&smcd_dev_list.mutex);
-	if (!smc_pnet_is_pnetid_set(smcd_dev->pnetid)) {
-		memcpy(smcd_dev->pnetid, pnet_name, SMC_MAX_PNETID_LEN);
+	अगर (!smc_pnet_is_pnetid_set(smcd_dev->pnetid)) अणु
+		स_नकल(smcd_dev->pnetid, pnet_name, SMC_MAX_PNETID_LEN);
 		smcd_dev->pnetid_by_user = true;
 		applied = true;
-	}
+	पूर्ण
 	mutex_unlock(&smcd_dev_list.mutex);
-	return applied;
-}
+	वापस applied;
+पूर्ण
 
-/* The limit for pnetid is 16 characters.
- * Valid characters should be (single-byte character set) a-z, A-Z, 0-9.
- * Lower case letters are converted to upper case.
+/* The limit क्रम pnetid is 16 अक्षरacters.
+ * Valid अक्षरacters should be (single-byte अक्षरacter set) a-z, A-Z, 0-9.
+ * Lower हाल letters are converted to upper हाल.
  * Interior blanks should not be used.
  */
-static bool smc_pnetid_valid(const char *pnet_name, char *pnetid)
-{
-	char *bf = skip_spaces(pnet_name);
-	size_t len = strlen(bf);
-	char *end = bf + len;
+अटल bool smc_pnetid_valid(स्थिर अक्षर *pnet_name, अक्षर *pnetid)
+अणु
+	अक्षर *bf = skip_spaces(pnet_name);
+	माप_प्रकार len = म_माप(bf);
+	अक्षर *end = bf + len;
 
-	if (!len)
-		return false;
-	while (--end >= bf && isspace(*end))
+	अगर (!len)
+		वापस false;
+	जबतक (--end >= bf && है_खाली(*end))
 		;
-	if (end - bf >= SMC_MAX_PNETID_LEN)
-		return false;
-	while (bf <= end) {
-		if (!isalnum(*bf))
-			return false;
-		*pnetid++ = islower(*bf) ? toupper(*bf) : *bf;
+	अगर (end - bf >= SMC_MAX_PNETID_LEN)
+		वापस false;
+	जबतक (bf <= end) अणु
+		अगर (!है_अक्षर_अंक(*bf))
+			वापस false;
+		*pnetid++ = है_छोटा(*bf) ? बड़े(*bf) : *bf;
 		bf++;
-	}
+	पूर्ण
 	*pnetid = '\0';
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /* Find an infiniband device by a given name. The device might not exist. */
-static struct smc_ib_device *smc_pnet_find_ib(char *ib_name)
-{
-	struct smc_ib_device *ibdev;
+अटल काष्ठा smc_ib_device *smc_pnet_find_ib(अक्षर *ib_name)
+अणु
+	काष्ठा smc_ib_device *ibdev;
 
 	mutex_lock(&smc_ib_devices.mutex);
-	list_for_each_entry(ibdev, &smc_ib_devices.list, list) {
-		if (!strncmp(ibdev->ibdev->name, ib_name,
-			     sizeof(ibdev->ibdev->name)) ||
-		    !strncmp(dev_name(ibdev->ibdev->dev.parent), ib_name,
-			     IB_DEVICE_NAME_MAX - 1)) {
-			goto out;
-		}
-	}
-	ibdev = NULL;
+	list_क्रम_each_entry(ibdev, &smc_ib_devices.list, list) अणु
+		अगर (!म_भेदन(ibdev->ibdev->name, ib_name,
+			     माप(ibdev->ibdev->name)) ||
+		    !म_भेदन(dev_name(ibdev->ibdev->dev.parent), ib_name,
+			     IB_DEVICE_NAME_MAX - 1)) अणु
+			जाओ out;
+		पूर्ण
+	पूर्ण
+	ibdev = शून्य;
 out:
 	mutex_unlock(&smc_ib_devices.mutex);
-	return ibdev;
-}
+	वापस ibdev;
+पूर्ण
 
 /* Find an smcd device by a given name. The device might not exist. */
-static struct smcd_dev *smc_pnet_find_smcd(char *smcd_name)
-{
-	struct smcd_dev *smcd_dev;
+अटल काष्ठा smcd_dev *smc_pnet_find_smcd(अक्षर *smcd_name)
+अणु
+	काष्ठा smcd_dev *smcd_dev;
 
 	mutex_lock(&smcd_dev_list.mutex);
-	list_for_each_entry(smcd_dev, &smcd_dev_list.list, list) {
-		if (!strncmp(dev_name(&smcd_dev->dev), smcd_name,
+	list_क्रम_each_entry(smcd_dev, &smcd_dev_list.list, list) अणु
+		अगर (!म_भेदन(dev_name(&smcd_dev->dev), smcd_name,
 			     IB_DEVICE_NAME_MAX - 1))
-			goto out;
-	}
-	smcd_dev = NULL;
+			जाओ out;
+	पूर्ण
+	smcd_dev = शून्य;
 out:
 	mutex_unlock(&smcd_dev_list.mutex);
-	return smcd_dev;
-}
+	वापस smcd_dev;
+पूर्ण
 
-static int smc_pnet_add_eth(struct smc_pnettable *pnettable, struct net *net,
-			    char *eth_name, char *pnet_name)
-{
-	struct smc_pnetentry *tmp_pe, *new_pe;
-	struct net_device *ndev, *base_ndev;
+अटल पूर्णांक smc_pnet_add_eth(काष्ठा smc_pnettable *pnettable, काष्ठा net *net,
+			    अक्षर *eth_name, अक्षर *pnet_name)
+अणु
+	काष्ठा smc_pnetentry *पंचांगp_pe, *new_pe;
+	काष्ठा net_device *ndev, *base_ndev;
 	u8 ndev_pnetid[SMC_MAX_PNETID_LEN];
 	bool new_netdev;
-	int rc;
+	पूर्णांक rc;
 
-	/* check if (base) netdev already has a pnetid. If there is one, we do
+	/* check अगर (base) netdev alपढ़ोy has a pnetid. If there is one, we करो
 	 * not want to add a pnet table entry
 	 */
 	rc = -EEXIST;
 	ndev = dev_get_by_name(net, eth_name);	/* dev_hold() */
-	if (ndev) {
+	अगर (ndev) अणु
 		base_ndev = pnet_find_base_ndev(ndev);
-		if (!smc_pnetid_by_dev_port(base_ndev->dev.parent,
+		अगर (!smc_pnetid_by_dev_port(base_ndev->dev.parent,
 					    base_ndev->dev_port, ndev_pnetid))
-			goto out_put;
-	}
+			जाओ out_put;
+	पूर्ण
 
-	/* add a new netdev entry to the pnet table if there isn't one */
+	/* add a new netdev entry to the pnet table अगर there isn't one */
 	rc = -ENOMEM;
-	new_pe = kzalloc(sizeof(*new_pe), GFP_KERNEL);
-	if (!new_pe)
-		goto out_put;
+	new_pe = kzalloc(माप(*new_pe), GFP_KERNEL);
+	अगर (!new_pe)
+		जाओ out_put;
 	new_pe->type = SMC_PNET_ETH;
-	memcpy(new_pe->pnet_name, pnet_name, SMC_MAX_PNETID_LEN);
-	strncpy(new_pe->eth_name, eth_name, IFNAMSIZ);
+	स_नकल(new_pe->pnet_name, pnet_name, SMC_MAX_PNETID_LEN);
+	म_नकलन(new_pe->eth_name, eth_name, IFNAMSIZ);
 	new_pe->ndev = ndev;
 
 	rc = -EEXIST;
 	new_netdev = true;
-	write_lock(&pnettable->lock);
-	list_for_each_entry(tmp_pe, &pnettable->pnetlist, list) {
-		if (tmp_pe->type == SMC_PNET_ETH &&
-		    !strncmp(tmp_pe->eth_name, eth_name, IFNAMSIZ)) {
+	ग_लिखो_lock(&pnettable->lock);
+	list_क्रम_each_entry(पंचांगp_pe, &pnettable->pnetlist, list) अणु
+		अगर (पंचांगp_pe->type == SMC_PNET_ETH &&
+		    !म_भेदन(पंचांगp_pe->eth_name, eth_name, IFNAMSIZ)) अणु
 			new_netdev = false;
-			break;
-		}
-	}
-	if (new_netdev) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (new_netdev) अणु
 		list_add_tail(&new_pe->list, &pnettable->pnetlist);
-		write_unlock(&pnettable->lock);
-	} else {
-		write_unlock(&pnettable->lock);
-		kfree(new_pe);
-		goto out_put;
-	}
-	if (ndev)
+		ग_लिखो_unlock(&pnettable->lock);
+	पूर्ण अन्यथा अणु
+		ग_लिखो_unlock(&pnettable->lock);
+		kमुक्त(new_pe);
+		जाओ out_put;
+	पूर्ण
+	अगर (ndev)
 		pr_warn_ratelimited("smc: net device %s "
 				    "applied user defined pnetid %.16s\n",
 				    new_pe->eth_name, new_pe->pnet_name);
-	return 0;
+	वापस 0;
 
 out_put:
-	if (ndev)
+	अगर (ndev)
 		dev_put(ndev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int smc_pnet_add_ib(struct smc_pnettable *pnettable, char *ib_name,
-			   u8 ib_port, char *pnet_name)
-{
-	struct smc_pnetentry *tmp_pe, *new_pe;
-	struct smc_ib_device *ib_dev;
+अटल पूर्णांक smc_pnet_add_ib(काष्ठा smc_pnettable *pnettable, अक्षर *ib_name,
+			   u8 ib_port, अक्षर *pnet_name)
+अणु
+	काष्ठा smc_pnetentry *पंचांगp_pe, *new_pe;
+	काष्ठा smc_ib_device *ib_dev;
 	bool smcddev_applied = true;
 	bool ibdev_applied = true;
-	struct smcd_dev *smcd_dev;
+	काष्ठा smcd_dev *smcd_dev;
 	bool new_ibdev;
 
 	/* try to apply the pnetid to active devices */
 	ib_dev = smc_pnet_find_ib(ib_name);
-	if (ib_dev) {
+	अगर (ib_dev) अणु
 		ibdev_applied = smc_pnet_apply_ib(ib_dev, ib_port, pnet_name);
-		if (ibdev_applied)
+		अगर (ibdev_applied)
 			pr_warn_ratelimited("smc: ib device %s ibport %d "
 					    "applied user defined pnetid "
 					    "%.16s\n", ib_dev->ibdev->name,
 					    ib_port,
 					    ib_dev->pnetid[ib_port - 1]);
-	}
+	पूर्ण
 	smcd_dev = smc_pnet_find_smcd(ib_name);
-	if (smcd_dev) {
+	अगर (smcd_dev) अणु
 		smcddev_applied = smc_pnet_apply_smcd(smcd_dev, pnet_name);
-		if (smcddev_applied)
+		अगर (smcddev_applied)
 			pr_warn_ratelimited("smc: smcd device %s "
 					    "applied user defined pnetid "
 					    "%.16s\n", dev_name(&smcd_dev->dev),
 					    smcd_dev->pnetid);
-	}
-	/* Apply fails when a device has a hardware-defined pnetid set, do not
-	 * add a pnet table entry in that case.
+	पूर्ण
+	/* Apply fails when a device has a hardware-defined pnetid set, करो not
+	 * add a pnet table entry in that हाल.
 	 */
-	if (!ibdev_applied || !smcddev_applied)
-		return -EEXIST;
+	अगर (!ibdev_applied || !smcddev_applied)
+		वापस -EEXIST;
 
-	/* add a new ib entry to the pnet table if there isn't one */
-	new_pe = kzalloc(sizeof(*new_pe), GFP_KERNEL);
-	if (!new_pe)
-		return -ENOMEM;
+	/* add a new ib entry to the pnet table अगर there isn't one */
+	new_pe = kzalloc(माप(*new_pe), GFP_KERNEL);
+	अगर (!new_pe)
+		वापस -ENOMEM;
 	new_pe->type = SMC_PNET_IB;
-	memcpy(new_pe->pnet_name, pnet_name, SMC_MAX_PNETID_LEN);
-	strncpy(new_pe->ib_name, ib_name, IB_DEVICE_NAME_MAX);
+	स_नकल(new_pe->pnet_name, pnet_name, SMC_MAX_PNETID_LEN);
+	म_नकलन(new_pe->ib_name, ib_name, IB_DEVICE_NAME_MAX);
 	new_pe->ib_port = ib_port;
 
 	new_ibdev = true;
-	write_lock(&pnettable->lock);
-	list_for_each_entry(tmp_pe, &pnettable->pnetlist, list) {
-		if (tmp_pe->type == SMC_PNET_IB &&
-		    !strncmp(tmp_pe->ib_name, ib_name, IB_DEVICE_NAME_MAX)) {
+	ग_लिखो_lock(&pnettable->lock);
+	list_क्रम_each_entry(पंचांगp_pe, &pnettable->pnetlist, list) अणु
+		अगर (पंचांगp_pe->type == SMC_PNET_IB &&
+		    !म_भेदन(पंचांगp_pe->ib_name, ib_name, IB_DEVICE_NAME_MAX)) अणु
 			new_ibdev = false;
-			break;
-		}
-	}
-	if (new_ibdev) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (new_ibdev) अणु
 		list_add_tail(&new_pe->list, &pnettable->pnetlist);
-		write_unlock(&pnettable->lock);
-	} else {
-		write_unlock(&pnettable->lock);
-		kfree(new_pe);
-	}
-	return (new_ibdev) ? 0 : -EEXIST;
-}
+		ग_लिखो_unlock(&pnettable->lock);
+	पूर्ण अन्यथा अणु
+		ग_लिखो_unlock(&pnettable->lock);
+		kमुक्त(new_pe);
+	पूर्ण
+	वापस (new_ibdev) ? 0 : -EEXIST;
+पूर्ण
 
-/* Append a pnetid to the end of the pnet table if not already on this list.
+/* Append a pnetid to the end of the pnet table अगर not alपढ़ोy on this list.
  */
-static int smc_pnet_enter(struct net *net, struct nlattr *tb[])
-{
-	char pnet_name[SMC_MAX_PNETID_LEN + 1];
-	struct smc_pnettable *pnettable;
+अटल पूर्णांक smc_pnet_enter(काष्ठा net *net, काष्ठा nlattr *tb[])
+अणु
+	अक्षर pnet_name[SMC_MAX_PNETID_LEN + 1];
+	काष्ठा smc_pnettable *pnettable;
 	bool new_netdev = false;
 	bool new_ibdev = false;
-	struct smc_net *sn;
+	काष्ठा smc_net *sn;
 	u8 ibport = 1;
-	char *string;
-	int rc;
+	अक्षर *string;
+	पूर्णांक rc;
 
-	/* get pnettable for namespace */
+	/* get pnettable क्रम namespace */
 	sn = net_generic(net, smc_net_id);
 	pnettable = &sn->pnettable;
 
 	rc = -EINVAL;
-	if (!tb[SMC_PNETID_NAME])
-		goto error;
-	string = (char *)nla_data(tb[SMC_PNETID_NAME]);
-	if (!smc_pnetid_valid(string, pnet_name))
-		goto error;
+	अगर (!tb[SMC_PNETID_NAME])
+		जाओ error;
+	string = (अक्षर *)nla_data(tb[SMC_PNETID_NAME]);
+	अगर (!smc_pnetid_valid(string, pnet_name))
+		जाओ error;
 
-	if (tb[SMC_PNETID_ETHNAME]) {
-		string = (char *)nla_data(tb[SMC_PNETID_ETHNAME]);
+	अगर (tb[SMC_PNETID_ETHNAME]) अणु
+		string = (अक्षर *)nla_data(tb[SMC_PNETID_ETHNAME]);
 		rc = smc_pnet_add_eth(pnettable, net, string, pnet_name);
-		if (!rc)
+		अगर (!rc)
 			new_netdev = true;
-		else if (rc != -EEXIST)
-			goto error;
-	}
+		अन्यथा अगर (rc != -EEXIST)
+			जाओ error;
+	पूर्ण
 
-	/* if this is not the initial namespace, stop here */
-	if (net != &init_net)
-		return new_netdev ? 0 : -EEXIST;
+	/* अगर this is not the initial namespace, stop here */
+	अगर (net != &init_net)
+		वापस new_netdev ? 0 : -EEXIST;
 
 	rc = -EINVAL;
-	if (tb[SMC_PNETID_IBNAME]) {
-		string = (char *)nla_data(tb[SMC_PNETID_IBNAME]);
+	अगर (tb[SMC_PNETID_IBNAME]) अणु
+		string = (अक्षर *)nla_data(tb[SMC_PNETID_IBNAME]);
 		string = strim(string);
-		if (tb[SMC_PNETID_IBPORT]) {
+		अगर (tb[SMC_PNETID_IBPORT]) अणु
 			ibport = nla_get_u8(tb[SMC_PNETID_IBPORT]);
-			if (ibport < 1 || ibport > SMC_MAX_PORTS)
-				goto error;
-		}
+			अगर (ibport < 1 || ibport > SMC_MAX_PORTS)
+				जाओ error;
+		पूर्ण
 		rc = smc_pnet_add_ib(pnettable, string, ibport, pnet_name);
-		if (!rc)
+		अगर (!rc)
 			new_ibdev = true;
-		else if (rc != -EEXIST)
-			goto error;
-	}
-	return (new_netdev || new_ibdev) ? 0 : -EEXIST;
+		अन्यथा अगर (rc != -EEXIST)
+			जाओ error;
+	पूर्ण
+	वापस (new_netdev || new_ibdev) ? 0 : -EEXIST;
 
 error:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Convert an smc_pnetentry to a netlink attribute sequence */
-static int smc_pnet_set_nla(struct sk_buff *msg,
-			    struct smc_pnetentry *pnetelem)
-{
-	if (nla_put_string(msg, SMC_PNETID_NAME, pnetelem->pnet_name))
-		return -1;
-	if (pnetelem->type == SMC_PNET_ETH) {
-		if (nla_put_string(msg, SMC_PNETID_ETHNAME,
+अटल पूर्णांक smc_pnet_set_nla(काष्ठा sk_buff *msg,
+			    काष्ठा smc_pnetentry *pnetelem)
+अणु
+	अगर (nla_put_string(msg, SMC_PNETID_NAME, pnetelem->pnet_name))
+		वापस -1;
+	अगर (pnetelem->type == SMC_PNET_ETH) अणु
+		अगर (nla_put_string(msg, SMC_PNETID_ETHNAME,
 				   pnetelem->eth_name))
-			return -1;
-	} else {
-		if (nla_put_string(msg, SMC_PNETID_ETHNAME, "n/a"))
-			return -1;
-	}
-	if (pnetelem->type == SMC_PNET_IB) {
-		if (nla_put_string(msg, SMC_PNETID_IBNAME, pnetelem->ib_name) ||
+			वापस -1;
+	पूर्ण अन्यथा अणु
+		अगर (nla_put_string(msg, SMC_PNETID_ETHNAME, "n/a"))
+			वापस -1;
+	पूर्ण
+	अगर (pnetelem->type == SMC_PNET_IB) अणु
+		अगर (nla_put_string(msg, SMC_PNETID_IBNAME, pnetelem->ib_name) ||
 		    nla_put_u8(msg, SMC_PNETID_IBPORT, pnetelem->ib_port))
-			return -1;
-	} else {
-		if (nla_put_string(msg, SMC_PNETID_IBNAME, "n/a") ||
+			वापस -1;
+	पूर्ण अन्यथा अणु
+		अगर (nla_put_string(msg, SMC_PNETID_IBNAME, "n/a") ||
 		    nla_put_u8(msg, SMC_PNETID_IBPORT, 0xff))
-			return -1;
-	}
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smc_pnet_add(struct sk_buff *skb, struct genl_info *info)
-{
-	struct net *net = genl_info_net(info);
+अटल पूर्णांक smc_pnet_add(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा net *net = genl_info_net(info);
 
-	return smc_pnet_enter(net, info->attrs);
-}
+	वापस smc_pnet_enter(net, info->attrs);
+पूर्ण
 
-static int smc_pnet_del(struct sk_buff *skb, struct genl_info *info)
-{
-	struct net *net = genl_info_net(info);
+अटल पूर्णांक smc_pnet_del(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा net *net = genl_info_net(info);
 
-	if (!info->attrs[SMC_PNETID_NAME])
-		return -EINVAL;
-	return smc_pnet_remove_by_pnetid(net,
-				(char *)nla_data(info->attrs[SMC_PNETID_NAME]));
-}
+	अगर (!info->attrs[SMC_PNETID_NAME])
+		वापस -EINVAL;
+	वापस smc_pnet_हटाओ_by_pnetid(net,
+				(अक्षर *)nla_data(info->attrs[SMC_PNETID_NAME]));
+पूर्ण
 
-static int smc_pnet_dump_start(struct netlink_callback *cb)
-{
+अटल पूर्णांक smc_pnet_dump_start(काष्ठा netlink_callback *cb)
+अणु
 	cb->args[0] = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smc_pnet_dumpinfo(struct sk_buff *skb,
+अटल पूर्णांक smc_pnet_dumpinfo(काष्ठा sk_buff *skb,
 			     u32 portid, u32 seq, u32 flags,
-			     struct smc_pnetentry *pnetelem)
-{
-	void *hdr;
+			     काष्ठा smc_pnetentry *pnetelem)
+अणु
+	व्योम *hdr;
 
 	hdr = genlmsg_put(skb, portid, seq, &smc_pnet_nl_family,
 			  flags, SMC_PNETID_GET);
-	if (!hdr)
-		return -ENOMEM;
-	if (smc_pnet_set_nla(skb, pnetelem) < 0) {
+	अगर (!hdr)
+		वापस -ENOMEM;
+	अगर (smc_pnet_set_nla(skb, pnetelem) < 0) अणु
 		genlmsg_cancel(skb, hdr);
-		return -EMSGSIZE;
-	}
+		वापस -EMSGSIZE;
+	पूर्ण
 	genlmsg_end(skb, hdr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _smc_pnet_dump(struct net *net, struct sk_buff *skb, u32 portid,
-			  u32 seq, u8 *pnetid, int start_idx)
-{
-	struct smc_pnettable *pnettable;
-	struct smc_pnetentry *pnetelem;
-	struct smc_net *sn;
-	int idx = 0;
+अटल पूर्णांक _smc_pnet_dump(काष्ठा net *net, काष्ठा sk_buff *skb, u32 portid,
+			  u32 seq, u8 *pnetid, पूर्णांक start_idx)
+अणु
+	काष्ठा smc_pnettable *pnettable;
+	काष्ठा smc_pnetentry *pnetelem;
+	काष्ठा smc_net *sn;
+	पूर्णांक idx = 0;
 
-	/* get pnettable for namespace */
+	/* get pnettable क्रम namespace */
 	sn = net_generic(net, smc_net_id);
 	pnettable = &sn->pnettable;
 
 	/* dump pnettable entries */
-	read_lock(&pnettable->lock);
-	list_for_each_entry(pnetelem, &pnettable->pnetlist, list) {
-		if (pnetid && !smc_pnet_match(pnetelem->pnet_name, pnetid))
-			continue;
-		if (idx++ < start_idx)
-			continue;
-		/* if this is not the initial namespace, dump only netdev */
-		if (net != &init_net && pnetelem->type != SMC_PNET_ETH)
-			continue;
-		if (smc_pnet_dumpinfo(skb, portid, seq, NLM_F_MULTI,
-				      pnetelem)) {
+	पढ़ो_lock(&pnettable->lock);
+	list_क्रम_each_entry(pnetelem, &pnettable->pnetlist, list) अणु
+		अगर (pnetid && !smc_pnet_match(pnetelem->pnet_name, pnetid))
+			जारी;
+		अगर (idx++ < start_idx)
+			जारी;
+		/* अगर this is not the initial namespace, dump only netdev */
+		अगर (net != &init_net && pnetelem->type != SMC_PNET_ETH)
+			जारी;
+		अगर (smc_pnet_dumpinfo(skb, portid, seq, NLM_F_MULTI,
+				      pnetelem)) अणु
 			--idx;
-			break;
-		}
-	}
-	read_unlock(&pnettable->lock);
-	return idx;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&pnettable->lock);
+	वापस idx;
+पूर्ण
 
-static int smc_pnet_dump(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct net *net = sock_net(skb->sk);
-	int idx;
+अटल पूर्णांक smc_pnet_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	पूर्णांक idx;
 
 	idx = _smc_pnet_dump(net, skb, NETLINK_CB(cb->skb).portid,
-			     cb->nlh->nlmsg_seq, NULL, cb->args[0]);
+			     cb->nlh->nlmsg_seq, शून्य, cb->args[0]);
 
 	cb->args[0] = idx;
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
 /* Retrieve one PNETID entry */
-static int smc_pnet_get(struct sk_buff *skb, struct genl_info *info)
-{
-	struct net *net = genl_info_net(info);
-	struct sk_buff *msg;
-	void *hdr;
+अटल पूर्णांक smc_pnet_get(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा net *net = genl_info_net(info);
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
-	if (!info->attrs[SMC_PNETID_NAME])
-		return -EINVAL;
+	अगर (!info->attrs[SMC_PNETID_NAME])
+		वापस -EINVAL;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	_smc_pnet_dump(net, msg, info->snd_portid, info->snd_seq,
 		       nla_data(info->attrs[SMC_PNETID_NAME]), 0);
@@ -653,55 +654,55 @@ static int smc_pnet_get(struct sk_buff *skb, struct genl_info *info)
 	/* finish multi part message and send it */
 	hdr = nlmsg_put(msg, info->snd_portid, info->snd_seq, NLMSG_DONE, 0,
 			NLM_F_MULTI);
-	if (!hdr) {
-		nlmsg_free(msg);
-		return -EMSGSIZE;
-	}
-	return genlmsg_reply(msg, info);
-}
+	अगर (!hdr) अणु
+		nlmsg_मुक्त(msg);
+		वापस -EMSGSIZE;
+	पूर्ण
+	वापस genlmsg_reply(msg, info);
+पूर्ण
 
 /* Remove and delete all pnetids from pnet table.
  */
-static int smc_pnet_flush(struct sk_buff *skb, struct genl_info *info)
-{
-	struct net *net = genl_info_net(info);
+अटल पूर्णांक smc_pnet_flush(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा net *net = genl_info_net(info);
 
-	smc_pnet_remove_by_pnetid(net, NULL);
-	return 0;
-}
+	smc_pnet_हटाओ_by_pnetid(net, शून्य);
+	वापस 0;
+पूर्ण
 
 /* SMC_PNETID generic netlink operation definition */
-static const struct genl_ops smc_pnet_ops[] = {
-	{
+अटल स्थिर काष्ठा genl_ops smc_pnet_ops[] = अणु
+	अणु
 		.cmd = SMC_PNETID_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		/* can be retrieved by unprivileged users */
-		.doit = smc_pnet_get,
+		.करोit = smc_pnet_get,
 		.dumpit = smc_pnet_dump,
 		.start = smc_pnet_dump_start
-	},
-	{
+	पूर्ण,
+	अणु
 		.cmd = SMC_PNETID_ADD,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.flags = GENL_ADMIN_PERM,
-		.doit = smc_pnet_add
-	},
-	{
+		.करोit = smc_pnet_add
+	पूर्ण,
+	अणु
 		.cmd = SMC_PNETID_DEL,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.flags = GENL_ADMIN_PERM,
-		.doit = smc_pnet_del
-	},
-	{
+		.करोit = smc_pnet_del
+	पूर्ण,
+	अणु
 		.cmd = SMC_PNETID_FLUSH,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.flags = GENL_ADMIN_PERM,
-		.doit = smc_pnet_flush
-	}
-};
+		.करोit = smc_pnet_flush
+	पूर्ण
+पूर्ण;
 
 /* SMC_PNETID family definition */
-static struct genl_family smc_pnet_nl_family __ro_after_init = {
+अटल काष्ठा genl_family smc_pnet_nl_family __ro_after_init = अणु
 	.hdrsize = 0,
 	.name = SMCR_GENL_FAMILY_NAME,
 	.version = SMCR_GENL_FAMILY_VERSION,
@@ -711,154 +712,154 @@ static struct genl_family smc_pnet_nl_family __ro_after_init = {
 	.module = THIS_MODULE,
 	.ops = smc_pnet_ops,
 	.n_ops =  ARRAY_SIZE(smc_pnet_ops)
-};
+पूर्ण;
 
-bool smc_pnet_is_ndev_pnetid(struct net *net, u8 *pnetid)
-{
-	struct smc_net *sn = net_generic(net, smc_net_id);
-	struct smc_pnetids_ndev_entry *pe;
+bool smc_pnet_is_ndev_pnetid(काष्ठा net *net, u8 *pnetid)
+अणु
+	काष्ठा smc_net *sn = net_generic(net, smc_net_id);
+	काष्ठा smc_pnetids_ndev_entry *pe;
 	bool rc = false;
 
-	read_lock(&sn->pnetids_ndev.lock);
-	list_for_each_entry(pe, &sn->pnetids_ndev.list, list) {
-		if (smc_pnet_match(pnetid, pe->pnetid)) {
+	पढ़ो_lock(&sn->pnetids_ndev.lock);
+	list_क्रम_each_entry(pe, &sn->pnetids_ndev.list, list) अणु
+		अगर (smc_pnet_match(pnetid, pe->pnetid)) अणु
 			rc = true;
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
 unlock:
-	read_unlock(&sn->pnetids_ndev.lock);
-	return rc;
-}
+	पढ़ो_unlock(&sn->pnetids_ndev.lock);
+	वापस rc;
+पूर्ण
 
-static int smc_pnet_add_pnetid(struct net *net, u8 *pnetid)
-{
-	struct smc_net *sn = net_generic(net, smc_net_id);
-	struct smc_pnetids_ndev_entry *pe, *pi;
+अटल पूर्णांक smc_pnet_add_pnetid(काष्ठा net *net, u8 *pnetid)
+अणु
+	काष्ठा smc_net *sn = net_generic(net, smc_net_id);
+	काष्ठा smc_pnetids_ndev_entry *pe, *pi;
 
-	pe = kzalloc(sizeof(*pe), GFP_KERNEL);
-	if (!pe)
-		return -ENOMEM;
+	pe = kzalloc(माप(*pe), GFP_KERNEL);
+	अगर (!pe)
+		वापस -ENOMEM;
 
-	write_lock(&sn->pnetids_ndev.lock);
-	list_for_each_entry(pi, &sn->pnetids_ndev.list, list) {
-		if (smc_pnet_match(pnetid, pe->pnetid)) {
+	ग_लिखो_lock(&sn->pnetids_ndev.lock);
+	list_क्रम_each_entry(pi, &sn->pnetids_ndev.list, list) अणु
+		अगर (smc_pnet_match(pnetid, pe->pnetid)) अणु
 			refcount_inc(&pi->refcnt);
-			kfree(pe);
-			goto unlock;
-		}
-	}
+			kमुक्त(pe);
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 	refcount_set(&pe->refcnt, 1);
-	memcpy(pe->pnetid, pnetid, SMC_MAX_PNETID_LEN);
+	स_नकल(pe->pnetid, pnetid, SMC_MAX_PNETID_LEN);
 	list_add_tail(&pe->list, &sn->pnetids_ndev.list);
 
 unlock:
-	write_unlock(&sn->pnetids_ndev.lock);
-	return 0;
-}
+	ग_लिखो_unlock(&sn->pnetids_ndev.lock);
+	वापस 0;
+पूर्ण
 
-static void smc_pnet_remove_pnetid(struct net *net, u8 *pnetid)
-{
-	struct smc_net *sn = net_generic(net, smc_net_id);
-	struct smc_pnetids_ndev_entry *pe, *pe2;
+अटल व्योम smc_pnet_हटाओ_pnetid(काष्ठा net *net, u8 *pnetid)
+अणु
+	काष्ठा smc_net *sn = net_generic(net, smc_net_id);
+	काष्ठा smc_pnetids_ndev_entry *pe, *pe2;
 
-	write_lock(&sn->pnetids_ndev.lock);
-	list_for_each_entry_safe(pe, pe2, &sn->pnetids_ndev.list, list) {
-		if (smc_pnet_match(pnetid, pe->pnetid)) {
-			if (refcount_dec_and_test(&pe->refcnt)) {
+	ग_लिखो_lock(&sn->pnetids_ndev.lock);
+	list_क्रम_each_entry_safe(pe, pe2, &sn->pnetids_ndev.list, list) अणु
+		अगर (smc_pnet_match(pnetid, pe->pnetid)) अणु
+			अगर (refcount_dec_and_test(&pe->refcnt)) अणु
 				list_del(&pe->list);
-				kfree(pe);
-			}
-			break;
-		}
-	}
-	write_unlock(&sn->pnetids_ndev.lock);
-}
+				kमुक्त(pe);
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock(&sn->pnetids_ndev.lock);
+पूर्ण
 
-static void smc_pnet_add_base_pnetid(struct net *net, struct net_device *dev,
+अटल व्योम smc_pnet_add_base_pnetid(काष्ठा net *net, काष्ठा net_device *dev,
 				     u8 *ndev_pnetid)
-{
-	struct net_device *base_dev;
+अणु
+	काष्ठा net_device *base_dev;
 
 	base_dev = __pnet_find_base_ndev(dev);
-	if (base_dev->flags & IFF_UP &&
+	अगर (base_dev->flags & IFF_UP &&
 	    !smc_pnetid_by_dev_port(base_dev->dev.parent, base_dev->dev_port,
-				    ndev_pnetid)) {
+				    ndev_pnetid)) अणु
 		/* add to PNETIDs list */
 		smc_pnet_add_pnetid(net, ndev_pnetid);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* create initial list of netdevice pnetids */
-static void smc_pnet_create_pnetids_list(struct net *net)
-{
+अटल व्योम smc_pnet_create_pnetids_list(काष्ठा net *net)
+अणु
 	u8 ndev_pnetid[SMC_MAX_PNETID_LEN];
-	struct net_device *dev;
+	काष्ठा net_device *dev;
 
 	rtnl_lock();
-	for_each_netdev(net, dev)
+	क्रम_each_netdev(net, dev)
 		smc_pnet_add_base_pnetid(net, dev, ndev_pnetid);
 	rtnl_unlock();
-}
+पूर्ण
 
 /* clean up list of netdevice pnetids */
-static void smc_pnet_destroy_pnetids_list(struct net *net)
-{
-	struct smc_net *sn = net_generic(net, smc_net_id);
-	struct smc_pnetids_ndev_entry *pe, *temp_pe;
+अटल व्योम smc_pnet_destroy_pnetids_list(काष्ठा net *net)
+अणु
+	काष्ठा smc_net *sn = net_generic(net, smc_net_id);
+	काष्ठा smc_pnetids_ndev_entry *pe, *temp_pe;
 
-	write_lock(&sn->pnetids_ndev.lock);
-	list_for_each_entry_safe(pe, temp_pe, &sn->pnetids_ndev.list, list) {
+	ग_लिखो_lock(&sn->pnetids_ndev.lock);
+	list_क्रम_each_entry_safe(pe, temp_pe, &sn->pnetids_ndev.list, list) अणु
 		list_del(&pe->list);
-		kfree(pe);
-	}
-	write_unlock(&sn->pnetids_ndev.lock);
-}
+		kमुक्त(pe);
+	पूर्ण
+	ग_लिखो_unlock(&sn->pnetids_ndev.lock);
+पूर्ण
 
-static int smc_pnet_netdev_event(struct notifier_block *this,
-				 unsigned long event, void *ptr)
-{
-	struct net_device *event_dev = netdev_notifier_info_to_dev(ptr);
-	struct net *net = dev_net(event_dev);
+अटल पूर्णांक smc_pnet_netdev_event(काष्ठा notअगरier_block *this,
+				 अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *event_dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा net *net = dev_net(event_dev);
 	u8 ndev_pnetid[SMC_MAX_PNETID_LEN];
 
-	switch (event) {
-	case NETDEV_REBOOT:
-	case NETDEV_UNREGISTER:
-		smc_pnet_remove_by_ndev(event_dev);
+	चयन (event) अणु
+	हाल NETDEV_REBOOT:
+	हाल NETDEV_UNREGISTER:
+		smc_pnet_हटाओ_by_ndev(event_dev);
 		smc_ib_ndev_change(event_dev, event);
-		return NOTIFY_OK;
-	case NETDEV_REGISTER:
+		वापस NOTIFY_OK;
+	हाल NETDEV_REGISTER:
 		smc_pnet_add_by_ndev(event_dev);
 		smc_ib_ndev_change(event_dev, event);
-		return NOTIFY_OK;
-	case NETDEV_UP:
+		वापस NOTIFY_OK;
+	हाल NETDEV_UP:
 		smc_pnet_add_base_pnetid(net, event_dev, ndev_pnetid);
-		return NOTIFY_OK;
-	case NETDEV_DOWN:
+		वापस NOTIFY_OK;
+	हाल NETDEV_DOWN:
 		event_dev = __pnet_find_base_ndev(event_dev);
-		if (!smc_pnetid_by_dev_port(event_dev->dev.parent,
-					    event_dev->dev_port, ndev_pnetid)) {
-			/* remove from PNETIDs list */
-			smc_pnet_remove_pnetid(net, ndev_pnetid);
-		}
-		return NOTIFY_OK;
-	default:
-		return NOTIFY_DONE;
-	}
-}
+		अगर (!smc_pnetid_by_dev_port(event_dev->dev.parent,
+					    event_dev->dev_port, ndev_pnetid)) अणु
+			/* हटाओ from PNETIDs list */
+			smc_pnet_हटाओ_pnetid(net, ndev_pnetid);
+		पूर्ण
+		वापस NOTIFY_OK;
+	शेष:
+		वापस NOTIFY_DONE;
+	पूर्ण
+पूर्ण
 
-static struct notifier_block smc_netdev_notifier = {
-	.notifier_call = smc_pnet_netdev_event
-};
+अटल काष्ठा notअगरier_block smc_netdev_notअगरier = अणु
+	.notअगरier_call = smc_pnet_netdev_event
+पूर्ण;
 
 /* init network namespace */
-int smc_pnet_net_init(struct net *net)
-{
-	struct smc_net *sn = net_generic(net, smc_net_id);
-	struct smc_pnettable *pnettable = &sn->pnettable;
-	struct smc_pnetids_ndev *pnetids_ndev = &sn->pnetids_ndev;
+पूर्णांक smc_pnet_net_init(काष्ठा net *net)
+अणु
+	काष्ठा smc_net *sn = net_generic(net, smc_net_id);
+	काष्ठा smc_pnettable *pnettable = &sn->pnettable;
+	काष्ठा smc_pnetids_ndev *pnetids_ndev = &sn->pnetids_ndev;
 
 	INIT_LIST_HEAD(&pnettable->pnetlist);
 	rwlock_init(&pnettable->lock);
@@ -867,167 +868,167 @@ int smc_pnet_net_init(struct net *net)
 
 	smc_pnet_create_pnetids_list(net);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init smc_pnet_init(void)
-{
-	int rc;
+पूर्णांक __init smc_pnet_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = genl_register_family(&smc_pnet_nl_family);
-	if (rc)
-		return rc;
-	rc = register_netdevice_notifier(&smc_netdev_notifier);
-	if (rc)
-		genl_unregister_family(&smc_pnet_nl_family);
+	rc = genl_रेजिस्टर_family(&smc_pnet_nl_family);
+	अगर (rc)
+		वापस rc;
+	rc = रेजिस्टर_netdevice_notअगरier(&smc_netdev_notअगरier);
+	अगर (rc)
+		genl_unरेजिस्टर_family(&smc_pnet_nl_family);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* exit network namespace */
-void smc_pnet_net_exit(struct net *net)
-{
+/* निकास network namespace */
+व्योम smc_pnet_net_निकास(काष्ठा net *net)
+अणु
 	/* flush pnet table */
-	smc_pnet_remove_by_pnetid(net, NULL);
+	smc_pnet_हटाओ_by_pnetid(net, शून्य);
 	smc_pnet_destroy_pnetids_list(net);
-}
+पूर्ण
 
-void smc_pnet_exit(void)
-{
-	unregister_netdevice_notifier(&smc_netdev_notifier);
-	genl_unregister_family(&smc_pnet_nl_family);
-}
+व्योम smc_pnet_निकास(व्योम)
+अणु
+	unरेजिस्टर_netdevice_notअगरier(&smc_netdev_notअगरier);
+	genl_unरेजिस्टर_family(&smc_pnet_nl_family);
+पूर्ण
 
-static struct net_device *__pnet_find_base_ndev(struct net_device *ndev)
-{
-	int i, nest_lvl;
+अटल काष्ठा net_device *__pnet_find_base_ndev(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक i, nest_lvl;
 
 	ASSERT_RTNL();
 	nest_lvl = ndev->lower_level;
-	for (i = 0; i < nest_lvl; i++) {
-		struct list_head *lower = &ndev->adj_list.lower;
+	क्रम (i = 0; i < nest_lvl; i++) अणु
+		काष्ठा list_head *lower = &ndev->adj_list.lower;
 
-		if (list_empty(lower))
-			break;
+		अगर (list_empty(lower))
+			अवरोध;
 		lower = lower->next;
 		ndev = netdev_lower_get_next(ndev, &lower);
-	}
-	return ndev;
-}
+	पूर्ण
+	वापस ndev;
+पूर्ण
 
-/* Determine one base device for stacked net devices.
+/* Determine one base device क्रम stacked net devices.
  * If the lower device level contains more than one devices
- * (for instance with bonding slaves), just the first device
+ * (क्रम instance with bonding slaves), just the first device
  * is used to reach a base device.
  */
-static struct net_device *pnet_find_base_ndev(struct net_device *ndev)
-{
+अटल काष्ठा net_device *pnet_find_base_ndev(काष्ठा net_device *ndev)
+अणु
 	rtnl_lock();
 	ndev = __pnet_find_base_ndev(ndev);
 	rtnl_unlock();
-	return ndev;
-}
+	वापस ndev;
+पूर्ण
 
-static int smc_pnet_find_ndev_pnetid_by_table(struct net_device *ndev,
+अटल पूर्णांक smc_pnet_find_ndev_pnetid_by_table(काष्ठा net_device *ndev,
 					      u8 *pnetid)
-{
-	struct smc_pnettable *pnettable;
-	struct net *net = dev_net(ndev);
-	struct smc_pnetentry *pnetelem;
-	struct smc_net *sn;
-	int rc = -ENOENT;
+अणु
+	काष्ठा smc_pnettable *pnettable;
+	काष्ठा net *net = dev_net(ndev);
+	काष्ठा smc_pnetentry *pnetelem;
+	काष्ठा smc_net *sn;
+	पूर्णांक rc = -ENOENT;
 
-	/* get pnettable for namespace */
+	/* get pnettable क्रम namespace */
 	sn = net_generic(net, smc_net_id);
 	pnettable = &sn->pnettable;
 
-	read_lock(&pnettable->lock);
-	list_for_each_entry(pnetelem, &pnettable->pnetlist, list) {
-		if (pnetelem->type == SMC_PNET_ETH && ndev == pnetelem->ndev) {
+	पढ़ो_lock(&pnettable->lock);
+	list_क्रम_each_entry(pnetelem, &pnettable->pnetlist, list) अणु
+		अगर (pnetelem->type == SMC_PNET_ETH && ndev == pnetelem->ndev) अणु
 			/* get pnetid of netdev device */
-			memcpy(pnetid, pnetelem->pnet_name, SMC_MAX_PNETID_LEN);
+			स_नकल(pnetid, pnetelem->pnet_name, SMC_MAX_PNETID_LEN);
 			rc = 0;
-			break;
-		}
-	}
-	read_unlock(&pnettable->lock);
-	return rc;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&pnettable->lock);
+	वापस rc;
+पूर्ण
 
-/* find a roce device for the given pnetid */
-static void _smc_pnet_find_roce_by_pnetid(u8 *pnet_id,
-					  struct smc_init_info *ini,
-					  struct smc_ib_device *known_dev)
-{
-	struct smc_ib_device *ibdev;
-	int i;
+/* find a roce device क्रम the given pnetid */
+अटल व्योम _smc_pnet_find_roce_by_pnetid(u8 *pnet_id,
+					  काष्ठा smc_init_info *ini,
+					  काष्ठा smc_ib_device *known_dev)
+अणु
+	काष्ठा smc_ib_device *ibdev;
+	पूर्णांक i;
 
-	ini->ib_dev = NULL;
+	ini->ib_dev = शून्य;
 	mutex_lock(&smc_ib_devices.mutex);
-	list_for_each_entry(ibdev, &smc_ib_devices.list, list) {
-		if (ibdev == known_dev)
-			continue;
-		for (i = 1; i <= SMC_MAX_PORTS; i++) {
-			if (!rdma_is_port_valid(ibdev->ibdev, i))
-				continue;
-			if (smc_pnet_match(ibdev->pnetid[i - 1], pnet_id) &&
+	list_क्रम_each_entry(ibdev, &smc_ib_devices.list, list) अणु
+		अगर (ibdev == known_dev)
+			जारी;
+		क्रम (i = 1; i <= SMC_MAX_PORTS; i++) अणु
+			अगर (!rdma_is_port_valid(ibdev->ibdev, i))
+				जारी;
+			अगर (smc_pnet_match(ibdev->pnetid[i - 1], pnet_id) &&
 			    smc_ib_port_active(ibdev, i) &&
 			    !test_bit(i - 1, ibdev->ports_going_away) &&
 			    !smc_ib_determine_gid(ibdev, i, ini->vlan_id,
-						  ini->ib_gid, NULL)) {
+						  ini->ib_gid, शून्य)) अणु
 				ini->ib_dev = ibdev;
 				ini->ib_port = i;
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out:
 	mutex_unlock(&smc_ib_devices.mutex);
-}
+पूर्ण
 
 /* find alternate roce device with same pnet_id and vlan_id */
-void smc_pnet_find_alt_roce(struct smc_link_group *lgr,
-			    struct smc_init_info *ini,
-			    struct smc_ib_device *known_dev)
-{
+व्योम smc_pnet_find_alt_roce(काष्ठा smc_link_group *lgr,
+			    काष्ठा smc_init_info *ini,
+			    काष्ठा smc_ib_device *known_dev)
+अणु
 	_smc_pnet_find_roce_by_pnetid(lgr->pnet_id, ini, known_dev);
-}
+पूर्ण
 
-/* if handshake network device belongs to a roce device, return its
+/* अगर handshake network device beदीर्घs to a roce device, वापस its
  * IB device and port
  */
-static void smc_pnet_find_rdma_dev(struct net_device *netdev,
-				   struct smc_init_info *ini)
-{
-	struct smc_ib_device *ibdev;
+अटल व्योम smc_pnet_find_rdma_dev(काष्ठा net_device *netdev,
+				   काष्ठा smc_init_info *ini)
+अणु
+	काष्ठा smc_ib_device *ibdev;
 
 	mutex_lock(&smc_ib_devices.mutex);
-	list_for_each_entry(ibdev, &smc_ib_devices.list, list) {
-		struct net_device *ndev;
-		int i;
+	list_क्रम_each_entry(ibdev, &smc_ib_devices.list, list) अणु
+		काष्ठा net_device *ndev;
+		पूर्णांक i;
 
-		for (i = 1; i <= SMC_MAX_PORTS; i++) {
-			if (!rdma_is_port_valid(ibdev->ibdev, i))
-				continue;
-			if (!ibdev->ibdev->ops.get_netdev)
-				continue;
+		क्रम (i = 1; i <= SMC_MAX_PORTS; i++) अणु
+			अगर (!rdma_is_port_valid(ibdev->ibdev, i))
+				जारी;
+			अगर (!ibdev->ibdev->ops.get_netdev)
+				जारी;
 			ndev = ibdev->ibdev->ops.get_netdev(ibdev->ibdev, i);
-			if (!ndev)
-				continue;
+			अगर (!ndev)
+				जारी;
 			dev_put(ndev);
-			if (netdev == ndev &&
+			अगर (netdev == ndev &&
 			    smc_ib_port_active(ibdev, i) &&
 			    !test_bit(i - 1, ibdev->ports_going_away) &&
 			    !smc_ib_determine_gid(ibdev, i, ini->vlan_id,
-						  ini->ib_gid, NULL)) {
+						  ini->ib_gid, शून्य)) अणु
 				ini->ib_dev = ibdev;
 				ini->ib_port = i;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&smc_ib_devices.mutex);
-}
+पूर्ण
 
 /* Determine the corresponding IB device port based on the hardware PNETID.
  * Searching stops at the first matching active IB device port with vlan_id
@@ -1035,141 +1036,141 @@ static void smc_pnet_find_rdma_dev(struct net_device *netdev,
  * If nothing found, check pnetid table.
  * If nothing found, try to use handshake device
  */
-static void smc_pnet_find_roce_by_pnetid(struct net_device *ndev,
-					 struct smc_init_info *ini)
-{
+अटल व्योम smc_pnet_find_roce_by_pnetid(काष्ठा net_device *ndev,
+					 काष्ठा smc_init_info *ini)
+अणु
 	u8 ndev_pnetid[SMC_MAX_PNETID_LEN];
 
 	ndev = pnet_find_base_ndev(ndev);
-	if (smc_pnetid_by_dev_port(ndev->dev.parent, ndev->dev_port,
+	अगर (smc_pnetid_by_dev_port(ndev->dev.parent, ndev->dev_port,
 				   ndev_pnetid) &&
-	    smc_pnet_find_ndev_pnetid_by_table(ndev, ndev_pnetid)) {
+	    smc_pnet_find_ndev_pnetid_by_table(ndev, ndev_pnetid)) अणु
 		smc_pnet_find_rdma_dev(ndev, ini);
-		return; /* pnetid could not be determined */
-	}
-	_smc_pnet_find_roce_by_pnetid(ndev_pnetid, ini, NULL);
-}
+		वापस; /* pnetid could not be determined */
+	पूर्ण
+	_smc_pnet_find_roce_by_pnetid(ndev_pnetid, ini, शून्य);
+पूर्ण
 
-static void smc_pnet_find_ism_by_pnetid(struct net_device *ndev,
-					struct smc_init_info *ini)
-{
+अटल व्योम smc_pnet_find_ism_by_pnetid(काष्ठा net_device *ndev,
+					काष्ठा smc_init_info *ini)
+अणु
 	u8 ndev_pnetid[SMC_MAX_PNETID_LEN];
-	struct smcd_dev *ismdev;
+	काष्ठा smcd_dev *ismdev;
 
 	ndev = pnet_find_base_ndev(ndev);
-	if (smc_pnetid_by_dev_port(ndev->dev.parent, ndev->dev_port,
+	अगर (smc_pnetid_by_dev_port(ndev->dev.parent, ndev->dev_port,
 				   ndev_pnetid) &&
 	    smc_pnet_find_ndev_pnetid_by_table(ndev, ndev_pnetid))
-		return; /* pnetid could not be determined */
+		वापस; /* pnetid could not be determined */
 
 	mutex_lock(&smcd_dev_list.mutex);
-	list_for_each_entry(ismdev, &smcd_dev_list.list, list) {
-		if (smc_pnet_match(ismdev->pnetid, ndev_pnetid) &&
+	list_क्रम_each_entry(ismdev, &smcd_dev_list.list, list) अणु
+		अगर (smc_pnet_match(ismdev->pnetid, ndev_pnetid) &&
 		    !ismdev->going_away &&
 		    (!ini->ism_peer_gid[0] ||
 		     !smc_ism_cantalk(ini->ism_peer_gid[0], ini->vlan_id,
-				      ismdev))) {
+				      ismdev))) अणु
 			ini->ism_dev[0] = ismdev;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&smcd_dev_list.mutex);
-}
+पूर्ण
 
-/* PNET table analysis for a given sock:
- * determine ib_device and port belonging to used internal TCP socket
- * ethernet interface.
+/* PNET table analysis क्रम a given sock:
+ * determine ib_device and port beदीर्घing to used पूर्णांकernal TCP socket
+ * ethernet पूर्णांकerface.
  */
-void smc_pnet_find_roce_resource(struct sock *sk, struct smc_init_info *ini)
-{
-	struct dst_entry *dst = sk_dst_get(sk);
+व्योम smc_pnet_find_roce_resource(काष्ठा sock *sk, काष्ठा smc_init_info *ini)
+अणु
+	काष्ठा dst_entry *dst = sk_dst_get(sk);
 
-	ini->ib_dev = NULL;
+	ini->ib_dev = शून्य;
 	ini->ib_port = 0;
-	if (!dst)
-		goto out;
-	if (!dst->dev)
-		goto out_rel;
+	अगर (!dst)
+		जाओ out;
+	अगर (!dst->dev)
+		जाओ out_rel;
 
 	smc_pnet_find_roce_by_pnetid(dst->dev, ini);
 
 out_rel:
 	dst_release(dst);
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-void smc_pnet_find_ism_resource(struct sock *sk, struct smc_init_info *ini)
-{
-	struct dst_entry *dst = sk_dst_get(sk);
+व्योम smc_pnet_find_ism_resource(काष्ठा sock *sk, काष्ठा smc_init_info *ini)
+अणु
+	काष्ठा dst_entry *dst = sk_dst_get(sk);
 
-	ini->ism_dev[0] = NULL;
-	if (!dst)
-		goto out;
-	if (!dst->dev)
-		goto out_rel;
+	ini->ism_dev[0] = शून्य;
+	अगर (!dst)
+		जाओ out;
+	अगर (!dst->dev)
+		जाओ out_rel;
 
 	smc_pnet_find_ism_by_pnetid(dst->dev, ini);
 
 out_rel:
 	dst_release(dst);
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
 /* Lookup and apply a pnet table entry to the given ib device.
  */
-int smc_pnetid_by_table_ib(struct smc_ib_device *smcibdev, u8 ib_port)
-{
-	char *ib_name = smcibdev->ibdev->name;
-	struct smc_pnettable *pnettable;
-	struct smc_pnetentry *tmp_pe;
-	struct smc_net *sn;
-	int rc = -ENOENT;
+पूर्णांक smc_pnetid_by_table_ib(काष्ठा smc_ib_device *smcibdev, u8 ib_port)
+अणु
+	अक्षर *ib_name = smcibdev->ibdev->name;
+	काष्ठा smc_pnettable *pnettable;
+	काष्ठा smc_pnetentry *पंचांगp_pe;
+	काष्ठा smc_net *sn;
+	पूर्णांक rc = -ENOENT;
 
-	/* get pnettable for init namespace */
+	/* get pnettable क्रम init namespace */
 	sn = net_generic(&init_net, smc_net_id);
 	pnettable = &sn->pnettable;
 
-	read_lock(&pnettable->lock);
-	list_for_each_entry(tmp_pe, &pnettable->pnetlist, list) {
-		if (tmp_pe->type == SMC_PNET_IB &&
-		    !strncmp(tmp_pe->ib_name, ib_name, IB_DEVICE_NAME_MAX) &&
-		    tmp_pe->ib_port == ib_port) {
-			smc_pnet_apply_ib(smcibdev, ib_port, tmp_pe->pnet_name);
+	पढ़ो_lock(&pnettable->lock);
+	list_क्रम_each_entry(पंचांगp_pe, &pnettable->pnetlist, list) अणु
+		अगर (पंचांगp_pe->type == SMC_PNET_IB &&
+		    !म_भेदन(पंचांगp_pe->ib_name, ib_name, IB_DEVICE_NAME_MAX) &&
+		    पंचांगp_pe->ib_port == ib_port) अणु
+			smc_pnet_apply_ib(smcibdev, ib_port, पंचांगp_pe->pnet_name);
 			rc = 0;
-			break;
-		}
-	}
-	read_unlock(&pnettable->lock);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&pnettable->lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Lookup and apply a pnet table entry to the given smcd device.
  */
-int smc_pnetid_by_table_smcd(struct smcd_dev *smcddev)
-{
-	const char *ib_name = dev_name(&smcddev->dev);
-	struct smc_pnettable *pnettable;
-	struct smc_pnetentry *tmp_pe;
-	struct smc_net *sn;
-	int rc = -ENOENT;
+पूर्णांक smc_pnetid_by_table_smcd(काष्ठा smcd_dev *smcddev)
+अणु
+	स्थिर अक्षर *ib_name = dev_name(&smcddev->dev);
+	काष्ठा smc_pnettable *pnettable;
+	काष्ठा smc_pnetentry *पंचांगp_pe;
+	काष्ठा smc_net *sn;
+	पूर्णांक rc = -ENOENT;
 
-	/* get pnettable for init namespace */
+	/* get pnettable क्रम init namespace */
 	sn = net_generic(&init_net, smc_net_id);
 	pnettable = &sn->pnettable;
 
-	read_lock(&pnettable->lock);
-	list_for_each_entry(tmp_pe, &pnettable->pnetlist, list) {
-		if (tmp_pe->type == SMC_PNET_IB &&
-		    !strncmp(tmp_pe->ib_name, ib_name, IB_DEVICE_NAME_MAX)) {
-			smc_pnet_apply_smcd(smcddev, tmp_pe->pnet_name);
+	पढ़ो_lock(&pnettable->lock);
+	list_क्रम_each_entry(पंचांगp_pe, &pnettable->pnetlist, list) अणु
+		अगर (पंचांगp_pe->type == SMC_PNET_IB &&
+		    !म_भेदन(पंचांगp_pe->ib_name, ib_name, IB_DEVICE_NAME_MAX)) अणु
+			smc_pnet_apply_smcd(smcddev, पंचांगp_pe->pnet_name);
 			rc = 0;
-			break;
-		}
-	}
-	read_unlock(&pnettable->lock);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&pnettable->lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण

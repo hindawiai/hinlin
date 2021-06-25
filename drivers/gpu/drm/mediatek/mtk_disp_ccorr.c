@@ -1,223 +1,224 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2021 MediaTek Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/component.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/platform_device.h>
-#include <linux/soc/mediatek/mtk-cmdq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/soc/mediatek/mtk-cmdq.h>
 
-#include "mtk_disp_drv.h"
-#include "mtk_drm_crtc.h"
-#include "mtk_drm_ddp_comp.h"
+#समावेश "mtk_disp_drv.h"
+#समावेश "mtk_drm_crtc.h"
+#समावेश "mtk_drm_ddp_comp.h"
 
-#define DISP_CCORR_EN				0x0000
-#define CCORR_EN					BIT(0)
-#define DISP_CCORR_CFG				0x0020
-#define CCORR_RELAY_MODE				BIT(0)
-#define CCORR_ENGINE_EN					BIT(1)
-#define CCORR_GAMMA_OFF					BIT(2)
-#define CCORR_WGAMUT_SRC_CLIP				BIT(3)
-#define DISP_CCORR_SIZE				0x0030
-#define DISP_CCORR_COEF_0			0x0080
-#define DISP_CCORR_COEF_1			0x0084
-#define DISP_CCORR_COEF_2			0x0088
-#define DISP_CCORR_COEF_3			0x008C
-#define DISP_CCORR_COEF_4			0x0090
+#घोषणा DISP_CCORR_EN				0x0000
+#घोषणा CCORR_EN					BIT(0)
+#घोषणा DISP_CCORR_CFG				0x0020
+#घोषणा CCORR_RELAY_MODE				BIT(0)
+#घोषणा CCORR_ENGINE_EN					BIT(1)
+#घोषणा CCORR_GAMMA_OFF					BIT(2)
+#घोषणा CCORR_WGAMUT_SRC_CLIP				BIT(3)
+#घोषणा DISP_CCORR_SIZE				0x0030
+#घोषणा DISP_CCORR_COEF_0			0x0080
+#घोषणा DISP_CCORR_COEF_1			0x0084
+#घोषणा DISP_CCORR_COEF_2			0x0088
+#घोषणा DISP_CCORR_COEF_3			0x008C
+#घोषणा DISP_CCORR_COEF_4			0x0090
 
-struct mtk_disp_ccorr_data {
+काष्ठा mtk_disp_ccorr_data अणु
 	u32 matrix_bits;
-};
+पूर्ण;
 
 /**
- * struct mtk_disp_ccorr - DISP_CCORR driver structure
- * @ddp_comp - structure containing type enum and hardware resources
+ * काष्ठा mtk_disp_ccorr - DISP_CCORR driver काष्ठाure
+ * @ddp_comp - काष्ठाure containing type क्रमागत and hardware resources
  * @crtc - associated crtc to report irq events to
  */
-struct mtk_disp_ccorr {
-	struct clk *clk;
-	void __iomem *regs;
-	struct cmdq_client_reg cmdq_reg;
-	const struct mtk_disp_ccorr_data	*data;
-};
+काष्ठा mtk_disp_ccorr अणु
+	काष्ठा clk *clk;
+	व्योम __iomem *regs;
+	काष्ठा cmdq_client_reg cmdq_reg;
+	स्थिर काष्ठा mtk_disp_ccorr_data	*data;
+पूर्ण;
 
-int mtk_ccorr_clk_enable(struct device *dev)
-{
-	struct mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
+पूर्णांक mtk_ccorr_clk_enable(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
 
-	return clk_prepare_enable(ccorr->clk);
-}
+	वापस clk_prepare_enable(ccorr->clk);
+पूर्ण
 
-void mtk_ccorr_clk_disable(struct device *dev)
-{
-	struct mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
+व्योम mtk_ccorr_clk_disable(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(ccorr->clk);
-}
+पूर्ण
 
-void mtk_ccorr_config(struct device *dev, unsigned int w,
-			     unsigned int h, unsigned int vrefresh,
-			     unsigned int bpc, struct cmdq_pkt *cmdq_pkt)
-{
-	struct mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
+व्योम mtk_ccorr_config(काष्ठा device *dev, अचिन्हित पूर्णांक w,
+			     अचिन्हित पूर्णांक h, अचिन्हित पूर्णांक vrefresh,
+			     अचिन्हित पूर्णांक bpc, काष्ठा cmdq_pkt *cmdq_pkt)
+अणु
+	काष्ठा mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
 
-	mtk_ddp_write(cmdq_pkt, w << 16 | h, &ccorr->cmdq_reg, ccorr->regs,
+	mtk_ddp_ग_लिखो(cmdq_pkt, w << 16 | h, &ccorr->cmdq_reg, ccorr->regs,
 		      DISP_CCORR_SIZE);
-	mtk_ddp_write(cmdq_pkt, CCORR_ENGINE_EN, &ccorr->cmdq_reg, ccorr->regs,
+	mtk_ddp_ग_लिखो(cmdq_pkt, CCORR_ENGINE_EN, &ccorr->cmdq_reg, ccorr->regs,
 		      DISP_CCORR_CFG);
-}
+पूर्ण
 
-void mtk_ccorr_start(struct device *dev)
-{
-	struct mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
+व्योम mtk_ccorr_start(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
 
-	writel(CCORR_EN, ccorr->regs + DISP_CCORR_EN);
-}
+	ग_लिखोl(CCORR_EN, ccorr->regs + DISP_CCORR_EN);
+पूर्ण
 
-void mtk_ccorr_stop(struct device *dev)
-{
-	struct mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
+व्योम mtk_ccorr_stop(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
 
-	writel_relaxed(0x0, ccorr->regs + DISP_CCORR_EN);
-}
+	ग_लिखोl_relaxed(0x0, ccorr->regs + DISP_CCORR_EN);
+पूर्ण
 
-/* Converts a DRM S31.32 value to the HW S1.n format. */
-static u16 mtk_ctm_s31_32_to_s1_n(u64 in, u32 n)
-{
+/* Converts a DRM S31.32 value to the HW S1.n क्रमmat. */
+अटल u16 mtk_cपंचांग_s31_32_to_s1_n(u64 in, u32 n)
+अणु
 	u16 r;
 
 	/* Sign bit. */
 	r = in & BIT_ULL(63) ? BIT(n + 1) : 0;
 
-	if ((in & GENMASK_ULL(62, 33)) > 0) {
+	अगर ((in & GENMASK_ULL(62, 33)) > 0) अणु
 		/* identity value 0x100000000 -> 0x400(mt8183), */
 		/* identity value 0x100000000 -> 0x800(mt8192), */
-		/* if bigger this, set it to max 0x7ff. */
+		/* अगर bigger this, set it to max 0x7ff. */
 		r |= GENMASK(n, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* take the n+1 most important bits. */
 		r |= (in >> (32 - n)) & GENMASK(n, 0);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void mtk_ccorr_ctm_set(struct device *dev, struct drm_crtc_state *state)
-{
-	struct mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
-	struct drm_property_blob *blob = state->ctm;
-	struct drm_color_ctm *ctm;
-	const u64 *input;
-	uint16_t coeffs[9] = { 0 };
-	int i;
-	struct cmdq_pkt *cmdq_pkt = NULL;
+व्योम mtk_ccorr_cपंचांग_set(काष्ठा device *dev, काष्ठा drm_crtc_state *state)
+अणु
+	काष्ठा mtk_disp_ccorr *ccorr = dev_get_drvdata(dev);
+	काष्ठा drm_property_blob *blob = state->cपंचांग;
+	काष्ठा drm_color_cपंचांग *cपंचांग;
+	स्थिर u64 *input;
+	uपूर्णांक16_t coeffs[9] = अणु 0 पूर्ण;
+	पूर्णांक i;
+	काष्ठा cmdq_pkt *cmdq_pkt = शून्य;
 	u32 matrix_bits = ccorr->data->matrix_bits;
 
-	if (!blob)
-		return;
+	अगर (!blob)
+		वापस;
 
-	ctm = (struct drm_color_ctm *)blob->data;
-	input = ctm->matrix;
+	cपंचांग = (काष्ठा drm_color_cपंचांग *)blob->data;
+	input = cपंचांग->matrix;
 
-	for (i = 0; i < ARRAY_SIZE(coeffs); i++)
-		coeffs[i] = mtk_ctm_s31_32_to_s1_n(input[i], matrix_bits);
+	क्रम (i = 0; i < ARRAY_SIZE(coeffs); i++)
+		coeffs[i] = mtk_cपंचांग_s31_32_to_s1_n(input[i], matrix_bits);
 
-	mtk_ddp_write(cmdq_pkt, coeffs[0] << 16 | coeffs[1],
+	mtk_ddp_ग_लिखो(cmdq_pkt, coeffs[0] << 16 | coeffs[1],
 		      &ccorr->cmdq_reg, ccorr->regs, DISP_CCORR_COEF_0);
-	mtk_ddp_write(cmdq_pkt, coeffs[2] << 16 | coeffs[3],
+	mtk_ddp_ग_लिखो(cmdq_pkt, coeffs[2] << 16 | coeffs[3],
 		      &ccorr->cmdq_reg, ccorr->regs, DISP_CCORR_COEF_1);
-	mtk_ddp_write(cmdq_pkt, coeffs[4] << 16 | coeffs[5],
+	mtk_ddp_ग_लिखो(cmdq_pkt, coeffs[4] << 16 | coeffs[5],
 		      &ccorr->cmdq_reg, ccorr->regs, DISP_CCORR_COEF_2);
-	mtk_ddp_write(cmdq_pkt, coeffs[6] << 16 | coeffs[7],
+	mtk_ddp_ग_लिखो(cmdq_pkt, coeffs[6] << 16 | coeffs[7],
 		      &ccorr->cmdq_reg, ccorr->regs, DISP_CCORR_COEF_3);
-	mtk_ddp_write(cmdq_pkt, coeffs[8] << 16,
+	mtk_ddp_ग_लिखो(cmdq_pkt, coeffs[8] << 16,
 		      &ccorr->cmdq_reg, ccorr->regs, DISP_CCORR_COEF_4);
-}
+पूर्ण
 
-static int mtk_disp_ccorr_bind(struct device *dev, struct device *master,
-			       void *data)
-{
-	return 0;
-}
+अटल पूर्णांक mtk_disp_ccorr_bind(काष्ठा device *dev, काष्ठा device *master,
+			       व्योम *data)
+अणु
+	वापस 0;
+पूर्ण
 
-static void mtk_disp_ccorr_unbind(struct device *dev, struct device *master,
-				  void *data)
-{
-}
+अटल व्योम mtk_disp_ccorr_unbind(काष्ठा device *dev, काष्ठा device *master,
+				  व्योम *data)
+अणु
+पूर्ण
 
-static const struct component_ops mtk_disp_ccorr_component_ops = {
+अटल स्थिर काष्ठा component_ops mtk_disp_ccorr_component_ops = अणु
 	.bind	= mtk_disp_ccorr_bind,
 	.unbind	= mtk_disp_ccorr_unbind,
-};
+पूर्ण;
 
-static int mtk_disp_ccorr_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct mtk_disp_ccorr *priv;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक mtk_disp_ccorr_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा mtk_disp_ccorr *priv;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	priv->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(priv->clk)) {
+	priv->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(priv->clk)) अणु
 		dev_err(dev, "failed to get ccorr clk\n");
-		return PTR_ERR(priv->clk);
-	}
+		वापस PTR_ERR(priv->clk);
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->regs = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->regs)) {
+	अगर (IS_ERR(priv->regs)) अणु
 		dev_err(dev, "failed to ioremap ccorr\n");
-		return PTR_ERR(priv->regs);
-	}
+		वापस PTR_ERR(priv->regs);
+	पूर्ण
 
-#if IS_REACHABLE(CONFIG_MTK_CMDQ)
+#अगर IS_REACHABLE(CONFIG_MTK_CMDQ)
 	ret = cmdq_dev_get_client_reg(dev, &priv->cmdq_reg, 0);
-	if (ret)
+	अगर (ret)
 		dev_dbg(dev, "get mediatek,gce-client-reg fail!\n");
-#endif
+#पूर्ण_अगर
 
 	priv->data = of_device_get_match_data(dev);
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	ret = component_add(dev, &mtk_disp_ccorr_component_ops);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "Failed to add component: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_disp_ccorr_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक mtk_disp_ccorr_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_del(&pdev->dev, &mtk_disp_ccorr_component_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtk_disp_ccorr_data mt8183_ccorr_driver_data = {
+अटल स्थिर काष्ठा mtk_disp_ccorr_data mt8183_ccorr_driver_data = अणु
 	.matrix_bits = 10,
-};
+पूर्ण;
 
-static const struct of_device_id mtk_disp_ccorr_driver_dt_match[] = {
-	{ .compatible = "mediatek,mt8183-disp-ccorr",
-	  .data = &mt8183_ccorr_driver_data},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id mtk_disp_ccorr_driver_dt_match[] = अणु
+	अणु .compatible = "mediatek,mt8183-disp-ccorr",
+	  .data = &mt8183_ccorr_driver_dataपूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk_disp_ccorr_driver_dt_match);
 
-struct platform_driver mtk_disp_ccorr_driver = {
+काष्ठा platक्रमm_driver mtk_disp_ccorr_driver = अणु
 	.probe		= mtk_disp_ccorr_probe,
-	.remove		= mtk_disp_ccorr_remove,
-	.driver		= {
+	.हटाओ		= mtk_disp_ccorr_हटाओ,
+	.driver		= अणु
 		.name	= "mediatek-disp-ccorr",
 		.owner	= THIS_MODULE,
 		.of_match_table = mtk_disp_ccorr_driver_dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;

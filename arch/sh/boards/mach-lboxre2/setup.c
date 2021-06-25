@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/arch/sh/boards/lbox/setup.c
  *
@@ -7,73 +8,73 @@
  * NTT COMWARE L-BOX RE2 Support
  */
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/ata_platform.h>
-#include <asm/machvec.h>
-#include <asm/addrspace.h>
-#include <mach/lboxre2.h>
-#include <asm/io.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ata_platक्रमm.h>
+#समावेश <यंत्र/machvec.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <mach/lboxre2.h>
+#समावेश <यंत्र/पन.स>
 
-static struct resource cf_ide_resources[] = {
-	[0] = {
+अटल काष्ठा resource cf_ide_resources[] = अणु
+	[0] = अणु
 		.start  = 0x1f0,
 		.end    = 0x1f0 + 8 ,
 		.flags  = IORESOURCE_IO,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start  = 0x1f0 + 0x206,
 		.end    = 0x1f0 +8 + 0x206 + 8,
 		.flags  = IORESOURCE_IO,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.start  = IRQ_CF0,
 		.flags  = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device cf_ide_device  = {
+अटल काष्ठा platक्रमm_device cf_ide_device  = अणु
 	.name           = "pata_platform",
 	.id             = -1,
 	.num_resources  = ARRAY_SIZE(cf_ide_resources),
 	.resource       = cf_ide_resources,
-};
+पूर्ण;
 
-static struct platform_device *lboxre2_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *lboxre2_devices[] __initdata = अणु
        &cf_ide_device,
-};
+पूर्ण;
 
-static int __init lboxre2_devices_setup(void)
-{
+अटल पूर्णांक __init lboxre2_devices_setup(व्योम)
+अणु
 	u32 cf0_io_base;	/* Boot CF base address */
 	pgprot_t prot;
-	unsigned long paddrbase, psize;
+	अचिन्हित दीर्घ paddrbase, psize;
 
-	/* open I/O area window */
-	paddrbase = virt_to_phys((void*)PA_AREA5_IO);
+	/* खोलो I/O area winकरोw */
+	paddrbase = virt_to_phys((व्योम*)PA_AREA5_IO);
 	psize = PAGE_SIZE;
 	prot = PAGE_KERNEL_PCC(1, _PAGE_PCC_IO16);
 	cf0_io_base = (u32)ioremap_prot(paddrbase, psize, pgprot_val(prot));
-	if (!cf0_io_base) {
-		printk(KERN_ERR "%s : can't open CF I/O window!\n" , __func__ );
-		return -ENOMEM;
-	}
+	अगर (!cf0_io_base) अणु
+		prपूर्णांकk(KERN_ERR "%s : can't open CF I/O window!\n" , __func__ );
+		वापस -ENOMEM;
+	पूर्ण
 
 	cf_ide_resources[0].start += cf0_io_base ;
 	cf_ide_resources[0].end   += cf0_io_base ;
 	cf_ide_resources[1].start += cf0_io_base ;
 	cf_ide_resources[1].end   += cf0_io_base ;
 
-	return platform_add_devices(lboxre2_devices,
+	वापस platक्रमm_add_devices(lboxre2_devices,
 			ARRAY_SIZE(lboxre2_devices));
 
-}
+पूर्ण
 device_initcall(lboxre2_devices_setup);
 
 /*
  * The Machine Vector
  */
-static struct sh_machine_vector mv_lboxre2 __initmv = {
+अटल काष्ठा sh_machine_vector mv_lboxre2 __iniपंचांगv = अणु
 	.mv_name		= "L-BOX RE2",
 	.mv_init_irq		= init_lboxre2_IRQ,
-};
+पूर्ण;

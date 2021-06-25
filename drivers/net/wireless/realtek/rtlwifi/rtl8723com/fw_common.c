@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2009-2014  Realtek Corporation.*/
 
-#include "../wifi.h"
-#include "../pci.h"
-#include "../base.h"
-#include "../efuse.h"
-#include "fw_common.h"
-#include <linux/module.h>
+#समावेश "../wifi.h"
+#समावेश "../pci.h"
+#समावेश "../base.h"
+#समावेश "../efuse.h"
+#समावेश "fw_common.h"
+#समावेश <linux/module.h>
 
-void rtl8723_enable_fw_download(struct ieee80211_hw *hw, bool enable)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	u8 tmp;
+व्योम rtl8723_enable_fw_करोwnload(काष्ठा ieee80211_hw *hw, bool enable)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	u8 पंचांगp;
 
-	if (enable) {
-		tmp = rtl_read_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
-		rtl_write_byte(rtlpriv, REG_SYS_FUNC_EN + 1,
-			       tmp | 0x04);
+	अगर (enable) अणु
+		पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
+		rtl_ग_लिखो_byte(rtlpriv, REG_SYS_FUNC_EN + 1,
+			       पंचांगp | 0x04);
 
-		tmp = rtl_read_byte(rtlpriv, REG_MCUFWDL);
-		rtl_write_byte(rtlpriv, REG_MCUFWDL, tmp | 0x01);
+		पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_MCUFWDL);
+		rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL, पंचांगp | 0x01);
 
-		tmp = rtl_read_byte(rtlpriv, REG_MCUFWDL + 2);
-		rtl_write_byte(rtlpriv, REG_MCUFWDL + 2, tmp & 0xf7);
-	} else {
-		tmp = rtl_read_byte(rtlpriv, REG_MCUFWDL);
-		rtl_write_byte(rtlpriv, REG_MCUFWDL, tmp & 0xfe);
+		पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_MCUFWDL + 2);
+		rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL + 2, पंचांगp & 0xf7);
+	पूर्ण अन्यथा अणु
+		पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_MCUFWDL);
+		rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL, पंचांगp & 0xfe);
 
-		rtl_write_byte(rtlpriv, REG_MCUFWDL + 1, 0x00);
-	}
-}
-EXPORT_SYMBOL_GPL(rtl8723_enable_fw_download);
+		rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL + 1, 0x00);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(rtl8723_enable_fw_करोwnload);
 
-void rtl8723_write_fw(struct ieee80211_hw *hw,
-		      enum version_8723e version,
+व्योम rtl8723_ग_लिखो_fw(काष्ठा ieee80211_hw *hw,
+		      क्रमागत version_8723e version,
 		      u8 *buffer, u32 size, u8 max_page)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	u8 *bufferptr = buffer;
-	u32 page_nums, remain_size;
+	u32 page_nums, reमुख्य_size;
 	u32 page, offset;
 
 	rtl_dbg(rtlpriv, COMP_FW, DBG_TRACE, "FW size is %d bytes,\n", size);
@@ -46,189 +47,189 @@ void rtl8723_write_fw(struct ieee80211_hw *hw,
 	rtl_fill_dummy(bufferptr, &size);
 
 	page_nums = size / FW_8192C_PAGE_SIZE;
-	remain_size = size % FW_8192C_PAGE_SIZE;
+	reमुख्य_size = size % FW_8192C_PAGE_SIZE;
 
-	if (page_nums > max_page) {
+	अगर (page_nums > max_page) अणु
 		pr_err("Page numbers should not greater than %d\n",
 		       max_page);
-	}
-	for (page = 0; page < page_nums; page++) {
+	पूर्ण
+	क्रम (page = 0; page < page_nums; page++) अणु
 		offset = page * FW_8192C_PAGE_SIZE;
-		rtl_fw_page_write(hw, page, (bufferptr + offset),
+		rtl_fw_page_ग_लिखो(hw, page, (bufferptr + offset),
 				  FW_8192C_PAGE_SIZE);
-	}
+	पूर्ण
 
-	if (remain_size) {
+	अगर (reमुख्य_size) अणु
 		offset = page_nums * FW_8192C_PAGE_SIZE;
 		page = page_nums;
-		rtl_fw_page_write(hw, page, (bufferptr + offset), remain_size);
-	}
+		rtl_fw_page_ग_लिखो(hw, page, (bufferptr + offset), reमुख्य_size);
+	पूर्ण
 	rtl_dbg(rtlpriv, COMP_FW, DBG_TRACE, "FW write done.\n");
-}
-EXPORT_SYMBOL_GPL(rtl8723_write_fw);
+पूर्ण
+EXPORT_SYMBOL_GPL(rtl8723_ग_लिखो_fw);
 
-void rtl8723ae_firmware_selfreset(struct ieee80211_hw *hw)
-{
-	u8 u1b_tmp;
+व्योम rtl8723ae_firmware_selfreset(काष्ठा ieee80211_hw *hw)
+अणु
+	u8 u1b_पंचांगp;
 	u8 delay = 100;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
-	rtl_write_byte(rtlpriv, REG_HMETFR + 3, 0x20);
-	u1b_tmp = rtl_read_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
+	rtl_ग_लिखो_byte(rtlpriv, REG_HMETFR + 3, 0x20);
+	u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
 
-	while (u1b_tmp & BIT(2)) {
+	जबतक (u1b_पंचांगp & BIT(2)) अणु
 		delay--;
-		if (delay == 0)
-			break;
+		अगर (delay == 0)
+			अवरोध;
 		udelay(50);
-		u1b_tmp = rtl_read_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
-	}
-	if (delay == 0) {
-		u1b_tmp = rtl_read_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
-		rtl_write_byte(rtlpriv, REG_SYS_FUNC_EN + 1,
-			       u1b_tmp&(~BIT(2)));
-	}
-}
+		u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
+	पूर्ण
+	अगर (delay == 0) अणु
+		u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
+		rtl_ग_लिखो_byte(rtlpriv, REG_SYS_FUNC_EN + 1,
+			       u1b_पंचांगp&(~BIT(2)));
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(rtl8723ae_firmware_selfreset);
 
-void rtl8723be_firmware_selfreset(struct ieee80211_hw *hw)
-{
-	u8 u1b_tmp;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+व्योम rtl8723be_firmware_selfreset(काष्ठा ieee80211_hw *hw)
+अणु
+	u8 u1b_पंचांगp;
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
-	u1b_tmp = rtl_read_byte(rtlpriv, REG_RSV_CTRL + 1);
-	rtl_write_byte(rtlpriv, REG_RSV_CTRL + 1, (u1b_tmp & (~BIT(0))));
+	u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_RSV_CTRL + 1);
+	rtl_ग_लिखो_byte(rtlpriv, REG_RSV_CTRL + 1, (u1b_पंचांगp & (~BIT(0))));
 
-	u1b_tmp = rtl_read_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
-	rtl_write_byte(rtlpriv, REG_SYS_FUNC_EN + 1, (u1b_tmp & (~BIT(2))));
+	u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
+	rtl_ग_लिखो_byte(rtlpriv, REG_SYS_FUNC_EN + 1, (u1b_पंचांगp & (~BIT(2))));
 	udelay(50);
 
-	u1b_tmp = rtl_read_byte(rtlpriv, REG_RSV_CTRL + 1);
-	rtl_write_byte(rtlpriv, REG_RSV_CTRL + 1, (u1b_tmp | BIT(0)));
+	u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_RSV_CTRL + 1);
+	rtl_ग_लिखो_byte(rtlpriv, REG_RSV_CTRL + 1, (u1b_पंचांगp | BIT(0)));
 
-	u1b_tmp = rtl_read_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
-	rtl_write_byte(rtlpriv, REG_SYS_FUNC_EN + 1, (u1b_tmp | BIT(2)));
+	u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_SYS_FUNC_EN + 1);
+	rtl_ग_लिखो_byte(rtlpriv, REG_SYS_FUNC_EN + 1, (u1b_पंचांगp | BIT(2)));
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 		"_8051Reset8723be(): 8051 reset success .\n");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rtl8723be_firmware_selfreset);
 
-int rtl8723_fw_free_to_go(struct ieee80211_hw *hw, bool is_8723be,
-			  int max_count)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	int err = -EIO;
+पूर्णांक rtl8723_fw_मुक्त_to_go(काष्ठा ieee80211_hw *hw, bool is_8723be,
+			  पूर्णांक max_count)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	पूर्णांक err = -EIO;
 	u32 counter = 0;
 	u32 value32;
 
-	do {
-		value32 = rtl_read_dword(rtlpriv, REG_MCUFWDL);
-	} while ((counter++ < max_count) &&
+	करो अणु
+		value32 = rtl_पढ़ो_dword(rtlpriv, REG_MCUFWDL);
+	पूर्ण जबतक ((counter++ < max_count) &&
 		 (!(value32 & FWDL_CHKSUM_RPT)));
 
-	if (counter >= max_count) {
+	अगर (counter >= max_count) अणु
 		pr_err("chksum report fail ! REG_MCUFWDL:0x%08x .\n",
 		       value32);
-		goto exit;
-	}
-	value32 = rtl_read_dword(rtlpriv, REG_MCUFWDL) | MCUFWDL_RDY;
+		जाओ निकास;
+	पूर्ण
+	value32 = rtl_पढ़ो_dword(rtlpriv, REG_MCUFWDL) | MCUFWDL_RDY;
 	value32 &= ~WINTINI_RDY;
-	rtl_write_dword(rtlpriv, REG_MCUFWDL, value32);
+	rtl_ग_लिखो_dword(rtlpriv, REG_MCUFWDL, value32);
 
-	if (is_8723be)
+	अगर (is_8723be)
 		rtl8723be_firmware_selfreset(hw);
 	counter = 0;
 
-	do {
-		value32 = rtl_read_dword(rtlpriv, REG_MCUFWDL);
-		if (value32 & WINTINI_RDY) {
+	करो अणु
+		value32 = rtl_पढ़ो_dword(rtlpriv, REG_MCUFWDL);
+		अगर (value32 & WINTINI_RDY) अणु
 			rtl_dbg(rtlpriv, COMP_FW, DBG_TRACE,
 				"Polling FW ready success!! REG_MCUFWDL:0x%08x .\n",
 				value32);
 			err = 0;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		mdelay(FW_8192C_POLLING_DELAY);
 
-	} while (counter++ < max_count);
+	पूर्ण जबतक (counter++ < max_count);
 
 	pr_err("Polling FW ready fail!! REG_MCUFWDL:0x%08x .\n",
 	       value32);
 
-exit:
-	return err;
-}
-EXPORT_SYMBOL_GPL(rtl8723_fw_free_to_go);
+निकास:
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(rtl8723_fw_मुक्त_to_go);
 
-int rtl8723_download_fw(struct ieee80211_hw *hw,
-			bool is_8723be, int max_count)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct rtlwifi_firmware_header *pfwheader;
+पूर्णांक rtl8723_करोwnload_fw(काष्ठा ieee80211_hw *hw,
+			bool is_8723be, पूर्णांक max_count)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा rtlwअगरi_firmware_header *pfwheader;
 	u8 *pfwdata;
 	u32 fwsize;
-	int err;
-	enum version_8723e version = rtlhal->version;
-	int max_page;
+	पूर्णांक err;
+	क्रमागत version_8723e version = rtlhal->version;
+	पूर्णांक max_page;
 
-	if (rtlpriv->max_fw_size == 0 || !rtlhal->pfirmware)
-		return 1;
+	अगर (rtlpriv->max_fw_size == 0 || !rtlhal->pfirmware)
+		वापस 1;
 
-	pfwheader = (struct rtlwifi_firmware_header *)rtlhal->pfirmware;
+	pfwheader = (काष्ठा rtlwअगरi_firmware_header *)rtlhal->pfirmware;
 	rtlhal->fw_version = le16_to_cpu(pfwheader->version);
 	rtlhal->fw_subversion = pfwheader->subversion;
 	pfwdata = rtlhal->pfirmware;
 	fwsize = rtlhal->fwsize;
 
-	if (!is_8723be)
+	अगर (!is_8723be)
 		max_page = 6;
-	else
+	अन्यथा
 		max_page = 8;
-	if (rtlpriv->cfg->ops->is_fw_header(pfwheader)) {
+	अगर (rtlpriv->cfg->ops->is_fw_header(pfwheader)) अणु
 		rtl_dbg(rtlpriv, COMP_FW, DBG_LOUD,
 			"Firmware Version(%d), Signature(%#x), Size(%d)\n",
 			pfwheader->version, pfwheader->signature,
-			(int)sizeof(struct rtlwifi_firmware_header));
+			(पूर्णांक)माप(काष्ठा rtlwअगरi_firmware_header));
 
-		pfwdata = pfwdata + sizeof(struct rtlwifi_firmware_header);
-		fwsize = fwsize - sizeof(struct rtlwifi_firmware_header);
-	}
+		pfwdata = pfwdata + माप(काष्ठा rtlwअगरi_firmware_header);
+		fwsize = fwsize - माप(काष्ठा rtlwअगरi_firmware_header);
+	पूर्ण
 
-	if (rtl_read_byte(rtlpriv, REG_MCUFWDL)&BIT(7)) {
-		if (is_8723be)
+	अगर (rtl_पढ़ो_byte(rtlpriv, REG_MCUFWDL)&BIT(7)) अणु
+		अगर (is_8723be)
 			rtl8723be_firmware_selfreset(hw);
-		else
+		अन्यथा
 			rtl8723ae_firmware_selfreset(hw);
-		rtl_write_byte(rtlpriv, REG_MCUFWDL, 0x00);
-	}
-	rtl8723_enable_fw_download(hw, true);
-	rtl8723_write_fw(hw, version, pfwdata, fwsize, max_page);
-	rtl8723_enable_fw_download(hw, false);
+		rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL, 0x00);
+	पूर्ण
+	rtl8723_enable_fw_करोwnload(hw, true);
+	rtl8723_ग_लिखो_fw(hw, version, pfwdata, fwsize, max_page);
+	rtl8723_enable_fw_करोwnload(hw, false);
 
-	err = rtl8723_fw_free_to_go(hw, is_8723be, max_count);
-	if (err)
+	err = rtl8723_fw_मुक्त_to_go(hw, is_8723be, max_count);
+	अगर (err)
 		pr_err("Firmware is not ready to run!\n");
-	return 0;
-}
-EXPORT_SYMBOL_GPL(rtl8723_download_fw);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(rtl8723_करोwnload_fw);
 
-bool rtl8723_cmd_send_packet(struct ieee80211_hw *hw,
-			     struct sk_buff *skb)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	struct rtl8192_tx_ring *ring;
-	struct rtl_tx_desc *pdesc;
-	struct sk_buff *pskb = NULL;
-	unsigned long flags;
+bool rtl8723_cmd_send_packet(काष्ठा ieee80211_hw *hw,
+			     काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	काष्ठा rtl8192_tx_ring *ring;
+	काष्ठा rtl_tx_desc *pdesc;
+	काष्ठा sk_buff *pskb = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	ring = &rtlpci->tx_ring[BEACON_QUEUE];
 
 	pskb = __skb_dequeue(&ring->queue);
-	kfree_skb(pskb);
+	kमुक्त_skb(pskb);
 	spin_lock_irqsave(&rtlpriv->locks.irq_th_lock, flags);
 
 	pdesc = &ring->desc[0];
@@ -240,6 +241,6 @@ bool rtl8723_cmd_send_packet(struct ieee80211_hw *hw,
 
 	rtlpriv->cfg->ops->tx_polling(hw, BEACON_QUEUE);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(rtl8723_cmd_send_packet);

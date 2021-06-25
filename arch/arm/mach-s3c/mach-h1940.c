@@ -1,162 +1,163 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2003-2005 Simtec Electronics
 //   Ben Dooks <ben@simtec.co.uk>
 //
-// https://www.handhelds.org/projects/h1940.html
+// https://www.handhelds.org/projects/h1940.hपंचांगl
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/memblock.h>
-#include <linux/timer.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/serial_core.h>
-#include <linux/serial_s3c.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/input.h>
-#include <linux/gpio_keys.h>
-#include <linux/pwm.h>
-#include <linux/pwm_backlight.h>
-#include <linux/i2c.h>
-#include <linux/leds.h>
-#include <linux/pda_power.h>
-#include <linux/s3c_adc_battery.h>
-#include <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial_s3c.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/input.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/pwm_backlight.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/pda_घातer.h>
+#समावेश <linux/s3c_adc_battery.h>
+#समावेश <linux/delay.h>
 
-#include <video/platform_lcd.h>
+#समावेश <video/platक्रमm_lcd.h>
 
-#include <linux/mmc/host.h>
-#include <linux/export.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/export.h>
 
-#include <asm/irq.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
-#include <asm/mach/irq.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/mach/irq.h>
 
-#include <linux/platform_data/i2c-s3c2410.h>
-#include <linux/platform_data/mmc-s3cmci.h>
-#include <linux/platform_data/touchscreen-s3c2410.h>
-#include <linux/platform_data/usb-s3c2410_udc.h>
+#समावेश <linux/platक्रमm_data/i2c-s3c2410.h>
+#समावेश <linux/platक्रमm_data/mmc-s3cmci.h>
+#समावेश <linux/platक्रमm_data/touchscreen-s3c2410.h>
+#समावेश <linux/platक्रमm_data/usb-s3c2410_udc.h>
 
-#include <sound/uda1380.h>
+#समावेश <sound/uda1380.h>
 
-#include <linux/platform_data/fb-s3c2410.h>
-#include "map.h"
-#include "hardware-s3c24xx.h"
-#include "regs-clock.h"
-#include "regs-gpio.h"
-#include "gpio-samsung.h"
+#समावेश <linux/platक्रमm_data/fb-s3c2410.h>
+#समावेश "map.h"
+#समावेश "hardware-s3c24xx.h"
+#समावेश "regs-clock.h"
+#समावेश "regs-gpio.h"
+#समावेश "gpio-samsung.h"
 
-#include "cpu.h"
-#include "devs.h"
-#include "gpio-cfg.h"
-#include "pm.h"
+#समावेश "cpu.h"
+#समावेश "devs.h"
+#समावेश "gpio-cfg.h"
+#समावेश "pm.h"
 
-#include "s3c24xx.h"
-#include "h1940.h"
+#समावेश "s3c24xx.h"
+#समावेश "h1940.h"
 
-#define H1940_LATCH		((void __force __iomem *)0xF8000000)
+#घोषणा H1940_LATCH		((व्योम __क्रमce __iomem *)0xF8000000)
 
-#define H1940_PA_LATCH		S3C2410_CS2
+#घोषणा H1940_PA_LATCH		S3C2410_CS2
 
-#define H1940_LATCH_BIT(x)	(1 << ((x) + 16 - S3C_GPIO_END))
+#घोषणा H1940_LATCH_BIT(x)	(1 << ((x) + 16 - S3C_GPIO_END))
 
-#define S3C24XX_PLL_MDIV_SHIFT         (12)
-#define S3C24XX_PLL_PDIV_SHIFT         (4)
-#define S3C24XX_PLL_SDIV_SHIFT         (0)
+#घोषणा S3C24XX_PLL_MDIV_SHIFT         (12)
+#घोषणा S3C24XX_PLL_PDIV_SHIFT         (4)
+#घोषणा S3C24XX_PLL_SDIV_SHIFT         (0)
 
-static struct map_desc h1940_iodesc[] __initdata = {
-	[0] = {
-		.virtual	= (unsigned long)H1940_LATCH,
+अटल काष्ठा map_desc h1940_iodesc[] __initdata = अणु
+	[0] = अणु
+		.भव	= (अचिन्हित दीर्घ)H1940_LATCH,
 		.pfn		= __phys_to_pfn(H1940_PA_LATCH),
 		.length		= SZ_16K,
 		.type		= MT_DEVICE
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#define UCON S3C2410_UCON_DEFAULT | S3C2410_UCON_UCLK
-#define ULCON S3C2410_LCON_CS8 | S3C2410_LCON_PNONE | S3C2410_LCON_STOPB
-#define UFCON S3C2410_UFCON_RXTRIG8 | S3C2410_UFCON_FIFOMODE
+#घोषणा UCON S3C2410_UCON_DEFAULT | S3C2410_UCON_UCLK
+#घोषणा ULCON S3C2410_LCON_CS8 | S3C2410_LCON_PNONE | S3C2410_LCON_STOPB
+#घोषणा UFCON S3C2410_UFCON_RXTRIG8 | S3C2410_UFCON_FIFOMODE
 
-static struct s3c2410_uartcfg h1940_uartcfgs[] __initdata = {
-	[0] = {
+अटल काष्ठा s3c2410_uartcfg h1940_uartcfgs[] __initdata = अणु
+	[0] = अणु
 		.hwport	     = 0,
 		.flags	     = 0,
 		.ucon	     = 0x3c5,
 		.ulcon	     = 0x03,
 		.ufcon	     = 0x51,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.hwport	     = 1,
 		.flags	     = 0,
 		.ucon	     = 0x245,
 		.ulcon	     = 0x03,
 		.ufcon	     = 0x00,
-	},
+	पूर्ण,
 	/* IR port */
-	[2] = {
+	[2] = अणु
 		.hwport	     = 2,
 		.flags	     = 0,
 		.uart_flags  = UPF_CONS_FLOW,
 		.ucon	     = 0x3c5,
 		.ulcon	     = 0x43,
 		.ufcon	     = 0x51,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /* Board control latch control */
 
-static unsigned int latch_state;
+अटल अचिन्हित पूर्णांक latch_state;
 
-static void h1940_latch_control(unsigned int clear, unsigned int set)
-{
-	unsigned long flags;
+अटल व्योम h1940_latch_control(अचिन्हित पूर्णांक clear, अचिन्हित पूर्णांक set)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 
 	latch_state &= ~clear;
 	latch_state |= set;
 
-	__raw_writel(latch_state, H1940_LATCH);
+	__raw_ग_लिखोl(latch_state, H1940_LATCH);
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static inline int h1940_gpiolib_to_latch(int offset)
-{
-	return 1 << (offset + 16);
-}
+अटल अंतरभूत पूर्णांक h1940_gpiolib_to_latch(पूर्णांक offset)
+अणु
+	वापस 1 << (offset + 16);
+पूर्ण
 
-static void h1940_gpiolib_latch_set(struct gpio_chip *chip,
-					unsigned offset, int value)
-{
-	int latch_bit = h1940_gpiolib_to_latch(offset);
+अटल व्योम h1940_gpiolib_latch_set(काष्ठा gpio_chip *chip,
+					अचिन्हित offset, पूर्णांक value)
+अणु
+	पूर्णांक latch_bit = h1940_gpiolib_to_latch(offset);
 
 	h1940_latch_control(value ? 0 : latch_bit,
 		value ? latch_bit : 0);
-}
+पूर्ण
 
-static int h1940_gpiolib_latch_output(struct gpio_chip *chip,
-					unsigned offset, int value)
-{
+अटल पूर्णांक h1940_gpiolib_latch_output(काष्ठा gpio_chip *chip,
+					अचिन्हित offset, पूर्णांक value)
+अणु
 	h1940_gpiolib_latch_set(chip, offset, value);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int h1940_gpiolib_latch_get(struct gpio_chip *chip,
-					unsigned offset)
-{
-	return (latch_state >> (offset + 16)) & 1;
-}
+अटल पूर्णांक h1940_gpiolib_latch_get(काष्ठा gpio_chip *chip,
+					अचिन्हित offset)
+अणु
+	वापस (latch_state >> (offset + 16)) & 1;
+पूर्ण
 
-static struct gpio_chip h1940_latch_gpiochip = {
+अटल काष्ठा gpio_chip h1940_latch_gpiochip = अणु
 	.base			= H1940_LATCH_GPIO(0),
 	.owner			= THIS_MODULE,
 	.label			= "H1940_LATCH",
@@ -164,25 +165,25 @@ static struct gpio_chip h1940_latch_gpiochip = {
 	.direction_output	= h1940_gpiolib_latch_output,
 	.set			= h1940_gpiolib_latch_set,
 	.get			= h1940_gpiolib_latch_get,
-};
+पूर्ण;
 
-static struct s3c2410_udc_mach_info h1940_udc_cfg __initdata = {
+अटल काष्ठा s3c2410_udc_mach_info h1940_udc_cfg __initdata = अणु
 	.vbus_pin		= S3C2410_GPG(5),
 	.vbus_pin_inverted	= 1,
 	.pullup_pin		= H1940_LATCH_USB_DP,
-};
+पूर्ण;
 
-static struct s3c2410_ts_mach_info h1940_ts_cfg __initdata = {
+अटल काष्ठा s3c2410_ts_mach_info h1940_ts_cfg __initdata = अणु
 		.delay = 10000,
 		.presc = 49,
-		.oversampling_shift = 2,
+		.oversampling_shअगरt = 2,
 		.cfg_gpio = s3c24xx_ts_cfg_gpio,
-};
+पूर्ण;
 
 /*
  * Set lcd on or off
  */
-static struct s3c2410fb_display h1940_lcd __initdata = {
+अटल काष्ठा s3c2410fb_display h1940_lcd __initdata = अणु
 	.lcdcon5=	S3C2410_LCDCON5_FRM565 | \
 			S3C2410_LCDCON5_INVVLINE | \
 			S3C2410_LCDCON5_HWSWP,
@@ -190,7 +191,7 @@ static struct s3c2410fb_display h1940_lcd __initdata = {
 	.type =		S3C2410_LCDCON1_TFT,
 	.width =	240,
 	.height =	320,
-	.pixclock =	260000,
+	.pixघड़ी =	260000,
 	.xres =		240,
 	.yres =		320,
 	.bpp =		16,
@@ -200,12 +201,12 @@ static struct s3c2410fb_display h1940_lcd __initdata = {
 	.upper_margin =	8,
 	.lower_margin = 7,
 	.vsync_len =	1,
-};
+पूर्ण;
 
-static struct s3c2410fb_mach_info h1940_fb_info __initdata = {
+अटल काष्ठा s3c2410fb_mach_info h1940_fb_info __initdata = अणु
 	.displays = &h1940_lcd,
 	.num_displays = 1,
-	.default_display = 0,
+	.शेष_display = 0,
 
 	.lpcsel =	0x02,
 	.gpccon =	0xaa940659,
@@ -220,125 +221,125 @@ static struct s3c2410fb_mach_info h1940_fb_info __initdata = {
 	.gpdup =	0x0000faff,
 	.gpdup_mask =	0xffffffff,
 	.gpdup_reg =	S3C2410_GPDUP,
-};
+पूर्ण;
 
-static int power_supply_init(struct device *dev)
-{
-	return gpio_request(S3C2410_GPF(2), "cable plugged");
-}
+अटल पूर्णांक घातer_supply_init(काष्ठा device *dev)
+अणु
+	वापस gpio_request(S3C2410_GPF(2), "cable plugged");
+पूर्ण
 
-static int h1940_is_ac_online(void)
-{
-	return !gpio_get_value(S3C2410_GPF(2));
-}
+अटल पूर्णांक h1940_is_ac_online(व्योम)
+अणु
+	वापस !gpio_get_value(S3C2410_GPF(2));
+पूर्ण
 
-static void power_supply_exit(struct device *dev)
-{
-	gpio_free(S3C2410_GPF(2));
-}
+अटल व्योम घातer_supply_निकास(काष्ठा device *dev)
+अणु
+	gpio_मुक्त(S3C2410_GPF(2));
+पूर्ण
 
-static char *h1940_supplicants[] = {
+अटल अक्षर *h1940_supplicants[] = अणु
 	"main-battery",
 	"backup-battery",
-};
+पूर्ण;
 
-static struct pda_power_pdata power_supply_info = {
-	.init			= power_supply_init,
+अटल काष्ठा pda_घातer_pdata घातer_supply_info = अणु
+	.init			= घातer_supply_init,
 	.is_ac_online		= h1940_is_ac_online,
-	.exit			= power_supply_exit,
+	.निकास			= घातer_supply_निकास,
 	.supplied_to		= h1940_supplicants,
 	.num_supplicants	= ARRAY_SIZE(h1940_supplicants),
-};
+पूर्ण;
 
-static struct resource power_supply_resources[] = {
+अटल काष्ठा resource घातer_supply_resources[] = अणु
 	[0] = DEFINE_RES_NAMED(IRQ_EINT2, 1, "ac", IORESOURCE_IRQ \
 			| IORESOURCE_IRQ_LOWEDGE | IORESOURCE_IRQ_HIGHEDGE),
-};
+पूर्ण;
 
-static struct platform_device power_supply = {
+अटल काष्ठा platक्रमm_device घातer_supply = अणु
 	.name		= "pda-power",
 	.id		= -1,
-	.dev		= {
-				.platform_data =
-					&power_supply_info,
-	},
-	.resource	= power_supply_resources,
-	.num_resources	= ARRAY_SIZE(power_supply_resources),
-};
+	.dev		= अणु
+				.platक्रमm_data =
+					&घातer_supply_info,
+	पूर्ण,
+	.resource	= घातer_supply_resources,
+	.num_resources	= ARRAY_SIZE(घातer_supply_resources),
+पूर्ण;
 
-static const struct s3c_adc_bat_thresh bat_lut_noac[] = {
-	{ .volt = 4070, .cur = 162, .level = 100},
-	{ .volt = 4040, .cur = 165, .level = 95},
-	{ .volt = 4016, .cur = 164, .level = 90},
-	{ .volt = 3996, .cur = 166, .level = 85},
-	{ .volt = 3971, .cur = 168, .level = 80},
-	{ .volt = 3951, .cur = 168, .level = 75},
-	{ .volt = 3931, .cur = 170, .level = 70},
-	{ .volt = 3903, .cur = 172, .level = 65},
-	{ .volt = 3886, .cur = 172, .level = 60},
-	{ .volt = 3858, .cur = 176, .level = 55},
-	{ .volt = 3842, .cur = 176, .level = 50},
-	{ .volt = 3818, .cur = 176, .level = 45},
-	{ .volt = 3789, .cur = 180, .level = 40},
-	{ .volt = 3769, .cur = 180, .level = 35},
-	{ .volt = 3749, .cur = 184, .level = 30},
-	{ .volt = 3732, .cur = 184, .level = 25},
-	{ .volt = 3716, .cur = 184, .level = 20},
-	{ .volt = 3708, .cur = 184, .level = 15},
-	{ .volt = 3716, .cur = 96, .level = 10},
-	{ .volt = 3700, .cur = 96, .level = 5},
-	{ .volt = 3684, .cur = 96, .level = 0},
-};
+अटल स्थिर काष्ठा s3c_adc_bat_thresh bat_lut_noac[] = अणु
+	अणु .volt = 4070, .cur = 162, .level = 100पूर्ण,
+	अणु .volt = 4040, .cur = 165, .level = 95पूर्ण,
+	अणु .volt = 4016, .cur = 164, .level = 90पूर्ण,
+	अणु .volt = 3996, .cur = 166, .level = 85पूर्ण,
+	अणु .volt = 3971, .cur = 168, .level = 80पूर्ण,
+	अणु .volt = 3951, .cur = 168, .level = 75पूर्ण,
+	अणु .volt = 3931, .cur = 170, .level = 70पूर्ण,
+	अणु .volt = 3903, .cur = 172, .level = 65पूर्ण,
+	अणु .volt = 3886, .cur = 172, .level = 60पूर्ण,
+	अणु .volt = 3858, .cur = 176, .level = 55पूर्ण,
+	अणु .volt = 3842, .cur = 176, .level = 50पूर्ण,
+	अणु .volt = 3818, .cur = 176, .level = 45पूर्ण,
+	अणु .volt = 3789, .cur = 180, .level = 40पूर्ण,
+	अणु .volt = 3769, .cur = 180, .level = 35पूर्ण,
+	अणु .volt = 3749, .cur = 184, .level = 30पूर्ण,
+	अणु .volt = 3732, .cur = 184, .level = 25पूर्ण,
+	अणु .volt = 3716, .cur = 184, .level = 20पूर्ण,
+	अणु .volt = 3708, .cur = 184, .level = 15पूर्ण,
+	अणु .volt = 3716, .cur = 96, .level = 10पूर्ण,
+	अणु .volt = 3700, .cur = 96, .level = 5पूर्ण,
+	अणु .volt = 3684, .cur = 96, .level = 0पूर्ण,
+पूर्ण;
 
-static const struct s3c_adc_bat_thresh bat_lut_acin[] = {
-	{ .volt = 4130, .cur = 0, .level = 100},
-	{ .volt = 3982, .cur = 0, .level = 50},
-	{ .volt = 3854, .cur = 0, .level = 10},
-	{ .volt = 3841, .cur = 0, .level = 0},
-};
+अटल स्थिर काष्ठा s3c_adc_bat_thresh bat_lut_acin[] = अणु
+	अणु .volt = 4130, .cur = 0, .level = 100पूर्ण,
+	अणु .volt = 3982, .cur = 0, .level = 50पूर्ण,
+	अणु .volt = 3854, .cur = 0, .level = 10पूर्ण,
+	अणु .volt = 3841, .cur = 0, .level = 0पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table h1940_bat_gpio_table = {
+अटल काष्ठा gpiod_lookup_table h1940_bat_gpio_table = अणु
 	.dev_id = "s3c-adc-battery",
-	.table = {
+	.table = अणु
 		/* Charge status S3C2410_GPF(3) */
 		GPIO_LOOKUP("GPIOF", 3, "charge-status", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int h1940_bat_init(void)
-{
-	int ret;
+अटल पूर्णांक h1940_bat_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = gpio_request(H1940_LATCH_SM803_ENABLE, "h1940-charger-enable");
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	gpio_direction_output(H1940_LATCH_SM803_ENABLE, 0);
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static void h1940_bat_exit(void)
-{
-	gpio_free(H1940_LATCH_SM803_ENABLE);
-}
+अटल व्योम h1940_bat_निकास(व्योम)
+अणु
+	gpio_मुक्त(H1940_LATCH_SM803_ENABLE);
+पूर्ण
 
-static void h1940_enable_charger(void)
-{
+अटल व्योम h1940_enable_अक्षरger(व्योम)
+अणु
 	gpio_set_value(H1940_LATCH_SM803_ENABLE, 1);
-}
+पूर्ण
 
-static void h1940_disable_charger(void)
-{
+अटल व्योम h1940_disable_अक्षरger(व्योम)
+अणु
 	gpio_set_value(H1940_LATCH_SM803_ENABLE, 0);
-}
+पूर्ण
 
-static struct s3c_adc_bat_pdata h1940_bat_cfg = {
+अटल काष्ठा s3c_adc_bat_pdata h1940_bat_cfg = अणु
 	.init = h1940_bat_init,
-	.exit = h1940_bat_exit,
-	.enable_charger = h1940_enable_charger,
-	.disable_charger = h1940_disable_charger,
+	.निकास = h1940_bat_निकास,
+	.enable_अक्षरger = h1940_enable_अक्षरger,
+	.disable_अक्षरger = h1940_disable_अक्षरger,
 	.lut_noac = bat_lut_noac,
 	.lut_noac_cnt = ARRAY_SIZE(bat_lut_noac),
 	.lut_acin = bat_lut_acin,
@@ -347,138 +348,138 @@ static struct s3c_adc_bat_pdata h1940_bat_cfg = {
 	.current_channel = 1,
 	.volt_mult = 4056,
 	.current_mult = 1893,
-	.internal_impedance = 200,
+	.पूर्णांकernal_impedance = 200,
 	.backup_volt_channel = 3,
 	/* TODO Check backup volt multiplier */
 	.backup_volt_mult = 4056,
 	.backup_volt_min = 0,
 	.backup_volt_max = 4149288
-};
+पूर्ण;
 
-static struct platform_device h1940_battery = {
+अटल काष्ठा platक्रमm_device h1940_battery = अणु
 	.name             = "s3c-adc-battery",
 	.id               = -1,
-	.dev = {
+	.dev = अणु
 		.parent = &s3c_device_adc.dev,
-		.platform_data = &h1940_bat_cfg,
-	},
-};
+		.platक्रमm_data = &h1940_bat_cfg,
+	पूर्ण,
+पूर्ण;
 
-static DEFINE_SPINLOCK(h1940_blink_spin);
+अटल DEFINE_SPINLOCK(h1940_blink_spin);
 
-int h1940_led_blink_set(struct gpio_desc *desc, int state,
-	unsigned long *delay_on, unsigned long *delay_off)
-{
-	int blink_gpio, check_gpio1, check_gpio2;
-	int gpio = desc ? desc_to_gpio(desc) : -EINVAL;
+पूर्णांक h1940_led_blink_set(काष्ठा gpio_desc *desc, पूर्णांक state,
+	अचिन्हित दीर्घ *delay_on, अचिन्हित दीर्घ *delay_off)
+अणु
+	पूर्णांक blink_gpio, check_gpio1, check_gpio2;
+	पूर्णांक gpio = desc ? desc_to_gpio(desc) : -EINVAL;
 
-	switch (gpio) {
-	case H1940_LATCH_LED_GREEN:
+	चयन (gpio) अणु
+	हाल H1940_LATCH_LED_GREEN:
 		blink_gpio = S3C2410_GPA(7);
 		check_gpio1 = S3C2410_GPA(1);
 		check_gpio2 = S3C2410_GPA(3);
-		break;
-	case H1940_LATCH_LED_RED:
+		अवरोध;
+	हाल H1940_LATCH_LED_RED:
 		blink_gpio = S3C2410_GPA(1);
 		check_gpio1 = S3C2410_GPA(7);
 		check_gpio2 = S3C2410_GPA(3);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		blink_gpio = S3C2410_GPA(3);
 		check_gpio1 = S3C2410_GPA(1);
 		check_gpio2 = S3C2410_GPA(7);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (delay_on && delay_off && !*delay_on && !*delay_off)
+	अगर (delay_on && delay_off && !*delay_on && !*delay_off)
 		*delay_on = *delay_off = 500;
 
 	spin_lock(&h1940_blink_spin);
 
-	switch (state) {
-	case GPIO_LED_NO_BLINK_LOW:
-	case GPIO_LED_NO_BLINK_HIGH:
-		if (!gpio_get_value(check_gpio1) &&
+	चयन (state) अणु
+	हाल GPIO_LED_NO_BLINK_LOW:
+	हाल GPIO_LED_NO_BLINK_HIGH:
+		अगर (!gpio_get_value(check_gpio1) &&
 		    !gpio_get_value(check_gpio2))
 			gpio_set_value(H1940_LATCH_LED_FLASH, 0);
 		gpio_set_value(blink_gpio, 0);
-		if (gpio_is_valid(gpio))
+		अगर (gpio_is_valid(gpio))
 			gpio_set_value(gpio, state);
-		break;
-	case GPIO_LED_BLINK:
-		if (gpio_is_valid(gpio))
+		अवरोध;
+	हाल GPIO_LED_BLINK:
+		अगर (gpio_is_valid(gpio))
 			gpio_set_value(gpio, 0);
 		gpio_set_value(H1940_LATCH_LED_FLASH, 1);
 		gpio_set_value(blink_gpio, 1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock(&h1940_blink_spin);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(h1940_led_blink_set);
 
-static struct gpio_led h1940_leds_desc[] = {
-	{
+अटल काष्ठा gpio_led h1940_leds_desc[] = अणु
+	अणु
 		.name			= "Green",
-		.default_trigger	= "main-battery-full",
+		.शेष_trigger	= "main-battery-full",
 		.gpio			= H1940_LATCH_LED_GREEN,
 		.retain_state_suspended	= 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "Red",
-		.default_trigger
+		.शेष_trigger
 			= "main-battery-charging-blink-full-solid",
 		.gpio			= H1940_LATCH_LED_RED,
 		.retain_state_suspended	= 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_led_platform_data h1940_leds_pdata = {
+अटल काष्ठा gpio_led_platक्रमm_data h1940_leds_pdata = अणु
 	.num_leds	= ARRAY_SIZE(h1940_leds_desc),
 	.leds		= h1940_leds_desc,
 	.gpio_blink_set	= h1940_led_blink_set,
-};
+पूर्ण;
 
-static struct platform_device h1940_device_leds = {
+अटल काष्ठा platक्रमm_device h1940_device_leds = अणु
 	.name	= "leds-gpio",
 	.id	= -1,
-	.dev	= {
-			.platform_data = &h1940_leds_pdata,
-	},
-};
+	.dev	= अणु
+			.platक्रमm_data = &h1940_leds_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device h1940_device_bluetooth = {
+अटल काष्ठा platक्रमm_device h1940_device_bluetooth = अणु
 	.name             = "h1940-bt",
 	.id               = -1,
-};
+पूर्ण;
 
-static void h1940_set_mmc_power(unsigned char power_mode, unsigned short vdd)
-{
-	s3c24xx_mci_def_set_power(power_mode, vdd);
+अटल व्योम h1940_set_mmc_घातer(अचिन्हित अक्षर घातer_mode, अचिन्हित लघु vdd)
+अणु
+	s3c24xx_mci_def_set_घातer(घातer_mode, vdd);
 
-	switch (power_mode) {
-	case MMC_POWER_OFF:
+	चयन (घातer_mode) अणु
+	हाल MMC_POWER_OFF:
 		gpio_set_value(H1940_LATCH_SD_POWER, 0);
-		break;
-	case MMC_POWER_UP:
-	case MMC_POWER_ON:
+		अवरोध;
+	हाल MMC_POWER_UP:
+	हाल MMC_POWER_ON:
 		gpio_set_value(H1940_LATCH_SD_POWER, 1);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static struct s3c24xx_mci_pdata h1940_mmc_cfg __initdata = {
-	.set_power     = h1940_set_mmc_power,
+अटल काष्ठा s3c24xx_mci_pdata h1940_mmc_cfg __initdata = अणु
+	.set_घातer     = h1940_set_mmc_घातer,
 	.ocr_avail     = MMC_VDD_32_33,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table h1940_mmc_gpio_table = {
+अटल काष्ठा gpiod_lookup_table h1940_mmc_gpio_table = अणु
 	.dev_id = "s3c2410-sdi",
-	.table = {
+	.table = अणु
 		/* Card detect S3C2410_GPF(5) */
 		GPIO_LOOKUP("GPIOF", 5, "cd", GPIO_ACTIVE_LOW),
 		/* Write protect S3C2410_GPH(8) */
@@ -490,33 +491,33 @@ static struct gpiod_lookup_table h1940_mmc_gpio_table = {
 		GPIO_LOOKUP_IDX("GPIOE",  8, "bus", 3, GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP_IDX("GPIOE",  9, "bus", 4, GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP_IDX("GPIOE", 10, "bus", 5, GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table h1940_audio_gpio_table = {
+अटल काष्ठा gpiod_lookup_table h1940_audio_gpio_table = अणु
 	.dev_id = "h1940-audio",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("H1940_LATCH",
 			    H1940_LATCH_AUDIO_POWER - H1940_LATCH_GPIO(0),
 			    "speaker-power", GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP("GPIOG", 4, "hp", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device h1940_audio = {
+अटल काष्ठा platक्रमm_device h1940_audio = अणु
 	.name = "h1940-audio",
 	.id   = -1,
-};
+पूर्ण;
 
-static struct pwm_lookup h1940_pwm_lookup[] = {
-	PWM_LOOKUP("samsung-pwm", 0, "pwm-backlight", NULL, 36296,
+अटल काष्ठा pwm_lookup h1940_pwm_lookup[] = अणु
+	PWM_LOOKUP("samsung-pwm", 0, "pwm-backlight", शून्य, 36296,
 		   PWM_POLARITY_NORMAL),
-};
+पूर्ण;
 
-static int h1940_backlight_init(struct device *dev)
-{
+अटल पूर्णांक h1940_backlight_init(काष्ठा device *dev)
+अणु
 	gpio_request(S3C2410_GPB(0), "Backlight");
 
 	gpio_direction_output(S3C2410_GPB(0), 0);
@@ -524,58 +525,58 @@ static int h1940_backlight_init(struct device *dev)
 	s3c_gpio_cfgpin(S3C2410_GPB(0), S3C2410_GPB0_TOUT0);
 	gpio_set_value(H1940_LATCH_MAX1698_nSHUTDOWN, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int h1940_backlight_notify(struct device *dev, int brightness)
-{
-	if (!brightness) {
+अटल पूर्णांक h1940_backlight_notअगरy(काष्ठा device *dev, पूर्णांक brightness)
+अणु
+	अगर (!brightness) अणु
 		gpio_direction_output(S3C2410_GPB(0), 1);
 		gpio_set_value(H1940_LATCH_MAX1698_nSHUTDOWN, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		gpio_direction_output(S3C2410_GPB(0), 0);
 		s3c_gpio_setpull(S3C2410_GPB(0), S3C_GPIO_PULL_NONE);
 		s3c_gpio_cfgpin(S3C2410_GPB(0), S3C2410_GPB0_TOUT0);
 		gpio_set_value(H1940_LATCH_MAX1698_nSHUTDOWN, 1);
-	}
-	return brightness;
-}
+	पूर्ण
+	वापस brightness;
+पूर्ण
 
-static void h1940_backlight_exit(struct device *dev)
-{
+अटल व्योम h1940_backlight_निकास(काष्ठा device *dev)
+अणु
 	gpio_direction_output(S3C2410_GPB(0), 1);
 	gpio_set_value(H1940_LATCH_MAX1698_nSHUTDOWN, 0);
-}
+पूर्ण
 
 
-static struct platform_pwm_backlight_data backlight_data = {
+अटल काष्ठा platक्रमm_pwm_backlight_data backlight_data = अणु
 	.max_brightness = 100,
 	.dft_brightness = 50,
 	.init           = h1940_backlight_init,
-	.notify		= h1940_backlight_notify,
-	.exit           = h1940_backlight_exit,
-};
+	.notअगरy		= h1940_backlight_notअगरy,
+	.निकास           = h1940_backlight_निकास,
+पूर्ण;
 
-static struct platform_device h1940_backlight = {
+अटल काष्ठा platक्रमm_device h1940_backlight = अणु
 	.name = "pwm-backlight",
-	.dev  = {
+	.dev  = अणु
 		.parent = &samsung_device_pwm.dev,
-		.platform_data = &backlight_data,
-	},
+		.platक्रमm_data = &backlight_data,
+	पूर्ण,
 	.id   = -1,
-};
+पूर्ण;
 
-static void h1940_lcd_power_set(struct plat_lcd_data *pd,
-					unsigned int power)
-{
-	int value, retries = 100;
+अटल व्योम h1940_lcd_घातer_set(काष्ठा plat_lcd_data *pd,
+					अचिन्हित पूर्णांक घातer)
+अणु
+	पूर्णांक value, retries = 100;
 
-	if (!power) {
+	अगर (!घातer) अणु
 		gpio_set_value(S3C2410_GPC(0), 0);
-		/* wait for 3ac */
-		do {
+		/* रुको क्रम 3ac */
+		करो अणु
 			value = gpio_get_value(S3C2410_GPC(6));
-		} while (value && retries--);
+		पूर्ण जबतक (value && retries--);
 
 		gpio_set_value(H1940_LATCH_LCD_P2, 0);
 		gpio_set_value(H1940_LATCH_LCD_P3, 0);
@@ -589,7 +590,7 @@ static void h1940_lcd_power_set(struct plat_lcd_data *pd,
 
 		gpio_set_value(S3C2410_GPC(5), 0);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		gpio_set_value(H1940_LATCH_LCD_P0, 1);
 		gpio_set_value(H1940_LATCH_LCD_P1, 1);
 
@@ -605,42 +606,42 @@ static void h1940_lcd_power_set(struct plat_lcd_data *pd,
 		gpio_set_value(H1940_LATCH_LCD_P3, 1);
 		gpio_set_value(H1940_LATCH_LCD_P2, 1);
 		gpio_set_value(H1940_LATCH_LCD_P4, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct plat_lcd_data h1940_lcd_power_data = {
-	.set_power      = h1940_lcd_power_set,
-};
+अटल काष्ठा plat_lcd_data h1940_lcd_घातer_data = अणु
+	.set_घातer      = h1940_lcd_घातer_set,
+पूर्ण;
 
-static struct platform_device h1940_lcd_powerdev = {
+अटल काष्ठा platक्रमm_device h1940_lcd_घातerdev = अणु
 	.name                   = "platform-lcd",
 	.dev.parent             = &s3c_device_lcd.dev,
-	.dev.platform_data      = &h1940_lcd_power_data,
-};
+	.dev.platक्रमm_data      = &h1940_lcd_घातer_data,
+पूर्ण;
 
-static struct uda1380_platform_data uda1380_info = {
-	.gpio_power	= H1940_LATCH_UDA_POWER,
+अटल काष्ठा uda1380_platक्रमm_data uda1380_info = अणु
+	.gpio_घातer	= H1940_LATCH_UDA_POWER,
 	.gpio_reset	= S3C2410_GPA(12),
 	.dac_clk	= UDA1380_DAC_CLK_SYSCLK,
-};
+पूर्ण;
 
-static struct i2c_board_info h1940_i2c_devices[] = {
-	{
+अटल काष्ठा i2c_board_info h1940_i2c_devices[] = अणु
+	अणु
 		I2C_BOARD_INFO("uda1380", 0x1a),
-		.platform_data = &uda1380_info,
-	},
-};
+		.platक्रमm_data = &uda1380_info,
+	पूर्ण,
+पूर्ण;
 
-#define DECLARE_BUTTON(p, k, n, w)	\
-	{				\
+#घोषणा DECLARE_BUTTON(p, k, n, w)	\
+	अणु				\
 		.gpio		= p,	\
 		.code		= k,	\
 		.desc		= n,	\
 		.wakeup		= w,	\
 		.active_low	= 1,	\
-	}
+	पूर्ण
 
-static struct gpio_keys_button h1940_buttons[] = {
+अटल काष्ठा gpio_keys_button h1940_buttons[] = अणु
 	DECLARE_BUTTON(S3C2410_GPF(0),       KEY_POWER,          "Power", 1),
 	DECLARE_BUTTON(S3C2410_GPF(6),       KEY_ENTER,         "Select", 1),
 	DECLARE_BUTTON(S3C2410_GPF(7),      KEY_RECORD,         "Record", 0),
@@ -652,22 +653,22 @@ static struct gpio_keys_button h1940_buttons[] = {
 	DECLARE_BUTTON(S3C2410_GPG(8),       KEY_RIGHT,    "Right_arrow", 0),
 	DECLARE_BUTTON(S3C2410_GPG(9),          KEY_UP,       "Up_arrow", 0),
 	DECLARE_BUTTON(S3C2410_GPG(10),       KEY_DOWN,     "Down_arrow", 0),
-};
+पूर्ण;
 
-static struct gpio_keys_platform_data h1940_buttons_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data h1940_buttons_data = अणु
 	.buttons	= h1940_buttons,
 	.nbuttons	= ARRAY_SIZE(h1940_buttons),
-};
+पूर्ण;
 
-static struct platform_device h1940_dev_buttons = {
+अटल काष्ठा platक्रमm_device h1940_dev_buttons = अणु
 	.name		= "gpio-keys",
 	.id		= -1,
-	.dev		= {
-		.platform_data  = &h1940_buttons_data,
-	}
-};
+	.dev		= अणु
+		.platक्रमm_data  = &h1940_buttons_data,
+	पूर्ण
+पूर्ण;
 
-static struct platform_device *h1940_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *h1940_devices[] __initdata = अणु
 	&h1940_dev_buttons,
 	&s3c_device_ohci,
 	&s3c_device_lcd,
@@ -681,48 +682,48 @@ static struct platform_device *h1940_devices[] __initdata = {
 	&s3c_device_rtc,
 	&samsung_device_pwm,
 	&h1940_backlight,
-	&h1940_lcd_powerdev,
+	&h1940_lcd_घातerdev,
 	&s3c_device_adc,
 	&s3c_device_ts,
-	&power_supply,
+	&घातer_supply,
 	&h1940_battery,
 	&h1940_audio,
-};
+पूर्ण;
 
-static void __init h1940_map_io(void)
-{
+अटल व्योम __init h1940_map_io(व्योम)
+अणु
 	s3c24xx_init_io(h1940_iodesc, ARRAY_SIZE(h1940_iodesc));
 	s3c24xx_init_uarts(h1940_uartcfgs, ARRAY_SIZE(h1940_uartcfgs));
-	s3c24xx_set_timer_source(S3C24XX_PWM3, S3C24XX_PWM4);
+	s3c24xx_set_समयr_source(S3C24XX_PWM3, S3C24XX_PWM4);
 
 	/* setup PM */
 
-#ifdef CONFIG_PM_H1940
-	memcpy(phys_to_virt(H1940_SUSPEND_RESUMEAT), h1940_pm_return, 1024);
-#endif
+#अगर_घोषित CONFIG_PM_H1940
+	स_नकल(phys_to_virt(H1940_SUSPEND_RESUMEAT), h1940_pm_वापस, 1024);
+#पूर्ण_अगर
 	s3c_pm_init();
 
 	/* Add latch gpio chip, set latch initial value */
 	h1940_latch_control(0, 0);
-	WARN_ON(gpiochip_add_data(&h1940_latch_gpiochip, NULL));
-}
+	WARN_ON(gpiochip_add_data(&h1940_latch_gpiochip, शून्य));
+पूर्ण
 
-static void __init h1940_init_time(void)
-{
-	s3c2410_init_clocks(12000000);
-	s3c24xx_timer_init();
-}
+अटल व्योम __init h1940_init_समय(व्योम)
+अणु
+	s3c2410_init_घड़ीs(12000000);
+	s3c24xx_समयr_init();
+पूर्ण
 
-/* H1940 and RX3715 need to reserve this for suspend */
-static void __init h1940_reserve(void)
-{
+/* H1940 and RX3715 need to reserve this क्रम suspend */
+अटल व्योम __init h1940_reserve(व्योम)
+अणु
 	memblock_reserve(0x30003000, 0x1000);
 	memblock_reserve(0x30081000, 0x1000);
-}
+पूर्ण
 
-static void __init h1940_init(void)
-{
-	u32 tmp;
+अटल व्योम __init h1940_init(व्योम)
+अणु
+	u32 पंचांगp;
 
 	s3c24xx_fb_set_platdata(&h1940_fb_info);
 	gpiod_add_lookup_table(&h1940_mmc_gpio_table);
@@ -734,19 +735,19 @@ static void __init h1940_init(void)
 	s3c24xx_mci_set_platdata(&h1940_mmc_cfg);
  	s3c24xx_udc_set_platdata(&h1940_udc_cfg);
 	s3c24xx_ts_set_platdata(&h1940_ts_cfg);
-	s3c_i2c0_set_platdata(NULL);
+	s3c_i2c0_set_platdata(शून्य);
 
-	/* Turn off suspend on both USB ports, and switch the
+	/* Turn off suspend on both USB ports, and चयन the
 	 * selectable USB port to USB device mode. */
 
-	s3c2410_modify_misccr(S3C2410_MISCCR_USBHOST |
+	s3c2410_modअगरy_misccr(S3C2410_MISCCR_USBHOST |
 			      S3C2410_MISCCR_USBSUSPND0 |
 			      S3C2410_MISCCR_USBSUSPND1, 0x0);
 
-	tmp =   (0x78 << S3C24XX_PLL_MDIV_SHIFT)
+	पंचांगp =   (0x78 << S3C24XX_PLL_MDIV_SHIFT)
 	      | (0x02 << S3C24XX_PLL_PDIV_SHIFT)
 	      | (0x03 << S3C24XX_PLL_SDIV_SHIFT);
-	writel(tmp, S3C2410_UPLLCON);
+	ग_लिखोl(पंचांगp, S3C2410_UPLLCON);
 
 	gpio_request(S3C2410_GPC(0), "LCD power");
 	gpio_request(S3C2410_GPC(1), "LCD power");
@@ -775,7 +776,7 @@ static void __init h1940_init(void)
 	gpio_direction_output(H1940_LATCH_SD_POWER, 0);
 
 	pwm_add_table(h1940_pwm_lookup, ARRAY_SIZE(h1940_pwm_lookup));
-	platform_add_devices(h1940_devices, ARRAY_SIZE(h1940_devices));
+	platक्रमm_add_devices(h1940_devices, ARRAY_SIZE(h1940_devices));
 
 	gpio_request(S3C2410_GPA(1), "Red LED blink");
 	gpio_request(S3C2410_GPA(3), "Blue LED blink");
@@ -786,16 +787,16 @@ static void __init h1940_init(void)
 	gpio_direction_output(S3C2410_GPA(7), 0);
 	gpio_direction_output(H1940_LATCH_LED_FLASH, 0);
 
-	i2c_register_board_info(0, h1940_i2c_devices,
+	i2c_रेजिस्टर_board_info(0, h1940_i2c_devices,
 		ARRAY_SIZE(h1940_i2c_devices));
-}
+पूर्ण
 
 MACHINE_START(H1940, "IPAQ-H1940")
-	/* Maintainer: Ben Dooks <ben-linux@fluff.org> */
+	/* Maपूर्णांकainer: Ben Dooks <ben-linux@fluff.org> */
 	.atag_offset	= 0x100,
 	.map_io		= h1940_map_io,
 	.reserve	= h1940_reserve,
 	.init_irq	= s3c2410_init_irq,
 	.init_machine	= h1940_init,
-	.init_time	= h1940_init_time,
+	.init_समय	= h1940_init_समय,
 MACHINE_END

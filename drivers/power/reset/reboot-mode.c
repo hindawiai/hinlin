@@ -1,194 +1,195 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2016, Fuzhou Rockchip Electronics Co., Ltd
  */
 
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/reboot.h>
-#include <linux/reboot-mode.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/reboot-mode.h>
 
-#define PREFIX "mode-"
+#घोषणा PREFIX "mode-"
 
-struct mode_info {
-	const char *mode;
+काष्ठा mode_info अणु
+	स्थिर अक्षर *mode;
 	u32 magic;
-	struct list_head list;
-};
+	काष्ठा list_head list;
+पूर्ण;
 
-static unsigned int get_reboot_mode_magic(struct reboot_mode_driver *reboot,
-					  const char *cmd)
-{
-	const char *normal = "normal";
-	int magic = 0;
-	struct mode_info *info;
+अटल अचिन्हित पूर्णांक get_reboot_mode_magic(काष्ठा reboot_mode_driver *reboot,
+					  स्थिर अक्षर *cmd)
+अणु
+	स्थिर अक्षर *normal = "normal";
+	पूर्णांक magic = 0;
+	काष्ठा mode_info *info;
 
-	if (!cmd)
+	अगर (!cmd)
 		cmd = normal;
 
-	list_for_each_entry(info, &reboot->head, list) {
-		if (!strcmp(info->mode, cmd)) {
+	list_क्रम_each_entry(info, &reboot->head, list) अणु
+		अगर (!म_भेद(info->mode, cmd)) अणु
 			magic = info->magic;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return magic;
-}
+	वापस magic;
+पूर्ण
 
-static int reboot_mode_notify(struct notifier_block *this,
-			      unsigned long mode, void *cmd)
-{
-	struct reboot_mode_driver *reboot;
-	unsigned int magic;
+अटल पूर्णांक reboot_mode_notअगरy(काष्ठा notअगरier_block *this,
+			      अचिन्हित दीर्घ mode, व्योम *cmd)
+अणु
+	काष्ठा reboot_mode_driver *reboot;
+	अचिन्हित पूर्णांक magic;
 
-	reboot = container_of(this, struct reboot_mode_driver, reboot_notifier);
+	reboot = container_of(this, काष्ठा reboot_mode_driver, reboot_notअगरier);
 	magic = get_reboot_mode_magic(reboot, cmd);
-	if (magic)
-		reboot->write(reboot, magic);
+	अगर (magic)
+		reboot->ग_लिखो(reboot, magic);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /**
- * reboot_mode_register - register a reboot mode driver
+ * reboot_mode_रेजिस्टर - रेजिस्टर a reboot mode driver
  * @reboot: reboot mode driver
  *
  * Returns: 0 on success or a negative error code on failure.
  */
-int reboot_mode_register(struct reboot_mode_driver *reboot)
-{
-	struct mode_info *info;
-	struct property *prop;
-	struct device_node *np = reboot->dev->of_node;
-	size_t len = strlen(PREFIX);
-	int ret;
+पूर्णांक reboot_mode_रेजिस्टर(काष्ठा reboot_mode_driver *reboot)
+अणु
+	काष्ठा mode_info *info;
+	काष्ठा property *prop;
+	काष्ठा device_node *np = reboot->dev->of_node;
+	माप_प्रकार len = म_माप(PREFIX);
+	पूर्णांक ret;
 
 	INIT_LIST_HEAD(&reboot->head);
 
-	for_each_property_of_node(np, prop) {
-		if (strncmp(prop->name, PREFIX, len))
-			continue;
+	क्रम_each_property_of_node(np, prop) अणु
+		अगर (म_भेदन(prop->name, PREFIX, len))
+			जारी;
 
-		info = devm_kzalloc(reboot->dev, sizeof(*info), GFP_KERNEL);
-		if (!info) {
+		info = devm_kzalloc(reboot->dev, माप(*info), GFP_KERNEL);
+		अगर (!info) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		if (of_property_read_u32(np, prop->name, &info->magic)) {
+		अगर (of_property_पढ़ो_u32(np, prop->name, &info->magic)) अणु
 			dev_err(reboot->dev, "reboot mode %s without magic number\n",
 				info->mode);
-			devm_kfree(reboot->dev, info);
-			continue;
-		}
+			devm_kमुक्त(reboot->dev, info);
+			जारी;
+		पूर्ण
 
-		info->mode = kstrdup_const(prop->name + len, GFP_KERNEL);
-		if (!info->mode) {
+		info->mode = kstrdup_स्थिर(prop->name + len, GFP_KERNEL);
+		अगर (!info->mode) अणु
 			ret =  -ENOMEM;
-			goto error;
-		} else if (info->mode[0] == '\0') {
-			kfree_const(info->mode);
+			जाओ error;
+		पूर्ण अन्यथा अगर (info->mode[0] == '\0') अणु
+			kमुक्त_स्थिर(info->mode);
 			ret = -EINVAL;
 			dev_err(reboot->dev, "invalid mode name(%s): too short!\n",
 				prop->name);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		list_add_tail(&info->list, &reboot->head);
-	}
+	पूर्ण
 
-	reboot->reboot_notifier.notifier_call = reboot_mode_notify;
-	register_reboot_notifier(&reboot->reboot_notifier);
+	reboot->reboot_notअगरier.notअगरier_call = reboot_mode_notअगरy;
+	रेजिस्टर_reboot_notअगरier(&reboot->reboot_notअगरier);
 
-	return 0;
+	वापस 0;
 
 error:
-	list_for_each_entry(info, &reboot->head, list)
-		kfree_const(info->mode);
+	list_क्रम_each_entry(info, &reboot->head, list)
+		kमुक्त_स्थिर(info->mode);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(reboot_mode_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(reboot_mode_रेजिस्टर);
 
 /**
- * reboot_mode_unregister - unregister a reboot mode driver
+ * reboot_mode_unरेजिस्टर - unरेजिस्टर a reboot mode driver
  * @reboot: reboot mode driver
  */
-int reboot_mode_unregister(struct reboot_mode_driver *reboot)
-{
-	struct mode_info *info;
+पूर्णांक reboot_mode_unरेजिस्टर(काष्ठा reboot_mode_driver *reboot)
+अणु
+	काष्ठा mode_info *info;
 
-	unregister_reboot_notifier(&reboot->reboot_notifier);
+	unरेजिस्टर_reboot_notअगरier(&reboot->reboot_notअगरier);
 
-	list_for_each_entry(info, &reboot->head, list)
-		kfree_const(info->mode);
+	list_क्रम_each_entry(info, &reboot->head, list)
+		kमुक्त_स्थिर(info->mode);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(reboot_mode_unregister);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(reboot_mode_unरेजिस्टर);
 
-static void devm_reboot_mode_release(struct device *dev, void *res)
-{
-	reboot_mode_unregister(*(struct reboot_mode_driver **)res);
-}
+अटल व्योम devm_reboot_mode_release(काष्ठा device *dev, व्योम *res)
+अणु
+	reboot_mode_unरेजिस्टर(*(काष्ठा reboot_mode_driver **)res);
+पूर्ण
 
 /**
- * devm_reboot_mode_register() - resource managed reboot_mode_register()
+ * devm_reboot_mode_रेजिस्टर() - resource managed reboot_mode_रेजिस्टर()
  * @dev: device to associate this resource with
  * @reboot: reboot mode driver
  *
  * Returns: 0 on success or a negative error code on failure.
  */
-int devm_reboot_mode_register(struct device *dev,
-			      struct reboot_mode_driver *reboot)
-{
-	struct reboot_mode_driver **dr;
-	int rc;
+पूर्णांक devm_reboot_mode_रेजिस्टर(काष्ठा device *dev,
+			      काष्ठा reboot_mode_driver *reboot)
+अणु
+	काष्ठा reboot_mode_driver **dr;
+	पूर्णांक rc;
 
-	dr = devres_alloc(devm_reboot_mode_release, sizeof(*dr), GFP_KERNEL);
-	if (!dr)
-		return -ENOMEM;
+	dr = devres_alloc(devm_reboot_mode_release, माप(*dr), GFP_KERNEL);
+	अगर (!dr)
+		वापस -ENOMEM;
 
-	rc = reboot_mode_register(reboot);
-	if (rc) {
-		devres_free(dr);
-		return rc;
-	}
+	rc = reboot_mode_रेजिस्टर(reboot);
+	अगर (rc) अणु
+		devres_मुक्त(dr);
+		वापस rc;
+	पूर्ण
 
 	*dr = reboot;
 	devres_add(dev, dr);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(devm_reboot_mode_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_reboot_mode_रेजिस्टर);
 
-static int devm_reboot_mode_match(struct device *dev, void *res, void *data)
-{
-	struct reboot_mode_driver **p = res;
+अटल पूर्णांक devm_reboot_mode_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा reboot_mode_driver **p = res;
 
-	if (WARN_ON(!p || !*p))
-		return 0;
+	अगर (WARN_ON(!p || !*p))
+		वापस 0;
 
-	return *p == data;
-}
+	वापस *p == data;
+पूर्ण
 
 /**
- * devm_reboot_mode_unregister() - resource managed reboot_mode_unregister()
+ * devm_reboot_mode_unरेजिस्टर() - resource managed reboot_mode_unरेजिस्टर()
  * @dev: device to associate this resource with
  * @reboot: reboot mode driver
  */
-void devm_reboot_mode_unregister(struct device *dev,
-				 struct reboot_mode_driver *reboot)
-{
+व्योम devm_reboot_mode_unरेजिस्टर(काष्ठा device *dev,
+				 काष्ठा reboot_mode_driver *reboot)
+अणु
 	WARN_ON(devres_release(dev,
 			       devm_reboot_mode_release,
 			       devm_reboot_mode_match, reboot));
-}
-EXPORT_SYMBOL_GPL(devm_reboot_mode_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_reboot_mode_unरेजिस्टर);
 
 MODULE_AUTHOR("Andy Yan <andy.yan@rock-chips.com>");
 MODULE_DESCRIPTION("System reboot mode core library");

@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  arch/arm/mach-rpc/include/mach/isa-dma.h
  *
  *  Copyright (C) 1997 Russell King
  */
-#ifndef __ASM_ARCH_DMA_H
-#define __ASM_ARCH_DMA_H
+#अगर_अघोषित __ASM_ARCH_DMA_H
+#घोषणा __ASM_ARCH_DMA_H
 
-#define MAX_DMA_CHANNELS	8
+#घोषणा MAX_DMA_CHANNELS	8
 
-#define DMA_0			0
-#define DMA_1			1
-#define DMA_2			2
-#define DMA_3			3
-#define DMA_S0			4
-#define DMA_S1			5
-#define DMA_VIRTUAL_FLOPPY	6
-#define DMA_VIRTUAL_SOUND	7
+#घोषणा DMA_0			0
+#घोषणा DMA_1			1
+#घोषणा DMA_2			2
+#घोषणा DMA_3			3
+#घोषणा DMA_S0			4
+#घोषणा DMA_S1			5
+#घोषणा DMA_VIRTUAL_FLOPPY	6
+#घोषणा DMA_VIRTUAL_SOUND	7
 
-#define DMA_FLOPPY		DMA_VIRTUAL_FLOPPY
+#घोषणा DMA_FLOPPY		DMA_VIRTUAL_FLOPPY
 
-#define IOMD_DMA_BOUNDARY	(PAGE_SIZE - 1)
+#घोषणा IOMD_DMA_BOUNDARY	(PAGE_SIZE - 1)
 
-#endif /* _ASM_ARCH_DMA_H */
+#पूर्ण_अगर /* _ASM_ARCH_DMA_H */
 

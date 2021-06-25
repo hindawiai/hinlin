@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BCM63XX_DEV_SPI_H
-#define BCM63XX_DEV_SPI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BCM63XX_DEV_SPI_H
+#घोषणा BCM63XX_DEV_SPI_H
 
-#include <linux/types.h>
-#include <bcm63xx_io.h>
-#include <bcm63xx_regs.h>
+#समावेश <linux/types.h>
+#समावेश <bcm63xx_पन.स>
+#समावेश <bcm63xx_regs.h>
 
-int __init bcm63xx_spi_register(void);
+पूर्णांक __init bcm63xx_spi_रेजिस्टर(व्योम);
 
-#endif /* BCM63XX_DEV_SPI_H */
+#पूर्ण_अगर /* BCM63XX_DEV_SPI_H */

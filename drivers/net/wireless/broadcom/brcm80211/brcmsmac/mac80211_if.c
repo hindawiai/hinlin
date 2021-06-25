@@ -1,89 +1,90 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2010 Broadcom Corporation
  * Copyright (c) 2013 Hauke Mehrtens <hauke@hauke-m.de>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define __UNDEF_NO_VERSION__
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा __UNDEF_NO_VERSION__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/etherdevice.h>
-#include <linux/sched.h>
-#include <linux/firmware.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/bcma/bcma.h>
-#include <net/mac80211.h>
-#include <defs.h>
-#include "phy/phy_int.h"
-#include "d11.h"
-#include "channel.h"
-#include "scb.h"
-#include "pub.h"
-#include "ucode_loader.h"
-#include "mac80211_if.h"
-#include "main.h"
-#include "debug.h"
-#include "led.h"
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/bcma/bcma.h>
+#समावेश <net/mac80211.h>
+#समावेश <defs.h>
+#समावेश "phy/phy_int.h"
+#समावेश "d11.h"
+#समावेश "channel.h"
+#समावेश "scb.h"
+#समावेश "pub.h"
+#समावेश "ucode_loader.h"
+#समावेश "mac80211_if.h"
+#समावेश "main.h"
+#समावेश "debug.h"
+#समावेश "led.h"
 
-#define N_TX_QUEUES	4 /* #tx queues on mac80211<->driver interface */
-#define BRCMS_FLUSH_TIMEOUT	500 /* msec */
+#घोषणा N_TX_QUEUES	4 /* #tx queues on mac80211<->driver पूर्णांकerface */
+#घोषणा BRCMS_FLUSH_TIMEOUT	500 /* msec */
 
 /* Flags we support */
-#define MAC_FILTERS (FIF_ALLMULTI | \
+#घोषणा MAC_FILTERS (FIF_ALLMULTI | \
 	FIF_FCSFAIL | \
 	FIF_CONTROL | \
 	FIF_OTHER_BSS | \
 	FIF_BCN_PRBRESP_PROMISC | \
 	FIF_PSPOLL)
 
-#define CHAN2GHZ(channel, freqency, chflags)  { \
+#घोषणा CHAN2GHZ(channel, freqency, chflags)  अणु \
 	.band = NL80211_BAND_2GHZ, \
 	.center_freq = (freqency), \
 	.hw_value = (channel), \
 	.flags = chflags, \
 	.max_antenna_gain = 0, \
-	.max_power = 19, \
-}
+	.max_घातer = 19, \
+पूर्ण
 
-#define CHAN5GHZ(channel, chflags)  { \
+#घोषणा CHAN5GHZ(channel, chflags)  अणु \
 	.band = NL80211_BAND_5GHZ, \
 	.center_freq = 5000 + 5*(channel), \
 	.hw_value = (channel), \
 	.flags = chflags, \
 	.max_antenna_gain = 0, \
-	.max_power = 21, \
-}
+	.max_घातer = 21, \
+पूर्ण
 
-#define RATE(rate100m, _flags) { \
+#घोषणा RATE(rate100m, _flags) अणु \
 	.bitrate = (rate100m), \
 	.flags = (_flags), \
 	.hw_value = (rate100m / 5), \
-}
+पूर्ण
 
-struct firmware_hdr {
+काष्ठा firmware_hdr अणु
 	__le32 offset;
 	__le32 len;
 	__le32 idx;
-};
+पूर्ण;
 
-static const char * const brcms_firmwares[MAX_FW_IMAGES] = {
+अटल स्थिर अक्षर * स्थिर brcms_firmwares[MAX_FW_IMAGES] = अणु
 	"brcm/bcm43xx",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static int n_adapters_found;
+अटल पूर्णांक n_adapters_found;
 
 MODULE_AUTHOR("Broadcom Corporation");
 MODULE_DESCRIPTION("Broadcom 802.11n wireless LAN driver.");
@@ -93,24 +94,24 @@ MODULE_FIRMWARE("brcm/bcm43xx-0.fw");
 MODULE_FIRMWARE("brcm/bcm43xx_hdr-0.fw");
 
 /* recognized BCMA Core IDs */
-static struct bcma_device_id brcms_coreid_table[] = {
+अटल काष्ठा bcma_device_id brcms_coreid_table[] = अणु
 	BCMA_CORE(BCMA_MANUF_BCM, BCMA_CORE_80211, 17, BCMA_ANY_CLASS),
 	BCMA_CORE(BCMA_MANUF_BCM, BCMA_CORE_80211, 23, BCMA_ANY_CLASS),
 	BCMA_CORE(BCMA_MANUF_BCM, BCMA_CORE_80211, 24, BCMA_ANY_CLASS),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(bcma, brcms_coreid_table);
 
-#if defined(CONFIG_BRCMDBG)
+#अगर defined(CONFIG_BRCMDBG)
 /*
- * Module parameter for setting the debug message level. Available
- * flags are specified by the BRCM_DL_* macros in
+ * Module parameter क्रम setting the debug message level. Available
+ * flags are specअगरied by the BRCM_DL_* macros in
  * drivers/net/wireless/brcm80211/include/defs.h.
  */
-module_param_named(debug, brcm_msg_level, uint, 0644);
-#endif
+module_param_named(debug, brcm_msg_level, uपूर्णांक, 0644);
+#पूर्ण_अगर
 
-static struct ieee80211_channel brcms_2ghz_chantable[] = {
+अटल काष्ठा ieee80211_channel brcms_2ghz_chantable[] = अणु
 	CHAN2GHZ(1, 2412, IEEE80211_CHAN_NO_HT40MINUS),
 	CHAN2GHZ(2, 2417, IEEE80211_CHAN_NO_HT40MINUS),
 	CHAN2GHZ(3, 2422, IEEE80211_CHAN_NO_HT40MINUS),
@@ -132,9 +133,9 @@ static struct ieee80211_channel brcms_2ghz_chantable[] = {
 		 IEEE80211_CHAN_NO_IR |
 		 IEEE80211_CHAN_NO_HT40PLUS | IEEE80211_CHAN_NO_HT40MINUS |
 		 IEEE80211_CHAN_NO_OFDM)
-};
+पूर्ण;
 
-static struct ieee80211_channel brcms_5ghz_nphy_chantable[] = {
+अटल काष्ठा ieee80211_channel brcms_5ghz_nphy_chantable[] = अणु
 	/* UNII-1 */
 	CHAN5GHZ(36, IEEE80211_CHAN_NO_HT40MINUS),
 	CHAN5GHZ(40, IEEE80211_CHAN_NO_HT40PLUS),
@@ -194,13 +195,13 @@ static struct ieee80211_channel brcms_5ghz_nphy_chantable[] = {
 	CHAN5GHZ(157, IEEE80211_CHAN_NO_HT40MINUS),
 	CHAN5GHZ(161, IEEE80211_CHAN_NO_HT40PLUS),
 	CHAN5GHZ(165, IEEE80211_CHAN_NO_HT40PLUS | IEEE80211_CHAN_NO_HT40MINUS)
-};
+पूर्ण;
 
 /*
- * The rate table is used for both 2.4G and 5G rates. The
- * latter being a subset as it does not support CCK rates.
+ * The rate table is used क्रम both 2.4G and 5G rates. The
+ * latter being a subset as it करोes not support CCK rates.
  */
-static struct ieee80211_rate legacy_ratetable[] = {
+अटल काष्ठा ieee80211_rate legacy_ratetable[] = अणु
 	RATE(10, 0),
 	RATE(20, IEEE80211_RATE_SHORT_PREAMBLE),
 	RATE(55, IEEE80211_RATE_SHORT_PREAMBLE),
@@ -213,381 +214,381 @@ static struct ieee80211_rate legacy_ratetable[] = {
 	RATE(360, 0),
 	RATE(480, 0),
 	RATE(540, 0),
-};
+पूर्ण;
 
-static const struct ieee80211_supported_band brcms_band_2GHz_nphy_template = {
+अटल स्थिर काष्ठा ieee80211_supported_band brcms_band_2GHz_nphy_ढाँचा = अणु
 	.band = NL80211_BAND_2GHZ,
 	.channels = brcms_2ghz_chantable,
 	.n_channels = ARRAY_SIZE(brcms_2ghz_chantable),
 	.bitrates = legacy_ratetable,
 	.n_bitrates = ARRAY_SIZE(legacy_ratetable),
-	.ht_cap = {
+	.ht_cap = अणु
 		   /* from include/linux/ieee80211.h */
 		   .cap = IEEE80211_HT_CAP_GRN_FLD |
 			  IEEE80211_HT_CAP_SGI_20 | IEEE80211_HT_CAP_SGI_40,
 		   .ht_supported = true,
 		   .ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K,
 		   .ampdu_density = AMPDU_DEF_MPDU_DENSITY,
-		   .mcs = {
-			   /* placeholders for now */
-			   .rx_mask = {0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0},
+		   .mcs = अणु
+			   /* placeholders क्रम now */
+			   .rx_mask = अणु0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण,
 			   .rx_highest = cpu_to_le16(500),
-			   .tx_params = IEEE80211_HT_MCS_TX_DEFINED}
-		   }
-};
+			   .tx_params = IEEE80211_HT_MCS_TX_DEFINEDपूर्ण
+		   पूर्ण
+पूर्ण;
 
-static const struct ieee80211_supported_band brcms_band_5GHz_nphy_template = {
+अटल स्थिर काष्ठा ieee80211_supported_band brcms_band_5GHz_nphy_ढाँचा = अणु
 	.band = NL80211_BAND_5GHZ,
 	.channels = brcms_5ghz_nphy_chantable,
 	.n_channels = ARRAY_SIZE(brcms_5ghz_nphy_chantable),
 	.bitrates = legacy_ratetable + BRCMS_LEGACY_5G_RATE_OFFSET,
 	.n_bitrates = ARRAY_SIZE(legacy_ratetable) -
 			BRCMS_LEGACY_5G_RATE_OFFSET,
-	.ht_cap = {
+	.ht_cap = अणु
 		   .cap = IEEE80211_HT_CAP_GRN_FLD | IEEE80211_HT_CAP_SGI_20 |
 			  IEEE80211_HT_CAP_SGI_40,
 		   .ht_supported = true,
 		   .ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K,
 		   .ampdu_density = AMPDU_DEF_MPDU_DENSITY,
-		   .mcs = {
-			   /* placeholders for now */
-			   .rx_mask = {0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0},
+		   .mcs = अणु
+			   /* placeholders क्रम now */
+			   .rx_mask = अणु0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण,
 			   .rx_highest = cpu_to_le16(500),
-			   .tx_params = IEEE80211_HT_MCS_TX_DEFINED}
-		   }
-};
+			   .tx_params = IEEE80211_HT_MCS_TX_DEFINEDपूर्ण
+		   पूर्ण
+पूर्ण;
 
 /* flags the given rate in rateset as requested */
-static void brcms_set_basic_rate(struct brcm_rateset *rs, u16 rate, bool is_br)
-{
+अटल व्योम brcms_set_basic_rate(काष्ठा brcm_rateset *rs, u16 rate, bool is_br)
+अणु
 	u32 i;
 
-	for (i = 0; i < rs->count; i++) {
-		if (rate != (rs->rates[i] & 0x7f))
-			continue;
+	क्रम (i = 0; i < rs->count; i++) अणु
+		अगर (rate != (rs->rates[i] & 0x7f))
+			जारी;
 
-		if (is_br)
+		अगर (is_br)
 			rs->rates[i] |= BRCMS_RATE_FLAG;
-		else
+		अन्यथा
 			rs->rates[i] &= BRCMS_RATE_MASK;
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
 /*
- * This function frees the WL per-device resources.
+ * This function मुक्तs the WL per-device resources.
  *
- * This function frees resources owned by the WL device pointed to
+ * This function मुक्तs resources owned by the WL device poपूर्णांकed to
  * by the wl parameter.
  *
  * precondition: can both be called locked and unlocked
  */
-static void brcms_free(struct brcms_info *wl)
-{
-	struct brcms_timer *t, *next;
+अटल व्योम brcms_मुक्त(काष्ठा brcms_info *wl)
+अणु
+	काष्ठा brcms_समयr *t, *next;
 
-	/* free ucode data */
-	if (wl->fw.fw_cnt)
-		brcms_ucode_data_free(&wl->ucode);
-	if (wl->irq)
-		free_irq(wl->irq, wl);
+	/* मुक्त ucode data */
+	अगर (wl->fw.fw_cnt)
+		brcms_ucode_data_मुक्त(&wl->ucode);
+	अगर (wl->irq)
+		मुक्त_irq(wl->irq, wl);
 
-	/* kill dpc */
-	tasklet_kill(&wl->tasklet);
+	/* समाप्त dpc */
+	tasklet_समाप्त(&wl->tasklet);
 
-	if (wl->pub) {
+	अगर (wl->pub) अणु
 		brcms_debugfs_detach(wl->pub);
-		brcms_c_module_unregister(wl->pub, "linux", wl);
-	}
+		brcms_c_module_unरेजिस्टर(wl->pub, "linux", wl);
+	पूर्ण
 
-	/* free common resources */
-	if (wl->wlc) {
+	/* मुक्त common resources */
+	अगर (wl->wlc) अणु
 		brcms_c_detach(wl->wlc);
-		wl->wlc = NULL;
-		wl->pub = NULL;
-	}
+		wl->wlc = शून्य;
+		wl->pub = शून्य;
+	पूर्ण
 
-	/* virtual interface deletion is deferred so we cannot spinwait */
+	/* भव पूर्णांकerface deletion is deferred so we cannot spinरुको */
 
-	/* wait for all pending callbacks to complete */
-	while (atomic_read(&wl->callbacks) > 0)
+	/* रुको क्रम all pending callbacks to complete */
+	जबतक (atomic_पढ़ो(&wl->callbacks) > 0)
 		schedule();
 
-	/* free timers */
-	for (t = wl->timers; t; t = next) {
+	/* मुक्त समयrs */
+	क्रम (t = wl->समयrs; t; t = next) अणु
 		next = t->next;
-#ifdef DEBUG
-		kfree(t->name);
-#endif
-		kfree(t);
-	}
-}
+#अगर_घोषित DEBUG
+		kमुक्त(t->name);
+#पूर्ण_अगर
+		kमुक्त(t);
+	पूर्ण
+पूर्ण
 
 /*
 * called from both kernel as from this kernel module (error flow on attach)
 * precondition: perimeter lock is not acquired.
 */
-static void brcms_remove(struct bcma_device *pdev)
-{
-	struct ieee80211_hw *hw = bcma_get_drvdata(pdev);
-	struct brcms_info *wl = hw->priv;
+अटल व्योम brcms_हटाओ(काष्ठा bcma_device *pdev)
+अणु
+	काष्ठा ieee80211_hw *hw = bcma_get_drvdata(pdev);
+	काष्ठा brcms_info *wl = hw->priv;
 
-	if (wl->wlc) {
-		brcms_led_unregister(wl);
-		wiphy_rfkill_set_hw_state(wl->pub->ieee_hw->wiphy, false);
-		wiphy_rfkill_stop_polling(wl->pub->ieee_hw->wiphy);
-		ieee80211_unregister_hw(hw);
-	}
+	अगर (wl->wlc) अणु
+		brcms_led_unरेजिस्टर(wl);
+		wiphy_rfसमाप्त_set_hw_state(wl->pub->ieee_hw->wiphy, false);
+		wiphy_rfसमाप्त_stop_polling(wl->pub->ieee_hw->wiphy);
+		ieee80211_unरेजिस्टर_hw(hw);
+	पूर्ण
 
-	brcms_free(wl);
+	brcms_मुक्त(wl);
 
-	bcma_set_drvdata(pdev, NULL);
-	ieee80211_free_hw(hw);
-}
+	bcma_set_drvdata(pdev, शून्य);
+	ieee80211_मुक्त_hw(hw);
+पूर्ण
 
 /*
  * Precondition: Since this function is called in brcms_pci_probe() context,
  * no locking is required.
  */
-static void brcms_release_fw(struct brcms_info *wl)
-{
-	int i;
-	for (i = 0; i < MAX_FW_IMAGES; i++) {
+अटल व्योम brcms_release_fw(काष्ठा brcms_info *wl)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < MAX_FW_IMAGES; i++) अणु
 		release_firmware(wl->fw.fw_bin[i]);
 		release_firmware(wl->fw.fw_hdr[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Precondition: Since this function is called in brcms_pci_probe() context,
  * no locking is required.
  */
-static int brcms_request_fw(struct brcms_info *wl, struct bcma_device *pdev)
-{
-	int status;
-	struct device *device = &pdev->dev;
-	char fw_name[100];
-	int i;
+अटल पूर्णांक brcms_request_fw(काष्ठा brcms_info *wl, काष्ठा bcma_device *pdev)
+अणु
+	पूर्णांक status;
+	काष्ठा device *device = &pdev->dev;
+	अक्षर fw_name[100];
+	पूर्णांक i;
 
-	memset(&wl->fw, 0, sizeof(struct brcms_firmware));
-	for (i = 0; i < MAX_FW_IMAGES; i++) {
-		if (brcms_firmwares[i] == NULL)
-			break;
-		sprintf(fw_name, "%s-%d.fw", brcms_firmwares[i],
+	स_रखो(&wl->fw, 0, माप(काष्ठा brcms_firmware));
+	क्रम (i = 0; i < MAX_FW_IMAGES; i++) अणु
+		अगर (brcms_firmwares[i] == शून्य)
+			अवरोध;
+		प्र_लिखो(fw_name, "%s-%d.fw", brcms_firmwares[i],
 			UCODE_LOADER_API_VER);
 		status = request_firmware(&wl->fw.fw_bin[i], fw_name, device);
-		if (status) {
+		अगर (status) अणु
 			wiphy_err(wl->wiphy, "%s: fail to load firmware %s\n",
 				  KBUILD_MODNAME, fw_name);
-			return status;
-		}
-		sprintf(fw_name, "%s_hdr-%d.fw", brcms_firmwares[i],
+			वापस status;
+		पूर्ण
+		प्र_लिखो(fw_name, "%s_hdr-%d.fw", brcms_firmwares[i],
 			UCODE_LOADER_API_VER);
 		status = request_firmware(&wl->fw.fw_hdr[i], fw_name, device);
-		if (status) {
+		अगर (status) अणु
 			wiphy_err(wl->wiphy, "%s: fail to load firmware %s\n",
 				  KBUILD_MODNAME, fw_name);
-			return status;
-		}
+			वापस status;
+		पूर्ण
 		wl->fw.hdr_num_entries[i] =
-		    wl->fw.fw_hdr[i]->size / (sizeof(struct firmware_hdr));
-	}
+		    wl->fw.fw_hdr[i]->size / (माप(काष्ठा firmware_hdr));
+	पूर्ण
 	wl->fw.fw_cnt = i;
 	status = brcms_ucode_data_init(wl, &wl->ucode);
 	brcms_release_fw(wl);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void brcms_ops_tx(struct ieee80211_hw *hw,
-			 struct ieee80211_tx_control *control,
-			 struct sk_buff *skb)
-{
-	struct brcms_info *wl = hw->priv;
-	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+अटल व्योम brcms_ops_tx(काष्ठा ieee80211_hw *hw,
+			 काष्ठा ieee80211_tx_control *control,
+			 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
+	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
 
 	spin_lock_bh(&wl->lock);
-	if (!wl->pub->up) {
+	अगर (!wl->pub->up) अणु
 		brcms_err(wl->wlc->hw->d11core, "ops->tx called while down\n");
-		kfree_skb(skb);
-		goto done;
-	}
-	if (brcms_c_sendpkt_mac80211(wl->wlc, skb, hw))
+		kमुक्त_skb(skb);
+		जाओ करोne;
+	पूर्ण
+	अगर (brcms_c_sendpkt_mac80211(wl->wlc, skb, hw))
 		tx_info->rate_driver_data[0] = control->sta;
- done:
+ करोne:
 	spin_unlock_bh(&wl->lock);
-}
+पूर्ण
 
-static int brcms_ops_start(struct ieee80211_hw *hw)
-{
-	struct brcms_info *wl = hw->priv;
+अटल पूर्णांक brcms_ops_start(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
 	bool blocked;
-	int err;
+	पूर्णांक err;
 
-	if (!wl->ucode.bcm43xx_bomminor) {
+	अगर (!wl->ucode.bcm43xx_bomminor) अणु
 		err = brcms_request_fw(wl, wl->wlc->hw->d11core);
-		if (err)
-			return -ENOENT;
-	}
+		अगर (err)
+			वापस -ENOENT;
+	पूर्ण
 
 	ieee80211_wake_queues(hw);
 	spin_lock_bh(&wl->lock);
-	blocked = brcms_rfkill_set_hw_state(wl);
+	blocked = brcms_rfसमाप्त_set_hw_state(wl);
 	spin_unlock_bh(&wl->lock);
-	if (!blocked)
-		wiphy_rfkill_stop_polling(wl->pub->ieee_hw->wiphy);
+	अगर (!blocked)
+		wiphy_rfसमाप्त_stop_polling(wl->pub->ieee_hw->wiphy);
 
 	spin_lock_bh(&wl->lock);
-	/* avoid acknowledging frames before a non-monitor device is added */
+	/* aव्योम acknowledging frames beक्रमe a non-monitor device is added */
 	wl->mute_tx = true;
 
-	if (!wl->pub->up)
-		if (!blocked)
+	अगर (!wl->pub->up)
+		अगर (!blocked)
 			err = brcms_up(wl);
-		else
+		अन्यथा
 			err = -ERFKILL;
-	else
+	अन्यथा
 		err = -ENODEV;
 	spin_unlock_bh(&wl->lock);
 
-	if (err != 0)
+	अगर (err != 0)
 		brcms_err(wl->wlc->hw->d11core, "%s: brcms_up() returned %d\n",
 			  __func__, err);
 
-	bcma_core_pci_power_save(wl->wlc->hw->d11core->bus, true);
-	return err;
-}
+	bcma_core_pci_घातer_save(wl->wlc->hw->d11core->bus, true);
+	वापस err;
+पूर्ण
 
-static void brcms_ops_stop(struct ieee80211_hw *hw)
-{
-	struct brcms_info *wl = hw->priv;
-	int status;
+अटल व्योम brcms_ops_stop(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
+	पूर्णांक status;
 
 	ieee80211_stop_queues(hw);
 
-	if (wl->wlc == NULL)
-		return;
+	अगर (wl->wlc == शून्य)
+		वापस;
 
 	spin_lock_bh(&wl->lock);
 	status = brcms_c_chipmatch(wl->wlc->hw->d11core);
 	spin_unlock_bh(&wl->lock);
-	if (!status) {
+	अगर (!status) अणु
 		brcms_err(wl->wlc->hw->d11core,
 			  "wl: brcms_ops_stop: chipmatch failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bcma_core_pci_power_save(wl->wlc->hw->d11core->bus, false);
+	bcma_core_pci_घातer_save(wl->wlc->hw->d11core->bus, false);
 
-	/* put driver in down state */
+	/* put driver in करोwn state */
 	spin_lock_bh(&wl->lock);
-	brcms_down(wl);
+	brcms_करोwn(wl);
 	spin_unlock_bh(&wl->lock);
-}
+पूर्ण
 
-static int
-brcms_ops_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	struct brcms_info *wl = hw->priv;
+अटल पूर्णांक
+brcms_ops_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
 
-	/* Just STA, AP and ADHOC for now */
-	if (vif->type != NL80211_IFTYPE_STATION &&
-	    vif->type != NL80211_IFTYPE_AP &&
-	    vif->type != NL80211_IFTYPE_ADHOC) {
+	/* Just STA, AP and ADHOC क्रम now */
+	अगर (vअगर->type != NL80211_IFTYPE_STATION &&
+	    vअगर->type != NL80211_IFTYPE_AP &&
+	    vअगर->type != NL80211_IFTYPE_ADHOC) अणु
 		brcms_err(wl->wlc->hw->d11core,
 			  "%s: Attempt to add type %d, only STA, AP and AdHoc for now\n",
-			  __func__, vif->type);
-		return -EOPNOTSUPP;
-	}
+			  __func__, vअगर->type);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	spin_lock_bh(&wl->lock);
-	wl->wlc->vif = vif;
+	wl->wlc->vअगर = vअगर;
 	wl->mute_tx = false;
 	brcms_c_mute(wl->wlc, false);
-	if (vif->type == NL80211_IFTYPE_STATION)
-		brcms_c_start_station(wl->wlc, vif->addr);
-	else if (vif->type == NL80211_IFTYPE_AP)
-		brcms_c_start_ap(wl->wlc, vif->addr, vif->bss_conf.bssid,
-				 vif->bss_conf.ssid, vif->bss_conf.ssid_len);
-	else if (vif->type == NL80211_IFTYPE_ADHOC)
-		brcms_c_start_adhoc(wl->wlc, vif->addr);
+	अगर (vअगर->type == NL80211_IFTYPE_STATION)
+		brcms_c_start_station(wl->wlc, vअगर->addr);
+	अन्यथा अगर (vअगर->type == NL80211_IFTYPE_AP)
+		brcms_c_start_ap(wl->wlc, vअगर->addr, vअगर->bss_conf.bssid,
+				 vअगर->bss_conf.ssid, vअगर->bss_conf.ssid_len);
+	अन्यथा अगर (vअगर->type == NL80211_IFTYPE_ADHOC)
+		brcms_c_start_adhoc(wl->wlc, vअगर->addr);
 	spin_unlock_bh(&wl->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-brcms_ops_remove_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	struct brcms_info *wl = hw->priv;
+अटल व्योम
+brcms_ops_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
 
 	spin_lock_bh(&wl->lock);
-	wl->wlc->vif = NULL;
+	wl->wlc->vअगर = शून्य;
 	spin_unlock_bh(&wl->lock);
-}
+पूर्ण
 
-static int brcms_ops_config(struct ieee80211_hw *hw, u32 changed)
-{
-	struct ieee80211_conf *conf = &hw->conf;
-	struct brcms_info *wl = hw->priv;
-	struct bcma_device *core = wl->wlc->hw->d11core;
-	int err = 0;
-	int new_int;
+अटल पूर्णांक brcms_ops_config(काष्ठा ieee80211_hw *hw, u32 changed)
+अणु
+	काष्ठा ieee80211_conf *conf = &hw->conf;
+	काष्ठा brcms_info *wl = hw->priv;
+	काष्ठा bcma_device *core = wl->wlc->hw->d11core;
+	पूर्णांक err = 0;
+	पूर्णांक new_पूर्णांक;
 
 	spin_lock_bh(&wl->lock);
-	if (changed & IEEE80211_CONF_CHANGE_LISTEN_INTERVAL) {
-		brcms_c_set_beacon_listen_interval(wl->wlc,
-						   conf->listen_interval);
-	}
-	if (changed & IEEE80211_CONF_CHANGE_MONITOR)
+	अगर (changed & IEEE80211_CONF_CHANGE_LISTEN_INTERVAL) अणु
+		brcms_c_set_beacon_listen_पूर्णांकerval(wl->wlc,
+						   conf->listen_पूर्णांकerval);
+	पूर्ण
+	अगर (changed & IEEE80211_CONF_CHANGE_MONITOR)
 		brcms_dbg_info(core, "%s: change monitor mode: %s\n",
 			       __func__, conf->flags & IEEE80211_CONF_MONITOR ?
 			       "true" : "false");
-	if (changed & IEEE80211_CONF_CHANGE_PS)
+	अगर (changed & IEEE80211_CONF_CHANGE_PS)
 		brcms_err(core, "%s: change power-save mode: %s (implement)\n",
 			  __func__, conf->flags & IEEE80211_CONF_PS ?
 			  "true" : "false");
 
-	if (changed & IEEE80211_CONF_CHANGE_POWER) {
-		err = brcms_c_set_tx_power(wl->wlc, conf->power_level);
-		if (err < 0) {
+	अगर (changed & IEEE80211_CONF_CHANGE_POWER) अणु
+		err = brcms_c_set_tx_घातer(wl->wlc, conf->घातer_level);
+		अगर (err < 0) अणु
 			brcms_err(core, "%s: Error setting power_level\n",
 				  __func__);
-			goto config_out;
-		}
-		new_int = brcms_c_get_tx_power(wl->wlc);
-		if (new_int != conf->power_level)
+			जाओ config_out;
+		पूर्ण
+		new_पूर्णांक = brcms_c_get_tx_घातer(wl->wlc);
+		अगर (new_पूर्णांक != conf->घातer_level)
 			brcms_err(core,
 				  "%s: Power level req != actual, %d %d\n",
-				  __func__, conf->power_level,
-				  new_int);
-	}
-	if (changed & IEEE80211_CONF_CHANGE_CHANNEL) {
-		if (conf->chandef.width == NL80211_CHAN_WIDTH_20 ||
+				  __func__, conf->घातer_level,
+				  new_पूर्णांक);
+	पूर्ण
+	अगर (changed & IEEE80211_CONF_CHANGE_CHANNEL) अणु
+		अगर (conf->chandef.width == NL80211_CHAN_WIDTH_20 ||
 		    conf->chandef.width == NL80211_CHAN_WIDTH_20_NOHT)
 			err = brcms_c_set_channel(wl->wlc,
 						  conf->chandef.chan->hw_value);
-		else
+		अन्यथा
 			err = -ENOTSUPP;
-	}
-	if (changed & IEEE80211_CONF_CHANGE_RETRY_LIMITS)
+	पूर्ण
+	अगर (changed & IEEE80211_CONF_CHANGE_RETRY_LIMITS)
 		err = brcms_c_set_rate_limit(wl->wlc,
-					     conf->short_frame_max_tx_count,
-					     conf->long_frame_max_tx_count);
+					     conf->लघु_frame_max_tx_count,
+					     conf->दीर्घ_frame_max_tx_count);
 
  config_out:
 	spin_unlock_bh(&wl->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-brcms_ops_bss_info_changed(struct ieee80211_hw *hw,
-			struct ieee80211_vif *vif,
-			struct ieee80211_bss_conf *info, u32 changed)
-{
-	struct brcms_info *wl = hw->priv;
-	struct bcma_device *core = wl->wlc->hw->d11core;
+अटल व्योम
+brcms_ops_bss_info_changed(काष्ठा ieee80211_hw *hw,
+			काष्ठा ieee80211_vअगर *vअगर,
+			काष्ठा ieee80211_bss_conf *info, u32 changed)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
+	काष्ठा bcma_device *core = wl->wlc->hw->d11core;
 
-	if (changed & BSS_CHANGED_ASSOC) {
+	अगर (changed & BSS_CHANGED_ASSOC) अणु
 		/* association status changed (associated/disassociated)
 		 * also implies a change in the AID.
 		 */
@@ -596,21 +597,21 @@ brcms_ops_bss_info_changed(struct ieee80211_hw *hw,
 		spin_lock_bh(&wl->lock);
 		brcms_c_associate_upd(wl->wlc, info->assoc);
 		spin_unlock_bh(&wl->lock);
-	}
-	if (changed & BSS_CHANGED_ERP_SLOT) {
+	पूर्ण
+	अगर (changed & BSS_CHANGED_ERP_SLOT) अणु
 		s8 val;
 
 		/* slot timing changed */
-		if (info->use_short_slot)
+		अगर (info->use_लघु_slot)
 			val = 1;
-		else
+		अन्यथा
 			val = 0;
 		spin_lock_bh(&wl->lock);
-		brcms_c_set_shortslot_override(wl->wlc, val);
+		brcms_c_set_लघुslot_override(wl->wlc, val);
 		spin_unlock_bh(&wl->lock);
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_HT) {
+	अगर (changed & BSS_CHANGED_HT) अणु
 		/* 802.11n parameters changed */
 		u16 mode = info->ht_operation_mode;
 
@@ -622,13 +623,13 @@ brcms_ops_bss_info_changed(struct ieee80211_hw *hw,
 		brcms_c_protection_upd(wl->wlc, BRCMS_PROT_N_OBSS,
 			mode & IEEE80211_HT_OP_MODE_NON_HT_STA_PRSNT);
 		spin_unlock_bh(&wl->lock);
-	}
-	if (changed & BSS_CHANGED_BASIC_RATES) {
-		struct ieee80211_supported_band *bi;
+	पूर्ण
+	अगर (changed & BSS_CHANGED_BASIC_RATES) अणु
+		काष्ठा ieee80211_supported_band *bi;
 		u32 br_mask, i;
 		u16 rate;
-		struct brcm_rateset rs;
-		int error;
+		काष्ठा brcm_rateset rs;
+		पूर्णांक error;
 
 		/* retrieve the current rates */
 		spin_lock_bh(&wl->lock);
@@ -637,174 +638,174 @@ brcms_ops_bss_info_changed(struct ieee80211_hw *hw,
 
 		br_mask = info->basic_rates;
 		bi = hw->wiphy->bands[brcms_c_get_curband(wl->wlc)];
-		for (i = 0; i < bi->n_bitrates; i++) {
-			/* convert to internal rate value */
+		क्रम (i = 0; i < bi->n_bitrates; i++) अणु
+			/* convert to पूर्णांकernal rate value */
 			rate = (bi->bitrates[i].bitrate << 1) / 10;
 
 			/* set/clear basic rate flag */
 			brcms_set_basic_rate(&rs, rate, br_mask & 1);
 			br_mask >>= 1;
-		}
+		पूर्ण
 
 		/* update the rate set */
 		spin_lock_bh(&wl->lock);
 		error = brcms_c_set_rateset(wl->wlc, &rs);
 		spin_unlock_bh(&wl->lock);
-		if (error)
+		अगर (error)
 			brcms_err(core, "changing basic rates failed: %d\n",
 				  error);
-	}
-	if (changed & BSS_CHANGED_BEACON_INT) {
-		/* Beacon interval changed */
+	पूर्ण
+	अगर (changed & BSS_CHANGED_BEACON_INT) अणु
+		/* Beacon पूर्णांकerval changed */
 		spin_lock_bh(&wl->lock);
-		brcms_c_set_beacon_period(wl->wlc, info->beacon_int);
+		brcms_c_set_beacon_period(wl->wlc, info->beacon_पूर्णांक);
 		spin_unlock_bh(&wl->lock);
-	}
-	if (changed & BSS_CHANGED_BSSID) {
-		/* BSSID changed, for whatever reason (IBSS and managed mode) */
+	पूर्ण
+	अगर (changed & BSS_CHANGED_BSSID) अणु
+		/* BSSID changed, क्रम whatever reason (IBSS and managed mode) */
 		spin_lock_bh(&wl->lock);
 		brcms_c_set_addrmatch(wl->wlc, RCM_BSSID_OFFSET, info->bssid);
 		spin_unlock_bh(&wl->lock);
-	}
-	if (changed & BSS_CHANGED_SSID) {
-		/* BSSID changed, for whatever reason (IBSS and managed mode) */
+	पूर्ण
+	अगर (changed & BSS_CHANGED_SSID) अणु
+		/* BSSID changed, क्रम whatever reason (IBSS and managed mode) */
 		spin_lock_bh(&wl->lock);
 		brcms_c_set_ssid(wl->wlc, info->ssid, info->ssid_len);
 		spin_unlock_bh(&wl->lock);
-	}
-	if (changed & BSS_CHANGED_BEACON) {
+	पूर्ण
+	अगर (changed & BSS_CHANGED_BEACON) अणु
 		/* Beacon data changed, retrieve new beacon (beaconing modes) */
-		struct sk_buff *beacon;
+		काष्ठा sk_buff *beacon;
 		u16 tim_offset = 0;
 
 		spin_lock_bh(&wl->lock);
-		beacon = ieee80211_beacon_get_tim(hw, vif, &tim_offset, NULL);
+		beacon = ieee80211_beacon_get_tim(hw, vअगर, &tim_offset, शून्य);
 		brcms_c_set_new_beacon(wl->wlc, beacon, tim_offset,
 				       info->dtim_period);
 		spin_unlock_bh(&wl->lock);
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_AP_PROBE_RESP) {
-		struct sk_buff *probe_resp;
+	अगर (changed & BSS_CHANGED_AP_PROBE_RESP) अणु
+		काष्ठा sk_buff *probe_resp;
 
 		spin_lock_bh(&wl->lock);
-		probe_resp = ieee80211_proberesp_get(hw, vif);
+		probe_resp = ieee80211_proberesp_get(hw, vअगर);
 		brcms_c_set_new_probe_resp(wl->wlc, probe_resp);
 		spin_unlock_bh(&wl->lock);
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_BEACON_ENABLED) {
+	अगर (changed & BSS_CHANGED_BEACON_ENABLED) अणु
 		/* Beaconing should be enabled/disabled (beaconing modes) */
 		brcms_err(core, "%s: Beacon enabled: %s\n", __func__,
 			  info->enable_beacon ? "true" : "false");
-		if (info->enable_beacon &&
-		    hw->wiphy->flags & WIPHY_FLAG_AP_PROBE_RESP_OFFLOAD) {
+		अगर (info->enable_beacon &&
+		    hw->wiphy->flags & WIPHY_FLAG_AP_PROBE_RESP_OFFLOAD) अणु
 			brcms_c_enable_probe_resp(wl->wlc, true);
-		} else {
+		पूर्ण अन्यथा अणु
 			brcms_c_enable_probe_resp(wl->wlc, false);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (changed & BSS_CHANGED_CQM) {
+	अगर (changed & BSS_CHANGED_CQM) अणु
 		/* Connection quality monitor config changed */
 		brcms_err(core, "%s: cqm change: threshold %d, hys %d "
 			  " (implement)\n", __func__, info->cqm_rssi_thold,
 			  info->cqm_rssi_hyst);
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_IBSS) {
+	अगर (changed & BSS_CHANGED_IBSS) अणु
 		/* IBSS join status changed */
 		brcms_err(core, "%s: IBSS joined: %s (implement)\n",
 			  __func__, info->ibss_joined ? "true" : "false");
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_ARP_FILTER) {
+	अगर (changed & BSS_CHANGED_ARP_FILTER) अणु
 		/* Hardware ARP filter address list or state changed */
 		brcms_err(core, "%s: arp filtering: %d addresses"
 			  " (implement)\n", __func__, info->arp_addr_cnt);
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_QOS) {
+	अगर (changed & BSS_CHANGED_QOS) अणु
 		/*
-		 * QoS for this association was enabled/disabled.
-		 * Note that it is only ever disabled for station mode.
+		 * QoS क्रम this association was enabled/disabled.
+		 * Note that it is only ever disabled क्रम station mode.
 		 */
 		brcms_err(core, "%s: qos enabled: %s (implement)\n",
 			  __func__, info->qos ? "true" : "false");
-	}
-	return;
-}
+	पूर्ण
+	वापस;
+पूर्ण
 
-static void
-brcms_ops_configure_filter(struct ieee80211_hw *hw,
-			unsigned int changed_flags,
-			unsigned int *total_flags, u64 multicast)
-{
-	struct brcms_info *wl = hw->priv;
-	struct bcma_device *core = wl->wlc->hw->d11core;
+अटल व्योम
+brcms_ops_configure_filter(काष्ठा ieee80211_hw *hw,
+			अचिन्हित पूर्णांक changed_flags,
+			अचिन्हित पूर्णांक *total_flags, u64 multicast)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
+	काष्ठा bcma_device *core = wl->wlc->hw->d11core;
 
 	changed_flags &= MAC_FILTERS;
 	*total_flags &= MAC_FILTERS;
 
-	if (changed_flags & FIF_ALLMULTI)
+	अगर (changed_flags & FIF_ALLMULTI)
 		brcms_dbg_info(core, "FIF_ALLMULTI\n");
-	if (changed_flags & FIF_FCSFAIL)
+	अगर (changed_flags & FIF_FCSFAIL)
 		brcms_dbg_info(core, "FIF_FCSFAIL\n");
-	if (changed_flags & FIF_CONTROL)
+	अगर (changed_flags & FIF_CONTROL)
 		brcms_dbg_info(core, "FIF_CONTROL\n");
-	if (changed_flags & FIF_OTHER_BSS)
+	अगर (changed_flags & FIF_OTHER_BSS)
 		brcms_dbg_info(core, "FIF_OTHER_BSS\n");
-	if (changed_flags & FIF_PSPOLL)
+	अगर (changed_flags & FIF_PSPOLL)
 		brcms_dbg_info(core, "FIF_PSPOLL\n");
-	if (changed_flags & FIF_BCN_PRBRESP_PROMISC)
+	अगर (changed_flags & FIF_BCN_PRBRESP_PROMISC)
 		brcms_dbg_info(core, "FIF_BCN_PRBRESP_PROMISC\n");
 
 	spin_lock_bh(&wl->lock);
 	brcms_c_mac_promisc(wl->wlc, *total_flags);
 	spin_unlock_bh(&wl->lock);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void brcms_ops_sw_scan_start(struct ieee80211_hw *hw,
-				    struct ieee80211_vif *vif,
-				    const u8 *mac_addr)
-{
-	struct brcms_info *wl = hw->priv;
+अटल व्योम brcms_ops_sw_scan_start(काष्ठा ieee80211_hw *hw,
+				    काष्ठा ieee80211_vअगर *vअगर,
+				    स्थिर u8 *mac_addr)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
 	spin_lock_bh(&wl->lock);
 	brcms_c_scan_start(wl->wlc);
 	spin_unlock_bh(&wl->lock);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void brcms_ops_sw_scan_complete(struct ieee80211_hw *hw,
-				       struct ieee80211_vif *vif)
-{
-	struct brcms_info *wl = hw->priv;
+अटल व्योम brcms_ops_sw_scan_complete(काष्ठा ieee80211_hw *hw,
+				       काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
 	spin_lock_bh(&wl->lock);
 	brcms_c_scan_stop(wl->wlc);
 	spin_unlock_bh(&wl->lock);
-	return;
-}
+	वापस;
+पूर्ण
 
-static int
-brcms_ops_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif, u16 queue,
-		  const struct ieee80211_tx_queue_params *params)
-{
-	struct brcms_info *wl = hw->priv;
+अटल पूर्णांक
+brcms_ops_conf_tx(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर, u16 queue,
+		  स्थिर काष्ठा ieee80211_tx_queue_params *params)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
 
 	spin_lock_bh(&wl->lock);
 	brcms_c_wme_setparams(wl->wlc, queue, params, true);
 	spin_unlock_bh(&wl->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-brcms_ops_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-	       struct ieee80211_sta *sta)
-{
-	struct brcms_info *wl = hw->priv;
-	struct scb *scb = &wl->wlc->pri_scb;
+अटल पूर्णांक
+brcms_ops_sta_add(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+	       काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
+	काष्ठा scb *scb = &wl->wlc->pri_scb;
 
 	brcms_c_init_scb(scb);
 
@@ -816,52 +817,52 @@ brcms_ops_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	 * minstrel_ht initiates addBA on our behalf by calling
 	 * ieee80211_start_tx_ba_session()
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-brcms_ops_ampdu_action(struct ieee80211_hw *hw,
-		    struct ieee80211_vif *vif,
-		    struct ieee80211_ampdu_params *params)
-{
-	struct brcms_info *wl = hw->priv;
-	struct scb *scb = &wl->wlc->pri_scb;
-	int status;
-	struct ieee80211_sta *sta = params->sta;
-	enum ieee80211_ampdu_mlme_action action = params->action;
+अटल पूर्णांक
+brcms_ops_ampdu_action(काष्ठा ieee80211_hw *hw,
+		    काष्ठा ieee80211_vअगर *vअगर,
+		    काष्ठा ieee80211_ampdu_params *params)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
+	काष्ठा scb *scb = &wl->wlc->pri_scb;
+	पूर्णांक status;
+	काष्ठा ieee80211_sta *sta = params->sta;
+	क्रमागत ieee80211_ampdu_mlme_action action = params->action;
 	u16 tid = params->tid;
 	u8 buf_size = params->buf_size;
 
-	if (WARN_ON(scb->magic != SCB_MAGIC))
-		return -EIDRM;
-	switch (action) {
-	case IEEE80211_AMPDU_RX_START:
-		break;
-	case IEEE80211_AMPDU_RX_STOP:
-		break;
-	case IEEE80211_AMPDU_TX_START:
+	अगर (WARN_ON(scb->magic != SCB_MAGIC))
+		वापस -EIDRM;
+	चयन (action) अणु
+	हाल IEEE80211_AMPDU_RX_START:
+		अवरोध;
+	हाल IEEE80211_AMPDU_RX_STOP:
+		अवरोध;
+	हाल IEEE80211_AMPDU_TX_START:
 		spin_lock_bh(&wl->lock);
 		status = brcms_c_aggregatable(wl->wlc, tid);
 		spin_unlock_bh(&wl->lock);
-		if (!status) {
+		अगर (!status) अणु
 			brcms_dbg_ht(wl->wlc->hw->d11core,
 				     "START: tid %d is not agg\'able\n", tid);
-			return -EINVAL;
-		}
-		return IEEE80211_AMPDU_TX_START_IMMEDIATE;
+			वापस -EINVAL;
+		पूर्ण
+		वापस IEEE80211_AMPDU_TX_START_IMMEDIATE;
 
-	case IEEE80211_AMPDU_TX_STOP_CONT:
-	case IEEE80211_AMPDU_TX_STOP_FLUSH:
-	case IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
+	हाल IEEE80211_AMPDU_TX_STOP_CONT:
+	हाल IEEE80211_AMPDU_TX_STOP_FLUSH:
+	हाल IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
 		spin_lock_bh(&wl->lock);
 		brcms_c_ampdu_flush(wl->wlc, sta, tid);
 		spin_unlock_bh(&wl->lock);
-		ieee80211_stop_tx_ba_cb_irqsafe(vif, sta->addr, tid);
-		break;
-	case IEEE80211_AMPDU_TX_OPERATIONAL:
+		ieee80211_stop_tx_ba_cb_irqsafe(vअगर, sta->addr, tid);
+		अवरोध;
+	हाल IEEE80211_AMPDU_TX_OPERATIONAL:
 		/*
-		 * BA window size from ADDBA response ('buf_size') defines how
-		 * many outstanding MPDUs are allowed for the BA stream by
+		 * BA winकरोw size from ADDBA response ('buf_size') defines how
+		 * many outstanding MPDUs are allowed क्रम the BA stream by
 		 * recipient and traffic class. 'ampdu_factor' gives maximum
 		 * AMPDU size.
 		 */
@@ -871,100 +872,100 @@ brcms_ops_ampdu_action(struct ieee80211_hw *hw,
 			 sta->ht_cap.ampdu_factor)) - 1);
 		spin_unlock_bh(&wl->lock);
 		/* Power save wakeup */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		brcms_err(wl->wlc->hw->d11core,
 			  "%s: Invalid command, ignoring\n", __func__);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void brcms_ops_rfkill_poll(struct ieee80211_hw *hw)
-{
-	struct brcms_info *wl = hw->priv;
+अटल व्योम brcms_ops_rfसमाप्त_poll(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
 	bool blocked;
 
 	spin_lock_bh(&wl->lock);
 	blocked = brcms_c_check_radio_disabled(wl->wlc);
 	spin_unlock_bh(&wl->lock);
 
-	wiphy_rfkill_set_hw_state(wl->pub->ieee_hw->wiphy, blocked);
-}
+	wiphy_rfसमाप्त_set_hw_state(wl->pub->ieee_hw->wiphy, blocked);
+पूर्ण
 
-static bool brcms_tx_flush_completed(struct brcms_info *wl)
-{
+अटल bool brcms_tx_flush_completed(काष्ठा brcms_info *wl)
+अणु
 	bool result;
 
 	spin_lock_bh(&wl->lock);
 	result = brcms_c_tx_flush_completed(wl->wlc);
 	spin_unlock_bh(&wl->lock);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void brcms_ops_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+अटल व्योम brcms_ops_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
 			    u32 queues, bool drop)
-{
-	struct brcms_info *wl = hw->priv;
-	int ret;
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
+	पूर्णांक ret;
 
-	no_printk("%s: drop = %s\n", __func__, drop ? "true" : "false");
+	no_prपूर्णांकk("%s: drop = %s\n", __func__, drop ? "true" : "false");
 
-	ret = wait_event_timeout(wl->tx_flush_wq,
+	ret = रुको_event_समयout(wl->tx_flush_wq,
 				 brcms_tx_flush_completed(wl),
-				 msecs_to_jiffies(BRCMS_FLUSH_TIMEOUT));
+				 msecs_to_jअगरfies(BRCMS_FLUSH_TIMEOUT));
 
 	brcms_dbg_mac80211(wl->wlc->hw->d11core,
-			   "ret=%d\n", jiffies_to_msecs(ret));
-}
+			   "ret=%d\n", jअगरfies_to_msecs(ret));
+पूर्ण
 
-static u64 brcms_ops_get_tsf(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	struct brcms_info *wl = hw->priv;
+अटल u64 brcms_ops_get_tsf(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
 	u64 tsf;
 
 	spin_lock_bh(&wl->lock);
 	tsf = brcms_c_tsf_get(wl->wlc);
 	spin_unlock_bh(&wl->lock);
 
-	return tsf;
-}
+	वापस tsf;
+पूर्ण
 
-static void brcms_ops_set_tsf(struct ieee80211_hw *hw,
-			   struct ieee80211_vif *vif, u64 tsf)
-{
-	struct brcms_info *wl = hw->priv;
+अटल व्योम brcms_ops_set_tsf(काष्ठा ieee80211_hw *hw,
+			   काष्ठा ieee80211_vअगर *vअगर, u64 tsf)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
 
 	spin_lock_bh(&wl->lock);
 	brcms_c_tsf_set(wl->wlc, tsf);
 	spin_unlock_bh(&wl->lock);
-}
+पूर्ण
 
-static int brcms_ops_beacon_set_tim(struct ieee80211_hw *hw,
-				 struct ieee80211_sta *sta, bool set)
-{
-	struct brcms_info *wl = hw->priv;
-	struct sk_buff *beacon = NULL;
+अटल पूर्णांक brcms_ops_beacon_set_tim(काष्ठा ieee80211_hw *hw,
+				 काष्ठा ieee80211_sta *sta, bool set)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
+	काष्ठा sk_buff *beacon = शून्य;
 	u16 tim_offset = 0;
 
 	spin_lock_bh(&wl->lock);
-	if (wl->wlc->vif)
-		beacon = ieee80211_beacon_get_tim(hw, wl->wlc->vif,
-						  &tim_offset, NULL);
-	if (beacon)
+	अगर (wl->wlc->vअगर)
+		beacon = ieee80211_beacon_get_tim(hw, wl->wlc->vअगर,
+						  &tim_offset, शून्य);
+	अगर (beacon)
 		brcms_c_set_new_beacon(wl->wlc, beacon, tim_offset,
-				       wl->wlc->vif->bss_conf.dtim_period);
+				       wl->wlc->vअगर->bss_conf.dtim_period);
 	spin_unlock_bh(&wl->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ieee80211_ops brcms_ops = {
+अटल स्थिर काष्ठा ieee80211_ops brcms_ops = अणु
 	.tx = brcms_ops_tx,
 	.start = brcms_ops_start,
 	.stop = brcms_ops_stop,
-	.add_interface = brcms_ops_add_interface,
-	.remove_interface = brcms_ops_remove_interface,
+	.add_पूर्णांकerface = brcms_ops_add_पूर्णांकerface,
+	.हटाओ_पूर्णांकerface = brcms_ops_हटाओ_पूर्णांकerface,
 	.config = brcms_ops_config,
 	.bss_info_changed = brcms_ops_bss_info_changed,
 	.configure_filter = brcms_ops_configure_filter,
@@ -973,118 +974,118 @@ static const struct ieee80211_ops brcms_ops = {
 	.conf_tx = brcms_ops_conf_tx,
 	.sta_add = brcms_ops_sta_add,
 	.ampdu_action = brcms_ops_ampdu_action,
-	.rfkill_poll = brcms_ops_rfkill_poll,
+	.rfसमाप्त_poll = brcms_ops_rfसमाप्त_poll,
 	.flush = brcms_ops_flush,
 	.get_tsf = brcms_ops_get_tsf,
 	.set_tsf = brcms_ops_set_tsf,
 	.set_tim = brcms_ops_beacon_set_tim,
-};
+पूर्ण;
 
-void brcms_dpc(struct tasklet_struct *t)
-{
-	struct brcms_info *wl;
+व्योम brcms_dpc(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा brcms_info *wl;
 
 	wl = from_tasklet(wl, t, tasklet);
 
 	spin_lock_bh(&wl->lock);
 
-	/* call the common second level interrupt handler */
-	if (wl->pub->up) {
-		if (wl->resched) {
-			unsigned long flags;
+	/* call the common second level पूर्णांकerrupt handler */
+	अगर (wl->pub->up) अणु
+		अगर (wl->resched) अणु
+			अचिन्हित दीर्घ flags;
 
 			spin_lock_irqsave(&wl->isr_lock, flags);
-			brcms_c_intrsupd(wl->wlc);
+			brcms_c_पूर्णांकrsupd(wl->wlc);
 			spin_unlock_irqrestore(&wl->isr_lock, flags);
-		}
+		पूर्ण
 
 		wl->resched = brcms_c_dpc(wl->wlc, true);
-	}
+	पूर्ण
 
-	/* brcms_c_dpc() may bring the driver down */
-	if (!wl->pub->up)
-		goto done;
+	/* brcms_c_dpc() may bring the driver करोwn */
+	अगर (!wl->pub->up)
+		जाओ करोne;
 
 	/* re-schedule dpc */
-	if (wl->resched)
+	अगर (wl->resched)
 		tasklet_schedule(&wl->tasklet);
-	else
-		/* re-enable interrupts */
-		brcms_intrson(wl);
+	अन्यथा
+		/* re-enable पूर्णांकerrupts */
+		brcms_पूर्णांकrson(wl);
 
- done:
+ करोne:
 	spin_unlock_bh(&wl->lock);
 	wake_up(&wl->tx_flush_wq);
-}
+पूर्ण
 
-static irqreturn_t brcms_isr(int irq, void *dev_id)
-{
-	struct brcms_info *wl;
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t brcms_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा brcms_info *wl;
+	irqवापस_t ret = IRQ_NONE;
 
-	wl = (struct brcms_info *) dev_id;
+	wl = (काष्ठा brcms_info *) dev_id;
 
 	spin_lock(&wl->isr_lock);
 
-	/* call common first level interrupt handler */
-	if (brcms_c_isr(wl->wlc)) {
+	/* call common first level पूर्णांकerrupt handler */
+	अगर (brcms_c_isr(wl->wlc)) अणु
 		/* schedule second level handler */
 		tasklet_schedule(&wl->tasklet);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
 	spin_unlock(&wl->isr_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * is called in brcms_pci_probe() context, therefore no locking required.
+ * is called in brcms_pci_probe() context, thereक्रमe no locking required.
  */
-static int ieee_hw_rate_init(struct ieee80211_hw *hw)
-{
-	struct brcms_info *wl = hw->priv;
-	struct brcms_c_info *wlc = wl->wlc;
-	struct ieee80211_supported_band *band;
-	int has_5g = 0;
+अटल पूर्णांक ieee_hw_rate_init(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा brcms_info *wl = hw->priv;
+	काष्ठा brcms_c_info *wlc = wl->wlc;
+	काष्ठा ieee80211_supported_band *band;
+	पूर्णांक has_5g = 0;
 	u16 phy_type;
 
-	hw->wiphy->bands[NL80211_BAND_2GHZ] = NULL;
-	hw->wiphy->bands[NL80211_BAND_5GHZ] = NULL;
+	hw->wiphy->bands[NL80211_BAND_2GHZ] = शून्य;
+	hw->wiphy->bands[NL80211_BAND_5GHZ] = शून्य;
 
 	phy_type = brcms_c_get_phy_type(wl->wlc, 0);
-	if (phy_type == PHY_TYPE_N || phy_type == PHY_TYPE_LCN) {
+	अगर (phy_type == PHY_TYPE_N || phy_type == PHY_TYPE_LCN) अणु
 		band = &wlc->bandstate[BAND_2G_INDEX]->band;
-		*band = brcms_band_2GHz_nphy_template;
-		if (phy_type == PHY_TYPE_LCN) {
+		*band = brcms_band_2GHz_nphy_ढाँचा;
+		अगर (phy_type == PHY_TYPE_LCN) अणु
 			/* Single stream */
 			band->ht_cap.mcs.rx_mask[1] = 0;
 			band->ht_cap.mcs.rx_highest = cpu_to_le16(72);
-		}
+		पूर्ण
 		hw->wiphy->bands[NL80211_BAND_2GHZ] = band;
-	} else {
-		return -EPERM;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EPERM;
+	पूर्ण
 
-	/* Assume all bands use the same phy.  True for 11n devices. */
-	if (wl->pub->_nbands > 1) {
+	/* Assume all bands use the same phy.  True क्रम 11n devices. */
+	अगर (wl->pub->_nbands > 1) अणु
 		has_5g++;
-		if (phy_type == PHY_TYPE_N || phy_type == PHY_TYPE_LCN) {
+		अगर (phy_type == PHY_TYPE_N || phy_type == PHY_TYPE_LCN) अणु
 			band = &wlc->bandstate[BAND_5G_INDEX]->band;
-			*band = brcms_band_5GHz_nphy_template;
+			*band = brcms_band_5GHz_nphy_ढाँचा;
 			hw->wiphy->bands[NL80211_BAND_5GHZ] = band;
-		} else {
-			return -EPERM;
-		}
-	}
-	return 0;
-}
+		पूर्ण अन्यथा अणु
+			वापस -EPERM;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * is called in brcms_pci_probe() context, therefore no locking required.
+ * is called in brcms_pci_probe() context, thereक्रमe no locking required.
  */
-static int ieee_hw_init(struct ieee80211_hw *hw)
-{
+अटल पूर्णांक ieee_hw_init(काष्ठा ieee80211_hw *hw)
+अणु
 	ieee80211_hw_set(hw, AMPDU_AGGREGATION);
 	ieee80211_hw_set(hw, SIGNAL_DBM);
 	ieee80211_hw_set(hw, REPORTS_TX_ACK_STATUS);
@@ -1093,8 +1094,8 @@ static int ieee_hw_init(struct ieee80211_hw *hw)
 	hw->queues = N_TX_QUEUES;
 	hw->max_rates = 2;	/* Primary rate and 1 fallback rate */
 
-	/* channel change time is dependent on chip and band  */
-	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
+	/* channel change समय is dependent on chip and band  */
+	hw->wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
 				     BIT(NL80211_IFTYPE_AP) |
 				     BIT(NL80211_IFTYPE_ADHOC);
 
@@ -1110,41 +1111,41 @@ static int ieee_hw_init(struct ieee80211_hw *hw)
 	hw->rate_control_algorithm = "minstrel_ht";
 
 	hw->sta_data_size = 0;
-	return ieee_hw_rate_init(hw);
-}
+	वापस ieee_hw_rate_init(hw);
+पूर्ण
 
 /*
  * attach to the WL device.
  *
- * Attach to the WL device identified by vendor and device parameters.
- * regs is a host accessible memory address pointing to WL device registers.
+ * Attach to the WL device identअगरied by venकरोr and device parameters.
+ * regs is a host accessible memory address poपूर्णांकing to WL device रेजिस्टरs.
  *
- * is called in brcms_bcma_probe() context, therefore no locking required.
+ * is called in brcms_bcma_probe() context, thereक्रमe no locking required.
  */
-static struct brcms_info *brcms_attach(struct bcma_device *pdev)
-{
-	struct brcms_info *wl = NULL;
-	int unit, err;
-	struct ieee80211_hw *hw;
+अटल काष्ठा brcms_info *brcms_attach(काष्ठा bcma_device *pdev)
+अणु
+	काष्ठा brcms_info *wl = शून्य;
+	पूर्णांक unit, err;
+	काष्ठा ieee80211_hw *hw;
 	u8 perm[ETH_ALEN];
 
 	unit = n_adapters_found;
 	err = 0;
 
-	if (unit < 0)
-		return NULL;
+	अगर (unit < 0)
+		वापस शून्य;
 
-	/* allocate private info */
+	/* allocate निजी info */
 	hw = bcma_get_drvdata(pdev);
-	if (hw != NULL)
+	अगर (hw != शून्य)
 		wl = hw->priv;
-	if (WARN_ON(hw == NULL) || WARN_ON(wl == NULL))
-		return NULL;
+	अगर (WARN_ON(hw == शून्य) || WARN_ON(wl == शून्य))
+		वापस शून्य;
 	wl->wiphy = hw->wiphy;
 
 	atomic_set(&wl->callbacks, 0);
 
-	init_waitqueue_head(&wl->tx_flush_wq);
+	init_रुकोqueue_head(&wl->tx_flush_wq);
 
 	/* setup the bottom half handler */
 	tasklet_setup(&wl->tasklet, brcms_dpc);
@@ -1152,509 +1153,509 @@ static struct brcms_info *brcms_attach(struct bcma_device *pdev)
 	spin_lock_init(&wl->lock);
 	spin_lock_init(&wl->isr_lock);
 
-	/* common load-time initialization */
-	wl->wlc = brcms_c_attach((void *)wl, pdev, unit, false, &err);
-	if (!wl->wlc) {
+	/* common load-समय initialization */
+	wl->wlc = brcms_c_attach((व्योम *)wl, pdev, unit, false, &err);
+	अगर (!wl->wlc) अणु
 		wiphy_err(wl->wiphy, "%s: attach() failed with code %d\n",
 			  KBUILD_MODNAME, err);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	wl->pub = brcms_c_pub(wl->wlc);
 
 	wl->pub->ieee_hw = hw;
 
-	/* register our interrupt handler */
-	if (request_irq(pdev->irq, brcms_isr,
-			IRQF_SHARED, KBUILD_MODNAME, wl)) {
+	/* रेजिस्टर our पूर्णांकerrupt handler */
+	अगर (request_irq(pdev->irq, brcms_isr,
+			IRQF_SHARED, KBUILD_MODNAME, wl)) अणु
 		wiphy_err(wl->wiphy, "wl%d: request_irq() failed\n", unit);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	wl->irq = pdev->irq;
 
-	/* register module */
-	brcms_c_module_register(wl->pub, "linux", wl, NULL);
+	/* रेजिस्टर module */
+	brcms_c_module_रेजिस्टर(wl->pub, "linux", wl, शून्य);
 
-	if (ieee_hw_init(hw)) {
+	अगर (ieee_hw_init(hw)) अणु
 		wiphy_err(wl->wiphy, "wl%d: %s: ieee_hw_init failed!\n", unit,
 			  __func__);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	brcms_c_regd_init(wl->wlc);
 
-	memcpy(perm, &wl->pub->cur_etheraddr, ETH_ALEN);
-	if (WARN_ON(!is_valid_ether_addr(perm)))
-		goto fail;
+	स_नकल(perm, &wl->pub->cur_etheraddr, ETH_ALEN);
+	अगर (WARN_ON(!is_valid_ether_addr(perm)))
+		जाओ fail;
 	SET_IEEE80211_PERM_ADDR(hw, perm);
 
-	err = ieee80211_register_hw(hw);
-	if (err)
+	err = ieee80211_रेजिस्टर_hw(hw);
+	अगर (err)
 		wiphy_err(wl->wiphy, "%s: ieee80211_register_hw failed, status"
 			  "%d\n", __func__, err);
 
-	if (wl->pub->srom_ccode[0] &&
-	    regulatory_hint(wl->wiphy, wl->pub->srom_ccode))
+	अगर (wl->pub->srom_ccode[0] &&
+	    regulatory_hपूर्णांक(wl->wiphy, wl->pub->srom_ccode))
 		wiphy_err(wl->wiphy, "%s: regulatory hint failed\n", __func__);
 
 	brcms_debugfs_attach(wl->pub);
 	brcms_debugfs_create_files(wl->pub);
 	n_adapters_found++;
-	return wl;
+	वापस wl;
 
 fail:
-	brcms_free(wl);
-	return NULL;
-}
+	brcms_मुक्त(wl);
+	वापस शून्य;
+पूर्ण
 
 
 
 /*
- * determines if a device is a WL device, and if so, attaches it.
+ * determines अगर a device is a WL device, and अगर so, attaches it.
  *
- * This function determines if a device pointed to by pdev is a WL device,
- * and if so, performs a brcms_attach() on it.
+ * This function determines अगर a device poपूर्णांकed to by pdev is a WL device,
+ * and अगर so, perक्रमms a brcms_attach() on it.
  *
  * Perimeter lock is initialized in the course of this function.
  */
-static int brcms_bcma_probe(struct bcma_device *pdev)
-{
-	struct brcms_info *wl;
-	struct ieee80211_hw *hw;
+अटल पूर्णांक brcms_bcma_probe(काष्ठा bcma_device *pdev)
+अणु
+	काष्ठा brcms_info *wl;
+	काष्ठा ieee80211_hw *hw;
 
 	dev_info(&pdev->dev, "mfg %x core %x rev %d class %d irq %d\n",
 		 pdev->id.manuf, pdev->id.id, pdev->id.rev, pdev->id.class,
 		 pdev->irq);
 
-	if ((pdev->id.manuf != BCMA_MANUF_BCM) ||
+	अगर ((pdev->id.manuf != BCMA_MANUF_BCM) ||
 	    (pdev->id.id != BCMA_CORE_80211))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	hw = ieee80211_alloc_hw(sizeof(struct brcms_info), &brcms_ops);
-	if (!hw) {
+	hw = ieee80211_alloc_hw(माप(काष्ठा brcms_info), &brcms_ops);
+	अगर (!hw) अणु
 		pr_err("%s: ieee80211_alloc_hw failed\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	SET_IEEE80211_DEV(hw, &pdev->dev);
 
 	bcma_set_drvdata(pdev, hw);
 
-	memset(hw->priv, 0, sizeof(*wl));
+	स_रखो(hw->priv, 0, माप(*wl));
 
 	wl = brcms_attach(pdev);
-	if (!wl) {
+	अगर (!wl) अणु
 		pr_err("%s: brcms_attach failed!\n", __func__);
-		return -ENODEV;
-	}
-	brcms_led_register(wl);
+		वापस -ENODEV;
+	पूर्ण
+	brcms_led_रेजिस्टर(wl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcms_suspend(struct bcma_device *pdev)
-{
-	struct brcms_info *wl;
-	struct ieee80211_hw *hw;
+अटल पूर्णांक brcms_suspend(काष्ठा bcma_device *pdev)
+अणु
+	काष्ठा brcms_info *wl;
+	काष्ठा ieee80211_hw *hw;
 
 	hw = bcma_get_drvdata(pdev);
 	wl = hw->priv;
-	if (!wl) {
+	अगर (!wl) अणु
 		pr_err("%s: %s: no driver private struct!\n", KBUILD_MODNAME,
 		       __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* only need to flag hw is down for proper resume */
+	/* only need to flag hw is करोwn क्रम proper resume */
 	spin_lock_bh(&wl->lock);
 	wl->pub->hw_up = false;
 	spin_unlock_bh(&wl->lock);
 
 	brcms_dbg_info(wl->wlc->hw->d11core, "brcms_suspend ok\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcms_resume(struct bcma_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक brcms_resume(काष्ठा bcma_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static struct bcma_driver brcms_bcma_driver = {
+अटल काष्ठा bcma_driver brcms_bcma_driver = अणु
 	.name     = KBUILD_MODNAME,
 	.probe    = brcms_bcma_probe,
 	.suspend  = brcms_suspend,
 	.resume   = brcms_resume,
-	.remove   = brcms_remove,
+	.हटाओ   = brcms_हटाओ,
 	.id_table = brcms_coreid_table,
-};
+पूर्ण;
 
 /*
- * This is the main entry point for the brcmsmac driver.
+ * This is the मुख्य entry poपूर्णांक क्रम the brcmsmac driver.
  *
  * This function is scheduled upon module initialization and
- * does the driver registration, which result in brcms_bcma_probe()
+ * करोes the driver registration, which result in brcms_bcma_probe()
  * call resulting in the driver bringup.
  */
-static void brcms_driver_init(struct work_struct *work)
-{
-	int error;
+अटल व्योम brcms_driver_init(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक error;
 
-	error = bcma_driver_register(&brcms_bcma_driver);
-	if (error)
+	error = bcma_driver_रेजिस्टर(&brcms_bcma_driver);
+	अगर (error)
 		pr_err("%s: register returned %d\n", __func__, error);
-}
+पूर्ण
 
-static DECLARE_WORK(brcms_driver_work, brcms_driver_init);
+अटल DECLARE_WORK(brcms_driver_work, brcms_driver_init);
 
-static int __init brcms_module_init(void)
-{
+अटल पूर्णांक __init brcms_module_init(व्योम)
+अणु
 	brcms_debugfs_init();
-	if (!schedule_work(&brcms_driver_work))
-		return -EBUSY;
+	अगर (!schedule_work(&brcms_driver_work))
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * This function unloads the brcmsmac driver from the system.
+ * This function unloads the brcmsmac driver from the प्रणाली.
  *
  * This function unconditionally unloads the brcmsmac driver module from the
- * system.
+ * प्रणाली.
  *
  */
-static void __exit brcms_module_exit(void)
-{
+अटल व्योम __निकास brcms_module_निकास(व्योम)
+अणु
 	cancel_work_sync(&brcms_driver_work);
-	bcma_driver_unregister(&brcms_bcma_driver);
-	brcms_debugfs_exit();
-}
+	bcma_driver_unरेजिस्टर(&brcms_bcma_driver);
+	brcms_debugfs_निकास();
+पूर्ण
 
 module_init(brcms_module_init);
-module_exit(brcms_module_exit);
+module_निकास(brcms_module_निकास);
 
 /*
  * precondition: perimeter lock has been acquired
  */
-void brcms_txflowcontrol(struct brcms_info *wl, struct brcms_if *wlif,
-			 bool state, int prio)
-{
+व्योम brcms_txflowcontrol(काष्ठा brcms_info *wl, काष्ठा brcms_अगर *wlअगर,
+			 bool state, पूर्णांक prio)
+अणु
 	brcms_err(wl->wlc->hw->d11core, "Shouldn't be here %s\n", __func__);
-}
+पूर्ण
 
 /*
  * precondition: perimeter lock has been acquired
  */
-void brcms_init(struct brcms_info *wl)
-{
+व्योम brcms_init(काष्ठा brcms_info *wl)
+अणु
 	brcms_dbg_info(wl->wlc->hw->d11core, "Initializing wl%d\n",
 		       wl->pub->unit);
 	brcms_reset(wl);
 	brcms_c_init(wl->wlc, wl->mute_tx);
-}
+पूर्ण
 
 /*
  * precondition: perimeter lock has been acquired
  */
-uint brcms_reset(struct brcms_info *wl)
-{
+uपूर्णांक brcms_reset(काष्ठा brcms_info *wl)
+अणु
 	brcms_dbg_info(wl->wlc->hw->d11core, "Resetting wl%d\n", wl->pub->unit);
 	brcms_c_reset(wl->wlc);
 
 	/* dpc will not be rescheduled */
 	wl->resched = false;
 
-	/* inform publicly that interface is down */
+	/* inक्रमm खुलाly that पूर्णांकerface is करोwn */
 	wl->pub->up = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void brcms_fatal_error(struct brcms_info *wl)
-{
+व्योम brcms_fatal_error(काष्ठा brcms_info *wl)
+अणु
 	brcms_err(wl->wlc->hw->d11core, "wl%d: fatal error, reinitializing\n",
 		  wl->wlc->pub->unit);
 	brcms_reset(wl);
 	ieee80211_restart_hw(wl->pub->ieee_hw);
-}
+पूर्ण
 
 /*
- * These are interrupt on/off entry points. Disable interrupts
- * during interrupt state transition.
+ * These are पूर्णांकerrupt on/off entry poपूर्णांकs. Disable पूर्णांकerrupts
+ * during पूर्णांकerrupt state transition.
  */
-void brcms_intrson(struct brcms_info *wl)
-{
-	unsigned long flags;
+व्योम brcms_पूर्णांकrson(काष्ठा brcms_info *wl)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&wl->isr_lock, flags);
-	brcms_c_intrson(wl->wlc);
+	brcms_c_पूर्णांकrson(wl->wlc);
 	spin_unlock_irqrestore(&wl->isr_lock, flags);
-}
+पूर्ण
 
-u32 brcms_intrsoff(struct brcms_info *wl)
-{
-	unsigned long flags;
+u32 brcms_पूर्णांकrsoff(काष्ठा brcms_info *wl)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 status;
 
 	spin_lock_irqsave(&wl->isr_lock, flags);
-	status = brcms_c_intrsoff(wl->wlc);
+	status = brcms_c_पूर्णांकrsoff(wl->wlc);
 	spin_unlock_irqrestore(&wl->isr_lock, flags);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void brcms_intrsrestore(struct brcms_info *wl, u32 macintmask)
-{
-	unsigned long flags;
+व्योम brcms_पूर्णांकrsrestore(काष्ठा brcms_info *wl, u32 macपूर्णांकmask)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&wl->isr_lock, flags);
-	brcms_c_intrsrestore(wl->wlc, macintmask);
+	brcms_c_पूर्णांकrsrestore(wl->wlc, macपूर्णांकmask);
 	spin_unlock_irqrestore(&wl->isr_lock, flags);
-}
+पूर्ण
 
 /*
  * precondition: perimeter lock has been acquired
  */
-int brcms_up(struct brcms_info *wl)
-{
-	int error = 0;
+पूर्णांक brcms_up(काष्ठा brcms_info *wl)
+अणु
+	पूर्णांक error = 0;
 
-	if (wl->pub->up)
-		return 0;
+	अगर (wl->pub->up)
+		वापस 0;
 
 	error = brcms_c_up(wl->wlc);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * precondition: perimeter lock has been acquired
  */
-void brcms_down(struct brcms_info *wl)
+व्योम brcms_करोwn(काष्ठा brcms_info *wl)
 	__must_hold(&wl->lock)
-{
-	uint callbacks, ret_val = 0;
+अणु
+	uपूर्णांक callbacks, ret_val = 0;
 
-	/* call common down function */
-	ret_val = brcms_c_down(wl->wlc);
-	callbacks = atomic_read(&wl->callbacks) - ret_val;
+	/* call common करोwn function */
+	ret_val = brcms_c_करोwn(wl->wlc);
+	callbacks = atomic_पढ़ो(&wl->callbacks) - ret_val;
 
-	/* wait for down callbacks to complete */
+	/* रुको क्रम करोwn callbacks to complete */
 	spin_unlock_bh(&wl->lock);
 
 	/* For HIGH_only driver, it's important to actually schedule other work,
-	 * not just spin wait since everything runs at schedule level
+	 * not just spin रुको since everything runs at schedule level
 	 */
-	SPINWAIT((atomic_read(&wl->callbacks) > callbacks), 100 * 1000);
+	SPINWAIT((atomic_पढ़ो(&wl->callbacks) > callbacks), 100 * 1000);
 
 	spin_lock_bh(&wl->lock);
-}
+पूर्ण
 
 /*
 * precondition: perimeter lock is not acquired
  */
-static void _brcms_timer(struct work_struct *work)
-{
-	struct brcms_timer *t = container_of(work, struct brcms_timer,
+अटल व्योम _brcms_समयr(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा brcms_समयr *t = container_of(work, काष्ठा brcms_समयr,
 					     dly_wrk.work);
 
 	spin_lock_bh(&t->wl->lock);
 
-	if (t->set) {
-		if (t->periodic) {
+	अगर (t->set) अणु
+		अगर (t->periodic) अणु
 			atomic_inc(&t->wl->callbacks);
 			ieee80211_queue_delayed_work(t->wl->pub->ieee_hw,
 						     &t->dly_wrk,
-						     msecs_to_jiffies(t->ms));
-		} else {
+						     msecs_to_jअगरfies(t->ms));
+		पूर्ण अन्यथा अणु
 			t->set = false;
-		}
+		पूर्ण
 
 		t->fn(t->arg);
-	}
+	पूर्ण
 
 	atomic_dec(&t->wl->callbacks);
 
 	spin_unlock_bh(&t->wl->lock);
-}
+पूर्ण
 
 /*
- * Adds a timer to the list. Caller supplies a timer function.
+ * Adds a समयr to the list. Caller supplies a समयr function.
  * Is called from wlc.
  *
  * precondition: perimeter lock has been acquired
  */
-struct brcms_timer *brcms_init_timer(struct brcms_info *wl,
-				     void (*fn) (void *arg),
-				     void *arg, const char *name)
-{
-	struct brcms_timer *t;
+काष्ठा brcms_समयr *brcms_init_समयr(काष्ठा brcms_info *wl,
+				     व्योम (*fn) (व्योम *arg),
+				     व्योम *arg, स्थिर अक्षर *name)
+अणु
+	काष्ठा brcms_समयr *t;
 
-	t = kzalloc(sizeof(struct brcms_timer), GFP_ATOMIC);
-	if (!t)
-		return NULL;
+	t = kzalloc(माप(काष्ठा brcms_समयr), GFP_ATOMIC);
+	अगर (!t)
+		वापस शून्य;
 
-	INIT_DELAYED_WORK(&t->dly_wrk, _brcms_timer);
+	INIT_DELAYED_WORK(&t->dly_wrk, _brcms_समयr);
 	t->wl = wl;
 	t->fn = fn;
 	t->arg = arg;
-	t->next = wl->timers;
-	wl->timers = t;
+	t->next = wl->समयrs;
+	wl->समयrs = t;
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	t->name = kstrdup(name, GFP_ATOMIC);
-#endif
+#पूर्ण_अगर
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
 /*
- * adds only the kernel timer since it's going to be more accurate
+ * adds only the kernel समयr since it's going to be more accurate
  * as well as it's easier to make it periodic
  *
  * precondition: perimeter lock has been acquired
  */
-void brcms_add_timer(struct brcms_timer *t, uint ms, int periodic)
-{
-	struct ieee80211_hw *hw = t->wl->pub->ieee_hw;
+व्योम brcms_add_समयr(काष्ठा brcms_समयr *t, uपूर्णांक ms, पूर्णांक periodic)
+अणु
+	काष्ठा ieee80211_hw *hw = t->wl->pub->ieee_hw;
 
-#ifdef DEBUG
-	if (t->set)
+#अगर_घोषित DEBUG
+	अगर (t->set)
 		brcms_dbg_info(t->wl->wlc->hw->d11core,
 			       "%s: Already set. Name: %s, per %d\n",
 			       __func__, t->name, periodic);
-#endif
+#पूर्ण_अगर
 	t->ms = ms;
 	t->periodic = (bool) periodic;
-	if (!t->set) {
+	अगर (!t->set) अणु
 		t->set = true;
 		atomic_inc(&t->wl->callbacks);
-	}
+	पूर्ण
 
-	ieee80211_queue_delayed_work(hw, &t->dly_wrk, msecs_to_jiffies(ms));
-}
+	ieee80211_queue_delayed_work(hw, &t->dly_wrk, msecs_to_jअगरfies(ms));
+पूर्ण
 
 /*
- * return true if timer successfully deleted, false if still pending
+ * वापस true अगर समयr successfully deleted, false अगर still pending
  *
  * precondition: perimeter lock has been acquired
  */
-bool brcms_del_timer(struct brcms_timer *t)
-{
-	if (t->set) {
+bool brcms_del_समयr(काष्ठा brcms_समयr *t)
+अणु
+	अगर (t->set) अणु
 		t->set = false;
-		if (!cancel_delayed_work(&t->dly_wrk))
-			return false;
+		अगर (!cancel_delayed_work(&t->dly_wrk))
+			वापस false;
 
 		atomic_dec(&t->wl->callbacks);
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * precondition: perimeter lock has been acquired
  */
-void brcms_free_timer(struct brcms_timer *t)
-{
-	struct brcms_info *wl = t->wl;
-	struct brcms_timer *tmp;
+व्योम brcms_मुक्त_समयr(काष्ठा brcms_समयr *t)
+अणु
+	काष्ठा brcms_info *wl = t->wl;
+	काष्ठा brcms_समयr *पंचांगp;
 
-	/* delete the timer in case it is active */
-	brcms_del_timer(t);
+	/* delete the समयr in हाल it is active */
+	brcms_del_समयr(t);
 
-	if (wl->timers == t) {
-		wl->timers = wl->timers->next;
-#ifdef DEBUG
-		kfree(t->name);
-#endif
-		kfree(t);
-		return;
+	अगर (wl->समयrs == t) अणु
+		wl->समयrs = wl->समयrs->next;
+#अगर_घोषित DEBUG
+		kमुक्त(t->name);
+#पूर्ण_अगर
+		kमुक्त(t);
+		वापस;
 
-	}
+	पूर्ण
 
-	tmp = wl->timers;
-	while (tmp) {
-		if (tmp->next == t) {
-			tmp->next = t->next;
-#ifdef DEBUG
-			kfree(t->name);
-#endif
-			kfree(t);
-			return;
-		}
-		tmp = tmp->next;
-	}
+	पंचांगp = wl->समयrs;
+	जबतक (पंचांगp) अणु
+		अगर (पंचांगp->next == t) अणु
+			पंचांगp->next = t->next;
+#अगर_घोषित DEBUG
+			kमुक्त(t->name);
+#पूर्ण_अगर
+			kमुक्त(t);
+			वापस;
+		पूर्ण
+		पंचांगp = पंचांगp->next;
+	पूर्ण
 
-}
+पूर्ण
 
 /*
  * precondition: no locking required
  */
-int brcms_ucode_init_buf(struct brcms_info *wl, void **pbuf, u32 idx)
-{
-	int i, entry;
-	const u8 *pdata;
-	struct firmware_hdr *hdr;
-	for (i = 0; i < wl->fw.fw_cnt; i++) {
-		hdr = (struct firmware_hdr *)wl->fw.fw_hdr[i]->data;
-		for (entry = 0; entry < wl->fw.hdr_num_entries[i];
-		     entry++, hdr++) {
+पूर्णांक brcms_ucode_init_buf(काष्ठा brcms_info *wl, व्योम **pbuf, u32 idx)
+अणु
+	पूर्णांक i, entry;
+	स्थिर u8 *pdata;
+	काष्ठा firmware_hdr *hdr;
+	क्रम (i = 0; i < wl->fw.fw_cnt; i++) अणु
+		hdr = (काष्ठा firmware_hdr *)wl->fw.fw_hdr[i]->data;
+		क्रम (entry = 0; entry < wl->fw.hdr_num_entries[i];
+		     entry++, hdr++) अणु
 			u32 len = le32_to_cpu(hdr->len);
-			if (le32_to_cpu(hdr->idx) == idx) {
+			अगर (le32_to_cpu(hdr->idx) == idx) अणु
 				pdata = wl->fw.fw_bin[i]->data +
 					le32_to_cpu(hdr->offset);
-				*pbuf = kvmalloc(len, GFP_KERNEL);
-				if (*pbuf == NULL)
-					goto fail;
-				memcpy(*pbuf, pdata, len);
-				return 0;
-			}
-		}
-	}
+				*pbuf = kvदो_स्मृति(len, GFP_KERNEL);
+				अगर (*pbuf == शून्य)
+					जाओ fail;
+				स_नकल(*pbuf, pdata, len);
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	brcms_err(wl->wlc->hw->d11core,
 		  "ERROR: ucode buf tag:%d can not be found!\n", idx);
-	*pbuf = NULL;
+	*pbuf = शून्य;
 fail:
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
 /*
  * Precondition: Since this function is called in brcms_bcma_probe() context,
  * no locking is required.
  */
-int brcms_ucode_init_uint(struct brcms_info *wl, size_t *n_bytes, u32 idx)
-{
-	int i, entry;
-	const u8 *pdata;
-	struct firmware_hdr *hdr;
-	for (i = 0; i < wl->fw.fw_cnt; i++) {
-		hdr = (struct firmware_hdr *)wl->fw.fw_hdr[i]->data;
-		for (entry = 0; entry < wl->fw.hdr_num_entries[i];
-		     entry++, hdr++) {
-			if (le32_to_cpu(hdr->idx) == idx) {
+पूर्णांक brcms_ucode_init_uपूर्णांक(काष्ठा brcms_info *wl, माप_प्रकार *n_bytes, u32 idx)
+अणु
+	पूर्णांक i, entry;
+	स्थिर u8 *pdata;
+	काष्ठा firmware_hdr *hdr;
+	क्रम (i = 0; i < wl->fw.fw_cnt; i++) अणु
+		hdr = (काष्ठा firmware_hdr *)wl->fw.fw_hdr[i]->data;
+		क्रम (entry = 0; entry < wl->fw.hdr_num_entries[i];
+		     entry++, hdr++) अणु
+			अगर (le32_to_cpu(hdr->idx) == idx) अणु
 				pdata = wl->fw.fw_bin[i]->data +
 					le32_to_cpu(hdr->offset);
-				if (le32_to_cpu(hdr->len) != 4) {
+				अगर (le32_to_cpu(hdr->len) != 4) अणु
 					brcms_err(wl->wlc->hw->d11core,
 						  "ERROR: fw hdr len\n");
-					return -ENOMSG;
-				}
+					वापस -ENOMSG;
+				पूर्ण
 				*n_bytes = le32_to_cpu(*((__le32 *) pdata));
-				return 0;
-			}
-		}
-	}
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	brcms_err(wl->wlc->hw->d11core,
 		  "ERROR: ucode tag:%d can not be found!\n", idx);
-	return -ENOMSG;
-}
+	वापस -ENOMSG;
+पूर्ण
 
 /*
  * precondition: can both be called locked and unlocked
  */
-void brcms_ucode_free_buf(void *p)
-{
-	kvfree(p);
-}
+व्योम brcms_ucode_मुक्त_buf(व्योम *p)
+अणु
+	kvमुक्त(p);
+पूर्ण
 
 /*
  * checks validity of all firmware images loaded from user space
@@ -1662,68 +1663,68 @@ void brcms_ucode_free_buf(void *p)
  * Precondition: Since this function is called in brcms_bcma_probe() context,
  * no locking is required.
  */
-int brcms_check_firmwares(struct brcms_info *wl)
-{
-	int i;
-	int entry;
-	int rc = 0;
-	const struct firmware *fw;
-	const struct firmware *fw_hdr;
-	struct firmware_hdr *ucode_hdr;
-	for (i = 0; i < MAX_FW_IMAGES && rc == 0; i++) {
+पूर्णांक brcms_check_firmwares(काष्ठा brcms_info *wl)
+अणु
+	पूर्णांक i;
+	पूर्णांक entry;
+	पूर्णांक rc = 0;
+	स्थिर काष्ठा firmware *fw;
+	स्थिर काष्ठा firmware *fw_hdr;
+	काष्ठा firmware_hdr *ucode_hdr;
+	क्रम (i = 0; i < MAX_FW_IMAGES && rc == 0; i++) अणु
 		fw =  wl->fw.fw_bin[i];
 		fw_hdr = wl->fw.fw_hdr[i];
-		if (fw == NULL && fw_hdr == NULL) {
-			break;
-		} else if (fw == NULL || fw_hdr == NULL) {
+		अगर (fw == शून्य && fw_hdr == शून्य) अणु
+			अवरोध;
+		पूर्ण अन्यथा अगर (fw == शून्य || fw_hdr == शून्य) अणु
 			wiphy_err(wl->wiphy, "%s: invalid bin/hdr fw\n",
 				  __func__);
 			rc = -EBADF;
-		} else if (fw_hdr->size % sizeof(struct firmware_hdr)) {
+		पूर्ण अन्यथा अगर (fw_hdr->size % माप(काष्ठा firmware_hdr)) अणु
 			wiphy_err(wl->wiphy, "%s: non integral fw hdr file "
 				"size %zu/%zu\n", __func__, fw_hdr->size,
-				sizeof(struct firmware_hdr));
+				माप(काष्ठा firmware_hdr));
 			rc = -EBADF;
-		} else if (fw->size < MIN_FW_SIZE || fw->size > MAX_FW_SIZE) {
+		पूर्ण अन्यथा अगर (fw->size < MIN_FW_SIZE || fw->size > MAX_FW_SIZE) अणु
 			wiphy_err(wl->wiphy, "%s: out of bounds fw file size %zu\n",
 				  __func__, fw->size);
 			rc = -EBADF;
-		} else {
-			/* check if ucode section overruns firmware image */
-			ucode_hdr = (struct firmware_hdr *)fw_hdr->data;
-			for (entry = 0; entry < wl->fw.hdr_num_entries[i] &&
-			     !rc; entry++, ucode_hdr++) {
-				if (le32_to_cpu(ucode_hdr->offset) +
+		पूर्ण अन्यथा अणु
+			/* check अगर ucode section overruns firmware image */
+			ucode_hdr = (काष्ठा firmware_hdr *)fw_hdr->data;
+			क्रम (entry = 0; entry < wl->fw.hdr_num_entries[i] &&
+			     !rc; entry++, ucode_hdr++) अणु
+				अगर (le32_to_cpu(ucode_hdr->offset) +
 				    le32_to_cpu(ucode_hdr->len) >
-				    fw->size) {
+				    fw->size) अणु
 					wiphy_err(wl->wiphy,
 						  "%s: conflicting bin/hdr\n",
 						  __func__);
 					rc = -EBADF;
-				}
-			}
-		}
-	}
-	if (rc == 0 && wl->fw.fw_cnt != i) {
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (rc == 0 && wl->fw.fw_cnt != i) अणु
 		wiphy_err(wl->wiphy, "%s: invalid fw_cnt=%d\n", __func__,
 			wl->fw.fw_cnt);
 		rc = -EBADF;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 /*
  * precondition: perimeter lock has been acquired
  */
-bool brcms_rfkill_set_hw_state(struct brcms_info *wl)
+bool brcms_rfसमाप्त_set_hw_state(काष्ठा brcms_info *wl)
 	__must_hold(&wl->lock)
-{
+अणु
 	bool blocked = brcms_c_check_radio_disabled(wl->wlc);
 
 	spin_unlock_bh(&wl->lock);
-	wiphy_rfkill_set_hw_state(wl->pub->ieee_hw->wiphy, blocked);
-	if (blocked)
-		wiphy_rfkill_start_polling(wl->pub->ieee_hw->wiphy);
+	wiphy_rfसमाप्त_set_hw_state(wl->pub->ieee_hw->wiphy, blocked);
+	अगर (blocked)
+		wiphy_rfसमाप्त_start_polling(wl->pub->ieee_hw->wiphy);
 	spin_lock_bh(&wl->lock);
-	return blocked;
-}
+	वापस blocked;
+पूर्ण

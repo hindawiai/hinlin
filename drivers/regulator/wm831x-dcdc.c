@@ -1,309 +1,310 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// wm831x-dcdc.c  --  DC-DC buck converter driver for the WM831x series
+// wm831x-dcdc.c  --  DC-DC buck converter driver क्रम the WM831x series
 //
 // Copyright 2009 Wolfson Microelectronics PLC.
 //
-// Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+// Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
-#include <linux/gpio/consumer.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/slab.h>
 
-#include <linux/mfd/wm831x/core.h>
-#include <linux/mfd/wm831x/regulator.h>
-#include <linux/mfd/wm831x/pdata.h>
+#समावेश <linux/mfd/wm831x/core.h>
+#समावेश <linux/mfd/wm831x/regulator.h>
+#समावेश <linux/mfd/wm831x/pdata.h>
 
-#define WM831X_BUCKV_MAX_SELECTOR 0x68
-#define WM831X_BUCKP_MAX_SELECTOR 0x66
+#घोषणा WM831X_BUCKV_MAX_SELECTOR 0x68
+#घोषणा WM831X_BUCKP_MAX_SELECTOR 0x66
 
-#define WM831X_DCDC_MODE_FAST    0
-#define WM831X_DCDC_MODE_NORMAL  1
-#define WM831X_DCDC_MODE_IDLE    2
-#define WM831X_DCDC_MODE_STANDBY 3
+#घोषणा WM831X_DCDC_MODE_FAST    0
+#घोषणा WM831X_DCDC_MODE_NORMAL  1
+#घोषणा WM831X_DCDC_MODE_IDLE    2
+#घोषणा WM831X_DCDC_MODE_STANDBY 3
 
-#define WM831X_DCDC_MAX_NAME 9
+#घोषणा WM831X_DCDC_MAX_NAME 9
 
 /* Register offsets in control block */
-#define WM831X_DCDC_CONTROL_1     0
-#define WM831X_DCDC_CONTROL_2     1
-#define WM831X_DCDC_ON_CONFIG     2
-#define WM831X_DCDC_SLEEP_CONTROL 3
-#define WM831X_DCDC_DVS_CONTROL   4
+#घोषणा WM831X_DCDC_CONTROL_1     0
+#घोषणा WM831X_DCDC_CONTROL_2     1
+#घोषणा WM831X_DCDC_ON_CONFIG     2
+#घोषणा WM831X_DCDC_SLEEP_CONTROL 3
+#घोषणा WM831X_DCDC_DVS_CONTROL   4
 
 /*
  * Shared
  */
 
-struct wm831x_dcdc {
-	char name[WM831X_DCDC_MAX_NAME];
-	char supply_name[WM831X_DCDC_MAX_NAME];
-	struct regulator_desc desc;
-	int base;
-	struct wm831x *wm831x;
-	struct regulator_dev *regulator;
-	struct gpio_desc *dvs_gpiod;
-	int dvs_gpio_state;
-	int on_vsel;
-	int dvs_vsel;
-};
+काष्ठा wm831x_dcdc अणु
+	अक्षर name[WM831X_DCDC_MAX_NAME];
+	अक्षर supply_name[WM831X_DCDC_MAX_NAME];
+	काष्ठा regulator_desc desc;
+	पूर्णांक base;
+	काष्ठा wm831x *wm831x;
+	काष्ठा regulator_dev *regulator;
+	काष्ठा gpio_desc *dvs_gpiod;
+	पूर्णांक dvs_gpio_state;
+	पूर्णांक on_vsel;
+	पूर्णांक dvs_vsel;
+पूर्ण;
 
-static unsigned int wm831x_dcdc_get_mode(struct regulator_dev *rdev)
+अटल अचिन्हित पूर्णांक wm831x_dcdc_get_mode(काष्ठा regulator_dev *rdev)
 
-{
-	struct wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
-	struct wm831x *wm831x = dcdc->wm831x;
+अणु
+	काष्ठा wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
+	काष्ठा wm831x *wm831x = dcdc->wm831x;
 	u16 reg = dcdc->base + WM831X_DCDC_ON_CONFIG;
-	int val;
+	पूर्णांक val;
 
-	val = wm831x_reg_read(wm831x, reg);
-	if (val < 0)
-		return val;
+	val = wm831x_reg_पढ़ो(wm831x, reg);
+	अगर (val < 0)
+		वापस val;
 
 	val = (val & WM831X_DC1_ON_MODE_MASK) >> WM831X_DC1_ON_MODE_SHIFT;
 
-	switch (val) {
-	case WM831X_DCDC_MODE_FAST:
-		return REGULATOR_MODE_FAST;
-	case WM831X_DCDC_MODE_NORMAL:
-		return REGULATOR_MODE_NORMAL;
-	case WM831X_DCDC_MODE_STANDBY:
-		return REGULATOR_MODE_STANDBY;
-	case WM831X_DCDC_MODE_IDLE:
-		return REGULATOR_MODE_IDLE;
-	default:
+	चयन (val) अणु
+	हाल WM831X_DCDC_MODE_FAST:
+		वापस REGULATOR_MODE_FAST;
+	हाल WM831X_DCDC_MODE_NORMAL:
+		वापस REGULATOR_MODE_NORMAL;
+	हाल WM831X_DCDC_MODE_STANDBY:
+		वापस REGULATOR_MODE_STANDBY;
+	हाल WM831X_DCDC_MODE_IDLE:
+		वापस REGULATOR_MODE_IDLE;
+	शेष:
 		BUG();
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int wm831x_dcdc_set_mode_int(struct wm831x *wm831x, int reg,
-				    unsigned int mode)
-{
-	int val;
+अटल पूर्णांक wm831x_dcdc_set_mode_पूर्णांक(काष्ठा wm831x *wm831x, पूर्णांक reg,
+				    अचिन्हित पूर्णांक mode)
+अणु
+	पूर्णांक val;
 
-	switch (mode) {
-	case REGULATOR_MODE_FAST:
+	चयन (mode) अणु
+	हाल REGULATOR_MODE_FAST:
 		val = WM831X_DCDC_MODE_FAST;
-		break;
-	case REGULATOR_MODE_NORMAL:
+		अवरोध;
+	हाल REGULATOR_MODE_NORMAL:
 		val = WM831X_DCDC_MODE_NORMAL;
-		break;
-	case REGULATOR_MODE_STANDBY:
+		अवरोध;
+	हाल REGULATOR_MODE_STANDBY:
 		val = WM831X_DCDC_MODE_STANDBY;
-		break;
-	case REGULATOR_MODE_IDLE:
+		अवरोध;
+	हाल REGULATOR_MODE_IDLE:
 		val = WM831X_DCDC_MODE_IDLE;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return wm831x_set_bits(wm831x, reg, WM831X_DC1_ON_MODE_MASK,
+	वापस wm831x_set_bits(wm831x, reg, WM831X_DC1_ON_MODE_MASK,
 			       val << WM831X_DC1_ON_MODE_SHIFT);
-}
+पूर्ण
 
-static int wm831x_dcdc_set_mode(struct regulator_dev *rdev, unsigned int mode)
-{
-	struct wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
-	struct wm831x *wm831x = dcdc->wm831x;
+अटल पूर्णांक wm831x_dcdc_set_mode(काष्ठा regulator_dev *rdev, अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
+	काष्ठा wm831x *wm831x = dcdc->wm831x;
 	u16 reg = dcdc->base + WM831X_DCDC_ON_CONFIG;
 
-	return wm831x_dcdc_set_mode_int(wm831x, reg, mode);
-}
+	वापस wm831x_dcdc_set_mode_पूर्णांक(wm831x, reg, mode);
+पूर्ण
 
-static int wm831x_dcdc_set_suspend_mode(struct regulator_dev *rdev,
-					unsigned int mode)
-{
-	struct wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
-	struct wm831x *wm831x = dcdc->wm831x;
+अटल पूर्णांक wm831x_dcdc_set_suspend_mode(काष्ठा regulator_dev *rdev,
+					अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
+	काष्ठा wm831x *wm831x = dcdc->wm831x;
 	u16 reg = dcdc->base + WM831X_DCDC_SLEEP_CONTROL;
 
-	return wm831x_dcdc_set_mode_int(wm831x, reg, mode);
-}
+	वापस wm831x_dcdc_set_mode_पूर्णांक(wm831x, reg, mode);
+पूर्ण
 
-static int wm831x_dcdc_get_status(struct regulator_dev *rdev)
-{
-	struct wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
-	struct wm831x *wm831x = dcdc->wm831x;
-	int ret;
+अटल पूर्णांक wm831x_dcdc_get_status(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
+	काष्ठा wm831x *wm831x = dcdc->wm831x;
+	पूर्णांक ret;
 
-	/* First, check for errors */
-	ret = wm831x_reg_read(wm831x, WM831X_DCDC_UV_STATUS);
-	if (ret < 0)
-		return ret;
+	/* First, check क्रम errors */
+	ret = wm831x_reg_पढ़ो(wm831x, WM831X_DCDC_UV_STATUS);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret & (1 << rdev_get_id(rdev))) {
+	अगर (ret & (1 << rdev_get_id(rdev))) अणु
 		dev_dbg(wm831x->dev, "DCDC%d under voltage\n",
 			rdev_get_id(rdev) + 1);
-		return REGULATOR_STATUS_ERROR;
-	}
+		वापस REGULATOR_STATUS_ERROR;
+	पूर्ण
 
 	/* DCDC1 and DCDC2 can additionally detect high voltage/current */
-	if (rdev_get_id(rdev) < 2) {
-		if (ret & (WM831X_DC1_OV_STS << rdev_get_id(rdev))) {
+	अगर (rdev_get_id(rdev) < 2) अणु
+		अगर (ret & (WM831X_DC1_OV_STS << rdev_get_id(rdev))) अणु
 			dev_dbg(wm831x->dev, "DCDC%d over voltage\n",
 				rdev_get_id(rdev) + 1);
-			return REGULATOR_STATUS_ERROR;
-		}
+			वापस REGULATOR_STATUS_ERROR;
+		पूर्ण
 
-		if (ret & (WM831X_DC1_HC_STS << rdev_get_id(rdev))) {
+		अगर (ret & (WM831X_DC1_HC_STS << rdev_get_id(rdev))) अणु
 			dev_dbg(wm831x->dev, "DCDC%d over current\n",
 				rdev_get_id(rdev) + 1);
-			return REGULATOR_STATUS_ERROR;
-		}
-	}
+			वापस REGULATOR_STATUS_ERROR;
+		पूर्ण
+	पूर्ण
 
 	/* Is the regulator on? */
-	ret = wm831x_reg_read(wm831x, WM831X_DCDC_STATUS);
-	if (ret < 0)
-		return ret;
-	if (!(ret & (1 << rdev_get_id(rdev))))
-		return REGULATOR_STATUS_OFF;
+	ret = wm831x_reg_पढ़ो(wm831x, WM831X_DCDC_STATUS);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (!(ret & (1 << rdev_get_id(rdev))))
+		वापस REGULATOR_STATUS_OFF;
 
 	/* TODO: When we handle hardware control modes so we can report the
 	 * current mode. */
-	return REGULATOR_STATUS_ON;
-}
+	वापस REGULATOR_STATUS_ON;
+पूर्ण
 
-static irqreturn_t wm831x_dcdc_uv_irq(int irq, void *data)
-{
-	struct wm831x_dcdc *dcdc = data;
+अटल irqवापस_t wm831x_dcdc_uv_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = data;
 
-	regulator_notifier_call_chain(dcdc->regulator,
+	regulator_notअगरier_call_chain(dcdc->regulator,
 				      REGULATOR_EVENT_UNDER_VOLTAGE,
-				      NULL);
+				      शून्य);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t wm831x_dcdc_oc_irq(int irq, void *data)
-{
-	struct wm831x_dcdc *dcdc = data;
+अटल irqवापस_t wm831x_dcdc_oc_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = data;
 
-	regulator_notifier_call_chain(dcdc->regulator,
+	regulator_notअगरier_call_chain(dcdc->regulator,
 				      REGULATOR_EVENT_OVER_CURRENT,
-				      NULL);
+				      शून्य);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * BUCKV specifics
+ * BUCKV specअगरics
  */
 
-static const struct linear_range wm831x_buckv_ranges[] = {
+अटल स्थिर काष्ठा linear_range wm831x_buckv_ranges[] = अणु
 	REGULATOR_LINEAR_RANGE(600000, 0, 0x7, 0),
 	REGULATOR_LINEAR_RANGE(600000, 0x8, 0x68, 12500),
-};
+पूर्ण;
 
-static int wm831x_buckv_set_dvs(struct regulator_dev *rdev, int state)
-{
-	struct wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
+अटल पूर्णांक wm831x_buckv_set_dvs(काष्ठा regulator_dev *rdev, पूर्णांक state)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
 
-	if (state == dcdc->dvs_gpio_state)
-		return 0;
+	अगर (state == dcdc->dvs_gpio_state)
+		वापस 0;
 
 	dcdc->dvs_gpio_state = state;
 	gpiod_set_value(dcdc->dvs_gpiod, state);
 
-	/* Should wait for DVS state change to be asserted if we have
-	 * a GPIO for it, for now assume the device is configured
-	 * for the fastest possible transition.
+	/* Should रुको क्रम DVS state change to be निश्चितed अगर we have
+	 * a GPIO क्रम it, क्रम now assume the device is configured
+	 * क्रम the fastest possible transition.
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm831x_buckv_set_voltage_sel(struct regulator_dev *rdev,
-					unsigned vsel)
-{
-	struct wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
-	struct wm831x *wm831x = dcdc->wm831x;
-	int on_reg = dcdc->base + WM831X_DCDC_ON_CONFIG;
-	int dvs_reg = dcdc->base + WM831X_DCDC_DVS_CONTROL;
-	int ret;
+अटल पूर्णांक wm831x_buckv_set_voltage_sel(काष्ठा regulator_dev *rdev,
+					अचिन्हित vsel)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
+	काष्ठा wm831x *wm831x = dcdc->wm831x;
+	पूर्णांक on_reg = dcdc->base + WM831X_DCDC_ON_CONFIG;
+	पूर्णांक dvs_reg = dcdc->base + WM831X_DCDC_DVS_CONTROL;
+	पूर्णांक ret;
 
-	/* If this value is already set then do a GPIO update if we can */
-	if (dcdc->dvs_gpiod && dcdc->on_vsel == vsel)
-		return wm831x_buckv_set_dvs(rdev, 0);
+	/* If this value is alपढ़ोy set then करो a GPIO update अगर we can */
+	अगर (dcdc->dvs_gpiod && dcdc->on_vsel == vsel)
+		वापस wm831x_buckv_set_dvs(rdev, 0);
 
-	if (dcdc->dvs_gpiod && dcdc->dvs_vsel == vsel)
-		return wm831x_buckv_set_dvs(rdev, 1);
+	अगर (dcdc->dvs_gpiod && dcdc->dvs_vsel == vsel)
+		वापस wm831x_buckv_set_dvs(rdev, 1);
 
 	/* Always set the ON status to the minimum voltage */
 	ret = wm831x_set_bits(wm831x, on_reg, WM831X_DC1_ON_VSEL_MASK, vsel);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	dcdc->on_vsel = vsel;
 
-	if (!dcdc->dvs_gpiod)
-		return ret;
+	अगर (!dcdc->dvs_gpiod)
+		वापस ret;
 
 	/* Kick the voltage transition now */
 	ret = wm831x_buckv_set_dvs(rdev, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
 	 * If this VSEL is higher than the last one we've seen then
-	 * remember it as the DVS VSEL.  This is optimised for CPUfreq
+	 * remember it as the DVS VSEL.  This is optimised क्रम CPUfreq
 	 * usage where we want to get to the highest voltage very
 	 * quickly.
 	 */
-	if (vsel > dcdc->dvs_vsel) {
+	अगर (vsel > dcdc->dvs_vsel) अणु
 		ret = wm831x_set_bits(wm831x, dvs_reg,
 				      WM831X_DC1_DVS_VSEL_MASK,
 				      vsel);
-		if (ret == 0)
+		अगर (ret == 0)
 			dcdc->dvs_vsel = vsel;
-		else
+		अन्यथा
 			dev_warn(wm831x->dev,
 				 "Failed to set DCDC DVS VSEL: %d\n", ret);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm831x_buckv_set_suspend_voltage(struct regulator_dev *rdev,
-					    int uV)
-{
-	struct wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
-	struct wm831x *wm831x = dcdc->wm831x;
+अटल पूर्णांक wm831x_buckv_set_suspend_voltage(काष्ठा regulator_dev *rdev,
+					    पूर्णांक uV)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
+	काष्ठा wm831x *wm831x = dcdc->wm831x;
 	u16 reg = dcdc->base + WM831X_DCDC_SLEEP_CONTROL;
-	int vsel;
+	पूर्णांक vsel;
 
 	vsel = regulator_map_voltage_linear_range(rdev, uV, uV);
-	if (vsel < 0)
-		return vsel;
+	अगर (vsel < 0)
+		वापस vsel;
 
-	return wm831x_set_bits(wm831x, reg, WM831X_DC1_SLP_VSEL_MASK, vsel);
-}
+	वापस wm831x_set_bits(wm831x, reg, WM831X_DC1_SLP_VSEL_MASK, vsel);
+पूर्ण
 
-static int wm831x_buckv_get_voltage_sel(struct regulator_dev *rdev)
-{
-	struct wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
+अटल पूर्णांक wm831x_buckv_get_voltage_sel(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
 
-	if (dcdc->dvs_gpiod && dcdc->dvs_gpio_state)
-		return dcdc->dvs_vsel;
-	else
-		return dcdc->on_vsel;
-}
+	अगर (dcdc->dvs_gpiod && dcdc->dvs_gpio_state)
+		वापस dcdc->dvs_vsel;
+	अन्यथा
+		वापस dcdc->on_vsel;
+पूर्ण
 
 /* Current limit options */
-static const unsigned int wm831x_dcdc_ilim[] = {
+अटल स्थिर अचिन्हित पूर्णांक wm831x_dcdc_ilim[] = अणु
 	125000, 250000, 375000, 500000, 625000, 750000, 875000, 1000000
-};
+पूर्ण;
 
-static const struct regulator_ops wm831x_buckv_ops = {
+अटल स्थिर काष्ठा regulator_ops wm831x_buckv_ops = अणु
 	.set_voltage_sel = wm831x_buckv_set_voltage_sel,
 	.get_voltage_sel = wm831x_buckv_get_voltage_sel,
 	.list_voltage = regulator_list_voltage_linear_range,
@@ -319,108 +320,108 @@ static const struct regulator_ops wm831x_buckv_ops = {
 	.get_mode = wm831x_dcdc_get_mode,
 	.set_mode = wm831x_dcdc_set_mode,
 	.set_suspend_mode = wm831x_dcdc_set_suspend_mode,
-};
+पूर्ण;
 
 /*
  * Set up DVS control.  We just log errors since we can still run
- * (with reduced performance) if we fail.
+ * (with reduced perक्रमmance) अगर we fail.
  */
-static void wm831x_buckv_dvs_init(struct platform_device *pdev,
-				  struct wm831x_dcdc *dcdc,
-				  struct wm831x_buckv_pdata *pdata)
-{
-	struct wm831x *wm831x = dcdc->wm831x;
-	int ret;
+अटल व्योम wm831x_buckv_dvs_init(काष्ठा platक्रमm_device *pdev,
+				  काष्ठा wm831x_dcdc *dcdc,
+				  काष्ठा wm831x_buckv_pdata *pdata)
+अणु
+	काष्ठा wm831x *wm831x = dcdc->wm831x;
+	पूर्णांक ret;
 	u16 ctrl;
 
-	if (!pdata)
-		return;
+	अगर (!pdata)
+		वापस;
 
-	/* gpiolib won't let us read the GPIO status so pick the higher
-	 * of the two existing voltages so we take it as platform data.
+	/* gpiolib won't let us पढ़ो the GPIO status so pick the higher
+	 * of the two existing voltages so we take it as platक्रमm data.
 	 */
 	dcdc->dvs_gpio_state = pdata->dvs_init_state;
 
 	dcdc->dvs_gpiod = devm_gpiod_get(&pdev->dev, "dvs",
 			dcdc->dvs_gpio_state ? GPIOD_OUT_HIGH : GPIOD_OUT_LOW);
-	if (IS_ERR(dcdc->dvs_gpiod)) {
+	अगर (IS_ERR(dcdc->dvs_gpiod)) अणु
 		dev_err(wm831x->dev, "Failed to get %s DVS GPIO: %ld\n",
 			dcdc->name, PTR_ERR(dcdc->dvs_gpiod));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (pdata->dvs_control_src) {
-	case 1:
+	चयन (pdata->dvs_control_src) अणु
+	हाल 1:
 		ctrl = 2 << WM831X_DC1_DVS_SRC_SHIFT;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		ctrl = 3 << WM831X_DC1_DVS_SRC_SHIFT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(wm831x->dev, "Invalid DVS control source %d for %s\n",
 			pdata->dvs_control_src, dcdc->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* If DVS_VSEL is set to the minimum value then raise it to ON_VSEL
+	/* If DVS_VSEL is set to the minimum value then उठाओ it to ON_VSEL
 	 * to make bootstrapping a bit smoother.
 	 */
-	if (!dcdc->dvs_vsel) {
+	अगर (!dcdc->dvs_vsel) अणु
 		ret = wm831x_set_bits(wm831x,
 				      dcdc->base + WM831X_DCDC_DVS_CONTROL,
 				      WM831X_DC1_DVS_VSEL_MASK, dcdc->on_vsel);
-		if (ret == 0)
+		अगर (ret == 0)
 			dcdc->dvs_vsel = dcdc->on_vsel;
-		else
+		अन्यथा
 			dev_warn(wm831x->dev, "Failed to set DVS_VSEL: %d\n",
 				 ret);
-	}
+	पूर्ण
 
 	ret = wm831x_set_bits(wm831x, dcdc->base + WM831X_DCDC_DVS_CONTROL,
 			      WM831X_DC1_DVS_SRC_MASK, ctrl);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(wm831x->dev, "Failed to set %s DVS source: %d\n",
 			dcdc->name, ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int wm831x_buckv_probe(struct platform_device *pdev)
-{
-	struct wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
-	struct wm831x_pdata *pdata = dev_get_platdata(wm831x->dev);
-	struct regulator_config config = { };
-	int id;
-	struct wm831x_dcdc *dcdc;
-	struct resource *res;
-	int ret, irq;
+अटल पूर्णांक wm831x_buckv_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा wm831x_pdata *pdata = dev_get_platdata(wm831x->dev);
+	काष्ठा regulator_config config = अणु पूर्ण;
+	पूर्णांक id;
+	काष्ठा wm831x_dcdc *dcdc;
+	काष्ठा resource *res;
+	पूर्णांक ret, irq;
 
-	if (pdata && pdata->wm831x_num)
+	अगर (pdata && pdata->wm831x_num)
 		id = (pdata->wm831x_num * 10) + 1;
-	else
+	अन्यथा
 		id = 0;
 	id = pdev->id - id;
 
 	dev_dbg(&pdev->dev, "Probing DCDC%d\n", id + 1);
 
-	dcdc = devm_kzalloc(&pdev->dev,  sizeof(struct wm831x_dcdc),
+	dcdc = devm_kzalloc(&pdev->dev,  माप(काष्ठा wm831x_dcdc),
 			    GFP_KERNEL);
-	if (!dcdc)
-		return -ENOMEM;
+	अगर (!dcdc)
+		वापस -ENOMEM;
 
 	dcdc->wm831x = wm831x;
 
-	res = platform_get_resource(pdev, IORESOURCE_REG, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_REG, 0);
+	अगर (res == शून्य) अणु
 		dev_err(&pdev->dev, "No REG resource\n");
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	dcdc->base = res->start;
 
-	snprintf(dcdc->name, sizeof(dcdc->name), "DCDC%d", id + 1);
+	snम_लिखो(dcdc->name, माप(dcdc->name), "DCDC%d", id + 1);
 	dcdc->desc.name = dcdc->name;
 
-	snprintf(dcdc->supply_name, sizeof(dcdc->supply_name),
+	snम_लिखो(dcdc->supply_name, माप(dcdc->supply_name),
 		 "DC%dVDD", id + 1);
 	dcdc->desc.supply_name = dcdc->supply_name;
 
@@ -438,95 +439,95 @@ static int wm831x_buckv_probe(struct platform_device *pdev)
 	dcdc->desc.n_current_limits = ARRAY_SIZE(wm831x_dcdc_ilim);
 	dcdc->desc.curr_table = wm831x_dcdc_ilim;
 
-	ret = wm831x_reg_read(wm831x, dcdc->base + WM831X_DCDC_ON_CONFIG);
-	if (ret < 0) {
+	ret = wm831x_reg_पढ़ो(wm831x, dcdc->base + WM831X_DCDC_ON_CONFIG);
+	अगर (ret < 0) अणु
 		dev_err(wm831x->dev, "Failed to read ON VSEL: %d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	dcdc->on_vsel = ret & WM831X_DC1_ON_VSEL_MASK;
 
-	ret = wm831x_reg_read(wm831x, dcdc->base + WM831X_DCDC_DVS_CONTROL);
-	if (ret < 0) {
+	ret = wm831x_reg_पढ़ो(wm831x, dcdc->base + WM831X_DCDC_DVS_CONTROL);
+	अगर (ret < 0) अणु
 		dev_err(wm831x->dev, "Failed to read DVS VSEL: %d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	dcdc->dvs_vsel = ret & WM831X_DC1_DVS_VSEL_MASK;
 
-	if (pdata && pdata->dcdc[id])
+	अगर (pdata && pdata->dcdc[id])
 		wm831x_buckv_dvs_init(pdev, dcdc,
 				      pdata->dcdc[id]->driver_data);
 
 	config.dev = pdev->dev.parent;
-	if (pdata)
+	अगर (pdata)
 		config.init_data = pdata->dcdc[id];
 	config.driver_data = dcdc;
 	config.regmap = wm831x->regmap;
 
-	dcdc->regulator = devm_regulator_register(&pdev->dev, &dcdc->desc,
+	dcdc->regulator = devm_regulator_रेजिस्टर(&pdev->dev, &dcdc->desc,
 						  &config);
-	if (IS_ERR(dcdc->regulator)) {
+	अगर (IS_ERR(dcdc->regulator)) अणु
 		ret = PTR_ERR(dcdc->regulator);
 		dev_err(wm831x->dev, "Failed to register DCDC%d: %d\n",
 			id + 1, ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	irq = wm831x_irq(wm831x, platform_get_irq_byname(pdev, "UV"));
-	ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+	irq = wm831x_irq(wm831x, platक्रमm_get_irq_byname(pdev, "UV"));
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
 					wm831x_dcdc_uv_irq,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					dcdc->name, dcdc);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(&pdev->dev, "Failed to request UV IRQ %d: %d\n",
 			irq, ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	irq = wm831x_irq(wm831x, platform_get_irq_byname(pdev, "HC"));
-	ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+	irq = wm831x_irq(wm831x, platक्रमm_get_irq_byname(pdev, "HC"));
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
 					wm831x_dcdc_oc_irq,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					dcdc->name, dcdc);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(&pdev->dev, "Failed to request HC IRQ %d: %d\n",
 			irq, ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, dcdc);
+	platक्रमm_set_drvdata(pdev, dcdc);
 
-	return 0;
+	वापस 0;
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver wm831x_buckv_driver = {
+अटल काष्ठा platक्रमm_driver wm831x_buckv_driver = अणु
 	.probe = wm831x_buckv_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "wm831x-buckv",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * BUCKP specifics
+ * BUCKP specअगरics
  */
 
-static int wm831x_buckp_set_suspend_voltage(struct regulator_dev *rdev, int uV)
-{
-	struct wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
-	struct wm831x *wm831x = dcdc->wm831x;
+अटल पूर्णांक wm831x_buckp_set_suspend_voltage(काष्ठा regulator_dev *rdev, पूर्णांक uV)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
+	काष्ठा wm831x *wm831x = dcdc->wm831x;
 	u16 reg = dcdc->base + WM831X_DCDC_SLEEP_CONTROL;
-	int sel;
+	पूर्णांक sel;
 
 	sel = regulator_map_voltage_linear(rdev, uV, uV);
-	if (sel < 0)
-		return sel;
+	अगर (sel < 0)
+		वापस sel;
 
-	return wm831x_set_bits(wm831x, reg, WM831X_DC3_ON_VSEL_MASK, sel);
-}
+	वापस wm831x_set_bits(wm831x, reg, WM831X_DC3_ON_VSEL_MASK, sel);
+पूर्ण
 
-static const struct regulator_ops wm831x_buckp_ops = {
+अटल स्थिर काष्ठा regulator_ops wm831x_buckp_ops = अणु
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
 	.get_voltage_sel = regulator_get_voltage_sel_regmap,
 	.list_voltage = regulator_list_voltage_linear,
@@ -540,45 +541,45 @@ static const struct regulator_ops wm831x_buckp_ops = {
 	.get_mode = wm831x_dcdc_get_mode,
 	.set_mode = wm831x_dcdc_set_mode,
 	.set_suspend_mode = wm831x_dcdc_set_suspend_mode,
-};
+पूर्ण;
 
-static int wm831x_buckp_probe(struct platform_device *pdev)
-{
-	struct wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
-	struct wm831x_pdata *pdata = dev_get_platdata(wm831x->dev);
-	struct regulator_config config = { };
-	int id;
-	struct wm831x_dcdc *dcdc;
-	struct resource *res;
-	int ret, irq;
+अटल पूर्णांक wm831x_buckp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा wm831x_pdata *pdata = dev_get_platdata(wm831x->dev);
+	काष्ठा regulator_config config = अणु पूर्ण;
+	पूर्णांक id;
+	काष्ठा wm831x_dcdc *dcdc;
+	काष्ठा resource *res;
+	पूर्णांक ret, irq;
 
-	if (pdata && pdata->wm831x_num)
+	अगर (pdata && pdata->wm831x_num)
 		id = (pdata->wm831x_num * 10) + 1;
-	else
+	अन्यथा
 		id = 0;
 	id = pdev->id - id;
 
 	dev_dbg(&pdev->dev, "Probing DCDC%d\n", id + 1);
 
-	dcdc = devm_kzalloc(&pdev->dev, sizeof(struct wm831x_dcdc),
+	dcdc = devm_kzalloc(&pdev->dev, माप(काष्ठा wm831x_dcdc),
 			    GFP_KERNEL);
-	if (!dcdc)
-		return -ENOMEM;
+	अगर (!dcdc)
+		वापस -ENOMEM;
 
 	dcdc->wm831x = wm831x;
 
-	res = platform_get_resource(pdev, IORESOURCE_REG, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_REG, 0);
+	अगर (res == शून्य) अणु
 		dev_err(&pdev->dev, "No REG resource\n");
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	dcdc->base = res->start;
 
-	snprintf(dcdc->name, sizeof(dcdc->name), "DCDC%d", id + 1);
+	snम_लिखो(dcdc->name, माप(dcdc->name), "DCDC%d", id + 1);
 	dcdc->desc.name = dcdc->name;
 
-	snprintf(dcdc->supply_name, sizeof(dcdc->supply_name),
+	snम_लिखो(dcdc->supply_name, माप(dcdc->supply_name),
 		 "DC%dVDD", id + 1);
 	dcdc->desc.supply_name = dcdc->supply_name;
 
@@ -595,114 +596,114 @@ static int wm831x_buckp_probe(struct platform_device *pdev)
 	dcdc->desc.uV_step = 25000;
 
 	config.dev = pdev->dev.parent;
-	if (pdata)
+	अगर (pdata)
 		config.init_data = pdata->dcdc[id];
 	config.driver_data = dcdc;
 	config.regmap = wm831x->regmap;
 
-	dcdc->regulator = devm_regulator_register(&pdev->dev, &dcdc->desc,
+	dcdc->regulator = devm_regulator_रेजिस्टर(&pdev->dev, &dcdc->desc,
 						  &config);
-	if (IS_ERR(dcdc->regulator)) {
+	अगर (IS_ERR(dcdc->regulator)) अणु
 		ret = PTR_ERR(dcdc->regulator);
 		dev_err(wm831x->dev, "Failed to register DCDC%d: %d\n",
 			id + 1, ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	irq = wm831x_irq(wm831x, platform_get_irq_byname(pdev, "UV"));
-	ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+	irq = wm831x_irq(wm831x, platक्रमm_get_irq_byname(pdev, "UV"));
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
 					wm831x_dcdc_uv_irq,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					dcdc->name, dcdc);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(&pdev->dev, "Failed to request UV IRQ %d: %d\n",
 			irq, ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, dcdc);
+	platक्रमm_set_drvdata(pdev, dcdc);
 
-	return 0;
+	वापस 0;
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver wm831x_buckp_driver = {
+अटल काष्ठा platक्रमm_driver wm831x_buckp_driver = अणु
 	.probe = wm831x_buckp_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "wm831x-buckp",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
  * DCDC boost convertors
  */
 
-static int wm831x_boostp_get_status(struct regulator_dev *rdev)
-{
-	struct wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
-	struct wm831x *wm831x = dcdc->wm831x;
-	int ret;
+अटल पूर्णांक wm831x_boostp_get_status(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा wm831x_dcdc *dcdc = rdev_get_drvdata(rdev);
+	काष्ठा wm831x *wm831x = dcdc->wm831x;
+	पूर्णांक ret;
 
-	/* First, check for errors */
-	ret = wm831x_reg_read(wm831x, WM831X_DCDC_UV_STATUS);
-	if (ret < 0)
-		return ret;
+	/* First, check क्रम errors */
+	ret = wm831x_reg_पढ़ो(wm831x, WM831X_DCDC_UV_STATUS);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret & (1 << rdev_get_id(rdev))) {
+	अगर (ret & (1 << rdev_get_id(rdev))) अणु
 		dev_dbg(wm831x->dev, "DCDC%d under voltage\n",
 			rdev_get_id(rdev) + 1);
-		return REGULATOR_STATUS_ERROR;
-	}
+		वापस REGULATOR_STATUS_ERROR;
+	पूर्ण
 
 	/* Is the regulator on? */
-	ret = wm831x_reg_read(wm831x, WM831X_DCDC_STATUS);
-	if (ret < 0)
-		return ret;
-	if (ret & (1 << rdev_get_id(rdev)))
-		return REGULATOR_STATUS_ON;
-	else
-		return REGULATOR_STATUS_OFF;
-}
+	ret = wm831x_reg_पढ़ो(wm831x, WM831X_DCDC_STATUS);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret & (1 << rdev_get_id(rdev)))
+		वापस REGULATOR_STATUS_ON;
+	अन्यथा
+		वापस REGULATOR_STATUS_OFF;
+पूर्ण
 
-static const struct regulator_ops wm831x_boostp_ops = {
+अटल स्थिर काष्ठा regulator_ops wm831x_boostp_ops = अणु
 	.get_status = wm831x_boostp_get_status,
 
 	.is_enabled = regulator_is_enabled_regmap,
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
-};
+पूर्ण;
 
-static int wm831x_boostp_probe(struct platform_device *pdev)
-{
-	struct wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
-	struct wm831x_pdata *pdata = dev_get_platdata(wm831x->dev);
-	struct regulator_config config = { };
-	int id = pdev->id % ARRAY_SIZE(pdata->dcdc);
-	struct wm831x_dcdc *dcdc;
-	struct resource *res;
-	int ret, irq;
+अटल पूर्णांक wm831x_boostp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा wm831x_pdata *pdata = dev_get_platdata(wm831x->dev);
+	काष्ठा regulator_config config = अणु पूर्ण;
+	पूर्णांक id = pdev->id % ARRAY_SIZE(pdata->dcdc);
+	काष्ठा wm831x_dcdc *dcdc;
+	काष्ठा resource *res;
+	पूर्णांक ret, irq;
 
 	dev_dbg(&pdev->dev, "Probing DCDC%d\n", id + 1);
 
-	if (pdata == NULL || pdata->dcdc[id] == NULL)
-		return -ENODEV;
+	अगर (pdata == शून्य || pdata->dcdc[id] == शून्य)
+		वापस -ENODEV;
 
-	dcdc = devm_kzalloc(&pdev->dev, sizeof(struct wm831x_dcdc), GFP_KERNEL);
-	if (!dcdc)
-		return -ENOMEM;
+	dcdc = devm_kzalloc(&pdev->dev, माप(काष्ठा wm831x_dcdc), GFP_KERNEL);
+	अगर (!dcdc)
+		वापस -ENOMEM;
 
 	dcdc->wm831x = wm831x;
 
-	res = platform_get_resource(pdev, IORESOURCE_REG, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_REG, 0);
+	अगर (res == शून्य) अणु
 		dev_err(&pdev->dev, "No REG resource\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dcdc->base = res->start;
 
-	snprintf(dcdc->name, sizeof(dcdc->name), "DCDC%d", id + 1);
+	snम_लिखो(dcdc->name, माप(dcdc->name), "DCDC%d", id + 1);
 	dcdc->desc.name = dcdc->name;
 	dcdc->desc.id = id;
 	dcdc->desc.type = REGULATOR_VOLTAGE;
@@ -712,43 +713,43 @@ static int wm831x_boostp_probe(struct platform_device *pdev)
 	dcdc->desc.enable_mask = 1 << id;
 
 	config.dev = pdev->dev.parent;
-	if (pdata)
+	अगर (pdata)
 		config.init_data = pdata->dcdc[id];
 	config.driver_data = dcdc;
 	config.regmap = wm831x->regmap;
 
-	dcdc->regulator = devm_regulator_register(&pdev->dev, &dcdc->desc,
+	dcdc->regulator = devm_regulator_रेजिस्टर(&pdev->dev, &dcdc->desc,
 						  &config);
-	if (IS_ERR(dcdc->regulator)) {
+	अगर (IS_ERR(dcdc->regulator)) अणु
 		ret = PTR_ERR(dcdc->regulator);
 		dev_err(wm831x->dev, "Failed to register DCDC%d: %d\n",
 			id + 1, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	irq = wm831x_irq(wm831x, platform_get_irq_byname(pdev, "UV"));
-	ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+	irq = wm831x_irq(wm831x, platक्रमm_get_irq_byname(pdev, "UV"));
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
 					wm831x_dcdc_uv_irq,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					dcdc->name,
 					dcdc);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(&pdev->dev, "Failed to request UV IRQ %d: %d\n",
 			irq, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, dcdc);
+	platक्रमm_set_drvdata(pdev, dcdc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver wm831x_boostp_driver = {
+अटल काष्ठा platक्रमm_driver wm831x_boostp_driver = अणु
 	.probe = wm831x_boostp_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "wm831x-boostp",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
  * External Power Enable
@@ -757,38 +758,38 @@ static struct platform_driver wm831x_boostp_driver = {
  * code.
  */
 
-#define WM831X_EPE_BASE 6
+#घोषणा WM831X_EPE_BASE 6
 
-static const struct regulator_ops wm831x_epe_ops = {
+अटल स्थिर काष्ठा regulator_ops wm831x_epe_ops = अणु
 	.is_enabled = regulator_is_enabled_regmap,
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.get_status = wm831x_dcdc_get_status,
-};
+पूर्ण;
 
-static int wm831x_epe_probe(struct platform_device *pdev)
-{
-	struct wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
-	struct wm831x_pdata *pdata = dev_get_platdata(wm831x->dev);
-	struct regulator_config config = { };
-	int id = pdev->id % ARRAY_SIZE(pdata->epe);
-	struct wm831x_dcdc *dcdc;
-	int ret;
+अटल पूर्णांक wm831x_epe_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm831x *wm831x = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा wm831x_pdata *pdata = dev_get_platdata(wm831x->dev);
+	काष्ठा regulator_config config = अणु पूर्ण;
+	पूर्णांक id = pdev->id % ARRAY_SIZE(pdata->epe);
+	काष्ठा wm831x_dcdc *dcdc;
+	पूर्णांक ret;
 
 	dev_dbg(&pdev->dev, "Probing EPE%d\n", id + 1);
 
-	dcdc = devm_kzalloc(&pdev->dev, sizeof(struct wm831x_dcdc), GFP_KERNEL);
-	if (!dcdc)
-		return -ENOMEM;
+	dcdc = devm_kzalloc(&pdev->dev, माप(काष्ठा wm831x_dcdc), GFP_KERNEL);
+	अगर (!dcdc)
+		वापस -ENOMEM;
 
 	dcdc->wm831x = wm831x;
 
 	/* For current parts this is correct; probably need to revisit
 	 * in future.
 	 */
-	snprintf(dcdc->name, sizeof(dcdc->name), "EPE%d", id + 1);
+	snम_लिखो(dcdc->name, माप(dcdc->name), "EPE%d", id + 1);
 	dcdc->desc.name = dcdc->name;
-	dcdc->desc.id = id + WM831X_EPE_BASE; /* Offset in DCDC registers */
+	dcdc->desc.id = id + WM831X_EPE_BASE; /* Offset in DCDC रेजिस्टरs */
 	dcdc->desc.ops = &wm831x_epe_ops;
 	dcdc->desc.type = REGULATOR_VOLTAGE;
 	dcdc->desc.owner = THIS_MODULE;
@@ -796,55 +797,55 @@ static int wm831x_epe_probe(struct platform_device *pdev)
 	dcdc->desc.enable_mask = 1 << dcdc->desc.id;
 
 	config.dev = pdev->dev.parent;
-	if (pdata)
+	अगर (pdata)
 		config.init_data = pdata->epe[id];
 	config.driver_data = dcdc;
 	config.regmap = wm831x->regmap;
 
-	dcdc->regulator = devm_regulator_register(&pdev->dev, &dcdc->desc,
+	dcdc->regulator = devm_regulator_रेजिस्टर(&pdev->dev, &dcdc->desc,
 						  &config);
-	if (IS_ERR(dcdc->regulator)) {
+	अगर (IS_ERR(dcdc->regulator)) अणु
 		ret = PTR_ERR(dcdc->regulator);
 		dev_err(wm831x->dev, "Failed to register EPE%d: %d\n",
 			id + 1, ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, dcdc);
+	platक्रमm_set_drvdata(pdev, dcdc);
 
-	return 0;
+	वापस 0;
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver wm831x_epe_driver = {
+अटल काष्ठा platक्रमm_driver wm831x_epe_driver = अणु
 	.probe = wm831x_epe_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "wm831x-epe",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_driver * const drivers[] = {
+अटल काष्ठा platक्रमm_driver * स्थिर drivers[] = अणु
 	&wm831x_buckv_driver,
 	&wm831x_buckp_driver,
 	&wm831x_boostp_driver,
 	&wm831x_epe_driver,
-};
+पूर्ण;
 
-static int __init wm831x_dcdc_init(void)
-{
-	return platform_register_drivers(drivers, ARRAY_SIZE(drivers));
-}
+अटल पूर्णांक __init wm831x_dcdc_init(व्योम)
+अणु
+	वापस platक्रमm_रेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
+पूर्ण
 subsys_initcall(wm831x_dcdc_init);
 
-static void __exit wm831x_dcdc_exit(void)
-{
-	platform_unregister_drivers(drivers, ARRAY_SIZE(drivers));
-}
-module_exit(wm831x_dcdc_exit);
+अटल व्योम __निकास wm831x_dcdc_निकास(व्योम)
+अणु
+	platक्रमm_unरेजिस्टर_drivers(drivers, ARRAY_SIZE(drivers));
+पूर्ण
+module_निकास(wm831x_dcdc_निकास);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Mark Brown");
 MODULE_DESCRIPTION("WM831x DC-DC convertor driver");
 MODULE_LICENSE("GPL");

@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
-#ifndef __PVRUSB2_CONTEXT_H
-#define __PVRUSB2_CONTEXT_H
+#अगर_अघोषित __PVRUSB2_CONTEXT_H
+#घोषणा __PVRUSB2_CONTEXT_H
 
-#include <linux/mutex.h>
-#include <linux/usb.h>
-#include <linux/workqueue.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/workqueue.h>
 
-struct pvr2_hdw;     /* hardware interface - defined elsewhere */
-struct pvr2_stream;  /* stream interface - defined elsewhere */
+काष्ठा pvr2_hdw;     /* hardware पूर्णांकerface - defined अन्यथाwhere */
+काष्ठा pvr2_stream;  /* stream पूर्णांकerface - defined अन्यथाwhere */
 
-struct pvr2_context;        /* All central state */
-struct pvr2_channel;        /* One I/O pathway to a user */
-struct pvr2_context_stream; /* Wrapper for a stream */
-struct pvr2_ioread;         /* Low level stream structure */
+काष्ठा pvr2_context;        /* All central state */
+काष्ठा pvr2_channel;        /* One I/O pathway to a user */
+काष्ठा pvr2_context_stream; /* Wrapper क्रम a stream */
+काष्ठा pvr2_ioपढ़ो;         /* Low level stream काष्ठाure */
 
-struct pvr2_context_stream {
-	struct pvr2_channel *user;
-	struct pvr2_stream *stream;
-};
+काष्ठा pvr2_context_stream अणु
+	काष्ठा pvr2_channel *user;
+	काष्ठा pvr2_stream *stream;
+पूर्ण;
 
-struct pvr2_context {
-	struct pvr2_channel *mc_first;
-	struct pvr2_channel *mc_last;
-	struct pvr2_context *exist_next;
-	struct pvr2_context *exist_prev;
-	struct pvr2_context *notify_next;
-	struct pvr2_context *notify_prev;
-	struct pvr2_hdw *hdw;
-	struct pvr2_context_stream video_stream;
-	struct mutex mutex;
-	int notify_flag;
-	int initialized_flag;
-	int disconnect_flag;
+काष्ठा pvr2_context अणु
+	काष्ठा pvr2_channel *mc_first;
+	काष्ठा pvr2_channel *mc_last;
+	काष्ठा pvr2_context *exist_next;
+	काष्ठा pvr2_context *exist_prev;
+	काष्ठा pvr2_context *notअगरy_next;
+	काष्ठा pvr2_context *notअगरy_prev;
+	काष्ठा pvr2_hdw *hdw;
+	काष्ठा pvr2_context_stream video_stream;
+	काष्ठा mutex mutex;
+	पूर्णांक notअगरy_flag;
+	पूर्णांक initialized_flag;
+	पूर्णांक disconnect_flag;
 
 	/* Called after pvr2_context initialization is complete */
-	void (*setup_func)(struct pvr2_context *);
+	व्योम (*setup_func)(काष्ठा pvr2_context *);
 
-};
+पूर्ण;
 
-struct pvr2_channel {
-	struct pvr2_context *mc_head;
-	struct pvr2_channel *mc_next;
-	struct pvr2_channel *mc_prev;
-	struct pvr2_context_stream *stream;
-	struct pvr2_hdw *hdw;
-	unsigned int input_mask;
-	void (*check_func)(struct pvr2_channel *);
-};
+काष्ठा pvr2_channel अणु
+	काष्ठा pvr2_context *mc_head;
+	काष्ठा pvr2_channel *mc_next;
+	काष्ठा pvr2_channel *mc_prev;
+	काष्ठा pvr2_context_stream *stream;
+	काष्ठा pvr2_hdw *hdw;
+	अचिन्हित पूर्णांक input_mask;
+	व्योम (*check_func)(काष्ठा pvr2_channel *);
+पूर्ण;
 
-struct pvr2_context *pvr2_context_create(struct usb_interface *intf,
-					 const struct usb_device_id *devid,
-					 void (*setup_func)(struct pvr2_context *));
-void pvr2_context_disconnect(struct pvr2_context *);
+काष्ठा pvr2_context *pvr2_context_create(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+					 स्थिर काष्ठा usb_device_id *devid,
+					 व्योम (*setup_func)(काष्ठा pvr2_context *));
+व्योम pvr2_context_disconnect(काष्ठा pvr2_context *);
 
-void pvr2_channel_init(struct pvr2_channel *,struct pvr2_context *);
-void pvr2_channel_done(struct pvr2_channel *);
-int pvr2_channel_limit_inputs(struct pvr2_channel *,unsigned int);
-unsigned int pvr2_channel_get_limited_inputs(struct pvr2_channel *);
-int pvr2_channel_claim_stream(struct pvr2_channel *,
-			      struct pvr2_context_stream *);
-struct pvr2_ioread *pvr2_channel_create_mpeg_stream(
-	struct pvr2_context_stream *);
+व्योम pvr2_channel_init(काष्ठा pvr2_channel *,काष्ठा pvr2_context *);
+व्योम pvr2_channel_करोne(काष्ठा pvr2_channel *);
+पूर्णांक pvr2_channel_limit_inमाला_दो(काष्ठा pvr2_channel *,अचिन्हित पूर्णांक);
+अचिन्हित पूर्णांक pvr2_channel_get_limited_inमाला_दो(काष्ठा pvr2_channel *);
+पूर्णांक pvr2_channel_claim_stream(काष्ठा pvr2_channel *,
+			      काष्ठा pvr2_context_stream *);
+काष्ठा pvr2_ioपढ़ो *pvr2_channel_create_mpeg_stream(
+	काष्ठा pvr2_context_stream *);
 
-int pvr2_context_global_init(void);
-void pvr2_context_global_done(void);
+पूर्णांक pvr2_context_global_init(व्योम);
+व्योम pvr2_context_global_करोne(व्योम);
 
-#endif /* __PVRUSB2_CONTEXT_H */
+#पूर्ण_अगर /* __PVRUSB2_CONTEXT_H */

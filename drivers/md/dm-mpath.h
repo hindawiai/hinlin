@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
  *
@@ -6,17 +7,17 @@
  * Multipath.
  */
 
-#ifndef	DM_MPATH_H
-#define	DM_MPATH_H
+#अगर_अघोषित	DM_MPATH_H
+#घोषणा	DM_MPATH_H
 
-struct dm_dev;
+काष्ठा dm_dev;
 
-struct dm_path {
-	struct dm_dev *dev;	/* Read-only */
-	void *pscontext;	/* For path-selector use */
-};
+काष्ठा dm_path अणु
+	काष्ठा dm_dev *dev;	/* Read-only */
+	व्योम *pscontext;	/* For path-selector use */
+पूर्ण;
 
-/* Callback for hwh_pg_init_fn to use when complete */
-void dm_pg_init_complete(struct dm_path *path, unsigned err_flags);
+/* Callback क्रम hwh_pg_init_fn to use when complete */
+व्योम dm_pg_init_complete(काष्ठा dm_path *path, अचिन्हित err_flags);
 
-#endif
+#पूर्ण_अगर

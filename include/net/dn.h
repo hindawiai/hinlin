@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NET_DN_H
-#define _NET_DN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NET_DN_H
+#घोषणा _NET_DN_H
 
-#include <linux/dn.h>
-#include <net/sock.h>
-#include <net/flow.h>
-#include <asm/byteorder.h>
-#include <asm/unaligned.h>
+#समावेश <linux/dn.h>
+#समावेश <net/sock.h>
+#समावेश <net/flow.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/unaligned.h>
 
-struct dn_scp                                   /* Session Control Port */
-{
-        unsigned char           state;
-#define DN_O     1                      /* Open                 */
-#define DN_CR    2                      /* Connect Receive      */
-#define DN_DR    3                      /* Disconnect Reject    */
-#define DN_DRC   4                      /* Discon. Rej. Complete*/
-#define DN_CC    5                      /* Connect Confirm      */
-#define DN_CI    6                      /* Connect Initiate     */
-#define DN_NR    7                      /* No resources         */
-#define DN_NC    8                      /* No communication     */
-#define DN_CD    9                      /* Connect Delivery     */
-#define DN_RJ    10                     /* Rejected             */
-#define DN_RUN   11                     /* Running              */
-#define DN_DI    12                     /* Disconnect Initiate  */
-#define DN_DIC   13                     /* Disconnect Complete  */
-#define DN_DN    14                     /* Disconnect Notificat */
-#define DN_CL    15                     /* Closed               */
-#define DN_CN    16                     /* Closed Notification  */
+काष्ठा dn_scp                                   /* Session Control Port */
+अणु
+        अचिन्हित अक्षर           state;
+#घोषणा DN_O     1                      /* Open                 */
+#घोषणा DN_CR    2                      /* Connect Receive      */
+#घोषणा DN_DR    3                      /* Disconnect Reject    */
+#घोषणा DN_DRC   4                      /* Discon. Rej. Complete*/
+#घोषणा DN_CC    5                      /* Connect Confirm      */
+#घोषणा DN_CI    6                      /* Connect Initiate     */
+#घोषणा DN_NR    7                      /* No resources         */
+#घोषणा DN_NC    8                      /* No communication     */
+#घोषणा DN_CD    9                      /* Connect Delivery     */
+#घोषणा DN_RJ    10                     /* Rejected             */
+#घोषणा DN_RUN   11                     /* Running              */
+#घोषणा DN_DI    12                     /* Disconnect Initiate  */
+#घोषणा DN_DIC   13                     /* Disconnect Complete  */
+#घोषणा DN_DN    14                     /* Disconnect Notअगरicat */
+#घोषणा DN_CL    15                     /* Closed               */
+#घोषणा DN_CN    16                     /* Closed Notअगरication  */
 
         __le16          addrloc;
         __le16          addrrem;
@@ -40,9 +41,9 @@ struct dn_scp                                   /* Session Control Port */
         __u16          ackrcv_oth;
         __u8           flowrem_sw;
 	__u8           flowloc_sw;
-#define DN_SEND         2
-#define DN_DONTSEND     1
-#define DN_NOCHANGE     0
+#घोषणा DN_SEND         2
+#घोषणा DN_DONTSEND     1
+#घोषणा DN_NOCHANGE     0
 	__u16		flowrem_dat;
 	__u16		flowrem_oth;
 	__u16		flowloc_dat;
@@ -58,77 +59,77 @@ struct dn_scp                                   /* Session Control Port */
 	__u8		nonagle;
 	__u8		multi_ireq;
 	__u8		accept_mode;
-	unsigned long		seg_total; /* Running total of current segment */
+	अचिन्हित दीर्घ		seg_total; /* Running total of current segment */
 
-	struct optdata_dn     conndata_in;
-	struct optdata_dn     conndata_out;
-	struct optdata_dn     discdata_in;
-	struct optdata_dn     discdata_out;
-        struct accessdata_dn  accessdata;
+	काष्ठा optdata_dn     conndata_in;
+	काष्ठा optdata_dn     conndata_out;
+	काष्ठा optdata_dn     discdata_in;
+	काष्ठा optdata_dn     discdata_out;
+        काष्ठा accessdata_dn  accessdata;
 
-        struct sockaddr_dn addr; /* Local address  */
-	struct sockaddr_dn peer; /* Remote address */
+        काष्ठा sockaddr_dn addr; /* Local address  */
+	काष्ठा sockaddr_dn peer; /* Remote address */
 
 	/*
-	 * In this case the RTT estimation is not specified in the
-	 * docs, nor is any back off algorithm. Here we follow well
+	 * In this हाल the RTT estimation is not specअगरied in the
+	 * करोcs, nor is any back off algorithm. Here we follow well
 	 * known tcp algorithms with a few small variations.
 	 *
-	 * snd_window: Max number of packets we send before we wait for
+	 * snd_winकरोw: Max number of packets we send beक्रमe we रुको क्रम
 	 *             an ack to come back. This will become part of a
 	 *             more complicated scheme when we support flow
 	 *             control.
 	 *
-	 * nsp_srtt:   Round-Trip-Time (x8) in jiffies. This is a rolling
+	 * nsp_srtt:   Round-Trip-Time (x8) in jअगरfies. This is a rolling
 	 *             average.
-	 * nsp_rttvar: Round-Trip-Time-Varience (x4) in jiffies. This is the
+	 * nsp_rttvar: Round-Trip-Time-Varience (x4) in jअगरfies. This is the
 	 *             varience of the smoothed average (but calculated in
-	 *             a simpler way than for normal statistical varience
+	 *             a simpler way than क्रम normal statistical varience
 	 *             calculations).
 	 *
-	 * nsp_rxtshift: Backoff counter. Value is zero normally, each time
+	 * nsp_rxtshअगरt: Backoff counter. Value is zero normally, each समय
 	 *               a packet is lost is increases by one until an ack
 	 *               is received. Its used to index an array of backoff
 	 *               multipliers.
 	 */
-#define NSP_MIN_WINDOW 1
-#define NSP_MAX_WINDOW (0x07fe)
-	unsigned long max_window;
-	unsigned long snd_window;
-#define NSP_INITIAL_SRTT (HZ)
-	unsigned long nsp_srtt;
-#define NSP_INITIAL_RTTVAR (HZ*3)
-	unsigned long nsp_rttvar;
-#define NSP_MAXRXTSHIFT 12
-	unsigned long nsp_rxtshift;
+#घोषणा NSP_MIN_WINDOW 1
+#घोषणा NSP_MAX_WINDOW (0x07fe)
+	अचिन्हित दीर्घ max_winकरोw;
+	अचिन्हित दीर्घ snd_winकरोw;
+#घोषणा NSP_INITIAL_SRTT (HZ)
+	अचिन्हित दीर्घ nsp_srtt;
+#घोषणा NSP_INITIAL_RTTVAR (HZ*3)
+	अचिन्हित दीर्घ nsp_rttvar;
+#घोषणा NSP_MAXRXTSHIFT 12
+	अचिन्हित दीर्घ nsp_rxtshअगरt;
 
 	/*
-	 * Output queues, one for data, one for otherdata/linkservice
+	 * Output queues, one क्रम data, one क्रम otherdata/linkservice
 	 */
-	struct sk_buff_head data_xmit_queue;
-	struct sk_buff_head other_xmit_queue;
+	काष्ठा sk_buff_head data_xmit_queue;
+	काष्ठा sk_buff_head other_xmit_queue;
 
 	/*
-	 * Input queue for other data
+	 * Input queue क्रम other data
 	 */
-	struct sk_buff_head other_receive_queue;
-	int other_report;
+	काष्ठा sk_buff_head other_receive_queue;
+	पूर्णांक other_report;
 
 	/*
-	 * Stuff to do with the slow timer
+	 * Stuff to करो with the slow समयr
 	 */
-	unsigned long stamp;          /* time of last transmit */
-	unsigned long persist;
-	int (*persist_fxn)(struct sock *sk);
-	unsigned long keepalive;
-	void (*keepalive_fxn)(struct sock *sk);
+	अचिन्हित दीर्घ stamp;          /* समय of last transmit */
+	अचिन्हित दीर्घ persist;
+	पूर्णांक (*persist_fxn)(काष्ठा sock *sk);
+	अचिन्हित दीर्घ keepalive;
+	व्योम (*keepalive_fxn)(काष्ठा sock *sk);
 
-};
+पूर्ण;
 
-static inline struct dn_scp *DN_SK(struct sock *sk)
-{
-	return (struct dn_scp *)(sk + 1);
-}
+अटल अंतरभूत काष्ठा dn_scp *DN_SK(काष्ठा sock *sk)
+अणु
+	वापस (काष्ठा dn_scp *)(sk + 1);
+पूर्ण
 
 /*
  * src,dst : Source and Destination DECnet addresses
@@ -138,18 +139,18 @@ static inline struct dn_scp *DN_SK(struct sock *sk)
  * rt_flags : Routing flags byte
  * nsp_flags : NSP layer flags byte
  * segsize : Size of segment
- * segnum : Number, for data, otherdata and linkservice
- * xmit_count : Number of times we've transmitted this skb
+ * segnum : Number, क्रम data, otherdata and linkservice
+ * xmit_count : Number of बार we've transmitted this skb
  * stamp : Time stamp of most recent transmission, used in RTT calculations
- * iif: Input interface number
+ * iअगर: Input पूर्णांकerface number
  *
- * As a general policy, this structure keeps all addresses in network
- * byte order, and all else in host byte order. Thus dst, src, dst_port
- * and src_port are in network order. All else is in host order.
+ * As a general policy, this काष्ठाure keeps all addresses in network
+ * byte order, and all अन्यथा in host byte order. Thus dst, src, dst_port
+ * and src_port are in network order. All अन्यथा is in host order.
  * 
  */
-#define DN_SKB_CB(skb) ((struct dn_skb_cb *)(skb)->cb)
-struct dn_skb_cb {
+#घोषणा DN_SKB_CB(skb) ((काष्ठा dn_skb_cb *)(skb)->cb)
+काष्ठा dn_skb_cb अणु
 	__le16 dst;
 	__le16 src;
 	__u16 hops;
@@ -162,22 +163,22 @@ struct dn_skb_cb {
 	__u16 segsize;
 	__u16 segnum;
 	__u16 xmit_count;
-	unsigned long stamp;
-	int iif;
-};
+	अचिन्हित दीर्घ stamp;
+	पूर्णांक iअगर;
+पूर्ण;
 
-static inline __le16 dn_eth2dn(unsigned char *ethaddr)
-{
-	return get_unaligned((__le16 *)(ethaddr + 4));
-}
+अटल अंतरभूत __le16 dn_eth2dn(अचिन्हित अक्षर *ethaddr)
+अणु
+	वापस get_unaligned((__le16 *)(ethaddr + 4));
+पूर्ण
 
-static inline __le16 dn_saddr2dn(struct sockaddr_dn *saddr)
-{
-	return *(__le16 *)saddr->sdn_nodeaddr;
-}
+अटल अंतरभूत __le16 dn_saddr2dn(काष्ठा sockaddr_dn *saddr)
+अणु
+	वापस *(__le16 *)saddr->sdn_nodeaddr;
+पूर्ण
 
-static inline void dn_dn2eth(unsigned char *ethaddr, __le16 addr)
-{
+अटल अंतरभूत व्योम dn_dn2eth(अचिन्हित अक्षर *ethaddr, __le16 addr)
+अणु
 	__u16 a = le16_to_cpu(addr);
 	ethaddr[0] = 0xAA;
 	ethaddr[1] = 0x00;
@@ -185,47 +186,47 @@ static inline void dn_dn2eth(unsigned char *ethaddr, __le16 addr)
 	ethaddr[3] = 0x00;
 	ethaddr[4] = (__u8)(a & 0xff);
 	ethaddr[5] = (__u8)(a >> 8);
-}
+पूर्ण
 
-static inline void dn_sk_ports_copy(struct flowidn *fld, struct dn_scp *scp)
-{
+अटल अंतरभूत व्योम dn_sk_ports_copy(काष्ठा flowidn *fld, काष्ठा dn_scp *scp)
+अणु
 	fld->fld_sport = scp->addrloc;
 	fld->fld_dport = scp->addrrem;
-}
+पूर्ण
 
-unsigned int dn_mss_from_pmtu(struct net_device *dev, int mtu);
-void dn_register_sysctl(void);
-void dn_unregister_sysctl(void);
+अचिन्हित पूर्णांक dn_mss_from_pmtu(काष्ठा net_device *dev, पूर्णांक mtu);
+व्योम dn_रेजिस्टर_sysctl(व्योम);
+व्योम dn_unरेजिस्टर_sysctl(व्योम);
 
-#define DN_MENUVER_ACC 0x01
-#define DN_MENUVER_USR 0x02
-#define DN_MENUVER_PRX 0x04
-#define DN_MENUVER_UIC 0x08
+#घोषणा DN_MENUVER_ACC 0x01
+#घोषणा DN_MENUVER_USR 0x02
+#घोषणा DN_MENUVER_PRX 0x04
+#घोषणा DN_MENUVER_UIC 0x08
 
-struct sock *dn_sklist_find_listener(struct sockaddr_dn *addr);
-struct sock *dn_find_by_skb(struct sk_buff *skb);
-#define DN_ASCBUF_LEN 9
-char *dn_addr2asc(__u16, char *);
-int dn_destroy_timer(struct sock *sk);
+काष्ठा sock *dn_sklist_find_listener(काष्ठा sockaddr_dn *addr);
+काष्ठा sock *dn_find_by_skb(काष्ठा sk_buff *skb);
+#घोषणा DN_ASCBUF_LEN 9
+अक्षर *dn_addr2asc(__u16, अक्षर *);
+पूर्णांक dn_destroy_समयr(काष्ठा sock *sk);
 
-int dn_sockaddr2username(struct sockaddr_dn *addr, unsigned char *buf,
-			 unsigned char type);
-int dn_username2sockaddr(unsigned char *data, int len, struct sockaddr_dn *addr,
-			 unsigned char *type);
+पूर्णांक dn_sockaddr2username(काष्ठा sockaddr_dn *addr, अचिन्हित अक्षर *buf,
+			 अचिन्हित अक्षर type);
+पूर्णांक dn_username2sockaddr(अचिन्हित अक्षर *data, पूर्णांक len, काष्ठा sockaddr_dn *addr,
+			 अचिन्हित अक्षर *type);
 
-void dn_start_slow_timer(struct sock *sk);
-void dn_stop_slow_timer(struct sock *sk);
+व्योम dn_start_slow_समयr(काष्ठा sock *sk);
+व्योम dn_stop_slow_समयr(काष्ठा sock *sk);
 
-extern __le16 decnet_address;
-extern int decnet_debug_level;
-extern int decnet_time_wait;
-extern int decnet_dn_count;
-extern int decnet_di_count;
-extern int decnet_dr_count;
-extern int decnet_no_fc_max_cwnd;
+बाह्य __le16 decnet_address;
+बाह्य पूर्णांक decnet_debug_level;
+बाह्य पूर्णांक decnet_समय_रुको;
+बाह्य पूर्णांक decnet_dn_count;
+बाह्य पूर्णांक decnet_di_count;
+बाह्य पूर्णांक decnet_dr_count;
+बाह्य पूर्णांक decnet_no_fc_max_cwnd;
 
-extern long sysctl_decnet_mem[3];
-extern int sysctl_decnet_wmem[3];
-extern int sysctl_decnet_rmem[3];
+बाह्य दीर्घ sysctl_decnet_mem[3];
+बाह्य पूर्णांक sysctl_decnet_wmem[3];
+बाह्य पूर्णांक sysctl_decnet_rmem[3];
 
-#endif /* _NET_DN_H */
+#पूर्ण_अगर /* _NET_DN_H */

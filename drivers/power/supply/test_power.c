@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Power supply driver for testing.
+ * Power supply driver क्रम testing.
  *
- * Copyright 2010  Anton Vorontsov <cbouatmailru@gmail.com>
+ * Copyright 2010  Anton Vorontsov <cbouaपंचांगailru@gmail.com>
  *
  * Dynamic module parameter code from the Virtual Battery Driver
  * Copyright (C) 2008 Pylone, Inc.
  * By: Masashi YOKOTA <yokota@pylone.jp>
  * Originally found here:
- * http://downloads.pylone.jp/src/virtual_battery/virtual_battery-0.0.1.tar.bz2
+ * http://करोwnloads.pylone.jp/src/भव_battery/भव_battery-0.0.1.tar.bz2
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/power_supply.h>
-#include <linux/errno.h>
-#include <linux/delay.h>
-#include <generated/utsrelease.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/delay.h>
+#समावेश <generated/utsrelease.h>
 
-enum test_power_id {
+क्रमागत test_घातer_id अणु
 	TEST_AC,
 	TEST_BATTERY,
 	TEST_USB,
 	TEST_POWER_NUM,
-};
+पूर्ण;
 
-static int ac_online			= 1;
-static int usb_online			= 1;
-static int battery_status		= POWER_SUPPLY_STATUS_DISCHARGING;
-static int battery_health		= POWER_SUPPLY_HEALTH_GOOD;
-static int battery_present		= 1; /* true */
-static int battery_technology		= POWER_SUPPLY_TECHNOLOGY_LION;
-static int battery_capacity		= 50;
-static int battery_voltage		= 3300;
-static int battery_charge_counter	= -1000;
-static int battery_current		= -1600;
+अटल पूर्णांक ac_online			= 1;
+अटल पूर्णांक usb_online			= 1;
+अटल पूर्णांक battery_status		= POWER_SUPPLY_STATUS_DISCHARGING;
+अटल पूर्णांक battery_health		= POWER_SUPPLY_HEALTH_GOOD;
+अटल पूर्णांक battery_present		= 1; /* true */
+अटल पूर्णांक battery_technology		= POWER_SUPPLY_TECHNOLOGY_LION;
+अटल पूर्णांक battery_capacity		= 50;
+अटल पूर्णांक battery_voltage		= 3300;
+अटल पूर्णांक battery_अक्षरge_counter	= -1000;
+अटल पूर्णांक battery_current		= -1600;
 
-static bool module_initialized;
+अटल bool module_initialized;
 
-static int test_power_get_ac_property(struct power_supply *psy,
-				      enum power_supply_property psp,
-				      union power_supply_propval *val)
-{
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = ac_online;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+अटल पूर्णांक test_घातer_get_ac_property(काष्ठा घातer_supply *psy,
+				      क्रमागत घातer_supply_property psp,
+				      जोड़ घातer_supply_propval *val)
+अणु
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = ac_online;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int test_power_get_usb_property(struct power_supply *psy,
-				      enum power_supply_property psp,
-				      union power_supply_propval *val)
-{
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = usb_online;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+अटल पूर्णांक test_घातer_get_usb_property(काष्ठा घातer_supply *psy,
+				      क्रमागत घातer_supply_property psp,
+				      जोड़ घातer_supply_propval *val)
+अणु
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = usb_online;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int test_power_get_battery_property(struct power_supply *psy,
-					   enum power_supply_property psp,
-					   union power_supply_propval *val)
-{
-	switch (psp) {
-	case POWER_SUPPLY_PROP_MODEL_NAME:
+अटल पूर्णांक test_घातer_get_battery_property(काष्ठा घातer_supply *psy,
+					   क्रमागत घातer_supply_property psp,
+					   जोड़ घातer_supply_propval *val)
+अणु
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = "Test battery";
-		break;
-	case POWER_SUPPLY_PROP_MANUFACTURER:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = "Linux";
-		break;
-	case POWER_SUPPLY_PROP_SERIAL_NUMBER:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_SERIAL_NUMBER:
 		val->strval = UTS_RELEASE;
-		break;
-	case POWER_SUPPLY_PROP_STATUS:
-		val->intval = battery_status;
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-		val->intval = POWER_SUPPLY_CHARGE_TYPE_FAST;
-		break;
-	case POWER_SUPPLY_PROP_HEALTH:
-		val->intval = battery_health;
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = battery_present;
-		break;
-	case POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->intval = battery_technology;
-		break;
-	case POWER_SUPPLY_PROP_CAPACITY_LEVEL:
-		val->intval = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
-		break;
-	case POWER_SUPPLY_PROP_CAPACITY:
-	case POWER_SUPPLY_PROP_CHARGE_NOW:
-		val->intval = battery_capacity;
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_COUNTER:
-		val->intval = battery_charge_counter;
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-	case POWER_SUPPLY_PROP_CHARGE_FULL:
-		val->intval = 100;
-		break;
-	case POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG:
-	case POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
-		val->intval = 3600;
-		break;
-	case POWER_SUPPLY_PROP_TEMP:
-		val->intval = 26;
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->intval = battery_voltage;
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_AVG:
-	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		val->intval = battery_current;
-		break;
-	default:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_STATUS:
+		val->पूर्णांकval = battery_status;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
+		val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_FAST;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_HEALTH:
+		val->पूर्णांकval = battery_health;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		val->पूर्णांकval = battery_present;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->पूर्णांकval = battery_technology;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CAPACITY_LEVEL:
+		val->पूर्णांकval = POWER_SUPPLY_CAPACITY_LEVEL_NORMAL;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CAPACITY:
+	हाल POWER_SUPPLY_PROP_CHARGE_NOW:
+		val->पूर्णांकval = battery_capacity;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_COUNTER:
+		val->पूर्णांकval = battery_अक्षरge_counter;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+	हाल POWER_SUPPLY_PROP_CHARGE_FULL:
+		val->पूर्णांकval = 100;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG:
+	हाल POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
+		val->पूर्णांकval = 3600;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TEMP:
+		val->पूर्णांकval = 26;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->पूर्णांकval = battery_voltage;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_AVG:
+	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
+		val->पूर्णांकval = battery_current;
+		अवरोध;
+	शेष:
 		pr_info("%s: some properties deliberately report errors.\n",
 			__func__);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static enum power_supply_property test_power_ac_props[] = {
+अटल क्रमागत घातer_supply_property test_घातer_ac_props[] = अणु
 	POWER_SUPPLY_PROP_ONLINE,
-};
+पूर्ण;
 
-static enum power_supply_property test_power_battery_props[] = {
+अटल क्रमागत घातer_supply_property test_घातer_battery_props[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_CHARGE_TYPE,
 	POWER_SUPPLY_PROP_HEALTH,
@@ -156,399 +157,399 @@ static enum power_supply_property test_power_battery_props[] = {
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_AVG,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
-};
+पूर्ण;
 
-static char *test_power_ac_supplied_to[] = {
+अटल अक्षर *test_घातer_ac_supplied_to[] = अणु
 	"test_battery",
-};
+पूर्ण;
 
-static struct power_supply *test_power_supplies[TEST_POWER_NUM];
+अटल काष्ठा घातer_supply *test_घातer_supplies[TEST_POWER_NUM];
 
-static const struct power_supply_desc test_power_desc[] = {
-	[TEST_AC] = {
+अटल स्थिर काष्ठा घातer_supply_desc test_घातer_desc[] = अणु
+	[TEST_AC] = अणु
 		.name = "test_ac",
 		.type = POWER_SUPPLY_TYPE_MAINS,
-		.properties = test_power_ac_props,
-		.num_properties = ARRAY_SIZE(test_power_ac_props),
-		.get_property = test_power_get_ac_property,
-	},
-	[TEST_BATTERY] = {
+		.properties = test_घातer_ac_props,
+		.num_properties = ARRAY_SIZE(test_घातer_ac_props),
+		.get_property = test_घातer_get_ac_property,
+	पूर्ण,
+	[TEST_BATTERY] = अणु
 		.name = "test_battery",
 		.type = POWER_SUPPLY_TYPE_BATTERY,
-		.properties = test_power_battery_props,
-		.num_properties = ARRAY_SIZE(test_power_battery_props),
-		.get_property = test_power_get_battery_property,
-	},
-	[TEST_USB] = {
+		.properties = test_घातer_battery_props,
+		.num_properties = ARRAY_SIZE(test_घातer_battery_props),
+		.get_property = test_घातer_get_battery_property,
+	पूर्ण,
+	[TEST_USB] = अणु
 		.name = "test_usb",
 		.type = POWER_SUPPLY_TYPE_USB,
-		.properties = test_power_ac_props,
-		.num_properties = ARRAY_SIZE(test_power_ac_props),
-		.get_property = test_power_get_usb_property,
-	},
-};
+		.properties = test_घातer_ac_props,
+		.num_properties = ARRAY_SIZE(test_घातer_ac_props),
+		.get_property = test_घातer_get_usb_property,
+	पूर्ण,
+पूर्ण;
 
-static const struct power_supply_config test_power_configs[] = {
-	{
+अटल स्थिर काष्ठा घातer_supply_config test_घातer_configs[] = अणु
+	अणु
 		/* test_ac */
-		.supplied_to = test_power_ac_supplied_to,
-		.num_supplicants = ARRAY_SIZE(test_power_ac_supplied_to),
-	}, {
+		.supplied_to = test_घातer_ac_supplied_to,
+		.num_supplicants = ARRAY_SIZE(test_घातer_ac_supplied_to),
+	पूर्ण, अणु
 		/* test_battery */
-	}, {
+	पूर्ण, अणु
 		/* test_usb */
-		.supplied_to = test_power_ac_supplied_to,
-		.num_supplicants = ARRAY_SIZE(test_power_ac_supplied_to),
-	},
-};
+		.supplied_to = test_घातer_ac_supplied_to,
+		.num_supplicants = ARRAY_SIZE(test_घातer_ac_supplied_to),
+	पूर्ण,
+पूर्ण;
 
-static int __init test_power_init(void)
-{
-	int i;
-	int ret;
+अटल पूर्णांक __init test_घातer_init(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	BUILD_BUG_ON(TEST_POWER_NUM != ARRAY_SIZE(test_power_supplies));
-	BUILD_BUG_ON(TEST_POWER_NUM != ARRAY_SIZE(test_power_configs));
+	BUILD_BUG_ON(TEST_POWER_NUM != ARRAY_SIZE(test_घातer_supplies));
+	BUILD_BUG_ON(TEST_POWER_NUM != ARRAY_SIZE(test_घातer_configs));
 
-	for (i = 0; i < ARRAY_SIZE(test_power_supplies); i++) {
-		test_power_supplies[i] = power_supply_register(NULL,
-						&test_power_desc[i],
-						&test_power_configs[i]);
-		if (IS_ERR(test_power_supplies[i])) {
+	क्रम (i = 0; i < ARRAY_SIZE(test_घातer_supplies); i++) अणु
+		test_घातer_supplies[i] = घातer_supply_रेजिस्टर(शून्य,
+						&test_घातer_desc[i],
+						&test_घातer_configs[i]);
+		अगर (IS_ERR(test_घातer_supplies[i])) अणु
 			pr_err("%s: failed to register %s\n", __func__,
-				test_power_desc[i].name);
-			ret = PTR_ERR(test_power_supplies[i]);
-			goto failed;
-		}
-	}
+				test_घातer_desc[i].name);
+			ret = PTR_ERR(test_घातer_supplies[i]);
+			जाओ failed;
+		पूर्ण
+	पूर्ण
 
 	module_initialized = true;
-	return 0;
+	वापस 0;
 failed:
-	while (--i >= 0)
-		power_supply_unregister(test_power_supplies[i]);
-	return ret;
-}
-module_init(test_power_init);
+	जबतक (--i >= 0)
+		घातer_supply_unरेजिस्टर(test_घातer_supplies[i]);
+	वापस ret;
+पूर्ण
+module_init(test_घातer_init);
 
-static void __exit test_power_exit(void)
-{
-	int i;
+अटल व्योम __निकास test_घातer_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
 	/* Let's see how we handle changes... */
 	ac_online = 0;
 	usb_online = 0;
 	battery_status = POWER_SUPPLY_STATUS_DISCHARGING;
-	for (i = 0; i < ARRAY_SIZE(test_power_supplies); i++)
-		power_supply_changed(test_power_supplies[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(test_घातer_supplies); i++)
+		घातer_supply_changed(test_घातer_supplies[i]);
 	pr_info("%s: 'changed' event sent, sleeping for 10 seconds...\n",
 		__func__);
 	ssleep(10);
 
-	for (i = 0; i < ARRAY_SIZE(test_power_supplies); i++)
-		power_supply_unregister(test_power_supplies[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(test_घातer_supplies); i++)
+		घातer_supply_unरेजिस्टर(test_घातer_supplies[i]);
 
 	module_initialized = false;
-}
-module_exit(test_power_exit);
+पूर्ण
+module_निकास(test_घातer_निकास);
 
 
 
-#define MAX_KEYLENGTH 256
-struct battery_property_map {
-	int value;
-	char const *key;
-};
+#घोषणा MAX_KEYLENGTH 256
+काष्ठा battery_property_map अणु
+	पूर्णांक value;
+	अक्षर स्थिर *key;
+पूर्ण;
 
-static struct battery_property_map map_ac_online[] = {
-	{ 0,  "off"  },
-	{ 1,  "on" },
-	{ -1, NULL  },
-};
+अटल काष्ठा battery_property_map map_ac_online[] = अणु
+	अणु 0,  "off"  पूर्ण,
+	अणु 1,  "on" पूर्ण,
+	अणु -1, शून्य  पूर्ण,
+पूर्ण;
 
-static struct battery_property_map map_status[] = {
-	{ POWER_SUPPLY_STATUS_CHARGING,     "charging"     },
-	{ POWER_SUPPLY_STATUS_DISCHARGING,  "discharging"  },
-	{ POWER_SUPPLY_STATUS_NOT_CHARGING, "not-charging" },
-	{ POWER_SUPPLY_STATUS_FULL,         "full"         },
-	{ -1,                               NULL           },
-};
+अटल काष्ठा battery_property_map map_status[] = अणु
+	अणु POWER_SUPPLY_STATUS_CHARGING,     "charging"     पूर्ण,
+	अणु POWER_SUPPLY_STATUS_DISCHARGING,  "discharging"  पूर्ण,
+	अणु POWER_SUPPLY_STATUS_NOT_CHARGING, "not-charging" पूर्ण,
+	अणु POWER_SUPPLY_STATUS_FULL,         "full"         पूर्ण,
+	अणु -1,                               शून्य           पूर्ण,
+पूर्ण;
 
-static struct battery_property_map map_health[] = {
-	{ POWER_SUPPLY_HEALTH_GOOD,           "good"        },
-	{ POWER_SUPPLY_HEALTH_OVERHEAT,       "overheat"    },
-	{ POWER_SUPPLY_HEALTH_DEAD,           "dead"        },
-	{ POWER_SUPPLY_HEALTH_OVERVOLTAGE,    "overvoltage" },
-	{ POWER_SUPPLY_HEALTH_UNSPEC_FAILURE, "failure"     },
-	{ -1,                                 NULL          },
-};
+अटल काष्ठा battery_property_map map_health[] = अणु
+	अणु POWER_SUPPLY_HEALTH_GOOD,           "good"        पूर्ण,
+	अणु POWER_SUPPLY_HEALTH_OVERHEAT,       "overheat"    पूर्ण,
+	अणु POWER_SUPPLY_HEALTH_DEAD,           "dead"        पूर्ण,
+	अणु POWER_SUPPLY_HEALTH_OVERVOLTAGE,    "overvoltage" पूर्ण,
+	अणु POWER_SUPPLY_HEALTH_UNSPEC_FAILURE, "failure"     पूर्ण,
+	अणु -1,                                 शून्य          पूर्ण,
+पूर्ण;
 
-static struct battery_property_map map_present[] = {
-	{ 0,  "false" },
-	{ 1,  "true"  },
-	{ -1, NULL    },
-};
+अटल काष्ठा battery_property_map map_present[] = अणु
+	अणु 0,  "false" पूर्ण,
+	अणु 1,  "true"  पूर्ण,
+	अणु -1, शून्य    पूर्ण,
+पूर्ण;
 
-static struct battery_property_map map_technology[] = {
-	{ POWER_SUPPLY_TECHNOLOGY_NiMH, "NiMH" },
-	{ POWER_SUPPLY_TECHNOLOGY_LION, "LION" },
-	{ POWER_SUPPLY_TECHNOLOGY_LIPO, "LIPO" },
-	{ POWER_SUPPLY_TECHNOLOGY_LiFe, "LiFe" },
-	{ POWER_SUPPLY_TECHNOLOGY_NiCd, "NiCd" },
-	{ POWER_SUPPLY_TECHNOLOGY_LiMn, "LiMn" },
-	{ -1,				NULL   },
-};
+अटल काष्ठा battery_property_map map_technology[] = अणु
+	अणु POWER_SUPPLY_TECHNOLOGY_NiMH, "NiMH" पूर्ण,
+	अणु POWER_SUPPLY_TECHNOLOGY_LION, "LION" पूर्ण,
+	अणु POWER_SUPPLY_TECHNOLOGY_LIPO, "LIPO" पूर्ण,
+	अणु POWER_SUPPLY_TECHNOLOGY_LiFe, "LiFe" पूर्ण,
+	अणु POWER_SUPPLY_TECHNOLOGY_NiCd, "NiCd" पूर्ण,
+	अणु POWER_SUPPLY_TECHNOLOGY_LiMn, "LiMn" पूर्ण,
+	अणु -1,				शून्य   पूर्ण,
+पूर्ण;
 
 
-static int map_get_value(struct battery_property_map *map, const char *key,
-				int def_val)
-{
-	char buf[MAX_KEYLENGTH];
-	int cr;
+अटल पूर्णांक map_get_value(काष्ठा battery_property_map *map, स्थिर अक्षर *key,
+				पूर्णांक def_val)
+अणु
+	अक्षर buf[MAX_KEYLENGTH];
+	पूर्णांक cr;
 
-	strncpy(buf, key, MAX_KEYLENGTH);
+	म_नकलन(buf, key, MAX_KEYLENGTH);
 	buf[MAX_KEYLENGTH-1] = '\0';
 
 	cr = strnlen(buf, MAX_KEYLENGTH) - 1;
-	if (cr < 0)
-		return def_val;
-	if (buf[cr] == '\n')
+	अगर (cr < 0)
+		वापस def_val;
+	अगर (buf[cr] == '\n')
 		buf[cr] = '\0';
 
-	while (map->key) {
-		if (strncasecmp(map->key, buf, MAX_KEYLENGTH) == 0)
-			return map->value;
+	जबतक (map->key) अणु
+		अगर (strnहालcmp(map->key, buf, MAX_KEYLENGTH) == 0)
+			वापस map->value;
 		map++;
-	}
+	पूर्ण
 
-	return def_val;
-}
+	वापस def_val;
+पूर्ण
 
 
-static const char *map_get_key(struct battery_property_map *map, int value,
-				const char *def_key)
-{
-	while (map->key) {
-		if (map->value == value)
-			return map->key;
+अटल स्थिर अक्षर *map_get_key(काष्ठा battery_property_map *map, पूर्णांक value,
+				स्थिर अक्षर *def_key)
+अणु
+	जबतक (map->key) अणु
+		अगर (map->value == value)
+			वापस map->key;
 		map++;
-	}
+	पूर्ण
 
-	return def_key;
-}
+	वापस def_key;
+पूर्ण
 
-static inline void signal_power_supply_changed(struct power_supply *psy)
-{
-	if (module_initialized)
-		power_supply_changed(psy);
-}
+अटल अंतरभूत व्योम संकेत_घातer_supply_changed(काष्ठा घातer_supply *psy)
+अणु
+	अगर (module_initialized)
+		घातer_supply_changed(psy);
+पूर्ण
 
-static int param_set_ac_online(const char *key, const struct kernel_param *kp)
-{
+अटल पूर्णांक param_set_ac_online(स्थिर अक्षर *key, स्थिर काष्ठा kernel_param *kp)
+अणु
 	ac_online = map_get_value(map_ac_online, key, ac_online);
-	signal_power_supply_changed(test_power_supplies[TEST_AC]);
-	return 0;
-}
+	संकेत_घातer_supply_changed(test_घातer_supplies[TEST_AC]);
+	वापस 0;
+पूर्ण
 
-static int param_get_ac_online(char *buffer, const struct kernel_param *kp)
-{
-	return sprintf(buffer, "%s\n",
+अटल पूर्णांक param_get_ac_online(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस प्र_लिखो(buffer, "%s\n",
 			map_get_key(map_ac_online, ac_online, "unknown"));
-}
+पूर्ण
 
-static int param_set_usb_online(const char *key, const struct kernel_param *kp)
-{
+अटल पूर्णांक param_set_usb_online(स्थिर अक्षर *key, स्थिर काष्ठा kernel_param *kp)
+अणु
 	usb_online = map_get_value(map_ac_online, key, usb_online);
-	signal_power_supply_changed(test_power_supplies[TEST_USB]);
-	return 0;
-}
+	संकेत_घातer_supply_changed(test_घातer_supplies[TEST_USB]);
+	वापस 0;
+पूर्ण
 
-static int param_get_usb_online(char *buffer, const struct kernel_param *kp)
-{
-	return sprintf(buffer, "%s\n",
+अटल पूर्णांक param_get_usb_online(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस प्र_लिखो(buffer, "%s\n",
 			map_get_key(map_ac_online, usb_online, "unknown"));
-}
+पूर्ण
 
-static int param_set_battery_status(const char *key,
-					const struct kernel_param *kp)
-{
+अटल पूर्णांक param_set_battery_status(स्थिर अक्षर *key,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
 	battery_status = map_get_value(map_status, key, battery_status);
-	signal_power_supply_changed(test_power_supplies[TEST_BATTERY]);
-	return 0;
-}
+	संकेत_घातer_supply_changed(test_घातer_supplies[TEST_BATTERY]);
+	वापस 0;
+पूर्ण
 
-static int param_get_battery_status(char *buffer, const struct kernel_param *kp)
-{
-	return sprintf(buffer, "%s\n",
+अटल पूर्णांक param_get_battery_status(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस प्र_लिखो(buffer, "%s\n",
 			map_get_key(map_ac_online, battery_status, "unknown"));
-}
+पूर्ण
 
-static int param_set_battery_health(const char *key,
-					const struct kernel_param *kp)
-{
+अटल पूर्णांक param_set_battery_health(स्थिर अक्षर *key,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
 	battery_health = map_get_value(map_health, key, battery_health);
-	signal_power_supply_changed(test_power_supplies[TEST_BATTERY]);
-	return 0;
-}
+	संकेत_घातer_supply_changed(test_घातer_supplies[TEST_BATTERY]);
+	वापस 0;
+पूर्ण
 
-static int param_get_battery_health(char *buffer, const struct kernel_param *kp)
-{
-	return sprintf(buffer, "%s\n",
+अटल पूर्णांक param_get_battery_health(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस प्र_लिखो(buffer, "%s\n",
 			map_get_key(map_ac_online, battery_health, "unknown"));
-}
+पूर्ण
 
-static int param_set_battery_present(const char *key,
-					const struct kernel_param *kp)
-{
+अटल पूर्णांक param_set_battery_present(स्थिर अक्षर *key,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
 	battery_present = map_get_value(map_present, key, battery_present);
-	signal_power_supply_changed(test_power_supplies[TEST_AC]);
-	return 0;
-}
+	संकेत_घातer_supply_changed(test_घातer_supplies[TEST_AC]);
+	वापस 0;
+पूर्ण
 
-static int param_get_battery_present(char *buffer,
-					const struct kernel_param *kp)
-{
-	return sprintf(buffer, "%s\n",
+अटल पूर्णांक param_get_battery_present(अक्षर *buffer,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस प्र_लिखो(buffer, "%s\n",
 			map_get_key(map_ac_online, battery_present, "unknown"));
-}
+पूर्ण
 
-static int param_set_battery_technology(const char *key,
-					const struct kernel_param *kp)
-{
+अटल पूर्णांक param_set_battery_technology(स्थिर अक्षर *key,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
 	battery_technology = map_get_value(map_technology, key,
 						battery_technology);
-	signal_power_supply_changed(test_power_supplies[TEST_BATTERY]);
-	return 0;
-}
+	संकेत_घातer_supply_changed(test_घातer_supplies[TEST_BATTERY]);
+	वापस 0;
+पूर्ण
 
-static int param_get_battery_technology(char *buffer,
-					const struct kernel_param *kp)
-{
-	return sprintf(buffer, "%s\n",
+अटल पूर्णांक param_get_battery_technology(अक्षर *buffer,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
+	वापस प्र_लिखो(buffer, "%s\n",
 			map_get_key(map_ac_online, battery_technology,
 					"unknown"));
-}
+पूर्ण
 
-static int param_set_battery_capacity(const char *key,
-					const struct kernel_param *kp)
-{
-	int tmp;
+अटल पूर्णांक param_set_battery_capacity(स्थिर अक्षर *key,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक पंचांगp;
 
-	if (1 != sscanf(key, "%d", &tmp))
-		return -EINVAL;
+	अगर (1 != माला_पूछो(key, "%d", &पंचांगp))
+		वापस -EINVAL;
 
-	battery_capacity = tmp;
-	signal_power_supply_changed(test_power_supplies[TEST_BATTERY]);
-	return 0;
-}
+	battery_capacity = पंचांगp;
+	संकेत_घातer_supply_changed(test_घातer_supplies[TEST_BATTERY]);
+	वापस 0;
+पूर्ण
 
-#define param_get_battery_capacity param_get_int
+#घोषणा param_get_battery_capacity param_get_पूर्णांक
 
-static int param_set_battery_voltage(const char *key,
-					const struct kernel_param *kp)
-{
-	int tmp;
+अटल पूर्णांक param_set_battery_voltage(स्थिर अक्षर *key,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक पंचांगp;
 
-	if (1 != sscanf(key, "%d", &tmp))
-		return -EINVAL;
+	अगर (1 != माला_पूछो(key, "%d", &पंचांगp))
+		वापस -EINVAL;
 
-	battery_voltage = tmp;
-	signal_power_supply_changed(test_power_supplies[TEST_BATTERY]);
-	return 0;
-}
+	battery_voltage = पंचांगp;
+	संकेत_घातer_supply_changed(test_घातer_supplies[TEST_BATTERY]);
+	वापस 0;
+पूर्ण
 
-#define param_get_battery_voltage param_get_int
+#घोषणा param_get_battery_voltage param_get_पूर्णांक
 
-static int param_set_battery_charge_counter(const char *key,
-					const struct kernel_param *kp)
-{
-	int tmp;
+अटल पूर्णांक param_set_battery_अक्षरge_counter(स्थिर अक्षर *key,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक पंचांगp;
 
-	if (1 != sscanf(key, "%d", &tmp))
-		return -EINVAL;
+	अगर (1 != माला_पूछो(key, "%d", &पंचांगp))
+		वापस -EINVAL;
 
-	battery_charge_counter = tmp;
-	signal_power_supply_changed(test_power_supplies[TEST_BATTERY]);
-	return 0;
-}
+	battery_अक्षरge_counter = पंचांगp;
+	संकेत_घातer_supply_changed(test_घातer_supplies[TEST_BATTERY]);
+	वापस 0;
+पूर्ण
 
-#define param_get_battery_charge_counter param_get_int
+#घोषणा param_get_battery_अक्षरge_counter param_get_पूर्णांक
 
-static int param_set_battery_current(const char *key,
-					const struct kernel_param *kp)
-{
-	int tmp;
+अटल पूर्णांक param_set_battery_current(स्थिर अक्षर *key,
+					स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक पंचांगp;
 
-	if (1 != sscanf(key, "%d", &tmp))
-		return -EINVAL;
+	अगर (1 != माला_पूछो(key, "%d", &पंचांगp))
+		वापस -EINVAL;
 
-	battery_current = tmp;
-	signal_power_supply_changed(test_power_supplies[TEST_BATTERY]);
-	return 0;
-}
+	battery_current = पंचांगp;
+	संकेत_घातer_supply_changed(test_घातer_supplies[TEST_BATTERY]);
+	वापस 0;
+पूर्ण
 
-#define param_get_battery_current param_get_int
+#घोषणा param_get_battery_current param_get_पूर्णांक
 
-static const struct kernel_param_ops param_ops_ac_online = {
+अटल स्थिर काष्ठा kernel_param_ops param_ops_ac_online = अणु
 	.set = param_set_ac_online,
 	.get = param_get_ac_online,
-};
+पूर्ण;
 
-static const struct kernel_param_ops param_ops_usb_online = {
+अटल स्थिर काष्ठा kernel_param_ops param_ops_usb_online = अणु
 	.set = param_set_usb_online,
 	.get = param_get_usb_online,
-};
+पूर्ण;
 
-static const struct kernel_param_ops param_ops_battery_status = {
+अटल स्थिर काष्ठा kernel_param_ops param_ops_battery_status = अणु
 	.set = param_set_battery_status,
 	.get = param_get_battery_status,
-};
+पूर्ण;
 
-static const struct kernel_param_ops param_ops_battery_present = {
+अटल स्थिर काष्ठा kernel_param_ops param_ops_battery_present = अणु
 	.set = param_set_battery_present,
 	.get = param_get_battery_present,
-};
+पूर्ण;
 
-static const struct kernel_param_ops param_ops_battery_technology = {
+अटल स्थिर काष्ठा kernel_param_ops param_ops_battery_technology = अणु
 	.set = param_set_battery_technology,
 	.get = param_get_battery_technology,
-};
+पूर्ण;
 
-static const struct kernel_param_ops param_ops_battery_health = {
+अटल स्थिर काष्ठा kernel_param_ops param_ops_battery_health = अणु
 	.set = param_set_battery_health,
 	.get = param_get_battery_health,
-};
+पूर्ण;
 
-static const struct kernel_param_ops param_ops_battery_capacity = {
+अटल स्थिर काष्ठा kernel_param_ops param_ops_battery_capacity = अणु
 	.set = param_set_battery_capacity,
 	.get = param_get_battery_capacity,
-};
+पूर्ण;
 
-static const struct kernel_param_ops param_ops_battery_voltage = {
+अटल स्थिर काष्ठा kernel_param_ops param_ops_battery_voltage = अणु
 	.set = param_set_battery_voltage,
 	.get = param_get_battery_voltage,
-};
+पूर्ण;
 
-static const struct kernel_param_ops param_ops_battery_charge_counter = {
-	.set = param_set_battery_charge_counter,
-	.get = param_get_battery_charge_counter,
-};
+अटल स्थिर काष्ठा kernel_param_ops param_ops_battery_अक्षरge_counter = अणु
+	.set = param_set_battery_अक्षरge_counter,
+	.get = param_get_battery_अक्षरge_counter,
+पूर्ण;
 
-static const struct kernel_param_ops param_ops_battery_current = {
+अटल स्थिर काष्ठा kernel_param_ops param_ops_battery_current = अणु
 	.set = param_set_battery_current,
 	.get = param_get_battery_current,
-};
+पूर्ण;
 
-#define param_check_ac_online(name, p) __param_check(name, p, void);
-#define param_check_usb_online(name, p) __param_check(name, p, void);
-#define param_check_battery_status(name, p) __param_check(name, p, void);
-#define param_check_battery_present(name, p) __param_check(name, p, void);
-#define param_check_battery_technology(name, p) __param_check(name, p, void);
-#define param_check_battery_health(name, p) __param_check(name, p, void);
-#define param_check_battery_capacity(name, p) __param_check(name, p, void);
-#define param_check_battery_voltage(name, p) __param_check(name, p, void);
-#define param_check_battery_charge_counter(name, p) __param_check(name, p, void);
-#define param_check_battery_current(name, p) __param_check(name, p, void);
+#घोषणा param_check_ac_online(name, p) __param_check(name, p, व्योम);
+#घोषणा param_check_usb_online(name, p) __param_check(name, p, व्योम);
+#घोषणा param_check_battery_status(name, p) __param_check(name, p, व्योम);
+#घोषणा param_check_battery_present(name, p) __param_check(name, p, व्योम);
+#घोषणा param_check_battery_technology(name, p) __param_check(name, p, व्योम);
+#घोषणा param_check_battery_health(name, p) __param_check(name, p, व्योम);
+#घोषणा param_check_battery_capacity(name, p) __param_check(name, p, व्योम);
+#घोषणा param_check_battery_voltage(name, p) __param_check(name, p, व्योम);
+#घोषणा param_check_battery_अक्षरge_counter(name, p) __param_check(name, p, व्योम);
+#घोषणा param_check_battery_current(name, p) __param_check(name, p, व्योम);
 
 
 module_param(ac_online, ac_online, 0644);
@@ -579,8 +580,8 @@ MODULE_PARM_DESC(battery_capacity, "battery capacity (percentage)");
 module_param(battery_voltage, battery_voltage, 0644);
 MODULE_PARM_DESC(battery_voltage, "battery voltage (millivolts)");
 
-module_param(battery_charge_counter, battery_charge_counter, 0644);
-MODULE_PARM_DESC(battery_charge_counter,
+module_param(battery_अक्षरge_counter, battery_अक्षरge_counter, 0644);
+MODULE_PARM_DESC(battery_अक्षरge_counter,
 	"battery charge counter (microampere-hours)");
 
 module_param(battery_current, battery_current, 0644);

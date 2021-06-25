@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *    tape device driver for 3480/3490E/3590 tapes.
+ *    tape device driver क्रम 3480/3490E/3590 tapes.
  *
  *  S390 and zSeries version
  *    Copyright IBM Corp. 2001, 2009
@@ -10,73 +11,73 @@
  *		 Stefan Bader <shbader@de.ibm.com>
  */
 
-#ifndef _TAPE_H
-#define _TAPE_H
+#अगर_अघोषित _TAPE_H
+#घोषणा _TAPE_H
 
-#include <asm/ccwdev.h>
-#include <asm/debug.h>
-#include <asm/idals.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mtio.h>
-#include <linux/interrupt.h>
-#include <linux/workqueue.h>
+#समावेश <यंत्र/ccwdev.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/idals.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mtपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/workqueue.h>
 
-struct gendisk;
+काष्ठा gendisk;
 
 /*
- * Define DBF_LIKE_HELL for lots of messages in the debug feature.
+ * Define DBF_LIKE_HELL क्रम lots of messages in the debug feature.
  */
-#define DBF_LIKE_HELL
-#ifdef  DBF_LIKE_HELL
-#define DBF_LH(level, str, ...) \
-do { \
-	debug_sprintf_event(TAPE_DBF_AREA, level, str, ## __VA_ARGS__); \
-} while (0)
-#else
-#define DBF_LH(level, str, ...) do {} while(0)
-#endif
+#घोषणा DBF_LIKE_HELL
+#अगर_घोषित  DBF_LIKE_HELL
+#घोषणा DBF_LH(level, str, ...) \
+करो अणु \
+	debug_प्र_लिखो_event(TAPE_DBF_AREA, level, str, ## __VA_ARGS__); \
+पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा DBF_LH(level, str, ...) करो अणुपूर्ण जबतक(0)
+#पूर्ण_अगर
 
 /*
  * macros s390 debug feature (dbf)
  */
-#define DBF_EVENT(d_level, d_str...) \
-do { \
-	debug_sprintf_event(TAPE_DBF_AREA, d_level, d_str); \
-} while (0)
+#घोषणा DBF_EVENT(d_level, d_str...) \
+करो अणु \
+	debug_प्र_लिखो_event(TAPE_DBF_AREA, d_level, d_str); \
+पूर्ण जबतक (0)
 
-#define DBF_EXCEPTION(d_level, d_str...) \
-do { \
-	debug_sprintf_exception(TAPE_DBF_AREA, d_level, d_str); \
-} while (0)
+#घोषणा DBF_EXCEPTION(d_level, d_str...) \
+करो अणु \
+	debug_प्र_लिखो_exception(TAPE_DBF_AREA, d_level, d_str); \
+पूर्ण जबतक (0)
 
-#define TAPE_VERSION_MAJOR 2
-#define TAPE_VERSION_MINOR 0
-#define TAPE_MAGIC "tape"
+#घोषणा TAPE_VERSION_MAJOR 2
+#घोषणा TAPE_VERSION_MINOR 0
+#घोषणा TAPE_MAGIC "tape"
 
-#define TAPE_MINORS_PER_DEV 2	    /* two minors per device */
-#define TAPEBLOCK_HSEC_SIZE	2048
-#define TAPEBLOCK_HSEC_S2B	2
-#define TAPEBLOCK_RETRIES	5
+#घोषणा TAPE_MINORS_PER_DEV 2	    /* two minors per device */
+#घोषणा TAPEBLOCK_HSEC_SIZE	2048
+#घोषणा TAPEBLOCK_HSEC_S2B	2
+#घोषणा TAPEBLOCK_RETRIES	5
 
-enum tape_medium_state {
+क्रमागत tape_medium_state अणु
 	MS_UNKNOWN,
 	MS_LOADED,
 	MS_UNLOADED,
 	MS_SIZE
-};
+पूर्ण;
 
-enum tape_state {
+क्रमागत tape_state अणु
 	TS_UNUSED=0,
 	TS_IN_USE,
 	TS_BLKUSE,
 	TS_INIT,
 	TS_NOT_OPER,
 	TS_SIZE
-};
+पूर्ण;
 
-enum tape_op {
-	TO_BLOCK,	/* Block read */
+क्रमागत tape_op अणु
+	TO_BLOCK,	/* Block पढ़ो */
 	TO_BSB,		/* Backward space block */
 	TO_BSF,		/* Backward space filemark */
 	TO_DSE,		/* Data security erase */
@@ -85,8 +86,8 @@ enum tape_op {
 	TO_LBL,		/* Locate block label */
 	TO_NOP,		/* No operation */
 	TO_RBA,		/* Read backward */
-	TO_RBI,		/* Read block information */
-	TO_RFO,		/* Read forward */
+	TO_RBI,		/* Read block inक्रमmation */
+	TO_RFO,		/* Read क्रमward */
 	TO_REW,		/* Rewind tape */
 	TO_RUN,		/* Rewind and unload tape */
 	TO_WRI,		/* Write block */
@@ -102,266 +103,266 @@ enum tape_op {
 	TO_CRYPT_OFF,	/* Disable encrpytion */
 	TO_KEKL_SET,	/* Set KEK label */
 	TO_KEKL_QUERY,	/* Query KEK label */
-	TO_RDC,		/* Read device characteristics */
+	TO_RDC,		/* Read device अक्षरacteristics */
 	TO_SIZE,	/* #entries in tape_op_t */
-};
+पूर्ण;
 
 /* Forward declaration */
-struct tape_device;
+काष्ठा tape_device;
 
 /* tape_request->status can be: */
-enum tape_request_status {
-	TAPE_REQUEST_INIT,	/* request is ready to be processed */
+क्रमागत tape_request_status अणु
+	TAPE_REQUEST_INIT,	/* request is पढ़ोy to be processed */
 	TAPE_REQUEST_QUEUED,	/* request is queued to be processed */
 	TAPE_REQUEST_IN_IO,	/* request is currently in IO */
 	TAPE_REQUEST_DONE,	/* request is completed. */
 	TAPE_REQUEST_CANCEL,	/* request should be canceled. */
-	TAPE_REQUEST_LONG_BUSY, /* request has to be restarted after long busy */
-};
+	TAPE_REQUEST_LONG_BUSY, /* request has to be restarted after दीर्घ busy */
+पूर्ण;
 
 /* Tape CCW request */
-struct tape_request {
-	struct list_head list;		/* list head for request queueing. */
-	struct tape_device *device;	/* tape device of this request */
-	struct ccw1 *cpaddr;		/* address of the channel program. */
-	void *cpdata;			/* pointer to ccw data. */
-	enum tape_request_status status;/* status of this request */
-	int options;			/* options for execution. */
-	int retries;			/* retry counter for error recovery. */
-	int rescnt;			/* residual count from devstat. */
-	struct timer_list timer;	/* timer for std_assign_timeout(). */
+काष्ठा tape_request अणु
+	काष्ठा list_head list;		/* list head क्रम request queueing. */
+	काष्ठा tape_device *device;	/* tape device of this request */
+	काष्ठा ccw1 *cpaddr;		/* address of the channel program. */
+	व्योम *cpdata;			/* poपूर्णांकer to ccw data. */
+	क्रमागत tape_request_status status;/* status of this request */
+	पूर्णांक options;			/* options क्रम execution. */
+	पूर्णांक retries;			/* retry counter क्रम error recovery. */
+	पूर्णांक rescnt;			/* residual count from devstat. */
+	काष्ठा समयr_list समयr;	/* समयr क्रम std_assign_समयout(). */
 
-	/* Callback for delivering final status. */
-	void (*callback)(struct tape_request *, void *);
-	void *callback_data;
+	/* Callback क्रम delivering final status. */
+	व्योम (*callback)(काष्ठा tape_request *, व्योम *);
+	व्योम *callback_data;
 
-	enum tape_op op;
-	int rc;
-};
+	क्रमागत tape_op op;
+	पूर्णांक rc;
+पूर्ण;
 
-/* Function type for magnetic tape commands */
-typedef int (*tape_mtop_fn)(struct tape_device *, int);
+/* Function type क्रम magnetic tape commands */
+प्रकार पूर्णांक (*tape_mtop_fn)(काष्ठा tape_device *, पूर्णांक);
 
-/* Size of the array containing the mtops for a discipline */
-#define TAPE_NR_MTOPS (MTMKPART+1)
+/* Size of the array containing the mtops क्रम a discipline */
+#घोषणा TAPE_NR_MTOPS (MTMKPART+1)
 
 /* Tape Discipline */
-struct tape_discipline {
-	struct module *owner;
-	int  (*setup_device)(struct tape_device *);
-	void (*cleanup_device)(struct tape_device *);
-	int (*irq)(struct tape_device *, struct tape_request *, struct irb *);
-	struct tape_request *(*read_block)(struct tape_device *, size_t);
-	struct tape_request *(*write_block)(struct tape_device *, size_t);
-	void (*process_eov)(struct tape_device*);
-	/* ioctl function for additional ioctls. */
-	int (*ioctl_fn)(struct tape_device *, unsigned int, unsigned long);
+काष्ठा tape_discipline अणु
+	काष्ठा module *owner;
+	पूर्णांक  (*setup_device)(काष्ठा tape_device *);
+	व्योम (*cleanup_device)(काष्ठा tape_device *);
+	पूर्णांक (*irq)(काष्ठा tape_device *, काष्ठा tape_request *, काष्ठा irb *);
+	काष्ठा tape_request *(*पढ़ो_block)(काष्ठा tape_device *, माप_प्रकार);
+	काष्ठा tape_request *(*ग_लिखो_block)(काष्ठा tape_device *, माप_प्रकार);
+	व्योम (*process_eov)(काष्ठा tape_device*);
+	/* ioctl function क्रम additional ioctls. */
+	पूर्णांक (*ioctl_fn)(काष्ठा tape_device *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
 	/* Array of tape commands with TAPE_NR_MTOPS entries */
 	tape_mtop_fn *mtop_array;
-};
+पूर्ण;
 
 /*
- * The discipline irq function either returns an error code (<0) which
+ * The discipline irq function either वापसs an error code (<0) which
  * means that the request has failed with an error or one of the following:
  */
-#define TAPE_IO_SUCCESS		0	/* request successful */
-#define TAPE_IO_PENDING		1	/* request still running */
-#define TAPE_IO_RETRY		2	/* retry to current request */
-#define TAPE_IO_STOP		3	/* stop the running request */
-#define TAPE_IO_LONG_BUSY	4	/* delay the running request */
+#घोषणा TAPE_IO_SUCCESS		0	/* request successful */
+#घोषणा TAPE_IO_PENDING		1	/* request still running */
+#घोषणा TAPE_IO_RETRY		2	/* retry to current request */
+#घोषणा TAPE_IO_STOP		3	/* stop the running request */
+#घोषणा TAPE_IO_LONG_BUSY	4	/* delay the running request */
 
 /* Char Frontend Data */
-struct tape_char_data {
-	struct idal_buffer *idal_buf;	/* idal buffer for user char data */
-	int block_size;			/*   of size block_size. */
-};
+काष्ठा tape_अक्षर_data अणु
+	काष्ठा idal_buffer *idal_buf;	/* idal buffer क्रम user अक्षर data */
+	पूर्णांक block_size;			/*   of size block_size. */
+पूर्ण;
 
 /* Tape Info */
-struct tape_device {
+काष्ठा tape_device अणु
 	/* entry in tape_device_list */
-	struct list_head		node;
+	काष्ठा list_head		node;
 
-	int				cdev_id;
-	struct ccw_device *		cdev;
-	struct tape_class_device *	nt;
-	struct tape_class_device *	rt;
+	पूर्णांक				cdev_id;
+	काष्ठा ccw_device *		cdev;
+	काष्ठा tape_class_device *	nt;
+	काष्ठा tape_class_device *	rt;
 
 	/* Device mutex to serialize tape commands. */
-	struct mutex			mutex;
+	काष्ठा mutex			mutex;
 
-	/* Device discipline information. */
-	struct tape_discipline *	discipline;
-	void *				discdata;
+	/* Device discipline inक्रमmation. */
+	काष्ठा tape_discipline *	discipline;
+	व्योम *				discdata;
 
 	/* Generic status flags */
-	long				tape_generic_status;
+	दीर्घ				tape_generic_status;
 
-	/* Device state information. */
-	wait_queue_head_t		state_change_wq;
-	enum tape_state			tape_state;
-	enum tape_medium_state		medium_state;
-	unsigned char *			modeset_byte;
+	/* Device state inक्रमmation. */
+	रुको_queue_head_t		state_change_wq;
+	क्रमागत tape_state			tape_state;
+	क्रमागत tape_medium_state		medium_state;
+	अचिन्हित अक्षर *			modeset_byte;
 
 	/* Reference count. */
 	atomic_t			ref_count;
 
 	/* Request queue. */
-	struct list_head		req_queue;
+	काष्ठा list_head		req_queue;
 
-	/* Request wait queue. */
-	wait_queue_head_t		wait_queue;
+	/* Request रुको queue. */
+	रुको_queue_head_t		रुको_queue;
 
 	/* Each tape device has (currently) two minor numbers. */
-	int				first_minor;
+	पूर्णांक				first_minor;
 
-	/* Number of tapemarks required for correct termination. */
-	int				required_tapemarks;
+	/* Number of tapemarks required क्रम correct termination. */
+	पूर्णांक				required_tapemarks;
 
 	/* Block ID of the BOF */
-	unsigned int			bof;
+	अचिन्हित पूर्णांक			bof;
 
 	/* Character device frontend data */
-	struct tape_char_data		char_data;
+	काष्ठा tape_अक्षर_data		अक्षर_data;
 
 	/* Function to start or stop the next request later. */
-	struct delayed_work		tape_dnr;
+	काष्ठा delayed_work		tape_dnr;
 
-	/* Timer for long busy */
-	struct timer_list		lb_timeout;
+	/* Timer क्रम दीर्घ busy */
+	काष्ठा समयr_list		lb_समयout;
 
-};
+पूर्ण;
 
 /* Externals from tape_core.c */
-extern struct tape_request *tape_alloc_request(int cplength, int datasize);
-extern void tape_free_request(struct tape_request *);
-extern int tape_do_io(struct tape_device *, struct tape_request *);
-extern int tape_do_io_async(struct tape_device *, struct tape_request *);
-extern int tape_do_io_interruptible(struct tape_device *, struct tape_request *);
-extern int tape_cancel_io(struct tape_device *, struct tape_request *);
+बाह्य काष्ठा tape_request *tape_alloc_request(पूर्णांक cplength, पूर्णांक datasize);
+बाह्य व्योम tape_मुक्त_request(काष्ठा tape_request *);
+बाह्य पूर्णांक tape_करो_io(काष्ठा tape_device *, काष्ठा tape_request *);
+बाह्य पूर्णांक tape_करो_io_async(काष्ठा tape_device *, काष्ठा tape_request *);
+बाह्य पूर्णांक tape_करो_io_पूर्णांकerruptible(काष्ठा tape_device *, काष्ठा tape_request *);
+बाह्य पूर्णांक tape_cancel_io(काष्ठा tape_device *, काष्ठा tape_request *);
 
-static inline int
-tape_do_io_free(struct tape_device *device, struct tape_request *request)
-{
-	int rc;
+अटल अंतरभूत पूर्णांक
+tape_करो_io_मुक्त(काष्ठा tape_device *device, काष्ठा tape_request *request)
+अणु
+	पूर्णांक rc;
 
-	rc = tape_do_io(device, request);
-	tape_free_request(request);
-	return rc;
-}
+	rc = tape_करो_io(device, request);
+	tape_मुक्त_request(request);
+	वापस rc;
+पूर्ण
 
-static inline void
-tape_do_io_async_free(struct tape_device *device, struct tape_request *request)
-{
-	request->callback = (void *) tape_free_request;
-	request->callback_data = NULL;
-	tape_do_io_async(device, request);
-}
+अटल अंतरभूत व्योम
+tape_करो_io_async_मुक्त(काष्ठा tape_device *device, काष्ठा tape_request *request)
+अणु
+	request->callback = (व्योम *) tape_मुक्त_request;
+	request->callback_data = शून्य;
+	tape_करो_io_async(device, request);
+पूर्ण
 
-extern int tape_open(struct tape_device *);
-extern int tape_release(struct tape_device *);
-extern int tape_mtop(struct tape_device *, int, int);
-extern void tape_state_set(struct tape_device *, enum tape_state);
+बाह्य पूर्णांक tape_खोलो(काष्ठा tape_device *);
+बाह्य पूर्णांक tape_release(काष्ठा tape_device *);
+बाह्य पूर्णांक tape_mtop(काष्ठा tape_device *, पूर्णांक, पूर्णांक);
+बाह्य व्योम tape_state_set(काष्ठा tape_device *, क्रमागत tape_state);
 
-extern int tape_generic_online(struct tape_device *, struct tape_discipline *);
-extern int tape_generic_offline(struct ccw_device *);
+बाह्य पूर्णांक tape_generic_online(काष्ठा tape_device *, काष्ठा tape_discipline *);
+बाह्य पूर्णांक tape_generic_offline(काष्ठा ccw_device *);
 
 /* Externals from tape_devmap.c */
-extern int tape_generic_probe(struct ccw_device *);
-extern void tape_generic_remove(struct ccw_device *);
+बाह्य पूर्णांक tape_generic_probe(काष्ठा ccw_device *);
+बाह्य व्योम tape_generic_हटाओ(काष्ठा ccw_device *);
 
-extern struct tape_device *tape_find_device(int devindex);
-extern struct tape_device *tape_get_device(struct tape_device *);
-extern void tape_put_device(struct tape_device *);
+बाह्य काष्ठा tape_device *tape_find_device(पूर्णांक devindex);
+बाह्य काष्ठा tape_device *tape_get_device(काष्ठा tape_device *);
+बाह्य व्योम tape_put_device(काष्ठा tape_device *);
 
-/* Externals from tape_char.c */
-extern int tapechar_init(void);
-extern void tapechar_exit(void);
-extern int  tapechar_setup_device(struct tape_device *);
-extern void tapechar_cleanup_device(struct tape_device *);
+/* Externals from tape_अक्षर.c */
+बाह्य पूर्णांक tapeअक्षर_init(व्योम);
+बाह्य व्योम tapeअक्षर_निकास(व्योम);
+बाह्य पूर्णांक  tapeअक्षर_setup_device(काष्ठा tape_device *);
+बाह्य व्योम tapeअक्षर_cleanup_device(काष्ठा tape_device *);
 
 /* tape initialisation functions */
-#ifdef CONFIG_PROC_FS
-extern void tape_proc_init (void);
-extern void tape_proc_cleanup (void);
-#else
-static inline void tape_proc_init (void) {;}
-static inline void tape_proc_cleanup (void) {;}
-#endif
+#अगर_घोषित CONFIG_PROC_FS
+बाह्य व्योम tape_proc_init (व्योम);
+बाह्य व्योम tape_proc_cleanup (व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम tape_proc_init (व्योम) अणु;पूर्ण
+अटल अंतरभूत व्योम tape_proc_cleanup (व्योम) अणु;पूर्ण
+#पूर्ण_अगर
 
-/* a function for dumping device sense info */
-extern void tape_dump_sense_dbf(struct tape_device *, struct tape_request *,
-				struct irb *);
+/* a function क्रम dumping device sense info */
+बाह्य व्योम tape_dump_sense_dbf(काष्ठा tape_device *, काष्ठा tape_request *,
+				काष्ठा irb *);
 
-/* functions for handling the status of a device */
-extern void tape_med_state_set(struct tape_device *, enum tape_medium_state);
+/* functions क्रम handling the status of a device */
+बाह्य व्योम tape_med_state_set(काष्ठा tape_device *, क्रमागत tape_medium_state);
 
 /* The debug area */
-extern debug_info_t *TAPE_DBF_AREA;
+बाह्य debug_info_t *TAPE_DBF_AREA;
 
-/* functions for building ccws */
-static inline struct ccw1 *
-tape_ccw_cc(struct ccw1 *ccw, __u8 cmd_code, __u16 memsize, void *cda)
-{
+/* functions क्रम building ccws */
+अटल अंतरभूत काष्ठा ccw1 *
+tape_ccw_cc(काष्ठा ccw1 *ccw, __u8 cmd_code, __u16 memsize, व्योम *cda)
+अणु
 	ccw->cmd_code = cmd_code;
 	ccw->flags = CCW_FLAG_CC;
 	ccw->count = memsize;
 	ccw->cda = (__u32)(addr_t) cda;
-	return ccw + 1;
-}
+	वापस ccw + 1;
+पूर्ण
 
-static inline struct ccw1 *
-tape_ccw_end(struct ccw1 *ccw, __u8 cmd_code, __u16 memsize, void *cda)
-{
+अटल अंतरभूत काष्ठा ccw1 *
+tape_ccw_end(काष्ठा ccw1 *ccw, __u8 cmd_code, __u16 memsize, व्योम *cda)
+अणु
 	ccw->cmd_code = cmd_code;
 	ccw->flags = 0;
 	ccw->count = memsize;
 	ccw->cda = (__u32)(addr_t) cda;
-	return ccw + 1;
-}
+	वापस ccw + 1;
+पूर्ण
 
-static inline struct ccw1 *
-tape_ccw_cmd(struct ccw1 *ccw, __u8 cmd_code)
-{
+अटल अंतरभूत काष्ठा ccw1 *
+tape_ccw_cmd(काष्ठा ccw1 *ccw, __u8 cmd_code)
+अणु
 	ccw->cmd_code = cmd_code;
 	ccw->flags = 0;
 	ccw->count = 0;
 	ccw->cda = (__u32)(addr_t) &ccw->cmd_code;
-	return ccw + 1;
-}
+	वापस ccw + 1;
+पूर्ण
 
-static inline struct ccw1 *
-tape_ccw_repeat(struct ccw1 *ccw, __u8 cmd_code, int count)
-{
-	while (count-- > 0) {
+अटल अंतरभूत काष्ठा ccw1 *
+tape_ccw_repeat(काष्ठा ccw1 *ccw, __u8 cmd_code, पूर्णांक count)
+अणु
+	जबतक (count-- > 0) अणु
 		ccw->cmd_code = cmd_code;
 		ccw->flags = CCW_FLAG_CC;
 		ccw->count = 0;
 		ccw->cda = (__u32)(addr_t) &ccw->cmd_code;
 		ccw++;
-	}
-	return ccw;
-}
+	पूर्ण
+	वापस ccw;
+पूर्ण
 
-static inline struct ccw1 *
-tape_ccw_cc_idal(struct ccw1 *ccw, __u8 cmd_code, struct idal_buffer *idal)
-{
+अटल अंतरभूत काष्ठा ccw1 *
+tape_ccw_cc_idal(काष्ठा ccw1 *ccw, __u8 cmd_code, काष्ठा idal_buffer *idal)
+अणु
 	ccw->cmd_code = cmd_code;
 	ccw->flags    = CCW_FLAG_CC;
 	idal_buffer_set_cda(idal, ccw);
-	return ccw++;
-}
+	वापस ccw++;
+पूर्ण
 
-static inline struct ccw1 *
-tape_ccw_end_idal(struct ccw1 *ccw, __u8 cmd_code, struct idal_buffer *idal)
-{
+अटल अंतरभूत काष्ठा ccw1 *
+tape_ccw_end_idal(काष्ठा ccw1 *ccw, __u8 cmd_code, काष्ठा idal_buffer *idal)
+अणु
 	ccw->cmd_code = cmd_code;
 	ccw->flags    = 0;
 	idal_buffer_set_cda(idal, ccw);
-	return ccw++;
-}
+	वापस ccw++;
+पूर्ण
 
 /* Global vars */
-extern const char *tape_state_verbose[];
-extern const char *tape_op_verbose[];
+बाह्य स्थिर अक्षर *tape_state_verbose[];
+बाह्य स्थिर अक्षर *tape_op_verbose[];
 
-#endif /* for ifdef tape.h */
+#पूर्ण_अगर /* क्रम अगरdef tape.h */

@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * NET4:	Sysctl interface to net af_unix subsystem.
+ * NET4:	Sysctl पूर्णांकerface to net af_unix subप्रणाली.
  *
  * Authors:	Mike Shaver.
  */
 
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/sysctl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysctl.h>
 
-#include <net/af_unix.h>
+#समावेश <net/af_unix.h>
 
-static struct ctl_table unix_table[] = {
-	{
+अटल काष्ठा ctl_table unix_table[] = अणु
+	अणु
 		.procname	= "max_dgram_qlen",
 		.data		= &init_net.unx.sysctl_max_dgram_qlen,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec
-	},
-	{ }
-};
+		.proc_handler	= proc_करोपूर्णांकvec
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-int __net_init unix_sysctl_register(struct net *net)
-{
-	struct ctl_table *table;
+पूर्णांक __net_init unix_sysctl_रेजिस्टर(काष्ठा net *net)
+अणु
+	काष्ठा ctl_table *table;
 
-	table = kmemdup(unix_table, sizeof(unix_table), GFP_KERNEL);
-	if (table == NULL)
-		goto err_alloc;
+	table = kmemdup(unix_table, माप(unix_table), GFP_KERNEL);
+	अगर (table == शून्य)
+		जाओ err_alloc;
 
 	/* Don't export sysctls to unprivileged users */
-	if (net->user_ns != &init_user_ns)
-		table[0].procname = NULL;
+	अगर (net->user_ns != &init_user_ns)
+		table[0].procname = शून्य;
 
 	table[0].data = &net->unx.sysctl_max_dgram_qlen;
-	net->unx.ctl = register_net_sysctl(net, "net/unix", table);
-	if (net->unx.ctl == NULL)
-		goto err_reg;
+	net->unx.ctl = रेजिस्टर_net_sysctl(net, "net/unix", table);
+	अगर (net->unx.ctl == शून्य)
+		जाओ err_reg;
 
-	return 0;
+	वापस 0;
 
 err_reg:
-	kfree(table);
+	kमुक्त(table);
 err_alloc:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-void unix_sysctl_unregister(struct net *net)
-{
-	struct ctl_table *table;
+व्योम unix_sysctl_unरेजिस्टर(काष्ठा net *net)
+अणु
+	काष्ठा ctl_table *table;
 
 	table = net->unx.ctl->ctl_table_arg;
-	unregister_net_sysctl_table(net->unx.ctl);
-	kfree(table);
-}
+	unरेजिस्टर_net_sysctl_table(net->unx.ctl);
+	kमुक्त(table);
+पूर्ण

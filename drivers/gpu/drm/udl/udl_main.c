@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Red Hat
  *
@@ -8,140 +9,140 @@
  * Copyright (C) 2009 Bernie Thompson <bernie@plugable.com>
  */
 
-#include <drm/drm.h>
-#include <drm/drm_print.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#include "udl_drv.h"
+#समावेश "udl_drv.h"
 
-/* -BULK_SIZE as per usb-skeleton. Can we get full page and avoid overhead? */
-#define BULK_SIZE 512
+/* -BULK_SIZE as per usb-skeleton. Can we get full page and aव्योम overhead? */
+#घोषणा BULK_SIZE 512
 
-#define NR_USB_REQUEST_CHANNEL 0x12
+#घोषणा NR_USB_REQUEST_CHANNEL 0x12
 
-#define MAX_TRANSFER (PAGE_SIZE*16 - BULK_SIZE)
-#define WRITES_IN_FLIGHT (4)
-#define MAX_VENDOR_DESCRIPTOR_SIZE 256
+#घोषणा MAX_TRANSFER (PAGE_SIZE*16 - BULK_SIZE)
+#घोषणा WRITES_IN_FLIGHT (4)
+#घोषणा MAX_VENDOR_DESCRIPTOR_SIZE 256
 
-#define GET_URB_TIMEOUT	HZ
-#define FREE_URB_TIMEOUT (HZ*2)
+#घोषणा GET_URB_TIMEOUT	HZ
+#घोषणा FREE_URB_TIMEOUT (HZ*2)
 
-static int udl_parse_vendor_descriptor(struct udl_device *udl)
-{
-	struct usb_device *udev = udl_to_usb_device(udl);
-	char *desc;
-	char *buf;
-	char *desc_end;
+अटल पूर्णांक udl_parse_venकरोr_descriptor(काष्ठा udl_device *udl)
+अणु
+	काष्ठा usb_device *udev = udl_to_usb_device(udl);
+	अक्षर *desc;
+	अक्षर *buf;
+	अक्षर *desc_end;
 
 	u8 total_len = 0;
 
 	buf = kzalloc(MAX_VENDOR_DESCRIPTOR_SIZE, GFP_KERNEL);
-	if (!buf)
-		return false;
+	अगर (!buf)
+		वापस false;
 	desc = buf;
 
-	total_len = usb_get_descriptor(udev, 0x5f, /* vendor specific */
+	total_len = usb_get_descriptor(udev, 0x5f, /* venकरोr specअगरic */
 				    0, desc, MAX_VENDOR_DESCRIPTOR_SIZE);
-	if (total_len > 5) {
+	अगर (total_len > 5) अणु
 		DRM_INFO("vendor descriptor length:%x data:%11ph\n",
 			total_len, desc);
 
-		if ((desc[0] != total_len) || /* descriptor length */
-		    (desc[1] != 0x5f) ||   /* vendor descriptor type */
+		अगर ((desc[0] != total_len) || /* descriptor length */
+		    (desc[1] != 0x5f) ||   /* venकरोr descriptor type */
 		    (desc[2] != 0x01) ||   /* version (2 bytes) */
 		    (desc[3] != 0x00) ||
 		    (desc[4] != total_len - 2)) /* length after type */
-			goto unrecognized;
+			जाओ unrecognized;
 
 		desc_end = desc + total_len;
-		desc += 5; /* the fixed header we've already parsed */
+		desc += 5; /* the fixed header we've alपढ़ोy parsed */
 
-		while (desc < desc_end) {
+		जबतक (desc < desc_end) अणु
 			u8 length;
 			u16 key;
 
 			key = le16_to_cpu(*((u16 *) desc));
-			desc += sizeof(u16);
+			desc += माप(u16);
 			length = *desc;
 			desc++;
 
-			switch (key) {
-			case 0x0200: { /* max_area */
+			चयन (key) अणु
+			हाल 0x0200: अणु /* max_area */
 				u32 max_area;
 				max_area = le32_to_cpu(*((u32 *)desc));
 				DRM_DEBUG("DL chip limited to %d pixel modes\n",
 					max_area);
 				udl->sku_pixel_limit = max_area;
-				break;
-			}
-			default:
-				break;
-			}
+				अवरोध;
+			पूर्ण
+			शेष:
+				अवरोध;
+			पूर्ण
 			desc += length;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	goto success;
+	जाओ success;
 
 unrecognized:
-	/* allow udlfb to load for now even if firmware unrecognized */
+	/* allow udlfb to load क्रम now even अगर firmware unrecognized */
 	DRM_ERROR("Unrecognized vendor firmware descriptor\n");
 
 success:
-	kfree(buf);
-	return true;
-}
+	kमुक्त(buf);
+	वापस true;
+पूर्ण
 
 /*
- * Need to ensure a channel is selected before submitting URBs
+ * Need to ensure a channel is selected beक्रमe submitting URBs
  */
-static int udl_select_std_channel(struct udl_device *udl)
-{
-	static const u8 set_def_chn[] = {0x57, 0xCD, 0xDC, 0xA7,
+अटल पूर्णांक udl_select_std_channel(काष्ठा udl_device *udl)
+अणु
+	अटल स्थिर u8 set_def_chn[] = अणु0x57, 0xCD, 0xDC, 0xA7,
 					 0x1C, 0x88, 0x5E, 0x15,
 					 0x60, 0xFE, 0xC6, 0x97,
-					 0x16, 0x3D, 0x47, 0xF2};
+					 0x16, 0x3D, 0x47, 0xF2पूर्ण;
 
-	void *sendbuf;
-	int ret;
-	struct usb_device *udev = udl_to_usb_device(udl);
+	व्योम *sendbuf;
+	पूर्णांक ret;
+	काष्ठा usb_device *udev = udl_to_usb_device(udl);
 
-	sendbuf = kmemdup(set_def_chn, sizeof(set_def_chn), GFP_KERNEL);
-	if (!sendbuf)
-		return -ENOMEM;
+	sendbuf = kmemdup(set_def_chn, माप(set_def_chn), GFP_KERNEL);
+	अगर (!sendbuf)
+		वापस -ENOMEM;
 
 	ret = usb_control_msg(udev, usb_sndctrlpipe(udev, 0),
 			      NR_USB_REQUEST_CHANNEL,
-			      (USB_DIR_OUT | USB_TYPE_VENDOR), 0, 0,
-			      sendbuf, sizeof(set_def_chn),
+			      (USB_सूची_OUT | USB_TYPE_VENDOR), 0, 0,
+			      sendbuf, माप(set_def_chn),
 			      USB_CTRL_SET_TIMEOUT);
-	kfree(sendbuf);
-	return ret < 0 ? ret : 0;
-}
+	kमुक्त(sendbuf);
+	वापस ret < 0 ? ret : 0;
+पूर्ण
 
-static void udl_release_urb_work(struct work_struct *work)
-{
-	struct urb_node *unode = container_of(work, struct urb_node,
+अटल व्योम udl_release_urb_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा urb_node *unode = container_of(work, काष्ठा urb_node,
 					      release_urb_work.work);
 
 	up(&unode->dev->urbs.limit_sem);
-}
+पूर्ण
 
-void udl_urb_completion(struct urb *urb)
-{
-	struct urb_node *unode = urb->context;
-	struct udl_device *udl = unode->dev;
-	unsigned long flags;
+व्योम udl_urb_completion(काष्ठा urb *urb)
+अणु
+	काष्ठा urb_node *unode = urb->context;
+	काष्ठा udl_device *udl = unode->dev;
+	अचिन्हित दीर्घ flags;
 
 	/* sync/async unlink faults aren't errors */
-	if (urb->status) {
-		if (!(urb->status == -ENOENT ||
+	अगर (urb->status) अणु
+		अगर (!(urb->status == -ENOENT ||
 		    urb->status == -ECONNRESET ||
-		    urb->status == -ESHUTDOWN)) {
+		    urb->status == -ESHUTDOWN)) अणु
 			DRM_ERROR("%s - nonzero write bulk status received: %d\n",
 				__func__, urb->status);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	urb->transfer_buffer_length = udl->urbs.size; /* reset to actual */
 
@@ -150,31 +151,31 @@ void udl_urb_completion(struct urb *urb)
 	udl->urbs.available++;
 	spin_unlock_irqrestore(&udl->urbs.lock, flags);
 
-#if 0
+#अगर 0
 	/*
-	 * When using fb_defio, we deadlock if up() is called
-	 * while another is waiting. So queue to another process.
+	 * When using fb_defio, we deadlock अगर up() is called
+	 * जबतक another is रुकोing. So queue to another process.
 	 */
-	if (fb_defio)
+	अगर (fb_defio)
 		schedule_delayed_work(&unode->release_urb_work, 0);
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 		up(&udl->urbs.limit_sem);
-}
+पूर्ण
 
-static void udl_free_urb_list(struct drm_device *dev)
-{
-	struct udl_device *udl = to_udl(dev);
-	int count = udl->urbs.count;
-	struct list_head *node;
-	struct urb_node *unode;
-	struct urb *urb;
+अटल व्योम udl_मुक्त_urb_list(काष्ठा drm_device *dev)
+अणु
+	काष्ठा udl_device *udl = to_udl(dev);
+	पूर्णांक count = udl->urbs.count;
+	काष्ठा list_head *node;
+	काष्ठा urb_node *unode;
+	काष्ठा urb *urb;
 
 	DRM_DEBUG("Waiting for completes and freeing all render urbs\n");
 
-	/* keep waiting and freeing, until we've got 'em all */
-	while (count--) {
-		down(&udl->urbs.limit_sem);
+	/* keep रुकोing and मुक्तing, until we've got 'em all */
+	जबतक (count--) अणु
+		करोwn(&udl->urbs.limit_sem);
 
 		spin_lock_irq(&udl->urbs.lock);
 
@@ -183,26 +184,26 @@ static void udl_free_urb_list(struct drm_device *dev)
 
 		spin_unlock_irq(&udl->urbs.lock);
 
-		unode = list_entry(node, struct urb_node, entry);
+		unode = list_entry(node, काष्ठा urb_node, entry);
 		urb = unode->urb;
 
 		/* Free each separately allocated piece */
-		usb_free_coherent(urb->dev, udl->urbs.size,
+		usb_मुक्त_coherent(urb->dev, udl->urbs.size,
 				  urb->transfer_buffer, urb->transfer_dma);
-		usb_free_urb(urb);
-		kfree(node);
-	}
+		usb_मुक्त_urb(urb);
+		kमुक्त(node);
+	पूर्ण
 	udl->urbs.count = 0;
-}
+पूर्ण
 
-static int udl_alloc_urb_list(struct drm_device *dev, int count, size_t size)
-{
-	struct udl_device *udl = to_udl(dev);
-	struct urb *urb;
-	struct urb_node *unode;
-	char *buf;
-	size_t wanted_size = count * size;
-	struct usb_device *udev = udl_to_usb_device(udl);
+अटल पूर्णांक udl_alloc_urb_list(काष्ठा drm_device *dev, पूर्णांक count, माप_प्रकार size)
+अणु
+	काष्ठा udl_device *udl = to_udl(dev);
+	काष्ठा urb *urb;
+	काष्ठा urb_node *unode;
+	अक्षर *buf;
+	माप_प्रकार wanted_size = count * size;
+	काष्ठा usb_device *udev = udl_to_usb_device(udl);
 
 	spin_lock_init(&udl->urbs.lock);
 
@@ -214,36 +215,36 @@ retry:
 	udl->urbs.count = 0;
 	udl->urbs.available = 0;
 
-	while (udl->urbs.count * size < wanted_size) {
-		unode = kzalloc(sizeof(struct urb_node), GFP_KERNEL);
-		if (!unode)
-			break;
+	जबतक (udl->urbs.count * size < wanted_size) अणु
+		unode = kzalloc(माप(काष्ठा urb_node), GFP_KERNEL);
+		अगर (!unode)
+			अवरोध;
 		unode->dev = udl;
 
 		INIT_DELAYED_WORK(&unode->release_urb_work,
 			  udl_release_urb_work);
 
 		urb = usb_alloc_urb(0, GFP_KERNEL);
-		if (!urb) {
-			kfree(unode);
-			break;
-		}
+		अगर (!urb) अणु
+			kमुक्त(unode);
+			अवरोध;
+		पूर्ण
 		unode->urb = urb;
 
 		buf = usb_alloc_coherent(udev, size, GFP_KERNEL,
 					 &urb->transfer_dma);
-		if (!buf) {
-			kfree(unode);
-			usb_free_urb(urb);
-			if (size > PAGE_SIZE) {
+		अगर (!buf) अणु
+			kमुक्त(unode);
+			usb_मुक्त_urb(urb);
+			अगर (size > PAGE_SIZE) अणु
 				size /= 2;
-				udl_free_urb_list(dev);
-				goto retry;
-			}
-			break;
-		}
+				udl_मुक्त_urb_list(dev);
+				जाओ retry;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		/* urb->transfer_buffer_length set to actual before submit */
+		/* urb->transfer_buffer_length set to actual beक्रमe submit */
 		usb_fill_bulk_urb(urb, udev, usb_sndbulkpipe(udev, 1),
 				  buf, size, udl_urb_completion, unode);
 		urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
@@ -253,28 +254,28 @@ retry:
 		up(&udl->urbs.limit_sem);
 		udl->urbs.count++;
 		udl->urbs.available++;
-	}
+	पूर्ण
 
-	DRM_DEBUG("allocated %d %d byte urbs\n", udl->urbs.count, (int) size);
+	DRM_DEBUG("allocated %d %d byte urbs\n", udl->urbs.count, (पूर्णांक) size);
 
-	return udl->urbs.count;
-}
+	वापस udl->urbs.count;
+पूर्ण
 
-struct urb *udl_get_urb(struct drm_device *dev)
-{
-	struct udl_device *udl = to_udl(dev);
-	int ret = 0;
-	struct list_head *entry;
-	struct urb_node *unode;
-	struct urb *urb = NULL;
+काष्ठा urb *udl_get_urb(काष्ठा drm_device *dev)
+अणु
+	काष्ठा udl_device *udl = to_udl(dev);
+	पूर्णांक ret = 0;
+	काष्ठा list_head *entry;
+	काष्ठा urb_node *unode;
+	काष्ठा urb *urb = शून्य;
 
-	/* Wait for an in-flight buffer to complete and get re-queued */
-	ret = down_timeout(&udl->urbs.limit_sem, GET_URB_TIMEOUT);
-	if (ret) {
+	/* Wait क्रम an in-flight buffer to complete and get re-queued */
+	ret = करोwn_समयout(&udl->urbs.limit_sem, GET_URB_TIMEOUT);
+	अगर (ret) अणु
 		DRM_INFO("wait for urb interrupted: %x available: %d\n",
 		       ret, udl->urbs.available);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	spin_lock_irq(&udl->urbs.lock);
 
@@ -285,80 +286,80 @@ struct urb *udl_get_urb(struct drm_device *dev)
 
 	spin_unlock_irq(&udl->urbs.lock);
 
-	unode = list_entry(entry, struct urb_node, entry);
+	unode = list_entry(entry, काष्ठा urb_node, entry);
 	urb = unode->urb;
 
 error:
-	return urb;
-}
+	वापस urb;
+पूर्ण
 
-int udl_submit_urb(struct drm_device *dev, struct urb *urb, size_t len)
-{
-	struct udl_device *udl = to_udl(dev);
-	int ret;
+पूर्णांक udl_submit_urb(काष्ठा drm_device *dev, काष्ठा urb *urb, माप_प्रकार len)
+अणु
+	काष्ठा udl_device *udl = to_udl(dev);
+	पूर्णांक ret;
 
 	BUG_ON(len > udl->urbs.size);
 
 	urb->transfer_buffer_length = len; /* set to actual payload len */
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
-	if (ret) {
-		udl_urb_completion(urb); /* because no one else will */
+	अगर (ret) अणु
+		udl_urb_completion(urb); /* because no one अन्यथा will */
 		DRM_ERROR("usb_submit_urb error %x\n", ret);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int udl_init(struct udl_device *udl)
-{
-	struct drm_device *dev = &udl->drm;
-	int ret = -ENOMEM;
+पूर्णांक udl_init(काष्ठा udl_device *udl)
+अणु
+	काष्ठा drm_device *dev = &udl->drm;
+	पूर्णांक ret = -ENOMEM;
 
 	DRM_DEBUG("\n");
 
-	udl->dmadev = usb_intf_get_dma_device(to_usb_interface(dev->dev));
-	if (!udl->dmadev)
+	udl->dmadev = usb_पूर्णांकf_get_dma_device(to_usb_पूर्णांकerface(dev->dev));
+	अगर (!udl->dmadev)
 		drm_warn(dev, "buffer sharing not supported"); /* not an error */
 
 	mutex_init(&udl->gem_lock);
 
-	if (!udl_parse_vendor_descriptor(udl)) {
+	अगर (!udl_parse_venकरोr_descriptor(udl)) अणु
 		ret = -ENODEV;
 		DRM_ERROR("firmware not recognized. Assume incompatible device\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (udl_select_std_channel(udl))
+	अगर (udl_select_std_channel(udl))
 		DRM_ERROR("Selecting channel failed\n");
 
-	if (!udl_alloc_urb_list(dev, WRITES_IN_FLIGHT, MAX_TRANSFER)) {
+	अगर (!udl_alloc_urb_list(dev, WRITES_IN_FLIGHT, MAX_TRANSFER)) अणु
 		DRM_ERROR("udl_alloc_urb_list failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	DRM_DEBUG("\n");
 	ret = udl_modeset_init(dev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	drm_kms_helper_poll_init(dev);
 
-	return 0;
+	वापस 0;
 
 err:
-	if (udl->urbs.count)
-		udl_free_urb_list(dev);
+	अगर (udl->urbs.count)
+		udl_मुक्त_urb_list(dev);
 	put_device(udl->dmadev);
 	DRM_ERROR("%d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int udl_drop_usb(struct drm_device *dev)
-{
-	struct udl_device *udl = to_udl(dev);
+पूर्णांक udl_drop_usb(काष्ठा drm_device *dev)
+अणु
+	काष्ठा udl_device *udl = to_udl(dev);
 
-	udl_free_urb_list(dev);
+	udl_मुक्त_urb_list(dev);
 	put_device(udl->dmadev);
-	udl->dmadev = NULL;
+	udl->dmadev = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

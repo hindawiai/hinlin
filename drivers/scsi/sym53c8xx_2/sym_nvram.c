@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Device driver for the SYMBIOS/LSILOGIC 53C8XX and 53C1010 family 
+ * Device driver क्रम the SYMBIOS/LSILOGIC 53C8XX and 53C1010 family 
  * of PCI-SCSI IO processors.
  *
- * Copyright (C) 1999-2001  Gerard Roudier <groudier@free.fr>
+ * Copyright (C) 1999-2001  Gerard Roudier <groudier@मुक्त.fr>
  *
  * This driver is derived from the Linux sym53c8xx driver.
  * Copyright (C) 1998-2000  Gerard Roudier
@@ -11,141 +12,141 @@
  * The sym53c8xx driver is derived from the ncr53c8xx driver that had been 
  * a port of the FreeBSD ncr driver to Linux-1.2.13.
  *
- * The original ncr driver has been written for 386bsd and FreeBSD by
+ * The original ncr driver has been written क्रम 386bsd and FreeBSD by
  *         Wolfgang Stanglmeier        <wolf@cologne.de>
  *         Stefan Esser                <se@mi.Uni-Koeln.de>
  * Copyright (C) 1994  Wolfgang Stanglmeier
  *
  * Other major contributions:
  *
- * NVRAM detection and reading.
- * Copyright (C) 1997 Richard Waltham <dormouse@farsrobt.demon.co.uk>
+ * NVRAM detection and पढ़ोing.
+ * Copyright (C) 1997 Riअक्षरd Waltham <करोrmouse@farsrobt.demon.co.uk>
  *
  *-----------------------------------------------------------------------------
  */
 
-#include "sym_glue.h"
-#include "sym_nvram.h"
+#समावेश "sym_glue.h"
+#समावेश "sym_nvram.h"
 
-#ifdef	SYM_CONF_DEBUG_NVRAM
-static u_char Tekram_boot_delay[7] = {3, 5, 10, 20, 30, 60, 120};
-#endif
+#अगर_घोषित	SYM_CONF_DEBUG_NVRAM
+अटल u_अक्षर Tekram_boot_delay[7] = अणु3, 5, 10, 20, 30, 60, 120पूर्ण;
+#पूर्ण_अगर
 
 /*
  *  Get host setup from NVRAM.
  */
-void sym_nvram_setup_host(struct Scsi_Host *shost, struct sym_hcb *np, struct sym_nvram *nvram)
-{
+व्योम sym_nvram_setup_host(काष्ठा Scsi_Host *shost, काष्ठा sym_hcb *np, काष्ठा sym_nvram *nvram)
+अणु
 	/*
 	 *  Get parity checking, host ID, verbose mode 
 	 *  and miscellaneous host flags from NVRAM.
 	 */
-	switch (nvram->type) {
-	case SYM_SYMBIOS_NVRAM:
-		if (!(nvram->data.Symbios.flags & SYMBIOS_PARITY_ENABLE))
+	चयन (nvram->type) अणु
+	हाल SYM_SYMBIOS_NVRAM:
+		अगर (!(nvram->data.Symbios.flags & SYMBIOS_PARITY_ENABLE))
 			np->rv_scntl0  &= ~0x0a;
-		np->myaddr = nvram->data.Symbios.host_id & 0x0f;
-		if (nvram->data.Symbios.flags & SYMBIOS_VERBOSE_MSGS)
+		np->myaddr = nvram->data.Symमूलप्रण.सost_id & 0x0f;
+		अगर (nvram->data.Symbios.flags & SYMBIOS_VERBOSE_MSGS)
 			np->verbose += 1;
-		if (nvram->data.Symbios.flags1 & SYMBIOS_SCAN_HI_LO)
+		अगर (nvram->data.Symbios.flags1 & SYMBIOS_SCAN_HI_LO)
 			shost->reverse_ordering = 1;
-		if (nvram->data.Symbios.flags2 & SYMBIOS_AVOID_BUS_RESET)
+		अगर (nvram->data.Symbios.flags2 & SYMBIOS_AVOID_BUS_RESET)
 			np->usrflags |= SYM_AVOID_BUS_RESET;
-		break;
-	case SYM_TEKRAM_NVRAM:
+		अवरोध;
+	हाल SYM_TEKRAM_NVRAM:
 		np->myaddr = nvram->data.Tekram.host_id & 0x0f;
-		break;
-#ifdef CONFIG_PARISC
-	case SYM_PARISC_PDC:
-		if (nvram->data.parisc.host_id != -1)
+		अवरोध;
+#अगर_घोषित CONFIG_PARISC
+	हाल SYM_PARISC_PDC:
+		अगर (nvram->data.parisc.host_id != -1)
 			np->myaddr = nvram->data.parisc.host_id;
-		if (nvram->data.parisc.factor != -1)
+		अगर (nvram->data.parisc.factor != -1)
 			np->minsync = nvram->data.parisc.factor;
-		if (nvram->data.parisc.width != -1)
+		अगर (nvram->data.parisc.width != -1)
 			np->maxwide = nvram->data.parisc.width;
-		switch (nvram->data.parisc.mode) {
-			case 0: np->scsi_mode = SMODE_SE; break;
-			case 1: np->scsi_mode = SMODE_HVD; break;
-			case 2: np->scsi_mode = SMODE_LVD; break;
-			default: break;
-		}
-#endif
-	default:
-		break;
-	}
-}
+		चयन (nvram->data.parisc.mode) अणु
+			हाल 0: np->scsi_mode = SMODE_SE; अवरोध;
+			हाल 1: np->scsi_mode = SMODE_HVD; अवरोध;
+			हाल 2: np->scsi_mode = SMODE_LVD; अवरोध;
+			शेष: अवरोध;
+		पूर्ण
+#पूर्ण_अगर
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- *  Get target set-up from Symbios format NVRAM.
+ *  Get target set-up from Symbios क्रमmat NVRAM.
  */
-static void
-sym_Symbios_setup_target(struct sym_tcb *tp, int target, Symbios_nvram *nvram)
-{
+अटल व्योम
+sym_Symbios_setup_target(काष्ठा sym_tcb *tp, पूर्णांक target, Symbios_nvram *nvram)
+अणु
 	Symbios_target *tn = &nvram->target[target];
 
-	if (!(tn->flags & SYMBIOS_QUEUE_TAGS_ENABLED))
+	अगर (!(tn->flags & SYMBIOS_QUEUE_TAGS_ENABLED))
 		tp->usrtags = 0;
-	if (!(tn->flags & SYMBIOS_DISCONNECT_ENABLE))
+	अगर (!(tn->flags & SYMBIOS_DISCONNECT_ENABLE))
 		tp->usrflags &= ~SYM_DISC_ENABLED;
-	if (!(tn->flags & SYMBIOS_SCAN_AT_BOOT_TIME))
+	अगर (!(tn->flags & SYMBIOS_SCAN_AT_BOOT_TIME))
 		tp->usrflags |= SYM_SCAN_BOOT_DISABLED;
-	if (!(tn->flags & SYMBIOS_SCAN_LUNS))
+	अगर (!(tn->flags & SYMBIOS_SCAN_LUNS))
 		tp->usrflags |= SYM_SCAN_LUNS_DISABLED;
 	tp->usr_period = (tn->sync_period + 3) / 4;
 	tp->usr_width = (tn->bus_width == 0x8) ? 0 : 1;
-}
+पूर्ण
 
-static const unsigned char Tekram_sync[16] = {
+अटल स्थिर अचिन्हित अक्षर Tekram_sync[16] = अणु
 	25, 31, 37, 43, 50, 62, 75, 125, 12, 15, 18, 21, 6, 7, 9, 10
-};
+पूर्ण;
 
 /*
- *  Get target set-up from Tekram format NVRAM.
+ *  Get target set-up from Tekram क्रमmat NVRAM.
  */
-static void
-sym_Tekram_setup_target(struct sym_tcb *tp, int target, Tekram_nvram *nvram)
-{
-	struct Tekram_target *tn = &nvram->target[target];
+अटल व्योम
+sym_Tekram_setup_target(काष्ठा sym_tcb *tp, पूर्णांक target, Tekram_nvram *nvram)
+अणु
+	काष्ठा Tekram_target *tn = &nvram->target[target];
 
-	if (tn->flags & TEKRAM_TAGGED_COMMANDS) {
+	अगर (tn->flags & TEKRAM_TAGGED_COMMANDS) अणु
 		tp->usrtags = 2 << nvram->max_tags_index;
-	}
+	पूर्ण
 
-	if (tn->flags & TEKRAM_DISCONNECT_ENABLE)
+	अगर (tn->flags & TEKRAM_DISCONNECT_ENABLE)
 		tp->usrflags |= SYM_DISC_ENABLED;
  
-	if (tn->flags & TEKRAM_SYNC_NEGO)
+	अगर (tn->flags & TEKRAM_SYNC_NEGO)
 		tp->usr_period = Tekram_sync[tn->sync_index & 0xf];
 	tp->usr_width = (tn->flags & TEKRAM_WIDE_NEGO) ? 1 : 0;
-}
+पूर्ण
 
 /*
  *  Get target setup from NVRAM.
  */
-void sym_nvram_setup_target(struct sym_tcb *tp, int target, struct sym_nvram *nvp)
-{
-	switch (nvp->type) {
-	case SYM_SYMBIOS_NVRAM:
+व्योम sym_nvram_setup_target(काष्ठा sym_tcb *tp, पूर्णांक target, काष्ठा sym_nvram *nvp)
+अणु
+	चयन (nvp->type) अणु
+	हाल SYM_SYMBIOS_NVRAM:
 		sym_Symbios_setup_target(tp, target, &nvp->data.Symbios);
-		break;
-	case SYM_TEKRAM_NVRAM:
+		अवरोध;
+	हाल SYM_TEKRAM_NVRAM:
 		sym_Tekram_setup_target(tp, target, &nvp->data.Tekram);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#ifdef	SYM_CONF_DEBUG_NVRAM
+#अगर_घोषित	SYM_CONF_DEBUG_NVRAM
 /*
- *  Dump Symbios format NVRAM for debugging purpose.
+ *  Dump Symbios क्रमmat NVRAM क्रम debugging purpose.
  */
-static void sym_display_Symbios_nvram(struct sym_device *np, Symbios_nvram *nvram)
-{
-	int i;
+अटल व्योम sym_display_Symbios_nvram(काष्ठा sym_device *np, Symbios_nvram *nvram)
+अणु
+	पूर्णांक i;
 
 	/* display Symbios nvram host data */
-	printf("%s: HOST ID=%d%s%s%s%s%s%s\n",
+	म_लिखो("%s: HOST ID=%d%s%s%s%s%s%s\n",
 		sym_name(np), nvram->host_id & 0x0f,
 		(nvram->flags  & SYMBIOS_SCAM_ENABLE)	? " SCAM"	:"",
 		(nvram->flags  & SYMBIOS_PARITY_ENABLE)	? " PARITY"	:"",
@@ -155,9 +156,9 @@ static void sym_display_Symbios_nvram(struct sym_device *np, Symbios_nvram *nvra
 		(nvram->flags1 & SYMBIOS_SCAN_HI_LO)	? " HI_LO"	:"");
 
 	/* display Symbios nvram drive data */
-	for (i = 0 ; i < 15 ; i++) {
-		struct Symbios_target *tn = &nvram->target[i];
-		printf("%s-%d:%s%s%s%s WIDTH=%d SYNC=%d TMO=%d\n",
+	क्रम (i = 0 ; i < 15 ; i++) अणु
+		काष्ठा Symbios_target *tn = &nvram->target[i];
+		म_लिखो("%s-%d:%s%s%s%s WIDTH=%d SYNC=%d TMO=%d\n",
 		sym_name(np), i,
 		(tn->flags & SYMBIOS_DISCONNECT_ENABLE)	? " DISC"	: "",
 		(tn->flags & SYMBIOS_SCAN_AT_BOOT_TIME)	? " SCAN_BOOT"	: "",
@@ -165,31 +166,31 @@ static void sym_display_Symbios_nvram(struct sym_device *np, Symbios_nvram *nvra
 		(tn->flags & SYMBIOS_QUEUE_TAGS_ENABLED)? " TCQ"	: "",
 		tn->bus_width,
 		tn->sync_period / 4,
-		tn->timeout);
-	}
-}
+		tn->समयout);
+	पूर्ण
+पूर्ण
 
 /*
- *  Dump TEKRAM format NVRAM for debugging purpose.
+ *  Dump TEKRAM क्रमmat NVRAM क्रम debugging purpose.
  */
-static void sym_display_Tekram_nvram(struct sym_device *np, Tekram_nvram *nvram)
-{
-	int i, tags, boot_delay;
-	char *rem;
+अटल व्योम sym_display_Tekram_nvram(काष्ठा sym_device *np, Tekram_nvram *nvram)
+अणु
+	पूर्णांक i, tags, boot_delay;
+	अक्षर *rem;
 
 	/* display Tekram nvram host data */
 	tags = 2 << nvram->max_tags_index;
 	boot_delay = 0;
-	if (nvram->boot_delay_index < 6)
+	अगर (nvram->boot_delay_index < 6)
 		boot_delay = Tekram_boot_delay[nvram->boot_delay_index];
-	switch ((nvram->flags & TEKRAM_REMOVABLE_FLAGS) >> 6) {
-	default:
-	case 0:	rem = "";			break;
-	case 1: rem = " REMOVABLE=boot device";	break;
-	case 2: rem = " REMOVABLE=all";		break;
-	}
+	चयन ((nvram->flags & TEKRAM_REMOVABLE_FLAGS) >> 6) अणु
+	शेष:
+	हाल 0:	rem = "";			अवरोध;
+	हाल 1: rem = " REMOVABLE=boot device";	अवरोध;
+	हाल 2: rem = " REMOVABLE=all";		अवरोध;
+	पूर्ण
 
-	printf("%s: HOST ID=%d%s%s%s%s%s%s%s%s%s BOOT DELAY=%d tags=%d\n",
+	म_लिखो("%s: HOST ID=%d%s%s%s%s%s%s%s%s%s BOOT DELAY=%d tags=%d\n",
 		sym_name(np), nvram->host_id & 0x0f,
 		(nvram->flags1 & SYMBIOS_SCAM_ENABLE)	? " SCAM"	:"",
 		(nvram->flags & TEKRAM_MORE_THAN_2_DRIVES) ? " >2DRIVES":"",
@@ -202,12 +203,12 @@ static void sym_display_Tekram_nvram(struct sym_device *np, Tekram_nvram *nvram)
 		rem, boot_delay, tags);
 
 	/* display Tekram nvram drive data */
-	for (i = 0; i <= 15; i++) {
-		int sync, j;
-		struct Tekram_target *tn = &nvram->target[i];
+	क्रम (i = 0; i <= 15; i++) अणु
+		पूर्णांक sync, j;
+		काष्ठा Tekram_target *tn = &nvram->target[i];
 		j = tn->sync_index & 0xf;
 		sync = Tekram_sync[j];
-		printf("%s-%d:%s%s%s%s%s%s PERIOD=%d\n",
+		म_लिखो("%s-%d:%s%s%s%s%s%s PERIOD=%d\n",
 		sym_name(np), i,
 		(tn->flags & TEKRAM_PARITY_CHECK)	? " PARITY"	: "",
 		(tn->flags & TEKRAM_SYNC_NEGO)		? " SYNC"	: "",
@@ -216,158 +217,158 @@ static void sym_display_Tekram_nvram(struct sym_device *np, Tekram_nvram *nvram)
 		(tn->flags & TEKRAM_TAGGED_COMMANDS)	? " TCQ"	: "",
 		(tn->flags & TEKRAM_WIDE_NEGO)		? " WIDE"	: "",
 		sync);
-	}
-}
-#else
-static void sym_display_Symbios_nvram(struct sym_device *np, Symbios_nvram *nvram) { (void)np; (void)nvram; }
-static void sym_display_Tekram_nvram(struct sym_device *np, Tekram_nvram *nvram) { (void)np; (void)nvram; }
-#endif	/* SYM_CONF_DEBUG_NVRAM */
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल व्योम sym_display_Symbios_nvram(काष्ठा sym_device *np, Symbios_nvram *nvram) अणु (व्योम)np; (व्योम)nvram; पूर्ण
+अटल व्योम sym_display_Tekram_nvram(काष्ठा sym_device *np, Tekram_nvram *nvram) अणु (व्योम)np; (व्योम)nvram; पूर्ण
+#पूर्ण_अगर	/* SYM_CONF_DEBUG_NVRAM */
 
 
 /*
- *  24C16 EEPROM reading.
+ *  24C16 EEPROM पढ़ोing.
  *
  *  GPIO0 - data in/data out
- *  GPIO1 - clock
+ *  GPIO1 - घड़ी
  *  Symbios NVRAM wiring now also used by Tekram.
  */
 
-#define SET_BIT 0
-#define CLR_BIT 1
-#define SET_CLK 2
-#define CLR_CLK 3
+#घोषणा SET_BIT 0
+#घोषणा CLR_BIT 1
+#घोषणा SET_CLK 2
+#घोषणा CLR_CLK 3
 
 /*
- *  Set/clear data/clock bit in GPIO0
+ *  Set/clear data/घड़ी bit in GPIO0
  */
-static void S24C16_set_bit(struct sym_device *np, u_char write_bit, u_char *gpreg, 
-			  int bit_mode)
-{
+अटल व्योम S24C16_set_bit(काष्ठा sym_device *np, u_अक्षर ग_लिखो_bit, u_अक्षर *gpreg, 
+			  पूर्णांक bit_mode)
+अणु
 	udelay(5);
-	switch (bit_mode) {
-	case SET_BIT:
-		*gpreg |= write_bit;
-		break;
-	case CLR_BIT:
+	चयन (bit_mode) अणु
+	हाल SET_BIT:
+		*gpreg |= ग_लिखो_bit;
+		अवरोध;
+	हाल CLR_BIT:
 		*gpreg &= 0xfe;
-		break;
-	case SET_CLK:
+		अवरोध;
+	हाल SET_CLK:
 		*gpreg |= 0x02;
-		break;
-	case CLR_CLK:
+		अवरोध;
+	हाल CLR_CLK:
 		*gpreg &= 0xfd;
-		break;
+		अवरोध;
 
-	}
+	पूर्ण
 	OUTB(np, nc_gpreg, *gpreg);
 	INB(np, nc_mbox1);
 	udelay(5);
-}
+पूर्ण
 
 /*
  *  Send START condition to NVRAM to wake it up.
  */
-static void S24C16_start(struct sym_device *np, u_char *gpreg)
-{
+अटल व्योम S24C16_start(काष्ठा sym_device *np, u_अक्षर *gpreg)
+अणु
 	S24C16_set_bit(np, 1, gpreg, SET_BIT);
 	S24C16_set_bit(np, 0, gpreg, SET_CLK);
 	S24C16_set_bit(np, 0, gpreg, CLR_BIT);
 	S24C16_set_bit(np, 0, gpreg, CLR_CLK);
-}
+पूर्ण
 
 /*
- *  Send STOP condition to NVRAM - puts NVRAM to sleep... ZZzzzz!!
+ *  Send STOP condition to NVRAM - माला_दो NVRAM to sleep... ZZzzzz!!
  */
-static void S24C16_stop(struct sym_device *np, u_char *gpreg)
-{
+अटल व्योम S24C16_stop(काष्ठा sym_device *np, u_अक्षर *gpreg)
+अणु
 	S24C16_set_bit(np, 0, gpreg, SET_CLK);
 	S24C16_set_bit(np, 1, gpreg, SET_BIT);
-}
+पूर्ण
 
 /*
- *  Read or write a bit to the NVRAM,
- *  read if GPIO0 input else write if GPIO0 output
+ *  Read or ग_लिखो a bit to the NVRAM,
+ *  पढ़ो अगर GPIO0 input अन्यथा ग_लिखो अगर GPIO0 output
  */
-static void S24C16_do_bit(struct sym_device *np, u_char *read_bit, u_char write_bit, 
-			 u_char *gpreg)
-{
-	S24C16_set_bit(np, write_bit, gpreg, SET_BIT);
+अटल व्योम S24C16_करो_bit(काष्ठा sym_device *np, u_अक्षर *पढ़ो_bit, u_अक्षर ग_लिखो_bit, 
+			 u_अक्षर *gpreg)
+अणु
+	S24C16_set_bit(np, ग_लिखो_bit, gpreg, SET_BIT);
 	S24C16_set_bit(np, 0, gpreg, SET_CLK);
-	if (read_bit)
-		*read_bit = INB(np, nc_gpreg);
+	अगर (पढ़ो_bit)
+		*पढ़ो_bit = INB(np, nc_gpreg);
 	S24C16_set_bit(np, 0, gpreg, CLR_CLK);
 	S24C16_set_bit(np, 0, gpreg, CLR_BIT);
-}
+पूर्ण
 
 /*
- *  Output an ACK to the NVRAM after reading,
- *  change GPIO0 to output and when done back to an input
+ *  Output an ACK to the NVRAM after पढ़ोing,
+ *  change GPIO0 to output and when करोne back to an input
  */
-static void S24C16_write_ack(struct sym_device *np, u_char write_bit, u_char *gpreg, 
-			    u_char *gpcntl)
-{
+अटल व्योम S24C16_ग_लिखो_ack(काष्ठा sym_device *np, u_अक्षर ग_लिखो_bit, u_अक्षर *gpreg, 
+			    u_अक्षर *gpcntl)
+अणु
 	OUTB(np, nc_gpcntl, *gpcntl & 0xfe);
-	S24C16_do_bit(np, NULL, write_bit, gpreg);
+	S24C16_करो_bit(np, शून्य, ग_लिखो_bit, gpreg);
 	OUTB(np, nc_gpcntl, *gpcntl);
-}
+पूर्ण
 
 /*
  *  Input an ACK from NVRAM after writing,
- *  change GPIO0 to input and when done back to an output
+ *  change GPIO0 to input and when करोne back to an output
  */
-static void S24C16_read_ack(struct sym_device *np, u_char *read_bit, u_char *gpreg, 
-			   u_char *gpcntl)
-{
+अटल व्योम S24C16_पढ़ो_ack(काष्ठा sym_device *np, u_अक्षर *पढ़ो_bit, u_अक्षर *gpreg, 
+			   u_अक्षर *gpcntl)
+अणु
 	OUTB(np, nc_gpcntl, *gpcntl | 0x01);
-	S24C16_do_bit(np, read_bit, 1, gpreg);
+	S24C16_करो_bit(np, पढ़ो_bit, 1, gpreg);
 	OUTB(np, nc_gpcntl, *gpcntl);
-}
+पूर्ण
 
 /*
  *  WRITE a byte to the NVRAM and then get an ACK to see it was accepted OK,
- *  GPIO0 must already be set as an output
+ *  GPIO0 must alपढ़ोy be set as an output
  */
-static void S24C16_write_byte(struct sym_device *np, u_char *ack_data, u_char write_data, 
-			     u_char *gpreg, u_char *gpcntl)
-{
-	int x;
+अटल व्योम S24C16_ग_लिखो_byte(काष्ठा sym_device *np, u_अक्षर *ack_data, u_अक्षर ग_लिखो_data, 
+			     u_अक्षर *gpreg, u_अक्षर *gpcntl)
+अणु
+	पूर्णांक x;
 	
-	for (x = 0; x < 8; x++)
-		S24C16_do_bit(np, NULL, (write_data >> (7 - x)) & 0x01, gpreg);
+	क्रम (x = 0; x < 8; x++)
+		S24C16_करो_bit(np, शून्य, (ग_लिखो_data >> (7 - x)) & 0x01, gpreg);
 		
-	S24C16_read_ack(np, ack_data, gpreg, gpcntl);
-}
+	S24C16_पढ़ो_ack(np, ack_data, gpreg, gpcntl);
+पूर्ण
 
 /*
  *  READ a byte from the NVRAM and then send an ACK to say we have got it,
- *  GPIO0 must already be set as an input
+ *  GPIO0 must alपढ़ोy be set as an input
  */
-static void S24C16_read_byte(struct sym_device *np, u_char *read_data, u_char ack_data, 
-			    u_char *gpreg, u_char *gpcntl)
-{
-	int x;
-	u_char read_bit;
+अटल व्योम S24C16_पढ़ो_byte(काष्ठा sym_device *np, u_अक्षर *पढ़ो_data, u_अक्षर ack_data, 
+			    u_अक्षर *gpreg, u_अक्षर *gpcntl)
+अणु
+	पूर्णांक x;
+	u_अक्षर पढ़ो_bit;
 
-	*read_data = 0;
-	for (x = 0; x < 8; x++) {
-		S24C16_do_bit(np, &read_bit, 1, gpreg);
-		*read_data |= ((read_bit & 0x01) << (7 - x));
-	}
+	*पढ़ो_data = 0;
+	क्रम (x = 0; x < 8; x++) अणु
+		S24C16_करो_bit(np, &पढ़ो_bit, 1, gpreg);
+		*पढ़ो_data |= ((पढ़ो_bit & 0x01) << (7 - x));
+	पूर्ण
 
-	S24C16_write_ack(np, ack_data, gpreg, gpcntl);
-}
+	S24C16_ग_लिखो_ack(np, ack_data, gpreg, gpcntl);
+पूर्ण
 
-#ifdef SYM_CONF_NVRAM_WRITE_SUPPORT
+#अगर_घोषित SYM_CONF_NVRAM_WRITE_SUPPORT
 /*
  *  Write 'len' bytes starting at 'offset'.
  */
-static int sym_write_S24C16_nvram(struct sym_device *np, int offset,
-		u_char *data, int len)
-{
-	u_char	gpcntl, gpreg;
-	u_char	old_gpcntl, old_gpreg;
-	u_char	ack_data;
-	int	x;
+अटल पूर्णांक sym_ग_लिखो_S24C16_nvram(काष्ठा sym_device *np, पूर्णांक offset,
+		u_अक्षर *data, पूर्णांक len)
+अणु
+	u_अक्षर	gpcntl, gpreg;
+	u_अक्षर	old_gpcntl, old_gpreg;
+	u_अक्षर	ack_data;
+	पूर्णांक	x;
 
 	/* save current state of GPCNTL and GPREG */
 	old_gpreg	= INB(np, nc_gpreg);
@@ -378,7 +379,7 @@ static int sym_write_S24C16_nvram(struct sym_device *np, int offset,
 	OUTB(np, nc_gpreg,  old_gpreg);
 	OUTB(np, nc_gpcntl, gpcntl);
 
-	/* this is to set NVRAM into a known state with GPIO0/1 both low */
+	/* this is to set NVRAM पूर्णांकo a known state with GPIO0/1 both low */
 	gpreg = old_gpreg;
 	S24C16_set_bit(np, 0, &gpreg, CLR_CLK);
 	S24C16_set_bit(np, 0, &gpreg, CLR_BIT);
@@ -387,41 +388,41 @@ static int sym_write_S24C16_nvram(struct sym_device *np, int offset,
 	S24C16_stop(np, &gpreg);
 
 	/* NVRAM has to be written in segments of 16 bytes */
-	for (x = 0; x < len ; x += 16) {
-		do {
+	क्रम (x = 0; x < len ; x += 16) अणु
+		करो अणु
 			S24C16_start(np, &gpreg);
-			S24C16_write_byte(np, &ack_data,
+			S24C16_ग_लिखो_byte(np, &ack_data,
 					  0xa0 | (((offset+x) >> 7) & 0x0e),
 					  &gpreg, &gpcntl);
-		} while (ack_data & 0x01);
+		पूर्ण जबतक (ack_data & 0x01);
 
-		S24C16_write_byte(np, &ack_data, (offset+x) & 0xff, 
+		S24C16_ग_लिखो_byte(np, &ack_data, (offset+x) & 0xff, 
 				  &gpreg, &gpcntl);
 
-		for (y = 0; y < 16; y++)
-			S24C16_write_byte(np, &ack_data, data[x+y], 
+		क्रम (y = 0; y < 16; y++)
+			S24C16_ग_लिखो_byte(np, &ack_data, data[x+y], 
 					  &gpreg, &gpcntl);
 		S24C16_stop(np, &gpreg);
-	}
+	पूर्ण
 
-	/* return GPIO0/1 to original states after having accessed NVRAM */
+	/* वापस GPIO0/1 to original states after having accessed NVRAM */
 	OUTB(np, nc_gpcntl, old_gpcntl);
 	OUTB(np, nc_gpreg,  old_gpreg);
 
-	return 0;
-}
-#endif /* SYM_CONF_NVRAM_WRITE_SUPPORT */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* SYM_CONF_NVRAM_WRITE_SUPPORT */
 
 /*
  *  Read 'len' bytes starting at 'offset'.
  */
-static int sym_read_S24C16_nvram(struct sym_device *np, int offset, u_char *data, int len)
-{
-	u_char	gpcntl, gpreg;
-	u_char	old_gpcntl, old_gpreg;
-	u_char	ack_data;
-	int	retv = 1;
-	int	x;
+अटल पूर्णांक sym_पढ़ो_S24C16_nvram(काष्ठा sym_device *np, पूर्णांक offset, u_अक्षर *data, पूर्णांक len)
+अणु
+	u_अक्षर	gpcntl, gpreg;
+	u_अक्षर	old_gpcntl, old_gpreg;
+	u_अक्षर	ack_data;
+	पूर्णांक	retv = 1;
+	पूर्णांक	x;
 
 	/* save current state of GPCNTL and GPREG */
 	old_gpreg	= INB(np, nc_gpreg);
@@ -432,7 +433,7 @@ static int sym_read_S24C16_nvram(struct sym_device *np, int offset, u_char *data
 	OUTB(np, nc_gpreg,  old_gpreg);
 	OUTB(np, nc_gpcntl, gpcntl);
 
-	/* this is to set NVRAM into a known state with GPIO0/1 both low */
+	/* this is to set NVRAM पूर्णांकo a known state with GPIO0/1 both low */
 	gpreg = old_gpreg;
 	S24C16_set_bit(np, 0, &gpreg, CLR_CLK);
 	S24C16_set_bit(np, 0, &gpreg, CLR_BIT);
@@ -443,34 +444,34 @@ static int sym_read_S24C16_nvram(struct sym_device *np, int offset, u_char *data
 	/* activate NVRAM */
 	S24C16_start(np, &gpreg);
 
-	/* write device code and random address MSB */
-	S24C16_write_byte(np, &ack_data,
+	/* ग_लिखो device code and अक्रमom address MSB */
+	S24C16_ग_लिखो_byte(np, &ack_data,
 		0xa0 | ((offset >> 7) & 0x0e), &gpreg, &gpcntl);
-	if (ack_data & 0x01)
-		goto out;
+	अगर (ack_data & 0x01)
+		जाओ out;
 
-	/* write random address LSB */
-	S24C16_write_byte(np, &ack_data,
+	/* ग_लिखो अक्रमom address LSB */
+	S24C16_ग_लिखो_byte(np, &ack_data,
 		offset & 0xff, &gpreg, &gpcntl);
-	if (ack_data & 0x01)
-		goto out;
+	अगर (ack_data & 0x01)
+		जाओ out;
 
-	/* regenerate START state to set up for reading */
+	/* regenerate START state to set up क्रम पढ़ोing */
 	S24C16_start(np, &gpreg);
 	
-	/* rewrite device code and address MSB with read bit set (lsb = 0x01) */
-	S24C16_write_byte(np, &ack_data,
+	/* reग_लिखो device code and address MSB with पढ़ो bit set (lsb = 0x01) */
+	S24C16_ग_लिखो_byte(np, &ack_data,
 		0xa1 | ((offset >> 7) & 0x0e), &gpreg, &gpcntl);
-	if (ack_data & 0x01)
-		goto out;
+	अगर (ack_data & 0x01)
+		जाओ out;
 
-	/* now set up GPIO0 for inputting data */
+	/* now set up GPIO0 क्रम inputting data */
 	gpcntl |= 0x01;
 	OUTB(np, nc_gpcntl, gpcntl);
 		
 	/* input all requested data - only part of total NVRAM */
-	for (x = 0; x < len; x++) 
-		S24C16_read_byte(np, &data[x], (x == (len-1)), &gpreg, &gpcntl);
+	क्रम (x = 0; x < len; x++) 
+		S24C16_पढ़ो_byte(np, &data[x], (x == (len-1)), &gpreg, &gpcntl);
 
 	/* finally put NVRAM back in inactive mode */
 	gpcntl &= 0xfe;
@@ -478,89 +479,89 @@ static int sym_read_S24C16_nvram(struct sym_device *np, int offset, u_char *data
 	S24C16_stop(np, &gpreg);
 	retv = 0;
 out:
-	/* return GPIO0/1 to original states after having accessed NVRAM */
+	/* वापस GPIO0/1 to original states after having accessed NVRAM */
 	OUTB(np, nc_gpcntl, old_gpcntl);
 	OUTB(np, nc_gpreg,  old_gpreg);
 
-	return retv;
-}
+	वापस retv;
+पूर्ण
 
-#undef SET_BIT
-#undef CLR_BIT
-#undef SET_CLK
-#undef CLR_CLK
+#अघोषित SET_BIT
+#अघोषित CLR_BIT
+#अघोषित SET_CLK
+#अघोषित CLR_CLK
 
 /*
- *  Try reading Symbios NVRAM.
- *  Return 0 if OK.
+ *  Try पढ़ोing Symbios NVRAM.
+ *  Return 0 अगर OK.
  */
-static int sym_read_Symbios_nvram(struct sym_device *np, Symbios_nvram *nvram)
-{
-	static u_char Symbios_trailer[6] = {0xfe, 0xfe, 0, 0, 0, 0};
-	u_char *data = (u_char *) nvram;
-	int len  = sizeof(*nvram);
-	u_short	csum;
-	int x;
+अटल पूर्णांक sym_पढ़ो_Symbios_nvram(काष्ठा sym_device *np, Symbios_nvram *nvram)
+अणु
+	अटल u_अक्षर Symbios_trailer[6] = अणु0xfe, 0xfe, 0, 0, 0, 0पूर्ण;
+	u_अक्षर *data = (u_अक्षर *) nvram;
+	पूर्णांक len  = माप(*nvram);
+	u_लघु	csum;
+	पूर्णांक x;
 
-	/* probe the 24c16 and read the SYMBIOS 24c16 area */
-	if (sym_read_S24C16_nvram (np, SYMBIOS_NVRAM_ADDRESS, data, len))
-		return 1;
+	/* probe the 24c16 and पढ़ो the SYMBIOS 24c16 area */
+	अगर (sym_पढ़ो_S24C16_nvram (np, SYMBIOS_NVRAM_ADDRESS, data, len))
+		वापस 1;
 
-	/* check valid NVRAM signature, verify byte count and checksum */
-	if (nvram->type != 0 ||
-	    memcmp(nvram->trailer, Symbios_trailer, 6) ||
+	/* check valid NVRAM signature, verअगरy byte count and checksum */
+	अगर (nvram->type != 0 ||
+	    स_भेद(nvram->trailer, Symbios_trailer, 6) ||
 	    nvram->byte_count != len - 12)
-		return 1;
+		वापस 1;
 
-	/* verify checksum */
-	for (x = 6, csum = 0; x < len - 6; x++)
+	/* verअगरy checksum */
+	क्रम (x = 6, csum = 0; x < len - 6; x++)
 		csum += data[x];
-	if (csum != nvram->checksum)
-		return 1;
+	अगर (csum != nvram->checksum)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *  93C46 EEPROM reading.
+ *  93C46 EEPROM पढ़ोing.
  *
  *  GPIO0 - data in
  *  GPIO1 - data out
- *  GPIO2 - clock
+ *  GPIO2 - घड़ी
  *  GPIO4 - chip select
  *
  *  Used by Tekram.
  */
 
 /*
- *  Pulse clock bit in GPIO0
+ *  Pulse घड़ी bit in GPIO0
  */
-static void T93C46_Clk(struct sym_device *np, u_char *gpreg)
-{
+अटल व्योम T93C46_Clk(काष्ठा sym_device *np, u_अक्षर *gpreg)
+अणु
 	OUTB(np, nc_gpreg, *gpreg | 0x04);
 	INB(np, nc_mbox1);
 	udelay(2);
 	OUTB(np, nc_gpreg, *gpreg);
-}
+पूर्ण
 
 /* 
  *  Read bit from NVRAM
  */
-static void T93C46_Read_Bit(struct sym_device *np, u_char *read_bit, u_char *gpreg)
-{
+अटल व्योम T93C46_Read_Bit(काष्ठा sym_device *np, u_अक्षर *पढ़ो_bit, u_अक्षर *gpreg)
+अणु
 	udelay(2);
 	T93C46_Clk(np, gpreg);
-	*read_bit = INB(np, nc_gpreg);
-}
+	*पढ़ो_bit = INB(np, nc_gpreg);
+पूर्ण
 
 /*
  *  Write bit to GPIO0
  */
-static void T93C46_Write_Bit(struct sym_device *np, u_char write_bit, u_char *gpreg)
-{
-	if (write_bit & 0x01)
+अटल व्योम T93C46_Write_Bit(काष्ठा sym_device *np, u_अक्षर ग_लिखो_bit, u_अक्षर *gpreg)
+अणु
+	अगर (ग_लिखो_bit & 0x01)
 		*gpreg |= 0x02;
-	else
+	अन्यथा
 		*gpreg &= 0xfd;
 		
 	*gpreg |= 0x10;
@@ -570,85 +571,85 @@ static void T93C46_Write_Bit(struct sym_device *np, u_char write_bit, u_char *gp
 	udelay(2);
 
 	T93C46_Clk(np, gpreg);
-}
+पूर्ण
 
 /*
- *  Send STOP condition to NVRAM - puts NVRAM to sleep... ZZZzzz!!
+ *  Send STOP condition to NVRAM - माला_दो NVRAM to sleep... ZZZzzz!!
  */
-static void T93C46_Stop(struct sym_device *np, u_char *gpreg)
-{
+अटल व्योम T93C46_Stop(काष्ठा sym_device *np, u_अक्षर *gpreg)
+अणु
 	*gpreg &= 0xef;
 	OUTB(np, nc_gpreg, *gpreg);
 	INB(np, nc_mbox1);
 	udelay(2);
 
 	T93C46_Clk(np, gpreg);
-}
+पूर्ण
 
 /*
- *  Send read command and address to NVRAM
+ *  Send पढ़ो command and address to NVRAM
  */
-static void T93C46_Send_Command(struct sym_device *np, u_short write_data, 
-				u_char *read_bit, u_char *gpreg)
-{
-	int x;
+अटल व्योम T93C46_Send_Command(काष्ठा sym_device *np, u_लघु ग_लिखो_data, 
+				u_अक्षर *पढ़ो_bit, u_अक्षर *gpreg)
+अणु
+	पूर्णांक x;
 
 	/* send 9 bits, start bit (1), command (2), address (6)  */
-	for (x = 0; x < 9; x++)
-		T93C46_Write_Bit(np, (u_char) (write_data >> (8 - x)), gpreg);
+	क्रम (x = 0; x < 9; x++)
+		T93C46_Write_Bit(np, (u_अक्षर) (ग_लिखो_data >> (8 - x)), gpreg);
 
-	*read_bit = INB(np, nc_gpreg);
-}
+	*पढ़ो_bit = INB(np, nc_gpreg);
+पूर्ण
 
 /*
  *  READ 2 bytes from the NVRAM
  */
-static void T93C46_Read_Word(struct sym_device *np,
-		unsigned short *nvram_data, unsigned char *gpreg)
-{
-	int x;
-	u_char read_bit;
+अटल व्योम T93C46_Read_Word(काष्ठा sym_device *np,
+		अचिन्हित लघु *nvram_data, अचिन्हित अक्षर *gpreg)
+अणु
+	पूर्णांक x;
+	u_अक्षर पढ़ो_bit;
 
 	*nvram_data = 0;
-	for (x = 0; x < 16; x++) {
-		T93C46_Read_Bit(np, &read_bit, gpreg);
+	क्रम (x = 0; x < 16; x++) अणु
+		T93C46_Read_Bit(np, &पढ़ो_bit, gpreg);
 
-		if (read_bit & 0x01)
+		अगर (पढ़ो_bit & 0x01)
 			*nvram_data |=  (0x01 << (15 - x));
-		else
+		अन्यथा
 			*nvram_data &= ~(0x01 << (15 - x));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *  Read Tekram NvRAM data.
  */
-static int T93C46_Read_Data(struct sym_device *np, unsigned short *data,
-		int len, unsigned char *gpreg)
-{
-	int x;
+अटल पूर्णांक T93C46_Read_Data(काष्ठा sym_device *np, अचिन्हित लघु *data,
+		पूर्णांक len, अचिन्हित अक्षर *gpreg)
+अणु
+	पूर्णांक x;
 
-	for (x = 0; x < len; x++)  {
-		unsigned char read_bit;
-		/* output read command and address */
-		T93C46_Send_Command(np, 0x180 | x, &read_bit, gpreg);
-		if (read_bit & 0x01)
-			return 1; /* Bad */
+	क्रम (x = 0; x < len; x++)  अणु
+		अचिन्हित अक्षर पढ़ो_bit;
+		/* output पढ़ो command and address */
+		T93C46_Send_Command(np, 0x180 | x, &पढ़ो_bit, gpreg);
+		अगर (पढ़ो_bit & 0x01)
+			वापस 1; /* Bad */
 		T93C46_Read_Word(np, &data[x], gpreg);
 		T93C46_Stop(np, gpreg);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *  Try reading 93C46 Tekram NVRAM.
+ *  Try पढ़ोing 93C46 Tekram NVRAM.
  */
-static int sym_read_T93C46_nvram(struct sym_device *np, Tekram_nvram *nvram)
-{
-	u_char gpcntl, gpreg;
-	u_char old_gpcntl, old_gpreg;
-	int retv;
+अटल पूर्णांक sym_पढ़ो_T93C46_nvram(काष्ठा sym_device *np, Tekram_nvram *nvram)
+अणु
+	u_अक्षर gpcntl, gpreg;
+	u_अक्षर old_gpcntl, old_gpreg;
+	पूर्णांक retv;
 
 	/* save current state of GPCNTL and GPREG */
 	old_gpreg	= INB(np, nc_gpreg);
@@ -662,106 +663,106 @@ static int sym_read_T93C46_nvram(struct sym_device *np, Tekram_nvram *nvram)
 	OUTB(np, nc_gpcntl, gpcntl);
 
 	/* input all of NVRAM, 64 words */
-	retv = T93C46_Read_Data(np, (u_short *) nvram,
-				sizeof(*nvram) / sizeof(short), &gpreg);
+	retv = T93C46_Read_Data(np, (u_लघु *) nvram,
+				माप(*nvram) / माप(लघु), &gpreg);
 	
-	/* return GPIO0/1/2/4 to original states after having accessed NVRAM */
+	/* वापस GPIO0/1/2/4 to original states after having accessed NVRAM */
 	OUTB(np, nc_gpcntl, old_gpcntl);
 	OUTB(np, nc_gpreg,  old_gpreg);
 
-	return retv;
-}
+	वापस retv;
+पूर्ण
 
 /*
- *  Try reading Tekram NVRAM.
- *  Return 0 if OK.
+ *  Try पढ़ोing Tekram NVRAM.
+ *  Return 0 अगर OK.
  */
-static int sym_read_Tekram_nvram (struct sym_device *np, Tekram_nvram *nvram)
-{
-	u_char *data = (u_char *) nvram;
-	int len = sizeof(*nvram);
-	u_short	csum;
-	int x;
+अटल पूर्णांक sym_पढ़ो_Tekram_nvram (काष्ठा sym_device *np, Tekram_nvram *nvram)
+अणु
+	u_अक्षर *data = (u_अक्षर *) nvram;
+	पूर्णांक len = माप(*nvram);
+	u_लघु	csum;
+	पूर्णांक x;
 
-	switch (np->pdev->device) {
-	case PCI_DEVICE_ID_NCR_53C885:
-	case PCI_DEVICE_ID_NCR_53C895:
-	case PCI_DEVICE_ID_NCR_53C896:
-		x = sym_read_S24C16_nvram(np, TEKRAM_24C16_NVRAM_ADDRESS,
+	चयन (np->pdev->device) अणु
+	हाल PCI_DEVICE_ID_NCR_53C885:
+	हाल PCI_DEVICE_ID_NCR_53C895:
+	हाल PCI_DEVICE_ID_NCR_53C896:
+		x = sym_पढ़ो_S24C16_nvram(np, TEKRAM_24C16_NVRAM_ADDRESS,
 					  data, len);
-		break;
-	case PCI_DEVICE_ID_NCR_53C875:
-		x = sym_read_S24C16_nvram(np, TEKRAM_24C16_NVRAM_ADDRESS,
+		अवरोध;
+	हाल PCI_DEVICE_ID_NCR_53C875:
+		x = sym_पढ़ो_S24C16_nvram(np, TEKRAM_24C16_NVRAM_ADDRESS,
 					  data, len);
-		if (!x)
-			break;
+		अगर (!x)
+			अवरोध;
 		fallthrough;
-	default:
-		x = sym_read_T93C46_nvram(np, nvram);
-		break;
-	}
-	if (x)
-		return 1;
+	शेष:
+		x = sym_पढ़ो_T93C46_nvram(np, nvram);
+		अवरोध;
+	पूर्ण
+	अगर (x)
+		वापस 1;
 
-	/* verify checksum */
-	for (x = 0, csum = 0; x < len - 1; x += 2)
+	/* verअगरy checksum */
+	क्रम (x = 0, csum = 0; x < len - 1; x += 2)
 		csum += data[x] + (data[x+1] << 8);
-	if (csum != 0x1234)
-		return 1;
+	अगर (csum != 0x1234)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PARISC
+#अगर_घोषित CONFIG_PARISC
 /*
- * Host firmware (PDC) keeps a table for altering SCSI capabilities.
+ * Host firmware (PDC) keeps a table क्रम altering SCSI capabilities.
  * Many newer machines export one channel of 53c896 chip as SE, 50-pin HD.
- * Also used for Multi-initiator SCSI clusters to set the SCSI Initiator ID.
+ * Also used क्रम Multi-initiator SCSI clusters to set the SCSI Initiator ID.
  */
-static int sym_read_parisc_pdc(struct sym_device *np, struct pdc_initiator *pdc)
-{
-	struct hardware_path hwpath;
+अटल पूर्णांक sym_पढ़ो_parisc_pdc(काष्ठा sym_device *np, काष्ठा pdc_initiator *pdc)
+अणु
+	काष्ठा hardware_path hwpath;
 	get_pci_node_path(np->pdev, &hwpath);
-	if (!pdc_get_initiator(&hwpath, pdc))
-		return 0;
+	अगर (!pdc_get_initiator(&hwpath, pdc))
+		वापस 0;
 
-	return SYM_PARISC_PDC;
-}
-#else
-static inline int sym_read_parisc_pdc(struct sym_device *np,
-					struct pdc_initiator *x)
-{
-	return 0;
-}
-#endif
+	वापस SYM_PARISC_PDC;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक sym_पढ़ो_parisc_pdc(काष्ठा sym_device *np,
+					काष्ठा pdc_initiator *x)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- *  Try reading Symbios or Tekram NVRAM
+ *  Try पढ़ोing Symbios or Tekram NVRAM
  */
-int sym_read_nvram(struct sym_device *np, struct sym_nvram *nvp)
-{
-	if (!sym_read_Symbios_nvram(np, &nvp->data.Symbios)) {
+पूर्णांक sym_पढ़ो_nvram(काष्ठा sym_device *np, काष्ठा sym_nvram *nvp)
+अणु
+	अगर (!sym_पढ़ो_Symbios_nvram(np, &nvp->data.Symbios)) अणु
 		nvp->type = SYM_SYMBIOS_NVRAM;
 		sym_display_Symbios_nvram(np, &nvp->data.Symbios);
-	} else if (!sym_read_Tekram_nvram(np, &nvp->data.Tekram)) {
+	पूर्ण अन्यथा अगर (!sym_पढ़ो_Tekram_nvram(np, &nvp->data.Tekram)) अणु
 		nvp->type = SYM_TEKRAM_NVRAM;
 		sym_display_Tekram_nvram(np, &nvp->data.Tekram);
-	} else {
-		nvp->type = sym_read_parisc_pdc(np, &nvp->data.parisc);
-	}
-	return nvp->type;
-}
+	पूर्ण अन्यथा अणु
+		nvp->type = sym_पढ़ो_parisc_pdc(np, &nvp->data.parisc);
+	पूर्ण
+	वापस nvp->type;
+पूर्ण
 
-char *sym_nvram_type(struct sym_nvram *nvp)
-{
-	switch (nvp->type) {
-	case SYM_SYMBIOS_NVRAM:
-		return "Symbios NVRAM";
-	case SYM_TEKRAM_NVRAM:
-		return "Tekram NVRAM";
-	case SYM_PARISC_PDC:
-		return "PA-RISC Firmware";
-	default:
-		return "No NVRAM";
-	}
-}
+अक्षर *sym_nvram_type(काष्ठा sym_nvram *nvp)
+अणु
+	चयन (nvp->type) अणु
+	हाल SYM_SYMBIOS_NVRAM:
+		वापस "Symbios NVRAM";
+	हाल SYM_TEKRAM_NVRAM:
+		वापस "Tekram NVRAM";
+	हाल SYM_PARISC_PDC:
+		वापस "PA-RISC Firmware";
+	शेष:
+		वापस "No NVRAM";
+	पूर्ण
+पूर्ण

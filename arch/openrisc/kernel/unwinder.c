@@ -1,105 +1,106 @@
+<शैली गुरु>
 /*
  * OpenRISC unwinder.c
  *
- * Reusable arch specific api for unwinding stacks.
+ * Reusable arch specअगरic api क्रम unwinding stacks.
  *
- * Copyright (C) 2017 Stafford Horne <shorne@gmail.com>
+ * Copyright (C) 2017 Stafक्रमd Horne <shorne@gmail.com>
  *
  * This file is licensed under the terms of the GNU General Public License
  * version 2.  This program is licensed "as is" without any warranty of any
  * kind, whether express or implied.
  */
 
-#include <linux/sched/task_stack.h>
-#include <linux/kernel.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/kernel.h>
 
-#include <asm/unwinder.h>
+#समावेश <यंत्र/unwinder.h>
 
-#ifdef CONFIG_FRAME_POINTER
-struct or1k_frameinfo {
-	unsigned long *fp;
-	unsigned long ra;
-	unsigned long top;
-};
+#अगर_घोषित CONFIG_FRAME_POINTER
+काष्ठा or1k_frameinfo अणु
+	अचिन्हित दीर्घ *fp;
+	अचिन्हित दीर्घ ra;
+	अचिन्हित दीर्घ top;
+पूर्ण;
 
 /*
- * Verify a frameinfo structure.  The return address should be a valid text
- * address.  The frame pointer may be null if its the last frame, otherwise
- * the frame pointer should point to a location in the stack after the the
+ * Verअगरy a frameinfo काष्ठाure.  The वापस address should be a valid text
+ * address.  The frame poपूर्णांकer may be null अगर its the last frame, otherwise
+ * the frame poपूर्णांकer should poपूर्णांक to a location in the stack after the the
  * top of the next frame up.
  */
-static inline int or1k_frameinfo_valid(struct or1k_frameinfo *frameinfo)
-{
-	return (frameinfo->fp == NULL ||
+अटल अंतरभूत पूर्णांक or1k_frameinfo_valid(काष्ठा or1k_frameinfo *frameinfo)
+अणु
+	वापस (frameinfo->fp == शून्य ||
 		(!kstack_end(frameinfo->fp) &&
 		 frameinfo->fp > &frameinfo->top)) &&
 	       __kernel_text_address(frameinfo->ra);
-}
+पूर्ण
 
 /*
- * Create a stack trace doing scanning which is frame pointer aware. We can
+ * Create a stack trace करोing scanning which is frame poपूर्णांकer aware. We can
  * get reliable stack traces by matching the previously found frame
- * pointer with the top of the stack address every time we find a valid
+ * poपूर्णांकer with the top of the stack address every समय we find a valid
  * or1k_frameinfo.
  *
  * Ideally the stack parameter will be passed as FP, but it can not be
- * guaranteed.  Therefore we scan each address looking for the first sign
- * of a return address.
+ * guaranteed.  Thereक्रमe we scan each address looking क्रम the first sign
+ * of a वापस address.
  *
  * The OpenRISC stack frame looks something like the following.  The
- * location SP is held in r1 and location FP is held in r2 when frame pointers
+ * location SP is held in r1 and location FP is held in r2 when frame poपूर्णांकers
  * enabled.
  *
  * SP   -> (top of stack)
- *      -  (callee saved registers)
+ *      -  (callee saved रेजिस्टरs)
  *      -  (local variables)
  * FP-8 -> previous FP             \
- * FP-4 -> return address          |- or1k_frameinfo
+ * FP-4 -> वापस address          |- or1k_frameinfo
  * FP   -> (previous top of stack) /
  */
-void unwind_stack(void *data, unsigned long *stack,
-		  void (*trace)(void *data, unsigned long addr, int reliable))
-{
-	unsigned long *next_fp = NULL;
-	struct or1k_frameinfo *frameinfo = NULL;
-	int reliable = 0;
+व्योम unwind_stack(व्योम *data, अचिन्हित दीर्घ *stack,
+		  व्योम (*trace)(व्योम *data, अचिन्हित दीर्घ addr, पूर्णांक reliable))
+अणु
+	अचिन्हित दीर्घ *next_fp = शून्य;
+	काष्ठा or1k_frameinfo *frameinfo = शून्य;
+	पूर्णांक reliable = 0;
 
-	while (!kstack_end(stack)) {
+	जबतक (!kstack_end(stack)) अणु
 		frameinfo = container_of(stack,
-					 struct or1k_frameinfo,
+					 काष्ठा or1k_frameinfo,
 					 top);
 
-		if (__kernel_text_address(frameinfo->ra)) {
-			if (or1k_frameinfo_valid(frameinfo) &&
-			    (next_fp == NULL ||
-			     next_fp == &frameinfo->top)) {
+		अगर (__kernel_text_address(frameinfo->ra)) अणु
+			अगर (or1k_frameinfo_valid(frameinfo) &&
+			    (next_fp == शून्य ||
+			     next_fp == &frameinfo->top)) अणु
 				reliable = 1;
 				next_fp = frameinfo->fp;
-			} else
+			पूर्ण अन्यथा
 				reliable = 0;
 
 			trace(data, frameinfo->ra, reliable);
-		}
+		पूर्ण
 		stack++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else /* CONFIG_FRAME_POINTER */
+#अन्यथा /* CONFIG_FRAME_POINTER */
 
 /*
- * Create a stack trace by doing a simple scan treating all text addresses
- * as return addresses.
+ * Create a stack trace by करोing a simple scan treating all text addresses
+ * as वापस addresses.
  */
-void unwind_stack(void *data, unsigned long *stack,
-		   void (*trace)(void *data, unsigned long addr, int reliable))
-{
-	unsigned long addr;
+व्योम unwind_stack(व्योम *data, अचिन्हित दीर्घ *stack,
+		   व्योम (*trace)(व्योम *data, अचिन्हित दीर्घ addr, पूर्णांक reliable))
+अणु
+	अचिन्हित दीर्घ addr;
 
-	while (!kstack_end(stack)) {
+	जबतक (!kstack_end(stack)) अणु
 		addr = *stack++;
-		if (__kernel_text_address(addr))
+		अगर (__kernel_text_address(addr))
 			trace(data, addr, 0);
-	}
-}
-#endif /* CONFIG_FRAME_POINTER */
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_FRAME_POINTER */
 

@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI__LINUX_FUNCTIONFS_H__
-#define _UAPI__LINUX_FUNCTIONFS_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI__LINUX_FUNCTIONFS_H__
+#घोषणा _UAPI__LINUX_FUNCTIONFS_H__
 
 
-#include <linux/types.h>
-#include <linux/ioctl.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ioctl.h>
 
-#include <linux/usb/ch9.h>
+#समावेश <linux/usb/ch9.h>
 
 
-enum {
+क्रमागत अणु
 	FUNCTIONFS_DESCRIPTORS_MAGIC = 1,
 	FUNCTIONFS_STRINGS_MAGIC = 2,
 	FUNCTIONFS_DESCRIPTORS_MAGIC_V2 = 3,
-};
+पूर्ण;
 
-enum functionfs_flags {
+क्रमागत functionfs_flags अणु
 	FUNCTIONFS_HAS_FS_DESC = 1,
 	FUNCTIONFS_HAS_HS_DESC = 2,
 	FUNCTIONFS_HAS_SS_DESC = 4,
@@ -24,70 +25,70 @@ enum functionfs_flags {
 	FUNCTIONFS_EVENTFD = 32,
 	FUNCTIONFS_ALL_CTRL_RECIP = 64,
 	FUNCTIONFS_CONFIG0_SETUP = 128,
-};
+पूर्ण;
 
-/* Descriptor of an non-audio endpoint */
-struct usb_endpoint_descriptor_no_audio {
+/* Descriptor of an non-audio endpoपूर्णांक */
+काष्ठा usb_endpoपूर्णांक_descriptor_no_audio अणु
 	__u8  bLength;
 	__u8  bDescriptorType;
 
-	__u8  bEndpointAddress;
+	__u8  bEndpoपूर्णांकAddress;
 	__u8  bmAttributes;
 	__le16 wMaxPacketSize;
 	__u8  bInterval;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct usb_functionfs_descs_head_v2 {
+काष्ठा usb_functionfs_descs_head_v2 अणु
 	__le32 magic;
 	__le32 length;
 	__le32 flags;
 	/*
 	 * __le32 fs_count, hs_count, fs_count; must be included manually in
-	 * the structure taking flags into consideration.
+	 * the काष्ठाure taking flags पूर्णांकo consideration.
 	 */
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-/* Legacy format, deprecated as of 3.14. */
-struct usb_functionfs_descs_head {
+/* Legacy क्रमmat, deprecated as of 3.14. */
+काष्ठा usb_functionfs_descs_head अणु
 	__le32 magic;
 	__le32 length;
 	__le32 fs_count;
 	__le32 hs_count;
-} __attribute__((packed, deprecated));
+पूर्ण __attribute__((packed, deprecated));
 
 /* MS OS Descriptor header */
-struct usb_os_desc_header {
-	__u8	interface;
+काष्ठा usb_os_desc_header अणु
+	__u8	पूर्णांकerface;
 	__le32	dwLength;
 	__le16	bcdVersion;
 	__le16	wIndex;
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			__u8	bCount;
 			__u8	Reserved;
-		};
+		पूर्ण;
 		__le16	wCount;
-	};
-} __attribute__((packed));
+	पूर्ण;
+पूर्ण __attribute__((packed));
 
-struct usb_ext_compat_desc {
+काष्ठा usb_ext_compat_desc अणु
 	__u8	bFirstInterfaceNumber;
 	__u8	Reserved1;
 	__u8	CompatibleID[8];
 	__u8	SubCompatibleID[8];
 	__u8	Reserved2[6];
-};
+पूर्ण;
 
-struct usb_ext_prop_desc {
+काष्ठा usb_ext_prop_desc अणु
 	__le32	dwSize;
 	__le32	dwPropertyDataType;
 	__le16	wPropertyNameLength;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-#ifndef __KERNEL__
+#अगर_अघोषित __KERNEL__
 
 /*
- * Descriptors format:
+ * Descriptors क्रमmat:
  *
  * | off | name      | type         | description                          |
  * |-----+-----------+--------------+--------------------------------------|
@@ -105,10 +106,10 @@ struct usb_ext_prop_desc {
  * |     | os_descrs | OSDesc[]     | list of MS OS descriptors            |
  *
  * Depending on which flags are set, various fields may be missing in the
- * structure.  Any flags that are not recognised cause the whole block to be
+ * काष्ठाure.  Any flags that are not recognised cause the whole block to be
  * rejected with -ENOSYS.
  *
- * Legacy descriptors format (deprecated as of 3.14):
+ * Legacy descriptors क्रमmat (deprecated as of 3.14):
  *
  * | off | name      | type         | description                          |
  * |-----+-----------+--------------+--------------------------------------|
@@ -122,7 +123,7 @@ struct usb_ext_prop_desc {
  * All numbers must be in little endian order.
  *
  * Descriptor[] is an array of valid USB descriptors which have the following
- * format:
+ * क्रमmat:
  *
  * | off | name            | type | description              |
  * |-----+-----------------+------+--------------------------|
@@ -131,11 +132,11 @@ struct usb_ext_prop_desc {
  * |   2 | payload         |      | descriptor's payload     |
  *
  * OSDesc[] is an array of valid MS OS Feature Descriptors which have one of
- * the following formats:
+ * the following क्रमmats:
  *
  * | off | name            | type | description              |
  * |-----+-----------------+------+--------------------------|
- * |   0 | inteface        | U8   | related interface number |
+ * |   0 | पूर्णांकeface        | U8   | related पूर्णांकerface number |
  * |   1 | dwLength        | U32  | length of the descriptor |
  * |   5 | bcdVersion      | U16  | currently supported: 1   |
  * |   7 | wIndex          | U16  | currently supported: 4   |
@@ -145,7 +146,7 @@ struct usb_ext_prop_desc {
  *
  * | off | name            | type | description              |
  * |-----+-----------------+------+--------------------------|
- * |   0 | inteface        | U8   | related interface number |
+ * |   0 | पूर्णांकeface        | U8   | related पूर्णांकerface number |
  * |   1 | dwLength        | U32  | length of the descriptor |
  * |   5 | bcdVersion      | U16  | currently supported: 1   |
  * |   7 | wIndex          | U16  | currently supported: 5   |
@@ -153,19 +154,19 @@ struct usb_ext_prop_desc {
  * |  11 | ExtProp[]       |      | list of ext. prop. d.    |
  *
  * ExtCompat[] is an array of valid Extended Compatiblity descriptors
- * which have the following format:
+ * which have the following क्रमmat:
  *
  * | off | name                  | type | description                         |
  * |-----+-----------------------+------+-------------------------------------|
- * |   0 | bFirstInterfaceNumber | U8   | index of the interface or of the 1st|
- * |     |                       |      | interface in an IAD group           |
+ * |   0 | bFirstInterfaceNumber | U8   | index of the पूर्णांकerface or of the 1st|
+ * |     |                       |      | पूर्णांकerface in an IAD group           |
  * |   1 | Reserved              | U8   | 1                                   |
  * |   2 | CompatibleID          | U8[8]| compatible ID string                |
  * |  10 | SubCompatibleID       | U8[8]| subcompatible ID string             |
  * |  18 | Reserved              | U8[6]| 0                                   |
  *
  * ExtProp[] is an array of valid Extended Properties descriptors
- * which have the following format:
+ * which have the following क्रमmat:
  *
  * | off | name                  | type | description                         |
  * |-----+-----------------------+------+-------------------------------------|
@@ -177,15 +178,15 @@ struct usb_ext_prop_desc {
  * |14+NL| bProperty             |U8[DL]| payload of this property            |
  */
 
-struct usb_functionfs_strings_head {
+काष्ठा usb_functionfs_strings_head अणु
 	__le32 magic;
 	__le32 length;
 	__le32 str_count;
 	__le32 lang_count;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
 /*
- * Strings format:
+ * Strings क्रमmat:
  *
  * | off | name       | type                  | description                |
  * |-----+------------+-----------------------+----------------------------|
@@ -196,7 +197,7 @@ struct usb_functionfs_strings_head {
  * |  16 | stringtab  | StringTab[lang_count] | table of strings per lang  |
  *
  * For each language there is one stringtab entry (ie. there are lang_count
- * stringtab entires).  Each StringTab has following format:
+ * stringtab entires).  Each StringTab has following क्रमmat:
  *
  * | off | name    | type              | description                        |
  * |-----+---------+-------------------+------------------------------------|
@@ -208,16 +209,16 @@ struct usb_functionfs_strings_head {
  * UTF-8.
  */
 
-#endif
+#पूर्ण_अगर
 
 
 /*
  * Events are delivered on the ep0 file descriptor, when the user mode driver
- * reads from this file descriptor after writing the descriptors.  Don't
+ * पढ़ोs from this file descriptor after writing the descriptors.  Don't
  * stop polling this descriptor.
  */
 
-enum usb_functionfs_event_type {
+क्रमागत usb_functionfs_event_type अणु
 	FUNCTIONFS_BIND,
 	FUNCTIONFS_UNBIND,
 
@@ -228,66 +229,66 @@ enum usb_functionfs_event_type {
 
 	FUNCTIONFS_SUSPEND,
 	FUNCTIONFS_RESUME
-};
+पूर्ण;
 
-/* NOTE:  this structure must stay the same size and layout on
+/* NOTE:  this काष्ठाure must stay the same size and layout on
  * both 32-bit and 64-bit kernels.
  */
-struct usb_functionfs_event {
-	union {
+काष्ठा usb_functionfs_event अणु
+	जोड़ अणु
 		/* SETUP: packet; DATA phase i/o precedes next event
-		 *(setup.bmRequestType & USB_DIR_IN) flags direction */
-		struct usb_ctrlrequest	setup;
-	} __attribute__((packed)) u;
+		 *(setup.bmRequestType & USB_सूची_IN) flags direction */
+		काष्ठा usb_ctrlrequest	setup;
+	पूर्ण __attribute__((packed)) u;
 
-	/* enum usb_functionfs_event_type */
+	/* क्रमागत usb_functionfs_event_type */
 	__u8				type;
 	__u8				_pad[3];
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
 
-/* Endpoint ioctls */
+/* Endpoपूर्णांक ioctls */
 /* The same as in gadgetfs */
 
 /* IN transfers may be reported to the gadget driver as complete
- *	when the fifo is loaded, before the host reads the data;
+ *	when the fअगरo is loaded, beक्रमe the host पढ़ोs the data;
  * OUT transfers may be reported to the host's "client" driver as
- *	complete when they're sitting in the FIFO unread.
- * THIS returns how many bytes are "unclaimed" in the endpoint fifo
- * (needed for precise fault handling, when the hardware allows it)
+ *	complete when they're sitting in the FIFO unपढ़ो.
+ * THIS वापसs how many bytes are "unclaimed" in the endpoपूर्णांक fअगरo
+ * (needed क्रम precise fault handling, when the hardware allows it)
  */
-#define	FUNCTIONFS_FIFO_STATUS	_IO('g', 1)
+#घोषणा	FUNCTIONFS_FIFO_STATUS	_IO('g', 1)
 
-/* discards any unclaimed data in the fifo. */
-#define	FUNCTIONFS_FIFO_FLUSH	_IO('g', 2)
+/* discards any unclaimed data in the fअगरo. */
+#घोषणा	FUNCTIONFS_FIFO_FLUSH	_IO('g', 2)
 
-/* resets endpoint halt+toggle; used to implement set_interface.
+/* resets endpoपूर्णांक halt+toggle; used to implement set_पूर्णांकerface.
  * some hardware (like pxa2xx) can't support this.
  */
-#define	FUNCTIONFS_CLEAR_HALT	_IO('g', 3)
+#घोषणा	FUNCTIONFS_CLEAR_HALT	_IO('g', 3)
 
-/* Specific for functionfs */
-
-/*
- * Returns reverse mapping of an interface.  Called on EP0.  If there
- * is no such interface returns -EDOM.  If function is not active
- * returns -ENODEV.
- */
-#define	FUNCTIONFS_INTERFACE_REVMAP	_IO('g', 128)
+/* Specअगरic क्रम functionfs */
 
 /*
- * Returns real bEndpointAddress of an endpoint. If endpoint shuts down
- * during the call, returns -ESHUTDOWN.
+ * Returns reverse mapping of an पूर्णांकerface.  Called on EP0.  If there
+ * is no such पूर्णांकerface वापसs -गलत_तर्क.  If function is not active
+ * वापसs -ENODEV.
  */
-#define	FUNCTIONFS_ENDPOINT_REVMAP	_IO('g', 129)
+#घोषणा	FUNCTIONFS_INTERFACE_REVMAP	_IO('g', 128)
 
 /*
- * Returns endpoint descriptor. If endpoint shuts down during the call,
- * returns -ESHUTDOWN.
+ * Returns real bEndpoपूर्णांकAddress of an endpoपूर्णांक. If endpoपूर्णांक shuts करोwn
+ * during the call, वापसs -ESHUTDOWN.
  */
-#define	FUNCTIONFS_ENDPOINT_DESC	_IOR('g', 130, \
-					     struct usb_endpoint_descriptor)
+#घोषणा	FUNCTIONFS_ENDPOINT_REVMAP	_IO('g', 129)
+
+/*
+ * Returns endpoपूर्णांक descriptor. If endpoपूर्णांक shuts करोwn during the call,
+ * वापसs -ESHUTDOWN.
+ */
+#घोषणा	FUNCTIONFS_ENDPOINT_DESC	_IOR('g', 130, \
+					     काष्ठा usb_endpoपूर्णांक_descriptor)
 
 
 
-#endif /* _UAPI__LINUX_FUNCTIONFS_H__ */
+#पूर्ण_अगर /* _UAPI__LINUX_FUNCTIONFS_H__ */

@@ -1,1 +1,2 @@
-#include <asm-generic/kvm_para.h>
+<शैली गुरु>
+#समावेश <यंत्र-generic/kvm_para.h>

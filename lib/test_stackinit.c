@@ -1,395 +1,396 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Test cases for compiler-based stack variable zeroing via future
+ * Test हालs क्रम compiler-based stack variable zeroing via future
  * compiler flags or CONFIG_GCC_PLUGIN_STRUCTLEAK*.
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
 
 /* Exfiltration buffer. */
-#define MAX_VAR_SIZE	128
-static u8 check_buf[MAX_VAR_SIZE];
+#घोषणा MAX_VAR_SIZE	128
+अटल u8 check_buf[MAX_VAR_SIZE];
 
 /* Character array to trigger stack protector in all functions. */
-#define VAR_BUFFER	 32
+#घोषणा VAR_BUFFER	 32
 
 /* Volatile mask to convince compiler to copy memory with 0xff. */
-static volatile u8 forced_mask = 0xff;
+अटल अस्थिर u8 क्रमced_mask = 0xff;
 
 /* Location and size tracking to validate fill and test are colocated. */
-static void *fill_start, *target_start;
-static size_t fill_size, target_size;
+अटल व्योम *fill_start, *target_start;
+अटल माप_प्रकार fill_size, target_size;
 
-static bool range_contains(char *haystack_start, size_t haystack_size,
-			   char *needle_start, size_t needle_size)
-{
-	if (needle_start >= haystack_start &&
+अटल bool range_contains(अक्षर *haystack_start, माप_प्रकार haystack_size,
+			   अक्षर *needle_start, माप_प्रकार needle_size)
+अणु
+	अगर (needle_start >= haystack_start &&
 	    needle_start + needle_size <= haystack_start + haystack_size)
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
-#define DO_NOTHING_TYPE_SCALAR(var_type)	var_type
-#define DO_NOTHING_TYPE_STRING(var_type)	void
-#define DO_NOTHING_TYPE_STRUCT(var_type)	void
+#घोषणा DO_NOTHING_TYPE_SCALAR(var_type)	var_type
+#घोषणा DO_NOTHING_TYPE_STRING(var_type)	व्योम
+#घोषणा DO_NOTHING_TYPE_STRUCT(var_type)	व्योम
 
-#define DO_NOTHING_RETURN_SCALAR(ptr)		*(ptr)
-#define DO_NOTHING_RETURN_STRING(ptr)		/**/
-#define DO_NOTHING_RETURN_STRUCT(ptr)		/**/
+#घोषणा DO_NOTHING_RETURN_SCALAR(ptr)		*(ptr)
+#घोषणा DO_NOTHING_RETURN_STRING(ptr)		/**/
+#घोषणा DO_NOTHING_RETURN_STRUCT(ptr)		/**/
 
-#define DO_NOTHING_CALL_SCALAR(var, name)			\
-		(var) = do_nothing_ ## name(&(var))
-#define DO_NOTHING_CALL_STRING(var, name)			\
-		do_nothing_ ## name(var)
-#define DO_NOTHING_CALL_STRUCT(var, name)			\
-		do_nothing_ ## name(&(var))
+#घोषणा DO_NOTHING_CALL_SCALAR(var, name)			\
+		(var) = करो_nothing_ ## name(&(var))
+#घोषणा DO_NOTHING_CALL_STRING(var, name)			\
+		करो_nothing_ ## name(var)
+#घोषणा DO_NOTHING_CALL_STRUCT(var, name)			\
+		करो_nothing_ ## name(&(var))
 
-#define FETCH_ARG_SCALAR(var)		&var
-#define FETCH_ARG_STRING(var)		var
-#define FETCH_ARG_STRUCT(var)		&var
+#घोषणा FETCH_ARG_SCALAR(var)		&var
+#घोषणा FETCH_ARG_STRING(var)		var
+#घोषणा FETCH_ARG_STRUCT(var)		&var
 
-#define FILL_SIZE_STRING		16
+#घोषणा FILL_SIZE_STRING		16
 
-#define INIT_CLONE_SCALAR		/**/
-#define INIT_CLONE_STRING		[FILL_SIZE_STRING]
-#define INIT_CLONE_STRUCT		/**/
+#घोषणा INIT_CLONE_SCALAR		/**/
+#घोषणा INIT_CLONE_STRING		[FILL_SIZE_STRING]
+#घोषणा INIT_CLONE_STRUCT		/**/
 
-#define INIT_SCALAR_none		/**/
-#define INIT_SCALAR_zero		= 0
+#घोषणा INIT_SCALAR_none		/**/
+#घोषणा INIT_SCALAR_zero		= 0
 
-#define INIT_STRING_none		[FILL_SIZE_STRING] /**/
-#define INIT_STRING_zero		[FILL_SIZE_STRING] = { }
+#घोषणा INIT_STRING_none		[FILL_SIZE_STRING] /**/
+#घोषणा INIT_STRING_zero		[FILL_SIZE_STRING] = अणु पूर्ण
 
-#define INIT_STRUCT_none		/**/
-#define INIT_STRUCT_zero		= { }
-#define INIT_STRUCT_static_partial	= { .two = 0, }
-#define INIT_STRUCT_static_all		= { .one = arg->one,		\
+#घोषणा INIT_STRUCT_none		/**/
+#घोषणा INIT_STRUCT_zero		= अणु पूर्ण
+#घोषणा INIT_STRUCT_अटल_partial	= अणु .two = 0, पूर्ण
+#घोषणा INIT_STRUCT_अटल_all		= अणु .one = arg->one,		\
 					    .two = arg->two,		\
 					    .three = arg->three,	\
 					    .four = arg->four,		\
-					}
-#define INIT_STRUCT_dynamic_partial	= { .two = arg->two, }
-#define INIT_STRUCT_dynamic_all		= { .one = arg->one,		\
+					पूर्ण
+#घोषणा INIT_STRUCT_dynamic_partial	= अणु .two = arg->two, पूर्ण
+#घोषणा INIT_STRUCT_dynamic_all		= अणु .one = arg->one,		\
 					    .two = arg->two,		\
 					    .three = arg->three,	\
 					    .four = arg->four,		\
-					}
-#define INIT_STRUCT_runtime_partial	;				\
+					पूर्ण
+#घोषणा INIT_STRUCT_runसमय_partial	;				\
 					var.two = 0
-#define INIT_STRUCT_runtime_all		;				\
+#घोषणा INIT_STRUCT_runसमय_all		;				\
 					var.one = 0;			\
 					var.two = 0;			\
 					var.three = 0;			\
-					memset(&var.four, 0,		\
-					       sizeof(var.four))
+					स_रखो(&var.four, 0,		\
+					       माप(var.four))
 
 /*
- * @name: unique string name for the test
- * @var_type: type to be tested for zeroing initialization
+ * @name: unique string name क्रम the test
+ * @var_type: type to be tested क्रम zeroing initialization
  * @which: is this a SCALAR, STRING, or STRUCT type?
- * @init_level: what kind of initialization is performed
+ * @init_level: what kind of initialization is perक्रमmed
  * @xfail: is this test expected to fail?
  */
-#define DEFINE_TEST_DRIVER(name, var_type, which, xfail)	\
+#घोषणा DEFINE_TEST_DRIVER(name, var_type, which, xfail)	\
 /* Returns 0 on success, 1 on failure. */			\
-static noinline __init int test_ ## name (void)			\
-{								\
+अटल noअंतरभूत __init पूर्णांक test_ ## name (व्योम)			\
+अणु								\
 	var_type zero INIT_CLONE_ ## which;			\
-	int ignored;						\
+	पूर्णांक ignored;						\
 	u8 sum = 0, i;						\
 								\
 	/* Notice when a new test is larger than expected. */	\
-	BUILD_BUG_ON(sizeof(zero) > MAX_VAR_SIZE);		\
+	BUILD_BUG_ON(माप(zero) > MAX_VAR_SIZE);		\
 								\
-	/* Fill clone type with zero for per-field init. */	\
-	memset(&zero, 0x00, sizeof(zero));			\
-	/* Clear entire check buffer for 0xFF overlap test. */	\
-	memset(check_buf, 0x00, sizeof(check_buf));		\
+	/* Fill clone type with zero क्रम per-field init. */	\
+	स_रखो(&zero, 0x00, माप(zero));			\
+	/* Clear entire check buffer क्रम 0xFF overlap test. */	\
+	स_रखो(check_buf, 0x00, माप(check_buf));		\
 	/* Fill stack with 0xFF. */				\
-	ignored = leaf_ ##name((unsigned long)&ignored, 1,	\
+	ignored = leaf_ ##name((अचिन्हित दीर्घ)&ignored, 1,	\
 				FETCH_ARG_ ## which(zero));	\
-	/* Verify all bytes overwritten with 0xFF. */		\
-	for (sum = 0, i = 0; i < target_size; i++)		\
+	/* Verअगरy all bytes overwritten with 0xFF. */		\
+	क्रम (sum = 0, i = 0; i < target_size; i++)		\
 		sum += (check_buf[i] != 0xFF);			\
-	if (sum) {						\
+	अगर (sum) अणु						\
 		pr_err(#name ": leaf fill was not 0xFF!?\n");	\
-		return 1;					\
-	}							\
-	/* Clear entire check buffer for later bit tests. */	\
-	memset(check_buf, 0x00, sizeof(check_buf));		\
+		वापस 1;					\
+	पूर्ण							\
+	/* Clear entire check buffer क्रम later bit tests. */	\
+	स_रखो(check_buf, 0x00, माप(check_buf));		\
 	/* Extract stack-defined variable contents. */		\
-	ignored = leaf_ ##name((unsigned long)&ignored, 0,	\
+	ignored = leaf_ ##name((अचिन्हित दीर्घ)&ignored, 0,	\
 				FETCH_ARG_ ## which(zero));	\
 								\
 	/* Validate that compiler lined up fill and target. */	\
-	if (!range_contains(fill_start, fill_size,		\
-			    target_start, target_size)) {	\
+	अगर (!range_contains(fill_start, fill_size,		\
+			    target_start, target_size)) अणु	\
 		pr_err(#name ": stack fill missed target!?\n");	\
 		pr_err(#name ": fill %zu wide\n", fill_size);	\
 		pr_err(#name ": target offset by %d\n",	\
-			(int)((ssize_t)(uintptr_t)fill_start -	\
-			(ssize_t)(uintptr_t)target_start));	\
-		return 1;					\
-	}							\
+			(पूर्णांक)((sमाप_प्रकार)(uपूर्णांकptr_t)fill_start -	\
+			(sमाप_प्रकार)(uपूर्णांकptr_t)target_start));	\
+		वापस 1;					\
+	पूर्ण							\
 								\
-	/* Look for any bytes still 0xFF in check region. */	\
-	for (sum = 0, i = 0; i < target_size; i++)		\
+	/* Look क्रम any bytes still 0xFF in check region. */	\
+	क्रम (sum = 0, i = 0; i < target_size; i++)		\
 		sum += (check_buf[i] == 0xFF);			\
 								\
-	if (sum == 0) {						\
+	अगर (sum == 0) अणु						\
 		pr_info(#name " ok\n");				\
-		return 0;					\
-	} else {						\
+		वापस 0;					\
+	पूर्ण अन्यथा अणु						\
 		pr_warn(#name " %sFAIL (uninit bytes: %d)\n",	\
 			(xfail) ? "X" : "", sum);		\
-		return (xfail) ? 0 : 1;				\
-	}							\
-}
-#define DEFINE_TEST(name, var_type, which, init_level)		\
-/* no-op to force compiler into ignoring "uninitialized" vars */\
-static noinline __init DO_NOTHING_TYPE_ ## which(var_type)	\
-do_nothing_ ## name(var_type *ptr)				\
-{								\
-	/* Will always be true, but compiler doesn't know. */	\
-	if ((unsigned long)ptr > 0x2)				\
-		return DO_NOTHING_RETURN_ ## which(ptr);	\
-	else							\
-		return DO_NOTHING_RETURN_ ## which(ptr + 1);	\
-}								\
-static noinline __init int leaf_ ## name(unsigned long sp,	\
+		वापस (xfail) ? 0 : 1;				\
+	पूर्ण							\
+पूर्ण
+#घोषणा DEFINE_TEST(name, var_type, which, init_level)		\
+/* no-op to क्रमce compiler पूर्णांकo ignoring "uninitialized" vars */\
+अटल noअंतरभूत __init DO_NOTHING_TYPE_ ## which(var_type)	\
+करो_nothing_ ## name(var_type *ptr)				\
+अणु								\
+	/* Will always be true, but compiler करोesn't know. */	\
+	अगर ((अचिन्हित दीर्घ)ptr > 0x2)				\
+		वापस DO_NOTHING_RETURN_ ## which(ptr);	\
+	अन्यथा							\
+		वापस DO_NOTHING_RETURN_ ## which(ptr + 1);	\
+पूर्ण								\
+अटल noअंतरभूत __init पूर्णांक leaf_ ## name(अचिन्हित दीर्घ sp,	\
 					 bool fill,		\
 					 var_type *arg)		\
-{								\
-	char buf[VAR_BUFFER];					\
+अणु								\
+	अक्षर buf[VAR_BUFFER];					\
 	var_type var INIT_ ## which ## _ ## init_level;		\
 								\
 	target_start = &var;					\
-	target_size = sizeof(var);				\
+	target_size = माप(var);				\
 	/*							\
 	 * Keep this buffer around to make sure we've got a	\
 	 * stack frame of SOME kind...				\
 	 */							\
-	memset(buf, (char)(sp & 0xff), sizeof(buf));		\
+	स_रखो(buf, (अक्षर)(sp & 0xff), माप(buf));		\
 	/* Fill variable with 0xFF. */				\
-	if (fill) {						\
+	अगर (fill) अणु						\
 		fill_start = &var;				\
-		fill_size = sizeof(var);			\
-		memset(fill_start,				\
-		       (char)((sp & 0xff) | forced_mask),	\
+		fill_size = माप(var);			\
+		स_रखो(fill_start,				\
+		       (अक्षर)((sp & 0xff) | क्रमced_mask),	\
 		       fill_size);				\
-	}							\
+	पूर्ण							\
 								\
 	/* Silence "never initialized" warnings. */		\
 	DO_NOTHING_CALL_ ## which(var, name);			\
 								\
 	/* Exfiltrate "var". */					\
-	memcpy(check_buf, target_start, target_size);		\
+	स_नकल(check_buf, target_start, target_size);		\
 								\
-	return (int)buf[0] | (int)buf[sizeof(buf) - 1];		\
-}								\
+	वापस (पूर्णांक)buf[0] | (पूर्णांक)buf[माप(buf) - 1];		\
+पूर्ण								\
 DEFINE_TEST_DRIVER(name, var_type, which, 0)
 
 /* Structure with no padding. */
-struct test_packed {
-	unsigned long one;
-	unsigned long two;
-	unsigned long three;
-	unsigned long four;
-};
+काष्ठा test_packed अणु
+	अचिन्हित दीर्घ one;
+	अचिन्हित दीर्घ two;
+	अचिन्हित दीर्घ three;
+	अचिन्हित दीर्घ four;
+पूर्ण;
 
-/* Simple structure with padding likely to be covered by compiler. */
-struct test_small_hole {
-	size_t one;
-	char two;
+/* Simple काष्ठाure with padding likely to be covered by compiler. */
+काष्ठा test_small_hole अणु
+	माप_प्रकार one;
+	अक्षर two;
 	/* 3 byte padding hole here. */
-	int three;
-	unsigned long four;
-};
+	पूर्णांक three;
+	अचिन्हित दीर्घ four;
+पूर्ण;
 
-/* Try to trigger unhandled padding in a structure. */
-struct test_aligned {
-	u32 internal1;
-	u64 internal2;
-} __aligned(64);
+/* Try to trigger unhandled padding in a काष्ठाure. */
+काष्ठा test_aligned अणु
+	u32 पूर्णांकernal1;
+	u64 पूर्णांकernal2;
+पूर्ण __aligned(64);
 
-struct test_big_hole {
+काष्ठा test_big_hole अणु
 	u8 one;
 	u8 two;
 	u8 three;
 	/* 61 byte padding hole here. */
-	struct test_aligned four;
-} __aligned(64);
+	काष्ठा test_aligned four;
+पूर्ण __aligned(64);
 
-struct test_trailing_hole {
-	char *one;
-	char *two;
-	char *three;
-	char four;
+काष्ठा test_trailing_hole अणु
+	अक्षर *one;
+	अक्षर *two;
+	अक्षर *three;
+	अक्षर four;
 	/* "sizeof(unsigned long) - 1" byte padding hole here. */
-};
+पूर्ण;
 
-/* Test if STRUCTLEAK is clearing structs with __user fields. */
-struct test_user {
+/* Test अगर STRUCTLEAK is clearing काष्ठाs with __user fields. */
+काष्ठा test_user अणु
 	u8 one;
-	unsigned long two;
-	char __user *three;
-	unsigned long four;
-};
+	अचिन्हित दीर्घ two;
+	अक्षर __user *three;
+	अचिन्हित दीर्घ four;
+पूर्ण;
 
-#define DEFINE_SCALAR_TEST(name, init)				\
+#घोषणा DEFINE_SCALAR_TEST(name, init)				\
 		DEFINE_TEST(name ## _ ## init, name, SCALAR, init)
 
-#define DEFINE_SCALAR_TESTS(init)				\
+#घोषणा DEFINE_SCALAR_TESTS(init)				\
 		DEFINE_SCALAR_TEST(u8, init);			\
 		DEFINE_SCALAR_TEST(u16, init);			\
 		DEFINE_SCALAR_TEST(u32, init);			\
 		DEFINE_SCALAR_TEST(u64, init);			\
-		DEFINE_TEST(char_array_ ## init, unsigned char, STRING, init)
+		DEFINE_TEST(अक्षर_array_ ## init, अचिन्हित अक्षर, STRING, init)
 
-#define DEFINE_STRUCT_TEST(name, init)				\
+#घोषणा DEFINE_STRUCT_TEST(name, init)				\
 		DEFINE_TEST(name ## _ ## init,			\
-			    struct test_ ## name, STRUCT, init)
+			    काष्ठा test_ ## name, STRUCT, init)
 
-#define DEFINE_STRUCT_TESTS(init)				\
+#घोषणा DEFINE_STRUCT_TESTS(init)				\
 		DEFINE_STRUCT_TEST(small_hole, init);		\
 		DEFINE_STRUCT_TEST(big_hole, init);		\
 		DEFINE_STRUCT_TEST(trailing_hole, init);	\
 		DEFINE_STRUCT_TEST(packed, init)
 
-/* These should be fully initialized all the time! */
+/* These should be fully initialized all the समय! */
 DEFINE_SCALAR_TESTS(zero);
 DEFINE_STRUCT_TESTS(zero);
 /* Static initialization: padding may be left uninitialized. */
-DEFINE_STRUCT_TESTS(static_partial);
-DEFINE_STRUCT_TESTS(static_all);
+DEFINE_STRUCT_TESTS(अटल_partial);
+DEFINE_STRUCT_TESTS(अटल_all);
 /* Dynamic initialization: padding may be left uninitialized. */
 DEFINE_STRUCT_TESTS(dynamic_partial);
 DEFINE_STRUCT_TESTS(dynamic_all);
-/* Runtime initialization: padding may be left uninitialized. */
-DEFINE_STRUCT_TESTS(runtime_partial);
-DEFINE_STRUCT_TESTS(runtime_all);
+/* Runसमय initialization: padding may be left uninitialized. */
+DEFINE_STRUCT_TESTS(runसमय_partial);
+DEFINE_STRUCT_TESTS(runसमय_all);
 /* No initialization without compiler instrumentation. */
 DEFINE_SCALAR_TESTS(none);
 DEFINE_STRUCT_TESTS(none);
-DEFINE_TEST(user, struct test_user, STRUCT, none);
+DEFINE_TEST(user, काष्ठा test_user, STRUCT, none);
 
 /*
  * Check two uses through a variable declaration outside either path,
- * which was noticed as a special case in porting earlier stack init
+ * which was noticed as a special हाल in porting earlier stack init
  * compiler logic.
  */
-static int noinline __leaf_switch_none(int path, bool fill)
-{
-	switch (path) {
-		uint64_t var;
+अटल पूर्णांक noअंतरभूत __leaf_चयन_none(पूर्णांक path, bool fill)
+अणु
+	चयन (path) अणु
+		uपूर्णांक64_t var;
 
-	case 1:
+	हाल 1:
 		target_start = &var;
-		target_size = sizeof(var);
-		if (fill) {
+		target_size = माप(var);
+		अगर (fill) अणु
 			fill_start = &var;
-			fill_size = sizeof(var);
+			fill_size = माप(var);
 
-			memset(fill_start, forced_mask | 0x55, fill_size);
-		}
-		memcpy(check_buf, target_start, target_size);
-		break;
-	case 2:
+			स_रखो(fill_start, क्रमced_mask | 0x55, fill_size);
+		पूर्ण
+		स_नकल(check_buf, target_start, target_size);
+		अवरोध;
+	हाल 2:
 		target_start = &var;
-		target_size = sizeof(var);
-		if (fill) {
+		target_size = माप(var);
+		अगर (fill) अणु
 			fill_start = &var;
-			fill_size = sizeof(var);
+			fill_size = माप(var);
 
-			memset(fill_start, forced_mask | 0xaa, fill_size);
-		}
-		memcpy(check_buf, target_start, target_size);
-		break;
-	default:
+			स_रखो(fill_start, क्रमced_mask | 0xaa, fill_size);
+		पूर्ण
+		स_नकल(check_buf, target_start, target_size);
+		अवरोध;
+	शेष:
 		var = 5;
-		return var & forced_mask;
-	}
-	return 0;
-}
+		वापस var & क्रमced_mask;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static noinline __init int leaf_switch_1_none(unsigned long sp, bool fill,
-					      uint64_t *arg)
-{
-	return __leaf_switch_none(1, fill);
-}
+अटल noअंतरभूत __init पूर्णांक leaf_चयन_1_none(अचिन्हित दीर्घ sp, bool fill,
+					      uपूर्णांक64_t *arg)
+अणु
+	वापस __leaf_चयन_none(1, fill);
+पूर्ण
 
-static noinline __init int leaf_switch_2_none(unsigned long sp, bool fill,
-					      uint64_t *arg)
-{
-	return __leaf_switch_none(2, fill);
-}
+अटल noअंतरभूत __init पूर्णांक leaf_चयन_2_none(अचिन्हित दीर्घ sp, bool fill,
+					      uपूर्णांक64_t *arg)
+अणु
+	वापस __leaf_चयन_none(2, fill);
+पूर्ण
 
 /*
- * These are expected to fail for most configurations because neither
- * GCC nor Clang have a way to perform initialization of variables in
- * non-code areas (i.e. in a switch statement before the first "case").
+ * These are expected to fail क्रम most configurations because neither
+ * GCC nor Clang have a way to perक्रमm initialization of variables in
+ * non-code areas (i.e. in a चयन statement beक्रमe the first "case").
  * https://bugs.llvm.org/show_bug.cgi?id=44916
  */
-DEFINE_TEST_DRIVER(switch_1_none, uint64_t, SCALAR, 1);
-DEFINE_TEST_DRIVER(switch_2_none, uint64_t, SCALAR, 1);
+DEFINE_TEST_DRIVER(चयन_1_none, uपूर्णांक64_t, SCALAR, 1);
+DEFINE_TEST_DRIVER(चयन_2_none, uपूर्णांक64_t, SCALAR, 1);
 
-static int __init test_stackinit_init(void)
-{
-	unsigned int failures = 0;
+अटल पूर्णांक __init test_stackinit_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक failures = 0;
 
-#define test_scalars(init)	do {				\
+#घोषणा test_scalars(init)	करो अणु				\
 		failures += test_u8_ ## init ();		\
 		failures += test_u16_ ## init ();		\
 		failures += test_u32_ ## init ();		\
 		failures += test_u64_ ## init ();		\
-		failures += test_char_array_ ## init ();	\
-	} while (0)
+		failures += test_अक्षर_array_ ## init ();	\
+	पूर्ण जबतक (0)
 
-#define test_structs(init)	do {				\
+#घोषणा test_काष्ठाs(init)	करो अणु				\
 		failures += test_small_hole_ ## init ();	\
 		failures += test_big_hole_ ## init ();		\
 		failures += test_trailing_hole_ ## init ();	\
 		failures += test_packed_ ## init ();		\
-	} while (0)
+	पूर्ण जबतक (0)
 
 	/* These are explicitly initialized and should always pass. */
 	test_scalars(zero);
-	test_structs(zero);
+	test_काष्ठाs(zero);
 	/* Padding here appears to be accidentally always initialized? */
-	test_structs(dynamic_partial);
+	test_काष्ठाs(dynamic_partial);
 	/* Padding initialization depends on compiler behaviors. */
-	test_structs(static_partial);
-	test_structs(static_all);
-	test_structs(dynamic_all);
-	test_structs(runtime_partial);
-	test_structs(runtime_all);
+	test_काष्ठाs(अटल_partial);
+	test_काष्ठाs(अटल_all);
+	test_काष्ठाs(dynamic_all);
+	test_काष्ठाs(runसमय_partial);
+	test_काष्ठाs(runसमय_all);
 
-	/* STRUCTLEAK_BYREF_ALL should cover everything from here down. */
+	/* STRUCTLEAK_BYREF_ALL should cover everything from here करोwn. */
 	test_scalars(none);
-	failures += test_switch_1_none();
-	failures += test_switch_2_none();
+	failures += test_चयन_1_none();
+	failures += test_चयन_2_none();
 
-	/* STRUCTLEAK_BYREF should cover from here down. */
-	test_structs(none);
+	/* STRUCTLEAK_BYREF should cover from here करोwn. */
+	test_काष्ठाs(none);
 
 	/* STRUCTLEAK will only cover this. */
 	failures += test_user();
 
-	if (failures == 0)
+	अगर (failures == 0)
 		pr_info("all tests passed!\n");
-	else
+	अन्यथा
 		pr_err("failures: %u\n", failures);
 
-	return failures ? -EINVAL : 0;
-}
+	वापस failures ? -EINVAL : 0;
+पूर्ण
 module_init(test_stackinit_init);
 
-static void __exit test_stackinit_exit(void)
-{ }
-module_exit(test_stackinit_exit);
+अटल व्योम __निकास test_stackinit_निकास(व्योम)
+अणु पूर्ण
+module_निकास(test_stackinit_निकास);
 
 MODULE_LICENSE("GPL");

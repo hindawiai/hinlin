@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * arch/arm/mm/cache-tauros2.c - Tauros2 L2 cache controller support
  *
@@ -14,48 +15,48 @@
  *   Document ID MV-S105190-00, Rev 0.7, March 14 2008.
  */
 
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <asm/cacheflush.h>
-#include <asm/cp15.h>
-#include <asm/cputype.h>
-#include <asm/hardware/cache-tauros2.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/hardware/cache-tauros2.h>
 
-/* CP15 PJ4 Control configuration register */
-#define CCR_L2C_PREFETCH_DISABLE	BIT(24)
-#define CCR_L2C_ECC_ENABLE		BIT(23)
-#define CCR_L2C_WAY7_4_DISABLE		BIT(21)
-#define CCR_L2C_BURST8_ENABLE		BIT(20)
+/* CP15 PJ4 Control configuration रेजिस्टर */
+#घोषणा CCR_L2C_PREFETCH_DISABLE	BIT(24)
+#घोषणा CCR_L2C_ECC_ENABLE		BIT(23)
+#घोषणा CCR_L2C_WAY7_4_DISABLE		BIT(21)
+#घोषणा CCR_L2C_BURST8_ENABLE		BIT(20)
 
 /*
  * When Tauros2 is used on a CPU that supports the v7 hierarchical
  * cache operations, the cache handling code in proc-v7.S takes care
  * of everything, including handling DMA coherency.
  *
- * So, we only need to register outer cache operations here if we're
- * being used on a pre-v7 CPU, and we only need to build support for
- * outer cache operations into the kernel image if the kernel has been
+ * So, we only need to रेजिस्टर outer cache operations here अगर we're
+ * being used on a pre-v7 CPU, and we only need to build support क्रम
+ * outer cache operations पूर्णांकo the kernel image अगर the kernel has been
  * configured to support a pre-v7 CPU.
  */
-#ifdef CONFIG_CPU_32v5
+#अगर_घोषित CONFIG_CPU_32v5
 /*
- * Low-level cache maintenance operations.
+ * Low-level cache मुख्यtenance operations.
  */
-static inline void tauros2_clean_pa(unsigned long addr)
-{
-	__asm__("mcr p15, 1, %0, c7, c11, 3" : : "r" (addr));
-}
+अटल अंतरभूत व्योम tauros2_clean_pa(अचिन्हित दीर्घ addr)
+अणु
+	__यंत्र__("mcr p15, 1, %0, c7, c11, 3" : : "r" (addr));
+पूर्ण
 
-static inline void tauros2_clean_inv_pa(unsigned long addr)
-{
-	__asm__("mcr p15, 1, %0, c7, c15, 3" : : "r" (addr));
-}
+अटल अंतरभूत व्योम tauros2_clean_inv_pa(अचिन्हित दीर्घ addr)
+अणु
+	__यंत्र__("mcr p15, 1, %0, c7, c15, 3" : : "r" (addr));
+पूर्ण
 
-static inline void tauros2_inv_pa(unsigned long addr)
-{
-	__asm__("mcr p15, 1, %0, c7, c7, 3" : : "r" (addr));
-}
+अटल अंतरभूत व्योम tauros2_inv_pa(अचिन्हित दीर्घ addr)
+अणु
+	__यंत्र__("mcr p15, 1, %0, c7, c7, 3" : : "r" (addr));
+पूर्ण
 
 
 /*
@@ -64,166 +65,166 @@ static inline void tauros2_inv_pa(unsigned long addr)
  * Note that the end addresses passed to Linux primitives are
  * noninclusive.
  */
-#define CACHE_LINE_SIZE		32
+#घोषणा CACHE_LINE_SIZE		32
 
-static void tauros2_inv_range(unsigned long start, unsigned long end)
-{
+अटल व्योम tauros2_inv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	/*
 	 * Clean and invalidate partial first cache line.
 	 */
-	if (start & (CACHE_LINE_SIZE - 1)) {
+	अगर (start & (CACHE_LINE_SIZE - 1)) अणु
 		tauros2_clean_inv_pa(start & ~(CACHE_LINE_SIZE - 1));
 		start = (start | (CACHE_LINE_SIZE - 1)) + 1;
-	}
+	पूर्ण
 
 	/*
 	 * Clean and invalidate partial last cache line.
 	 */
-	if (end & (CACHE_LINE_SIZE - 1)) {
+	अगर (end & (CACHE_LINE_SIZE - 1)) अणु
 		tauros2_clean_inv_pa(end & ~(CACHE_LINE_SIZE - 1));
 		end &= ~(CACHE_LINE_SIZE - 1);
-	}
+	पूर्ण
 
 	/*
 	 * Invalidate all full cache lines between 'start' and 'end'.
 	 */
-	while (start < end) {
+	जबतक (start < end) अणु
 		tauros2_inv_pa(start);
 		start += CACHE_LINE_SIZE;
-	}
+	पूर्ण
 
 	dsb();
-}
+पूर्ण
 
-static void tauros2_clean_range(unsigned long start, unsigned long end)
-{
+अटल व्योम tauros2_clean_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	start &= ~(CACHE_LINE_SIZE - 1);
-	while (start < end) {
+	जबतक (start < end) अणु
 		tauros2_clean_pa(start);
 		start += CACHE_LINE_SIZE;
-	}
+	पूर्ण
 
 	dsb();
-}
+पूर्ण
 
-static void tauros2_flush_range(unsigned long start, unsigned long end)
-{
+अटल व्योम tauros2_flush_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	start &= ~(CACHE_LINE_SIZE - 1);
-	while (start < end) {
+	जबतक (start < end) अणु
 		tauros2_clean_inv_pa(start);
 		start += CACHE_LINE_SIZE;
-	}
+	पूर्ण
 
 	dsb();
-}
+पूर्ण
 
-static void tauros2_disable(void)
-{
-	__asm__ __volatile__ (
+अटल व्योम tauros2_disable(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__ (
 	"mcr	p15, 1, %0, c7, c11, 0 @L2 Cache Clean All\n\t"
 	"mrc	p15, 0, %0, c1, c0, 0\n\t"
 	"bic	%0, %0, #(1 << 26)\n\t"
 	"mcr	p15, 0, %0, c1, c0, 0  @Disable L2 Cache\n\t"
 	: : "r" (0x0));
-}
+पूर्ण
 
-static void tauros2_resume(void)
-{
-	__asm__ __volatile__ (
+अटल व्योम tauros2_resume(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__ (
 	"mcr	p15, 1, %0, c7, c7, 0 @L2 Cache Invalidate All\n\t"
 	"mrc	p15, 0, %0, c1, c0, 0\n\t"
 	"orr	%0, %0, #(1 << 26)\n\t"
 	"mcr	p15, 0, %0, c1, c0, 0 @Enable L2 Cache\n\t"
 	: : "r" (0x0));
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static inline u32 __init read_extra_features(void)
-{
+अटल अंतरभूत u32 __init पढ़ो_extra_features(व्योम)
+अणु
 	u32 u;
 
-	__asm__("mrc p15, 1, %0, c15, c1, 0" : "=r" (u));
+	__यंत्र__("mrc p15, 1, %0, c15, c1, 0" : "=r" (u));
 
-	return u;
-}
+	वापस u;
+पूर्ण
 
-static inline void __init write_extra_features(u32 u)
-{
-	__asm__("mcr p15, 1, %0, c15, c1, 0" : : "r" (u));
-}
+अटल अंतरभूत व्योम __init ग_लिखो_extra_features(u32 u)
+अणु
+	__यंत्र__("mcr p15, 1, %0, c15, c1, 0" : : "r" (u));
+पूर्ण
 
-static inline int __init cpuid_scheme(void)
-{
-	return !!((processor_id & 0x000f0000) == 0x000f0000);
-}
+अटल अंतरभूत पूर्णांक __init cpuid_scheme(व्योम)
+अणु
+	वापस !!((processor_id & 0x000f0000) == 0x000f0000);
+पूर्ण
 
-static inline u32 __init read_mmfr3(void)
-{
+अटल अंतरभूत u32 __init पढ़ो_mmfr3(व्योम)
+अणु
 	u32 mmfr3;
 
-	__asm__("mrc p15, 0, %0, c0, c1, 7\n" : "=r" (mmfr3));
+	__यंत्र__("mrc p15, 0, %0, c0, c1, 7\n" : "=r" (mmfr3));
 
-	return mmfr3;
-}
+	वापस mmfr3;
+पूर्ण
 
-static inline u32 __init read_actlr(void)
-{
+अटल अंतरभूत u32 __init पढ़ो_actlr(व्योम)
+अणु
 	u32 actlr;
 
-	__asm__("mrc p15, 0, %0, c1, c0, 1\n" : "=r" (actlr));
+	__यंत्र__("mrc p15, 0, %0, c1, c0, 1\n" : "=r" (actlr));
 
-	return actlr;
-}
+	वापस actlr;
+पूर्ण
 
-static inline void __init write_actlr(u32 actlr)
-{
-	__asm__("mcr p15, 0, %0, c1, c0, 1\n" : : "r" (actlr));
-}
+अटल अंतरभूत व्योम __init ग_लिखो_actlr(u32 actlr)
+अणु
+	__यंत्र__("mcr p15, 0, %0, c1, c0, 1\n" : : "r" (actlr));
+पूर्ण
 
-static void enable_extra_feature(unsigned int features)
-{
+अटल व्योम enable_extra_feature(अचिन्हित पूर्णांक features)
+अणु
 	u32 u;
 
-	u = read_extra_features();
+	u = पढ़ो_extra_features();
 
-	if (features & CACHE_TAUROS2_PREFETCH_ON)
+	अगर (features & CACHE_TAUROS2_PREFETCH_ON)
 		u &= ~CCR_L2C_PREFETCH_DISABLE;
-	else
+	अन्यथा
 		u |= CCR_L2C_PREFETCH_DISABLE;
 	pr_info("Tauros2: %s L2 prefetch.\n",
 			(features & CACHE_TAUROS2_PREFETCH_ON)
 			? "Enabling" : "Disabling");
 
-	if (features & CACHE_TAUROS2_LINEFILL_BURST8)
+	अगर (features & CACHE_TAUROS2_LINEFILL_BURST8)
 		u |= CCR_L2C_BURST8_ENABLE;
-	else
+	अन्यथा
 		u &= ~CCR_L2C_BURST8_ENABLE;
 	pr_info("Tauros2: %s burst8 line fill.\n",
 			(features & CACHE_TAUROS2_LINEFILL_BURST8)
 			? "Enabling" : "Disabling");
 
-	write_extra_features(u);
-}
+	ग_लिखो_extra_features(u);
+पूर्ण
 
-static void __init tauros2_internal_init(unsigned int features)
-{
-	char *mode = NULL;
+अटल व्योम __init tauros2_पूर्णांकernal_init(अचिन्हित पूर्णांक features)
+अणु
+	अक्षर *mode = शून्य;
 
 	enable_extra_feature(features);
 
-#ifdef CONFIG_CPU_32v5
-	if ((processor_id & 0xff0f0000) == 0x56050000) {
+#अगर_घोषित CONFIG_CPU_32v5
+	अगर ((processor_id & 0xff0f0000) == 0x56050000) अणु
 		u32 feat;
 
 		/*
 		 * v5 CPUs with Tauros2 have the L2 cache enable bit
-		 * located in the CPU Extra Features register.
+		 * located in the CPU Extra Features रेजिस्टर.
 		 */
-		feat = read_extra_features();
-		if (!(feat & 0x00400000)) {
+		feat = पढ़ो_extra_features();
+		अगर (!(feat & 0x00400000)) अणु
 			pr_info("Tauros2: Enabling L2 cache.\n");
-			write_extra_features(feat | 0x00400000);
-		}
+			ग_लिखो_extra_features(feat | 0x00400000);
+		पूर्ण
 
 		mode = "ARMv5";
 		outer_cache.inv_range = tauros2_inv_range;
@@ -231,76 +232,76 @@ static void __init tauros2_internal_init(unsigned int features)
 		outer_cache.flush_range = tauros2_flush_range;
 		outer_cache.disable = tauros2_disable;
 		outer_cache.resume = tauros2_resume;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_32v7
+#अगर_घोषित CONFIG_CPU_32v7
 	/*
-	 * Check whether this CPU has support for the v7 hierarchical
-	 * cache ops.  (PJ4 is in its v7 personality mode if the MMFR3
-	 * register indicates support for the v7 hierarchical cache
+	 * Check whether this CPU has support क्रम the v7 hierarchical
+	 * cache ops.  (PJ4 is in its v7 personality mode अगर the MMFR3
+	 * रेजिस्टर indicates support क्रम the v7 hierarchical cache
 	 * ops.)
 	 *
 	 * (Although strictly speaking there may exist CPUs that
 	 * implement the v7 cache ops but are only ARMv6 CPUs (due to
 	 * not complying with all of the other ARMv7 requirements),
-	 * there are no real-life examples of Tauros2 being used on
+	 * there are no real-lअगरe examples of Tauros2 being used on
 	 * such CPUs as of yet.)
 	 */
-	if (cpuid_scheme() && (read_mmfr3() & 0xf) == 1) {
+	अगर (cpuid_scheme() && (पढ़ो_mmfr3() & 0xf) == 1) अणु
 		u32 actlr;
 
 		/*
-		 * When Tauros2 is used in an ARMv7 system, the L2
+		 * When Tauros2 is used in an ARMv7 प्रणाली, the L2
 		 * enable bit is located in the Auxiliary System Control
-		 * Register (which is the only register allowed by the
+		 * Register (which is the only रेजिस्टर allowed by the
 		 * ARMv7 spec to contain fine-grained cache control bits).
 		 */
-		actlr = read_actlr();
-		if (!(actlr & 0x00000002)) {
+		actlr = पढ़ो_actlr();
+		अगर (!(actlr & 0x00000002)) अणु
 			pr_info("Tauros2: Enabling L2 cache.\n");
-			write_actlr(actlr | 0x00000002);
-		}
+			ग_लिखो_actlr(actlr | 0x00000002);
+		पूर्ण
 
 		mode = "ARMv7";
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (mode == NULL) {
+	अगर (mode == शून्य) अणु
 		pr_crit("Tauros2: Unable to detect CPU mode.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pr_info("Tauros2: L2 cache support initialised "
 			 "in %s mode.\n", mode);
-}
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id tauros2_ids[] __initconst = {
-	{ .compatible = "marvell,tauros2-cache"},
-	{}
-};
-#endif
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id tauros2_ids[] __initस्थिर = अणु
+	अणु .compatible = "marvell,tauros2-cache"पूर्ण,
+	अणुपूर्ण
+पूर्ण;
+#पूर्ण_अगर
 
-void __init tauros2_init(unsigned int features)
-{
-#ifdef CONFIG_OF
-	struct device_node *node;
-	int ret;
-	unsigned int f;
+व्योम __init tauros2_init(अचिन्हित पूर्णांक features)
+अणु
+#अगर_घोषित CONFIG_OF
+	काष्ठा device_node *node;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक f;
 
-	node = of_find_matching_node(NULL, tauros2_ids);
-	if (!node) {
+	node = of_find_matching_node(शून्य, tauros2_ids);
+	अगर (!node) अणु
 		pr_info("Not found marvell,tauros2-cache, disable it\n");
-	} else {
-		ret = of_property_read_u32(node, "marvell,tauros2-cache-features", &f);
-		if (ret) {
+	पूर्ण अन्यथा अणु
+		ret = of_property_पढ़ो_u32(node, "marvell,tauros2-cache-features", &f);
+		अगर (ret) अणु
 			pr_info("Not found marvell,tauros-cache-features property, "
 				"disable extra features\n");
 			features = 0;
-		} else
+		पूर्ण अन्यथा
 			features = f;
-	}
-#endif
-	tauros2_internal_init(features);
-}
+	पूर्ण
+#पूर्ण_अगर
+	tauros2_पूर्णांकernal_init(features);
+पूर्ण

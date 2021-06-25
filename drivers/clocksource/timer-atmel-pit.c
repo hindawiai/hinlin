@@ -1,264 +1,265 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * at91sam926x_time.c - Periodic Interval Timer (PIT) for at91sam926x
+ * at91sam926x_समय.c - Periodic Interval Timer (PIT) क्रम at91sam926x
  *
  * Copyright (C) 2005-2006 M. Amine SAYA, ATMEL Rousset, France
  * Revision	 2005 M. Nicolas Diremdjian, ATMEL Rousset, France
  * Converted to ClockSource/ClockEvents by David Brownell.
  */
 
-#define pr_fmt(fmt)	"AT91: PIT: " fmt
+#घोषणा pr_fmt(fmt)	"AT91: PIT: " fmt
 
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/slab.h>
 
-#define AT91_PIT_MR		0x00			/* Mode Register */
-#define AT91_PIT_PITIEN			BIT(25)			/* Timer Interrupt Enable */
-#define AT91_PIT_PITEN			BIT(24)			/* Timer Enabled */
-#define AT91_PIT_PIV			GENMASK(19, 0)		/* Periodic Interval Value */
+#घोषणा AT91_PIT_MR		0x00			/* Mode Register */
+#घोषणा AT91_PIT_PITIEN			BIT(25)			/* Timer Interrupt Enable */
+#घोषणा AT91_PIT_PITEN			BIT(24)			/* Timer Enabled */
+#घोषणा AT91_PIT_PIV			GENMASK(19, 0)		/* Periodic Interval Value */
 
-#define AT91_PIT_SR		0x04			/* Status Register */
-#define AT91_PIT_PITS			BIT(0)			/* Timer Status */
+#घोषणा AT91_PIT_SR		0x04			/* Status Register */
+#घोषणा AT91_PIT_PITS			BIT(0)			/* Timer Status */
 
-#define AT91_PIT_PIVR		0x08			/* Periodic Interval Value Register */
-#define AT91_PIT_PIIR		0x0c			/* Periodic Interval Image Register */
-#define AT91_PIT_PICNT			GENMASK(31, 20)		/* Interval Counter */
-#define AT91_PIT_CPIV			GENMASK(19, 0)		/* Inverval Value */
+#घोषणा AT91_PIT_PIVR		0x08			/* Periodic Interval Value Register */
+#घोषणा AT91_PIT_PIIR		0x0c			/* Periodic Interval Image Register */
+#घोषणा AT91_PIT_PICNT			GENMASK(31, 20)		/* Interval Counter */
+#घोषणा AT91_PIT_CPIV			GENMASK(19, 0)		/* Inverval Value */
 
-#define PIT_CPIV(x)	((x) & AT91_PIT_CPIV)
-#define PIT_PICNT(x)	(((x) & AT91_PIT_PICNT) >> 20)
+#घोषणा PIT_CPIV(x)	((x) & AT91_PIT_CPIV)
+#घोषणा PIT_PICNT(x)	(((x) & AT91_PIT_PICNT) >> 20)
 
-struct pit_data {
-	struct clock_event_device	clkevt;
-	struct clocksource		clksrc;
+काष्ठा pit_data अणु
+	काष्ठा घड़ी_event_device	clkevt;
+	काष्ठा घड़ीsource		clksrc;
 
-	void __iomem	*base;
+	व्योम __iomem	*base;
 	u32		cycle;
 	u32		cnt;
-	unsigned int	irq;
-	struct clk	*mck;
-};
+	अचिन्हित पूर्णांक	irq;
+	काष्ठा clk	*mck;
+पूर्ण;
 
-static inline struct pit_data *clksrc_to_pit_data(struct clocksource *clksrc)
-{
-	return container_of(clksrc, struct pit_data, clksrc);
-}
+अटल अंतरभूत काष्ठा pit_data *clksrc_to_pit_data(काष्ठा घड़ीsource *clksrc)
+अणु
+	वापस container_of(clksrc, काष्ठा pit_data, clksrc);
+पूर्ण
 
-static inline struct pit_data *clkevt_to_pit_data(struct clock_event_device *clkevt)
-{
-	return container_of(clkevt, struct pit_data, clkevt);
-}
+अटल अंतरभूत काष्ठा pit_data *clkevt_to_pit_data(काष्ठा घड़ी_event_device *clkevt)
+अणु
+	वापस container_of(clkevt, काष्ठा pit_data, clkevt);
+पूर्ण
 
-static inline unsigned int pit_read(void __iomem *base, unsigned int reg_offset)
-{
-	return readl_relaxed(base + reg_offset);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक pit_पढ़ो(व्योम __iomem *base, अचिन्हित पूर्णांक reg_offset)
+अणु
+	वापस पढ़ोl_relaxed(base + reg_offset);
+पूर्ण
 
-static inline void pit_write(void __iomem *base, unsigned int reg_offset, unsigned long value)
-{
-	writel_relaxed(value, base + reg_offset);
-}
+अटल अंतरभूत व्योम pit_ग_लिखो(व्योम __iomem *base, अचिन्हित पूर्णांक reg_offset, अचिन्हित दीर्घ value)
+अणु
+	ग_लिखोl_relaxed(value, base + reg_offset);
+पूर्ण
 
 /*
  * Clocksource:  just a monotonic counter of MCK/16 cycles.
- * We don't care whether or not PIT irqs are enabled.
+ * We करोn't care whether or not PIT irqs are enabled.
  */
-static u64 read_pit_clk(struct clocksource *cs)
-{
-	struct pit_data *data = clksrc_to_pit_data(cs);
-	unsigned long flags;
+अटल u64 पढ़ो_pit_clk(काष्ठा घड़ीsource *cs)
+अणु
+	काष्ठा pit_data *data = clksrc_to_pit_data(cs);
+	अचिन्हित दीर्घ flags;
 	u32 elapsed;
 	u32 t;
 
 	raw_local_irq_save(flags);
 	elapsed = data->cnt;
-	t = pit_read(data->base, AT91_PIT_PIIR);
+	t = pit_पढ़ो(data->base, AT91_PIT_PIIR);
 	raw_local_irq_restore(flags);
 
 	elapsed += PIT_PICNT(t) * data->cycle;
 	elapsed += PIT_CPIV(t);
-	return elapsed;
-}
+	वापस elapsed;
+पूर्ण
 
-static int pit_clkevt_shutdown(struct clock_event_device *dev)
-{
-	struct pit_data *data = clkevt_to_pit_data(dev);
+अटल पूर्णांक pit_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *dev)
+अणु
+	काष्ठा pit_data *data = clkevt_to_pit_data(dev);
 
-	/* disable irq, leaving the clocksource active */
-	pit_write(data->base, AT91_PIT_MR, (data->cycle - 1) | AT91_PIT_PITEN);
-	return 0;
-}
+	/* disable irq, leaving the घड़ीsource active */
+	pit_ग_लिखो(data->base, AT91_PIT_MR, (data->cycle - 1) | AT91_PIT_PITEN);
+	वापस 0;
+पूर्ण
 
 /*
- * Clockevent device:  interrupts every 1/HZ (== pit_cycles * MCK/16)
+ * Clockevent device:  पूर्णांकerrupts every 1/HZ (== pit_cycles * MCK/16)
  */
-static int pit_clkevt_set_periodic(struct clock_event_device *dev)
-{
-	struct pit_data *data = clkevt_to_pit_data(dev);
+अटल पूर्णांक pit_clkevt_set_periodic(काष्ठा घड़ी_event_device *dev)
+अणु
+	काष्ठा pit_data *data = clkevt_to_pit_data(dev);
 
-	/* update clocksource counter */
-	data->cnt += data->cycle * PIT_PICNT(pit_read(data->base, AT91_PIT_PIVR));
-	pit_write(data->base, AT91_PIT_MR,
+	/* update घड़ीsource counter */
+	data->cnt += data->cycle * PIT_PICNT(pit_पढ़ो(data->base, AT91_PIT_PIVR));
+	pit_ग_लिखो(data->base, AT91_PIT_MR,
 		  (data->cycle - 1) | AT91_PIT_PITEN | AT91_PIT_PITIEN);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void at91sam926x_pit_suspend(struct clock_event_device *cedev)
-{
-	struct pit_data *data = clkevt_to_pit_data(cedev);
+अटल व्योम at91sam926x_pit_suspend(काष्ठा घड़ी_event_device *cedev)
+अणु
+	काष्ठा pit_data *data = clkevt_to_pit_data(cedev);
 
-	/* Disable timer */
-	pit_write(data->base, AT91_PIT_MR, 0);
-}
+	/* Disable समयr */
+	pit_ग_लिखो(data->base, AT91_PIT_MR, 0);
+पूर्ण
 
-static void at91sam926x_pit_reset(struct pit_data *data)
-{
-	/* Disable timer and irqs */
-	pit_write(data->base, AT91_PIT_MR, 0);
+अटल व्योम at91sam926x_pit_reset(काष्ठा pit_data *data)
+अणु
+	/* Disable समयr and irqs */
+	pit_ग_लिखो(data->base, AT91_PIT_MR, 0);
 
-	/* Clear any pending interrupts, wait for PIT to stop counting */
-	while (PIT_CPIV(pit_read(data->base, AT91_PIT_PIVR)) != 0)
+	/* Clear any pending पूर्णांकerrupts, रुको क्रम PIT to stop counting */
+	जबतक (PIT_CPIV(pit_पढ़ो(data->base, AT91_PIT_PIVR)) != 0)
 		cpu_relax();
 
-	/* Start PIT but don't enable IRQ */
-	pit_write(data->base, AT91_PIT_MR,
+	/* Start PIT but करोn't enable IRQ */
+	pit_ग_लिखो(data->base, AT91_PIT_MR,
 		  (data->cycle - 1) | AT91_PIT_PITEN);
-}
+पूर्ण
 
-static void at91sam926x_pit_resume(struct clock_event_device *cedev)
-{
-	struct pit_data *data = clkevt_to_pit_data(cedev);
+अटल व्योम at91sam926x_pit_resume(काष्ठा घड़ी_event_device *cedev)
+अणु
+	काष्ठा pit_data *data = clkevt_to_pit_data(cedev);
 
 	at91sam926x_pit_reset(data);
-}
+पूर्ण
 
 /*
- * IRQ handler for the timer.
+ * IRQ handler क्रम the समयr.
  */
-static irqreturn_t at91sam926x_pit_interrupt(int irq, void *dev_id)
-{
-	struct pit_data *data = dev_id;
+अटल irqवापस_t at91sam926x_pit_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा pit_data *data = dev_id;
 
-	/* The PIT interrupt may be disabled, and is shared */
-	if (clockevent_state_periodic(&data->clkevt) &&
-	    (pit_read(data->base, AT91_PIT_SR) & AT91_PIT_PITS)) {
-		/* Get number of ticks performed before irq, and ack it */
-		data->cnt += data->cycle * PIT_PICNT(pit_read(data->base,
+	/* The PIT पूर्णांकerrupt may be disabled, and is shared */
+	अगर (घड़ीevent_state_periodic(&data->clkevt) &&
+	    (pit_पढ़ो(data->base, AT91_PIT_SR) & AT91_PIT_PITS)) अणु
+		/* Get number of ticks perक्रमmed beक्रमe irq, and ack it */
+		data->cnt += data->cycle * PIT_PICNT(pit_पढ़ो(data->base,
 							      AT91_PIT_PIVR));
 		data->clkevt.event_handler(&data->clkevt);
 
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
 /*
- * Set up both clocksource and clockevent support.
+ * Set up both घड़ीsource and घड़ीevent support.
  */
-static int __init at91sam926x_pit_dt_init(struct device_node *node)
-{
-	unsigned long   pit_rate;
-	unsigned        bits;
-	int             ret;
-	struct pit_data *data;
+अटल पूर्णांक __init at91sam926x_pit_dt_init(काष्ठा device_node *node)
+अणु
+	अचिन्हित दीर्घ   pit_rate;
+	अचिन्हित        bits;
+	पूर्णांक             ret;
+	काष्ठा pit_data *data;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->base = of_iomap(node, 0);
-	if (!data->base) {
+	अगर (!data->base) अणु
 		pr_err("Could not map PIT address\n");
 		ret = -ENXIO;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	data->mck = of_clk_get(node, 0);
-	if (IS_ERR(data->mck)) {
+	अगर (IS_ERR(data->mck)) अणु
 		pr_err("Unable to get mck clk\n");
 		ret = PTR_ERR(data->mck);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	ret = clk_prepare_enable(data->mck);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Unable to enable mck\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* Get the interrupts property */
+	/* Get the पूर्णांकerrupts property */
 	data->irq = irq_of_parse_and_map(node, 0);
-	if (!data->irq) {
+	अगर (!data->irq) अणु
 		pr_err("Unable to get IRQ from DT\n");
 		ret = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/*
 	 * Use our actual MCK to figure out how many MCK/16 ticks per
-	 * 1/HZ period (instead of a compile-time constant LATCH).
+	 * 1/HZ period (instead of a compile-समय स्थिरant LATCH).
 	 */
 	pit_rate = clk_get_rate(data->mck) / 16;
 	data->cycle = DIV_ROUND_CLOSEST(pit_rate, HZ);
 	WARN_ON(((data->cycle - 1) & ~AT91_PIT_PIV) != 0);
 
-	/* Initialize and enable the timer */
+	/* Initialize and enable the समयr */
 	at91sam926x_pit_reset(data);
 
 	/*
-	 * Register clocksource.  The high order bits of PIV are unused,
-	 * so this isn't a 32-bit counter unless we get clockevent irqs.
+	 * Register घड़ीsource.  The high order bits of PIV are unused,
+	 * so this isn't a 32-bit counter unless we get घड़ीevent irqs.
 	 */
 	bits = 12 /* PICNT */ + ilog2(data->cycle) /* PIV */;
 	data->clksrc.mask = CLOCKSOURCE_MASK(bits);
 	data->clksrc.name = "pit";
 	data->clksrc.rating = 175;
-	data->clksrc.read = read_pit_clk;
+	data->clksrc.पढ़ो = पढ़ो_pit_clk;
 	data->clksrc.flags = CLOCK_SOURCE_IS_CONTINUOUS;
 	
-	ret = clocksource_register_hz(&data->clksrc, pit_rate);
-	if (ret) {
+	ret = घड़ीsource_रेजिस्टर_hz(&data->clksrc, pit_rate);
+	अगर (ret) अणु
 		pr_err("Failed to register clocksource\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* Set up irq handler */
-	ret = request_irq(data->irq, at91sam926x_pit_interrupt,
+	ret = request_irq(data->irq, at91sam926x_pit_पूर्णांकerrupt,
 			  IRQF_SHARED | IRQF_TIMER | IRQF_IRQPOLL,
 			  "at91_tick", data);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Unable to setup IRQ\n");
-		clocksource_unregister(&data->clksrc);
-		goto exit;
-	}
+		घड़ीsource_unरेजिस्टर(&data->clksrc);
+		जाओ निकास;
+	पूर्ण
 
-	/* Set up and register clockevents */
+	/* Set up and रेजिस्टर घड़ीevents */
 	data->clkevt.name = "pit";
 	data->clkevt.features = CLOCK_EVT_FEAT_PERIODIC;
-	data->clkevt.shift = 32;
-	data->clkevt.mult = div_sc(pit_rate, NSEC_PER_SEC, data->clkevt.shift);
+	data->clkevt.shअगरt = 32;
+	data->clkevt.mult = भाग_sc(pit_rate, NSEC_PER_SEC, data->clkevt.shअगरt);
 	data->clkevt.rating = 100;
 	data->clkevt.cpumask = cpumask_of(0);
 
-	data->clkevt.set_state_shutdown = pit_clkevt_shutdown;
+	data->clkevt.set_state_shutकरोwn = pit_clkevt_shutकरोwn;
 	data->clkevt.set_state_periodic = pit_clkevt_set_periodic;
 	data->clkevt.resume = at91sam926x_pit_resume;
 	data->clkevt.suspend = at91sam926x_pit_suspend;
-	clockevents_register_device(&data->clkevt);
+	घड़ीevents_रेजिस्टर_device(&data->clkevt);
 
-	return 0;
+	वापस 0;
 
-exit:
-	kfree(data);
-	return ret;
-}
+निकास:
+	kमुक्त(data);
+	वापस ret;
+पूर्ण
 TIMER_OF_DECLARE(at91sam926x_pit, "atmel,at91sam9260-pit",
 		       at91sam926x_pit_dt_init);

@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/mm_types.h>
-#include <linux/rbtree.h>
-#include <linux/rwsem.h>
-#include <linux/spinlock.h>
-#include <linux/list.h>
-#include <linux/cpumask.h>
-#include <linux/mman.h>
-#include <linux/pgtable.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/mm_types.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/list.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/pgtable.h>
 
-#include <linux/atomic.h>
-#include <linux/user_namespace.h>
-#include <asm/mmu.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <यंत्र/mmu.h>
 
-#ifndef INIT_MM_CONTEXT
-#define INIT_MM_CONTEXT(name)
-#endif
+#अगर_अघोषित INIT_MM_CONTEXT
+#घोषणा INIT_MM_CONTEXT(name)
+#पूर्ण_अगर
 
 /*
- * For dynamically allocated mm_structs, there is a dynamically sized cpumask
- * at the end of the structure, the size of which depends on the maximum CPU
- * number the system can see. That way we allocate only as much memory for
- * mm_cpumask() as needed for the hundreds, or thousands of processes that
- * a system typically runs.
+ * For dynamically allocated mm_काष्ठाs, there is a dynamically sized cpumask
+ * at the end of the काष्ठाure, the size of which depends on the maximum CPU
+ * number the प्रणाली can see. That way we allocate only as much memory क्रम
+ * mm_cpumask() as needed क्रम the hundreds, or thousands of processes that
+ * a प्रणाली typically runs.
  *
- * Since there is only one init_mm in the entire system, keep it simple
- * and size this cpu_bitmask to NR_CPUS.
+ * Since there is only one init_mm in the entire प्रणाली, keep it simple
+ * and size this cpu_biपंचांगask to NR_CPUS.
  */
-struct mm_struct init_mm = {
+काष्ठा mm_काष्ठा init_mm = अणु
 	.mm_rb		= RB_ROOT,
 	.pgd		= swapper_pg_dir,
 	.mm_users	= ATOMIC_INIT(2),
 	.mm_count	= ATOMIC_INIT(1),
-	.write_protect_seq = SEQCNT_ZERO(init_mm.write_protect_seq),
+	.ग_लिखो_protect_seq = SEQCNT_ZERO(init_mm.ग_लिखो_protect_seq),
 	MMAP_LOCK_INITIALIZER(init_mm)
 	.page_table_lock =  __SPIN_LOCK_UNLOCKED(init_mm.page_table_lock),
 	.arg_lock	=  __SPIN_LOCK_UNLOCKED(init_mm.arg_lock),
 	.mmlist		= LIST_HEAD_INIT(init_mm.mmlist),
 	.user_ns	= &init_user_ns,
-	.cpu_bitmap	= CPU_BITS_NONE,
+	.cpu_biपंचांगap	= CPU_BITS_NONE,
 	INIT_MM_CONTEXT(init_mm)
-};
+पूर्ण;

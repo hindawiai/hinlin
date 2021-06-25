@@ -1,179 +1,180 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_ELEVATOR_H
-#define _LINUX_ELEVATOR_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_ELEVATOR_H
+#घोषणा _LINUX_ELEVATOR_H
 
-#include <linux/percpu.h>
-#include <linux/hashtable.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/hashtable.h>
 
-#ifdef CONFIG_BLOCK
+#अगर_घोषित CONFIG_BLOCK
 
-struct io_cq;
-struct elevator_type;
-#ifdef CONFIG_BLK_DEBUG_FS
-struct blk_mq_debugfs_attr;
-#endif
+काष्ठा io_cq;
+काष्ठा elevator_type;
+#अगर_घोषित CONFIG_BLK_DEBUG_FS
+काष्ठा blk_mq_debugfs_attr;
+#पूर्ण_अगर
 
 /*
  * Return values from elevator merger
  */
-enum elv_merge {
+क्रमागत elv_merge अणु
 	ELEVATOR_NO_MERGE	= 0,
 	ELEVATOR_FRONT_MERGE	= 1,
 	ELEVATOR_BACK_MERGE	= 2,
 	ELEVATOR_DISCARD_MERGE	= 3,
-};
+पूर्ण;
 
-struct blk_mq_alloc_data;
-struct blk_mq_hw_ctx;
+काष्ठा blk_mq_alloc_data;
+काष्ठा blk_mq_hw_ctx;
 
-struct elevator_mq_ops {
-	int (*init_sched)(struct request_queue *, struct elevator_type *);
-	void (*exit_sched)(struct elevator_queue *);
-	int (*init_hctx)(struct blk_mq_hw_ctx *, unsigned int);
-	void (*exit_hctx)(struct blk_mq_hw_ctx *, unsigned int);
-	void (*depth_updated)(struct blk_mq_hw_ctx *);
+काष्ठा elevator_mq_ops अणु
+	पूर्णांक (*init_sched)(काष्ठा request_queue *, काष्ठा elevator_type *);
+	व्योम (*निकास_sched)(काष्ठा elevator_queue *);
+	पूर्णांक (*init_hctx)(काष्ठा blk_mq_hw_ctx *, अचिन्हित पूर्णांक);
+	व्योम (*निकास_hctx)(काष्ठा blk_mq_hw_ctx *, अचिन्हित पूर्णांक);
+	व्योम (*depth_updated)(काष्ठा blk_mq_hw_ctx *);
 
-	bool (*allow_merge)(struct request_queue *, struct request *, struct bio *);
-	bool (*bio_merge)(struct request_queue *, struct bio *, unsigned int);
-	int (*request_merge)(struct request_queue *q, struct request **, struct bio *);
-	void (*request_merged)(struct request_queue *, struct request *, enum elv_merge);
-	void (*requests_merged)(struct request_queue *, struct request *, struct request *);
-	void (*limit_depth)(unsigned int, struct blk_mq_alloc_data *);
-	void (*prepare_request)(struct request *);
-	void (*finish_request)(struct request *);
-	void (*insert_requests)(struct blk_mq_hw_ctx *, struct list_head *, bool);
-	struct request *(*dispatch_request)(struct blk_mq_hw_ctx *);
-	bool (*has_work)(struct blk_mq_hw_ctx *);
-	void (*completed_request)(struct request *, u64);
-	void (*requeue_request)(struct request *);
-	struct request *(*former_request)(struct request_queue *, struct request *);
-	struct request *(*next_request)(struct request_queue *, struct request *);
-	void (*init_icq)(struct io_cq *);
-	void (*exit_icq)(struct io_cq *);
-};
+	bool (*allow_merge)(काष्ठा request_queue *, काष्ठा request *, काष्ठा bio *);
+	bool (*bio_merge)(काष्ठा request_queue *, काष्ठा bio *, अचिन्हित पूर्णांक);
+	पूर्णांक (*request_merge)(काष्ठा request_queue *q, काष्ठा request **, काष्ठा bio *);
+	व्योम (*request_merged)(काष्ठा request_queue *, काष्ठा request *, क्रमागत elv_merge);
+	व्योम (*requests_merged)(काष्ठा request_queue *, काष्ठा request *, काष्ठा request *);
+	व्योम (*limit_depth)(अचिन्हित पूर्णांक, काष्ठा blk_mq_alloc_data *);
+	व्योम (*prepare_request)(काष्ठा request *);
+	व्योम (*finish_request)(काष्ठा request *);
+	व्योम (*insert_requests)(काष्ठा blk_mq_hw_ctx *, काष्ठा list_head *, bool);
+	काष्ठा request *(*dispatch_request)(काष्ठा blk_mq_hw_ctx *);
+	bool (*has_work)(काष्ठा blk_mq_hw_ctx *);
+	व्योम (*completed_request)(काष्ठा request *, u64);
+	व्योम (*requeue_request)(काष्ठा request *);
+	काष्ठा request *(*क्रमmer_request)(काष्ठा request_queue *, काष्ठा request *);
+	काष्ठा request *(*next_request)(काष्ठा request_queue *, काष्ठा request *);
+	व्योम (*init_icq)(काष्ठा io_cq *);
+	व्योम (*निकास_icq)(काष्ठा io_cq *);
+पूर्ण;
 
-#define ELV_NAME_MAX	(16)
+#घोषणा ELV_NAME_MAX	(16)
 
-struct elv_fs_entry {
-	struct attribute attr;
-	ssize_t (*show)(struct elevator_queue *, char *);
-	ssize_t (*store)(struct elevator_queue *, const char *, size_t);
-};
+काष्ठा elv_fs_entry अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा elevator_queue *, अक्षर *);
+	sमाप_प्रकार (*store)(काष्ठा elevator_queue *, स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
 /*
- * identifies an elevator type, such as AS or deadline
+ * identअगरies an elevator type, such as AS or deadline
  */
-struct elevator_type
-{
+काष्ठा elevator_type
+अणु
 	/* managed by elevator core */
-	struct kmem_cache *icq_cache;
+	काष्ठा kmem_cache *icq_cache;
 
 	/* fields provided by elevator implementation */
-	struct elevator_mq_ops ops;
+	काष्ठा elevator_mq_ops ops;
 
-	size_t icq_size;	/* see iocontext.h */
-	size_t icq_align;	/* ditto */
-	struct elv_fs_entry *elevator_attrs;
-	const char *elevator_name;
-	const char *elevator_alias;
-	const unsigned int elevator_features;
-	struct module *elevator_owner;
-#ifdef CONFIG_BLK_DEBUG_FS
-	const struct blk_mq_debugfs_attr *queue_debugfs_attrs;
-	const struct blk_mq_debugfs_attr *hctx_debugfs_attrs;
-#endif
+	माप_प्रकार icq_size;	/* see iocontext.h */
+	माप_प्रकार icq_align;	/* ditto */
+	काष्ठा elv_fs_entry *elevator_attrs;
+	स्थिर अक्षर *elevator_name;
+	स्थिर अक्षर *elevator_alias;
+	स्थिर अचिन्हित पूर्णांक elevator_features;
+	काष्ठा module *elevator_owner;
+#अगर_घोषित CONFIG_BLK_DEBUG_FS
+	स्थिर काष्ठा blk_mq_debugfs_attr *queue_debugfs_attrs;
+	स्थिर काष्ठा blk_mq_debugfs_attr *hctx_debugfs_attrs;
+#पूर्ण_अगर
 
 	/* managed by elevator core */
-	char icq_cache_name[ELV_NAME_MAX + 6];	/* elvname + "_io_cq" */
-	struct list_head list;
-};
+	अक्षर icq_cache_name[ELV_NAME_MAX + 6];	/* elvname + "_io_cq" */
+	काष्ठा list_head list;
+पूर्ण;
 
-#define ELV_HASH_BITS 6
+#घोषणा ELV_HASH_BITS 6
 
-void elv_rqhash_del(struct request_queue *q, struct request *rq);
-void elv_rqhash_add(struct request_queue *q, struct request *rq);
-void elv_rqhash_reposition(struct request_queue *q, struct request *rq);
-struct request *elv_rqhash_find(struct request_queue *q, sector_t offset);
+व्योम elv_rqhash_del(काष्ठा request_queue *q, काष्ठा request *rq);
+व्योम elv_rqhash_add(काष्ठा request_queue *q, काष्ठा request *rq);
+व्योम elv_rqhash_reposition(काष्ठा request_queue *q, काष्ठा request *rq);
+काष्ठा request *elv_rqhash_find(काष्ठा request_queue *q, sector_t offset);
 
 /*
  * each queue has an elevator_queue associated with it
  */
-struct elevator_queue
-{
-	struct elevator_type *type;
-	void *elevator_data;
-	struct kobject kobj;
-	struct mutex sysfs_lock;
-	unsigned int registered:1;
+काष्ठा elevator_queue
+अणु
+	काष्ठा elevator_type *type;
+	व्योम *elevator_data;
+	काष्ठा kobject kobj;
+	काष्ठा mutex sysfs_lock;
+	अचिन्हित पूर्णांक रेजिस्टरed:1;
 	DECLARE_HASHTABLE(hash, ELV_HASH_BITS);
-};
+पूर्ण;
 
 /*
- * block elevator interface
+ * block elevator पूर्णांकerface
  */
-extern enum elv_merge elv_merge(struct request_queue *, struct request **,
-		struct bio *);
-extern void elv_merge_requests(struct request_queue *, struct request *,
-			       struct request *);
-extern void elv_merged_request(struct request_queue *, struct request *,
-		enum elv_merge);
-extern bool elv_attempt_insert_merge(struct request_queue *, struct request *);
-extern struct request *elv_former_request(struct request_queue *, struct request *);
-extern struct request *elv_latter_request(struct request_queue *, struct request *);
+बाह्य क्रमागत elv_merge elv_merge(काष्ठा request_queue *, काष्ठा request **,
+		काष्ठा bio *);
+बाह्य व्योम elv_merge_requests(काष्ठा request_queue *, काष्ठा request *,
+			       काष्ठा request *);
+बाह्य व्योम elv_merged_request(काष्ठा request_queue *, काष्ठा request *,
+		क्रमागत elv_merge);
+बाह्य bool elv_attempt_insert_merge(काष्ठा request_queue *, काष्ठा request *);
+बाह्य काष्ठा request *elv_क्रमmer_request(काष्ठा request_queue *, काष्ठा request *);
+बाह्य काष्ठा request *elv_latter_request(काष्ठा request_queue *, काष्ठा request *);
 
 /*
  * io scheduler registration
  */
-extern int elv_register(struct elevator_type *);
-extern void elv_unregister(struct elevator_type *);
+बाह्य पूर्णांक elv_रेजिस्टर(काष्ठा elevator_type *);
+बाह्य व्योम elv_unरेजिस्टर(काष्ठा elevator_type *);
 
 /*
- * io scheduler sysfs switching
+ * io scheduler sysfs चयनing
  */
-extern ssize_t elv_iosched_show(struct request_queue *, char *);
-extern ssize_t elv_iosched_store(struct request_queue *, const char *, size_t);
+बाह्य sमाप_प्रकार elv_iosched_show(काष्ठा request_queue *, अक्षर *);
+बाह्य sमाप_प्रकार elv_iosched_store(काष्ठा request_queue *, स्थिर अक्षर *, माप_प्रकार);
 
-extern bool elv_bio_merge_ok(struct request *, struct bio *);
-extern struct elevator_queue *elevator_alloc(struct request_queue *,
-					struct elevator_type *);
+बाह्य bool elv_bio_merge_ok(काष्ठा request *, काष्ठा bio *);
+बाह्य काष्ठा elevator_queue *elevator_alloc(काष्ठा request_queue *,
+					काष्ठा elevator_type *);
 
 /*
  * Helper functions.
  */
-extern struct request *elv_rb_former_request(struct request_queue *, struct request *);
-extern struct request *elv_rb_latter_request(struct request_queue *, struct request *);
+बाह्य काष्ठा request *elv_rb_क्रमmer_request(काष्ठा request_queue *, काष्ठा request *);
+बाह्य काष्ठा request *elv_rb_latter_request(काष्ठा request_queue *, काष्ठा request *);
 
 /*
  * rb support functions.
  */
-extern void elv_rb_add(struct rb_root *, struct request *);
-extern void elv_rb_del(struct rb_root *, struct request *);
-extern struct request *elv_rb_find(struct rb_root *, sector_t);
+बाह्य व्योम elv_rb_add(काष्ठा rb_root *, काष्ठा request *);
+बाह्य व्योम elv_rb_del(काष्ठा rb_root *, काष्ठा request *);
+बाह्य काष्ठा request *elv_rb_find(काष्ठा rb_root *, sector_t);
 
 /*
  * Insertion selection
  */
-#define ELEVATOR_INSERT_FRONT	1
-#define ELEVATOR_INSERT_BACK	2
-#define ELEVATOR_INSERT_SORT	3
-#define ELEVATOR_INSERT_REQUEUE	4
-#define ELEVATOR_INSERT_FLUSH	5
-#define ELEVATOR_INSERT_SORT_MERGE	6
+#घोषणा ELEVATOR_INSERT_FRONT	1
+#घोषणा ELEVATOR_INSERT_BACK	2
+#घोषणा ELEVATOR_INSERT_SORT	3
+#घोषणा ELEVATOR_INSERT_REQUEUE	4
+#घोषणा ELEVATOR_INSERT_FLUSH	5
+#घोषणा ELEVATOR_INSERT_SORT_MERGE	6
 
-#define rq_end_sector(rq)	(blk_rq_pos(rq) + blk_rq_sectors(rq))
-#define rb_entry_rq(node)	rb_entry((node), struct request, rb_node)
+#घोषणा rq_end_sector(rq)	(blk_rq_pos(rq) + blk_rq_sectors(rq))
+#घोषणा rb_entry_rq(node)	rb_entry((node), काष्ठा request, rb_node)
 
-#define rq_entry_fifo(ptr)	list_entry((ptr), struct request, queuelist)
-#define rq_fifo_clear(rq)	list_del_init(&(rq)->queuelist)
+#घोषणा rq_entry_fअगरo(ptr)	list_entry((ptr), काष्ठा request, queuelist)
+#घोषणा rq_fअगरo_clear(rq)	list_del_init(&(rq)->queuelist)
 
 /*
  * Elevator features.
  */
 
-/* Supports zoned block devices sequential write constraint */
-#define ELEVATOR_F_ZBD_SEQ_WRITE	(1U << 0)
+/* Supports zoned block devices sequential ग_लिखो स्थिरraपूर्णांक */
+#घोषणा ELEVATOR_F_ZBD_SEQ_WRITE	(1U << 0)
 /* Supports scheduling on multiple hardware queues */
-#define ELEVATOR_F_MQ_AWARE		(1U << 1)
+#घोषणा ELEVATOR_F_MQ_AWARE		(1U << 1)
 
-#endif /* CONFIG_BLOCK */
-#endif
+#पूर्ण_अगर /* CONFIG_BLOCK */
+#पूर्ण_अगर

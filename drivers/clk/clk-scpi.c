@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * System Control and Power Interface (SCPI) Protocol based clock driver
+ * System Control and Power Interface (SCPI) Protocol based घड़ी driver
  *
  * Copyright (C) 2015 ARM Ltd.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/scpi_protocol.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/scpi_protocol.h>
 
-struct scpi_clk {
+काष्ठा scpi_clk अणु
 	u32 id;
-	struct clk_hw hw;
-	struct scpi_dvfs_info *info;
-	struct scpi_ops *scpi_ops;
-};
+	काष्ठा clk_hw hw;
+	काष्ठा scpi_dvfs_info *info;
+	काष्ठा scpi_ops *scpi_ops;
+पूर्ण;
 
-#define to_scpi_clk(clk) container_of(clk, struct scpi_clk, hw)
+#घोषणा to_scpi_clk(clk) container_of(clk, काष्ठा scpi_clk, hw)
 
-static struct platform_device *cpufreq_dev;
+अटल काष्ठा platक्रमm_device *cpufreq_dev;
 
-static unsigned long scpi_clk_recalc_rate(struct clk_hw *hw,
-					  unsigned long parent_rate)
-{
-	struct scpi_clk *clk = to_scpi_clk(hw);
+अटल अचिन्हित दीर्घ scpi_clk_recalc_rate(काष्ठा clk_hw *hw,
+					  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा scpi_clk *clk = to_scpi_clk(hw);
 
-	return clk->scpi_ops->clk_get_val(clk->id);
-}
+	वापस clk->scpi_ops->clk_get_val(clk->id);
+पूर्ण
 
-static long scpi_clk_round_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long *parent_rate)
-{
+अटल दीर्घ scpi_clk_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *parent_rate)
+अणु
 	/*
-	 * We can't figure out what rate it will be, so just return the
+	 * We can't figure out what rate it will be, so just वापस the
 	 * rate back to the caller. scpi_clk_recalc_rate() will be called
-	 * after the rate is set and we'll know what rate the clock is
+	 * after the rate is set and we'll know what rate the घड़ी is
 	 * running at then.
 	 */
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static int scpi_clk_set_rate(struct clk_hw *hw, unsigned long rate,
-			     unsigned long parent_rate)
-{
-	struct scpi_clk *clk = to_scpi_clk(hw);
+अटल पूर्णांक scpi_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा scpi_clk *clk = to_scpi_clk(hw);
 
-	return clk->scpi_ops->clk_set_val(clk->id, rate);
-}
+	वापस clk->scpi_ops->clk_set_val(clk->id, rate);
+पूर्ण
 
-static const struct clk_ops scpi_clk_ops = {
+अटल स्थिर काष्ठा clk_ops scpi_clk_ops = अणु
 	.recalc_rate = scpi_clk_recalc_rate,
 	.round_rate = scpi_clk_round_rate,
 	.set_rate = scpi_clk_set_rate,
-};
+पूर्ण;
 
-/* find closest match to given frequency in OPP table */
-static long __scpi_dvfs_round_rate(struct scpi_clk *clk, unsigned long rate)
-{
-	int idx;
-	unsigned long fmin = 0, fmax = ~0, ftmp;
-	const struct scpi_opp *opp = clk->info->opps;
+/* find बंदst match to given frequency in OPP table */
+अटल दीर्घ __scpi_dvfs_round_rate(काष्ठा scpi_clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	पूर्णांक idx;
+	अचिन्हित दीर्घ fmin = 0, fmax = ~0, fपंचांगp;
+	स्थिर काष्ठा scpi_opp *opp = clk->info->opps;
 
-	for (idx = 0; idx < clk->info->count; idx++, opp++) {
-		ftmp = opp->freq;
-		if (ftmp >= rate) {
-			if (ftmp <= fmax)
-				fmax = ftmp;
-			break;
-		} else if (ftmp >= fmin) {
-			fmin = ftmp;
-		}
-	}
-	return fmax != ~0 ? fmax : fmin;
-}
+	क्रम (idx = 0; idx < clk->info->count; idx++, opp++) अणु
+		fपंचांगp = opp->freq;
+		अगर (fपंचांगp >= rate) अणु
+			अगर (fपंचांगp <= fmax)
+				fmax = fपंचांगp;
+			अवरोध;
+		पूर्ण अन्यथा अगर (fपंचांगp >= fmin) अणु
+			fmin = fपंचांगp;
+		पूर्ण
+	पूर्ण
+	वापस fmax != ~0 ? fmax : fmin;
+पूर्ण
 
-static unsigned long scpi_dvfs_recalc_rate(struct clk_hw *hw,
-					   unsigned long parent_rate)
-{
-	struct scpi_clk *clk = to_scpi_clk(hw);
-	int idx = clk->scpi_ops->dvfs_get_idx(clk->id);
-	const struct scpi_opp *opp;
+अटल अचिन्हित दीर्घ scpi_dvfs_recalc_rate(काष्ठा clk_hw *hw,
+					   अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा scpi_clk *clk = to_scpi_clk(hw);
+	पूर्णांक idx = clk->scpi_ops->dvfs_get_idx(clk->id);
+	स्थिर काष्ठा scpi_opp *opp;
 
-	if (idx < 0)
-		return 0;
+	अगर (idx < 0)
+		वापस 0;
 
 	opp = clk->info->opps + idx;
-	return opp->freq;
-}
+	वापस opp->freq;
+पूर्ण
 
-static long scpi_dvfs_round_rate(struct clk_hw *hw, unsigned long rate,
-				 unsigned long *parent_rate)
-{
-	struct scpi_clk *clk = to_scpi_clk(hw);
+अटल दीर्घ scpi_dvfs_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				 अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा scpi_clk *clk = to_scpi_clk(hw);
 
-	return __scpi_dvfs_round_rate(clk, rate);
-}
+	वापस __scpi_dvfs_round_rate(clk, rate);
+पूर्ण
 
-static int __scpi_find_dvfs_index(struct scpi_clk *clk, unsigned long rate)
-{
-	int idx, max_opp = clk->info->count;
-	const struct scpi_opp *opp = clk->info->opps;
+अटल पूर्णांक __scpi_find_dvfs_index(काष्ठा scpi_clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	पूर्णांक idx, max_opp = clk->info->count;
+	स्थिर काष्ठा scpi_opp *opp = clk->info->opps;
 
-	for (idx = 0; idx < max_opp; idx++, opp++)
-		if (opp->freq == rate)
-			return idx;
-	return -EINVAL;
-}
+	क्रम (idx = 0; idx < max_opp; idx++, opp++)
+		अगर (opp->freq == rate)
+			वापस idx;
+	वापस -EINVAL;
+पूर्ण
 
-static int scpi_dvfs_set_rate(struct clk_hw *hw, unsigned long rate,
-			      unsigned long parent_rate)
-{
-	struct scpi_clk *clk = to_scpi_clk(hw);
-	int ret = __scpi_find_dvfs_index(clk, rate);
+अटल पूर्णांक scpi_dvfs_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			      अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा scpi_clk *clk = to_scpi_clk(hw);
+	पूर्णांक ret = __scpi_find_dvfs_index(clk, rate);
 
-	if (ret < 0)
-		return ret;
-	return clk->scpi_ops->dvfs_set_idx(clk->id, (u8)ret);
-}
+	अगर (ret < 0)
+		वापस ret;
+	वापस clk->scpi_ops->dvfs_set_idx(clk->id, (u8)ret);
+पूर्ण
 
-static const struct clk_ops scpi_dvfs_ops = {
+अटल स्थिर काष्ठा clk_ops scpi_dvfs_ops = अणु
 	.recalc_rate = scpi_dvfs_recalc_rate,
 	.round_rate = scpi_dvfs_round_rate,
 	.set_rate = scpi_dvfs_set_rate,
-};
+पूर्ण;
 
-static const struct of_device_id scpi_clk_match[] __maybe_unused = {
-	{ .compatible = "arm,scpi-dvfs-clocks", .data = &scpi_dvfs_ops, },
-	{ .compatible = "arm,scpi-variable-clocks", .data = &scpi_clk_ops, },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id scpi_clk_match[] __maybe_unused = अणु
+	अणु .compatible = "arm,scpi-dvfs-clocks", .data = &scpi_dvfs_ops, पूर्ण,
+	अणु .compatible = "arm,scpi-variable-clocks", .data = &scpi_clk_ops, पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int
-scpi_clk_ops_init(struct device *dev, const struct of_device_id *match,
-		  struct scpi_clk *sclk, const char *name)
-{
-	struct clk_init_data init;
-	unsigned long min = 0, max = 0;
-	int ret;
+अटल पूर्णांक
+scpi_clk_ops_init(काष्ठा device *dev, स्थिर काष्ठा of_device_id *match,
+		  काष्ठा scpi_clk *sclk, स्थिर अक्षर *name)
+अणु
+	काष्ठा clk_init_data init;
+	अचिन्हित दीर्घ min = 0, max = 0;
+	पूर्णांक ret;
 
 	init.name = name;
 	init.flags = 0;
@@ -150,164 +151,164 @@ scpi_clk_ops_init(struct device *dev, const struct of_device_id *match,
 	sclk->hw.init = &init;
 	sclk->scpi_ops = get_scpi_ops();
 
-	if (init.ops == &scpi_dvfs_ops) {
+	अगर (init.ops == &scpi_dvfs_ops) अणु
 		sclk->info = sclk->scpi_ops->dvfs_get_info(sclk->id);
-		if (IS_ERR(sclk->info))
-			return PTR_ERR(sclk->info);
-	} else if (init.ops == &scpi_clk_ops) {
-		if (sclk->scpi_ops->clk_get_range(sclk->id, &min, &max) || !max)
-			return -EINVAL;
-	} else {
-		return -EINVAL;
-	}
+		अगर (IS_ERR(sclk->info))
+			वापस PTR_ERR(sclk->info);
+	पूर्ण अन्यथा अगर (init.ops == &scpi_clk_ops) अणु
+		अगर (sclk->scpi_ops->clk_get_range(sclk->id, &min, &max) || !max)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = devm_clk_hw_register(dev, &sclk->hw);
-	if (!ret && max)
+	ret = devm_clk_hw_रेजिस्टर(dev, &sclk->hw);
+	अगर (!ret && max)
 		clk_hw_set_rate_range(&sclk->hw, min, max);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct scpi_clk_data {
-	struct scpi_clk **clk;
-	unsigned int clk_num;
-};
+काष्ठा scpi_clk_data अणु
+	काष्ठा scpi_clk **clk;
+	अचिन्हित पूर्णांक clk_num;
+पूर्ण;
 
-static struct clk_hw *
-scpi_of_clk_src_get(struct of_phandle_args *clkspec, void *data)
-{
-	struct scpi_clk *sclk;
-	struct scpi_clk_data *clk_data = data;
-	unsigned int idx = clkspec->args[0], count;
+अटल काष्ठा clk_hw *
+scpi_of_clk_src_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
+अणु
+	काष्ठा scpi_clk *sclk;
+	काष्ठा scpi_clk_data *clk_data = data;
+	अचिन्हित पूर्णांक idx = clkspec->args[0], count;
 
-	for (count = 0; count < clk_data->clk_num; count++) {
+	क्रम (count = 0; count < clk_data->clk_num; count++) अणु
 		sclk = clk_data->clk[count];
-		if (idx == sclk->id)
-			return &sclk->hw;
-	}
+		अगर (idx == sclk->id)
+			वापस &sclk->hw;
+	पूर्ण
 
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static int scpi_clk_add(struct device *dev, struct device_node *np,
-			const struct of_device_id *match)
-{
-	int idx, count, err;
-	struct scpi_clk_data *clk_data;
+अटल पूर्णांक scpi_clk_add(काष्ठा device *dev, काष्ठा device_node *np,
+			स्थिर काष्ठा of_device_id *match)
+अणु
+	पूर्णांक idx, count, err;
+	काष्ठा scpi_clk_data *clk_data;
 
 	count = of_property_count_strings(np, "clock-output-names");
-	if (count < 0) {
+	अगर (count < 0) अणु
 		dev_err(dev, "%pOFn: invalid clock output count\n", np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	clk_data = devm_kmalloc(dev, sizeof(*clk_data), GFP_KERNEL);
-	if (!clk_data)
-		return -ENOMEM;
+	clk_data = devm_kदो_स्मृति(dev, माप(*clk_data), GFP_KERNEL);
+	अगर (!clk_data)
+		वापस -ENOMEM;
 
 	clk_data->clk_num = count;
-	clk_data->clk = devm_kcalloc(dev, count, sizeof(*clk_data->clk),
+	clk_data->clk = devm_kसुस्मृति(dev, count, माप(*clk_data->clk),
 				     GFP_KERNEL);
-	if (!clk_data->clk)
-		return -ENOMEM;
+	अगर (!clk_data->clk)
+		वापस -ENOMEM;
 
-	for (idx = 0; idx < count; idx++) {
-		struct scpi_clk *sclk;
-		const char *name;
+	क्रम (idx = 0; idx < count; idx++) अणु
+		काष्ठा scpi_clk *sclk;
+		स्थिर अक्षर *name;
 		u32 val;
 
-		sclk = devm_kzalloc(dev, sizeof(*sclk), GFP_KERNEL);
-		if (!sclk)
-			return -ENOMEM;
+		sclk = devm_kzalloc(dev, माप(*sclk), GFP_KERNEL);
+		अगर (!sclk)
+			वापस -ENOMEM;
 
-		if (of_property_read_string_index(np, "clock-output-names",
-						  idx, &name)) {
+		अगर (of_property_पढ़ो_string_index(np, "clock-output-names",
+						  idx, &name)) अणु
 			dev_err(dev, "invalid clock name @ %pOFn\n", np);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (of_property_read_u32_index(np, "clock-indices",
-					       idx, &val)) {
+		अगर (of_property_पढ़ो_u32_index(np, "clock-indices",
+					       idx, &val)) अणु
 			dev_err(dev, "invalid clock index @ %pOFn\n", np);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		sclk->id = val;
 
 		err = scpi_clk_ops_init(dev, match, sclk, name);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "failed to register clock '%s'\n", name);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		dev_dbg(dev, "Registered clock '%s'\n", name);
 		clk_data->clk[idx] = sclk;
-	}
+	पूर्ण
 
-	return of_clk_add_hw_provider(np, scpi_of_clk_src_get, clk_data);
-}
+	वापस of_clk_add_hw_provider(np, scpi_of_clk_src_get, clk_data);
+पूर्ण
 
-static int scpi_clocks_remove(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *child, *np = dev->of_node;
+अटल पूर्णांक scpi_घड़ीs_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *child, *np = dev->of_node;
 
-	if (cpufreq_dev) {
-		platform_device_unregister(cpufreq_dev);
-		cpufreq_dev = NULL;
-	}
+	अगर (cpufreq_dev) अणु
+		platक्रमm_device_unरेजिस्टर(cpufreq_dev);
+		cpufreq_dev = शून्य;
+	पूर्ण
 
-	for_each_available_child_of_node(np, child)
+	क्रम_each_available_child_of_node(np, child)
 		of_clk_del_provider(np);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scpi_clocks_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct device *dev = &pdev->dev;
-	struct device_node *child, *np = dev->of_node;
-	const struct of_device_id *match;
+अटल पूर्णांक scpi_घड़ीs_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *child, *np = dev->of_node;
+	स्थिर काष्ठा of_device_id *match;
 
-	if (!get_scpi_ops())
-		return -ENXIO;
+	अगर (!get_scpi_ops())
+		वापस -ENXIO;
 
-	for_each_available_child_of_node(np, child) {
+	क्रम_each_available_child_of_node(np, child) अणु
 		match = of_match_node(scpi_clk_match, child);
-		if (!match)
-			continue;
+		अगर (!match)
+			जारी;
 		ret = scpi_clk_add(dev, child, match);
-		if (ret) {
-			scpi_clocks_remove(pdev);
+		अगर (ret) अणु
+			scpi_घड़ीs_हटाओ(pdev);
 			of_node_put(child);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (match->data != &scpi_dvfs_ops)
-			continue;
-		/* Add the virtual cpufreq device if it's DVFS clock provider */
-		cpufreq_dev = platform_device_register_simple("scpi-cpufreq",
-							      -1, NULL, 0);
-		if (IS_ERR(cpufreq_dev))
+		अगर (match->data != &scpi_dvfs_ops)
+			जारी;
+		/* Add the भव cpufreq device अगर it's DVFS घड़ी provider */
+		cpufreq_dev = platक्रमm_device_रेजिस्टर_simple("scpi-cpufreq",
+							      -1, शून्य, 0);
+		अगर (IS_ERR(cpufreq_dev))
 			pr_warn("unable to register cpufreq device");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id scpi_clocks_ids[] = {
-	{ .compatible = "arm,scpi-clocks", },
-	{}
-};
-MODULE_DEVICE_TABLE(of, scpi_clocks_ids);
+अटल स्थिर काष्ठा of_device_id scpi_घड़ीs_ids[] = अणु
+	अणु .compatible = "arm,scpi-clocks", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, scpi_घड़ीs_ids);
 
-static struct platform_driver scpi_clocks_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver scpi_घड़ीs_driver = अणु
+	.driver	= अणु
 		.name = "scpi_clocks",
-		.of_match_table = scpi_clocks_ids,
-	},
-	.probe = scpi_clocks_probe,
-	.remove = scpi_clocks_remove,
-};
-module_platform_driver(scpi_clocks_driver);
+		.of_match_table = scpi_घड़ीs_ids,
+	पूर्ण,
+	.probe = scpi_घड़ीs_probe,
+	.हटाओ = scpi_घड़ीs_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(scpi_घड़ीs_driver);
 
 MODULE_AUTHOR("Sudeep Holla <sudeep.holla@arm.com>");
 MODULE_DESCRIPTION("ARM SCPI clock driver");

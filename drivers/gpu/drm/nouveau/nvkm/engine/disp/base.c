@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,474 +22,474 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
-#include "conn.h"
-#include "dp.h"
-#include "head.h"
-#include "ior.h"
-#include "outp.h"
+#समावेश "priv.h"
+#समावेश "conn.h"
+#समावेश "dp.h"
+#समावेश "head.h"
+#समावेश "ior.h"
+#समावेश "outp.h"
 
-#include <core/client.h>
-#include <core/notify.h>
-#include <core/oproxy.h>
-#include <subdev/bios.h>
-#include <subdev/bios/dcb.h>
+#समावेश <core/client.h>
+#समावेश <core/notअगरy.h>
+#समावेश <core/oproxy.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/dcb.h>
 
-#include <nvif/class.h>
-#include <nvif/cl0046.h>
-#include <nvif/event.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/class.h>
+#समावेश <nvअगर/cl0046.h>
+#समावेश <nvअगर/event.h>
+#समावेश <nvअगर/unpack.h>
 
-static void
-nvkm_disp_vblank_fini(struct nvkm_event *event, int type, int id)
-{
-	struct nvkm_disp *disp = container_of(event, typeof(*disp), vblank);
-	struct nvkm_head *head = nvkm_head_find(disp, id);
-	if (head)
+अटल व्योम
+nvkm_disp_vblank_fini(काष्ठा nvkm_event *event, पूर्णांक type, पूर्णांक id)
+अणु
+	काष्ठा nvkm_disp *disp = container_of(event, typeof(*disp), vblank);
+	काष्ठा nvkm_head *head = nvkm_head_find(disp, id);
+	अगर (head)
 		head->func->vblank_put(head);
-}
+पूर्ण
 
-static void
-nvkm_disp_vblank_init(struct nvkm_event *event, int type, int id)
-{
-	struct nvkm_disp *disp = container_of(event, typeof(*disp), vblank);
-	struct nvkm_head *head = nvkm_head_find(disp, id);
-	if (head)
+अटल व्योम
+nvkm_disp_vblank_init(काष्ठा nvkm_event *event, पूर्णांक type, पूर्णांक id)
+अणु
+	काष्ठा nvkm_disp *disp = container_of(event, typeof(*disp), vblank);
+	काष्ठा nvkm_head *head = nvkm_head_find(disp, id);
+	अगर (head)
 		head->func->vblank_get(head);
-}
+पूर्ण
 
-static int
-nvkm_disp_vblank_ctor(struct nvkm_object *object, void *data, u32 size,
-		      struct nvkm_notify *notify)
-{
-	struct nvkm_disp *disp =
-		container_of(notify->event, typeof(*disp), vblank);
-	union {
-		struct nvif_notify_head_req_v0 v0;
-	} *req = data;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+nvkm_disp_vblank_ctor(काष्ठा nvkm_object *object, व्योम *data, u32 size,
+		      काष्ठा nvkm_notअगरy *notअगरy)
+अणु
+	काष्ठा nvkm_disp *disp =
+		container_of(notअगरy->event, typeof(*disp), vblank);
+	जोड़ अणु
+		काष्ठा nvअगर_notअगरy_head_req_v0 v0;
+	पूर्ण *req = data;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unpack(ret, &data, &size, req->v0, 0, 0, false))) {
-		notify->size = sizeof(struct nvif_notify_head_rep_v0);
-		if (ret = -ENXIO, req->v0.head <= disp->vblank.index_nr) {
-			notify->types = 1;
-			notify->index = req->v0.head;
-			return 0;
-		}
-	}
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, req->v0, 0, 0, false))) अणु
+		notअगरy->size = माप(काष्ठा nvअगर_notअगरy_head_rep_v0);
+		अगर (ret = -ENXIO, req->v0.head <= disp->vblank.index_nr) अणु
+			notअगरy->types = 1;
+			notअगरy->index = req->v0.head;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nvkm_event_func
-nvkm_disp_vblank_func = {
+अटल स्थिर काष्ठा nvkm_event_func
+nvkm_disp_vblank_func = अणु
 	.ctor = nvkm_disp_vblank_ctor,
 	.init = nvkm_disp_vblank_init,
 	.fini = nvkm_disp_vblank_fini,
-};
+पूर्ण;
 
-void
-nvkm_disp_vblank(struct nvkm_disp *disp, int head)
-{
-	struct nvif_notify_head_rep_v0 rep = {};
-	nvkm_event_send(&disp->vblank, 1, head, &rep, sizeof(rep));
-}
+व्योम
+nvkm_disp_vblank(काष्ठा nvkm_disp *disp, पूर्णांक head)
+अणु
+	काष्ठा nvअगर_notअगरy_head_rep_v0 rep = अणुपूर्ण;
+	nvkm_event_send(&disp->vblank, 1, head, &rep, माप(rep));
+पूर्ण
 
-static int
-nvkm_disp_hpd_ctor(struct nvkm_object *object, void *data, u32 size,
-		   struct nvkm_notify *notify)
-{
-	struct nvkm_disp *disp =
-		container_of(notify->event, typeof(*disp), hpd);
-	union {
-		struct nvif_notify_conn_req_v0 v0;
-	} *req = data;
-	struct nvkm_outp *outp;
-	int ret = -ENOSYS;
+अटल पूर्णांक
+nvkm_disp_hpd_ctor(काष्ठा nvkm_object *object, व्योम *data, u32 size,
+		   काष्ठा nvkm_notअगरy *notअगरy)
+अणु
+	काष्ठा nvkm_disp *disp =
+		container_of(notअगरy->event, typeof(*disp), hpd);
+	जोड़ अणु
+		काष्ठा nvअगर_notअगरy_conn_req_v0 v0;
+	पूर्ण *req = data;
+	काष्ठा nvkm_outp *outp;
+	पूर्णांक ret = -ENOSYS;
 
-	if (!(ret = nvif_unpack(ret, &data, &size, req->v0, 0, 0, false))) {
-		notify->size = sizeof(struct nvif_notify_conn_rep_v0);
-		list_for_each_entry(outp, &disp->outp, head) {
-			if (ret = -ENXIO, outp->conn->index == req->v0.conn) {
-				if (ret = -ENODEV, outp->conn->hpd.event) {
-					notify->types = req->v0.mask;
-					notify->index = req->v0.conn;
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, req->v0, 0, 0, false))) अणु
+		notअगरy->size = माप(काष्ठा nvअगर_notअगरy_conn_rep_v0);
+		list_क्रम_each_entry(outp, &disp->outp, head) अणु
+			अगर (ret = -ENXIO, outp->conn->index == req->v0.conn) अणु
+				अगर (ret = -ENODEV, outp->conn->hpd.event) अणु
+					notअगरy->types = req->v0.mask;
+					notअगरy->index = req->v0.conn;
 					ret = 0;
-				}
-				break;
-			}
-		}
-	}
+				पूर्ण
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nvkm_event_func
-nvkm_disp_hpd_func = {
+अटल स्थिर काष्ठा nvkm_event_func
+nvkm_disp_hpd_func = अणु
 	.ctor = nvkm_disp_hpd_ctor
-};
+पूर्ण;
 
-int
-nvkm_disp_ntfy(struct nvkm_object *object, u32 type, struct nvkm_event **event)
-{
-	struct nvkm_disp *disp = nvkm_disp(object->engine);
-	switch (type) {
-	case NV04_DISP_NTFY_VBLANK:
+पूर्णांक
+nvkm_disp_ntfy(काष्ठा nvkm_object *object, u32 type, काष्ठा nvkm_event **event)
+अणु
+	काष्ठा nvkm_disp *disp = nvkm_disp(object->engine);
+	चयन (type) अणु
+	हाल NV04_DISP_NTFY_VBLANK:
 		*event = &disp->vblank;
-		return 0;
-	case NV04_DISP_NTFY_CONN:
+		वापस 0;
+	हाल NV04_DISP_NTFY_CONN:
 		*event = &disp->hpd;
-		return 0;
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static void
-nvkm_disp_class_del(struct nvkm_oproxy *oproxy)
-{
-	struct nvkm_disp *disp = nvkm_disp(oproxy->base.engine);
+अटल व्योम
+nvkm_disp_class_del(काष्ठा nvkm_oproxy *oproxy)
+अणु
+	काष्ठा nvkm_disp *disp = nvkm_disp(oproxy->base.engine);
 	spin_lock(&disp->client.lock);
-	if (disp->client.object == oproxy)
-		disp->client.object = NULL;
+	अगर (disp->client.object == oproxy)
+		disp->client.object = शून्य;
 	spin_unlock(&disp->client.lock);
-}
+पूर्ण
 
-static const struct nvkm_oproxy_func
-nvkm_disp_class = {
+अटल स्थिर काष्ठा nvkm_oproxy_func
+nvkm_disp_class = अणु
 	.dtor[1] = nvkm_disp_class_del,
-};
+पूर्ण;
 
-static int
-nvkm_disp_class_new(struct nvkm_device *device,
-		    const struct nvkm_oclass *oclass, void *data, u32 size,
-		    struct nvkm_object **pobject)
-{
-	const struct nvkm_disp_oclass *sclass = oclass->engn;
-	struct nvkm_disp *disp = nvkm_disp(oclass->engine);
-	struct nvkm_oproxy *oproxy;
-	int ret;
+अटल पूर्णांक
+nvkm_disp_class_new(काष्ठा nvkm_device *device,
+		    स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
+		    काष्ठा nvkm_object **pobject)
+अणु
+	स्थिर काष्ठा nvkm_disp_oclass *sclass = oclass->engn;
+	काष्ठा nvkm_disp *disp = nvkm_disp(oclass->engine);
+	काष्ठा nvkm_oproxy *oproxy;
+	पूर्णांक ret;
 
 	ret = nvkm_oproxy_new_(&nvkm_disp_class, oclass, &oproxy);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	*pobject = &oproxy->base;
 
 	spin_lock(&disp->client.lock);
-	if (disp->client.object) {
+	अगर (disp->client.object) अणु
 		spin_unlock(&disp->client.lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	disp->client.object = oproxy;
 	spin_unlock(&disp->client.lock);
 
-	return sclass->ctor(disp, oclass, data, size, &oproxy->object);
-}
+	वापस sclass->ctor(disp, oclass, data, size, &oproxy->object);
+पूर्ण
 
-static const struct nvkm_device_oclass
-nvkm_disp_sclass = {
+अटल स्थिर काष्ठा nvkm_device_oclass
+nvkm_disp_sclass = अणु
 	.ctor = nvkm_disp_class_new,
-};
+पूर्ण;
 
-static int
-nvkm_disp_class_get(struct nvkm_oclass *oclass, int index,
-		    const struct nvkm_device_oclass **class)
-{
-	struct nvkm_disp *disp = nvkm_disp(oclass->engine);
-	if (index == 0) {
-		const struct nvkm_disp_oclass *root = disp->func->root(disp);
+अटल पूर्णांक
+nvkm_disp_class_get(काष्ठा nvkm_oclass *oclass, पूर्णांक index,
+		    स्थिर काष्ठा nvkm_device_oclass **class)
+अणु
+	काष्ठा nvkm_disp *disp = nvkm_disp(oclass->engine);
+	अगर (index == 0) अणु
+		स्थिर काष्ठा nvkm_disp_oclass *root = disp->func->root(disp);
 		oclass->base = root->base;
 		oclass->engn = root;
 		*class = &nvkm_disp_sclass;
-		return 0;
-	}
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static void
-nvkm_disp_intr(struct nvkm_engine *engine)
-{
-	struct nvkm_disp *disp = nvkm_disp(engine);
-	disp->func->intr(disp);
-}
+अटल व्योम
+nvkm_disp_पूर्णांकr(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_disp *disp = nvkm_disp(engine);
+	disp->func->पूर्णांकr(disp);
+पूर्ण
 
-static int
-nvkm_disp_fini(struct nvkm_engine *engine, bool suspend)
-{
-	struct nvkm_disp *disp = nvkm_disp(engine);
-	struct nvkm_conn *conn;
-	struct nvkm_outp *outp;
+अटल पूर्णांक
+nvkm_disp_fini(काष्ठा nvkm_engine *engine, bool suspend)
+अणु
+	काष्ठा nvkm_disp *disp = nvkm_disp(engine);
+	काष्ठा nvkm_conn *conn;
+	काष्ठा nvkm_outp *outp;
 
-	if (disp->func->fini)
+	अगर (disp->func->fini)
 		disp->func->fini(disp);
 
-	list_for_each_entry(outp, &disp->outp, head) {
+	list_क्रम_each_entry(outp, &disp->outp, head) अणु
 		nvkm_outp_fini(outp);
-	}
+	पूर्ण
 
-	list_for_each_entry(conn, &disp->conn, head) {
+	list_क्रम_each_entry(conn, &disp->conn, head) अणु
 		nvkm_conn_fini(conn);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_disp_init(struct nvkm_engine *engine)
-{
-	struct nvkm_disp *disp = nvkm_disp(engine);
-	struct nvkm_conn *conn;
-	struct nvkm_outp *outp;
-	struct nvkm_ior *ior;
+अटल पूर्णांक
+nvkm_disp_init(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_disp *disp = nvkm_disp(engine);
+	काष्ठा nvkm_conn *conn;
+	काष्ठा nvkm_outp *outp;
+	काष्ठा nvkm_ior *ior;
 
-	list_for_each_entry(conn, &disp->conn, head) {
+	list_क्रम_each_entry(conn, &disp->conn, head) अणु
 		nvkm_conn_init(conn);
-	}
+	पूर्ण
 
-	list_for_each_entry(outp, &disp->outp, head) {
+	list_क्रम_each_entry(outp, &disp->outp, head) अणु
 		nvkm_outp_init(outp);
-	}
+	पूर्ण
 
-	if (disp->func->init) {
-		int ret = disp->func->init(disp);
-		if (ret)
-			return ret;
-	}
+	अगर (disp->func->init) अणु
+		पूर्णांक ret = disp->func->init(disp);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* Set 'normal' (ie. when it's attached to a head) state for
+	/* Set 'normal' (ie. when it's attached to a head) state क्रम
 	 * each output resource to 'fully enabled'.
 	 */
-	list_for_each_entry(ior, &disp->ior, head) {
-		ior->func->power(ior, true, true, true, true, true);
-	}
+	list_क्रम_each_entry(ior, &disp->ior, head) अणु
+		ior->func->घातer(ior, true, true, true, true, true);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_disp_oneinit(struct nvkm_engine *engine)
-{
-	struct nvkm_disp *disp = nvkm_disp(engine);
-	struct nvkm_subdev *subdev = &disp->engine.subdev;
-	struct nvkm_bios *bios = subdev->device->bios;
-	struct nvkm_outp *outp, *outt, *pair;
-	struct nvkm_conn *conn;
-	struct nvkm_head *head;
-	struct nvkm_ior *ior;
-	struct nvbios_connE connE;
-	struct dcb_output dcbE;
+अटल पूर्णांक
+nvkm_disp_oneinit(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_disp *disp = nvkm_disp(engine);
+	काष्ठा nvkm_subdev *subdev = &disp->engine.subdev;
+	काष्ठा nvkm_bios *bios = subdev->device->bios;
+	काष्ठा nvkm_outp *outp, *outt, *pair;
+	काष्ठा nvkm_conn *conn;
+	काष्ठा nvkm_head *head;
+	काष्ठा nvkm_ior *ior;
+	काष्ठा nvbios_connE connE;
+	काष्ठा dcb_output dcbE;
 	u8  hpd = 0, ver, hdr;
 	u32 data;
-	int ret, i;
+	पूर्णांक ret, i;
 
-	/* Create output path objects for each VBIOS display path. */
+	/* Create output path objects क्रम each VBIOS display path. */
 	i = -1;
-	while ((data = dcb_outp_parse(bios, ++i, &ver, &hdr, &dcbE))) {
-		if (ver < 0x40) /* No support for chipsets prior to NV50. */
-			break;
-		if (dcbE.type == DCB_OUTPUT_UNUSED)
-			continue;
-		if (dcbE.type == DCB_OUTPUT_EOL)
-			break;
-		outp = NULL;
+	जबतक ((data = dcb_outp_parse(bios, ++i, &ver, &hdr, &dcbE))) अणु
+		अगर (ver < 0x40) /* No support क्रम chipsets prior to NV50. */
+			अवरोध;
+		अगर (dcbE.type == DCB_OUTPUT_UNUSED)
+			जारी;
+		अगर (dcbE.type == DCB_OUTPUT_EOL)
+			अवरोध;
+		outp = शून्य;
 
-		switch (dcbE.type) {
-		case DCB_OUTPUT_ANALOG:
-		case DCB_OUTPUT_TV:
-		case DCB_OUTPUT_TMDS:
-		case DCB_OUTPUT_LVDS:
+		चयन (dcbE.type) अणु
+		हाल DCB_OUTPUT_ANALOG:
+		हाल DCB_OUTPUT_TV:
+		हाल DCB_OUTPUT_TMDS:
+		हाल DCB_OUTPUT_LVDS:
 			ret = nvkm_outp_new(disp, i, &dcbE, &outp);
-			break;
-		case DCB_OUTPUT_DP:
+			अवरोध;
+		हाल DCB_OUTPUT_DP:
 			ret = nvkm_dp_new(disp, i, &dcbE, &outp);
-			break;
-		case DCB_OUTPUT_WFD:
-			/* No support for WFD yet. */
+			अवरोध;
+		हाल DCB_OUTPUT_WFD:
+			/* No support क्रम WFD yet. */
 			ret = -ENODEV;
-			continue;
-		default:
+			जारी;
+		शेष:
 			nvkm_warn(subdev, "dcb %d type %d unknown\n",
 				  i, dcbE.type);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (ret) {
-			if (outp) {
-				if (ret != -ENODEV)
+		अगर (ret) अणु
+			अगर (outp) अणु
+				अगर (ret != -ENODEV)
 					OUTP_ERR(outp, "ctor failed: %d", ret);
-				else
+				अन्यथा
 					OUTP_DBG(outp, "not supported");
 				nvkm_outp_del(&outp);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			nvkm_error(subdev, "failed to create outp %d\n", i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		list_add_tail(&outp->head, &disp->outp);
 		hpd = max(hpd, (u8)(dcbE.connector + 1));
-	}
+	पूर्ण
 
 	/* Create connector objects based on available output paths. */
-	list_for_each_entry_safe(outp, outt, &disp->outp, head) {
-		/* VBIOS data *should* give us the most useful information. */
+	list_क्रम_each_entry_safe(outp, outt, &disp->outp, head) अणु
+		/* VBIOS data *should* give us the most useful inक्रमmation. */
 		data = nvbios_connEp(bios, outp->info.connector, &ver, &hdr,
 				     &connE);
 
 		/* No bios connector data... */
-		if (!data) {
+		अगर (!data) अणु
 			/* Heuristic: anything with the same ccb index is
 			 * considered to be on the same connector, any
 			 * output path without an associated ccb entry will
 			 * be put on its own connector.
 			 */
-			int ccb_index = outp->info.i2c_index;
-			if (ccb_index != 0xf) {
-				list_for_each_entry(pair, &disp->outp, head) {
-					if (pair->info.i2c_index == ccb_index) {
+			पूर्णांक ccb_index = outp->info.i2c_index;
+			अगर (ccb_index != 0xf) अणु
+				list_क्रम_each_entry(pair, &disp->outp, head) अणु
+					अगर (pair->info.i2c_index == ccb_index) अणु
 						outp->conn = pair->conn;
-						break;
-					}
-				}
-			}
+						अवरोध;
+					पूर्ण
+				पूर्ण
+			पूर्ण
 
 			/* Connector shared with another output path. */
-			if (outp->conn)
-				continue;
+			अगर (outp->conn)
+				जारी;
 
-			memset(&connE, 0x00, sizeof(connE));
+			स_रखो(&connE, 0x00, माप(connE));
 			connE.type = DCB_CONNECTOR_NONE;
 			i = -1;
-		} else {
+		पूर्ण अन्यथा अणु
 			i = outp->info.connector;
-		}
+		पूर्ण
 
-		/* Check that we haven't already created this connector. */
-		list_for_each_entry(conn, &disp->conn, head) {
-			if (conn->index == outp->info.connector) {
+		/* Check that we haven't alपढ़ोy created this connector. */
+		list_क्रम_each_entry(conn, &disp->conn, head) अणु
+			अगर (conn->index == outp->info.connector) अणु
 				outp->conn = conn;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (outp->conn)
-			continue;
+		अगर (outp->conn)
+			जारी;
 
 		/* Apparently we need to create a new one! */
 		ret = nvkm_conn_new(disp, i, &connE, &outp->conn);
-		if (ret) {
+		अगर (ret) अणु
 			nvkm_error(&disp->engine.subdev,
 				   "failed to create outp %d conn: %d\n",
 				   outp->index, ret);
 			nvkm_conn_del(&outp->conn);
 			list_del(&outp->head);
 			nvkm_outp_del(&outp);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		list_add_tail(&outp->conn->head, &disp->conn);
-	}
+	पूर्ण
 
 	ret = nvkm_event_init(&nvkm_disp_hpd_func, 3, hpd, &disp->hpd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (disp->func->oneinit) {
+	अगर (disp->func->oneinit) अणु
 		ret = disp->func->oneinit(disp);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* Enforce identity-mapped SOR assignment for panels, which have
-	 * certain bits (ie. backlight controls) wired to a specific SOR.
+	/* Enक्रमce identity-mapped SOR assignment क्रम panels, which have
+	 * certain bits (ie. backlight controls) wired to a specअगरic SOR.
 	 */
-	list_for_each_entry(outp, &disp->outp, head) {
-		if (outp->conn->info.type == DCB_CONNECTOR_LVDS ||
-		    outp->conn->info.type == DCB_CONNECTOR_eDP) {
+	list_क्रम_each_entry(outp, &disp->outp, head) अणु
+		अगर (outp->conn->info.type == DCB_CONNECTOR_LVDS ||
+		    outp->conn->info.type == DCB_CONNECTOR_eDP) अणु
 			ior = nvkm_ior_find(disp, SOR, ffs(outp->info.or) - 1);
-			if (!WARN_ON(!ior))
+			अगर (!WARN_ON(!ior))
 				ior->identity = true;
 			outp->identity = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	i = 0;
-	list_for_each_entry(head, &disp->head, head)
+	list_क्रम_each_entry(head, &disp->head, head)
 		i = max(i, head->id + 1);
 
-	return nvkm_event_init(&nvkm_disp_vblank_func, 1, i, &disp->vblank);
-}
+	वापस nvkm_event_init(&nvkm_disp_vblank_func, 1, i, &disp->vblank);
+पूर्ण
 
-static void *
-nvkm_disp_dtor(struct nvkm_engine *engine)
-{
-	struct nvkm_disp *disp = nvkm_disp(engine);
-	struct nvkm_conn *conn;
-	struct nvkm_outp *outp;
-	void *data = disp;
+अटल व्योम *
+nvkm_disp_dtor(काष्ठा nvkm_engine *engine)
+अणु
+	काष्ठा nvkm_disp *disp = nvkm_disp(engine);
+	काष्ठा nvkm_conn *conn;
+	काष्ठा nvkm_outp *outp;
+	व्योम *data = disp;
 
-	if (disp->func->dtor)
+	अगर (disp->func->dtor)
 		data = disp->func->dtor(disp);
 
 	nvkm_event_fini(&disp->vblank);
 	nvkm_event_fini(&disp->hpd);
 
-	while (!list_empty(&disp->conn)) {
+	जबतक (!list_empty(&disp->conn)) अणु
 		conn = list_first_entry(&disp->conn, typeof(*conn), head);
 		list_del(&conn->head);
 		nvkm_conn_del(&conn);
-	}
+	पूर्ण
 
-	while (!list_empty(&disp->outp)) {
+	जबतक (!list_empty(&disp->outp)) अणु
 		outp = list_first_entry(&disp->outp, typeof(*outp), head);
 		list_del(&outp->head);
 		nvkm_outp_del(&outp);
-	}
+	पूर्ण
 
-	while (!list_empty(&disp->ior)) {
-		struct nvkm_ior *ior =
+	जबतक (!list_empty(&disp->ior)) अणु
+		काष्ठा nvkm_ior *ior =
 			list_first_entry(&disp->ior, typeof(*ior), head);
 		nvkm_ior_del(&ior);
-	}
+	पूर्ण
 
-	while (!list_empty(&disp->head)) {
-		struct nvkm_head *head =
+	जबतक (!list_empty(&disp->head)) अणु
+		काष्ठा nvkm_head *head =
 			list_first_entry(&disp->head, typeof(*head), head);
 		nvkm_head_del(&head);
-	}
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static const struct nvkm_engine_func
-nvkm_disp = {
+अटल स्थिर काष्ठा nvkm_engine_func
+nvkm_disp = अणु
 	.dtor = nvkm_disp_dtor,
 	.oneinit = nvkm_disp_oneinit,
 	.init = nvkm_disp_init,
 	.fini = nvkm_disp_fini,
-	.intr = nvkm_disp_intr,
+	.पूर्णांकr = nvkm_disp_पूर्णांकr,
 	.base.sclass = nvkm_disp_class_get,
-};
+पूर्ण;
 
-int
-nvkm_disp_ctor(const struct nvkm_disp_func *func, struct nvkm_device *device,
-	       enum nvkm_subdev_type type, int inst, struct nvkm_disp *disp)
-{
+पूर्णांक
+nvkm_disp_ctor(स्थिर काष्ठा nvkm_disp_func *func, काष्ठा nvkm_device *device,
+	       क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_disp *disp)
+अणु
 	disp->func = func;
 	INIT_LIST_HEAD(&disp->head);
 	INIT_LIST_HEAD(&disp->ior);
 	INIT_LIST_HEAD(&disp->outp);
 	INIT_LIST_HEAD(&disp->conn);
 	spin_lock_init(&disp->client.lock);
-	return nvkm_engine_ctor(&nvkm_disp, device, type, inst, true, &disp->engine);
-}
+	वापस nvkm_engine_ctor(&nvkm_disp, device, type, inst, true, &disp->engine);
+पूर्ण
 
-int
-nvkm_disp_new_(const struct nvkm_disp_func *func, struct nvkm_device *device,
-	       enum nvkm_subdev_type type, int inst, struct nvkm_disp **pdisp)
-{
-	if (!(*pdisp = kzalloc(sizeof(**pdisp), GFP_KERNEL)))
-		return -ENOMEM;
-	return nvkm_disp_ctor(func, device, type, inst, *pdisp);
-}
+पूर्णांक
+nvkm_disp_new_(स्थिर काष्ठा nvkm_disp_func *func, काष्ठा nvkm_device *device,
+	       क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_disp **pdisp)
+अणु
+	अगर (!(*pdisp = kzalloc(माप(**pdisp), GFP_KERNEL)))
+		वापस -ENOMEM;
+	वापस nvkm_disp_ctor(func, device, type, inst, *pdisp);
+पूर्ण

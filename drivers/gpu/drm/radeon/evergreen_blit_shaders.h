@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,14 +23,14 @@
  *
  */
 
-#ifndef EVERGREEN_BLIT_SHADERS_H
-#define EVERGREEN_BLIT_SHADERS_H
+#अगर_अघोषित EVERGREEN_BLIT_SHADERS_H
+#घोषणा EVERGREEN_BLIT_SHADERS_H
 
-extern const u32 evergreen_ps[];
-extern const u32 evergreen_vs[];
-extern const u32 evergreen_default_state[];
+बाह्य स्थिर u32 evergreen_ps[];
+बाह्य स्थिर u32 evergreen_vs[];
+बाह्य स्थिर u32 evergreen_शेष_state[];
 
-extern const u32 evergreen_ps_size, evergreen_vs_size;
-extern const u32 evergreen_default_size;
+बाह्य स्थिर u32 evergreen_ps_size, evergreen_vs_size;
+बाह्य स्थिर u32 evergreen_शेष_size;
 
-#endif
+#पूर्ण_अगर

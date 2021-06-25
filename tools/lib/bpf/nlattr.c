@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 
 /*
  * NETLINK      Netlink attributes
@@ -6,82 +7,82 @@
  * Copyright (c) 2003-2013 Thomas Graf <tgraf@suug.ch>
  */
 
-#include <errno.h>
-#include <string.h>
-#include <stdio.h>
-#include <linux/rtnetlink.h>
-#include "nlattr.h"
-#include "libbpf_internal.h"
+#समावेश <त्रुटिसं.स>
+#समावेश <माला.स>
+#समावेश <मानकपन.स>
+#समावेश <linux/rtnetlink.h>
+#समावेश "nlattr.h"
+#समावेश "libbpf_internal.h"
 
-static uint16_t nla_attr_minlen[LIBBPF_NLA_TYPE_MAX+1] = {
-	[LIBBPF_NLA_U8]		= sizeof(uint8_t),
-	[LIBBPF_NLA_U16]	= sizeof(uint16_t),
-	[LIBBPF_NLA_U32]	= sizeof(uint32_t),
-	[LIBBPF_NLA_U64]	= sizeof(uint64_t),
+अटल uपूर्णांक16_t nla_attr_minlen[LIBBPF_NLA_TYPE_MAX+1] = अणु
+	[LIBBPF_NLA_U8]		= माप(uपूर्णांक8_t),
+	[LIBBPF_NLA_U16]	= माप(uपूर्णांक16_t),
+	[LIBBPF_NLA_U32]	= माप(uपूर्णांक32_t),
+	[LIBBPF_NLA_U64]	= माप(uपूर्णांक64_t),
 	[LIBBPF_NLA_STRING]	= 1,
 	[LIBBPF_NLA_FLAG]	= 0,
-};
+पूर्ण;
 
-static struct nlattr *nla_next(const struct nlattr *nla, int *remaining)
-{
-	int totlen = NLA_ALIGN(nla->nla_len);
+अटल काष्ठा nlattr *nla_next(स्थिर काष्ठा nlattr *nla, पूर्णांक *reमुख्यing)
+अणु
+	पूर्णांक totlen = NLA_ALIGN(nla->nla_len);
 
-	*remaining -= totlen;
-	return (struct nlattr *) ((char *) nla + totlen);
-}
+	*reमुख्यing -= totlen;
+	वापस (काष्ठा nlattr *) ((अक्षर *) nla + totlen);
+पूर्ण
 
-static int nla_ok(const struct nlattr *nla, int remaining)
-{
-	return remaining >= sizeof(*nla) &&
-	       nla->nla_len >= sizeof(*nla) &&
-	       nla->nla_len <= remaining;
-}
+अटल पूर्णांक nla_ok(स्थिर काष्ठा nlattr *nla, पूर्णांक reमुख्यing)
+अणु
+	वापस reमुख्यing >= माप(*nla) &&
+	       nla->nla_len >= माप(*nla) &&
+	       nla->nla_len <= reमुख्यing;
+पूर्ण
 
-static int nla_type(const struct nlattr *nla)
-{
-	return nla->nla_type & NLA_TYPE_MASK;
-}
+अटल पूर्णांक nla_type(स्थिर काष्ठा nlattr *nla)
+अणु
+	वापस nla->nla_type & NLA_TYPE_MASK;
+पूर्ण
 
-static int validate_nla(struct nlattr *nla, int maxtype,
-			struct libbpf_nla_policy *policy)
-{
-	struct libbpf_nla_policy *pt;
-	unsigned int minlen = 0;
-	int type = nla_type(nla);
+अटल पूर्णांक validate_nla(काष्ठा nlattr *nla, पूर्णांक maxtype,
+			काष्ठा libbpf_nla_policy *policy)
+अणु
+	काष्ठा libbpf_nla_policy *pt;
+	अचिन्हित पूर्णांक minlen = 0;
+	पूर्णांक type = nla_type(nla);
 
-	if (type < 0 || type > maxtype)
-		return 0;
+	अगर (type < 0 || type > maxtype)
+		वापस 0;
 
 	pt = &policy[type];
 
-	if (pt->type > LIBBPF_NLA_TYPE_MAX)
-		return 0;
+	अगर (pt->type > LIBBPF_NLA_TYPE_MAX)
+		वापस 0;
 
-	if (pt->minlen)
+	अगर (pt->minlen)
 		minlen = pt->minlen;
-	else if (pt->type != LIBBPF_NLA_UNSPEC)
+	अन्यथा अगर (pt->type != LIBBPF_NLA_UNSPEC)
 		minlen = nla_attr_minlen[pt->type];
 
-	if (libbpf_nla_len(nla) < minlen)
-		return -1;
+	अगर (libbpf_nla_len(nla) < minlen)
+		वापस -1;
 
-	if (pt->maxlen && libbpf_nla_len(nla) > pt->maxlen)
-		return -1;
+	अगर (pt->maxlen && libbpf_nla_len(nla) > pt->maxlen)
+		वापस -1;
 
-	if (pt->type == LIBBPF_NLA_STRING) {
-		char *data = libbpf_nla_data(nla);
+	अगर (pt->type == LIBBPF_NLA_STRING) अणु
+		अक्षर *data = libbpf_nla_data(nla);
 
-		if (data[libbpf_nla_len(nla) - 1] != '\0')
-			return -1;
-	}
+		अगर (data[libbpf_nla_len(nla) - 1] != '\0')
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int nlmsg_len(const struct nlmsghdr *nlh)
-{
-	return nlh->nlmsg_len - NLMSG_HDRLEN;
-}
+अटल अंतरभूत पूर्णांक nlmsg_len(स्थिर काष्ठा nlmsghdr *nlh)
+अणु
+	वापस nlh->nlmsg_len - NLMSG_HDRLEN;
+पूर्ण
 
 /**
  * Create attribute index based on a stream of attributes.
@@ -91,47 +92,47 @@ static inline int nlmsg_len(const struct nlmsghdr *nlh)
  * @arg len		Length of attribute stream.
  * @arg policy		Attribute validation policy.
  *
- * Iterates over the stream of attributes and stores a pointer to each
+ * Iterates over the stream of attributes and stores a poपूर्णांकer to each
  * attribute in the index array using the attribute type as index to
  * the array. Attribute with a type greater than the maximum type
- * specified will be silently ignored in order to maintain backwards
- * compatibility. If \a policy is not NULL, the attribute will be
- * validated using the specified policy.
+ * specअगरied will be silently ignored in order to मुख्यtain backwards
+ * compatibility. If \च policy is not शून्य, the attribute will be
+ * validated using the specअगरied policy.
  *
  * @see nla_validate
- * @return 0 on success or a negative error code.
+ * @वापस 0 on success or a negative error code.
  */
-int libbpf_nla_parse(struct nlattr *tb[], int maxtype, struct nlattr *head,
-		     int len, struct libbpf_nla_policy *policy)
-{
-	struct nlattr *nla;
-	int rem, err;
+पूर्णांक libbpf_nla_parse(काष्ठा nlattr *tb[], पूर्णांक maxtype, काष्ठा nlattr *head,
+		     पूर्णांक len, काष्ठा libbpf_nla_policy *policy)
+अणु
+	काष्ठा nlattr *nla;
+	पूर्णांक rem, err;
 
-	memset(tb, 0, sizeof(struct nlattr *) * (maxtype + 1));
+	स_रखो(tb, 0, माप(काष्ठा nlattr *) * (maxtype + 1));
 
-	libbpf_nla_for_each_attr(nla, head, len, rem) {
-		int type = nla_type(nla);
+	libbpf_nla_क्रम_each_attr(nla, head, len, rem) अणु
+		पूर्णांक type = nla_type(nla);
 
-		if (type > maxtype)
-			continue;
+		अगर (type > maxtype)
+			जारी;
 
-		if (policy) {
+		अगर (policy) अणु
 			err = validate_nla(nla, maxtype, policy);
-			if (err < 0)
-				goto errout;
-		}
+			अगर (err < 0)
+				जाओ errout;
+		पूर्ण
 
-		if (tb[type])
+		अगर (tb[type])
 			pr_warn("Attribute of type %#x found multiple times in message, "
 				"previous attribute is being ignored.\n", type);
 
 		tb[type] = nla;
-	}
+	पूर्ण
 
 	err = 0;
 errout:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * Create attribute index based on nested attribute
@@ -140,56 +141,56 @@ errout:
  * @arg nla             Nested Attribute.
  * @arg policy          Attribute validation policy.
  *
- * Feeds the stream of attributes nested into the specified attribute
+ * Feeds the stream of attributes nested पूर्णांकo the specअगरied attribute
  * to libbpf_nla_parse().
  *
  * @see libbpf_nla_parse
- * @return 0 on success or a negative error code.
+ * @वापस 0 on success or a negative error code.
  */
-int libbpf_nla_parse_nested(struct nlattr *tb[], int maxtype,
-			    struct nlattr *nla,
-			    struct libbpf_nla_policy *policy)
-{
-	return libbpf_nla_parse(tb, maxtype, libbpf_nla_data(nla),
+पूर्णांक libbpf_nla_parse_nested(काष्ठा nlattr *tb[], पूर्णांक maxtype,
+			    काष्ठा nlattr *nla,
+			    काष्ठा libbpf_nla_policy *policy)
+अणु
+	वापस libbpf_nla_parse(tb, maxtype, libbpf_nla_data(nla),
 				libbpf_nla_len(nla), policy);
-}
+पूर्ण
 
 /* dump netlink extended ack error message */
-int libbpf_nla_dump_errormsg(struct nlmsghdr *nlh)
-{
-	struct libbpf_nla_policy extack_policy[NLMSGERR_ATTR_MAX + 1] = {
-		[NLMSGERR_ATTR_MSG]	= { .type = LIBBPF_NLA_STRING },
-		[NLMSGERR_ATTR_OFFS]	= { .type = LIBBPF_NLA_U32 },
-	};
-	struct nlattr *tb[NLMSGERR_ATTR_MAX + 1], *attr;
-	struct nlmsgerr *err;
-	char *errmsg = NULL;
-	int hlen, alen;
+पूर्णांक libbpf_nla_dump_errormsg(काष्ठा nlmsghdr *nlh)
+अणु
+	काष्ठा libbpf_nla_policy extack_policy[NLMSGERR_ATTR_MAX + 1] = अणु
+		[NLMSGERR_ATTR_MSG]	= अणु .type = LIBBPF_NLA_STRING पूर्ण,
+		[NLMSGERR_ATTR_OFFS]	= अणु .type = LIBBPF_NLA_U32 पूर्ण,
+	पूर्ण;
+	काष्ठा nlattr *tb[NLMSGERR_ATTR_MAX + 1], *attr;
+	काष्ठा nlmsgerr *err;
+	अक्षर *errmsg = शून्य;
+	पूर्णांक hlen, alen;
 
-	/* no TLVs, nothing to do here */
-	if (!(nlh->nlmsg_flags & NLM_F_ACK_TLVS))
-		return 0;
+	/* no TLVs, nothing to करो here */
+	अगर (!(nlh->nlmsg_flags & NLM_F_ACK_TLVS))
+		वापस 0;
 
-	err = (struct nlmsgerr *)NLMSG_DATA(nlh);
-	hlen = sizeof(*err);
+	err = (काष्ठा nlmsgerr *)NLMSG_DATA(nlh);
+	hlen = माप(*err);
 
-	/* if NLM_F_CAPPED is set then the inner err msg was capped */
-	if (!(nlh->nlmsg_flags & NLM_F_CAPPED))
+	/* अगर NLM_F_CAPPED is set then the inner err msg was capped */
+	अगर (!(nlh->nlmsg_flags & NLM_F_CAPPED))
 		hlen += nlmsg_len(&err->msg);
 
-	attr = (struct nlattr *) ((void *) err + hlen);
+	attr = (काष्ठा nlattr *) ((व्योम *) err + hlen);
 	alen = nlh->nlmsg_len - hlen;
 
-	if (libbpf_nla_parse(tb, NLMSGERR_ATTR_MAX, attr, alen,
-			     extack_policy) != 0) {
+	अगर (libbpf_nla_parse(tb, NLMSGERR_ATTR_MAX, attr, alen,
+			     extack_policy) != 0) अणु
 		pr_warn("Failed to parse extended error attributes\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (tb[NLMSGERR_ATTR_MSG])
-		errmsg = (char *) libbpf_nla_data(tb[NLMSGERR_ATTR_MSG]);
+	अगर (tb[NLMSGERR_ATTR_MSG])
+		errmsg = (अक्षर *) libbpf_nla_data(tb[NLMSGERR_ATTR_MSG]);
 
 	pr_warn("Kernel error message: %s\n", errmsg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

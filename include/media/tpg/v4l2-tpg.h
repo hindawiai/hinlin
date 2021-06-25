@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * v4l2-tpg.h - Test Pattern Generator
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#ifndef _V4L2_TPG_H_
-#define _V4L2_TPG_H_
+#अगर_अघोषित _V4L2_TPG_H_
+#घोषणा _V4L2_TPG_H_
 
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/random.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/videodev2.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/videodev2.h>
 
-struct tpg_rbg_color8 {
-	unsigned char r, g, b;
-};
+काष्ठा tpg_rbg_color8 अणु
+	अचिन्हित अक्षर r, g, b;
+पूर्ण;
 
-struct tpg_rbg_color16 {
+काष्ठा tpg_rbg_color16 अणु
 	__u16 r, g, b;
-};
+पूर्ण;
 
-enum tpg_color {
+क्रमागत tpg_color अणु
 	TPG_COLOR_CSC_WHITE,
 	TPG_COLOR_CSC_YELLOW,
 	TPG_COLOR_CSC_CYAN,
@@ -51,15 +52,15 @@ enum tpg_color {
 	TPG_COLOR_RANDOM,
 	TPG_COLOR_RAMP,
 	TPG_COLOR_MAX = TPG_COLOR_RAMP + 256
-};
+पूर्ण;
 
-extern const struct tpg_rbg_color8 tpg_colors[TPG_COLOR_MAX];
-extern const unsigned short tpg_rec709_to_linear[255 * 16 + 1];
-extern const unsigned short tpg_linear_to_rec709[255 * 16 + 1];
-extern const struct tpg_rbg_color16 tpg_csc_colors[V4L2_COLORSPACE_DCI_P3 + 1]
+बाह्य स्थिर काष्ठा tpg_rbg_color8 tpg_colors[TPG_COLOR_MAX];
+बाह्य स्थिर अचिन्हित लघु tpg_rec709_to_linear[255 * 16 + 1];
+बाह्य स्थिर अचिन्हित लघु tpg_linear_to_rec709[255 * 16 + 1];
+बाह्य स्थिर काष्ठा tpg_rbg_color16 tpg_csc_colors[V4L2_COLORSPACE_DCI_P3 + 1]
 					  [V4L2_XFER_FUNC_SMPTE2084 + 1]
 					  [TPG_COLOR_CSC_BLACK + 1];
-enum tpg_pattern {
+क्रमागत tpg_pattern अणु
 	TPG_PAT_75_COLORBAR,
 	TPG_PAT_100_COLORBAR,
 	TPG_PAT_CSC_COLORBAR,
@@ -84,31 +85,31 @@ enum tpg_pattern {
 
 	/* Must be the last pattern */
 	TPG_PAT_NOISE,
-};
+पूर्ण;
 
-extern const char * const tpg_pattern_strings[];
+बाह्य स्थिर अक्षर * स्थिर tpg_pattern_strings[];
 
-enum tpg_quality {
+क्रमागत tpg_quality अणु
 	TPG_QUAL_COLOR,
 	TPG_QUAL_GRAY,
 	TPG_QUAL_NOISE
-};
+पूर्ण;
 
-enum tpg_video_aspect {
+क्रमागत tpg_video_aspect अणु
 	TPG_VIDEO_ASPECT_IMAGE,
 	TPG_VIDEO_ASPECT_4X3,
 	TPG_VIDEO_ASPECT_14X9_CENTRE,
 	TPG_VIDEO_ASPECT_16X9_CENTRE,
 	TPG_VIDEO_ASPECT_16X9_ANAMORPHIC,
-};
+पूर्ण;
 
-enum tpg_pixel_aspect {
+क्रमागत tpg_pixel_aspect अणु
 	TPG_PIXEL_ASPECT_SQUARE,
 	TPG_PIXEL_ASPECT_NTSC,
 	TPG_PIXEL_ASPECT_PAL,
-};
+पूर्ण;
 
-enum tpg_move_mode {
+क्रमागत tpg_move_mode अणु
 	TPG_MOVE_NEG_FAST,
 	TPG_MOVE_NEG,
 	TPG_MOVE_NEG_SLOW,
@@ -116,40 +117,40 @@ enum tpg_move_mode {
 	TPG_MOVE_POS_SLOW,
 	TPG_MOVE_POS,
 	TPG_MOVE_POS_FAST,
-};
+पूर्ण;
 
-enum tgp_color_enc {
+क्रमागत tgp_color_enc अणु
 	TGP_COLOR_ENC_RGB,
 	TGP_COLOR_ENC_YCBCR,
 	TGP_COLOR_ENC_HSV,
 	TGP_COLOR_ENC_LUMA,
-};
+पूर्ण;
 
-extern const char * const tpg_aspect_strings[];
+बाह्य स्थिर अक्षर * स्थिर tpg_aspect_strings[];
 
-#define TPG_MAX_PLANES 3
-#define TPG_MAX_PAT_LINES 8
+#घोषणा TPG_MAX_PLANES 3
+#घोषणा TPG_MAX_PAT_LINES 8
 
-struct tpg_data {
+काष्ठा tpg_data अणु
 	/* Source frame size */
-	unsigned			src_width, src_height;
+	अचिन्हित			src_width, src_height;
 	/* Buffer height */
-	unsigned			buf_height;
+	अचिन्हित			buf_height;
 	/* Scaled output frame size */
-	unsigned			scaled_width;
+	अचिन्हित			scaled_width;
 	u32				field;
 	bool				field_alternate;
 	/* crop coordinates are frame-based */
-	struct v4l2_rect		crop;
-	/* compose coordinates are format-based */
-	struct v4l2_rect		compose;
+	काष्ठा v4l2_rect		crop;
+	/* compose coordinates are क्रमmat-based */
+	काष्ठा v4l2_rect		compose;
 	/* border and square coordinates are frame-based */
-	struct v4l2_rect		border;
-	struct v4l2_rect		square;
+	काष्ठा v4l2_rect		border;
+	काष्ठा v4l2_rect		square;
 
 	/* Color-related fields */
-	enum tpg_quality		qual;
-	unsigned			qual_offset;
+	क्रमागत tpg_quality		qual;
+	अचिन्हित			qual_offset;
 	u8				alpha_component;
 	bool				alpha_red_only;
 	u8				brightness;
@@ -157,7 +158,7 @@ struct tpg_data {
 	u8				saturation;
 	s16				hue;
 	u32				fourcc;
-	enum tgp_color_enc		color_enc;
+	क्रमागत tgp_color_enc		color_enc;
 	u32				colorspace;
 	u32				xfer_func;
 	u32				ycbcr_enc;
@@ -179,32 +180,32 @@ struct tpg_data {
 	 * V4L2_QUANTIZATION_DEFAULT.
 	 */
 	u32				real_quantization;
-	enum tpg_video_aspect		vid_aspect;
-	enum tpg_pixel_aspect		pix_aspect;
-	unsigned			rgb_range;
-	unsigned			real_rgb_range;
-	unsigned			buffers;
-	unsigned			planes;
-	bool				interleaved;
-	u8				vdownsampling[TPG_MAX_PLANES];
-	u8				hdownsampling[TPG_MAX_PLANES];
+	क्रमागत tpg_video_aspect		vid_aspect;
+	क्रमागत tpg_pixel_aspect		pix_aspect;
+	अचिन्हित			rgb_range;
+	अचिन्हित			real_rgb_range;
+	अचिन्हित			buffers;
+	अचिन्हित			planes;
+	bool				पूर्णांकerleaved;
+	u8				vकरोwnsampling[TPG_MAX_PLANES];
+	u8				hकरोwnsampling[TPG_MAX_PLANES];
 	/*
-	 * horizontal positions must be ANDed with this value to enforce
-	 * correct boundaries for packed YUYV values.
+	 * horizontal positions must be ANDed with this value to enक्रमce
+	 * correct boundaries क्रम packed YUYV values.
 	 */
-	unsigned			hmask[TPG_MAX_PLANES];
-	/* Used to store the colors in native format, either RGB or YUV */
+	अचिन्हित			hmask[TPG_MAX_PLANES];
+	/* Used to store the colors in native क्रमmat, either RGB or YUV */
 	u8				colors[TPG_COLOR_MAX][3];
 	u8				textfg[TPG_MAX_PLANES][8], textbg[TPG_MAX_PLANES][8];
-	/* size in bytes for two pixels in each plane */
-	unsigned			twopixelsize[TPG_MAX_PLANES];
-	unsigned			bytesperline[TPG_MAX_PLANES];
+	/* size in bytes क्रम two pixels in each plane */
+	अचिन्हित			twopixelsize[TPG_MAX_PLANES];
+	अचिन्हित			bytesperline[TPG_MAX_PLANES];
 
 	/* Configuration */
-	enum tpg_pattern		pattern;
+	क्रमागत tpg_pattern		pattern;
 	bool				hflip;
 	bool				vflip;
-	unsigned			perc_fill;
+	अचिन्हित			perc_fill;
 	bool				perc_fill_blank;
 	bool				show_border;
 	bool				show_square;
@@ -212,441 +213,441 @@ struct tpg_data {
 	bool				insert_eav;
 
 	/* Test pattern movement */
-	enum tpg_move_mode		mv_hor_mode;
-	int				mv_hor_count;
-	int				mv_hor_step;
-	enum tpg_move_mode		mv_vert_mode;
-	int				mv_vert_count;
-	int				mv_vert_step;
+	क्रमागत tpg_move_mode		mv_hor_mode;
+	पूर्णांक				mv_hor_count;
+	पूर्णांक				mv_hor_step;
+	क्रमागत tpg_move_mode		mv_vert_mode;
+	पूर्णांक				mv_vert_count;
+	पूर्णांक				mv_vert_step;
 
 	bool				recalc_colors;
 	bool				recalc_lines;
 	bool				recalc_square_border;
 
 	/* Used to store TPG_MAX_PAT_LINES lines, each with up to two planes */
-	unsigned			max_line_width;
+	अचिन्हित			max_line_width;
 	u8				*lines[TPG_MAX_PAT_LINES][TPG_MAX_PLANES];
-	u8				*downsampled_lines[TPG_MAX_PAT_LINES][TPG_MAX_PLANES];
-	u8				*random_line[TPG_MAX_PLANES];
+	u8				*करोwnsampled_lines[TPG_MAX_PAT_LINES][TPG_MAX_PLANES];
+	u8				*अक्रमom_line[TPG_MAX_PLANES];
 	u8				*contrast_line[TPG_MAX_PLANES];
 	u8				*black_line[TPG_MAX_PLANES];
-};
+पूर्ण;
 
-void tpg_init(struct tpg_data *tpg, unsigned w, unsigned h);
-int tpg_alloc(struct tpg_data *tpg, unsigned max_w);
-void tpg_free(struct tpg_data *tpg);
-void tpg_reset_source(struct tpg_data *tpg, unsigned width, unsigned height,
+व्योम tpg_init(काष्ठा tpg_data *tpg, अचिन्हित w, अचिन्हित h);
+पूर्णांक tpg_alloc(काष्ठा tpg_data *tpg, अचिन्हित max_w);
+व्योम tpg_मुक्त(काष्ठा tpg_data *tpg);
+व्योम tpg_reset_source(काष्ठा tpg_data *tpg, अचिन्हित width, अचिन्हित height,
 		       u32 field);
-void tpg_log_status(struct tpg_data *tpg);
+व्योम tpg_log_status(काष्ठा tpg_data *tpg);
 
-void tpg_set_font(const u8 *f);
-void tpg_gen_text(const struct tpg_data *tpg,
-		u8 *basep[TPG_MAX_PLANES][2], int y, int x, const char *text);
-void tpg_calc_text_basep(struct tpg_data *tpg,
-		u8 *basep[TPG_MAX_PLANES][2], unsigned p, u8 *vbuf);
-unsigned tpg_g_interleaved_plane(const struct tpg_data *tpg, unsigned buf_line);
-void tpg_fill_plane_buffer(struct tpg_data *tpg, v4l2_std_id std,
-			   unsigned p, u8 *vbuf);
-void tpg_fillbuffer(struct tpg_data *tpg, v4l2_std_id std,
-		    unsigned p, u8 *vbuf);
-bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc);
-void tpg_s_crop_compose(struct tpg_data *tpg, const struct v4l2_rect *crop,
-		const struct v4l2_rect *compose);
-const char *tpg_g_color_order(const struct tpg_data *tpg);
+व्योम tpg_set_font(स्थिर u8 *f);
+व्योम tpg_gen_text(स्थिर काष्ठा tpg_data *tpg,
+		u8 *basep[TPG_MAX_PLANES][2], पूर्णांक y, पूर्णांक x, स्थिर अक्षर *text);
+व्योम tpg_calc_text_basep(काष्ठा tpg_data *tpg,
+		u8 *basep[TPG_MAX_PLANES][2], अचिन्हित p, u8 *vbuf);
+अचिन्हित tpg_g_पूर्णांकerleaved_plane(स्थिर काष्ठा tpg_data *tpg, अचिन्हित buf_line);
+व्योम tpg_fill_plane_buffer(काष्ठा tpg_data *tpg, v4l2_std_id std,
+			   अचिन्हित p, u8 *vbuf);
+व्योम tpg_fillbuffer(काष्ठा tpg_data *tpg, v4l2_std_id std,
+		    अचिन्हित p, u8 *vbuf);
+bool tpg_s_fourcc(काष्ठा tpg_data *tpg, u32 fourcc);
+व्योम tpg_s_crop_compose(काष्ठा tpg_data *tpg, स्थिर काष्ठा v4l2_rect *crop,
+		स्थिर काष्ठा v4l2_rect *compose);
+स्थिर अक्षर *tpg_g_color_order(स्थिर काष्ठा tpg_data *tpg);
 
-static inline void tpg_s_pattern(struct tpg_data *tpg, enum tpg_pattern pattern)
-{
-	if (tpg->pattern == pattern)
-		return;
+अटल अंतरभूत व्योम tpg_s_pattern(काष्ठा tpg_data *tpg, क्रमागत tpg_pattern pattern)
+अणु
+	अगर (tpg->pattern == pattern)
+		वापस;
 	tpg->pattern = pattern;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline void tpg_s_quality(struct tpg_data *tpg,
-				    enum tpg_quality qual, unsigned qual_offset)
-{
-	if (tpg->qual == qual && tpg->qual_offset == qual_offset)
-		return;
+अटल अंतरभूत व्योम tpg_s_quality(काष्ठा tpg_data *tpg,
+				    क्रमागत tpg_quality qual, अचिन्हित qual_offset)
+अणु
+	अगर (tpg->qual == qual && tpg->qual_offset == qual_offset)
+		वापस;
 	tpg->qual = qual;
 	tpg->qual_offset = qual_offset;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline enum tpg_quality tpg_g_quality(const struct tpg_data *tpg)
-{
-	return tpg->qual;
-}
+अटल अंतरभूत क्रमागत tpg_quality tpg_g_quality(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->qual;
+पूर्ण
 
-static inline void tpg_s_alpha_component(struct tpg_data *tpg,
+अटल अंतरभूत व्योम tpg_s_alpha_component(काष्ठा tpg_data *tpg,
 					    u8 alpha_component)
-{
-	if (tpg->alpha_component == alpha_component)
-		return;
+अणु
+	अगर (tpg->alpha_component == alpha_component)
+		वापस;
 	tpg->alpha_component = alpha_component;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline void tpg_s_alpha_mode(struct tpg_data *tpg,
+अटल अंतरभूत व्योम tpg_s_alpha_mode(काष्ठा tpg_data *tpg,
 					    bool red_only)
-{
-	if (tpg->alpha_red_only == red_only)
-		return;
+अणु
+	अगर (tpg->alpha_red_only == red_only)
+		वापस;
 	tpg->alpha_red_only = red_only;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline void tpg_s_brightness(struct tpg_data *tpg,
+अटल अंतरभूत व्योम tpg_s_brightness(काष्ठा tpg_data *tpg,
 					u8 brightness)
-{
-	if (tpg->brightness == brightness)
-		return;
+अणु
+	अगर (tpg->brightness == brightness)
+		वापस;
 	tpg->brightness = brightness;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline void tpg_s_contrast(struct tpg_data *tpg,
+अटल अंतरभूत व्योम tpg_s_contrast(काष्ठा tpg_data *tpg,
 					u8 contrast)
-{
-	if (tpg->contrast == contrast)
-		return;
+अणु
+	अगर (tpg->contrast == contrast)
+		वापस;
 	tpg->contrast = contrast;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline void tpg_s_saturation(struct tpg_data *tpg,
+अटल अंतरभूत व्योम tpg_s_saturation(काष्ठा tpg_data *tpg,
 					u8 saturation)
-{
-	if (tpg->saturation == saturation)
-		return;
+अणु
+	अगर (tpg->saturation == saturation)
+		वापस;
 	tpg->saturation = saturation;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline void tpg_s_hue(struct tpg_data *tpg,
+अटल अंतरभूत व्योम tpg_s_hue(काष्ठा tpg_data *tpg,
 					s16 hue)
-{
+अणु
 	hue = clamp_t(s16, hue, -128, 128);
-	if (tpg->hue == hue)
-		return;
+	अगर (tpg->hue == hue)
+		वापस;
 	tpg->hue = hue;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline void tpg_s_rgb_range(struct tpg_data *tpg,
-					unsigned rgb_range)
-{
-	if (tpg->rgb_range == rgb_range)
-		return;
+अटल अंतरभूत व्योम tpg_s_rgb_range(काष्ठा tpg_data *tpg,
+					अचिन्हित rgb_range)
+अणु
+	अगर (tpg->rgb_range == rgb_range)
+		वापस;
 	tpg->rgb_range = rgb_range;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline void tpg_s_real_rgb_range(struct tpg_data *tpg,
-					unsigned rgb_range)
-{
-	if (tpg->real_rgb_range == rgb_range)
-		return;
+अटल अंतरभूत व्योम tpg_s_real_rgb_range(काष्ठा tpg_data *tpg,
+					अचिन्हित rgb_range)
+अणु
+	अगर (tpg->real_rgb_range == rgb_range)
+		वापस;
 	tpg->real_rgb_range = rgb_range;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline void tpg_s_colorspace(struct tpg_data *tpg, u32 colorspace)
-{
-	if (tpg->colorspace == colorspace)
-		return;
+अटल अंतरभूत व्योम tpg_s_colorspace(काष्ठा tpg_data *tpg, u32 colorspace)
+अणु
+	अगर (tpg->colorspace == colorspace)
+		वापस;
 	tpg->colorspace = colorspace;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline u32 tpg_g_colorspace(const struct tpg_data *tpg)
-{
-	return tpg->colorspace;
-}
+अटल अंतरभूत u32 tpg_g_colorspace(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->colorspace;
+पूर्ण
 
-static inline void tpg_s_ycbcr_enc(struct tpg_data *tpg, u32 ycbcr_enc)
-{
-	if (tpg->ycbcr_enc == ycbcr_enc)
-		return;
+अटल अंतरभूत व्योम tpg_s_ycbcr_enc(काष्ठा tpg_data *tpg, u32 ycbcr_enc)
+अणु
+	अगर (tpg->ycbcr_enc == ycbcr_enc)
+		वापस;
 	tpg->ycbcr_enc = ycbcr_enc;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline u32 tpg_g_ycbcr_enc(const struct tpg_data *tpg)
-{
-	return tpg->ycbcr_enc;
-}
+अटल अंतरभूत u32 tpg_g_ycbcr_enc(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->ycbcr_enc;
+पूर्ण
 
-static inline void tpg_s_hsv_enc(struct tpg_data *tpg, u32 hsv_enc)
-{
-	if (tpg->hsv_enc == hsv_enc)
-		return;
+अटल अंतरभूत व्योम tpg_s_hsv_enc(काष्ठा tpg_data *tpg, u32 hsv_enc)
+अणु
+	अगर (tpg->hsv_enc == hsv_enc)
+		वापस;
 	tpg->hsv_enc = hsv_enc;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline u32 tpg_g_hsv_enc(const struct tpg_data *tpg)
-{
-	return tpg->hsv_enc;
-}
+अटल अंतरभूत u32 tpg_g_hsv_enc(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->hsv_enc;
+पूर्ण
 
-static inline void tpg_s_xfer_func(struct tpg_data *tpg, u32 xfer_func)
-{
-	if (tpg->xfer_func == xfer_func)
-		return;
+अटल अंतरभूत व्योम tpg_s_xfer_func(काष्ठा tpg_data *tpg, u32 xfer_func)
+अणु
+	अगर (tpg->xfer_func == xfer_func)
+		वापस;
 	tpg->xfer_func = xfer_func;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline u32 tpg_g_xfer_func(const struct tpg_data *tpg)
-{
-	return tpg->xfer_func;
-}
+अटल अंतरभूत u32 tpg_g_xfer_func(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->xfer_func;
+पूर्ण
 
-static inline void tpg_s_quantization(struct tpg_data *tpg, u32 quantization)
-{
-	if (tpg->quantization == quantization)
-		return;
+अटल अंतरभूत व्योम tpg_s_quantization(काष्ठा tpg_data *tpg, u32 quantization)
+अणु
+	अगर (tpg->quantization == quantization)
+		वापस;
 	tpg->quantization = quantization;
 	tpg->recalc_colors = true;
-}
+पूर्ण
 
-static inline u32 tpg_g_quantization(const struct tpg_data *tpg)
-{
-	return tpg->quantization;
-}
+अटल अंतरभूत u32 tpg_g_quantization(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->quantization;
+पूर्ण
 
-static inline unsigned tpg_g_buffers(const struct tpg_data *tpg)
-{
-	return tpg->buffers;
-}
+अटल अंतरभूत अचिन्हित tpg_g_buffers(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->buffers;
+पूर्ण
 
-static inline unsigned tpg_g_planes(const struct tpg_data *tpg)
-{
-	return tpg->interleaved ? 1 : tpg->planes;
-}
+अटल अंतरभूत अचिन्हित tpg_g_planes(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->पूर्णांकerleaved ? 1 : tpg->planes;
+पूर्ण
 
-static inline bool tpg_g_interleaved(const struct tpg_data *tpg)
-{
-	return tpg->interleaved;
-}
+अटल अंतरभूत bool tpg_g_पूर्णांकerleaved(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->पूर्णांकerleaved;
+पूर्ण
 
-static inline unsigned tpg_g_twopixelsize(const struct tpg_data *tpg, unsigned plane)
-{
-	return tpg->twopixelsize[plane];
-}
+अटल अंतरभूत अचिन्हित tpg_g_twopixelsize(स्थिर काष्ठा tpg_data *tpg, अचिन्हित plane)
+अणु
+	वापस tpg->twopixelsize[plane];
+पूर्ण
 
-static inline unsigned tpg_hdiv(const struct tpg_data *tpg,
-				  unsigned plane, unsigned x)
-{
-	return ((x / tpg->hdownsampling[plane]) & tpg->hmask[plane]) *
+अटल अंतरभूत अचिन्हित tpg_hभाग(स्थिर काष्ठा tpg_data *tpg,
+				  अचिन्हित plane, अचिन्हित x)
+अणु
+	वापस ((x / tpg->hकरोwnsampling[plane]) & tpg->hmask[plane]) *
 		tpg->twopixelsize[plane] / 2;
-}
+पूर्ण
 
-static inline unsigned tpg_hscale(const struct tpg_data *tpg, unsigned x)
-{
-	return (x * tpg->scaled_width) / tpg->src_width;
-}
+अटल अंतरभूत अचिन्हित tpg_hscale(स्थिर काष्ठा tpg_data *tpg, अचिन्हित x)
+अणु
+	वापस (x * tpg->scaled_width) / tpg->src_width;
+पूर्ण
 
-static inline unsigned tpg_hscale_div(const struct tpg_data *tpg,
-				      unsigned plane, unsigned x)
-{
-	return tpg_hdiv(tpg, plane, tpg_hscale(tpg, x));
-}
+अटल अंतरभूत अचिन्हित tpg_hscale_भाग(स्थिर काष्ठा tpg_data *tpg,
+				      अचिन्हित plane, अचिन्हित x)
+अणु
+	वापस tpg_hभाग(tpg, plane, tpg_hscale(tpg, x));
+पूर्ण
 
-static inline unsigned tpg_g_bytesperline(const struct tpg_data *tpg, unsigned plane)
-{
-	return tpg->bytesperline[plane];
-}
+अटल अंतरभूत अचिन्हित tpg_g_bytesperline(स्थिर काष्ठा tpg_data *tpg, अचिन्हित plane)
+अणु
+	वापस tpg->bytesperline[plane];
+पूर्ण
 
-static inline void tpg_s_bytesperline(struct tpg_data *tpg, unsigned plane, unsigned bpl)
-{
-	unsigned p;
+अटल अंतरभूत व्योम tpg_s_bytesperline(काष्ठा tpg_data *tpg, अचिन्हित plane, अचिन्हित bpl)
+अणु
+	अचिन्हित p;
 
-	if (tpg->buffers > 1) {
+	अगर (tpg->buffers > 1) अणु
 		tpg->bytesperline[plane] = bpl;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (p = 0; p < tpg_g_planes(tpg); p++) {
-		unsigned plane_w = bpl * tpg->twopixelsize[p] / tpg->twopixelsize[0];
+	क्रम (p = 0; p < tpg_g_planes(tpg); p++) अणु
+		अचिन्हित plane_w = bpl * tpg->twopixelsize[p] / tpg->twopixelsize[0];
 
-		tpg->bytesperline[p] = plane_w / tpg->hdownsampling[p];
-	}
-	if (tpg_g_interleaved(tpg))
+		tpg->bytesperline[p] = plane_w / tpg->hकरोwnsampling[p];
+	पूर्ण
+	अगर (tpg_g_पूर्णांकerleaved(tpg))
 		tpg->bytesperline[1] = tpg->bytesperline[0];
-}
+पूर्ण
 
 
-static inline unsigned tpg_g_line_width(const struct tpg_data *tpg, unsigned plane)
-{
-	unsigned w = 0;
-	unsigned p;
+अटल अंतरभूत अचिन्हित tpg_g_line_width(स्थिर काष्ठा tpg_data *tpg, अचिन्हित plane)
+अणु
+	अचिन्हित w = 0;
+	अचिन्हित p;
 
-	if (tpg->buffers > 1)
-		return tpg_g_bytesperline(tpg, plane);
-	for (p = 0; p < tpg_g_planes(tpg); p++) {
-		unsigned plane_w = tpg_g_bytesperline(tpg, p);
+	अगर (tpg->buffers > 1)
+		वापस tpg_g_bytesperline(tpg, plane);
+	क्रम (p = 0; p < tpg_g_planes(tpg); p++) अणु
+		अचिन्हित plane_w = tpg_g_bytesperline(tpg, p);
 
-		w += plane_w / tpg->vdownsampling[p];
-	}
-	return w;
-}
+		w += plane_w / tpg->vकरोwnsampling[p];
+	पूर्ण
+	वापस w;
+पूर्ण
 
-static inline unsigned tpg_calc_line_width(const struct tpg_data *tpg,
-					   unsigned plane, unsigned bpl)
-{
-	unsigned w = 0;
-	unsigned p;
+अटल अंतरभूत अचिन्हित tpg_calc_line_width(स्थिर काष्ठा tpg_data *tpg,
+					   अचिन्हित plane, अचिन्हित bpl)
+अणु
+	अचिन्हित w = 0;
+	अचिन्हित p;
 
-	if (tpg->buffers > 1)
-		return bpl;
-	for (p = 0; p < tpg_g_planes(tpg); p++) {
-		unsigned plane_w = bpl * tpg->twopixelsize[p] / tpg->twopixelsize[0];
+	अगर (tpg->buffers > 1)
+		वापस bpl;
+	क्रम (p = 0; p < tpg_g_planes(tpg); p++) अणु
+		अचिन्हित plane_w = bpl * tpg->twopixelsize[p] / tpg->twopixelsize[0];
 
-		plane_w /= tpg->hdownsampling[p];
-		w += plane_w / tpg->vdownsampling[p];
-	}
-	return w;
-}
+		plane_w /= tpg->hकरोwnsampling[p];
+		w += plane_w / tpg->vकरोwnsampling[p];
+	पूर्ण
+	वापस w;
+पूर्ण
 
-static inline unsigned tpg_calc_plane_size(const struct tpg_data *tpg, unsigned plane)
-{
-	if (plane >= tpg_g_planes(tpg))
-		return 0;
+अटल अंतरभूत अचिन्हित tpg_calc_plane_size(स्थिर काष्ठा tpg_data *tpg, अचिन्हित plane)
+अणु
+	अगर (plane >= tpg_g_planes(tpg))
+		वापस 0;
 
-	return tpg_g_bytesperline(tpg, plane) * tpg->buf_height /
-	       tpg->vdownsampling[plane];
-}
+	वापस tpg_g_bytesperline(tpg, plane) * tpg->buf_height /
+	       tpg->vकरोwnsampling[plane];
+पूर्ण
 
-static inline void tpg_s_buf_height(struct tpg_data *tpg, unsigned h)
-{
+अटल अंतरभूत व्योम tpg_s_buf_height(काष्ठा tpg_data *tpg, अचिन्हित h)
+अणु
 	tpg->buf_height = h;
-}
+पूर्ण
 
-static inline void tpg_s_field(struct tpg_data *tpg, unsigned field, bool alternate)
-{
+अटल अंतरभूत व्योम tpg_s_field(काष्ठा tpg_data *tpg, अचिन्हित field, bool alternate)
+अणु
 	tpg->field = field;
 	tpg->field_alternate = alternate;
-}
+पूर्ण
 
-static inline void tpg_s_perc_fill(struct tpg_data *tpg,
-				      unsigned perc_fill)
-{
+अटल अंतरभूत व्योम tpg_s_perc_fill(काष्ठा tpg_data *tpg,
+				      अचिन्हित perc_fill)
+अणु
 	tpg->perc_fill = perc_fill;
-}
+पूर्ण
 
-static inline unsigned tpg_g_perc_fill(const struct tpg_data *tpg)
-{
-	return tpg->perc_fill;
-}
+अटल अंतरभूत अचिन्हित tpg_g_perc_fill(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->perc_fill;
+पूर्ण
 
-static inline void tpg_s_perc_fill_blank(struct tpg_data *tpg,
+अटल अंतरभूत व्योम tpg_s_perc_fill_blank(काष्ठा tpg_data *tpg,
 					 bool perc_fill_blank)
-{
+अणु
 	tpg->perc_fill_blank = perc_fill_blank;
-}
+पूर्ण
 
-static inline void tpg_s_video_aspect(struct tpg_data *tpg,
-					enum tpg_video_aspect vid_aspect)
-{
-	if (tpg->vid_aspect == vid_aspect)
-		return;
+अटल अंतरभूत व्योम tpg_s_video_aspect(काष्ठा tpg_data *tpg,
+					क्रमागत tpg_video_aspect vid_aspect)
+अणु
+	अगर (tpg->vid_aspect == vid_aspect)
+		वापस;
 	tpg->vid_aspect = vid_aspect;
 	tpg->recalc_square_border = true;
-}
+पूर्ण
 
-static inline enum tpg_video_aspect tpg_g_video_aspect(const struct tpg_data *tpg)
-{
-	return tpg->vid_aspect;
-}
+अटल अंतरभूत क्रमागत tpg_video_aspect tpg_g_video_aspect(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->vid_aspect;
+पूर्ण
 
-static inline void tpg_s_pixel_aspect(struct tpg_data *tpg,
-					enum tpg_pixel_aspect pix_aspect)
-{
-	if (tpg->pix_aspect == pix_aspect)
-		return;
+अटल अंतरभूत व्योम tpg_s_pixel_aspect(काष्ठा tpg_data *tpg,
+					क्रमागत tpg_pixel_aspect pix_aspect)
+अणु
+	अगर (tpg->pix_aspect == pix_aspect)
+		वापस;
 	tpg->pix_aspect = pix_aspect;
 	tpg->recalc_square_border = true;
-}
+पूर्ण
 
-static inline void tpg_s_show_border(struct tpg_data *tpg,
+अटल अंतरभूत व्योम tpg_s_show_border(काष्ठा tpg_data *tpg,
 					bool show_border)
-{
+अणु
 	tpg->show_border = show_border;
-}
+पूर्ण
 
-static inline void tpg_s_show_square(struct tpg_data *tpg,
+अटल अंतरभूत व्योम tpg_s_show_square(काष्ठा tpg_data *tpg,
 					bool show_square)
-{
+अणु
 	tpg->show_square = show_square;
-}
+पूर्ण
 
-static inline void tpg_s_insert_sav(struct tpg_data *tpg, bool insert_sav)
-{
+अटल अंतरभूत व्योम tpg_s_insert_sav(काष्ठा tpg_data *tpg, bool insert_sav)
+अणु
 	tpg->insert_sav = insert_sav;
-}
+पूर्ण
 
-static inline void tpg_s_insert_eav(struct tpg_data *tpg, bool insert_eav)
-{
+अटल अंतरभूत व्योम tpg_s_insert_eav(काष्ठा tpg_data *tpg, bool insert_eav)
+अणु
 	tpg->insert_eav = insert_eav;
-}
+पूर्ण
 
-void tpg_update_mv_step(struct tpg_data *tpg);
+व्योम tpg_update_mv_step(काष्ठा tpg_data *tpg);
 
-static inline void tpg_s_mv_hor_mode(struct tpg_data *tpg,
-				enum tpg_move_mode mv_hor_mode)
-{
+अटल अंतरभूत व्योम tpg_s_mv_hor_mode(काष्ठा tpg_data *tpg,
+				क्रमागत tpg_move_mode mv_hor_mode)
+अणु
 	tpg->mv_hor_mode = mv_hor_mode;
 	tpg_update_mv_step(tpg);
-}
+पूर्ण
 
-static inline void tpg_s_mv_vert_mode(struct tpg_data *tpg,
-				enum tpg_move_mode mv_vert_mode)
-{
+अटल अंतरभूत व्योम tpg_s_mv_vert_mode(काष्ठा tpg_data *tpg,
+				क्रमागत tpg_move_mode mv_vert_mode)
+अणु
 	tpg->mv_vert_mode = mv_vert_mode;
 	tpg_update_mv_step(tpg);
-}
+पूर्ण
 
-static inline void tpg_init_mv_count(struct tpg_data *tpg)
-{
+अटल अंतरभूत व्योम tpg_init_mv_count(काष्ठा tpg_data *tpg)
+अणु
 	tpg->mv_hor_count = tpg->mv_vert_count = 0;
-}
+पूर्ण
 
-static inline void tpg_update_mv_count(struct tpg_data *tpg, bool frame_is_field)
-{
+अटल अंतरभूत व्योम tpg_update_mv_count(काष्ठा tpg_data *tpg, bool frame_is_field)
+अणु
 	tpg->mv_hor_count += tpg->mv_hor_step * (frame_is_field ? 1 : 2);
 	tpg->mv_vert_count += tpg->mv_vert_step * (frame_is_field ? 1 : 2);
-}
+पूर्ण
 
-static inline void tpg_s_hflip(struct tpg_data *tpg, bool hflip)
-{
-	if (tpg->hflip == hflip)
-		return;
+अटल अंतरभूत व्योम tpg_s_hflip(काष्ठा tpg_data *tpg, bool hflip)
+अणु
+	अगर (tpg->hflip == hflip)
+		वापस;
 	tpg->hflip = hflip;
 	tpg_update_mv_step(tpg);
 	tpg->recalc_lines = true;
-}
+पूर्ण
 
-static inline bool tpg_g_hflip(const struct tpg_data *tpg)
-{
-	return tpg->hflip;
-}
+अटल अंतरभूत bool tpg_g_hflip(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->hflip;
+पूर्ण
 
-static inline void tpg_s_vflip(struct tpg_data *tpg, bool vflip)
-{
+अटल अंतरभूत व्योम tpg_s_vflip(काष्ठा tpg_data *tpg, bool vflip)
+अणु
 	tpg->vflip = vflip;
-}
+पूर्ण
 
-static inline bool tpg_g_vflip(const struct tpg_data *tpg)
-{
-	return tpg->vflip;
-}
+अटल अंतरभूत bool tpg_g_vflip(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->vflip;
+पूर्ण
 
-static inline bool tpg_pattern_is_static(const struct tpg_data *tpg)
-{
-	return tpg->pattern != TPG_PAT_NOISE &&
+अटल अंतरभूत bool tpg_pattern_is_अटल(स्थिर काष्ठा tpg_data *tpg)
+अणु
+	वापस tpg->pattern != TPG_PAT_NOISE &&
 	       tpg->mv_hor_mode == TPG_MOVE_NONE &&
 	       tpg->mv_vert_mode == TPG_MOVE_NONE;
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

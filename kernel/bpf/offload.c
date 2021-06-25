@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2017-2018 Netronome Systems, Inc.
  *
@@ -13,341 +14,341 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
-#include <linux/bpf.h>
-#include <linux/bpf_verifier.h>
-#include <linux/bug.h>
-#include <linux/kdev_t.h>
-#include <linux/list.h>
-#include <linux/lockdep.h>
-#include <linux/netdevice.h>
-#include <linux/printk.h>
-#include <linux/proc_ns.h>
-#include <linux/rhashtable.h>
-#include <linux/rtnetlink.h>
-#include <linux/rwsem.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/bpf_verअगरier.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/list.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/proc_ns.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/rwsem.h>
 
 /* Protects offdevs, members of bpf_offload_netdev and offload members
  * of all progs.
  * RTNL lock cannot be taken when holding this lock.
  */
-static DECLARE_RWSEM(bpf_devs_lock);
+अटल DECLARE_RWSEM(bpf_devs_lock);
 
-struct bpf_offload_dev {
-	const struct bpf_prog_offload_ops *ops;
-	struct list_head netdevs;
-	void *priv;
-};
+काष्ठा bpf_offload_dev अणु
+	स्थिर काष्ठा bpf_prog_offload_ops *ops;
+	काष्ठा list_head netdevs;
+	व्योम *priv;
+पूर्ण;
 
-struct bpf_offload_netdev {
-	struct rhash_head l;
-	struct net_device *netdev;
-	struct bpf_offload_dev *offdev;
-	struct list_head progs;
-	struct list_head maps;
-	struct list_head offdev_netdevs;
-};
+काष्ठा bpf_offload_netdev अणु
+	काष्ठा rhash_head l;
+	काष्ठा net_device *netdev;
+	काष्ठा bpf_offload_dev *offdev;
+	काष्ठा list_head progs;
+	काष्ठा list_head maps;
+	काष्ठा list_head offdev_netdevs;
+पूर्ण;
 
-static const struct rhashtable_params offdevs_params = {
-	.nelem_hint		= 4,
-	.key_len		= sizeof(struct net_device *),
-	.key_offset		= offsetof(struct bpf_offload_netdev, netdev),
-	.head_offset		= offsetof(struct bpf_offload_netdev, l),
-	.automatic_shrinking	= true,
-};
+अटल स्थिर काष्ठा rhashtable_params offdevs_params = अणु
+	.nelem_hपूर्णांक		= 4,
+	.key_len		= माप(काष्ठा net_device *),
+	.key_offset		= दुरत्व(काष्ठा bpf_offload_netdev, netdev),
+	.head_offset		= दुरत्व(काष्ठा bpf_offload_netdev, l),
+	.स्वतःmatic_shrinking	= true,
+पूर्ण;
 
-static struct rhashtable offdevs;
-static bool offdevs_inited;
+अटल काष्ठा rhashtable offdevs;
+अटल bool offdevs_inited;
 
-static int bpf_dev_offload_check(struct net_device *netdev)
-{
-	if (!netdev)
-		return -EINVAL;
-	if (!netdev->netdev_ops->ndo_bpf)
-		return -EOPNOTSUPP;
-	return 0;
-}
+अटल पूर्णांक bpf_dev_offload_check(काष्ठा net_device *netdev)
+अणु
+	अगर (!netdev)
+		वापस -EINVAL;
+	अगर (!netdev->netdev_ops->nकरो_bpf)
+		वापस -EOPNOTSUPP;
+	वापस 0;
+पूर्ण
 
-static struct bpf_offload_netdev *
-bpf_offload_find_netdev(struct net_device *netdev)
-{
-	lockdep_assert_held(&bpf_devs_lock);
+अटल काष्ठा bpf_offload_netdev *
+bpf_offload_find_netdev(काष्ठा net_device *netdev)
+अणु
+	lockdep_निश्चित_held(&bpf_devs_lock);
 
-	if (!offdevs_inited)
-		return NULL;
-	return rhashtable_lookup_fast(&offdevs, &netdev, offdevs_params);
-}
+	अगर (!offdevs_inited)
+		वापस शून्य;
+	वापस rhashtable_lookup_fast(&offdevs, &netdev, offdevs_params);
+पूर्ण
 
-int bpf_prog_offload_init(struct bpf_prog *prog, union bpf_attr *attr)
-{
-	struct bpf_offload_netdev *ondev;
-	struct bpf_prog_offload *offload;
-	int err;
+पूर्णांक bpf_prog_offload_init(काष्ठा bpf_prog *prog, जोड़ bpf_attr *attr)
+अणु
+	काष्ठा bpf_offload_netdev *ondev;
+	काष्ठा bpf_prog_offload *offload;
+	पूर्णांक err;
 
-	if (attr->prog_type != BPF_PROG_TYPE_SCHED_CLS &&
+	अगर (attr->prog_type != BPF_PROG_TYPE_SCHED_CLS &&
 	    attr->prog_type != BPF_PROG_TYPE_XDP)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (attr->prog_flags)
-		return -EINVAL;
+	अगर (attr->prog_flags)
+		वापस -EINVAL;
 
-	offload = kzalloc(sizeof(*offload), GFP_USER);
-	if (!offload)
-		return -ENOMEM;
+	offload = kzalloc(माप(*offload), GFP_USER);
+	अगर (!offload)
+		वापस -ENOMEM;
 
 	offload->prog = prog;
 
 	offload->netdev = dev_get_by_index(current->nsproxy->net_ns,
-					   attr->prog_ifindex);
+					   attr->prog_अगरindex);
 	err = bpf_dev_offload_check(offload->netdev);
-	if (err)
-		goto err_maybe_put;
+	अगर (err)
+		जाओ err_maybe_put;
 
-	down_write(&bpf_devs_lock);
+	करोwn_ग_लिखो(&bpf_devs_lock);
 	ondev = bpf_offload_find_netdev(offload->netdev);
-	if (!ondev) {
+	अगर (!ondev) अणु
 		err = -EINVAL;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 	offload->offdev = ondev->offdev;
 	prog->aux->offload = offload;
 	list_add_tail(&offload->offloads, &ondev->progs);
 	dev_put(offload->netdev);
-	up_write(&bpf_devs_lock);
+	up_ग_लिखो(&bpf_devs_lock);
 
-	return 0;
+	वापस 0;
 err_unlock:
-	up_write(&bpf_devs_lock);
+	up_ग_लिखो(&bpf_devs_lock);
 err_maybe_put:
-	if (offload->netdev)
+	अगर (offload->netdev)
 		dev_put(offload->netdev);
-	kfree(offload);
-	return err;
-}
+	kमुक्त(offload);
+	वापस err;
+पूर्ण
 
-int bpf_prog_offload_verifier_prep(struct bpf_prog *prog)
-{
-	struct bpf_prog_offload *offload;
-	int ret = -ENODEV;
+पूर्णांक bpf_prog_offload_verअगरier_prep(काष्ठा bpf_prog *prog)
+अणु
+	काष्ठा bpf_prog_offload *offload;
+	पूर्णांक ret = -ENODEV;
 
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 	offload = prog->aux->offload;
-	if (offload) {
+	अगर (offload) अणु
 		ret = offload->offdev->ops->prepare(prog);
 		offload->dev_state = !ret;
-	}
-	up_read(&bpf_devs_lock);
+	पूर्ण
+	up_पढ़ो(&bpf_devs_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int bpf_prog_offload_verify_insn(struct bpf_verifier_env *env,
-				 int insn_idx, int prev_insn_idx)
-{
-	struct bpf_prog_offload *offload;
-	int ret = -ENODEV;
+पूर्णांक bpf_prog_offload_verअगरy_insn(काष्ठा bpf_verअगरier_env *env,
+				 पूर्णांक insn_idx, पूर्णांक prev_insn_idx)
+अणु
+	काष्ठा bpf_prog_offload *offload;
+	पूर्णांक ret = -ENODEV;
 
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 	offload = env->prog->aux->offload;
-	if (offload)
+	अगर (offload)
 		ret = offload->offdev->ops->insn_hook(env, insn_idx,
 						      prev_insn_idx);
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int bpf_prog_offload_finalize(struct bpf_verifier_env *env)
-{
-	struct bpf_prog_offload *offload;
-	int ret = -ENODEV;
+पूर्णांक bpf_prog_offload_finalize(काष्ठा bpf_verअगरier_env *env)
+अणु
+	काष्ठा bpf_prog_offload *offload;
+	पूर्णांक ret = -ENODEV;
 
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 	offload = env->prog->aux->offload;
-	if (offload) {
-		if (offload->offdev->ops->finalize)
+	अगर (offload) अणु
+		अगर (offload->offdev->ops->finalize)
 			ret = offload->offdev->ops->finalize(env);
-		else
+		अन्यथा
 			ret = 0;
-	}
-	up_read(&bpf_devs_lock);
+	पूर्ण
+	up_पढ़ो(&bpf_devs_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-bpf_prog_offload_replace_insn(struct bpf_verifier_env *env, u32 off,
-			      struct bpf_insn *insn)
-{
-	const struct bpf_prog_offload_ops *ops;
-	struct bpf_prog_offload *offload;
-	int ret = -EOPNOTSUPP;
+व्योम
+bpf_prog_offload_replace_insn(काष्ठा bpf_verअगरier_env *env, u32 off,
+			      काष्ठा bpf_insn *insn)
+अणु
+	स्थिर काष्ठा bpf_prog_offload_ops *ops;
+	काष्ठा bpf_prog_offload *offload;
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 	offload = env->prog->aux->offload;
-	if (offload) {
+	अगर (offload) अणु
 		ops = offload->offdev->ops;
-		if (!offload->opt_failed && ops->replace_insn)
+		अगर (!offload->opt_failed && ops->replace_insn)
 			ret = ops->replace_insn(env, off, insn);
 		offload->opt_failed |= ret;
-	}
-	up_read(&bpf_devs_lock);
-}
+	पूर्ण
+	up_पढ़ो(&bpf_devs_lock);
+पूर्ण
 
-void
-bpf_prog_offload_remove_insns(struct bpf_verifier_env *env, u32 off, u32 cnt)
-{
-	struct bpf_prog_offload *offload;
-	int ret = -EOPNOTSUPP;
+व्योम
+bpf_prog_offload_हटाओ_insns(काष्ठा bpf_verअगरier_env *env, u32 off, u32 cnt)
+अणु
+	काष्ठा bpf_prog_offload *offload;
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 	offload = env->prog->aux->offload;
-	if (offload) {
-		if (!offload->opt_failed && offload->offdev->ops->remove_insns)
-			ret = offload->offdev->ops->remove_insns(env, off, cnt);
+	अगर (offload) अणु
+		अगर (!offload->opt_failed && offload->offdev->ops->हटाओ_insns)
+			ret = offload->offdev->ops->हटाओ_insns(env, off, cnt);
 		offload->opt_failed |= ret;
-	}
-	up_read(&bpf_devs_lock);
-}
+	पूर्ण
+	up_पढ़ो(&bpf_devs_lock);
+पूर्ण
 
-static void __bpf_prog_offload_destroy(struct bpf_prog *prog)
-{
-	struct bpf_prog_offload *offload = prog->aux->offload;
+अटल व्योम __bpf_prog_offload_destroy(काष्ठा bpf_prog *prog)
+अणु
+	काष्ठा bpf_prog_offload *offload = prog->aux->offload;
 
-	if (offload->dev_state)
+	अगर (offload->dev_state)
 		offload->offdev->ops->destroy(prog);
 
 	/* Make sure BPF_PROG_GET_NEXT_ID can't find this dead program */
-	bpf_prog_free_id(prog, true);
+	bpf_prog_मुक्त_id(prog, true);
 
 	list_del_init(&offload->offloads);
-	kfree(offload);
-	prog->aux->offload = NULL;
-}
+	kमुक्त(offload);
+	prog->aux->offload = शून्य;
+पूर्ण
 
-void bpf_prog_offload_destroy(struct bpf_prog *prog)
-{
-	down_write(&bpf_devs_lock);
-	if (prog->aux->offload)
+व्योम bpf_prog_offload_destroy(काष्ठा bpf_prog *prog)
+अणु
+	करोwn_ग_लिखो(&bpf_devs_lock);
+	अगर (prog->aux->offload)
 		__bpf_prog_offload_destroy(prog);
-	up_write(&bpf_devs_lock);
-}
+	up_ग_लिखो(&bpf_devs_lock);
+पूर्ण
 
-static int bpf_prog_offload_translate(struct bpf_prog *prog)
-{
-	struct bpf_prog_offload *offload;
-	int ret = -ENODEV;
+अटल पूर्णांक bpf_prog_offload_translate(काष्ठा bpf_prog *prog)
+अणु
+	काष्ठा bpf_prog_offload *offload;
+	पूर्णांक ret = -ENODEV;
 
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 	offload = prog->aux->offload;
-	if (offload)
+	अगर (offload)
 		ret = offload->offdev->ops->translate(prog);
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int bpf_prog_warn_on_exec(const void *ctx,
-					  const struct bpf_insn *insn)
-{
+अटल अचिन्हित पूर्णांक bpf_prog_warn_on_exec(स्थिर व्योम *ctx,
+					  स्थिर काष्ठा bpf_insn *insn)
+अणु
 	WARN(1, "attempt to execute device eBPF program on the host!");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bpf_prog_offload_compile(struct bpf_prog *prog)
-{
+पूर्णांक bpf_prog_offload_compile(काष्ठा bpf_prog *prog)
+अणु
 	prog->bpf_func = bpf_prog_warn_on_exec;
 
-	return bpf_prog_offload_translate(prog);
-}
+	वापस bpf_prog_offload_translate(prog);
+पूर्ण
 
-struct ns_get_path_bpf_prog_args {
-	struct bpf_prog *prog;
-	struct bpf_prog_info *info;
-};
+काष्ठा ns_get_path_bpf_prog_args अणु
+	काष्ठा bpf_prog *prog;
+	काष्ठा bpf_prog_info *info;
+पूर्ण;
 
-static struct ns_common *bpf_prog_offload_info_fill_ns(void *private_data)
-{
-	struct ns_get_path_bpf_prog_args *args = private_data;
-	struct bpf_prog_aux *aux = args->prog->aux;
-	struct ns_common *ns;
-	struct net *net;
+अटल काष्ठा ns_common *bpf_prog_offload_info_fill_ns(व्योम *निजी_data)
+अणु
+	काष्ठा ns_get_path_bpf_prog_args *args = निजी_data;
+	काष्ठा bpf_prog_aux *aux = args->prog->aux;
+	काष्ठा ns_common *ns;
+	काष्ठा net *net;
 
 	rtnl_lock();
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 
-	if (aux->offload) {
-		args->info->ifindex = aux->offload->netdev->ifindex;
+	अगर (aux->offload) अणु
+		args->info->अगरindex = aux->offload->netdev->अगरindex;
 		net = dev_net(aux->offload->netdev);
 		get_net(net);
 		ns = &net->ns;
-	} else {
-		args->info->ifindex = 0;
-		ns = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		args->info->अगरindex = 0;
+		ns = शून्य;
+	पूर्ण
 
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 	rtnl_unlock();
 
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
-int bpf_prog_offload_info_fill(struct bpf_prog_info *info,
-			       struct bpf_prog *prog)
-{
-	struct ns_get_path_bpf_prog_args args = {
+पूर्णांक bpf_prog_offload_info_fill(काष्ठा bpf_prog_info *info,
+			       काष्ठा bpf_prog *prog)
+अणु
+	काष्ठा ns_get_path_bpf_prog_args args = अणु
 		.prog	= prog,
 		.info	= info,
-	};
-	struct bpf_prog_aux *aux = prog->aux;
-	struct inode *ns_inode;
-	struct path ns_path;
-	char __user *uinsns;
-	int res;
+	पूर्ण;
+	काष्ठा bpf_prog_aux *aux = prog->aux;
+	काष्ठा inode *ns_inode;
+	काष्ठा path ns_path;
+	अक्षर __user *uinsns;
+	पूर्णांक res;
 	u32 ulen;
 
 	res = ns_get_path_cb(&ns_path, bpf_prog_offload_info_fill_ns, &args);
-	if (res) {
-		if (!info->ifindex)
-			return -ENODEV;
-		return res;
-	}
+	अगर (res) अणु
+		अगर (!info->अगरindex)
+			वापस -ENODEV;
+		वापस res;
+	पूर्ण
 
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 
-	if (!aux->offload) {
-		up_read(&bpf_devs_lock);
-		return -ENODEV;
-	}
+	अगर (!aux->offload) अणु
+		up_पढ़ो(&bpf_devs_lock);
+		वापस -ENODEV;
+	पूर्ण
 
 	ulen = info->jited_prog_len;
 	info->jited_prog_len = aux->offload->jited_len;
-	if (info->jited_prog_len && ulen) {
+	अगर (info->jited_prog_len && ulen) अणु
 		uinsns = u64_to_user_ptr(info->jited_prog_insns);
 		ulen = min_t(u32, info->jited_prog_len, ulen);
-		if (copy_to_user(uinsns, aux->offload->jited_image, ulen)) {
-			up_read(&bpf_devs_lock);
-			return -EFAULT;
-		}
-	}
+		अगर (copy_to_user(uinsns, aux->offload->jited_image, ulen)) अणु
+			up_पढ़ो(&bpf_devs_lock);
+			वापस -EFAULT;
+		पूर्ण
+	पूर्ण
 
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 
 	ns_inode = ns_path.dentry->d_inode;
 	info->netns_dev = new_encode_dev(ns_inode->i_sb->s_dev);
 	info->netns_ino = ns_inode->i_ino;
 	path_put(&ns_path);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct bpf_prog_ops bpf_offload_prog_ops = {
-};
+स्थिर काष्ठा bpf_prog_ops bpf_offload_prog_ops = अणु
+पूर्ण;
 
-static int bpf_map_offload_ndo(struct bpf_offloaded_map *offmap,
-			       enum bpf_netdev_command cmd)
-{
-	struct netdev_bpf data = {};
-	struct net_device *netdev;
+अटल पूर्णांक bpf_map_offload_nकरो(काष्ठा bpf_offloaded_map *offmap,
+			       क्रमागत bpf_netdev_command cmd)
+अणु
+	काष्ठा netdev_bpf data = अणुपूर्ण;
+	काष्ठा net_device *netdev;
 
 	ASSERT_RTNL();
 
@@ -356,357 +357,357 @@ static int bpf_map_offload_ndo(struct bpf_offloaded_map *offmap,
 	/* Caller must make sure netdev is valid */
 	netdev = offmap->netdev;
 
-	return netdev->netdev_ops->ndo_bpf(netdev, &data);
-}
+	वापस netdev->netdev_ops->nकरो_bpf(netdev, &data);
+पूर्ण
 
-struct bpf_map *bpf_map_offload_map_alloc(union bpf_attr *attr)
-{
-	struct net *net = current->nsproxy->net_ns;
-	struct bpf_offload_netdev *ondev;
-	struct bpf_offloaded_map *offmap;
-	int err;
+काष्ठा bpf_map *bpf_map_offload_map_alloc(जोड़ bpf_attr *attr)
+अणु
+	काष्ठा net *net = current->nsproxy->net_ns;
+	काष्ठा bpf_offload_netdev *ondev;
+	काष्ठा bpf_offloaded_map *offmap;
+	पूर्णांक err;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return ERR_PTR(-EPERM);
-	if (attr->map_type != BPF_MAP_TYPE_ARRAY &&
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस ERR_PTR(-EPERM);
+	अगर (attr->map_type != BPF_MAP_TYPE_ARRAY &&
 	    attr->map_type != BPF_MAP_TYPE_HASH)
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	offmap = kzalloc(sizeof(*offmap), GFP_USER);
-	if (!offmap)
-		return ERR_PTR(-ENOMEM);
+	offmap = kzalloc(माप(*offmap), GFP_USER);
+	अगर (!offmap)
+		वापस ERR_PTR(-ENOMEM);
 
 	bpf_map_init_from_attr(&offmap->map, attr);
 
 	rtnl_lock();
-	down_write(&bpf_devs_lock);
-	offmap->netdev = __dev_get_by_index(net, attr->map_ifindex);
+	करोwn_ग_लिखो(&bpf_devs_lock);
+	offmap->netdev = __dev_get_by_index(net, attr->map_अगरindex);
 	err = bpf_dev_offload_check(offmap->netdev);
-	if (err)
-		goto err_unlock;
+	अगर (err)
+		जाओ err_unlock;
 
 	ondev = bpf_offload_find_netdev(offmap->netdev);
-	if (!ondev) {
+	अगर (!ondev) अणु
 		err = -EINVAL;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
-	err = bpf_map_offload_ndo(offmap, BPF_OFFLOAD_MAP_ALLOC);
-	if (err)
-		goto err_unlock;
+	err = bpf_map_offload_nकरो(offmap, BPF_OFFLOAD_MAP_ALLOC);
+	अगर (err)
+		जाओ err_unlock;
 
 	list_add_tail(&offmap->offloads, &ondev->maps);
-	up_write(&bpf_devs_lock);
+	up_ग_लिखो(&bpf_devs_lock);
 	rtnl_unlock();
 
-	return &offmap->map;
+	वापस &offmap->map;
 
 err_unlock:
-	up_write(&bpf_devs_lock);
+	up_ग_लिखो(&bpf_devs_lock);
 	rtnl_unlock();
-	kfree(offmap);
-	return ERR_PTR(err);
-}
+	kमुक्त(offmap);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void __bpf_map_offload_destroy(struct bpf_offloaded_map *offmap)
-{
-	WARN_ON(bpf_map_offload_ndo(offmap, BPF_OFFLOAD_MAP_FREE));
+अटल व्योम __bpf_map_offload_destroy(काष्ठा bpf_offloaded_map *offmap)
+अणु
+	WARN_ON(bpf_map_offload_nकरो(offmap, BPF_OFFLOAD_MAP_FREE));
 	/* Make sure BPF_MAP_GET_NEXT_ID can't find this dead map */
-	bpf_map_free_id(&offmap->map, true);
+	bpf_map_मुक्त_id(&offmap->map, true);
 	list_del_init(&offmap->offloads);
-	offmap->netdev = NULL;
-}
+	offmap->netdev = शून्य;
+पूर्ण
 
-void bpf_map_offload_map_free(struct bpf_map *map)
-{
-	struct bpf_offloaded_map *offmap = map_to_offmap(map);
+व्योम bpf_map_offload_map_मुक्त(काष्ठा bpf_map *map)
+अणु
+	काष्ठा bpf_offloaded_map *offmap = map_to_offmap(map);
 
 	rtnl_lock();
-	down_write(&bpf_devs_lock);
-	if (offmap->netdev)
+	करोwn_ग_लिखो(&bpf_devs_lock);
+	अगर (offmap->netdev)
 		__bpf_map_offload_destroy(offmap);
-	up_write(&bpf_devs_lock);
+	up_ग_लिखो(&bpf_devs_lock);
 	rtnl_unlock();
 
-	kfree(offmap);
-}
+	kमुक्त(offmap);
+पूर्ण
 
-int bpf_map_offload_lookup_elem(struct bpf_map *map, void *key, void *value)
-{
-	struct bpf_offloaded_map *offmap = map_to_offmap(map);
-	int ret = -ENODEV;
+पूर्णांक bpf_map_offload_lookup_elem(काष्ठा bpf_map *map, व्योम *key, व्योम *value)
+अणु
+	काष्ठा bpf_offloaded_map *offmap = map_to_offmap(map);
+	पूर्णांक ret = -ENODEV;
 
-	down_read(&bpf_devs_lock);
-	if (offmap->netdev)
+	करोwn_पढ़ो(&bpf_devs_lock);
+	अगर (offmap->netdev)
 		ret = offmap->dev_ops->map_lookup_elem(offmap, key, value);
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int bpf_map_offload_update_elem(struct bpf_map *map,
-				void *key, void *value, u64 flags)
-{
-	struct bpf_offloaded_map *offmap = map_to_offmap(map);
-	int ret = -ENODEV;
+पूर्णांक bpf_map_offload_update_elem(काष्ठा bpf_map *map,
+				व्योम *key, व्योम *value, u64 flags)
+अणु
+	काष्ठा bpf_offloaded_map *offmap = map_to_offmap(map);
+	पूर्णांक ret = -ENODEV;
 
-	if (unlikely(flags > BPF_EXIST))
-		return -EINVAL;
+	अगर (unlikely(flags > BPF_EXIST))
+		वापस -EINVAL;
 
-	down_read(&bpf_devs_lock);
-	if (offmap->netdev)
+	करोwn_पढ़ो(&bpf_devs_lock);
+	अगर (offmap->netdev)
 		ret = offmap->dev_ops->map_update_elem(offmap, key, value,
 						       flags);
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int bpf_map_offload_delete_elem(struct bpf_map *map, void *key)
-{
-	struct bpf_offloaded_map *offmap = map_to_offmap(map);
-	int ret = -ENODEV;
+पूर्णांक bpf_map_offload_delete_elem(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	काष्ठा bpf_offloaded_map *offmap = map_to_offmap(map);
+	पूर्णांक ret = -ENODEV;
 
-	down_read(&bpf_devs_lock);
-	if (offmap->netdev)
+	करोwn_पढ़ो(&bpf_devs_lock);
+	अगर (offmap->netdev)
 		ret = offmap->dev_ops->map_delete_elem(offmap, key);
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int bpf_map_offload_get_next_key(struct bpf_map *map, void *key, void *next_key)
-{
-	struct bpf_offloaded_map *offmap = map_to_offmap(map);
-	int ret = -ENODEV;
+पूर्णांक bpf_map_offload_get_next_key(काष्ठा bpf_map *map, व्योम *key, व्योम *next_key)
+अणु
+	काष्ठा bpf_offloaded_map *offmap = map_to_offmap(map);
+	पूर्णांक ret = -ENODEV;
 
-	down_read(&bpf_devs_lock);
-	if (offmap->netdev)
+	करोwn_पढ़ो(&bpf_devs_lock);
+	अगर (offmap->netdev)
 		ret = offmap->dev_ops->map_get_next_key(offmap, key, next_key);
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct ns_get_path_bpf_map_args {
-	struct bpf_offloaded_map *offmap;
-	struct bpf_map_info *info;
-};
+काष्ठा ns_get_path_bpf_map_args अणु
+	काष्ठा bpf_offloaded_map *offmap;
+	काष्ठा bpf_map_info *info;
+पूर्ण;
 
-static struct ns_common *bpf_map_offload_info_fill_ns(void *private_data)
-{
-	struct ns_get_path_bpf_map_args *args = private_data;
-	struct ns_common *ns;
-	struct net *net;
+अटल काष्ठा ns_common *bpf_map_offload_info_fill_ns(व्योम *निजी_data)
+अणु
+	काष्ठा ns_get_path_bpf_map_args *args = निजी_data;
+	काष्ठा ns_common *ns;
+	काष्ठा net *net;
 
 	rtnl_lock();
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 
-	if (args->offmap->netdev) {
-		args->info->ifindex = args->offmap->netdev->ifindex;
+	अगर (args->offmap->netdev) अणु
+		args->info->अगरindex = args->offmap->netdev->अगरindex;
 		net = dev_net(args->offmap->netdev);
 		get_net(net);
 		ns = &net->ns;
-	} else {
-		args->info->ifindex = 0;
-		ns = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		args->info->अगरindex = 0;
+		ns = शून्य;
+	पूर्ण
 
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 	rtnl_unlock();
 
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
-int bpf_map_offload_info_fill(struct bpf_map_info *info, struct bpf_map *map)
-{
-	struct ns_get_path_bpf_map_args args = {
+पूर्णांक bpf_map_offload_info_fill(काष्ठा bpf_map_info *info, काष्ठा bpf_map *map)
+अणु
+	काष्ठा ns_get_path_bpf_map_args args = अणु
 		.offmap	= map_to_offmap(map),
 		.info	= info,
-	};
-	struct inode *ns_inode;
-	struct path ns_path;
-	int res;
+	पूर्ण;
+	काष्ठा inode *ns_inode;
+	काष्ठा path ns_path;
+	पूर्णांक res;
 
 	res = ns_get_path_cb(&ns_path, bpf_map_offload_info_fill_ns, &args);
-	if (res) {
-		if (!info->ifindex)
-			return -ENODEV;
-		return res;
-	}
+	अगर (res) अणु
+		अगर (!info->अगरindex)
+			वापस -ENODEV;
+		वापस res;
+	पूर्ण
 
 	ns_inode = ns_path.dentry->d_inode;
 	info->netns_dev = new_encode_dev(ns_inode->i_sb->s_dev);
 	info->netns_ino = ns_inode->i_ino;
 	path_put(&ns_path);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool __bpf_offload_dev_match(struct bpf_prog *prog,
-				    struct net_device *netdev)
-{
-	struct bpf_offload_netdev *ondev1, *ondev2;
-	struct bpf_prog_offload *offload;
+अटल bool __bpf_offload_dev_match(काष्ठा bpf_prog *prog,
+				    काष्ठा net_device *netdev)
+अणु
+	काष्ठा bpf_offload_netdev *ondev1, *ondev2;
+	काष्ठा bpf_prog_offload *offload;
 
-	if (!bpf_prog_is_dev_bound(prog->aux))
-		return false;
+	अगर (!bpf_prog_is_dev_bound(prog->aux))
+		वापस false;
 
 	offload = prog->aux->offload;
-	if (!offload)
-		return false;
-	if (offload->netdev == netdev)
-		return true;
+	अगर (!offload)
+		वापस false;
+	अगर (offload->netdev == netdev)
+		वापस true;
 
 	ondev1 = bpf_offload_find_netdev(offload->netdev);
 	ondev2 = bpf_offload_find_netdev(netdev);
 
-	return ondev1 && ondev2 && ondev1->offdev == ondev2->offdev;
-}
+	वापस ondev1 && ondev2 && ondev1->offdev == ondev2->offdev;
+पूर्ण
 
-bool bpf_offload_dev_match(struct bpf_prog *prog, struct net_device *netdev)
-{
+bool bpf_offload_dev_match(काष्ठा bpf_prog *prog, काष्ठा net_device *netdev)
+अणु
 	bool ret;
 
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 	ret = __bpf_offload_dev_match(prog, netdev);
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(bpf_offload_dev_match);
 
-bool bpf_offload_prog_map_match(struct bpf_prog *prog, struct bpf_map *map)
-{
-	struct bpf_offloaded_map *offmap;
+bool bpf_offload_prog_map_match(काष्ठा bpf_prog *prog, काष्ठा bpf_map *map)
+अणु
+	काष्ठा bpf_offloaded_map *offmap;
 	bool ret;
 
-	if (!bpf_map_is_dev_bound(map))
-		return bpf_map_offload_neutral(map);
+	अगर (!bpf_map_is_dev_bound(map))
+		वापस bpf_map_offload_neutral(map);
 	offmap = map_to_offmap(map);
 
-	down_read(&bpf_devs_lock);
+	करोwn_पढ़ो(&bpf_devs_lock);
 	ret = __bpf_offload_dev_match(prog, offmap->netdev);
-	up_read(&bpf_devs_lock);
+	up_पढ़ो(&bpf_devs_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int bpf_offload_dev_netdev_register(struct bpf_offload_dev *offdev,
-				    struct net_device *netdev)
-{
-	struct bpf_offload_netdev *ondev;
-	int err;
+पूर्णांक bpf_offload_dev_netdev_रेजिस्टर(काष्ठा bpf_offload_dev *offdev,
+				    काष्ठा net_device *netdev)
+अणु
+	काष्ठा bpf_offload_netdev *ondev;
+	पूर्णांक err;
 
-	ondev = kzalloc(sizeof(*ondev), GFP_KERNEL);
-	if (!ondev)
-		return -ENOMEM;
+	ondev = kzalloc(माप(*ondev), GFP_KERNEL);
+	अगर (!ondev)
+		वापस -ENOMEM;
 
 	ondev->netdev = netdev;
 	ondev->offdev = offdev;
 	INIT_LIST_HEAD(&ondev->progs);
 	INIT_LIST_HEAD(&ondev->maps);
 
-	down_write(&bpf_devs_lock);
+	करोwn_ग_लिखो(&bpf_devs_lock);
 	err = rhashtable_insert_fast(&offdevs, &ondev->l, offdevs_params);
-	if (err) {
+	अगर (err) अणु
 		netdev_warn(netdev, "failed to register for BPF offload\n");
-		goto err_unlock_free;
-	}
+		जाओ err_unlock_मुक्त;
+	पूर्ण
 
 	list_add(&ondev->offdev_netdevs, &offdev->netdevs);
-	up_write(&bpf_devs_lock);
-	return 0;
+	up_ग_लिखो(&bpf_devs_lock);
+	वापस 0;
 
-err_unlock_free:
-	up_write(&bpf_devs_lock);
-	kfree(ondev);
-	return err;
-}
-EXPORT_SYMBOL_GPL(bpf_offload_dev_netdev_register);
+err_unlock_मुक्त:
+	up_ग_लिखो(&bpf_devs_lock);
+	kमुक्त(ondev);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(bpf_offload_dev_netdev_रेजिस्टर);
 
-void bpf_offload_dev_netdev_unregister(struct bpf_offload_dev *offdev,
-				       struct net_device *netdev)
-{
-	struct bpf_offload_netdev *ondev, *altdev;
-	struct bpf_offloaded_map *offmap, *mtmp;
-	struct bpf_prog_offload *offload, *ptmp;
+व्योम bpf_offload_dev_netdev_unरेजिस्टर(काष्ठा bpf_offload_dev *offdev,
+				       काष्ठा net_device *netdev)
+अणु
+	काष्ठा bpf_offload_netdev *ondev, *altdev;
+	काष्ठा bpf_offloaded_map *offmap, *mपंचांगp;
+	काष्ठा bpf_prog_offload *offload, *pपंचांगp;
 
 	ASSERT_RTNL();
 
-	down_write(&bpf_devs_lock);
+	करोwn_ग_लिखो(&bpf_devs_lock);
 	ondev = rhashtable_lookup_fast(&offdevs, &netdev, offdevs_params);
-	if (WARN_ON(!ondev))
-		goto unlock;
+	अगर (WARN_ON(!ondev))
+		जाओ unlock;
 
-	WARN_ON(rhashtable_remove_fast(&offdevs, &ondev->l, offdevs_params));
+	WARN_ON(rhashtable_हटाओ_fast(&offdevs, &ondev->l, offdevs_params));
 	list_del(&ondev->offdev_netdevs);
 
 	/* Try to move the objects to another netdev of the device */
 	altdev = list_first_entry_or_null(&offdev->netdevs,
-					  struct bpf_offload_netdev,
+					  काष्ठा bpf_offload_netdev,
 					  offdev_netdevs);
-	if (altdev) {
-		list_for_each_entry(offload, &ondev->progs, offloads)
+	अगर (altdev) अणु
+		list_क्रम_each_entry(offload, &ondev->progs, offloads)
 			offload->netdev = altdev->netdev;
 		list_splice_init(&ondev->progs, &altdev->progs);
 
-		list_for_each_entry(offmap, &ondev->maps, offloads)
+		list_क्रम_each_entry(offmap, &ondev->maps, offloads)
 			offmap->netdev = altdev->netdev;
 		list_splice_init(&ondev->maps, &altdev->maps);
-	} else {
-		list_for_each_entry_safe(offload, ptmp, &ondev->progs, offloads)
+	पूर्ण अन्यथा अणु
+		list_क्रम_each_entry_safe(offload, pपंचांगp, &ondev->progs, offloads)
 			__bpf_prog_offload_destroy(offload->prog);
-		list_for_each_entry_safe(offmap, mtmp, &ondev->maps, offloads)
+		list_क्रम_each_entry_safe(offmap, mपंचांगp, &ondev->maps, offloads)
 			__bpf_map_offload_destroy(offmap);
-	}
+	पूर्ण
 
 	WARN_ON(!list_empty(&ondev->progs));
 	WARN_ON(!list_empty(&ondev->maps));
-	kfree(ondev);
+	kमुक्त(ondev);
 unlock:
-	up_write(&bpf_devs_lock);
-}
-EXPORT_SYMBOL_GPL(bpf_offload_dev_netdev_unregister);
+	up_ग_लिखो(&bpf_devs_lock);
+पूर्ण
+EXPORT_SYMBOL_GPL(bpf_offload_dev_netdev_unरेजिस्टर);
 
-struct bpf_offload_dev *
-bpf_offload_dev_create(const struct bpf_prog_offload_ops *ops, void *priv)
-{
-	struct bpf_offload_dev *offdev;
-	int err;
+काष्ठा bpf_offload_dev *
+bpf_offload_dev_create(स्थिर काष्ठा bpf_prog_offload_ops *ops, व्योम *priv)
+अणु
+	काष्ठा bpf_offload_dev *offdev;
+	पूर्णांक err;
 
-	down_write(&bpf_devs_lock);
-	if (!offdevs_inited) {
+	करोwn_ग_लिखो(&bpf_devs_lock);
+	अगर (!offdevs_inited) अणु
 		err = rhashtable_init(&offdevs, &offdevs_params);
-		if (err) {
-			up_write(&bpf_devs_lock);
-			return ERR_PTR(err);
-		}
+		अगर (err) अणु
+			up_ग_लिखो(&bpf_devs_lock);
+			वापस ERR_PTR(err);
+		पूर्ण
 		offdevs_inited = true;
-	}
-	up_write(&bpf_devs_lock);
+	पूर्ण
+	up_ग_लिखो(&bpf_devs_lock);
 
-	offdev = kzalloc(sizeof(*offdev), GFP_KERNEL);
-	if (!offdev)
-		return ERR_PTR(-ENOMEM);
+	offdev = kzalloc(माप(*offdev), GFP_KERNEL);
+	अगर (!offdev)
+		वापस ERR_PTR(-ENOMEM);
 
 	offdev->ops = ops;
 	offdev->priv = priv;
 	INIT_LIST_HEAD(&offdev->netdevs);
 
-	return offdev;
-}
+	वापस offdev;
+पूर्ण
 EXPORT_SYMBOL_GPL(bpf_offload_dev_create);
 
-void bpf_offload_dev_destroy(struct bpf_offload_dev *offdev)
-{
+व्योम bpf_offload_dev_destroy(काष्ठा bpf_offload_dev *offdev)
+अणु
 	WARN_ON(!list_empty(&offdev->netdevs));
-	kfree(offdev);
-}
+	kमुक्त(offdev);
+पूर्ण
 EXPORT_SYMBOL_GPL(bpf_offload_dev_destroy);
 
-void *bpf_offload_dev_priv(struct bpf_offload_dev *offdev)
-{
-	return offdev->priv;
-}
+व्योम *bpf_offload_dev_priv(काष्ठा bpf_offload_dev *offdev)
+अणु
+	वापस offdev->priv;
+पूर्ण
 EXPORT_SYMBOL_GPL(bpf_offload_dev_priv);

@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2008 Ben Skeggs.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,957 +25,957 @@
  *
  */
 
-#include <drm/drm_gem_ttm_helper.h>
+#समावेश <drm/drm_gem_tपंचांग_helper.h>
 
-#include "nouveau_drv.h"
-#include "nouveau_dma.h"
-#include "nouveau_fence.h"
-#include "nouveau_abi16.h"
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_dma.h"
+#समावेश "nouveau_fence.h"
+#समावेश "nouveau_abi16.h"
 
-#include "nouveau_ttm.h"
-#include "nouveau_gem.h"
-#include "nouveau_mem.h"
-#include "nouveau_vmm.h"
+#समावेश "nouveau_ttm.h"
+#समावेश "nouveau_gem.h"
+#समावेश "nouveau_mem.h"
+#समावेश "nouveau_vmm.h"
 
-#include <nvif/class.h>
-#include <nvif/push206e.h>
+#समावेश <nvअगर/class.h>
+#समावेश <nvअगर/push206e.h>
 
-void
-nouveau_gem_object_del(struct drm_gem_object *gem)
-{
-	struct nouveau_bo *nvbo = nouveau_gem_object(gem);
-	struct nouveau_drm *drm = nouveau_bdev(nvbo->bo.bdev);
-	struct device *dev = drm->dev->dev;
-	int ret;
+व्योम
+nouveau_gem_object_del(काष्ठा drm_gem_object *gem)
+अणु
+	काष्ठा nouveau_bo *nvbo = nouveau_gem_object(gem);
+	काष्ठा nouveau_drm *drm = nouveau_bdev(nvbo->bo.bdev);
+	काष्ठा device *dev = drm->dev->dev;
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(dev);
-	if (WARN_ON(ret < 0 && ret != -EACCES)) {
-		pm_runtime_put_autosuspend(dev);
-		return;
-	}
+	ret = pm_runसमय_get_sync(dev);
+	अगर (WARN_ON(ret < 0 && ret != -EACCES)) अणु
+		pm_runसमय_put_स्वतःsuspend(dev);
+		वापस;
+	पूर्ण
 
-	if (gem->import_attach)
+	अगर (gem->import_attach)
 		drm_prime_gem_destroy(gem, nvbo->bo.sg);
 
-	ttm_bo_put(&nvbo->bo);
+	tपंचांग_bo_put(&nvbo->bo);
 
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
-}
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
+पूर्ण
 
-int
-nouveau_gem_object_open(struct drm_gem_object *gem, struct drm_file *file_priv)
-{
-	struct nouveau_cli *cli = nouveau_cli(file_priv);
-	struct nouveau_bo *nvbo = nouveau_gem_object(gem);
-	struct nouveau_drm *drm = nouveau_bdev(nvbo->bo.bdev);
-	struct device *dev = drm->dev->dev;
-	struct nouveau_vmm *vmm = cli->svm.cli ? &cli->svm : &cli->vmm;
-	struct nouveau_vma *vma;
-	int ret;
+पूर्णांक
+nouveau_gem_object_खोलो(काष्ठा drm_gem_object *gem, काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(file_priv);
+	काष्ठा nouveau_bo *nvbo = nouveau_gem_object(gem);
+	काष्ठा nouveau_drm *drm = nouveau_bdev(nvbo->bo.bdev);
+	काष्ठा device *dev = drm->dev->dev;
+	काष्ठा nouveau_vmm *vmm = cli->svm.cli ? &cli->svm : &cli->vmm;
+	काष्ठा nouveau_vma *vma;
+	पूर्णांक ret;
 
-	if (vmm->vmm.object.oclass < NVIF_CLASS_VMM_NV50)
-		return 0;
+	अगर (vmm->vmm.object.oclass < NVIF_CLASS_VMM_NV50)
+		वापस 0;
 
-	ret = ttm_bo_reserve(&nvbo->bo, false, false, NULL);
-	if (ret)
-		return ret;
+	ret = tपंचांग_bo_reserve(&nvbo->bo, false, false, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	ret = pm_runtime_get_sync(dev);
-	if (ret < 0 && ret != -EACCES) {
-		pm_runtime_put_autosuspend(dev);
-		goto out;
-	}
+	ret = pm_runसमय_get_sync(dev);
+	अगर (ret < 0 && ret != -EACCES) अणु
+		pm_runसमय_put_स्वतःsuspend(dev);
+		जाओ out;
+	पूर्ण
 
 	ret = nouveau_vma_new(nvbo, vmm, &vma);
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
 out:
-	ttm_bo_unreserve(&nvbo->bo);
-	return ret;
-}
+	tपंचांग_bo_unreserve(&nvbo->bo);
+	वापस ret;
+पूर्ण
 
-struct nouveau_gem_object_unmap {
-	struct nouveau_cli_work work;
-	struct nouveau_vma *vma;
-};
+काष्ठा nouveau_gem_object_unmap अणु
+	काष्ठा nouveau_cli_work work;
+	काष्ठा nouveau_vma *vma;
+पूर्ण;
 
-static void
-nouveau_gem_object_delete(struct nouveau_vma *vma)
-{
+अटल व्योम
+nouveau_gem_object_delete(काष्ठा nouveau_vma *vma)
+अणु
 	nouveau_fence_unref(&vma->fence);
 	nouveau_vma_del(&vma);
-}
+पूर्ण
 
-static void
-nouveau_gem_object_delete_work(struct nouveau_cli_work *w)
-{
-	struct nouveau_gem_object_unmap *work =
+अटल व्योम
+nouveau_gem_object_delete_work(काष्ठा nouveau_cli_work *w)
+अणु
+	काष्ठा nouveau_gem_object_unmap *work =
 		container_of(w, typeof(*work), work);
 	nouveau_gem_object_delete(work->vma);
-	kfree(work);
-}
+	kमुक्त(work);
+पूर्ण
 
-static void
-nouveau_gem_object_unmap(struct nouveau_bo *nvbo, struct nouveau_vma *vma)
-{
-	struct dma_fence *fence = vma->fence ? &vma->fence->base : NULL;
-	struct nouveau_gem_object_unmap *work;
+अटल व्योम
+nouveau_gem_object_unmap(काष्ठा nouveau_bo *nvbo, काष्ठा nouveau_vma *vma)
+अणु
+	काष्ठा dma_fence *fence = vma->fence ? &vma->fence->base : शून्य;
+	काष्ठा nouveau_gem_object_unmap *work;
 
 	list_del_init(&vma->head);
 
-	if (!fence) {
+	अगर (!fence) अणु
 		nouveau_gem_object_delete(vma);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!(work = kmalloc(sizeof(*work), GFP_KERNEL))) {
-		WARN_ON(dma_fence_wait_timeout(fence, false, 2 * HZ) <= 0);
+	अगर (!(work = kदो_स्मृति(माप(*work), GFP_KERNEL))) अणु
+		WARN_ON(dma_fence_रुको_समयout(fence, false, 2 * HZ) <= 0);
 		nouveau_gem_object_delete(vma);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	work->work.func = nouveau_gem_object_delete_work;
 	work->vma = vma;
 	nouveau_cli_work_queue(vma->vmm->cli, fence, &work->work);
-}
+पूर्ण
 
-void
-nouveau_gem_object_close(struct drm_gem_object *gem, struct drm_file *file_priv)
-{
-	struct nouveau_cli *cli = nouveau_cli(file_priv);
-	struct nouveau_bo *nvbo = nouveau_gem_object(gem);
-	struct nouveau_drm *drm = nouveau_bdev(nvbo->bo.bdev);
-	struct device *dev = drm->dev->dev;
-	struct nouveau_vmm *vmm = cli->svm.cli ? &cli->svm : & cli->vmm;
-	struct nouveau_vma *vma;
-	int ret;
+व्योम
+nouveau_gem_object_बंद(काष्ठा drm_gem_object *gem, काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(file_priv);
+	काष्ठा nouveau_bo *nvbo = nouveau_gem_object(gem);
+	काष्ठा nouveau_drm *drm = nouveau_bdev(nvbo->bo.bdev);
+	काष्ठा device *dev = drm->dev->dev;
+	काष्ठा nouveau_vmm *vmm = cli->svm.cli ? &cli->svm : & cli->vmm;
+	काष्ठा nouveau_vma *vma;
+	पूर्णांक ret;
 
-	if (vmm->vmm.object.oclass < NVIF_CLASS_VMM_NV50)
-		return;
+	अगर (vmm->vmm.object.oclass < NVIF_CLASS_VMM_NV50)
+		वापस;
 
-	ret = ttm_bo_reserve(&nvbo->bo, false, false, NULL);
-	if (ret)
-		return;
+	ret = tपंचांग_bo_reserve(&nvbo->bo, false, false, शून्य);
+	अगर (ret)
+		वापस;
 
 	vma = nouveau_vma_find(nvbo, vmm);
-	if (vma) {
-		if (--vma->refs == 0) {
-			ret = pm_runtime_get_sync(dev);
-			if (!WARN_ON(ret < 0 && ret != -EACCES)) {
+	अगर (vma) अणु
+		अगर (--vma->refs == 0) अणु
+			ret = pm_runसमय_get_sync(dev);
+			अगर (!WARN_ON(ret < 0 && ret != -EACCES)) अणु
 				nouveau_gem_object_unmap(nvbo, vma);
-				pm_runtime_mark_last_busy(dev);
-			}
-			pm_runtime_put_autosuspend(dev);
-		}
-	}
-	ttm_bo_unreserve(&nvbo->bo);
-}
+				pm_runसमय_mark_last_busy(dev);
+			पूर्ण
+			pm_runसमय_put_स्वतःsuspend(dev);
+		पूर्ण
+	पूर्ण
+	tपंचांग_bo_unreserve(&nvbo->bo);
+पूर्ण
 
-const struct drm_gem_object_funcs nouveau_gem_object_funcs = {
-	.free = nouveau_gem_object_del,
-	.open = nouveau_gem_object_open,
-	.close = nouveau_gem_object_close,
+स्थिर काष्ठा drm_gem_object_funcs nouveau_gem_object_funcs = अणु
+	.मुक्त = nouveau_gem_object_del,
+	.खोलो = nouveau_gem_object_खोलो,
+	.बंद = nouveau_gem_object_बंद,
 	.pin = nouveau_gem_prime_pin,
 	.unpin = nouveau_gem_prime_unpin,
 	.get_sg_table = nouveau_gem_prime_get_sg_table,
-	.vmap = drm_gem_ttm_vmap,
-	.vunmap = drm_gem_ttm_vunmap,
-};
+	.vmap = drm_gem_tपंचांग_vmap,
+	.vunmap = drm_gem_tपंचांग_vunmap,
+पूर्ण;
 
-int
-nouveau_gem_new(struct nouveau_cli *cli, u64 size, int align, uint32_t domain,
-		uint32_t tile_mode, uint32_t tile_flags,
-		struct nouveau_bo **pnvbo)
-{
-	struct nouveau_drm *drm = cli->drm;
-	struct nouveau_bo *nvbo;
-	int ret;
+पूर्णांक
+nouveau_gem_new(काष्ठा nouveau_cli *cli, u64 size, पूर्णांक align, uपूर्णांक32_t करोमुख्य,
+		uपूर्णांक32_t tile_mode, uपूर्णांक32_t tile_flags,
+		काष्ठा nouveau_bo **pnvbo)
+अणु
+	काष्ठा nouveau_drm *drm = cli->drm;
+	काष्ठा nouveau_bo *nvbo;
+	पूर्णांक ret;
 
-	if (!(domain & (NOUVEAU_GEM_DOMAIN_VRAM | NOUVEAU_GEM_DOMAIN_GART)))
-		domain |= NOUVEAU_GEM_DOMAIN_CPU;
+	अगर (!(करोमुख्य & (NOUVEAU_GEM_DOMAIN_VRAM | NOUVEAU_GEM_DOMAIN_GART)))
+		करोमुख्य |= NOUVEAU_GEM_DOMAIN_CPU;
 
-	nvbo = nouveau_bo_alloc(cli, &size, &align, domain, tile_mode,
+	nvbo = nouveau_bo_alloc(cli, &size, &align, करोमुख्य, tile_mode,
 				tile_flags);
-	if (IS_ERR(nvbo))
-		return PTR_ERR(nvbo);
+	अगर (IS_ERR(nvbo))
+		वापस PTR_ERR(nvbo);
 
 	nvbo->bo.base.funcs = &nouveau_gem_object_funcs;
 
-	/* Initialize the embedded gem-object. We return a single gem-reference
-	 * to the caller, instead of a normal nouveau_bo ttm reference. */
+	/* Initialize the embedded gem-object. We वापस a single gem-reference
+	 * to the caller, instead of a normal nouveau_bo tपंचांग reference. */
 	ret = drm_gem_object_init(drm->dev, &nvbo->bo.base, size);
-	if (ret) {
+	अगर (ret) अणु
 		drm_gem_object_release(&nvbo->bo.base);
-		kfree(nvbo);
-		return ret;
-	}
+		kमुक्त(nvbo);
+		वापस ret;
+	पूर्ण
 
-	ret = nouveau_bo_init(nvbo, size, align, domain, NULL, NULL);
-	if (ret) {
-		nouveau_bo_ref(NULL, &nvbo);
-		return ret;
-	}
+	ret = nouveau_bo_init(nvbo, size, align, करोमुख्य, शून्य, शून्य);
+	अगर (ret) अणु
+		nouveau_bo_ref(शून्य, &nvbo);
+		वापस ret;
+	पूर्ण
 
-	/* we restrict allowed domains on nv50+ to only the types
-	 * that were requested at creation time.  not possibly on
+	/* we restrict allowed करोमुख्यs on nv50+ to only the types
+	 * that were requested at creation समय.  not possibly on
 	 * earlier chips without busting the ABI.
 	 */
-	nvbo->valid_domains = NOUVEAU_GEM_DOMAIN_VRAM |
+	nvbo->valid_करोमुख्यs = NOUVEAU_GEM_DOMAIN_VRAM |
 			      NOUVEAU_GEM_DOMAIN_GART;
-	if (drm->client.device.info.family >= NV_DEVICE_INFO_V0_TESLA)
-		nvbo->valid_domains &= domain;
+	अगर (drm->client.device.info.family >= NV_DEVICE_INFO_V0_TESLA)
+		nvbo->valid_करोमुख्यs &= करोमुख्य;
 
 	*pnvbo = nvbo;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nouveau_gem_info(struct drm_file *file_priv, struct drm_gem_object *gem,
-		 struct drm_nouveau_gem_info *rep)
-{
-	struct nouveau_cli *cli = nouveau_cli(file_priv);
-	struct nouveau_bo *nvbo = nouveau_gem_object(gem);
-	struct nouveau_vmm *vmm = cli->svm.cli ? &cli->svm : &cli->vmm;
-	struct nouveau_vma *vma;
+अटल पूर्णांक
+nouveau_gem_info(काष्ठा drm_file *file_priv, काष्ठा drm_gem_object *gem,
+		 काष्ठा drm_nouveau_gem_info *rep)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(file_priv);
+	काष्ठा nouveau_bo *nvbo = nouveau_gem_object(gem);
+	काष्ठा nouveau_vmm *vmm = cli->svm.cli ? &cli->svm : &cli->vmm;
+	काष्ठा nouveau_vma *vma;
 
-	if (is_power_of_2(nvbo->valid_domains))
-		rep->domain = nvbo->valid_domains;
-	else if (nvbo->bo.mem.mem_type == TTM_PL_TT)
-		rep->domain = NOUVEAU_GEM_DOMAIN_GART;
-	else
-		rep->domain = NOUVEAU_GEM_DOMAIN_VRAM;
+	अगर (is_घातer_of_2(nvbo->valid_करोमुख्यs))
+		rep->करोमुख्य = nvbo->valid_करोमुख्यs;
+	अन्यथा अगर (nvbo->bo.mem.mem_type == TTM_PL_TT)
+		rep->करोमुख्य = NOUVEAU_GEM_DOMAIN_GART;
+	अन्यथा
+		rep->करोमुख्य = NOUVEAU_GEM_DOMAIN_VRAM;
 	rep->offset = nvbo->offset;
-	if (vmm->vmm.object.oclass >= NVIF_CLASS_VMM_NV50) {
+	अगर (vmm->vmm.object.oclass >= NVIF_CLASS_VMM_NV50) अणु
 		vma = nouveau_vma_find(nvbo, vmm);
-		if (!vma)
-			return -EINVAL;
+		अगर (!vma)
+			वापस -EINVAL;
 
 		rep->offset = vma->addr;
-	}
+	पूर्ण
 
 	rep->size = nvbo->bo.mem.num_pages << PAGE_SHIFT;
 	rep->map_handle = drm_vma_node_offset_addr(&nvbo->bo.base.vma_node);
 	rep->tile_mode = nvbo->mode;
 	rep->tile_flags = nvbo->contig ? 0 : NOUVEAU_GEM_TILE_NONCONTIG;
-	if (cli->device.info.family >= NV_DEVICE_INFO_V0_FERMI)
+	अगर (cli->device.info.family >= NV_DEVICE_INFO_V0_FERMI)
 		rep->tile_flags |= nvbo->kind << 8;
-	else
-	if (cli->device.info.family >= NV_DEVICE_INFO_V0_TESLA)
+	अन्यथा
+	अगर (cli->device.info.family >= NV_DEVICE_INFO_V0_TESLA)
 		rep->tile_flags |= nvbo->kind << 8 | nvbo->comp << 16;
-	else
+	अन्यथा
 		rep->tile_flags |= nvbo->zeta;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nouveau_gem_ioctl_new(struct drm_device *dev, void *data,
-		      struct drm_file *file_priv)
-{
-	struct nouveau_cli *cli = nouveau_cli(file_priv);
-	struct drm_nouveau_gem_new *req = data;
-	struct nouveau_bo *nvbo = NULL;
-	int ret = 0;
+पूर्णांक
+nouveau_gem_ioctl_new(काष्ठा drm_device *dev, व्योम *data,
+		      काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(file_priv);
+	काष्ठा drm_nouveau_gem_new *req = data;
+	काष्ठा nouveau_bo *nvbo = शून्य;
+	पूर्णांक ret = 0;
 
 	ret = nouveau_gem_new(cli, req->info.size, req->align,
-			      req->info.domain, req->info.tile_mode,
+			      req->info.करोमुख्य, req->info.tile_mode,
 			      req->info.tile_flags, &nvbo);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = drm_gem_handle_create(file_priv, &nvbo->bo.base,
 				    &req->info.handle);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		ret = nouveau_gem_info(file_priv, &nvbo->bo.base, &req->info);
-		if (ret)
+		अगर (ret)
 			drm_gem_handle_delete(file_priv, req->info.handle);
-	}
+	पूर्ण
 
 	/* drop reference from allocate - handle holds it now */
 	drm_gem_object_put(&nvbo->bo.base);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-nouveau_gem_set_domain(struct drm_gem_object *gem, uint32_t read_domains,
-		       uint32_t write_domains, uint32_t valid_domains)
-{
-	struct nouveau_bo *nvbo = nouveau_gem_object(gem);
-	struct ttm_buffer_object *bo = &nvbo->bo;
-	uint32_t domains = valid_domains & nvbo->valid_domains &
-		(write_domains ? write_domains : read_domains);
-	uint32_t pref_domains = 0;;
+अटल पूर्णांक
+nouveau_gem_set_करोमुख्य(काष्ठा drm_gem_object *gem, uपूर्णांक32_t पढ़ो_करोमुख्यs,
+		       uपूर्णांक32_t ग_लिखो_करोमुख्यs, uपूर्णांक32_t valid_करोमुख्यs)
+अणु
+	काष्ठा nouveau_bo *nvbo = nouveau_gem_object(gem);
+	काष्ठा tपंचांग_buffer_object *bo = &nvbo->bo;
+	uपूर्णांक32_t करोमुख्यs = valid_करोमुख्यs & nvbo->valid_करोमुख्यs &
+		(ग_लिखो_करोमुख्यs ? ग_लिखो_करोमुख्यs : पढ़ो_करोमुख्यs);
+	uपूर्णांक32_t pref_करोमुख्यs = 0;;
 
-	if (!domains)
-		return -EINVAL;
+	अगर (!करोमुख्यs)
+		वापस -EINVAL;
 
-	valid_domains &= ~(NOUVEAU_GEM_DOMAIN_VRAM | NOUVEAU_GEM_DOMAIN_GART);
+	valid_करोमुख्यs &= ~(NOUVEAU_GEM_DOMAIN_VRAM | NOUVEAU_GEM_DOMAIN_GART);
 
-	if ((domains & NOUVEAU_GEM_DOMAIN_VRAM) &&
+	अगर ((करोमुख्यs & NOUVEAU_GEM_DOMAIN_VRAM) &&
 	    bo->mem.mem_type == TTM_PL_VRAM)
-		pref_domains |= NOUVEAU_GEM_DOMAIN_VRAM;
+		pref_करोमुख्यs |= NOUVEAU_GEM_DOMAIN_VRAM;
 
-	else if ((domains & NOUVEAU_GEM_DOMAIN_GART) &&
+	अन्यथा अगर ((करोमुख्यs & NOUVEAU_GEM_DOMAIN_GART) &&
 		 bo->mem.mem_type == TTM_PL_TT)
-		pref_domains |= NOUVEAU_GEM_DOMAIN_GART;
+		pref_करोमुख्यs |= NOUVEAU_GEM_DOMAIN_GART;
 
-	else if (domains & NOUVEAU_GEM_DOMAIN_VRAM)
-		pref_domains |= NOUVEAU_GEM_DOMAIN_VRAM;
+	अन्यथा अगर (करोमुख्यs & NOUVEAU_GEM_DOMAIN_VRAM)
+		pref_करोमुख्यs |= NOUVEAU_GEM_DOMAIN_VRAM;
 
-	else
-		pref_domains |= NOUVEAU_GEM_DOMAIN_GART;
+	अन्यथा
+		pref_करोमुख्यs |= NOUVEAU_GEM_DOMAIN_GART;
 
-	nouveau_bo_placement_set(nvbo, pref_domains, valid_domains);
+	nouveau_bo_placement_set(nvbo, pref_करोमुख्यs, valid_करोमुख्यs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct validate_op {
-	struct list_head list;
-	struct ww_acquire_ctx ticket;
-};
+काष्ठा validate_op अणु
+	काष्ठा list_head list;
+	काष्ठा ww_acquire_ctx ticket;
+पूर्ण;
 
-static void
-validate_fini_no_ticket(struct validate_op *op, struct nouveau_channel *chan,
-			struct nouveau_fence *fence,
-			struct drm_nouveau_gem_pushbuf_bo *pbbo)
-{
-	struct nouveau_bo *nvbo;
-	struct drm_nouveau_gem_pushbuf_bo *b;
+अटल व्योम
+validate_fini_no_ticket(काष्ठा validate_op *op, काष्ठा nouveau_channel *chan,
+			काष्ठा nouveau_fence *fence,
+			काष्ठा drm_nouveau_gem_pushbuf_bo *pbbo)
+अणु
+	काष्ठा nouveau_bo *nvbo;
+	काष्ठा drm_nouveau_gem_pushbuf_bo *b;
 
-	while (!list_empty(&op->list)) {
-		nvbo = list_entry(op->list.next, struct nouveau_bo, entry);
+	जबतक (!list_empty(&op->list)) अणु
+		nvbo = list_entry(op->list.next, काष्ठा nouveau_bo, entry);
 		b = &pbbo[nvbo->pbbo_index];
 
-		if (likely(fence)) {
-			nouveau_bo_fence(nvbo, fence, !!b->write_domains);
+		अगर (likely(fence)) अणु
+			nouveau_bo_fence(nvbo, fence, !!b->ग_लिखो_करोमुख्यs);
 
-			if (chan->vmm->vmm.object.oclass >= NVIF_CLASS_VMM_NV50) {
-				struct nouveau_vma *vma =
-					(void *)(unsigned long)b->user_priv;
+			अगर (chan->vmm->vmm.object.oclass >= NVIF_CLASS_VMM_NV50) अणु
+				काष्ठा nouveau_vma *vma =
+					(व्योम *)(अचिन्हित दीर्घ)b->user_priv;
 				nouveau_fence_unref(&vma->fence);
 				dma_fence_get(&fence->base);
 				vma->fence = fence;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (unlikely(nvbo->validate_mapped)) {
-			ttm_bo_kunmap(&nvbo->kmap);
+		अगर (unlikely(nvbo->validate_mapped)) अणु
+			tपंचांग_bo_kunmap(&nvbo->kmap);
 			nvbo->validate_mapped = false;
-		}
+		पूर्ण
 
 		list_del(&nvbo->entry);
-		nvbo->reserved_by = NULL;
-		ttm_bo_unreserve(&nvbo->bo);
+		nvbo->reserved_by = शून्य;
+		tपंचांग_bo_unreserve(&nvbo->bo);
 		drm_gem_object_put(&nvbo->bo.base);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-validate_fini(struct validate_op *op, struct nouveau_channel *chan,
-	      struct nouveau_fence *fence,
-	      struct drm_nouveau_gem_pushbuf_bo *pbbo)
-{
+अटल व्योम
+validate_fini(काष्ठा validate_op *op, काष्ठा nouveau_channel *chan,
+	      काष्ठा nouveau_fence *fence,
+	      काष्ठा drm_nouveau_gem_pushbuf_bo *pbbo)
+अणु
 	validate_fini_no_ticket(op, chan, fence, pbbo);
 	ww_acquire_fini(&op->ticket);
-}
+पूर्ण
 
-static int
-validate_init(struct nouveau_channel *chan, struct drm_file *file_priv,
-	      struct drm_nouveau_gem_pushbuf_bo *pbbo,
-	      int nr_buffers, struct validate_op *op)
-{
-	struct nouveau_cli *cli = nouveau_cli(file_priv);
-	int trycnt = 0;
-	int ret = -EINVAL, i;
-	struct nouveau_bo *res_bo = NULL;
+अटल पूर्णांक
+validate_init(काष्ठा nouveau_channel *chan, काष्ठा drm_file *file_priv,
+	      काष्ठा drm_nouveau_gem_pushbuf_bo *pbbo,
+	      पूर्णांक nr_buffers, काष्ठा validate_op *op)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(file_priv);
+	पूर्णांक trycnt = 0;
+	पूर्णांक ret = -EINVAL, i;
+	काष्ठा nouveau_bo *res_bo = शून्य;
 	LIST_HEAD(gart_list);
 	LIST_HEAD(vram_list);
 	LIST_HEAD(both_list);
 
 	ww_acquire_init(&op->ticket, &reservation_ww_class);
 retry:
-	if (++trycnt > 100000) {
+	अगर (++trycnt > 100000) अणु
 		NV_PRINTK(err, cli, "%s failed and gave up.\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < nr_buffers; i++) {
-		struct drm_nouveau_gem_pushbuf_bo *b = &pbbo[i];
-		struct drm_gem_object *gem;
-		struct nouveau_bo *nvbo;
+	क्रम (i = 0; i < nr_buffers; i++) अणु
+		काष्ठा drm_nouveau_gem_pushbuf_bo *b = &pbbo[i];
+		काष्ठा drm_gem_object *gem;
+		काष्ठा nouveau_bo *nvbo;
 
 		gem = drm_gem_object_lookup(file_priv, b->handle);
-		if (!gem) {
+		अगर (!gem) अणु
 			NV_PRINTK(err, cli, "Unknown handle 0x%08x\n", b->handle);
 			ret = -ENOENT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		nvbo = nouveau_gem_object(gem);
-		if (nvbo == res_bo) {
-			res_bo = NULL;
+		अगर (nvbo == res_bo) अणु
+			res_bo = शून्य;
 			drm_gem_object_put(gem);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (nvbo->reserved_by && nvbo->reserved_by == file_priv) {
+		अगर (nvbo->reserved_by && nvbo->reserved_by == file_priv) अणु
 			NV_PRINTK(err, cli, "multiple instances of buffer %d on "
 				      "validation list\n", b->handle);
 			drm_gem_object_put(gem);
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ret = ttm_bo_reserve(&nvbo->bo, true, false, &op->ticket);
-		if (ret) {
+		ret = tपंचांग_bo_reserve(&nvbo->bo, true, false, &op->ticket);
+		अगर (ret) अणु
 			list_splice_tail_init(&vram_list, &op->list);
 			list_splice_tail_init(&gart_list, &op->list);
 			list_splice_tail_init(&both_list, &op->list);
-			validate_fini_no_ticket(op, chan, NULL, NULL);
-			if (unlikely(ret == -EDEADLK)) {
-				ret = ttm_bo_reserve_slowpath(&nvbo->bo, true,
+			validate_fini_no_ticket(op, chan, शून्य, शून्य);
+			अगर (unlikely(ret == -EDEADLK)) अणु
+				ret = tपंचांग_bo_reserve_slowpath(&nvbo->bo, true,
 							      &op->ticket);
-				if (!ret)
+				अगर (!ret)
 					res_bo = nvbo;
-			}
-			if (unlikely(ret)) {
-				if (ret != -ERESTARTSYS)
+			पूर्ण
+			अगर (unlikely(ret)) अणु
+				अगर (ret != -ERESTARTSYS)
 					NV_PRINTK(err, cli, "fail reserve\n");
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (chan->vmm->vmm.object.oclass >= NVIF_CLASS_VMM_NV50) {
-			struct nouveau_vmm *vmm = chan->vmm;
-			struct nouveau_vma *vma = nouveau_vma_find(nvbo, vmm);
-			if (!vma) {
+		अगर (chan->vmm->vmm.object.oclass >= NVIF_CLASS_VMM_NV50) अणु
+			काष्ठा nouveau_vmm *vmm = chan->vmm;
+			काष्ठा nouveau_vma *vma = nouveau_vma_find(nvbo, vmm);
+			अगर (!vma) अणु
 				NV_PRINTK(err, cli, "vma not found!\n");
 				ret = -EINVAL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			b->user_priv = (uint64_t)(unsigned long)vma;
-		} else {
-			b->user_priv = (uint64_t)(unsigned long)nvbo;
-		}
+			b->user_priv = (uपूर्णांक64_t)(अचिन्हित दीर्घ)vma;
+		पूर्ण अन्यथा अणु
+			b->user_priv = (uपूर्णांक64_t)(अचिन्हित दीर्घ)nvbo;
+		पूर्ण
 
 		nvbo->reserved_by = file_priv;
 		nvbo->pbbo_index = i;
-		if ((b->valid_domains & NOUVEAU_GEM_DOMAIN_VRAM) &&
-		    (b->valid_domains & NOUVEAU_GEM_DOMAIN_GART))
+		अगर ((b->valid_करोमुख्यs & NOUVEAU_GEM_DOMAIN_VRAM) &&
+		    (b->valid_करोमुख्यs & NOUVEAU_GEM_DOMAIN_GART))
 			list_add_tail(&nvbo->entry, &both_list);
-		else
-		if (b->valid_domains & NOUVEAU_GEM_DOMAIN_VRAM)
+		अन्यथा
+		अगर (b->valid_करोमुख्यs & NOUVEAU_GEM_DOMAIN_VRAM)
 			list_add_tail(&nvbo->entry, &vram_list);
-		else
-		if (b->valid_domains & NOUVEAU_GEM_DOMAIN_GART)
+		अन्यथा
+		अगर (b->valid_करोमुख्यs & NOUVEAU_GEM_DOMAIN_GART)
 			list_add_tail(&nvbo->entry, &gart_list);
-		else {
+		अन्यथा अणु
 			NV_PRINTK(err, cli, "invalid valid domains: 0x%08x\n",
-				 b->valid_domains);
+				 b->valid_करोमुख्यs);
 			list_add_tail(&nvbo->entry, &both_list);
 			ret = -EINVAL;
-			break;
-		}
-		if (nvbo == res_bo)
-			goto retry;
-	}
+			अवरोध;
+		पूर्ण
+		अगर (nvbo == res_bo)
+			जाओ retry;
+	पूर्ण
 
-	ww_acquire_done(&op->ticket);
+	ww_acquire_करोne(&op->ticket);
 	list_splice_tail(&vram_list, &op->list);
 	list_splice_tail(&gart_list, &op->list);
 	list_splice_tail(&both_list, &op->list);
-	if (ret)
-		validate_fini(op, chan, NULL, NULL);
-	return ret;
+	अगर (ret)
+		validate_fini(op, chan, शून्य, शून्य);
+	वापस ret;
 
-}
+पूर्ण
 
-static int
-validate_list(struct nouveau_channel *chan, struct nouveau_cli *cli,
-	      struct list_head *list, struct drm_nouveau_gem_pushbuf_bo *pbbo)
-{
-	struct nouveau_drm *drm = chan->drm;
-	struct nouveau_bo *nvbo;
-	int ret, relocs = 0;
+अटल पूर्णांक
+validate_list(काष्ठा nouveau_channel *chan, काष्ठा nouveau_cli *cli,
+	      काष्ठा list_head *list, काष्ठा drm_nouveau_gem_pushbuf_bo *pbbo)
+अणु
+	काष्ठा nouveau_drm *drm = chan->drm;
+	काष्ठा nouveau_bo *nvbo;
+	पूर्णांक ret, relocs = 0;
 
-	list_for_each_entry(nvbo, list, entry) {
-		struct drm_nouveau_gem_pushbuf_bo *b = &pbbo[nvbo->pbbo_index];
+	list_क्रम_each_entry(nvbo, list, entry) अणु
+		काष्ठा drm_nouveau_gem_pushbuf_bo *b = &pbbo[nvbo->pbbo_index];
 
-		ret = nouveau_gem_set_domain(&nvbo->bo.base, b->read_domains,
-					     b->write_domains,
-					     b->valid_domains);
-		if (unlikely(ret)) {
+		ret = nouveau_gem_set_करोमुख्य(&nvbo->bo.base, b->पढ़ो_करोमुख्यs,
+					     b->ग_लिखो_करोमुख्यs,
+					     b->valid_करोमुख्यs);
+		अगर (unlikely(ret)) अणु
 			NV_PRINTK(err, cli, "fail set_domain\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = nouveau_bo_validate(nvbo, true, false);
-		if (unlikely(ret)) {
-			if (ret != -ERESTARTSYS)
+		अगर (unlikely(ret)) अणु
+			अगर (ret != -ERESTARTSYS)
 				NV_PRINTK(err, cli, "fail ttm_validate\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = nouveau_fence_sync(nvbo, chan, !!b->write_domains, true);
-		if (unlikely(ret)) {
-			if (ret != -ERESTARTSYS)
+		ret = nouveau_fence_sync(nvbo, chan, !!b->ग_लिखो_करोमुख्यs, true);
+		अगर (unlikely(ret)) अणु
+			अगर (ret != -ERESTARTSYS)
 				NV_PRINTK(err, cli, "fail post-validate sync\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA) {
-			if (nvbo->offset == b->presumed.offset &&
+		अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA) अणु
+			अगर (nvbo->offset == b->presumed.offset &&
 			    ((nvbo->bo.mem.mem_type == TTM_PL_VRAM &&
-			      b->presumed.domain & NOUVEAU_GEM_DOMAIN_VRAM) ||
+			      b->presumed.करोमुख्य & NOUVEAU_GEM_DOMAIN_VRAM) ||
 			     (nvbo->bo.mem.mem_type == TTM_PL_TT &&
-			      b->presumed.domain & NOUVEAU_GEM_DOMAIN_GART)))
-				continue;
+			      b->presumed.करोमुख्य & NOUVEAU_GEM_DOMAIN_GART)))
+				जारी;
 
-			if (nvbo->bo.mem.mem_type == TTM_PL_TT)
-				b->presumed.domain = NOUVEAU_GEM_DOMAIN_GART;
-			else
-				b->presumed.domain = NOUVEAU_GEM_DOMAIN_VRAM;
+			अगर (nvbo->bo.mem.mem_type == TTM_PL_TT)
+				b->presumed.करोमुख्य = NOUVEAU_GEM_DOMAIN_GART;
+			अन्यथा
+				b->presumed.करोमुख्य = NOUVEAU_GEM_DOMAIN_VRAM;
 			b->presumed.offset = nvbo->offset;
 			b->presumed.valid = 0;
 			relocs++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return relocs;
-}
+	वापस relocs;
+पूर्ण
 
-static int
-nouveau_gem_pushbuf_validate(struct nouveau_channel *chan,
-			     struct drm_file *file_priv,
-			     struct drm_nouveau_gem_pushbuf_bo *pbbo,
-			     int nr_buffers,
-			     struct validate_op *op, bool *apply_relocs)
-{
-	struct nouveau_cli *cli = nouveau_cli(file_priv);
-	int ret;
+अटल पूर्णांक
+nouveau_gem_pushbuf_validate(काष्ठा nouveau_channel *chan,
+			     काष्ठा drm_file *file_priv,
+			     काष्ठा drm_nouveau_gem_pushbuf_bo *pbbo,
+			     पूर्णांक nr_buffers,
+			     काष्ठा validate_op *op, bool *apply_relocs)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(file_priv);
+	पूर्णांक ret;
 
 	INIT_LIST_HEAD(&op->list);
 
-	if (nr_buffers == 0)
-		return 0;
+	अगर (nr_buffers == 0)
+		वापस 0;
 
 	ret = validate_init(chan, file_priv, pbbo, nr_buffers, op);
-	if (unlikely(ret)) {
-		if (ret != -ERESTARTSYS)
+	अगर (unlikely(ret)) अणु
+		अगर (ret != -ERESTARTSYS)
 			NV_PRINTK(err, cli, "validate_init\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = validate_list(chan, cli, &op->list, pbbo);
-	if (unlikely(ret < 0)) {
-		if (ret != -ERESTARTSYS)
+	अगर (unlikely(ret < 0)) अणु
+		अगर (ret != -ERESTARTSYS)
 			NV_PRINTK(err, cli, "validating bo list\n");
-		validate_fini(op, chan, NULL, NULL);
-		return ret;
-	} else if (ret > 0) {
+		validate_fini(op, chan, शून्य, शून्य);
+		वापस ret;
+	पूर्ण अन्यथा अगर (ret > 0) अणु
 		*apply_relocs = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void
-u_free(void *addr)
-{
-	kvfree(addr);
-}
+अटल अंतरभूत व्योम
+u_मुक्त(व्योम *addr)
+अणु
+	kvमुक्त(addr);
+पूर्ण
 
-static inline void *
-u_memcpya(uint64_t user, unsigned nmemb, unsigned size)
-{
-	void *mem;
-	void __user *userptr = (void __force __user *)(uintptr_t)user;
+अटल अंतरभूत व्योम *
+u_स_नकलa(uपूर्णांक64_t user, अचिन्हित nmemb, अचिन्हित size)
+अणु
+	व्योम *mem;
+	व्योम __user *userptr = (व्योम __क्रमce __user *)(uपूर्णांकptr_t)user;
 
 	size *= nmemb;
 
-	mem = kvmalloc(size, GFP_KERNEL);
-	if (!mem)
-		return ERR_PTR(-ENOMEM);
+	mem = kvदो_स्मृति(size, GFP_KERNEL);
+	अगर (!mem)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (copy_from_user(mem, userptr, size)) {
-		u_free(mem);
-		return ERR_PTR(-EFAULT);
-	}
+	अगर (copy_from_user(mem, userptr, size)) अणु
+		u_मुक्त(mem);
+		वापस ERR_PTR(-EFAULT);
+	पूर्ण
 
-	return mem;
-}
+	वापस mem;
+पूर्ण
 
-static int
-nouveau_gem_pushbuf_reloc_apply(struct nouveau_cli *cli,
-				struct drm_nouveau_gem_pushbuf *req,
-				struct drm_nouveau_gem_pushbuf_reloc *reloc,
-				struct drm_nouveau_gem_pushbuf_bo *bo)
-{
-	int ret = 0;
-	unsigned i;
+अटल पूर्णांक
+nouveau_gem_pushbuf_reloc_apply(काष्ठा nouveau_cli *cli,
+				काष्ठा drm_nouveau_gem_pushbuf *req,
+				काष्ठा drm_nouveau_gem_pushbuf_reloc *reloc,
+				काष्ठा drm_nouveau_gem_pushbuf_bo *bo)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित i;
 
-	for (i = 0; i < req->nr_relocs; i++) {
-		struct drm_nouveau_gem_pushbuf_reloc *r = &reloc[i];
-		struct drm_nouveau_gem_pushbuf_bo *b;
-		struct nouveau_bo *nvbo;
-		uint32_t data;
+	क्रम (i = 0; i < req->nr_relocs; i++) अणु
+		काष्ठा drm_nouveau_gem_pushbuf_reloc *r = &reloc[i];
+		काष्ठा drm_nouveau_gem_pushbuf_bo *b;
+		काष्ठा nouveau_bo *nvbo;
+		uपूर्णांक32_t data;
 
-		if (unlikely(r->bo_index >= req->nr_buffers)) {
+		अगर (unlikely(r->bo_index >= req->nr_buffers)) अणु
 			NV_PRINTK(err, cli, "reloc bo index invalid\n");
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		b = &bo[r->bo_index];
-		if (b->presumed.valid)
-			continue;
+		अगर (b->presumed.valid)
+			जारी;
 
-		if (unlikely(r->reloc_bo_index >= req->nr_buffers)) {
+		अगर (unlikely(r->reloc_bo_index >= req->nr_buffers)) अणु
 			NV_PRINTK(err, cli, "reloc container bo index invalid\n");
 			ret = -EINVAL;
-			break;
-		}
-		nvbo = (void *)(unsigned long)bo[r->reloc_bo_index].user_priv;
+			अवरोध;
+		पूर्ण
+		nvbo = (व्योम *)(अचिन्हित दीर्घ)bo[r->reloc_bo_index].user_priv;
 
-		if (unlikely(r->reloc_bo_offset + 4 >
-			     nvbo->bo.mem.num_pages << PAGE_SHIFT)) {
+		अगर (unlikely(r->reloc_bo_offset + 4 >
+			     nvbo->bo.mem.num_pages << PAGE_SHIFT)) अणु
 			NV_PRINTK(err, cli, "reloc outside of bo\n");
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!nvbo->kmap.virtual) {
-			ret = ttm_bo_kmap(&nvbo->bo, 0, nvbo->bo.mem.num_pages,
+		अगर (!nvbo->kmap.भव) अणु
+			ret = tपंचांग_bo_kmap(&nvbo->bo, 0, nvbo->bo.mem.num_pages,
 					  &nvbo->kmap);
-			if (ret) {
+			अगर (ret) अणु
 				NV_PRINTK(err, cli, "failed kmap for reloc\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			nvbo->validate_mapped = true;
-		}
+		पूर्ण
 
-		if (r->flags & NOUVEAU_GEM_RELOC_LOW)
+		अगर (r->flags & NOUVEAU_GEM_RELOC_LOW)
 			data = b->presumed.offset + r->data;
-		else
-		if (r->flags & NOUVEAU_GEM_RELOC_HIGH)
+		अन्यथा
+		अगर (r->flags & NOUVEAU_GEM_RELOC_HIGH)
 			data = (b->presumed.offset + r->data) >> 32;
-		else
+		अन्यथा
 			data = r->data;
 
-		if (r->flags & NOUVEAU_GEM_RELOC_OR) {
-			if (b->presumed.domain == NOUVEAU_GEM_DOMAIN_GART)
+		अगर (r->flags & NOUVEAU_GEM_RELOC_OR) अणु
+			अगर (b->presumed.करोमुख्य == NOUVEAU_GEM_DOMAIN_GART)
 				data |= r->tor;
-			else
+			अन्यथा
 				data |= r->vor;
-		}
+		पूर्ण
 
-		ret = ttm_bo_wait(&nvbo->bo, false, false);
-		if (ret) {
+		ret = tपंचांग_bo_रुको(&nvbo->bo, false, false);
+		अगर (ret) अणु
 			NV_PRINTK(err, cli, "reloc wait_idle failed: %d\n", ret);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		nouveau_bo_wr32(nvbo, r->reloc_bo_offset >> 2, data);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-nouveau_gem_ioctl_pushbuf(struct drm_device *dev, void *data,
-			  struct drm_file *file_priv)
-{
-	struct nouveau_abi16 *abi16 = nouveau_abi16_get(file_priv);
-	struct nouveau_cli *cli = nouveau_cli(file_priv);
-	struct nouveau_abi16_chan *temp;
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct drm_nouveau_gem_pushbuf *req = data;
-	struct drm_nouveau_gem_pushbuf_push *push;
-	struct drm_nouveau_gem_pushbuf_reloc *reloc = NULL;
-	struct drm_nouveau_gem_pushbuf_bo *bo;
-	struct nouveau_channel *chan = NULL;
-	struct validate_op op;
-	struct nouveau_fence *fence = NULL;
-	int i, j, ret = 0;
-	bool do_reloc = false, sync = false;
+पूर्णांक
+nouveau_gem_ioctl_pushbuf(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा nouveau_abi16 *abi16 = nouveau_abi16_get(file_priv);
+	काष्ठा nouveau_cli *cli = nouveau_cli(file_priv);
+	काष्ठा nouveau_abi16_chan *temp;
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा drm_nouveau_gem_pushbuf *req = data;
+	काष्ठा drm_nouveau_gem_pushbuf_push *push;
+	काष्ठा drm_nouveau_gem_pushbuf_reloc *reloc = शून्य;
+	काष्ठा drm_nouveau_gem_pushbuf_bo *bo;
+	काष्ठा nouveau_channel *chan = शून्य;
+	काष्ठा validate_op op;
+	काष्ठा nouveau_fence *fence = शून्य;
+	पूर्णांक i, j, ret = 0;
+	bool करो_reloc = false, sync = false;
 
-	if (unlikely(!abi16))
-		return -ENOMEM;
+	अगर (unlikely(!abi16))
+		वापस -ENOMEM;
 
-	list_for_each_entry(temp, &abi16->channels, head) {
-		if (temp->chan->chid == req->channel) {
+	list_क्रम_each_entry(temp, &abi16->channels, head) अणु
+		अगर (temp->chan->chid == req->channel) अणु
 			chan = temp->chan;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!chan)
-		return nouveau_abi16_put(abi16, -ENOENT);
-	if (unlikely(atomic_read(&chan->killed)))
-		return nouveau_abi16_put(abi16, -ENODEV);
+	अगर (!chan)
+		वापस nouveau_abi16_put(abi16, -ENOENT);
+	अगर (unlikely(atomic_पढ़ो(&chan->समाप्तed)))
+		वापस nouveau_abi16_put(abi16, -ENODEV);
 
 	sync = req->vram_available & NOUVEAU_GEM_PUSHBUF_SYNC;
 
 	req->vram_available = drm->gem.vram_available;
 	req->gart_available = drm->gem.gart_available;
-	if (unlikely(req->nr_push == 0))
-		goto out_next;
+	अगर (unlikely(req->nr_push == 0))
+		जाओ out_next;
 
-	if (unlikely(req->nr_push > NOUVEAU_GEM_MAX_PUSH)) {
+	अगर (unlikely(req->nr_push > NOUVEAU_GEM_MAX_PUSH)) अणु
 		NV_PRINTK(err, cli, "pushbuf push count exceeds limit: %d max %d\n",
 			 req->nr_push, NOUVEAU_GEM_MAX_PUSH);
-		return nouveau_abi16_put(abi16, -EINVAL);
-	}
+		वापस nouveau_abi16_put(abi16, -EINVAL);
+	पूर्ण
 
-	if (unlikely(req->nr_buffers > NOUVEAU_GEM_MAX_BUFFERS)) {
+	अगर (unlikely(req->nr_buffers > NOUVEAU_GEM_MAX_BUFFERS)) अणु
 		NV_PRINTK(err, cli, "pushbuf bo count exceeds limit: %d max %d\n",
 			 req->nr_buffers, NOUVEAU_GEM_MAX_BUFFERS);
-		return nouveau_abi16_put(abi16, -EINVAL);
-	}
+		वापस nouveau_abi16_put(abi16, -EINVAL);
+	पूर्ण
 
-	if (unlikely(req->nr_relocs > NOUVEAU_GEM_MAX_RELOCS)) {
+	अगर (unlikely(req->nr_relocs > NOUVEAU_GEM_MAX_RELOCS)) अणु
 		NV_PRINTK(err, cli, "pushbuf reloc count exceeds limit: %d max %d\n",
 			 req->nr_relocs, NOUVEAU_GEM_MAX_RELOCS);
-		return nouveau_abi16_put(abi16, -EINVAL);
-	}
+		वापस nouveau_abi16_put(abi16, -EINVAL);
+	पूर्ण
 
-	push = u_memcpya(req->push, req->nr_push, sizeof(*push));
-	if (IS_ERR(push))
-		return nouveau_abi16_put(abi16, PTR_ERR(push));
+	push = u_स_नकलa(req->push, req->nr_push, माप(*push));
+	अगर (IS_ERR(push))
+		वापस nouveau_abi16_put(abi16, PTR_ERR(push));
 
-	bo = u_memcpya(req->buffers, req->nr_buffers, sizeof(*bo));
-	if (IS_ERR(bo)) {
-		u_free(push);
-		return nouveau_abi16_put(abi16, PTR_ERR(bo));
-	}
+	bo = u_स_नकलa(req->buffers, req->nr_buffers, माप(*bo));
+	अगर (IS_ERR(bo)) अणु
+		u_मुक्त(push);
+		वापस nouveau_abi16_put(abi16, PTR_ERR(bo));
+	पूर्ण
 
 	/* Ensure all push buffers are on validate list */
-	for (i = 0; i < req->nr_push; i++) {
-		if (push[i].bo_index >= req->nr_buffers) {
+	क्रम (i = 0; i < req->nr_push; i++) अणु
+		अगर (push[i].bo_index >= req->nr_buffers) अणु
 			NV_PRINTK(err, cli, "push %d buffer not in list\n", i);
 			ret = -EINVAL;
-			goto out_prevalid;
-		}
-	}
+			जाओ out_prevalid;
+		पूर्ण
+	पूर्ण
 
 	/* Validate buffer list */
 revalidate:
 	ret = nouveau_gem_pushbuf_validate(chan, file_priv, bo,
-					   req->nr_buffers, &op, &do_reloc);
-	if (ret) {
-		if (ret != -ERESTARTSYS)
+					   req->nr_buffers, &op, &करो_reloc);
+	अगर (ret) अणु
+		अगर (ret != -ERESTARTSYS)
 			NV_PRINTK(err, cli, "validate: %d\n", ret);
-		goto out_prevalid;
-	}
+		जाओ out_prevalid;
+	पूर्ण
 
 	/* Apply any relocations that are required */
-	if (do_reloc) {
-		if (!reloc) {
-			validate_fini(&op, chan, NULL, bo);
-			reloc = u_memcpya(req->relocs, req->nr_relocs, sizeof(*reloc));
-			if (IS_ERR(reloc)) {
+	अगर (करो_reloc) अणु
+		अगर (!reloc) अणु
+			validate_fini(&op, chan, शून्य, bo);
+			reloc = u_स_नकलa(req->relocs, req->nr_relocs, माप(*reloc));
+			अगर (IS_ERR(reloc)) अणु
 				ret = PTR_ERR(reloc);
-				goto out_prevalid;
-			}
+				जाओ out_prevalid;
+			पूर्ण
 
-			goto revalidate;
-		}
+			जाओ revalidate;
+		पूर्ण
 
 		ret = nouveau_gem_pushbuf_reloc_apply(cli, req, reloc, bo);
-		if (ret) {
+		अगर (ret) अणु
 			NV_PRINTK(err, cli, "reloc apply: %d\n", ret);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (chan->dma.ib_max) {
-		ret = nouveau_dma_wait(chan, req->nr_push + 1, 16);
-		if (ret) {
+	अगर (chan->dma.ib_max) अणु
+		ret = nouveau_dma_रुको(chan, req->nr_push + 1, 16);
+		अगर (ret) अणु
 			NV_PRINTK(err, cli, "nv50cal_space: %d\n", ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (i = 0; i < req->nr_push; i++) {
-			struct nouveau_vma *vma = (void *)(unsigned long)
+		क्रम (i = 0; i < req->nr_push; i++) अणु
+			काष्ठा nouveau_vma *vma = (व्योम *)(अचिन्हित दीर्घ)
 				bo[push[i].bo_index].user_priv;
 
 			nv50_dma_push(chan, vma->addr + push[i].offset,
 				      push[i].length);
-		}
-	} else
-	if (drm->client.device.info.chipset >= 0x25) {
+		पूर्ण
+	पूर्ण अन्यथा
+	अगर (drm->client.device.info.chipset >= 0x25) अणु
 		ret = PUSH_WAIT(chan->chan.push, req->nr_push * 2);
-		if (ret) {
+		अगर (ret) अणु
 			NV_PRINTK(err, cli, "cal_space: %d\n", ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (i = 0; i < req->nr_push; i++) {
-			struct nouveau_bo *nvbo = (void *)(unsigned long)
+		क्रम (i = 0; i < req->nr_push; i++) अणु
+			काष्ठा nouveau_bo *nvbo = (व्योम *)(अचिन्हित दीर्घ)
 				bo[push[i].bo_index].user_priv;
 
 			PUSH_CALL(chan->chan.push, nvbo->offset + push[i].offset);
 			PUSH_DATA(chan->chan.push, 0);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = PUSH_WAIT(chan->chan.push, req->nr_push * (2 + NOUVEAU_DMA_SKIPS));
-		if (ret) {
+		अगर (ret) अणु
 			NV_PRINTK(err, cli, "jmp_space: %d\n", ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (i = 0; i < req->nr_push; i++) {
-			struct nouveau_bo *nvbo = (void *)(unsigned long)
+		क्रम (i = 0; i < req->nr_push; i++) अणु
+			काष्ठा nouveau_bo *nvbo = (व्योम *)(अचिन्हित दीर्घ)
 				bo[push[i].bo_index].user_priv;
-			uint32_t cmd;
+			uपूर्णांक32_t cmd;
 
 			cmd = chan->push.addr + ((chan->dma.cur + 2) << 2);
 			cmd |= 0x20000000;
-			if (unlikely(cmd != req->suffix0)) {
-				if (!nvbo->kmap.virtual) {
-					ret = ttm_bo_kmap(&nvbo->bo, 0,
+			अगर (unlikely(cmd != req->suffix0)) अणु
+				अगर (!nvbo->kmap.भव) अणु
+					ret = tपंचांग_bo_kmap(&nvbo->bo, 0,
 							  nvbo->bo.mem.
 							  num_pages,
 							  &nvbo->kmap);
-					if (ret) {
+					अगर (ret) अणु
 						WIND_RING(chan);
-						goto out;
-					}
+						जाओ out;
+					पूर्ण
 					nvbo->validate_mapped = true;
-				}
+				पूर्ण
 
 				nouveau_bo_wr32(nvbo, (push[i].offset +
 						push[i].length - 8) / 4, cmd);
-			}
+			पूर्ण
 
 			PUSH_JUMP(chan->chan.push, nvbo->offset + push[i].offset);
 			PUSH_DATA(chan->chan.push, 0);
-			for (j = 0; j < NOUVEAU_DMA_SKIPS; j++)
+			क्रम (j = 0; j < NOUVEAU_DMA_SKIPS; j++)
 				PUSH_DATA(chan->chan.push, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = nouveau_fence_new(chan, false, &fence);
-	if (ret) {
+	अगर (ret) अणु
 		NV_PRINTK(err, cli, "error fencing pushbuf: %d\n", ret);
 		WIND_RING(chan);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (sync) {
-		if (!(ret = nouveau_fence_wait(fence, false, false))) {
-			if ((ret = dma_fence_get_status(&fence->base)) == 1)
+	अगर (sync) अणु
+		अगर (!(ret = nouveau_fence_रुको(fence, false, false))) अणु
+			अगर ((ret = dma_fence_get_status(&fence->base)) == 1)
 				ret = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	validate_fini(&op, chan, fence, bo);
 	nouveau_fence_unref(&fence);
 
-	if (do_reloc) {
-		struct drm_nouveau_gem_pushbuf_bo __user *upbbo =
+	अगर (करो_reloc) अणु
+		काष्ठा drm_nouveau_gem_pushbuf_bo __user *upbbo =
 			u64_to_user_ptr(req->buffers);
 
-		for (i = 0; i < req->nr_buffers; i++) {
-			if (bo[i].presumed.valid)
-				continue;
+		क्रम (i = 0; i < req->nr_buffers; i++) अणु
+			अगर (bo[i].presumed.valid)
+				जारी;
 
-			if (copy_to_user(&upbbo[i].presumed, &bo[i].presumed,
-					 sizeof(bo[i].presumed))) {
+			अगर (copy_to_user(&upbbo[i].presumed, &bo[i].presumed,
+					 माप(bo[i].presumed))) अणु
 				ret = -EFAULT;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out_prevalid:
-	if (!IS_ERR(reloc))
-		u_free(reloc);
-	u_free(bo);
-	u_free(push);
+	अगर (!IS_ERR(reloc))
+		u_मुक्त(reloc);
+	u_मुक्त(bo);
+	u_मुक्त(push);
 
 out_next:
-	if (chan->dma.ib_max) {
+	अगर (chan->dma.ib_max) अणु
 		req->suffix0 = 0x00000000;
 		req->suffix1 = 0x00000000;
-	} else
-	if (drm->client.device.info.chipset >= 0x25) {
+	पूर्ण अन्यथा
+	अगर (drm->client.device.info.chipset >= 0x25) अणु
 		req->suffix0 = 0x00020000;
 		req->suffix1 = 0x00000000;
-	} else {
+	पूर्ण अन्यथा अणु
 		req->suffix0 = 0x20000000 |
 			      (chan->push.addr + ((chan->dma.cur + 2) << 2));
 		req->suffix1 = 0x00000000;
-	}
+	पूर्ण
 
-	return nouveau_abi16_put(abi16, ret);
-}
+	वापस nouveau_abi16_put(abi16, ret);
+पूर्ण
 
-int
-nouveau_gem_ioctl_cpu_prep(struct drm_device *dev, void *data,
-			   struct drm_file *file_priv)
-{
-	struct drm_nouveau_gem_cpu_prep *req = data;
-	struct drm_gem_object *gem;
-	struct nouveau_bo *nvbo;
-	bool no_wait = !!(req->flags & NOUVEAU_GEM_CPU_PREP_NOWAIT);
-	bool write = !!(req->flags & NOUVEAU_GEM_CPU_PREP_WRITE);
-	long lret;
-	int ret;
+पूर्णांक
+nouveau_gem_ioctl_cpu_prep(काष्ठा drm_device *dev, व्योम *data,
+			   काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_nouveau_gem_cpu_prep *req = data;
+	काष्ठा drm_gem_object *gem;
+	काष्ठा nouveau_bo *nvbo;
+	bool no_रुको = !!(req->flags & NOUVEAU_GEM_CPU_PREP_NOWAIT);
+	bool ग_लिखो = !!(req->flags & NOUVEAU_GEM_CPU_PREP_WRITE);
+	दीर्घ lret;
+	पूर्णांक ret;
 
 	gem = drm_gem_object_lookup(file_priv, req->handle);
-	if (!gem)
-		return -ENOENT;
+	अगर (!gem)
+		वापस -ENOENT;
 	nvbo = nouveau_gem_object(gem);
 
-	lret = dma_resv_wait_timeout_rcu(nvbo->bo.base.resv, write, true,
-						   no_wait ? 0 : 30 * HZ);
-	if (!lret)
+	lret = dma_resv_रुको_समयout_rcu(nvbo->bo.base.resv, ग_लिखो, true,
+						   no_रुको ? 0 : 30 * HZ);
+	अगर (!lret)
 		ret = -EBUSY;
-	else if (lret > 0)
+	अन्यथा अगर (lret > 0)
 		ret = 0;
-	else
+	अन्यथा
 		ret = lret;
 
-	nouveau_bo_sync_for_cpu(nvbo);
+	nouveau_bo_sync_क्रम_cpu(nvbo);
 	drm_gem_object_put(gem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-nouveau_gem_ioctl_cpu_fini(struct drm_device *dev, void *data,
-			   struct drm_file *file_priv)
-{
-	struct drm_nouveau_gem_cpu_fini *req = data;
-	struct drm_gem_object *gem;
-	struct nouveau_bo *nvbo;
+पूर्णांक
+nouveau_gem_ioctl_cpu_fini(काष्ठा drm_device *dev, व्योम *data,
+			   काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_nouveau_gem_cpu_fini *req = data;
+	काष्ठा drm_gem_object *gem;
+	काष्ठा nouveau_bo *nvbo;
 
 	gem = drm_gem_object_lookup(file_priv, req->handle);
-	if (!gem)
-		return -ENOENT;
+	अगर (!gem)
+		वापस -ENOENT;
 	nvbo = nouveau_gem_object(gem);
 
-	nouveau_bo_sync_for_device(nvbo);
+	nouveau_bo_sync_क्रम_device(nvbo);
 	drm_gem_object_put(gem);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nouveau_gem_ioctl_info(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv)
-{
-	struct drm_nouveau_gem_info *req = data;
-	struct drm_gem_object *gem;
-	int ret;
+पूर्णांक
+nouveau_gem_ioctl_info(काष्ठा drm_device *dev, व्योम *data,
+		       काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_nouveau_gem_info *req = data;
+	काष्ठा drm_gem_object *gem;
+	पूर्णांक ret;
 
 	gem = drm_gem_object_lookup(file_priv, req->handle);
-	if (!gem)
-		return -ENOENT;
+	अगर (!gem)
+		वापस -ENOENT;
 
 	ret = nouveau_gem_info(file_priv, gem, req);
 	drm_gem_object_put(gem);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 

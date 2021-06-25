@@ -1,13 +1,14 @@
+<शैली गुरु>
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,42 +22,42 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef PP_DEBUG_H
-#define PP_DEBUG_H
+#अगर_अघोषित PP_DEBUG_H
+#घोषणा PP_DEBUG_H
 
-#ifdef pr_fmt
-#undef pr_fmt
-#endif
+#अगर_घोषित pr_fmt
+#अघोषित pr_fmt
+#पूर्ण_अगर
 
-#define pr_fmt(fmt) "amdgpu: [powerplay] " fmt
+#घोषणा pr_fmt(fmt) "amdgpu: [powerplay] " fmt
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
 
-#define PP_ASSERT_WITH_CODE(cond, msg, code)	\
-	do {					\
-		if (!(cond)) {			\
+#घोषणा PP_ASSERT_WITH_CODE(cond, msg, code)	\
+	करो अणु					\
+		अगर (!(cond)) अणु			\
 			pr_warn_ratelimited("%s\n", msg);	\
 			code;			\
-		}				\
-	} while (0)
+		पूर्ण				\
+	पूर्ण जबतक (0)
 
-#define PP_ASSERT(cond, msg)	\
-	do {					\
-		if (!(cond)) {			\
+#घोषणा PP_ASSERT(cond, msg)	\
+	करो अणु					\
+		अगर (!(cond)) अणु			\
 			pr_warn_ratelimited("%s\n", msg);	\
-		}				\
-	} while (0)
+		पूर्ण				\
+	पूर्ण जबतक (0)
 
-#define PP_DBG_LOG(fmt, ...) \
-	do { \
+#घोषणा PP_DBG_LOG(fmt, ...) \
+	करो अणु \
 		pr_debug(fmt, ##__VA_ARGS__); \
-	} while (0)
+	पूर्ण जबतक (0)
 
 
-#define GET_FLEXIBLE_ARRAY_MEMBER_ADDR(type, member, ptr, n)	\
-	(type *)((char *)&(ptr)->member + (sizeof(type) * (n)))
+#घोषणा GET_FLEXIBLE_ARRAY_MEMBER_ADDR(type, member, ptr, n)	\
+	(type *)((अक्षर *)&(ptr)->member + (माप(type) * (n)))
 
-#endif /* PP_DEBUG_H */
+#पूर्ण_अगर /* PP_DEBUG_H */
 

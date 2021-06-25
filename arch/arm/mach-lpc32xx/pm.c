@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * arch/arm/mach-lpc32xx/pm.c
  *
  * Original authors: Vitaly Wool, Dmitry Chigirev <source@mvista.com>
- * Modified by Kevin Wells <kevin.wells@nxp.com>
+ * Modअगरied by Kevin Wells <kevin.wells@nxp.com>
  *
  * 2005 (c) MontaVista Software, Inc. This file is licensed under
  * the terms of the GNU General Public License version 2. This program
@@ -11,43 +12,43 @@
  */
 
 /*
- * LPC32XX CPU and system power management
+ * LPC32XX CPU and प्रणाली घातer management
  *
- * The LPC32XX has three CPU modes for controlling system power: run,
- * direct-run, and halt modes. When switching between halt and run modes,
+ * The LPC32XX has three CPU modes क्रम controlling प्रणाली घातer: run,
+ * direct-run, and halt modes. When चयनing between halt and run modes,
  * the CPU transistions through direct-run mode. For Linux, direct-run
  * mode is not used in normal operation. Halt mode is used when the
- * system is fully suspended.
+ * प्रणाली is fully suspended.
  *
  * Run mode:
- * The ARM CPU clock (HCLK_PLL), HCLK bus clock, and PCLK bus clocks are
- * derived from the HCLK PLL. The HCLK and PCLK bus rates are divided from
+ * The ARM CPU घड़ी (HCLK_PLL), HCLK bus घड़ी, and PCLK bus घड़ीs are
+ * derived from the HCLK PLL. The HCLK and PCLK bus rates are भागided from
  * the HCLK_PLL rate. Linux runs in this mode.
  *
  * Direct-run mode:
- * The ARM CPU clock, HCLK bus clock, and PCLK bus clocks are driven from
+ * The ARM CPU घड़ी, HCLK bus घड़ी, and PCLK bus घड़ीs are driven from
  * SYSCLK. SYSCLK is usually around 13MHz, but may vary based on SYSCLK
- * source or the frequency of the main oscillator. In this mode, the
+ * source or the frequency of the मुख्य oscillator. In this mode, the
  * HCLK_PLL can be safely enabled, changed, or disabled.
  *
  * Halt mode:
- * SYSCLK is gated off and the CPU and system clocks are halted.
- * Peripherals based on the 32KHz oscillator clock (ie, RTC, touch,
- * key scanner, etc.) still operate if enabled. In this state, an enabled
- * system event (ie, GPIO state change, RTC match, key press, etc.) will
- * wake the system up back into direct-run mode.
+ * SYSCLK is gated off and the CPU and प्रणाली घड़ीs are halted.
+ * Peripherals based on the 32KHz oscillator घड़ी (ie, RTC, touch,
+ * key scanner, etc.) still operate अगर enabled. In this state, an enabled
+ * प्रणाली event (ie, GPIO state change, RTC match, key press, etc.) will
+ * wake the प्रणाली up back पूर्णांकo direct-run mode.
  *
  * DRAM refresh
- * DRAM clocking and refresh are slightly different for systems with DDR
- * DRAM or regular SDRAM devices. If SDRAM is used in the system, the
- * SDRAM will still be accessible in direct-run mode. In DDR based systems,
- * a transition to direct-run mode will stop all DDR accesses (no clocks).
- * Because of this, the code to switch power modes and the code to enter
- * and exit DRAM self-refresh modes must not be executed in DRAM. A small
- * section of IRAM is used instead for this.
+ * DRAM घड़ीing and refresh are slightly dअगरferent क्रम प्रणालीs with DDR
+ * DRAM or regular SDRAM devices. If SDRAM is used in the प्रणाली, the
+ * SDRAM will still be accessible in direct-run mode. In DDR based प्रणालीs,
+ * a transition to direct-run mode will stop all DDR accesses (no घड़ीs).
+ * Because of this, the code to चयन घातer modes and the code to enter
+ * and निकास DRAM self-refresh modes must not be executed in DRAM. A small
+ * section of IRAM is used instead क्रम this.
  *
  * Suspend is handled with the following logic:
- *  Backup a small area of IRAM used for the suspend code
+ *  Backup a small area of IRAM used क्रम the suspend code
  *  Copy suspend code to IRAM
  *  Transfer control to code in IRAM
  *  Places DRAMs in self-refresh mode
@@ -58,80 +59,80 @@
  *  System enters direct-run mode when an enabled event occurs
  *  HCLK PLL state is restored
  *  Run mode is entered
- *  DRAMS are placed back into normal mode
- *  Code execution returns from IRAM
- *  IRAM code are used for suspend is restored
- *  Suspend mode is exited
+ *  DRAMS are placed back पूर्णांकo normal mode
+ *  Code execution वापसs from IRAM
+ *  IRAM code are used क्रम suspend is restored
+ *  Suspend mode is निकासed
  */
 
-#include <linux/suspend.h>
-#include <linux/io.h>
-#include <linux/slab.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
 
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/cacheflush.h>
 
-#include "lpc32xx.h"
-#include "common.h"
+#समावेश "lpc32xx.h"
+#समावेश "common.h"
 
-#define TEMP_IRAM_AREA  IO_ADDRESS(LPC32XX_IRAM_BASE)
+#घोषणा TEMP_IRAM_AREA  IO_ADDRESS(LPC32XX_IRAM_BASE)
 
 /*
  * Both STANDBY and MEM suspend states are handled the same with no
  * loss of CPU or memory state
  */
-static int lpc32xx_pm_enter(suspend_state_t state)
-{
-	int (*lpc32xx_suspend_ptr) (void);
-	void *iram_swap_area;
+अटल पूर्णांक lpc32xx_pm_enter(suspend_state_t state)
+अणु
+	पूर्णांक (*lpc32xx_suspend_ptr) (व्योम);
+	व्योम *iram_swap_area;
 
-	/* Allocate some space for temporary IRAM storage */
-	iram_swap_area = kmemdup((void *)TEMP_IRAM_AREA,
+	/* Allocate some space क्रम temporary IRAM storage */
+	iram_swap_area = kmemdup((व्योम *)TEMP_IRAM_AREA,
 				 lpc32xx_sys_suspend_sz, GFP_KERNEL);
-	if (!iram_swap_area)
-		return -ENOMEM;
+	अगर (!iram_swap_area)
+		वापस -ENOMEM;
 
 	/*
-	 * Copy code to suspend system into IRAM. The suspend code
-	 * needs to run from IRAM as DRAM may no longer be available
+	 * Copy code to suspend प्रणाली पूर्णांकo IRAM. The suspend code
+	 * needs to run from IRAM as DRAM may no दीर्घer be available
 	 * when the PLL is stopped.
 	 */
-	memcpy((void *) TEMP_IRAM_AREA, &lpc32xx_sys_suspend,
+	स_नकल((व्योम *) TEMP_IRAM_AREA, &lpc32xx_sys_suspend,
 		lpc32xx_sys_suspend_sz);
-	flush_icache_range((unsigned long)TEMP_IRAM_AREA,
-		(unsigned long)(TEMP_IRAM_AREA) + lpc32xx_sys_suspend_sz);
+	flush_icache_range((अचिन्हित दीर्घ)TEMP_IRAM_AREA,
+		(अचिन्हित दीर्घ)(TEMP_IRAM_AREA) + lpc32xx_sys_suspend_sz);
 
 	/* Transfer to suspend code in IRAM */
-	lpc32xx_suspend_ptr = (void *) TEMP_IRAM_AREA;
+	lpc32xx_suspend_ptr = (व्योम *) TEMP_IRAM_AREA;
 	flush_cache_all();
-	(void) lpc32xx_suspend_ptr();
+	(व्योम) lpc32xx_suspend_ptr();
 
 	/* Restore original IRAM contents */
-	memcpy((void *) TEMP_IRAM_AREA, iram_swap_area,
+	स_नकल((व्योम *) TEMP_IRAM_AREA, iram_swap_area,
 		lpc32xx_sys_suspend_sz);
 
-	kfree(iram_swap_area);
+	kमुक्त(iram_swap_area);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_suspend_ops lpc32xx_pm_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops lpc32xx_pm_ops = अणु
 	.valid	= suspend_valid_only_mem,
 	.enter	= lpc32xx_pm_enter,
-};
+पूर्ण;
 
-#define EMC_DYN_MEM_CTRL_OFS 0x20
-#define EMC_SRMMC           (1 << 3)
-#define EMC_CTRL_REG io_p2v(LPC32XX_EMC_BASE + EMC_DYN_MEM_CTRL_OFS)
-static int __init lpc32xx_pm_init(void)
-{
+#घोषणा EMC_DYN_MEM_CTRL_OFS 0x20
+#घोषणा EMC_SRMMC           (1 << 3)
+#घोषणा EMC_CTRL_REG io_p2v(LPC32XX_EMC_BASE + EMC_DYN_MEM_CTRL_OFS)
+अटल पूर्णांक __init lpc32xx_pm_init(व्योम)
+अणु
 	/*
-	 * Setup SDRAM self-refresh clock to automatically disable o
-	 * start of self-refresh. This only needs to be done once.
+	 * Setup SDRAM self-refresh घड़ी to स्वतःmatically disable o
+	 * start of self-refresh. This only needs to be करोne once.
 	 */
-	__raw_writel(__raw_readl(EMC_CTRL_REG) | EMC_SRMMC, EMC_CTRL_REG);
+	__raw_ग_लिखोl(__raw_पढ़ोl(EMC_CTRL_REG) | EMC_SRMMC, EMC_CTRL_REG);
 
 	suspend_set_ops(&lpc32xx_pm_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(lpc32xx_pm_init);

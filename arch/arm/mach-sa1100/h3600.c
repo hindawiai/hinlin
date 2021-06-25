@@ -1,145 +1,146 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Support for Compaq iPAQ H3600 handheld computer
+ * Support क्रम Compaq iPAQ H3600 handheld computer
  *
  * Copyright (c) 2000,1 Compaq Computer Corporation. (Author: Jamey Hicks)
  * Copyright (c) 2009 Dmitry Artamonow <mad_soft@inbox.ru>
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/gpio.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/gpपन.स>
 
-#include <video/sa1100fb.h>
+#समावेश <video/sa1100fb.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <linux/platform_data/irda-sa11x0.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <linux/platक्रमm_data/irda-sa11x0.h>
 
-#include <mach/h3xxx.h>
-#include <mach/irqs.h>
+#समावेश <mach/h3xxx.h>
+#समावेश <mach/irqs.h>
 
-#include "generic.h"
+#समावेश "generic.h"
 
 /*
- * helper for sa1100fb
+ * helper क्रम sa1100fb
  */
-static struct gpio h3600_lcd_gpio[] = {
-	{ H3XXX_EGPIO_LCD_ON,	GPIOF_OUT_INIT_LOW,	"LCD power" },
-	{ H3600_EGPIO_LCD_PCI,	GPIOF_OUT_INIT_LOW,	"LCD control" },
-	{ H3600_EGPIO_LCD_5V_ON, GPIOF_OUT_INIT_LOW,	"LCD 5v" },
-	{ H3600_EGPIO_LVDD_ON,	GPIOF_OUT_INIT_LOW,	"LCD 9v/-6.5v" },
-};
+अटल काष्ठा gpio h3600_lcd_gpio[] = अणु
+	अणु H3XXX_EGPIO_LCD_ON,	GPIOF_OUT_INIT_LOW,	"LCD power" पूर्ण,
+	अणु H3600_EGPIO_LCD_PCI,	GPIOF_OUT_INIT_LOW,	"LCD control" पूर्ण,
+	अणु H3600_EGPIO_LCD_5V_ON, GPIOF_OUT_INIT_LOW,	"LCD 5v" पूर्ण,
+	अणु H3600_EGPIO_LVDD_ON,	GPIOF_OUT_INIT_LOW,	"LCD 9v/-6.5v" पूर्ण,
+पूर्ण;
 
-static bool h3600_lcd_request(void)
-{
-	static bool h3600_lcd_ok;
-	int rc;
+अटल bool h3600_lcd_request(व्योम)
+अणु
+	अटल bool h3600_lcd_ok;
+	पूर्णांक rc;
 
-	if (h3600_lcd_ok)
-		return true;
+	अगर (h3600_lcd_ok)
+		वापस true;
 
 	rc = gpio_request_array(h3600_lcd_gpio, ARRAY_SIZE(h3600_lcd_gpio));
-	if (rc)
+	अगर (rc)
 		pr_err("%s: can't request GPIOs\n", __func__);
-	else
+	अन्यथा
 		h3600_lcd_ok = true;
 
-	return h3600_lcd_ok;
-}
+	वापस h3600_lcd_ok;
+पूर्ण
 
-static void h3600_lcd_power(int enable)
-{
-	if (!h3600_lcd_request())
-		return;
+अटल व्योम h3600_lcd_घातer(पूर्णांक enable)
+अणु
+	अगर (!h3600_lcd_request())
+		वापस;
 
 	gpio_direction_output(H3XXX_EGPIO_LCD_ON, enable);
 	gpio_direction_output(H3600_EGPIO_LCD_PCI, enable);
 	gpio_direction_output(H3600_EGPIO_LCD_5V_ON, enable);
 	gpio_direction_output(H3600_EGPIO_LVDD_ON, enable);
-}
+पूर्ण
 
-static const struct sa1100fb_rgb h3600_rgb_16 = {
-	.red	= { .offset = 12, .length = 4, },
-	.green	= { .offset = 7,  .length = 4, },
-	.blue	= { .offset = 1,  .length = 4, },
-	.transp	= { .offset = 0,  .length = 0, },
-};
+अटल स्थिर काष्ठा sa1100fb_rgb h3600_rgb_16 = अणु
+	.red	= अणु .offset = 12, .length = 4, पूर्ण,
+	.green	= अणु .offset = 7,  .length = 4, पूर्ण,
+	.blue	= अणु .offset = 1,  .length = 4, पूर्ण,
+	.transp	= अणु .offset = 0,  .length = 0, पूर्ण,
+पूर्ण;
 
-static struct sa1100fb_mach_info h3600_lcd_info = {
-	.pixclock	= 174757, 	.bpp		= 16,
+अटल काष्ठा sa1100fb_mach_info h3600_lcd_info = अणु
+	.pixघड़ी	= 174757, 	.bpp		= 16,
 	.xres		= 320,		.yres		= 240,
 
 	.hsync_len	= 3,		.vsync_len	= 3,
 	.left_margin	= 12,		.upper_margin	= 10,
 	.right_margin	= 17,		.lower_margin	= 1,
 
-	.cmap_static	= 1,
+	.cmap_अटल	= 1,
 
 	.lccr0		= LCCR0_Color | LCCR0_Sngl | LCCR0_Act,
 	.lccr3		= LCCR3_OutEnH | LCCR3_PixRsEdg | LCCR3_ACBsDiv(2),
 
 	.rgb[RGB_16] = &h3600_rgb_16,
 
-	.lcd_power = h3600_lcd_power,
-};
+	.lcd_घातer = h3600_lcd_घातer,
+पूर्ण;
 
 
-static void __init h3600_map_io(void)
-{
+अटल व्योम __init h3600_map_io(व्योम)
+अणु
 	h3xxx_map_io();
-}
+पूर्ण
 
 /*
- * This turns the IRDA power on or off on the Compaq H3600
+ * This turns the IRDA घातer on or off on the Compaq H3600
  */
-static struct gpio h3600_irda_gpio[] = {
-	{ H3600_EGPIO_IR_ON,	GPIOF_OUT_INIT_LOW, "IrDA power" },
-	{ H3600_EGPIO_IR_FSEL,	GPIOF_OUT_INIT_LOW, "IrDA fsel" },
-};
+अटल काष्ठा gpio h3600_irda_gpio[] = अणु
+	अणु H3600_EGPIO_IR_ON,	GPIOF_OUT_INIT_LOW, "IrDA power" पूर्ण,
+	अणु H3600_EGPIO_IR_FSEL,	GPIOF_OUT_INIT_LOW, "IrDA fsel" पूर्ण,
+पूर्ण;
 
-static int h3600_irda_set_power(struct device *dev, unsigned int state)
-{
+अटल पूर्णांक h3600_irda_set_घातer(काष्ठा device *dev, अचिन्हित पूर्णांक state)
+अणु
 	gpio_set_value(H3600_EGPIO_IR_ON, state);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void h3600_irda_set_speed(struct device *dev, unsigned int speed)
-{
+अटल व्योम h3600_irda_set_speed(काष्ठा device *dev, अचिन्हित पूर्णांक speed)
+अणु
 	gpio_set_value(H3600_EGPIO_IR_FSEL, !(speed < 4000000));
-}
+पूर्ण
 
-static int h3600_irda_startup(struct device *dev)
-{
-	return gpio_request_array(h3600_irda_gpio, sizeof(h3600_irda_gpio));
-}
+अटल पूर्णांक h3600_irda_startup(काष्ठा device *dev)
+अणु
+	वापस gpio_request_array(h3600_irda_gpio, माप(h3600_irda_gpio));
+पूर्ण
 
-static void h3600_irda_shutdown(struct device *dev)
-{
-	return gpio_free_array(h3600_irda_gpio, sizeof(h3600_irda_gpio));
-}
+अटल व्योम h3600_irda_shutकरोwn(काष्ठा device *dev)
+अणु
+	वापस gpio_मुक्त_array(h3600_irda_gpio, माप(h3600_irda_gpio));
+पूर्ण
 
-static struct irda_platform_data h3600_irda_data = {
-	.set_power	= h3600_irda_set_power,
+अटल काष्ठा irda_platक्रमm_data h3600_irda_data = अणु
+	.set_घातer	= h3600_irda_set_घातer,
 	.set_speed	= h3600_irda_set_speed,
 	.startup	= h3600_irda_startup,
-	.shutdown	= h3600_irda_shutdown,
-};
+	.shutकरोwn	= h3600_irda_shutकरोwn,
+पूर्ण;
 
-static void __init h3600_mach_init(void)
-{
+अटल व्योम __init h3600_mach_init(व्योम)
+अणु
 	h3xxx_mach_init();
 
-	sa11x0_register_lcd(&h3600_lcd_info);
-	sa11x0_register_irda(&h3600_irda_data);
-}
+	sa11x0_रेजिस्टर_lcd(&h3600_lcd_info);
+	sa11x0_रेजिस्टर_irda(&h3600_irda_data);
+पूर्ण
 
 MACHINE_START(H3600, "Compaq iPAQ H3600")
 	.atag_offset	= 0x100,
 	.map_io		= h3600_map_io,
 	.nr_irqs	= SA1100_NR_IRQS,
 	.init_irq	= sa1100_init_irq,
-	.init_time	= sa1100_timer_init,
+	.init_समय	= sa1100_समयr_init,
 	.init_machine	= h3600_mach_init,
 	.init_late	= sa11x0_init_late,
 	.restart	= sa11x0_restart,

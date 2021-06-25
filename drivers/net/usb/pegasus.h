@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 1999-2013 Petko Manolov (petkan@nucleusys.com)
  */
 
 
-#ifndef	PEGASUS_DEV
+#अगर_अघोषित	PEGASUS_DEV
 
-#define	PEGASUS_II		0x80000000
-#define	HAS_HOME_PNA		0x40000000
+#घोषणा	PEGASUS_II		0x80000000
+#घोषणा	HAS_HOME_PNA		0x40000000
 
-#define	PEGASUS_MTU		1536
+#घोषणा	PEGASUS_MTU		1536
 
-#define	EPROM_WRITE		0x01
-#define	EPROM_READ		0x02
-#define	EPROM_DONE		0x04
-#define	EPROM_WR_ENABLE		0x10
-#define	EPROM_LOAD		0x20
+#घोषणा	EPROM_WRITE		0x01
+#घोषणा	EPROM_READ		0x02
+#घोषणा	EPROM_DONE		0x04
+#घोषणा	EPROM_WR_ENABLE		0x10
+#घोषणा	EPROM_LOAD		0x20
 
-#define	PHY_DONE		0x80
-#define	PHY_READ		0x40
-#define	PHY_WRITE		0x20
-#define	DEFAULT_GPIO_RESET	0x24
-#define	DEFAULT_GPIO_SET	0x26
+#घोषणा	PHY_DONE		0x80
+#घोषणा	PHY_READ		0x40
+#घोषणा	PHY_WRITE		0x20
+#घोषणा	DEFAULT_GPIO_RESET	0x24
+#घोषणा	DEFAULT_GPIO_SET	0x26
 
-#define	PEGASUS_PRESENT		0x00000001
-#define	PEGASUS_TX_BUSY		0x00000004
-#define	PEGASUS_RX_BUSY		0x00000008
-#define	CTRL_URB_RUNNING	0x00000010
-#define	CTRL_URB_SLEEP		0x00000020
-#define	PEGASUS_UNPLUG		0x00000040
-#define	PEGASUS_RX_URB_FAIL	0x00000080
+#घोषणा	PEGASUS_PRESENT		0x00000001
+#घोषणा	PEGASUS_TX_BUSY		0x00000004
+#घोषणा	PEGASUS_RX_BUSY		0x00000008
+#घोषणा	CTRL_URB_RUNNING	0x00000010
+#घोषणा	CTRL_URB_SLEEP		0x00000020
+#घोषणा	PEGASUS_UNPLUG		0x00000040
+#घोषणा	PEGASUS_RX_URB_FAIL	0x00000080
 
-#define	RX_MULTICAST		2
-#define	RX_PROMISCUOUS		4
+#घोषणा	RX_MULTICAST		2
+#घोषणा	RX_PROMISCUOUS		4
 
-#define	REG_TIMEOUT		(HZ)
-#define	PEGASUS_TX_TIMEOUT	(HZ*10)
+#घोषणा	REG_TIMEOUT		(HZ)
+#घोषणा	PEGASUS_TX_TIMEOUT	(HZ*10)
 
-#define	TX_UNDERRUN		0x80
-#define	EXCESSIVE_COL		0x40
-#define	LATE_COL		0x20
-#define	NO_CARRIER		0x10
-#define	LOSS_CARRIER		0x08
-#define	JABBER_TIMEOUT		0x04
+#घोषणा	TX_UNDERRUN		0x80
+#घोषणा	EXCESSIVE_COL		0x40
+#घोषणा	LATE_COL		0x20
+#घोषणा	NO_CARRIER		0x10
+#घोषणा	LOSS_CARRIER		0x08
+#घोषणा	JABBER_TIMEOUT		0x04
 
-#define	LINK_STATUS		0x01
+#घोषणा	LINK_STATUS		0x01
 
-#define	PEGASUS_REQT_READ	0xc0
-#define	PEGASUS_REQT_WRITE	0x40
-#define	PEGASUS_REQ_GET_REGS	0xf0
-#define	PEGASUS_REQ_SET_REGS	0xf1
-#define	PEGASUS_REQ_SET_REG	PEGASUS_REQ_SET_REGS
+#घोषणा	PEGASUS_REQT_READ	0xc0
+#घोषणा	PEGASUS_REQT_WRITE	0x40
+#घोषणा	PEGASUS_REQ_GET_REGS	0xf0
+#घोषणा	PEGASUS_REQ_SET_REGS	0xf1
+#घोषणा	PEGASUS_REQ_SET_REG	PEGASUS_REQ_SET_REGS
 
-enum pegasus_registers {
+क्रमागत pegasus_रेजिस्टरs अणु
 	EthCtrl0 = 0,
 	EthCtrl1 = 1,
 	EthCtrl2 = 2,
@@ -73,75 +74,75 @@ enum pegasus_registers {
 	Gpio0 = 0x7e,
 	Gpio1 = 0x7f,
 	Reg81 = 0x81,
-};
+पूर्ण;
 
 
-typedef struct pegasus {
-	struct usb_device	*usb;
-	struct usb_interface	*intf;
-	struct net_device	*net;
-	struct mii_if_info	mii;
-	unsigned		flags;
-	unsigned		features;
+प्रकार काष्ठा pegasus अणु
+	काष्ठा usb_device	*usb;
+	काष्ठा usb_पूर्णांकerface	*पूर्णांकf;
+	काष्ठा net_device	*net;
+	काष्ठा mii_अगर_info	mii;
+	अचिन्हित		flags;
+	अचिन्हित		features;
 	u32			msg_enable;
 	u32			wolopts;
-	int			dev_index;
-	int			intr_interval;
-	struct tasklet_struct	rx_tl;
-	struct delayed_work	carrier_check;
-	struct urb		*rx_urb, *tx_urb, *intr_urb;
-	struct sk_buff		*rx_skb;
-	int			chip;
-	unsigned char		intr_buff[8];
+	पूर्णांक			dev_index;
+	पूर्णांक			पूर्णांकr_पूर्णांकerval;
+	काष्ठा tasklet_काष्ठा	rx_tl;
+	काष्ठा delayed_work	carrier_check;
+	काष्ठा urb		*rx_urb, *tx_urb, *पूर्णांकr_urb;
+	काष्ठा sk_buff		*rx_skb;
+	पूर्णांक			chip;
+	अचिन्हित अक्षर		पूर्णांकr_buff[8];
 	__u8			tx_buff[PEGASUS_MTU];
 	__u8			eth_regs[4];
 	__u8			phy;
 	__u8			gpio_res;
-} pegasus_t;
+पूर्ण pegasus_t;
 
 
-struct usb_eth_dev {
-	char	*name;
-	__u16	vendor;
+काष्ठा usb_eth_dev अणु
+	अक्षर	*name;
+	__u16	venकरोr;
 	__u16	device;
-	__u32	private; /* LSB is gpio reset value */
-};
+	__u32	निजी; /* LSB is gpio reset value */
+पूर्ण;
 
-#define	VENDOR_3COM		0x0506
-#define	VENDOR_ABOCOM		0x07b8
-#define	VENDOR_ACCTON		0x083a
-#define	VENDOR_ADMTEK		0x07a6
-#define	VENDOR_AEILAB		0x3334
-#define	VENDOR_ALLIEDTEL	0x07c9
-#define	VENDOR_ATEN		0x0557
-#define	VENDOR_BELKIN		0x050d
-#define	VENDOR_BILLIONTON	0x08dd
-#define	VENDOR_COMPAQ		0x049f
-#define	VENDOR_COREGA		0x07aa
-#define	VENDOR_DLINK		0x2001
-#define	VENDOR_ELCON		0x0db7
-#define	VENDOR_ELECOM		0x056e
-#define	VENDOR_ELSA		0x05cc
-#define	VENDOR_GIGABYTE		0x1044
-#define	VENDOR_HAWKING		0x0e66
-#define	VENDOR_HP		0x03f0
-#define	VENDOR_IODATA		0x04bb
-#define	VENDOR_KINGSTON		0x0951
-#define	VENDOR_LANEED		0x056e
-#define	VENDOR_LINKSYS		0x066b
-#define	VENDOR_LINKSYS2		0x077b
-#define	VENDOR_MELCO		0x0411
-#define	VENDOR_MICROSOFT	0x045e
-#define	VENDOR_MOBILITY		0x1342
-#define	VENDOR_NETGEAR		0x0846
-#define	VENDOR_OCT		0x0b39
-#define	VENDOR_SMARTBRIDGES	0x08d1
-#define	VENDOR_SMC		0x0707
-#define	VENDOR_SOHOWARE		0x15e8
-#define	VENDOR_SIEMENS		0x067c
+#घोषणा	VENDOR_3COM		0x0506
+#घोषणा	VENDOR_ABOCOM		0x07b8
+#घोषणा	VENDOR_ACCTON		0x083a
+#घोषणा	VENDOR_ADMTEK		0x07a6
+#घोषणा	VENDOR_AEILAB		0x3334
+#घोषणा	VENDOR_ALLIEDTEL	0x07c9
+#घोषणा	VENDOR_ATEN		0x0557
+#घोषणा	VENDOR_BELKIN		0x050d
+#घोषणा	VENDOR_BILLIONTON	0x08dd
+#घोषणा	VENDOR_COMPAQ		0x049f
+#घोषणा	VENDOR_COREGA		0x07aa
+#घोषणा	VENDOR_DLINK		0x2001
+#घोषणा	VENDOR_ELCON		0x0db7
+#घोषणा	VENDOR_ELECOM		0x056e
+#घोषणा	VENDOR_ELSA		0x05cc
+#घोषणा	VENDOR_GIGABYTE		0x1044
+#घोषणा	VENDOR_HAWKING		0x0e66
+#घोषणा	VENDOR_HP		0x03f0
+#घोषणा	VENDOR_IODATA		0x04bb
+#घोषणा	VENDOR_KINGSTON		0x0951
+#घोषणा	VENDOR_LANEED		0x056e
+#घोषणा	VENDOR_LINKSYS		0x066b
+#घोषणा	VENDOR_LINKSYS2		0x077b
+#घोषणा	VENDOR_MELCO		0x0411
+#घोषणा	VENDOR_MICROSOFT	0x045e
+#घोषणा	VENDOR_MOBILITY		0x1342
+#घोषणा	VENDOR_NETGEAR		0x0846
+#घोषणा	VENDOR_OCT		0x0b39
+#घोषणा	VENDOR_SMARTBRIDGES	0x08d1
+#घोषणा	VENDOR_SMC		0x0707
+#घोषणा	VENDOR_SOHOWARE		0x15e8
+#घोषणा	VENDOR_SIEMENS		0x067c
 
 
-#else	/* PEGASUS_DEV */
+#अन्यथा	/* PEGASUS_DEV */
 
 PEGASUS_DEV("3Com USB Ethernet 3C460B", VENDOR_3COM, 0x4601,
 		DEFAULT_GPIO_RESET | PEGASUS_II)
@@ -301,4 +302,4 @@ PEGASUS_DEV("SpeedStream USB 10/100 Ethernet", VENDOR_SIEMENS, 0x1001,
 		DEFAULT_GPIO_RESET | PEGASUS_II)
 
 
-#endif	/* PEGASUS_DEV */
+#पूर्ण_अगर	/* PEGASUS_DEV */

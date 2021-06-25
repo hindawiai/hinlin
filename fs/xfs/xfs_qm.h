@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __XFS_QM_H__
-#define __XFS_QM_H__
+#अगर_अघोषित __XFS_QM_H__
+#घोषणा __XFS_QM_H__
 
-#include "xfs_dquot_item.h"
-#include "xfs_dquot.h"
+#समावेश "xfs_dquot_item.h"
+#समावेश "xfs_dquot.h"
 
-struct xfs_inode;
+काष्ठा xfs_inode;
 
-extern struct kmem_zone	*xfs_qm_dqtrxzone;
+बाह्य काष्ठा kmem_zone	*xfs_qm_dqtrxzone;
 
 /*
- * Number of bmaps that we ask from bmapi when doing a quotacheck.
+ * Number of bmaps that we ask from bmapi when करोing a quotacheck.
  * We make this restriction to keep the memory usage to a minimum.
  */
-#define XFS_DQITER_MAP_SIZE	10
+#घोषणा XFS_DQITER_MAP_SIZE	10
 
-#define XFS_IS_DQUOT_UNINITIALIZED(dqp) ( \
+#घोषणा XFS_IS_DQUOT_UNINITIALIZED(dqp) ( \
 	!dqp->q_blk.hardlimit && \
 	!dqp->q_blk.softlimit && \
 	!dqp->q_rtb.hardlimit && \
@@ -30,151 +31,151 @@ extern struct kmem_zone	*xfs_qm_dqtrxzone;
 	!dqp->q_rtb.count && \
 	!dqp->q_ino.count)
 
-struct xfs_quota_limits {
-	xfs_qcnt_t		hard;	/* default hard limit */
-	xfs_qcnt_t		soft;	/* default soft limit */
-	time64_t		time;	/* limit for timers */
-	xfs_qwarncnt_t		warn;	/* limit for warnings */
-};
+काष्ठा xfs_quota_limits अणु
+	xfs_qcnt_t		hard;	/* शेष hard limit */
+	xfs_qcnt_t		soft;	/* शेष soft limit */
+	समय64_t		समय;	/* limit क्रम समयrs */
+	xfs_qwarncnt_t		warn;	/* limit क्रम warnings */
+पूर्ण;
 
-/* Defaults for each quota type: time limits, warn limits, usage limits */
-struct xfs_def_quota {
-	struct xfs_quota_limits	blk;
-	struct xfs_quota_limits	ino;
-	struct xfs_quota_limits	rtb;
-};
+/* Defaults क्रम each quota type: समय limits, warn limits, usage limits */
+काष्ठा xfs_def_quota अणु
+	काष्ठा xfs_quota_limits	blk;
+	काष्ठा xfs_quota_limits	ino;
+	काष्ठा xfs_quota_limits	rtb;
+पूर्ण;
 
 /*
- * Various quota information for individual filesystems.
- * The mount structure keeps a pointer to this.
+ * Various quota inक्रमmation क्रम inभागidual fileप्रणालीs.
+ * The mount काष्ठाure keeps a poपूर्णांकer to this.
  */
-struct xfs_quotainfo {
-	struct radix_tree_root	qi_uquota_tree;
-	struct radix_tree_root	qi_gquota_tree;
-	struct radix_tree_root	qi_pquota_tree;
-	struct mutex		qi_tree_lock;
-	struct xfs_inode	*qi_uquotaip;	/* user quota inode */
-	struct xfs_inode	*qi_gquotaip;	/* group quota inode */
-	struct xfs_inode	*qi_pquotaip;	/* project quota inode */
-	struct list_lru		qi_lru;
-	int			qi_dquots;
-	struct mutex		qi_quotaofflock;/* to serialize quotaoff */
+काष्ठा xfs_quotainfo अणु
+	काष्ठा radix_tree_root	qi_uquota_tree;
+	काष्ठा radix_tree_root	qi_gquota_tree;
+	काष्ठा radix_tree_root	qi_pquota_tree;
+	काष्ठा mutex		qi_tree_lock;
+	काष्ठा xfs_inode	*qi_uquotaip;	/* user quota inode */
+	काष्ठा xfs_inode	*qi_gquotaip;	/* group quota inode */
+	काष्ठा xfs_inode	*qi_pquotaip;	/* project quota inode */
+	काष्ठा list_lru		qi_lru;
+	पूर्णांक			qi_dquots;
+	काष्ठा mutex		qi_quotaofflock;/* to serialize quotaoff */
 	xfs_filblks_t		qi_dqchunklen;	/* # BBs in a chunk of dqs */
-	uint			qi_dqperchunk;	/* # ondisk dq in above chunk */
-	struct xfs_def_quota	qi_usr_default;
-	struct xfs_def_quota	qi_grp_default;
-	struct xfs_def_quota	qi_prj_default;
-	struct shrinker		qi_shrinker;
+	uपूर्णांक			qi_dqperchunk;	/* # ondisk dq in above chunk */
+	काष्ठा xfs_def_quota	qi_usr_शेष;
+	काष्ठा xfs_def_quota	qi_grp_शेष;
+	काष्ठा xfs_def_quota	qi_prj_शेष;
+	काष्ठा shrinker		qi_shrinker;
 
-	/* Minimum and maximum quota expiration timestamp values. */
-	time64_t		qi_expiry_min;
-	time64_t		qi_expiry_max;
-};
+	/* Minimum and maximum quota expiration बारtamp values. */
+	समय64_t		qi_expiry_min;
+	समय64_t		qi_expiry_max;
+पूर्ण;
 
-static inline struct radix_tree_root *
+अटल अंतरभूत काष्ठा radix_tree_root *
 xfs_dquot_tree(
-	struct xfs_quotainfo	*qi,
+	काष्ठा xfs_quotainfo	*qi,
 	xfs_dqtype_t		type)
-{
-	switch (type) {
-	case XFS_DQTYPE_USER:
-		return &qi->qi_uquota_tree;
-	case XFS_DQTYPE_GROUP:
-		return &qi->qi_gquota_tree;
-	case XFS_DQTYPE_PROJ:
-		return &qi->qi_pquota_tree;
-	default:
+अणु
+	चयन (type) अणु
+	हाल XFS_DQTYPE_USER:
+		वापस &qi->qi_uquota_tree;
+	हाल XFS_DQTYPE_GROUP:
+		वापस &qi->qi_gquota_tree;
+	हाल XFS_DQTYPE_PROJ:
+		वापस &qi->qi_pquota_tree;
+	शेष:
 		ASSERT(0);
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static inline struct xfs_inode *
-xfs_quota_inode(struct xfs_mount *mp, xfs_dqtype_t type)
-{
-	switch (type) {
-	case XFS_DQTYPE_USER:
-		return mp->m_quotainfo->qi_uquotaip;
-	case XFS_DQTYPE_GROUP:
-		return mp->m_quotainfo->qi_gquotaip;
-	case XFS_DQTYPE_PROJ:
-		return mp->m_quotainfo->qi_pquotaip;
-	default:
+अटल अंतरभूत काष्ठा xfs_inode *
+xfs_quota_inode(काष्ठा xfs_mount *mp, xfs_dqtype_t type)
+अणु
+	चयन (type) अणु
+	हाल XFS_DQTYPE_USER:
+		वापस mp->m_quotainfo->qi_uquotaip;
+	हाल XFS_DQTYPE_GROUP:
+		वापस mp->m_quotainfo->qi_gquotaip;
+	हाल XFS_DQTYPE_PROJ:
+		वापस mp->m_quotainfo->qi_pquotaip;
+	शेष:
 		ASSERT(0);
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-extern void	xfs_trans_mod_dquot(struct xfs_trans *tp, struct xfs_dquot *dqp,
-				    uint field, int64_t delta);
-extern void	xfs_trans_dqjoin(struct xfs_trans *, struct xfs_dquot *);
-extern void	xfs_trans_log_dquot(struct xfs_trans *, struct xfs_dquot *);
+बाह्य व्योम	xfs_trans_mod_dquot(काष्ठा xfs_trans *tp, काष्ठा xfs_dquot *dqp,
+				    uपूर्णांक field, पूर्णांक64_t delta);
+बाह्य व्योम	xfs_trans_dqjoin(काष्ठा xfs_trans *, काष्ठा xfs_dquot *);
+बाह्य व्योम	xfs_trans_log_dquot(काष्ठा xfs_trans *, काष्ठा xfs_dquot *);
 
 /*
  * We keep the usr, grp, and prj dquots separately so that locking will be
- * easier to do at commit time. All transactions that we know of at this point
+ * easier to करो at commit समय. All transactions that we know of at this poपूर्णांक
  * affect no more than two dquots of one type. Hence, the TRANS_MAXDQS value.
  */
-enum {
+क्रमागत अणु
 	XFS_QM_TRANS_USR = 0,
 	XFS_QM_TRANS_GRP,
 	XFS_QM_TRANS_PRJ,
 	XFS_QM_TRANS_DQTYPES
-};
-#define XFS_QM_TRANS_MAXDQS		2
-struct xfs_dquot_acct {
-	struct xfs_dqtrx	dqs[XFS_QM_TRANS_DQTYPES][XFS_QM_TRANS_MAXDQS];
-};
+पूर्ण;
+#घोषणा XFS_QM_TRANS_MAXDQS		2
+काष्ठा xfs_dquot_acct अणु
+	काष्ठा xfs_dqtrx	dqs[XFS_QM_TRANS_DQTYPES][XFS_QM_TRANS_MAXDQS];
+पूर्ण;
 
 /*
- * Users are allowed to have a usage exceeding their softlimit for
- * a period this long.
+ * Users are allowed to have a usage exceeding their softlimit क्रम
+ * a period this दीर्घ.
  */
-#define XFS_QM_BTIMELIMIT	(7 * 24*60*60)          /* 1 week */
-#define XFS_QM_RTBTIMELIMIT	(7 * 24*60*60)          /* 1 week */
-#define XFS_QM_ITIMELIMIT	(7 * 24*60*60)          /* 1 week */
+#घोषणा XFS_QM_BTIMELIMIT	(7 * 24*60*60)          /* 1 week */
+#घोषणा XFS_QM_RTBTIMELIMIT	(7 * 24*60*60)          /* 1 week */
+#घोषणा XFS_QM_ITIMELIMIT	(7 * 24*60*60)          /* 1 week */
 
-#define XFS_QM_BWARNLIMIT	5
-#define XFS_QM_IWARNLIMIT	5
-#define XFS_QM_RTBWARNLIMIT	5
+#घोषणा XFS_QM_BWARNLIMIT	5
+#घोषणा XFS_QM_IWARNLIMIT	5
+#घोषणा XFS_QM_RTBWARNLIMIT	5
 
-extern void		xfs_qm_destroy_quotainfo(struct xfs_mount *);
+बाह्य व्योम		xfs_qm_destroy_quotainfo(काष्ठा xfs_mount *);
 
 /* dquot stuff */
-extern void		xfs_qm_dqpurge_all(struct xfs_mount *, uint);
-extern void		xfs_qm_dqrele_all_inodes(struct xfs_mount *, uint);
+बाह्य व्योम		xfs_qm_dqpurge_all(काष्ठा xfs_mount *, uपूर्णांक);
+बाह्य व्योम		xfs_qm_dqrele_all_inodes(काष्ठा xfs_mount *, uपूर्णांक);
 
 /* quota ops */
-extern int		xfs_qm_scall_trunc_qfiles(struct xfs_mount *, uint);
-extern int		xfs_qm_scall_getquota(struct xfs_mount *mp,
+बाह्य पूर्णांक		xfs_qm_scall_trunc_qfiles(काष्ठा xfs_mount *, uपूर्णांक);
+बाह्य पूर्णांक		xfs_qm_scall_getquota(काष्ठा xfs_mount *mp,
 					xfs_dqid_t id,
 					xfs_dqtype_t type,
-					struct qc_dqblk *dst);
-extern int		xfs_qm_scall_getquota_next(struct xfs_mount *mp,
+					काष्ठा qc_dqblk *dst);
+बाह्य पूर्णांक		xfs_qm_scall_getquota_next(काष्ठा xfs_mount *mp,
 					xfs_dqid_t *id,
 					xfs_dqtype_t type,
-					struct qc_dqblk *dst);
-extern int		xfs_qm_scall_setqlim(struct xfs_mount *mp,
+					काष्ठा qc_dqblk *dst);
+बाह्य पूर्णांक		xfs_qm_scall_setqlim(काष्ठा xfs_mount *mp,
 					xfs_dqid_t id,
 					xfs_dqtype_t type,
-					struct qc_dqblk *newlim);
-extern int		xfs_qm_scall_quotaon(struct xfs_mount *, uint);
-extern int		xfs_qm_scall_quotaoff(struct xfs_mount *, uint);
+					काष्ठा qc_dqblk *newlim);
+बाह्य पूर्णांक		xfs_qm_scall_quotaon(काष्ठा xfs_mount *, uपूर्णांक);
+बाह्य पूर्णांक		xfs_qm_scall_quotaoff(काष्ठा xfs_mount *, uपूर्णांक);
 
-static inline struct xfs_def_quota *
-xfs_get_defquota(struct xfs_quotainfo *qi, xfs_dqtype_t type)
-{
-	switch (type) {
-	case XFS_DQTYPE_USER:
-		return &qi->qi_usr_default;
-	case XFS_DQTYPE_GROUP:
-		return &qi->qi_grp_default;
-	case XFS_DQTYPE_PROJ:
-		return &qi->qi_prj_default;
-	default:
+अटल अंतरभूत काष्ठा xfs_def_quota *
+xfs_get_defquota(काष्ठा xfs_quotainfo *qi, xfs_dqtype_t type)
+अणु
+	चयन (type) अणु
+	हाल XFS_DQTYPE_USER:
+		वापस &qi->qi_usr_शेष;
+	हाल XFS_DQTYPE_GROUP:
+		वापस &qi->qi_grp_शेष;
+	हाल XFS_DQTYPE_PROJ:
+		वापस &qi->qi_prj_शेष;
+	शेष:
 		ASSERT(0);
-		return NULL;
-	}
-}
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-#endif /* __XFS_QM_H__ */
+#पूर्ण_अगर /* __XFS_QM_H__ */

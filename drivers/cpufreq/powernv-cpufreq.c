@@ -1,123 +1,124 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * POWERNV cpufreq driver for the IBM POWER processors
+ * POWERNV cpufreq driver क्रम the IBM POWER processors
  *
  * (C) Copyright IBM 2014
  *
  * Author: Vaidyanathan Srinivasan <svaidy at linux.vnet.ibm.com>
  */
 
-#define pr_fmt(fmt)	"powernv-cpufreq: " fmt
+#घोषणा pr_fmt(fmt)	"powernv-cpufreq: " fmt
 
-#include <linux/kernel.h>
-#include <linux/sysfs.h>
-#include <linux/cpumask.h>
-#include <linux/module.h>
-#include <linux/cpufreq.h>
-#include <linux/smp.h>
-#include <linux/of.h>
-#include <linux/reboot.h>
-#include <linux/slab.h>
-#include <linux/cpu.h>
-#include <linux/hashtable.h>
-#include <trace/events/power.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/of.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/hashtable.h>
+#समावेश <trace/events/घातer.h>
 
-#include <asm/cputhreads.h>
-#include <asm/firmware.h>
-#include <asm/reg.h>
-#include <asm/smp.h> /* Required for cpu_sibling_mask() in UP configs */
-#include <asm/opal.h>
-#include <linux/timer.h>
+#समावेश <यंत्र/cputhपढ़ोs.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/smp.h> /* Required क्रम cpu_sibling_mask() in UP configs */
+#समावेश <यंत्र/opal.h>
+#समावेश <linux/समयr.h>
 
-#define POWERNV_MAX_PSTATES_ORDER  8
-#define POWERNV_MAX_PSTATES	(1UL << (POWERNV_MAX_PSTATES_ORDER))
-#define PMSR_PSAFE_ENABLE	(1UL << 30)
-#define PMSR_SPR_EM_DISABLE	(1UL << 31)
-#define MAX_PSTATE_SHIFT	32
-#define LPSTATE_SHIFT		48
-#define GPSTATE_SHIFT		56
+#घोषणा POWERNV_MAX_PSTATES_ORDER  8
+#घोषणा POWERNV_MAX_PSTATES	(1UL << (POWERNV_MAX_PSTATES_ORDER))
+#घोषणा PMSR_PSAFE_ENABLE	(1UL << 30)
+#घोषणा PMSR_SPR_EM_DISABLE	(1UL << 31)
+#घोषणा MAX_PSTATE_SHIFT	32
+#घोषणा LPSTATE_SHIFT		48
+#घोषणा GPSTATE_SHIFT		56
 
-#define MAX_RAMP_DOWN_TIME				5120
+#घोषणा MAX_RAMP_DOWN_TIME				5120
 /*
- * On an idle system we want the global pstate to ramp-down from max value to
- * min over a span of ~5 secs. Also we want it to initially ramp-down slowly and
- * then ramp-down rapidly later on.
+ * On an idle प्रणाली we want the global pstate to ramp-करोwn from max value to
+ * min over a span of ~5 secs. Also we want it to initially ramp-करोwn slowly and
+ * then ramp-करोwn rapidly later on.
  *
- * This gives a percentage rampdown for time elapsed in milliseconds.
- * ramp_down_percentage = ((ms * ms) >> 18)
+ * This gives a percentage rampकरोwn क्रम समय elapsed in milliseconds.
+ * ramp_करोwn_percentage = ((ms * ms) >> 18)
  *			~= 3.8 * (sec * sec)
  *
- * At 0 ms	ramp_down_percent = 0
- * At 5120 ms	ramp_down_percent = 100
+ * At 0 ms	ramp_करोwn_percent = 0
+ * At 5120 ms	ramp_करोwn_percent = 100
  */
-#define ramp_down_percent(time)		((time * time) >> 18)
+#घोषणा ramp_करोwn_percent(समय)		((समय * समय) >> 18)
 
-/* Interval after which the timer is queued to bring down global pstate */
-#define GPSTATE_TIMER_INTERVAL				2000
+/* Interval after which the समयr is queued to bring करोwn global pstate */
+#घोषणा GPSTATE_TIMER_INTERVAL				2000
 
 /**
- * struct global_pstate_info -	Per policy data structure to maintain history of
+ * काष्ठा global_pstate_info -	Per policy data काष्ठाure to मुख्यtain history of
  *				global pstates
  * @highest_lpstate_idx:	The local pstate index from which we are
- *				ramping down
- * @elapsed_time:		Time in ms spent in ramping down from
+ *				ramping करोwn
+ * @elapsed_समय:		Time in ms spent in ramping करोwn from
  *				highest_lpstate_idx
- * @last_sampled_time:		Time from boot in ms when global pstates were
+ * @last_sampled_समय:		Time from boot in ms when global pstates were
  *				last set
  * @last_lpstate_idx:		Last set value of local pstate and global
  * @last_gpstate_idx:		pstate in terms of cpufreq table index
- * @timer:			Is used for ramping down if cpu goes idle for
- *				a long time with global pstate held high
- * @gpstate_lock:		A spinlock to maintain synchronization between
- *				routines called by the timer handler and
+ * @समयr:			Is used क्रम ramping करोwn अगर cpu goes idle क्रम
+ *				a दीर्घ समय with global pstate held high
+ * @gpstate_lock:		A spinlock to मुख्यtain synchronization between
+ *				routines called by the समयr handler and
  *				governer's target_index calls
  * @policy:			Associated CPUFreq policy
  */
-struct global_pstate_info {
-	int highest_lpstate_idx;
-	unsigned int elapsed_time;
-	unsigned int last_sampled_time;
-	int last_lpstate_idx;
-	int last_gpstate_idx;
+काष्ठा global_pstate_info अणु
+	पूर्णांक highest_lpstate_idx;
+	अचिन्हित पूर्णांक elapsed_समय;
+	अचिन्हित पूर्णांक last_sampled_समय;
+	पूर्णांक last_lpstate_idx;
+	पूर्णांक last_gpstate_idx;
 	spinlock_t gpstate_lock;
-	struct timer_list timer;
-	struct cpufreq_policy *policy;
-};
+	काष्ठा समयr_list समयr;
+	काष्ठा cpufreq_policy *policy;
+पूर्ण;
 
-static struct cpufreq_frequency_table powernv_freqs[POWERNV_MAX_PSTATES+1];
+अटल काष्ठा cpufreq_frequency_table घातernv_freqs[POWERNV_MAX_PSTATES+1];
 
-static DEFINE_HASHTABLE(pstate_revmap, POWERNV_MAX_PSTATES_ORDER);
+अटल DEFINE_HASHTABLE(pstate_revmap, POWERNV_MAX_PSTATES_ORDER);
 /**
- * struct pstate_idx_revmap_data: Entry in the hashmap pstate_revmap
+ * काष्ठा pstate_idx_revmap_data: Entry in the hashmap pstate_revmap
  *				  indexed by a function of pstate id.
  *
- * @pstate_id: pstate id for this entry.
+ * @pstate_id: pstate id क्रम this entry.
  *
- * @cpufreq_table_idx: Index into the powernv_freqs
- *		       cpufreq_frequency_table for frequency
+ * @cpufreq_table_idx: Index पूर्णांकo the घातernv_freqs
+ *		       cpufreq_frequency_table क्रम frequency
  *		       corresponding to pstate_id.
  *
- * @hentry: hlist_node that hooks this entry into the pstate_revmap
+ * @hentry: hlist_node that hooks this entry पूर्णांकo the pstate_revmap
  *	    hashtable
  */
-struct pstate_idx_revmap_data {
+काष्ठा pstate_idx_revmap_data अणु
 	u8 pstate_id;
-	unsigned int cpufreq_table_idx;
-	struct hlist_node hentry;
-};
+	अचिन्हित पूर्णांक cpufreq_table_idx;
+	काष्ठा hlist_node hentry;
+पूर्ण;
 
-static bool rebooting, throttled, occ_reset;
+अटल bool rebooting, throttled, occ_reset;
 
-static const char * const throttle_reason[] = {
+अटल स्थिर अक्षर * स्थिर throttle_reason[] = अणु
 	"No throttling",
 	"Power Cap",
 	"Processor Over Temperature",
 	"Power Supply Failure",
 	"Over Current",
 	"OCC Reset"
-};
+पूर्ण;
 
-enum throttle_reason_type {
+क्रमागत throttle_reason_type अणु
 	NO_THROTTLE = 0,
 	POWERCAP,
 	CPU_OVERTEMP,
@@ -125,286 +126,286 @@ enum throttle_reason_type {
 	OVERCURRENT,
 	OCC_RESET_THROTTLE,
 	OCC_MAX_REASON
-};
+पूर्ण;
 
-static struct chip {
-	unsigned int id;
+अटल काष्ठा chip अणु
+	अचिन्हित पूर्णांक id;
 	bool throttled;
 	bool restore;
 	u8 throttle_reason;
 	cpumask_t mask;
-	struct work_struct throttle;
-	int throttle_turbo;
-	int throttle_sub_turbo;
-	int reason[OCC_MAX_REASON];
-} *chips;
+	काष्ठा work_काष्ठा throttle;
+	पूर्णांक throttle_turbo;
+	पूर्णांक throttle_sub_turbo;
+	पूर्णांक reason[OCC_MAX_REASON];
+पूर्ण *chips;
 
-static int nr_chips;
-static DEFINE_PER_CPU(struct chip *, chip_info);
+अटल पूर्णांक nr_chips;
+अटल DEFINE_PER_CPU(काष्ठा chip *, chip_info);
 
 /*
  * Note:
- * The set of pstates consists of contiguous integers.
- * powernv_pstate_info stores the index of the frequency table for
+ * The set of pstates consists of contiguous पूर्णांकegers.
+ * घातernv_pstate_info stores the index of the frequency table क्रम
  * max, min and nominal frequencies. It also stores number of
  * available frequencies.
  *
- * powernv_pstate_info.nominal indicates the index to the highest
+ * घातernv_pstate_info.nominal indicates the index to the highest
  * non-turbo frequency.
  */
-static struct powernv_pstate_info {
-	unsigned int min;
-	unsigned int max;
-	unsigned int nominal;
-	unsigned int nr_pstates;
+अटल काष्ठा घातernv_pstate_info अणु
+	अचिन्हित पूर्णांक min;
+	अचिन्हित पूर्णांक max;
+	अचिन्हित पूर्णांक nominal;
+	अचिन्हित पूर्णांक nr_pstates;
 	bool wof_enabled;
-} powernv_pstate_info;
+पूर्ण घातernv_pstate_info;
 
-static inline u8 extract_pstate(u64 pmsr_val, unsigned int shift)
-{
-	return ((pmsr_val >> shift) & 0xFF);
-}
+अटल अंतरभूत u8 extract_pstate(u64 pmsr_val, अचिन्हित पूर्णांक shअगरt)
+अणु
+	वापस ((pmsr_val >> shअगरt) & 0xFF);
+पूर्ण
 
-#define extract_local_pstate(x) extract_pstate(x, LPSTATE_SHIFT)
-#define extract_global_pstate(x) extract_pstate(x, GPSTATE_SHIFT)
-#define extract_max_pstate(x)  extract_pstate(x, MAX_PSTATE_SHIFT)
+#घोषणा extract_local_pstate(x) extract_pstate(x, LPSTATE_SHIFT)
+#घोषणा extract_global_pstate(x) extract_pstate(x, GPSTATE_SHIFT)
+#घोषणा extract_max_pstate(x)  extract_pstate(x, MAX_PSTATE_SHIFT)
 
-/* Use following functions for conversions between pstate_id and index */
+/* Use following functions क्रम conversions between pstate_id and index */
 
 /*
  * idx_to_pstate : Returns the pstate id corresponding to the
  *		   frequency in the cpufreq frequency table
- *		   powernv_freqs indexed by @i.
+ *		   घातernv_freqs indexed by @i.
  *
- *		   If @i is out of bound, this will return the pstate
+ *		   If @i is out of bound, this will वापस the pstate
  *		   corresponding to the nominal frequency.
  */
-static inline u8 idx_to_pstate(unsigned int i)
-{
-	if (unlikely(i >= powernv_pstate_info.nr_pstates)) {
+अटल अंतरभूत u8 idx_to_pstate(अचिन्हित पूर्णांक i)
+अणु
+	अगर (unlikely(i >= घातernv_pstate_info.nr_pstates)) अणु
 		pr_warn_once("idx_to_pstate: index %u is out of bound\n", i);
-		return powernv_freqs[powernv_pstate_info.nominal].driver_data;
-	}
+		वापस घातernv_freqs[घातernv_pstate_info.nominal].driver_data;
+	पूर्ण
 
-	return powernv_freqs[i].driver_data;
-}
+	वापस घातernv_freqs[i].driver_data;
+पूर्ण
 
 /*
  * pstate_to_idx : Returns the index in the cpufreq frequencytable
- *		   powernv_freqs for the frequency whose corresponding
+ *		   घातernv_freqs क्रम the frequency whose corresponding
  *		   pstate id is @pstate.
  *
  *		   If no frequency corresponding to @pstate is found,
- *		   this will return the index of the nominal
+ *		   this will वापस the index of the nominal
  *		   frequency.
  */
-static unsigned int pstate_to_idx(u8 pstate)
-{
-	unsigned int key = pstate % POWERNV_MAX_PSTATES;
-	struct pstate_idx_revmap_data *revmap_data;
+अटल अचिन्हित पूर्णांक pstate_to_idx(u8 pstate)
+अणु
+	अचिन्हित पूर्णांक key = pstate % POWERNV_MAX_PSTATES;
+	काष्ठा pstate_idx_revmap_data *revmap_data;
 
-	hash_for_each_possible(pstate_revmap, revmap_data, hentry, key) {
-		if (revmap_data->pstate_id == pstate)
-			return revmap_data->cpufreq_table_idx;
-	}
+	hash_क्रम_each_possible(pstate_revmap, revmap_data, hentry, key) अणु
+		अगर (revmap_data->pstate_id == pstate)
+			वापस revmap_data->cpufreq_table_idx;
+	पूर्ण
 
 	pr_warn_once("pstate_to_idx: pstate 0x%x not found\n", pstate);
-	return powernv_pstate_info.nominal;
-}
+	वापस घातernv_pstate_info.nominal;
+पूर्ण
 
-static inline void reset_gpstates(struct cpufreq_policy *policy)
-{
-	struct global_pstate_info *gpstates = policy->driver_data;
+अटल अंतरभूत व्योम reset_gpstates(काष्ठा cpufreq_policy *policy)
+अणु
+	काष्ठा global_pstate_info *gpstates = policy->driver_data;
 
 	gpstates->highest_lpstate_idx = 0;
-	gpstates->elapsed_time = 0;
-	gpstates->last_sampled_time = 0;
+	gpstates->elapsed_समय = 0;
+	gpstates->last_sampled_समय = 0;
 	gpstates->last_lpstate_idx = 0;
 	gpstates->last_gpstate_idx = 0;
-}
+पूर्ण
 
 /*
  * Initialize the freq table based on data obtained
  * from the firmware passed via device-tree
  */
-static int init_powernv_pstates(void)
-{
-	struct device_node *power_mgt;
-	int i, nr_pstates = 0;
-	const __be32 *pstate_ids, *pstate_freqs;
+अटल पूर्णांक init_घातernv_pstates(व्योम)
+अणु
+	काष्ठा device_node *घातer_mgt;
+	पूर्णांक i, nr_pstates = 0;
+	स्थिर __be32 *pstate_ids, *pstate_freqs;
 	u32 len_ids, len_freqs;
 	u32 pstate_min, pstate_max, pstate_nominal;
 	u32 pstate_turbo, pstate_ultra_turbo;
-	int rc = -ENODEV;
+	पूर्णांक rc = -ENODEV;
 
-	power_mgt = of_find_node_by_path("/ibm,opal/power-mgt");
-	if (!power_mgt) {
+	घातer_mgt = of_find_node_by_path("/ibm,opal/power-mgt");
+	अगर (!घातer_mgt) अणु
 		pr_warn("power-mgt node not found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (of_property_read_u32(power_mgt, "ibm,pstate-min", &pstate_min)) {
+	अगर (of_property_पढ़ो_u32(घातer_mgt, "ibm,pstate-min", &pstate_min)) अणु
 		pr_warn("ibm,pstate-min node not found\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (of_property_read_u32(power_mgt, "ibm,pstate-max", &pstate_max)) {
+	अगर (of_property_पढ़ो_u32(घातer_mgt, "ibm,pstate-max", &pstate_max)) अणु
 		pr_warn("ibm,pstate-max node not found\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (of_property_read_u32(power_mgt, "ibm,pstate-nominal",
-				 &pstate_nominal)) {
+	अगर (of_property_पढ़ो_u32(घातer_mgt, "ibm,pstate-nominal",
+				 &pstate_nominal)) अणु
 		pr_warn("ibm,pstate-nominal not found\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (of_property_read_u32(power_mgt, "ibm,pstate-ultra-turbo",
-				 &pstate_ultra_turbo)) {
-		powernv_pstate_info.wof_enabled = false;
-		goto next;
-	}
+	अगर (of_property_पढ़ो_u32(घातer_mgt, "ibm,pstate-ultra-turbo",
+				 &pstate_ultra_turbo)) अणु
+		घातernv_pstate_info.wof_enabled = false;
+		जाओ next;
+	पूर्ण
 
-	if (of_property_read_u32(power_mgt, "ibm,pstate-turbo",
-				 &pstate_turbo)) {
-		powernv_pstate_info.wof_enabled = false;
-		goto next;
-	}
+	अगर (of_property_पढ़ो_u32(घातer_mgt, "ibm,pstate-turbo",
+				 &pstate_turbo)) अणु
+		घातernv_pstate_info.wof_enabled = false;
+		जाओ next;
+	पूर्ण
 
-	if (pstate_turbo == pstate_ultra_turbo)
-		powernv_pstate_info.wof_enabled = false;
-	else
-		powernv_pstate_info.wof_enabled = true;
+	अगर (pstate_turbo == pstate_ultra_turbo)
+		घातernv_pstate_info.wof_enabled = false;
+	अन्यथा
+		घातernv_pstate_info.wof_enabled = true;
 
 next:
 	pr_info("cpufreq pstate min 0x%x nominal 0x%x max 0x%x\n", pstate_min,
 		pstate_nominal, pstate_max);
 	pr_info("Workload Optimized Frequency is %s in the platform\n",
-		(powernv_pstate_info.wof_enabled) ? "enabled" : "disabled");
+		(घातernv_pstate_info.wof_enabled) ? "enabled" : "disabled");
 
-	pstate_ids = of_get_property(power_mgt, "ibm,pstate-ids", &len_ids);
-	if (!pstate_ids) {
+	pstate_ids = of_get_property(घातer_mgt, "ibm,pstate-ids", &len_ids);
+	अगर (!pstate_ids) अणु
 		pr_warn("ibm,pstate-ids not found\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	pstate_freqs = of_get_property(power_mgt, "ibm,pstate-frequencies-mhz",
+	pstate_freqs = of_get_property(घातer_mgt, "ibm,pstate-frequencies-mhz",
 				      &len_freqs);
-	if (!pstate_freqs) {
+	अगर (!pstate_freqs) अणु
 		pr_warn("ibm,pstate-frequencies-mhz not found\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (len_ids != len_freqs) {
+	अगर (len_ids != len_freqs) अणु
 		pr_warn("Entries in ibm,pstate-ids and "
 			"ibm,pstate-frequencies-mhz does not match\n");
-	}
+	पूर्ण
 
-	nr_pstates = min(len_ids, len_freqs) / sizeof(u32);
-	if (!nr_pstates) {
+	nr_pstates = min(len_ids, len_freqs) / माप(u32);
+	अगर (!nr_pstates) अणु
 		pr_warn("No PStates found\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	powernv_pstate_info.nr_pstates = nr_pstates;
+	घातernv_pstate_info.nr_pstates = nr_pstates;
 	pr_debug("NR PStates %d\n", nr_pstates);
 
-	for (i = 0; i < nr_pstates; i++) {
+	क्रम (i = 0; i < nr_pstates; i++) अणु
 		u32 id = be32_to_cpu(pstate_ids[i]);
 		u32 freq = be32_to_cpu(pstate_freqs[i]);
-		struct pstate_idx_revmap_data *revmap_data;
-		unsigned int key;
+		काष्ठा pstate_idx_revmap_data *revmap_data;
+		अचिन्हित पूर्णांक key;
 
 		pr_debug("PState id %d freq %d MHz\n", id, freq);
-		powernv_freqs[i].frequency = freq * 1000; /* kHz */
-		powernv_freqs[i].driver_data = id & 0xFF;
+		घातernv_freqs[i].frequency = freq * 1000; /* kHz */
+		घातernv_freqs[i].driver_data = id & 0xFF;
 
-		revmap_data = kmalloc(sizeof(*revmap_data), GFP_KERNEL);
-		if (!revmap_data) {
+		revmap_data = kदो_स्मृति(माप(*revmap_data), GFP_KERNEL);
+		अगर (!revmap_data) अणु
 			rc = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		revmap_data->pstate_id = id & 0xFF;
 		revmap_data->cpufreq_table_idx = i;
 		key = (revmap_data->pstate_id) % POWERNV_MAX_PSTATES;
 		hash_add(pstate_revmap, &revmap_data->hentry, key);
 
-		if (id == pstate_max)
-			powernv_pstate_info.max = i;
-		if (id == pstate_nominal)
-			powernv_pstate_info.nominal = i;
-		if (id == pstate_min)
-			powernv_pstate_info.min = i;
+		अगर (id == pstate_max)
+			घातernv_pstate_info.max = i;
+		अगर (id == pstate_nominal)
+			घातernv_pstate_info.nominal = i;
+		अगर (id == pstate_min)
+			घातernv_pstate_info.min = i;
 
-		if (powernv_pstate_info.wof_enabled && id == pstate_turbo) {
-			int j;
+		अगर (घातernv_pstate_info.wof_enabled && id == pstate_turbo) अणु
+			पूर्णांक j;
 
-			for (j = i - 1; j >= (int)powernv_pstate_info.max; j--)
-				powernv_freqs[j].flags = CPUFREQ_BOOST_FREQ;
-		}
-	}
+			क्रम (j = i - 1; j >= (पूर्णांक)घातernv_pstate_info.max; j--)
+				घातernv_freqs[j].flags = CPUFREQ_BOOST_FREQ;
+		पूर्ण
+	पूर्ण
 
 	/* End of list marker entry */
-	powernv_freqs[i].frequency = CPUFREQ_TABLE_END;
+	घातernv_freqs[i].frequency = CPUFREQ_TABLE_END;
 
-	of_node_put(power_mgt);
-	return 0;
+	of_node_put(घातer_mgt);
+	वापस 0;
 out:
-	of_node_put(power_mgt);
-	return rc;
-}
+	of_node_put(घातer_mgt);
+	वापस rc;
+पूर्ण
 
 /* Returns the CPU frequency corresponding to the pstate_id. */
-static unsigned int pstate_id_to_freq(u8 pstate_id)
-{
-	int i;
+अटल अचिन्हित पूर्णांक pstate_id_to_freq(u8 pstate_id)
+अणु
+	पूर्णांक i;
 
 	i = pstate_to_idx(pstate_id);
-	if (i >= powernv_pstate_info.nr_pstates || i < 0) {
+	अगर (i >= घातernv_pstate_info.nr_pstates || i < 0) अणु
 		pr_warn("PState id 0x%x outside of PState table, reporting nominal id 0x%x instead\n",
-			pstate_id, idx_to_pstate(powernv_pstate_info.nominal));
-		i = powernv_pstate_info.nominal;
-	}
+			pstate_id, idx_to_pstate(घातernv_pstate_info.nominal));
+		i = घातernv_pstate_info.nominal;
+	पूर्ण
 
-	return powernv_freqs[i].frequency;
-}
+	वापस घातernv_freqs[i].frequency;
+पूर्ण
 
 /*
  * cpuinfo_nominal_freq_show - Show the nominal CPU frequency as indicated by
  * the firmware
  */
-static ssize_t cpuinfo_nominal_freq_show(struct cpufreq_policy *policy,
-					char *buf)
-{
-	return sprintf(buf, "%u\n",
-		powernv_freqs[powernv_pstate_info.nominal].frequency);
-}
+अटल sमाप_प्रकार cpuinfo_nominal_freq_show(काष्ठा cpufreq_policy *policy,
+					अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n",
+		घातernv_freqs[घातernv_pstate_info.nominal].frequency);
+पूर्ण
 
-static struct freq_attr cpufreq_freq_attr_cpuinfo_nominal_freq =
+अटल काष्ठा freq_attr cpufreq_freq_attr_cpuinfo_nominal_freq =
 	__ATTR_RO(cpuinfo_nominal_freq);
 
-#define SCALING_BOOST_FREQS_ATTR_INDEX		2
+#घोषणा SCALING_BOOST_FREQS_ATTR_INDEX		2
 
-static struct freq_attr *powernv_cpu_freq_attr[] = {
+अटल काष्ठा freq_attr *घातernv_cpu_freq_attr[] = अणु
 	&cpufreq_freq_attr_scaling_available_freqs,
 	&cpufreq_freq_attr_cpuinfo_nominal_freq,
 	&cpufreq_freq_attr_scaling_boost_freqs,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-#define throttle_attr(name, member)					\
-static ssize_t name##_show(struct cpufreq_policy *policy, char *buf)	\
-{									\
-	struct chip *chip = per_cpu(chip_info, policy->cpu);		\
+#घोषणा throttle_attr(name, member)					\
+अटल sमाप_प्रकार name##_show(काष्ठा cpufreq_policy *policy, अक्षर *buf)	\
+अणु									\
+	काष्ठा chip *chip = per_cpu(chip_info, policy->cpu);		\
 									\
-	return sprintf(buf, "%u\n", chip->member);			\
-}									\
+	वापस प्र_लिखो(buf, "%u\n", chip->member);			\
+पूर्ण									\
 									\
-static struct freq_attr throttle_attr_##name = __ATTR_RO(name)		\
+अटल काष्ठा freq_attr throttle_attr_##name = __ATTR_RO(name)		\
 
 throttle_attr(unthrottle, reason[NO_THROTTLE]);
-throttle_attr(powercap, reason[POWERCAP]);
+throttle_attr(घातercap, reason[POWERCAP]);
 throttle_attr(overtemp, reason[CPU_OVERTEMP]);
 throttle_attr(supply_fault, reason[POWER_SUPPLY_FAILURE]);
 throttle_attr(overcurrent, reason[OVERCURRENT]);
@@ -412,81 +413,81 @@ throttle_attr(occ_reset, reason[OCC_RESET_THROTTLE]);
 throttle_attr(turbo_stat, throttle_turbo);
 throttle_attr(sub_turbo_stat, throttle_sub_turbo);
 
-static struct attribute *throttle_attrs[] = {
+अटल काष्ठा attribute *throttle_attrs[] = अणु
 	&throttle_attr_unthrottle.attr,
-	&throttle_attr_powercap.attr,
+	&throttle_attr_घातercap.attr,
 	&throttle_attr_overtemp.attr,
 	&throttle_attr_supply_fault.attr,
 	&throttle_attr_overcurrent.attr,
 	&throttle_attr_occ_reset.attr,
 	&throttle_attr_turbo_stat.attr,
 	&throttle_attr_sub_turbo_stat.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group throttle_attr_grp = {
+अटल स्थिर काष्ठा attribute_group throttle_attr_grp = अणु
 	.name	= "throttle_stats",
 	.attrs	= throttle_attrs,
-};
+पूर्ण;
 
 /* Helper routines */
 
-/* Access helpers to power mgt SPR */
+/* Access helpers to घातer mgt SPR */
 
-static inline unsigned long get_pmspr(unsigned long sprn)
-{
-	switch (sprn) {
-	case SPRN_PMCR:
-		return mfspr(SPRN_PMCR);
+अटल अंतरभूत अचिन्हित दीर्घ get_pmspr(अचिन्हित दीर्घ sprn)
+अणु
+	चयन (sprn) अणु
+	हाल SPRN_PMCR:
+		वापस mfspr(SPRN_PMCR);
 
-	case SPRN_PMICR:
-		return mfspr(SPRN_PMICR);
+	हाल SPRN_PMICR:
+		वापस mfspr(SPRN_PMICR);
 
-	case SPRN_PMSR:
-		return mfspr(SPRN_PMSR);
-	}
+	हाल SPRN_PMSR:
+		वापस mfspr(SPRN_PMSR);
+	पूर्ण
 	BUG();
-}
+पूर्ण
 
-static inline void set_pmspr(unsigned long sprn, unsigned long val)
-{
-	switch (sprn) {
-	case SPRN_PMCR:
+अटल अंतरभूत व्योम set_pmspr(अचिन्हित दीर्घ sprn, अचिन्हित दीर्घ val)
+अणु
+	चयन (sprn) अणु
+	हाल SPRN_PMCR:
 		mtspr(SPRN_PMCR, val);
-		return;
+		वापस;
 
-	case SPRN_PMICR:
+	हाल SPRN_PMICR:
 		mtspr(SPRN_PMICR, val);
-		return;
-	}
+		वापस;
+	पूर्ण
 	BUG();
-}
+पूर्ण
 
 /*
  * Use objects of this type to query/update
  * pstates on a remote CPU via smp_call_function.
  */
-struct powernv_smp_call_data {
-	unsigned int freq;
+काष्ठा घातernv_smp_call_data अणु
+	अचिन्हित पूर्णांक freq;
 	u8 pstate_id;
 	u8 gpstate_id;
-};
+पूर्ण;
 
 /*
- * powernv_read_cpu_freq: Reads the current frequency on this CPU.
+ * घातernv_पढ़ो_cpu_freq: Reads the current frequency on this CPU.
  *
  * Called via smp_call_function.
  *
  * Note: The caller of the smp_call_function should pass an argument of
- * the type 'struct powernv_smp_call_data *' along with this function.
+ * the type 'struct powernv_smp_call_data *' aदीर्घ with this function.
  *
- * The current frequency on this CPU will be returned via
- * ((struct powernv_smp_call_data *)arg)->freq;
+ * The current frequency on this CPU will be वापसed via
+ * ((काष्ठा घातernv_smp_call_data *)arg)->freq;
  */
-static void powernv_read_cpu_freq(void *arg)
-{
-	unsigned long pmspr_val;
-	struct powernv_smp_call_data *freq_data = arg;
+अटल व्योम घातernv_पढ़ो_cpu_freq(व्योम *arg)
+अणु
+	अचिन्हित दीर्घ pmspr_val;
+	काष्ठा घातernv_smp_call_data *freq_data = arg;
 
 	pmspr_val = get_pmspr(SPRN_PMSR);
 	freq_data->pstate_id = extract_local_pstate(pmspr_val);
@@ -495,22 +496,22 @@ static void powernv_read_cpu_freq(void *arg)
 	pr_debug("cpu %d pmsr %016lX pstate_id 0x%x frequency %d kHz\n",
 		 raw_smp_processor_id(), pmspr_val, freq_data->pstate_id,
 		 freq_data->freq);
-}
+पूर्ण
 
 /*
- * powernv_cpufreq_get: Returns the CPU frequency as reported by the
- * firmware for CPU 'cpu'. This value is reported through the sysfs
+ * घातernv_cpufreq_get: Returns the CPU frequency as reported by the
+ * firmware क्रम CPU 'cpu'. This value is reported through the sysfs
  * file cpuinfo_cur_freq.
  */
-static unsigned int powernv_cpufreq_get(unsigned int cpu)
-{
-	struct powernv_smp_call_data freq_data;
+अटल अचिन्हित पूर्णांक घातernv_cpufreq_get(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा घातernv_smp_call_data freq_data;
 
-	smp_call_function_any(cpu_sibling_mask(cpu), powernv_read_cpu_freq,
+	smp_call_function_any(cpu_sibling_mask(cpu), घातernv_पढ़ो_cpu_freq,
 			&freq_data, 1);
 
-	return freq_data.freq;
-}
+	वापस freq_data.freq;
+पूर्ण
 
 /*
  * set_pstate: Sets the pstate on this CPU.
@@ -518,15 +519,15 @@ static unsigned int powernv_cpufreq_get(unsigned int cpu)
  * This is called via an smp_call_function.
  *
  * The caller must ensure that freq_data is of the type
- * (struct powernv_smp_call_data *) and the pstate_id which needs to be set
+ * (काष्ठा घातernv_smp_call_data *) and the pstate_id which needs to be set
  * on this CPU should be present in freq_data->pstate_id.
  */
-static void set_pstate(void *data)
-{
-	unsigned long val;
-	struct powernv_smp_call_data *freq_data = data;
-	unsigned long pstate_ul = freq_data->pstate_id;
-	unsigned long gpstate_ul = freq_data->gpstate_id;
+अटल व्योम set_pstate(व्योम *data)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा घातernv_smp_call_data *freq_data = data;
+	अचिन्हित दीर्घ pstate_ul = freq_data->pstate_id;
+	अचिन्हित दीर्घ gpstate_ul = freq_data->gpstate_id;
 
 	val = get_pmspr(SPRN_PMCR);
 	val = val & 0x0000FFFFFFFFFFFFULL;
@@ -540,275 +541,275 @@ static void set_pstate(void *data)
 	pr_debug("Setting cpu %d pmcr to %016lX\n",
 			raw_smp_processor_id(), val);
 	set_pmspr(SPRN_PMCR, val);
-}
+पूर्ण
 
 /*
  * get_nominal_index: Returns the index corresponding to the nominal
  * pstate in the cpufreq table
  */
-static inline unsigned int get_nominal_index(void)
-{
-	return powernv_pstate_info.nominal;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक get_nominal_index(व्योम)
+अणु
+	वापस घातernv_pstate_info.nominal;
+पूर्ण
 
-static void powernv_cpufreq_throttle_check(void *data)
-{
-	struct chip *chip;
-	unsigned int cpu = smp_processor_id();
-	unsigned long pmsr;
+अटल व्योम घातernv_cpufreq_throttle_check(व्योम *data)
+अणु
+	काष्ठा chip *chip;
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
+	अचिन्हित दीर्घ pmsr;
 	u8 pmsr_pmax;
-	unsigned int pmsr_pmax_idx;
+	अचिन्हित पूर्णांक pmsr_pmax_idx;
 
 	pmsr = get_pmspr(SPRN_PMSR);
-	chip = this_cpu_read(chip_info);
+	chip = this_cpu_पढ़ो(chip_info);
 
-	/* Check for Pmax Capping */
+	/* Check क्रम Pmax Capping */
 	pmsr_pmax = extract_max_pstate(pmsr);
 	pmsr_pmax_idx = pstate_to_idx(pmsr_pmax);
-	if (pmsr_pmax_idx != powernv_pstate_info.max) {
-		if (chip->throttled)
-			goto next;
+	अगर (pmsr_pmax_idx != घातernv_pstate_info.max) अणु
+		अगर (chip->throttled)
+			जाओ next;
 		chip->throttled = true;
-		if (pmsr_pmax_idx > powernv_pstate_info.nominal) {
+		अगर (pmsr_pmax_idx > घातernv_pstate_info.nominal) अणु
 			pr_warn_once("CPU %d on Chip %u has Pmax(0x%x) reduced below that of nominal frequency(0x%x)\n",
 				     cpu, chip->id, pmsr_pmax,
-				     idx_to_pstate(powernv_pstate_info.nominal));
+				     idx_to_pstate(घातernv_pstate_info.nominal));
 			chip->throttle_sub_turbo++;
-		} else {
+		पूर्ण अन्यथा अणु
 			chip->throttle_turbo++;
-		}
-		trace_powernv_throttle(chip->id,
+		पूर्ण
+		trace_घातernv_throttle(chip->id,
 				      throttle_reason[chip->throttle_reason],
 				      pmsr_pmax);
-	} else if (chip->throttled) {
+	पूर्ण अन्यथा अगर (chip->throttled) अणु
 		chip->throttled = false;
-		trace_powernv_throttle(chip->id,
+		trace_घातernv_throttle(chip->id,
 				      throttle_reason[chip->throttle_reason],
 				      pmsr_pmax);
-	}
+	पूर्ण
 
-	/* Check if Psafe_mode_active is set in PMSR. */
+	/* Check अगर Psafe_mode_active is set in PMSR. */
 next:
-	if (pmsr & PMSR_PSAFE_ENABLE) {
+	अगर (pmsr & PMSR_PSAFE_ENABLE) अणु
 		throttled = true;
 		pr_info("Pstate set to safe frequency\n");
-	}
+	पूर्ण
 
-	/* Check if SPR_EM_DISABLE is set in PMSR */
-	if (pmsr & PMSR_SPR_EM_DISABLE) {
+	/* Check अगर SPR_EM_DISABLE is set in PMSR */
+	अगर (pmsr & PMSR_SPR_EM_DISABLE) अणु
 		throttled = true;
 		pr_info("Frequency Control disabled from OS\n");
-	}
+	पूर्ण
 
-	if (throttled) {
+	अगर (throttled) अणु
 		pr_info("PMSR = %16lx\n", pmsr);
 		pr_warn("CPU Frequency could be throttled\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * calc_global_pstate - Calculate global pstate
- * @elapsed_time:		Elapsed time in milliseconds
+ * @elapsed_समय:		Elapsed समय in milliseconds
  * @local_pstate_idx:		New local pstate
- * @highest_lpstate_idx:	pstate from which its ramping down
+ * @highest_lpstate_idx:	pstate from which its ramping करोwn
  *
  * Finds the appropriate global pstate based on the pstate from which its
- * ramping down and the time elapsed in ramping down. It follows a quadratic
- * equation which ensures that it reaches ramping down to pmin in 5sec.
+ * ramping करोwn and the समय elapsed in ramping करोwn. It follows a quadratic
+ * equation which ensures that it reaches ramping करोwn to pmin in 5sec.
  */
-static inline int calc_global_pstate(unsigned int elapsed_time,
-				     int highest_lpstate_idx,
-				     int local_pstate_idx)
-{
-	int index_diff;
+अटल अंतरभूत पूर्णांक calc_global_pstate(अचिन्हित पूर्णांक elapsed_समय,
+				     पूर्णांक highest_lpstate_idx,
+				     पूर्णांक local_pstate_idx)
+अणु
+	पूर्णांक index_dअगरf;
 
 	/*
-	 * Using ramp_down_percent we get the percentage of rampdown
-	 * that we are expecting to be dropping. Difference between
-	 * highest_lpstate_idx and powernv_pstate_info.min will give a absolute
+	 * Using ramp_करोwn_percent we get the percentage of rampकरोwn
+	 * that we are expecting to be dropping. Dअगरference between
+	 * highest_lpstate_idx and घातernv_pstate_info.min will give a असलolute
 	 * number of how many pstates we will drop eventually by the end of
 	 * 5 seconds, then just scale it get the number pstates to be dropped.
 	 */
-	index_diff =  ((int)ramp_down_percent(elapsed_time) *
-			(powernv_pstate_info.min - highest_lpstate_idx)) / 100;
+	index_dअगरf =  ((पूर्णांक)ramp_करोwn_percent(elapsed_समय) *
+			(घातernv_pstate_info.min - highest_lpstate_idx)) / 100;
 
 	/* Ensure that global pstate is >= to local pstate */
-	if (highest_lpstate_idx + index_diff >= local_pstate_idx)
-		return local_pstate_idx;
-	else
-		return highest_lpstate_idx + index_diff;
-}
+	अगर (highest_lpstate_idx + index_dअगरf >= local_pstate_idx)
+		वापस local_pstate_idx;
+	अन्यथा
+		वापस highest_lpstate_idx + index_dअगरf;
+पूर्ण
 
-static inline void  queue_gpstate_timer(struct global_pstate_info *gpstates)
-{
-	unsigned int timer_interval;
+अटल अंतरभूत व्योम  queue_gpstate_समयr(काष्ठा global_pstate_info *gpstates)
+अणु
+	अचिन्हित पूर्णांक समयr_पूर्णांकerval;
 
 	/*
-	 * Setting up timer to fire after GPSTATE_TIMER_INTERVAL ms, But
-	 * if it exceeds MAX_RAMP_DOWN_TIME ms for ramp down time.
-	 * Set timer such that it fires exactly at MAX_RAMP_DOWN_TIME
-	 * seconds of ramp down time.
+	 * Setting up समयr to fire after GPSTATE_TIMER_INTERVAL ms, But
+	 * अगर it exceeds MAX_RAMP_DOWN_TIME ms क्रम ramp करोwn समय.
+	 * Set समयr such that it fires exactly at MAX_RAMP_DOWN_TIME
+	 * seconds of ramp करोwn समय.
 	 */
-	if ((gpstates->elapsed_time + GPSTATE_TIMER_INTERVAL)
+	अगर ((gpstates->elapsed_समय + GPSTATE_TIMER_INTERVAL)
 	     > MAX_RAMP_DOWN_TIME)
-		timer_interval = MAX_RAMP_DOWN_TIME - gpstates->elapsed_time;
-	else
-		timer_interval = GPSTATE_TIMER_INTERVAL;
+		समयr_पूर्णांकerval = MAX_RAMP_DOWN_TIME - gpstates->elapsed_समय;
+	अन्यथा
+		समयr_पूर्णांकerval = GPSTATE_TIMER_INTERVAL;
 
-	mod_timer(&gpstates->timer, jiffies + msecs_to_jiffies(timer_interval));
-}
+	mod_समयr(&gpstates->समयr, jअगरfies + msecs_to_jअगरfies(समयr_पूर्णांकerval));
+पूर्ण
 
 /**
- * gpstate_timer_handler
+ * gpstate_समयr_handler
  *
- * @t: Timer context used to fetch global pstate info struct
+ * @t: Timer context used to fetch global pstate info काष्ठा
  *
- * This handler brings down the global pstate closer to the local pstate
- * according quadratic equation. Queues a new timer if it is still not equal
+ * This handler brings करोwn the global pstate बंदr to the local pstate
+ * according quadratic equation. Queues a new समयr अगर it is still not equal
  * to local pstate
  */
-static void gpstate_timer_handler(struct timer_list *t)
-{
-	struct global_pstate_info *gpstates = from_timer(gpstates, t, timer);
-	struct cpufreq_policy *policy = gpstates->policy;
-	int gpstate_idx, lpstate_idx;
-	unsigned long val;
-	unsigned int time_diff = jiffies_to_msecs(jiffies)
-					- gpstates->last_sampled_time;
-	struct powernv_smp_call_data freq_data;
+अटल व्योम gpstate_समयr_handler(काष्ठा समयr_list *t)
+अणु
+	काष्ठा global_pstate_info *gpstates = from_समयr(gpstates, t, समयr);
+	काष्ठा cpufreq_policy *policy = gpstates->policy;
+	पूर्णांक gpstate_idx, lpstate_idx;
+	अचिन्हित दीर्घ val;
+	अचिन्हित पूर्णांक समय_dअगरf = jअगरfies_to_msecs(jअगरfies)
+					- gpstates->last_sampled_समय;
+	काष्ठा घातernv_smp_call_data freq_data;
 
-	if (!spin_trylock(&gpstates->gpstate_lock))
-		return;
+	अगर (!spin_trylock(&gpstates->gpstate_lock))
+		वापस;
 	/*
-	 * If the timer has migrated to the different cpu then bring
+	 * If the समयr has migrated to the dअगरferent cpu then bring
 	 * it back to one of the policy->cpus
 	 */
-	if (!cpumask_test_cpu(raw_smp_processor_id(), policy->cpus)) {
-		gpstates->timer.expires = jiffies + msecs_to_jiffies(1);
-		add_timer_on(&gpstates->timer, cpumask_first(policy->cpus));
+	अगर (!cpumask_test_cpu(raw_smp_processor_id(), policy->cpus)) अणु
+		gpstates->समयr.expires = jअगरfies + msecs_to_jअगरfies(1);
+		add_समयr_on(&gpstates->समयr, cpumask_first(policy->cpus));
 		spin_unlock(&gpstates->gpstate_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * If PMCR was last updated was using fast_swtich then
 	 * We may have wrong in gpstate->last_lpstate_idx
-	 * value. Hence, read from PMCR to get correct data.
+	 * value. Hence, पढ़ो from PMCR to get correct data.
 	 */
 	val = get_pmspr(SPRN_PMCR);
 	freq_data.gpstate_id = extract_global_pstate(val);
 	freq_data.pstate_id = extract_local_pstate(val);
-	if (freq_data.gpstate_id  == freq_data.pstate_id) {
+	अगर (freq_data.gpstate_id  == freq_data.pstate_id) अणु
 		reset_gpstates(policy);
 		spin_unlock(&gpstates->gpstate_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	gpstates->last_sampled_time += time_diff;
-	gpstates->elapsed_time += time_diff;
+	gpstates->last_sampled_समय += समय_dअगरf;
+	gpstates->elapsed_समय += समय_dअगरf;
 
-	if (gpstates->elapsed_time > MAX_RAMP_DOWN_TIME) {
+	अगर (gpstates->elapsed_समय > MAX_RAMP_DOWN_TIME) अणु
 		gpstate_idx = pstate_to_idx(freq_data.pstate_id);
 		lpstate_idx = gpstate_idx;
 		reset_gpstates(policy);
 		gpstates->highest_lpstate_idx = gpstate_idx;
-	} else {
+	पूर्ण अन्यथा अणु
 		lpstate_idx = pstate_to_idx(freq_data.pstate_id);
-		gpstate_idx = calc_global_pstate(gpstates->elapsed_time,
+		gpstate_idx = calc_global_pstate(gpstates->elapsed_समय,
 						 gpstates->highest_lpstate_idx,
 						 lpstate_idx);
-	}
+	पूर्ण
 	freq_data.gpstate_id = idx_to_pstate(gpstate_idx);
 	gpstates->last_gpstate_idx = gpstate_idx;
 	gpstates->last_lpstate_idx = lpstate_idx;
 	/*
-	 * If local pstate is equal to global pstate, rampdown is over
-	 * So timer is not required to be queued.
+	 * If local pstate is equal to global pstate, rampकरोwn is over
+	 * So समयr is not required to be queued.
 	 */
-	if (gpstate_idx != gpstates->last_lpstate_idx)
-		queue_gpstate_timer(gpstates);
+	अगर (gpstate_idx != gpstates->last_lpstate_idx)
+		queue_gpstate_समयr(gpstates);
 
 	set_pstate(&freq_data);
 	spin_unlock(&gpstates->gpstate_lock);
-}
+पूर्ण
 
 /*
- * powernv_cpufreq_target_index: Sets the frequency corresponding to
+ * घातernv_cpufreq_target_index: Sets the frequency corresponding to
  * the cpufreq table entry indexed by new_index on the cpus in the
  * mask policy->cpus
  */
-static int powernv_cpufreq_target_index(struct cpufreq_policy *policy,
-					unsigned int new_index)
-{
-	struct powernv_smp_call_data freq_data;
-	unsigned int cur_msec, gpstate_idx;
-	struct global_pstate_info *gpstates = policy->driver_data;
+अटल पूर्णांक घातernv_cpufreq_target_index(काष्ठा cpufreq_policy *policy,
+					अचिन्हित पूर्णांक new_index)
+अणु
+	काष्ठा घातernv_smp_call_data freq_data;
+	अचिन्हित पूर्णांक cur_msec, gpstate_idx;
+	काष्ठा global_pstate_info *gpstates = policy->driver_data;
 
-	if (unlikely(rebooting) && new_index != get_nominal_index())
-		return 0;
+	अगर (unlikely(rebooting) && new_index != get_nominal_index())
+		वापस 0;
 
-	if (!throttled) {
-		/* we don't want to be preempted while
-		 * checking if the CPU frequency has been throttled
+	अगर (!throttled) अणु
+		/* we करोn't want to be preempted जबतक
+		 * checking अगर the CPU frequency has been throttled
 		 */
 		preempt_disable();
-		powernv_cpufreq_throttle_check(NULL);
+		घातernv_cpufreq_throttle_check(शून्य);
 		preempt_enable();
-	}
+	पूर्ण
 
-	cur_msec = jiffies_to_msecs(get_jiffies_64());
+	cur_msec = jअगरfies_to_msecs(get_jअगरfies_64());
 
 	freq_data.pstate_id = idx_to_pstate(new_index);
-	if (!gpstates) {
+	अगर (!gpstates) अणु
 		freq_data.gpstate_id = freq_data.pstate_id;
-		goto no_gpstate;
-	}
+		जाओ no_gpstate;
+	पूर्ण
 
 	spin_lock(&gpstates->gpstate_lock);
 
-	if (!gpstates->last_sampled_time) {
+	अगर (!gpstates->last_sampled_समय) अणु
 		gpstate_idx = new_index;
 		gpstates->highest_lpstate_idx = new_index;
-		goto gpstates_done;
-	}
+		जाओ gpstates_करोne;
+	पूर्ण
 
-	if (gpstates->last_gpstate_idx < new_index) {
-		gpstates->elapsed_time += cur_msec -
-						 gpstates->last_sampled_time;
+	अगर (gpstates->last_gpstate_idx < new_index) अणु
+		gpstates->elapsed_समय += cur_msec -
+						 gpstates->last_sampled_समय;
 
 		/*
-		 * If its has been ramping down for more than MAX_RAMP_DOWN_TIME
+		 * If its has been ramping करोwn क्रम more than MAX_RAMP_DOWN_TIME
 		 * we should be resetting all global pstate related data. Set it
 		 * equal to local pstate to start fresh.
 		 */
-		if (gpstates->elapsed_time > MAX_RAMP_DOWN_TIME) {
+		अगर (gpstates->elapsed_समय > MAX_RAMP_DOWN_TIME) अणु
 			reset_gpstates(policy);
 			gpstates->highest_lpstate_idx = new_index;
 			gpstate_idx = new_index;
-		} else {
-		/* Elaspsed_time is less than 5 seconds, continue to rampdown */
-			gpstate_idx = calc_global_pstate(gpstates->elapsed_time,
+		पूर्ण अन्यथा अणु
+		/* Elaspsed_समय is less than 5 seconds, जारी to rampकरोwn */
+			gpstate_idx = calc_global_pstate(gpstates->elapsed_समय,
 							 gpstates->highest_lpstate_idx,
 							 new_index);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		reset_gpstates(policy);
 		gpstates->highest_lpstate_idx = new_index;
 		gpstate_idx = new_index;
-	}
+	पूर्ण
 
 	/*
-	 * If local pstate is equal to global pstate, rampdown is over
-	 * So timer is not required to be queued.
+	 * If local pstate is equal to global pstate, rampकरोwn is over
+	 * So समयr is not required to be queued.
 	 */
-	if (gpstate_idx != new_index)
-		queue_gpstate_timer(gpstates);
-	else
-		del_timer_sync(&gpstates->timer);
+	अगर (gpstate_idx != new_index)
+		queue_gpstate_समयr(gpstates);
+	अन्यथा
+		del_समयr_sync(&gpstates->समयr);
 
-gpstates_done:
+gpstates_करोne:
 	freq_data.gpstate_id = idx_to_pstate(gpstate_idx);
-	gpstates->last_sampled_time = cur_msec;
+	gpstates->last_sampled_समय = cur_msec;
 	gpstates->last_gpstate_idx = gpstate_idx;
 	gpstates->last_lpstate_idx = new_index;
 
@@ -817,343 +818,343 @@ gpstates_done:
 no_gpstate:
 	/*
 	 * Use smp_call_function to send IPI and execute the
-	 * mtspr on target CPU.  We could do that without IPI
-	 * if current CPU is within policy->cpus (core)
+	 * mtspr on target CPU.  We could करो that without IPI
+	 * अगर current CPU is within policy->cpus (core)
 	 */
 	smp_call_function_any(policy->cpus, set_pstate, &freq_data, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int powernv_cpufreq_cpu_init(struct cpufreq_policy *policy)
-{
-	int base, i;
-	struct kernfs_node *kn;
-	struct global_pstate_info *gpstates;
+अटल पूर्णांक घातernv_cpufreq_cpu_init(काष्ठा cpufreq_policy *policy)
+अणु
+	पूर्णांक base, i;
+	काष्ठा kernfs_node *kn;
+	काष्ठा global_pstate_info *gpstates;
 
-	base = cpu_first_thread_sibling(policy->cpu);
+	base = cpu_first_thपढ़ो_sibling(policy->cpu);
 
-	for (i = 0; i < threads_per_core; i++)
+	क्रम (i = 0; i < thपढ़ोs_per_core; i++)
 		cpumask_set_cpu(base + i, policy->cpus);
 
 	kn = kernfs_find_and_get(policy->kobj.sd, throttle_attr_grp.name);
-	if (!kn) {
-		int ret;
+	अगर (!kn) अणु
+		पूर्णांक ret;
 
 		ret = sysfs_create_group(&policy->kobj, &throttle_attr_grp);
-		if (ret) {
+		अगर (ret) अणु
 			pr_info("Failed to create throttle stats directory for cpu %d\n",
 				policy->cpu);
-			return ret;
-		}
-	} else {
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		kernfs_put(kn);
-	}
+	पूर्ण
 
-	policy->freq_table = powernv_freqs;
-	policy->fast_switch_possible = true;
+	policy->freq_table = घातernv_freqs;
+	policy->fast_चयन_possible = true;
 
-	if (pvr_version_is(PVR_POWER9))
-		return 0;
+	अगर (pvr_version_is(PVR_POWER9))
+		वापस 0;
 
-	/* Initialise Gpstate ramp-down timer only on POWER8 */
-	gpstates =  kzalloc(sizeof(*gpstates), GFP_KERNEL);
-	if (!gpstates)
-		return -ENOMEM;
+	/* Initialise Gpstate ramp-करोwn समयr only on POWER8 */
+	gpstates =  kzalloc(माप(*gpstates), GFP_KERNEL);
+	अगर (!gpstates)
+		वापस -ENOMEM;
 
 	policy->driver_data = gpstates;
 
-	/* initialize timer */
+	/* initialize समयr */
 	gpstates->policy = policy;
-	timer_setup(&gpstates->timer, gpstate_timer_handler,
+	समयr_setup(&gpstates->समयr, gpstate_समयr_handler,
 		    TIMER_PINNED | TIMER_DEFERRABLE);
-	gpstates->timer.expires = jiffies +
-				msecs_to_jiffies(GPSTATE_TIMER_INTERVAL);
+	gpstates->समयr.expires = jअगरfies +
+				msecs_to_jअगरfies(GPSTATE_TIMER_INTERVAL);
 	spin_lock_init(&gpstates->gpstate_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int powernv_cpufreq_cpu_exit(struct cpufreq_policy *policy)
-{
-	/* timer is deleted in cpufreq_cpu_stop() */
-	kfree(policy->driver_data);
+अटल पूर्णांक घातernv_cpufreq_cpu_निकास(काष्ठा cpufreq_policy *policy)
+अणु
+	/* समयr is deleted in cpufreq_cpu_stop() */
+	kमुक्त(policy->driver_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int powernv_cpufreq_reboot_notifier(struct notifier_block *nb,
-				unsigned long action, void *unused)
-{
-	int cpu;
-	struct cpufreq_policy *cpu_policy;
+अटल पूर्णांक घातernv_cpufreq_reboot_notअगरier(काष्ठा notअगरier_block *nb,
+				अचिन्हित दीर्घ action, व्योम *unused)
+अणु
+	पूर्णांक cpu;
+	काष्ठा cpufreq_policy *cpu_policy;
 
 	rebooting = true;
-	for_each_online_cpu(cpu) {
+	क्रम_each_online_cpu(cpu) अणु
 		cpu_policy = cpufreq_cpu_get(cpu);
-		if (!cpu_policy)
-			continue;
-		powernv_cpufreq_target_index(cpu_policy, get_nominal_index());
+		अगर (!cpu_policy)
+			जारी;
+		घातernv_cpufreq_target_index(cpu_policy, get_nominal_index());
 		cpufreq_cpu_put(cpu_policy);
-	}
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block powernv_cpufreq_reboot_nb = {
-	.notifier_call = powernv_cpufreq_reboot_notifier,
-};
+अटल काष्ठा notअगरier_block घातernv_cpufreq_reboot_nb = अणु
+	.notअगरier_call = घातernv_cpufreq_reboot_notअगरier,
+पूर्ण;
 
-static void powernv_cpufreq_work_fn(struct work_struct *work)
-{
-	struct chip *chip = container_of(work, struct chip, throttle);
-	struct cpufreq_policy *policy;
-	unsigned int cpu;
+अटल व्योम घातernv_cpufreq_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा chip *chip = container_of(work, काष्ठा chip, throttle);
+	काष्ठा cpufreq_policy *policy;
+	अचिन्हित पूर्णांक cpu;
 	cpumask_t mask;
 
 	get_online_cpus();
 	cpumask_and(&mask, &chip->mask, cpu_online_mask);
 	smp_call_function_any(&mask,
-			      powernv_cpufreq_throttle_check, NULL, 0);
+			      घातernv_cpufreq_throttle_check, शून्य, 0);
 
-	if (!chip->restore)
-		goto out;
+	अगर (!chip->restore)
+		जाओ out;
 
 	chip->restore = false;
-	for_each_cpu(cpu, &mask) {
-		int index;
+	क्रम_each_cpu(cpu, &mask) अणु
+		पूर्णांक index;
 
 		policy = cpufreq_cpu_get(cpu);
-		if (!policy)
-			continue;
+		अगर (!policy)
+			जारी;
 		index = cpufreq_table_find_index_c(policy, policy->cur);
-		powernv_cpufreq_target_index(policy, index);
+		घातernv_cpufreq_target_index(policy, index);
 		cpumask_andnot(&mask, &mask, policy->cpus);
 		cpufreq_cpu_put(policy);
-	}
+	पूर्ण
 out:
 	put_online_cpus();
-}
+पूर्ण
 
-static int powernv_cpufreq_occ_msg(struct notifier_block *nb,
-				   unsigned long msg_type, void *_msg)
-{
-	struct opal_msg *msg = _msg;
-	struct opal_occ_msg omsg;
-	int i;
+अटल पूर्णांक घातernv_cpufreq_occ_msg(काष्ठा notअगरier_block *nb,
+				   अचिन्हित दीर्घ msg_type, व्योम *_msg)
+अणु
+	काष्ठा opal_msg *msg = _msg;
+	काष्ठा opal_occ_msg omsg;
+	पूर्णांक i;
 
-	if (msg_type != OPAL_MSG_OCC)
-		return 0;
+	अगर (msg_type != OPAL_MSG_OCC)
+		वापस 0;
 
 	omsg.type = be64_to_cpu(msg->params[0]);
 
-	switch (omsg.type) {
-	case OCC_RESET:
+	चयन (omsg.type) अणु
+	हाल OCC_RESET:
 		occ_reset = true;
 		pr_info("OCC (On Chip Controller - enforces hard thermal/power limits) Resetting\n");
 		/*
-		 * powernv_cpufreq_throttle_check() is called in
+		 * घातernv_cpufreq_throttle_check() is called in
 		 * target() callback which can detect the throttle state
-		 * for governors like ondemand.
-		 * But static governors will not call target() often thus
+		 * क्रम governors like ondemand.
+		 * But अटल governors will not call target() often thus
 		 * report throttling here.
 		 */
-		if (!throttled) {
+		अगर (!throttled) अणु
 			throttled = true;
 			pr_warn("CPU frequency is throttled for duration\n");
-		}
+		पूर्ण
 
-		break;
-	case OCC_LOAD:
+		अवरोध;
+	हाल OCC_LOAD:
 		pr_info("OCC Loading, CPU frequency is throttled until OCC is started\n");
-		break;
-	case OCC_THROTTLE:
+		अवरोध;
+	हाल OCC_THROTTLE:
 		omsg.chip = be64_to_cpu(msg->params[1]);
 		omsg.throttle_status = be64_to_cpu(msg->params[2]);
 
-		if (occ_reset) {
+		अगर (occ_reset) अणु
 			occ_reset = false;
 			throttled = false;
 			pr_info("OCC Active, CPU frequency is no longer throttled\n");
 
-			for (i = 0; i < nr_chips; i++) {
+			क्रम (i = 0; i < nr_chips; i++) अणु
 				chips[i].restore = true;
 				schedule_work(&chips[i].throttle);
-			}
+			पूर्ण
 
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		for (i = 0; i < nr_chips; i++)
-			if (chips[i].id == omsg.chip)
-				break;
+		क्रम (i = 0; i < nr_chips; i++)
+			अगर (chips[i].id == omsg.chip)
+				अवरोध;
 
-		if (omsg.throttle_status >= 0 &&
-		    omsg.throttle_status <= OCC_MAX_THROTTLE_STATUS) {
+		अगर (omsg.throttle_status >= 0 &&
+		    omsg.throttle_status <= OCC_MAX_THROTTLE_STATUS) अणु
 			chips[i].throttle_reason = omsg.throttle_status;
 			chips[i].reason[omsg.throttle_status]++;
-		}
+		पूर्ण
 
-		if (!omsg.throttle_status)
+		अगर (!omsg.throttle_status)
 			chips[i].restore = true;
 
 		schedule_work(&chips[i].throttle);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct notifier_block powernv_cpufreq_opal_nb = {
-	.notifier_call	= powernv_cpufreq_occ_msg,
-	.next		= NULL,
+अटल काष्ठा notअगरier_block घातernv_cpufreq_opal_nb = अणु
+	.notअगरier_call	= घातernv_cpufreq_occ_msg,
+	.next		= शून्य,
 	.priority	= 0,
-};
+पूर्ण;
 
-static void powernv_cpufreq_stop_cpu(struct cpufreq_policy *policy)
-{
-	struct powernv_smp_call_data freq_data;
-	struct global_pstate_info *gpstates = policy->driver_data;
+अटल व्योम घातernv_cpufreq_stop_cpu(काष्ठा cpufreq_policy *policy)
+अणु
+	काष्ठा घातernv_smp_call_data freq_data;
+	काष्ठा global_pstate_info *gpstates = policy->driver_data;
 
-	freq_data.pstate_id = idx_to_pstate(powernv_pstate_info.min);
-	freq_data.gpstate_id = idx_to_pstate(powernv_pstate_info.min);
+	freq_data.pstate_id = idx_to_pstate(घातernv_pstate_info.min);
+	freq_data.gpstate_id = idx_to_pstate(घातernv_pstate_info.min);
 	smp_call_function_single(policy->cpu, set_pstate, &freq_data, 1);
-	if (gpstates)
-		del_timer_sync(&gpstates->timer);
-}
+	अगर (gpstates)
+		del_समयr_sync(&gpstates->समयr);
+पूर्ण
 
-static unsigned int powernv_fast_switch(struct cpufreq_policy *policy,
-					unsigned int target_freq)
-{
-	int index;
-	struct powernv_smp_call_data freq_data;
+अटल अचिन्हित पूर्णांक घातernv_fast_चयन(काष्ठा cpufreq_policy *policy,
+					अचिन्हित पूर्णांक target_freq)
+अणु
+	पूर्णांक index;
+	काष्ठा घातernv_smp_call_data freq_data;
 
 	index = cpufreq_table_find_index_dl(policy, target_freq);
-	freq_data.pstate_id = powernv_freqs[index].driver_data;
-	freq_data.gpstate_id = powernv_freqs[index].driver_data;
+	freq_data.pstate_id = घातernv_freqs[index].driver_data;
+	freq_data.gpstate_id = घातernv_freqs[index].driver_data;
 	set_pstate(&freq_data);
 
-	return powernv_freqs[index].frequency;
-}
+	वापस घातernv_freqs[index].frequency;
+पूर्ण
 
-static struct cpufreq_driver powernv_cpufreq_driver = {
+अटल काष्ठा cpufreq_driver घातernv_cpufreq_driver = अणु
 	.name		= "powernv-cpufreq",
 	.flags		= CPUFREQ_CONST_LOOPS,
-	.init		= powernv_cpufreq_cpu_init,
-	.exit		= powernv_cpufreq_cpu_exit,
-	.verify		= cpufreq_generic_frequency_table_verify,
-	.target_index	= powernv_cpufreq_target_index,
-	.fast_switch	= powernv_fast_switch,
-	.get		= powernv_cpufreq_get,
-	.stop_cpu	= powernv_cpufreq_stop_cpu,
-	.attr		= powernv_cpu_freq_attr,
-};
+	.init		= घातernv_cpufreq_cpu_init,
+	.निकास		= घातernv_cpufreq_cpu_निकास,
+	.verअगरy		= cpufreq_generic_frequency_table_verअगरy,
+	.target_index	= घातernv_cpufreq_target_index,
+	.fast_चयन	= घातernv_fast_चयन,
+	.get		= घातernv_cpufreq_get,
+	.stop_cpu	= घातernv_cpufreq_stop_cpu,
+	.attr		= घातernv_cpu_freq_attr,
+पूर्ण;
 
-static int init_chip_info(void)
-{
-	unsigned int *chip;
-	unsigned int cpu, i;
-	unsigned int prev_chip_id = UINT_MAX;
-	int ret = 0;
+अटल पूर्णांक init_chip_info(व्योम)
+अणु
+	अचिन्हित पूर्णांक *chip;
+	अचिन्हित पूर्णांक cpu, i;
+	अचिन्हित पूर्णांक prev_chip_id = अच_पूर्णांक_उच्च;
+	पूर्णांक ret = 0;
 
-	chip = kcalloc(num_possible_cpus(), sizeof(*chip), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = kसुस्मृति(num_possible_cpus(), माप(*chip), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
-	for_each_possible_cpu(cpu) {
-		unsigned int id = cpu_to_chip_id(cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		अचिन्हित पूर्णांक id = cpu_to_chip_id(cpu);
 
-		if (prev_chip_id != id) {
+		अगर (prev_chip_id != id) अणु
 			prev_chip_id = id;
 			chip[nr_chips++] = id;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	chips = kcalloc(nr_chips, sizeof(struct chip), GFP_KERNEL);
-	if (!chips) {
+	chips = kसुस्मृति(nr_chips, माप(काष्ठा chip), GFP_KERNEL);
+	अगर (!chips) अणु
 		ret = -ENOMEM;
-		goto free_and_return;
-	}
+		जाओ मुक्त_and_वापस;
+	पूर्ण
 
-	for (i = 0; i < nr_chips; i++) {
+	क्रम (i = 0; i < nr_chips; i++) अणु
 		chips[i].id = chip[i];
 		cpumask_copy(&chips[i].mask, cpumask_of_node(chip[i]));
-		INIT_WORK(&chips[i].throttle, powernv_cpufreq_work_fn);
-		for_each_cpu(cpu, &chips[i].mask)
+		INIT_WORK(&chips[i].throttle, घातernv_cpufreq_work_fn);
+		क्रम_each_cpu(cpu, &chips[i].mask)
 			per_cpu(chip_info, cpu) =  &chips[i];
-	}
+	पूर्ण
 
-free_and_return:
-	kfree(chip);
-	return ret;
-}
+मुक्त_and_वापस:
+	kमुक्त(chip);
+	वापस ret;
+पूर्ण
 
-static inline void clean_chip_info(void)
-{
-	int i;
+अटल अंतरभूत व्योम clean_chip_info(व्योम)
+अणु
+	पूर्णांक i;
 
 	/* flush any pending work items */
-	if (chips)
-		for (i = 0; i < nr_chips; i++)
+	अगर (chips)
+		क्रम (i = 0; i < nr_chips; i++)
 			cancel_work_sync(&chips[i].throttle);
-	kfree(chips);
-}
+	kमुक्त(chips);
+पूर्ण
 
-static inline void unregister_all_notifiers(void)
-{
-	opal_message_notifier_unregister(OPAL_MSG_OCC,
-					 &powernv_cpufreq_opal_nb);
-	unregister_reboot_notifier(&powernv_cpufreq_reboot_nb);
-}
+अटल अंतरभूत व्योम unरेजिस्टर_all_notअगरiers(व्योम)
+अणु
+	opal_message_notअगरier_unरेजिस्टर(OPAL_MSG_OCC,
+					 &घातernv_cpufreq_opal_nb);
+	unरेजिस्टर_reboot_notअगरier(&घातernv_cpufreq_reboot_nb);
+पूर्ण
 
-static int __init powernv_cpufreq_init(void)
-{
-	int rc = 0;
+अटल पूर्णांक __init घातernv_cpufreq_init(व्योम)
+अणु
+	पूर्णांक rc = 0;
 
-	/* Don't probe on pseries (guest) platforms */
-	if (!firmware_has_feature(FW_FEATURE_OPAL))
-		return -ENODEV;
+	/* Don't probe on pseries (guest) platक्रमms */
+	अगर (!firmware_has_feature(FW_FEATURE_OPAL))
+		वापस -ENODEV;
 
 	/* Discover pstates from device tree and init */
-	rc = init_powernv_pstates();
-	if (rc)
-		goto out;
+	rc = init_घातernv_pstates();
+	अगर (rc)
+		जाओ out;
 
 	/* Populate chip info */
 	rc = init_chip_info();
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	if (powernv_pstate_info.wof_enabled)
-		powernv_cpufreq_driver.boost_enabled = true;
-	else
-		powernv_cpu_freq_attr[SCALING_BOOST_FREQS_ATTR_INDEX] = NULL;
+	अगर (घातernv_pstate_info.wof_enabled)
+		घातernv_cpufreq_driver.boost_enabled = true;
+	अन्यथा
+		घातernv_cpu_freq_attr[SCALING_BOOST_FREQS_ATTR_INDEX] = शून्य;
 
-	rc = cpufreq_register_driver(&powernv_cpufreq_driver);
-	if (rc) {
+	rc = cpufreq_रेजिस्टर_driver(&घातernv_cpufreq_driver);
+	अगर (rc) अणु
 		pr_info("Failed to register the cpufreq driver (%d)\n", rc);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	if (powernv_pstate_info.wof_enabled)
+	अगर (घातernv_pstate_info.wof_enabled)
 		cpufreq_enable_boost_support();
 
-	register_reboot_notifier(&powernv_cpufreq_reboot_nb);
-	opal_message_notifier_register(OPAL_MSG_OCC, &powernv_cpufreq_opal_nb);
+	रेजिस्टर_reboot_notअगरier(&घातernv_cpufreq_reboot_nb);
+	opal_message_notअगरier_रेजिस्टर(OPAL_MSG_OCC, &घातernv_cpufreq_opal_nb);
 
-	return 0;
+	वापस 0;
 cleanup:
 	clean_chip_info();
 out:
 	pr_info("Platform driver disabled. System does not support PState control\n");
-	return rc;
-}
-module_init(powernv_cpufreq_init);
+	वापस rc;
+पूर्ण
+module_init(घातernv_cpufreq_init);
 
-static void __exit powernv_cpufreq_exit(void)
-{
-	cpufreq_unregister_driver(&powernv_cpufreq_driver);
-	unregister_all_notifiers();
+अटल व्योम __निकास घातernv_cpufreq_निकास(व्योम)
+अणु
+	cpufreq_unरेजिस्टर_driver(&घातernv_cpufreq_driver);
+	unरेजिस्टर_all_notअगरiers();
 	clean_chip_info();
-}
-module_exit(powernv_cpufreq_exit);
+पूर्ण
+module_निकास(घातernv_cpufreq_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Vaidyanathan Srinivasan <svaidy at linux.vnet.ibm.com>");

@@ -1,198 +1,199 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * drivers/acpi/power.c - ACPI Power Resources management.
+ * drivers/acpi/घातer.c - ACPI Power Resources management.
  *
  * Copyright (C) 2001 - 2015 Intel Corp.
- * Author: Andy Grover <andrew.grover@intel.com>
- * Author: Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
- * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+ * Author: Andy Grover <andrew.grover@पूर्णांकel.com>
+ * Author: Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
+ * Author: Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
  */
 
 /*
- * ACPI power-managed devices may be controlled in two ways:
+ * ACPI घातer-managed devices may be controlled in two ways:
  * 1. via "Device Specific (D-State) Control"
  * 2. via "Power Resource Control".
  * The code below deals with ACPI Power Resources control.
  *
- * An ACPI "power resource object" represents a software controllable power
- * plane, clock plane, or other resource depended on by a device.
+ * An ACPI "power resource object" represents a software controllable घातer
+ * plane, घड़ी plane, or other resource depended on by a device.
  *
- * A device may rely on multiple power resources, and a power resource
+ * A device may rely on multiple घातer resources, and a घातer resource
  * may be shared by multiple devices.
  */
 
-#define pr_fmt(fmt) "ACPI: PM: " fmt
+#घोषणा pr_fmt(fmt) "ACPI: PM: " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/pm_runtime.h>
-#include <linux/sysfs.h>
-#include <linux/acpi.h>
-#include "sleep.h"
-#include "internal.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/acpi.h>
+#समावेश "sleep.h"
+#समावेश "internal.h"
 
-#define ACPI_POWER_CLASS		"power_resource"
-#define ACPI_POWER_DEVICE_NAME		"Power Resource"
-#define ACPI_POWER_RESOURCE_STATE_OFF	0x00
-#define ACPI_POWER_RESOURCE_STATE_ON	0x01
-#define ACPI_POWER_RESOURCE_STATE_UNKNOWN 0xFF
+#घोषणा ACPI_POWER_CLASS		"power_resource"
+#घोषणा ACPI_POWER_DEVICE_NAME		"Power Resource"
+#घोषणा ACPI_POWER_RESOURCE_STATE_OFF	0x00
+#घोषणा ACPI_POWER_RESOURCE_STATE_ON	0x01
+#घोषणा ACPI_POWER_RESOURCE_STATE_UNKNOWN 0xFF
 
-struct acpi_power_dependent_device {
-	struct device *dev;
-	struct list_head node;
-};
+काष्ठा acpi_घातer_dependent_device अणु
+	काष्ठा device *dev;
+	काष्ठा list_head node;
+पूर्ण;
 
-struct acpi_power_resource {
-	struct acpi_device device;
-	struct list_head list_node;
-	char *name;
-	u32 system_level;
+काष्ठा acpi_घातer_resource अणु
+	काष्ठा acpi_device device;
+	काष्ठा list_head list_node;
+	अक्षर *name;
+	u32 प्रणाली_level;
 	u32 order;
-	unsigned int ref_count;
-	unsigned int users;
+	अचिन्हित पूर्णांक ref_count;
+	अचिन्हित पूर्णांक users;
 	bool wakeup_enabled;
-	struct mutex resource_lock;
-	struct list_head dependents;
-};
+	काष्ठा mutex resource_lock;
+	काष्ठा list_head dependents;
+पूर्ण;
 
-struct acpi_power_resource_entry {
-	struct list_head node;
-	struct acpi_power_resource *resource;
-};
+काष्ठा acpi_घातer_resource_entry अणु
+	काष्ठा list_head node;
+	काष्ठा acpi_घातer_resource *resource;
+पूर्ण;
 
-static LIST_HEAD(acpi_power_resource_list);
-static DEFINE_MUTEX(power_resource_list_lock);
+अटल LIST_HEAD(acpi_घातer_resource_list);
+अटल DEFINE_MUTEX(घातer_resource_list_lock);
 
 /* --------------------------------------------------------------------------
                              Power Resource Management
    -------------------------------------------------------------------------- */
 
-static inline
-struct acpi_power_resource *to_power_resource(struct acpi_device *device)
-{
-	return container_of(device, struct acpi_power_resource, device);
-}
+अटल अंतरभूत
+काष्ठा acpi_घातer_resource *to_घातer_resource(काष्ठा acpi_device *device)
+अणु
+	वापस container_of(device, काष्ठा acpi_घातer_resource, device);
+पूर्ण
 
-static struct acpi_power_resource *acpi_power_get_context(acpi_handle handle)
-{
-	struct acpi_device *device;
+अटल काष्ठा acpi_घातer_resource *acpi_घातer_get_context(acpi_handle handle)
+अणु
+	काष्ठा acpi_device *device;
 
-	if (acpi_bus_get_device(handle, &device))
-		return NULL;
+	अगर (acpi_bus_get_device(handle, &device))
+		वापस शून्य;
 
-	return to_power_resource(device);
-}
+	वापस to_घातer_resource(device);
+पूर्ण
 
-static int acpi_power_resources_list_add(acpi_handle handle,
-					 struct list_head *list)
-{
-	struct acpi_power_resource *resource = acpi_power_get_context(handle);
-	struct acpi_power_resource_entry *entry;
+अटल पूर्णांक acpi_घातer_resources_list_add(acpi_handle handle,
+					 काष्ठा list_head *list)
+अणु
+	काष्ठा acpi_घातer_resource *resource = acpi_घातer_get_context(handle);
+	काष्ठा acpi_घातer_resource_entry *entry;
 
-	if (!resource || !list)
-		return -EINVAL;
+	अगर (!resource || !list)
+		वापस -EINVAL;
 
-	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
-	if (!entry)
-		return -ENOMEM;
+	entry = kzalloc(माप(*entry), GFP_KERNEL);
+	अगर (!entry)
+		वापस -ENOMEM;
 
 	entry->resource = resource;
-	if (!list_empty(list)) {
-		struct acpi_power_resource_entry *e;
+	अगर (!list_empty(list)) अणु
+		काष्ठा acpi_घातer_resource_entry *e;
 
-		list_for_each_entry(e, list, node)
-			if (e->resource->order > resource->order) {
+		list_क्रम_each_entry(e, list, node)
+			अगर (e->resource->order > resource->order) अणु
 				list_add_tail(&entry->node, &e->node);
-				return 0;
-			}
-	}
+				वापस 0;
+			पूर्ण
+	पूर्ण
 	list_add_tail(&entry->node, list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void acpi_power_resources_list_free(struct list_head *list)
-{
-	struct acpi_power_resource_entry *entry, *e;
+व्योम acpi_घातer_resources_list_मुक्त(काष्ठा list_head *list)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry, *e;
 
-	list_for_each_entry_safe(entry, e, list, node) {
+	list_क्रम_each_entry_safe(entry, e, list, node) अणु
 		list_del(&entry->node);
-		kfree(entry);
-	}
-}
+		kमुक्त(entry);
+	पूर्ण
+पूर्ण
 
-static bool acpi_power_resource_is_dup(union acpi_object *package,
-				       unsigned int start, unsigned int i)
-{
+अटल bool acpi_घातer_resource_is_dup(जोड़ acpi_object *package,
+				       अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक i)
+अणु
 	acpi_handle rhandle, dup;
-	unsigned int j;
+	अचिन्हित पूर्णांक j;
 
 	/* The caller is expected to check the package element types */
 	rhandle = package->package.elements[i].reference.handle;
-	for (j = start; j < i; j++) {
+	क्रम (j = start; j < i; j++) अणु
 		dup = package->package.elements[j].reference.handle;
-		if (dup == rhandle)
-			return true;
-	}
+		अगर (dup == rhandle)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int acpi_extract_power_resources(union acpi_object *package, unsigned int start,
-				 struct list_head *list)
-{
-	unsigned int i;
-	int err = 0;
+पूर्णांक acpi_extract_घातer_resources(जोड़ acpi_object *package, अचिन्हित पूर्णांक start,
+				 काष्ठा list_head *list)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err = 0;
 
-	for (i = start; i < package->package.count; i++) {
-		union acpi_object *element = &package->package.elements[i];
-		struct acpi_device *rdev;
+	क्रम (i = start; i < package->package.count; i++) अणु
+		जोड़ acpi_object *element = &package->package.elements[i];
+		काष्ठा acpi_device *rdev;
 		acpi_handle rhandle;
 
-		if (element->type != ACPI_TYPE_LOCAL_REFERENCE) {
+		अगर (element->type != ACPI_TYPE_LOCAL_REFERENCE) अणु
 			err = -ENODATA;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		rhandle = element->reference.handle;
-		if (!rhandle) {
+		अगर (!rhandle) अणु
 			err = -ENODEV;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Some ACPI tables contain duplicate power resource references */
-		if (acpi_power_resource_is_dup(package, start, i))
-			continue;
+		/* Some ACPI tables contain duplicate घातer resource references */
+		अगर (acpi_घातer_resource_is_dup(package, start, i))
+			जारी;
 
-		rdev = acpi_add_power_resource(rhandle);
-		if (!rdev) {
+		rdev = acpi_add_घातer_resource(rhandle);
+		अगर (!rdev) अणु
 			err = -ENODEV;
-			break;
-		}
-		err = acpi_power_resources_list_add(rhandle, list);
-		if (err)
-			break;
+			अवरोध;
+		पूर्ण
+		err = acpi_घातer_resources_list_add(rhandle, list);
+		अगर (err)
+			अवरोध;
 
-		to_power_resource(rdev)->users++;
-	}
-	if (err)
-		acpi_power_resources_list_free(list);
+		to_घातer_resource(rdev)->users++;
+	पूर्ण
+	अगर (err)
+		acpi_घातer_resources_list_मुक्त(list);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int acpi_power_get_state(acpi_handle handle, int *state)
-{
+अटल पूर्णांक acpi_घातer_get_state(acpi_handle handle, पूर्णांक *state)
+अणु
 	acpi_status status = AE_OK;
-	unsigned long long sta = 0;
+	अचिन्हित दीर्घ दीर्घ sta = 0;
 
-	if (!handle || !state)
-		return -EINVAL;
+	अगर (!handle || !state)
+		वापस -EINVAL;
 
-	status = acpi_evaluate_integer(handle, "_STA", NULL, &sta);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	status = acpi_evaluate_पूर्णांकeger(handle, "_STA", शून्य, &sta);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
 	*state = (sta & 0x01)?ACPI_POWER_RESOURCE_STATE_ON:
 			      ACPI_POWER_RESOURCE_STATE_OFF;
@@ -200,59 +201,59 @@ static int acpi_power_get_state(acpi_handle handle, int *state)
 	acpi_handle_debug(handle, "Power resource is %s\n",
 			  *state ? "on" : "off");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_power_get_list_state(struct list_head *list, int *state)
-{
-	struct acpi_power_resource_entry *entry;
-	int cur_state;
+अटल पूर्णांक acpi_घातer_get_list_state(काष्ठा list_head *list, पूर्णांक *state)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry;
+	पूर्णांक cur_state;
 
-	if (!list || !state)
-		return -EINVAL;
+	अगर (!list || !state)
+		वापस -EINVAL;
 
 	/* The state of the list is 'on' IFF all resources are 'on'. */
 	cur_state = 0;
-	list_for_each_entry(entry, list, node) {
-		struct acpi_power_resource *resource = entry->resource;
+	list_क्रम_each_entry(entry, list, node) अणु
+		काष्ठा acpi_घातer_resource *resource = entry->resource;
 		acpi_handle handle = resource->device.handle;
-		int result;
+		पूर्णांक result;
 
 		mutex_lock(&resource->resource_lock);
-		result = acpi_power_get_state(handle, &cur_state);
+		result = acpi_घातer_get_state(handle, &cur_state);
 		mutex_unlock(&resource->resource_lock);
-		if (result)
-			return result;
+		अगर (result)
+			वापस result;
 
-		if (cur_state != ACPI_POWER_RESOURCE_STATE_ON)
-			break;
-	}
+		अगर (cur_state != ACPI_POWER_RESOURCE_STATE_ON)
+			अवरोध;
+	पूर्ण
 
 	pr_debug("Power resource list is %s\n", cur_state ? "on" : "off");
 
 	*state = cur_state;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-acpi_power_resource_add_dependent(struct acpi_power_resource *resource,
-				  struct device *dev)
-{
-	struct acpi_power_dependent_device *dep;
-	int ret = 0;
+अटल पूर्णांक
+acpi_घातer_resource_add_dependent(काष्ठा acpi_घातer_resource *resource,
+				  काष्ठा device *dev)
+अणु
+	काष्ठा acpi_घातer_dependent_device *dep;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&resource->resource_lock);
-	list_for_each_entry(dep, &resource->dependents, node) {
+	list_क्रम_each_entry(dep, &resource->dependents, node) अणु
 		/* Only add it once */
-		if (dep->dev == dev)
-			goto unlock;
-	}
+		अगर (dep->dev == dev)
+			जाओ unlock;
+	पूर्ण
 
-	dep = kzalloc(sizeof(*dep), GFP_KERNEL);
-	if (!dep) {
+	dep = kzalloc(माप(*dep), GFP_KERNEL);
+	अगर (!dep) अणु
 		ret = -ENOMEM;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	dep->dev = dev;
 	list_add_tail(&dep->node, &resource->dependents);
@@ -260,359 +261,359 @@ acpi_power_resource_add_dependent(struct acpi_power_resource *resource,
 
 unlock:
 	mutex_unlock(&resource->resource_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-acpi_power_resource_remove_dependent(struct acpi_power_resource *resource,
-				     struct device *dev)
-{
-	struct acpi_power_dependent_device *dep;
+अटल व्योम
+acpi_घातer_resource_हटाओ_dependent(काष्ठा acpi_घातer_resource *resource,
+				     काष्ठा device *dev)
+अणु
+	काष्ठा acpi_घातer_dependent_device *dep;
 
 	mutex_lock(&resource->resource_lock);
-	list_for_each_entry(dep, &resource->dependents, node) {
-		if (dep->dev == dev) {
+	list_क्रम_each_entry(dep, &resource->dependents, node) अणु
+		अगर (dep->dev == dev) अणु
 			list_del(&dep->node);
-			kfree(dep);
+			kमुक्त(dep);
 			dev_dbg(dev, "removed power dependency to [%s]\n",
 				resource->name);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&resource->resource_lock);
-}
+पूर्ण
 
 /**
- * acpi_device_power_add_dependent - Add dependent device of this ACPI device
- * @adev: ACPI device pointer
+ * acpi_device_घातer_add_dependent - Add dependent device of this ACPI device
+ * @adev: ACPI device poपूर्णांकer
  * @dev: Dependent device
  *
  * If @adev has non-empty _PR0 the @dev is added as dependent device to all
- * power resources returned by it. This means that whenever these power
- * resources are turned _ON the dependent devices get runtime resumed. This
- * is needed for devices such as PCI to allow its driver to re-initialize
+ * घातer resources वापसed by it. This means that whenever these घातer
+ * resources are turned _ON the dependent devices get runसमय resumed. This
+ * is needed क्रम devices such as PCI to allow its driver to re-initialize
  * it after it went to D0uninitialized.
  *
- * If @adev does not have _PR0 this does nothing.
+ * If @adev करोes not have _PR0 this करोes nothing.
  *
- * Returns %0 in case of success and negative errno otherwise.
+ * Returns %0 in हाल of success and negative त्रुटि_सं otherwise.
  */
-int acpi_device_power_add_dependent(struct acpi_device *adev,
-				    struct device *dev)
-{
-	struct acpi_power_resource_entry *entry;
-	struct list_head *resources;
-	int ret;
+पूर्णांक acpi_device_घातer_add_dependent(काष्ठा acpi_device *adev,
+				    काष्ठा device *dev)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry;
+	काष्ठा list_head *resources;
+	पूर्णांक ret;
 
-	if (!adev->flags.power_manageable)
-		return 0;
+	अगर (!adev->flags.घातer_manageable)
+		वापस 0;
 
-	resources = &adev->power.states[ACPI_STATE_D0].resources;
-	list_for_each_entry(entry, resources, node) {
-		ret = acpi_power_resource_add_dependent(entry->resource, dev);
-		if (ret)
-			goto err;
-	}
+	resources = &adev->घातer.states[ACPI_STATE_D0].resources;
+	list_क्रम_each_entry(entry, resources, node) अणु
+		ret = acpi_घातer_resource_add_dependent(entry->resource, dev);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	list_for_each_entry(entry, resources, node)
-		acpi_power_resource_remove_dependent(entry->resource, dev);
+	list_क्रम_each_entry(entry, resources, node)
+		acpi_घातer_resource_हटाओ_dependent(entry->resource, dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * acpi_device_power_remove_dependent - Remove dependent device
- * @adev: ACPI device pointer
+ * acpi_device_घातer_हटाओ_dependent - Remove dependent device
+ * @adev: ACPI device poपूर्णांकer
  * @dev: Dependent device
  *
- * Does the opposite of acpi_device_power_add_dependent() and removes the
- * dependent device if it is found. Can be called to @adev that does not
+ * Does the opposite of acpi_device_घातer_add_dependent() and हटाओs the
+ * dependent device अगर it is found. Can be called to @adev that करोes not
  * have _PR0 as well.
  */
-void acpi_device_power_remove_dependent(struct acpi_device *adev,
-					struct device *dev)
-{
-	struct acpi_power_resource_entry *entry;
-	struct list_head *resources;
+व्योम acpi_device_घातer_हटाओ_dependent(काष्ठा acpi_device *adev,
+					काष्ठा device *dev)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry;
+	काष्ठा list_head *resources;
 
-	if (!adev->flags.power_manageable)
-		return;
+	अगर (!adev->flags.घातer_manageable)
+		वापस;
 
-	resources = &adev->power.states[ACPI_STATE_D0].resources;
-	list_for_each_entry_reverse(entry, resources, node)
-		acpi_power_resource_remove_dependent(entry->resource, dev);
-}
+	resources = &adev->घातer.states[ACPI_STATE_D0].resources;
+	list_क्रम_each_entry_reverse(entry, resources, node)
+		acpi_घातer_resource_हटाओ_dependent(entry->resource, dev);
+पूर्ण
 
-static int __acpi_power_on(struct acpi_power_resource *resource)
-{
-	struct acpi_power_dependent_device *dep;
+अटल पूर्णांक __acpi_घातer_on(काष्ठा acpi_घातer_resource *resource)
+अणु
+	काष्ठा acpi_घातer_dependent_device *dep;
 	acpi_status status = AE_OK;
 
-	status = acpi_evaluate_object(resource->device.handle, "_ON", NULL, NULL);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	status = acpi_evaluate_object(resource->device.handle, "_ON", शून्य, शून्य);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
 	pr_debug("Power resource [%s] turned on\n", resource->name);
 
 	/*
-	 * If there are other dependents on this power resource we need to
+	 * If there are other dependents on this घातer resource we need to
 	 * resume them now so that their drivers can re-initialize the
 	 * hardware properly after it went back to D0.
 	 */
-	if (list_empty(&resource->dependents) ||
+	अगर (list_empty(&resource->dependents) ||
 	    list_is_singular(&resource->dependents))
-		return 0;
+		वापस 0;
 
-	list_for_each_entry(dep, &resource->dependents, node) {
+	list_क्रम_each_entry(dep, &resource->dependents, node) अणु
 		dev_dbg(dep->dev, "runtime resuming because [%s] turned on\n",
 			resource->name);
 		pm_request_resume(dep->dev);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_power_on_unlocked(struct acpi_power_resource *resource)
-{
-	int result = 0;
+अटल पूर्णांक acpi_घातer_on_unlocked(काष्ठा acpi_घातer_resource *resource)
+अणु
+	पूर्णांक result = 0;
 
-	if (resource->ref_count++) {
+	अगर (resource->ref_count++) अणु
 		pr_debug("Power resource [%s] already on\n", resource->name);
-	} else {
-		result = __acpi_power_on(resource);
-		if (result)
+	पूर्ण अन्यथा अणु
+		result = __acpi_घातer_on(resource);
+		अगर (result)
 			resource->ref_count--;
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
-static int acpi_power_on(struct acpi_power_resource *resource)
-{
-	int result;
+अटल पूर्णांक acpi_घातer_on(काष्ठा acpi_घातer_resource *resource)
+अणु
+	पूर्णांक result;
 
 	mutex_lock(&resource->resource_lock);
-	result = acpi_power_on_unlocked(resource);
+	result = acpi_घातer_on_unlocked(resource);
 	mutex_unlock(&resource->resource_lock);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int __acpi_power_off(struct acpi_power_resource *resource)
-{
+अटल पूर्णांक __acpi_घातer_off(काष्ठा acpi_घातer_resource *resource)
+अणु
 	acpi_status status;
 
 	status = acpi_evaluate_object(resource->device.handle, "_OFF",
-				      NULL, NULL);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+				      शून्य, शून्य);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
 	pr_debug("Power resource [%s] turned off\n", resource->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_power_off_unlocked(struct acpi_power_resource *resource)
-{
-	int result = 0;
+अटल पूर्णांक acpi_घातer_off_unlocked(काष्ठा acpi_घातer_resource *resource)
+अणु
+	पूर्णांक result = 0;
 
-	if (!resource->ref_count) {
+	अगर (!resource->ref_count) अणु
 		pr_debug("Power resource [%s] already off\n", resource->name);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (--resource->ref_count) {
+	अगर (--resource->ref_count) अणु
 		pr_debug("Power resource [%s] still in use\n", resource->name);
-	} else {
-		result = __acpi_power_off(resource);
-		if (result)
+	पूर्ण अन्यथा अणु
+		result = __acpi_घातer_off(resource);
+		अगर (result)
 			resource->ref_count++;
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
-static int acpi_power_off(struct acpi_power_resource *resource)
-{
-	int result;
+अटल पूर्णांक acpi_घातer_off(काष्ठा acpi_घातer_resource *resource)
+अणु
+	पूर्णांक result;
 
 	mutex_lock(&resource->resource_lock);
-	result = acpi_power_off_unlocked(resource);
+	result = acpi_घातer_off_unlocked(resource);
 	mutex_unlock(&resource->resource_lock);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int acpi_power_off_list(struct list_head *list)
-{
-	struct acpi_power_resource_entry *entry;
-	int result = 0;
+अटल पूर्णांक acpi_घातer_off_list(काष्ठा list_head *list)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry;
+	पूर्णांक result = 0;
 
-	list_for_each_entry_reverse(entry, list, node) {
-		result = acpi_power_off(entry->resource);
-		if (result)
-			goto err;
-	}
-	return 0;
-
- err:
-	list_for_each_entry_continue(entry, list, node)
-		acpi_power_on(entry->resource);
-
-	return result;
-}
-
-static int acpi_power_on_list(struct list_head *list)
-{
-	struct acpi_power_resource_entry *entry;
-	int result = 0;
-
-	list_for_each_entry(entry, list, node) {
-		result = acpi_power_on(entry->resource);
-		if (result)
-			goto err;
-	}
-	return 0;
+	list_क्रम_each_entry_reverse(entry, list, node) अणु
+		result = acpi_घातer_off(entry->resource);
+		अगर (result)
+			जाओ err;
+	पूर्ण
+	वापस 0;
 
  err:
-	list_for_each_entry_continue_reverse(entry, list, node)
-		acpi_power_off(entry->resource);
+	list_क्रम_each_entry_जारी(entry, list, node)
+		acpi_घातer_on(entry->resource);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static struct attribute *attrs[] = {
-	NULL,
-};
+अटल पूर्णांक acpi_घातer_on_list(काष्ठा list_head *list)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry;
+	पूर्णांक result = 0;
 
-static const struct attribute_group attr_groups[] = {
-	[ACPI_STATE_D0] = {
+	list_क्रम_each_entry(entry, list, node) अणु
+		result = acpi_घातer_on(entry->resource);
+		अगर (result)
+			जाओ err;
+	पूर्ण
+	वापस 0;
+
+ err:
+	list_क्रम_each_entry_जारी_reverse(entry, list, node)
+		acpi_घातer_off(entry->resource);
+
+	वापस result;
+पूर्ण
+
+अटल काष्ठा attribute *attrs[] = अणु
+	शून्य,
+पूर्ण;
+
+अटल स्थिर काष्ठा attribute_group attr_groups[] = अणु
+	[ACPI_STATE_D0] = अणु
 		.name = "power_resources_D0",
 		.attrs = attrs,
-	},
-	[ACPI_STATE_D1] = {
+	पूर्ण,
+	[ACPI_STATE_D1] = अणु
 		.name = "power_resources_D1",
 		.attrs = attrs,
-	},
-	[ACPI_STATE_D2] = {
+	पूर्ण,
+	[ACPI_STATE_D2] = अणु
 		.name = "power_resources_D2",
 		.attrs = attrs,
-	},
-	[ACPI_STATE_D3_HOT] = {
+	पूर्ण,
+	[ACPI_STATE_D3_HOT] = अणु
 		.name = "power_resources_D3hot",
 		.attrs = attrs,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct attribute_group wakeup_attr_group = {
+अटल स्थिर काष्ठा attribute_group wakeup_attr_group = अणु
 	.name = "power_resources_wakeup",
 	.attrs = attrs,
-};
+पूर्ण;
 
-static void acpi_power_hide_list(struct acpi_device *adev,
-				 struct list_head *resources,
-				 const struct attribute_group *attr_group)
-{
-	struct acpi_power_resource_entry *entry;
+अटल व्योम acpi_घातer_hide_list(काष्ठा acpi_device *adev,
+				 काष्ठा list_head *resources,
+				 स्थिर काष्ठा attribute_group *attr_group)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry;
 
-	if (list_empty(resources))
-		return;
+	अगर (list_empty(resources))
+		वापस;
 
-	list_for_each_entry_reverse(entry, resources, node) {
-		struct acpi_device *res_dev = &entry->resource->device;
+	list_क्रम_each_entry_reverse(entry, resources, node) अणु
+		काष्ठा acpi_device *res_dev = &entry->resource->device;
 
-		sysfs_remove_link_from_group(&adev->dev.kobj,
+		sysfs_हटाओ_link_from_group(&adev->dev.kobj,
 					     attr_group->name,
 					     dev_name(&res_dev->dev));
-	}
-	sysfs_remove_group(&adev->dev.kobj, attr_group);
-}
+	पूर्ण
+	sysfs_हटाओ_group(&adev->dev.kobj, attr_group);
+पूर्ण
 
-static void acpi_power_expose_list(struct acpi_device *adev,
-				   struct list_head *resources,
-				   const struct attribute_group *attr_group)
-{
-	struct acpi_power_resource_entry *entry;
-	int ret;
+अटल व्योम acpi_घातer_expose_list(काष्ठा acpi_device *adev,
+				   काष्ठा list_head *resources,
+				   स्थिर काष्ठा attribute_group *attr_group)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry;
+	पूर्णांक ret;
 
-	if (list_empty(resources))
-		return;
+	अगर (list_empty(resources))
+		वापस;
 
 	ret = sysfs_create_group(&adev->dev.kobj, attr_group);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
-	list_for_each_entry(entry, resources, node) {
-		struct acpi_device *res_dev = &entry->resource->device;
+	list_क्रम_each_entry(entry, resources, node) अणु
+		काष्ठा acpi_device *res_dev = &entry->resource->device;
 
 		ret = sysfs_add_link_to_group(&adev->dev.kobj,
 					      attr_group->name,
 					      &res_dev->dev.kobj,
 					      dev_name(&res_dev->dev));
-		if (ret) {
-			acpi_power_hide_list(adev, resources, attr_group);
-			break;
-		}
-	}
-}
+		अगर (ret) अणु
+			acpi_घातer_hide_list(adev, resources, attr_group);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void acpi_power_expose_hide(struct acpi_device *adev,
-				   struct list_head *resources,
-				   const struct attribute_group *attr_group,
+अटल व्योम acpi_घातer_expose_hide(काष्ठा acpi_device *adev,
+				   काष्ठा list_head *resources,
+				   स्थिर काष्ठा attribute_group *attr_group,
 				   bool expose)
-{
-	if (expose)
-		acpi_power_expose_list(adev, resources, attr_group);
-	else
-		acpi_power_hide_list(adev, resources, attr_group);
-}
+अणु
+	अगर (expose)
+		acpi_घातer_expose_list(adev, resources, attr_group);
+	अन्यथा
+		acpi_घातer_hide_list(adev, resources, attr_group);
+पूर्ण
 
-void acpi_power_add_remove_device(struct acpi_device *adev, bool add)
-{
-	int state;
+व्योम acpi_घातer_add_हटाओ_device(काष्ठा acpi_device *adev, bool add)
+अणु
+	पूर्णांक state;
 
-	if (adev->wakeup.flags.valid)
-		acpi_power_expose_hide(adev, &adev->wakeup.resources,
+	अगर (adev->wakeup.flags.valid)
+		acpi_घातer_expose_hide(adev, &adev->wakeup.resources,
 				       &wakeup_attr_group, add);
 
-	if (!adev->power.flags.power_resources)
-		return;
+	अगर (!adev->घातer.flags.घातer_resources)
+		वापस;
 
-	for (state = ACPI_STATE_D0; state <= ACPI_STATE_D3_HOT; state++)
-		acpi_power_expose_hide(adev,
-				       &adev->power.states[state].resources,
+	क्रम (state = ACPI_STATE_D0; state <= ACPI_STATE_D3_HOT; state++)
+		acpi_घातer_expose_hide(adev,
+				       &adev->घातer.states[state].resources,
 				       &attr_groups[state], add);
-}
+पूर्ण
 
-int acpi_power_wakeup_list_init(struct list_head *list, int *system_level_p)
-{
-	struct acpi_power_resource_entry *entry;
-	int system_level = 5;
+पूर्णांक acpi_घातer_wakeup_list_init(काष्ठा list_head *list, पूर्णांक *प्रणाली_level_p)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry;
+	पूर्णांक प्रणाली_level = 5;
 
-	list_for_each_entry(entry, list, node) {
-		struct acpi_power_resource *resource = entry->resource;
+	list_क्रम_each_entry(entry, list, node) अणु
+		काष्ठा acpi_घातer_resource *resource = entry->resource;
 		acpi_handle handle = resource->device.handle;
-		int result;
-		int state;
+		पूर्णांक result;
+		पूर्णांक state;
 
 		mutex_lock(&resource->resource_lock);
 
-		result = acpi_power_get_state(handle, &state);
-		if (result) {
+		result = acpi_घातer_get_state(handle, &state);
+		अगर (result) अणु
 			mutex_unlock(&resource->resource_lock);
-			return result;
-		}
-		if (state == ACPI_POWER_RESOURCE_STATE_ON) {
+			वापस result;
+		पूर्ण
+		अगर (state == ACPI_POWER_RESOURCE_STATE_ON) अणु
 			resource->ref_count++;
 			resource->wakeup_enabled = true;
-		}
-		if (system_level > resource->system_level)
-			system_level = resource->system_level;
+		पूर्ण
+		अगर (प्रणाली_level > resource->प्रणाली_level)
+			प्रणाली_level = resource->प्रणाली_level;
 
 		mutex_unlock(&resource->resource_lock);
-	}
-	*system_level_p = system_level;
-	return 0;
-}
+	पूर्ण
+	*प्रणाली_level_p = प्रणाली_level;
+	वापस 0;
+पूर्ण
 
 /* --------------------------------------------------------------------------
                              Device Power Management
@@ -623,311 +624,311 @@ int acpi_power_wakeup_list_init(struct list_head *list, int *system_level_p)
  *                          ACPI 3.0) _PSW (Power State Wake)
  * @dev: Device to handle.
  * @enable: 0 - disable, 1 - enable the wake capabilities of the device.
- * @sleep_state: Target sleep state of the system.
- * @dev_state: Target power state of the device.
+ * @sleep_state: Target sleep state of the प्रणाली.
+ * @dev_state: Target घातer state of the device.
  *
  * Execute _DSW (Device Sleep Wake) or (deprecated in ACPI 3.0) _PSW (Power
- * State Wake) for the device, if present.  On failure reset the device's
+ * State Wake) क्रम the device, अगर present.  On failure reset the device's
  * wakeup.flags.valid flag.
  *
  * RETURN VALUE:
- * 0 if either _DSW or _PSW has been successfully executed
- * 0 if neither _DSW nor _PSW has been found
- * -ENODEV if the execution of either _DSW or _PSW has failed
+ * 0 अगर either _DSW or _PSW has been successfully executed
+ * 0 अगर neither _DSW nor _PSW has been found
+ * -ENODEV अगर the execution of either _DSW or _PSW has failed
  */
-int acpi_device_sleep_wake(struct acpi_device *dev,
-			   int enable, int sleep_state, int dev_state)
-{
-	union acpi_object in_arg[3];
-	struct acpi_object_list arg_list = { 3, in_arg };
+पूर्णांक acpi_device_sleep_wake(काष्ठा acpi_device *dev,
+			   पूर्णांक enable, पूर्णांक sleep_state, पूर्णांक dev_state)
+अणु
+	जोड़ acpi_object in_arg[3];
+	काष्ठा acpi_object_list arg_list = अणु 3, in_arg पूर्ण;
 	acpi_status status = AE_OK;
 
 	/*
 	 * Try to execute _DSW first.
 	 *
-	 * Three arguments are needed for the _DSW object:
+	 * Three arguments are needed क्रम the _DSW object:
 	 * Argument 0: enable/disable the wake capabilities
-	 * Argument 1: target system state
+	 * Argument 1: target प्रणाली state
 	 * Argument 2: target device state
 	 * When _DSW object is called to disable the wake capabilities, maybe
 	 * the first argument is filled. The values of the other two arguments
 	 * are meaningless.
 	 */
 	in_arg[0].type = ACPI_TYPE_INTEGER;
-	in_arg[0].integer.value = enable;
+	in_arg[0].पूर्णांकeger.value = enable;
 	in_arg[1].type = ACPI_TYPE_INTEGER;
-	in_arg[1].integer.value = sleep_state;
+	in_arg[1].पूर्णांकeger.value = sleep_state;
 	in_arg[2].type = ACPI_TYPE_INTEGER;
-	in_arg[2].integer.value = dev_state;
-	status = acpi_evaluate_object(dev->handle, "_DSW", &arg_list, NULL);
-	if (ACPI_SUCCESS(status)) {
-		return 0;
-	} else if (status != AE_NOT_FOUND) {
+	in_arg[2].पूर्णांकeger.value = dev_state;
+	status = acpi_evaluate_object(dev->handle, "_DSW", &arg_list, शून्य);
+	अगर (ACPI_SUCCESS(status)) अणु
+		वापस 0;
+	पूर्ण अन्यथा अगर (status != AE_NOT_FOUND) अणु
 		acpi_handle_info(dev->handle, "_DSW execution failed\n");
 		dev->wakeup.flags.valid = 0;
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Execute _PSW */
 	status = acpi_execute_simple_method(dev->handle, "_PSW", enable);
-	if (ACPI_FAILURE(status) && (status != AE_NOT_FOUND)) {
+	अगर (ACPI_FAILURE(status) && (status != AE_NOT_FOUND)) अणु
 		acpi_handle_info(dev->handle, "_PSW execution failed\n");
 		dev->wakeup.flags.valid = 0;
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Prepare a wakeup device, two steps (Ref ACPI 2.0:P229):
- * 1. Power on the power resources required for the wakeup device
+ * 1. Power on the घातer resources required क्रम the wakeup device
  * 2. Execute _DSW (Device Sleep Wake) or (deprecated in ACPI 3.0) _PSW (Power
- *    State Wake) for the device, if present
+ *    State Wake) क्रम the device, अगर present
  */
-int acpi_enable_wakeup_device_power(struct acpi_device *dev, int sleep_state)
-{
-	struct acpi_power_resource_entry *entry;
-	int err = 0;
+पूर्णांक acpi_enable_wakeup_device_घातer(काष्ठा acpi_device *dev, पूर्णांक sleep_state)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry;
+	पूर्णांक err = 0;
 
-	if (!dev || !dev->wakeup.flags.valid)
-		return -EINVAL;
+	अगर (!dev || !dev->wakeup.flags.valid)
+		वापस -EINVAL;
 
 	mutex_lock(&acpi_device_lock);
 
-	if (dev->wakeup.prepare_count++)
-		goto out;
+	अगर (dev->wakeup.prepare_count++)
+		जाओ out;
 
-	list_for_each_entry(entry, &dev->wakeup.resources, node) {
-		struct acpi_power_resource *resource = entry->resource;
+	list_क्रम_each_entry(entry, &dev->wakeup.resources, node) अणु
+		काष्ठा acpi_घातer_resource *resource = entry->resource;
 
 		mutex_lock(&resource->resource_lock);
 
-		if (!resource->wakeup_enabled) {
-			err = acpi_power_on_unlocked(resource);
-			if (!err)
+		अगर (!resource->wakeup_enabled) अणु
+			err = acpi_घातer_on_unlocked(resource);
+			अगर (!err)
 				resource->wakeup_enabled = true;
-		}
+		पूर्ण
 
 		mutex_unlock(&resource->resource_lock);
 
-		if (err) {
+		अगर (err) अणु
 			dev_err(&dev->dev,
 				"Cannot turn wakeup power resources on\n");
 			dev->wakeup.flags.valid = 0;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	/*
 	 * Passing 3 as the third argument below means the device may be
-	 * put into arbitrary power state afterward.
+	 * put पूर्णांकo arbitrary घातer state afterward.
 	 */
 	err = acpi_device_sleep_wake(dev, 1, sleep_state, 3);
-	if (err)
+	अगर (err)
 		dev->wakeup.prepare_count = 0;
 
  out:
 	mutex_unlock(&acpi_device_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Shutdown a wakeup device, counterpart of above method
+ * Shutकरोwn a wakeup device, counterpart of above method
  * 1. Execute _DSW (Device Sleep Wake) or (deprecated in ACPI 3.0) _PSW (Power
- *    State Wake) for the device, if present
- * 2. Shutdown down the power resources
+ *    State Wake) क्रम the device, अगर present
+ * 2. Shutकरोwn करोwn the घातer resources
  */
-int acpi_disable_wakeup_device_power(struct acpi_device *dev)
-{
-	struct acpi_power_resource_entry *entry;
-	int err = 0;
+पूर्णांक acpi_disable_wakeup_device_घातer(काष्ठा acpi_device *dev)
+अणु
+	काष्ठा acpi_घातer_resource_entry *entry;
+	पूर्णांक err = 0;
 
-	if (!dev || !dev->wakeup.flags.valid)
-		return -EINVAL;
+	अगर (!dev || !dev->wakeup.flags.valid)
+		वापस -EINVAL;
 
 	mutex_lock(&acpi_device_lock);
 
-	if (--dev->wakeup.prepare_count > 0)
-		goto out;
+	अगर (--dev->wakeup.prepare_count > 0)
+		जाओ out;
 
 	/*
-	 * Executing the code below even if prepare_count is already zero when
-	 * the function is called may be useful, for example for initialisation.
+	 * Executing the code below even अगर prepare_count is alपढ़ोy zero when
+	 * the function is called may be useful, क्रम example क्रम initialisation.
 	 */
-	if (dev->wakeup.prepare_count < 0)
+	अगर (dev->wakeup.prepare_count < 0)
 		dev->wakeup.prepare_count = 0;
 
 	err = acpi_device_sleep_wake(dev, 0, 0, 0);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	list_for_each_entry(entry, &dev->wakeup.resources, node) {
-		struct acpi_power_resource *resource = entry->resource;
+	list_क्रम_each_entry(entry, &dev->wakeup.resources, node) अणु
+		काष्ठा acpi_घातer_resource *resource = entry->resource;
 
 		mutex_lock(&resource->resource_lock);
 
-		if (resource->wakeup_enabled) {
-			err = acpi_power_off_unlocked(resource);
-			if (!err)
+		अगर (resource->wakeup_enabled) अणु
+			err = acpi_घातer_off_unlocked(resource);
+			अगर (!err)
 				resource->wakeup_enabled = false;
-		}
+		पूर्ण
 
 		mutex_unlock(&resource->resource_lock);
 
-		if (err) {
+		अगर (err) अणु
 			dev_err(&dev->dev,
 				"Cannot turn wakeup power resources off\n");
 			dev->wakeup.flags.valid = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
  out:
 	mutex_unlock(&acpi_device_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int acpi_power_get_inferred_state(struct acpi_device *device, int *state)
-{
-	int result = 0;
-	int list_state = 0;
-	int i = 0;
+पूर्णांक acpi_घातer_get_inferred_state(काष्ठा acpi_device *device, पूर्णांक *state)
+अणु
+	पूर्णांक result = 0;
+	पूर्णांक list_state = 0;
+	पूर्णांक i = 0;
 
-	if (!device || !state)
-		return -EINVAL;
+	अगर (!device || !state)
+		वापस -EINVAL;
 
 	/*
-	 * We know a device's inferred power state when all the resources
-	 * required for a given D-state are 'on'.
+	 * We know a device's inferred घातer state when all the resources
+	 * required क्रम a given D-state are 'on'.
 	 */
-	for (i = ACPI_STATE_D0; i <= ACPI_STATE_D3_HOT; i++) {
-		struct list_head *list = &device->power.states[i].resources;
+	क्रम (i = ACPI_STATE_D0; i <= ACPI_STATE_D3_HOT; i++) अणु
+		काष्ठा list_head *list = &device->घातer.states[i].resources;
 
-		if (list_empty(list))
-			continue;
+		अगर (list_empty(list))
+			जारी;
 
-		result = acpi_power_get_list_state(list, &list_state);
-		if (result)
-			return result;
+		result = acpi_घातer_get_list_state(list, &list_state);
+		अगर (result)
+			वापस result;
 
-		if (list_state == ACPI_POWER_RESOURCE_STATE_ON) {
+		अगर (list_state == ACPI_POWER_RESOURCE_STATE_ON) अणु
 			*state = i;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	*state = device->power.states[ACPI_STATE_D3_COLD].flags.valid ?
+	*state = device->घातer.states[ACPI_STATE_D3_COLD].flags.valid ?
 		ACPI_STATE_D3_COLD : ACPI_STATE_D3_HOT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int acpi_power_on_resources(struct acpi_device *device, int state)
-{
-	if (!device || state < ACPI_STATE_D0 || state > ACPI_STATE_D3_HOT)
-		return -EINVAL;
+पूर्णांक acpi_घातer_on_resources(काष्ठा acpi_device *device, पूर्णांक state)
+अणु
+	अगर (!device || state < ACPI_STATE_D0 || state > ACPI_STATE_D3_HOT)
+		वापस -EINVAL;
 
-	return acpi_power_on_list(&device->power.states[state].resources);
-}
+	वापस acpi_घातer_on_list(&device->घातer.states[state].resources);
+पूर्ण
 
-int acpi_power_transition(struct acpi_device *device, int state)
-{
-	int result = 0;
+पूर्णांक acpi_घातer_transition(काष्ठा acpi_device *device, पूर्णांक state)
+अणु
+	पूर्णांक result = 0;
 
-	if (!device || (state < ACPI_STATE_D0) || (state > ACPI_STATE_D3_COLD))
-		return -EINVAL;
+	अगर (!device || (state < ACPI_STATE_D0) || (state > ACPI_STATE_D3_COLD))
+		वापस -EINVAL;
 
-	if (device->power.state == state || !device->flags.power_manageable)
-		return 0;
+	अगर (device->घातer.state == state || !device->flags.घातer_manageable)
+		वापस 0;
 
-	if ((device->power.state < ACPI_STATE_D0)
-	    || (device->power.state > ACPI_STATE_D3_COLD))
-		return -ENODEV;
+	अगर ((device->घातer.state < ACPI_STATE_D0)
+	    || (device->घातer.state > ACPI_STATE_D3_COLD))
+		वापस -ENODEV;
 
 	/*
-	 * First we reference all power resources required in the target list
-	 * (e.g. so the device doesn't lose power while transitioning).  Then,
-	 * we dereference all power resources used in the current list.
+	 * First we reference all घातer resources required in the target list
+	 * (e.g. so the device करोesn't lose घातer जबतक transitioning).  Then,
+	 * we dereference all घातer resources used in the current list.
 	 */
-	if (state < ACPI_STATE_D3_COLD)
-		result = acpi_power_on_list(
-			&device->power.states[state].resources);
+	अगर (state < ACPI_STATE_D3_COLD)
+		result = acpi_घातer_on_list(
+			&device->घातer.states[state].resources);
 
-	if (!result && device->power.state < ACPI_STATE_D3_COLD)
-		acpi_power_off_list(
-			&device->power.states[device->power.state].resources);
+	अगर (!result && device->घातer.state < ACPI_STATE_D3_COLD)
+		acpi_घातer_off_list(
+			&device->घातer.states[device->घातer.state].resources);
 
 	/* We shouldn't change the state unless the above operations succeed. */
-	device->power.state = result ? ACPI_STATE_UNKNOWN : state;
+	device->घातer.state = result ? ACPI_STATE_UNKNOWN : state;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void acpi_release_power_resource(struct device *dev)
-{
-	struct acpi_device *device = to_acpi_device(dev);
-	struct acpi_power_resource *resource;
+अटल व्योम acpi_release_घातer_resource(काष्ठा device *dev)
+अणु
+	काष्ठा acpi_device *device = to_acpi_device(dev);
+	काष्ठा acpi_घातer_resource *resource;
 
-	resource = container_of(device, struct acpi_power_resource, device);
+	resource = container_of(device, काष्ठा acpi_घातer_resource, device);
 
-	mutex_lock(&power_resource_list_lock);
+	mutex_lock(&घातer_resource_list_lock);
 	list_del(&resource->list_node);
-	mutex_unlock(&power_resource_list_lock);
+	mutex_unlock(&घातer_resource_list_lock);
 
-	acpi_free_pnp_ids(&device->pnp);
-	kfree(resource);
-}
+	acpi_मुक्त_pnp_ids(&device->pnp);
+	kमुक्त(resource);
+पूर्ण
 
-static ssize_t resource_in_use_show(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct acpi_power_resource *resource;
+अटल sमाप_प्रकार resource_in_use_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा acpi_घातer_resource *resource;
 
-	resource = to_power_resource(to_acpi_device(dev));
-	return sprintf(buf, "%u\n", !!resource->ref_count);
-}
-static DEVICE_ATTR_RO(resource_in_use);
+	resource = to_घातer_resource(to_acpi_device(dev));
+	वापस प्र_लिखो(buf, "%u\n", !!resource->ref_count);
+पूर्ण
+अटल DEVICE_ATTR_RO(resource_in_use);
 
-static void acpi_power_sysfs_remove(struct acpi_device *device)
-{
-	device_remove_file(&device->dev, &dev_attr_resource_in_use);
-}
+अटल व्योम acpi_घातer_sysfs_हटाओ(काष्ठा acpi_device *device)
+अणु
+	device_हटाओ_file(&device->dev, &dev_attr_resource_in_use);
+पूर्ण
 
-static void acpi_power_add_resource_to_list(struct acpi_power_resource *resource)
-{
-	mutex_lock(&power_resource_list_lock);
+अटल व्योम acpi_घातer_add_resource_to_list(काष्ठा acpi_घातer_resource *resource)
+अणु
+	mutex_lock(&घातer_resource_list_lock);
 
-	if (!list_empty(&acpi_power_resource_list)) {
-		struct acpi_power_resource *r;
+	अगर (!list_empty(&acpi_घातer_resource_list)) अणु
+		काष्ठा acpi_घातer_resource *r;
 
-		list_for_each_entry(r, &acpi_power_resource_list, list_node)
-			if (r->order > resource->order) {
+		list_क्रम_each_entry(r, &acpi_घातer_resource_list, list_node)
+			अगर (r->order > resource->order) अणु
 				list_add_tail(&resource->list_node, &r->list_node);
-				goto out;
-			}
-	}
-	list_add_tail(&resource->list_node, &acpi_power_resource_list);
+				जाओ out;
+			पूर्ण
+	पूर्ण
+	list_add_tail(&resource->list_node, &acpi_घातer_resource_list);
 
  out:
-	mutex_unlock(&power_resource_list_lock);
-}
+	mutex_unlock(&घातer_resource_list_lock);
+पूर्ण
 
-struct acpi_device *acpi_add_power_resource(acpi_handle handle)
-{
-	struct acpi_power_resource *resource;
-	struct acpi_device *device = NULL;
-	union acpi_object acpi_object;
-	struct acpi_buffer buffer = { sizeof(acpi_object), &acpi_object };
+काष्ठा acpi_device *acpi_add_घातer_resource(acpi_handle handle)
+अणु
+	काष्ठा acpi_घातer_resource *resource;
+	काष्ठा acpi_device *device = शून्य;
+	जोड़ acpi_object acpi_object;
+	काष्ठा acpi_buffer buffer = अणु माप(acpi_object), &acpi_object पूर्ण;
 	acpi_status status;
-	int state, result = -ENODEV;
+	पूर्णांक state, result = -ENODEV;
 
 	acpi_bus_get_device(handle, &device);
-	if (device)
-		return device;
+	अगर (device)
+		वापस device;
 
-	resource = kzalloc(sizeof(*resource), GFP_KERNEL);
-	if (!resource)
-		return NULL;
+	resource = kzalloc(माप(*resource), GFP_KERNEL);
+	अगर (!resource)
+		वापस शून्य;
 
 	device = &resource->device;
 	acpi_init_device_object(device, handle, ACPI_BUS_TYPE_POWER);
@@ -935,117 +936,117 @@ struct acpi_device *acpi_add_power_resource(acpi_handle handle)
 	INIT_LIST_HEAD(&resource->list_node);
 	INIT_LIST_HEAD(&resource->dependents);
 	resource->name = device->pnp.bus_id;
-	strcpy(acpi_device_name(device), ACPI_POWER_DEVICE_NAME);
-	strcpy(acpi_device_class(device), ACPI_POWER_CLASS);
-	device->power.state = ACPI_STATE_UNKNOWN;
+	म_नकल(acpi_device_name(device), ACPI_POWER_DEVICE_NAME);
+	म_नकल(acpi_device_class(device), ACPI_POWER_CLASS);
+	device->घातer.state = ACPI_STATE_UNKNOWN;
 
-	/* Evaluate the object to get the system level and resource order. */
-	status = acpi_evaluate_object(handle, NULL, NULL, &buffer);
-	if (ACPI_FAILURE(status))
-		goto err;
+	/* Evaluate the object to get the प्रणाली level and resource order. */
+	status = acpi_evaluate_object(handle, शून्य, शून्य, &buffer);
+	अगर (ACPI_FAILURE(status))
+		जाओ err;
 
-	resource->system_level = acpi_object.power_resource.system_level;
-	resource->order = acpi_object.power_resource.resource_order;
+	resource->प्रणाली_level = acpi_object.घातer_resource.प्रणाली_level;
+	resource->order = acpi_object.घातer_resource.resource_order;
 
-	result = acpi_power_get_state(handle, &state);
-	if (result)
-		goto err;
+	result = acpi_घातer_get_state(handle, &state);
+	अगर (result)
+		जाओ err;
 
 	pr_info("%s [%s] (%s)\n", acpi_device_name(device),
 		acpi_device_bid(device), state ? "on" : "off");
 
 	device->flags.match_driver = true;
-	result = acpi_device_add(device, acpi_release_power_resource);
-	if (result)
-		goto err;
+	result = acpi_device_add(device, acpi_release_घातer_resource);
+	अगर (result)
+		जाओ err;
 
-	if (!device_create_file(&device->dev, &dev_attr_resource_in_use))
-		device->remove = acpi_power_sysfs_remove;
+	अगर (!device_create_file(&device->dev, &dev_attr_resource_in_use))
+		device->हटाओ = acpi_घातer_sysfs_हटाओ;
 
-	acpi_power_add_resource_to_list(resource);
+	acpi_घातer_add_resource_to_list(resource);
 	acpi_device_add_finalize(device);
-	return device;
+	वापस device;
 
  err:
-	acpi_release_power_resource(&device->dev);
-	return NULL;
-}
+	acpi_release_घातer_resource(&device->dev);
+	वापस शून्य;
+पूर्ण
 
-#ifdef CONFIG_ACPI_SLEEP
-void acpi_resume_power_resources(void)
-{
-	struct acpi_power_resource *resource;
+#अगर_घोषित CONFIG_ACPI_SLEEP
+व्योम acpi_resume_घातer_resources(व्योम)
+अणु
+	काष्ठा acpi_घातer_resource *resource;
 
-	mutex_lock(&power_resource_list_lock);
+	mutex_lock(&घातer_resource_list_lock);
 
-	list_for_each_entry(resource, &acpi_power_resource_list, list_node) {
-		int result, state;
+	list_क्रम_each_entry(resource, &acpi_घातer_resource_list, list_node) अणु
+		पूर्णांक result, state;
 
 		mutex_lock(&resource->resource_lock);
 
-		result = acpi_power_get_state(resource->device.handle, &state);
-		if (result) {
+		result = acpi_घातer_get_state(resource->device.handle, &state);
+		अगर (result) अणु
 			mutex_unlock(&resource->resource_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (state == ACPI_POWER_RESOURCE_STATE_OFF
-		    && resource->ref_count) {
+		अगर (state == ACPI_POWER_RESOURCE_STATE_OFF
+		    && resource->ref_count) अणु
 			dev_info(&resource->device.dev, "Turning ON\n");
-			__acpi_power_on(resource);
-		}
+			__acpi_घातer_on(resource);
+		पूर्ण
 
 		mutex_unlock(&resource->resource_lock);
-	}
+	पूर्ण
 
-	mutex_unlock(&power_resource_list_lock);
-}
-#endif
+	mutex_unlock(&घातer_resource_list_lock);
+पूर्ण
+#पूर्ण_अगर
 
-static void acpi_power_turn_off_if_unused(struct acpi_power_resource *resource,
+अटल व्योम acpi_घातer_turn_off_अगर_unused(काष्ठा acpi_घातer_resource *resource,
 				       bool init)
-{
-	if (resource->ref_count > 0)
-		return;
+अणु
+	अगर (resource->ref_count > 0)
+		वापस;
 
-	if (init) {
-		if (resource->users > 0)
-			return;
-	} else {
-		int result, state;
+	अगर (init) अणु
+		अगर (resource->users > 0)
+			वापस;
+	पूर्ण अन्यथा अणु
+		पूर्णांक result, state;
 
-		result = acpi_power_get_state(resource->device.handle, &state);
-		if (result || state == ACPI_POWER_RESOURCE_STATE_OFF)
-			return;
-	}
+		result = acpi_घातer_get_state(resource->device.handle, &state);
+		अगर (result || state == ACPI_POWER_RESOURCE_STATE_OFF)
+			वापस;
+	पूर्ण
 
 	dev_info(&resource->device.dev, "Turning OFF\n");
-	__acpi_power_off(resource);
-}
+	__acpi_घातer_off(resource);
+पूर्ण
 
 /**
- * acpi_turn_off_unused_power_resources - Turn off power resources not in use.
- * @init: Control switch.
+ * acpi_turn_off_unused_घातer_resources - Turn off घातer resources not in use.
+ * @init: Control चयन.
  *
- * If @ainit is set, unconditionally turn off all of the ACPI power resources
+ * If @ainit is set, unconditionally turn off all of the ACPI घातer resources
  * without any users.
  *
- * Otherwise, turn off all ACPI power resources without active references (that
+ * Otherwise, turn off all ACPI घातer resources without active references (that
  * is, the ones that should be "off" at the moment) that are "on".
  */
-void acpi_turn_off_unused_power_resources(bool init)
-{
-	struct acpi_power_resource *resource;
+व्योम acpi_turn_off_unused_घातer_resources(bool init)
+अणु
+	काष्ठा acpi_घातer_resource *resource;
 
-	mutex_lock(&power_resource_list_lock);
+	mutex_lock(&घातer_resource_list_lock);
 
-	list_for_each_entry_reverse(resource, &acpi_power_resource_list, list_node) {
+	list_क्रम_each_entry_reverse(resource, &acpi_घातer_resource_list, list_node) अणु
 		mutex_lock(&resource->resource_lock);
 
-		acpi_power_turn_off_if_unused(resource, init);
+		acpi_घातer_turn_off_अगर_unused(resource, init);
 
 		mutex_unlock(&resource->resource_lock);
-	}
+	पूर्ण
 
-	mutex_unlock(&power_resource_list_lock);
-}
+	mutex_unlock(&घातer_resource_list_lock);
+पूर्ण

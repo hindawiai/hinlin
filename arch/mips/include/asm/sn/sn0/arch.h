@@ -1,56 +1,57 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * SGI IP27 specific setup.
+ * SGI IP27 specअगरic setup.
  *
  * Copyright (C) 1995 - 1997, 1999 Silcon Graphics, Inc.
  * Copyright (C) 1999 Ralf Baechle (ralf@gnu.org)
  */
-#ifndef _ASM_SN_SN0_ARCH_H
-#define _ASM_SN_SN0_ARCH_H
+#अगर_अघोषित _ASM_SN_SN0_ARCH_H
+#घोषणा _ASM_SN_SN0_ARCH_H
 
 
 /*
  * MAXCPUS refers to the maximum number of CPUs in a single kernel.
  * This is not necessarily the same as MAXNODES * CPUS_PER_NODE
  */
-#define MAXCPUS			(MAX_NUMNODES * CPUS_PER_NODE)
+#घोषणा MAXCPUS			(MAX_NUMNODES * CPUS_PER_NODE)
 
 /*
- * This is the maximum number of NASIDS that can be present in a system.
+ * This is the maximum number of NASIDS that can be present in a प्रणाली.
  * (Highest NASID plus one.)
  */
-#define MAX_NASIDS		256
+#घोषणा MAX_NASIDS		256
 
 /*
  * MAX_REGIONS refers to the maximum number of hardware partitioned regions.
  */
-#define MAX_REGIONS		64
-#define MAX_NONPREMIUM_REGIONS	16
-#define MAX_PREMIUM_REGIONS	MAX_REGIONS
+#घोषणा MAX_REGIONS		64
+#घोषणा MAX_NONPREMIUM_REGIONS	16
+#घोषणा MAX_PREMIUM_REGIONS	MAX_REGIONS
 
 /*
  * MAX_PARITIONS refers to the maximum number of logically defined
- * partitions the system can support.
+ * partitions the प्रणाली can support.
  */
-#define MAX_PARTITIONS		MAX_REGIONS
+#घोषणा MAX_PARTITIONS		MAX_REGIONS
 
-#define NASID_MASK_BYTES	((MAX_NASIDS + 7) / 8)
+#घोषणा NASID_MASK_BYTES	((MAX_NASIDS + 7) / 8)
 
 /*
- * Slot constants for SN0
+ * Slot स्थिरants क्रम SN0
  */
-#ifdef CONFIG_SGI_SN_N_MODE
-#define MAX_MEM_SLOTS	16			/* max slots per node */
-#else /* !CONFIG_SGI_SN_N_MODE, assume CONFIG_SGI_SN_M_MODE */
-#define MAX_MEM_SLOTS	32			/* max slots per node */
-#endif /* CONFIG_SGI_SN_M_MODE */
+#अगर_घोषित CONFIG_SGI_SN_N_MODE
+#घोषणा MAX_MEM_SLOTS	16			/* max slots per node */
+#अन्यथा /* !CONFIG_SGI_SN_N_MODE, assume CONFIG_SGI_SN_M_MODE */
+#घोषणा MAX_MEM_SLOTS	32			/* max slots per node */
+#पूर्ण_अगर /* CONFIG_SGI_SN_M_MODE */
 
-#define SLOT_SHIFT		(27)
-#define SLOT_MIN_MEM_SIZE	(32*1024*1024)
+#घोषणा SLOT_SHIFT		(27)
+#घोषणा SLOT_MIN_MEM_SIZE	(32*1024*1024)
 
-#define CPUS_PER_NODE		2	/* CPUs on a single hub */
+#घोषणा CPUS_PER_NODE		2	/* CPUs on a single hub */
 
-#endif /* _ASM_SN_SN0_ARCH_H */
+#पूर्ण_अगर /* _ASM_SN_SN0_ARCH_H */

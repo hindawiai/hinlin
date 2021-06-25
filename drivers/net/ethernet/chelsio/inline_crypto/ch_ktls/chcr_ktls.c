@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (C) 2020 Chelsio Communications.  All rights reserved. */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/skbuff.h>
-#include <linux/module.h>
-#include <linux/highmem.h>
-#include <linux/ip.h>
-#include <net/ipv6.h>
-#include <linux/netdevice.h>
-#include <crypto/aes.h>
-#include "chcr_ktls.h"
+#समावेश <linux/skbuff.h>
+#समावेश <linux/module.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/ip.h>
+#समावेश <net/ipv6.h>
+#समावेश <linux/netdevice.h>
+#समावेश <crypto/aes.h>
+#समावेश "chcr_ktls.h"
 
-static LIST_HEAD(uld_ctx_list);
-static DEFINE_MUTEX(dev_mutex);
+अटल LIST_HEAD(uld_ctx_list);
+अटल DEFINE_MUTEX(dev_mutex);
 
-/* chcr_get_nfrags_to_send: get the remaining nfrags after start offset
+/* chcr_get_nfrags_to_send: get the reमुख्यing nfrags after start offset
  * @skb: skb
  * @start: start offset.
  * @len: how much data to send after @start
  */
-static int chcr_get_nfrags_to_send(struct sk_buff *skb, u32 start, u32 len)
-{
-	struct skb_shared_info *si = skb_shinfo(skb);
+अटल पूर्णांक chcr_get_nfrags_to_send(काष्ठा sk_buff *skb, u32 start, u32 len)
+अणु
+	काष्ठा skb_shared_info *si = skb_shinfo(skb);
 	u32 frag_size, skb_linear_data_len = skb_headlen(skb);
 	u8 nfrags = 0, frag_idx = 0;
 	skb_frag_t *frag;
 
-	/* if its a linear skb then return 1 */
-	if (!skb_is_nonlinear(skb))
-		return 1;
+	/* अगर its a linear skb then वापस 1 */
+	अगर (!skb_is_nonlinear(skb))
+		वापस 1;
 
-	if (unlikely(start < skb_linear_data_len)) {
+	अगर (unlikely(start < skb_linear_data_len)) अणु
 		frag_size = min(len, skb_linear_data_len - start);
-	} else {
+	पूर्ण अन्यथा अणु
 		start -= skb_linear_data_len;
 
 		frag = &si->frags[frag_idx];
 		frag_size = skb_frag_size(frag);
-		while (start >= frag_size) {
+		जबतक (start >= frag_size) अणु
 			start -= frag_size;
 			frag_idx++;
 			frag = &si->frags[frag_idx];
 			frag_size = skb_frag_size(frag);
-		}
+		पूर्ण
 		frag_size = min(len, skb_frag_size(frag) - start);
-	}
+	पूर्ण
 	len -= frag_size;
 	nfrags++;
 
-	while (len) {
+	जबतक (len) अणु
 		frag_size = min(len, skb_frag_size(&si->frags[frag_idx]));
 		len -= frag_size;
 		nfrags++;
 		frag_idx++;
-	}
-	return nfrags;
-}
+	पूर्ण
+	वापस nfrags;
+पूर्ण
 
-static int chcr_init_tcb_fields(struct chcr_ktls_info *tx_info);
-static void clear_conn_resources(struct chcr_ktls_info *tx_info);
+अटल पूर्णांक chcr_init_tcb_fields(काष्ठा chcr_ktls_info *tx_info);
+अटल व्योम clear_conn_resources(काष्ठा chcr_ktls_info *tx_info);
 /*
  * chcr_ktls_save_keys: calculate and save crypto keys.
- * @tx_info - driver specific tls info.
- * @crypto_info - tls crypto information.
+ * @tx_info - driver specअगरic tls info.
+ * @crypto_info - tls crypto inक्रमmation.
  * @direction - TX/RX direction.
- * return - SUCCESS/FAILURE.
+ * वापस - SUCCESS/FAILURE.
  */
-static int chcr_ktls_save_keys(struct chcr_ktls_info *tx_info,
-			       struct tls_crypto_info *crypto_info,
-			       enum tls_offload_ctx_dir direction)
-{
-	int ck_size, key_ctx_size, mac_key_size, keylen, ghash_size, ret;
-	unsigned char ghash_h[TLS_CIPHER_AES_GCM_256_TAG_SIZE];
-	struct tls12_crypto_info_aes_gcm_128 *info_128_gcm;
-	struct ktls_key_ctx *kctx = &tx_info->key_ctx;
-	struct crypto_aes_ctx aes_ctx;
-	unsigned char *key, *salt;
+अटल पूर्णांक chcr_ktls_save_keys(काष्ठा chcr_ktls_info *tx_info,
+			       काष्ठा tls_crypto_info *crypto_info,
+			       क्रमागत tls_offload_ctx_dir direction)
+अणु
+	पूर्णांक ck_size, key_ctx_size, mac_key_size, keylen, ghash_size, ret;
+	अचिन्हित अक्षर ghash_h[TLS_CIPHER_AES_GCM_256_TAG_SIZE];
+	काष्ठा tls12_crypto_info_aes_gcm_128 *info_128_gcm;
+	काष्ठा ktls_key_ctx *kctx = &tx_info->key_ctx;
+	काष्ठा crypto_aes_ctx aes_ctx;
+	अचिन्हित अक्षर *key, *salt;
 
-	switch (crypto_info->cipher_type) {
-	case TLS_CIPHER_AES_GCM_128:
+	चयन (crypto_info->cipher_type) अणु
+	हाल TLS_CIPHER_AES_GCM_128:
 		info_128_gcm =
-			(struct tls12_crypto_info_aes_gcm_128 *)crypto_info;
+			(काष्ठा tls12_crypto_info_aes_gcm_128 *)crypto_info;
 		keylen = TLS_CIPHER_AES_GCM_128_KEY_SIZE;
 		ck_size = CHCR_KEYCTX_CIPHER_KEY_SIZE_128;
 		tx_info->salt_size = TLS_CIPHER_AES_GCM_128_SALT_SIZE;
@@ -95,7 +96,7 @@ static int chcr_ktls_save_keys(struct chcr_ktls_info *tx_info,
 		tx_info->record_no = *(u64 *)info_128_gcm->rec_seq;
 
 		/* The SCMD fields used when encrypting a full TLS
-		 * record. Its a one time calculation till the
+		 * record. Its a one समय calculation till the
 		 * connection exists.
 		 */
 		tx_info->scmd0_seqno_numivs =
@@ -107,91 +108,91 @@ static int chcr_ktls_save_keys(struct chcr_ktls_info *tx_info,
 			SCMD_IV_SIZE_V(TLS_CIPHER_AES_GCM_128_IV_SIZE >> 1) |
 			SCMD_NUM_IVS_V(1);
 
-		/* keys will be sent inline. */
+		/* keys will be sent अंतरभूत. */
 		tx_info->scmd0_ivgen_hdrlen = SCMD_KEY_CTX_INLINE_F;
 
 		/* The SCMD fields used when encrypting a partial TLS
 		 * record (no trailer and possibly a truncated payload).
 		 */
-		tx_info->scmd0_short_seqno_numivs =
+		tx_info->scmd0_लघु_seqno_numivs =
 			SCMD_CIPH_AUTH_SEQ_CTRL_F |
 			SCMD_PROTO_VERSION_V(CHCR_SCMD_PROTO_VERSION_GENERIC) |
 			SCMD_CIPH_MODE_V(CHCR_SCMD_CIPHER_MODE_AES_CTR) |
 			SCMD_IV_SIZE_V(AES_BLOCK_LEN >> 1);
 
-		tx_info->scmd0_short_ivgen_hdrlen =
+		tx_info->scmd0_लघु_ivgen_hdrlen =
 			tx_info->scmd0_ivgen_hdrlen | SCMD_AADIVDROP_F;
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_err("GCM: cipher type 0x%x not supported\n",
 		       crypto_info->cipher_type);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	key_ctx_size = CHCR_KTLS_KEY_CTX_LEN +
 		       roundup(keylen, 16) + ghash_size;
-	/* Calculate the H = CIPH(K, 0 repeated 16 times).
+	/* Calculate the H = CIPH(K, 0 repeated 16 बार).
 	 * It will go in key context
 	 */
 
 	ret = aes_expandkey(&aes_ctx, key, keylen);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	memset(ghash_h, 0, ghash_size);
+	स_रखो(ghash_h, 0, ghash_size);
 	aes_encrypt(&aes_ctx, ghash_h, ghash_h);
-	memzero_explicit(&aes_ctx, sizeof(aes_ctx));
+	memzero_explicit(&aes_ctx, माप(aes_ctx));
 
 	/* fill the Key context */
-	if (direction == TLS_OFFLOAD_CTX_DIR_TX) {
+	अगर (direction == TLS_OFFLOAD_CTX_सूची_TX) अणु
 		kctx->ctx_hdr = FILL_KEY_CTX_HDR(ck_size,
 						 mac_key_size,
 						 key_ctx_size >> 4);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memcpy(kctx->salt, salt, tx_info->salt_size);
-	memcpy(kctx->key, key, keylen);
-	memcpy(kctx->key + keylen, ghash_h, ghash_size);
+	स_नकल(kctx->salt, salt, tx_info->salt_size);
+	स_नकल(kctx->key, key, keylen);
+	स_नकल(kctx->key + keylen, ghash_h, ghash_size);
 	tx_info->key_ctx_len = key_ctx_size;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * chcr_ktls_act_open_req: creates TCB entry for ipv4 connection.
+ * chcr_ktls_act_खोलो_req: creates TCB entry क्रम ipv4 connection.
  * @sk - tcp socket.
- * @tx_info - driver specific tls info.
+ * @tx_info - driver specअगरic tls info.
  * @atid - connection active tid.
- * return - send success/failure.
+ * वापस - send success/failure.
  */
-static int chcr_ktls_act_open_req(struct sock *sk,
-				  struct chcr_ktls_info *tx_info,
-				  int atid)
-{
-	struct inet_sock *inet = inet_sk(sk);
-	struct cpl_t6_act_open_req *cpl6;
-	struct cpl_act_open_req *cpl;
-	struct sk_buff *skb;
-	unsigned int len;
-	int qid_atid;
+अटल पूर्णांक chcr_ktls_act_खोलो_req(काष्ठा sock *sk,
+				  काष्ठा chcr_ktls_info *tx_info,
+				  पूर्णांक atid)
+अणु
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा cpl_t6_act_खोलो_req *cpl6;
+	काष्ठा cpl_act_खोलो_req *cpl;
+	काष्ठा sk_buff *skb;
+	अचिन्हित पूर्णांक len;
+	पूर्णांक qid_atid;
 	u64 options;
 
-	len = sizeof(*cpl6);
+	len = माप(*cpl6);
 	skb = alloc_skb(len, GFP_KERNEL);
-	if (unlikely(!skb))
-		return -ENOMEM;
+	अगर (unlikely(!skb))
+		वापस -ENOMEM;
 	/* mark it a control pkt */
 	set_wr_txq(skb, CPL_PRIORITY_CONTROL, tx_info->port_id);
 
 	cpl6 = __skb_put_zero(skb, len);
-	cpl = (struct cpl_act_open_req *)cpl6;
+	cpl = (काष्ठा cpl_act_खोलो_req *)cpl6;
 	INIT_TP_WR(cpl6, 0);
 	qid_atid = TID_QID_V(tx_info->rx_qid) |
 		   TID_TID_V(atid);
@@ -211,38 +212,38 @@ static int chcr_ktls_act_open_req(struct sock *sk,
 		TX_QUEUE_V(tx_info->adap->params.tp.tx_modq[tx_info->tx_chan]);
 	cpl->opt2 = htonl(options);
 
-	return cxgb4_l2t_send(tx_info->netdev, skb, tx_info->l2te);
-}
+	वापस cxgb4_l2t_send(tx_info->netdev, skb, tx_info->l2te);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 /*
- * chcr_ktls_act_open_req6: creates TCB entry for ipv6 connection.
+ * chcr_ktls_act_खोलो_req6: creates TCB entry क्रम ipv6 connection.
  * @sk - tcp socket.
- * @tx_info - driver specific tls info.
+ * @tx_info - driver specअगरic tls info.
  * @atid - connection active tid.
- * return - send success/failure.
+ * वापस - send success/failure.
  */
-static int chcr_ktls_act_open_req6(struct sock *sk,
-				   struct chcr_ktls_info *tx_info,
-				   int atid)
-{
-	struct inet_sock *inet = inet_sk(sk);
-	struct cpl_t6_act_open_req6 *cpl6;
-	struct cpl_act_open_req6 *cpl;
-	struct sk_buff *skb;
-	unsigned int len;
-	int qid_atid;
+अटल पूर्णांक chcr_ktls_act_खोलो_req6(काष्ठा sock *sk,
+				   काष्ठा chcr_ktls_info *tx_info,
+				   पूर्णांक atid)
+अणु
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा cpl_t6_act_खोलो_req6 *cpl6;
+	काष्ठा cpl_act_खोलो_req6 *cpl;
+	काष्ठा sk_buff *skb;
+	अचिन्हित पूर्णांक len;
+	पूर्णांक qid_atid;
 	u64 options;
 
-	len = sizeof(*cpl6);
+	len = माप(*cpl6);
 	skb = alloc_skb(len, GFP_KERNEL);
-	if (unlikely(!skb))
-		return -ENOMEM;
+	अगर (unlikely(!skb))
+		वापस -ENOMEM;
 	/* mark it a control pkt */
 	set_wr_txq(skb, CPL_PRIORITY_CONTROL, tx_info->port_id);
 
 	cpl6 = __skb_put_zero(skb, len);
-	cpl = (struct cpl_act_open_req6 *)cpl6;
+	cpl = (काष्ठा cpl_act_खोलो_req6 *)cpl6;
 	INIT_TP_WR(cpl6, 0);
 	qid_atid = TID_QID_V(tx_info->rx_qid) | TID_TID_V(atid);
 	OPCODE_TID(cpl) = htonl(MK_OPCODE_TID(CPL_ACT_OPEN_REQ6, qid_atid));
@@ -262,82 +263,82 @@ static int chcr_ktls_act_open_req6(struct sock *sk,
 		TX_QUEUE_V(tx_info->adap->params.tp.tx_modq[tx_info->tx_chan]);
 	cpl->opt2 = htonl(options);
 
-	return cxgb4_l2t_send(tx_info->netdev, skb, tx_info->l2te);
-}
-#endif /* #if IS_ENABLED(CONFIG_IPV6) */
+	वापस cxgb4_l2t_send(tx_info->netdev, skb, tx_info->l2te);
+पूर्ण
+#पूर्ण_अगर /* #अगर IS_ENABLED(CONFIG_IPV6) */
 
 /*
- * chcr_setup_connection:  create a TCB entry so that TP will form tcp packets.
+ * chcr_setup_connection:  create a TCB entry so that TP will क्रमm tcp packets.
  * @sk - tcp socket.
- * @tx_info - driver specific tls info.
- * return: NET_TX_OK/NET_XMIT_DROP
+ * @tx_info - driver specअगरic tls info.
+ * वापस: NET_TX_OK/NET_XMIT_DROP
  */
-static int chcr_setup_connection(struct sock *sk,
-				 struct chcr_ktls_info *tx_info)
-{
-	struct tid_info *t = &tx_info->adap->tids;
-	int atid, ret = 0;
+अटल पूर्णांक chcr_setup_connection(काष्ठा sock *sk,
+				 काष्ठा chcr_ktls_info *tx_info)
+अणु
+	काष्ठा tid_info *t = &tx_info->adap->tids;
+	पूर्णांक atid, ret = 0;
 
 	atid = cxgb4_alloc_atid(t, tx_info);
-	if (atid == -1)
-		return -EINVAL;
+	अगर (atid == -1)
+		वापस -EINVAL;
 
 	tx_info->atid = atid;
 
-	if (tx_info->ip_family == AF_INET) {
-		ret = chcr_ktls_act_open_req(sk, tx_info, atid);
-#if IS_ENABLED(CONFIG_IPV6)
-	} else {
-		ret = cxgb4_clip_get(tx_info->netdev, (const u32 *)
+	अगर (tx_info->ip_family == AF_INET) अणु
+		ret = chcr_ktls_act_खोलो_req(sk, tx_info, atid);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अणु
+		ret = cxgb4_clip_get(tx_info->netdev, (स्थिर u32 *)
 				     &sk->sk_v6_rcv_saddr,
 				     1);
-		if (ret)
-			return ret;
-		ret = chcr_ktls_act_open_req6(sk, tx_info, atid);
-#endif
-	}
+		अगर (ret)
+			वापस ret;
+		ret = chcr_ktls_act_खोलो_req6(sk, tx_info, atid);
+#पूर्ण_अगर
+	पूर्ण
 
-	/* if return type is NET_XMIT_CN, msg will be sent but delayed, mark ret
-	 * success, if any other return type clear atid and return that failure.
+	/* अगर वापस type is NET_XMIT_CN, msg will be sent but delayed, mark ret
+	 * success, अगर any other वापस type clear atid and वापस that failure.
 	 */
-	if (ret) {
-		if (ret == NET_XMIT_CN) {
+	अगर (ret) अणु
+		अगर (ret == NET_XMIT_CN) अणु
 			ret = 0;
-		} else {
-#if IS_ENABLED(CONFIG_IPV6)
+		पूर्ण अन्यथा अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
 			/* clear clip entry */
-			if (tx_info->ip_family == AF_INET6)
+			अगर (tx_info->ip_family == AF_INET6)
 				cxgb4_clip_release(tx_info->netdev,
-						   (const u32 *)
+						   (स्थिर u32 *)
 						   &sk->sk_v6_rcv_saddr,
 						   1);
-#endif
-			cxgb4_free_atid(t, atid);
-		}
-	}
+#पूर्ण_अगर
+			cxgb4_मुक्त_atid(t, atid);
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * chcr_set_tcb_field: update tcb fields.
- * @tx_info - driver specific tls info.
+ * @tx_info - driver specअगरic tls info.
  * @word - TCB word.
  * @mask - TCB word related mask.
  * @val - TCB word related value.
- * @no_reply - set 1 if not looking for TP response.
+ * @no_reply - set 1 अगर not looking क्रम TP response.
  */
-static int chcr_set_tcb_field(struct chcr_ktls_info *tx_info, u16 word,
-			      u64 mask, u64 val, int no_reply)
-{
-	struct cpl_set_tcb_field *req;
-	struct sk_buff *skb;
+अटल पूर्णांक chcr_set_tcb_field(काष्ठा chcr_ktls_info *tx_info, u16 word,
+			      u64 mask, u64 val, पूर्णांक no_reply)
+अणु
+	काष्ठा cpl_set_tcb_field *req;
+	काष्ठा sk_buff *skb;
 
-	skb = alloc_skb(sizeof(struct cpl_set_tcb_field), GFP_ATOMIC);
-	if (!skb)
-		return -ENOMEM;
+	skb = alloc_skb(माप(काष्ठा cpl_set_tcb_field), GFP_ATOMIC);
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	req = (struct cpl_set_tcb_field *)__skb_put_zero(skb, sizeof(*req));
+	req = (काष्ठा cpl_set_tcb_field *)__skb_put_zero(skb, माप(*req));
 	INIT_TP_WR_CPL(req, CPL_SET_TCB_FIELD, tx_info->tid);
 	req->reply_ctrl = htons(QUEUENO_V(tx_info->rx_qid) |
 				NO_REPLY_V(no_reply));
@@ -346,109 +347,109 @@ static int chcr_set_tcb_field(struct chcr_ktls_info *tx_info, u16 word,
 	req->val = cpu_to_be64(val);
 
 	set_wr_txq(skb, CPL_PRIORITY_CONTROL, tx_info->port_id);
-	return cxgb4_ofld_send(tx_info->netdev, skb);
-}
+	वापस cxgb4_ofld_send(tx_info->netdev, skb);
+पूर्ण
 
 /*
- * chcr_ktls_dev_del:  call back for tls_dev_del.
- * Remove the tid and l2t entry and close the connection.
+ * chcr_ktls_dev_del:  call back क्रम tls_dev_del.
+ * Remove the tid and l2t entry and बंद the connection.
  * it per connection basis.
  * @netdev - net device.
  * @tls_cts - tls context.
  * @direction - TX/RX crypto direction
  */
-static void chcr_ktls_dev_del(struct net_device *netdev,
-			      struct tls_context *tls_ctx,
-			      enum tls_offload_ctx_dir direction)
-{
-	struct chcr_ktls_ofld_ctx_tx *tx_ctx =
+अटल व्योम chcr_ktls_dev_del(काष्ठा net_device *netdev,
+			      काष्ठा tls_context *tls_ctx,
+			      क्रमागत tls_offload_ctx_dir direction)
+अणु
+	काष्ठा chcr_ktls_ofld_ctx_tx *tx_ctx =
 				chcr_get_ktls_tx_context(tls_ctx);
-	struct chcr_ktls_info *tx_info = tx_ctx->chcr_info;
-	struct ch_ktls_port_stats_debug *port_stats;
-	struct chcr_ktls_uld_ctx *u_ctx;
+	काष्ठा chcr_ktls_info *tx_info = tx_ctx->chcr_info;
+	काष्ठा ch_ktls_port_stats_debug *port_stats;
+	काष्ठा chcr_ktls_uld_ctx *u_ctx;
 
-	if (!tx_info)
-		return;
+	अगर (!tx_info)
+		वापस;
 
 	u_ctx = tx_info->adap->uld[CXGB4_ULD_KTLS].handle;
-	if (u_ctx && u_ctx->detach)
-		return;
+	अगर (u_ctx && u_ctx->detach)
+		वापस;
 	/* clear l2t entry */
-	if (tx_info->l2te)
+	अगर (tx_info->l2te)
 		cxgb4_l2t_release(tx_info->l2te);
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 	/* clear clip entry */
-	if (tx_info->ip_family == AF_INET6)
-		cxgb4_clip_release(netdev, (const u32 *)
+	अगर (tx_info->ip_family == AF_INET6)
+		cxgb4_clip_release(netdev, (स्थिर u32 *)
 				   &tx_info->sk->sk_v6_rcv_saddr,
 				   1);
-#endif
+#पूर्ण_अगर
 
 	/* clear tid */
-	if (tx_info->tid != -1) {
-		cxgb4_remove_tid(&tx_info->adap->tids, tx_info->tx_chan,
+	अगर (tx_info->tid != -1) अणु
+		cxgb4_हटाओ_tid(&tx_info->adap->tids, tx_info->tx_chan,
 				 tx_info->tid, tx_info->ip_family);
 
 		xa_erase(&u_ctx->tid_list, tx_info->tid);
-	}
+	पूर्ण
 
 	port_stats = &tx_info->adap->ch_ktls_stats.ktls_port[tx_info->port_id];
-	atomic64_inc(&port_stats->ktls_tx_connection_close);
-	kvfree(tx_info);
-	tx_ctx->chcr_info = NULL;
+	atomic64_inc(&port_stats->ktls_tx_connection_बंद);
+	kvमुक्त(tx_info);
+	tx_ctx->chcr_info = शून्य;
 	/* release module refcount */
 	module_put(THIS_MODULE);
-}
+पूर्ण
 
 /*
- * chcr_ktls_dev_add:  call back for tls_dev_add.
- * Create a tcb entry for TP. Also add l2t entry for the connection. And
+ * chcr_ktls_dev_add:  call back क्रम tls_dev_add.
+ * Create a tcb entry क्रम TP. Also add l2t entry क्रम the connection. And
  * generate keys & save those keys locally.
  * @netdev - net device.
  * @tls_cts - tls context.
  * @direction - TX/RX crypto direction
- * return: SUCCESS/FAILURE.
+ * वापस: SUCCESS/FAILURE.
  */
-static int chcr_ktls_dev_add(struct net_device *netdev, struct sock *sk,
-			     enum tls_offload_ctx_dir direction,
-			     struct tls_crypto_info *crypto_info,
+अटल पूर्णांक chcr_ktls_dev_add(काष्ठा net_device *netdev, काष्ठा sock *sk,
+			     क्रमागत tls_offload_ctx_dir direction,
+			     काष्ठा tls_crypto_info *crypto_info,
 			     u32 start_offload_tcp_sn)
-{
-	struct tls_context *tls_ctx = tls_get_ctx(sk);
-	struct ch_ktls_port_stats_debug *port_stats;
-	struct chcr_ktls_ofld_ctx_tx *tx_ctx;
-	struct chcr_ktls_uld_ctx *u_ctx;
-	struct chcr_ktls_info *tx_info;
-	struct dst_entry *dst;
-	struct adapter *adap;
-	struct port_info *pi;
-	struct neighbour *n;
+अणु
+	काष्ठा tls_context *tls_ctx = tls_get_ctx(sk);
+	काष्ठा ch_ktls_port_stats_debug *port_stats;
+	काष्ठा chcr_ktls_ofld_ctx_tx *tx_ctx;
+	काष्ठा chcr_ktls_uld_ctx *u_ctx;
+	काष्ठा chcr_ktls_info *tx_info;
+	काष्ठा dst_entry *dst;
+	काष्ठा adapter *adap;
+	काष्ठा port_info *pi;
+	काष्ठा neighbour *n;
 	u8 daaddr[16];
-	int ret = -1;
+	पूर्णांक ret = -1;
 
 	tx_ctx = chcr_get_ktls_tx_context(tls_ctx);
 
 	pi = netdev_priv(netdev);
 	adap = pi->adapter;
 	port_stats = &adap->ch_ktls_stats.ktls_port[pi->port_id];
-	atomic64_inc(&port_stats->ktls_tx_connection_open);
+	atomic64_inc(&port_stats->ktls_tx_connection_खोलो);
 	u_ctx = adap->uld[CXGB4_ULD_KTLS].handle;
 
-	if (direction == TLS_OFFLOAD_CTX_DIR_RX) {
+	अगर (direction == TLS_OFFLOAD_CTX_सूची_RX) अणु
 		pr_err("not expecting for RX direction\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (tx_ctx->chcr_info)
-		goto out;
+	अगर (tx_ctx->chcr_info)
+		जाओ out;
 
-	if (u_ctx && u_ctx->detach)
-		goto out;
+	अगर (u_ctx && u_ctx->detach)
+		जाओ out;
 
-	tx_info = kvzalloc(sizeof(*tx_info), GFP_KERNEL);
-	if (!tx_info)
-		goto out;
+	tx_info = kvzalloc(माप(*tx_info), GFP_KERNEL);
+	अगर (!tx_info)
+		जाओ out;
 
 	tx_info->sk = sk;
 	spin_lock_init(&tx_info->lock);
@@ -466,119 +467,119 @@ static int chcr_ktls_dev_add(struct net_device *netdev, struct sock *sk,
 	tx_info->prev_win = 0;
 
 	tx_info->rx_qid = chcr_get_first_rx_qid(adap);
-	if (unlikely(tx_info->rx_qid < 0))
-		goto free_tx_info;
+	अगर (unlikely(tx_info->rx_qid < 0))
+		जाओ मुक्त_tx_info;
 
 	tx_info->prev_seq = start_offload_tcp_sn;
 	tx_info->tcp_start_seq_number = start_offload_tcp_sn;
 
 	/* save crypto keys */
 	ret = chcr_ktls_save_keys(tx_info, crypto_info, direction);
-	if (ret < 0)
-		goto free_tx_info;
+	अगर (ret < 0)
+		जाओ मुक्त_tx_info;
 
 	/* get peer ip */
-	if (sk->sk_family == AF_INET) {
-		memcpy(daaddr, &sk->sk_daddr, 4);
+	अगर (sk->sk_family == AF_INET) अणु
+		स_नकल(daaddr, &sk->sk_daddr, 4);
 		tx_info->ip_family = AF_INET;
-#if IS_ENABLED(CONFIG_IPV6)
-	} else {
-		if (!sk->sk_ipv6only &&
-		    ipv6_addr_type(&sk->sk_v6_daddr) == IPV6_ADDR_MAPPED) {
-			memcpy(daaddr, &sk->sk_daddr, 4);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अणु
+		अगर (!sk->sk_ipv6only &&
+		    ipv6_addr_type(&sk->sk_v6_daddr) == IPV6_ADDR_MAPPED) अणु
+			स_नकल(daaddr, &sk->sk_daddr, 4);
 			tx_info->ip_family = AF_INET;
-		} else {
-			memcpy(daaddr, sk->sk_v6_daddr.in6_u.u6_addr8, 16);
+		पूर्ण अन्यथा अणु
+			स_नकल(daaddr, sk->sk_v6_daddr.in6_u.u6_addr8, 16);
 			tx_info->ip_family = AF_INET6;
-		}
-#endif
-	}
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
 	/* get the l2t index */
 	dst = sk_dst_get(sk);
-	if (!dst) {
+	अगर (!dst) अणु
 		pr_err("DST entry not found\n");
-		goto free_tx_info;
-	}
+		जाओ मुक्त_tx_info;
+	पूर्ण
 	n = dst_neigh_lookup(dst, daaddr);
-	if (!n || !n->dev) {
+	अगर (!n || !n->dev) अणु
 		pr_err("neighbour not found\n");
 		dst_release(dst);
-		goto free_tx_info;
-	}
+		जाओ मुक्त_tx_info;
+	पूर्ण
 	tx_info->l2te  = cxgb4_l2t_get(adap->l2t, n, n->dev, 0);
 
 	neigh_release(n);
 	dst_release(dst);
 
-	if (!tx_info->l2te) {
+	अगर (!tx_info->l2te) अणु
 		pr_err("l2t entry not found\n");
-		goto free_tx_info;
-	}
+		जाओ मुक्त_tx_info;
+	पूर्ण
 
-	/* Driver shouldn't be removed until any single connection exists */
-	if (!try_module_get(THIS_MODULE))
-		goto free_l2t;
+	/* Driver shouldn't be हटाओd until any single connection exists */
+	अगर (!try_module_get(THIS_MODULE))
+		जाओ मुक्त_l2t;
 
 	init_completion(&tx_info->completion);
 	/* create a filter and call cxgb4_l2t_send to send the packet out, which
-	 * will take care of updating l2t entry in hw if not already done.
+	 * will take care of updating l2t entry in hw अगर not alपढ़ोy करोne.
 	 */
-	tx_info->open_state = CH_KTLS_OPEN_PENDING;
+	tx_info->खोलो_state = CH_KTLS_OPEN_PENDING;
 
-	if (chcr_setup_connection(sk, tx_info))
-		goto put_module;
+	अगर (chcr_setup_connection(sk, tx_info))
+		जाओ put_module;
 
-	/* Wait for reply */
-	wait_for_completion_timeout(&tx_info->completion, 30 * HZ);
+	/* Wait क्रम reply */
+	रुको_क्रम_completion_समयout(&tx_info->completion, 30 * HZ);
 	spin_lock_bh(&tx_info->lock);
-	if (tx_info->open_state) {
-		/* need to wait for hw response, can't free tx_info yet. */
-		if (tx_info->open_state == CH_KTLS_OPEN_PENDING)
-			tx_info->pending_close = true;
-		else
+	अगर (tx_info->खोलो_state) अणु
+		/* need to रुको क्रम hw response, can't मुक्त tx_info yet. */
+		अगर (tx_info->खोलो_state == CH_KTLS_OPEN_PENDING)
+			tx_info->pending_बंद = true;
+		अन्यथा
 			spin_unlock_bh(&tx_info->lock);
-		/* if in pending close, free the lock after the cleanup */
-		goto put_module;
-	}
+		/* अगर in pending बंद, मुक्त the lock after the cleanup */
+		जाओ put_module;
+	पूर्ण
 	spin_unlock_bh(&tx_info->lock);
 
 	/* initialize tcb */
 	reinit_completion(&tx_info->completion);
-	/* mark it pending for hw response */
-	tx_info->open_state = CH_KTLS_OPEN_PENDING;
+	/* mark it pending क्रम hw response */
+	tx_info->खोलो_state = CH_KTLS_OPEN_PENDING;
 
-	if (chcr_init_tcb_fields(tx_info))
-		goto free_tid;
+	अगर (chcr_init_tcb_fields(tx_info))
+		जाओ मुक्त_tid;
 
-	/* Wait for reply */
-	wait_for_completion_timeout(&tx_info->completion, 30 * HZ);
+	/* Wait क्रम reply */
+	रुको_क्रम_completion_समयout(&tx_info->completion, 30 * HZ);
 	spin_lock_bh(&tx_info->lock);
-	if (tx_info->open_state) {
-		/* need to wait for hw response, can't free tx_info yet. */
-		tx_info->pending_close = true;
-		/* free the lock after cleanup */
-		goto free_tid;
-	}
+	अगर (tx_info->खोलो_state) अणु
+		/* need to रुको क्रम hw response, can't मुक्त tx_info yet. */
+		tx_info->pending_बंद = true;
+		/* मुक्त the lock after cleanup */
+		जाओ मुक्त_tid;
+	पूर्ण
 	spin_unlock_bh(&tx_info->lock);
 
-	if (!cxgb4_check_l2t_valid(tx_info->l2te))
-		goto free_tid;
+	अगर (!cxgb4_check_l2t_valid(tx_info->l2te))
+		जाओ मुक्त_tid;
 
 	atomic64_inc(&port_stats->ktls_tx_ctx);
 	tx_ctx->chcr_info = tx_info;
 
-	return 0;
+	वापस 0;
 
-free_tid:
-#if IS_ENABLED(CONFIG_IPV6)
+मुक्त_tid:
+#अगर IS_ENABLED(CONFIG_IPV6)
 	/* clear clip entry */
-	if (tx_info->ip_family == AF_INET6)
-		cxgb4_clip_release(netdev, (const u32 *)
+	अगर (tx_info->ip_family == AF_INET6)
+		cxgb4_clip_release(netdev, (स्थिर u32 *)
 				   &sk->sk_v6_rcv_saddr,
 				   1);
-#endif
-	cxgb4_remove_tid(&tx_info->adap->tids, tx_info->tx_chan,
+#पूर्ण_अगर
+	cxgb4_हटाओ_tid(&tx_info->adap->tids, tx_info->tx_chan,
 			 tx_info->tid, tx_info->ip_family);
 
 	xa_erase(&u_ctx->tid_list, tx_info->tid);
@@ -586,73 +587,73 @@ free_tid:
 put_module:
 	/* release module refcount */
 	module_put(THIS_MODULE);
-free_l2t:
+मुक्त_l2t:
 	cxgb4_l2t_release(tx_info->l2te);
-free_tx_info:
-	if (tx_info->pending_close)
+मुक्त_tx_info:
+	अगर (tx_info->pending_बंद)
 		spin_unlock_bh(&tx_info->lock);
-	else
-		kvfree(tx_info);
+	अन्यथा
+		kvमुक्त(tx_info);
 out:
 	atomic64_inc(&port_stats->ktls_tx_connection_fail);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
  * chcr_init_tcb_fields:  Initialize tcb fields to handle TCP seq number
  *			  handling.
- * @tx_info - driver specific tls info.
- * return: NET_TX_OK/NET_XMIT_DROP
+ * @tx_info - driver specअगरic tls info.
+ * वापस: NET_TX_OK/NET_XMIT_DROP
  */
-static int chcr_init_tcb_fields(struct chcr_ktls_info *tx_info)
-{
-	int  ret = 0;
+अटल पूर्णांक chcr_init_tcb_fields(काष्ठा chcr_ktls_info *tx_info)
+अणु
+	पूर्णांक  ret = 0;
 
 	/* set tcb in offload and bypass */
 	ret =
 	chcr_set_tcb_field(tx_info, TCB_T_FLAGS_W,
 			   TCB_T_FLAGS_V(TF_CORE_BYPASS_F | TF_NON_OFFLOAD_F),
 			   TCB_T_FLAGS_V(TF_CORE_BYPASS_F), 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	/* reset snd_una and snd_next fields in tcb */
 	ret = chcr_set_tcb_field(tx_info, TCB_SND_UNA_RAW_W,
 				 TCB_SND_NXT_RAW_V(TCB_SND_NXT_RAW_M) |
 				 TCB_SND_UNA_RAW_V(TCB_SND_UNA_RAW_M),
 				 0, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* reset send max */
 	ret = chcr_set_tcb_field(tx_info, TCB_SND_MAX_RAW_W,
 				 TCB_SND_MAX_RAW_V(TCB_SND_MAX_RAW_M),
 				 0, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* update l2t index and request for tp reply to confirm tcb is
+	/* update l2t index and request क्रम tp reply to confirm tcb is
 	 * initialised to handle tx traffic.
 	 */
 	ret = chcr_set_tcb_field(tx_info, TCB_L2T_IX_W,
 				 TCB_L2T_IX_V(TCB_L2T_IX_M),
 				 TCB_L2T_IX_V(tx_info->l2te->idx), 0);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * chcr_ktls_cpl_act_open_rpl: connection reply received from TP.
+ * chcr_ktls_cpl_act_खोलो_rpl: connection reply received from TP.
  */
-static int chcr_ktls_cpl_act_open_rpl(struct adapter *adap,
-				      unsigned char *input)
-{
-	const struct cpl_act_open_rpl *p = (void *)input;
-	struct chcr_ktls_info *tx_info = NULL;
-	struct chcr_ktls_ofld_ctx_tx *tx_ctx;
-	struct chcr_ktls_uld_ctx *u_ctx;
-	unsigned int atid, tid, status;
-	struct tls_context *tls_ctx;
-	struct tid_info *t;
-	int ret = 0;
+अटल पूर्णांक chcr_ktls_cpl_act_खोलो_rpl(काष्ठा adapter *adap,
+				      अचिन्हित अक्षर *input)
+अणु
+	स्थिर काष्ठा cpl_act_खोलो_rpl *p = (व्योम *)input;
+	काष्ठा chcr_ktls_info *tx_info = शून्य;
+	काष्ठा chcr_ktls_ofld_ctx_tx *tx_ctx;
+	काष्ठा chcr_ktls_uld_ctx *u_ctx;
+	अचिन्हित पूर्णांक atid, tid, status;
+	काष्ठा tls_context *tls_ctx;
+	काष्ठा tid_info *t;
+	पूर्णांक ret = 0;
 
 	tid = GET_TID(p);
 	status = AOPEN_STATUS_G(ntohl(p->atid_status));
@@ -661,62 +662,62 @@ static int chcr_ktls_cpl_act_open_rpl(struct adapter *adap,
 	t = &adap->tids;
 	tx_info = lookup_atid(t, atid);
 
-	if (!tx_info || tx_info->atid != atid) {
+	अगर (!tx_info || tx_info->atid != atid) अणु
 		pr_err("%s: incorrect tx_info or atid\n", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	cxgb4_free_atid(t, atid);
+	cxgb4_मुक्त_atid(t, atid);
 	tx_info->atid = -1;
 
 	spin_lock(&tx_info->lock);
-	/* HW response is very close, finish pending cleanup */
-	if (tx_info->pending_close) {
+	/* HW response is very बंद, finish pending cleanup */
+	अगर (tx_info->pending_बंद) अणु
 		spin_unlock(&tx_info->lock);
-		if (!status) {
-			cxgb4_remove_tid(&tx_info->adap->tids, tx_info->tx_chan,
+		अगर (!status) अणु
+			cxgb4_हटाओ_tid(&tx_info->adap->tids, tx_info->tx_chan,
 					 tid, tx_info->ip_family);
-		}
-		kvfree(tx_info);
-		return 0;
-	}
+		पूर्ण
+		kvमुक्त(tx_info);
+		वापस 0;
+	पूर्ण
 
-	if (!status) {
+	अगर (!status) अणु
 		tx_info->tid = tid;
 		cxgb4_insert_tid(t, tx_info, tx_info->tid, tx_info->ip_family);
 		/* Adding tid */
 		tls_ctx = tls_get_ctx(tx_info->sk);
 		tx_ctx = chcr_get_ktls_tx_context(tls_ctx);
 		u_ctx = adap->uld[CXGB4_ULD_KTLS].handle;
-		if (u_ctx) {
+		अगर (u_ctx) अणु
 			ret = xa_insert_bh(&u_ctx->tid_list, tid, tx_ctx,
 					   GFP_NOWAIT);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				pr_err("%s: Failed to allocate tid XA entry = %d\n",
 				       __func__, tx_info->tid);
-				tx_info->open_state = CH_KTLS_OPEN_FAILURE;
-				goto out;
-			}
-		}
-		tx_info->open_state = CH_KTLS_OPEN_SUCCESS;
-	} else {
-		tx_info->open_state = CH_KTLS_OPEN_FAILURE;
-	}
+				tx_info->खोलो_state = CH_KTLS_OPEN_FAILURE;
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		tx_info->खोलो_state = CH_KTLS_OPEN_SUCCESS;
+	पूर्ण अन्यथा अणु
+		tx_info->खोलो_state = CH_KTLS_OPEN_FAILURE;
+	पूर्ण
 out:
 	spin_unlock(&tx_info->lock);
 
 	complete(&tx_info->completion);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * chcr_ktls_cpl_set_tcb_rpl: TCB reply received from TP.
  */
-static int chcr_ktls_cpl_set_tcb_rpl(struct adapter *adap, unsigned char *input)
-{
-	const struct cpl_set_tcb_rpl *p = (void *)input;
-	struct chcr_ktls_info *tx_info = NULL;
-	struct tid_info *t;
+अटल पूर्णांक chcr_ktls_cpl_set_tcb_rpl(काष्ठा adapter *adap, अचिन्हित अक्षर *input)
+अणु
+	स्थिर काष्ठा cpl_set_tcb_rpl *p = (व्योम *)input;
+	काष्ठा chcr_ktls_info *tx_info = शून्य;
+	काष्ठा tid_info *t;
 	u32 tid;
 
 	tid = GET_TID(p);
@@ -724,32 +725,32 @@ static int chcr_ktls_cpl_set_tcb_rpl(struct adapter *adap, unsigned char *input)
 	t = &adap->tids;
 	tx_info = lookup_tid(t, tid);
 
-	if (!tx_info || tx_info->tid != tid) {
+	अगर (!tx_info || tx_info->tid != tid) अणु
 		pr_err("%s: incorrect tx_info or tid\n", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	spin_lock(&tx_info->lock);
-	if (tx_info->pending_close) {
+	अगर (tx_info->pending_बंद) अणु
 		spin_unlock(&tx_info->lock);
-		kvfree(tx_info);
-		return 0;
-	}
-	tx_info->open_state = CH_KTLS_OPEN_SUCCESS;
+		kvमुक्त(tx_info);
+		वापस 0;
+	पूर्ण
+	tx_info->खोलो_state = CH_KTLS_OPEN_SUCCESS;
 	spin_unlock(&tx_info->lock);
 
 	complete(&tx_info->completion);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *__chcr_write_cpl_set_tcb_ulp(struct chcr_ktls_info *tx_info,
-					u32 tid, void *pos, u16 word,
-					struct sge_eth_txq *q, u64 mask,
+अटल व्योम *__chcr_ग_लिखो_cpl_set_tcb_ulp(काष्ठा chcr_ktls_info *tx_info,
+					u32 tid, व्योम *pos, u16 word,
+					काष्ठा sge_eth_txq *q, u64 mask,
 					u64 val, u32 reply)
-{
-	struct cpl_set_tcb_field_core *cpl;
-	struct ulptx_idata *idata;
-	struct ulp_txpkt *txpkt;
+अणु
+	काष्ठा cpl_set_tcb_field_core *cpl;
+	काष्ठा ulptx_idata *idata;
+	काष्ठा ulp_txpkt *txpkt;
 
 	/* ULP_TXPKT */
 	txpkt = pos;
@@ -760,9 +761,9 @@ static void *__chcr_write_cpl_set_tcb_ulp(struct chcr_ktls_info *tx_info,
 	txpkt->len = htonl(DIV_ROUND_UP(CHCR_SET_TCB_FIELD_LEN, 16));
 
 	/* ULPTX_IDATA sub-command */
-	idata = (struct ulptx_idata *)(txpkt + 1);
+	idata = (काष्ठा ulptx_idata *)(txpkt + 1);
 	idata->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_IMM));
-	idata->len = htonl(sizeof(*cpl));
+	idata->len = htonl(माप(*cpl));
 	pos = idata + 1;
 
 	cpl = pos;
@@ -775,145 +776,145 @@ static void *__chcr_write_cpl_set_tcb_ulp(struct chcr_ktls_info *tx_info,
 	cpl->val = cpu_to_be64(val);
 
 	/* ULPTX_NOOP */
-	idata = (struct ulptx_idata *)(cpl + 1);
+	idata = (काष्ठा ulptx_idata *)(cpl + 1);
 	idata->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_NOOP));
 	idata->len = htonl(0);
 	pos = idata + 1;
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
 
 /*
- * chcr_write_cpl_set_tcb_ulp: update tcb values.
+ * chcr_ग_लिखो_cpl_set_tcb_ulp: update tcb values.
  * TCB is responsible to create tcp headers, so all the related values
  * should be correctly updated.
- * @tx_info - driver specific tls info.
+ * @tx_info - driver specअगरic tls info.
  * @q - tx queue on which packet is going out.
- * @tid - TCB identifier.
+ * @tid - TCB identअगरier.
  * @pos - current index where should we start writing.
  * @word - TCB word.
  * @mask - TCB word related mask.
  * @val - TCB word related value.
- * @reply - set 1 if looking for TP response.
- * return - next position to write.
+ * @reply - set 1 अगर looking क्रम TP response.
+ * वापस - next position to ग_लिखो.
  */
-static void *chcr_write_cpl_set_tcb_ulp(struct chcr_ktls_info *tx_info,
-					struct sge_eth_txq *q, u32 tid,
-					void *pos, u16 word, u64 mask,
+अटल व्योम *chcr_ग_लिखो_cpl_set_tcb_ulp(काष्ठा chcr_ktls_info *tx_info,
+					काष्ठा sge_eth_txq *q, u32 tid,
+					व्योम *pos, u16 word, u64 mask,
 					u64 val, u32 reply)
-{
-	int left = (void *)q->q.stat - pos;
+अणु
+	पूर्णांक left = (व्योम *)q->q.stat - pos;
 
-	if (unlikely(left < CHCR_SET_TCB_FIELD_LEN)) {
-		if (!left) {
+	अगर (unlikely(left < CHCR_SET_TCB_FIELD_LEN)) अणु
+		अगर (!left) अणु
 			pos = q->q.desc;
-		} else {
-			u8 buf[48] = {0};
+		पूर्ण अन्यथा अणु
+			u8 buf[48] = अणु0पूर्ण;
 
-			__chcr_write_cpl_set_tcb_ulp(tx_info, tid, buf, word, q,
+			__chcr_ग_लिखो_cpl_set_tcb_ulp(tx_info, tid, buf, word, q,
 						     mask, val, reply);
 
-			return chcr_copy_to_txd(buf, &q->q, pos,
+			वापस chcr_copy_to_txd(buf, &q->q, pos,
 						CHCR_SET_TCB_FIELD_LEN);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	pos = __chcr_write_cpl_set_tcb_ulp(tx_info, tid, pos, word, q,
+	pos = __chcr_ग_लिखो_cpl_set_tcb_ulp(tx_info, tid, pos, word, q,
 					   mask, val, reply);
 
-	/* check again if we are at the end of the queue */
-	if (left == CHCR_SET_TCB_FIELD_LEN)
+	/* check again अगर we are at the end of the queue */
+	अगर (left == CHCR_SET_TCB_FIELD_LEN)
 		pos = q->q.desc;
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
 /*
  * chcr_ktls_xmit_tcb_cpls: update tcb entry so that TP will create the header
- * with updated values like tcp seq, ack, window etc.
- * @tx_info - driver specific tls info.
+ * with updated values like tcp seq, ack, winकरोw etc.
+ * @tx_info - driver specअगरic tls info.
  * @q - TX queue.
  * @tcp_seq
  * @tcp_ack
  * @tcp_win
- * return: NETDEV_TX_BUSY/NET_TX_OK.
+ * वापस: NETDEV_TX_BUSY/NET_TX_OK.
  */
-static int chcr_ktls_xmit_tcb_cpls(struct chcr_ktls_info *tx_info,
-				   struct sge_eth_txq *q, u64 tcp_seq,
+अटल पूर्णांक chcr_ktls_xmit_tcb_cpls(काष्ठा chcr_ktls_info *tx_info,
+				   काष्ठा sge_eth_txq *q, u64 tcp_seq,
 				   u64 tcp_ack, u64 tcp_win, bool offset)
-{
+अणु
 	bool first_wr = ((tx_info->prev_ack == 0) && (tx_info->prev_win == 0));
-	struct ch_ktls_port_stats_debug *port_stats;
+	काष्ठा ch_ktls_port_stats_debug *port_stats;
 	u32 len, cpl = 0, ndesc, wr_len, wr_mid = 0;
-	struct fw_ulptx_wr *wr;
-	int credits;
-	void *pos;
+	काष्ठा fw_ulptx_wr *wr;
+	पूर्णांक credits;
+	व्योम *pos;
 
-	wr_len = sizeof(*wr);
-	/* there can be max 4 cpls, check if we have enough credits */
+	wr_len = माप(*wr);
+	/* there can be max 4 cpls, check अगर we have enough credits */
 	len = wr_len + 4 * roundup(CHCR_SET_TCB_FIELD_LEN, 16);
 	ndesc = DIV_ROUND_UP(len, 64);
 
 	credits = chcr_txq_avail(&q->q) - ndesc;
-	if (unlikely(credits < 0)) {
+	अगर (unlikely(credits < 0)) अणु
 		chcr_eth_txq_stop(q);
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (unlikely(credits < ETHTXQ_STOP_THRES)) {
+	अगर (unlikely(credits < ETHTXQ_STOP_THRES)) अणु
 		chcr_eth_txq_stop(q);
 		wr_mid |= FW_WR_EQUEQ_F | FW_WR_EQUIQ_F;
-	}
+	पूर्ण
 
 	pos = &q->q.desc[q->q.pidx];
-	/* make space for WR, we'll fill it later when we know all the cpls
+	/* make space क्रम WR, we'll fill it later when we know all the cpls
 	 * being sent out and have complete length.
 	 */
 	wr = pos;
 	pos += wr_len;
-	/* update tx_max if its a re-transmit or the first wr */
-	if (first_wr || tcp_seq != tx_info->prev_seq) {
-		pos = chcr_write_cpl_set_tcb_ulp(tx_info, q, tx_info->tid, pos,
+	/* update tx_max अगर its a re-transmit or the first wr */
+	अगर (first_wr || tcp_seq != tx_info->prev_seq) अणु
+		pos = chcr_ग_लिखो_cpl_set_tcb_ulp(tx_info, q, tx_info->tid, pos,
 						 TCB_TX_MAX_W,
 						 TCB_TX_MAX_V(TCB_TX_MAX_M),
 						 TCB_TX_MAX_V(tcp_seq), 0);
 		cpl++;
-	}
-	/* reset snd una if it's a re-transmit pkt */
-	if (tcp_seq != tx_info->prev_seq || offset) {
+	पूर्ण
+	/* reset snd una अगर it's a re-transmit pkt */
+	अगर (tcp_seq != tx_info->prev_seq || offset) अणु
 		/* reset snd_una */
 		port_stats =
 			&tx_info->adap->ch_ktls_stats.ktls_port[tx_info->port_id];
-		pos = chcr_write_cpl_set_tcb_ulp(tx_info, q, tx_info->tid, pos,
+		pos = chcr_ग_लिखो_cpl_set_tcb_ulp(tx_info, q, tx_info->tid, pos,
 						 TCB_SND_UNA_RAW_W,
 						 TCB_SND_UNA_RAW_V
 						 (TCB_SND_UNA_RAW_M),
 						 TCB_SND_UNA_RAW_V(0), 0);
-		if (tcp_seq != tx_info->prev_seq)
+		अगर (tcp_seq != tx_info->prev_seq)
 			atomic64_inc(&port_stats->ktls_tx_ooo);
 		cpl++;
-	}
+	पूर्ण
 	/* update ack */
-	if (first_wr || tx_info->prev_ack != tcp_ack) {
-		pos = chcr_write_cpl_set_tcb_ulp(tx_info, q, tx_info->tid, pos,
+	अगर (first_wr || tx_info->prev_ack != tcp_ack) अणु
+		pos = chcr_ग_लिखो_cpl_set_tcb_ulp(tx_info, q, tx_info->tid, pos,
 						 TCB_RCV_NXT_W,
 						 TCB_RCV_NXT_V(TCB_RCV_NXT_M),
 						 TCB_RCV_NXT_V(tcp_ack), 0);
 		tx_info->prev_ack = tcp_ack;
 		cpl++;
-	}
-	/* update receive window */
-	if (first_wr || tx_info->prev_win != tcp_win) {
-		chcr_write_cpl_set_tcb_ulp(tx_info, q, tx_info->tid, pos,
+	पूर्ण
+	/* update receive winकरोw */
+	अगर (first_wr || tx_info->prev_win != tcp_win) अणु
+		chcr_ग_लिखो_cpl_set_tcb_ulp(tx_info, q, tx_info->tid, pos,
 					   TCB_RCV_WND_W,
 					   TCB_RCV_WND_V(TCB_RCV_WND_M),
 					   TCB_RCV_WND_V(tcp_win), 0);
 		tx_info->prev_win = tcp_win;
 		cpl++;
-	}
+	पूर्ण
 
-	if (cpl) {
+	अगर (cpl) अणु
 		/* get the actual length */
 		len = wr_len + cpl * roundup(CHCR_SET_TCB_FIELD_LEN, 16);
 		/* ULPTX wr */
@@ -926,85 +927,85 @@ static int chcr_ktls_xmit_tcb_cpls(struct chcr_ktls_info *tx_info,
 		ndesc = DIV_ROUND_UP(len, 64);
 		chcr_txq_advance(&q->q, ndesc);
 		cxgb4_ring_tx_db(tx_info->adap, &q->q, ndesc);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * chcr_ktls_get_tx_flits
- * returns number of flits to be sent out, it includes key context length, WR
+ * वापसs number of flits to be sent out, it includes key context length, WR
  * size and skb fragments.
  */
-static unsigned int
-chcr_ktls_get_tx_flits(u32 nr_frags, unsigned int key_ctx_len)
-{
-	return chcr_sgl_len(nr_frags) +
+अटल अचिन्हित पूर्णांक
+chcr_ktls_get_tx_flits(u32 nr_frags, अचिन्हित पूर्णांक key_ctx_len)
+अणु
+	वापस chcr_sgl_len(nr_frags) +
 	       DIV_ROUND_UP(key_ctx_len + CHCR_KTLS_WR_SIZE, 8);
-}
+पूर्ण
 
 /*
- * chcr_ktls_check_tcp_options: To check if there is any TCP option available
- * other than timestamp.
+ * chcr_ktls_check_tcp_options: To check अगर there is any TCP option available
+ * other than बारtamp.
  * @skb - skb contains partial record..
- * return: 1 / 0
+ * वापस: 1 / 0
  */
-static int
-chcr_ktls_check_tcp_options(struct tcphdr *tcp)
-{
-	int cnt, opt, optlen;
-	u_char *cp;
+अटल पूर्णांक
+chcr_ktls_check_tcp_options(काष्ठा tcphdr *tcp)
+अणु
+	पूर्णांक cnt, opt, optlen;
+	u_अक्षर *cp;
 
-	cp = (u_char *)(tcp + 1);
-	cnt = (tcp->doff << 2) - sizeof(struct tcphdr);
-	for (; cnt > 0; cnt -= optlen, cp += optlen) {
+	cp = (u_अक्षर *)(tcp + 1);
+	cnt = (tcp->करोff << 2) - माप(काष्ठा tcphdr);
+	क्रम (; cnt > 0; cnt -= optlen, cp += optlen) अणु
 		opt = cp[0];
-		if (opt == TCPOPT_EOL)
-			break;
-		if (opt == TCPOPT_NOP) {
+		अगर (opt == TCPOPT_EOL)
+			अवरोध;
+		अगर (opt == TCPOPT_NOP) अणु
 			optlen = 1;
-		} else {
-			if (cnt < 2)
-				break;
+		पूर्ण अन्यथा अणु
+			अगर (cnt < 2)
+				अवरोध;
 			optlen = cp[1];
-			if (optlen < 2 || optlen > cnt)
-				break;
-		}
-		switch (opt) {
-		case TCPOPT_NOP:
-			break;
-		default:
-			return 1;
-		}
-	}
-	return 0;
-}
+			अगर (optlen < 2 || optlen > cnt)
+				अवरोध;
+		पूर्ण
+		चयन (opt) अणु
+		हाल TCPOPT_NOP:
+			अवरोध;
+		शेष:
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * chcr_ktls_write_tcp_options : TP can't send out all the options, we need to
+ * chcr_ktls_ग_लिखो_tcp_options : TP can't send out all the options, we need to
  * send out separately.
- * @tx_info - driver specific tls info.
+ * @tx_info - driver specअगरic tls info.
  * @skb - skb contains partial record..
  * @q - TX queue.
  * @tx_chan - channel number.
- * return: NETDEV_TX_OK/NETDEV_TX_BUSY.
+ * वापस: NETDEV_TX_OK/NETDEV_TX_BUSY.
  */
-static int
-chcr_ktls_write_tcp_options(struct chcr_ktls_info *tx_info, struct sk_buff *skb,
-			    struct sge_eth_txq *q, uint32_t tx_chan)
-{
-	struct fw_eth_tx_pkt_wr *wr;
-	struct cpl_tx_pkt_core *cpl;
+अटल पूर्णांक
+chcr_ktls_ग_लिखो_tcp_options(काष्ठा chcr_ktls_info *tx_info, काष्ठा sk_buff *skb,
+			    काष्ठा sge_eth_txq *q, uपूर्णांक32_t tx_chan)
+अणु
+	काष्ठा fw_eth_tx_pkt_wr *wr;
+	काष्ठा cpl_tx_pkt_core *cpl;
 	u32 ctrl, iplen, maclen;
-	struct ipv6hdr *ip6;
-	unsigned int ndesc;
-	struct tcphdr *tcp;
-	int len16, pktlen;
-	struct iphdr *ip;
+	काष्ठा ipv6hdr *ip6;
+	अचिन्हित पूर्णांक ndesc;
+	काष्ठा tcphdr *tcp;
+	पूर्णांक len16, pktlen;
+	काष्ठा iphdr *ip;
 	u32 wr_mid = 0;
-	int credits;
+	पूर्णांक credits;
 	u8 buf[150];
 	u64 cntrl1;
-	void *pos;
+	व्योम *pos;
 
 	iplen = skb_network_header_len(skb);
 	maclen = skb_mac_header_len(skb);
@@ -1014,21 +1015,21 @@ chcr_ktls_write_tcp_options(struct chcr_ktls_info *tx_info, struct sk_buff *skb,
 	 */
 	pktlen = skb_transport_offset(skb) + tcp_hdrlen(skb);
 
-	ctrl = sizeof(*cpl) + pktlen;
-	len16 = DIV_ROUND_UP(sizeof(*wr) + ctrl, 16);
+	ctrl = माप(*cpl) + pktlen;
+	len16 = DIV_ROUND_UP(माप(*wr) + ctrl, 16);
 	/* check how many descriptors needed */
 	ndesc = DIV_ROUND_UP(len16, 4);
 
 	credits = chcr_txq_avail(&q->q) - ndesc;
-	if (unlikely(credits < 0)) {
+	अगर (unlikely(credits < 0)) अणु
 		chcr_eth_txq_stop(q);
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (unlikely(credits < ETHTXQ_STOP_THRES)) {
+	अगर (unlikely(credits < ETHTXQ_STOP_THRES)) अणु
 		chcr_eth_txq_stop(q);
 		wr_mid |= FW_WR_EQUEQ_F | FW_WR_EQUIQ_F;
-	}
+	पूर्ण
 
 	pos = &q->q.desc[q->q.pidx];
 	wr = pos;
@@ -1040,7 +1041,7 @@ chcr_ktls_write_tcp_options(struct chcr_ktls_info *tx_info, struct sk_buff *skb,
 	wr->equiq_to_len16 = htonl(wr_mid | FW_WR_LEN16_V(len16));
 	wr->r3 = 0;
 
-	cpl = (void *)(wr + 1);
+	cpl = (व्योम *)(wr + 1);
 
 	/* CPL header */
 	cpl->ctrl0 = htonl(TXPKT_OPCODE_V(CPL_TX_PKT) | TXPKT_INTF_V(tx_chan) |
@@ -1048,17 +1049,17 @@ chcr_ktls_write_tcp_options(struct chcr_ktls_info *tx_info, struct sk_buff *skb,
 	cpl->pack = 0;
 	cpl->len = htons(pktlen);
 
-	memcpy(buf, skb->data, pktlen);
-	if (!IS_ENABLED(CONFIG_IPV6) || tx_info->ip_family == AF_INET) {
+	स_नकल(buf, skb->data, pktlen);
+	अगर (!IS_ENABLED(CONFIG_IPV6) || tx_info->ip_family == AF_INET) अणु
 		/* we need to correct ip header len */
-		ip = (struct iphdr *)(buf + maclen);
+		ip = (काष्ठा iphdr *)(buf + maclen);
 		ip->tot_len = htons(pktlen - maclen);
 		cntrl1 = TXPKT_CSUM_TYPE_V(TX_CSUM_TCPIP);
-	} else {
-		ip6 = (struct ipv6hdr *)(buf + maclen);
+	पूर्ण अन्यथा अणु
+		ip6 = (काष्ठा ipv6hdr *)(buf + maclen);
 		ip6->payload_len = htons(pktlen - maclen - iplen);
 		cntrl1 = TXPKT_CSUM_TYPE_V(TX_CSUM_TCPIP6);
-	}
+	पूर्ण
 
 	cntrl1 |= T6_TXPKT_ETHHDR_LEN_V(maclen - ETH_HLEN) |
 		  TXPKT_IPHDR_LEN_V(iplen);
@@ -1067,86 +1068,86 @@ chcr_ktls_write_tcp_options(struct chcr_ktls_info *tx_info, struct sk_buff *skb,
 
 	pos = cpl + 1;
 
-	/* now take care of the tcp header, if fin is not set then clear push
-	 * bit as well, and if fin is set, it will be sent at the last so we
+	/* now take care of the tcp header, अगर fin is not set then clear push
+	 * bit as well, and अगर fin is set, it will be sent at the last so we
 	 * need to update the tcp sequence number as per the last packet.
 	 */
-	tcp = (struct tcphdr *)(buf + maclen + iplen);
+	tcp = (काष्ठा tcphdr *)(buf + maclen + iplen);
 
-	if (!tcp->fin)
+	अगर (!tcp->fin)
 		tcp->psh = 0;
-	else
+	अन्यथा
 		tcp->seq = htonl(tx_info->prev_seq);
 
 	chcr_copy_to_txd(buf, &q->q, pos, pktlen);
 
 	chcr_txq_advance(&q->q, ndesc);
 	cxgb4_ring_tx_db(tx_info->adap, &q->q, ndesc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * chcr_ktls_xmit_wr_complete: This sends out the complete record. If an skb
  * received has partial end part of the record, send out the complete record, so
  * that crypto block will be able to generate TAG/HASH.
  * @skb - segment which has complete or partial end part.
- * @tx_info - driver specific tls info.
+ * @tx_info - driver specअगरic tls info.
  * @q - TX queue.
  * @tcp_seq
  * @tcp_push - tcp push bit.
  * @mss - segment size.
- * return: NETDEV_TX_BUSY/NET_TX_OK.
+ * वापस: NETDEV_TX_BUSY/NET_TX_OK.
  */
-static int chcr_ktls_xmit_wr_complete(struct sk_buff *skb,
-				      struct chcr_ktls_info *tx_info,
-				      struct sge_eth_txq *q, u32 tcp_seq,
+अटल पूर्णांक chcr_ktls_xmit_wr_complete(काष्ठा sk_buff *skb,
+				      काष्ठा chcr_ktls_info *tx_info,
+				      काष्ठा sge_eth_txq *q, u32 tcp_seq,
 				      bool is_last_wr, u32 data_len,
 				      u32 skb_offset, u32 nfrags,
 				      bool tcp_push, u32 mss)
-{
+अणु
 	u32 len16, wr_mid = 0, flits = 0, ndesc, cipher_start;
-	struct adapter *adap = tx_info->adap;
-	int credits, left, last_desc;
-	struct tx_sw_desc *sgl_sdesc;
-	struct cpl_tx_data *tx_data;
-	struct cpl_tx_sec_pdu *cpl;
-	struct ulptx_idata *idata;
-	struct ulp_txpkt *ulptx;
-	struct fw_ulptx_wr *wr;
-	void *pos;
+	काष्ठा adapter *adap = tx_info->adap;
+	पूर्णांक credits, left, last_desc;
+	काष्ठा tx_sw_desc *sgl_sdesc;
+	काष्ठा cpl_tx_data *tx_data;
+	काष्ठा cpl_tx_sec_pdu *cpl;
+	काष्ठा ulptx_idata *idata;
+	काष्ठा ulp_txpkt *ulptx;
+	काष्ठा fw_ulptx_wr *wr;
+	व्योम *pos;
 	u64 *end;
 
 	/* get the number of flits required */
 	flits = chcr_ktls_get_tx_flits(nfrags, tx_info->key_ctx_len);
 	/* number of descriptors */
 	ndesc = chcr_flits_to_desc(flits);
-	/* check if enough credits available */
+	/* check अगर enough credits available */
 	credits = chcr_txq_avail(&q->q) - ndesc;
-	if (unlikely(credits < 0)) {
+	अगर (unlikely(credits < 0)) अणु
 		chcr_eth_txq_stop(q);
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (unlikely(credits < ETHTXQ_STOP_THRES)) {
+	अगर (unlikely(credits < ETHTXQ_STOP_THRES)) अणु
 		/* Credits are below the threshold values, stop the queue after
-		 * injecting the Work Request for this packet.
+		 * injecting the Work Request क्रम this packet.
 		 */
 		chcr_eth_txq_stop(q);
 		wr_mid |= FW_WR_EQUEQ_F | FW_WR_EQUIQ_F;
-	}
+	पूर्ण
 
 	last_desc = q->q.pidx + ndesc - 1;
-	if (last_desc >= q->q.size)
+	अगर (last_desc >= q->q.size)
 		last_desc -= q->q.size;
 	sgl_sdesc = &q->q.sdesc[last_desc];
 
-	if (unlikely(cxgb4_map_skb(adap->pdev_dev, skb, sgl_sdesc->addr) < 0)) {
-		memset(sgl_sdesc->addr, 0, sizeof(sgl_sdesc->addr));
+	अगर (unlikely(cxgb4_map_skb(adap->pdev_dev, skb, sgl_sdesc->addr) < 0)) अणु
+		स_रखो(sgl_sdesc->addr, 0, माप(sgl_sdesc->addr));
 		q->mapping_err++;
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (!is_last_wr)
+	अगर (!is_last_wr)
 		skb_get(skb);
 
 	pos = &q->q.desc[q->q.pidx];
@@ -1158,7 +1159,7 @@ static int chcr_ktls_xmit_wr_complete(struct sk_buff *skb,
 	wr->op_to_compl = htonl(FW_WR_OP_V(FW_ULPTX_WR));
 	wr->flowid_len16 = htonl(wr_mid | FW_WR_LEN16_V(len16));
 	wr->cookie = 0;
-	pos += sizeof(*wr);
+	pos += माप(*wr);
 	/* ULP_TXPKT */
 	ulptx = pos;
 	ulptx->cmd_dest = htonl(ULPTX_CMD_V(ULP_TX_PKT) |
@@ -1167,15 +1168,15 @@ static int chcr_ktls_xmit_wr_complete(struct sk_buff *skb,
 				ULP_TXPKT_RO_F);
 	ulptx->len = htonl(len16 - 1);
 	/* ULPTX_IDATA sub-command */
-	idata = (struct ulptx_idata *)(ulptx + 1);
+	idata = (काष्ठा ulptx_idata *)(ulptx + 1);
 	idata->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_IMM) | ULP_TX_SC_MORE_F);
 	/* idata length will include cpl_tx_sec_pdu + key context size +
 	 * cpl_tx_data header.
 	 */
-	idata->len = htonl(sizeof(*cpl) + tx_info->key_ctx_len +
-			   sizeof(*tx_data));
+	idata->len = htonl(माप(*cpl) + tx_info->key_ctx_len +
+			   माप(*tx_data));
 	/* SEC CPL */
-	cpl = (struct cpl_tx_sec_pdu *)(idata + 1);
+	cpl = (काष्ठा cpl_tx_sec_pdu *)(idata + 1);
 	cpl->op_ivinsrtofst =
 		htonl(CPL_TX_SEC_PDU_OPCODE_V(CPL_TX_SEC_PDU) |
 		      CPL_TX_SEC_PDU_CPLLEN_V(CHCR_CPL_TX_SEC_PDU_LEN_64BIT) |
@@ -1203,47 +1204,47 @@ static int chcr_ktls_xmit_wr_complete(struct sk_buff *skb,
 	cpl->scmd1 = cpu_to_be64(tx_info->record_no);
 
 	pos = cpl + 1;
-	/* check if space left to fill the keys */
-	left = (void *)q->q.stat - pos;
-	if (!left) {
-		left = (void *)end - (void *)q->q.stat;
+	/* check अगर space left to fill the keys */
+	left = (व्योम *)q->q.stat - pos;
+	अगर (!left) अणु
+		left = (व्योम *)end - (व्योम *)q->q.stat;
 		pos = q->q.desc;
 		end = pos + left;
-	}
+	पूर्ण
 
 	pos = chcr_copy_to_txd(&tx_info->key_ctx, &q->q, pos,
 			       tx_info->key_ctx_len);
-	left = (void *)q->q.stat - pos;
+	left = (व्योम *)q->q.stat - pos;
 
-	if (!left) {
-		left = (void *)end - (void *)q->q.stat;
+	अगर (!left) अणु
+		left = (व्योम *)end - (व्योम *)q->q.stat;
 		pos = q->q.desc;
 		end = pos + left;
-	}
+	पूर्ण
 	/* CPL_TX_DATA */
-	tx_data = (void *)pos;
+	tx_data = (व्योम *)pos;
 	OPCODE_TID(tx_data) = htonl(MK_OPCODE_TID(CPL_TX_DATA, tx_info->tid));
 	tx_data->len = htonl(TX_DATA_MSS_V(mss) | TX_LENGTH_V(data_len));
 
 	tx_data->rsvd = htonl(tcp_seq);
 
 	tx_data->flags = htonl(TX_BYPASS_F);
-	if (tcp_push)
+	अगर (tcp_push)
 		tx_data->flags |= htonl(TX_PUSH_F | TX_SHOVE_F);
 
 	/* check left again, it might go beyond queue limit */
 	pos = tx_data + 1;
-	left = (void *)q->q.stat - pos;
+	left = (व्योम *)q->q.stat - pos;
 
 	/* check the position again */
-	if (!left) {
-		left = (void *)end - (void *)q->q.stat;
+	अगर (!left) अणु
+		left = (व्योम *)end - (व्योम *)q->q.stat;
 		pos = q->q.desc;
 		end = pos + left;
-	}
+	पूर्ण
 
 	/* send the complete packet except the header */
-	cxgb4_write_partial_sgl(skb, &q->q, pos, end, sgl_sdesc->addr,
+	cxgb4_ग_लिखो_partial_sgl(skb, &q->q, pos, end, sgl_sdesc->addr,
 				skb_offset, data_len);
 	sgl_sdesc->skb = skb;
 
@@ -1251,46 +1252,46 @@ static int chcr_ktls_xmit_wr_complete(struct sk_buff *skb,
 	cxgb4_ring_tx_db(adap, &q->q, ndesc);
 	atomic64_inc(&adap->ch_ktls_stats.ktls_tx_send_records);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * chcr_ktls_xmit_wr_short: This is to send out partial records. If its
+ * chcr_ktls_xmit_wr_लघु: This is to send out partial records. If its
  * a middle part of a record, fetch the prior data to make it 16 byte aligned
  * and then only send it out.
  *
  * @skb - skb contains partial record..
- * @tx_info - driver specific tls info.
+ * @tx_info - driver specअगरic tls info.
  * @q - TX queue.
  * @tcp_seq
  * @tcp_push - tcp push bit.
  * @mss - segment size.
  * @tls_rec_offset - offset from start of the tls record.
- * @perior_data - data before the current segment, required to make this record
+ * @perior_data - data beक्रमe the current segment, required to make this record
  *		  16 byte aligned.
  * @prior_data_len - prior_data length (less than 16)
- * return: NETDEV_TX_BUSY/NET_TX_OK.
+ * वापस: NETDEV_TX_BUSY/NET_TX_OK.
  */
-static int chcr_ktls_xmit_wr_short(struct sk_buff *skb,
-				   struct chcr_ktls_info *tx_info,
-				   struct sge_eth_txq *q,
+अटल पूर्णांक chcr_ktls_xmit_wr_लघु(काष्ठा sk_buff *skb,
+				   काष्ठा chcr_ktls_info *tx_info,
+				   काष्ठा sge_eth_txq *q,
 				   u32 tcp_seq, bool tcp_push, u32 mss,
 				   u32 tls_rec_offset, u8 *prior_data,
 				   u32 prior_data_len, u32 data_len,
 				   u32 skb_offset)
-{
+अणु
 	u32 len16, wr_mid = 0, cipher_start, nfrags;
-	struct adapter *adap = tx_info->adap;
-	unsigned int flits = 0, ndesc;
-	int credits, left, last_desc;
-	struct tx_sw_desc *sgl_sdesc;
-	struct cpl_tx_data *tx_data;
-	struct cpl_tx_sec_pdu *cpl;
-	struct ulptx_idata *idata;
-	struct ulp_txpkt *ulptx;
-	struct fw_ulptx_wr *wr;
+	काष्ठा adapter *adap = tx_info->adap;
+	अचिन्हित पूर्णांक flits = 0, ndesc;
+	पूर्णांक credits, left, last_desc;
+	काष्ठा tx_sw_desc *sgl_sdesc;
+	काष्ठा cpl_tx_data *tx_data;
+	काष्ठा cpl_tx_sec_pdu *cpl;
+	काष्ठा ulptx_idata *idata;
+	काष्ठा ulp_txpkt *ulptx;
+	काष्ठा fw_ulptx_wr *wr;
 	__be64 iv_record;
-	void *pos;
+	व्योम *pos;
 	u64 *end;
 
 	nfrags = chcr_get_nfrags_to_send(skb, skb_offset, data_len);
@@ -1304,32 +1305,32 @@ static int chcr_ktls_xmit_wr_short(struct sk_buff *skb,
 	 * to make it 16 byte aligned. So atleadt 2 extra flits of immediate
 	 * data will be added.
 	 */
-	if (prior_data_len)
+	अगर (prior_data_len)
 		flits += 2;
 	/* number of descriptors */
 	ndesc = chcr_flits_to_desc(flits);
-	/* check if enough credits available */
+	/* check अगर enough credits available */
 	credits = chcr_txq_avail(&q->q) - ndesc;
-	if (unlikely(credits < 0)) {
+	अगर (unlikely(credits < 0)) अणु
 		chcr_eth_txq_stop(q);
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (unlikely(credits < ETHTXQ_STOP_THRES)) {
+	अगर (unlikely(credits < ETHTXQ_STOP_THRES)) अणु
 		chcr_eth_txq_stop(q);
 		wr_mid |= FW_WR_EQUEQ_F | FW_WR_EQUIQ_F;
-	}
+	पूर्ण
 
 	last_desc = q->q.pidx + ndesc - 1;
-	if (last_desc >= q->q.size)
+	अगर (last_desc >= q->q.size)
 		last_desc -= q->q.size;
 	sgl_sdesc = &q->q.sdesc[last_desc];
 
-	if (unlikely(cxgb4_map_skb(adap->pdev_dev, skb, sgl_sdesc->addr) < 0)) {
-		memset(sgl_sdesc->addr, 0, sizeof(sgl_sdesc->addr));
+	अगर (unlikely(cxgb4_map_skb(adap->pdev_dev, skb, sgl_sdesc->addr) < 0)) अणु
+		स_रखो(sgl_sdesc->addr, 0, माप(sgl_sdesc->addr));
 		q->mapping_err++;
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	pos = &q->q.desc[q->q.pidx];
 	end = (u64 *)pos + flits;
@@ -1340,7 +1341,7 @@ static int chcr_ktls_xmit_wr_short(struct sk_buff *skb,
 	wr->op_to_compl = htonl(FW_WR_OP_V(FW_ULPTX_WR));
 	wr->flowid_len16 = htonl(wr_mid | FW_WR_LEN16_V(len16));
 	wr->cookie = 0;
-	pos += sizeof(*wr);
+	pos += माप(*wr);
 	/* ULP_TXPKT */
 	ulptx = pos;
 	ulptx->cmd_dest = htonl(ULPTX_CMD_V(ULP_TX_PKT) |
@@ -1349,17 +1350,17 @@ static int chcr_ktls_xmit_wr_short(struct sk_buff *skb,
 				ULP_TXPKT_RO_F);
 	ulptx->len = htonl(len16 - 1);
 	/* ULPTX_IDATA sub-command */
-	idata = (struct ulptx_idata *)(ulptx + 1);
+	idata = (काष्ठा ulptx_idata *)(ulptx + 1);
 	idata->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_IMM) | ULP_TX_SC_MORE_F);
 	/* idata length will include cpl_tx_sec_pdu + key context size +
 	 * cpl_tx_data header.
 	 */
-	idata->len = htonl(sizeof(*cpl) + tx_info->key_ctx_len +
-			   sizeof(*tx_data) + AES_BLOCK_LEN + prior_data_len);
+	idata->len = htonl(माप(*cpl) + tx_info->key_ctx_len +
+			   माप(*tx_data) + AES_BLOCK_LEN + prior_data_len);
 	/* SEC CPL */
-	cpl = (struct cpl_tx_sec_pdu *)(idata + 1);
-	/* cipher start will have tls header + iv size extra if its a header
-	 * part of tls record. else only 16 byte IV will be added.
+	cpl = (काष्ठा cpl_tx_sec_pdu *)(idata + 1);
+	/* cipher start will have tls header + iv size extra अगर its a header
+	 * part of tls record. अन्यथा only 16 byte IV will be added.
 	 */
 	cipher_start =
 		AES_BLOCK_LEN + 1 +
@@ -1374,112 +1375,112 @@ static int chcr_ktls_xmit_wr_short(struct sk_buff *skb,
 		htonl(CPL_TX_SEC_PDU_CIPHERSTART_V(cipher_start));
 	cpl->cipherstop_lo_authinsert = 0;
 	/* These two flits are actually a CPL_TLS_TX_SCMD_FMT. */
-	cpl->seqno_numivs = htonl(tx_info->scmd0_short_seqno_numivs);
-	cpl->ivgen_hdrlen = htonl(tx_info->scmd0_short_ivgen_hdrlen);
+	cpl->seqno_numivs = htonl(tx_info->scmd0_लघु_seqno_numivs);
+	cpl->ivgen_hdrlen = htonl(tx_info->scmd0_लघु_ivgen_hdrlen);
 	cpl->scmd1 = 0;
 
 	pos = cpl + 1;
-	/* check if space left to fill the keys */
-	left = (void *)q->q.stat - pos;
-	if (!left) {
-		left = (void *)end - (void *)q->q.stat;
+	/* check अगर space left to fill the keys */
+	left = (व्योम *)q->q.stat - pos;
+	अगर (!left) अणु
+		left = (व्योम *)end - (व्योम *)q->q.stat;
 		pos = q->q.desc;
 		end = pos + left;
-	}
+	पूर्ण
 
 	pos = chcr_copy_to_txd(&tx_info->key_ctx, &q->q, pos,
 			       tx_info->key_ctx_len);
-	left = (void *)q->q.stat - pos;
+	left = (व्योम *)q->q.stat - pos;
 
-	if (!left) {
-		left = (void *)end - (void *)q->q.stat;
+	अगर (!left) अणु
+		left = (व्योम *)end - (व्योम *)q->q.stat;
 		pos = q->q.desc;
 		end = pos + left;
-	}
+	पूर्ण
 	/* CPL_TX_DATA */
-	tx_data = (void *)pos;
+	tx_data = (व्योम *)pos;
 	OPCODE_TID(tx_data) = htonl(MK_OPCODE_TID(CPL_TX_DATA, tx_info->tid));
 	tx_data->len = htonl(TX_DATA_MSS_V(mss) |
 			     TX_LENGTH_V(data_len + prior_data_len));
 	tx_data->rsvd = htonl(tcp_seq);
 	tx_data->flags = htonl(TX_BYPASS_F);
-	if (tcp_push)
+	अगर (tcp_push)
 		tx_data->flags |= htonl(TX_PUSH_F | TX_SHOVE_F);
 
 	/* check left again, it might go beyond queue limit */
 	pos = tx_data + 1;
-	left = (void *)q->q.stat - pos;
+	left = (व्योम *)q->q.stat - pos;
 
 	/* check the position again */
-	if (!left) {
-		left = (void *)end - (void *)q->q.stat;
+	अगर (!left) अणु
+		left = (व्योम *)end - (व्योम *)q->q.stat;
 		pos = q->q.desc;
 		end = pos + left;
-	}
-	/* copy the 16 byte IV for AES-CTR, which includes 4 bytes of salt, 8
+	पूर्ण
+	/* copy the 16 byte IV क्रम AES-CTR, which includes 4 bytes of salt, 8
 	 * bytes of actual IV and 4 bytes of 16 byte-sequence.
 	 */
-	memcpy(pos, tx_info->key_ctx.salt, tx_info->salt_size);
-	memcpy(pos + tx_info->salt_size, &iv_record, tx_info->iv_size);
+	स_नकल(pos, tx_info->key_ctx.salt, tx_info->salt_size);
+	स_नकल(pos + tx_info->salt_size, &iv_record, tx_info->iv_size);
 	*(__be32 *)(pos + tx_info->salt_size + tx_info->iv_size) =
 		htonl(2 + (tls_rec_offset ? ((tls_rec_offset -
 		(TLS_HEADER_SIZE + tx_info->iv_size)) / AES_BLOCK_LEN) : 0));
 
 	pos += 16;
 	/* Prior_data_len will always be less than 16 bytes, fill the
-	 * prio_data_len after AES_CTRL_BLOCK and clear the remaining length
+	 * prio_data_len after AES_CTRL_BLOCK and clear the reमुख्यing length
 	 * to 0.
 	 */
-	if (prior_data_len)
+	अगर (prior_data_len)
 		pos = chcr_copy_to_txd(prior_data, &q->q, pos, 16);
 	/* send the complete packet except the header */
-	cxgb4_write_partial_sgl(skb, &q->q, pos, end, sgl_sdesc->addr,
+	cxgb4_ग_लिखो_partial_sgl(skb, &q->q, pos, end, sgl_sdesc->addr,
 				skb_offset, data_len);
 	sgl_sdesc->skb = skb;
 
 	chcr_txq_advance(&q->q, ndesc);
 	cxgb4_ring_tx_db(adap, &q->q, ndesc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * chcr_ktls_tx_plaintxt: This handler will take care of the records which has
+ * chcr_ktls_tx_plaपूर्णांकxt: This handler will take care of the records which has
  * only plain text (only tls header and iv)
- * @tx_info - driver specific tls info.
+ * @tx_info - driver specअगरic tls info.
  * @skb - skb contains partial record..
  * @tcp_seq
  * @mss - segment size.
  * @tcp_push - tcp push bit.
  * @q - TX queue.
  * @port_id : port number
- * @perior_data - data before the current segment, required to make this record
+ * @perior_data - data beक्रमe the current segment, required to make this record
  *		 16 byte aligned.
  * @prior_data_len - prior_data length (less than 16)
- * return: NETDEV_TX_BUSY/NET_TX_OK.
+ * वापस: NETDEV_TX_BUSY/NET_TX_OK.
  */
-static int chcr_ktls_tx_plaintxt(struct chcr_ktls_info *tx_info,
-				 struct sk_buff *skb, u32 tcp_seq, u32 mss,
-				 bool tcp_push, struct sge_eth_txq *q,
+अटल पूर्णांक chcr_ktls_tx_plaपूर्णांकxt(काष्ठा chcr_ktls_info *tx_info,
+				 काष्ठा sk_buff *skb, u32 tcp_seq, u32 mss,
+				 bool tcp_push, काष्ठा sge_eth_txq *q,
 				 u32 port_id, u8 *prior_data,
 				 u32 data_len, u32 skb_offset,
 				 u32 prior_data_len)
-{
-	int credits, left, len16, last_desc;
-	unsigned int flits = 0, ndesc;
-	struct tx_sw_desc *sgl_sdesc;
-	struct cpl_tx_data *tx_data;
-	struct ulptx_idata *idata;
-	struct ulp_txpkt *ulptx;
-	struct fw_ulptx_wr *wr;
+अणु
+	पूर्णांक credits, left, len16, last_desc;
+	अचिन्हित पूर्णांक flits = 0, ndesc;
+	काष्ठा tx_sw_desc *sgl_sdesc;
+	काष्ठा cpl_tx_data *tx_data;
+	काष्ठा ulptx_idata *idata;
+	काष्ठा ulp_txpkt *ulptx;
+	काष्ठा fw_ulptx_wr *wr;
 	u32 wr_mid = 0, nfrags;
-	void *pos;
+	व्योम *pos;
 	u64 *end;
 
 	flits = DIV_ROUND_UP(CHCR_PLAIN_TX_DATA_LEN, 8);
 	nfrags = chcr_get_nfrags_to_send(skb, skb_offset, data_len);
 	flits += chcr_sgl_len(nfrags);
-	if (prior_data_len)
+	अगर (prior_data_len)
 		flits += 2;
 
 	/* WR will need len16 */
@@ -1488,27 +1489,27 @@ static int chcr_ktls_tx_plaintxt(struct chcr_ktls_info *tx_info,
 	ndesc = DIV_ROUND_UP(flits, 8);
 
 	credits = chcr_txq_avail(&q->q) - ndesc;
-	if (unlikely(credits < 0)) {
+	अगर (unlikely(credits < 0)) अणु
 		chcr_eth_txq_stop(q);
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (unlikely(credits < ETHTXQ_STOP_THRES)) {
+	अगर (unlikely(credits < ETHTXQ_STOP_THRES)) अणु
 		chcr_eth_txq_stop(q);
 		wr_mid |= FW_WR_EQUEQ_F | FW_WR_EQUIQ_F;
-	}
+	पूर्ण
 
 	last_desc = q->q.pidx + ndesc - 1;
-	if (last_desc >= q->q.size)
+	अगर (last_desc >= q->q.size)
 		last_desc -= q->q.size;
 	sgl_sdesc = &q->q.sdesc[last_desc];
 
-	if (unlikely(cxgb4_map_skb(tx_info->adap->pdev_dev, skb,
-				   sgl_sdesc->addr) < 0)) {
-		memset(sgl_sdesc->addr, 0, sizeof(sgl_sdesc->addr));
+	अगर (unlikely(cxgb4_map_skb(tx_info->adap->pdev_dev, skb,
+				   sgl_sdesc->addr) < 0)) अणु
+		स_रखो(sgl_sdesc->addr, 0, माप(sgl_sdesc->addr));
 		q->mapping_err++;
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	pos = &q->q.desc[q->q.pidx];
 	end = (u64 *)pos + flits;
@@ -1518,7 +1519,7 @@ static int chcr_ktls_tx_plaintxt(struct chcr_ktls_info *tx_info,
 	wr->flowid_len16 = htonl(wr_mid | FW_WR_LEN16_V(len16));
 	wr->cookie = 0;
 	/* ULP_TXPKT */
-	ulptx = (struct ulp_txpkt *)(wr + 1);
+	ulptx = (काष्ठा ulp_txpkt *)(wr + 1);
 	ulptx->cmd_dest = htonl(ULPTX_CMD_V(ULP_TX_PKT) |
 			ULP_TXPKT_DATAMODIFY_V(0) |
 			ULP_TXPKT_CHANNELID_V(tx_info->port_id) |
@@ -1526,61 +1527,61 @@ static int chcr_ktls_tx_plaintxt(struct chcr_ktls_info *tx_info,
 			ULP_TXPKT_FID_V(q->q.cntxt_id) | ULP_TXPKT_RO_V(1));
 	ulptx->len = htonl(len16 - 1);
 	/* ULPTX_IDATA sub-command */
-	idata = (struct ulptx_idata *)(ulptx + 1);
+	idata = (काष्ठा ulptx_idata *)(ulptx + 1);
 	idata->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_IMM) | ULP_TX_SC_MORE_F);
-	idata->len = htonl(sizeof(*tx_data) + prior_data_len);
+	idata->len = htonl(माप(*tx_data) + prior_data_len);
 	/* CPL_TX_DATA */
-	tx_data = (struct cpl_tx_data *)(idata + 1);
+	tx_data = (काष्ठा cpl_tx_data *)(idata + 1);
 	OPCODE_TID(tx_data) = htonl(MK_OPCODE_TID(CPL_TX_DATA, tx_info->tid));
 	tx_data->len = htonl(TX_DATA_MSS_V(mss) |
 			     TX_LENGTH_V(data_len + prior_data_len));
 	/* set tcp seq number */
 	tx_data->rsvd = htonl(tcp_seq);
 	tx_data->flags = htonl(TX_BYPASS_F);
-	if (tcp_push)
+	अगर (tcp_push)
 		tx_data->flags |= htonl(TX_PUSH_F | TX_SHOVE_F);
 
 	pos = tx_data + 1;
-	/* apart from prior_data_len, we should set remaining part of 16 bytes
+	/* apart from prior_data_len, we should set reमुख्यing part of 16 bytes
 	 * to be zero.
 	 */
-	if (prior_data_len)
+	अगर (prior_data_len)
 		pos = chcr_copy_to_txd(prior_data, &q->q, pos, 16);
 
 	/* check left again, it might go beyond queue limit */
-	left = (void *)q->q.stat - pos;
+	left = (व्योम *)q->q.stat - pos;
 
 	/* check the position again */
-	if (!left) {
-		left = (void *)end - (void *)q->q.stat;
+	अगर (!left) अणु
+		left = (व्योम *)end - (व्योम *)q->q.stat;
 		pos = q->q.desc;
 		end = pos + left;
-	}
+	पूर्ण
 	/* send the complete packet including the header */
-	cxgb4_write_partial_sgl(skb, &q->q, pos, end, sgl_sdesc->addr,
+	cxgb4_ग_लिखो_partial_sgl(skb, &q->q, pos, end, sgl_sdesc->addr,
 				skb_offset, data_len);
 	sgl_sdesc->skb = skb;
 
 	chcr_txq_advance(&q->q, ndesc);
 	cxgb4_ring_tx_db(tx_info->adap, &q->q, ndesc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chcr_ktls_tunnel_pkt(struct chcr_ktls_info *tx_info,
-				struct sk_buff *skb,
-				struct sge_eth_txq *q)
-{
+अटल पूर्णांक chcr_ktls_tunnel_pkt(काष्ठा chcr_ktls_info *tx_info,
+				काष्ठा sk_buff *skb,
+				काष्ठा sge_eth_txq *q)
+अणु
 	u32 ctrl, iplen, maclen, wr_mid = 0, len16;
-	struct tx_sw_desc *sgl_sdesc;
-	struct fw_eth_tx_pkt_wr *wr;
-	struct cpl_tx_pkt_core *cpl;
-	unsigned int flits, ndesc;
-	int credits, last_desc;
+	काष्ठा tx_sw_desc *sgl_sdesc;
+	काष्ठा fw_eth_tx_pkt_wr *wr;
+	काष्ठा cpl_tx_pkt_core *cpl;
+	अचिन्हित पूर्णांक flits, ndesc;
+	पूर्णांक credits, last_desc;
 	u64 cntrl1, *end;
-	void *pos;
+	व्योम *pos;
 
-	ctrl = sizeof(*cpl);
-	flits = DIV_ROUND_UP(sizeof(*wr) + ctrl, 8);
+	ctrl = माप(*cpl);
+	flits = DIV_ROUND_UP(माप(*wr) + ctrl, 8);
 
 	flits += chcr_sgl_len(skb_shinfo(skb)->nr_frags + 1);
 	len16 = DIV_ROUND_UP(flits, 2);
@@ -1588,27 +1589,27 @@ static int chcr_ktls_tunnel_pkt(struct chcr_ktls_info *tx_info,
 	ndesc = DIV_ROUND_UP(flits, 8);
 
 	credits = chcr_txq_avail(&q->q) - ndesc;
-	if (unlikely(credits < 0)) {
+	अगर (unlikely(credits < 0)) अणु
 		chcr_eth_txq_stop(q);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (unlikely(credits < ETHTXQ_STOP_THRES)) {
+	अगर (unlikely(credits < ETHTXQ_STOP_THRES)) अणु
 		chcr_eth_txq_stop(q);
 		wr_mid |= FW_WR_EQUEQ_F | FW_WR_EQUIQ_F;
-	}
+	पूर्ण
 
 	last_desc = q->q.pidx + ndesc - 1;
-	if (last_desc >= q->q.size)
+	अगर (last_desc >= q->q.size)
 		last_desc -= q->q.size;
 	sgl_sdesc = &q->q.sdesc[last_desc];
 
-	if (unlikely(cxgb4_map_skb(tx_info->adap->pdev_dev, skb,
-				   sgl_sdesc->addr) < 0)) {
-		memset(sgl_sdesc->addr, 0, sizeof(sgl_sdesc->addr));
+	अगर (unlikely(cxgb4_map_skb(tx_info->adap->pdev_dev, skb,
+				   sgl_sdesc->addr) < 0)) अणु
+		स_रखो(sgl_sdesc->addr, 0, माप(sgl_sdesc->addr));
 		q->mapping_err++;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	iplen = skb_network_header_len(skb);
 	maclen = skb_mac_header_len(skb);
@@ -1624,7 +1625,7 @@ static int chcr_ktls_tunnel_pkt(struct chcr_ktls_info *tx_info,
 	wr->equiq_to_len16 = htonl(wr_mid | FW_WR_LEN16_V(len16));
 	wr->r3 = 0;
 
-	cpl = (void *)(wr + 1);
+	cpl = (व्योम *)(wr + 1);
 
 	/* CPL header */
 	cpl->ctrl0 = htonl(TXPKT_OPCODE_V(CPL_TX_PKT) |
@@ -1641,77 +1642,77 @@ static int chcr_ktls_tunnel_pkt(struct chcr_ktls_info *tx_info,
 
 	pos = cpl + 1;
 
-	cxgb4_write_sgl(skb, &q->q, pos, end, 0, sgl_sdesc->addr);
+	cxgb4_ग_लिखो_sgl(skb, &q->q, pos, end, 0, sgl_sdesc->addr);
 	sgl_sdesc->skb = skb;
 	chcr_txq_advance(&q->q, ndesc);
 	cxgb4_ring_tx_db(tx_info->adap, &q->q, ndesc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * chcr_ktls_copy_record_in_skb
  * @nskb - new skb where the frags to be added.
- * @skb - old skb, to copy socket and destructor details.
- * @record - specific record which has complete 16k record in frags.
+ * @skb - old skb, to copy socket and deकाष्ठाor details.
+ * @record - specअगरic record which has complete 16k record in frags.
  */
-static void chcr_ktls_copy_record_in_skb(struct sk_buff *nskb,
-					 struct sk_buff *skb,
-					 struct tls_record_info *record)
-{
-	int i = 0;
+अटल व्योम chcr_ktls_copy_record_in_skb(काष्ठा sk_buff *nskb,
+					 काष्ठा sk_buff *skb,
+					 काष्ठा tls_record_info *record)
+अणु
+	पूर्णांक i = 0;
 
-	for (i = 0; i < record->num_frags; i++) {
+	क्रम (i = 0; i < record->num_frags; i++) अणु
 		skb_shinfo(nskb)->frags[i] = record->frags[i];
 		/* increase the frag ref count */
 		__skb_frag_ref(&skb_shinfo(nskb)->frags[i]);
-	}
+	पूर्ण
 
 	skb_shinfo(nskb)->nr_frags = record->num_frags;
 	nskb->data_len = record->len;
 	nskb->len += record->len;
 	nskb->truesize += record->len;
 	nskb->sk = skb->sk;
-	nskb->destructor = skb->destructor;
+	nskb->deकाष्ठाor = skb->deकाष्ठाor;
 	refcount_add(nskb->truesize, &nskb->sk->sk_wmem_alloc);
-}
+पूर्ण
 
 /*
  * chcr_end_part_handler: This handler will handle the record which
- * is complete or if record's end part is received. T6 adapter has a issue that
- * it can't send out TAG with partial record so if its an end part then we have
- * to send TAG as well and for which we need to fetch the complete record and
+ * is complete or अगर record's end part is received. T6 adapter has a issue that
+ * it can't send out TAG with partial record so अगर its an end part then we have
+ * to send TAG as well and क्रम which we need to fetch the complete record and
  * send it to crypto module.
- * @tx_info - driver specific tls info.
+ * @tx_info - driver specअगरic tls info.
  * @skb - skb contains partial record.
  * @record - complete record of 16K size.
  * @tcp_seq
  * @mss - segment size in which TP needs to chop a packet.
- * @tcp_push_no_fin - tcp push if fin is not set.
+ * @tcp_push_no_fin - tcp push अगर fin is not set.
  * @q - TX queue.
  * @tls_end_offset - offset from end of the record.
- * @last wr : check if this is the last part of the skb going out.
- * return: NETDEV_TX_OK/NETDEV_TX_BUSY.
+ * @last wr : check अगर this is the last part of the skb going out.
+ * वापस: NETDEV_TX_OK/NETDEV_TX_BUSY.
  */
-static int chcr_end_part_handler(struct chcr_ktls_info *tx_info,
-				 struct sk_buff *skb,
-				 struct tls_record_info *record,
-				 u32 tcp_seq, int mss, bool tcp_push_no_fin,
-				 struct sge_eth_txq *q, u32 skb_offset,
+अटल पूर्णांक chcr_end_part_handler(काष्ठा chcr_ktls_info *tx_info,
+				 काष्ठा sk_buff *skb,
+				 काष्ठा tls_record_info *record,
+				 u32 tcp_seq, पूर्णांक mss, bool tcp_push_no_fin,
+				 काष्ठा sge_eth_txq *q, u32 skb_offset,
 				 u32 tls_end_offset, bool last_wr)
-{
-	bool free_skb_if_tx_fails = false;
-	struct sk_buff *nskb = NULL;
+अणु
+	bool मुक्त_skb_अगर_tx_fails = false;
+	काष्ठा sk_buff *nskb = शून्य;
 
-	/* check if it is a complete record */
-	if (tls_end_offset == record->len) {
+	/* check अगर it is a complete record */
+	अगर (tls_end_offset == record->len) अणु
 		nskb = skb;
 		atomic64_inc(&tx_info->adap->ch_ktls_stats.ktls_tx_complete_pkts);
-	} else {
+	पूर्ण अन्यथा अणु
 		nskb = alloc_skb(0, GFP_ATOMIC);
-		if (!nskb) {
-			dev_kfree_skb_any(skb);
-			return NETDEV_TX_BUSY;
-		}
+		अगर (!nskb) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस NETDEV_TX_BUSY;
+		पूर्ण
 
 		/* copy complete record in skb */
 		chcr_ktls_copy_record_in_skb(nskb, skb, record);
@@ -1722,220 +1723,220 @@ static int chcr_end_part_handler(struct chcr_ktls_info *tx_info,
 		/* reset skb offset */
 		skb_offset = 0;
 
-		if (last_wr)
-			dev_kfree_skb_any(skb);
-		else
-			free_skb_if_tx_fails = true;
+		अगर (last_wr)
+			dev_kमुक्त_skb_any(skb);
+		अन्यथा
+			मुक्त_skb_अगर_tx_fails = true;
 
 		last_wr = true;
 
 		atomic64_inc(&tx_info->adap->ch_ktls_stats.ktls_tx_end_pkts);
-	}
+	पूर्ण
 
-	if (chcr_ktls_xmit_wr_complete(nskb, tx_info, q, tcp_seq,
+	अगर (chcr_ktls_xmit_wr_complete(nskb, tx_info, q, tcp_seq,
 				       last_wr, record->len, skb_offset,
 				       record->num_frags,
 				       (last_wr && tcp_push_no_fin),
-				       mss)) {
-		if (free_skb_if_tx_fails)
-			dev_kfree_skb_any(skb);
-		goto out;
-	}
+				       mss)) अणु
+		अगर (मुक्त_skb_अगर_tx_fails)
+			dev_kमुक्त_skb_any(skb);
+		जाओ out;
+	पूर्ण
 	tx_info->prev_seq = record->end_seq;
-	return 0;
+	वापस 0;
 out:
-	dev_kfree_skb_any(nskb);
-	return NETDEV_TX_BUSY;
-}
+	dev_kमुक्त_skb_any(nskb);
+	वापस NETDEV_TX_BUSY;
+पूर्ण
 
 /*
- * chcr_short_record_handler: This handler will take care of the records which
- * doesn't have end part (1st part or the middle part(/s) of a record). In such
- * cases, AES CTR will be used in place of AES GCM to send out partial packet.
+ * chcr_लघु_record_handler: This handler will take care of the records which
+ * करोesn't have end part (1st part or the middle part(/s) of a record). In such
+ * हालs, AES CTR will be used in place of AES GCM to send out partial packet.
  * This partial record might be the first part of the record, or the middle
- * part. In case of middle record we should fetch the prior data to make it 16
+ * part. In हाल of middle record we should fetch the prior data to make it 16
  * byte aligned. If it has a partial tls header or iv then get to the start of
- * tls header. And if it has partial TAG, then remove the complete TAG and send
+ * tls header. And अगर it has partial TAG, then हटाओ the complete TAG and send
  * only the payload.
- * There is one more possibility that it gets a partial header, send that
- * portion as a plaintext.
- * @tx_info - driver specific tls info.
+ * There is one more possibility that it माला_लो a partial header, send that
+ * portion as a plaपूर्णांकext.
+ * @tx_info - driver specअगरic tls info.
  * @skb - skb contains partial record..
  * @record - complete record of 16K size.
  * @tcp_seq
  * @mss - segment size in which TP needs to chop a packet.
- * @tcp_push_no_fin - tcp push if fin is not set.
+ * @tcp_push_no_fin - tcp push अगर fin is not set.
  * @q - TX queue.
  * @tls_end_offset - offset from end of the record.
- * return: NETDEV_TX_OK/NETDEV_TX_BUSY.
+ * वापस: NETDEV_TX_OK/NETDEV_TX_BUSY.
  */
-static int chcr_short_record_handler(struct chcr_ktls_info *tx_info,
-				     struct sk_buff *skb,
-				     struct tls_record_info *record,
-				     u32 tcp_seq, int mss, bool tcp_push_no_fin,
+अटल पूर्णांक chcr_लघु_record_handler(काष्ठा chcr_ktls_info *tx_info,
+				     काष्ठा sk_buff *skb,
+				     काष्ठा tls_record_info *record,
+				     u32 tcp_seq, पूर्णांक mss, bool tcp_push_no_fin,
 				     u32 data_len, u32 skb_offset,
-				     struct sge_eth_txq *q, u32 tls_end_offset)
-{
+				     काष्ठा sge_eth_txq *q, u32 tls_end_offset)
+अणु
 	u32 tls_rec_offset = tcp_seq - tls_record_start_seq(record);
-	u8 prior_data[16] = {0};
+	u8 prior_data[16] = अणु0पूर्ण;
 	u32 prior_data_len = 0;
 
-	/* check if the skb is ending in middle of tag/HASH, its a big
-	 * trouble, send the packet before the HASH.
+	/* check अगर the skb is ending in middle of tag/HASH, its a big
+	 * trouble, send the packet beक्रमe the HASH.
 	 */
-	int remaining_record = tls_end_offset - data_len;
+	पूर्णांक reमुख्यing_record = tls_end_offset - data_len;
 
-	if (remaining_record > 0 &&
-	    remaining_record < TLS_CIPHER_AES_GCM_128_TAG_SIZE) {
-		int trimmed_len = 0;
+	अगर (reमुख्यing_record > 0 &&
+	    reमुख्यing_record < TLS_CIPHER_AES_GCM_128_TAG_SIZE) अणु
+		पूर्णांक trimmed_len = 0;
 
-		if (tls_end_offset > TLS_CIPHER_AES_GCM_128_TAG_SIZE)
+		अगर (tls_end_offset > TLS_CIPHER_AES_GCM_128_TAG_SIZE)
 			trimmed_len = data_len -
 				      (TLS_CIPHER_AES_GCM_128_TAG_SIZE -
-				       remaining_record);
-		if (!trimmed_len)
-			return FALLBACK;
+				       reमुख्यing_record);
+		अगर (!trimmed_len)
+			वापस FALLBACK;
 
 		WARN_ON(trimmed_len > data_len);
 
 		data_len = trimmed_len;
 		atomic64_inc(&tx_info->adap->ch_ktls_stats.ktls_tx_trimmed_pkts);
-	}
+	पूर्ण
 
-	/* check if it is only the header part. */
-	if (tls_rec_offset + data_len <= (TLS_HEADER_SIZE + tx_info->iv_size)) {
-		if (chcr_ktls_tx_plaintxt(tx_info, skb, tcp_seq, mss,
+	/* check अगर it is only the header part. */
+	अगर (tls_rec_offset + data_len <= (TLS_HEADER_SIZE + tx_info->iv_size)) अणु
+		अगर (chcr_ktls_tx_plaपूर्णांकxt(tx_info, skb, tcp_seq, mss,
 					  tcp_push_no_fin, q,
 					  tx_info->port_id, prior_data,
 					  data_len, skb_offset, prior_data_len))
-			goto out;
+			जाओ out;
 
 		tx_info->prev_seq = tcp_seq + data_len;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* check if the middle record's start point is 16 byte aligned. CTR
-	 * needs 16 byte aligned start point to start encryption.
+	/* check अगर the middle record's start poपूर्णांक is 16 byte aligned. CTR
+	 * needs 16 byte aligned start poपूर्णांक to start encryption.
 	 */
-	if (tls_rec_offset) {
+	अगर (tls_rec_offset) अणु
 		/* there is an offset from start, means its a middle record */
-		int remaining = 0;
+		पूर्णांक reमुख्यing = 0;
 
-		if (tls_rec_offset < (TLS_HEADER_SIZE + tx_info->iv_size)) {
+		अगर (tls_rec_offset < (TLS_HEADER_SIZE + tx_info->iv_size)) अणु
 			prior_data_len = tls_rec_offset;
 			tls_rec_offset = 0;
-			remaining = 0;
-		} else {
+			reमुख्यing = 0;
+		पूर्ण अन्यथा अणु
 			prior_data_len =
 				(tls_rec_offset -
 				(TLS_HEADER_SIZE + tx_info->iv_size))
 				% AES_BLOCK_LEN;
-			remaining = tls_rec_offset - prior_data_len;
-		}
+			reमुख्यing = tls_rec_offset - prior_data_len;
+		पूर्ण
 
-		/* if prior_data_len is not zero, means we need to fetch prior
+		/* अगर prior_data_len is not zero, means we need to fetch prior
 		 * data to make this record 16 byte aligned, or we need to reach
 		 * to start offset.
 		 */
-		if (prior_data_len) {
-			int i = 0;
-			u8 *data = NULL;
+		अगर (prior_data_len) अणु
+			पूर्णांक i = 0;
+			u8 *data = शून्य;
 			skb_frag_t *f;
 			u8 *vaddr;
-			int frag_size = 0, frag_delta = 0;
+			पूर्णांक frag_size = 0, frag_delta = 0;
 
-			while (remaining > 0) {
+			जबतक (reमुख्यing > 0) अणु
 				frag_size = skb_frag_size(&record->frags[i]);
-				if (remaining < frag_size)
-					break;
+				अगर (reमुख्यing < frag_size)
+					अवरोध;
 
-				remaining -= frag_size;
+				reमुख्यing -= frag_size;
 				i++;
-			}
+			पूर्ण
 			f = &record->frags[i];
 			vaddr = kmap_atomic(skb_frag_page(f));
 
-			data = vaddr + skb_frag_off(f)  + remaining;
-			frag_delta = skb_frag_size(f) - remaining;
+			data = vaddr + skb_frag_off(f)  + reमुख्यing;
+			frag_delta = skb_frag_size(f) - reमुख्यing;
 
-			if (frag_delta >= prior_data_len) {
-				memcpy(prior_data, data, prior_data_len);
+			अगर (frag_delta >= prior_data_len) अणु
+				स_नकल(prior_data, data, prior_data_len);
 				kunmap_atomic(vaddr);
-			} else {
-				memcpy(prior_data, data, frag_delta);
+			पूर्ण अन्यथा अणु
+				स_नकल(prior_data, data, frag_delta);
 				kunmap_atomic(vaddr);
 				/* get the next page */
 				f = &record->frags[i + 1];
 				vaddr = kmap_atomic(skb_frag_page(f));
 				data = vaddr + skb_frag_off(f);
-				memcpy(prior_data + frag_delta,
+				स_नकल(prior_data + frag_delta,
 				       data, (prior_data_len - frag_delta));
 				kunmap_atomic(vaddr);
-			}
+			पूर्ण
 			/* reset tcp_seq as per the prior_data_required len */
 			tcp_seq -= prior_data_len;
-		}
+		पूर्ण
 		atomic64_inc(&tx_info->adap->ch_ktls_stats.ktls_tx_middle_pkts);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&tx_info->adap->ch_ktls_stats.ktls_tx_start_pkts);
-	}
+	पूर्ण
 
-	if (chcr_ktls_xmit_wr_short(skb, tx_info, q, tcp_seq, tcp_push_no_fin,
+	अगर (chcr_ktls_xmit_wr_लघु(skb, tx_info, q, tcp_seq, tcp_push_no_fin,
 				    mss, tls_rec_offset, prior_data,
-				    prior_data_len, data_len, skb_offset)) {
-		goto out;
-	}
+				    prior_data_len, data_len, skb_offset)) अणु
+		जाओ out;
+	पूर्ण
 
 	tx_info->prev_seq = tcp_seq + data_len + prior_data_len;
-	return 0;
+	वापस 0;
 out:
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_BUSY;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_BUSY;
+पूर्ण
 
-static int chcr_ktls_sw_fallback(struct sk_buff *skb,
-				 struct chcr_ktls_info *tx_info,
-				 struct sge_eth_txq *q)
-{
+अटल पूर्णांक chcr_ktls_sw_fallback(काष्ठा sk_buff *skb,
+				 काष्ठा chcr_ktls_info *tx_info,
+				 काष्ठा sge_eth_txq *q)
+अणु
 	u32 data_len, skb_offset;
-	struct sk_buff *nskb;
-	struct tcphdr *th;
+	काष्ठा sk_buff *nskb;
+	काष्ठा tcphdr *th;
 
 	nskb = tls_encrypt_skb(skb);
 
-	if (!nskb)
-		return 0;
+	अगर (!nskb)
+		वापस 0;
 
 	th = tcp_hdr(nskb);
 	skb_offset =  skb_transport_offset(nskb) + tcp_hdrlen(nskb);
 	data_len = nskb->len - skb_offset;
-	skb_tx_timestamp(nskb);
+	skb_tx_बारtamp(nskb);
 
-	if (chcr_ktls_tunnel_pkt(tx_info, nskb, q))
-		goto out;
+	अगर (chcr_ktls_tunnel_pkt(tx_info, nskb, q))
+		जाओ out;
 
 	tx_info->prev_seq = ntohl(th->seq) + data_len;
 	atomic64_inc(&tx_info->adap->ch_ktls_stats.ktls_tx_fallback);
-	return 0;
+	वापस 0;
 out:
-	dev_kfree_skb_any(nskb);
-	return 0;
-}
+	dev_kमुक्त_skb_any(nskb);
+	वापस 0;
+पूर्ण
 /* nic tls TX handler */
-static int chcr_ktls_xmit(struct sk_buff *skb, struct net_device *dev)
-{
+अटल पूर्णांक chcr_ktls_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
 	u32 tls_end_offset, tcp_seq, skb_data_len, skb_offset;
-	struct ch_ktls_port_stats_debug *port_stats;
-	struct chcr_ktls_ofld_ctx_tx *tx_ctx;
-	struct ch_ktls_stats_debug *stats;
-	struct tcphdr *th = tcp_hdr(skb);
-	int data_len, qidx, ret = 0, mss;
-	struct tls_record_info *record;
-	struct chcr_ktls_info *tx_info;
-	struct tls_context *tls_ctx;
-	struct sge_eth_txq *q;
-	struct adapter *adap;
-	unsigned long flags;
+	काष्ठा ch_ktls_port_stats_debug *port_stats;
+	काष्ठा chcr_ktls_ofld_ctx_tx *tx_ctx;
+	काष्ठा ch_ktls_stats_debug *stats;
+	काष्ठा tcphdr *th = tcp_hdr(skb);
+	पूर्णांक data_len, qidx, ret = 0, mss;
+	काष्ठा tls_record_info *record;
+	काष्ठा chcr_ktls_info *tx_info;
+	काष्ठा tls_context *tls_ctx;
+	काष्ठा sge_eth_txq *q;
+	काष्ठा adapter *adap;
+	अचिन्हित दीर्घ flags;
 
 	tcp_seq = ntohl(th->seq);
 	skb_offset = skb_transport_offset(skb) + tcp_hdrlen(skb);
@@ -1945,14 +1946,14 @@ static int chcr_ktls_xmit(struct sk_buff *skb, struct net_device *dev)
 	mss = skb_is_gso(skb) ? skb_shinfo(skb)->gso_size : data_len;
 
 	tls_ctx = tls_get_ctx(skb->sk);
-	if (unlikely(tls_ctx->netdev != dev))
-		goto out;
+	अगर (unlikely(tls_ctx->netdev != dev))
+		जाओ out;
 
 	tx_ctx = chcr_get_ktls_tx_context(tls_ctx);
 	tx_info = tx_ctx->chcr_info;
 
-	if (unlikely(!tx_info))
-		goto out;
+	अगर (unlikely(!tx_info))
+		जाओ out;
 
 	adap = tx_info->adap;
 	stats = &adap->ch_ktls_stats;
@@ -1961,99 +1962,99 @@ static int chcr_ktls_xmit(struct sk_buff *skb, struct net_device *dev)
 	qidx = skb->queue_mapping;
 	q = &adap->sge.ethtxq[qidx + tx_info->first_qset];
 	cxgb4_reclaim_completed_tx(adap, &q->q, true);
-	/* if tcp options are set but finish is not send the options first */
-	if (!th->fin && chcr_ktls_check_tcp_options(th)) {
-		ret = chcr_ktls_write_tcp_options(tx_info, skb, q,
+	/* अगर tcp options are set but finish is not send the options first */
+	अगर (!th->fin && chcr_ktls_check_tcp_options(th)) अणु
+		ret = chcr_ktls_ग_लिखो_tcp_options(tx_info, skb, q,
 						  tx_info->tx_chan);
-		if (ret)
-			return NETDEV_TX_BUSY;
-	}
+		अगर (ret)
+			वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	/* TCP segments can be in received either complete or partial.
-	 * chcr_end_part_handler will handle cases if complete record or end
-	 * part of the record is received. In case of partial end part of record,
+	 * chcr_end_part_handler will handle हालs अगर complete record or end
+	 * part of the record is received. In हाल of partial end part of record,
 	 * we will send the complete record again.
 	 */
 
 	spin_lock_irqsave(&tx_ctx->base.lock, flags);
 
-	do {
+	करो अणु
 
 		cxgb4_reclaim_completed_tx(adap, &q->q, true);
 		/* fetch the tls record */
 		record = tls_get_record(&tx_ctx->base, tcp_seq,
 					&tx_info->record_no);
-		/* By the time packet reached to us, ACK is received, and record
-		 * won't be found in that case, handle it gracefully.
+		/* By the समय packet reached to us, ACK is received, and record
+		 * won't be found in that हाल, handle it gracefully.
 		 */
-		if (unlikely(!record)) {
+		अगर (unlikely(!record)) अणु
 			spin_unlock_irqrestore(&tx_ctx->base.lock, flags);
 			atomic64_inc(&port_stats->ktls_tx_drop_no_sync_data);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		tls_end_offset = record->end_seq - tcp_seq;
 
 		pr_debug("seq 0x%x, end_seq 0x%x prev_seq 0x%x, datalen 0x%x\n",
 			 tcp_seq, record->end_seq, tx_info->prev_seq, data_len);
-		/* update tcb for the skb */
-		if (skb_data_len == data_len) {
+		/* update tcb क्रम the skb */
+		अगर (skb_data_len == data_len) अणु
 			u32 tx_max = tcp_seq;
 
-			if (!tls_record_is_start_marker(record) &&
+			अगर (!tls_record_is_start_marker(record) &&
 			    tls_end_offset < TLS_CIPHER_AES_GCM_128_TAG_SIZE)
 				tx_max = record->end_seq -
 					TLS_CIPHER_AES_GCM_128_TAG_SIZE;
 
 			ret = chcr_ktls_xmit_tcb_cpls(tx_info, q, tx_max,
 						      ntohl(th->ack_seq),
-						      ntohs(th->window),
+						      ntohs(th->winकरोw),
 						      tls_end_offset !=
 						      record->len);
-			if (ret) {
+			अगर (ret) अणु
 				spin_unlock_irqrestore(&tx_ctx->base.lock,
 						       flags);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (th->fin)
+			अगर (th->fin)
 				skb_get(skb);
-		}
+		पूर्ण
 
-		if (unlikely(tls_record_is_start_marker(record))) {
+		अगर (unlikely(tls_record_is_start_marker(record))) अणु
 			atomic64_inc(&port_stats->ktls_tx_skip_no_sync_data);
 			/* If tls_end_offset < data_len, means there is some
 			 * data after start marker, which needs encryption, send
-			 * plaintext first and take skb refcount. else send out
-			 * complete pkt as plaintext.
+			 * plaपूर्णांकext first and take skb refcount. अन्यथा send out
+			 * complete pkt as plaपूर्णांकext.
 			 */
-			if (tls_end_offset < data_len)
+			अगर (tls_end_offset < data_len)
 				skb_get(skb);
-			else
+			अन्यथा
 				tls_end_offset = data_len;
 
-			ret = chcr_ktls_tx_plaintxt(tx_info, skb, tcp_seq, mss,
+			ret = chcr_ktls_tx_plaपूर्णांकxt(tx_info, skb, tcp_seq, mss,
 						    (!th->fin && th->psh), q,
-						    tx_info->port_id, NULL,
+						    tx_info->port_id, शून्य,
 						    tls_end_offset, skb_offset,
 						    0);
 
-			if (ret) {
-				/* free the refcount taken earlier */
-				if (tls_end_offset < data_len)
-					dev_kfree_skb_any(skb);
+			अगर (ret) अणु
+				/* मुक्त the refcount taken earlier */
+				अगर (tls_end_offset < data_len)
+					dev_kमुक्त_skb_any(skb);
 				spin_unlock_irqrestore(&tx_ctx->base.lock, flags);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			data_len -= tls_end_offset;
 			tcp_seq = record->end_seq;
 			skb_offset += tls_end_offset;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* if a tls record is finishing in this SKB */
-		if (tls_end_offset <= data_len) {
+		/* अगर a tls record is finishing in this SKB */
+		अगर (tls_end_offset <= data_len) अणु
 			ret = chcr_end_part_handler(tx_info, skb, record,
 						    tcp_seq, mss,
 						    (!th->fin && th->psh), q,
@@ -2067,31 +2068,31 @@ static int chcr_ktls_xmit(struct sk_buff *skb, struct net_device *dev)
 			 */
 			tcp_seq += tls_end_offset;
 			skb_offset += tls_end_offset;
-		} else {
-			ret = chcr_short_record_handler(tx_info, skb,
+		पूर्ण अन्यथा अणु
+			ret = chcr_लघु_record_handler(tx_info, skb,
 							record, tcp_seq, mss,
 							(!th->fin && th->psh),
 							data_len, skb_offset,
 							q, tls_end_offset);
 			data_len = 0;
-		}
+		पूर्ण
 
-		/* if any failure, come out from the loop. */
-		if (ret) {
+		/* अगर any failure, come out from the loop. */
+		अगर (ret) अणु
 			spin_unlock_irqrestore(&tx_ctx->base.lock, flags);
-			if (th->fin)
-				dev_kfree_skb_any(skb);
+			अगर (th->fin)
+				dev_kमुक्त_skb_any(skb);
 
-			if (ret == FALLBACK)
-				return chcr_ktls_sw_fallback(skb, tx_info, q);
+			अगर (ret == FALLBACK)
+				वापस chcr_ktls_sw_fallback(skb, tx_info, q);
 
-			return NETDEV_TX_OK;
-		}
+			वापस NETDEV_TX_OK;
+		पूर्ण
 
 		/* length should never be less than 0 */
 		WARN_ON(data_len < 0);
 
-	} while (data_len > 0);
+	पूर्ण जबतक (data_len > 0);
 
 	spin_unlock_irqrestore(&tx_ctx->base.lock, flags);
 	atomic64_inc(&port_stats->ktls_tx_encrypted_packets);
@@ -2100,117 +2101,117 @@ static int chcr_ktls_xmit(struct sk_buff *skb, struct net_device *dev)
 	/* tcp finish is set, send a separate tcp msg including all the options
 	 * as well.
 	 */
-	if (th->fin) {
-		chcr_ktls_write_tcp_options(tx_info, skb, q, tx_info->tx_chan);
-		dev_kfree_skb_any(skb);
-	}
+	अगर (th->fin) अणु
+		chcr_ktls_ग_लिखो_tcp_options(tx_info, skb, q, tx_info->tx_chan);
+		dev_kमुक्त_skb_any(skb);
+	पूर्ण
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 out:
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void *chcr_ktls_uld_add(const struct cxgb4_lld_info *lldi)
-{
-	struct chcr_ktls_uld_ctx *u_ctx;
+अटल व्योम *chcr_ktls_uld_add(स्थिर काष्ठा cxgb4_lld_info *lldi)
+अणु
+	काष्ठा chcr_ktls_uld_ctx *u_ctx;
 
 	pr_info_once("%s - version %s\n", CHCR_KTLS_DRV_DESC,
 		     CHCR_KTLS_DRV_VERSION);
-	u_ctx = kzalloc(sizeof(*u_ctx), GFP_KERNEL);
-	if (!u_ctx) {
+	u_ctx = kzalloc(माप(*u_ctx), GFP_KERNEL);
+	अगर (!u_ctx) अणु
 		u_ctx = ERR_PTR(-ENOMEM);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	u_ctx->lldi = *lldi;
 	u_ctx->detach = false;
 	xa_init_flags(&u_ctx->tid_list, XA_FLAGS_LOCK_BH);
 out:
-	return u_ctx;
-}
+	वापस u_ctx;
+पूर्ण
 
-static const struct tlsdev_ops chcr_ktls_ops = {
+अटल स्थिर काष्ठा tlsdev_ops chcr_ktls_ops = अणु
 	.tls_dev_add = chcr_ktls_dev_add,
 	.tls_dev_del = chcr_ktls_dev_del,
-};
+पूर्ण;
 
-static chcr_handler_func work_handlers[NUM_CPL_CMDS] = {
-	[CPL_ACT_OPEN_RPL] = chcr_ktls_cpl_act_open_rpl,
+अटल chcr_handler_func work_handlers[NUM_CPL_CMDS] = अणु
+	[CPL_ACT_OPEN_RPL] = chcr_ktls_cpl_act_खोलो_rpl,
 	[CPL_SET_TCB_RPL] = chcr_ktls_cpl_set_tcb_rpl,
-};
+पूर्ण;
 
-static int chcr_ktls_uld_rx_handler(void *handle, const __be64 *rsp,
-				    const struct pkt_gl *pgl)
-{
-	const struct cpl_act_open_rpl *rpl = (struct cpl_act_open_rpl *)rsp;
-	struct chcr_ktls_uld_ctx *u_ctx = handle;
+अटल पूर्णांक chcr_ktls_uld_rx_handler(व्योम *handle, स्थिर __be64 *rsp,
+				    स्थिर काष्ठा pkt_gl *pgl)
+अणु
+	स्थिर काष्ठा cpl_act_खोलो_rpl *rpl = (काष्ठा cpl_act_खोलो_rpl *)rsp;
+	काष्ठा chcr_ktls_uld_ctx *u_ctx = handle;
 	u8 opcode = rpl->ot.opcode;
-	struct adapter *adap;
+	काष्ठा adapter *adap;
 
 	adap = pci_get_drvdata(u_ctx->lldi.pdev);
 
-	if (!work_handlers[opcode]) {
+	अगर (!work_handlers[opcode]) अणु
 		pr_err("Unsupported opcode %d received\n", opcode);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	work_handlers[opcode](adap, (unsigned char *)&rsp[1]);
-	return 0;
-}
+	work_handlers[opcode](adap, (अचिन्हित अक्षर *)&rsp[1]);
+	वापस 0;
+पूर्ण
 
-static void clear_conn_resources(struct chcr_ktls_info *tx_info)
-{
+अटल व्योम clear_conn_resources(काष्ठा chcr_ktls_info *tx_info)
+अणु
 	/* clear l2t entry */
-	if (tx_info->l2te)
+	अगर (tx_info->l2te)
 		cxgb4_l2t_release(tx_info->l2te);
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 	/* clear clip entry */
-	if (tx_info->ip_family == AF_INET6)
-		cxgb4_clip_release(tx_info->netdev, (const u32 *)
+	अगर (tx_info->ip_family == AF_INET6)
+		cxgb4_clip_release(tx_info->netdev, (स्थिर u32 *)
 				   &tx_info->sk->sk_v6_rcv_saddr,
 				   1);
-#endif
+#पूर्ण_अगर
 
 	/* clear tid */
-	if (tx_info->tid != -1)
-		cxgb4_remove_tid(&tx_info->adap->tids, tx_info->tx_chan,
+	अगर (tx_info->tid != -1)
+		cxgb4_हटाओ_tid(&tx_info->adap->tids, tx_info->tx_chan,
 				 tx_info->tid, tx_info->ip_family);
-}
+पूर्ण
 
-static void ch_ktls_reset_all_conn(struct chcr_ktls_uld_ctx *u_ctx)
-{
-	struct ch_ktls_port_stats_debug *port_stats;
-	struct chcr_ktls_ofld_ctx_tx *tx_ctx;
-	struct chcr_ktls_info *tx_info;
-	unsigned long index;
+अटल व्योम ch_ktls_reset_all_conn(काष्ठा chcr_ktls_uld_ctx *u_ctx)
+अणु
+	काष्ठा ch_ktls_port_stats_debug *port_stats;
+	काष्ठा chcr_ktls_ofld_ctx_tx *tx_ctx;
+	काष्ठा chcr_ktls_info *tx_info;
+	अचिन्हित दीर्घ index;
 
-	xa_for_each(&u_ctx->tid_list, index, tx_ctx) {
+	xa_क्रम_each(&u_ctx->tid_list, index, tx_ctx) अणु
 		tx_info = tx_ctx->chcr_info;
 		clear_conn_resources(tx_info);
 		port_stats = &tx_info->adap->ch_ktls_stats.ktls_port[tx_info->port_id];
-		atomic64_inc(&port_stats->ktls_tx_connection_close);
-		kvfree(tx_info);
-		tx_ctx->chcr_info = NULL;
+		atomic64_inc(&port_stats->ktls_tx_connection_बंद);
+		kvमुक्त(tx_info);
+		tx_ctx->chcr_info = शून्य;
 		/* release module refcount */
 		module_put(THIS_MODULE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int chcr_ktls_uld_state_change(void *handle, enum cxgb4_state new_state)
-{
-	struct chcr_ktls_uld_ctx *u_ctx = handle;
+अटल पूर्णांक chcr_ktls_uld_state_change(व्योम *handle, क्रमागत cxgb4_state new_state)
+अणु
+	काष्ठा chcr_ktls_uld_ctx *u_ctx = handle;
 
-	switch (new_state) {
-	case CXGB4_STATE_UP:
+	चयन (new_state) अणु
+	हाल CXGB4_STATE_UP:
 		pr_info("%s: Up\n", pci_name(u_ctx->lldi.pdev));
 		mutex_lock(&dev_mutex);
 		list_add_tail(&u_ctx->entry, &uld_ctx_list);
 		mutex_unlock(&dev_mutex);
-		break;
-	case CXGB4_STATE_START_RECOVERY:
-	case CXGB4_STATE_DOWN:
-	case CXGB4_STATE_DETACH:
+		अवरोध;
+	हाल CXGB4_STATE_START_RECOVERY:
+	हाल CXGB4_STATE_DOWN:
+	हाल CXGB4_STATE_DETACH:
 		pr_info("%s: Down\n", pci_name(u_ctx->lldi.pdev));
 		mutex_lock(&dev_mutex);
 		u_ctx->detach = true;
@@ -2218,15 +2219,15 @@ static int chcr_ktls_uld_state_change(void *handle, enum cxgb4_state new_state)
 		ch_ktls_reset_all_conn(u_ctx);
 		xa_destroy(&u_ctx->tid_list);
 		mutex_unlock(&dev_mutex);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct cxgb4_uld_info chcr_ktls_uld_info = {
+अटल काष्ठा cxgb4_uld_info chcr_ktls_uld_info = अणु
 	.name = CHCR_KTLS_DRV_MODULE_NAME,
 	.nrxq = 1,
 	.rxq_size = 1024,
@@ -2235,35 +2236,35 @@ static struct cxgb4_uld_info chcr_ktls_uld_info = {
 	.rx_handler = chcr_ktls_uld_rx_handler,
 	.state_change = chcr_ktls_uld_state_change,
 	.tlsdev_ops = &chcr_ktls_ops,
-};
+पूर्ण;
 
-static int __init chcr_ktls_init(void)
-{
-	cxgb4_register_uld(CXGB4_ULD_KTLS, &chcr_ktls_uld_info);
-	return 0;
-}
+अटल पूर्णांक __init chcr_ktls_init(व्योम)
+अणु
+	cxgb4_रेजिस्टर_uld(CXGB4_ULD_KTLS, &chcr_ktls_uld_info);
+	वापस 0;
+पूर्ण
 
-static void __exit chcr_ktls_exit(void)
-{
-	struct chcr_ktls_uld_ctx *u_ctx, *tmp;
-	struct adapter *adap;
+अटल व्योम __निकास chcr_ktls_निकास(व्योम)
+अणु
+	काष्ठा chcr_ktls_uld_ctx *u_ctx, *पंचांगp;
+	काष्ठा adapter *adap;
 
 	pr_info("driver unloaded\n");
 
 	mutex_lock(&dev_mutex);
-	list_for_each_entry_safe(u_ctx, tmp, &uld_ctx_list, entry) {
+	list_क्रम_each_entry_safe(u_ctx, पंचांगp, &uld_ctx_list, entry) अणु
 		adap = pci_get_drvdata(u_ctx->lldi.pdev);
-		memset(&adap->ch_ktls_stats, 0, sizeof(adap->ch_ktls_stats));
+		स_रखो(&adap->ch_ktls_stats, 0, माप(adap->ch_ktls_stats));
 		list_del(&u_ctx->entry);
 		xa_destroy(&u_ctx->tid_list);
-		kfree(u_ctx);
-	}
+		kमुक्त(u_ctx);
+	पूर्ण
 	mutex_unlock(&dev_mutex);
-	cxgb4_unregister_uld(CXGB4_ULD_KTLS);
-}
+	cxgb4_unरेजिस्टर_uld(CXGB4_ULD_KTLS);
+पूर्ण
 
 module_init(chcr_ktls_init);
-module_exit(chcr_ktls_exit);
+module_निकास(chcr_ktls_निकास);
 
 MODULE_DESCRIPTION("Chelsio NIC TLS ULD driver");
 MODULE_LICENSE("GPL");

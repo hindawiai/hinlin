@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* SPU ELF support for BFD.
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPU ELF support क्रम BFD.
 
    Copyright 2006 Free Software Foundation, Inc.
 
@@ -43,8 +44,8 @@ RR     | op         |  RB   |  RA   |  RT   |		LBT    | op    |RO|       I16    
 
 -=-=-= OPCODE =-=-=-
 
-OPCODE field specifies the most significant 11bit of the instruction. Some formats don't have 11bits for opcode field, and in this
-case, bit field other than op are defined as 0s. For example, opcode of fma instruction which is RRR format is defined as 0x700,
+OPCODE field specअगरies the most signअगरicant 11bit of the inकाष्ठाion. Some क्रमmats करोn't have 11bits क्रम opcode field, and in this
+हाल, bit field other than op are defined as 0s. For example, opcode of fma inकाष्ठाion which is RRR क्रमmat is defined as 0x700,
 since 0x700 -> 11'b11100000000, this means opcode is 4'b1110, and other 7bits are defined as 7'b0000000.
 
 -=-=-= ASM_FORMAT =-=-=-
@@ -75,31 +76,31 @@ RR category						LBT category
 	ASM_RTA		mnemonic RT, RA
 	ASM_WRCH	mnemonic CA, RT
 
-Note that RRR instructions have the names for RC and RT reversed from
+Note that RRR inकाष्ठाions have the names क्रम RC and RT reversed from
 what's in the ISA, in order to put RT in the same position it appears
-for other formats.
+क्रम other क्रमmats.
 
 -=-=-= DEPENDENCY =-=-=-
 
-DEPENDENCY filed consists of 5 digits. This represents which register is used as source and which register is used as target.
-The first(most significant) digit is always 0. Then it is followd by RC, RB, RA and RT digits.
-If the digit is 0, this means the corresponding register is not used in the instruction.
-If the digit is 1, this means the corresponding register is used as a source in the instruction.
-If the digit is 2, this means the corresponding register is used as a target in the instruction.
-If the digit is 3, this means the corresponding register is used as both source and target in the instruction.
-For example, fms instruction has 00113 as the DEPENDENCY field. This means RC is not used in this operation, RB and RA are
+DEPENDENCY filed consists of 5 digits. This represents which रेजिस्टर is used as source and which रेजिस्टर is used as target.
+The first(most signअगरicant) digit is always 0. Then it is followd by RC, RB, RA and RT digits.
+If the digit is 0, this means the corresponding रेजिस्टर is not used in the inकाष्ठाion.
+If the digit is 1, this means the corresponding रेजिस्टर is used as a source in the inकाष्ठाion.
+If the digit is 2, this means the corresponding रेजिस्टर is used as a target in the inकाष्ठाion.
+If the digit is 3, this means the corresponding रेजिस्टर is used as both source and target in the inकाष्ठाion.
+For example, fms inकाष्ठाion has 00113 as the DEPENDENCY field. This means RC is not used in this operation, RB and RA are
 used as sources and RT is the target.
 
 -=-=-= PIPE =-=-=-
 
-This field shows which execution pipe is used for the instruction
+This field shows which execution pipe is used क्रम the inकाष्ठाion
 
 pipe0 execution pipelines:
-	FP6	SP floating pipeline
-	FP7	integer operations executed in SP floating pipeline
-	FPD	DP floating pipeline
+	FP6	SP भग्नing pipeline
+	FP7	पूर्णांकeger operations executed in SP भग्नing pipeline
+	FPD	DP भग्नing pipeline
 	FX2	FXU pipeline
-	FX3	Rotate/Shift pipeline
+	FX3	Rotate/Shअगरt pipeline
 	FXB	Byte pipeline
 	NOP	No pipeline
 
@@ -112,11 +113,11 @@ pipe1 execution pipelines:
 
 */
 
-#define _A0() {0}
-#define _A1(a) {1,a}
-#define _A2(a,b) {2,a,b}
-#define _A3(a,b,c) {3,a,b,c}
-#define _A4(a,b,c,d) {4,a,b,c,d}
+#घोषणा _A0() अणु0पूर्ण
+#घोषणा _A1(a) अणु1,aपूर्ण
+#घोषणा _A2(a,b) अणु2,a,bपूर्ण
+#घोषणा _A3(a,b,c) अणु3,a,b,cपूर्ण
+#घोषणा _A4(a,b,c,d) अणु4,a,b,c,dपूर्ण
 
 /*    TAG		FORMAT	OPCODE	MNEMONIC	ASM_FORMAT	DEPENDENCY	PIPE	COMMENT				*/
 /*									0[RC][RB][RA][RT]					*/
@@ -131,7 +132,7 @@ APUOP(M_LQA,		RI16,	0x184,	"lqa",		_A2(A_T,A_S18),	00002,	LS)	/* LoadQAbs      R
 APUOP(M_LQR,		RI16,	0x19C,	"lqr",		_A2(A_T,A_R18),	00002,	LS)	/* LoadQRel      RT<-M[IP+I16] */
 APUOP(M_STOP,		RR,	0x000,	"stop",		_A0(),		00000,	BR)	/* STOP          stop */
 APUOP(M_STOP2,		RR,	0x000,	"stop",		_A1(A_U14),	00000,	BR)	/* STOP          stop */
-APUOP(M_STOPD,		RR,	0x140,	"stopd",	_A3(A_T,A_A,A_B),         00111,	BR)	/* STOPD         stop (with register dependencies) */
+APUOP(M_STOPD,		RR,	0x140,	"stopd",	_A3(A_T,A_A,A_B),         00111,	BR)	/* STOPD         stop (with रेजिस्टर dependencies) */
 APUOP(M_LNOP,		RR,	0x001,	"lnop",		_A0(),		00000,	LNOP)	/* LNOP          no_operation */
 APUOP(M_SYNC,		RR,	0x002,	"sync",		_A0(),		00000,	BR)	/* SYNC          flush_pipe */
 APUOP(M_DSYNC,		RR,	0x003,	"dsync",	_A0(),		00000,	BR)	/* DSYNC         flush_store_queue */
@@ -140,10 +141,10 @@ APUOP(M_RDCH,		RR,	0x00d,	"rdch",		_A2(A_T,A_H),	00002,	SPR)	/* ReaDCHannel   RT
 APUOP(M_RCHCNT,		RR,	0x00f,	"rchcnt",	_A2(A_T,A_H),	00002,	SPR)	/* ReaDCHanCouNT RT<-CA:count */
 APUOP(M_HBRA,		LBT,	0x080,	"hbra",		_A2(A_S11,A_S18),	00000,	LS)	/* HBRA          BTB[B9]<-M[I16] */
 APUOP(M_HBRR,		LBT,	0x090,	"hbrr",		_A2(A_S11,A_R18),	00000,	LS)	/* HBRR          BTB[B9]<-M[IP+I16] */
-APUOP(M_BRZ,		RI16,	0x100,	"brz",		_A2(A_T,A_R18),	00001,	BR)	/* BRZ           IP<-IP+I16_if(RT) */
-APUOP(M_BRNZ,		RI16,	0x108,	"brnz",		_A2(A_T,A_R18),	00001,	BR)	/* BRNZ          IP<-IP+I16_if(RT) */
-APUOP(M_BRHZ,		RI16,	0x110,	"brhz",		_A2(A_T,A_R18),	00001,	BR)	/* BRHZ          IP<-IP+I16_if(RT) */
-APUOP(M_BRHNZ,		RI16,	0x118,	"brhnz",	_A2(A_T,A_R18),	00001,	BR)	/* BRHNZ         IP<-IP+I16_if(RT) */
+APUOP(M_BRZ,		RI16,	0x100,	"brz",		_A2(A_T,A_R18),	00001,	BR)	/* BRZ           IP<-IP+I16_अगर(RT) */
+APUOP(M_BRNZ,		RI16,	0x108,	"brnz",		_A2(A_T,A_R18),	00001,	BR)	/* BRNZ          IP<-IP+I16_अगर(RT) */
+APUOP(M_BRHZ,		RI16,	0x110,	"brhz",		_A2(A_T,A_R18),	00001,	BR)	/* BRHZ          IP<-IP+I16_अगर(RT) */
+APUOP(M_BRHNZ,		RI16,	0x118,	"brhnz",	_A2(A_T,A_R18),	00001,	BR)	/* BRHNZ         IP<-IP+I16_अगर(RT) */
 APUOP(M_STQA,		RI16,	0x104,	"stqa",		_A2(A_T,A_S18),	00001,	LS)	/* SToreQAbs     M[I16]<-RT */
 APUOP(M_STQR,		RI16,	0x11C,	"stqr",		_A2(A_T,A_R18),	00001,	LS)	/* SToreQRel     M[IP+I16]<-RT */
 APUOP(M_MTSPR,		RR,	0x10c,	"mtspr",	_A2(A_S,A_T),	00001,	SPR)	/* MTSPR         SA<-RT */
@@ -153,10 +154,10 @@ APUOP(M_BI,		RR,	0x1a8,	"bi",		_A1(A_A),		00010,	BR)	/* BI            IP<-RA */
 APUOP(M_BISL,		RR,	0x1a9,	"bisl",		_A2(A_T,A_A),	00012,	BR)	/* BISL          RT,IP<-IP,RA */
 APUOP(M_IRET,  		RR,	0x1aa,	"iret",	        _A1(A_A), 	00010,	BR)	/* IRET          IP<-SRR0 */
 APUOP(M_IRET2, 		RR,	0x1aa,	"iret",	        _A0(),	 	00010,	BR)	/* IRET          IP<-SRR0 */
-APUOP(M_BISLED,		RR,	0x1ab,	"bisled",	_A2(A_T,A_A),	00012,	BR)	/* BISLED        RT,IP<-IP,RA_if(ext) */
+APUOP(M_BISLED,		RR,	0x1ab,	"bisled",	_A2(A_T,A_A),	00012,	BR)	/* BISLED        RT,IP<-IP,RA_अगर(ext) */
 APUOP(M_HBR,		LBTI,	0x1ac,	"hbr",		_A2(A_S11I,A_A),	00010,	LS)	/* HBR           BTB[B9]<-M[Ra] */
 APUOP(M_FREST,		RR,	0x1b8,	"frest",	_A2(A_T,A_A),	00012,	SHUF)	/* FREST         RT<-recip(RA) */
-APUOP(M_FRSQEST,	RR,	0x1b9,	"frsqest",	_A2(A_T,A_A),	00012,	SHUF)	/* FRSQEST       RT<-rsqrt(RA) */
+APUOP(M_FRSQEST,	RR,	0x1b9,	"frsqest",	_A2(A_T,A_A),	00012,	SHUF)	/* FRSQEST       RT<-rवर्ग_मूल(RA) */
 APUOP(M_FSM,		RR,	0x1b4,	"fsm",		_A2(A_T,A_A),	00012,	SHUF)	/* FormSelMask%  RT<-expand(Ra) */
 APUOP(M_FSMH,		RR,	0x1b5,	"fsmh",		_A2(A_T,A_A),	00012,	SHUF)	/* FormSelMask%  RT<-expand(Ra) */
 APUOP(M_FSMB,		RR,	0x1b6,	"fsmb",		_A2(A_T,A_A),	00012,	SHUF)	/* FormSelMask%  RT<-expand(Ra) */
@@ -174,10 +175,10 @@ APUOP(M_ROTQMBYI,	RI7,	0x1fd,	"rotqmbyi",	_A3(A_T,A_A,A_S6),	00012,	SHUF)	/* ROT
 APUOP(M_SHLQBII,	RI7,	0x1fb,	"shlqbii",	_A3(A_T,A_A,A_U3),	00012,	SHUF)	/* SHLQBII       RT<-RA<<I7 */
 APUOP(M_SHLQBYI,	RI7,	0x1ff,	"shlqbyi",	_A3(A_T,A_A,A_U5),	00012,	SHUF)	/* SHLQBYI       RT<-RA<<I7 */
 APUOP(M_STQD,		RI10,	0x120,	"stqd",		_A4(A_T,A_S14,A_P,A_A),	00011,	LS)	/* SToreQDisp    M[Ra+I10]<-RT */
-APUOP(M_BIHNZ,		RR,	0x12b,	"bihnz",	_A2(A_T,A_A),	00011,	BR)	/* BIHNZ         IP<-RA_if(RT) */
-APUOP(M_BIHZ,		RR,	0x12a,	"bihz",		_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_if(RT) */
-APUOP(M_BINZ,		RR,	0x129,	"binz",		_A2(A_T,A_A),	00011,	BR)	/* BINZ          IP<-RA_if(RT) */
-APUOP(M_BIZ,		RR,	0x128,	"biz",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_if(RT) */
+APUOP(M_BIHNZ,		RR,	0x12b,	"bihnz",	_A2(A_T,A_A),	00011,	BR)	/* BIHNZ         IP<-RA_अगर(RT) */
+APUOP(M_BIHZ,		RR,	0x12a,	"bihz",		_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_अगर(RT) */
+APUOP(M_BINZ,		RR,	0x129,	"binz",		_A2(A_T,A_A),	00011,	BR)	/* BINZ          IP<-RA_अगर(RT) */
+APUOP(M_BIZ,		RR,	0x128,	"biz",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_अगर(RT) */
 APUOP(M_CBX,		RR,	0x1d4,	"cbx",		_A3(A_T,A_A,A_B),		00112,	SHUF)	/* genCtl%%insX  RT<-sta(Ra+Rb,siz) */
 APUOP(M_CHX,		RR,	0x1d5,	"chx",		_A3(A_T,A_A,A_B),		00112,	SHUF)	/* genCtl%%insX  RT<-sta(Ra+Rb,siz) */
 APUOP(M_CWX,		RR,	0x1d6,	"cwx",		_A3(A_T,A_A,A_B),		00112,	SHUF)	/* genCtl%%insX  RT<-sta(Ra+Rb,siz) */
@@ -224,19 +225,19 @@ APUOP(M_CLGTI,		RI10,	0x2e0,	"clgti",	_A3(A_T,A_A,A_S10),	00012,	FX2)	/* CLGT%I 
 APUOP(M_CEQBI,		RI10,	0x3f0,	"ceqbi",	_A3(A_T,A_A,A_S10B),	00012,	FX2)	/* CEQ%I         RT<-(RA=I10) */
 APUOP(M_CEQHI,		RI10,	0x3e8,	"ceqhi",	_A3(A_T,A_A,A_S10),	00012,	FX2)	/* CEQ%I         RT<-(RA=I10) */
 APUOP(M_CEQI,		RI10,	0x3e0,	"ceqi",		_A3(A_T,A_A,A_S10),	00012,	FX2)	/* CEQ%I         RT<-(RA=I10) */
-APUOP(M_HGTI,		RI10,	0x278,	"hgti",		_A3(A_T,A_A,A_S10),	00010,	FX2)	/* HaltGTI       halt_if(RA>I10) */
-APUOP(M_HGTI2,		RI10,	0x278,	"hgti",		_A2(A_A,A_S10),	00010,	FX2)	/* HaltGTI       halt_if(RA>I10) */
-APUOP(M_HLGTI,		RI10,	0x2f8,	"hlgti",	_A3(A_T,A_A,A_S10),	00010,	FX2)	/* HaltLGTI      halt_if(RA>I10) */
-APUOP(M_HLGTI2,		RI10,	0x2f8,	"hlgti",	_A2(A_A,A_S10),	00010,	FX2)	/* HaltLGTI      halt_if(RA>I10) */
-APUOP(M_HEQI,		RI10,	0x3f8,	"heqi",		_A3(A_T,A_A,A_S10),	00010,	FX2)	/* HaltEQImm     halt_if(RA=I10) */
-APUOP(M_HEQI2,		RI10,	0x3f8,	"heqi",		_A2(A_A,A_S10),	00010,	FX2)	/* HaltEQImm     halt_if(RA=I10) */
+APUOP(M_HGTI,		RI10,	0x278,	"hgti",		_A3(A_T,A_A,A_S10),	00010,	FX2)	/* HaltGTI       halt_अगर(RA>I10) */
+APUOP(M_HGTI2,		RI10,	0x278,	"hgti",		_A2(A_A,A_S10),	00010,	FX2)	/* HaltGTI       halt_अगर(RA>I10) */
+APUOP(M_HLGTI,		RI10,	0x2f8,	"hlgti",	_A3(A_T,A_A,A_S10),	00010,	FX2)	/* HaltLGTI      halt_अगर(RA>I10) */
+APUOP(M_HLGTI2,		RI10,	0x2f8,	"hlgti",	_A2(A_A,A_S10),	00010,	FX2)	/* HaltLGTI      halt_अगर(RA>I10) */
+APUOP(M_HEQI,		RI10,	0x3f8,	"heqi",		_A3(A_T,A_A,A_S10),	00010,	FX2)	/* HaltEQImm     halt_अगर(RA=I10) */
+APUOP(M_HEQI2,		RI10,	0x3f8,	"heqi",		_A2(A_A,A_S10),	00010,	FX2)	/* HaltEQImm     halt_अगर(RA=I10) */
 APUOP(M_MPYI,		RI10,	0x3a0,	"mpyi",		_A3(A_T,A_A,A_S10),	00012,	FP7)	/* MPYI          RT<-RA*I10 */
 APUOP(M_MPYUI,		RI10,	0x3a8,	"mpyui",	_A3(A_T,A_A,A_S10),	00012,	FP7)	/* MPYUI         RT<-RA*I10 */
-APUOP(M_CFLTS,		RI8,	0x3b0,	"cflts",	_A3(A_T,A_A,A_U7A),	00012,	FP7)	/* CFLTS         RT<-int(RA,I8) */
-APUOP(M_CFLTU,		RI8,	0x3b2,	"cfltu",	_A3(A_T,A_A,A_U7A),	00012,	FP7)	/* CFLTU         RT<-int(RA,I8) */
+APUOP(M_CFLTS,		RI8,	0x3b0,	"cflts",	_A3(A_T,A_A,A_U7A),	00012,	FP7)	/* CFLTS         RT<-पूर्णांक(RA,I8) */
+APUOP(M_CFLTU,		RI8,	0x3b2,	"cfltu",	_A3(A_T,A_A,A_U7A),	00012,	FP7)	/* CFLTU         RT<-पूर्णांक(RA,I8) */
 APUOP(M_CSFLT,		RI8,	0x3b4,	"csflt",	_A3(A_T,A_A,A_U7B),	00012,	FP7)	/* CSFLT         RT<-flt(RA,I8) */
 APUOP(M_CUFLT,		RI8,	0x3b6,	"cuflt",	_A3(A_T,A_A,A_U7B),	00012,	FP7)	/* CUFLT         RT<-flt(RA,I8) */
-APUOP(M_FESD,		RR,	0x3b8,	"fesd",		_A2(A_T,A_A),	00012,	FPD)	/* FESD          RT<-double(RA) */
+APUOP(M_FESD,		RR,	0x3b8,	"fesd",		_A2(A_T,A_A),	00012,	FPD)	/* FESD          RT<-द्विगुन(RA) */
 APUOP(M_FRDS,		RR,	0x3b9,	"frds",		_A2(A_T,A_A),	00012,	FPD)	/* FRDS          RT<-single(RA) */
 APUOP(M_FSCRRD,		RR,	0x398,	"fscrrd",	_A1(A_T),		00002,	FPD)	/* FSCRRD        RT<-FP_status */
 APUOP(M_FSCRWR,		RR,	0x3ba,	"fscrwr",	_A2(A_T,A_A),	00010,	FP7)	/* FSCRWR        FP_status<-RA */
@@ -267,25 +268,25 @@ APUOP(M_CLGTH,		RR,	0x2c8,	"clgth",	_A3(A_T,A_A,A_B),		00112,	FX2)	/* CLGT%     
 APUOP(M_CEQ,		RR,	0x3c0,	"ceq",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* CEQ%          RT<-(RA=RB) */
 APUOP(M_CEQB,		RR,	0x3d0,	"ceqb",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* CEQ%          RT<-(RA=RB) */
 APUOP(M_CEQH,		RR,	0x3c8,	"ceqh",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* CEQ%          RT<-(RA=RB) */
-APUOP(M_HGT,		RR,	0x258,	"hgt",		_A3(A_T,A_A,A_B),		00110,	FX2)	/* HaltGT        halt_if(RA>RB) */
-APUOP(M_HGT2,		RR,	0x258,	"hgt",		_A2(A_A,A_B),	00110,	FX2)	/* HaltGT        halt_if(RA>RB) */
-APUOP(M_HLGT,		RR,	0x2d8,	"hlgt",		_A3(A_T,A_A,A_B),		00110,	FX2)	/* HaltLGT       halt_if(RA>RB) */
-APUOP(M_HLGT2,		RR,	0x2d8,	"hlgt",		_A2(A_A,A_B),	00110,	FX2)	/* HaltLGT       halt_if(RA>RB) */
-APUOP(M_HEQ,		RR,	0x3d8,	"heq",		_A3(A_T,A_A,A_B),		00110,	FX2)	/* HaltEQ        halt_if(RA=RB) */
-APUOP(M_HEQ2,		RR,	0x3d8,	"heq",		_A2(A_A,A_B),	00110,	FX2)	/* HaltEQ        halt_if(RA=RB) */
+APUOP(M_HGT,		RR,	0x258,	"hgt",		_A3(A_T,A_A,A_B),		00110,	FX2)	/* HaltGT        halt_अगर(RA>RB) */
+APUOP(M_HGT2,		RR,	0x258,	"hgt",		_A2(A_A,A_B),	00110,	FX2)	/* HaltGT        halt_अगर(RA>RB) */
+APUOP(M_HLGT,		RR,	0x2d8,	"hlgt",		_A3(A_T,A_A,A_B),		00110,	FX2)	/* HaltLGT       halt_अगर(RA>RB) */
+APUOP(M_HLGT2,		RR,	0x2d8,	"hlgt",		_A2(A_A,A_B),	00110,	FX2)	/* HaltLGT       halt_अगर(RA>RB) */
+APUOP(M_HEQ,		RR,	0x3d8,	"heq",		_A3(A_T,A_A,A_B),		00110,	FX2)	/* HaltEQ        halt_अगर(RA=RB) */
+APUOP(M_HEQ2,		RR,	0x3d8,	"heq",		_A2(A_A,A_B),	00110,	FX2)	/* HaltEQ        halt_अगर(RA=RB) */
 APUOP(M_FCEQ,		RR,	0x3c2,	"fceq",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* FCEQ          RT<-(RA=RB) */
 APUOP(M_FCMEQ,		RR,	0x3ca,	"fcmeq",	_A3(A_T,A_A,A_B),		00112,	FX2)	/* FCMEQ         RT<-(|RA|=|RB|) */
 APUOP(M_FCGT,		RR,	0x2c2,	"fcgt",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* FCGT          RT<-(RA<RB) */
 APUOP(M_FCMGT,		RR,	0x2ca,	"fcmgt",	_A3(A_T,A_A,A_B),		00112,	FX2)	/* FCMGT         RT<-(|RA|<|RB|) */
 APUOP(M_AND,		RR,	0x0c1,	"and",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* AND           RT<-RA&RB */
-APUOP(M_NAND,		RR,	0x0c9,	"nand",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* NAND          RT<-!(RA&RB) */
+APUOP(M_न_अंकD,		RR,	0x0c9,	"nand",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* न_अंकD          RT<-!(RA&RB) */
 APUOP(M_OR,		RR,	0x041,	"or",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* OR            RT<-RA|RB */
 APUOP(M_NOR,		RR,	0x049,	"nor",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* NOR           RT<-!(RA&RB) */
 APUOP(M_XOR,		RR,	0x241,	"xor",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* XOR           RT<-RA^RB */
 APUOP(M_EQV,		RR,	0x249,	"eqv",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* EQuiValent    RT<-!(RA^RB) */
 APUOP(M_ANDC,		RR,	0x2c1,	"andc",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* ANDComplement RT<-RA&!RB */
 APUOP(M_ORC,		RR,	0x2c9,	"orc",		_A3(A_T,A_A,A_B),		00112,	FX2)	/* ORComplement  RT<-RA|!RB */
-APUOP(M_ABSDB,		RR,	0x053,	"absdb",	_A3(A_T,A_A,A_B),		00112,	FXB)	/* ABSoluteDiff  RT<-|RA-RB| */
+APUOP(M_ABSDB,		RR,	0x053,	"absdb",	_A3(A_T,A_A,A_B),		00112,	FXB)	/* ABSoluteDअगरf  RT<-|RA-RB| */
 APUOP(M_AVGB,		RR,	0x0d3,	"avgb",		_A3(A_T,A_A,A_B),		00112,	FXB)	/* AVG%          RT<-(RA+RB+1)/2 */
 APUOP(M_SUMB,		RR,	0x253,	"sumb",		_A3(A_T,A_A,A_B),		00112,	FXB)	/* SUM%          RT<-f(RA,RB) */
 APUOP(M_DFA,		RR,	0x2cc,	"dfa",		_A3(A_T,A_A,A_B),		00112,	FPD)	/* DFAdd         RT<-RA+RB */
@@ -320,19 +321,19 @@ APUOP(M_FMS,		RRR,	0x780,	"fms",		_A4(A_C,A_A,A_B,A_T),	02111,	FP6)	/* FMSub    
 APUOP(M_FNMS,		RRR,	0x680,	"fnms",		_A4(A_C,A_A,A_B,A_T),	02111,	FP6)	/* FNMSub        RC<-RT-RA*RB */
 APUOP(M_MPYA,		RRR,	0x600,	"mpya",		_A4(A_C,A_A,A_B,A_T),	02111,	FP7)	/* MPYA          RC<-RA*RB+RT */
 APUOP(M_SELB,		RRR,	0x400,	"selb",		_A4(A_C,A_A,A_B,A_T),	02111,	FX2)	/* SELectBits    RC<-RA&RT|RB&!RT */
-/* for system function call, this uses op-code of mtspr */
+/* क्रम प्रणाली function call, this uses op-code of mtspr */
 APUOP(M_SYSCALL,	RI7,    0x10c,	"syscall",      _A3(A_T,A_A,A_S7N),	00002,	SPR)        /* System Call */
 /*
-pseudo instruction:
-system call
+pseuकरो inकाष्ठाion:
+प्रणाली call
 value of I9	operation
 0	halt
-1		rt[0] = open(MEM[ra[0]],	ra[1])
-2		rt[0] = close(ra[0])
-3		rt[0] = read(ra[0],	MEM[ra[1]],	ra[2])
-4		rt[0] = write(ra[0],	MEM[ra[1]],	ra[2])
-5		printf(MEM[ra[0]],	ra[1],	ra[2],	ra[3])
-42		rt[0] = clock()
+1		rt[0] = खोलो(MEM[ra[0]],	ra[1])
+2		rt[0] = बंद(ra[0])
+3		rt[0] = पढ़ो(ra[0],	MEM[ra[1]],	ra[2])
+4		rt[0] = ग_लिखो(ra[0],	MEM[ra[1]],	ra[2])
+5		म_लिखो(MEM[ra[0]],	ra[1],	ra[2],	ra[3])
+42		rt[0] = घड़ी()
 52		rt[0] = lseek(ra0,	ra1,	ra2)
 
 */
@@ -349,11 +350,11 @@ APUOP(M_BGX,		RR,	0x343,	"bgx",		_A3(A_T,A_A,A_B),		00113,		FX2)	/* CarryGen_eXt
 /*
 
 The following ops are a subset of above except with feature bits set.
-Feature bits are bits 11-17 of the instruction:
+Feature bits are bits 11-17 of the inकाष्ठाion:
 
   11 - C & P feature bit
-  12 - disable interrupts
-  13 - enable interrupts
+  12 - disable पूर्णांकerrupts
+  13 - enable पूर्णांकerrupts
 
 */
 APUOPFB(M_BID,		RR,	0x1a8,	0x20,	"bid",		_A1(A_A),		00010,	BR)	/* BI            IP<-RA */
@@ -364,36 +365,36 @@ APUOPFB(M_IRETD,  	RR,	0x1aa,	0x20,	"iretd",	_A1(A_A), 	00010,	BR)	/* IRET      
 APUOPFB(M_IRETD2,  	RR,	0x1aa,	0x20,	"iretd",	_A0(),	 	00010,	BR)	/* IRET          IP<-SRR0 */
 APUOPFB(M_IRETE,  	RR,	0x1aa,	0x10,	"irete",	_A1(A_A), 	00010,	BR)	/* IRET          IP<-SRR0 */
 APUOPFB(M_IRETE2,  	RR,	0x1aa,	0x10,	"irete",	_A0(),	 	00010,	BR)	/* IRET          IP<-SRR0 */
-APUOPFB(M_BISLEDD,	RR,	0x1ab,	0x20,	"bisledd",	_A2(A_T,A_A),	00012,	BR)	/* BISLED        RT,IP<-IP,RA_if(ext) */
-APUOPFB(M_BISLEDE,	RR,	0x1ab,	0x10,	"bislede",	_A2(A_T,A_A),	00012,	BR)	/* BISLED        RT,IP<-IP,RA_if(ext) */
-APUOPFB(M_BIHNZD,	RR,	0x12b,	0x20,	"bihnzd",	_A2(A_T,A_A),	00011,	BR)	/* BIHNZ         IP<-RA_if(RT) */
-APUOPFB(M_BIHNZE,	RR,	0x12b,	0x10,	"bihnze",	_A2(A_T,A_A),	00011,	BR)	/* BIHNZ         IP<-RA_if(RT) */
-APUOPFB(M_BIHZD,	RR,	0x12a,	0x20,	"bihzd",	_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_if(RT) */
-APUOPFB(M_BIHZE,	RR,	0x12a,	0x10,	"bihze",	_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_if(RT) */
-APUOPFB(M_BINZD,	RR,	0x129,	0x20,	"binzd",	_A2(A_T,A_A),	00011,	BR)	/* BINZ          IP<-RA_if(RT) */
-APUOPFB(M_BINZE,	RR,	0x129,	0x10,	"binze",	_A2(A_T,A_A),	00011,	BR)	/* BINZ          IP<-RA_if(RT) */
-APUOPFB(M_BIZD,		RR,	0x128,	0x20,	"bizd",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_if(RT) */
-APUOPFB(M_BIZE,		RR,	0x128,	0x10,	"bize",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_if(RT) */
+APUOPFB(M_BISLEDD,	RR,	0x1ab,	0x20,	"bisledd",	_A2(A_T,A_A),	00012,	BR)	/* BISLED        RT,IP<-IP,RA_अगर(ext) */
+APUOPFB(M_BISLEDE,	RR,	0x1ab,	0x10,	"bislede",	_A2(A_T,A_A),	00012,	BR)	/* BISLED        RT,IP<-IP,RA_अगर(ext) */
+APUOPFB(M_BIHNZD,	RR,	0x12b,	0x20,	"bihnzd",	_A2(A_T,A_A),	00011,	BR)	/* BIHNZ         IP<-RA_अगर(RT) */
+APUOPFB(M_BIHNZE,	RR,	0x12b,	0x10,	"bihnze",	_A2(A_T,A_A),	00011,	BR)	/* BIHNZ         IP<-RA_अगर(RT) */
+APUOPFB(M_BIHZD,	RR,	0x12a,	0x20,	"bihzd",	_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_अगर(RT) */
+APUOPFB(M_BIHZE,	RR,	0x12a,	0x10,	"bihze",	_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_अगर(RT) */
+APUOPFB(M_BINZD,	RR,	0x129,	0x20,	"binzd",	_A2(A_T,A_A),	00011,	BR)	/* BINZ          IP<-RA_अगर(RT) */
+APUOPFB(M_BINZE,	RR,	0x129,	0x10,	"binze",	_A2(A_T,A_A),	00011,	BR)	/* BINZ          IP<-RA_अगर(RT) */
+APUOPFB(M_BIZD,		RR,	0x128,	0x20,	"bizd",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_अगर(RT) */
+APUOPFB(M_BIZE,		RR,	0x128,	0x10,	"bize",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_अगर(RT) */
 APUOPFB(M_SYNCC,	RR,	0x002,	0x40,	"syncc",	_A0(),		00000,	BR)	/* SYNCC          flush_pipe */
 APUOPFB(M_HBRP,		LBTI,	0x1ac,	0x40,	"hbrp",		_A0(),	        00010,	LS)	/* HBR           BTB[B9]<-M[Ra] */
 
 /* Synonyms required by the AS manual. */
 APUOP(M_LR,		RI10,	0x020,	"lr",		_A2(A_T,A_A),	00012,	FX2)	/* OR%I          RT<-RA|I10 */
-APUOP(M_BIHT,		RR,	0x12b,	"biht", 	_A2(A_T,A_A),	00011,	BR)	/* BIHNZ         IP<-RA_if(RT) */
-APUOP(M_BIHF,		RR,	0x12a,	"bihf",		_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_if(RT) */
-APUOP(M_BIT,		RR,	0x129,	"bit",		_A2(A_T,A_A),	00011,	BR)	/* BINZ          IP<-RA_if(RT) */
-APUOP(M_BIF,		RR,	0x128,	"bif",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_if(RT) */
-APUOPFB(M_BIHTD,	RR,	0x12b,	0x20,	"bihtd",	_A2(A_T,A_A),	00011,	BR)	/* BIHNF         IP<-RA_if(RT) */
-APUOPFB(M_BIHTE,	RR,	0x12b,	0x10,	"bihte",	_A2(A_T,A_A),	00011,	BR)	/* BIHNF         IP<-RA_if(RT) */
-APUOPFB(M_BIHFD,	RR,	0x12a,	0x20,	"bihfd",	_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_if(RT) */
-APUOPFB(M_BIHFE,	RR,	0x12a,	0x10,	"bihfe",	_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_if(RT) */
-APUOPFB(M_BITD, 	RR,	0x129,	0x20,	"bitd", 	_A2(A_T,A_A),	00011,	BR)	/* BINF          IP<-RA_if(RT) */
-APUOPFB(M_BITE, 	RR,	0x129,	0x10,	"bite", 	_A2(A_T,A_A),	00011,	BR)	/* BINF          IP<-RA_if(RT) */
-APUOPFB(M_BIFD,		RR,	0x128,	0x20,	"bifd",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_if(RT) */
-APUOPFB(M_BIFE,		RR,	0x128,	0x10,	"bife",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_if(RT) */
+APUOP(M_BIHT,		RR,	0x12b,	"biht", 	_A2(A_T,A_A),	00011,	BR)	/* BIHNZ         IP<-RA_अगर(RT) */
+APUOP(M_BIHF,		RR,	0x12a,	"bihf",		_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_अगर(RT) */
+APUOP(M_BIT,		RR,	0x129,	"bit",		_A2(A_T,A_A),	00011,	BR)	/* BINZ          IP<-RA_अगर(RT) */
+APUOP(M_BIF,		RR,	0x128,	"bif",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_अगर(RT) */
+APUOPFB(M_BIHTD,	RR,	0x12b,	0x20,	"bihtd",	_A2(A_T,A_A),	00011,	BR)	/* BIHNF         IP<-RA_अगर(RT) */
+APUOPFB(M_BIHTE,	RR,	0x12b,	0x10,	"bihte",	_A2(A_T,A_A),	00011,	BR)	/* BIHNF         IP<-RA_अगर(RT) */
+APUOPFB(M_BIHFD,	RR,	0x12a,	0x20,	"bihfd",	_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_अगर(RT) */
+APUOPFB(M_BIHFE,	RR,	0x12a,	0x10,	"bihfe",	_A2(A_T,A_A),	00011,	BR)	/* BIHZ          IP<-RA_अगर(RT) */
+APUOPFB(M_BITD, 	RR,	0x129,	0x20,	"bitd", 	_A2(A_T,A_A),	00011,	BR)	/* BINF          IP<-RA_अगर(RT) */
+APUOPFB(M_BITE, 	RR,	0x129,	0x10,	"bite", 	_A2(A_T,A_A),	00011,	BR)	/* BINF          IP<-RA_अगर(RT) */
+APUOPFB(M_BIFD,		RR,	0x128,	0x20,	"bifd",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_अगर(RT) */
+APUOPFB(M_BIFE,		RR,	0x128,	0x10,	"bife",		_A2(A_T,A_A),	00011,	BR)	/* BIZ           IP<-RA_अगर(RT) */
 
-#undef _A0
-#undef _A1
-#undef _A2
-#undef _A3
-#undef _A4
+#अघोषित _A0
+#अघोषित _A1
+#अघोषित _A2
+#अघोषित _A3
+#अघोषित _A4

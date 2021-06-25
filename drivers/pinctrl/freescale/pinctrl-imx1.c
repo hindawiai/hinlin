@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // i.MX1 pinctrl driver based on imx pinmux core
 //
 // Copyright (C) 2014 Alexander Shiyan <shc_work@mail.ru>
 
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-imx1.h"
+#समावेश "pinctrl-imx1.h"
 
-#define PAD_ID(port, pin)	((port) * 32 + (pin))
-#define PA	0
-#define PB	1
-#define PC	2
-#define PD	3
+#घोषणा PAD_ID(port, pin)	((port) * 32 + (pin))
+#घोषणा PA	0
+#घोषणा PB	1
+#घोषणा PC	2
+#घोषणा PD	3
 
-enum imx1_pads {
+क्रमागत imx1_pads अणु
 	MX1_PAD_A24		= PAD_ID(PA, 0),
 	MX1_PAD_TIN		= PAD_ID(PA, 1),
 	MX1_PAD_PWMO		= PAD_ID(PA, 2),
@@ -128,10 +129,10 @@ enum imx1_pads {
 	MX1_PAD_LD14		= PAD_ID(PD, 29),
 	MX1_PAD_LD15		= PAD_ID(PD, 30),
 	MX1_PAD_TMR2OUT		= PAD_ID(PD, 31),
-};
+पूर्ण;
 
-/* Pad names for the pinmux subsystem */
-static const struct pinctrl_pin_desc imx1_pinctrl_pads[] = {
+/* Pad names क्रम the pinmux subप्रणाली */
+अटल स्थिर काष्ठा pinctrl_pin_desc imx1_pinctrl_pads[] = अणु
 	IMX_PINCTRL_PIN(MX1_PAD_A24),
 	IMX_PINCTRL_PIN(MX1_PAD_TIN),
 	IMX_PINCTRL_PIN(MX1_PAD_PWMO),
@@ -241,28 +242,28 @@ static const struct pinctrl_pin_desc imx1_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX1_PAD_LD14),
 	IMX_PINCTRL_PIN(MX1_PAD_LD15),
 	IMX_PINCTRL_PIN(MX1_PAD_TMR2OUT),
-};
+पूर्ण;
 
-static struct imx1_pinctrl_soc_info imx1_pinctrl_info = {
+अटल काष्ठा imx1_pinctrl_soc_info imx1_pinctrl_info = अणु
 	.pins	= imx1_pinctrl_pads,
 	.npins	= ARRAY_SIZE(imx1_pinctrl_pads),
-};
+पूर्ण;
 
-static int __init imx1_pinctrl_probe(struct platform_device *pdev)
-{
-	return imx1_pinctrl_core_probe(pdev, &imx1_pinctrl_info);
-}
+अटल पूर्णांक __init imx1_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx1_pinctrl_core_probe(pdev, &imx1_pinctrl_info);
+पूर्ण
 
-static const struct of_device_id imx1_pinctrl_of_match[] = {
-	{ .compatible = "fsl,imx1-iomuxc", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id imx1_pinctrl_of_match[] = अणु
+	अणु .compatible = "fsl,imx1-iomuxc", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver imx1_pinctrl_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver imx1_pinctrl_driver = अणु
+	.driver	= अणु
 		.name		= "imx1-pinctrl",
 		.of_match_table	= imx1_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
-builtin_platform_driver_probe(imx1_pinctrl_driver, imx1_pinctrl_probe);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver_probe(imx1_pinctrl_driver, imx1_pinctrl_probe);

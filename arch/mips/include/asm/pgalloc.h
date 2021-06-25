@@ -1,97 +1,98 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1994 - 2001, 2003 by Ralf Baechle
  * Copyright (C) 1999, 2000, 2001 Silicon Graphics, Inc.
  */
-#ifndef _ASM_PGALLOC_H
-#define _ASM_PGALLOC_H
+#अगर_अघोषित _ASM_PGALLOC_H
+#घोषणा _ASM_PGALLOC_H
 
-#include <linux/highmem.h>
-#include <linux/mm.h>
-#include <linux/sched.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
 
-#define __HAVE_ARCH_PMD_ALLOC_ONE
-#define __HAVE_ARCH_PUD_ALLOC_ONE
-#include <asm-generic/pgalloc.h>
+#घोषणा __HAVE_ARCH_PMD_ALLOC_ONE
+#घोषणा __HAVE_ARCH_PUD_ALLOC_ONE
+#समावेश <यंत्र-generic/pgभाग.स>
 
-static inline void pmd_populate_kernel(struct mm_struct *mm, pmd_t *pmd,
+अटल अंतरभूत व्योम pmd_populate_kernel(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
 	pte_t *pte)
-{
-	set_pmd(pmd, __pmd((unsigned long)pte));
-}
+अणु
+	set_pmd(pmd, __pmd((अचिन्हित दीर्घ)pte));
+पूर्ण
 
-static inline void pmd_populate(struct mm_struct *mm, pmd_t *pmd,
+अटल अंतरभूत व्योम pmd_populate(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
 	pgtable_t pte)
-{
-	set_pmd(pmd, __pmd((unsigned long)page_address(pte)));
-}
-#define pmd_pgtable(pmd) pmd_page(pmd)
+अणु
+	set_pmd(pmd, __pmd((अचिन्हित दीर्घ)page_address(pte)));
+पूर्ण
+#घोषणा pmd_pgtable(pmd) pmd_page(pmd)
 
 /*
- * Initialize a new pmd table with invalid pointers.
+ * Initialize a new pmd table with invalid poपूर्णांकers.
  */
-extern void pmd_init(unsigned long page, unsigned long pagetable);
+बाह्य व्योम pmd_init(अचिन्हित दीर्घ page, अचिन्हित दीर्घ pagetable);
 
-#ifndef __PAGETABLE_PMD_FOLDED
+#अगर_अघोषित __PAGETABLE_PMD_FOLDED
 
-static inline void pud_populate(struct mm_struct *mm, pud_t *pud, pmd_t *pmd)
-{
-	set_pud(pud, __pud((unsigned long)pmd));
-}
-#endif
+अटल अंतरभूत व्योम pud_populate(काष्ठा mm_काष्ठा *mm, pud_t *pud, pmd_t *pmd)
+अणु
+	set_pud(pud, __pud((अचिन्हित दीर्घ)pmd));
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Initialize a new pgd / pmd table with invalid pointers.
+ * Initialize a new pgd / pmd table with invalid poपूर्णांकers.
  */
-extern void pgd_init(unsigned long page);
-extern pgd_t *pgd_alloc(struct mm_struct *mm);
+बाह्य व्योम pgd_init(अचिन्हित दीर्घ page);
+बाह्य pgd_t *pgd_alloc(काष्ठा mm_काष्ठा *mm);
 
-#define __pte_free_tlb(tlb,pte,address)			\
-do {							\
+#घोषणा __pte_मुक्त_tlb(tlb,pte,address)			\
+करो अणु							\
 	pgtable_pte_page_dtor(pte);			\
-	tlb_remove_page((tlb), pte);			\
-} while (0)
+	tlb_हटाओ_page((tlb), pte);			\
+पूर्ण जबतक (0)
 
-#ifndef __PAGETABLE_PMD_FOLDED
+#अगर_अघोषित __PAGETABLE_PMD_FOLDED
 
-static inline pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long address)
-{
+अटल अंतरभूत pmd_t *pmd_alloc_one(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address)
+अणु
 	pmd_t *pmd;
 
-	pmd = (pmd_t *) __get_free_pages(GFP_KERNEL, PMD_ORDER);
-	if (pmd)
-		pmd_init((unsigned long)pmd, (unsigned long)invalid_pte_table);
-	return pmd;
-}
+	pmd = (pmd_t *) __get_मुक्त_pages(GFP_KERNEL, PMD_ORDER);
+	अगर (pmd)
+		pmd_init((अचिन्हित दीर्घ)pmd, (अचिन्हित दीर्घ)invalid_pte_table);
+	वापस pmd;
+पूर्ण
 
-#define __pmd_free_tlb(tlb, x, addr)	pmd_free((tlb)->mm, x)
+#घोषणा __pmd_मुक्त_tlb(tlb, x, addr)	pmd_मुक्त((tlb)->mm, x)
 
-#endif
+#पूर्ण_अगर
 
-#ifndef __PAGETABLE_PUD_FOLDED
+#अगर_अघोषित __PAGETABLE_PUD_FOLDED
 
-static inline pud_t *pud_alloc_one(struct mm_struct *mm, unsigned long address)
-{
+अटल अंतरभूत pud_t *pud_alloc_one(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address)
+अणु
 	pud_t *pud;
 
-	pud = (pud_t *) __get_free_pages(GFP_KERNEL, PUD_ORDER);
-	if (pud)
-		pud_init((unsigned long)pud, (unsigned long)invalid_pmd_table);
-	return pud;
-}
+	pud = (pud_t *) __get_मुक्त_pages(GFP_KERNEL, PUD_ORDER);
+	अगर (pud)
+		pud_init((अचिन्हित दीर्घ)pud, (अचिन्हित दीर्घ)invalid_pmd_table);
+	वापस pud;
+पूर्ण
 
-static inline void p4d_populate(struct mm_struct *mm, p4d_t *p4d, pud_t *pud)
-{
-	set_p4d(p4d, __p4d((unsigned long)pud));
-}
+अटल अंतरभूत व्योम p4d_populate(काष्ठा mm_काष्ठा *mm, p4d_t *p4d, pud_t *pud)
+अणु
+	set_p4d(p4d, __p4d((अचिन्हित दीर्घ)pud));
+पूर्ण
 
-#define __pud_free_tlb(tlb, x, addr)	pud_free((tlb)->mm, x)
+#घोषणा __pud_मुक्त_tlb(tlb, x, addr)	pud_मुक्त((tlb)->mm, x)
 
-#endif /* __PAGETABLE_PUD_FOLDED */
+#पूर्ण_अगर /* __PAGETABLE_PUD_FOLDED */
 
-extern void pagetable_init(void);
+बाह्य व्योम pagetable_init(व्योम);
 
-#endif /* _ASM_PGALLOC_H */
+#पूर्ण_अगर /* _ASM_PGALLOC_H */

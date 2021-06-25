@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __HID_ROCCAT_LUA_H
-#define __HID_ROCCAT_LUA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __HID_ROCCAT_LUA_H
+#घोषणा __HID_ROCCAT_LUA_H
 
 /*
- * Copyright (c) 2012 Stefan Achatz <erazor_de@users.sourceforge.net>
+ * Copyright (c) 2012 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
  */
 
 /*
  */
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum {
+क्रमागत अणु
 	LUA_SIZE_CONTROL = 8,
-};
+पूर्ण;
 
-enum lua_commands {
+क्रमागत lua_commands अणु
 	LUA_COMMAND_CONTROL = 3,
-};
+पूर्ण;
 
-struct lua_device {
-	struct mutex lua_lock;
-};
+काष्ठा lua_device अणु
+	काष्ठा mutex lua_lock;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

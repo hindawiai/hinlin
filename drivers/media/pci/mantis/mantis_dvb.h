@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Mantis PCI bridge driver
 
@@ -6,18 +7,18 @@
 
 */
 
-#ifndef __MANTIS_DVB_H
-#define __MANTIS_DVB_H
+#अगर_अघोषित __MANTIS_DVB_H
+#घोषणा __MANTIS_DVB_H
 
-enum mantis_power {
+क्रमागत mantis_घातer अणु
 	POWER_OFF	= 0,
 	POWER_ON	= 1
-};
+पूर्ण;
 
-extern int mantis_frontend_power(struct mantis_pci *mantis, enum mantis_power power);
-extern void mantis_frontend_soft_reset(struct mantis_pci *mantis);
+बाह्य पूर्णांक mantis_frontend_घातer(काष्ठा mantis_pci *mantis, क्रमागत mantis_घातer घातer);
+बाह्य व्योम mantis_frontend_soft_reset(काष्ठा mantis_pci *mantis);
 
-extern int mantis_dvb_init(struct mantis_pci *mantis);
-extern int mantis_dvb_exit(struct mantis_pci *mantis);
+बाह्य पूर्णांक mantis_dvb_init(काष्ठा mantis_pci *mantis);
+बाह्य पूर्णांक mantis_dvb_निकास(काष्ठा mantis_pci *mantis);
 
-#endif /* __MANTIS_DVB_H */
+#पूर्ण_अगर /* __MANTIS_DVB_H */

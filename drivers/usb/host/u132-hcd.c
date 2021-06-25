@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
-* Host Controller Driver for the Elan Digital Systems U132 adapter
+* Host Controller Driver क्रम the Elan Digital Systems U132 adapter
 *
 * Copyright(C) 2006 Elan Digital Systems Limited
-* http://www.elandigitalsystems.com
+* http://www.elandigitalप्रणालीs.com
 *
-* Author and Maintainer - Tony Olech - Elan Digital Systems
-* tony.olech@elandigitalsystems.com
+* Author and Maपूर्णांकainer - Tony Olech - Elan Digital Systems
+* tony.olech@elandigitalप्रणालीs.com
 *
-* This driver was written by Tony Olech(tony.olech@elandigitalsystems.com)
+* This driver was written by Tony Olech(tony.olech@elandigitalप्रणालीs.com)
 * based on various USB host drivers in the 2.6.15 linux kernel
-* with constant reference to the 3rd Edition of Linux Device Drivers
+* with स्थिरant reference to the 3rd Edition of Linux Device Drivers
 * published by O'Reilly
 *
-* The U132 adapter is a USB to CardBus adapter specifically designed
-* for PC cards that contain an OHCI host controller. Typical PC cards
+* The U132 adapter is a USB to CardBus adapter specअगरically deचिन्हित
+* क्रम PC cards that contain an OHCI host controller. Typical PC cards
 * are the Orange Mobile 3G Option GlobeTrotter Fusion card.
 *
-* The U132 adapter will *NOT *work with PC cards that do not contain
+* The U132 adapter will *NOT *work with PC cards that करो not contain
 * an OHCI controller. A simple way to test whether a PC card has an
-* OHCI controller as an interface is to insert the PC card directly
-* into a laptop(or desktop) with a CardBus slot and if "lspci" shows
+* OHCI controller as an पूर्णांकerface is to insert the PC card directly
+* पूर्णांकo a laptop(or desktop) with a CardBus slot and अगर "lspci" shows
 * a new USB controller and "lsusb -v" shows a new OHCI Host Controller
 * then there is a good chance that the U132 adapter will support the
-* PC card.(you also need the specific client driver for the PC card)
+* PC card.(you also need the specअगरic client driver क्रम the PC card)
 *
-* Please inform the Author and Maintainer about any PC cards that
+* Please inक्रमm the Author and Maपूर्णांकainer about any PC cards that
 * contain OHCI Host Controller and work when directly connected to
-* an embedded CardBus slot but do not work when they are connected
+* an embedded CardBus slot but करो not work when they are connected
 * via an ELAN U132 adapter.
 *
 */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/delay.h>
-#include <linux/ioport.h>
-#include <linux/pci_ids.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/timer.h>
-#include <linux/list.h>
-#include <linux/interrupt.h>
-#include <linux/usb.h>
-#include <linux/usb/hcd.h>
-#include <linux/workqueue.h>
-#include <linux/platform_device.h>
-#include <linux/mutex.h>
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/byteorder.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mutex.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/byteorder.h>
 
-	/* FIXME ohci.h is ONLY for internal use by the OHCI driver.
+	/* FIXME ohci.h is ONLY क्रम पूर्णांकernal use by the OHCI driver.
 	 * If you're going to try stuff like this, you need to split
-	 * out shareable stuff (register declarations?) into its own
+	 * out shareable stuff (रेजिस्टर declarations?) पूर्णांकo its own
 	 * file, maybe name <linux/usb/ohci.h>
 	 */
 
-#include "ohci.h"
-#define OHCI_CONTROL_INIT OHCI_CTRL_CBSR
-#define OHCI_INTR_INIT (OHCI_INTR_MIE | OHCI_INTR_UE | OHCI_INTR_RD | \
+#समावेश "ohci.h"
+#घोषणा OHCI_CONTROL_INIT OHCI_CTRL_CBSR
+#घोषणा OHCI_INTR_INIT (OHCI_INTR_MIE | OHCI_INTR_UE | OHCI_INTR_RD | \
 	OHCI_INTR_WDH)
 MODULE_AUTHOR("Tony Olech - Elan Digital Systems Limited");
 MODULE_DESCRIPTION("U132 USB Host Controller Driver");
 MODULE_LICENSE("GPL");
-#define INT_MODULE_PARM(n, v) static int n = v;module_param(n, int, 0444)
+#घोषणा INT_MODULE_PARM(n, v) अटल पूर्णांक n = v;module_param(n, पूर्णांक, 0444)
 INT_MODULE_PARM(testing, 0);
-/* Some boards misreport power switching/overcurrent*/
-static bool distrust_firmware = true;
+/* Some boards misreport घातer चयनing/overcurrent*/
+अटल bool distrust_firmware = true;
 module_param(distrust_firmware, bool, 0);
 MODULE_PARM_DESC(distrust_firmware, "true to distrust firmware power/overcurrent"
 	"t setup");
-static DECLARE_WAIT_QUEUE_HEAD(u132_hcd_wait);
+अटल DECLARE_WAIT_QUEUE_HEAD(u132_hcd_रुको);
 /*
 * u132_module_lock exists to protect access to global variables
 *
 */
-static DEFINE_MUTEX(u132_module_lock);
-static int u132_exiting;
-static int u132_instances;
+अटल DEFINE_MUTEX(u132_module_lock);
+अटल पूर्णांक u132_निकासing;
+अटल पूर्णांक u132_instances;
 /*
-* end of the global variables protected by u132_module_lock
+* end of the global variables रक्षित by u132_module_lock
 */
-static struct workqueue_struct *workqueue;
-#define MAX_U132_PORTS 7
-#define MAX_U132_ADDRS 128
-#define MAX_U132_UDEVS 4
-#define MAX_U132_ENDPS 100
-#define MAX_U132_RINGS 4
-static const char *cc_to_text[16] = {
+अटल काष्ठा workqueue_काष्ठा *workqueue;
+#घोषणा MAX_U132_PORTS 7
+#घोषणा MAX_U132_ADDRS 128
+#घोषणा MAX_U132_UDEVS 4
+#घोषणा MAX_U132_ENDPS 100
+#घोषणा MAX_U132_RINGS 4
+अटल स्थिर अक्षर *cc_to_text[16] = अणु
 	"No Error ",
 	"CRC Error ",
 	"Bit Stuff ",
@@ -107,424 +108,424 @@ static const char *cc_to_text[16] = {
 	"BuffUnder ",
 	"(for HCD) ",
 	"(for HCD) "
-};
-struct u132_port {
-	struct u132 *u132;
-	int reset;
-	int enable;
-	int power;
-	int Status;
-};
-struct u132_addr {
+पूर्ण;
+काष्ठा u132_port अणु
+	काष्ठा u132 *u132;
+	पूर्णांक reset;
+	पूर्णांक enable;
+	पूर्णांक घातer;
+	पूर्णांक Status;
+पूर्ण;
+काष्ठा u132_addr अणु
 	u8 address;
-};
-struct u132_udev {
-	struct kref kref;
-	struct usb_device *usb_device;
-	u8 enumeration;
+पूर्ण;
+काष्ठा u132_udev अणु
+	काष्ठा kref kref;
+	काष्ठा usb_device *usb_device;
+	u8 क्रमागतeration;
 	u8 udev_number;
 	u8 usb_addr;
 	u8 portnumber;
 	u8 endp_number_in[16];
 	u8 endp_number_out[16];
-};
-#define ENDP_QUEUE_SHIFT 3
-#define ENDP_QUEUE_SIZE (1<<ENDP_QUEUE_SHIFT)
-#define ENDP_QUEUE_MASK (ENDP_QUEUE_SIZE-1)
-struct u132_urbq {
-	struct list_head urb_more;
-	struct urb *urb;
-};
-struct u132_spin {
+पूर्ण;
+#घोषणा ENDP_QUEUE_SHIFT 3
+#घोषणा ENDP_QUEUE_SIZE (1<<ENDP_QUEUE_SHIFT)
+#घोषणा ENDP_QUEUE_MASK (ENDP_QUEUE_SIZE-1)
+काष्ठा u132_urbq अणु
+	काष्ठा list_head urb_more;
+	काष्ठा urb *urb;
+पूर्ण;
+काष्ठा u132_spin अणु
 	spinlock_t slock;
-};
-struct u132_endp {
-	struct kref kref;
+पूर्ण;
+काष्ठा u132_endp अणु
+	काष्ठा kref kref;
 	u8 udev_number;
 	u8 endp_number;
 	u8 usb_addr;
 	u8 usb_endp;
-	struct u132 *u132;
-	struct list_head endp_ring;
-	struct u132_ring *ring;
-	unsigned toggle_bits:2;
-	unsigned active:1;
-	unsigned delayed:1;
-	unsigned input:1;
-	unsigned output:1;
-	unsigned pipetype:2;
-	unsigned dequeueing:1;
-	unsigned edset_flush:1;
-	unsigned spare_bits:14;
-	unsigned long jiffies;
-	struct usb_host_endpoint *hep;
-	struct u132_spin queue_lock;
+	काष्ठा u132 *u132;
+	काष्ठा list_head endp_ring;
+	काष्ठा u132_ring *ring;
+	अचिन्हित toggle_bits:2;
+	अचिन्हित active:1;
+	अचिन्हित delayed:1;
+	अचिन्हित input:1;
+	अचिन्हित output:1;
+	अचिन्हित pipetype:2;
+	अचिन्हित dequeueing:1;
+	अचिन्हित edset_flush:1;
+	अचिन्हित spare_bits:14;
+	अचिन्हित दीर्घ jअगरfies;
+	काष्ठा usb_host_endpoपूर्णांक *hep;
+	काष्ठा u132_spin queue_lock;
 	u16 queue_size;
 	u16 queue_last;
 	u16 queue_next;
-	struct urb *urb_list[ENDP_QUEUE_SIZE];
-	struct list_head urb_more;
-	struct delayed_work scheduler;
-};
-struct u132_ring {
-	unsigned in_use:1;
-	unsigned length:7;
+	काष्ठा urb *urb_list[ENDP_QUEUE_SIZE];
+	काष्ठा list_head urb_more;
+	काष्ठा delayed_work scheduler;
+पूर्ण;
+काष्ठा u132_ring अणु
+	अचिन्हित in_use:1;
+	अचिन्हित length:7;
 	u8 number;
-	struct u132 *u132;
-	struct u132_endp *curr_endp;
-	struct delayed_work scheduler;
-};
-struct u132 {
-	struct kref kref;
-	struct mutex sw_lock;
-	struct mutex scheduler_lock;
-	struct u132_platform_data *board;
-	struct platform_device *platform_dev;
-	struct u132_ring ring[MAX_U132_RINGS];
-	int sequence_num;
-	int going;
-	int power;
-	int reset;
-	int num_ports;
+	काष्ठा u132 *u132;
+	काष्ठा u132_endp *curr_endp;
+	काष्ठा delayed_work scheduler;
+पूर्ण;
+काष्ठा u132 अणु
+	काष्ठा kref kref;
+	काष्ठा mutex sw_lock;
+	काष्ठा mutex scheduler_lock;
+	काष्ठा u132_platक्रमm_data *board;
+	काष्ठा platक्रमm_device *platक्रमm_dev;
+	काष्ठा u132_ring ring[MAX_U132_RINGS];
+	पूर्णांक sequence_num;
+	पूर्णांक going;
+	पूर्णांक घातer;
+	पूर्णांक reset;
+	पूर्णांक num_ports;
 	u32 hc_control;
-	u32 hc_fminterval;
+	u32 hc_fmपूर्णांकerval;
 	u32 hc_roothub_status;
 	u32 hc_roothub_a;
 	u32 hc_roothub_portstatus[MAX_ROOT_PORTS];
-	int flags;
-	unsigned long next_statechange;
-	struct delayed_work monitor;
-	int num_endpoints;
-	struct u132_addr addr[MAX_U132_ADDRS];
-	struct u132_udev udev[MAX_U132_UDEVS];
-	struct u132_port port[MAX_U132_PORTS];
-	struct u132_endp *endp[MAX_U132_ENDPS];
-};
+	पूर्णांक flags;
+	अचिन्हित दीर्घ next_statechange;
+	काष्ठा delayed_work monitor;
+	पूर्णांक num_endpoपूर्णांकs;
+	काष्ठा u132_addr addr[MAX_U132_ADDRS];
+	काष्ठा u132_udev udev[MAX_U132_UDEVS];
+	काष्ठा u132_port port[MAX_U132_PORTS];
+	काष्ठा u132_endp *endp[MAX_U132_ENDPS];
+पूर्ण;
 
 /*
-* these cannot be inlines because we need the structure offset!!
+* these cannot be अंतरभूतs because we need the काष्ठाure offset!!
 * Does anyone have a better way?????
 */
-#define ftdi_read_pcimem(pdev, member, data) usb_ftdi_elan_read_pcimem(pdev, \
-	offsetof(struct ohci_regs, member), 0, data);
-#define ftdi_write_pcimem(pdev, member, data) usb_ftdi_elan_write_pcimem(pdev, \
-	offsetof(struct ohci_regs, member), 0, data)
-#define u132_read_pcimem(u132, member, data) \
-	usb_ftdi_elan_read_pcimem(u132->platform_dev, offsetof(struct \
+#घोषणा ftdi_पढ़ो_pcimem(pdev, member, data) usb_ftdi_elan_पढ़ो_pcimem(pdev, \
+	दुरत्व(काष्ठा ohci_regs, member), 0, data);
+#घोषणा ftdi_ग_लिखो_pcimem(pdev, member, data) usb_ftdi_elan_ग_लिखो_pcimem(pdev, \
+	दुरत्व(काष्ठा ohci_regs, member), 0, data)
+#घोषणा u132_पढ़ो_pcimem(u132, member, data) \
+	usb_ftdi_elan_पढ़ो_pcimem(u132->platक्रमm_dev, दुरत्व(काष्ठा \
 	ohci_regs, member), 0, data)
-#define u132_write_pcimem(u132, member, data) \
-	usb_ftdi_elan_write_pcimem(u132->platform_dev, offsetof(struct \
+#घोषणा u132_ग_लिखो_pcimem(u132, member, data) \
+	usb_ftdi_elan_ग_लिखो_pcimem(u132->platक्रमm_dev, दुरत्व(काष्ठा \
 	ohci_regs, member), 0, data)
-static inline struct u132 *udev_to_u132(struct u132_udev *udev)
-{
+अटल अंतरभूत काष्ठा u132 *udev_to_u132(काष्ठा u132_udev *udev)
+अणु
 	u8 udev_number = udev->udev_number;
-	return container_of(udev, struct u132, udev[udev_number]);
-}
+	वापस container_of(udev, काष्ठा u132, udev[udev_number]);
+पूर्ण
 
-static inline struct u132 *hcd_to_u132(struct usb_hcd *hcd)
-{
-	return (struct u132 *)(hcd->hcd_priv);
-}
+अटल अंतरभूत काष्ठा u132 *hcd_to_u132(काष्ठा usb_hcd *hcd)
+अणु
+	वापस (काष्ठा u132 *)(hcd->hcd_priv);
+पूर्ण
 
-static inline struct usb_hcd *u132_to_hcd(struct u132 *u132)
-{
-	return container_of((void *)u132, struct usb_hcd, hcd_priv);
-}
+अटल अंतरभूत काष्ठा usb_hcd *u132_to_hcd(काष्ठा u132 *u132)
+अणु
+	वापस container_of((व्योम *)u132, काष्ठा usb_hcd, hcd_priv);
+पूर्ण
 
-static inline void u132_disable(struct u132 *u132)
-{
+अटल अंतरभूत व्योम u132_disable(काष्ठा u132 *u132)
+अणु
 	u132_to_hcd(u132)->state = HC_STATE_HALT;
-}
+पूर्ण
 
 
-#define kref_to_u132(d) container_of(d, struct u132, kref)
-#define kref_to_u132_endp(d) container_of(d, struct u132_endp, kref)
-#define kref_to_u132_udev(d) container_of(d, struct u132_udev, kref)
-#include "../misc/usb_u132.h"
-static const char hcd_name[] = "u132_hcd";
-#define PORT_C_MASK ((USB_PORT_STAT_C_CONNECTION | USB_PORT_STAT_C_ENABLE | \
+#घोषणा kref_to_u132(d) container_of(d, काष्ठा u132, kref)
+#घोषणा kref_to_u132_endp(d) container_of(d, काष्ठा u132_endp, kref)
+#घोषणा kref_to_u132_udev(d) container_of(d, काष्ठा u132_udev, kref)
+#समावेश "../misc/usb_u132.h"
+अटल स्थिर अक्षर hcd_name[] = "u132_hcd";
+#घोषणा PORT_C_MASK ((USB_PORT_STAT_C_CONNECTION | USB_PORT_STAT_C_ENABLE | \
 	USB_PORT_STAT_C_SUSPEND | USB_PORT_STAT_C_OVERCURRENT | \
 	USB_PORT_STAT_C_RESET) << 16)
-static void u132_hcd_delete(struct kref *kref)
-{
-	struct u132 *u132 = kref_to_u132(kref);
-	struct platform_device *pdev = u132->platform_dev;
-	struct usb_hcd *hcd = u132_to_hcd(u132);
+अटल व्योम u132_hcd_delete(काष्ठा kref *kref)
+अणु
+	काष्ठा u132 *u132 = kref_to_u132(kref);
+	काष्ठा platक्रमm_device *pdev = u132->platक्रमm_dev;
+	काष्ठा usb_hcd *hcd = u132_to_hcd(u132);
 	u132->going += 1;
 	mutex_lock(&u132_module_lock);
 	u132_instances -= 1;
 	mutex_unlock(&u132_module_lock);
-	dev_warn(&u132->platform_dev->dev, "FREEING the hcd=%p and thus the u13"
+	dev_warn(&u132->platक्रमm_dev->dev, "FREEING the hcd=%p and thus the u13"
 		"2=%p going=%d pdev=%p\n", hcd, u132, u132->going, pdev);
 	usb_put_hcd(hcd);
-}
+पूर्ण
 
-static inline void u132_u132_put_kref(struct u132 *u132)
-{
+अटल अंतरभूत व्योम u132_u132_put_kref(काष्ठा u132 *u132)
+अणु
 	kref_put(&u132->kref, u132_hcd_delete);
-}
+पूर्ण
 
-static inline void u132_u132_init_kref(struct u132 *u132)
-{
+अटल अंतरभूत व्योम u132_u132_init_kref(काष्ठा u132 *u132)
+अणु
 	kref_init(&u132->kref);
-}
+पूर्ण
 
-static void u132_udev_delete(struct kref *kref)
-{
-	struct u132_udev *udev = kref_to_u132_udev(kref);
+अटल व्योम u132_udev_delete(काष्ठा kref *kref)
+अणु
+	काष्ठा u132_udev *udev = kref_to_u132_udev(kref);
 	udev->udev_number = 0;
-	udev->usb_device = NULL;
+	udev->usb_device = शून्य;
 	udev->usb_addr = 0;
-	udev->enumeration = 0;
-}
+	udev->क्रमागतeration = 0;
+पूर्ण
 
-static inline void u132_udev_put_kref(struct u132 *u132, struct u132_udev *udev)
-{
+अटल अंतरभूत व्योम u132_udev_put_kref(काष्ठा u132 *u132, काष्ठा u132_udev *udev)
+अणु
 	kref_put(&udev->kref, u132_udev_delete);
-}
+पूर्ण
 
-static inline void u132_udev_get_kref(struct u132 *u132, struct u132_udev *udev)
-{
+अटल अंतरभूत व्योम u132_udev_get_kref(काष्ठा u132 *u132, काष्ठा u132_udev *udev)
+अणु
 	kref_get(&udev->kref);
-}
+पूर्ण
 
-static inline void u132_udev_init_kref(struct u132 *u132,
-	struct u132_udev *udev)
-{
+अटल अंतरभूत व्योम u132_udev_init_kref(काष्ठा u132 *u132,
+	काष्ठा u132_udev *udev)
+अणु
 	kref_init(&udev->kref);
-}
+पूर्ण
 
-static inline void u132_ring_put_kref(struct u132 *u132, struct u132_ring *ring)
-{
+अटल अंतरभूत व्योम u132_ring_put_kref(काष्ठा u132 *u132, काष्ठा u132_ring *ring)
+अणु
 	kref_put(&u132->kref, u132_hcd_delete);
-}
+पूर्ण
 
-static void u132_ring_requeue_work(struct u132 *u132, struct u132_ring *ring,
-	unsigned int delta)
-{
-	if (delta > 0) {
-		if (queue_delayed_work(workqueue, &ring->scheduler, delta))
-			return;
-	} else if (queue_delayed_work(workqueue, &ring->scheduler, 0))
-		return;
+अटल व्योम u132_ring_requeue_work(काष्ठा u132 *u132, काष्ठा u132_ring *ring,
+	अचिन्हित पूर्णांक delta)
+अणु
+	अगर (delta > 0) अणु
+		अगर (queue_delayed_work(workqueue, &ring->scheduler, delta))
+			वापस;
+	पूर्ण अन्यथा अगर (queue_delayed_work(workqueue, &ring->scheduler, 0))
+		वापस;
 	kref_put(&u132->kref, u132_hcd_delete);
-}
+पूर्ण
 
-static void u132_ring_queue_work(struct u132 *u132, struct u132_ring *ring,
-	unsigned int delta)
-{
+अटल व्योम u132_ring_queue_work(काष्ठा u132 *u132, काष्ठा u132_ring *ring,
+	अचिन्हित पूर्णांक delta)
+अणु
 	kref_get(&u132->kref);
 	u132_ring_requeue_work(u132, ring, delta);
-}
+पूर्ण
 
-static void u132_ring_cancel_work(struct u132 *u132, struct u132_ring *ring)
-{
-	if (cancel_delayed_work(&ring->scheduler))
+अटल व्योम u132_ring_cancel_work(काष्ठा u132 *u132, काष्ठा u132_ring *ring)
+अणु
+	अगर (cancel_delayed_work(&ring->scheduler))
 		kref_put(&u132->kref, u132_hcd_delete);
-}
+पूर्ण
 
-static void u132_endp_delete(struct kref *kref)
-{
-	struct u132_endp *endp = kref_to_u132_endp(kref);
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_endp_delete(काष्ठा kref *kref)
+अणु
+	काष्ठा u132_endp *endp = kref_to_u132_endp(kref);
+	काष्ठा u132 *u132 = endp->u132;
 	u8 usb_addr = endp->usb_addr;
 	u8 usb_endp = endp->usb_endp;
 	u8 address = u132->addr[usb_addr].address;
-	struct u132_udev *udev = &u132->udev[address];
+	काष्ठा u132_udev *udev = &u132->udev[address];
 	u8 endp_number = endp->endp_number;
-	struct usb_host_endpoint *hep = endp->hep;
-	struct u132_ring *ring = endp->ring;
-	struct list_head *head = &endp->endp_ring;
+	काष्ठा usb_host_endpoपूर्णांक *hep = endp->hep;
+	काष्ठा u132_ring *ring = endp->ring;
+	काष्ठा list_head *head = &endp->endp_ring;
 	ring->length -= 1;
-	if (endp == ring->curr_endp) {
-		if (list_empty(head)) {
-			ring->curr_endp = NULL;
+	अगर (endp == ring->curr_endp) अणु
+		अगर (list_empty(head)) अणु
+			ring->curr_endp = शून्य;
 			list_del(head);
-		} else {
-			struct u132_endp *next_endp = list_entry(head->next,
-				struct u132_endp, endp_ring);
+		पूर्ण अन्यथा अणु
+			काष्ठा u132_endp *next_endp = list_entry(head->next,
+				काष्ठा u132_endp, endp_ring);
 			ring->curr_endp = next_endp;
 			list_del(head);
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		list_del(head);
-	if (endp->input) {
+	अगर (endp->input) अणु
 		udev->endp_number_in[usb_endp] = 0;
 		u132_udev_put_kref(u132, udev);
-	}
-	if (endp->output) {
+	पूर्ण
+	अगर (endp->output) अणु
 		udev->endp_number_out[usb_endp] = 0;
 		u132_udev_put_kref(u132, udev);
-	}
-	u132->endp[endp_number - 1] = NULL;
-	hep->hcpriv = NULL;
-	kfree(endp);
+	पूर्ण
+	u132->endp[endp_number - 1] = शून्य;
+	hep->hcpriv = शून्य;
+	kमुक्त(endp);
 	u132_u132_put_kref(u132);
-}
+पूर्ण
 
-static inline void u132_endp_put_kref(struct u132 *u132, struct u132_endp *endp)
-{
+अटल अंतरभूत व्योम u132_endp_put_kref(काष्ठा u132 *u132, काष्ठा u132_endp *endp)
+अणु
 	kref_put(&endp->kref, u132_endp_delete);
-}
+पूर्ण
 
-static inline void u132_endp_get_kref(struct u132 *u132, struct u132_endp *endp)
-{
+अटल अंतरभूत व्योम u132_endp_get_kref(काष्ठा u132 *u132, काष्ठा u132_endp *endp)
+अणु
 	kref_get(&endp->kref);
-}
+पूर्ण
 
-static inline void u132_endp_init_kref(struct u132 *u132,
-	struct u132_endp *endp)
-{
+अटल अंतरभूत व्योम u132_endp_init_kref(काष्ठा u132 *u132,
+	काष्ठा u132_endp *endp)
+अणु
 	kref_init(&endp->kref);
 	kref_get(&u132->kref);
-}
+पूर्ण
 
-static void u132_endp_queue_work(struct u132 *u132, struct u132_endp *endp,
-	unsigned int delta)
-{
-	if (queue_delayed_work(workqueue, &endp->scheduler, delta))
+अटल व्योम u132_endp_queue_work(काष्ठा u132 *u132, काष्ठा u132_endp *endp,
+	अचिन्हित पूर्णांक delta)
+अणु
+	अगर (queue_delayed_work(workqueue, &endp->scheduler, delta))
 		kref_get(&endp->kref);
-}
+पूर्ण
 
-static void u132_endp_cancel_work(struct u132 *u132, struct u132_endp *endp)
-{
-	if (cancel_delayed_work(&endp->scheduler))
+अटल व्योम u132_endp_cancel_work(काष्ठा u132 *u132, काष्ठा u132_endp *endp)
+अणु
+	अगर (cancel_delayed_work(&endp->scheduler))
 		kref_put(&endp->kref, u132_endp_delete);
-}
+पूर्ण
 
-static inline void u132_monitor_put_kref(struct u132 *u132)
-{
+अटल अंतरभूत व्योम u132_monitor_put_kref(काष्ठा u132 *u132)
+अणु
 	kref_put(&u132->kref, u132_hcd_delete);
-}
+पूर्ण
 
-static void u132_monitor_queue_work(struct u132 *u132, unsigned int delta)
-{
-	if (queue_delayed_work(workqueue, &u132->monitor, delta))
+अटल व्योम u132_monitor_queue_work(काष्ठा u132 *u132, अचिन्हित पूर्णांक delta)
+अणु
+	अगर (queue_delayed_work(workqueue, &u132->monitor, delta))
 		kref_get(&u132->kref);
-}
+पूर्ण
 
-static void u132_monitor_requeue_work(struct u132 *u132, unsigned int delta)
-{
-	if (!queue_delayed_work(workqueue, &u132->monitor, delta))
+अटल व्योम u132_monitor_requeue_work(काष्ठा u132 *u132, अचिन्हित पूर्णांक delta)
+अणु
+	अगर (!queue_delayed_work(workqueue, &u132->monitor, delta))
 		kref_put(&u132->kref, u132_hcd_delete);
-}
+पूर्ण
 
-static void u132_monitor_cancel_work(struct u132 *u132)
-{
-	if (cancel_delayed_work(&u132->monitor))
+अटल व्योम u132_monitor_cancel_work(काष्ठा u132 *u132)
+अणु
+	अगर (cancel_delayed_work(&u132->monitor))
 		kref_put(&u132->kref, u132_hcd_delete);
-}
+पूर्ण
 
-static int read_roothub_info(struct u132 *u132)
-{
+अटल पूर्णांक पढ़ो_roothub_info(काष्ठा u132 *u132)
+अणु
 	u32 revision;
-	int retval;
-	retval = u132_read_pcimem(u132, revision, &revision);
-	if (retval) {
-		dev_err(&u132->platform_dev->dev, "error %d accessing device co"
+	पूर्णांक retval;
+	retval = u132_पढ़ो_pcimem(u132, revision, &revision);
+	अगर (retval) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "error %d accessing device co"
 			"ntrol\n", retval);
-		return retval;
-	} else if ((revision & 0xFF) == 0x10) {
-	} else if ((revision & 0xFF) == 0x11) {
-	} else {
-		dev_err(&u132->platform_dev->dev, "device revision is not valid"
+		वापस retval;
+	पूर्ण अन्यथा अगर ((revision & 0xFF) == 0x10) अणु
+	पूर्ण अन्यथा अगर ((revision & 0xFF) == 0x11) अणु
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device revision is not valid"
 			" %08X\n", revision);
-		return -ENODEV;
-	}
-	retval = u132_read_pcimem(u132, control, &u132->hc_control);
-	if (retval) {
-		dev_err(&u132->platform_dev->dev, "error %d accessing device co"
+		वापस -ENODEV;
+	पूर्ण
+	retval = u132_पढ़ो_pcimem(u132, control, &u132->hc_control);
+	अगर (retval) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "error %d accessing device co"
 			"ntrol\n", retval);
-		return retval;
-	}
-	retval = u132_read_pcimem(u132, roothub.status,
+		वापस retval;
+	पूर्ण
+	retval = u132_पढ़ो_pcimem(u132, roothub.status,
 		&u132->hc_roothub_status);
-	if (retval) {
-		dev_err(&u132->platform_dev->dev, "error %d accessing device re"
+	अगर (retval) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "error %d accessing device re"
 			"g roothub.status\n", retval);
-		return retval;
-	}
-	retval = u132_read_pcimem(u132, roothub.a, &u132->hc_roothub_a);
-	if (retval) {
-		dev_err(&u132->platform_dev->dev, "error %d accessing device re"
+		वापस retval;
+	पूर्ण
+	retval = u132_पढ़ो_pcimem(u132, roothub.a, &u132->hc_roothub_a);
+	अगर (retval) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "error %d accessing device re"
 			"g roothub.a\n", retval);
-		return retval;
-	}
-	{
-		int I = u132->num_ports;
-		int i = 0;
-		while (I-- > 0) {
-			retval = u132_read_pcimem(u132, roothub.portstatus[i],
+		वापस retval;
+	पूर्ण
+	अणु
+		पूर्णांक I = u132->num_ports;
+		पूर्णांक i = 0;
+		जबतक (I-- > 0) अणु
+			retval = u132_पढ़ो_pcimem(u132, roothub.portstatus[i],
 				&u132->hc_roothub_portstatus[i]);
-			if (retval) {
-				dev_err(&u132->platform_dev->dev, "error %d acc"
+			अगर (retval) अणु
+				dev_err(&u132->platक्रमm_dev->dev, "error %d acc"
 					"essing device roothub.portstatus[%d]\n"
 					, retval, i);
-				return retval;
-			} else
+				वापस retval;
+			पूर्ण अन्यथा
 				i += 1;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void u132_hcd_monitor_work(struct work_struct *work)
-{
-	struct u132 *u132 = container_of(work, struct u132, monitor.work);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अटल व्योम u132_hcd_monitor_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा u132 *u132 = container_of(work, काष्ठा u132, monitor.work);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		u132_monitor_put_kref(u132);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed\n");
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed\n");
 		u132_monitor_put_kref(u132);
-		return;
-	} else {
-		int retval;
+		वापस;
+	पूर्ण अन्यथा अणु
+		पूर्णांक retval;
 		mutex_lock(&u132->sw_lock);
-		retval = read_roothub_info(u132);
-		if (retval) {
-			struct usb_hcd *hcd = u132_to_hcd(u132);
+		retval = पढ़ो_roothub_info(u132);
+		अगर (retval) अणु
+			काष्ठा usb_hcd *hcd = u132_to_hcd(u132);
 			u132_disable(u132);
 			u132->going = 1;
 			mutex_unlock(&u132->sw_lock);
 			usb_hc_died(hcd);
-			ftdi_elan_gone_away(u132->platform_dev);
+			ftdi_elan_gone_away(u132->platक्रमm_dev);
 			u132_monitor_put_kref(u132);
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 			u132_monitor_requeue_work(u132, 500);
 			mutex_unlock(&u132->sw_lock);
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_giveback_urb(struct u132 *u132, struct u132_endp *endp,
-	struct urb *urb, int status)
-{
-	struct u132_ring *ring;
-	unsigned long irqs;
-	struct usb_hcd *hcd = u132_to_hcd(u132);
+अटल व्योम u132_hcd_giveback_urb(काष्ठा u132 *u132, काष्ठा u132_endp *endp,
+	काष्ठा urb *urb, पूर्णांक status)
+अणु
+	काष्ठा u132_ring *ring;
+	अचिन्हित दीर्घ irqs;
+	काष्ठा usb_hcd *hcd = u132_to_hcd(u132);
 	urb->error_count = 0;
 	spin_lock_irqsave(&endp->queue_lock.slock, irqs);
 	usb_hcd_unlink_urb_from_ep(hcd, urb);
 	endp->queue_next += 1;
-	if (ENDP_QUEUE_SIZE > --endp->queue_size) {
+	अगर (ENDP_QUEUE_SIZE > --endp->queue_size) अणु
 		endp->active = 0;
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-	} else {
-		struct list_head *next = endp->urb_more.next;
-		struct u132_urbq *urbq = list_entry(next, struct u132_urbq,
+	पूर्ण अन्यथा अणु
+		काष्ठा list_head *next = endp->urb_more.next;
+		काष्ठा u132_urbq *urbq = list_entry(next, काष्ठा u132_urbq,
 			urb_more);
 		list_del(next);
 		endp->urb_list[ENDP_QUEUE_MASK & endp->queue_last++] =
 			urbq->urb;
 		endp->active = 0;
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-		kfree(urbq);
-	}
+		kमुक्त(urbq);
+	पूर्ण
 	mutex_lock(&u132->scheduler_lock);
 	ring = endp->ring;
 	ring->in_use = 0;
@@ -533,879 +534,879 @@ static void u132_hcd_giveback_urb(struct u132 *u132, struct u132_endp *endp,
 	mutex_unlock(&u132->scheduler_lock);
 	u132_endp_put_kref(u132, endp);
 	usb_hcd_giveback_urb(hcd, urb, status);
-}
+पूर्ण
 
-static void u132_hcd_forget_urb(struct u132 *u132, struct u132_endp *endp,
-	struct urb *urb, int status)
-{
+अटल व्योम u132_hcd_क्रमget_urb(काष्ठा u132 *u132, काष्ठा u132_endp *endp,
+	काष्ठा urb *urb, पूर्णांक status)
+अणु
 	u132_endp_put_kref(u132, endp);
-}
+पूर्ण
 
-static void u132_hcd_abandon_urb(struct u132 *u132, struct u132_endp *endp,
-	struct urb *urb, int status)
-{
-	unsigned long irqs;
-	struct usb_hcd *hcd = u132_to_hcd(u132);
+अटल व्योम u132_hcd_abanकरोn_urb(काष्ठा u132 *u132, काष्ठा u132_endp *endp,
+	काष्ठा urb *urb, पूर्णांक status)
+अणु
+	अचिन्हित दीर्घ irqs;
+	काष्ठा usb_hcd *hcd = u132_to_hcd(u132);
 	urb->error_count = 0;
 	spin_lock_irqsave(&endp->queue_lock.slock, irqs);
 	usb_hcd_unlink_urb_from_ep(hcd, urb);
 	endp->queue_next += 1;
-	if (ENDP_QUEUE_SIZE > --endp->queue_size) {
+	अगर (ENDP_QUEUE_SIZE > --endp->queue_size) अणु
 		endp->active = 0;
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-	} else {
-		struct list_head *next = endp->urb_more.next;
-		struct u132_urbq *urbq = list_entry(next, struct u132_urbq,
+	पूर्ण अन्यथा अणु
+		काष्ठा list_head *next = endp->urb_more.next;
+		काष्ठा u132_urbq *urbq = list_entry(next, काष्ठा u132_urbq,
 			urb_more);
 		list_del(next);
 		endp->urb_list[ENDP_QUEUE_MASK & endp->queue_last++] =
 			urbq->urb;
 		endp->active = 0;
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-		kfree(urbq);
-	}
+		kमुक्त(urbq);
+	पूर्ण
 	usb_hcd_giveback_urb(hcd, urb, status);
-}
+पूर्ण
 
-static inline int edset_input(struct u132 *u132, struct u132_ring *ring,
-	struct u132_endp *endp, struct urb *urb, u8 address, u8 toggle_bits,
-	void (*callback) (void *endp, struct urb *urb, u8 *buf, int len,
-	int toggle_bits, int error_count, int condition_code, int repeat_number,
-	 int halted, int skipped, int actual, int non_null))
-{
-	return usb_ftdi_elan_edset_input(u132->platform_dev, ring->number, endp,
+अटल अंतरभूत पूर्णांक edset_input(काष्ठा u132 *u132, काष्ठा u132_ring *ring,
+	काष्ठा u132_endp *endp, काष्ठा urb *urb, u8 address, u8 toggle_bits,
+	व्योम (*callback) (व्योम *endp, काष्ठा urb *urb, u8 *buf, पूर्णांक len,
+	पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code, पूर्णांक repeat_number,
+	 पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null))
+अणु
+	वापस usb_ftdi_elan_edset_input(u132->platक्रमm_dev, ring->number, endp,
 		 urb, address, endp->usb_endp, toggle_bits, callback);
-}
+पूर्ण
 
-static inline int edset_setup(struct u132 *u132, struct u132_ring *ring,
-	struct u132_endp *endp, struct urb *urb, u8 address, u8 toggle_bits,
-	void (*callback) (void *endp, struct urb *urb, u8 *buf, int len,
-	int toggle_bits, int error_count, int condition_code, int repeat_number,
-	 int halted, int skipped, int actual, int non_null))
-{
-	return usb_ftdi_elan_edset_setup(u132->platform_dev, ring->number, endp,
+अटल अंतरभूत पूर्णांक edset_setup(काष्ठा u132 *u132, काष्ठा u132_ring *ring,
+	काष्ठा u132_endp *endp, काष्ठा urb *urb, u8 address, u8 toggle_bits,
+	व्योम (*callback) (व्योम *endp, काष्ठा urb *urb, u8 *buf, पूर्णांक len,
+	पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code, पूर्णांक repeat_number,
+	 पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null))
+अणु
+	वापस usb_ftdi_elan_edset_setup(u132->platक्रमm_dev, ring->number, endp,
 		 urb, address, endp->usb_endp, toggle_bits, callback);
-}
+पूर्ण
 
-static inline int edset_single(struct u132 *u132, struct u132_ring *ring,
-	struct u132_endp *endp, struct urb *urb, u8 address, u8 toggle_bits,
-	void (*callback) (void *endp, struct urb *urb, u8 *buf, int len,
-	int toggle_bits, int error_count, int condition_code, int repeat_number,
-	 int halted, int skipped, int actual, int non_null))
-{
-	return usb_ftdi_elan_edset_single(u132->platform_dev, ring->number,
+अटल अंतरभूत पूर्णांक edset_single(काष्ठा u132 *u132, काष्ठा u132_ring *ring,
+	काष्ठा u132_endp *endp, काष्ठा urb *urb, u8 address, u8 toggle_bits,
+	व्योम (*callback) (व्योम *endp, काष्ठा urb *urb, u8 *buf, पूर्णांक len,
+	पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code, पूर्णांक repeat_number,
+	 पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null))
+अणु
+	वापस usb_ftdi_elan_edset_single(u132->platक्रमm_dev, ring->number,
 		endp, urb, address, endp->usb_endp, toggle_bits, callback);
-}
+पूर्ण
 
-static inline int edset_output(struct u132 *u132, struct u132_ring *ring,
-	struct u132_endp *endp, struct urb *urb, u8 address, u8 toggle_bits,
-	void (*callback) (void *endp, struct urb *urb, u8 *buf, int len,
-	int toggle_bits, int error_count, int condition_code, int repeat_number,
-	 int halted, int skipped, int actual, int non_null))
-{
-	return usb_ftdi_elan_edset_output(u132->platform_dev, ring->number,
+अटल अंतरभूत पूर्णांक edset_output(काष्ठा u132 *u132, काष्ठा u132_ring *ring,
+	काष्ठा u132_endp *endp, काष्ठा urb *urb, u8 address, u8 toggle_bits,
+	व्योम (*callback) (व्योम *endp, काष्ठा urb *urb, u8 *buf, पूर्णांक len,
+	पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code, पूर्णांक repeat_number,
+	 पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null))
+अणु
+	वापस usb_ftdi_elan_edset_output(u132->platक्रमm_dev, ring->number,
 		endp, urb, address, endp->usb_endp, toggle_bits, callback);
-}
+पूर्ण
 
 
 /*
 * must not LOCK sw_lock
 *
 */
-static void u132_hcd_interrupt_recv(void *data, struct urb *urb, u8 *buf,
-	int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_पूर्णांकerrupt_recv(व्योम *data, काष्ठा urb *urb, u8 *buf,
+	पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	u8 address = u132->addr[endp->usb_addr].address;
-	struct u132_udev *udev = &u132->udev[address];
+	काष्ठा u132_udev *udev = &u132->udev[address];
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
-		struct u132_ring *ring = endp->ring;
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
+		काष्ठा u132_ring *ring = endp->ring;
 		u8 *u = urb->transfer_buffer + urb->actual_length;
 		u8 *b = buf;
-		int L = len;
+		पूर्णांक L = len;
 
-		while (L-- > 0)
+		जबतक (L-- > 0)
 			*u++ = *b++;
 
 		urb->actual_length += len;
-		if ((condition_code == TD_CC_NOERROR) &&
-			(urb->transfer_buffer_length > urb->actual_length)) {
+		अगर ((condition_code == TD_CC_NOERROR) &&
+			(urb->transfer_buffer_length > urb->actual_length)) अणु
 			endp->toggle_bits = toggle_bits;
 			usb_settoggle(udev->usb_device, endp->usb_endp, 0,
 				1 & toggle_bits);
-			if (urb->actual_length > 0) {
-				int retval;
+			अगर (urb->actual_length > 0) अणु
+				पूर्णांक retval;
 				mutex_unlock(&u132->scheduler_lock);
 				retval = edset_single(u132, ring, endp, urb,
 					address, endp->toggle_bits,
-					u132_hcd_interrupt_recv);
-				if (retval != 0)
+					u132_hcd_पूर्णांकerrupt_recv);
+				अगर (retval != 0)
 					u132_hcd_giveback_urb(u132, endp, urb,
 						retval);
-			} else {
+			पूर्ण अन्यथा अणु
 				ring->in_use = 0;
 				endp->active = 0;
-				endp->jiffies = jiffies +
-					msecs_to_jiffies(urb->interval);
+				endp->jअगरfies = jअगरfies +
+					msecs_to_jअगरfies(urb->पूर्णांकerval);
 				u132_ring_cancel_work(u132, ring);
 				u132_ring_queue_work(u132, ring, 0);
 				mutex_unlock(&u132->scheduler_lock);
 				u132_endp_put_kref(u132, endp);
-			}
-			return;
-		} else if ((condition_code == TD_DATAUNDERRUN) &&
-			((urb->transfer_flags & URB_SHORT_NOT_OK) == 0)) {
+			पूर्ण
+			वापस;
+		पूर्ण अन्यथा अगर ((condition_code == TD_DATAUNDERRUN) &&
+			((urb->transfer_flags & URB_SHORT_NOT_OK) == 0)) अणु
 			endp->toggle_bits = toggle_bits;
 			usb_settoggle(udev->usb_device, endp->usb_endp, 0,
 				1 & toggle_bits);
 			mutex_unlock(&u132->scheduler_lock);
 			u132_hcd_giveback_urb(u132, endp, urb, 0);
-			return;
-		} else {
-			if (condition_code == TD_CC_NOERROR) {
+			वापस;
+		पूर्ण अन्यथा अणु
+			अगर (condition_code == TD_CC_NOERROR) अणु
 				endp->toggle_bits = toggle_bits;
 				usb_settoggle(udev->usb_device, endp->usb_endp,
 					0, 1 & toggle_bits);
-			} else if (condition_code == TD_CC_STALL) {
+			पूर्ण अन्यथा अगर (condition_code == TD_CC_STALL) अणु
 				endp->toggle_bits = 0x2;
 				usb_settoggle(udev->usb_device, endp->usb_endp,
 					0, 0);
-			} else {
+			पूर्ण अन्यथा अणु
 				endp->toggle_bits = 0x2;
 				usb_settoggle(udev->usb_device, endp->usb_endp,
 					0, 0);
-				dev_err(&u132->platform_dev->dev, "urb=%p givin"
+				dev_err(&u132->platक्रमm_dev->dev, "urb=%p givin"
 					"g back INTERRUPT %s\n", urb,
 					cc_to_text[condition_code]);
-			}
+			पूर्ण
 			mutex_unlock(&u132->scheduler_lock);
 			u132_hcd_giveback_urb(u132, endp, urb,
 				cc_to_error[condition_code]);
-			return;
-		}
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_bulk_output_sent(void *data, struct urb *urb, u8 *buf,
-	int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_bulk_output_sent(व्योम *data, काष्ठा urb *urb, u8 *buf,
+	पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	u8 address = u132->addr[endp->usb_addr].address;
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
-		struct u132_ring *ring = endp->ring;
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
+		काष्ठा u132_ring *ring = endp->ring;
 		urb->actual_length += len;
 		endp->toggle_bits = toggle_bits;
-		if (urb->transfer_buffer_length > urb->actual_length) {
-			int retval;
+		अगर (urb->transfer_buffer_length > urb->actual_length) अणु
+			पूर्णांक retval;
 			mutex_unlock(&u132->scheduler_lock);
 			retval = edset_output(u132, ring, endp, urb, address,
 				endp->toggle_bits, u132_hcd_bulk_output_sent);
-			if (retval != 0)
+			अगर (retval != 0)
 				u132_hcd_giveback_urb(u132, endp, urb, retval);
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 			mutex_unlock(&u132->scheduler_lock);
 			u132_hcd_giveback_urb(u132, endp, urb, 0);
-			return;
-		}
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_bulk_input_recv(void *data, struct urb *urb, u8 *buf,
-	int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_bulk_input_recv(व्योम *data, काष्ठा urb *urb, u8 *buf,
+	पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	u8 address = u132->addr[endp->usb_addr].address;
-	struct u132_udev *udev = &u132->udev[address];
+	काष्ठा u132_udev *udev = &u132->udev[address];
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
-		struct u132_ring *ring = endp->ring;
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
+		काष्ठा u132_ring *ring = endp->ring;
 		u8 *u = urb->transfer_buffer + urb->actual_length;
 		u8 *b = buf;
-		int L = len;
+		पूर्णांक L = len;
 
-		while (L-- > 0)
+		जबतक (L-- > 0)
 			*u++ = *b++;
 
 		urb->actual_length += len;
-		if ((condition_code == TD_CC_NOERROR) &&
-			(urb->transfer_buffer_length > urb->actual_length)) {
-			int retval;
+		अगर ((condition_code == TD_CC_NOERROR) &&
+			(urb->transfer_buffer_length > urb->actual_length)) अणु
+			पूर्णांक retval;
 			endp->toggle_bits = toggle_bits;
 			usb_settoggle(udev->usb_device, endp->usb_endp, 0,
 				1 & toggle_bits);
 			mutex_unlock(&u132->scheduler_lock);
-			retval = usb_ftdi_elan_edset_input(u132->platform_dev,
+			retval = usb_ftdi_elan_edset_input(u132->platक्रमm_dev,
 				ring->number, endp, urb, address,
 				endp->usb_endp, endp->toggle_bits,
 				u132_hcd_bulk_input_recv);
-			if (retval != 0)
+			अगर (retval != 0)
 				u132_hcd_giveback_urb(u132, endp, urb, retval);
-			return;
-		} else if (condition_code == TD_CC_NOERROR) {
+			वापस;
+		पूर्ण अन्यथा अगर (condition_code == TD_CC_NOERROR) अणु
 			endp->toggle_bits = toggle_bits;
 			usb_settoggle(udev->usb_device, endp->usb_endp, 0,
 				1 & toggle_bits);
 			mutex_unlock(&u132->scheduler_lock);
 			u132_hcd_giveback_urb(u132, endp, urb,
 				cc_to_error[condition_code]);
-			return;
-		} else if ((condition_code == TD_DATAUNDERRUN) &&
-			((urb->transfer_flags & URB_SHORT_NOT_OK) == 0)) {
+			वापस;
+		पूर्ण अन्यथा अगर ((condition_code == TD_DATAUNDERRUN) &&
+			((urb->transfer_flags & URB_SHORT_NOT_OK) == 0)) अणु
 			endp->toggle_bits = toggle_bits;
 			usb_settoggle(udev->usb_device, endp->usb_endp, 0,
 				1 & toggle_bits);
 			mutex_unlock(&u132->scheduler_lock);
 			u132_hcd_giveback_urb(u132, endp, urb, 0);
-			return;
-		} else if (condition_code == TD_DATAUNDERRUN) {
+			वापस;
+		पूर्ण अन्यथा अगर (condition_code == TD_DATAUNDERRUN) अणु
 			endp->toggle_bits = toggle_bits;
 			usb_settoggle(udev->usb_device, endp->usb_endp, 0,
 				1 & toggle_bits);
-			dev_warn(&u132->platform_dev->dev, "urb=%p(SHORT NOT OK"
+			dev_warn(&u132->platक्रमm_dev->dev, "urb=%p(SHORT NOT OK"
 				") giving back BULK IN %s\n", urb,
 				cc_to_text[condition_code]);
 			mutex_unlock(&u132->scheduler_lock);
 			u132_hcd_giveback_urb(u132, endp, urb, 0);
-			return;
-		} else if (condition_code == TD_CC_STALL) {
+			वापस;
+		पूर्ण अन्यथा अगर (condition_code == TD_CC_STALL) अणु
 			endp->toggle_bits = 0x2;
 			usb_settoggle(udev->usb_device, endp->usb_endp, 0, 0);
 			mutex_unlock(&u132->scheduler_lock);
 			u132_hcd_giveback_urb(u132, endp, urb,
 				cc_to_error[condition_code]);
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 			endp->toggle_bits = 0x2;
 			usb_settoggle(udev->usb_device, endp->usb_endp, 0, 0);
-			dev_err(&u132->platform_dev->dev, "urb=%p giving back B"
+			dev_err(&u132->platक्रमm_dev->dev, "urb=%p giving back B"
 				"ULK IN code=%d %s\n", urb, condition_code,
 				cc_to_text[condition_code]);
 			mutex_unlock(&u132->scheduler_lock);
 			u132_hcd_giveback_urb(u132, endp, urb,
 				cc_to_error[condition_code]);
-			return;
-		}
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_configure_empty_sent(void *data, struct urb *urb, u8 *buf,
-	int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_configure_empty_sent(व्योम *data, काष्ठा urb *urb, u8 *buf,
+	पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+		वापस;
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_configure_input_recv(void *data, struct urb *urb, u8 *buf,
-	int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_configure_input_recv(व्योम *data, काष्ठा urb *urb, u8 *buf,
+	पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	u8 address = u132->addr[endp->usb_addr].address;
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
-		struct u132_ring *ring = endp->ring;
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
+		काष्ठा u132_ring *ring = endp->ring;
 		u8 *u = urb->transfer_buffer;
 		u8 *b = buf;
-		int L = len;
+		पूर्णांक L = len;
 
-		while (L-- > 0)
+		जबतक (L-- > 0)
 			*u++ = *b++;
 
 		urb->actual_length = len;
-		if ((condition_code == TD_CC_NOERROR) || ((condition_code ==
+		अगर ((condition_code == TD_CC_NOERROR) || ((condition_code ==
 			TD_DATAUNDERRUN) && ((urb->transfer_flags &
-			URB_SHORT_NOT_OK) == 0))) {
-			int retval;
+			URB_SHORT_NOT_OK) == 0))) अणु
+			पूर्णांक retval;
 			mutex_unlock(&u132->scheduler_lock);
-			retval = usb_ftdi_elan_edset_empty(u132->platform_dev,
+			retval = usb_ftdi_elan_edset_empty(u132->platक्रमm_dev,
 				ring->number, endp, urb, address,
 				endp->usb_endp, 0x3,
 				u132_hcd_configure_empty_sent);
-			if (retval != 0)
+			अगर (retval != 0)
 				u132_hcd_giveback_urb(u132, endp, urb, retval);
-			return;
-		} else if (condition_code == TD_CC_STALL) {
+			वापस;
+		पूर्ण अन्यथा अगर (condition_code == TD_CC_STALL) अणु
 			mutex_unlock(&u132->scheduler_lock);
-			dev_warn(&u132->platform_dev->dev, "giving back SETUP I"
+			dev_warn(&u132->platक्रमm_dev->dev, "giving back SETUP I"
 				"NPUT STALL urb %p\n", urb);
 			u132_hcd_giveback_urb(u132, endp, urb,
 				cc_to_error[condition_code]);
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 			mutex_unlock(&u132->scheduler_lock);
-			dev_err(&u132->platform_dev->dev, "giving back SETUP IN"
+			dev_err(&u132->platक्रमm_dev->dev, "giving back SETUP IN"
 				"PUT %s urb %p\n", cc_to_text[condition_code],
 				urb);
 			u132_hcd_giveback_urb(u132, endp, urb,
 				cc_to_error[condition_code]);
-			return;
-		}
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_configure_empty_recv(void *data, struct urb *urb, u8 *buf,
-	int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_configure_empty_recv(व्योम *data, काष्ठा urb *urb, u8 *buf,
+	पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+		वापस;
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_configure_setup_sent(void *data, struct urb *urb, u8 *buf,
-	int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_configure_setup_sent(व्योम *data, काष्ठा urb *urb, u8 *buf,
+	पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	u8 address = u132->addr[endp->usb_addr].address;
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
-		if (usb_pipein(urb->pipe)) {
-			int retval;
-			struct u132_ring *ring = endp->ring;
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
+		अगर (usb_pipein(urb->pipe)) अणु
+			पूर्णांक retval;
+			काष्ठा u132_ring *ring = endp->ring;
 			mutex_unlock(&u132->scheduler_lock);
-			retval = usb_ftdi_elan_edset_input(u132->platform_dev,
+			retval = usb_ftdi_elan_edset_input(u132->platक्रमm_dev,
 				ring->number, endp, urb, address,
 				endp->usb_endp, 0,
 				u132_hcd_configure_input_recv);
-			if (retval != 0)
+			अगर (retval != 0)
 				u132_hcd_giveback_urb(u132, endp, urb, retval);
-			return;
-		} else {
-			int retval;
-			struct u132_ring *ring = endp->ring;
+			वापस;
+		पूर्ण अन्यथा अणु
+			पूर्णांक retval;
+			काष्ठा u132_ring *ring = endp->ring;
 			mutex_unlock(&u132->scheduler_lock);
-			retval = usb_ftdi_elan_edset_input(u132->platform_dev,
+			retval = usb_ftdi_elan_edset_input(u132->platक्रमm_dev,
 				ring->number, endp, urb, address,
 				endp->usb_endp, 0,
 				u132_hcd_configure_empty_recv);
-			if (retval != 0)
+			अगर (retval != 0)
 				u132_hcd_giveback_urb(u132, endp, urb, retval);
-			return;
-		}
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_enumeration_empty_recv(void *data, struct urb *urb,
-	u8 *buf, int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_क्रमागतeration_empty_recv(व्योम *data, काष्ठा urb *urb,
+	u8 *buf, पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	u8 address = u132->addr[endp->usb_addr].address;
-	struct u132_udev *udev = &u132->udev[address];
+	काष्ठा u132_udev *udev = &u132->udev[address];
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
 		u132->addr[0].address = 0;
 		endp->usb_addr = udev->usb_addr;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+		वापस;
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_enumeration_address_sent(void *data, struct urb *urb,
-	u8 *buf, int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_क्रमागतeration_address_sent(व्योम *data, काष्ठा urb *urb,
+	u8 *buf, पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
-		int retval;
-		struct u132_ring *ring = endp->ring;
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
+		पूर्णांक retval;
+		काष्ठा u132_ring *ring = endp->ring;
 		mutex_unlock(&u132->scheduler_lock);
-		retval = usb_ftdi_elan_edset_input(u132->platform_dev,
+		retval = usb_ftdi_elan_edset_input(u132->platक्रमm_dev,
 			ring->number, endp, urb, 0, endp->usb_endp, 0,
-			u132_hcd_enumeration_empty_recv);
-		if (retval != 0)
+			u132_hcd_क्रमागतeration_empty_recv);
+		अगर (retval != 0)
 			u132_hcd_giveback_urb(u132, endp, urb, retval);
-		return;
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+		वापस;
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_initial_empty_sent(void *data, struct urb *urb, u8 *buf,
-	int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_initial_empty_sent(व्योम *data, काष्ठा urb *urb, u8 *buf,
+	पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+		वापस;
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_initial_input_recv(void *data, struct urb *urb, u8 *buf,
-	int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_initial_input_recv(व्योम *data, काष्ठा urb *urb, u8 *buf,
+	पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	u8 address = u132->addr[endp->usb_addr].address;
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
-		int retval;
-		struct u132_ring *ring = endp->ring;
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
+		पूर्णांक retval;
+		काष्ठा u132_ring *ring = endp->ring;
 		u8 *u = urb->transfer_buffer;
 		u8 *b = buf;
-		int L = len;
+		पूर्णांक L = len;
 
-		while (L-- > 0)
+		जबतक (L-- > 0)
 			*u++ = *b++;
 
 		urb->actual_length = len;
 		mutex_unlock(&u132->scheduler_lock);
-		retval = usb_ftdi_elan_edset_empty(u132->platform_dev,
+		retval = usb_ftdi_elan_edset_empty(u132->platक्रमm_dev,
 			ring->number, endp, urb, address, endp->usb_endp, 0x3,
 			u132_hcd_initial_empty_sent);
-		if (retval != 0)
+		अगर (retval != 0)
 			u132_hcd_giveback_urb(u132, endp, urb, retval);
-		return;
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+		वापस;
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_initial_setup_sent(void *data, struct urb *urb, u8 *buf,
-	int len, int toggle_bits, int error_count, int condition_code,
-	int repeat_number, int halted, int skipped, int actual, int non_null)
-{
-	struct u132_endp *endp = data;
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_initial_setup_sent(व्योम *data, काष्ठा urb *urb, u8 *buf,
+	पूर्णांक len, पूर्णांक toggle_bits, पूर्णांक error_count, पूर्णांक condition_code,
+	पूर्णांक repeat_number, पूर्णांक halted, पूर्णांक skipped, पूर्णांक actual, पूर्णांक non_null)
+अणु
+	काष्ठा u132_endp *endp = data;
+	काष्ठा u132 *u132 = endp->u132;
 	u8 address = u132->addr[endp->usb_addr].address;
 	mutex_lock(&u132->scheduler_lock);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
 		mutex_unlock(&u132->scheduler_lock);
-		u132_hcd_forget_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (endp->dequeueing) {
+		u132_hcd_क्रमget_urb(u132, endp, urb, -ENODEV);
+		वापस;
+	पूर्ण अन्यथा अगर (endp->dequeueing) अणु
 		endp->dequeueing = 0;
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -EINTR);
-		return;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, -ENODEV);
-		return;
-	} else if (!urb->unlinked) {
-		int retval;
-		struct u132_ring *ring = endp->ring;
+		वापस;
+	पूर्ण अन्यथा अगर (!urb->unlinked) अणु
+		पूर्णांक retval;
+		काष्ठा u132_ring *ring = endp->ring;
 		mutex_unlock(&u132->scheduler_lock);
-		retval = usb_ftdi_elan_edset_input(u132->platform_dev,
+		retval = usb_ftdi_elan_edset_input(u132->platक्रमm_dev,
 			ring->number, endp, urb, address, endp->usb_endp, 0,
 			u132_hcd_initial_input_recv);
-		if (retval != 0)
+		अगर (retval != 0)
 			u132_hcd_giveback_urb(u132, endp, urb, retval);
-		return;
-	} else {
-		dev_err(&u132->platform_dev->dev, "CALLBACK called urb=%p "
+		वापस;
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "CALLBACK called urb=%p "
 				"unlinked=%d\n", urb, urb->unlinked);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_hcd_giveback_urb(u132, endp, urb, 0);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
 /*
 * this work function is only executed from the work queue
 *
 */
-static void u132_hcd_ring_work_scheduler(struct work_struct *work)
-{
-	struct u132_ring *ring =
-		container_of(work, struct u132_ring, scheduler.work);
-	struct u132 *u132 = ring->u132;
+अटल व्योम u132_hcd_ring_work_scheduler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा u132_ring *ring =
+		container_of(work, काष्ठा u132_ring, scheduler.work);
+	काष्ठा u132 *u132 = ring->u132;
 	mutex_lock(&u132->scheduler_lock);
-	if (ring->in_use) {
+	अगर (ring->in_use) अणु
 		mutex_unlock(&u132->scheduler_lock);
 		u132_ring_put_kref(u132, ring);
-		return;
-	} else if (ring->curr_endp) {
-		struct u132_endp *endp, *last_endp = ring->curr_endp;
-		unsigned long wakeup = 0;
-		list_for_each_entry(endp, &last_endp->endp_ring, endp_ring) {
-			if (endp->queue_next == endp->queue_last) {
-			} else if ((endp->delayed == 0)
-				|| time_after_eq(jiffies, endp->jiffies)) {
+		वापस;
+	पूर्ण अन्यथा अगर (ring->curr_endp) अणु
+		काष्ठा u132_endp *endp, *last_endp = ring->curr_endp;
+		अचिन्हित दीर्घ wakeup = 0;
+		list_क्रम_each_entry(endp, &last_endp->endp_ring, endp_ring) अणु
+			अगर (endp->queue_next == endp->queue_last) अणु
+			पूर्ण अन्यथा अगर ((endp->delayed == 0)
+				|| समय_after_eq(jअगरfies, endp->jअगरfies)) अणु
 				ring->curr_endp = endp;
 				u132_endp_cancel_work(u132, last_endp);
 				u132_endp_queue_work(u132, last_endp, 0);
 				mutex_unlock(&u132->scheduler_lock);
 				u132_ring_put_kref(u132, ring);
-				return;
-			} else {
-				unsigned long delta = endp->jiffies - jiffies;
-				if (delta > wakeup)
+				वापस;
+			पूर्ण अन्यथा अणु
+				अचिन्हित दीर्घ delta = endp->jअगरfies - jअगरfies;
+				अगर (delta > wakeup)
 					wakeup = delta;
-			}
-		}
-		if (last_endp->queue_next == last_endp->queue_last) {
-		} else if ((last_endp->delayed == 0) || time_after_eq(jiffies,
-			last_endp->jiffies)) {
+			पूर्ण
+		पूर्ण
+		अगर (last_endp->queue_next == last_endp->queue_last) अणु
+		पूर्ण अन्यथा अगर ((last_endp->delayed == 0) || समय_after_eq(jअगरfies,
+			last_endp->jअगरfies)) अणु
 			u132_endp_cancel_work(u132, last_endp);
 			u132_endp_queue_work(u132, last_endp, 0);
 			mutex_unlock(&u132->scheduler_lock);
 			u132_ring_put_kref(u132, ring);
-			return;
-		} else {
-			unsigned long delta = last_endp->jiffies - jiffies;
-			if (delta > wakeup)
+			वापस;
+		पूर्ण अन्यथा अणु
+			अचिन्हित दीर्घ delta = last_endp->jअगरfies - jअगरfies;
+			अगर (delta > wakeup)
 				wakeup = delta;
-		}
-		if (wakeup > 0) {
+		पूर्ण
+		अगर (wakeup > 0) अणु
 			u132_ring_requeue_work(u132, ring, wakeup);
 			mutex_unlock(&u132->scheduler_lock);
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 			mutex_unlock(&u132->scheduler_lock);
 			u132_ring_put_kref(u132, ring);
-			return;
-		}
-	} else {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mutex_unlock(&u132->scheduler_lock);
 		u132_ring_put_kref(u132, ring);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void u132_hcd_endp_work_scheduler(struct work_struct *work)
-{
-	struct u132_ring *ring;
-	struct u132_endp *endp =
-		container_of(work, struct u132_endp, scheduler.work);
-	struct u132 *u132 = endp->u132;
+अटल व्योम u132_hcd_endp_work_scheduler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा u132_ring *ring;
+	काष्ठा u132_endp *endp =
+		container_of(work, काष्ठा u132_endp, scheduler.work);
+	काष्ठा u132 *u132 = endp->u132;
 	mutex_lock(&u132->scheduler_lock);
 	ring = endp->ring;
-	if (endp->edset_flush) {
+	अगर (endp->edset_flush) अणु
 		endp->edset_flush = 0;
-		if (endp->dequeueing)
-			usb_ftdi_elan_edset_flush(u132->platform_dev,
+		अगर (endp->dequeueing)
+			usb_ftdi_elan_edset_flush(u132->platक्रमm_dev,
 				ring->number, endp);
 		mutex_unlock(&u132->scheduler_lock);
 		u132_endp_put_kref(u132, endp);
-		return;
-	} else if (endp->active) {
+		वापस;
+	पूर्ण अन्यथा अगर (endp->active) अणु
 		mutex_unlock(&u132->scheduler_lock);
 		u132_endp_put_kref(u132, endp);
-		return;
-	} else if (ring->in_use) {
+		वापस;
+	पूर्ण अन्यथा अगर (ring->in_use) अणु
 		mutex_unlock(&u132->scheduler_lock);
 		u132_endp_put_kref(u132, endp);
-		return;
-	} else if (endp->queue_next == endp->queue_last) {
+		वापस;
+	पूर्ण अन्यथा अगर (endp->queue_next == endp->queue_last) अणु
 		mutex_unlock(&u132->scheduler_lock);
 		u132_endp_put_kref(u132, endp);
-		return;
-	} else if (endp->pipetype == PIPE_INTERRUPT) {
+		वापस;
+	पूर्ण अन्यथा अगर (endp->pipetype == PIPE_INTERRUPT) अणु
 		u8 address = u132->addr[endp->usb_addr].address;
-		if (ring->in_use) {
+		अगर (ring->in_use) अणु
 			mutex_unlock(&u132->scheduler_lock);
 			u132_endp_put_kref(u132, endp);
-			return;
-		} else {
-			int retval;
-			struct urb *urb = endp->urb_list[ENDP_QUEUE_MASK &
+			वापस;
+		पूर्ण अन्यथा अणु
+			पूर्णांक retval;
+			काष्ठा urb *urb = endp->urb_list[ENDP_QUEUE_MASK &
 				endp->queue_next];
 			endp->active = 1;
 			ring->curr_endp = endp;
 			ring->in_use = 1;
 			mutex_unlock(&u132->scheduler_lock);
 			retval = edset_single(u132, ring, endp, urb, address,
-				endp->toggle_bits, u132_hcd_interrupt_recv);
-			if (retval != 0)
+				endp->toggle_bits, u132_hcd_पूर्णांकerrupt_recv);
+			अगर (retval != 0)
 				u132_hcd_giveback_urb(u132, endp, urb, retval);
-			return;
-		}
-	} else if (endp->pipetype == PIPE_CONTROL) {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अगर (endp->pipetype == PIPE_CONTROL) अणु
 		u8 address = u132->addr[endp->usb_addr].address;
-		if (ring->in_use) {
+		अगर (ring->in_use) अणु
 			mutex_unlock(&u132->scheduler_lock);
 			u132_endp_put_kref(u132, endp);
-			return;
-		} else if (address == 0) {
-			int retval;
-			struct urb *urb = endp->urb_list[ENDP_QUEUE_MASK &
+			वापस;
+		पूर्ण अन्यथा अगर (address == 0) अणु
+			पूर्णांक retval;
+			काष्ठा urb *urb = endp->urb_list[ENDP_QUEUE_MASK &
 				endp->queue_next];
 			endp->active = 1;
 			ring->curr_endp = endp;
@@ -1413,25 +1414,25 @@ static void u132_hcd_endp_work_scheduler(struct work_struct *work)
 			mutex_unlock(&u132->scheduler_lock);
 			retval = edset_setup(u132, ring, endp, urb, address,
 				0x2, u132_hcd_initial_setup_sent);
-			if (retval != 0)
+			अगर (retval != 0)
 				u132_hcd_giveback_urb(u132, endp, urb, retval);
-			return;
-		} else if (endp->usb_addr == 0) {
-			int retval;
-			struct urb *urb = endp->urb_list[ENDP_QUEUE_MASK &
+			वापस;
+		पूर्ण अन्यथा अगर (endp->usb_addr == 0) अणु
+			पूर्णांक retval;
+			काष्ठा urb *urb = endp->urb_list[ENDP_QUEUE_MASK &
 				endp->queue_next];
 			endp->active = 1;
 			ring->curr_endp = endp;
 			ring->in_use = 1;
 			mutex_unlock(&u132->scheduler_lock);
 			retval = edset_setup(u132, ring, endp, urb, 0, 0x2,
-				u132_hcd_enumeration_address_sent);
-			if (retval != 0)
+				u132_hcd_क्रमागतeration_address_sent);
+			अगर (retval != 0)
 				u132_hcd_giveback_urb(u132, endp, urb, retval);
-			return;
-		} else {
-			int retval;
-			struct urb *urb = endp->urb_list[ENDP_QUEUE_MASK &
+			वापस;
+		पूर्ण अन्यथा अणु
+			पूर्णांक retval;
+			काष्ठा urb *urb = endp->urb_list[ENDP_QUEUE_MASK &
 				endp->queue_next];
 			address = u132->addr[endp->usb_addr].address;
 			endp->active = 1;
@@ -1440,20 +1441,20 @@ static void u132_hcd_endp_work_scheduler(struct work_struct *work)
 			mutex_unlock(&u132->scheduler_lock);
 			retval = edset_setup(u132, ring, endp, urb, address,
 				0x2, u132_hcd_configure_setup_sent);
-			if (retval != 0)
+			अगर (retval != 0)
 				u132_hcd_giveback_urb(u132, endp, urb, retval);
-			return;
-		}
-	} else {
-		if (endp->input) {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (endp->input) अणु
 			u8 address = u132->addr[endp->usb_addr].address;
-			if (ring->in_use) {
+			अगर (ring->in_use) अणु
 				mutex_unlock(&u132->scheduler_lock);
 				u132_endp_put_kref(u132, endp);
-				return;
-			} else {
-				int retval;
-				struct urb *urb = endp->urb_list[
+				वापस;
+			पूर्ण अन्यथा अणु
+				पूर्णांक retval;
+				काष्ठा urb *urb = endp->urb_list[
 					ENDP_QUEUE_MASK & endp->queue_next];
 				endp->active = 1;
 				ring->curr_endp = endp;
@@ -1462,21 +1463,21 @@ static void u132_hcd_endp_work_scheduler(struct work_struct *work)
 				retval = edset_input(u132, ring, endp, urb,
 					address, endp->toggle_bits,
 					u132_hcd_bulk_input_recv);
-				if (retval == 0) {
-				} else
+				अगर (retval == 0) अणु
+				पूर्ण अन्यथा
 					u132_hcd_giveback_urb(u132, endp, urb,
 						retval);
-				return;
-			}
-		} else {	/* output pipe */
+				वापस;
+			पूर्ण
+		पूर्ण अन्यथा अणु	/* output pipe */
 			u8 address = u132->addr[endp->usb_addr].address;
-			if (ring->in_use) {
+			अगर (ring->in_use) अणु
 				mutex_unlock(&u132->scheduler_lock);
 				u132_endp_put_kref(u132, endp);
-				return;
-			} else {
-				int retval;
-				struct urb *urb = endp->urb_list[
+				वापस;
+			पूर्ण अन्यथा अणु
+				पूर्णांक retval;
+				काष्ठा urb *urb = endp->urb_list[
 					ENDP_QUEUE_MASK & endp->queue_next];
 				endp->active = 1;
 				ring->curr_endp = endp;
@@ -1485,399 +1486,399 @@ static void u132_hcd_endp_work_scheduler(struct work_struct *work)
 				retval = edset_output(u132, ring, endp, urb,
 					address, endp->toggle_bits,
 					u132_hcd_bulk_output_sent);
-				if (retval == 0) {
-				} else
+				अगर (retval == 0) अणु
+				पूर्ण अन्यथा
 					u132_hcd_giveback_urb(u132, endp, urb,
 						retval);
-				return;
-			}
-		}
-	}
-}
-#ifdef CONFIG_PM
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
+#अगर_घोषित CONFIG_PM
 
-static void port_power(struct u132 *u132, int pn, int is_on)
-{
-	u132->port[pn].power = is_on;
-}
+अटल व्योम port_घातer(काष्ठा u132 *u132, पूर्णांक pn, पूर्णांक is_on)
+अणु
+	u132->port[pn].घातer = is_on;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static void u132_power(struct u132 *u132, int is_on)
-{
-	struct usb_hcd *hcd = u132_to_hcd(u132)
-		;	/* hub is inactive unless the port is powered */
-	if (is_on) {
-		if (u132->power)
-			return;
-		u132->power = 1;
-	} else {
-		u132->power = 0;
+अटल व्योम u132_घातer(काष्ठा u132 *u132, पूर्णांक is_on)
+अणु
+	काष्ठा usb_hcd *hcd = u132_to_hcd(u132)
+		;	/* hub is inactive unless the port is घातered */
+	अगर (is_on) अणु
+		अगर (u132->घातer)
+			वापस;
+		u132->घातer = 1;
+	पूर्ण अन्यथा अणु
+		u132->घातer = 0;
 		hcd->state = HC_STATE_HALT;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int u132_periodic_reinit(struct u132 *u132)
-{
-	int retval;
-	u32 fi = u132->hc_fminterval & 0x03fff;
+अटल पूर्णांक u132_periodic_reinit(काष्ठा u132 *u132)
+अणु
+	पूर्णांक retval;
+	u32 fi = u132->hc_fmपूर्णांकerval & 0x03fff;
 	u32 fit;
-	u32 fminterval;
-	retval = u132_read_pcimem(u132, fminterval, &fminterval);
-	if (retval)
-		return retval;
-	fit = fminterval & FIT;
-	retval = u132_write_pcimem(u132, fminterval,
-		(fit ^ FIT) | u132->hc_fminterval);
-	if (retval)
-		return retval;
-	return u132_write_pcimem(u132, periodicstart,
+	u32 fmपूर्णांकerval;
+	retval = u132_पढ़ो_pcimem(u132, fmपूर्णांकerval, &fmपूर्णांकerval);
+	अगर (retval)
+		वापस retval;
+	fit = fmपूर्णांकerval & FIT;
+	retval = u132_ग_लिखो_pcimem(u132, fmपूर्णांकerval,
+		(fit ^ FIT) | u132->hc_fmपूर्णांकerval);
+	अगर (retval)
+		वापस retval;
+	वापस u132_ग_लिखो_pcimem(u132, periodicstart,
 	       ((9 * fi) / 10) & 0x3fff);
-}
+पूर्ण
 
-static char *hcfs2string(int state)
-{
-	switch (state) {
-	case OHCI_USB_RESET:
-		return "reset";
-	case OHCI_USB_RESUME:
-		return "resume";
-	case OHCI_USB_OPER:
-		return "operational";
-	case OHCI_USB_SUSPEND:
-		return "suspend";
-	}
-	return "?";
-}
+अटल अक्षर *hcfs2string(पूर्णांक state)
+अणु
+	चयन (state) अणु
+	हाल OHCI_USB_RESET:
+		वापस "reset";
+	हाल OHCI_USB_RESUME:
+		वापस "resume";
+	हाल OHCI_USB_OPER:
+		वापस "operational";
+	हाल OHCI_USB_SUSPEND:
+		वापस "suspend";
+	पूर्ण
+	वापस "?";
+पूर्ण
 
-static int u132_init(struct u132 *u132)
-{
-	int retval;
+अटल पूर्णांक u132_init(काष्ठा u132 *u132)
+अणु
+	पूर्णांक retval;
 	u32 control;
 	u132_disable(u132);
-	u132->next_statechange = jiffies;
-	retval = u132_write_pcimem(u132, intrdisable, OHCI_INTR_MIE);
-	if (retval)
-		return retval;
-	retval = u132_read_pcimem(u132, control, &control);
-	if (retval)
-		return retval;
-	if (u132->num_ports == 0) {
+	u132->next_statechange = jअगरfies;
+	retval = u132_ग_लिखो_pcimem(u132, पूर्णांकrdisable, OHCI_INTR_MIE);
+	अगर (retval)
+		वापस retval;
+	retval = u132_पढ़ो_pcimem(u132, control, &control);
+	अगर (retval)
+		वापस retval;
+	अगर (u132->num_ports == 0) अणु
 		u32 rh_a = -1;
-		retval = u132_read_pcimem(u132, roothub.a, &rh_a);
-		if (retval)
-			return retval;
+		retval = u132_पढ़ो_pcimem(u132, roothub.a, &rh_a);
+		अगर (retval)
+			वापस retval;
 		u132->num_ports = rh_a & RH_A_NDP;
-		retval = read_roothub_info(u132);
-		if (retval)
-			return retval;
-	}
-	if (u132->num_ports > MAX_U132_PORTS)
-		return -EINVAL;
+		retval = पढ़ो_roothub_info(u132);
+		अगर (retval)
+			वापस retval;
+	पूर्ण
+	अगर (u132->num_ports > MAX_U132_PORTS)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /* Start an OHCI controller, set the BUS operational
 * resets USB and controller
-* enable interrupts
+* enable पूर्णांकerrupts
 */
-static int u132_run(struct u132 *u132)
-{
-	int retval;
+अटल पूर्णांक u132_run(काष्ठा u132 *u132)
+अणु
+	पूर्णांक retval;
 	u32 control;
 	u32 status;
-	u32 fminterval;
+	u32 fmपूर्णांकerval;
 	u32 periodicstart;
 	u32 cmdstatus;
 	u32 roothub_a;
-	int mask = OHCI_INTR_INIT;
-	int first = u132->hc_fminterval == 0;
-	int sleep_time = 0;
-	int reset_timeout = 30;	/* ... allow extra time */
+	पूर्णांक mask = OHCI_INTR_INIT;
+	पूर्णांक first = u132->hc_fmपूर्णांकerval == 0;
+	पूर्णांक sleep_समय = 0;
+	पूर्णांक reset_समयout = 30;	/* ... allow extra समय */
 	u132_disable(u132);
-	if (first) {
+	अगर (first) अणु
 		u32 temp;
-		retval = u132_read_pcimem(u132, fminterval, &temp);
-		if (retval)
-			return retval;
-		u132->hc_fminterval = temp & 0x3fff;
-		u132->hc_fminterval |= FSMP(u132->hc_fminterval) << 16;
-	}
-	retval = u132_read_pcimem(u132, control, &u132->hc_control);
-	if (retval)
-		return retval;
-	dev_info(&u132->platform_dev->dev, "resetting from state '%s', control "
+		retval = u132_पढ़ो_pcimem(u132, fmपूर्णांकerval, &temp);
+		अगर (retval)
+			वापस retval;
+		u132->hc_fmपूर्णांकerval = temp & 0x3fff;
+		u132->hc_fmपूर्णांकerval |= FSMP(u132->hc_fmपूर्णांकerval) << 16;
+	पूर्ण
+	retval = u132_पढ़ो_pcimem(u132, control, &u132->hc_control);
+	अगर (retval)
+		वापस retval;
+	dev_info(&u132->platक्रमm_dev->dev, "resetting from state '%s', control "
 		"= %08X\n", hcfs2string(u132->hc_control & OHCI_CTRL_HCFS),
 		u132->hc_control);
-	switch (u132->hc_control & OHCI_CTRL_HCFS) {
-	case OHCI_USB_OPER:
-		sleep_time = 0;
-		break;
-	case OHCI_USB_SUSPEND:
-	case OHCI_USB_RESUME:
+	चयन (u132->hc_control & OHCI_CTRL_HCFS) अणु
+	हाल OHCI_USB_OPER:
+		sleep_समय = 0;
+		अवरोध;
+	हाल OHCI_USB_SUSPEND:
+	हाल OHCI_USB_RESUME:
 		u132->hc_control &= OHCI_CTRL_RWC;
 		u132->hc_control |= OHCI_USB_RESUME;
-		sleep_time = 10;
-		break;
-	default:
+		sleep_समय = 10;
+		अवरोध;
+	शेष:
 		u132->hc_control &= OHCI_CTRL_RWC;
 		u132->hc_control |= OHCI_USB_RESET;
-		sleep_time = 50;
-		break;
-	}
-	retval = u132_write_pcimem(u132, control, u132->hc_control);
-	if (retval)
-		return retval;
-	retval = u132_read_pcimem(u132, control, &control);
-	if (retval)
-		return retval;
-	msleep(sleep_time);
-	retval = u132_read_pcimem(u132, roothub.a, &roothub_a);
-	if (retval)
-		return retval;
-	if (!(roothub_a & RH_A_NPS)) {
-		int temp;	/* power down each port */
-		for (temp = 0; temp < u132->num_ports; temp++) {
-			retval = u132_write_pcimem(u132,
+		sleep_समय = 50;
+		अवरोध;
+	पूर्ण
+	retval = u132_ग_लिखो_pcimem(u132, control, u132->hc_control);
+	अगर (retval)
+		वापस retval;
+	retval = u132_पढ़ो_pcimem(u132, control, &control);
+	अगर (retval)
+		वापस retval;
+	msleep(sleep_समय);
+	retval = u132_पढ़ो_pcimem(u132, roothub.a, &roothub_a);
+	अगर (retval)
+		वापस retval;
+	अगर (!(roothub_a & RH_A_NPS)) अणु
+		पूर्णांक temp;	/* घातer करोwn each port */
+		क्रम (temp = 0; temp < u132->num_ports; temp++) अणु
+			retval = u132_ग_लिखो_pcimem(u132,
 				roothub.portstatus[temp], RH_PS_LSDA);
-			if (retval)
-				return retval;
-		}
-	}
-	retval = u132_read_pcimem(u132, control, &control);
-	if (retval)
-		return retval;
+			अगर (retval)
+				वापस retval;
+		पूर्ण
+	पूर्ण
+	retval = u132_पढ़ो_pcimem(u132, control, &control);
+	अगर (retval)
+		वापस retval;
 retry:
-	retval = u132_read_pcimem(u132, cmdstatus, &status);
-	if (retval)
-		return retval;
-	retval = u132_write_pcimem(u132, cmdstatus, OHCI_HCR);
-	if (retval)
-		return retval;
-extra:	{
-		retval = u132_read_pcimem(u132, cmdstatus, &status);
-		if (retval)
-			return retval;
-		if (0 != (status & OHCI_HCR)) {
-			if (--reset_timeout == 0) {
-				dev_err(&u132->platform_dev->dev, "USB HC reset"
+	retval = u132_पढ़ो_pcimem(u132, cmdstatus, &status);
+	अगर (retval)
+		वापस retval;
+	retval = u132_ग_लिखो_pcimem(u132, cmdstatus, OHCI_HCR);
+	अगर (retval)
+		वापस retval;
+extra:	अणु
+		retval = u132_पढ़ो_pcimem(u132, cmdstatus, &status);
+		अगर (retval)
+			वापस retval;
+		अगर (0 != (status & OHCI_HCR)) अणु
+			अगर (--reset_समयout == 0) अणु
+				dev_err(&u132->platक्रमm_dev->dev, "USB HC reset"
 					" timed out!\n");
-				return -ENODEV;
-			} else {
+				वापस -ENODEV;
+			पूर्ण अन्यथा अणु
 				msleep(5);
-				goto extra;
-			}
-		}
-	}
-	if (u132->flags & OHCI_QUIRK_INITRESET) {
-		retval = u132_write_pcimem(u132, control, u132->hc_control);
-		if (retval)
-			return retval;
-		retval = u132_read_pcimem(u132, control, &control);
-		if (retval)
-			return retval;
-	}
-	retval = u132_write_pcimem(u132, ed_controlhead, 0x00000000);
-	if (retval)
-		return retval;
-	retval = u132_write_pcimem(u132, ed_bulkhead, 0x11000000);
-	if (retval)
-		return retval;
-	retval = u132_write_pcimem(u132, hcca, 0x00000000);
-	if (retval)
-		return retval;
+				जाओ extra;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (u132->flags & OHCI_QUIRK_INITRESET) अणु
+		retval = u132_ग_लिखो_pcimem(u132, control, u132->hc_control);
+		अगर (retval)
+			वापस retval;
+		retval = u132_पढ़ो_pcimem(u132, control, &control);
+		अगर (retval)
+			वापस retval;
+	पूर्ण
+	retval = u132_ग_लिखो_pcimem(u132, ed_controlhead, 0x00000000);
+	अगर (retval)
+		वापस retval;
+	retval = u132_ग_लिखो_pcimem(u132, ed_bulkhead, 0x11000000);
+	अगर (retval)
+		वापस retval;
+	retval = u132_ग_लिखो_pcimem(u132, hcca, 0x00000000);
+	अगर (retval)
+		वापस retval;
 	retval = u132_periodic_reinit(u132);
-	if (retval)
-		return retval;
-	retval = u132_read_pcimem(u132, fminterval, &fminterval);
-	if (retval)
-		return retval;
-	retval = u132_read_pcimem(u132, periodicstart, &periodicstart);
-	if (retval)
-		return retval;
-	if (0 == (fminterval & 0x3fff0000) || 0 == periodicstart) {
-		if (!(u132->flags & OHCI_QUIRK_INITRESET)) {
+	अगर (retval)
+		वापस retval;
+	retval = u132_पढ़ो_pcimem(u132, fmपूर्णांकerval, &fmपूर्णांकerval);
+	अगर (retval)
+		वापस retval;
+	retval = u132_पढ़ो_pcimem(u132, periodicstart, &periodicstart);
+	अगर (retval)
+		वापस retval;
+	अगर (0 == (fmपूर्णांकerval & 0x3fff0000) || 0 == periodicstart) अणु
+		अगर (!(u132->flags & OHCI_QUIRK_INITRESET)) अणु
 			u132->flags |= OHCI_QUIRK_INITRESET;
-			goto retry;
-		} else
-			dev_err(&u132->platform_dev->dev, "init err(%08x %04x)"
-				"\n", fminterval, periodicstart);
-	}			/* start controller operations */
+			जाओ retry;
+		पूर्ण अन्यथा
+			dev_err(&u132->platक्रमm_dev->dev, "init err(%08x %04x)"
+				"\n", fmपूर्णांकerval, periodicstart);
+	पूर्ण			/* start controller operations */
 	u132->hc_control &= OHCI_CTRL_RWC;
 	u132->hc_control |= OHCI_CONTROL_INIT | OHCI_CTRL_BLE | OHCI_USB_OPER;
-	retval = u132_write_pcimem(u132, control, u132->hc_control);
-	if (retval)
-		return retval;
-	retval = u132_write_pcimem(u132, cmdstatus, OHCI_BLF);
-	if (retval)
-		return retval;
-	retval = u132_read_pcimem(u132, cmdstatus, &cmdstatus);
-	if (retval)
-		return retval;
-	retval = u132_read_pcimem(u132, control, &control);
-	if (retval)
-		return retval;
+	retval = u132_ग_लिखो_pcimem(u132, control, u132->hc_control);
+	अगर (retval)
+		वापस retval;
+	retval = u132_ग_लिखो_pcimem(u132, cmdstatus, OHCI_BLF);
+	अगर (retval)
+		वापस retval;
+	retval = u132_पढ़ो_pcimem(u132, cmdstatus, &cmdstatus);
+	अगर (retval)
+		वापस retval;
+	retval = u132_पढ़ो_pcimem(u132, control, &control);
+	अगर (retval)
+		वापस retval;
 	u132_to_hcd(u132)->state = HC_STATE_RUNNING;
-	retval = u132_write_pcimem(u132, roothub.status, RH_HS_DRWE);
-	if (retval)
-		return retval;
-	retval = u132_write_pcimem(u132, intrstatus, mask);
-	if (retval)
-		return retval;
-	retval = u132_write_pcimem(u132, intrdisable,
+	retval = u132_ग_लिखो_pcimem(u132, roothub.status, RH_HS_DRWE);
+	अगर (retval)
+		वापस retval;
+	retval = u132_ग_लिखो_pcimem(u132, पूर्णांकrstatus, mask);
+	अगर (retval)
+		वापस retval;
+	retval = u132_ग_लिखो_pcimem(u132, पूर्णांकrdisable,
 		OHCI_INTR_MIE | OHCI_INTR_OC | OHCI_INTR_RHSC | OHCI_INTR_FNO |
 		OHCI_INTR_UE | OHCI_INTR_RD | OHCI_INTR_SF | OHCI_INTR_WDH |
 		OHCI_INTR_SO);
-	if (retval)
-		return retval;	/* handle root hub init quirks ... */
-	retval = u132_read_pcimem(u132, roothub.a, &roothub_a);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;	/* handle root hub init quirks ... */
+	retval = u132_पढ़ो_pcimem(u132, roothub.a, &roothub_a);
+	अगर (retval)
+		वापस retval;
 	roothub_a &= ~(RH_A_PSM | RH_A_OCPM);
-	if (u132->flags & OHCI_QUIRK_SUPERIO) {
+	अगर (u132->flags & OHCI_QUIRK_SUPERIO) अणु
 		roothub_a |= RH_A_NOCP;
 		roothub_a &= ~(RH_A_POTPGT | RH_A_NPS);
-		retval = u132_write_pcimem(u132, roothub.a, roothub_a);
-		if (retval)
-			return retval;
-	} else if ((u132->flags & OHCI_QUIRK_AMD756) || distrust_firmware) {
+		retval = u132_ग_लिखो_pcimem(u132, roothub.a, roothub_a);
+		अगर (retval)
+			वापस retval;
+	पूर्ण अन्यथा अगर ((u132->flags & OHCI_QUIRK_AMD756) || distrust_firmware) अणु
 		roothub_a |= RH_A_NPS;
-		retval = u132_write_pcimem(u132, roothub.a, roothub_a);
-		if (retval)
-			return retval;
-	}
-	retval = u132_write_pcimem(u132, roothub.status, RH_HS_LPSC);
-	if (retval)
-		return retval;
-	retval = u132_write_pcimem(u132, roothub.b,
+		retval = u132_ग_लिखो_pcimem(u132, roothub.a, roothub_a);
+		अगर (retval)
+			वापस retval;
+	पूर्ण
+	retval = u132_ग_लिखो_pcimem(u132, roothub.status, RH_HS_LPSC);
+	अगर (retval)
+		वापस retval;
+	retval = u132_ग_लिखो_pcimem(u132, roothub.b,
 		(roothub_a & RH_A_NPS) ? 0 : RH_B_PPCM);
-	if (retval)
-		return retval;
-	retval = u132_read_pcimem(u132, control, &control);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
+	retval = u132_पढ़ो_pcimem(u132, control, &control);
+	अगर (retval)
+		वापस retval;
 	mdelay((roothub_a >> 23) & 0x1fe);
 	u132_to_hcd(u132)->state = HC_STATE_RUNNING;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void u132_hcd_stop(struct usb_hcd *hcd)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "u132 device %p(hcd=%p) has b"
+अटल व्योम u132_hcd_stop(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "u132 device %p(hcd=%p) has b"
 			"een removed %d\n", u132, hcd, u132->going);
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device hcd=%p is being remov"
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device hcd=%p is being remov"
 			"ed\n", hcd);
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_lock(&u132->sw_lock);
 		msleep(100);
-		u132_power(u132, 0);
+		u132_घातer(u132, 0);
 		mutex_unlock(&u132->sw_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int u132_hcd_start(struct usb_hcd *hcd)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अटल पूर्णांक u132_hcd_start(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed\n");
-		return -ESHUTDOWN;
-	} else if (hcd->self.controller) {
-		int retval;
-		struct platform_device *pdev =
-			to_platform_device(hcd->self.controller);
-		u16 vendor = ((struct u132_platform_data *)
-			dev_get_platdata(&pdev->dev))->vendor;
-		u16 device = ((struct u132_platform_data *)
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed\n");
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा अगर (hcd->self.controller) अणु
+		पूर्णांक retval;
+		काष्ठा platक्रमm_device *pdev =
+			to_platक्रमm_device(hcd->self.controller);
+		u16 venकरोr = ((काष्ठा u132_platक्रमm_data *)
+			dev_get_platdata(&pdev->dev))->venकरोr;
+		u16 device = ((काष्ठा u132_platक्रमm_data *)
 			dev_get_platdata(&pdev->dev))->device;
 		mutex_lock(&u132->sw_lock);
 		msleep(10);
-		if (vendor == PCI_VENDOR_ID_AMD && device == 0x740c) {
+		अगर (venकरोr == PCI_VENDOR_ID_AMD && device == 0x740c) अणु
 			u132->flags = OHCI_QUIRK_AMD756;
-		} else if (vendor == PCI_VENDOR_ID_OPTI && device == 0xc861) {
-			dev_err(&u132->platform_dev->dev, "WARNING: OPTi workar"
+		पूर्ण अन्यथा अगर (venकरोr == PCI_VENDOR_ID_OPTI && device == 0xc861) अणु
+			dev_err(&u132->platक्रमm_dev->dev, "WARNING: OPTi workar"
 				"ounds unavailable\n");
-		} else if (vendor == PCI_VENDOR_ID_COMPAQ && device == 0xa0f8)
+		पूर्ण अन्यथा अगर (venकरोr == PCI_VENDOR_ID_COMPAQ && device == 0xa0f8)
 			u132->flags |= OHCI_QUIRK_ZFMICRO;
 		retval = u132_run(u132);
-		if (retval) {
+		अगर (retval) अणु
 			u132_disable(u132);
 			u132->going = 1;
-		}
+		पूर्ण
 		msleep(100);
 		mutex_unlock(&u132->sw_lock);
-		return retval;
-	} else {
-		dev_err(&u132->platform_dev->dev, "platform_device missing\n");
-		return -ENODEV;
-	}
-}
+		वापस retval;
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "platform_device missing\n");
+		वापस -ENODEV;
+	पूर्ण
+पूर्ण
 
-static int u132_hcd_reset(struct usb_hcd *hcd)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अटल पूर्णांक u132_hcd_reset(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed\n");
-		return -ESHUTDOWN;
-	} else {
-		int retval;
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed\n");
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा अणु
+		पूर्णांक retval;
 		mutex_lock(&u132->sw_lock);
 		retval = u132_init(u132);
-		if (retval) {
+		अगर (retval) अणु
 			u132_disable(u132);
 			u132->going = 1;
-		}
+		पूर्ण
 		mutex_unlock(&u132->sw_lock);
-		return retval;
-	}
-}
+		वापस retval;
+	पूर्ण
+पूर्ण
 
-static int create_endpoint_and_queue_int(struct u132 *u132,
-	struct u132_udev *udev, struct urb *urb,
-	struct usb_device *usb_dev, u8 usb_addr, u8 usb_endp, u8 address,
+अटल पूर्णांक create_endpoपूर्णांक_and_queue_पूर्णांक(काष्ठा u132 *u132,
+	काष्ठा u132_udev *udev, काष्ठा urb *urb,
+	काष्ठा usb_device *usb_dev, u8 usb_addr, u8 usb_endp, u8 address,
 	gfp_t mem_flags)
-{
-	struct u132_ring *ring;
-	unsigned long irqs;
-	int rc;
+अणु
+	काष्ठा u132_ring *ring;
+	अचिन्हित दीर्घ irqs;
+	पूर्णांक rc;
 	u8 endp_number;
-	struct u132_endp *endp = kmalloc(sizeof(struct u132_endp), mem_flags);
+	काष्ठा u132_endp *endp = kदो_स्मृति(माप(काष्ठा u132_endp), mem_flags);
 
-	if (!endp)
-		return -ENOMEM;
+	अगर (!endp)
+		वापस -ENOMEM;
 
 	spin_lock_init(&endp->queue_lock.slock);
 	spin_lock_irqsave(&endp->queue_lock.slock, irqs);
 	rc = usb_hcd_link_urb_to_ep(u132_to_hcd(u132), urb);
-	if (rc) {
+	अगर (rc) अणु
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-		kfree(endp);
-		return rc;
-	}
+		kमुक्त(endp);
+		वापस rc;
+	पूर्ण
 
-	endp_number = ++u132->num_endpoints;
+	endp_number = ++u132->num_endpoपूर्णांकs;
 	urb->ep->hcpriv = u132->endp[endp_number - 1] = endp;
 	INIT_DELAYED_WORK(&endp->scheduler, u132_hcd_endp_work_scheduler);
 	INIT_LIST_HEAD(&endp->urb_more);
 	ring = endp->ring = &u132->ring[0];
-	if (ring->curr_endp) {
+	अगर (ring->curr_endp) अणु
 		list_add_tail(&endp->endp_ring, &ring->curr_endp->endp_ring);
-	} else {
+	पूर्ण अन्यथा अणु
 		INIT_LIST_HEAD(&endp->endp_ring);
 		ring->curr_endp = endp;
-	}
+	पूर्ण
 	ring->length += 1;
 	endp->dequeueing = 0;
 	endp->edset_flush = 0;
@@ -1888,24 +1889,24 @@ static int create_endpoint_and_queue_int(struct u132 *u132,
 	endp->hep = urb->ep;
 	endp->pipetype = usb_pipetype(urb->pipe);
 	u132_endp_init_kref(u132, endp);
-	if (usb_pipein(urb->pipe)) {
+	अगर (usb_pipein(urb->pipe)) अणु
 		endp->toggle_bits = 0x2;
 		usb_settoggle(udev->usb_device, usb_endp, 0, 0);
 		endp->input = 1;
 		endp->output = 0;
 		udev->endp_number_in[usb_endp] = endp_number;
 		u132_udev_get_kref(u132, udev);
-	} else {
+	पूर्ण अन्यथा अणु
 		endp->toggle_bits = 0x2;
 		usb_settoggle(udev->usb_device, usb_endp, 1, 0);
 		endp->input = 0;
 		endp->output = 1;
 		udev->endp_number_out[usb_endp] = endp_number;
 		u132_udev_get_kref(u132, udev);
-	}
+	पूर्ण
 	urb->hcpriv = u132;
 	endp->delayed = 1;
-	endp->jiffies = jiffies + msecs_to_jiffies(urb->interval);
+	endp->jअगरfies = jअगरfies + msecs_to_jअगरfies(urb->पूर्णांकerval);
 	endp->udev_number = address;
 	endp->usb_addr = usb_addr;
 	endp->usb_endp = usb_endp;
@@ -1914,59 +1915,59 @@ static int create_endpoint_and_queue_int(struct u132 *u132,
 	endp->queue_next = 0;
 	endp->urb_list[ENDP_QUEUE_MASK & endp->queue_last++] = urb;
 	spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-	u132_endp_queue_work(u132, endp, msecs_to_jiffies(urb->interval));
-	return 0;
-}
+	u132_endp_queue_work(u132, endp, msecs_to_jअगरfies(urb->पूर्णांकerval));
+	वापस 0;
+पूर्ण
 
-static int queue_int_on_old_endpoint(struct u132 *u132,
-	struct u132_udev *udev, struct urb *urb,
-	struct usb_device *usb_dev, struct u132_endp *endp, u8 usb_addr,
+अटल पूर्णांक queue_पूर्णांक_on_old_endpoपूर्णांक(काष्ठा u132 *u132,
+	काष्ठा u132_udev *udev, काष्ठा urb *urb,
+	काष्ठा usb_device *usb_dev, काष्ठा u132_endp *endp, u8 usb_addr,
 	u8 usb_endp, u8 address)
-{
+अणु
 	urb->hcpriv = u132;
 	endp->delayed = 1;
-	endp->jiffies = jiffies + msecs_to_jiffies(urb->interval);
-	if (endp->queue_size++ < ENDP_QUEUE_SIZE) {
+	endp->jअगरfies = jअगरfies + msecs_to_jअगरfies(urb->पूर्णांकerval);
+	अगर (endp->queue_size++ < ENDP_QUEUE_SIZE) अणु
 		endp->urb_list[ENDP_QUEUE_MASK & endp->queue_last++] = urb;
-	} else {
-		struct u132_urbq *urbq = kmalloc(sizeof(struct u132_urbq),
+	पूर्ण अन्यथा अणु
+		काष्ठा u132_urbq *urbq = kदो_स्मृति(माप(काष्ठा u132_urbq),
 			GFP_ATOMIC);
-		if (urbq == NULL) {
+		अगर (urbq == शून्य) अणु
 			endp->queue_size -= 1;
-			return -ENOMEM;
-		} else {
+			वापस -ENOMEM;
+		पूर्ण अन्यथा अणु
 			list_add_tail(&urbq->urb_more, &endp->urb_more);
 			urbq->urb = urb;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int create_endpoint_and_queue_bulk(struct u132 *u132,
-	struct u132_udev *udev, struct urb *urb,
-	struct usb_device *usb_dev, u8 usb_addr, u8 usb_endp, u8 address,
+अटल पूर्णांक create_endpoपूर्णांक_and_queue_bulk(काष्ठा u132 *u132,
+	काष्ठा u132_udev *udev, काष्ठा urb *urb,
+	काष्ठा usb_device *usb_dev, u8 usb_addr, u8 usb_endp, u8 address,
 	gfp_t mem_flags)
-{
-	int ring_number;
-	struct u132_ring *ring;
-	unsigned long irqs;
-	int rc;
+अणु
+	पूर्णांक ring_number;
+	काष्ठा u132_ring *ring;
+	अचिन्हित दीर्घ irqs;
+	पूर्णांक rc;
 	u8 endp_number;
-	struct u132_endp *endp = kmalloc(sizeof(struct u132_endp), mem_flags);
+	काष्ठा u132_endp *endp = kदो_स्मृति(माप(काष्ठा u132_endp), mem_flags);
 
-	if (!endp)
-		return -ENOMEM;
+	अगर (!endp)
+		वापस -ENOMEM;
 
 	spin_lock_init(&endp->queue_lock.slock);
 	spin_lock_irqsave(&endp->queue_lock.slock, irqs);
 	rc = usb_hcd_link_urb_to_ep(u132_to_hcd(u132), urb);
-	if (rc) {
+	अगर (rc) अणु
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-		kfree(endp);
-		return rc;
-	}
+		kमुक्त(endp);
+		वापस rc;
+	पूर्ण
 
-	endp_number = ++u132->num_endpoints;
+	endp_number = ++u132->num_endpoपूर्णांकs;
 	urb->ep->hcpriv = u132->endp[endp_number - 1] = endp;
 	INIT_DELAYED_WORK(&endp->scheduler, u132_hcd_endp_work_scheduler);
 	INIT_LIST_HEAD(&endp->urb_more);
@@ -1979,7 +1980,7 @@ static int create_endpoint_and_queue_bulk(struct u132 *u132,
 	endp->hep = urb->ep;
 	endp->pipetype = usb_pipetype(urb->pipe);
 	u132_endp_init_kref(u132, endp);
-	if (usb_pipein(urb->pipe)) {
+	अगर (usb_pipein(urb->pipe)) अणु
 		endp->toggle_bits = 0x2;
 		usb_settoggle(udev->usb_device, usb_endp, 0, 0);
 		ring_number = 3;
@@ -1987,7 +1988,7 @@ static int create_endpoint_and_queue_bulk(struct u132 *u132,
 		endp->output = 0;
 		udev->endp_number_in[usb_endp] = endp_number;
 		u132_udev_get_kref(u132, udev);
-	} else {
+	पूर्ण अन्यथा अणु
 		endp->toggle_bits = 0x2;
 		usb_settoggle(udev->usb_device, usb_endp, 1, 0);
 		ring_number = 2;
@@ -1995,14 +1996,14 @@ static int create_endpoint_and_queue_bulk(struct u132 *u132,
 		endp->output = 1;
 		udev->endp_number_out[usb_endp] = endp_number;
 		u132_udev_get_kref(u132, udev);
-	}
+	पूर्ण
 	ring = endp->ring = &u132->ring[ring_number - 1];
-	if (ring->curr_endp) {
+	अगर (ring->curr_endp) अणु
 		list_add_tail(&endp->endp_ring, &ring->curr_endp->endp_ring);
-	} else {
+	पूर्ण अन्यथा अणु
 		INIT_LIST_HEAD(&endp->endp_ring);
 		ring->curr_endp = endp;
-	}
+	पूर्ण
 	ring->length += 1;
 	urb->hcpriv = u132;
 	endp->udev_number = address;
@@ -2014,65 +2015,65 @@ static int create_endpoint_and_queue_bulk(struct u132 *u132,
 	endp->urb_list[ENDP_QUEUE_MASK & endp->queue_last++] = urb;
 	spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
 	u132_endp_queue_work(u132, endp, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int queue_bulk_on_old_endpoint(struct u132 *u132, struct u132_udev *udev,
-	struct urb *urb,
-	struct usb_device *usb_dev, struct u132_endp *endp, u8 usb_addr,
+अटल पूर्णांक queue_bulk_on_old_endpoपूर्णांक(काष्ठा u132 *u132, काष्ठा u132_udev *udev,
+	काष्ठा urb *urb,
+	काष्ठा usb_device *usb_dev, काष्ठा u132_endp *endp, u8 usb_addr,
 	u8 usb_endp, u8 address)
-{
+अणु
 	urb->hcpriv = u132;
-	if (endp->queue_size++ < ENDP_QUEUE_SIZE) {
+	अगर (endp->queue_size++ < ENDP_QUEUE_SIZE) अणु
 		endp->urb_list[ENDP_QUEUE_MASK & endp->queue_last++] = urb;
-	} else {
-		struct u132_urbq *urbq = kmalloc(sizeof(struct u132_urbq),
+	पूर्ण अन्यथा अणु
+		काष्ठा u132_urbq *urbq = kदो_स्मृति(माप(काष्ठा u132_urbq),
 			GFP_ATOMIC);
-		if (urbq == NULL) {
+		अगर (urbq == शून्य) अणु
 			endp->queue_size -= 1;
-			return -ENOMEM;
-		} else {
+			वापस -ENOMEM;
+		पूर्ण अन्यथा अणु
 			list_add_tail(&urbq->urb_more, &endp->urb_more);
 			urbq->urb = urb;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int create_endpoint_and_queue_control(struct u132 *u132,
-	struct urb *urb,
-	struct usb_device *usb_dev, u8 usb_addr, u8 usb_endp,
+अटल पूर्णांक create_endpoपूर्णांक_and_queue_control(काष्ठा u132 *u132,
+	काष्ठा urb *urb,
+	काष्ठा usb_device *usb_dev, u8 usb_addr, u8 usb_endp,
 	gfp_t mem_flags)
-{
-	struct u132_ring *ring;
-	unsigned long irqs;
-	int rc;
+अणु
+	काष्ठा u132_ring *ring;
+	अचिन्हित दीर्घ irqs;
+	पूर्णांक rc;
 	u8 endp_number;
-	struct u132_endp *endp = kmalloc(sizeof(struct u132_endp), mem_flags);
+	काष्ठा u132_endp *endp = kदो_स्मृति(माप(काष्ठा u132_endp), mem_flags);
 
-	if (!endp)
-		return -ENOMEM;
+	अगर (!endp)
+		वापस -ENOMEM;
 
 	spin_lock_init(&endp->queue_lock.slock);
 	spin_lock_irqsave(&endp->queue_lock.slock, irqs);
 	rc = usb_hcd_link_urb_to_ep(u132_to_hcd(u132), urb);
-	if (rc) {
+	अगर (rc) अणु
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-		kfree(endp);
-		return rc;
-	}
+		kमुक्त(endp);
+		वापस rc;
+	पूर्ण
 
-	endp_number = ++u132->num_endpoints;
+	endp_number = ++u132->num_endpoपूर्णांकs;
 	urb->ep->hcpriv = u132->endp[endp_number - 1] = endp;
 	INIT_DELAYED_WORK(&endp->scheduler, u132_hcd_endp_work_scheduler);
 	INIT_LIST_HEAD(&endp->urb_more);
 	ring = endp->ring = &u132->ring[0];
-	if (ring->curr_endp) {
+	अगर (ring->curr_endp) अणु
 		list_add_tail(&endp->endp_ring, &ring->curr_endp->endp_ring);
-	} else {
+	पूर्ण अन्यथा अणु
 		INIT_LIST_HEAD(&endp->endp_ring);
 		ring->curr_endp = endp;
-	}
+	पूर्ण
 	ring->length += 1;
 	endp->dequeueing = 0;
 	endp->edset_flush = 0;
@@ -2083,9 +2084,9 @@ static int create_endpoint_and_queue_control(struct u132 *u132,
 	endp->hep = urb->ep;
 	u132_endp_init_kref(u132, endp);
 	u132_endp_get_kref(u132, endp);
-	if (usb_addr == 0) {
+	अगर (usb_addr == 0) अणु
 		u8 address = u132->addr[usb_addr].address;
-		struct u132_udev *udev = &u132->udev[address];
+		काष्ठा u132_udev *udev = &u132->udev[address];
 		endp->udev_number = address;
 		endp->usb_addr = usb_addr;
 		endp->usb_endp = usb_endp;
@@ -2103,10 +2104,10 @@ static int create_endpoint_and_queue_control(struct u132 *u132,
 		endp->urb_list[ENDP_QUEUE_MASK & endp->queue_last++] = urb;
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
 		u132_endp_queue_work(u132, endp, 0);
-		return 0;
-	} else {		/*(usb_addr > 0) */
+		वापस 0;
+	पूर्ण अन्यथा अणु		/*(usb_addr > 0) */
 		u8 address = u132->addr[usb_addr].address;
-		struct u132_udev *udev = &u132->udev[address];
+		काष्ठा u132_udev *udev = &u132->udev[address];
 		endp->udev_number = address;
 		endp->usb_addr = usb_addr;
 		endp->usb_endp = usb_endp;
@@ -2114,7 +2115,7 @@ static int create_endpoint_and_queue_control(struct u132 *u132,
 		endp->output = 1;
 		endp->pipetype = usb_pipetype(urb->pipe);
 		u132_udev_get_kref(u132, udev);
-		udev->enumeration = 2;
+		udev->क्रमागतeration = 2;
 		udev->endp_number_in[usb_endp] = endp_number;
 		udev->endp_number_out[usb_endp] = endp_number;
 		urb->hcpriv = u132;
@@ -2124,45 +2125,45 @@ static int create_endpoint_and_queue_control(struct u132 *u132,
 		endp->urb_list[ENDP_QUEUE_MASK & endp->queue_last++] = urb;
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
 		u132_endp_queue_work(u132, endp, 0);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int queue_control_on_old_endpoint(struct u132 *u132,
-	struct urb *urb,
-	struct usb_device *usb_dev, struct u132_endp *endp, u8 usb_addr,
+अटल पूर्णांक queue_control_on_old_endpoपूर्णांक(काष्ठा u132 *u132,
+	काष्ठा urb *urb,
+	काष्ठा usb_device *usb_dev, काष्ठा u132_endp *endp, u8 usb_addr,
 	u8 usb_endp)
-{
-	if (usb_addr == 0) {
-		if (usb_pipein(urb->pipe)) {
+अणु
+	अगर (usb_addr == 0) अणु
+		अगर (usb_pipein(urb->pipe)) अणु
 			urb->hcpriv = u132;
-			if (endp->queue_size++ < ENDP_QUEUE_SIZE) {
+			अगर (endp->queue_size++ < ENDP_QUEUE_SIZE) अणु
 				endp->urb_list[ENDP_QUEUE_MASK &
 					endp->queue_last++] = urb;
-			} else {
-				struct u132_urbq *urbq =
-					kmalloc(sizeof(struct u132_urbq),
+			पूर्ण अन्यथा अणु
+				काष्ठा u132_urbq *urbq =
+					kदो_स्मृति(माप(काष्ठा u132_urbq),
 					GFP_ATOMIC);
-				if (urbq == NULL) {
+				अगर (urbq == शून्य) अणु
 					endp->queue_size -= 1;
-					return -ENOMEM;
-				} else {
+					वापस -ENOMEM;
+				पूर्ण अन्यथा अणु
 					list_add_tail(&urbq->urb_more,
 						&endp->urb_more);
 					urbq->urb = urb;
-				}
-			}
-			return 0;
-		} else {	/* usb_pipeout(urb->pipe) */
-			struct u132_addr *addr = &u132->addr[usb_dev->devnum];
-			int I = MAX_U132_UDEVS;
-			int i = 0;
-			while (--I > 0) {
-				struct u132_udev *udev = &u132->udev[++i];
-				if (udev->usb_device) {
-					continue;
-				} else {
-					udev->enumeration = 1;
+				पूर्ण
+			पूर्ण
+			वापस 0;
+		पूर्ण अन्यथा अणु	/* usb_pipeout(urb->pipe) */
+			काष्ठा u132_addr *addr = &u132->addr[usb_dev->devnum];
+			पूर्णांक I = MAX_U132_UDEVS;
+			पूर्णांक i = 0;
+			जबतक (--I > 0) अणु
+				काष्ठा u132_udev *udev = &u132->udev[++i];
+				अगर (udev->usb_device) अणु
+					जारी;
+				पूर्ण अन्यथा अणु
+					udev->क्रमागतeration = 1;
 					u132->addr[0].address = i;
 					endp->udev_number = i;
 					udev->udev_number = i;
@@ -2177,309 +2178,309 @@ static int queue_control_on_old_endpoint(struct u132 *u132,
 					((u8 *) (urb->setup_packet))[2] =
 						addr->address = i;
 					u132_udev_get_kref(u132, udev);
-					break;
-				}
-			}
-			if (I == 0) {
-				dev_err(&u132->platform_dev->dev, "run out of d"
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (I == 0) अणु
+				dev_err(&u132->platक्रमm_dev->dev, "run out of d"
 					"evice space\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			urb->hcpriv = u132;
-			if (endp->queue_size++ < ENDP_QUEUE_SIZE) {
+			अगर (endp->queue_size++ < ENDP_QUEUE_SIZE) अणु
 				endp->urb_list[ENDP_QUEUE_MASK &
 					endp->queue_last++] = urb;
-			} else {
-				struct u132_urbq *urbq =
-					kmalloc(sizeof(struct u132_urbq),
+			पूर्ण अन्यथा अणु
+				काष्ठा u132_urbq *urbq =
+					kदो_स्मृति(माप(काष्ठा u132_urbq),
 					GFP_ATOMIC);
-				if (urbq == NULL) {
+				अगर (urbq == शून्य) अणु
 					endp->queue_size -= 1;
-					return -ENOMEM;
-				} else {
+					वापस -ENOMEM;
+				पूर्ण अन्यथा अणु
 					list_add_tail(&urbq->urb_more,
 						&endp->urb_more);
 					urbq->urb = urb;
-				}
-			}
-			return 0;
-		}
-	} else {		/*(usb_addr > 0) */
+				पूर्ण
+			पूर्ण
+			वापस 0;
+		पूर्ण
+	पूर्ण अन्यथा अणु		/*(usb_addr > 0) */
 		u8 address = u132->addr[usb_addr].address;
-		struct u132_udev *udev = &u132->udev[address];
+		काष्ठा u132_udev *udev = &u132->udev[address];
 		urb->hcpriv = u132;
-		if (udev->enumeration != 2)
-			udev->enumeration = 2;
-		if (endp->queue_size++ < ENDP_QUEUE_SIZE) {
+		अगर (udev->क्रमागतeration != 2)
+			udev->क्रमागतeration = 2;
+		अगर (endp->queue_size++ < ENDP_QUEUE_SIZE) अणु
 			endp->urb_list[ENDP_QUEUE_MASK & endp->queue_last++] =
 				urb;
-		} else {
-			struct u132_urbq *urbq =
-				kmalloc(sizeof(struct u132_urbq), GFP_ATOMIC);
-			if (urbq == NULL) {
+		पूर्ण अन्यथा अणु
+			काष्ठा u132_urbq *urbq =
+				kदो_स्मृति(माप(काष्ठा u132_urbq), GFP_ATOMIC);
+			अगर (urbq == शून्य) अणु
 				endp->queue_size -= 1;
-				return -ENOMEM;
-			} else {
+				वापस -ENOMEM;
+			पूर्ण अन्यथा अणु
 				list_add_tail(&urbq->urb_more, &endp->urb_more);
 				urbq->urb = urb;
-			}
-		}
-		return 0;
-	}
-}
+			पूर्ण
+		पूर्ण
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int u132_urb_enqueue(struct usb_hcd *hcd, struct urb *urb,
+अटल पूर्णांक u132_urb_enqueue(काष्ठा usb_hcd *hcd, काष्ठा urb *urb,
 		gfp_t mem_flags)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (irqs_disabled()) {
-		if (gfpflags_allow_blocking(mem_flags)) {
-			printk(KERN_ERR "invalid context for function that might sleep\n");
-			return -EINVAL;
-		}
-	}
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (irqs_disabled()) अणु
+		अगर (gfpflags_allow_blocking(mem_flags)) अणु
+			prपूर्णांकk(KERN_ERR "invalid context for function that might sleep\n");
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed "
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed "
 				"urb=%p\n", urb);
-		return -ESHUTDOWN;
-	} else {
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा अणु
 		u8 usb_addr = usb_pipedevice(urb->pipe);
-		u8 usb_endp = usb_pipeendpoint(urb->pipe);
-		struct usb_device *usb_dev = urb->dev;
-		if (usb_pipetype(urb->pipe) == PIPE_INTERRUPT) {
+		u8 usb_endp = usb_pipeendpoपूर्णांक(urb->pipe);
+		काष्ठा usb_device *usb_dev = urb->dev;
+		अगर (usb_pipetype(urb->pipe) == PIPE_INTERRUPT) अणु
 			u8 address = u132->addr[usb_addr].address;
-			struct u132_udev *udev = &u132->udev[address];
-			struct u132_endp *endp = urb->ep->hcpriv;
+			काष्ठा u132_udev *udev = &u132->udev[address];
+			काष्ठा u132_endp *endp = urb->ep->hcpriv;
 			urb->actual_length = 0;
-			if (endp) {
-				unsigned long irqs;
-				int retval;
+			अगर (endp) अणु
+				अचिन्हित दीर्घ irqs;
+				पूर्णांक retval;
 				spin_lock_irqsave(&endp->queue_lock.slock,
 					irqs);
 				retval = usb_hcd_link_urb_to_ep(hcd, urb);
-				if (retval == 0) {
-					retval = queue_int_on_old_endpoint(
+				अगर (retval == 0) अणु
+					retval = queue_पूर्णांक_on_old_endpoपूर्णांक(
 							u132, udev, urb,
 							usb_dev, endp,
 							usb_addr, usb_endp,
 							address);
-					if (retval)
+					अगर (retval)
 						usb_hcd_unlink_urb_from_ep(
 	hcd, urb);
-				}
+				पूर्ण
 				spin_unlock_irqrestore(&endp->queue_lock.slock,
 					irqs);
-				if (retval) {
-					return retval;
-				} else {
+				अगर (retval) अणु
+					वापस retval;
+				पूर्ण अन्यथा अणु
 					u132_endp_queue_work(u132, endp,
-						msecs_to_jiffies(urb->interval))
+						msecs_to_jअगरfies(urb->पूर्णांकerval))
 						;
-					return 0;
-				}
-			} else if (u132->num_endpoints == MAX_U132_ENDPS) {
-				return -EINVAL;
-			} else {	/*(endp == NULL) */
-				return create_endpoint_and_queue_int(u132, udev,
+					वापस 0;
+				पूर्ण
+			पूर्ण अन्यथा अगर (u132->num_endpoपूर्णांकs == MAX_U132_ENDPS) अणु
+				वापस -EINVAL;
+			पूर्ण अन्यथा अणु	/*(endp == शून्य) */
+				वापस create_endpoपूर्णांक_and_queue_पूर्णांक(u132, udev,
 						urb, usb_dev, usb_addr,
 						usb_endp, address, mem_flags);
-			}
-		} else if (usb_pipetype(urb->pipe) == PIPE_ISOCHRONOUS) {
-			dev_err(&u132->platform_dev->dev, "the hardware does no"
+			पूर्ण
+		पूर्ण अन्यथा अगर (usb_pipetype(urb->pipe) == PIPE_ISOCHRONOUS) अणु
+			dev_err(&u132->platक्रमm_dev->dev, "the hardware does no"
 				"t support PIPE_ISOCHRONOUS\n");
-			return -EINVAL;
-		} else if (usb_pipetype(urb->pipe) == PIPE_BULK) {
+			वापस -EINVAL;
+		पूर्ण अन्यथा अगर (usb_pipetype(urb->pipe) == PIPE_BULK) अणु
 			u8 address = u132->addr[usb_addr].address;
-			struct u132_udev *udev = &u132->udev[address];
-			struct u132_endp *endp = urb->ep->hcpriv;
+			काष्ठा u132_udev *udev = &u132->udev[address];
+			काष्ठा u132_endp *endp = urb->ep->hcpriv;
 			urb->actual_length = 0;
-			if (endp) {
-				unsigned long irqs;
-				int retval;
+			अगर (endp) अणु
+				अचिन्हित दीर्घ irqs;
+				पूर्णांक retval;
 				spin_lock_irqsave(&endp->queue_lock.slock,
 					irqs);
 				retval = usb_hcd_link_urb_to_ep(hcd, urb);
-				if (retval == 0) {
-					retval = queue_bulk_on_old_endpoint(
+				अगर (retval == 0) अणु
+					retval = queue_bulk_on_old_endpoपूर्णांक(
 							u132, udev, urb,
 							usb_dev, endp,
 							usb_addr, usb_endp,
 							address);
-					if (retval)
+					अगर (retval)
 						usb_hcd_unlink_urb_from_ep(
 	hcd, urb);
-				}
+				पूर्ण
 				spin_unlock_irqrestore(&endp->queue_lock.slock,
 					irqs);
-				if (retval) {
-					return retval;
-				} else {
+				अगर (retval) अणु
+					वापस retval;
+				पूर्ण अन्यथा अणु
 					u132_endp_queue_work(u132, endp, 0);
-					return 0;
-				}
-			} else if (u132->num_endpoints == MAX_U132_ENDPS) {
-				return -EINVAL;
-			} else
-				return create_endpoint_and_queue_bulk(u132,
+					वापस 0;
+				पूर्ण
+			पूर्ण अन्यथा अगर (u132->num_endpoपूर्णांकs == MAX_U132_ENDPS) अणु
+				वापस -EINVAL;
+			पूर्ण अन्यथा
+				वापस create_endpoपूर्णांक_and_queue_bulk(u132,
 					udev, urb, usb_dev, usb_addr,
 					usb_endp, address, mem_flags);
-		} else {
-			struct u132_endp *endp = urb->ep->hcpriv;
+		पूर्ण अन्यथा अणु
+			काष्ठा u132_endp *endp = urb->ep->hcpriv;
 			u16 urb_size = 8;
 			u8 *b = urb->setup_packet;
-			int i = 0;
-			char data[30 * 3 + 4];
-			char *d = data;
-			int m = (sizeof(data) - 1) / 3;
-			int l = 0;
+			पूर्णांक i = 0;
+			अक्षर data[30 * 3 + 4];
+			अक्षर *d = data;
+			पूर्णांक m = (माप(data) - 1) / 3;
+			पूर्णांक l = 0;
 			data[0] = 0;
-			while (urb_size-- > 0) {
-				if (i > m) {
-				} else if (i++ < m) {
-					int w = sprintf(d, " %02X", *b++);
+			जबतक (urb_size-- > 0) अणु
+				अगर (i > m) अणु
+				पूर्ण अन्यथा अगर (i++ < m) अणु
+					पूर्णांक w = प्र_लिखो(d, " %02X", *b++);
 					d += w;
 					l += w;
-				} else
-					d += sprintf(d, " ..");
-			}
-			if (endp) {
-				unsigned long irqs;
-				int retval;
+				पूर्ण अन्यथा
+					d += प्र_लिखो(d, " ..");
+			पूर्ण
+			अगर (endp) अणु
+				अचिन्हित दीर्घ irqs;
+				पूर्णांक retval;
 				spin_lock_irqsave(&endp->queue_lock.slock,
 					irqs);
 				retval = usb_hcd_link_urb_to_ep(hcd, urb);
-				if (retval == 0) {
-					retval = queue_control_on_old_endpoint(
+				अगर (retval == 0) अणु
+					retval = queue_control_on_old_endpoपूर्णांक(
 							u132, urb, usb_dev,
 							endp, usb_addr,
 							usb_endp);
-					if (retval)
+					अगर (retval)
 						usb_hcd_unlink_urb_from_ep(
 								hcd, urb);
-				}
+				पूर्ण
 				spin_unlock_irqrestore(&endp->queue_lock.slock,
 					irqs);
-				if (retval) {
-					return retval;
-				} else {
+				अगर (retval) अणु
+					वापस retval;
+				पूर्ण अन्यथा अणु
 					u132_endp_queue_work(u132, endp, 0);
-					return 0;
-				}
-			} else if (u132->num_endpoints == MAX_U132_ENDPS) {
-				return -EINVAL;
-			} else
-				return create_endpoint_and_queue_control(u132,
+					वापस 0;
+				पूर्ण
+			पूर्ण अन्यथा अगर (u132->num_endpoपूर्णांकs == MAX_U132_ENDPS) अणु
+				वापस -EINVAL;
+			पूर्ण अन्यथा
+				वापस create_endpoपूर्णांक_and_queue_control(u132,
 					urb, usb_dev, usb_addr, usb_endp,
 					mem_flags);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int dequeue_from_overflow_chain(struct u132 *u132,
-	struct u132_endp *endp, struct urb *urb)
-{
-	struct u132_urbq *urbq;
+अटल पूर्णांक dequeue_from_overflow_chain(काष्ठा u132 *u132,
+	काष्ठा u132_endp *endp, काष्ठा urb *urb)
+अणु
+	काष्ठा u132_urbq *urbq;
 
-	list_for_each_entry(urbq, &endp->urb_more, urb_more) {
-		if (urbq->urb == urb) {
-			struct usb_hcd *hcd = u132_to_hcd(u132);
+	list_क्रम_each_entry(urbq, &endp->urb_more, urb_more) अणु
+		अगर (urbq->urb == urb) अणु
+			काष्ठा usb_hcd *hcd = u132_to_hcd(u132);
 			list_del(&urbq->urb_more);
 			endp->queue_size -= 1;
 			urb->error_count = 0;
 			usb_hcd_giveback_urb(hcd, urb, 0);
-			return 0;
-		} else
-			continue;
-	}
-	dev_err(&u132->platform_dev->dev, "urb=%p not found in endp[%d]=%p ring"
+			वापस 0;
+		पूर्ण अन्यथा
+			जारी;
+	पूर्ण
+	dev_err(&u132->platक्रमm_dev->dev, "urb=%p not found in endp[%d]=%p ring"
 		"[%d] %c%c usb_endp=%d usb_addr=%d size=%d next=%04X last=%04X"
 		"\n", urb, endp->endp_number, endp, endp->ring->number,
 		endp->input ? 'I' : ' ', endp->output ? 'O' : ' ',
 		endp->usb_endp, endp->usb_addr, endp->queue_size,
 		endp->queue_next, endp->queue_last);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int u132_endp_urb_dequeue(struct u132 *u132, struct u132_endp *endp,
-		struct urb *urb, int status)
-{
-	unsigned long irqs;
-	int rc;
+अटल पूर्णांक u132_endp_urb_dequeue(काष्ठा u132 *u132, काष्ठा u132_endp *endp,
+		काष्ठा urb *urb, पूर्णांक status)
+अणु
+	अचिन्हित दीर्घ irqs;
+	पूर्णांक rc;
 
 	spin_lock_irqsave(&endp->queue_lock.slock, irqs);
 	rc = usb_hcd_check_unlink_urb(u132_to_hcd(u132), urb, status);
-	if (rc) {
+	अगर (rc) अणु
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-		return rc;
-	}
-	if (endp->queue_size == 0) {
-		dev_err(&u132->platform_dev->dev, "urb=%p not found in endp[%d]"
+		वापस rc;
+	पूर्ण
+	अगर (endp->queue_size == 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "urb=%p not found in endp[%d]"
 			"=%p ring[%d] %c%c usb_endp=%d usb_addr=%d\n", urb,
 			endp->endp_number, endp, endp->ring->number,
 			endp->input ? 'I' : ' ', endp->output ? 'O' : ' ',
 			endp->usb_endp, endp->usb_addr);
 		spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-		return -EINVAL;
-	}
-	if (urb == endp->urb_list[ENDP_QUEUE_MASK & endp->queue_next]) {
-		if (endp->active) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (urb == endp->urb_list[ENDP_QUEUE_MASK & endp->queue_next]) अणु
+		अगर (endp->active) अणु
 			endp->dequeueing = 1;
 			endp->edset_flush = 1;
 			u132_endp_queue_work(u132, endp, 0);
 			spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-			return 0;
-		} else {
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-			u132_hcd_abandon_urb(u132, endp, urb, status);
-			return 0;
-		}
-	} else {
+			u132_hcd_abanकरोn_urb(u132, endp, urb, status);
+			वापस 0;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		u16 queue_list = 0;
 		u16 queue_size = endp->queue_size;
 		u16 queue_scan = endp->queue_next;
-		struct urb **urb_slot = NULL;
-		while (++queue_list < ENDP_QUEUE_SIZE && --queue_size > 0) {
-			if (urb == endp->urb_list[ENDP_QUEUE_MASK &
-				++queue_scan]) {
+		काष्ठा urb **urb_slot = शून्य;
+		जबतक (++queue_list < ENDP_QUEUE_SIZE && --queue_size > 0) अणु
+			अगर (urb == endp->urb_list[ENDP_QUEUE_MASK &
+				++queue_scan]) अणु
 				urb_slot = &endp->urb_list[ENDP_QUEUE_MASK &
 					queue_scan];
-				break;
-			} else
-				continue;
-		}
-		while (++queue_list < ENDP_QUEUE_SIZE && --queue_size > 0) {
+				अवरोध;
+			पूर्ण अन्यथा
+				जारी;
+		पूर्ण
+		जबतक (++queue_list < ENDP_QUEUE_SIZE && --queue_size > 0) अणु
 			*urb_slot = endp->urb_list[ENDP_QUEUE_MASK &
 				++queue_scan];
 			urb_slot = &endp->urb_list[ENDP_QUEUE_MASK &
 				queue_scan];
-		}
-		if (urb_slot) {
-			struct usb_hcd *hcd = u132_to_hcd(u132);
+		पूर्ण
+		अगर (urb_slot) अणु
+			काष्ठा usb_hcd *hcd = u132_to_hcd(u132);
 
 			usb_hcd_unlink_urb_from_ep(hcd, urb);
 			endp->queue_size -= 1;
-			if (list_empty(&endp->urb_more)) {
+			अगर (list_empty(&endp->urb_more)) अणु
 				spin_unlock_irqrestore(&endp->queue_lock.slock,
 					irqs);
-			} else {
-				struct list_head *next = endp->urb_more.next;
-				struct u132_urbq *urbq = list_entry(next,
-					struct u132_urbq, urb_more);
+			पूर्ण अन्यथा अणु
+				काष्ठा list_head *next = endp->urb_more.next;
+				काष्ठा u132_urbq *urbq = list_entry(next,
+					काष्ठा u132_urbq, urb_more);
 				list_del(next);
 				*urb_slot = urbq->urb;
 				spin_unlock_irqrestore(&endp->queue_lock.slock,
 					irqs);
-				kfree(urbq);
-			}
+				kमुक्त(urbq);
+			पूर्ण
 			urb->error_count = 0;
 			usb_hcd_giveback_urb(hcd, urb, status);
-			return 0;
-		} else if (list_empty(&endp->urb_more)) {
-			dev_err(&u132->platform_dev->dev, "urb=%p not found in "
+			वापस 0;
+		पूर्ण अन्यथा अगर (list_empty(&endp->urb_more)) अणु
+			dev_err(&u132->platक्रमm_dev->dev, "urb=%p not found in "
 				"endp[%d]=%p ring[%d] %c%c usb_endp=%d usb_addr"
 				"=%d size=%d next=%04X last=%04X\n", urb,
 				endp->endp_number, endp, endp->ring->number,
@@ -2488,85 +2489,85 @@ static int u132_endp_urb_dequeue(struct u132 *u132, struct u132_endp *endp,
 				endp->usb_addr, endp->queue_size,
 				endp->queue_next, endp->queue_last);
 			spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-			return -EINVAL;
-		} else {
-			int retval;
+			वापस -EINVAL;
+		पूर्ण अन्यथा अणु
+			पूर्णांक retval;
 
 			usb_hcd_unlink_urb_from_ep(u132_to_hcd(u132), urb);
 			retval = dequeue_from_overflow_chain(u132, endp,
 				urb);
 			spin_unlock_irqrestore(&endp->queue_lock.slock, irqs);
-			return retval;
-		}
-	}
-}
+			वापस retval;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int u132_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 2) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अटल पूर्णांक u132_urb_dequeue(काष्ठा usb_hcd *hcd, काष्ठा urb *urb, पूर्णांक status)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 2) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else {
+		वापस -ENODEV;
+	पूर्ण अन्यथा अणु
 		u8 usb_addr = usb_pipedevice(urb->pipe);
-		u8 usb_endp = usb_pipeendpoint(urb->pipe);
+		u8 usb_endp = usb_pipeendpoपूर्णांक(urb->pipe);
 		u8 address = u132->addr[usb_addr].address;
-		struct u132_udev *udev = &u132->udev[address];
-		if (usb_pipein(urb->pipe)) {
+		काष्ठा u132_udev *udev = &u132->udev[address];
+		अगर (usb_pipein(urb->pipe)) अणु
 			u8 endp_number = udev->endp_number_in[usb_endp];
-			struct u132_endp *endp = u132->endp[endp_number - 1];
-			return u132_endp_urb_dequeue(u132, endp, urb, status);
-		} else {
+			काष्ठा u132_endp *endp = u132->endp[endp_number - 1];
+			वापस u132_endp_urb_dequeue(u132, endp, urb, status);
+		पूर्ण अन्यथा अणु
 			u8 endp_number = udev->endp_number_out[usb_endp];
-			struct u132_endp *endp = u132->endp[endp_number - 1];
-			return u132_endp_urb_dequeue(u132, endp, urb, status);
-		}
-	}
-}
+			काष्ठा u132_endp *endp = u132->endp[endp_number - 1];
+			वापस u132_endp_urb_dequeue(u132, endp, urb, status);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void u132_endpoint_disable(struct usb_hcd *hcd,
-	struct usb_host_endpoint *hep)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 2) {
-		dev_err(&u132->platform_dev->dev, "u132 device %p(hcd=%p hep=%p"
+अटल व्योम u132_endpoपूर्णांक_disable(काष्ठा usb_hcd *hcd,
+	काष्ठा usb_host_endpoपूर्णांक *hep)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 2) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "u132 device %p(hcd=%p hep=%p"
 			") has been removed %d\n", u132, hcd, hep,
 			u132->going);
-	} else {
-		struct u132_endp *endp = hep->hcpriv;
-		if (endp)
+	पूर्ण अन्यथा अणु
+		काष्ठा u132_endp *endp = hep->hcpriv;
+		अगर (endp)
 			u132_endp_put_kref(u132, endp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int u132_get_frame(struct usb_hcd *hcd)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अटल पूर्णांक u132_get_frame(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed\n");
-		return -ESHUTDOWN;
-	} else {
-		dev_err(&u132->platform_dev->dev, "TODO: u132_get_frame\n");
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed\n");
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा अणु
+		dev_err(&u132->platक्रमm_dev->dev, "TODO: u132_get_frame\n");
 		mdelay(100);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int u132_roothub_descriptor(struct u132 *u132,
-	struct usb_hub_descriptor *desc)
-{
-	int retval;
+अटल पूर्णांक u132_roothub_descriptor(काष्ठा u132 *u132,
+	काष्ठा usb_hub_descriptor *desc)
+अणु
+	पूर्णांक retval;
 	u16 temp;
 	u32 rh_a = -1;
 	u32 rh_b = -1;
-	retval = u132_read_pcimem(u132, roothub.a, &rh_a);
-	if (retval)
-		return retval;
+	retval = u132_पढ़ो_pcimem(u132, roothub.a, &rh_a);
+	अगर (retval)
+		वापस retval;
 	desc->bDescriptorType = USB_DT_HUB;
 	desc->bPwrOn2PwrGood = (rh_a & RH_A_POTPGT) >> 24;
 	desc->bHubContrCurrent = 0;
@@ -2574,515 +2575,515 @@ static int u132_roothub_descriptor(struct u132 *u132,
 	temp = 1 + (u132->num_ports / 8);
 	desc->bDescLength = 7 + 2 * temp;
 	temp = HUB_CHAR_COMMON_LPSM | HUB_CHAR_COMMON_OCPM;
-	if (rh_a & RH_A_NPS)
+	अगर (rh_a & RH_A_NPS)
 		temp |= HUB_CHAR_NO_LPSM;
-	if (rh_a & RH_A_PSM)
+	अगर (rh_a & RH_A_PSM)
 		temp |= HUB_CHAR_INDV_PORT_LPSM;
-	if (rh_a & RH_A_NOCP)
+	अगर (rh_a & RH_A_NOCP)
 		temp |= HUB_CHAR_NO_OCPM;
-	else if (rh_a & RH_A_OCPM)
+	अन्यथा अगर (rh_a & RH_A_OCPM)
 		temp |= HUB_CHAR_INDV_PORT_OCPM;
 	desc->wHubCharacteristics = cpu_to_le16(temp);
-	retval = u132_read_pcimem(u132, roothub.b, &rh_b);
-	if (retval)
-		return retval;
-	memset(desc->u.hs.DeviceRemovable, 0xff,
-			sizeof(desc->u.hs.DeviceRemovable));
+	retval = u132_पढ़ो_pcimem(u132, roothub.b, &rh_b);
+	अगर (retval)
+		वापस retval;
+	स_रखो(desc->u.hs.DeviceRemovable, 0xff,
+			माप(desc->u.hs.DeviceRemovable));
 	desc->u.hs.DeviceRemovable[0] = rh_b & RH_B_DR;
-	if (u132->num_ports > 7) {
+	अगर (u132->num_ports > 7) अणु
 		desc->u.hs.DeviceRemovable[1] = (rh_b & RH_B_DR) >> 8;
 		desc->u.hs.DeviceRemovable[2] = 0xff;
-	} else
+	पूर्ण अन्यथा
 		desc->u.hs.DeviceRemovable[1] = 0xff;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int u132_roothub_status(struct u132 *u132, __le32 *desc)
-{
+अटल पूर्णांक u132_roothub_status(काष्ठा u132 *u132, __le32 *desc)
+अणु
 	u32 rh_status = -1;
-	int ret_status = u132_read_pcimem(u132, roothub.status, &rh_status);
+	पूर्णांक ret_status = u132_पढ़ो_pcimem(u132, roothub.status, &rh_status);
 	*desc = cpu_to_le32(rh_status);
-	return ret_status;
-}
+	वापस ret_status;
+पूर्ण
 
-static int u132_roothub_portstatus(struct u132 *u132, __le32 *desc, u16 wIndex)
-{
-	if (wIndex == 0 || wIndex > u132->num_ports) {
-		return -EINVAL;
-	} else {
-		int port = wIndex - 1;
+अटल पूर्णांक u132_roothub_portstatus(काष्ठा u132 *u132, __le32 *desc, u16 wIndex)
+अणु
+	अगर (wIndex == 0 || wIndex > u132->num_ports) अणु
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		पूर्णांक port = wIndex - 1;
 		u32 rh_portstatus = -1;
-		int ret_portstatus = u132_read_pcimem(u132,
+		पूर्णांक ret_portstatus = u132_पढ़ो_pcimem(u132,
 			roothub.portstatus[port], &rh_portstatus);
 		*desc = cpu_to_le32(rh_portstatus);
-		if (*(u16 *) (desc + 2)) {
-			dev_info(&u132->platform_dev->dev, "Port %d Status Chan"
+		अगर (*(u16 *) (desc + 2)) अणु
+			dev_info(&u132->platक्रमm_dev->dev, "Port %d Status Chan"
 				"ge = %08X\n", port, *desc);
-		}
-		return ret_portstatus;
-	}
-}
+		पूर्ण
+		वापस ret_portstatus;
+	पूर्ण
+पूर्ण
 
 
-/* this timer value might be vendor-specific ... */
-#define PORT_RESET_HW_MSEC 10
-#define PORT_RESET_MSEC 10
-/* wrap-aware logic morphed from <linux/jiffies.h> */
-#define tick_before(t1, t2) ((s16)(((s16)(t1))-((s16)(t2))) < 0)
-static int u132_roothub_portreset(struct u132 *u132, int port_index)
-{
-	int retval;
+/* this समयr value might be venकरोr-specअगरic ... */
+#घोषणा PORT_RESET_HW_MSEC 10
+#घोषणा PORT_RESET_MSEC 10
+/* wrap-aware logic morphed from <linux/jअगरfies.h> */
+#घोषणा tick_beक्रमe(t1, t2) ((s16)(((s16)(t1))-((s16)(t2))) < 0)
+अटल पूर्णांक u132_roothub_portreset(काष्ठा u132 *u132, पूर्णांक port_index)
+अणु
+	पूर्णांक retval;
 	u32 fmnumber;
 	u16 now;
-	u16 reset_done;
-	retval = u132_read_pcimem(u132, fmnumber, &fmnumber);
-	if (retval)
-		return retval;
+	u16 reset_करोne;
+	retval = u132_पढ़ो_pcimem(u132, fmnumber, &fmnumber);
+	अगर (retval)
+		वापस retval;
 	now = fmnumber;
-	reset_done = now + PORT_RESET_MSEC;
-	do {
+	reset_करोne = now + PORT_RESET_MSEC;
+	करो अणु
 		u32 portstat;
-		do {
-			retval = u132_read_pcimem(u132,
+		करो अणु
+			retval = u132_पढ़ो_pcimem(u132,
 				roothub.portstatus[port_index], &portstat);
-			if (retval)
-				return retval;
-			if (RH_PS_PRS & portstat)
-				continue;
-			else
-				break;
-		} while (tick_before(now, reset_done));
-		if (RH_PS_PRS & portstat)
-			return -ENODEV;
-		if (RH_PS_CCS & portstat) {
-			if (RH_PS_PRSC & portstat) {
-				retval = u132_write_pcimem(u132,
+			अगर (retval)
+				वापस retval;
+			अगर (RH_PS_PRS & portstat)
+				जारी;
+			अन्यथा
+				अवरोध;
+		पूर्ण जबतक (tick_beक्रमe(now, reset_करोne));
+		अगर (RH_PS_PRS & portstat)
+			वापस -ENODEV;
+		अगर (RH_PS_CCS & portstat) अणु
+			अगर (RH_PS_PRSC & portstat) अणु
+				retval = u132_ग_लिखो_pcimem(u132,
 					roothub.portstatus[port_index],
 					RH_PS_PRSC);
-				if (retval)
-					return retval;
-			}
-		} else
-			break;	/* start the next reset,
-				sleep till it's probably done */
-		retval = u132_write_pcimem(u132, roothub.portstatus[port_index],
+				अगर (retval)
+					वापस retval;
+			पूर्ण
+		पूर्ण अन्यथा
+			अवरोध;	/* start the next reset,
+				sleep till it's probably करोne */
+		retval = u132_ग_लिखो_pcimem(u132, roothub.portstatus[port_index],
 			 RH_PS_PRS);
-		if (retval)
-			return retval;
+		अगर (retval)
+			वापस retval;
 		msleep(PORT_RESET_HW_MSEC);
-		retval = u132_read_pcimem(u132, fmnumber, &fmnumber);
-		if (retval)
-			return retval;
+		retval = u132_पढ़ो_pcimem(u132, fmnumber, &fmnumber);
+		अगर (retval)
+			वापस retval;
 		now = fmnumber;
-	} while (tick_before(now, reset_done));
-	return 0;
-}
+	पूर्ण जबतक (tick_beक्रमe(now, reset_करोne));
+	वापस 0;
+पूर्ण
 
-static int u132_roothub_setportfeature(struct u132 *u132, u16 wValue,
+अटल पूर्णांक u132_roothub_setportfeature(काष्ठा u132 *u132, u16 wValue,
 	u16 wIndex)
-{
-	if (wIndex == 0 || wIndex > u132->num_ports) {
-		return -EINVAL;
-	} else {
-		int port_index = wIndex - 1;
-		struct u132_port *port = &u132->port[port_index];
+अणु
+	अगर (wIndex == 0 || wIndex > u132->num_ports) अणु
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		पूर्णांक port_index = wIndex - 1;
+		काष्ठा u132_port *port = &u132->port[port_index];
 		port->Status &= ~(1 << wValue);
-		switch (wValue) {
-		case USB_PORT_FEAT_SUSPEND:
-			return u132_write_pcimem(u132,
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_SUSPEND:
+			वापस u132_ग_लिखो_pcimem(u132,
 			       roothub.portstatus[port_index], RH_PS_PSS);
-		case USB_PORT_FEAT_POWER:
-			return u132_write_pcimem(u132,
+		हाल USB_PORT_FEAT_POWER:
+			वापस u132_ग_लिखो_pcimem(u132,
 			       roothub.portstatus[port_index], RH_PS_PPS);
-		case USB_PORT_FEAT_RESET:
-			return u132_roothub_portreset(u132, port_index);
-		default:
-			return -EPIPE;
-		}
-	}
-}
+		हाल USB_PORT_FEAT_RESET:
+			वापस u132_roothub_portreset(u132, port_index);
+		शेष:
+			वापस -EPIPE;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int u132_roothub_clearportfeature(struct u132 *u132, u16 wValue,
+अटल पूर्णांक u132_roothub_clearportfeature(काष्ठा u132 *u132, u16 wValue,
 	u16 wIndex)
-{
-	if (wIndex == 0 || wIndex > u132->num_ports) {
-		return -EINVAL;
-	} else {
-		int port_index = wIndex - 1;
+अणु
+	अगर (wIndex == 0 || wIndex > u132->num_ports) अणु
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		पूर्णांक port_index = wIndex - 1;
 		u32 temp;
-		struct u132_port *port = &u132->port[port_index];
+		काष्ठा u132_port *port = &u132->port[port_index];
 		port->Status &= ~(1 << wValue);
-		switch (wValue) {
-		case USB_PORT_FEAT_ENABLE:
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_ENABLE:
 			temp = RH_PS_CCS;
-			break;
-		case USB_PORT_FEAT_C_ENABLE:
+			अवरोध;
+		हाल USB_PORT_FEAT_C_ENABLE:
 			temp = RH_PS_PESC;
-			break;
-		case USB_PORT_FEAT_SUSPEND:
+			अवरोध;
+		हाल USB_PORT_FEAT_SUSPEND:
 			temp = RH_PS_POCI;
-			if ((u132->hc_control & OHCI_CTRL_HCFS)
-				!= OHCI_USB_OPER) {
-				dev_err(&u132->platform_dev->dev, "TODO resume_"
+			अगर ((u132->hc_control & OHCI_CTRL_HCFS)
+				!= OHCI_USB_OPER) अणु
+				dev_err(&u132->platक्रमm_dev->dev, "TODO resume_"
 					"root_hub\n");
-			}
-			break;
-		case USB_PORT_FEAT_C_SUSPEND:
+			पूर्ण
+			अवरोध;
+		हाल USB_PORT_FEAT_C_SUSPEND:
 			temp = RH_PS_PSSC;
-			break;
-		case USB_PORT_FEAT_POWER:
+			अवरोध;
+		हाल USB_PORT_FEAT_POWER:
 			temp = RH_PS_LSDA;
-			break;
-		case USB_PORT_FEAT_C_CONNECTION:
+			अवरोध;
+		हाल USB_PORT_FEAT_C_CONNECTION:
 			temp = RH_PS_CSC;
-			break;
-		case USB_PORT_FEAT_C_OVER_CURRENT:
+			अवरोध;
+		हाल USB_PORT_FEAT_C_OVER_CURRENT:
 			temp = RH_PS_OCIC;
-			break;
-		case USB_PORT_FEAT_C_RESET:
+			अवरोध;
+		हाल USB_PORT_FEAT_C_RESET:
 			temp = RH_PS_PRSC;
-			break;
-		default:
-			return -EPIPE;
-		}
-		return u132_write_pcimem(u132, roothub.portstatus[port_index],
+			अवरोध;
+		शेष:
+			वापस -EPIPE;
+		पूर्ण
+		वापस u132_ग_लिखो_pcimem(u132, roothub.portstatus[port_index],
 		       temp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-/* the virtual root hub timer IRQ checks for hub status*/
-static int u132_hub_status_data(struct usb_hcd *hcd, char *buf)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device hcd=%p has been remov"
+/* the भव root hub समयr IRQ checks क्रम hub status*/
+अटल पूर्णांक u132_hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device hcd=%p has been remov"
 			"ed %d\n", hcd, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device hcd=%p is being remov"
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device hcd=%p is being remov"
 			"ed\n", hcd);
-		return -ESHUTDOWN;
-	} else {
-		int i, changed = 0, length = 1;
-		if (u132->flags & OHCI_QUIRK_AMD756) {
-			if ((u132->hc_roothub_a & RH_A_NDP) > MAX_ROOT_PORTS) {
-				dev_err(&u132->platform_dev->dev, "bogus NDP, r"
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा अणु
+		पूर्णांक i, changed = 0, length = 1;
+		अगर (u132->flags & OHCI_QUIRK_AMD756) अणु
+			अगर ((u132->hc_roothub_a & RH_A_NDP) > MAX_ROOT_PORTS) अणु
+				dev_err(&u132->platक्रमm_dev->dev, "bogus NDP, r"
 					"ereads as NDP=%d\n",
 					u132->hc_roothub_a & RH_A_NDP);
-				goto done;
-			}
-		}
-		if (u132->hc_roothub_status & (RH_HS_LPSC | RH_HS_OCIC))
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
+		अगर (u132->hc_roothub_status & (RH_HS_LPSC | RH_HS_OCIC))
 			buf[0] = changed = 1;
-		else
+		अन्यथा
 			buf[0] = 0;
-		if (u132->num_ports > 7) {
+		अगर (u132->num_ports > 7) अणु
 			buf[1] = 0;
 			length++;
-		}
-		for (i = 0; i < u132->num_ports; i++) {
-			if (u132->hc_roothub_portstatus[i] & (RH_PS_CSC |
+		पूर्ण
+		क्रम (i = 0; i < u132->num_ports; i++) अणु
+			अगर (u132->hc_roothub_portstatus[i] & (RH_PS_CSC |
 				RH_PS_PESC | RH_PS_PSSC | RH_PS_OCIC |
-				RH_PS_PRSC)) {
+				RH_PS_PRSC)) अणु
 				changed = 1;
-				if (i < 7)
+				अगर (i < 7)
 					buf[0] |= 1 << (i + 1);
-				else
+				अन्यथा
 					buf[1] |= 1 << (i - 7);
-				continue;
-			}
-			if (!(u132->hc_roothub_portstatus[i] & RH_PS_CCS))
-				continue;
+				जारी;
+			पूर्ण
+			अगर (!(u132->hc_roothub_portstatus[i] & RH_PS_CCS))
+				जारी;
 
-			if ((u132->hc_roothub_portstatus[i] & RH_PS_PSS))
-				continue;
-		}
-done:
-		return changed ? length : 0;
-	}
-}
+			अगर ((u132->hc_roothub_portstatus[i] & RH_PS_PSS))
+				जारी;
+		पूर्ण
+करोne:
+		वापस changed ? length : 0;
+	पूर्ण
+पूर्ण
 
-static int u132_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
-	u16 wIndex, char *buf, u16 wLength)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अटल पूर्णांक u132_hub_control(काष्ठा usb_hcd *hcd, u16 typeReq, u16 wValue,
+	u16 wIndex, अक्षर *buf, u16 wLength)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed\n");
-		return -ESHUTDOWN;
-	} else {
-		int retval = 0;
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed\n");
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा अणु
+		पूर्णांक retval = 0;
 		mutex_lock(&u132->sw_lock);
-		switch (typeReq) {
-		case ClearHubFeature:
-			switch (wValue) {
-			case C_HUB_OVER_CURRENT:
-			case C_HUB_LOCAL_POWER:
-				break;
-			default:
-				goto stall;
-			}
-			break;
-		case SetHubFeature:
-			switch (wValue) {
-			case C_HUB_OVER_CURRENT:
-			case C_HUB_LOCAL_POWER:
-				break;
-			default:
-				goto stall;
-			}
-			break;
-		case ClearPortFeature:{
+		चयन (typeReq) अणु
+		हाल ClearHubFeature:
+			चयन (wValue) अणु
+			हाल C_HUB_OVER_CURRENT:
+			हाल C_HUB_LOCAL_POWER:
+				अवरोध;
+			शेष:
+				जाओ stall;
+			पूर्ण
+			अवरोध;
+		हाल SetHubFeature:
+			चयन (wValue) अणु
+			हाल C_HUB_OVER_CURRENT:
+			हाल C_HUB_LOCAL_POWER:
+				अवरोध;
+			शेष:
+				जाओ stall;
+			पूर्ण
+			अवरोध;
+		हाल ClearPortFeature:अणु
 				retval = u132_roothub_clearportfeature(u132,
 					wValue, wIndex);
-				if (retval)
-					goto error;
-				break;
-			}
-		case GetHubDescriptor:{
+				अगर (retval)
+					जाओ error;
+				अवरोध;
+			पूर्ण
+		हाल GetHubDescriptor:अणु
 				retval = u132_roothub_descriptor(u132,
-					(struct usb_hub_descriptor *)buf);
-				if (retval)
-					goto error;
-				break;
-			}
-		case GetHubStatus:{
+					(काष्ठा usb_hub_descriptor *)buf);
+				अगर (retval)
+					जाओ error;
+				अवरोध;
+			पूर्ण
+		हाल GetHubStatus:अणु
 				retval = u132_roothub_status(u132,
 					(__le32 *) buf);
-				if (retval)
-					goto error;
-				break;
-			}
-		case GetPortStatus:{
+				अगर (retval)
+					जाओ error;
+				अवरोध;
+			पूर्ण
+		हाल GetPortStatus:अणु
 				retval = u132_roothub_portstatus(u132,
 					(__le32 *) buf, wIndex);
-				if (retval)
-					goto error;
-				break;
-			}
-		case SetPortFeature:{
+				अगर (retval)
+					जाओ error;
+				अवरोध;
+			पूर्ण
+		हाल SetPortFeature:अणु
 				retval = u132_roothub_setportfeature(u132,
 					wValue, wIndex);
-				if (retval)
-					goto error;
-				break;
-			}
-		default:
-			goto stall;
+				अगर (retval)
+					जाओ error;
+				अवरोध;
+			पूर्ण
+		शेष:
+			जाओ stall;
 		error:
 			u132_disable(u132);
 			u132->going = 1;
-			break;
+			अवरोध;
 		stall:
 			retval = -EPIPE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mutex_unlock(&u132->sw_lock);
-		return retval;
-	}
-}
+		वापस retval;
+	पूर्ण
+पूर्ण
 
-static int u132_start_port_reset(struct usb_hcd *hcd, unsigned port_num)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अटल पूर्णांक u132_start_port_reset(काष्ठा usb_hcd *hcd, अचिन्हित port_num)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed\n");
-		return -ESHUTDOWN;
-	} else
-		return 0;
-}
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed\n");
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
 
-#ifdef CONFIG_PM
-static int u132_bus_suspend(struct usb_hcd *hcd)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक u132_bus_suspend(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed\n");
-		return -ESHUTDOWN;
-	} else
-		return 0;
-}
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed\n");
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
-static int u132_bus_resume(struct usb_hcd *hcd)
-{
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अटल पूर्णांक u132_bus_resume(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed\n");
-		return -ESHUTDOWN;
-	} else
-		return 0;
-}
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed\n");
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
-#else
-#define u132_bus_suspend NULL
-#define u132_bus_resume NULL
-#endif
-static const struct hc_driver u132_hc_driver = {
+#अन्यथा
+#घोषणा u132_bus_suspend शून्य
+#घोषणा u132_bus_resume शून्य
+#पूर्ण_अगर
+अटल स्थिर काष्ठा hc_driver u132_hc_driver = अणु
 	.description = hcd_name,
-	.hcd_priv_size = sizeof(struct u132),
-	.irq = NULL,
+	.hcd_priv_size = माप(काष्ठा u132),
+	.irq = शून्य,
 	.flags = HCD_USB11 | HCD_MEMORY,
 	.reset = u132_hcd_reset,
 	.start = u132_hcd_start,
 	.stop = u132_hcd_stop,
 	.urb_enqueue = u132_urb_enqueue,
 	.urb_dequeue = u132_urb_dequeue,
-	.endpoint_disable = u132_endpoint_disable,
+	.endpoपूर्णांक_disable = u132_endpoपूर्णांक_disable,
 	.get_frame_number = u132_get_frame,
 	.hub_status_data = u132_hub_status_data,
 	.hub_control = u132_hub_control,
 	.bus_suspend = u132_bus_suspend,
 	.bus_resume = u132_bus_resume,
 	.start_port_reset = u132_start_port_reset,
-};
+पूर्ण;
 
 /*
 * This function may be called by the USB core whilst the "usb_all_devices_rwsem"
-* is held for writing, thus this module must not call usb_remove_hcd()
+* is held क्रम writing, thus this module must not call usb_हटाओ_hcd()
 * synchronously - but instead should immediately stop activity to the
-* device and asynchronously call usb_remove_hcd()
+* device and asynchronously call usb_हटाओ_hcd()
 */
-static int u132_remove(struct platform_device *pdev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(pdev);
-	if (hcd) {
-		struct u132 *u132 = hcd_to_u132(hcd);
-		if (u132->going++ > 1) {
-			dev_err(&u132->platform_dev->dev, "already being remove"
+अटल पूर्णांक u132_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+	अगर (hcd) अणु
+		काष्ठा u132 *u132 = hcd_to_u132(hcd);
+		अगर (u132->going++ > 1) अणु
+			dev_err(&u132->platक्रमm_dev->dev, "already being remove"
 				"d\n");
-			return -ENODEV;
-		} else {
-			int rings = MAX_U132_RINGS;
-			int endps = MAX_U132_ENDPS;
-			dev_err(&u132->platform_dev->dev, "removing device u132"
+			वापस -ENODEV;
+		पूर्ण अन्यथा अणु
+			पूर्णांक rings = MAX_U132_RINGS;
+			पूर्णांक endps = MAX_U132_ENDPS;
+			dev_err(&u132->platक्रमm_dev->dev, "removing device u132"
 				".%d\n", u132->sequence_num);
 			msleep(100);
 			mutex_lock(&u132->sw_lock);
 			u132_monitor_cancel_work(u132);
-			while (rings-- > 0) {
-				struct u132_ring *ring = &u132->ring[rings];
+			जबतक (rings-- > 0) अणु
+				काष्ठा u132_ring *ring = &u132->ring[rings];
 				u132_ring_cancel_work(u132, ring);
-			}
-			while (endps-- > 0) {
-				struct u132_endp *endp = u132->endp[endps];
-				if (endp)
+			पूर्ण
+			जबतक (endps-- > 0) अणु
+				काष्ठा u132_endp *endp = u132->endp[endps];
+				अगर (endp)
 					u132_endp_cancel_work(u132, endp);
-			}
+			पूर्ण
 			u132->going += 1;
-			printk(KERN_INFO "removing device u132.%d\n",
+			prपूर्णांकk(KERN_INFO "removing device u132.%d\n",
 				u132->sequence_num);
 			mutex_unlock(&u132->sw_lock);
-			usb_remove_hcd(hcd);
+			usb_हटाओ_hcd(hcd);
 			u132_u132_put_kref(u132);
-			return 0;
-		}
-	} else
-		return 0;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
-static void u132_initialise(struct u132 *u132, struct platform_device *pdev)
-{
-	int rings = MAX_U132_RINGS;
-	int ports = MAX_U132_PORTS;
-	int addrs = MAX_U132_ADDRS;
-	int udevs = MAX_U132_UDEVS;
-	int endps = MAX_U132_ENDPS;
+अटल व्योम u132_initialise(काष्ठा u132 *u132, काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक rings = MAX_U132_RINGS;
+	पूर्णांक ports = MAX_U132_PORTS;
+	पूर्णांक addrs = MAX_U132_ADDRS;
+	पूर्णांक udevs = MAX_U132_UDEVS;
+	पूर्णांक endps = MAX_U132_ENDPS;
 	u132->board = dev_get_platdata(&pdev->dev);
-	u132->platform_dev = pdev;
-	u132->power = 0;
+	u132->platक्रमm_dev = pdev;
+	u132->घातer = 0;
 	u132->reset = 0;
 	mutex_init(&u132->sw_lock);
 	mutex_init(&u132->scheduler_lock);
-	while (rings-- > 0) {
-		struct u132_ring *ring = &u132->ring[rings];
+	जबतक (rings-- > 0) अणु
+		काष्ठा u132_ring *ring = &u132->ring[rings];
 		ring->u132 = u132;
 		ring->number = rings + 1;
 		ring->length = 0;
-		ring->curr_endp = NULL;
+		ring->curr_endp = शून्य;
 		INIT_DELAYED_WORK(&ring->scheduler,
 				  u132_hcd_ring_work_scheduler);
-	}
+	पूर्ण
 	mutex_lock(&u132->sw_lock);
 	INIT_DELAYED_WORK(&u132->monitor, u132_hcd_monitor_work);
-	while (ports-- > 0) {
-		struct u132_port *port = &u132->port[ports];
+	जबतक (ports-- > 0) अणु
+		काष्ठा u132_port *port = &u132->port[ports];
 		port->u132 = u132;
 		port->reset = 0;
 		port->enable = 0;
-		port->power = 0;
+		port->घातer = 0;
 		port->Status = 0;
-	}
-	while (addrs-- > 0) {
-		struct u132_addr *addr = &u132->addr[addrs];
+	पूर्ण
+	जबतक (addrs-- > 0) अणु
+		काष्ठा u132_addr *addr = &u132->addr[addrs];
 		addr->address = 0;
-	}
-	while (udevs-- > 0) {
-		struct u132_udev *udev = &u132->udev[udevs];
-		int i = ARRAY_SIZE(udev->endp_number_in);
-		int o = ARRAY_SIZE(udev->endp_number_out);
-		udev->usb_device = NULL;
+	पूर्ण
+	जबतक (udevs-- > 0) अणु
+		काष्ठा u132_udev *udev = &u132->udev[udevs];
+		पूर्णांक i = ARRAY_SIZE(udev->endp_number_in);
+		पूर्णांक o = ARRAY_SIZE(udev->endp_number_out);
+		udev->usb_device = शून्य;
 		udev->udev_number = 0;
 		udev->usb_addr = 0;
 		udev->portnumber = 0;
-		while (i-- > 0)
+		जबतक (i-- > 0)
 			udev->endp_number_in[i] = 0;
 
-		while (o-- > 0)
+		जबतक (o-- > 0)
 			udev->endp_number_out[o] = 0;
 
-	}
-	while (endps-- > 0)
-		u132->endp[endps] = NULL;
+	पूर्ण
+	जबतक (endps-- > 0)
+		u132->endp[endps] = शून्य;
 
 	mutex_unlock(&u132->sw_lock);
-}
+पूर्ण
 
-static int u132_probe(struct platform_device *pdev)
-{
-	struct usb_hcd *hcd;
-	int retval;
+अटल पूर्णांक u132_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_hcd *hcd;
+	पूर्णांक retval;
 	u32 control;
 	u32 rh_a = -1;
 
 	msleep(100);
-	if (u132_exiting > 0)
-		return -ENODEV;
+	अगर (u132_निकासing > 0)
+		वापस -ENODEV;
 
-	retval = ftdi_write_pcimem(pdev, intrdisable, OHCI_INTR_MIE);
-	if (retval)
-		return retval;
-	retval = ftdi_read_pcimem(pdev, control, &control);
-	if (retval)
-		return retval;
-	retval = ftdi_read_pcimem(pdev, roothub.a, &rh_a);
-	if (retval)
-		return retval;
+	retval = ftdi_ग_लिखो_pcimem(pdev, पूर्णांकrdisable, OHCI_INTR_MIE);
+	अगर (retval)
+		वापस retval;
+	retval = ftdi_पढ़ो_pcimem(pdev, control, &control);
+	अगर (retval)
+		वापस retval;
+	retval = ftdi_पढ़ो_pcimem(pdev, roothub.a, &rh_a);
+	अगर (retval)
+		वापस retval;
 
 	hcd = usb_create_hcd(&u132_hc_driver, &pdev->dev, dev_name(&pdev->dev));
-	if (!hcd) {
-		printk(KERN_ERR "failed to create the usb hcd struct for U132\n"
+	अगर (!hcd) अणु
+		prपूर्णांकk(KERN_ERR "failed to create the usb hcd struct for U132\n"
 			);
 		ftdi_elan_gone_away(pdev);
-		return -ENOMEM;
-	} else {
-		struct u132 *u132 = hcd_to_u132(hcd);
+		वापस -ENOMEM;
+	पूर्ण अन्यथा अणु
+		काष्ठा u132 *u132 = hcd_to_u132(hcd);
 		retval = 0;
 		hcd->rsrc_start = 0;
 		mutex_lock(&u132_module_lock);
@@ -3092,132 +3093,132 @@ static int u132_probe(struct platform_device *pdev)
 		u132_initialise(u132, pdev);
 		hcd->product_desc = "ELAN U132 Host Controller";
 		retval = usb_add_hcd(hcd, 0, 0);
-		if (retval != 0) {
-			dev_err(&u132->platform_dev->dev, "init error %d\n",
+		अगर (retval != 0) अणु
+			dev_err(&u132->platक्रमm_dev->dev, "init error %d\n",
 				retval);
 			u132_u132_put_kref(u132);
-			return retval;
-		} else {
+			वापस retval;
+		पूर्ण अन्यथा अणु
 			device_wakeup_enable(hcd->self.controller);
 			u132_monitor_queue_work(u132, 100);
-			return 0;
-		}
-	}
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /*
- * for this device there's no useful distinction between the controller
+ * क्रम this device there's no useful distinction between the controller
  * and its root hub.
  */
-static int u132_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(pdev);
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अटल पूर्णांक u132_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed\n");
-		return -ESHUTDOWN;
-	} else {
-		int retval = 0, ports;
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed\n");
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा अणु
+		पूर्णांक retval = 0, ports;
 
-		switch (state.event) {
-		case PM_EVENT_FREEZE:
+		चयन (state.event) अणु
+		हाल PM_EVENT_FREEZE:
 			retval = u132_bus_suspend(hcd);
-			break;
-		case PM_EVENT_SUSPEND:
-		case PM_EVENT_HIBERNATE:
+			अवरोध;
+		हाल PM_EVENT_SUSPEND:
+		हाल PM_EVENT_HIBERNATE:
 			ports = MAX_U132_PORTS;
-			while (ports-- > 0) {
-				port_power(u132, ports, 0);
-			}
-			break;
-		}
-		return retval;
-	}
-}
+			जबतक (ports-- > 0) अणु
+				port_घातer(u132, ports, 0);
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		वापस retval;
+	पूर्ण
+पूर्ण
 
-static int u132_resume(struct platform_device *pdev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(pdev);
-	struct u132 *u132 = hcd_to_u132(hcd);
-	if (u132->going > 1) {
-		dev_err(&u132->platform_dev->dev, "device has been removed %d\n"
+अटल पूर्णांक u132_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा u132 *u132 = hcd_to_u132(hcd);
+	अगर (u132->going > 1) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device has been removed %d\n"
 			, u132->going);
-		return -ENODEV;
-	} else if (u132->going > 0) {
-		dev_err(&u132->platform_dev->dev, "device is being removed\n");
-		return -ESHUTDOWN;
-	} else {
-		int retval = 0;
-		if (!u132->port[0].power) {
-			int ports = MAX_U132_PORTS;
-			while (ports-- > 0) {
-				port_power(u132, ports, 1);
-			}
+		वापस -ENODEV;
+	पूर्ण अन्यथा अगर (u132->going > 0) अणु
+		dev_err(&u132->platक्रमm_dev->dev, "device is being removed\n");
+		वापस -ESHUTDOWN;
+	पूर्ण अन्यथा अणु
+		पूर्णांक retval = 0;
+		अगर (!u132->port[0].घातer) अणु
+			पूर्णांक ports = MAX_U132_PORTS;
+			जबतक (ports-- > 0) अणु
+				port_घातer(u132, ports, 1);
+			पूर्ण
 			retval = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			retval = u132_bus_resume(hcd);
-		}
-		return retval;
-	}
-}
+		पूर्ण
+		वापस retval;
+	पूर्ण
+पूर्ण
 
-#else
-#define u132_suspend NULL
-#define u132_resume NULL
-#endif
+#अन्यथा
+#घोषणा u132_suspend शून्य
+#घोषणा u132_resume शून्य
+#पूर्ण_अगर
 /*
 * this driver is loaded explicitly by ftdi_u132
 *
-* the platform_driver struct is static because it is per type of module
+* the platक्रमm_driver काष्ठा is अटल because it is per type of module
 */
-static struct platform_driver u132_platform_driver = {
+अटल काष्ठा platक्रमm_driver u132_platक्रमm_driver = अणु
 	.probe = u132_probe,
-	.remove = u132_remove,
+	.हटाओ = u132_हटाओ,
 	.suspend = u132_suspend,
 	.resume = u132_resume,
-	.driver = {
+	.driver = अणु
 		   .name = hcd_name,
-		   },
-};
-static int __init u132_hcd_init(void)
-{
-	int retval;
+		   पूर्ण,
+पूर्ण;
+अटल पूर्णांक __init u132_hcd_init(व्योम)
+अणु
+	पूर्णांक retval;
 	u132_instances = 0;
-	u132_exiting = 0;
-	if (usb_disabled())
-		return -ENODEV;
-	printk(KERN_INFO "driver %s\n", hcd_name);
-	workqueue = create_singlethread_workqueue("u132");
-	if (!workqueue)
-		return -ENOMEM;
-	retval = platform_driver_register(&u132_platform_driver);
-	if (retval)
+	u132_निकासing = 0;
+	अगर (usb_disabled())
+		वापस -ENODEV;
+	prपूर्णांकk(KERN_INFO "driver %s\n", hcd_name);
+	workqueue = create_singlethपढ़ो_workqueue("u132");
+	अगर (!workqueue)
+		वापस -ENOMEM;
+	retval = platक्रमm_driver_रेजिस्टर(&u132_platक्रमm_driver);
+	अगर (retval)
 		destroy_workqueue(workqueue);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
 module_init(u132_hcd_init);
-static void __exit u132_hcd_exit(void)
-{
+अटल व्योम __निकास u132_hcd_निकास(व्योम)
+अणु
 	mutex_lock(&u132_module_lock);
-	u132_exiting += 1;
+	u132_निकासing += 1;
 	mutex_unlock(&u132_module_lock);
-	platform_driver_unregister(&u132_platform_driver);
-	printk(KERN_INFO "u132-hcd driver deregistered\n");
-	wait_event(u132_hcd_wait, u132_instances == 0);
+	platक्रमm_driver_unरेजिस्टर(&u132_platक्रमm_driver);
+	prपूर्णांकk(KERN_INFO "u132-hcd driver deregistered\n");
+	रुको_event(u132_hcd_रुको, u132_instances == 0);
 	flush_workqueue(workqueue);
 	destroy_workqueue(workqueue);
-}
+पूर्ण
 
 
-module_exit(u132_hcd_exit);
+module_निकास(u132_hcd_निकास);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:u132_hcd");

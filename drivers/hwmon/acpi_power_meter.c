@@ -1,302 +1,303 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * A hwmon driver for ACPI 4.0 power meters
+ * A hwmon driver क्रम ACPI 4.0 घातer meters
  * Copyright (C) 2009 IBM
  *
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
 
-#include <linux/module.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/jiffies.h>
-#include <linux/mutex.h>
-#include <linux/dmi.h>
-#include <linux/slab.h>
-#include <linux/kdev_t.h>
-#include <linux/sched.h>
-#include <linux/time.h>
-#include <linux/err.h>
-#include <linux/acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/err.h>
+#समावेश <linux/acpi.h>
 
-#define ACPI_POWER_METER_NAME		"power_meter"
-#define ACPI_POWER_METER_DEVICE_NAME	"Power Meter"
-#define ACPI_POWER_METER_CLASS		"pwr_meter_resource"
+#घोषणा ACPI_POWER_METER_NAME		"power_meter"
+#घोषणा ACPI_POWER_METER_DEVICE_NAME	"Power Meter"
+#घोषणा ACPI_POWER_METER_CLASS		"pwr_meter_resource"
 
-#define NUM_SENSORS			17
+#घोषणा NUM_SENSORS			17
 
-#define POWER_METER_CAN_MEASURE	(1 << 0)
-#define POWER_METER_CAN_TRIP	(1 << 1)
-#define POWER_METER_CAN_CAP	(1 << 2)
-#define POWER_METER_CAN_NOTIFY	(1 << 3)
-#define POWER_METER_IS_BATTERY	(1 << 8)
-#define UNKNOWN_HYSTERESIS	0xFFFFFFFF
+#घोषणा POWER_METER_CAN_MEASURE	(1 << 0)
+#घोषणा POWER_METER_CAN_TRIP	(1 << 1)
+#घोषणा POWER_METER_CAN_CAP	(1 << 2)
+#घोषणा POWER_METER_CAN_NOTIFY	(1 << 3)
+#घोषणा POWER_METER_IS_BATTERY	(1 << 8)
+#घोषणा UNKNOWN_HYSTERESIS	0xFFFFFFFF
 
-#define METER_NOTIFY_CONFIG	0x80
-#define METER_NOTIFY_TRIP	0x81
-#define METER_NOTIFY_CAP	0x82
-#define METER_NOTIFY_CAPPING	0x83
-#define METER_NOTIFY_INTERVAL	0x84
+#घोषणा METER_NOTIFY_CONFIG	0x80
+#घोषणा METER_NOTIFY_TRIP	0x81
+#घोषणा METER_NOTIFY_CAP	0x82
+#घोषणा METER_NOTIFY_CAPPING	0x83
+#घोषणा METER_NOTIFY_INTERVAL	0x84
 
-#define POWER_AVERAGE_NAME	"power1_average"
-#define POWER_CAP_NAME		"power1_cap"
-#define POWER_AVG_INTERVAL_NAME	"power1_average_interval"
-#define POWER_ALARM_NAME	"power1_alarm"
+#घोषणा POWER_AVERAGE_NAME	"power1_average"
+#घोषणा POWER_CAP_NAME		"power1_cap"
+#घोषणा POWER_AVG_INTERVAL_NAME	"power1_average_interval"
+#घोषणा POWER_ALARM_NAME	"power1_alarm"
 
-static int cap_in_hardware;
-static bool force_cap_on;
+अटल पूर्णांक cap_in_hardware;
+अटल bool क्रमce_cap_on;
 
-static int can_cap_in_hardware(void)
-{
-	return force_cap_on || cap_in_hardware;
-}
+अटल पूर्णांक can_cap_in_hardware(व्योम)
+अणु
+	वापस क्रमce_cap_on || cap_in_hardware;
+पूर्ण
 
-static const struct acpi_device_id power_meter_ids[] = {
-	{"ACPI000D", 0},
-	{"", 0},
-};
-MODULE_DEVICE_TABLE(acpi, power_meter_ids);
+अटल स्थिर काष्ठा acpi_device_id घातer_meter_ids[] = अणु
+	अणु"ACPI000D", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(acpi, घातer_meter_ids);
 
-struct acpi_power_meter_capabilities {
+काष्ठा acpi_घातer_meter_capabilities अणु
 	u64		flags;
 	u64		units;
 	u64		type;
 	u64		accuracy;
-	u64		sampling_time;
-	u64		min_avg_interval;
-	u64		max_avg_interval;
+	u64		sampling_समय;
+	u64		min_avg_पूर्णांकerval;
+	u64		max_avg_पूर्णांकerval;
 	u64		hysteresis;
 	u64		configurable_cap;
 	u64		min_cap;
 	u64		max_cap;
-};
+पूर्ण;
 
-struct acpi_power_meter_resource {
-	struct acpi_device	*acpi_dev;
+काष्ठा acpi_घातer_meter_resource अणु
+	काष्ठा acpi_device	*acpi_dev;
 	acpi_bus_id		name;
-	struct mutex		lock;
-	struct device		*hwmon_dev;
-	struct acpi_power_meter_capabilities	caps;
+	काष्ठा mutex		lock;
+	काष्ठा device		*hwmon_dev;
+	काष्ठा acpi_घातer_meter_capabilities	caps;
 	acpi_string		model_number;
 	acpi_string		serial_number;
 	acpi_string		oem_info;
-	u64		power;
+	u64		घातer;
 	u64		cap;
-	u64		avg_interval;
-	int			sensors_valid;
-	unsigned long		sensors_last_updated;
-	struct sensor_device_attribute	sensors[NUM_SENSORS];
-	int			num_sensors;
+	u64		avg_पूर्णांकerval;
+	पूर्णांक			sensors_valid;
+	अचिन्हित दीर्घ		sensors_last_updated;
+	काष्ठा sensor_device_attribute	sensors[NUM_SENSORS];
+	पूर्णांक			num_sensors;
 	s64			trip[2];
-	int			num_domain_devices;
-	struct acpi_device	**domain_devices;
-	struct kobject		*holders_dir;
-};
+	पूर्णांक			num_करोमुख्य_devices;
+	काष्ठा acpi_device	**करोमुख्य_devices;
+	काष्ठा kobject		*holders_dir;
+पूर्ण;
 
-struct sensor_template {
-	char *label;
-	ssize_t (*show)(struct device *dev,
-			struct device_attribute *devattr,
-			char *buf);
-	ssize_t (*set)(struct device *dev,
-		       struct device_attribute *devattr,
-		       const char *buf, size_t count);
-	int index;
-};
+काष्ठा sensor_ढाँचा अणु
+	अक्षर *label;
+	sमाप_प्रकार (*show)(काष्ठा device *dev,
+			काष्ठा device_attribute *devattr,
+			अक्षर *buf);
+	sमाप_प्रकार (*set)(काष्ठा device *dev,
+		       काष्ठा device_attribute *devattr,
+		       स्थिर अक्षर *buf, माप_प्रकार count);
+	पूर्णांक index;
+पूर्ण;
 
-/* Averaging interval */
-static int update_avg_interval(struct acpi_power_meter_resource *resource)
-{
-	unsigned long long data;
+/* Averaging पूर्णांकerval */
+अटल पूर्णांक update_avg_पूर्णांकerval(काष्ठा acpi_घातer_meter_resource *resource)
+अणु
+	अचिन्हित दीर्घ दीर्घ data;
 	acpi_status status;
 
-	status = acpi_evaluate_integer(resource->acpi_dev->handle, "_GAI",
-				       NULL, &data);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_पूर्णांकeger(resource->acpi_dev->handle, "_GAI",
+				       शून्य, &data);
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_evaluation_failure_warn(resource->acpi_dev->handle, "_GAI",
 					     status);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	resource->avg_interval = data;
-	return 0;
-}
+	resource->avg_पूर्णांकerval = data;
+	वापस 0;
+पूर्ण
 
-static ssize_t show_avg_interval(struct device *dev,
-				 struct device_attribute *devattr,
-				 char *buf)
-{
-	struct acpi_device *acpi_dev = to_acpi_device(dev);
-	struct acpi_power_meter_resource *resource = acpi_dev->driver_data;
+अटल sमाप_प्रकार show_avg_पूर्णांकerval(काष्ठा device *dev,
+				 काष्ठा device_attribute *devattr,
+				 अक्षर *buf)
+अणु
+	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
+	काष्ठा acpi_घातer_meter_resource *resource = acpi_dev->driver_data;
 
 	mutex_lock(&resource->lock);
-	update_avg_interval(resource);
+	update_avg_पूर्णांकerval(resource);
 	mutex_unlock(&resource->lock);
 
-	return sprintf(buf, "%llu\n", resource->avg_interval);
-}
+	वापस प्र_लिखो(buf, "%llu\n", resource->avg_पूर्णांकerval);
+पूर्ण
 
-static ssize_t set_avg_interval(struct device *dev,
-				struct device_attribute *devattr,
-				const char *buf, size_t count)
-{
-	struct acpi_device *acpi_dev = to_acpi_device(dev);
-	struct acpi_power_meter_resource *resource = acpi_dev->driver_data;
-	union acpi_object arg0 = { ACPI_TYPE_INTEGER };
-	struct acpi_object_list args = { 1, &arg0 };
-	int res;
-	unsigned long temp;
-	unsigned long long data;
+अटल sमाप_प्रकार set_avg_पूर्णांकerval(काष्ठा device *dev,
+				काष्ठा device_attribute *devattr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
+	काष्ठा acpi_घातer_meter_resource *resource = acpi_dev->driver_data;
+	जोड़ acpi_object arg0 = अणु ACPI_TYPE_INTEGER पूर्ण;
+	काष्ठा acpi_object_list args = अणु 1, &arg0 पूर्ण;
+	पूर्णांक res;
+	अचिन्हित दीर्घ temp;
+	अचिन्हित दीर्घ दीर्घ data;
 	acpi_status status;
 
-	res = kstrtoul(buf, 10, &temp);
-	if (res)
-		return res;
+	res = kम_से_अदीर्घ(buf, 10, &temp);
+	अगर (res)
+		वापस res;
 
-	if (temp > resource->caps.max_avg_interval ||
-	    temp < resource->caps.min_avg_interval)
-		return -EINVAL;
-	arg0.integer.value = temp;
+	अगर (temp > resource->caps.max_avg_पूर्णांकerval ||
+	    temp < resource->caps.min_avg_पूर्णांकerval)
+		वापस -EINVAL;
+	arg0.पूर्णांकeger.value = temp;
 
 	mutex_lock(&resource->lock);
-	status = acpi_evaluate_integer(resource->acpi_dev->handle, "_PAI",
+	status = acpi_evaluate_पूर्णांकeger(resource->acpi_dev->handle, "_PAI",
 				       &args, &data);
-	if (ACPI_SUCCESS(status))
-		resource->avg_interval = temp;
+	अगर (ACPI_SUCCESS(status))
+		resource->avg_पूर्णांकerval = temp;
 	mutex_unlock(&resource->lock);
 
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_evaluation_failure_warn(resource->acpi_dev->handle, "_PAI",
 					     status);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* _PAI returns 0 on success, nonzero otherwise */
-	if (data)
-		return -EINVAL;
+	/* _PAI वापसs 0 on success, nonzero otherwise */
+	अगर (data)
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* Cap functions */
-static int update_cap(struct acpi_power_meter_resource *resource)
-{
-	unsigned long long data;
+अटल पूर्णांक update_cap(काष्ठा acpi_घातer_meter_resource *resource)
+अणु
+	अचिन्हित दीर्घ दीर्घ data;
 	acpi_status status;
 
-	status = acpi_evaluate_integer(resource->acpi_dev->handle, "_GHL",
-				       NULL, &data);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_पूर्णांकeger(resource->acpi_dev->handle, "_GHL",
+				       शून्य, &data);
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_evaluation_failure_warn(resource->acpi_dev->handle, "_GHL",
 					     status);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	resource->cap = data;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t show_cap(struct device *dev,
-			struct device_attribute *devattr,
-			char *buf)
-{
-	struct acpi_device *acpi_dev = to_acpi_device(dev);
-	struct acpi_power_meter_resource *resource = acpi_dev->driver_data;
+अटल sमाप_प्रकार show_cap(काष्ठा device *dev,
+			काष्ठा device_attribute *devattr,
+			अक्षर *buf)
+अणु
+	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
+	काष्ठा acpi_घातer_meter_resource *resource = acpi_dev->driver_data;
 
 	mutex_lock(&resource->lock);
 	update_cap(resource);
 	mutex_unlock(&resource->lock);
 
-	return sprintf(buf, "%llu\n", resource->cap * 1000);
-}
+	वापस प्र_लिखो(buf, "%llu\n", resource->cap * 1000);
+पूर्ण
 
-static ssize_t set_cap(struct device *dev, struct device_attribute *devattr,
-		       const char *buf, size_t count)
-{
-	struct acpi_device *acpi_dev = to_acpi_device(dev);
-	struct acpi_power_meter_resource *resource = acpi_dev->driver_data;
-	union acpi_object arg0 = { ACPI_TYPE_INTEGER };
-	struct acpi_object_list args = { 1, &arg0 };
-	int res;
-	unsigned long temp;
-	unsigned long long data;
+अटल sमाप_प्रकार set_cap(काष्ठा device *dev, काष्ठा device_attribute *devattr,
+		       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
+	काष्ठा acpi_घातer_meter_resource *resource = acpi_dev->driver_data;
+	जोड़ acpi_object arg0 = अणु ACPI_TYPE_INTEGER पूर्ण;
+	काष्ठा acpi_object_list args = अणु 1, &arg0 पूर्ण;
+	पूर्णांक res;
+	अचिन्हित दीर्घ temp;
+	अचिन्हित दीर्घ दीर्घ data;
 	acpi_status status;
 
-	res = kstrtoul(buf, 10, &temp);
-	if (res)
-		return res;
+	res = kम_से_अदीर्घ(buf, 10, &temp);
+	अगर (res)
+		वापस res;
 
 	temp = DIV_ROUND_CLOSEST(temp, 1000);
-	if (temp > resource->caps.max_cap || temp < resource->caps.min_cap)
-		return -EINVAL;
-	arg0.integer.value = temp;
+	अगर (temp > resource->caps.max_cap || temp < resource->caps.min_cap)
+		वापस -EINVAL;
+	arg0.पूर्णांकeger.value = temp;
 
 	mutex_lock(&resource->lock);
-	status = acpi_evaluate_integer(resource->acpi_dev->handle, "_SHL",
+	status = acpi_evaluate_पूर्णांकeger(resource->acpi_dev->handle, "_SHL",
 				       &args, &data);
-	if (ACPI_SUCCESS(status))
+	अगर (ACPI_SUCCESS(status))
 		resource->cap = temp;
 	mutex_unlock(&resource->lock);
 
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_evaluation_failure_warn(resource->acpi_dev->handle, "_SHL",
 					     status);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* _SHL returns 0 on success, nonzero otherwise */
-	if (data)
-		return -EINVAL;
+	/* _SHL वापसs 0 on success, nonzero otherwise */
+	अगर (data)
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-/* Power meter trip points */
-static int set_acpi_trip(struct acpi_power_meter_resource *resource)
-{
-	union acpi_object arg_objs[] = {
-		{ACPI_TYPE_INTEGER},
-		{ACPI_TYPE_INTEGER}
-	};
-	struct acpi_object_list args = { 2, arg_objs };
-	unsigned long long data;
+/* Power meter trip poपूर्णांकs */
+अटल पूर्णांक set_acpi_trip(काष्ठा acpi_घातer_meter_resource *resource)
+अणु
+	जोड़ acpi_object arg_objs[] = अणु
+		अणुACPI_TYPE_INTEGERपूर्ण,
+		अणुACPI_TYPE_INTEGERपूर्ण
+	पूर्ण;
+	काष्ठा acpi_object_list args = अणु 2, arg_objs पूर्ण;
+	अचिन्हित दीर्घ दीर्घ data;
 	acpi_status status;
 
 	/* Both trip levels must be set */
-	if (resource->trip[0] < 0 || resource->trip[1] < 0)
-		return 0;
+	अगर (resource->trip[0] < 0 || resource->trip[1] < 0)
+		वापस 0;
 
 	/* This driver stores min, max; ACPI wants max, min. */
-	arg_objs[0].integer.value = resource->trip[1];
-	arg_objs[1].integer.value = resource->trip[0];
+	arg_objs[0].पूर्णांकeger.value = resource->trip[1];
+	arg_objs[1].पूर्णांकeger.value = resource->trip[0];
 
-	status = acpi_evaluate_integer(resource->acpi_dev->handle, "_PTP",
+	status = acpi_evaluate_पूर्णांकeger(resource->acpi_dev->handle, "_PTP",
 				       &args, &data);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_evaluation_failure_warn(resource->acpi_dev->handle, "_PTP",
 					     status);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* _PTP returns 0 on success, nonzero otherwise */
-	if (data)
-		return -EINVAL;
+	/* _PTP वापसs 0 on success, nonzero otherwise */
+	अगर (data)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t set_trip(struct device *dev, struct device_attribute *devattr,
-			const char *buf, size_t count)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	struct acpi_device *acpi_dev = to_acpi_device(dev);
-	struct acpi_power_meter_resource *resource = acpi_dev->driver_data;
-	int res;
-	unsigned long temp;
+अटल sमाप_प्रकार set_trip(काष्ठा device *dev, काष्ठा device_attribute *devattr,
+			स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
+	काष्ठा acpi_घातer_meter_resource *resource = acpi_dev->driver_data;
+	पूर्णांक res;
+	अचिन्हित दीर्घ temp;
 
-	res = kstrtoul(buf, 10, &temp);
-	if (res)
-		return res;
+	res = kम_से_अदीर्घ(buf, 10, &temp);
+	अगर (res)
+		वापस res;
 
 	temp = DIV_ROUND_CLOSEST(temp, 1000);
 
@@ -305,709 +306,709 @@ static ssize_t set_trip(struct device *dev, struct device_attribute *devattr,
 	res = set_acpi_trip(resource);
 	mutex_unlock(&resource->lock);
 
-	if (res)
-		return res;
+	अगर (res)
+		वापस res;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* Power meter */
-static int update_meter(struct acpi_power_meter_resource *resource)
-{
-	unsigned long long data;
+अटल पूर्णांक update_meter(काष्ठा acpi_घातer_meter_resource *resource)
+अणु
+	अचिन्हित दीर्घ दीर्घ data;
 	acpi_status status;
-	unsigned long local_jiffies = jiffies;
+	अचिन्हित दीर्घ local_jअगरfies = jअगरfies;
 
-	if (time_before(local_jiffies, resource->sensors_last_updated +
-			msecs_to_jiffies(resource->caps.sampling_time)) &&
+	अगर (समय_beक्रमe(local_jअगरfies, resource->sensors_last_updated +
+			msecs_to_jअगरfies(resource->caps.sampling_समय)) &&
 			resource->sensors_valid)
-		return 0;
+		वापस 0;
 
-	status = acpi_evaluate_integer(resource->acpi_dev->handle, "_PMM",
-				       NULL, &data);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_पूर्णांकeger(resource->acpi_dev->handle, "_PMM",
+				       शून्य, &data);
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_evaluation_failure_warn(resource->acpi_dev->handle, "_PMM",
 					     status);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	resource->power = data;
+	resource->घातer = data;
 	resource->sensors_valid = 1;
-	resource->sensors_last_updated = jiffies;
-	return 0;
-}
+	resource->sensors_last_updated = jअगरfies;
+	वापस 0;
+पूर्ण
 
-static ssize_t show_power(struct device *dev,
-			  struct device_attribute *devattr,
-			  char *buf)
-{
-	struct acpi_device *acpi_dev = to_acpi_device(dev);
-	struct acpi_power_meter_resource *resource = acpi_dev->driver_data;
+अटल sमाप_प्रकार show_घातer(काष्ठा device *dev,
+			  काष्ठा device_attribute *devattr,
+			  अक्षर *buf)
+अणु
+	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
+	काष्ठा acpi_घातer_meter_resource *resource = acpi_dev->driver_data;
 
 	mutex_lock(&resource->lock);
 	update_meter(resource);
 	mutex_unlock(&resource->lock);
 
-	return sprintf(buf, "%llu\n", resource->power * 1000);
-}
+	वापस प्र_लिखो(buf, "%llu\n", resource->घातer * 1000);
+पूर्ण
 
 /* Miscellaneous */
-static ssize_t show_str(struct device *dev,
-			struct device_attribute *devattr,
-			char *buf)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	struct acpi_device *acpi_dev = to_acpi_device(dev);
-	struct acpi_power_meter_resource *resource = acpi_dev->driver_data;
+अटल sमाप_प्रकार show_str(काष्ठा device *dev,
+			काष्ठा device_attribute *devattr,
+			अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
+	काष्ठा acpi_घातer_meter_resource *resource = acpi_dev->driver_data;
 	acpi_string val;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&resource->lock);
-	switch (attr->index) {
-	case 0:
+	चयन (attr->index) अणु
+	हाल 0:
 		val = resource->model_number;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		val = resource->serial_number;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		val = resource->oem_info;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "Implementation error: unexpected attribute index %d\n",
 		     attr->index);
 		val = "";
-		break;
-	}
-	ret = sprintf(buf, "%s\n", val);
+		अवरोध;
+	पूर्ण
+	ret = प्र_लिखो(buf, "%s\n", val);
 	mutex_unlock(&resource->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t show_val(struct device *dev,
-			struct device_attribute *devattr,
-			char *buf)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	struct acpi_device *acpi_dev = to_acpi_device(dev);
-	struct acpi_power_meter_resource *resource = acpi_dev->driver_data;
+अटल sमाप_प्रकार show_val(काष्ठा device *dev,
+			काष्ठा device_attribute *devattr,
+			अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
+	काष्ठा acpi_घातer_meter_resource *resource = acpi_dev->driver_data;
 	u64 val = 0;
 
-	switch (attr->index) {
-	case 0:
-		val = resource->caps.min_avg_interval;
-		break;
-	case 1:
-		val = resource->caps.max_avg_interval;
-		break;
-	case 2:
+	चयन (attr->index) अणु
+	हाल 0:
+		val = resource->caps.min_avg_पूर्णांकerval;
+		अवरोध;
+	हाल 1:
+		val = resource->caps.max_avg_पूर्णांकerval;
+		अवरोध;
+	हाल 2:
 		val = resource->caps.min_cap * 1000;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		val = resource->caps.max_cap * 1000;
-		break;
-	case 4:
-		if (resource->caps.hysteresis == UNKNOWN_HYSTERESIS)
-			return sprintf(buf, "unknown\n");
+		अवरोध;
+	हाल 4:
+		अगर (resource->caps.hysteresis == UNKNOWN_HYSTERESIS)
+			वापस प्र_लिखो(buf, "unknown\n");
 
 		val = resource->caps.hysteresis * 1000;
-		break;
-	case 5:
-		if (resource->caps.flags & POWER_METER_IS_BATTERY)
+		अवरोध;
+	हाल 5:
+		अगर (resource->caps.flags & POWER_METER_IS_BATTERY)
 			val = 1;
-		else
+		अन्यथा
 			val = 0;
-		break;
-	case 6:
-		if (resource->power > resource->cap)
+		अवरोध;
+	हाल 6:
+		अगर (resource->घातer > resource->cap)
 			val = 1;
-		else
+		अन्यथा
 			val = 0;
-		break;
-	case 7:
-	case 8:
-		if (resource->trip[attr->index - 7] < 0)
-			return sprintf(buf, "unknown\n");
+		अवरोध;
+	हाल 7:
+	हाल 8:
+		अगर (resource->trip[attr->index - 7] < 0)
+			वापस प्र_लिखो(buf, "unknown\n");
 
 		val = resource->trip[attr->index - 7] * 1000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "Implementation error: unexpected attribute index %d\n",
 		     attr->index);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return sprintf(buf, "%llu\n", val);
-}
+	वापस प्र_लिखो(buf, "%llu\n", val);
+पूर्ण
 
-static ssize_t show_accuracy(struct device *dev,
-			     struct device_attribute *devattr,
-			     char *buf)
-{
-	struct acpi_device *acpi_dev = to_acpi_device(dev);
-	struct acpi_power_meter_resource *resource = acpi_dev->driver_data;
-	unsigned int acc = resource->caps.accuracy;
+अटल sमाप_प्रकार show_accuracy(काष्ठा device *dev,
+			     काष्ठा device_attribute *devattr,
+			     अक्षर *buf)
+अणु
+	काष्ठा acpi_device *acpi_dev = to_acpi_device(dev);
+	काष्ठा acpi_घातer_meter_resource *resource = acpi_dev->driver_data;
+	अचिन्हित पूर्णांक acc = resource->caps.accuracy;
 
-	return sprintf(buf, "%u.%u%%\n", acc / 1000, acc % 1000);
-}
+	वापस प्र_लिखो(buf, "%u.%u%%\n", acc / 1000, acc % 1000);
+पूर्ण
 
-static ssize_t show_name(struct device *dev,
-			 struct device_attribute *devattr,
-			 char *buf)
-{
-	return sprintf(buf, "%s\n", ACPI_POWER_METER_NAME);
-}
+अटल sमाप_प्रकार show_name(काष्ठा device *dev,
+			 काष्ठा device_attribute *devattr,
+			 अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", ACPI_POWER_METER_NAME);
+पूर्ण
 
-#define RO_SENSOR_TEMPLATE(_label, _show, _index)	\
-	{						\
+#घोषणा RO_SENSOR_TEMPLATE(_label, _show, _index)	\
+	अणु						\
 		.label = _label,			\
 		.show  = _show,				\
 		.index = _index,			\
-	}
+	पूर्ण
 
-#define RW_SENSOR_TEMPLATE(_label, _show, _set, _index)	\
-	{						\
+#घोषणा RW_SENSOR_TEMPLATE(_label, _show, _set, _index)	\
+	अणु						\
 		.label = _label,			\
 		.show  = _show,				\
 		.set   = _set,				\
 		.index = _index,			\
-	}
+	पूर्ण
 
 /* Sensor descriptions.  If you add a sensor, update NUM_SENSORS above! */
-static struct sensor_template meter_attrs[] = {
-	RO_SENSOR_TEMPLATE(POWER_AVERAGE_NAME, show_power, 0),
+अटल काष्ठा sensor_ढाँचा meter_attrs[] = अणु
+	RO_SENSOR_TEMPLATE(POWER_AVERAGE_NAME, show_घातer, 0),
 	RO_SENSOR_TEMPLATE("power1_accuracy", show_accuracy, 0),
 	RO_SENSOR_TEMPLATE("power1_average_interval_min", show_val, 0),
 	RO_SENSOR_TEMPLATE("power1_average_interval_max", show_val, 1),
 	RO_SENSOR_TEMPLATE("power1_is_battery", show_val, 5),
-	RW_SENSOR_TEMPLATE(POWER_AVG_INTERVAL_NAME, show_avg_interval,
-		set_avg_interval, 0),
-	{},
-};
+	RW_SENSOR_TEMPLATE(POWER_AVG_INTERVAL_NAME, show_avg_पूर्णांकerval,
+		set_avg_पूर्णांकerval, 0),
+	अणुपूर्ण,
+पूर्ण;
 
-static struct sensor_template misc_cap_attrs[] = {
+अटल काष्ठा sensor_ढाँचा misc_cap_attrs[] = अणु
 	RO_SENSOR_TEMPLATE("power1_cap_min", show_val, 2),
 	RO_SENSOR_TEMPLATE("power1_cap_max", show_val, 3),
 	RO_SENSOR_TEMPLATE("power1_cap_hyst", show_val, 4),
 	RO_SENSOR_TEMPLATE(POWER_ALARM_NAME, show_val, 6),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-static struct sensor_template ro_cap_attrs[] = {
+अटल काष्ठा sensor_ढाँचा ro_cap_attrs[] = अणु
 	RO_SENSOR_TEMPLATE(POWER_CAP_NAME, show_cap, 0),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-static struct sensor_template rw_cap_attrs[] = {
+अटल काष्ठा sensor_ढाँचा rw_cap_attrs[] = अणु
 	RW_SENSOR_TEMPLATE(POWER_CAP_NAME, show_cap, set_cap, 0),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-static struct sensor_template trip_attrs[] = {
+अटल काष्ठा sensor_ढाँचा trip_attrs[] = अणु
 	RW_SENSOR_TEMPLATE("power1_average_min", show_val, set_trip, 7),
 	RW_SENSOR_TEMPLATE("power1_average_max", show_val, set_trip, 8),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-static struct sensor_template misc_attrs[] = {
+अटल काष्ठा sensor_ढाँचा misc_attrs[] = अणु
 	RO_SENSOR_TEMPLATE("name", show_name, 0),
 	RO_SENSOR_TEMPLATE("power1_model_number", show_str, 0),
 	RO_SENSOR_TEMPLATE("power1_oem_info", show_str, 2),
 	RO_SENSOR_TEMPLATE("power1_serial_number", show_str, 1),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-#undef RO_SENSOR_TEMPLATE
-#undef RW_SENSOR_TEMPLATE
+#अघोषित RO_SENSOR_TEMPLATE
+#अघोषित RW_SENSOR_TEMPLATE
 
-/* Read power domain data */
-static void remove_domain_devices(struct acpi_power_meter_resource *resource)
-{
-	int i;
+/* Read घातer करोमुख्य data */
+अटल व्योम हटाओ_करोमुख्य_devices(काष्ठा acpi_घातer_meter_resource *resource)
+अणु
+	पूर्णांक i;
 
-	if (!resource->num_domain_devices)
-		return;
+	अगर (!resource->num_करोमुख्य_devices)
+		वापस;
 
-	for (i = 0; i < resource->num_domain_devices; i++) {
-		struct acpi_device *obj = resource->domain_devices[i];
-		if (!obj)
-			continue;
+	क्रम (i = 0; i < resource->num_करोमुख्य_devices; i++) अणु
+		काष्ठा acpi_device *obj = resource->करोमुख्य_devices[i];
+		अगर (!obj)
+			जारी;
 
-		sysfs_remove_link(resource->holders_dir,
+		sysfs_हटाओ_link(resource->holders_dir,
 				  kobject_name(&obj->dev.kobj));
 		put_device(&obj->dev);
-	}
+	पूर्ण
 
-	kfree(resource->domain_devices);
+	kमुक्त(resource->करोमुख्य_devices);
 	kobject_put(resource->holders_dir);
-	resource->num_domain_devices = 0;
-}
+	resource->num_करोमुख्य_devices = 0;
+पूर्ण
 
-static int read_domain_devices(struct acpi_power_meter_resource *resource)
-{
-	int res = 0;
-	int i;
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *pss;
+अटल पूर्णांक पढ़ो_करोमुख्य_devices(काष्ठा acpi_घातer_meter_resource *resource)
+अणु
+	पूर्णांक res = 0;
+	पूर्णांक i;
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *pss;
 	acpi_status status;
 
-	status = acpi_evaluate_object(resource->acpi_dev->handle, "_PMD", NULL,
+	status = acpi_evaluate_object(resource->acpi_dev->handle, "_PMD", शून्य,
 				      &buffer);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_evaluation_failure_warn(resource->acpi_dev->handle, "_PMD",
 					     status);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	pss = buffer.pointer;
-	if (!pss ||
-	    pss->type != ACPI_TYPE_PACKAGE) {
+	pss = buffer.poपूर्णांकer;
+	अगर (!pss ||
+	    pss->type != ACPI_TYPE_PACKAGE) अणु
 		dev_err(&resource->acpi_dev->dev, ACPI_POWER_METER_NAME
 			"Invalid _PMD data\n");
 		res = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (!pss->package.count)
-		goto end;
+	अगर (!pss->package.count)
+		जाओ end;
 
-	resource->domain_devices = kcalloc(pss->package.count,
-					   sizeof(struct acpi_device *),
+	resource->करोमुख्य_devices = kसुस्मृति(pss->package.count,
+					   माप(काष्ठा acpi_device *),
 					   GFP_KERNEL);
-	if (!resource->domain_devices) {
+	अगर (!resource->करोमुख्य_devices) अणु
 		res = -ENOMEM;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	resource->holders_dir = kobject_create_and_add("measures",
 					&resource->acpi_dev->dev.kobj);
-	if (!resource->holders_dir) {
+	अगर (!resource->holders_dir) अणु
 		res = -ENOMEM;
-		goto exit_free;
-	}
+		जाओ निकास_मुक्त;
+	पूर्ण
 
-	resource->num_domain_devices = pss->package.count;
+	resource->num_करोमुख्य_devices = pss->package.count;
 
-	for (i = 0; i < pss->package.count; i++) {
-		struct acpi_device *obj;
-		union acpi_object *element = &(pss->package.elements[i]);
+	क्रम (i = 0; i < pss->package.count; i++) अणु
+		काष्ठा acpi_device *obj;
+		जोड़ acpi_object *element = &(pss->package.elements[i]);
 
 		/* Refuse non-references */
-		if (element->type != ACPI_TYPE_LOCAL_REFERENCE)
-			continue;
+		अगर (element->type != ACPI_TYPE_LOCAL_REFERENCE)
+			जारी;
 
-		/* Create a symlink to domain objects */
-		resource->domain_devices[i] = NULL;
-		if (acpi_bus_get_device(element->reference.handle,
-					&resource->domain_devices[i]))
-			continue;
+		/* Create a symlink to करोमुख्य objects */
+		resource->करोमुख्य_devices[i] = शून्य;
+		अगर (acpi_bus_get_device(element->reference.handle,
+					&resource->करोमुख्य_devices[i]))
+			जारी;
 
-		obj = resource->domain_devices[i];
+		obj = resource->करोमुख्य_devices[i];
 		get_device(&obj->dev);
 
 		res = sysfs_create_link(resource->holders_dir, &obj->dev.kobj,
 				      kobject_name(&obj->dev.kobj));
-		if (res) {
+		अगर (res) अणु
 			put_device(&obj->dev);
-			resource->domain_devices[i] = NULL;
-		}
-	}
+			resource->करोमुख्य_devices[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
 	res = 0;
-	goto end;
+	जाओ end;
 
-exit_free:
-	kfree(resource->domain_devices);
+निकास_मुक्त:
+	kमुक्त(resource->करोमुख्य_devices);
 end:
-	kfree(buffer.pointer);
-	return res;
-}
+	kमुक्त(buffer.poपूर्णांकer);
+	वापस res;
+पूर्ण
 
 /* Registration and deregistration */
-static int register_attrs(struct acpi_power_meter_resource *resource,
-			  struct sensor_template *attrs)
-{
-	struct device *dev = &resource->acpi_dev->dev;
-	struct sensor_device_attribute *sensors =
+अटल पूर्णांक रेजिस्टर_attrs(काष्ठा acpi_घातer_meter_resource *resource,
+			  काष्ठा sensor_ढाँचा *attrs)
+अणु
+	काष्ठा device *dev = &resource->acpi_dev->dev;
+	काष्ठा sensor_device_attribute *sensors =
 		&resource->sensors[resource->num_sensors];
-	int res = 0;
+	पूर्णांक res = 0;
 
-	while (attrs->label) {
+	जबतक (attrs->label) अणु
 		sensors->dev_attr.attr.name = attrs->label;
 		sensors->dev_attr.attr.mode = 0444;
 		sensors->dev_attr.show = attrs->show;
 		sensors->index = attrs->index;
 
-		if (attrs->set) {
+		अगर (attrs->set) अणु
 			sensors->dev_attr.attr.mode |= 0200;
 			sensors->dev_attr.store = attrs->set;
-		}
+		पूर्ण
 
 		sysfs_attr_init(&sensors->dev_attr.attr);
 		res = device_create_file(dev, &sensors->dev_attr);
-		if (res) {
-			sensors->dev_attr.attr.name = NULL;
-			goto error;
-		}
+		अगर (res) अणु
+			sensors->dev_attr.attr.name = शून्य;
+			जाओ error;
+		पूर्ण
 		sensors++;
 		resource->num_sensors++;
 		attrs++;
-	}
+	पूर्ण
 
 error:
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void remove_attrs(struct acpi_power_meter_resource *resource)
-{
-	int i;
+अटल व्योम हटाओ_attrs(काष्ठा acpi_घातer_meter_resource *resource)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < resource->num_sensors; i++) {
-		if (!resource->sensors[i].dev_attr.attr.name)
-			continue;
-		device_remove_file(&resource->acpi_dev->dev,
+	क्रम (i = 0; i < resource->num_sensors; i++) अणु
+		अगर (!resource->sensors[i].dev_attr.attr.name)
+			जारी;
+		device_हटाओ_file(&resource->acpi_dev->dev,
 				   &resource->sensors[i].dev_attr);
-	}
+	पूर्ण
 
-	remove_domain_devices(resource);
+	हटाओ_करोमुख्य_devices(resource);
 
 	resource->num_sensors = 0;
-}
+पूर्ण
 
-static int setup_attrs(struct acpi_power_meter_resource *resource)
-{
-	int res = 0;
+अटल पूर्णांक setup_attrs(काष्ठा acpi_घातer_meter_resource *resource)
+अणु
+	पूर्णांक res = 0;
 
-	res = read_domain_devices(resource);
-	if (res)
-		return res;
+	res = पढ़ो_करोमुख्य_devices(resource);
+	अगर (res)
+		वापस res;
 
-	if (resource->caps.flags & POWER_METER_CAN_MEASURE) {
-		res = register_attrs(resource, meter_attrs);
-		if (res)
-			goto error;
-	}
+	अगर (resource->caps.flags & POWER_METER_CAN_MEASURE) अणु
+		res = रेजिस्टर_attrs(resource, meter_attrs);
+		अगर (res)
+			जाओ error;
+	पूर्ण
 
-	if (resource->caps.flags & POWER_METER_CAN_CAP) {
-		if (!can_cap_in_hardware()) {
+	अगर (resource->caps.flags & POWER_METER_CAN_CAP) अणु
+		अगर (!can_cap_in_hardware()) अणु
 			dev_warn(&resource->acpi_dev->dev,
 				 "Ignoring unsafe software power cap!\n");
-			goto skip_unsafe_cap;
-		}
+			जाओ skip_unsafe_cap;
+		पूर्ण
 
-		if (resource->caps.configurable_cap)
-			res = register_attrs(resource, rw_cap_attrs);
-		else
-			res = register_attrs(resource, ro_cap_attrs);
+		अगर (resource->caps.configurable_cap)
+			res = रेजिस्टर_attrs(resource, rw_cap_attrs);
+		अन्यथा
+			res = रेजिस्टर_attrs(resource, ro_cap_attrs);
 
-		if (res)
-			goto error;
+		अगर (res)
+			जाओ error;
 
-		res = register_attrs(resource, misc_cap_attrs);
-		if (res)
-			goto error;
-	}
+		res = रेजिस्टर_attrs(resource, misc_cap_attrs);
+		अगर (res)
+			जाओ error;
+	पूर्ण
 
 skip_unsafe_cap:
-	if (resource->caps.flags & POWER_METER_CAN_TRIP) {
-		res = register_attrs(resource, trip_attrs);
-		if (res)
-			goto error;
-	}
+	अगर (resource->caps.flags & POWER_METER_CAN_TRIP) अणु
+		res = रेजिस्टर_attrs(resource, trip_attrs);
+		अगर (res)
+			जाओ error;
+	पूर्ण
 
-	res = register_attrs(resource, misc_attrs);
-	if (res)
-		goto error;
+	res = रेजिस्टर_attrs(resource, misc_attrs);
+	अगर (res)
+		जाओ error;
 
-	return res;
+	वापस res;
 error:
-	remove_attrs(resource);
-	return res;
-}
+	हटाओ_attrs(resource);
+	वापस res;
+पूर्ण
 
-static void free_capabilities(struct acpi_power_meter_resource *resource)
-{
+अटल व्योम मुक्त_capabilities(काष्ठा acpi_घातer_meter_resource *resource)
+अणु
 	acpi_string *str;
-	int i;
+	पूर्णांक i;
 
 	str = &resource->model_number;
-	for (i = 0; i < 3; i++, str++) {
-		kfree(*str);
-		*str = NULL;
-	}
-}
+	क्रम (i = 0; i < 3; i++, str++) अणु
+		kमुक्त(*str);
+		*str = शून्य;
+	पूर्ण
+पूर्ण
 
-static int read_capabilities(struct acpi_power_meter_resource *resource)
-{
-	int res = 0;
-	int i;
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	struct acpi_buffer state = { 0, NULL };
-	struct acpi_buffer format = { sizeof("NNNNNNNNNNN"), "NNNNNNNNNNN" };
-	union acpi_object *pss;
+अटल पूर्णांक पढ़ो_capabilities(काष्ठा acpi_घातer_meter_resource *resource)
+अणु
+	पूर्णांक res = 0;
+	पूर्णांक i;
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	काष्ठा acpi_buffer state = अणु 0, शून्य पूर्ण;
+	काष्ठा acpi_buffer क्रमmat = अणु माप("NNNNNNNNNNN"), "NNNNNNNNNNN" पूर्ण;
+	जोड़ acpi_object *pss;
 	acpi_string *str;
 	acpi_status status;
 
-	status = acpi_evaluate_object(resource->acpi_dev->handle, "_PMC", NULL,
+	status = acpi_evaluate_object(resource->acpi_dev->handle, "_PMC", शून्य,
 				      &buffer);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_evaluation_failure_warn(resource->acpi_dev->handle, "_PMC",
 					     status);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	pss = buffer.pointer;
-	if (!pss ||
+	pss = buffer.poपूर्णांकer;
+	अगर (!pss ||
 	    pss->type != ACPI_TYPE_PACKAGE ||
-	    pss->package.count != 14) {
+	    pss->package.count != 14) अणु
 		dev_err(&resource->acpi_dev->dev, ACPI_POWER_METER_NAME
 			"Invalid _PMC data\n");
 		res = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	/* Grab all the integer data at once */
-	state.length = sizeof(struct acpi_power_meter_capabilities);
-	state.pointer = &resource->caps;
+	/* Grab all the पूर्णांकeger data at once */
+	state.length = माप(काष्ठा acpi_घातer_meter_capabilities);
+	state.poपूर्णांकer = &resource->caps;
 
-	status = acpi_extract_package(pss, &format, &state);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_extract_package(pss, &क्रमmat, &state);
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_err(&resource->acpi_dev->dev, ACPI_POWER_METER_NAME
 			"_PMC package parsing failed: %s\n",
-			acpi_format_exception(status));
+			acpi_क्रमmat_exception(status));
 		res = -EFAULT;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (resource->caps.units) {
+	अगर (resource->caps.units) अणु
 		dev_err(&resource->acpi_dev->dev, ACPI_POWER_METER_NAME
 			"Unknown units %llu.\n",
 			resource->caps.units);
 		res = -EINVAL;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	/* Grab the string data */
 	str = &resource->model_number;
 
-	for (i = 11; i < 14; i++) {
-		union acpi_object *element = &(pss->package.elements[i]);
+	क्रम (i = 11; i < 14; i++) अणु
+		जोड़ acpi_object *element = &(pss->package.elements[i]);
 
-		if (element->type != ACPI_TYPE_STRING) {
+		अगर (element->type != ACPI_TYPE_STRING) अणु
 			res = -EINVAL;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		*str = kcalloc(element->string.length + 1, sizeof(u8),
+		*str = kसुस्मृति(element->string.length + 1, माप(u8),
 			       GFP_KERNEL);
-		if (!*str) {
+		अगर (!*str) अणु
 			res = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		strncpy(*str, element->string.pointer, element->string.length);
+		म_नकलन(*str, element->string.poपूर्णांकer, element->string.length);
 		str++;
-	}
+	पूर्ण
 
 	dev_info(&resource->acpi_dev->dev, "Found ACPI power meter.\n");
-	goto end;
+	जाओ end;
 error:
-	free_capabilities(resource);
+	मुक्त_capabilities(resource);
 end:
-	kfree(buffer.pointer);
-	return res;
-}
+	kमुक्त(buffer.poपूर्णांकer);
+	वापस res;
+पूर्ण
 
-/* Handle ACPI event notifications */
-static void acpi_power_meter_notify(struct acpi_device *device, u32 event)
-{
-	struct acpi_power_meter_resource *resource;
-	int res;
+/* Handle ACPI event notअगरications */
+अटल व्योम acpi_घातer_meter_notअगरy(काष्ठा acpi_device *device, u32 event)
+अणु
+	काष्ठा acpi_घातer_meter_resource *resource;
+	पूर्णांक res;
 
-	if (!device || !acpi_driver_data(device))
-		return;
+	अगर (!device || !acpi_driver_data(device))
+		वापस;
 
 	resource = acpi_driver_data(device);
 
-	switch (event) {
-	case METER_NOTIFY_CONFIG:
+	चयन (event) अणु
+	हाल METER_NOTIFY_CONFIG:
 		mutex_lock(&resource->lock);
-		free_capabilities(resource);
-		res = read_capabilities(resource);
+		मुक्त_capabilities(resource);
+		res = पढ़ो_capabilities(resource);
 		mutex_unlock(&resource->lock);
-		if (res)
-			break;
+		अगर (res)
+			अवरोध;
 
-		remove_attrs(resource);
+		हटाओ_attrs(resource);
 		setup_attrs(resource);
-		break;
-	case METER_NOTIFY_TRIP:
-		sysfs_notify(&device->dev.kobj, NULL, POWER_AVERAGE_NAME);
-		break;
-	case METER_NOTIFY_CAP:
-		sysfs_notify(&device->dev.kobj, NULL, POWER_CAP_NAME);
-		break;
-	case METER_NOTIFY_INTERVAL:
-		sysfs_notify(&device->dev.kobj, NULL, POWER_AVG_INTERVAL_NAME);
-		break;
-	case METER_NOTIFY_CAPPING:
-		sysfs_notify(&device->dev.kobj, NULL, POWER_ALARM_NAME);
+		अवरोध;
+	हाल METER_NOTIFY_TRIP:
+		sysfs_notअगरy(&device->dev.kobj, शून्य, POWER_AVERAGE_NAME);
+		अवरोध;
+	हाल METER_NOTIFY_CAP:
+		sysfs_notअगरy(&device->dev.kobj, शून्य, POWER_CAP_NAME);
+		अवरोध;
+	हाल METER_NOTIFY_INTERVAL:
+		sysfs_notअगरy(&device->dev.kobj, शून्य, POWER_AVG_INTERVAL_NAME);
+		अवरोध;
+	हाल METER_NOTIFY_CAPPING:
+		sysfs_notअगरy(&device->dev.kobj, शून्य, POWER_ALARM_NAME);
 		dev_info(&device->dev, "Capping in progress.\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "Unexpected event %d\n", event);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	acpi_bus_generate_netlink_event(ACPI_POWER_METER_CLASS,
 					dev_name(&device->dev), event, 0);
-}
+पूर्ण
 
-static int acpi_power_meter_add(struct acpi_device *device)
-{
-	int res;
-	struct acpi_power_meter_resource *resource;
+अटल पूर्णांक acpi_घातer_meter_add(काष्ठा acpi_device *device)
+अणु
+	पूर्णांक res;
+	काष्ठा acpi_घातer_meter_resource *resource;
 
-	if (!device)
-		return -EINVAL;
+	अगर (!device)
+		वापस -EINVAL;
 
-	resource = kzalloc(sizeof(struct acpi_power_meter_resource),
+	resource = kzalloc(माप(काष्ठा acpi_घातer_meter_resource),
 			   GFP_KERNEL);
-	if (!resource)
-		return -ENOMEM;
+	अगर (!resource)
+		वापस -ENOMEM;
 
 	resource->sensors_valid = 0;
 	resource->acpi_dev = device;
 	mutex_init(&resource->lock);
-	strcpy(acpi_device_name(device), ACPI_POWER_METER_DEVICE_NAME);
-	strcpy(acpi_device_class(device), ACPI_POWER_METER_CLASS);
+	म_नकल(acpi_device_name(device), ACPI_POWER_METER_DEVICE_NAME);
+	म_नकल(acpi_device_class(device), ACPI_POWER_METER_CLASS);
 	device->driver_data = resource;
 
-	res = read_capabilities(resource);
-	if (res)
-		goto exit_free;
+	res = पढ़ो_capabilities(resource);
+	अगर (res)
+		जाओ निकास_मुक्त;
 
 	resource->trip[0] = resource->trip[1] = -1;
 
 	res = setup_attrs(resource);
-	if (res)
-		goto exit_free_capability;
+	अगर (res)
+		जाओ निकास_मुक्त_capability;
 
-	resource->hwmon_dev = hwmon_device_register(&device->dev);
-	if (IS_ERR(resource->hwmon_dev)) {
+	resource->hwmon_dev = hwmon_device_रेजिस्टर(&device->dev);
+	अगर (IS_ERR(resource->hwmon_dev)) अणु
 		res = PTR_ERR(resource->hwmon_dev);
-		goto exit_remove;
-	}
+		जाओ निकास_हटाओ;
+	पूर्ण
 
 	res = 0;
-	goto exit;
+	जाओ निकास;
 
-exit_remove:
-	remove_attrs(resource);
-exit_free_capability:
-	free_capabilities(resource);
-exit_free:
-	kfree(resource);
-exit:
-	return res;
-}
+निकास_हटाओ:
+	हटाओ_attrs(resource);
+निकास_मुक्त_capability:
+	मुक्त_capabilities(resource);
+निकास_मुक्त:
+	kमुक्त(resource);
+निकास:
+	वापस res;
+पूर्ण
 
-static int acpi_power_meter_remove(struct acpi_device *device)
-{
-	struct acpi_power_meter_resource *resource;
+अटल पूर्णांक acpi_घातer_meter_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_घातer_meter_resource *resource;
 
-	if (!device || !acpi_driver_data(device))
-		return -EINVAL;
+	अगर (!device || !acpi_driver_data(device))
+		वापस -EINVAL;
 
 	resource = acpi_driver_data(device);
-	hwmon_device_unregister(resource->hwmon_dev);
+	hwmon_device_unरेजिस्टर(resource->hwmon_dev);
 
-	remove_attrs(resource);
-	free_capabilities(resource);
+	हटाओ_attrs(resource);
+	मुक्त_capabilities(resource);
 
-	kfree(resource);
-	return 0;
-}
+	kमुक्त(resource);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 
-static int acpi_power_meter_resume(struct device *dev)
-{
-	struct acpi_power_meter_resource *resource;
+अटल पूर्णांक acpi_घातer_meter_resume(काष्ठा device *dev)
+अणु
+	काष्ठा acpi_घातer_meter_resource *resource;
 
-	if (!dev)
-		return -EINVAL;
+	अगर (!dev)
+		वापस -EINVAL;
 
 	resource = acpi_driver_data(to_acpi_device(dev));
-	if (!resource)
-		return -EINVAL;
+	अगर (!resource)
+		वापस -EINVAL;
 
-	free_capabilities(resource);
-	read_capabilities(resource);
+	मुक्त_capabilities(resource);
+	पढ़ो_capabilities(resource);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_PM_SLEEP */
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static SIMPLE_DEV_PM_OPS(acpi_power_meter_pm, NULL, acpi_power_meter_resume);
+अटल SIMPLE_DEV_PM_OPS(acpi_घातer_meter_pm, शून्य, acpi_घातer_meter_resume);
 
-static struct acpi_driver acpi_power_meter_driver = {
+अटल काष्ठा acpi_driver acpi_घातer_meter_driver = अणु
 	.name = "power_meter",
 	.class = ACPI_POWER_METER_CLASS,
-	.ids = power_meter_ids,
-	.ops = {
-		.add = acpi_power_meter_add,
-		.remove = acpi_power_meter_remove,
-		.notify = acpi_power_meter_notify,
-		},
-	.drv.pm = &acpi_power_meter_pm,
-};
+	.ids = घातer_meter_ids,
+	.ops = अणु
+		.add = acpi_घातer_meter_add,
+		.हटाओ = acpi_घातer_meter_हटाओ,
+		.notअगरy = acpi_घातer_meter_notअगरy,
+		पूर्ण,
+	.drv.pm = &acpi_घातer_meter_pm,
+पूर्ण;
 
-/* Module init/exit routines */
-static int __init enable_cap_knobs(const struct dmi_system_id *d)
-{
+/* Module init/निकास routines */
+अटल पूर्णांक __init enable_cap_knobs(स्थिर काष्ठा dmi_प्रणाली_id *d)
+अणु
 	cap_in_hardware = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dmi_system_id pm_dmi_table[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id pm_dmi_table[] __initस्थिर = अणु
+	अणु
 		enable_cap_knobs, "IBM Active Energy Manager",
-		{
+		अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "IBM")
-		},
-	},
-	{}
-};
+		पूर्ण,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int __init acpi_power_meter_init(void)
-{
-	int result;
+अटल पूर्णांक __init acpi_घातer_meter_init(व्योम)
+अणु
+	पूर्णांक result;
 
-	if (acpi_disabled)
-		return -ENODEV;
+	अगर (acpi_disabled)
+		वापस -ENODEV;
 
-	dmi_check_system(pm_dmi_table);
+	dmi_check_प्रणाली(pm_dmi_table);
 
-	result = acpi_bus_register_driver(&acpi_power_meter_driver);
-	if (result < 0)
-		return result;
+	result = acpi_bus_रेजिस्टर_driver(&acpi_घातer_meter_driver);
+	अगर (result < 0)
+		वापस result;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit acpi_power_meter_exit(void)
-{
-	acpi_bus_unregister_driver(&acpi_power_meter_driver);
-}
+अटल व्योम __निकास acpi_घातer_meter_निकास(व्योम)
+अणु
+	acpi_bus_unरेजिस्टर_driver(&acpi_घातer_meter_driver);
+पूर्ण
 
 MODULE_AUTHOR("Darrick J. Wong <darrick.wong@oracle.com>");
 MODULE_DESCRIPTION("ACPI 4.0 power meter driver");
 MODULE_LICENSE("GPL");
 
-module_param(force_cap_on, bool, 0644);
-MODULE_PARM_DESC(force_cap_on, "Enable power cap even it is unsafe to do so.");
+module_param(क्रमce_cap_on, bool, 0644);
+MODULE_PARM_DESC(क्रमce_cap_on, "Enable power cap even it is unsafe to do so.");
 
-module_init(acpi_power_meter_init);
-module_exit(acpi_power_meter_exit);
+module_init(acpi_घातer_meter_init);
+module_निकास(acpi_घातer_meter_निकास);

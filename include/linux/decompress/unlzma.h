@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef DECOMPRESS_UNLZMA_H
-#define DECOMPRESS_UNLZMA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित DECOMPRESS_UNLZMA_H
+#घोषणा DECOMPRESS_UNLZMA_H
 
-int unlzma(unsigned char *, long,
-	   long (*fill)(void*, unsigned long),
-	   long (*flush)(void*, unsigned long),
-	   unsigned char *output,
-	   long *posp,
-	   void(*error)(char *x)
+पूर्णांक unlzma(अचिन्हित अक्षर *, दीर्घ,
+	   दीर्घ (*fill)(व्योम*, अचिन्हित दीर्घ),
+	   दीर्घ (*flush)(व्योम*, अचिन्हित दीर्घ),
+	   अचिन्हित अक्षर *output,
+	   दीर्घ *posp,
+	   व्योम(*error)(अक्षर *x)
 	);
 
-#endif
+#पूर्ण_अगर

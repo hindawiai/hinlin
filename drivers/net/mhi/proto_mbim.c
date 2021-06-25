@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* MHI Network driver - Network over MHI bus
  *
  * Copyright (C) 2021 Linaro Ltd <loic.poulain@linaro.org>
@@ -7,297 +8,297 @@
  * Copyright (C) ST-Ericsson 2010-2012
  * and cdc_mbim, which is:
  * Copyright (c) 2012  Smith Micro Software, Inc.
- * Copyright (c) 2012  Bjørn Mork <bjorn@mork.no>
+ * Copyright (c) 2012  Bjथचrn Mork <bjorn@mork.no>
  *
  */
 
-#include <linux/ethtool.h>
-#include <linux/if_vlan.h>
-#include <linux/ip.h>
-#include <linux/mii.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/usb.h>
-#include <linux/usb/cdc.h>
-#include <linux/usb/usbnet.h>
-#include <linux/usb/cdc_ncm.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/cdc.h>
+#समावेश <linux/usb/usbnet.h>
+#समावेश <linux/usb/cdc_ncm.h>
 
-#include "mhi.h"
+#समावेश "mhi.h"
 
-#define MBIM_NDP16_SIGN_MASK 0x00ffffff
+#घोषणा MBIM_NDP16_SIGN_MASK 0x00ffffff
 
 /* Usual WWAN MTU */
-#define MHI_MBIM_DEFAULT_MTU 1500
+#घोषणा MHI_MBIM_DEFAULT_MTU 1500
 
 /* 3500 allows to optimize skb allocation, the skbs will basically fit in
  * one 4K page. Large MBIM packets will simply be split over several MHI
  * transfers and chained by the MHI net layer (zerocopy).
  */
-#define MHI_MBIM_DEFAULT_MRU 3500
+#घोषणा MHI_MBIM_DEFAULT_MRU 3500
 
-struct mbim_context {
+काष्ठा mbim_context अणु
 	u16 rx_seq;
 	u16 tx_seq;
-};
+पूर्ण;
 
-static void __mbim_length_errors_inc(struct mhi_net_dev *dev)
-{
+अटल व्योम __mbim_length_errors_inc(काष्ठा mhi_net_dev *dev)
+अणु
 	u64_stats_update_begin(&dev->stats.rx_syncp);
 	u64_stats_inc(&dev->stats.rx_length_errors);
 	u64_stats_update_end(&dev->stats.rx_syncp);
-}
+पूर्ण
 
-static void __mbim_errors_inc(struct mhi_net_dev *dev)
-{
+अटल व्योम __mbim_errors_inc(काष्ठा mhi_net_dev *dev)
+अणु
 	u64_stats_update_begin(&dev->stats.rx_syncp);
 	u64_stats_inc(&dev->stats.rx_errors);
 	u64_stats_update_end(&dev->stats.rx_syncp);
-}
+पूर्ण
 
-static int mbim_rx_verify_nth16(struct sk_buff *skb)
-{
-	struct mhi_net_dev *dev = netdev_priv(skb->dev);
-	struct mbim_context *ctx = dev->proto_data;
-	struct usb_cdc_ncm_nth16 *nth16;
-	int len;
+अटल पूर्णांक mbim_rx_verअगरy_nth16(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mhi_net_dev *dev = netdev_priv(skb->dev);
+	काष्ठा mbim_context *ctx = dev->proto_data;
+	काष्ठा usb_cdc_ncm_nth16 *nth16;
+	पूर्णांक len;
 
-	if (skb->len < sizeof(struct usb_cdc_ncm_nth16) +
-			sizeof(struct usb_cdc_ncm_ndp16)) {
-		netif_dbg(dev, rx_err, dev->ndev, "frame too short\n");
+	अगर (skb->len < माप(काष्ठा usb_cdc_ncm_nth16) +
+			माप(काष्ठा usb_cdc_ncm_ndp16)) अणु
+		netअगर_dbg(dev, rx_err, dev->ndev, "frame too short\n");
 		__mbim_length_errors_inc(dev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	nth16 = (struct usb_cdc_ncm_nth16 *)skb->data;
+	nth16 = (काष्ठा usb_cdc_ncm_nth16 *)skb->data;
 
-	if (nth16->dwSignature != cpu_to_le32(USB_CDC_NCM_NTH16_SIGN)) {
-		netif_dbg(dev, rx_err, dev->ndev,
+	अगर (nth16->dwSignature != cpu_to_le32(USB_CDC_NCM_NTH16_SIGN)) अणु
+		netअगर_dbg(dev, rx_err, dev->ndev,
 			  "invalid NTH16 signature <%#010x>\n",
 			  le32_to_cpu(nth16->dwSignature));
 		__mbim_errors_inc(dev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* No limit on the block length, except the size of the data pkt */
 	len = le16_to_cpu(nth16->wBlockLength);
-	if (len > skb->len) {
-		netif_dbg(dev, rx_err, dev->ndev,
+	अगर (len > skb->len) अणु
+		netअगर_dbg(dev, rx_err, dev->ndev,
 			  "NTB does not fit into the skb %u/%u\n", len,
 			  skb->len);
 		__mbim_length_errors_inc(dev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ctx->rx_seq + 1 != le16_to_cpu(nth16->wSequence) &&
+	अगर (ctx->rx_seq + 1 != le16_to_cpu(nth16->wSequence) &&
 	    (ctx->rx_seq || le16_to_cpu(nth16->wSequence)) &&
-	    !(ctx->rx_seq == 0xffff && !le16_to_cpu(nth16->wSequence))) {
-		netif_dbg(dev, rx_err, dev->ndev,
+	    !(ctx->rx_seq == 0xffff && !le16_to_cpu(nth16->wSequence))) अणु
+		netअगर_dbg(dev, rx_err, dev->ndev,
 			  "sequence number glitch prev=%d curr=%d\n",
 			  ctx->rx_seq, le16_to_cpu(nth16->wSequence));
-	}
+	पूर्ण
 	ctx->rx_seq = le16_to_cpu(nth16->wSequence);
 
-	return le16_to_cpu(nth16->wNdpIndex);
-}
+	वापस le16_to_cpu(nth16->wNdpIndex);
+पूर्ण
 
-static int mbim_rx_verify_ndp16(struct sk_buff *skb, struct usb_cdc_ncm_ndp16 *ndp16)
-{
-	struct mhi_net_dev *dev = netdev_priv(skb->dev);
-	int ret;
+अटल पूर्णांक mbim_rx_verअगरy_ndp16(काष्ठा sk_buff *skb, काष्ठा usb_cdc_ncm_ndp16 *ndp16)
+अणु
+	काष्ठा mhi_net_dev *dev = netdev_priv(skb->dev);
+	पूर्णांक ret;
 
-	if (le16_to_cpu(ndp16->wLength) < USB_CDC_NCM_NDP16_LENGTH_MIN) {
-		netif_dbg(dev, rx_err, dev->ndev, "invalid DPT16 length <%u>\n",
+	अगर (le16_to_cpu(ndp16->wLength) < USB_CDC_NCM_NDP16_LENGTH_MIN) अणु
+		netअगर_dbg(dev, rx_err, dev->ndev, "invalid DPT16 length <%u>\n",
 			  le16_to_cpu(ndp16->wLength));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = ((le16_to_cpu(ndp16->wLength) - sizeof(struct usb_cdc_ncm_ndp16))
-			/ sizeof(struct usb_cdc_ncm_dpe16));
-	ret--; /* Last entry is always a NULL terminator */
+	ret = ((le16_to_cpu(ndp16->wLength) - माप(काष्ठा usb_cdc_ncm_ndp16))
+			/ माप(काष्ठा usb_cdc_ncm_dpe16));
+	ret--; /* Last entry is always a शून्य terminator */
 
-	if (sizeof(struct usb_cdc_ncm_ndp16) +
-	     ret * sizeof(struct usb_cdc_ncm_dpe16) > skb->len) {
-		netif_dbg(dev, rx_err, dev->ndev,
+	अगर (माप(काष्ठा usb_cdc_ncm_ndp16) +
+	     ret * माप(काष्ठा usb_cdc_ncm_dpe16) > skb->len) अणु
+		netअगर_dbg(dev, rx_err, dev->ndev,
 			  "Invalid nframes = %d\n", ret);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mbim_rx(struct mhi_net_dev *mhi_netdev, struct sk_buff *skb)
-{
-	struct net_device *ndev = mhi_netdev->ndev;
-	int ndpoffset;
+अटल व्योम mbim_rx(काष्ठा mhi_net_dev *mhi_netdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *ndev = mhi_netdev->ndev;
+	पूर्णांक ndpoffset;
 
 	/* Check NTB header and retrieve first NDP offset */
-	ndpoffset = mbim_rx_verify_nth16(skb);
-	if (ndpoffset < 0) {
+	ndpoffset = mbim_rx_verअगरy_nth16(skb);
+	अगर (ndpoffset < 0) अणु
 		net_err_ratelimited("%s: Incorrect NTB header\n", ndev->name);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* Process each NDP */
-	while (1) {
-		struct usb_cdc_ncm_ndp16 ndp16;
-		struct usb_cdc_ncm_dpe16 dpe16;
-		int nframes, n, dpeoffset;
+	जबतक (1) अणु
+		काष्ठा usb_cdc_ncm_ndp16 ndp16;
+		काष्ठा usb_cdc_ncm_dpe16 dpe16;
+		पूर्णांक nframes, n, dpeoffset;
 
-		if (skb_copy_bits(skb, ndpoffset, &ndp16, sizeof(ndp16))) {
+		अगर (skb_copy_bits(skb, ndpoffset, &ndp16, माप(ndp16))) अणु
 			net_err_ratelimited("%s: Incorrect NDP offset (%u)\n",
 					    ndev->name, ndpoffset);
 			__mbim_length_errors_inc(mhi_netdev);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		/* Check NDP header and retrieve number of datagrams */
-		nframes = mbim_rx_verify_ndp16(skb, &ndp16);
-		if (nframes < 0) {
+		nframes = mbim_rx_verअगरy_ndp16(skb, &ndp16);
+		अगर (nframes < 0) अणु
 			net_err_ratelimited("%s: Incorrect NDP16\n", ndev->name);
 			__mbim_length_errors_inc(mhi_netdev);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		 /* Only IP data type supported, no DSS in MHI context */
-		if ((ndp16.dwSignature & cpu_to_le32(MBIM_NDP16_SIGN_MASK))
-				!= cpu_to_le32(USB_CDC_MBIM_NDP16_IPS_SIGN)) {
+		अगर ((ndp16.dwSignature & cpu_to_le32(MBIM_NDP16_SIGN_MASK))
+				!= cpu_to_le32(USB_CDC_MBIM_NDP16_IPS_SIGN)) अणु
 			net_err_ratelimited("%s: Unsupported NDP type\n", ndev->name);
 			__mbim_errors_inc(mhi_netdev);
-			goto next_ndp;
-		}
+			जाओ next_ndp;
+		पूर्ण
 
-		/* Only primary IP session 0 (0x00) supported for now */
-		if (ndp16.dwSignature & ~cpu_to_le32(MBIM_NDP16_SIGN_MASK)) {
+		/* Only primary IP session 0 (0x00) supported क्रम now */
+		अगर (ndp16.dwSignature & ~cpu_to_le32(MBIM_NDP16_SIGN_MASK)) अणु
 			net_err_ratelimited("%s: bad packet session\n", ndev->name);
 			__mbim_errors_inc(mhi_netdev);
-			goto next_ndp;
-		}
+			जाओ next_ndp;
+		पूर्ण
 
 		/* de-aggregate and deliver IP packets */
-		dpeoffset = ndpoffset + sizeof(struct usb_cdc_ncm_ndp16);
-		for (n = 0; n < nframes; n++, dpeoffset += sizeof(dpe16)) {
+		dpeoffset = ndpoffset + माप(काष्ठा usb_cdc_ncm_ndp16);
+		क्रम (n = 0; n < nframes; n++, dpeoffset += माप(dpe16)) अणु
 			u16 dgram_offset, dgram_len;
-			struct sk_buff *skbn;
+			काष्ठा sk_buff *skbn;
 
-			if (skb_copy_bits(skb, dpeoffset, &dpe16, sizeof(dpe16)))
-				break;
+			अगर (skb_copy_bits(skb, dpeoffset, &dpe16, माप(dpe16)))
+				अवरोध;
 
 			dgram_offset = le16_to_cpu(dpe16.wDatagramIndex);
 			dgram_len = le16_to_cpu(dpe16.wDatagramLength);
 
-			if (!dgram_offset || !dgram_len)
-				break; /* null terminator */
+			अगर (!dgram_offset || !dgram_len)
+				अवरोध; /* null terminator */
 
 			skbn = netdev_alloc_skb(ndev, dgram_len);
-			if (!skbn)
-				continue;
+			अगर (!skbn)
+				जारी;
 
 			skb_put(skbn, dgram_len);
 			skb_copy_bits(skb, dgram_offset, skbn->data, dgram_len);
 
-			switch (skbn->data[0] & 0xf0) {
-			case 0x40:
+			चयन (skbn->data[0] & 0xf0) अणु
+			हाल 0x40:
 				skbn->protocol = htons(ETH_P_IP);
-				break;
-			case 0x60:
+				अवरोध;
+			हाल 0x60:
 				skbn->protocol = htons(ETH_P_IPV6);
-				break;
-			default:
+				अवरोध;
+			शेष:
 				net_err_ratelimited("%s: unknown protocol\n",
 						    ndev->name);
 				__mbim_errors_inc(mhi_netdev);
-				dev_kfree_skb_any(skbn);
-				continue;
-			}
+				dev_kमुक्त_skb_any(skbn);
+				जारी;
+			पूर्ण
 
-			netif_rx(skbn);
-		}
+			netअगर_rx(skbn);
+		पूर्ण
 next_ndp:
 		/* Other NDP to process? */
-		ndpoffset = (int)le16_to_cpu(ndp16.wNextNdpIndex);
-		if (!ndpoffset)
-			break;
-	}
+		ndpoffset = (पूर्णांक)le16_to_cpu(ndp16.wNextNdpIndex);
+		अगर (!ndpoffset)
+			अवरोध;
+	पूर्ण
 
-	/* free skb */
+	/* मुक्त skb */
 	dev_consume_skb_any(skb);
-	return;
+	वापस;
 error:
-	dev_kfree_skb_any(skb);
-}
+	dev_kमुक्त_skb_any(skb);
+पूर्ण
 
-struct mbim_tx_hdr {
-	struct usb_cdc_ncm_nth16 nth16;
-	struct usb_cdc_ncm_ndp16 ndp16;
-	struct usb_cdc_ncm_dpe16 dpe16[2];
-} __packed;
+काष्ठा mbim_tx_hdr अणु
+	काष्ठा usb_cdc_ncm_nth16 nth16;
+	काष्ठा usb_cdc_ncm_ndp16 ndp16;
+	काष्ठा usb_cdc_ncm_dpe16 dpe16[2];
+पूर्ण __packed;
 
-static struct sk_buff *mbim_tx_fixup(struct mhi_net_dev *mhi_netdev,
-				     struct sk_buff *skb)
-{
-	struct mbim_context *ctx = mhi_netdev->proto_data;
-	unsigned int dgram_size = skb->len;
-	struct usb_cdc_ncm_nth16 *nth16;
-	struct usb_cdc_ncm_ndp16 *ndp16;
-	struct mbim_tx_hdr *mbim_hdr;
+अटल काष्ठा sk_buff *mbim_tx_fixup(काष्ठा mhi_net_dev *mhi_netdev,
+				     काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mbim_context *ctx = mhi_netdev->proto_data;
+	अचिन्हित पूर्णांक dgram_size = skb->len;
+	काष्ठा usb_cdc_ncm_nth16 *nth16;
+	काष्ठा usb_cdc_ncm_ndp16 *ndp16;
+	काष्ठा mbim_tx_hdr *mbim_hdr;
 
 	/* For now, this is a partial implementation of CDC MBIM, only one NDP
 	 * is sent, containing the IP packet (no aggregation).
 	 */
 
-	/* Ensure we have enough headroom for crafting MBIM header */
-	if (skb_cow_head(skb, sizeof(struct mbim_tx_hdr))) {
-		dev_kfree_skb_any(skb);
-		return NULL;
-	}
+	/* Ensure we have enough headroom क्रम crafting MBIM header */
+	अगर (skb_cow_head(skb, माप(काष्ठा mbim_tx_hdr))) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस शून्य;
+	पूर्ण
 
-	mbim_hdr = skb_push(skb, sizeof(struct mbim_tx_hdr));
+	mbim_hdr = skb_push(skb, माप(काष्ठा mbim_tx_hdr));
 
 	/* Fill NTB header */
 	nth16 = &mbim_hdr->nth16;
 	nth16->dwSignature = cpu_to_le32(USB_CDC_NCM_NTH16_SIGN);
-	nth16->wHeaderLength = cpu_to_le16(sizeof(struct usb_cdc_ncm_nth16));
+	nth16->wHeaderLength = cpu_to_le16(माप(काष्ठा usb_cdc_ncm_nth16));
 	nth16->wSequence = cpu_to_le16(ctx->tx_seq++);
 	nth16->wBlockLength = cpu_to_le16(skb->len);
-	nth16->wNdpIndex = cpu_to_le16(sizeof(struct usb_cdc_ncm_nth16));
+	nth16->wNdpIndex = cpu_to_le16(माप(काष्ठा usb_cdc_ncm_nth16));
 
 	/* Fill the unique NDP */
 	ndp16 = &mbim_hdr->ndp16;
 	ndp16->dwSignature = cpu_to_le32(USB_CDC_MBIM_NDP16_IPS_SIGN);
-	ndp16->wLength = cpu_to_le16(sizeof(struct usb_cdc_ncm_ndp16)
-					+ sizeof(struct usb_cdc_ncm_dpe16) * 2);
+	ndp16->wLength = cpu_to_le16(माप(काष्ठा usb_cdc_ncm_ndp16)
+					+ माप(काष्ठा usb_cdc_ncm_dpe16) * 2);
 	ndp16->wNextNdpIndex = 0;
 
 	/* Datagram follows the mbim header */
-	ndp16->dpe16[0].wDatagramIndex = cpu_to_le16(sizeof(struct mbim_tx_hdr));
+	ndp16->dpe16[0].wDatagramIndex = cpu_to_le16(माप(काष्ठा mbim_tx_hdr));
 	ndp16->dpe16[0].wDatagramLength = cpu_to_le16(dgram_size);
 
 	/* null termination */
 	ndp16->dpe16[1].wDatagramIndex = 0;
 	ndp16->dpe16[1].wDatagramLength = 0;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int mbim_init(struct mhi_net_dev *mhi_netdev)
-{
-	struct net_device *ndev = mhi_netdev->ndev;
+अटल पूर्णांक mbim_init(काष्ठा mhi_net_dev *mhi_netdev)
+अणु
+	काष्ठा net_device *ndev = mhi_netdev->ndev;
 
 	mhi_netdev->proto_data = devm_kzalloc(&ndev->dev,
-					      sizeof(struct mbim_context),
+					      माप(काष्ठा mbim_context),
 					      GFP_KERNEL);
-	if (!mhi_netdev->proto_data)
-		return -ENOMEM;
+	अगर (!mhi_netdev->proto_data)
+		वापस -ENOMEM;
 
-	ndev->needed_headroom = sizeof(struct mbim_tx_hdr);
+	ndev->needed_headroom = माप(काष्ठा mbim_tx_hdr);
 	ndev->mtu = MHI_MBIM_DEFAULT_MTU;
 	mhi_netdev->mru = MHI_MBIM_DEFAULT_MRU;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct mhi_net_proto proto_mbim = {
+स्थिर काष्ठा mhi_net_proto proto_mbim = अणु
 	.init = mbim_init,
 	.rx = mbim_rx,
 	.tx_fixup = mbim_tx_fixup,
-};
+पूर्ण;

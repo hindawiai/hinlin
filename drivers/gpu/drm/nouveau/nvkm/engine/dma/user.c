@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,73 +22,73 @@
  *
  * Authors: Ben Skeggs
  */
-#include "user.h"
+#समावेश "user.h"
 
-#include <core/client.h>
-#include <core/gpuobj.h>
-#include <subdev/fb.h>
-#include <subdev/instmem.h>
+#समावेश <core/client.h>
+#समावेश <core/gpuobj.h>
+#समावेश <subdev/fb.h>
+#समावेश <subdev/insपंचांगem.h>
 
-#include <nvif/cl0002.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/cl0002.h>
+#समावेश <nvअगर/unpack.h>
 
-static const struct nvkm_object_func nvkm_dmaobj_func;
-struct nvkm_dmaobj *
-nvkm_dmaobj_search(struct nvkm_client *client, u64 handle)
-{
-	struct nvkm_object *object;
+अटल स्थिर काष्ठा nvkm_object_func nvkm_dmaobj_func;
+काष्ठा nvkm_dmaobj *
+nvkm_dmaobj_search(काष्ठा nvkm_client *client, u64 handle)
+अणु
+	काष्ठा nvkm_object *object;
 
 	object = nvkm_object_search(client, handle, &nvkm_dmaobj_func);
-	if (IS_ERR(object))
-		return (void *)object;
+	अगर (IS_ERR(object))
+		वापस (व्योम *)object;
 
-	return nvkm_dmaobj(object);
-}
+	वापस nvkm_dmaobj(object);
+पूर्ण
 
-static int
-nvkm_dmaobj_bind(struct nvkm_object *base, struct nvkm_gpuobj *gpuobj,
-		 int align, struct nvkm_gpuobj **pgpuobj)
-{
-	struct nvkm_dmaobj *dmaobj = nvkm_dmaobj(base);
-	return dmaobj->func->bind(dmaobj, gpuobj, align, pgpuobj);
-}
+अटल पूर्णांक
+nvkm_dmaobj_bind(काष्ठा nvkm_object *base, काष्ठा nvkm_gpuobj *gpuobj,
+		 पूर्णांक align, काष्ठा nvkm_gpuobj **pgpuobj)
+अणु
+	काष्ठा nvkm_dmaobj *dmaobj = nvkm_dmaobj(base);
+	वापस dmaobj->func->bind(dmaobj, gpuobj, align, pgpuobj);
+पूर्ण
 
-static void *
-nvkm_dmaobj_dtor(struct nvkm_object *base)
-{
-	return nvkm_dmaobj(base);
-}
+अटल व्योम *
+nvkm_dmaobj_dtor(काष्ठा nvkm_object *base)
+अणु
+	वापस nvkm_dmaobj(base);
+पूर्ण
 
-static const struct nvkm_object_func
-nvkm_dmaobj_func = {
+अटल स्थिर काष्ठा nvkm_object_func
+nvkm_dmaobj_func = अणु
 	.dtor = nvkm_dmaobj_dtor,
 	.bind = nvkm_dmaobj_bind,
-};
+पूर्ण;
 
-int
-nvkm_dmaobj_ctor(const struct nvkm_dmaobj_func *func, struct nvkm_dma *dma,
-		 const struct nvkm_oclass *oclass, void **pdata, u32 *psize,
-		 struct nvkm_dmaobj *dmaobj)
-{
-	union {
-		struct nv_dma_v0 v0;
-	} *args = *pdata;
-	struct nvkm_device *device = dma->engine.subdev.device;
-	struct nvkm_client *client = oclass->client;
-	struct nvkm_object *parent = oclass->parent;
-	struct nvkm_instmem *instmem = device->imem;
-	struct nvkm_fb *fb = device->fb;
-	void *data = *pdata;
+पूर्णांक
+nvkm_dmaobj_ctor(स्थिर काष्ठा nvkm_dmaobj_func *func, काष्ठा nvkm_dma *dma,
+		 स्थिर काष्ठा nvkm_oclass *oclass, व्योम **pdata, u32 *psize,
+		 काष्ठा nvkm_dmaobj *dmaobj)
+अणु
+	जोड़ अणु
+		काष्ठा nv_dma_v0 v0;
+	पूर्ण *args = *pdata;
+	काष्ठा nvkm_device *device = dma->engine.subdev.device;
+	काष्ठा nvkm_client *client = oclass->client;
+	काष्ठा nvkm_object *parent = oclass->parent;
+	काष्ठा nvkm_insपंचांगem *insपंचांगem = device->imem;
+	काष्ठा nvkm_fb *fb = device->fb;
+	व्योम *data = *pdata;
 	u32 size = *psize;
-	int ret = -ENOSYS;
+	पूर्णांक ret = -ENOSYS;
 
 	nvkm_object_ctor(&nvkm_dmaobj_func, oclass, &dmaobj->object);
 	dmaobj->func = func;
 	dmaobj->dma = dma;
 
-	nvif_ioctl(parent, "create dma size %d\n", *psize);
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
-		nvif_ioctl(parent, "create dma vers %d target %d access %d "
+	nvअगर_ioctl(parent, "create dma size %d\n", *psize);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, true))) अणु
+		nvअगर_ioctl(parent, "create dma vers %d target %d access %d "
 				   "start %016llx limit %016llx\n",
 			   args->v0.version, args->v0.target, args->v0.access,
 			   args->v0.start, args->v0.limit);
@@ -95,59 +96,59 @@ nvkm_dmaobj_ctor(const struct nvkm_dmaobj_func *func, struct nvkm_dma *dma,
 		dmaobj->access = args->v0.access;
 		dmaobj->start  = args->v0.start;
 		dmaobj->limit  = args->v0.limit;
-	} else
-		return ret;
+	पूर्ण अन्यथा
+		वापस ret;
 
 	*pdata = data;
 	*psize = size;
 
-	if (dmaobj->start > dmaobj->limit)
-		return -EINVAL;
+	अगर (dmaobj->start > dmaobj->limit)
+		वापस -EINVAL;
 
-	switch (dmaobj->target) {
-	case NV_DMA_V0_TARGET_VM:
+	चयन (dmaobj->target) अणु
+	हाल NV_DMA_V0_TARGET_VM:
 		dmaobj->target = NV_MEM_TARGET_VM;
-		break;
-	case NV_DMA_V0_TARGET_VRAM:
-		if (!client->super) {
-			if (dmaobj->limit >= fb->ram->size - instmem->reserved)
-				return -EACCES;
-			if (device->card_type >= NV_50)
-				return -EACCES;
-		}
+		अवरोध;
+	हाल NV_DMA_V0_TARGET_VRAM:
+		अगर (!client->super) अणु
+			अगर (dmaobj->limit >= fb->ram->size - insपंचांगem->reserved)
+				वापस -EACCES;
+			अगर (device->card_type >= NV_50)
+				वापस -EACCES;
+		पूर्ण
 		dmaobj->target = NV_MEM_TARGET_VRAM;
-		break;
-	case NV_DMA_V0_TARGET_PCI:
-		if (!client->super)
-			return -EACCES;
+		अवरोध;
+	हाल NV_DMA_V0_TARGET_PCI:
+		अगर (!client->super)
+			वापस -EACCES;
 		dmaobj->target = NV_MEM_TARGET_PCI;
-		break;
-	case NV_DMA_V0_TARGET_PCI_US:
-	case NV_DMA_V0_TARGET_AGP:
-		if (!client->super)
-			return -EACCES;
+		अवरोध;
+	हाल NV_DMA_V0_TARGET_PCI_US:
+	हाल NV_DMA_V0_TARGET_AGP:
+		अगर (!client->super)
+			वापस -EACCES;
 		dmaobj->target = NV_MEM_TARGET_PCI_NOSNOOP;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (dmaobj->access) {
-	case NV_DMA_V0_ACCESS_VM:
+	चयन (dmaobj->access) अणु
+	हाल NV_DMA_V0_ACCESS_VM:
 		dmaobj->access = NV_MEM_ACCESS_VM;
-		break;
-	case NV_DMA_V0_ACCESS_RD:
+		अवरोध;
+	हाल NV_DMA_V0_ACCESS_RD:
 		dmaobj->access = NV_MEM_ACCESS_RO;
-		break;
-	case NV_DMA_V0_ACCESS_WR:
+		अवरोध;
+	हाल NV_DMA_V0_ACCESS_WR:
 		dmaobj->access = NV_MEM_ACCESS_WO;
-		break;
-	case NV_DMA_V0_ACCESS_RDWR:
+		अवरोध;
+	हाल NV_DMA_V0_ACCESS_RDWR:
 		dmaobj->access = NV_MEM_ACCESS_RW;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

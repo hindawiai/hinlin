@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * linux/include/linux/lockd/lockd.h
  *
@@ -7,71 +8,71 @@
  * Copyright (C) 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#ifndef LINUX_LOCKD_LOCKD_H
-#define LINUX_LOCKD_LOCKD_H
+#अगर_अघोषित LINUX_LOCKD_LOCKD_H
+#घोषणा LINUX_LOCKD_LOCKD_H
 
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <net/ipv6.h>
-#include <linux/fs.h>
-#include <linux/kref.h>
-#include <linux/refcount.h>
-#include <linux/utsname.h>
-#include <linux/lockd/bind.h>
-#include <linux/lockd/xdr.h>
-#ifdef CONFIG_LOCKD_V4
-#include <linux/lockd/xdr4.h>
-#endif
-#include <linux/lockd/debug.h>
-#include <linux/sunrpc/svc.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
+#समावेश <net/ipv6.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/lockd/bind.h>
+#समावेश <linux/lockd/xdr.h>
+#अगर_घोषित CONFIG_LOCKD_V4
+#समावेश <linux/lockd/xdr4.h>
+#पूर्ण_अगर
+#समावेश <linux/lockd/debug.h>
+#समावेश <linux/sunrpc/svc.h>
 
 /*
  * Version string
  */
-#define LOCKD_VERSION		"0.5"
+#घोषणा LOCKD_VERSION		"0.5"
 
 /*
- * Default timeout for RPC calls (seconds)
+ * Default समयout क्रम RPC calls (seconds)
  */
-#define LOCKD_DFLT_TIMEO	10
+#घोषणा LOCKD_DFLT_TIMEO	10
 
 /*
  * Lockd host handle (used both by the client and server personality).
  */
-struct nlm_host {
-	struct hlist_node	h_hash;		/* doubly linked list */
-	struct sockaddr_storage	h_addr;		/* peer address */
-	size_t			h_addrlen;
-	struct sockaddr_storage	h_srcaddr;	/* our address (optional) */
-	size_t			h_srcaddrlen;
-	struct rpc_clnt		*h_rpcclnt;	/* RPC client to talk to peer */
-	char			*h_name;		/* remote hostname */
-	u32			h_version;	/* interface version */
-	unsigned short		h_proto;	/* transport proto */
-	unsigned short		h_reclaiming : 1,
+काष्ठा nlm_host अणु
+	काष्ठा hlist_node	h_hash;		/* करोubly linked list */
+	काष्ठा sockaddr_storage	h_addr;		/* peer address */
+	माप_प्रकार			h_addrlen;
+	काष्ठा sockaddr_storage	h_srcaddr;	/* our address (optional) */
+	माप_प्रकार			h_srcaddrlen;
+	काष्ठा rpc_clnt		*h_rpcclnt;	/* RPC client to talk to peer */
+	अक्षर			*h_name;		/* remote hostname */
+	u32			h_version;	/* पूर्णांकerface version */
+	अचिन्हित लघु		h_proto;	/* transport proto */
+	अचिन्हित लघु		h_reclaiming : 1,
 				h_server     : 1, /* server side, not client side */
 				h_noresvport : 1,
 				h_inuse      : 1;
-	wait_queue_head_t	h_gracewait;	/* wait while reclaiming */
-	struct rw_semaphore	h_rwsem;	/* Reboot recovery lock */
-	u32			h_state;	/* pseudo-state counter */
+	रुको_queue_head_t	h_graceरुको;	/* रुको जबतक reclaiming */
+	काष्ठा rw_semaphore	h_rwsem;	/* Reboot recovery lock */
+	u32			h_state;	/* pseuकरो-state counter */
 	u32			h_nsmstate;	/* true remote NSM state */
-	u32			h_pidcount;	/* Pseudopids */
+	u32			h_pidcount;	/* Pseuकरोpids */
 	refcount_t		h_count;	/* reference count */
-	struct mutex		h_mutex;	/* mutex for pmap binding */
-	unsigned long		h_nextrebind;	/* next portmap call */
-	unsigned long		h_expires;	/* eligible for GC */
-	struct list_head	h_lockowners;	/* Lockowners for the client */
+	काष्ठा mutex		h_mutex;	/* mutex क्रम pmap binding */
+	अचिन्हित दीर्घ		h_nextrebind;	/* next porपंचांगap call */
+	अचिन्हित दीर्घ		h_expires;	/* eligible क्रम GC */
+	काष्ठा list_head	h_lockowners;	/* Lockowners क्रम the client */
 	spinlock_t		h_lock;
-	struct list_head	h_granted;	/* Locks in GRANTED state */
-	struct list_head	h_reclaim;	/* Locks in RECLAIM state */
-	struct nsm_handle	*h_nsmhandle;	/* NSM status handle */
-	char			*h_addrbuf;	/* address eyecatcher */
-	struct net		*net;		/* host net */
-	const struct cred	*h_cred;
-	char			nodename[UNX_MAXNODENAME + 1];
-	const struct nlmclnt_operations	*h_nlmclnt_ops;	/* Callback ops for NLM users */
-};
+	काष्ठा list_head	h_granted;	/* Locks in GRANTED state */
+	काष्ठा list_head	h_reclaim;	/* Locks in RECLAIM state */
+	काष्ठा nsm_handle	*h_nsmhandle;	/* NSM status handle */
+	अक्षर			*h_addrbuf;	/* address eyecatcher */
+	काष्ठा net		*net;		/* host net */
+	स्थिर काष्ठा cred	*h_cred;
+	अक्षर			nodename[UNX_MAXNODENAME + 1];
+	स्थिर काष्ठा nlmclnt_operations	*h_nlmclnt_ops;	/* Callback ops क्रम NLM users */
+पूर्ण;
 
 /*
  * The largest string sm_addrbuf should hold is a full-size IPv6 address
@@ -79,296 +80,296 @@ struct nlm_host {
  * hold eight groups of colon-separated four-hex-digit numbers, a
  * percent sign, a scope id (at most 32 bits, in decimal), and NUL.
  */
-#define NSM_ADDRBUF		((8 * 4 + 7) + (1 + 10) + 1)
+#घोषणा NSM_ADDRBUF		((8 * 4 + 7) + (1 + 10) + 1)
 
-struct nsm_handle {
-	struct list_head	sm_link;
+काष्ठा nsm_handle अणु
+	काष्ठा list_head	sm_link;
 	refcount_t		sm_count;
-	char			*sm_mon_name;
-	char			*sm_name;
-	struct sockaddr_storage	sm_addr;
-	size_t			sm_addrlen;
-	unsigned int		sm_monitored : 1,
-				sm_sticky : 1;	/* don't unmonitor */
-	struct nsm_private	sm_priv;
-	char			sm_addrbuf[NSM_ADDRBUF];
-};
+	अक्षर			*sm_mon_name;
+	अक्षर			*sm_name;
+	काष्ठा sockaddr_storage	sm_addr;
+	माप_प्रकार			sm_addrlen;
+	अचिन्हित पूर्णांक		sm_monitored : 1,
+				sm_sticky : 1;	/* करोn't unmonitor */
+	काष्ठा nsm_निजी	sm_priv;
+	अक्षर			sm_addrbuf[NSM_ADDRBUF];
+पूर्ण;
 
 /*
  * Rigorous type checking on sockaddr type conversions
  */
-static inline struct sockaddr_in *nlm_addr_in(const struct nlm_host *host)
-{
-	return (struct sockaddr_in *)&host->h_addr;
-}
+अटल अंतरभूत काष्ठा sockaddr_in *nlm_addr_in(स्थिर काष्ठा nlm_host *host)
+अणु
+	वापस (काष्ठा sockaddr_in *)&host->h_addr;
+पूर्ण
 
-static inline struct sockaddr *nlm_addr(const struct nlm_host *host)
-{
-	return (struct sockaddr *)&host->h_addr;
-}
+अटल अंतरभूत काष्ठा sockaddr *nlm_addr(स्थिर काष्ठा nlm_host *host)
+अणु
+	वापस (काष्ठा sockaddr *)&host->h_addr;
+पूर्ण
 
-static inline struct sockaddr_in *nlm_srcaddr_in(const struct nlm_host *host)
-{
-	return (struct sockaddr_in *)&host->h_srcaddr;
-}
+अटल अंतरभूत काष्ठा sockaddr_in *nlm_srcaddr_in(स्थिर काष्ठा nlm_host *host)
+अणु
+	वापस (काष्ठा sockaddr_in *)&host->h_srcaddr;
+पूर्ण
 
-static inline struct sockaddr *nlm_srcaddr(const struct nlm_host *host)
-{
-	return (struct sockaddr *)&host->h_srcaddr;
-}
+अटल अंतरभूत काष्ठा sockaddr *nlm_srcaddr(स्थिर काष्ठा nlm_host *host)
+अणु
+	वापस (काष्ठा sockaddr *)&host->h_srcaddr;
+पूर्ण
 
 /*
- * Map an fl_owner_t into a unique 32-bit "pid"
+ * Map an fl_owner_t पूर्णांकo a unique 32-bit "pid"
  */
-struct nlm_lockowner {
-	struct list_head list;
+काष्ठा nlm_lockowner अणु
+	काष्ठा list_head list;
 	refcount_t count;
 
-	struct nlm_host *host;
+	काष्ठा nlm_host *host;
 	fl_owner_t owner;
-	uint32_t pid;
-};
+	uपूर्णांक32_t pid;
+पूर्ण;
 
-struct nlm_wait;
+काष्ठा nlm_रुको;
 
 /*
- * Memory chunk for NLM client RPC request.
+ * Memory chunk क्रम NLM client RPC request.
  */
-#define NLMCLNT_OHSIZE		((__NEW_UTS_LEN) + 10u)
-struct nlm_rqst {
+#घोषणा NLMCLNT_OHSIZE		((__NEW_UTS_LEN) + 10u)
+काष्ठा nlm_rqst अणु
 	refcount_t		a_count;
-	unsigned int		a_flags;	/* initial RPC task flags */
-	struct nlm_host *	a_host;		/* host handle */
-	struct nlm_args		a_args;		/* arguments */
-	struct nlm_res		a_res;		/* result */
-	struct nlm_block *	a_block;
-	unsigned int		a_retries;	/* Retry count */
+	अचिन्हित पूर्णांक		a_flags;	/* initial RPC task flags */
+	काष्ठा nlm_host *	a_host;		/* host handle */
+	काष्ठा nlm_args		a_args;		/* arguments */
+	काष्ठा nlm_res		a_res;		/* result */
+	काष्ठा nlm_block *	a_block;
+	अचिन्हित पूर्णांक		a_retries;	/* Retry count */
 	u8			a_owner[NLMCLNT_OHSIZE];
-	void *	a_callback_data; /* sent to nlmclnt_operations callbacks */
-};
+	व्योम *	a_callback_data; /* sent to nlmclnt_operations callbacks */
+पूर्ण;
 
 /*
- * This struct describes a file held open by lockd on behalf of
+ * This काष्ठा describes a file held खोलो by lockd on behalf of
  * an NFS client.
  */
-struct nlm_file {
-	struct hlist_node	f_list;		/* linked list */
-	struct nfs_fh		f_handle;	/* NFS file handle */
-	struct file *		f_file;		/* VFS file pointer */
-	struct nlm_share *	f_shares;	/* DOS shares */
-	struct list_head	f_blocks;	/* blocked locks */
-	unsigned int		f_locks;	/* guesstimate # of locks */
-	unsigned int		f_count;	/* reference count */
-	struct mutex		f_mutex;	/* avoid concurrent access */
-};
+काष्ठा nlm_file अणु
+	काष्ठा hlist_node	f_list;		/* linked list */
+	काष्ठा nfs_fh		f_handle;	/* NFS file handle */
+	काष्ठा file *		f_file;		/* VFS file poपूर्णांकer */
+	काष्ठा nlm_share *	f_shares;	/* DOS shares */
+	काष्ठा list_head	f_blocks;	/* blocked locks */
+	अचिन्हित पूर्णांक		f_locks;	/* guesstimate # of locks */
+	अचिन्हित पूर्णांक		f_count;	/* reference count */
+	काष्ठा mutex		f_mutex;	/* aव्योम concurrent access */
+पूर्ण;
 
 /*
  * This is a server block (i.e. a lock requested by some client which
  * couldn't be granted because of a conflicting lock).
  */
-#define NLM_NEVER		(~(unsigned long) 0)
-/* timeout on non-blocking call: */
-#define NLM_TIMEOUT		(7 * HZ)
+#घोषणा NLM_NEVER		(~(अचिन्हित दीर्घ) 0)
+/* समयout on non-blocking call: */
+#घोषणा NLM_TIMEOUT		(7 * HZ)
 
-struct nlm_block {
-	struct kref		b_count;	/* Reference count */
-	struct list_head	b_list;		/* linked list of all blocks */
-	struct list_head	b_flist;	/* linked list (per file) */
-	struct nlm_rqst	*	b_call;		/* RPC args & callback info */
-	struct svc_serv *	b_daemon;	/* NLM service */
-	struct nlm_host *	b_host;		/* host handle for RPC clnt */
-	unsigned long		b_when;		/* next re-xmit */
-	unsigned int		b_id;		/* block id */
-	unsigned char		b_granted;	/* VFS granted lock */
-	struct nlm_file *	b_file;		/* file in question */
-	struct cache_req *	b_cache_req;	/* deferred request handling */
-	struct cache_deferred_req * b_deferred_req;
-	unsigned int		b_flags;	/* block flags */
-#define B_QUEUED		1	/* lock queued */
-#define B_GOT_CALLBACK		2	/* got lock or conflicting lock */
-#define B_TIMED_OUT		4	/* filesystem too slow to respond */
-};
+काष्ठा nlm_block अणु
+	काष्ठा kref		b_count;	/* Reference count */
+	काष्ठा list_head	b_list;		/* linked list of all blocks */
+	काष्ठा list_head	b_flist;	/* linked list (per file) */
+	काष्ठा nlm_rqst	*	b_call;		/* RPC args & callback info */
+	काष्ठा svc_serv *	b_daemon;	/* NLM service */
+	काष्ठा nlm_host *	b_host;		/* host handle क्रम RPC clnt */
+	अचिन्हित दीर्घ		b_when;		/* next re-xmit */
+	अचिन्हित पूर्णांक		b_id;		/* block id */
+	अचिन्हित अक्षर		b_granted;	/* VFS granted lock */
+	काष्ठा nlm_file *	b_file;		/* file in question */
+	काष्ठा cache_req *	b_cache_req;	/* deferred request handling */
+	काष्ठा cache_deferred_req * b_deferred_req;
+	अचिन्हित पूर्णांक		b_flags;	/* block flags */
+#घोषणा B_QUEUED		1	/* lock queued */
+#घोषणा B_GOT_CALLBACK		2	/* got lock or conflicting lock */
+#घोषणा B_TIMED_OUT		4	/* fileप्रणाली too slow to respond */
+पूर्ण;
 
 /*
  * Global variables
  */
-extern const struct rpc_program	nlm_program;
-extern const struct svc_procedure nlmsvc_procedures[];
-#ifdef CONFIG_LOCKD_V4
-extern const struct svc_procedure nlmsvc_procedures4[];
-#endif
-extern int			nlmsvc_grace_period;
-extern unsigned long		nlmsvc_timeout;
-extern bool			nsm_use_hostnames;
-extern u32			nsm_local_state;
+बाह्य स्थिर काष्ठा rpc_program	nlm_program;
+बाह्य स्थिर काष्ठा svc_procedure nlmsvc_procedures[];
+#अगर_घोषित CONFIG_LOCKD_V4
+बाह्य स्थिर काष्ठा svc_procedure nlmsvc_procedures4[];
+#पूर्ण_अगर
+बाह्य पूर्णांक			nlmsvc_grace_period;
+बाह्य अचिन्हित दीर्घ		nlmsvc_समयout;
+बाह्य bool			nsm_use_hostnames;
+बाह्य u32			nsm_local_state;
 
 /*
  * Lockd client functions
  */
-struct nlm_rqst * nlm_alloc_call(struct nlm_host *host);
-int		  nlm_async_call(struct nlm_rqst *, u32, const struct rpc_call_ops *);
-int		  nlm_async_reply(struct nlm_rqst *, u32, const struct rpc_call_ops *);
-void		  nlmclnt_release_call(struct nlm_rqst *);
-struct nlm_wait * nlmclnt_prepare_block(struct nlm_host *host, struct file_lock *fl);
-void		  nlmclnt_finish_block(struct nlm_wait *block);
-int		  nlmclnt_block(struct nlm_wait *block, struct nlm_rqst *req, long timeout);
-__be32		  nlmclnt_grant(const struct sockaddr *addr,
-				const struct nlm_lock *lock);
-void		  nlmclnt_recovery(struct nlm_host *);
-int		  nlmclnt_reclaim(struct nlm_host *, struct file_lock *,
-				  struct nlm_rqst *);
-void		  nlmclnt_next_cookie(struct nlm_cookie *);
+काष्ठा nlm_rqst * nlm_alloc_call(काष्ठा nlm_host *host);
+पूर्णांक		  nlm_async_call(काष्ठा nlm_rqst *, u32, स्थिर काष्ठा rpc_call_ops *);
+पूर्णांक		  nlm_async_reply(काष्ठा nlm_rqst *, u32, स्थिर काष्ठा rpc_call_ops *);
+व्योम		  nlmclnt_release_call(काष्ठा nlm_rqst *);
+काष्ठा nlm_रुको * nlmclnt_prepare_block(काष्ठा nlm_host *host, काष्ठा file_lock *fl);
+व्योम		  nlmclnt_finish_block(काष्ठा nlm_रुको *block);
+पूर्णांक		  nlmclnt_block(काष्ठा nlm_रुको *block, काष्ठा nlm_rqst *req, दीर्घ समयout);
+__be32		  nlmclnt_grant(स्थिर काष्ठा sockaddr *addr,
+				स्थिर काष्ठा nlm_lock *lock);
+व्योम		  nlmclnt_recovery(काष्ठा nlm_host *);
+पूर्णांक		  nlmclnt_reclaim(काष्ठा nlm_host *, काष्ठा file_lock *,
+				  काष्ठा nlm_rqst *);
+व्योम		  nlmclnt_next_cookie(काष्ठा nlm_cookie *);
 
 /*
  * Host cache
  */
-struct nlm_host  *nlmclnt_lookup_host(const struct sockaddr *sap,
-					const size_t salen,
-					const unsigned short protocol,
-					const u32 version,
-					const char *hostname,
-					int noresvport,
-					struct net *net,
-					const struct cred *cred);
-void		  nlmclnt_release_host(struct nlm_host *);
-struct nlm_host  *nlmsvc_lookup_host(const struct svc_rqst *rqstp,
-					const char *hostname,
-					const size_t hostname_len);
-void		  nlmsvc_release_host(struct nlm_host *);
-struct rpc_clnt * nlm_bind_host(struct nlm_host *);
-void		  nlm_rebind_host(struct nlm_host *);
-struct nlm_host * nlm_get_host(struct nlm_host *);
-void		  nlm_shutdown_hosts(void);
-void		  nlm_shutdown_hosts_net(struct net *net);
-void		  nlm_host_rebooted(const struct net *net,
-					const struct nlm_reboot *);
+काष्ठा nlm_host  *nlmclnt_lookup_host(स्थिर काष्ठा sockaddr *sap,
+					स्थिर माप_प्रकार salen,
+					स्थिर अचिन्हित लघु protocol,
+					स्थिर u32 version,
+					स्थिर अक्षर *hostname,
+					पूर्णांक noresvport,
+					काष्ठा net *net,
+					स्थिर काष्ठा cred *cred);
+व्योम		  nlmclnt_release_host(काष्ठा nlm_host *);
+काष्ठा nlm_host  *nlmsvc_lookup_host(स्थिर काष्ठा svc_rqst *rqstp,
+					स्थिर अक्षर *hostname,
+					स्थिर माप_प्रकार hostname_len);
+व्योम		  nlmsvc_release_host(काष्ठा nlm_host *);
+काष्ठा rpc_clnt * nlm_bind_host(काष्ठा nlm_host *);
+व्योम		  nlm_rebind_host(काष्ठा nlm_host *);
+काष्ठा nlm_host * nlm_get_host(काष्ठा nlm_host *);
+व्योम		  nlm_shutकरोwn_hosts(व्योम);
+व्योम		  nlm_shutकरोwn_hosts_net(काष्ठा net *net);
+व्योम		  nlm_host_rebooted(स्थिर काष्ठा net *net,
+					स्थिर काष्ठा nlm_reboot *);
 
 /*
  * Host monitoring
  */
-int		  nsm_monitor(const struct nlm_host *host);
-void		  nsm_unmonitor(const struct nlm_host *host);
+पूर्णांक		  nsm_monitor(स्थिर काष्ठा nlm_host *host);
+व्योम		  nsm_unmonitor(स्थिर काष्ठा nlm_host *host);
 
-struct nsm_handle *nsm_get_handle(const struct net *net,
-					const struct sockaddr *sap,
-					const size_t salen,
-					const char *hostname,
-					const size_t hostname_len);
-struct nsm_handle *nsm_reboot_lookup(const struct net *net,
-					const struct nlm_reboot *info);
-void		  nsm_release(struct nsm_handle *nsm);
+काष्ठा nsm_handle *nsm_get_handle(स्थिर काष्ठा net *net,
+					स्थिर काष्ठा sockaddr *sap,
+					स्थिर माप_प्रकार salen,
+					स्थिर अक्षर *hostname,
+					स्थिर माप_प्रकार hostname_len);
+काष्ठा nsm_handle *nsm_reboot_lookup(स्थिर काष्ठा net *net,
+					स्थिर काष्ठा nlm_reboot *info);
+व्योम		  nsm_release(काष्ठा nsm_handle *nsm);
 
 /*
  * This is used in garbage collection and resource reclaim
- * A return value != 0 means destroy the lock/block/share
+ * A वापस value != 0 means destroy the lock/block/share
  */
-typedef int	  (*nlm_host_match_fn_t)(void *cur, struct nlm_host *ref);
+प्रकार पूर्णांक	  (*nlm_host_match_fn_t)(व्योम *cur, काष्ठा nlm_host *ref);
 
 /*
  * Server-side lock handling
  */
-__be32		  nlmsvc_lock(struct svc_rqst *, struct nlm_file *,
-			      struct nlm_host *, struct nlm_lock *, int,
-			      struct nlm_cookie *, int);
-__be32		  nlmsvc_unlock(struct net *net, struct nlm_file *, struct nlm_lock *);
-__be32		  nlmsvc_testlock(struct svc_rqst *, struct nlm_file *,
-			struct nlm_host *, struct nlm_lock *,
-			struct nlm_lock *, struct nlm_cookie *);
-__be32		  nlmsvc_cancel_blocked(struct net *net, struct nlm_file *, struct nlm_lock *);
-unsigned long	  nlmsvc_retry_blocked(void);
-void		  nlmsvc_traverse_blocks(struct nlm_host *, struct nlm_file *,
+__be32		  nlmsvc_lock(काष्ठा svc_rqst *, काष्ठा nlm_file *,
+			      काष्ठा nlm_host *, काष्ठा nlm_lock *, पूर्णांक,
+			      काष्ठा nlm_cookie *, पूर्णांक);
+__be32		  nlmsvc_unlock(काष्ठा net *net, काष्ठा nlm_file *, काष्ठा nlm_lock *);
+__be32		  nlmsvc_testlock(काष्ठा svc_rqst *, काष्ठा nlm_file *,
+			काष्ठा nlm_host *, काष्ठा nlm_lock *,
+			काष्ठा nlm_lock *, काष्ठा nlm_cookie *);
+__be32		  nlmsvc_cancel_blocked(काष्ठा net *net, काष्ठा nlm_file *, काष्ठा nlm_lock *);
+अचिन्हित दीर्घ	  nlmsvc_retry_blocked(व्योम);
+व्योम		  nlmsvc_traverse_blocks(काष्ठा nlm_host *, काष्ठा nlm_file *,
 					nlm_host_match_fn_t match);
-void		  nlmsvc_grant_reply(struct nlm_cookie *, __be32);
-void		  nlmsvc_release_call(struct nlm_rqst *);
-void		  nlmsvc_locks_init_private(struct file_lock *, struct nlm_host *, pid_t);
+व्योम		  nlmsvc_grant_reply(काष्ठा nlm_cookie *, __be32);
+व्योम		  nlmsvc_release_call(काष्ठा nlm_rqst *);
+व्योम		  nlmsvc_locks_init_निजी(काष्ठा file_lock *, काष्ठा nlm_host *, pid_t);
 
 /*
- * File handling for the server personality
+ * File handling क्रम the server personality
  */
-__be32		  nlm_lookup_file(struct svc_rqst *, struct nlm_file **,
-					struct nfs_fh *);
-void		  nlm_release_file(struct nlm_file *);
-void		  nlmsvc_release_lockowner(struct nlm_lock *);
-void		  nlmsvc_mark_resources(struct net *);
-void		  nlmsvc_free_host_resources(struct nlm_host *);
-void		  nlmsvc_invalidate_all(void);
+__be32		  nlm_lookup_file(काष्ठा svc_rqst *, काष्ठा nlm_file **,
+					काष्ठा nfs_fh *);
+व्योम		  nlm_release_file(काष्ठा nlm_file *);
+व्योम		  nlmsvc_release_lockowner(काष्ठा nlm_lock *);
+व्योम		  nlmsvc_mark_resources(काष्ठा net *);
+व्योम		  nlmsvc_मुक्त_host_resources(काष्ठा nlm_host *);
+व्योम		  nlmsvc_invalidate_all(व्योम);
 
 /*
  * Cluster failover support
  */
-int           nlmsvc_unlock_all_by_sb(struct super_block *sb);
-int           nlmsvc_unlock_all_by_ip(struct sockaddr *server_addr);
+पूर्णांक           nlmsvc_unlock_all_by_sb(काष्ठा super_block *sb);
+पूर्णांक           nlmsvc_unlock_all_by_ip(काष्ठा sockaddr *server_addr);
 
-static inline struct inode *nlmsvc_file_inode(struct nlm_file *file)
-{
-	return locks_inode(file->f_file);
-}
+अटल अंतरभूत काष्ठा inode *nlmsvc_file_inode(काष्ठा nlm_file *file)
+अणु
+	वापस locks_inode(file->f_file);
+पूर्ण
 
-static inline int __nlm_privileged_request4(const struct sockaddr *sap)
-{
-	const struct sockaddr_in *sin = (struct sockaddr_in *)sap;
+अटल अंतरभूत पूर्णांक __nlm_privileged_request4(स्थिर काष्ठा sockaddr *sap)
+अणु
+	स्थिर काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)sap;
 
-	if (ntohs(sin->sin_port) > 1023)
-		return 0;
+	अगर (ntohs(sin->sin_port) > 1023)
+		वापस 0;
 
-	return ipv4_is_loopback(sin->sin_addr.s_addr);
-}
+	वापस ipv4_is_loopback(sin->sin_addr.s_addr);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-static inline int __nlm_privileged_request6(const struct sockaddr *sap)
-{
-	const struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sap;
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल अंतरभूत पूर्णांक __nlm_privileged_request6(स्थिर काष्ठा sockaddr *sap)
+अणु
+	स्थिर काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)sap;
 
-	if (ntohs(sin6->sin6_port) > 1023)
-		return 0;
+	अगर (ntohs(sin6->sin6_port) > 1023)
+		वापस 0;
 
-	if (ipv6_addr_type(&sin6->sin6_addr) & IPV6_ADDR_MAPPED)
-		return ipv4_is_loopback(sin6->sin6_addr.s6_addr32[3]);
+	अगर (ipv6_addr_type(&sin6->sin6_addr) & IPV6_ADDR_MAPPED)
+		वापस ipv4_is_loopback(sin6->sin6_addr.s6_addr32[3]);
 
-	return ipv6_addr_type(&sin6->sin6_addr) & IPV6_ADDR_LOOPBACK;
-}
-#else	/* IS_ENABLED(CONFIG_IPV6) */
-static inline int __nlm_privileged_request6(const struct sockaddr *sap)
-{
-	return 0;
-}
-#endif	/* IS_ENABLED(CONFIG_IPV6) */
+	वापस ipv6_addr_type(&sin6->sin6_addr) & IPV6_ADDR_LOOPBACK;
+पूर्ण
+#अन्यथा	/* IS_ENABLED(CONFIG_IPV6) */
+अटल अंतरभूत पूर्णांक __nlm_privileged_request6(स्थिर काष्ठा sockaddr *sap)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर	/* IS_ENABLED(CONFIG_IPV6) */
 
 /*
  * Ensure incoming requests are from local privileged callers.
  *
- * Return TRUE if sender is local and is connecting via a privileged port;
- * otherwise return FALSE.
+ * Return TRUE अगर sender is local and is connecting via a privileged port;
+ * otherwise वापस FALSE.
  */
-static inline int nlm_privileged_requester(const struct svc_rqst *rqstp)
-{
-	const struct sockaddr *sap = svc_addr(rqstp);
+अटल अंतरभूत पूर्णांक nlm_privileged_requester(स्थिर काष्ठा svc_rqst *rqstp)
+अणु
+	स्थिर काष्ठा sockaddr *sap = svc_addr(rqstp);
 
-	switch (sap->sa_family) {
-	case AF_INET:
-		return __nlm_privileged_request4(sap);
-	case AF_INET6:
-		return __nlm_privileged_request6(sap);
-	default:
-		return 0;
-	}
-}
+	चयन (sap->sa_family) अणु
+	हाल AF_INET:
+		वापस __nlm_privileged_request4(sap);
+	हाल AF_INET6:
+		वापस __nlm_privileged_request6(sap);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /*
  * Compare two NLM locks.
  * When the second lock is of type F_UNLCK, this acts like a wildcard.
  */
-static inline int nlm_compare_locks(const struct file_lock *fl1,
-				    const struct file_lock *fl2)
-{
-	return locks_inode(fl1->fl_file) == locks_inode(fl2->fl_file)
+अटल अंतरभूत पूर्णांक nlm_compare_locks(स्थिर काष्ठा file_lock *fl1,
+				    स्थिर काष्ठा file_lock *fl2)
+अणु
+	वापस locks_inode(fl1->fl_file) == locks_inode(fl2->fl_file)
 	     && fl1->fl_pid   == fl2->fl_pid
 	     && fl1->fl_owner == fl2->fl_owner
 	     && fl1->fl_start == fl2->fl_start
 	     && fl1->fl_end   == fl2->fl_end
 	     &&(fl1->fl_type  == fl2->fl_type || fl2->fl_type == F_UNLCK);
-}
+पूर्ण
 
-extern const struct lock_manager_operations nlmsvc_lock_operations;
+बाह्य स्थिर काष्ठा lock_manager_operations nlmsvc_lock_operations;
 
-#endif /* LINUX_LOCKD_LOCKD_H */
+#पूर्ण_अगर /* LINUX_LOCKD_LOCKD_H */

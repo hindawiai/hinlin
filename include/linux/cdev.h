@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_CDEV_H
-#define _LINUX_CDEV_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_CDEV_H
+#घोषणा _LINUX_CDEV_H
 
-#include <linux/kobject.h>
-#include <linux/kdev_t.h>
-#include <linux/list.h>
-#include <linux/device.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/list.h>
+#समावेश <linux/device.h>
 
-struct file_operations;
-struct inode;
-struct module;
+काष्ठा file_operations;
+काष्ठा inode;
+काष्ठा module;
 
-struct cdev {
-	struct kobject kobj;
-	struct module *owner;
-	const struct file_operations *ops;
-	struct list_head list;
+काष्ठा cdev अणु
+	काष्ठा kobject kobj;
+	काष्ठा module *owner;
+	स्थिर काष्ठा file_operations *ops;
+	काष्ठा list_head list;
 	dev_t dev;
-	unsigned int count;
-} __randomize_layout;
+	अचिन्हित पूर्णांक count;
+पूर्ण __अक्रमomize_layout;
 
-void cdev_init(struct cdev *, const struct file_operations *);
+व्योम cdev_init(काष्ठा cdev *, स्थिर काष्ठा file_operations *);
 
-struct cdev *cdev_alloc(void);
+काष्ठा cdev *cdev_alloc(व्योम);
 
-void cdev_put(struct cdev *p);
+व्योम cdev_put(काष्ठा cdev *p);
 
-int cdev_add(struct cdev *, dev_t, unsigned);
+पूर्णांक cdev_add(काष्ठा cdev *, dev_t, अचिन्हित);
 
-void cdev_set_parent(struct cdev *p, struct kobject *kobj);
-int cdev_device_add(struct cdev *cdev, struct device *dev);
-void cdev_device_del(struct cdev *cdev, struct device *dev);
+व्योम cdev_set_parent(काष्ठा cdev *p, काष्ठा kobject *kobj);
+पूर्णांक cdev_device_add(काष्ठा cdev *cdev, काष्ठा device *dev);
+व्योम cdev_device_del(काष्ठा cdev *cdev, काष्ठा device *dev);
 
-void cdev_del(struct cdev *);
+व्योम cdev_del(काष्ठा cdev *);
 
-void cd_forget(struct inode *);
+व्योम cd_क्रमget(काष्ठा inode *);
 
-#endif
+#पूर्ण_अगर

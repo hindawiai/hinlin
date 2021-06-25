@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Windfarm PowerMac thermal control. SMU based 1 CPU desktop control loops
  *
@@ -6,7 +7,7 @@
  *                    <benh@kernel.crashing.org>
  *
  * The algorithm used is the PID control algorithm, used the same
- * way the published Darwin code does, using the same values that
+ * way the published Darwin code करोes, using the same values that
  * are present in the Darwin 8.2 snapshot property lists (note however
  * that none of the code has been re-used, it's a complete re-implementation
  *
@@ -15,76 +16,76 @@
  * PowerMac9,1
  * ===========
  *
- * Has 3 control loops: CPU fans is similar to PowerMac8,1 (though it doesn't
+ * Has 3 control loops: CPU fans is similar to PowerMac8,1 (though it करोesn't
  * try to play with other control loops fans). Drive bay is rather basic PID
- * with one sensor and one fan. Slots area is a bit different as the Darwin
+ * with one sensor and one fan. Slots area is a bit dअगरferent as the Darwin
  * driver is supposed to be capable of working in a special "AGP" mode which
  * involves the presence of an AGP sensor and an AGP fan (possibly on the
  * AGP card itself). I can't deal with that special mode as I don't have
- * access to those additional sensor/fans for now (though ultimately, it would
- * be possible to add sensor objects for them) so I'm only implementing the
+ * access to those additional sensor/fans क्रम now (though ultimately, it would
+ * be possible to add sensor objects क्रम them) so I'm only implementing the
  * basic PCI slot control loop
  */
 
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/wait.h>
-#include <linux/kmod.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <asm/io.h>
-#include <asm/sections.h>
-#include <asm/smu.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/smu.h>
 
-#include "windfarm.h"
-#include "windfarm_pid.h"
+#समावेश "windfarm.h"
+#समावेश "windfarm_pid.h"
 
-#define VERSION "0.4"
+#घोषणा VERSION "0.4"
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#ifdef DEBUG
-#define DBG(args...)	printk(args)
-#else
-#define DBG(args...)	do { } while(0)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा DBG(args...)	prपूर्णांकk(args)
+#अन्यथा
+#घोषणा DBG(args...)	करो अणु पूर्ण जबतक(0)
+#पूर्ण_अगर
 
-/* define this to force CPU overtemp to 74 degree, useful for testing
+/* define this to क्रमce CPU overtemp to 74 degree, useful क्रम testing
  * the overtemp code
  */
-#undef HACKED_OVERTEMP
+#अघोषित HACKED_OVERTEMP
 
 /* Controls & sensors */
-static struct wf_sensor	*sensor_cpu_power;
-static struct wf_sensor	*sensor_cpu_temp;
-static struct wf_sensor	*sensor_hd_temp;
-static struct wf_sensor	*sensor_slots_power;
-static struct wf_control *fan_cpu_main;
-static struct wf_control *fan_cpu_second;
-static struct wf_control *fan_cpu_third;
-static struct wf_control *fan_hd;
-static struct wf_control *fan_slots;
-static struct wf_control *cpufreq_clamp;
+अटल काष्ठा wf_sensor	*sensor_cpu_घातer;
+अटल काष्ठा wf_sensor	*sensor_cpu_temp;
+अटल काष्ठा wf_sensor	*sensor_hd_temp;
+अटल काष्ठा wf_sensor	*sensor_slots_घातer;
+अटल काष्ठा wf_control *fan_cpu_मुख्य;
+अटल काष्ठा wf_control *fan_cpu_second;
+अटल काष्ठा wf_control *fan_cpu_third;
+अटल काष्ठा wf_control *fan_hd;
+अटल काष्ठा wf_control *fan_slots;
+अटल काष्ठा wf_control *cpufreq_clamp;
 
-/* Set to kick the control loop into life */
-static int wf_smu_all_controls_ok, wf_smu_all_sensors_ok;
-static bool wf_smu_started;
-static bool wf_smu_overtemp;
+/* Set to kick the control loop पूर्णांकo lअगरe */
+अटल पूर्णांक wf_smu_all_controls_ok, wf_smu_all_sensors_ok;
+अटल bool wf_smu_started;
+अटल bool wf_smu_overtemp;
 
 /* Failure handling.. could be nicer */
-#define FAILURE_FAN		0x01
-#define FAILURE_SENSOR		0x02
-#define FAILURE_OVERTEMP	0x04
+#घोषणा FAILURE_FAN		0x01
+#घोषणा FAILURE_SENSOR		0x02
+#घोषणा FAILURE_OVERTEMP	0x04
 
-static unsigned int wf_smu_failure_state;
-static int wf_smu_readjust, wf_smu_skipping;
+अटल अचिन्हित पूर्णांक wf_smu_failure_state;
+अटल पूर्णांक wf_smu_पढ़ोjust, wf_smu_skipping;
 
 /*
  * ****** CPU Fans Control Loop ******
@@ -92,18 +93,18 @@ static int wf_smu_readjust, wf_smu_skipping;
  */
 
 
-#define WF_SMU_CPU_FANS_INTERVAL	1
-#define WF_SMU_CPU_FANS_MAX_HISTORY	16
+#घोषणा WF_SMU_CPU_FANS_INTERVAL	1
+#घोषणा WF_SMU_CPU_FANS_MAX_HISTORY	16
 
 /* State data used by the cpu fans control loop
  */
-struct wf_smu_cpu_fans_state {
-	int			ticks;
-	s32			cpu_setpoint;
-	struct wf_cpu_pid_state	pid;
-};
+काष्ठा wf_smu_cpu_fans_state अणु
+	पूर्णांक			ticks;
+	s32			cpu_setpoपूर्णांक;
+	काष्ठा wf_cpu_pid_state	pid;
+पूर्ण;
 
-static struct wf_smu_cpu_fans_state *wf_smu_cpu_fans;
+अटल काष्ठा wf_smu_cpu_fans_state *wf_smu_cpu_fans;
 
 
 
@@ -112,26 +113,26 @@ static struct wf_smu_cpu_fans_state *wf_smu_cpu_fans;
  *
  */
 
-struct wf_smu_drive_fans_state {
-	int			ticks;
-	s32			setpoint;
-	struct wf_pid_state	pid;
-};
+काष्ठा wf_smu_drive_fans_state अणु
+	पूर्णांक			ticks;
+	s32			setpoपूर्णांक;
+	काष्ठा wf_pid_state	pid;
+पूर्ण;
 
-static struct wf_smu_drive_fans_state *wf_smu_drive_fans;
+अटल काष्ठा wf_smu_drive_fans_state *wf_smu_drive_fans;
 
 /*
  * ****** Slots Fan Control Loop ******
  *
  */
 
-struct wf_smu_slots_fans_state {
-	int			ticks;
-	s32			setpoint;
-	struct wf_pid_state	pid;
-};
+काष्ठा wf_smu_slots_fans_state अणु
+	पूर्णांक			ticks;
+	s32			setpoपूर्णांक;
+	काष्ठा wf_pid_state	pid;
+पूर्ण;
 
-static struct wf_smu_slots_fans_state *wf_smu_slots_fans;
+अटल काष्ठा wf_smu_slots_fans_state *wf_smu_slots_fans;
 
 /*
  * ***** Implementation *****
@@ -139,173 +140,173 @@ static struct wf_smu_slots_fans_state *wf_smu_slots_fans;
  */
 
 
-static void wf_smu_create_cpu_fans(void)
-{
-	struct wf_cpu_pid_param pid_param;
-	const struct smu_sdbp_header *hdr;
-	struct smu_sdbp_cpupiddata *piddata;
-	struct smu_sdbp_fvt *fvt;
-	s32 tmax, tdelta, maxpow, powadj;
+अटल व्योम wf_smu_create_cpu_fans(व्योम)
+अणु
+	काष्ठा wf_cpu_pid_param pid_param;
+	स्थिर काष्ठा smu_sdbp_header *hdr;
+	काष्ठा smu_sdbp_cpupiddata *piddata;
+	काष्ठा smu_sdbp_fvt *fvt;
+	s32 पंचांगax, tdelta, maxघात, घातadj;
 
 	/* First, locate the PID params in SMU SBD */
-	hdr = smu_get_sdb_partition(SMU_SDB_CPUPIDDATA_ID, NULL);
-	if (hdr == 0) {
-		printk(KERN_WARNING "windfarm: CPU PID fan config not found "
+	hdr = smu_get_sdb_partition(SMU_SDB_CPUPIDDATA_ID, शून्य);
+	अगर (hdr == 0) अणु
+		prपूर्णांकk(KERN_WARNING "windfarm: CPU PID fan config not found "
 		       "max fan speed\n");
-		goto fail;
-	}
-	piddata = (struct smu_sdbp_cpupiddata *)&hdr[1];
+		जाओ fail;
+	पूर्ण
+	piddata = (काष्ठा smu_sdbp_cpupiddata *)&hdr[1];
 
-	/* Get the FVT params for operating point 0 (the only supported one
-	 * for now) in order to get tmax
+	/* Get the FVT params क्रम operating poपूर्णांक 0 (the only supported one
+	 * क्रम now) in order to get पंचांगax
 	 */
-	hdr = smu_get_sdb_partition(SMU_SDB_FVT_ID, NULL);
-	if (hdr) {
-		fvt = (struct smu_sdbp_fvt *)&hdr[1];
-		tmax = ((s32)fvt->maxtemp) << 16;
-	} else
-		tmax = 0x5e0000; /* 94 degree default */
+	hdr = smu_get_sdb_partition(SMU_SDB_FVT_ID, शून्य);
+	अगर (hdr) अणु
+		fvt = (काष्ठा smu_sdbp_fvt *)&hdr[1];
+		पंचांगax = ((s32)fvt->maxtemp) << 16;
+	पूर्ण अन्यथा
+		पंचांगax = 0x5e0000; /* 94 degree शेष */
 
 	/* Alloc & initialize state */
-	wf_smu_cpu_fans = kmalloc(sizeof(struct wf_smu_cpu_fans_state),
+	wf_smu_cpu_fans = kदो_स्मृति(माप(काष्ठा wf_smu_cpu_fans_state),
 				  GFP_KERNEL);
-	if (wf_smu_cpu_fans == NULL)
-		goto fail;
+	अगर (wf_smu_cpu_fans == शून्य)
+		जाओ fail;
        	wf_smu_cpu_fans->ticks = 1;
 
 	/* Fill PID params */
-	pid_param.interval = WF_SMU_CPU_FANS_INTERVAL;
+	pid_param.पूर्णांकerval = WF_SMU_CPU_FANS_INTERVAL;
 	pid_param.history_len = piddata->history_len;
-	if (pid_param.history_len > WF_CPU_PID_MAX_HISTORY) {
-		printk(KERN_WARNING "windfarm: History size overflow on "
+	अगर (pid_param.history_len > WF_CPU_PID_MAX_HISTORY) अणु
+		prपूर्णांकk(KERN_WARNING "windfarm: History size overflow on "
 		       "CPU control loop (%d)\n", piddata->history_len);
 		pid_param.history_len = WF_CPU_PID_MAX_HISTORY;
-	}
+	पूर्ण
 	pid_param.gd = piddata->gd;
 	pid_param.gp = piddata->gp;
 	pid_param.gr = piddata->gr / pid_param.history_len;
 
 	tdelta = ((s32)piddata->target_temp_delta) << 16;
-	maxpow = ((s32)piddata->max_power) << 16;
-	powadj = ((s32)piddata->power_adj) << 16;
+	maxघात = ((s32)piddata->max_घातer) << 16;
+	घातadj = ((s32)piddata->घातer_adj) << 16;
 
-	pid_param.tmax = tmax;
-	pid_param.ttarget = tmax - tdelta;
-	pid_param.pmaxadj = maxpow - powadj;
+	pid_param.पंचांगax = पंचांगax;
+	pid_param.ttarget = पंचांगax - tdelta;
+	pid_param.pmaxadj = maxघात - घातadj;
 
-	pid_param.min = wf_control_get_min(fan_cpu_main);
-	pid_param.max = wf_control_get_max(fan_cpu_main);
+	pid_param.min = wf_control_get_min(fan_cpu_मुख्य);
+	pid_param.max = wf_control_get_max(fan_cpu_मुख्य);
 
 	wf_cpu_pid_init(&wf_smu_cpu_fans->pid, &pid_param);
 
 	DBG("wf: CPU Fan control initialized.\n");
 	DBG("    ttarget=%d.%03d, tmax=%d.%03d, min=%d RPM, max=%d RPM\n",
-	    FIX32TOPRINT(pid_param.ttarget), FIX32TOPRINT(pid_param.tmax),
+	    FIX32TOPRINT(pid_param.ttarget), FIX32TOPRINT(pid_param.पंचांगax),
 	    pid_param.min, pid_param.max);
 
-	return;
+	वापस;
 
  fail:
-	printk(KERN_WARNING "windfarm: CPU fan config not found\n"
+	prपूर्णांकk(KERN_WARNING "windfarm: CPU fan config not found\n"
 	       "for this machine model, max fan speed\n");
 
-	if (cpufreq_clamp)
+	अगर (cpufreq_clamp)
 		wf_control_set_max(cpufreq_clamp);
-	if (fan_cpu_main)
-		wf_control_set_max(fan_cpu_main);
-}
+	अगर (fan_cpu_मुख्य)
+		wf_control_set_max(fan_cpu_मुख्य);
+पूर्ण
 
-static void wf_smu_cpu_fans_tick(struct wf_smu_cpu_fans_state *st)
-{
-	s32 new_setpoint, temp, power;
-	int rc;
+अटल व्योम wf_smu_cpu_fans_tick(काष्ठा wf_smu_cpu_fans_state *st)
+अणु
+	s32 new_setpoपूर्णांक, temp, घातer;
+	पूर्णांक rc;
 
-	if (--st->ticks != 0) {
-		if (wf_smu_readjust)
-			goto readjust;
-		return;
-	}
+	अगर (--st->ticks != 0) अणु
+		अगर (wf_smu_पढ़ोjust)
+			जाओ पढ़ोjust;
+		वापस;
+	पूर्ण
 	st->ticks = WF_SMU_CPU_FANS_INTERVAL;
 
 	rc = wf_sensor_get(sensor_cpu_temp, &temp);
-	if (rc) {
-		printk(KERN_WARNING "windfarm: CPU temp sensor error %d\n",
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_WARNING "windfarm: CPU temp sensor error %d\n",
 		       rc);
 		wf_smu_failure_state |= FAILURE_SENSOR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	rc = wf_sensor_get(sensor_cpu_power, &power);
-	if (rc) {
-		printk(KERN_WARNING "windfarm: CPU power sensor error %d\n",
+	rc = wf_sensor_get(sensor_cpu_घातer, &घातer);
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_WARNING "windfarm: CPU power sensor error %d\n",
 		       rc);
 		wf_smu_failure_state |= FAILURE_SENSOR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	DBG("wf_smu: CPU Fans tick ! CPU temp: %d.%03d, power: %d.%03d\n",
-	    FIX32TOPRINT(temp), FIX32TOPRINT(power));
+	    FIX32TOPRINT(temp), FIX32TOPRINT(घातer));
 
-#ifdef HACKED_OVERTEMP
-	if (temp > 0x4a0000)
+#अगर_घोषित HACKED_OVERTEMP
+	अगर (temp > 0x4a0000)
 		wf_smu_failure_state |= FAILURE_OVERTEMP;
-#else
-	if (temp > st->pid.param.tmax)
+#अन्यथा
+	अगर (temp > st->pid.param.पंचांगax)
 		wf_smu_failure_state |= FAILURE_OVERTEMP;
-#endif
-	new_setpoint = wf_cpu_pid_run(&st->pid, power, temp);
+#पूर्ण_अगर
+	new_setpoपूर्णांक = wf_cpu_pid_run(&st->pid, घातer, temp);
 
-	DBG("wf_smu: new_setpoint: %d RPM\n", (int)new_setpoint);
+	DBG("wf_smu: new_setpoint: %d RPM\n", (पूर्णांक)new_setpoपूर्णांक);
 
-	if (st->cpu_setpoint == new_setpoint)
-		return;
-	st->cpu_setpoint = new_setpoint;
- readjust:
-	if (fan_cpu_main && wf_smu_failure_state == 0) {
-		rc = wf_control_set(fan_cpu_main, st->cpu_setpoint);
-		if (rc) {
-			printk(KERN_WARNING "windfarm: CPU main fan"
+	अगर (st->cpu_setpoपूर्णांक == new_setpoपूर्णांक)
+		वापस;
+	st->cpu_setpoपूर्णांक = new_setpoपूर्णांक;
+ पढ़ोjust:
+	अगर (fan_cpu_मुख्य && wf_smu_failure_state == 0) अणु
+		rc = wf_control_set(fan_cpu_मुख्य, st->cpu_setpoपूर्णांक);
+		अगर (rc) अणु
+			prपूर्णांकk(KERN_WARNING "windfarm: CPU main fan"
 			       " error %d\n", rc);
 			wf_smu_failure_state |= FAILURE_FAN;
-		}
-	}
-	if (fan_cpu_second && wf_smu_failure_state == 0) {
-		rc = wf_control_set(fan_cpu_second, st->cpu_setpoint);
-		if (rc) {
-			printk(KERN_WARNING "windfarm: CPU second fan"
+		पूर्ण
+	पूर्ण
+	अगर (fan_cpu_second && wf_smu_failure_state == 0) अणु
+		rc = wf_control_set(fan_cpu_second, st->cpu_setpoपूर्णांक);
+		अगर (rc) अणु
+			prपूर्णांकk(KERN_WARNING "windfarm: CPU second fan"
 			       " error %d\n", rc);
 			wf_smu_failure_state |= FAILURE_FAN;
-		}
-	}
-	if (fan_cpu_third && wf_smu_failure_state == 0) {
-		rc = wf_control_set(fan_cpu_third, st->cpu_setpoint);
-		if (rc) {
-			printk(KERN_WARNING "windfarm: CPU third fan"
+		पूर्ण
+	पूर्ण
+	अगर (fan_cpu_third && wf_smu_failure_state == 0) अणु
+		rc = wf_control_set(fan_cpu_third, st->cpu_setpoपूर्णांक);
+		अगर (rc) अणु
+			prपूर्णांकk(KERN_WARNING "windfarm: CPU third fan"
 			       " error %d\n", rc);
 			wf_smu_failure_state |= FAILURE_FAN;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void wf_smu_create_drive_fans(void)
-{
-	struct wf_pid_param param = {
-		.interval	= 5,
+अटल व्योम wf_smu_create_drive_fans(व्योम)
+अणु
+	काष्ठा wf_pid_param param = अणु
+		.पूर्णांकerval	= 5,
 		.history_len	= 2,
 		.gd		= 0x01e00000,
 		.gp		= 0x00500000,
 		.gr		= 0x00000000,
 		.itarget	= 0x00200000,
-	};
+	पूर्ण;
 
 	/* Alloc & initialize state */
-	wf_smu_drive_fans = kmalloc(sizeof(struct wf_smu_drive_fans_state),
+	wf_smu_drive_fans = kदो_स्मृति(माप(काष्ठा wf_smu_drive_fans_state),
 					GFP_KERNEL);
-	if (wf_smu_drive_fans == NULL) {
-		printk(KERN_WARNING "windfarm: Memory allocation error"
+	अगर (wf_smu_drive_fans == शून्य) अणु
+		prपूर्णांकk(KERN_WARNING "windfarm: Memory allocation error"
 		       " max fan speed\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
        	wf_smu_drive_fans->ticks = 1;
 
 	/* Fill PID params */
@@ -317,76 +318,76 @@ static void wf_smu_create_drive_fans(void)
 	DBG("wf: Drive Fan control initialized.\n");
 	DBG("    itarged=%d.%03d, min=%d RPM, max=%d RPM\n",
 	    FIX32TOPRINT(param.itarget), param.min, param.max);
-	return;
+	वापस;
 
  fail:
-	if (fan_hd)
+	अगर (fan_hd)
 		wf_control_set_max(fan_hd);
-}
+पूर्ण
 
-static void wf_smu_drive_fans_tick(struct wf_smu_drive_fans_state *st)
-{
-	s32 new_setpoint, temp;
-	int rc;
+अटल व्योम wf_smu_drive_fans_tick(काष्ठा wf_smu_drive_fans_state *st)
+अणु
+	s32 new_setpoपूर्णांक, temp;
+	पूर्णांक rc;
 
-	if (--st->ticks != 0) {
-		if (wf_smu_readjust)
-			goto readjust;
-		return;
-	}
-	st->ticks = st->pid.param.interval;
+	अगर (--st->ticks != 0) अणु
+		अगर (wf_smu_पढ़ोjust)
+			जाओ पढ़ोjust;
+		वापस;
+	पूर्ण
+	st->ticks = st->pid.param.पूर्णांकerval;
 
 	rc = wf_sensor_get(sensor_hd_temp, &temp);
-	if (rc) {
-		printk(KERN_WARNING "windfarm: HD temp sensor error %d\n",
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_WARNING "windfarm: HD temp sensor error %d\n",
 		       rc);
 		wf_smu_failure_state |= FAILURE_SENSOR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	DBG("wf_smu: Drive Fans tick ! HD temp: %d.%03d\n",
 	    FIX32TOPRINT(temp));
 
-	if (temp > (st->pid.param.itarget + 0x50000))
+	अगर (temp > (st->pid.param.itarget + 0x50000))
 		wf_smu_failure_state |= FAILURE_OVERTEMP;
 
-	new_setpoint = wf_pid_run(&st->pid, temp);
+	new_setpoपूर्णांक = wf_pid_run(&st->pid, temp);
 
-	DBG("wf_smu: new_setpoint: %d\n", (int)new_setpoint);
+	DBG("wf_smu: new_setpoint: %d\n", (पूर्णांक)new_setpoपूर्णांक);
 
-	if (st->setpoint == new_setpoint)
-		return;
-	st->setpoint = new_setpoint;
- readjust:
-	if (fan_hd && wf_smu_failure_state == 0) {
-		rc = wf_control_set(fan_hd, st->setpoint);
-		if (rc) {
-			printk(KERN_WARNING "windfarm: HD fan error %d\n",
+	अगर (st->setpoपूर्णांक == new_setpoपूर्णांक)
+		वापस;
+	st->setpoपूर्णांक = new_setpoपूर्णांक;
+ पढ़ोjust:
+	अगर (fan_hd && wf_smu_failure_state == 0) अणु
+		rc = wf_control_set(fan_hd, st->setpoपूर्णांक);
+		अगर (rc) अणु
+			prपूर्णांकk(KERN_WARNING "windfarm: HD fan error %d\n",
 			       rc);
 			wf_smu_failure_state |= FAILURE_FAN;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void wf_smu_create_slots_fans(void)
-{
-	struct wf_pid_param param = {
-		.interval	= 1,
+अटल व्योम wf_smu_create_slots_fans(व्योम)
+अणु
+	काष्ठा wf_pid_param param = अणु
+		.पूर्णांकerval	= 1,
 		.history_len	= 8,
 		.gd		= 0x00000000,
 		.gp		= 0x00000000,
 		.gr		= 0x00020000,
 		.itarget	= 0x00000000
-	};
+	पूर्ण;
 
 	/* Alloc & initialize state */
-	wf_smu_slots_fans = kmalloc(sizeof(struct wf_smu_slots_fans_state),
+	wf_smu_slots_fans = kदो_स्मृति(माप(काष्ठा wf_smu_slots_fans_state),
 					GFP_KERNEL);
-	if (wf_smu_slots_fans == NULL) {
-		printk(KERN_WARNING "windfarm: Memory allocation error"
+	अगर (wf_smu_slots_fans == शून्य) अणु
+		prपूर्णांकk(KERN_WARNING "windfarm: Memory allocation error"
 		       " max fan speed\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
        	wf_smu_slots_fans->ticks = 1;
 
 	/* Fill PID params */
@@ -398,58 +399,58 @@ static void wf_smu_create_slots_fans(void)
 	DBG("wf: Slots Fan control initialized.\n");
 	DBG("    itarged=%d.%03d, min=%d RPM, max=%d RPM\n",
 	    FIX32TOPRINT(param.itarget), param.min, param.max);
-	return;
+	वापस;
 
  fail:
-	if (fan_slots)
+	अगर (fan_slots)
 		wf_control_set_max(fan_slots);
-}
+पूर्ण
 
-static void wf_smu_slots_fans_tick(struct wf_smu_slots_fans_state *st)
-{
-	s32 new_setpoint, power;
-	int rc;
+अटल व्योम wf_smu_slots_fans_tick(काष्ठा wf_smu_slots_fans_state *st)
+अणु
+	s32 new_setpoपूर्णांक, घातer;
+	पूर्णांक rc;
 
-	if (--st->ticks != 0) {
-		if (wf_smu_readjust)
-			goto readjust;
-		return;
-	}
-	st->ticks = st->pid.param.interval;
+	अगर (--st->ticks != 0) अणु
+		अगर (wf_smu_पढ़ोjust)
+			जाओ पढ़ोjust;
+		वापस;
+	पूर्ण
+	st->ticks = st->pid.param.पूर्णांकerval;
 
-	rc = wf_sensor_get(sensor_slots_power, &power);
-	if (rc) {
-		printk(KERN_WARNING "windfarm: Slots power sensor error %d\n",
+	rc = wf_sensor_get(sensor_slots_घातer, &घातer);
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_WARNING "windfarm: Slots power sensor error %d\n",
 		       rc);
 		wf_smu_failure_state |= FAILURE_SENSOR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	DBG("wf_smu: Slots Fans tick ! Slots power: %d.%03d\n",
-	    FIX32TOPRINT(power));
+	    FIX32TOPRINT(घातer));
 
-#if 0 /* Check what makes a good overtemp condition */
-	if (power > (st->pid.param.itarget + 0x50000))
+#अगर 0 /* Check what makes a good overtemp condition */
+	अगर (घातer > (st->pid.param.itarget + 0x50000))
 		wf_smu_failure_state |= FAILURE_OVERTEMP;
-#endif
+#पूर्ण_अगर
 
-	new_setpoint = wf_pid_run(&st->pid, power);
+	new_setpoपूर्णांक = wf_pid_run(&st->pid, घातer);
 
-	DBG("wf_smu: new_setpoint: %d\n", (int)new_setpoint);
+	DBG("wf_smu: new_setpoint: %d\n", (पूर्णांक)new_setpoपूर्णांक);
 
-	if (st->setpoint == new_setpoint)
-		return;
-	st->setpoint = new_setpoint;
- readjust:
-	if (fan_slots && wf_smu_failure_state == 0) {
-		rc = wf_control_set(fan_slots, st->setpoint);
-		if (rc) {
-			printk(KERN_WARNING "windfarm: Slots fan error %d\n",
+	अगर (st->setpoपूर्णांक == new_setpoपूर्णांक)
+		वापस;
+	st->setpoपूर्णांक = new_setpoपूर्णांक;
+ पढ़ोjust:
+	अगर (fan_slots && wf_smu_failure_state == 0) अणु
+		rc = wf_control_set(fan_slots, st->setpoपूर्णांक);
+		अगर (rc) अणु
+			prपूर्णांकk(KERN_WARNING "windfarm: Slots fan error %d\n",
 			       rc);
 			wf_smu_failure_state |= FAILURE_FAN;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
 /*
@@ -457,282 +458,282 @@ static void wf_smu_slots_fans_tick(struct wf_smu_slots_fans_state *st)
  *
  */
 
-static void wf_smu_tick(void)
-{
-	unsigned int last_failure = wf_smu_failure_state;
-	unsigned int new_failure;
+अटल व्योम wf_smu_tick(व्योम)
+अणु
+	अचिन्हित पूर्णांक last_failure = wf_smu_failure_state;
+	अचिन्हित पूर्णांक new_failure;
 
-	if (!wf_smu_started) {
+	अगर (!wf_smu_started) अणु
 		DBG("wf: creating control loops !\n");
 		wf_smu_create_drive_fans();
 		wf_smu_create_slots_fans();
 		wf_smu_create_cpu_fans();
 		wf_smu_started = true;
-	}
+	पूर्ण
 
 	/* Skipping ticks */
-	if (wf_smu_skipping && --wf_smu_skipping)
-		return;
+	अगर (wf_smu_skipping && --wf_smu_skipping)
+		वापस;
 
 	wf_smu_failure_state = 0;
-	if (wf_smu_drive_fans)
+	अगर (wf_smu_drive_fans)
 		wf_smu_drive_fans_tick(wf_smu_drive_fans);
-	if (wf_smu_slots_fans)
+	अगर (wf_smu_slots_fans)
 		wf_smu_slots_fans_tick(wf_smu_slots_fans);
-	if (wf_smu_cpu_fans)
+	अगर (wf_smu_cpu_fans)
 		wf_smu_cpu_fans_tick(wf_smu_cpu_fans);
 
-	wf_smu_readjust = 0;
+	wf_smu_पढ़ोjust = 0;
 	new_failure = wf_smu_failure_state & ~last_failure;
 
 	/* If entering failure mode, clamp cpufreq and ramp all
 	 * fans to full speed.
 	 */
-	if (wf_smu_failure_state && !last_failure) {
-		if (cpufreq_clamp)
+	अगर (wf_smu_failure_state && !last_failure) अणु
+		अगर (cpufreq_clamp)
 			wf_control_set_max(cpufreq_clamp);
-		if (fan_cpu_main)
-			wf_control_set_max(fan_cpu_main);
-		if (fan_cpu_second)
+		अगर (fan_cpu_मुख्य)
+			wf_control_set_max(fan_cpu_मुख्य);
+		अगर (fan_cpu_second)
 			wf_control_set_max(fan_cpu_second);
-		if (fan_cpu_third)
+		अगर (fan_cpu_third)
 			wf_control_set_max(fan_cpu_third);
-		if (fan_hd)
+		अगर (fan_hd)
 			wf_control_set_max(fan_hd);
-		if (fan_slots)
+		अगर (fan_slots)
 			wf_control_set_max(fan_slots);
-	}
+	पूर्ण
 
-	/* If leaving failure mode, unclamp cpufreq and readjust
+	/* If leaving failure mode, unclamp cpufreq and पढ़ोjust
 	 * all fans on next iteration
 	 */
-	if (!wf_smu_failure_state && last_failure) {
-		if (cpufreq_clamp)
+	अगर (!wf_smu_failure_state && last_failure) अणु
+		अगर (cpufreq_clamp)
 			wf_control_set_min(cpufreq_clamp);
-		wf_smu_readjust = 1;
-	}
+		wf_smu_पढ़ोjust = 1;
+	पूर्ण
 
-	/* Overtemp condition detected, notify and start skipping a couple
-	 * ticks to let the temperature go down
+	/* Overtemp condition detected, notअगरy and start skipping a couple
+	 * ticks to let the temperature go करोwn
 	 */
-	if (new_failure & FAILURE_OVERTEMP) {
+	अगर (new_failure & FAILURE_OVERTEMP) अणु
 		wf_set_overtemp();
 		wf_smu_skipping = 2;
 		wf_smu_overtemp = true;
-	}
+	पूर्ण
 
-	/* We only clear the overtemp condition if overtemp is cleared
+	/* We only clear the overtemp condition अगर overtemp is cleared
 	 * _and_ no other failure is present. Since a sensor error will
 	 * clear the overtemp condition (can't measure temperature) at
-	 * the control loop levels, but we don't want to keep it clear
-	 * here in this case
+	 * the control loop levels, but we करोn't want to keep it clear
+	 * here in this हाल
 	 */
-	if (!wf_smu_failure_state && wf_smu_overtemp) {
+	अगर (!wf_smu_failure_state && wf_smu_overtemp) अणु
 		wf_clear_overtemp();
 		wf_smu_overtemp = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void wf_smu_new_control(struct wf_control *ct)
-{
-	if (wf_smu_all_controls_ok)
-		return;
+अटल व्योम wf_smu_new_control(काष्ठा wf_control *ct)
+अणु
+	अगर (wf_smu_all_controls_ok)
+		वापस;
 
-	if (fan_cpu_main == NULL && !strcmp(ct->name, "cpu-rear-fan-0")) {
-		if (wf_get_control(ct) == 0)
-			fan_cpu_main = ct;
-	}
+	अगर (fan_cpu_मुख्य == शून्य && !म_भेद(ct->name, "cpu-rear-fan-0")) अणु
+		अगर (wf_get_control(ct) == 0)
+			fan_cpu_मुख्य = ct;
+	पूर्ण
 
-	if (fan_cpu_second == NULL && !strcmp(ct->name, "cpu-rear-fan-1")) {
-		if (wf_get_control(ct) == 0)
+	अगर (fan_cpu_second == शून्य && !म_भेद(ct->name, "cpu-rear-fan-1")) अणु
+		अगर (wf_get_control(ct) == 0)
 			fan_cpu_second = ct;
-	}
+	पूर्ण
 
-	if (fan_cpu_third == NULL && !strcmp(ct->name, "cpu-front-fan-0")) {
-		if (wf_get_control(ct) == 0)
+	अगर (fan_cpu_third == शून्य && !म_भेद(ct->name, "cpu-front-fan-0")) अणु
+		अगर (wf_get_control(ct) == 0)
 			fan_cpu_third = ct;
-	}
+	पूर्ण
 
-	if (cpufreq_clamp == NULL && !strcmp(ct->name, "cpufreq-clamp")) {
-		if (wf_get_control(ct) == 0)
+	अगर (cpufreq_clamp == शून्य && !म_भेद(ct->name, "cpufreq-clamp")) अणु
+		अगर (wf_get_control(ct) == 0)
 			cpufreq_clamp = ct;
-	}
+	पूर्ण
 
-	if (fan_hd == NULL && !strcmp(ct->name, "drive-bay-fan")) {
-		if (wf_get_control(ct) == 0)
+	अगर (fan_hd == शून्य && !म_भेद(ct->name, "drive-bay-fan")) अणु
+		अगर (wf_get_control(ct) == 0)
 			fan_hd = ct;
-	}
+	पूर्ण
 
-	if (fan_slots == NULL && !strcmp(ct->name, "slots-fan")) {
-		if (wf_get_control(ct) == 0)
+	अगर (fan_slots == शून्य && !म_भेद(ct->name, "slots-fan")) अणु
+		अगर (wf_get_control(ct) == 0)
 			fan_slots = ct;
-	}
+	पूर्ण
 
-	if (fan_cpu_main && (fan_cpu_second || fan_cpu_third) && fan_hd &&
+	अगर (fan_cpu_मुख्य && (fan_cpu_second || fan_cpu_third) && fan_hd &&
 	    fan_slots && cpufreq_clamp)
 		wf_smu_all_controls_ok = 1;
-}
+पूर्ण
 
-static void wf_smu_new_sensor(struct wf_sensor *sr)
-{
-	if (wf_smu_all_sensors_ok)
-		return;
+अटल व्योम wf_smu_new_sensor(काष्ठा wf_sensor *sr)
+अणु
+	अगर (wf_smu_all_sensors_ok)
+		वापस;
 
-	if (sensor_cpu_power == NULL && !strcmp(sr->name, "cpu-power")) {
-		if (wf_get_sensor(sr) == 0)
-			sensor_cpu_power = sr;
-	}
+	अगर (sensor_cpu_घातer == शून्य && !म_भेद(sr->name, "cpu-power")) अणु
+		अगर (wf_get_sensor(sr) == 0)
+			sensor_cpu_घातer = sr;
+	पूर्ण
 
-	if (sensor_cpu_temp == NULL && !strcmp(sr->name, "cpu-temp")) {
-		if (wf_get_sensor(sr) == 0)
+	अगर (sensor_cpu_temp == शून्य && !म_भेद(sr->name, "cpu-temp")) अणु
+		अगर (wf_get_sensor(sr) == 0)
 			sensor_cpu_temp = sr;
-	}
+	पूर्ण
 
-	if (sensor_hd_temp == NULL && !strcmp(sr->name, "hd-temp")) {
-		if (wf_get_sensor(sr) == 0)
+	अगर (sensor_hd_temp == शून्य && !म_भेद(sr->name, "hd-temp")) अणु
+		अगर (wf_get_sensor(sr) == 0)
 			sensor_hd_temp = sr;
-	}
+	पूर्ण
 
-	if (sensor_slots_power == NULL && !strcmp(sr->name, "slots-power")) {
-		if (wf_get_sensor(sr) == 0)
-			sensor_slots_power = sr;
-	}
+	अगर (sensor_slots_घातer == शून्य && !म_भेद(sr->name, "slots-power")) अणु
+		अगर (wf_get_sensor(sr) == 0)
+			sensor_slots_घातer = sr;
+	पूर्ण
 
-	if (sensor_cpu_power && sensor_cpu_temp &&
-	    sensor_hd_temp && sensor_slots_power)
+	अगर (sensor_cpu_घातer && sensor_cpu_temp &&
+	    sensor_hd_temp && sensor_slots_घातer)
 		wf_smu_all_sensors_ok = 1;
-}
+पूर्ण
 
 
-static int wf_smu_notify(struct notifier_block *self,
-			       unsigned long event, void *data)
-{
-	switch(event) {
-	case WF_EVENT_NEW_CONTROL:
+अटल पूर्णांक wf_smu_notअगरy(काष्ठा notअगरier_block *self,
+			       अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	चयन(event) अणु
+	हाल WF_EVENT_NEW_CONTROL:
 		DBG("wf: new control %s detected\n",
-		    ((struct wf_control *)data)->name);
+		    ((काष्ठा wf_control *)data)->name);
 		wf_smu_new_control(data);
-		wf_smu_readjust = 1;
-		break;
-	case WF_EVENT_NEW_SENSOR:
+		wf_smu_पढ़ोjust = 1;
+		अवरोध;
+	हाल WF_EVENT_NEW_SENSOR:
 		DBG("wf: new sensor %s detected\n",
-		    ((struct wf_sensor *)data)->name);
+		    ((काष्ठा wf_sensor *)data)->name);
 		wf_smu_new_sensor(data);
-		break;
-	case WF_EVENT_TICK:
-		if (wf_smu_all_controls_ok && wf_smu_all_sensors_ok)
+		अवरोध;
+	हाल WF_EVENT_TICK:
+		अगर (wf_smu_all_controls_ok && wf_smu_all_sensors_ok)
 			wf_smu_tick();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct notifier_block wf_smu_events = {
-	.notifier_call	= wf_smu_notify,
-};
+अटल काष्ठा notअगरier_block wf_smu_events = अणु
+	.notअगरier_call	= wf_smu_notअगरy,
+पूर्ण;
 
-static int wf_init_pm(void)
-{
-	printk(KERN_INFO "windfarm: Initializing for Desktop G5 model\n");
+अटल पूर्णांक wf_init_pm(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "windfarm: Initializing for Desktop G5 model\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wf_smu_probe(struct platform_device *ddev)
-{
-	wf_register_client(&wf_smu_events);
+अटल पूर्णांक wf_smu_probe(काष्ठा platक्रमm_device *ddev)
+अणु
+	wf_रेजिस्टर_client(&wf_smu_events);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wf_smu_remove(struct platform_device *ddev)
-{
-	wf_unregister_client(&wf_smu_events);
+अटल पूर्णांक wf_smu_हटाओ(काष्ठा platक्रमm_device *ddev)
+अणु
+	wf_unरेजिस्टर_client(&wf_smu_events);
 
-	/* XXX We don't have yet a guarantee that our callback isn't
-	 * in progress when returning from wf_unregister_client, so
+	/* XXX We करोn't have yet a guarantee that our callback isn't
+	 * in progress when वापसing from wf_unरेजिस्टर_client, so
 	 * we add an arbitrary delay. I'll have to fix that in the core
 	 */
 	msleep(1000);
 
 	/* Release all sensors */
-	/* One more crappy race: I don't think we have any guarantee here
+	/* One more crappy race: I करोn't think we have any guarantee here
 	 * that the attribute callback won't race with the sensor beeing
 	 * disposed of, and I'm not 100% certain what best way to deal
-	 * with that except by adding locks all over... I'll do that
+	 * with that except by adding locks all over... I'll करो that
 	 * eventually but heh, who ever rmmod this module anyway ?
 	 */
-	if (sensor_cpu_power)
-		wf_put_sensor(sensor_cpu_power);
-	if (sensor_cpu_temp)
+	अगर (sensor_cpu_घातer)
+		wf_put_sensor(sensor_cpu_घातer);
+	अगर (sensor_cpu_temp)
 		wf_put_sensor(sensor_cpu_temp);
-	if (sensor_hd_temp)
+	अगर (sensor_hd_temp)
 		wf_put_sensor(sensor_hd_temp);
-	if (sensor_slots_power)
-		wf_put_sensor(sensor_slots_power);
+	अगर (sensor_slots_घातer)
+		wf_put_sensor(sensor_slots_घातer);
 
 	/* Release all controls */
-	if (fan_cpu_main)
-		wf_put_control(fan_cpu_main);
-	if (fan_cpu_second)
+	अगर (fan_cpu_मुख्य)
+		wf_put_control(fan_cpu_मुख्य);
+	अगर (fan_cpu_second)
 		wf_put_control(fan_cpu_second);
-	if (fan_cpu_third)
+	अगर (fan_cpu_third)
 		wf_put_control(fan_cpu_third);
-	if (fan_hd)
+	अगर (fan_hd)
 		wf_put_control(fan_hd);
-	if (fan_slots)
+	अगर (fan_slots)
 		wf_put_control(fan_slots);
-	if (cpufreq_clamp)
+	अगर (cpufreq_clamp)
 		wf_put_control(cpufreq_clamp);
 
-	/* Destroy control loops state structures */
-	kfree(wf_smu_slots_fans);
-	kfree(wf_smu_drive_fans);
-	kfree(wf_smu_cpu_fans);
+	/* Destroy control loops state काष्ठाures */
+	kमुक्त(wf_smu_slots_fans);
+	kमुक्त(wf_smu_drive_fans);
+	kमुक्त(wf_smu_cpu_fans);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver wf_smu_driver = {
+अटल काष्ठा platक्रमm_driver wf_smu_driver = अणु
         .probe = wf_smu_probe,
-        .remove = wf_smu_remove,
-	.driver = {
+        .हटाओ = wf_smu_हटाओ,
+	.driver = अणु
 		.name = "windfarm",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 
-static int __init wf_smu_init(void)
-{
-	int rc = -ENODEV;
+अटल पूर्णांक __init wf_smu_init(व्योम)
+अणु
+	पूर्णांक rc = -ENODEV;
 
-	if (of_machine_is_compatible("PowerMac9,1"))
+	अगर (of_machine_is_compatible("PowerMac9,1"))
 		rc = wf_init_pm();
 
-	if (rc == 0) {
-#ifdef MODULE
+	अगर (rc == 0) अणु
+#अगर_घोषित MODULE
 		request_module("windfarm_smu_controls");
 		request_module("windfarm_smu_sensors");
 		request_module("windfarm_lm75_sensor");
 		request_module("windfarm_cpufreq_clamp");
 
-#endif /* MODULE */
-		platform_driver_register(&wf_smu_driver);
-	}
+#पूर्ण_अगर /* MODULE */
+		platक्रमm_driver_रेजिस्टर(&wf_smu_driver);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit wf_smu_exit(void)
-{
+अटल व्योम __निकास wf_smu_निकास(व्योम)
+अणु
 
-	platform_driver_unregister(&wf_smu_driver);
-}
+	platक्रमm_driver_unरेजिस्टर(&wf_smu_driver);
+पूर्ण
 
 
 module_init(wf_smu_init);
-module_exit(wf_smu_exit);
+module_निकास(wf_smu_निकास);
 
 MODULE_AUTHOR("Benjamin Herrenschmidt <benh@kernel.crashing.org>");
 MODULE_DESCRIPTION("Thermal control logic for PowerMac9,1");

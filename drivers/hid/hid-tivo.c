@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  HID driver for TiVo Slide Bluetooth remote
+ *  HID driver क्रम TiVo Slide Bluetooth remote
  *
  *  Copyright (c) 2011 Jarod Wilson <jarod@redhat.com>
  *  based on the hid-topseed driver, which is in turn, based on hid-cherry...
@@ -9,68 +10,68 @@
 /*
  */
 
-#include <linux/device.h>
-#include <linux/hid.h>
-#include <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
 
-#include "hid-ids.h"
+#समावेश "hid-ids.h"
 
-#define HID_UP_TIVOVENDOR	0xffff0000
-#define tivo_map_key_clear(c)	hid_map_usage_clear(hi, usage, bit, max, \
+#घोषणा HID_UP_TIVOVENDOR	0xffff0000
+#घोषणा tivo_map_key_clear(c)	hid_map_usage_clear(hi, usage, bit, max, \
 					EV_KEY, (c))
 
-static int tivo_input_mapping(struct hid_device *hdev, struct hid_input *hi,
-		struct hid_field *field, struct hid_usage *usage,
-		unsigned long **bit, int *max)
-{
-	switch (usage->hid & HID_USAGE_PAGE) {
-	case HID_UP_TIVOVENDOR:
-		switch (usage->hid & HID_USAGE) {
+अटल पूर्णांक tivo_input_mapping(काष्ठा hid_device *hdev, काष्ठा hid_input *hi,
+		काष्ठा hid_field *field, काष्ठा hid_usage *usage,
+		अचिन्हित दीर्घ **bit, पूर्णांक *max)
+अणु
+	चयन (usage->hid & HID_USAGE_PAGE) अणु
+	हाल HID_UP_TIVOVENDOR:
+		चयन (usage->hid & HID_USAGE) अणु
 		/* TiVo button */
-		case 0x3d: tivo_map_key_clear(KEY_MEDIA);	break;
+		हाल 0x3d: tivo_map_key_clear(KEY_MEDIA);	अवरोध;
 		/* Live TV */
-		case 0x3e: tivo_map_key_clear(KEY_TV);		break;
-		/* Red thumbs down */
-		case 0x41: tivo_map_key_clear(KEY_KPMINUS);	break;
+		हाल 0x3e: tivo_map_key_clear(KEY_TV);		अवरोध;
+		/* Red thumbs करोwn */
+		हाल 0x41: tivo_map_key_clear(KEY_KPMINUS);	अवरोध;
 		/* Green thumbs up */
-		case 0x42: tivo_map_key_clear(KEY_KPPLUS);	break;
-		default:
-			return 0;
-		}
-		break;
-	case HID_UP_CONSUMER:
-		switch (usage->hid & HID_USAGE) {
-		/* Enter/Last (default mapping: KEY_LAST) */
-		case 0x083: tivo_map_key_clear(KEY_ENTER);	break;
-		/* Info (default mapping: KEY_PROPS) */
-		case 0x209: tivo_map_key_clear(KEY_INFO);	break;
-		default:
-			return 0;
-		}
-		break;
-	default:
-		return 0;
-	}
+		हाल 0x42: tivo_map_key_clear(KEY_KPPLUS);	अवरोध;
+		शेष:
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल HID_UP_CONSUMER:
+		चयन (usage->hid & HID_USAGE) अणु
+		/* Enter/Last (शेष mapping: KEY_LAST) */
+		हाल 0x083: tivo_map_key_clear(KEY_ENTER);	अवरोध;
+		/* Info (शेष mapping: KEY_PROPS) */
+		हाल 0x209: tivo_map_key_clear(KEY_INFO);	अवरोध;
+		शेष:
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	/* This means we found a matching mapping here, else, look in the
+	/* This means we found a matching mapping here, अन्यथा, look in the
 	 * standard hid mappings in hid-input.c */
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct hid_device_id tivo_devices[] = {
-	/* TiVo Slide Bluetooth remote, pairs with a Broadcom dongle */
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_TIVO, USB_DEVICE_ID_TIVO_SLIDE_BT) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_TIVO, USB_DEVICE_ID_TIVO_SLIDE) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_TIVO, USB_DEVICE_ID_TIVO_SLIDE_PRO) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id tivo_devices[] = अणु
+	/* TiVo Slide Bluetooth remote, pairs with a Broadcom करोngle */
+	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_TIVO, USB_DEVICE_ID_TIVO_SLIDE_BT) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_TIVO, USB_DEVICE_ID_TIVO_SLIDE) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_TIVO, USB_DEVICE_ID_TIVO_SLIDE_PRO) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, tivo_devices);
 
-static struct hid_driver tivo_driver = {
+अटल काष्ठा hid_driver tivo_driver = अणु
 	.name = "tivo_slide",
 	.id_table = tivo_devices,
 	.input_mapping = tivo_input_mapping,
-};
+पूर्ण;
 module_hid_driver(tivo_driver);
 
 MODULE_LICENSE("GPL");

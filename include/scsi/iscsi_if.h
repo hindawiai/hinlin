@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * iSCSI User/Kernel Shares (Defines, Constants, Protocol definitions, etc)
  *
  * Copyright (C) 2005 Dmitry Yusupov
  * Copyright (C) 2005 Alex Aizman
- * maintained by open-iscsi@googlegroups.com
+ * मुख्यtained by खोलो-iscsi@googlegroups.com
  */
 
-#ifndef ISCSI_IF_H
-#define ISCSI_IF_H
+#अगर_अघोषित ISCSI_IF_H
+#घोषणा ISCSI_IF_H
 
-#include <scsi/iscsi_proto.h>
-#include <linux/in.h>
-#include <linux/in6.h>
+#समावेश <scsi/iscsi_proto.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
 
-#define ISCSI_NL_GRP_ISCSID	1
-#define ISCSI_NL_GRP_UIP	2
+#घोषणा ISCSI_NL_GRP_ISCSID	1
+#घोषणा ISCSI_NL_GRP_UIP	2
 
-#define UEVENT_BASE			10
-#define KEVENT_BASE			100
-#define ISCSI_ERR_BASE			1000
+#घोषणा UEVENT_BASE			10
+#घोषणा KEVENT_BASE			100
+#घोषणा ISCSI_ERR_BASE			1000
 
-enum iscsi_uevent_e {
+क्रमागत iscsi_uevent_e अणु
 	ISCSI_UEVENT_UNKNOWN		= 0,
 
-	/* down events */
+	/* करोwn events */
 	ISCSI_UEVENT_CREATE_SESSION	= UEVENT_BASE + 1,
 	ISCSI_UEVENT_DESTROY_SESSION	= UEVENT_BASE + 2,
 	ISCSI_UEVENT_CREATE_CONN	= UEVENT_BASE + 3,
@@ -75,315 +76,315 @@ enum iscsi_uevent_e {
 	ISCSI_KEVENT_CONN_LOGIN_STATE   = KEVENT_BASE + 9,
 	ISCSI_KEVENT_HOST_EVENT		= KEVENT_BASE + 10,
 	ISCSI_KEVENT_PING_COMP		= KEVENT_BASE + 11,
-};
+पूर्ण;
 
-enum iscsi_tgt_dscvr {
+क्रमागत iscsi_tgt_dscvr अणु
 	ISCSI_TGT_DSCVR_SEND_TARGETS	= 1,
 	ISCSI_TGT_DSCVR_ISNS		= 2,
 	ISCSI_TGT_DSCVR_SLP		= 3,
-};
+पूर्ण;
 
-enum iscsi_host_event_code {
+क्रमागत iscsi_host_event_code अणु
 	ISCSI_EVENT_LINKUP		= 1,
 	ISCSI_EVENT_LINKDOWN,
 	/* must always be last */
 	ISCSI_EVENT_MAX,
-};
+पूर्ण;
 
-struct iscsi_uevent {
-	uint32_t type; /* k/u events type */
-	uint32_t iferror; /* carries interface or resource errors */
-	uint64_t transport_handle;
+काष्ठा iscsi_uevent अणु
+	uपूर्णांक32_t type; /* k/u events type */
+	uपूर्णांक32_t अगरerror; /* carries पूर्णांकerface or resource errors */
+	uपूर्णांक64_t transport_handle;
 
-	union {
+	जोड़ अणु
 		/* messages u -> k */
-		struct msg_create_session {
-			uint32_t	initial_cmdsn;
-			uint16_t	cmds_max;
-			uint16_t	queue_depth;
-		} c_session;
-		struct msg_create_bound_session {
-			uint64_t	ep_handle;
-			uint32_t	initial_cmdsn;
-			uint16_t	cmds_max;
-			uint16_t	queue_depth;
-		} c_bound_session;
-		struct msg_destroy_session {
-			uint32_t	sid;
-		} d_session;
-		struct msg_create_conn {
-			uint32_t	sid;
-			uint32_t	cid;
-		} c_conn;
-		struct msg_bind_conn {
-			uint32_t	sid;
-			uint32_t	cid;
-			uint64_t	transport_eph;
-			uint32_t	is_leading;
-		} b_conn;
-		struct msg_destroy_conn {
-			uint32_t	sid;
-			uint32_t	cid;
-		} d_conn;
-		struct msg_send_pdu {
-			uint32_t	sid;
-			uint32_t	cid;
-			uint32_t	hdr_size;
-			uint32_t	data_size;
-		} send_pdu;
-		struct msg_set_param {
-			uint32_t	sid;
-			uint32_t	cid;
-			uint32_t	param; /* enum iscsi_param */
-			uint32_t	len;
-		} set_param;
-		struct msg_start_conn {
-			uint32_t	sid;
-			uint32_t	cid;
-		} start_conn;
-		struct msg_stop_conn {
-			uint32_t	sid;
-			uint32_t	cid;
-			uint64_t	conn_handle;
-			uint32_t	flag;
-		} stop_conn;
-		struct msg_get_stats {
-			uint32_t	sid;
-			uint32_t	cid;
-		} get_stats;
-		struct msg_transport_connect {
-			uint32_t	non_blocking;
-		} ep_connect;
-		struct msg_transport_connect_through_host {
-			uint32_t	host_no;
-			uint32_t	non_blocking;
-		} ep_connect_through_host;
-		struct msg_transport_poll {
-			uint64_t	ep_handle;
-			uint32_t	timeout_ms;
-		} ep_poll;
-		struct msg_transport_disconnect {
-			uint64_t	ep_handle;
-		} ep_disconnect;
-		struct msg_tgt_dscvr {
-			enum iscsi_tgt_dscvr	type;
-			uint32_t	host_no;
+		काष्ठा msg_create_session अणु
+			uपूर्णांक32_t	initial_cmdsn;
+			uपूर्णांक16_t	cmds_max;
+			uपूर्णांक16_t	queue_depth;
+		पूर्ण c_session;
+		काष्ठा msg_create_bound_session अणु
+			uपूर्णांक64_t	ep_handle;
+			uपूर्णांक32_t	initial_cmdsn;
+			uपूर्णांक16_t	cmds_max;
+			uपूर्णांक16_t	queue_depth;
+		पूर्ण c_bound_session;
+		काष्ठा msg_destroy_session अणु
+			uपूर्णांक32_t	sid;
+		पूर्ण d_session;
+		काष्ठा msg_create_conn अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+		पूर्ण c_conn;
+		काष्ठा msg_bind_conn अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+			uपूर्णांक64_t	transport_eph;
+			uपूर्णांक32_t	is_leading;
+		पूर्ण b_conn;
+		काष्ठा msg_destroy_conn अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+		पूर्ण d_conn;
+		काष्ठा msg_send_pdu अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+			uपूर्णांक32_t	hdr_size;
+			uपूर्णांक32_t	data_size;
+		पूर्ण send_pdu;
+		काष्ठा msg_set_param अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+			uपूर्णांक32_t	param; /* क्रमागत iscsi_param */
+			uपूर्णांक32_t	len;
+		पूर्ण set_param;
+		काष्ठा msg_start_conn अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+		पूर्ण start_conn;
+		काष्ठा msg_stop_conn अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+			uपूर्णांक64_t	conn_handle;
+			uपूर्णांक32_t	flag;
+		पूर्ण stop_conn;
+		काष्ठा msg_get_stats अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+		पूर्ण get_stats;
+		काष्ठा msg_transport_connect अणु
+			uपूर्णांक32_t	non_blocking;
+		पूर्ण ep_connect;
+		काष्ठा msg_transport_connect_through_host अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	non_blocking;
+		पूर्ण ep_connect_through_host;
+		काष्ठा msg_transport_poll अणु
+			uपूर्णांक64_t	ep_handle;
+			uपूर्णांक32_t	समयout_ms;
+		पूर्ण ep_poll;
+		काष्ठा msg_transport_disconnect अणु
+			uपूर्णांक64_t	ep_handle;
+		पूर्ण ep_disconnect;
+		काष्ठा msg_tgt_dscvr अणु
+			क्रमागत iscsi_tgt_dscvr	type;
+			uपूर्णांक32_t	host_no;
 			/*
  			 * enable = 1 to establish a new connection
 			 * with the server. enable = 0 to disconnect
-			 * from the server. Used primarily to switch
+			 * from the server. Used primarily to चयन
 			 * from one iSNS server to another.
 			 */
-			uint32_t	enable;
-		} tgt_dscvr;
-		struct msg_set_host_param {
-			uint32_t	host_no;
-			uint32_t	param; /* enum iscsi_host_param */
-			uint32_t	len;
-		} set_host_param;
-		struct msg_set_path {
-			uint32_t	host_no;
-		} set_path;
-		struct msg_set_iface_params {
-			uint32_t	host_no;
-			uint32_t	count;
-		} set_iface_params;
-		struct msg_iscsi_ping {
-			uint32_t        host_no;
-			uint32_t        iface_num;
-			uint32_t        iface_type;
-			uint32_t        payload_size;
-			uint32_t	pid;	/* unique ping id associated
+			uपूर्णांक32_t	enable;
+		पूर्ण tgt_dscvr;
+		काष्ठा msg_set_host_param अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	param; /* क्रमागत iscsi_host_param */
+			uपूर्णांक32_t	len;
+		पूर्ण set_host_param;
+		काष्ठा msg_set_path अणु
+			uपूर्णांक32_t	host_no;
+		पूर्ण set_path;
+		काष्ठा msg_set_अगरace_params अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	count;
+		पूर्ण set_अगरace_params;
+		काष्ठा msg_iscsi_ping अणु
+			uपूर्णांक32_t        host_no;
+			uपूर्णांक32_t        अगरace_num;
+			uपूर्णांक32_t        अगरace_type;
+			uपूर्णांक32_t        payload_size;
+			uपूर्णांक32_t	pid;	/* unique ping id associated
 						   with each ping request */
-		} iscsi_ping;
-		struct msg_get_chap {
-			uint32_t	host_no;
-			uint32_t	num_entries; /* number of CHAP entries
+		पूर्ण iscsi_ping;
+		काष्ठा msg_get_chap अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	num_entries; /* number of CHAP entries
 						      * on request, number of
 						      * valid CHAP entries on
 						      * response */
-			uint16_t	chap_tbl_idx;
-		} get_chap;
-		struct msg_delete_chap {
-		       uint32_t        host_no;
-		       uint16_t        chap_tbl_idx;
-		} delete_chap;
-		struct msg_set_flashnode_param {
-			uint32_t	host_no;
-			uint32_t	flashnode_idx;
-			uint32_t	count;
-		} set_flashnode;
-		struct msg_new_flashnode {
-			uint32_t	host_no;
-			uint32_t	len;
-		} new_flashnode;
-		struct msg_del_flashnode {
-			uint32_t	host_no;
-			uint32_t	flashnode_idx;
-		} del_flashnode;
-		struct msg_login_flashnode {
-			uint32_t	host_no;
-			uint32_t	flashnode_idx;
-		} login_flashnode;
-		struct msg_logout_flashnode {
-			uint32_t	host_no;
-			uint32_t	flashnode_idx;
-		} logout_flashnode;
-		struct msg_logout_flashnode_sid {
-			uint32_t	host_no;
-			uint32_t	sid;
-		} logout_flashnode_sid;
-		struct msg_get_host_stats {
-			uint32_t host_no;
-		} get_host_stats;
-	} u;
-	union {
+			uपूर्णांक16_t	chap_tbl_idx;
+		पूर्ण get_chap;
+		काष्ठा msg_delete_chap अणु
+		       uपूर्णांक32_t        host_no;
+		       uपूर्णांक16_t        chap_tbl_idx;
+		पूर्ण delete_chap;
+		काष्ठा msg_set_flashnode_param अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	flashnode_idx;
+			uपूर्णांक32_t	count;
+		पूर्ण set_flashnode;
+		काष्ठा msg_new_flashnode अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	len;
+		पूर्ण new_flashnode;
+		काष्ठा msg_del_flashnode अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	flashnode_idx;
+		पूर्ण del_flashnode;
+		काष्ठा msg_login_flashnode अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	flashnode_idx;
+		पूर्ण login_flashnode;
+		काष्ठा msg_logout_flashnode अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	flashnode_idx;
+		पूर्ण logout_flashnode;
+		काष्ठा msg_logout_flashnode_sid अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	sid;
+		पूर्ण logout_flashnode_sid;
+		काष्ठा msg_get_host_stats अणु
+			uपूर्णांक32_t host_no;
+		पूर्ण get_host_stats;
+	पूर्ण u;
+	जोड़ अणु
 		/* messages k -> u */
-		int			retcode;
-		struct msg_create_session_ret {
-			uint32_t	sid;
-			uint32_t	host_no;
-		} c_session_ret;
-		struct msg_create_conn_ret {
-			uint32_t	sid;
-			uint32_t	cid;
-		} c_conn_ret;
-		struct msg_unbind_session {
-			uint32_t	sid;
-			uint32_t	host_no;
-		} unbind_session;
-		struct msg_recv_req {
-			uint32_t	sid;
-			uint32_t	cid;
-			uint64_t	recv_handle;
-		} recv_req;
-		struct msg_conn_login {
-			uint32_t        sid;
-			uint32_t        cid;
-			uint32_t        state; /* enum iscsi_conn_state */
-		} conn_login;
-		struct msg_conn_error {
-			uint32_t	sid;
-			uint32_t	cid;
-			uint32_t	error; /* enum iscsi_err */
-		} connerror;
-		struct msg_session_destroyed {
-			uint32_t	host_no;
-			uint32_t	sid;
-		} d_session;
-		struct msg_transport_connect_ret {
-			uint64_t	handle;
-		} ep_connect_ret;
-		struct msg_req_path {
-			uint32_t	host_no;
-		} req_path;
-		struct msg_notify_if_down {
-			uint32_t	host_no;
-		} notify_if_down;
-		struct msg_host_event {
-			uint32_t	host_no;
-			uint32_t	data_size;
-			enum iscsi_host_event_code code;
-		} host_event;
-		struct msg_ping_comp {
-			uint32_t        host_no;
-			uint32_t        status; /* enum
+		पूर्णांक			retcode;
+		काष्ठा msg_create_session_ret अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	host_no;
+		पूर्ण c_session_ret;
+		काष्ठा msg_create_conn_ret अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+		पूर्ण c_conn_ret;
+		काष्ठा msg_unbind_session अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	host_no;
+		पूर्ण unbind_session;
+		काष्ठा msg_recv_req अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+			uपूर्णांक64_t	recv_handle;
+		पूर्ण recv_req;
+		काष्ठा msg_conn_login अणु
+			uपूर्णांक32_t        sid;
+			uपूर्णांक32_t        cid;
+			uपूर्णांक32_t        state; /* क्रमागत iscsi_conn_state */
+		पूर्ण conn_login;
+		काष्ठा msg_conn_error अणु
+			uपूर्णांक32_t	sid;
+			uपूर्णांक32_t	cid;
+			uपूर्णांक32_t	error; /* क्रमागत iscsi_err */
+		पूर्ण connerror;
+		काष्ठा msg_session_destroyed अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	sid;
+		पूर्ण d_session;
+		काष्ठा msg_transport_connect_ret अणु
+			uपूर्णांक64_t	handle;
+		पूर्ण ep_connect_ret;
+		काष्ठा msg_req_path अणु
+			uपूर्णांक32_t	host_no;
+		पूर्ण req_path;
+		काष्ठा msg_notअगरy_अगर_करोwn अणु
+			uपूर्णांक32_t	host_no;
+		पूर्ण notअगरy_अगर_करोwn;
+		काष्ठा msg_host_event अणु
+			uपूर्णांक32_t	host_no;
+			uपूर्णांक32_t	data_size;
+			क्रमागत iscsi_host_event_code code;
+		पूर्ण host_event;
+		काष्ठा msg_ping_comp अणु
+			uपूर्णांक32_t        host_no;
+			uपूर्णांक32_t        status; /* क्रमागत
 						 * iscsi_ping_status_code */
-			uint32_t	pid;	/* unique ping id associated
+			uपूर्णांक32_t	pid;	/* unique ping id associated
 						   with each ping request */
-			uint32_t        data_size;
-		} ping_comp;
-		struct msg_new_flashnode_ret {
-			uint32_t	flashnode_idx;
-		} new_flashnode_ret;
-	} r;
-} __attribute__ ((aligned (sizeof(uint64_t))));
+			uपूर्णांक32_t        data_size;
+		पूर्ण ping_comp;
+		काष्ठा msg_new_flashnode_ret अणु
+			uपूर्णांक32_t	flashnode_idx;
+		पूर्ण new_flashnode_ret;
+	पूर्ण r;
+पूर्ण __attribute__ ((aligned (माप(uपूर्णांक64_t))));
 
-enum iscsi_param_type {
+क्रमागत iscsi_param_type अणु
 	ISCSI_PARAM,		/* iscsi_param (session, conn, target, LU) */
 	ISCSI_HOST_PARAM,	/* iscsi_host_param */
 	ISCSI_NET_PARAM,	/* iscsi_net_param */
 	ISCSI_FLASHNODE_PARAM,	/* iscsi_flashnode_param */
 	ISCSI_CHAP_PARAM,	/* iscsi_chap_param */
-	ISCSI_IFACE_PARAM,	/* iscsi_iface_param */
-};
+	ISCSI_IFACE_PARAM,	/* iscsi_अगरace_param */
+पूर्ण;
 
-/* structure for minimalist usecase */
-struct iscsi_param_info {
-	uint32_t len;		/* Actual length of the param value */
-	uint16_t param;		/* iscsi param */
-	uint8_t value[];	/* length sized value follows */
-} __packed;
+/* काष्ठाure क्रम minimalist useहाल */
+काष्ठा iscsi_param_info अणु
+	uपूर्णांक32_t len;		/* Actual length of the param value */
+	uपूर्णांक16_t param;		/* iscsi param */
+	uपूर्णांक8_t value[];	/* length sized value follows */
+पूर्ण __packed;
 
-struct iscsi_iface_param_info {
-	uint32_t iface_num;	/* iface number, 0 - n */
-	uint32_t len;		/* Actual length of the param */
-	uint16_t param;		/* iscsi param value */
-	uint8_t iface_type;	/* IPv4 or IPv6 */
-	uint8_t param_type;	/* iscsi_param_type */
-	uint8_t value[];	/* length sized value follows */
-} __packed;
+काष्ठा iscsi_अगरace_param_info अणु
+	uपूर्णांक32_t अगरace_num;	/* अगरace number, 0 - n */
+	uपूर्णांक32_t len;		/* Actual length of the param */
+	uपूर्णांक16_t param;		/* iscsi param value */
+	uपूर्णांक8_t अगरace_type;	/* IPv4 or IPv6 */
+	uपूर्णांक8_t param_type;	/* iscsi_param_type */
+	uपूर्णांक8_t value[];	/* length sized value follows */
+पूर्ण __packed;
 
 /*
- * To keep the struct iscsi_uevent size the same for userspace code
- * compatibility, the main structure for ISCSI_UEVENT_PATH_UPDATE and
+ * To keep the काष्ठा iscsi_uevent size the same क्रम userspace code
+ * compatibility, the मुख्य काष्ठाure क्रम ISCSI_UEVENT_PATH_UPDATE and
  * ISCSI_KEVENT_PATH_REQ is defined separately and comes after the
- * struct iscsi_uevent in the NETLINK_ISCSI message.
+ * काष्ठा iscsi_uevent in the NETLINK_ISCSI message.
  */
-struct iscsi_path {
-	uint64_t	handle;
-	uint8_t		mac_addr[6];
-	uint8_t		mac_addr_old[6];
-	uint32_t	ip_addr_len;	/* 4 or 16 */
-	union {
-		struct in_addr	v4_addr;
-		struct in6_addr	v6_addr;
-	} src;
-	union {
-		struct in_addr	v4_addr;
-		struct in6_addr	v6_addr;
-	} dst;
-	uint16_t	vlan_id;
-	uint16_t	pmtu;
-} __attribute__ ((aligned (sizeof(uint64_t))));
+काष्ठा iscsi_path अणु
+	uपूर्णांक64_t	handle;
+	uपूर्णांक8_t		mac_addr[6];
+	uपूर्णांक8_t		mac_addr_old[6];
+	uपूर्णांक32_t	ip_addr_len;	/* 4 or 16 */
+	जोड़ अणु
+		काष्ठा in_addr	v4_addr;
+		काष्ठा in6_addr	v6_addr;
+	पूर्ण src;
+	जोड़ अणु
+		काष्ठा in_addr	v4_addr;
+		काष्ठा in6_addr	v6_addr;
+	पूर्ण dst;
+	uपूर्णांक16_t	vlan_id;
+	uपूर्णांक16_t	pmtu;
+पूर्ण __attribute__ ((aligned (माप(uपूर्णांक64_t))));
 
-/* iscsi iface enabled/disabled setting */
-#define ISCSI_IFACE_DISABLE	0x01
-#define ISCSI_IFACE_ENABLE	0x02
+/* iscsi अगरace enabled/disabled setting */
+#घोषणा ISCSI_IFACE_DISABLE	0x01
+#घोषणा ISCSI_IFACE_ENABLE	0x02
 
 /* ipv4 bootproto */
-#define ISCSI_BOOTPROTO_STATIC		0x01
-#define ISCSI_BOOTPROTO_DHCP		0x02
+#घोषणा ISCSI_BOOTPROTO_STATIC		0x01
+#घोषणा ISCSI_BOOTPROTO_DHCP		0x02
 
-/* ipv6 addr autoconfig type */
-#define ISCSI_IPV6_AUTOCFG_DISABLE		0x01
-#define ISCSI_IPV6_AUTOCFG_ND_ENABLE		0x02
-#define ISCSI_IPV6_AUTOCFG_DHCPV6_ENABLE	0x03
+/* ipv6 addr स्वतःconfig type */
+#घोषणा ISCSI_IPV6_AUTOCFG_DISABLE		0x01
+#घोषणा ISCSI_IPV6_AUTOCFG_ND_ENABLE		0x02
+#घोषणा ISCSI_IPV6_AUTOCFG_DHCPV6_ENABLE	0x03
 
 /* ipv6 link local addr type */
-#define ISCSI_IPV6_LINKLOCAL_AUTOCFG_ENABLE	0x01
-#define ISCSI_IPV6_LINKLOCAL_AUTOCFG_DISABLE	0x02
+#घोषणा ISCSI_IPV6_LINKLOCAL_AUTOCFG_ENABLE	0x01
+#घोषणा ISCSI_IPV6_LINKLOCAL_AUTOCFG_DISABLE	0x02
 
 /* ipv6 router addr type */
-#define ISCSI_IPV6_ROUTER_AUTOCFG_ENABLE	0x01
-#define ISCSI_IPV6_ROUTER_AUTOCFG_DISABLE	0x02
+#घोषणा ISCSI_IPV6_ROUTER_AUTOCFG_ENABLE	0x01
+#घोषणा ISCSI_IPV6_ROUTER_AUTOCFG_DISABLE	0x02
 
-#define ISCSI_IFACE_TYPE_IPV4		0x01
-#define ISCSI_IFACE_TYPE_IPV6		0x02
+#घोषणा ISCSI_IFACE_TYPE_IPV4		0x01
+#घोषणा ISCSI_IFACE_TYPE_IPV6		0x02
 
-#define ISCSI_MAX_VLAN_ID		4095
-#define ISCSI_MAX_VLAN_PRIORITY		7
+#घोषणा ISCSI_MAX_VLAN_ID		4095
+#घोषणा ISCSI_MAX_VLAN_PRIORITY		7
 
 /* iscsi vlan enable/disabled setting */
-#define ISCSI_VLAN_DISABLE	0x01
-#define ISCSI_VLAN_ENABLE	0x02
+#घोषणा ISCSI_VLAN_DISABLE	0x01
+#घोषणा ISCSI_VLAN_ENABLE	0x02
 
-/* iscsi generic enable/disabled setting for various features */
-#define ISCSI_NET_PARAM_DISABLE		0x01
-#define ISCSI_NET_PARAM_ENABLE		0x02
+/* iscsi generic enable/disabled setting क्रम various features */
+#घोषणा ISCSI_NET_PARAM_DISABLE		0x01
+#घोषणा ISCSI_NET_PARAM_ENABLE		0x02
 
 /* iSCSI network params */
-enum iscsi_net_param {
+क्रमागत iscsi_net_param अणु
 	ISCSI_NET_PARAM_IPV4_ADDR		= 1,
 	ISCSI_NET_PARAM_IPV4_SUBNET,
 	ISCSI_NET_PARAM_IPV4_GW,
@@ -438,10 +439,10 @@ enum iscsi_net_param {
 	ISCSI_NET_PARAM_IPV6_ND_STALE_TMO,
 	ISCSI_NET_PARAM_IPV6_DUP_ADDR_DETECT_CNT,
 	ISCSI_NET_PARAM_IPV6_RTR_ADV_LINK_MTU,
-	ISCSI_NET_PARAM_REDIRECT_EN,
-};
+	ISCSI_NET_PARAM_REसूचीECT_EN,
+पूर्ण;
 
-enum iscsi_ipaddress_state {
+क्रमागत iscsi_ipaddress_state अणु
 	ISCSI_IPDDRESS_STATE_UNCONFIGURED,
 	ISCSI_IPDDRESS_STATE_ACQUIRING,
 	ISCSI_IPDDRESS_STATE_TENTATIVE,
@@ -449,17 +450,17 @@ enum iscsi_ipaddress_state {
 	ISCSI_IPDDRESS_STATE_DISABLING,
 	ISCSI_IPDDRESS_STATE_INVALID,
 	ISCSI_IPDDRESS_STATE_DEPRECATED,
-};
+पूर्ण;
 
-enum iscsi_router_state {
+क्रमागत iscsi_router_state अणु
 	ISCSI_ROUTER_STATE_UNKNOWN,
 	ISCSI_ROUTER_STATE_ADVERTISED,
 	ISCSI_ROUTER_STATE_MANUAL,
 	ISCSI_ROUTER_STATE_STALE,
-};
+पूर्ण;
 
-/* iSCSI specific settings params for iface */
-enum iscsi_iface_param {
+/* iSCSI specअगरic settings params क्रम अगरace */
+क्रमागत iscsi_अगरace_param अणु
 	ISCSI_IFACE_PARAM_DEF_TASKMGMT_TMO,
 	ISCSI_IFACE_PARAM_HDRDGST_EN,
 	ISCSI_IFACE_PARAM_DATADGST_EN,
@@ -478,9 +479,9 @@ enum iscsi_iface_param {
 	ISCSI_IFACE_PARAM_DISCOVERY_LOGOUT_EN,
 	ISCSI_IFACE_PARAM_STRICT_LOGIN_COMP_EN,
 	ISCSI_IFACE_PARAM_INITIATOR_NAME,
-};
+पूर्ण;
 
-enum iscsi_conn_state {
+क्रमागत iscsi_conn_state अणु
 	ISCSI_CONN_STATE_FREE,
 	ISCSI_CONN_STATE_XPT_WAIT,
 	ISCSI_CONN_STATE_IN_LOGIN,
@@ -488,12 +489,12 @@ enum iscsi_conn_state {
 	ISCSI_CONN_STATE_IN_LOGOUT,
 	ISCSI_CONN_STATE_LOGOUT_REQUESTED,
 	ISCSI_CONN_STATE_CLEANUP_WAIT,
-};
+पूर्ण;
 
 /*
  * Common error codes
  */
-enum iscsi_err {
+क्रमागत iscsi_err अणु
 	ISCSI_OK			= 0,
 
 	ISCSI_ERR_DATASN		= ISCSI_ERR_BASE + 1,
@@ -518,12 +519,12 @@ enum iscsi_err {
 	ISCSI_ERR_TCP_CONN_CLOSE	= ISCSI_ERR_BASE + 20,
 	ISCSI_ERR_SCSI_EH_SESSION_RST	= ISCSI_ERR_BASE + 21,
 	ISCSI_ERR_NOP_TIMEDOUT		= ISCSI_ERR_BASE + 22,
-};
+पूर्ण;
 
 /*
  * iSCSI Parameters (RFC3720)
  */
-enum iscsi_param {
+क्रमागत iscsi_param अणु
 	/* passed in using netlink set param */
 	ISCSI_PARAM_MAX_RECV_DLENGTH,
 	ISCSI_PARAM_MAX_XMIT_DLENGTH,
@@ -612,10 +613,10 @@ enum iscsi_param {
 	ISCSI_PARAM_LOCAL_IPADDR,
 	/* must always be last */
 	ISCSI_PARAM_MAX,
-};
+पूर्ण;
 
 /* iSCSI HBA params */
-enum iscsi_host_param {
+क्रमागत iscsi_host_param अणु
 	ISCSI_HOST_PARAM_HWADDRESS,
 	ISCSI_HOST_PARAM_INITIATOR_NAME,
 	ISCSI_HOST_PARAM_NETDEV_NAME,
@@ -623,14 +624,14 @@ enum iscsi_host_param {
 	ISCSI_HOST_PARAM_PORT_STATE,
 	ISCSI_HOST_PARAM_PORT_SPEED,
 	ISCSI_HOST_PARAM_MAX,
-};
+पूर्ण;
 
 /* portal type */
-#define PORTAL_TYPE_IPV4	"ipv4"
-#define PORTAL_TYPE_IPV6	"ipv6"
+#घोषणा PORTAL_TYPE_IPV4	"ipv4"
+#घोषणा PORTAL_TYPE_IPV6	"ipv6"
 
 /* iSCSI Flash Target params */
-enum iscsi_flashnode_param {
+क्रमागत iscsi_flashnode_param अणु
 	ISCSI_FLASHNODE_IS_FW_ASSIGNED_IPV6,
 	ISCSI_FLASHNODE_PORTAL_TYPE,
 	ISCSI_FLASHNODE_AUTO_SND_TGT_DISABLE,
@@ -646,7 +647,7 @@ enum iscsi_flashnode_param {
 	ISCSI_FLASHNODE_SNACK_REQ_EN,
 	ISCSI_FLASHNODE_DISCOVERY_LOGOUT_EN,
 	ISCSI_FLASHNODE_BIDI_CHAP_EN,
-	/* make authentication for discovery sessions optional */
+	/* make authentication क्रम discovery sessions optional */
 	ISCSI_FLASHNODE_DISCOVERY_AUTH_OPTIONAL,
 	ISCSI_FLASHNODE_ERL,
 	ISCSI_FLASHNODE_TCP_TIMESTAMP_STAT,
@@ -669,7 +670,7 @@ enum iscsi_flashnode_param {
 	ISCSI_FLASHNODE_DEF_TASKMGMT_TMO,
 	ISCSI_FLASHNODE_IPADDR,
 	ISCSI_FLASHNODE_ALIAS,
-	ISCSI_FLASHNODE_REDIRECT_IPADDR,
+	ISCSI_FLASHNODE_REसूचीECT_IPADDR,
 	ISCSI_FLASHNODE_MAX_SEGMENT_SIZE,
 	ISCSI_FLASHNODE_LOCAL_PORT,
 	ISCSI_FLASHNODE_IPV4_TOS,
@@ -693,22 +694,22 @@ enum iscsi_flashnode_param {
 	ISCSI_FLASHNODE_IS_BOOT_TGT,
 
 	ISCSI_FLASHNODE_MAX,
-};
+पूर्ण;
 
-struct iscsi_flashnode_param_info {
-	uint32_t len;		/* Actual length of the param */
-	uint16_t param;		/* iscsi param value */
-	uint8_t value[];	/* length sized value follows */
-} __packed;
+काष्ठा iscsi_flashnode_param_info अणु
+	uपूर्णांक32_t len;		/* Actual length of the param */
+	uपूर्णांक16_t param;		/* iscsi param value */
+	uपूर्णांक8_t value[];	/* length sized value follows */
+पूर्ण __packed;
 
-enum iscsi_discovery_parent_type {
+क्रमागत iscsi_discovery_parent_type अणु
 	ISCSI_DISC_PARENT_UNKNOWN	= 0x1,
 	ISCSI_DISC_PARENT_SENDTGT	= 0x2,
 	ISCSI_DISC_PARENT_ISNS		= 0x3,
-};
+पूर्ण;
 
 /* iSCSI port Speed */
-enum iscsi_port_speed {
+क्रमागत iscsi_port_speed अणु
 	ISCSI_PORT_SPEED_UNKNOWN	= 0x1,
 	ISCSI_PORT_SPEED_10MBPS		= 0x2,
 	ISCSI_PORT_SPEED_100MBPS	= 0x4,
@@ -716,16 +717,16 @@ enum iscsi_port_speed {
 	ISCSI_PORT_SPEED_10GBPS		= 0x10,
 	ISCSI_PORT_SPEED_25GBPS         = 0x20,
 	ISCSI_PORT_SPEED_40GBPS         = 0x40,
-};
+पूर्ण;
 
 /* iSCSI port state */
-enum iscsi_port_state {
+क्रमागत iscsi_port_state अणु
 	ISCSI_PORT_STATE_DOWN		= 0x1,
 	ISCSI_PORT_STATE_UP		= 0x2,
-};
+पूर्ण;
 
 /* iSCSI PING status/error code */
-enum iscsi_ping_status_code {
+क्रमागत iscsi_ping_status_code अणु
 	ISCSI_PING_SUCCESS			= 0,
 	ISCSI_PING_FW_DISABLED			= 0x1,
 	ISCSI_PING_IPADDR_INVALID		= 0x2,
@@ -736,219 +737,219 @@ enum iscsi_ping_status_code {
 	ISCSI_PING_ICMP_ERROR			= 0x7,
 	ISCSI_PING_MAX_REQ_EXCEEDED		= 0x8,
 	ISCSI_PING_NO_ARP_RECEIVED		= 0x9,
-};
+पूर्ण;
 
-#define iscsi_ptr(_handle) ((void*)(unsigned long)_handle)
-#define iscsi_handle(_ptr) ((uint64_t)(unsigned long)_ptr)
+#घोषणा iscsi_ptr(_handle) ((व्योम*)(अचिन्हित दीर्घ)_handle)
+#घोषणा iscsi_handle(_ptr) ((uपूर्णांक64_t)(अचिन्हित दीर्घ)_ptr)
 
 /*
  * These flags presents iSCSI Data-Path capabilities.
  */
-#define CAP_RECOVERY_L0		0x1
-#define CAP_RECOVERY_L1		0x2
-#define CAP_RECOVERY_L2		0x4
-#define CAP_MULTI_R2T		0x8
-#define CAP_HDRDGST		0x10
-#define CAP_DATADGST		0x20
-#define CAP_MULTI_CONN		0x40
-#define CAP_TEXT_NEGO		0x80
-#define CAP_MARKERS		0x100
-#define CAP_FW_DB		0x200
-#define CAP_SENDTARGETS_OFFLOAD	0x400	/* offload discovery process */
-#define CAP_DATA_PATH_OFFLOAD	0x800	/* offload entire IO path */
-#define CAP_DIGEST_OFFLOAD	0x1000	/* offload hdr and data digests */
-#define CAP_PADDING_OFFLOAD	0x2000	/* offload padding insertion, removal,
-					 and verification */
-#define CAP_LOGIN_OFFLOAD	0x4000  /* offload session login */
+#घोषणा CAP_RECOVERY_L0		0x1
+#घोषणा CAP_RECOVERY_L1		0x2
+#घोषणा CAP_RECOVERY_L2		0x4
+#घोषणा CAP_MULTI_R2T		0x8
+#घोषणा CAP_HDRDGST		0x10
+#घोषणा CAP_DATADGST		0x20
+#घोषणा CAP_MULTI_CONN		0x40
+#घोषणा CAP_TEXT_NEGO		0x80
+#घोषणा CAP_MARKERS		0x100
+#घोषणा CAP_FW_DB		0x200
+#घोषणा CAP_SENDTARGETS_OFFLOAD	0x400	/* offload discovery process */
+#घोषणा CAP_DATA_PATH_OFFLOAD	0x800	/* offload entire IO path */
+#घोषणा CAP_DIGEST_OFFLOAD	0x1000	/* offload hdr and data digests */
+#घोषणा CAP_PADDING_OFFLOAD	0x2000	/* offload padding insertion, removal,
+					 and verअगरication */
+#घोषणा CAP_LOGIN_OFFLOAD	0x4000  /* offload session login */
 
 /*
  * These flags describes reason of stop_conn() call
  */
-#define STOP_CONN_TERM		0x1
-#define STOP_CONN_SUSPEND	0x2
-#define STOP_CONN_RECOVER	0x3
+#घोषणा STOP_CONN_TERM		0x1
+#घोषणा STOP_CONN_SUSPEND	0x2
+#घोषणा STOP_CONN_RECOVER	0x3
 
-#define ISCSI_STATS_CUSTOM_MAX		32
-#define ISCSI_STATS_CUSTOM_DESC_MAX	64
-struct iscsi_stats_custom {
-	char desc[ISCSI_STATS_CUSTOM_DESC_MAX];
-	uint64_t value;
-};
+#घोषणा ISCSI_STATS_CUSTOM_MAX		32
+#घोषणा ISCSI_STATS_CUSTOM_DESC_MAX	64
+काष्ठा iscsi_stats_custom अणु
+	अक्षर desc[ISCSI_STATS_CUSTOM_DESC_MAX];
+	uपूर्णांक64_t value;
+पूर्ण;
 
 /*
- * struct iscsi_stats - iSCSI Statistics (iSCSI MIB)
+ * काष्ठा iscsi_stats - iSCSI Statistics (iSCSI MIB)
  *
- * Note: this structure contains counters collected on per-connection basis.
+ * Note: this काष्ठाure contains counters collected on per-connection basis.
  */
-struct iscsi_stats {
+काष्ठा iscsi_stats अणु
 	/* octets */
-	uint64_t txdata_octets;
-	uint64_t rxdata_octets;
+	uपूर्णांक64_t txdata_octets;
+	uपूर्णांक64_t rxdata_octets;
 
 	/* xmit pdus */
-	uint32_t noptx_pdus;
-	uint32_t scsicmd_pdus;
-	uint32_t tmfcmd_pdus;
-	uint32_t login_pdus;
-	uint32_t text_pdus;
-	uint32_t dataout_pdus;
-	uint32_t logout_pdus;
-	uint32_t snack_pdus;
+	uपूर्णांक32_t noptx_pdus;
+	uपूर्णांक32_t scsicmd_pdus;
+	uपूर्णांक32_t पंचांगfcmd_pdus;
+	uपूर्णांक32_t login_pdus;
+	uपूर्णांक32_t text_pdus;
+	uपूर्णांक32_t dataout_pdus;
+	uपूर्णांक32_t logout_pdus;
+	uपूर्णांक32_t snack_pdus;
 
 	/* recv pdus */
-	uint32_t noprx_pdus;
-	uint32_t scsirsp_pdus;
-	uint32_t tmfrsp_pdus;
-	uint32_t textrsp_pdus;
-	uint32_t datain_pdus;
-	uint32_t logoutrsp_pdus;
-	uint32_t r2t_pdus;
-	uint32_t async_pdus;
-	uint32_t rjt_pdus;
+	uपूर्णांक32_t noprx_pdus;
+	uपूर्णांक32_t scsirsp_pdus;
+	uपूर्णांक32_t पंचांगfrsp_pdus;
+	uपूर्णांक32_t textrsp_pdus;
+	uपूर्णांक32_t datain_pdus;
+	uपूर्णांक32_t logoutrsp_pdus;
+	uपूर्णांक32_t r2t_pdus;
+	uपूर्णांक32_t async_pdus;
+	uपूर्णांक32_t rjt_pdus;
 
 	/* errors */
-	uint32_t digest_err;
-	uint32_t timeout_err;
+	uपूर्णांक32_t digest_err;
+	uपूर्णांक32_t समयout_err;
 
 	/*
 	 * iSCSI Custom Statistics support, i.e. Transport could
-	 * extend existing MIB statistics with its own specific statistics
+	 * extend existing MIB statistics with its own specअगरic statistics
 	 * up to ISCSI_STATS_CUSTOM_MAX
 	 */
-	uint32_t custom_length;
-	struct iscsi_stats_custom custom[]
-		__attribute__ ((aligned (sizeof(uint64_t))));
-};
+	uपूर्णांक32_t custom_length;
+	काष्ठा iscsi_stats_custom custom[]
+		__attribute__ ((aligned (माप(uपूर्णांक64_t))));
+पूर्ण;
 
-enum chap_type_e {
+क्रमागत chap_type_e अणु
 	CHAP_TYPE_OUT,
 	CHAP_TYPE_IN,
-};
+पूर्ण;
 
-enum iscsi_chap_param {
+क्रमागत iscsi_chap_param अणु
 	ISCSI_CHAP_PARAM_INDEX,
 	ISCSI_CHAP_PARAM_CHAP_TYPE,
 	ISCSI_CHAP_PARAM_USERNAME,
 	ISCSI_CHAP_PARAM_PASSWORD,
 	ISCSI_CHAP_PARAM_PASSWORD_LEN
-};
+पूर्ण;
 
-#define ISCSI_CHAP_AUTH_NAME_MAX_LEN	256
-#define ISCSI_CHAP_AUTH_SECRET_MAX_LEN	256
-struct iscsi_chap_rec {
-	uint16_t chap_tbl_idx;
-	enum chap_type_e chap_type;
-	char username[ISCSI_CHAP_AUTH_NAME_MAX_LEN];
-	uint8_t password[ISCSI_CHAP_AUTH_SECRET_MAX_LEN];
-	uint8_t password_length;
-};
+#घोषणा ISCSI_CHAP_AUTH_NAME_MAX_LEN	256
+#घोषणा ISCSI_CHAP_AUTH_SECRET_MAX_LEN	256
+काष्ठा iscsi_chap_rec अणु
+	uपूर्णांक16_t chap_tbl_idx;
+	क्रमागत chap_type_e chap_type;
+	अक्षर username[ISCSI_CHAP_AUTH_NAME_MAX_LEN];
+	uपूर्णांक8_t password[ISCSI_CHAP_AUTH_SECRET_MAX_LEN];
+	uपूर्णांक8_t password_length;
+पूर्ण;
 
-#define ISCSI_HOST_STATS_CUSTOM_MAX             32
-#define ISCSI_HOST_STATS_CUSTOM_DESC_MAX        64
-struct iscsi_host_stats_custom {
-	char desc[ISCSI_HOST_STATS_CUSTOM_DESC_MAX];
-	uint64_t value;
-};
+#घोषणा ISCSI_HOST_STATS_CUSTOM_MAX             32
+#घोषणा ISCSI_HOST_STATS_CUSTOM_DESC_MAX        64
+काष्ठा iscsi_host_stats_custom अणु
+	अक्षर desc[ISCSI_HOST_STATS_CUSTOM_DESC_MAX];
+	uपूर्णांक64_t value;
+पूर्ण;
 
-/* struct iscsi_offload_host_stats: Host statistics,
- * Include statistics for MAC, IP, TCP & iSCSI.
+/* काष्ठा iscsi_offload_host_stats: Host statistics,
+ * Include statistics क्रम MAC, IP, TCP & iSCSI.
  */
-struct iscsi_offload_host_stats {
+काष्ठा iscsi_offload_host_stats अणु
 	/* MAC */
-	uint64_t mactx_frames;
-	uint64_t mactx_bytes;
-	uint64_t mactx_multicast_frames;
-	uint64_t mactx_broadcast_frames;
-	uint64_t mactx_pause_frames;
-	uint64_t mactx_control_frames;
-	uint64_t mactx_deferral;
-	uint64_t mactx_excess_deferral;
-	uint64_t mactx_late_collision;
-	uint64_t mactx_abort;
-	uint64_t mactx_single_collision;
-	uint64_t mactx_multiple_collision;
-	uint64_t mactx_collision;
-	uint64_t mactx_frames_dropped;
-	uint64_t mactx_jumbo_frames;
-	uint64_t macrx_frames;
-	uint64_t macrx_bytes;
-	uint64_t macrx_unknown_control_frames;
-	uint64_t macrx_pause_frames;
-	uint64_t macrx_control_frames;
-	uint64_t macrx_dribble;
-	uint64_t macrx_frame_length_error;
-	uint64_t macrx_jabber;
-	uint64_t macrx_carrier_sense_error;
-	uint64_t macrx_frame_discarded;
-	uint64_t macrx_frames_dropped;
-	uint64_t mac_crc_error;
-	uint64_t mac_encoding_error;
-	uint64_t macrx_length_error_large;
-	uint64_t macrx_length_error_small;
-	uint64_t macrx_multicast_frames;
-	uint64_t macrx_broadcast_frames;
+	uपूर्णांक64_t mactx_frames;
+	uपूर्णांक64_t mactx_bytes;
+	uपूर्णांक64_t mactx_multicast_frames;
+	uपूर्णांक64_t mactx_broadcast_frames;
+	uपूर्णांक64_t mactx_छोड़ो_frames;
+	uपूर्णांक64_t mactx_control_frames;
+	uपूर्णांक64_t mactx_deferral;
+	uपूर्णांक64_t mactx_excess_deferral;
+	uपूर्णांक64_t mactx_late_collision;
+	uपूर्णांक64_t mactx_पात;
+	uपूर्णांक64_t mactx_single_collision;
+	uपूर्णांक64_t mactx_multiple_collision;
+	uपूर्णांक64_t mactx_collision;
+	uपूर्णांक64_t mactx_frames_dropped;
+	uपूर्णांक64_t mactx_jumbo_frames;
+	uपूर्णांक64_t macrx_frames;
+	uपूर्णांक64_t macrx_bytes;
+	uपूर्णांक64_t macrx_unknown_control_frames;
+	uपूर्णांक64_t macrx_छोड़ो_frames;
+	uपूर्णांक64_t macrx_control_frames;
+	uपूर्णांक64_t macrx_dribble;
+	uपूर्णांक64_t macrx_frame_length_error;
+	uपूर्णांक64_t macrx_jabber;
+	uपूर्णांक64_t macrx_carrier_sense_error;
+	uपूर्णांक64_t macrx_frame_discarded;
+	uपूर्णांक64_t macrx_frames_dropped;
+	uपूर्णांक64_t mac_crc_error;
+	uपूर्णांक64_t mac_encoding_error;
+	uपूर्णांक64_t macrx_length_error_large;
+	uपूर्णांक64_t macrx_length_error_small;
+	uपूर्णांक64_t macrx_multicast_frames;
+	uपूर्णांक64_t macrx_broadcast_frames;
 	/* IP */
-	uint64_t iptx_packets;
-	uint64_t iptx_bytes;
-	uint64_t iptx_fragments;
-	uint64_t iprx_packets;
-	uint64_t iprx_bytes;
-	uint64_t iprx_fragments;
-	uint64_t ip_datagram_reassembly;
-	uint64_t ip_invalid_address_error;
-	uint64_t ip_error_packets;
-	uint64_t ip_fragrx_overlap;
-	uint64_t ip_fragrx_outoforder;
-	uint64_t ip_datagram_reassembly_timeout;
-	uint64_t ipv6tx_packets;
-	uint64_t ipv6tx_bytes;
-	uint64_t ipv6tx_fragments;
-	uint64_t ipv6rx_packets;
-	uint64_t ipv6rx_bytes;
-	uint64_t ipv6rx_fragments;
-	uint64_t ipv6_datagram_reassembly;
-	uint64_t ipv6_invalid_address_error;
-	uint64_t ipv6_error_packets;
-	uint64_t ipv6_fragrx_overlap;
-	uint64_t ipv6_fragrx_outoforder;
-	uint64_t ipv6_datagram_reassembly_timeout;
+	uपूर्णांक64_t iptx_packets;
+	uपूर्णांक64_t iptx_bytes;
+	uपूर्णांक64_t iptx_fragments;
+	uपूर्णांक64_t iprx_packets;
+	uपूर्णांक64_t iprx_bytes;
+	uपूर्णांक64_t iprx_fragments;
+	uपूर्णांक64_t ip_datagram_reassembly;
+	uपूर्णांक64_t ip_invalid_address_error;
+	uपूर्णांक64_t ip_error_packets;
+	uपूर्णांक64_t ip_fragrx_overlap;
+	uपूर्णांक64_t ip_fragrx_outoक्रमder;
+	uपूर्णांक64_t ip_datagram_reassembly_समयout;
+	uपूर्णांक64_t ipv6tx_packets;
+	uपूर्णांक64_t ipv6tx_bytes;
+	uपूर्णांक64_t ipv6tx_fragments;
+	uपूर्णांक64_t ipv6rx_packets;
+	uपूर्णांक64_t ipv6rx_bytes;
+	uपूर्णांक64_t ipv6rx_fragments;
+	uपूर्णांक64_t ipv6_datagram_reassembly;
+	uपूर्णांक64_t ipv6_invalid_address_error;
+	uपूर्णांक64_t ipv6_error_packets;
+	uपूर्णांक64_t ipv6_fragrx_overlap;
+	uपूर्णांक64_t ipv6_fragrx_outoक्रमder;
+	uपूर्णांक64_t ipv6_datagram_reassembly_समयout;
 	/* TCP */
-	uint64_t tcptx_segments;
-	uint64_t tcptx_bytes;
-	uint64_t tcprx_segments;
-	uint64_t tcprx_byte;
-	uint64_t tcp_duplicate_ack_retx;
-	uint64_t tcp_retx_timer_expired;
-	uint64_t tcprx_duplicate_ack;
-	uint64_t tcprx_pure_ackr;
-	uint64_t tcptx_delayed_ack;
-	uint64_t tcptx_pure_ack;
-	uint64_t tcprx_segment_error;
-	uint64_t tcprx_segment_outoforder;
-	uint64_t tcprx_window_probe;
-	uint64_t tcprx_window_update;
-	uint64_t tcptx_window_probe_persist;
+	uपूर्णांक64_t tcptx_segments;
+	uपूर्णांक64_t tcptx_bytes;
+	uपूर्णांक64_t tcprx_segments;
+	uपूर्णांक64_t tcprx_byte;
+	uपूर्णांक64_t tcp_duplicate_ack_retx;
+	uपूर्णांक64_t tcp_retx_समयr_expired;
+	uपूर्णांक64_t tcprx_duplicate_ack;
+	uपूर्णांक64_t tcprx_pure_ackr;
+	uपूर्णांक64_t tcptx_delayed_ack;
+	uपूर्णांक64_t tcptx_pure_ack;
+	uपूर्णांक64_t tcprx_segment_error;
+	uपूर्णांक64_t tcprx_segment_outoक्रमder;
+	uपूर्णांक64_t tcprx_winकरोw_probe;
+	uपूर्णांक64_t tcprx_winकरोw_update;
+	uपूर्णांक64_t tcptx_winकरोw_probe_persist;
 	/* ECC */
-	uint64_t ecc_error_correction;
+	uपूर्णांक64_t ecc_error_correction;
 	/* iSCSI */
-	uint64_t iscsi_pdu_tx;
-	uint64_t iscsi_data_bytes_tx;
-	uint64_t iscsi_pdu_rx;
-	uint64_t iscsi_data_bytes_rx;
-	uint64_t iscsi_io_completed;
-	uint64_t iscsi_unexpected_io_rx;
-	uint64_t iscsi_format_error;
-	uint64_t iscsi_hdr_digest_error;
-	uint64_t iscsi_data_digest_error;
-	uint64_t iscsi_sequence_error;
+	uपूर्णांक64_t iscsi_pdu_tx;
+	uपूर्णांक64_t iscsi_data_bytes_tx;
+	uपूर्णांक64_t iscsi_pdu_rx;
+	uपूर्णांक64_t iscsi_data_bytes_rx;
+	uपूर्णांक64_t iscsi_io_completed;
+	uपूर्णांक64_t iscsi_unexpected_io_rx;
+	uपूर्णांक64_t iscsi_क्रमmat_error;
+	uपूर्णांक64_t iscsi_hdr_digest_error;
+	uपूर्णांक64_t iscsi_data_digest_error;
+	uपूर्णांक64_t iscsi_sequence_error;
 	/*
 	 * iSCSI Custom Host Statistics support, i.e. Transport could
-	 * extend existing host statistics with its own specific statistics
+	 * extend existing host statistics with its own specअगरic statistics
 	 * up to ISCSI_HOST_STATS_CUSTOM_MAX
 	 */
-	uint32_t custom_length;
-	struct iscsi_host_stats_custom custom[]
-		__aligned(sizeof(uint64_t));
-};
+	uपूर्णांक32_t custom_length;
+	काष्ठा iscsi_host_stats_custom custom[]
+		__aligned(माप(uपूर्णांक64_t));
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2013 Noralf Tronnes
  *
@@ -7,335 +8,335 @@
  *   broadsheetfb.c, Copyright (C) 2008, Jaya Kumar
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/vmalloc.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/fb.h>
-#include <linux/gpio/consumer.h>
-#include <linux/spi/spi.h>
-#include <linux/delay.h>
-#include <linux/uaccess.h>
-#include <linux/backlight.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
-#include <linux/spinlock.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/spinlock.h>
 
-#include <video/mipi_display.h>
+#समावेश <video/mipi_display.h>
 
-#include "fbtft.h"
-#include "internal.h"
+#समावेश "fbtft.h"
+#समावेश "internal.h"
 
-static unsigned long debug;
-module_param(debug, ulong, 0000);
+अटल अचिन्हित दीर्घ debug;
+module_param(debug, uदीर्घ, 0000);
 MODULE_PARM_DESC(debug, "override device debug level");
 
-int fbtft_write_buf_dc(struct fbtft_par *par, void *buf, size_t len, int dc)
-{
-	int ret;
+पूर्णांक fbtft_ग_लिखो_buf_dc(काष्ठा fbtft_par *par, व्योम *buf, माप_प्रकार len, पूर्णांक dc)
+अणु
+	पूर्णांक ret;
 
-	if (par->gpio.dc)
+	अगर (par->gpio.dc)
 		gpiod_set_value(par->gpio.dc, dc);
 
-	ret = par->fbtftops.write(par, buf, len);
-	if (ret < 0)
+	ret = par->fbtftops.ग_लिखो(par, buf, len);
+	अगर (ret < 0)
 		dev_err(par->info->device,
 			"write() failed and returned %d\n", ret);
-	return ret;
-}
-EXPORT_SYMBOL(fbtft_write_buf_dc);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(fbtft_ग_लिखो_buf_dc);
 
-void fbtft_dbg_hex(const struct device *dev, int groupsize,
-		   void *buf, size_t len, const char *fmt, ...)
-{
-	va_list args;
-	static char textbuf[512];
-	char *text = textbuf;
-	size_t text_len;
+व्योम fbtft_dbg_hex(स्थिर काष्ठा device *dev, पूर्णांक groupsize,
+		   व्योम *buf, माप_प्रकार len, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	अटल अक्षर textbuf[512];
+	अक्षर *text = textbuf;
+	माप_प्रकार text_len;
 
-	va_start(args, fmt);
-	text_len = vscnprintf(text, sizeof(textbuf), fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	text_len = vscnम_लिखो(text, माप(textbuf), fmt, args);
+	बहु_पूर्ण(args);
 
 	hex_dump_to_buffer(buf, len, 32, groupsize, text + text_len,
 			   512 - text_len, false);
 
-	if (len > 32)
+	अगर (len > 32)
 		dev_info(dev, "%s ...\n", text);
-	else
+	अन्यथा
 		dev_info(dev, "%s\n", text);
-}
+पूर्ण
 EXPORT_SYMBOL(fbtft_dbg_hex);
 
-static int fbtft_request_one_gpio(struct fbtft_par *par,
-				  const char *name, int index,
-				  struct gpio_desc **gpiop)
-{
-	struct device *dev = par->info->device;
-	int ret = 0;
+अटल पूर्णांक fbtft_request_one_gpio(काष्ठा fbtft_par *par,
+				  स्थिर अक्षर *name, पूर्णांक index,
+				  काष्ठा gpio_desc **gpiop)
+अणु
+	काष्ठा device *dev = par->info->device;
+	पूर्णांक ret = 0;
 
 	*gpiop = devm_gpiod_get_index_optional(dev, name, index,
 					       GPIOD_OUT_HIGH);
-	if (IS_ERR(*gpiop)) {
+	अगर (IS_ERR(*gpiop)) अणु
 		ret = PTR_ERR(*gpiop);
 		dev_err(dev,
 			"Failed to request %s GPIO: %d\n", name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	fbtft_par_dbg(DEBUG_REQUEST_GPIOS, par, "%s: '%s' GPIO\n",
 		      __func__, name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fbtft_request_gpios(struct fbtft_par *par)
-{
-	int i;
-	int ret;
+अटल पूर्णांक fbtft_request_gpios(काष्ठा fbtft_par *par)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
 
 	ret = fbtft_request_one_gpio(par, "reset", 0, &par->gpio.reset);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = fbtft_request_one_gpio(par, "dc", 0, &par->gpio.dc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = fbtft_request_one_gpio(par, "rd", 0, &par->gpio.rd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = fbtft_request_one_gpio(par, "wr", 0, &par->gpio.wr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = fbtft_request_one_gpio(par, "cs", 0, &par->gpio.cs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = fbtft_request_one_gpio(par, "latch", 0, &par->gpio.latch);
-	if (ret)
-		return ret;
-	for (i = 0; i < 16; i++) {
+	अगर (ret)
+		वापस ret;
+	क्रम (i = 0; i < 16; i++) अणु
 		ret = fbtft_request_one_gpio(par, "db", i,
 					     &par->gpio.db[i]);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		ret = fbtft_request_one_gpio(par, "led", i,
 					     &par->gpio.led[i]);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		ret = fbtft_request_one_gpio(par, "aux", i,
 					     &par->gpio.aux[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_FB_BACKLIGHT
-static int fbtft_backlight_update_status(struct backlight_device *bd)
-{
-	struct fbtft_par *par = bl_get_data(bd);
+#अगर_घोषित CONFIG_FB_BACKLIGHT
+अटल पूर्णांक fbtft_backlight_update_status(काष्ठा backlight_device *bd)
+अणु
+	काष्ठा fbtft_par *par = bl_get_data(bd);
 	bool polarity = par->polarity;
 
 	fbtft_par_dbg(DEBUG_BACKLIGHT, par,
 		      "%s: polarity=%d, power=%d, fb_blank=%d\n",
-		      __func__, polarity, bd->props.power, bd->props.fb_blank);
+		      __func__, polarity, bd->props.घातer, bd->props.fb_blank);
 
-	if ((bd->props.power == FB_BLANK_UNBLANK) &&
+	अगर ((bd->props.घातer == FB_BLANK_UNBLANK) &&
 	    (bd->props.fb_blank == FB_BLANK_UNBLANK))
 		gpiod_set_value(par->gpio.led[0], polarity);
-	else
+	अन्यथा
 		gpiod_set_value(par->gpio.led[0], !polarity);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fbtft_backlight_get_brightness(struct backlight_device *bd)
-{
-	return bd->props.brightness;
-}
+अटल पूर्णांक fbtft_backlight_get_brightness(काष्ठा backlight_device *bd)
+अणु
+	वापस bd->props.brightness;
+पूर्ण
 
-void fbtft_unregister_backlight(struct fbtft_par *par)
-{
-	if (par->info->bl_dev) {
-		par->info->bl_dev->props.power = FB_BLANK_POWERDOWN;
+व्योम fbtft_unरेजिस्टर_backlight(काष्ठा fbtft_par *par)
+अणु
+	अगर (par->info->bl_dev) अणु
+		par->info->bl_dev->props.घातer = FB_BLANK_POWERDOWN;
 		backlight_update_status(par->info->bl_dev);
-		backlight_device_unregister(par->info->bl_dev);
-		par->info->bl_dev = NULL;
-	}
-}
+		backlight_device_unरेजिस्टर(par->info->bl_dev);
+		par->info->bl_dev = शून्य;
+	पूर्ण
+पूर्ण
 
-static const struct backlight_ops fbtft_bl_ops = {
+अटल स्थिर काष्ठा backlight_ops fbtft_bl_ops = अणु
 	.get_brightness	= fbtft_backlight_get_brightness,
 	.update_status	= fbtft_backlight_update_status,
-};
+पूर्ण;
 
-void fbtft_register_backlight(struct fbtft_par *par)
-{
-	struct backlight_device *bd;
-	struct backlight_properties bl_props = { 0, };
+व्योम fbtft_रेजिस्टर_backlight(काष्ठा fbtft_par *par)
+अणु
+	काष्ठा backlight_device *bd;
+	काष्ठा backlight_properties bl_props = अणु 0, पूर्ण;
 
-	if (!par->gpio.led[0]) {
+	अगर (!par->gpio.led[0]) अणु
 		fbtft_par_dbg(DEBUG_BACKLIGHT, par,
 			      "%s(): led pin not set, exiting.\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bl_props.type = BACKLIGHT_RAW;
 	/* Assume backlight is off, get polarity from current state of pin */
-	bl_props.power = FB_BLANK_POWERDOWN;
-	if (!gpiod_get_value(par->gpio.led[0]))
+	bl_props.घातer = FB_BLANK_POWERDOWN;
+	अगर (!gpiod_get_value(par->gpio.led[0]))
 		par->polarity = true;
 
-	bd = backlight_device_register(dev_driver_string(par->info->device),
+	bd = backlight_device_रेजिस्टर(dev_driver_string(par->info->device),
 				       par->info->device, par,
 				       &fbtft_bl_ops, &bl_props);
-	if (IS_ERR(bd)) {
+	अगर (IS_ERR(bd)) अणु
 		dev_err(par->info->device,
 			"cannot register backlight device (%ld)\n",
 			PTR_ERR(bd));
-		return;
-	}
+		वापस;
+	पूर्ण
 	par->info->bl_dev = bd;
 
-	if (!par->fbtftops.unregister_backlight)
-		par->fbtftops.unregister_backlight = fbtft_unregister_backlight;
-}
-#else
-void fbtft_register_backlight(struct fbtft_par *par) { };
-void fbtft_unregister_backlight(struct fbtft_par *par) { };
-#endif
-EXPORT_SYMBOL(fbtft_register_backlight);
-EXPORT_SYMBOL(fbtft_unregister_backlight);
+	अगर (!par->fbtftops.unरेजिस्टर_backlight)
+		par->fbtftops.unरेजिस्टर_backlight = fbtft_unरेजिस्टर_backlight;
+पूर्ण
+#अन्यथा
+व्योम fbtft_रेजिस्टर_backlight(काष्ठा fbtft_par *par) अणु पूर्ण;
+व्योम fbtft_unरेजिस्टर_backlight(काष्ठा fbtft_par *par) अणु पूर्ण;
+#पूर्ण_अगर
+EXPORT_SYMBOL(fbtft_रेजिस्टर_backlight);
+EXPORT_SYMBOL(fbtft_unरेजिस्टर_backlight);
 
-static void fbtft_set_addr_win(struct fbtft_par *par, int xs, int ys, int xe,
-			       int ye)
-{
-	write_reg(par, MIPI_DCS_SET_COLUMN_ADDRESS,
+अटल व्योम fbtft_set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe,
+			       पूर्णांक ye)
+अणु
+	ग_लिखो_reg(par, MIPI_DCS_SET_COLUMN_ADDRESS,
 		  (xs >> 8) & 0xFF, xs & 0xFF, (xe >> 8) & 0xFF, xe & 0xFF);
 
-	write_reg(par, MIPI_DCS_SET_PAGE_ADDRESS,
+	ग_लिखो_reg(par, MIPI_DCS_SET_PAGE_ADDRESS,
 		  (ys >> 8) & 0xFF, ys & 0xFF, (ye >> 8) & 0xFF, ye & 0xFF);
 
-	write_reg(par, MIPI_DCS_WRITE_MEMORY_START);
-}
+	ग_लिखो_reg(par, MIPI_DCS_WRITE_MEMORY_START);
+पूर्ण
 
-static void fbtft_reset(struct fbtft_par *par)
-{
-	if (!par->gpio.reset)
-		return;
+अटल व्योम fbtft_reset(काष्ठा fbtft_par *par)
+अणु
+	अगर (!par->gpio.reset)
+		वापस;
 	fbtft_par_dbg(DEBUG_RESET, par, "%s()\n", __func__);
 	gpiod_set_value_cansleep(par->gpio.reset, 1);
 	usleep_range(20, 40);
 	gpiod_set_value_cansleep(par->gpio.reset, 0);
 	msleep(120);
-}
+पूर्ण
 
-static void fbtft_update_display(struct fbtft_par *par, unsigned int start_line,
-				 unsigned int end_line)
-{
-	size_t offset, len;
-	ktime_t ts_start, ts_end;
-	long fps, throughput;
-	bool timeit = false;
-	int ret = 0;
+अटल व्योम fbtft_update_display(काष्ठा fbtft_par *par, अचिन्हित पूर्णांक start_line,
+				 अचिन्हित पूर्णांक end_line)
+अणु
+	माप_प्रकार offset, len;
+	kसमय_प्रकार ts_start, ts_end;
+	दीर्घ fps, throughput;
+	bool समयit = false;
+	पूर्णांक ret = 0;
 
-	if (unlikely(par->debug & (DEBUG_TIME_FIRST_UPDATE |
-			DEBUG_TIME_EACH_UPDATE))) {
-		if ((par->debug & DEBUG_TIME_EACH_UPDATE) ||
+	अगर (unlikely(par->debug & (DEBUG_TIME_FIRST_UPDATE |
+			DEBUG_TIME_EACH_UPDATE))) अणु
+		अगर ((par->debug & DEBUG_TIME_EACH_UPDATE) ||
 		    ((par->debug & DEBUG_TIME_FIRST_UPDATE) &&
-		    !par->first_update_done)) {
-			ts_start = ktime_get();
-			timeit = true;
-		}
-	}
+		    !par->first_update_करोne)) अणु
+			ts_start = kसमय_get();
+			समयit = true;
+		पूर्ण
+	पूर्ण
 
 	/* Sanity checks */
-	if (start_line > end_line) {
+	अगर (start_line > end_line) अणु
 		dev_warn(par->info->device,
 			 "%s: start_line=%u is larger than end_line=%u. Shouldn't happen, will do full display update\n",
 			 __func__, start_line, end_line);
 		start_line = 0;
 		end_line = par->info->var.yres - 1;
-	}
-	if (start_line > par->info->var.yres - 1 ||
-	    end_line > par->info->var.yres - 1) {
+	पूर्ण
+	अगर (start_line > par->info->var.yres - 1 ||
+	    end_line > par->info->var.yres - 1) अणु
 		dev_warn(par->info->device,
 			 "%s: start_line=%u or end_line=%u is larger than max=%d. Shouldn't happen, will do full display update\n",
 			 __func__, start_line,
 			 end_line, par->info->var.yres - 1);
 		start_line = 0;
 		end_line = par->info->var.yres - 1;
-	}
+	पूर्ण
 
 	fbtft_par_dbg(DEBUG_UPDATE_DISPLAY, par, "%s(start_line=%u, end_line=%u)\n",
 		      __func__, start_line, end_line);
 
-	if (par->fbtftops.set_addr_win)
+	अगर (par->fbtftops.set_addr_win)
 		par->fbtftops.set_addr_win(par, 0, start_line,
 				par->info->var.xres - 1, end_line);
 
 	offset = start_line * par->info->fix.line_length;
 	len = (end_line - start_line + 1) * par->info->fix.line_length;
-	ret = par->fbtftops.write_vmem(par, offset, len);
-	if (ret < 0)
+	ret = par->fbtftops.ग_लिखो_vmem(par, offset, len);
+	अगर (ret < 0)
 		dev_err(par->info->device,
 			"%s: write_vmem failed to update display buffer\n",
 			__func__);
 
-	if (unlikely(timeit)) {
-		ts_end = ktime_get();
-		if (!ktime_to_ns(par->update_time))
-			par->update_time = ts_start;
+	अगर (unlikely(समयit)) अणु
+		ts_end = kसमय_get();
+		अगर (!kसमय_प्रकारo_ns(par->update_समय))
+			par->update_समय = ts_start;
 
-		fps = ktime_us_delta(ts_start, par->update_time);
-		par->update_time = ts_start;
+		fps = kसमय_us_delta(ts_start, par->update_समय);
+		par->update_समय = ts_start;
 		fps = fps ? 1000000 / fps : 0;
 
-		throughput = ktime_us_delta(ts_end, ts_start);
+		throughput = kसमय_us_delta(ts_end, ts_start);
 		throughput = throughput ? (len * 1000) / throughput : 0;
 		throughput = throughput * 1000 / 1024;
 
 		dev_info(par->info->device,
 			 "Display update: %ld kB/s, fps=%ld\n",
 			 throughput, fps);
-		par->first_update_done = true;
-	}
-}
+		par->first_update_करोne = true;
+	पूर्ण
+पूर्ण
 
-static void fbtft_mkdirty(struct fb_info *info, int y, int height)
-{
-	struct fbtft_par *par = info->par;
-	struct fb_deferred_io *fbdefio = info->fbdefio;
+अटल व्योम fbtft_सूची_गढ़ोty(काष्ठा fb_info *info, पूर्णांक y, पूर्णांक height)
+अणु
+	काष्ठा fbtft_par *par = info->par;
+	काष्ठा fb_deferred_io *fbdefio = info->fbdefio;
 
-	/* special case, needed ? */
-	if (y == -1) {
+	/* special हाल, needed ? */
+	अगर (y == -1) अणु
 		y = 0;
 		height = info->var.yres;
-	}
+	पूर्ण
 
 	/* Mark display lines/area as dirty */
 	spin_lock(&par->dirty_lock);
-	if (y < par->dirty_lines_start)
+	अगर (y < par->dirty_lines_start)
 		par->dirty_lines_start = y;
-	if (y + height - 1 > par->dirty_lines_end)
+	अगर (y + height - 1 > par->dirty_lines_end)
 		par->dirty_lines_end = y + height - 1;
 	spin_unlock(&par->dirty_lock);
 
-	/* Schedule deferred_io to update display (no-op if already on queue)*/
+	/* Schedule deferred_io to update display (no-op अगर alपढ़ोy on queue)*/
 	schedule_delayed_work(&info->deferred_work, fbdefio->delay);
-}
+पूर्ण
 
-static void fbtft_deferred_io(struct fb_info *info, struct list_head *pagelist)
-{
-	struct fbtft_par *par = info->par;
-	unsigned int dirty_lines_start, dirty_lines_end;
-	struct page *page;
-	unsigned long index;
-	unsigned int y_low = 0, y_high = 0;
-	int count = 0;
+अटल व्योम fbtft_deferred_io(काष्ठा fb_info *info, काष्ठा list_head *pagelist)
+अणु
+	काष्ठा fbtft_par *par = info->par;
+	अचिन्हित पूर्णांक dirty_lines_start, dirty_lines_end;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ index;
+	अचिन्हित पूर्णांक y_low = 0, y_high = 0;
+	पूर्णांक count = 0;
 
 	spin_lock(&par->dirty_lock);
 	dirty_lines_start = par->dirty_lines_start;
@@ -346,7 +347,7 @@ static void fbtft_deferred_io(struct fb_info *info, struct list_head *pagelist)
 	spin_unlock(&par->dirty_lock);
 
 	/* Mark display lines as dirty */
-	list_for_each_entry(page, pagelist, lru) {
+	list_क्रम_each_entry(page, pagelist, lru) अणु
 		count++;
 		index = page->index << PAGE_SHIFT;
 		y_low = index / info->fix.line_length;
@@ -354,96 +355,96 @@ static void fbtft_deferred_io(struct fb_info *info, struct list_head *pagelist)
 		dev_dbg(info->device,
 			"page->index=%lu y_low=%d y_high=%d\n",
 			page->index, y_low, y_high);
-		if (y_high > info->var.yres - 1)
+		अगर (y_high > info->var.yres - 1)
 			y_high = info->var.yres - 1;
-		if (y_low < dirty_lines_start)
+		अगर (y_low < dirty_lines_start)
 			dirty_lines_start = y_low;
-		if (y_high > dirty_lines_end)
+		अगर (y_high > dirty_lines_end)
 			dirty_lines_end = y_high;
-	}
+	पूर्ण
 
 	par->fbtftops.update_display(info->par,
 					dirty_lines_start, dirty_lines_end);
-}
+पूर्ण
 
-static void fbtft_fb_fillrect(struct fb_info *info,
-			      const struct fb_fillrect *rect)
-{
-	struct fbtft_par *par = info->par;
+अटल व्योम fbtft_fb_fillrect(काष्ठा fb_info *info,
+			      स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	काष्ठा fbtft_par *par = info->par;
 
 	dev_dbg(info->dev,
 		"%s: dx=%d, dy=%d, width=%d, height=%d\n",
 		__func__, rect->dx, rect->dy, rect->width, rect->height);
 	sys_fillrect(info, rect);
 
-	par->fbtftops.mkdirty(info, rect->dy, rect->height);
-}
+	par->fbtftops.सूची_गढ़ोty(info, rect->dy, rect->height);
+पूर्ण
 
-static void fbtft_fb_copyarea(struct fb_info *info,
-			      const struct fb_copyarea *area)
-{
-	struct fbtft_par *par = info->par;
+अटल व्योम fbtft_fb_copyarea(काष्ठा fb_info *info,
+			      स्थिर काष्ठा fb_copyarea *area)
+अणु
+	काष्ठा fbtft_par *par = info->par;
 
 	dev_dbg(info->dev,
 		"%s: dx=%d, dy=%d, width=%d, height=%d\n",
 		__func__,  area->dx, area->dy, area->width, area->height);
 	sys_copyarea(info, area);
 
-	par->fbtftops.mkdirty(info, area->dy, area->height);
-}
+	par->fbtftops.सूची_गढ़ोty(info, area->dy, area->height);
+पूर्ण
 
-static void fbtft_fb_imageblit(struct fb_info *info,
-			       const struct fb_image *image)
-{
-	struct fbtft_par *par = info->par;
+अटल व्योम fbtft_fb_imageblit(काष्ठा fb_info *info,
+			       स्थिर काष्ठा fb_image *image)
+अणु
+	काष्ठा fbtft_par *par = info->par;
 
 	dev_dbg(info->dev,
 		"%s: dx=%d, dy=%d, width=%d, height=%d\n",
 		__func__,  image->dx, image->dy, image->width, image->height);
 	sys_imageblit(info, image);
 
-	par->fbtftops.mkdirty(info, image->dy, image->height);
-}
+	par->fbtftops.सूची_गढ़ोty(info, image->dy, image->height);
+पूर्ण
 
-static ssize_t fbtft_fb_write(struct fb_info *info, const char __user *buf,
-			      size_t count, loff_t *ppos)
-{
-	struct fbtft_par *par = info->par;
-	ssize_t res;
+अटल sमाप_प्रकार fbtft_fb_ग_लिखो(काष्ठा fb_info *info, स्थिर अक्षर __user *buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा fbtft_par *par = info->par;
+	sमाप_प्रकार res;
 
 	dev_dbg(info->dev,
 		"%s: count=%zd, ppos=%llu\n", __func__,  count, *ppos);
-	res = fb_sys_write(info, buf, count, ppos);
+	res = fb_sys_ग_लिखो(info, buf, count, ppos);
 
-	/* TODO: only mark changed area update all for now */
-	par->fbtftops.mkdirty(info, -1, 0);
+	/* TODO: only mark changed area update all क्रम now */
+	par->fbtftops.सूची_गढ़ोty(info, -1, 0);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /* from pxafb.c */
-static unsigned int chan_to_field(unsigned int chan, struct fb_bitfield *bf)
-{
+अटल अचिन्हित पूर्णांक chan_to_field(अचिन्हित पूर्णांक chan, काष्ठा fb_bitfield *bf)
+अणु
 	chan &= 0xffff;
 	chan >>= 16 - bf->length;
-	return chan << bf->offset;
-}
+	वापस chan << bf->offset;
+पूर्ण
 
-static int fbtft_fb_setcolreg(unsigned int regno, unsigned int red,
-			      unsigned int green, unsigned int blue,
-			      unsigned int transp, struct fb_info *info)
-{
-	unsigned int val;
-	int ret = 1;
+अटल पूर्णांक fbtft_fb_setcolreg(अचिन्हित पूर्णांक regno, अचिन्हित पूर्णांक red,
+			      अचिन्हित पूर्णांक green, अचिन्हित पूर्णांक blue,
+			      अचिन्हित पूर्णांक transp, काष्ठा fb_info *info)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret = 1;
 
 	dev_dbg(info->dev,
 		"%s(regno=%u, red=0x%X, green=0x%X, blue=0x%X, trans=0x%X)\n",
 		__func__, regno, red, green, blue, transp);
 
-	switch (info->fix.visual) {
-	case FB_VISUAL_TRUECOLOR:
-		if (regno < 16) {
-			u32 *pal = info->pseudo_palette;
+	चयन (info->fix.visual) अणु
+	हाल FB_VISUAL_TRUECOLOR:
+		अगर (regno < 16) अणु
+			u32 *pal = info->pseuकरो_palette;
 
 			val  = chan_to_field(red,   &info->var.red);
 			val |= chan_to_field(green, &info->var.green);
@@ -451,208 +452,208 @@ static int fbtft_fb_setcolreg(unsigned int regno, unsigned int red,
 
 			pal[regno] = val;
 			ret = 0;
-		}
-		break;
-	}
-	return ret;
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int fbtft_fb_blank(int blank, struct fb_info *info)
-{
-	struct fbtft_par *par = info->par;
-	int ret = -EINVAL;
+अटल पूर्णांक fbtft_fb_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	काष्ठा fbtft_par *par = info->par;
+	पूर्णांक ret = -EINVAL;
 
 	dev_dbg(info->dev, "%s(blank=%d)\n",
 		__func__, blank);
 
-	if (!par->fbtftops.blank)
-		return ret;
+	अगर (!par->fbtftops.blank)
+		वापस ret;
 
-	switch (blank) {
-	case FB_BLANK_POWERDOWN:
-	case FB_BLANK_VSYNC_SUSPEND:
-	case FB_BLANK_HSYNC_SUSPEND:
-	case FB_BLANK_NORMAL:
+	चयन (blank) अणु
+	हाल FB_BLANK_POWERDOWN:
+	हाल FB_BLANK_VSYNC_SUSPEND:
+	हाल FB_BLANK_HSYNC_SUSPEND:
+	हाल FB_BLANK_NORMAL:
 		ret = par->fbtftops.blank(par, true);
-		break;
-	case FB_BLANK_UNBLANK:
+		अवरोध;
+	हाल FB_BLANK_UNBLANK:
 		ret = par->fbtftops.blank(par, false);
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void fbtft_merge_fbtftops(struct fbtft_ops *dst, struct fbtft_ops *src)
-{
-	if (src->write)
-		dst->write = src->write;
-	if (src->read)
-		dst->read = src->read;
-	if (src->write_vmem)
-		dst->write_vmem = src->write_vmem;
-	if (src->write_register)
-		dst->write_register = src->write_register;
-	if (src->set_addr_win)
+अटल व्योम fbtft_merge_fbtftops(काष्ठा fbtft_ops *dst, काष्ठा fbtft_ops *src)
+अणु
+	अगर (src->ग_लिखो)
+		dst->ग_लिखो = src->ग_लिखो;
+	अगर (src->पढ़ो)
+		dst->पढ़ो = src->पढ़ो;
+	अगर (src->ग_लिखो_vmem)
+		dst->ग_लिखो_vmem = src->ग_लिखो_vmem;
+	अगर (src->ग_लिखो_रेजिस्टर)
+		dst->ग_लिखो_रेजिस्टर = src->ग_लिखो_रेजिस्टर;
+	अगर (src->set_addr_win)
 		dst->set_addr_win = src->set_addr_win;
-	if (src->reset)
+	अगर (src->reset)
 		dst->reset = src->reset;
-	if (src->mkdirty)
-		dst->mkdirty = src->mkdirty;
-	if (src->update_display)
+	अगर (src->सूची_गढ़ोty)
+		dst->सूची_गढ़ोty = src->सूची_गढ़ोty;
+	अगर (src->update_display)
 		dst->update_display = src->update_display;
-	if (src->init_display)
+	अगर (src->init_display)
 		dst->init_display = src->init_display;
-	if (src->blank)
+	अगर (src->blank)
 		dst->blank = src->blank;
-	if (src->request_gpios_match)
+	अगर (src->request_gpios_match)
 		dst->request_gpios_match = src->request_gpios_match;
-	if (src->request_gpios)
+	अगर (src->request_gpios)
 		dst->request_gpios = src->request_gpios;
-	if (src->verify_gpios)
-		dst->verify_gpios = src->verify_gpios;
-	if (src->register_backlight)
-		dst->register_backlight = src->register_backlight;
-	if (src->unregister_backlight)
-		dst->unregister_backlight = src->unregister_backlight;
-	if (src->set_var)
+	अगर (src->verअगरy_gpios)
+		dst->verअगरy_gpios = src->verअगरy_gpios;
+	अगर (src->रेजिस्टर_backlight)
+		dst->रेजिस्टर_backlight = src->रेजिस्टर_backlight;
+	अगर (src->unरेजिस्टर_backlight)
+		dst->unरेजिस्टर_backlight = src->unरेजिस्टर_backlight;
+	अगर (src->set_var)
 		dst->set_var = src->set_var;
-	if (src->set_gamma)
+	अगर (src->set_gamma)
 		dst->set_gamma = src->set_gamma;
-}
+पूर्ण
 
 /**
- * fbtft_framebuffer_alloc - creates a new frame buffer info structure
+ * fbtft_framebuffer_alloc - creates a new frame buffer info काष्ठाure
  *
- * @display: pointer to structure describing the display
- * @dev: pointer to the device for this fb, this can be NULL
- * @pdata: platform data for the display in use
+ * @display: poपूर्णांकer to काष्ठाure describing the display
+ * @dev: poपूर्णांकer to the device क्रम this fb, this can be शून्य
+ * @pdata: platक्रमm data क्रम the display in use
  *
- * Creates a new frame buffer info structure.
+ * Creates a new frame buffer info काष्ठाure.
  *
- * Also creates and populates the following structures:
+ * Also creates and populates the following काष्ठाures:
  *   info->fbops
  *   info->fbdefio
- *   info->pseudo_palette
+ *   info->pseuकरो_palette
  *   par->fbtftops
  *   par->txbuf
  *
- * Returns the new structure, or NULL if an error occurred.
+ * Returns the new काष्ठाure, or शून्य अगर an error occurred.
  *
  */
-struct fb_info *fbtft_framebuffer_alloc(struct fbtft_display *display,
-					struct device *dev,
-					struct fbtft_platform_data *pdata)
-{
-	struct fb_info *info;
-	struct fbtft_par *par;
-	struct fb_ops *fbops = NULL;
-	struct fb_deferred_io *fbdefio = NULL;
-	u8 *vmem = NULL;
-	void *txbuf = NULL;
-	void *buf = NULL;
-	unsigned int width;
-	unsigned int height;
-	int txbuflen = display->txbuflen;
-	unsigned int bpp = display->bpp;
-	unsigned int fps = display->fps;
-	int vmem_size;
-	const s16 *init_sequence = display->init_sequence;
-	char *gamma = display->gamma;
-	u32 *gamma_curves = NULL;
+काष्ठा fb_info *fbtft_framebuffer_alloc(काष्ठा fbtft_display *display,
+					काष्ठा device *dev,
+					काष्ठा fbtft_platक्रमm_data *pdata)
+अणु
+	काष्ठा fb_info *info;
+	काष्ठा fbtft_par *par;
+	काष्ठा fb_ops *fbops = शून्य;
+	काष्ठा fb_deferred_io *fbdefio = शून्य;
+	u8 *vmem = शून्य;
+	व्योम *txbuf = शून्य;
+	व्योम *buf = शून्य;
+	अचिन्हित पूर्णांक width;
+	अचिन्हित पूर्णांक height;
+	पूर्णांक txbuflen = display->txbuflen;
+	अचिन्हित पूर्णांक bpp = display->bpp;
+	अचिन्हित पूर्णांक fps = display->fps;
+	पूर्णांक vmem_size;
+	स्थिर s16 *init_sequence = display->init_sequence;
+	अक्षर *gamma = display->gamma;
+	u32 *gamma_curves = शून्य;
 
 	/* sanity check */
-	if (display->gamma_num * display->gamma_len >
-			FBTFT_GAMMA_MAX_VALUES_TOTAL) {
+	अगर (display->gamma_num * display->gamma_len >
+			FBTFT_GAMMA_MAX_VALUES_TOTAL) अणु
 		dev_err(dev, "FBTFT_GAMMA_MAX_VALUES_TOTAL=%d is exceeded\n",
 			FBTFT_GAMMA_MAX_VALUES_TOTAL);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	/* defaults */
-	if (!fps)
+	/* शेषs */
+	अगर (!fps)
 		fps = 20;
-	if (!bpp)
+	अगर (!bpp)
 		bpp = 16;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(dev, "platform data is missing\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* override driver values? */
-	if (pdata->fps)
+	अगर (pdata->fps)
 		fps = pdata->fps;
-	if (pdata->txbuflen)
+	अगर (pdata->txbuflen)
 		txbuflen = pdata->txbuflen;
-	if (pdata->display.init_sequence)
+	अगर (pdata->display.init_sequence)
 		init_sequence = pdata->display.init_sequence;
-	if (pdata->gamma)
+	अगर (pdata->gamma)
 		gamma = pdata->gamma;
-	if (pdata->display.debug)
+	अगर (pdata->display.debug)
 		display->debug = pdata->display.debug;
-	if (pdata->display.backlight)
+	अगर (pdata->display.backlight)
 		display->backlight = pdata->display.backlight;
-	if (pdata->display.width)
+	अगर (pdata->display.width)
 		display->width = pdata->display.width;
-	if (pdata->display.height)
+	अगर (pdata->display.height)
 		display->height = pdata->display.height;
-	if (pdata->display.buswidth)
+	अगर (pdata->display.buswidth)
 		display->buswidth = pdata->display.buswidth;
-	if (pdata->display.regwidth)
+	अगर (pdata->display.regwidth)
 		display->regwidth = pdata->display.regwidth;
 
 	display->debug |= debug;
 	fbtft_expand_debug_value(&display->debug);
 
-	switch (pdata->rotate) {
-	case 90:
-	case 270:
+	चयन (pdata->rotate) अणु
+	हाल 90:
+	हाल 270:
 		width =  display->height;
 		height = display->width;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		width =  display->width;
 		height = display->height;
-	}
+	पूर्ण
 
 	vmem_size = display->width * display->height * bpp / 8;
 	vmem = vzalloc(vmem_size);
-	if (!vmem)
-		goto alloc_fail;
+	अगर (!vmem)
+		जाओ alloc_fail;
 
-	fbops = devm_kzalloc(dev, sizeof(struct fb_ops), GFP_KERNEL);
-	if (!fbops)
-		goto alloc_fail;
+	fbops = devm_kzalloc(dev, माप(काष्ठा fb_ops), GFP_KERNEL);
+	अगर (!fbops)
+		जाओ alloc_fail;
 
-	fbdefio = devm_kzalloc(dev, sizeof(struct fb_deferred_io), GFP_KERNEL);
-	if (!fbdefio)
-		goto alloc_fail;
+	fbdefio = devm_kzalloc(dev, माप(काष्ठा fb_deferred_io), GFP_KERNEL);
+	अगर (!fbdefio)
+		जाओ alloc_fail;
 
 	buf = devm_kzalloc(dev, 128, GFP_KERNEL);
-	if (!buf)
-		goto alloc_fail;
+	अगर (!buf)
+		जाओ alloc_fail;
 
-	if (display->gamma_num && display->gamma_len) {
-		gamma_curves = devm_kcalloc(dev,
+	अगर (display->gamma_num && display->gamma_len) अणु
+		gamma_curves = devm_kसुस्मृति(dev,
 					    display->gamma_num *
 					    display->gamma_len,
-					    sizeof(gamma_curves[0]),
+					    माप(gamma_curves[0]),
 					    GFP_KERNEL);
-		if (!gamma_curves)
-			goto alloc_fail;
-	}
+		अगर (!gamma_curves)
+			जाओ alloc_fail;
+	पूर्ण
 
-	info = framebuffer_alloc(sizeof(struct fbtft_par), dev);
-	if (!info)
-		goto alloc_fail;
+	info = framebuffer_alloc(माप(काष्ठा fbtft_par), dev);
+	अगर (!info)
+		जाओ alloc_fail;
 
 	info->screen_buffer = vmem;
 	info->fbops = fbops;
 	info->fbdefio = fbdefio;
 
 	fbops->owner        =      dev->driver->owner;
-	fbops->fb_read      =      fb_sys_read;
-	fbops->fb_write     =      fbtft_fb_write;
+	fbops->fb_पढ़ो      =      fb_sys_पढ़ो;
+	fbops->fb_ग_लिखो     =      fbtft_fb_ग_लिखो;
 	fbops->fb_fillrect  =      fbtft_fb_fillrect;
 	fbops->fb_copyarea  =      fbtft_fb_copyarea;
 	fbops->fb_imageblit =      fbtft_fb_imageblit;
@@ -663,7 +664,7 @@ struct fb_info *fbtft_framebuffer_alloc(struct fbtft_display *display,
 	fbdefio->deferred_io =     fbtft_deferred_io;
 	fb_deferred_io_init(info);
 
-	snprintf(info->fix.id, sizeof(info->fix.id), "%s", dev->driver->name);
+	snम_लिखो(info->fix.id, माप(info->fix.id), "%s", dev->driver->name);
 	info->fix.type =           FB_TYPE_PACKED_PIXELS;
 	info->fix.visual =         FB_VISUAL_TRUECOLOR;
 	info->fix.xpanstep =	   0;
@@ -676,8 +677,8 @@ struct fb_info *fbtft_framebuffer_alloc(struct fbtft_display *display,
 	info->var.rotate =         pdata->rotate;
 	info->var.xres =           width;
 	info->var.yres =           height;
-	info->var.xres_virtual =   info->var.xres;
-	info->var.yres_virtual =   info->var.yres;
+	info->var.xres_भव =   info->var.xres;
+	info->var.yres_भव =   info->var.yres;
 	info->var.bits_per_pixel = bpp;
 	info->var.nonstd =         1;
 
@@ -706,147 +707,147 @@ struct fb_info *fbtft_framebuffer_alloc(struct fbtft_display *display,
 	par->gamma.num_curves = display->gamma_num;
 	par->gamma.num_values = display->gamma_len;
 	mutex_init(&par->gamma.lock);
-	info->pseudo_palette = par->pseudo_palette;
+	info->pseuकरो_palette = par->pseuकरो_palette;
 
-	if (par->gamma.curves && gamma) {
-		if (fbtft_gamma_parse_str(par, par->gamma.curves, gamma,
-					  strlen(gamma)))
-			goto release_framebuf;
-	}
+	अगर (par->gamma.curves && gamma) अणु
+		अगर (fbtft_gamma_parse_str(par, par->gamma.curves, gamma,
+					  म_माप(gamma)))
+			जाओ release_framebuf;
+	पूर्ण
 
 	/* Transmit buffer */
-	if (txbuflen == -1)
-		txbuflen = vmem_size + 2; /* add in case startbyte is used */
-	if (txbuflen >= vmem_size + 2)
+	अगर (txbuflen == -1)
+		txbuflen = vmem_size + 2; /* add in हाल startbyte is used */
+	अगर (txbuflen >= vmem_size + 2)
 		txbuflen = 0;
 
-#ifdef __LITTLE_ENDIAN
-	if ((!txbuflen) && (bpp > 8))
-		txbuflen = PAGE_SIZE; /* need buffer for byteswapping */
-#endif
+#अगर_घोषित __LITTLE_ENDIAN
+	अगर ((!txbuflen) && (bpp > 8))
+		txbuflen = PAGE_SIZE; /* need buffer क्रम byteswapping */
+#पूर्ण_अगर
 
-	if (txbuflen > 0) {
+	अगर (txbuflen > 0) अणु
 		txbuf = devm_kzalloc(par->info->device, txbuflen, GFP_KERNEL);
-		if (!txbuf)
-			goto release_framebuf;
+		अगर (!txbuf)
+			जाओ release_framebuf;
 		par->txbuf.buf = txbuf;
 		par->txbuf.len = txbuflen;
-	}
+	पूर्ण
 
-	/* default fbtft operations */
-	par->fbtftops.write = fbtft_write_spi;
-	par->fbtftops.read = fbtft_read_spi;
-	par->fbtftops.write_vmem = fbtft_write_vmem16_bus8;
-	par->fbtftops.write_register = fbtft_write_reg8_bus8;
+	/* शेष fbtft operations */
+	par->fbtftops.ग_लिखो = fbtft_ग_लिखो_spi;
+	par->fbtftops.पढ़ो = fbtft_पढ़ो_spi;
+	par->fbtftops.ग_लिखो_vmem = fbtft_ग_लिखो_vmem16_bus8;
+	par->fbtftops.ग_लिखो_रेजिस्टर = fbtft_ग_लिखो_reg8_bus8;
 	par->fbtftops.set_addr_win = fbtft_set_addr_win;
 	par->fbtftops.reset = fbtft_reset;
-	par->fbtftops.mkdirty = fbtft_mkdirty;
+	par->fbtftops.सूची_गढ़ोty = fbtft_सूची_गढ़ोty;
 	par->fbtftops.update_display = fbtft_update_display;
-	if (display->backlight)
-		par->fbtftops.register_backlight = fbtft_register_backlight;
+	अगर (display->backlight)
+		par->fbtftops.रेजिस्टर_backlight = fbtft_रेजिस्टर_backlight;
 
 	/* use driver provided functions */
 	fbtft_merge_fbtftops(&par->fbtftops, &display->fbtftops);
 
-	return info;
+	वापस info;
 
 release_framebuf:
 	framebuffer_release(info);
 
 alloc_fail:
-	vfree(vmem);
+	vमुक्त(vmem);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(fbtft_framebuffer_alloc);
 
 /**
- * fbtft_framebuffer_release - frees up all memory used by the framebuffer
+ * fbtft_framebuffer_release - मुक्तs up all memory used by the framebuffer
  *
- * @info: frame buffer info structure
+ * @info: frame buffer info काष्ठाure
  *
  */
-void fbtft_framebuffer_release(struct fb_info *info)
-{
+व्योम fbtft_framebuffer_release(काष्ठा fb_info *info)
+अणु
 	fb_deferred_io_cleanup(info);
-	vfree(info->screen_buffer);
+	vमुक्त(info->screen_buffer);
 	framebuffer_release(info);
-}
+पूर्ण
 EXPORT_SYMBOL(fbtft_framebuffer_release);
 
 /**
- *	fbtft_register_framebuffer - registers a tft frame buffer device
- *	@fb_info: frame buffer info structure
+ *	fbtft_रेजिस्टर_framebuffer - रेजिस्टरs a tft frame buffer device
+ *	@fb_info: frame buffer info काष्ठाure
  *
- *  Sets SPI driverdata if needed
+ *  Sets SPI driverdata अगर needed
  *  Requests needed gpios.
  *  Initializes display
  *  Updates display.
  *	Registers a frame buffer device @fb_info.
  *
- *	Returns negative errno on error, or zero for success.
+ *	Returns negative त्रुटि_सं on error, or zero क्रम success.
  *
  */
-int fbtft_register_framebuffer(struct fb_info *fb_info)
-{
-	int ret;
-	char text1[50] = "";
-	char text2[50] = "";
-	struct fbtft_par *par = fb_info->par;
-	struct spi_device *spi = par->spi;
+पूर्णांक fbtft_रेजिस्टर_framebuffer(काष्ठा fb_info *fb_info)
+अणु
+	पूर्णांक ret;
+	अक्षर text1[50] = "";
+	अक्षर text2[50] = "";
+	काष्ठा fbtft_par *par = fb_info->par;
+	काष्ठा spi_device *spi = par->spi;
 
 	/* sanity checks */
-	if (!par->fbtftops.init_display) {
+	अगर (!par->fbtftops.init_display) अणु
 		dev_err(fb_info->device, "missing fbtftops.init_display()\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (spi)
+	अगर (spi)
 		spi_set_drvdata(spi, fb_info);
-	if (par->pdev)
-		platform_set_drvdata(par->pdev, fb_info);
+	अगर (par->pdev)
+		platक्रमm_set_drvdata(par->pdev, fb_info);
 
 	ret = par->fbtftops.request_gpios(par);
-	if (ret < 0)
-		goto reg_fail;
+	अगर (ret < 0)
+		जाओ reg_fail;
 
-	if (par->fbtftops.verify_gpios) {
-		ret = par->fbtftops.verify_gpios(par);
-		if (ret < 0)
-			goto reg_fail;
-	}
+	अगर (par->fbtftops.verअगरy_gpios) अणु
+		ret = par->fbtftops.verअगरy_gpios(par);
+		अगर (ret < 0)
+			जाओ reg_fail;
+	पूर्ण
 
 	ret = par->fbtftops.init_display(par);
-	if (ret < 0)
-		goto reg_fail;
-	if (par->fbtftops.set_var) {
+	अगर (ret < 0)
+		जाओ reg_fail;
+	अगर (par->fbtftops.set_var) अणु
 		ret = par->fbtftops.set_var(par);
-		if (ret < 0)
-			goto reg_fail;
-	}
+		अगर (ret < 0)
+			जाओ reg_fail;
+	पूर्ण
 
 	/* update the entire display */
 	par->fbtftops.update_display(par, 0, par->info->var.yres - 1);
 
-	if (par->fbtftops.set_gamma && par->gamma.curves) {
+	अगर (par->fbtftops.set_gamma && par->gamma.curves) अणु
 		ret = par->fbtftops.set_gamma(par, par->gamma.curves);
-		if (ret)
-			goto reg_fail;
-	}
+		अगर (ret)
+			जाओ reg_fail;
+	पूर्ण
 
-	if (par->fbtftops.register_backlight)
-		par->fbtftops.register_backlight(par);
+	अगर (par->fbtftops.रेजिस्टर_backlight)
+		par->fbtftops.रेजिस्टर_backlight(par);
 
-	ret = register_framebuffer(fb_info);
-	if (ret < 0)
-		goto reg_fail;
+	ret = रेजिस्टर_framebuffer(fb_info);
+	अगर (ret < 0)
+		जाओ reg_fail;
 
 	fbtft_sysfs_init(par);
 
-	if (par->txbuf.buf && par->txbuf.len >= 1024)
-		sprintf(text1, ", %zu KiB buffer memory", par->txbuf.len >> 10);
-	if (spi)
-		sprintf(text2, ", spi%d.%d at %d MHz", spi->master->bus_num,
+	अगर (par->txbuf.buf && par->txbuf.len >= 1024)
+		प्र_लिखो(text1, ", %zu KiB buffer memory", par->txbuf.len >> 10);
+	अगर (spi)
+		प्र_लिखो(text2, ", spi%d.%d at %d MHz", spi->master->bus_num,
 			spi->chip_select, spi->max_speed_hz / 1000000);
 	dev_info(fb_info->dev,
 		 "%s frame buffer, %dx%d, %d KiB video memory%s, fps=%lu%s\n",
@@ -854,103 +855,103 @@ int fbtft_register_framebuffer(struct fb_info *fb_info)
 		 fb_info->fix.smem_len >> 10, text1,
 		 HZ / fb_info->fbdefio->delay, text2);
 
-#ifdef CONFIG_FB_BACKLIGHT
-	/* Turn on backlight if available */
-	if (fb_info->bl_dev) {
-		fb_info->bl_dev->props.power = FB_BLANK_UNBLANK;
+#अगर_घोषित CONFIG_FB_BACKLIGHT
+	/* Turn on backlight अगर available */
+	अगर (fb_info->bl_dev) अणु
+		fb_info->bl_dev->props.घातer = FB_BLANK_UNBLANK;
 		fb_info->bl_dev->ops->update_status(fb_info->bl_dev);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
 reg_fail:
-	if (par->fbtftops.unregister_backlight)
-		par->fbtftops.unregister_backlight(par);
+	अगर (par->fbtftops.unरेजिस्टर_backlight)
+		par->fbtftops.unरेजिस्टर_backlight(par);
 
-	return ret;
-}
-EXPORT_SYMBOL(fbtft_register_framebuffer);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(fbtft_रेजिस्टर_framebuffer);
 
 /**
- *	fbtft_unregister_framebuffer - releases a tft frame buffer device
- *	@fb_info: frame buffer info structure
+ *	fbtft_unरेजिस्टर_framebuffer - releases a tft frame buffer device
+ *	@fb_info: frame buffer info काष्ठाure
  *
- *  Frees SPI driverdata if needed
+ *  Frees SPI driverdata अगर needed
  *  Frees gpios.
- *	Unregisters frame buffer device.
+ *	Unरेजिस्टरs frame buffer device.
  *
  */
-int fbtft_unregister_framebuffer(struct fb_info *fb_info)
-{
-	struct fbtft_par *par = fb_info->par;
+पूर्णांक fbtft_unरेजिस्टर_framebuffer(काष्ठा fb_info *fb_info)
+अणु
+	काष्ठा fbtft_par *par = fb_info->par;
 
-	if (par->fbtftops.unregister_backlight)
-		par->fbtftops.unregister_backlight(par);
-	fbtft_sysfs_exit(par);
-	unregister_framebuffer(fb_info);
+	अगर (par->fbtftops.unरेजिस्टर_backlight)
+		par->fbtftops.unरेजिस्टर_backlight(par);
+	fbtft_sysfs_निकास(par);
+	unरेजिस्टर_framebuffer(fb_info);
 
-	return 0;
-}
-EXPORT_SYMBOL(fbtft_unregister_framebuffer);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(fbtft_unरेजिस्टर_framebuffer);
 
 /**
  * fbtft_init_display_from_property() - Device Tree init_display() function
  * @par: Driver data
  *
- * Return: 0 if successful, negative if error
+ * Return: 0 अगर successful, negative अगर error
  */
-static int fbtft_init_display_from_property(struct fbtft_par *par)
-{
-	struct device *dev = par->info->device;
-	int buf[64], count, index, i, j, ret;
+अटल पूर्णांक fbtft_init_display_from_property(काष्ठा fbtft_par *par)
+अणु
+	काष्ठा device *dev = par->info->device;
+	पूर्णांक buf[64], count, index, i, j, ret;
 	u32 *values;
 	u32 val;
 
 	count = device_property_count_u32(dev, "init");
-	if (count < 0)
-		return count;
-	if (count == 0)
-		return -EINVAL;
+	अगर (count < 0)
+		वापस count;
+	अगर (count == 0)
+		वापस -EINVAL;
 
-	values = kmalloc_array(count + 1, sizeof(*values), GFP_KERNEL);
-	if (!values)
-		return -ENOMEM;
+	values = kदो_स्मृति_array(count + 1, माप(*values), GFP_KERNEL);
+	अगर (!values)
+		वापस -ENOMEM;
 
-	ret = device_property_read_u32_array(dev, "init", values, count);
-	if (ret)
-		goto out_free;
+	ret = device_property_पढ़ो_u32_array(dev, "init", values, count);
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	par->fbtftops.reset(par);
-	if (par->gpio.cs)
+	अगर (par->gpio.cs)
 		gpiod_set_value(par->gpio.cs, 0);  /* Activate chip */
 
 	index = -1;
 	val = values[++index];
 
-	while (index < count) {
-		if (val & FBTFT_OF_INIT_CMD) {
+	जबतक (index < count) अणु
+		अगर (val & FBTFT_OF_INIT_CMD) अणु
 			val &= 0xFFFF;
 			i = 0;
-			while ((index < count) && !(val & 0xFFFF0000)) {
-				if (i > 63) {
+			जबतक ((index < count) && !(val & 0xFFFF0000)) अणु
+				अगर (i > 63) अणु
 					dev_err(dev,
 						"%s: Maximum register values exceeded\n",
 						__func__);
 					ret = -EINVAL;
-					goto out_free;
-				}
+					जाओ out_मुक्त;
+				पूर्ण
 				buf[i++] = val;
 				val = values[++index];
-			}
+			पूर्ण
 			/* make debug message */
 			fbtft_par_dbg(DEBUG_INIT_DISPLAY, par,
 				      "init: write_register:\n");
-			for (j = 0; j < i; j++)
+			क्रम (j = 0; j < i; j++)
 				fbtft_par_dbg(DEBUG_INIT_DISPLAY, par,
 					      "buf[%d] = %02X\n", j, buf[j]);
 
-			par->fbtftops.write_register(par, i,
+			par->fbtftops.ग_लिखो_रेजिस्टर(par, i,
 				buf[0], buf[1], buf[2], buf[3],
 				buf[4], buf[5], buf[6], buf[7],
 				buf[8], buf[9], buf[10], buf[11],
@@ -967,104 +968,104 @@ static int fbtft_init_display_from_property(struct fbtft_par *par)
 				buf[52], buf[53], buf[54], buf[55],
 				buf[56], buf[57], buf[58], buf[59],
 				buf[60], buf[61], buf[62], buf[63]);
-		} else if (val & FBTFT_OF_INIT_DELAY) {
+		पूर्ण अन्यथा अगर (val & FBTFT_OF_INIT_DELAY) अणु
 			fbtft_par_dbg(DEBUG_INIT_DISPLAY, par,
 				      "init: msleep(%u)\n", val & 0xFFFF);
 			msleep(val & 0xFFFF);
 			val = values[++index];
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "illegal init value 0x%X\n", val);
 			ret = -EINVAL;
-			goto out_free;
-		}
-	}
+			जाओ out_मुक्त;
+		पूर्ण
+	पूर्ण
 
-out_free:
-	kfree(values);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(values);
+	वापस ret;
+पूर्ण
 
 /**
  * fbtft_init_display() - Generic init_display() function
  * @par: Driver data
  *
- * Uses par->init_sequence to do the initialization
+ * Uses par->init_sequence to करो the initialization
  *
- * Return: 0 if successful, negative if error
+ * Return: 0 अगर successful, negative अगर error
  */
-int fbtft_init_display(struct fbtft_par *par)
-{
-	int buf[64];
-	char msg[128];
-	char str[16];
-	int i = 0;
-	int j;
+पूर्णांक fbtft_init_display(काष्ठा fbtft_par *par)
+अणु
+	पूर्णांक buf[64];
+	अक्षर msg[128];
+	अक्षर str[16];
+	पूर्णांक i = 0;
+	पूर्णांक j;
 
 	/* sanity check */
-	if (!par->init_sequence) {
+	अगर (!par->init_sequence) अणु
 		dev_err(par->info->device,
 			"error: init_sequence is not set\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* make sure stop marker exists */
-	for (i = 0; i < FBTFT_MAX_INIT_SEQUENCE; i++)
-		if (par->init_sequence[i] == -3)
-			break;
-	if (i == FBTFT_MAX_INIT_SEQUENCE) {
+	क्रम (i = 0; i < FBTFT_MAX_INIT_SEQUENCE; i++)
+		अगर (par->init_sequence[i] == -3)
+			अवरोध;
+	अगर (i == FBTFT_MAX_INIT_SEQUENCE) अणु
 		dev_err(par->info->device,
 			"missing stop marker at end of init sequence\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	par->fbtftops.reset(par);
-	if (par->gpio.cs)
+	अगर (par->gpio.cs)
 		gpiod_set_value(par->gpio.cs, 0);  /* Activate chip */
 
 	i = 0;
-	while (i < FBTFT_MAX_INIT_SEQUENCE) {
-		if (par->init_sequence[i] == -3) {
-			/* done */
-			return 0;
-		}
-		if (par->init_sequence[i] >= 0) {
+	जबतक (i < FBTFT_MAX_INIT_SEQUENCE) अणु
+		अगर (par->init_sequence[i] == -3) अणु
+			/* करोne */
+			वापस 0;
+		पूर्ण
+		अगर (par->init_sequence[i] >= 0) अणु
 			dev_err(par->info->device,
 				"missing delimiter at position %d\n", i);
-			return -EINVAL;
-		}
-		if (par->init_sequence[i + 1] < 0) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (par->init_sequence[i + 1] < 0) अणु
 			dev_err(par->info->device,
 				"missing value after delimiter %d at position %d\n",
 				par->init_sequence[i], i);
-			return -EINVAL;
-		}
-		switch (par->init_sequence[i]) {
-		case -1:
+			वापस -EINVAL;
+		पूर्ण
+		चयन (par->init_sequence[i]) अणु
+		हाल -1:
 			i++;
 			/* make debug message */
-			strcpy(msg, "");
+			म_नकल(msg, "");
 			j = i + 1;
-			while (par->init_sequence[j] >= 0) {
-				sprintf(str, "0x%02X ", par->init_sequence[j]);
-				strcat(msg, str);
+			जबतक (par->init_sequence[j] >= 0) अणु
+				प्र_लिखो(str, "0x%02X ", par->init_sequence[j]);
+				म_जोड़ो(msg, str);
 				j++;
-			}
+			पूर्ण
 			fbtft_par_dbg(DEBUG_INIT_DISPLAY, par,
 				      "init: write(0x%02X) %s\n",
 				      par->init_sequence[i], msg);
 
 			/* Write */
 			j = 0;
-			while (par->init_sequence[i] >= 0) {
-				if (j > 63) {
+			जबतक (par->init_sequence[i] >= 0) अणु
+				अगर (j > 63) अणु
 					dev_err(par->info->device,
 						"%s: Maximum register values exceeded\n",
 						__func__);
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 				buf[j++] = par->init_sequence[i++];
-			}
-			par->fbtftops.write_register(par, j,
+			पूर्ण
+			par->fbtftops.ग_लिखो_रेजिस्टर(par, j,
 				buf[0], buf[1], buf[2], buf[3],
 				buf[4], buf[5], buf[6], buf[7],
 				buf[8], buf[9], buf[10], buf[11],
@@ -1081,93 +1082,93 @@ int fbtft_init_display(struct fbtft_par *par)
 				buf[52], buf[53], buf[54], buf[55],
 				buf[56], buf[57], buf[58], buf[59],
 				buf[60], buf[61], buf[62], buf[63]);
-			break;
-		case -2:
+			अवरोध;
+		हाल -2:
 			i++;
 			fbtft_par_dbg(DEBUG_INIT_DISPLAY, par,
 				      "init: mdelay(%d)\n",
 				      par->init_sequence[i]);
 			mdelay(par->init_sequence[i++]);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(par->info->device,
 				"unknown delimiter %d at position %d\n",
 				par->init_sequence[i], i);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	dev_err(par->info->device,
 		"%s: something is wrong. Shouldn't get here.\n", __func__);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL(fbtft_init_display);
 
 /**
- * fbtft_verify_gpios() - Generic verify_gpios() function
+ * fbtft_verअगरy_gpios() - Generic verअगरy_gpios() function
  * @par: Driver data
  *
  * Uses @spi, @pdev and @buswidth to determine which GPIOs is needed
  *
- * Return: 0 if successful, negative if error
+ * Return: 0 अगर successful, negative अगर error
  */
-static int fbtft_verify_gpios(struct fbtft_par *par)
-{
-	struct fbtft_platform_data *pdata = par->pdata;
-	int i;
+अटल पूर्णांक fbtft_verअगरy_gpios(काष्ठा fbtft_par *par)
+अणु
+	काष्ठा fbtft_platक्रमm_data *pdata = par->pdata;
+	पूर्णांक i;
 
 	fbtft_par_dbg(DEBUG_VERIFY_GPIOS, par, "%s()\n", __func__);
 
-	if (pdata->display.buswidth != 9 &&  par->startbyte == 0 &&
-	    !par->gpio.dc) {
+	अगर (pdata->display.buswidth != 9 &&  par->startbyte == 0 &&
+	    !par->gpio.dc) अणु
 		dev_err(par->info->device,
 			"Missing info about 'dc' gpio. Aborting.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!par->pdev)
-		return 0;
+	अगर (!par->pdev)
+		वापस 0;
 
-	if (!par->gpio.wr) {
+	अगर (!par->gpio.wr) अणु
 		dev_err(par->info->device, "Missing 'wr' gpio. Aborting.\n");
-		return -EINVAL;
-	}
-	for (i = 0; i < pdata->display.buswidth; i++) {
-		if (!par->gpio.db[i]) {
+		वापस -EINVAL;
+	पूर्ण
+	क्रम (i = 0; i < pdata->display.buswidth; i++) अणु
+		अगर (!par->gpio.db[i]) अणु
 			dev_err(par->info->device,
 				"Missing 'db%02d' gpio. Aborting.\n", i);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* returns 0 if the property is not present */
-static u32 fbtft_property_value(struct device *dev, const char *propname)
-{
-	int ret;
+/* वापसs 0 अगर the property is not present */
+अटल u32 fbtft_property_value(काष्ठा device *dev, स्थिर अक्षर *propname)
+अणु
+	पूर्णांक ret;
 	u32 val = 0;
 
-	ret = device_property_read_u32(dev, propname, &val);
-	if (ret == 0)
+	ret = device_property_पढ़ो_u32(dev, propname, &val);
+	अगर (ret == 0)
 		dev_info(dev, "%s: %s = %u\n", __func__, propname, val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static struct fbtft_platform_data *fbtft_properties_read(struct device *dev)
-{
-	struct fbtft_platform_data *pdata;
+अटल काष्ठा fbtft_platक्रमm_data *fbtft_properties_पढ़ो(काष्ठा device *dev)
+अणु
+	काष्ठा fbtft_platक्रमm_data *pdata;
 
-	if (!dev_fwnode(dev)) {
+	अगर (!dev_fwnode(dev)) अणु
 		dev_err(dev, "Missing platform data or properties\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस ERR_PTR(-ENOMEM);
 
 	pdata->display.width = fbtft_property_value(dev, "width");
 	pdata->display.height = fbtft_property_value(dev, "height");
@@ -1177,173 +1178,173 @@ static struct fbtft_platform_data *fbtft_properties_read(struct device *dev)
 	pdata->display.bpp = fbtft_property_value(dev, "bpp");
 	pdata->display.debug = fbtft_property_value(dev, "debug");
 	pdata->rotate = fbtft_property_value(dev, "rotate");
-	pdata->bgr = device_property_read_bool(dev, "bgr");
+	pdata->bgr = device_property_पढ़ो_bool(dev, "bgr");
 	pdata->fps = fbtft_property_value(dev, "fps");
 	pdata->txbuflen = fbtft_property_value(dev, "txbuflen");
 	pdata->startbyte = fbtft_property_value(dev, "startbyte");
-	device_property_read_string(dev, "gamma", (const char **)&pdata->gamma);
+	device_property_पढ़ो_string(dev, "gamma", (स्थिर अक्षर **)&pdata->gamma);
 
-	if (device_property_present(dev, "led-gpios"))
+	अगर (device_property_present(dev, "led-gpios"))
 		pdata->display.backlight = 1;
-	if (device_property_present(dev, "init"))
+	अगर (device_property_present(dev, "init"))
 		pdata->display.fbtftops.init_display =
 			fbtft_init_display_from_property;
 
 	pdata->display.fbtftops.request_gpios = fbtft_request_gpios;
 
-	return pdata;
-}
+	वापस pdata;
+पूर्ण
 
 /**
  * fbtft_probe_common() - Generic device probe() helper function
  * @display: Display properties
  * @sdev: SPI device
- * @pdev: Platform device
+ * @pdev: Platक्रमm device
  *
- * Allocates, initializes and registers a framebuffer
+ * Allocates, initializes and रेजिस्टरs a framebuffer
  *
- * Either @sdev or @pdev should be NULL
+ * Either @sdev or @pdev should be शून्य
  *
- * Return: 0 if successful, negative if error
+ * Return: 0 अगर successful, negative अगर error
  */
-int fbtft_probe_common(struct fbtft_display *display,
-		       struct spi_device *sdev,
-		       struct platform_device *pdev)
-{
-	struct device *dev;
-	struct fb_info *info;
-	struct fbtft_par *par;
-	struct fbtft_platform_data *pdata;
-	int ret;
+पूर्णांक fbtft_probe_common(काष्ठा fbtft_display *display,
+		       काष्ठा spi_device *sdev,
+		       काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev;
+	काष्ठा fb_info *info;
+	काष्ठा fbtft_par *par;
+	काष्ठा fbtft_platक्रमm_data *pdata;
+	पूर्णांक ret;
 
-	if (sdev)
+	अगर (sdev)
 		dev = &sdev->dev;
-	else
+	अन्यथा
 		dev = &pdev->dev;
 
-	if (unlikely(display->debug & DEBUG_DRIVER_INIT_FUNCTIONS))
+	अगर (unlikely(display->debug & DEBUG_DRIVER_INIT_FUNCTIONS))
 		dev_info(dev, "%s()\n", __func__);
 
-	pdata = dev->platform_data;
-	if (!pdata) {
-		pdata = fbtft_properties_read(dev);
-		if (IS_ERR(pdata))
-			return PTR_ERR(pdata);
-	}
+	pdata = dev->platक्रमm_data;
+	अगर (!pdata) अणु
+		pdata = fbtft_properties_पढ़ो(dev);
+		अगर (IS_ERR(pdata))
+			वापस PTR_ERR(pdata);
+	पूर्ण
 
 	info = fbtft_framebuffer_alloc(display, dev, pdata);
-	if (!info)
-		return -ENOMEM;
+	अगर (!info)
+		वापस -ENOMEM;
 
 	par = info->par;
 	par->spi = sdev;
 	par->pdev = pdev;
 
-	if (display->buswidth == 0) {
+	अगर (display->buswidth == 0) अणु
 		dev_err(dev, "buswidth is not set\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* write register functions */
-	if (display->regwidth == 8 && display->buswidth == 8)
-		par->fbtftops.write_register = fbtft_write_reg8_bus8;
-	else if (display->regwidth == 8 && display->buswidth == 9 && par->spi)
-		par->fbtftops.write_register = fbtft_write_reg8_bus9;
-	else if (display->regwidth == 16 && display->buswidth == 8)
-		par->fbtftops.write_register = fbtft_write_reg16_bus8;
-	else if (display->regwidth == 16 && display->buswidth == 16)
-		par->fbtftops.write_register = fbtft_write_reg16_bus16;
-	else
+	/* ग_लिखो रेजिस्टर functions */
+	अगर (display->regwidth == 8 && display->buswidth == 8)
+		par->fbtftops.ग_लिखो_रेजिस्टर = fbtft_ग_लिखो_reg8_bus8;
+	अन्यथा अगर (display->regwidth == 8 && display->buswidth == 9 && par->spi)
+		par->fbtftops.ग_लिखो_रेजिस्टर = fbtft_ग_लिखो_reg8_bus9;
+	अन्यथा अगर (display->regwidth == 16 && display->buswidth == 8)
+		par->fbtftops.ग_लिखो_रेजिस्टर = fbtft_ग_लिखो_reg16_bus8;
+	अन्यथा अगर (display->regwidth == 16 && display->buswidth == 16)
+		par->fbtftops.ग_लिखो_रेजिस्टर = fbtft_ग_लिखो_reg16_bus16;
+	अन्यथा
 		dev_warn(dev,
 			 "no default functions for regwidth=%d and buswidth=%d\n",
 			 display->regwidth, display->buswidth);
 
-	/* write_vmem() functions */
-	if (display->buswidth == 8)
-		par->fbtftops.write_vmem = fbtft_write_vmem16_bus8;
-	else if (display->buswidth == 9)
-		par->fbtftops.write_vmem = fbtft_write_vmem16_bus9;
-	else if (display->buswidth == 16)
-		par->fbtftops.write_vmem = fbtft_write_vmem16_bus16;
+	/* ग_लिखो_vmem() functions */
+	अगर (display->buswidth == 8)
+		par->fbtftops.ग_लिखो_vmem = fbtft_ग_लिखो_vmem16_bus8;
+	अन्यथा अगर (display->buswidth == 9)
+		par->fbtftops.ग_लिखो_vmem = fbtft_ग_लिखो_vmem16_bus9;
+	अन्यथा अगर (display->buswidth == 16)
+		par->fbtftops.ग_लिखो_vmem = fbtft_ग_लिखो_vmem16_bus16;
 
-	/* GPIO write() functions */
-	if (par->pdev) {
-		if (display->buswidth == 8)
-			par->fbtftops.write = fbtft_write_gpio8_wr;
-		else if (display->buswidth == 16)
-			par->fbtftops.write = fbtft_write_gpio16_wr;
-	}
+	/* GPIO ग_लिखो() functions */
+	अगर (par->pdev) अणु
+		अगर (display->buswidth == 8)
+			par->fbtftops.ग_लिखो = fbtft_ग_लिखो_gpio8_wr;
+		अन्यथा अगर (display->buswidth == 16)
+			par->fbtftops.ग_लिखो = fbtft_ग_लिखो_gpio16_wr;
+	पूर्ण
 
 	/* 9-bit SPI setup */
-	if (par->spi && display->buswidth == 9) {
-		if (par->spi->master->bits_per_word_mask & SPI_BPW_MASK(9)) {
+	अगर (par->spi && display->buswidth == 9) अणु
+		अगर (par->spi->master->bits_per_word_mask & SPI_BPW_MASK(9)) अणु
 			par->spi->bits_per_word = 9;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_warn(&par->spi->dev,
 				 "9-bit SPI not available, emulating using 8-bit.\n");
-			/* allocate buffer with room for dc bits */
+			/* allocate buffer with room क्रम dc bits */
 			par->extra = devm_kzalloc(par->info->device,
 						  par->txbuf.len +
 						  (par->txbuf.len / 8) + 8,
 						  GFP_KERNEL);
-			if (!par->extra) {
+			अगर (!par->extra) अणु
 				ret = -ENOMEM;
-				goto out_release;
-			}
-			par->fbtftops.write = fbtft_write_spi_emulate_9;
-		}
-	}
+				जाओ out_release;
+			पूर्ण
+			par->fbtftops.ग_लिखो = fbtft_ग_लिखो_spi_emulate_9;
+		पूर्ण
+	पूर्ण
 
-	if (!par->fbtftops.verify_gpios)
-		par->fbtftops.verify_gpios = fbtft_verify_gpios;
+	अगर (!par->fbtftops.verअगरy_gpios)
+		par->fbtftops.verअगरy_gpios = fbtft_verअगरy_gpios;
 
 	/* make sure we still use the driver provided functions */
 	fbtft_merge_fbtftops(&par->fbtftops, &display->fbtftops);
 
-	/* use init_sequence if provided */
-	if (par->init_sequence)
+	/* use init_sequence अगर provided */
+	अगर (par->init_sequence)
 		par->fbtftops.init_display = fbtft_init_display;
 
-	/* use platform_data provided functions above all */
+	/* use platक्रमm_data provided functions above all */
 	fbtft_merge_fbtftops(&par->fbtftops, &pdata->display.fbtftops);
 
-	ret = fbtft_register_framebuffer(info);
-	if (ret < 0)
-		goto out_release;
+	ret = fbtft_रेजिस्टर_framebuffer(info);
+	अगर (ret < 0)
+		जाओ out_release;
 
-	return 0;
+	वापस 0;
 
 out_release:
 	fbtft_framebuffer_release(info);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(fbtft_probe_common);
 
 /**
- * fbtft_remove_common() - Generic device remove() helper function
+ * fbtft_हटाओ_common() - Generic device हटाओ() helper function
  * @dev: Device
  * @info: Framebuffer
  *
- * Unregisters and releases the framebuffer
+ * Unरेजिस्टरs and releases the framebuffer
  *
- * Return: 0 if successful, negative if error
+ * Return: 0 अगर successful, negative अगर error
  */
-int fbtft_remove_common(struct device *dev, struct fb_info *info)
-{
-	struct fbtft_par *par;
+पूर्णांक fbtft_हटाओ_common(काष्ठा device *dev, काष्ठा fb_info *info)
+अणु
+	काष्ठा fbtft_par *par;
 
-	if (!info)
-		return -EINVAL;
+	अगर (!info)
+		वापस -EINVAL;
 	par = info->par;
-	if (par)
+	अगर (par)
 		fbtft_par_dbg(DEBUG_DRIVER_INIT_FUNCTIONS, par,
 			      "%s()\n", __func__);
-	fbtft_unregister_framebuffer(info);
+	fbtft_unरेजिस्टर_framebuffer(info);
 	fbtft_framebuffer_release(info);
 
-	return 0;
-}
-EXPORT_SYMBOL(fbtft_remove_common);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(fbtft_हटाओ_common);
 
 MODULE_LICENSE("GPL");

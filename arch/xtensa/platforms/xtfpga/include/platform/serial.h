@@ -1,18 +1,19 @@
+<शैली गुरु>
 /*
- * arch/xtensa/platform/xtavnet/include/platform/serial.h
+ * arch/xtensa/platक्रमm/xtavnet/include/platक्रमm/serial.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001, 2006 Tensilica Inc.
  */
 
-#ifndef __ASM_XTENSA_XTAVNET_SERIAL_H
-#define __ASM_XTENSA_XTAVNET_SERIAL_H
+#अगर_अघोषित __ASM_XTENSA_XTAVNET_SERIAL_H
+#घोषणा __ASM_XTENSA_XTAVNET_SERIAL_H
 
-#include <platform/hardware.h>
+#समावेश <platक्रमm/hardware.h>
 
-#define BASE_BAUD (*(long *)XTFPGA_CLKFRQ_VADDR / 16)
+#घोषणा BASE_BAUD (*(दीर्घ *)XTFPGA_CLKFRQ_VADDR / 16)
 
-#endif /* __ASM_XTENSA_XTAVNET_SERIAL_H */
+#पूर्ण_अगर /* __ASM_XTENSA_XTAVNET_SERIAL_H */

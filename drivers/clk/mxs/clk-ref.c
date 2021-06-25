@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2012 Freescale Semiconductor, Inc.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include "clk.h"
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश "clk.h"
 
 /**
- * struct clk_ref - mxs reference clock
- * @hw: clk_hw for the reference clock
- * @reg: register address
- * @idx: the index of the reference clock within the same register
+ * काष्ठा clk_ref - mxs reference घड़ी
+ * @hw: clk_hw क्रम the reference घड़ी
+ * @reg: रेजिस्टर address
+ * @idx: the index of the reference घड़ी within the same रेजिस्टर
  *
- * The mxs reference clock sources from pll.  Every 4 reference clocks share
- * one register space, and @idx is used to identify them.  Each reference
- * clock has a gate control and a fractional * divider.  The rate is calculated
+ * The mxs reference घड़ी sources from pll.  Every 4 reference घड़ीs share
+ * one रेजिस्टर space, and @idx is used to identअगरy them.  Each reference
+ * घड़ी has a gate control and a fractional * भागider.  The rate is calculated
  * as pll rate  * (18 / FRAC), where FRAC = 18 ~ 35.
  */
-struct clk_ref {
-	struct clk_hw hw;
-	void __iomem *reg;
+काष्ठा clk_ref अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *reg;
 	u8 idx;
-};
+पूर्ण;
 
-#define to_clk_ref(_hw) container_of(_hw, struct clk_ref, hw)
+#घोषणा to_clk_ref(_hw) container_of(_hw, काष्ठा clk_ref, hw)
 
-static int clk_ref_enable(struct clk_hw *hw)
-{
-	struct clk_ref *ref = to_clk_ref(hw);
+अटल पूर्णांक clk_ref_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_ref *ref = to_clk_ref(hw);
 
-	writel_relaxed(1 << ((ref->idx + 1) * 8 - 1), ref->reg + CLR);
+	ग_लिखोl_relaxed(1 << ((ref->idx + 1) * 8 - 1), ref->reg + CLR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_ref_disable(struct clk_hw *hw)
-{
-	struct clk_ref *ref = to_clk_ref(hw);
+अटल व्योम clk_ref_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_ref *ref = to_clk_ref(hw);
 
-	writel_relaxed(1 << ((ref->idx + 1) * 8 - 1), ref->reg + SET);
-}
+	ग_लिखोl_relaxed(1 << ((ref->idx + 1) * 8 - 1), ref->reg + SET);
+पूर्ण
 
-static unsigned long clk_ref_recalc_rate(struct clk_hw *hw,
-					 unsigned long parent_rate)
-{
-	struct clk_ref *ref = to_clk_ref(hw);
-	u64 tmp = parent_rate;
-	u8 frac = (readl_relaxed(ref->reg) >> (ref->idx * 8)) & 0x3f;
+अटल अचिन्हित दीर्घ clk_ref_recalc_rate(काष्ठा clk_hw *hw,
+					 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_ref *ref = to_clk_ref(hw);
+	u64 पंचांगp = parent_rate;
+	u8 frac = (पढ़ोl_relaxed(ref->reg) >> (ref->idx * 8)) & 0x3f;
 
-	tmp *= 18;
-	do_div(tmp, frac);
+	पंचांगp *= 18;
+	करो_भाग(पंचांगp, frac);
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static long clk_ref_round_rate(struct clk_hw *hw, unsigned long rate,
-			       unsigned long *prate)
-{
-	unsigned long parent_rate = *prate;
-	u64 tmp = parent_rate;
+अटल दीर्घ clk_ref_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ *prate)
+अणु
+	अचिन्हित दीर्घ parent_rate = *prate;
+	u64 पंचांगp = parent_rate;
 	u8 frac;
 
-	tmp = tmp * 18 + rate / 2;
-	do_div(tmp, rate);
-	frac = tmp;
+	पंचांगp = पंचांगp * 18 + rate / 2;
+	करो_भाग(पंचांगp, rate);
+	frac = पंचांगp;
 
-	if (frac < 18)
+	अगर (frac < 18)
 		frac = 18;
-	else if (frac > 35)
+	अन्यथा अगर (frac > 35)
 		frac = 35;
 
-	tmp = parent_rate;
-	tmp *= 18;
-	do_div(tmp, frac);
+	पंचांगp = parent_rate;
+	पंचांगp *= 18;
+	करो_भाग(पंचांगp, frac);
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static int clk_ref_set_rate(struct clk_hw *hw, unsigned long rate,
-			    unsigned long parent_rate)
-{
-	struct clk_ref *ref = to_clk_ref(hw);
-	unsigned long flags;
-	u64 tmp = parent_rate;
+अटल पूर्णांक clk_ref_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_ref *ref = to_clk_ref(hw);
+	अचिन्हित दीर्घ flags;
+	u64 पंचांगp = parent_rate;
 	u32 val;
-	u8 frac, shift = ref->idx * 8;
+	u8 frac, shअगरt = ref->idx * 8;
 
-	tmp = tmp * 18 + rate / 2;
-	do_div(tmp, rate);
-	frac = tmp;
+	पंचांगp = पंचांगp * 18 + rate / 2;
+	करो_भाग(पंचांगp, rate);
+	frac = पंचांगp;
 
-	if (frac < 18)
+	अगर (frac < 18)
 		frac = 18;
-	else if (frac > 35)
+	अन्यथा अगर (frac > 35)
 		frac = 35;
 
 	spin_lock_irqsave(&mxs_lock, flags);
 
-	val = readl_relaxed(ref->reg);
-	val &= ~(0x3f << shift);
-	val |= frac << shift;
-	writel_relaxed(val, ref->reg);
+	val = पढ़ोl_relaxed(ref->reg);
+	val &= ~(0x3f << shअगरt);
+	val |= frac << shअगरt;
+	ग_लिखोl_relaxed(val, ref->reg);
 
 	spin_unlock_irqrestore(&mxs_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops clk_ref_ops = {
+अटल स्थिर काष्ठा clk_ops clk_ref_ops = अणु
 	.enable		= clk_ref_enable,
 	.disable	= clk_ref_disable,
 	.recalc_rate	= clk_ref_recalc_rate,
 	.round_rate	= clk_ref_round_rate,
 	.set_rate	= clk_ref_set_rate,
-};
+पूर्ण;
 
-struct clk *mxs_clk_ref(const char *name, const char *parent_name,
-			void __iomem *reg, u8 idx)
-{
-	struct clk_ref *ref;
-	struct clk *clk;
-	struct clk_init_data init;
+काष्ठा clk *mxs_clk_ref(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+			व्योम __iomem *reg, u8 idx)
+अणु
+	काष्ठा clk_ref *ref;
+	काष्ठा clk *clk;
+	काष्ठा clk_init_data init;
 
-	ref = kzalloc(sizeof(*ref), GFP_KERNEL);
-	if (!ref)
-		return ERR_PTR(-ENOMEM);
+	ref = kzalloc(माप(*ref), GFP_KERNEL);
+	अगर (!ref)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &clk_ref_ops;
 	init.flags = 0;
-	init.parent_names = (parent_name ? &parent_name: NULL);
+	init.parent_names = (parent_name ? &parent_name: शून्य);
 	init.num_parents = (parent_name ? 1 : 0);
 
 	ref->reg = reg;
 	ref->idx = idx;
 	ref->hw.init = &init;
 
-	clk = clk_register(NULL, &ref->hw);
-	if (IS_ERR(clk))
-		kfree(ref);
+	clk = clk_रेजिस्टर(शून्य, &ref->hw);
+	अगर (IS_ERR(clk))
+		kमुक्त(ref);
 
-	return clk;
-}
+	वापस clk;
+पूर्ण

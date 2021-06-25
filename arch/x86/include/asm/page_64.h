@@ -1,83 +1,84 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_PAGE_64_H
-#define _ASM_X86_PAGE_64_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_PAGE_64_H
+#घोषणा _ASM_X86_PAGE_64_H
 
-#include <asm/page_64_types.h>
+#समावेश <यंत्र/page_64_types.h>
 
-#ifndef __ASSEMBLY__
-#include <asm/alternative.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <यंत्र/alternative.h>
 
-/* duplicated to the one in bootmem.h */
-extern unsigned long max_pfn;
-extern unsigned long phys_base;
+/* duplicated to the one in booपंचांगem.h */
+बाह्य अचिन्हित दीर्घ max_pfn;
+बाह्य अचिन्हित दीर्घ phys_base;
 
-extern unsigned long page_offset_base;
-extern unsigned long vmalloc_base;
-extern unsigned long vmemmap_base;
+बाह्य अचिन्हित दीर्घ page_offset_base;
+बाह्य अचिन्हित दीर्घ vदो_स्मृति_base;
+बाह्य अचिन्हित दीर्घ vmemmap_base;
 
-static inline unsigned long __phys_addr_nodebug(unsigned long x)
-{
-	unsigned long y = x - __START_KERNEL_map;
+अटल अंतरभूत अचिन्हित दीर्घ __phys_addr_nodebug(अचिन्हित दीर्घ x)
+अणु
+	अचिन्हित दीर्घ y = x - __START_KERNEL_map;
 
-	/* use the carry flag to determine if x was < __START_KERNEL_map */
+	/* use the carry flag to determine अगर x was < __START_KERNEL_map */
 	x = y + ((x > y) ? phys_base : (__START_KERNEL_map - PAGE_OFFSET));
 
-	return x;
-}
+	वापस x;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_VIRTUAL
-extern unsigned long __phys_addr(unsigned long);
-extern unsigned long __phys_addr_symbol(unsigned long);
-#else
-#define __phys_addr(x)		__phys_addr_nodebug(x)
-#define __phys_addr_symbol(x) \
-	((unsigned long)(x) - __START_KERNEL_map + phys_base)
-#endif
+#अगर_घोषित CONFIG_DEBUG_VIRTUAL
+बाह्य अचिन्हित दीर्घ __phys_addr(अचिन्हित दीर्घ);
+बाह्य अचिन्हित दीर्घ __phys_addr_symbol(अचिन्हित दीर्घ);
+#अन्यथा
+#घोषणा __phys_addr(x)		__phys_addr_nodebug(x)
+#घोषणा __phys_addr_symbol(x) \
+	((अचिन्हित दीर्घ)(x) - __START_KERNEL_map + phys_base)
+#पूर्ण_अगर
 
-#define __phys_reloc_hide(x)	(x)
+#घोषणा __phys_reloc_hide(x)	(x)
 
-#ifdef CONFIG_FLATMEM
-#define pfn_valid(pfn)          ((pfn) < max_pfn)
-#endif
+#अगर_घोषित CONFIG_FLATMEM
+#घोषणा pfn_valid(pfn)          ((pfn) < max_pfn)
+#पूर्ण_अगर
 
-void clear_page_orig(void *page);
-void clear_page_rep(void *page);
-void clear_page_erms(void *page);
+व्योम clear_page_orig(व्योम *page);
+व्योम clear_page_rep(व्योम *page);
+व्योम clear_page_erms(व्योम *page);
 
-static inline void clear_page(void *page)
-{
+अटल अंतरभूत व्योम clear_page(व्योम *page)
+अणु
 	alternative_call_2(clear_page_orig,
 			   clear_page_rep, X86_FEATURE_REP_GOOD,
 			   clear_page_erms, X86_FEATURE_ERMS,
 			   "=D" (page),
 			   "0" (page)
 			   : "cc", "memory", "rax", "rcx");
-}
+पूर्ण
 
-void copy_page(void *to, void *from);
+व्योम copy_page(व्योम *to, व्योम *from);
 
-#ifdef CONFIG_X86_5LEVEL
+#अगर_घोषित CONFIG_X86_5LEVEL
 /*
  * User space process size.  This is the first address outside the user range.
- * There are a few constraints that determine this:
+ * There are a few स्थिरraपूर्णांकs that determine this:
  *
- * On Intel CPUs, if a SYSCALL instruction is at the highest canonical
+ * On Intel CPUs, अगर a SYSCALL inकाष्ठाion is at the highest canonical
  * address, then that syscall will enter the kernel with a
- * non-canonical return address, and SYSRET will explode dangerously.
- * We avoid this particular problem by preventing anything
+ * non-canonical वापस address, and SYSRET will explode dangerously.
+ * We aव्योम this particular problem by preventing anything
  * from being mapped at the maximum canonical address.
  *
  * On AMD CPUs in the Ryzen family, there's a nasty bug in which the
- * CPUs malfunction if they execute code from the highest canonical page.
+ * CPUs malfunction अगर they execute code from the highest canonical page.
  * They'll speculate right off the end of the canonical space, and
  * bad things happen.  This is worked around in the same way as the
  * Intel problem.
  *
  * With page table isolation enabled, we map the LDT in ... [stay tuned]
  */
-static inline unsigned long task_size_max(void)
-{
-	unsigned long ret;
+अटल अंतरभूत अचिन्हित दीर्घ task_size_max(व्योम)
+अणु
+	अचिन्हित दीर्घ ret;
 
 	alternative_io("movq %[small],%0","movq %[large],%0",
 			X86_FEATURE_LA57,
@@ -85,14 +86,14 @@ static inline unsigned long task_size_max(void)
 			[small] "i" ((1ul << 47)-PAGE_SIZE),
 			[large] "i" ((1ul << 56)-PAGE_SIZE));
 
-	return ret;
-}
-#endif	/* CONFIG_X86_5LEVEL */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_X86_5LEVEL */
 
-#endif	/* !__ASSEMBLY__ */
+#पूर्ण_अगर	/* !__ASSEMBLY__ */
 
-#ifdef CONFIG_X86_VSYSCALL_EMULATION
+#अगर_घोषित CONFIG_X86_VSYSCALL_EMULATION
 # define __HAVE_ARCH_GATE_AREA 1
-#endif
+#पूर्ण_अगर
 
-#endif /* _ASM_X86_PAGE_64_H */
+#पूर्ण_अगर /* _ASM_X86_PAGE_64_H */

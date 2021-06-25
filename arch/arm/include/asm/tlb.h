@@ -1,68 +1,69 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  arch/arm/include/asm/tlb.h
+ *  arch/arm/include/यंत्र/tlb.h
  *
  *  Copyright (C) 2002 Russell King
  *
  *  Experimentation shows that on a StrongARM, it appears to be faster
  *  to use the "invalidate whole tlb" rather than "invalidate single
- *  tlb" for this.
+ *  tlb" क्रम this.
  *
- *  This appears true for both the process fork+exit case, as well as
- *  the munmap-large-area case.
+ *  This appears true क्रम both the process विभाजन+निकास हाल, as well as
+ *  the munmap-large-area हाल.
  */
-#ifndef __ASMARM_TLB_H
-#define __ASMARM_TLB_H
+#अगर_अघोषित __ASMARM_TLB_H
+#घोषणा __ASMARM_TLB_H
 
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/cacheflush.h>
 
-#ifndef CONFIG_MMU
+#अगर_अघोषित CONFIG_MMU
 
-#include <linux/pagemap.h>
+#समावेश <linux/pagemap.h>
 
-#define tlb_flush(tlb)	((void) tlb)
+#घोषणा tlb_flush(tlb)	((व्योम) tlb)
 
-#include <asm-generic/tlb.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-#else /* !CONFIG_MMU */
+#अन्यथा /* !CONFIG_MMU */
 
-#include <linux/swap.h>
-#include <asm/tlbflush.h>
+#समावेश <linux/swap.h>
+#समावेश <यंत्र/tlbflush.h>
 
-static inline void __tlb_remove_table(void *_table)
-{
-	free_page_and_swap_cache((struct page *)_table);
-}
+अटल अंतरभूत व्योम __tlb_हटाओ_table(व्योम *_table)
+अणु
+	मुक्त_page_and_swap_cache((काष्ठा page *)_table);
+पूर्ण
 
-#include <asm-generic/tlb.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-static inline void
-__pte_free_tlb(struct mmu_gather *tlb, pgtable_t pte, unsigned long addr)
-{
+अटल अंतरभूत व्योम
+__pte_मुक्त_tlb(काष्ठा mmu_gather *tlb, pgtable_t pte, अचिन्हित दीर्घ addr)
+अणु
 	pgtable_pte_page_dtor(pte);
 
-#ifndef CONFIG_ARM_LPAE
+#अगर_अघोषित CONFIG_ARM_LPAE
 	/*
 	 * With the classic ARM MMU, a pte page has two corresponding pmd
 	 * entries, each covering 1MB.
 	 */
 	addr = (addr & PMD_MASK) + SZ_1M;
 	__tlb_adjust_range(tlb, addr - PAGE_SIZE, 2 * PAGE_SIZE);
-#endif
+#पूर्ण_अगर
 
-	tlb_remove_table(tlb, pte);
-}
+	tlb_हटाओ_table(tlb, pte);
+पूर्ण
 
-static inline void
-__pmd_free_tlb(struct mmu_gather *tlb, pmd_t *pmdp, unsigned long addr)
-{
-#ifdef CONFIG_ARM_LPAE
-	struct page *page = virt_to_page(pmdp);
+अटल अंतरभूत व्योम
+__pmd_मुक्त_tlb(काष्ठा mmu_gather *tlb, pmd_t *pmdp, अचिन्हित दीर्घ addr)
+अणु
+#अगर_घोषित CONFIG_ARM_LPAE
+	काष्ठा page *page = virt_to_page(pmdp);
 
 	pgtable_pmd_page_dtor(page);
-	tlb_remove_table(tlb, page);
-#endif
-}
+	tlb_हटाओ_table(tlb, page);
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* CONFIG_MMU */
-#endif
+#पूर्ण_अगर /* CONFIG_MMU */
+#पूर्ण_अगर

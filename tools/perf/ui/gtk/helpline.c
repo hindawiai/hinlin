@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <string.h>
-#include <linux/kernel.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <linux/kernel.h>
 
-#include "gtk.h"
-#include "../ui.h"
-#include "../helpline.h"
+#समावेश "gtk.h"
+#समावेश "../ui.h"
+#समावेश "../helpline.h"
 
-static void gtk_helpline_pop(void)
-{
-	if (!perf_gtk__is_active_context(pgctx))
-		return;
+अटल व्योम gtk_helpline_pop(व्योम)
+अणु
+	अगर (!perf_gtk__is_active_context(pgctx))
+		वापस;
 
 	gtk_statusbar_pop(GTK_STATUSBAR(pgctx->statbar),
 			  pgctx->statbar_ctx_id);
-}
+पूर्ण
 
-static void gtk_helpline_push(const char *msg)
-{
-	if (!perf_gtk__is_active_context(pgctx))
-		return;
+अटल व्योम gtk_helpline_push(स्थिर अक्षर *msg)
+अणु
+	अगर (!perf_gtk__is_active_context(pgctx))
+		वापस;
 
 	gtk_statusbar_push(GTK_STATUSBAR(pgctx->statbar),
 			   pgctx->statbar_ctx_id, msg);
-}
+पूर्ण
 
-static int gtk_helpline_show(const char *fmt, va_list ap)
-{
-	int ret;
-	char *ptr;
-	static int backlog;
+अटल पूर्णांक gtk_helpline_show(स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
+	पूर्णांक ret;
+	अक्षर *ptr;
+	अटल पूर्णांक backlog;
 
-	ret = vscnprintf(ui_helpline__current + backlog,
-			 sizeof(ui_helpline__current) - backlog, fmt, ap);
+	ret = vscnम_लिखो(ui_helpline__current + backlog,
+			 माप(ui_helpline__current) - backlog, fmt, ap);
 	backlog += ret;
 
 	/* only first line can be displayed */
-	ptr = strchr(ui_helpline__current, '\n');
-	if (ptr && (ptr - ui_helpline__current) <= backlog) {
+	ptr = म_अक्षर(ui_helpline__current, '\n');
+	अगर (ptr && (ptr - ui_helpline__current) <= backlog) अणु
 		*ptr = '\0';
-		ui_helpline__puts(ui_helpline__current);
+		ui_helpline__माला_दो(ui_helpline__current);
 		backlog = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct ui_helpline gtk_helpline_fns = {
+अटल काष्ठा ui_helpline gtk_helpline_fns = अणु
 	.pop	= gtk_helpline_pop,
 	.push	= gtk_helpline_push,
 	.show	= gtk_helpline_show,
-};
+पूर्ण;
 
-void perf_gtk__init_helpline(void)
-{
+व्योम perf_gtk__init_helpline(व्योम)
+अणु
 	helpline_fns = &gtk_helpline_fns;
-}
+पूर्ण

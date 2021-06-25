@@ -1,77 +1,78 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *    Hypervisor filesystem for Linux on s390.
+ *    Hypervisor fileप्रणाली क्रम Linux on s390.
  *
  *    Copyright IBM Corp. 2006
  *    Author(s): Michael Holzheu <holzheu@de.ibm.com>
  */
 
-#ifndef _HYPFS_H_
-#define _HYPFS_H_
+#अगर_अघोषित _HYPFS_H_
+#घोषणा _HYPFS_H_
 
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/debugfs.h>
-#include <linux/workqueue.h>
-#include <linux/kref.h>
-#include <asm/hypfs.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/kref.h>
+#समावेश <यंत्र/hypfs.h>
 
-#define REG_FILE_MODE    0440
-#define UPDATE_FILE_MODE 0220
-#define DIR_MODE         0550
+#घोषणा REG_खाता_MODE    0440
+#घोषणा UPDATE_खाता_MODE 0220
+#घोषणा सूची_MODE         0550
 
-extern struct dentry *hypfs_mkdir(struct dentry *parent, const char *name);
+बाह्य काष्ठा dentry *hypfs_सूची_गढ़ो(काष्ठा dentry *parent, स्थिर अक्षर *name);
 
-extern struct dentry *hypfs_create_u64(struct dentry *dir, const char *name,
+बाह्य काष्ठा dentry *hypfs_create_u64(काष्ठा dentry *dir, स्थिर अक्षर *name,
 				       __u64 value);
 
-extern struct dentry *hypfs_create_str(struct dentry *dir, const char *name,
-				       char *string);
+बाह्य काष्ठा dentry *hypfs_create_str(काष्ठा dentry *dir, स्थिर अक्षर *name,
+				       अक्षर *string);
 
 /* LPAR Hypervisor */
-extern int hypfs_diag_init(void);
-extern void hypfs_diag_exit(void);
-extern int hypfs_diag_create_files(struct dentry *root);
+बाह्य पूर्णांक hypfs_diag_init(व्योम);
+बाह्य व्योम hypfs_diag_निकास(व्योम);
+बाह्य पूर्णांक hypfs_diag_create_files(काष्ठा dentry *root);
 
 /* VM Hypervisor */
-extern int hypfs_vm_init(void);
-extern void hypfs_vm_exit(void);
-extern int hypfs_vm_create_files(struct dentry *root);
+बाह्य पूर्णांक hypfs_vm_init(व्योम);
+बाह्य व्योम hypfs_vm_निकास(व्योम);
+बाह्य पूर्णांक hypfs_vm_create_files(काष्ठा dentry *root);
 
 /* VM diagnose 0c */
-int hypfs_diag0c_init(void);
-void hypfs_diag0c_exit(void);
+पूर्णांक hypfs_diag0c_init(व्योम);
+व्योम hypfs_diag0c_निकास(व्योम);
 
 /* Set Partition-Resource Parameter */
-void hypfs_sprp_init(void);
-void hypfs_sprp_exit(void);
+व्योम hypfs_sprp_init(व्योम);
+व्योम hypfs_sprp_निकास(व्योम);
 
-/* debugfs interface */
-struct hypfs_dbfs_file;
+/* debugfs पूर्णांकerface */
+काष्ठा hypfs_dbfs_file;
 
-struct hypfs_dbfs_data {
-	void			*buf;
-	void			*buf_free_ptr;
-	size_t			size;
-	struct hypfs_dbfs_file	*dbfs_file;
-};
+काष्ठा hypfs_dbfs_data अणु
+	व्योम			*buf;
+	व्योम			*buf_मुक्त_ptr;
+	माप_प्रकार			size;
+	काष्ठा hypfs_dbfs_file	*dbfs_file;
+पूर्ण;
 
-struct hypfs_dbfs_file {
-	const char	*name;
-	int		(*data_create)(void **data, void **data_free_ptr,
-				       size_t *size);
-	void		(*data_free)(const void *buf_free_ptr);
-	long		(*unlocked_ioctl) (struct file *, unsigned int,
-					   unsigned long);
+काष्ठा hypfs_dbfs_file अणु
+	स्थिर अक्षर	*name;
+	पूर्णांक		(*data_create)(व्योम **data, व्योम **data_मुक्त_ptr,
+				       माप_प्रकार *size);
+	व्योम		(*data_मुक्त)(स्थिर व्योम *buf_मुक्त_ptr);
+	दीर्घ		(*unlocked_ioctl) (काष्ठा file *, अचिन्हित पूर्णांक,
+					   अचिन्हित दीर्घ);
 
-	/* Private data for hypfs_dbfs.c */
-	struct mutex		lock;
-	struct dentry		*dentry;
-};
+	/* Private data क्रम hypfs_dbfs.c */
+	काष्ठा mutex		lock;
+	काष्ठा dentry		*dentry;
+पूर्ण;
 
-extern void hypfs_dbfs_init(void);
-extern void hypfs_dbfs_exit(void);
-extern void hypfs_dbfs_create_file(struct hypfs_dbfs_file *df);
-extern void hypfs_dbfs_remove_file(struct hypfs_dbfs_file *df);
+बाह्य व्योम hypfs_dbfs_init(व्योम);
+बाह्य व्योम hypfs_dbfs_निकास(व्योम);
+बाह्य व्योम hypfs_dbfs_create_file(काष्ठा hypfs_dbfs_file *df);
+बाह्य व्योम hypfs_dbfs_हटाओ_file(काष्ठा hypfs_dbfs_file *df);
 
-#endif /* _HYPFS_H_ */
+#पूर्ण_अगर /* _HYPFS_H_ */

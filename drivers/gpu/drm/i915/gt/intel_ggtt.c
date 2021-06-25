@@ -1,251 +1,252 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#include <linux/stop_machine.h>
+#समावेश <linux/stop_machine.h>
 
-#include <asm/set_memory.h>
-#include <asm/smp.h>
+#समावेश <यंत्र/set_memory.h>
+#समावेश <यंत्र/smp.h>
 
-#include <drm/i915_drm.h>
+#समावेश <drm/i915_drm.h>
 
-#include "gem/i915_gem_lmem.h"
+#समावेश "gem/i915_gem_lmem.h"
 
-#include "intel_gt.h"
-#include "i915_drv.h"
-#include "i915_scatterlist.h"
-#include "i915_vgpu.h"
+#समावेश "intel_gt.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_scatterlist.h"
+#समावेश "i915_vgpu.h"
 
-#include "intel_gtt.h"
+#समावेश "intel_gtt.h"
 
-static int
-i915_get_ggtt_vma_pages(struct i915_vma *vma);
+अटल पूर्णांक
+i915_get_ggtt_vma_pages(काष्ठा i915_vma *vma);
 
-static void i915_ggtt_color_adjust(const struct drm_mm_node *node,
-				   unsigned long color,
+अटल व्योम i915_ggtt_color_adjust(स्थिर काष्ठा drm_mm_node *node,
+				   अचिन्हित दीर्घ color,
 				   u64 *start,
 				   u64 *end)
-{
-	if (i915_node_color_differs(node, color))
+अणु
+	अगर (i915_node_color_dअगरfers(node, color))
 		*start += I915_GTT_PAGE_SIZE;
 
 	/*
 	 * Also leave a space between the unallocated reserved node after the
-	 * GTT and any objects within the GTT, i.e. we use the color adjustment
+	 * GTT and any objects within the GTT, i.e. we use the color adjusपंचांगent
 	 * to insert a guard page to prevent prefetches crossing over the
 	 * GTT boundary.
 	 */
 	node = list_next_entry(node, node_list);
-	if (node->color != color)
+	अगर (node->color != color)
 		*end -= I915_GTT_PAGE_SIZE;
-}
+पूर्ण
 
-static int ggtt_init_hw(struct i915_ggtt *ggtt)
-{
-	struct drm_i915_private *i915 = ggtt->vm.i915;
+अटल पूर्णांक ggtt_init_hw(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = ggtt->vm.i915;
 
 	i915_address_space_init(&ggtt->vm, VM_CLASS_GGTT);
 
 	ggtt->vm.is_ggtt = true;
 
-	/* Only VLV supports read-only GGTT mappings */
-	ggtt->vm.has_read_only = IS_VALLEYVIEW(i915);
+	/* Only VLV supports पढ़ो-only GGTT mappings */
+	ggtt->vm.has_पढ़ो_only = IS_VALLEYVIEW(i915);
 
-	if (!HAS_LLC(i915) && !HAS_PPGTT(i915))
+	अगर (!HAS_LLC(i915) && !HAS_PPGTT(i915))
 		ggtt->vm.mm.color_adjust = i915_ggtt_color_adjust;
 
-	if (ggtt->mappable_end) {
-		if (!io_mapping_init_wc(&ggtt->iomap,
+	अगर (ggtt->mappable_end) अणु
+		अगर (!io_mapping_init_wc(&ggtt->iomap,
 					ggtt->gmadr.start,
-					ggtt->mappable_end)) {
+					ggtt->mappable_end)) अणु
 			ggtt->vm.cleanup(&ggtt->vm);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		ggtt->mtrr = arch_phys_wc_add(ggtt->gmadr.start,
 					      ggtt->mappable_end);
-	}
+	पूर्ण
 
-	intel_ggtt_init_fences(ggtt);
+	पूर्णांकel_ggtt_init_fences(ggtt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * i915_ggtt_init_hw - Initialize GGTT hardware
  * @i915: i915 device
  */
-int i915_ggtt_init_hw(struct drm_i915_private *i915)
-{
-	int ret;
+पूर्णांक i915_ggtt_init_hw(काष्ठा drm_i915_निजी *i915)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * Note that we use page colouring to enforce a guard page at the
+	 * Note that we use page colouring to enक्रमce a guard page at the
 	 * end of the address space. This is required as the CS may prefetch
 	 * beyond the end of the batch buffer, across the page boundary,
-	 * and beyond the end of the GTT if we do not provide a guard.
+	 * and beyond the end of the GTT अगर we करो not provide a guard.
 	 */
 	ret = ggtt_init_hw(&i915->ggtt);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Certain Gen5 chipsets require idling the GPU before
+ * Certain Gen5 chipsets require idling the GPU beक्रमe
  * unmapping anything from the GTT when VT-d is enabled.
  */
-static bool needs_idle_maps(struct drm_i915_private *i915)
-{
+अटल bool needs_idle_maps(काष्ठा drm_i915_निजी *i915)
+अणु
 	/*
-	 * Query intel_iommu to see if we need the workaround. Presumably that
+	 * Query पूर्णांकel_iommu to see अगर we need the workaround. Presumably that
 	 * was loaded first.
 	 */
-	if (!intel_vtd_active())
-		return false;
+	अगर (!पूर्णांकel_vtd_active())
+		वापस false;
 
-	if (IS_GEN(i915, 5) && IS_MOBILE(i915))
-		return true;
+	अगर (IS_GEN(i915, 5) && IS_MOBILE(i915))
+		वापस true;
 
-	if (IS_GEN(i915, 12))
-		return true; /* XXX DMAR fault reason 7 */
+	अगर (IS_GEN(i915, 12))
+		वापस true; /* XXX DMAR fault reason 7 */
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void i915_ggtt_suspend(struct i915_ggtt *ggtt)
-{
-	struct i915_vma *vma, *vn;
-	int open;
+व्योम i915_ggtt_suspend(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा i915_vma *vma, *vn;
+	पूर्णांक खोलो;
 
 	mutex_lock(&ggtt->vm.mutex);
 
 	/* Skip rewriting PTE on VMA unbind. */
-	open = atomic_xchg(&ggtt->vm.open, 0);
+	खोलो = atomic_xchg(&ggtt->vm.खोलो, 0);
 
-	list_for_each_entry_safe(vma, vn, &ggtt->vm.bound_list, vm_link) {
+	list_क्रम_each_entry_safe(vma, vn, &ggtt->vm.bound_list, vm_link) अणु
 		GEM_BUG_ON(!drm_mm_node_allocated(&vma->node));
-		i915_vma_wait_for_bind(vma);
+		i915_vma_रुको_क्रम_bind(vma);
 
-		if (i915_vma_is_pinned(vma))
-			continue;
+		अगर (i915_vma_is_pinned(vma))
+			जारी;
 
-		if (!i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND)) {
+		अगर (!i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND)) अणु
 			__i915_vma_evict(vma);
-			drm_mm_remove_node(&vma->node);
-		}
-	}
+			drm_mm_हटाओ_node(&vma->node);
+		पूर्ण
+	पूर्ण
 
 	ggtt->vm.clear_range(&ggtt->vm, 0, ggtt->vm.total);
 	ggtt->invalidate(ggtt);
-	atomic_set(&ggtt->vm.open, open);
+	atomic_set(&ggtt->vm.खोलो, खोलो);
 
 	mutex_unlock(&ggtt->vm.mutex);
 
-	intel_gt_check_and_clear_faults(ggtt->vm.gt);
-}
+	पूर्णांकel_gt_check_and_clear_faults(ggtt->vm.gt);
+पूर्ण
 
-void gen6_ggtt_invalidate(struct i915_ggtt *ggtt)
-{
-	struct intel_uncore *uncore = ggtt->vm.gt->uncore;
+व्योम gen6_ggtt_invalidate(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = ggtt->vm.gt->uncore;
 
 	spin_lock_irq(&uncore->lock);
-	intel_uncore_write_fw(uncore, GFX_FLSH_CNTL_GEN6, GFX_FLSH_CNTL_EN);
-	intel_uncore_read_fw(uncore, GFX_FLSH_CNTL_GEN6);
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, GFX_FLSH_CNTL_GEN6, GFX_FLSH_CNTL_EN);
+	पूर्णांकel_uncore_पढ़ो_fw(uncore, GFX_FLSH_CNTL_GEN6);
 	spin_unlock_irq(&uncore->lock);
-}
+पूर्ण
 
-static void gen8_ggtt_invalidate(struct i915_ggtt *ggtt)
-{
-	struct intel_uncore *uncore = ggtt->vm.gt->uncore;
+अटल व्योम gen8_ggtt_invalidate(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = ggtt->vm.gt->uncore;
 
 	/*
-	 * Note that as an uncached mmio write, this will flush the
-	 * WCB of the writes into the GGTT before it triggers the invalidate.
+	 * Note that as an uncached mmio ग_लिखो, this will flush the
+	 * WCB of the ग_लिखोs पूर्णांकo the GGTT beक्रमe it triggers the invalidate.
 	 */
-	intel_uncore_write_fw(uncore, GFX_FLSH_CNTL_GEN6, GFX_FLSH_CNTL_EN);
-}
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, GFX_FLSH_CNTL_GEN6, GFX_FLSH_CNTL_EN);
+पूर्ण
 
-static void guc_ggtt_invalidate(struct i915_ggtt *ggtt)
-{
-	struct intel_uncore *uncore = ggtt->vm.gt->uncore;
-	struct drm_i915_private *i915 = ggtt->vm.i915;
+अटल व्योम guc_ggtt_invalidate(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = ggtt->vm.gt->uncore;
+	काष्ठा drm_i915_निजी *i915 = ggtt->vm.i915;
 
 	gen8_ggtt_invalidate(ggtt);
 
-	if (INTEL_GEN(i915) >= 12)
-		intel_uncore_write_fw(uncore, GEN12_GUC_TLB_INV_CR,
+	अगर (INTEL_GEN(i915) >= 12)
+		पूर्णांकel_uncore_ग_लिखो_fw(uncore, GEN12_GUC_TLB_INV_CR,
 				      GEN12_GUC_TLB_INV_CR_INVALIDATE);
-	else
-		intel_uncore_write_fw(uncore, GEN8_GTCR, GEN8_GTCR_INVALIDATE);
-}
+	अन्यथा
+		पूर्णांकel_uncore_ग_लिखो_fw(uncore, GEN8_GTCR, GEN8_GTCR_INVALIDATE);
+पूर्ण
 
-static void gmch_ggtt_invalidate(struct i915_ggtt *ggtt)
-{
-	intel_gtt_chipset_flush();
-}
+अटल व्योम gmch_ggtt_invalidate(काष्ठा i915_ggtt *ggtt)
+अणु
+	पूर्णांकel_gtt_chipset_flush();
+पूर्ण
 
-static u64 gen8_ggtt_pte_encode(dma_addr_t addr,
-				enum i915_cache_level level,
+अटल u64 gen8_ggtt_pte_encode(dma_addr_t addr,
+				क्रमागत i915_cache_level level,
 				u32 flags)
-{
+अणु
 	gen8_pte_t pte = addr | _PAGE_PRESENT;
 
-	if (flags & PTE_LM)
+	अगर (flags & PTE_LM)
 		pte |= GEN12_GGTT_PTE_LM;
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static void gen8_set_pte(void __iomem *addr, gen8_pte_t pte)
-{
-	writeq(pte, addr);
-}
+अटल व्योम gen8_set_pte(व्योम __iomem *addr, gen8_pte_t pte)
+अणु
+	ग_लिखोq(pte, addr);
+पूर्ण
 
-static void gen8_ggtt_insert_page(struct i915_address_space *vm,
+अटल व्योम gen8_ggtt_insert_page(काष्ठा i915_address_space *vm,
 				  dma_addr_t addr,
 				  u64 offset,
-				  enum i915_cache_level level,
+				  क्रमागत i915_cache_level level,
 				  u32 flags)
-{
-	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
+अणु
+	काष्ठा i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
 	gen8_pte_t __iomem *pte =
 		(gen8_pte_t __iomem *)ggtt->gsm + offset / I915_GTT_PAGE_SIZE;
 
 	gen8_set_pte(pte, gen8_ggtt_pte_encode(addr, level, flags));
 
 	ggtt->invalidate(ggtt);
-}
+पूर्ण
 
-static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
-				     struct i915_vma *vma,
-				     enum i915_cache_level level,
+अटल व्योम gen8_ggtt_insert_entries(काष्ठा i915_address_space *vm,
+				     काष्ठा i915_vma *vma,
+				     क्रमागत i915_cache_level level,
 				     u32 flags)
-{
-	const gen8_pte_t pte_encode = gen8_ggtt_pte_encode(0, level, flags);
-	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
+अणु
+	स्थिर gen8_pte_t pte_encode = gen8_ggtt_pte_encode(0, level, flags);
+	काष्ठा i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
 	gen8_pte_t __iomem *gte;
 	gen8_pte_t __iomem *end;
-	struct sgt_iter iter;
+	काष्ठा sgt_iter iter;
 	dma_addr_t addr;
 
 	/*
 	 * Note that we ignore PTE_READ_ONLY here. The caller must be careful
-	 * not to allow the user to override access to a read only page.
+	 * not to allow the user to override access to a पढ़ो only page.
 	 */
 
 	gte = (gen8_pte_t __iomem *)ggtt->gsm;
 	gte += vma->node.start / I915_GTT_PAGE_SIZE;
 	end = gte + vma->node.size / I915_GTT_PAGE_SIZE;
 
-	for_each_sgt_daddr(addr, iter, vma->pages)
+	क्रम_each_sgt_daddr(addr, iter, vma->pages)
 		gen8_set_pte(gte++, pte_encode | addr);
 	GEM_BUG_ON(gte > end);
 
 	/* Fill the allocated but "unused" space beyond the end of the buffer */
-	while (gte < end)
+	जबतक (gte < end)
 		gen8_set_pte(gte++, vm->scratch[0]->encode);
 
 	/*
@@ -253,238 +254,238 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 	 * updates have finished.
 	 */
 	ggtt->invalidate(ggtt);
-}
+पूर्ण
 
-static void gen6_ggtt_insert_page(struct i915_address_space *vm,
+अटल व्योम gen6_ggtt_insert_page(काष्ठा i915_address_space *vm,
 				  dma_addr_t addr,
 				  u64 offset,
-				  enum i915_cache_level level,
+				  क्रमागत i915_cache_level level,
 				  u32 flags)
-{
-	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
+अणु
+	काष्ठा i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
 	gen6_pte_t __iomem *pte =
 		(gen6_pte_t __iomem *)ggtt->gsm + offset / I915_GTT_PAGE_SIZE;
 
-	iowrite32(vm->pte_encode(addr, level, flags), pte);
+	ioग_लिखो32(vm->pte_encode(addr, level, flags), pte);
 
 	ggtt->invalidate(ggtt);
-}
+पूर्ण
 
 /*
- * Binds an object into the global gtt with the specified cache level.
- * The object will be accessible to the GPU via commands whose operands
+ * Binds an object पूर्णांकo the global gtt with the specअगरied cache level.
+ * The object will be accessible to the GPU via commands whose opeअक्रमs
  * reference offsets within the global GTT as well as accessible by the GPU
  * through the GMADR mapped BAR (i915->mm.gtt->gtt).
  */
-static void gen6_ggtt_insert_entries(struct i915_address_space *vm,
-				     struct i915_vma *vma,
-				     enum i915_cache_level level,
+अटल व्योम gen6_ggtt_insert_entries(काष्ठा i915_address_space *vm,
+				     काष्ठा i915_vma *vma,
+				     क्रमागत i915_cache_level level,
 				     u32 flags)
-{
-	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
+अणु
+	काष्ठा i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
 	gen6_pte_t __iomem *gte;
 	gen6_pte_t __iomem *end;
-	struct sgt_iter iter;
+	काष्ठा sgt_iter iter;
 	dma_addr_t addr;
 
 	gte = (gen6_pte_t __iomem *)ggtt->gsm;
 	gte += vma->node.start / I915_GTT_PAGE_SIZE;
 	end = gte + vma->node.size / I915_GTT_PAGE_SIZE;
 
-	for_each_sgt_daddr(addr, iter, vma->pages)
-		iowrite32(vm->pte_encode(addr, level, flags), gte++);
+	क्रम_each_sgt_daddr(addr, iter, vma->pages)
+		ioग_लिखो32(vm->pte_encode(addr, level, flags), gte++);
 	GEM_BUG_ON(gte > end);
 
 	/* Fill the allocated but "unused" space beyond the end of the buffer */
-	while (gte < end)
-		iowrite32(vm->scratch[0]->encode, gte++);
+	जबतक (gte < end)
+		ioग_लिखो32(vm->scratch[0]->encode, gte++);
 
 	/*
 	 * We want to flush the TLBs only after we're certain all the PTE
 	 * updates have finished.
 	 */
 	ggtt->invalidate(ggtt);
-}
+पूर्ण
 
-static void nop_clear_range(struct i915_address_space *vm,
+अटल व्योम nop_clear_range(काष्ठा i915_address_space *vm,
 			    u64 start, u64 length)
-{
-}
+अणु
+पूर्ण
 
-static void gen8_ggtt_clear_range(struct i915_address_space *vm,
+अटल व्योम gen8_ggtt_clear_range(काष्ठा i915_address_space *vm,
 				  u64 start, u64 length)
-{
-	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
-	unsigned int first_entry = start / I915_GTT_PAGE_SIZE;
-	unsigned int num_entries = length / I915_GTT_PAGE_SIZE;
-	const gen8_pte_t scratch_pte = vm->scratch[0]->encode;
+अणु
+	काष्ठा i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
+	अचिन्हित पूर्णांक first_entry = start / I915_GTT_PAGE_SIZE;
+	अचिन्हित पूर्णांक num_entries = length / I915_GTT_PAGE_SIZE;
+	स्थिर gen8_pte_t scratch_pte = vm->scratch[0]->encode;
 	gen8_pte_t __iomem *gtt_base =
 		(gen8_pte_t __iomem *)ggtt->gsm + first_entry;
-	const int max_entries = ggtt_total_entries(ggtt) - first_entry;
-	int i;
+	स्थिर पूर्णांक max_entries = ggtt_total_entries(ggtt) - first_entry;
+	पूर्णांक i;
 
-	if (WARN(num_entries > max_entries,
+	अगर (WARN(num_entries > max_entries,
 		 "First entry = %d; Num entries = %d (max=%d)\n",
 		 first_entry, num_entries, max_entries))
 		num_entries = max_entries;
 
-	for (i = 0; i < num_entries; i++)
+	क्रम (i = 0; i < num_entries; i++)
 		gen8_set_pte(&gtt_base[i], scratch_pte);
-}
+पूर्ण
 
-static void bxt_vtd_ggtt_wa(struct i915_address_space *vm)
-{
+अटल व्योम bxt_vtd_ggtt_wa(काष्ठा i915_address_space *vm)
+अणु
 	/*
-	 * Make sure the internal GAM fifo has been cleared of all GTT
-	 * writes before exiting stop_machine(). This guarantees that
-	 * any aperture accesses waiting to start in another process
-	 * cannot back up behind the GTT writes causing a hang.
-	 * The register can be any arbitrary GAM register.
+	 * Make sure the पूर्णांकernal GAM fअगरo has been cleared of all GTT
+	 * ग_लिखोs beक्रमe निकासing stop_machine(). This guarantees that
+	 * any aperture accesses रुकोing to start in another process
+	 * cannot back up behind the GTT ग_लिखोs causing a hang.
+	 * The रेजिस्टर can be any arbitrary GAM रेजिस्टर.
 	 */
-	intel_uncore_posting_read_fw(vm->gt->uncore, GFX_FLSH_CNTL_GEN6);
-}
+	पूर्णांकel_uncore_posting_पढ़ो_fw(vm->gt->uncore, GFX_FLSH_CNTL_GEN6);
+पूर्ण
 
-struct insert_page {
-	struct i915_address_space *vm;
+काष्ठा insert_page अणु
+	काष्ठा i915_address_space *vm;
 	dma_addr_t addr;
 	u64 offset;
-	enum i915_cache_level level;
-};
+	क्रमागत i915_cache_level level;
+पूर्ण;
 
-static int bxt_vtd_ggtt_insert_page__cb(void *_arg)
-{
-	struct insert_page *arg = _arg;
+अटल पूर्णांक bxt_vtd_ggtt_insert_page__cb(व्योम *_arg)
+अणु
+	काष्ठा insert_page *arg = _arg;
 
 	gen8_ggtt_insert_page(arg->vm, arg->addr, arg->offset, arg->level, 0);
 	bxt_vtd_ggtt_wa(arg->vm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bxt_vtd_ggtt_insert_page__BKL(struct i915_address_space *vm,
+अटल व्योम bxt_vtd_ggtt_insert_page__BKL(काष्ठा i915_address_space *vm,
 					  dma_addr_t addr,
 					  u64 offset,
-					  enum i915_cache_level level,
+					  क्रमागत i915_cache_level level,
 					  u32 unused)
-{
-	struct insert_page arg = { vm, addr, offset, level };
+अणु
+	काष्ठा insert_page arg = अणु vm, addr, offset, level पूर्ण;
 
-	stop_machine(bxt_vtd_ggtt_insert_page__cb, &arg, NULL);
-}
+	stop_machine(bxt_vtd_ggtt_insert_page__cb, &arg, शून्य);
+पूर्ण
 
-struct insert_entries {
-	struct i915_address_space *vm;
-	struct i915_vma *vma;
-	enum i915_cache_level level;
+काष्ठा insert_entries अणु
+	काष्ठा i915_address_space *vm;
+	काष्ठा i915_vma *vma;
+	क्रमागत i915_cache_level level;
 	u32 flags;
-};
+पूर्ण;
 
-static int bxt_vtd_ggtt_insert_entries__cb(void *_arg)
-{
-	struct insert_entries *arg = _arg;
+अटल पूर्णांक bxt_vtd_ggtt_insert_entries__cb(व्योम *_arg)
+अणु
+	काष्ठा insert_entries *arg = _arg;
 
 	gen8_ggtt_insert_entries(arg->vm, arg->vma, arg->level, arg->flags);
 	bxt_vtd_ggtt_wa(arg->vm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bxt_vtd_ggtt_insert_entries__BKL(struct i915_address_space *vm,
-					     struct i915_vma *vma,
-					     enum i915_cache_level level,
+अटल व्योम bxt_vtd_ggtt_insert_entries__BKL(काष्ठा i915_address_space *vm,
+					     काष्ठा i915_vma *vma,
+					     क्रमागत i915_cache_level level,
 					     u32 flags)
-{
-	struct insert_entries arg = { vm, vma, level, flags };
+अणु
+	काष्ठा insert_entries arg = अणु vm, vma, level, flags पूर्ण;
 
-	stop_machine(bxt_vtd_ggtt_insert_entries__cb, &arg, NULL);
-}
+	stop_machine(bxt_vtd_ggtt_insert_entries__cb, &arg, शून्य);
+पूर्ण
 
-static void gen6_ggtt_clear_range(struct i915_address_space *vm,
+अटल व्योम gen6_ggtt_clear_range(काष्ठा i915_address_space *vm,
 				  u64 start, u64 length)
-{
-	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
-	unsigned int first_entry = start / I915_GTT_PAGE_SIZE;
-	unsigned int num_entries = length / I915_GTT_PAGE_SIZE;
+अणु
+	काष्ठा i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
+	अचिन्हित पूर्णांक first_entry = start / I915_GTT_PAGE_SIZE;
+	अचिन्हित पूर्णांक num_entries = length / I915_GTT_PAGE_SIZE;
 	gen6_pte_t scratch_pte, __iomem *gtt_base =
 		(gen6_pte_t __iomem *)ggtt->gsm + first_entry;
-	const int max_entries = ggtt_total_entries(ggtt) - first_entry;
-	int i;
+	स्थिर पूर्णांक max_entries = ggtt_total_entries(ggtt) - first_entry;
+	पूर्णांक i;
 
-	if (WARN(num_entries > max_entries,
+	अगर (WARN(num_entries > max_entries,
 		 "First entry = %d; Num entries = %d (max=%d)\n",
 		 first_entry, num_entries, max_entries))
 		num_entries = max_entries;
 
 	scratch_pte = vm->scratch[0]->encode;
-	for (i = 0; i < num_entries; i++)
-		iowrite32(scratch_pte, &gtt_base[i]);
-}
+	क्रम (i = 0; i < num_entries; i++)
+		ioग_लिखो32(scratch_pte, &gtt_base[i]);
+पूर्ण
 
-static void i915_ggtt_insert_page(struct i915_address_space *vm,
+अटल व्योम i915_ggtt_insert_page(काष्ठा i915_address_space *vm,
 				  dma_addr_t addr,
 				  u64 offset,
-				  enum i915_cache_level cache_level,
+				  क्रमागत i915_cache_level cache_level,
 				  u32 unused)
-{
-	unsigned int flags = (cache_level == I915_CACHE_NONE) ?
+अणु
+	अचिन्हित पूर्णांक flags = (cache_level == I915_CACHE_NONE) ?
 		AGP_USER_MEMORY : AGP_USER_CACHED_MEMORY;
 
-	intel_gtt_insert_page(addr, offset >> PAGE_SHIFT, flags);
-}
+	पूर्णांकel_gtt_insert_page(addr, offset >> PAGE_SHIFT, flags);
+पूर्ण
 
-static void i915_ggtt_insert_entries(struct i915_address_space *vm,
-				     struct i915_vma *vma,
-				     enum i915_cache_level cache_level,
+अटल व्योम i915_ggtt_insert_entries(काष्ठा i915_address_space *vm,
+				     काष्ठा i915_vma *vma,
+				     क्रमागत i915_cache_level cache_level,
 				     u32 unused)
-{
-	unsigned int flags = (cache_level == I915_CACHE_NONE) ?
+अणु
+	अचिन्हित पूर्णांक flags = (cache_level == I915_CACHE_NONE) ?
 		AGP_USER_MEMORY : AGP_USER_CACHED_MEMORY;
 
-	intel_gtt_insert_sg_entries(vma->pages, vma->node.start >> PAGE_SHIFT,
+	पूर्णांकel_gtt_insert_sg_entries(vma->pages, vma->node.start >> PAGE_SHIFT,
 				    flags);
-}
+पूर्ण
 
-static void i915_ggtt_clear_range(struct i915_address_space *vm,
+अटल व्योम i915_ggtt_clear_range(काष्ठा i915_address_space *vm,
 				  u64 start, u64 length)
-{
-	intel_gtt_clear_range(start >> PAGE_SHIFT, length >> PAGE_SHIFT);
-}
+अणु
+	पूर्णांकel_gtt_clear_range(start >> PAGE_SHIFT, length >> PAGE_SHIFT);
+पूर्ण
 
-static void ggtt_bind_vma(struct i915_address_space *vm,
-			  struct i915_vm_pt_stash *stash,
-			  struct i915_vma *vma,
-			  enum i915_cache_level cache_level,
+अटल व्योम ggtt_bind_vma(काष्ठा i915_address_space *vm,
+			  काष्ठा i915_vm_pt_stash *stash,
+			  काष्ठा i915_vma *vma,
+			  क्रमागत i915_cache_level cache_level,
 			  u32 flags)
-{
-	struct drm_i915_gem_object *obj = vma->obj;
+अणु
+	काष्ठा drm_i915_gem_object *obj = vma->obj;
 	u32 pte_flags;
 
-	if (i915_vma_is_bound(vma, ~flags & I915_VMA_BIND_MASK))
-		return;
+	अगर (i915_vma_is_bound(vma, ~flags & I915_VMA_BIND_MASK))
+		वापस;
 
-	/* Applicable to VLV (gen8+ do not support RO in the GGTT) */
+	/* Applicable to VLV (gen8+ करो not support RO in the GGTT) */
 	pte_flags = 0;
-	if (i915_gem_object_is_readonly(obj))
+	अगर (i915_gem_object_is_पढ़ोonly(obj))
 		pte_flags |= PTE_READ_ONLY;
-	if (i915_gem_object_is_lmem(obj))
+	अगर (i915_gem_object_is_lmem(obj))
 		pte_flags |= PTE_LM;
 
 	vm->insert_entries(vm, vma, cache_level, pte_flags);
 	vma->page_sizes.gtt = I915_GTT_PAGE_SIZE;
-}
+पूर्ण
 
-static void ggtt_unbind_vma(struct i915_address_space *vm, struct i915_vma *vma)
-{
+अटल व्योम ggtt_unbind_vma(काष्ठा i915_address_space *vm, काष्ठा i915_vma *vma)
+अणु
 	vm->clear_range(vm, vma->node.start, vma->size);
-}
+पूर्ण
 
-static int ggtt_reserve_guc_top(struct i915_ggtt *ggtt)
-{
+अटल पूर्णांक ggtt_reserve_guc_top(काष्ठा i915_ggtt *ggtt)
+अणु
 	u64 size;
-	int ret;
+	पूर्णांक ret;
 
-	if (!intel_uc_uses_guc(&ggtt->vm.gt->uc))
-		return 0;
+	अगर (!पूर्णांकel_uc_uses_guc(&ggtt->vm.gt->uc))
+		वापस 0;
 
 	GEM_BUG_ON(ggtt->vm.total <= GUC_GGTT_TOP);
 	size = ggtt->vm.total - GUC_GGTT_TOP;
@@ -492,87 +493,87 @@ static int ggtt_reserve_guc_top(struct i915_ggtt *ggtt)
 	ret = i915_gem_gtt_reserve(&ggtt->vm, &ggtt->uc_fw, size,
 				   GUC_GGTT_TOP, I915_COLOR_UNEVICTABLE,
 				   PIN_NOEVICT);
-	if (ret)
+	अगर (ret)
 		drm_dbg(&ggtt->vm.i915->drm,
 			"Failed to reserve top of GGTT for GuC\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ggtt_release_guc_top(struct i915_ggtt *ggtt)
-{
-	if (drm_mm_node_allocated(&ggtt->uc_fw))
-		drm_mm_remove_node(&ggtt->uc_fw);
-}
+अटल व्योम ggtt_release_guc_top(काष्ठा i915_ggtt *ggtt)
+अणु
+	अगर (drm_mm_node_allocated(&ggtt->uc_fw))
+		drm_mm_हटाओ_node(&ggtt->uc_fw);
+पूर्ण
 
-static void cleanup_init_ggtt(struct i915_ggtt *ggtt)
-{
+अटल व्योम cleanup_init_ggtt(काष्ठा i915_ggtt *ggtt)
+अणु
 	ggtt_release_guc_top(ggtt);
-	if (drm_mm_node_allocated(&ggtt->error_capture))
-		drm_mm_remove_node(&ggtt->error_capture);
+	अगर (drm_mm_node_allocated(&ggtt->error_capture))
+		drm_mm_हटाओ_node(&ggtt->error_capture);
 	mutex_destroy(&ggtt->error_mutex);
-}
+पूर्ण
 
-static int init_ggtt(struct i915_ggtt *ggtt)
-{
+अटल पूर्णांक init_ggtt(काष्ठा i915_ggtt *ggtt)
+अणु
 	/*
 	 * Let GEM Manage all of the aperture.
 	 *
 	 * However, leave one page at the end still bound to the scratch page.
 	 * There are a number of places where the hardware apparently prefetches
 	 * past the end of the object, and we've seen multiple hangs with the
-	 * GPU head pointer stuck in a batchbuffer bound at the last page of the
+	 * GPU head poपूर्णांकer stuck in a batchbuffer bound at the last page of the
 	 * aperture.  One page should be enough to keep any prefetching inside
 	 * of the aperture.
 	 */
-	unsigned long hole_start, hole_end;
-	struct drm_mm_node *entry;
-	int ret;
+	अचिन्हित दीर्घ hole_start, hole_end;
+	काष्ठा drm_mm_node *entry;
+	पूर्णांक ret;
 
 	/*
 	 * GuC requires all resources that we're sharing with it to be placed in
 	 * non-WOPCM memory. If GuC is not present or not in use we still need a
-	 * small bias as ring wraparound at offset 0 sometimes hangs. No idea
+	 * small bias as ring wraparound at offset 0 someबार hangs. No idea
 	 * why.
 	 */
 	ggtt->pin_bias = max_t(u32, I915_GTT_PAGE_SIZE,
-			       intel_wopcm_guc_size(&ggtt->vm.i915->wopcm));
+			       पूर्णांकel_wopcm_guc_size(&ggtt->vm.i915->wopcm));
 
-	ret = intel_vgt_balloon(ggtt);
-	if (ret)
-		return ret;
+	ret = पूर्णांकel_vgt_balloon(ggtt);
+	अगर (ret)
+		वापस ret;
 
 	mutex_init(&ggtt->error_mutex);
-	if (ggtt->mappable_end) {
+	अगर (ggtt->mappable_end) अणु
 		/*
-		 * Reserve a mappable slot for our lockless error capture.
+		 * Reserve a mappable slot क्रम our lockless error capture.
 		 *
 		 * We strongly prefer taking address 0x0 in order to protect
-		 * other critical buffers against accidental overwrites,
+		 * other critical buffers against accidental overग_लिखोs,
 		 * as writing to address 0 is a very common mistake.
 		 *
-		 * Since 0 may already be in use by the system (e.g. the BIOS
+		 * Since 0 may alपढ़ोy be in use by the प्रणाली (e.g. the BIOS
 		 * framebuffer), we let the reservation fail quietly and hope
-		 * 0 remains reserved always.
+		 * 0 reमुख्यs reserved always.
 		 *
 		 * If we fail to reserve 0, and then fail to find any space
-		 * for an error-capture, remain silent. We can afford not
+		 * क्रम an error-capture, reमुख्य silent. We can afक्रमd not
 		 * to reserve an error_capture node as we have fallback
-		 * paths, and we trust that 0 will remain reserved. However,
-		 * the only likely reason for failure to insert is a driver
+		 * paths, and we trust that 0 will reमुख्य reserved. However,
+		 * the only likely reason क्रम failure to insert is a driver
 		 * bug, which we expect to cause other failures...
 		 */
 		ggtt->error_capture.size = I915_GTT_PAGE_SIZE;
 		ggtt->error_capture.color = I915_COLOR_UNEVICTABLE;
-		if (drm_mm_reserve_node(&ggtt->vm.mm, &ggtt->error_capture))
+		अगर (drm_mm_reserve_node(&ggtt->vm.mm, &ggtt->error_capture))
 			drm_mm_insert_node_in_range(&ggtt->vm.mm,
 						    &ggtt->error_capture,
 						    ggtt->error_capture.size, 0,
 						    ggtt->error_capture.color,
 						    0, ggtt->mappable_end,
 						    DRM_MM_INSERT_LOW);
-	}
-	if (drm_mm_node_allocated(&ggtt->error_capture))
+	पूर्ण
+	अगर (drm_mm_node_allocated(&ggtt->error_capture))
 		drm_dbg(&ggtt->vm.i915->drm,
 			"Reserved GGTT:[%llx, %llx] for use by error capture\n",
 			ggtt->error_capture.start,
@@ -581,91 +582,91 @@ static int init_ggtt(struct i915_ggtt *ggtt)
 	/*
 	 * The upper portion of the GuC address space has a sizeable hole
 	 * (several MB) that is inaccessible by GuC. Reserve this range within
-	 * GGTT as it can comfortably hold GuC/HuC firmware images.
+	 * GGTT as it can comक्रमtably hold GuC/HuC firmware images.
 	 */
 	ret = ggtt_reserve_guc_top(ggtt);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	/* Clear any non-preallocated blocks */
-	drm_mm_for_each_hole(entry, &ggtt->vm.mm, hole_start, hole_end) {
+	/* Clear any non-pपुनः_स्मृतिated blocks */
+	drm_mm_क्रम_each_hole(entry, &ggtt->vm.mm, hole_start, hole_end) अणु
 		drm_dbg(&ggtt->vm.i915->drm,
 			"clearing unused GTT space: [%lx, %lx]\n",
 			hole_start, hole_end);
 		ggtt->vm.clear_range(&ggtt->vm, hole_start,
 				     hole_end - hole_start);
-	}
+	पूर्ण
 
 	/* And finally clear the reserved guard page */
 	ggtt->vm.clear_range(&ggtt->vm, ggtt->vm.total - PAGE_SIZE, PAGE_SIZE);
 
-	return 0;
+	वापस 0;
 
 err:
 	cleanup_init_ggtt(ggtt);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void aliasing_gtt_bind_vma(struct i915_address_space *vm,
-				  struct i915_vm_pt_stash *stash,
-				  struct i915_vma *vma,
-				  enum i915_cache_level cache_level,
+अटल व्योम aliasing_gtt_bind_vma(काष्ठा i915_address_space *vm,
+				  काष्ठा i915_vm_pt_stash *stash,
+				  काष्ठा i915_vma *vma,
+				  क्रमागत i915_cache_level cache_level,
 				  u32 flags)
-{
+अणु
 	u32 pte_flags;
 
 	/* Currently applicable only to VLV */
 	pte_flags = 0;
-	if (i915_gem_object_is_readonly(vma->obj))
+	अगर (i915_gem_object_is_पढ़ोonly(vma->obj))
 		pte_flags |= PTE_READ_ONLY;
 
-	if (flags & I915_VMA_LOCAL_BIND)
+	अगर (flags & I915_VMA_LOCAL_BIND)
 		ppgtt_bind_vma(&i915_vm_to_ggtt(vm)->alias->vm,
 			       stash, vma, cache_level, flags);
 
-	if (flags & I915_VMA_GLOBAL_BIND)
+	अगर (flags & I915_VMA_GLOBAL_BIND)
 		vm->insert_entries(vm, vma, cache_level, pte_flags);
-}
+पूर्ण
 
-static void aliasing_gtt_unbind_vma(struct i915_address_space *vm,
-				    struct i915_vma *vma)
-{
-	if (i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND))
+अटल व्योम aliasing_gtt_unbind_vma(काष्ठा i915_address_space *vm,
+				    काष्ठा i915_vma *vma)
+अणु
+	अगर (i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND))
 		vm->clear_range(vm, vma->node.start, vma->size);
 
-	if (i915_vma_is_bound(vma, I915_VMA_LOCAL_BIND))
+	अगर (i915_vma_is_bound(vma, I915_VMA_LOCAL_BIND))
 		ppgtt_unbind_vma(&i915_vm_to_ggtt(vm)->alias->vm, vma);
-}
+पूर्ण
 
-static int init_aliasing_ppgtt(struct i915_ggtt *ggtt)
-{
-	struct i915_vm_pt_stash stash = {};
-	struct i915_ppgtt *ppgtt;
-	int err;
+अटल पूर्णांक init_aliasing_ppgtt(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा i915_vm_pt_stash stash = अणुपूर्ण;
+	काष्ठा i915_ppgtt *ppgtt;
+	पूर्णांक err;
 
 	ppgtt = i915_ppgtt_create(ggtt->vm.gt);
-	if (IS_ERR(ppgtt))
-		return PTR_ERR(ppgtt);
+	अगर (IS_ERR(ppgtt))
+		वापस PTR_ERR(ppgtt);
 
-	if (GEM_WARN_ON(ppgtt->vm.total < ggtt->vm.total)) {
+	अगर (GEM_WARN_ON(ppgtt->vm.total < ggtt->vm.total)) अणु
 		err = -ENODEV;
-		goto err_ppgtt;
-	}
+		जाओ err_ppgtt;
+	पूर्ण
 
 	err = i915_vm_alloc_pt_stash(&ppgtt->vm, &stash, ggtt->vm.total);
-	if (err)
-		goto err_ppgtt;
+	अगर (err)
+		जाओ err_ppgtt;
 
-	i915_gem_object_lock(ppgtt->vm.scratch[0], NULL);
+	i915_gem_object_lock(ppgtt->vm.scratch[0], शून्य);
 	err = i915_vm_pin_pt_stash(&ppgtt->vm, &stash);
 	i915_gem_object_unlock(ppgtt->vm.scratch[0]);
-	if (err)
-		goto err_stash;
+	अगर (err)
+		जाओ err_stash;
 
 	/*
 	 * Note we only pre-allocate as far as the end of the global
-	 * GTT. On 48b / 4-level page-tables, the difference is very,
-	 * very significant! We have to preallocate as GVT/vgpu does
+	 * GTT. On 48b / 4-level page-tables, the dअगरference is very,
+	 * very signअगरicant! We have to pपुनः_स्मृतिate as GVT/vgpu करोes
 	 * not like the page directory disappearing.
 	 */
 	ppgtt->vm.allocate_va_range(&ppgtt->vm, &stash, 0, ggtt->vm.total);
@@ -679,67 +680,67 @@ static int init_aliasing_ppgtt(struct i915_ggtt *ggtt)
 	GEM_BUG_ON(ggtt->vm.vma_ops.unbind_vma != ggtt_unbind_vma);
 	ggtt->vm.vma_ops.unbind_vma = aliasing_gtt_unbind_vma;
 
-	i915_vm_free_pt_stash(&ppgtt->vm, &stash);
-	return 0;
+	i915_vm_मुक्त_pt_stash(&ppgtt->vm, &stash);
+	वापस 0;
 
 err_stash:
-	i915_vm_free_pt_stash(&ppgtt->vm, &stash);
+	i915_vm_मुक्त_pt_stash(&ppgtt->vm, &stash);
 err_ppgtt:
 	i915_vm_put(&ppgtt->vm);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void fini_aliasing_ppgtt(struct i915_ggtt *ggtt)
-{
-	struct i915_ppgtt *ppgtt;
+अटल व्योम fini_aliasing_ppgtt(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा i915_ppgtt *ppgtt;
 
 	ppgtt = fetch_and_zero(&ggtt->alias);
-	if (!ppgtt)
-		return;
+	अगर (!ppgtt)
+		वापस;
 
 	i915_vm_put(&ppgtt->vm);
 
 	ggtt->vm.vma_ops.bind_vma   = ggtt_bind_vma;
 	ggtt->vm.vma_ops.unbind_vma = ggtt_unbind_vma;
-}
+पूर्ण
 
-int i915_init_ggtt(struct drm_i915_private *i915)
-{
-	int ret;
+पूर्णांक i915_init_ggtt(काष्ठा drm_i915_निजी *i915)
+अणु
+	पूर्णांक ret;
 
 	ret = init_ggtt(&i915->ggtt);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (INTEL_PPGTT(i915) == INTEL_PPGTT_ALIASING) {
+	अगर (INTEL_PPGTT(i915) == INTEL_PPGTT_ALIASING) अणु
 		ret = init_aliasing_ppgtt(&i915->ggtt);
-		if (ret)
+		अगर (ret)
 			cleanup_init_ggtt(&i915->ggtt);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ggtt_cleanup_hw(struct i915_ggtt *ggtt)
-{
-	struct i915_vma *vma, *vn;
+अटल व्योम ggtt_cleanup_hw(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा i915_vma *vma, *vn;
 
-	atomic_set(&ggtt->vm.open, 0);
+	atomic_set(&ggtt->vm.खोलो, 0);
 
 	rcu_barrier(); /* flush the RCU'ed__i915_vm_release */
 	flush_workqueue(ggtt->vm.i915->wq);
 
 	mutex_lock(&ggtt->vm.mutex);
 
-	list_for_each_entry_safe(vma, vn, &ggtt->vm.bound_list, vm_link)
+	list_क्रम_each_entry_safe(vma, vn, &ggtt->vm.bound_list, vm_link)
 		WARN_ON(__i915_vma_unbind(vma));
 
-	if (drm_mm_node_allocated(&ggtt->error_capture))
-		drm_mm_remove_node(&ggtt->error_capture);
+	अगर (drm_mm_node_allocated(&ggtt->error_capture))
+		drm_mm_हटाओ_node(&ggtt->error_capture);
 	mutex_destroy(&ggtt->error_mutex);
 
 	ggtt_release_guc_top(ggtt);
-	intel_vgt_deballoon(ggtt);
+	पूर्णांकel_vgt_deballoon(ggtt);
 
 	ggtt->vm.cleanup(&ggtt->vm);
 
@@ -749,171 +750,171 @@ static void ggtt_cleanup_hw(struct i915_ggtt *ggtt)
 
 	arch_phys_wc_del(ggtt->mtrr);
 
-	if (ggtt->iomap.size)
+	अगर (ggtt->iomap.size)
 		io_mapping_fini(&ggtt->iomap);
-}
+पूर्ण
 
 /**
  * i915_ggtt_driver_release - Clean up GGTT hardware initialization
  * @i915: i915 device
  */
-void i915_ggtt_driver_release(struct drm_i915_private *i915)
-{
-	struct i915_ggtt *ggtt = &i915->ggtt;
+व्योम i915_ggtt_driver_release(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_ggtt *ggtt = &i915->ggtt;
 
 	fini_aliasing_ppgtt(ggtt);
 
-	intel_ggtt_fini_fences(ggtt);
+	पूर्णांकel_ggtt_fini_fences(ggtt);
 	ggtt_cleanup_hw(ggtt);
-}
+पूर्ण
 
-static unsigned int gen6_get_total_gtt_size(u16 snb_gmch_ctl)
-{
+अटल अचिन्हित पूर्णांक gen6_get_total_gtt_size(u16 snb_gmch_ctl)
+अणु
 	snb_gmch_ctl >>= SNB_GMCH_GGMS_SHIFT;
 	snb_gmch_ctl &= SNB_GMCH_GGMS_MASK;
-	return snb_gmch_ctl << 20;
-}
+	वापस snb_gmch_ctl << 20;
+पूर्ण
 
-static unsigned int gen8_get_total_gtt_size(u16 bdw_gmch_ctl)
-{
+अटल अचिन्हित पूर्णांक gen8_get_total_gtt_size(u16 bdw_gmch_ctl)
+अणु
 	bdw_gmch_ctl >>= BDW_GMCH_GGMS_SHIFT;
 	bdw_gmch_ctl &= BDW_GMCH_GGMS_MASK;
-	if (bdw_gmch_ctl)
+	अगर (bdw_gmch_ctl)
 		bdw_gmch_ctl = 1 << bdw_gmch_ctl;
 
-#ifdef CONFIG_X86_32
-	/* Limit 32b platforms to a 2GB GGTT: 4 << 20 / pte size * I915_GTT_PAGE_SIZE */
-	if (bdw_gmch_ctl > 4)
+#अगर_घोषित CONFIG_X86_32
+	/* Limit 32b platक्रमms to a 2GB GGTT: 4 << 20 / pte size * I915_GTT_PAGE_SIZE */
+	अगर (bdw_gmch_ctl > 4)
 		bdw_gmch_ctl = 4;
-#endif
+#पूर्ण_अगर
 
-	return bdw_gmch_ctl << 20;
-}
+	वापस bdw_gmch_ctl << 20;
+पूर्ण
 
-static unsigned int chv_get_total_gtt_size(u16 gmch_ctrl)
-{
+अटल अचिन्हित पूर्णांक chv_get_total_gtt_size(u16 gmch_ctrl)
+अणु
 	gmch_ctrl >>= SNB_GMCH_GGMS_SHIFT;
 	gmch_ctrl &= SNB_GMCH_GGMS_MASK;
 
-	if (gmch_ctrl)
-		return 1 << (20 + gmch_ctrl);
+	अगर (gmch_ctrl)
+		वापस 1 << (20 + gmch_ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ggtt_probe_common(struct i915_ggtt *ggtt, u64 size)
-{
-	struct drm_i915_private *i915 = ggtt->vm.i915;
-	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
+अटल पूर्णांक ggtt_probe_common(काष्ठा i915_ggtt *ggtt, u64 size)
+अणु
+	काष्ठा drm_i915_निजी *i915 = ggtt->vm.i915;
+	काष्ठा pci_dev *pdev = to_pci_dev(i915->drm.dev);
 	phys_addr_t phys_addr;
 	u32 pte_flags;
-	int ret;
+	पूर्णांक ret;
 
-	/* For Modern GENs the PTEs and register space are split in the BAR */
+	/* For Modern GENs the PTEs and रेजिस्टर space are split in the BAR */
 	phys_addr = pci_resource_start(pdev, 0) + pci_resource_len(pdev, 0) / 2;
 
 	/*
-	 * On BXT+/CNL+ writes larger than 64 bit to the GTT pagetable range
+	 * On BXT+/CNL+ ग_लिखोs larger than 64 bit to the GTT pagetable range
 	 * will be dropped. For WC mappings in general we have 64 byte burst
-	 * writes when the WC buffer is flushed, so we can't use it, but have to
+	 * ग_लिखोs when the WC buffer is flushed, so we can't use it, but have to
 	 * resort to an uncached mapping. The WC issue is easily caught by the
-	 * readback check when writing GTT PTE entries.
+	 * पढ़ोback check when writing GTT PTE entries.
 	 */
-	if (IS_GEN9_LP(i915) || INTEL_GEN(i915) >= 10)
+	अगर (IS_GEN9_LP(i915) || INTEL_GEN(i915) >= 10)
 		ggtt->gsm = ioremap(phys_addr, size);
-	else
+	अन्यथा
 		ggtt->gsm = ioremap_wc(phys_addr, size);
-	if (!ggtt->gsm) {
+	अगर (!ggtt->gsm) अणु
 		drm_err(&i915->drm, "Failed to map the ggtt page table\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = setup_scratch_page(&ggtt->vm);
-	if (ret) {
+	अगर (ret) अणु
 		drm_err(&i915->drm, "Scratch setup failed\n");
-		/* iounmap will also get called at remove, but meh */
+		/* iounmap will also get called at हटाओ, but meh */
 		iounmap(ggtt->gsm);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pte_flags = 0;
-	if (i915_gem_object_is_lmem(ggtt->vm.scratch[0]))
+	अगर (i915_gem_object_is_lmem(ggtt->vm.scratch[0]))
 		pte_flags |= PTE_LM;
 
 	ggtt->vm.scratch[0]->encode =
 		ggtt->vm.pte_encode(px_dma(ggtt->vm.scratch[0]),
 				    I915_CACHE_NONE, pte_flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ggtt_set_pages(struct i915_vma *vma)
-{
-	int ret;
+पूर्णांक ggtt_set_pages(काष्ठा i915_vma *vma)
+अणु
+	पूर्णांक ret;
 
 	GEM_BUG_ON(vma->pages);
 
 	ret = i915_get_ggtt_vma_pages(vma);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	vma->page_sizes = vma->obj->mm.page_sizes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gen6_gmch_remove(struct i915_address_space *vm)
-{
-	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
+अटल व्योम gen6_gmch_हटाओ(काष्ठा i915_address_space *vm)
+अणु
+	काष्ठा i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
 
 	iounmap(ggtt->gsm);
-	free_scratch(vm);
-}
+	मुक्त_scratch(vm);
+पूर्ण
 
-static struct resource pci_resource(struct pci_dev *pdev, int bar)
-{
-	return (struct resource)DEFINE_RES_MEM(pci_resource_start(pdev, bar),
+अटल काष्ठा resource pci_resource(काष्ठा pci_dev *pdev, पूर्णांक bar)
+अणु
+	वापस (काष्ठा resource)DEFINE_RES_MEM(pci_resource_start(pdev, bar),
 					       pci_resource_len(pdev, bar));
-}
+पूर्ण
 
-static int gen8_gmch_probe(struct i915_ggtt *ggtt)
-{
-	struct drm_i915_private *i915 = ggtt->vm.i915;
-	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
-	unsigned int size;
+अटल पूर्णांक gen8_gmch_probe(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = ggtt->vm.i915;
+	काष्ठा pci_dev *pdev = to_pci_dev(i915->drm.dev);
+	अचिन्हित पूर्णांक size;
 	u16 snb_gmch_ctl;
 
-	/* TODO: We're not aware of mappable constraints on gen8 yet */
-	if (!HAS_LMEM(i915)) {
+	/* TODO: We're not aware of mappable स्थिरraपूर्णांकs on gen8 yet */
+	अगर (!HAS_LMEM(i915)) अणु
 		ggtt->gmadr = pci_resource(pdev, 2);
 		ggtt->mappable_end = resource_size(&ggtt->gmadr);
-	}
+	पूर्ण
 
-	pci_read_config_word(pdev, SNB_GMCH_CTRL, &snb_gmch_ctl);
-	if (IS_CHERRYVIEW(i915))
+	pci_पढ़ो_config_word(pdev, SNB_GMCH_CTRL, &snb_gmch_ctl);
+	अगर (IS_CHERRYVIEW(i915))
 		size = chv_get_total_gtt_size(snb_gmch_ctl);
-	else
+	अन्यथा
 		size = gen8_get_total_gtt_size(snb_gmch_ctl);
 
 	ggtt->vm.alloc_pt_dma = alloc_pt_dma;
 
-	ggtt->vm.total = (size / sizeof(gen8_pte_t)) * I915_GTT_PAGE_SIZE;
-	ggtt->vm.cleanup = gen6_gmch_remove;
+	ggtt->vm.total = (size / माप(gen8_pte_t)) * I915_GTT_PAGE_SIZE;
+	ggtt->vm.cleanup = gen6_gmch_हटाओ;
 	ggtt->vm.insert_page = gen8_ggtt_insert_page;
 	ggtt->vm.clear_range = nop_clear_range;
-	if (intel_scanout_needs_vtd_wa(i915))
+	अगर (पूर्णांकel_scanout_needs_vtd_wa(i915))
 		ggtt->vm.clear_range = gen8_ggtt_clear_range;
 
 	ggtt->vm.insert_entries = gen8_ggtt_insert_entries;
 
-	/* Serialize GTT updates with aperture access on BXT if VT-d is on. */
-	if (intel_ggtt_update_needs_vtd_wa(i915) ||
-	    IS_CHERRYVIEW(i915) /* fails with concurrent use/update */) {
+	/* Serialize GTT updates with aperture access on BXT अगर VT-d is on. */
+	अगर (पूर्णांकel_ggtt_update_needs_vtd_wa(i915) ||
+	    IS_CHERRYVIEW(i915) /* fails with concurrent use/update */) अणु
 		ggtt->vm.insert_entries = bxt_vtd_ggtt_insert_entries__BKL;
 		ggtt->vm.insert_page    = bxt_vtd_ggtt_insert_page__BKL;
 		ggtt->vm.bind_async_flags =
 			I915_VMA_GLOBAL_BIND | I915_VMA_LOCAL_BIND;
-	}
+	पूर्ण
 
 	ggtt->invalidate = gen8_ggtt_invalidate;
 
@@ -924,107 +925,107 @@ static int gen8_gmch_probe(struct i915_ggtt *ggtt)
 
 	ggtt->vm.pte_encode = gen8_ggtt_pte_encode;
 
-	setup_private_pat(ggtt->vm.gt->uncore);
+	setup_निजी_pat(ggtt->vm.gt->uncore);
 
-	return ggtt_probe_common(ggtt, size);
-}
+	वापस ggtt_probe_common(ggtt, size);
+पूर्ण
 
-static u64 snb_pte_encode(dma_addr_t addr,
-			  enum i915_cache_level level,
+अटल u64 snb_pte_encode(dma_addr_t addr,
+			  क्रमागत i915_cache_level level,
 			  u32 flags)
-{
+अणु
 	gen6_pte_t pte = GEN6_PTE_ADDR_ENCODE(addr) | GEN6_PTE_VALID;
 
-	switch (level) {
-	case I915_CACHE_L3_LLC:
-	case I915_CACHE_LLC:
+	चयन (level) अणु
+	हाल I915_CACHE_L3_LLC:
+	हाल I915_CACHE_LLC:
 		pte |= GEN6_PTE_CACHE_LLC;
-		break;
-	case I915_CACHE_NONE:
+		अवरोध;
+	हाल I915_CACHE_NONE:
 		pte |= GEN6_PTE_UNCACHED;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		MISSING_CASE(level);
-	}
+	पूर्ण
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static u64 ivb_pte_encode(dma_addr_t addr,
-			  enum i915_cache_level level,
+अटल u64 ivb_pte_encode(dma_addr_t addr,
+			  क्रमागत i915_cache_level level,
 			  u32 flags)
-{
+अणु
 	gen6_pte_t pte = GEN6_PTE_ADDR_ENCODE(addr) | GEN6_PTE_VALID;
 
-	switch (level) {
-	case I915_CACHE_L3_LLC:
+	चयन (level) अणु
+	हाल I915_CACHE_L3_LLC:
 		pte |= GEN7_PTE_CACHE_L3_LLC;
-		break;
-	case I915_CACHE_LLC:
+		अवरोध;
+	हाल I915_CACHE_LLC:
 		pte |= GEN6_PTE_CACHE_LLC;
-		break;
-	case I915_CACHE_NONE:
+		अवरोध;
+	हाल I915_CACHE_NONE:
 		pte |= GEN6_PTE_UNCACHED;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		MISSING_CASE(level);
-	}
+	पूर्ण
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static u64 byt_pte_encode(dma_addr_t addr,
-			  enum i915_cache_level level,
+अटल u64 byt_pte_encode(dma_addr_t addr,
+			  क्रमागत i915_cache_level level,
 			  u32 flags)
-{
+अणु
 	gen6_pte_t pte = GEN6_PTE_ADDR_ENCODE(addr) | GEN6_PTE_VALID;
 
-	if (!(flags & PTE_READ_ONLY))
+	अगर (!(flags & PTE_READ_ONLY))
 		pte |= BYT_PTE_WRITEABLE;
 
-	if (level != I915_CACHE_NONE)
+	अगर (level != I915_CACHE_NONE)
 		pte |= BYT_PTE_SNOOPED_BY_CPU_CACHES;
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static u64 hsw_pte_encode(dma_addr_t addr,
-			  enum i915_cache_level level,
+अटल u64 hsw_pte_encode(dma_addr_t addr,
+			  क्रमागत i915_cache_level level,
 			  u32 flags)
-{
+अणु
 	gen6_pte_t pte = HSW_PTE_ADDR_ENCODE(addr) | GEN6_PTE_VALID;
 
-	if (level != I915_CACHE_NONE)
+	अगर (level != I915_CACHE_NONE)
 		pte |= HSW_WB_LLC_AGE3;
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static u64 iris_pte_encode(dma_addr_t addr,
-			   enum i915_cache_level level,
+अटल u64 iris_pte_encode(dma_addr_t addr,
+			   क्रमागत i915_cache_level level,
 			   u32 flags)
-{
+अणु
 	gen6_pte_t pte = HSW_PTE_ADDR_ENCODE(addr) | GEN6_PTE_VALID;
 
-	switch (level) {
-	case I915_CACHE_NONE:
-		break;
-	case I915_CACHE_WT:
+	चयन (level) अणु
+	हाल I915_CACHE_NONE:
+		अवरोध;
+	हाल I915_CACHE_WT:
 		pte |= HSW_WT_ELLC_LLC_AGE3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pte |= HSW_WB_ELLC_LLC_AGE3;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static int gen6_gmch_probe(struct i915_ggtt *ggtt)
-{
-	struct drm_i915_private *i915 = ggtt->vm.i915;
-	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
-	unsigned int size;
+अटल पूर्णांक gen6_gmch_probe(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = ggtt->vm.i915;
+	काष्ठा pci_dev *pdev = to_pci_dev(i915->drm.dev);
+	अचिन्हित पूर्णांक size;
 	u16 snb_gmch_ctl;
 
 	ggtt->gmadr = pci_resource(pdev, 2);
@@ -1034,37 +1035,37 @@ static int gen6_gmch_probe(struct i915_ggtt *ggtt)
 	 * 64/512MB is the current min/max we actually know of, but this is
 	 * just a coarse sanity check.
 	 */
-	if (ggtt->mappable_end < (64<<20) || ggtt->mappable_end > (512<<20)) {
+	अगर (ggtt->mappable_end < (64<<20) || ggtt->mappable_end > (512<<20)) अणु
 		drm_err(&i915->drm, "Unknown GMADR size (%pa)\n",
 			&ggtt->mappable_end);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	pci_read_config_word(pdev, SNB_GMCH_CTRL, &snb_gmch_ctl);
+	pci_पढ़ो_config_word(pdev, SNB_GMCH_CTRL, &snb_gmch_ctl);
 
 	size = gen6_get_total_gtt_size(snb_gmch_ctl);
-	ggtt->vm.total = (size / sizeof(gen6_pte_t)) * I915_GTT_PAGE_SIZE;
+	ggtt->vm.total = (size / माप(gen6_pte_t)) * I915_GTT_PAGE_SIZE;
 
 	ggtt->vm.alloc_pt_dma = alloc_pt_dma;
 
 	ggtt->vm.clear_range = nop_clear_range;
-	if (!HAS_FULL_PPGTT(i915) || intel_scanout_needs_vtd_wa(i915))
+	अगर (!HAS_FULL_PPGTT(i915) || पूर्णांकel_scanout_needs_vtd_wa(i915))
 		ggtt->vm.clear_range = gen6_ggtt_clear_range;
 	ggtt->vm.insert_page = gen6_ggtt_insert_page;
 	ggtt->vm.insert_entries = gen6_ggtt_insert_entries;
-	ggtt->vm.cleanup = gen6_gmch_remove;
+	ggtt->vm.cleanup = gen6_gmch_हटाओ;
 
 	ggtt->invalidate = gen6_ggtt_invalidate;
 
-	if (HAS_EDRAM(i915))
+	अगर (HAS_EDRAM(i915))
 		ggtt->vm.pte_encode = iris_pte_encode;
-	else if (IS_HASWELL(i915))
+	अन्यथा अगर (IS_HASWELL(i915))
 		ggtt->vm.pte_encode = hsw_pte_encode;
-	else if (IS_VALLEYVIEW(i915))
+	अन्यथा अगर (IS_VALLEYVIEW(i915))
 		ggtt->vm.pte_encode = byt_pte_encode;
-	else if (INTEL_GEN(i915) >= 7)
+	अन्यथा अगर (INTEL_GEN(i915) >= 7)
 		ggtt->vm.pte_encode = ivb_pte_encode;
-	else
+	अन्यथा
 		ggtt->vm.pte_encode = snb_pte_encode;
 
 	ggtt->vm.vma_ops.bind_vma    = ggtt_bind_vma;
@@ -1072,43 +1073,43 @@ static int gen6_gmch_probe(struct i915_ggtt *ggtt)
 	ggtt->vm.vma_ops.set_pages   = ggtt_set_pages;
 	ggtt->vm.vma_ops.clear_pages = clear_pages;
 
-	return ggtt_probe_common(ggtt, size);
-}
+	वापस ggtt_probe_common(ggtt, size);
+पूर्ण
 
-static void i915_gmch_remove(struct i915_address_space *vm)
-{
-	intel_gmch_remove();
-}
+अटल व्योम i915_gmch_हटाओ(काष्ठा i915_address_space *vm)
+अणु
+	पूर्णांकel_gmch_हटाओ();
+पूर्ण
 
-static int i915_gmch_probe(struct i915_ggtt *ggtt)
-{
-	struct drm_i915_private *i915 = ggtt->vm.i915;
+अटल पूर्णांक i915_gmch_probe(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = ggtt->vm.i915;
 	phys_addr_t gmadr_base;
-	int ret;
+	पूर्णांक ret;
 
-	ret = intel_gmch_probe(i915->bridge_dev, to_pci_dev(i915->drm.dev), NULL);
-	if (!ret) {
+	ret = पूर्णांकel_gmch_probe(i915->bridge_dev, to_pci_dev(i915->drm.dev), शून्य);
+	अगर (!ret) अणु
 		drm_err(&i915->drm, "failed to set up gmch\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	intel_gtt_get(&ggtt->vm.total, &gmadr_base, &ggtt->mappable_end);
+	पूर्णांकel_gtt_get(&ggtt->vm.total, &gmadr_base, &ggtt->mappable_end);
 
 	ggtt->gmadr =
-		(struct resource)DEFINE_RES_MEM(gmadr_base, ggtt->mappable_end);
+		(काष्ठा resource)DEFINE_RES_MEM(gmadr_base, ggtt->mappable_end);
 
 	ggtt->vm.alloc_pt_dma = alloc_pt_dma;
 
-	if (needs_idle_maps(i915)) {
+	अगर (needs_idle_maps(i915)) अणु
 		drm_notice(&i915->drm,
 			   "Flushing DMA requests before IOMMU unmaps; performance may be degraded\n");
-		ggtt->do_idle_maps = true;
-	}
+		ggtt->करो_idle_maps = true;
+	पूर्ण
 
 	ggtt->vm.insert_page = i915_ggtt_insert_page;
 	ggtt->vm.insert_entries = i915_ggtt_insert_entries;
 	ggtt->vm.clear_range = i915_ggtt_clear_range;
-	ggtt->vm.cleanup = i915_gmch_remove;
+	ggtt->vm.cleanup = i915_gmch_हटाओ;
 
 	ggtt->invalidate = gmch_ggtt_invalidate;
 
@@ -1117,35 +1118,35 @@ static int i915_gmch_probe(struct i915_ggtt *ggtt)
 	ggtt->vm.vma_ops.set_pages   = ggtt_set_pages;
 	ggtt->vm.vma_ops.clear_pages = clear_pages;
 
-	if (unlikely(ggtt->do_idle_maps))
+	अगर (unlikely(ggtt->करो_idle_maps))
 		drm_notice(&i915->drm,
 			   "Applying Ironlake quirks for intel_iommu\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ggtt_probe_hw(struct i915_ggtt *ggtt, struct intel_gt *gt)
-{
-	struct drm_i915_private *i915 = gt->i915;
-	int ret;
+अटल पूर्णांक ggtt_probe_hw(काष्ठा i915_ggtt *ggtt, काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	पूर्णांक ret;
 
 	ggtt->vm.gt = gt;
 	ggtt->vm.i915 = i915;
 	ggtt->vm.dma = i915->drm.dev;
 	dma_resv_init(&ggtt->vm.resv);
 
-	if (INTEL_GEN(i915) <= 5)
+	अगर (INTEL_GEN(i915) <= 5)
 		ret = i915_gmch_probe(ggtt);
-	else if (INTEL_GEN(i915) < 8)
+	अन्यथा अगर (INTEL_GEN(i915) < 8)
 		ret = gen6_gmch_probe(ggtt);
-	else
+	अन्यथा
 		ret = gen8_gmch_probe(ggtt);
-	if (ret) {
+	अगर (ret) अणु
 		dma_resv_fini(&ggtt->vm.resv);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if ((ggtt->vm.total - 1) >> 32) {
+	अगर ((ggtt->vm.total - 1) >> 32) अणु
 		drm_err(&i915->drm,
 			"We never expected a Global GTT with more than 32bits"
 			" of address space! Found %lldM!\n",
@@ -1153,66 +1154,66 @@ static int ggtt_probe_hw(struct i915_ggtt *ggtt, struct intel_gt *gt)
 		ggtt->vm.total = 1ULL << 32;
 		ggtt->mappable_end =
 			min_t(u64, ggtt->mappable_end, ggtt->vm.total);
-	}
+	पूर्ण
 
-	if (ggtt->mappable_end > ggtt->vm.total) {
+	अगर (ggtt->mappable_end > ggtt->vm.total) अणु
 		drm_err(&i915->drm,
 			"mappable aperture extends past end of GGTT,"
 			" aperture=%pa, total=%llx\n",
 			&ggtt->mappable_end, ggtt->vm.total);
 		ggtt->mappable_end = ggtt->vm.total;
-	}
+	पूर्ण
 
-	/* GMADR is the PCI mmio aperture into the global GTT. */
+	/* GMADR is the PCI mmio aperture पूर्णांकo the global GTT. */
 	drm_dbg(&i915->drm, "GGTT size = %lluM\n", ggtt->vm.total >> 20);
 	drm_dbg(&i915->drm, "GMADR size = %lluM\n",
 		(u64)ggtt->mappable_end >> 20);
 	drm_dbg(&i915->drm, "DSM size = %lluM\n",
-		(u64)resource_size(&intel_graphics_stolen_res) >> 20);
+		(u64)resource_size(&पूर्णांकel_graphics_stolen_res) >> 20);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * i915_ggtt_probe_hw - Probe GGTT hardware location
  * @i915: i915 device
  */
-int i915_ggtt_probe_hw(struct drm_i915_private *i915)
-{
-	int ret;
+पूर्णांक i915_ggtt_probe_hw(काष्ठा drm_i915_निजी *i915)
+अणु
+	पूर्णांक ret;
 
 	ret = ggtt_probe_hw(&i915->ggtt, &i915->gt);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (intel_vtd_active())
+	अगर (पूर्णांकel_vtd_active())
 		drm_info(&i915->drm, "VT-d active for gfx access\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int i915_ggtt_enable_hw(struct drm_i915_private *i915)
-{
-	if (INTEL_GEN(i915) < 6 && !intel_enable_gtt())
-		return -EIO;
+पूर्णांक i915_ggtt_enable_hw(काष्ठा drm_i915_निजी *i915)
+अणु
+	अगर (INTEL_GEN(i915) < 6 && !पूर्णांकel_enable_gtt())
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void i915_ggtt_enable_guc(struct i915_ggtt *ggtt)
-{
+व्योम i915_ggtt_enable_guc(काष्ठा i915_ggtt *ggtt)
+अणु
 	GEM_BUG_ON(ggtt->invalidate != gen8_ggtt_invalidate);
 
 	ggtt->invalidate = guc_ggtt_invalidate;
 
 	ggtt->invalidate(ggtt);
-}
+पूर्ण
 
-void i915_ggtt_disable_guc(struct i915_ggtt *ggtt)
-{
-	/* XXX Temporary pardon for error unload */
-	if (ggtt->invalidate == gen8_ggtt_invalidate)
-		return;
+व्योम i915_ggtt_disable_guc(काष्ठा i915_ggtt *ggtt)
+अणु
+	/* XXX Temporary parकरोn क्रम error unload */
+	अगर (ggtt->invalidate == gen8_ggtt_invalidate)
+		वापस;
 
 	/* We should only be called after i915_ggtt_enable_guc() */
 	GEM_BUG_ON(ggtt->invalidate != guc_ggtt_invalidate);
@@ -1220,159 +1221,159 @@ void i915_ggtt_disable_guc(struct i915_ggtt *ggtt)
 	ggtt->invalidate = gen8_ggtt_invalidate;
 
 	ggtt->invalidate(ggtt);
-}
+पूर्ण
 
-void i915_ggtt_resume(struct i915_ggtt *ggtt)
-{
-	struct i915_vma *vma;
+व्योम i915_ggtt_resume(काष्ठा i915_ggtt *ggtt)
+अणु
+	काष्ठा i915_vma *vma;
 	bool flush = false;
-	int open;
+	पूर्णांक खोलो;
 
-	intel_gt_check_and_clear_faults(ggtt->vm.gt);
+	पूर्णांकel_gt_check_and_clear_faults(ggtt->vm.gt);
 
 	/* First fill our portion of the GTT with scratch pages */
 	ggtt->vm.clear_range(&ggtt->vm, 0, ggtt->vm.total);
 
 	/* Skip rewriting PTE on VMA unbind. */
-	open = atomic_xchg(&ggtt->vm.open, 0);
+	खोलो = atomic_xchg(&ggtt->vm.खोलो, 0);
 
-	/* clflush objects bound into the GGTT and rebind them. */
-	list_for_each_entry(vma, &ggtt->vm.bound_list, vm_link) {
-		struct drm_i915_gem_object *obj = vma->obj;
-		unsigned int was_bound =
-			atomic_read(&vma->flags) & I915_VMA_BIND_MASK;
+	/* clflush objects bound पूर्णांकo the GGTT and rebind them. */
+	list_क्रम_each_entry(vma, &ggtt->vm.bound_list, vm_link) अणु
+		काष्ठा drm_i915_gem_object *obj = vma->obj;
+		अचिन्हित पूर्णांक was_bound =
+			atomic_पढ़ो(&vma->flags) & I915_VMA_BIND_MASK;
 
 		GEM_BUG_ON(!was_bound);
-		vma->ops->bind_vma(&ggtt->vm, NULL, vma,
+		vma->ops->bind_vma(&ggtt->vm, शून्य, vma,
 				   obj ? obj->cache_level : 0,
 				   was_bound);
-		if (obj) { /* only used during resume => exclusive access */
-			flush |= fetch_and_zero(&obj->write_domain);
-			obj->read_domains |= I915_GEM_DOMAIN_GTT;
-		}
-	}
+		अगर (obj) अणु /* only used during resume => exclusive access */
+			flush |= fetch_and_zero(&obj->ग_लिखो_करोमुख्य);
+			obj->पढ़ो_करोमुख्यs |= I915_GEM_DOMAIN_GTT;
+		पूर्ण
+	पूर्ण
 
-	atomic_set(&ggtt->vm.open, open);
+	atomic_set(&ggtt->vm.खोलो, खोलो);
 	ggtt->invalidate(ggtt);
 
-	if (flush)
+	अगर (flush)
 		wbinvd_on_all_cpus();
 
-	if (INTEL_GEN(ggtt->vm.i915) >= 8)
-		setup_private_pat(ggtt->vm.gt->uncore);
+	अगर (INTEL_GEN(ggtt->vm.i915) >= 8)
+		setup_निजी_pat(ggtt->vm.gt->uncore);
 
-	intel_ggtt_restore_fences(ggtt);
-}
+	पूर्णांकel_ggtt_restore_fences(ggtt);
+पूर्ण
 
-static struct scatterlist *
-rotate_pages(struct drm_i915_gem_object *obj, unsigned int offset,
-	     unsigned int width, unsigned int height,
-	     unsigned int src_stride, unsigned int dst_stride,
-	     struct sg_table *st, struct scatterlist *sg)
-{
-	unsigned int column, row;
-	unsigned int src_idx;
+अटल काष्ठा scatterlist *
+rotate_pages(काष्ठा drm_i915_gem_object *obj, अचिन्हित पूर्णांक offset,
+	     अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height,
+	     अचिन्हित पूर्णांक src_stride, अचिन्हित पूर्णांक dst_stride,
+	     काष्ठा sg_table *st, काष्ठा scatterlist *sg)
+अणु
+	अचिन्हित पूर्णांक column, row;
+	अचिन्हित पूर्णांक src_idx;
 
-	for (column = 0; column < width; column++) {
-		unsigned int left;
+	क्रम (column = 0; column < width; column++) अणु
+		अचिन्हित पूर्णांक left;
 
 		src_idx = src_stride * (height - 1) + column + offset;
-		for (row = 0; row < height; row++) {
+		क्रम (row = 0; row < height; row++) अणु
 			st->nents++;
 			/*
-			 * We don't need the pages, but need to initialize
+			 * We करोn't need the pages, but need to initialize
 			 * the entries so the sg list can be happily traversed.
 			 * The only thing we need are DMA addresses.
 			 */
-			sg_set_page(sg, NULL, I915_GTT_PAGE_SIZE, 0);
+			sg_set_page(sg, शून्य, I915_GTT_PAGE_SIZE, 0);
 			sg_dma_address(sg) =
 				i915_gem_object_get_dma_address(obj, src_idx);
 			sg_dma_len(sg) = I915_GTT_PAGE_SIZE;
 			sg = sg_next(sg);
 			src_idx -= src_stride;
-		}
+		पूर्ण
 
 		left = (dst_stride - height) * I915_GTT_PAGE_SIZE;
 
-		if (!left)
-			continue;
+		अगर (!left)
+			जारी;
 
 		st->nents++;
 
 		/*
-		 * The DE ignores the PTEs for the padding tiles, the sg entry
+		 * The DE ignores the PTEs क्रम the padding tiles, the sg entry
 		 * here is just a conenience to indicate how many padding PTEs
 		 * to insert at this spot.
 		 */
-		sg_set_page(sg, NULL, left, 0);
+		sg_set_page(sg, शून्य, left, 0);
 		sg_dma_address(sg) = 0;
 		sg_dma_len(sg) = left;
 		sg = sg_next(sg);
-	}
+	पूर्ण
 
-	return sg;
-}
+	वापस sg;
+पूर्ण
 
-static noinline struct sg_table *
-intel_rotate_pages(struct intel_rotation_info *rot_info,
-		   struct drm_i915_gem_object *obj)
-{
-	unsigned int size = intel_rotation_info_size(rot_info);
-	struct drm_i915_private *i915 = to_i915(obj->base.dev);
-	struct sg_table *st;
-	struct scatterlist *sg;
-	int ret = -ENOMEM;
-	int i;
+अटल noअंतरभूत काष्ठा sg_table *
+पूर्णांकel_rotate_pages(काष्ठा पूर्णांकel_rotation_info *rot_info,
+		   काष्ठा drm_i915_gem_object *obj)
+अणु
+	अचिन्हित पूर्णांक size = पूर्णांकel_rotation_info_size(rot_info);
+	काष्ठा drm_i915_निजी *i915 = to_i915(obj->base.dev);
+	काष्ठा sg_table *st;
+	काष्ठा scatterlist *sg;
+	पूर्णांक ret = -ENOMEM;
+	पूर्णांक i;
 
 	/* Allocate target SG list. */
-	st = kmalloc(sizeof(*st), GFP_KERNEL);
-	if (!st)
-		goto err_st_alloc;
+	st = kदो_स्मृति(माप(*st), GFP_KERNEL);
+	अगर (!st)
+		जाओ err_st_alloc;
 
 	ret = sg_alloc_table(st, size, GFP_KERNEL);
-	if (ret)
-		goto err_sg_alloc;
+	अगर (ret)
+		जाओ err_sg_alloc;
 
 	st->nents = 0;
 	sg = st->sgl;
 
-	for (i = 0 ; i < ARRAY_SIZE(rot_info->plane); i++)
+	क्रम (i = 0 ; i < ARRAY_SIZE(rot_info->plane); i++)
 		sg = rotate_pages(obj, rot_info->plane[i].offset,
 				  rot_info->plane[i].width, rot_info->plane[i].height,
 				  rot_info->plane[i].src_stride,
 				  rot_info->plane[i].dst_stride,
 				  st, sg);
 
-	return st;
+	वापस st;
 
 err_sg_alloc:
-	kfree(st);
+	kमुक्त(st);
 err_st_alloc:
 
 	drm_dbg(&i915->drm, "Failed to create rotated mapping for object size %zu! (%ux%u tiles, %u pages)\n",
 		obj->base.size, rot_info->plane[0].width,
 		rot_info->plane[0].height, size);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static struct scatterlist *
-remap_pages(struct drm_i915_gem_object *obj, unsigned int offset,
-	    unsigned int width, unsigned int height,
-	    unsigned int src_stride, unsigned int dst_stride,
-	    struct sg_table *st, struct scatterlist *sg)
-{
-	unsigned int row;
+अटल काष्ठा scatterlist *
+remap_pages(काष्ठा drm_i915_gem_object *obj, अचिन्हित पूर्णांक offset,
+	    अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height,
+	    अचिन्हित पूर्णांक src_stride, अचिन्हित पूर्णांक dst_stride,
+	    काष्ठा sg_table *st, काष्ठा scatterlist *sg)
+अणु
+	अचिन्हित पूर्णांक row;
 
-	for (row = 0; row < height; row++) {
-		unsigned int left = width * I915_GTT_PAGE_SIZE;
+	क्रम (row = 0; row < height; row++) अणु
+		अचिन्हित पूर्णांक left = width * I915_GTT_PAGE_SIZE;
 
-		while (left) {
+		जबतक (left) अणु
 			dma_addr_t addr;
-			unsigned int length;
+			अचिन्हित पूर्णांक length;
 
 			/*
-			 * We don't need the pages, but need to initialize
+			 * We करोn't need the pages, but need to initialize
 			 * the entries so the sg list can be happily traversed.
 			 * The only thing we need are DMA addresses.
 			 */
@@ -1383,179 +1384,179 @@ remap_pages(struct drm_i915_gem_object *obj, unsigned int offset,
 
 			st->nents++;
 
-			sg_set_page(sg, NULL, length, 0);
+			sg_set_page(sg, शून्य, length, 0);
 			sg_dma_address(sg) = addr;
 			sg_dma_len(sg) = length;
 			sg = sg_next(sg);
 
 			offset += length / I915_GTT_PAGE_SIZE;
 			left -= length;
-		}
+		पूर्ण
 
 		offset += src_stride - width;
 
 		left = (dst_stride - width) * I915_GTT_PAGE_SIZE;
 
-		if (!left)
-			continue;
+		अगर (!left)
+			जारी;
 
 		st->nents++;
 
 		/*
-		 * The DE ignores the PTEs for the padding tiles, the sg entry
+		 * The DE ignores the PTEs क्रम the padding tiles, the sg entry
 		 * here is just a conenience to indicate how many padding PTEs
 		 * to insert at this spot.
 		 */
-		sg_set_page(sg, NULL, left, 0);
+		sg_set_page(sg, शून्य, left, 0);
 		sg_dma_address(sg) = 0;
 		sg_dma_len(sg) = left;
 		sg = sg_next(sg);
-	}
+	पूर्ण
 
-	return sg;
-}
+	वापस sg;
+पूर्ण
 
-static noinline struct sg_table *
-intel_remap_pages(struct intel_remapped_info *rem_info,
-		  struct drm_i915_gem_object *obj)
-{
-	unsigned int size = intel_remapped_info_size(rem_info);
-	struct drm_i915_private *i915 = to_i915(obj->base.dev);
-	struct sg_table *st;
-	struct scatterlist *sg;
-	int ret = -ENOMEM;
-	int i;
+अटल noअंतरभूत काष्ठा sg_table *
+पूर्णांकel_remap_pages(काष्ठा पूर्णांकel_remapped_info *rem_info,
+		  काष्ठा drm_i915_gem_object *obj)
+अणु
+	अचिन्हित पूर्णांक size = पूर्णांकel_remapped_info_size(rem_info);
+	काष्ठा drm_i915_निजी *i915 = to_i915(obj->base.dev);
+	काष्ठा sg_table *st;
+	काष्ठा scatterlist *sg;
+	पूर्णांक ret = -ENOMEM;
+	पूर्णांक i;
 
 	/* Allocate target SG list. */
-	st = kmalloc(sizeof(*st), GFP_KERNEL);
-	if (!st)
-		goto err_st_alloc;
+	st = kदो_स्मृति(माप(*st), GFP_KERNEL);
+	अगर (!st)
+		जाओ err_st_alloc;
 
 	ret = sg_alloc_table(st, size, GFP_KERNEL);
-	if (ret)
-		goto err_sg_alloc;
+	अगर (ret)
+		जाओ err_sg_alloc;
 
 	st->nents = 0;
 	sg = st->sgl;
 
-	for (i = 0 ; i < ARRAY_SIZE(rem_info->plane); i++) {
+	क्रम (i = 0 ; i < ARRAY_SIZE(rem_info->plane); i++) अणु
 		sg = remap_pages(obj, rem_info->plane[i].offset,
 				 rem_info->plane[i].width, rem_info->plane[i].height,
 				 rem_info->plane[i].src_stride, rem_info->plane[i].dst_stride,
 				 st, sg);
-	}
+	पूर्ण
 
 	i915_sg_trim(st);
 
-	return st;
+	वापस st;
 
 err_sg_alloc:
-	kfree(st);
+	kमुक्त(st);
 err_st_alloc:
 
 	drm_dbg(&i915->drm, "Failed to create remapped mapping for object size %zu! (%ux%u tiles, %u pages)\n",
 		obj->base.size, rem_info->plane[0].width,
 		rem_info->plane[0].height, size);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static noinline struct sg_table *
-intel_partial_pages(const struct i915_ggtt_view *view,
-		    struct drm_i915_gem_object *obj)
-{
-	struct sg_table *st;
-	struct scatterlist *sg, *iter;
-	unsigned int count = view->partial.size;
-	unsigned int offset;
-	int ret = -ENOMEM;
+अटल noअंतरभूत काष्ठा sg_table *
+पूर्णांकel_partial_pages(स्थिर काष्ठा i915_ggtt_view *view,
+		    काष्ठा drm_i915_gem_object *obj)
+अणु
+	काष्ठा sg_table *st;
+	काष्ठा scatterlist *sg, *iter;
+	अचिन्हित पूर्णांक count = view->partial.size;
+	अचिन्हित पूर्णांक offset;
+	पूर्णांक ret = -ENOMEM;
 
-	st = kmalloc(sizeof(*st), GFP_KERNEL);
-	if (!st)
-		goto err_st_alloc;
+	st = kदो_स्मृति(माप(*st), GFP_KERNEL);
+	अगर (!st)
+		जाओ err_st_alloc;
 
 	ret = sg_alloc_table(st, count, GFP_KERNEL);
-	if (ret)
-		goto err_sg_alloc;
+	अगर (ret)
+		जाओ err_sg_alloc;
 
 	iter = i915_gem_object_get_sg_dma(obj, view->partial.offset, &offset, true);
 	GEM_BUG_ON(!iter);
 
 	sg = st->sgl;
 	st->nents = 0;
-	do {
-		unsigned int len;
+	करो अणु
+		अचिन्हित पूर्णांक len;
 
 		len = min(sg_dma_len(iter) - (offset << PAGE_SHIFT),
 			  count << PAGE_SHIFT);
-		sg_set_page(sg, NULL, len, 0);
+		sg_set_page(sg, शून्य, len, 0);
 		sg_dma_address(sg) =
 			sg_dma_address(iter) + (offset << PAGE_SHIFT);
 		sg_dma_len(sg) = len;
 
 		st->nents++;
 		count -= len >> PAGE_SHIFT;
-		if (count == 0) {
+		अगर (count == 0) अणु
 			sg_mark_end(sg);
 			i915_sg_trim(st); /* Drop any unused tail entries. */
 
-			return st;
-		}
+			वापस st;
+		पूर्ण
 
 		sg = __sg_next(sg);
 		iter = __sg_next(iter);
 		offset = 0;
-	} while (1);
+	पूर्ण जबतक (1);
 
 err_sg_alloc:
-	kfree(st);
+	kमुक्त(st);
 err_st_alloc:
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static int
-i915_get_ggtt_vma_pages(struct i915_vma *vma)
-{
-	int ret;
+अटल पूर्णांक
+i915_get_ggtt_vma_pages(काष्ठा i915_vma *vma)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * The vma->pages are only valid within the lifespan of the borrowed
+	 * The vma->pages are only valid within the lअगरespan of the borrowed
 	 * obj->mm.pages. When the obj->mm.pages sg_table is regenerated, so
 	 * must be the vma->pages. A simple rule is that vma->pages must only
 	 * be accessed when the obj->mm.pages are pinned.
 	 */
 	GEM_BUG_ON(!i915_gem_object_has_pinned_pages(vma->obj));
 
-	switch (vma->ggtt_view.type) {
-	default:
+	चयन (vma->ggtt_view.type) अणु
+	शेष:
 		GEM_BUG_ON(vma->ggtt_view.type);
 		fallthrough;
-	case I915_GGTT_VIEW_NORMAL:
+	हाल I915_GGTT_VIEW_NORMAL:
 		vma->pages = vma->obj->mm.pages;
-		return 0;
+		वापस 0;
 
-	case I915_GGTT_VIEW_ROTATED:
+	हाल I915_GGTT_VIEW_ROTATED:
 		vma->pages =
-			intel_rotate_pages(&vma->ggtt_view.rotated, vma->obj);
-		break;
+			पूर्णांकel_rotate_pages(&vma->ggtt_view.rotated, vma->obj);
+		अवरोध;
 
-	case I915_GGTT_VIEW_REMAPPED:
+	हाल I915_GGTT_VIEW_REMAPPED:
 		vma->pages =
-			intel_remap_pages(&vma->ggtt_view.remapped, vma->obj);
-		break;
+			पूर्णांकel_remap_pages(&vma->ggtt_view.remapped, vma->obj);
+		अवरोध;
 
-	case I915_GGTT_VIEW_PARTIAL:
-		vma->pages = intel_partial_pages(&vma->ggtt_view, vma->obj);
-		break;
-	}
+	हाल I915_GGTT_VIEW_PARTIAL:
+		vma->pages = पूर्णांकel_partial_pages(&vma->ggtt_view, vma->obj);
+		अवरोध;
+	पूर्ण
 
 	ret = 0;
-	if (IS_ERR(vma->pages)) {
+	अगर (IS_ERR(vma->pages)) अणु
 		ret = PTR_ERR(vma->pages);
-		vma->pages = NULL;
+		vma->pages = शून्य;
 		drm_err(&vma->vm->i915->drm,
 			"Failed to get pages for VMA view type %u (%d)!\n",
 			vma->ggtt_view.type, ret);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण

@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2013, Michael Ellerman, IBM Corporation.
  */
 
-#define pr_fmt(fmt)	"pseries-rng: " fmt
+#घोषणा pr_fmt(fmt)	"pseries-rng: " fmt
 
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <asm/archrandom.h>
-#include <asm/machdep.h>
-#include <asm/plpar_wrappers.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <यंत्र/archअक्रमom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/plpar_wrappers.h>
 
 
-static int pseries_get_random_long(unsigned long *v)
-{
-	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
+अटल पूर्णांक pseries_get_अक्रमom_दीर्घ(अचिन्हित दीर्घ *v)
+अणु
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
 
-	if (plpar_hcall(H_RANDOM, retbuf) == H_SUCCESS) {
+	अगर (plpar_hcall(H_RANDOM, retbuf) == H_SUCCESS) अणु
 		*v = retbuf[0];
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __init int rng_init(void)
-{
-	struct device_node *dn;
+अटल __init पूर्णांक rng_init(व्योम)
+अणु
+	काष्ठा device_node *dn;
 
-	dn = of_find_compatible_node(NULL, NULL, "ibm,random");
-	if (!dn)
-		return -ENODEV;
+	dn = of_find_compatible_node(शून्य, शून्य, "ibm,random");
+	अगर (!dn)
+		वापस -ENODEV;
 
 	pr_info("Registering arch random hook.\n");
 
-	ppc_md.get_random_seed = pseries_get_random_long;
+	ppc_md.get_अक्रमom_seed = pseries_get_अक्रमom_दीर्घ;
 
 	of_node_put(dn);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_subsys_initcall(pseries, rng_init);

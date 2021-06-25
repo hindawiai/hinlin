@@ -1,324 +1,325 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
 
-#include <linux/kref.h>
+#समावेश <linux/kref.h>
 
-#include "gem/i915_gem_pm.h"
-#include "gt/intel_gt.h"
+#समावेश "gem/i915_gem_pm.h"
+#समावेश "gt/intel_gt.h"
 
-#include "i915_selftest.h"
+#समावेश "i915_selftest.h"
 
-#include "igt_flush_test.h"
-#include "lib_sw_fence.h"
+#समावेश "igt_flush_test.h"
+#समावेश "lib_sw_fence.h"
 
-struct live_active {
-	struct i915_active base;
-	struct kref ref;
+काष्ठा live_active अणु
+	काष्ठा i915_active base;
+	काष्ठा kref ref;
 	bool retired;
-};
+पूर्ण;
 
-static void __live_get(struct live_active *active)
-{
+अटल व्योम __live_get(काष्ठा live_active *active)
+अणु
 	kref_get(&active->ref);
-}
+पूर्ण
 
-static void __live_free(struct live_active *active)
-{
+अटल व्योम __live_मुक्त(काष्ठा live_active *active)
+अणु
 	i915_active_fini(&active->base);
-	kfree(active);
-}
+	kमुक्त(active);
+पूर्ण
 
-static void __live_release(struct kref *ref)
-{
-	struct live_active *active = container_of(ref, typeof(*active), ref);
+अटल व्योम __live_release(काष्ठा kref *ref)
+अणु
+	काष्ठा live_active *active = container_of(ref, typeof(*active), ref);
 
-	__live_free(active);
-}
+	__live_मुक्त(active);
+पूर्ण
 
-static void __live_put(struct live_active *active)
-{
+अटल व्योम __live_put(काष्ठा live_active *active)
+अणु
 	kref_put(&active->ref, __live_release);
-}
+पूर्ण
 
-static int __live_active(struct i915_active *base)
-{
-	struct live_active *active = container_of(base, typeof(*active), base);
+अटल पूर्णांक __live_active(काष्ठा i915_active *base)
+अणु
+	काष्ठा live_active *active = container_of(base, typeof(*active), base);
 
 	__live_get(active);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __live_retire(struct i915_active *base)
-{
-	struct live_active *active = container_of(base, typeof(*active), base);
+अटल व्योम __live_retire(काष्ठा i915_active *base)
+अणु
+	काष्ठा live_active *active = container_of(base, typeof(*active), base);
 
 	active->retired = true;
 	__live_put(active);
-}
+पूर्ण
 
-static struct live_active *__live_alloc(struct drm_i915_private *i915)
-{
-	struct live_active *active;
+अटल काष्ठा live_active *__live_alloc(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा live_active *active;
 
-	active = kzalloc(sizeof(*active), GFP_KERNEL);
-	if (!active)
-		return NULL;
+	active = kzalloc(माप(*active), GFP_KERNEL);
+	अगर (!active)
+		वापस शून्य;
 
 	kref_init(&active->ref);
 	i915_active_init(&active->base, __live_active, __live_retire);
 
-	return active;
-}
+	वापस active;
+पूर्ण
 
-static struct live_active *
-__live_active_setup(struct drm_i915_private *i915)
-{
-	struct intel_engine_cs *engine;
-	struct i915_sw_fence *submit;
-	struct live_active *active;
-	unsigned int count = 0;
-	int err = 0;
+अटल काष्ठा live_active *
+__live_active_setup(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	काष्ठा i915_sw_fence *submit;
+	काष्ठा live_active *active;
+	अचिन्हित पूर्णांक count = 0;
+	पूर्णांक err = 0;
 
 	active = __live_alloc(i915);
-	if (!active)
-		return ERR_PTR(-ENOMEM);
+	अगर (!active)
+		वापस ERR_PTR(-ENOMEM);
 
 	submit = heap_fence_create(GFP_KERNEL);
-	if (!submit) {
-		kfree(active);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!submit) अणु
+		kमुक्त(active);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	err = i915_active_acquire(&active->base);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	for_each_uabi_engine(engine, i915) {
-		struct i915_request *rq;
+	क्रम_each_uabi_engine(engine, i915) अणु
+		काष्ठा i915_request *rq;
 
-		rq = intel_engine_create_kernel_request(engine);
-		if (IS_ERR(rq)) {
+		rq = पूर्णांकel_engine_create_kernel_request(engine);
+		अगर (IS_ERR(rq)) अणु
 			err = PTR_ERR(rq);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		err = i915_sw_fence_await_sw_fence_gfp(&rq->submit,
+		err = i915_sw_fence_aरुको_sw_fence_gfp(&rq->submit,
 						       submit,
 						       GFP_KERNEL);
-		if (err >= 0)
+		अगर (err >= 0)
 			err = i915_active_add_request(&active->base, rq);
 		i915_request_add(rq);
-		if (err) {
+		अगर (err) अणु
 			pr_err("Failed to track active ref!\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		count++;
-	}
+	पूर्ण
 
 	i915_active_release(&active->base);
-	if (READ_ONCE(active->retired) && count) {
+	अगर (READ_ONCE(active->retired) && count) अणु
 		pr_err("i915_active retired before submission!\n");
 		err = -EINVAL;
-	}
-	if (atomic_read(&active->base.count) != count) {
+	पूर्ण
+	अगर (atomic_पढ़ो(&active->base.count) != count) अणु
 		pr_err("i915_active not tracking all requests, found %d, expected %d\n",
-		       atomic_read(&active->base.count), count);
+		       atomic_पढ़ो(&active->base.count), count);
 		err = -EINVAL;
-	}
+	पूर्ण
 
 out:
 	i915_sw_fence_commit(submit);
 	heap_fence_put(submit);
-	if (err) {
+	अगर (err) अणु
 		__live_put(active);
 		active = ERR_PTR(err);
-	}
+	पूर्ण
 
-	return active;
-}
+	वापस active;
+पूर्ण
 
-static int live_active_wait(void *arg)
-{
-	struct drm_i915_private *i915 = arg;
-	struct live_active *active;
-	int err = 0;
+अटल पूर्णांक live_active_रुको(व्योम *arg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा live_active *active;
+	पूर्णांक err = 0;
 
-	/* Check that we get a callback when requests retire upon waiting */
+	/* Check that we get a callback when requests retire upon रुकोing */
 
 	active = __live_active_setup(i915);
-	if (IS_ERR(active))
-		return PTR_ERR(active);
+	अगर (IS_ERR(active))
+		वापस PTR_ERR(active);
 
-	__i915_active_wait(&active->base, TASK_UNINTERRUPTIBLE);
-	if (!READ_ONCE(active->retired)) {
-		struct drm_printer p = drm_err_printer(__func__);
+	__i915_active_रुको(&active->base, TASK_UNINTERRUPTIBLE);
+	अगर (!READ_ONCE(active->retired)) अणु
+		काष्ठा drm_prपूर्णांकer p = drm_err_prपूर्णांकer(__func__);
 
 		pr_err("i915_active not retired after waiting!\n");
-		i915_active_print(&active->base, &p);
+		i915_active_prपूर्णांक(&active->base, &p);
 
 		err = -EINVAL;
-	}
+	पूर्ण
 
 	__live_put(active);
 
-	if (igt_flush_test(i915))
+	अगर (igt_flush_test(i915))
 		err = -EIO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int live_active_retire(void *arg)
-{
-	struct drm_i915_private *i915 = arg;
-	struct live_active *active;
-	int err = 0;
+अटल पूर्णांक live_active_retire(व्योम *arg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा live_active *active;
+	पूर्णांक err = 0;
 
 	/* Check that we get a callback when requests are indirectly retired */
 
 	active = __live_active_setup(i915);
-	if (IS_ERR(active))
-		return PTR_ERR(active);
+	अगर (IS_ERR(active))
+		वापस PTR_ERR(active);
 
-	/* waits for & retires all requests */
-	if (igt_flush_test(i915))
+	/* रुकोs क्रम & retires all requests */
+	अगर (igt_flush_test(i915))
 		err = -EIO;
 
-	if (!READ_ONCE(active->retired)) {
-		struct drm_printer p = drm_err_printer(__func__);
+	अगर (!READ_ONCE(active->retired)) अणु
+		काष्ठा drm_prपूर्णांकer p = drm_err_prपूर्णांकer(__func__);
 
 		pr_err("i915_active not retired after flushing!\n");
-		i915_active_print(&active->base, &p);
+		i915_active_prपूर्णांक(&active->base, &p);
 
 		err = -EINVAL;
-	}
+	पूर्ण
 
 	__live_put(active);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int live_active_barrier(void *arg)
-{
-	struct drm_i915_private *i915 = arg;
-	struct intel_engine_cs *engine;
-	struct live_active *active;
-	int err = 0;
+अटल पूर्णांक live_active_barrier(व्योम *arg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	काष्ठा live_active *active;
+	पूर्णांक err = 0;
 
-	/* Check that we get a callback when requests retire upon waiting */
+	/* Check that we get a callback when requests retire upon रुकोing */
 
 	active = __live_alloc(i915);
-	if (!active)
-		return -ENOMEM;
+	अगर (!active)
+		वापस -ENOMEM;
 
 	err = i915_active_acquire(&active->base);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	for_each_uabi_engine(engine, i915) {
-		err = i915_active_acquire_preallocate_barrier(&active->base,
+	क्रम_each_uabi_engine(engine, i915) अणु
+		err = i915_active_acquire_pपुनः_स्मृतिate_barrier(&active->base,
 							      engine);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		i915_active_acquire_barrier(&active->base);
-	}
+	पूर्ण
 
 	i915_active_release(&active->base);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	__i915_active_wait(&active->base, TASK_UNINTERRUPTIBLE);
-	if (!READ_ONCE(active->retired)) {
+	__i915_active_रुको(&active->base, TASK_UNINTERRUPTIBLE);
+	अगर (!READ_ONCE(active->retired)) अणु
 		pr_err("i915_active not retired after flushing barriers!\n");
 		err = -EINVAL;
-	}
+	पूर्ण
 
 out:
 	__live_put(active);
 
-	if (igt_flush_test(i915))
+	अगर (igt_flush_test(i915))
 		err = -EIO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int i915_active_live_selftests(struct drm_i915_private *i915)
-{
-	static const struct i915_subtest tests[] = {
-		SUBTEST(live_active_wait),
+पूर्णांक i915_active_live_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+		SUBTEST(live_active_रुको),
 		SUBTEST(live_active_retire),
 		SUBTEST(live_active_barrier),
-	};
+	पूर्ण;
 
-	if (intel_gt_is_wedged(&i915->gt))
-		return 0;
+	अगर (पूर्णांकel_gt_is_wedged(&i915->gt))
+		वापस 0;
 
-	return i915_subtests(tests, i915);
-}
+	वापस i915_subtests(tests, i915);
+पूर्ण
 
-static struct intel_engine_cs *node_to_barrier(struct active_node *it)
-{
-	struct intel_engine_cs *engine;
+अटल काष्ठा पूर्णांकel_engine_cs *node_to_barrier(काष्ठा active_node *it)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
 
-	if (!is_barrier(&it->base))
-		return NULL;
+	अगर (!is_barrier(&it->base))
+		वापस शून्य;
 
 	engine = __barrier_to_engine(it);
 	smp_rmb(); /* serialise with add_active_barriers */
-	if (!is_barrier(&it->base))
-		return NULL;
+	अगर (!is_barrier(&it->base))
+		वापस शून्य;
 
-	return engine;
-}
+	वापस engine;
+पूर्ण
 
-void i915_active_print(struct i915_active *ref, struct drm_printer *m)
-{
-	drm_printf(m, "active %ps:%ps\n", ref->active, ref->retire);
-	drm_printf(m, "\tcount: %d\n", atomic_read(&ref->count));
-	drm_printf(m, "\tpreallocated barriers? %s\n",
-		   yesno(!llist_empty(&ref->preallocated_barriers)));
+व्योम i915_active_prपूर्णांक(काष्ठा i915_active *ref, काष्ठा drm_prपूर्णांकer *m)
+अणु
+	drm_म_लिखो(m, "active %ps:%ps\n", ref->active, ref->retire);
+	drm_म_लिखो(m, "\tcount: %d\n", atomic_पढ़ो(&ref->count));
+	drm_म_लिखो(m, "\tpreallocated barriers? %s\n",
+		   yesno(!llist_empty(&ref->pपुनः_स्मृतिated_barriers)));
 
-	if (i915_active_acquire_if_busy(ref)) {
-		struct active_node *it, *n;
+	अगर (i915_active_acquire_अगर_busy(ref)) अणु
+		काष्ठा active_node *it, *n;
 
-		rbtree_postorder_for_each_entry_safe(it, n, &ref->tree, node) {
-			struct intel_engine_cs *engine;
+		rbtree_postorder_क्रम_each_entry_safe(it, n, &ref->tree, node) अणु
+			काष्ठा पूर्णांकel_engine_cs *engine;
 
 			engine = node_to_barrier(it);
-			if (engine) {
-				drm_printf(m, "\tbarrier: %s\n", engine->name);
-				continue;
-			}
+			अगर (engine) अणु
+				drm_म_लिखो(m, "\tbarrier: %s\n", engine->name);
+				जारी;
+			पूर्ण
 
-			if (i915_active_fence_isset(&it->base)) {
-				drm_printf(m,
-					   "\ttimeline: %llx\n", it->timeline);
-				continue;
-			}
-		}
+			अगर (i915_active_fence_isset(&it->base)) अणु
+				drm_म_लिखो(m,
+					   "\ttimeline: %llx\n", it->समयline);
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		i915_active_release(ref);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void spin_unlock_wait(spinlock_t *lock)
-{
+अटल व्योम spin_unlock_रुको(spinlock_t *lock)
+अणु
 	spin_lock_irq(lock);
 	spin_unlock_irq(lock);
-}
+पूर्ण
 
-static void active_flush(struct i915_active *ref,
-			 struct i915_active_fence *active)
-{
-	struct dma_fence *fence;
+अटल व्योम active_flush(काष्ठा i915_active *ref,
+			 काष्ठा i915_active_fence *active)
+अणु
+	काष्ठा dma_fence *fence;
 
-	fence = xchg(__active_fence_slot(active), NULL);
-	if (!fence)
-		return;
+	fence = xchg(__active_fence_slot(active), शून्य);
+	अगर (!fence)
+		वापस;
 
 	spin_lock_irq(fence->lock);
 	__list_del_entry(&active->cb.node);
@@ -326,26 +327,26 @@ static void active_flush(struct i915_active *ref,
 	atomic_dec(&ref->count);
 
 	GEM_BUG_ON(!test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags));
-}
+पूर्ण
 
-void i915_active_unlock_wait(struct i915_active *ref)
-{
-	if (i915_active_acquire_if_busy(ref)) {
-		struct active_node *it, *n;
+व्योम i915_active_unlock_रुको(काष्ठा i915_active *ref)
+अणु
+	अगर (i915_active_acquire_अगर_busy(ref)) अणु
+		काष्ठा active_node *it, *n;
 
-		/* Wait for all active callbacks */
-		rcu_read_lock();
+		/* Wait क्रम all active callbacks */
+		rcu_पढ़ो_lock();
 		active_flush(ref, &ref->excl);
-		rbtree_postorder_for_each_entry_safe(it, n, &ref->tree, node)
+		rbtree_postorder_क्रम_each_entry_safe(it, n, &ref->tree, node)
 			active_flush(ref, &it->base);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
 		i915_active_release(ref);
-	}
+	पूर्ण
 
-	/* And wait for the retire callback */
-	spin_unlock_wait(&ref->tree_lock);
+	/* And रुको क्रम the retire callback */
+	spin_unlock_रुको(&ref->tree_lock);
 
-	/* ... which may have been on a thread instead */
+	/* ... which may have been on a thपढ़ो instead */
 	flush_work(&ref->work);
-}
+पूर्ण

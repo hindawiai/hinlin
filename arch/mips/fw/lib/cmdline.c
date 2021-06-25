@@ -1,103 +1,104 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2012 MIPS Technologies, Inc.  All rights reserved.
  */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
 
-#include <asm/addrspace.h>
-#include <asm/fw/fw.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/fw/fw.h>
 
-int fw_argc;
-int *_fw_argv;
-int *_fw_envp;
+पूर्णांक fw_argc;
+पूर्णांक *_fw_argv;
+पूर्णांक *_fw_envp;
 
-#ifndef CONFIG_HAVE_PLAT_FW_INIT_CMDLINE
-void __init fw_init_cmdline(void)
-{
-	int i;
+#अगर_अघोषित CONFIG_HAVE_PLAT_FW_INIT_CMDLINE
+व्योम __init fw_init_cmdline(व्योम)
+अणु
+	पूर्णांक i;
 
 	/* Validate command line parameters. */
-	if ((fw_arg0 >= CKSEG0) || (fw_arg1 < CKSEG0)) {
+	अगर ((fw_arg0 >= CKSEG0) || (fw_arg1 < CKSEG0)) अणु
 		fw_argc = 0;
-		_fw_argv = NULL;
-	} else {
+		_fw_argv = शून्य;
+	पूर्ण अन्यथा अणु
 		fw_argc = (fw_arg0 & 0x0000ffff);
-		_fw_argv = (int *)fw_arg1;
-	}
+		_fw_argv = (पूर्णांक *)fw_arg1;
+	पूर्ण
 
-	/* Validate environment pointer. */
-	if (fw_arg2 < CKSEG0)
-		_fw_envp = NULL;
-	else
-		_fw_envp = (int *)fw_arg2;
+	/* Validate environment poपूर्णांकer. */
+	अगर (fw_arg2 < CKSEG0)
+		_fw_envp = शून्य;
+	अन्यथा
+		_fw_envp = (पूर्णांक *)fw_arg2;
 
-	for (i = 1; i < fw_argc; i++) {
+	क्रम (i = 1; i < fw_argc; i++) अणु
 		strlcat(arcs_cmdline, fw_argv(i), COMMAND_LINE_SIZE);
-		if (i < (fw_argc - 1))
+		अगर (i < (fw_argc - 1))
 			strlcat(arcs_cmdline, " ", COMMAND_LINE_SIZE);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-char * __init fw_getcmdline(void)
-{
-	return &(arcs_cmdline[0]);
-}
+अक्षर * __init fw_अ_लोmdline(व्योम)
+अणु
+	वापस &(arcs_cmdline[0]);
+पूर्ण
 
-char *fw_getenv(char *envname)
-{
-	char *result = NULL;
+अक्षर *fw_दो_पर्या(अक्षर *envname)
+अणु
+	अक्षर *result = शून्य;
 
-	if (_fw_envp != NULL) {
+	अगर (_fw_envp != शून्य) अणु
 		/*
-		 * Return a pointer to the given environment variable.
-		 * YAMON uses "name", "value" pairs, while U-Boot uses
+		 * Return a poपूर्णांकer to the given environment variable.
+		 * YAMON uses "name", "value" pairs, जबतक U-Boot uses
 		 * "name=value".
 		 */
-		int i, yamon, index = 0;
+		पूर्णांक i, yamon, index = 0;
 
-		yamon = (strchr(fw_envp(index), '=') == NULL);
-		i = strlen(envname);
+		yamon = (म_अक्षर(fw_envp(index), '=') == शून्य);
+		i = म_माप(envname);
 
-		while (fw_envp(index)) {
-			if (strncmp(envname, fw_envp(index), i) == 0) {
-				if (yamon) {
+		जबतक (fw_envp(index)) अणु
+			अगर (म_भेदन(envname, fw_envp(index), i) == 0) अणु
+				अगर (yamon) अणु
 					result = fw_envp(index + 1);
-					break;
-				} else if (fw_envp(index)[i] == '=') {
+					अवरोध;
+				पूर्ण अन्यथा अगर (fw_envp(index)[i] == '=') अणु
 					result = fw_envp(index) + i + 1;
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
 			/* Increment array index. */
-			if (yamon)
+			अगर (yamon)
 				index += 2;
-			else
+			अन्यथा
 				index += 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-unsigned long fw_getenvl(char *envname)
-{
-	unsigned long envl = 0UL;
-	char *str;
-	int tmp;
+अचिन्हित दीर्घ fw_दो_पर्याl(अक्षर *envname)
+अणु
+	अचिन्हित दीर्घ envl = 0UL;
+	अक्षर *str;
+	पूर्णांक पंचांगp;
 
-	str = fw_getenv(envname);
-	if (str) {
-		tmp = kstrtoul(str, 0, &envl);
-		if (tmp)
+	str = fw_दो_पर्या(envname);
+	अगर (str) अणु
+		पंचांगp = kम_से_अदीर्घ(str, 0, &envl);
+		अगर (पंचांगp)
 			envl = 0;
-	}
+	पूर्ण
 
-	return envl;
-}
+	वापस envl;
+पूर्ण

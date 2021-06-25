@@ -1,344 +1,345 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (c) 2003 Gerd Knorr
  * Copyright (c) 2003 Pavel Machek
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/input.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/input.h>
+#समावेश <linux/slab.h>
 
-#include "bttv.h"
-#include "bttvp.h"
+#समावेश "bttv.h"
+#समावेश "bttvp.h"
 
 
-static int ir_debug;
-module_param(ir_debug, int, 0644);
+अटल पूर्णांक ir_debug;
+module_param(ir_debug, पूर्णांक, 0644);
 
-static int ir_rc5_remote_gap = 885;
-module_param(ir_rc5_remote_gap, int, 0644);
+अटल पूर्णांक ir_rc5_remote_gap = 885;
+module_param(ir_rc5_remote_gap, पूर्णांक, 0644);
 
-#undef dprintk
-#define dprintk(fmt, ...)			\
-do {						\
-	if (ir_debug >= 1)			\
+#अघोषित dprपूर्णांकk
+#घोषणा dprपूर्णांकk(fmt, ...)			\
+करो अणु						\
+	अगर (ir_debug >= 1)			\
 		pr_info(fmt, ##__VA_ARGS__);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define DEVNAME "bttv-input"
+#घोषणा DEVNAME "bttv-input"
 
-#define MODULE_NAME "bttv"
+#घोषणा MODULE_NAME "bttv"
 
 /* ---------------------------------------------------------------------- */
 
-static void ir_handle_key(struct bttv *btv)
-{
-	struct bttv_ir *ir = btv->remote;
+अटल व्योम ir_handle_key(काष्ठा bttv *btv)
+अणु
+	काष्ठा bttv_ir *ir = btv->remote;
 	u32 gpio,data;
 
-	/* read gpio value */
-	gpio = bttv_gpio_read(&btv->c);
-	if (ir->polling) {
-		if (ir->last_gpio == gpio)
-			return;
+	/* पढ़ो gpio value */
+	gpio = bttv_gpio_पढ़ो(&btv->c);
+	अगर (ir->polling) अणु
+		अगर (ir->last_gpio == gpio)
+			वापस;
 		ir->last_gpio = gpio;
-	}
+	पूर्ण
 
 	/* extract data */
 	data = ir_extract_bits(gpio, ir->mask_keycode);
-	dprintk("irq gpio=0x%x code=%d | %s%s%s\n",
+	dprपूर्णांकk("irq gpio=0x%x code=%d | %s%s%s\n",
 		gpio, data,
 		ir->polling               ? "poll"  : "irq",
-		(gpio & ir->mask_keydown) ? " down" : "",
+		(gpio & ir->mask_keyकरोwn) ? " down" : "",
 		(gpio & ir->mask_keyup)   ? " up"   : "");
 
-	if ((ir->mask_keydown && (gpio & ir->mask_keydown)) ||
-	    (ir->mask_keyup   && !(gpio & ir->mask_keyup))) {
-		rc_keydown_notimeout(ir->dev, RC_PROTO_UNKNOWN, data, 0);
-	} else {
-		/* HACK: Probably, ir->mask_keydown is missing
-		   for this board */
-		if (btv->c.type == BTTV_BOARD_WINFAST2000)
-			rc_keydown_notimeout(ir->dev, RC_PROTO_UNKNOWN, data,
+	अगर ((ir->mask_keyकरोwn && (gpio & ir->mask_keyकरोwn)) ||
+	    (ir->mask_keyup   && !(gpio & ir->mask_keyup))) अणु
+		rc_keyकरोwn_noसमयout(ir->dev, RC_PROTO_UNKNOWN, data, 0);
+	पूर्ण अन्यथा अणु
+		/* HACK: Probably, ir->mask_keyकरोwn is missing
+		   क्रम this board */
+		अगर (btv->c.type == BTTV_BOARD_WINFAST2000)
+			rc_keyकरोwn_noसमयout(ir->dev, RC_PROTO_UNKNOWN, data,
 					     0);
 
 		rc_keyup(ir->dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ir_enltv_handle_key(struct bttv *btv)
-{
-	struct bttv_ir *ir = btv->remote;
+अटल व्योम ir_enltv_handle_key(काष्ठा bttv *btv)
+अणु
+	काष्ठा bttv_ir *ir = btv->remote;
 	u32 gpio, data, keyup;
 
-	/* read gpio value */
-	gpio = bttv_gpio_read(&btv->c);
+	/* पढ़ो gpio value */
+	gpio = bttv_gpio_पढ़ो(&btv->c);
 
 	/* extract data */
 	data = ir_extract_bits(gpio, ir->mask_keycode);
 
-	/* Check if it is keyup */
+	/* Check अगर it is keyup */
 	keyup = (gpio & ir->mask_keyup) ? 1UL << 31 : 0;
 
-	if ((ir->last_gpio & 0x7f) != data) {
-		dprintk("gpio=0x%x code=%d | %s\n",
+	अगर ((ir->last_gpio & 0x7f) != data) अणु
+		dprपूर्णांकk("gpio=0x%x code=%d | %s\n",
 			gpio, data,
 			(gpio & ir->mask_keyup) ? " up" : "up/down");
 
-		rc_keydown_notimeout(ir->dev, RC_PROTO_UNKNOWN, data, 0);
-		if (keyup)
+		rc_keyकरोwn_noसमयout(ir->dev, RC_PROTO_UNKNOWN, data, 0);
+		अगर (keyup)
 			rc_keyup(ir->dev);
-	} else {
-		if ((ir->last_gpio & 1UL << 31) == keyup)
-			return;
+	पूर्ण अन्यथा अणु
+		अगर ((ir->last_gpio & 1UL << 31) == keyup)
+			वापस;
 
-		dprintk("(cnt) gpio=0x%x code=%d | %s\n",
+		dprपूर्णांकk("(cnt) gpio=0x%x code=%d | %s\n",
 			gpio, data,
 			(gpio & ir->mask_keyup) ? " up" : "down");
 
-		if (keyup)
+		अगर (keyup)
 			rc_keyup(ir->dev);
-		else
-			rc_keydown_notimeout(ir->dev, RC_PROTO_UNKNOWN, data,
+		अन्यथा
+			rc_keyकरोwn_noसमयout(ir->dev, RC_PROTO_UNKNOWN, data,
 					     0);
-	}
+	पूर्ण
 
 	ir->last_gpio = data | keyup;
-}
+पूर्ण
 
-static int bttv_rc5_irq(struct bttv *btv);
+अटल पूर्णांक bttv_rc5_irq(काष्ठा bttv *btv);
 
-void bttv_input_irq(struct bttv *btv)
-{
-	struct bttv_ir *ir = btv->remote;
+व्योम bttv_input_irq(काष्ठा bttv *btv)
+अणु
+	काष्ठा bttv_ir *ir = btv->remote;
 
-	if (ir->rc5_gpio)
+	अगर (ir->rc5_gpio)
 		bttv_rc5_irq(btv);
-	else if (!ir->polling)
+	अन्यथा अगर (!ir->polling)
 		ir_handle_key(btv);
-}
+पूर्ण
 
-static void bttv_input_timer(struct timer_list *t)
-{
-	struct bttv_ir *ir = from_timer(ir, t, timer);
-	struct bttv *btv = ir->btv;
+अटल व्योम bttv_input_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा bttv_ir *ir = from_समयr(ir, t, समयr);
+	काष्ठा bttv *btv = ir->btv;
 
-	if (btv->c.type == BTTV_BOARD_ENLTV_FM_2)
+	अगर (btv->c.type == BTTV_BOARD_ENLTV_FM_2)
 		ir_enltv_handle_key(btv);
-	else
+	अन्यथा
 		ir_handle_key(btv);
-	mod_timer(&ir->timer, jiffies + msecs_to_jiffies(ir->polling));
-}
+	mod_समयr(&ir->समयr, jअगरfies + msecs_to_jअगरfies(ir->polling));
+पूर्ण
 
 /*
  * FIXME: Nebula digi uses the legacy way to decode RC5, instead of relying
  * on the rc-core way. As we need to be sure that both IRQ transitions are
- * properly triggered, Better to touch it only with this hardware for
+ * properly triggered, Better to touch it only with this hardware क्रम
  * testing.
  */
 
-#define RC5_START(x)	(((x) >> 12) & 0x03)
-#define RC5_TOGGLE(x)	(((x) >> 11) & 0x01)
-#define RC5_ADDR(x)	(((x) >> 6)  & 0x1f)
-#define RC5_INSTR(x)	(((x) >> 0)  & 0x3f)
+#घोषणा RC5_START(x)	(((x) >> 12) & 0x03)
+#घोषणा RC5_TOGGLE(x)	(((x) >> 11) & 0x01)
+#घोषणा RC5_ADDR(x)	(((x) >> 6)  & 0x1f)
+#घोषणा RC5_INSTR(x)	(((x) >> 0)  & 0x3f)
 
 /* decode raw bit pattern to RC5 code */
-static u32 bttv_rc5_decode(unsigned int code)
-{
-	unsigned int org_code = code;
-	unsigned int pair;
-	unsigned int rc5 = 0;
-	int i;
+अटल u32 bttv_rc5_decode(अचिन्हित पूर्णांक code)
+अणु
+	अचिन्हित पूर्णांक org_code = code;
+	अचिन्हित पूर्णांक pair;
+	अचिन्हित पूर्णांक rc5 = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < 14; ++i) {
+	क्रम (i = 0; i < 14; ++i) अणु
 		pair = code & 0x3;
 		code >>= 2;
 
 		rc5 <<= 1;
-		switch (pair) {
-		case 0:
-		case 2:
-			break;
-		case 1:
+		चयन (pair) अणु
+		हाल 0:
+		हाल 2:
+			अवरोध;
+		हाल 1:
 			rc5 |= 1;
-		break;
-		case 3:
-			dprintk("rc5_decode(%x) bad code\n",
+		अवरोध;
+		हाल 3:
+			dprपूर्णांकk("rc5_decode(%x) bad code\n",
 				org_code);
-			return 0;
-		}
-	}
-	dprintk("code=%x, rc5=%x, start=%x, toggle=%x, address=%x, instr=%x\n",
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	dprपूर्णांकk("code=%x, rc5=%x, start=%x, toggle=%x, address=%x, instr=%x\n",
 		rc5, org_code, RC5_START(rc5),
 		RC5_TOGGLE(rc5), RC5_ADDR(rc5), RC5_INSTR(rc5));
-	return rc5;
-}
+	वापस rc5;
+पूर्ण
 
-static void bttv_rc5_timer_end(struct timer_list *t)
-{
-	struct bttv_ir *ir = from_timer(ir, t, timer);
-	ktime_t tv;
+अटल व्योम bttv_rc5_समयr_end(काष्ठा समयr_list *t)
+अणु
+	काष्ठा bttv_ir *ir = from_समयr(ir, t, समयr);
+	kसमय_प्रकार tv;
 	u32 gap, rc5, scancode;
-	u8 toggle, command, system;
+	u8 toggle, command, प्रणाली;
 
-	/* get time */
-	tv = ktime_get();
+	/* get समय */
+	tv = kसमय_get();
 
-	gap = ktime_to_us(ktime_sub(tv, ir->base_time));
-	/* avoid overflow with gap >1s */
-	if (gap > USEC_PER_SEC) {
+	gap = kसमय_प्रकारo_us(kसमय_sub(tv, ir->base_समय));
+	/* aव्योम overflow with gap >1s */
+	अगर (gap > USEC_PER_SEC) अणु
 		gap = 200000;
-	}
-	/* signal we're ready to start a new code */
+	पूर्ण
+	/* संकेत we're पढ़ोy to start a new code */
 	ir->active = false;
 
-	/* Allow some timer jitter (RC5 is ~24ms anyway so this is ok) */
-	if (gap < 28000) {
-		dprintk("spurious timer_end\n");
-		return;
-	}
+	/* Allow some समयr jitter (RC5 is ~24ms anyway so this is ok) */
+	अगर (gap < 28000) अणु
+		dprपूर्णांकk("spurious timer_end\n");
+		वापस;
+	पूर्ण
 
-	if (ir->last_bit < 20) {
+	अगर (ir->last_bit < 20) अणु
 		/* ignore spurious codes (caused by light/other remotes) */
-		dprintk("short code: %x\n", ir->code);
-		return;
-	}
+		dprपूर्णांकk("short code: %x\n", ir->code);
+		वापस;
+	पूर्ण
 
-	ir->code = (ir->code << ir->shift_by) | 1;
+	ir->code = (ir->code << ir->shअगरt_by) | 1;
 	rc5 = bttv_rc5_decode(ir->code);
 
 	toggle = RC5_TOGGLE(rc5);
-	system = RC5_ADDR(rc5);
+	प्रणाली = RC5_ADDR(rc5);
 	command = RC5_INSTR(rc5);
 
-	switch (RC5_START(rc5)) {
-	case 0x3:
-		break;
-	case 0x2:
+	चयन (RC5_START(rc5)) अणु
+	हाल 0x3:
+		अवरोध;
+	हाल 0x2:
 		command += 0x40;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	scancode = RC_SCANCODE_RC5(system, command);
-	rc_keydown(ir->dev, RC_PROTO_RC5, scancode, toggle);
-	dprintk("scancode %x, toggle %x\n", scancode, toggle);
-}
+	scancode = RC_SCANCODE_RC5(प्रणाली, command);
+	rc_keyकरोwn(ir->dev, RC_PROTO_RC5, scancode, toggle);
+	dprपूर्णांकk("scancode %x, toggle %x\n", scancode, toggle);
+पूर्ण
 
-static int bttv_rc5_irq(struct bttv *btv)
-{
-	struct bttv_ir *ir = btv->remote;
-	ktime_t tv;
+अटल पूर्णांक bttv_rc5_irq(काष्ठा bttv *btv)
+अणु
+	काष्ठा bttv_ir *ir = btv->remote;
+	kसमय_प्रकार tv;
 	u32 gpio;
 	u32 gap;
-	unsigned long current_jiffies;
+	अचिन्हित दीर्घ current_jअगरfies;
 
-	/* read gpio port */
-	gpio = bttv_gpio_read(&btv->c);
+	/* पढ़ो gpio port */
+	gpio = bttv_gpio_पढ़ो(&btv->c);
 
-	/* get time of bit */
-	current_jiffies = jiffies;
-	tv = ktime_get();
+	/* get समय of bit */
+	current_jअगरfies = jअगरfies;
+	tv = kसमय_get();
 
-	gap = ktime_to_us(ktime_sub(tv, ir->base_time));
-	/* avoid overflow with gap >1s */
-	if (gap > USEC_PER_SEC) {
+	gap = kसमय_प्रकारo_us(kसमय_sub(tv, ir->base_समय));
+	/* aव्योम overflow with gap >1s */
+	अगर (gap > USEC_PER_SEC) अणु
 		gap = 200000;
-	}
+	पूर्ण
 
-	dprintk("RC5 IRQ: gap %d us for %s\n",
+	dprपूर्णांकk("RC5 IRQ: gap %d us for %s\n",
 		gap, (gpio & 0x20) ? "mark" : "space");
 
 	/* remote IRQ? */
-	if (!(gpio & 0x20))
-		return 0;
+	अगर (!(gpio & 0x20))
+		वापस 0;
 
 	/* active code => add bit */
-	if (ir->active) {
-		/* only if in the code (otherwise spurious IRQ or timer
+	अगर (ir->active) अणु
+		/* only अगर in the code (otherwise spurious IRQ or समयr
 		   late) */
-		if (ir->last_bit < 28) {
+		अगर (ir->last_bit < 28) अणु
 			ir->last_bit = (gap - ir_rc5_remote_gap / 2) /
 			    ir_rc5_remote_gap;
 			ir->code |= 1 << ir->last_bit;
-		}
+		पूर्ण
 		/* starting new code */
-	} else {
+	पूर्ण अन्यथा अणु
 		ir->active = true;
 		ir->code = 0;
-		ir->base_time = tv;
+		ir->base_समय = tv;
 		ir->last_bit = 0;
 
-		mod_timer(&ir->timer, current_jiffies + msecs_to_jiffies(30));
-	}
+		mod_समयr(&ir->समयr, current_jअगरfies + msecs_to_jअगरfies(30));
+	पूर्ण
 
 	/* toggle GPIO pin 4 to reset the irq */
-	bttv_gpio_write(&btv->c, gpio & ~(1 << 4));
-	bttv_gpio_write(&btv->c, gpio | (1 << 4));
-	return 1;
-}
+	bttv_gpio_ग_लिखो(&btv->c, gpio & ~(1 << 4));
+	bttv_gpio_ग_लिखो(&btv->c, gpio | (1 << 4));
+	वापस 1;
+पूर्ण
 
 /* ---------------------------------------------------------------------- */
 
-static void bttv_ir_start(struct bttv_ir *ir)
-{
-	if (ir->polling) {
-		timer_setup(&ir->timer, bttv_input_timer, 0);
-		ir->timer.expires  = jiffies + msecs_to_jiffies(1000);
-		add_timer(&ir->timer);
-	} else if (ir->rc5_gpio) {
-		/* set timer_end for code completion */
-		timer_setup(&ir->timer, bttv_rc5_timer_end, 0);
-		ir->shift_by = 1;
+अटल व्योम bttv_ir_start(काष्ठा bttv_ir *ir)
+अणु
+	अगर (ir->polling) अणु
+		समयr_setup(&ir->समयr, bttv_input_समयr, 0);
+		ir->समयr.expires  = jअगरfies + msecs_to_jअगरfies(1000);
+		add_समयr(&ir->समयr);
+	पूर्ण अन्यथा अगर (ir->rc5_gpio) अणु
+		/* set समयr_end क्रम code completion */
+		समयr_setup(&ir->समयr, bttv_rc5_समयr_end, 0);
+		ir->shअगरt_by = 1;
 		ir->rc5_remote_gap = ir_rc5_remote_gap;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bttv_ir_stop(struct bttv *btv)
-{
-	if (btv->remote->polling)
-		del_timer_sync(&btv->remote->timer);
+अटल व्योम bttv_ir_stop(काष्ठा bttv *btv)
+अणु
+	अगर (btv->remote->polling)
+		del_समयr_sync(&btv->remote->समयr);
 
-	if (btv->remote->rc5_gpio) {
+	अगर (btv->remote->rc5_gpio) अणु
 		u32 gpio;
 
-		del_timer_sync(&btv->remote->timer);
+		del_समयr_sync(&btv->remote->समयr);
 
-		gpio = bttv_gpio_read(&btv->c);
-		bttv_gpio_write(&btv->c, gpio & ~(1 << 4));
-	}
-}
+		gpio = bttv_gpio_पढ़ो(&btv->c);
+		bttv_gpio_ग_लिखो(&btv->c, gpio & ~(1 << 4));
+	पूर्ण
+पूर्ण
 
 /*
  * Get_key functions used by I2C remotes
  */
 
-static int get_key_pv951(struct IR_i2c *ir, enum rc_proto *protocol,
+अटल पूर्णांक get_key_pv951(काष्ठा IR_i2c *ir, क्रमागत rc_proto *protocol,
 			 u32 *scancode, u8 *toggle)
-{
-	int rc;
-	unsigned char b;
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर b;
 
 	/* poll IR chip */
 	rc = i2c_master_recv(ir->c, &b, 1);
-	if (rc != 1) {
-		dprintk("read error\n");
-		if (rc < 0)
-			return rc;
-		return -EIO;
-	}
+	अगर (rc != 1) अणु
+		dprपूर्णांकk("read error\n");
+		अगर (rc < 0)
+			वापस rc;
+		वापस -EIO;
+	पूर्ण
 
 	/* ignore 0xaa */
-	if (b==0xaa)
-		return 0;
-	dprintk("key %02x\n", b);
+	अगर (b==0xaa)
+		वापस 0;
+	dprपूर्णांकk("key %02x\n", b);
 
 	/*
 	 * NOTE:
@@ -349,201 +350,201 @@ static int get_key_pv951(struct IR_i2c *ir, enum rc_proto *protocol,
 	 * I decided to not fix the table, due to two reasons:
 	 *	1) Without the actual device, this is only a guess;
 	 *	2) As the addr is not reported via I2C, nor can be changed,
-	 *	   the device is bound to the vendor-provided RC.
+	 *	   the device is bound to the venकरोr-provided RC.
 	 */
 
 	*protocol = RC_PROTO_UNKNOWN;
 	*scancode = b;
 	*toggle = 0;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Instantiate the I2C IR receiver device, if present */
-void init_bttv_i2c_ir(struct bttv *btv)
-{
-	static const unsigned short addr_list[] = {
+/* Instantiate the I2C IR receiver device, अगर present */
+व्योम init_bttv_i2c_ir(काष्ठा bttv *btv)
+अणु
+	अटल स्थिर अचिन्हित लघु addr_list[] = अणु
 		0x1a, 0x18, 0x64, 0x30, 0x71,
 		I2C_CLIENT_END
-	};
-	struct i2c_board_info info;
-	struct i2c_client *i2c_dev;
+	पूर्ण;
+	काष्ठा i2c_board_info info;
+	काष्ठा i2c_client *i2c_dev;
 
-	if (0 != btv->i2c_rc)
-		return;
+	अगर (0 != btv->i2c_rc)
+		वापस;
 
-	memset(&info, 0, sizeof(struct i2c_board_info));
-	memset(&btv->init_data, 0, sizeof(btv->init_data));
+	स_रखो(&info, 0, माप(काष्ठा i2c_board_info));
+	स_रखो(&btv->init_data, 0, माप(btv->init_data));
 	strscpy(info.type, "ir_video", I2C_NAME_SIZE);
 
-	switch (btv->c.type) {
-	case BTTV_BOARD_PV951:
+	चयन (btv->c.type) अणु
+	हाल BTTV_BOARD_PV951:
 		btv->init_data.name = "PV951";
 		btv->init_data.get_key = get_key_pv951;
 		btv->init_data.ir_codes = RC_MAP_PV951;
 		info.addr = 0x4b;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (btv->init_data.name) {
-		info.platform_data = &btv->init_data;
+	अगर (btv->init_data.name) अणु
+		info.platक्रमm_data = &btv->init_data;
 		i2c_dev = i2c_new_client_device(&btv->c.i2c_adap, &info);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * The external IR receiver is at i2c address 0x34 (0x35 for
-		 * reads).  Future Hauppauge cards will have an internal
-		 * receiver at 0x30 (0x31 for reads).  In theory, both can be
-		 * fitted, and Hauppauge suggest an external overrides an
-		 * internal.
+		 * The बाह्यal IR receiver is at i2c address 0x34 (0x35 क्रम
+		 * पढ़ोs).  Future Hauppauge cards will have an पूर्णांकernal
+		 * receiver at 0x30 (0x31 क्रम पढ़ोs).  In theory, both can be
+		 * fitted, and Hauppauge suggest an बाह्यal overrides an
+		 * पूर्णांकernal.
 		 * That's why we probe 0x1a (~0x34) first. CB
 		 */
-		i2c_dev = i2c_new_scanned_device(&btv->c.i2c_adap, &info, addr_list, NULL);
-	}
-	if (IS_ERR(i2c_dev))
-		return;
+		i2c_dev = i2c_new_scanned_device(&btv->c.i2c_adap, &info, addr_list, शून्य);
+	पूर्ण
+	अगर (IS_ERR(i2c_dev))
+		वापस;
 
-#if defined(CONFIG_MODULES) && defined(MODULE)
+#अगर defined(CONFIG_MODULES) && defined(MODULE)
 	request_module("ir-kbd-i2c");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-int bttv_input_init(struct bttv *btv)
-{
-	struct bttv_ir *ir;
-	char *ir_codes = NULL;
-	struct rc_dev *rc;
-	int err = -ENOMEM;
+पूर्णांक bttv_input_init(काष्ठा bttv *btv)
+अणु
+	काष्ठा bttv_ir *ir;
+	अक्षर *ir_codes = शून्य;
+	काष्ठा rc_dev *rc;
+	पूर्णांक err = -ENOMEM;
 
-	if (!btv->has_remote)
-		return -ENODEV;
+	अगर (!btv->has_remote)
+		वापस -ENODEV;
 
-	ir = kzalloc(sizeof(*ir),GFP_KERNEL);
+	ir = kzalloc(माप(*ir),GFP_KERNEL);
 	rc = rc_allocate_device(RC_DRIVER_SCANCODE);
-	if (!ir || !rc)
-		goto err_out_free;
+	अगर (!ir || !rc)
+		जाओ err_out_मुक्त;
 
 	/* detect & configure */
-	switch (btv->c.type) {
-	case BTTV_BOARD_AVERMEDIA:
-	case BTTV_BOARD_AVPHONE98:
-	case BTTV_BOARD_AVERMEDIA98:
+	चयन (btv->c.type) अणु
+	हाल BTTV_BOARD_AVERMEDIA:
+	हाल BTTV_BOARD_AVPHONE98:
+	हाल BTTV_BOARD_AVERMEDIA98:
 		ir_codes         = RC_MAP_AVERMEDIA;
 		ir->mask_keycode = 0xf88000;
-		ir->mask_keydown = 0x010000;
+		ir->mask_keyकरोwn = 0x010000;
 		ir->polling      = 50; // ms
-		break;
+		अवरोध;
 
-	case BTTV_BOARD_AVDVBT_761:
-	case BTTV_BOARD_AVDVBT_771:
+	हाल BTTV_BOARD_AVDVBT_761:
+	हाल BTTV_BOARD_AVDVBT_771:
 		ir_codes         = RC_MAP_AVERMEDIA_DVBT;
 		ir->mask_keycode = 0x0f00c0;
-		ir->mask_keydown = 0x000020;
+		ir->mask_keyकरोwn = 0x000020;
 		ir->polling      = 50; // ms
-		break;
+		अवरोध;
 
-	case BTTV_BOARD_PXELVWPLTVPAK:
+	हाल BTTV_BOARD_PXELVWPLTVPAK:
 		ir_codes         = RC_MAP_PIXELVIEW;
 		ir->mask_keycode = 0x003e00;
 		ir->mask_keyup   = 0x010000;
 		ir->polling      = 50; // ms
-		break;
-	case BTTV_BOARD_PV_M4900:
-	case BTTV_BOARD_PV_BT878P_9B:
-	case BTTV_BOARD_PV_BT878P_PLUS:
+		अवरोध;
+	हाल BTTV_BOARD_PV_M4900:
+	हाल BTTV_BOARD_PV_BT878P_9B:
+	हाल BTTV_BOARD_PV_BT878P_PLUS:
 		ir_codes         = RC_MAP_PIXELVIEW;
 		ir->mask_keycode = 0x001f00;
 		ir->mask_keyup   = 0x008000;
 		ir->polling      = 50; // ms
-		break;
+		अवरोध;
 
-	case BTTV_BOARD_WINFAST2000:
+	हाल BTTV_BOARD_WINFAST2000:
 		ir_codes         = RC_MAP_WINFAST;
 		ir->mask_keycode = 0x1f8;
-		break;
-	case BTTV_BOARD_MAGICTVIEW061:
-	case BTTV_BOARD_MAGICTVIEW063:
+		अवरोध;
+	हाल BTTV_BOARD_MAGICTVIEW061:
+	हाल BTTV_BOARD_MAGICTVIEW063:
 		ir_codes         = RC_MAP_WINFAST;
 		ir->mask_keycode = 0x0008e000;
-		ir->mask_keydown = 0x00200000;
-		break;
-	case BTTV_BOARD_APAC_VIEWCOMP:
+		ir->mask_keyकरोwn = 0x00200000;
+		अवरोध;
+	हाल BTTV_BOARD_APAC_VIEWCOMP:
 		ir_codes         = RC_MAP_APAC_VIEWCOMP;
 		ir->mask_keycode = 0x001f00;
 		ir->mask_keyup   = 0x008000;
 		ir->polling      = 50; // ms
-		break;
-	case BTTV_BOARD_ASKEY_CPH03X:
-	case BTTV_BOARD_CONCEPTRONIC_CTVFMI2:
-	case BTTV_BOARD_CONTVFMI:
-	case BTTV_BOARD_KWORLD_VSTREAM_XPERT:
+		अवरोध;
+	हाल BTTV_BOARD_ASKEY_CPH03X:
+	हाल BTTV_BOARD_CONCEPTRONIC_CTVFMI2:
+	हाल BTTV_BOARD_CONTVFMI:
+	हाल BTTV_BOARD_KWORLD_VSTREAM_XPERT:
 		ir_codes         = RC_MAP_PIXELVIEW;
 		ir->mask_keycode = 0x001F00;
 		ir->mask_keyup   = 0x006000;
 		ir->polling      = 50; // ms
-		break;
-	case BTTV_BOARD_NEBULA_DIGITV:
+		अवरोध;
+	हाल BTTV_BOARD_NEBULA_DIGITV:
 		ir_codes         = RC_MAP_NEBULA;
 		ir->rc5_gpio     = true;
-		break;
-	case BTTV_BOARD_MACHTV_MAGICTV:
+		अवरोध;
+	हाल BTTV_BOARD_MACHTV_MAGICTV:
 		ir_codes         = RC_MAP_APAC_VIEWCOMP;
 		ir->mask_keycode = 0x001F00;
 		ir->mask_keyup   = 0x004000;
 		ir->polling      = 50; /* ms */
-		break;
-	case BTTV_BOARD_KOZUMI_KTV_01C:
+		अवरोध;
+	हाल BTTV_BOARD_KOZUMI_KTV_01C:
 		ir_codes         = RC_MAP_PCTV_SEDNA;
 		ir->mask_keycode = 0x001f00;
 		ir->mask_keyup   = 0x006000;
 		ir->polling      = 50; /* ms */
-		break;
-	case BTTV_BOARD_ENLTV_FM_2:
+		अवरोध;
+	हाल BTTV_BOARD_ENLTV_FM_2:
 		ir_codes         = RC_MAP_ENCORE_ENLTV2;
 		ir->mask_keycode = 0x00fd00;
 		ir->mask_keyup   = 0x000080;
 		ir->polling      = 1; /* ms */
-		ir->last_gpio    = ir_extract_bits(bttv_gpio_read(&btv->c),
+		ir->last_gpio    = ir_extract_bits(bttv_gpio_पढ़ो(&btv->c),
 						   ir->mask_keycode);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!ir_codes) {
-		dprintk("Ooops: IR config error [card=%d]\n", btv->c.type);
+	अगर (!ir_codes) अणु
+		dprपूर्णांकk("Ooops: IR config error [card=%d]\n", btv->c.type);
 		err = -ENODEV;
-		goto err_out_free;
-	}
+		जाओ err_out_मुक्त;
+	पूर्ण
 
-	if (ir->rc5_gpio) {
+	अगर (ir->rc5_gpio) अणु
 		u32 gpio;
 		/* enable remote irq */
 		bttv_gpio_inout(&btv->c, (1 << 4), 1 << 4);
-		gpio = bttv_gpio_read(&btv->c);
-		bttv_gpio_write(&btv->c, gpio & ~(1 << 4));
-		bttv_gpio_write(&btv->c, gpio | (1 << 4));
-	} else {
-		/* init hardware-specific stuff */
-		bttv_gpio_inout(&btv->c, ir->mask_keycode | ir->mask_keydown, 0);
-	}
+		gpio = bttv_gpio_पढ़ो(&btv->c);
+		bttv_gpio_ग_लिखो(&btv->c, gpio & ~(1 << 4));
+		bttv_gpio_ग_लिखो(&btv->c, gpio | (1 << 4));
+	पूर्ण अन्यथा अणु
+		/* init hardware-specअगरic stuff */
+		bttv_gpio_inout(&btv->c, ir->mask_keycode | ir->mask_keyकरोwn, 0);
+	पूर्ण
 
 	/* init input device */
 	ir->dev = rc;
 	ir->btv = btv;
 
-	snprintf(ir->name, sizeof(ir->name), "bttv IR (card=%d)",
+	snम_लिखो(ir->name, माप(ir->name), "bttv IR (card=%d)",
 		 btv->c.type);
-	snprintf(ir->phys, sizeof(ir->phys), "pci-%s/ir0",
+	snम_लिखो(ir->phys, माप(ir->phys), "pci-%s/ir0",
 		 pci_name(btv->c.pci));
 
 	rc->device_name = ir->name;
 	rc->input_phys = ir->phys;
 	rc->input_id.bustype = BUS_PCI;
 	rc->input_id.version = 1;
-	if (btv->c.pci->subsystem_vendor) {
-		rc->input_id.vendor  = btv->c.pci->subsystem_vendor;
-		rc->input_id.product = btv->c.pci->subsystem_device;
-	} else {
-		rc->input_id.vendor  = btv->c.pci->vendor;
+	अगर (btv->c.pci->subप्रणाली_venकरोr) अणु
+		rc->input_id.venकरोr  = btv->c.pci->subप्रणाली_venकरोr;
+		rc->input_id.product = btv->c.pci->subप्रणाली_device;
+	पूर्ण अन्यथा अणु
+		rc->input_id.venकरोr  = btv->c.pci->venकरोr;
 		rc->input_id.product = btv->c.pci->device;
-	}
+	पूर्ण
 	rc->dev.parent = &btv->c.pci->dev;
 	rc->map_name = ir_codes;
 	rc->driver_name = MODULE_NAME;
@@ -551,29 +552,29 @@ int bttv_input_init(struct bttv *btv)
 	btv->remote = ir;
 	bttv_ir_start(ir);
 
-	/* all done */
-	err = rc_register_device(rc);
-	if (err)
-		goto err_out_stop;
+	/* all करोne */
+	err = rc_रेजिस्टर_device(rc);
+	अगर (err)
+		जाओ err_out_stop;
 
-	return 0;
+	वापस 0;
 
  err_out_stop:
 	bttv_ir_stop(btv);
-	btv->remote = NULL;
- err_out_free:
-	rc_free_device(rc);
-	kfree(ir);
-	return err;
-}
+	btv->remote = शून्य;
+ err_out_मुक्त:
+	rc_मुक्त_device(rc);
+	kमुक्त(ir);
+	वापस err;
+पूर्ण
 
-void bttv_input_fini(struct bttv *btv)
-{
-	if (btv->remote == NULL)
-		return;
+व्योम bttv_input_fini(काष्ठा bttv *btv)
+अणु
+	अगर (btv->remote == शून्य)
+		वापस;
 
 	bttv_ir_stop(btv);
-	rc_unregister_device(btv->remote->dev);
-	kfree(btv->remote);
-	btv->remote = NULL;
-}
+	rc_unरेजिस्टर_device(btv->remote->dev);
+	kमुक्त(btv->remote);
+	btv->remote = शून्य;
+पूर्ण

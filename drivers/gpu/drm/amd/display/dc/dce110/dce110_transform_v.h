@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,37 +23,37 @@
  *
  */
 
-#ifndef __DAL_TRANSFORM_V_DCE110_H__
-#define __DAL_TRANSFORM_V_DCE110_H__
+#अगर_अघोषित __DAL_TRANSFORM_V_DCE110_H__
+#घोषणा __DAL_TRANSFORM_V_DCE110_H__
 
-#include "../dce/dce_transform.h"
+#समावेश "../dce/dce_transform.h"
 
-#define LB_TOTAL_NUMBER_OF_ENTRIES 1712
-#define LB_BITS_PER_ENTRY 144
+#घोषणा LB_TOTAL_NUMBER_OF_ENTRIES 1712
+#घोषणा LB_BITS_PER_ENTRY 144
 
-bool dce110_transform_v_construct(
-	struct dce_transform *xfm110,
-	struct dc_context *ctx);
+bool dce110_transक्रमm_v_स्थिरruct(
+	काष्ठा dce_transक्रमm *xfm110,
+	काष्ठा dc_context *ctx);
 
-void dce110_opp_v_set_csc_default(
-	struct transform *xfm,
-	const struct default_adjustment *default_adjust);
+व्योम dce110_opp_v_set_csc_शेष(
+	काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा शेष_adjusपंचांगent *शेष_adjust);
 
-void dce110_opp_v_set_csc_adjustment(
-		struct transform *xfm,
-	const struct out_csc_color_matrix *tbl_entry);
+व्योम dce110_opp_v_set_csc_adjusपंचांगent(
+		काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा out_csc_color_matrix *tbl_entry);
 
 
-void dce110_opp_program_regamma_pwl_v(
-	struct transform *xfm,
-	const struct pwl_params *params);
+व्योम dce110_opp_program_regamma_pwl_v(
+	काष्ठा transक्रमm *xfm,
+	स्थिर काष्ठा pwl_params *params);
 
-void dce110_opp_power_on_regamma_lut_v(
-	struct transform *xfm,
-	bool power_on);
+व्योम dce110_opp_घातer_on_regamma_lut_v(
+	काष्ठा transक्रमm *xfm,
+	bool घातer_on);
 
-void dce110_opp_set_regamma_mode_v(
-	struct transform *xfm,
-	enum opp_regamma mode);
+व्योम dce110_opp_set_regamma_mode_v(
+	काष्ठा transक्रमm *xfm,
+	क्रमागत opp_regamma mode);
 
-#endif
+#पूर्ण_अगर

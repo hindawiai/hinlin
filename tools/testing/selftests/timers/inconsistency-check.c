@@ -1,3 +1,4 @@
+<शैली गुरु>
 /* Time inconsistency check test
  *		by: john stultz (johnstul@us.ibm.com)
  *		(C) Copyright IBM 2003, 2004, 2005, 2012
@@ -7,7 +8,7 @@
  *  To build:
  *	$ gcc inconsistency-check.c -o inconsistency-check -lrt
  *
- *   This program is free software: you can redistribute it and/or modify
+ *   This program is मुक्त software: you can redistribute it and/or modअगरy
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -15,179 +16,179 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU General Public License क्रम more details.
  */
 
 
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/timex.h>
-#include <string.h>
-#include <signal.h>
-#include "../kselftest.h"
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <समय.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/समयx.h>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश "../kselftest.h"
 
-#define CALLS_PER_LOOP 64
-#define NSEC_PER_SEC 1000000000ULL
+#घोषणा CALLS_PER_LOOP 64
+#घोषणा NSEC_PER_SEC 1000000000ULL
 
-#define CLOCK_REALTIME			0
-#define CLOCK_MONOTONIC			1
-#define CLOCK_PROCESS_CPUTIME_ID	2
-#define CLOCK_THREAD_CPUTIME_ID		3
-#define CLOCK_MONOTONIC_RAW		4
-#define CLOCK_REALTIME_COARSE		5
-#define CLOCK_MONOTONIC_COARSE		6
-#define CLOCK_BOOTTIME			7
-#define CLOCK_REALTIME_ALARM		8
-#define CLOCK_BOOTTIME_ALARM		9
-#define CLOCK_HWSPECIFIC		10
-#define CLOCK_TAI			11
-#define NR_CLOCKIDS			12
+#घोषणा CLOCK_REALTIME			0
+#घोषणा CLOCK_MONOTONIC			1
+#घोषणा CLOCK_PROCESS_CPUTIME_ID	2
+#घोषणा CLOCK_THREAD_CPUTIME_ID		3
+#घोषणा CLOCK_MONOTONIC_RAW		4
+#घोषणा CLOCK_REALTIME_COARSE		5
+#घोषणा CLOCK_MONOTONIC_COARSE		6
+#घोषणा CLOCK_BOOTTIME			7
+#घोषणा CLOCK_REALTIME_ALARM		8
+#घोषणा CLOCK_BOOTTIME_ALARM		9
+#घोषणा CLOCK_HWSPECIFIC		10
+#घोषणा CLOCK_TAI			11
+#घोषणा NR_CLOCKIDS			12
 
-char *clockstring(int clockid)
-{
-	switch (clockid) {
-	case CLOCK_REALTIME:
-		return "CLOCK_REALTIME";
-	case CLOCK_MONOTONIC:
-		return "CLOCK_MONOTONIC";
-	case CLOCK_PROCESS_CPUTIME_ID:
-		return "CLOCK_PROCESS_CPUTIME_ID";
-	case CLOCK_THREAD_CPUTIME_ID:
-		return "CLOCK_THREAD_CPUTIME_ID";
-	case CLOCK_MONOTONIC_RAW:
-		return "CLOCK_MONOTONIC_RAW";
-	case CLOCK_REALTIME_COARSE:
-		return "CLOCK_REALTIME_COARSE";
-	case CLOCK_MONOTONIC_COARSE:
-		return "CLOCK_MONOTONIC_COARSE";
-	case CLOCK_BOOTTIME:
-		return "CLOCK_BOOTTIME";
-	case CLOCK_REALTIME_ALARM:
-		return "CLOCK_REALTIME_ALARM";
-	case CLOCK_BOOTTIME_ALARM:
-		return "CLOCK_BOOTTIME_ALARM";
-	case CLOCK_TAI:
-		return "CLOCK_TAI";
-	};
-	return "UNKNOWN_CLOCKID";
-}
+अक्षर *घड़ीstring(पूर्णांक घड़ीid)
+अणु
+	चयन (घड़ीid) अणु
+	हाल CLOCK_REALTIME:
+		वापस "CLOCK_REALTIME";
+	हाल CLOCK_MONOTONIC:
+		वापस "CLOCK_MONOTONIC";
+	हाल CLOCK_PROCESS_CPUTIME_ID:
+		वापस "CLOCK_PROCESS_CPUTIME_ID";
+	हाल CLOCK_THREAD_CPUTIME_ID:
+		वापस "CLOCK_THREAD_CPUTIME_ID";
+	हाल CLOCK_MONOTONIC_RAW:
+		वापस "CLOCK_MONOTONIC_RAW";
+	हाल CLOCK_REALTIME_COARSE:
+		वापस "CLOCK_REALTIME_COARSE";
+	हाल CLOCK_MONOTONIC_COARSE:
+		वापस "CLOCK_MONOTONIC_COARSE";
+	हाल CLOCK_BOOTTIME:
+		वापस "CLOCK_BOOTTIME";
+	हाल CLOCK_REALTIME_ALARM:
+		वापस "CLOCK_REALTIME_ALARM";
+	हाल CLOCK_BOOTTIME_ALARM:
+		वापस "CLOCK_BOOTTIME_ALARM";
+	हाल CLOCK_TAI:
+		वापस "CLOCK_TAI";
+	पूर्ण;
+	वापस "UNKNOWN_CLOCKID";
+पूर्ण
 
-/* returns 1 if a <= b, 0 otherwise */
-static inline int in_order(struct timespec a, struct timespec b)
-{
-	/* use unsigned to avoid false positives on 2038 rollover */
-	if ((unsigned long)a.tv_sec < (unsigned long)b.tv_sec)
-		return 1;
-	if ((unsigned long)a.tv_sec > (unsigned long)b.tv_sec)
-		return 0;
-	if (a.tv_nsec > b.tv_nsec)
-		return 0;
-	return 1;
-}
+/* वापसs 1 अगर a <= b, 0 otherwise */
+अटल अंतरभूत पूर्णांक in_order(काष्ठा बारpec a, काष्ठा बारpec b)
+अणु
+	/* use अचिन्हित to aव्योम false positives on 2038 rollover */
+	अगर ((अचिन्हित दीर्घ)a.tv_sec < (अचिन्हित दीर्घ)b.tv_sec)
+		वापस 1;
+	अगर ((अचिन्हित दीर्घ)a.tv_sec > (अचिन्हित दीर्घ)b.tv_sec)
+		वापस 0;
+	अगर (a.tv_nsec > b.tv_nsec)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 
 
-int consistency_test(int clock_type, unsigned long seconds)
-{
-	struct timespec list[CALLS_PER_LOOP];
-	int i, inconsistent;
-	long now, then;
-	time_t t;
-	char *start_str;
+पूर्णांक consistency_test(पूर्णांक घड़ी_प्रकारype, अचिन्हित दीर्घ seconds)
+अणु
+	काष्ठा बारpec list[CALLS_PER_LOOP];
+	पूर्णांक i, inconsistent;
+	दीर्घ now, then;
+	समय_प्रकार t;
+	अक्षर *start_str;
 
-	clock_gettime(clock_type, &list[0]);
+	घड़ी_समय_लो(घड़ी_प्रकारype, &list[0]);
 	now = then = list[0].tv_sec;
 
-	/* timestamp start of test */
-	t = time(0);
-	start_str = ctime(&t);
+	/* बारtamp start of test */
+	t = समय(0);
+	start_str = स_समय(&t);
 
-	while (seconds == -1 || now - then < seconds) {
+	जबतक (seconds == -1 || now - then < seconds) अणु
 		inconsistent = -1;
 
 		/* Fill list */
-		for (i = 0; i < CALLS_PER_LOOP; i++)
-			clock_gettime(clock_type, &list[i]);
+		क्रम (i = 0; i < CALLS_PER_LOOP; i++)
+			घड़ी_समय_लो(घड़ी_प्रकारype, &list[i]);
 
-		/* Check for inconsistencies */
-		for (i = 0; i < CALLS_PER_LOOP - 1; i++)
-			if (!in_order(list[i], list[i+1]))
+		/* Check क्रम inconsistencies */
+		क्रम (i = 0; i < CALLS_PER_LOOP - 1; i++)
+			अगर (!in_order(list[i], list[i+1]))
 				inconsistent = i;
 
 		/* display inconsistency */
-		if (inconsistent >= 0) {
-			unsigned long long delta;
+		अगर (inconsistent >= 0) अणु
+			अचिन्हित दीर्घ दीर्घ delta;
 
-			printf("\%s\n", start_str);
-			for (i = 0; i < CALLS_PER_LOOP; i++) {
-				if (i == inconsistent)
-					printf("--------------------\n");
-				printf("%lu:%lu\n", list[i].tv_sec,
+			म_लिखो("\%s\n", start_str);
+			क्रम (i = 0; i < CALLS_PER_LOOP; i++) अणु
+				अगर (i == inconsistent)
+					म_लिखो("--------------------\n");
+				म_लिखो("%lu:%lu\n", list[i].tv_sec,
 							list[i].tv_nsec);
-				if (i == inconsistent + 1)
-					printf("--------------------\n");
-			}
+				अगर (i == inconsistent + 1)
+					म_लिखो("--------------------\n");
+			पूर्ण
 			delta = list[inconsistent].tv_sec * NSEC_PER_SEC;
 			delta += list[inconsistent].tv_nsec;
 			delta -= list[inconsistent+1].tv_sec * NSEC_PER_SEC;
 			delta -= list[inconsistent+1].tv_nsec;
-			printf("Delta: %llu ns\n", delta);
-			fflush(0);
-			/* timestamp inconsistency*/
-			t = time(0);
-			printf("%s\n", ctime(&t));
-			printf("[FAILED]\n");
-			return -1;
-		}
+			म_लिखो("Delta: %llu ns\n", delta);
+			ख_साफ(0);
+			/* बारtamp inconsistency*/
+			t = समय(0);
+			म_लिखो("%s\n", स_समय(&t));
+			म_लिखो("[FAILED]\n");
+			वापस -1;
+		पूर्ण
 		now = list[0].tv_sec;
-	}
-	printf("[OK]\n");
-	return 0;
-}
+	पूर्ण
+	म_लिखो("[OK]\n");
+	वापस 0;
+पूर्ण
 
 
-int main(int argc, char *argv[])
-{
-	int clockid, opt;
-	int userclock = CLOCK_REALTIME;
-	int maxclocks = NR_CLOCKIDS;
-	int runtime = 10;
-	struct timespec ts;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक घड़ीid, opt;
+	पूर्णांक userघड़ी = CLOCK_REALTIME;
+	पूर्णांक maxघड़ीs = NR_CLOCKIDS;
+	पूर्णांक runसमय = 10;
+	काष्ठा बारpec ts;
 
 	/* Process arguments */
-	while ((opt = getopt(argc, argv, "t:c:")) != -1) {
-		switch (opt) {
-		case 't':
-			runtime = atoi(optarg);
-			break;
-		case 'c':
-			userclock = atoi(optarg);
-			maxclocks = userclock + 1;
-			break;
-		default:
-			printf("Usage: %s [-t <secs>] [-c <clockid>]\n", argv[0]);
-			printf("	-t: Number of seconds to run\n");
-			printf("	-c: clockid to use (default, all clockids)\n");
-			exit(-1);
-		}
-	}
+	जबतक ((opt = getopt(argc, argv, "t:c:")) != -1) अणु
+		चयन (opt) अणु
+		हाल 't':
+			runसमय = म_से_प(optarg);
+			अवरोध;
+		हाल 'c':
+			userघड़ी = म_से_प(optarg);
+			maxघड़ीs = userघड़ी + 1;
+			अवरोध;
+		शेष:
+			म_लिखो("Usage: %s [-t <secs>] [-c <clockid>]\n", argv[0]);
+			म_लिखो("	-t: Number of seconds to run\n");
+			म_लिखो("	-c: clockid to use (default, all clockids)\n");
+			निकास(-1);
+		पूर्ण
+	पूर्ण
 
-	setbuf(stdout, NULL);
+	रखो_बफ(मानक_निकास, शून्य);
 
-	for (clockid = userclock; clockid < maxclocks; clockid++) {
+	क्रम (घड़ीid = userघड़ी; घड़ीid < maxघड़ीs; घड़ीid++) अणु
 
-		if (clockid == CLOCK_HWSPECIFIC)
-			continue;
+		अगर (घड़ीid == CLOCK_HWSPECIFIC)
+			जारी;
 
-		if (!clock_gettime(clockid, &ts)) {
-			printf("Consistent %-30s ", clockstring(clockid));
-			if (consistency_test(clockid, runtime))
-				return ksft_exit_fail();
-		}
-	}
-	return ksft_exit_pass();
-}
+		अगर (!घड़ी_समय_लो(घड़ीid, &ts)) अणु
+			म_लिखो("Consistent %-30s ", घड़ीstring(घड़ीid));
+			अगर (consistency_test(घड़ीid, runसमय))
+				वापस ksft_निकास_fail();
+		पूर्ण
+	पूर्ण
+	वापस ksft_निकास_pass();
+पूर्ण

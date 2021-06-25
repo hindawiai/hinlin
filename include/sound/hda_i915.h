@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * HD-Audio helpers to sync with i915 driver
  */
-#ifndef __SOUND_HDA_I915_H
-#define __SOUND_HDA_I915_H
+#अगर_अघोषित __SOUND_HDA_I915_H
+#घोषणा __SOUND_HDA_I915_H
 
-#include "hda_component.h"
+#समावेश "hda_component.h"
 
-#ifdef CONFIG_SND_HDA_I915
-void snd_hdac_i915_set_bclk(struct hdac_bus *bus);
-int snd_hdac_i915_init(struct hdac_bus *bus);
-#else
-static inline void snd_hdac_i915_set_bclk(struct hdac_bus *bus)
-{
-}
-static inline int snd_hdac_i915_init(struct hdac_bus *bus)
-{
-	return -ENODEV;
-}
-#endif
-static inline int snd_hdac_i915_exit(struct hdac_bus *bus)
-{
-	return snd_hdac_acomp_exit(bus);
-}
+#अगर_घोषित CONFIG_SND_HDA_I915
+व्योम snd_hdac_i915_set_bclk(काष्ठा hdac_bus *bus);
+पूर्णांक snd_hdac_i915_init(काष्ठा hdac_bus *bus);
+#अन्यथा
+अटल अंतरभूत व्योम snd_hdac_i915_set_bclk(काष्ठा hdac_bus *bus)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक snd_hdac_i915_init(काष्ठा hdac_bus *bus)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
+अटल अंतरभूत पूर्णांक snd_hdac_i915_निकास(काष्ठा hdac_bus *bus)
+अणु
+	वापस snd_hdac_acomp_निकास(bus);
+पूर्ण
 
-#endif /* __SOUND_HDA_I915_H */
+#पूर्ण_अगर /* __SOUND_HDA_I915_H */

@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/module.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/module.h>
 
-#include "notifier-error-inject.h"
+#समावेश "notifier-error-inject.h"
 
-static int debugfs_errno_set(void *data, u64 val)
-{
-	*(int *)data = clamp_t(int, val, -MAX_ERRNO, 0);
-	return 0;
-}
+अटल पूर्णांक debugfs_त्रुटि_सं_set(व्योम *data, u64 val)
+अणु
+	*(पूर्णांक *)data = clamp_t(पूर्णांक, val, -MAX_ERRNO, 0);
+	वापस 0;
+पूर्ण
 
-static int debugfs_errno_get(void *data, u64 *val)
-{
-	*val = *(int *)data;
-	return 0;
-}
+अटल पूर्णांक debugfs_त्रुटि_सं_get(व्योम *data, u64 *val)
+अणु
+	*val = *(पूर्णांक *)data;
+	वापस 0;
+पूर्ण
 
-DEFINE_SIMPLE_ATTRIBUTE(fops_errno, debugfs_errno_get, debugfs_errno_set,
+DEFINE_SIMPLE_ATTRIBUTE(fops_त्रुटि_सं, debugfs_त्रुटि_सं_get, debugfs_त्रुटि_सं_set,
 			"%lld\n");
 
-static struct dentry *debugfs_create_errno(const char *name, umode_t mode,
-				struct dentry *parent, int *value)
-{
-	return debugfs_create_file(name, mode, parent, value, &fops_errno);
-}
+अटल काष्ठा dentry *debugfs_create_त्रुटि_सं(स्थिर अक्षर *name, umode_t mode,
+				काष्ठा dentry *parent, पूर्णांक *value)
+अणु
+	वापस debugfs_create_file(name, mode, parent, value, &fops_त्रुटि_सं);
+पूर्ण
 
-static int notifier_err_inject_callback(struct notifier_block *nb,
-				unsigned long val, void *p)
-{
-	int err = 0;
-	struct notifier_err_inject *err_inject =
-		container_of(nb, struct notifier_err_inject, nb);
-	struct notifier_err_inject_action *action;
+अटल पूर्णांक notअगरier_err_inject_callback(काष्ठा notअगरier_block *nb,
+				अचिन्हित दीर्घ val, व्योम *p)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा notअगरier_err_inject *err_inject =
+		container_of(nb, काष्ठा notअगरier_err_inject, nb);
+	काष्ठा notअगरier_err_inject_action *action;
 
-	for (action = err_inject->actions; action->name; action++) {
-		if (action->val == val) {
+	क्रम (action = err_inject->actions; action->name; action++) अणु
+		अगर (action->val == val) अणु
 			err = action->error;
-			break;
-		}
-	}
-	if (err)
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (err)
 		pr_info("Injecting error (%d) to %s\n", err, action->name);
 
-	return notifier_from_errno(err);
-}
+	वापस notअगरier_from_त्रुटि_सं(err);
+पूर्ण
 
-struct dentry *notifier_err_inject_dir;
-EXPORT_SYMBOL_GPL(notifier_err_inject_dir);
+काष्ठा dentry *notअगरier_err_inject_dir;
+EXPORT_SYMBOL_GPL(notअगरier_err_inject_dir);
 
-struct dentry *notifier_err_inject_init(const char *name, struct dentry *parent,
-			struct notifier_err_inject *err_inject, int priority)
-{
-	struct notifier_err_inject_action *action;
+काष्ठा dentry *notअगरier_err_inject_init(स्थिर अक्षर *name, काष्ठा dentry *parent,
+			काष्ठा notअगरier_err_inject *err_inject, पूर्णांक priority)
+अणु
+	काष्ठा notअगरier_err_inject_action *action;
 	umode_t mode = S_IFREG | S_IRUSR | S_IWUSR;
-	struct dentry *dir;
-	struct dentry *actions_dir;
+	काष्ठा dentry *dir;
+	काष्ठा dentry *actions_dir;
 
-	err_inject->nb.notifier_call = notifier_err_inject_callback;
+	err_inject->nb.notअगरier_call = notअगरier_err_inject_callback;
 	err_inject->nb.priority = priority;
 
 	dir = debugfs_create_dir(name, parent);
 
 	actions_dir = debugfs_create_dir("actions", dir);
 
-	for (action = err_inject->actions; action->name; action++) {
-		struct dentry *action_dir;
+	क्रम (action = err_inject->actions; action->name; action++) अणु
+		काष्ठा dentry *action_dir;
 
 		action_dir = debugfs_create_dir(action->name, actions_dir);
 
 		/*
 		 * Create debugfs r/w file containing action->error. If
-		 * notifier call chain is called with action->val, it will
+		 * notअगरier call chain is called with action->val, it will
 		 * fail with the error code
 		 */
-		debugfs_create_errno("error", mode, action_dir, &action->error);
-	}
-	return dir;
-}
-EXPORT_SYMBOL_GPL(notifier_err_inject_init);
+		debugfs_create_त्रुटि_सं("error", mode, action_dir, &action->error);
+	पूर्ण
+	वापस dir;
+पूर्ण
+EXPORT_SYMBOL_GPL(notअगरier_err_inject_init);
 
-static int __init err_inject_init(void)
-{
-	notifier_err_inject_dir =
-		debugfs_create_dir("notifier-error-inject", NULL);
+अटल पूर्णांक __init err_inject_init(व्योम)
+अणु
+	notअगरier_err_inject_dir =
+		debugfs_create_dir("notifier-error-inject", शून्य);
 
-	if (!notifier_err_inject_dir)
-		return -ENOMEM;
+	अगर (!notअगरier_err_inject_dir)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit err_inject_exit(void)
-{
-	debugfs_remove_recursive(notifier_err_inject_dir);
-}
+अटल व्योम __निकास err_inject_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(notअगरier_err_inject_dir);
+पूर्ण
 
 module_init(err_inject_init);
-module_exit(err_inject_exit);
+module_निकास(err_inject_निकास);
 
 MODULE_DESCRIPTION("Notifier error injection module");
 MODULE_LICENSE("GPL");

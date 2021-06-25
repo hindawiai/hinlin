@@ -1,172 +1,173 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * ALSA driver for the Aureal Vortex family of soundprocessors.
+ * ALSA driver क्रम the Aureal Vortex family of soundprocessors.
  * Author: Manuel Jander (mjander@embedded.cl)
  *
  *   This driver is the result of the OpenVortex Project from Savannah
- * (savannah.nongnu.org/projects/openvortex). I would like to thank
- * the developers of OpenVortex, Jeff Muizelaar and Kester Maddock, from
+ * (savannah.nongnu.org/projects/खोलोvortex). I would like to thank
+ * the developers of OpenVortex, Jeff Muizelaar and Kester Madकरोck, from
  * whom i got plenty of help, and their codebase was invaluable.
  *   Thanks to the ALSA developers, they helped a lot working out
  * the ALSA part.
- *   Thanks also to Sourceforge for maintaining the old binary drivers,
- * and the forum, where developers could comunicate.
+ *   Thanks also to Sourceक्रमge क्रम मुख्यtaining the old binary drivers,
+ * and the क्रमum, where developers could comunicate.
  *
  * Now at least i can play Legacy DOOM with MIDI music :-)
  */
 
-#include "au88x0.h"
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/dma-mapping.h>
-#include <sound/initval.h>
+#समावेश "au88x0.h"
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <sound/initval.h>
 
 // module parameters (see "Module Parameters")
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
-static int pcifix[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 255 };
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+अटल पूर्णांक pcअगरix[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS - 1)] = 255 पूर्ण;
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for " CARD_NAME " soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for " CARD_NAME " soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable " CARD_NAME " soundcard.");
-module_param_array(pcifix, int, NULL, 0444);
-MODULE_PARM_DESC(pcifix, "Enable VIA-workaround for " CARD_NAME " soundcard.");
+module_param_array(pcअगरix, पूर्णांक, शून्य, 0444);
+MODULE_PARM_DESC(pcअगरix, "Enable VIA-workaround for " CARD_NAME " soundcard.");
 
 MODULE_DESCRIPTION("Aureal vortex");
 MODULE_LICENSE("GPL");
 MODULE_DEVICE_TABLE(pci, snd_vortex_ids);
 
-static void vortex_fix_latency(struct pci_dev *vortex)
-{
-	int rc;
-	if (!(rc = pci_write_config_byte(vortex, 0x40, 0xff))) {
+अटल व्योम vortex_fix_latency(काष्ठा pci_dev *vortex)
+अणु
+	पूर्णांक rc;
+	अगर (!(rc = pci_ग_लिखो_config_byte(vortex, 0x40, 0xff))) अणु
 			dev_info(&vortex->dev, "vortex latency is 0xff\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_warn(&vortex->dev,
 			 "could not set vortex latency: pci error 0x%x\n", rc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vortex_fix_agp_bridge(struct pci_dev *via)
-{
-	int rc;
+अटल व्योम vortex_fix_agp_bridge(काष्ठा pci_dev *via)
+अणु
+	पूर्णांक rc;
 	u8 value;
 
 	/*
-	 * only set the bit (Extend PCI#2 Internal Master for
-	 * Efficient Handling of Dummy Requests) if the can
-	 * read the config and it is not already set
+	 * only set the bit (Extend PCI#2 Internal Master क्रम
+	 * Efficient Handling of Dummy Requests) अगर the can
+	 * पढ़ो the config and it is not alपढ़ोy set
 	 */
 
-	if (!(rc = pci_read_config_byte(via, 0x42, &value))
+	अगर (!(rc = pci_पढ़ो_config_byte(via, 0x42, &value))
 			&& ((value & 0x10)
-				|| !(rc = pci_write_config_byte(via, 0x42, value | 0x10)))) {
+				|| !(rc = pci_ग_लिखो_config_byte(via, 0x42, value | 0x10)))) अणु
 		dev_info(&via->dev, "bridge config is 0x%x\n", value | 0x10);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_warn(&via->dev,
 			 "could not set vortex latency: pci error 0x%x\n", rc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void snd_vortex_workaround(struct pci_dev *vortex, int fix)
-{
-	struct pci_dev *via = NULL;
+अटल व्योम snd_vortex_workaround(काष्ठा pci_dev *vortex, पूर्णांक fix)
+अणु
+	काष्ठा pci_dev *via = शून्य;
 
-	/* autodetect if workarounds are required */
-	if (fix == 255) {
+	/* स्वतःdetect अगर workarounds are required */
+	अगर (fix == 255) अणु
 		/* VIA KT133 */
 		via = pci_get_device(PCI_VENDOR_ID_VIA,
-			PCI_DEVICE_ID_VIA_8365_1, NULL);
+			PCI_DEVICE_ID_VIA_8365_1, शून्य);
 		/* VIA Apollo */
-		if (via == NULL) {
+		अगर (via == शून्य) अणु
 			via = pci_get_device(PCI_VENDOR_ID_VIA,
-				PCI_DEVICE_ID_VIA_82C598_1, NULL);
+				PCI_DEVICE_ID_VIA_82C598_1, शून्य);
 			/* AMD Irongate */
-			if (via == NULL)
+			अगर (via == शून्य)
 				via = pci_get_device(PCI_VENDOR_ID_AMD,
-					PCI_DEVICE_ID_AMD_FE_GATE_7007, NULL);
-		}
-		if (via) {
+					PCI_DEVICE_ID_AMD_FE_GATE_7007, शून्य);
+		पूर्ण
+		अगर (via) अणु
 			dev_info(&vortex->dev,
 				 "Activating latency workaround...\n");
 			vortex_fix_latency(vortex);
 			vortex_fix_agp_bridge(via);
-		}
-	} else {
-		if (fix & 0x1)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (fix & 0x1)
 			vortex_fix_latency(vortex);
-		if ((fix & 0x2) && (via = pci_get_device(PCI_VENDOR_ID_VIA,
-				PCI_DEVICE_ID_VIA_8365_1, NULL)))
+		अगर ((fix & 0x2) && (via = pci_get_device(PCI_VENDOR_ID_VIA,
+				PCI_DEVICE_ID_VIA_8365_1, शून्य)))
 			vortex_fix_agp_bridge(via);
-		if ((fix & 0x4) && (via = pci_get_device(PCI_VENDOR_ID_VIA,
-				PCI_DEVICE_ID_VIA_82C598_1, NULL)))
+		अगर ((fix & 0x4) && (via = pci_get_device(PCI_VENDOR_ID_VIA,
+				PCI_DEVICE_ID_VIA_82C598_1, शून्य)))
 			vortex_fix_agp_bridge(via);
-		if ((fix & 0x8) && (via = pci_get_device(PCI_VENDOR_ID_AMD,
-				PCI_DEVICE_ID_AMD_FE_GATE_7007, NULL)))
+		अगर ((fix & 0x8) && (via = pci_get_device(PCI_VENDOR_ID_AMD,
+				PCI_DEVICE_ID_AMD_FE_GATE_7007, शून्य)))
 			vortex_fix_agp_bridge(via);
-	}
+	पूर्ण
 	pci_dev_put(via);
-}
+पूर्ण
 
-// component-destructor
+// component-deकाष्ठाor
 // (see "Management of Cards and Components")
-static int snd_vortex_dev_free(struct snd_device *device)
-{
+अटल पूर्णांक snd_vortex_dev_मुक्त(काष्ठा snd_device *device)
+अणु
 	vortex_t *vortex = device->device_data;
 
-	vortex_gameport_unregister(vortex);
-	vortex_core_shutdown(vortex);
-	// Take down PCI interface.
-	free_irq(vortex->irq, vortex);
+	vortex_gameport_unरेजिस्टर(vortex);
+	vortex_core_shutकरोwn(vortex);
+	// Take करोwn PCI पूर्णांकerface.
+	मुक्त_irq(vortex->irq, vortex);
 	iounmap(vortex->mmio);
 	pci_release_regions(vortex->pci_dev);
 	pci_disable_device(vortex->pci_dev);
-	kfree(vortex);
+	kमुक्त(vortex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-// chip-specific constructor
+// chip-specअगरic स्थिरructor
 // (see "Management of Cards and Components")
-static int
-snd_vortex_create(struct snd_card *card, struct pci_dev *pci, vortex_t ** rchip)
-{
+अटल पूर्णांक
+snd_vortex_create(काष्ठा snd_card *card, काष्ठा pci_dev *pci, vortex_t ** rchip)
+अणु
 	vortex_t *chip;
-	int err;
-	static const struct snd_device_ops ops = {
-		.dev_free = snd_vortex_dev_free,
-	};
+	पूर्णांक err;
+	अटल स्थिर काष्ठा snd_device_ops ops = अणु
+		.dev_मुक्त = snd_vortex_dev_मुक्त,
+	पूर्ण;
 
-	*rchip = NULL;
+	*rchip = शून्य;
 
 	// check PCI availability (DMA).
-	if ((err = pci_enable_device(pci)) < 0)
-		return err;
-	if (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(32))) {
+	अगर ((err = pci_enable_device(pci)) < 0)
+		वापस err;
+	अगर (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(32))) अणु
 		dev_err(card->dev, "error to set DMA mask\n");
 		pci_disable_device(pci);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
-	if (chip == NULL) {
+	chip = kzalloc(माप(*chip), GFP_KERNEL);
+	अगर (chip == शून्य) अणु
 		pci_disable_device(pci);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	chip->card = card;
 
 	// initialize the stuff
 	chip->pci_dev = pci;
 	chip->io = pci_resource_start(pci, 0);
-	chip->vendor = pci->vendor;
+	chip->venकरोr = pci->venकरोr;
 	chip->device = pci->device;
 	chip->card = card;
 	chip->irq = -1;
@@ -174,30 +175,30 @@ snd_vortex_create(struct snd_card *card, struct pci_dev *pci, vortex_t ** rchip)
 	// (1) PCI resource allocation
 	// Get MMIO area
 	//
-	if ((err = pci_request_regions(pci, CARD_NAME_SHORT)) != 0)
-		goto regions_out;
+	अगर ((err = pci_request_regions(pci, CARD_NAME_SHORT)) != 0)
+		जाओ regions_out;
 
 	chip->mmio = pci_ioremap_bar(pci, 0);
-	if (!chip->mmio) {
+	अगर (!chip->mmio) अणु
 		dev_err(card->dev, "MMIO area remap failed.\n");
 		err = -ENOMEM;
-		goto ioremap_out;
-	}
+		जाओ ioremap_out;
+	पूर्ण
 
 	/* Init audio core.
-	 * This must be done before we do request_irq otherwise we can get spurious
-	 * interrupts that we do not handle properly and make a mess of things */
-	if ((err = vortex_core_init(chip)) != 0) {
+	 * This must be करोne beक्रमe we करो request_irq otherwise we can get spurious
+	 * पूर्णांकerrupts that we करो not handle properly and make a mess of things */
+	अगर ((err = vortex_core_init(chip)) != 0) अणु
 		dev_err(card->dev, "hw core init failed\n");
-		goto core_out;
-	}
+		जाओ core_out;
+	पूर्ण
 
-	if ((err = request_irq(pci->irq, vortex_interrupt,
+	अगर ((err = request_irq(pci->irq, vortex_पूर्णांकerrupt,
 			       IRQF_SHARED, KBUILD_MODNAME,
-	                       chip)) != 0) {
+	                       chip)) != 0) अणु
 		dev_err(card->dev, "cannot grab irq\n");
-		goto irq_out;
-	}
+		जाओ irq_out;
+	पूर्ण
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
 
@@ -205,177 +206,177 @@ snd_vortex_create(struct snd_card *card, struct pci_dev *pci, vortex_t ** rchip)
 	// End of PCI setup.
 
 	// Register alsa root device.
-	if ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops)) < 0) {
-		goto alloc_out;
-	}
+	अगर ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops)) < 0) अणु
+		जाओ alloc_out;
+	पूर्ण
 
 	*rchip = chip;
 
-	return 0;
+	वापस 0;
 
       alloc_out:
-	free_irq(chip->irq, chip);
+	मुक्त_irq(chip->irq, chip);
       irq_out:
-	vortex_core_shutdown(chip);
+	vortex_core_shutकरोwn(chip);
       core_out:
 	iounmap(chip->mmio);
       ioremap_out:
 	pci_release_regions(chip->pci_dev);
       regions_out:
 	pci_disable_device(chip->pci_dev);
-	//FIXME: this not the right place to unregister the gameport
-	vortex_gameport_unregister(chip);
-	kfree(chip);
-	return err;
-}
+	//FIXME: this not the right place to unरेजिस्टर the gameport
+	vortex_gameport_unरेजिस्टर(chip);
+	kमुक्त(chip);
+	वापस err;
+पूर्ण
 
-// constructor -- see "Constructor" sub-section
-static int
-snd_vortex_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
-{
-	static int dev;
-	struct snd_card *card;
+// स्थिरructor -- see "Constructor" sub-section
+अटल पूर्णांक
+snd_vortex_probe(काष्ठा pci_dev *pci, स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	अटल पूर्णांक dev;
+	काष्ठा snd_card *card;
 	vortex_t *chip;
-	int err;
+	पूर्णांक err;
 
 	// (1)
-	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
-	if (!enable[dev]) {
+	अगर (dev >= SNDRV_CARDS)
+		वापस -ENODEV;
+	अगर (!enable[dev]) अणु
 		dev++;
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 	// (2)
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
 			   0, &card);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	// (3)
-	if ((err = snd_vortex_create(card, pci, &chip)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
-	snd_vortex_workaround(pci, pcifix[dev]);
+	अगर ((err = snd_vortex_create(card, pci, &chip)) < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
+	snd_vortex_workaround(pci, pcअगरix[dev]);
 
 	// Card details needed in snd_vortex_midi
-	strcpy(card->driver, CARD_NAME_SHORT);
-	sprintf(card->shortname, "Aureal Vortex %s", CARD_NAME_SHORT);
-	sprintf(card->longname, "%s at 0x%lx irq %i",
-		card->shortname, chip->io, chip->irq);
+	म_नकल(card->driver, CARD_NAME_SHORT);
+	प्र_लिखो(card->लघुname, "Aureal Vortex %s", CARD_NAME_SHORT);
+	प्र_लिखो(card->दीर्घname, "%s at 0x%lx irq %i",
+		card->लघुname, chip->io, chip->irq);
 
 	// (4) Alloc components.
 	err = snd_vortex_mixer(chip);
-	if (err < 0) {
-		snd_card_free(card);
-		return err;
-	}
+	अगर (err < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 	// ADB pcm.
 	err = snd_vortex_new_pcm(chip, VORTEX_PCM_ADB, NR_PCM);
-	if (err < 0) {
-		snd_card_free(card);
-		return err;
-	}
-#ifndef CHIP_AU8820
+	अगर (err < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
+#अगर_अघोषित CHIP_AU8820
 	// ADB SPDIF
-	if ((err = snd_vortex_new_pcm(chip, VORTEX_PCM_SPDIF, 1)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
+	अगर ((err = snd_vortex_new_pcm(chip, VORTEX_PCM_SPDIF, 1)) < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 	// A3D
-	if ((err = snd_vortex_new_pcm(chip, VORTEX_PCM_A3D, NR_A3D)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
-#endif
+	अगर ((err = snd_vortex_new_pcm(chip, VORTEX_PCM_A3D, NR_A3D)) < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
+#पूर्ण_अगर
 	/*
 	   // ADB I2S
-	   if ((err = snd_vortex_new_pcm(chip, VORTEX_PCM_I2S, 1)) < 0) {
-	   snd_card_free(card);
-	   return err;
-	   }
+	   अगर ((err = snd_vortex_new_pcm(chip, VORTEX_PCM_I2S, 1)) < 0) अणु
+	   snd_card_मुक्त(card);
+	   वापस err;
+	   पूर्ण
 	 */
-#ifndef CHIP_AU8810
+#अगर_अघोषित CHIP_AU8810
 	// WT pcm.
-	if ((err = snd_vortex_new_pcm(chip, VORTEX_PCM_WT, NR_WT)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
-#endif
-	if ((err = snd_vortex_midi(chip)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
+	अगर ((err = snd_vortex_new_pcm(chip, VORTEX_PCM_WT, NR_WT)) < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
+#पूर्ण_अगर
+	अगर ((err = snd_vortex_midi(chip)) < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 
-	vortex_gameport_register(chip);
+	vortex_gameport_रेजिस्टर(chip);
 
-#if 0
-	if (snd_seq_device_new(card, 1, SNDRV_SEQ_DEV_ID_VORTEX_SYNTH,
-			       sizeof(snd_vortex_synth_arg_t), &wave) < 0
-	    || wave == NULL) {
+#अगर 0
+	अगर (snd_seq_device_new(card, 1, SNDRV_SEQ_DEV_ID_VORTEX_SYNTH,
+			       माप(snd_vortex_synth_arg_t), &wave) < 0
+	    || wave == शून्य) अणु
 		dev_err(card->dev, "Can't initialize Aureal wavetable synth\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		snd_vortex_synth_arg_t *arg;
 
 		arg = SNDRV_SEQ_DEVICE_ARGPTR(wave);
-		strcpy(wave->name, "Aureal Synth");
+		म_नकल(wave->name, "Aureal Synth");
 		arg->hwptr = vortex;
 		arg->index = 1;
 		arg->seq_ports = seq_ports[dev];
 		arg->max_voices = max_synth_voices[dev];
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	// (5)
-	if ((err = pci_read_config_word(pci, PCI_DEVICE_ID,
-				  &(chip->device))) < 0) {
-		snd_card_free(card);
-		return err;
-	}	
-	if ((err = pci_read_config_word(pci, PCI_VENDOR_ID,
-				  &(chip->vendor))) < 0) {
-		snd_card_free(card);
-		return err;
-	}
+	अगर ((err = pci_पढ़ो_config_word(pci, PCI_DEVICE_ID,
+				  &(chip->device))) < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण	
+	अगर ((err = pci_पढ़ो_config_word(pci, PCI_VENDOR_ID,
+				  &(chip->venकरोr))) < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 	chip->rev = pci->revision;
-#ifdef CHIP_AU8830
-	if ((chip->rev) != 0xfe && (chip->rev) != 0xfa) {
+#अगर_घोषित CHIP_AU8830
+	अगर ((chip->rev) != 0xfe && (chip->rev) != 0xfa) अणु
 		dev_alert(card->dev,
 			  "The revision (%x) of your card has not been seen before.\n",
 		       chip->rev);
 		dev_alert(card->dev,
 			  "Please email the results of 'lspci -vv' to openvortex-dev@nongnu.org.\n");
-		snd_card_free(card);
+		snd_card_मुक्त(card);
 		err = -ENODEV;
-		return err;
-	}
-#endif
+		वापस err;
+	पूर्ण
+#पूर्ण_अगर
 
 	// (6)
-	if ((err = snd_card_register(card)) < 0) {
-		snd_card_free(card);
-		return err;
-	}
+	अगर ((err = snd_card_रेजिस्टर(card)) < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 	// (7)
 	pci_set_drvdata(pci, card);
 	dev++;
-	vortex_connect_default(chip, 1);
-	vortex_enable_int(chip);
-	return 0;
-}
+	vortex_connect_शेष(chip, 1);
+	vortex_enable_पूर्णांक(chip);
+	वापस 0;
+पूर्ण
 
-// destructor -- see "Destructor" sub-section
-static void snd_vortex_remove(struct pci_dev *pci)
-{
-	snd_card_free(pci_get_drvdata(pci));
-}
+// deकाष्ठाor -- see "Destructor" sub-section
+अटल व्योम snd_vortex_हटाओ(काष्ठा pci_dev *pci)
+अणु
+	snd_card_मुक्त(pci_get_drvdata(pci));
+पूर्ण
 
 // pci_driver definition
-static struct pci_driver vortex_driver = {
+अटल काष्ठा pci_driver vortex_driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = snd_vortex_ids,
 	.probe = snd_vortex_probe,
-	.remove = snd_vortex_remove,
-};
+	.हटाओ = snd_vortex_हटाओ,
+पूर्ण;
 
 module_pci_driver(vortex_driver);

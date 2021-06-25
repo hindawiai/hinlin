@@ -1,197 +1,198 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Error log support on PowerNV.
  *
  * Copyright 2013,2014 IBM Corp.
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/sysfs.h>
-#include <linux/fs.h>
-#include <linux/vmalloc.h>
-#include <linux/fcntl.h>
-#include <linux/kobject.h>
-#include <linux/uaccess.h>
-#include <asm/opal.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/opal.h>
 
-struct elog_obj {
-	struct kobject kobj;
-	struct bin_attribute raw_attr;
-	uint64_t id;
-	uint64_t type;
-	size_t size;
-	char *buffer;
-};
-#define to_elog_obj(x) container_of(x, struct elog_obj, kobj)
+काष्ठा elog_obj अणु
+	काष्ठा kobject kobj;
+	काष्ठा bin_attribute raw_attr;
+	uपूर्णांक64_t id;
+	uपूर्णांक64_t type;
+	माप_प्रकार size;
+	अक्षर *buffer;
+पूर्ण;
+#घोषणा to_elog_obj(x) container_of(x, काष्ठा elog_obj, kobj)
 
-struct elog_attribute {
-	struct attribute attr;
-	ssize_t (*show)(struct elog_obj *elog, struct elog_attribute *attr,
-			char *buf);
-	ssize_t (*store)(struct elog_obj *elog, struct elog_attribute *attr,
-			 const char *buf, size_t count);
-};
-#define to_elog_attr(x) container_of(x, struct elog_attribute, attr)
+काष्ठा elog_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा elog_obj *elog, काष्ठा elog_attribute *attr,
+			अक्षर *buf);
+	sमाप_प्रकार (*store)(काष्ठा elog_obj *elog, काष्ठा elog_attribute *attr,
+			 स्थिर अक्षर *buf, माप_प्रकार count);
+पूर्ण;
+#घोषणा to_elog_attr(x) container_of(x, काष्ठा elog_attribute, attr)
 
-static ssize_t elog_id_show(struct elog_obj *elog_obj,
-			    struct elog_attribute *attr,
-			    char *buf)
-{
-	return sprintf(buf, "0x%llx\n", elog_obj->id);
-}
+अटल sमाप_प्रकार elog_id_show(काष्ठा elog_obj *elog_obj,
+			    काष्ठा elog_attribute *attr,
+			    अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "0x%llx\n", elog_obj->id);
+पूर्ण
 
-static const char *elog_type_to_string(uint64_t type)
-{
-	switch (type) {
-	case 0: return "PEL";
-	default: return "unknown";
-	}
-}
+अटल स्थिर अक्षर *elog_type_to_string(uपूर्णांक64_t type)
+अणु
+	चयन (type) अणु
+	हाल 0: वापस "PEL";
+	शेष: वापस "unknown";
+	पूर्ण
+पूर्ण
 
-static ssize_t elog_type_show(struct elog_obj *elog_obj,
-			      struct elog_attribute *attr,
-			      char *buf)
-{
-	return sprintf(buf, "0x%llx %s\n",
+अटल sमाप_प्रकार elog_type_show(काष्ठा elog_obj *elog_obj,
+			      काष्ठा elog_attribute *attr,
+			      अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "0x%llx %s\n",
 		       elog_obj->type,
 		       elog_type_to_string(elog_obj->type));
-}
+पूर्ण
 
-static ssize_t elog_ack_show(struct elog_obj *elog_obj,
-			     struct elog_attribute *attr,
-			     char *buf)
-{
-	return sprintf(buf, "ack - acknowledge log message\n");
-}
+अटल sमाप_प्रकार elog_ack_show(काष्ठा elog_obj *elog_obj,
+			     काष्ठा elog_attribute *attr,
+			     अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "ack - acknowledge log message\n");
+पूर्ण
 
-static ssize_t elog_ack_store(struct elog_obj *elog_obj,
-			      struct elog_attribute *attr,
-			      const char *buf,
-			      size_t count)
-{
+अटल sमाप_प्रकार elog_ack_store(काष्ठा elog_obj *elog_obj,
+			      काष्ठा elog_attribute *attr,
+			      स्थिर अक्षर *buf,
+			      माप_प्रकार count)
+अणु
 	/*
-	 * Try to self remove this attribute. If we are successful,
+	 * Try to self हटाओ this attribute. If we are successful,
 	 * delete the kobject itself.
 	 */
-	if (sysfs_remove_file_self(&elog_obj->kobj, &attr->attr)) {
+	अगर (sysfs_हटाओ_file_self(&elog_obj->kobj, &attr->attr)) अणु
 		opal_send_ack_elog(elog_obj->id);
 		kobject_put(&elog_obj->kobj);
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static struct elog_attribute id_attribute =
-	__ATTR(id, 0444, elog_id_show, NULL);
-static struct elog_attribute type_attribute =
-	__ATTR(type, 0444, elog_type_show, NULL);
-static struct elog_attribute ack_attribute =
+अटल काष्ठा elog_attribute id_attribute =
+	__ATTR(id, 0444, elog_id_show, शून्य);
+अटल काष्ठा elog_attribute type_attribute =
+	__ATTR(type, 0444, elog_type_show, शून्य);
+अटल काष्ठा elog_attribute ack_attribute =
 	__ATTR(acknowledge, 0660, elog_ack_show, elog_ack_store);
 
-static struct kset *elog_kset;
+अटल काष्ठा kset *elog_kset;
 
-static ssize_t elog_attr_show(struct kobject *kobj,
-			      struct attribute *attr,
-			      char *buf)
-{
-	struct elog_attribute *attribute;
-	struct elog_obj *elog;
-
-	attribute = to_elog_attr(attr);
-	elog = to_elog_obj(kobj);
-
-	if (!attribute->show)
-		return -EIO;
-
-	return attribute->show(elog, attribute, buf);
-}
-
-static ssize_t elog_attr_store(struct kobject *kobj,
-			       struct attribute *attr,
-			       const char *buf, size_t len)
-{
-	struct elog_attribute *attribute;
-	struct elog_obj *elog;
+अटल sमाप_प्रकार elog_attr_show(काष्ठा kobject *kobj,
+			      काष्ठा attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा elog_attribute *attribute;
+	काष्ठा elog_obj *elog;
 
 	attribute = to_elog_attr(attr);
 	elog = to_elog_obj(kobj);
 
-	if (!attribute->store)
-		return -EIO;
+	अगर (!attribute->show)
+		वापस -EIO;
 
-	return attribute->store(elog, attribute, buf, len);
-}
+	वापस attribute->show(elog, attribute, buf);
+पूर्ण
 
-static const struct sysfs_ops elog_sysfs_ops = {
+अटल sमाप_प्रकार elog_attr_store(काष्ठा kobject *kobj,
+			       काष्ठा attribute *attr,
+			       स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा elog_attribute *attribute;
+	काष्ठा elog_obj *elog;
+
+	attribute = to_elog_attr(attr);
+	elog = to_elog_obj(kobj);
+
+	अगर (!attribute->store)
+		वापस -EIO;
+
+	वापस attribute->store(elog, attribute, buf, len);
+पूर्ण
+
+अटल स्थिर काष्ठा sysfs_ops elog_sysfs_ops = अणु
 	.show = elog_attr_show,
 	.store = elog_attr_store,
-};
+पूर्ण;
 
-static void elog_release(struct kobject *kobj)
-{
-	struct elog_obj *elog;
+अटल व्योम elog_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा elog_obj *elog;
 
 	elog = to_elog_obj(kobj);
-	kfree(elog->buffer);
-	kfree(elog);
-}
+	kमुक्त(elog->buffer);
+	kमुक्त(elog);
+पूर्ण
 
-static struct attribute *elog_default_attrs[] = {
+अटल काष्ठा attribute *elog_शेष_attrs[] = अणु
 	&id_attribute.attr,
 	&type_attribute.attr,
 	&ack_attribute.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct kobj_type elog_ktype = {
+अटल काष्ठा kobj_type elog_ktype = अणु
 	.sysfs_ops = &elog_sysfs_ops,
 	.release = &elog_release,
-	.default_attrs = elog_default_attrs,
-};
+	.शेष_attrs = elog_शेष_attrs,
+पूर्ण;
 
 /* Maximum size of a single log on FSP is 16KB */
-#define OPAL_MAX_ERRLOG_SIZE	16384
+#घोषणा OPAL_MAX_ERRLOG_SIZE	16384
 
-static ssize_t raw_attr_read(struct file *filep, struct kobject *kobj,
-			     struct bin_attribute *bin_attr,
-			     char *buffer, loff_t pos, size_t count)
-{
-	int opal_rc;
+अटल sमाप_प्रकार raw_attr_पढ़ो(काष्ठा file *filep, काष्ठा kobject *kobj,
+			     काष्ठा bin_attribute *bin_attr,
+			     अक्षर *buffer, loff_t pos, माप_प्रकार count)
+अणु
+	पूर्णांक opal_rc;
 
-	struct elog_obj *elog = to_elog_obj(kobj);
+	काष्ठा elog_obj *elog = to_elog_obj(kobj);
 
-	/* We may have had an error reading before, so let's retry */
-	if (!elog->buffer) {
+	/* We may have had an error पढ़ोing beक्रमe, so let's retry */
+	अगर (!elog->buffer) अणु
 		elog->buffer = kzalloc(elog->size, GFP_KERNEL);
-		if (!elog->buffer)
-			return -EIO;
+		अगर (!elog->buffer)
+			वापस -EIO;
 
-		opal_rc = opal_read_elog(__pa(elog->buffer),
+		opal_rc = opal_पढ़ो_elog(__pa(elog->buffer),
 					 elog->size, elog->id);
-		if (opal_rc != OPAL_SUCCESS) {
+		अगर (opal_rc != OPAL_SUCCESS) अणु
 			pr_err_ratelimited("ELOG: log read failed for log-id=%llx\n",
 					   elog->id);
-			kfree(elog->buffer);
-			elog->buffer = NULL;
-			return -EIO;
-		}
-	}
+			kमुक्त(elog->buffer);
+			elog->buffer = शून्य;
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	memcpy(buffer, elog->buffer + pos, count);
+	स_नकल(buffer, elog->buffer + pos, count);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void create_elog_obj(uint64_t id, size_t size, uint64_t type)
-{
-	struct elog_obj *elog;
-	int rc;
+अटल व्योम create_elog_obj(uपूर्णांक64_t id, माप_प्रकार size, uपूर्णांक64_t type)
+अणु
+	काष्ठा elog_obj *elog;
+	पूर्णांक rc;
 
-	elog = kzalloc(sizeof(*elog), GFP_KERNEL);
-	if (!elog)
-		return;
+	elog = kzalloc(माप(*elog), GFP_KERNEL);
+	अगर (!elog)
+		वापस;
 
 	elog->kobj.kset = elog_kset;
 
@@ -202,7 +203,7 @@ static void create_elog_obj(uint64_t id, size_t size, uint64_t type)
 	elog->raw_attr.attr.name = "raw";
 	elog->raw_attr.attr.mode = 0400;
 	elog->raw_attr.size = size;
-	elog->raw_attr.read = raw_attr_read;
+	elog->raw_attr.पढ़ो = raw_attr_पढ़ो;
 
 	elog->id = id;
 	elog->size = size;
@@ -210,70 +211,70 @@ static void create_elog_obj(uint64_t id, size_t size, uint64_t type)
 
 	elog->buffer = kzalloc(elog->size, GFP_KERNEL);
 
-	if (elog->buffer) {
-		rc = opal_read_elog(__pa(elog->buffer),
+	अगर (elog->buffer) अणु
+		rc = opal_पढ़ो_elog(__pa(elog->buffer),
 					 elog->size, elog->id);
-		if (rc != OPAL_SUCCESS) {
+		अगर (rc != OPAL_SUCCESS) अणु
 			pr_err("ELOG: log read failed for log-id=%llx\n",
 			       elog->id);
-			kfree(elog->buffer);
-			elog->buffer = NULL;
-		}
-	}
+			kमुक्त(elog->buffer);
+			elog->buffer = शून्य;
+		पूर्ण
+	पूर्ण
 
-	rc = kobject_add(&elog->kobj, NULL, "0x%llx", id);
-	if (rc) {
+	rc = kobject_add(&elog->kobj, शून्य, "0x%llx", id);
+	अगर (rc) अणु
 		kobject_put(&elog->kobj);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * As soon as the sysfs file for this elog is created/activated there is
-	 * a chance the opal_errd daemon (or any userspace) might read and
-	 * acknowledge the elog before kobject_uevent() is called. If that
+	 * As soon as the sysfs file क्रम this elog is created/activated there is
+	 * a chance the opal_errd daemon (or any userspace) might पढ़ो and
+	 * acknowledge the elog beक्रमe kobject_uevent() is called. If that
 	 * happens then there is a potential race between
 	 * elog_ack_store->kobject_put() and kobject_uevent() which leads to a
-	 * use-after-free of a kernfs object resulting in a kernel crash.
+	 * use-after-मुक्त of a kernfs object resulting in a kernel crash.
 	 *
-	 * To avoid that, we need to take a reference on behalf of the bin file,
-	 * so that our reference remains valid while we call kobject_uevent().
-	 * We then drop our reference before exiting the function, leaving the
-	 * bin file to drop the last reference (if it hasn't already).
+	 * To aव्योम that, we need to take a reference on behalf of the bin file,
+	 * so that our reference reमुख्यs valid जबतक we call kobject_uevent().
+	 * We then drop our reference beक्रमe निकासing the function, leaving the
+	 * bin file to drop the last reference (अगर it hasn't alपढ़ोy).
 	 */
 
-	/* Take a reference for the bin file */
+	/* Take a reference क्रम the bin file */
 	kobject_get(&elog->kobj);
 	rc = sysfs_create_bin_file(&elog->kobj, &elog->raw_attr);
-	if (rc == 0) {
+	अगर (rc == 0) अणु
 		kobject_uevent(&elog->kobj, KOBJ_ADD);
-	} else {
-		/* Drop the reference taken for the bin file */
+	पूर्ण अन्यथा अणु
+		/* Drop the reference taken क्रम the bin file */
 		kobject_put(&elog->kobj);
-	}
+	पूर्ण
 
 	/* Drop our reference */
 	kobject_put(&elog->kobj);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static irqreturn_t elog_event(int irq, void *data)
-{
+अटल irqवापस_t elog_event(पूर्णांक irq, व्योम *data)
+अणु
 	__be64 size;
 	__be64 id;
 	__be64 type;
-	uint64_t elog_size;
-	uint64_t log_id;
-	uint64_t elog_type;
-	int rc;
-	char name[2+16+1];
-	struct kobject *kobj;
+	uपूर्णांक64_t elog_size;
+	uपूर्णांक64_t log_id;
+	uपूर्णांक64_t elog_type;
+	पूर्णांक rc;
+	अक्षर name[2+16+1];
+	काष्ठा kobject *kobj;
 
 	rc = opal_get_elog_size(&id, &size, &type);
-	if (rc != OPAL_SUCCESS) {
+	अगर (rc != OPAL_SUCCESS) अणु
 		pr_err("ELOG: OPAL log info read failed\n");
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	elog_size = be64_to_cpu(size);
 	log_id = be64_to_cpu(id);
@@ -281,59 +282,59 @@ static irqreturn_t elog_event(int irq, void *data)
 
 	WARN_ON(elog_size > OPAL_MAX_ERRLOG_SIZE);
 
-	if (elog_size >= OPAL_MAX_ERRLOG_SIZE)
+	अगर (elog_size >= OPAL_MAX_ERRLOG_SIZE)
 		elog_size  =  OPAL_MAX_ERRLOG_SIZE;
 
-	sprintf(name, "0x%llx", log_id);
+	प्र_लिखो(name, "0x%llx", log_id);
 
-	/* we may get notified twice, let's handle
+	/* we may get notअगरied twice, let's handle
 	 * that gracefully and not create two conflicting
 	 * entries.
 	 */
 	kobj = kset_find_obj(elog_kset, name);
-	if (kobj) {
+	अगर (kobj) अणु
 		/* Drop reference added by kset_find_obj() */
 		kobject_put(kobj);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	create_elog_obj(log_id, elog_size, elog_type);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int __init opal_elog_init(void)
-{
-	int rc = 0, irq;
+पूर्णांक __init opal_elog_init(व्योम)
+अणु
+	पूर्णांक rc = 0, irq;
 
 	/* ELOG not supported by firmware */
-	if (!opal_check_token(OPAL_ELOG_READ))
-		return -1;
+	अगर (!opal_check_token(OPAL_ELOG_READ))
+		वापस -1;
 
-	elog_kset = kset_create_and_add("elog", NULL, opal_kobj);
-	if (!elog_kset) {
+	elog_kset = kset_create_and_add("elog", शून्य, opal_kobj);
+	अगर (!elog_kset) अणु
 		pr_warn("%s: failed to create elog kset\n", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	irq = opal_event_request(ilog2(OPAL_EVENT_ERROR_LOG_AVAIL));
-	if (!irq) {
+	अगर (!irq) अणु
 		pr_err("%s: Can't register OPAL event irq (%d)\n",
 		       __func__, irq);
-		return irq;
-	}
+		वापस irq;
+	पूर्ण
 
-	rc = request_threaded_irq(irq, NULL, elog_event,
-			IRQF_TRIGGER_HIGH | IRQF_ONESHOT, "opal-elog", NULL);
-	if (rc) {
+	rc = request_thपढ़ोed_irq(irq, शून्य, elog_event,
+			IRQF_TRIGGER_HIGH | IRQF_ONESHOT, "opal-elog", शून्य);
+	अगर (rc) अणु
 		pr_err("%s: Can't request OPAL event irq (%d)\n",
 		       __func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* We are now ready to pull error logs from opal. */
-	if (opal_check_token(OPAL_ELOG_RESEND))
+	/* We are now पढ़ोy to pull error logs from opal. */
+	अगर (opal_check_token(OPAL_ELOG_RESEND))
 		opal_resend_pending_logs();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

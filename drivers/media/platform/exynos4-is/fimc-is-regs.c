@@ -1,230 +1,231 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Samsung EXYNOS4x12 FIMC-IS (Imaging Subsystem) driver
+ * Samsung EXYNOS4x12 FIMC-IS (Imaging Subप्रणाली) driver
  *
  * Copyright (C) 2012 - 2013 Samsung Electronics Co., Ltd.
  *
  * Authors: Younghwan Joo <yhwan.joo@samsung.com>
  *          Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
-#include <linux/delay.h>
+#समावेश <linux/delay.h>
 
-#include "fimc-is.h"
-#include "fimc-is-command.h"
-#include "fimc-is-regs.h"
-#include "fimc-is-sensor.h"
+#समावेश "fimc-is.h"
+#समावेश "fimc-is-command.h"
+#समावेश "fimc-is-regs.h"
+#समावेश "fimc-is-sensor.h"
 
-void fimc_is_fw_clear_irq1(struct fimc_is *is, unsigned int nr)
-{
-	mcuctl_write(1UL << nr, is, MCUCTL_REG_INTCR1);
-}
+व्योम fimc_is_fw_clear_irq1(काष्ठा fimc_is *is, अचिन्हित पूर्णांक nr)
+अणु
+	mcuctl_ग_लिखो(1UL << nr, is, MCUCTL_REG_INTCR1);
+पूर्ण
 
-void fimc_is_fw_clear_irq2(struct fimc_is *is)
-{
-	u32 cfg = mcuctl_read(is, MCUCTL_REG_INTSR2);
-	mcuctl_write(cfg, is, MCUCTL_REG_INTCR2);
-}
+व्योम fimc_is_fw_clear_irq2(काष्ठा fimc_is *is)
+अणु
+	u32 cfg = mcuctl_पढ़ो(is, MCUCTL_REG_INTSR2);
+	mcuctl_ग_लिखो(cfg, is, MCUCTL_REG_INTCR2);
+पूर्ण
 
-void fimc_is_hw_set_intgr0_gd0(struct fimc_is *is)
-{
-	mcuctl_write(INTGR0_INTGD(0), is, MCUCTL_REG_INTGR0);
-}
+व्योम fimc_is_hw_set_पूर्णांकgr0_gd0(काष्ठा fimc_is *is)
+अणु
+	mcuctl_ग_लिखो(INTGR0_INTGD(0), is, MCUCTL_REG_INTGR0);
+पूर्ण
 
-int fimc_is_hw_wait_intmsr0_intmsd0(struct fimc_is *is)
-{
-	unsigned int timeout = 2000;
+पूर्णांक fimc_is_hw_रुको_पूर्णांकmsr0_पूर्णांकmsd0(काष्ठा fimc_is *is)
+अणु
+	अचिन्हित पूर्णांक समयout = 2000;
 	u32 cfg, status;
 
-	do {
-		cfg = mcuctl_read(is, MCUCTL_REG_INTMSR0);
+	करो अणु
+		cfg = mcuctl_पढ़ो(is, MCUCTL_REG_INTMSR0);
 		status = INTMSR0_GET_INTMSD(0, cfg);
 
-		if (--timeout == 0) {
+		अगर (--समयout == 0) अणु
 			dev_warn(&is->pdev->dev, "%s timeout\n",
 				 __func__);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		udelay(1);
-	} while (status != 0);
+	पूर्ण जबतक (status != 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int fimc_is_hw_set_param(struct fimc_is *is)
-{
-	struct chain_config *config = &is->config[is->config_index];
-	unsigned int param_count = __get_pending_param_count(is);
+पूर्णांक fimc_is_hw_set_param(काष्ठा fimc_is *is)
+अणु
+	काष्ठा chain_config *config = &is->config[is->config_index];
+	अचिन्हित पूर्णांक param_count = __get_pending_param_count(is);
 
-	fimc_is_hw_wait_intmsr0_intmsd0(is);
+	fimc_is_hw_रुको_पूर्णांकmsr0_पूर्णांकmsd0(is);
 
-	mcuctl_write(HIC_SET_PARAMETER, is, MCUCTL_REG_ISSR(0));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(1));
-	mcuctl_write(is->config_index, is, MCUCTL_REG_ISSR(2));
+	mcuctl_ग_लिखो(HIC_SET_PARAMETER, is, MCUCTL_REG_ISSR(0));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(1));
+	mcuctl_ग_लिखो(is->config_index, is, MCUCTL_REG_ISSR(2));
 
-	mcuctl_write(param_count, is, MCUCTL_REG_ISSR(3));
-	mcuctl_write(config->p_region_index[0], is, MCUCTL_REG_ISSR(4));
-	mcuctl_write(config->p_region_index[1], is, MCUCTL_REG_ISSR(5));
+	mcuctl_ग_लिखो(param_count, is, MCUCTL_REG_ISSR(3));
+	mcuctl_ग_लिखो(config->p_region_index[0], is, MCUCTL_REG_ISSR(4));
+	mcuctl_ग_लिखो(config->p_region_index[1], is, MCUCTL_REG_ISSR(5));
 
-	fimc_is_hw_set_intgr0_gd0(is);
-	return 0;
-}
+	fimc_is_hw_set_पूर्णांकgr0_gd0(is);
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused fimc_is_hw_set_tune(struct fimc_is *is)
-{
-	fimc_is_hw_wait_intmsr0_intmsd0(is);
+अटल पूर्णांक __maybe_unused fimc_is_hw_set_tune(काष्ठा fimc_is *is)
+अणु
+	fimc_is_hw_रुको_पूर्णांकmsr0_पूर्णांकmsd0(is);
 
-	mcuctl_write(HIC_SET_TUNE, is, MCUCTL_REG_ISSR(0));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(1));
-	mcuctl_write(is->h2i_cmd.entry_id, is, MCUCTL_REG_ISSR(2));
+	mcuctl_ग_लिखो(HIC_SET_TUNE, is, MCUCTL_REG_ISSR(0));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(1));
+	mcuctl_ग_लिखो(is->h2i_cmd.entry_id, is, MCUCTL_REG_ISSR(2));
 
-	fimc_is_hw_set_intgr0_gd0(is);
-	return 0;
-}
+	fimc_is_hw_set_पूर्णांकgr0_gd0(is);
+	वापस 0;
+पूर्ण
 
-#define FIMC_IS_MAX_PARAMS	4
+#घोषणा FIMC_IS_MAX_PARAMS	4
 
-int fimc_is_hw_get_params(struct fimc_is *is, unsigned int num_args)
-{
-	int i;
+पूर्णांक fimc_is_hw_get_params(काष्ठा fimc_is *is, अचिन्हित पूर्णांक num_args)
+अणु
+	पूर्णांक i;
 
-	if (num_args > FIMC_IS_MAX_PARAMS)
-		return -EINVAL;
+	अगर (num_args > FIMC_IS_MAX_PARAMS)
+		वापस -EINVAL;
 
 	is->i2h_cmd.num_args = num_args;
 
-	for (i = 0; i < FIMC_IS_MAX_PARAMS; i++) {
-		if (i < num_args)
-			is->i2h_cmd.args[i] = mcuctl_read(is,
+	क्रम (i = 0; i < FIMC_IS_MAX_PARAMS; i++) अणु
+		अगर (i < num_args)
+			is->i2h_cmd.args[i] = mcuctl_पढ़ो(is,
 					MCUCTL_REG_ISSR(12 + i));
-		else
+		अन्यथा
 			is->i2h_cmd.args[i] = 0;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void fimc_is_hw_set_isp_buf_mask(struct fimc_is *is, unsigned int mask)
-{
-	if (hweight32(mask) == 1) {
+व्योम fimc_is_hw_set_isp_buf_mask(काष्ठा fimc_is *is, अचिन्हित पूर्णांक mask)
+अणु
+	अगर (hweight32(mask) == 1) अणु
 		dev_err(&is->pdev->dev, "%s(): not enough buffers (mask %#x)\n",
 							__func__, mask);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (mcuctl_read(is, MCUCTL_REG_ISSR(23)) != 0)
+	अगर (mcuctl_पढ़ो(is, MCUCTL_REG_ISSR(23)) != 0)
 		dev_dbg(&is->pdev->dev, "non-zero DMA buffer mask\n");
 
-	mcuctl_write(mask, is, MCUCTL_REG_ISSR(23));
-}
+	mcuctl_ग_लिखो(mask, is, MCUCTL_REG_ISSR(23));
+पूर्ण
 
-void fimc_is_hw_set_sensor_num(struct fimc_is *is)
-{
+व्योम fimc_is_hw_set_sensor_num(काष्ठा fimc_is *is)
+अणु
 	pr_debug("setting sensor index to: %d\n", is->sensor_index);
 
-	mcuctl_write(IH_REPLY_DONE, is, MCUCTL_REG_ISSR(0));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(1));
-	mcuctl_write(IHC_GET_SENSOR_NUM, is, MCUCTL_REG_ISSR(2));
-	mcuctl_write(FIMC_IS_SENSORS_NUM, is, MCUCTL_REG_ISSR(3));
-}
+	mcuctl_ग_लिखो(IH_REPLY_DONE, is, MCUCTL_REG_ISSR(0));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(1));
+	mcuctl_ग_लिखो(IHC_GET_SENSOR_NUM, is, MCUCTL_REG_ISSR(2));
+	mcuctl_ग_लिखो(FIMC_IS_SENSORS_NUM, is, MCUCTL_REG_ISSR(3));
+पूर्ण
 
-void fimc_is_hw_close_sensor(struct fimc_is *is, unsigned int index)
-{
-	if (is->sensor_index != index)
-		return;
+व्योम fimc_is_hw_बंद_sensor(काष्ठा fimc_is *is, अचिन्हित पूर्णांक index)
+अणु
+	अगर (is->sensor_index != index)
+		वापस;
 
-	fimc_is_hw_wait_intmsr0_intmsd0(is);
-	mcuctl_write(HIC_CLOSE_SENSOR, is, MCUCTL_REG_ISSR(0));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(1));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(2));
-	fimc_is_hw_set_intgr0_gd0(is);
-}
+	fimc_is_hw_रुको_पूर्णांकmsr0_पूर्णांकmsd0(is);
+	mcuctl_ग_लिखो(HIC_CLOSE_SENSOR, is, MCUCTL_REG_ISSR(0));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(1));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(2));
+	fimc_is_hw_set_पूर्णांकgr0_gd0(is);
+पूर्ण
 
-void fimc_is_hw_get_setfile_addr(struct fimc_is *is)
-{
-	fimc_is_hw_wait_intmsr0_intmsd0(is);
-	mcuctl_write(HIC_GET_SET_FILE_ADDR, is, MCUCTL_REG_ISSR(0));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(1));
-	fimc_is_hw_set_intgr0_gd0(is);
-}
+व्योम fimc_is_hw_get_setfile_addr(काष्ठा fimc_is *is)
+अणु
+	fimc_is_hw_रुको_पूर्णांकmsr0_पूर्णांकmsd0(is);
+	mcuctl_ग_लिखो(HIC_GET_SET_खाता_ADDR, is, MCUCTL_REG_ISSR(0));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(1));
+	fimc_is_hw_set_पूर्णांकgr0_gd0(is);
+पूर्ण
 
-void fimc_is_hw_load_setfile(struct fimc_is *is)
-{
-	fimc_is_hw_wait_intmsr0_intmsd0(is);
-	mcuctl_write(HIC_LOAD_SET_FILE, is, MCUCTL_REG_ISSR(0));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(1));
-	fimc_is_hw_set_intgr0_gd0(is);
-}
+व्योम fimc_is_hw_load_setfile(काष्ठा fimc_is *is)
+अणु
+	fimc_is_hw_रुको_पूर्णांकmsr0_पूर्णांकmsd0(is);
+	mcuctl_ग_लिखो(HIC_LOAD_SET_खाता, is, MCUCTL_REG_ISSR(0));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(1));
+	fimc_is_hw_set_पूर्णांकgr0_gd0(is);
+पूर्ण
 
-int fimc_is_hw_change_mode(struct fimc_is *is)
-{
-	static const u8 cmd[] = {
+पूर्णांक fimc_is_hw_change_mode(काष्ठा fimc_is *is)
+अणु
+	अटल स्थिर u8 cmd[] = अणु
 		HIC_PREVIEW_STILL, HIC_PREVIEW_VIDEO,
 		HIC_CAPTURE_STILL, HIC_CAPTURE_VIDEO,
-	};
+	पूर्ण;
 
-	if (WARN_ON(is->config_index >= ARRAY_SIZE(cmd)))
-		return -EINVAL;
+	अगर (WARN_ON(is->config_index >= ARRAY_SIZE(cmd)))
+		वापस -EINVAL;
 
-	mcuctl_write(cmd[is->config_index], is, MCUCTL_REG_ISSR(0));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(1));
-	mcuctl_write(is->setfile.sub_index, is, MCUCTL_REG_ISSR(2));
-	fimc_is_hw_set_intgr0_gd0(is);
-	return 0;
-}
+	mcuctl_ग_लिखो(cmd[is->config_index], is, MCUCTL_REG_ISSR(0));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(1));
+	mcuctl_ग_लिखो(is->setfile.sub_index, is, MCUCTL_REG_ISSR(2));
+	fimc_is_hw_set_पूर्णांकgr0_gd0(is);
+	वापस 0;
+पूर्ण
 
-void fimc_is_hw_stream_on(struct fimc_is *is)
-{
-	fimc_is_hw_wait_intmsr0_intmsd0(is);
-	mcuctl_write(HIC_STREAM_ON, is, MCUCTL_REG_ISSR(0));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(1));
-	mcuctl_write(0, is, MCUCTL_REG_ISSR(2));
-	fimc_is_hw_set_intgr0_gd0(is);
-}
+व्योम fimc_is_hw_stream_on(काष्ठा fimc_is *is)
+अणु
+	fimc_is_hw_रुको_पूर्णांकmsr0_पूर्णांकmsd0(is);
+	mcuctl_ग_लिखो(HIC_STREAM_ON, is, MCUCTL_REG_ISSR(0));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(1));
+	mcuctl_ग_लिखो(0, is, MCUCTL_REG_ISSR(2));
+	fimc_is_hw_set_पूर्णांकgr0_gd0(is);
+पूर्ण
 
-void fimc_is_hw_stream_off(struct fimc_is *is)
-{
-	fimc_is_hw_wait_intmsr0_intmsd0(is);
-	mcuctl_write(HIC_STREAM_OFF, is, MCUCTL_REG_ISSR(0));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(1));
-	fimc_is_hw_set_intgr0_gd0(is);
-}
+व्योम fimc_is_hw_stream_off(काष्ठा fimc_is *is)
+अणु
+	fimc_is_hw_रुको_पूर्णांकmsr0_पूर्णांकmsd0(is);
+	mcuctl_ग_लिखो(HIC_STREAM_OFF, is, MCUCTL_REG_ISSR(0));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(1));
+	fimc_is_hw_set_पूर्णांकgr0_gd0(is);
+पूर्ण
 
-void fimc_is_hw_subip_power_off(struct fimc_is *is)
-{
-	fimc_is_hw_wait_intmsr0_intmsd0(is);
-	mcuctl_write(HIC_POWER_DOWN, is, MCUCTL_REG_ISSR(0));
-	mcuctl_write(is->sensor_index, is, MCUCTL_REG_ISSR(1));
-	fimc_is_hw_set_intgr0_gd0(is);
-}
+व्योम fimc_is_hw_subip_घातer_off(काष्ठा fimc_is *is)
+अणु
+	fimc_is_hw_रुको_पूर्णांकmsr0_पूर्णांकmsd0(is);
+	mcuctl_ग_लिखो(HIC_POWER_DOWN, is, MCUCTL_REG_ISSR(0));
+	mcuctl_ग_लिखो(is->sensor_index, is, MCUCTL_REG_ISSR(1));
+	fimc_is_hw_set_पूर्णांकgr0_gd0(is);
+पूर्ण
 
-int fimc_is_itf_s_param(struct fimc_is *is, bool update)
-{
-	int ret;
+पूर्णांक fimc_is_itf_s_param(काष्ठा fimc_is *is, bool update)
+अणु
+	पूर्णांक ret;
 
-	if (update)
+	अगर (update)
 		__is_hw_update_params(is);
 
 	fimc_is_mem_barrier();
 
 	clear_bit(IS_ST_BLOCK_CMD_CLEARED, &is->state);
 	fimc_is_hw_set_param(is);
-	ret = fimc_is_wait_event(is, IS_ST_BLOCK_CMD_CLEARED, 1,
+	ret = fimc_is_रुको_event(is, IS_ST_BLOCK_CMD_CLEARED, 1,
 				FIMC_IS_CONFIG_TIMEOUT);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&is->pdev->dev, "%s() timeout\n", __func__);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int fimc_is_itf_mode_change(struct fimc_is *is)
-{
-	int ret;
+पूर्णांक fimc_is_itf_mode_change(काष्ठा fimc_is *is)
+अणु
+	पूर्णांक ret;
 
 	clear_bit(IS_ST_CHANGE_MODE, &is->state);
 	fimc_is_hw_change_mode(is);
-	ret = fimc_is_wait_event(is, IS_ST_CHANGE_MODE, 1,
+	ret = fimc_is_रुको_event(is, IS_ST_CHANGE_MODE, 1,
 				FIMC_IS_CONFIG_TIMEOUT);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&is->pdev->dev, "%s(): mode change (%d) timeout\n",
 			__func__, is->config_index);
-	return ret;
-}
+	वापस ret;
+पूर्ण

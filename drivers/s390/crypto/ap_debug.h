@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  Copyright IBM Corp. 2016
  *  Author(s): Harald Freudenberger <freude@de.ibm.com>
  */
-#ifndef AP_DEBUG_H
-#define AP_DEBUG_H
+#अगर_अघोषित AP_DEBUG_H
+#घोषणा AP_DEBUG_H
 
-#include <asm/debug.h>
+#समावेश <यंत्र/debug.h>
 
-#define DBF_ERR		3	/* error conditions   */
-#define DBF_WARN	4	/* warning conditions */
-#define DBF_INFO	5	/* informational      */
-#define DBF_DEBUG	6	/* for debugging only */
+#घोषणा DBF_ERR		3	/* error conditions   */
+#घोषणा DBF_WARN	4	/* warning conditions */
+#घोषणा DBF_INFO	5	/* inक्रमmational      */
+#घोषणा DBF_DEBUG	6	/* क्रम debugging only */
 
-#define RC2ERR(rc) ((rc) ? DBF_ERR : DBF_INFO)
-#define RC2WARN(rc) ((rc) ? DBF_WARN : DBF_INFO)
+#घोषणा RC2ERR(rc) ((rc) ? DBF_ERR : DBF_INFO)
+#घोषणा RC2WARN(rc) ((rc) ? DBF_WARN : DBF_INFO)
 
-#define DBF_MAX_SPRINTF_ARGS 5
+#घोषणा DBF_MAX_SPRINTF_ARGS 5
 
-#define AP_DBF(...)					\
-	debug_sprintf_event(ap_dbf_info, ##__VA_ARGS__)
-#define AP_DBF_ERR(...)					\
-	debug_sprintf_event(ap_dbf_info, DBF_ERR, ##__VA_ARGS__)
-#define AP_DBF_WARN(...)					\
-	debug_sprintf_event(ap_dbf_info, DBF_WARN, ##__VA_ARGS__)
-#define AP_DBF_INFO(...)					\
-	debug_sprintf_event(ap_dbf_info, DBF_INFO, ##__VA_ARGS__)
-#define AP_DBF_DBG(...)					\
-	debug_sprintf_event(ap_dbf_info, DBF_DEBUG, ##__VA_ARGS__)
+#घोषणा AP_DBF(...)					\
+	debug_प्र_लिखो_event(ap_dbf_info, ##__VA_ARGS__)
+#घोषणा AP_DBF_ERR(...)					\
+	debug_प्र_लिखो_event(ap_dbf_info, DBF_ERR, ##__VA_ARGS__)
+#घोषणा AP_DBF_WARN(...)					\
+	debug_प्र_लिखो_event(ap_dbf_info, DBF_WARN, ##__VA_ARGS__)
+#घोषणा AP_DBF_INFO(...)					\
+	debug_प्र_लिखो_event(ap_dbf_info, DBF_INFO, ##__VA_ARGS__)
+#घोषणा AP_DBF_DBG(...)					\
+	debug_प्र_लिखो_event(ap_dbf_info, DBF_DEBUG, ##__VA_ARGS__)
 
-extern debug_info_t *ap_dbf_info;
+बाह्य debug_info_t *ap_dbf_info;
 
-#endif /* AP_DEBUG_H */
+#पूर्ण_अगर /* AP_DEBUG_H */

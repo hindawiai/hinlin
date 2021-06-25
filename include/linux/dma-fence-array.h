@@ -1,84 +1,85 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * fence-array: aggregates fence to be waited together
+ * fence-array: aggregates fence to be रुकोed together
  *
  * Copyright (C) 2016 Collabora Ltd
  * Copyright (C) 2016 Advanced Micro Devices, Inc.
  * Authors:
- *	Gustavo Padovan <gustavo@padovan.org>
- *	Christian König <christian.koenig@amd.com>
+ *	Gustavo Paकरोvan <gustavo@paकरोvan.org>
+ *	Christian Kथघnig <christian.koenig@amd.com>
  */
 
-#ifndef __LINUX_DMA_FENCE_ARRAY_H
-#define __LINUX_DMA_FENCE_ARRAY_H
+#अगर_अघोषित __LINUX_DMA_FENCE_ARRAY_H
+#घोषणा __LINUX_DMA_FENCE_ARRAY_H
 
-#include <linux/dma-fence.h>
-#include <linux/irq_work.h>
+#समावेश <linux/dma-fence.h>
+#समावेश <linux/irq_work.h>
 
 /**
- * struct dma_fence_array_cb - callback helper for fence array
- * @cb: fence callback structure for signaling
+ * काष्ठा dma_fence_array_cb - callback helper क्रम fence array
+ * @cb: fence callback काष्ठाure क्रम संकेतing
  * @array: reference to the parent fence array object
  */
-struct dma_fence_array_cb {
-	struct dma_fence_cb cb;
-	struct dma_fence_array *array;
-};
+काष्ठा dma_fence_array_cb अणु
+	काष्ठा dma_fence_cb cb;
+	काष्ठा dma_fence_array *array;
+पूर्ण;
 
 /**
- * struct dma_fence_array - fence to represent an array of fences
+ * काष्ठा dma_fence_array - fence to represent an array of fences
  * @base: fence base class
- * @lock: spinlock for fence handling
+ * @lock: spinlock क्रम fence handling
  * @num_fences: number of fences in the array
  * @num_pending: fences in the array still pending
  * @fences: array of the fences
- * @work: internal irq_work function
+ * @work: पूर्णांकernal irq_work function
  */
-struct dma_fence_array {
-	struct dma_fence base;
+काष्ठा dma_fence_array अणु
+	काष्ठा dma_fence base;
 
 	spinlock_t lock;
-	unsigned num_fences;
+	अचिन्हित num_fences;
 	atomic_t num_pending;
-	struct dma_fence **fences;
+	काष्ठा dma_fence **fences;
 
-	struct irq_work work;
-};
+	काष्ठा irq_work work;
+पूर्ण;
 
-extern const struct dma_fence_ops dma_fence_array_ops;
+बाह्य स्थिर काष्ठा dma_fence_ops dma_fence_array_ops;
 
 /**
- * dma_fence_is_array - check if a fence is from the array subsclass
+ * dma_fence_is_array - check अगर a fence is from the array subsclass
  * @fence: fence to test
  *
- * Return true if it is a dma_fence_array and false otherwise.
+ * Return true अगर it is a dma_fence_array and false otherwise.
  */
-static inline bool dma_fence_is_array(struct dma_fence *fence)
-{
-	return fence->ops == &dma_fence_array_ops;
-}
+अटल अंतरभूत bool dma_fence_is_array(काष्ठा dma_fence *fence)
+अणु
+	वापस fence->ops == &dma_fence_array_ops;
+पूर्ण
 
 /**
  * to_dma_fence_array - cast a fence to a dma_fence_array
  * @fence: fence to cast to a dma_fence_array
  *
- * Returns NULL if the fence is not a dma_fence_array,
+ * Returns शून्य अगर the fence is not a dma_fence_array,
  * or the dma_fence_array otherwise.
  */
-static inline struct dma_fence_array *
-to_dma_fence_array(struct dma_fence *fence)
-{
-	if (fence->ops != &dma_fence_array_ops)
-		return NULL;
+अटल अंतरभूत काष्ठा dma_fence_array *
+to_dma_fence_array(काष्ठा dma_fence *fence)
+अणु
+	अगर (fence->ops != &dma_fence_array_ops)
+		वापस शून्य;
 
-	return container_of(fence, struct dma_fence_array, base);
-}
+	वापस container_of(fence, काष्ठा dma_fence_array, base);
+पूर्ण
 
-struct dma_fence_array *dma_fence_array_create(int num_fences,
-					       struct dma_fence **fences,
-					       u64 context, unsigned seqno,
-					       bool signal_on_any);
+काष्ठा dma_fence_array *dma_fence_array_create(पूर्णांक num_fences,
+					       काष्ठा dma_fence **fences,
+					       u64 context, अचिन्हित seqno,
+					       bool संकेत_on_any);
 
-bool dma_fence_match_context(struct dma_fence *fence, u64 context);
+bool dma_fence_match_context(काष्ठा dma_fence *fence, u64 context);
 
-#endif /* __LINUX_DMA_FENCE_ARRAY_H */
+#पूर्ण_अगर /* __LINUX_DMA_FENCE_ARRAY_H */

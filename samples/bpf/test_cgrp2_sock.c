@@ -1,290 +1,291 @@
+<शैली गुरु>
 /* eBPF example program:
  *
  * - Loads eBPF program
  *
- *   The eBPF program sets the sk_bound_dev_if index in new AF_INET{6}
- *   sockets opened by processes in the cgroup.
+ *   The eBPF program sets the sk_bound_dev_अगर index in new AF_INETअणु6पूर्ण
+ *   sockets खोलोed by processes in the cgroup.
  *
  * - Attaches the new program to a cgroup using BPF_PROG_ATTACH
  */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
-#include <unistd.h>
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <net/if.h>
-#include <inttypes.h>
-#include <linux/bpf.h>
-#include <bpf/bpf.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <मानकघोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <net/अगर.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf.h>
 
-#include "bpf_insn.h"
+#समावेश "bpf_insn.h"
 
-char bpf_log_buf[BPF_LOG_BUF_SIZE];
+अक्षर bpf_log_buf[BPF_LOG_BUF_SIZE];
 
-static int prog_load(__u32 idx, __u32 mark, __u32 prio)
-{
-	/* save pointer to context */
-	struct bpf_insn prog_start[] = {
+अटल पूर्णांक prog_load(__u32 idx, __u32 mark, __u32 prio)
+अणु
+	/* save poपूर्णांकer to context */
+	काष्ठा bpf_insn prog_start[] = अणु
 		BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
-	};
-	struct bpf_insn prog_end[] = {
+	पूर्ण;
+	काष्ठा bpf_insn prog_end[] = अणु
 		BPF_MOV64_IMM(BPF_REG_0, 1), /* r0 = verdict */
 		BPF_EXIT_INSN(),
-	};
+	पूर्ण;
 
-	/* set sk_bound_dev_if on socket */
-	struct bpf_insn prog_dev[] = {
+	/* set sk_bound_dev_अगर on socket */
+	काष्ठा bpf_insn prog_dev[] = अणु
 		BPF_MOV64_IMM(BPF_REG_3, idx),
-		BPF_MOV64_IMM(BPF_REG_2, offsetof(struct bpf_sock, bound_dev_if)),
-		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3, offsetof(struct bpf_sock, bound_dev_if)),
-	};
+		BPF_MOV64_IMM(BPF_REG_2, दुरत्व(काष्ठा bpf_sock, bound_dev_अगर)),
+		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3, दुरत्व(काष्ठा bpf_sock, bound_dev_अगर)),
+	पूर्ण;
 
 	/* set mark on socket */
-	struct bpf_insn prog_mark[] = {
+	काष्ठा bpf_insn prog_mark[] = अणु
 		/* get uid of process */
 		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
 			     BPF_FUNC_get_current_uid_gid),
 		BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 0xffffffff),
 
-		/* if uid is 0, use given mark, else use the uid as the mark */
+		/* अगर uid is 0, use given mark, अन्यथा use the uid as the mark */
 		BPF_MOV64_REG(BPF_REG_3, BPF_REG_0),
 		BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 0, 1),
 		BPF_MOV64_IMM(BPF_REG_3, mark),
 
 		/* set the mark on the new socket */
 		BPF_MOV64_REG(BPF_REG_1, BPF_REG_6),
-		BPF_MOV64_IMM(BPF_REG_2, offsetof(struct bpf_sock, mark)),
-		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3, offsetof(struct bpf_sock, mark)),
-	};
+		BPF_MOV64_IMM(BPF_REG_2, दुरत्व(काष्ठा bpf_sock, mark)),
+		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3, दुरत्व(काष्ठा bpf_sock, mark)),
+	पूर्ण;
 
 	/* set priority on socket */
-	struct bpf_insn prog_prio[] = {
+	काष्ठा bpf_insn prog_prio[] = अणु
 		BPF_MOV64_REG(BPF_REG_1, BPF_REG_6),
 		BPF_MOV64_IMM(BPF_REG_3, prio),
-		BPF_MOV64_IMM(BPF_REG_2, offsetof(struct bpf_sock, priority)),
-		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3, offsetof(struct bpf_sock, priority)),
-	};
+		BPF_MOV64_IMM(BPF_REG_2, दुरत्व(काष्ठा bpf_sock, priority)),
+		BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_3, दुरत्व(काष्ठा bpf_sock, priority)),
+	पूर्ण;
 
-	struct bpf_insn *prog;
-	size_t insns_cnt;
-	void *p;
-	int ret;
+	काष्ठा bpf_insn *prog;
+	माप_प्रकार insns_cnt;
+	व्योम *p;
+	पूर्णांक ret;
 
-	insns_cnt = sizeof(prog_start) + sizeof(prog_end);
-	if (idx)
-		insns_cnt += sizeof(prog_dev);
+	insns_cnt = माप(prog_start) + माप(prog_end);
+	अगर (idx)
+		insns_cnt += माप(prog_dev);
 
-	if (mark)
-		insns_cnt += sizeof(prog_mark);
+	अगर (mark)
+		insns_cnt += माप(prog_mark);
 
-	if (prio)
-		insns_cnt += sizeof(prog_prio);
+	अगर (prio)
+		insns_cnt += माप(prog_prio);
 
-	p = prog = malloc(insns_cnt);
-	if (!prog) {
-		fprintf(stderr, "Failed to allocate memory for instructions\n");
-		return EXIT_FAILURE;
-	}
+	p = prog = दो_स्मृति(insns_cnt);
+	अगर (!prog) अणु
+		ख_लिखो(मानक_त्रुटि, "Failed to allocate memory for instructions\n");
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	memcpy(p, prog_start, sizeof(prog_start));
-	p += sizeof(prog_start);
+	स_नकल(p, prog_start, माप(prog_start));
+	p += माप(prog_start);
 
-	if (idx) {
-		memcpy(p, prog_dev, sizeof(prog_dev));
-		p += sizeof(prog_dev);
-	}
+	अगर (idx) अणु
+		स_नकल(p, prog_dev, माप(prog_dev));
+		p += माप(prog_dev);
+	पूर्ण
 
-	if (mark) {
-		memcpy(p, prog_mark, sizeof(prog_mark));
-		p += sizeof(prog_mark);
-	}
+	अगर (mark) अणु
+		स_नकल(p, prog_mark, माप(prog_mark));
+		p += माप(prog_mark);
+	पूर्ण
 
-	if (prio) {
-		memcpy(p, prog_prio, sizeof(prog_prio));
-		p += sizeof(prog_prio);
-	}
+	अगर (prio) अणु
+		स_नकल(p, prog_prio, माप(prog_prio));
+		p += माप(prog_prio);
+	पूर्ण
 
-	memcpy(p, prog_end, sizeof(prog_end));
-	p += sizeof(prog_end);
+	स_नकल(p, prog_end, माप(prog_end));
+	p += माप(prog_end);
 
-	insns_cnt /= sizeof(struct bpf_insn);
+	insns_cnt /= माप(काष्ठा bpf_insn);
 
 	ret = bpf_load_program(BPF_PROG_TYPE_CGROUP_SOCK, prog, insns_cnt,
 				"GPL", 0, bpf_log_buf, BPF_LOG_BUF_SIZE);
 
-	free(prog);
+	मुक्त(prog);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int get_bind_to_device(int sd, char *name, size_t len)
-{
+अटल पूर्णांक get_bind_to_device(पूर्णांक sd, अक्षर *name, माप_प्रकार len)
+अणु
 	socklen_t optlen = len;
-	int rc;
+	पूर्णांक rc;
 
 	name[0] = '\0';
-	rc = getsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, name, &optlen);
-	if (rc < 0)
-		perror("setsockopt(SO_BINDTODEVICE)");
+	rc = माला_लोockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, name, &optlen);
+	अगर (rc < 0)
+		लिखो_त्रुटि("setsockopt(SO_BINDTODEVICE)");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static unsigned int get_somark(int sd)
-{
-	unsigned int mark = 0;
-	socklen_t optlen = sizeof(mark);
-	int rc;
+अटल अचिन्हित पूर्णांक get_somark(पूर्णांक sd)
+अणु
+	अचिन्हित पूर्णांक mark = 0;
+	socklen_t optlen = माप(mark);
+	पूर्णांक rc;
 
-	rc = getsockopt(sd, SOL_SOCKET, SO_MARK, &mark, &optlen);
-	if (rc < 0)
-		perror("getsockopt(SO_MARK)");
+	rc = माला_लोockopt(sd, SOL_SOCKET, SO_MARK, &mark, &optlen);
+	अगर (rc < 0)
+		लिखो_त्रुटि("getsockopt(SO_MARK)");
 
-	return mark;
-}
+	वापस mark;
+पूर्ण
 
-static unsigned int get_priority(int sd)
-{
-	unsigned int prio = 0;
-	socklen_t optlen = sizeof(prio);
-	int rc;
+अटल अचिन्हित पूर्णांक get_priority(पूर्णांक sd)
+अणु
+	अचिन्हित पूर्णांक prio = 0;
+	socklen_t optlen = माप(prio);
+	पूर्णांक rc;
 
-	rc = getsockopt(sd, SOL_SOCKET, SO_PRIORITY, &prio, &optlen);
-	if (rc < 0)
-		perror("getsockopt(SO_PRIORITY)");
+	rc = माला_लोockopt(sd, SOL_SOCKET, SO_PRIORITY, &prio, &optlen);
+	अगर (rc < 0)
+		लिखो_त्रुटि("getsockopt(SO_PRIORITY)");
 
-	return prio;
-}
+	वापस prio;
+पूर्ण
 
-static int show_sockopts(int family)
-{
-	unsigned int mark, prio;
-	char name[16];
-	int sd;
+अटल पूर्णांक show_sockopts(पूर्णांक family)
+अणु
+	अचिन्हित पूर्णांक mark, prio;
+	अक्षर name[16];
+	पूर्णांक sd;
 
 	sd = socket(family, SOCK_DGRAM, 17);
-	if (sd < 0) {
-		perror("socket");
-		return 1;
-	}
+	अगर (sd < 0) अणु
+		लिखो_त्रुटि("socket");
+		वापस 1;
+	पूर्ण
 
-	if (get_bind_to_device(sd, name, sizeof(name)) < 0)
-		return 1;
+	अगर (get_bind_to_device(sd, name, माप(name)) < 0)
+		वापस 1;
 
 	mark = get_somark(sd);
 	prio = get_priority(sd);
 
-	close(sd);
+	बंद(sd);
 
-	printf("sd %d: dev %s, mark %u, priority %u\n", sd, name, mark, prio);
+	म_लिखो("sd %d: dev %s, mark %u, priority %u\n", sd, name, mark, prio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usage(const char *argv0)
-{
-	printf("Usage:\n");
-	printf("  Attach a program\n");
-	printf("  %s -b bind-to-dev -m mark -p prio cg-path\n", argv0);
-	printf("\n");
-	printf("  Detach a program\n");
-	printf("  %s -d cg-path\n", argv0);
-	printf("\n");
-	printf("  Show inherited socket settings (mark, priority, and device)\n");
-	printf("  %s [-6]\n", argv0);
-	return EXIT_FAILURE;
-}
+अटल पूर्णांक usage(स्थिर अक्षर *argv0)
+अणु
+	म_लिखो("Usage:\n");
+	म_लिखो("  Attach a program\n");
+	म_लिखो("  %s -b bind-to-dev -m mark -p prio cg-path\n", argv0);
+	म_लिखो("\n");
+	म_लिखो("  Detach a program\n");
+	म_लिखो("  %s -d cg-path\n", argv0);
+	म_लिखो("\n");
+	म_लिखो("  Show inherited socket settings (mark, priority, and device)\n");
+	म_लिखो("  %s [-6]\n", argv0);
+	वापस निकास_त्रुटि;
+पूर्ण
 
-int main(int argc, char **argv)
-{
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
 	__u32 idx = 0, mark = 0, prio = 0;
-	const char *cgrp_path = NULL;
-	int cg_fd, prog_fd, ret;
-	int family = PF_INET;
-	int do_attach = 1;
-	int rc;
+	स्थिर अक्षर *cgrp_path = शून्य;
+	पूर्णांक cg_fd, prog_fd, ret;
+	पूर्णांक family = PF_INET;
+	पूर्णांक करो_attach = 1;
+	पूर्णांक rc;
 
-	while ((rc = getopt(argc, argv, "db:m:p:6")) != -1) {
-		switch (rc) {
-		case 'd':
-			do_attach = 0;
-			break;
-		case 'b':
-			idx = if_nametoindex(optarg);
-			if (!idx) {
-				idx = strtoumax(optarg, NULL, 0);
-				if (!idx) {
-					printf("Invalid device name\n");
-					return EXIT_FAILURE;
-				}
-			}
-			break;
-		case 'm':
-			mark = strtoumax(optarg, NULL, 0);
-			break;
-		case 'p':
-			prio = strtoumax(optarg, NULL, 0);
-			break;
-		case '6':
+	जबतक ((rc = getopt(argc, argv, "db:m:p:6")) != -1) अणु
+		चयन (rc) अणु
+		हाल 'd':
+			करो_attach = 0;
+			अवरोध;
+		हाल 'b':
+			idx = अगर_nametoindex(optarg);
+			अगर (!idx) अणु
+				idx = strtoumax(optarg, शून्य, 0);
+				अगर (!idx) अणु
+					म_लिखो("Invalid device name\n");
+					वापस निकास_त्रुटि;
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल 'm':
+			mark = strtoumax(optarg, शून्य, 0);
+			अवरोध;
+		हाल 'p':
+			prio = strtoumax(optarg, शून्य, 0);
+			अवरोध;
+		हाल '6':
 			family = PF_INET6;
-			break;
-		default:
-			return usage(argv[0]);
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस usage(argv[0]);
+		पूर्ण
+	पूर्ण
 
-	if (optind == argc)
-		return show_sockopts(family);
+	अगर (optind == argc)
+		वापस show_sockopts(family);
 
 	cgrp_path = argv[optind];
-	if (!cgrp_path) {
-		fprintf(stderr, "cgroup path not given\n");
-		return EXIT_FAILURE;
-	}
+	अगर (!cgrp_path) अणु
+		ख_लिखो(मानक_त्रुटि, "cgroup path not given\n");
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	if (do_attach && !idx && !mark && !prio) {
-		fprintf(stderr,
+	अगर (करो_attach && !idx && !mark && !prio) अणु
+		ख_लिखो(मानक_त्रुटि,
 			"One of device, mark or priority must be given\n");
-		return EXIT_FAILURE;
-	}
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	cg_fd = open(cgrp_path, O_DIRECTORY | O_RDONLY);
-	if (cg_fd < 0) {
-		printf("Failed to open cgroup path: '%s'\n", strerror(errno));
-		return EXIT_FAILURE;
-	}
+	cg_fd = खोलो(cgrp_path, O_सूचीECTORY | O_RDONLY);
+	अगर (cg_fd < 0) अणु
+		म_लिखो("Failed to open cgroup path: '%s'\n", म_त्रुटि(त्रुटि_सं));
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	if (do_attach) {
+	अगर (करो_attach) अणु
 		prog_fd = prog_load(idx, mark, prio);
-		if (prog_fd < 0) {
-			printf("Failed to load prog: '%s'\n", strerror(errno));
-			printf("Output from kernel verifier:\n%s\n-------\n",
+		अगर (prog_fd < 0) अणु
+			म_लिखो("Failed to load prog: '%s'\n", म_त्रुटि(त्रुटि_सं));
+			म_लिखो("Output from kernel verifier:\n%s\n-------\n",
 			       bpf_log_buf);
-			return EXIT_FAILURE;
-		}
+			वापस निकास_त्रुटि;
+		पूर्ण
 
 		ret = bpf_prog_attach(prog_fd, cg_fd,
 				      BPF_CGROUP_INET_SOCK_CREATE, 0);
-		if (ret < 0) {
-			printf("Failed to attach prog to cgroup: '%s'\n",
-			       strerror(errno));
-			return EXIT_FAILURE;
-		}
-	} else {
+		अगर (ret < 0) अणु
+			म_लिखो("Failed to attach prog to cgroup: '%s'\n",
+			       म_त्रुटि(त्रुटि_सं));
+			वापस निकास_त्रुटि;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = bpf_prog_detach(cg_fd, BPF_CGROUP_INET_SOCK_CREATE);
-		if (ret < 0) {
-			printf("Failed to detach prog from cgroup: '%s'\n",
-			       strerror(errno));
-			return EXIT_FAILURE;
-		}
-	}
+		अगर (ret < 0) अणु
+			म_लिखो("Failed to detach prog from cgroup: '%s'\n",
+			       म_त्रुटि(त्रुटि_सं));
+			वापस निकास_त्रुटि;
+		पूर्ण
+	पूर्ण
 
-	close(cg_fd);
-	return EXIT_SUCCESS;
-}
+	बंद(cg_fd);
+	वापस निकास_सफल;
+पूर्ण

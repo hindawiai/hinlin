@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Russell King
  *  Written from the i915 driver.
  */
 
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_fourcc.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_fourcc.h>
 
-#include "armada_crtc.h"
-#include "armada_drm.h"
-#include "armada_fb.h"
-#include "armada_gem.h"
+#समावेश "armada_crtc.h"
+#समावेश "armada_drm.h"
+#समावेश "armada_fb.h"
+#समावेश "armada_gem.h"
 
-static const struct fb_ops armada_fb_ops = {
+अटल स्थिर काष्ठा fb_ops armada_fb_ops = अणु
 	.owner		= THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
 	.fb_fillrect	= drm_fb_helper_cfb_fillrect,
 	.fb_copyarea	= drm_fb_helper_cfb_copyarea,
 	.fb_imageblit	= drm_fb_helper_cfb_imageblit,
-};
+पूर्ण;
 
-static int armada_fbdev_create(struct drm_fb_helper *fbh,
-	struct drm_fb_helper_surface_size *sizes)
-{
-	struct drm_device *dev = fbh->dev;
-	struct drm_mode_fb_cmd2 mode;
-	struct armada_framebuffer *dfb;
-	struct armada_gem_object *obj;
-	struct fb_info *info;
-	int size, ret;
-	void *ptr;
+अटल पूर्णांक armada_fbdev_create(काष्ठा drm_fb_helper *fbh,
+	काष्ठा drm_fb_helper_surface_size *sizes)
+अणु
+	काष्ठा drm_device *dev = fbh->dev;
+	काष्ठा drm_mode_fb_cmd2 mode;
+	काष्ठा armada_framebuffer *dfb;
+	काष्ठा armada_gem_object *obj;
+	काष्ठा fb_info *info;
+	पूर्णांक size, ret;
+	व्योम *ptr;
 
-	memset(&mode, 0, sizeof(mode));
+	स_रखो(&mode, 0, माप(mode));
 	mode.width = sizes->surface_width;
 	mode.height = sizes->surface_height;
 	mode.pitches[0] = armada_pitch(mode.width, sizes->surface_bpp);
-	mode.pixel_format = drm_mode_legacy_fb_format(sizes->surface_bpp,
+	mode.pixel_क्रमmat = drm_mode_legacy_fb_क्रमmat(sizes->surface_bpp,
 					sizes->surface_depth);
 
 	size = mode.pitches[0] * mode.height;
-	obj = armada_gem_alloc_private_object(dev, size);
-	if (!obj) {
+	obj = armada_gem_alloc_निजी_object(dev, size);
+	अगर (!obj) अणु
 		DRM_ERROR("failed to allocate fb memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = armada_gem_linear_back(dev, obj);
-	if (ret) {
+	अगर (ret) अणु
 		drm_gem_object_put(&obj->obj);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ptr = armada_gem_map_object(dev, obj);
-	if (!ptr) {
+	अगर (!ptr) अणु
 		drm_gem_object_put(&obj->obj);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dfb = armada_framebuffer_create(dev, &mode, obj);
 
 	/*
-	 * A reference is now held by the framebuffer object if
-	 * successful, otherwise this drops the ref for the error path.
+	 * A reference is now held by the framebuffer object अगर
+	 * successful, otherwise this drops the ref क्रम the error path.
 	 */
 	drm_gem_object_put(&obj->obj);
 
-	if (IS_ERR(dfb))
-		return PTR_ERR(dfb);
+	अगर (IS_ERR(dfb))
+		वापस PTR_ERR(dfb);
 
 	info = drm_fb_helper_alloc_fbi(fbh);
-	if (IS_ERR(info)) {
+	अगर (IS_ERR(info)) अणु
 		ret = PTR_ERR(info);
-		goto err_fballoc;
-	}
+		जाओ err_fballoc;
+	पूर्ण
 
 	info->fbops = &armada_fb_ops;
 	info->fix.smem_start = obj->phys_addr;
@@ -88,80 +89,80 @@ static int armada_fbdev_create(struct drm_fb_helper *fbh,
 	drm_fb_helper_fill_info(info, fbh, sizes);
 
 	DRM_DEBUG_KMS("allocated %dx%d %dbpp fb: 0x%08llx\n",
-		dfb->fb.width, dfb->fb.height, dfb->fb.format->cpp[0] * 8,
-		(unsigned long long)obj->phys_addr);
+		dfb->fb.width, dfb->fb.height, dfb->fb.क्रमmat->cpp[0] * 8,
+		(अचिन्हित दीर्घ दीर्घ)obj->phys_addr);
 
-	return 0;
+	वापस 0;
 
  err_fballoc:
 	dfb->fb.funcs->destroy(&dfb->fb);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int armada_fb_probe(struct drm_fb_helper *fbh,
-	struct drm_fb_helper_surface_size *sizes)
-{
-	int ret = 0;
+अटल पूर्णांक armada_fb_probe(काष्ठा drm_fb_helper *fbh,
+	काष्ठा drm_fb_helper_surface_size *sizes)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!fbh->fb) {
+	अगर (!fbh->fb) अणु
 		ret = armada_fbdev_create(fbh, sizes);
-		if (ret == 0)
+		अगर (ret == 0)
 			ret = 1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct drm_fb_helper_funcs armada_fb_helper_funcs = {
+अटल स्थिर काष्ठा drm_fb_helper_funcs armada_fb_helper_funcs = अणु
 	.fb_probe	= armada_fb_probe,
-};
+पूर्ण;
 
-int armada_fbdev_init(struct drm_device *dev)
-{
-	struct armada_private *priv = drm_to_armada_dev(dev);
-	struct drm_fb_helper *fbh;
-	int ret;
+पूर्णांक armada_fbdev_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा armada_निजी *priv = drm_to_armada_dev(dev);
+	काष्ठा drm_fb_helper *fbh;
+	पूर्णांक ret;
 
-	fbh = devm_kzalloc(dev->dev, sizeof(*fbh), GFP_KERNEL);
-	if (!fbh)
-		return -ENOMEM;
+	fbh = devm_kzalloc(dev->dev, माप(*fbh), GFP_KERNEL);
+	अगर (!fbh)
+		वापस -ENOMEM;
 
 	priv->fbdev = fbh;
 
 	drm_fb_helper_prepare(dev, fbh, &armada_fb_helper_funcs);
 
 	ret = drm_fb_helper_init(dev, fbh);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("failed to initialize drm fb helper\n");
-		goto err_fb_helper;
-	}
+		जाओ err_fb_helper;
+	पूर्ण
 
 	ret = drm_fb_helper_initial_config(fbh, 32);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("failed to set initial config\n");
-		goto err_fb_setup;
-	}
+		जाओ err_fb_setup;
+	पूर्ण
 
-	return 0;
+	वापस 0;
  err_fb_setup:
 	drm_fb_helper_fini(fbh);
  err_fb_helper:
-	priv->fbdev = NULL;
-	return ret;
-}
+	priv->fbdev = शून्य;
+	वापस ret;
+पूर्ण
 
-void armada_fbdev_fini(struct drm_device *dev)
-{
-	struct armada_private *priv = drm_to_armada_dev(dev);
-	struct drm_fb_helper *fbh = priv->fbdev;
+व्योम armada_fbdev_fini(काष्ठा drm_device *dev)
+अणु
+	काष्ठा armada_निजी *priv = drm_to_armada_dev(dev);
+	काष्ठा drm_fb_helper *fbh = priv->fbdev;
 
-	if (fbh) {
-		drm_fb_helper_unregister_fbi(fbh);
+	अगर (fbh) अणु
+		drm_fb_helper_unरेजिस्टर_fbi(fbh);
 
 		drm_fb_helper_fini(fbh);
 
-		if (fbh->fb)
+		अगर (fbh->fb)
 			fbh->fb->funcs->destroy(fbh->fb);
 
-		priv->fbdev = NULL;
-	}
-}
+		priv->fbdev = शून्य;
+	पूर्ण
+पूर्ण

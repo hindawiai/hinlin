@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*---------------------------------------------------------------------------+
- |  reg_divide.c                                                             |
+ |  reg_भागide.c                                                             |
  |                                                                           |
  | Divide one FPU_REG by another and put the result in a destination FPU_REG.|
  |                                                                           |
@@ -8,8 +9,8 @@
  |                  W. Metzenthen, 22 Parker St, Ormond, Vic 3163, Australia |
  |                  E-mail   billm@jacobi.maths.monash.edu.au                |
  |                                                                           |
- |    Return value is the tag of the answer, or-ed with FPU_Exception if     |
- |    one was raised, or -1 on internal error.                               |
+ |    Return value is the tag of the answer, or-ed with FPU_Exception अगर     |
+ |    one was उठाओd, or -1 on पूर्णांकernal error.                               |
  |                                                                           |
  +---------------------------------------------------------------------------*/
 
@@ -17,167 +18,167 @@
  | The destination may be any FPU_REG, including one of the source FPU_REGs. |
  +---------------------------------------------------------------------------*/
 
-#include "exception.h"
-#include "reg_constant.h"
-#include "fpu_emu.h"
-#include "fpu_system.h"
+#समावेश "exception.h"
+#समावेश "reg_constant.h"
+#समावेश "fpu_emu.h"
+#समावेश "fpu_system.h"
 
 /*
-  Divide one register by another and put the result into a third register.
+  Divide one रेजिस्टर by another and put the result पूर्णांकo a third रेजिस्टर.
   */
-int FPU_div(int flags, int rm, int control_w)
-{
+पूर्णांक FPU_भाग(पूर्णांक flags, पूर्णांक rm, पूर्णांक control_w)
+अणु
 	FPU_REG x, y;
-	FPU_REG const *a, *b, *st0_ptr, *st_ptr;
+	FPU_REG स्थिर *a, *b, *st0_ptr, *st_ptr;
 	FPU_REG *dest;
-	u_char taga, tagb, signa, signb, sign, saved_sign;
-	int tag, deststnr;
+	u_अक्षर taga, tagb, signa, signb, sign, saved_sign;
+	पूर्णांक tag, deststnr;
 
-	if (flags & DEST_RM)
+	अगर (flags & DEST_RM)
 		deststnr = rm;
-	else
+	अन्यथा
 		deststnr = 0;
 
-	if (flags & REV) {
+	अगर (flags & REV) अणु
 		b = &st(0);
 		st0_ptr = b;
 		tagb = FPU_gettag0();
-		if (flags & LOADED) {
+		अगर (flags & LOADED) अणु
 			a = (FPU_REG *) rm;
 			taga = flags & 0x0f;
-		} else {
+		पूर्ण अन्यथा अणु
 			a = &st(rm);
 			st_ptr = a;
 			taga = FPU_gettagi(rm);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		a = &st(0);
 		st0_ptr = a;
 		taga = FPU_gettag0();
-		if (flags & LOADED) {
+		अगर (flags & LOADED) अणु
 			b = (FPU_REG *) rm;
 			tagb = flags & 0x0f;
-		} else {
+		पूर्ण अन्यथा अणु
 			b = &st(rm);
 			st_ptr = b;
 			tagb = FPU_gettagi(rm);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	signa = getsign(a);
-	signb = getsign(b);
+	signa = माला_लोign(a);
+	signb = माला_लोign(b);
 
 	sign = signa ^ signb;
 
 	dest = &st(deststnr);
-	saved_sign = getsign(dest);
+	saved_sign = माला_लोign(dest);
 
-	if (!(taga | tagb)) {
-		/* Both regs Valid, this should be the most common case. */
+	अगर (!(taga | tagb)) अणु
+		/* Both regs Valid, this should be the most common हाल. */
 		reg_copy(a, &x);
 		reg_copy(b, &y);
 		setpositive(&x);
 		setpositive(&y);
-		tag = FPU_u_div(&x, &y, dest, control_w, sign);
+		tag = FPU_u_भाग(&x, &y, dest, control_w, sign);
 
-		if (tag < 0)
-			return tag;
+		अगर (tag < 0)
+			वापस tag;
 
 		FPU_settagi(deststnr, tag);
-		return tag;
-	}
+		वापस tag;
+	पूर्ण
 
-	if (taga == TAG_Special)
+	अगर (taga == TAG_Special)
 		taga = FPU_Special(a);
-	if (tagb == TAG_Special)
+	अगर (tagb == TAG_Special)
 		tagb = FPU_Special(b);
 
-	if (((taga == TAG_Valid) && (tagb == TW_Denormal))
+	अगर (((taga == TAG_Valid) && (tagb == TW_Denormal))
 	    || ((taga == TW_Denormal) && (tagb == TAG_Valid))
-	    || ((taga == TW_Denormal) && (tagb == TW_Denormal))) {
-		if (denormal_operand() < 0)
-			return FPU_Exception;
+	    || ((taga == TW_Denormal) && (tagb == TW_Denormal))) अणु
+		अगर (denormal_opeअक्रम() < 0)
+			वापस FPU_Exception;
 
 		FPU_to_exp16(a, &x);
 		FPU_to_exp16(b, &y);
-		tag = FPU_u_div(&x, &y, dest, control_w, sign);
-		if (tag < 0)
-			return tag;
+		tag = FPU_u_भाग(&x, &y, dest, control_w, sign);
+		अगर (tag < 0)
+			वापस tag;
 
 		FPU_settagi(deststnr, tag);
-		return tag;
-	} else if ((taga <= TW_Denormal) && (tagb <= TW_Denormal)) {
-		if (tagb != TAG_Zero) {
+		वापस tag;
+	पूर्ण अन्यथा अगर ((taga <= TW_Denormal) && (tagb <= TW_Denormal)) अणु
+		अगर (tagb != TAG_Zero) अणु
 			/* Want to find Zero/Valid */
-			if (tagb == TW_Denormal) {
-				if (denormal_operand() < 0)
-					return FPU_Exception;
-			}
+			अगर (tagb == TW_Denormal) अणु
+				अगर (denormal_opeअक्रम() < 0)
+					वापस FPU_Exception;
+			पूर्ण
 
 			/* The result is zero. */
 			FPU_copy_to_regi(&CONST_Z, TAG_Zero, deststnr);
 			setsign(dest, sign);
-			return TAG_Zero;
-		}
+			वापस TAG_Zero;
+		पूर्ण
 		/* We have an exception condition, either 0/0 or Valid/Zero. */
-		if (taga == TAG_Zero) {
+		अगर (taga == TAG_Zero) अणु
 			/* 0/0 */
-			return arith_invalid(deststnr);
-		}
+			वापस arith_invalid(deststnr);
+		पूर्ण
 		/* Valid/Zero */
-		return FPU_divide_by_zero(deststnr, sign);
-	}
+		वापस FPU_भागide_by_zero(deststnr, sign);
+	पूर्ण
 	/* Must have infinities, NaNs, etc */
-	else if ((taga == TW_NaN) || (tagb == TW_NaN)) {
-		if (flags & LOADED)
-			return real_2op_NaN((FPU_REG *) rm, flags & 0x0f, 0,
+	अन्यथा अगर ((taga == TW_NaN) || (tagb == TW_NaN)) अणु
+		अगर (flags & LOADED)
+			वापस real_2op_NaN((FPU_REG *) rm, flags & 0x0f, 0,
 					    st0_ptr);
 
-		if (flags & DEST_RM) {
-			int tag;
+		अगर (flags & DEST_RM) अणु
+			पूर्णांक tag;
 			tag = FPU_gettag0();
-			if (tag == TAG_Special)
+			अगर (tag == TAG_Special)
 				tag = FPU_Special(st0_ptr);
-			return real_2op_NaN(st0_ptr, tag, rm,
+			वापस real_2op_NaN(st0_ptr, tag, rm,
 					    (flags & REV) ? st0_ptr : &st(rm));
-		} else {
-			int tag;
+		पूर्ण अन्यथा अणु
+			पूर्णांक tag;
 			tag = FPU_gettagi(rm);
-			if (tag == TAG_Special)
+			अगर (tag == TAG_Special)
 				tag = FPU_Special(&st(rm));
-			return real_2op_NaN(&st(rm), tag, 0,
+			वापस real_2op_NaN(&st(rm), tag, 0,
 					    (flags & REV) ? st0_ptr : &st(rm));
-		}
-	} else if (taga == TW_Infinity) {
-		if (tagb == TW_Infinity) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (taga == TW_Infinity) अणु
+		अगर (tagb == TW_Infinity) अणु
 			/* infinity/infinity */
-			return arith_invalid(deststnr);
-		} else {
+			वापस arith_invalid(deststnr);
+		पूर्ण अन्यथा अणु
 			/* tagb must be Valid or Zero */
-			if ((tagb == TW_Denormal) && (denormal_operand() < 0))
-				return FPU_Exception;
+			अगर ((tagb == TW_Denormal) && (denormal_opeअक्रम() < 0))
+				वापस FPU_Exception;
 
-			/* Infinity divided by Zero or Valid does
-			   not raise and exception, but returns Infinity */
+			/* Infinity भागided by Zero or Valid करोes
+			   not उठाओ and exception, but वापसs Infinity */
 			FPU_copy_to_regi(a, TAG_Special, deststnr);
 			setsign(dest, sign);
-			return taga;
-		}
-	} else if (tagb == TW_Infinity) {
-		if ((taga == TW_Denormal) && (denormal_operand() < 0))
-			return FPU_Exception;
+			वापस taga;
+		पूर्ण
+	पूर्ण अन्यथा अगर (tagb == TW_Infinity) अणु
+		अगर ((taga == TW_Denormal) && (denormal_opeअक्रम() < 0))
+			वापस FPU_Exception;
 
 		/* The result is zero. */
 		FPU_copy_to_regi(&CONST_Z, TAG_Zero, deststnr);
 		setsign(dest, sign);
-		return TAG_Zero;
-	}
-#ifdef PARANOID
-	else {
+		वापस TAG_Zero;
+	पूर्ण
+#अगर_घोषित PARANOID
+	अन्यथा अणु
 		EXCEPTION(EX_INTERNAL | 0x102);
-		return FPU_Exception;
-	}
-#endif /* PARANOID */
+		वापस FPU_Exception;
+	पूर्ण
+#पूर्ण_अगर /* PARANOID */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

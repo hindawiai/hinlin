@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __CPUIDLE_PSCI_H
-#define __CPUIDLE_PSCI_H
+#अगर_अघोषित __CPUIDLE_PSCI_H
+#घोषणा __CPUIDLE_PSCI_H
 
-struct device;
-struct device_node;
+काष्ठा device;
+काष्ठा device_node;
 
-void psci_set_domain_state(u32 state);
-int psci_dt_parse_state_node(struct device_node *np, u32 *state);
+व्योम psci_set_करोमुख्य_state(u32 state);
+पूर्णांक psci_dt_parse_state_node(काष्ठा device_node *np, u32 *state);
 
-#ifdef CONFIG_ARM_PSCI_CPUIDLE_DOMAIN
-struct device *psci_dt_attach_cpu(int cpu);
-void psci_dt_detach_cpu(struct device *dev);
-#else
-static inline struct device *psci_dt_attach_cpu(int cpu) { return NULL; }
-static inline void psci_dt_detach_cpu(struct device *dev) { }
-#endif
+#अगर_घोषित CONFIG_ARM_PSCI_CPUIDLE_DOMAIN
+काष्ठा device *psci_dt_attach_cpu(पूर्णांक cpu);
+व्योम psci_dt_detach_cpu(काष्ठा device *dev);
+#अन्यथा
+अटल अंतरभूत काष्ठा device *psci_dt_attach_cpu(पूर्णांक cpu) अणु वापस शून्य; पूर्ण
+अटल अंतरभूत व्योम psci_dt_detach_cpu(काष्ठा device *dev) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* __CPUIDLE_PSCI_H */
+#पूर्ण_अगर /* __CPUIDLE_PSCI_H */

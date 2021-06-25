@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for atomisp driver sysfs interface.
+ * Support क्रम atomisp driver sysfs पूर्णांकerface.
  *
  * Copyright (c) 2014 Intel Corporation. All Rights Reserved.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  *
  */
 
-#ifndef	__ATOMISP_DRVFS_H__
-#define	__ATOMISP_DRVFS_H__
+#अगर_अघोषित	__ATOMISP_DRVFS_H__
+#घोषणा	__ATOMISP_DRVFS_H__
 
-int atomisp_drvfs_init(struct atomisp_device *isp);
-void atomisp_drvfs_exit(void);
+पूर्णांक atomisp_drvfs_init(काष्ठा atomisp_device *isp);
+व्योम atomisp_drvfs_निकास(व्योम);
 
-#endif /* __ATOMISP_DRVFS_H__ */
+#पूर्ण_अगर /* __ATOMISP_DRVFS_H__ */

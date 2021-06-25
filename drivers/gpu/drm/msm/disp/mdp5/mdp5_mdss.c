@@ -1,279 +1,280 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/irqdomain.h>
-#include <linux/irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/irq.h>
 
-#include "msm_drv.h"
-#include "mdp5_kms.h"
+#समावेश "msm_drv.h"
+#समावेश "mdp5_kms.h"
 
-#define to_mdp5_mdss(x) container_of(x, struct mdp5_mdss, base)
+#घोषणा to_mdp5_mdss(x) container_of(x, काष्ठा mdp5_mdss, base)
 
-struct mdp5_mdss {
-	struct msm_mdss base;
+काष्ठा mdp5_mdss अणु
+	काष्ठा msm_mdss base;
 
-	void __iomem *mmio, *vbif;
+	व्योम __iomem *mmio, *vbअगर;
 
-	struct regulator *vdd;
+	काष्ठा regulator *vdd;
 
-	struct clk *ahb_clk;
-	struct clk *axi_clk;
-	struct clk *vsync_clk;
+	काष्ठा clk *ahb_clk;
+	काष्ठा clk *axi_clk;
+	काष्ठा clk *vsync_clk;
 
-	struct {
-		volatile unsigned long enabled_mask;
-		struct irq_domain *domain;
-	} irqcontroller;
-};
+	काष्ठा अणु
+		अस्थिर अचिन्हित दीर्घ enabled_mask;
+		काष्ठा irq_करोमुख्य *करोमुख्य;
+	पूर्ण irqcontroller;
+पूर्ण;
 
-static inline void mdss_write(struct mdp5_mdss *mdp5_mdss, u32 reg, u32 data)
-{
-	msm_writel(data, mdp5_mdss->mmio + reg);
-}
+अटल अंतरभूत व्योम mdss_ग_लिखो(काष्ठा mdp5_mdss *mdp5_mdss, u32 reg, u32 data)
+अणु
+	msm_ग_लिखोl(data, mdp5_mdss->mmio + reg);
+पूर्ण
 
-static inline u32 mdss_read(struct mdp5_mdss *mdp5_mdss, u32 reg)
-{
-	return msm_readl(mdp5_mdss->mmio + reg);
-}
+अटल अंतरभूत u32 mdss_पढ़ो(काष्ठा mdp5_mdss *mdp5_mdss, u32 reg)
+अणु
+	वापस msm_पढ़ोl(mdp5_mdss->mmio + reg);
+पूर्ण
 
-static irqreturn_t mdss_irq(int irq, void *arg)
-{
-	struct mdp5_mdss *mdp5_mdss = arg;
-	u32 intr;
+अटल irqवापस_t mdss_irq(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा mdp5_mdss *mdp5_mdss = arg;
+	u32 पूर्णांकr;
 
-	intr = mdss_read(mdp5_mdss, REG_MDSS_HW_INTR_STATUS);
+	पूर्णांकr = mdss_पढ़ो(mdp5_mdss, REG_MDSS_HW_INTR_STATUS);
 
-	VERB("intr=%08x", intr);
+	VERB("intr=%08x", पूर्णांकr);
 
-	while (intr) {
-		irq_hw_number_t hwirq = fls(intr) - 1;
+	जबतक (पूर्णांकr) अणु
+		irq_hw_number_t hwirq = fls(पूर्णांकr) - 1;
 
 		generic_handle_irq(irq_find_mapping(
-				mdp5_mdss->irqcontroller.domain, hwirq));
-		intr &= ~(1 << hwirq);
-	}
+				mdp5_mdss->irqcontroller.करोमुख्य, hwirq));
+		पूर्णांकr &= ~(1 << hwirq);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * interrupt-controller implementation, so sub-blocks (MDP/HDMI/eDP/DSI/etc)
- * can register to get their irq's delivered
+ * पूर्णांकerrupt-controller implementation, so sub-blocks (MDP/HDMI/eDP/DSI/etc)
+ * can रेजिस्टर to get their irq's delivered
  */
 
-#define VALID_IRQS  (MDSS_HW_INTR_STATUS_INTR_MDP | \
+#घोषणा VALID_IRQS  (MDSS_HW_INTR_STATUS_INTR_MDP | \
 		MDSS_HW_INTR_STATUS_INTR_DSI0 | \
 		MDSS_HW_INTR_STATUS_INTR_DSI1 | \
 		MDSS_HW_INTR_STATUS_INTR_HDMI | \
 		MDSS_HW_INTR_STATUS_INTR_EDP)
 
-static void mdss_hw_mask_irq(struct irq_data *irqd)
-{
-	struct mdp5_mdss *mdp5_mdss = irq_data_get_irq_chip_data(irqd);
+अटल व्योम mdss_hw_mask_irq(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा mdp5_mdss *mdp5_mdss = irq_data_get_irq_chip_data(irqd);
 
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	clear_bit(irqd->hwirq, &mdp5_mdss->irqcontroller.enabled_mask);
 	smp_mb__after_atomic();
-}
+पूर्ण
 
-static void mdss_hw_unmask_irq(struct irq_data *irqd)
-{
-	struct mdp5_mdss *mdp5_mdss = irq_data_get_irq_chip_data(irqd);
+अटल व्योम mdss_hw_unmask_irq(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा mdp5_mdss *mdp5_mdss = irq_data_get_irq_chip_data(irqd);
 
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	set_bit(irqd->hwirq, &mdp5_mdss->irqcontroller.enabled_mask);
 	smp_mb__after_atomic();
-}
+पूर्ण
 
-static struct irq_chip mdss_hw_irq_chip = {
+अटल काष्ठा irq_chip mdss_hw_irq_chip = अणु
 	.name		= "mdss",
 	.irq_mask	= mdss_hw_mask_irq,
 	.irq_unmask	= mdss_hw_unmask_irq,
-};
+पूर्ण;
 
-static int mdss_hw_irqdomain_map(struct irq_domain *d, unsigned int irq,
+अटल पूर्णांक mdss_hw_irqकरोमुख्य_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
 				 irq_hw_number_t hwirq)
-{
-	struct mdp5_mdss *mdp5_mdss = d->host_data;
+अणु
+	काष्ठा mdp5_mdss *mdp5_mdss = d->host_data;
 
-	if (!(VALID_IRQS & (1 << hwirq)))
-		return -EPERM;
+	अगर (!(VALID_IRQS & (1 << hwirq)))
+		वापस -EPERM;
 
 	irq_set_chip_and_handler(irq, &mdss_hw_irq_chip, handle_level_irq);
 	irq_set_chip_data(irq, mdp5_mdss);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops mdss_hw_irqdomain_ops = {
-	.map = mdss_hw_irqdomain_map,
-	.xlate = irq_domain_xlate_onecell,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops mdss_hw_irqकरोमुख्य_ops = अणु
+	.map = mdss_hw_irqकरोमुख्य_map,
+	.xlate = irq_करोमुख्य_xlate_onecell,
+पूर्ण;
 
 
-static int mdss_irq_domain_init(struct mdp5_mdss *mdp5_mdss)
-{
-	struct device *dev = mdp5_mdss->base.dev->dev;
-	struct irq_domain *d;
+अटल पूर्णांक mdss_irq_करोमुख्य_init(काष्ठा mdp5_mdss *mdp5_mdss)
+अणु
+	काष्ठा device *dev = mdp5_mdss->base.dev->dev;
+	काष्ठा irq_करोमुख्य *d;
 
-	d = irq_domain_add_linear(dev->of_node, 32, &mdss_hw_irqdomain_ops,
+	d = irq_करोमुख्य_add_linear(dev->of_node, 32, &mdss_hw_irqकरोमुख्य_ops,
 				  mdp5_mdss);
-	if (!d) {
+	अगर (!d) अणु
 		DRM_DEV_ERROR(dev, "mdss irq domain add failed\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	mdp5_mdss->irqcontroller.enabled_mask = 0;
-	mdp5_mdss->irqcontroller.domain = d;
+	mdp5_mdss->irqcontroller.करोमुख्य = d;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mdp5_mdss_enable(struct msm_mdss *mdss)
-{
-	struct mdp5_mdss *mdp5_mdss = to_mdp5_mdss(mdss);
+अटल पूर्णांक mdp5_mdss_enable(काष्ठा msm_mdss *mdss)
+अणु
+	काष्ठा mdp5_mdss *mdp5_mdss = to_mdp5_mdss(mdss);
 	DBG("");
 
 	clk_prepare_enable(mdp5_mdss->ahb_clk);
-	if (mdp5_mdss->axi_clk)
+	अगर (mdp5_mdss->axi_clk)
 		clk_prepare_enable(mdp5_mdss->axi_clk);
-	if (mdp5_mdss->vsync_clk)
+	अगर (mdp5_mdss->vsync_clk)
 		clk_prepare_enable(mdp5_mdss->vsync_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mdp5_mdss_disable(struct msm_mdss *mdss)
-{
-	struct mdp5_mdss *mdp5_mdss = to_mdp5_mdss(mdss);
+अटल पूर्णांक mdp5_mdss_disable(काष्ठा msm_mdss *mdss)
+अणु
+	काष्ठा mdp5_mdss *mdp5_mdss = to_mdp5_mdss(mdss);
 	DBG("");
 
-	if (mdp5_mdss->vsync_clk)
+	अगर (mdp5_mdss->vsync_clk)
 		clk_disable_unprepare(mdp5_mdss->vsync_clk);
-	if (mdp5_mdss->axi_clk)
+	अगर (mdp5_mdss->axi_clk)
 		clk_disable_unprepare(mdp5_mdss->axi_clk);
 	clk_disable_unprepare(mdp5_mdss->ahb_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int msm_mdss_get_clocks(struct mdp5_mdss *mdp5_mdss)
-{
-	struct platform_device *pdev =
-			to_platform_device(mdp5_mdss->base.dev->dev);
+अटल पूर्णांक msm_mdss_get_घड़ीs(काष्ठा mdp5_mdss *mdp5_mdss)
+अणु
+	काष्ठा platक्रमm_device *pdev =
+			to_platक्रमm_device(mdp5_mdss->base.dev->dev);
 
 	mdp5_mdss->ahb_clk = msm_clk_get(pdev, "iface");
-	if (IS_ERR(mdp5_mdss->ahb_clk))
-		mdp5_mdss->ahb_clk = NULL;
+	अगर (IS_ERR(mdp5_mdss->ahb_clk))
+		mdp5_mdss->ahb_clk = शून्य;
 
 	mdp5_mdss->axi_clk = msm_clk_get(pdev, "bus");
-	if (IS_ERR(mdp5_mdss->axi_clk))
-		mdp5_mdss->axi_clk = NULL;
+	अगर (IS_ERR(mdp5_mdss->axi_clk))
+		mdp5_mdss->axi_clk = शून्य;
 
 	mdp5_mdss->vsync_clk = msm_clk_get(pdev, "vsync");
-	if (IS_ERR(mdp5_mdss->vsync_clk))
-		mdp5_mdss->vsync_clk = NULL;
+	अगर (IS_ERR(mdp5_mdss->vsync_clk))
+		mdp5_mdss->vsync_clk = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mdp5_mdss_destroy(struct drm_device *dev)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct mdp5_mdss *mdp5_mdss = to_mdp5_mdss(priv->mdss);
+अटल व्योम mdp5_mdss_destroy(काष्ठा drm_device *dev)
+अणु
+	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
+	काष्ठा mdp5_mdss *mdp5_mdss = to_mdp5_mdss(priv->mdss);
 
-	if (!mdp5_mdss)
-		return;
+	अगर (!mdp5_mdss)
+		वापस;
 
-	irq_domain_remove(mdp5_mdss->irqcontroller.domain);
-	mdp5_mdss->irqcontroller.domain = NULL;
+	irq_करोमुख्य_हटाओ(mdp5_mdss->irqcontroller.करोमुख्य);
+	mdp5_mdss->irqcontroller.करोमुख्य = शून्य;
 
 	regulator_disable(mdp5_mdss->vdd);
 
-	pm_runtime_disable(dev->dev);
-}
+	pm_runसमय_disable(dev->dev);
+पूर्ण
 
-static const struct msm_mdss_funcs mdss_funcs = {
+अटल स्थिर काष्ठा msm_mdss_funcs mdss_funcs = अणु
 	.enable	= mdp5_mdss_enable,
 	.disable = mdp5_mdss_disable,
 	.destroy = mdp5_mdss_destroy,
-};
+पूर्ण;
 
-int mdp5_mdss_init(struct drm_device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev->dev);
-	struct msm_drm_private *priv = dev->dev_private;
-	struct mdp5_mdss *mdp5_mdss;
-	int ret;
+पूर्णांक mdp5_mdss_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev->dev);
+	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
+	काष्ठा mdp5_mdss *mdp5_mdss;
+	पूर्णांक ret;
 
 	DBG("");
 
-	if (!of_device_is_compatible(dev->dev->of_node, "qcom,mdss"))
-		return 0;
+	अगर (!of_device_is_compatible(dev->dev->of_node, "qcom,mdss"))
+		वापस 0;
 
-	mdp5_mdss = devm_kzalloc(dev->dev, sizeof(*mdp5_mdss), GFP_KERNEL);
-	if (!mdp5_mdss) {
+	mdp5_mdss = devm_kzalloc(dev->dev, माप(*mdp5_mdss), GFP_KERNEL);
+	अगर (!mdp5_mdss) अणु
 		ret = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	mdp5_mdss->base.dev = dev;
 
 	mdp5_mdss->mmio = msm_ioremap(pdev, "mdss_phys", "MDSS");
-	if (IS_ERR(mdp5_mdss->mmio)) {
+	अगर (IS_ERR(mdp5_mdss->mmio)) अणु
 		ret = PTR_ERR(mdp5_mdss->mmio);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	mdp5_mdss->vbif = msm_ioremap(pdev, "vbif_phys", "VBIF");
-	if (IS_ERR(mdp5_mdss->vbif)) {
-		ret = PTR_ERR(mdp5_mdss->vbif);
-		goto fail;
-	}
+	mdp5_mdss->vbअगर = msm_ioremap(pdev, "vbif_phys", "VBIF");
+	अगर (IS_ERR(mdp5_mdss->vbअगर)) अणु
+		ret = PTR_ERR(mdp5_mdss->vbअगर);
+		जाओ fail;
+	पूर्ण
 
-	ret = msm_mdss_get_clocks(mdp5_mdss);
-	if (ret) {
+	ret = msm_mdss_get_घड़ीs(mdp5_mdss);
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev->dev, "failed to get clocks: %d\n", ret);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	/* Regulator to enable GDSCs in downstream kernels */
+	/* Regulator to enable GDSCs in करोwnstream kernels */
 	mdp5_mdss->vdd = devm_regulator_get(dev->dev, "vdd");
-	if (IS_ERR(mdp5_mdss->vdd)) {
+	अगर (IS_ERR(mdp5_mdss->vdd)) अणु
 		ret = PTR_ERR(mdp5_mdss->vdd);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	ret = regulator_enable(mdp5_mdss->vdd);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev->dev, "failed to enable regulator vdd: %d\n",
 			ret);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	ret = devm_request_irq(dev->dev, platform_get_irq(pdev, 0),
+	ret = devm_request_irq(dev->dev, platक्रमm_get_irq(pdev, 0),
 			       mdss_irq, 0, "mdss_isr", mdp5_mdss);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev->dev, "failed to init irq: %d\n", ret);
-		goto fail_irq;
-	}
+		जाओ fail_irq;
+	पूर्ण
 
-	ret = mdss_irq_domain_init(mdp5_mdss);
-	if (ret) {
+	ret = mdss_irq_करोमुख्य_init(mdp5_mdss);
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev->dev, "failed to init sub-block irqs: %d\n", ret);
-		goto fail_irq;
-	}
+		जाओ fail_irq;
+	पूर्ण
 
 	mdp5_mdss->base.funcs = &mdss_funcs;
 	priv->mdss = &mdp5_mdss->base;
 
-	pm_runtime_enable(dev->dev);
+	pm_runसमय_enable(dev->dev);
 
-	return 0;
+	वापस 0;
 fail_irq:
 	regulator_disable(mdp5_mdss->vdd);
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण

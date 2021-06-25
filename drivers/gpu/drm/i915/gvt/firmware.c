@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,23 +22,23 @@
  * SOFTWARE.
  *
  * Authors:
- *    Zhi Wang <zhi.a.wang@intel.com>
+ *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
  *
  * Contributors:
- *    Changbin Du <changbin.du@intel.com>
+ *    Changbin Du <changbin.du@पूर्णांकel.com>
  *
  */
 
-#include <linux/firmware.h>
-#include <linux/crc32.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/crc32.h>
 
-#include "i915_drv.h"
-#include "gvt.h"
-#include "i915_pvinfo.h"
+#समावेश "i915_drv.h"
+#समावेश "gvt.h"
+#समावेश "i915_pvinfo.h"
 
-#define FIRMWARE_VERSION (0x0)
+#घोषणा FIRMWARE_VERSION (0x0)
 
-struct gvt_firmware_header {
+काष्ठा gvt_firmware_header अणु
 	u64 magic;
 	u32 crc32;		/* protect the data after this field */
 	u32 version;
@@ -45,129 +46,129 @@ struct gvt_firmware_header {
 	u64 cfg_space_offset;	/* offset in the file */
 	u64 mmio_size;
 	u64 mmio_offset;	/* offset in the file */
-	unsigned char data[1];
-};
+	अचिन्हित अक्षर data[1];
+पूर्ण;
 
-#define dev_to_drm_minor(d) dev_get_drvdata((d))
+#घोषणा dev_to_drm_minor(d) dev_get_drvdata((d))
 
-static ssize_t
-gvt_firmware_read(struct file *filp, struct kobject *kobj,
-	     struct bin_attribute *attr, char *buf,
-	     loff_t offset, size_t count)
-{
-	memcpy(buf, attr->private + offset, count);
-	return count;
-}
+अटल sमाप_प्रकार
+gvt_firmware_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+	     काष्ठा bin_attribute *attr, अक्षर *buf,
+	     loff_t offset, माप_प्रकार count)
+अणु
+	स_नकल(buf, attr->निजी + offset, count);
+	वापस count;
+पूर्ण
 
-static struct bin_attribute firmware_attr = {
-	.attr = {.name = "gvt_firmware", .mode = (S_IRUSR)},
-	.read = gvt_firmware_read,
-	.write = NULL,
-	.mmap = NULL,
-};
+अटल काष्ठा bin_attribute firmware_attr = अणु
+	.attr = अणु.name = "gvt_firmware", .mode = (S_IRUSR)पूर्ण,
+	.पढ़ो = gvt_firmware_पढ़ो,
+	.ग_लिखो = शून्य,
+	.mmap = शून्य,
+पूर्ण;
 
-static int mmio_snapshot_handler(struct intel_gvt *gvt, u32 offset, void *data)
-{
-	*(u32 *)(data + offset) = intel_uncore_read_notrace(gvt->gt->uncore,
+अटल पूर्णांक mmio_snapshot_handler(काष्ठा पूर्णांकel_gvt *gvt, u32 offset, व्योम *data)
+अणु
+	*(u32 *)(data + offset) = पूर्णांकel_uncore_पढ़ो_notrace(gvt->gt->uncore,
 							    _MMIO(offset));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int expose_firmware_sysfs(struct intel_gvt *gvt)
-{
-	struct intel_gvt_device_info *info = &gvt->device_info;
-	struct pci_dev *pdev = to_pci_dev(gvt->gt->i915->drm.dev);
-	struct gvt_firmware_header *h;
-	void *firmware;
-	void *p;
-	unsigned long size, crc32_start;
-	int i, ret;
+अटल पूर्णांक expose_firmware_sysfs(काष्ठा पूर्णांकel_gvt *gvt)
+अणु
+	काष्ठा पूर्णांकel_gvt_device_info *info = &gvt->device_info;
+	काष्ठा pci_dev *pdev = to_pci_dev(gvt->gt->i915->drm.dev);
+	काष्ठा gvt_firmware_header *h;
+	व्योम *firmware;
+	व्योम *p;
+	अचिन्हित दीर्घ size, crc32_start;
+	पूर्णांक i, ret;
 
-	size = sizeof(*h) + info->mmio_size + info->cfg_space_size;
+	size = माप(*h) + info->mmio_size + info->cfg_space_size;
 	firmware = vzalloc(size);
-	if (!firmware)
-		return -ENOMEM;
+	अगर (!firmware)
+		वापस -ENOMEM;
 
 	h = firmware;
 
 	h->magic = VGT_MAGIC;
 	h->version = FIRMWARE_VERSION;
 	h->cfg_space_size = info->cfg_space_size;
-	h->cfg_space_offset = offsetof(struct gvt_firmware_header, data);
+	h->cfg_space_offset = दुरत्व(काष्ठा gvt_firmware_header, data);
 	h->mmio_size = info->mmio_size;
 	h->mmio_offset = h->cfg_space_offset + h->cfg_space_size;
 
 	p = firmware + h->cfg_space_offset;
 
-	for (i = 0; i < h->cfg_space_size; i += 4)
-		pci_read_config_dword(pdev, i, p + i);
+	क्रम (i = 0; i < h->cfg_space_size; i += 4)
+		pci_पढ़ो_config_dword(pdev, i, p + i);
 
-	memcpy(gvt->firmware.cfg_space, p, info->cfg_space_size);
+	स_नकल(gvt->firmware.cfg_space, p, info->cfg_space_size);
 
 	p = firmware + h->mmio_offset;
 
-	/* Take a snapshot of hw mmio registers. */
-	intel_gvt_for_each_tracked_mmio(gvt, mmio_snapshot_handler, p);
+	/* Take a snapshot of hw mmio रेजिस्टरs. */
+	पूर्णांकel_gvt_क्रम_each_tracked_mmio(gvt, mmio_snapshot_handler, p);
 
-	memcpy(gvt->firmware.mmio, p, info->mmio_size);
+	स_नकल(gvt->firmware.mmio, p, info->mmio_size);
 
-	crc32_start = offsetof(struct gvt_firmware_header, crc32) + 4;
+	crc32_start = दुरत्व(काष्ठा gvt_firmware_header, crc32) + 4;
 	h->crc32 = crc32_le(0, firmware + crc32_start, size - crc32_start);
 
 	firmware_attr.size = size;
-	firmware_attr.private = firmware;
+	firmware_attr.निजी = firmware;
 
 	ret = device_create_bin_file(&pdev->dev, &firmware_attr);
-	if (ret) {
-		vfree(firmware);
-		return ret;
-	}
-	return 0;
-}
+	अगर (ret) अणु
+		vमुक्त(firmware);
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void clean_firmware_sysfs(struct intel_gvt *gvt)
-{
-	struct pci_dev *pdev = to_pci_dev(gvt->gt->i915->drm.dev);
+अटल व्योम clean_firmware_sysfs(काष्ठा पूर्णांकel_gvt *gvt)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(gvt->gt->i915->drm.dev);
 
-	device_remove_bin_file(&pdev->dev, &firmware_attr);
-	vfree(firmware_attr.private);
-}
+	device_हटाओ_bin_file(&pdev->dev, &firmware_attr);
+	vमुक्त(firmware_attr.निजी);
+पूर्ण
 
 /**
- * intel_gvt_free_firmware - free GVT firmware
- * @gvt: intel gvt device
+ * पूर्णांकel_gvt_मुक्त_firmware - मुक्त GVT firmware
+ * @gvt: पूर्णांकel gvt device
  *
  */
-void intel_gvt_free_firmware(struct intel_gvt *gvt)
-{
-	if (!gvt->firmware.firmware_loaded)
+व्योम पूर्णांकel_gvt_मुक्त_firmware(काष्ठा पूर्णांकel_gvt *gvt)
+अणु
+	अगर (!gvt->firmware.firmware_loaded)
 		clean_firmware_sysfs(gvt);
 
-	kfree(gvt->firmware.cfg_space);
-	vfree(gvt->firmware.mmio);
-}
+	kमुक्त(gvt->firmware.cfg_space);
+	vमुक्त(gvt->firmware.mmio);
+पूर्ण
 
-static int verify_firmware(struct intel_gvt *gvt,
-			   const struct firmware *fw)
-{
-	struct intel_gvt_device_info *info = &gvt->device_info;
-	struct pci_dev *pdev = to_pci_dev(gvt->gt->i915->drm.dev);
-	struct gvt_firmware_header *h;
-	unsigned long id, crc32_start;
-	const void *mem;
-	const char *item;
+अटल पूर्णांक verअगरy_firmware(काष्ठा पूर्णांकel_gvt *gvt,
+			   स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा पूर्णांकel_gvt_device_info *info = &gvt->device_info;
+	काष्ठा pci_dev *pdev = to_pci_dev(gvt->gt->i915->drm.dev);
+	काष्ठा gvt_firmware_header *h;
+	अचिन्हित दीर्घ id, crc32_start;
+	स्थिर व्योम *mem;
+	स्थिर अक्षर *item;
 	u64 file, request;
 
-	h = (struct gvt_firmware_header *)fw->data;
+	h = (काष्ठा gvt_firmware_header *)fw->data;
 
-	crc32_start = offsetofend(struct gvt_firmware_header, crc32);
+	crc32_start = दुरत्वend(काष्ठा gvt_firmware_header, crc32);
 	mem = fw->data + crc32_start;
 
-#define VERIFY(s, a, b) do { \
+#घोषणा VERIFY(s, a, b) करो अणु \
 	item = (s); file = (u64)(a); request = (u64)(b); \
-	if ((a) != (b)) \
-		goto invalid_firmware; \
-} while (0)
+	अगर ((a) != (b)) \
+		जाओ invalid_firmware; \
+पूर्ण जबतक (0)
 
 	VERIFY("magic number", h->magic, VGT_MAGIC);
 	VERIFY("version", h->version, FIRMWARE_VERSION);
@@ -178,7 +179,7 @@ static int verify_firmware(struct intel_gvt *gvt,
 	mem = (fw->data + h->cfg_space_offset);
 
 	id = *(u16 *)(mem + PCI_VENDOR_ID);
-	VERIFY("vender id", id, pdev->vendor);
+	VERIFY("vender id", id, pdev->venकरोr);
 
 	id = *(u16 *)(mem + PCI_DEVICE_ID);
 	VERIFY("device id", id, pdev->device);
@@ -186,88 +187,88 @@ static int verify_firmware(struct intel_gvt *gvt,
 	id = *(u8 *)(mem + PCI_REVISION_ID);
 	VERIFY("revision id", id, pdev->revision);
 
-#undef VERIFY
-	return 0;
+#अघोषित VERIFY
+	वापस 0;
 
 invalid_firmware:
 	gvt_dbg_core("Invalid firmware: %s [file] 0x%llx [request] 0x%llx\n",
 		     item, file, request);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-#define GVT_FIRMWARE_PATH "i915/gvt"
+#घोषणा GVT_FIRMWARE_PATH "i915/gvt"
 
 /**
- * intel_gvt_load_firmware - load GVT firmware
- * @gvt: intel gvt device
+ * पूर्णांकel_gvt_load_firmware - load GVT firmware
+ * @gvt: पूर्णांकel gvt device
  *
  */
-int intel_gvt_load_firmware(struct intel_gvt *gvt)
-{
-	struct intel_gvt_device_info *info = &gvt->device_info;
-	struct pci_dev *pdev = to_pci_dev(gvt->gt->i915->drm.dev);
-	struct intel_gvt_firmware *firmware = &gvt->firmware;
-	struct gvt_firmware_header *h;
-	const struct firmware *fw;
-	char *path;
-	void *mem;
-	int ret;
+पूर्णांक पूर्णांकel_gvt_load_firmware(काष्ठा पूर्णांकel_gvt *gvt)
+अणु
+	काष्ठा पूर्णांकel_gvt_device_info *info = &gvt->device_info;
+	काष्ठा pci_dev *pdev = to_pci_dev(gvt->gt->i915->drm.dev);
+	काष्ठा पूर्णांकel_gvt_firmware *firmware = &gvt->firmware;
+	काष्ठा gvt_firmware_header *h;
+	स्थिर काष्ठा firmware *fw;
+	अक्षर *path;
+	व्योम *mem;
+	पूर्णांक ret;
 
-	path = kmalloc(PATH_MAX, GFP_KERNEL);
-	if (!path)
-		return -ENOMEM;
+	path = kदो_स्मृति(PATH_MAX, GFP_KERNEL);
+	अगर (!path)
+		वापस -ENOMEM;
 
-	mem = kmalloc(info->cfg_space_size, GFP_KERNEL);
-	if (!mem) {
-		kfree(path);
-		return -ENOMEM;
-	}
+	mem = kदो_स्मृति(info->cfg_space_size, GFP_KERNEL);
+	अगर (!mem) अणु
+		kमुक्त(path);
+		वापस -ENOMEM;
+	पूर्ण
 
 	firmware->cfg_space = mem;
 
-	mem = vmalloc(info->mmio_size);
-	if (!mem) {
-		kfree(path);
-		kfree(firmware->cfg_space);
-		return -ENOMEM;
-	}
+	mem = vदो_स्मृति(info->mmio_size);
+	अगर (!mem) अणु
+		kमुक्त(path);
+		kमुक्त(firmware->cfg_space);
+		वापस -ENOMEM;
+	पूर्ण
 
 	firmware->mmio = mem;
 
-	sprintf(path, "%s/vid_0x%04x_did_0x%04x_rid_0x%02x.golden_hw_state",
-		 GVT_FIRMWARE_PATH, pdev->vendor, pdev->device,
+	प्र_लिखो(path, "%s/vid_0x%04x_did_0x%04x_rid_0x%02x.golden_hw_state",
+		 GVT_FIRMWARE_PATH, pdev->venकरोr, pdev->device,
 		 pdev->revision);
 
 	gvt_dbg_core("request hw state firmware %s...\n", path);
 
 	ret = request_firmware(&fw, path, gvt->gt->i915->drm.dev);
-	kfree(path);
+	kमुक्त(path);
 
-	if (ret)
-		goto expose_firmware;
+	अगर (ret)
+		जाओ expose_firmware;
 
 	gvt_dbg_core("success.\n");
 
-	ret = verify_firmware(gvt, fw);
-	if (ret)
-		goto out_free_fw;
+	ret = verअगरy_firmware(gvt, fw);
+	अगर (ret)
+		जाओ out_मुक्त_fw;
 
 	gvt_dbg_core("verified.\n");
 
-	h = (struct gvt_firmware_header *)fw->data;
+	h = (काष्ठा gvt_firmware_header *)fw->data;
 
-	memcpy(firmware->cfg_space, fw->data + h->cfg_space_offset,
+	स_नकल(firmware->cfg_space, fw->data + h->cfg_space_offset,
 	       h->cfg_space_size);
-	memcpy(firmware->mmio, fw->data + h->mmio_offset,
+	स_नकल(firmware->mmio, fw->data + h->mmio_offset,
 	       h->mmio_size);
 
 	release_firmware(fw);
 	firmware->firmware_loaded = true;
-	return 0;
+	वापस 0;
 
-out_free_fw:
+out_मुक्त_fw:
 	release_firmware(fw);
 expose_firmware:
 	expose_firmware_sysfs(gvt);
-	return 0;
-}
+	वापस 0;
+पूर्ण

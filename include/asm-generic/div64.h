@@ -1,86 +1,87 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_GENERIC_DIV64_H
-#define _ASM_GENERIC_DIV64_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_GENERIC_DIV64_H
+#घोषणा _ASM_GENERIC_DIV64_H
 /*
- * Copyright (C) 2003 Bernardo Innocenti <bernie@develer.com>
- * Based on former asm-ppc/div64.h and asm-m68knommu/div64.h
+ * Copyright (C) 2003 Bernarकरो Innocenti <bernie@develer.com>
+ * Based on क्रमmer यंत्र-ppc/भाग64.h and यंत्र-m68knommu/भाग64.h
  *
- * Optimization for constant divisors on 32-bit machines:
+ * Optimization क्रम स्थिरant भागisors on 32-bit machines:
  * Copyright (C) 2006-2015 Nicolas Pitre
  *
- * The semantics of do_div() is, in C++ notation, observing that the name
+ * The semantics of करो_भाग() is, in C++ notation, observing that the name
  * is a function-like macro and the n parameter has the semantics of a C++
  * reference:
  *
- * uint32_t do_div(uint64_t &n, uint32_t base)
- * {
- * 	uint32_t remainder = n % base;
+ * uपूर्णांक32_t करो_भाग(uपूर्णांक64_t &n, uपूर्णांक32_t base)
+ * अणु
+ * 	uपूर्णांक32_t reमुख्यder = n % base;
  * 	n = n / base;
- * 	return remainder;
- * }
+ * 	वापस reमुख्यder;
+ * पूर्ण
  *
- * NOTE: macro parameter n is evaluated multiple times,
+ * NOTE: macro parameter n is evaluated multiple बार,
  *       beware of side effects!
  */
 
-#include <linux/types.h>
-#include <linux/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <linux/compiler.h>
 
-#if BITS_PER_LONG == 64
+#अगर BITS_PER_LONG == 64
 
 /**
- * do_div - returns 2 values: calculate remainder and update new dividend
- * @n: uint64_t dividend (will be updated)
- * @base: uint32_t divisor
+ * करो_भाग - वापसs 2 values: calculate reमुख्यder and update new भागidend
+ * @n: uपूर्णांक64_t भागidend (will be updated)
+ * @base: uपूर्णांक32_t भागisor
  *
  * Summary:
- * ``uint32_t remainder = n % base;``
+ * ``uपूर्णांक32_t reमुख्यder = n % base;``
  * ``n = n / base;``
  *
- * Return: (uint32_t)remainder
+ * Return: (uपूर्णांक32_t)reमुख्यder
  *
- * NOTE: macro parameter @n is evaluated multiple times,
+ * NOTE: macro parameter @n is evaluated multiple बार,
  * beware of side effects!
  */
-# define do_div(n,base) ({					\
-	uint32_t __base = (base);				\
-	uint32_t __rem;						\
-	__rem = ((uint64_t)(n)) % __base;			\
-	(n) = ((uint64_t)(n)) / __base;				\
+# define करो_भाग(n,base) (अणु					\
+	uपूर्णांक32_t __base = (base);				\
+	uपूर्णांक32_t __rem;						\
+	__rem = ((uपूर्णांक64_t)(n)) % __base;			\
+	(n) = ((uपूर्णांक64_t)(n)) / __base;				\
 	__rem;							\
- })
+ पूर्ण)
 
-#elif BITS_PER_LONG == 32
+#या_अगर BITS_PER_LONG == 32
 
-#include <linux/log2.h>
+#समावेश <linux/log2.h>
 
 /*
- * If the divisor happens to be constant, we determine the appropriate
- * inverse at compile time to turn the division into a few inline
- * multiplications which ought to be much faster. And yet only if compiling
- * with a sufficiently recent gcc version to perform proper 64-bit constant
+ * If the भागisor happens to be स्थिरant, we determine the appropriate
+ * inverse at compile समय to turn the भागision पूर्णांकo a few अंतरभूत
+ * multiplications which ought to be much faster. And yet only अगर compiling
+ * with a sufficiently recent gcc version to perक्रमm proper 64-bit स्थिरant
  * propagation.
  *
- * (It is unfortunate that gcc doesn't perform all this internally.)
+ * (It is unक्रमtunate that gcc करोesn't perक्रमm all this पूर्णांकernally.)
  */
 
-#ifndef __div64_const32_is_OK
-#define __div64_const32_is_OK (__GNUC__ >= 4)
-#endif
+#अगर_अघोषित __भाग64_स्थिर32_is_OK
+#घोषणा __भाग64_स्थिर32_is_OK (__GNUC__ >= 4)
+#पूर्ण_अगर
 
-#define __div64_const32(n, ___b)					\
-({									\
+#घोषणा __भाग64_स्थिर32(n, ___b)					\
+(अणु									\
 	/*								\
 	 * Multiplication by reciprocal of b: n / b = n * (p / b) / p	\
 	 *								\
-	 * We rely on the fact that most of this code gets optimized	\
-	 * away at compile time due to constant propagation and only	\
-	 * a few multiplication instructions should remain.		\
-	 * Hence this monstrous macro (static inline doesn't always	\
-	 * do the trick here).						\
+	 * We rely on the fact that most of this code माला_लो optimized	\
+	 * away at compile समय due to स्थिरant propagation and only	\
+	 * a few multiplication inकाष्ठाions should reमुख्य.		\
+	 * Hence this monstrous macro (अटल अंतरभूत करोesn't always	\
+	 * करो the trick here).						\
 	 */								\
-	uint64_t ___res, ___x, ___t, ___m, ___n = (n);			\
-	uint32_t ___p, ___bias;						\
+	uपूर्णांक64_t ___res, ___x, ___t, ___m, ___n = (n);			\
+	uपूर्णांक32_t ___p, ___bias;						\
 									\
 	/* determine MSB of b */					\
 	___p = 1 << ilog2(___b);					\
@@ -89,7 +90,7 @@
 	___m = (~0ULL / ___b) * ___p;					\
 	___m += (((~0ULL % ___b + 1) * ___p) + ___b - 1) / ___b;	\
 									\
-	/* one less than the dividend with highest result */		\
+	/* one less than the भागidend with highest result */		\
 	___x = ~0ULL / ___b * ___b - 1;					\
 									\
 	/* test our ___m with res = m * x / (p << 64) */		\
@@ -102,50 +103,50 @@
 	___res /= ___p;							\
 									\
 	/* Now sanitize and optimize what we've got. */			\
-	if (~0ULL % (___b / (___b & -___b)) == 0) {			\
-		/* special case, can be simplified to ... */		\
+	अगर (~0ULL % (___b / (___b & -___b)) == 0) अणु			\
+		/* special हाल, can be simplअगरied to ... */		\
 		___n /= (___b & -___b);					\
 		___m = ~0ULL / (___b / (___b & -___b));			\
 		___p = 1;						\
 		___bias = 1;						\
-	} else if (___res != ___x / ___b) {				\
+	पूर्ण अन्यथा अगर (___res != ___x / ___b) अणु				\
 		/*							\
 		 * We can't get away without a bias to compensate	\
-		 * for bit truncation errors.  To avoid it we'd need an	\
+		 * क्रम bit truncation errors.  To aव्योम it we'd need an	\
 		 * additional bit to represent m which would overflow	\
 		 * a 64-bit variable.					\
 		 *							\
-		 * Instead we do m = p / b and n / b = (n * m + m) / p.	\
+		 * Instead we करो m = p / b and n / b = (n * m + m) / p.	\
 		 */							\
 		___bias = 1;						\
 		/* Compute m = (p << 64) / b */				\
 		___m = (~0ULL / ___b) * ___p;				\
 		___m += ((~0ULL % ___b + 1) * ___p) / ___b;		\
-	} else {							\
+	पूर्ण अन्यथा अणु							\
 		/*							\
 		 * Reduce m / p, and try to clear bit 31 of m when	\
 		 * possible, otherwise that'll need extra overflow	\
 		 * handling later.					\
 		 */							\
-		uint32_t ___bits = -(___m & -___m);			\
+		uपूर्णांक32_t ___bits = -(___m & -___m);			\
 		___bits |= ___m >> 32;					\
 		___bits = (~___bits) << 1;				\
 		/*							\
-		 * If ___bits == 0 then setting bit 31 is  unavoidable.	\
+		 * If ___bits == 0 then setting bit 31 is  unaव्योमable.	\
 		 * Simply apply the maximum possible reduction in that	\
-		 * case. Otherwise the MSB of ___bits indicates the	\
+		 * हाल. Otherwise the MSB of ___bits indicates the	\
 		 * best reduction we should apply.			\
 		 */							\
-		if (!___bits) {						\
+		अगर (!___bits) अणु						\
 			___p /= (___m & -___m);				\
 			___m /= (___m & -___m);				\
-		} else {						\
+		पूर्ण अन्यथा अणु						\
 			___p >>= ilog2(___bits);			\
 			___m >>= ilog2(___bits);			\
-		}							\
+		पूर्ण							\
 		/* No bias needed. */					\
 		___bias = 0;						\
-	}								\
+	पूर्ण								\
 									\
 	/*								\
 	 * Now we have a combination of 2 conditions:			\
@@ -155,101 +156,101 @@
 	 * 2) whether or not there might be an overflow in the cross	\
 	 *    product determined by (___m & ((1 << 63) | (1 << 31))).	\
 	 *								\
-	 * Select the best way to do (m_bias + m * n) / (1 << 64).	\
-	 * From now on there will be actual runtime code generated.	\
+	 * Select the best way to करो (m_bias + m * n) / (1 << 64).	\
+	 * From now on there will be actual runसमय code generated.	\
 	 */								\
 	___res = __arch_xprod_64(___m, ___n, ___bias);			\
 									\
 	___res /= ___p;							\
-})
+पूर्ण)
 
-#ifndef __arch_xprod_64
+#अगर_अघोषित __arch_xprod_64
 /*
- * Default C implementation for __arch_xprod_64()
+ * Default C implementation क्रम __arch_xprod_64()
  *
- * Prototype: uint64_t __arch_xprod_64(const uint64_t m, uint64_t n, bool bias)
+ * Prototype: uपूर्णांक64_t __arch_xprod_64(स्थिर uपूर्णांक64_t m, uपूर्णांक64_t n, bool bias)
  * Semantic:  retval = ((bias ? m : 0) + m * n) >> 64
  *
- * The product is a 128-bit value, scaled down to 64 bits.
- * Assuming constant propagation to optimize away unused conditional code.
+ * The product is a 128-bit value, scaled करोwn to 64 bits.
+ * Assuming स्थिरant propagation to optimize away unused conditional code.
  * Architectures may provide their own optimized assembly implementation.
  */
-static inline uint64_t __arch_xprod_64(const uint64_t m, uint64_t n, bool bias)
-{
-	uint32_t m_lo = m;
-	uint32_t m_hi = m >> 32;
-	uint32_t n_lo = n;
-	uint32_t n_hi = n >> 32;
-	uint64_t res;
-	uint32_t res_lo, res_hi, tmp;
+अटल अंतरभूत uपूर्णांक64_t __arch_xprod_64(स्थिर uपूर्णांक64_t m, uपूर्णांक64_t n, bool bias)
+अणु
+	uपूर्णांक32_t m_lo = m;
+	uपूर्णांक32_t m_hi = m >> 32;
+	uपूर्णांक32_t n_lo = n;
+	uपूर्णांक32_t n_hi = n >> 32;
+	uपूर्णांक64_t res;
+	uपूर्णांक32_t res_lo, res_hi, पंचांगp;
 
-	if (!bias) {
-		res = ((uint64_t)m_lo * n_lo) >> 32;
-	} else if (!(m & ((1ULL << 63) | (1ULL << 31)))) {
+	अगर (!bias) अणु
+		res = ((uपूर्णांक64_t)m_lo * n_lo) >> 32;
+	पूर्ण अन्यथा अगर (!(m & ((1ULL << 63) | (1ULL << 31)))) अणु
 		/* there can't be any overflow here */
-		res = (m + (uint64_t)m_lo * n_lo) >> 32;
-	} else {
-		res = m + (uint64_t)m_lo * n_lo;
+		res = (m + (uपूर्णांक64_t)m_lo * n_lo) >> 32;
+	पूर्ण अन्यथा अणु
+		res = m + (uपूर्णांक64_t)m_lo * n_lo;
 		res_lo = res >> 32;
 		res_hi = (res_lo < m_hi);
-		res = res_lo | ((uint64_t)res_hi << 32);
-	}
+		res = res_lo | ((uपूर्णांक64_t)res_hi << 32);
+	पूर्ण
 
-	if (!(m & ((1ULL << 63) | (1ULL << 31)))) {
+	अगर (!(m & ((1ULL << 63) | (1ULL << 31)))) अणु
 		/* there can't be any overflow here */
-		res += (uint64_t)m_lo * n_hi;
-		res += (uint64_t)m_hi * n_lo;
+		res += (uपूर्णांक64_t)m_lo * n_hi;
+		res += (uपूर्णांक64_t)m_hi * n_lo;
 		res >>= 32;
-	} else {
-		res += (uint64_t)m_lo * n_hi;
-		tmp = res >> 32;
-		res += (uint64_t)m_hi * n_lo;
+	पूर्ण अन्यथा अणु
+		res += (uपूर्णांक64_t)m_lo * n_hi;
+		पंचांगp = res >> 32;
+		res += (uपूर्णांक64_t)m_hi * n_lo;
 		res_lo = res >> 32;
-		res_hi = (res_lo < tmp);
-		res = res_lo | ((uint64_t)res_hi << 32);
-	}
+		res_hi = (res_lo < पंचांगp);
+		res = res_lo | ((uपूर्णांक64_t)res_hi << 32);
+	पूर्ण
 
-	res += (uint64_t)m_hi * n_hi;
+	res += (uपूर्णांक64_t)m_hi * n_hi;
 
-	return res;
-}
-#endif
+	वापस res;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef __div64_32
-extern uint32_t __div64_32(uint64_t *dividend, uint32_t divisor);
-#endif
+#अगर_अघोषित __भाग64_32
+बाह्य uपूर्णांक32_t __भाग64_32(uपूर्णांक64_t *भागidend, uपूर्णांक32_t भागisor);
+#पूर्ण_अगर
 
-/* The unnecessary pointer compare is there
- * to check for type safety (n must be 64bit)
+/* The unnecessary poपूर्णांकer compare is there
+ * to check क्रम type safety (n must be 64bit)
  */
-# define do_div(n,base) ({				\
-	uint32_t __base = (base);			\
-	uint32_t __rem;					\
-	(void)(((typeof((n)) *)0) == ((uint64_t *)0));	\
-	if (__builtin_constant_p(__base) &&		\
-	    is_power_of_2(__base)) {			\
+# define करो_भाग(n,base) (अणु				\
+	uपूर्णांक32_t __base = (base);			\
+	uपूर्णांक32_t __rem;					\
+	(व्योम)(((typeof((n)) *)0) == ((uपूर्णांक64_t *)0));	\
+	अगर (__builtin_स्थिरant_p(__base) &&		\
+	    is_घातer_of_2(__base)) अणु			\
 		__rem = (n) & (__base - 1);		\
 		(n) >>= ilog2(__base);			\
-	} else if (__div64_const32_is_OK &&		\
-		   __builtin_constant_p(__base) &&	\
-		   __base != 0) {			\
-		uint32_t __res_lo, __n_lo = (n);	\
-		(n) = __div64_const32(n, __base);	\
-		/* the remainder can be computed with 32-bit regs */ \
+	पूर्ण अन्यथा अगर (__भाग64_स्थिर32_is_OK &&		\
+		   __builtin_स्थिरant_p(__base) &&	\
+		   __base != 0) अणु			\
+		uपूर्णांक32_t __res_lo, __n_lo = (n);	\
+		(n) = __भाग64_स्थिर32(n, __base);	\
+		/* the reमुख्यder can be computed with 32-bit regs */ \
 		__res_lo = (n);				\
 		__rem = __n_lo - __res_lo * __base;	\
-	} else if (likely(((n) >> 32) == 0)) {		\
-		__rem = (uint32_t)(n) % __base;		\
-		(n) = (uint32_t)(n) / __base;		\
-	} else 						\
-		__rem = __div64_32(&(n), __base);	\
+	पूर्ण अन्यथा अगर (likely(((n) >> 32) == 0)) अणु		\
+		__rem = (uपूर्णांक32_t)(n) % __base;		\
+		(n) = (uपूर्णांक32_t)(n) / __base;		\
+	पूर्ण अन्यथा 						\
+		__rem = __भाग64_32(&(n), __base);	\
 	__rem;						\
- })
+ पूर्ण)
 
-#else /* BITS_PER_LONG == ?? */
+#अन्यथा /* BITS_PER_LONG == ?? */
 
-# error do_div() does not yet support the C64
+# error करो_भाग() करोes not yet support the C64
 
-#endif /* BITS_PER_LONG */
+#पूर्ण_अगर /* BITS_PER_LONG */
 
-#endif /* _ASM_GENERIC_DIV64_H */
+#पूर्ण_अगर /* _ASM_GENERIC_DIV64_H */

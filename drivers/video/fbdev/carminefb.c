@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Frame buffer driver for the Carmine GPU.
+ * Frame buffer driver क्रम the Carmine GPU.
  *
  * The driver configures the GPU as follows
  * - FB0 is display 0 with unique memory area
  * - FB1 is display 1 with unique memory area
  * - both display use 32 bit colors
  */
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/fb.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fb.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#include "carminefb.h"
-#include "carminefb_regs.h"
+#समावेश "carminefb.h"
+#समावेश "carminefb_regs.h"
 
-#if !defined(__LITTLE_ENDIAN) && !defined(__BIG_ENDIAN)
-#error  "The endianness of the target host has not been defined."
-#endif
+#अगर !defined(__LITTLE_ENDIAN) && !defined(__BIG_ENDIAN)
+#त्रुटि  "The endianness of the target host has not been defined."
+#पूर्ण_अगर
 
 /*
- * The initial video mode can be supplied via two different ways:
+ * The initial video mode can be supplied via two dअगरferent ways:
  * - as a string that is passed to fb_find_mode() (module option fb_mode_str)
- * - as an integer that picks the video mode from carmine_modedb[] (module
+ * - as an पूर्णांकeger that picks the video mode from carmine_modedb[] (module
  *   option fb_mode)
  *
  * If nothing is used than the initial video mode will be the
  * CARMINEFB_DEFAULT_VIDEO_MODE member of the carmine_modedb[].
  */
-#define CARMINEFB_DEFAULT_VIDEO_MODE	1
+#घोषणा CARMINEFB_DEFAULT_VIDEO_MODE	1
 
-static unsigned int fb_mode = CARMINEFB_DEFAULT_VIDEO_MODE;
-module_param(fb_mode, uint, 0444);
+अटल अचिन्हित पूर्णांक fb_mode = CARMINEFB_DEFAULT_VIDEO_MODE;
+module_param(fb_mode, uपूर्णांक, 0444);
 MODULE_PARM_DESC(fb_mode, "Initial video mode as integer.");
 
-static char *fb_mode_str;
-module_param(fb_mode_str, charp, 0444);
+अटल अक्षर *fb_mode_str;
+module_param(fb_mode_str, अक्षरp, 0444);
 MODULE_PARM_DESC(fb_mode_str, "Initial video mode in characters.");
 
 /*
@@ -47,17 +48,17 @@ MODULE_PARM_DESC(fb_mode_str, "Initial video mode in characters.");
  * 0b001 Display 0
  * 0b010 Display 1
  */
-static int fb_displays = CARMINE_USE_DISPLAY0 | CARMINE_USE_DISPLAY1;
-module_param(fb_displays, int, 0444);
+अटल पूर्णांक fb_displays = CARMINE_USE_DISPLAY0 | CARMINE_USE_DISPLAY1;
+module_param(fb_displays, पूर्णांक, 0444);
 MODULE_PARM_DESC(fb_displays, "Bit mode, which displays are used");
 
-struct carmine_hw {
-	void __iomem *v_regs;
-	void __iomem *screen_mem;
-	struct fb_info *fb[MAX_DISPLAY];
-};
+काष्ठा carmine_hw अणु
+	व्योम __iomem *v_regs;
+	व्योम __iomem *screen_mem;
+	काष्ठा fb_info *fb[MAX_DISPLAY];
+पूर्ण;
 
-struct carmine_resolution {
+काष्ठा carmine_resolution अणु
 	u32 htp;
 	u32 hsp;
 	u32 hsw;
@@ -67,39 +68,39 @@ struct carmine_resolution {
 	u32 vsw;
 	u32 vdp;
 	u32 disp_mode;
-};
+पूर्ण;
 
-struct carmine_fb {
-	void __iomem *display_reg;
-	void __iomem *screen_base;
+काष्ठा carmine_fb अणु
+	व्योम __iomem *display_reg;
+	व्योम __iomem *screen_base;
 	u32 smem_offset;
 	u32 cur_mode;
 	u32 new_mode;
-	struct carmine_resolution *res;
-	u32 pseudo_palette[16];
-};
+	काष्ठा carmine_resolution *res;
+	u32 pseuकरो_palette[16];
+पूर्ण;
 
-static struct fb_fix_screeninfo carminefb_fix = {
+अटल काष्ठा fb_fix_screeninfo carminefb_fix = अणु
 	.id = "Carmine",
 	.type = FB_TYPE_PACKED_PIXELS,
 	.visual = FB_VISUAL_TRUECOLOR,
 	.accel = FB_ACCEL_NONE,
-};
+पूर्ण;
 
-static const struct fb_videomode carmine_modedb[] = {
-	{
+अटल स्थिर काष्ठा fb_videomode carmine_modedb[] = अणु
+	अणु
 		.name		= "640x480",
 		.xres		= 640,
 		.yres		= 480,
-	}, {
+	पूर्ण, अणु
 		.name		= "800x600",
 		.xres		= 800,
 		.yres		= 600,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct carmine_resolution car_modes[] = {
-	{
+अटल काष्ठा carmine_resolution car_modes[] = अणु
+	अणु
 		/* 640x480 */
 		.htp = 800,
 		.hsp = 672,
@@ -110,8 +111,8 @@ static struct carmine_resolution car_modes[] = {
 		.vsw = 2,
 		.vdp = 480,
 		.disp_mode = 0x1400,
-	},
-	{
+	पूर्ण,
+	अणु
 		/* 800x600 */
 		.htp = 1060,
 		.hsp = 864,
@@ -122,88 +123,88 @@ static struct carmine_resolution car_modes[] = {
 		.vsw = 2,
 		.vdp = 600,
 		.disp_mode = 0x0d00,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int carmine_find_mode(const struct fb_var_screeninfo *var)
-{
-	int i;
+अटल पूर्णांक carmine_find_mode(स्थिर काष्ठा fb_var_screeninfo *var)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(car_modes); i++)
-		if (car_modes[i].hdp == var->xres &&
+	क्रम (i = 0; i < ARRAY_SIZE(car_modes); i++)
+		अगर (car_modes[i].hdp == var->xres &&
 		    car_modes[i].vdp == var->yres)
-			return i;
-	return -EINVAL;
-}
+			वापस i;
+	वापस -EINVAL;
+पूर्ण
 
-static void c_set_disp_reg(const struct carmine_fb *par,
+अटल व्योम c_set_disp_reg(स्थिर काष्ठा carmine_fb *par,
 		u32 offset, u32 val)
-{
-	writel(val, par->display_reg + offset);
-}
+अणु
+	ग_लिखोl(val, par->display_reg + offset);
+पूर्ण
 
-static u32 c_get_disp_reg(const struct carmine_fb *par,
+अटल u32 c_get_disp_reg(स्थिर काष्ठा carmine_fb *par,
 		u32 offset)
-{
-	return readl(par->display_reg + offset);
-}
+अणु
+	वापस पढ़ोl(par->display_reg + offset);
+पूर्ण
 
-static void c_set_hw_reg(const struct carmine_hw *hw,
+अटल व्योम c_set_hw_reg(स्थिर काष्ठा carmine_hw *hw,
 		u32 offset, u32 val)
-{
-	writel(val, hw->v_regs + offset);
-}
+अणु
+	ग_लिखोl(val, hw->v_regs + offset);
+पूर्ण
 
-static u32 c_get_hw_reg(const struct carmine_hw *hw,
+अटल u32 c_get_hw_reg(स्थिर काष्ठा carmine_hw *hw,
 		u32 offset)
-{
-	return readl(hw->v_regs + offset);
-}
+अणु
+	वापस पढ़ोl(hw->v_regs + offset);
+पूर्ण
 
-static int carmine_setcolreg(unsigned regno, unsigned red, unsigned green,
-		unsigned blue, unsigned transp, struct fb_info *info)
-{
-	if (regno >= 16)
-		return 1;
+अटल पूर्णांक carmine_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
+		अचिन्हित blue, अचिन्हित transp, काष्ठा fb_info *info)
+अणु
+	अगर (regno >= 16)
+		वापस 1;
 
 	red >>= 8;
 	green >>= 8;
 	blue >>= 8;
 	transp >>= 8;
 
-	((__be32 *)info->pseudo_palette)[regno] = cpu_to_be32(transp << 24 |
+	((__be32 *)info->pseuकरो_palette)[regno] = cpu_to_be32(transp << 24 |
 		red << 0 | green << 8 | blue << 16);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int carmine_check_var(struct fb_var_screeninfo *var,
-		struct fb_info *info)
-{
-	int ret;
+अटल पूर्णांक carmine_check_var(काष्ठा fb_var_screeninfo *var,
+		काष्ठा fb_info *info)
+अणु
+	पूर्णांक ret;
 
 	ret = carmine_find_mode(var);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (var->grayscale || var->rotate || var->nonstd)
-		return -EINVAL;
+	अगर (var->grayscale || var->rotate || var->nonstd)
+		वापस -EINVAL;
 
-	var->xres_virtual = var->xres;
-	var->yres_virtual = var->yres;
+	var->xres_भव = var->xres;
+	var->yres_भव = var->yres;
 
 	var->bits_per_pixel = 32;
 
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 	var->transp.offset = 24;
 	var->red.offset = 0;
 	var->green.offset = 8;
 	var->blue.offset = 16;
-#else
+#अन्यथा
 	var->transp.offset = 24;
 	var->red.offset = 16;
 	var->green.offset = 8;
 	var->blue.offset = 0;
-#endif
+#पूर्ण_अगर
 
 	var->red.length = 8;
 	var->green.length = 8;
@@ -214,15 +215,15 @@ static int carmine_check_var(struct fb_var_screeninfo *var,
 	var->green.msb_right = 0;
 	var->blue.msb_right = 0;
 	var->transp.msb_right = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void carmine_init_display_param(struct carmine_fb *par)
-{
+अटल व्योम carmine_init_display_param(काष्ठा carmine_fb *par)
+अणु
 	u32 width;
 	u32 height;
 	u32 param;
-	u32 window_size;
+	u32 winकरोw_size;
 	u32 soffset = par->smem_offset;
 
 	c_set_disp_reg(par, CARMINE_DISP_REG_C_TRANS, 0);
@@ -232,29 +233,29 @@ static void carmine_init_display_param(struct carmine_fb *par)
 			CARMINE_CURSOR1_PRIORITY_MASK |
 			CARMINE_CURSOR_CUTZ_MASK);
 
-	/* Set default cursor position */
+	/* Set शेष cursor position */
 	c_set_disp_reg(par, CARMINE_DISP_REG_CUR1_POS, 0 << 16 | 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_CUR2_POS, 0 << 16 | 0);
 
-	/* Set default display mode */
+	/* Set शेष display mode */
 	c_set_disp_reg(par, CARMINE_DISP_REG_L0_EXT_MODE, CARMINE_WINDOW_MODE |
-			CARMINE_EXT_CMODE_DIRECT24_RGBA);
+			CARMINE_EXT_CMODE_सूचीECT24_RGBA);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L1_EXT_MODE,
-			CARMINE_EXT_CMODE_DIRECT24_RGBA);
+			CARMINE_EXT_CMODE_सूचीECT24_RGBA);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L2_EXT_MODE, CARMINE_EXTEND_MODE |
-			CARMINE_EXT_CMODE_DIRECT24_RGBA);
+			CARMINE_EXT_CMODE_सूचीECT24_RGBA);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L3_EXT_MODE, CARMINE_EXTEND_MODE |
-			CARMINE_EXT_CMODE_DIRECT24_RGBA);
+			CARMINE_EXT_CMODE_सूचीECT24_RGBA);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L4_EXT_MODE, CARMINE_EXTEND_MODE |
-			CARMINE_EXT_CMODE_DIRECT24_RGBA);
+			CARMINE_EXT_CMODE_सूचीECT24_RGBA);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L5_EXT_MODE, CARMINE_EXTEND_MODE |
-			CARMINE_EXT_CMODE_DIRECT24_RGBA);
+			CARMINE_EXT_CMODE_सूचीECT24_RGBA);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L6_EXT_MODE, CARMINE_EXTEND_MODE |
-			CARMINE_EXT_CMODE_DIRECT24_RGBA);
+			CARMINE_EXT_CMODE_सूचीECT24_RGBA);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L7_EXT_MODE, CARMINE_EXTEND_MODE |
-			CARMINE_EXT_CMODE_DIRECT24_RGBA);
+			CARMINE_EXT_CMODE_सूचीECT24_RGBA);
 
-	/* Set default frame size to layer mode register */
+	/* Set शेष frame size to layer mode रेजिस्टर */
 	width = par->res->hdp * 4 / CARMINE_DISP_WIDTH_UNIT;
 	width = width << CARMINE_DISP_WIDTH_SHIFT;
 
@@ -270,28 +271,28 @@ static void carmine_init_display_param(struct carmine_fb *par)
 	c_set_disp_reg(par, CARMINE_DISP_REG_L6_MODE_W_H, param);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L7_MODE_W_H, param);
 
-	/* Set default pos and size */
-	window_size = (par->res->vdp - 1) << CARMINE_DISP_WIN_H_SHIFT;
-	window_size |= par->res->hdp;
+	/* Set शेष pos and size */
+	winकरोw_size = (par->res->vdp - 1) << CARMINE_DISP_WIN_H_SHIFT;
+	winकरोw_size |= par->res->hdp;
 
 	c_set_disp_reg(par, CARMINE_DISP_REG_L0_WIN_POS, 0);
-	c_set_disp_reg(par, CARMINE_DISP_REG_L0_WIN_SIZE, window_size);
+	c_set_disp_reg(par, CARMINE_DISP_REG_L0_WIN_SIZE, winकरोw_size);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L1_WIN_POS, 0);
-	c_set_disp_reg(par, CARMINE_DISP_REG_L1_WIN_SIZE, window_size);
+	c_set_disp_reg(par, CARMINE_DISP_REG_L1_WIN_SIZE, winकरोw_size);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L2_WIN_POS, 0);
-	c_set_disp_reg(par, CARMINE_DISP_REG_L2_WIN_SIZE, window_size);
+	c_set_disp_reg(par, CARMINE_DISP_REG_L2_WIN_SIZE, winकरोw_size);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L3_WIN_POS, 0);
-	c_set_disp_reg(par, CARMINE_DISP_REG_L3_WIN_SIZE, window_size);
+	c_set_disp_reg(par, CARMINE_DISP_REG_L3_WIN_SIZE, winकरोw_size);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L4_WIN_POS, 0);
-	c_set_disp_reg(par, CARMINE_DISP_REG_L4_WIN_SIZE, window_size);
+	c_set_disp_reg(par, CARMINE_DISP_REG_L4_WIN_SIZE, winकरोw_size);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L5_WIN_POS, 0);
-	c_set_disp_reg(par, CARMINE_DISP_REG_L5_WIN_SIZE, window_size);
+	c_set_disp_reg(par, CARMINE_DISP_REG_L5_WIN_SIZE, winकरोw_size);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L6_WIN_POS, 0);
-	c_set_disp_reg(par, CARMINE_DISP_REG_L6_WIN_SIZE, window_size);
+	c_set_disp_reg(par, CARMINE_DISP_REG_L6_WIN_SIZE, winकरोw_size);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L7_WIN_POS, 0);
-	c_set_disp_reg(par, CARMINE_DISP_REG_L7_WIN_SIZE, window_size);
+	c_set_disp_reg(par, CARMINE_DISP_REG_L7_WIN_SIZE, winकरोw_size);
 
-	/* Set default origin address */
+	/* Set शेष origin address */
 	c_set_disp_reg(par, CARMINE_DISP_REG_L0_ORG_ADR, soffset);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L1_ORG_ADR, soffset);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L2_ORG_ADR1, soffset);
@@ -301,7 +302,7 @@ static void carmine_init_display_param(struct carmine_fb *par)
 	c_set_disp_reg(par, CARMINE_DISP_REG_L6_ORG_ADR1, soffset);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L7_ORG_ADR1, soffset);
 
-	/* Set default display address */
+	/* Set शेष display address */
 	c_set_disp_reg(par, CARMINE_DISP_REG_L0_DISP_ADR, soffset);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L2_DISP_ADR1, soffset);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L3_DISP_ADR1, soffset);
@@ -310,7 +311,7 @@ static void carmine_init_display_param(struct carmine_fb *par)
 	c_set_disp_reg(par, CARMINE_DISP_REG_L6_DISP_ADR0, soffset);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L7_DISP_ADR0, soffset);
 
-	/* Set default display position */
+	/* Set शेष display position */
 	c_set_disp_reg(par, CARMINE_DISP_REG_L0_DISP_POS, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L2_DISP_POS, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L3_DISP_POS, 0);
@@ -319,7 +320,7 @@ static void carmine_init_display_param(struct carmine_fb *par)
 	c_set_disp_reg(par, CARMINE_DISP_REG_L6_DISP_POS, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L7_DISP_POS, 0);
 
-	/* Set default blend mode */
+	/* Set शेष blend mode */
 	c_set_disp_reg(par, CARMINE_DISP_REG_BLEND_MODE_L0, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_BLEND_MODE_L1, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_BLEND_MODE_L2, 0);
@@ -329,7 +330,7 @@ static void carmine_init_display_param(struct carmine_fb *par)
 	c_set_disp_reg(par, CARMINE_DISP_REG_BLEND_MODE_L6, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_BLEND_MODE_L7, 0);
 
-	/* default transparency mode */
+	/* शेष transparency mode */
 	c_set_disp_reg(par, CARMINE_DISP_REG_L0_TRANS, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L1_TRANS, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L2_TRANS, 0);
@@ -339,7 +340,7 @@ static void carmine_init_display_param(struct carmine_fb *par)
 	c_set_disp_reg(par, CARMINE_DISP_REG_L6_TRANS, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L7_TRANS, 0);
 
-	/* Set default read skip parameter */
+	/* Set शेष पढ़ो skip parameter */
 	c_set_disp_reg(par, CARMINE_DISP_REG_L0RM, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L2RM, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L3RM, 0);
@@ -363,10 +364,10 @@ static void carmine_init_display_param(struct carmine_fb *par)
 	c_set_disp_reg(par, CARMINE_DISP_REG_L5PY, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L6PY, 0);
 	c_set_disp_reg(par, CARMINE_DISP_REG_L7PY, 0);
-}
+पूर्ण
 
-static void set_display_parameters(struct carmine_fb *par)
-{
+अटल व्योम set_display_parameters(काष्ठा carmine_fb *par)
+अणु
 	u32 mode;
 	u32 hdp, vdp, htp, hsp, hsw, vtr, vsp, vsw;
 
@@ -396,50 +397,50 @@ static void set_display_parameters(struct carmine_fb *par)
 	c_set_disp_reg(par, CARMINE_DISP_REG_V_PERIOD_POS,
 			(vdp << CARMINE_DISP_VDP_SHIFT) | vsp);
 
-	/* clock */
+	/* घड़ी */
 	mode = c_get_disp_reg(par, CARMINE_DISP_REG_DCM1);
 	mode = (mode & ~CARMINE_DISP_DCM_MASK) |
 		(par->res->disp_mode & CARMINE_DISP_DCM_MASK);
 	/* enable video output and layer 0 */
 	mode |= CARMINE_DEN | CARMINE_L0E;
 	c_set_disp_reg(par, CARMINE_DISP_REG_DCM1, mode);
-}
+पूर्ण
 
-static int carmine_set_par(struct fb_info *info)
-{
-	struct carmine_fb *par = info->par;
-	int ret;
+अटल पूर्णांक carmine_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा carmine_fb *par = info->par;
+	पूर्णांक ret;
 
 	ret = carmine_find_mode(&info->var);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	par->new_mode = ret;
-	if (par->cur_mode != par->new_mode) {
+	अगर (par->cur_mode != par->new_mode) अणु
 
 		par->cur_mode = par->new_mode;
 		par->res = &car_modes[par->new_mode];
 
 		carmine_init_display_param(par);
 		set_display_parameters(par);
-	}
+	पूर्ण
 
 	info->fix.line_length = info->var.xres * info->var.bits_per_pixel / 8;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int init_hardware(struct carmine_hw *hw)
-{
+अटल पूर्णांक init_hardware(काष्ठा carmine_hw *hw)
+अणु
 	u32 flags;
 	u32 loops;
 	u32 ret;
 
 	/* Initialize Carmine */
-	/* Sets internal clock */
+	/* Sets पूर्णांकernal घड़ी */
 	c_set_hw_reg(hw, CARMINE_CTL_REG + CARMINE_CTL_REG_CLOCK_ENABLE,
 			CARMINE_DFLT_IP_CLOCK_ENABLE);
 
-	/* Video signal output is turned off */
+	/* Video संकेत output is turned off */
 	c_set_hw_reg(hw, CARMINE_DISP0_REG + CARMINE_DISP_REG_DCM1, 0);
 	c_set_hw_reg(hw, CARMINE_DISP1_REG + CARMINE_DISP_REG_DCM1, 0);
 
@@ -482,23 +483,23 @@ static int init_hardware(struct carmine_hw *hw)
 			flags);
 
 	/* Executes DLL reset */
-	if (CARMINE_DCTL_DLL_RESET) {
-		for (loops = 0; loops < CARMINE_DCTL_INIT_WAIT_LIMIT; loops++) {
+	अगर (CARMINE_DCTL_DLL_RESET) अणु
+		क्रम (loops = 0; loops < CARMINE_DCTL_INIT_WAIT_LIMIT; loops++) अणु
 
 			ret = c_get_hw_reg(hw, CARMINE_DCTL_REG +
 					CARMINE_DCTL_REG_RSV0_STATES);
 			ret &= CARMINE_DCTL_REG_STATES_MASK;
-			if (!ret)
-				break;
+			अगर (!ret)
+				अवरोध;
 
 			mdelay(CARMINE_DCTL_INIT_WAIT_INTERVAL);
-		}
+		पूर्ण
 
-		if (loops >= CARMINE_DCTL_INIT_WAIT_LIMIT) {
-			printk(KERN_ERR "DRAM init failed\n");
-			return -EIO;
-		}
-	}
+		अगर (loops >= CARMINE_DCTL_INIT_WAIT_LIMIT) अणु
+			prपूर्णांकk(KERN_ERR "DRAM init failed\n");
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	flags = CARMINE_DFLT_IP_DCTL_MODE_AFT_RST << 16 |
 		CARMINE_DFLT_IP_DCTL_ADD;
@@ -509,11 +510,11 @@ static int init_hardware(struct carmine_hw *hw)
 	c_set_hw_reg(hw, CARMINE_DCTL_REG + CARMINE_DCTL_REG_RSV0_STATES,
 			flags);
 
-	/* Initialize the write back register */
+	/* Initialize the ग_लिखो back रेजिस्टर */
 	c_set_hw_reg(hw, CARMINE_WB_REG + CARMINE_WB_REG_WBM,
 			CARMINE_WB_REG_WBM_DEFAULT);
 
-	/* Initialize the Kottos registers */
+	/* Initialize the Kottos रेजिस्टरs */
 	c_set_hw_reg(hw, CARMINE_GRAPH_REG + CARMINE_GRAPH_REG_VRINTM, 0);
 	c_set_hw_reg(hw, CARMINE_GRAPH_REG + CARMINE_GRAPH_REG_VRERRM, 0);
 
@@ -524,10 +525,10 @@ static int init_hardware(struct carmine_hw *hw)
 	c_set_hw_reg(hw, CARMINE_GRAPH_REG + CARMINE_GRAPH_REG_DC_OFFSET_LY, 0);
 	c_set_hw_reg(hw, CARMINE_GRAPH_REG + CARMINE_GRAPH_REG_DC_OFFSET_TX, 0);
 	c_set_hw_reg(hw, CARMINE_GRAPH_REG + CARMINE_GRAPH_REG_DC_OFFSET_TY, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct fb_ops carminefb_ops = {
+अटल स्थिर काष्ठा fb_ops carminefb_ops = अणु
 	.owner		= THIS_MODULE,
 	.fb_fillrect	= cfb_fillrect,
 	.fb_copyarea	= cfb_copyarea,
@@ -536,19 +537,19 @@ static const struct fb_ops carminefb_ops = {
 	.fb_check_var	= carmine_check_var,
 	.fb_set_par	= carmine_set_par,
 	.fb_setcolreg	= carmine_setcolreg,
-};
+पूर्ण;
 
-static int alloc_carmine_fb(void __iomem *regs, void __iomem *smem_base,
-			    int smem_offset, struct device *device,
-			    struct fb_info **rinfo)
-{
-	int ret;
-	struct fb_info *info;
-	struct carmine_fb *par;
+अटल पूर्णांक alloc_carmine_fb(व्योम __iomem *regs, व्योम __iomem *smem_base,
+			    पूर्णांक smem_offset, काष्ठा device *device,
+			    काष्ठा fb_info **rinfo)
+अणु
+	पूर्णांक ret;
+	काष्ठा fb_info *info;
+	काष्ठा carmine_fb *par;
 
-	info = framebuffer_alloc(sizeof *par, device);
-	if (!info)
-		return -ENOMEM;
+	info = framebuffer_alloc(माप *par, device);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	par = info->par;
 	par->display_reg = regs;
@@ -559,14 +560,14 @@ static int alloc_carmine_fb(void __iomem *regs, void __iomem *smem_base,
 	info->fbops = &carminefb_ops;
 
 	info->fix = carminefb_fix;
-	info->pseudo_palette = par->pseudo_palette;
+	info->pseuकरो_palette = par->pseuकरो_palette;
 	info->flags = FBINFO_DEFAULT;
 
 	ret = fb_alloc_cmap(&info->cmap, 256, 1);
-	if (ret < 0)
-		goto err_free_fb;
+	अगर (ret < 0)
+		जाओ err_मुक्त_fb;
 
-	if (fb_mode >= ARRAY_SIZE(carmine_modedb))
+	अगर (fb_mode >= ARRAY_SIZE(carmine_modedb))
 		fb_mode = CARMINEFB_DEFAULT_VIDEO_MODE;
 
 	par->cur_mode = par->new_mode = ~0;
@@ -574,137 +575,137 @@ static int alloc_carmine_fb(void __iomem *regs, void __iomem *smem_base,
 	ret = fb_find_mode(&info->var, info, fb_mode_str, carmine_modedb,
 			ARRAY_SIZE(carmine_modedb),
 			&carmine_modedb[fb_mode], 32);
-	if (!ret || ret == 4) {
+	अगर (!ret || ret == 4) अणु
 		ret = -EINVAL;
-		goto err_dealloc_cmap;
-	}
+		जाओ err_dealloc_cmap;
+	पूर्ण
 
 	fb_videomode_to_modelist(carmine_modedb, ARRAY_SIZE(carmine_modedb),
 			&info->modelist);
 
-	ret = register_framebuffer(info);
-	if (ret < 0)
-		goto err_dealloc_cmap;
+	ret = रेजिस्टर_framebuffer(info);
+	अगर (ret < 0)
+		जाओ err_dealloc_cmap;
 
 	fb_info(info, "%s frame buffer device\n", info->fix.id);
 
 	*rinfo = info;
-	return 0;
+	वापस 0;
 
 err_dealloc_cmap:
 	fb_dealloc_cmap(&info->cmap);
-err_free_fb:
+err_मुक्त_fb:
 	framebuffer_release(info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cleanup_fb_device(struct fb_info *info)
-{
-	if (info) {
-		unregister_framebuffer(info);
+अटल व्योम cleanup_fb_device(काष्ठा fb_info *info)
+अणु
+	अगर (info) अणु
+		unरेजिस्टर_framebuffer(info);
 		fb_dealloc_cmap(&info->cmap);
 		framebuffer_release(info);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int carminefb_probe(struct pci_dev *dev, const struct pci_device_id *ent)
-{
-	struct carmine_hw *hw;
-	struct device *device = &dev->dev;
-	struct fb_info *info;
-	int ret;
+अटल पूर्णांक carminefb_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा carmine_hw *hw;
+	काष्ठा device *device = &dev->dev;
+	काष्ठा fb_info *info;
+	पूर्णांक ret;
 
 	ret = pci_enable_device(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = -ENOMEM;
-	hw = kzalloc(sizeof *hw, GFP_KERNEL);
-	if (!hw)
-		goto err_enable_pci;
+	hw = kzalloc(माप *hw, GFP_KERNEL);
+	अगर (!hw)
+		जाओ err_enable_pci;
 
 	carminefb_fix.mmio_start = pci_resource_start(dev, CARMINE_CONFIG_BAR);
 	carminefb_fix.mmio_len = pci_resource_len(dev, CARMINE_CONFIG_BAR);
 
-	if (!request_mem_region(carminefb_fix.mmio_start,
+	अगर (!request_mem_region(carminefb_fix.mmio_start,
 				carminefb_fix.mmio_len,
-				"carminefb regbase")) {
-		printk(KERN_ERR "carminefb: Can't reserve regbase.\n");
+				"carminefb regbase")) अणु
+		prपूर्णांकk(KERN_ERR "carminefb: Can't reserve regbase.\n");
 		ret = -EBUSY;
-		goto err_free_hw;
-	}
+		जाओ err_मुक्त_hw;
+	पूर्ण
 	hw->v_regs = ioremap(carminefb_fix.mmio_start,
 			carminefb_fix.mmio_len);
-	if (!hw->v_regs) {
-		printk(KERN_ERR "carminefb: Can't remap %s register.\n",
+	अगर (!hw->v_regs) अणु
+		prपूर्णांकk(KERN_ERR "carminefb: Can't remap %s register.\n",
 				carminefb_fix.id);
-		goto err_free_reg_mmio;
-	}
+		जाओ err_मुक्त_reg_mmio;
+	पूर्ण
 
 	carminefb_fix.smem_start = pci_resource_start(dev, CARMINE_MEMORY_BAR);
 	carminefb_fix.smem_len = pci_resource_len(dev, CARMINE_MEMORY_BAR);
 
 	/* The memory area tends to be very large (256 MiB). Remap only what
-	 * is required for that largest resolution to avoid remaps at run
-	 * time
+	 * is required क्रम that largest resolution to aव्योम remaps at run
+	 * समय
 	 */
-	if (carminefb_fix.smem_len > CARMINE_TOTAL_DIPLAY_MEM)
+	अगर (carminefb_fix.smem_len > CARMINE_TOTAL_DIPLAY_MEM)
 		carminefb_fix.smem_len = CARMINE_TOTAL_DIPLAY_MEM;
 
-	else if (carminefb_fix.smem_len < CARMINE_TOTAL_DIPLAY_MEM) {
-		printk(KERN_ERR "carminefb: Memory bar is only %d bytes, %d "
+	अन्यथा अगर (carminefb_fix.smem_len < CARMINE_TOTAL_DIPLAY_MEM) अणु
+		prपूर्णांकk(KERN_ERR "carminefb: Memory bar is only %d bytes, %d "
 				"are required.", carminefb_fix.smem_len,
 				CARMINE_TOTAL_DIPLAY_MEM);
-		goto err_unmap_vregs;
-	}
+		जाओ err_unmap_vregs;
+	पूर्ण
 
-	if (!request_mem_region(carminefb_fix.smem_start,
-				carminefb_fix.smem_len,	"carminefb smem")) {
-		printk(KERN_ERR "carminefb: Can't reserve smem.\n");
-		goto err_unmap_vregs;
-	}
+	अगर (!request_mem_region(carminefb_fix.smem_start,
+				carminefb_fix.smem_len,	"carminefb smem")) अणु
+		prपूर्णांकk(KERN_ERR "carminefb: Can't reserve smem.\n");
+		जाओ err_unmap_vregs;
+	पूर्ण
 
 	hw->screen_mem = ioremap(carminefb_fix.smem_start,
 			carminefb_fix.smem_len);
-	if (!hw->screen_mem) {
-		printk(KERN_ERR "carmine: Can't ioremap smem area.\n");
-		goto err_reg_smem;
-	}
+	अगर (!hw->screen_mem) अणु
+		prपूर्णांकk(KERN_ERR "carmine: Can't ioremap smem area.\n");
+		जाओ err_reg_smem;
+	पूर्ण
 
 	ret = init_hardware(hw);
-	if (ret)
-		goto err_unmap_screen;
+	अगर (ret)
+		जाओ err_unmap_screen;
 
-	info = NULL;
-	if (fb_displays & CARMINE_USE_DISPLAY0) {
+	info = शून्य;
+	अगर (fb_displays & CARMINE_USE_DISPLAY0) अणु
 		ret = alloc_carmine_fb(hw->v_regs + CARMINE_DISP0_REG,
 				hw->screen_mem, CARMINE_DISPLAY_MEM * 0,
 				device, &info);
-		if (ret)
-			goto err_deinit_hw;
-	}
+		अगर (ret)
+			जाओ err_deinit_hw;
+	पूर्ण
 
 	hw->fb[0] = info;
 
-	info = NULL;
-	if (fb_displays & CARMINE_USE_DISPLAY1) {
+	info = शून्य;
+	अगर (fb_displays & CARMINE_USE_DISPLAY1) अणु
 		ret = alloc_carmine_fb(hw->v_regs + CARMINE_DISP1_REG,
 				hw->screen_mem, CARMINE_DISPLAY_MEM * 1,
 				device, &info);
-		if (ret)
-			goto err_cleanup_fb0;
-	}
+		अगर (ret)
+			जाओ err_cleanup_fb0;
+	पूर्ण
 
 	hw->fb[1] = info;
-	info = NULL;
+	info = शून्य;
 
 	pci_set_drvdata(dev, hw);
-	return 0;
+	वापस 0;
 
 err_cleanup_fb0:
 	cleanup_fb_device(hw->fb[0]);
 err_deinit_hw:
-	/* disable clock, etc */
+	/* disable घड़ी, etc */
 	c_set_hw_reg(hw, CARMINE_CTL_REG + CARMINE_CTL_REG_CLOCK_ENABLE, 0);
 err_unmap_screen:
 	iounmap(hw->screen_mem);
@@ -712,33 +713,33 @@ err_reg_smem:
 	release_mem_region(carminefb_fix.smem_start, carminefb_fix.smem_len);
 err_unmap_vregs:
 	iounmap(hw->v_regs);
-err_free_reg_mmio:
+err_मुक्त_reg_mmio:
 	release_mem_region(carminefb_fix.mmio_start, carminefb_fix.mmio_len);
-err_free_hw:
-	kfree(hw);
+err_मुक्त_hw:
+	kमुक्त(hw);
 err_enable_pci:
 	pci_disable_device(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void carminefb_remove(struct pci_dev *dev)
-{
-	struct carmine_hw *hw = pci_get_drvdata(dev);
-	struct fb_fix_screeninfo fix;
-	int i;
+अटल व्योम carminefb_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा carmine_hw *hw = pci_get_drvdata(dev);
+	काष्ठा fb_fix_screeninfo fix;
+	पूर्णांक i;
 
-	/* in case we use only fb1 and not fb1 */
-	if (hw->fb[0])
+	/* in हाल we use only fb1 and not fb1 */
+	अगर (hw->fb[0])
 		fix = hw->fb[0]->fix;
-	else
+	अन्यथा
 		fix = hw->fb[1]->fix;
 
-	/* deactivate display(s) and switch clocks */
+	/* deactivate display(s) and चयन घड़ीs */
 	c_set_hw_reg(hw, CARMINE_DISP0_REG + CARMINE_DISP_REG_DCM1, 0);
 	c_set_hw_reg(hw, CARMINE_DISP1_REG + CARMINE_DISP_REG_DCM1, 0);
 	c_set_hw_reg(hw, CARMINE_CTL_REG + CARMINE_CTL_REG_CLOCK_ENABLE, 0);
 
-	for (i = 0; i < MAX_DISPLAY; i++)
+	क्रम (i = 0; i < MAX_DISPLAY; i++)
 		cleanup_fb_device(hw->fb[i]);
 
 	iounmap(hw->screen_mem);
@@ -747,42 +748,42 @@ static void carminefb_remove(struct pci_dev *dev)
 	release_mem_region(fix.mmio_start, fix.mmio_len);
 
 	pci_disable_device(dev);
-	kfree(hw);
-}
+	kमुक्त(hw);
+पूर्ण
 
-#define PCI_VENDOR_ID_FUJITU_LIMITED 0x10cf
-static struct pci_device_id carmine_devices[] = {
-{
-	PCI_DEVICE(PCI_VENDOR_ID_FUJITU_LIMITED, 0x202b)},
-	{0, 0, 0, 0, 0, 0, 0}
-};
+#घोषणा PCI_VENDOR_ID_FUJITU_LIMITED 0x10cf
+अटल काष्ठा pci_device_id carmine_devices[] = अणु
+अणु
+	PCI_DEVICE(PCI_VENDOR_ID_FUJITU_LIMITED, 0x202b)पूर्ण,
+	अणु0, 0, 0, 0, 0, 0, 0पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, carmine_devices);
 
-static struct pci_driver carmine_pci_driver = {
+अटल काष्ठा pci_driver carmine_pci_driver = अणु
 	.name		= "carminefb",
 	.id_table	= carmine_devices,
 	.probe		= carminefb_probe,
-	.remove		= carminefb_remove,
-};
+	.हटाओ		= carminefb_हटाओ,
+पूर्ण;
 
-static int __init carminefb_init(void)
-{
-	if (!(fb_displays &
-		(CARMINE_USE_DISPLAY0 | CARMINE_USE_DISPLAY1))) {
-		printk(KERN_ERR "If you disable both displays than you don't "
+अटल पूर्णांक __init carminefb_init(व्योम)
+अणु
+	अगर (!(fb_displays &
+		(CARMINE_USE_DISPLAY0 | CARMINE_USE_DISPLAY1))) अणु
+		prपूर्णांकk(KERN_ERR "If you disable both displays than you don't "
 				"need the driver at all\n");
-		return -EINVAL;
-	}
-	return pci_register_driver(&carmine_pci_driver);
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस pci_रेजिस्टर_driver(&carmine_pci_driver);
+पूर्ण
 module_init(carminefb_init);
 
-static void __exit carminefb_cleanup(void)
-{
-	pci_unregister_driver(&carmine_pci_driver);
-}
-module_exit(carminefb_cleanup);
+अटल व्योम __निकास carminefb_cleanup(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&carmine_pci_driver);
+पूर्ण
+module_निकास(carminefb_cleanup);
 
 MODULE_AUTHOR("Sebastian Siewior <bigeasy@linutronix.de>");
 MODULE_DESCRIPTION("Framebuffer driver for Fujitsu Carmine based devices");

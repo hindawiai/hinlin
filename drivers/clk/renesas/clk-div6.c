@@ -1,342 +1,343 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * r8a7790 Common Clock Framework support
  *
  * Copyright (C) 2013  Renesas Solutions Corp.
  *
- * Contact: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Contact: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/notifier.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/pm.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/slab.h>
 
-#include "clk-div6.h"
+#समावेश "clk-div6.h"
 
-#define CPG_DIV6_CKSTP		BIT(8)
-#define CPG_DIV6_DIV(d)		((d) & 0x3f)
-#define CPG_DIV6_DIV_MASK	0x3f
+#घोषणा CPG_DIV6_CKSTP		BIT(8)
+#घोषणा CPG_DIV6_DIV(d)		((d) & 0x3f)
+#घोषणा CPG_DIV6_DIV_MASK	0x3f
 
 /**
- * struct div6_clock - CPG 6 bit divider clock
- * @hw: handle between common and hardware-specific interfaces
- * @reg: IO-remapped register
- * @div: divisor value (1-64)
- * @src_shift: Shift to access the register bits to select the parent clock
- * @src_width: Number of register bits to select the parent clock (may be 0)
- * @nb: Notifier block to save/restore clock state for system resume
- * @parents: Array to map from valid parent clocks indices to hardware indices
+ * काष्ठा भाग6_घड़ी - CPG 6 bit भागider घड़ी
+ * @hw: handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @reg: IO-remapped रेजिस्टर
+ * @भाग: भागisor value (1-64)
+ * @src_shअगरt: Shअगरt to access the रेजिस्टर bits to select the parent घड़ी
+ * @src_width: Number of रेजिस्टर bits to select the parent घड़ी (may be 0)
+ * @nb: Notअगरier block to save/restore घड़ी state क्रम प्रणाली resume
+ * @parents: Array to map from valid parent घड़ीs indices to hardware indices
  */
-struct div6_clock {
-	struct clk_hw hw;
-	void __iomem *reg;
-	unsigned int div;
-	u32 src_shift;
+काष्ठा भाग6_घड़ी अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *reg;
+	अचिन्हित पूर्णांक भाग;
+	u32 src_shअगरt;
 	u32 src_width;
-	struct notifier_block nb;
+	काष्ठा notअगरier_block nb;
 	u8 parents[];
-};
+पूर्ण;
 
-#define to_div6_clock(_hw) container_of(_hw, struct div6_clock, hw)
+#घोषणा to_भाग6_घड़ी(_hw) container_of(_hw, काष्ठा भाग6_घड़ी, hw)
 
-static int cpg_div6_clock_enable(struct clk_hw *hw)
-{
-	struct div6_clock *clock = to_div6_clock(hw);
+अटल पूर्णांक cpg_भाग6_घड़ी_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा भाग6_घड़ी *घड़ी = to_भाग6_घड़ी(hw);
 	u32 val;
 
-	val = (readl(clock->reg) & ~(CPG_DIV6_DIV_MASK | CPG_DIV6_CKSTP))
-	    | CPG_DIV6_DIV(clock->div - 1);
-	writel(val, clock->reg);
+	val = (पढ़ोl(घड़ी->reg) & ~(CPG_DIV6_DIV_MASK | CPG_DIV6_CKSTP))
+	    | CPG_DIV6_DIV(घड़ी->भाग - 1);
+	ग_लिखोl(val, घड़ी->reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cpg_div6_clock_disable(struct clk_hw *hw)
-{
-	struct div6_clock *clock = to_div6_clock(hw);
+अटल व्योम cpg_भाग6_घड़ी_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा भाग6_घड़ी *घड़ी = to_भाग6_घड़ी(hw);
 	u32 val;
 
-	val = readl(clock->reg);
+	val = पढ़ोl(घड़ी->reg);
 	val |= CPG_DIV6_CKSTP;
 	/*
-	 * DIV6 clocks require the divisor field to be non-zero when stopping
-	 * the clock. However, some clocks (e.g. ZB on sh73a0) fail to be
-	 * re-enabled later if the divisor field is changed when stopping the
-	 * clock
+	 * DIV6 घड़ीs require the भागisor field to be non-zero when stopping
+	 * the घड़ी. However, some घड़ीs (e.g. ZB on sh73a0) fail to be
+	 * re-enabled later अगर the भागisor field is changed when stopping the
+	 * घड़ी
 	 */
-	if (!(val & CPG_DIV6_DIV_MASK))
+	अगर (!(val & CPG_DIV6_DIV_MASK))
 		val |= CPG_DIV6_DIV_MASK;
-	writel(val, clock->reg);
-}
+	ग_लिखोl(val, घड़ी->reg);
+पूर्ण
 
-static int cpg_div6_clock_is_enabled(struct clk_hw *hw)
-{
-	struct div6_clock *clock = to_div6_clock(hw);
+अटल पूर्णांक cpg_भाग6_घड़ी_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा भाग6_घड़ी *घड़ी = to_भाग6_घड़ी(hw);
 
-	return !(readl(clock->reg) & CPG_DIV6_CKSTP);
-}
+	वापस !(पढ़ोl(घड़ी->reg) & CPG_DIV6_CKSTP);
+पूर्ण
 
-static unsigned long cpg_div6_clock_recalc_rate(struct clk_hw *hw,
-						unsigned long parent_rate)
-{
-	struct div6_clock *clock = to_div6_clock(hw);
+अटल अचिन्हित दीर्घ cpg_भाग6_घड़ी_recalc_rate(काष्ठा clk_hw *hw,
+						अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा भाग6_घड़ी *घड़ी = to_भाग6_घड़ी(hw);
 
-	return parent_rate / clock->div;
-}
+	वापस parent_rate / घड़ी->भाग;
+पूर्ण
 
-static unsigned int cpg_div6_clock_calc_div(unsigned long rate,
-					    unsigned long parent_rate)
-{
-	unsigned int div;
+अटल अचिन्हित पूर्णांक cpg_भाग6_घड़ी_calc_भाग(अचिन्हित दीर्घ rate,
+					    अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित पूर्णांक भाग;
 
-	if (!rate)
+	अगर (!rate)
 		rate = 1;
 
-	div = DIV_ROUND_CLOSEST(parent_rate, rate);
-	return clamp_t(unsigned int, div, 1, 64);
-}
+	भाग = DIV_ROUND_CLOSEST(parent_rate, rate);
+	वापस clamp_t(अचिन्हित पूर्णांक, भाग, 1, 64);
+पूर्ण
 
-static long cpg_div6_clock_round_rate(struct clk_hw *hw, unsigned long rate,
-				      unsigned long *parent_rate)
-{
-	unsigned int div = cpg_div6_clock_calc_div(rate, *parent_rate);
+अटल दीर्घ cpg_भाग6_घड़ी_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				      अचिन्हित दीर्घ *parent_rate)
+अणु
+	अचिन्हित पूर्णांक भाग = cpg_भाग6_घड़ी_calc_भाग(rate, *parent_rate);
 
-	return *parent_rate / div;
-}
+	वापस *parent_rate / भाग;
+पूर्ण
 
-static int cpg_div6_clock_set_rate(struct clk_hw *hw, unsigned long rate,
-				   unsigned long parent_rate)
-{
-	struct div6_clock *clock = to_div6_clock(hw);
-	unsigned int div = cpg_div6_clock_calc_div(rate, parent_rate);
+अटल पूर्णांक cpg_भाग6_घड़ी_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				   अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा भाग6_घड़ी *घड़ी = to_भाग6_घड़ी(hw);
+	अचिन्हित पूर्णांक भाग = cpg_भाग6_घड़ी_calc_भाग(rate, parent_rate);
 	u32 val;
 
-	clock->div = div;
+	घड़ी->भाग = भाग;
 
-	val = readl(clock->reg) & ~CPG_DIV6_DIV_MASK;
-	/* Only program the new divisor if the clock isn't stopped. */
-	if (!(val & CPG_DIV6_CKSTP))
-		writel(val | CPG_DIV6_DIV(clock->div - 1), clock->reg);
+	val = पढ़ोl(घड़ी->reg) & ~CPG_DIV6_DIV_MASK;
+	/* Only program the new भागisor अगर the घड़ी isn't stopped. */
+	अगर (!(val & CPG_DIV6_CKSTP))
+		ग_लिखोl(val | CPG_DIV6_DIV(घड़ी->भाग - 1), घड़ी->reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 cpg_div6_clock_get_parent(struct clk_hw *hw)
-{
-	struct div6_clock *clock = to_div6_clock(hw);
-	unsigned int i;
+अटल u8 cpg_भाग6_घड़ी_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा भाग6_घड़ी *घड़ी = to_भाग6_घड़ी(hw);
+	अचिन्हित पूर्णांक i;
 	u8 hw_index;
 
-	if (clock->src_width == 0)
-		return 0;
+	अगर (घड़ी->src_width == 0)
+		वापस 0;
 
-	hw_index = (readl(clock->reg) >> clock->src_shift) &
-		   (BIT(clock->src_width) - 1);
-	for (i = 0; i < clk_hw_get_num_parents(hw); i++) {
-		if (clock->parents[i] == hw_index)
-			return i;
-	}
+	hw_index = (पढ़ोl(घड़ी->reg) >> घड़ी->src_shअगरt) &
+		   (BIT(घड़ी->src_width) - 1);
+	क्रम (i = 0; i < clk_hw_get_num_parents(hw); i++) अणु
+		अगर (घड़ी->parents[i] == hw_index)
+			वापस i;
+	पूर्ण
 
 	pr_err("%s: %s DIV6 clock set to invalid parent %u\n",
 	       __func__, clk_hw_get_name(hw), hw_index);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cpg_div6_clock_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct div6_clock *clock = to_div6_clock(hw);
+अटल पूर्णांक cpg_भाग6_घड़ी_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा भाग6_घड़ी *घड़ी = to_भाग6_घड़ी(hw);
 	u8 hw_index;
 	u32 mask;
 
-	if (index >= clk_hw_get_num_parents(hw))
-		return -EINVAL;
+	अगर (index >= clk_hw_get_num_parents(hw))
+		वापस -EINVAL;
 
-	mask = ~((BIT(clock->src_width) - 1) << clock->src_shift);
-	hw_index = clock->parents[index];
+	mask = ~((BIT(घड़ी->src_width) - 1) << घड़ी->src_shअगरt);
+	hw_index = घड़ी->parents[index];
 
-	writel((readl(clock->reg) & mask) | (hw_index << clock->src_shift),
-	       clock->reg);
+	ग_लिखोl((पढ़ोl(घड़ी->reg) & mask) | (hw_index << घड़ी->src_shअगरt),
+	       घड़ी->reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops cpg_div6_clock_ops = {
-	.enable = cpg_div6_clock_enable,
-	.disable = cpg_div6_clock_disable,
-	.is_enabled = cpg_div6_clock_is_enabled,
-	.get_parent = cpg_div6_clock_get_parent,
-	.set_parent = cpg_div6_clock_set_parent,
-	.recalc_rate = cpg_div6_clock_recalc_rate,
-	.round_rate = cpg_div6_clock_round_rate,
-	.set_rate = cpg_div6_clock_set_rate,
-};
+अटल स्थिर काष्ठा clk_ops cpg_भाग6_घड़ी_ops = अणु
+	.enable = cpg_भाग6_घड़ी_enable,
+	.disable = cpg_भाग6_घड़ी_disable,
+	.is_enabled = cpg_भाग6_घड़ी_is_enabled,
+	.get_parent = cpg_भाग6_घड़ी_get_parent,
+	.set_parent = cpg_भाग6_घड़ी_set_parent,
+	.recalc_rate = cpg_भाग6_घड़ी_recalc_rate,
+	.round_rate = cpg_भाग6_घड़ी_round_rate,
+	.set_rate = cpg_भाग6_घड़ी_set_rate,
+पूर्ण;
 
-static int cpg_div6_clock_notifier_call(struct notifier_block *nb,
-					unsigned long action, void *data)
-{
-	struct div6_clock *clock = container_of(nb, struct div6_clock, nb);
+अटल पूर्णांक cpg_भाग6_घड़ी_notअगरier_call(काष्ठा notअगरier_block *nb,
+					अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	काष्ठा भाग6_घड़ी *घड़ी = container_of(nb, काष्ठा भाग6_घड़ी, nb);
 
-	switch (action) {
-	case PM_EVENT_RESUME:
+	चयन (action) अणु
+	हाल PM_EVENT_RESUME:
 		/*
-		 * TODO: This does not yet support DIV6 clocks with multiple
+		 * TODO: This करोes not yet support DIV6 घड़ीs with multiple
 		 * parents, as the parent selection bits are not restored.
-		 * Fortunately so far such DIV6 clocks are found only on
-		 * R/SH-Mobile SoCs, while the resume functionality is only
+		 * Fortunately so far such DIV6 घड़ीs are found only on
+		 * R/SH-Mobile SoCs, जबतक the resume functionality is only
 		 * needed on R-Car Gen3.
 		 */
-		if (__clk_get_enable_count(clock->hw.clk))
-			cpg_div6_clock_enable(&clock->hw);
-		else
-			cpg_div6_clock_disable(&clock->hw);
-		return NOTIFY_OK;
-	}
+		अगर (__clk_get_enable_count(घड़ी->hw.clk))
+			cpg_भाग6_घड़ी_enable(&घड़ी->hw);
+		अन्यथा
+			cpg_भाग6_घड़ी_disable(&घड़ी->hw);
+		वापस NOTIFY_OK;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /**
- * cpg_div6_register - Register a DIV6 clock
- * @name: Name of the DIV6 clock
- * @num_parents: Number of parent clocks of the DIV6 clock (1, 4, or 8)
- * @parent_names: Array containing the names of the parent clocks
- * @reg: Mapped register used to control the DIV6 clock
- * @notifiers: Optional notifier chain to save/restore state for system resume
+ * cpg_भाग6_रेजिस्टर - Register a DIV6 घड़ी
+ * @name: Name of the DIV6 घड़ी
+ * @num_parents: Number of parent घड़ीs of the DIV6 घड़ी (1, 4, or 8)
+ * @parent_names: Array containing the names of the parent घड़ीs
+ * @reg: Mapped रेजिस्टर used to control the DIV6 घड़ी
+ * @notअगरiers: Optional notअगरier chain to save/restore state क्रम प्रणाली resume
  */
-struct clk * __init cpg_div6_register(const char *name,
-				      unsigned int num_parents,
-				      const char **parent_names,
-				      void __iomem *reg,
-				      struct raw_notifier_head *notifiers)
-{
-	unsigned int valid_parents;
-	struct clk_init_data init = {};
-	struct div6_clock *clock;
-	struct clk *clk;
-	unsigned int i;
+काष्ठा clk * __init cpg_भाग6_रेजिस्टर(स्थिर अक्षर *name,
+				      अचिन्हित पूर्णांक num_parents,
+				      स्थिर अक्षर **parent_names,
+				      व्योम __iomem *reg,
+				      काष्ठा raw_notअगरier_head *notअगरiers)
+अणु
+	अचिन्हित पूर्णांक valid_parents;
+	काष्ठा clk_init_data init = अणुपूर्ण;
+	काष्ठा भाग6_घड़ी *घड़ी;
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
 
-	clock = kzalloc(struct_size(clock, parents, num_parents), GFP_KERNEL);
-	if (!clock)
-		return ERR_PTR(-ENOMEM);
+	घड़ी = kzalloc(काष्ठा_size(घड़ी, parents, num_parents), GFP_KERNEL);
+	अगर (!घड़ी)
+		वापस ERR_PTR(-ENOMEM);
 
-	clock->reg = reg;
+	घड़ी->reg = reg;
 
 	/*
-	 * Read the divisor. Disabling the clock overwrites the divisor, so we
-	 * need to cache its value for the enable operation.
+	 * Read the भागisor. Disabling the घड़ी overग_लिखोs the भागisor, so we
+	 * need to cache its value क्रम the enable operation.
 	 */
-	clock->div = (readl(clock->reg) & CPG_DIV6_DIV_MASK) + 1;
+	घड़ी->भाग = (पढ़ोl(घड़ी->reg) & CPG_DIV6_DIV_MASK) + 1;
 
-	switch (num_parents) {
-	case 1:
-		/* fixed parent clock */
-		clock->src_shift = clock->src_width = 0;
-		break;
-	case 4:
-		/* clock with EXSRC bits 6-7 */
-		clock->src_shift = 6;
-		clock->src_width = 2;
-		break;
-	case 8:
+	चयन (num_parents) अणु
+	हाल 1:
+		/* fixed parent घड़ी */
+		घड़ी->src_shअगरt = घड़ी->src_width = 0;
+		अवरोध;
+	हाल 4:
+		/* घड़ी with EXSRC bits 6-7 */
+		घड़ी->src_shअगरt = 6;
+		घड़ी->src_width = 2;
+		अवरोध;
+	हाल 8:
 		/* VCLK with EXSRC bits 12-14 */
-		clock->src_shift = 12;
-		clock->src_width = 3;
-		break;
-	default:
+		घड़ी->src_shअगरt = 12;
+		घड़ी->src_width = 3;
+		अवरोध;
+	शेष:
 		pr_err("%s: invalid number of parents for DIV6 clock %s\n",
 		       __func__, name);
 		clk = ERR_PTR(-EINVAL);
-		goto free_clock;
-	}
+		जाओ मुक्त_घड़ी;
+	पूर्ण
 
 	/* Filter out invalid parents */
-	for (i = 0, valid_parents = 0; i < num_parents; i++) {
-		if (parent_names[i]) {
+	क्रम (i = 0, valid_parents = 0; i < num_parents; i++) अणु
+		अगर (parent_names[i]) अणु
 			parent_names[valid_parents] = parent_names[i];
-			clock->parents[valid_parents] = i;
+			घड़ी->parents[valid_parents] = i;
 			valid_parents++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Register the clock. */
+	/* Register the घड़ी. */
 	init.name = name;
-	init.ops = &cpg_div6_clock_ops;
+	init.ops = &cpg_भाग6_घड़ी_ops;
 	init.parent_names = parent_names;
 	init.num_parents = valid_parents;
 
-	clock->hw.init = &init;
+	घड़ी->hw.init = &init;
 
-	clk = clk_register(NULL, &clock->hw);
-	if (IS_ERR(clk))
-		goto free_clock;
+	clk = clk_रेजिस्टर(शून्य, &घड़ी->hw);
+	अगर (IS_ERR(clk))
+		जाओ मुक्त_घड़ी;
 
-	if (notifiers) {
-		clock->nb.notifier_call = cpg_div6_clock_notifier_call;
-		raw_notifier_chain_register(notifiers, &clock->nb);
-	}
+	अगर (notअगरiers) अणु
+		घड़ी->nb.notअगरier_call = cpg_भाग6_घड़ी_notअगरier_call;
+		raw_notअगरier_chain_रेजिस्टर(notअगरiers, &घड़ी->nb);
+	पूर्ण
 
-	return clk;
+	वापस clk;
 
-free_clock:
-	kfree(clock);
-	return clk;
-}
+मुक्त_घड़ी:
+	kमुक्त(घड़ी);
+	वापस clk;
+पूर्ण
 
-static void __init cpg_div6_clock_init(struct device_node *np)
-{
-	unsigned int num_parents;
-	const char **parent_names;
-	const char *clk_name = np->name;
-	void __iomem *reg;
-	struct clk *clk;
-	unsigned int i;
+अटल व्योम __init cpg_भाग6_घड़ी_init(काष्ठा device_node *np)
+अणु
+	अचिन्हित पूर्णांक num_parents;
+	स्थिर अक्षर **parent_names;
+	स्थिर अक्षर *clk_name = np->name;
+	व्योम __iomem *reg;
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
 
 	num_parents = of_clk_get_parent_count(np);
-	if (num_parents < 1) {
+	अगर (num_parents < 1) अणु
 		pr_err("%s: no parent found for %pOFn DIV6 clock\n",
 		       __func__, np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	parent_names = kmalloc_array(num_parents, sizeof(*parent_names),
+	parent_names = kदो_स्मृति_array(num_parents, माप(*parent_names),
 				GFP_KERNEL);
-	if (!parent_names)
-		return;
+	अगर (!parent_names)
+		वापस;
 
 	reg = of_iomap(np, 0);
-	if (reg == NULL) {
+	अगर (reg == शून्य) अणु
 		pr_err("%s: failed to map %pOFn DIV6 clock register\n",
 		       __func__, np);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* Parse the DT properties. */
-	of_property_read_string(np, "clock-output-names", &clk_name);
+	of_property_पढ़ो_string(np, "clock-output-names", &clk_name);
 
-	for (i = 0; i < num_parents; i++)
+	क्रम (i = 0; i < num_parents; i++)
 		parent_names[i] = of_clk_get_parent_name(np, i);
 
-	clk = cpg_div6_register(clk_name, num_parents, parent_names, reg, NULL);
-	if (IS_ERR(clk)) {
+	clk = cpg_भाग6_रेजिस्टर(clk_name, num_parents, parent_names, reg, शून्य);
+	अगर (IS_ERR(clk)) अणु
 		pr_err("%s: failed to register %pOFn DIV6 clock (%ld)\n",
 		       __func__, np, PTR_ERR(clk));
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	of_clk_add_provider(np, of_clk_src_simple_get, clk);
 
-	kfree(parent_names);
-	return;
+	kमुक्त(parent_names);
+	वापस;
 
 error:
-	if (reg)
+	अगर (reg)
 		iounmap(reg);
-	kfree(parent_names);
-}
-CLK_OF_DECLARE(cpg_div6_clk, "renesas,cpg-div6-clock", cpg_div6_clock_init);
+	kमुक्त(parent_names);
+पूर्ण
+CLK_OF_DECLARE(cpg_भाग6_clk, "renesas,cpg-div6-clock", cpg_भाग6_घड़ी_init);

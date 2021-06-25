@@ -1,110 +1,111 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BCM63XX_DEV_ENET_H_
-#define BCM63XX_DEV_ENET_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BCM63XX_DEV_ENET_H_
+#घोषणा BCM63XX_DEV_ENET_H_
 
-#include <linux/if_ether.h>
-#include <linux/init.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/init.h>
 
-#include <bcm63xx_regs.h>
+#समावेश <bcm63xx_regs.h>
 
 /*
- * on board ethernet platform data
+ * on board ethernet platक्रमm data
  */
-struct bcm63xx_enet_platform_data {
-	char mac_addr[ETH_ALEN];
+काष्ठा bcm63xx_enet_platक्रमm_data अणु
+	अक्षर mac_addr[ETH_ALEN];
 
-	int has_phy;
+	पूर्णांक has_phy;
 
-	/* if has_phy, then set use_internal_phy */
-	int use_internal_phy;
+	/* अगर has_phy, then set use_पूर्णांकernal_phy */
+	पूर्णांक use_पूर्णांकernal_phy;
 
-	/* or fill phy info to use an external one */
-	int phy_id;
-	int has_phy_interrupt;
-	int phy_interrupt;
+	/* or fill phy info to use an बाह्यal one */
+	पूर्णांक phy_id;
+	पूर्णांक has_phy_पूर्णांकerrupt;
+	पूर्णांक phy_पूर्णांकerrupt;
 
-	/* if has_phy, use autonegotiated pause parameters or force
+	/* अगर has_phy, use स्वतःnegotiated छोड़ो parameters or क्रमce
 	 * them */
-	int pause_auto;
-	int pause_rx;
-	int pause_tx;
+	पूर्णांक छोड़ो_स्वतः;
+	पूर्णांक छोड़ो_rx;
+	पूर्णांक छोड़ो_tx;
 
-	/* if !has_phy, set desired forced speed/duplex */
-	int force_speed_100;
-	int force_duplex_full;
+	/* अगर !has_phy, set desired क्रमced speed/duplex */
+	पूर्णांक क्रमce_speed_100;
+	पूर्णांक क्रमce_duplex_full;
 
-	/* if !has_phy, set callback to perform mii device
-	 * init/remove */
-	int (*mii_config)(struct net_device *dev, int probe,
-			  int (*mii_read)(struct net_device *dev,
-					  int phy_id, int reg),
-			  void (*mii_write)(struct net_device *dev,
-					    int phy_id, int reg, int val));
+	/* अगर !has_phy, set callback to perक्रमm mii device
+	 * init/हटाओ */
+	पूर्णांक (*mii_config)(काष्ठा net_device *dev, पूर्णांक probe,
+			  पूर्णांक (*mii_पढ़ो)(काष्ठा net_device *dev,
+					  पूर्णांक phy_id, पूर्णांक reg),
+			  व्योम (*mii_ग_लिखो)(काष्ठा net_device *dev,
+					    पूर्णांक phy_id, पूर्णांक reg, पूर्णांक val));
 
 	/* DMA channel enable mask */
 	u32 dma_chan_en_mask;
 
-	/* DMA channel interrupt mask */
-	u32 dma_chan_int_mask;
+	/* DMA channel पूर्णांकerrupt mask */
+	u32 dma_chan_पूर्णांक_mask;
 
-	/* DMA engine has internal SRAM */
+	/* DMA engine has पूर्णांकernal SRAM */
 	bool dma_has_sram;
 
-	/* DMA channel register width */
-	unsigned int dma_chan_width;
+	/* DMA channel रेजिस्टर width */
+	अचिन्हित पूर्णांक dma_chan_width;
 
-	/* DMA descriptor shift */
-	unsigned int dma_desc_shift;
+	/* DMA descriptor shअगरt */
+	अचिन्हित पूर्णांक dma_desc_shअगरt;
 
 	/* dma channel ids */
-	int rx_chan;
-	int tx_chan;
-};
+	पूर्णांक rx_chan;
+	पूर्णांक tx_chan;
+पूर्ण;
 
 /*
- * on board ethernet switch platform data
+ * on board ethernet चयन platक्रमm data
  */
-#define ENETSW_MAX_PORT	8
-#define ENETSW_PORTS_6328 5 /* 4 FE PHY + 1 RGMII */
-#define ENETSW_PORTS_6368 6 /* 4 FE PHY + 2 RGMII */
+#घोषणा ENETSW_MAX_PORT	8
+#घोषणा ENETSW_PORTS_6328 5 /* 4 FE PHY + 1 RGMII */
+#घोषणा ENETSW_PORTS_6368 6 /* 4 FE PHY + 2 RGMII */
 
-#define ENETSW_RGMII_PORT0	4
+#घोषणा ENETSW_RGMII_PORT0	4
 
-struct bcm63xx_enetsw_port {
-	int		used;
-	int		phy_id;
+काष्ठा bcm63xx_enetsw_port अणु
+	पूर्णांक		used;
+	पूर्णांक		phy_id;
 
-	int		bypass_link;
-	int		force_speed;
-	int		force_duplex_full;
+	पूर्णांक		bypass_link;
+	पूर्णांक		क्रमce_speed;
+	पूर्णांक		क्रमce_duplex_full;
 
-	const char	*name;
-};
+	स्थिर अक्षर	*name;
+पूर्ण;
 
-struct bcm63xx_enetsw_platform_data {
-	char mac_addr[ETH_ALEN];
-	int num_ports;
-	struct bcm63xx_enetsw_port used_ports[ENETSW_MAX_PORT];
+काष्ठा bcm63xx_enetsw_platक्रमm_data अणु
+	अक्षर mac_addr[ETH_ALEN];
+	पूर्णांक num_ports;
+	काष्ठा bcm63xx_enetsw_port used_ports[ENETSW_MAX_PORT];
 
 	/* DMA channel enable mask */
 	u32 dma_chan_en_mask;
 
-	/* DMA channel interrupt mask */
-	u32 dma_chan_int_mask;
+	/* DMA channel पूर्णांकerrupt mask */
+	u32 dma_chan_पूर्णांक_mask;
 
-	/* DMA channel register width */
-	unsigned int dma_chan_width;
+	/* DMA channel रेजिस्टर width */
+	अचिन्हित पूर्णांक dma_chan_width;
 
-	/* DMA engine has internal SRAM */
+	/* DMA engine has पूर्णांकernal SRAM */
 	bool dma_has_sram;
-};
+पूर्ण;
 
-int __init bcm63xx_enet_register(int unit,
-				 const struct bcm63xx_enet_platform_data *pd);
+पूर्णांक __init bcm63xx_enet_रेजिस्टर(पूर्णांक unit,
+				 स्थिर काष्ठा bcm63xx_enet_platक्रमm_data *pd);
 
-int bcm63xx_enetsw_register(const struct bcm63xx_enetsw_platform_data *pd);
+पूर्णांक bcm63xx_enetsw_रेजिस्टर(स्थिर काष्ठा bcm63xx_enetsw_platक्रमm_data *pd);
 
-enum bcm63xx_regs_enetdmac {
+क्रमागत bcm63xx_regs_enetdmac अणु
 	ENETDMAC_CHANCFG,
 	ENETDMAC_IR,
 	ENETDMAC_IRMASK,
@@ -113,14 +114,14 @@ enum bcm63xx_regs_enetdmac {
 	ENETDMAC_RSTART,
 	ENETDMAC_FC,
 	ENETDMAC_LEN,
-};
+पूर्ण;
 
-static inline unsigned long bcm63xx_enetdmacreg(enum bcm63xx_regs_enetdmac reg)
-{
-	extern const unsigned long *bcm63xx_regs_enetdmac;
+अटल अंतरभूत अचिन्हित दीर्घ bcm63xx_enetdmacreg(क्रमागत bcm63xx_regs_enetdmac reg)
+अणु
+	बाह्य स्थिर अचिन्हित दीर्घ *bcm63xx_regs_enetdmac;
 
-	return bcm63xx_regs_enetdmac[reg];
-}
+	वापस bcm63xx_regs_enetdmac[reg];
+पूर्ण
 
 
-#endif /* ! BCM63XX_DEV_ENET_H_ */
+#पूर्ण_अगर /* ! BCM63XX_DEV_ENET_H_ */

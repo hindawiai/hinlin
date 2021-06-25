@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * (C) 2001  Dave Jones, Arjan van de ven.
- * (C) 2002 - 2003  Dominik Brodowski <linux@brodo.de>
+ * (C) 2002 - 2003  Dominik Broकरोwski <linux@broकरो.de>
  *
- *  Based upon reverse engineered information, and on Intel documentation
- *  for chipsets ICH2-M and ICH3-M.
+ *  Based upon reverse engineered inक्रमmation, and on Intel करोcumentation
+ *  क्रम chipsets ICH2-M and ICH3-M.
  *
- *  Many thanks to Ducrot Bruno for finding and fixing the last
- *  "missing link" for ICH2-M/ICH3-M support, and to Thomas Winkler
- *  for extensive testing.
+ *  Many thanks to Ducrot Bruno क्रम finding and fixing the last
+ *  "missing link" क्रम ICH2-M/ICH3-M support, and to Thomas Winkler
+ *  क्रम extensive testing.
  *
  *  BIG FAT DISCLAIMER: Work in progress code. Possibly *dangerous*
  */
@@ -18,71 +19,71 @@
  *                        SPEEDSTEP - DEFINITIONS                    *
  *********************************************************************/
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/cpufreq.h>
-#include <linux/pci.h>
-#include <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/sched.h>
 
-#include <asm/cpu_device_id.h>
+#समावेश <यंत्र/cpu_device_id.h>
 
-#include "speedstep-lib.h"
+#समावेश "speedstep-lib.h"
 
 
 /* speedstep_chipset:
  *   It is necessary to know which chipset is used. As accesses to
  * this device occur at various places in this module, we need a
- * static struct pci_dev * pointing to that device.
+ * अटल काष्ठा pci_dev * poपूर्णांकing to that device.
  */
-static struct pci_dev *speedstep_chipset_dev;
+अटल काष्ठा pci_dev *speedstep_chipset_dev;
 
 
 /* speedstep_processor
  */
-static enum speedstep_processor speedstep_processor;
+अटल क्रमागत speedstep_processor speedstep_processor;
 
-static u32 pmbase;
+अटल u32 pmbase;
 
 /*
- *   There are only two frequency states for each processor. Values
- * are in kHz for the time being.
+ *   There are only two frequency states क्रम each processor. Values
+ * are in kHz क्रम the समय being.
  */
-static struct cpufreq_frequency_table speedstep_freqs[] = {
-	{0, SPEEDSTEP_HIGH,	0},
-	{0, SPEEDSTEP_LOW,	0},
-	{0, 0,			CPUFREQ_TABLE_END},
-};
+अटल काष्ठा cpufreq_frequency_table speedstep_freqs[] = अणु
+	अणु0, SPEEDSTEP_HIGH,	0पूर्ण,
+	अणु0, SPEEDSTEP_LOW,	0पूर्ण,
+	अणु0, 0,			CPUFREQ_TABLE_ENDपूर्ण,
+पूर्ण;
 
 
 /**
- * speedstep_find_register - read the PMBASE address
+ * speedstep_find_रेजिस्टर - पढ़ो the PMBASE address
  *
- * Returns: -ENODEV if no register could be found
+ * Returns: -ENODEV अगर no रेजिस्टर could be found
  */
-static int speedstep_find_register(void)
-{
-	if (!speedstep_chipset_dev)
-		return -ENODEV;
+अटल पूर्णांक speedstep_find_रेजिस्टर(व्योम)
+अणु
+	अगर (!speedstep_chipset_dev)
+		वापस -ENODEV;
 
 	/* get PMBASE */
-	pci_read_config_dword(speedstep_chipset_dev, 0x40, &pmbase);
-	if (!(pmbase & 0x01)) {
+	pci_पढ़ो_config_dword(speedstep_chipset_dev, 0x40, &pmbase);
+	अगर (!(pmbase & 0x01)) अणु
 		pr_err("could not find speedstep register\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	pmbase &= 0xFFFFFFFE;
-	if (!pmbase) {
+	अगर (!pmbase) अणु
 		pr_err("could not find speedstep register\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	pr_debug("pmbase is 0x%x\n", pmbase);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * speedstep_set_state - set the SpeedStep state
@@ -91,24 +92,24 @@ static int speedstep_find_register(void)
  *   Tries to change the SpeedStep state.  Can be called from
  *   smp_call_function_single.
  */
-static void speedstep_set_state(unsigned int state)
-{
+अटल व्योम speedstep_set_state(अचिन्हित पूर्णांक state)
+अणु
 	u8 pm2_blk;
 	u8 value;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (state > 0x1)
-		return;
+	अगर (state > 0x1)
+		वापस;
 
 	/* Disable IRQs */
 	local_irq_save(flags);
 
-	/* read state */
+	/* पढ़ो state */
 	value = inb(pmbase + 0x50);
 
 	pr_debug("read at pmbase 0x%x + 0x50 returned 0x%x\n", pmbase, value);
 
-	/* write new state */
+	/* ग_लिखो new state */
 	value &= 0xFE;
 	value |= state;
 
@@ -126,7 +127,7 @@ static void speedstep_set_state(unsigned int state)
 	pm2_blk &= 0xfe;
 	outb(pm2_blk, (pmbase + 0x20));
 
-	/* check if transition was successful */
+	/* check अगर transition was successful */
 	value = inb(pmbase + 0x50);
 
 	/* Enable IRQs */
@@ -134,120 +135,120 @@ static void speedstep_set_state(unsigned int state)
 
 	pr_debug("read at pmbase 0x%x + 0x50 returned 0x%x\n", pmbase, value);
 
-	if (state == (value & 0x1))
+	अगर (state == (value & 0x1))
 		pr_debug("change to %u MHz succeeded\n",
 			speedstep_get_frequency(speedstep_processor) / 1000);
-	else
+	अन्यथा
 		pr_err("change failed - I/O error\n");
 
-	return;
-}
+	वापस;
+पूर्ण
 
-/* Wrapper for smp_call_function_single. */
-static void _speedstep_set_state(void *_state)
-{
-	speedstep_set_state(*(unsigned int *)_state);
-}
+/* Wrapper क्रम smp_call_function_single. */
+अटल व्योम _speedstep_set_state(व्योम *_state)
+अणु
+	speedstep_set_state(*(अचिन्हित पूर्णांक *)_state);
+पूर्ण
 
 /**
  * speedstep_activate - activate SpeedStep control in the chipset
  *
- *   Tries to activate the SpeedStep status and control registers.
+ *   Tries to activate the SpeedStep status and control रेजिस्टरs.
  * Returns -EINVAL on an unsupported chipset, and zero on success.
  */
-static int speedstep_activate(void)
-{
+अटल पूर्णांक speedstep_activate(व्योम)
+अणु
 	u16 value = 0;
 
-	if (!speedstep_chipset_dev)
-		return -EINVAL;
+	अगर (!speedstep_chipset_dev)
+		वापस -EINVAL;
 
-	pci_read_config_word(speedstep_chipset_dev, 0x00A0, &value);
-	if (!(value & 0x08)) {
+	pci_पढ़ो_config_word(speedstep_chipset_dev, 0x00A0, &value);
+	अगर (!(value & 0x08)) अणु
 		value |= 0x08;
 		pr_debug("activating SpeedStep (TM) registers\n");
-		pci_write_config_word(speedstep_chipset_dev, 0x00A0, value);
-	}
+		pci_ग_लिखो_config_word(speedstep_chipset_dev, 0x00A0, value);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
  * speedstep_detect_chipset - detect the Southbridge which contains SpeedStep logic
  *
- *   Detects ICH2-M, ICH3-M and ICH4-M so far. The pci_dev points to
- * the LPC bridge / PM module which contains all power-management
- * functions. Returns the SPEEDSTEP_CHIPSET_-number for the detected
+ *   Detects ICH2-M, ICH3-M and ICH4-M so far. The pci_dev poपूर्णांकs to
+ * the LPC bridge / PM module which contains all घातer-management
+ * functions. Returns the SPEEDSTEP_CHIPSET_-number क्रम the detected
  * chipset, or zero on failure.
  */
-static unsigned int speedstep_detect_chipset(void)
-{
+अटल अचिन्हित पूर्णांक speedstep_detect_chipset(व्योम)
+अणु
 	speedstep_chipset_dev = pci_get_subsys(PCI_VENDOR_ID_INTEL,
 			      PCI_DEVICE_ID_INTEL_82801DB_12,
 			      PCI_ANY_ID, PCI_ANY_ID,
-			      NULL);
-	if (speedstep_chipset_dev)
-		return 4; /* 4-M */
+			      शून्य);
+	अगर (speedstep_chipset_dev)
+		वापस 4; /* 4-M */
 
 	speedstep_chipset_dev = pci_get_subsys(PCI_VENDOR_ID_INTEL,
 			      PCI_DEVICE_ID_INTEL_82801CA_12,
 			      PCI_ANY_ID, PCI_ANY_ID,
-			      NULL);
-	if (speedstep_chipset_dev)
-		return 3; /* 3-M */
+			      शून्य);
+	अगर (speedstep_chipset_dev)
+		वापस 3; /* 3-M */
 
 
 	speedstep_chipset_dev = pci_get_subsys(PCI_VENDOR_ID_INTEL,
 			      PCI_DEVICE_ID_INTEL_82801BA_10,
 			      PCI_ANY_ID, PCI_ANY_ID,
-			      NULL);
-	if (speedstep_chipset_dev) {
+			      शून्य);
+	अगर (speedstep_chipset_dev) अणु
 		/* speedstep.c causes lockups on Dell Inspirons 8000 and
 		 * 8100 which use a pretty old revision of the 82815
-		 * host bridge. Abort on these systems.
+		 * host bridge. Abort on these प्रणालीs.
 		 */
-		struct pci_dev *hostbridge;
+		काष्ठा pci_dev *hostbridge;
 
 		hostbridge  = pci_get_subsys(PCI_VENDOR_ID_INTEL,
 			      PCI_DEVICE_ID_INTEL_82815_MC,
 			      PCI_ANY_ID, PCI_ANY_ID,
-			      NULL);
+			      शून्य);
 
-		if (!hostbridge)
-			return 2; /* 2-M */
+		अगर (!hostbridge)
+			वापस 2; /* 2-M */
 
-		if (hostbridge->revision < 5) {
+		अगर (hostbridge->revision < 5) अणु
 			pr_debug("hostbridge does not support speedstep\n");
-			speedstep_chipset_dev = NULL;
+			speedstep_chipset_dev = शून्य;
 			pci_dev_put(hostbridge);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		pci_dev_put(hostbridge);
-		return 2; /* 2-M */
-	}
+		वापस 2; /* 2-M */
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void get_freq_data(void *_speed)
-{
-	unsigned int *speed = _speed;
+अटल व्योम get_freq_data(व्योम *_speed)
+अणु
+	अचिन्हित पूर्णांक *speed = _speed;
 
 	*speed = speedstep_get_frequency(speedstep_processor);
-}
+पूर्ण
 
-static unsigned int speedstep_get(unsigned int cpu)
-{
-	unsigned int speed;
+अटल अचिन्हित पूर्णांक speedstep_get(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित पूर्णांक speed;
 
 	/* You're supposed to ensure CPU is online. */
 	BUG_ON(smp_call_function_single(cpu, get_freq_data, &speed, 1));
 
 	pr_debug("detected %u kHz as current frequency\n", speed);
-	return speed;
-}
+	वापस speed;
+पूर्ण
 
 /**
  * speedstep_target - set a new CPUFreq policy
@@ -256,27 +257,27 @@ static unsigned int speedstep_get(unsigned int cpu)
  *
  * Sets a new CPUFreq policy.
  */
-static int speedstep_target(struct cpufreq_policy *policy, unsigned int index)
-{
-	unsigned int policy_cpu;
+अटल पूर्णांक speedstep_target(काष्ठा cpufreq_policy *policy, अचिन्हित पूर्णांक index)
+अणु
+	अचिन्हित पूर्णांक policy_cpu;
 
 	policy_cpu = cpumask_any_and(policy->cpus, cpu_online_mask);
 
 	smp_call_function_single(policy_cpu, _speedstep_set_state, &index,
 				 true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-struct get_freqs {
-	struct cpufreq_policy *policy;
-	int ret;
-};
+काष्ठा get_freqs अणु
+	काष्ठा cpufreq_policy *policy;
+	पूर्णांक ret;
+पूर्ण;
 
-static void get_freqs_on_cpu(void *_get_freqs)
-{
-	struct get_freqs *get_freqs = _get_freqs;
+अटल व्योम get_freqs_on_cpu(व्योम *_get_freqs)
+अणु
+	काष्ठा get_freqs *get_freqs = _get_freqs;
 
 	get_freqs->ret =
 		speedstep_get_freqs(speedstep_processor,
@@ -284,46 +285,46 @@ static void get_freqs_on_cpu(void *_get_freqs)
 			    &speedstep_freqs[SPEEDSTEP_HIGH].frequency,
 			    &get_freqs->policy->cpuinfo.transition_latency,
 			    &speedstep_set_state);
-}
+पूर्ण
 
-static int speedstep_cpu_init(struct cpufreq_policy *policy)
-{
-	unsigned int policy_cpu;
-	struct get_freqs gf;
+अटल पूर्णांक speedstep_cpu_init(काष्ठा cpufreq_policy *policy)
+अणु
+	अचिन्हित पूर्णांक policy_cpu;
+	काष्ठा get_freqs gf;
 
 	/* only run on CPU to be set, or on its sibling */
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	cpumask_copy(policy->cpus, topology_sibling_cpumask(policy->cpu));
-#endif
+#पूर्ण_अगर
 	policy_cpu = cpumask_any_and(policy->cpus, cpu_online_mask);
 
 	/* detect low and high frequency and transition latency */
 	gf.policy = policy;
 	smp_call_function_single(policy_cpu, get_freqs_on_cpu, &gf, 1);
-	if (gf.ret)
-		return gf.ret;
+	अगर (gf.ret)
+		वापस gf.ret;
 
 	policy->freq_table = speedstep_freqs;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static struct cpufreq_driver speedstep_driver = {
+अटल काष्ठा cpufreq_driver speedstep_driver = अणु
 	.name	= "speedstep-ich",
-	.verify	= cpufreq_generic_frequency_table_verify,
+	.verअगरy	= cpufreq_generic_frequency_table_verअगरy,
 	.target_index = speedstep_target,
 	.init	= speedstep_cpu_init,
 	.get	= speedstep_get,
 	.attr	= cpufreq_generic_attr,
-};
+पूर्ण;
 
-static const struct x86_cpu_id ss_smi_ids[] = {
+अटल स्थिर काष्ठा x86_cpu_id ss_smi_ids[] = अणु
 	X86_MATCH_VENDOR_FAM_MODEL(INTEL,  6, 0x8, 0),
 	X86_MATCH_VENDOR_FAM_MODEL(INTEL,  6, 0xb, 0),
 	X86_MATCH_VENDOR_FAM_MODEL(INTEL, 15, 0x2, 0),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
 /**
  * speedstep_init - initializes the SpeedStep CPUFreq driver
@@ -332,49 +333,49 @@ static const struct x86_cpu_id ss_smi_ids[] = {
  * devices, -EINVAL on problems during initiatization, and zero on
  * success.
  */
-static int __init speedstep_init(void)
-{
-	if (!x86_match_cpu(ss_smi_ids))
-		return -ENODEV;
+अटल पूर्णांक __init speedstep_init(व्योम)
+अणु
+	अगर (!x86_match_cpu(ss_smi_ids))
+		वापस -ENODEV;
 
 	/* detect processor */
 	speedstep_processor = speedstep_detect_processor();
-	if (!speedstep_processor) {
+	अगर (!speedstep_processor) अणु
 		pr_debug("Intel(R) SpeedStep(TM) capable processor "
 				"not found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* detect chipset */
-	if (!speedstep_detect_chipset()) {
+	अगर (!speedstep_detect_chipset()) अणु
 		pr_debug("Intel(R) SpeedStep(TM) for this chipset not "
 				"(yet) available.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* activate speedstep support */
-	if (speedstep_activate()) {
+	अगर (speedstep_activate()) अणु
 		pci_dev_put(speedstep_chipset_dev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (speedstep_find_register())
-		return -ENODEV;
+	अगर (speedstep_find_रेजिस्टर())
+		वापस -ENODEV;
 
-	return cpufreq_register_driver(&speedstep_driver);
-}
+	वापस cpufreq_रेजिस्टर_driver(&speedstep_driver);
+पूर्ण
 
 
 /**
- * speedstep_exit - unregisters SpeedStep support
+ * speedstep_निकास - unरेजिस्टरs SpeedStep support
  *
- *   Unregisters SpeedStep support.
+ *   Unरेजिस्टरs SpeedStep support.
  */
-static void __exit speedstep_exit(void)
-{
+अटल व्योम __निकास speedstep_निकास(व्योम)
+अणु
 	pci_dev_put(speedstep_chipset_dev);
-	cpufreq_unregister_driver(&speedstep_driver);
-}
+	cpufreq_unरेजिस्टर_driver(&speedstep_driver);
+पूर्ण
 
 
 MODULE_AUTHOR("Dave Jones, Dominik Brodowski <linux@brodo.de>");
@@ -383,4 +384,4 @@ MODULE_DESCRIPTION("Speedstep driver for Intel mobile processors on chipsets "
 MODULE_LICENSE("GPL");
 
 module_init(speedstep_init);
-module_exit(speedstep_exit);
+module_निकास(speedstep_निकास);

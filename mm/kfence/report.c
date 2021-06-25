@@ -1,268 +1,269 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * KFENCE reporting.
  *
  * Copyright (C) 2020, Google LLC.
  */
 
-#include <stdarg.h>
+#समावेश <मानकतर्क.स>
 
-#include <linux/kernel.h>
-#include <linux/lockdep.h>
-#include <linux/printk.h>
-#include <linux/sched/debug.h>
-#include <linux/seq_file.h>
-#include <linux/stacktrace.h>
-#include <linux/string.h>
-#include <trace/events/error_report.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/माला.स>
+#समावेश <trace/events/error_report.h>
 
-#include <asm/kfence.h>
+#समावेश <यंत्र/kfence.h>
 
-#include "kfence.h"
+#समावेश "kfence.h"
 
-/* May be overridden by <asm/kfence.h>. */
-#ifndef ARCH_FUNC_PREFIX
-#define ARCH_FUNC_PREFIX ""
-#endif
+/* May be overridden by <यंत्र/kfence.h>. */
+#अगर_अघोषित ARCH_FUNC_PREFIX
+#घोषणा ARCH_FUNC_PREFIX ""
+#पूर्ण_अगर
 
-extern bool no_hash_pointers;
+बाह्य bool no_hash_poपूर्णांकers;
 
-/* Helper function to either print to a seq_file or to console. */
-__printf(2, 3)
-static void seq_con_printf(struct seq_file *seq, const char *fmt, ...)
-{
-	va_list args;
+/* Helper function to either prपूर्णांक to a seq_file or to console. */
+__म_लिखो(2, 3)
+अटल व्योम seq_con_म_लिखो(काष्ठा seq_file *seq, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
 
-	va_start(args, fmt);
-	if (seq)
-		seq_vprintf(seq, fmt, args);
-	else
-		vprintk(fmt, args);
-	va_end(args);
-}
+	बहु_शुरू(args, fmt);
+	अगर (seq)
+		seq_भ_लिखो(seq, fmt, args);
+	अन्यथा
+		vprपूर्णांकk(fmt, args);
+	बहु_पूर्ण(args);
+पूर्ण
 
 /*
- * Get the number of stack entries to skip to get out of MM internals. @type is
- * optional, and if set to NULL, assumes an allocation or free stack.
+ * Get the number of stack entries to skip to get out of MM पूर्णांकernals. @type is
+ * optional, and अगर set to शून्य, assumes an allocation or मुक्त stack.
  */
-static int get_stack_skipnr(const unsigned long stack_entries[], int num_entries,
-			    const enum kfence_error_type *type)
-{
-	char buf[64];
-	int skipnr, fallback = 0;
+अटल पूर्णांक get_stack_skipnr(स्थिर अचिन्हित दीर्घ stack_entries[], पूर्णांक num_entries,
+			    स्थिर क्रमागत kfence_error_type *type)
+अणु
+	अक्षर buf[64];
+	पूर्णांक skipnr, fallback = 0;
 
-	if (type) {
-		/* Depending on error type, find different stack entries. */
-		switch (*type) {
-		case KFENCE_ERROR_UAF:
-		case KFENCE_ERROR_OOB:
-		case KFENCE_ERROR_INVALID:
+	अगर (type) अणु
+		/* Depending on error type, find dअगरferent stack entries. */
+		चयन (*type) अणु
+		हाल KFENCE_ERROR_UAF:
+		हाल KFENCE_ERROR_OOB:
+		हाल KFENCE_ERROR_INVALID:
 			/*
 			 * kfence_handle_page_fault() may be called with pt_regs
-			 * set to NULL; in that case we'll simply show the full
+			 * set to शून्य; in that हाल we'll simply show the full
 			 * stack trace.
 			 */
-			return 0;
-		case KFENCE_ERROR_CORRUPTION:
-		case KFENCE_ERROR_INVALID_FREE:
-			break;
-		}
-	}
+			वापस 0;
+		हाल KFENCE_ERROR_CORRUPTION:
+		हाल KFENCE_ERROR_INVALID_FREE:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	for (skipnr = 0; skipnr < num_entries; skipnr++) {
-		int len = scnprintf(buf, sizeof(buf), "%ps", (void *)stack_entries[skipnr]);
+	क्रम (skipnr = 0; skipnr < num_entries; skipnr++) अणु
+		पूर्णांक len = scnम_लिखो(buf, माप(buf), "%ps", (व्योम *)stack_entries[skipnr]);
 
-		if (str_has_prefix(buf, ARCH_FUNC_PREFIX "kfence_") ||
+		अगर (str_has_prefix(buf, ARCH_FUNC_PREFIX "kfence_") ||
 		    str_has_prefix(buf, ARCH_FUNC_PREFIX "__kfence_") ||
-		    !strncmp(buf, ARCH_FUNC_PREFIX "__slab_free", len)) {
+		    !म_भेदन(buf, ARCH_FUNC_PREFIX "__slab_free", len)) अणु
 			/*
-			 * In case of tail calls from any of the below
+			 * In हाल of tail calls from any of the below
 			 * to any of the above.
 			 */
 			fallback = skipnr + 1;
-		}
+		पूर्ण
 
 		/* Also the *_bulk() variants by only checking prefixes. */
-		if (str_has_prefix(buf, ARCH_FUNC_PREFIX "kfree") ||
+		अगर (str_has_prefix(buf, ARCH_FUNC_PREFIX "kfree") ||
 		    str_has_prefix(buf, ARCH_FUNC_PREFIX "kmem_cache_free") ||
 		    str_has_prefix(buf, ARCH_FUNC_PREFIX "__kmalloc") ||
 		    str_has_prefix(buf, ARCH_FUNC_PREFIX "kmem_cache_alloc"))
-			goto found;
-	}
-	if (fallback < num_entries)
-		return fallback;
+			जाओ found;
+	पूर्ण
+	अगर (fallback < num_entries)
+		वापस fallback;
 found:
 	skipnr++;
-	return skipnr < num_entries ? skipnr : 0;
-}
+	वापस skipnr < num_entries ? skipnr : 0;
+पूर्ण
 
-static void kfence_print_stack(struct seq_file *seq, const struct kfence_metadata *meta,
+अटल व्योम kfence_prपूर्णांक_stack(काष्ठा seq_file *seq, स्थिर काष्ठा kfence_metadata *meta,
 			       bool show_alloc)
-{
-	const struct kfence_track *track = show_alloc ? &meta->alloc_track : &meta->free_track;
+अणु
+	स्थिर काष्ठा kfence_track *track = show_alloc ? &meta->alloc_track : &meta->मुक्त_track;
 
-	if (track->num_stack_entries) {
-		/* Skip allocation/free internals stack. */
-		int i = get_stack_skipnr(track->stack_entries, track->num_stack_entries, NULL);
+	अगर (track->num_stack_entries) अणु
+		/* Skip allocation/मुक्त पूर्णांकernals stack. */
+		पूर्णांक i = get_stack_skipnr(track->stack_entries, track->num_stack_entries, शून्य);
 
-		/* stack_trace_seq_print() does not exist; open code our own. */
-		for (; i < track->num_stack_entries; i++)
-			seq_con_printf(seq, " %pS\n", (void *)track->stack_entries[i]);
-	} else {
-		seq_con_printf(seq, " no %s stack\n", show_alloc ? "allocation" : "deallocation");
-	}
-}
+		/* stack_trace_seq_prपूर्णांक() करोes not exist; खोलो code our own. */
+		क्रम (; i < track->num_stack_entries; i++)
+			seq_con_म_लिखो(seq, " %pS\n", (व्योम *)track->stack_entries[i]);
+	पूर्ण अन्यथा अणु
+		seq_con_म_लिखो(seq, " no %s stack\n", show_alloc ? "allocation" : "deallocation");
+	पूर्ण
+पूर्ण
 
-void kfence_print_object(struct seq_file *seq, const struct kfence_metadata *meta)
-{
-	const int size = abs(meta->size);
-	const unsigned long start = meta->addr;
-	const struct kmem_cache *const cache = meta->cache;
+व्योम kfence_prपूर्णांक_object(काष्ठा seq_file *seq, स्थिर काष्ठा kfence_metadata *meta)
+अणु
+	स्थिर पूर्णांक size = असल(meta->size);
+	स्थिर अचिन्हित दीर्घ start = meta->addr;
+	स्थिर काष्ठा kmem_cache *स्थिर cache = meta->cache;
 
-	lockdep_assert_held(&meta->lock);
+	lockdep_निश्चित_held(&meta->lock);
 
-	if (meta->state == KFENCE_OBJECT_UNUSED) {
-		seq_con_printf(seq, "kfence-#%td unused\n", meta - kfence_metadata);
-		return;
-	}
+	अगर (meta->state == KFENCE_OBJECT_UNUSED) अणु
+		seq_con_म_लिखो(seq, "kfence-#%td unused\n", meta - kfence_metadata);
+		वापस;
+	पूर्ण
 
-	seq_con_printf(seq,
+	seq_con_म_लिखो(seq,
 		       "kfence-#%td [0x%p-0x%p"
 		       ", size=%d, cache=%s] allocated by task %d:\n",
-		       meta - kfence_metadata, (void *)start, (void *)(start + size - 1), size,
+		       meta - kfence_metadata, (व्योम *)start, (व्योम *)(start + size - 1), size,
 		       (cache && cache->name) ? cache->name : "<destroyed>", meta->alloc_track.pid);
-	kfence_print_stack(seq, meta, true);
+	kfence_prपूर्णांक_stack(seq, meta, true);
 
-	if (meta->state == KFENCE_OBJECT_FREED) {
-		seq_con_printf(seq, "\nfreed by task %d:\n", meta->free_track.pid);
-		kfence_print_stack(seq, meta, false);
-	}
-}
+	अगर (meta->state == KFENCE_OBJECT_FREED) अणु
+		seq_con_म_लिखो(seq, "\nfreed by task %d:\n", meta->मुक्त_track.pid);
+		kfence_prपूर्णांक_stack(seq, meta, false);
+	पूर्ण
+पूर्ण
 
 /*
- * Show bytes at @addr that are different from the expected canary values, up to
+ * Show bytes at @addr that are dअगरferent from the expected canary values, up to
  * @max_bytes.
  */
-static void print_diff_canary(unsigned long address, size_t bytes_to_show,
-			      const struct kfence_metadata *meta)
-{
-	const unsigned long show_until_addr = address + bytes_to_show;
-	const u8 *cur, *end;
+अटल व्योम prपूर्णांक_dअगरf_canary(अचिन्हित दीर्घ address, माप_प्रकार bytes_to_show,
+			      स्थिर काष्ठा kfence_metadata *meta)
+अणु
+	स्थिर अचिन्हित दीर्घ show_until_addr = address + bytes_to_show;
+	स्थिर u8 *cur, *end;
 
-	/* Do not show contents of object nor read into following guard page. */
-	end = (const u8 *)(address < meta->addr ? min(show_until_addr, meta->addr)
+	/* Do not show contents of object nor पढ़ो पूर्णांकo following guard page. */
+	end = (स्थिर u8 *)(address < meta->addr ? min(show_until_addr, meta->addr)
 						: min(show_until_addr, PAGE_ALIGN(address)));
 
 	pr_cont("[");
-	for (cur = (const u8 *)address; cur < end; cur++) {
-		if (*cur == KFENCE_CANARY_PATTERN(cur))
+	क्रम (cur = (स्थिर u8 *)address; cur < end; cur++) अणु
+		अगर (*cur == KFENCE_CANARY_PATTERN(cur))
 			pr_cont(" .");
-		else if (no_hash_pointers)
+		अन्यथा अगर (no_hash_poपूर्णांकers)
 			pr_cont(" 0x%02x", *cur);
-		else /* Do not leak kernel memory in non-debug builds. */
+		अन्यथा /* Do not leak kernel memory in non-debug builds. */
 			pr_cont(" !");
-	}
+	पूर्ण
 	pr_cont(" ]");
-}
+पूर्ण
 
-static const char *get_access_type(bool is_write)
-{
-	return is_write ? "write" : "read";
-}
+अटल स्थिर अक्षर *get_access_type(bool is_ग_लिखो)
+अणु
+	वापस is_ग_लिखो ? "write" : "read";
+पूर्ण
 
-void kfence_report_error(unsigned long address, bool is_write, struct pt_regs *regs,
-			 const struct kfence_metadata *meta, enum kfence_error_type type)
-{
-	unsigned long stack_entries[KFENCE_STACK_DEPTH] = { 0 };
-	const ptrdiff_t object_index = meta ? meta - kfence_metadata : -1;
-	int num_stack_entries;
-	int skipnr = 0;
+व्योम kfence_report_error(अचिन्हित दीर्घ address, bool is_ग_लिखो, काष्ठा pt_regs *regs,
+			 स्थिर काष्ठा kfence_metadata *meta, क्रमागत kfence_error_type type)
+अणु
+	अचिन्हित दीर्घ stack_entries[KFENCE_STACK_DEPTH] = अणु 0 पूर्ण;
+	स्थिर सूचक_भेद_प्रकार object_index = meta ? meta - kfence_metadata : -1;
+	पूर्णांक num_stack_entries;
+	पूर्णांक skipnr = 0;
 
-	if (regs) {
+	अगर (regs) अणु
 		num_stack_entries = stack_trace_save_regs(regs, stack_entries, KFENCE_STACK_DEPTH, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		num_stack_entries = stack_trace_save(stack_entries, KFENCE_STACK_DEPTH, 1);
 		skipnr = get_stack_skipnr(stack_entries, num_stack_entries, &type);
-	}
+	पूर्ण
 
-	/* Require non-NULL meta, except if KFENCE_ERROR_INVALID. */
-	if (WARN_ON(type != KFENCE_ERROR_INVALID && !meta))
-		return;
+	/* Require non-शून्य meta, except अगर KFENCE_ERROR_INVALID. */
+	अगर (WARN_ON(type != KFENCE_ERROR_INVALID && !meta))
+		वापस;
 
-	if (meta)
-		lockdep_assert_held(&meta->lock);
+	अगर (meta)
+		lockdep_निश्चित_held(&meta->lock);
 	/*
-	 * Because we may generate reports in printk-unfriendly parts of the
-	 * kernel, such as scheduler code, the use of printk() could deadlock.
-	 * Until such time that all printing code here is safe in all parts of
+	 * Because we may generate reports in prपूर्णांकk-unमित्रly parts of the
+	 * kernel, such as scheduler code, the use of prपूर्णांकk() could deadlock.
+	 * Until such समय that all prपूर्णांकing code here is safe in all parts of
 	 * the kernel, accept the risk, and just get our message out (given the
-	 * system might already behave unpredictably due to the memory error).
-	 * As such, also disable lockdep to hide warnings, and avoid disabling
-	 * lockdep for the rest of the kernel.
+	 * प्रणाली might alपढ़ोy behave unpredictably due to the memory error).
+	 * As such, also disable lockdep to hide warnings, and aव्योम disabling
+	 * lockdep क्रम the rest of the kernel.
 	 */
 	lockdep_off();
 
 	pr_err("==================================================================\n");
-	/* Print report header. */
-	switch (type) {
-	case KFENCE_ERROR_OOB: {
-		const bool left_of_object = address < meta->addr;
+	/* Prपूर्णांक report header. */
+	चयन (type) अणु
+	हाल KFENCE_ERROR_OOB: अणु
+		स्थिर bool left_of_object = address < meta->addr;
 
-		pr_err("BUG: KFENCE: out-of-bounds %s in %pS\n\n", get_access_type(is_write),
-		       (void *)stack_entries[skipnr]);
+		pr_err("BUG: KFENCE: out-of-bounds %s in %pS\n\n", get_access_type(is_ग_लिखो),
+		       (व्योम *)stack_entries[skipnr]);
 		pr_err("Out-of-bounds %s at 0x%p (%luB %s of kfence-#%td):\n",
-		       get_access_type(is_write), (void *)address,
+		       get_access_type(is_ग_लिखो), (व्योम *)address,
 		       left_of_object ? meta->addr - address : address - meta->addr,
 		       left_of_object ? "left" : "right", object_index);
-		break;
-	}
-	case KFENCE_ERROR_UAF:
-		pr_err("BUG: KFENCE: use-after-free %s in %pS\n\n", get_access_type(is_write),
-		       (void *)stack_entries[skipnr]);
+		अवरोध;
+	पूर्ण
+	हाल KFENCE_ERROR_UAF:
+		pr_err("BUG: KFENCE: use-after-free %s in %pS\n\n", get_access_type(is_ग_लिखो),
+		       (व्योम *)stack_entries[skipnr]);
 		pr_err("Use-after-free %s at 0x%p (in kfence-#%td):\n",
-		       get_access_type(is_write), (void *)address, object_index);
-		break;
-	case KFENCE_ERROR_CORRUPTION:
-		pr_err("BUG: KFENCE: memory corruption in %pS\n\n", (void *)stack_entries[skipnr]);
-		pr_err("Corrupted memory at 0x%p ", (void *)address);
-		print_diff_canary(address, 16, meta);
+		       get_access_type(is_ग_लिखो), (व्योम *)address, object_index);
+		अवरोध;
+	हाल KFENCE_ERROR_CORRUPTION:
+		pr_err("BUG: KFENCE: memory corruption in %pS\n\n", (व्योम *)stack_entries[skipnr]);
+		pr_err("Corrupted memory at 0x%p ", (व्योम *)address);
+		prपूर्णांक_dअगरf_canary(address, 16, meta);
 		pr_cont(" (in kfence-#%td):\n", object_index);
-		break;
-	case KFENCE_ERROR_INVALID:
-		pr_err("BUG: KFENCE: invalid %s in %pS\n\n", get_access_type(is_write),
-		       (void *)stack_entries[skipnr]);
-		pr_err("Invalid %s at 0x%p:\n", get_access_type(is_write),
-		       (void *)address);
-		break;
-	case KFENCE_ERROR_INVALID_FREE:
-		pr_err("BUG: KFENCE: invalid free in %pS\n\n", (void *)stack_entries[skipnr]);
-		pr_err("Invalid free of 0x%p (in kfence-#%td):\n", (void *)address,
+		अवरोध;
+	हाल KFENCE_ERROR_INVALID:
+		pr_err("BUG: KFENCE: invalid %s in %pS\n\n", get_access_type(is_ग_लिखो),
+		       (व्योम *)stack_entries[skipnr]);
+		pr_err("Invalid %s at 0x%p:\n", get_access_type(is_ग_लिखो),
+		       (व्योम *)address);
+		अवरोध;
+	हाल KFENCE_ERROR_INVALID_FREE:
+		pr_err("BUG: KFENCE: invalid free in %pS\n\n", (व्योम *)stack_entries[skipnr]);
+		pr_err("Invalid free of 0x%p (in kfence-#%td):\n", (व्योम *)address,
 		       object_index);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Print stack trace and object info. */
-	stack_trace_print(stack_entries + skipnr, num_stack_entries - skipnr, 0);
+	/* Prपूर्णांक stack trace and object info. */
+	stack_trace_prपूर्णांक(stack_entries + skipnr, num_stack_entries - skipnr, 0);
 
-	if (meta) {
+	अगर (meta) अणु
 		pr_err("\n");
-		kfence_print_object(NULL, meta);
-	}
+		kfence_prपूर्णांक_object(शून्य, meta);
+	पूर्ण
 
-	/* Print report footer. */
+	/* Prपूर्णांक report footer. */
 	pr_err("\n");
-	if (no_hash_pointers && regs)
+	अगर (no_hash_poपूर्णांकers && regs)
 		show_regs(regs);
-	else
-		dump_stack_print_info(KERN_ERR);
+	अन्यथा
+		dump_stack_prपूर्णांक_info(KERN_ERR);
 	trace_error_report_end(ERROR_DETECTOR_KFENCE, address);
 	pr_err("==================================================================\n");
 
 	lockdep_on();
 
-	if (panic_on_warn)
+	अगर (panic_on_warn)
 		panic("panic_on_warn set ...\n");
 
-	/* We encountered a memory safety error, taint the kernel! */
-	add_taint(TAINT_BAD_PAGE, LOCKDEP_STILL_OK);
-}
+	/* We encountered a memory safety error, taपूर्णांक the kernel! */
+	add_taपूर्णांक(TAINT_BAD_PAGE, LOCKDEP_STILL_OK);
+पूर्ण

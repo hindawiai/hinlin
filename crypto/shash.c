@@ -1,216 +1,217 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Synchronous Cryptographic Hash operations.
  *
- * Copyright (c) 2008 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2008 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#include <crypto/scatterwalk.h>
-#include <crypto/internal/hash.h>
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/seq_file.h>
-#include <linux/cryptouser.h>
-#include <net/netlink.h>
-#include <linux/compiler.h>
+#समावेश <crypto/scatterwalk.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/cryptouser.h>
+#समावेश <net/netlink.h>
+#समावेश <linux/compiler.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static const struct crypto_type crypto_shash_type;
+अटल स्थिर काष्ठा crypto_type crypto_shash_type;
 
-int shash_no_setkey(struct crypto_shash *tfm, const u8 *key,
-		    unsigned int keylen)
-{
-	return -ENOSYS;
-}
+पूर्णांक shash_no_setkey(काष्ठा crypto_shash *tfm, स्थिर u8 *key,
+		    अचिन्हित पूर्णांक keylen)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 EXPORT_SYMBOL_GPL(shash_no_setkey);
 
-static int shash_setkey_unaligned(struct crypto_shash *tfm, const u8 *key,
-				  unsigned int keylen)
-{
-	struct shash_alg *shash = crypto_shash_alg(tfm);
-	unsigned long alignmask = crypto_shash_alignmask(tfm);
-	unsigned long absize;
+अटल पूर्णांक shash_setkey_unaligned(काष्ठा crypto_shash *tfm, स्थिर u8 *key,
+				  अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा shash_alg *shash = crypto_shash_alg(tfm);
+	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(tfm);
+	अचिन्हित दीर्घ असलize;
 	u8 *buffer, *alignbuffer;
-	int err;
+	पूर्णांक err;
 
-	absize = keylen + (alignmask & ~(crypto_tfm_ctx_alignment() - 1));
-	buffer = kmalloc(absize, GFP_ATOMIC);
-	if (!buffer)
-		return -ENOMEM;
+	असलize = keylen + (alignmask & ~(crypto_tfm_ctx_alignment() - 1));
+	buffer = kदो_स्मृति(असलize, GFP_ATOMIC);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
-	alignbuffer = (u8 *)ALIGN((unsigned long)buffer, alignmask + 1);
-	memcpy(alignbuffer, key, keylen);
+	alignbuffer = (u8 *)ALIGN((अचिन्हित दीर्घ)buffer, alignmask + 1);
+	स_नकल(alignbuffer, key, keylen);
 	err = shash->setkey(tfm, alignbuffer, keylen);
-	kfree_sensitive(buffer);
-	return err;
-}
+	kमुक्त_sensitive(buffer);
+	वापस err;
+पूर्ण
 
-static void shash_set_needkey(struct crypto_shash *tfm, struct shash_alg *alg)
-{
-	if (crypto_shash_alg_needs_key(alg))
+अटल व्योम shash_set_needkey(काष्ठा crypto_shash *tfm, काष्ठा shash_alg *alg)
+अणु
+	अगर (crypto_shash_alg_needs_key(alg))
 		crypto_shash_set_flags(tfm, CRYPTO_TFM_NEED_KEY);
-}
+पूर्ण
 
-int crypto_shash_setkey(struct crypto_shash *tfm, const u8 *key,
-			unsigned int keylen)
-{
-	struct shash_alg *shash = crypto_shash_alg(tfm);
-	unsigned long alignmask = crypto_shash_alignmask(tfm);
-	int err;
+पूर्णांक crypto_shash_setkey(काष्ठा crypto_shash *tfm, स्थिर u8 *key,
+			अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा shash_alg *shash = crypto_shash_alg(tfm);
+	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(tfm);
+	पूर्णांक err;
 
-	if ((unsigned long)key & alignmask)
+	अगर ((अचिन्हित दीर्घ)key & alignmask)
 		err = shash_setkey_unaligned(tfm, key, keylen);
-	else
+	अन्यथा
 		err = shash->setkey(tfm, key, keylen);
 
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		shash_set_needkey(tfm, shash);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	crypto_shash_clear_flags(tfm, CRYPTO_TFM_NEED_KEY);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_shash_setkey);
 
-static int shash_update_unaligned(struct shash_desc *desc, const u8 *data,
-				  unsigned int len)
-{
-	struct crypto_shash *tfm = desc->tfm;
-	struct shash_alg *shash = crypto_shash_alg(tfm);
-	unsigned long alignmask = crypto_shash_alignmask(tfm);
-	unsigned int unaligned_len = alignmask + 1 -
-				     ((unsigned long)data & alignmask);
+अटल पूर्णांक shash_update_unaligned(काष्ठा shash_desc *desc, स्थिर u8 *data,
+				  अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा crypto_shash *tfm = desc->tfm;
+	काष्ठा shash_alg *shash = crypto_shash_alg(tfm);
+	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(tfm);
+	अचिन्हित पूर्णांक unaligned_len = alignmask + 1 -
+				     ((अचिन्हित दीर्घ)data & alignmask);
 	/*
-	 * We cannot count on __aligned() working for large values:
+	 * We cannot count on __aligned() working क्रम large values:
 	 * https://patchwork.kernel.org/patch/9507697/
 	 */
 	u8 ubuf[MAX_ALGAPI_ALIGNMASK * 2];
 	u8 *buf = PTR_ALIGN(&ubuf[0], alignmask + 1);
-	int err;
+	पूर्णांक err;
 
-	if (WARN_ON(buf + unaligned_len > ubuf + sizeof(ubuf)))
-		return -EINVAL;
+	अगर (WARN_ON(buf + unaligned_len > ubuf + माप(ubuf)))
+		वापस -EINVAL;
 
-	if (unaligned_len > len)
+	अगर (unaligned_len > len)
 		unaligned_len = len;
 
-	memcpy(buf, data, unaligned_len);
+	स_नकल(buf, data, unaligned_len);
 	err = shash->update(desc, buf, unaligned_len);
-	memset(buf, 0, unaligned_len);
+	स_रखो(buf, 0, unaligned_len);
 
-	return err ?:
+	वापस err ?:
 	       shash->update(desc, data + unaligned_len, len - unaligned_len);
-}
+पूर्ण
 
-int crypto_shash_update(struct shash_desc *desc, const u8 *data,
-			unsigned int len)
-{
-	struct crypto_shash *tfm = desc->tfm;
-	struct shash_alg *shash = crypto_shash_alg(tfm);
-	unsigned long alignmask = crypto_shash_alignmask(tfm);
+पूर्णांक crypto_shash_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा crypto_shash *tfm = desc->tfm;
+	काष्ठा shash_alg *shash = crypto_shash_alg(tfm);
+	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(tfm);
 
-	if ((unsigned long)data & alignmask)
-		return shash_update_unaligned(desc, data, len);
+	अगर ((अचिन्हित दीर्घ)data & alignmask)
+		वापस shash_update_unaligned(desc, data, len);
 
-	return shash->update(desc, data, len);
-}
+	वापस shash->update(desc, data, len);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_shash_update);
 
-static int shash_final_unaligned(struct shash_desc *desc, u8 *out)
-{
-	struct crypto_shash *tfm = desc->tfm;
-	unsigned long alignmask = crypto_shash_alignmask(tfm);
-	struct shash_alg *shash = crypto_shash_alg(tfm);
-	unsigned int ds = crypto_shash_digestsize(tfm);
+अटल पूर्णांक shash_final_unaligned(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा crypto_shash *tfm = desc->tfm;
+	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(tfm);
+	काष्ठा shash_alg *shash = crypto_shash_alg(tfm);
+	अचिन्हित पूर्णांक ds = crypto_shash_digestsize(tfm);
 	/*
-	 * We cannot count on __aligned() working for large values:
+	 * We cannot count on __aligned() working क्रम large values:
 	 * https://patchwork.kernel.org/patch/9507697/
 	 */
 	u8 ubuf[MAX_ALGAPI_ALIGNMASK + HASH_MAX_DIGESTSIZE];
 	u8 *buf = PTR_ALIGN(&ubuf[0], alignmask + 1);
-	int err;
+	पूर्णांक err;
 
-	if (WARN_ON(buf + ds > ubuf + sizeof(ubuf)))
-		return -EINVAL;
+	अगर (WARN_ON(buf + ds > ubuf + माप(ubuf)))
+		वापस -EINVAL;
 
 	err = shash->final(desc, buf);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	memcpy(out, buf, ds);
+	स_नकल(out, buf, ds);
 
 out:
-	memset(buf, 0, ds);
-	return err;
-}
+	स_रखो(buf, 0, ds);
+	वापस err;
+पूर्ण
 
-int crypto_shash_final(struct shash_desc *desc, u8 *out)
-{
-	struct crypto_shash *tfm = desc->tfm;
-	struct shash_alg *shash = crypto_shash_alg(tfm);
-	unsigned long alignmask = crypto_shash_alignmask(tfm);
+पूर्णांक crypto_shash_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा crypto_shash *tfm = desc->tfm;
+	काष्ठा shash_alg *shash = crypto_shash_alg(tfm);
+	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(tfm);
 
-	if ((unsigned long)out & alignmask)
-		return shash_final_unaligned(desc, out);
+	अगर ((अचिन्हित दीर्घ)out & alignmask)
+		वापस shash_final_unaligned(desc, out);
 
-	return shash->final(desc, out);
-}
+	वापस shash->final(desc, out);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_shash_final);
 
-static int shash_finup_unaligned(struct shash_desc *desc, const u8 *data,
-				 unsigned int len, u8 *out)
-{
-	return crypto_shash_update(desc, data, len) ?:
+अटल पूर्णांक shash_finup_unaligned(काष्ठा shash_desc *desc, स्थिर u8 *data,
+				 अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	वापस crypto_shash_update(desc, data, len) ?:
 	       crypto_shash_final(desc, out);
-}
+पूर्ण
 
-int crypto_shash_finup(struct shash_desc *desc, const u8 *data,
-		       unsigned int len, u8 *out)
-{
-	struct crypto_shash *tfm = desc->tfm;
-	struct shash_alg *shash = crypto_shash_alg(tfm);
-	unsigned long alignmask = crypto_shash_alignmask(tfm);
+पूर्णांक crypto_shash_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+		       अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	काष्ठा crypto_shash *tfm = desc->tfm;
+	काष्ठा shash_alg *shash = crypto_shash_alg(tfm);
+	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(tfm);
 
-	if (((unsigned long)data | (unsigned long)out) & alignmask)
-		return shash_finup_unaligned(desc, data, len, out);
+	अगर (((अचिन्हित दीर्घ)data | (अचिन्हित दीर्घ)out) & alignmask)
+		वापस shash_finup_unaligned(desc, data, len, out);
 
-	return shash->finup(desc, data, len, out);
-}
+	वापस shash->finup(desc, data, len, out);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_shash_finup);
 
-static int shash_digest_unaligned(struct shash_desc *desc, const u8 *data,
-				  unsigned int len, u8 *out)
-{
-	return crypto_shash_init(desc) ?:
+अटल पूर्णांक shash_digest_unaligned(काष्ठा shash_desc *desc, स्थिर u8 *data,
+				  अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	वापस crypto_shash_init(desc) ?:
 	       crypto_shash_finup(desc, data, len, out);
-}
+पूर्ण
 
-int crypto_shash_digest(struct shash_desc *desc, const u8 *data,
-			unsigned int len, u8 *out)
-{
-	struct crypto_shash *tfm = desc->tfm;
-	struct shash_alg *shash = crypto_shash_alg(tfm);
-	unsigned long alignmask = crypto_shash_alignmask(tfm);
+पूर्णांक crypto_shash_digest(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	काष्ठा crypto_shash *tfm = desc->tfm;
+	काष्ठा shash_alg *shash = crypto_shash_alg(tfm);
+	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(tfm);
 
-	if (crypto_shash_get_flags(tfm) & CRYPTO_TFM_NEED_KEY)
-		return -ENOKEY;
+	अगर (crypto_shash_get_flags(tfm) & CRYPTO_TFM_NEED_KEY)
+		वापस -ENOKEY;
 
-	if (((unsigned long)data | (unsigned long)out) & alignmask)
-		return shash_digest_unaligned(desc, data, len, out);
+	अगर (((अचिन्हित दीर्घ)data | (अचिन्हित दीर्घ)out) & alignmask)
+		वापस shash_digest_unaligned(desc, data, len, out);
 
-	return shash->digest(desc, data, len, out);
-}
+	वापस shash->digest(desc, data, len, out);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_shash_digest);
 
-int crypto_shash_tfm_digest(struct crypto_shash *tfm, const u8 *data,
-			    unsigned int len, u8 *out)
-{
+पूर्णांक crypto_shash_tfm_digest(काष्ठा crypto_shash *tfm, स्थिर u8 *data,
+			    अचिन्हित पूर्णांक len, u8 *out)
+अणु
 	SHASH_DESC_ON_STACK(desc, tfm);
-	int err;
+	पूर्णांक err;
 
 	desc->tfm = tfm;
 
@@ -218,176 +219,176 @@ int crypto_shash_tfm_digest(struct crypto_shash *tfm, const u8 *data,
 
 	shash_desc_zero(desc);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_shash_tfm_digest);
 
-static int shash_default_export(struct shash_desc *desc, void *out)
-{
-	memcpy(out, shash_desc_ctx(desc), crypto_shash_descsize(desc->tfm));
-	return 0;
-}
+अटल पूर्णांक shash_शेष_export(काष्ठा shash_desc *desc, व्योम *out)
+अणु
+	स_नकल(out, shash_desc_ctx(desc), crypto_shash_descsize(desc->tfm));
+	वापस 0;
+पूर्ण
 
-static int shash_default_import(struct shash_desc *desc, const void *in)
-{
-	memcpy(shash_desc_ctx(desc), in, crypto_shash_descsize(desc->tfm));
-	return 0;
-}
+अटल पूर्णांक shash_शेष_import(काष्ठा shash_desc *desc, स्थिर व्योम *in)
+अणु
+	स_नकल(shash_desc_ctx(desc), in, crypto_shash_descsize(desc->tfm));
+	वापस 0;
+पूर्ण
 
-static int shash_async_setkey(struct crypto_ahash *tfm, const u8 *key,
-			      unsigned int keylen)
-{
-	struct crypto_shash **ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक shash_async_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+			      अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा crypto_shash **ctx = crypto_ahash_ctx(tfm);
 
-	return crypto_shash_setkey(*ctx, key, keylen);
-}
+	वापस crypto_shash_setkey(*ctx, key, keylen);
+पूर्ण
 
-static int shash_async_init(struct ahash_request *req)
-{
-	struct crypto_shash **ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	struct shash_desc *desc = ahash_request_ctx(req);
+अटल पूर्णांक shash_async_init(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_shash **ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	काष्ठा shash_desc *desc = ahash_request_ctx(req);
 
 	desc->tfm = *ctx;
 
-	return crypto_shash_init(desc);
-}
+	वापस crypto_shash_init(desc);
+पूर्ण
 
-int shash_ahash_update(struct ahash_request *req, struct shash_desc *desc)
-{
-	struct crypto_hash_walk walk;
-	int nbytes;
+पूर्णांक shash_ahash_update(काष्ठा ahash_request *req, काष्ठा shash_desc *desc)
+अणु
+	काष्ठा crypto_hash_walk walk;
+	पूर्णांक nbytes;
 
-	for (nbytes = crypto_hash_walk_first(req, &walk); nbytes > 0;
-	     nbytes = crypto_hash_walk_done(&walk, nbytes))
+	क्रम (nbytes = crypto_hash_walk_first(req, &walk); nbytes > 0;
+	     nbytes = crypto_hash_walk_करोne(&walk, nbytes))
 		nbytes = crypto_shash_update(desc, walk.data, nbytes);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 EXPORT_SYMBOL_GPL(shash_ahash_update);
 
-static int shash_async_update(struct ahash_request *req)
-{
-	return shash_ahash_update(req, ahash_request_ctx(req));
-}
+अटल पूर्णांक shash_async_update(काष्ठा ahash_request *req)
+अणु
+	वापस shash_ahash_update(req, ahash_request_ctx(req));
+पूर्ण
 
-static int shash_async_final(struct ahash_request *req)
-{
-	return crypto_shash_final(ahash_request_ctx(req), req->result);
-}
+अटल पूर्णांक shash_async_final(काष्ठा ahash_request *req)
+अणु
+	वापस crypto_shash_final(ahash_request_ctx(req), req->result);
+पूर्ण
 
-int shash_ahash_finup(struct ahash_request *req, struct shash_desc *desc)
-{
-	struct crypto_hash_walk walk;
-	int nbytes;
+पूर्णांक shash_ahash_finup(काष्ठा ahash_request *req, काष्ठा shash_desc *desc)
+अणु
+	काष्ठा crypto_hash_walk walk;
+	पूर्णांक nbytes;
 
 	nbytes = crypto_hash_walk_first(req, &walk);
-	if (!nbytes)
-		return crypto_shash_final(desc, req->result);
+	अगर (!nbytes)
+		वापस crypto_shash_final(desc, req->result);
 
-	do {
+	करो अणु
 		nbytes = crypto_hash_walk_last(&walk) ?
 			 crypto_shash_finup(desc, walk.data, nbytes,
 					    req->result) :
 			 crypto_shash_update(desc, walk.data, nbytes);
-		nbytes = crypto_hash_walk_done(&walk, nbytes);
-	} while (nbytes > 0);
+		nbytes = crypto_hash_walk_करोne(&walk, nbytes);
+	पूर्ण जबतक (nbytes > 0);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 EXPORT_SYMBOL_GPL(shash_ahash_finup);
 
-static int shash_async_finup(struct ahash_request *req)
-{
-	struct crypto_shash **ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	struct shash_desc *desc = ahash_request_ctx(req);
+अटल पूर्णांक shash_async_finup(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_shash **ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	काष्ठा shash_desc *desc = ahash_request_ctx(req);
 
 	desc->tfm = *ctx;
 
-	return shash_ahash_finup(req, desc);
-}
+	वापस shash_ahash_finup(req, desc);
+पूर्ण
 
-int shash_ahash_digest(struct ahash_request *req, struct shash_desc *desc)
-{
-	unsigned int nbytes = req->nbytes;
-	struct scatterlist *sg;
-	unsigned int offset;
-	int err;
+पूर्णांक shash_ahash_digest(काष्ठा ahash_request *req, काष्ठा shash_desc *desc)
+अणु
+	अचिन्हित पूर्णांक nbytes = req->nbytes;
+	काष्ठा scatterlist *sg;
+	अचिन्हित पूर्णांक offset;
+	पूर्णांक err;
 
-	if (nbytes &&
+	अगर (nbytes &&
 	    (sg = req->src, offset = sg->offset,
-	     nbytes <= min(sg->length, ((unsigned int)(PAGE_SIZE)) - offset))) {
-		void *data;
+	     nbytes <= min(sg->length, ((अचिन्हित पूर्णांक)(PAGE_SIZE)) - offset))) अणु
+		व्योम *data;
 
 		data = kmap_atomic(sg_page(sg));
 		err = crypto_shash_digest(desc, data + offset, nbytes,
 					  req->result);
 		kunmap_atomic(data);
-	} else
+	पूर्ण अन्यथा
 		err = crypto_shash_init(desc) ?:
 		      shash_ahash_finup(req, desc);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(shash_ahash_digest);
 
-static int shash_async_digest(struct ahash_request *req)
-{
-	struct crypto_shash **ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	struct shash_desc *desc = ahash_request_ctx(req);
+अटल पूर्णांक shash_async_digest(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_shash **ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	काष्ठा shash_desc *desc = ahash_request_ctx(req);
 
 	desc->tfm = *ctx;
 
-	return shash_ahash_digest(req, desc);
-}
+	वापस shash_ahash_digest(req, desc);
+पूर्ण
 
-static int shash_async_export(struct ahash_request *req, void *out)
-{
-	return crypto_shash_export(ahash_request_ctx(req), out);
-}
+अटल पूर्णांक shash_async_export(काष्ठा ahash_request *req, व्योम *out)
+अणु
+	वापस crypto_shash_export(ahash_request_ctx(req), out);
+पूर्ण
 
-static int shash_async_import(struct ahash_request *req, const void *in)
-{
-	struct crypto_shash **ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	struct shash_desc *desc = ahash_request_ctx(req);
+अटल पूर्णांक shash_async_import(काष्ठा ahash_request *req, स्थिर व्योम *in)
+अणु
+	काष्ठा crypto_shash **ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	काष्ठा shash_desc *desc = ahash_request_ctx(req);
 
 	desc->tfm = *ctx;
 
-	return crypto_shash_import(desc, in);
-}
+	वापस crypto_shash_import(desc, in);
+पूर्ण
 
-static void crypto_exit_shash_ops_async(struct crypto_tfm *tfm)
-{
-	struct crypto_shash **ctx = crypto_tfm_ctx(tfm);
+अटल व्योम crypto_निकास_shash_ops_async(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा crypto_shash **ctx = crypto_tfm_ctx(tfm);
 
-	crypto_free_shash(*ctx);
-}
+	crypto_मुक्त_shash(*ctx);
+पूर्ण
 
-int crypto_init_shash_ops_async(struct crypto_tfm *tfm)
-{
-	struct crypto_alg *calg = tfm->__crt_alg;
-	struct shash_alg *alg = __crypto_shash_alg(calg);
-	struct crypto_ahash *crt = __crypto_ahash_cast(tfm);
-	struct crypto_shash **ctx = crypto_tfm_ctx(tfm);
-	struct crypto_shash *shash;
+पूर्णांक crypto_init_shash_ops_async(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा crypto_alg *calg = tfm->__crt_alg;
+	काष्ठा shash_alg *alg = __crypto_shash_alg(calg);
+	काष्ठा crypto_ahash *crt = __crypto_ahash_cast(tfm);
+	काष्ठा crypto_shash **ctx = crypto_tfm_ctx(tfm);
+	काष्ठा crypto_shash *shash;
 
-	if (!crypto_mod_get(calg))
-		return -EAGAIN;
+	अगर (!crypto_mod_get(calg))
+		वापस -EAGAIN;
 
 	shash = crypto_create_tfm(calg, &crypto_shash_type);
-	if (IS_ERR(shash)) {
+	अगर (IS_ERR(shash)) अणु
 		crypto_mod_put(calg);
-		return PTR_ERR(shash);
-	}
+		वापस PTR_ERR(shash);
+	पूर्ण
 
 	*ctx = shash;
-	tfm->exit = crypto_exit_shash_ops_async;
+	tfm->निकास = crypto_निकास_shash_ops_async;
 
 	crt->init = shash_async_init;
 	crt->update = shash_async_update;
 	crt->final = shash_async_final;
 	crt->finup = shash_async_finup;
 	crt->digest = shash_async_digest;
-	if (crypto_shash_alg_has_setkey(alg))
+	अगर (crypto_shash_alg_has_setkey(alg))
 		crt->setkey = shash_async_setkey;
 
 	crypto_ahash_set_flags(crt, crypto_shash_get_flags(shash) &
@@ -396,220 +397,220 @@ int crypto_init_shash_ops_async(struct crypto_tfm *tfm)
 	crt->export = shash_async_export;
 	crt->import = shash_async_import;
 
-	crt->reqsize = sizeof(struct shash_desc) + crypto_shash_descsize(shash);
+	crt->reqsize = माप(काष्ठा shash_desc) + crypto_shash_descsize(shash);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void crypto_shash_exit_tfm(struct crypto_tfm *tfm)
-{
-	struct crypto_shash *hash = __crypto_shash_cast(tfm);
-	struct shash_alg *alg = crypto_shash_alg(hash);
+अटल व्योम crypto_shash_निकास_tfm(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा crypto_shash *hash = __crypto_shash_cast(tfm);
+	काष्ठा shash_alg *alg = crypto_shash_alg(hash);
 
-	alg->exit_tfm(hash);
-}
+	alg->निकास_tfm(hash);
+पूर्ण
 
-static int crypto_shash_init_tfm(struct crypto_tfm *tfm)
-{
-	struct crypto_shash *hash = __crypto_shash_cast(tfm);
-	struct shash_alg *alg = crypto_shash_alg(hash);
-	int err;
+अटल पूर्णांक crypto_shash_init_tfm(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा crypto_shash *hash = __crypto_shash_cast(tfm);
+	काष्ठा shash_alg *alg = crypto_shash_alg(hash);
+	पूर्णांक err;
 
 	hash->descsize = alg->descsize;
 
 	shash_set_needkey(hash, alg);
 
-	if (alg->exit_tfm)
-		tfm->exit = crypto_shash_exit_tfm;
+	अगर (alg->निकास_tfm)
+		tfm->निकास = crypto_shash_निकास_tfm;
 
-	if (!alg->init_tfm)
-		return 0;
+	अगर (!alg->init_tfm)
+		वापस 0;
 
 	err = alg->init_tfm(hash);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* ->init_tfm() may have increased the descsize. */
-	if (WARN_ON_ONCE(hash->descsize > HASH_MAX_DESCSIZE)) {
-		if (alg->exit_tfm)
-			alg->exit_tfm(hash);
-		return -EINVAL;
-	}
+	अगर (WARN_ON_ONCE(hash->descsize > HASH_MAX_DESCSIZE)) अणु
+		अगर (alg->निकास_tfm)
+			alg->निकास_tfm(hash);
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void crypto_shash_free_instance(struct crypto_instance *inst)
-{
-	struct shash_instance *shash = shash_instance(inst);
+अटल व्योम crypto_shash_मुक्त_instance(काष्ठा crypto_instance *inst)
+अणु
+	काष्ठा shash_instance *shash = shash_instance(inst);
 
-	shash->free(shash);
-}
+	shash->मुक्त(shash);
+पूर्ण
 
-#ifdef CONFIG_NET
-static int crypto_shash_report(struct sk_buff *skb, struct crypto_alg *alg)
-{
-	struct crypto_report_hash rhash;
-	struct shash_alg *salg = __crypto_shash_alg(alg);
+#अगर_घोषित CONFIG_NET
+अटल पूर्णांक crypto_shash_report(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा crypto_report_hash rhash;
+	काष्ठा shash_alg *salg = __crypto_shash_alg(alg);
 
-	memset(&rhash, 0, sizeof(rhash));
+	स_रखो(&rhash, 0, माप(rhash));
 
-	strscpy(rhash.type, "shash", sizeof(rhash.type));
+	strscpy(rhash.type, "shash", माप(rhash.type));
 
 	rhash.blocksize = alg->cra_blocksize;
 	rhash.digestsize = salg->digestsize;
 
-	return nla_put(skb, CRYPTOCFGA_REPORT_HASH, sizeof(rhash), &rhash);
-}
-#else
-static int crypto_shash_report(struct sk_buff *skb, struct crypto_alg *alg)
-{
-	return -ENOSYS;
-}
-#endif
+	वापस nla_put(skb, CRYPTOCFGA_REPORT_HASH, माप(rhash), &rhash);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक crypto_shash_report(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर
 
-static void crypto_shash_show(struct seq_file *m, struct crypto_alg *alg)
+अटल व्योम crypto_shash_show(काष्ठा seq_file *m, काष्ठा crypto_alg *alg)
 	__maybe_unused;
-static void crypto_shash_show(struct seq_file *m, struct crypto_alg *alg)
-{
-	struct shash_alg *salg = __crypto_shash_alg(alg);
+अटल व्योम crypto_shash_show(काष्ठा seq_file *m, काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा shash_alg *salg = __crypto_shash_alg(alg);
 
-	seq_printf(m, "type         : shash\n");
-	seq_printf(m, "blocksize    : %u\n", alg->cra_blocksize);
-	seq_printf(m, "digestsize   : %u\n", salg->digestsize);
-}
+	seq_म_लिखो(m, "type         : shash\n");
+	seq_म_लिखो(m, "blocksize    : %u\n", alg->cra_blocksize);
+	seq_म_लिखो(m, "digestsize   : %u\n", salg->digestsize);
+पूर्ण
 
-static const struct crypto_type crypto_shash_type = {
+अटल स्थिर काष्ठा crypto_type crypto_shash_type = अणु
 	.extsize = crypto_alg_extsize,
 	.init_tfm = crypto_shash_init_tfm,
-	.free = crypto_shash_free_instance,
-#ifdef CONFIG_PROC_FS
+	.मुक्त = crypto_shash_मुक्त_instance,
+#अगर_घोषित CONFIG_PROC_FS
 	.show = crypto_shash_show,
-#endif
+#पूर्ण_अगर
 	.report = crypto_shash_report,
 	.maskclear = ~CRYPTO_ALG_TYPE_MASK,
 	.maskset = CRYPTO_ALG_TYPE_MASK,
 	.type = CRYPTO_ALG_TYPE_SHASH,
-	.tfmsize = offsetof(struct crypto_shash, base),
-};
+	.tfmsize = दुरत्व(काष्ठा crypto_shash, base),
+पूर्ण;
 
-int crypto_grab_shash(struct crypto_shash_spawn *spawn,
-		      struct crypto_instance *inst,
-		      const char *name, u32 type, u32 mask)
-{
+पूर्णांक crypto_grab_shash(काष्ठा crypto_shash_spawn *spawn,
+		      काष्ठा crypto_instance *inst,
+		      स्थिर अक्षर *name, u32 type, u32 mask)
+अणु
 	spawn->base.frontend = &crypto_shash_type;
-	return crypto_grab_spawn(&spawn->base, inst, name, type, mask);
-}
+	वापस crypto_grab_spawn(&spawn->base, inst, name, type, mask);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_grab_shash);
 
-struct crypto_shash *crypto_alloc_shash(const char *alg_name, u32 type,
+काष्ठा crypto_shash *crypto_alloc_shash(स्थिर अक्षर *alg_name, u32 type,
 					u32 mask)
-{
-	return crypto_alloc_tfm(alg_name, &crypto_shash_type, type, mask);
-}
+अणु
+	वापस crypto_alloc_tfm(alg_name, &crypto_shash_type, type, mask);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_alloc_shash);
 
-static int shash_prepare_alg(struct shash_alg *alg)
-{
-	struct crypto_alg *base = &alg->base;
+अटल पूर्णांक shash_prepare_alg(काष्ठा shash_alg *alg)
+अणु
+	काष्ठा crypto_alg *base = &alg->base;
 
-	if (alg->digestsize > HASH_MAX_DIGESTSIZE ||
+	अगर (alg->digestsize > HASH_MAX_DIGESTSIZE ||
 	    alg->descsize > HASH_MAX_DESCSIZE ||
 	    alg->statesize > HASH_MAX_STATESIZE)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if ((alg->export && !alg->import) || (alg->import && !alg->export))
-		return -EINVAL;
+	अगर ((alg->export && !alg->import) || (alg->import && !alg->export))
+		वापस -EINVAL;
 
 	base->cra_type = &crypto_shash_type;
 	base->cra_flags &= ~CRYPTO_ALG_TYPE_MASK;
 	base->cra_flags |= CRYPTO_ALG_TYPE_SHASH;
 
-	if (!alg->finup)
+	अगर (!alg->finup)
 		alg->finup = shash_finup_unaligned;
-	if (!alg->digest)
+	अगर (!alg->digest)
 		alg->digest = shash_digest_unaligned;
-	if (!alg->export) {
-		alg->export = shash_default_export;
-		alg->import = shash_default_import;
+	अगर (!alg->export) अणु
+		alg->export = shash_शेष_export;
+		alg->import = shash_शेष_import;
 		alg->statesize = alg->descsize;
-	}
-	if (!alg->setkey)
+	पूर्ण
+	अगर (!alg->setkey)
 		alg->setkey = shash_no_setkey;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int crypto_register_shash(struct shash_alg *alg)
-{
-	struct crypto_alg *base = &alg->base;
-	int err;
+पूर्णांक crypto_रेजिस्टर_shash(काष्ठा shash_alg *alg)
+अणु
+	काष्ठा crypto_alg *base = &alg->base;
+	पूर्णांक err;
 
 	err = shash_prepare_alg(alg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return crypto_register_alg(base);
-}
-EXPORT_SYMBOL_GPL(crypto_register_shash);
+	वापस crypto_रेजिस्टर_alg(base);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_shash);
 
-void crypto_unregister_shash(struct shash_alg *alg)
-{
-	crypto_unregister_alg(&alg->base);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_shash);
+व्योम crypto_unरेजिस्टर_shash(काष्ठा shash_alg *alg)
+अणु
+	crypto_unरेजिस्टर_alg(&alg->base);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_shash);
 
-int crypto_register_shashes(struct shash_alg *algs, int count)
-{
-	int i, ret;
+पूर्णांक crypto_रेजिस्टर_shashes(काष्ठा shash_alg *algs, पूर्णांक count)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < count; i++) {
-		ret = crypto_register_shash(&algs[i]);
-		if (ret)
-			goto err;
-	}
+	क्रम (i = 0; i < count; i++) अणु
+		ret = crypto_रेजिस्टर_shash(&algs[i]);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	for (--i; i >= 0; --i)
-		crypto_unregister_shash(&algs[i]);
+	क्रम (--i; i >= 0; --i)
+		crypto_unरेजिस्टर_shash(&algs[i]);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(crypto_register_shashes);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_shashes);
 
-void crypto_unregister_shashes(struct shash_alg *algs, int count)
-{
-	int i;
+व्योम crypto_unरेजिस्टर_shashes(काष्ठा shash_alg *algs, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = count - 1; i >= 0; --i)
-		crypto_unregister_shash(&algs[i]);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_shashes);
+	क्रम (i = count - 1; i >= 0; --i)
+		crypto_unरेजिस्टर_shash(&algs[i]);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_shashes);
 
-int shash_register_instance(struct crypto_template *tmpl,
-			    struct shash_instance *inst)
-{
-	int err;
+पूर्णांक shash_रेजिस्टर_instance(काष्ठा crypto_ढाँचा *पंचांगpl,
+			    काष्ठा shash_instance *inst)
+अणु
+	पूर्णांक err;
 
-	if (WARN_ON(!inst->free))
-		return -EINVAL;
+	अगर (WARN_ON(!inst->मुक्त))
+		वापस -EINVAL;
 
 	err = shash_prepare_alg(&inst->alg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return crypto_register_instance(tmpl, shash_crypto_instance(inst));
-}
-EXPORT_SYMBOL_GPL(shash_register_instance);
+	वापस crypto_रेजिस्टर_instance(पंचांगpl, shash_crypto_instance(inst));
+पूर्ण
+EXPORT_SYMBOL_GPL(shash_रेजिस्टर_instance);
 
-void shash_free_singlespawn_instance(struct shash_instance *inst)
-{
+व्योम shash_मुक्त_singlespawn_instance(काष्ठा shash_instance *inst)
+अणु
 	crypto_drop_spawn(shash_instance_ctx(inst));
-	kfree(inst);
-}
-EXPORT_SYMBOL_GPL(shash_free_singlespawn_instance);
+	kमुक्त(inst);
+पूर्ण
+EXPORT_SYMBOL_GPL(shash_मुक्त_singlespawn_instance);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Synchronous cryptographic hash type");

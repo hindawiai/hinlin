@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2019 Intel Corporation. */
 
-#ifndef XSK_H_
-#define XSK_H_
+#अगर_अघोषित XSK_H_
+#घोषणा XSK_H_
 
-/* Masks for xdp_umem_page flags.
+/* Masks क्रम xdp_umem_page flags.
  * The low 12-bits of the addr will be 0 since this is the page address, so we
- * can use them for flags.
+ * can use them क्रम flags.
  */
-#define XSK_NEXT_PG_CONTIG_SHIFT 0
-#define XSK_NEXT_PG_CONTIG_MASK BIT_ULL(XSK_NEXT_PG_CONTIG_SHIFT)
+#घोषणा XSK_NEXT_PG_CONTIG_SHIFT 0
+#घोषणा XSK_NEXT_PG_CONTIG_MASK BIT_ULL(XSK_NEXT_PG_CONTIG_SHIFT)
 
-struct xdp_ring_offset_v1 {
+काष्ठा xdp_ring_offset_v1 अणु
 	__u64 producer;
 	__u64 consumer;
 	__u64 desc;
-};
+पूर्ण;
 
-struct xdp_mmap_offsets_v1 {
-	struct xdp_ring_offset_v1 rx;
-	struct xdp_ring_offset_v1 tx;
-	struct xdp_ring_offset_v1 fr;
-	struct xdp_ring_offset_v1 cr;
-};
+काष्ठा xdp_mmap_offsets_v1 अणु
+	काष्ठा xdp_ring_offset_v1 rx;
+	काष्ठा xdp_ring_offset_v1 tx;
+	काष्ठा xdp_ring_offset_v1 fr;
+	काष्ठा xdp_ring_offset_v1 cr;
+पूर्ण;
 
-/* Nodes are linked in the struct xdp_sock map_list field, and used to
+/* Nodes are linked in the काष्ठा xdp_sock map_list field, and used to
  * track which maps a certain socket reside in.
  */
 
-struct xsk_map_node {
-	struct list_head node;
-	struct xsk_map *map;
-	struct xdp_sock **map_entry;
-};
+काष्ठा xsk_map_node अणु
+	काष्ठा list_head node;
+	काष्ठा xsk_map *map;
+	काष्ठा xdp_sock **map_entry;
+पूर्ण;
 
-static inline struct xdp_sock *xdp_sk(struct sock *sk)
-{
-	return (struct xdp_sock *)sk;
-}
+अटल अंतरभूत काष्ठा xdp_sock *xdp_sk(काष्ठा sock *sk)
+अणु
+	वापस (काष्ठा xdp_sock *)sk;
+पूर्ण
 
-void xsk_map_try_sock_delete(struct xsk_map *map, struct xdp_sock *xs,
-			     struct xdp_sock **map_entry);
-void xsk_clear_pool_at_qid(struct net_device *dev, u16 queue_id);
-int xsk_reg_pool_at_qid(struct net_device *dev, struct xsk_buff_pool *pool,
+व्योम xsk_map_try_sock_delete(काष्ठा xsk_map *map, काष्ठा xdp_sock *xs,
+			     काष्ठा xdp_sock **map_entry);
+व्योम xsk_clear_pool_at_qid(काष्ठा net_device *dev, u16 queue_id);
+पूर्णांक xsk_reg_pool_at_qid(काष्ठा net_device *dev, काष्ठा xsk_buff_pool *pool,
 			u16 queue_id);
 
-#endif /* XSK_H_ */
+#पूर्ण_अगर /* XSK_H_ */

@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_DEMANGLE_OCAML
-#define __PERF_DEMANGLE_OCAML 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_DEMANGLE_OCAML
+#घोषणा __PERF_DEMANGLE_OCAML 1
 
-char * ocaml_demangle_sym(const char *str);
+अक्षर * ocaml_demangle_sym(स्थिर अक्षर *str);
 
-#endif /* __PERF_DEMANGLE_OCAML */
+#पूर्ण_अगर /* __PERF_DEMANGLE_OCAML */

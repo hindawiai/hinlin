@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* x86-specific clocksource additions */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* x86-specअगरic घड़ीsource additions */
 
-#ifndef _ASM_X86_CLOCKSOURCE_H
-#define _ASM_X86_CLOCKSOURCE_H
+#अगर_अघोषित _ASM_X86_CLOCKSOURCE_H
+#घोषणा _ASM_X86_CLOCKSOURCE_H
 
-#include <asm/vdso/clocksource.h>
+#समावेश <यंत्र/vdso/घड़ीsource.h>
 
-extern unsigned int vclocks_used;
+बाह्य अचिन्हित पूर्णांक vघड़ीs_used;
 
-static inline bool vclock_was_used(int vclock)
-{
-	return READ_ONCE(vclocks_used) & (1U << vclock);
-}
+अटल अंतरभूत bool vघड़ी_was_used(पूर्णांक vघड़ी)
+अणु
+	वापस READ_ONCE(vघड़ीs_used) & (1U << vघड़ी);
+पूर्ण
 
-static inline void vclocks_set_used(unsigned int which)
-{
-	WRITE_ONCE(vclocks_used, READ_ONCE(vclocks_used) | (1 << which));
-}
+अटल अंतरभूत व्योम vघड़ीs_set_used(अचिन्हित पूर्णांक which)
+अणु
+	WRITE_ONCE(vघड़ीs_used, READ_ONCE(vघड़ीs_used) | (1 << which));
+पूर्ण
 
-#endif /* _ASM_X86_CLOCKSOURCE_H */
+#पूर्ण_अगर /* _ASM_X86_CLOCKSOURCE_H */

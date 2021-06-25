@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_CRC_CCITT_H
-#define _LINUX_CRC_CCITT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_CRC_CCITT_H
+#घोषणा _LINUX_CRC_CCITT_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-extern u16 const crc_ccitt_table[256];
-extern u16 const crc_ccitt_false_table[256];
+बाह्य u16 स्थिर crc_ccitt_table[256];
+बाह्य u16 स्थिर crc_ccitt_false_table[256];
 
-extern u16 crc_ccitt(u16 crc, const u8 *buffer, size_t len);
-extern u16 crc_ccitt_false(u16 crc, const u8 *buffer, size_t len);
+बाह्य u16 crc_ccitt(u16 crc, स्थिर u8 *buffer, माप_प्रकार len);
+बाह्य u16 crc_ccitt_false(u16 crc, स्थिर u8 *buffer, माप_प्रकार len);
 
-static inline u16 crc_ccitt_byte(u16 crc, const u8 c)
-{
-	return (crc >> 8) ^ crc_ccitt_table[(crc ^ c) & 0xff];
-}
+अटल अंतरभूत u16 crc_ccitt_byte(u16 crc, स्थिर u8 c)
+अणु
+	वापस (crc >> 8) ^ crc_ccitt_table[(crc ^ c) & 0xff];
+पूर्ण
 
-static inline u16 crc_ccitt_false_byte(u16 crc, const u8 c)
-{
-    return (crc << 8) ^ crc_ccitt_false_table[(crc >> 8) ^ c];
-}
+अटल अंतरभूत u16 crc_ccitt_false_byte(u16 crc, स्थिर u8 c)
+अणु
+    वापस (crc << 8) ^ crc_ccitt_false_table[(crc >> 8) ^ c];
+पूर्ण
 
-#endif /* _LINUX_CRC_CCITT_H */
+#पूर्ण_अगर /* _LINUX_CRC_CCITT_H */

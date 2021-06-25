@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ADAV801 audio driver
  *
  * Copyright 2014 Analog Devices Inc.
  */
 
-#include <linux/module.h>
-#include <linux/spi/spi.h>
-#include <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/regmap.h>
 
-#include <sound/soc.h>
+#समावेश <sound/soc.h>
 
-#include "adav80x.h"
+#समावेश "adav80x.h"
 
-static const struct spi_device_id adav80x_spi_id[] = {
-	{ "adav801", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा spi_device_id adav80x_spi_id[] = अणु
+	अणु "adav801", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, adav80x_spi_id);
 
-static int adav80x_spi_probe(struct spi_device *spi)
-{
-	struct regmap_config config;
+अटल पूर्णांक adav80x_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap_config config;
 
 	config = adav80x_regmap_config;
-	config.read_flag_mask = 0x01;
+	config.पढ़ो_flag_mask = 0x01;
 
-	return adav80x_bus_probe(&spi->dev, devm_regmap_init_spi(spi, &config));
-}
+	वापस adav80x_bus_probe(&spi->dev, devm_regmap_init_spi(spi, &config));
+पूर्ण
 
-static struct spi_driver adav80x_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver adav80x_spi_driver = अणु
+	.driver = अणु
 		.name	= "adav801",
-	},
+	पूर्ण,
 	.probe		= adav80x_spi_probe,
 	.id_table	= adav80x_spi_id,
-};
+पूर्ण;
 module_spi_driver(adav80x_spi_driver);
 
 MODULE_DESCRIPTION("ASoC ADAV801 driver");

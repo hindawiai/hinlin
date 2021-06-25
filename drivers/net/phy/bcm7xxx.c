@@ -1,570 +1,571 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Broadcom BCM7xxx internal transceivers support.
+ * Broadcom BCM7xxx पूर्णांकernal transceivers support.
  *
  * Copyright (C) 2014-2017 Broadcom
  */
 
-#include <linux/module.h>
-#include <linux/phy.h>
-#include <linux/delay.h>
-#include "bcm-phy-lib.h"
-#include <linux/bitops.h>
-#include <linux/brcmphy.h>
-#include <linux/clk.h>
-#include <linux/mdio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/delay.h>
+#समावेश "bcm-phy-lib.h"
+#समावेश <linux/bitops.h>
+#समावेश <linux/brcmphy.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/mdपन.स>
 
-/* Broadcom BCM7xxx internal PHY registers */
+/* Broadcom BCM7xxx पूर्णांकernal PHY रेजिस्टरs */
 
-/* EPHY only register definitions */
-#define MII_BCM7XXX_100TX_AUX_CTL	0x10
-#define MII_BCM7XXX_100TX_FALSE_CAR	0x13
-#define MII_BCM7XXX_100TX_DISC		0x14
-#define MII_BCM7XXX_AUX_MODE		0x1d
-#define  MII_BCM7XXX_64CLK_MDIO		BIT(12)
-#define MII_BCM7XXX_TEST		0x1f
-#define  MII_BCM7XXX_SHD_MODE_2		BIT(2)
-#define MII_BCM7XXX_SHD_2_ADDR_CTRL	0xe
-#define MII_BCM7XXX_SHD_2_CTRL_STAT	0xf
-#define MII_BCM7XXX_SHD_2_BIAS_TRIM	0x1a
-#define MII_BCM7XXX_SHD_3_AN_EEE_ADV	0x3
-#define MII_BCM7XXX_SHD_3_PCS_CTRL_2	0x6
-#define  MII_BCM7XXX_PCS_CTRL_2_DEF	0x4400
-#define MII_BCM7XXX_SHD_3_AN_STAT	0xb
-#define  MII_BCM7XXX_AN_NULL_MSG_EN	BIT(0)
-#define  MII_BCM7XXX_AN_EEE_EN		BIT(1)
-#define MII_BCM7XXX_SHD_3_EEE_THRESH	0xe
-#define  MII_BCM7XXX_EEE_THRESH_DEF	0x50
-#define MII_BCM7XXX_SHD_3_TL4		0x23
-#define  MII_BCM7XXX_TL4_RST_MSK	(BIT(2) | BIT(1))
+/* EPHY only रेजिस्टर definitions */
+#घोषणा MII_BCM7XXX_100TX_AUX_CTL	0x10
+#घोषणा MII_BCM7XXX_100TX_FALSE_CAR	0x13
+#घोषणा MII_BCM7XXX_100TX_DISC		0x14
+#घोषणा MII_BCM7XXX_AUX_MODE		0x1d
+#घोषणा  MII_BCM7XXX_64CLK_MDIO		BIT(12)
+#घोषणा MII_BCM7XXX_TEST		0x1f
+#घोषणा  MII_BCM7XXX_SHD_MODE_2		BIT(2)
+#घोषणा MII_BCM7XXX_SHD_2_ADDR_CTRL	0xe
+#घोषणा MII_BCM7XXX_SHD_2_CTRL_STAT	0xf
+#घोषणा MII_BCM7XXX_SHD_2_BIAS_TRIM	0x1a
+#घोषणा MII_BCM7XXX_SHD_3_AN_EEE_ADV	0x3
+#घोषणा MII_BCM7XXX_SHD_3_PCS_CTRL_2	0x6
+#घोषणा  MII_BCM7XXX_PCS_CTRL_2_DEF	0x4400
+#घोषणा MII_BCM7XXX_SHD_3_AN_STAT	0xb
+#घोषणा  MII_BCM7XXX_AN_शून्य_MSG_EN	BIT(0)
+#घोषणा  MII_BCM7XXX_AN_EEE_EN		BIT(1)
+#घोषणा MII_BCM7XXX_SHD_3_EEE_THRESH	0xe
+#घोषणा  MII_BCM7XXX_EEE_THRESH_DEF	0x50
+#घोषणा MII_BCM7XXX_SHD_3_TL4		0x23
+#घोषणा  MII_BCM7XXX_TL4_RST_MSK	(BIT(2) | BIT(1))
 
-struct bcm7xxx_phy_priv {
+काष्ठा bcm7xxx_phy_priv अणु
 	u64	*stats;
-	struct clk *clk;
-};
+	काष्ठा clk *clk;
+पूर्ण;
 
-static int bcm7xxx_28nm_d0_afe_config_init(struct phy_device *phydev)
-{
+अटल पूर्णांक bcm7xxx_28nm_d0_afe_config_init(काष्ठा phy_device *phydev)
+अणु
 	/* AFE_RXCONFIG_0 */
-	bcm_phy_write_misc(phydev, AFE_RXCONFIG_0, 0xeb15);
+	bcm_phy_ग_लिखो_misc(phydev, AFE_RXCONFIG_0, 0xeb15);
 
 	/* AFE_RXCONFIG_1 */
-	bcm_phy_write_misc(phydev, AFE_RXCONFIG_1, 0x9b2f);
+	bcm_phy_ग_लिखो_misc(phydev, AFE_RXCONFIG_1, 0x9b2f);
 
-	/* AFE_RXCONFIG_2, set rCal offset for HT=0 code and LT=-2 code */
-	bcm_phy_write_misc(phydev, AFE_RXCONFIG_2, 0x2003);
+	/* AFE_RXCONFIG_2, set rCal offset क्रम HT=0 code and LT=-2 code */
+	bcm_phy_ग_लिखो_misc(phydev, AFE_RXCONFIG_2, 0x2003);
 
 	/* AFE_RX_LP_COUNTER, set RX bandwidth to maximum */
-	bcm_phy_write_misc(phydev, AFE_RX_LP_COUNTER, 0x7fc0);
+	bcm_phy_ग_लिखो_misc(phydev, AFE_RX_LP_COUNTER, 0x7fc0);
 
-	/* AFE_TX_CONFIG, set 100BT Cfeed=011 to improve rise/fall time */
-	bcm_phy_write_misc(phydev, AFE_TX_CONFIG, 0x431);
+	/* AFE_TX_CONFIG, set 100BT Cfeed=011 to improve rise/fall समय */
+	bcm_phy_ग_लिखो_misc(phydev, AFE_TX_CONFIG, 0x431);
 
-	/* AFE_VDCA_ICTRL_0, set Iq=1101 instead of 0111 for AB symmetry */
-	bcm_phy_write_misc(phydev, AFE_VDCA_ICTRL_0, 0xa7da);
+	/* AFE_VDCA_ICTRL_0, set Iq=1101 instead of 0111 क्रम AB symmetry */
+	bcm_phy_ग_लिखो_misc(phydev, AFE_VDCA_ICTRL_0, 0xa7da);
 
-	/* AFE_VDAC_OTHERS_0, set 1000BT Cidac=010 for all ports */
-	bcm_phy_write_misc(phydev, AFE_VDAC_OTHERS_0, 0xa020);
+	/* AFE_VDAC_OTHERS_0, set 1000BT Cidac=010 क्रम all ports */
+	bcm_phy_ग_लिखो_misc(phydev, AFE_VDAC_OTHERS_0, 0xa020);
 
 	/* AFE_HPF_TRIM_OTHERS, set 100Tx/10BT to -4.5% swing and set rCal
-	 * offset for HT=0 code
+	 * offset क्रम HT=0 code
 	 */
-	bcm_phy_write_misc(phydev, AFE_HPF_TRIM_OTHERS, 0x00e3);
+	bcm_phy_ग_लिखो_misc(phydev, AFE_HPF_TRIM_OTHERS, 0x00e3);
 
-	/* CORE_BASE1E, force trim to overwrite and set I_ext trim to 0000 */
-	phy_write(phydev, MII_BRCM_CORE_BASE1E, 0x0010);
+	/* CORE_BASE1E, क्रमce trim to overग_लिखो and set I_ext trim to 0000 */
+	phy_ग_लिखो(phydev, MII_BRCM_CORE_BASE1E, 0x0010);
 
 	/* DSP_TAP10, adjust bias current trim (+0% swing, +0 tick) */
-	bcm_phy_write_misc(phydev, DSP_TAP10, 0x011b);
+	bcm_phy_ग_लिखो_misc(phydev, DSP_TAP10, 0x011b);
 
 	/* Reset R_CAL/RC_CAL engine */
 	bcm_phy_r_rc_cal_reset(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm7xxx_28nm_e0_plus_afe_config_init(struct phy_device *phydev)
-{
-	/* AFE_RXCONFIG_1, provide more margin for INL/DNL measurement */
-	bcm_phy_write_misc(phydev, AFE_RXCONFIG_1, 0x9b2f);
+अटल पूर्णांक bcm7xxx_28nm_e0_plus_afe_config_init(काष्ठा phy_device *phydev)
+अणु
+	/* AFE_RXCONFIG_1, provide more margin क्रम INL/DNL measurement */
+	bcm_phy_ग_लिखो_misc(phydev, AFE_RXCONFIG_1, 0x9b2f);
 
-	/* AFE_TX_CONFIG, set 100BT Cfeed=011 to improve rise/fall time */
-	bcm_phy_write_misc(phydev, AFE_TX_CONFIG, 0x431);
+	/* AFE_TX_CONFIG, set 100BT Cfeed=011 to improve rise/fall समय */
+	bcm_phy_ग_लिखो_misc(phydev, AFE_TX_CONFIG, 0x431);
 
-	/* AFE_VDCA_ICTRL_0, set Iq=1101 instead of 0111 for AB symmetry */
-	bcm_phy_write_misc(phydev, AFE_VDCA_ICTRL_0, 0xa7da);
+	/* AFE_VDCA_ICTRL_0, set Iq=1101 instead of 0111 क्रम AB symmetry */
+	bcm_phy_ग_लिखो_misc(phydev, AFE_VDCA_ICTRL_0, 0xa7da);
 
 	/* AFE_HPF_TRIM_OTHERS, set 100Tx/10BT to -4.5% swing and set rCal
-	 * offset for HT=0 code
+	 * offset क्रम HT=0 code
 	 */
-	bcm_phy_write_misc(phydev, AFE_HPF_TRIM_OTHERS, 0x00e3);
+	bcm_phy_ग_लिखो_misc(phydev, AFE_HPF_TRIM_OTHERS, 0x00e3);
 
-	/* CORE_BASE1E, force trim to overwrite and set I_ext trim to 0000 */
-	phy_write(phydev, MII_BRCM_CORE_BASE1E, 0x0010);
+	/* CORE_BASE1E, क्रमce trim to overग_लिखो and set I_ext trim to 0000 */
+	phy_ग_लिखो(phydev, MII_BRCM_CORE_BASE1E, 0x0010);
 
 	/* DSP_TAP10, adjust bias current trim (+0% swing, +0 tick) */
-	bcm_phy_write_misc(phydev, DSP_TAP10, 0x011b);
+	bcm_phy_ग_लिखो_misc(phydev, DSP_TAP10, 0x011b);
 
 	/* Reset R_CAL/RC_CAL engine */
 	bcm_phy_r_rc_cal_reset(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm7xxx_28nm_a0_patch_afe_config_init(struct phy_device *phydev)
-{
-	/* +1 RC_CAL codes for RL centering for both LT and HT conditions */
-	bcm_phy_write_misc(phydev, AFE_RXCONFIG_2, 0xd003);
+अटल पूर्णांक bcm7xxx_28nm_a0_patch_afe_config_init(काष्ठा phy_device *phydev)
+अणु
+	/* +1 RC_CAL codes क्रम RL centering क्रम both LT and HT conditions */
+	bcm_phy_ग_लिखो_misc(phydev, AFE_RXCONFIG_2, 0xd003);
 
-	/* Cut master bias current by 2% to compensate for RC_CAL offset */
-	bcm_phy_write_misc(phydev, DSP_TAP10, 0x791b);
+	/* Cut master bias current by 2% to compensate क्रम RC_CAL offset */
+	bcm_phy_ग_लिखो_misc(phydev, DSP_TAP10, 0x791b);
 
 	/* Improve hybrid leakage */
-	bcm_phy_write_misc(phydev, AFE_HPF_TRIM_OTHERS, 0x10e3);
+	bcm_phy_ग_लिखो_misc(phydev, AFE_HPF_TRIM_OTHERS, 0x10e3);
 
 	/* Change rx_on_tune 8 to 0xf */
-	bcm_phy_write_misc(phydev, 0x21, 0x2, 0x87f6);
+	bcm_phy_ग_लिखो_misc(phydev, 0x21, 0x2, 0x87f6);
 
 	/* Change 100Tx EEE bandwidth */
-	bcm_phy_write_misc(phydev, 0x22, 0x2, 0x017d);
+	bcm_phy_ग_लिखो_misc(phydev, 0x22, 0x2, 0x017d);
 
-	/* Enable ffe zero detection for Vitesse interoperability */
-	bcm_phy_write_misc(phydev, 0x26, 0x2, 0x0015);
+	/* Enable ffe zero detection क्रम Vitesse पूर्णांकeroperability */
+	bcm_phy_ग_लिखो_misc(phydev, 0x26, 0x2, 0x0015);
 
 	bcm_phy_r_rc_cal_reset(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm7xxx_28nm_config_init(struct phy_device *phydev)
-{
+अटल पूर्णांक bcm7xxx_28nm_config_init(काष्ठा phy_device *phydev)
+अणु
 	u8 rev = PHY_BRCM_7XXX_REV(phydev->dev_flags);
 	u8 patch = PHY_BRCM_7XXX_PATCH(phydev->dev_flags);
 	u8 count;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	/* Newer devices have moved the revision information back into a
+	/* Newer devices have moved the revision inक्रमmation back पूर्णांकo a
 	 * standard location in MII_PHYS_ID[23]
 	 */
-	if (rev == 0)
+	अगर (rev == 0)
 		rev = phydev->phy_id & ~phydev->drv->phy_id_mask;
 
 	pr_info_once("%s: %s PHY revision: 0x%02x, patch: %d\n",
 		     phydev_name(phydev), phydev->drv->name, rev, patch);
 
-	/* Dummy read to a register to workaround an issue upon reset where the
-	 * internal inverter may not allow the first MDIO transaction to pass
-	 * the MDIO management controller and make us return 0xffff for such
-	 * reads.
+	/* Dummy पढ़ो to a रेजिस्टर to workaround an issue upon reset where the
+	 * पूर्णांकernal inverter may not allow the first MDIO transaction to pass
+	 * the MDIO management controller and make us वापस 0xffff क्रम such
+	 * पढ़ोs.
 	 */
-	phy_read(phydev, MII_BMSR);
+	phy_पढ़ो(phydev, MII_BMSR);
 
-	switch (rev) {
-	case 0xa0:
-	case 0xb0:
+	चयन (rev) अणु
+	हाल 0xa0:
+	हाल 0xb0:
 		ret = bcm_phy_28nm_a0b0_afe_config_init(phydev);
-		break;
-	case 0xd0:
+		अवरोध;
+	हाल 0xd0:
 		ret = bcm7xxx_28nm_d0_afe_config_init(phydev);
-		break;
-	case 0xe0:
-	case 0xf0:
-	/* Rev G0 introduces a roll over */
-	case 0x10:
+		अवरोध;
+	हाल 0xe0:
+	हाल 0xf0:
+	/* Rev G0 पूर्णांकroduces a roll over */
+	हाल 0x10:
 		ret = bcm7xxx_28nm_e0_plus_afe_config_init(phydev);
-		break;
-	case 0x01:
+		अवरोध;
+	हाल 0x01:
 		ret = bcm7xxx_28nm_a0_patch_afe_config_init(phydev);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret =  bcm_phy_enable_jumbo(phydev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = bcm_phy_downshift_get(phydev, &count);
-	if (ret)
-		return ret;
+	ret = bcm_phy_करोwnshअगरt_get(phydev, &count);
+	अगर (ret)
+		वापस ret;
 
-	/* Only enable EEE if Wirespeed/downshift is disabled */
+	/* Only enable EEE अगर Wirespeed/करोwnshअगरt is disabled */
 	ret = bcm_phy_set_eee(phydev, count == DOWNSHIFT_DEV_DISABLE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return bcm_phy_enable_apd(phydev, true);
-}
+	वापस bcm_phy_enable_apd(phydev, true);
+पूर्ण
 
-static int bcm7xxx_28nm_resume(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक bcm7xxx_28nm_resume(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
 	/* Re-apply workarounds coming out suspend/resume */
 	ret = bcm7xxx_28nm_config_init(phydev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* 28nm Gigabit PHYs come out of reset without any half-duplex
-	 * or "hub" compliant advertised mode, fix that. This does not
+	 * or "hub" compliant advertised mode, fix that. This करोes not
 	 * cause any problems with the PHY library since genphy_config_aneg()
-	 * gracefully handles auto-negotiated and forced modes.
+	 * gracefully handles स्वतः-negotiated and क्रमced modes.
 	 */
-	return genphy_config_aneg(phydev);
-}
+	वापस genphy_config_aneg(phydev);
+पूर्ण
 
-static int phy_set_clr_bits(struct phy_device *dev, int location,
-					int set_mask, int clr_mask)
-{
-	int v, ret;
+अटल पूर्णांक phy_set_clr_bits(काष्ठा phy_device *dev, पूर्णांक location,
+					पूर्णांक set_mask, पूर्णांक clr_mask)
+अणु
+	पूर्णांक v, ret;
 
-	v = phy_read(dev, location);
-	if (v < 0)
-		return v;
+	v = phy_पढ़ो(dev, location);
+	अगर (v < 0)
+		वापस v;
 
 	v &= ~clr_mask;
 	v |= set_mask;
 
-	ret = phy_write(dev, location, v);
-	if (ret < 0)
-		return ret;
+	ret = phy_ग_लिखो(dev, location, v);
+	अगर (ret < 0)
+		वापस ret;
 
-	return v;
-}
+	वापस v;
+पूर्ण
 
-static int bcm7xxx_28nm_ephy_01_afe_config_init(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक bcm7xxx_28nm_ephy_01_afe_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	/* set shadow mode 2 */
+	/* set shaकरोw mode 2 */
 	ret = phy_set_clr_bits(phydev, MII_BCM7XXX_TEST,
 			       MII_BCM7XXX_SHD_MODE_2, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Set current trim values INT_trim = -1, Ext_trim =0 */
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_BIAS_TRIM, 0x3BE0);
-	if (ret < 0)
-		goto reset_shadow_mode;
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_BIAS_TRIM, 0x3BE0);
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
 
 	/* Cal reset */
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
 			MII_BCM7XXX_SHD_3_TL4);
-	if (ret < 0)
-		goto reset_shadow_mode;
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
 	ret = phy_set_clr_bits(phydev, MII_BCM7XXX_SHD_2_CTRL_STAT,
 			       MII_BCM7XXX_TL4_RST_MSK, 0);
-	if (ret < 0)
-		goto reset_shadow_mode;
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
 
 	/* Cal reset disable */
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
 			MII_BCM7XXX_SHD_3_TL4);
-	if (ret < 0)
-		goto reset_shadow_mode;
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
 	ret = phy_set_clr_bits(phydev, MII_BCM7XXX_SHD_2_CTRL_STAT,
 			       0, MII_BCM7XXX_TL4_RST_MSK);
-	if (ret < 0)
-		goto reset_shadow_mode;
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
 
-reset_shadow_mode:
-	/* reset shadow mode 2 */
+reset_shaकरोw_mode:
+	/* reset shaकरोw mode 2 */
 	ret = phy_set_clr_bits(phydev, MII_BCM7XXX_TEST, 0,
 			       MII_BCM7XXX_SHD_MODE_2);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* The 28nm EPHY does not support Clause 45 (MMD) used by bcm-phy-lib */
-static int bcm7xxx_28nm_ephy_apd_enable(struct phy_device *phydev)
-{
-	int ret;
+/* The 28nm EPHY करोes not support Clause 45 (MMD) used by bcm-phy-lib */
+अटल पूर्णांक bcm7xxx_28nm_ephy_apd_enable(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	/* set shadow mode 1 */
+	/* set shaकरोw mode 1 */
 	ret = phy_set_clr_bits(phydev, MII_BRCM_FET_BRCMTEST,
 			       MII_BRCM_FET_BT_SRE, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Enable auto-power down */
+	/* Enable स्वतः-घातer करोwn */
 	ret = phy_set_clr_bits(phydev, MII_BRCM_FET_SHDW_AUXSTAT2,
 			       MII_BRCM_FET_SHDW_AS2_APDE, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* reset shadow mode 1 */
+	/* reset shaकरोw mode 1 */
 	ret = phy_set_clr_bits(phydev, MII_BRCM_FET_BRCMTEST, 0,
 			       MII_BRCM_FET_BT_SRE);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm7xxx_28nm_ephy_eee_enable(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक bcm7xxx_28nm_ephy_eee_enable(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	/* set shadow mode 2 */
+	/* set shaकरोw mode 2 */
 	ret = phy_set_clr_bits(phydev, MII_BCM7XXX_TEST,
 			       MII_BCM7XXX_SHD_MODE_2, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Advertise supported modes */
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
 			MII_BCM7XXX_SHD_3_AN_EEE_ADV);
-	if (ret < 0)
-		goto reset_shadow_mode;
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_CTRL_STAT,
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_CTRL_STAT,
 			MDIO_EEE_100TX);
-	if (ret < 0)
-		goto reset_shadow_mode;
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
 
 	/* Restore Defaults */
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
 			MII_BCM7XXX_SHD_3_PCS_CTRL_2);
-	if (ret < 0)
-		goto reset_shadow_mode;
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_CTRL_STAT,
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_CTRL_STAT,
 			MII_BCM7XXX_PCS_CTRL_2_DEF);
-	if (ret < 0)
-		goto reset_shadow_mode;
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
 
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
 			MII_BCM7XXX_SHD_3_EEE_THRESH);
-	if (ret < 0)
-		goto reset_shadow_mode;
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_CTRL_STAT,
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_CTRL_STAT,
 			MII_BCM7XXX_EEE_THRESH_DEF);
-	if (ret < 0)
-		goto reset_shadow_mode;
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
 
-	/* Enable EEE autonegotiation */
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
+	/* Enable EEE स्वतःnegotiation */
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_ADDR_CTRL,
 			MII_BCM7XXX_SHD_3_AN_STAT);
-	if (ret < 0)
-		goto reset_shadow_mode;
-	ret = phy_write(phydev, MII_BCM7XXX_SHD_2_CTRL_STAT,
-			(MII_BCM7XXX_AN_NULL_MSG_EN | MII_BCM7XXX_AN_EEE_EN));
-	if (ret < 0)
-		goto reset_shadow_mode;
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
+	ret = phy_ग_लिखो(phydev, MII_BCM7XXX_SHD_2_CTRL_STAT,
+			(MII_BCM7XXX_AN_शून्य_MSG_EN | MII_BCM7XXX_AN_EEE_EN));
+	अगर (ret < 0)
+		जाओ reset_shaकरोw_mode;
 
-reset_shadow_mode:
-	/* reset shadow mode 2 */
+reset_shaकरोw_mode:
+	/* reset shaकरोw mode 2 */
 	ret = phy_set_clr_bits(phydev, MII_BCM7XXX_TEST, 0,
 			       MII_BCM7XXX_SHD_MODE_2);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Restart autoneg */
-	phy_write(phydev, MII_BMCR,
+	/* Restart स्वतःneg */
+	phy_ग_लिखो(phydev, MII_BMCR,
 		  (BMCR_SPEED100 | BMCR_ANENABLE | BMCR_ANRESTART));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm7xxx_28nm_ephy_config_init(struct phy_device *phydev)
-{
+अटल पूर्णांक bcm7xxx_28nm_ephy_config_init(काष्ठा phy_device *phydev)
+अणु
 	u8 rev = phydev->phy_id & ~phydev->drv->phy_id_mask;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	pr_info_once("%s: %s PHY revision: 0x%02x\n",
 		     phydev_name(phydev), phydev->drv->name, rev);
 
-	/* Dummy read to a register to workaround a possible issue upon reset
-	 * where the internal inverter may not allow the first MDIO transaction
-	 * to pass the MDIO management controller and make us return 0xffff for
-	 * such reads.
+	/* Dummy पढ़ो to a रेजिस्टर to workaround a possible issue upon reset
+	 * where the पूर्णांकernal inverter may not allow the first MDIO transaction
+	 * to pass the MDIO management controller and make us वापस 0xffff क्रम
+	 * such पढ़ोs.
 	 */
-	phy_read(phydev, MII_BMSR);
+	phy_पढ़ो(phydev, MII_BMSR);
 
-	/* Apply AFE software work-around if necessary */
-	if (rev == 0x01) {
+	/* Apply AFE software work-around अगर necessary */
+	अगर (rev == 0x01) अणु
 		ret = bcm7xxx_28nm_ephy_01_afe_config_init(phydev);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = bcm7xxx_28nm_ephy_eee_enable(phydev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return bcm7xxx_28nm_ephy_apd_enable(phydev);
-}
+	वापस bcm7xxx_28nm_ephy_apd_enable(phydev);
+पूर्ण
 
-static int bcm7xxx_28nm_ephy_resume(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक bcm7xxx_28nm_ephy_resume(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
 	/* Re-apply workarounds coming out suspend/resume */
 	ret = bcm7xxx_28nm_ephy_config_init(phydev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return genphy_config_aneg(phydev);
-}
+	वापस genphy_config_aneg(phydev);
+पूर्ण
 
-static int bcm7xxx_config_init(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक bcm7xxx_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	/* Enable 64 clock MDIO */
-	phy_write(phydev, MII_BCM7XXX_AUX_MODE, MII_BCM7XXX_64CLK_MDIO);
-	phy_read(phydev, MII_BCM7XXX_AUX_MODE);
+	/* Enable 64 घड़ी MDIO */
+	phy_ग_लिखो(phydev, MII_BCM7XXX_AUX_MODE, MII_BCM7XXX_64CLK_MDIO);
+	phy_पढ़ो(phydev, MII_BCM7XXX_AUX_MODE);
 
-	/* set shadow mode 2 */
+	/* set shaकरोw mode 2 */
 	ret = phy_set_clr_bits(phydev, MII_BCM7XXX_TEST,
 			MII_BCM7XXX_SHD_MODE_2, MII_BCM7XXX_SHD_MODE_2);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* set iddq_clkbias */
-	phy_write(phydev, MII_BCM7XXX_100TX_DISC, 0x0F00);
+	phy_ग_लिखो(phydev, MII_BCM7XXX_100TX_DISC, 0x0F00);
 	udelay(10);
 
 	/* reset iddq_clkbias */
-	phy_write(phydev, MII_BCM7XXX_100TX_DISC, 0x0C00);
+	phy_ग_लिखो(phydev, MII_BCM7XXX_100TX_DISC, 0x0C00);
 
-	phy_write(phydev, MII_BCM7XXX_100TX_FALSE_CAR, 0x7555);
+	phy_ग_लिखो(phydev, MII_BCM7XXX_100TX_FALSE_CAR, 0x7555);
 
-	/* reset shadow mode 2 */
+	/* reset shaकरोw mode 2 */
 	ret = phy_set_clr_bits(phydev, MII_BCM7XXX_TEST, 0, MII_BCM7XXX_SHD_MODE_2);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Workaround for putting the PHY in IDDQ mode, required
- * for all BCM7XXX 40nm and 65nm PHYs
+/* Workaround क्रम putting the PHY in IDDQ mode, required
+ * क्रम all BCM7XXX 40nm and 65nm PHYs
  */
-static int bcm7xxx_suspend(struct phy_device *phydev)
-{
-	int ret;
-	static const struct bcm7xxx_regs {
-		int reg;
+अटल पूर्णांक bcm7xxx_suspend(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
+	अटल स्थिर काष्ठा bcm7xxx_regs अणु
+		पूर्णांक reg;
 		u16 value;
-	} bcm7xxx_suspend_cfg[] = {
-		{ MII_BCM7XXX_TEST, 0x008b },
-		{ MII_BCM7XXX_100TX_AUX_CTL, 0x01c0 },
-		{ MII_BCM7XXX_100TX_DISC, 0x7000 },
-		{ MII_BCM7XXX_TEST, 0x000f },
-		{ MII_BCM7XXX_100TX_AUX_CTL, 0x20d0 },
-		{ MII_BCM7XXX_TEST, 0x000b },
-	};
-	unsigned int i;
+	पूर्ण bcm7xxx_suspend_cfg[] = अणु
+		अणु MII_BCM7XXX_TEST, 0x008b पूर्ण,
+		अणु MII_BCM7XXX_100TX_AUX_CTL, 0x01c0 पूर्ण,
+		अणु MII_BCM7XXX_100TX_DISC, 0x7000 पूर्ण,
+		अणु MII_BCM7XXX_TEST, 0x000f पूर्ण,
+		अणु MII_BCM7XXX_100TX_AUX_CTL, 0x20d0 पूर्ण,
+		अणु MII_BCM7XXX_TEST, 0x000b पूर्ण,
+	पूर्ण;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(bcm7xxx_suspend_cfg); i++) {
-		ret = phy_write(phydev,
+	क्रम (i = 0; i < ARRAY_SIZE(bcm7xxx_suspend_cfg); i++) अणु
+		ret = phy_ग_लिखो(phydev,
 				bcm7xxx_suspend_cfg[i].reg,
 				bcm7xxx_suspend_cfg[i].value);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm7xxx_28nm_get_tunable(struct phy_device *phydev,
-				    struct ethtool_tunable *tuna,
-				    void *data)
-{
-	switch (tuna->id) {
-	case ETHTOOL_PHY_DOWNSHIFT:
-		return bcm_phy_downshift_get(phydev, (u8 *)data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक bcm7xxx_28nm_get_tunable(काष्ठा phy_device *phydev,
+				    काष्ठा ethtool_tunable *tuna,
+				    व्योम *data)
+अणु
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_PHY_DOWNSHIFT:
+		वापस bcm_phy_करोwnshअगरt_get(phydev, (u8 *)data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int bcm7xxx_28nm_set_tunable(struct phy_device *phydev,
-				    struct ethtool_tunable *tuna,
-				    const void *data)
-{
+अटल पूर्णांक bcm7xxx_28nm_set_tunable(काष्ठा phy_device *phydev,
+				    काष्ठा ethtool_tunable *tuna,
+				    स्थिर व्योम *data)
+अणु
 	u8 count = *(u8 *)data;
-	int ret;
+	पूर्णांक ret;
 
-	switch (tuna->id) {
-	case ETHTOOL_PHY_DOWNSHIFT:
-		ret = bcm_phy_downshift_set(phydev, count);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_PHY_DOWNSHIFT:
+		ret = bcm_phy_करोwnshअगरt_set(phydev, count);
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Disable EEE advertisement since this prevents the PHY
-	 * from successfully linking up, trigger auto-negotiation restart
-	 * to let the MAC decide what to do.
+	 * from successfully linking up, trigger स्वतः-negotiation restart
+	 * to let the MAC decide what to करो.
 	 */
 	ret = bcm_phy_set_eee(phydev, count == DOWNSHIFT_DEV_DISABLE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return genphy_restart_aneg(phydev);
-}
+	वापस genphy_restart_aneg(phydev);
+पूर्ण
 
-static void bcm7xxx_28nm_get_phy_stats(struct phy_device *phydev,
-				       struct ethtool_stats *stats, u64 *data)
-{
-	struct bcm7xxx_phy_priv *priv = phydev->priv;
+अटल व्योम bcm7xxx_28nm_get_phy_stats(काष्ठा phy_device *phydev,
+				       काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा bcm7xxx_phy_priv *priv = phydev->priv;
 
 	bcm_phy_get_stats(phydev, priv->stats, stats, data);
-}
+पूर्ण
 
-static int bcm7xxx_28nm_probe(struct phy_device *phydev)
-{
-	struct bcm7xxx_phy_priv *priv;
-	int ret = 0;
+अटल पूर्णांक bcm7xxx_28nm_probe(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा bcm7xxx_phy_priv *priv;
+	पूर्णांक ret = 0;
 
-	priv = devm_kzalloc(&phydev->mdio.dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&phydev->mdio.dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	phydev->priv = priv;
 
-	priv->stats = devm_kcalloc(&phydev->mdio.dev,
-				   bcm_phy_get_sset_count(phydev), sizeof(u64),
+	priv->stats = devm_kसुस्मृति(&phydev->mdio.dev,
+				   bcm_phy_get_sset_count(phydev), माप(u64),
 				   GFP_KERNEL);
-	if (!priv->stats)
-		return -ENOMEM;
+	अगर (!priv->stats)
+		वापस -ENOMEM;
 
-	priv->clk = devm_clk_get_optional(&phydev->mdio.dev, NULL);
-	if (IS_ERR(priv->clk))
-		return PTR_ERR(priv->clk);
+	priv->clk = devm_clk_get_optional(&phydev->mdio.dev, शून्य);
+	अगर (IS_ERR(priv->clk))
+		वापस PTR_ERR(priv->clk);
 
 	ret = clk_prepare_enable(priv->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Dummy read to a register to workaround an issue upon reset where the
-	 * internal inverter may not allow the first MDIO transaction to pass
-	 * the MDIO management controller and make us return 0xffff for such
-	 * reads. This is needed to ensure that any subsequent reads to the
+	/* Dummy पढ़ो to a रेजिस्टर to workaround an issue upon reset where the
+	 * पूर्णांकernal inverter may not allow the first MDIO transaction to pass
+	 * the MDIO management controller and make us वापस 0xffff क्रम such
+	 * पढ़ोs. This is needed to ensure that any subsequent पढ़ोs to the
 	 * PHY will succeed.
 	 */
-	phy_read(phydev, MII_BMSR);
+	phy_पढ़ो(phydev, MII_BMSR);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void bcm7xxx_28nm_remove(struct phy_device *phydev)
-{
-	struct bcm7xxx_phy_priv *priv = phydev->priv;
+अटल व्योम bcm7xxx_28nm_हटाओ(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा bcm7xxx_phy_priv *priv = phydev->priv;
 
 	clk_disable_unprepare(priv->clk);
-}
+पूर्ण
 
-#define BCM7XXX_28NM_GPHY(_oui, _name)					\
-{									\
+#घोषणा BCM7XXX_28NM_GPHY(_oui, _name)					\
+अणु									\
 	.phy_id		= (_oui),					\
 	.phy_id_mask	= 0xfffffff0,					\
 	.name		= _name,					\
@@ -578,11 +579,11 @@ static void bcm7xxx_28nm_remove(struct phy_device *phydev)
 	.get_strings	= bcm_phy_get_strings,				\
 	.get_stats	= bcm7xxx_28nm_get_phy_stats,			\
 	.probe		= bcm7xxx_28nm_probe,				\
-	.remove		= bcm7xxx_28nm_remove,				\
-}
+	.हटाओ		= bcm7xxx_28nm_हटाओ,				\
+पूर्ण
 
-#define BCM7XXX_28NM_EPHY(_oui, _name)					\
-{									\
+#घोषणा BCM7XXX_28NM_EPHY(_oui, _name)					\
+अणु									\
 	.phy_id		= (_oui),					\
 	.phy_id_mask	= 0xfffffff0,					\
 	.name		= _name,					\
@@ -594,11 +595,11 @@ static void bcm7xxx_28nm_remove(struct phy_device *phydev)
 	.get_strings	= bcm_phy_get_strings,				\
 	.get_stats	= bcm7xxx_28nm_get_phy_stats,			\
 	.probe		= bcm7xxx_28nm_probe,				\
-	.remove		= bcm7xxx_28nm_remove,				\
-}
+	.हटाओ		= bcm7xxx_28nm_हटाओ,				\
+पूर्ण
 
-#define BCM7XXX_40NM_EPHY(_oui, _name)					\
-{									\
+#घोषणा BCM7XXX_40NM_EPHY(_oui, _name)					\
+अणु									\
 	.phy_id         = (_oui),					\
 	.phy_id_mask    = 0xfffffff0,					\
 	.name           = _name,					\
@@ -608,9 +609,9 @@ static void bcm7xxx_28nm_remove(struct phy_device *phydev)
 	.config_init    = bcm7xxx_config_init,				\
 	.suspend        = bcm7xxx_suspend,				\
 	.resume         = bcm7xxx_config_init,				\
-}
+पूर्ण
 
-static struct phy_driver bcm7xxx_driver[] = {
+अटल काष्ठा phy_driver bcm7xxx_driver[] = अणु
 	BCM7XXX_28NM_EPHY(PHY_ID_BCM72113, "Broadcom BCM72113"),
 	BCM7XXX_28NM_EPHY(PHY_ID_BCM72116, "Broadcom BCM72116"),
 	BCM7XXX_28NM_GPHY(PHY_ID_BCM7250, "Broadcom BCM7250"),
@@ -630,29 +631,29 @@ static struct phy_driver bcm7xxx_driver[] = {
 	BCM7XXX_40NM_EPHY(PHY_ID_BCM7425, "Broadcom BCM7425"),
 	BCM7XXX_40NM_EPHY(PHY_ID_BCM7429, "Broadcom BCM7429"),
 	BCM7XXX_40NM_EPHY(PHY_ID_BCM7435, "Broadcom BCM7435"),
-};
+पूर्ण;
 
-static struct mdio_device_id __maybe_unused bcm7xxx_tbl[] = {
-	{ PHY_ID_BCM72113, 0xfffffff0 },
-	{ PHY_ID_BCM72116, 0xfffffff0, },
-	{ PHY_ID_BCM7250, 0xfffffff0, },
-	{ PHY_ID_BCM7255, 0xfffffff0, },
-	{ PHY_ID_BCM7260, 0xfffffff0, },
-	{ PHY_ID_BCM7268, 0xfffffff0, },
-	{ PHY_ID_BCM7271, 0xfffffff0, },
-	{ PHY_ID_BCM7278, 0xfffffff0, },
-	{ PHY_ID_BCM7364, 0xfffffff0, },
-	{ PHY_ID_BCM7366, 0xfffffff0, },
-	{ PHY_ID_BCM7346, 0xfffffff0, },
-	{ PHY_ID_BCM7362, 0xfffffff0, },
-	{ PHY_ID_BCM7425, 0xfffffff0, },
-	{ PHY_ID_BCM7429, 0xfffffff0, },
-	{ PHY_ID_BCM74371, 0xfffffff0, },
-	{ PHY_ID_BCM7439, 0xfffffff0, },
-	{ PHY_ID_BCM7435, 0xfffffff0, },
-	{ PHY_ID_BCM7445, 0xfffffff0, },
-	{ }
-};
+अटल काष्ठा mdio_device_id __maybe_unused bcm7xxx_tbl[] = अणु
+	अणु PHY_ID_BCM72113, 0xfffffff0 पूर्ण,
+	अणु PHY_ID_BCM72116, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7250, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7255, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7260, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7268, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7271, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7278, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7364, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7366, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7346, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7362, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7425, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7429, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM74371, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7439, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7435, 0xfffffff0, पूर्ण,
+	अणु PHY_ID_BCM7445, 0xfffffff0, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 module_phy_driver(bcm7xxx_driver);
 

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * VFIO core
  *
@@ -10,316 +11,316 @@
  * Author: Tom Lyon, pugs@cisco.com
  */
 
-#include <linux/cdev.h>
-#include <linux/compat.h>
-#include <linux/device.h>
-#include <linux/file.h>
-#include <linux/anon_inodes.h>
-#include <linux/fs.h>
-#include <linux/idr.h>
-#include <linux/iommu.h>
-#include <linux/list.h>
-#include <linux/miscdevice.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/pci.h>
-#include <linux/rwsem.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/stat.h>
-#include <linux/string.h>
-#include <linux/uaccess.h>
-#include <linux/vfio.h>
-#include <linux/wait.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/device.h>
+#समावेश <linux/file.h>
+#समावेश <linux/anon_inodes.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/list.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/vfपन.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/sched/संकेत.स>
 
-#define DRIVER_VERSION	"0.3"
-#define DRIVER_AUTHOR	"Alex Williamson <alex.williamson@redhat.com>"
-#define DRIVER_DESC	"VFIO - User Level meta-driver"
+#घोषणा DRIVER_VERSION	"0.3"
+#घोषणा DRIVER_AUTHOR	"Alex Williamson <alex.williamson@redhat.com>"
+#घोषणा DRIVER_DESC	"VFIO - User Level meta-driver"
 
-static struct vfio {
-	struct class			*class;
-	struct list_head		iommu_drivers_list;
-	struct mutex			iommu_drivers_lock;
-	struct list_head		group_list;
-	struct idr			group_idr;
-	struct mutex			group_lock;
-	struct cdev			group_cdev;
+अटल काष्ठा vfio अणु
+	काष्ठा class			*class;
+	काष्ठा list_head		iommu_drivers_list;
+	काष्ठा mutex			iommu_drivers_lock;
+	काष्ठा list_head		group_list;
+	काष्ठा idr			group_idr;
+	काष्ठा mutex			group_lock;
+	काष्ठा cdev			group_cdev;
 	dev_t				group_devt;
-} vfio;
+पूर्ण vfio;
 
-struct vfio_iommu_driver {
-	const struct vfio_iommu_driver_ops	*ops;
-	struct list_head			vfio_next;
-};
+काष्ठा vfio_iommu_driver अणु
+	स्थिर काष्ठा vfio_iommu_driver_ops	*ops;
+	काष्ठा list_head			vfio_next;
+पूर्ण;
 
-struct vfio_container {
-	struct kref			kref;
-	struct list_head		group_list;
-	struct rw_semaphore		group_lock;
-	struct vfio_iommu_driver	*iommu_driver;
-	void				*iommu_data;
+काष्ठा vfio_container अणु
+	काष्ठा kref			kref;
+	काष्ठा list_head		group_list;
+	काष्ठा rw_semaphore		group_lock;
+	काष्ठा vfio_iommu_driver	*iommu_driver;
+	व्योम				*iommu_data;
 	bool				noiommu;
-};
+पूर्ण;
 
-struct vfio_unbound_dev {
-	struct device			*dev;
-	struct list_head		unbound_next;
-};
+काष्ठा vfio_unbound_dev अणु
+	काष्ठा device			*dev;
+	काष्ठा list_head		unbound_next;
+पूर्ण;
 
-struct vfio_group {
-	struct kref			kref;
-	int				minor;
+काष्ठा vfio_group अणु
+	काष्ठा kref			kref;
+	पूर्णांक				minor;
 	atomic_t			container_users;
-	struct iommu_group		*iommu_group;
-	struct vfio_container		*container;
-	struct list_head		device_list;
-	struct mutex			device_lock;
-	struct device			*dev;
-	struct notifier_block		nb;
-	struct list_head		vfio_next;
-	struct list_head		container_next;
-	struct list_head		unbound_list;
-	struct mutex			unbound_lock;
-	atomic_t			opened;
-	wait_queue_head_t		container_q;
+	काष्ठा iommu_group		*iommu_group;
+	काष्ठा vfio_container		*container;
+	काष्ठा list_head		device_list;
+	काष्ठा mutex			device_lock;
+	काष्ठा device			*dev;
+	काष्ठा notअगरier_block		nb;
+	काष्ठा list_head		vfio_next;
+	काष्ठा list_head		container_next;
+	काष्ठा list_head		unbound_list;
+	काष्ठा mutex			unbound_lock;
+	atomic_t			खोलोed;
+	रुको_queue_head_t		container_q;
 	bool				noiommu;
-	unsigned int			dev_counter;
-	struct kvm			*kvm;
-	struct blocking_notifier_head	notifier;
-};
+	अचिन्हित पूर्णांक			dev_counter;
+	काष्ठा kvm			*kvm;
+	काष्ठा blocking_notअगरier_head	notअगरier;
+पूर्ण;
 
-#ifdef CONFIG_VFIO_NOIOMMU
-static bool noiommu __read_mostly;
+#अगर_घोषित CONFIG_VFIO_NOIOMMU
+अटल bool noiommu __पढ़ो_mostly;
 module_param_named(enable_unsafe_noiommu_mode,
 		   noiommu, bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(enable_unsafe_noiommu_mode, "Enable UNSAFE, no-IOMMU mode.  This mode provides no device isolation, no DMA translation, no host kernel protection, cannot be used for device assignment to virtual machines, requires RAWIO permissions, and will taint the kernel.  If you do not know what this is for, step away. (default: false)");
-#endif
+#पूर्ण_अगर
 
 /*
- * vfio_iommu_group_{get,put} are only intended for VFIO bus driver probe
- * and remove functions, any use cases other than acquiring the first
- * reference for the purpose of calling vfio_register_group_dev() or removing
- * that symmetric reference after vfio_unregister_group_dev() should use the raw
- * iommu_group_{get,put} functions.  In particular, vfio_iommu_group_put()
- * removes the device from the dummy group and cannot be nested.
+ * vfio_iommu_group_अणुget,putपूर्ण are only पूर्णांकended क्रम VFIO bus driver probe
+ * and हटाओ functions, any use हालs other than acquiring the first
+ * reference क्रम the purpose of calling vfio_रेजिस्टर_group_dev() or removing
+ * that symmetric reference after vfio_unरेजिस्टर_group_dev() should use the raw
+ * iommu_group_अणुget,putपूर्ण functions.  In particular, vfio_iommu_group_put()
+ * हटाओs the device from the dummy group and cannot be nested.
  */
-struct iommu_group *vfio_iommu_group_get(struct device *dev)
-{
-	struct iommu_group *group;
-	int __maybe_unused ret;
+काष्ठा iommu_group *vfio_iommu_group_get(काष्ठा device *dev)
+अणु
+	काष्ठा iommu_group *group;
+	पूर्णांक __maybe_unused ret;
 
 	group = iommu_group_get(dev);
 
-#ifdef CONFIG_VFIO_NOIOMMU
+#अगर_घोषित CONFIG_VFIO_NOIOMMU
 	/*
-	 * With noiommu enabled, an IOMMU group will be created for a device
-	 * that doesn't already have one and doesn't have an iommu_ops on their
-	 * bus.  We set iommudata simply to be able to identify these groups
-	 * as special use and for reclamation later.
+	 * With noiommu enabled, an IOMMU group will be created क्रम a device
+	 * that करोesn't already have one and doesn't have an iommu_ops on their
+	 * bus.  We set iommudata simply to be able to identअगरy these groups
+	 * as special use and क्रम reclamation later.
 	 */
-	if (group || !noiommu || iommu_present(dev->bus))
-		return group;
+	अगर (group || !noiommu || iommu_present(dev->bus))
+		वापस group;
 
 	group = iommu_group_alloc();
-	if (IS_ERR(group))
-		return NULL;
+	अगर (IS_ERR(group))
+		वापस शून्य;
 
 	iommu_group_set_name(group, "vfio-noiommu");
-	iommu_group_set_iommudata(group, &noiommu, NULL);
+	iommu_group_set_iommudata(group, &noiommu, शून्य);
 	ret = iommu_group_add_device(group, dev);
-	if (ret) {
+	अगर (ret) अणु
 		iommu_group_put(group);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
-	 * Where to taint?  At this point we've added an IOMMU group for a
-	 * device that is not backed by iommu_ops, therefore any iommu_
-	 * callback using iommu_ops can legitimately Oops.  So, while we may
+	 * Where to taपूर्णांक?  At this poपूर्णांक we've added an IOMMU group क्रम a
+	 * device that is not backed by iommu_ops, thereक्रमe any iommu_
+	 * callback using iommu_ops can legitimately Oops.  So, जबतक we may
 	 * be about to give a DMA capable device to a user without IOMMU
-	 * protection, which is clearly taint-worthy, let's go ahead and do
+	 * protection, which is clearly taपूर्णांक-worthy, let's go ahead and करो
 	 * it here.
 	 */
-	add_taint(TAINT_USER, LOCKDEP_STILL_OK);
+	add_taपूर्णांक(TAINT_USER, LOCKDEP_STILL_OK);
 	dev_warn(dev, "Adding kernel taint for vfio-noiommu group on device\n");
-#endif
+#पूर्ण_अगर
 
-	return group;
-}
+	वापस group;
+पूर्ण
 EXPORT_SYMBOL_GPL(vfio_iommu_group_get);
 
-void vfio_iommu_group_put(struct iommu_group *group, struct device *dev)
-{
-#ifdef CONFIG_VFIO_NOIOMMU
-	if (iommu_group_get_iommudata(group) == &noiommu)
-		iommu_group_remove_device(dev);
-#endif
+व्योम vfio_iommu_group_put(काष्ठा iommu_group *group, काष्ठा device *dev)
+अणु
+#अगर_घोषित CONFIG_VFIO_NOIOMMU
+	अगर (iommu_group_get_iommudata(group) == &noiommu)
+		iommu_group_हटाओ_device(dev);
+#पूर्ण_अगर
 
 	iommu_group_put(group);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vfio_iommu_group_put);
 
-#ifdef CONFIG_VFIO_NOIOMMU
-static void *vfio_noiommu_open(unsigned long arg)
-{
-	if (arg != VFIO_NOIOMMU_IOMMU)
-		return ERR_PTR(-EINVAL);
-	if (!capable(CAP_SYS_RAWIO))
-		return ERR_PTR(-EPERM);
+#अगर_घोषित CONFIG_VFIO_NOIOMMU
+अटल व्योम *vfio_noiommu_खोलो(अचिन्हित दीर्घ arg)
+अणु
+	अगर (arg != VFIO_NOIOMMU_IOMMU)
+		वापस ERR_PTR(-EINVAL);
+	अगर (!capable(CAP_SYS_RAWIO))
+		वापस ERR_PTR(-EPERM);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void vfio_noiommu_release(void *iommu_data)
-{
-}
+अटल व्योम vfio_noiommu_release(व्योम *iommu_data)
+अणु
+पूर्ण
 
-static long vfio_noiommu_ioctl(void *iommu_data,
-			       unsigned int cmd, unsigned long arg)
-{
-	if (cmd == VFIO_CHECK_EXTENSION)
-		return noiommu && (arg == VFIO_NOIOMMU_IOMMU) ? 1 : 0;
+अटल दीर्घ vfio_noiommu_ioctl(व्योम *iommu_data,
+			       अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	अगर (cmd == VFIO_CHECK_EXTENSION)
+		वापस noiommu && (arg == VFIO_NOIOMMU_IOMMU) ? 1 : 0;
 
-	return -ENOTTY;
-}
+	वापस -ENOTTY;
+पूर्ण
 
-static int vfio_noiommu_attach_group(void *iommu_data,
-				     struct iommu_group *iommu_group)
-{
-	return iommu_group_get_iommudata(iommu_group) == &noiommu ? 0 : -EINVAL;
-}
+अटल पूर्णांक vfio_noiommu_attach_group(व्योम *iommu_data,
+				     काष्ठा iommu_group *iommu_group)
+अणु
+	वापस iommu_group_get_iommudata(iommu_group) == &noiommu ? 0 : -EINVAL;
+पूर्ण
 
-static void vfio_noiommu_detach_group(void *iommu_data,
-				      struct iommu_group *iommu_group)
-{
-}
+अटल व्योम vfio_noiommu_detach_group(व्योम *iommu_data,
+				      काष्ठा iommu_group *iommu_group)
+अणु
+पूर्ण
 
-static const struct vfio_iommu_driver_ops vfio_noiommu_ops = {
+अटल स्थिर काष्ठा vfio_iommu_driver_ops vfio_noiommu_ops = अणु
 	.name = "vfio-noiommu",
 	.owner = THIS_MODULE,
-	.open = vfio_noiommu_open,
+	.खोलो = vfio_noiommu_खोलो,
 	.release = vfio_noiommu_release,
 	.ioctl = vfio_noiommu_ioctl,
 	.attach_group = vfio_noiommu_attach_group,
 	.detach_group = vfio_noiommu_detach_group,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
 
 /**
  * IOMMU driver registration
  */
-int vfio_register_iommu_driver(const struct vfio_iommu_driver_ops *ops)
-{
-	struct vfio_iommu_driver *driver, *tmp;
+पूर्णांक vfio_रेजिस्टर_iommu_driver(स्थिर काष्ठा vfio_iommu_driver_ops *ops)
+अणु
+	काष्ठा vfio_iommu_driver *driver, *पंचांगp;
 
-	driver = kzalloc(sizeof(*driver), GFP_KERNEL);
-	if (!driver)
-		return -ENOMEM;
+	driver = kzalloc(माप(*driver), GFP_KERNEL);
+	अगर (!driver)
+		वापस -ENOMEM;
 
 	driver->ops = ops;
 
 	mutex_lock(&vfio.iommu_drivers_lock);
 
-	/* Check for duplicates */
-	list_for_each_entry(tmp, &vfio.iommu_drivers_list, vfio_next) {
-		if (tmp->ops == ops) {
+	/* Check क्रम duplicates */
+	list_क्रम_each_entry(पंचांगp, &vfio.iommu_drivers_list, vfio_next) अणु
+		अगर (पंचांगp->ops == ops) अणु
 			mutex_unlock(&vfio.iommu_drivers_lock);
-			kfree(driver);
-			return -EINVAL;
-		}
-	}
+			kमुक्त(driver);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	list_add(&driver->vfio_next, &vfio.iommu_drivers_list);
 
 	mutex_unlock(&vfio.iommu_drivers_lock);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(vfio_register_iommu_driver);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_रेजिस्टर_iommu_driver);
 
-void vfio_unregister_iommu_driver(const struct vfio_iommu_driver_ops *ops)
-{
-	struct vfio_iommu_driver *driver;
+व्योम vfio_unरेजिस्टर_iommu_driver(स्थिर काष्ठा vfio_iommu_driver_ops *ops)
+अणु
+	काष्ठा vfio_iommu_driver *driver;
 
 	mutex_lock(&vfio.iommu_drivers_lock);
-	list_for_each_entry(driver, &vfio.iommu_drivers_list, vfio_next) {
-		if (driver->ops == ops) {
+	list_क्रम_each_entry(driver, &vfio.iommu_drivers_list, vfio_next) अणु
+		अगर (driver->ops == ops) अणु
 			list_del(&driver->vfio_next);
 			mutex_unlock(&vfio.iommu_drivers_lock);
-			kfree(driver);
-			return;
-		}
-	}
+			kमुक्त(driver);
+			वापस;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&vfio.iommu_drivers_lock);
-}
-EXPORT_SYMBOL_GPL(vfio_unregister_iommu_driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_unरेजिस्टर_iommu_driver);
 
 /**
- * Group minor allocation/free - both called with vfio.group_lock held
+ * Group minor allocation/मुक्त - both called with vfio.group_lock held
  */
-static int vfio_alloc_group_minor(struct vfio_group *group)
-{
-	return idr_alloc(&vfio.group_idr, group, 0, MINORMASK + 1, GFP_KERNEL);
-}
+अटल पूर्णांक vfio_alloc_group_minor(काष्ठा vfio_group *group)
+अणु
+	वापस idr_alloc(&vfio.group_idr, group, 0, MINORMASK + 1, GFP_KERNEL);
+पूर्ण
 
-static void vfio_free_group_minor(int minor)
-{
-	idr_remove(&vfio.group_idr, minor);
-}
+अटल व्योम vfio_मुक्त_group_minor(पूर्णांक minor)
+अणु
+	idr_हटाओ(&vfio.group_idr, minor);
+पूर्ण
 
-static int vfio_iommu_group_notifier(struct notifier_block *nb,
-				     unsigned long action, void *data);
-static void vfio_group_get(struct vfio_group *group);
+अटल पूर्णांक vfio_iommu_group_notअगरier(काष्ठा notअगरier_block *nb,
+				     अचिन्हित दीर्घ action, व्योम *data);
+अटल व्योम vfio_group_get(काष्ठा vfio_group *group);
 
 /**
  * Container objects - containers are created when /dev/vfio/vfio is
- * opened, but their lifecycle extends until the last user is done, so
- * it's freed via kref.  Must support container/group/device being
- * closed in any order.
+ * खोलोed, but their lअगरecycle extends until the last user is करोne, so
+ * it's मुक्तd via kref.  Must support container/group/device being
+ * बंदd in any order.
  */
-static void vfio_container_get(struct vfio_container *container)
-{
+अटल व्योम vfio_container_get(काष्ठा vfio_container *container)
+अणु
 	kref_get(&container->kref);
-}
+पूर्ण
 
-static void vfio_container_release(struct kref *kref)
-{
-	struct vfio_container *container;
-	container = container_of(kref, struct vfio_container, kref);
+अटल व्योम vfio_container_release(काष्ठा kref *kref)
+अणु
+	काष्ठा vfio_container *container;
+	container = container_of(kref, काष्ठा vfio_container, kref);
 
-	kfree(container);
-}
+	kमुक्त(container);
+पूर्ण
 
-static void vfio_container_put(struct vfio_container *container)
-{
+अटल व्योम vfio_container_put(काष्ठा vfio_container *container)
+अणु
 	kref_put(&container->kref, vfio_container_release);
-}
+पूर्ण
 
-static void vfio_group_unlock_and_free(struct vfio_group *group)
-{
+अटल व्योम vfio_group_unlock_and_मुक्त(काष्ठा vfio_group *group)
+अणु
 	mutex_unlock(&vfio.group_lock);
 	/*
-	 * Unregister outside of lock.  A spurious callback is harmless now
-	 * that the group is no longer in vfio.group_list.
+	 * Unरेजिस्टर outside of lock.  A spurious callback is harmless now
+	 * that the group is no दीर्घer in vfio.group_list.
 	 */
-	iommu_group_unregister_notifier(group->iommu_group, &group->nb);
-	kfree(group);
-}
+	iommu_group_unरेजिस्टर_notअगरier(group->iommu_group, &group->nb);
+	kमुक्त(group);
+पूर्ण
 
 /**
  * Group objects - create, release, get, put, search
  */
-static struct vfio_group *vfio_create_group(struct iommu_group *iommu_group)
-{
-	struct vfio_group *group, *tmp;
-	struct device *dev;
-	int ret, minor;
+अटल काष्ठा vfio_group *vfio_create_group(काष्ठा iommu_group *iommu_group)
+अणु
+	काष्ठा vfio_group *group, *पंचांगp;
+	काष्ठा device *dev;
+	पूर्णांक ret, minor;
 
-	group = kzalloc(sizeof(*group), GFP_KERNEL);
-	if (!group)
-		return ERR_PTR(-ENOMEM);
+	group = kzalloc(माप(*group), GFP_KERNEL);
+	अगर (!group)
+		वापस ERR_PTR(-ENOMEM);
 
 	kref_init(&group->kref);
 	INIT_LIST_HEAD(&group->device_list);
@@ -327,55 +328,55 @@ static struct vfio_group *vfio_create_group(struct iommu_group *iommu_group)
 	INIT_LIST_HEAD(&group->unbound_list);
 	mutex_init(&group->unbound_lock);
 	atomic_set(&group->container_users, 0);
-	atomic_set(&group->opened, 0);
-	init_waitqueue_head(&group->container_q);
+	atomic_set(&group->खोलोed, 0);
+	init_रुकोqueue_head(&group->container_q);
 	group->iommu_group = iommu_group;
-#ifdef CONFIG_VFIO_NOIOMMU
+#अगर_घोषित CONFIG_VFIO_NOIOMMU
 	group->noiommu = (iommu_group_get_iommudata(iommu_group) == &noiommu);
-#endif
-	BLOCKING_INIT_NOTIFIER_HEAD(&group->notifier);
+#पूर्ण_अगर
+	BLOCKING_INIT_NOTIFIER_HEAD(&group->notअगरier);
 
-	group->nb.notifier_call = vfio_iommu_group_notifier;
+	group->nb.notअगरier_call = vfio_iommu_group_notअगरier;
 
 	/*
-	 * blocking notifiers acquire a rwsem around registering and hold
-	 * it around callback.  Therefore, need to register outside of
-	 * vfio.group_lock to avoid A-B/B-A contention.  Our callback won't
-	 * do anything unless it can find the group in vfio.group_list, so
-	 * no harm in registering early.
+	 * blocking notअगरiers acquire a rwsem around रेजिस्टरing and hold
+	 * it around callback.  Thereक्रमe, need to रेजिस्टर outside of
+	 * vfio.group_lock to aव्योम A-B/B-A contention.  Our callback won't
+	 * करो anything unless it can find the group in vfio.group_list, so
+	 * no harm in रेजिस्टरing early.
 	 */
-	ret = iommu_group_register_notifier(iommu_group, &group->nb);
-	if (ret) {
-		kfree(group);
-		return ERR_PTR(ret);
-	}
+	ret = iommu_group_रेजिस्टर_notअगरier(iommu_group, &group->nb);
+	अगर (ret) अणु
+		kमुक्त(group);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	mutex_lock(&vfio.group_lock);
 
 	/* Did we race creating this group? */
-	list_for_each_entry(tmp, &vfio.group_list, vfio_next) {
-		if (tmp->iommu_group == iommu_group) {
-			vfio_group_get(tmp);
-			vfio_group_unlock_and_free(group);
-			return tmp;
-		}
-	}
+	list_क्रम_each_entry(पंचांगp, &vfio.group_list, vfio_next) अणु
+		अगर (पंचांगp->iommu_group == iommu_group) अणु
+			vfio_group_get(पंचांगp);
+			vfio_group_unlock_and_मुक्त(group);
+			वापस पंचांगp;
+		पूर्ण
+	पूर्ण
 
 	minor = vfio_alloc_group_minor(group);
-	if (minor < 0) {
-		vfio_group_unlock_and_free(group);
-		return ERR_PTR(minor);
-	}
+	अगर (minor < 0) अणु
+		vfio_group_unlock_and_मुक्त(group);
+		वापस ERR_PTR(minor);
+	पूर्ण
 
-	dev = device_create(vfio.class, NULL,
+	dev = device_create(vfio.class, शून्य,
 			    MKDEV(MAJOR(vfio.group_devt), minor),
 			    group, "%s%d", group->noiommu ? "noiommu-" : "",
 			    iommu_group_id(iommu_group));
-	if (IS_ERR(dev)) {
-		vfio_free_group_minor(minor);
-		vfio_group_unlock_and_free(group);
-		return ERR_CAST(dev);
-	}
+	अगर (IS_ERR(dev)) अणु
+		vfio_मुक्त_group_minor(minor);
+		vfio_group_unlock_and_मुक्त(group);
+		वापस ERR_CAST(dev);
+	पूर्ण
 
 	group->minor = minor;
 	group->dev = dev;
@@ -384,409 +385,409 @@ static struct vfio_group *vfio_create_group(struct iommu_group *iommu_group)
 
 	mutex_unlock(&vfio.group_lock);
 
-	return group;
-}
+	वापस group;
+पूर्ण
 
 /* called with vfio.group_lock held */
-static void vfio_group_release(struct kref *kref)
-{
-	struct vfio_group *group = container_of(kref, struct vfio_group, kref);
-	struct vfio_unbound_dev *unbound, *tmp;
-	struct iommu_group *iommu_group = group->iommu_group;
+अटल व्योम vfio_group_release(काष्ठा kref *kref)
+अणु
+	काष्ठा vfio_group *group = container_of(kref, काष्ठा vfio_group, kref);
+	काष्ठा vfio_unbound_dev *unbound, *पंचांगp;
+	काष्ठा iommu_group *iommu_group = group->iommu_group;
 
 	WARN_ON(!list_empty(&group->device_list));
-	WARN_ON(group->notifier.head);
+	WARN_ON(group->notअगरier.head);
 
-	list_for_each_entry_safe(unbound, tmp,
-				 &group->unbound_list, unbound_next) {
+	list_क्रम_each_entry_safe(unbound, पंचांगp,
+				 &group->unbound_list, unbound_next) अणु
 		list_del(&unbound->unbound_next);
-		kfree(unbound);
-	}
+		kमुक्त(unbound);
+	पूर्ण
 
 	device_destroy(vfio.class, MKDEV(MAJOR(vfio.group_devt), group->minor));
 	list_del(&group->vfio_next);
-	vfio_free_group_minor(group->minor);
-	vfio_group_unlock_and_free(group);
+	vfio_मुक्त_group_minor(group->minor);
+	vfio_group_unlock_and_मुक्त(group);
 	iommu_group_put(iommu_group);
-}
+पूर्ण
 
-static void vfio_group_put(struct vfio_group *group)
-{
+अटल व्योम vfio_group_put(काष्ठा vfio_group *group)
+अणु
 	kref_put_mutex(&group->kref, vfio_group_release, &vfio.group_lock);
-}
+पूर्ण
 
-struct vfio_group_put_work {
-	struct work_struct work;
-	struct vfio_group *group;
-};
+काष्ठा vfio_group_put_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा vfio_group *group;
+पूर्ण;
 
-static void vfio_group_put_bg(struct work_struct *work)
-{
-	struct vfio_group_put_work *do_work;
+अटल व्योम vfio_group_put_bg(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा vfio_group_put_work *करो_work;
 
-	do_work = container_of(work, struct vfio_group_put_work, work);
+	करो_work = container_of(work, काष्ठा vfio_group_put_work, work);
 
-	vfio_group_put(do_work->group);
-	kfree(do_work);
-}
+	vfio_group_put(करो_work->group);
+	kमुक्त(करो_work);
+पूर्ण
 
-static void vfio_group_schedule_put(struct vfio_group *group)
-{
-	struct vfio_group_put_work *do_work;
+अटल व्योम vfio_group_schedule_put(काष्ठा vfio_group *group)
+अणु
+	काष्ठा vfio_group_put_work *करो_work;
 
-	do_work = kmalloc(sizeof(*do_work), GFP_KERNEL);
-	if (WARN_ON(!do_work))
-		return;
+	करो_work = kदो_स्मृति(माप(*करो_work), GFP_KERNEL);
+	अगर (WARN_ON(!करो_work))
+		वापस;
 
-	INIT_WORK(&do_work->work, vfio_group_put_bg);
-	do_work->group = group;
-	schedule_work(&do_work->work);
-}
+	INIT_WORK(&करो_work->work, vfio_group_put_bg);
+	करो_work->group = group;
+	schedule_work(&करो_work->work);
+पूर्ण
 
 /* Assume group_lock or group reference is held */
-static void vfio_group_get(struct vfio_group *group)
-{
+अटल व्योम vfio_group_get(काष्ठा vfio_group *group)
+अणु
 	kref_get(&group->kref);
-}
+पूर्ण
 
 /*
- * Not really a try as we will sleep for mutex, but we need to make
- * sure the group pointer is valid under lock and get a reference.
+ * Not really a try as we will sleep क्रम mutex, but we need to make
+ * sure the group poपूर्णांकer is valid under lock and get a reference.
  */
-static struct vfio_group *vfio_group_try_get(struct vfio_group *group)
-{
-	struct vfio_group *target = group;
+अटल काष्ठा vfio_group *vfio_group_try_get(काष्ठा vfio_group *group)
+अणु
+	काष्ठा vfio_group *target = group;
 
 	mutex_lock(&vfio.group_lock);
-	list_for_each_entry(group, &vfio.group_list, vfio_next) {
-		if (group == target) {
+	list_क्रम_each_entry(group, &vfio.group_list, vfio_next) अणु
+		अगर (group == target) अणु
 			vfio_group_get(group);
 			mutex_unlock(&vfio.group_lock);
-			return group;
-		}
-	}
+			वापस group;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&vfio.group_lock);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static
-struct vfio_group *vfio_group_get_from_iommu(struct iommu_group *iommu_group)
-{
-	struct vfio_group *group;
+अटल
+काष्ठा vfio_group *vfio_group_get_from_iommu(काष्ठा iommu_group *iommu_group)
+अणु
+	काष्ठा vfio_group *group;
 
 	mutex_lock(&vfio.group_lock);
-	list_for_each_entry(group, &vfio.group_list, vfio_next) {
-		if (group->iommu_group == iommu_group) {
+	list_क्रम_each_entry(group, &vfio.group_list, vfio_next) अणु
+		अगर (group->iommu_group == iommu_group) अणु
 			vfio_group_get(group);
 			mutex_unlock(&vfio.group_lock);
-			return group;
-		}
-	}
+			वापस group;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&vfio.group_lock);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct vfio_group *vfio_group_get_from_minor(int minor)
-{
-	struct vfio_group *group;
+अटल काष्ठा vfio_group *vfio_group_get_from_minor(पूर्णांक minor)
+अणु
+	काष्ठा vfio_group *group;
 
 	mutex_lock(&vfio.group_lock);
 	group = idr_find(&vfio.group_idr, minor);
-	if (!group) {
+	अगर (!group) अणु
 		mutex_unlock(&vfio.group_lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	vfio_group_get(group);
 	mutex_unlock(&vfio.group_lock);
 
-	return group;
-}
+	वापस group;
+पूर्ण
 
-static struct vfio_group *vfio_group_get_from_dev(struct device *dev)
-{
-	struct iommu_group *iommu_group;
-	struct vfio_group *group;
+अटल काष्ठा vfio_group *vfio_group_get_from_dev(काष्ठा device *dev)
+अणु
+	काष्ठा iommu_group *iommu_group;
+	काष्ठा vfio_group *group;
 
 	iommu_group = iommu_group_get(dev);
-	if (!iommu_group)
-		return NULL;
+	अगर (!iommu_group)
+		वापस शून्य;
 
 	group = vfio_group_get_from_iommu(iommu_group);
 	iommu_group_put(iommu_group);
 
-	return group;
-}
+	वापस group;
+पूर्ण
 
 /**
  * Device objects - create, release, get, put, search
  */
 /* Device reference always implies a group reference */
-void vfio_device_put(struct vfio_device *device)
-{
-	if (refcount_dec_and_test(&device->refcount))
+व्योम vfio_device_put(काष्ठा vfio_device *device)
+अणु
+	अगर (refcount_dec_and_test(&device->refcount))
 		complete(&device->comp);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vfio_device_put);
 
-static bool vfio_device_try_get(struct vfio_device *device)
-{
-	return refcount_inc_not_zero(&device->refcount);
-}
+अटल bool vfio_device_try_get(काष्ठा vfio_device *device)
+अणु
+	वापस refcount_inc_not_zero(&device->refcount);
+पूर्ण
 
-static struct vfio_device *vfio_group_get_device(struct vfio_group *group,
-						 struct device *dev)
-{
-	struct vfio_device *device;
+अटल काष्ठा vfio_device *vfio_group_get_device(काष्ठा vfio_group *group,
+						 काष्ठा device *dev)
+अणु
+	काष्ठा vfio_device *device;
 
 	mutex_lock(&group->device_lock);
-	list_for_each_entry(device, &group->device_list, group_next) {
-		if (device->dev == dev && vfio_device_try_get(device)) {
+	list_क्रम_each_entry(device, &group->device_list, group_next) अणु
+		अगर (device->dev == dev && vfio_device_try_get(device)) अणु
 			mutex_unlock(&group->device_lock);
-			return device;
-		}
-	}
+			वापस device;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&group->device_lock);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Some drivers, like pci-stub, are only used to prevent other drivers from
- * claiming a device and are therefore perfectly legitimate for a user owned
+ * claiming a device and are thereक्रमe perfectly legitimate क्रम a user owned
  * group.  The pci-stub driver has no dependencies on DMA or the IOVA mapping
- * of the device, but it does prevent the user from having direct access to
+ * of the device, but it करोes prevent the user from having direct access to
  * the device, which is useful in some circumstances.
  *
- * We also assume that we can include PCI interconnect devices, ie. bridges.
- * IOMMU grouping on PCI necessitates that if we lack isolation on a bridge
- * then all of the downstream devices will be part of the same IOMMU group as
- * the bridge.  Thus, if placing the bridge into the user owned IOVA space
- * breaks anything, it only does so for user owned devices downstream.  Note
- * that error notification via MSI can be affected for platforms that handle
+ * We also assume that we can include PCI पूर्णांकerconnect devices, ie. bridges.
+ * IOMMU grouping on PCI necessitates that अगर we lack isolation on a bridge
+ * then all of the करोwnstream devices will be part of the same IOMMU group as
+ * the bridge.  Thus, अगर placing the bridge पूर्णांकo the user owned IOVA space
+ * अवरोधs anything, it only करोes so क्रम user owned devices करोwnstream.  Note
+ * that error notअगरication via MSI can be affected क्रम platक्रमms that handle
  * MSI within the same IOVA space as DMA.
  */
-static const char * const vfio_driver_allowed[] = { "pci-stub" };
+अटल स्थिर अक्षर * स्थिर vfio_driver_allowed[] = अणु "pci-stub" पूर्ण;
 
-static bool vfio_dev_driver_allowed(struct device *dev,
-				    struct device_driver *drv)
-{
-	if (dev_is_pci(dev)) {
-		struct pci_dev *pdev = to_pci_dev(dev);
+अटल bool vfio_dev_driver_allowed(काष्ठा device *dev,
+				    काष्ठा device_driver *drv)
+अणु
+	अगर (dev_is_pci(dev)) अणु
+		काष्ठा pci_dev *pdev = to_pci_dev(dev);
 
-		if (pdev->hdr_type != PCI_HEADER_TYPE_NORMAL)
-			return true;
-	}
+		अगर (pdev->hdr_type != PCI_HEADER_TYPE_NORMAL)
+			वापस true;
+	पूर्ण
 
-	return match_string(vfio_driver_allowed,
+	वापस match_string(vfio_driver_allowed,
 			    ARRAY_SIZE(vfio_driver_allowed),
 			    drv->name) >= 0;
-}
+पूर्ण
 
 /*
- * A vfio group is viable for use by userspace if all devices are in
+ * A vfio group is viable क्रम use by userspace अगर all devices are in
  * one of the following states:
  *  - driver-less
  *  - bound to a vfio driver
  *  - bound to an otherwise allowed driver
- *  - a PCI interconnect device
+ *  - a PCI पूर्णांकerconnect device
  *
  * We use two methods to determine whether a device is bound to a vfio
  * driver.  The first is to test whether the device exists in the vfio
- * group.  The second is to test if the device exists on the group
+ * group.  The second is to test अगर the device exists on the group
  * unbound_list, indicating it's in the middle of transitioning from
  * a vfio driver to driver-less.
  */
-static int vfio_dev_viable(struct device *dev, void *data)
-{
-	struct vfio_group *group = data;
-	struct vfio_device *device;
-	struct device_driver *drv = READ_ONCE(dev->driver);
-	struct vfio_unbound_dev *unbound;
-	int ret = -EINVAL;
+अटल पूर्णांक vfio_dev_viable(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा vfio_group *group = data;
+	काष्ठा vfio_device *device;
+	काष्ठा device_driver *drv = READ_ONCE(dev->driver);
+	काष्ठा vfio_unbound_dev *unbound;
+	पूर्णांक ret = -EINVAL;
 
 	mutex_lock(&group->unbound_lock);
-	list_for_each_entry(unbound, &group->unbound_list, unbound_next) {
-		if (dev == unbound->dev) {
+	list_क्रम_each_entry(unbound, &group->unbound_list, unbound_next) अणु
+		अगर (dev == unbound->dev) अणु
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&group->unbound_lock);
 
-	if (!ret || !drv || vfio_dev_driver_allowed(dev, drv))
-		return 0;
+	अगर (!ret || !drv || vfio_dev_driver_allowed(dev, drv))
+		वापस 0;
 
 	device = vfio_group_get_device(group, dev);
-	if (device) {
+	अगर (device) अणु
 		vfio_device_put(device);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * Async device support
  */
-static int vfio_group_nb_add_dev(struct vfio_group *group, struct device *dev)
-{
-	struct vfio_device *device;
+अटल पूर्णांक vfio_group_nb_add_dev(काष्ठा vfio_group *group, काष्ठा device *dev)
+अणु
+	काष्ठा vfio_device *device;
 
-	/* Do we already know about it?  We shouldn't */
+	/* Do we alपढ़ोy know about it?  We shouldn't */
 	device = vfio_group_get_device(group, dev);
-	if (WARN_ON_ONCE(device)) {
+	अगर (WARN_ON_ONCE(device)) अणु
 		vfio_device_put(device);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Nothing to do for idle groups */
-	if (!atomic_read(&group->container_users))
-		return 0;
+	/* Nothing to करो क्रम idle groups */
+	अगर (!atomic_पढ़ो(&group->container_users))
+		वापस 0;
 
-	/* TODO Prevent device auto probing */
+	/* TODO Prevent device स्वतः probing */
 	dev_WARN(dev, "Device added to live group %d!\n",
 		 iommu_group_id(group->iommu_group));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vfio_group_nb_verify(struct vfio_group *group, struct device *dev)
-{
-	/* We don't care what happens when the group isn't in use */
-	if (!atomic_read(&group->container_users))
-		return 0;
+अटल पूर्णांक vfio_group_nb_verअगरy(काष्ठा vfio_group *group, काष्ठा device *dev)
+अणु
+	/* We करोn't care what happens when the group isn't in use */
+	अगर (!atomic_पढ़ो(&group->container_users))
+		वापस 0;
 
-	return vfio_dev_viable(dev, group);
-}
+	वापस vfio_dev_viable(dev, group);
+पूर्ण
 
-static int vfio_iommu_group_notifier(struct notifier_block *nb,
-				     unsigned long action, void *data)
-{
-	struct vfio_group *group = container_of(nb, struct vfio_group, nb);
-	struct device *dev = data;
-	struct vfio_unbound_dev *unbound;
+अटल पूर्णांक vfio_iommu_group_notअगरier(काष्ठा notअगरier_block *nb,
+				     अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	काष्ठा vfio_group *group = container_of(nb, काष्ठा vfio_group, nb);
+	काष्ठा device *dev = data;
+	काष्ठा vfio_unbound_dev *unbound;
 
 	/*
 	 * Need to go through a group_lock lookup to get a reference or we
-	 * risk racing a group being removed.  Ignore spurious notifies.
+	 * risk racing a group being हटाओd.  Ignore spurious notअगरies.
 	 */
 	group = vfio_group_try_get(group);
-	if (!group)
-		return NOTIFY_OK;
+	अगर (!group)
+		वापस NOTIFY_OK;
 
-	switch (action) {
-	case IOMMU_GROUP_NOTIFY_ADD_DEVICE:
+	चयन (action) अणु
+	हाल IOMMU_GROUP_NOTIFY_ADD_DEVICE:
 		vfio_group_nb_add_dev(group, dev);
-		break;
-	case IOMMU_GROUP_NOTIFY_DEL_DEVICE:
+		अवरोध;
+	हाल IOMMU_GROUP_NOTIFY_DEL_DEVICE:
 		/*
-		 * Nothing to do here.  If the device is in use, then the
-		 * vfio sub-driver should block the remove callback until
+		 * Nothing to करो here.  If the device is in use, then the
+		 * vfio sub-driver should block the हटाओ callback until
 		 * it is unused.  If the device is unused or attached to a
-		 * stub driver, then it should be released and we don't
+		 * stub driver, then it should be released and we करोn't
 		 * care that it will be going away.
 		 */
-		break;
-	case IOMMU_GROUP_NOTIFY_BIND_DRIVER:
+		अवरोध;
+	हाल IOMMU_GROUP_NOTIFY_BIND_DRIVER:
 		dev_dbg(dev, "%s: group %d binding to driver\n", __func__,
 			iommu_group_id(group->iommu_group));
-		break;
-	case IOMMU_GROUP_NOTIFY_BOUND_DRIVER:
+		अवरोध;
+	हाल IOMMU_GROUP_NOTIFY_BOUND_DRIVER:
 		dev_dbg(dev, "%s: group %d bound to driver %s\n", __func__,
 			iommu_group_id(group->iommu_group), dev->driver->name);
-		BUG_ON(vfio_group_nb_verify(group, dev));
-		break;
-	case IOMMU_GROUP_NOTIFY_UNBIND_DRIVER:
+		BUG_ON(vfio_group_nb_verअगरy(group, dev));
+		अवरोध;
+	हाल IOMMU_GROUP_NOTIFY_UNBIND_DRIVER:
 		dev_dbg(dev, "%s: group %d unbinding from driver %s\n",
 			__func__, iommu_group_id(group->iommu_group),
 			dev->driver->name);
-		break;
-	case IOMMU_GROUP_NOTIFY_UNBOUND_DRIVER:
+		अवरोध;
+	हाल IOMMU_GROUP_NOTIFY_UNBOUND_DRIVER:
 		dev_dbg(dev, "%s: group %d unbound from driver\n", __func__,
 			iommu_group_id(group->iommu_group));
 		/*
 		 * XXX An unbound device in a live group is ok, but we'd
-		 * really like to avoid the above BUG_ON by preventing other
+		 * really like to aव्योम the above BUG_ON by preventing other
 		 * drivers from binding to it.  Once that occurs, we have to
-		 * stop the system to maintain isolation.  At a minimum, we'd
-		 * want a toggle to disable driver auto probe for this device.
+		 * stop the प्रणाली to मुख्यtain isolation.  At a minimum, we'd
+		 * want a toggle to disable driver स्वतः probe क्रम this device.
 		 */
 
 		mutex_lock(&group->unbound_lock);
-		list_for_each_entry(unbound,
-				    &group->unbound_list, unbound_next) {
-			if (dev == unbound->dev) {
+		list_क्रम_each_entry(unbound,
+				    &group->unbound_list, unbound_next) अणु
+			अगर (dev == unbound->dev) अणु
 				list_del(&unbound->unbound_next);
-				kfree(unbound);
-				break;
-			}
-		}
+				kमुक्त(unbound);
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		mutex_unlock(&group->unbound_lock);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * If we're the last reference to the group, the group will be
-	 * released, which includes unregistering the iommu group notifier.
-	 * We hold a read-lock on that notifier list, unregistering needs
-	 * a write-lock... deadlock.  Release our reference asynchronously
-	 * to avoid that situation.
+	 * released, which includes unरेजिस्टरing the iommu group notअगरier.
+	 * We hold a पढ़ो-lock on that notअगरier list, unरेजिस्टरing needs
+	 * a ग_लिखो-lock... deadlock.  Release our reference asynchronously
+	 * to aव्योम that situation.
 	 */
 	vfio_group_schedule_put(group);
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
 /**
  * VFIO driver API
  */
-void vfio_init_group_dev(struct vfio_device *device, struct device *dev,
-			 const struct vfio_device_ops *ops)
-{
+व्योम vfio_init_group_dev(काष्ठा vfio_device *device, काष्ठा device *dev,
+			 स्थिर काष्ठा vfio_device_ops *ops)
+अणु
 	init_completion(&device->comp);
 	device->dev = dev;
 	device->ops = ops;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vfio_init_group_dev);
 
-int vfio_register_group_dev(struct vfio_device *device)
-{
-	struct vfio_device *existing_device;
-	struct iommu_group *iommu_group;
-	struct vfio_group *group;
+पूर्णांक vfio_रेजिस्टर_group_dev(काष्ठा vfio_device *device)
+अणु
+	काष्ठा vfio_device *existing_device;
+	काष्ठा iommu_group *iommu_group;
+	काष्ठा vfio_group *group;
 
 	iommu_group = iommu_group_get(device->dev);
-	if (!iommu_group)
-		return -EINVAL;
+	अगर (!iommu_group)
+		वापस -EINVAL;
 
 	group = vfio_group_get_from_iommu(iommu_group);
-	if (!group) {
+	अगर (!group) अणु
 		group = vfio_create_group(iommu_group);
-		if (IS_ERR(group)) {
+		अगर (IS_ERR(group)) अणु
 			iommu_group_put(iommu_group);
-			return PTR_ERR(group);
-		}
-	} else {
+			वापस PTR_ERR(group);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * A found vfio_group already holds a reference to the
+		 * A found vfio_group alपढ़ोy holds a reference to the
 		 * iommu_group.  A created vfio_group keeps the reference.
 		 */
 		iommu_group_put(iommu_group);
-	}
+	पूर्ण
 
 	existing_device = vfio_group_get_device(group, device->dev);
-	if (existing_device) {
+	अगर (existing_device) अणु
 		dev_WARN(device->dev, "Device already exists on group %d\n",
 			 iommu_group_id(iommu_group));
 		vfio_device_put(existing_device);
 		vfio_group_put(group);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/* Our reference on group is moved to the device */
 	device->group = group;
 
-	/* Refcounting can't start until the driver calls register */
+	/* Refcounting can't start until the driver calls रेजिस्टर */
 	refcount_set(&device->refcount, 1);
 
 	mutex_lock(&group->device_lock);
@@ -794,113 +795,113 @@ int vfio_register_group_dev(struct vfio_device *device)
 	group->dev_counter++;
 	mutex_unlock(&group->device_lock);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(vfio_register_group_dev);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_रेजिस्टर_group_dev);
 
 /**
- * Get a reference to the vfio_device for a device.  Even if the
+ * Get a reference to the vfio_device क्रम a device.  Even अगर the
  * caller thinks they own the device, they could be racing with a
- * release call path, so we can't trust drvdata for the shortcut.
- * Go the long way around, from the iommu_group to the vfio_group
+ * release call path, so we can't trust drvdata क्रम the लघुcut.
+ * Go the दीर्घ way around, from the iommu_group to the vfio_group
  * to the vfio_device.
  */
-struct vfio_device *vfio_device_get_from_dev(struct device *dev)
-{
-	struct vfio_group *group;
-	struct vfio_device *device;
+काष्ठा vfio_device *vfio_device_get_from_dev(काष्ठा device *dev)
+अणु
+	काष्ठा vfio_group *group;
+	काष्ठा vfio_device *device;
 
 	group = vfio_group_get_from_dev(dev);
-	if (!group)
-		return NULL;
+	अगर (!group)
+		वापस शून्य;
 
 	device = vfio_group_get_device(group, dev);
 	vfio_group_put(group);
 
-	return device;
-}
+	वापस device;
+पूर्ण
 EXPORT_SYMBOL_GPL(vfio_device_get_from_dev);
 
-static struct vfio_device *vfio_device_get_from_name(struct vfio_group *group,
-						     char *buf)
-{
-	struct vfio_device *it, *device = ERR_PTR(-ENODEV);
+अटल काष्ठा vfio_device *vfio_device_get_from_name(काष्ठा vfio_group *group,
+						     अक्षर *buf)
+अणु
+	काष्ठा vfio_device *it, *device = ERR_PTR(-ENODEV);
 
 	mutex_lock(&group->device_lock);
-	list_for_each_entry(it, &group->device_list, group_next) {
-		int ret;
+	list_क्रम_each_entry(it, &group->device_list, group_next) अणु
+		पूर्णांक ret;
 
-		if (it->ops->match) {
+		अगर (it->ops->match) अणु
 			ret = it->ops->match(it, buf);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				device = ERR_PTR(ret);
-				break;
-			}
-		} else {
-			ret = !strcmp(dev_name(it->dev), buf);
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			ret = !म_भेद(dev_name(it->dev), buf);
+		पूर्ण
 
-		if (ret && vfio_device_try_get(it)) {
+		अगर (ret && vfio_device_try_get(it)) अणु
 			device = it;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&group->device_lock);
 
-	return device;
-}
+	वापस device;
+पूर्ण
 
 /*
- * Decrement the device reference count and wait for the device to be
- * removed.  Open file descriptors for the device... */
-void vfio_unregister_group_dev(struct vfio_device *device)
-{
-	struct vfio_group *group = device->group;
-	struct vfio_unbound_dev *unbound;
-	unsigned int i = 0;
-	bool interrupted = false;
-	long rc;
+ * Decrement the device reference count and रुको क्रम the device to be
+ * हटाओd.  Open file descriptors क्रम the device... */
+व्योम vfio_unरेजिस्टर_group_dev(काष्ठा vfio_device *device)
+अणु
+	काष्ठा vfio_group *group = device->group;
+	काष्ठा vfio_unbound_dev *unbound;
+	अचिन्हित पूर्णांक i = 0;
+	bool पूर्णांकerrupted = false;
+	दीर्घ rc;
 
 	/*
-	 * When the device is removed from the group, the group suddenly
+	 * When the device is हटाओd from the group, the group suddenly
 	 * becomes non-viable; the device has a driver (until the unbind
 	 * completes), but it's not present in the group.  This is bad news
-	 * for any external users that need to re-acquire a group reference
+	 * क्रम any बाह्यal users that need to re-acquire a group reference
 	 * in order to match and release their existing reference.  To
 	 * solve this, we track such devices on the unbound_list to bridge
 	 * the gap until they're fully unbound.
 	 */
-	unbound = kzalloc(sizeof(*unbound), GFP_KERNEL);
-	if (unbound) {
+	unbound = kzalloc(माप(*unbound), GFP_KERNEL);
+	अगर (unbound) अणु
 		unbound->dev = device->dev;
 		mutex_lock(&group->unbound_lock);
 		list_add(&unbound->unbound_next, &group->unbound_list);
 		mutex_unlock(&group->unbound_lock);
-	}
+	पूर्ण
 	WARN_ON(!unbound);
 
 	vfio_device_put(device);
-	rc = try_wait_for_completion(&device->comp);
-	while (rc <= 0) {
-		if (device->ops->request)
+	rc = try_रुको_क्रम_completion(&device->comp);
+	जबतक (rc <= 0) अणु
+		अगर (device->ops->request)
 			device->ops->request(device, i++);
 
-		if (interrupted) {
-			rc = wait_for_completion_timeout(&device->comp,
+		अगर (पूर्णांकerrupted) अणु
+			rc = रुको_क्रम_completion_समयout(&device->comp,
 							 HZ * 10);
-		} else {
-			rc = wait_for_completion_interruptible_timeout(
+		पूर्ण अन्यथा अणु
+			rc = रुको_क्रम_completion_पूर्णांकerruptible_समयout(
 				&device->comp, HZ * 10);
-			if (rc < 0) {
-				interrupted = true;
+			अगर (rc < 0) अणु
+				पूर्णांकerrupted = true;
 				dev_warn(device->dev,
 					 "Device is currently in use, task"
 					 " \"%s\" (%d) "
 					 "blocked until device is released",
 					 current->comm, task_pid_nr(current));
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&group->device_lock);
 	list_del(&device->group_next);
@@ -909,409 +910,409 @@ void vfio_unregister_group_dev(struct vfio_device *device)
 
 	/*
 	 * In order to support multiple devices per group, devices can be
-	 * plucked from the group while other devices in the group are still
-	 * in use.  The container persists with this group and those remaining
+	 * plucked from the group जबतक other devices in the group are still
+	 * in use.  The container persists with this group and those reमुख्यing
 	 * devices still attached.  If the user creates an isolation violation
-	 * by binding this device to another driver while the group is still in
-	 * use, that's their fault.  However, in the case of removing the last,
+	 * by binding this device to another driver जबतक the group is still in
+	 * use, that's their fault.  However, in the हाल of removing the last,
 	 * or potentially the only, device in the group there can be no other
-	 * in-use devices in the group.  The user has done their due diligence
-	 * and we should lay no claims to those devices.  In order to do that,
+	 * in-use devices in the group.  The user has करोne their due diligence
+	 * and we should lay no claims to those devices.  In order to करो that,
 	 * we need to make sure the group is detached from the container.
 	 * Without this stall, we're potentially racing with a user process
 	 * that may attempt to immediately bind this device to another driver.
 	 */
-	if (list_empty(&group->device_list))
-		wait_event(group->container_q, !group->container);
+	अगर (list_empty(&group->device_list))
+		रुको_event(group->container_q, !group->container);
 
-	/* Matches the get in vfio_register_group_dev() */
+	/* Matches the get in vfio_रेजिस्टर_group_dev() */
 	vfio_group_put(group);
-}
-EXPORT_SYMBOL_GPL(vfio_unregister_group_dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_unरेजिस्टर_group_dev);
 
 /**
  * VFIO base fd, /dev/vfio/vfio
  */
-static long vfio_ioctl_check_extension(struct vfio_container *container,
-				       unsigned long arg)
-{
-	struct vfio_iommu_driver *driver;
-	long ret = 0;
+अटल दीर्घ vfio_ioctl_check_extension(काष्ठा vfio_container *container,
+				       अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा vfio_iommu_driver *driver;
+	दीर्घ ret = 0;
 
-	down_read(&container->group_lock);
+	करोwn_पढ़ो(&container->group_lock);
 
 	driver = container->iommu_driver;
 
-	switch (arg) {
+	चयन (arg) अणु
 		/* No base extensions yet */
-	default:
+	शेष:
 		/*
-		 * If no driver is set, poll all registered drivers for
-		 * extensions and return the first positive result.  If
-		 * a driver is already set, further queries will be passed
+		 * If no driver is set, poll all रेजिस्टरed drivers क्रम
+		 * extensions and वापस the first positive result.  If
+		 * a driver is alपढ़ोy set, further queries will be passed
 		 * only to that driver.
 		 */
-		if (!driver) {
+		अगर (!driver) अणु
 			mutex_lock(&vfio.iommu_drivers_lock);
-			list_for_each_entry(driver, &vfio.iommu_drivers_list,
-					    vfio_next) {
+			list_क्रम_each_entry(driver, &vfio.iommu_drivers_list,
+					    vfio_next) अणु
 
-#ifdef CONFIG_VFIO_NOIOMMU
-				if (!list_empty(&container->group_list) &&
+#अगर_घोषित CONFIG_VFIO_NOIOMMU
+				अगर (!list_empty(&container->group_list) &&
 				    (container->noiommu !=
 				     (driver->ops == &vfio_noiommu_ops)))
-					continue;
-#endif
+					जारी;
+#पूर्ण_अगर
 
-				if (!try_module_get(driver->ops->owner))
-					continue;
+				अगर (!try_module_get(driver->ops->owner))
+					जारी;
 
-				ret = driver->ops->ioctl(NULL,
+				ret = driver->ops->ioctl(शून्य,
 							 VFIO_CHECK_EXTENSION,
 							 arg);
 				module_put(driver->ops->owner);
-				if (ret > 0)
-					break;
-			}
+				अगर (ret > 0)
+					अवरोध;
+			पूर्ण
 			mutex_unlock(&vfio.iommu_drivers_lock);
-		} else
+		पूर्ण अन्यथा
 			ret = driver->ops->ioctl(container->iommu_data,
 						 VFIO_CHECK_EXTENSION, arg);
-	}
+	पूर्ण
 
-	up_read(&container->group_lock);
+	up_पढ़ो(&container->group_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* hold write lock on container->group_lock */
-static int __vfio_container_attach_groups(struct vfio_container *container,
-					  struct vfio_iommu_driver *driver,
-					  void *data)
-{
-	struct vfio_group *group;
-	int ret = -ENODEV;
+/* hold ग_लिखो lock on container->group_lock */
+अटल पूर्णांक __vfio_container_attach_groups(काष्ठा vfio_container *container,
+					  काष्ठा vfio_iommu_driver *driver,
+					  व्योम *data)
+अणु
+	काष्ठा vfio_group *group;
+	पूर्णांक ret = -ENODEV;
 
-	list_for_each_entry(group, &container->group_list, container_next) {
+	list_क्रम_each_entry(group, &container->group_list, container_next) अणु
 		ret = driver->ops->attach_group(data, group->iommu_group);
-		if (ret)
-			goto unwind;
-	}
+		अगर (ret)
+			जाओ unwind;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 unwind:
-	list_for_each_entry_continue_reverse(group, &container->group_list,
-					     container_next) {
+	list_क्रम_each_entry_जारी_reverse(group, &container->group_list,
+					     container_next) अणु
 		driver->ops->detach_group(data, group->iommu_group);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long vfio_ioctl_set_iommu(struct vfio_container *container,
-				 unsigned long arg)
-{
-	struct vfio_iommu_driver *driver;
-	long ret = -ENODEV;
+अटल दीर्घ vfio_ioctl_set_iommu(काष्ठा vfio_container *container,
+				 अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा vfio_iommu_driver *driver;
+	दीर्घ ret = -ENODEV;
 
-	down_write(&container->group_lock);
+	करोwn_ग_लिखो(&container->group_lock);
 
 	/*
-	 * The container is designed to be an unprivileged interface while
-	 * the group can be assigned to specific users.  Therefore, only by
-	 * adding a group to a container does the user get the privilege of
+	 * The container is deचिन्हित to be an unprivileged पूर्णांकerface जबतक
+	 * the group can be asचिन्हित to specअगरic users.  Thereक्रमe, only by
+	 * adding a group to a container करोes the user get the privilege of
 	 * enabling the iommu, which may allocate finite resources.  There
 	 * is no unset_iommu, but by removing all the groups from a container,
-	 * the container is deprivileged and returns to an unset state.
+	 * the container is deprivileged and वापसs to an unset state.
 	 */
-	if (list_empty(&container->group_list) || container->iommu_driver) {
-		up_write(&container->group_lock);
-		return -EINVAL;
-	}
+	अगर (list_empty(&container->group_list) || container->iommu_driver) अणु
+		up_ग_लिखो(&container->group_lock);
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&vfio.iommu_drivers_lock);
-	list_for_each_entry(driver, &vfio.iommu_drivers_list, vfio_next) {
-		void *data;
+	list_क्रम_each_entry(driver, &vfio.iommu_drivers_list, vfio_next) अणु
+		व्योम *data;
 
-#ifdef CONFIG_VFIO_NOIOMMU
+#अगर_घोषित CONFIG_VFIO_NOIOMMU
 		/*
 		 * Only noiommu containers can use vfio-noiommu and noiommu
 		 * containers can only use vfio-noiommu.
 		 */
-		if (container->noiommu != (driver->ops == &vfio_noiommu_ops))
-			continue;
-#endif
+		अगर (container->noiommu != (driver->ops == &vfio_noiommu_ops))
+			जारी;
+#पूर्ण_अगर
 
-		if (!try_module_get(driver->ops->owner))
-			continue;
+		अगर (!try_module_get(driver->ops->owner))
+			जारी;
 
 		/*
-		 * The arg magic for SET_IOMMU is the same as CHECK_EXTENSION,
-		 * so test which iommu driver reported support for this
-		 * extension and call open on them.  We also pass them the
+		 * The arg magic क्रम SET_IOMMU is the same as CHECK_EXTENSION,
+		 * so test which iommu driver reported support क्रम this
+		 * extension and call खोलो on them.  We also pass them the
 		 * magic, allowing a single driver to support multiple
-		 * interfaces if they'd like.
+		 * पूर्णांकerfaces अगर they'd like.
 		 */
-		if (driver->ops->ioctl(NULL, VFIO_CHECK_EXTENSION, arg) <= 0) {
+		अगर (driver->ops->ioctl(शून्य, VFIO_CHECK_EXTENSION, arg) <= 0) अणु
 			module_put(driver->ops->owner);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		data = driver->ops->open(arg);
-		if (IS_ERR(data)) {
+		data = driver->ops->खोलो(arg);
+		अगर (IS_ERR(data)) अणु
 			ret = PTR_ERR(data);
 			module_put(driver->ops->owner);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ret = __vfio_container_attach_groups(container, driver, data);
-		if (ret) {
+		अगर (ret) अणु
 			driver->ops->release(data);
 			module_put(driver->ops->owner);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		container->iommu_driver = driver;
 		container->iommu_data = data;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&vfio.iommu_drivers_lock);
-	up_write(&container->group_lock);
+	up_ग_लिखो(&container->group_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long vfio_fops_unl_ioctl(struct file *filep,
-				unsigned int cmd, unsigned long arg)
-{
-	struct vfio_container *container = filep->private_data;
-	struct vfio_iommu_driver *driver;
-	void *data;
-	long ret = -EINVAL;
+अटल दीर्घ vfio_fops_unl_ioctl(काष्ठा file *filep,
+				अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा vfio_container *container = filep->निजी_data;
+	काष्ठा vfio_iommu_driver *driver;
+	व्योम *data;
+	दीर्घ ret = -EINVAL;
 
-	if (!container)
-		return ret;
+	अगर (!container)
+		वापस ret;
 
-	switch (cmd) {
-	case VFIO_GET_API_VERSION:
+	चयन (cmd) अणु
+	हाल VFIO_GET_API_VERSION:
 		ret = VFIO_API_VERSION;
-		break;
-	case VFIO_CHECK_EXTENSION:
+		अवरोध;
+	हाल VFIO_CHECK_EXTENSION:
 		ret = vfio_ioctl_check_extension(container, arg);
-		break;
-	case VFIO_SET_IOMMU:
+		अवरोध;
+	हाल VFIO_SET_IOMMU:
 		ret = vfio_ioctl_set_iommu(container, arg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		driver = container->iommu_driver;
 		data = container->iommu_data;
 
-		if (driver) /* passthrough all unrecognized ioctls */
+		अगर (driver) /* passthrough all unrecognized ioctls */
 			ret = driver->ops->ioctl(data, cmd, arg);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vfio_fops_open(struct inode *inode, struct file *filep)
-{
-	struct vfio_container *container;
+अटल पूर्णांक vfio_fops_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा vfio_container *container;
 
-	container = kzalloc(sizeof(*container), GFP_KERNEL);
-	if (!container)
-		return -ENOMEM;
+	container = kzalloc(माप(*container), GFP_KERNEL);
+	अगर (!container)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&container->group_list);
 	init_rwsem(&container->group_lock);
 	kref_init(&container->kref);
 
-	filep->private_data = container;
+	filep->निजी_data = container;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vfio_fops_release(struct inode *inode, struct file *filep)
-{
-	struct vfio_container *container = filep->private_data;
-	struct vfio_iommu_driver *driver = container->iommu_driver;
+अटल पूर्णांक vfio_fops_release(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा vfio_container *container = filep->निजी_data;
+	काष्ठा vfio_iommu_driver *driver = container->iommu_driver;
 
-	if (driver && driver->ops->notify)
-		driver->ops->notify(container->iommu_data,
+	अगर (driver && driver->ops->notअगरy)
+		driver->ops->notअगरy(container->iommu_data,
 				    VFIO_IOMMU_CONTAINER_CLOSE);
 
-	filep->private_data = NULL;
+	filep->निजी_data = शून्य;
 
 	vfio_container_put(container);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Once an iommu driver is set, we optionally pass read/write/mmap
- * on to the driver, allowing management interfaces beyond ioctl.
+ * Once an iommu driver is set, we optionally pass पढ़ो/ग_लिखो/mmap
+ * on to the driver, allowing management पूर्णांकerfaces beyond ioctl.
  */
-static ssize_t vfio_fops_read(struct file *filep, char __user *buf,
-			      size_t count, loff_t *ppos)
-{
-	struct vfio_container *container = filep->private_data;
-	struct vfio_iommu_driver *driver;
-	ssize_t ret = -EINVAL;
+अटल sमाप_प्रकार vfio_fops_पढ़ो(काष्ठा file *filep, अक्षर __user *buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा vfio_container *container = filep->निजी_data;
+	काष्ठा vfio_iommu_driver *driver;
+	sमाप_प्रकार ret = -EINVAL;
 
 	driver = container->iommu_driver;
-	if (likely(driver && driver->ops->read))
-		ret = driver->ops->read(container->iommu_data,
+	अगर (likely(driver && driver->ops->पढ़ो))
+		ret = driver->ops->पढ़ो(container->iommu_data,
 					buf, count, ppos);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t vfio_fops_write(struct file *filep, const char __user *buf,
-			       size_t count, loff_t *ppos)
-{
-	struct vfio_container *container = filep->private_data;
-	struct vfio_iommu_driver *driver;
-	ssize_t ret = -EINVAL;
+अटल sमाप_प्रकार vfio_fops_ग_लिखो(काष्ठा file *filep, स्थिर अक्षर __user *buf,
+			       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा vfio_container *container = filep->निजी_data;
+	काष्ठा vfio_iommu_driver *driver;
+	sमाप_प्रकार ret = -EINVAL;
 
 	driver = container->iommu_driver;
-	if (likely(driver && driver->ops->write))
-		ret = driver->ops->write(container->iommu_data,
+	अगर (likely(driver && driver->ops->ग_लिखो))
+		ret = driver->ops->ग_लिखो(container->iommu_data,
 					 buf, count, ppos);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vfio_fops_mmap(struct file *filep, struct vm_area_struct *vma)
-{
-	struct vfio_container *container = filep->private_data;
-	struct vfio_iommu_driver *driver;
-	int ret = -EINVAL;
+अटल पूर्णांक vfio_fops_mmap(काष्ठा file *filep, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा vfio_container *container = filep->निजी_data;
+	काष्ठा vfio_iommu_driver *driver;
+	पूर्णांक ret = -EINVAL;
 
 	driver = container->iommu_driver;
-	if (likely(driver && driver->ops->mmap))
+	अगर (likely(driver && driver->ops->mmap))
 		ret = driver->ops->mmap(container->iommu_data, vma);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations vfio_fops = {
+अटल स्थिर काष्ठा file_operations vfio_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= vfio_fops_open,
+	.खोलो		= vfio_fops_खोलो,
 	.release	= vfio_fops_release,
-	.read		= vfio_fops_read,
-	.write		= vfio_fops_write,
+	.पढ़ो		= vfio_fops_पढ़ो,
+	.ग_लिखो		= vfio_fops_ग_लिखो,
 	.unlocked_ioctl	= vfio_fops_unl_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
 	.mmap		= vfio_fops_mmap,
-};
+पूर्ण;
 
 /**
  * VFIO Group fd, /dev/vfio/$GROUP
  */
-static void __vfio_group_unset_container(struct vfio_group *group)
-{
-	struct vfio_container *container = group->container;
-	struct vfio_iommu_driver *driver;
+अटल व्योम __vfio_group_unset_container(काष्ठा vfio_group *group)
+अणु
+	काष्ठा vfio_container *container = group->container;
+	काष्ठा vfio_iommu_driver *driver;
 
-	down_write(&container->group_lock);
+	करोwn_ग_लिखो(&container->group_lock);
 
 	driver = container->iommu_driver;
-	if (driver)
+	अगर (driver)
 		driver->ops->detach_group(container->iommu_data,
 					  group->iommu_group);
 
-	group->container = NULL;
+	group->container = शून्य;
 	wake_up(&group->container_q);
 	list_del(&group->container_next);
 
-	/* Detaching the last group deprivileges a container, remove iommu */
-	if (driver && list_empty(&container->group_list)) {
+	/* Detaching the last group deprivileges a container, हटाओ iommu */
+	अगर (driver && list_empty(&container->group_list)) अणु
 		driver->ops->release(container->iommu_data);
 		module_put(driver->ops->owner);
-		container->iommu_driver = NULL;
-		container->iommu_data = NULL;
-	}
+		container->iommu_driver = शून्य;
+		container->iommu_data = शून्य;
+	पूर्ण
 
-	up_write(&container->group_lock);
+	up_ग_लिखो(&container->group_lock);
 
 	vfio_container_put(container);
-}
+पूर्ण
 
 /*
- * VFIO_GROUP_UNSET_CONTAINER should fail if there are other users or
- * if there was no container to unset.  Since the ioctl is called on
- * the group, we know that still exists, therefore the only valid
+ * VFIO_GROUP_UNSET_CONTAINER should fail अगर there are other users or
+ * अगर there was no container to unset.  Since the ioctl is called on
+ * the group, we know that still exists, thereक्रमe the only valid
  * transition here is 1->0.
  */
-static int vfio_group_unset_container(struct vfio_group *group)
-{
-	int users = atomic_cmpxchg(&group->container_users, 1, 0);
+अटल पूर्णांक vfio_group_unset_container(काष्ठा vfio_group *group)
+अणु
+	पूर्णांक users = atomic_cmpxchg(&group->container_users, 1, 0);
 
-	if (!users)
-		return -EINVAL;
-	if (users != 1)
-		return -EBUSY;
+	अगर (!users)
+		वापस -EINVAL;
+	अगर (users != 1)
+		वापस -EBUSY;
 
 	__vfio_group_unset_container(group);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * When removing container users, anything that removes the last user
- * implicitly removes the group from the container.  That is, if the
- * group file descriptor is closed, as well as any device file descriptors,
- * the group is free.
+ * When removing container users, anything that हटाओs the last user
+ * implicitly हटाओs the group from the container.  That is, अगर the
+ * group file descriptor is बंदd, as well as any device file descriptors,
+ * the group is मुक्त.
  */
-static void vfio_group_try_dissolve_container(struct vfio_group *group)
-{
-	if (0 == atomic_dec_if_positive(&group->container_users))
+अटल व्योम vfio_group_try_dissolve_container(काष्ठा vfio_group *group)
+अणु
+	अगर (0 == atomic_dec_अगर_positive(&group->container_users))
 		__vfio_group_unset_container(group);
-}
+पूर्ण
 
-static int vfio_group_set_container(struct vfio_group *group, int container_fd)
-{
-	struct fd f;
-	struct vfio_container *container;
-	struct vfio_iommu_driver *driver;
-	int ret = 0;
+अटल पूर्णांक vfio_group_set_container(काष्ठा vfio_group *group, पूर्णांक container_fd)
+अणु
+	काष्ठा fd f;
+	काष्ठा vfio_container *container;
+	काष्ठा vfio_iommu_driver *driver;
+	पूर्णांक ret = 0;
 
-	if (atomic_read(&group->container_users))
-		return -EINVAL;
+	अगर (atomic_पढ़ो(&group->container_users))
+		वापस -EINVAL;
 
-	if (group->noiommu && !capable(CAP_SYS_RAWIO))
-		return -EPERM;
+	अगर (group->noiommu && !capable(CAP_SYS_RAWIO))
+		वापस -EPERM;
 
 	f = fdget(container_fd);
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
 	/* Sanity check, is this really our fd? */
-	if (f.file->f_op != &vfio_fops) {
+	अगर (f.file->f_op != &vfio_fops) अणु
 		fdput(f);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	container = f.file->private_data;
-	WARN_ON(!container); /* fget ensures we don't race vfio_release */
+	container = f.file->निजी_data;
+	WARN_ON(!container); /* fget ensures we करोn't race vfio_release */
 
-	down_write(&container->group_lock);
+	करोwn_ग_लिखो(&container->group_lock);
 
 	/* Real groups and fake groups cannot mix */
-	if (!list_empty(&container->group_list) &&
-	    container->noiommu != group->noiommu) {
+	अगर (!list_empty(&container->group_list) &&
+	    container->noiommu != group->noiommu) अणु
 		ret = -EPERM;
-		goto unlock_out;
-	}
+		जाओ unlock_out;
+	पूर्ण
 
 	driver = container->iommu_driver;
-	if (driver) {
+	अगर (driver) अणु
 		ret = driver->ops->attach_group(container->iommu_data,
 						group->iommu_group);
-		if (ret)
-			goto unlock_out;
-	}
+		अगर (ret)
+			जाओ unlock_out;
+	पूर्ण
 
 	group->container = container;
 	container->noiommu = group->noiommu;
@@ -1322,82 +1323,82 @@ static int vfio_group_set_container(struct vfio_group *group, int container_fd)
 	atomic_inc(&group->container_users);
 
 unlock_out:
-	up_write(&container->group_lock);
+	up_ग_लिखो(&container->group_lock);
 	fdput(f);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool vfio_group_viable(struct vfio_group *group)
-{
-	return (iommu_group_for_each_dev(group->iommu_group,
+अटल bool vfio_group_viable(काष्ठा vfio_group *group)
+अणु
+	वापस (iommu_group_क्रम_each_dev(group->iommu_group,
 					 group, vfio_dev_viable) == 0);
-}
+पूर्ण
 
-static int vfio_group_add_container_user(struct vfio_group *group)
-{
-	if (!atomic_inc_not_zero(&group->container_users))
-		return -EINVAL;
+अटल पूर्णांक vfio_group_add_container_user(काष्ठा vfio_group *group)
+अणु
+	अगर (!atomic_inc_not_zero(&group->container_users))
+		वापस -EINVAL;
 
-	if (group->noiommu) {
+	अगर (group->noiommu) अणु
 		atomic_dec(&group->container_users);
-		return -EPERM;
-	}
-	if (!group->container->iommu_driver || !vfio_group_viable(group)) {
+		वापस -EPERM;
+	पूर्ण
+	अगर (!group->container->iommu_driver || !vfio_group_viable(group)) अणु
 		atomic_dec(&group->container_users);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations vfio_device_fops;
+अटल स्थिर काष्ठा file_operations vfio_device_fops;
 
-static int vfio_group_get_device_fd(struct vfio_group *group, char *buf)
-{
-	struct vfio_device *device;
-	struct file *filep;
-	int ret;
+अटल पूर्णांक vfio_group_get_device_fd(काष्ठा vfio_group *group, अक्षर *buf)
+अणु
+	काष्ठा vfio_device *device;
+	काष्ठा file *filep;
+	पूर्णांक ret;
 
-	if (0 == atomic_read(&group->container_users) ||
+	अगर (0 == atomic_पढ़ो(&group->container_users) ||
 	    !group->container->iommu_driver || !vfio_group_viable(group))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (group->noiommu && !capable(CAP_SYS_RAWIO))
-		return -EPERM;
+	अगर (group->noiommu && !capable(CAP_SYS_RAWIO))
+		वापस -EPERM;
 
 	device = vfio_device_get_from_name(group, buf);
-	if (IS_ERR(device))
-		return PTR_ERR(device);
+	अगर (IS_ERR(device))
+		वापस PTR_ERR(device);
 
-	ret = device->ops->open(device);
-	if (ret) {
+	ret = device->ops->खोलो(device);
+	अगर (ret) अणु
 		vfio_device_put(device);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * We can't use anon_inode_getfd() because we need to modify
+	 * We can't use anon_inode_getfd() because we need to modअगरy
 	 * the f_mode flags directly to allow more than just ioctls
 	 */
 	ret = get_unused_fd_flags(O_CLOEXEC);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		device->ops->release(device);
 		vfio_device_put(device);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	filep = anon_inode_getfile("[vfio-device]", &vfio_device_fops,
 				   device, O_RDWR);
-	if (IS_ERR(filep)) {
+	अगर (IS_ERR(filep)) अणु
 		put_unused_fd(ret);
 		ret = PTR_ERR(filep);
 		device->ops->release(device);
 		vfio_device_put(device);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * TODO: add an anon_inode interface to do this.
+	 * TODO: add an anon_inode पूर्णांकerface to करो this.
 	 * Appears to be missing by lack of need rather than
 	 * explicitly prevented.  Now there's need.
 	 */
@@ -1407,146 +1408,146 @@ static int vfio_group_get_device_fd(struct vfio_group *group, char *buf)
 
 	fd_install(ret, filep);
 
-	if (group->noiommu)
+	अगर (group->noiommu)
 		dev_warn(device->dev, "vfio-noiommu device opened by user "
 			 "(%s:%d)\n", current->comm, task_pid_nr(current));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long vfio_group_fops_unl_ioctl(struct file *filep,
-				      unsigned int cmd, unsigned long arg)
-{
-	struct vfio_group *group = filep->private_data;
-	long ret = -ENOTTY;
+अटल दीर्घ vfio_group_fops_unl_ioctl(काष्ठा file *filep,
+				      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा vfio_group *group = filep->निजी_data;
+	दीर्घ ret = -ENOTTY;
 
-	switch (cmd) {
-	case VFIO_GROUP_GET_STATUS:
-	{
-		struct vfio_group_status status;
-		unsigned long minsz;
+	चयन (cmd) अणु
+	हाल VFIO_GROUP_GET_STATUS:
+	अणु
+		काष्ठा vfio_group_status status;
+		अचिन्हित दीर्घ minsz;
 
-		minsz = offsetofend(struct vfio_group_status, flags);
+		minsz = दुरत्वend(काष्ठा vfio_group_status, flags);
 
-		if (copy_from_user(&status, (void __user *)arg, minsz))
-			return -EFAULT;
+		अगर (copy_from_user(&status, (व्योम __user *)arg, minsz))
+			वापस -EFAULT;
 
-		if (status.argsz < minsz)
-			return -EINVAL;
+		अगर (status.argsz < minsz)
+			वापस -EINVAL;
 
 		status.flags = 0;
 
-		if (vfio_group_viable(group))
+		अगर (vfio_group_viable(group))
 			status.flags |= VFIO_GROUP_FLAGS_VIABLE;
 
-		if (group->container)
+		अगर (group->container)
 			status.flags |= VFIO_GROUP_FLAGS_CONTAINER_SET;
 
-		if (copy_to_user((void __user *)arg, &status, minsz))
-			return -EFAULT;
+		अगर (copy_to_user((व्योम __user *)arg, &status, minsz))
+			वापस -EFAULT;
 
 		ret = 0;
-		break;
-	}
-	case VFIO_GROUP_SET_CONTAINER:
-	{
-		int fd;
+		अवरोध;
+	पूर्ण
+	हाल VFIO_GROUP_SET_CONTAINER:
+	अणु
+		पूर्णांक fd;
 
-		if (get_user(fd, (int __user *)arg))
-			return -EFAULT;
+		अगर (get_user(fd, (पूर्णांक __user *)arg))
+			वापस -EFAULT;
 
-		if (fd < 0)
-			return -EINVAL;
+		अगर (fd < 0)
+			वापस -EINVAL;
 
 		ret = vfio_group_set_container(group, fd);
-		break;
-	}
-	case VFIO_GROUP_UNSET_CONTAINER:
+		अवरोध;
+	पूर्ण
+	हाल VFIO_GROUP_UNSET_CONTAINER:
 		ret = vfio_group_unset_container(group);
-		break;
-	case VFIO_GROUP_GET_DEVICE_FD:
-	{
-		char *buf;
+		अवरोध;
+	हाल VFIO_GROUP_GET_DEVICE_FD:
+	अणु
+		अक्षर *buf;
 
-		buf = strndup_user((const char __user *)arg, PAGE_SIZE);
-		if (IS_ERR(buf))
-			return PTR_ERR(buf);
+		buf = strndup_user((स्थिर अक्षर __user *)arg, PAGE_SIZE);
+		अगर (IS_ERR(buf))
+			वापस PTR_ERR(buf);
 
 		ret = vfio_group_get_device_fd(group, buf);
-		kfree(buf);
-		break;
-	}
-	}
+		kमुक्त(buf);
+		अवरोध;
+	पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vfio_group_fops_open(struct inode *inode, struct file *filep)
-{
-	struct vfio_group *group;
-	int opened;
+अटल पूर्णांक vfio_group_fops_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा vfio_group *group;
+	पूर्णांक खोलोed;
 
 	group = vfio_group_get_from_minor(iminor(inode));
-	if (!group)
-		return -ENODEV;
+	अगर (!group)
+		वापस -ENODEV;
 
-	if (group->noiommu && !capable(CAP_SYS_RAWIO)) {
+	अगर (group->noiommu && !capable(CAP_SYS_RAWIO)) अणु
 		vfio_group_put(group);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	/* Do we need multiple instances of the group open?  Seems not. */
-	opened = atomic_cmpxchg(&group->opened, 0, 1);
-	if (opened) {
+	/* Do we need multiple instances of the group खोलो?  Seems not. */
+	खोलोed = atomic_cmpxchg(&group->खोलोed, 0, 1);
+	अगर (खोलोed) अणु
 		vfio_group_put(group);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* Is something still in use from a previous open? */
-	if (group->container) {
-		atomic_dec(&group->opened);
+	/* Is something still in use from a previous खोलो? */
+	अगर (group->container) अणु
+		atomic_dec(&group->खोलोed);
 		vfio_group_put(group);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* Warn if previous user didn't cleanup and re-init to drop them */
-	if (WARN_ON(group->notifier.head))
-		BLOCKING_INIT_NOTIFIER_HEAD(&group->notifier);
+	/* Warn अगर previous user didn't cleanup and re-init to drop them */
+	अगर (WARN_ON(group->notअगरier.head))
+		BLOCKING_INIT_NOTIFIER_HEAD(&group->notअगरier);
 
-	filep->private_data = group;
+	filep->निजी_data = group;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vfio_group_fops_release(struct inode *inode, struct file *filep)
-{
-	struct vfio_group *group = filep->private_data;
+अटल पूर्णांक vfio_group_fops_release(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा vfio_group *group = filep->निजी_data;
 
-	filep->private_data = NULL;
+	filep->निजी_data = शून्य;
 
 	vfio_group_try_dissolve_container(group);
 
-	atomic_dec(&group->opened);
+	atomic_dec(&group->खोलोed);
 
 	vfio_group_put(group);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations vfio_group_fops = {
+अटल स्थिर काष्ठा file_operations vfio_group_fops = अणु
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= vfio_group_fops_unl_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= vfio_group_fops_open,
+	.खोलो		= vfio_group_fops_खोलो,
 	.release	= vfio_group_fops_release,
-};
+पूर्ण;
 
 /**
  * VFIO Device fd
  */
-static int vfio_device_fops_release(struct inode *inode, struct file *filep)
-{
-	struct vfio_device *device = filep->private_data;
+अटल पूर्णांक vfio_device_fops_release(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा vfio_device *device = filep->निजी_data;
 
 	device->ops->release(device);
 
@@ -1554,295 +1555,295 @@ static int vfio_device_fops_release(struct inode *inode, struct file *filep)
 
 	vfio_device_put(device);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long vfio_device_fops_unl_ioctl(struct file *filep,
-				       unsigned int cmd, unsigned long arg)
-{
-	struct vfio_device *device = filep->private_data;
+अटल दीर्घ vfio_device_fops_unl_ioctl(काष्ठा file *filep,
+				       अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा vfio_device *device = filep->निजी_data;
 
-	if (unlikely(!device->ops->ioctl))
-		return -EINVAL;
+	अगर (unlikely(!device->ops->ioctl))
+		वापस -EINVAL;
 
-	return device->ops->ioctl(device, cmd, arg);
-}
+	वापस device->ops->ioctl(device, cmd, arg);
+पूर्ण
 
-static ssize_t vfio_device_fops_read(struct file *filep, char __user *buf,
-				     size_t count, loff_t *ppos)
-{
-	struct vfio_device *device = filep->private_data;
+अटल sमाप_प्रकार vfio_device_fops_पढ़ो(काष्ठा file *filep, अक्षर __user *buf,
+				     माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा vfio_device *device = filep->निजी_data;
 
-	if (unlikely(!device->ops->read))
-		return -EINVAL;
+	अगर (unlikely(!device->ops->पढ़ो))
+		वापस -EINVAL;
 
-	return device->ops->read(device, buf, count, ppos);
-}
+	वापस device->ops->पढ़ो(device, buf, count, ppos);
+पूर्ण
 
-static ssize_t vfio_device_fops_write(struct file *filep,
-				      const char __user *buf,
-				      size_t count, loff_t *ppos)
-{
-	struct vfio_device *device = filep->private_data;
+अटल sमाप_प्रकार vfio_device_fops_ग_लिखो(काष्ठा file *filep,
+				      स्थिर अक्षर __user *buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा vfio_device *device = filep->निजी_data;
 
-	if (unlikely(!device->ops->write))
-		return -EINVAL;
+	अगर (unlikely(!device->ops->ग_लिखो))
+		वापस -EINVAL;
 
-	return device->ops->write(device, buf, count, ppos);
-}
+	वापस device->ops->ग_लिखो(device, buf, count, ppos);
+पूर्ण
 
-static int vfio_device_fops_mmap(struct file *filep, struct vm_area_struct *vma)
-{
-	struct vfio_device *device = filep->private_data;
+अटल पूर्णांक vfio_device_fops_mmap(काष्ठा file *filep, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा vfio_device *device = filep->निजी_data;
 
-	if (unlikely(!device->ops->mmap))
-		return -EINVAL;
+	अगर (unlikely(!device->ops->mmap))
+		वापस -EINVAL;
 
-	return device->ops->mmap(device, vma);
-}
+	वापस device->ops->mmap(device, vma);
+पूर्ण
 
-static const struct file_operations vfio_device_fops = {
+अटल स्थिर काष्ठा file_operations vfio_device_fops = अणु
 	.owner		= THIS_MODULE,
 	.release	= vfio_device_fops_release,
-	.read		= vfio_device_fops_read,
-	.write		= vfio_device_fops_write,
+	.पढ़ो		= vfio_device_fops_पढ़ो,
+	.ग_लिखो		= vfio_device_fops_ग_लिखो,
 	.unlocked_ioctl	= vfio_device_fops_unl_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
 	.mmap		= vfio_device_fops_mmap,
-};
+पूर्ण;
 
 /**
  * External user API, exported by symbols to be linked dynamically.
  *
  * The protocol includes:
- *  1. do normal VFIO init operation:
- *	- opening a new container;
+ *  1. करो normal VFIO init operation:
+ *	- खोलोing a new container;
  *	- attaching group(s) to it;
- *	- setting an IOMMU driver for a container.
- * When IOMMU is set for a container, all groups in it are
- * considered ready to use by an external user.
+ *	- setting an IOMMU driver क्रम a container.
+ * When IOMMU is set क्रम a container, all groups in it are
+ * considered पढ़ोy to use by an बाह्यal user.
  *
- * 2. User space passes a group fd to an external user.
- * The external user calls vfio_group_get_external_user()
- * to verify that:
+ * 2. User space passes a group fd to an बाह्यal user.
+ * The बाह्यal user calls vfio_group_get_बाह्यal_user()
+ * to verअगरy that:
  *	- the group is initialized;
- *	- IOMMU is set for it.
- * If both checks passed, vfio_group_get_external_user()
+ *	- IOMMU is set क्रम it.
+ * If both checks passed, vfio_group_get_बाह्यal_user()
  * increments the container user counter to prevent
- * the VFIO group from disposal before KVM exits.
+ * the VFIO group from disposal beक्रमe KVM निकासs.
  *
- * 3. The external user calls vfio_external_user_iommu_id()
+ * 3. The बाह्यal user calls vfio_बाह्यal_user_iommu_id()
  * to know an IOMMU ID.
  *
- * 4. When the external KVM finishes, it calls
- * vfio_group_put_external_user() to release the VFIO group.
+ * 4. When the बाह्यal KVM finishes, it calls
+ * vfio_group_put_बाह्यal_user() to release the VFIO group.
  * This call decrements the container user counter.
  */
-struct vfio_group *vfio_group_get_external_user(struct file *filep)
-{
-	struct vfio_group *group = filep->private_data;
-	int ret;
+काष्ठा vfio_group *vfio_group_get_बाह्यal_user(काष्ठा file *filep)
+अणु
+	काष्ठा vfio_group *group = filep->निजी_data;
+	पूर्णांक ret;
 
-	if (filep->f_op != &vfio_group_fops)
-		return ERR_PTR(-EINVAL);
+	अगर (filep->f_op != &vfio_group_fops)
+		वापस ERR_PTR(-EINVAL);
 
 	ret = vfio_group_add_container_user(group);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	vfio_group_get(group);
 
-	return group;
-}
-EXPORT_SYMBOL_GPL(vfio_group_get_external_user);
+	वापस group;
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_group_get_बाह्यal_user);
 
 /**
  * External user API, exported by symbols to be linked dynamically.
- * The external user passes in a device pointer
- * to verify that:
+ * The बाह्यal user passes in a device poपूर्णांकer
+ * to verअगरy that:
  *	- A VFIO group is assiciated with the device;
- *	- IOMMU is set for the group.
- * If both checks passed, vfio_group_get_external_user_from_dev()
+ *	- IOMMU is set क्रम the group.
+ * If both checks passed, vfio_group_get_बाह्यal_user_from_dev()
  * increments the container user counter to prevent the VFIO group
- * from disposal before external user exits and returns the pointer
+ * from disposal beक्रमe बाह्यal user निकासs and वापसs the poपूर्णांकer
  * to the VFIO group.
  *
- * When the external user finishes using the VFIO group, it calls
- * vfio_group_put_external_user() to release the VFIO group and
+ * When the बाह्यal user finishes using the VFIO group, it calls
+ * vfio_group_put_बाह्यal_user() to release the VFIO group and
  * decrement the container user counter.
  *
  * @dev [in]	: device
- * Return error PTR or pointer to VFIO group.
+ * Return error PTR or poपूर्णांकer to VFIO group.
  */
 
-struct vfio_group *vfio_group_get_external_user_from_dev(struct device *dev)
-{
-	struct vfio_group *group;
-	int ret;
+काष्ठा vfio_group *vfio_group_get_बाह्यal_user_from_dev(काष्ठा device *dev)
+अणु
+	काष्ठा vfio_group *group;
+	पूर्णांक ret;
 
 	group = vfio_group_get_from_dev(dev);
-	if (!group)
-		return ERR_PTR(-ENODEV);
+	अगर (!group)
+		वापस ERR_PTR(-ENODEV);
 
 	ret = vfio_group_add_container_user(group);
-	if (ret) {
+	अगर (ret) अणु
 		vfio_group_put(group);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return group;
-}
-EXPORT_SYMBOL_GPL(vfio_group_get_external_user_from_dev);
+	वापस group;
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_group_get_बाह्यal_user_from_dev);
 
-void vfio_group_put_external_user(struct vfio_group *group)
-{
+व्योम vfio_group_put_बाह्यal_user(काष्ठा vfio_group *group)
+अणु
 	vfio_group_try_dissolve_container(group);
 	vfio_group_put(group);
-}
-EXPORT_SYMBOL_GPL(vfio_group_put_external_user);
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_group_put_बाह्यal_user);
 
-bool vfio_external_group_match_file(struct vfio_group *test_group,
-				    struct file *filep)
-{
-	struct vfio_group *group = filep->private_data;
+bool vfio_बाह्यal_group_match_file(काष्ठा vfio_group *test_group,
+				    काष्ठा file *filep)
+अणु
+	काष्ठा vfio_group *group = filep->निजी_data;
 
-	return (filep->f_op == &vfio_group_fops) && (group == test_group);
-}
-EXPORT_SYMBOL_GPL(vfio_external_group_match_file);
+	वापस (filep->f_op == &vfio_group_fops) && (group == test_group);
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_बाह्यal_group_match_file);
 
-int vfio_external_user_iommu_id(struct vfio_group *group)
-{
-	return iommu_group_id(group->iommu_group);
-}
-EXPORT_SYMBOL_GPL(vfio_external_user_iommu_id);
+पूर्णांक vfio_बाह्यal_user_iommu_id(काष्ठा vfio_group *group)
+अणु
+	वापस iommu_group_id(group->iommu_group);
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_बाह्यal_user_iommu_id);
 
-long vfio_external_check_extension(struct vfio_group *group, unsigned long arg)
-{
-	return vfio_ioctl_check_extension(group->container, arg);
-}
-EXPORT_SYMBOL_GPL(vfio_external_check_extension);
+दीर्घ vfio_बाह्यal_check_extension(काष्ठा vfio_group *group, अचिन्हित दीर्घ arg)
+अणु
+	वापस vfio_ioctl_check_extension(group->container, arg);
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_बाह्यal_check_extension);
 
 /**
  * Sub-module support
  */
 /*
- * Helper for managing a buffer of info chain capabilities, allocate or
- * reallocate a buffer with additional @size, filling in @id and @version
- * of the capability.  A pointer to the new capability is returned.
+ * Helper क्रम managing a buffer of info chain capabilities, allocate or
+ * पुनः_स्मृतिate a buffer with additional @size, filling in @id and @version
+ * of the capability.  A poपूर्णांकer to the new capability is वापसed.
  *
  * NB. The chain is based at the head of the buffer, so new entries are
- * added to the tail, vfio_info_cap_shift() should be called to fixup the
+ * added to the tail, vfio_info_cap_shअगरt() should be called to fixup the
  * next offsets prior to copying to the user buffer.
  */
-struct vfio_info_cap_header *vfio_info_cap_add(struct vfio_info_cap *caps,
-					       size_t size, u16 id, u16 version)
-{
-	void *buf;
-	struct vfio_info_cap_header *header, *tmp;
+काष्ठा vfio_info_cap_header *vfio_info_cap_add(काष्ठा vfio_info_cap *caps,
+					       माप_प्रकार size, u16 id, u16 version)
+अणु
+	व्योम *buf;
+	काष्ठा vfio_info_cap_header *header, *पंचांगp;
 
-	buf = krealloc(caps->buf, caps->size + size, GFP_KERNEL);
-	if (!buf) {
-		kfree(caps->buf);
+	buf = kपुनः_स्मृति(caps->buf, caps->size + size, GFP_KERNEL);
+	अगर (!buf) अणु
+		kमुक्त(caps->buf);
 		caps->size = 0;
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	caps->buf = buf;
 	header = buf + caps->size;
 
 	/* Eventually copied to user buffer, zero */
-	memset(header, 0, size);
+	स_रखो(header, 0, size);
 
 	header->id = id;
 	header->version = version;
 
 	/* Add to the end of the capability chain */
-	for (tmp = buf; tmp->next; tmp = buf + tmp->next)
+	क्रम (पंचांगp = buf; पंचांगp->next; पंचांगp = buf + पंचांगp->next)
 		; /* nothing */
 
-	tmp->next = caps->size;
+	पंचांगp->next = caps->size;
 	caps->size += size;
 
-	return header;
-}
+	वापस header;
+पूर्ण
 EXPORT_SYMBOL_GPL(vfio_info_cap_add);
 
-void vfio_info_cap_shift(struct vfio_info_cap *caps, size_t offset)
-{
-	struct vfio_info_cap_header *tmp;
-	void *buf = (void *)caps->buf;
+व्योम vfio_info_cap_shअगरt(काष्ठा vfio_info_cap *caps, माप_प्रकार offset)
+अणु
+	काष्ठा vfio_info_cap_header *पंचांगp;
+	व्योम *buf = (व्योम *)caps->buf;
 
-	for (tmp = buf; tmp->next; tmp = buf + tmp->next - offset)
-		tmp->next += offset;
-}
-EXPORT_SYMBOL(vfio_info_cap_shift);
+	क्रम (पंचांगp = buf; पंचांगp->next; पंचांगp = buf + पंचांगp->next - offset)
+		पंचांगp->next += offset;
+पूर्ण
+EXPORT_SYMBOL(vfio_info_cap_shअगरt);
 
-int vfio_info_add_capability(struct vfio_info_cap *caps,
-			     struct vfio_info_cap_header *cap, size_t size)
-{
-	struct vfio_info_cap_header *header;
+पूर्णांक vfio_info_add_capability(काष्ठा vfio_info_cap *caps,
+			     काष्ठा vfio_info_cap_header *cap, माप_प्रकार size)
+अणु
+	काष्ठा vfio_info_cap_header *header;
 
 	header = vfio_info_cap_add(caps, size, cap->id, cap->version);
-	if (IS_ERR(header))
-		return PTR_ERR(header);
+	अगर (IS_ERR(header))
+		वापस PTR_ERR(header);
 
-	memcpy(header + 1, cap + 1, size - sizeof(*header));
+	स_नकल(header + 1, cap + 1, size - माप(*header));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vfio_info_add_capability);
 
-int vfio_set_irqs_validate_and_prepare(struct vfio_irq_set *hdr, int num_irqs,
-				       int max_irq_type, size_t *data_size)
-{
-	unsigned long minsz;
-	size_t size;
+पूर्णांक vfio_set_irqs_validate_and_prepare(काष्ठा vfio_irq_set *hdr, पूर्णांक num_irqs,
+				       पूर्णांक max_irq_type, माप_प्रकार *data_size)
+अणु
+	अचिन्हित दीर्घ minsz;
+	माप_प्रकार size;
 
-	minsz = offsetofend(struct vfio_irq_set, count);
+	minsz = दुरत्वend(काष्ठा vfio_irq_set, count);
 
-	if ((hdr->argsz < minsz) || (hdr->index >= max_irq_type) ||
+	अगर ((hdr->argsz < minsz) || (hdr->index >= max_irq_type) ||
 	    (hdr->count >= (U32_MAX - hdr->start)) ||
 	    (hdr->flags & ~(VFIO_IRQ_SET_DATA_TYPE_MASK |
 				VFIO_IRQ_SET_ACTION_TYPE_MASK)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (data_size)
+	अगर (data_size)
 		*data_size = 0;
 
-	if (hdr->start >= num_irqs || hdr->start + hdr->count > num_irqs)
-		return -EINVAL;
+	अगर (hdr->start >= num_irqs || hdr->start + hdr->count > num_irqs)
+		वापस -EINVAL;
 
-	switch (hdr->flags & VFIO_IRQ_SET_DATA_TYPE_MASK) {
-	case VFIO_IRQ_SET_DATA_NONE:
+	चयन (hdr->flags & VFIO_IRQ_SET_DATA_TYPE_MASK) अणु
+	हाल VFIO_IRQ_SET_DATA_NONE:
 		size = 0;
-		break;
-	case VFIO_IRQ_SET_DATA_BOOL:
-		size = sizeof(uint8_t);
-		break;
-	case VFIO_IRQ_SET_DATA_EVENTFD:
-		size = sizeof(int32_t);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल VFIO_IRQ_SET_DATA_BOOL:
+		size = माप(uपूर्णांक8_t);
+		अवरोध;
+	हाल VFIO_IRQ_SET_DATA_EVENTFD:
+		size = माप(पूर्णांक32_t);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (size) {
-		if (hdr->argsz - minsz < hdr->count * size)
-			return -EINVAL;
+	अगर (size) अणु
+		अगर (hdr->argsz - minsz < hdr->count * size)
+			वापस -EINVAL;
 
-		if (!data_size)
-			return -EINVAL;
+		अगर (!data_size)
+			वापस -EINVAL;
 
 		*data_size = hdr->count * size;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vfio_set_irqs_validate_and_prepare);
 
 /*
- * Pin a set of guest PFNs and return their associated host PFNs for local
- * domain only.
+ * Pin a set of guest PFNs and वापस their associated host PFNs क्रम local
+ * करोमुख्य only.
  * @dev [in]     : device
  * @user_pfn [in]: array of user/guest PFNs to be pinned.
  * @npage [in]   : count of elements in user_pfn array.  This count should not
@@ -1851,52 +1852,52 @@ EXPORT_SYMBOL(vfio_set_irqs_validate_and_prepare);
  * @phys_pfn[out]: array of host PFNs
  * Return error or number of pages pinned.
  */
-int vfio_pin_pages(struct device *dev, unsigned long *user_pfn, int npage,
-		   int prot, unsigned long *phys_pfn)
-{
-	struct vfio_container *container;
-	struct vfio_group *group;
-	struct vfio_iommu_driver *driver;
-	int ret;
+पूर्णांक vfio_pin_pages(काष्ठा device *dev, अचिन्हित दीर्घ *user_pfn, पूर्णांक npage,
+		   पूर्णांक prot, अचिन्हित दीर्घ *phys_pfn)
+अणु
+	काष्ठा vfio_container *container;
+	काष्ठा vfio_group *group;
+	काष्ठा vfio_iommu_driver *driver;
+	पूर्णांक ret;
 
-	if (!dev || !user_pfn || !phys_pfn || !npage)
-		return -EINVAL;
+	अगर (!dev || !user_pfn || !phys_pfn || !npage)
+		वापस -EINVAL;
 
-	if (npage > VFIO_PIN_PAGES_MAX_ENTRIES)
-		return -E2BIG;
+	अगर (npage > VFIO_PIN_PAGES_MAX_ENTRIES)
+		वापस -E2BIG;
 
 	group = vfio_group_get_from_dev(dev);
-	if (!group)
-		return -ENODEV;
+	अगर (!group)
+		वापस -ENODEV;
 
-	if (group->dev_counter > 1) {
+	अगर (group->dev_counter > 1) अणु
 		ret = -EINVAL;
-		goto err_pin_pages;
-	}
+		जाओ err_pin_pages;
+	पूर्ण
 
 	ret = vfio_group_add_container_user(group);
-	if (ret)
-		goto err_pin_pages;
+	अगर (ret)
+		जाओ err_pin_pages;
 
 	container = group->container;
 	driver = container->iommu_driver;
-	if (likely(driver && driver->ops->pin_pages))
+	अगर (likely(driver && driver->ops->pin_pages))
 		ret = driver->ops->pin_pages(container->iommu_data,
 					     group->iommu_group, user_pfn,
 					     npage, prot, phys_pfn);
-	else
+	अन्यथा
 		ret = -ENOTTY;
 
 	vfio_group_try_dissolve_container(group);
 
 err_pin_pages:
 	vfio_group_put(group);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(vfio_pin_pages);
 
 /*
- * Unpin set of host PFNs for local domain only.
+ * Unpin set of host PFNs क्रम local करोमुख्य only.
  * @dev [in]     : device
  * @user_pfn [in]: array of user/guest PFNs to be unpinned. Number of user/guest
  *		   PFNs should not be greater than VFIO_PIN_PAGES_MAX_ENTRIES.
@@ -1904,54 +1905,54 @@ EXPORT_SYMBOL(vfio_pin_pages);
  *                 be greater than VFIO_PIN_PAGES_MAX_ENTRIES.
  * Return error or number of pages unpinned.
  */
-int vfio_unpin_pages(struct device *dev, unsigned long *user_pfn, int npage)
-{
-	struct vfio_container *container;
-	struct vfio_group *group;
-	struct vfio_iommu_driver *driver;
-	int ret;
+पूर्णांक vfio_unpin_pages(काष्ठा device *dev, अचिन्हित दीर्घ *user_pfn, पूर्णांक npage)
+अणु
+	काष्ठा vfio_container *container;
+	काष्ठा vfio_group *group;
+	काष्ठा vfio_iommu_driver *driver;
+	पूर्णांक ret;
 
-	if (!dev || !user_pfn || !npage)
-		return -EINVAL;
+	अगर (!dev || !user_pfn || !npage)
+		वापस -EINVAL;
 
-	if (npage > VFIO_PIN_PAGES_MAX_ENTRIES)
-		return -E2BIG;
+	अगर (npage > VFIO_PIN_PAGES_MAX_ENTRIES)
+		वापस -E2BIG;
 
 	group = vfio_group_get_from_dev(dev);
-	if (!group)
-		return -ENODEV;
+	अगर (!group)
+		वापस -ENODEV;
 
 	ret = vfio_group_add_container_user(group);
-	if (ret)
-		goto err_unpin_pages;
+	अगर (ret)
+		जाओ err_unpin_pages;
 
 	container = group->container;
 	driver = container->iommu_driver;
-	if (likely(driver && driver->ops->unpin_pages))
+	अगर (likely(driver && driver->ops->unpin_pages))
 		ret = driver->ops->unpin_pages(container->iommu_data, user_pfn,
 					       npage);
-	else
+	अन्यथा
 		ret = -ENOTTY;
 
 	vfio_group_try_dissolve_container(group);
 
 err_unpin_pages:
 	vfio_group_put(group);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(vfio_unpin_pages);
 
 /*
- * Pin a set of guest IOVA PFNs and return their associated host PFNs for a
+ * Pin a set of guest IOVA PFNs and वापस their associated host PFNs क्रम a
  * VFIO group.
  *
- * The caller needs to call vfio_group_get_external_user() or
- * vfio_group_get_external_user_from_dev() prior to calling this interface,
+ * The caller needs to call vfio_group_get_बाह्यal_user() or
+ * vfio_group_get_बाह्यal_user_from_dev() prior to calling this पूर्णांकerface,
  * so as to prevent the VFIO group from disposal in the middle of the call.
- * But it can keep the reference to the VFIO group for several calls into
- * this interface.
+ * But it can keep the reference to the VFIO group क्रम several calls पूर्णांकo
+ * this पूर्णांकerface.
  * After finishing using of the VFIO group, the caller needs to release the
- * VFIO group by calling vfio_group_put_external_user().
+ * VFIO group by calling vfio_group_put_बाह्यal_user().
  *
  * @group [in]		: VFIO group
  * @user_iova_pfn [in]	: array of user/guest IOVA PFNs to be pinned.
@@ -1962,46 +1963,46 @@ EXPORT_SYMBOL(vfio_unpin_pages);
  * @phys_pfn [out]	: array of host PFNs
  * Return error or number of pages pinned.
  */
-int vfio_group_pin_pages(struct vfio_group *group,
-			 unsigned long *user_iova_pfn, int npage,
-			 int prot, unsigned long *phys_pfn)
-{
-	struct vfio_container *container;
-	struct vfio_iommu_driver *driver;
-	int ret;
+पूर्णांक vfio_group_pin_pages(काष्ठा vfio_group *group,
+			 अचिन्हित दीर्घ *user_iova_pfn, पूर्णांक npage,
+			 पूर्णांक prot, अचिन्हित दीर्घ *phys_pfn)
+अणु
+	काष्ठा vfio_container *container;
+	काष्ठा vfio_iommu_driver *driver;
+	पूर्णांक ret;
 
-	if (!group || !user_iova_pfn || !phys_pfn || !npage)
-		return -EINVAL;
+	अगर (!group || !user_iova_pfn || !phys_pfn || !npage)
+		वापस -EINVAL;
 
-	if (group->dev_counter > 1)
-		return -EINVAL;
+	अगर (group->dev_counter > 1)
+		वापस -EINVAL;
 
-	if (npage > VFIO_PIN_PAGES_MAX_ENTRIES)
-		return -E2BIG;
+	अगर (npage > VFIO_PIN_PAGES_MAX_ENTRIES)
+		वापस -E2BIG;
 
 	container = group->container;
 	driver = container->iommu_driver;
-	if (likely(driver && driver->ops->pin_pages))
+	अगर (likely(driver && driver->ops->pin_pages))
 		ret = driver->ops->pin_pages(container->iommu_data,
 					     group->iommu_group, user_iova_pfn,
 					     npage, prot, phys_pfn);
-	else
+	अन्यथा
 		ret = -ENOTTY;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(vfio_group_pin_pages);
 
 /*
- * Unpin a set of guest IOVA PFNs for a VFIO group.
+ * Unpin a set of guest IOVA PFNs क्रम a VFIO group.
  *
- * The caller needs to call vfio_group_get_external_user() or
- * vfio_group_get_external_user_from_dev() prior to calling this interface,
+ * The caller needs to call vfio_group_get_बाह्यal_user() or
+ * vfio_group_get_बाह्यal_user_from_dev() prior to calling this पूर्णांकerface,
  * so as to prevent the VFIO group from disposal in the middle of the call.
- * But it can keep the reference to the VFIO group for several calls into
- * this interface.
+ * But it can keep the reference to the VFIO group क्रम several calls पूर्णांकo
+ * this पूर्णांकerface.
  * After finishing using of the VFIO group, the caller needs to release the
- * VFIO group by calling vfio_group_put_external_user().
+ * VFIO group by calling vfio_group_put_बाह्यal_user().
  *
  * @group [in]		: vfio group
  * @user_iova_pfn [in]	: array of user/guest IOVA PFNs to be unpinned.
@@ -2010,284 +2011,284 @@ EXPORT_SYMBOL(vfio_group_pin_pages);
  *			  VFIO_PIN_PAGES_MAX_ENTRIES.
  * Return error or number of pages unpinned.
  */
-int vfio_group_unpin_pages(struct vfio_group *group,
-			   unsigned long *user_iova_pfn, int npage)
-{
-	struct vfio_container *container;
-	struct vfio_iommu_driver *driver;
-	int ret;
+पूर्णांक vfio_group_unpin_pages(काष्ठा vfio_group *group,
+			   अचिन्हित दीर्घ *user_iova_pfn, पूर्णांक npage)
+अणु
+	काष्ठा vfio_container *container;
+	काष्ठा vfio_iommu_driver *driver;
+	पूर्णांक ret;
 
-	if (!group || !user_iova_pfn || !npage)
-		return -EINVAL;
+	अगर (!group || !user_iova_pfn || !npage)
+		वापस -EINVAL;
 
-	if (npage > VFIO_PIN_PAGES_MAX_ENTRIES)
-		return -E2BIG;
+	अगर (npage > VFIO_PIN_PAGES_MAX_ENTRIES)
+		वापस -E2BIG;
 
 	container = group->container;
 	driver = container->iommu_driver;
-	if (likely(driver && driver->ops->unpin_pages))
+	अगर (likely(driver && driver->ops->unpin_pages))
 		ret = driver->ops->unpin_pages(container->iommu_data,
 					       user_iova_pfn, npage);
-	else
+	अन्यथा
 		ret = -ENOTTY;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(vfio_group_unpin_pages);
 
 
 /*
- * This interface allows the CPUs to perform some sort of virtual DMA on
+ * This पूर्णांकerface allows the CPUs to perक्रमm some sort of भव DMA on
  * behalf of the device.
  *
- * CPUs read/write from/into a range of IOVAs pointing to user space memory
- * into/from a kernel buffer.
+ * CPUs पढ़ो/ग_लिखो from/पूर्णांकo a range of IOVAs poपूर्णांकing to user space memory
+ * पूर्णांकo/from a kernel buffer.
  *
- * As the read/write of user space memory is conducted via the CPUs and is
+ * As the पढ़ो/ग_लिखो of user space memory is conducted via the CPUs and is
  * not a real device DMA, it is not necessary to pin the user space memory.
  *
- * The caller needs to call vfio_group_get_external_user() or
- * vfio_group_get_external_user_from_dev() prior to calling this interface,
+ * The caller needs to call vfio_group_get_बाह्यal_user() or
+ * vfio_group_get_बाह्यal_user_from_dev() prior to calling this पूर्णांकerface,
  * so as to prevent the VFIO group from disposal in the middle of the call.
- * But it can keep the reference to the VFIO group for several calls into
- * this interface.
+ * But it can keep the reference to the VFIO group क्रम several calls पूर्णांकo
+ * this पूर्णांकerface.
  * After finishing using of the VFIO group, the caller needs to release the
- * VFIO group by calling vfio_group_put_external_user().
+ * VFIO group by calling vfio_group_put_बाह्यal_user().
  *
  * @group [in]		: VFIO group
  * @user_iova [in]	: base IOVA of a user space buffer
- * @data [in]		: pointer to kernel buffer
+ * @data [in]		: poपूर्णांकer to kernel buffer
  * @len [in]		: kernel buffer length
- * @write		: indicate read or write
+ * @ग_लिखो		: indicate पढ़ो or ग_लिखो
  * Return error code on failure or 0 on success.
  */
-int vfio_dma_rw(struct vfio_group *group, dma_addr_t user_iova,
-		void *data, size_t len, bool write)
-{
-	struct vfio_container *container;
-	struct vfio_iommu_driver *driver;
-	int ret = 0;
+पूर्णांक vfio_dma_rw(काष्ठा vfio_group *group, dma_addr_t user_iova,
+		व्योम *data, माप_प्रकार len, bool ग_लिखो)
+अणु
+	काष्ठा vfio_container *container;
+	काष्ठा vfio_iommu_driver *driver;
+	पूर्णांक ret = 0;
 
-	if (!group || !data || len <= 0)
-		return -EINVAL;
+	अगर (!group || !data || len <= 0)
+		वापस -EINVAL;
 
 	container = group->container;
 	driver = container->iommu_driver;
 
-	if (likely(driver && driver->ops->dma_rw))
+	अगर (likely(driver && driver->ops->dma_rw))
 		ret = driver->ops->dma_rw(container->iommu_data,
-					  user_iova, data, len, write);
-	else
+					  user_iova, data, len, ग_लिखो);
+	अन्यथा
 		ret = -ENOTTY;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(vfio_dma_rw);
 
-static int vfio_register_iommu_notifier(struct vfio_group *group,
-					unsigned long *events,
-					struct notifier_block *nb)
-{
-	struct vfio_container *container;
-	struct vfio_iommu_driver *driver;
-	int ret;
+अटल पूर्णांक vfio_रेजिस्टर_iommu_notअगरier(काष्ठा vfio_group *group,
+					अचिन्हित दीर्घ *events,
+					काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा vfio_container *container;
+	काष्ठा vfio_iommu_driver *driver;
+	पूर्णांक ret;
 
 	ret = vfio_group_add_container_user(group);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	container = group->container;
 	driver = container->iommu_driver;
-	if (likely(driver && driver->ops->register_notifier))
-		ret = driver->ops->register_notifier(container->iommu_data,
+	अगर (likely(driver && driver->ops->रेजिस्टर_notअगरier))
+		ret = driver->ops->रेजिस्टर_notअगरier(container->iommu_data,
 						     events, nb);
-	else
+	अन्यथा
 		ret = -ENOTTY;
 
 	vfio_group_try_dissolve_container(group);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vfio_unregister_iommu_notifier(struct vfio_group *group,
-					  struct notifier_block *nb)
-{
-	struct vfio_container *container;
-	struct vfio_iommu_driver *driver;
-	int ret;
+अटल पूर्णांक vfio_unरेजिस्टर_iommu_notअगरier(काष्ठा vfio_group *group,
+					  काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा vfio_container *container;
+	काष्ठा vfio_iommu_driver *driver;
+	पूर्णांक ret;
 
 	ret = vfio_group_add_container_user(group);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	container = group->container;
 	driver = container->iommu_driver;
-	if (likely(driver && driver->ops->unregister_notifier))
-		ret = driver->ops->unregister_notifier(container->iommu_data,
+	अगर (likely(driver && driver->ops->unरेजिस्टर_notअगरier))
+		ret = driver->ops->unरेजिस्टर_notअगरier(container->iommu_data,
 						       nb);
-	else
+	अन्यथा
 		ret = -ENOTTY;
 
 	vfio_group_try_dissolve_container(group);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void vfio_group_set_kvm(struct vfio_group *group, struct kvm *kvm)
-{
+व्योम vfio_group_set_kvm(काष्ठा vfio_group *group, काष्ठा kvm *kvm)
+अणु
 	group->kvm = kvm;
-	blocking_notifier_call_chain(&group->notifier,
+	blocking_notअगरier_call_chain(&group->notअगरier,
 				VFIO_GROUP_NOTIFY_SET_KVM, kvm);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(vfio_group_set_kvm);
 
-static int vfio_register_group_notifier(struct vfio_group *group,
-					unsigned long *events,
-					struct notifier_block *nb)
-{
-	int ret;
+अटल पूर्णांक vfio_रेजिस्टर_group_notअगरier(काष्ठा vfio_group *group,
+					अचिन्हित दीर्घ *events,
+					काष्ठा notअगरier_block *nb)
+अणु
+	पूर्णांक ret;
 	bool set_kvm = false;
 
-	if (*events & VFIO_GROUP_NOTIFY_SET_KVM)
+	अगर (*events & VFIO_GROUP_NOTIFY_SET_KVM)
 		set_kvm = true;
 
 	/* clear known events */
 	*events &= ~VFIO_GROUP_NOTIFY_SET_KVM;
 
-	/* refuse to continue if still events remaining */
-	if (*events)
-		return -EINVAL;
+	/* refuse to जारी अगर still events reमुख्यing */
+	अगर (*events)
+		वापस -EINVAL;
 
 	ret = vfio_group_add_container_user(group);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
-	ret = blocking_notifier_chain_register(&group->notifier, nb);
+	ret = blocking_notअगरier_chain_रेजिस्टर(&group->notअगरier, nb);
 
 	/*
-	 * The attaching of kvm and vfio_group might already happen, so
+	 * The attaching of kvm and vfio_group might alपढ़ोy happen, so
 	 * here we replay once upon registration.
 	 */
-	if (!ret && set_kvm && group->kvm)
-		blocking_notifier_call_chain(&group->notifier,
+	अगर (!ret && set_kvm && group->kvm)
+		blocking_notअगरier_call_chain(&group->notअगरier,
 					VFIO_GROUP_NOTIFY_SET_KVM, group->kvm);
 
 	vfio_group_try_dissolve_container(group);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vfio_unregister_group_notifier(struct vfio_group *group,
-					 struct notifier_block *nb)
-{
-	int ret;
+अटल पूर्णांक vfio_unरेजिस्टर_group_notअगरier(काष्ठा vfio_group *group,
+					 काष्ठा notअगरier_block *nb)
+अणु
+	पूर्णांक ret;
 
 	ret = vfio_group_add_container_user(group);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
-	ret = blocking_notifier_chain_unregister(&group->notifier, nb);
+	ret = blocking_notअगरier_chain_unरेजिस्टर(&group->notअगरier, nb);
 
 	vfio_group_try_dissolve_container(group);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int vfio_register_notifier(struct device *dev, enum vfio_notify_type type,
-			   unsigned long *events, struct notifier_block *nb)
-{
-	struct vfio_group *group;
-	int ret;
+पूर्णांक vfio_रेजिस्टर_notअगरier(काष्ठा device *dev, क्रमागत vfio_notअगरy_type type,
+			   अचिन्हित दीर्घ *events, काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा vfio_group *group;
+	पूर्णांक ret;
 
-	if (!dev || !nb || !events || (*events == 0))
-		return -EINVAL;
-
-	group = vfio_group_get_from_dev(dev);
-	if (!group)
-		return -ENODEV;
-
-	switch (type) {
-	case VFIO_IOMMU_NOTIFY:
-		ret = vfio_register_iommu_notifier(group, events, nb);
-		break;
-	case VFIO_GROUP_NOTIFY:
-		ret = vfio_register_group_notifier(group, events, nb);
-		break;
-	default:
-		ret = -EINVAL;
-	}
-
-	vfio_group_put(group);
-	return ret;
-}
-EXPORT_SYMBOL(vfio_register_notifier);
-
-int vfio_unregister_notifier(struct device *dev, enum vfio_notify_type type,
-			     struct notifier_block *nb)
-{
-	struct vfio_group *group;
-	int ret;
-
-	if (!dev || !nb)
-		return -EINVAL;
+	अगर (!dev || !nb || !events || (*events == 0))
+		वापस -EINVAL;
 
 	group = vfio_group_get_from_dev(dev);
-	if (!group)
-		return -ENODEV;
+	अगर (!group)
+		वापस -ENODEV;
 
-	switch (type) {
-	case VFIO_IOMMU_NOTIFY:
-		ret = vfio_unregister_iommu_notifier(group, nb);
-		break;
-	case VFIO_GROUP_NOTIFY:
-		ret = vfio_unregister_group_notifier(group, nb);
-		break;
-	default:
+	चयन (type) अणु
+	हाल VFIO_IOMMU_NOTIFY:
+		ret = vfio_रेजिस्टर_iommu_notअगरier(group, events, nb);
+		अवरोध;
+	हाल VFIO_GROUP_NOTIFY:
+		ret = vfio_रेजिस्टर_group_notअगरier(group, events, nb);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	vfio_group_put(group);
-	return ret;
-}
-EXPORT_SYMBOL(vfio_unregister_notifier);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(vfio_रेजिस्टर_notअगरier);
 
-struct iommu_domain *vfio_group_iommu_domain(struct vfio_group *group)
-{
-	struct vfio_container *container;
-	struct vfio_iommu_driver *driver;
+पूर्णांक vfio_unरेजिस्टर_notअगरier(काष्ठा device *dev, क्रमागत vfio_notअगरy_type type,
+			     काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा vfio_group *group;
+	पूर्णांक ret;
 
-	if (!group)
-		return ERR_PTR(-EINVAL);
+	अगर (!dev || !nb)
+		वापस -EINVAL;
+
+	group = vfio_group_get_from_dev(dev);
+	अगर (!group)
+		वापस -ENODEV;
+
+	चयन (type) अणु
+	हाल VFIO_IOMMU_NOTIFY:
+		ret = vfio_unरेजिस्टर_iommu_notअगरier(group, nb);
+		अवरोध;
+	हाल VFIO_GROUP_NOTIFY:
+		ret = vfio_unरेजिस्टर_group_notअगरier(group, nb);
+		अवरोध;
+	शेष:
+		ret = -EINVAL;
+	पूर्ण
+
+	vfio_group_put(group);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(vfio_unरेजिस्टर_notअगरier);
+
+काष्ठा iommu_करोमुख्य *vfio_group_iommu_करोमुख्य(काष्ठा vfio_group *group)
+अणु
+	काष्ठा vfio_container *container;
+	काष्ठा vfio_iommu_driver *driver;
+
+	अगर (!group)
+		वापस ERR_PTR(-EINVAL);
 
 	container = group->container;
 	driver = container->iommu_driver;
-	if (likely(driver && driver->ops->group_iommu_domain))
-		return driver->ops->group_iommu_domain(container->iommu_data,
+	अगर (likely(driver && driver->ops->group_iommu_करोमुख्य))
+		वापस driver->ops->group_iommu_करोमुख्य(container->iommu_data,
 						       group->iommu_group);
 
-	return ERR_PTR(-ENOTTY);
-}
-EXPORT_SYMBOL_GPL(vfio_group_iommu_domain);
+	वापस ERR_PTR(-ENOTTY);
+पूर्ण
+EXPORT_SYMBOL_GPL(vfio_group_iommu_करोमुख्य);
 
 /**
  * Module/class support
  */
-static char *vfio_devnode(struct device *dev, umode_t *mode)
-{
-	return kasprintf(GFP_KERNEL, "vfio/%s", dev_name(dev));
-}
+अटल अक्षर *vfio_devnode(काष्ठा device *dev, umode_t *mode)
+अणु
+	वापस kaप्र_लिखो(GFP_KERNEL, "vfio/%s", dev_name(dev));
+पूर्ण
 
-static struct miscdevice vfio_dev = {
+अटल काष्ठा miscdevice vfio_dev = अणु
 	.minor = VFIO_MINOR,
 	.name = "vfio",
 	.fops = &vfio_fops,
 	.nodename = "vfio/vfio",
 	.mode = S_IRUGO | S_IWUGO,
-};
+पूर्ण;
 
-static int __init vfio_init(void)
-{
-	int ret;
+अटल पूर्णांक __init vfio_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	idr_init(&vfio.group_idr);
 	mutex_init(&vfio.group_lock);
@@ -2295,64 +2296,64 @@ static int __init vfio_init(void)
 	INIT_LIST_HEAD(&vfio.group_list);
 	INIT_LIST_HEAD(&vfio.iommu_drivers_list);
 
-	ret = misc_register(&vfio_dev);
-	if (ret) {
+	ret = misc_रेजिस्टर(&vfio_dev);
+	अगर (ret) अणु
 		pr_err("vfio: misc device register failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* /dev/vfio/$GROUP */
 	vfio.class = class_create(THIS_MODULE, "vfio");
-	if (IS_ERR(vfio.class)) {
+	अगर (IS_ERR(vfio.class)) अणु
 		ret = PTR_ERR(vfio.class);
-		goto err_class;
-	}
+		जाओ err_class;
+	पूर्ण
 
 	vfio.class->devnode = vfio_devnode;
 
 	ret = alloc_chrdev_region(&vfio.group_devt, 0, MINORMASK + 1, "vfio");
-	if (ret)
-		goto err_alloc_chrdev;
+	अगर (ret)
+		जाओ err_alloc_chrdev;
 
 	cdev_init(&vfio.group_cdev, &vfio_group_fops);
 	ret = cdev_add(&vfio.group_cdev, vfio.group_devt, MINORMASK + 1);
-	if (ret)
-		goto err_cdev_add;
+	अगर (ret)
+		जाओ err_cdev_add;
 
 	pr_info(DRIVER_DESC " version: " DRIVER_VERSION "\n");
 
-#ifdef CONFIG_VFIO_NOIOMMU
-	vfio_register_iommu_driver(&vfio_noiommu_ops);
-#endif
-	return 0;
+#अगर_घोषित CONFIG_VFIO_NOIOMMU
+	vfio_रेजिस्टर_iommu_driver(&vfio_noiommu_ops);
+#पूर्ण_अगर
+	वापस 0;
 
 err_cdev_add:
-	unregister_chrdev_region(vfio.group_devt, MINORMASK + 1);
+	unरेजिस्टर_chrdev_region(vfio.group_devt, MINORMASK + 1);
 err_alloc_chrdev:
 	class_destroy(vfio.class);
-	vfio.class = NULL;
+	vfio.class = शून्य;
 err_class:
-	misc_deregister(&vfio_dev);
-	return ret;
-}
+	misc_deरेजिस्टर(&vfio_dev);
+	वापस ret;
+पूर्ण
 
-static void __exit vfio_cleanup(void)
-{
+अटल व्योम __निकास vfio_cleanup(व्योम)
+अणु
 	WARN_ON(!list_empty(&vfio.group_list));
 
-#ifdef CONFIG_VFIO_NOIOMMU
-	vfio_unregister_iommu_driver(&vfio_noiommu_ops);
-#endif
+#अगर_घोषित CONFIG_VFIO_NOIOMMU
+	vfio_unरेजिस्टर_iommu_driver(&vfio_noiommu_ops);
+#पूर्ण_अगर
 	idr_destroy(&vfio.group_idr);
 	cdev_del(&vfio.group_cdev);
-	unregister_chrdev_region(vfio.group_devt, MINORMASK + 1);
+	unरेजिस्टर_chrdev_region(vfio.group_devt, MINORMASK + 1);
 	class_destroy(vfio.class);
-	vfio.class = NULL;
-	misc_deregister(&vfio_dev);
-}
+	vfio.class = शून्य;
+	misc_deरेजिस्टर(&vfio_dev);
+पूर्ण
 
 module_init(vfio_init);
-module_exit(vfio_cleanup);
+module_निकास(vfio_cleanup);
 
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE("GPL v2");

@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  * Author: Andrey Ryabinin <a.ryabinin@samsung.com>
  */
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/kasan.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/mman.h>
-#include <linux/module.h>
-#include <linux/printk.h>
-#include <linux/random.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/uaccess.h>
-#include <linux/io.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kasan.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/module.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <asm/page.h>
+#समावेश <यंत्र/page.h>
 
-#include <kunit/test.h>
+#समावेश <kunit/test.h>
 
-#include "../mm/kasan/kasan.h"
+#समावेश "../mm/kasan/kasan.h"
 
-#define OOB_TAG_OFF (IS_ENABLED(CONFIG_KASAN_GENERIC) ? 0 : KASAN_GRANULE_SIZE)
+#घोषणा OOB_TAG_OFF (IS_ENABLED(CONFIG_KASAN_GENERIC) ? 0 : KASAN_GRANULE_SIZE)
 
 /*
- * Some tests use these global variables to store return values from function
+ * Some tests use these global variables to store वापस values from function
  * calls that could otherwise be eliminated by the compiler as dead code.
  */
-void *kasan_ptr_result;
-int kasan_int_result;
+व्योम *kasan_ptr_result;
+पूर्णांक kasan_पूर्णांक_result;
 
-static struct kunit_resource resource;
-static struct kunit_kasan_expectation fail_data;
-static bool multishot;
+अटल काष्ठा kunit_resource resource;
+अटल काष्ठा kunit_kasan_expectation fail_data;
+अटल bool multishot;
 
 /*
  * Temporarily enable multi-shot mode. Otherwise, KASAN would only report the
- * first detected bug and panic the kernel if panic_on_warn is enabled. For
- * hardware tag-based KASAN also allow tag checking to be reenabled for each
- * test, see the comment for KUNIT_EXPECT_KASAN_FAIL().
+ * first detected bug and panic the kernel अगर panic_on_warn is enabled. For
+ * hardware tag-based KASAN also allow tag checking to be reenabled क्रम each
+ * test, see the comment क्रम KUNIT_EXPECT_KASAN_FAIL().
  */
-static int kasan_test_init(struct kunit *test)
-{
-	if (!kasan_enabled()) {
+अटल पूर्णांक kasan_test_init(काष्ठा kunit *test)
+अणु
+	अगर (!kasan_enabled()) अणु
 		kunit_err(test, "can't run KASAN tests with KASAN disabled");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	multishot = kasan_save_enable_multi_shot();
 	kasan_set_tagging_report_once(false);
 	fail_data.report_found = false;
 	fail_data.report_expected = false;
-	kunit_add_named_resource(test, NULL, NULL, &resource,
+	kunit_add_named_resource(test, शून्य, शून्य, &resource,
 					"kasan_data", &fail_data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kasan_test_exit(struct kunit *test)
-{
+अटल व्योम kasan_test_निकास(काष्ठा kunit *test)
+अणु
 	kasan_set_tagging_report_once(true);
 	kasan_restore_multi_shot(multishot);
 	KUNIT_EXPECT_FALSE(test, fail_data.report_found);
-}
+पूर्ण
 
 /**
  * KUNIT_EXPECT_KASAN_FAIL() - check that the executed expression produces a
  * KASAN report; causes a test failure otherwise. This relies on a KUnit
- * resource named "kasan_data". Do not use this name for KUnit resources
+ * resource named "kasan_data". Do not use this name क्रम KUnit resources
  * outside of KASAN tests.
  *
  * For hardware tag-based KASAN in sync mode, when a tag fault happens, tag
- * checking is auto-disabled. When this happens, this test handler reenables
+ * checking is स्वतः-disabled. When this happens, this test handler reenables
  * tag checking. As tag checking can be only disabled or enabled per CPU,
  * this handler disables migration (preemption).
  *
- * Since the compiler doesn't see that the expression can change the fail_data
+ * Since the compiler करोesn't see that the expression can change the fail_data
  * fields, it can reorder or optimize away the accesses to those fields.
- * Use READ/WRITE_ONCE() for the accesses and compiler barriers around the
+ * Use READ/WRITE_ONCE() क्रम the accesses and compiler barriers around the
  * expression to prevent that.
  *
  * In between KUNIT_EXPECT_KASAN_FAIL checks, fail_data.report_found is kept as
  * false. This allows detecting KASAN reports that happen outside of the checks
- * by asserting !fail_data.report_found at the start of KUNIT_EXPECT_KASAN_FAIL
- * and in kasan_test_exit.
+ * by निश्चितing !fail_data.report_found at the start of KUNIT_EXPECT_KASAN_FAIL
+ * and in kasan_test_निकास.
  */
-#define KUNIT_EXPECT_KASAN_FAIL(test, expression) do {			\
-	if (IS_ENABLED(CONFIG_KASAN_HW_TAGS) &&				\
+#घोषणा KUNIT_EXPECT_KASAN_FAIL(test, expression) करो अणु			\
+	अगर (IS_ENABLED(CONFIG_KASAN_HW_TAGS) &&				\
 	    !kasan_async_mode_enabled())				\
 		migrate_disable();					\
 	KUNIT_EXPECT_FALSE(test, READ_ONCE(fail_data.report_found));	\
@@ -101,119 +102,119 @@ static void kasan_test_exit(struct kunit *test)
 	KUNIT_EXPECT_EQ(test,						\
 			READ_ONCE(fail_data.report_expected),		\
 			READ_ONCE(fail_data.report_found));		\
-	if (IS_ENABLED(CONFIG_KASAN_HW_TAGS)) {				\
-		if (READ_ONCE(fail_data.report_found))			\
+	अगर (IS_ENABLED(CONFIG_KASAN_HW_TAGS)) अणु				\
+		अगर (READ_ONCE(fail_data.report_found))			\
 			kasan_enable_tagging_sync();			\
 		migrate_enable();					\
-	}								\
+	पूर्ण								\
 	WRITE_ONCE(fail_data.report_found, false);			\
 	WRITE_ONCE(fail_data.report_expected, false);			\
-} while (0)
+पूर्ण जबतक (0)
 
-#define KASAN_TEST_NEEDS_CONFIG_ON(test, config) do {			\
-	if (!IS_ENABLED(config)) {					\
+#घोषणा KASAN_TEST_NEEDS_CONFIG_ON(test, config) करो अणु			\
+	अगर (!IS_ENABLED(config)) अणु					\
 		kunit_info((test), "skipping, " #config " required");	\
-		return;							\
-	}								\
-} while (0)
+		वापस;							\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define KASAN_TEST_NEEDS_CONFIG_OFF(test, config) do {			\
-	if (IS_ENABLED(config)) {					\
+#घोषणा KASAN_TEST_NEEDS_CONFIG_OFF(test, config) करो अणु			\
+	अगर (IS_ENABLED(config)) अणु					\
 		kunit_info((test), "skipping, " #config " enabled");	\
-		return;							\
-	}								\
-} while (0)
+		वापस;							\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-static void kmalloc_oob_right(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 123;
+अटल व्योम kदो_स्मृति_oob_right(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 123;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr[size + OOB_TAG_OFF] = 'x');
-	kfree(ptr);
-}
+	kमुक्त(ptr);
+पूर्ण
 
-static void kmalloc_oob_left(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 15;
+अटल व्योम kदो_स्मृति_oob_left(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 15;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, *ptr = *(ptr - 1));
-	kfree(ptr);
-}
+	kमुक्त(ptr);
+पूर्ण
 
-static void kmalloc_node_oob_right(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 4096;
+अटल व्योम kदो_स्मृति_node_oob_right(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 4096;
 
-	ptr = kmalloc_node(size, GFP_KERNEL, 0);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति_node(size, GFP_KERNEL, 0);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr[size] = 0);
-	kfree(ptr);
-}
+	kमुक्त(ptr);
+पूर्ण
 
 /*
- * These kmalloc_pagealloc_* tests try allocating a memory chunk that doesn't
- * fit into a slab cache and therefore is allocated via the page allocator
- * fallback. Since this kind of fallback is only implemented for SLUB, these
+ * These kदो_स्मृति_pagealloc_* tests try allocating a memory chunk that करोesn't
+ * fit पूर्णांकo a slab cache and thereक्रमe is allocated via the page allocator
+ * fallback. Since this kind of fallback is only implemented क्रम SLUB, these
  * tests are limited to that allocator.
  */
-static void kmalloc_pagealloc_oob_right(struct kunit *test)
-{
-	char *ptr;
-	size_t size = KMALLOC_MAX_CACHE_SIZE + 10;
+अटल व्योम kदो_स्मृति_pagealloc_oob_right(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = KMALLOC_MAX_CACHE_SIZE + 10;
 
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_SLUB);
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr[size + OOB_TAG_OFF] = 0);
 
-	kfree(ptr);
-}
+	kमुक्त(ptr);
+पूर्ण
 
-static void kmalloc_pagealloc_uaf(struct kunit *test)
-{
-	char *ptr;
-	size_t size = KMALLOC_MAX_CACHE_SIZE + 10;
+अटल व्योम kदो_स्मृति_pagealloc_uaf(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = KMALLOC_MAX_CACHE_SIZE + 10;
 
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_SLUB);
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
-	kfree(ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
+	kमुक्त(ptr);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr[0] = 0);
-}
+पूर्ण
 
-static void kmalloc_pagealloc_invalid_free(struct kunit *test)
-{
-	char *ptr;
-	size_t size = KMALLOC_MAX_CACHE_SIZE + 10;
+अटल व्योम kदो_स्मृति_pagealloc_invalid_मुक्त(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = KMALLOC_MAX_CACHE_SIZE + 10;
 
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_SLUB);
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, kfree(ptr + 1));
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, kमुक्त(ptr + 1));
+पूर्ण
 
-static void pagealloc_oob_right(struct kunit *test)
-{
-	char *ptr;
-	struct page *pages;
-	size_t order = 4;
-	size_t size = (1UL << (PAGE_SHIFT + order));
+अटल व्योम pagealloc_oob_right(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	काष्ठा page *pages;
+	माप_प्रकार order = 4;
+	माप_प्रकार size = (1UL << (PAGE_SHIFT + order));
 
 	/*
 	 * With generic KASAN page allocations have no redzones, thus
@@ -224,56 +225,56 @@ static void pagealloc_oob_right(struct kunit *test)
 
 	pages = alloc_pages(GFP_KERNEL, order);
 	ptr = page_address(pages);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr[size] = 0);
-	free_pages((unsigned long)ptr, order);
-}
+	मुक्त_pages((अचिन्हित दीर्घ)ptr, order);
+पूर्ण
 
-static void pagealloc_uaf(struct kunit *test)
-{
-	char *ptr;
-	struct page *pages;
-	size_t order = 4;
+अटल व्योम pagealloc_uaf(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	काष्ठा page *pages;
+	माप_प्रकार order = 4;
 
 	pages = alloc_pages(GFP_KERNEL, order);
 	ptr = page_address(pages);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
-	free_pages((unsigned long)ptr, order);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
+	मुक्त_pages((अचिन्हित दीर्घ)ptr, order);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr[0] = 0);
-}
+पूर्ण
 
-static void kmalloc_large_oob_right(struct kunit *test)
-{
-	char *ptr;
-	size_t size = KMALLOC_MAX_CACHE_SIZE - 256;
+अटल व्योम kदो_स्मृति_large_oob_right(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = KMALLOC_MAX_CACHE_SIZE - 256;
 
 	/*
-	 * Allocate a chunk that is large enough, but still fits into a slab
-	 * and does not trigger the page allocator fallback in SLUB.
+	 * Allocate a chunk that is large enough, but still fits पूर्णांकo a slab
+	 * and करोes not trigger the page allocator fallback in SLUB.
 	 */
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr[size] = 0);
-	kfree(ptr);
-}
+	kमुक्त(ptr);
+पूर्ण
 
-static void krealloc_more_oob_helper(struct kunit *test,
-					size_t size1, size_t size2)
-{
-	char *ptr1, *ptr2;
-	size_t middle;
+अटल व्योम kपुनः_स्मृति_more_oob_helper(काष्ठा kunit *test,
+					माप_प्रकार size1, माप_प्रकार size2)
+अणु
+	अक्षर *ptr1, *ptr2;
+	माप_प्रकार middle;
 
 	KUNIT_ASSERT_LT(test, size1, size2);
 	middle = size1 + (size2 - size1) / 2;
 
-	ptr1 = kmalloc(size1, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr1);
+	ptr1 = kदो_स्मृति(size1, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr1);
 
-	ptr2 = krealloc(ptr1, size2, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr2);
+	ptr2 = kपुनः_स्मृति(ptr1, size2, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr2);
 
 	/* All offsets up to size2 must be accessible. */
 	ptr2[size1 - 1] = 'x';
@@ -282,36 +283,36 @@ static void krealloc_more_oob_helper(struct kunit *test,
 	ptr2[size2 - 1] = 'x';
 
 	/* Generic mode is precise, so unaligned size2 must be inaccessible. */
-	if (IS_ENABLED(CONFIG_KASAN_GENERIC))
+	अगर (IS_ENABLED(CONFIG_KASAN_GENERIC))
 		KUNIT_EXPECT_KASAN_FAIL(test, ptr2[size2] = 'x');
 
 	/* For all modes first aligned offset after size2 must be inaccessible. */
 	KUNIT_EXPECT_KASAN_FAIL(test,
 		ptr2[round_up(size2, KASAN_GRANULE_SIZE)] = 'x');
 
-	kfree(ptr2);
-}
+	kमुक्त(ptr2);
+पूर्ण
 
-static void krealloc_less_oob_helper(struct kunit *test,
-					size_t size1, size_t size2)
-{
-	char *ptr1, *ptr2;
-	size_t middle;
+अटल व्योम kपुनः_स्मृति_less_oob_helper(काष्ठा kunit *test,
+					माप_प्रकार size1, माप_प्रकार size2)
+अणु
+	अक्षर *ptr1, *ptr2;
+	माप_प्रकार middle;
 
 	KUNIT_ASSERT_LT(test, size2, size1);
 	middle = size2 + (size1 - size2) / 2;
 
-	ptr1 = kmalloc(size1, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr1);
+	ptr1 = kदो_स्मृति(size1, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr1);
 
-	ptr2 = krealloc(ptr1, size2, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr2);
+	ptr2 = kपुनः_स्मृति(ptr1, size2, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr2);
 
-	/* Must be accessible for all modes. */
+	/* Must be accessible क्रम all modes. */
 	ptr2[size2 - 1] = 'x';
 
 	/* Generic mode is precise, so unaligned size2 must be inaccessible. */
-	if (IS_ENABLED(CONFIG_KASAN_GENERIC))
+	अगर (IS_ENABLED(CONFIG_KASAN_GENERIC))
 		KUNIT_EXPECT_KASAN_FAIL(test, ptr2[size2] = 'x');
 
 	/* For all modes first aligned offset after size2 must be inaccessible. */
@@ -323,366 +324,366 @@ static void krealloc_less_oob_helper(struct kunit *test,
 	 * granules and thus the latter two offsets should be inaccessible.
 	 */
 	KUNIT_EXPECT_LE(test, round_up(size2, KASAN_GRANULE_SIZE),
-				round_down(middle, KASAN_GRANULE_SIZE));
+				round_करोwn(middle, KASAN_GRANULE_SIZE));
 	KUNIT_EXPECT_LE(test, round_up(middle, KASAN_GRANULE_SIZE),
-				round_down(size1, KASAN_GRANULE_SIZE));
+				round_करोwn(size1, KASAN_GRANULE_SIZE));
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr2[middle] = 'x');
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr2[size1 - 1] = 'x');
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr2[size1] = 'x');
 
-	kfree(ptr2);
-}
+	kमुक्त(ptr2);
+पूर्ण
 
-static void krealloc_more_oob(struct kunit *test)
-{
-	krealloc_more_oob_helper(test, 201, 235);
-}
+अटल व्योम kपुनः_स्मृति_more_oob(काष्ठा kunit *test)
+अणु
+	kपुनः_स्मृति_more_oob_helper(test, 201, 235);
+पूर्ण
 
-static void krealloc_less_oob(struct kunit *test)
-{
-	krealloc_less_oob_helper(test, 235, 201);
-}
+अटल व्योम kपुनः_स्मृति_less_oob(काष्ठा kunit *test)
+अणु
+	kपुनः_स्मृति_less_oob_helper(test, 235, 201);
+पूर्ण
 
-static void krealloc_pagealloc_more_oob(struct kunit *test)
-{
-	/* page_alloc fallback in only implemented for SLUB. */
+अटल व्योम kपुनः_स्मृति_pagealloc_more_oob(काष्ठा kunit *test)
+अणु
+	/* page_alloc fallback in only implemented क्रम SLUB. */
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_SLUB);
 
-	krealloc_more_oob_helper(test, KMALLOC_MAX_CACHE_SIZE + 201,
+	kपुनः_स्मृति_more_oob_helper(test, KMALLOC_MAX_CACHE_SIZE + 201,
 					KMALLOC_MAX_CACHE_SIZE + 235);
-}
+पूर्ण
 
-static void krealloc_pagealloc_less_oob(struct kunit *test)
-{
-	/* page_alloc fallback in only implemented for SLUB. */
+अटल व्योम kपुनः_स्मृति_pagealloc_less_oob(काष्ठा kunit *test)
+अणु
+	/* page_alloc fallback in only implemented क्रम SLUB. */
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_SLUB);
 
-	krealloc_less_oob_helper(test, KMALLOC_MAX_CACHE_SIZE + 235,
+	kपुनः_स्मृति_less_oob_helper(test, KMALLOC_MAX_CACHE_SIZE + 235,
 					KMALLOC_MAX_CACHE_SIZE + 201);
-}
+पूर्ण
 
 /*
- * Check that krealloc() detects a use-after-free, returns NULL,
- * and doesn't unpoison the freed object.
+ * Check that kपुनः_स्मृति() detects a use-after-मुक्त, वापसs शून्य,
+ * and करोesn't unpoison the मुक्तd object.
  */
-static void krealloc_uaf(struct kunit *test)
-{
-	char *ptr1, *ptr2;
-	int size1 = 201;
-	int size2 = 235;
+अटल व्योम kपुनः_स्मृति_uaf(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr1, *ptr2;
+	पूर्णांक size1 = 201;
+	पूर्णांक size2 = 235;
 
-	ptr1 = kmalloc(size1, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr1);
-	kfree(ptr1);
+	ptr1 = kदो_स्मृति(size1, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr1);
+	kमुक्त(ptr1);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, ptr2 = krealloc(ptr1, size2, GFP_KERNEL));
-	KUNIT_ASSERT_PTR_EQ(test, (void *)ptr2, NULL);
-	KUNIT_EXPECT_KASAN_FAIL(test, *(volatile char *)ptr1);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, ptr2 = kपुनः_स्मृति(ptr1, size2, GFP_KERNEL));
+	KUNIT_ASSERT_PTR_EQ(test, (व्योम *)ptr2, शून्य);
+	KUNIT_EXPECT_KASAN_FAIL(test, *(अस्थिर अक्षर *)ptr1);
+पूर्ण
 
-static void kmalloc_oob_16(struct kunit *test)
-{
-	struct {
+अटल व्योम kदो_स्मृति_oob_16(काष्ठा kunit *test)
+अणु
+	काष्ठा अणु
 		u64 words[2];
-	} *ptr1, *ptr2;
+	पूर्ण *ptr1, *ptr2;
 
-	/* This test is specifically crafted for the generic mode. */
+	/* This test is specअगरically crafted क्रम the generic mode. */
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_KASAN_GENERIC);
 
-	ptr1 = kmalloc(sizeof(*ptr1) - 3, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr1);
+	ptr1 = kदो_स्मृति(माप(*ptr1) - 3, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr1);
 
-	ptr2 = kmalloc(sizeof(*ptr2), GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr2);
+	ptr2 = kदो_स्मृति(माप(*ptr2), GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr2);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, *ptr1 = *ptr2);
-	kfree(ptr1);
-	kfree(ptr2);
-}
+	kमुक्त(ptr1);
+	kमुक्त(ptr2);
+पूर्ण
 
-static void kmalloc_uaf_16(struct kunit *test)
-{
-	struct {
+अटल व्योम kदो_स्मृति_uaf_16(काष्ठा kunit *test)
+अणु
+	काष्ठा अणु
 		u64 words[2];
-	} *ptr1, *ptr2;
+	पूर्ण *ptr1, *ptr2;
 
-	ptr1 = kmalloc(sizeof(*ptr1), GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr1);
+	ptr1 = kदो_स्मृति(माप(*ptr1), GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr1);
 
-	ptr2 = kmalloc(sizeof(*ptr2), GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr2);
-	kfree(ptr2);
+	ptr2 = kदो_स्मृति(माप(*ptr2), GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr2);
+	kमुक्त(ptr2);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, *ptr1 = *ptr2);
-	kfree(ptr1);
-}
+	kमुक्त(ptr1);
+पूर्ण
 
-static void kmalloc_oob_memset_2(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 8;
+अटल व्योम kदो_स्मृति_oob_स_रखो_2(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 8;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, memset(ptr + 7 + OOB_TAG_OFF, 0, 2));
-	kfree(ptr);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, स_रखो(ptr + 7 + OOB_TAG_OFF, 0, 2));
+	kमुक्त(ptr);
+पूर्ण
 
-static void kmalloc_oob_memset_4(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 8;
+अटल व्योम kदो_स्मृति_oob_स_रखो_4(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 8;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, memset(ptr + 5 + OOB_TAG_OFF, 0, 4));
-	kfree(ptr);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, स_रखो(ptr + 5 + OOB_TAG_OFF, 0, 4));
+	kमुक्त(ptr);
+पूर्ण
 
 
-static void kmalloc_oob_memset_8(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 8;
+अटल व्योम kदो_स्मृति_oob_स_रखो_8(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 8;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, memset(ptr + 1 + OOB_TAG_OFF, 0, 8));
-	kfree(ptr);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, स_रखो(ptr + 1 + OOB_TAG_OFF, 0, 8));
+	kमुक्त(ptr);
+पूर्ण
 
-static void kmalloc_oob_memset_16(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 16;
+अटल व्योम kदो_स्मृति_oob_स_रखो_16(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 16;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, memset(ptr + 1 + OOB_TAG_OFF, 0, 16));
-	kfree(ptr);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, स_रखो(ptr + 1 + OOB_TAG_OFF, 0, 16));
+	kमुक्त(ptr);
+पूर्ण
 
-static void kmalloc_oob_in_memset(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 666;
+अटल व्योम kदो_स्मृति_oob_in_स_रखो(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 666;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, memset(ptr, 0, size + 5 + OOB_TAG_OFF));
-	kfree(ptr);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, स_रखो(ptr, 0, size + 5 + OOB_TAG_OFF));
+	kमुक्त(ptr);
+पूर्ण
 
-static void kmalloc_memmove_invalid_size(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 64;
-	volatile size_t invalid_size = -2;
+अटल व्योम kदो_स्मृति_स_हटाओ_invalid_size(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 64;
+	अस्थिर माप_प्रकार invalid_size = -2;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	memset((char *)ptr, 0, 64);
+	स_रखो((अक्षर *)ptr, 0, 64);
 
 	KUNIT_EXPECT_KASAN_FAIL(test,
-		memmove((char *)ptr, (char *)ptr + 4, invalid_size));
-	kfree(ptr);
-}
+		स_हटाओ((अक्षर *)ptr, (अक्षर *)ptr + 4, invalid_size));
+	kमुक्त(ptr);
+पूर्ण
 
-static void kmalloc_uaf(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 10;
+अटल व्योम kदो_स्मृति_uaf(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 10;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	kfree(ptr);
+	kमुक्त(ptr);
 	KUNIT_EXPECT_KASAN_FAIL(test, *(ptr + 8) = 'x');
-}
+पूर्ण
 
-static void kmalloc_uaf_memset(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 33;
+अटल व्योम kदो_स्मृति_uaf_स_रखो(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 33;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	kfree(ptr);
-	KUNIT_EXPECT_KASAN_FAIL(test, memset(ptr, 0, size));
-}
+	kमुक्त(ptr);
+	KUNIT_EXPECT_KASAN_FAIL(test, स_रखो(ptr, 0, size));
+पूर्ण
 
-static void kmalloc_uaf2(struct kunit *test)
-{
-	char *ptr1, *ptr2;
-	size_t size = 43;
-	int counter = 0;
+अटल व्योम kदो_स्मृति_uaf2(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr1, *ptr2;
+	माप_प्रकार size = 43;
+	पूर्णांक counter = 0;
 
 again:
-	ptr1 = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr1);
+	ptr1 = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr1);
 
-	kfree(ptr1);
+	kमुक्त(ptr1);
 
-	ptr2 = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr2);
+	ptr2 = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr2);
 
 	/*
 	 * For tag-based KASAN ptr1 and ptr2 tags might happen to be the same.
-	 * Allow up to 16 attempts at generating different tags.
+	 * Allow up to 16 attempts at generating dअगरferent tags.
 	 */
-	if (!IS_ENABLED(CONFIG_KASAN_GENERIC) && ptr1 == ptr2 && counter++ < 16) {
-		kfree(ptr2);
-		goto again;
-	}
+	अगर (!IS_ENABLED(CONFIG_KASAN_GENERIC) && ptr1 == ptr2 && counter++ < 16) अणु
+		kमुक्त(ptr2);
+		जाओ again;
+	पूर्ण
 
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr1[40] = 'x');
 	KUNIT_EXPECT_PTR_NE(test, ptr1, ptr2);
 
-	kfree(ptr2);
-}
+	kमुक्त(ptr2);
+पूर्ण
 
-static void kfree_via_page(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 8;
-	struct page *page;
-	unsigned long offset;
+अटल व्योम kमुक्त_via_page(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 8;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ offset;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
 	page = virt_to_page(ptr);
 	offset = offset_in_page(ptr);
-	kfree(page_address(page) + offset);
-}
+	kमुक्त(page_address(page) + offset);
+पूर्ण
 
-static void kfree_via_phys(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 8;
+अटल व्योम kमुक्त_via_phys(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 8;
 	phys_addr_t phys;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
 	phys = virt_to_phys(ptr);
-	kfree(phys_to_virt(phys));
-}
+	kमुक्त(phys_to_virt(phys));
+पूर्ण
 
-static void kmem_cache_oob(struct kunit *test)
-{
-	char *p;
-	size_t size = 200;
-	struct kmem_cache *cache;
+अटल व्योम kmem_cache_oob(काष्ठा kunit *test)
+अणु
+	अक्षर *p;
+	माप_प्रकार size = 200;
+	काष्ठा kmem_cache *cache;
 
-	cache = kmem_cache_create("test_cache", size, 0, 0, NULL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, cache);
+	cache = kmem_cache_create("test_cache", size, 0, 0, शून्य);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, cache);
 
 	p = kmem_cache_alloc(cache, GFP_KERNEL);
-	if (!p) {
+	अगर (!p) अणु
 		kunit_err(test, "Allocation failed: %s\n", __func__);
 		kmem_cache_destroy(cache);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	KUNIT_EXPECT_KASAN_FAIL(test, *p = p[size + OOB_TAG_OFF]);
 
-	kmem_cache_free(cache, p);
+	kmem_cache_मुक्त(cache, p);
 	kmem_cache_destroy(cache);
-}
+पूर्ण
 
-static void kmem_cache_accounted(struct kunit *test)
-{
-	int i;
-	char *p;
-	size_t size = 200;
-	struct kmem_cache *cache;
+अटल व्योम kmem_cache_accounted(काष्ठा kunit *test)
+अणु
+	पूर्णांक i;
+	अक्षर *p;
+	माप_प्रकार size = 200;
+	काष्ठा kmem_cache *cache;
 
-	cache = kmem_cache_create("test_cache", size, 0, SLAB_ACCOUNT, NULL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, cache);
+	cache = kmem_cache_create("test_cache", size, 0, SLAB_ACCOUNT, शून्य);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, cache);
 
 	/*
-	 * Several allocations with a delay to allow for lazy per memcg kmem
+	 * Several allocations with a delay to allow क्रम lazy per memcg kmem
 	 * cache creation.
 	 */
-	for (i = 0; i < 5; i++) {
+	क्रम (i = 0; i < 5; i++) अणु
 		p = kmem_cache_alloc(cache, GFP_KERNEL);
-		if (!p)
-			goto free_cache;
+		अगर (!p)
+			जाओ मुक्त_cache;
 
-		kmem_cache_free(cache, p);
+		kmem_cache_मुक्त(cache, p);
 		msleep(100);
-	}
+	पूर्ण
 
-free_cache:
+मुक्त_cache:
 	kmem_cache_destroy(cache);
-}
+पूर्ण
 
-static void kmem_cache_bulk(struct kunit *test)
-{
-	struct kmem_cache *cache;
-	size_t size = 200;
-	char *p[10];
+अटल व्योम kmem_cache_bulk(काष्ठा kunit *test)
+अणु
+	काष्ठा kmem_cache *cache;
+	माप_प्रकार size = 200;
+	अक्षर *p[10];
 	bool ret;
-	int i;
+	पूर्णांक i;
 
-	cache = kmem_cache_create("test_cache", size, 0, 0, NULL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, cache);
+	cache = kmem_cache_create("test_cache", size, 0, 0, शून्य);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, cache);
 
-	ret = kmem_cache_alloc_bulk(cache, GFP_KERNEL, ARRAY_SIZE(p), (void **)&p);
-	if (!ret) {
+	ret = kmem_cache_alloc_bulk(cache, GFP_KERNEL, ARRAY_SIZE(p), (व्योम **)&p);
+	अगर (!ret) अणु
 		kunit_err(test, "Allocation failed: %s\n", __func__);
 		kmem_cache_destroy(cache);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(p); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(p); i++)
 		p[i][0] = p[i][size - 1] = 42;
 
-	kmem_cache_free_bulk(cache, ARRAY_SIZE(p), (void **)&p);
+	kmem_cache_मुक्त_bulk(cache, ARRAY_SIZE(p), (व्योम **)&p);
 	kmem_cache_destroy(cache);
-}
+पूर्ण
 
-static char global_array[10];
+अटल अक्षर global_array[10];
 
-static void kasan_global_oob(struct kunit *test)
-{
+अटल व्योम kasan_global_oob(काष्ठा kunit *test)
+अणु
 	/*
 	 * Deliberate out-of-bounds access. To prevent CONFIG_UBSAN_LOCAL_BOUNDS
 	 * from failing here and panicing the kernel, access the array via a
-	 * volatile pointer, which will prevent the compiler from being able to
+	 * अस्थिर poपूर्णांकer, which will prevent the compiler from being able to
 	 * determine the array bounds.
 	 *
-	 * This access uses a volatile pointer to char (char *volatile) rather
-	 * than the more conventional pointer to volatile char (volatile char *)
+	 * This access uses a अस्थिर poपूर्णांकer to अक्षर (अक्षर *अस्थिर) rather
+	 * than the more conventional poपूर्णांकer to अस्थिर अक्षर (अस्थिर अक्षर *)
 	 * because we want to prevent the compiler from making inferences about
-	 * the pointer itself (i.e. its array bounds), not the data that it
+	 * the poपूर्णांकer itself (i.e. its array bounds), not the data that it
 	 * refers to.
 	 */
-	char *volatile array = global_array;
-	char *p = &array[ARRAY_SIZE(global_array) + 3];
+	अक्षर *अस्थिर array = global_array;
+	अक्षर *p = &array[ARRAY_SIZE(global_array) + 3];
 
 	/* Only generic mode instruments globals. */
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_KASAN_GENERIC);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, *(volatile char *)p);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, *(अस्थिर अक्षर *)p);
+पूर्ण
 
 /* Check that ksize() makes the whole object accessible. */
-static void ksize_unpoisons_memory(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 123, real_size;
+अटल व्योम ksize_unpoisons_memory(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 123, real_size;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 	real_size = ksize(ptr);
 
 	/* This access shouldn't trigger a KASAN report. */
@@ -691,204 +692,204 @@ static void ksize_unpoisons_memory(struct kunit *test)
 	/* This one must. */
 	KUNIT_EXPECT_KASAN_FAIL(test, ptr[real_size] = 'y');
 
-	kfree(ptr);
-}
+	kमुक्त(ptr);
+पूर्ण
 
 /*
- * Check that a use-after-free is detected by ksize() and via normal accesses
+ * Check that a use-after-मुक्त is detected by ksize() and via normal accesses
  * after it.
  */
-static void ksize_uaf(struct kunit *test)
-{
-	char *ptr;
-	int size = 128 - KASAN_GRANULE_SIZE;
+अटल व्योम ksize_uaf(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	पूर्णांक size = 128 - KASAN_GRANULE_SIZE;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
-	kfree(ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
+	kमुक्त(ptr);
 
 	KUNIT_EXPECT_KASAN_FAIL(test, ksize(ptr));
-	KUNIT_EXPECT_KASAN_FAIL(test, kasan_int_result = *ptr);
-	KUNIT_EXPECT_KASAN_FAIL(test, kasan_int_result = *(ptr + size));
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, kasan_पूर्णांक_result = *ptr);
+	KUNIT_EXPECT_KASAN_FAIL(test, kasan_पूर्णांक_result = *(ptr + size));
+पूर्ण
 
-static void kasan_stack_oob(struct kunit *test)
-{
-	char stack_array[10];
+अटल व्योम kasan_stack_oob(काष्ठा kunit *test)
+अणु
+	अक्षर stack_array[10];
 	/* See comment in kasan_global_oob. */
-	char *volatile array = stack_array;
-	char *p = &array[ARRAY_SIZE(stack_array) + OOB_TAG_OFF];
+	अक्षर *अस्थिर array = stack_array;
+	अक्षर *p = &array[ARRAY_SIZE(stack_array) + OOB_TAG_OFF];
 
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_KASAN_STACK);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, *(volatile char *)p);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, *(अस्थिर अक्षर *)p);
+पूर्ण
 
-static void kasan_alloca_oob_left(struct kunit *test)
-{
-	volatile int i = 10;
-	char alloca_array[i];
+अटल व्योम kasan_alloca_oob_left(काष्ठा kunit *test)
+अणु
+	अस्थिर पूर्णांक i = 10;
+	अक्षर alloca_array[i];
 	/* See comment in kasan_global_oob. */
-	char *volatile array = alloca_array;
-	char *p = array - 1;
+	अक्षर *अस्थिर array = alloca_array;
+	अक्षर *p = array - 1;
 
 	/* Only generic mode instruments dynamic allocas. */
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_KASAN_GENERIC);
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_KASAN_STACK);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, *(volatile char *)p);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, *(अस्थिर अक्षर *)p);
+पूर्ण
 
-static void kasan_alloca_oob_right(struct kunit *test)
-{
-	volatile int i = 10;
-	char alloca_array[i];
+अटल व्योम kasan_alloca_oob_right(काष्ठा kunit *test)
+अणु
+	अस्थिर पूर्णांक i = 10;
+	अक्षर alloca_array[i];
 	/* See comment in kasan_global_oob. */
-	char *volatile array = alloca_array;
-	char *p = array + i;
+	अक्षर *अस्थिर array = alloca_array;
+	अक्षर *p = array + i;
 
 	/* Only generic mode instruments dynamic allocas. */
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_KASAN_GENERIC);
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_KASAN_STACK);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, *(volatile char *)p);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, *(अस्थिर अक्षर *)p);
+पूर्ण
 
-static void kmem_cache_double_free(struct kunit *test)
-{
-	char *p;
-	size_t size = 200;
-	struct kmem_cache *cache;
+अटल व्योम kmem_cache_द्विगुन_मुक्त(काष्ठा kunit *test)
+अणु
+	अक्षर *p;
+	माप_प्रकार size = 200;
+	काष्ठा kmem_cache *cache;
 
-	cache = kmem_cache_create("test_cache", size, 0, 0, NULL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, cache);
+	cache = kmem_cache_create("test_cache", size, 0, 0, शून्य);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, cache);
 
 	p = kmem_cache_alloc(cache, GFP_KERNEL);
-	if (!p) {
+	अगर (!p) अणु
 		kunit_err(test, "Allocation failed: %s\n", __func__);
 		kmem_cache_destroy(cache);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	kmem_cache_free(cache, p);
-	KUNIT_EXPECT_KASAN_FAIL(test, kmem_cache_free(cache, p));
+	kmem_cache_मुक्त(cache, p);
+	KUNIT_EXPECT_KASAN_FAIL(test, kmem_cache_मुक्त(cache, p));
 	kmem_cache_destroy(cache);
-}
+पूर्ण
 
-static void kmem_cache_invalid_free(struct kunit *test)
-{
-	char *p;
-	size_t size = 200;
-	struct kmem_cache *cache;
+अटल व्योम kmem_cache_invalid_मुक्त(काष्ठा kunit *test)
+अणु
+	अक्षर *p;
+	माप_प्रकार size = 200;
+	काष्ठा kmem_cache *cache;
 
 	cache = kmem_cache_create("test_cache", size, 0, SLAB_TYPESAFE_BY_RCU,
-				  NULL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, cache);
+				  शून्य);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, cache);
 
 	p = kmem_cache_alloc(cache, GFP_KERNEL);
-	if (!p) {
+	अगर (!p) अणु
 		kunit_err(test, "Allocation failed: %s\n", __func__);
 		kmem_cache_destroy(cache);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Trigger invalid free, the object doesn't get freed. */
-	KUNIT_EXPECT_KASAN_FAIL(test, kmem_cache_free(cache, p + 1));
+	/* Trigger invalid मुक्त, the object करोesn't get मुक्तd. */
+	KUNIT_EXPECT_KASAN_FAIL(test, kmem_cache_मुक्त(cache, p + 1));
 
 	/*
-	 * Properly free the object to prevent the "Objects remaining in
-	 * test_cache on __kmem_cache_shutdown" BUG failure.
+	 * Properly मुक्त the object to prevent the "Objects reमुख्यing in
+	 * test_cache on __kmem_cache_shutकरोwn" BUG failure.
 	 */
-	kmem_cache_free(cache, p);
+	kmem_cache_मुक्त(cache, p);
 
 	kmem_cache_destroy(cache);
-}
+पूर्ण
 
-static void kasan_memchr(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 24;
+अटल व्योम kasan_स_प्रथम(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 24;
 
 	/*
 	 * str* functions are not instrumented with CONFIG_AMD_MEM_ENCRYPT.
-	 * See https://bugzilla.kernel.org/show_bug.cgi?id=206337 for details.
+	 * See https://bugzilla.kernel.org/show_bug.cgi?id=206337 क्रम details.
 	 */
 	KASAN_TEST_NEEDS_CONFIG_OFF(test, CONFIG_AMD_MEM_ENCRYPT);
 
-	if (OOB_TAG_OFF)
+	अगर (OOB_TAG_OFF)
 		size = round_up(size, OOB_TAG_OFF);
 
-	ptr = kmalloc(size, GFP_KERNEL | __GFP_ZERO);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL | __GFP_ZERO);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
 	KUNIT_EXPECT_KASAN_FAIL(test,
-		kasan_ptr_result = memchr(ptr, '1', size + 1));
+		kasan_ptr_result = स_प्रथम(ptr, '1', size + 1));
 
-	kfree(ptr);
-}
+	kमुक्त(ptr);
+पूर्ण
 
-static void kasan_memcmp(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 24;
-	int arr[9];
+अटल व्योम kasan_स_भेद(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 24;
+	पूर्णांक arr[9];
 
 	/*
 	 * str* functions are not instrumented with CONFIG_AMD_MEM_ENCRYPT.
-	 * See https://bugzilla.kernel.org/show_bug.cgi?id=206337 for details.
+	 * See https://bugzilla.kernel.org/show_bug.cgi?id=206337 क्रम details.
 	 */
 	KASAN_TEST_NEEDS_CONFIG_OFF(test, CONFIG_AMD_MEM_ENCRYPT);
 
-	if (OOB_TAG_OFF)
+	अगर (OOB_TAG_OFF)
 		size = round_up(size, OOB_TAG_OFF);
 
-	ptr = kmalloc(size, GFP_KERNEL | __GFP_ZERO);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
-	memset(arr, 0, sizeof(arr));
+	ptr = kदो_स्मृति(size, GFP_KERNEL | __GFP_ZERO);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
+	स_रखो(arr, 0, माप(arr));
 
 	KUNIT_EXPECT_KASAN_FAIL(test,
-		kasan_int_result = memcmp(ptr, arr, size+1));
-	kfree(ptr);
-}
+		kasan_पूर्णांक_result = स_भेद(ptr, arr, size+1));
+	kमुक्त(ptr);
+पूर्ण
 
-static void kasan_strings(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 24;
+अटल व्योम kasan_strings(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 24;
 
 	/*
 	 * str* functions are not instrumented with CONFIG_AMD_MEM_ENCRYPT.
-	 * See https://bugzilla.kernel.org/show_bug.cgi?id=206337 for details.
+	 * See https://bugzilla.kernel.org/show_bug.cgi?id=206337 क्रम details.
 	 */
 	KASAN_TEST_NEEDS_CONFIG_OFF(test, CONFIG_AMD_MEM_ENCRYPT);
 
-	ptr = kmalloc(size, GFP_KERNEL | __GFP_ZERO);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL | __GFP_ZERO);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	kfree(ptr);
+	kमुक्त(ptr);
 
 	/*
 	 * Try to cause only 1 invalid access (less spam in dmesg).
-	 * For that we need ptr to point to zeroed byte.
-	 * Skip metadata that could be stored in freed object so ptr
-	 * will likely point to zeroed byte.
+	 * For that we need ptr to poपूर्णांक to zeroed byte.
+	 * Skip metadata that could be stored in मुक्तd object so ptr
+	 * will likely poपूर्णांक to zeroed byte.
 	 */
 	ptr += 16;
-	KUNIT_EXPECT_KASAN_FAIL(test, kasan_ptr_result = strchr(ptr, '1'));
+	KUNIT_EXPECT_KASAN_FAIL(test, kasan_ptr_result = म_अक्षर(ptr, '1'));
 
-	KUNIT_EXPECT_KASAN_FAIL(test, kasan_ptr_result = strrchr(ptr, '1'));
+	KUNIT_EXPECT_KASAN_FAIL(test, kasan_ptr_result = म_खोजप(ptr, '1'));
 
-	KUNIT_EXPECT_KASAN_FAIL(test, kasan_int_result = strcmp(ptr, "2"));
+	KUNIT_EXPECT_KASAN_FAIL(test, kasan_पूर्णांक_result = म_भेद(ptr, "2"));
 
-	KUNIT_EXPECT_KASAN_FAIL(test, kasan_int_result = strncmp(ptr, "2", 1));
+	KUNIT_EXPECT_KASAN_FAIL(test, kasan_पूर्णांक_result = म_भेदन(ptr, "2", 1));
 
-	KUNIT_EXPECT_KASAN_FAIL(test, kasan_int_result = strlen(ptr));
+	KUNIT_EXPECT_KASAN_FAIL(test, kasan_पूर्णांक_result = म_माप(ptr));
 
-	KUNIT_EXPECT_KASAN_FAIL(test, kasan_int_result = strnlen(ptr, 1));
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, kasan_पूर्णांक_result = strnlen(ptr, 1));
+पूर्ण
 
-static void kasan_bitops_modify(struct kunit *test, int nr, void *addr)
-{
+अटल व्योम kasan_bitops_modअगरy(काष्ठा kunit *test, पूर्णांक nr, व्योम *addr)
+अणु
 	KUNIT_EXPECT_KASAN_FAIL(test, set_bit(nr, addr));
 	KUNIT_EXPECT_KASAN_FAIL(test, __set_bit(nr, addr));
 	KUNIT_EXPECT_KASAN_FAIL(test, clear_bit(nr, addr));
@@ -897,10 +898,10 @@ static void kasan_bitops_modify(struct kunit *test, int nr, void *addr)
 	KUNIT_EXPECT_KASAN_FAIL(test, __clear_bit_unlock(nr, addr));
 	KUNIT_EXPECT_KASAN_FAIL(test, change_bit(nr, addr));
 	KUNIT_EXPECT_KASAN_FAIL(test, __change_bit(nr, addr));
-}
+पूर्ण
 
-static void kasan_bitops_test_and_modify(struct kunit *test, int nr, void *addr)
-{
+अटल व्योम kasan_bitops_test_and_modअगरy(काष्ठा kunit *test, पूर्णांक nr, व्योम *addr)
+अणु
 	KUNIT_EXPECT_KASAN_FAIL(test, test_and_set_bit(nr, addr));
 	KUNIT_EXPECT_KASAN_FAIL(test, __test_and_set_bit(nr, addr));
 	KUNIT_EXPECT_KASAN_FAIL(test, test_and_set_bit_lock(nr, addr));
@@ -908,76 +909,76 @@ static void kasan_bitops_test_and_modify(struct kunit *test, int nr, void *addr)
 	KUNIT_EXPECT_KASAN_FAIL(test, __test_and_clear_bit(nr, addr));
 	KUNIT_EXPECT_KASAN_FAIL(test, test_and_change_bit(nr, addr));
 	KUNIT_EXPECT_KASAN_FAIL(test, __test_and_change_bit(nr, addr));
-	KUNIT_EXPECT_KASAN_FAIL(test, kasan_int_result = test_bit(nr, addr));
+	KUNIT_EXPECT_KASAN_FAIL(test, kasan_पूर्णांक_result = test_bit(nr, addr));
 
-#if defined(clear_bit_unlock_is_negative_byte)
-	KUNIT_EXPECT_KASAN_FAIL(test, kasan_int_result =
+#अगर defined(clear_bit_unlock_is_negative_byte)
+	KUNIT_EXPECT_KASAN_FAIL(test, kasan_पूर्णांक_result =
 				clear_bit_unlock_is_negative_byte(nr, addr));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void kasan_bitops_generic(struct kunit *test)
-{
-	long *bits;
+अटल व्योम kasan_bitops_generic(काष्ठा kunit *test)
+अणु
+	दीर्घ *bits;
 
-	/* This test is specifically crafted for the generic mode. */
+	/* This test is specअगरically crafted क्रम the generic mode. */
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_KASAN_GENERIC);
 
 	/*
 	 * Allocate 1 more byte, which causes kzalloc to round up to 16 bytes;
-	 * this way we do not actually corrupt other memory.
+	 * this way we करो not actually corrupt other memory.
 	 */
-	bits = kzalloc(sizeof(*bits) + 1, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, bits);
+	bits = kzalloc(माप(*bits) + 1, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, bits);
 
 	/*
 	 * Below calls try to access bit within allocated memory; however, the
 	 * below accesses are still out-of-bounds, since bitops are defined to
-	 * operate on the whole long the bit is in.
+	 * operate on the whole दीर्घ the bit is in.
 	 */
-	kasan_bitops_modify(test, BITS_PER_LONG, bits);
+	kasan_bitops_modअगरy(test, BITS_PER_LONG, bits);
 
 	/*
 	 * Below calls try to access bit beyond allocated memory.
 	 */
-	kasan_bitops_test_and_modify(test, BITS_PER_LONG + BITS_PER_BYTE, bits);
+	kasan_bitops_test_and_modअगरy(test, BITS_PER_LONG + BITS_PER_BYTE, bits);
 
-	kfree(bits);
-}
+	kमुक्त(bits);
+पूर्ण
 
-static void kasan_bitops_tags(struct kunit *test)
-{
-	long *bits;
+अटल व्योम kasan_bitops_tags(काष्ठा kunit *test)
+अणु
+	दीर्घ *bits;
 
-	/* This test is specifically crafted for tag-based modes. */
+	/* This test is specअगरically crafted क्रम tag-based modes. */
 	KASAN_TEST_NEEDS_CONFIG_OFF(test, CONFIG_KASAN_GENERIC);
 
-	/* kmalloc-64 cache will be used and the last 16 bytes will be the redzone. */
+	/* kदो_स्मृति-64 cache will be used and the last 16 bytes will be the redzone. */
 	bits = kzalloc(48, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, bits);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, bits);
 
-	/* Do the accesses past the 48 allocated bytes, but within the redone. */
-	kasan_bitops_modify(test, BITS_PER_LONG, (void *)bits + 48);
-	kasan_bitops_test_and_modify(test, BITS_PER_LONG + BITS_PER_BYTE, (void *)bits + 48);
+	/* Do the accesses past the 48 allocated bytes, but within the reकरोne. */
+	kasan_bitops_modअगरy(test, BITS_PER_LONG, (व्योम *)bits + 48);
+	kasan_bitops_test_and_modअगरy(test, BITS_PER_LONG + BITS_PER_BYTE, (व्योम *)bits + 48);
 
-	kfree(bits);
-}
+	kमुक्त(bits);
+पूर्ण
 
-static void kmalloc_double_kzfree(struct kunit *test)
-{
-	char *ptr;
-	size_t size = 16;
+अटल व्योम kदो_स्मृति_द्विगुन_kzमुक्त(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	माप_प्रकार size = 16;
 
-	ptr = kmalloc(size, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(size, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	kfree_sensitive(ptr);
-	KUNIT_EXPECT_KASAN_FAIL(test, kfree_sensitive(ptr));
-}
+	kमुक्त_sensitive(ptr);
+	KUNIT_EXPECT_KASAN_FAIL(test, kमुक्त_sensitive(ptr));
+पूर्ण
 
-static void vmalloc_oob(struct kunit *test)
-{
-	void *area;
+अटल व्योम vदो_स्मृति_oob(काष्ठा kunit *test)
+अणु
+	व्योम *area;
 
 	KASAN_TEST_NEEDS_CONFIG_ON(test, CONFIG_KASAN_VMALLOC);
 
@@ -985,58 +986,58 @@ static void vmalloc_oob(struct kunit *test)
 	 * We have to be careful not to hit the guard page.
 	 * The MMU will catch that and crash us.
 	 */
-	area = vmalloc(3000);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, area);
+	area = vदो_स्मृति(3000);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, area);
 
-	KUNIT_EXPECT_KASAN_FAIL(test, ((volatile char *)area)[3100]);
-	vfree(area);
-}
+	KUNIT_EXPECT_KASAN_FAIL(test, ((अस्थिर अक्षर *)area)[3100]);
+	vमुक्त(area);
+पूर्ण
 
 /*
- * Check that the assigned pointer tag falls within the [KASAN_TAG_MIN,
- * KASAN_TAG_KERNEL) range (note: excluding the match-all tag) for tag-based
+ * Check that the asचिन्हित poपूर्णांकer tag falls within the [KASAN_TAG_MIN,
+ * KASAN_TAG_KERNEL) range (note: excluding the match-all tag) क्रम tag-based
  * modes.
  */
-static void match_all_not_assigned(struct kunit *test)
-{
-	char *ptr;
-	struct page *pages;
-	int i, size, order;
+अटल व्योम match_all_not_asचिन्हित(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	काष्ठा page *pages;
+	पूर्णांक i, size, order;
 
 	KASAN_TEST_NEEDS_CONFIG_OFF(test, CONFIG_KASAN_GENERIC);
 
-	for (i = 0; i < 256; i++) {
-		size = (get_random_int() % 1024) + 1;
-		ptr = kmalloc(size, GFP_KERNEL);
-		KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	क्रम (i = 0; i < 256; i++) अणु
+		size = (get_अक्रमom_पूर्णांक() % 1024) + 1;
+		ptr = kदो_स्मृति(size, GFP_KERNEL);
+		KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 		KUNIT_EXPECT_GE(test, (u8)get_tag(ptr), (u8)KASAN_TAG_MIN);
 		KUNIT_EXPECT_LT(test, (u8)get_tag(ptr), (u8)KASAN_TAG_KERNEL);
-		kfree(ptr);
-	}
+		kमुक्त(ptr);
+	पूर्ण
 
-	for (i = 0; i < 256; i++) {
-		order = (get_random_int() % 4) + 1;
+	क्रम (i = 0; i < 256; i++) अणु
+		order = (get_अक्रमom_पूर्णांक() % 4) + 1;
 		pages = alloc_pages(GFP_KERNEL, order);
 		ptr = page_address(pages);
-		KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+		KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 		KUNIT_EXPECT_GE(test, (u8)get_tag(ptr), (u8)KASAN_TAG_MIN);
 		KUNIT_EXPECT_LT(test, (u8)get_tag(ptr), (u8)KASAN_TAG_KERNEL);
-		free_pages((unsigned long)ptr, order);
-	}
-}
+		मुक्त_pages((अचिन्हित दीर्घ)ptr, order);
+	पूर्ण
+पूर्ण
 
-/* Check that 0xff works as a match-all pointer tag for tag-based modes. */
-static void match_all_ptr_tag(struct kunit *test)
-{
-	char *ptr;
+/* Check that 0xff works as a match-all poपूर्णांकer tag क्रम tag-based modes. */
+अटल व्योम match_all_ptr_tag(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
 	u8 tag;
 
 	KASAN_TEST_NEEDS_CONFIG_OFF(test, CONFIG_KASAN_GENERIC);
 
-	ptr = kmalloc(128, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(128, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 
-	/* Backup the assigned tag. */
+	/* Backup the asचिन्हित tag. */
 	tag = get_tag(ptr);
 	KUNIT_EXPECT_NE(test, tag, (u8)KASAN_TAG_KERNEL);
 
@@ -1046,68 +1047,68 @@ static void match_all_ptr_tag(struct kunit *test)
 	/* This access shouldn't trigger a KASAN report. */
 	*ptr = 0;
 
-	/* Recover the pointer tag and free. */
+	/* Recover the poपूर्णांकer tag and मुक्त. */
 	ptr = set_tag(ptr, tag);
-	kfree(ptr);
-}
+	kमुक्त(ptr);
+पूर्ण
 
-/* Check that there are no match-all memory tags for tag-based modes. */
-static void match_all_mem_tag(struct kunit *test)
-{
-	char *ptr;
-	int tag;
+/* Check that there are no match-all memory tags क्रम tag-based modes. */
+अटल व्योम match_all_mem_tag(काष्ठा kunit *test)
+अणु
+	अक्षर *ptr;
+	पूर्णांक tag;
 
 	KASAN_TEST_NEEDS_CONFIG_OFF(test, CONFIG_KASAN_GENERIC);
 
-	ptr = kmalloc(128, GFP_KERNEL);
-	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, ptr);
+	ptr = kदो_स्मृति(128, GFP_KERNEL);
+	KUNIT_ASSERT_NOT_ERR_OR_शून्य(test, ptr);
 	KUNIT_EXPECT_NE(test, (u8)get_tag(ptr), (u8)KASAN_TAG_KERNEL);
 
-	/* For each possible tag value not matching the pointer tag. */
-	for (tag = KASAN_TAG_MIN; tag <= KASAN_TAG_KERNEL; tag++) {
-		if (tag == get_tag(ptr))
-			continue;
+	/* For each possible tag value not matching the poपूर्णांकer tag. */
+	क्रम (tag = KASAN_TAG_MIN; tag <= KASAN_TAG_KERNEL; tag++) अणु
+		अगर (tag == get_tag(ptr))
+			जारी;
 
 		/* Mark the first memory granule with the chosen memory tag. */
 		kasan_poison(ptr, KASAN_GRANULE_SIZE, (u8)tag, false);
 
 		/* This access must cause a KASAN report. */
 		KUNIT_EXPECT_KASAN_FAIL(test, *ptr = 0);
-	}
+	पूर्ण
 
-	/* Recover the memory tag and free. */
+	/* Recover the memory tag and मुक्त. */
 	kasan_poison(ptr, KASAN_GRANULE_SIZE, get_tag(ptr), false);
-	kfree(ptr);
-}
+	kमुक्त(ptr);
+पूर्ण
 
-static struct kunit_case kasan_kunit_test_cases[] = {
-	KUNIT_CASE(kmalloc_oob_right),
-	KUNIT_CASE(kmalloc_oob_left),
-	KUNIT_CASE(kmalloc_node_oob_right),
-	KUNIT_CASE(kmalloc_pagealloc_oob_right),
-	KUNIT_CASE(kmalloc_pagealloc_uaf),
-	KUNIT_CASE(kmalloc_pagealloc_invalid_free),
+अटल काष्ठा kunit_हाल kasan_kunit_test_हालs[] = अणु
+	KUNIT_CASE(kदो_स्मृति_oob_right),
+	KUNIT_CASE(kदो_स्मृति_oob_left),
+	KUNIT_CASE(kदो_स्मृति_node_oob_right),
+	KUNIT_CASE(kदो_स्मृति_pagealloc_oob_right),
+	KUNIT_CASE(kदो_स्मृति_pagealloc_uaf),
+	KUNIT_CASE(kदो_स्मृति_pagealloc_invalid_मुक्त),
 	KUNIT_CASE(pagealloc_oob_right),
 	KUNIT_CASE(pagealloc_uaf),
-	KUNIT_CASE(kmalloc_large_oob_right),
-	KUNIT_CASE(krealloc_more_oob),
-	KUNIT_CASE(krealloc_less_oob),
-	KUNIT_CASE(krealloc_pagealloc_more_oob),
-	KUNIT_CASE(krealloc_pagealloc_less_oob),
-	KUNIT_CASE(krealloc_uaf),
-	KUNIT_CASE(kmalloc_oob_16),
-	KUNIT_CASE(kmalloc_uaf_16),
-	KUNIT_CASE(kmalloc_oob_in_memset),
-	KUNIT_CASE(kmalloc_oob_memset_2),
-	KUNIT_CASE(kmalloc_oob_memset_4),
-	KUNIT_CASE(kmalloc_oob_memset_8),
-	KUNIT_CASE(kmalloc_oob_memset_16),
-	KUNIT_CASE(kmalloc_memmove_invalid_size),
-	KUNIT_CASE(kmalloc_uaf),
-	KUNIT_CASE(kmalloc_uaf_memset),
-	KUNIT_CASE(kmalloc_uaf2),
-	KUNIT_CASE(kfree_via_page),
-	KUNIT_CASE(kfree_via_phys),
+	KUNIT_CASE(kदो_स्मृति_large_oob_right),
+	KUNIT_CASE(kपुनः_स्मृति_more_oob),
+	KUNIT_CASE(kपुनः_स्मृति_less_oob),
+	KUNIT_CASE(kपुनः_स्मृति_pagealloc_more_oob),
+	KUNIT_CASE(kपुनः_स्मृति_pagealloc_less_oob),
+	KUNIT_CASE(kपुनः_स्मृति_uaf),
+	KUNIT_CASE(kदो_स्मृति_oob_16),
+	KUNIT_CASE(kदो_स्मृति_uaf_16),
+	KUNIT_CASE(kदो_स्मृति_oob_in_स_रखो),
+	KUNIT_CASE(kदो_स्मृति_oob_स_रखो_2),
+	KUNIT_CASE(kदो_स्मृति_oob_स_रखो_4),
+	KUNIT_CASE(kदो_स्मृति_oob_स_रखो_8),
+	KUNIT_CASE(kदो_स्मृति_oob_स_रखो_16),
+	KUNIT_CASE(kदो_स्मृति_स_हटाओ_invalid_size),
+	KUNIT_CASE(kदो_स्मृति_uaf),
+	KUNIT_CASE(kदो_स्मृति_uaf_स_रखो),
+	KUNIT_CASE(kदो_स्मृति_uaf2),
+	KUNIT_CASE(kमुक्त_via_page),
+	KUNIT_CASE(kमुक्त_via_phys),
 	KUNIT_CASE(kmem_cache_oob),
 	KUNIT_CASE(kmem_cache_accounted),
 	KUNIT_CASE(kmem_cache_bulk),
@@ -1117,27 +1118,27 @@ static struct kunit_case kasan_kunit_test_cases[] = {
 	KUNIT_CASE(kasan_alloca_oob_right),
 	KUNIT_CASE(ksize_unpoisons_memory),
 	KUNIT_CASE(ksize_uaf),
-	KUNIT_CASE(kmem_cache_double_free),
-	KUNIT_CASE(kmem_cache_invalid_free),
-	KUNIT_CASE(kasan_memchr),
-	KUNIT_CASE(kasan_memcmp),
+	KUNIT_CASE(kmem_cache_द्विगुन_मुक्त),
+	KUNIT_CASE(kmem_cache_invalid_मुक्त),
+	KUNIT_CASE(kasan_स_प्रथम),
+	KUNIT_CASE(kasan_स_भेद),
 	KUNIT_CASE(kasan_strings),
 	KUNIT_CASE(kasan_bitops_generic),
 	KUNIT_CASE(kasan_bitops_tags),
-	KUNIT_CASE(kmalloc_double_kzfree),
-	KUNIT_CASE(vmalloc_oob),
-	KUNIT_CASE(match_all_not_assigned),
+	KUNIT_CASE(kदो_स्मृति_द्विगुन_kzमुक्त),
+	KUNIT_CASE(vदो_स्मृति_oob),
+	KUNIT_CASE(match_all_not_asचिन्हित),
 	KUNIT_CASE(match_all_ptr_tag),
 	KUNIT_CASE(match_all_mem_tag),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static struct kunit_suite kasan_kunit_test_suite = {
+अटल काष्ठा kunit_suite kasan_kunit_test_suite = अणु
 	.name = "kasan",
 	.init = kasan_test_init,
-	.test_cases = kasan_kunit_test_cases,
-	.exit = kasan_test_exit,
-};
+	.test_हालs = kasan_kunit_test_हालs,
+	.निकास = kasan_test_निकास,
+पूर्ण;
 
 kunit_test_suite(kasan_kunit_test_suite);
 

@@ -1,205 +1,206 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* 
  * Copyright (C) 2000, 2002 Jeff Dike (jdike@karaya.com)
  */
 
-#include <linux/fs.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/major.h>
-#include <linux/mm.h>
-#include <linux/init.h>
-#include <linux/console.h>
-#include <asm/termbits.h>
-#include <asm/irq.h>
-#include "chan.h"
-#include <init.h>
-#include <irq_user.h>
-#include "mconsole_kern.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/major.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/console.h>
+#समावेश <यंत्र/termbits.h>
+#समावेश <यंत्र/irq.h>
+#समावेश "chan.h"
+#समावेश <init.h>
+#समावेश <irq_user.h>
+#समावेश "mconsole_kern.h"
 
-static const int ssl_version = 1;
+अटल स्थिर पूर्णांक ssl_version = 1;
 
-#define NR_PORTS 64
+#घोषणा NR_PORTS 64
 
-static void ssl_announce(char *dev_name, int dev)
-{
-	printk(KERN_INFO "Serial line %d assigned device '%s'\n", dev,
+अटल व्योम ssl_announce(अक्षर *dev_name, पूर्णांक dev)
+अणु
+	prपूर्णांकk(KERN_INFO "Serial line %d assigned device '%s'\n", dev,
 	       dev_name);
-}
+पूर्ण
 
-/* Almost const, except that xterm_title may be changed in an initcall */
-static struct chan_opts opts = {
+/* Almost स्थिर, except that xterm_title may be changed in an initcall */
+अटल काष्ठा chan_opts opts = अणु
 	.announce 	= ssl_announce,
 	.xterm_title	= "Serial Line #%d",
 	.raw		= 1,
-};
+पूर्ण;
 
-static int ssl_config(char *str, char **error_out);
-static int ssl_get_config(char *dev, char *str, int size, char **error_out);
-static int ssl_remove(int n, char **error_out);
+अटल पूर्णांक ssl_config(अक्षर *str, अक्षर **error_out);
+अटल पूर्णांक ssl_get_config(अक्षर *dev, अक्षर *str, पूर्णांक size, अक्षर **error_out);
+अटल पूर्णांक ssl_हटाओ(पूर्णांक n, अक्षर **error_out);
 
 
-/* Const, except for .mc.list */
-static struct line_driver driver = {
+/* Const, except क्रम .mc.list */
+अटल काष्ठा line_driver driver = अणु
 	.name 			= "UML serial line",
 	.device_name 		= "ttyS",
 	.major 			= TTY_MAJOR,
 	.minor_start 		= 64,
 	.type 		 	= TTY_DRIVER_TYPE_SERIAL,
 	.subtype 	 	= 0,
-	.read_irq 		= SSL_IRQ,
-	.read_irq_name 		= "ssl",
-	.write_irq 		= SSL_WRITE_IRQ,
-	.write_irq_name 	= "ssl-write",
-	.mc  = {
+	.पढ़ो_irq 		= SSL_IRQ,
+	.पढ़ो_irq_name 		= "ssl",
+	.ग_लिखो_irq 		= SSL_WRITE_IRQ,
+	.ग_लिखो_irq_name 	= "ssl-write",
+	.mc  = अणु
 		.list		= LIST_HEAD_INIT(driver.mc.list),
 		.name  		= "ssl",
 		.config 	= ssl_config,
 		.get_config 	= ssl_get_config,
 		.id		= line_id,
-		.remove 	= ssl_remove,
-	},
-};
+		.हटाओ 	= ssl_हटाओ,
+	पूर्ण,
+पूर्ण;
 
-/* The array is initialized by line_init, at initcall time.  The
- * elements are locked individually as needed.
+/* The array is initialized by line_init, at initcall समय.  The
+ * elements are locked inभागidually as needed.
  */
-static char *conf[NR_PORTS];
-static char *def_conf = CONFIG_SSL_CHAN;
-static struct line serial_lines[NR_PORTS];
+अटल अक्षर *conf[NR_PORTS];
+अटल अक्षर *def_conf = CONFIG_SSL_CHAN;
+अटल काष्ठा line serial_lines[NR_PORTS];
 
-static int ssl_config(char *str, char **error_out)
-{
-	return line_config(serial_lines, ARRAY_SIZE(serial_lines), str, &opts,
+अटल पूर्णांक ssl_config(अक्षर *str, अक्षर **error_out)
+अणु
+	वापस line_config(serial_lines, ARRAY_SIZE(serial_lines), str, &opts,
 			   error_out);
-}
+पूर्ण
 
-static int ssl_get_config(char *dev, char *str, int size, char **error_out)
-{
-	return line_get_config(dev, serial_lines, ARRAY_SIZE(serial_lines), str,
+अटल पूर्णांक ssl_get_config(अक्षर *dev, अक्षर *str, पूर्णांक size, अक्षर **error_out)
+अणु
+	वापस line_get_config(dev, serial_lines, ARRAY_SIZE(serial_lines), str,
 			       size, error_out);
-}
+पूर्ण
 
-static int ssl_remove(int n, char **error_out)
-{
-	return line_remove(serial_lines, ARRAY_SIZE(serial_lines), n,
+अटल पूर्णांक ssl_हटाओ(पूर्णांक n, अक्षर **error_out)
+अणु
+	वापस line_हटाओ(serial_lines, ARRAY_SIZE(serial_lines), n,
 			   error_out);
-}
+पूर्ण
 
-static int ssl_install(struct tty_driver *driver, struct tty_struct *tty)
-{
-	return line_install(driver, tty, &serial_lines[tty->index]);
-}
+अटल पूर्णांक ssl_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty)
+अणु
+	वापस line_install(driver, tty, &serial_lines[tty->index]);
+पूर्ण
 
-static const struct tty_operations ssl_ops = {
-	.open 	 		= line_open,
-	.close 	 		= line_close,
-	.write 	 		= line_write,
-	.write_room		= line_write_room,
-	.chars_in_buffer 	= line_chars_in_buffer,
+अटल स्थिर काष्ठा tty_operations ssl_ops = अणु
+	.खोलो 	 		= line_खोलो,
+	.बंद 	 		= line_बंद,
+	.ग_लिखो 	 		= line_ग_लिखो,
+	.ग_लिखो_room		= line_ग_लिखो_room,
+	.अक्षरs_in_buffer 	= line_अक्षरs_in_buffer,
 	.flush_buffer 		= line_flush_buffer,
-	.flush_chars 		= line_flush_chars,
+	.flush_अक्षरs 		= line_flush_अक्षरs,
 	.set_termios 		= line_set_termios,
 	.throttle 		= line_throttle,
 	.unthrottle 		= line_unthrottle,
 	.install		= ssl_install,
 	.hangup			= line_hangup,
-};
+पूर्ण;
 
-/* Changed by ssl_init and referenced by ssl_exit, which are both serialized
- * by being an initcall and exitcall, respectively.
+/* Changed by ssl_init and referenced by ssl_निकास, which are both serialized
+ * by being an initcall and निकासcall, respectively.
  */
-static int ssl_init_done = 0;
+अटल पूर्णांक ssl_init_करोne = 0;
 
-static void ssl_console_write(struct console *c, const char *string,
-			      unsigned len)
-{
-	struct line *line = &serial_lines[c->index];
-	unsigned long flags;
+अटल व्योम ssl_console_ग_लिखो(काष्ठा console *c, स्थिर अक्षर *string,
+			      अचिन्हित len)
+अणु
+	काष्ठा line *line = &serial_lines[c->index];
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&line->lock, flags);
-	console_write_chan(line->chan_out, string, len);
+	console_ग_लिखो_chan(line->chan_out, string, len);
 	spin_unlock_irqrestore(&line->lock, flags);
-}
+पूर्ण
 
-static struct tty_driver *ssl_console_device(struct console *c, int *index)
-{
+अटल काष्ठा tty_driver *ssl_console_device(काष्ठा console *c, पूर्णांक *index)
+अणु
 	*index = c->index;
-	return driver.driver;
-}
+	वापस driver.driver;
+पूर्ण
 
-static int ssl_console_setup(struct console *co, char *options)
-{
-	struct line *line = &serial_lines[co->index];
+अटल पूर्णांक ssl_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा line *line = &serial_lines[co->index];
 
-	return console_open_chan(line, co);
-}
+	वापस console_खोलो_chan(line, co);
+पूर्ण
 
-/* No locking for register_console call - relies on single-threaded initcalls */
-static struct console ssl_cons = {
+/* No locking क्रम रेजिस्टर_console call - relies on single-thपढ़ोed initcalls */
+अटल काष्ठा console ssl_cons = अणु
 	.name		= "ttyS",
-	.write		= ssl_console_write,
+	.ग_लिखो		= ssl_console_ग_लिखो,
 	.device		= ssl_console_device,
 	.setup		= ssl_console_setup,
 	.flags		= CON_PRINTBUFFER|CON_ANYTIME,
 	.index		= -1,
-};
+पूर्ण;
 
-static int ssl_init(void)
-{
-	char *new_title;
-	int err;
-	int i;
+अटल पूर्णांक ssl_init(व्योम)
+अणु
+	अक्षर *new_title;
+	पूर्णांक err;
+	पूर्णांक i;
 
-	printk(KERN_INFO "Initializing software serial port version %d\n",
+	prपूर्णांकk(KERN_INFO "Initializing software serial port version %d\n",
 	       ssl_version);
 
-	err = register_lines(&driver, &ssl_ops, serial_lines,
+	err = रेजिस्टर_lines(&driver, &ssl_ops, serial_lines,
 				    ARRAY_SIZE(serial_lines));
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	new_title = add_xterm_umid(opts.xterm_title);
-	if (new_title != NULL)
+	अगर (new_title != शून्य)
 		opts.xterm_title = new_title;
 
-	for (i = 0; i < NR_PORTS; i++) {
-		char *error;
-		char *s = conf[i];
-		if (!s)
+	क्रम (i = 0; i < NR_PORTS; i++) अणु
+		अक्षर *error;
+		अक्षर *s = conf[i];
+		अगर (!s)
 			s = def_conf;
-		if (setup_one_line(serial_lines, i, s, &opts, &error))
-			printk(KERN_ERR "setup_one_line failed for "
+		अगर (setup_one_line(serial_lines, i, s, &opts, &error))
+			prपूर्णांकk(KERN_ERR "setup_one_line failed for "
 			       "device %d : %s\n", i, error);
-	}
+	पूर्ण
 
-	ssl_init_done = 1;
-	register_console(&ssl_cons);
-	return 0;
-}
+	ssl_init_करोne = 1;
+	रेजिस्टर_console(&ssl_cons);
+	वापस 0;
+पूर्ण
 late_initcall(ssl_init);
 
-static void ssl_exit(void)
-{
-	if (!ssl_init_done)
-		return;
-	close_lines(serial_lines, ARRAY_SIZE(serial_lines));
-}
-__uml_exitcall(ssl_exit);
+अटल व्योम ssl_निकास(व्योम)
+अणु
+	अगर (!ssl_init_करोne)
+		वापस;
+	बंद_lines(serial_lines, ARRAY_SIZE(serial_lines));
+पूर्ण
+__uml_निकासcall(ssl_निकास);
 
-static int ssl_chan_setup(char *str)
-{
+अटल पूर्णांक ssl_chan_setup(अक्षर *str)
+अणु
 	line_setup(conf, NR_PORTS, &def_conf, str, "serial line");
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("ssl", ssl_chan_setup);
 __channel_help(ssl_chan_setup, "ssl");
 
-static int ssl_non_raw_setup(char *str)
-{
+अटल पूर्णांक ssl_non_raw_setup(अक्षर *str)
+अणु
 	opts.raw = 0;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("ssl-non-raw", ssl_non_raw_setup);
 __channel_help(ssl_non_raw_setup, "set serial lines to non-raw mode");

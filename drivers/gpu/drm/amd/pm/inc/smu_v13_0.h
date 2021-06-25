@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,256 +21,256 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __SMU_V13_0_H__
-#define __SMU_V13_0_H__
+#अगर_अघोषित __SMU_V13_0_H__
+#घोषणा __SMU_V13_0_H__
 
-#include "amdgpu_smu.h"
+#समावेश "amdgpu_smu.h"
 
-#define SMU13_DRIVER_IF_VERSION_INV 0xFFFFFFFF
-#define SMU13_DRIVER_IF_VERSION_ALDE 0x6
+#घोषणा SMU13_DRIVER_IF_VERSION_INV 0xFFFFFFFF
+#घोषणा SMU13_DRIVER_IF_VERSION_ALDE 0x6
 
 /* MP Apertures */
-#define MP0_Public			0x03800000
-#define MP0_SRAM			0x03900000
-#define MP1_Public			0x03b00000
-#define MP1_SRAM			0x03c00004
+#घोषणा MP0_Public			0x03800000
+#घोषणा MP0_SRAM			0x03900000
+#घोषणा MP1_Public			0x03b00000
+#घोषणा MP1_SRAM			0x03c00004
 
 /* address block */
-#define smnMP1_FIRMWARE_FLAGS		0x3010024
-#define smnMP0_FW_INTF			0x30101c0
-#define smnMP1_PUB_CTRL			0x3010b14
+#घोषणा smnMP1_FIRMWARE_FLAGS		0x3010024
+#घोषणा smnMP0_FW_INTF			0x30101c0
+#घोषणा smnMP1_PUB_CTRL			0x3010b14
 
-#define TEMP_RANGE_MIN			(0)
-#define TEMP_RANGE_MAX			(80 * 1000)
+#घोषणा TEMP_RANGE_MIN			(0)
+#घोषणा TEMP_RANGE_MAX			(80 * 1000)
 
-#define SMU13_TOOL_SIZE			0x19000
+#घोषणा SMU13_TOOL_SIZE			0x19000
 
-#define MAX_DPM_LEVELS 16
-#define MAX_PCIE_CONF 2
+#घोषणा MAX_DPM_LEVELS 16
+#घोषणा MAX_PCIE_CONF 2
 
-#define CTF_OFFSET_EDGE			5
-#define CTF_OFFSET_HOTSPOT		5
-#define CTF_OFFSET_MEM			5
+#घोषणा CTF_OFFSET_EDGE			5
+#घोषणा CTF_OFFSET_HOTSPOT		5
+#घोषणा CTF_OFFSET_MEM			5
 
-static const struct smu_temperature_range smu13_thermal_policy[] =
-{
-	{-273150,  99000, 99000, -273150, 99000, 99000, -273150, 99000, 99000},
-	{ 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000},
-};
+अटल स्थिर काष्ठा smu_temperature_range smu13_thermal_policy[] =
+अणु
+	अणु-273150,  99000, 99000, -273150, 99000, 99000, -273150, 99000, 99000पूर्ण,
+	अणु 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000पूर्ण,
+पूर्ण;
 
-struct smu_13_0_max_sustainable_clocks {
-	uint32_t display_clock;
-	uint32_t phy_clock;
-	uint32_t pixel_clock;
-	uint32_t uclock;
-	uint32_t dcef_clock;
-	uint32_t soc_clock;
-};
+काष्ठा smu_13_0_max_sustainable_घड़ीs अणु
+	uपूर्णांक32_t display_घड़ी;
+	uपूर्णांक32_t phy_घड़ी;
+	uपूर्णांक32_t pixel_घड़ी;
+	uपूर्णांक32_t uघड़ी;
+	uपूर्णांक32_t dcef_घड़ी;
+	uपूर्णांक32_t soc_घड़ी;
+पूर्ण;
 
-struct smu_13_0_dpm_clk_level {
+काष्ठा smu_13_0_dpm_clk_level अणु
 	bool				enabled;
-	uint32_t			value;
-};
+	uपूर्णांक32_t			value;
+पूर्ण;
 
-struct smu_13_0_dpm_table {
-	uint32_t			min;        /* MHz */
-	uint32_t			max;        /* MHz */
-	uint32_t			count;
-	struct smu_13_0_dpm_clk_level	dpm_levels[MAX_DPM_LEVELS];
-};
+काष्ठा smu_13_0_dpm_table अणु
+	uपूर्णांक32_t			min;        /* MHz */
+	uपूर्णांक32_t			max;        /* MHz */
+	uपूर्णांक32_t			count;
+	काष्ठा smu_13_0_dpm_clk_level	dpm_levels[MAX_DPM_LEVELS];
+पूर्ण;
 
-struct smu_13_0_pcie_table {
-	uint8_t  pcie_gen[MAX_PCIE_CONF];
-	uint8_t  pcie_lane[MAX_PCIE_CONF];
-};
+काष्ठा smu_13_0_pcie_table अणु
+	uपूर्णांक8_t  pcie_gen[MAX_PCIE_CONF];
+	uपूर्णांक8_t  pcie_lane[MAX_PCIE_CONF];
+पूर्ण;
 
-struct smu_13_0_dpm_tables {
-	struct smu_13_0_dpm_table        soc_table;
-	struct smu_13_0_dpm_table        gfx_table;
-	struct smu_13_0_dpm_table        uclk_table;
-	struct smu_13_0_dpm_table        eclk_table;
-	struct smu_13_0_dpm_table        vclk_table;
-	struct smu_13_0_dpm_table        dclk_table;
-	struct smu_13_0_dpm_table        dcef_table;
-	struct smu_13_0_dpm_table        pixel_table;
-	struct smu_13_0_dpm_table        display_table;
-	struct smu_13_0_dpm_table        phy_table;
-	struct smu_13_0_dpm_table        fclk_table;
-	struct smu_13_0_pcie_table       pcie_table;
-};
+काष्ठा smu_13_0_dpm_tables अणु
+	काष्ठा smu_13_0_dpm_table        soc_table;
+	काष्ठा smu_13_0_dpm_table        gfx_table;
+	काष्ठा smu_13_0_dpm_table        uclk_table;
+	काष्ठा smu_13_0_dpm_table        eclk_table;
+	काष्ठा smu_13_0_dpm_table        vclk_table;
+	काष्ठा smu_13_0_dpm_table        dclk_table;
+	काष्ठा smu_13_0_dpm_table        dcef_table;
+	काष्ठा smu_13_0_dpm_table        pixel_table;
+	काष्ठा smu_13_0_dpm_table        display_table;
+	काष्ठा smu_13_0_dpm_table        phy_table;
+	काष्ठा smu_13_0_dpm_table        fclk_table;
+	काष्ठा smu_13_0_pcie_table       pcie_table;
+पूर्ण;
 
-struct smu_13_0_dpm_context {
-	struct smu_13_0_dpm_tables  dpm_tables;
-	uint32_t                    workload_policy_mask;
-	uint32_t                    dcef_min_ds_clk;
-};
+काष्ठा smu_13_0_dpm_context अणु
+	काष्ठा smu_13_0_dpm_tables  dpm_tables;
+	uपूर्णांक32_t                    workload_policy_mask;
+	uपूर्णांक32_t                    dcef_min_ds_clk;
+पूर्ण;
 
-enum smu_13_0_power_state {
+क्रमागत smu_13_0_घातer_state अणु
 	SMU_13_0_POWER_STATE__D0 = 0,
 	SMU_13_0_POWER_STATE__D1,
 	SMU_13_0_POWER_STATE__D3, /* Sleep*/
 	SMU_13_0_POWER_STATE__D4, /* Hibernate*/
 	SMU_13_0_POWER_STATE__D5, /* Power off*/
-};
+पूर्ण;
 
-struct smu_13_0_power_context {
-	uint32_t	power_source;
-	uint8_t		in_power_limit_boost_mode;
-	enum smu_13_0_power_state power_state;
-};
+काष्ठा smu_13_0_घातer_context अणु
+	uपूर्णांक32_t	घातer_source;
+	uपूर्णांक8_t		in_घातer_limit_boost_mode;
+	क्रमागत smu_13_0_घातer_state घातer_state;
+पूर्ण;
 
-enum smu_v13_0_baco_seq {
+क्रमागत smu_v13_0_baco_seq अणु
 	BACO_SEQ_BACO = 0,
 	BACO_SEQ_MSR,
 	BACO_SEQ_BAMACO,
 	BACO_SEQ_ULPS,
 	BACO_SEQ_COUNT,
-};
+पूर्ण;
 
-#if defined(SWSMU_CODE_LAYER_L2) || defined(SWSMU_CODE_LAYER_L3)
+#अगर defined(SWSMU_CODE_LAYER_L2) || defined(SWSMU_CODE_LAYER_L3)
 
-int smu_v13_0_init_microcode(struct smu_context *smu);
+पूर्णांक smu_v13_0_init_microcode(काष्ठा smu_context *smu);
 
-void smu_v13_0_fini_microcode(struct smu_context *smu);
+व्योम smu_v13_0_fini_microcode(काष्ठा smu_context *smu);
 
-int smu_v13_0_load_microcode(struct smu_context *smu);
+पूर्णांक smu_v13_0_load_microcode(काष्ठा smu_context *smu);
 
-int smu_v13_0_init_smc_tables(struct smu_context *smu);
+पूर्णांक smu_v13_0_init_smc_tables(काष्ठा smu_context *smu);
 
-int smu_v13_0_fini_smc_tables(struct smu_context *smu);
+पूर्णांक smu_v13_0_fini_smc_tables(काष्ठा smu_context *smu);
 
-int smu_v13_0_init_power(struct smu_context *smu);
+पूर्णांक smu_v13_0_init_घातer(काष्ठा smu_context *smu);
 
-int smu_v13_0_fini_power(struct smu_context *smu);
+पूर्णांक smu_v13_0_fini_घातer(काष्ठा smu_context *smu);
 
-int smu_v13_0_check_fw_status(struct smu_context *smu);
+पूर्णांक smu_v13_0_check_fw_status(काष्ठा smu_context *smu);
 
-int smu_v13_0_setup_pptable(struct smu_context *smu);
+पूर्णांक smu_v13_0_setup_pptable(काष्ठा smu_context *smu);
 
-int smu_v13_0_get_vbios_bootup_values(struct smu_context *smu);
+पूर्णांक smu_v13_0_get_vbios_bootup_values(काष्ठा smu_context *smu);
 
-int smu_v13_0_check_fw_version(struct smu_context *smu);
+पूर्णांक smu_v13_0_check_fw_version(काष्ठा smu_context *smu);
 
-int smu_v13_0_set_driver_table_location(struct smu_context *smu);
+पूर्णांक smu_v13_0_set_driver_table_location(काष्ठा smu_context *smu);
 
-int smu_v13_0_set_tool_table_location(struct smu_context *smu);
+पूर्णांक smu_v13_0_set_tool_table_location(काष्ठा smu_context *smu);
 
-int smu_v13_0_notify_memory_pool_location(struct smu_context *smu);
+पूर्णांक smu_v13_0_notअगरy_memory_pool_location(काष्ठा smu_context *smu);
 
-int smu_v13_0_system_features_control(struct smu_context *smu,
+पूर्णांक smu_v13_0_प्रणाली_features_control(काष्ठा smu_context *smu,
 				      bool en);
 
-int smu_v13_0_init_display_count(struct smu_context *smu, uint32_t count);
+पूर्णांक smu_v13_0_init_display_count(काष्ठा smu_context *smu, uपूर्णांक32_t count);
 
-int smu_v13_0_set_allowed_mask(struct smu_context *smu);
+पूर्णांक smu_v13_0_set_allowed_mask(काष्ठा smu_context *smu);
 
-int smu_v13_0_notify_display_change(struct smu_context *smu);
+पूर्णांक smu_v13_0_notअगरy_display_change(काष्ठा smu_context *smu);
 
-int smu_v13_0_get_current_power_limit(struct smu_context *smu,
-				      uint32_t *power_limit);
+पूर्णांक smu_v13_0_get_current_घातer_limit(काष्ठा smu_context *smu,
+				      uपूर्णांक32_t *घातer_limit);
 
-int smu_v13_0_set_power_limit(struct smu_context *smu, uint32_t n);
+पूर्णांक smu_v13_0_set_घातer_limit(काष्ठा smu_context *smu, uपूर्णांक32_t n);
 
-int smu_v13_0_init_max_sustainable_clocks(struct smu_context *smu);
+पूर्णांक smu_v13_0_init_max_sustainable_घड़ीs(काष्ठा smu_context *smu);
 
-int smu_v13_0_enable_thermal_alert(struct smu_context *smu);
+पूर्णांक smu_v13_0_enable_thermal_alert(काष्ठा smu_context *smu);
 
-int smu_v13_0_disable_thermal_alert(struct smu_context *smu);
+पूर्णांक smu_v13_0_disable_thermal_alert(काष्ठा smu_context *smu);
 
-int smu_v13_0_get_gfx_vdd(struct smu_context *smu, uint32_t *value);
+पूर्णांक smu_v13_0_get_gfx_vdd(काष्ठा smu_context *smu, uपूर्णांक32_t *value);
 
-int smu_v13_0_set_min_deep_sleep_dcefclk(struct smu_context *smu, uint32_t clk);
+पूर्णांक smu_v13_0_set_min_deep_sleep_dcefclk(काष्ठा smu_context *smu, uपूर्णांक32_t clk);
 
-int
-smu_v13_0_display_clock_voltage_request(struct smu_context *smu,
-					struct pp_display_clock_request
-					*clock_req);
+पूर्णांक
+smu_v13_0_display_घड़ी_voltage_request(काष्ठा smu_context *smu,
+					काष्ठा pp_display_घड़ी_request
+					*घड़ी_req);
 
-uint32_t
-smu_v13_0_get_fan_control_mode(struct smu_context *smu);
+uपूर्णांक32_t
+smu_v13_0_get_fan_control_mode(काष्ठा smu_context *smu);
 
-int
-smu_v13_0_set_fan_control_mode(struct smu_context *smu,
-			       uint32_t mode);
+पूर्णांक
+smu_v13_0_set_fan_control_mode(काष्ठा smu_context *smu,
+			       uपूर्णांक32_t mode);
 
-int
-smu_v13_0_set_fan_speed_percent(struct smu_context *smu, uint32_t speed);
+पूर्णांक
+smu_v13_0_set_fan_speed_percent(काष्ठा smu_context *smu, uपूर्णांक32_t speed);
 
-int smu_v13_0_set_fan_speed_rpm(struct smu_context *smu,
-				uint32_t speed);
+पूर्णांक smu_v13_0_set_fan_speed_rpm(काष्ठा smu_context *smu,
+				uपूर्णांक32_t speed);
 
-int smu_v13_0_set_xgmi_pstate(struct smu_context *smu,
-			      uint32_t pstate);
+पूर्णांक smu_v13_0_set_xgmi_pstate(काष्ठा smu_context *smu,
+			      uपूर्णांक32_t pstate);
 
-int smu_v13_0_gfx_off_control(struct smu_context *smu, bool enable);
+पूर्णांक smu_v13_0_gfx_off_control(काष्ठा smu_context *smu, bool enable);
 
-int smu_v13_0_register_irq_handler(struct smu_context *smu);
+पूर्णांक smu_v13_0_रेजिस्टर_irq_handler(काष्ठा smu_context *smu);
 
-int smu_v13_0_set_azalia_d3_pme(struct smu_context *smu);
+पूर्णांक smu_v13_0_set_azalia_d3_pme(काष्ठा smu_context *smu);
 
-int smu_v13_0_get_max_sustainable_clocks_by_dc(struct smu_context *smu,
-					       struct pp_smu_nv_clock_table *max_clocks);
+पूर्णांक smu_v13_0_get_max_sustainable_घड़ीs_by_dc(काष्ठा smu_context *smu,
+					       काष्ठा pp_smu_nv_घड़ी_प्रकारable *max_घड़ीs);
 
-bool smu_v13_0_baco_is_support(struct smu_context *smu);
+bool smu_v13_0_baco_is_support(काष्ठा smu_context *smu);
 
-enum smu_baco_state smu_v13_0_baco_get_state(struct smu_context *smu);
+क्रमागत smu_baco_state smu_v13_0_baco_get_state(काष्ठा smu_context *smu);
 
-int smu_v13_0_baco_set_state(struct smu_context *smu, enum smu_baco_state state);
+पूर्णांक smu_v13_0_baco_set_state(काष्ठा smu_context *smu, क्रमागत smu_baco_state state);
 
-int smu_v13_0_baco_enter(struct smu_context *smu);
-int smu_v13_0_baco_exit(struct smu_context *smu);
+पूर्णांक smu_v13_0_baco_enter(काष्ठा smu_context *smu);
+पूर्णांक smu_v13_0_baco_निकास(काष्ठा smu_context *smu);
 
-int smu_v13_0_mode1_reset(struct smu_context *smu);
-int smu_v13_0_mode2_reset(struct smu_context *smu);
+पूर्णांक smu_v13_0_mode1_reset(काष्ठा smu_context *smu);
+पूर्णांक smu_v13_0_mode2_reset(काष्ठा smu_context *smu);
 
-int smu_v13_0_get_dpm_ultimate_freq(struct smu_context *smu, enum smu_clk_type clk_type,
-				    uint32_t *min, uint32_t *max);
+पूर्णांक smu_v13_0_get_dpm_ultimate_freq(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk_type,
+				    uपूर्णांक32_t *min, uपूर्णांक32_t *max);
 
-int smu_v13_0_set_soft_freq_limited_range(struct smu_context *smu, enum smu_clk_type clk_type,
-					  uint32_t min, uint32_t max);
+पूर्णांक smu_v13_0_set_soft_freq_limited_range(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk_type,
+					  uपूर्णांक32_t min, uपूर्णांक32_t max);
 
-int smu_v13_0_set_hard_freq_limited_range(struct smu_context *smu,
-					  enum smu_clk_type clk_type,
-					  uint32_t min,
-					  uint32_t max);
+पूर्णांक smu_v13_0_set_hard_freq_limited_range(काष्ठा smu_context *smu,
+					  क्रमागत smu_clk_type clk_type,
+					  uपूर्णांक32_t min,
+					  uपूर्णांक32_t max);
 
-int smu_v13_0_set_performance_level(struct smu_context *smu,
-				    enum amd_dpm_forced_level level);
+पूर्णांक smu_v13_0_set_perक्रमmance_level(काष्ठा smu_context *smu,
+				    क्रमागत amd_dpm_क्रमced_level level);
 
-int smu_v13_0_set_power_source(struct smu_context *smu,
-			       enum smu_power_src_type power_src);
+पूर्णांक smu_v13_0_set_घातer_source(काष्ठा smu_context *smu,
+			       क्रमागत smu_घातer_src_type घातer_src);
 
-int smu_v13_0_get_dpm_freq_by_index(struct smu_context *smu,
-				    enum smu_clk_type clk_type,
-				    uint16_t level,
-				    uint32_t *value);
+पूर्णांक smu_v13_0_get_dpm_freq_by_index(काष्ठा smu_context *smu,
+				    क्रमागत smu_clk_type clk_type,
+				    uपूर्णांक16_t level,
+				    uपूर्णांक32_t *value);
 
-int smu_v13_0_get_dpm_level_count(struct smu_context *smu,
-				  enum smu_clk_type clk_type,
-				  uint32_t *value);
+पूर्णांक smu_v13_0_get_dpm_level_count(काष्ठा smu_context *smu,
+				  क्रमागत smu_clk_type clk_type,
+				  uपूर्णांक32_t *value);
 
-int smu_v13_0_set_single_dpm_table(struct smu_context *smu,
-				   enum smu_clk_type clk_type,
-				   struct smu_13_0_dpm_table *single_dpm_table);
+पूर्णांक smu_v13_0_set_single_dpm_table(काष्ठा smu_context *smu,
+				   क्रमागत smu_clk_type clk_type,
+				   काष्ठा smu_13_0_dpm_table *single_dpm_table);
 
-int smu_v13_0_get_dpm_level_range(struct smu_context *smu,
-				  enum smu_clk_type clk_type,
-				  uint32_t *min_value,
-				  uint32_t *max_value);
+पूर्णांक smu_v13_0_get_dpm_level_range(काष्ठा smu_context *smu,
+				  क्रमागत smu_clk_type clk_type,
+				  uपूर्णांक32_t *min_value,
+				  uपूर्णांक32_t *max_value);
 
-int smu_v13_0_get_current_pcie_link_width_level(struct smu_context *smu);
+पूर्णांक smu_v13_0_get_current_pcie_link_width_level(काष्ठा smu_context *smu);
 
-int smu_v13_0_get_current_pcie_link_width(struct smu_context *smu);
+पूर्णांक smu_v13_0_get_current_pcie_link_width(काष्ठा smu_context *smu);
 
-int smu_v13_0_get_current_pcie_link_speed_level(struct smu_context *smu);
+पूर्णांक smu_v13_0_get_current_pcie_link_speed_level(काष्ठा smu_context *smu);
 
-int smu_v13_0_get_current_pcie_link_speed(struct smu_context *smu);
+पूर्णांक smu_v13_0_get_current_pcie_link_speed(काष्ठा smu_context *smu);
 
-int smu_v13_0_gfx_ulv_control(struct smu_context *smu,
+पूर्णांक smu_v13_0_gfx_ulv_control(काष्ठा smu_context *smu,
 			      bool enablement);
 
-int smu_v13_0_wait_for_event(struct smu_context *smu, enum smu_event_type event,
-			     uint64_t event_arg);
+पूर्णांक smu_v13_0_रुको_क्रम_event(काष्ठा smu_context *smu, क्रमागत smu_event_type event,
+			     uपूर्णांक64_t event_arg);
 
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर

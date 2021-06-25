@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2014-2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,132 +22,132 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __INTEL_FRONTBUFFER_H__
-#define __INTEL_FRONTBUFFER_H__
+#अगर_अघोषित __INTEL_FRONTBUFFER_H__
+#घोषणा __INTEL_FRONTBUFFER_H__
 
-#include <linux/atomic.h>
-#include <linux/kref.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/kref.h>
 
-#include "gem/i915_gem_object_types.h"
-#include "i915_active.h"
+#समावेश "gem/i915_gem_object_types.h"
+#समावेश "i915_active.h"
 
-struct drm_i915_private;
+काष्ठा drm_i915_निजी;
 
-enum fb_op_origin {
+क्रमागत fb_op_origin अणु
 	ORIGIN_GTT,
 	ORIGIN_CPU,
 	ORIGIN_CS,
 	ORIGIN_FLIP,
-	ORIGIN_DIRTYFB,
-};
+	ORIGIN_सूचीTYFB,
+पूर्ण;
 
-struct intel_frontbuffer {
-	struct kref ref;
+काष्ठा पूर्णांकel_frontbuffer अणु
+	काष्ठा kref ref;
 	atomic_t bits;
-	struct i915_active write;
-	struct drm_i915_gem_object *obj;
-	struct rcu_head rcu;
-};
+	काष्ठा i915_active ग_लिखो;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-void intel_frontbuffer_flip_prepare(struct drm_i915_private *i915,
-				    unsigned frontbuffer_bits);
-void intel_frontbuffer_flip_complete(struct drm_i915_private *i915,
-				     unsigned frontbuffer_bits);
-void intel_frontbuffer_flip(struct drm_i915_private *i915,
-			    unsigned frontbuffer_bits);
+व्योम पूर्णांकel_frontbuffer_flip_prepare(काष्ठा drm_i915_निजी *i915,
+				    अचिन्हित frontbuffer_bits);
+व्योम पूर्णांकel_frontbuffer_flip_complete(काष्ठा drm_i915_निजी *i915,
+				     अचिन्हित frontbuffer_bits);
+व्योम पूर्णांकel_frontbuffer_flip(काष्ठा drm_i915_निजी *i915,
+			    अचिन्हित frontbuffer_bits);
 
-void intel_frontbuffer_put(struct intel_frontbuffer *front);
+व्योम पूर्णांकel_frontbuffer_put(काष्ठा पूर्णांकel_frontbuffer *front);
 
-static inline struct intel_frontbuffer *
-__intel_frontbuffer_get(const struct drm_i915_gem_object *obj)
-{
-	struct intel_frontbuffer *front;
+अटल अंतरभूत काष्ठा पूर्णांकel_frontbuffer *
+__पूर्णांकel_frontbuffer_get(स्थिर काष्ठा drm_i915_gem_object *obj)
+अणु
+	काष्ठा पूर्णांकel_frontbuffer *front;
 
-	if (likely(!rcu_access_pointer(obj->frontbuffer)))
-		return NULL;
+	अगर (likely(!rcu_access_poपूर्णांकer(obj->frontbuffer)))
+		वापस शून्य;
 
-	rcu_read_lock();
-	do {
+	rcu_पढ़ो_lock();
+	करो अणु
 		front = rcu_dereference(obj->frontbuffer);
-		if (!front)
-			break;
+		अगर (!front)
+			अवरोध;
 
-		if (unlikely(!kref_get_unless_zero(&front->ref)))
-			continue;
+		अगर (unlikely(!kref_get_unless_zero(&front->ref)))
+			जारी;
 
-		if (likely(front == rcu_access_pointer(obj->frontbuffer)))
-			break;
+		अगर (likely(front == rcu_access_poपूर्णांकer(obj->frontbuffer)))
+			अवरोध;
 
-		intel_frontbuffer_put(front);
-	} while (1);
-	rcu_read_unlock();
+		पूर्णांकel_frontbuffer_put(front);
+	पूर्ण जबतक (1);
+	rcu_पढ़ो_unlock();
 
-	return front;
-}
+	वापस front;
+पूर्ण
 
-struct intel_frontbuffer *
-intel_frontbuffer_get(struct drm_i915_gem_object *obj);
+काष्ठा पूर्णांकel_frontbuffer *
+पूर्णांकel_frontbuffer_get(काष्ठा drm_i915_gem_object *obj);
 
-void __intel_fb_invalidate(struct intel_frontbuffer *front,
-			   enum fb_op_origin origin,
-			   unsigned int frontbuffer_bits);
+व्योम __पूर्णांकel_fb_invalidate(काष्ठा पूर्णांकel_frontbuffer *front,
+			   क्रमागत fb_op_origin origin,
+			   अचिन्हित पूर्णांक frontbuffer_bits);
 
 /**
- * intel_frontbuffer_invalidate - invalidate frontbuffer object
+ * पूर्णांकel_frontbuffer_invalidate - invalidate frontbuffer object
  * @front: GEM object to invalidate
  * @origin: which operation caused the invalidation
  *
- * This function gets called every time rendering on the given object starts and
- * frontbuffer caching (fbc, low refresh rate for DRRS, panel self refresh) must
+ * This function माला_लो called every समय rendering on the given object starts and
+ * frontbuffer caching (fbc, low refresh rate क्रम DRRS, panel self refresh) must
  * be invalidated. For ORIGIN_CS any subsequent invalidation will be delayed
  * until the rendering completes or a flip on this frontbuffer plane is
  * scheduled.
  */
-static inline bool intel_frontbuffer_invalidate(struct intel_frontbuffer *front,
-						enum fb_op_origin origin)
-{
-	unsigned int frontbuffer_bits;
+अटल अंतरभूत bool पूर्णांकel_frontbuffer_invalidate(काष्ठा पूर्णांकel_frontbuffer *front,
+						क्रमागत fb_op_origin origin)
+अणु
+	अचिन्हित पूर्णांक frontbuffer_bits;
 
-	if (!front)
-		return false;
+	अगर (!front)
+		वापस false;
 
-	frontbuffer_bits = atomic_read(&front->bits);
-	if (!frontbuffer_bits)
-		return false;
+	frontbuffer_bits = atomic_पढ़ो(&front->bits);
+	अगर (!frontbuffer_bits)
+		वापस false;
 
-	__intel_fb_invalidate(front, origin, frontbuffer_bits);
-	return true;
-}
+	__पूर्णांकel_fb_invalidate(front, origin, frontbuffer_bits);
+	वापस true;
+पूर्ण
 
-void __intel_fb_flush(struct intel_frontbuffer *front,
-		      enum fb_op_origin origin,
-		      unsigned int frontbuffer_bits);
+व्योम __पूर्णांकel_fb_flush(काष्ठा पूर्णांकel_frontbuffer *front,
+		      क्रमागत fb_op_origin origin,
+		      अचिन्हित पूर्णांक frontbuffer_bits);
 
 /**
- * intel_frontbuffer_flush - flush frontbuffer object
+ * पूर्णांकel_frontbuffer_flush - flush frontbuffer object
  * @front: GEM object to flush
  * @origin: which operation caused the flush
  *
- * This function gets called every time rendering on the given object has
+ * This function माला_लो called every समय rendering on the given object has
  * completed and frontbuffer caching can be started again.
  */
-static inline void intel_frontbuffer_flush(struct intel_frontbuffer *front,
-					   enum fb_op_origin origin)
-{
-	unsigned int frontbuffer_bits;
+अटल अंतरभूत व्योम पूर्णांकel_frontbuffer_flush(काष्ठा पूर्णांकel_frontbuffer *front,
+					   क्रमागत fb_op_origin origin)
+अणु
+	अचिन्हित पूर्णांक frontbuffer_bits;
 
-	if (!front)
-		return;
+	अगर (!front)
+		वापस;
 
-	frontbuffer_bits = atomic_read(&front->bits);
-	if (!frontbuffer_bits)
-		return;
+	frontbuffer_bits = atomic_पढ़ो(&front->bits);
+	अगर (!frontbuffer_bits)
+		वापस;
 
-	__intel_fb_flush(front, origin, frontbuffer_bits);
-}
+	__पूर्णांकel_fb_flush(front, origin, frontbuffer_bits);
+पूर्ण
 
-void intel_frontbuffer_track(struct intel_frontbuffer *old,
-			     struct intel_frontbuffer *new,
-			     unsigned int frontbuffer_bits);
+व्योम पूर्णांकel_frontbuffer_track(काष्ठा पूर्णांकel_frontbuffer *old,
+			     काष्ठा पूर्णांकel_frontbuffer *new,
+			     अचिन्हित पूर्णांक frontbuffer_bits);
 
-#endif /* __INTEL_FRONTBUFFER_H__ */
+#पूर्ण_अगर /* __INTEL_FRONTBUFFER_H__ */

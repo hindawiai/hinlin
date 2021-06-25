@@ -1,551 +1,552 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Earthsoft PT3 driver
  *
  * Copyright (C) 2014 Akihiro Tsukada <tskd08@gmail.com>
  */
 
-#include <linux/freezer.h>
-#include <linux/kernel.h>
-#include <linux/kthread.h>
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/string.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sched/संकेत.स>
 
-#include <media/dmxdev.h>
-#include <media/dvbdev.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
+#समावेश <media/dmxdev.h>
+#समावेश <media/dvbdev.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
 
-#include "pt3.h"
+#समावेश "pt3.h"
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-static bool one_adapter;
+अटल bool one_adapter;
 module_param(one_adapter, bool, 0444);
 MODULE_PARM_DESC(one_adapter, "Place FE's together under one adapter.");
 
-static int num_bufs = 4;
-module_param(num_bufs, int, 0444);
+अटल पूर्णांक num_bufs = 4;
+module_param(num_bufs, पूर्णांक, 0444);
 MODULE_PARM_DESC(num_bufs, "Number of DMA buffer (188KiB) per FE.");
 
 
-static const struct i2c_algorithm pt3_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm pt3_i2c_algo = अणु
 	.master_xfer   = &pt3_i2c_master_xfer,
 	.functionality = &pt3_i2c_functionality,
-};
+पूर्ण;
 
-static const struct pt3_adap_config adap_conf[PT3_NUM_FE] = {
-	{
-		.demod_info = {
+अटल स्थिर काष्ठा pt3_adap_config adap_conf[PT3_NUM_FE] = अणु
+	अणु
+		.demod_info = अणु
 			I2C_BOARD_INFO(TC90522_I2C_DEV_SAT, 0x11),
-		},
-		.tuner_info = {
+		पूर्ण,
+		.tuner_info = अणु
 			I2C_BOARD_INFO("qm1d1c0042", 0x63),
-		},
-		.tuner_cfg.qm1d1c0042 = {
+		पूर्ण,
+		.tuner_cfg.qm1d1c0042 = अणु
 			.lpf = 1,
-		},
+		पूर्ण,
 		.init_freq = 1049480 - 300,
-	},
-	{
-		.demod_info = {
+	पूर्ण,
+	अणु
+		.demod_info = अणु
 			I2C_BOARD_INFO(TC90522_I2C_DEV_TER, 0x10),
-		},
-		.tuner_info = {
+		पूर्ण,
+		.tuner_info = अणु
 			I2C_BOARD_INFO("mxl301rf", 0x62),
-		},
+		पूर्ण,
 		.init_freq = 515142857,
-	},
-	{
-		.demod_info = {
+	पूर्ण,
+	अणु
+		.demod_info = अणु
 			I2C_BOARD_INFO(TC90522_I2C_DEV_SAT, 0x13),
-		},
-		.tuner_info = {
+		पूर्ण,
+		.tuner_info = अणु
 			I2C_BOARD_INFO("qm1d1c0042", 0x60),
-		},
-		.tuner_cfg.qm1d1c0042 = {
+		पूर्ण,
+		.tuner_cfg.qm1d1c0042 = अणु
 			.lpf = 1,
-		},
+		पूर्ण,
 		.init_freq = 1049480 + 300,
-	},
-	{
-		.demod_info = {
+	पूर्ण,
+	अणु
+		.demod_info = अणु
 			I2C_BOARD_INFO(TC90522_I2C_DEV_TER, 0x12),
-		},
-		.tuner_info = {
+		पूर्ण,
+		.tuner_info = अणु
 			I2C_BOARD_INFO("mxl301rf", 0x61),
-		},
+		पूर्ण,
 		.init_freq = 521142857,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 
-struct reg_val {
+काष्ठा reg_val अणु
 	u8 reg;
 	u8 val;
-};
+पूर्ण;
 
-static int
-pt3_demod_write(struct pt3_adapter *adap, const struct reg_val *data, int num)
-{
-	struct i2c_msg msg;
-	int i, ret;
+अटल पूर्णांक
+pt3_demod_ग_लिखो(काष्ठा pt3_adapter *adap, स्थिर काष्ठा reg_val *data, पूर्णांक num)
+अणु
+	काष्ठा i2c_msg msg;
+	पूर्णांक i, ret;
 
 	ret = 0;
 	msg.addr = adap->i2c_demod->addr;
 	msg.flags = 0;
 	msg.len = 2;
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		msg.buf = (u8 *)&data[i];
 		ret = i2c_transfer(adap->i2c_demod->adapter, &msg, 1);
-		if (ret == 0)
+		अगर (ret == 0)
 			ret = -EREMOTE;
-		if (ret < 0)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline void pt3_lnb_ctrl(struct pt3_board *pt3, bool on)
-{
-	iowrite32((on ? 0x0f : 0x0c), pt3->regs[0] + REG_SYSTEM_W);
-}
+अटल अंतरभूत व्योम pt3_lnb_ctrl(काष्ठा pt3_board *pt3, bool on)
+अणु
+	ioग_लिखो32((on ? 0x0f : 0x0c), pt3->regs[0] + REG_SYSTEM_W);
+पूर्ण
 
-static inline struct pt3_adapter *pt3_find_adapter(struct dvb_frontend *fe)
-{
-	struct pt3_board *pt3;
-	int i;
+अटल अंतरभूत काष्ठा pt3_adapter *pt3_find_adapter(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा pt3_board *pt3;
+	पूर्णांक i;
 
-	if (one_adapter) {
+	अगर (one_adapter) अणु
 		pt3 = fe->dvb->priv;
-		for (i = 0; i < PT3_NUM_FE; i++)
-			if (pt3->adaps[i]->fe == fe)
-				return pt3->adaps[i];
-	}
-	return container_of(fe->dvb, struct pt3_adapter, dvb_adap);
-}
+		क्रम (i = 0; i < PT3_NUM_FE; i++)
+			अगर (pt3->adaps[i]->fe == fe)
+				वापस pt3->adaps[i];
+	पूर्ण
+	वापस container_of(fe->dvb, काष्ठा pt3_adapter, dvb_adap);
+पूर्ण
 
 /*
  * all 4 tuners in PT3 are packaged in a can module (Sharp VA4M6JC2103).
- * it seems that they share the power lines and Amp power line and
- * adaps[3] controls those powers.
+ * it seems that they share the घातer lines and Amp घातer line and
+ * adaps[3] controls those घातers.
  */
-static int
-pt3_set_tuner_power(struct pt3_board *pt3, bool tuner_on, bool amp_on)
-{
-	struct reg_val rv = { 0x1e, 0x99 };
+अटल पूर्णांक
+pt3_set_tuner_घातer(काष्ठा pt3_board *pt3, bool tuner_on, bool amp_on)
+अणु
+	काष्ठा reg_val rv = अणु 0x1e, 0x99 पूर्ण;
 
-	if (tuner_on)
+	अगर (tuner_on)
 		rv.val |= 0x40;
-	if (amp_on)
+	अगर (amp_on)
 		rv.val |= 0x04;
-	return pt3_demod_write(pt3->adaps[PT3_NUM_FE - 1], &rv, 1);
-}
+	वापस pt3_demod_ग_लिखो(pt3->adaps[PT3_NUM_FE - 1], &rv, 1);
+पूर्ण
 
-static int pt3_set_lna(struct dvb_frontend *fe)
-{
-	struct pt3_adapter *adap;
-	struct pt3_board *pt3;
+अटल पूर्णांक pt3_set_lna(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा pt3_adapter *adap;
+	काष्ठा pt3_board *pt3;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	/* LNA is shared btw. 2 TERR-tuners */
 
 	adap = pt3_find_adapter(fe);
 	val = fe->dtv_property_cache.lna;
-	if (val == LNA_AUTO || val == adap->cur_lna)
-		return 0;
+	अगर (val == LNA_AUTO || val == adap->cur_lna)
+		वापस 0;
 
 	pt3 = adap->dvb_adap.priv;
-	if (mutex_lock_interruptible(&pt3->lock))
-		return -ERESTARTSYS;
-	if (val)
+	अगर (mutex_lock_पूर्णांकerruptible(&pt3->lock))
+		वापस -ERESTARTSYS;
+	अगर (val)
 		pt3->lna_on_cnt++;
-	else
+	अन्यथा
 		pt3->lna_on_cnt--;
 
-	if (val && pt3->lna_on_cnt <= 1) {
+	अगर (val && pt3->lna_on_cnt <= 1) अणु
 		pt3->lna_on_cnt = 1;
-		ret = pt3_set_tuner_power(pt3, true, true);
-	} else if (!val && pt3->lna_on_cnt <= 0) {
+		ret = pt3_set_tuner_घातer(pt3, true, true);
+	पूर्ण अन्यथा अगर (!val && pt3->lna_on_cnt <= 0) अणु
 		pt3->lna_on_cnt = 0;
-		ret = pt3_set_tuner_power(pt3, true, false);
-	} else
+		ret = pt3_set_tuner_घातer(pt3, true, false);
+	पूर्ण अन्यथा
 		ret = 0;
 	mutex_unlock(&pt3->lock);
 	adap->cur_lna = (val != 0);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pt3_set_voltage(struct dvb_frontend *fe, enum fe_sec_voltage volt)
-{
-	struct pt3_adapter *adap;
-	struct pt3_board *pt3;
+अटल पूर्णांक pt3_set_voltage(काष्ठा dvb_frontend *fe, क्रमागत fe_sec_voltage volt)
+अणु
+	काष्ठा pt3_adapter *adap;
+	काष्ठा pt3_board *pt3;
 	bool on;
 
-	/* LNB power is shared btw. 2 SAT-tuners */
+	/* LNB घातer is shared btw. 2 SAT-tuners */
 
 	adap = pt3_find_adapter(fe);
 	on = (volt != SEC_VOLTAGE_OFF);
-	if (on == adap->cur_lnb)
-		return 0;
+	अगर (on == adap->cur_lnb)
+		वापस 0;
 	adap->cur_lnb = on;
 	pt3 = adap->dvb_adap.priv;
-	if (mutex_lock_interruptible(&pt3->lock))
-		return -ERESTARTSYS;
-	if (on)
+	अगर (mutex_lock_पूर्णांकerruptible(&pt3->lock))
+		वापस -ERESTARTSYS;
+	अगर (on)
 		pt3->lnb_on_cnt++;
-	else
+	अन्यथा
 		pt3->lnb_on_cnt--;
 
-	if (on && pt3->lnb_on_cnt <= 1) {
+	अगर (on && pt3->lnb_on_cnt <= 1) अणु
 		pt3->lnb_on_cnt = 1;
 		pt3_lnb_ctrl(pt3, true);
-	} else if (!on && pt3->lnb_on_cnt <= 0) {
+	पूर्ण अन्यथा अगर (!on && pt3->lnb_on_cnt <= 0) अणु
 		pt3->lnb_on_cnt = 0;
 		pt3_lnb_ctrl(pt3, false);
-	}
+	पूर्ण
 	mutex_unlock(&pt3->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* register values used in pt3_fe_init() */
+/* रेजिस्टर values used in pt3_fe_init() */
 
-static const struct reg_val init0_sat[] = {
-	{ 0x03, 0x01 },
-	{ 0x1e, 0x10 },
-};
-static const struct reg_val init0_ter[] = {
-	{ 0x01, 0x40 },
-	{ 0x1c, 0x10 },
-};
-static const struct reg_val cfg_sat[] = {
-	{ 0x1c, 0x15 },
-	{ 0x1f, 0x04 },
-};
-static const struct reg_val cfg_ter[] = {
-	{ 0x1d, 0x01 },
-};
+अटल स्थिर काष्ठा reg_val init0_sat[] = अणु
+	अणु 0x03, 0x01 पूर्ण,
+	अणु 0x1e, 0x10 पूर्ण,
+पूर्ण;
+अटल स्थिर काष्ठा reg_val init0_ter[] = अणु
+	अणु 0x01, 0x40 पूर्ण,
+	अणु 0x1c, 0x10 पूर्ण,
+पूर्ण;
+अटल स्थिर काष्ठा reg_val cfg_sat[] = अणु
+	अणु 0x1c, 0x15 पूर्ण,
+	अणु 0x1f, 0x04 पूर्ण,
+पूर्ण;
+अटल स्थिर काष्ठा reg_val cfg_ter[] = अणु
+	अणु 0x1d, 0x01 पूर्ण,
+पूर्ण;
 
 /*
  * pt3_fe_init: initialize demod sub modules and ISDB-T tuners all at once.
  *
- * As for demod IC (TC90522) and ISDB-T tuners (MxL301RF),
- * the i2c sequences for init'ing them are not public and hidden in a ROM,
- * and include the board specific configurations as well.
+ * As क्रम demod IC (TC90522) and ISDB-T tuners (MxL301RF),
+ * the i2c sequences क्रम init'ing them are not खुला and hidden in a ROM,
+ * and include the board specअगरic configurations as well.
  * They are stored in a lump and cannot be taken out / accessed separately,
  * thus cannot be moved to the FE/tuner driver.
  */
-static int pt3_fe_init(struct pt3_board *pt3)
-{
-	int i, ret;
-	struct dvb_frontend *fe;
+अटल पूर्णांक pt3_fe_init(काष्ठा pt3_board *pt3)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा dvb_frontend *fe;
 
 	pt3_i2c_reset(pt3);
 	ret = pt3_init_all_demods(pt3);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_warn(&pt3->pdev->dev, "Failed to init demod chips\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* additional config? */
-	for (i = 0; i < PT3_NUM_FE; i++) {
+	क्रम (i = 0; i < PT3_NUM_FE; i++) अणु
 		fe = pt3->adaps[i]->fe;
 
-		if (fe->ops.delsys[0] == SYS_ISDBS)
-			ret = pt3_demod_write(pt3->adaps[i],
+		अगर (fe->ops.delsys[0] == SYS_ISDBS)
+			ret = pt3_demod_ग_लिखो(pt3->adaps[i],
 					      init0_sat, ARRAY_SIZE(init0_sat));
-		else
-			ret = pt3_demod_write(pt3->adaps[i],
+		अन्यथा
+			ret = pt3_demod_ग_लिखो(pt3->adaps[i],
 					      init0_ter, ARRAY_SIZE(init0_ter));
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(&pt3->pdev->dev,
 				 "demod[%d] failed in init sequence0\n", i);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		ret = fe->ops.init(fe);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	usleep_range(2000, 4000);
-	ret = pt3_set_tuner_power(pt3, true, false);
-	if (ret < 0) {
+	ret = pt3_set_tuner_घातer(pt3, true, false);
+	अगर (ret < 0) अणु
 		dev_warn(&pt3->pdev->dev, "Failed to control tuner module\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* output pin configuration */
-	for (i = 0; i < PT3_NUM_FE; i++) {
+	क्रम (i = 0; i < PT3_NUM_FE; i++) अणु
 		fe = pt3->adaps[i]->fe;
-		if (fe->ops.delsys[0] == SYS_ISDBS)
-			ret = pt3_demod_write(pt3->adaps[i],
+		अगर (fe->ops.delsys[0] == SYS_ISDBS)
+			ret = pt3_demod_ग_लिखो(pt3->adaps[i],
 						cfg_sat, ARRAY_SIZE(cfg_sat));
-		else
-			ret = pt3_demod_write(pt3->adaps[i],
+		अन्यथा
+			ret = pt3_demod_ग_लिखो(pt3->adaps[i],
 						cfg_ter, ARRAY_SIZE(cfg_ter));
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(&pt3->pdev->dev,
 				 "demod[%d] failed in init sequence1\n", i);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	usleep_range(4000, 6000);
 
-	for (i = 0; i < PT3_NUM_FE; i++) {
+	क्रम (i = 0; i < PT3_NUM_FE; i++) अणु
 		fe = pt3->adaps[i]->fe;
-		if (fe->ops.delsys[0] != SYS_ISDBS)
-			continue;
+		अगर (fe->ops.delsys[0] != SYS_ISDBS)
+			जारी;
 		/* init and wake-up ISDB-S tuners */
 		ret = fe->ops.tuner_ops.init(fe);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(&pt3->pdev->dev,
 				 "Failed to init SAT-tuner[%d]\n", i);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	ret = pt3_init_all_mxl301rf(pt3);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_warn(&pt3->pdev->dev, "Failed to init TERR-tuners\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = pt3_set_tuner_power(pt3, true, true);
-	if (ret < 0) {
+	ret = pt3_set_tuner_घातer(pt3, true, true);
+	अगर (ret < 0) अणु
 		dev_warn(&pt3->pdev->dev, "Failed to control tuner module\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Wake up all tuners and make an initial tuning,
-	 * in order to avoid interference among the tuners in the module,
-	 * according to the doc from the manufacturer.
+	 * in order to aव्योम पूर्णांकerference among the tuners in the module,
+	 * according to the करोc from the manufacturer.
 	 */
-	for (i = 0; i < PT3_NUM_FE; i++) {
+	क्रम (i = 0; i < PT3_NUM_FE; i++) अणु
 		fe = pt3->adaps[i]->fe;
 		ret = 0;
-		if (fe->ops.delsys[0] == SYS_ISDBT)
+		अगर (fe->ops.delsys[0] == SYS_ISDBT)
 			ret = fe->ops.tuner_ops.init(fe);
 		/* set only when called from pt3_probe(), not resume() */
-		if (ret == 0 && fe->dtv_property_cache.frequency == 0) {
+		अगर (ret == 0 && fe->dtv_property_cache.frequency == 0) अणु
 			fe->dtv_property_cache.frequency =
 						adap_conf[i].init_freq;
 			ret = fe->ops.tuner_ops.set_params(fe);
-		}
-		if (ret < 0) {
+		पूर्ण
+		अगर (ret < 0) अणु
 			dev_warn(&pt3->pdev->dev,
 				 "Failed in initial tuning of tuner[%d]\n", i);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* and sleep again, waiting to be opened by users. */
-	for (i = 0; i < PT3_NUM_FE; i++) {
+	/* and sleep again, रुकोing to be खोलोed by users. */
+	क्रम (i = 0; i < PT3_NUM_FE; i++) अणु
 		fe = pt3->adaps[i]->fe;
-		if (fe->ops.tuner_ops.sleep)
+		अगर (fe->ops.tuner_ops.sleep)
 			ret = fe->ops.tuner_ops.sleep(fe);
-		if (ret < 0)
-			break;
-		if (fe->ops.sleep)
+		अगर (ret < 0)
+			अवरोध;
+		अगर (fe->ops.sleep)
 			ret = fe->ops.sleep(fe);
-		if (ret < 0)
-			break;
-		if (fe->ops.delsys[0] == SYS_ISDBS)
+		अगर (ret < 0)
+			अवरोध;
+		अगर (fe->ops.delsys[0] == SYS_ISDBS)
 			fe->ops.set_voltage = &pt3_set_voltage;
-		else
+		अन्यथा
 			fe->ops.set_lna = &pt3_set_lna;
-	}
-	if (i < PT3_NUM_FE) {
+	पूर्ण
+	अगर (i < PT3_NUM_FE) अणु
 		dev_warn(&pt3->pdev->dev, "FE[%d] failed to standby\n", i);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-static int pt3_attach_fe(struct pt3_board *pt3, int i)
-{
-	const struct i2c_board_info *info;
-	struct tc90522_config cfg;
-	struct i2c_client *cl;
-	struct dvb_adapter *dvb_adap;
-	int ret;
+अटल पूर्णांक pt3_attach_fe(काष्ठा pt3_board *pt3, पूर्णांक i)
+अणु
+	स्थिर काष्ठा i2c_board_info *info;
+	काष्ठा tc90522_config cfg;
+	काष्ठा i2c_client *cl;
+	काष्ठा dvb_adapter *dvb_adap;
+	पूर्णांक ret;
 
 	info = &adap_conf[i].demod_info;
 	cfg = adap_conf[i].demod_cfg;
-	cfg.tuner_i2c = NULL;
+	cfg.tuner_i2c = शून्य;
 
 	ret = -ENODEV;
 	cl = dvb_module_probe("tc90522", info->type, &pt3->i2c_adap,
 			      info->addr, &cfg);
-	if (!cl)
-		return -ENODEV;
+	अगर (!cl)
+		वापस -ENODEV;
 	pt3->adaps[i]->i2c_demod = cl;
 
-	if (!strncmp(cl->name, TC90522_I2C_DEV_SAT,
-		     strlen(TC90522_I2C_DEV_SAT))) {
-		struct qm1d1c0042_config tcfg;
+	अगर (!म_भेदन(cl->name, TC90522_I2C_DEV_SAT,
+		     म_माप(TC90522_I2C_DEV_SAT))) अणु
+		काष्ठा qm1d1c0042_config tcfg;
 
 		tcfg = adap_conf[i].tuner_cfg.qm1d1c0042;
 		tcfg.fe = cfg.fe;
 		info = &adap_conf[i].tuner_info;
 		cl = dvb_module_probe("qm1d1c0042", info->type, cfg.tuner_i2c,
 				      info->addr, &tcfg);
-	} else {
-		struct mxl301rf_config tcfg;
+	पूर्ण अन्यथा अणु
+		काष्ठा mxl301rf_config tcfg;
 
 		tcfg = adap_conf[i].tuner_cfg.mxl301rf;
 		tcfg.fe = cfg.fe;
 		info = &adap_conf[i].tuner_info;
 		cl = dvb_module_probe("mxl301rf", info->type, cfg.tuner_i2c,
 				      info->addr, &tcfg);
-	}
-	if (!cl)
-		goto err_demod_module_release;
+	पूर्ण
+	अगर (!cl)
+		जाओ err_demod_module_release;
 	pt3->adaps[i]->i2c_tuner = cl;
 
 	dvb_adap = &pt3->adaps[one_adapter ? 0 : i]->dvb_adap;
-	ret = dvb_register_frontend(dvb_adap, cfg.fe);
-	if (ret < 0)
-		goto err_tuner_module_release;
+	ret = dvb_रेजिस्टर_frontend(dvb_adap, cfg.fe);
+	अगर (ret < 0)
+		जाओ err_tuner_module_release;
 	pt3->adaps[i]->fe = cfg.fe;
-	return 0;
+	वापस 0;
 
 err_tuner_module_release:
 	dvb_module_release(pt3->adaps[i]->i2c_tuner);
 err_demod_module_release:
 	dvb_module_release(pt3->adaps[i]->i2c_demod);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int pt3_fetch_thread(void *data)
-{
-	struct pt3_adapter *adap = data;
-	ktime_t delay;
+अटल पूर्णांक pt3_fetch_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा pt3_adapter *adap = data;
+	kसमय_प्रकार delay;
 	bool was_frozen;
 
-#define PT3_INITIAL_BUF_DROPS 4
-#define PT3_FETCH_DELAY 10
-#define PT3_FETCH_DELAY_DELTA 2
+#घोषणा PT3_INITIAL_BUF_DROPS 4
+#घोषणा PT3_FETCH_DELAY 10
+#घोषणा PT3_FETCH_DELAY_DELTA 2
 
 	pt3_init_dmabuf(adap);
 	adap->num_discard = PT3_INITIAL_BUF_DROPS;
 
 	dev_dbg(adap->dvb_adap.device, "PT3: [%s] started\n",
-		adap->thread->comm);
-	set_freezable();
-	while (!kthread_freezable_should_stop(&was_frozen)) {
-		if (was_frozen)
+		adap->thपढ़ो->comm);
+	set_मुक्तzable();
+	जबतक (!kthपढ़ो_मुक्तzable_should_stop(&was_frozen)) अणु
+		अगर (was_frozen)
 			adap->num_discard = PT3_INITIAL_BUF_DROPS;
 
 		pt3_proc_dma(adap);
 
-		delay = ktime_set(0, PT3_FETCH_DELAY * NSEC_PER_MSEC);
+		delay = kसमय_set(0, PT3_FETCH_DELAY * NSEC_PER_MSEC);
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		freezable_schedule_hrtimeout_range(&delay,
+		मुक्तzable_schedule_hrसमयout_range(&delay,
 					PT3_FETCH_DELAY_DELTA * NSEC_PER_MSEC,
 					HRTIMER_MODE_REL);
-	}
+	पूर्ण
 	dev_dbg(adap->dvb_adap.device, "PT3: [%s] exited\n",
-		adap->thread->comm);
-	return 0;
-}
+		adap->thपढ़ो->comm);
+	वापस 0;
+पूर्ण
 
-static int pt3_start_streaming(struct pt3_adapter *adap)
-{
-	struct task_struct *thread;
+अटल पूर्णांक pt3_start_streaming(काष्ठा pt3_adapter *adap)
+अणु
+	काष्ठा task_काष्ठा *thपढ़ो;
 
-	/* start fetching thread */
-	thread = kthread_run(pt3_fetch_thread, adap, "pt3-ad%i-dmx%i",
+	/* start fetching thपढ़ो */
+	thपढ़ो = kthपढ़ो_run(pt3_fetch_thपढ़ो, adap, "pt3-ad%i-dmx%i",
 				adap->dvb_adap.num, adap->dmxdev.dvbdev->id);
-	if (IS_ERR(thread)) {
-		int ret = PTR_ERR(thread);
+	अगर (IS_ERR(thपढ़ो)) अणु
+		पूर्णांक ret = PTR_ERR(thपढ़ो);
 
-		adap->thread = NULL;
+		adap->thपढ़ो = शून्य;
 		dev_warn(adap->dvb_adap.device,
 			 "PT3 (adap:%d, dmx:%d): failed to start kthread\n",
 			 adap->dvb_adap.num, adap->dmxdev.dvbdev->id);
-		return ret;
-	}
-	adap->thread = thread;
+		वापस ret;
+	पूर्ण
+	adap->thपढ़ो = thपढ़ो;
 
-	return pt3_start_dma(adap);
-}
+	वापस pt3_start_dma(adap);
+पूर्ण
 
-static int pt3_stop_streaming(struct pt3_adapter *adap)
-{
-	int ret;
+अटल पूर्णांक pt3_stop_streaming(काष्ठा pt3_adapter *adap)
+अणु
+	पूर्णांक ret;
 
 	ret = pt3_stop_dma(adap);
-	if (ret)
+	अगर (ret)
 		dev_warn(adap->dvb_adap.device,
 			 "PT3: failed to stop streaming of adap:%d/FE:%d\n",
 			 adap->dvb_adap.num, adap->fe->id);
 
-	/* kill the fetching thread */
-	ret = kthread_stop(adap->thread);
-	adap->thread = NULL;
-	return ret;
-}
+	/* समाप्त the fetching thपढ़ो */
+	ret = kthपढ़ो_stop(adap->thपढ़ो);
+	adap->thपढ़ो = शून्य;
+	वापस ret;
+पूर्ण
 
-static int pt3_start_feed(struct dvb_demux_feed *feed)
-{
-	struct pt3_adapter *adap;
+अटल पूर्णांक pt3_start_feed(काष्ठा dvb_demux_feed *feed)
+अणु
+	काष्ठा pt3_adapter *adap;
 
-	if (signal_pending(current))
-		return -EINTR;
+	अगर (संकेत_pending(current))
+		वापस -EINTR;
 
-	adap = container_of(feed->demux, struct pt3_adapter, demux);
+	adap = container_of(feed->demux, काष्ठा pt3_adapter, demux);
 	adap->num_feeds++;
-	if (adap->num_feeds > 1)
-		return 0;
+	अगर (adap->num_feeds > 1)
+		वापस 0;
 
-	return pt3_start_streaming(adap);
+	वापस pt3_start_streaming(adap);
 
-}
+पूर्ण
 
-static int pt3_stop_feed(struct dvb_demux_feed *feed)
-{
-	struct pt3_adapter *adap;
+अटल पूर्णांक pt3_stop_feed(काष्ठा dvb_demux_feed *feed)
+अणु
+	काष्ठा pt3_adapter *adap;
 
-	adap = container_of(feed->demux, struct pt3_adapter, demux);
+	adap = container_of(feed->demux, काष्ठा pt3_adapter, demux);
 
 	adap->num_feeds--;
-	if (adap->num_feeds > 0 || !adap->thread)
-		return 0;
+	अगर (adap->num_feeds > 0 || !adap->thपढ़ो)
+		वापस 0;
 	adap->num_feeds = 0;
 
-	return pt3_stop_streaming(adap);
-}
+	वापस pt3_stop_streaming(adap);
+पूर्ण
 
 
-static int pt3_alloc_adapter(struct pt3_board *pt3, int index)
-{
-	int ret;
-	struct pt3_adapter *adap;
-	struct dvb_adapter *da;
+अटल पूर्णांक pt3_alloc_adapter(काष्ठा pt3_board *pt3, पूर्णांक index)
+अणु
+	पूर्णांक ret;
+	काष्ठा pt3_adapter *adap;
+	काष्ठा dvb_adapter *da;
 
-	adap = kzalloc(sizeof(*adap), GFP_KERNEL);
-	if (!adap)
-		return -ENOMEM;
+	adap = kzalloc(माप(*adap), GFP_KERNEL);
+	अगर (!adap)
+		वापस -ENOMEM;
 
 	pt3->adaps[index] = adap;
 	adap->adap_idx = index;
 
-	if (index == 0 || !one_adapter) {
-		ret = dvb_register_adapter(&adap->dvb_adap, "PT3 DVB",
+	अगर (index == 0 || !one_adapter) अणु
+		ret = dvb_रेजिस्टर_adapter(&adap->dvb_adap, "PT3 DVB",
 				THIS_MODULE, &pt3->pdev->dev, adapter_nr);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&pt3->pdev->dev,
 				"failed to register adapter dev\n");
-			goto err_mem;
-		}
+			जाओ err_mem;
+		पूर्ण
 		da = &adap->dvb_adap;
-	} else
+	पूर्ण अन्यथा
 		da = &pt3->adaps[0]->dvb_adap;
 
 	adap->dvb_adap.priv = pt3;
@@ -556,282 +557,282 @@ static int pt3_alloc_adapter(struct pt3_board *pt3, int index)
 	adap->demux.start_feed = pt3_start_feed;
 	adap->demux.stop_feed = pt3_stop_feed;
 	ret = dvb_dmx_init(&adap->demux);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pt3->pdev->dev, "failed to init dmx dev\n");
-		goto err_adap;
-	}
+		जाओ err_adap;
+	पूर्ण
 
 	adap->dmxdev.filternum = 256;
 	adap->dmxdev.demux = &adap->demux.dmx;
 	ret = dvb_dmxdev_init(&adap->dmxdev, da);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pt3->pdev->dev, "failed to init dmxdev\n");
-		goto err_demux;
-	}
+		जाओ err_demux;
+	पूर्ण
 
 	ret = pt3_alloc_dmabuf(adap);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pt3->pdev->dev, "failed to alloc DMA buffers\n");
-		goto err_dmabuf;
-	}
+		जाओ err_dmabuf;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_dmabuf:
-	pt3_free_dmabuf(adap);
+	pt3_मुक्त_dmabuf(adap);
 	dvb_dmxdev_release(&adap->dmxdev);
 err_demux:
 	dvb_dmx_release(&adap->demux);
 err_adap:
-	if (index == 0 || !one_adapter)
-		dvb_unregister_adapter(da);
+	अगर (index == 0 || !one_adapter)
+		dvb_unरेजिस्टर_adapter(da);
 err_mem:
-	kfree(adap);
-	pt3->adaps[index] = NULL;
-	return ret;
-}
+	kमुक्त(adap);
+	pt3->adaps[index] = शून्य;
+	वापस ret;
+पूर्ण
 
-static void pt3_cleanup_adapter(struct pt3_board *pt3, int index)
-{
-	struct pt3_adapter *adap;
-	struct dmx_demux *dmx;
+अटल व्योम pt3_cleanup_adapter(काष्ठा pt3_board *pt3, पूर्णांक index)
+अणु
+	काष्ठा pt3_adapter *adap;
+	काष्ठा dmx_demux *dmx;
 
 	adap = pt3->adaps[index];
-	if (adap == NULL)
-		return;
+	अगर (adap == शून्य)
+		वापस;
 
-	/* stop demux kthread */
-	if (adap->thread)
+	/* stop demux kthपढ़ो */
+	अगर (adap->thपढ़ो)
 		pt3_stop_streaming(adap);
 
 	dmx = &adap->demux.dmx;
-	dmx->close(dmx);
-	if (adap->fe) {
-		adap->fe->callback = NULL;
-		if (adap->fe->frontend_priv)
-			dvb_unregister_frontend(adap->fe);
+	dmx->बंद(dmx);
+	अगर (adap->fe) अणु
+		adap->fe->callback = शून्य;
+		अगर (adap->fe->frontend_priv)
+			dvb_unरेजिस्टर_frontend(adap->fe);
 		dvb_module_release(adap->i2c_tuner);
 		dvb_module_release(adap->i2c_demod);
-	}
-	pt3_free_dmabuf(adap);
+	पूर्ण
+	pt3_मुक्त_dmabuf(adap);
 	dvb_dmxdev_release(&adap->dmxdev);
 	dvb_dmx_release(&adap->demux);
-	if (index == 0 || !one_adapter)
-		dvb_unregister_adapter(&adap->dvb_adap);
-	kfree(adap);
-	pt3->adaps[index] = NULL;
-}
+	अगर (index == 0 || !one_adapter)
+		dvb_unरेजिस्टर_adapter(&adap->dvb_adap);
+	kमुक्त(adap);
+	pt3->adaps[index] = शून्य;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 
-static int pt3_suspend(struct device *dev)
-{
-	struct pt3_board *pt3 = dev_get_drvdata(dev);
-	int i;
-	struct pt3_adapter *adap;
+अटल पूर्णांक pt3_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pt3_board *pt3 = dev_get_drvdata(dev);
+	पूर्णांक i;
+	काष्ठा pt3_adapter *adap;
 
-	for (i = 0; i < PT3_NUM_FE; i++) {
+	क्रम (i = 0; i < PT3_NUM_FE; i++) अणु
 		adap = pt3->adaps[i];
-		if (adap->num_feeds > 0)
+		अगर (adap->num_feeds > 0)
 			pt3_stop_dma(adap);
 		dvb_frontend_suspend(adap->fe);
-		pt3_free_dmabuf(adap);
-	}
+		pt3_मुक्त_dmabuf(adap);
+	पूर्ण
 
 	pt3_lnb_ctrl(pt3, false);
-	pt3_set_tuner_power(pt3, false, false);
-	return 0;
-}
+	pt3_set_tuner_घातer(pt3, false, false);
+	वापस 0;
+पूर्ण
 
-static int pt3_resume(struct device *dev)
-{
-	struct pt3_board *pt3 = dev_get_drvdata(dev);
-	int i, ret;
-	struct pt3_adapter *adap;
+अटल पूर्णांक pt3_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pt3_board *pt3 = dev_get_drvdata(dev);
+	पूर्णांक i, ret;
+	काष्ठा pt3_adapter *adap;
 
 	ret = pt3_fe_init(pt3);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (pt3->lna_on_cnt > 0)
-		pt3_set_tuner_power(pt3, true, true);
-	if (pt3->lnb_on_cnt > 0)
+	अगर (pt3->lna_on_cnt > 0)
+		pt3_set_tuner_घातer(pt3, true, true);
+	अगर (pt3->lnb_on_cnt > 0)
 		pt3_lnb_ctrl(pt3, true);
 
-	for (i = 0; i < PT3_NUM_FE; i++) {
+	क्रम (i = 0; i < PT3_NUM_FE; i++) अणु
 		adap = pt3->adaps[i];
 		dvb_frontend_resume(adap->fe);
 		ret = pt3_alloc_dmabuf(adap);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pt3->pdev->dev, "failed to alloc DMA bufs\n");
-			continue;
-		}
-		if (adap->num_feeds > 0)
+			जारी;
+		पूर्ण
+		अगर (adap->num_feeds > 0)
 			pt3_start_dma(adap);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_PM_SLEEP */
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
 
-static void pt3_remove(struct pci_dev *pdev)
-{
-	struct pt3_board *pt3;
-	int i;
+अटल व्योम pt3_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pt3_board *pt3;
+	पूर्णांक i;
 
 	pt3 = pci_get_drvdata(pdev);
-	for (i = PT3_NUM_FE - 1; i >= 0; i--)
+	क्रम (i = PT3_NUM_FE - 1; i >= 0; i--)
 		pt3_cleanup_adapter(pt3, i);
 	i2c_del_adapter(&pt3->i2c_adap);
-	kfree(pt3->i2c_buf);
+	kमुक्त(pt3->i2c_buf);
 	pci_iounmap(pt3->pdev, pt3->regs[0]);
 	pci_iounmap(pt3->pdev, pt3->regs[1]);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-	kfree(pt3);
-}
+	kमुक्त(pt3);
+पूर्ण
 
-static int pt3_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
+अटल पूर्णांक pt3_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
 	u8 rev;
 	u32 ver;
-	int i, ret;
-	struct pt3_board *pt3;
-	struct i2c_adapter *i2c;
+	पूर्णांक i, ret;
+	काष्ठा pt3_board *pt3;
+	काष्ठा i2c_adapter *i2c;
 
-	if (pci_read_config_byte(pdev, PCI_REVISION_ID, &rev) || rev != 1)
-		return -ENODEV;
+	अगर (pci_पढ़ो_config_byte(pdev, PCI_REVISION_ID, &rev) || rev != 1)
+		वापस -ENODEV;
 
 	ret = pci_enable_device(pdev);
-	if (ret < 0)
-		return -ENODEV;
+	अगर (ret < 0)
+		वापस -ENODEV;
 	pci_set_master(pdev);
 
 	ret = pci_request_regions(pdev, DRV_NAME);
-	if (ret < 0)
-		goto err_disable_device;
+	अगर (ret < 0)
+		जाओ err_disable_device;
 
 	ret = dma_set_mask(&pdev->dev, DMA_BIT_MASK(64));
-	if (ret == 0)
+	अगर (ret == 0)
 		dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(64));
-	else {
+	अन्यथा अणु
 		ret = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-		if (ret == 0)
+		अगर (ret == 0)
 			dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
-		else {
+		अन्यथा अणु
 			dev_err(&pdev->dev, "Failed to set DMA mask\n");
-			goto err_release_regions;
-		}
+			जाओ err_release_regions;
+		पूर्ण
 		dev_info(&pdev->dev, "Use 32bit DMA\n");
-	}
+	पूर्ण
 
-	pt3 = kzalloc(sizeof(*pt3), GFP_KERNEL);
-	if (!pt3) {
+	pt3 = kzalloc(माप(*pt3), GFP_KERNEL);
+	अगर (!pt3) अणु
 		ret = -ENOMEM;
-		goto err_release_regions;
-	}
+		जाओ err_release_regions;
+	पूर्ण
 	pci_set_drvdata(pdev, pt3);
 	pt3->pdev = pdev;
 	mutex_init(&pt3->lock);
 	pt3->regs[0] = pci_ioremap_bar(pdev, 0);
 	pt3->regs[1] = pci_ioremap_bar(pdev, 2);
-	if (pt3->regs[0] == NULL || pt3->regs[1] == NULL) {
+	अगर (pt3->regs[0] == शून्य || pt3->regs[1] == शून्य) अणु
 		dev_err(&pdev->dev, "Failed to ioremap\n");
 		ret = -ENOMEM;
-		goto err_kfree;
-	}
+		जाओ err_kमुक्त;
+	पूर्ण
 
-	ver = ioread32(pt3->regs[0] + REG_VERSION);
-	if ((ver >> 16) != 0x0301) {
+	ver = ioपढ़ो32(pt3->regs[0] + REG_VERSION);
+	अगर ((ver >> 16) != 0x0301) अणु
 		dev_warn(&pdev->dev, "PT%d, I/F-ver.:%d not supported\n",
 			 ver >> 24, (ver & 0x00ff0000) >> 16);
 		ret = -ENODEV;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
 	pt3->num_bufs = clamp_val(num_bufs, MIN_DATA_BUFS, MAX_DATA_BUFS);
 
-	pt3->i2c_buf = kmalloc(sizeof(*pt3->i2c_buf), GFP_KERNEL);
-	if (pt3->i2c_buf == NULL) {
+	pt3->i2c_buf = kदो_स्मृति(माप(*pt3->i2c_buf), GFP_KERNEL);
+	अगर (pt3->i2c_buf == शून्य) अणु
 		ret = -ENOMEM;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 	i2c = &pt3->i2c_adap;
 	i2c->owner = THIS_MODULE;
 	i2c->algo = &pt3_i2c_algo;
-	i2c->algo_data = NULL;
+	i2c->algo_data = शून्य;
 	i2c->dev.parent = &pdev->dev;
-	strscpy(i2c->name, DRV_NAME, sizeof(i2c->name));
+	strscpy(i2c->name, DRV_NAME, माप(i2c->name));
 	i2c_set_adapdata(i2c, pt3);
 	ret = i2c_add_adapter(i2c);
-	if (ret < 0)
-		goto err_i2cbuf;
+	अगर (ret < 0)
+		जाओ err_i2cbuf;
 
-	for (i = 0; i < PT3_NUM_FE; i++) {
+	क्रम (i = 0; i < PT3_NUM_FE; i++) अणु
 		ret = pt3_alloc_adapter(pt3, i);
-		if (ret < 0)
-			break;
+		अगर (ret < 0)
+			अवरोध;
 
 		ret = pt3_attach_fe(pt3, i);
-		if (ret < 0)
-			break;
-	}
-	if (i < PT3_NUM_FE) {
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
+	अगर (i < PT3_NUM_FE) अणु
 		dev_err(&pdev->dev, "Failed to create FE%d\n", i);
-		goto err_cleanup_adapters;
-	}
+		जाओ err_cleanup_adapters;
+	पूर्ण
 
 	ret = pt3_fe_init(pt3);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Failed to init frontends\n");
 		i = PT3_NUM_FE - 1;
-		goto err_cleanup_adapters;
-	}
+		जाओ err_cleanup_adapters;
+	पूर्ण
 
 	dev_info(&pdev->dev,
 		 "successfully init'ed PT%d (fw:0x%02x, I/F:0x%02x)\n",
 		 ver >> 24, (ver >> 8) & 0xff, (ver >> 16) & 0xff);
-	return 0;
+	वापस 0;
 
 err_cleanup_adapters:
-	while (i >= 0)
+	जबतक (i >= 0)
 		pt3_cleanup_adapter(pt3, i--);
 	i2c_del_adapter(i2c);
 err_i2cbuf:
-	kfree(pt3->i2c_buf);
+	kमुक्त(pt3->i2c_buf);
 err_iounmap:
-	if (pt3->regs[0])
+	अगर (pt3->regs[0])
 		pci_iounmap(pdev, pt3->regs[0]);
-	if (pt3->regs[1])
+	अगर (pt3->regs[1])
 		pci_iounmap(pdev, pt3->regs[1]);
-err_kfree:
-	kfree(pt3);
+err_kमुक्त:
+	kमुक्त(pt3);
 err_release_regions:
 	pci_release_regions(pdev);
 err_disable_device:
 	pci_disable_device(pdev);
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static const struct pci_device_id pt3_id_table[] = {
-	{ PCI_DEVICE_SUB(0x1172, 0x4c15, 0xee8d, 0x0368) },
-	{ },
-};
+अटल स्थिर काष्ठा pci_device_id pt3_id_table[] = अणु
+	अणु PCI_DEVICE_SUB(0x1172, 0x4c15, 0xee8d, 0x0368) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, pt3_id_table);
 
-static SIMPLE_DEV_PM_OPS(pt3_pm_ops, pt3_suspend, pt3_resume);
+अटल SIMPLE_DEV_PM_OPS(pt3_pm_ops, pt3_suspend, pt3_resume);
 
-static struct pci_driver pt3_driver = {
+अटल काष्ठा pci_driver pt3_driver = अणु
 	.name		= DRV_NAME,
 	.probe		= pt3_probe,
-	.remove		= pt3_remove,
+	.हटाओ		= pt3_हटाओ,
 	.id_table	= pt3_id_table,
 
 	.driver.pm	= &pt3_pm_ops,
-};
+पूर्ण;
 
 module_pci_driver(pt3_driver);
 

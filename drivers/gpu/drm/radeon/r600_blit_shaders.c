@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -24,22 +25,22 @@
  *     Alex Deucher <alexander.deucher@amd.com>
  */
 
-#include <linux/bug.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
 
 /*
  * R6xx+ cards need to use the 3D engine to blit data which requires
  * quite a bit of hw state setup.  Rather than pull the whole 3D driver
- * (which normally generates the 3D state) into the DRM, we opt to use
- * statically generated state tables.  The register state and shaders
+ * (which normally generates the 3D state) पूर्णांकo the DRM, we opt to use
+ * अटलally generated state tables.  The रेजिस्टर state and shaders
  * were hand generated to support blitting functionality.  See the 3D
- * driver or documentation for descriptions of the registers and
- * shader instructions.
+ * driver or करोcumentation क्रम descriptions of the रेजिस्टरs and
+ * shader inकाष्ठाions.
  */
 
-const u32 r6xx_default_state[] =
-{
+स्थिर u32 r6xx_शेष_state[] =
+अणु
 	0xc0002400, /* START_3D_CMDBUF */
 	0x00000000,
 
@@ -283,7 +284,7 @@ const u32 r6xx_default_state[] =
 	0xc0116900,
 	0x00000280,
 	0x00000000, /* PA_SU_POINT_SIZE */
-	0x00000000, /* PA_SU_POINT_MINMAX */
+	0x00000000, /* PA_SU_POपूर्णांक_न्यूनMAX */
 	0x00000008, /* PA_SU_LINE_CNTL */
 	0x00000000, /* PA_SC_LINE_STIPPLE */
 	0x00000000, /* VGT_OUTPUT_PATH_CNTL */
@@ -330,7 +331,7 @@ const u32 r6xx_default_state[] =
 	0x00000244, /* PA_SU_SC_MODE_CNTL */
 	0x00000100, /* PA_CL_VTE_CNTL */
 	0x00000000, /* PA_CL_VS_OUT_CNTL */
-	0x00000000, /* PA_CL_NANINF_CNTL */
+	0x00000000, /* PA_CL_न_अंकINF_CNTL */
 
 	0xc0026900,
 	0x0000008e,
@@ -362,10 +363,10 @@ const u32 r6xx_default_state[] =
 	0x00000012,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;
 
-const u32 r7xx_default_state[] =
-{
+स्थिर u32 r7xx_शेष_state[] =
+अणु
 	0xc0012800, /* CONTEXT_CONTROL */
 	0x80000000,
 	0x80000000,
@@ -599,7 +600,7 @@ const u32 r7xx_default_state[] =
 	0xc0116900,
 	0x00000280,
 	0x00000000, /* PA_SU_POINT_SIZE */
-	0x00000000, /* PA_SU_POINT_MINMAX */
+	0x00000000, /* PA_SU_POपूर्णांक_न्यूनMAX */
 	0x00000008, /* PA_SU_LINE_CNTL */
 	0x00000000, /* PA_SC_LINE_STIPPLE */
 	0x00000000, /* VGT_OUTPUT_PATH_CNTL */
@@ -646,7 +647,7 @@ const u32 r7xx_default_state[] =
 	0x00000244, /* PA_SU_SC_MODE_CNTL */
 	0x00000100, /* PA_CL_VTE_CNTL */
 	0x00000000, /* PA_CL_VS_OUT_CNTL */
-	0x00000000, /* PA_CL_NANINF_CNTL */
+	0x00000000, /* PA_CL_न_अंकINF_CNTL */
 
 	0xc0026900,
 	0x0000008e,
@@ -678,11 +679,11 @@ const u32 r7xx_default_state[] =
 	0x00000012,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;
 
-/* same for r6xx/r7xx */
-const u32 r6xx_vs[] =
-{
+/* same क्रम r6xx/r7xx */
+स्थिर u32 r6xx_vs[] =
+अणु
 	0x00000004,
 	0x81000000,
 	0x0000203c,
@@ -693,16 +694,16 @@ const u32 r6xx_vs[] =
 	0x00000000,
 	0x3c000000,
 	0x68cd1000,
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 	0x000a0000,
-#else
+#अन्यथा
 	0x00080000,
-#endif
+#पूर्ण_अगर
 	0x00000000,
-};
+पूर्ण;
 
-const u32 r6xx_ps[] =
-{
+स्थिर u32 r6xx_ps[] =
+अणु
 	0x00000002,
 	0x80800000,
 	0x00000000,
@@ -711,9 +712,9 @@ const u32 r6xx_ps[] =
 	0x000d1000,
 	0xb0800000,
 	0x00000000,
-};
+पूर्ण;
 
-const u32 r6xx_ps_size = ARRAY_SIZE(r6xx_ps);
-const u32 r6xx_vs_size = ARRAY_SIZE(r6xx_vs);
-const u32 r6xx_default_size = ARRAY_SIZE(r6xx_default_state);
-const u32 r7xx_default_size = ARRAY_SIZE(r7xx_default_state);
+स्थिर u32 r6xx_ps_size = ARRAY_SIZE(r6xx_ps);
+स्थिर u32 r6xx_vs_size = ARRAY_SIZE(r6xx_vs);
+स्थिर u32 r6xx_शेष_size = ARRAY_SIZE(r6xx_शेष_state);
+स्थिर u32 r7xx_शेष_size = ARRAY_SIZE(r7xx_शेष_state);

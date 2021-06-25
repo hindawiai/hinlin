@@ -1,158 +1,159 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_BOOK3S_64_TLBFLUSH_H
-#define _ASM_POWERPC_BOOK3S_64_TLBFLUSH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_BOOK3S_64_TLBFLUSH_H
+#घोषणा _ASM_POWERPC_BOOK3S_64_TLBFLUSH_H
 
-#define MMU_NO_CONTEXT	~0UL
+#घोषणा MMU_NO_CONTEXT	~0UL
 
-#include <linux/mm_types.h>
-#include <asm/book3s/64/tlbflush-hash.h>
-#include <asm/book3s/64/tlbflush-radix.h>
+#समावेश <linux/mm_types.h>
+#समावेश <यंत्र/book3s/64/tlbflush-hash.h>
+#समावेश <यंत्र/book3s/64/tlbflush-radix.h>
 
 /* TLB flush actions. Used as argument to tlbiel_all() */
-enum {
+क्रमागत अणु
 	TLB_INVAL_SCOPE_GLOBAL = 0,	/* invalidate all TLBs */
-	TLB_INVAL_SCOPE_LPID = 1,	/* invalidate TLBs for current LPID */
-};
+	TLB_INVAL_SCOPE_LPID = 1,	/* invalidate TLBs क्रम current LPID */
+पूर्ण;
 
-#ifdef CONFIG_PPC_NATIVE
-static inline void tlbiel_all(void)
-{
+#अगर_घोषित CONFIG_PPC_NATIVE
+अटल अंतरभूत व्योम tlbiel_all(व्योम)
+अणु
 	/*
-	 * This is used for host machine check and bootup.
+	 * This is used क्रम host machine check and bootup.
 	 *
 	 * This uses early_radix_enabled and implementations use
 	 * early_cpu_has_feature etc because that works early in boot
-	 * and this is the machine check path which is not performance
+	 * and this is the machine check path which is not perक्रमmance
 	 * critical.
 	 */
-	if (early_radix_enabled())
+	अगर (early_radix_enabled())
 		radix__tlbiel_all(TLB_INVAL_SCOPE_GLOBAL);
-	else
+	अन्यथा
 		hash__tlbiel_all(TLB_INVAL_SCOPE_GLOBAL);
-}
-#else
-static inline void tlbiel_all(void) { BUG(); }
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम tlbiel_all(व्योम) अणु BUG(); पूर्ण
+#पूर्ण_अगर
 
-static inline void tlbiel_all_lpid(bool radix)
-{
+अटल अंतरभूत व्योम tlbiel_all_lpid(bool radix)
+अणु
 	/*
-	 * This is used for guest machine check.
+	 * This is used क्रम guest machine check.
 	 */
-	if (radix)
+	अगर (radix)
 		radix__tlbiel_all(TLB_INVAL_SCOPE_LPID);
-	else
+	अन्यथा
 		hash__tlbiel_all(TLB_INVAL_SCOPE_LPID);
-}
+पूर्ण
 
 
-#define __HAVE_ARCH_FLUSH_PMD_TLB_RANGE
-static inline void flush_pmd_tlb_range(struct vm_area_struct *vma,
-				       unsigned long start, unsigned long end)
-{
-	if (radix_enabled())
-		return radix__flush_pmd_tlb_range(vma, start, end);
-	return hash__flush_tlb_range(vma, start, end);
-}
+#घोषणा __HAVE_ARCH_FLUSH_PMD_TLB_RANGE
+अटल अंतरभूत व्योम flush_pmd_tlb_range(काष्ठा vm_area_काष्ठा *vma,
+				       अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अगर (radix_enabled())
+		वापस radix__flush_pmd_tlb_range(vma, start, end);
+	वापस hash__flush_tlb_range(vma, start, end);
+पूर्ण
 
-#define __HAVE_ARCH_FLUSH_HUGETLB_TLB_RANGE
-static inline void flush_hugetlb_tlb_range(struct vm_area_struct *vma,
-					   unsigned long start,
-					   unsigned long end)
-{
-	if (radix_enabled())
-		return radix__flush_hugetlb_tlb_range(vma, start, end);
-	return hash__flush_tlb_range(vma, start, end);
-}
+#घोषणा __HAVE_ARCH_FLUSH_HUGETLB_TLB_RANGE
+अटल अंतरभूत व्योम flush_hugetlb_tlb_range(काष्ठा vm_area_काष्ठा *vma,
+					   अचिन्हित दीर्घ start,
+					   अचिन्हित दीर्घ end)
+अणु
+	अगर (radix_enabled())
+		वापस radix__flush_hugetlb_tlb_range(vma, start, end);
+	वापस hash__flush_tlb_range(vma, start, end);
+पूर्ण
 
-static inline void flush_tlb_range(struct vm_area_struct *vma,
-				   unsigned long start, unsigned long end)
-{
-	if (radix_enabled())
-		return radix__flush_tlb_range(vma, start, end);
-	return hash__flush_tlb_range(vma, start, end);
-}
+अटल अंतरभूत व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
+				   अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अगर (radix_enabled())
+		वापस radix__flush_tlb_range(vma, start, end);
+	वापस hash__flush_tlb_range(vma, start, end);
+पूर्ण
 
-static inline void flush_tlb_kernel_range(unsigned long start,
-					  unsigned long end)
-{
-	if (radix_enabled())
-		return radix__flush_tlb_kernel_range(start, end);
-	return hash__flush_tlb_kernel_range(start, end);
-}
+अटल अंतरभूत व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start,
+					  अचिन्हित दीर्घ end)
+अणु
+	अगर (radix_enabled())
+		वापस radix__flush_tlb_kernel_range(start, end);
+	वापस hash__flush_tlb_kernel_range(start, end);
+पूर्ण
 
-static inline void local_flush_tlb_mm(struct mm_struct *mm)
-{
-	if (radix_enabled())
-		return radix__local_flush_tlb_mm(mm);
-	return hash__local_flush_tlb_mm(mm);
-}
+अटल अंतरभूत व्योम local_flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (radix_enabled())
+		वापस radix__local_flush_tlb_mm(mm);
+	वापस hash__local_flush_tlb_mm(mm);
+पूर्ण
 
-static inline void local_flush_tlb_page(struct vm_area_struct *vma,
-					unsigned long vmaddr)
-{
-	if (radix_enabled())
-		return radix__local_flush_tlb_page(vma, vmaddr);
-	return hash__local_flush_tlb_page(vma, vmaddr);
-}
+अटल अंतरभूत व्योम local_flush_tlb_page(काष्ठा vm_area_काष्ठा *vma,
+					अचिन्हित दीर्घ vmaddr)
+अणु
+	अगर (radix_enabled())
+		वापस radix__local_flush_tlb_page(vma, vmaddr);
+	वापस hash__local_flush_tlb_page(vma, vmaddr);
+पूर्ण
 
-static inline void local_flush_all_mm(struct mm_struct *mm)
-{
-	if (radix_enabled())
-		return radix__local_flush_all_mm(mm);
-	return hash__local_flush_all_mm(mm);
-}
+अटल अंतरभूत व्योम local_flush_all_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (radix_enabled())
+		वापस radix__local_flush_all_mm(mm);
+	वापस hash__local_flush_all_mm(mm);
+पूर्ण
 
-static inline void tlb_flush(struct mmu_gather *tlb)
-{
-	if (radix_enabled())
-		return radix__tlb_flush(tlb);
-	return hash__tlb_flush(tlb);
-}
+अटल अंतरभूत व्योम tlb_flush(काष्ठा mmu_gather *tlb)
+अणु
+	अगर (radix_enabled())
+		वापस radix__tlb_flush(tlb);
+	वापस hash__tlb_flush(tlb);
+पूर्ण
 
-#ifdef CONFIG_SMP
-static inline void flush_tlb_mm(struct mm_struct *mm)
-{
-	if (radix_enabled())
-		return radix__flush_tlb_mm(mm);
-	return hash__flush_tlb_mm(mm);
-}
+#अगर_घोषित CONFIG_SMP
+अटल अंतरभूत व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (radix_enabled())
+		वापस radix__flush_tlb_mm(mm);
+	वापस hash__flush_tlb_mm(mm);
+पूर्ण
 
-static inline void flush_tlb_page(struct vm_area_struct *vma,
-				  unsigned long vmaddr)
-{
-	if (radix_enabled())
-		return radix__flush_tlb_page(vma, vmaddr);
-	return hash__flush_tlb_page(vma, vmaddr);
-}
+अटल अंतरभूत व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma,
+				  अचिन्हित दीर्घ vmaddr)
+अणु
+	अगर (radix_enabled())
+		वापस radix__flush_tlb_page(vma, vmaddr);
+	वापस hash__flush_tlb_page(vma, vmaddr);
+पूर्ण
 
-static inline void flush_all_mm(struct mm_struct *mm)
-{
-	if (radix_enabled())
-		return radix__flush_all_mm(mm);
-	return hash__flush_all_mm(mm);
-}
-#else
-#define flush_tlb_mm(mm)		local_flush_tlb_mm(mm)
-#define flush_tlb_page(vma, addr)	local_flush_tlb_page(vma, addr)
-#define flush_all_mm(mm)		local_flush_all_mm(mm)
-#endif /* CONFIG_SMP */
+अटल अंतरभूत व्योम flush_all_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (radix_enabled())
+		वापस radix__flush_all_mm(mm);
+	वापस hash__flush_all_mm(mm);
+पूर्ण
+#अन्यथा
+#घोषणा flush_tlb_mm(mm)		local_flush_tlb_mm(mm)
+#घोषणा flush_tlb_page(vma, addr)	local_flush_tlb_page(vma, addr)
+#घोषणा flush_all_mm(mm)		local_flush_all_mm(mm)
+#पूर्ण_अगर /* CONFIG_SMP */
 
-#define flush_tlb_fix_spurious_fault flush_tlb_fix_spurious_fault
-static inline void flush_tlb_fix_spurious_fault(struct vm_area_struct *vma,
-						unsigned long address)
-{
+#घोषणा flush_tlb_fix_spurious_fault flush_tlb_fix_spurious_fault
+अटल अंतरभूत व्योम flush_tlb_fix_spurious_fault(काष्ठा vm_area_काष्ठा *vma,
+						अचिन्हित दीर्घ address)
+अणु
 	/* See ptep_set_access_flags comment */
-	if (atomic_read(&vma->vm_mm->context.copros) > 0)
+	अगर (atomic_पढ़ो(&vma->vm_mm->context.copros) > 0)
 		flush_tlb_page(vma, address);
-}
+पूर्ण
 
-extern bool tlbie_capable;
-extern bool tlbie_enabled;
+बाह्य bool tlbie_capable;
+बाह्य bool tlbie_enabled;
 
-static inline bool cputlb_use_tlbie(void)
-{
-	return tlbie_enabled;
-}
+अटल अंतरभूत bool cputlb_use_tlbie(व्योम)
+अणु
+	वापस tlbie_enabled;
+पूर्ण
 
-#endif /*  _ASM_POWERPC_BOOK3S_64_TLBFLUSH_H */
+#पूर्ण_अगर /*  _ASM_POWERPC_BOOK3S_64_TLBFLUSH_H */

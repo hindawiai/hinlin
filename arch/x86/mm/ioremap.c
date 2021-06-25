@@ -1,216 +1,217 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Re-map IO memory to kernel address space so that we can access it.
- * This is needed for high PCI addresses that aren't mapped in the
+ * This is needed क्रम high PCI addresses that aren't mapped in the
  * 640k-1MB IO memory area on PC's
  *
  * (C) Copyright 1995 1996 Linus Torvalds
  */
 
-#include <linux/memblock.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/mmiotrace.h>
-#include <linux/mem_encrypt.h>
-#include <linux/efi.h>
-#include <linux/pgtable.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mmiotrace.h>
+#समावेश <linux/mem_encrypt.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/set_memory.h>
-#include <asm/e820/api.h>
-#include <asm/efi.h>
-#include <asm/fixmap.h>
-#include <asm/tlbflush.h>
-#include <asm/pgalloc.h>
-#include <asm/memtype.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/set_memory.h>
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/efi.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/memtype.h>
+#समावेश <यंत्र/setup.h>
 
-#include "physaddr.h"
+#समावेश "physaddr.h"
 
 /*
  * Descriptor controlling ioremap() behavior.
  */
-struct ioremap_desc {
-	unsigned int flags;
-};
+काष्ठा ioremap_desc अणु
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
 /*
- * Fix up the linear direct mapping of the kernel to avoid cache attribute
+ * Fix up the linear direct mapping of the kernel to aव्योम cache attribute
  * conflicts.
  */
-int ioremap_change_attr(unsigned long vaddr, unsigned long size,
-			enum page_cache_mode pcm)
-{
-	unsigned long nrpages = size >> PAGE_SHIFT;
-	int err;
+पूर्णांक ioremap_change_attr(अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ size,
+			क्रमागत page_cache_mode pcm)
+अणु
+	अचिन्हित दीर्घ nrpages = size >> PAGE_SHIFT;
+	पूर्णांक err;
 
-	switch (pcm) {
-	case _PAGE_CACHE_MODE_UC:
-	default:
+	चयन (pcm) अणु
+	हाल _PAGE_CACHE_MODE_UC:
+	शेष:
 		err = _set_memory_uc(vaddr, nrpages);
-		break;
-	case _PAGE_CACHE_MODE_WC:
+		अवरोध;
+	हाल _PAGE_CACHE_MODE_WC:
 		err = _set_memory_wc(vaddr, nrpages);
-		break;
-	case _PAGE_CACHE_MODE_WT:
+		अवरोध;
+	हाल _PAGE_CACHE_MODE_WT:
 		err = _set_memory_wt(vaddr, nrpages);
-		break;
-	case _PAGE_CACHE_MODE_WB:
+		अवरोध;
+	हाल _PAGE_CACHE_MODE_WB:
 		err = _set_memory_wb(vaddr, nrpages);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Does the range (or a subset of) contain normal RAM? */
-static unsigned int __ioremap_check_ram(struct resource *res)
-{
-	unsigned long start_pfn, stop_pfn;
-	unsigned long i;
+अटल अचिन्हित पूर्णांक __ioremap_check_ram(काष्ठा resource *res)
+अणु
+	अचिन्हित दीर्घ start_pfn, stop_pfn;
+	अचिन्हित दीर्घ i;
 
-	if ((res->flags & IORESOURCE_SYSTEM_RAM) != IORESOURCE_SYSTEM_RAM)
-		return 0;
+	अगर ((res->flags & IORESOURCE_SYSTEM_RAM) != IORESOURCE_SYSTEM_RAM)
+		वापस 0;
 
 	start_pfn = (res->start + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	stop_pfn = (res->end + 1) >> PAGE_SHIFT;
-	if (stop_pfn > start_pfn) {
-		for (i = 0; i < (stop_pfn - start_pfn); ++i)
-			if (pfn_valid(start_pfn + i) &&
+	अगर (stop_pfn > start_pfn) अणु
+		क्रम (i = 0; i < (stop_pfn - start_pfn); ++i)
+			अगर (pfn_valid(start_pfn + i) &&
 			    !PageReserved(pfn_to_page(start_pfn + i)))
-				return IORES_MAP_SYSTEM_RAM;
-	}
+				वापस IORES_MAP_SYSTEM_RAM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * In a SEV guest, NONE and RESERVED should not be mapped encrypted because
- * there the whole memory is already encrypted.
+ * there the whole memory is alपढ़ोy encrypted.
  */
-static unsigned int __ioremap_check_encrypted(struct resource *res)
-{
-	if (!sev_active())
-		return 0;
+अटल अचिन्हित पूर्णांक __ioremap_check_encrypted(काष्ठा resource *res)
+अणु
+	अगर (!sev_active())
+		वापस 0;
 
-	switch (res->desc) {
-	case IORES_DESC_NONE:
-	case IORES_DESC_RESERVED:
-		break;
-	default:
-		return IORES_MAP_ENCRYPTED;
-	}
+	चयन (res->desc) अणु
+	हाल IORES_DESC_NONE:
+	हाल IORES_DESC_RESERVED:
+		अवरोध;
+	शेष:
+		वापस IORES_MAP_ENCRYPTED;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The EFI runtime services data area is not covered by walk_mem_res(), but must
+ * The EFI runसमय services data area is not covered by walk_mem_res(), but must
  * be mapped encrypted when SEV is active.
  */
-static void __ioremap_check_other(resource_size_t addr, struct ioremap_desc *desc)
-{
-	if (!sev_active())
-		return;
+अटल व्योम __ioremap_check_other(resource_माप_प्रकार addr, काष्ठा ioremap_desc *desc)
+अणु
+	अगर (!sev_active())
+		वापस;
 
-	if (!IS_ENABLED(CONFIG_EFI))
-		return;
+	अगर (!IS_ENABLED(CONFIG_EFI))
+		वापस;
 
-	if (efi_mem_type(addr) == EFI_RUNTIME_SERVICES_DATA ||
+	अगर (efi_mem_type(addr) == EFI_RUNTIME_SERVICES_DATA ||
 	    (efi_mem_type(addr) == EFI_BOOT_SERVICES_DATA &&
 	     efi_mem_attributes(addr) & EFI_MEMORY_RUNTIME))
 		desc->flags |= IORES_MAP_ENCRYPTED;
-}
+पूर्ण
 
-static int __ioremap_collect_map_flags(struct resource *res, void *arg)
-{
-	struct ioremap_desc *desc = arg;
+अटल पूर्णांक __ioremap_collect_map_flags(काष्ठा resource *res, व्योम *arg)
+अणु
+	काष्ठा ioremap_desc *desc = arg;
 
-	if (!(desc->flags & IORES_MAP_SYSTEM_RAM))
+	अगर (!(desc->flags & IORES_MAP_SYSTEM_RAM))
 		desc->flags |= __ioremap_check_ram(res);
 
-	if (!(desc->flags & IORES_MAP_ENCRYPTED))
+	अगर (!(desc->flags & IORES_MAP_ENCRYPTED))
 		desc->flags |= __ioremap_check_encrypted(res);
 
-	return ((desc->flags & (IORES_MAP_SYSTEM_RAM | IORES_MAP_ENCRYPTED)) ==
+	वापस ((desc->flags & (IORES_MAP_SYSTEM_RAM | IORES_MAP_ENCRYPTED)) ==
 			       (IORES_MAP_SYSTEM_RAM | IORES_MAP_ENCRYPTED));
-}
+पूर्ण
 
 /*
- * To avoid multiple resource walks, this function walks resources marked as
- * IORESOURCE_MEM and IORESOURCE_BUSY and looking for system RAM and/or a
+ * To aव्योम multiple resource walks, this function walks resources marked as
+ * IORESOURCE_MEM and IORESOURCE_BUSY and looking क्रम प्रणाली RAM and/or a
  * resource described not as IORES_DESC_NONE (e.g. IORES_DESC_ACPI_TABLES).
  *
- * After that, deal with misc other ranges in __ioremap_check_other() which do
- * not fall into the above category.
+ * After that, deal with misc other ranges in __ioremap_check_other() which करो
+ * not fall पूर्णांकo the above category.
  */
-static void __ioremap_check_mem(resource_size_t addr, unsigned long size,
-				struct ioremap_desc *desc)
-{
+अटल व्योम __ioremap_check_mem(resource_माप_प्रकार addr, अचिन्हित दीर्घ size,
+				काष्ठा ioremap_desc *desc)
+अणु
 	u64 start, end;
 
 	start = (u64)addr;
 	end = start + size - 1;
-	memset(desc, 0, sizeof(struct ioremap_desc));
+	स_रखो(desc, 0, माप(काष्ठा ioremap_desc));
 
 	walk_mem_res(start, end, desc, __ioremap_collect_map_flags);
 
 	__ioremap_check_other(addr, desc);
-}
+पूर्ण
 
 /*
- * Remap an arbitrary physical address space into the kernel virtual
+ * Remap an arbitrary physical address space पूर्णांकo the kernel भव
  * address space. It transparently creates kernel huge I/O mapping when
  * the physical address is aligned by a huge page size (1GB or 2MB) and
  * the requested size is at least the huge page size.
  *
  * NOTE: MTRRs can override PAT memory types with a 4KB granularity.
- * Therefore, the mapping code falls back to use a smaller page toward 4KB
+ * Thereक्रमe, the mapping code falls back to use a smaller page toward 4KB
  * when a mapping range is covered by non-WB type of MTRRs.
  *
  * NOTE! We need to allow non-page-aligned mappings too: we will obviously
- * have to convert them into an offset in a page-aligned mapping, but the
+ * have to convert them पूर्णांकo an offset in a page-aligned mapping, but the
  * caller shouldn't need to know that small detail.
  */
-static void __iomem *
-__ioremap_caller(resource_size_t phys_addr, unsigned long size,
-		 enum page_cache_mode pcm, void *caller, bool encrypted)
-{
-	unsigned long offset, vaddr;
-	resource_size_t last_addr;
-	const resource_size_t unaligned_phys_addr = phys_addr;
-	const unsigned long unaligned_size = size;
-	struct ioremap_desc io_desc;
-	struct vm_struct *area;
-	enum page_cache_mode new_pcm;
+अटल व्योम __iomem *
+__ioremap_caller(resource_माप_प्रकार phys_addr, अचिन्हित दीर्घ size,
+		 क्रमागत page_cache_mode pcm, व्योम *caller, bool encrypted)
+अणु
+	अचिन्हित दीर्घ offset, vaddr;
+	resource_माप_प्रकार last_addr;
+	स्थिर resource_माप_प्रकार unaligned_phys_addr = phys_addr;
+	स्थिर अचिन्हित दीर्घ unaligned_size = size;
+	काष्ठा ioremap_desc io_desc;
+	काष्ठा vm_काष्ठा *area;
+	क्रमागत page_cache_mode new_pcm;
 	pgprot_t prot;
-	int retval;
-	void __iomem *ret_addr;
+	पूर्णांक retval;
+	व्योम __iomem *ret_addr;
 
 	/* Don't allow wraparound or zero size */
 	last_addr = phys_addr + size - 1;
-	if (!size || last_addr < phys_addr)
-		return NULL;
+	अगर (!size || last_addr < phys_addr)
+		वापस शून्य;
 
-	if (!phys_addr_valid(phys_addr)) {
-		printk(KERN_WARNING "ioremap: invalid physical address %llx\n",
-		       (unsigned long long)phys_addr);
+	अगर (!phys_addr_valid(phys_addr)) अणु
+		prपूर्णांकk(KERN_WARNING "ioremap: invalid physical address %llx\n",
+		       (अचिन्हित दीर्घ दीर्घ)phys_addr);
 		WARN_ON_ONCE(1);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	__ioremap_check_mem(phys_addr, size, &io_desc);
 
 	/*
 	 * Don't allow anybody to remap normal RAM that we're using..
 	 */
-	if (io_desc.flags & IORES_MAP_SYSTEM_RAM) {
+	अगर (io_desc.flags & IORES_MAP_SYSTEM_RAM) अणु
 		WARN_ONCE(1, "ioremap on RAM at %pa - %pa\n",
 			  &phys_addr, &last_addr);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
 	 * Mappings have to be page-aligned
@@ -221,22 +222,22 @@ __ioremap_caller(resource_size_t phys_addr, unsigned long size,
 
 	retval = memtype_reserve(phys_addr, (u64)phys_addr + size,
 						pcm, &new_pcm);
-	if (retval) {
-		printk(KERN_ERR "ioremap memtype_reserve failed %d\n", retval);
-		return NULL;
-	}
+	अगर (retval) अणु
+		prपूर्णांकk(KERN_ERR "ioremap memtype_reserve failed %d\n", retval);
+		वापस शून्य;
+	पूर्ण
 
-	if (pcm != new_pcm) {
-		if (!is_new_memtype_allowed(phys_addr, size, pcm, new_pcm)) {
-			printk(KERN_ERR
+	अगर (pcm != new_pcm) अणु
+		अगर (!is_new_memtype_allowed(phys_addr, size, pcm, new_pcm)) अणु
+			prपूर्णांकk(KERN_ERR
 		"ioremap error for 0x%llx-0x%llx, requested 0x%x, got 0x%x\n",
-				(unsigned long long)phys_addr,
-				(unsigned long long)(phys_addr + size),
+				(अचिन्हित दीर्घ दीर्घ)phys_addr,
+				(अचिन्हित दीर्घ दीर्घ)(phys_addr + size),
 				pcm, new_pcm);
-			goto err_free_memtype;
-		}
+			जाओ err_मुक्त_memtype;
+		पूर्ण
 		pcm = new_pcm;
-	}
+	पूर्ण
 
 	/*
 	 * If the page being mapped is in memory and SEV is active then
@@ -244,272 +245,272 @@ __ioremap_caller(resource_size_t phys_addr, unsigned long size,
 	 * resulting mapping.
 	 */
 	prot = PAGE_KERNEL_IO;
-	if ((io_desc.flags & IORES_MAP_ENCRYPTED) || encrypted)
+	अगर ((io_desc.flags & IORES_MAP_ENCRYPTED) || encrypted)
 		prot = pgprot_encrypted(prot);
 
-	switch (pcm) {
-	case _PAGE_CACHE_MODE_UC:
-	default:
+	चयन (pcm) अणु
+	हाल _PAGE_CACHE_MODE_UC:
+	शेष:
 		prot = __pgprot(pgprot_val(prot) |
 				cachemode2protval(_PAGE_CACHE_MODE_UC));
-		break;
-	case _PAGE_CACHE_MODE_UC_MINUS:
+		अवरोध;
+	हाल _PAGE_CACHE_MODE_UC_MINUS:
 		prot = __pgprot(pgprot_val(prot) |
 				cachemode2protval(_PAGE_CACHE_MODE_UC_MINUS));
-		break;
-	case _PAGE_CACHE_MODE_WC:
+		अवरोध;
+	हाल _PAGE_CACHE_MODE_WC:
 		prot = __pgprot(pgprot_val(prot) |
 				cachemode2protval(_PAGE_CACHE_MODE_WC));
-		break;
-	case _PAGE_CACHE_MODE_WT:
+		अवरोध;
+	हाल _PAGE_CACHE_MODE_WT:
 		prot = __pgprot(pgprot_val(prot) |
 				cachemode2protval(_PAGE_CACHE_MODE_WT));
-		break;
-	case _PAGE_CACHE_MODE_WB:
-		break;
-	}
+		अवरोध;
+	हाल _PAGE_CACHE_MODE_WB:
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * Ok, go for it..
+	 * Ok, go क्रम it..
 	 */
 	area = get_vm_area_caller(size, VM_IOREMAP, caller);
-	if (!area)
-		goto err_free_memtype;
+	अगर (!area)
+		जाओ err_मुक्त_memtype;
 	area->phys_addr = phys_addr;
-	vaddr = (unsigned long) area->addr;
+	vaddr = (अचिन्हित दीर्घ) area->addr;
 
-	if (memtype_kernel_map_sync(phys_addr, size, pcm))
-		goto err_free_area;
+	अगर (memtype_kernel_map_sync(phys_addr, size, pcm))
+		जाओ err_मुक्त_area;
 
-	if (ioremap_page_range(vaddr, vaddr + size, phys_addr, prot))
-		goto err_free_area;
+	अगर (ioremap_page_range(vaddr, vaddr + size, phys_addr, prot))
+		जाओ err_मुक्त_area;
 
-	ret_addr = (void __iomem *) (vaddr + offset);
+	ret_addr = (व्योम __iomem *) (vaddr + offset);
 	mmiotrace_ioremap(unaligned_phys_addr, unaligned_size, ret_addr);
 
 	/*
-	 * Check if the request spans more than any BAR in the iomem resource
+	 * Check अगर the request spans more than any BAR in the iomem resource
 	 * tree.
 	 */
-	if (iomem_map_sanity_check(unaligned_phys_addr, unaligned_size))
+	अगर (iomem_map_sanity_check(unaligned_phys_addr, unaligned_size))
 		pr_warn("caller %pS mapping multiple BARs\n", caller);
 
-	return ret_addr;
-err_free_area:
-	free_vm_area(area);
-err_free_memtype:
-	memtype_free(phys_addr, phys_addr + size);
-	return NULL;
-}
+	वापस ret_addr;
+err_मुक्त_area:
+	मुक्त_vm_area(area);
+err_मुक्त_memtype:
+	memtype_मुक्त(phys_addr, phys_addr + size);
+	वापस शून्य;
+पूर्ण
 
 /**
- * ioremap     -   map bus memory into CPU space
+ * ioremap     -   map bus memory पूर्णांकo CPU space
  * @phys_addr:    bus address of the memory
  * @size:      size of the resource to map
  *
- * ioremap performs a platform specific sequence of operations to
- * make bus memory CPU accessible via the readb/readw/readl/writeb/
- * writew/writel functions and the other mmio helpers. The returned
- * address is not guaranteed to be usable directly as a virtual
+ * ioremap perक्रमms a platक्रमm specअगरic sequence of operations to
+ * make bus memory CPU accessible via the पढ़ोb/पढ़ोw/पढ़ोl/ग_लिखोb/
+ * ग_लिखोw/ग_लिखोl functions and the other mmio helpers. The वापसed
+ * address is not guaranteed to be usable directly as a भव
  * address.
  *
  * This version of ioremap ensures that the memory is marked uncachable
  * on the CPU as well as honouring existing caching rules from things like
  * the PCI bus. Note that there are other caches and buffers on many
- * busses. In particular driver authors should read up on PCI writes
+ * busses. In particular driver authors should पढ़ो up on PCI ग_लिखोs
  *
- * It's useful if some control registers are in such an area and
- * write combining or read caching is not desirable:
+ * It's useful अगर some control रेजिस्टरs are in such an area and
+ * ग_लिखो combining or पढ़ो caching is not desirable:
  *
- * Must be freed with iounmap.
+ * Must be मुक्तd with iounmap.
  */
-void __iomem *ioremap(resource_size_t phys_addr, unsigned long size)
-{
+व्योम __iomem *ioremap(resource_माप_प्रकार phys_addr, अचिन्हित दीर्घ size)
+अणु
 	/*
 	 * Ideally, this should be:
 	 *	pat_enabled() ? _PAGE_CACHE_MODE_UC : _PAGE_CACHE_MODE_UC_MINUS;
 	 *
 	 * Till we fix all X drivers to use ioremap_wc(), we will use
-	 * UC MINUS. Drivers that are certain they need or can already
+	 * UC MINUS. Drivers that are certain they need or can alपढ़ोy
 	 * be converted over to strong UC can use ioremap_uc().
 	 */
-	enum page_cache_mode pcm = _PAGE_CACHE_MODE_UC_MINUS;
+	क्रमागत page_cache_mode pcm = _PAGE_CACHE_MODE_UC_MINUS;
 
-	return __ioremap_caller(phys_addr, size, pcm,
-				__builtin_return_address(0), false);
-}
+	वापस __ioremap_caller(phys_addr, size, pcm,
+				__builtin_वापस_address(0), false);
+पूर्ण
 EXPORT_SYMBOL(ioremap);
 
 /**
- * ioremap_uc     -   map bus memory into CPU space as strongly uncachable
+ * ioremap_uc     -   map bus memory पूर्णांकo CPU space as strongly uncachable
  * @phys_addr:    bus address of the memory
  * @size:      size of the resource to map
  *
- * ioremap_uc performs a platform specific sequence of operations to
- * make bus memory CPU accessible via the readb/readw/readl/writeb/
- * writew/writel functions and the other mmio helpers. The returned
- * address is not guaranteed to be usable directly as a virtual
+ * ioremap_uc perक्रमms a platक्रमm specअगरic sequence of operations to
+ * make bus memory CPU accessible via the पढ़ोb/पढ़ोw/पढ़ोl/ग_लिखोb/
+ * ग_लिखोw/ग_लिखोl functions and the other mmio helpers. The वापसed
+ * address is not guaranteed to be usable directly as a भव
  * address.
  *
  * This version of ioremap ensures that the memory is marked with a strong
  * preference as completely uncachable on the CPU when possible. For non-PAT
- * systems this ends up setting page-attribute flags PCD=1, PWT=1. For PAT
- * systems this will set the PAT entry for the pages as strong UC.  This call
+ * प्रणालीs this ends up setting page-attribute flags PCD=1, PWT=1. For PAT
+ * प्रणालीs this will set the PAT entry क्रम the pages as strong UC.  This call
  * will honor existing caching rules from things like the PCI bus. Note that
  * there are other caches and buffers on many busses. In particular driver
- * authors should read up on PCI writes.
+ * authors should पढ़ो up on PCI ग_लिखोs.
  *
- * It's useful if some control registers are in such an area and
- * write combining or read caching is not desirable:
+ * It's useful अगर some control रेजिस्टरs are in such an area and
+ * ग_लिखो combining or पढ़ो caching is not desirable:
  *
- * Must be freed with iounmap.
+ * Must be मुक्तd with iounmap.
  */
-void __iomem *ioremap_uc(resource_size_t phys_addr, unsigned long size)
-{
-	enum page_cache_mode pcm = _PAGE_CACHE_MODE_UC;
+व्योम __iomem *ioremap_uc(resource_माप_प्रकार phys_addr, अचिन्हित दीर्घ size)
+अणु
+	क्रमागत page_cache_mode pcm = _PAGE_CACHE_MODE_UC;
 
-	return __ioremap_caller(phys_addr, size, pcm,
-				__builtin_return_address(0), false);
-}
+	वापस __ioremap_caller(phys_addr, size, pcm,
+				__builtin_वापस_address(0), false);
+पूर्ण
 EXPORT_SYMBOL_GPL(ioremap_uc);
 
 /**
- * ioremap_wc	-	map memory into CPU space write combined
+ * ioremap_wc	-	map memory पूर्णांकo CPU space ग_लिखो combined
  * @phys_addr:	bus address of the memory
  * @size:	size of the resource to map
  *
- * This version of ioremap ensures that the memory is marked write combining.
- * Write combining allows faster writes to some hardware devices.
+ * This version of ioremap ensures that the memory is marked ग_लिखो combining.
+ * Write combining allows faster ग_लिखोs to some hardware devices.
  *
- * Must be freed with iounmap.
+ * Must be मुक्तd with iounmap.
  */
-void __iomem *ioremap_wc(resource_size_t phys_addr, unsigned long size)
-{
-	return __ioremap_caller(phys_addr, size, _PAGE_CACHE_MODE_WC,
-					__builtin_return_address(0), false);
-}
+व्योम __iomem *ioremap_wc(resource_माप_प्रकार phys_addr, अचिन्हित दीर्घ size)
+अणु
+	वापस __ioremap_caller(phys_addr, size, _PAGE_CACHE_MODE_WC,
+					__builtin_वापस_address(0), false);
+पूर्ण
 EXPORT_SYMBOL(ioremap_wc);
 
 /**
- * ioremap_wt	-	map memory into CPU space write through
+ * ioremap_wt	-	map memory पूर्णांकo CPU space ग_लिखो through
  * @phys_addr:	bus address of the memory
  * @size:	size of the resource to map
  *
- * This version of ioremap ensures that the memory is marked write through.
- * Write through stores data into memory while keeping the cache up-to-date.
+ * This version of ioremap ensures that the memory is marked ग_लिखो through.
+ * Write through stores data पूर्णांकo memory जबतक keeping the cache up-to-date.
  *
- * Must be freed with iounmap.
+ * Must be मुक्तd with iounmap.
  */
-void __iomem *ioremap_wt(resource_size_t phys_addr, unsigned long size)
-{
-	return __ioremap_caller(phys_addr, size, _PAGE_CACHE_MODE_WT,
-					__builtin_return_address(0), false);
-}
+व्योम __iomem *ioremap_wt(resource_माप_प्रकार phys_addr, अचिन्हित दीर्घ size)
+अणु
+	वापस __ioremap_caller(phys_addr, size, _PAGE_CACHE_MODE_WT,
+					__builtin_वापस_address(0), false);
+पूर्ण
 EXPORT_SYMBOL(ioremap_wt);
 
-void __iomem *ioremap_encrypted(resource_size_t phys_addr, unsigned long size)
-{
-	return __ioremap_caller(phys_addr, size, _PAGE_CACHE_MODE_WB,
-				__builtin_return_address(0), true);
-}
+व्योम __iomem *ioremap_encrypted(resource_माप_प्रकार phys_addr, अचिन्हित दीर्घ size)
+अणु
+	वापस __ioremap_caller(phys_addr, size, _PAGE_CACHE_MODE_WB,
+				__builtin_वापस_address(0), true);
+पूर्ण
 EXPORT_SYMBOL(ioremap_encrypted);
 
-void __iomem *ioremap_cache(resource_size_t phys_addr, unsigned long size)
-{
-	return __ioremap_caller(phys_addr, size, _PAGE_CACHE_MODE_WB,
-				__builtin_return_address(0), false);
-}
+व्योम __iomem *ioremap_cache(resource_माप_प्रकार phys_addr, अचिन्हित दीर्घ size)
+अणु
+	वापस __ioremap_caller(phys_addr, size, _PAGE_CACHE_MODE_WB,
+				__builtin_वापस_address(0), false);
+पूर्ण
 EXPORT_SYMBOL(ioremap_cache);
 
-void __iomem *ioremap_prot(resource_size_t phys_addr, unsigned long size,
-				unsigned long prot_val)
-{
-	return __ioremap_caller(phys_addr, size,
+व्योम __iomem *ioremap_prot(resource_माप_प्रकार phys_addr, अचिन्हित दीर्घ size,
+				अचिन्हित दीर्घ prot_val)
+अणु
+	वापस __ioremap_caller(phys_addr, size,
 				pgprot2cachemode(__pgprot(prot_val)),
-				__builtin_return_address(0), false);
-}
+				__builtin_वापस_address(0), false);
+पूर्ण
 EXPORT_SYMBOL(ioremap_prot);
 
 /**
  * iounmap - Free a IO remapping
- * @addr: virtual address from ioremap_*
+ * @addr: भव address from ioremap_*
  *
- * Caller must ensure there is only one unmapping for the same pointer.
+ * Caller must ensure there is only one unmapping क्रम the same poपूर्णांकer.
  */
-void iounmap(volatile void __iomem *addr)
-{
-	struct vm_struct *p, *o;
+व्योम iounmap(अस्थिर व्योम __iomem *addr)
+अणु
+	काष्ठा vm_काष्ठा *p, *o;
 
-	if ((void __force *)addr <= high_memory)
-		return;
+	अगर ((व्योम __क्रमce *)addr <= high_memory)
+		वापस;
 
 	/*
-	 * The PCI/ISA range special-casing was removed from __ioremap()
-	 * so this check, in theory, can be removed. However, there are
-	 * cases where iounmap() is called for addresses not obtained via
-	 * ioremap() (vga16fb for example). Add a warning so that these
-	 * cases can be caught and fixed.
+	 * The PCI/ISA range special-casing was हटाओd from __ioremap()
+	 * so this check, in theory, can be हटाओd. However, there are
+	 * हालs where iounmap() is called क्रम addresses not obtained via
+	 * ioremap() (vga16fb क्रम example). Add a warning so that these
+	 * हालs can be caught and fixed.
 	 */
-	if ((void __force *)addr >= phys_to_virt(ISA_START_ADDRESS) &&
-	    (void __force *)addr < phys_to_virt(ISA_END_ADDRESS)) {
+	अगर ((व्योम __क्रमce *)addr >= phys_to_virt(ISA_START_ADDRESS) &&
+	    (व्योम __क्रमce *)addr < phys_to_virt(ISA_END_ADDRESS)) अणु
 		WARN(1, "iounmap() called for ISA range not obtained using ioremap()\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mmiotrace_iounmap(addr);
 
-	addr = (volatile void __iomem *)
-		(PAGE_MASK & (unsigned long __force)addr);
+	addr = (अस्थिर व्योम __iomem *)
+		(PAGE_MASK & (अचिन्हित दीर्घ __क्रमce)addr);
 
 	/* Use the vm area unlocked, assuming the caller
-	   ensures there isn't another iounmap for the same address
-	   in parallel. Reuse of the virtual address is prevented by
-	   leaving it in the global lists until we're done with it.
+	   ensures there isn't another iounmap क्रम the same address
+	   in parallel. Reuse of the भव address is prevented by
+	   leaving it in the global lists until we're करोne with it.
 	   cpa takes care of the direct mappings. */
-	p = find_vm_area((void __force *)addr);
+	p = find_vm_area((व्योम __क्रमce *)addr);
 
-	if (!p) {
-		printk(KERN_ERR "iounmap: bad address %p\n", addr);
+	अगर (!p) अणु
+		prपूर्णांकk(KERN_ERR "iounmap: bad address %p\n", addr);
 		dump_stack();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memtype_free(p->phys_addr, p->phys_addr + get_vm_area_size(p));
+	memtype_मुक्त(p->phys_addr, p->phys_addr + get_vm_area_size(p));
 
-	/* Finally remove it */
-	o = remove_vm_area((void __force *)addr);
-	BUG_ON(p != o || o == NULL);
-	kfree(p);
-}
+	/* Finally हटाओ it */
+	o = हटाओ_vm_area((व्योम __क्रमce *)addr);
+	BUG_ON(p != o || o == शून्य);
+	kमुक्त(p);
+पूर्ण
 EXPORT_SYMBOL(iounmap);
 
 /*
- * Convert a physical pointer to a virtual kernel pointer for /dev/mem
+ * Convert a physical poपूर्णांकer to a भव kernel poपूर्णांकer क्रम /dev/mem
  * access
  */
-void *xlate_dev_mem_ptr(phys_addr_t phys)
-{
-	unsigned long start  = phys &  PAGE_MASK;
-	unsigned long offset = phys & ~PAGE_MASK;
-	void *vaddr;
+व्योम *xlate_dev_mem_ptr(phys_addr_t phys)
+अणु
+	अचिन्हित दीर्घ start  = phys &  PAGE_MASK;
+	अचिन्हित दीर्घ offset = phys & ~PAGE_MASK;
+	व्योम *vaddr;
 
-	/* memremap() maps if RAM, otherwise falls back to ioremap() */
+	/* memremap() maps अगर RAM, otherwise falls back to ioremap() */
 	vaddr = memremap(start, PAGE_SIZE, MEMREMAP_WB);
 
-	/* Only add the offset on success and return NULL if memremap() failed */
-	if (vaddr)
+	/* Only add the offset on success and वापस शून्य अगर memremap() failed */
+	अगर (vaddr)
 		vaddr += offset;
 
-	return vaddr;
-}
+	वापस vaddr;
+पूर्ण
 
-void unxlate_dev_mem_ptr(phys_addr_t phys, void *addr)
-{
-	memunmap((void *)((unsigned long)addr & PAGE_MASK));
-}
+व्योम unxlate_dev_mem_ptr(phys_addr_t phys, व्योम *addr)
+अणु
+	memunmap((व्योम *)((अचिन्हित दीर्घ)addr & PAGE_MASK));
+पूर्ण
 
 /*
- * Examine the physical address to determine if it is an area of memory
+ * Examine the physical address to determine अगर it is an area of memory
  * that should be mapped decrypted.  If the memory is not part of the
  * kernel usable area it was accessed and created decrypted, so these
  * areas should be mapped decrypted. And since the encryption key can
@@ -519,354 +520,354 @@ void unxlate_dev_mem_ptr(phys_addr_t phys, void *addr)
  * If SEV is active, that implies that BIOS/UEFI also ran encrypted so
  * only persistent memory should be mapped decrypted.
  */
-static bool memremap_should_map_decrypted(resource_size_t phys_addr,
-					  unsigned long size)
-{
-	int is_pmem;
+अटल bool memremap_should_map_decrypted(resource_माप_प्रकार phys_addr,
+					  अचिन्हित दीर्घ size)
+अणु
+	पूर्णांक is_pmem;
 
 	/*
-	 * Check if the address is part of a persistent memory region.
+	 * Check अगर the address is part of a persistent memory region.
 	 * This check covers areas added by E820, EFI and ACPI.
 	 */
-	is_pmem = region_intersects(phys_addr, size, IORESOURCE_MEM,
+	is_pmem = region_पूर्णांकersects(phys_addr, size, IORESOURCE_MEM,
 				    IORES_DESC_PERSISTENT_MEMORY);
-	if (is_pmem != REGION_DISJOINT)
-		return true;
+	अगर (is_pmem != REGION_DISJOINT)
+		वापस true;
 
 	/*
-	 * Check if the non-volatile attribute is set for an EFI
+	 * Check अगर the non-अस्थिर attribute is set क्रम an EFI
 	 * reserved area.
 	 */
-	if (efi_enabled(EFI_BOOT)) {
-		switch (efi_mem_type(phys_addr)) {
-		case EFI_RESERVED_TYPE:
-			if (efi_mem_attributes(phys_addr) & EFI_MEMORY_NV)
-				return true;
-			break;
-		default:
-			break;
-		}
-	}
+	अगर (efi_enabled(EFI_BOOT)) अणु
+		चयन (efi_mem_type(phys_addr)) अणु
+		हाल EFI_RESERVED_TYPE:
+			अगर (efi_mem_attributes(phys_addr) & EFI_MEMORY_NV)
+				वापस true;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Check if the address is outside kernel usable area */
-	switch (e820__get_entry_type(phys_addr, phys_addr + size - 1)) {
-	case E820_TYPE_RESERVED:
-	case E820_TYPE_ACPI:
-	case E820_TYPE_NVS:
-	case E820_TYPE_UNUSABLE:
+	/* Check अगर the address is outside kernel usable area */
+	चयन (e820__get_entry_type(phys_addr, phys_addr + size - 1)) अणु
+	हाल E820_TYPE_RESERVED:
+	हाल E820_TYPE_ACPI:
+	हाल E820_TYPE_NVS:
+	हाल E820_TYPE_UNUSABLE:
 		/* For SEV, these areas are encrypted */
-		if (sev_active())
-			break;
+		अगर (sev_active())
+			अवरोध;
 		fallthrough;
 
-	case E820_TYPE_PRAM:
-		return true;
-	default:
-		break;
-	}
+	हाल E820_TYPE_PRAM:
+		वापस true;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Examine the physical address to determine if it is EFI data. Check
- * it against the boot params structure and EFI tables and memory types.
+ * Examine the physical address to determine अगर it is EFI data. Check
+ * it against the boot params काष्ठाure and EFI tables and memory types.
  */
-static bool memremap_is_efi_data(resource_size_t phys_addr,
-				 unsigned long size)
-{
+अटल bool memremap_is_efi_data(resource_माप_प्रकार phys_addr,
+				 अचिन्हित दीर्घ size)
+अणु
 	u64 paddr;
 
-	/* Check if the address is part of EFI boot/runtime data */
-	if (!efi_enabled(EFI_BOOT))
-		return false;
+	/* Check अगर the address is part of EFI boot/runसमय data */
+	अगर (!efi_enabled(EFI_BOOT))
+		वापस false;
 
 	paddr = boot_params.efi_info.efi_memmap_hi;
 	paddr <<= 32;
 	paddr |= boot_params.efi_info.efi_memmap;
-	if (phys_addr == paddr)
-		return true;
+	अगर (phys_addr == paddr)
+		वापस true;
 
 	paddr = boot_params.efi_info.efi_systab_hi;
 	paddr <<= 32;
 	paddr |= boot_params.efi_info.efi_systab;
-	if (phys_addr == paddr)
-		return true;
+	अगर (phys_addr == paddr)
+		वापस true;
 
-	if (efi_is_table_address(phys_addr))
-		return true;
+	अगर (efi_is_table_address(phys_addr))
+		वापस true;
 
-	switch (efi_mem_type(phys_addr)) {
-	case EFI_BOOT_SERVICES_DATA:
-	case EFI_RUNTIME_SERVICES_DATA:
-		return true;
-	default:
-		break;
-	}
+	चयन (efi_mem_type(phys_addr)) अणु
+	हाल EFI_BOOT_SERVICES_DATA:
+	हाल EFI_RUNTIME_SERVICES_DATA:
+		वापस true;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Examine the physical address to determine if it is boot data by checking
+ * Examine the physical address to determine अगर it is boot data by checking
  * it against the boot params setup_data chain.
  */
-static bool memremap_is_setup_data(resource_size_t phys_addr,
-				   unsigned long size)
-{
-	struct setup_data *data;
+अटल bool memremap_is_setup_data(resource_माप_प्रकार phys_addr,
+				   अचिन्हित दीर्घ size)
+अणु
+	काष्ठा setup_data *data;
 	u64 paddr, paddr_next;
 
 	paddr = boot_params.hdr.setup_data;
-	while (paddr) {
-		unsigned int len;
+	जबतक (paddr) अणु
+		अचिन्हित पूर्णांक len;
 
-		if (phys_addr == paddr)
-			return true;
+		अगर (phys_addr == paddr)
+			वापस true;
 
-		data = memremap(paddr, sizeof(*data),
+		data = memremap(paddr, माप(*data),
 				MEMREMAP_WB | MEMREMAP_DEC);
 
 		paddr_next = data->next;
 		len = data->len;
 
-		if ((phys_addr > paddr) && (phys_addr < (paddr + len))) {
+		अगर ((phys_addr > paddr) && (phys_addr < (paddr + len))) अणु
 			memunmap(data);
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
-		if (data->type == SETUP_INDIRECT &&
-		    ((struct setup_indirect *)data->data)->type != SETUP_INDIRECT) {
-			paddr = ((struct setup_indirect *)data->data)->addr;
-			len = ((struct setup_indirect *)data->data)->len;
-		}
+		अगर (data->type == SETUP_INसूचीECT &&
+		    ((काष्ठा setup_indirect *)data->data)->type != SETUP_INसूचीECT) अणु
+			paddr = ((काष्ठा setup_indirect *)data->data)->addr;
+			len = ((काष्ठा setup_indirect *)data->data)->len;
+		पूर्ण
 
 		memunmap(data);
 
-		if ((phys_addr > paddr) && (phys_addr < (paddr + len)))
-			return true;
+		अगर ((phys_addr > paddr) && (phys_addr < (paddr + len)))
+			वापस true;
 
 		paddr = paddr_next;
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Examine the physical address to determine if it is boot data by checking
+ * Examine the physical address to determine अगर it is boot data by checking
  * it against the boot params setup_data chain (early boot version).
  */
-static bool __init early_memremap_is_setup_data(resource_size_t phys_addr,
-						unsigned long size)
-{
-	struct setup_data *data;
+अटल bool __init early_memremap_is_setup_data(resource_माप_प्रकार phys_addr,
+						अचिन्हित दीर्घ size)
+अणु
+	काष्ठा setup_data *data;
 	u64 paddr, paddr_next;
 
 	paddr = boot_params.hdr.setup_data;
-	while (paddr) {
-		unsigned int len;
+	जबतक (paddr) अणु
+		अचिन्हित पूर्णांक len;
 
-		if (phys_addr == paddr)
-			return true;
+		अगर (phys_addr == paddr)
+			वापस true;
 
-		data = early_memremap_decrypted(paddr, sizeof(*data));
+		data = early_memremap_decrypted(paddr, माप(*data));
 
 		paddr_next = data->next;
 		len = data->len;
 
-		early_memunmap(data, sizeof(*data));
+		early_memunmap(data, माप(*data));
 
-		if ((phys_addr > paddr) && (phys_addr < (paddr + len)))
-			return true;
+		अगर ((phys_addr > paddr) && (phys_addr < (paddr + len)))
+			वापस true;
 
 		paddr = paddr_next;
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Architecture function to determine if RAM remap is allowed. By default, a
- * RAM remap will map the data as encrypted. Determine if a RAM remap should
- * not be done so that the data will be mapped decrypted.
+ * Architecture function to determine अगर RAM remap is allowed. By शेष, a
+ * RAM remap will map the data as encrypted. Determine अगर a RAM remap should
+ * not be करोne so that the data will be mapped decrypted.
  */
-bool arch_memremap_can_ram_remap(resource_size_t phys_addr, unsigned long size,
-				 unsigned long flags)
-{
-	if (!mem_encrypt_active())
-		return true;
+bool arch_memremap_can_ram_remap(resource_माप_प्रकार phys_addr, अचिन्हित दीर्घ size,
+				 अचिन्हित दीर्घ flags)
+अणु
+	अगर (!mem_encrypt_active())
+		वापस true;
 
-	if (flags & MEMREMAP_ENC)
-		return true;
+	अगर (flags & MEMREMAP_ENC)
+		वापस true;
 
-	if (flags & MEMREMAP_DEC)
-		return false;
+	अगर (flags & MEMREMAP_DEC)
+		वापस false;
 
-	if (sme_active()) {
-		if (memremap_is_setup_data(phys_addr, size) ||
+	अगर (sme_active()) अणु
+		अगर (memremap_is_setup_data(phys_addr, size) ||
 		    memremap_is_efi_data(phys_addr, size))
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
-	return !memremap_should_map_decrypted(phys_addr, size);
-}
+	वापस !memremap_should_map_decrypted(phys_addr, size);
+पूर्ण
 
 /*
  * Architecture override of __weak function to adjust the protection attributes
- * used when remapping memory. By default, early_memremap() will map the data
- * as encrypted. Determine if an encrypted mapping should not be done and set
+ * used when remapping memory. By शेष, early_memremap() will map the data
+ * as encrypted. Determine अगर an encrypted mapping should not be करोne and set
  * the appropriate protection attributes.
  */
-pgprot_t __init early_memremap_pgprot_adjust(resource_size_t phys_addr,
-					     unsigned long size,
+pgprot_t __init early_memremap_pgprot_adjust(resource_माप_प्रकार phys_addr,
+					     अचिन्हित दीर्घ size,
 					     pgprot_t prot)
-{
+अणु
 	bool encrypted_prot;
 
-	if (!mem_encrypt_active())
-		return prot;
+	अगर (!mem_encrypt_active())
+		वापस prot;
 
 	encrypted_prot = true;
 
-	if (sme_active()) {
-		if (early_memremap_is_setup_data(phys_addr, size) ||
+	अगर (sme_active()) अणु
+		अगर (early_memremap_is_setup_data(phys_addr, size) ||
 		    memremap_is_efi_data(phys_addr, size))
 			encrypted_prot = false;
-	}
+	पूर्ण
 
-	if (encrypted_prot && memremap_should_map_decrypted(phys_addr, size))
+	अगर (encrypted_prot && memremap_should_map_decrypted(phys_addr, size))
 		encrypted_prot = false;
 
-	return encrypted_prot ? pgprot_encrypted(prot)
+	वापस encrypted_prot ? pgprot_encrypted(prot)
 			      : pgprot_decrypted(prot);
-}
+पूर्ण
 
-bool phys_mem_access_encrypted(unsigned long phys_addr, unsigned long size)
-{
-	return arch_memremap_can_ram_remap(phys_addr, size, 0);
-}
+bool phys_mem_access_encrypted(अचिन्हित दीर्घ phys_addr, अचिन्हित दीर्घ size)
+अणु
+	वापस arch_memremap_can_ram_remap(phys_addr, size, 0);
+पूर्ण
 
-#ifdef CONFIG_AMD_MEM_ENCRYPT
+#अगर_घोषित CONFIG_AMD_MEM_ENCRYPT
 /* Remap memory with encryption */
-void __init *early_memremap_encrypted(resource_size_t phys_addr,
-				      unsigned long size)
-{
-	return early_memremap_prot(phys_addr, size, __PAGE_KERNEL_ENC);
-}
+व्योम __init *early_memremap_encrypted(resource_माप_प्रकार phys_addr,
+				      अचिन्हित दीर्घ size)
+अणु
+	वापस early_memremap_prot(phys_addr, size, __PAGE_KERNEL_ENC);
+पूर्ण
 
 /*
- * Remap memory with encryption and write-protected - cannot be called
- * before pat_init() is called
+ * Remap memory with encryption and ग_लिखो-रक्षित - cannot be called
+ * beक्रमe pat_init() is called
  */
-void __init *early_memremap_encrypted_wp(resource_size_t phys_addr,
-					 unsigned long size)
-{
-	if (!x86_has_pat_wp())
-		return NULL;
-	return early_memremap_prot(phys_addr, size, __PAGE_KERNEL_ENC_WP);
-}
+व्योम __init *early_memremap_encrypted_wp(resource_माप_प्रकार phys_addr,
+					 अचिन्हित दीर्घ size)
+अणु
+	अगर (!x86_has_pat_wp())
+		वापस शून्य;
+	वापस early_memremap_prot(phys_addr, size, __PAGE_KERNEL_ENC_WP);
+पूर्ण
 
 /* Remap memory without encryption */
-void __init *early_memremap_decrypted(resource_size_t phys_addr,
-				      unsigned long size)
-{
-	return early_memremap_prot(phys_addr, size, __PAGE_KERNEL_NOENC);
-}
+व्योम __init *early_memremap_decrypted(resource_माप_प्रकार phys_addr,
+				      अचिन्हित दीर्घ size)
+अणु
+	वापस early_memremap_prot(phys_addr, size, __PAGE_KERNEL_NOENC);
+पूर्ण
 
 /*
- * Remap memory without encryption and write-protected - cannot be called
- * before pat_init() is called
+ * Remap memory without encryption and ग_लिखो-रक्षित - cannot be called
+ * beक्रमe pat_init() is called
  */
-void __init *early_memremap_decrypted_wp(resource_size_t phys_addr,
-					 unsigned long size)
-{
-	if (!x86_has_pat_wp())
-		return NULL;
-	return early_memremap_prot(phys_addr, size, __PAGE_KERNEL_NOENC_WP);
-}
-#endif	/* CONFIG_AMD_MEM_ENCRYPT */
+व्योम __init *early_memremap_decrypted_wp(resource_माप_प्रकार phys_addr,
+					 अचिन्हित दीर्घ size)
+अणु
+	अगर (!x86_has_pat_wp())
+		वापस शून्य;
+	वापस early_memremap_prot(phys_addr, size, __PAGE_KERNEL_NOENC_WP);
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_AMD_MEM_ENCRYPT */
 
-static pte_t bm_pte[PAGE_SIZE/sizeof(pte_t)] __page_aligned_bss;
+अटल pte_t bm_pte[PAGE_SIZE/माप(pte_t)] __page_aligned_bss;
 
-static inline pmd_t * __init early_ioremap_pmd(unsigned long addr)
-{
-	/* Don't assume we're using swapper_pg_dir at this point */
-	pgd_t *base = __va(read_cr3_pa());
+अटल अंतरभूत pmd_t * __init early_ioremap_pmd(अचिन्हित दीर्घ addr)
+अणु
+	/* Don't assume we're using swapper_pg_dir at this poपूर्णांक */
+	pgd_t *base = __va(पढ़ो_cr3_pa());
 	pgd_t *pgd = &base[pgd_index(addr)];
 	p4d_t *p4d = p4d_offset(pgd, addr);
 	pud_t *pud = pud_offset(p4d, addr);
 	pmd_t *pmd = pmd_offset(pud, addr);
 
-	return pmd;
-}
+	वापस pmd;
+पूर्ण
 
-static inline pte_t * __init early_ioremap_pte(unsigned long addr)
-{
-	return &bm_pte[pte_index(addr)];
-}
+अटल अंतरभूत pte_t * __init early_ioremap_pte(अचिन्हित दीर्घ addr)
+अणु
+	वापस &bm_pte[pte_index(addr)];
+पूर्ण
 
 bool __init is_early_ioremap_ptep(pte_t *ptep)
-{
-	return ptep >= &bm_pte[0] && ptep < &bm_pte[PAGE_SIZE/sizeof(pte_t)];
-}
+अणु
+	वापस ptep >= &bm_pte[0] && ptep < &bm_pte[PAGE_SIZE/माप(pte_t)];
+पूर्ण
 
-void __init early_ioremap_init(void)
-{
+व्योम __init early_ioremap_init(व्योम)
+अणु
 	pmd_t *pmd;
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 	BUILD_BUG_ON((fix_to_virt(0) + PAGE_SIZE) & ((1 << PMD_SHIFT) - 1));
-#else
+#अन्यथा
 	WARN_ON((fix_to_virt(0) + PAGE_SIZE) & ((1 << PMD_SHIFT) - 1));
-#endif
+#पूर्ण_अगर
 
 	early_ioremap_setup();
 
 	pmd = early_ioremap_pmd(fix_to_virt(FIX_BTMAP_BEGIN));
-	memset(bm_pte, 0, sizeof(bm_pte));
+	स_रखो(bm_pte, 0, माप(bm_pte));
 	pmd_populate_kernel(&init_mm, pmd, bm_pte);
 
 	/*
-	 * The boot-ioremap range spans multiple pmds, for which
+	 * The boot-ioremap range spans multiple pmds, क्रम which
 	 * we are not prepared:
 	 */
-#define __FIXADDR_TOP (-PAGE_SIZE)
+#घोषणा __FIXADDR_TOP (-PAGE_SIZE)
 	BUILD_BUG_ON((__fix_to_virt(FIX_BTMAP_BEGIN) >> PMD_SHIFT)
 		     != (__fix_to_virt(FIX_BTMAP_END) >> PMD_SHIFT));
-#undef __FIXADDR_TOP
-	if (pmd != early_ioremap_pmd(fix_to_virt(FIX_BTMAP_END))) {
+#अघोषित __FIXADDR_TOP
+	अगर (pmd != early_ioremap_pmd(fix_to_virt(FIX_BTMAP_END))) अणु
 		WARN_ON(1);
-		printk(KERN_WARNING "pmd %p != %p\n",
+		prपूर्णांकk(KERN_WARNING "pmd %p != %p\n",
 		       pmd, early_ioremap_pmd(fix_to_virt(FIX_BTMAP_END)));
-		printk(KERN_WARNING "fix_to_virt(FIX_BTMAP_BEGIN): %08lx\n",
+		prपूर्णांकk(KERN_WARNING "fix_to_virt(FIX_BTMAP_BEGIN): %08lx\n",
 			fix_to_virt(FIX_BTMAP_BEGIN));
-		printk(KERN_WARNING "fix_to_virt(FIX_BTMAP_END):   %08lx\n",
+		prपूर्णांकk(KERN_WARNING "fix_to_virt(FIX_BTMAP_END):   %08lx\n",
 			fix_to_virt(FIX_BTMAP_END));
 
-		printk(KERN_WARNING "FIX_BTMAP_END:       %d\n", FIX_BTMAP_END);
-		printk(KERN_WARNING "FIX_BTMAP_BEGIN:     %d\n",
+		prपूर्णांकk(KERN_WARNING "FIX_BTMAP_END:       %d\n", FIX_BTMAP_END);
+		prपूर्णांकk(KERN_WARNING "FIX_BTMAP_BEGIN:     %d\n",
 		       FIX_BTMAP_BEGIN);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init __early_set_fixmap(enum fixed_addresses idx,
+व्योम __init __early_set_fixmap(क्रमागत fixed_addresses idx,
 			       phys_addr_t phys, pgprot_t flags)
-{
-	unsigned long addr = __fix_to_virt(idx);
+अणु
+	अचिन्हित दीर्घ addr = __fix_to_virt(idx);
 	pte_t *pte;
 
-	if (idx >= __end_of_fixed_addresses) {
+	अगर (idx >= __end_of_fixed_addresses) अणु
 		BUG();
-		return;
-	}
+		वापस;
+	पूर्ण
 	pte = early_ioremap_pte(addr);
 
 	/* Sanitize 'prot' against any unsupported bits: */
 	pgprot_val(flags) &= __supported_pte_mask;
 
-	if (pgprot_val(flags))
+	अगर (pgprot_val(flags))
 		set_pte(pte, pfn_pte(phys >> PAGE_SHIFT, flags));
-	else
+	अन्यथा
 		pte_clear(&init_mm, addr, pte);
 	flush_tlb_one_kernel(addr);
-}
+पूर्ण

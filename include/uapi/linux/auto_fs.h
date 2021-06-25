@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * Copyright 1997 Transmeta Corporation - All Rights Reserved
  * Copyright 1999-2000 Jeremy Fitzhardinge <jeremy@goop.org>
@@ -10,187 +11,187 @@
  *
  * ----------------------------------------------------------------------- */
 
-#ifndef _UAPI_LINUX_AUTO_FS_H
-#define _UAPI_LINUX_AUTO_FS_H
+#अगर_अघोषित _UAPI_LINUX_AUTO_FS_H
+#घोषणा _UAPI_LINUX_AUTO_FS_H
 
-#include <linux/types.h>
-#include <linux/limits.h>
-#ifndef __KERNEL__
-#include <sys/ioctl.h>
-#endif /* __KERNEL__ */
+#समावेश <linux/types.h>
+#समावेश <linux/सीमा.स>
+#अगर_अघोषित __KERNEL__
+#समावेश <sys/ioctl.h>
+#पूर्ण_अगर /* __KERNEL__ */
 
-#define AUTOFS_PROTO_VERSION		5
-#define AUTOFS_MIN_PROTO_VERSION	3
-#define AUTOFS_MAX_PROTO_VERSION	5
+#घोषणा AUTOFS_PROTO_VERSION		5
+#घोषणा AUTOFS_MIN_PROTO_VERSION	3
+#घोषणा AUTOFS_MAX_PROTO_VERSION	5
 
-#define AUTOFS_PROTO_SUBVERSION		5
+#घोषणा AUTOFS_PROTO_SUBVERSION		5
 
 /*
- * The wait_queue_token (autofs_wqt_t) is part of a structure which is passed
+ * The रुको_queue_token (स्वतःfs_wqt_t) is part of a काष्ठाure which is passed
  * back to the kernel via ioctl from userspace. On architectures where 32- and
  * 64-bit userspace binaries can be executed it's important that the size of
- * autofs_wqt_t stays constant between 32- and 64-bit Linux kernels so that we
- * do not break the binary ABI interface by changing the structure size.
+ * स्वतःfs_wqt_t stays स्थिरant between 32- and 64-bit Linux kernels so that we
+ * करो not अवरोध the binary ABI पूर्णांकerface by changing the काष्ठाure size.
  */
-#if defined(__ia64__) || defined(__alpha__) /* pure 64bit architectures */
-typedef unsigned long autofs_wqt_t;
-#else
-typedef unsigned int autofs_wqt_t;
-#endif
+#अगर defined(__ia64__) || defined(__alpha__) /* pure 64bit architectures */
+प्रकार अचिन्हित दीर्घ स्वतःfs_wqt_t;
+#अन्यथा
+प्रकार अचिन्हित पूर्णांक स्वतःfs_wqt_t;
+#पूर्ण_अगर
 
 /* Packet types */
-#define autofs_ptype_missing	0	/* Missing entry (mount request) */
-#define autofs_ptype_expire	1	/* Expire entry (umount request) */
+#घोषणा स्वतःfs_ptype_missing	0	/* Missing entry (mount request) */
+#घोषणा स्वतःfs_ptype_expire	1	/* Expire entry (umount request) */
 
-struct autofs_packet_hdr {
-	int proto_version;		/* Protocol version */
-	int type;			/* Type of packet */
-};
+काष्ठा स्वतःfs_packet_hdr अणु
+	पूर्णांक proto_version;		/* Protocol version */
+	पूर्णांक type;			/* Type of packet */
+पूर्ण;
 
-struct autofs_packet_missing {
-	struct autofs_packet_hdr hdr;
-	autofs_wqt_t wait_queue_token;
-	int len;
-	char name[NAME_MAX+1];
-};	
+काष्ठा स्वतःfs_packet_missing अणु
+	काष्ठा स्वतःfs_packet_hdr hdr;
+	स्वतःfs_wqt_t रुको_queue_token;
+	पूर्णांक len;
+	अक्षर name[NAME_MAX+1];
+पूर्ण;	
 
 /* v3 expire (via ioctl) */
-struct autofs_packet_expire {
-	struct autofs_packet_hdr hdr;
-	int len;
-	char name[NAME_MAX+1];
-};
+काष्ठा स्वतःfs_packet_expire अणु
+	काष्ठा स्वतःfs_packet_hdr hdr;
+	पूर्णांक len;
+	अक्षर name[NAME_MAX+1];
+पूर्ण;
 
-#define AUTOFS_IOCTL 0x93
+#घोषणा AUTOFS_IOCTL 0x93
 
-enum {
+क्रमागत अणु
 	AUTOFS_IOC_READY_CMD = 0x60,
 	AUTOFS_IOC_FAIL_CMD,
 	AUTOFS_IOC_CATATONIC_CMD,
 	AUTOFS_IOC_PROTOVER_CMD,
 	AUTOFS_IOC_SETTIMEOUT_CMD,
 	AUTOFS_IOC_EXPIRE_CMD,
-};
+पूर्ण;
 
-#define AUTOFS_IOC_READY        _IO(AUTOFS_IOCTL, AUTOFS_IOC_READY_CMD)
-#define AUTOFS_IOC_FAIL         _IO(AUTOFS_IOCTL, AUTOFS_IOC_FAIL_CMD)
-#define AUTOFS_IOC_CATATONIC    _IO(AUTOFS_IOCTL, AUTOFS_IOC_CATATONIC_CMD)
-#define AUTOFS_IOC_PROTOVER     _IOR(AUTOFS_IOCTL, \
-				     AUTOFS_IOC_PROTOVER_CMD, int)
-#define AUTOFS_IOC_SETTIMEOUT32 _IOWR(AUTOFS_IOCTL, \
+#घोषणा AUTOFS_IOC_READY        _IO(AUTOFS_IOCTL, AUTOFS_IOC_READY_CMD)
+#घोषणा AUTOFS_IOC_FAIL         _IO(AUTOFS_IOCTL, AUTOFS_IOC_FAIL_CMD)
+#घोषणा AUTOFS_IOC_CATATONIC    _IO(AUTOFS_IOCTL, AUTOFS_IOC_CATATONIC_CMD)
+#घोषणा AUTOFS_IOC_PROTOVER     _IOR(AUTOFS_IOCTL, \
+				     AUTOFS_IOC_PROTOVER_CMD, पूर्णांक)
+#घोषणा AUTOFS_IOC_SETTIMEOUT32 _IOWR(AUTOFS_IOCTL, \
 				      AUTOFS_IOC_SETTIMEOUT_CMD, \
-				      compat_ulong_t)
-#define AUTOFS_IOC_SETTIMEOUT   _IOWR(AUTOFS_IOCTL, \
+				      compat_uदीर्घ_t)
+#घोषणा AUTOFS_IOC_SETTIMEOUT   _IOWR(AUTOFS_IOCTL, \
 				      AUTOFS_IOC_SETTIMEOUT_CMD, \
-				      unsigned long)
-#define AUTOFS_IOC_EXPIRE       _IOR(AUTOFS_IOCTL, \
+				      अचिन्हित दीर्घ)
+#घोषणा AUTOFS_IOC_EXPIRE       _IOR(AUTOFS_IOCTL, \
 				     AUTOFS_IOC_EXPIRE_CMD, \
-				     struct autofs_packet_expire)
+				     काष्ठा स्वतःfs_packet_expire)
 
-/* autofs version 4 and later definitions */
+/* स्वतःfs version 4 and later definitions */
 
-/* Mask for expire behaviour */
-#define AUTOFS_EXP_NORMAL		0x00
-#define AUTOFS_EXP_IMMEDIATE		0x01
-#define AUTOFS_EXP_LEAVES		0x02
-#define AUTOFS_EXP_FORCED		0x04
+/* Mask क्रम expire behaviour */
+#घोषणा AUTOFS_EXP_NORMAL		0x00
+#घोषणा AUTOFS_EXP_IMMEDIATE		0x01
+#घोषणा AUTOFS_EXP_LEAVES		0x02
+#घोषणा AUTOFS_EXP_FORCED		0x04
 
-#define AUTOFS_TYPE_ANY			0U
-#define AUTOFS_TYPE_INDIRECT		1U
-#define AUTOFS_TYPE_DIRECT		2U
-#define AUTOFS_TYPE_OFFSET		4U
+#घोषणा AUTOFS_TYPE_ANY			0U
+#घोषणा AUTOFS_TYPE_INसूचीECT		1U
+#घोषणा AUTOFS_TYPE_सूचीECT		2U
+#घोषणा AUTOFS_TYPE_OFFSET		4U
 
-static inline void set_autofs_type_indirect(unsigned int *type)
-{
-	*type = AUTOFS_TYPE_INDIRECT;
-}
+अटल अंतरभूत व्योम set_स्वतःfs_type_indirect(अचिन्हित पूर्णांक *type)
+अणु
+	*type = AUTOFS_TYPE_INसूचीECT;
+पूर्ण
 
-static inline unsigned int autofs_type_indirect(unsigned int type)
-{
-	return (type == AUTOFS_TYPE_INDIRECT);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक स्वतःfs_type_indirect(अचिन्हित पूर्णांक type)
+अणु
+	वापस (type == AUTOFS_TYPE_INसूचीECT);
+पूर्ण
 
-static inline void set_autofs_type_direct(unsigned int *type)
-{
-	*type = AUTOFS_TYPE_DIRECT;
-}
+अटल अंतरभूत व्योम set_स्वतःfs_type_direct(अचिन्हित पूर्णांक *type)
+अणु
+	*type = AUTOFS_TYPE_सूचीECT;
+पूर्ण
 
-static inline unsigned int autofs_type_direct(unsigned int type)
-{
-	return (type == AUTOFS_TYPE_DIRECT);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक स्वतःfs_type_direct(अचिन्हित पूर्णांक type)
+अणु
+	वापस (type == AUTOFS_TYPE_सूचीECT);
+पूर्ण
 
-static inline void set_autofs_type_offset(unsigned int *type)
-{
+अटल अंतरभूत व्योम set_स्वतःfs_type_offset(अचिन्हित पूर्णांक *type)
+अणु
 	*type = AUTOFS_TYPE_OFFSET;
-}
+पूर्ण
 
-static inline unsigned int autofs_type_offset(unsigned int type)
-{
-	return (type == AUTOFS_TYPE_OFFSET);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक स्वतःfs_type_offset(अचिन्हित पूर्णांक type)
+अणु
+	वापस (type == AUTOFS_TYPE_OFFSET);
+पूर्ण
 
-static inline unsigned int autofs_type_trigger(unsigned int type)
-{
-	return (type == AUTOFS_TYPE_DIRECT || type == AUTOFS_TYPE_OFFSET);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक स्वतःfs_type_trigger(अचिन्हित पूर्णांक type)
+अणु
+	वापस (type == AUTOFS_TYPE_सूचीECT || type == AUTOFS_TYPE_OFFSET);
+पूर्ण
 
 /*
  * This isn't really a type as we use it to say "no type set" to
- * indicate we want to search for "any" mount in the
- * autofs_dev_ioctl_ismountpoint() device ioctl function.
+ * indicate we want to search क्रम "any" mount in the
+ * स्वतःfs_dev_ioctl_ismountpoपूर्णांक() device ioctl function.
  */
-static inline void set_autofs_type_any(unsigned int *type)
-{
+अटल अंतरभूत व्योम set_स्वतःfs_type_any(अचिन्हित पूर्णांक *type)
+अणु
 	*type = AUTOFS_TYPE_ANY;
-}
+पूर्ण
 
-static inline unsigned int autofs_type_any(unsigned int type)
-{
-	return (type == AUTOFS_TYPE_ANY);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक स्वतःfs_type_any(अचिन्हित पूर्णांक type)
+अणु
+	वापस (type == AUTOFS_TYPE_ANY);
+पूर्ण
 
-/* Daemon notification packet types */
-enum autofs_notify {
+/* Daemon notअगरication packet types */
+क्रमागत स्वतःfs_notअगरy अणु
 	NFY_NONE,
 	NFY_MOUNT,
 	NFY_EXPIRE
-};
+पूर्ण;
 
 /* Kernel protocol version 4 packet types */
 
 /* Expire entry (umount request) */
-#define autofs_ptype_expire_multi	2
+#घोषणा स्वतःfs_ptype_expire_multi	2
 
 /* Kernel protocol version 5 packet types */
 
 /* Indirect mount missing and expire requests. */
-#define autofs_ptype_missing_indirect	3
-#define autofs_ptype_expire_indirect	4
+#घोषणा स्वतःfs_ptype_missing_indirect	3
+#घोषणा स्वतःfs_ptype_expire_indirect	4
 
 /* Direct mount missing and expire requests */
-#define autofs_ptype_missing_direct	5
-#define autofs_ptype_expire_direct	6
+#घोषणा स्वतःfs_ptype_missing_direct	5
+#घोषणा स्वतःfs_ptype_expire_direct	6
 
 /* v4 multi expire (via pipe) */
-struct autofs_packet_expire_multi {
-	struct autofs_packet_hdr hdr;
-	autofs_wqt_t wait_queue_token;
-	int len;
-	char name[NAME_MAX+1];
-};
+काष्ठा स्वतःfs_packet_expire_multi अणु
+	काष्ठा स्वतःfs_packet_hdr hdr;
+	स्वतःfs_wqt_t रुको_queue_token;
+	पूर्णांक len;
+	अक्षर name[NAME_MAX+1];
+पूर्ण;
 
-union autofs_packet_union {
-	struct autofs_packet_hdr hdr;
-	struct autofs_packet_missing missing;
-	struct autofs_packet_expire expire;
-	struct autofs_packet_expire_multi expire_multi;
-};
+जोड़ स्वतःfs_packet_जोड़ अणु
+	काष्ठा स्वतःfs_packet_hdr hdr;
+	काष्ठा स्वतःfs_packet_missing missing;
+	काष्ठा स्वतःfs_packet_expire expire;
+	काष्ठा स्वतःfs_packet_expire_multi expire_multi;
+पूर्ण;
 
-/* autofs v5 common packet struct */
-struct autofs_v5_packet {
-	struct autofs_packet_hdr hdr;
-	autofs_wqt_t wait_queue_token;
+/* स्वतःfs v5 common packet काष्ठा */
+काष्ठा स्वतःfs_v5_packet अणु
+	काष्ठा स्वतःfs_packet_hdr hdr;
+	स्वतःfs_wqt_t रुको_queue_token;
 	__u32 dev;
 	__u64 ino;
 	__u32 uid;
@@ -198,34 +199,34 @@ struct autofs_v5_packet {
 	__u32 pid;
 	__u32 tgid;
 	__u32 len;
-	char name[NAME_MAX+1];
-};
+	अक्षर name[NAME_MAX+1];
+पूर्ण;
 
-typedef struct autofs_v5_packet autofs_packet_missing_indirect_t;
-typedef struct autofs_v5_packet autofs_packet_expire_indirect_t;
-typedef struct autofs_v5_packet autofs_packet_missing_direct_t;
-typedef struct autofs_v5_packet autofs_packet_expire_direct_t;
+प्रकार काष्ठा स्वतःfs_v5_packet स्वतःfs_packet_missing_indirect_t;
+प्रकार काष्ठा स्वतःfs_v5_packet स्वतःfs_packet_expire_indirect_t;
+प्रकार काष्ठा स्वतःfs_v5_packet स्वतःfs_packet_missing_direct_t;
+प्रकार काष्ठा स्वतःfs_v5_packet स्वतःfs_packet_expire_direct_t;
 
-union autofs_v5_packet_union {
-	struct autofs_packet_hdr hdr;
-	struct autofs_v5_packet v5_packet;
-	autofs_packet_missing_indirect_t missing_indirect;
-	autofs_packet_expire_indirect_t expire_indirect;
-	autofs_packet_missing_direct_t missing_direct;
-	autofs_packet_expire_direct_t expire_direct;
-};
+जोड़ स्वतःfs_v5_packet_जोड़ अणु
+	काष्ठा स्वतःfs_packet_hdr hdr;
+	काष्ठा स्वतःfs_v5_packet v5_packet;
+	स्वतःfs_packet_missing_indirect_t missing_indirect;
+	स्वतःfs_packet_expire_indirect_t expire_indirect;
+	स्वतःfs_packet_missing_direct_t missing_direct;
+	स्वतःfs_packet_expire_direct_t expire_direct;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	AUTOFS_IOC_EXPIRE_MULTI_CMD = 0x66, /* AUTOFS_IOC_EXPIRE_CMD + 1 */
 	AUTOFS_IOC_PROTOSUBVER_CMD,
 	AUTOFS_IOC_ASKUMOUNT_CMD = 0x70, /* AUTOFS_DEV_IOCTL_VERSION_CMD - 1 */
-};
+पूर्ण;
 
-#define AUTOFS_IOC_EXPIRE_MULTI		_IOW(AUTOFS_IOCTL, \
-					     AUTOFS_IOC_EXPIRE_MULTI_CMD, int)
-#define AUTOFS_IOC_PROTOSUBVER		_IOR(AUTOFS_IOCTL, \
-					     AUTOFS_IOC_PROTOSUBVER_CMD, int)
-#define AUTOFS_IOC_ASKUMOUNT		_IOR(AUTOFS_IOCTL, \
-					     AUTOFS_IOC_ASKUMOUNT_CMD, int)
+#घोषणा AUTOFS_IOC_EXPIRE_MULTI		_IOW(AUTOFS_IOCTL, \
+					     AUTOFS_IOC_EXPIRE_MULTI_CMD, पूर्णांक)
+#घोषणा AUTOFS_IOC_PROTOSUBVER		_IOR(AUTOFS_IOCTL, \
+					     AUTOFS_IOC_PROTOSUBVER_CMD, पूर्णांक)
+#घोषणा AUTOFS_IOC_ASKUMOUNT		_IOR(AUTOFS_IOCTL, \
+					     AUTOFS_IOC_ASKUMOUNT_CMD, पूर्णांक)
 
-#endif /* _UAPI_LINUX_AUTO_FS_H */
+#पूर्ण_अगर /* _UAPI_LINUX_AUTO_FS_H */

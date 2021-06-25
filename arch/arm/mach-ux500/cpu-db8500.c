@@ -1,139 +1,140 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008-2009 ST-Ericsson SA
  *
  * Author: Srinidhi KASAGAR <srinidhi.kasagar@stericsson.com>
  */
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/amba/bus.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/irqchip/arm-gic.h>
-#include <linux/mfd/dbx500-prcmu.h>
-#include <linux/platform_data/arm-ux500-pm.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/regulator/machine.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqchip/arm-gic.h>
+#समावेश <linux/mfd/dbx500-prcmu.h>
+#समावेश <linux/platक्रमm_data/arm-ux500-pm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/regulator/machine.h>
 
-#include <asm/outercache.h>
-#include <asm/hardware/cache-l2x0.h>
-#include <asm/mach/map.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/outercache.h>
+#समावेश <यंत्र/hardware/cache-l2x0.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "db8500-regs.h"
-#include "pm_domains.h"
+#समावेश "db8500-regs.h"
+#समावेश "pm_domains.h"
 
-static int __init ux500_l2x0_unlock(void)
-{
-	int i;
-	struct device_node *np;
-	void __iomem *l2x0_base;
+अटल पूर्णांक __init ux500_l2x0_unlock(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा device_node *np;
+	व्योम __iomem *l2x0_base;
 
-	np = of_find_compatible_node(NULL, NULL, "arm,pl310-cache");
+	np = of_find_compatible_node(शून्य, शून्य, "arm,pl310-cache");
 	l2x0_base = of_iomap(np, 0);
 	of_node_put(np);
-	if (!l2x0_base)
-		return -ENODEV;
+	अगर (!l2x0_base)
+		वापस -ENODEV;
 
 	/*
-	 * Unlock Data and Instruction Lock if locked. Ux500 U-Boot versions
-	 * apparently locks both caches before jumping to the kernel. The
-	 * l2x0 core will not touch the unlock registers if the l2x0 is
-	 * already enabled, so we do it right here instead. The PL310 has
-	 * 8 sets of registers, one per possible CPU.
+	 * Unlock Data and Inकाष्ठाion Lock अगर locked. Ux500 U-Boot versions
+	 * apparently locks both caches beक्रमe jumping to the kernel. The
+	 * l2x0 core will not touch the unlock रेजिस्टरs अगर the l2x0 is
+	 * alपढ़ोy enabled, so we करो it right here instead. The PL310 has
+	 * 8 sets of रेजिस्टरs, one per possible CPU.
 	 */
-	for (i = 0; i < 8; i++) {
-		writel_relaxed(0x0, l2x0_base + L2X0_LOCKDOWN_WAY_D_BASE +
+	क्रम (i = 0; i < 8; i++) अणु
+		ग_लिखोl_relaxed(0x0, l2x0_base + L2X0_LOCKDOWN_WAY_D_BASE +
 			       i * L2X0_LOCKDOWN_STRIDE);
-		writel_relaxed(0x0, l2x0_base + L2X0_LOCKDOWN_WAY_I_BASE +
+		ग_लिखोl_relaxed(0x0, l2x0_base + L2X0_LOCKDOWN_WAY_I_BASE +
 			       i * L2X0_LOCKDOWN_STRIDE);
-	}
+	पूर्ण
 	iounmap(l2x0_base);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ux500_l2c310_write_sec(unsigned long val, unsigned reg)
-{
+अटल व्योम ux500_l2c310_ग_लिखो_sec(अचिन्हित दीर्घ val, अचिन्हित reg)
+अणु
 	/*
-	 * We can't write to secure registers as we are in non-secure
+	 * We can't ग_लिखो to secure रेजिस्टरs as we are in non-secure
 	 * mode, until we have some SMI service available.
 	 */
-}
+पूर्ण
 
 /*
- * FIXME: Should we set up the GPIO domain here?
+ * FIXME: Should we set up the GPIO करोमुख्य here?
  *
- * The problem is that we cannot put the interrupt resources into the platform
- * device until the irqdomain has been added. Right now, we set the GIC interrupt
- * domain from init_irq(), then load the gpio driver from
- * core_initcall(nmk_gpio_init) and add the platform devices from
+ * The problem is that we cannot put the पूर्णांकerrupt resources पूर्णांकo the platक्रमm
+ * device until the irqकरोमुख्य has been added. Right now, we set the GIC पूर्णांकerrupt
+ * करोमुख्य from init_irq(), then load the gpio driver from
+ * core_initcall(nmk_gpio_init) and add the platक्रमm devices from
  * arch_initcall(customize_machine).
  *
  * This feels fragile because it depends on the gpio device getting probed
- * _before_ any device uses the gpio interrupts.
+ * _beक्रमe_ any device uses the gpio पूर्णांकerrupts.
 */
-static void __init ux500_init_irq(void)
-{
-	struct device_node *np;
-	struct resource r;
+अटल व्योम __init ux500_init_irq(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा resource r;
 
 	irqchip_init();
 	prcmu_early_init();
-	np = of_find_compatible_node(NULL, NULL, "stericsson,db8500-prcmu");
+	np = of_find_compatible_node(शून्य, शून्य, "stericsson,db8500-prcmu");
 	of_address_to_resource(np, 0, &r);
 	of_node_put(np);
-	if (!r.start) {
+	अगर (!r.start) अणु
 		pr_err("could not find PRCMU base resource\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	ux500_pm_init(r.start, r.end-r.start);
 
-	/* Unlock before init */
+	/* Unlock beक्रमe init */
 	ux500_l2x0_unlock();
-	outer_cache.write_sec = ux500_l2c310_write_sec;
-}
+	outer_cache.ग_लिखो_sec = ux500_l2c310_ग_लिखो_sec;
+पूर्ण
 
-static void ux500_restart(enum reboot_mode mode, const char *cmd)
-{
+अटल व्योम ux500_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
+अणु
 	local_irq_disable();
 	local_fiq_disable();
 
-	prcmu_system_reset(0);
-}
+	prcmu_प्रणाली_reset(0);
+पूर्ण
 
-static const struct of_device_id u8500_local_bus_nodes[] = {
+अटल स्थिर काष्ठा of_device_id u8500_local_bus_nodes[] = अणु
 	/* only create devices below soc node */
-	{ .compatible = "stericsson,db8500", },
-	{ .compatible = "simple-bus"},
-	{ },
-};
+	अणु .compatible = "stericsson,db8500", पूर्ण,
+	अणु .compatible = "simple-bus"पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static void __init u8500_init_machine(void)
-{
-	/* Initialize ux500 power domains */
-	ux500_pm_domains_init();
+अटल व्योम __init u8500_init_machine(व्योम)
+अणु
+	/* Initialize ux500 घातer करोमुख्यs */
+	ux500_pm_करोमुख्यs_init();
 
-	of_platform_populate(NULL, u8500_local_bus_nodes,
-			     NULL, NULL);
-}
+	of_platक्रमm_populate(शून्य, u8500_local_bus_nodes,
+			     शून्य, शून्य);
+पूर्ण
 
-static const char * stericsson_dt_platform_compat[] = {
+अटल स्थिर अक्षर * stericsson_dt_platक्रमm_compat[] = अणु
 	"st-ericsson,u8500",
 	"st-ericsson,u9500",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(U8500_DT, "ST-Ericsson Ux5x0 platform (Device Tree Support)")
 	.l2c_aux_val    = 0,
 	.l2c_aux_mask	= ~0,
 	.init_irq	= ux500_init_irq,
 	.init_machine	= u8500_init_machine,
-	.dt_compat      = stericsson_dt_platform_compat,
+	.dt_compat      = stericsson_dt_platक्रमm_compat,
 	.restart        = ux500_restart,
 MACHINE_END

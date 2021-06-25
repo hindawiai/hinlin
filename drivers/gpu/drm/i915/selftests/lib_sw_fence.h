@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * lib_sw_fence.h - library routines for testing N:M synchronisation points
+ * lib_sw_fence.h - library routines क्रम testing N:M synchronisation poपूर्णांकs
  *
  * Copyright (C) 2017 Intel Corporation
  */
 
-#ifndef _LIB_SW_FENCE_H_
-#define _LIB_SW_FENCE_H_
+#अगर_अघोषित _LIB_SW_FENCE_H_
+#घोषणा _LIB_SW_FENCE_H_
 
-#include <linux/timer.h>
+#समावेश <linux/समयr.h>
 
-#include "../i915_sw_fence.h"
+#समावेश "../i915_sw_fence.h"
 
-#ifdef CONFIG_LOCKDEP
-#define onstack_fence_init(fence)				\
-do {								\
-	static struct lock_class_key __key;			\
+#अगर_घोषित CONFIG_LOCKDEP
+#घोषणा onstack_fence_init(fence)				\
+करो अणु								\
+	अटल काष्ठा lock_class_key __key;			\
 								\
 	__onstack_fence_init((fence), #fence, &__key);	\
-} while (0)
-#else
-#define onstack_fence_init(fence)				\
-	__onstack_fence_init((fence), NULL, NULL)
-#endif
+पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा onstack_fence_init(fence)				\
+	__onstack_fence_init((fence), शून्य, शून्य)
+#पूर्ण_अगर
 
-void __onstack_fence_init(struct i915_sw_fence *fence,
-			  const char *name,
-			  struct lock_class_key *key);
-void onstack_fence_fini(struct i915_sw_fence *fence);
+व्योम __onstack_fence_init(काष्ठा i915_sw_fence *fence,
+			  स्थिर अक्षर *name,
+			  काष्ठा lock_class_key *key);
+व्योम onstack_fence_fini(काष्ठा i915_sw_fence *fence);
 
-struct timed_fence {
-	struct i915_sw_fence fence;
-	struct timer_list timer;
-};
+काष्ठा समयd_fence अणु
+	काष्ठा i915_sw_fence fence;
+	काष्ठा समयr_list समयr;
+पूर्ण;
 
-void timed_fence_init(struct timed_fence *tf, unsigned long expires);
-void timed_fence_fini(struct timed_fence *tf);
+व्योम समयd_fence_init(काष्ठा समयd_fence *tf, अचिन्हित दीर्घ expires);
+व्योम समयd_fence_fini(काष्ठा समयd_fence *tf);
 
-struct i915_sw_fence *heap_fence_create(gfp_t gfp);
-void heap_fence_put(struct i915_sw_fence *fence);
+काष्ठा i915_sw_fence *heap_fence_create(gfp_t gfp);
+व्योम heap_fence_put(काष्ठा i915_sw_fence *fence);
 
-#endif /* _LIB_SW_FENCE_H_ */
+#पूर्ण_अगर /* _LIB_SW_FENCE_H_ */

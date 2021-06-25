@@ -1,247 +1,248 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* riowd.c - driver for hw watchdog inside Super I/O of RIO
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* riowd.c - driver क्रम hw watchकरोg inside Super I/O of RIO
  *
  * Copyright (C) 2001, 2008 David S. Miller (davem@davemloft.net)
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/fs.h>
-#include <linux/errno.h>
-#include <linux/miscdevice.h>
-#include <linux/watchdog.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/io.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
 
 
-/* RIO uses the NatSemi Super I/O power management logical device
- * as its' watchdog.
+/* RIO uses the NatSemi Super I/O घातer management logical device
+ * as its' watchकरोg.
  *
- * When the watchdog triggers, it asserts a line to the BBC (Boot Bus
+ * When the watchकरोg triggers, it निश्चितs a line to the BBC (Boot Bus
  * Controller) of the machine.  The BBC can only be configured to
- * trigger a power-on reset when the signal is asserted.  The BBC
- * can be configured to ignore the signal entirely as well.
+ * trigger a घातer-on reset when the संकेत is निश्चितed.  The BBC
+ * can be configured to ignore the संकेत entirely as well.
  *
- * The only Super I/O device register we care about is at index
- * 0x05 (WDTO_INDEX) which is the watchdog time-out in minutes (1-255).
- * If set to zero, this disables the watchdog.  When set, the system
- * must periodically (before watchdog expires) clear (set to zero) and
- * re-set the watchdog else it will trigger.
+ * The only Super I/O device रेजिस्टर we care about is at index
+ * 0x05 (WDTO_INDEX) which is the watchकरोg समय-out in minutes (1-255).
+ * If set to zero, this disables the watchकरोg.  When set, the प्रणाली
+ * must periodically (beक्रमe watchकरोg expires) clear (set to zero) and
+ * re-set the watchकरोg अन्यथा it will trigger.
  *
- * There are two other indexed watchdog registers inside this Super I/O
+ * There are two other indexed watchकरोg रेजिस्टरs inside this Super I/O
  * logical device, but they are unused.  The first, at index 0x06 is
- * the watchdog control and can be used to make the watchdog timer re-set
+ * the watchकरोg control and can be used to make the watchकरोg समयr re-set
  * when the PS/2 mouse or serial lines show activity.  The second, at
- * index 0x07 is merely a sampling of the line from the watchdog to the
+ * index 0x07 is merely a sampling of the line from the watchकरोg to the
  * BBC.
  *
- * The watchdog device generates no interrupts.
+ * The watchकरोg device generates no पूर्णांकerrupts.
  */
 
 MODULE_AUTHOR("David S. Miller <davem@davemloft.net>");
 MODULE_DESCRIPTION("Hardware watchdog driver for Sun RIO");
 MODULE_LICENSE("GPL");
 
-#define DRIVER_NAME	"riowd"
-#define PFX		DRIVER_NAME ": "
+#घोषणा DRIVER_NAME	"riowd"
+#घोषणा PFX		DRIVER_NAME ": "
 
-struct riowd {
-	void __iomem		*regs;
+काष्ठा riowd अणु
+	व्योम __iomem		*regs;
 	spinlock_t		lock;
-};
+पूर्ण;
 
-static struct riowd *riowd_device;
+अटल काष्ठा riowd *riowd_device;
 
-#define WDTO_INDEX	0x05
+#घोषणा WDTO_INDEX	0x05
 
-static int riowd_timeout = 1;		/* in minutes */
-module_param(riowd_timeout, int, 0);
-MODULE_PARM_DESC(riowd_timeout, "Watchdog timeout in minutes");
+अटल पूर्णांक riowd_समयout = 1;		/* in minutes */
+module_param(riowd_समयout, पूर्णांक, 0);
+MODULE_PARM_DESC(riowd_समयout, "Watchdog timeout in minutes");
 
-static void riowd_writereg(struct riowd *p, u8 val, int index)
-{
-	unsigned long flags;
+अटल व्योम riowd_ग_लिखोreg(काष्ठा riowd *p, u8 val, पूर्णांक index)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&p->lock, flags);
-	writeb(index, p->regs + 0);
-	writeb(val, p->regs + 1);
+	ग_लिखोb(index, p->regs + 0);
+	ग_लिखोb(val, p->regs + 1);
 	spin_unlock_irqrestore(&p->lock, flags);
-}
+पूर्ण
 
-static int riowd_open(struct inode *inode, struct file *filp)
-{
-	stream_open(inode, filp);
-	return 0;
-}
+अटल पूर्णांक riowd_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	stream_खोलो(inode, filp);
+	वापस 0;
+पूर्ण
 
-static int riowd_release(struct inode *inode, struct file *filp)
-{
-	return 0;
-}
+अटल पूर्णांक riowd_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस 0;
+पूर्ण
 
-static long riowd_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	static const struct watchdog_info info = {
+अटल दीर्घ riowd_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	अटल स्थिर काष्ठा watchकरोg_info info = अणु
 		.options		= WDIOF_SETTIMEOUT,
 		.firmware_version	= 1,
 		.identity		= DRIVER_NAME,
-	};
-	void __user *argp = (void __user *)arg;
-	struct riowd *p = riowd_device;
-	unsigned int options;
-	int new_margin;
+	पूर्ण;
+	व्योम __user *argp = (व्योम __user *)arg;
+	काष्ठा riowd *p = riowd_device;
+	अचिन्हित पूर्णांक options;
+	पूर्णांक new_margin;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		if (copy_to_user(argp, &info, sizeof(info)))
-			return -EFAULT;
-		break;
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		अगर (copy_to_user(argp, &info, माप(info)))
+			वापस -EFAULT;
+		अवरोध;
 
-	case WDIOC_GETSTATUS:
-	case WDIOC_GETBOOTSTATUS:
-		if (put_user(0, (int __user *)argp))
-			return -EFAULT;
-		break;
+	हाल WDIOC_GETSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
+		अगर (put_user(0, (पूर्णांक __user *)argp))
+			वापस -EFAULT;
+		अवरोध;
 
-	case WDIOC_KEEPALIVE:
-		riowd_writereg(p, riowd_timeout, WDTO_INDEX);
-		break;
+	हाल WDIOC_KEEPALIVE:
+		riowd_ग_लिखोreg(p, riowd_समयout, WDTO_INDEX);
+		अवरोध;
 
-	case WDIOC_SETOPTIONS:
-		if (copy_from_user(&options, argp, sizeof(options)))
-			return -EFAULT;
+	हाल WDIOC_SETOPTIONS:
+		अगर (copy_from_user(&options, argp, माप(options)))
+			वापस -EFAULT;
 
-		if (options & WDIOS_DISABLECARD)
-			riowd_writereg(p, 0, WDTO_INDEX);
-		else if (options & WDIOS_ENABLECARD)
-			riowd_writereg(p, riowd_timeout, WDTO_INDEX);
-		else
-			return -EINVAL;
+		अगर (options & WDIOS_DISABLECARD)
+			riowd_ग_लिखोreg(p, 0, WDTO_INDEX);
+		अन्यथा अगर (options & WDIOS_ENABLECARD)
+			riowd_ग_लिखोreg(p, riowd_समयout, WDTO_INDEX);
+		अन्यथा
+			वापस -EINVAL;
 
-		break;
+		अवरोध;
 
-	case WDIOC_SETTIMEOUT:
-		if (get_user(new_margin, (int __user *)argp))
-			return -EFAULT;
-		if ((new_margin < 60) || (new_margin > (255 * 60)))
-			return -EINVAL;
-		riowd_timeout = (new_margin + 59) / 60;
-		riowd_writereg(p, riowd_timeout, WDTO_INDEX);
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(new_margin, (पूर्णांक __user *)argp))
+			वापस -EFAULT;
+		अगर ((new_margin < 60) || (new_margin > (255 * 60)))
+			वापस -EINVAL;
+		riowd_समयout = (new_margin + 59) / 60;
+		riowd_ग_लिखोreg(p, riowd_समयout, WDTO_INDEX);
 		fallthrough;
 
-	case WDIOC_GETTIMEOUT:
-		return put_user(riowd_timeout * 60, (int __user *)argp);
+	हाल WDIOC_GETTIMEOUT:
+		वापस put_user(riowd_समयout * 60, (पूर्णांक __user *)argp);
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t riowd_write(struct file *file, const char __user *buf,
-						size_t count, loff_t *ppos)
-{
-	struct riowd *p = riowd_device;
+अटल sमाप_प्रकार riowd_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+						माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा riowd *p = riowd_device;
 
-	if (count) {
-		riowd_writereg(p, riowd_timeout, WDTO_INDEX);
-		return 1;
-	}
+	अगर (count) अणु
+		riowd_ग_लिखोreg(p, riowd_समयout, WDTO_INDEX);
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations riowd_fops = {
+अटल स्थिर काष्ठा file_operations riowd_fops = अणु
 	.owner =		THIS_MODULE,
 	.llseek =		no_llseek,
 	.unlocked_ioctl =	riowd_ioctl,
 	.compat_ioctl	=	compat_ptr_ioctl,
-	.open =			riowd_open,
-	.write =		riowd_write,
+	.खोलो =			riowd_खोलो,
+	.ग_लिखो =		riowd_ग_लिखो,
 	.release =		riowd_release,
-};
+पूर्ण;
 
-static struct miscdevice riowd_miscdev = {
+अटल काष्ठा miscdevice riowd_miscdev = अणु
 	.minor	= WATCHDOG_MINOR,
 	.name	= "watchdog",
 	.fops	= &riowd_fops
-};
+पूर्ण;
 
-static int riowd_probe(struct platform_device *op)
-{
-	struct riowd *p;
-	int err = -EINVAL;
+अटल पूर्णांक riowd_probe(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा riowd *p;
+	पूर्णांक err = -EINVAL;
 
-	if (riowd_device)
-		goto out;
+	अगर (riowd_device)
+		जाओ out;
 
 	err = -ENOMEM;
-	p = devm_kzalloc(&op->dev, sizeof(*p), GFP_KERNEL);
-	if (!p)
-		goto out;
+	p = devm_kzalloc(&op->dev, माप(*p), GFP_KERNEL);
+	अगर (!p)
+		जाओ out;
 
 	spin_lock_init(&p->lock);
 
 	p->regs = of_ioremap(&op->resource[0], 0, 2, DRIVER_NAME);
-	if (!p->regs) {
+	अगर (!p->regs) अणु
 		pr_err("Cannot map registers\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/* Make miscdev useable right away */
 	riowd_device = p;
 
-	err = misc_register(&riowd_miscdev);
-	if (err) {
+	err = misc_रेजिस्टर(&riowd_miscdev);
+	अगर (err) अणु
 		pr_err("Cannot register watchdog misc device\n");
-		goto out_iounmap;
-	}
+		जाओ out_iounmap;
+	पूर्ण
 
 	pr_info("Hardware watchdog [%i minutes], regs at %p\n",
-		riowd_timeout, p->regs);
+		riowd_समयout, p->regs);
 
-	platform_set_drvdata(op, p);
-	return 0;
+	platक्रमm_set_drvdata(op, p);
+	वापस 0;
 
 out_iounmap:
-	riowd_device = NULL;
+	riowd_device = शून्य;
 	of_iounmap(&op->resource[0], p->regs, 2);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int riowd_remove(struct platform_device *op)
-{
-	struct riowd *p = platform_get_drvdata(op);
+अटल पूर्णांक riowd_हटाओ(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा riowd *p = platक्रमm_get_drvdata(op);
 
-	misc_deregister(&riowd_miscdev);
+	misc_deरेजिस्टर(&riowd_miscdev);
 	of_iounmap(&op->resource[0], p->regs, 2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id riowd_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id riowd_match[] = अणु
+	अणु
 		.name = "pmc",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, riowd_match);
 
-static struct platform_driver riowd_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver riowd_driver = अणु
+	.driver = अणु
 		.name = DRIVER_NAME,
 		.of_match_table = riowd_match,
-	},
+	पूर्ण,
 	.probe		= riowd_probe,
-	.remove		= riowd_remove,
-};
+	.हटाओ		= riowd_हटाओ,
+पूर्ण;
 
-module_platform_driver(riowd_driver);
+module_platक्रमm_driver(riowd_driver);

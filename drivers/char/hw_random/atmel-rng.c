@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2011 Peter Korsgaard <jacmet@sunsite.dk>
  *
@@ -6,193 +7,193 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/hw_random.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define TRNG_CR		0x00
-#define TRNG_MR		0x04
-#define TRNG_ISR	0x1c
-#define TRNG_ODATA	0x50
+#घोषणा TRNG_CR		0x00
+#घोषणा TRNG_MR		0x04
+#घोषणा TRNG_ISR	0x1c
+#घोषणा TRNG_ODATA	0x50
 
-#define TRNG_KEY	0x524e4700 /* RNG */
+#घोषणा TRNG_KEY	0x524e4700 /* RNG */
 
-#define TRNG_HALFR	BIT(0) /* generate RN every 168 cycles */
+#घोषणा TRNG_HALFR	BIT(0) /* generate RN every 168 cycles */
 
-struct atmel_trng_data {
+काष्ठा aपंचांगel_trng_data अणु
 	bool has_half_rate;
-};
+पूर्ण;
 
-struct atmel_trng {
-	struct clk *clk;
-	void __iomem *base;
-	struct hwrng rng;
-};
+काष्ठा aपंचांगel_trng अणु
+	काष्ठा clk *clk;
+	व्योम __iomem *base;
+	काष्ठा hwrng rng;
+पूर्ण;
 
-static int atmel_trng_read(struct hwrng *rng, void *buf, size_t max,
-			   bool wait)
-{
-	struct atmel_trng *trng = container_of(rng, struct atmel_trng, rng);
+अटल पूर्णांक aपंचांगel_trng_पढ़ो(काष्ठा hwrng *rng, व्योम *buf, माप_प्रकार max,
+			   bool रुको)
+अणु
+	काष्ठा aपंचांगel_trng *trng = container_of(rng, काष्ठा aपंचांगel_trng, rng);
 	u32 *data = buf;
 
-	/* data ready? */
-	if (readl(trng->base + TRNG_ISR) & 1) {
-		*data = readl(trng->base + TRNG_ODATA);
+	/* data पढ़ोy? */
+	अगर (पढ़ोl(trng->base + TRNG_ISR) & 1) अणु
+		*data = पढ़ोl(trng->base + TRNG_ODATA);
 		/*
-		  ensure data ready is only set again AFTER the next data
-		  word is ready in case it got set between checking ISR
-		  and reading ODATA, so we don't risk re-reading the
+		  ensure data पढ़ोy is only set again AFTER the next data
+		  word is पढ़ोy in हाल it got set between checking ISR
+		  and पढ़ोing ODATA, so we करोn't risk re-पढ़ोing the
 		  same word
 		*/
-		readl(trng->base + TRNG_ISR);
-		return 4;
-	} else
-		return 0;
-}
+		पढ़ोl(trng->base + TRNG_ISR);
+		वापस 4;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
-static void atmel_trng_enable(struct atmel_trng *trng)
-{
-	writel(TRNG_KEY | 1, trng->base + TRNG_CR);
-}
+अटल व्योम aपंचांगel_trng_enable(काष्ठा aपंचांगel_trng *trng)
+अणु
+	ग_लिखोl(TRNG_KEY | 1, trng->base + TRNG_CR);
+पूर्ण
 
-static void atmel_trng_disable(struct atmel_trng *trng)
-{
-	writel(TRNG_KEY, trng->base + TRNG_CR);
-}
+अटल व्योम aपंचांगel_trng_disable(काष्ठा aपंचांगel_trng *trng)
+अणु
+	ग_लिखोl(TRNG_KEY, trng->base + TRNG_CR);
+पूर्ण
 
-static int atmel_trng_probe(struct platform_device *pdev)
-{
-	struct atmel_trng *trng;
-	const struct atmel_trng_data *data;
-	int ret;
+अटल पूर्णांक aपंचांगel_trng_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aपंचांगel_trng *trng;
+	स्थिर काष्ठा aपंचांगel_trng_data *data;
+	पूर्णांक ret;
 
-	trng = devm_kzalloc(&pdev->dev, sizeof(*trng), GFP_KERNEL);
-	if (!trng)
-		return -ENOMEM;
+	trng = devm_kzalloc(&pdev->dev, माप(*trng), GFP_KERNEL);
+	अगर (!trng)
+		वापस -ENOMEM;
 
-	trng->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(trng->base))
-		return PTR_ERR(trng->base);
+	trng->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(trng->base))
+		वापस PTR_ERR(trng->base);
 
-	trng->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(trng->clk))
-		return PTR_ERR(trng->clk);
+	trng->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(trng->clk))
+		वापस PTR_ERR(trng->clk);
 	data = of_device_get_match_data(&pdev->dev);
-	if (!data)
-		return -ENODEV;
+	अगर (!data)
+		वापस -ENODEV;
 
-	if (data->has_half_rate) {
-		unsigned long rate = clk_get_rate(trng->clk);
+	अगर (data->has_half_rate) अणु
+		अचिन्हित दीर्घ rate = clk_get_rate(trng->clk);
 
-		/* if peripheral clk is above 100MHz, set HALFR */
-		if (rate > 100000000)
-			writel(TRNG_HALFR, trng->base + TRNG_MR);
-	}
+		/* अगर peripheral clk is above 100MHz, set HALFR */
+		अगर (rate > 100000000)
+			ग_लिखोl(TRNG_HALFR, trng->base + TRNG_MR);
+	पूर्ण
 
 	ret = clk_prepare_enable(trng->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	atmel_trng_enable(trng);
+	aपंचांगel_trng_enable(trng);
 	trng->rng.name = pdev->name;
-	trng->rng.read = atmel_trng_read;
+	trng->rng.पढ़ो = aपंचांगel_trng_पढ़ो;
 
-	ret = devm_hwrng_register(&pdev->dev, &trng->rng);
-	if (ret)
-		goto err_register;
+	ret = devm_hwrng_रेजिस्टर(&pdev->dev, &trng->rng);
+	अगर (ret)
+		जाओ err_रेजिस्टर;
 
-	platform_set_drvdata(pdev, trng);
+	platक्रमm_set_drvdata(pdev, trng);
 
-	return 0;
+	वापस 0;
 
-err_register:
+err_रेजिस्टर:
 	clk_disable_unprepare(trng->clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int atmel_trng_remove(struct platform_device *pdev)
-{
-	struct atmel_trng *trng = platform_get_drvdata(pdev);
+अटल पूर्णांक aपंचांगel_trng_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aपंचांगel_trng *trng = platक्रमm_get_drvdata(pdev);
 
 
-	atmel_trng_disable(trng);
-	clk_disable_unprepare(trng->clk);
-
-	return 0;
-}
-
-#ifdef CONFIG_PM
-static int atmel_trng_suspend(struct device *dev)
-{
-	struct atmel_trng *trng = dev_get_drvdata(dev);
-
-	atmel_trng_disable(trng);
+	aपंचांगel_trng_disable(trng);
 	clk_disable_unprepare(trng->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_trng_resume(struct device *dev)
-{
-	struct atmel_trng *trng = dev_get_drvdata(dev);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक aपंचांगel_trng_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा aपंचांगel_trng *trng = dev_get_drvdata(dev);
+
+	aपंचांगel_trng_disable(trng);
+	clk_disable_unprepare(trng->clk);
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक aपंचांगel_trng_resume(काष्ठा device *dev)
+अणु
+	काष्ठा aपंचांगel_trng *trng = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(trng->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	atmel_trng_enable(trng);
+	aपंचांगel_trng_enable(trng);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops atmel_trng_pm_ops = {
-	.suspend	= atmel_trng_suspend,
-	.resume		= atmel_trng_resume,
-};
-#endif /* CONFIG_PM */
+अटल स्थिर काष्ठा dev_pm_ops aपंचांगel_trng_pm_ops = अणु
+	.suspend	= aपंचांगel_trng_suspend,
+	.resume		= aपंचांगel_trng_resume,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct atmel_trng_data at91sam9g45_config = {
+अटल स्थिर काष्ठा aपंचांगel_trng_data at91sam9g45_config = अणु
 	.has_half_rate = false,
-};
+पूर्ण;
 
-static const struct atmel_trng_data sam9x60_config = {
+अटल स्थिर काष्ठा aपंचांगel_trng_data sam9x60_config = अणु
 	.has_half_rate = true,
-};
+पूर्ण;
 
-static const struct of_device_id atmel_trng_dt_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id aपंचांगel_trng_dt_ids[] = अणु
+	अणु
 		.compatible = "atmel,at91sam9g45-trng",
 		.data = &at91sam9g45_config,
-	}, {
+	पूर्ण, अणु
 		.compatible = "microchip,sam9x60-trng",
 		.data = &sam9x60_config,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
-MODULE_DEVICE_TABLE(of, atmel_trng_dt_ids);
+	पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, aपंचांगel_trng_dt_ids);
 
-static struct platform_driver atmel_trng_driver = {
-	.probe		= atmel_trng_probe,
-	.remove		= atmel_trng_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver aपंचांगel_trng_driver = अणु
+	.probe		= aपंचांगel_trng_probe,
+	.हटाओ		= aपंचांगel_trng_हटाओ,
+	.driver		= अणु
 		.name	= "atmel-trng",
-#ifdef CONFIG_PM
-		.pm	= &atmel_trng_pm_ops,
-#endif /* CONFIG_PM */
-		.of_match_table = atmel_trng_dt_ids,
-	},
-};
+#अगर_घोषित CONFIG_PM
+		.pm	= &aपंचांगel_trng_pm_ops,
+#पूर्ण_अगर /* CONFIG_PM */
+		.of_match_table = aपंचांगel_trng_dt_ids,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(atmel_trng_driver);
+module_platक्रमm_driver(aपंचांगel_trng_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Peter Korsgaard <jacmet@sunsite.dk>");

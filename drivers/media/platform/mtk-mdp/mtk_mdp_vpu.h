@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2015-2016 MediaTek Inc.
- * Author: Houlong Wei <houlong.wei@mediatek.com>
+ * Author: Houदीर्घ Wei <houदीर्घ.wei@mediatek.com>
  *         Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
  */
 
-#ifndef __MTK_MDP_VPU_H__
-#define __MTK_MDP_VPU_H__
+#अगर_अघोषित __MTK_MDP_VPU_H__
+#घोषणा __MTK_MDP_VPU_H__
 
-#include "mtk_mdp_ipi.h"
+#समावेश "mtk_mdp_ipi.h"
 
 
 /**
- * struct mtk_mdp_vpu - VPU instance for MDP
- * @pdev	: pointer to the VPU platform device
+ * काष्ठा mtk_mdp_vpu - VPU instance क्रम MDP
+ * @pdev	: poपूर्णांकer to the VPU platक्रमm device
  * @inst_addr	: VPU MDP instance address
  * @failure	: VPU execution result status
- * @vsi		: VPU shared information
+ * @vsi		: VPU shared inक्रमmation
  */
-struct mtk_mdp_vpu {
-	struct platform_device	*pdev;
-	uint32_t		inst_addr;
-	int32_t			failure;
-	struct mdp_process_vsi	*vsi;
-};
+काष्ठा mtk_mdp_vpu अणु
+	काष्ठा platक्रमm_device	*pdev;
+	uपूर्णांक32_t		inst_addr;
+	पूर्णांक32_t			failure;
+	काष्ठा mdp_process_vsi	*vsi;
+पूर्ण;
 
-int mtk_mdp_vpu_register(struct platform_device *pdev);
-int mtk_mdp_vpu_init(struct mtk_mdp_vpu *vpu);
-int mtk_mdp_vpu_deinit(struct mtk_mdp_vpu *vpu);
-int mtk_mdp_vpu_process(struct mtk_mdp_vpu *vpu);
+पूर्णांक mtk_mdp_vpu_रेजिस्टर(काष्ठा platक्रमm_device *pdev);
+पूर्णांक mtk_mdp_vpu_init(काष्ठा mtk_mdp_vpu *vpu);
+पूर्णांक mtk_mdp_vpu_deinit(काष्ठा mtk_mdp_vpu *vpu);
+पूर्णांक mtk_mdp_vpu_process(काष्ठा mtk_mdp_vpu *vpu);
 
-#endif /* __MTK_MDP_VPU_H__ */
+#पूर्ण_अगर /* __MTK_MDP_VPU_H__ */

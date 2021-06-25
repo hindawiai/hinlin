@@ -1,186 +1,187 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright 2017 IBM Corp.
-#include <linux/sysfs.h>
-#include "ocxl_internal.h"
+#समावेश <linux/sysfs.h>
+#समावेश "ocxl_internal.h"
 
-static inline struct ocxl_afu *to_afu(struct device *device)
-{
-	struct ocxl_file_info *info = container_of(device, struct ocxl_file_info, dev);
+अटल अंतरभूत काष्ठा ocxl_afu *to_afu(काष्ठा device *device)
+अणु
+	काष्ठा ocxl_file_info *info = container_of(device, काष्ठा ocxl_file_info, dev);
 
-	return info->afu;
-}
+	वापस info->afu;
+पूर्ण
 
-static ssize_t global_mmio_size_show(struct device *device,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct ocxl_afu *afu = to_afu(device);
+अटल sमाप_प्रकार global_mmio_size_show(काष्ठा device *device,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा ocxl_afu *afu = to_afu(device);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n",
 			afu->config.global_mmio_size);
-}
+पूर्ण
 
-static ssize_t pp_mmio_size_show(struct device *device,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct ocxl_afu *afu = to_afu(device);
+अटल sमाप_प्रकार pp_mmio_size_show(काष्ठा device *device,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा ocxl_afu *afu = to_afu(device);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n",
 			afu->config.pp_mmio_stride);
-}
+पूर्ण
 
-static ssize_t afu_version_show(struct device *device,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct ocxl_afu *afu = to_afu(device);
+अटल sमाप_प्रकार afu_version_show(काष्ठा device *device,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा ocxl_afu *afu = to_afu(device);
 
-	return scnprintf(buf, PAGE_SIZE, "%hhu:%hhu\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%hhu:%hhu\n",
 			afu->config.version_major,
 			afu->config.version_minor);
-}
+पूर्ण
 
-static ssize_t contexts_show(struct device *device,
-		struct device_attribute *attr,
-		char *buf)
-{
-	struct ocxl_afu *afu = to_afu(device);
+अटल sमाप_प्रकार contexts_show(काष्ठा device *device,
+		काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा ocxl_afu *afu = to_afu(device);
 
-	return scnprintf(buf, PAGE_SIZE, "%d/%d\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d/%d\n",
 			afu->pasid_count, afu->pasid_max);
-}
+पूर्ण
 
-static ssize_t reload_on_reset_show(struct device *device,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct ocxl_afu *afu = to_afu(device);
-	struct ocxl_fn *fn = afu->fn;
-	struct pci_dev *pci_dev = to_pci_dev(fn->dev.parent);
-	int val;
+अटल sमाप_प्रकार reload_on_reset_show(काष्ठा device *device,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा ocxl_afu *afu = to_afu(device);
+	काष्ठा ocxl_fn *fn = afu->fn;
+	काष्ठा pci_dev *pci_dev = to_pci_dev(fn->dev.parent);
+	पूर्णांक val;
 
-	if (ocxl_config_get_reset_reload(pci_dev, &val))
-		return scnprintf(buf, PAGE_SIZE, "unavailable\n");
+	अगर (ocxl_config_get_reset_reload(pci_dev, &val))
+		वापस scnम_लिखो(buf, PAGE_SIZE, "unavailable\n");
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", val);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", val);
+पूर्ण
 
-static ssize_t reload_on_reset_store(struct device *device,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct ocxl_afu *afu = to_afu(device);
-	struct ocxl_fn *fn = afu->fn;
-	struct pci_dev *pci_dev = to_pci_dev(fn->dev.parent);
-	int rc, val;
+अटल sमाप_प्रकार reload_on_reset_store(काष्ठा device *device,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ocxl_afu *afu = to_afu(device);
+	काष्ठा ocxl_fn *fn = afu->fn;
+	काष्ठा pci_dev *pci_dev = to_pci_dev(fn->dev.parent);
+	पूर्णांक rc, val;
 
-	rc = kstrtoint(buf, 0, &val);
-	if (rc || (val != 0 && val != 1))
-		return -EINVAL;
+	rc = kstrtoपूर्णांक(buf, 0, &val);
+	अगर (rc || (val != 0 && val != 1))
+		वापस -EINVAL;
 
-	if (ocxl_config_set_reset_reload(pci_dev, val))
-		return -ENODEV;
+	अगर (ocxl_config_set_reset_reload(pci_dev, val))
+		वापस -ENODEV;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute afu_attrs[] = {
+अटल काष्ठा device_attribute afu_attrs[] = अणु
 	__ATTR_RO(global_mmio_size),
 	__ATTR_RO(pp_mmio_size),
 	__ATTR_RO(afu_version),
 	__ATTR_RO(contexts),
 	__ATTR_RW(reload_on_reset),
-};
+पूर्ण;
 
-static ssize_t global_mmio_read(struct file *filp, struct kobject *kobj,
-				struct bin_attribute *bin_attr, char *buf,
-				loff_t off, size_t count)
-{
-	struct ocxl_afu *afu = to_afu(kobj_to_dev(kobj));
+अटल sमाप_प्रकार global_mmio_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+				काष्ठा bin_attribute *bin_attr, अक्षर *buf,
+				loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा ocxl_afu *afu = to_afu(kobj_to_dev(kobj));
 
-	if (count == 0 || off < 0 ||
+	अगर (count == 0 || off < 0 ||
 		off >= afu->config.global_mmio_size)
-		return 0;
-	memcpy_fromio(buf, afu->global_mmio_ptr + off, count);
-	return count;
-}
+		वापस 0;
+	स_नकल_fromio(buf, afu->global_mmio_ptr + off, count);
+	वापस count;
+पूर्ण
 
-static vm_fault_t global_mmio_fault(struct vm_fault *vmf)
-{
-	struct vm_area_struct *vma = vmf->vma;
-	struct ocxl_afu *afu = vma->vm_private_data;
-	unsigned long offset;
+अटल vm_fault_t global_mmio_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+	काष्ठा ocxl_afu *afu = vma->vm_निजी_data;
+	अचिन्हित दीर्घ offset;
 
-	if (vmf->pgoff >= (afu->config.global_mmio_size >> PAGE_SHIFT))
-		return VM_FAULT_SIGBUS;
+	अगर (vmf->pgoff >= (afu->config.global_mmio_size >> PAGE_SHIFT))
+		वापस VM_FAULT_SIGBUS;
 
 	offset = vmf->pgoff;
 	offset += (afu->global_mmio_start >> PAGE_SHIFT);
-	return vmf_insert_pfn(vma, vmf->address, offset);
-}
+	वापस vmf_insert_pfn(vma, vmf->address, offset);
+पूर्ण
 
-static const struct vm_operations_struct global_mmio_vmops = {
+अटल स्थिर काष्ठा vm_operations_काष्ठा global_mmio_vmops = अणु
 	.fault = global_mmio_fault,
-};
+पूर्ण;
 
-static int global_mmio_mmap(struct file *filp, struct kobject *kobj,
-			struct bin_attribute *bin_attr,
-			struct vm_area_struct *vma)
-{
-	struct ocxl_afu *afu = to_afu(kobj_to_dev(kobj));
+अटल पूर्णांक global_mmio_mmap(काष्ठा file *filp, काष्ठा kobject *kobj,
+			काष्ठा bin_attribute *bin_attr,
+			काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा ocxl_afu *afu = to_afu(kobj_to_dev(kobj));
 
-	if ((vma_pages(vma) + vma->vm_pgoff) >
+	अगर ((vma_pages(vma) + vma->vm_pgoff) >
 		(afu->config.global_mmio_size >> PAGE_SHIFT))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 	vma->vm_ops = &global_mmio_vmops;
-	vma->vm_private_data = afu;
-	return 0;
-}
+	vma->vm_निजी_data = afu;
+	वापस 0;
+पूर्ण
 
-int ocxl_sysfs_register_afu(struct ocxl_file_info *info)
-{
-	int i, rc;
+पूर्णांक ocxl_sysfs_रेजिस्टर_afu(काष्ठा ocxl_file_info *info)
+अणु
+	पूर्णांक i, rc;
 
-	for (i = 0; i < ARRAY_SIZE(afu_attrs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(afu_attrs); i++) अणु
 		rc = device_create_file(&info->dev, &afu_attrs[i]);
-		if (rc)
-			goto err;
-	}
+		अगर (rc)
+			जाओ err;
+	पूर्ण
 
 	sysfs_attr_init(&info->attr_global_mmio.attr);
 	info->attr_global_mmio.attr.name = "global_mmio_area";
 	info->attr_global_mmio.attr.mode = 0600;
 	info->attr_global_mmio.size = info->afu->config.global_mmio_size;
-	info->attr_global_mmio.read = global_mmio_read;
+	info->attr_global_mmio.पढ़ो = global_mmio_पढ़ो;
 	info->attr_global_mmio.mmap = global_mmio_mmap;
 	rc = device_create_bin_file(&info->dev, &info->attr_global_mmio);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&info->dev, "Unable to create global mmio attr for afu: %d\n", rc);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	for (i--; i >= 0; i--)
-		device_remove_file(&info->dev, &afu_attrs[i]);
+	क्रम (i--; i >= 0; i--)
+		device_हटाओ_file(&info->dev, &afu_attrs[i]);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void ocxl_sysfs_unregister_afu(struct ocxl_file_info *info)
-{
-	int i;
+व्योम ocxl_sysfs_unरेजिस्टर_afu(काष्ठा ocxl_file_info *info)
+अणु
+	पूर्णांक i;
 
 	/*
-	 * device_remove_bin_file is safe to call if the file is not added as
-	 * the files are removed by name, and early exit if not found
+	 * device_हटाओ_bin_file is safe to call अगर the file is not added as
+	 * the files are हटाओd by name, and early निकास अगर not found
 	 */
-	for (i = 0; i < ARRAY_SIZE(afu_attrs); i++)
-		device_remove_file(&info->dev, &afu_attrs[i]);
-	device_remove_bin_file(&info->dev, &info->attr_global_mmio);
-}
+	क्रम (i = 0; i < ARRAY_SIZE(afu_attrs); i++)
+		device_हटाओ_file(&info->dev, &afu_attrs[i]);
+	device_हटाओ_bin_file(&info->dev, &info->attr_global_mmio);
+पूर्ण

@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * sysctl.h - Defines for sysctl handling in NTFS Linux kernel driver. Part of
+ * sysctl.h - Defines क्रम sysctl handling in NTFS Linux kernel driver. Part of
  *	      the Linux-NTFS project. Adapted from the old NTFS driver,
- *	      Copyright (C) 1997 Martin von Löwis, Régis Duchesne
+ *	      Copyright (C) 1997 Martin von Lथघwis, Rथऊgis Duchesne
  *
  * Copyright (c) 2002-2004 Anton Altaparmakov
  */
 
-#ifndef _LINUX_NTFS_SYSCTL_H
-#define _LINUX_NTFS_SYSCTL_H
+#अगर_अघोषित _LINUX_NTFS_SYSCTL_H
+#घोषणा _LINUX_NTFS_SYSCTL_H
 
 
-#if defined(DEBUG) && defined(CONFIG_SYSCTL)
+#अगर defined(DEBUG) && defined(CONFIG_SYSCTL)
 
-extern int ntfs_sysctl(int add);
+बाह्य पूर्णांक ntfs_sysctl(पूर्णांक add);
 
-#else
+#अन्यथा
 
-/* Just return success. */
-static inline int ntfs_sysctl(int add)
-{
-	return 0;
-}
+/* Just वापस success. */
+अटल अंतरभूत पूर्णांक ntfs_sysctl(पूर्णांक add)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* DEBUG && CONFIG_SYSCTL */
-#endif /* _LINUX_NTFS_SYSCTL_H */
+#पूर्ण_अगर /* DEBUG && CONFIG_SYSCTL */
+#पूर्ण_अगर /* _LINUX_NTFS_SYSCTL_H */

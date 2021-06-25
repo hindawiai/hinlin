@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * net/sched/sch_htb.c	Hierarchical token bucket, feed tree version
  *
  * Authors:	Martin Devera, <devik@cdi.cz>
  *
- * Credits (in time order) for older HTB versions:
- *              Stef Coene <stef.coene@docum.org>
+ * Credits (in समय order) क्रम older HTB versions:
+ *              Stef Coene <stef.coene@करोcum.org>
  *			HTB support at LARTC mailing list
  *		Ondrej Kraus, <krauso@barr.cz>
  *			found missing INIT_QDISC(htb)
@@ -14,1183 +15,1183 @@
  *		Andi Kleen, Jamal Hadi, Bert Hubert
  *			code review and helpful comments on shaping
  *		Tomasz Wrona, <tw@eter.tym.pl>
- *			created test case so that I was able to fix nasty bug
+ *			created test हाल so that I was able to fix nasty bug
  *		Wilfried Weissmann
  *			spotted bug in dequeue code and helped with fix
  *		Jiri Fojtasek
  *			fixed requeue routine
  *		and many others. thanks.
  */
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
-#include <linux/list.h>
-#include <linux/compiler.h>
-#include <linux/rbtree.h>
-#include <linux/workqueue.h>
-#include <linux/slab.h>
-#include <net/netlink.h>
-#include <net/sch_generic.h>
-#include <net/pkt_sched.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/list.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/slab.h>
+#समावेश <net/netlink.h>
+#समावेश <net/sch_generic.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/pkt_cls.h>
 
 /* HTB algorithm.
     Author: devik@cdi.cz
     ========================================================================
     HTB is like TBF with multiple classes. It is also similar to CBQ because
     it allows to assign priority to each class in hierarchy.
-    In fact it is another implementation of Floyd's formal sharing.
+    In fact it is another implementation of Floyd's क्रमmal sharing.
 
     Levels:
-    Each class is assigned level. Leaf has ALWAYS level 0 and root
+    Each class is asचिन्हित level. Leaf has ALWAYS level 0 and root
     classes have level TC_HTB_MAXDEPTH-1. Interior nodes has level
     one less than their parent.
 */
 
-static int htb_hysteresis __read_mostly = 0; /* whether to use mode hysteresis for speedup */
-#define HTB_VER 0x30011		/* major must be matched with number suplied by TC as version */
+अटल पूर्णांक htb_hysteresis __पढ़ो_mostly = 0; /* whether to use mode hysteresis क्रम speedup */
+#घोषणा HTB_VER 0x30011		/* major must be matched with number suplied by TC as version */
 
-#if HTB_VER >> 16 != TC_HTB_PROTOVER
-#error "Mismatched sch_htb.c and pkt_sch.h"
-#endif
+#अगर HTB_VER >> 16 != TC_HTB_PROTOVER
+#त्रुटि "Mismatched sch_htb.c and pkt_sch.h"
+#पूर्ण_अगर
 
 /* Module parameter and sysfs export */
-module_param    (htb_hysteresis, int, 0640);
+module_param    (htb_hysteresis, पूर्णांक, 0640);
 MODULE_PARM_DESC(htb_hysteresis, "Hysteresis mode, less CPU load, less accurate");
 
-static int htb_rate_est = 0; /* htb classes have a default rate estimator */
-module_param(htb_rate_est, int, 0640);
+अटल पूर्णांक htb_rate_est = 0; /* htb classes have a शेष rate estimator */
+module_param(htb_rate_est, पूर्णांक, 0640);
 MODULE_PARM_DESC(htb_rate_est, "setup a default rate estimator (4sec 16sec) for htb classes");
 
-/* used internaly to keep status of single class */
-enum htb_cmode {
+/* used पूर्णांकernaly to keep status of single class */
+क्रमागत htb_cmode अणु
 	HTB_CANT_SEND,		/* class can't send and can't borrow */
 	HTB_MAY_BORROW,		/* class can't send but may borrow */
 	HTB_CAN_SEND		/* class can send */
-};
+पूर्ण;
 
-struct htb_prio {
-	union {
-		struct rb_root	row;
-		struct rb_root	feed;
-	};
-	struct rb_node	*ptr;
+काष्ठा htb_prio अणु
+	जोड़ अणु
+		काष्ठा rb_root	row;
+		काष्ठा rb_root	feed;
+	पूर्ण;
+	काष्ठा rb_node	*ptr;
 	/* When class changes from state 1->2 and disconnects from
 	 * parent's feed then we lost ptr value and start from the
 	 * first child again. Here we store classid of the
-	 * last valid ptr (used when ptr is NULL).
+	 * last valid ptr (used when ptr is शून्य).
 	 */
 	u32		last_ptr_id;
-};
+पूर्ण;
 
-/* interior & leaf nodes; props specific to leaves are marked L:
- * To reduce false sharing, place mostly read fields at beginning,
+/* पूर्णांकerior & leaf nodes; props specअगरic to leaves are marked L:
+ * To reduce false sharing, place mostly पढ़ो fields at beginning,
  * and mostly written ones at the end.
  */
-struct htb_class {
-	struct Qdisc_class_common common;
-	struct psched_ratecfg	rate;
-	struct psched_ratecfg	ceil;
+काष्ठा htb_class अणु
+	काष्ठा Qdisc_class_common common;
+	काष्ठा psched_ratecfg	rate;
+	काष्ठा psched_ratecfg	उच्चमान;
 	s64			buffer, cbuffer;/* token bucket depth/rate */
-	s64			mbuffer;	/* max wait time */
+	s64			mbuffer;	/* max रुको समय */
 	u32			prio;		/* these two are used only by leaves... */
-	int			quantum;	/* but stored for parent-to-leaf return */
+	पूर्णांक			quantum;	/* but stored क्रम parent-to-leaf वापस */
 
-	struct tcf_proto __rcu	*filter_list;	/* class attached filters */
-	struct tcf_block	*block;
-	int			filter_cnt;
+	काष्ठा tcf_proto __rcu	*filter_list;	/* class attached filters */
+	काष्ठा tcf_block	*block;
+	पूर्णांक			filter_cnt;
 
-	int			level;		/* our level (see above) */
-	unsigned int		children;
-	struct htb_class	*parent;	/* parent class */
+	पूर्णांक			level;		/* our level (see above) */
+	अचिन्हित पूर्णांक		children;
+	काष्ठा htb_class	*parent;	/* parent class */
 
-	struct net_rate_estimator __rcu *rate_est;
+	काष्ठा net_rate_estimator __rcu *rate_est;
 
 	/*
 	 * Written often fields
 	 */
-	struct gnet_stats_basic_packed bstats;
-	struct gnet_stats_basic_packed bstats_bias;
-	struct tc_htb_xstats	xstats;	/* our special stats */
+	काष्ठा gnet_stats_basic_packed bstats;
+	काष्ठा gnet_stats_basic_packed bstats_bias;
+	काष्ठा tc_htb_xstats	xstats;	/* our special stats */
 
 	/* token bucket parameters */
 	s64			tokens, ctokens;/* current number of tokens */
-	s64			t_c;		/* checkpoint time */
+	s64			t_c;		/* checkpoपूर्णांक समय */
 
-	union {
-		struct htb_class_leaf {
-			int		deficit[TC_HTB_MAXDEPTH];
-			struct Qdisc	*q;
-		} leaf;
-		struct htb_class_inner {
-			struct htb_prio clprio[TC_HTB_NUMPRIO];
-		} inner;
-	};
+	जोड़ अणु
+		काष्ठा htb_class_leaf अणु
+			पूर्णांक		deficit[TC_HTB_MAXDEPTH];
+			काष्ठा Qdisc	*q;
+		पूर्ण leaf;
+		काष्ठा htb_class_inner अणु
+			काष्ठा htb_prio clprio[TC_HTB_NUMPRIO];
+		पूर्ण inner;
+	पूर्ण;
 	s64			pq_key;
 
-	int			prio_activity;	/* for which prios are we active */
-	enum htb_cmode		cmode;		/* current mode of the class */
-	struct rb_node		pq_node;	/* node for event queue */
-	struct rb_node		node[TC_HTB_NUMPRIO];	/* node for self or feed tree */
+	पूर्णांक			prio_activity;	/* क्रम which prios are we active */
+	क्रमागत htb_cmode		cmode;		/* current mode of the class */
+	काष्ठा rb_node		pq_node;	/* node क्रम event queue */
+	काष्ठा rb_node		node[TC_HTB_NUMPRIO];	/* node क्रम self or feed tree */
 
-	unsigned int drops ____cacheline_aligned_in_smp;
-	unsigned int		overlimits;
-};
+	अचिन्हित पूर्णांक drops ____cacheline_aligned_in_smp;
+	अचिन्हित पूर्णांक		overlimits;
+पूर्ण;
 
-struct htb_level {
-	struct rb_root	wait_pq;
-	struct htb_prio hprio[TC_HTB_NUMPRIO];
-};
+काष्ठा htb_level अणु
+	काष्ठा rb_root	रुको_pq;
+	काष्ठा htb_prio hprio[TC_HTB_NUMPRIO];
+पूर्ण;
 
-struct htb_sched {
-	struct Qdisc_class_hash clhash;
-	int			defcls;		/* class where unclassified flows go to */
-	int			rate2quantum;	/* quant = rate / rate2quantum */
+काष्ठा htb_sched अणु
+	काष्ठा Qdisc_class_hash clhash;
+	पूर्णांक			defcls;		/* class where unclassअगरied flows go to */
+	पूर्णांक			rate2quantum;	/* quant = rate / rate2quantum */
 
-	/* filters for qdisc itself */
-	struct tcf_proto __rcu	*filter_list;
-	struct tcf_block	*block;
+	/* filters क्रम qdisc itself */
+	काष्ठा tcf_proto __rcu	*filter_list;
+	काष्ठा tcf_block	*block;
 
-#define HTB_WARN_TOOMANYEVENTS	0x1
-	unsigned int		warned;	/* only one warning */
-	int			direct_qlen;
-	struct work_struct	work;
+#घोषणा HTB_WARN_TOOMANYEVENTS	0x1
+	अचिन्हित पूर्णांक		warned;	/* only one warning */
+	पूर्णांक			direct_qlen;
+	काष्ठा work_काष्ठा	work;
 
 	/* non shaped skbs; let them go directly thru */
-	struct qdisc_skb_head	direct_queue;
+	काष्ठा qdisc_skb_head	direct_queue;
 	u32			direct_pkts;
 	u32			overlimits;
 
-	struct qdisc_watchdog	watchdog;
+	काष्ठा qdisc_watchकरोg	watchकरोg;
 
-	s64			now;	/* cached dequeue time */
+	s64			now;	/* cached dequeue समय */
 
-	/* time of nearest event per level (row) */
+	/* समय of nearest event per level (row) */
 	s64			near_ev_cache[TC_HTB_MAXDEPTH];
 
-	int			row_mask[TC_HTB_MAXDEPTH];
+	पूर्णांक			row_mask[TC_HTB_MAXDEPTH];
 
-	struct htb_level	hlevel[TC_HTB_MAXDEPTH];
+	काष्ठा htb_level	hlevel[TC_HTB_MAXDEPTH];
 
-	struct Qdisc		**direct_qdiscs;
-	unsigned int            num_direct_qdiscs;
+	काष्ठा Qdisc		**direct_qdiscs;
+	अचिन्हित पूर्णांक            num_direct_qdiscs;
 
 	bool			offload;
-};
+पूर्ण;
 
 /* find class in global hash table using given handle */
-static inline struct htb_class *htb_find(u32 handle, struct Qdisc *sch)
-{
-	struct htb_sched *q = qdisc_priv(sch);
-	struct Qdisc_class_common *clc;
+अटल अंतरभूत काष्ठा htb_class *htb_find(u32 handle, काष्ठा Qdisc *sch)
+अणु
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा Qdisc_class_common *clc;
 
 	clc = qdisc_class_find(&q->clhash, handle);
-	if (clc == NULL)
-		return NULL;
-	return container_of(clc, struct htb_class, common);
-}
+	अगर (clc == शून्य)
+		वापस शून्य;
+	वापस container_of(clc, काष्ठा htb_class, common);
+पूर्ण
 
-static unsigned long htb_search(struct Qdisc *sch, u32 handle)
-{
-	return (unsigned long)htb_find(handle, sch);
-}
+अटल अचिन्हित दीर्घ htb_search(काष्ठा Qdisc *sch, u32 handle)
+अणु
+	वापस (अचिन्हित दीर्घ)htb_find(handle, sch);
+पूर्ण
 /**
- * htb_classify - classify a packet into class
+ * htb_classअगरy - classअगरy a packet पूर्णांकo class
  *
- * It returns NULL if the packet should be dropped or -1 if the packet
- * should be passed directly thru. In all other cases leaf class is returned.
+ * It वापसs शून्य अगर the packet should be dropped or -1 अगर the packet
+ * should be passed directly thru. In all other हालs leaf class is वापसed.
  * We allow direct class selection by classid in priority. The we examine
- * filters in qdisc and in inner nodes (if higher filter points to the inner
- * node). If we end up with classid MAJOR:0 we enqueue the skb into special
- * internal fifo (direct). These packets then go directly thru. If we still
- * have no valid leaf we try to use MAJOR:default leaf. It still unsuccessful
- * then finish and return direct queue.
+ * filters in qdisc and in inner nodes (अगर higher filter poपूर्णांकs to the inner
+ * node). If we end up with classid MAJOR:0 we enqueue the skb पूर्णांकo special
+ * पूर्णांकernal fअगरo (direct). These packets then go directly thru. If we still
+ * have no valid leaf we try to use MAJOR:शेष leaf. It still unsuccessful
+ * then finish and वापस direct queue.
  */
-#define HTB_DIRECT ((struct htb_class *)-1L)
+#घोषणा HTB_सूचीECT ((काष्ठा htb_class *)-1L)
 
-static struct htb_class *htb_classify(struct sk_buff *skb, struct Qdisc *sch,
-				      int *qerr)
-{
-	struct htb_sched *q = qdisc_priv(sch);
-	struct htb_class *cl;
-	struct tcf_result res;
-	struct tcf_proto *tcf;
-	int result;
+अटल काष्ठा htb_class *htb_classअगरy(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+				      पूर्णांक *qerr)
+अणु
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा htb_class *cl;
+	काष्ठा tcf_result res;
+	काष्ठा tcf_proto *tcf;
+	पूर्णांक result;
 
 	/* allow to select class by setting skb->priority to valid classid;
 	 * note that nfmark can be used too by attaching filter fw with no
 	 * rules in it
 	 */
-	if (skb->priority == sch->handle)
-		return HTB_DIRECT;	/* X:0 (direct flow) selected */
+	अगर (skb->priority == sch->handle)
+		वापस HTB_सूचीECT;	/* X:0 (direct flow) selected */
 	cl = htb_find(skb->priority, sch);
-	if (cl) {
-		if (cl->level == 0)
-			return cl;
-		/* Start with inner filter chain if a non-leaf class is selected */
+	अगर (cl) अणु
+		अगर (cl->level == 0)
+			वापस cl;
+		/* Start with inner filter chain अगर a non-leaf class is selected */
 		tcf = rcu_dereference_bh(cl->filter_list);
-	} else {
+	पूर्ण अन्यथा अणु
 		tcf = rcu_dereference_bh(q->filter_list);
-	}
+	पूर्ण
 
 	*qerr = NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
-	while (tcf && (result = tcf_classify(skb, tcf, &res, false)) >= 0) {
-#ifdef CONFIG_NET_CLS_ACT
-		switch (result) {
-		case TC_ACT_QUEUED:
-		case TC_ACT_STOLEN:
-		case TC_ACT_TRAP:
+	जबतक (tcf && (result = tcf_classअगरy(skb, tcf, &res, false)) >= 0) अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+		चयन (result) अणु
+		हाल TC_ACT_QUEUED:
+		हाल TC_ACT_STOLEN:
+		हाल TC_ACT_TRAP:
 			*qerr = NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
 			fallthrough;
-		case TC_ACT_SHOT:
-			return NULL;
-		}
-#endif
-		cl = (void *)res.class;
-		if (!cl) {
-			if (res.classid == sch->handle)
-				return HTB_DIRECT;	/* X:0 (direct flow) */
+		हाल TC_ACT_SHOT:
+			वापस शून्य;
+		पूर्ण
+#पूर्ण_अगर
+		cl = (व्योम *)res.class;
+		अगर (!cl) अणु
+			अगर (res.classid == sch->handle)
+				वापस HTB_सूचीECT;	/* X:0 (direct flow) */
 			cl = htb_find(res.classid, sch);
-			if (!cl)
-				break;	/* filter selected invalid classid */
-		}
-		if (!cl->level)
-			return cl;	/* we hit leaf; return it */
+			अगर (!cl)
+				अवरोध;	/* filter selected invalid classid */
+		पूर्ण
+		अगर (!cl->level)
+			वापस cl;	/* we hit leaf; वापस it */
 
 		/* we have got inner class; apply inner filter chain */
 		tcf = rcu_dereference_bh(cl->filter_list);
-	}
-	/* classification failed; try to use default class */
+	पूर्ण
+	/* classअगरication failed; try to use शेष class */
 	cl = htb_find(TC_H_MAKE(TC_H_MAJ(sch->handle), q->defcls), sch);
-	if (!cl || cl->level)
-		return HTB_DIRECT;	/* bad default .. this is safe bet */
-	return cl;
-}
+	अगर (!cl || cl->level)
+		वापस HTB_सूचीECT;	/* bad शेष .. this is safe bet */
+	वापस cl;
+पूर्ण
 
 /**
  * htb_add_to_id_tree - adds class to the round robin list
  *
  * Routine adds class to the list (actually tree) sorted by classid.
- * Make sure that class is not already on such list for given prio.
+ * Make sure that class is not alपढ़ोy on such list क्रम given prio.
  */
-static void htb_add_to_id_tree(struct rb_root *root,
-			       struct htb_class *cl, int prio)
-{
-	struct rb_node **p = &root->rb_node, *parent = NULL;
+अटल व्योम htb_add_to_id_tree(काष्ठा rb_root *root,
+			       काष्ठा htb_class *cl, पूर्णांक prio)
+अणु
+	काष्ठा rb_node **p = &root->rb_node, *parent = शून्य;
 
-	while (*p) {
-		struct htb_class *c;
+	जबतक (*p) अणु
+		काष्ठा htb_class *c;
 		parent = *p;
-		c = rb_entry(parent, struct htb_class, node[prio]);
+		c = rb_entry(parent, काष्ठा htb_class, node[prio]);
 
-		if (cl->common.classid > c->common.classid)
+		अगर (cl->common.classid > c->common.classid)
 			p = &parent->rb_right;
-		else
+		अन्यथा
 			p = &parent->rb_left;
-	}
+	पूर्ण
 	rb_link_node(&cl->node[prio], parent, p);
 	rb_insert_color(&cl->node[prio], root);
-}
+पूर्ण
 
 /**
- * htb_add_to_wait_tree - adds class to the event queue with delay
+ * htb_add_to_रुको_tree - adds class to the event queue with delay
  *
  * The class is added to priority event queue to indicate that class will
  * change its mode in cl->pq_key microseconds. Make sure that class is not
- * already in the queue.
+ * alपढ़ोy in the queue.
  */
-static void htb_add_to_wait_tree(struct htb_sched *q,
-				 struct htb_class *cl, s64 delay)
-{
-	struct rb_node **p = &q->hlevel[cl->level].wait_pq.rb_node, *parent = NULL;
+अटल व्योम htb_add_to_रुको_tree(काष्ठा htb_sched *q,
+				 काष्ठा htb_class *cl, s64 delay)
+अणु
+	काष्ठा rb_node **p = &q->hlevel[cl->level].रुको_pq.rb_node, *parent = शून्य;
 
 	cl->pq_key = q->now + delay;
-	if (cl->pq_key == q->now)
+	अगर (cl->pq_key == q->now)
 		cl->pq_key++;
 
 	/* update the nearest event cache */
-	if (q->near_ev_cache[cl->level] > cl->pq_key)
+	अगर (q->near_ev_cache[cl->level] > cl->pq_key)
 		q->near_ev_cache[cl->level] = cl->pq_key;
 
-	while (*p) {
-		struct htb_class *c;
+	जबतक (*p) अणु
+		काष्ठा htb_class *c;
 		parent = *p;
-		c = rb_entry(parent, struct htb_class, pq_node);
-		if (cl->pq_key >= c->pq_key)
+		c = rb_entry(parent, काष्ठा htb_class, pq_node);
+		अगर (cl->pq_key >= c->pq_key)
 			p = &parent->rb_right;
-		else
+		अन्यथा
 			p = &parent->rb_left;
-	}
+	पूर्ण
 	rb_link_node(&cl->pq_node, parent, p);
-	rb_insert_color(&cl->pq_node, &q->hlevel[cl->level].wait_pq);
-}
+	rb_insert_color(&cl->pq_node, &q->hlevel[cl->level].रुको_pq);
+पूर्ण
 
 /**
  * htb_next_rb_node - finds next node in binary tree
  *
- * When we are past last key we return NULL.
- * Average complexity is 2 steps per call.
+ * When we are past last key we वापस शून्य.
+ * Average complनिकासy is 2 steps per call.
  */
-static inline void htb_next_rb_node(struct rb_node **n)
-{
+अटल अंतरभूत व्योम htb_next_rb_node(काष्ठा rb_node **n)
+अणु
 	*n = rb_next(*n);
-}
+पूर्ण
 
 /**
  * htb_add_class_to_row - add class to its row
  *
  * The class is added to row at priorities marked in mask.
- * It does nothing if mask == 0.
+ * It करोes nothing अगर mask == 0.
  */
-static inline void htb_add_class_to_row(struct htb_sched *q,
-					struct htb_class *cl, int mask)
-{
+अटल अंतरभूत व्योम htb_add_class_to_row(काष्ठा htb_sched *q,
+					काष्ठा htb_class *cl, पूर्णांक mask)
+अणु
 	q->row_mask[cl->level] |= mask;
-	while (mask) {
-		int prio = ffz(~mask);
+	जबतक (mask) अणु
+		पूर्णांक prio = ffz(~mask);
 		mask &= ~(1 << prio);
 		htb_add_to_id_tree(&q->hlevel[cl->level].hprio[prio].row, cl, prio);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* If this triggers, it is a bug in this code, but it need not be fatal */
-static void htb_safe_rb_erase(struct rb_node *rb, struct rb_root *root)
-{
-	if (RB_EMPTY_NODE(rb)) {
+अटल व्योम htb_safe_rb_erase(काष्ठा rb_node *rb, काष्ठा rb_root *root)
+अणु
+	अगर (RB_EMPTY_NODE(rb)) अणु
 		WARN_ON(1);
-	} else {
+	पूर्ण अन्यथा अणु
 		rb_erase(rb, root);
 		RB_CLEAR_NODE(rb);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /**
- * htb_remove_class_from_row - removes class from its row
+ * htb_हटाओ_class_from_row - हटाओs class from its row
  *
- * The class is removed from row at priorities marked in mask.
- * It does nothing if mask == 0.
+ * The class is हटाओd from row at priorities marked in mask.
+ * It करोes nothing अगर mask == 0.
  */
-static inline void htb_remove_class_from_row(struct htb_sched *q,
-						 struct htb_class *cl, int mask)
-{
-	int m = 0;
-	struct htb_level *hlevel = &q->hlevel[cl->level];
+अटल अंतरभूत व्योम htb_हटाओ_class_from_row(काष्ठा htb_sched *q,
+						 काष्ठा htb_class *cl, पूर्णांक mask)
+अणु
+	पूर्णांक m = 0;
+	काष्ठा htb_level *hlevel = &q->hlevel[cl->level];
 
-	while (mask) {
-		int prio = ffz(~mask);
-		struct htb_prio *hprio = &hlevel->hprio[prio];
+	जबतक (mask) अणु
+		पूर्णांक prio = ffz(~mask);
+		काष्ठा htb_prio *hprio = &hlevel->hprio[prio];
 
 		mask &= ~(1 << prio);
-		if (hprio->ptr == cl->node + prio)
+		अगर (hprio->ptr == cl->node + prio)
 			htb_next_rb_node(&hprio->ptr);
 
 		htb_safe_rb_erase(cl->node + prio, &hprio->row);
-		if (!hprio->row.rb_node)
+		अगर (!hprio->row.rb_node)
 			m |= 1 << prio;
-	}
+	पूर्ण
 	q->row_mask[cl->level] &= ~m;
-}
+पूर्ण
 
 /**
  * htb_activate_prios - creates active classe's feed chain
  *
  * The class is connected to ancestors and/or appropriate rows
- * for priorities it is participating on. cl->cmode must be new
- * (activated) mode. It does nothing if cl->prio_activity == 0.
+ * क्रम priorities it is participating on. cl->cmode must be new
+ * (activated) mode. It करोes nothing अगर cl->prio_activity == 0.
  */
-static void htb_activate_prios(struct htb_sched *q, struct htb_class *cl)
-{
-	struct htb_class *p = cl->parent;
-	long m, mask = cl->prio_activity;
+अटल व्योम htb_activate_prios(काष्ठा htb_sched *q, काष्ठा htb_class *cl)
+अणु
+	काष्ठा htb_class *p = cl->parent;
+	दीर्घ m, mask = cl->prio_activity;
 
-	while (cl->cmode == HTB_MAY_BORROW && p && mask) {
+	जबतक (cl->cmode == HTB_MAY_BORROW && p && mask) अणु
 		m = mask;
-		while (m) {
-			int prio = ffz(~m);
+		जबतक (m) अणु
+			पूर्णांक prio = ffz(~m);
 			m &= ~(1 << prio);
 
-			if (p->inner.clprio[prio].feed.rb_node)
-				/* parent already has its feed in use so that
-				 * reset bit in mask as parent is already ok
+			अगर (p->inner.clprio[prio].feed.rb_node)
+				/* parent alपढ़ोy has its feed in use so that
+				 * reset bit in mask as parent is alपढ़ोy ok
 				 */
 				mask &= ~(1 << prio);
 
 			htb_add_to_id_tree(&p->inner.clprio[prio].feed, cl, prio);
-		}
+		पूर्ण
 		p->prio_activity |= mask;
 		cl = p;
 		p = cl->parent;
 
-	}
-	if (cl->cmode == HTB_CAN_SEND && mask)
+	पूर्ण
+	अगर (cl->cmode == HTB_CAN_SEND && mask)
 		htb_add_class_to_row(q, cl, mask);
-}
+पूर्ण
 
 /**
- * htb_deactivate_prios - remove class from feed chain
+ * htb_deactivate_prios - हटाओ class from feed chain
  *
- * cl->cmode must represent old mode (before deactivation). It does
- * nothing if cl->prio_activity == 0. Class is removed from all feed
+ * cl->cmode must represent old mode (beक्रमe deactivation). It करोes
+ * nothing अगर cl->prio_activity == 0. Class is हटाओd from all feed
  * chains and rows.
  */
-static void htb_deactivate_prios(struct htb_sched *q, struct htb_class *cl)
-{
-	struct htb_class *p = cl->parent;
-	long m, mask = cl->prio_activity;
+अटल व्योम htb_deactivate_prios(काष्ठा htb_sched *q, काष्ठा htb_class *cl)
+अणु
+	काष्ठा htb_class *p = cl->parent;
+	दीर्घ m, mask = cl->prio_activity;
 
-	while (cl->cmode == HTB_MAY_BORROW && p && mask) {
+	जबतक (cl->cmode == HTB_MAY_BORROW && p && mask) अणु
 		m = mask;
 		mask = 0;
-		while (m) {
-			int prio = ffz(~m);
+		जबतक (m) अणु
+			पूर्णांक prio = ffz(~m);
 			m &= ~(1 << prio);
 
-			if (p->inner.clprio[prio].ptr == cl->node + prio) {
-				/* we are removing child which is pointed to from
-				 * parent feed - forget the pointer but remember
+			अगर (p->inner.clprio[prio].ptr == cl->node + prio) अणु
+				/* we are removing child which is poपूर्णांकed to from
+				 * parent feed - क्रमget the poपूर्णांकer but remember
 				 * classid
 				 */
 				p->inner.clprio[prio].last_ptr_id = cl->common.classid;
-				p->inner.clprio[prio].ptr = NULL;
-			}
+				p->inner.clprio[prio].ptr = शून्य;
+			पूर्ण
 
 			htb_safe_rb_erase(cl->node + prio,
 					  &p->inner.clprio[prio].feed);
 
-			if (!p->inner.clprio[prio].feed.rb_node)
+			अगर (!p->inner.clprio[prio].feed.rb_node)
 				mask |= 1 << prio;
-		}
+		पूर्ण
 
 		p->prio_activity &= ~mask;
 		cl = p;
 		p = cl->parent;
 
-	}
-	if (cl->cmode == HTB_CAN_SEND && mask)
-		htb_remove_class_from_row(q, cl, mask);
-}
+	पूर्ण
+	अगर (cl->cmode == HTB_CAN_SEND && mask)
+		htb_हटाओ_class_from_row(q, cl, mask);
+पूर्ण
 
-static inline s64 htb_lowater(const struct htb_class *cl)
-{
-	if (htb_hysteresis)
-		return cl->cmode != HTB_CANT_SEND ? -cl->cbuffer : 0;
-	else
-		return 0;
-}
-static inline s64 htb_hiwater(const struct htb_class *cl)
-{
-	if (htb_hysteresis)
-		return cl->cmode == HTB_CAN_SEND ? -cl->buffer : 0;
-	else
-		return 0;
-}
+अटल अंतरभूत s64 htb_lowater(स्थिर काष्ठा htb_class *cl)
+अणु
+	अगर (htb_hysteresis)
+		वापस cl->cmode != HTB_CANT_SEND ? -cl->cbuffer : 0;
+	अन्यथा
+		वापस 0;
+पूर्ण
+अटल अंतरभूत s64 htb_hiwater(स्थिर काष्ठा htb_class *cl)
+अणु
+	अगर (htb_hysteresis)
+		वापस cl->cmode == HTB_CAN_SEND ? -cl->buffer : 0;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 
 /**
- * htb_class_mode - computes and returns current class mode
+ * htb_class_mode - computes and वापसs current class mode
  *
- * It computes cl's mode at time cl->t_c+diff and returns it. If mode
- * is not HTB_CAN_SEND then cl->pq_key is updated to time difference
- * from now to time when cl will change its state.
- * Also it is worth to note that class mode doesn't change simply
- * at cl->{c,}tokens == 0 but there can rather be hysteresis of
- * 0 .. -cl->{c,}buffer range. It is meant to limit number of
- * mode transitions per time unit. The speed gain is about 1/6.
+ * It computes cl's mode at समय cl->t_c+dअगरf and वापसs it. If mode
+ * is not HTB_CAN_SEND then cl->pq_key is updated to समय dअगरference
+ * from now to समय when cl will change its state.
+ * Also it is worth to note that class mode करोesn't change simply
+ * at cl->अणुc,पूर्णtokens == 0 but there can rather be hysteresis of
+ * 0 .. -cl->अणुc,पूर्णbuffer range. It is meant to limit number of
+ * mode transitions per समय unit. The speed gain is about 1/6.
  */
-static inline enum htb_cmode
-htb_class_mode(struct htb_class *cl, s64 *diff)
-{
+अटल अंतरभूत क्रमागत htb_cmode
+htb_class_mode(काष्ठा htb_class *cl, s64 *dअगरf)
+अणु
 	s64 toks;
 
-	if ((toks = (cl->ctokens + *diff)) < htb_lowater(cl)) {
-		*diff = -toks;
-		return HTB_CANT_SEND;
-	}
+	अगर ((toks = (cl->ctokens + *dअगरf)) < htb_lowater(cl)) अणु
+		*dअगरf = -toks;
+		वापस HTB_CANT_SEND;
+	पूर्ण
 
-	if ((toks = (cl->tokens + *diff)) >= htb_hiwater(cl))
-		return HTB_CAN_SEND;
+	अगर ((toks = (cl->tokens + *dअगरf)) >= htb_hiwater(cl))
+		वापस HTB_CAN_SEND;
 
-	*diff = -toks;
-	return HTB_MAY_BORROW;
-}
+	*dअगरf = -toks;
+	वापस HTB_MAY_BORROW;
+पूर्ण
 
 /**
  * htb_change_class_mode - changes classe's mode
  *
  * This should be the only way how to change classe's mode under normal
  * cirsumstances. Routine will update feed lists linkage, change mode
- * and add class to the wait event queue if appropriate. New mode should
- * be different from old one and cl->pq_key has to be valid if changing
- * to mode other than HTB_CAN_SEND (see htb_add_to_wait_tree).
+ * and add class to the रुको event queue अगर appropriate. New mode should
+ * be dअगरferent from old one and cl->pq_key has to be valid अगर changing
+ * to mode other than HTB_CAN_SEND (see htb_add_to_रुको_tree).
  */
-static void
-htb_change_class_mode(struct htb_sched *q, struct htb_class *cl, s64 *diff)
-{
-	enum htb_cmode new_mode = htb_class_mode(cl, diff);
+अटल व्योम
+htb_change_class_mode(काष्ठा htb_sched *q, काष्ठा htb_class *cl, s64 *dअगरf)
+अणु
+	क्रमागत htb_cmode new_mode = htb_class_mode(cl, dअगरf);
 
-	if (new_mode == cl->cmode)
-		return;
+	अगर (new_mode == cl->cmode)
+		वापस;
 
-	if (new_mode == HTB_CANT_SEND) {
+	अगर (new_mode == HTB_CANT_SEND) अणु
 		cl->overlimits++;
 		q->overlimits++;
-	}
+	पूर्ण
 
-	if (cl->prio_activity) {	/* not necessary: speed optimization */
-		if (cl->cmode != HTB_CANT_SEND)
+	अगर (cl->prio_activity) अणु	/* not necessary: speed optimization */
+		अगर (cl->cmode != HTB_CANT_SEND)
 			htb_deactivate_prios(q, cl);
 		cl->cmode = new_mode;
-		if (new_mode != HTB_CANT_SEND)
+		अगर (new_mode != HTB_CANT_SEND)
 			htb_activate_prios(q, cl);
-	} else
+	पूर्ण अन्यथा
 		cl->cmode = new_mode;
-}
+पूर्ण
 
 /**
- * htb_activate - inserts leaf cl into appropriate active feeds
+ * htb_activate - inserts leaf cl पूर्णांकo appropriate active feeds
  *
  * Routine learns (new) priority of leaf and activates feed chain
- * for the prio. It can be called on already active leaf safely.
- * It also adds leaf into droplist.
+ * क्रम the prio. It can be called on alपढ़ोy active leaf safely.
+ * It also adds leaf पूर्णांकo droplist.
  */
-static inline void htb_activate(struct htb_sched *q, struct htb_class *cl)
-{
+अटल अंतरभूत व्योम htb_activate(काष्ठा htb_sched *q, काष्ठा htb_class *cl)
+अणु
 	WARN_ON(cl->level || !cl->leaf.q || !cl->leaf.q->q.qlen);
 
-	if (!cl->prio_activity) {
+	अगर (!cl->prio_activity) अणु
 		cl->prio_activity = 1 << cl->prio;
 		htb_activate_prios(q, cl);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * htb_deactivate - remove leaf cl from active feeds
+ * htb_deactivate - हटाओ leaf cl from active feeds
  *
  * Make sure that leaf is active. In the other words it can't be called
- * with non-active leaf. It also removes class from the drop list.
+ * with non-active leaf. It also हटाओs class from the drop list.
  */
-static inline void htb_deactivate(struct htb_sched *q, struct htb_class *cl)
-{
+अटल अंतरभूत व्योम htb_deactivate(काष्ठा htb_sched *q, काष्ठा htb_class *cl)
+अणु
 	WARN_ON(!cl->prio_activity);
 
 	htb_deactivate_prios(q, cl);
 	cl->prio_activity = 0;
-}
+पूर्ण
 
-static int htb_enqueue(struct sk_buff *skb, struct Qdisc *sch,
-		       struct sk_buff **to_free)
-{
-	int ret;
-	unsigned int len = qdisc_pkt_len(skb);
-	struct htb_sched *q = qdisc_priv(sch);
-	struct htb_class *cl = htb_classify(skb, sch, &ret);
+अटल पूर्णांक htb_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+		       काष्ठा sk_buff **to_मुक्त)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक len = qdisc_pkt_len(skb);
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा htb_class *cl = htb_classअगरy(skb, sch, &ret);
 
-	if (cl == HTB_DIRECT) {
+	अगर (cl == HTB_सूचीECT) अणु
 		/* enqueue to helper queue */
-		if (q->direct_queue.qlen < q->direct_qlen) {
+		अगर (q->direct_queue.qlen < q->direct_qlen) अणु
 			__qdisc_enqueue_tail(skb, &q->direct_queue);
 			q->direct_pkts++;
-		} else {
-			return qdisc_drop(skb, sch, to_free);
-		}
-#ifdef CONFIG_NET_CLS_ACT
-	} else if (!cl) {
-		if (ret & __NET_XMIT_BYPASS)
+		पूर्ण अन्यथा अणु
+			वापस qdisc_drop(skb, sch, to_मुक्त);
+		पूर्ण
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	पूर्ण अन्यथा अगर (!cl) अणु
+		अगर (ret & __NET_XMIT_BYPASS)
 			qdisc_qstats_drop(sch);
-		__qdisc_drop(skb, to_free);
-		return ret;
-#endif
-	} else if ((ret = qdisc_enqueue(skb, cl->leaf.q,
-					to_free)) != NET_XMIT_SUCCESS) {
-		if (net_xmit_drop_count(ret)) {
+		__qdisc_drop(skb, to_मुक्त);
+		वापस ret;
+#पूर्ण_अगर
+	पूर्ण अन्यथा अगर ((ret = qdisc_enqueue(skb, cl->leaf.q,
+					to_मुक्त)) != NET_XMIT_SUCCESS) अणु
+		अगर (net_xmit_drop_count(ret)) अणु
 			qdisc_qstats_drop(sch);
 			cl->drops++;
-		}
-		return ret;
-	} else {
+		पूर्ण
+		वापस ret;
+	पूर्ण अन्यथा अणु
 		htb_activate(q, cl);
-	}
+	पूर्ण
 
 	sch->qstats.backlog += len;
 	sch->q.qlen++;
-	return NET_XMIT_SUCCESS;
-}
+	वापस NET_XMIT_SUCCESS;
+पूर्ण
 
-static inline void htb_accnt_tokens(struct htb_class *cl, int bytes, s64 diff)
-{
-	s64 toks = diff + cl->tokens;
+अटल अंतरभूत व्योम htb_accnt_tokens(काष्ठा htb_class *cl, पूर्णांक bytes, s64 dअगरf)
+अणु
+	s64 toks = dअगरf + cl->tokens;
 
-	if (toks > cl->buffer)
+	अगर (toks > cl->buffer)
 		toks = cl->buffer;
 	toks -= (s64) psched_l2t_ns(&cl->rate, bytes);
-	if (toks <= -cl->mbuffer)
+	अगर (toks <= -cl->mbuffer)
 		toks = 1 - cl->mbuffer;
 
 	cl->tokens = toks;
-}
+पूर्ण
 
-static inline void htb_accnt_ctokens(struct htb_class *cl, int bytes, s64 diff)
-{
-	s64 toks = diff + cl->ctokens;
+अटल अंतरभूत व्योम htb_accnt_ctokens(काष्ठा htb_class *cl, पूर्णांक bytes, s64 dअगरf)
+अणु
+	s64 toks = dअगरf + cl->ctokens;
 
-	if (toks > cl->cbuffer)
+	अगर (toks > cl->cbuffer)
 		toks = cl->cbuffer;
-	toks -= (s64) psched_l2t_ns(&cl->ceil, bytes);
-	if (toks <= -cl->mbuffer)
+	toks -= (s64) psched_l2t_ns(&cl->उच्चमान, bytes);
+	अगर (toks <= -cl->mbuffer)
 		toks = 1 - cl->mbuffer;
 
 	cl->ctokens = toks;
-}
+पूर्ण
 
 /**
- * htb_charge_class - charges amount "bytes" to leaf and ancestors
+ * htb_अक्षरge_class - अक्षरges amount "bytes" to leaf and ancestors
  *
- * Routine assumes that packet "bytes" long was dequeued from leaf cl
- * borrowing from "level". It accounts bytes to ceil leaky bucket for
- * leaf and all ancestors and to rate bucket for ancestors at levels
+ * Routine assumes that packet "bytes" दीर्घ was dequeued from leaf cl
+ * borrowing from "level". It accounts bytes to उच्चमान leaky bucket क्रम
+ * leaf and all ancestors and to rate bucket क्रम ancestors at levels
  * "level" and higher. It also handles possible change of mode resulting
  * from the update. Note that mode can also increase here (MAY_BORROW to
- * CAN_SEND) because we can use more precise clock that event queue here.
- * In such case we remove class from event queue first.
+ * CAN_SEND) because we can use more precise घड़ी that event queue here.
+ * In such हाल we हटाओ class from event queue first.
  */
-static void htb_charge_class(struct htb_sched *q, struct htb_class *cl,
-			     int level, struct sk_buff *skb)
-{
-	int bytes = qdisc_pkt_len(skb);
-	enum htb_cmode old_mode;
-	s64 diff;
+अटल व्योम htb_अक्षरge_class(काष्ठा htb_sched *q, काष्ठा htb_class *cl,
+			     पूर्णांक level, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक bytes = qdisc_pkt_len(skb);
+	क्रमागत htb_cmode old_mode;
+	s64 dअगरf;
 
-	while (cl) {
-		diff = min_t(s64, q->now - cl->t_c, cl->mbuffer);
-		if (cl->level >= level) {
-			if (cl->level == level)
+	जबतक (cl) अणु
+		dअगरf = min_t(s64, q->now - cl->t_c, cl->mbuffer);
+		अगर (cl->level >= level) अणु
+			अगर (cl->level == level)
 				cl->xstats.lends++;
-			htb_accnt_tokens(cl, bytes, diff);
-		} else {
+			htb_accnt_tokens(cl, bytes, dअगरf);
+		पूर्ण अन्यथा अणु
 			cl->xstats.borrows++;
-			cl->tokens += diff;	/* we moved t_c; update tokens */
-		}
-		htb_accnt_ctokens(cl, bytes, diff);
+			cl->tokens += dअगरf;	/* we moved t_c; update tokens */
+		पूर्ण
+		htb_accnt_ctokens(cl, bytes, dअगरf);
 		cl->t_c = q->now;
 
 		old_mode = cl->cmode;
-		diff = 0;
-		htb_change_class_mode(q, cl, &diff);
-		if (old_mode != cl->cmode) {
-			if (old_mode != HTB_CAN_SEND)
-				htb_safe_rb_erase(&cl->pq_node, &q->hlevel[cl->level].wait_pq);
-			if (cl->cmode != HTB_CAN_SEND)
-				htb_add_to_wait_tree(q, cl, diff);
-		}
+		dअगरf = 0;
+		htb_change_class_mode(q, cl, &dअगरf);
+		अगर (old_mode != cl->cmode) अणु
+			अगर (old_mode != HTB_CAN_SEND)
+				htb_safe_rb_erase(&cl->pq_node, &q->hlevel[cl->level].रुको_pq);
+			अगर (cl->cmode != HTB_CAN_SEND)
+				htb_add_to_रुको_tree(q, cl, dअगरf);
+		पूर्ण
 
-		/* update basic stats except for leaves which are already updated */
-		if (cl->level)
+		/* update basic stats except क्रम leaves which are alपढ़ोy updated */
+		अगर (cl->level)
 			bstats_update(&cl->bstats, skb);
 
 		cl = cl->parent;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * htb_do_events - make mode changes to classes at the level
+ * htb_करो_events - make mode changes to classes at the level
  *
- * Scans event queue for pending events and applies them. Returns time of
- * next pending event (0 for no event in pq, q->now for too many events).
+ * Scans event queue क्रम pending events and applies them. Returns समय of
+ * next pending event (0 क्रम no event in pq, q->now क्रम too many events).
  * Note: Applied are events whose have cl->pq_key <= q->now.
  */
-static s64 htb_do_events(struct htb_sched *q, const int level,
-			 unsigned long start)
-{
-	/* don't run for longer than 2 jiffies; 2 is used instead of
-	 * 1 to simplify things when jiffy is going to be incremented
+अटल s64 htb_करो_events(काष्ठा htb_sched *q, स्थिर पूर्णांक level,
+			 अचिन्हित दीर्घ start)
+अणु
+	/* करोn't run क्रम दीर्घer than 2 jअगरfies; 2 is used instead of
+	 * 1 to simplअगरy things when jअगरfy is going to be incremented
 	 * too soon
 	 */
-	unsigned long stop_at = start + 2;
-	struct rb_root *wait_pq = &q->hlevel[level].wait_pq;
+	अचिन्हित दीर्घ stop_at = start + 2;
+	काष्ठा rb_root *रुको_pq = &q->hlevel[level].रुको_pq;
 
-	while (time_before(jiffies, stop_at)) {
-		struct htb_class *cl;
-		s64 diff;
-		struct rb_node *p = rb_first(wait_pq);
+	जबतक (समय_beक्रमe(jअगरfies, stop_at)) अणु
+		काष्ठा htb_class *cl;
+		s64 dअगरf;
+		काष्ठा rb_node *p = rb_first(रुको_pq);
 
-		if (!p)
-			return 0;
+		अगर (!p)
+			वापस 0;
 
-		cl = rb_entry(p, struct htb_class, pq_node);
-		if (cl->pq_key > q->now)
-			return cl->pq_key;
+		cl = rb_entry(p, काष्ठा htb_class, pq_node);
+		अगर (cl->pq_key > q->now)
+			वापस cl->pq_key;
 
-		htb_safe_rb_erase(p, wait_pq);
-		diff = min_t(s64, q->now - cl->t_c, cl->mbuffer);
-		htb_change_class_mode(q, cl, &diff);
-		if (cl->cmode != HTB_CAN_SEND)
-			htb_add_to_wait_tree(q, cl, diff);
-	}
+		htb_safe_rb_erase(p, रुको_pq);
+		dअगरf = min_t(s64, q->now - cl->t_c, cl->mbuffer);
+		htb_change_class_mode(q, cl, &dअगरf);
+		अगर (cl->cmode != HTB_CAN_SEND)
+			htb_add_to_रुको_tree(q, cl, dअगरf);
+	पूर्ण
 
-	/* too much load - let's continue after a break for scheduling */
-	if (!(q->warned & HTB_WARN_TOOMANYEVENTS)) {
+	/* too much load - let's जारी after a अवरोध क्रम scheduling */
+	अगर (!(q->warned & HTB_WARN_TOOMANYEVENTS)) अणु
 		pr_warn("htb: too many events!\n");
 		q->warned |= HTB_WARN_TOOMANYEVENTS;
-	}
+	पूर्ण
 
-	return q->now;
-}
+	वापस q->now;
+पूर्ण
 
-/* Returns class->node+prio from id-tree where classe's id is >= id. NULL
+/* Returns class->node+prio from id-tree where classe's id is >= id. शून्य
  * is no such one exists.
  */
-static struct rb_node *htb_id_find_next_upper(int prio, struct rb_node *n,
+अटल काष्ठा rb_node *htb_id_find_next_upper(पूर्णांक prio, काष्ठा rb_node *n,
 					      u32 id)
-{
-	struct rb_node *r = NULL;
-	while (n) {
-		struct htb_class *cl =
-		    rb_entry(n, struct htb_class, node[prio]);
+अणु
+	काष्ठा rb_node *r = शून्य;
+	जबतक (n) अणु
+		काष्ठा htb_class *cl =
+		    rb_entry(n, काष्ठा htb_class, node[prio]);
 
-		if (id > cl->common.classid) {
+		अगर (id > cl->common.classid) अणु
 			n = n->rb_right;
-		} else if (id < cl->common.classid) {
+		पूर्ण अन्यथा अगर (id < cl->common.classid) अणु
 			r = n;
 			n = n->rb_left;
-		} else {
-			return n;
-		}
-	}
-	return r;
-}
+		पूर्ण अन्यथा अणु
+			वापस n;
+		पूर्ण
+	पूर्ण
+	वापस r;
+पूर्ण
 
 /**
- * htb_lookup_leaf - returns next leaf class in DRR order
+ * htb_lookup_leaf - वापसs next leaf class in DRR order
  *
- * Find leaf where current feed pointers points to.
+ * Find leaf where current feed poपूर्णांकers poपूर्णांकs to.
  */
-static struct htb_class *htb_lookup_leaf(struct htb_prio *hprio, const int prio)
-{
-	int i;
-	struct {
-		struct rb_node *root;
-		struct rb_node **pptr;
+अटल काष्ठा htb_class *htb_lookup_leaf(काष्ठा htb_prio *hprio, स्थिर पूर्णांक prio)
+अणु
+	पूर्णांक i;
+	काष्ठा अणु
+		काष्ठा rb_node *root;
+		काष्ठा rb_node **pptr;
 		u32 *pid;
-	} stk[TC_HTB_MAXDEPTH], *sp = stk;
+	पूर्ण stk[TC_HTB_MAXDEPTH], *sp = stk;
 
 	BUG_ON(!hprio->row.rb_node);
 	sp->root = hprio->row.rb_node;
 	sp->pptr = &hprio->ptr;
 	sp->pid = &hprio->last_ptr_id;
 
-	for (i = 0; i < 65535; i++) {
-		if (!*sp->pptr && *sp->pid) {
+	क्रम (i = 0; i < 65535; i++) अणु
+		अगर (!*sp->pptr && *sp->pid) अणु
 			/* ptr was invalidated but id is valid - try to recover
 			 * the original or next ptr
 			 */
 			*sp->pptr =
 			    htb_id_find_next_upper(prio, sp->root, *sp->pid);
-		}
-		*sp->pid = 0;	/* ptr is valid now so that remove this hint as it
+		पूर्ण
+		*sp->pid = 0;	/* ptr is valid now so that हटाओ this hपूर्णांक as it
 				 * can become out of date quickly
 				 */
-		if (!*sp->pptr) {	/* we are at right end; rewind & go up */
+		अगर (!*sp->pptr) अणु	/* we are at right end; शुरुआत & go up */
 			*sp->pptr = sp->root;
-			while ((*sp->pptr)->rb_left)
+			जबतक ((*sp->pptr)->rb_left)
 				*sp->pptr = (*sp->pptr)->rb_left;
-			if (sp > stk) {
+			अगर (sp > stk) अणु
 				sp--;
-				if (!*sp->pptr) {
+				अगर (!*sp->pptr) अणु
 					WARN_ON(1);
-					return NULL;
-				}
+					वापस शून्य;
+				पूर्ण
 				htb_next_rb_node(sp->pptr);
-			}
-		} else {
-			struct htb_class *cl;
-			struct htb_prio *clp;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			काष्ठा htb_class *cl;
+			काष्ठा htb_prio *clp;
 
-			cl = rb_entry(*sp->pptr, struct htb_class, node[prio]);
-			if (!cl->level)
-				return cl;
+			cl = rb_entry(*sp->pptr, काष्ठा htb_class, node[prio]);
+			अगर (!cl->level)
+				वापस cl;
 			clp = &cl->inner.clprio[prio];
 			(++sp)->root = clp->feed.rb_node;
 			sp->pptr = &clp->ptr;
 			sp->pid = &clp->last_ptr_id;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	WARN_ON(1);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* dequeues packet at given priority and level; call only if
+/* dequeues packet at given priority and level; call only अगर
  * you are sure that there is active class at prio/level
  */
-static struct sk_buff *htb_dequeue_tree(struct htb_sched *q, const int prio,
-					const int level)
-{
-	struct sk_buff *skb = NULL;
-	struct htb_class *cl, *start;
-	struct htb_level *hlevel = &q->hlevel[level];
-	struct htb_prio *hprio = &hlevel->hprio[prio];
+अटल काष्ठा sk_buff *htb_dequeue_tree(काष्ठा htb_sched *q, स्थिर पूर्णांक prio,
+					स्थिर पूर्णांक level)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा htb_class *cl, *start;
+	काष्ठा htb_level *hlevel = &q->hlevel[level];
+	काष्ठा htb_prio *hprio = &hlevel->hprio[prio];
 
 	/* look initial class up in the row */
 	start = cl = htb_lookup_leaf(hprio, prio);
 
-	do {
+	करो अणु
 next:
-		if (unlikely(!cl))
-			return NULL;
+		अगर (unlikely(!cl))
+			वापस शून्य;
 
-		/* class can be empty - it is unlikely but can be true if leaf
-		 * qdisc drops packets in enqueue routine or if someone used
+		/* class can be empty - it is unlikely but can be true अगर leaf
+		 * qdisc drops packets in enqueue routine or अगर someone used
 		 * graft operation on the leaf since last dequeue;
 		 * simply deactivate and skip such class
 		 */
-		if (unlikely(cl->leaf.q->q.qlen == 0)) {
-			struct htb_class *next;
+		अगर (unlikely(cl->leaf.q->q.qlen == 0)) अणु
+			काष्ठा htb_class *next;
 			htb_deactivate(q, cl);
 
 			/* row/level might become empty */
-			if ((q->row_mask[level] & (1 << prio)) == 0)
-				return NULL;
+			अगर ((q->row_mask[level] & (1 << prio)) == 0)
+				वापस शून्य;
 
 			next = htb_lookup_leaf(hprio, prio);
 
-			if (cl == start)	/* fix start if we just deleted it */
+			अगर (cl == start)	/* fix start अगर we just deleted it */
 				start = next;
 			cl = next;
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
 		skb = cl->leaf.q->dequeue(cl->leaf.q);
-		if (likely(skb != NULL))
-			break;
+		अगर (likely(skb != शून्य))
+			अवरोध;
 
 		qdisc_warn_nonwc("htb", cl->leaf.q);
 		htb_next_rb_node(level ? &cl->parent->inner.clprio[prio].ptr:
 					 &q->hlevel[0].hprio[prio].ptr);
 		cl = htb_lookup_leaf(hprio, prio);
 
-	} while (cl != start);
+	पूर्ण जबतक (cl != start);
 
-	if (likely(skb != NULL)) {
+	अगर (likely(skb != शून्य)) अणु
 		bstats_update(&cl->bstats, skb);
 		cl->leaf.deficit[level] -= qdisc_pkt_len(skb);
-		if (cl->leaf.deficit[level] < 0) {
+		अगर (cl->leaf.deficit[level] < 0) अणु
 			cl->leaf.deficit[level] += cl->quantum;
 			htb_next_rb_node(level ? &cl->parent->inner.clprio[prio].ptr :
 						 &q->hlevel[0].hprio[prio].ptr);
-		}
-		/* this used to be after charge_class but this constelation
-		 * gives us slightly better performance
+		पूर्ण
+		/* this used to be after अक्षरge_class but this स्थिरelation
+		 * gives us slightly better perक्रमmance
 		 */
-		if (!cl->leaf.q->q.qlen)
+		अगर (!cl->leaf.q->q.qlen)
 			htb_deactivate(q, cl);
-		htb_charge_class(q, cl, level, skb);
-	}
-	return skb;
-}
+		htb_अक्षरge_class(q, cl, level, skb);
+	पूर्ण
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *htb_dequeue(struct Qdisc *sch)
-{
-	struct sk_buff *skb;
-	struct htb_sched *q = qdisc_priv(sch);
-	int level;
+अटल काष्ठा sk_buff *htb_dequeue(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	पूर्णांक level;
 	s64 next_event;
-	unsigned long start_at;
+	अचिन्हित दीर्घ start_at;
 
 	/* try to dequeue direct packets as high prio (!) to minimize cpu work */
 	skb = __qdisc_dequeue_head(&q->direct_queue);
-	if (skb != NULL) {
+	अगर (skb != शून्य) अणु
 ok:
 		qdisc_bstats_update(sch, skb);
 		qdisc_qstats_backlog_dec(sch, skb);
 		sch->q.qlen--;
-		return skb;
-	}
+		वापस skb;
+	पूर्ण
 
-	if (!sch->q.qlen)
-		goto fin;
-	q->now = ktime_get_ns();
-	start_at = jiffies;
+	अगर (!sch->q.qlen)
+		जाओ fin;
+	q->now = kसमय_get_ns();
+	start_at = jअगरfies;
 
 	next_event = q->now + 5LLU * NSEC_PER_SEC;
 
-	for (level = 0; level < TC_HTB_MAXDEPTH; level++) {
-		/* common case optimization - skip event handler quickly */
-		int m;
+	क्रम (level = 0; level < TC_HTB_MAXDEPTH; level++) अणु
+		/* common हाल optimization - skip event handler quickly */
+		पूर्णांक m;
 		s64 event = q->near_ev_cache[level];
 
-		if (q->now >= event) {
-			event = htb_do_events(q, level, start_at);
-			if (!event)
+		अगर (q->now >= event) अणु
+			event = htb_करो_events(q, level, start_at);
+			अगर (!event)
 				event = q->now + NSEC_PER_SEC;
 			q->near_ev_cache[level] = event;
-		}
+		पूर्ण
 
-		if (next_event > event)
+		अगर (next_event > event)
 			next_event = event;
 
 		m = ~q->row_mask[level];
-		while (m != (int)(-1)) {
-			int prio = ffz(m);
+		जबतक (m != (पूर्णांक)(-1)) अणु
+			पूर्णांक prio = ffz(m);
 
 			m |= 1 << prio;
 			skb = htb_dequeue_tree(q, prio, level);
-			if (likely(skb != NULL))
-				goto ok;
-		}
-	}
-	if (likely(next_event > q->now))
-		qdisc_watchdog_schedule_ns(&q->watchdog, next_event);
-	else
+			अगर (likely(skb != शून्य))
+				जाओ ok;
+		पूर्ण
+	पूर्ण
+	अगर (likely(next_event > q->now))
+		qdisc_watchकरोg_schedule_ns(&q->watchकरोg, next_event);
+	अन्यथा
 		schedule_work(&q->work);
 fin:
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /* reset all classes */
 /* always caled under BH & queue lock */
-static void htb_reset(struct Qdisc *sch)
-{
-	struct htb_sched *q = qdisc_priv(sch);
-	struct htb_class *cl;
-	unsigned int i;
+अटल व्योम htb_reset(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा htb_class *cl;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < q->clhash.hashsize; i++) {
-		hlist_for_each_entry(cl, &q->clhash.hash[i], common.hnode) {
-			if (cl->level)
-				memset(&cl->inner, 0, sizeof(cl->inner));
-			else {
-				if (cl->leaf.q && !q->offload)
+	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
+		hlist_क्रम_each_entry(cl, &q->clhash.hash[i], common.hnode) अणु
+			अगर (cl->level)
+				स_रखो(&cl->inner, 0, माप(cl->inner));
+			अन्यथा अणु
+				अगर (cl->leaf.q && !q->offload)
 					qdisc_reset(cl->leaf.q);
-			}
+			पूर्ण
 			cl->prio_activity = 0;
 			cl->cmode = HTB_CAN_SEND;
-		}
-	}
-	qdisc_watchdog_cancel(&q->watchdog);
+		पूर्ण
+	पूर्ण
+	qdisc_watchकरोg_cancel(&q->watchकरोg);
 	__qdisc_reset_queue(&q->direct_queue);
 	sch->q.qlen = 0;
 	sch->qstats.backlog = 0;
-	memset(q->hlevel, 0, sizeof(q->hlevel));
-	memset(q->row_mask, 0, sizeof(q->row_mask));
-}
+	स_रखो(q->hlevel, 0, माप(q->hlevel));
+	स_रखो(q->row_mask, 0, माप(q->row_mask));
+पूर्ण
 
-static const struct nla_policy htb_policy[TCA_HTB_MAX + 1] = {
-	[TCA_HTB_PARMS]	= { .len = sizeof(struct tc_htb_opt) },
-	[TCA_HTB_INIT]	= { .len = sizeof(struct tc_htb_glob) },
-	[TCA_HTB_CTAB]	= { .type = NLA_BINARY, .len = TC_RTAB_SIZE },
-	[TCA_HTB_RTAB]	= { .type = NLA_BINARY, .len = TC_RTAB_SIZE },
-	[TCA_HTB_DIRECT_QLEN] = { .type = NLA_U32 },
-	[TCA_HTB_RATE64] = { .type = NLA_U64 },
-	[TCA_HTB_CEIL64] = { .type = NLA_U64 },
-	[TCA_HTB_OFFLOAD] = { .type = NLA_FLAG },
-};
+अटल स्थिर काष्ठा nla_policy htb_policy[TCA_HTB_MAX + 1] = अणु
+	[TCA_HTB_PARMS]	= अणु .len = माप(काष्ठा tc_htb_opt) पूर्ण,
+	[TCA_HTB_INIT]	= अणु .len = माप(काष्ठा tc_htb_glob) पूर्ण,
+	[TCA_HTB_CTAB]	= अणु .type = NLA_BINARY, .len = TC_RTAB_SIZE पूर्ण,
+	[TCA_HTB_RTAB]	= अणु .type = NLA_BINARY, .len = TC_RTAB_SIZE पूर्ण,
+	[TCA_HTB_सूचीECT_QLEN] = अणु .type = NLA_U32 पूर्ण,
+	[TCA_HTB_RATE64] = अणु .type = NLA_U64 पूर्ण,
+	[TCA_HTB_CEIL64] = अणु .type = NLA_U64 पूर्ण,
+	[TCA_HTB_OFFLOAD] = अणु .type = NLA_FLAG पूर्ण,
+पूर्ण;
 
-static void htb_work_func(struct work_struct *work)
-{
-	struct htb_sched *q = container_of(work, struct htb_sched, work);
-	struct Qdisc *sch = q->watchdog.qdisc;
+अटल व्योम htb_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा htb_sched *q = container_of(work, काष्ठा htb_sched, work);
+	काष्ठा Qdisc *sch = q->watchकरोg.qdisc;
 
-	rcu_read_lock();
-	__netif_schedule(qdisc_root(sch));
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_lock();
+	__netअगर_schedule(qdisc_root(sch));
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void htb_set_lockdep_class_child(struct Qdisc *q)
-{
-	static struct lock_class_key child_key;
+अटल व्योम htb_set_lockdep_class_child(काष्ठा Qdisc *q)
+अणु
+	अटल काष्ठा lock_class_key child_key;
 
 	lockdep_set_class(qdisc_lock(q), &child_key);
-}
+पूर्ण
 
-static int htb_offload(struct net_device *dev, struct tc_htb_qopt_offload *opt)
-{
-	return dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_QDISC_HTB, opt);
-}
+अटल पूर्णांक htb_offload(काष्ठा net_device *dev, काष्ठा tc_htb_qopt_offload *opt)
+अणु
+	वापस dev->netdev_ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_HTB, opt);
+पूर्ण
 
-static int htb_init(struct Qdisc *sch, struct nlattr *opt,
-		    struct netlink_ext_ack *extack)
-{
-	struct net_device *dev = qdisc_dev(sch);
-	struct tc_htb_qopt_offload offload_opt;
-	struct htb_sched *q = qdisc_priv(sch);
-	struct nlattr *tb[TCA_HTB_MAX + 1];
-	struct tc_htb_glob *gopt;
-	unsigned int ntx;
+अटल पूर्णांक htb_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+		    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा tc_htb_qopt_offload offload_opt;
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा nlattr *tb[TCA_HTB_MAX + 1];
+	काष्ठा tc_htb_glob *gopt;
+	अचिन्हित पूर्णांक ntx;
 	bool offload;
-	int err;
+	पूर्णांक err;
 
-	qdisc_watchdog_init(&q->watchdog, sch);
+	qdisc_watchकरोg_init(&q->watchकरोg, sch);
 	INIT_WORK(&q->work, htb_work_func);
 
-	if (!opt)
-		return -EINVAL;
+	अगर (!opt)
+		वापस -EINVAL;
 
 	err = tcf_block_get(&q->block, &q->filter_list, sch, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = nla_parse_nested_deprecated(tb, TCA_HTB_MAX, opt, htb_policy,
-					  NULL);
-	if (err < 0)
-		return err;
+					  शून्य);
+	अगर (err < 0)
+		वापस err;
 
-	if (!tb[TCA_HTB_INIT])
-		return -EINVAL;
+	अगर (!tb[TCA_HTB_INIT])
+		वापस -EINVAL;
 
 	gopt = nla_data(tb[TCA_HTB_INIT]);
-	if (gopt->version != HTB_VER >> 16)
-		return -EINVAL;
+	अगर (gopt->version != HTB_VER >> 16)
+		वापस -EINVAL;
 
 	offload = nla_get_flag(tb[TCA_HTB_OFFLOAD]);
 
-	if (offload) {
-		if (sch->parent != TC_H_ROOT)
-			return -EOPNOTSUPP;
+	अगर (offload) अणु
+		अगर (sch->parent != TC_H_ROOT)
+			वापस -EOPNOTSUPP;
 
-		if (!tc_can_offload(dev) || !dev->netdev_ops->ndo_setup_tc)
-			return -EOPNOTSUPP;
+		अगर (!tc_can_offload(dev) || !dev->netdev_ops->nकरो_setup_tc)
+			वापस -EOPNOTSUPP;
 
 		q->num_direct_qdiscs = dev->real_num_tx_queues;
-		q->direct_qdiscs = kcalloc(q->num_direct_qdiscs,
-					   sizeof(*q->direct_qdiscs),
+		q->direct_qdiscs = kसुस्मृति(q->num_direct_qdiscs,
+					   माप(*q->direct_qdiscs),
 					   GFP_KERNEL);
-		if (!q->direct_qdiscs)
-			return -ENOMEM;
-	}
+		अगर (!q->direct_qdiscs)
+			वापस -ENOMEM;
+	पूर्ण
 
 	err = qdisc_class_hash_init(&q->clhash);
-	if (err < 0)
-		goto err_free_direct_qdiscs;
+	अगर (err < 0)
+		जाओ err_मुक्त_direct_qdiscs;
 
 	qdisc_skb_head_init(&q->direct_queue);
 
-	if (tb[TCA_HTB_DIRECT_QLEN])
-		q->direct_qlen = nla_get_u32(tb[TCA_HTB_DIRECT_QLEN]);
-	else
+	अगर (tb[TCA_HTB_सूचीECT_QLEN])
+		q->direct_qlen = nla_get_u32(tb[TCA_HTB_सूचीECT_QLEN]);
+	अन्यथा
 		q->direct_qlen = qdisc_dev(sch)->tx_queue_len;
 
-	if ((q->rate2quantum = gopt->rate2quantum) < 1)
+	अगर ((q->rate2quantum = gopt->rate2quantum) < 1)
 		q->rate2quantum = 1;
 	q->defcls = gopt->defcls;
 
-	if (!offload)
-		return 0;
+	अगर (!offload)
+		वापस 0;
 
-	for (ntx = 0; ntx < q->num_direct_qdiscs; ntx++) {
-		struct netdev_queue *dev_queue = netdev_get_tx_queue(dev, ntx);
-		struct Qdisc *qdisc;
+	क्रम (ntx = 0; ntx < q->num_direct_qdiscs; ntx++) अणु
+		काष्ठा netdev_queue *dev_queue = netdev_get_tx_queue(dev, ntx);
+		काष्ठा Qdisc *qdisc;
 
-		qdisc = qdisc_create_dflt(dev_queue, &pfifo_qdisc_ops,
+		qdisc = qdisc_create_dflt(dev_queue, &pfअगरo_qdisc_ops,
 					  TC_H_MAKE(sch->handle, 0), extack);
-		if (!qdisc) {
+		अगर (!qdisc) अणु
 			err = -ENOMEM;
-			goto err_free_qdiscs;
-		}
+			जाओ err_मुक्त_qdiscs;
+		पूर्ण
 
 		htb_set_lockdep_class_child(qdisc);
 		q->direct_qdiscs[ntx] = qdisc;
 		qdisc->flags |= TCQ_F_ONETXQUEUE | TCQ_F_NOPARENT;
-	}
+	पूर्ण
 
 	sch->flags |= TCQ_F_MQROOT;
 
-	offload_opt = (struct tc_htb_qopt_offload) {
+	offload_opt = (काष्ठा tc_htb_qopt_offload) अणु
 		.command = TC_HTB_CREATE,
 		.parent_classid = TC_H_MAJ(sch->handle) >> 16,
 		.classid = TC_H_MIN(q->defcls),
 		.extack = extack,
-	};
+	पूर्ण;
 	err = htb_offload(dev, &offload_opt);
-	if (err)
-		goto err_free_qdiscs;
+	अगर (err)
+		जाओ err_मुक्त_qdiscs;
 
 	/* Defer this assignment, so that htb_destroy skips offload-related
-	 * parts (especially calling ndo_setup_tc) on errors.
+	 * parts (especially calling nकरो_setup_tc) on errors.
 	 */
 	q->offload = true;
 
-	return 0;
+	वापस 0;
 
-err_free_qdiscs:
-	for (ntx = 0; ntx < q->num_direct_qdiscs && q->direct_qdiscs[ntx];
+err_मुक्त_qdiscs:
+	क्रम (ntx = 0; ntx < q->num_direct_qdiscs && q->direct_qdiscs[ntx];
 	     ntx++)
 		qdisc_put(q->direct_qdiscs[ntx]);
 
 	qdisc_class_hash_destroy(&q->clhash);
-	/* Prevent use-after-free and double-free when htb_destroy gets called.
+	/* Prevent use-after-मुक्त and द्विगुन-मुक्त when htb_destroy माला_लो called.
 	 */
-	q->clhash.hash = NULL;
+	q->clhash.hash = शून्य;
 	q->clhash.hashsize = 0;
 
-err_free_direct_qdiscs:
-	kfree(q->direct_qdiscs);
-	q->direct_qdiscs = NULL;
-	return err;
-}
+err_मुक्त_direct_qdiscs:
+	kमुक्त(q->direct_qdiscs);
+	q->direct_qdiscs = शून्य;
+	वापस err;
+पूर्ण
 
-static void htb_attach_offload(struct Qdisc *sch)
-{
-	struct net_device *dev = qdisc_dev(sch);
-	struct htb_sched *q = qdisc_priv(sch);
-	unsigned int ntx;
+अटल व्योम htb_attach_offload(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	अचिन्हित पूर्णांक ntx;
 
-	for (ntx = 0; ntx < q->num_direct_qdiscs; ntx++) {
-		struct Qdisc *old, *qdisc = q->direct_qdiscs[ntx];
+	क्रम (ntx = 0; ntx < q->num_direct_qdiscs; ntx++) अणु
+		काष्ठा Qdisc *old, *qdisc = q->direct_qdiscs[ntx];
 
 		old = dev_graft_qdisc(qdisc->dev_queue, qdisc);
 		qdisc_put(old);
 		qdisc_hash_add(qdisc, false);
-	}
-	for (ntx = q->num_direct_qdiscs; ntx < dev->num_tx_queues; ntx++) {
-		struct netdev_queue *dev_queue = netdev_get_tx_queue(dev, ntx);
-		struct Qdisc *old = dev_graft_qdisc(dev_queue, NULL);
+	पूर्ण
+	क्रम (ntx = q->num_direct_qdiscs; ntx < dev->num_tx_queues; ntx++) अणु
+		काष्ठा netdev_queue *dev_queue = netdev_get_tx_queue(dev, ntx);
+		काष्ठा Qdisc *old = dev_graft_qdisc(dev_queue, शून्य);
 
 		qdisc_put(old);
-	}
+	पूर्ण
 
-	kfree(q->direct_qdiscs);
-	q->direct_qdiscs = NULL;
-}
+	kमुक्त(q->direct_qdiscs);
+	q->direct_qdiscs = शून्य;
+पूर्ण
 
-static void htb_attach_software(struct Qdisc *sch)
-{
-	struct net_device *dev = qdisc_dev(sch);
-	unsigned int ntx;
+अटल व्योम htb_attach_software(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	अचिन्हित पूर्णांक ntx;
 
 	/* Resemble qdisc_graft behavior. */
-	for (ntx = 0; ntx < dev->num_tx_queues; ntx++) {
-		struct netdev_queue *dev_queue = netdev_get_tx_queue(dev, ntx);
-		struct Qdisc *old = dev_graft_qdisc(dev_queue, sch);
+	क्रम (ntx = 0; ntx < dev->num_tx_queues; ntx++) अणु
+		काष्ठा netdev_queue *dev_queue = netdev_get_tx_queue(dev, ntx);
+		काष्ठा Qdisc *old = dev_graft_qdisc(dev_queue, sch);
 
 		qdisc_refcount_inc(sch);
 
 		qdisc_put(old);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void htb_attach(struct Qdisc *sch)
-{
-	struct htb_sched *q = qdisc_priv(sch);
+अटल व्योम htb_attach(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा htb_sched *q = qdisc_priv(sch);
 
-	if (q->offload)
+	अगर (q->offload)
 		htb_attach_offload(sch);
-	else
+	अन्यथा
 		htb_attach_software(sch);
-}
+पूर्ण
 
-static int htb_dump(struct Qdisc *sch, struct sk_buff *skb)
-{
-	struct htb_sched *q = qdisc_priv(sch);
-	struct nlattr *nest;
-	struct tc_htb_glob gopt;
+अटल पूर्णांक htb_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा nlattr *nest;
+	काष्ठा tc_htb_glob gopt;
 
-	if (q->offload)
+	अगर (q->offload)
 		sch->flags |= TCQ_F_OFFLOADED;
-	else
+	अन्यथा
 		sch->flags &= ~TCQ_F_OFFLOADED;
 
 	sch->qstats.overlimits = q->overlimits;
@@ -1205,376 +1206,376 @@ static int htb_dump(struct Qdisc *sch, struct sk_buff *skb)
 	gopt.debug = 0;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (nest == NULL)
-		goto nla_put_failure;
-	if (nla_put(skb, TCA_HTB_INIT, sizeof(gopt), &gopt) ||
-	    nla_put_u32(skb, TCA_HTB_DIRECT_QLEN, q->direct_qlen))
-		goto nla_put_failure;
-	if (q->offload && nla_put_flag(skb, TCA_HTB_OFFLOAD))
-		goto nla_put_failure;
+	अगर (nest == शून्य)
+		जाओ nla_put_failure;
+	अगर (nla_put(skb, TCA_HTB_INIT, माप(gopt), &gopt) ||
+	    nla_put_u32(skb, TCA_HTB_सूचीECT_QLEN, q->direct_qlen))
+		जाओ nla_put_failure;
+	अगर (q->offload && nla_put_flag(skb, TCA_HTB_OFFLOAD))
+		जाओ nla_put_failure;
 
-	return nla_nest_end(skb, nest);
+	वापस nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int htb_dump_class(struct Qdisc *sch, unsigned long arg,
-			  struct sk_buff *skb, struct tcmsg *tcm)
-{
-	struct htb_class *cl = (struct htb_class *)arg;
-	struct htb_sched *q = qdisc_priv(sch);
-	struct nlattr *nest;
-	struct tc_htb_opt opt;
+अटल पूर्णांक htb_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
+			  काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
+अणु
+	काष्ठा htb_class *cl = (काष्ठा htb_class *)arg;
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा nlattr *nest;
+	काष्ठा tc_htb_opt opt;
 
 	/* Its safe to not acquire qdisc lock. As we hold RTNL,
 	 * no change can happen on the class parameters.
 	 */
 	tcm->tcm_parent = cl->parent ? cl->parent->common.classid : TC_H_ROOT;
 	tcm->tcm_handle = cl->common.classid;
-	if (!cl->level && cl->leaf.q)
+	अगर (!cl->level && cl->leaf.q)
 		tcm->tcm_info = cl->leaf.q->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (nest == NULL)
-		goto nla_put_failure;
+	अगर (nest == शून्य)
+		जाओ nla_put_failure;
 
-	memset(&opt, 0, sizeof(opt));
+	स_रखो(&opt, 0, माप(opt));
 
 	psched_ratecfg_getrate(&opt.rate, &cl->rate);
 	opt.buffer = PSCHED_NS2TICKS(cl->buffer);
-	psched_ratecfg_getrate(&opt.ceil, &cl->ceil);
+	psched_ratecfg_getrate(&opt.उच्चमान, &cl->उच्चमान);
 	opt.cbuffer = PSCHED_NS2TICKS(cl->cbuffer);
 	opt.quantum = cl->quantum;
 	opt.prio = cl->prio;
 	opt.level = cl->level;
-	if (nla_put(skb, TCA_HTB_PARMS, sizeof(opt), &opt))
-		goto nla_put_failure;
-	if (q->offload && nla_put_flag(skb, TCA_HTB_OFFLOAD))
-		goto nla_put_failure;
-	if ((cl->rate.rate_bytes_ps >= (1ULL << 32)) &&
+	अगर (nla_put(skb, TCA_HTB_PARMS, माप(opt), &opt))
+		जाओ nla_put_failure;
+	अगर (q->offload && nla_put_flag(skb, TCA_HTB_OFFLOAD))
+		जाओ nla_put_failure;
+	अगर ((cl->rate.rate_bytes_ps >= (1ULL << 32)) &&
 	    nla_put_u64_64bit(skb, TCA_HTB_RATE64, cl->rate.rate_bytes_ps,
 			      TCA_HTB_PAD))
-		goto nla_put_failure;
-	if ((cl->ceil.rate_bytes_ps >= (1ULL << 32)) &&
-	    nla_put_u64_64bit(skb, TCA_HTB_CEIL64, cl->ceil.rate_bytes_ps,
+		जाओ nla_put_failure;
+	अगर ((cl->उच्चमान.rate_bytes_ps >= (1ULL << 32)) &&
+	    nla_put_u64_64bit(skb, TCA_HTB_CEIL64, cl->उच्चमान.rate_bytes_ps,
 			      TCA_HTB_PAD))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	return nla_nest_end(skb, nest);
+	वापस nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void htb_offload_aggregate_stats(struct htb_sched *q,
-					struct htb_class *cl)
-{
-	struct htb_class *c;
-	unsigned int i;
+अटल व्योम htb_offload_aggregate_stats(काष्ठा htb_sched *q,
+					काष्ठा htb_class *cl)
+अणु
+	काष्ठा htb_class *c;
+	अचिन्हित पूर्णांक i;
 
-	memset(&cl->bstats, 0, sizeof(cl->bstats));
+	स_रखो(&cl->bstats, 0, माप(cl->bstats));
 
-	for (i = 0; i < q->clhash.hashsize; i++) {
-		hlist_for_each_entry(c, &q->clhash.hash[i], common.hnode) {
-			struct htb_class *p = c;
+	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
+		hlist_क्रम_each_entry(c, &q->clhash.hash[i], common.hnode) अणु
+			काष्ठा htb_class *p = c;
 
-			while (p && p->level < cl->level)
+			जबतक (p && p->level < cl->level)
 				p = p->parent;
 
-			if (p != cl)
-				continue;
+			अगर (p != cl)
+				जारी;
 
 			cl->bstats.bytes += c->bstats_bias.bytes;
 			cl->bstats.packets += c->bstats_bias.packets;
-			if (c->level == 0) {
+			अगर (c->level == 0) अणु
 				cl->bstats.bytes += c->leaf.q->bstats.bytes;
 				cl->bstats.packets += c->leaf.q->bstats.packets;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int
-htb_dump_class_stats(struct Qdisc *sch, unsigned long arg, struct gnet_dump *d)
-{
-	struct htb_class *cl = (struct htb_class *)arg;
-	struct htb_sched *q = qdisc_priv(sch);
-	struct gnet_stats_queue qs = {
+अटल पूर्णांक
+htb_dump_class_stats(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg, काष्ठा gnet_dump *d)
+अणु
+	काष्ठा htb_class *cl = (काष्ठा htb_class *)arg;
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा gnet_stats_queue qs = अणु
 		.drops = cl->drops,
 		.overlimits = cl->overlimits,
-	};
+	पूर्ण;
 	__u32 qlen = 0;
 
-	if (!cl->level && cl->leaf.q)
+	अगर (!cl->level && cl->leaf.q)
 		qdisc_qstats_qlen_backlog(cl->leaf.q, &qlen, &qs.backlog);
 
 	cl->xstats.tokens = clamp_t(s64, PSCHED_NS2TICKS(cl->tokens),
-				    INT_MIN, INT_MAX);
+				    पूर्णांक_न्यून, पूर्णांक_उच्च);
 	cl->xstats.ctokens = clamp_t(s64, PSCHED_NS2TICKS(cl->ctokens),
-				     INT_MIN, INT_MAX);
+				     पूर्णांक_न्यून, पूर्णांक_उच्च);
 
-	if (q->offload) {
-		if (!cl->level) {
-			if (cl->leaf.q)
+	अगर (q->offload) अणु
+		अगर (!cl->level) अणु
+			अगर (cl->leaf.q)
 				cl->bstats = cl->leaf.q->bstats;
-			else
-				memset(&cl->bstats, 0, sizeof(cl->bstats));
+			अन्यथा
+				स_रखो(&cl->bstats, 0, माप(cl->bstats));
 			cl->bstats.bytes += cl->bstats_bias.bytes;
 			cl->bstats.packets += cl->bstats_bias.packets;
-		} else {
+		पूर्ण अन्यथा अणु
 			htb_offload_aggregate_stats(q, cl);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
-				  d, NULL, &cl->bstats) < 0 ||
+	अगर (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
+				  d, शून्य, &cl->bstats) < 0 ||
 	    gnet_stats_copy_rate_est(d, &cl->rate_est) < 0 ||
-	    gnet_stats_copy_queue(d, NULL, &qs, qlen) < 0)
-		return -1;
+	    gnet_stats_copy_queue(d, शून्य, &qs, qlen) < 0)
+		वापस -1;
 
-	return gnet_stats_copy_app(d, &cl->xstats, sizeof(cl->xstats));
-}
+	वापस gnet_stats_copy_app(d, &cl->xstats, माप(cl->xstats));
+पूर्ण
 
-static struct netdev_queue *
-htb_select_queue(struct Qdisc *sch, struct tcmsg *tcm)
-{
-	struct net_device *dev = qdisc_dev(sch);
-	struct tc_htb_qopt_offload offload_opt;
-	struct htb_sched *q = qdisc_priv(sch);
-	int err;
+अटल काष्ठा netdev_queue *
+htb_select_queue(काष्ठा Qdisc *sch, काष्ठा tcmsg *tcm)
+अणु
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा tc_htb_qopt_offload offload_opt;
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	पूर्णांक err;
 
-	if (!q->offload)
-		return sch->dev_queue;
+	अगर (!q->offload)
+		वापस sch->dev_queue;
 
-	offload_opt = (struct tc_htb_qopt_offload) {
+	offload_opt = (काष्ठा tc_htb_qopt_offload) अणु
 		.command = TC_HTB_LEAF_QUERY_QUEUE,
 		.classid = TC_H_MIN(tcm->tcm_parent),
-	};
+	पूर्ण;
 	err = htb_offload(dev, &offload_opt);
-	if (err || offload_opt.qid >= dev->num_tx_queues)
-		return NULL;
-	return netdev_get_tx_queue(dev, offload_opt.qid);
-}
+	अगर (err || offload_opt.qid >= dev->num_tx_queues)
+		वापस शून्य;
+	वापस netdev_get_tx_queue(dev, offload_opt.qid);
+पूर्ण
 
-static struct Qdisc *
-htb_graft_helper(struct netdev_queue *dev_queue, struct Qdisc *new_q)
-{
-	struct net_device *dev = dev_queue->dev;
-	struct Qdisc *old_q;
+अटल काष्ठा Qdisc *
+htb_graft_helper(काष्ठा netdev_queue *dev_queue, काष्ठा Qdisc *new_q)
+अणु
+	काष्ठा net_device *dev = dev_queue->dev;
+	काष्ठा Qdisc *old_q;
 
-	if (dev->flags & IFF_UP)
+	अगर (dev->flags & IFF_UP)
 		dev_deactivate(dev);
 	old_q = dev_graft_qdisc(dev_queue, new_q);
-	if (new_q)
+	अगर (new_q)
 		new_q->flags |= TCQ_F_ONETXQUEUE | TCQ_F_NOPARENT;
-	if (dev->flags & IFF_UP)
+	अगर (dev->flags & IFF_UP)
 		dev_activate(dev);
 
-	return old_q;
-}
+	वापस old_q;
+पूर्ण
 
-static void htb_offload_move_qdisc(struct Qdisc *sch, u16 qid_old, u16 qid_new)
-{
-	struct netdev_queue *queue_old, *queue_new;
-	struct net_device *dev = qdisc_dev(sch);
-	struct Qdisc *qdisc;
+अटल व्योम htb_offload_move_qdisc(काष्ठा Qdisc *sch, u16 qid_old, u16 qid_new)
+अणु
+	काष्ठा netdev_queue *queue_old, *queue_new;
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा Qdisc *qdisc;
 
 	queue_old = netdev_get_tx_queue(dev, qid_old);
 	queue_new = netdev_get_tx_queue(dev, qid_new);
 
-	if (dev->flags & IFF_UP)
+	अगर (dev->flags & IFF_UP)
 		dev_deactivate(dev);
-	qdisc = dev_graft_qdisc(queue_old, NULL);
+	qdisc = dev_graft_qdisc(queue_old, शून्य);
 	qdisc->dev_queue = queue_new;
 	qdisc = dev_graft_qdisc(queue_new, qdisc);
-	if (dev->flags & IFF_UP)
+	अगर (dev->flags & IFF_UP)
 		dev_activate(dev);
 
 	WARN_ON(!(qdisc->flags & TCQ_F_BUILTIN));
-}
+पूर्ण
 
-static int htb_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
-		     struct Qdisc **old, struct netlink_ext_ack *extack)
-{
-	struct netdev_queue *dev_queue = sch->dev_queue;
-	struct htb_class *cl = (struct htb_class *)arg;
-	struct htb_sched *q = qdisc_priv(sch);
-	struct Qdisc *old_q;
+अटल पूर्णांक htb_graft(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg, काष्ठा Qdisc *new,
+		     काष्ठा Qdisc **old, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा netdev_queue *dev_queue = sch->dev_queue;
+	काष्ठा htb_class *cl = (काष्ठा htb_class *)arg;
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा Qdisc *old_q;
 
-	if (cl->level)
-		return -EINVAL;
+	अगर (cl->level)
+		वापस -EINVAL;
 
-	if (q->offload) {
+	अगर (q->offload) अणु
 		dev_queue = new->dev_queue;
 		WARN_ON(dev_queue != cl->leaf.q->dev_queue);
-	}
+	पूर्ण
 
-	if (!new) {
-		new = qdisc_create_dflt(dev_queue, &pfifo_qdisc_ops,
+	अगर (!new) अणु
+		new = qdisc_create_dflt(dev_queue, &pfअगरo_qdisc_ops,
 					cl->common.classid, extack);
-		if (!new)
-			return -ENOBUFS;
-	}
+		अगर (!new)
+			वापस -ENOBUFS;
+	पूर्ण
 
-	if (q->offload) {
+	अगर (q->offload) अणु
 		htb_set_lockdep_class_child(new);
-		/* One ref for cl->leaf.q, the other for dev_queue->qdisc. */
+		/* One ref क्रम cl->leaf.q, the other क्रम dev_queue->qdisc. */
 		qdisc_refcount_inc(new);
 		old_q = htb_graft_helper(dev_queue, new);
-	}
+	पूर्ण
 
 	*old = qdisc_replace(sch, new, &cl->leaf.q);
 
-	if (q->offload) {
+	अगर (q->offload) अणु
 		WARN_ON(old_q != *old);
 		qdisc_put(old_q);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct Qdisc *htb_leaf(struct Qdisc *sch, unsigned long arg)
-{
-	struct htb_class *cl = (struct htb_class *)arg;
-	return !cl->level ? cl->leaf.q : NULL;
-}
+अटल काष्ठा Qdisc *htb_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा htb_class *cl = (काष्ठा htb_class *)arg;
+	वापस !cl->level ? cl->leaf.q : शून्य;
+पूर्ण
 
-static void htb_qlen_notify(struct Qdisc *sch, unsigned long arg)
-{
-	struct htb_class *cl = (struct htb_class *)arg;
+अटल व्योम htb_qlen_notअगरy(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा htb_class *cl = (काष्ठा htb_class *)arg;
 
 	htb_deactivate(qdisc_priv(sch), cl);
-}
+पूर्ण
 
-static inline int htb_parent_last_child(struct htb_class *cl)
-{
-	if (!cl->parent)
+अटल अंतरभूत पूर्णांक htb_parent_last_child(काष्ठा htb_class *cl)
+अणु
+	अगर (!cl->parent)
 		/* the root class */
-		return 0;
-	if (cl->parent->children > 1)
+		वापस 0;
+	अगर (cl->parent->children > 1)
 		/* not the last child */
-		return 0;
-	return 1;
-}
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-static void htb_parent_to_leaf(struct Qdisc *sch, struct htb_class *cl,
-			       struct Qdisc *new_q)
-{
-	struct htb_sched *q = qdisc_priv(sch);
-	struct htb_class *parent = cl->parent;
+अटल व्योम htb_parent_to_leaf(काष्ठा Qdisc *sch, काष्ठा htb_class *cl,
+			       काष्ठा Qdisc *new_q)
+अणु
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा htb_class *parent = cl->parent;
 
 	WARN_ON(cl->level || !cl->leaf.q || cl->prio_activity);
 
-	if (parent->cmode != HTB_CAN_SEND)
+	अगर (parent->cmode != HTB_CAN_SEND)
 		htb_safe_rb_erase(&parent->pq_node,
-				  &q->hlevel[parent->level].wait_pq);
+				  &q->hlevel[parent->level].रुको_pq);
 
 	parent->level = 0;
-	memset(&parent->inner, 0, sizeof(parent->inner));
+	स_रखो(&parent->inner, 0, माप(parent->inner));
 	parent->leaf.q = new_q ? new_q : &noop_qdisc;
 	parent->tokens = parent->buffer;
 	parent->ctokens = parent->cbuffer;
-	parent->t_c = ktime_get_ns();
+	parent->t_c = kसमय_get_ns();
 	parent->cmode = HTB_CAN_SEND;
-}
+पूर्ण
 
-static void htb_parent_to_leaf_offload(struct Qdisc *sch,
-				       struct netdev_queue *dev_queue,
-				       struct Qdisc *new_q)
-{
-	struct Qdisc *old_q;
+अटल व्योम htb_parent_to_leaf_offload(काष्ठा Qdisc *sch,
+				       काष्ठा netdev_queue *dev_queue,
+				       काष्ठा Qdisc *new_q)
+अणु
+	काष्ठा Qdisc *old_q;
 
-	/* One ref for cl->leaf.q, the other for dev_queue->qdisc. */
-	if (new_q)
+	/* One ref क्रम cl->leaf.q, the other क्रम dev_queue->qdisc. */
+	अगर (new_q)
 		qdisc_refcount_inc(new_q);
 	old_q = htb_graft_helper(dev_queue, new_q);
 	WARN_ON(!(old_q->flags & TCQ_F_BUILTIN));
-}
+पूर्ण
 
-static int htb_destroy_class_offload(struct Qdisc *sch, struct htb_class *cl,
+अटल पूर्णांक htb_destroy_class_offload(काष्ठा Qdisc *sch, काष्ठा htb_class *cl,
 				     bool last_child, bool destroying,
-				     struct netlink_ext_ack *extack)
-{
-	struct tc_htb_qopt_offload offload_opt;
-	struct Qdisc *q = cl->leaf.q;
-	struct Qdisc *old = NULL;
-	int err;
+				     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_htb_qopt_offload offload_opt;
+	काष्ठा Qdisc *q = cl->leaf.q;
+	काष्ठा Qdisc *old = शून्य;
+	पूर्णांक err;
 
-	if (cl->level)
-		return -EINVAL;
+	अगर (cl->level)
+		वापस -EINVAL;
 
 	WARN_ON(!q);
-	if (!destroying) {
-		/* On destroy of HTB, two cases are possible:
+	अगर (!destroying) अणु
+		/* On destroy of HTB, two हालs are possible:
 		 * 1. q is a normal qdisc, but q->dev_queue has noop qdisc.
-		 * 2. q is a noop qdisc (for nodes that were inner),
+		 * 2. q is a noop qdisc (क्रम nodes that were inner),
 		 *    q->dev_queue is noop_netdev_queue.
 		 */
-		old = htb_graft_helper(q->dev_queue, NULL);
+		old = htb_graft_helper(q->dev_queue, शून्य);
 		WARN_ON(!old);
 		WARN_ON(old != q);
-	}
+	पूर्ण
 
-	if (cl->parent) {
+	अगर (cl->parent) अणु
 		cl->parent->bstats_bias.bytes += q->bstats.bytes;
 		cl->parent->bstats_bias.packets += q->bstats.packets;
-	}
+	पूर्ण
 
-	offload_opt = (struct tc_htb_qopt_offload) {
+	offload_opt = (काष्ठा tc_htb_qopt_offload) अणु
 		.command = !last_child ? TC_HTB_LEAF_DEL :
 			   destroying ? TC_HTB_LEAF_DEL_LAST_FORCE :
 			   TC_HTB_LEAF_DEL_LAST,
 		.classid = cl->common.classid,
 		.extack = extack,
-	};
+	पूर्ण;
 	err = htb_offload(qdisc_dev(sch), &offload_opt);
 
-	if (!err || destroying)
+	अगर (!err || destroying)
 		qdisc_put(old);
-	else
+	अन्यथा
 		htb_graft_helper(q->dev_queue, old);
 
-	if (last_child)
-		return err;
+	अगर (last_child)
+		वापस err;
 
-	if (!err && offload_opt.moved_qid != 0) {
-		if (destroying)
+	अगर (!err && offload_opt.moved_qid != 0) अणु
+		अगर (destroying)
 			q->dev_queue = netdev_get_tx_queue(qdisc_dev(sch),
 							   offload_opt.qid);
-		else
+		अन्यथा
 			htb_offload_move_qdisc(sch, offload_opt.moved_qid,
 					       offload_opt.qid);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void htb_destroy_class(struct Qdisc *sch, struct htb_class *cl)
-{
-	if (!cl->level) {
+अटल व्योम htb_destroy_class(काष्ठा Qdisc *sch, काष्ठा htb_class *cl)
+अणु
+	अगर (!cl->level) अणु
 		WARN_ON(!cl->leaf.q);
 		qdisc_put(cl->leaf.q);
-	}
-	gen_kill_estimator(&cl->rate_est);
+	पूर्ण
+	gen_समाप्त_estimator(&cl->rate_est);
 	tcf_block_put(cl->block);
-	kfree(cl);
-}
+	kमुक्त(cl);
+पूर्ण
 
-static void htb_destroy(struct Qdisc *sch)
-{
-	struct net_device *dev = qdisc_dev(sch);
-	struct tc_htb_qopt_offload offload_opt;
-	struct htb_sched *q = qdisc_priv(sch);
-	struct hlist_node *next;
+अटल व्योम htb_destroy(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा tc_htb_qopt_offload offload_opt;
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा hlist_node *next;
 	bool nonempty, changed;
-	struct htb_class *cl;
-	unsigned int i;
+	काष्ठा htb_class *cl;
+	अचिन्हित पूर्णांक i;
 
 	cancel_work_sync(&q->work);
-	qdisc_watchdog_cancel(&q->watchdog);
+	qdisc_watchकरोg_cancel(&q->watchकरोg);
 	/* This line used to be after htb_destroy_class call below
 	 * and surprisingly it worked in 2.4. But it must precede it
 	 * because filter need its target class alive to be able to call
@@ -1582,321 +1583,321 @@ static void htb_destroy(struct Qdisc *sch)
 	 */
 	tcf_block_put(q->block);
 
-	for (i = 0; i < q->clhash.hashsize; i++) {
-		hlist_for_each_entry(cl, &q->clhash.hash[i], common.hnode) {
+	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
+		hlist_क्रम_each_entry(cl, &q->clhash.hash[i], common.hnode) अणु
 			tcf_block_put(cl->block);
-			cl->block = NULL;
-		}
-	}
+			cl->block = शून्य;
+		पूर्ण
+	पूर्ण
 
-	do {
+	करो अणु
 		nonempty = false;
 		changed = false;
-		for (i = 0; i < q->clhash.hashsize; i++) {
-			hlist_for_each_entry_safe(cl, next, &q->clhash.hash[i],
-						  common.hnode) {
+		क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
+			hlist_क्रम_each_entry_safe(cl, next, &q->clhash.hash[i],
+						  common.hnode) अणु
 				bool last_child;
 
-				if (!q->offload) {
+				अगर (!q->offload) अणु
 					htb_destroy_class(sch, cl);
-					continue;
-				}
+					जारी;
+				पूर्ण
 
 				nonempty = true;
 
-				if (cl->level)
-					continue;
+				अगर (cl->level)
+					जारी;
 
 				changed = true;
 
 				last_child = htb_parent_last_child(cl);
 				htb_destroy_class_offload(sch, cl, last_child,
-							  true, NULL);
-				qdisc_class_hash_remove(&q->clhash,
+							  true, शून्य);
+				qdisc_class_hash_हटाओ(&q->clhash,
 							&cl->common);
-				if (cl->parent)
+				अगर (cl->parent)
 					cl->parent->children--;
-				if (last_child)
-					htb_parent_to_leaf(sch, cl, NULL);
+				अगर (last_child)
+					htb_parent_to_leaf(sch, cl, शून्य);
 				htb_destroy_class(sch, cl);
-			}
-		}
-	} while (changed);
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (changed);
 	WARN_ON(nonempty);
 
 	qdisc_class_hash_destroy(&q->clhash);
 	__qdisc_reset_queue(&q->direct_queue);
 
-	if (!q->offload)
-		return;
+	अगर (!q->offload)
+		वापस;
 
-	offload_opt = (struct tc_htb_qopt_offload) {
+	offload_opt = (काष्ठा tc_htb_qopt_offload) अणु
 		.command = TC_HTB_DESTROY,
-	};
+	पूर्ण;
 	htb_offload(dev, &offload_opt);
 
-	if (!q->direct_qdiscs)
-		return;
-	for (i = 0; i < q->num_direct_qdiscs && q->direct_qdiscs[i]; i++)
+	अगर (!q->direct_qdiscs)
+		वापस;
+	क्रम (i = 0; i < q->num_direct_qdiscs && q->direct_qdiscs[i]; i++)
 		qdisc_put(q->direct_qdiscs[i]);
-	kfree(q->direct_qdiscs);
-}
+	kमुक्त(q->direct_qdiscs);
+पूर्ण
 
-static int htb_delete(struct Qdisc *sch, unsigned long arg,
-		      struct netlink_ext_ack *extack)
-{
-	struct htb_sched *q = qdisc_priv(sch);
-	struct htb_class *cl = (struct htb_class *)arg;
-	struct Qdisc *new_q = NULL;
-	int last_child = 0;
-	int err;
+अटल पूर्णांक htb_delete(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
+		      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा htb_class *cl = (काष्ठा htb_class *)arg;
+	काष्ठा Qdisc *new_q = शून्य;
+	पूर्णांक last_child = 0;
+	पूर्णांक err;
 
-	/* TODO: why don't allow to delete subtree ? references ? does
+	/* TODO: why करोn't allow to delete subtree ? references ? करोes
 	 * tc subsys guarantee us that in htb_destroy it holds no class
-	 * refs so that we can remove children safely there ?
+	 * refs so that we can हटाओ children safely there ?
 	 */
-	if (cl->children || cl->filter_cnt)
-		return -EBUSY;
+	अगर (cl->children || cl->filter_cnt)
+		वापस -EBUSY;
 
-	if (!cl->level && htb_parent_last_child(cl))
+	अगर (!cl->level && htb_parent_last_child(cl))
 		last_child = 1;
 
-	if (q->offload) {
+	अगर (q->offload) अणु
 		err = htb_destroy_class_offload(sch, cl, last_child, false,
 						extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (last_child) {
-		struct netdev_queue *dev_queue;
+	अगर (last_child) अणु
+		काष्ठा netdev_queue *dev_queue;
 
 		dev_queue = q->offload ? cl->leaf.q->dev_queue : sch->dev_queue;
-		new_q = qdisc_create_dflt(dev_queue, &pfifo_qdisc_ops,
+		new_q = qdisc_create_dflt(dev_queue, &pfअगरo_qdisc_ops,
 					  cl->parent->common.classid,
-					  NULL);
-		if (q->offload) {
-			if (new_q)
+					  शून्य);
+		अगर (q->offload) अणु
+			अगर (new_q)
 				htb_set_lockdep_class_child(new_q);
 			htb_parent_to_leaf_offload(sch, dev_queue, new_q);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	sch_tree_lock(sch);
 
-	if (!cl->level)
+	अगर (!cl->level)
 		qdisc_purge_queue(cl->leaf.q);
 
-	/* delete from hash and active; remainder in destroy_class */
-	qdisc_class_hash_remove(&q->clhash, &cl->common);
-	if (cl->parent)
+	/* delete from hash and active; reमुख्यder in destroy_class */
+	qdisc_class_hash_हटाओ(&q->clhash, &cl->common);
+	अगर (cl->parent)
 		cl->parent->children--;
 
-	if (cl->prio_activity)
+	अगर (cl->prio_activity)
 		htb_deactivate(q, cl);
 
-	if (cl->cmode != HTB_CAN_SEND)
+	अगर (cl->cmode != HTB_CAN_SEND)
 		htb_safe_rb_erase(&cl->pq_node,
-				  &q->hlevel[cl->level].wait_pq);
+				  &q->hlevel[cl->level].रुको_pq);
 
-	if (last_child)
+	अगर (last_child)
 		htb_parent_to_leaf(sch, cl, new_q);
 
 	sch_tree_unlock(sch);
 
 	htb_destroy_class(sch, cl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int htb_change_class(struct Qdisc *sch, u32 classid,
-			    u32 parentid, struct nlattr **tca,
-			    unsigned long *arg, struct netlink_ext_ack *extack)
-{
-	int err = -EINVAL;
-	struct htb_sched *q = qdisc_priv(sch);
-	struct htb_class *cl = (struct htb_class *)*arg, *parent;
-	struct tc_htb_qopt_offload offload_opt;
-	struct nlattr *opt = tca[TCA_OPTIONS];
-	struct nlattr *tb[TCA_HTB_MAX + 1];
-	struct Qdisc *parent_qdisc = NULL;
-	struct netdev_queue *dev_queue;
-	struct tc_htb_opt *hopt;
-	u64 rate64, ceil64;
-	int warn = 0;
+अटल पूर्णांक htb_change_class(काष्ठा Qdisc *sch, u32 classid,
+			    u32 parentid, काष्ठा nlattr **tca,
+			    अचिन्हित दीर्घ *arg, काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err = -EINVAL;
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा htb_class *cl = (काष्ठा htb_class *)*arg, *parent;
+	काष्ठा tc_htb_qopt_offload offload_opt;
+	काष्ठा nlattr *opt = tca[TCA_OPTIONS];
+	काष्ठा nlattr *tb[TCA_HTB_MAX + 1];
+	काष्ठा Qdisc *parent_qdisc = शून्य;
+	काष्ठा netdev_queue *dev_queue;
+	काष्ठा tc_htb_opt *hopt;
+	u64 rate64, उच्चमान64;
+	पूर्णांक warn = 0;
 
 	/* extract all subattrs from opt attr */
-	if (!opt)
-		goto failure;
+	अगर (!opt)
+		जाओ failure;
 
 	err = nla_parse_nested_deprecated(tb, TCA_HTB_MAX, opt, htb_policy,
-					  NULL);
-	if (err < 0)
-		goto failure;
+					  शून्य);
+	अगर (err < 0)
+		जाओ failure;
 
 	err = -EINVAL;
-	if (tb[TCA_HTB_PARMS] == NULL)
-		goto failure;
+	अगर (tb[TCA_HTB_PARMS] == शून्य)
+		जाओ failure;
 
-	parent = parentid == TC_H_ROOT ? NULL : htb_find(parentid, sch);
+	parent = parentid == TC_H_ROOT ? शून्य : htb_find(parentid, sch);
 
 	hopt = nla_data(tb[TCA_HTB_PARMS]);
-	if (!hopt->rate.rate || !hopt->ceil.rate)
-		goto failure;
+	अगर (!hopt->rate.rate || !hopt->उच्चमान.rate)
+		जाओ failure;
 
 	/* Keeping backward compatible with rate_table based iproute2 tc */
-	if (hopt->rate.linklayer == TC_LINKLAYER_UNAWARE)
+	अगर (hopt->rate.linklayer == TC_LINKLAYER_UNAWARE)
 		qdisc_put_rtab(qdisc_get_rtab(&hopt->rate, tb[TCA_HTB_RTAB],
-					      NULL));
+					      शून्य));
 
-	if (hopt->ceil.linklayer == TC_LINKLAYER_UNAWARE)
-		qdisc_put_rtab(qdisc_get_rtab(&hopt->ceil, tb[TCA_HTB_CTAB],
-					      NULL));
+	अगर (hopt->उच्चमान.linklayer == TC_LINKLAYER_UNAWARE)
+		qdisc_put_rtab(qdisc_get_rtab(&hopt->उच्चमान, tb[TCA_HTB_CTAB],
+					      शून्य));
 
 	rate64 = tb[TCA_HTB_RATE64] ? nla_get_u64(tb[TCA_HTB_RATE64]) : 0;
-	ceil64 = tb[TCA_HTB_CEIL64] ? nla_get_u64(tb[TCA_HTB_CEIL64]) : 0;
+	उच्चमान64 = tb[TCA_HTB_CEIL64] ? nla_get_u64(tb[TCA_HTB_CEIL64]) : 0;
 
-	if (!cl) {		/* new class */
-		struct net_device *dev = qdisc_dev(sch);
-		struct Qdisc *new_q, *old_q;
-		int prio;
-		struct {
-			struct nlattr		nla;
-			struct gnet_estimator	opt;
-		} est = {
-			.nla = {
-				.nla_len	= nla_attr_size(sizeof(est.opt)),
+	अगर (!cl) अणु		/* new class */
+		काष्ठा net_device *dev = qdisc_dev(sch);
+		काष्ठा Qdisc *new_q, *old_q;
+		पूर्णांक prio;
+		काष्ठा अणु
+			काष्ठा nlattr		nla;
+			काष्ठा gnet_estimator	opt;
+		पूर्ण est = अणु
+			.nla = अणु
+				.nla_len	= nla_attr_size(माप(est.opt)),
 				.nla_type	= TCA_RATE,
-			},
-			.opt = {
-				/* 4s interval, 16s averaging constant */
-				.interval	= 2,
+			पूर्ण,
+			.opt = अणु
+				/* 4s पूर्णांकerval, 16s averaging स्थिरant */
+				.पूर्णांकerval	= 2,
 				.ewma_log	= 2,
-			},
-		};
+			पूर्ण,
+		पूर्ण;
 
-		/* check for valid classid */
-		if (!classid || TC_H_MAJ(classid ^ sch->handle) ||
+		/* check क्रम valid classid */
+		अगर (!classid || TC_H_MAJ(classid ^ sch->handle) ||
 		    htb_find(classid, sch))
-			goto failure;
+			जाओ failure;
 
 		/* check maximal depth */
-		if (parent && parent->parent && parent->parent->level < 2) {
+		अगर (parent && parent->parent && parent->parent->level < 2) अणु
 			pr_err("htb: tree is too deep\n");
-			goto failure;
-		}
+			जाओ failure;
+		पूर्ण
 		err = -ENOBUFS;
-		cl = kzalloc(sizeof(*cl), GFP_KERNEL);
-		if (!cl)
-			goto failure;
+		cl = kzalloc(माप(*cl), GFP_KERNEL);
+		अगर (!cl)
+			जाओ failure;
 
 		err = tcf_block_get(&cl->block, &cl->filter_list, sch, extack);
-		if (err) {
-			kfree(cl);
-			goto failure;
-		}
-		if (htb_rate_est || tca[TCA_RATE]) {
-			err = gen_new_estimator(&cl->bstats, NULL,
+		अगर (err) अणु
+			kमुक्त(cl);
+			जाओ failure;
+		पूर्ण
+		अगर (htb_rate_est || tca[TCA_RATE]) अणु
+			err = gen_new_estimator(&cl->bstats, शून्य,
 						&cl->rate_est,
-						NULL,
+						शून्य,
 						qdisc_root_sleeping_running(sch),
 						tca[TCA_RATE] ? : &est.nla);
-			if (err)
-				goto err_block_put;
-		}
+			अगर (err)
+				जाओ err_block_put;
+		पूर्ण
 
 		cl->children = 0;
 		RB_CLEAR_NODE(&cl->pq_node);
 
-		for (prio = 0; prio < TC_HTB_NUMPRIO; prio++)
+		क्रम (prio = 0; prio < TC_HTB_NUMPRIO; prio++)
 			RB_CLEAR_NODE(&cl->node[prio]);
 
 		cl->common.classid = classid;
 
-		/* Make sure nothing interrupts us in between of two
-		 * ndo_setup_tc calls.
+		/* Make sure nothing पूर्णांकerrupts us in between of two
+		 * nकरो_setup_tc calls.
 		 */
 		ASSERT_RTNL();
 
-		/* create leaf qdisc early because it uses kmalloc(GFP_KERNEL)
+		/* create leaf qdisc early because it uses kदो_स्मृति(GFP_KERNEL)
 		 * so that can't be used inside of sch_tree_lock
 		 * -- thanks to Karlis Peisenieks
 		 */
-		if (!q->offload) {
+		अगर (!q->offload) अणु
 			dev_queue = sch->dev_queue;
-		} else if (!(parent && !parent->level)) {
+		पूर्ण अन्यथा अगर (!(parent && !parent->level)) अणु
 			/* Assign a dev_queue to this classid. */
-			offload_opt = (struct tc_htb_qopt_offload) {
+			offload_opt = (काष्ठा tc_htb_qopt_offload) अणु
 				.command = TC_HTB_LEAF_ALLOC_QUEUE,
 				.classid = cl->common.classid,
 				.parent_classid = parent ?
 					TC_H_MIN(parent->common.classid) :
 					TC_HTB_CLASSID_ROOT,
 				.rate = max_t(u64, hopt->rate.rate, rate64),
-				.ceil = max_t(u64, hopt->ceil.rate, ceil64),
+				.उच्चमान = max_t(u64, hopt->उच्चमान.rate, उच्चमान64),
 				.extack = extack,
-			};
+			पूर्ण;
 			err = htb_offload(dev, &offload_opt);
-			if (err) {
+			अगर (err) अणु
 				pr_err("htb: TC_HTB_LEAF_ALLOC_QUEUE failed with err = %d\n",
 				       err);
-				goto err_kill_estimator;
-			}
+				जाओ err_समाप्त_estimator;
+			पूर्ण
 			dev_queue = netdev_get_tx_queue(dev, offload_opt.qid);
-		} else { /* First child. */
+		पूर्ण अन्यथा अणु /* First child. */
 			dev_queue = parent->leaf.q->dev_queue;
-			old_q = htb_graft_helper(dev_queue, NULL);
+			old_q = htb_graft_helper(dev_queue, शून्य);
 			WARN_ON(old_q != parent->leaf.q);
-			offload_opt = (struct tc_htb_qopt_offload) {
+			offload_opt = (काष्ठा tc_htb_qopt_offload) अणु
 				.command = TC_HTB_LEAF_TO_INNER,
 				.classid = cl->common.classid,
 				.parent_classid =
 					TC_H_MIN(parent->common.classid),
 				.rate = max_t(u64, hopt->rate.rate, rate64),
-				.ceil = max_t(u64, hopt->ceil.rate, ceil64),
+				.उच्चमान = max_t(u64, hopt->उच्चमान.rate, उच्चमान64),
 				.extack = extack,
-			};
+			पूर्ण;
 			err = htb_offload(dev, &offload_opt);
-			if (err) {
+			अगर (err) अणु
 				pr_err("htb: TC_HTB_LEAF_TO_INNER failed with err = %d\n",
 				       err);
 				htb_graft_helper(dev_queue, old_q);
-				goto err_kill_estimator;
-			}
+				जाओ err_समाप्त_estimator;
+			पूर्ण
 			parent->bstats_bias.bytes += old_q->bstats.bytes;
 			parent->bstats_bias.packets += old_q->bstats.packets;
 			qdisc_put(old_q);
-		}
-		new_q = qdisc_create_dflt(dev_queue, &pfifo_qdisc_ops,
-					  classid, NULL);
-		if (q->offload) {
-			if (new_q) {
+		पूर्ण
+		new_q = qdisc_create_dflt(dev_queue, &pfअगरo_qdisc_ops,
+					  classid, शून्य);
+		अगर (q->offload) अणु
+			अगर (new_q) अणु
 				htb_set_lockdep_class_child(new_q);
-				/* One ref for cl->leaf.q, the other for
+				/* One ref क्रम cl->leaf.q, the other क्रम
 				 * dev_queue->qdisc.
 				 */
 				qdisc_refcount_inc(new_q);
-			}
+			पूर्ण
 			old_q = htb_graft_helper(dev_queue, new_q);
 			/* No qdisc_put needed. */
 			WARN_ON(!(old_q->flags & TCQ_F_BUILTIN));
-		}
+		पूर्ण
 		sch_tree_lock(sch);
-		if (parent && !parent->level) {
-			/* turn parent into inner node */
+		अगर (parent && !parent->level) अणु
+			/* turn parent पूर्णांकo inner node */
 			qdisc_purge_queue(parent->leaf.q);
 			parent_qdisc = parent->leaf.q;
-			if (parent->prio_activity)
+			अगर (parent->prio_activity)
 				htb_deactivate(q, parent);
 
-			/* remove from evt list because of level change */
-			if (parent->cmode != HTB_CAN_SEND) {
-				htb_safe_rb_erase(&parent->pq_node, &q->hlevel[0].wait_pq);
+			/* हटाओ from evt list because of level change */
+			अगर (parent->cmode != HTB_CAN_SEND) अणु
+				htb_safe_rb_erase(&parent->pq_node, &q->hlevel[0].रुको_pq);
 				parent->cmode = HTB_CAN_SEND;
-			}
+			पूर्ण
 			parent->level = (parent->parent ? parent->parent->level
 					 : TC_HTB_MAXDEPTH) - 1;
-			memset(&parent->inner, 0, sizeof(parent->inner));
-		}
+			स_रखो(&parent->inner, 0, माप(parent->inner));
+		पूर्ण
 
 		/* leaf (we) needs elementary qdisc */
 		cl->leaf.q = new_q ? new_q : &noop_qdisc;
@@ -1907,75 +1908,75 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 		cl->tokens = PSCHED_TICKS2NS(hopt->buffer);
 		cl->ctokens = PSCHED_TICKS2NS(hopt->cbuffer);
 		cl->mbuffer = 60ULL * NSEC_PER_SEC;	/* 1min */
-		cl->t_c = ktime_get_ns();
+		cl->t_c = kसमय_get_ns();
 		cl->cmode = HTB_CAN_SEND;
 
 		/* attach to the hash list and parent's family */
 		qdisc_class_hash_insert(&q->clhash, &cl->common);
-		if (parent)
+		अगर (parent)
 			parent->children++;
-		if (cl->leaf.q != &noop_qdisc)
+		अगर (cl->leaf.q != &noop_qdisc)
 			qdisc_hash_add(cl->leaf.q, true);
-	} else {
-		if (tca[TCA_RATE]) {
-			err = gen_replace_estimator(&cl->bstats, NULL,
+	पूर्ण अन्यथा अणु
+		अगर (tca[TCA_RATE]) अणु
+			err = gen_replace_estimator(&cl->bstats, शून्य,
 						    &cl->rate_est,
-						    NULL,
+						    शून्य,
 						    qdisc_root_sleeping_running(sch),
 						    tca[TCA_RATE]);
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
-		if (q->offload) {
-			struct net_device *dev = qdisc_dev(sch);
+		अगर (q->offload) अणु
+			काष्ठा net_device *dev = qdisc_dev(sch);
 
-			offload_opt = (struct tc_htb_qopt_offload) {
+			offload_opt = (काष्ठा tc_htb_qopt_offload) अणु
 				.command = TC_HTB_NODE_MODIFY,
 				.classid = cl->common.classid,
 				.rate = max_t(u64, hopt->rate.rate, rate64),
-				.ceil = max_t(u64, hopt->ceil.rate, ceil64),
+				.उच्चमान = max_t(u64, hopt->उच्चमान.rate, उच्चमान64),
 				.extack = extack,
-			};
+			पूर्ण;
 			err = htb_offload(dev, &offload_opt);
-			if (err)
+			अगर (err)
 				/* Estimator was replaced, and rollback may fail
-				 * as well, so we don't try to recover it, and
+				 * as well, so we करोn't try to recover it, and
 				 * the estimator won't work property with the
 				 * offload anyway, because bstats are updated
 				 * only when the stats are queried.
 				 */
-				return err;
-		}
+				वापस err;
+		पूर्ण
 
 		sch_tree_lock(sch);
-	}
+	पूर्ण
 
 	psched_ratecfg_precompute(&cl->rate, &hopt->rate, rate64);
-	psched_ratecfg_precompute(&cl->ceil, &hopt->ceil, ceil64);
+	psched_ratecfg_precompute(&cl->उच्चमान, &hopt->उच्चमान, उच्चमान64);
 
 	/* it used to be a nasty bug here, we have to check that node
-	 * is really leaf before changing cl->leaf !
+	 * is really leaf beक्रमe changing cl->leaf !
 	 */
-	if (!cl->level) {
+	अगर (!cl->level) अणु
 		u64 quantum = cl->rate.rate_bytes_ps;
 
-		do_div(quantum, q->rate2quantum);
-		cl->quantum = min_t(u64, quantum, INT_MAX);
+		करो_भाग(quantum, q->rate2quantum);
+		cl->quantum = min_t(u64, quantum, पूर्णांक_उच्च);
 
-		if (!hopt->quantum && cl->quantum < 1000) {
+		अगर (!hopt->quantum && cl->quantum < 1000) अणु
 			warn = -1;
 			cl->quantum = 1000;
-		}
-		if (!hopt->quantum && cl->quantum > 200000) {
+		पूर्ण
+		अगर (!hopt->quantum && cl->quantum > 200000) अणु
 			warn = 1;
 			cl->quantum = 200000;
-		}
-		if (hopt->quantum)
+		पूर्ण
+		अगर (hopt->quantum)
 			cl->quantum = hopt->quantum;
-		if ((cl->prio = hopt->prio) >= TC_HTB_NUMPRIO)
+		अगर ((cl->prio = hopt->prio) >= TC_HTB_NUMPRIO)
 			cl->prio = TC_HTB_NUMPRIO - 1;
-	}
+	पूर्ण
 
 	cl->buffer = PSCHED_TICKS2NS(hopt->buffer);
 	cl->cbuffer = PSCHED_TICKS2NS(hopt->cbuffer);
@@ -1983,89 +1984,89 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 	sch_tree_unlock(sch);
 	qdisc_put(parent_qdisc);
 
-	if (warn)
+	अगर (warn)
 		pr_warn("HTB: quantum of class %X is %s. Consider r2q change.\n",
 			    cl->common.classid, (warn == -1 ? "small" : "big"));
 
 	qdisc_class_hash_grow(sch, &q->clhash);
 
-	*arg = (unsigned long)cl;
-	return 0;
+	*arg = (अचिन्हित दीर्घ)cl;
+	वापस 0;
 
-err_kill_estimator:
-	gen_kill_estimator(&cl->rate_est);
+err_समाप्त_estimator:
+	gen_समाप्त_estimator(&cl->rate_est);
 err_block_put:
 	tcf_block_put(cl->block);
-	kfree(cl);
+	kमुक्त(cl);
 failure:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct tcf_block *htb_tcf_block(struct Qdisc *sch, unsigned long arg,
-				       struct netlink_ext_ack *extack)
-{
-	struct htb_sched *q = qdisc_priv(sch);
-	struct htb_class *cl = (struct htb_class *)arg;
+अटल काष्ठा tcf_block *htb_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
+				       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा htb_class *cl = (काष्ठा htb_class *)arg;
 
-	return cl ? cl->block : q->block;
-}
+	वापस cl ? cl->block : q->block;
+पूर्ण
 
-static unsigned long htb_bind_filter(struct Qdisc *sch, unsigned long parent,
+अटल अचिन्हित दीर्घ htb_bind_filter(काष्ठा Qdisc *sch, अचिन्हित दीर्घ parent,
 				     u32 classid)
-{
-	struct htb_class *cl = htb_find(classid, sch);
+अणु
+	काष्ठा htb_class *cl = htb_find(classid, sch);
 
-	/*if (cl && !cl->level) return 0;
+	/*अगर (cl && !cl->level) वापस 0;
 	 * The line above used to be there to prevent attaching filters to
 	 * leaves. But at least tc_index filter uses this just to get class
-	 * for other reasons so that we have to allow for it.
+	 * क्रम other reasons so that we have to allow क्रम it.
 	 * ----
 	 * 19.6.2002 As Werner explained it is ok - bind filter is just
 	 * another way to "lock" the class - unlike "get" this lock can
 	 * be broken by class during destroy IIUC.
 	 */
-	if (cl)
+	अगर (cl)
 		cl->filter_cnt++;
-	return (unsigned long)cl;
-}
+	वापस (अचिन्हित दीर्घ)cl;
+पूर्ण
 
-static void htb_unbind_filter(struct Qdisc *sch, unsigned long arg)
-{
-	struct htb_class *cl = (struct htb_class *)arg;
+अटल व्योम htb_unbind_filter(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा htb_class *cl = (काष्ठा htb_class *)arg;
 
-	if (cl)
+	अगर (cl)
 		cl->filter_cnt--;
-}
+पूर्ण
 
-static void htb_walk(struct Qdisc *sch, struct qdisc_walker *arg)
-{
-	struct htb_sched *q = qdisc_priv(sch);
-	struct htb_class *cl;
-	unsigned int i;
+अटल व्योम htb_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *arg)
+अणु
+	काष्ठा htb_sched *q = qdisc_priv(sch);
+	काष्ठा htb_class *cl;
+	अचिन्हित पूर्णांक i;
 
-	if (arg->stop)
-		return;
+	अगर (arg->stop)
+		वापस;
 
-	for (i = 0; i < q->clhash.hashsize; i++) {
-		hlist_for_each_entry(cl, &q->clhash.hash[i], common.hnode) {
-			if (arg->count < arg->skip) {
+	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
+		hlist_क्रम_each_entry(cl, &q->clhash.hash[i], common.hnode) अणु
+			अगर (arg->count < arg->skip) अणु
 				arg->count++;
-				continue;
-			}
-			if (arg->fn(sch, (unsigned long)cl, arg) < 0) {
+				जारी;
+			पूर्ण
+			अगर (arg->fn(sch, (अचिन्हित दीर्घ)cl, arg) < 0) अणु
 				arg->stop = 1;
-				return;
-			}
+				वापस;
+			पूर्ण
 			arg->count++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static const struct Qdisc_class_ops htb_class_ops = {
+अटल स्थिर काष्ठा Qdisc_class_ops htb_class_ops = अणु
 	.select_queue	=	htb_select_queue,
 	.graft		=	htb_graft,
 	.leaf		=	htb_leaf,
-	.qlen_notify	=	htb_qlen_notify,
+	.qlen_notअगरy	=	htb_qlen_notअगरy,
 	.find		=	htb_search,
 	.change		=	htb_change_class,
 	.delete		=	htb_delete,
@@ -2075,12 +2076,12 @@ static const struct Qdisc_class_ops htb_class_ops = {
 	.unbind_tcf	=	htb_unbind_filter,
 	.dump		=	htb_dump_class,
 	.dump_stats	=	htb_dump_class_stats,
-};
+पूर्ण;
 
-static struct Qdisc_ops htb_qdisc_ops __read_mostly = {
+अटल काष्ठा Qdisc_ops htb_qdisc_ops __पढ़ो_mostly = अणु
 	.cl_ops		=	&htb_class_ops,
 	.id		=	"htb",
-	.priv_size	=	sizeof(struct htb_sched),
+	.priv_size	=	माप(काष्ठा htb_sched),
 	.enqueue	=	htb_enqueue,
 	.dequeue	=	htb_dequeue,
 	.peek		=	qdisc_peek_dequeued,
@@ -2090,17 +2091,17 @@ static struct Qdisc_ops htb_qdisc_ops __read_mostly = {
 	.destroy	=	htb_destroy,
 	.dump		=	htb_dump,
 	.owner		=	THIS_MODULE,
-};
+पूर्ण;
 
-static int __init htb_module_init(void)
-{
-	return register_qdisc(&htb_qdisc_ops);
-}
-static void __exit htb_module_exit(void)
-{
-	unregister_qdisc(&htb_qdisc_ops);
-}
+अटल पूर्णांक __init htb_module_init(व्योम)
+अणु
+	वापस रेजिस्टर_qdisc(&htb_qdisc_ops);
+पूर्ण
+अटल व्योम __निकास htb_module_निकास(व्योम)
+अणु
+	unरेजिस्टर_qdisc(&htb_qdisc_ops);
+पूर्ण
 
 module_init(htb_module_init)
-module_exit(htb_module_exit)
+module_निकास(htb_module_निकास)
 MODULE_LICENSE("GPL");

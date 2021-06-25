@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * clk-da8xx-cfgchip - TI DaVinci DA8xx CFGCHIP clock driver
+ * clk-da8xx-cfgchip - TI DaVinci DA8xx CFGCHIP घड़ी driver
  *
  * Copyright (C) 2018 David Lechner <david@lechnology.com>
  */
 
-#ifndef __LINUX_PLATFORM_DATA_CLK_DA8XX_CFGCHIP_H__
-#define __LINUX_PLATFORM_DATA_CLK_DA8XX_CFGCHIP_H__
+#अगर_अघोषित __LINUX_PLATFORM_DATA_CLK_DA8XX_CFGCHIP_H__
+#घोषणा __LINUX_PLATFORM_DATA_CLK_DA8XX_CFGCHIP_H__
 
-#include <linux/regmap.h>
+#समावेश <linux/regmap.h>
 
 /**
- * da8xx_cfgchip_clk_platform_data
+ * da8xx_cfgchip_clk_platक्रमm_data
  * @cfgchip: CFGCHIP syscon regmap
  */
-struct da8xx_cfgchip_clk_platform_data {
-	struct regmap *cfgchip;
-};
+काष्ठा da8xx_cfgchip_clk_platक्रमm_data अणु
+	काष्ठा regmap *cfgchip;
+पूर्ण;
 
-#endif /* __LINUX_PLATFORM_DATA_CLK_DA8XX_CFGCHIP_H__ */
+#पूर्ण_अगर /* __LINUX_PLATFORM_DATA_CLK_DA8XX_CFGCHIP_H__ */

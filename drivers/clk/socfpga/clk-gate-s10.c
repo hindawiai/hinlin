@@ -1,81 +1,82 @@
-// SPDX-License-Identifier:	GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier:	GPL-2.0
 /*
  * Copyright (C) 2017, Intel Corporation
  */
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include "stratix10-clk.h"
-#include "clk.h"
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश "stratix10-clk.h"
+#समावेश "clk.h"
 
-#define SOCFPGA_CS_PDBG_CLK	"cs_pdbg_clk"
-#define to_socfpga_gate_clk(p) container_of(p, struct socfpga_gate_clk, hw.hw)
+#घोषणा SOCFPGA_CS_PDBG_CLK	"cs_pdbg_clk"
+#घोषणा to_socfpga_gate_clk(p) container_of(p, काष्ठा socfpga_gate_clk, hw.hw)
 
-static unsigned long socfpga_gate_clk_recalc_rate(struct clk_hw *hwclk,
-						  unsigned long parent_rate)
-{
-	struct socfpga_gate_clk *socfpgaclk = to_socfpga_gate_clk(hwclk);
-	u32 div = 1, val;
+अटल अचिन्हित दीर्घ socfpga_gate_clk_recalc_rate(काष्ठा clk_hw *hwclk,
+						  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा socfpga_gate_clk *socfpgaclk = to_socfpga_gate_clk(hwclk);
+	u32 भाग = 1, val;
 
-	if (socfpgaclk->fixed_div) {
-		div = socfpgaclk->fixed_div;
-	} else if (socfpgaclk->div_reg) {
-		val = readl(socfpgaclk->div_reg) >> socfpgaclk->shift;
+	अगर (socfpgaclk->fixed_भाग) अणु
+		भाग = socfpgaclk->fixed_भाग;
+	पूर्ण अन्यथा अगर (socfpgaclk->भाग_reg) अणु
+		val = पढ़ोl(socfpgaclk->भाग_reg) >> socfpgaclk->shअगरt;
 		val &= GENMASK(socfpgaclk->width - 1, 0);
-		div = (1 << val);
-	}
-	return parent_rate / div;
-}
+		भाग = (1 << val);
+	पूर्ण
+	वापस parent_rate / भाग;
+पूर्ण
 
-static unsigned long socfpga_dbg_clk_recalc_rate(struct clk_hw *hwclk,
-						  unsigned long parent_rate)
-{
-	struct socfpga_gate_clk *socfpgaclk = to_socfpga_gate_clk(hwclk);
-	u32 div, val;
+अटल अचिन्हित दीर्घ socfpga_dbg_clk_recalc_rate(काष्ठा clk_hw *hwclk,
+						  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा socfpga_gate_clk *socfpgaclk = to_socfpga_gate_clk(hwclk);
+	u32 भाग, val;
 
-	val = readl(socfpgaclk->div_reg) >> socfpgaclk->shift;
+	val = पढ़ोl(socfpgaclk->भाग_reg) >> socfpgaclk->shअगरt;
 	val &= GENMASK(socfpgaclk->width - 1, 0);
-	div = (1 << val);
-	div = div ? 4 : 1;
+	भाग = (1 << val);
+	भाग = भाग ? 4 : 1;
 
-	return parent_rate / div;
-}
+	वापस parent_rate / भाग;
+पूर्ण
 
-static u8 socfpga_gate_get_parent(struct clk_hw *hwclk)
-{
-	struct socfpga_gate_clk *socfpgaclk = to_socfpga_gate_clk(hwclk);
+अटल u8 socfpga_gate_get_parent(काष्ठा clk_hw *hwclk)
+अणु
+	काष्ठा socfpga_gate_clk *socfpgaclk = to_socfpga_gate_clk(hwclk);
 	u32 mask;
 	u8 parent = 0;
 
-	if (socfpgaclk->bypass_reg) {
-		mask = (0x1 << socfpgaclk->bypass_shift);
-		parent = ((readl(socfpgaclk->bypass_reg) & mask) >>
-			  socfpgaclk->bypass_shift);
-	}
-	return parent;
-}
+	अगर (socfpgaclk->bypass_reg) अणु
+		mask = (0x1 << socfpgaclk->bypass_shअगरt);
+		parent = ((पढ़ोl(socfpgaclk->bypass_reg) & mask) >>
+			  socfpgaclk->bypass_shअगरt);
+	पूर्ण
+	वापस parent;
+पूर्ण
 
-static struct clk_ops gateclk_ops = {
+अटल काष्ठा clk_ops gateclk_ops = अणु
 	.recalc_rate = socfpga_gate_clk_recalc_rate,
 	.get_parent = socfpga_gate_get_parent,
-};
+पूर्ण;
 
-static const struct clk_ops dbgclk_ops = {
+अटल स्थिर काष्ठा clk_ops dbgclk_ops = अणु
 	.recalc_rate = socfpga_dbg_clk_recalc_rate,
 	.get_parent = socfpga_gate_get_parent,
-};
+पूर्ण;
 
-struct clk_hw *s10_register_gate(const struct stratix10_gate_clock *clks, void __iomem *regbase)
-{
-	struct clk_hw *hw_clk;
-	struct socfpga_gate_clk *socfpga_clk;
-	struct clk_init_data init;
-	const char *parent_name = clks->parent_name;
-	int ret;
+काष्ठा clk_hw *s10_रेजिस्टर_gate(स्थिर काष्ठा stratix10_gate_घड़ी *clks, व्योम __iomem *regbase)
+अणु
+	काष्ठा clk_hw *hw_clk;
+	काष्ठा socfpga_gate_clk *socfpga_clk;
+	काष्ठा clk_init_data init;
+	स्थिर अक्षर *parent_name = clks->parent_name;
+	पूर्णांक ret;
 
-	socfpga_clk = kzalloc(sizeof(*socfpga_clk), GFP_KERNEL);
-	if (!socfpga_clk)
-		return NULL;
+	socfpga_clk = kzalloc(माप(*socfpga_clk), GFP_KERNEL);
+	अगर (!socfpga_clk)
+		वापस शून्य;
 
 	socfpga_clk->hw.reg = regbase + clks->gate_reg;
 	socfpga_clk->hw.bit_idx = clks->gate_idx;
@@ -83,42 +84,42 @@ struct clk_hw *s10_register_gate(const struct stratix10_gate_clock *clks, void _
 	gateclk_ops.enable = clk_gate_ops.enable;
 	gateclk_ops.disable = clk_gate_ops.disable;
 
-	socfpga_clk->fixed_div = clks->fixed_div;
+	socfpga_clk->fixed_भाग = clks->fixed_भाग;
 
-	if (clks->div_reg)
-		socfpga_clk->div_reg = regbase + clks->div_reg;
-	else
-		socfpga_clk->div_reg = NULL;
+	अगर (clks->भाग_reg)
+		socfpga_clk->भाग_reg = regbase + clks->भाग_reg;
+	अन्यथा
+		socfpga_clk->भाग_reg = शून्य;
 
-	socfpga_clk->width = clks->div_width;
-	socfpga_clk->shift = clks->div_offset;
+	socfpga_clk->width = clks->भाग_width;
+	socfpga_clk->shअगरt = clks->भाग_offset;
 
-	if (clks->bypass_reg)
+	अगर (clks->bypass_reg)
 		socfpga_clk->bypass_reg = regbase + clks->bypass_reg;
-	else
-		socfpga_clk->bypass_reg = NULL;
-	socfpga_clk->bypass_shift = clks->bypass_shift;
+	अन्यथा
+		socfpga_clk->bypass_reg = शून्य;
+	socfpga_clk->bypass_shअगरt = clks->bypass_shअगरt;
 
-	if (streq(clks->name, "cs_pdbg_clk"))
+	अगर (streq(clks->name, "cs_pdbg_clk"))
 		init.ops = &dbgclk_ops;
-	else
+	अन्यथा
 		init.ops = &gateclk_ops;
 
 	init.name = clks->name;
 	init.flags = clks->flags;
 
 	init.num_parents = clks->num_parents;
-	init.parent_names = parent_name ? &parent_name : NULL;
-	if (init.parent_names == NULL)
+	init.parent_names = parent_name ? &parent_name : शून्य;
+	अगर (init.parent_names == शून्य)
 		init.parent_data = clks->parent_data;
 	socfpga_clk->hw.hw.init = &init;
 
 	hw_clk = &socfpga_clk->hw.hw;
 
-	ret = clk_hw_register(NULL, &socfpga_clk->hw.hw);
-	if (ret) {
-		kfree(socfpga_clk);
-		return ERR_PTR(ret);
-	}
-	return hw_clk;
-}
+	ret = clk_hw_रेजिस्टर(शून्य, &socfpga_clk->hw.hw);
+	अगर (ret) अणु
+		kमुक्त(socfpga_clk);
+		वापस ERR_PTR(ret);
+	पूर्ण
+	वापस hw_clk;
+पूर्ण

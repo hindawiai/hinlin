@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
  * Copyright (C) 2013-2019 NVIDIA Corporation.
  * Copyright (C) 2015 Rob Clark
  */
 
-#ifndef DRM_TEGRA_DP_H
-#define DRM_TEGRA_DP_H 1
+#अगर_अघोषित DRM_TEGRA_DP_H
+#घोषणा DRM_TEGRA_DP_H 1
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_display_info;
-struct drm_display_mode;
-struct drm_dp_aux;
-struct drm_dp_link;
+काष्ठा drm_display_info;
+काष्ठा drm_display_mode;
+काष्ठा drm_dp_aux;
+काष्ठा drm_dp_link;
 
 /**
- * struct drm_dp_link_caps - DP link capabilities
+ * काष्ठा drm_dp_link_caps - DP link capabilities
  */
-struct drm_dp_link_caps {
+काष्ठा drm_dp_link_caps अणु
 	/**
 	 * @enhanced_framing:
 	 *
@@ -28,14 +29,14 @@ struct drm_dp_link_caps {
 	/**
 	 * tps3_supported:
 	 *
-	 * training pattern sequence 3 supported for equalization
+	 * training pattern sequence 3 supported क्रम equalization
 	 */
 	bool tps3_supported;
 
 	/**
 	 * @fast_training:
 	 *
-	 * AUX CH handshake not required for link training
+	 * AUX CH handshake not required क्रम link training
 	 */
 	bool fast_training;
 
@@ -52,126 +53,126 @@ struct drm_dp_link_caps {
 	 * eDP alternate scrambler reset capability
 	 */
 	bool alternate_scrambler_reset;
-};
+पूर्ण;
 
-void drm_dp_link_caps_copy(struct drm_dp_link_caps *dest,
-			   const struct drm_dp_link_caps *src);
+व्योम drm_dp_link_caps_copy(काष्ठा drm_dp_link_caps *dest,
+			   स्थिर काष्ठा drm_dp_link_caps *src);
 
 /**
- * struct drm_dp_link_ops - DP link operations
+ * काष्ठा drm_dp_link_ops - DP link operations
  */
-struct drm_dp_link_ops {
+काष्ठा drm_dp_link_ops अणु
 	/**
 	 * @apply_training:
 	 */
-	int (*apply_training)(struct drm_dp_link *link);
+	पूर्णांक (*apply_training)(काष्ठा drm_dp_link *link);
 
 	/**
 	 * @configure:
 	 */
-	int (*configure)(struct drm_dp_link *link);
-};
+	पूर्णांक (*configure)(काष्ठा drm_dp_link *link);
+पूर्ण;
 
-#define DP_TRAIN_VOLTAGE_SWING_LEVEL(x) ((x) << 0)
-#define DP_TRAIN_PRE_EMPHASIS_LEVEL(x) ((x) << 3)
-#define DP_LANE_POST_CURSOR(i, x) (((x) & 0x3) << (((i) & 1) << 2))
+#घोषणा DP_TRAIN_VOLTAGE_SWING_LEVEL(x) ((x) << 0)
+#घोषणा DP_TRAIN_PRE_EMPHASIS_LEVEL(x) ((x) << 3)
+#घोषणा DP_LANE_POST_CURSOR(i, x) (((x) & 0x3) << (((i) & 1) << 2))
 
 /**
- * struct drm_dp_link_train_set - link training settings
+ * काष्ठा drm_dp_link_train_set - link training settings
  * @voltage_swing: per-lane voltage swing
  * @pre_emphasis: per-lane pre-emphasis
  * @post_cursor: per-lane post-cursor
  */
-struct drm_dp_link_train_set {
-	unsigned int voltage_swing[4];
-	unsigned int pre_emphasis[4];
-	unsigned int post_cursor[4];
-};
+काष्ठा drm_dp_link_train_set अणु
+	अचिन्हित पूर्णांक voltage_swing[4];
+	अचिन्हित पूर्णांक pre_emphasis[4];
+	अचिन्हित पूर्णांक post_cursor[4];
+पूर्ण;
 
 /**
- * struct drm_dp_link_train - link training state information
+ * काष्ठा drm_dp_link_train - link training state inक्रमmation
  * @request: currently requested settings
- * @adjust: adjustments requested by sink
+ * @adjust: adjusपंचांगents requested by sink
  * @pattern: currently requested training pattern
- * @clock_recovered: flag to track if clock recovery has completed
- * @channel_equalized: flag to track if channel equalization has completed
+ * @घड़ी_recovered: flag to track अगर घड़ी recovery has completed
+ * @channel_equalized: flag to track अगर channel equalization has completed
  */
-struct drm_dp_link_train {
-	struct drm_dp_link_train_set request;
-	struct drm_dp_link_train_set adjust;
+काष्ठा drm_dp_link_train अणु
+	काष्ठा drm_dp_link_train_set request;
+	काष्ठा drm_dp_link_train_set adjust;
 
-	unsigned int pattern;
+	अचिन्हित पूर्णांक pattern;
 
-	bool clock_recovered;
+	bool घड़ी_recovered;
 	bool channel_equalized;
-};
+पूर्ण;
 
 /**
- * struct drm_dp_link - DP link capabilities and configuration
- * @revision: DP specification revision supported on the link
- * @max_rate: maximum clock rate supported on the link
+ * काष्ठा drm_dp_link - DP link capabilities and configuration
+ * @revision: DP specअगरication revision supported on the link
+ * @max_rate: maximum घड़ी rate supported on the link
  * @max_lanes: maximum number of lanes supported on the link
  * @caps: capabilities supported on the link (see &drm_dp_link_caps)
- * @aux_rd_interval: AUX read interval to use for training (in microseconds)
+ * @aux_rd_पूर्णांकerval: AUX पढ़ो पूर्णांकerval to use क्रम training (in microseconds)
  * @edp: eDP revision (0x11: eDP 1.1, 0x12: eDP 1.2, ...)
  * @rate: currently configured link rate
  * @lanes: currently configured number of lanes
  * @rates: additional supported link rates in kHz (eDP 1.4)
  * @num_rates: number of additional supported link rates (eDP 1.4)
  */
-struct drm_dp_link {
-	unsigned char revision;
-	unsigned int max_rate;
-	unsigned int max_lanes;
+काष्ठा drm_dp_link अणु
+	अचिन्हित अक्षर revision;
+	अचिन्हित पूर्णांक max_rate;
+	अचिन्हित पूर्णांक max_lanes;
 
-	struct drm_dp_link_caps caps;
+	काष्ठा drm_dp_link_caps caps;
 
 	/**
-	 * @cr: clock recovery read interval
-	 * @ce: channel equalization read interval
+	 * @cr: घड़ी recovery पढ़ो पूर्णांकerval
+	 * @ce: channel equalization पढ़ो पूर्णांकerval
 	 */
-	struct {
-		unsigned int cr;
-		unsigned int ce;
-	} aux_rd_interval;
+	काष्ठा अणु
+		अचिन्हित पूर्णांक cr;
+		अचिन्हित पूर्णांक ce;
+	पूर्ण aux_rd_पूर्णांकerval;
 
-	unsigned char edp;
+	अचिन्हित अक्षर edp;
 
-	unsigned int rate;
-	unsigned int lanes;
+	अचिन्हित पूर्णांक rate;
+	अचिन्हित पूर्णांक lanes;
 
-	unsigned long rates[DP_MAX_SUPPORTED_RATES];
-	unsigned int num_rates;
+	अचिन्हित दीर्घ rates[DP_MAX_SUPPORTED_RATES];
+	अचिन्हित पूर्णांक num_rates;
 
 	/**
 	 * @ops: DP link operations
 	 */
-	const struct drm_dp_link_ops *ops;
+	स्थिर काष्ठा drm_dp_link_ops *ops;
 
 	/**
 	 * @aux: DP AUX channel
 	 */
-	struct drm_dp_aux *aux;
+	काष्ठा drm_dp_aux *aux;
 
 	/**
 	 * @train: DP link training state
 	 */
-	struct drm_dp_link_train train;
-};
+	काष्ठा drm_dp_link_train train;
+पूर्ण;
 
-int drm_dp_link_add_rate(struct drm_dp_link *link, unsigned long rate);
-int drm_dp_link_remove_rate(struct drm_dp_link *link, unsigned long rate);
-void drm_dp_link_update_rates(struct drm_dp_link *link);
+पूर्णांक drm_dp_link_add_rate(काष्ठा drm_dp_link *link, अचिन्हित दीर्घ rate);
+पूर्णांक drm_dp_link_हटाओ_rate(काष्ठा drm_dp_link *link, अचिन्हित दीर्घ rate);
+व्योम drm_dp_link_update_rates(काष्ठा drm_dp_link *link);
 
-int drm_dp_link_probe(struct drm_dp_aux *aux, struct drm_dp_link *link);
-int drm_dp_link_power_up(struct drm_dp_aux *aux, struct drm_dp_link *link);
-int drm_dp_link_power_down(struct drm_dp_aux *aux, struct drm_dp_link *link);
-int drm_dp_link_configure(struct drm_dp_aux *aux, struct drm_dp_link *link);
-int drm_dp_link_choose(struct drm_dp_link *link,
-		       const struct drm_display_mode *mode,
-		       const struct drm_display_info *info);
+पूर्णांक drm_dp_link_probe(काष्ठा drm_dp_aux *aux, काष्ठा drm_dp_link *link);
+पूर्णांक drm_dp_link_घातer_up(काष्ठा drm_dp_aux *aux, काष्ठा drm_dp_link *link);
+पूर्णांक drm_dp_link_घातer_करोwn(काष्ठा drm_dp_aux *aux, काष्ठा drm_dp_link *link);
+पूर्णांक drm_dp_link_configure(काष्ठा drm_dp_aux *aux, काष्ठा drm_dp_link *link);
+पूर्णांक drm_dp_link_choose(काष्ठा drm_dp_link *link,
+		       स्थिर काष्ठा drm_display_mode *mode,
+		       स्थिर काष्ठा drm_display_info *info);
 
-void drm_dp_link_train_init(struct drm_dp_link_train *train);
-int drm_dp_link_train(struct drm_dp_link *link);
+व्योम drm_dp_link_train_init(काष्ठा drm_dp_link_train *train);
+पूर्णांक drm_dp_link_train(काष्ठा drm_dp_link *link);
 
-#endif
+#पूर्ण_अगर

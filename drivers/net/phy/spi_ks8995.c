@@ -1,221 +1,222 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * SPI driver for Micrel/Kendin KS8995M and KSZ8864RMN ethernet switches
+ * SPI driver क्रम Micrel/Kendin KS8995M and KSZ8864RMN ethernet चयनes
  *
- * Copyright (C) 2008 Gabor Juhos <juhosg at openwrt.org>
+ * Copyright (C) 2008 Gabor Juhos <juhosg at खोलोwrt.org>
  *
  * This file was based on: drivers/spi/at25.c
  *     Copyright (C) 2006 David Brownell
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/gpio/consumer.h>
-#include <linux/of.h>
-#include <linux/of_gpio.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_gpपन.स>
 
-#include <linux/spi/spi.h>
+#समावेश <linux/spi/spi.h>
 
-#define DRV_VERSION		"0.1.1"
-#define DRV_DESC		"Micrel KS8995 Ethernet switch SPI driver"
+#घोषणा DRV_VERSION		"0.1.1"
+#घोषणा DRV_DESC		"Micrel KS8995 Ethernet switch SPI driver"
 
 /* ------------------------------------------------------------------------ */
 
-#define KS8995_REG_ID0		0x00    /* Chip ID0 */
-#define KS8995_REG_ID1		0x01    /* Chip ID1 */
+#घोषणा KS8995_REG_ID0		0x00    /* Chip ID0 */
+#घोषणा KS8995_REG_ID1		0x01    /* Chip ID1 */
 
-#define KS8995_REG_GC0		0x02    /* Global Control 0 */
-#define KS8995_REG_GC1		0x03    /* Global Control 1 */
-#define KS8995_REG_GC2		0x04    /* Global Control 2 */
-#define KS8995_REG_GC3		0x05    /* Global Control 3 */
-#define KS8995_REG_GC4		0x06    /* Global Control 4 */
-#define KS8995_REG_GC5		0x07    /* Global Control 5 */
-#define KS8995_REG_GC6		0x08    /* Global Control 6 */
-#define KS8995_REG_GC7		0x09    /* Global Control 7 */
-#define KS8995_REG_GC8		0x0a    /* Global Control 8 */
-#define KS8995_REG_GC9		0x0b    /* Global Control 9 */
+#घोषणा KS8995_REG_GC0		0x02    /* Global Control 0 */
+#घोषणा KS8995_REG_GC1		0x03    /* Global Control 1 */
+#घोषणा KS8995_REG_GC2		0x04    /* Global Control 2 */
+#घोषणा KS8995_REG_GC3		0x05    /* Global Control 3 */
+#घोषणा KS8995_REG_GC4		0x06    /* Global Control 4 */
+#घोषणा KS8995_REG_GC5		0x07    /* Global Control 5 */
+#घोषणा KS8995_REG_GC6		0x08    /* Global Control 6 */
+#घोषणा KS8995_REG_GC7		0x09    /* Global Control 7 */
+#घोषणा KS8995_REG_GC8		0x0a    /* Global Control 8 */
+#घोषणा KS8995_REG_GC9		0x0b    /* Global Control 9 */
 
-#define KS8995_REG_PC(p, r)	((0x10 * p) + r)	 /* Port Control */
-#define KS8995_REG_PS(p, r)	((0x10 * p) + r + 0xe)  /* Port Status */
+#घोषणा KS8995_REG_PC(p, r)	((0x10 * p) + r)	 /* Port Control */
+#घोषणा KS8995_REG_PS(p, r)	((0x10 * p) + r + 0xe)  /* Port Status */
 
-#define KS8995_REG_TPC0		0x60    /* TOS Priority Control 0 */
-#define KS8995_REG_TPC1		0x61    /* TOS Priority Control 1 */
-#define KS8995_REG_TPC2		0x62    /* TOS Priority Control 2 */
-#define KS8995_REG_TPC3		0x63    /* TOS Priority Control 3 */
-#define KS8995_REG_TPC4		0x64    /* TOS Priority Control 4 */
-#define KS8995_REG_TPC5		0x65    /* TOS Priority Control 5 */
-#define KS8995_REG_TPC6		0x66    /* TOS Priority Control 6 */
-#define KS8995_REG_TPC7		0x67    /* TOS Priority Control 7 */
+#घोषणा KS8995_REG_TPC0		0x60    /* TOS Priority Control 0 */
+#घोषणा KS8995_REG_TPC1		0x61    /* TOS Priority Control 1 */
+#घोषणा KS8995_REG_TPC2		0x62    /* TOS Priority Control 2 */
+#घोषणा KS8995_REG_TPC3		0x63    /* TOS Priority Control 3 */
+#घोषणा KS8995_REG_TPC4		0x64    /* TOS Priority Control 4 */
+#घोषणा KS8995_REG_TPC5		0x65    /* TOS Priority Control 5 */
+#घोषणा KS8995_REG_TPC6		0x66    /* TOS Priority Control 6 */
+#घोषणा KS8995_REG_TPC7		0x67    /* TOS Priority Control 7 */
 
-#define KS8995_REG_MAC0		0x68    /* MAC address 0 */
-#define KS8995_REG_MAC1		0x69    /* MAC address 1 */
-#define KS8995_REG_MAC2		0x6a    /* MAC address 2 */
-#define KS8995_REG_MAC3		0x6b    /* MAC address 3 */
-#define KS8995_REG_MAC4		0x6c    /* MAC address 4 */
-#define KS8995_REG_MAC5		0x6d    /* MAC address 5 */
+#घोषणा KS8995_REG_MAC0		0x68    /* MAC address 0 */
+#घोषणा KS8995_REG_MAC1		0x69    /* MAC address 1 */
+#घोषणा KS8995_REG_MAC2		0x6a    /* MAC address 2 */
+#घोषणा KS8995_REG_MAC3		0x6b    /* MAC address 3 */
+#घोषणा KS8995_REG_MAC4		0x6c    /* MAC address 4 */
+#घोषणा KS8995_REG_MAC5		0x6d    /* MAC address 5 */
 
-#define KS8995_REG_IAC0		0x6e    /* Indirect Access Control 0 */
-#define KS8995_REG_IAC1		0x6f    /* Indirect Access Control 0 */
-#define KS8995_REG_IAD7		0x70    /* Indirect Access Data 7 */
-#define KS8995_REG_IAD6		0x71    /* Indirect Access Data 6 */
-#define KS8995_REG_IAD5		0x72    /* Indirect Access Data 5 */
-#define KS8995_REG_IAD4		0x73    /* Indirect Access Data 4 */
-#define KS8995_REG_IAD3		0x74    /* Indirect Access Data 3 */
-#define KS8995_REG_IAD2		0x75    /* Indirect Access Data 2 */
-#define KS8995_REG_IAD1		0x76    /* Indirect Access Data 1 */
-#define KS8995_REG_IAD0		0x77    /* Indirect Access Data 0 */
+#घोषणा KS8995_REG_IAC0		0x6e    /* Indirect Access Control 0 */
+#घोषणा KS8995_REG_IAC1		0x6f    /* Indirect Access Control 0 */
+#घोषणा KS8995_REG_IAD7		0x70    /* Indirect Access Data 7 */
+#घोषणा KS8995_REG_IAD6		0x71    /* Indirect Access Data 6 */
+#घोषणा KS8995_REG_IAD5		0x72    /* Indirect Access Data 5 */
+#घोषणा KS8995_REG_IAD4		0x73    /* Indirect Access Data 4 */
+#घोषणा KS8995_REG_IAD3		0x74    /* Indirect Access Data 3 */
+#घोषणा KS8995_REG_IAD2		0x75    /* Indirect Access Data 2 */
+#घोषणा KS8995_REG_IAD1		0x76    /* Indirect Access Data 1 */
+#घोषणा KS8995_REG_IAD0		0x77    /* Indirect Access Data 0 */
 
-#define KSZ8864_REG_ID1		0xfe	/* Chip ID in bit 7 */
+#घोषणा KSZ8864_REG_ID1		0xfe	/* Chip ID in bit 7 */
 
-#define KS8995_REGS_SIZE	0x80
-#define KSZ8864_REGS_SIZE	0x100
-#define KSZ8795_REGS_SIZE	0x100
+#घोषणा KS8995_REGS_SIZE	0x80
+#घोषणा KSZ8864_REGS_SIZE	0x100
+#घोषणा KSZ8795_REGS_SIZE	0x100
 
-#define ID1_CHIPID_M		0xf
-#define ID1_CHIPID_S		4
-#define ID1_REVISION_M		0x7
-#define ID1_REVISION_S		1
-#define ID1_START_SW		1	/* start the switch */
+#घोषणा ID1_CHIPID_M		0xf
+#घोषणा ID1_CHIPID_S		4
+#घोषणा ID1_REVISION_M		0x7
+#घोषणा ID1_REVISION_S		1
+#घोषणा ID1_START_SW		1	/* start the चयन */
 
-#define FAMILY_KS8995		0x95
-#define FAMILY_KSZ8795		0x87
-#define CHIPID_M		0
-#define KS8995_CHIP_ID		0x00
-#define KSZ8864_CHIP_ID		0x01
-#define KSZ8795_CHIP_ID		0x09
+#घोषणा FAMILY_KS8995		0x95
+#घोषणा FAMILY_KSZ8795		0x87
+#घोषणा CHIPID_M		0
+#घोषणा KS8995_CHIP_ID		0x00
+#घोषणा KSZ8864_CHIP_ID		0x01
+#घोषणा KSZ8795_CHIP_ID		0x09
 
-#define KS8995_CMD_WRITE	0x02U
-#define KS8995_CMD_READ		0x03U
+#घोषणा KS8995_CMD_WRITE	0x02U
+#घोषणा KS8995_CMD_READ		0x03U
 
-#define KS8995_RESET_DELAY	10 /* usec */
+#घोषणा KS8995_RESET_DELAY	10 /* usec */
 
-enum ks8995_chip_variant {
+क्रमागत ks8995_chip_variant अणु
 	ks8995,
 	ksz8864,
 	ksz8795,
 	max_variant
-};
+पूर्ण;
 
-struct ks8995_chip_params {
-	char *name;
-	int family_id;
-	int chip_id;
-	int regs_size;
-	int addr_width;
-	int addr_shift;
-};
+काष्ठा ks8995_chip_params अणु
+	अक्षर *name;
+	पूर्णांक family_id;
+	पूर्णांक chip_id;
+	पूर्णांक regs_size;
+	पूर्णांक addr_width;
+	पूर्णांक addr_shअगरt;
+पूर्ण;
 
-static const struct ks8995_chip_params ks8995_chip[] = {
-	[ks8995] = {
+अटल स्थिर काष्ठा ks8995_chip_params ks8995_chip[] = अणु
+	[ks8995] = अणु
 		.name = "KS8995MA",
 		.family_id = FAMILY_KS8995,
 		.chip_id = KS8995_CHIP_ID,
 		.regs_size = KS8995_REGS_SIZE,
 		.addr_width = 8,
-		.addr_shift = 0,
-	},
-	[ksz8864] = {
+		.addr_shअगरt = 0,
+	पूर्ण,
+	[ksz8864] = अणु
 		.name = "KSZ8864RMN",
 		.family_id = FAMILY_KS8995,
 		.chip_id = KSZ8864_CHIP_ID,
 		.regs_size = KSZ8864_REGS_SIZE,
 		.addr_width = 8,
-		.addr_shift = 0,
-	},
-	[ksz8795] = {
+		.addr_shअगरt = 0,
+	पूर्ण,
+	[ksz8795] = अणु
 		.name = "KSZ8795CLX",
 		.family_id = FAMILY_KSZ8795,
 		.chip_id = KSZ8795_CHIP_ID,
 		.regs_size = KSZ8795_REGS_SIZE,
 		.addr_width = 12,
-		.addr_shift = 1,
-	},
-};
+		.addr_shअगरt = 1,
+	पूर्ण,
+पूर्ण;
 
-struct ks8995_pdata {
-	int reset_gpio;
-	enum of_gpio_flags reset_gpio_flags;
-};
+काष्ठा ks8995_pdata अणु
+	पूर्णांक reset_gpio;
+	क्रमागत of_gpio_flags reset_gpio_flags;
+पूर्ण;
 
-struct ks8995_switch {
-	struct spi_device	*spi;
-	struct mutex		lock;
-	struct ks8995_pdata	*pdata;
-	struct bin_attribute	regs_attr;
-	const struct ks8995_chip_params	*chip;
-	int			revision_id;
-};
+काष्ठा ks8995_चयन अणु
+	काष्ठा spi_device	*spi;
+	काष्ठा mutex		lock;
+	काष्ठा ks8995_pdata	*pdata;
+	काष्ठा bin_attribute	regs_attr;
+	स्थिर काष्ठा ks8995_chip_params	*chip;
+	पूर्णांक			revision_id;
+पूर्ण;
 
-static const struct spi_device_id ks8995_id[] = {
-	{"ks8995", ks8995},
-	{"ksz8864", ksz8864},
-	{"ksz8795", ksz8795},
-	{ }
-};
+अटल स्थिर काष्ठा spi_device_id ks8995_id[] = अणु
+	अणु"ks8995", ks8995पूर्ण,
+	अणु"ksz8864", ksz8864पूर्ण,
+	अणु"ksz8795", ksz8795पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, ks8995_id);
 
-static const struct of_device_id ks8895_spi_of_match[] = {
-        { .compatible = "micrel,ks8995" },
-        { .compatible = "micrel,ksz8864" },
-        { .compatible = "micrel,ksz8795" },
-        { },
- };
+अटल स्थिर काष्ठा of_device_id ks8895_spi_of_match[] = अणु
+        अणु .compatible = "micrel,ks8995" पूर्ण,
+        अणु .compatible = "micrel,ksz8864" पूर्ण,
+        अणु .compatible = "micrel,ksz8795" पूर्ण,
+        अणु पूर्ण,
+ पूर्ण;
 MODULE_DEVICE_TABLE(of, ks8895_spi_of_match);
 
-static inline u8 get_chip_id(u8 val)
-{
-	return (val >> ID1_CHIPID_S) & ID1_CHIPID_M;
-}
+अटल अंतरभूत u8 get_chip_id(u8 val)
+अणु
+	वापस (val >> ID1_CHIPID_S) & ID1_CHIPID_M;
+पूर्ण
 
-static inline u8 get_chip_rev(u8 val)
-{
-	return (val >> ID1_REVISION_S) & ID1_REVISION_M;
-}
+अटल अंतरभूत u8 get_chip_rev(u8 val)
+अणु
+	वापस (val >> ID1_REVISION_S) & ID1_REVISION_M;
+पूर्ण
 
-/* create_spi_cmd - create a chip specific SPI command header
- * @ks: pointer to switch instance
- * @cmd: SPI command for switch
- * @address: register address for command
+/* create_spi_cmd - create a chip specअगरic SPI command header
+ * @ks: poपूर्णांकer to चयन instance
+ * @cmd: SPI command क्रम चयन
+ * @address: रेजिस्टर address क्रम command
  *
- * Different chip families use different bit pattern to address the switches
- * registers:
+ * Dअगरferent chip families use dअगरferent bit pattern to address the चयनes
+ * रेजिस्टरs:
  *
  * KS8995: 8bit command + 8bit address
  * KSZ8795: 3bit command + 12bit address + 1bit TR (?)
  */
-static inline __be16 create_spi_cmd(struct ks8995_switch *ks, int cmd,
-				    unsigned address)
-{
+अटल अंतरभूत __be16 create_spi_cmd(काष्ठा ks8995_चयन *ks, पूर्णांक cmd,
+				    अचिन्हित address)
+अणु
 	u16 result = cmd;
 
-	/* make room for address (incl. address shift) */
-	result <<= ks->chip->addr_width + ks->chip->addr_shift;
+	/* make room क्रम address (incl. address shअगरt) */
+	result <<= ks->chip->addr_width + ks->chip->addr_shअगरt;
 	/* add address */
-	result |= address << ks->chip->addr_shift;
+	result |= address << ks->chip->addr_shअगरt;
 	/* SPI protocol needs big endian */
-	return cpu_to_be16(result);
-}
+	वापस cpu_to_be16(result);
+पूर्ण
 /* ------------------------------------------------------------------------ */
-static int ks8995_read(struct ks8995_switch *ks, char *buf,
-		 unsigned offset, size_t count)
-{
+अटल पूर्णांक ks8995_पढ़ो(काष्ठा ks8995_चयन *ks, अक्षर *buf,
+		 अचिन्हित offset, माप_प्रकार count)
+अणु
 	__be16 cmd;
-	struct spi_transfer t[2];
-	struct spi_message m;
-	int err;
+	काष्ठा spi_transfer t[2];
+	काष्ठा spi_message m;
+	पूर्णांक err;
 
 	cmd = create_spi_cmd(ks, KS8995_CMD_READ, offset);
 	spi_message_init(&m);
 
-	memset(&t, 0, sizeof(t));
+	स_रखो(&t, 0, माप(t));
 
 	t[0].tx_buf = &cmd;
-	t[0].len = sizeof(cmd);
+	t[0].len = माप(cmd);
 	spi_message_add_tail(&t[0], &m);
 
 	t[1].rx_buf = buf;
@@ -226,24 +227,24 @@ static int ks8995_read(struct ks8995_switch *ks, char *buf,
 	err = spi_sync(ks->spi, &m);
 	mutex_unlock(&ks->lock);
 
-	return err ? err : count;
-}
+	वापस err ? err : count;
+पूर्ण
 
-static int ks8995_write(struct ks8995_switch *ks, char *buf,
-		 unsigned offset, size_t count)
-{
+अटल पूर्णांक ks8995_ग_लिखो(काष्ठा ks8995_चयन *ks, अक्षर *buf,
+		 अचिन्हित offset, माप_प्रकार count)
+अणु
 	__be16 cmd;
-	struct spi_transfer t[2];
-	struct spi_message m;
-	int err;
+	काष्ठा spi_transfer t[2];
+	काष्ठा spi_message m;
+	पूर्णांक err;
 
 	cmd = create_spi_cmd(ks, KS8995_CMD_WRITE, offset);
 	spi_message_init(&m);
 
-	memset(&t, 0, sizeof(t));
+	स_रखो(&t, 0, माप(t));
 
 	t[0].tx_buf = &cmd;
-	t[0].len = sizeof(cmd);
+	t[0].len = माप(cmd);
 	spi_message_add_tail(&t[0], &m);
 
 	t[1].tx_buf = buf;
@@ -254,218 +255,218 @@ static int ks8995_write(struct ks8995_switch *ks, char *buf,
 	err = spi_sync(ks->spi, &m);
 	mutex_unlock(&ks->lock);
 
-	return err ? err : count;
-}
+	वापस err ? err : count;
+पूर्ण
 
-static inline int ks8995_read_reg(struct ks8995_switch *ks, u8 addr, u8 *buf)
-{
-	return ks8995_read(ks, buf, addr, 1) != 1;
-}
+अटल अंतरभूत पूर्णांक ks8995_पढ़ो_reg(काष्ठा ks8995_चयन *ks, u8 addr, u8 *buf)
+अणु
+	वापस ks8995_पढ़ो(ks, buf, addr, 1) != 1;
+पूर्ण
 
-static inline int ks8995_write_reg(struct ks8995_switch *ks, u8 addr, u8 val)
-{
-	char buf = val;
+अटल अंतरभूत पूर्णांक ks8995_ग_लिखो_reg(काष्ठा ks8995_चयन *ks, u8 addr, u8 val)
+अणु
+	अक्षर buf = val;
 
-	return ks8995_write(ks, &buf, addr, 1) != 1;
-}
+	वापस ks8995_ग_लिखो(ks, &buf, addr, 1) != 1;
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
 
-static int ks8995_stop(struct ks8995_switch *ks)
-{
-	return ks8995_write_reg(ks, KS8995_REG_ID1, 0);
-}
+अटल पूर्णांक ks8995_stop(काष्ठा ks8995_चयन *ks)
+अणु
+	वापस ks8995_ग_लिखो_reg(ks, KS8995_REG_ID1, 0);
+पूर्ण
 
-static int ks8995_start(struct ks8995_switch *ks)
-{
-	return ks8995_write_reg(ks, KS8995_REG_ID1, 1);
-}
+अटल पूर्णांक ks8995_start(काष्ठा ks8995_चयन *ks)
+अणु
+	वापस ks8995_ग_लिखो_reg(ks, KS8995_REG_ID1, 1);
+पूर्ण
 
-static int ks8995_reset(struct ks8995_switch *ks)
-{
-	int err;
+अटल पूर्णांक ks8995_reset(काष्ठा ks8995_चयन *ks)
+अणु
+	पूर्णांक err;
 
 	err = ks8995_stop(ks);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	udelay(KS8995_RESET_DELAY);
 
-	return ks8995_start(ks);
-}
+	वापस ks8995_start(ks);
+पूर्ण
 
-static ssize_t ks8995_registers_read(struct file *filp, struct kobject *kobj,
-	struct bin_attribute *bin_attr, char *buf, loff_t off, size_t count)
-{
-	struct device *dev;
-	struct ks8995_switch *ks8995;
-
-	dev = kobj_to_dev(kobj);
-	ks8995 = dev_get_drvdata(dev);
-
-	return ks8995_read(ks8995, buf, off, count);
-}
-
-static ssize_t ks8995_registers_write(struct file *filp, struct kobject *kobj,
-	struct bin_attribute *bin_attr, char *buf, loff_t off, size_t count)
-{
-	struct device *dev;
-	struct ks8995_switch *ks8995;
+अटल sमाप_प्रकार ks8995_रेजिस्टरs_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+	काष्ठा bin_attribute *bin_attr, अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा device *dev;
+	काष्ठा ks8995_चयन *ks8995;
 
 	dev = kobj_to_dev(kobj);
 	ks8995 = dev_get_drvdata(dev);
 
-	return ks8995_write(ks8995, buf, off, count);
-}
+	वापस ks8995_पढ़ो(ks8995, buf, off, count);
+पूर्ण
+
+अटल sमाप_प्रकार ks8995_रेजिस्टरs_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
+	काष्ठा bin_attribute *bin_attr, अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा device *dev;
+	काष्ठा ks8995_चयन *ks8995;
+
+	dev = kobj_to_dev(kobj);
+	ks8995 = dev_get_drvdata(dev);
+
+	वापस ks8995_ग_लिखो(ks8995, buf, off, count);
+पूर्ण
 
 /* ks8995_get_revision - get chip revision
- * @ks: pointer to switch instance
+ * @ks: poपूर्णांकer to चयन instance
  *
- * Verify chip family and id and get chip revision.
+ * Verअगरy chip family and id and get chip revision.
  */
-static int ks8995_get_revision(struct ks8995_switch *ks)
-{
-	int err;
+अटल पूर्णांक ks8995_get_revision(काष्ठा ks8995_चयन *ks)
+अणु
+	पूर्णांक err;
 	u8 id0, id1, ksz8864_id;
 
-	/* read family id */
-	err = ks8995_read_reg(ks, KS8995_REG_ID0, &id0);
-	if (err) {
+	/* पढ़ो family id */
+	err = ks8995_पढ़ो_reg(ks, KS8995_REG_ID0, &id0);
+	अगर (err) अणु
 		err = -EIO;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	/* verify family id */
-	if (id0 != ks->chip->family_id) {
+	/* verअगरy family id */
+	अगर (id0 != ks->chip->family_id) अणु
 		dev_err(&ks->spi->dev, "chip family id mismatch: expected 0x%02x but 0x%02x read\n",
 			ks->chip->family_id, id0);
 		err = -ENODEV;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	switch (ks->chip->family_id) {
-	case FAMILY_KS8995:
-		/* try reading chip id at CHIP ID1 */
-		err = ks8995_read_reg(ks, KS8995_REG_ID1, &id1);
-		if (err) {
+	चयन (ks->chip->family_id) अणु
+	हाल FAMILY_KS8995:
+		/* try पढ़ोing chip id at CHIP ID1 */
+		err = ks8995_पढ़ो_reg(ks, KS8995_REG_ID1, &id1);
+		अगर (err) अणु
 			err = -EIO;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
-		/* verify chip id */
-		if ((get_chip_id(id1) == CHIPID_M) &&
-		    (get_chip_id(id1) == ks->chip->chip_id)) {
+		/* verअगरy chip id */
+		अगर ((get_chip_id(id1) == CHIPID_M) &&
+		    (get_chip_id(id1) == ks->chip->chip_id)) अणु
 			/* KS8995MA */
 			ks->revision_id = get_chip_rev(id1);
-		} else if (get_chip_id(id1) != CHIPID_M) {
+		पूर्ण अन्यथा अगर (get_chip_id(id1) != CHIPID_M) अणु
 			/* KSZ8864RMN */
-			err = ks8995_read_reg(ks, KS8995_REG_ID1, &ksz8864_id);
-			if (err) {
+			err = ks8995_पढ़ो_reg(ks, KS8995_REG_ID1, &ksz8864_id);
+			अगर (err) अणु
 				err = -EIO;
-				goto err_out;
-			}
+				जाओ err_out;
+			पूर्ण
 
-			if ((ksz8864_id & 0x80) &&
-			    (ks->chip->chip_id == KSZ8864_CHIP_ID)) {
+			अगर ((ksz8864_id & 0x80) &&
+			    (ks->chip->chip_id == KSZ8864_CHIP_ID)) अणु
 				ks->revision_id = get_chip_rev(id1);
-			}
+			पूर्ण
 
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&ks->spi->dev, "unsupported chip id for KS8995 family: 0x%02x\n",
 				id1);
 			err = -ENODEV;
-		}
-		break;
-	case FAMILY_KSZ8795:
-		/* try reading chip id at CHIP ID1 */
-		err = ks8995_read_reg(ks, KS8995_REG_ID1, &id1);
-		if (err) {
+		पूर्ण
+		अवरोध;
+	हाल FAMILY_KSZ8795:
+		/* try पढ़ोing chip id at CHIP ID1 */
+		err = ks8995_पढ़ो_reg(ks, KS8995_REG_ID1, &id1);
+		अगर (err) अणु
 			err = -EIO;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
-		if (get_chip_id(id1) == ks->chip->chip_id) {
+		अगर (get_chip_id(id1) == ks->chip->chip_id) अणु
 			ks->revision_id = get_chip_rev(id1);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&ks->spi->dev, "unsupported chip id for KSZ8795 family: 0x%02x\n",
 				id1);
 			err = -ENODEV;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_err(&ks->spi->dev, "unsupported family id: 0x%02x\n", id0);
 		err = -ENODEV;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 err_out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* ks8995_parse_dt - setup platform data from devicetree
- * @ks: pointer to switch instance
+/* ks8995_parse_dt - setup platक्रमm data from devicetree
+ * @ks: poपूर्णांकer to चयन instance
  *
- * Parses supported DT properties and sets up platform data
+ * Parses supported DT properties and sets up platक्रमm data
  * accordingly.
  */
-static void ks8995_parse_dt(struct ks8995_switch *ks)
-{
-	struct device_node *np = ks->spi->dev.of_node;
-	struct ks8995_pdata *pdata = ks->pdata;
+अटल व्योम ks8995_parse_dt(काष्ठा ks8995_चयन *ks)
+अणु
+	काष्ठा device_node *np = ks->spi->dev.of_node;
+	काष्ठा ks8995_pdata *pdata = ks->pdata;
 
-	if (!np)
-		return;
+	अगर (!np)
+		वापस;
 
 	pdata->reset_gpio = of_get_named_gpio_flags(np, "reset-gpios", 0,
 		&pdata->reset_gpio_flags);
-}
+पूर्ण
 
-static const struct bin_attribute ks8995_registers_attr = {
-	.attr = {
+अटल स्थिर काष्ठा bin_attribute ks8995_रेजिस्टरs_attr = अणु
+	.attr = अणु
 		.name   = "registers",
 		.mode   = 0600,
-	},
+	पूर्ण,
 	.size   = KS8995_REGS_SIZE,
-	.read   = ks8995_registers_read,
-	.write  = ks8995_registers_write,
-};
+	.पढ़ो   = ks8995_रेजिस्टरs_पढ़ो,
+	.ग_लिखो  = ks8995_रेजिस्टरs_ग_लिखो,
+पूर्ण;
 
 /* ------------------------------------------------------------------------ */
-static int ks8995_probe(struct spi_device *spi)
-{
-	struct ks8995_switch *ks;
-	int err;
-	int variant = spi_get_device_id(spi)->driver_data;
+अटल पूर्णांक ks8995_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा ks8995_चयन *ks;
+	पूर्णांक err;
+	पूर्णांक variant = spi_get_device_id(spi)->driver_data;
 
-	if (variant >= max_variant) {
+	अगर (variant >= max_variant) अणु
 		dev_err(&spi->dev, "bad chip variant %d\n", variant);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ks = devm_kzalloc(&spi->dev, sizeof(*ks), GFP_KERNEL);
-	if (!ks)
-		return -ENOMEM;
+	ks = devm_kzalloc(&spi->dev, माप(*ks), GFP_KERNEL);
+	अगर (!ks)
+		वापस -ENOMEM;
 
 	mutex_init(&ks->lock);
 	ks->spi = spi;
 	ks->chip = &ks8995_chip[variant];
 
-	if (ks->spi->dev.of_node) {
-		ks->pdata = devm_kzalloc(&spi->dev, sizeof(*ks->pdata),
+	अगर (ks->spi->dev.of_node) अणु
+		ks->pdata = devm_kzalloc(&spi->dev, माप(*ks->pdata),
 					 GFP_KERNEL);
-		if (!ks->pdata)
-			return -ENOMEM;
+		अगर (!ks->pdata)
+			वापस -ENOMEM;
 
 		ks->pdata->reset_gpio = -1;
 
 		ks8995_parse_dt(ks);
-	}
+	पूर्ण
 
-	if (!ks->pdata)
-		ks->pdata = spi->dev.platform_data;
+	अगर (!ks->pdata)
+		ks->pdata = spi->dev.platक्रमm_data;
 
-	/* de-assert switch reset */
-	if (ks->pdata && gpio_is_valid(ks->pdata->reset_gpio)) {
-		unsigned long flags;
+	/* de-निश्चित चयन reset */
+	अगर (ks->pdata && gpio_is_valid(ks->pdata->reset_gpio)) अणु
+		अचिन्हित दीर्घ flags;
 
 		flags = (ks->pdata->reset_gpio_flags == OF_GPIO_ACTIVE_LOW ?
 			 GPIOF_ACTIVE_LOW : 0);
@@ -473,73 +474,73 @@ static int ks8995_probe(struct spi_device *spi)
 		err = devm_gpio_request_one(&spi->dev,
 					    ks->pdata->reset_gpio,
 					    flags, "switch-reset");
-		if (err) {
+		अगर (err) अणु
 			dev_err(&spi->dev,
 				"failed to get reset-gpios: %d\n", err);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		gpiod_set_value(gpio_to_desc(ks->pdata->reset_gpio), 0);
-	}
+	पूर्ण
 
 	spi_set_drvdata(spi, ks);
 
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 8;
 	err = spi_setup(spi);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&spi->dev, "spi_setup failed, err=%d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = ks8995_get_revision(ks);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	memcpy(&ks->regs_attr, &ks8995_registers_attr, sizeof(ks->regs_attr));
+	स_नकल(&ks->regs_attr, &ks8995_रेजिस्टरs_attr, माप(ks->regs_attr));
 	ks->regs_attr.size = ks->chip->regs_size;
 
 	err = ks8995_reset(ks);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	sysfs_attr_init(&ks->regs_attr.attr);
 	err = sysfs_create_bin_file(&spi->dev.kobj, &ks->regs_attr);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&spi->dev, "unable to create sysfs file, err=%d\n",
 				    err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	dev_info(&spi->dev, "%s device found, Chip ID:%x, Revision:%x\n",
 		 ks->chip->name, ks->chip->chip_id, ks->revision_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ks8995_remove(struct spi_device *spi)
-{
-	struct ks8995_switch *ks = spi_get_drvdata(spi);
+अटल पूर्णांक ks8995_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा ks8995_चयन *ks = spi_get_drvdata(spi);
 
-	sysfs_remove_bin_file(&spi->dev.kobj, &ks->regs_attr);
+	sysfs_हटाओ_bin_file(&spi->dev.kobj, &ks->regs_attr);
 
-	/* assert reset */
-	if (ks->pdata && gpio_is_valid(ks->pdata->reset_gpio))
+	/* निश्चित reset */
+	अगर (ks->pdata && gpio_is_valid(ks->pdata->reset_gpio))
 		gpiod_set_value(gpio_to_desc(ks->pdata->reset_gpio), 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
-static struct spi_driver ks8995_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ks8995_driver = अणु
+	.driver = अणु
 		.name	    = "spi-ks8995",
 		.of_match_table = of_match_ptr(ks8895_spi_of_match),
-	},
+	पूर्ण,
 	.probe	  = ks8995_probe,
-	.remove	  = ks8995_remove,
+	.हटाओ	  = ks8995_हटाओ,
 	.id_table = ks8995_id,
-};
+पूर्ण;
 
 module_spi_driver(ks8995_driver);
 

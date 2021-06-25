@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <net/genetlink.h>
+#समावेश <net/genetlink.h>
 
-#include "br_private.h"
-#include "br_private_cfm.h"
+#समावेश "br_private.h"
+#समावेश "br_private_cfm.h"
 
-static const struct nla_policy
-br_cfm_mep_create_policy[IFLA_BRIDGE_CFM_MEP_CREATE_MAX + 1] = {
-	[IFLA_BRIDGE_CFM_MEP_CREATE_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_CFM_MEP_CREATE_INSTANCE]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_MEP_CREATE_DOMAIN]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_MEP_CREATE_DIRECTION]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_MEP_CREATE_IFINDEX]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_cfm_mep_create_policy[IFLA_BRIDGE_CFM_MEP_CREATE_MAX + 1] = अणु
+	[IFLA_BRIDGE_CFM_MEP_CREATE_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_CFM_MEP_CREATE_INSTANCE]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_MEP_CREATE_DOMAIN]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_MEP_CREATE_सूचीECTION]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_MEP_CREATE_IFINDEX]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static const struct nla_policy
-br_cfm_mep_delete_policy[IFLA_BRIDGE_CFM_MEP_DELETE_MAX + 1] = {
-	[IFLA_BRIDGE_CFM_MEP_DELETE_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_CFM_MEP_DELETE_INSTANCE]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_cfm_mep_delete_policy[IFLA_BRIDGE_CFM_MEP_DELETE_MAX + 1] = अणु
+	[IFLA_BRIDGE_CFM_MEP_DELETE_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_CFM_MEP_DELETE_INSTANCE]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static const struct nla_policy
-br_cfm_mep_config_policy[IFLA_BRIDGE_CFM_MEP_CONFIG_MAX + 1] = {
-	[IFLA_BRIDGE_CFM_MEP_CONFIG_UNSPEC]	 = { .type = NLA_REJECT },
-	[IFLA_BRIDGE_CFM_MEP_CONFIG_INSTANCE]	 = { .type = NLA_U32 },
+अटल स्थिर काष्ठा nla_policy
+br_cfm_mep_config_policy[IFLA_BRIDGE_CFM_MEP_CONFIG_MAX + 1] = अणु
+	[IFLA_BRIDGE_CFM_MEP_CONFIG_UNSPEC]	 = अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_CFM_MEP_CONFIG_INSTANCE]	 = अणु .type = NLA_U32 पूर्ण,
 	[IFLA_BRIDGE_CFM_MEP_CONFIG_UNICAST_MAC] = NLA_POLICY_ETH_ADDR,
 	[IFLA_BRIDGE_CFM_MEP_CONFIG_MDLEVEL]	 = NLA_POLICY_MAX(NLA_U32, 7),
 	[IFLA_BRIDGE_CFM_MEP_CONFIG_MEPID]	 = NLA_POLICY_MAX(NLA_U32, 0x1FFF),
-};
+पूर्ण;
 
-static const struct nla_policy
-br_cfm_cc_config_policy[IFLA_BRIDGE_CFM_CC_CONFIG_MAX + 1] = {
-	[IFLA_BRIDGE_CFM_CC_CONFIG_UNSPEC]	 = { .type = NLA_REJECT },
-	[IFLA_BRIDGE_CFM_CC_CONFIG_INSTANCE]	 = { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_CC_CONFIG_ENABLE]	 = { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_INTERVAL] = { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_MAID]	 = {
-	.type = NLA_BINARY, .len = CFM_MAID_LENGTH },
-};
+अटल स्थिर काष्ठा nla_policy
+br_cfm_cc_config_policy[IFLA_BRIDGE_CFM_CC_CONFIG_MAX + 1] = अणु
+	[IFLA_BRIDGE_CFM_CC_CONFIG_UNSPEC]	 = अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_CONFIG_INSTANCE]	 = अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_CONFIG_ENABLE]	 = अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_INTERVAL] = अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_MAID]	 = अणु
+	.type = NLA_BINARY, .len = CFM_MAID_LENGTH पूर्ण,
+पूर्ण;
 
-static const struct nla_policy
-br_cfm_cc_peer_mep_policy[IFLA_BRIDGE_CFM_CC_PEER_MEP_MAX + 1] = {
-	[IFLA_BRIDGE_CFM_CC_PEER_MEP_UNSPEC]	= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_CFM_CC_PEER_MEP_INSTANCE]	= { .type = NLA_U32 },
+अटल स्थिर काष्ठा nla_policy
+br_cfm_cc_peer_mep_policy[IFLA_BRIDGE_CFM_CC_PEER_MEP_MAX + 1] = अणु
+	[IFLA_BRIDGE_CFM_CC_PEER_MEP_UNSPEC]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_PEER_MEP_INSTANCE]	= अणु .type = NLA_U32 पूर्ण,
 	[IFLA_BRIDGE_CFM_CC_PEER_MEPID]		= NLA_POLICY_MAX(NLA_U32, 0x1FFF),
-};
+पूर्ण;
 
-static const struct nla_policy
-br_cfm_cc_rdi_policy[IFLA_BRIDGE_CFM_CC_RDI_MAX + 1] = {
-	[IFLA_BRIDGE_CFM_CC_RDI_UNSPEC]		= { .type = NLA_REJECT },
-	[IFLA_BRIDGE_CFM_CC_RDI_INSTANCE]	= { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_CC_RDI_RDI]		= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy
+br_cfm_cc_rdi_policy[IFLA_BRIDGE_CFM_CC_RDI_MAX + 1] = अणु
+	[IFLA_BRIDGE_CFM_CC_RDI_UNSPEC]		= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_RDI_INSTANCE]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_RDI_RDI]		= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static const struct nla_policy
-br_cfm_cc_ccm_tx_policy[IFLA_BRIDGE_CFM_CC_CCM_TX_MAX + 1] = {
-	[IFLA_BRIDGE_CFM_CC_CCM_TX_UNSPEC]	   = { .type = NLA_REJECT },
-	[IFLA_BRIDGE_CFM_CC_CCM_TX_INSTANCE]	   = { .type = NLA_U32 },
+अटल स्थिर काष्ठा nla_policy
+br_cfm_cc_ccm_tx_policy[IFLA_BRIDGE_CFM_CC_CCM_TX_MAX + 1] = अणु
+	[IFLA_BRIDGE_CFM_CC_CCM_TX_UNSPEC]	   = अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_CCM_TX_INSTANCE]	   = अणु .type = NLA_U32 पूर्ण,
 	[IFLA_BRIDGE_CFM_CC_CCM_TX_DMAC]	   = NLA_POLICY_ETH_ADDR,
-	[IFLA_BRIDGE_CFM_CC_CCM_TX_SEQ_NO_UPDATE]  = { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_CC_CCM_TX_PERIOD]	   = { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV]	   = { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV_VALUE]   = { .type = NLA_U8 },
-	[IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV]	   = { .type = NLA_U32 },
-	[IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV_VALUE] = { .type = NLA_U8 },
-};
+	[IFLA_BRIDGE_CFM_CC_CCM_TX_SEQ_NO_UPDATE]  = अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_CCM_TX_PERIOD]	   = अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV]	   = अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV_VALUE]   = अणु .type = NLA_U8 पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV]	   = अणु .type = NLA_U32 पूर्ण,
+	[IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV_VALUE] = अणु .type = NLA_U8 पूर्ण,
+पूर्ण;
 
-static const struct nla_policy
-br_cfm_policy[IFLA_BRIDGE_CFM_MAX + 1] = {
-	[IFLA_BRIDGE_CFM_UNSPEC]		= { .type = NLA_REJECT },
+अटल स्थिर काष्ठा nla_policy
+br_cfm_policy[IFLA_BRIDGE_CFM_MAX + 1] = अणु
+	[IFLA_BRIDGE_CFM_UNSPEC]		= अणु .type = NLA_REJECT पूर्ण,
 	[IFLA_BRIDGE_CFM_MEP_CREATE]		=
 				NLA_POLICY_NESTED(br_cfm_mep_create_policy),
 	[IFLA_BRIDGE_CFM_MEP_DELETE]		=
@@ -85,642 +86,642 @@ br_cfm_policy[IFLA_BRIDGE_CFM_MAX + 1] = {
 				NLA_POLICY_NESTED(br_cfm_cc_rdi_policy),
 	[IFLA_BRIDGE_CFM_CC_CCM_TX]		=
 				NLA_POLICY_NESTED(br_cfm_cc_ccm_tx_policy),
-};
+पूर्ण;
 
-static int br_mep_create_parse(struct net_bridge *br, struct nlattr *attr,
-			       struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_CFM_MEP_CREATE_MAX + 1];
-	struct br_cfm_mep_create create;
+अटल पूर्णांक br_mep_create_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+			       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_CFM_MEP_CREATE_MAX + 1];
+	काष्ठा br_cfm_mep_create create;
 	u32 instance;
-	int err;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_CFM_MEP_CREATE_MAX, attr,
 			       br_cfm_mep_create_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_CFM_MEP_CREATE_INSTANCE]) {
+	अगर (!tb[IFLA_BRIDGE_CFM_MEP_CREATE_INSTANCE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing INSTANCE attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_MEP_CREATE_DOMAIN]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_MEP_CREATE_DOMAIN]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing DOMAIN attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_MEP_CREATE_DIRECTION]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_MEP_CREATE_सूचीECTION]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing DIRECTION attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_MEP_CREATE_IFINDEX]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_MEP_CREATE_IFINDEX]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing IFINDEX attribute");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&create, 0, sizeof(create));
+	स_रखो(&create, 0, माप(create));
 
 	instance =  nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_CREATE_INSTANCE]);
-	create.domain = nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_CREATE_DOMAIN]);
-	create.direction = nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_CREATE_DIRECTION]);
-	create.ifindex = nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_CREATE_IFINDEX]);
+	create.करोमुख्य = nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_CREATE_DOMAIN]);
+	create.direction = nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_CREATE_सूचीECTION]);
+	create.अगरindex = nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_CREATE_IFINDEX]);
 
-	return br_cfm_mep_create(br, instance, &create, extack);
-}
+	वापस br_cfm_mep_create(br, instance, &create, extack);
+पूर्ण
 
-static int br_mep_delete_parse(struct net_bridge *br, struct nlattr *attr,
-			       struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_CFM_MEP_DELETE_MAX + 1];
+अटल पूर्णांक br_mep_delete_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+			       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_CFM_MEP_DELETE_MAX + 1];
 	u32 instance;
-	int err;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_CFM_MEP_DELETE_MAX, attr,
 			       br_cfm_mep_delete_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_CFM_MEP_DELETE_INSTANCE]) {
+	अगर (!tb[IFLA_BRIDGE_CFM_MEP_DELETE_INSTANCE]) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing INSTANCE attribute");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	instance =  nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_DELETE_INSTANCE]);
 
-	return br_cfm_mep_delete(br, instance, extack);
-}
+	वापस br_cfm_mep_delete(br, instance, extack);
+पूर्ण
 
-static int br_mep_config_parse(struct net_bridge *br, struct nlattr *attr,
-			       struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_CFM_MEP_CONFIG_MAX + 1];
-	struct br_cfm_mep_config config;
+अटल पूर्णांक br_mep_config_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+			       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_CFM_MEP_CONFIG_MAX + 1];
+	काष्ठा br_cfm_mep_config config;
 	u32 instance;
-	int err;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_CFM_MEP_CONFIG_MAX, attr,
 			       br_cfm_mep_config_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_CFM_MEP_CONFIG_INSTANCE]) {
+	अगर (!tb[IFLA_BRIDGE_CFM_MEP_CONFIG_INSTANCE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing INSTANCE attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_MEP_CONFIG_UNICAST_MAC]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_MEP_CONFIG_UNICAST_MAC]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing UNICAST_MAC attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_MEP_CONFIG_MDLEVEL]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_MEP_CONFIG_MDLEVEL]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing MDLEVEL attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_MEP_CONFIG_MEPID]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_MEP_CONFIG_MEPID]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing MEPID attribute");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 
 	instance =  nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_CONFIG_INSTANCE]);
-	nla_memcpy(&config.unicast_mac.addr,
+	nla_स_नकल(&config.unicast_mac.addr,
 		   tb[IFLA_BRIDGE_CFM_MEP_CONFIG_UNICAST_MAC],
-		   sizeof(config.unicast_mac.addr));
+		   माप(config.unicast_mac.addr));
 	config.mdlevel = nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_CONFIG_MDLEVEL]);
 	config.mepid = nla_get_u32(tb[IFLA_BRIDGE_CFM_MEP_CONFIG_MEPID]);
 
-	return br_cfm_mep_config_set(br, instance, &config, extack);
-}
+	वापस br_cfm_mep_config_set(br, instance, &config, extack);
+पूर्ण
 
-static int br_cc_config_parse(struct net_bridge *br, struct nlattr *attr,
-			      struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_CFM_CC_CONFIG_MAX + 1];
-	struct br_cfm_cc_config config;
+अटल पूर्णांक br_cc_config_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_CFM_CC_CONFIG_MAX + 1];
+	काष्ठा br_cfm_cc_config config;
 	u32 instance;
-	int err;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_CFM_CC_CONFIG_MAX, attr,
 			       br_cfm_cc_config_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_CFM_CC_CONFIG_INSTANCE]) {
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CONFIG_INSTANCE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing INSTANCE attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_CONFIG_ENABLE]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CONFIG_ENABLE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing ENABLE attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_INTERVAL]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_INTERVAL]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing INTERVAL attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_MAID]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_MAID]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing MAID attribute");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 
 	instance =  nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_CONFIG_INSTANCE]);
 	config.enable = nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_CONFIG_ENABLE]);
-	config.exp_interval = nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_INTERVAL]);
-	nla_memcpy(&config.exp_maid.data, tb[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_MAID],
-		   sizeof(config.exp_maid.data));
+	config.exp_पूर्णांकerval = nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_INTERVAL]);
+	nla_स_नकल(&config.exp_maid.data, tb[IFLA_BRIDGE_CFM_CC_CONFIG_EXP_MAID],
+		   माप(config.exp_maid.data));
 
-	return br_cfm_cc_config_set(br, instance, &config, extack);
-}
+	वापस br_cfm_cc_config_set(br, instance, &config, extack);
+पूर्ण
 
-static int br_cc_peer_mep_add_parse(struct net_bridge *br, struct nlattr *attr,
-				    struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_MAX + 1];
+अटल पूर्णांक br_cc_peer_mep_add_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+				    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_MAX + 1];
 	u32 instance, peer_mep_id;
-	int err;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_CFM_CC_PEER_MEP_MAX, attr,
 			       br_cfm_cc_peer_mep_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_INSTANCE]) {
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_INSTANCE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing INSTANCE attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_PEER_MEPID]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_PEER_MEPID]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing PEER_MEP_ID attribute");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	instance =  nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_INSTANCE]);
 	peer_mep_id =  nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_PEER_MEPID]);
 
-	return br_cfm_cc_peer_mep_add(br, instance, peer_mep_id, extack);
-}
+	वापस br_cfm_cc_peer_mep_add(br, instance, peer_mep_id, extack);
+पूर्ण
 
-static int br_cc_peer_mep_remove_parse(struct net_bridge *br, struct nlattr *attr,
-				       struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_MAX + 1];
+अटल पूर्णांक br_cc_peer_mep_हटाओ_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+				       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_MAX + 1];
 	u32 instance, peer_mep_id;
-	int err;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_CFM_CC_PEER_MEP_MAX, attr,
 			       br_cfm_cc_peer_mep_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_INSTANCE]) {
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_INSTANCE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing INSTANCE attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_PEER_MEPID]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_PEER_MEPID]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing PEER_MEP_ID attribute");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	instance =  nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_INSTANCE]);
 	peer_mep_id =  nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_PEER_MEPID]);
 
-	return br_cfm_cc_peer_mep_remove(br, instance, peer_mep_id, extack);
-}
+	वापस br_cfm_cc_peer_mep_हटाओ(br, instance, peer_mep_id, extack);
+पूर्ण
 
-static int br_cc_rdi_parse(struct net_bridge *br, struct nlattr *attr,
-			   struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_CFM_CC_RDI_MAX + 1];
+अटल पूर्णांक br_cc_rdi_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_CFM_CC_RDI_MAX + 1];
 	u32 instance, rdi;
-	int err;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_CFM_CC_RDI_MAX, attr,
 			       br_cfm_cc_rdi_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_CFM_CC_RDI_INSTANCE]) {
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_RDI_INSTANCE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing INSTANCE attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_RDI_RDI]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_RDI_RDI]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing RDI attribute");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	instance =  nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_RDI_INSTANCE]);
 	rdi =  nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_RDI_RDI]);
 
-	return br_cfm_cc_rdi_set(br, instance, rdi, extack);
-}
+	वापस br_cfm_cc_rdi_set(br, instance, rdi, extack);
+पूर्ण
 
-static int br_cc_ccm_tx_parse(struct net_bridge *br, struct nlattr *attr,
-			      struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_CFM_CC_CCM_TX_MAX + 1];
-	struct br_cfm_cc_ccm_tx_info tx_info;
+अटल पूर्णांक br_cc_ccm_tx_parse(काष्ठा net_bridge *br, काष्ठा nlattr *attr,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_CFM_CC_CCM_TX_MAX + 1];
+	काष्ठा br_cfm_cc_ccm_tx_info tx_info;
 	u32 instance;
-	int err;
+	पूर्णांक err;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_CFM_CC_CCM_TX_MAX, attr,
 			       br_cfm_cc_ccm_tx_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_INSTANCE]) {
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_INSTANCE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing INSTANCE attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_DMAC]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_DMAC]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing DMAC attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_SEQ_NO_UPDATE]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_SEQ_NO_UPDATE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing SEQ_NO_UPDATE attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_PERIOD]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_PERIOD]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing PERIOD attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing IF_TLV attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV_VALUE]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV_VALUE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing IF_TLV_VALUE attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing PORT_TLV attribute");
-		return -EINVAL;
-	}
-	if (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV_VALUE]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tb[IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV_VALUE]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing PORT_TLV_VALUE attribute");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&tx_info, 0, sizeof(tx_info));
+	स_रखो(&tx_info, 0, माप(tx_info));
 
 	instance = nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_RDI_INSTANCE]);
-	nla_memcpy(&tx_info.dmac.addr,
+	nla_स_नकल(&tx_info.dmac.addr,
 		   tb[IFLA_BRIDGE_CFM_CC_CCM_TX_DMAC],
-		   sizeof(tx_info.dmac.addr));
+		   माप(tx_info.dmac.addr));
 	tx_info.seq_no_update = nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_CCM_TX_SEQ_NO_UPDATE]);
 	tx_info.period = nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_CCM_TX_PERIOD]);
-	tx_info.if_tlv = nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV]);
-	tx_info.if_tlv_value = nla_get_u8(tb[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV_VALUE]);
+	tx_info.अगर_tlv = nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV]);
+	tx_info.अगर_tlv_value = nla_get_u8(tb[IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV_VALUE]);
 	tx_info.port_tlv = nla_get_u32(tb[IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV]);
 	tx_info.port_tlv_value = nla_get_u8(tb[IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV_VALUE]);
 
-	return br_cfm_cc_ccm_tx(br, instance, &tx_info, extack);
-}
+	वापस br_cfm_cc_ccm_tx(br, instance, &tx_info, extack);
+पूर्ण
 
-int br_cfm_parse(struct net_bridge *br, struct net_bridge_port *p,
-		 struct nlattr *attr, int cmd, struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_BRIDGE_CFM_MAX + 1];
-	int err;
+पूर्णांक br_cfm_parse(काष्ठा net_bridge *br, काष्ठा net_bridge_port *p,
+		 काष्ठा nlattr *attr, पूर्णांक cmd, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_BRIDGE_CFM_MAX + 1];
+	पूर्णांक err;
 
-	/* When this function is called for a port then the br pointer is
-	 * invalid, therefor set the br to point correctly
+	/* When this function is called क्रम a port then the br poपूर्णांकer is
+	 * invalid, thereक्रम set the br to poपूर्णांक correctly
 	 */
-	if (p)
+	अगर (p)
 		br = p->br;
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_CFM_MAX, attr,
 			       br_cfm_policy, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (tb[IFLA_BRIDGE_CFM_MEP_CREATE]) {
+	अगर (tb[IFLA_BRIDGE_CFM_MEP_CREATE]) अणु
 		err = br_mep_create_parse(br, tb[IFLA_BRIDGE_CFM_MEP_CREATE],
 					  extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_CFM_MEP_DELETE]) {
+	अगर (tb[IFLA_BRIDGE_CFM_MEP_DELETE]) अणु
 		err = br_mep_delete_parse(br, tb[IFLA_BRIDGE_CFM_MEP_DELETE],
 					  extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_CFM_MEP_CONFIG]) {
+	अगर (tb[IFLA_BRIDGE_CFM_MEP_CONFIG]) अणु
 		err = br_mep_config_parse(br, tb[IFLA_BRIDGE_CFM_MEP_CONFIG],
 					  extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_CFM_CC_CONFIG]) {
+	अगर (tb[IFLA_BRIDGE_CFM_CC_CONFIG]) अणु
 		err = br_cc_config_parse(br, tb[IFLA_BRIDGE_CFM_CC_CONFIG],
 					 extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_ADD]) {
+	अगर (tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_ADD]) अणु
 		err = br_cc_peer_mep_add_parse(br, tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_ADD],
 					       extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_REMOVE]) {
-		err = br_cc_peer_mep_remove_parse(br, tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_REMOVE],
+	अगर (tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_REMOVE]) अणु
+		err = br_cc_peer_mep_हटाओ_parse(br, tb[IFLA_BRIDGE_CFM_CC_PEER_MEP_REMOVE],
 						  extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_CFM_CC_RDI]) {
+	अगर (tb[IFLA_BRIDGE_CFM_CC_RDI]) अणु
 		err = br_cc_rdi_parse(br, tb[IFLA_BRIDGE_CFM_CC_RDI],
 				      extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_BRIDGE_CFM_CC_CCM_TX]) {
+	अगर (tb[IFLA_BRIDGE_CFM_CC_CCM_TX]) अणु
 		err = br_cc_ccm_tx_parse(br, tb[IFLA_BRIDGE_CFM_CC_CCM_TX],
 					 extack);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int br_cfm_config_fill_info(struct sk_buff *skb, struct net_bridge *br)
-{
-	struct br_cfm_peer_mep *peer_mep;
-	struct br_cfm_mep *mep;
-	struct nlattr *tb;
+पूर्णांक br_cfm_config_fill_info(काष्ठा sk_buff *skb, काष्ठा net_bridge *br)
+अणु
+	काष्ठा br_cfm_peer_mep *peer_mep;
+	काष्ठा br_cfm_mep *mep;
+	काष्ठा nlattr *tb;
 
-	hlist_for_each_entry_rcu(mep, &br->mep_list, head) {
+	hlist_क्रम_each_entry_rcu(mep, &br->mep_list, head) अणु
 		tb = nla_nest_start(skb, IFLA_BRIDGE_CFM_MEP_CREATE_INFO);
-		if (!tb)
-			goto nla_info_failure;
+		अगर (!tb)
+			जाओ nla_info_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CREATE_INSTANCE,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CREATE_INSTANCE,
 				mep->instance))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CREATE_DOMAIN,
-				mep->create.domain))
-			goto nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CREATE_DOMAIN,
+				mep->create.करोमुख्य))
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CREATE_DIRECTION,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CREATE_सूचीECTION,
 				mep->create.direction))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CREATE_IFINDEX,
-				mep->create.ifindex))
-			goto nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CREATE_IFINDEX,
+				mep->create.अगरindex))
+			जाओ nla_put_failure;
 
 		nla_nest_end(skb, tb);
 
 		tb = nla_nest_start(skb, IFLA_BRIDGE_CFM_MEP_CONFIG_INFO);
 
-		if (!tb)
-			goto nla_info_failure;
+		अगर (!tb)
+			जाओ nla_info_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CONFIG_INSTANCE,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CONFIG_INSTANCE,
 				mep->instance))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put(skb, IFLA_BRIDGE_CFM_MEP_CONFIG_UNICAST_MAC,
-			    sizeof(mep->config.unicast_mac.addr),
+		अगर (nla_put(skb, IFLA_BRIDGE_CFM_MEP_CONFIG_UNICAST_MAC,
+			    माप(mep->config.unicast_mac.addr),
 			    mep->config.unicast_mac.addr))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CONFIG_MDLEVEL,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CONFIG_MDLEVEL,
 				mep->config.mdlevel))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CONFIG_MEPID,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_CONFIG_MEPID,
 				mep->config.mepid))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
 		nla_nest_end(skb, tb);
 
 		tb = nla_nest_start(skb, IFLA_BRIDGE_CFM_CC_CONFIG_INFO);
 
-		if (!tb)
-			goto nla_info_failure;
+		अगर (!tb)
+			जाओ nla_info_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CONFIG_INSTANCE,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CONFIG_INSTANCE,
 				mep->instance))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CONFIG_ENABLE,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CONFIG_ENABLE,
 				mep->cc_config.enable))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CONFIG_EXP_INTERVAL,
-				mep->cc_config.exp_interval))
-			goto nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CONFIG_EXP_INTERVAL,
+				mep->cc_config.exp_पूर्णांकerval))
+			जाओ nla_put_failure;
 
-		if (nla_put(skb, IFLA_BRIDGE_CFM_CC_CONFIG_EXP_MAID,
-			    sizeof(mep->cc_config.exp_maid.data),
+		अगर (nla_put(skb, IFLA_BRIDGE_CFM_CC_CONFIG_EXP_MAID,
+			    माप(mep->cc_config.exp_maid.data),
 			    mep->cc_config.exp_maid.data))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
 		nla_nest_end(skb, tb);
 
 		tb = nla_nest_start(skb, IFLA_BRIDGE_CFM_CC_RDI_INFO);
 
-		if (!tb)
-			goto nla_info_failure;
+		अगर (!tb)
+			जाओ nla_info_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_RDI_INSTANCE,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_RDI_INSTANCE,
 				mep->instance))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_RDI_RDI,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_RDI_RDI,
 				mep->rdi))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
 		nla_nest_end(skb, tb);
 
 		tb = nla_nest_start(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_INFO);
 
-		if (!tb)
-			goto nla_info_failure;
+		अगर (!tb)
+			जाओ nla_info_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_INSTANCE,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_INSTANCE,
 				mep->instance))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_DMAC,
-			    sizeof(mep->cc_ccm_tx_info.dmac),
+		अगर (nla_put(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_DMAC,
+			    माप(mep->cc_ccm_tx_info.dmac),
 			    mep->cc_ccm_tx_info.dmac.addr))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_SEQ_NO_UPDATE,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_SEQ_NO_UPDATE,
 				mep->cc_ccm_tx_info.seq_no_update))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_PERIOD,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_PERIOD,
 				mep->cc_ccm_tx_info.period))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV,
-				mep->cc_ccm_tx_info.if_tlv))
-			goto nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV,
+				mep->cc_ccm_tx_info.अगर_tlv))
+			जाओ nla_put_failure;
 
-		if (nla_put_u8(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV_VALUE,
-			       mep->cc_ccm_tx_info.if_tlv_value))
-			goto nla_put_failure;
+		अगर (nla_put_u8(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_IF_TLV_VALUE,
+			       mep->cc_ccm_tx_info.अगर_tlv_value))
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV,
 				mep->cc_ccm_tx_info.port_tlv))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u8(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV_VALUE,
+		अगर (nla_put_u8(skb, IFLA_BRIDGE_CFM_CC_CCM_TX_PORT_TLV_VALUE,
 			       mep->cc_ccm_tx_info.port_tlv_value))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
 		nla_nest_end(skb, tb);
 
-		hlist_for_each_entry_rcu(peer_mep, &mep->peer_mep_list, head) {
+		hlist_क्रम_each_entry_rcu(peer_mep, &mep->peer_mep_list, head) अणु
 			tb = nla_nest_start(skb,
 					    IFLA_BRIDGE_CFM_CC_PEER_MEP_INFO);
 
-			if (!tb)
-				goto nla_info_failure;
+			अगर (!tb)
+				जाओ nla_info_failure;
 
-			if (nla_put_u32(skb,
+			अगर (nla_put_u32(skb,
 					IFLA_BRIDGE_CFM_CC_PEER_MEP_INSTANCE,
 					mep->instance))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
-			if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_PEER_MEPID,
+			अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_PEER_MEPID,
 					peer_mep->mepid))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
 			nla_nest_end(skb, tb);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, tb);
 
 nla_info_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-int br_cfm_status_fill_info(struct sk_buff *skb,
-			    struct net_bridge *br,
+पूर्णांक br_cfm_status_fill_info(काष्ठा sk_buff *skb,
+			    काष्ठा net_bridge *br,
 			    bool getlink)
-{
-	struct br_cfm_peer_mep *peer_mep;
-	struct br_cfm_mep *mep;
-	struct nlattr *tb;
+अणु
+	काष्ठा br_cfm_peer_mep *peer_mep;
+	काष्ठा br_cfm_mep *mep;
+	काष्ठा nlattr *tb;
 
-	hlist_for_each_entry_rcu(mep, &br->mep_list, head) {
+	hlist_क्रम_each_entry_rcu(mep, &br->mep_list, head) अणु
 		tb = nla_nest_start(skb, IFLA_BRIDGE_CFM_MEP_STATUS_INFO);
-		if (!tb)
-			goto nla_info_failure;
+		अगर (!tb)
+			जाओ nla_info_failure;
 
-		if (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_STATUS_INSTANCE,
+		अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_MEP_STATUS_INSTANCE,
 				mep->instance))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb,
+		अगर (nla_put_u32(skb,
 				IFLA_BRIDGE_CFM_MEP_STATUS_OPCODE_UNEXP_SEEN,
 				mep->status.opcode_unexp_seen))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb,
+		अगर (nla_put_u32(skb,
 				IFLA_BRIDGE_CFM_MEP_STATUS_VERSION_UNEXP_SEEN,
 				mep->status.version_unexp_seen))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb,
+		अगर (nla_put_u32(skb,
 				IFLA_BRIDGE_CFM_MEP_STATUS_RX_LEVEL_LOW_SEEN,
 				mep->status.rx_level_low_seen))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
-		/* Only clear if this is a GETLINK */
-		if (getlink) {
+		/* Only clear अगर this is a GETLINK */
+		अगर (getlink) अणु
 			/* Clear all 'seen' indications */
 			mep->status.opcode_unexp_seen = false;
 			mep->status.version_unexp_seen = false;
 			mep->status.rx_level_low_seen = false;
-		}
+		पूर्ण
 
 		nla_nest_end(skb, tb);
 
-		hlist_for_each_entry_rcu(peer_mep, &mep->peer_mep_list, head) {
+		hlist_क्रम_each_entry_rcu(peer_mep, &mep->peer_mep_list, head) अणु
 			tb = nla_nest_start(skb,
 					    IFLA_BRIDGE_CFM_CC_PEER_STATUS_INFO);
-			if (!tb)
-				goto nla_info_failure;
+			अगर (!tb)
+				जाओ nla_info_failure;
 
-			if (nla_put_u32(skb,
+			अगर (nla_put_u32(skb,
 					IFLA_BRIDGE_CFM_CC_PEER_STATUS_INSTANCE,
 					mep->instance))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
-			if (nla_put_u32(skb,
+			अगर (nla_put_u32(skb,
 					IFLA_BRIDGE_CFM_CC_PEER_STATUS_PEER_MEPID,
 					peer_mep->mepid))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
-			if (nla_put_u32(skb,
+			अगर (nla_put_u32(skb,
 					IFLA_BRIDGE_CFM_CC_PEER_STATUS_CCM_DEFECT,
 					peer_mep->cc_status.ccm_defect))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
-			if (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_PEER_STATUS_RDI,
+			अगर (nla_put_u32(skb, IFLA_BRIDGE_CFM_CC_PEER_STATUS_RDI,
 					peer_mep->cc_status.rdi))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
-			if (nla_put_u8(skb,
+			अगर (nla_put_u8(skb,
 				       IFLA_BRIDGE_CFM_CC_PEER_STATUS_PORT_TLV_VALUE,
 				       peer_mep->cc_status.port_tlv_value))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
-			if (nla_put_u8(skb,
+			अगर (nla_put_u8(skb,
 				       IFLA_BRIDGE_CFM_CC_PEER_STATUS_IF_TLV_VALUE,
-				       peer_mep->cc_status.if_tlv_value))
-				goto nla_put_failure;
+				       peer_mep->cc_status.अगर_tlv_value))
+				जाओ nla_put_failure;
 
-			if (nla_put_u32(skb,
+			अगर (nla_put_u32(skb,
 					IFLA_BRIDGE_CFM_CC_PEER_STATUS_SEEN,
 					peer_mep->cc_status.seen))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
-			if (nla_put_u32(skb,
+			अगर (nla_put_u32(skb,
 					IFLA_BRIDGE_CFM_CC_PEER_STATUS_TLV_SEEN,
 					peer_mep->cc_status.tlv_seen))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
-			if (nla_put_u32(skb,
+			अगर (nla_put_u32(skb,
 					IFLA_BRIDGE_CFM_CC_PEER_STATUS_SEQ_UNEXP_SEEN,
 					peer_mep->cc_status.seq_unexp_seen))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
-			if (getlink) { /* Only clear if this is a GETLINK */
+			अगर (getlink) अणु /* Only clear अगर this is a GETLINK */
 				/* Clear all 'seen' indications */
 				peer_mep->cc_status.seen = false;
 				peer_mep->cc_status.tlv_seen = false;
 				peer_mep->cc_status.seq_unexp_seen = false;
-			}
+			पूर्ण
 
 			nla_nest_end(skb, tb);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, tb);
 
 nla_info_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण

@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __USB_STREAM_H
-#define __USB_STREAM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __USB_STREAM_H
+#घोषणा __USB_STREAM_H
 
-#include <uapi/sound/usb_stream.h>
+#समावेश <uapi/sound/usb_stream.h>
 
-#define USB_STREAM_NURBS 4
-#define USB_STREAM_URBDEPTH 4
+#घोषणा USB_STREAM_NURBS 4
+#घोषणा USB_STREAM_URBDEPTH 4
 
-struct usb_stream_kernel {
-	struct usb_stream *s;
+काष्ठा usb_stream_kernel अणु
+	काष्ठा usb_stream *s;
 
-	void *write_page;
+	व्योम *ग_लिखो_page;
 
-	unsigned n_o_ps;
+	अचिन्हित n_o_ps;
 
-	struct urb *inurb[USB_STREAM_NURBS];
-	struct urb *idle_inurb;
-	struct urb *completed_inurb;
-	struct urb *outurb[USB_STREAM_NURBS];
-	struct urb *idle_outurb;
-	struct urb *completed_outurb;
-	struct urb *i_urb;
+	काष्ठा urb *inurb[USB_STREAM_NURBS];
+	काष्ठा urb *idle_inurb;
+	काष्ठा urb *completed_inurb;
+	काष्ठा urb *outurb[USB_STREAM_NURBS];
+	काष्ठा urb *idle_outurb;
+	काष्ठा urb *completed_outurb;
+	काष्ठा urb *i_urb;
 
-	int iso_frame_balance;
+	पूर्णांक iso_frame_balance;
 
-	wait_queue_head_t sleep;
+	रुको_queue_head_t sleep;
 
-	unsigned out_phase;
-	unsigned out_phase_peeked;
-	unsigned freqn;
-};
+	अचिन्हित out_phase;
+	अचिन्हित out_phase_peeked;
+	अचिन्हित freqn;
+पूर्ण;
 
-struct usb_stream *usb_stream_new(struct usb_stream_kernel *sk,
-				  struct usb_device *dev,
-				  unsigned in_endpoint, unsigned out_endpoint,
-				  unsigned sample_rate, unsigned use_packsize,
-				  unsigned period_frames, unsigned frame_size);
-void usb_stream_free(struct usb_stream_kernel *);
-int usb_stream_start(struct usb_stream_kernel *);
-void usb_stream_stop(struct usb_stream_kernel *);
+काष्ठा usb_stream *usb_stream_new(काष्ठा usb_stream_kernel *sk,
+				  काष्ठा usb_device *dev,
+				  अचिन्हित in_endpoपूर्णांक, अचिन्हित out_endpoपूर्णांक,
+				  अचिन्हित sample_rate, अचिन्हित use_packsize,
+				  अचिन्हित period_frames, अचिन्हित frame_size);
+व्योम usb_stream_मुक्त(काष्ठा usb_stream_kernel *);
+पूर्णांक usb_stream_start(काष्ठा usb_stream_kernel *);
+व्योम usb_stream_stop(काष्ठा usb_stream_kernel *);
 
-#endif /* __USB_STREAM_H */
+#पूर्ण_अगर /* __USB_STREAM_H */

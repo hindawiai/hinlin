@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * NetLabel Network Address Lists
  *
  * This file contains network address list functions used to manage ordered
- * lists of network addresses for use by the NetLabel subsystem.  The NetLabel
- * system manages static and dynamic label mappings for network protocols such
+ * lists of network addresses क्रम use by the NetLabel subप्रणाली.  The NetLabel
+ * प्रणाली manages अटल and dynamic label mappings क्रम network protocols such
  * as CIPSO and RIPSO.
  *
  * Author: Paul Moore <paul@paul-moore.com>
@@ -14,181 +15,181 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2008
  */
 
-#ifndef _NETLABEL_ADDRLIST_H
-#define _NETLABEL_ADDRLIST_H
+#अगर_अघोषित _NETLABEL_ADDRLIST_H
+#घोषणा _NETLABEL_ADDRLIST_H
 
-#include <linux/types.h>
-#include <linux/rcupdate.h>
-#include <linux/list.h>
-#include <linux/in6.h>
-#include <linux/audit.h>
+#समावेश <linux/types.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/list.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/audit.h>
 
 /**
- * struct netlbl_af4list - NetLabel IPv4 address list
+ * काष्ठा netlbl_af4list - NetLabel IPv4 address list
  * @addr: IPv4 address
  * @mask: IPv4 address mask
  * @valid: valid flag
- * @list: list structure, used internally
+ * @list: list काष्ठाure, used पूर्णांकernally
  */
-struct netlbl_af4list {
+काष्ठा netlbl_af4list अणु
 	__be32 addr;
 	__be32 mask;
 
 	u32 valid;
-	struct list_head list;
-};
+	काष्ठा list_head list;
+पूर्ण;
 
 /**
- * struct netlbl_af6list - NetLabel IPv6 address list
+ * काष्ठा netlbl_af6list - NetLabel IPv6 address list
  * @addr: IPv6 address
  * @mask: IPv6 address mask
  * @valid: valid flag
- * @list: list structure, used internally
+ * @list: list काष्ठाure, used पूर्णांकernally
  */
-struct netlbl_af6list {
-	struct in6_addr addr;
-	struct in6_addr mask;
+काष्ठा netlbl_af6list अणु
+	काष्ठा in6_addr addr;
+	काष्ठा in6_addr mask;
 
 	u32 valid;
-	struct list_head list;
-};
+	काष्ठा list_head list;
+पूर्ण;
 
-#define __af4list_entry(ptr) container_of(ptr, struct netlbl_af4list, list)
+#घोषणा __af4list_entry(ptr) container_of(ptr, काष्ठा netlbl_af4list, list)
 
-static inline struct netlbl_af4list *__af4list_valid(struct list_head *s,
-						     struct list_head *h)
-{
-	struct list_head *i = s;
-	struct netlbl_af4list *n = __af4list_entry(s);
-	while (i != h && !n->valid) {
+अटल अंतरभूत काष्ठा netlbl_af4list *__af4list_valid(काष्ठा list_head *s,
+						     काष्ठा list_head *h)
+अणु
+	काष्ठा list_head *i = s;
+	काष्ठा netlbl_af4list *n = __af4list_entry(s);
+	जबतक (i != h && !n->valid) अणु
 		i = i->next;
 		n = __af4list_entry(i);
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
-static inline struct netlbl_af4list *__af4list_valid_rcu(struct list_head *s,
-							 struct list_head *h)
-{
-	struct list_head *i = s;
-	struct netlbl_af4list *n = __af4list_entry(s);
-	while (i != h && !n->valid) {
+अटल अंतरभूत काष्ठा netlbl_af4list *__af4list_valid_rcu(काष्ठा list_head *s,
+							 काष्ठा list_head *h)
+अणु
+	काष्ठा list_head *i = s;
+	काष्ठा netlbl_af4list *n = __af4list_entry(s);
+	जबतक (i != h && !n->valid) अणु
 		i = rcu_dereference(list_next_rcu(i));
 		n = __af4list_entry(i);
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
-#define netlbl_af4list_foreach(iter, head)				\
-	for (iter = __af4list_valid((head)->next, head);		\
+#घोषणा netlbl_af4list_क्रमeach(iter, head)				\
+	क्रम (iter = __af4list_valid((head)->next, head);		\
 	     &iter->list != (head);					\
 	     iter = __af4list_valid(iter->list.next, head))
 
-#define netlbl_af4list_foreach_rcu(iter, head)				\
-	for (iter = __af4list_valid_rcu((head)->next, head);		\
+#घोषणा netlbl_af4list_क्रमeach_rcu(iter, head)				\
+	क्रम (iter = __af4list_valid_rcu((head)->next, head);		\
 	     &iter->list != (head);					\
 	     iter = __af4list_valid_rcu(iter->list.next, head))
 
-#define netlbl_af4list_foreach_safe(iter, tmp, head)			\
-	for (iter = __af4list_valid((head)->next, head),		\
-		     tmp = __af4list_valid(iter->list.next, head);	\
+#घोषणा netlbl_af4list_क्रमeach_safe(iter, पंचांगp, head)			\
+	क्रम (iter = __af4list_valid((head)->next, head),		\
+		     पंचांगp = __af4list_valid(iter->list.next, head);	\
 	     &iter->list != (head);					\
-	     iter = tmp, tmp = __af4list_valid(iter->list.next, head))
+	     iter = पंचांगp, पंचांगp = __af4list_valid(iter->list.next, head))
 
-int netlbl_af4list_add(struct netlbl_af4list *entry,
-		       struct list_head *head);
-struct netlbl_af4list *netlbl_af4list_remove(__be32 addr, __be32 mask,
-					     struct list_head *head);
-void netlbl_af4list_remove_entry(struct netlbl_af4list *entry);
-struct netlbl_af4list *netlbl_af4list_search(__be32 addr,
-					     struct list_head *head);
-struct netlbl_af4list *netlbl_af4list_search_exact(__be32 addr,
+पूर्णांक netlbl_af4list_add(काष्ठा netlbl_af4list *entry,
+		       काष्ठा list_head *head);
+काष्ठा netlbl_af4list *netlbl_af4list_हटाओ(__be32 addr, __be32 mask,
+					     काष्ठा list_head *head);
+व्योम netlbl_af4list_हटाओ_entry(काष्ठा netlbl_af4list *entry);
+काष्ठा netlbl_af4list *netlbl_af4list_search(__be32 addr,
+					     काष्ठा list_head *head);
+काष्ठा netlbl_af4list *netlbl_af4list_search_exact(__be32 addr,
 						   __be32 mask,
-						   struct list_head *head);
+						   काष्ठा list_head *head);
 
-#ifdef CONFIG_AUDIT
-void netlbl_af4list_audit_addr(struct audit_buffer *audit_buf,
-			       int src, const char *dev,
+#अगर_घोषित CONFIG_AUDIT
+व्योम netlbl_af4list_audit_addr(काष्ठा audit_buffer *audit_buf,
+			       पूर्णांक src, स्थिर अक्षर *dev,
 			       __be32 addr, __be32 mask);
-#else
-static inline void netlbl_af4list_audit_addr(struct audit_buffer *audit_buf,
-					     int src, const char *dev,
+#अन्यथा
+अटल अंतरभूत व्योम netlbl_af4list_audit_addr(काष्ठा audit_buffer *audit_buf,
+					     पूर्णांक src, स्थिर अक्षर *dev,
 					     __be32 addr, __be32 mask)
-{
-}
-#endif
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 
-#define __af6list_entry(ptr) container_of(ptr, struct netlbl_af6list, list)
+#घोषणा __af6list_entry(ptr) container_of(ptr, काष्ठा netlbl_af6list, list)
 
-static inline struct netlbl_af6list *__af6list_valid(struct list_head *s,
-						     struct list_head *h)
-{
-	struct list_head *i = s;
-	struct netlbl_af6list *n = __af6list_entry(s);
-	while (i != h && !n->valid) {
+अटल अंतरभूत काष्ठा netlbl_af6list *__af6list_valid(काष्ठा list_head *s,
+						     काष्ठा list_head *h)
+अणु
+	काष्ठा list_head *i = s;
+	काष्ठा netlbl_af6list *n = __af6list_entry(s);
+	जबतक (i != h && !n->valid) अणु
 		i = i->next;
 		n = __af6list_entry(i);
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
-static inline struct netlbl_af6list *__af6list_valid_rcu(struct list_head *s,
-							 struct list_head *h)
-{
-	struct list_head *i = s;
-	struct netlbl_af6list *n = __af6list_entry(s);
-	while (i != h && !n->valid) {
+अटल अंतरभूत काष्ठा netlbl_af6list *__af6list_valid_rcu(काष्ठा list_head *s,
+							 काष्ठा list_head *h)
+अणु
+	काष्ठा list_head *i = s;
+	काष्ठा netlbl_af6list *n = __af6list_entry(s);
+	जबतक (i != h && !n->valid) अणु
 		i = rcu_dereference(list_next_rcu(i));
 		n = __af6list_entry(i);
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
-#define netlbl_af6list_foreach(iter, head)				\
-	for (iter = __af6list_valid((head)->next, head);		\
+#घोषणा netlbl_af6list_क्रमeach(iter, head)				\
+	क्रम (iter = __af6list_valid((head)->next, head);		\
 	     &iter->list != (head);					\
 	     iter = __af6list_valid(iter->list.next, head))
 
-#define netlbl_af6list_foreach_rcu(iter, head)				\
-	for (iter = __af6list_valid_rcu((head)->next, head);		\
+#घोषणा netlbl_af6list_क्रमeach_rcu(iter, head)				\
+	क्रम (iter = __af6list_valid_rcu((head)->next, head);		\
 	     &iter->list != (head);					\
 	     iter = __af6list_valid_rcu(iter->list.next, head))
 
-#define netlbl_af6list_foreach_safe(iter, tmp, head)			\
-	for (iter = __af6list_valid((head)->next, head),		\
-		     tmp = __af6list_valid(iter->list.next, head);	\
+#घोषणा netlbl_af6list_क्रमeach_safe(iter, पंचांगp, head)			\
+	क्रम (iter = __af6list_valid((head)->next, head),		\
+		     पंचांगp = __af6list_valid(iter->list.next, head);	\
 	     &iter->list != (head);					\
-	     iter = tmp, tmp = __af6list_valid(iter->list.next, head))
+	     iter = पंचांगp, पंचांगp = __af6list_valid(iter->list.next, head))
 
-int netlbl_af6list_add(struct netlbl_af6list *entry,
-		       struct list_head *head);
-struct netlbl_af6list *netlbl_af6list_remove(const struct in6_addr *addr,
-					     const struct in6_addr *mask,
-					     struct list_head *head);
-void netlbl_af6list_remove_entry(struct netlbl_af6list *entry);
-struct netlbl_af6list *netlbl_af6list_search(const struct in6_addr *addr,
-					     struct list_head *head);
-struct netlbl_af6list *netlbl_af6list_search_exact(const struct in6_addr *addr,
-						   const struct in6_addr *mask,
-						   struct list_head *head);
+पूर्णांक netlbl_af6list_add(काष्ठा netlbl_af6list *entry,
+		       काष्ठा list_head *head);
+काष्ठा netlbl_af6list *netlbl_af6list_हटाओ(स्थिर काष्ठा in6_addr *addr,
+					     स्थिर काष्ठा in6_addr *mask,
+					     काष्ठा list_head *head);
+व्योम netlbl_af6list_हटाओ_entry(काष्ठा netlbl_af6list *entry);
+काष्ठा netlbl_af6list *netlbl_af6list_search(स्थिर काष्ठा in6_addr *addr,
+					     काष्ठा list_head *head);
+काष्ठा netlbl_af6list *netlbl_af6list_search_exact(स्थिर काष्ठा in6_addr *addr,
+						   स्थिर काष्ठा in6_addr *mask,
+						   काष्ठा list_head *head);
 
-#ifdef CONFIG_AUDIT
-void netlbl_af6list_audit_addr(struct audit_buffer *audit_buf,
-			       int src,
-			       const char *dev,
-			       const struct in6_addr *addr,
-			       const struct in6_addr *mask);
-#else
-static inline void netlbl_af6list_audit_addr(struct audit_buffer *audit_buf,
-					     int src,
-					     const char *dev,
-					     const struct in6_addr *addr,
-					     const struct in6_addr *mask)
-{
-}
-#endif
-#endif /* IPV6 */
+#अगर_घोषित CONFIG_AUDIT
+व्योम netlbl_af6list_audit_addr(काष्ठा audit_buffer *audit_buf,
+			       पूर्णांक src,
+			       स्थिर अक्षर *dev,
+			       स्थिर काष्ठा in6_addr *addr,
+			       स्थिर काष्ठा in6_addr *mask);
+#अन्यथा
+अटल अंतरभूत व्योम netlbl_af6list_audit_addr(काष्ठा audit_buffer *audit_buf,
+					     पूर्णांक src,
+					     स्थिर अक्षर *dev,
+					     स्थिर काष्ठा in6_addr *addr,
+					     स्थिर काष्ठा in6_addr *mask)
+अणु
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर /* IPV6 */
 
-#endif
+#पूर्ण_अगर

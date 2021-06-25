@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,162 +31,162 @@
  * SOFTWARE.
  */
 
-#ifndef __MLX5_EN_TC_H__
-#define __MLX5_EN_TC_H__
+#अगर_अघोषित __MLX5_EN_TC_H__
+#घोषणा __MLX5_EN_TC_H__
 
-#include <net/pkt_cls.h>
-#include "en.h"
-#include "eswitch.h"
-#include "en/tc_ct.h"
-#include "en/tc_tun.h"
-#include "en_rep.h"
+#समावेश <net/pkt_cls.h>
+#समावेश "en.h"
+#समावेश "eswitch.h"
+#समावेश "en/tc_ct.h"
+#समावेश "en/tc_tun.h"
+#समावेश "en_rep.h"
 
-#define MLX5E_TC_FLOW_ID_MASK 0x0000ffff
+#घोषणा MLX5E_TC_FLOW_ID_MASK 0x0000ffff
 
-#ifdef CONFIG_MLX5_ESWITCH
+#अगर_घोषित CONFIG_MLX5_ESWITCH
 
-#define NIC_FLOW_ATTR_SZ (sizeof(struct mlx5_flow_attr) +\
-			  sizeof(struct mlx5_nic_flow_attr))
-#define ESW_FLOW_ATTR_SZ (sizeof(struct mlx5_flow_attr) +\
-			  sizeof(struct mlx5_esw_flow_attr))
-#define ns_to_attr_sz(ns) (((ns) == MLX5_FLOW_NAMESPACE_FDB) ?\
+#घोषणा NIC_FLOW_ATTR_SZ (माप(काष्ठा mlx5_flow_attr) +\
+			  माप(काष्ठा mlx5_nic_flow_attr))
+#घोषणा ESW_FLOW_ATTR_SZ (माप(काष्ठा mlx5_flow_attr) +\
+			  माप(काष्ठा mlx5_esw_flow_attr))
+#घोषणा ns_to_attr_sz(ns) (((ns) == MLX5_FLOW_NAMESPACE_FDB) ?\
 			    ESW_FLOW_ATTR_SZ :\
 			    NIC_FLOW_ATTR_SZ)
 
 
-int mlx5e_tc_num_filters(struct mlx5e_priv *priv, unsigned long flags);
+पूर्णांक mlx5e_tc_num_filters(काष्ठा mlx5e_priv *priv, अचिन्हित दीर्घ flags);
 
-struct mlx5e_tc_update_priv {
-	struct net_device *tun_dev;
-};
+काष्ठा mlx5e_tc_update_priv अणु
+	काष्ठा net_device *tun_dev;
+पूर्ण;
 
-struct mlx5_nic_flow_attr {
+काष्ठा mlx5_nic_flow_attr अणु
 	u32 flow_tag;
 	u32 hairpin_tirn;
-	struct mlx5_flow_table *hairpin_ft;
-};
+	काष्ठा mlx5_flow_table *hairpin_ft;
+पूर्ण;
 
-struct mlx5_flow_attr {
+काष्ठा mlx5_flow_attr अणु
 	u32 action;
-	struct mlx5_fc *counter;
-	struct mlx5_modify_hdr *modify_hdr;
-	struct mlx5_ct_attr ct_attr;
-	struct mlx5e_tc_flow_parse_attr *parse_attr;
+	काष्ठा mlx5_fc *counter;
+	काष्ठा mlx5_modअगरy_hdr *modअगरy_hdr;
+	काष्ठा mlx5_ct_attr ct_attr;
+	काष्ठा mlx5e_tc_flow_parse_attr *parse_attr;
 	u32 chain;
 	u16 prio;
 	u32 dest_chain;
-	struct mlx5_flow_table *ft;
-	struct mlx5_flow_table *dest_ft;
+	काष्ठा mlx5_flow_table *ft;
+	काष्ठा mlx5_flow_table *dest_ft;
 	u8 inner_match_level;
 	u8 outer_match_level;
 	u8 ip_version;
 	u8 tun_ip_version;
 	u32 flags;
-	union {
-		struct mlx5_esw_flow_attr esw_attr[0];
-		struct mlx5_nic_flow_attr nic_attr[0];
-	};
-};
+	जोड़ अणु
+		काष्ठा mlx5_esw_flow_attr esw_attr[0];
+		काष्ठा mlx5_nic_flow_attr nic_attr[0];
+	पूर्ण;
+पूर्ण;
 
-struct mlx5_rx_tun_attr {
+काष्ठा mlx5_rx_tun_attr अणु
 	u16 decap_vport;
-	union {
+	जोड़ अणु
 		__be32 v4;
-		struct in6_addr v6;
-	} src_ip; /* Valid if decap_vport is not zero */
-	union {
+		काष्ठा in6_addr v6;
+	पूर्ण src_ip; /* Valid अगर decap_vport is not zero */
+	जोड़ अणु
 		__be32 v4;
-		struct in6_addr v6;
-	} dst_ip; /* Valid if decap_vport is not zero */
+		काष्ठा in6_addr v6;
+	पूर्ण dst_ip; /* Valid अगर decap_vport is not zero */
 	u32 vni;
-};
+पूर्ण;
 
-#define MLX5E_TC_TABLE_CHAIN_TAG_BITS 16
-#define MLX5E_TC_TABLE_CHAIN_TAG_MASK GENMASK(MLX5E_TC_TABLE_CHAIN_TAG_BITS - 1, 0)
+#घोषणा MLX5E_TC_TABLE_CHAIN_TAG_BITS 16
+#घोषणा MLX5E_TC_TABLE_CHAIN_TAG_MASK GENMASK(MLX5E_TC_TABLE_CHAIN_TAG_BITS - 1, 0)
 
-#if IS_ENABLED(CONFIG_MLX5_CLS_ACT)
+#अगर IS_ENABLED(CONFIG_MLX5_CLS_ACT)
 
-struct tunnel_match_key {
-	struct flow_dissector_key_control enc_control;
-	struct flow_dissector_key_keyid enc_key_id;
-	struct flow_dissector_key_ports enc_tp;
-	struct flow_dissector_key_ip enc_ip;
-	union {
-		struct flow_dissector_key_ipv4_addrs enc_ipv4;
-		struct flow_dissector_key_ipv6_addrs enc_ipv6;
-	};
+काष्ठा tunnel_match_key अणु
+	काष्ठा flow_dissector_key_control enc_control;
+	काष्ठा flow_dissector_key_keyid enc_key_id;
+	काष्ठा flow_dissector_key_ports enc_tp;
+	काष्ठा flow_dissector_key_ip enc_ip;
+	जोड़ अणु
+		काष्ठा flow_dissector_key_ipv4_addrs enc_ipv4;
+		काष्ठा flow_dissector_key_ipv6_addrs enc_ipv6;
+	पूर्ण;
 
-	int filter_ifindex;
-};
+	पूर्णांक filter_अगरindex;
+पूर्ण;
 
-struct tunnel_match_enc_opts {
-	struct flow_dissector_key_enc_opts key;
-	struct flow_dissector_key_enc_opts mask;
-};
+काष्ठा tunnel_match_enc_opts अणु
+	काष्ठा flow_dissector_key_enc_opts key;
+	काष्ठा flow_dissector_key_enc_opts mask;
+पूर्ण;
 
 /* Tunnel_id mapping is TUNNEL_INFO_BITS + ENC_OPTS_BITS.
- * Upper TUNNEL_INFO_BITS for general tunnel info.
- * Lower ENC_OPTS_BITS bits for enc_opts.
+ * Upper TUNNEL_INFO_BITS क्रम general tunnel info.
+ * Lower ENC_OPTS_BITS bits क्रम enc_opts.
  */
-#define TUNNEL_INFO_BITS 12
-#define TUNNEL_INFO_BITS_MASK GENMASK(TUNNEL_INFO_BITS - 1, 0)
-#define ENC_OPTS_BITS 12
-#define ENC_OPTS_BITS_MASK GENMASK(ENC_OPTS_BITS - 1, 0)
-#define TUNNEL_ID_BITS (TUNNEL_INFO_BITS + ENC_OPTS_BITS)
-#define TUNNEL_ID_MASK GENMASK(TUNNEL_ID_BITS - 1, 0)
+#घोषणा TUNNEL_INFO_BITS 12
+#घोषणा TUNNEL_INFO_BITS_MASK GENMASK(TUNNEL_INFO_BITS - 1, 0)
+#घोषणा ENC_OPTS_BITS 12
+#घोषणा ENC_OPTS_BITS_MASK GENMASK(ENC_OPTS_BITS - 1, 0)
+#घोषणा TUNNEL_ID_BITS (TUNNEL_INFO_BITS + ENC_OPTS_BITS)
+#घोषणा TUNNEL_ID_MASK GENMASK(TUNNEL_ID_BITS - 1, 0)
 
-enum {
+क्रमागत अणु
 	MLX5E_TC_FLAG_INGRESS_BIT,
 	MLX5E_TC_FLAG_EGRESS_BIT,
 	MLX5E_TC_FLAG_NIC_OFFLOAD_BIT,
 	MLX5E_TC_FLAG_ESW_OFFLOAD_BIT,
 	MLX5E_TC_FLAG_FT_OFFLOAD_BIT,
 	MLX5E_TC_FLAG_LAST_EXPORTED_BIT = MLX5E_TC_FLAG_FT_OFFLOAD_BIT,
-};
+पूर्ण;
 
-#define MLX5_TC_FLAG(flag) BIT(MLX5E_TC_FLAG_##flag##_BIT)
+#घोषणा MLX5_TC_FLAG(flag) BIT(MLX5E_TC_FLAG_##flag##_BIT)
 
-int mlx5e_tc_esw_init(struct rhashtable *tc_ht);
-void mlx5e_tc_esw_cleanup(struct rhashtable *tc_ht);
-bool mlx5e_is_eswitch_flow(struct mlx5e_tc_flow *flow);
+पूर्णांक mlx5e_tc_esw_init(काष्ठा rhashtable *tc_ht);
+व्योम mlx5e_tc_esw_cleanup(काष्ठा rhashtable *tc_ht);
+bool mlx5e_is_eचयन_flow(काष्ठा mlx5e_tc_flow *flow);
 
-int mlx5e_configure_flower(struct net_device *dev, struct mlx5e_priv *priv,
-			   struct flow_cls_offload *f, unsigned long flags);
-int mlx5e_delete_flower(struct net_device *dev, struct mlx5e_priv *priv,
-			struct flow_cls_offload *f, unsigned long flags);
+पूर्णांक mlx5e_configure_flower(काष्ठा net_device *dev, काष्ठा mlx5e_priv *priv,
+			   काष्ठा flow_cls_offload *f, अचिन्हित दीर्घ flags);
+पूर्णांक mlx5e_delete_flower(काष्ठा net_device *dev, काष्ठा mlx5e_priv *priv,
+			काष्ठा flow_cls_offload *f, अचिन्हित दीर्घ flags);
 
-int mlx5e_stats_flower(struct net_device *dev, struct mlx5e_priv *priv,
-		       struct flow_cls_offload *f, unsigned long flags);
+पूर्णांक mlx5e_stats_flower(काष्ठा net_device *dev, काष्ठा mlx5e_priv *priv,
+		       काष्ठा flow_cls_offload *f, अचिन्हित दीर्घ flags);
 
-int mlx5e_tc_configure_matchall(struct mlx5e_priv *priv,
-				struct tc_cls_matchall_offload *f);
-int mlx5e_tc_delete_matchall(struct mlx5e_priv *priv,
-			     struct tc_cls_matchall_offload *f);
-void mlx5e_tc_stats_matchall(struct mlx5e_priv *priv,
-			     struct tc_cls_matchall_offload *ma);
+पूर्णांक mlx5e_tc_configure_matchall(काष्ठा mlx5e_priv *priv,
+				काष्ठा tc_cls_matchall_offload *f);
+पूर्णांक mlx5e_tc_delete_matchall(काष्ठा mlx5e_priv *priv,
+			     काष्ठा tc_cls_matchall_offload *f);
+व्योम mlx5e_tc_stats_matchall(काष्ठा mlx5e_priv *priv,
+			     काष्ठा tc_cls_matchall_offload *ma);
 
-struct mlx5e_encap_entry;
-void mlx5e_tc_encap_flows_add(struct mlx5e_priv *priv,
-			      struct mlx5e_encap_entry *e,
-			      struct list_head *flow_list);
-void mlx5e_tc_encap_flows_del(struct mlx5e_priv *priv,
-			      struct mlx5e_encap_entry *e,
-			      struct list_head *flow_list);
-bool mlx5e_encap_take(struct mlx5e_encap_entry *e);
-void mlx5e_encap_put(struct mlx5e_priv *priv, struct mlx5e_encap_entry *e);
+काष्ठा mlx5e_encap_entry;
+व्योम mlx5e_tc_encap_flows_add(काष्ठा mlx5e_priv *priv,
+			      काष्ठा mlx5e_encap_entry *e,
+			      काष्ठा list_head *flow_list);
+व्योम mlx5e_tc_encap_flows_del(काष्ठा mlx5e_priv *priv,
+			      काष्ठा mlx5e_encap_entry *e,
+			      काष्ठा list_head *flow_list);
+bool mlx5e_encap_take(काष्ठा mlx5e_encap_entry *e);
+व्योम mlx5e_encap_put(काष्ठा mlx5e_priv *priv, काष्ठा mlx5e_encap_entry *e);
 
-void mlx5e_take_all_encap_flows(struct mlx5e_encap_entry *e, struct list_head *flow_list);
-void mlx5e_put_flow_list(struct mlx5e_priv *priv, struct list_head *flow_list);
+व्योम mlx5e_take_all_encap_flows(काष्ठा mlx5e_encap_entry *e, काष्ठा list_head *flow_list);
+व्योम mlx5e_put_flow_list(काष्ठा mlx5e_priv *priv, काष्ठा list_head *flow_list);
 
-struct mlx5e_neigh_hash_entry;
-struct mlx5e_encap_entry *
-mlx5e_get_next_init_encap(struct mlx5e_neigh_hash_entry *nhe,
-			  struct mlx5e_encap_entry *e);
-void mlx5e_tc_update_neigh_used_value(struct mlx5e_neigh_hash_entry *nhe);
+काष्ठा mlx5e_neigh_hash_entry;
+काष्ठा mlx5e_encap_entry *
+mlx5e_get_next_init_encap(काष्ठा mlx5e_neigh_hash_entry *nhe,
+			  काष्ठा mlx5e_encap_entry *e);
+व्योम mlx5e_tc_update_neigh_used_value(काष्ठा mlx5e_neigh_hash_entry *nhe);
 
-void mlx5e_tc_reoffload_flows_work(struct work_struct *work);
+व्योम mlx5e_tc_reoffload_flows_work(काष्ठा work_काष्ठा *work);
 
-enum mlx5e_tc_attr_to_reg {
+क्रमागत mlx5e_tc_attr_to_reg अणु
 	CHAIN_TO_REG,
 	VPORT_TO_REG,
 	TUNNEL_TO_REG,
@@ -197,150 +198,150 @@ enum mlx5e_tc_attr_to_reg {
 	FTEID_TO_REG,
 	NIC_CHAIN_TO_REG,
 	NIC_ZONE_RESTORE_TO_REG,
-};
+पूर्ण;
 
-struct mlx5e_tc_attr_to_reg_mapping {
-	int mfield; /* rewrite field */
-	int moffset; /* offset of mfield */
-	int mlen; /* bytes to rewrite/match */
+काष्ठा mlx5e_tc_attr_to_reg_mapping अणु
+	पूर्णांक mfield; /* reग_लिखो field */
+	पूर्णांक moffset; /* offset of mfield */
+	पूर्णांक mlen; /* bytes to reग_लिखो/match */
 
-	int soffset; /* offset of spec for match */
-};
+	पूर्णांक soffset; /* offset of spec क्रम match */
+पूर्ण;
 
-extern struct mlx5e_tc_attr_to_reg_mapping mlx5e_tc_attr_to_reg_mappings[];
+बाह्य काष्ठा mlx5e_tc_attr_to_reg_mapping mlx5e_tc_attr_to_reg_mappings[];
 
-bool mlx5e_is_valid_eswitch_fwd_dev(struct mlx5e_priv *priv,
-				    struct net_device *out_dev);
+bool mlx5e_is_valid_eचयन_fwd_dev(काष्ठा mlx5e_priv *priv,
+				    काष्ठा net_device *out_dev);
 
-int mlx5e_tc_match_to_reg_set(struct mlx5_core_dev *mdev,
-			      struct mlx5e_tc_mod_hdr_acts *mod_hdr_acts,
-			      enum mlx5_flow_namespace_type ns,
-			      enum mlx5e_tc_attr_to_reg type,
+पूर्णांक mlx5e_tc_match_to_reg_set(काष्ठा mlx5_core_dev *mdev,
+			      काष्ठा mlx5e_tc_mod_hdr_acts *mod_hdr_acts,
+			      क्रमागत mlx5_flow_namespace_type ns,
+			      क्रमागत mlx5e_tc_attr_to_reg type,
 			      u32 data);
 
-void mlx5e_tc_match_to_reg_mod_hdr_change(struct mlx5_core_dev *mdev,
-					  struct mlx5e_tc_mod_hdr_acts *mod_hdr_acts,
-					  enum mlx5e_tc_attr_to_reg type,
-					  int act_id, u32 data);
+व्योम mlx5e_tc_match_to_reg_mod_hdr_change(काष्ठा mlx5_core_dev *mdev,
+					  काष्ठा mlx5e_tc_mod_hdr_acts *mod_hdr_acts,
+					  क्रमागत mlx5e_tc_attr_to_reg type,
+					  पूर्णांक act_id, u32 data);
 
-void mlx5e_tc_match_to_reg_match(struct mlx5_flow_spec *spec,
-				 enum mlx5e_tc_attr_to_reg type,
+व्योम mlx5e_tc_match_to_reg_match(काष्ठा mlx5_flow_spec *spec,
+				 क्रमागत mlx5e_tc_attr_to_reg type,
 				 u32 data,
 				 u32 mask);
 
-void mlx5e_tc_match_to_reg_get_match(struct mlx5_flow_spec *spec,
-				     enum mlx5e_tc_attr_to_reg type,
+व्योम mlx5e_tc_match_to_reg_get_match(काष्ठा mlx5_flow_spec *spec,
+				     क्रमागत mlx5e_tc_attr_to_reg type,
 				     u32 *data,
 				     u32 *mask);
 
-int mlx5e_tc_match_to_reg_set_and_get_id(struct mlx5_core_dev *mdev,
-					 struct mlx5e_tc_mod_hdr_acts *mod_hdr_acts,
-					 enum mlx5_flow_namespace_type ns,
-					 enum mlx5e_tc_attr_to_reg type,
+पूर्णांक mlx5e_tc_match_to_reg_set_and_get_id(काष्ठा mlx5_core_dev *mdev,
+					 काष्ठा mlx5e_tc_mod_hdr_acts *mod_hdr_acts,
+					 क्रमागत mlx5_flow_namespace_type ns,
+					 क्रमागत mlx5e_tc_attr_to_reg type,
 					 u32 data);
 
-int mlx5e_tc_add_flow_mod_hdr(struct mlx5e_priv *priv,
-			      struct mlx5e_tc_flow_parse_attr *parse_attr,
-			      struct mlx5e_tc_flow *flow);
+पूर्णांक mlx5e_tc_add_flow_mod_hdr(काष्ठा mlx5e_priv *priv,
+			      काष्ठा mlx5e_tc_flow_parse_attr *parse_attr,
+			      काष्ठा mlx5e_tc_flow *flow);
 
-int alloc_mod_hdr_actions(struct mlx5_core_dev *mdev,
-			  int namespace,
-			  struct mlx5e_tc_mod_hdr_acts *mod_hdr_acts);
-void dealloc_mod_hdr_actions(struct mlx5e_tc_mod_hdr_acts *mod_hdr_acts);
+पूर्णांक alloc_mod_hdr_actions(काष्ठा mlx5_core_dev *mdev,
+			  पूर्णांक namespace,
+			  काष्ठा mlx5e_tc_mod_hdr_acts *mod_hdr_acts);
+व्योम dealloc_mod_hdr_actions(काष्ठा mlx5e_tc_mod_hdr_acts *mod_hdr_acts);
 
-struct mlx5e_tc_flow;
-u32 mlx5e_tc_get_flow_tun_id(struct mlx5e_tc_flow *flow);
+काष्ठा mlx5e_tc_flow;
+u32 mlx5e_tc_get_flow_tun_id(काष्ठा mlx5e_tc_flow *flow);
 
-void mlx5e_tc_set_ethertype(struct mlx5_core_dev *mdev,
-			    struct flow_match_basic *match, bool outer,
-			    void *headers_c, void *headers_v);
+व्योम mlx5e_tc_set_ethertype(काष्ठा mlx5_core_dev *mdev,
+			    काष्ठा flow_match_basic *match, bool outer,
+			    व्योम *headers_c, व्योम *headers_v);
 
-int mlx5e_tc_nic_init(struct mlx5e_priv *priv);
-void mlx5e_tc_nic_cleanup(struct mlx5e_priv *priv);
+पूर्णांक mlx5e_tc_nic_init(काष्ठा mlx5e_priv *priv);
+व्योम mlx5e_tc_nic_cleanup(काष्ठा mlx5e_priv *priv);
 
-int mlx5e_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
-			    void *cb_priv);
+पूर्णांक mlx5e_setup_tc_block_cb(क्रमागत tc_setup_type type, व्योम *type_data,
+			    व्योम *cb_priv);
 
-struct mlx5_flow_handle *
-mlx5e_add_offloaded_nic_rule(struct mlx5e_priv *priv,
-			     struct mlx5_flow_spec *spec,
-			     struct mlx5_flow_attr *attr);
-void mlx5e_del_offloaded_nic_rule(struct mlx5e_priv *priv,
-				  struct mlx5_flow_handle *rule,
-				  struct mlx5_flow_attr *attr);
+काष्ठा mlx5_flow_handle *
+mlx5e_add_offloaded_nic_rule(काष्ठा mlx5e_priv *priv,
+			     काष्ठा mlx5_flow_spec *spec,
+			     काष्ठा mlx5_flow_attr *attr);
+व्योम mlx5e_del_offloaded_nic_rule(काष्ठा mlx5e_priv *priv,
+				  काष्ठा mlx5_flow_handle *rule,
+				  काष्ठा mlx5_flow_attr *attr);
 
-struct mlx5_flow_handle *
-mlx5_tc_rule_insert(struct mlx5e_priv *priv,
-		    struct mlx5_flow_spec *spec,
-		    struct mlx5_flow_attr *attr);
-void
-mlx5_tc_rule_delete(struct mlx5e_priv *priv,
-		    struct mlx5_flow_handle *rule,
-		    struct mlx5_flow_attr *attr);
+काष्ठा mlx5_flow_handle *
+mlx5_tc_rule_insert(काष्ठा mlx5e_priv *priv,
+		    काष्ठा mlx5_flow_spec *spec,
+		    काष्ठा mlx5_flow_attr *attr);
+व्योम
+mlx5_tc_rule_delete(काष्ठा mlx5e_priv *priv,
+		    काष्ठा mlx5_flow_handle *rule,
+		    काष्ठा mlx5_flow_attr *attr);
 
-bool mlx5e_tc_is_vf_tunnel(struct net_device *out_dev, struct net_device *route_dev);
-int mlx5e_tc_query_route_vport(struct net_device *out_dev, struct net_device *route_dev,
+bool mlx5e_tc_is_vf_tunnel(काष्ठा net_device *out_dev, काष्ठा net_device *route_dev);
+पूर्णांक mlx5e_tc_query_route_vport(काष्ठा net_device *out_dev, काष्ठा net_device *route_dev,
 			       u16 *vport);
 
-#else /* CONFIG_MLX5_CLS_ACT */
-static inline int  mlx5e_tc_nic_init(struct mlx5e_priv *priv) { return 0; }
-static inline void mlx5e_tc_nic_cleanup(struct mlx5e_priv *priv) {}
-static inline int
-mlx5e_setup_tc_block_cb(enum tc_setup_type type, void *type_data, void *cb_priv)
-{ return -EOPNOTSUPP; }
+#अन्यथा /* CONFIG_MLX5_CLS_ACT */
+अटल अंतरभूत पूर्णांक  mlx5e_tc_nic_init(काष्ठा mlx5e_priv *priv) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम mlx5e_tc_nic_cleanup(काष्ठा mlx5e_priv *priv) अणुपूर्ण
+अटल अंतरभूत पूर्णांक
+mlx5e_setup_tc_block_cb(क्रमागत tc_setup_type type, व्योम *type_data, व्योम *cb_priv)
+अणु वापस -EOPNOTSUPP; पूर्ण
 
-#endif /* CONFIG_MLX5_CLS_ACT */
+#पूर्ण_अगर /* CONFIG_MLX5_CLS_ACT */
 
-struct mlx5_flow_attr *mlx5_alloc_flow_attr(enum mlx5_flow_namespace_type type);
+काष्ठा mlx5_flow_attr *mlx5_alloc_flow_attr(क्रमागत mlx5_flow_namespace_type type);
 
-struct mlx5_flow_handle *
-mlx5e_add_offloaded_nic_rule(struct mlx5e_priv *priv,
-			     struct mlx5_flow_spec *spec,
-			     struct mlx5_flow_attr *attr);
-void mlx5e_del_offloaded_nic_rule(struct mlx5e_priv *priv,
-				  struct mlx5_flow_handle *rule,
-				  struct mlx5_flow_attr *attr);
+काष्ठा mlx5_flow_handle *
+mlx5e_add_offloaded_nic_rule(काष्ठा mlx5e_priv *priv,
+			     काष्ठा mlx5_flow_spec *spec,
+			     काष्ठा mlx5_flow_attr *attr);
+व्योम mlx5e_del_offloaded_nic_rule(काष्ठा mlx5e_priv *priv,
+				  काष्ठा mlx5_flow_handle *rule,
+				  काष्ठा mlx5_flow_attr *attr);
 
-#else /* CONFIG_MLX5_ESWITCH */
-static inline int  mlx5e_tc_nic_init(struct mlx5e_priv *priv) { return 0; }
-static inline void mlx5e_tc_nic_cleanup(struct mlx5e_priv *priv) {}
-static inline int  mlx5e_tc_num_filters(struct mlx5e_priv *priv,
-					unsigned long flags)
-{
-	return 0;
-}
+#अन्यथा /* CONFIG_MLX5_ESWITCH */
+अटल अंतरभूत पूर्णांक  mlx5e_tc_nic_init(काष्ठा mlx5e_priv *priv) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम mlx5e_tc_nic_cleanup(काष्ठा mlx5e_priv *priv) अणुपूर्ण
+अटल अंतरभूत पूर्णांक  mlx5e_tc_num_filters(काष्ठा mlx5e_priv *priv,
+					अचिन्हित दीर्घ flags)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int
-mlx5e_setup_tc_block_cb(enum tc_setup_type type, void *type_data, void *cb_priv)
-{ return -EOPNOTSUPP; }
-#endif
+अटल अंतरभूत पूर्णांक
+mlx5e_setup_tc_block_cb(क्रमागत tc_setup_type type, व्योम *type_data, व्योम *cb_priv)
+अणु वापस -EOPNOTSUPP; पूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_MLX5_CLS_ACT)
-static inline bool mlx5e_cqe_regb_chain(struct mlx5_cqe64 *cqe)
-{
-#if IS_ENABLED(CONFIG_NET_TC_SKB_EXT)
+#अगर IS_ENABLED(CONFIG_MLX5_CLS_ACT)
+अटल अंतरभूत bool mlx5e_cqe_regb_chain(काष्ठा mlx5_cqe64 *cqe)
+अणु
+#अगर IS_ENABLED(CONFIG_NET_TC_SKB_EXT)
 	u32 chain, reg_b;
 
 	reg_b = be32_to_cpu(cqe->ft_metadata);
 
-	if (reg_b >> (MLX5E_TC_TABLE_CHAIN_TAG_BITS + ESW_ZONE_ID_BITS))
-		return false;
+	अगर (reg_b >> (MLX5E_TC_TABLE_CHAIN_TAG_BITS + ESW_ZONE_ID_BITS))
+		वापस false;
 
 	chain = reg_b & MLX5E_TC_TABLE_CHAIN_TAG_MASK;
-	if (chain)
-		return true;
-#endif
+	अगर (chain)
+		वापस true;
+#पूर्ण_अगर
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool mlx5e_tc_update_skb(struct mlx5_cqe64 *cqe, struct sk_buff *skb);
-#else /* CONFIG_MLX5_CLS_ACT */
-static inline bool mlx5e_cqe_regb_chain(struct mlx5_cqe64 *cqe)
-{ return false; }
-static inline bool
-mlx5e_tc_update_skb(struct mlx5_cqe64 *cqe, struct sk_buff *skb)
-{ return true; }
-#endif
+bool mlx5e_tc_update_skb(काष्ठा mlx5_cqe64 *cqe, काष्ठा sk_buff *skb);
+#अन्यथा /* CONFIG_MLX5_CLS_ACT */
+अटल अंतरभूत bool mlx5e_cqe_regb_chain(काष्ठा mlx5_cqe64 *cqe)
+अणु वापस false; पूर्ण
+अटल अंतरभूत bool
+mlx5e_tc_update_skb(काष्ठा mlx5_cqe64 *cqe, काष्ठा sk_buff *skb)
+अणु वापस true; पूर्ण
+#पूर्ण_अगर
 
-#endif /* __MLX5_EN_TC_H__ */
+#पूर्ण_अगर /* __MLX5_EN_TC_H__ */

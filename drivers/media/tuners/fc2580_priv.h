@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * FCI FC2580 silicon tuner driver
  *
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
-#ifndef FC2580_PRIV_H
-#define FC2580_PRIV_H
+#अगर_अघोषित FC2580_PRIV_H
+#घोषणा FC2580_PRIV_H
 
-#include "fc2580.h"
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-subdev.h>
-#include <linux/regmap.h>
-#include <linux/math64.h>
+#समावेश "fc2580.h"
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-subdev.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/math64.h>
 
-struct fc2580_reg_val {
+काष्ठा fc2580_reg_val अणु
 	u8 reg;
 	u8 val;
-};
+पूर्ण;
 
-static const struct fc2580_reg_val fc2580_init_reg_vals[] = {
-	{0x00, 0x00},
-	{0x12, 0x86},
-	{0x14, 0x5c},
-	{0x16, 0x3c},
-	{0x1f, 0xd2},
-	{0x09, 0xd7},
-	{0x0b, 0xd5},
-	{0x0c, 0x32},
-	{0x0e, 0x43},
-	{0x21, 0x0a},
-	{0x22, 0x82},
-	{0x45, 0x10},
-	{0x4c, 0x00},
-	{0x3f, 0x88},
-	{0x02, 0x0e},
-	{0x58, 0x14},
-};
+अटल स्थिर काष्ठा fc2580_reg_val fc2580_init_reg_vals[] = अणु
+	अणु0x00, 0x00पूर्ण,
+	अणु0x12, 0x86पूर्ण,
+	अणु0x14, 0x5cपूर्ण,
+	अणु0x16, 0x3cपूर्ण,
+	अणु0x1f, 0xd2पूर्ण,
+	अणु0x09, 0xd7पूर्ण,
+	अणु0x0b, 0xd5पूर्ण,
+	अणु0x0c, 0x32पूर्ण,
+	अणु0x0e, 0x43पूर्ण,
+	अणु0x21, 0x0aपूर्ण,
+	अणु0x22, 0x82पूर्ण,
+	अणु0x45, 0x10पूर्ण,
+	अणु0x4c, 0x00पूर्ण,
+	अणु0x3f, 0x88पूर्ण,
+	अणु0x02, 0x0eपूर्ण,
+	अणु0x58, 0x14पूर्ण,
+पूर्ण;
 
-struct fc2580_pll {
+काष्ठा fc2580_pll अणु
 	u32 freq;
-	u8 div_out;
+	u8 भाग_out;
 	u8 band;
-};
+पूर्ण;
 
-static const struct fc2580_pll fc2580_pll_lut[] = {
+अटल स्थिर काष्ठा fc2580_pll fc2580_pll_lut[] = अणु
 	/*                            VCO min    VCO max */
-	{ 400000000, 12, 0x80}, /* .......... 4800000000 */
-	{1000000000,  4, 0x00}, /* 1600000000 4000000000 */
-	{0xffffffff,  2, 0x40}, /* 2000000000 .......... */
-};
+	अणु 400000000, 12, 0x80पूर्ण, /* .......... 4800000000 */
+	अणु1000000000,  4, 0x00पूर्ण, /* 1600000000 4000000000 */
+	अणु0xffffffff,  2, 0x40पूर्ण, /* 2000000000 .......... */
+पूर्ण;
 
-struct fc2580_if_filter {
+काष्ठा fc2580_अगर_filter अणु
 	u32 freq;
 	u8 r36_val;
 	u8 r39_val;
-};
+पूर्ण;
 
-static const struct fc2580_if_filter fc2580_if_filter_lut[] = {
-	{   6000000, 0x18, 0x00},
-	{   7000000, 0x18, 0x80},
-	{   8000000, 0x18, 0x80},
-	{0xffffffff, 0x18, 0x80},
-};
+अटल स्थिर काष्ठा fc2580_अगर_filter fc2580_अगर_filter_lut[] = अणु
+	अणु   6000000, 0x18, 0x00पूर्ण,
+	अणु   7000000, 0x18, 0x80पूर्ण,
+	अणु   8000000, 0x18, 0x80पूर्ण,
+	अणु0xffffffff, 0x18, 0x80पूर्ण,
+पूर्ण;
 
-struct fc2580_freq_regs {
+काष्ठा fc2580_freq_regs अणु
 	u32 freq;
 	u8 r25_val;
 	u8 r27_val;
@@ -90,45 +91,45 @@ struct fc2580_freq_regs {
 	u8 r6d_val;
 	u8 r6e_val;
 	u8 r6f_val;
-};
+पूर्ण;
 
-/* XXX: 0xff is used for don't-care! */
-static const struct fc2580_freq_regs fc2580_freq_regs_lut[] = {
-	{ 400000000,
+/* XXX: 0xff is used क्रम करोn't-care! */
+अटल स्थिर काष्ठा fc2580_freq_regs fc2580_freq_regs_lut[] = अणु
+	अणु 400000000,
 		0xff, 0x77, 0x33, 0x40, 0xff, 0xff, 0xff, 0x09, 0xff, 0x8c,
 		0x50, 0x0f, 0x07, 0x00, 0x15, 0x03, 0x05, 0x10, 0x12, 0x08,
-		0x0a, 0x78, 0x32, 0x54},
-	{ 538000000,
+		0x0a, 0x78, 0x32, 0x54पूर्ण,
+	अणु 538000000,
 		0xf0, 0x77, 0x53, 0x60, 0xff, 0xff, 0x9f, 0x09, 0xff, 0x8c,
 		0x50, 0x13, 0x07, 0x06, 0x15, 0x06, 0x08, 0x10, 0x12, 0x0b,
-		0x0c, 0x78, 0x32, 0x14},
-	{ 794000000,
+		0x0c, 0x78, 0x32, 0x14पूर्ण,
+	अणु 794000000,
 		0xf0, 0x77, 0x53, 0x60, 0xff, 0xff, 0x9f, 0x09, 0xff, 0x8c,
 		0x50, 0x15, 0x03, 0x03, 0x15, 0x03, 0x05, 0x0c, 0x0e, 0x0b,
-		0x0c, 0x78, 0x32, 0x14},
-	{1000000000,
+		0x0c, 0x78, 0x32, 0x14पूर्ण,
+	अणु1000000000,
 		0xf0, 0x77, 0x53, 0x60, 0xff, 0xff, 0x8f, 0x09, 0xff, 0x8c,
 		0x50, 0x15, 0x07, 0x06, 0x15, 0x07, 0x09, 0x10, 0x12, 0x0b,
-		0x0c, 0x78, 0x32, 0x14},
-	{0xffffffff,
+		0x0c, 0x78, 0x32, 0x14पूर्ण,
+	अणु0xffffffff,
 		0xff, 0xff, 0xff, 0xff, 0x70, 0x37, 0xe7, 0x09, 0x20, 0x8c,
 		0x50, 0x0f, 0x0f, 0x00, 0x13, 0x00, 0x02, 0x0c, 0x0e, 0x08,
-		0x0a, 0xa0, 0x50, 0x14},
-};
+		0x0a, 0xa0, 0x50, 0x14पूर्ण,
+पूर्ण;
 
-struct fc2580_dev {
+काष्ठा fc2580_dev अणु
 	u32 clk;
-	struct i2c_client *client;
-	struct regmap *regmap;
-	struct v4l2_subdev subdev;
+	काष्ठा i2c_client *client;
+	काष्ठा regmap *regmap;
+	काष्ठा v4l2_subdev subdev;
 	bool active;
-	unsigned int f_frequency;
-	unsigned int f_bandwidth;
+	अचिन्हित पूर्णांक f_frequency;
+	अचिन्हित पूर्णांक f_bandwidth;
 
 	/* Controls */
-	struct v4l2_ctrl_handler hdl;
-	struct v4l2_ctrl *bandwidth_auto;
-	struct v4l2_ctrl *bandwidth;
-};
+	काष्ठा v4l2_ctrl_handler hdl;
+	काष्ठा v4l2_ctrl *bandwidth_स्वतः;
+	काष्ठा v4l2_ctrl *bandwidth;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

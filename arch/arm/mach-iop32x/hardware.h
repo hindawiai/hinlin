@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __HARDWARE_H
-#define __HARDWARE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __HARDWARE_H
+#घोषणा __HARDWARE_H
 
-#include <asm/types.h>
+#समावेश <यंत्र/types.h>
 
 /*
  * Note about PCI IO space mappings
  *
- * To make IO space accesses efficient, we store virtual addresses in
+ * To make IO space accesses efficient, we store भव addresses in
  * the IO resources.
  *
- * The PCI IO space is located at virtual 0xfe000000 from physical
+ * The PCI IO space is located at भव 0xfe000000 from physical
  * 0x90000000. The PCI BARs must be programmed with physical addresses,
- * but when we read them, we convert them to virtual addresses. See
+ * but when we पढ़ो them, we convert them to भव addresses. See
  * arch/arm/plat-iop/pci.c.
  */
 
-#ifndef __ASSEMBLY__
-void iop32x_init_irq(void);
-#endif
+#अगर_अघोषित __ASSEMBLY__
+व्योम iop32x_init_irq(व्योम);
+#पूर्ण_अगर
 
 
 /*
  * Generic chipset bits
  */
-#include "iop3xx.h"
+#समावेश "iop3xx.h"
 
 /*
- * Board specific bits
+ * Board specअगरic bits
  */
-#include "glantank.h"
-#include "iq80321.h"
-#include "iq31244.h"
-#include "n2100.h"
+#समावेश "glantank.h"
+#समावेश "iq80321.h"
+#समावेश "iq31244.h"
+#समावेश "n2100.h"
 
 
-#endif
+#पूर्ण_अगर

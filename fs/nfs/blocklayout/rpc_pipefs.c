@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  Copyright (c) 2006,2007 The Regents of the University of Michigan.
  *  All rights reserved.
@@ -6,283 +7,283 @@
  *  Fred Isaman <iisaman@umich.edu>
  *
  * permission is granted to use, copy, create derivative works and
- * redistribute this software and such derivative works for any purpose,
- * so long as the name of the university of michigan is not used in
- * any advertising or publicity pertaining to the use or distribution
- * of this software without specific, written prior authorization.  if
- * the above copyright notice or any other identification of the
+ * redistribute this software and such derivative works क्रम any purpose,
+ * so दीर्घ as the name of the university of michigan is not used in
+ * any advertising or खुलाity pertaining to the use or distribution
+ * of this software without specअगरic, written prior authorization.  अगर
+ * the above copyright notice or any other identअगरication of the
  * university of michigan is included in any copy of any portion of
  * this software, then the disclaimer below must also be included.
  *
  * this software is provided as is, without representation from the
- * university of michigan as to its fitness for any purpose, and without
+ * university of michigan as to its fitness क्रम any purpose, and without
  * warranty by the university of michigan of any kind, either express
  * or implied, including without limitation the implied warranties of
- * merchantability and fitness for a particular purpose.  the regents
- * of the university of michigan shall not be liable for any damages,
+ * merchantability and fitness क्रम a particular purpose.  the regents
+ * of the university of michigan shall not be liable क्रम any damages,
  * including special, indirect, incidental, or consequential damages,
  * with respect to any claim arising out or in connection with the use
- * of the software, even if it has been or is hereafter advised of the
+ * of the software, even अगर it has been or is hereafter advised of the
  * possibility of such damages.
  */
 
-#include <linux/module.h>
-#include <linux/genhd.h>
-#include <linux/blkdev.h>
+#समावेश <linux/module.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/blkdev.h>
 
-#include "blocklayout.h"
+#समावेश "blocklayout.h"
 
-#define NFSDBG_FACILITY         NFSDBG_PNFS_LD
+#घोषणा NFSDBG_FACILITY         NFSDBG_PNFS_LD
 
-static void
-nfs4_encode_simple(__be32 *p, struct pnfs_block_volume *b)
-{
-	int i;
+अटल व्योम
+nfs4_encode_simple(__be32 *p, काष्ठा pnfs_block_volume *b)
+अणु
+	पूर्णांक i;
 
 	*p++ = cpu_to_be32(1);
 	*p++ = cpu_to_be32(b->type);
 	*p++ = cpu_to_be32(b->simple.nr_sigs);
-	for (i = 0; i < b->simple.nr_sigs; i++) {
+	क्रम (i = 0; i < b->simple.nr_sigs; i++) अणु
 		p = xdr_encode_hyper(p, b->simple.sigs[i].offset);
 		p = xdr_encode_opaque(p, b->simple.sigs[i].sig,
 					 b->simple.sigs[i].sig_len);
-	}
-}
+	पूर्ण
+पूर्ण
 
 dev_t
-bl_resolve_deviceid(struct nfs_server *server, struct pnfs_block_volume *b,
+bl_resolve_deviceid(काष्ठा nfs_server *server, काष्ठा pnfs_block_volume *b,
 		gfp_t gfp_mask)
-{
-	struct net *net = server->nfs_client->cl_net;
-	struct nfs_net *nn = net_generic(net, nfs_net_id);
-	struct bl_dev_msg *reply = &nn->bl_mount_reply;
-	struct bl_pipe_msg bl_pipe_msg;
-	struct rpc_pipe_msg *msg = &bl_pipe_msg.msg;
-	struct bl_msg_hdr *bl_msg;
+अणु
+	काष्ठा net *net = server->nfs_client->cl_net;
+	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
+	काष्ठा bl_dev_msg *reply = &nn->bl_mount_reply;
+	काष्ठा bl_pipe_msg bl_pipe_msg;
+	काष्ठा rpc_pipe_msg *msg = &bl_pipe_msg.msg;
+	काष्ठा bl_msg_hdr *bl_msg;
 	DECLARE_WAITQUEUE(wq, current);
 	dev_t dev = 0;
-	int rc;
+	पूर्णांक rc;
 
-	dprintk("%s CREATING PIPEFS MESSAGE\n", __func__);
+	dprपूर्णांकk("%s CREATING PIPEFS MESSAGE\n", __func__);
 
 	mutex_lock(&nn->bl_mutex);
 	bl_pipe_msg.bl_wq = &nn->bl_wq;
 
 	b->simple.len += 4;	/* single volume */
-	if (b->simple.len > PAGE_SIZE)
-		goto out_unlock;
+	अगर (b->simple.len > PAGE_SIZE)
+		जाओ out_unlock;
 
-	memset(msg, 0, sizeof(*msg));
-	msg->len = sizeof(*bl_msg) + b->simple.len;
+	स_रखो(msg, 0, माप(*msg));
+	msg->len = माप(*bl_msg) + b->simple.len;
 	msg->data = kzalloc(msg->len, gfp_mask);
-	if (!msg->data)
-		goto out_free_data;
+	अगर (!msg->data)
+		जाओ out_मुक्त_data;
 
 	bl_msg = msg->data;
 	bl_msg->type = BL_DEVICE_MOUNT;
 	bl_msg->totallen = b->simple.len;
-	nfs4_encode_simple(msg->data + sizeof(*bl_msg), b);
+	nfs4_encode_simple(msg->data + माप(*bl_msg), b);
 
-	dprintk("%s CALLING USERSPACE DAEMON\n", __func__);
-	add_wait_queue(&nn->bl_wq, &wq);
+	dprपूर्णांकk("%s CALLING USERSPACE DAEMON\n", __func__);
+	add_रुको_queue(&nn->bl_wq, &wq);
 	rc = rpc_queue_upcall(nn->bl_device_pipe, msg);
-	if (rc < 0) {
-		remove_wait_queue(&nn->bl_wq, &wq);
-		goto out_free_data;
-	}
+	अगर (rc < 0) अणु
+		हटाओ_रुको_queue(&nn->bl_wq, &wq);
+		जाओ out_मुक्त_data;
+	पूर्ण
 
 	set_current_state(TASK_UNINTERRUPTIBLE);
 	schedule();
-	remove_wait_queue(&nn->bl_wq, &wq);
+	हटाओ_रुको_queue(&nn->bl_wq, &wq);
 
-	if (reply->status != BL_DEVICE_REQUEST_PROC) {
-		printk(KERN_WARNING "%s failed to decode device: %d\n",
+	अगर (reply->status != BL_DEVICE_REQUEST_PROC) अणु
+		prपूर्णांकk(KERN_WARNING "%s failed to decode device: %d\n",
 			__func__, reply->status);
-		goto out_free_data;
-	}
+		जाओ out_मुक्त_data;
+	पूर्ण
 
 	dev = MKDEV(reply->major, reply->minor);
-out_free_data:
-	kfree(msg->data);
+out_मुक्त_data:
+	kमुक्त(msg->data);
 out_unlock:
 	mutex_unlock(&nn->bl_mutex);
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static ssize_t bl_pipe_downcall(struct file *filp, const char __user *src,
-			 size_t mlen)
-{
-	struct nfs_net *nn = net_generic(file_inode(filp)->i_sb->s_fs_info,
+अटल sमाप_प्रकार bl_pipe_करोwncall(काष्ठा file *filp, स्थिर अक्षर __user *src,
+			 माप_प्रकार mlen)
+अणु
+	काष्ठा nfs_net *nn = net_generic(file_inode(filp)->i_sb->s_fs_info,
 					 nfs_net_id);
 
-	if (mlen != sizeof (struct bl_dev_msg))
-		return -EINVAL;
+	अगर (mlen != माप (काष्ठा bl_dev_msg))
+		वापस -EINVAL;
 
-	if (copy_from_user(&nn->bl_mount_reply, src, mlen) != 0)
-		return -EFAULT;
+	अगर (copy_from_user(&nn->bl_mount_reply, src, mlen) != 0)
+		वापस -EFAULT;
 
 	wake_up(&nn->bl_wq);
 
-	return mlen;
-}
+	वापस mlen;
+पूर्ण
 
-static void bl_pipe_destroy_msg(struct rpc_pipe_msg *msg)
-{
-	struct bl_pipe_msg *bl_pipe_msg =
-		container_of(msg, struct bl_pipe_msg, msg);
+अटल व्योम bl_pipe_destroy_msg(काष्ठा rpc_pipe_msg *msg)
+अणु
+	काष्ठा bl_pipe_msg *bl_pipe_msg =
+		container_of(msg, काष्ठा bl_pipe_msg, msg);
 
-	if (msg->errno >= 0)
-		return;
+	अगर (msg->त्रुटि_सं >= 0)
+		वापस;
 	wake_up(bl_pipe_msg->bl_wq);
-}
+पूर्ण
 
-static const struct rpc_pipe_ops bl_upcall_ops = {
+अटल स्थिर काष्ठा rpc_pipe_ops bl_upcall_ops = अणु
 	.upcall		= rpc_pipe_generic_upcall,
-	.downcall	= bl_pipe_downcall,
+	.करोwncall	= bl_pipe_करोwncall,
 	.destroy_msg	= bl_pipe_destroy_msg,
-};
+पूर्ण;
 
-static struct dentry *nfs4blocklayout_register_sb(struct super_block *sb,
-					    struct rpc_pipe *pipe)
-{
-	struct dentry *dir, *dentry;
+अटल काष्ठा dentry *nfs4blocklayout_रेजिस्टर_sb(काष्ठा super_block *sb,
+					    काष्ठा rpc_pipe *pipe)
+अणु
+	काष्ठा dentry *dir, *dentry;
 
-	dir = rpc_d_lookup_sb(sb, NFS_PIPE_DIRNAME);
-	if (dir == NULL)
-		return ERR_PTR(-ENOENT);
-	dentry = rpc_mkpipe_dentry(dir, "blocklayout", NULL, pipe);
+	dir = rpc_d_lookup_sb(sb, NFS_PIPE_सूचीNAME);
+	अगर (dir == शून्य)
+		वापस ERR_PTR(-ENOENT);
+	dentry = rpc_mkpipe_dentry(dir, "blocklayout", शून्य, pipe);
 	dput(dir);
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
-static void nfs4blocklayout_unregister_sb(struct super_block *sb,
-					  struct rpc_pipe *pipe)
-{
-	if (pipe->dentry)
+अटल व्योम nfs4blocklayout_unरेजिस्टर_sb(काष्ठा super_block *sb,
+					  काष्ठा rpc_pipe *pipe)
+अणु
+	अगर (pipe->dentry)
 		rpc_unlink(pipe->dentry);
-}
+पूर्ण
 
-static int rpc_pipefs_event(struct notifier_block *nb, unsigned long event,
-			   void *ptr)
-{
-	struct super_block *sb = ptr;
-	struct net *net = sb->s_fs_info;
-	struct nfs_net *nn = net_generic(net, nfs_net_id);
-	struct dentry *dentry;
-	int ret = 0;
+अटल पूर्णांक rpc_pipefs_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
+			   व्योम *ptr)
+अणु
+	काष्ठा super_block *sb = ptr;
+	काष्ठा net *net = sb->s_fs_info;
+	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
+	काष्ठा dentry *dentry;
+	पूर्णांक ret = 0;
 
-	if (!try_module_get(THIS_MODULE))
-		return 0;
+	अगर (!try_module_get(THIS_MODULE))
+		वापस 0;
 
-	if (nn->bl_device_pipe == NULL) {
+	अगर (nn->bl_device_pipe == शून्य) अणु
 		module_put(THIS_MODULE);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (event) {
-	case RPC_PIPEFS_MOUNT:
-		dentry = nfs4blocklayout_register_sb(sb, nn->bl_device_pipe);
-		if (IS_ERR(dentry)) {
+	चयन (event) अणु
+	हाल RPC_PIPEFS_MOUNT:
+		dentry = nfs4blocklayout_रेजिस्टर_sb(sb, nn->bl_device_pipe);
+		अगर (IS_ERR(dentry)) अणु
 			ret = PTR_ERR(dentry);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		nn->bl_device_pipe->dentry = dentry;
-		break;
-	case RPC_PIPEFS_UMOUNT:
-		if (nn->bl_device_pipe->dentry)
-			nfs4blocklayout_unregister_sb(sb, nn->bl_device_pipe);
-		break;
-	default:
+		अवरोध;
+	हाल RPC_PIPEFS_UMOUNT:
+		अगर (nn->bl_device_pipe->dentry)
+			nfs4blocklayout_unरेजिस्टर_sb(sb, nn->bl_device_pipe);
+		अवरोध;
+	शेष:
 		ret = -ENOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	module_put(THIS_MODULE);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct notifier_block nfs4blocklayout_block = {
-	.notifier_call = rpc_pipefs_event,
-};
+अटल काष्ठा notअगरier_block nfs4blocklayout_block = अणु
+	.notअगरier_call = rpc_pipefs_event,
+पूर्ण;
 
-static struct dentry *nfs4blocklayout_register_net(struct net *net,
-						   struct rpc_pipe *pipe)
-{
-	struct super_block *pipefs_sb;
-	struct dentry *dentry;
+अटल काष्ठा dentry *nfs4blocklayout_रेजिस्टर_net(काष्ठा net *net,
+						   काष्ठा rpc_pipe *pipe)
+अणु
+	काष्ठा super_block *pipefs_sb;
+	काष्ठा dentry *dentry;
 
 	pipefs_sb = rpc_get_sb_net(net);
-	if (!pipefs_sb)
-		return NULL;
-	dentry = nfs4blocklayout_register_sb(pipefs_sb, pipe);
+	अगर (!pipefs_sb)
+		वापस शून्य;
+	dentry = nfs4blocklayout_रेजिस्टर_sb(pipefs_sb, pipe);
 	rpc_put_sb_net(net);
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
-static void nfs4blocklayout_unregister_net(struct net *net,
-					   struct rpc_pipe *pipe)
-{
-	struct super_block *pipefs_sb;
+अटल व्योम nfs4blocklayout_unरेजिस्टर_net(काष्ठा net *net,
+					   काष्ठा rpc_pipe *pipe)
+अणु
+	काष्ठा super_block *pipefs_sb;
 
 	pipefs_sb = rpc_get_sb_net(net);
-	if (pipefs_sb) {
-		nfs4blocklayout_unregister_sb(pipefs_sb, pipe);
+	अगर (pipefs_sb) अणु
+		nfs4blocklayout_unरेजिस्टर_sb(pipefs_sb, pipe);
 		rpc_put_sb_net(net);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int nfs4blocklayout_net_init(struct net *net)
-{
-	struct nfs_net *nn = net_generic(net, nfs_net_id);
-	struct dentry *dentry;
+अटल पूर्णांक nfs4blocklayout_net_init(काष्ठा net *net)
+अणु
+	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
+	काष्ठा dentry *dentry;
 
 	mutex_init(&nn->bl_mutex);
-	init_waitqueue_head(&nn->bl_wq);
+	init_रुकोqueue_head(&nn->bl_wq);
 	nn->bl_device_pipe = rpc_mkpipe_data(&bl_upcall_ops, 0);
-	if (IS_ERR(nn->bl_device_pipe))
-		return PTR_ERR(nn->bl_device_pipe);
-	dentry = nfs4blocklayout_register_net(net, nn->bl_device_pipe);
-	if (IS_ERR(dentry)) {
+	अगर (IS_ERR(nn->bl_device_pipe))
+		वापस PTR_ERR(nn->bl_device_pipe);
+	dentry = nfs4blocklayout_रेजिस्टर_net(net, nn->bl_device_pipe);
+	अगर (IS_ERR(dentry)) अणु
 		rpc_destroy_pipe_data(nn->bl_device_pipe);
-		return PTR_ERR(dentry);
-	}
+		वापस PTR_ERR(dentry);
+	पूर्ण
 	nn->bl_device_pipe->dentry = dentry;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nfs4blocklayout_net_exit(struct net *net)
-{
-	struct nfs_net *nn = net_generic(net, nfs_net_id);
+अटल व्योम nfs4blocklayout_net_निकास(काष्ठा net *net)
+अणु
+	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
 
-	nfs4blocklayout_unregister_net(net, nn->bl_device_pipe);
+	nfs4blocklayout_unरेजिस्टर_net(net, nn->bl_device_pipe);
 	rpc_destroy_pipe_data(nn->bl_device_pipe);
-	nn->bl_device_pipe = NULL;
-}
+	nn->bl_device_pipe = शून्य;
+पूर्ण
 
-static struct pernet_operations nfs4blocklayout_net_ops = {
+अटल काष्ठा pernet_operations nfs4blocklayout_net_ops = अणु
 	.init = nfs4blocklayout_net_init,
-	.exit = nfs4blocklayout_net_exit,
-};
+	.निकास = nfs4blocklayout_net_निकास,
+पूर्ण;
 
-int __init bl_init_pipefs(void)
-{
-	int ret;
+पूर्णांक __init bl_init_pipefs(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = rpc_pipefs_notifier_register(&nfs4blocklayout_block);
-	if (ret)
-		goto out;
-	ret = register_pernet_subsys(&nfs4blocklayout_net_ops);
-	if (ret)
-		goto out_unregister_notifier;
-	return 0;
+	ret = rpc_pipefs_notअगरier_रेजिस्टर(&nfs4blocklayout_block);
+	अगर (ret)
+		जाओ out;
+	ret = रेजिस्टर_pernet_subsys(&nfs4blocklayout_net_ops);
+	अगर (ret)
+		जाओ out_unरेजिस्टर_notअगरier;
+	वापस 0;
 
-out_unregister_notifier:
-	rpc_pipefs_notifier_unregister(&nfs4blocklayout_block);
+out_unरेजिस्टर_notअगरier:
+	rpc_pipefs_notअगरier_unरेजिस्टर(&nfs4blocklayout_block);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void bl_cleanup_pipefs(void)
-{
-	rpc_pipefs_notifier_unregister(&nfs4blocklayout_block);
-	unregister_pernet_subsys(&nfs4blocklayout_net_ops);
-}
+व्योम bl_cleanup_pipefs(व्योम)
+अणु
+	rpc_pipefs_notअगरier_unरेजिस्टर(&nfs4blocklayout_block);
+	unरेजिस्टर_pernet_subsys(&nfs4blocklayout_net_ops);
+पूर्ण

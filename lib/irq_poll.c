@@ -1,112 +1,113 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Functions related to interrupt-poll handling in the block layer. This
- * is similar to NAPI for network devices.
+ * Functions related to पूर्णांकerrupt-poll handling in the block layer. This
+ * is similar to NAPI क्रम network devices.
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/bio.h>
-#include <linux/interrupt.h>
-#include <linux/cpu.h>
-#include <linux/irq_poll.h>
-#include <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/irq_poll.h>
+#समावेश <linux/delay.h>
 
-static unsigned int irq_poll_budget __read_mostly = 256;
+अटल अचिन्हित पूर्णांक irq_poll_budget __पढ़ो_mostly = 256;
 
-static DEFINE_PER_CPU(struct list_head, blk_cpu_iopoll);
+अटल DEFINE_PER_CPU(काष्ठा list_head, blk_cpu_iopoll);
 
 /**
  * irq_poll_sched - Schedule a run of the iopoll handler
- * @iop:      The parent iopoll structure
+ * @iop:      The parent iopoll काष्ठाure
  *
  * Description:
- *     Add this irq_poll structure to the pending poll list and trigger the
- *     raise of the blk iopoll softirq.
+ *     Add this irq_poll काष्ठाure to the pending poll list and trigger the
+ *     उठाओ of the blk iopoll softirq.
  **/
-void irq_poll_sched(struct irq_poll *iop)
-{
-	unsigned long flags;
+व्योम irq_poll_sched(काष्ठा irq_poll *iop)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (test_bit(IRQ_POLL_F_DISABLE, &iop->state))
-		return;
-	if (test_and_set_bit(IRQ_POLL_F_SCHED, &iop->state))
-		return;
+	अगर (test_bit(IRQ_POLL_F_DISABLE, &iop->state))
+		वापस;
+	अगर (test_and_set_bit(IRQ_POLL_F_SCHED, &iop->state))
+		वापस;
 
 	local_irq_save(flags);
 	list_add_tail(&iop->list, this_cpu_ptr(&blk_cpu_iopoll));
-	raise_softirq_irqoff(IRQ_POLL_SOFTIRQ);
+	उठाओ_softirq_irqoff(IRQ_POLL_SOFTIRQ);
 	local_irq_restore(flags);
-}
+पूर्ण
 EXPORT_SYMBOL(irq_poll_sched);
 
 /**
  * __irq_poll_complete - Mark this @iop as un-polled again
- * @iop:      The parent iopoll structure
+ * @iop:      The parent iopoll काष्ठाure
  *
  * Description:
- *     See irq_poll_complete(). This function must be called with interrupts
+ *     See irq_poll_complete(). This function must be called with पूर्णांकerrupts
  *     disabled.
  **/
-static void __irq_poll_complete(struct irq_poll *iop)
-{
+अटल व्योम __irq_poll_complete(काष्ठा irq_poll *iop)
+अणु
 	list_del(&iop->list);
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	clear_bit_unlock(IRQ_POLL_F_SCHED, &iop->state);
-}
+पूर्ण
 
 /**
  * irq_poll_complete - Mark this @iop as un-polled again
- * @iop:      The parent iopoll structure
+ * @iop:      The parent iopoll काष्ठाure
  *
  * Description:
- *     If a driver consumes less than the assigned budget in its run of the
+ *     If a driver consumes less than the asचिन्हित budget in its run of the
  *     iopoll handler, it'll end the polled mode by calling this function. The
- *     iopoll handler will not be invoked again before irq_poll_sched()
+ *     iopoll handler will not be invoked again beक्रमe irq_poll_sched()
  *     is called.
  **/
-void irq_poll_complete(struct irq_poll *iop)
-{
-	unsigned long flags;
+व्योम irq_poll_complete(काष्ठा irq_poll *iop)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	__irq_poll_complete(iop);
 	local_irq_restore(flags);
-}
+पूर्ण
 EXPORT_SYMBOL(irq_poll_complete);
 
-static void __latent_entropy irq_poll_softirq(struct softirq_action *h)
-{
-	struct list_head *list = this_cpu_ptr(&blk_cpu_iopoll);
-	int rearm = 0, budget = irq_poll_budget;
-	unsigned long start_time = jiffies;
+अटल व्योम __latent_entropy irq_poll_softirq(काष्ठा softirq_action *h)
+अणु
+	काष्ठा list_head *list = this_cpu_ptr(&blk_cpu_iopoll);
+	पूर्णांक rearm = 0, budget = irq_poll_budget;
+	अचिन्हित दीर्घ start_समय = jअगरfies;
 
 	local_irq_disable();
 
-	while (!list_empty(list)) {
-		struct irq_poll *iop;
-		int work, weight;
+	जबतक (!list_empty(list)) अणु
+		काष्ठा irq_poll *iop;
+		पूर्णांक work, weight;
 
 		/*
-		 * If softirq window is exhausted then punt.
+		 * If softirq winकरोw is exhausted then punt.
 		 */
-		if (budget <= 0 || time_after(jiffies, start_time)) {
+		अगर (budget <= 0 || समय_after(jअगरfies, start_समय)) अणु
 			rearm = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		local_irq_enable();
 
-		/* Even though interrupts have been re-enabled, this
-		 * access is safe because interrupts can only add new
+		/* Even though पूर्णांकerrupts have been re-enabled, this
+		 * access is safe because पूर्णांकerrupts can only add new
 		 * entries to the tail of this list, and only ->poll()
-		 * calls can remove this head entry from the list.
+		 * calls can हटाओ this head entry from the list.
 		 */
-		iop = list_entry(list->next, struct irq_poll, list);
+		iop = list_entry(list->next, काष्ठा irq_poll, list);
 
 		weight = iop->weight;
 		work = 0;
-		if (test_bit(IRQ_POLL_F_SCHED, &iop->state))
+		अगर (test_bit(IRQ_POLL_F_SCHED, &iop->state))
 			work = iop->poll(iop, weight);
 
 		budget -= work;
@@ -114,79 +115,79 @@ static void __latent_entropy irq_poll_softirq(struct softirq_action *h)
 		local_irq_disable();
 
 		/*
-		 * Drivers must not modify the iopoll state, if they
-		 * consume their assigned weight (or more, some drivers can't
+		 * Drivers must not modअगरy the iopoll state, अगर they
+		 * consume their asचिन्हित weight (or more, some drivers can't
 		 * easily just stop processing, they have to complete an
-		 * entire mask of commands).In such cases this code
-		 * still "owns" the iopoll instance and therefore can
+		 * entire mask of commands).In such हालs this code
+		 * still "owns" the iopoll instance and thereक्रमe can
 		 * move the instance around on the list at-will.
 		 */
-		if (work >= weight) {
-			if (test_bit(IRQ_POLL_F_DISABLE, &iop->state))
+		अगर (work >= weight) अणु
+			अगर (test_bit(IRQ_POLL_F_DISABLE, &iop->state))
 				__irq_poll_complete(iop);
-			else
+			अन्यथा
 				list_move_tail(&iop->list, list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rearm)
-		__raise_softirq_irqoff(IRQ_POLL_SOFTIRQ);
+	अगर (rearm)
+		__उठाओ_softirq_irqoff(IRQ_POLL_SOFTIRQ);
 
 	local_irq_enable();
-}
+पूर्ण
 
 /**
  * irq_poll_disable - Disable iopoll on this @iop
- * @iop:      The parent iopoll structure
+ * @iop:      The parent iopoll काष्ठाure
  *
  * Description:
- *     Disable io polling and wait for any pending callbacks to have completed.
+ *     Disable io polling and रुको क्रम any pending callbacks to have completed.
  **/
-void irq_poll_disable(struct irq_poll *iop)
-{
+व्योम irq_poll_disable(काष्ठा irq_poll *iop)
+अणु
 	set_bit(IRQ_POLL_F_DISABLE, &iop->state);
-	while (test_and_set_bit(IRQ_POLL_F_SCHED, &iop->state))
+	जबतक (test_and_set_bit(IRQ_POLL_F_SCHED, &iop->state))
 		msleep(1);
 	clear_bit(IRQ_POLL_F_DISABLE, &iop->state);
-}
+पूर्ण
 EXPORT_SYMBOL(irq_poll_disable);
 
 /**
  * irq_poll_enable - Enable iopoll on this @iop
- * @iop:      The parent iopoll structure
+ * @iop:      The parent iopoll काष्ठाure
  *
  * Description:
  *     Enable iopoll on this @iop. Note that the handler run will not be
  *     scheduled, it will only mark it as active.
  **/
-void irq_poll_enable(struct irq_poll *iop)
-{
+व्योम irq_poll_enable(काष्ठा irq_poll *iop)
+अणु
 	BUG_ON(!test_bit(IRQ_POLL_F_SCHED, &iop->state));
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	clear_bit_unlock(IRQ_POLL_F_SCHED, &iop->state);
-}
+पूर्ण
 EXPORT_SYMBOL(irq_poll_enable);
 
 /**
  * irq_poll_init - Initialize this @iop
- * @iop:      The parent iopoll structure
- * @weight:   The default weight (or command completion budget)
+ * @iop:      The parent iopoll काष्ठाure
+ * @weight:   The शेष weight (or command completion budget)
  * @poll_fn:  The handler to invoke
  *
  * Description:
- *     Initialize and enable this irq_poll structure.
+ *     Initialize and enable this irq_poll काष्ठाure.
  **/
-void irq_poll_init(struct irq_poll *iop, int weight, irq_poll_fn *poll_fn)
-{
-	memset(iop, 0, sizeof(*iop));
+व्योम irq_poll_init(काष्ठा irq_poll *iop, पूर्णांक weight, irq_poll_fn *poll_fn)
+अणु
+	स_रखो(iop, 0, माप(*iop));
 	INIT_LIST_HEAD(&iop->list);
 	iop->weight = weight;
 	iop->poll = poll_fn;
-}
+पूर्ण
 EXPORT_SYMBOL(irq_poll_init);
 
-static int irq_poll_cpu_dead(unsigned int cpu)
-{
+अटल पूर्णांक irq_poll_cpu_dead(अचिन्हित पूर्णांक cpu)
+अणु
 	/*
 	 * If a CPU goes away, splice its entries to the current CPU
 	 * and trigger a run of the softirq
@@ -194,22 +195,22 @@ static int irq_poll_cpu_dead(unsigned int cpu)
 	local_irq_disable();
 	list_splice_init(&per_cpu(blk_cpu_iopoll, cpu),
 			 this_cpu_ptr(&blk_cpu_iopoll));
-	__raise_softirq_irqoff(IRQ_POLL_SOFTIRQ);
+	__उठाओ_softirq_irqoff(IRQ_POLL_SOFTIRQ);
 	local_irq_enable();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __init int irq_poll_setup(void)
-{
-	int i;
+अटल __init पूर्णांक irq_poll_setup(व्योम)
+अणु
+	पूर्णांक i;
 
-	for_each_possible_cpu(i)
+	क्रम_each_possible_cpu(i)
 		INIT_LIST_HEAD(&per_cpu(blk_cpu_iopoll, i));
 
-	open_softirq(IRQ_POLL_SOFTIRQ, irq_poll_softirq);
-	cpuhp_setup_state_nocalls(CPUHP_IRQ_POLL_DEAD, "irq_poll:dead", NULL,
+	खोलो_softirq(IRQ_POLL_SOFTIRQ, irq_poll_softirq);
+	cpuhp_setup_state_nocalls(CPUHP_IRQ_POLL_DEAD, "irq_poll:dead", शून्य,
 				  irq_poll_cpu_dead);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(irq_poll_setup);

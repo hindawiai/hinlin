@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) Maxime Coquelin 2015
  * Copyright (C) STMicroelectronics 2017
- * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
+ * Author:  Maxime Coquelin <mcoquelin.sपंचांग32@gmail.com>
  */
 
-#include <linux/kernel.h>
-#include <asm/mach/arch.h>
-#ifdef CONFIG_ARM_SINGLE_ARMV7M
-#include <asm/v7m.h>
-#endif
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/mach/arch.h>
+#अगर_घोषित CONFIG_ARM_SINGLE_ARMV7M
+#समावेश <यंत्र/v7m.h>
+#पूर्ण_अगर
 
-static const char *const stm32_compat[] __initconst = {
+अटल स्थिर अक्षर *स्थिर sपंचांग32_compat[] __initस्थिर = अणु
 	"st,stm32f429",
 	"st,stm32f469",
 	"st,stm32f746",
@@ -19,12 +20,12 @@ static const char *const stm32_compat[] __initconst = {
 	"st,stm32h743",
 	"st,stm32h750",
 	"st,stm32mp157",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 DT_MACHINE_START(STM32DT, "STM32 (Device Tree Support)")
-	.dt_compat = stm32_compat,
-#ifdef CONFIG_ARM_SINGLE_ARMV7M
+	.dt_compat = sपंचांग32_compat,
+#अगर_घोषित CONFIG_ARM_SINGLE_ARMV7M
 	.restart = armv7m_restart,
-#endif
+#पूर्ण_अगर
 MACHINE_END

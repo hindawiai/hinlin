@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,184 +22,184 @@
  *
  * Authors: Ben Skeggs
  */
-#include <core/engine.h>
-#include <core/device.h>
-#include <core/option.h>
+#समावेश <core/engine.h>
+#समावेश <core/device.h>
+#समावेश <core/option.h>
 
-#include <subdev/fb.h>
+#समावेश <subdev/fb.h>
 
 bool
-nvkm_engine_chsw_load(struct nvkm_engine *engine)
-{
-	if (engine->func->chsw_load)
-		return engine->func->chsw_load(engine);
-	return false;
-}
+nvkm_engine_chsw_load(काष्ठा nvkm_engine *engine)
+अणु
+	अगर (engine->func->chsw_load)
+		वापस engine->func->chsw_load(engine);
+	वापस false;
+पूर्ण
 
-void
-nvkm_engine_unref(struct nvkm_engine **pengine)
-{
-	struct nvkm_engine *engine = *pengine;
-	if (engine) {
-		if (refcount_dec_and_mutex_lock(&engine->use.refcount, &engine->use.mutex)) {
+व्योम
+nvkm_engine_unref(काष्ठा nvkm_engine **pengine)
+अणु
+	काष्ठा nvkm_engine *engine = *pengine;
+	अगर (engine) अणु
+		अगर (refcount_dec_and_mutex_lock(&engine->use.refcount, &engine->use.mutex)) अणु
 			nvkm_subdev_fini(&engine->subdev, false);
 			engine->use.enabled = false;
 			mutex_unlock(&engine->use.mutex);
-		}
-		*pengine = NULL;
-	}
-}
+		पूर्ण
+		*pengine = शून्य;
+	पूर्ण
+पूर्ण
 
-struct nvkm_engine *
-nvkm_engine_ref(struct nvkm_engine *engine)
-{
-	int ret;
-	if (engine) {
-		if (!refcount_inc_not_zero(&engine->use.refcount)) {
+काष्ठा nvkm_engine *
+nvkm_engine_ref(काष्ठा nvkm_engine *engine)
+अणु
+	पूर्णांक ret;
+	अगर (engine) अणु
+		अगर (!refcount_inc_not_zero(&engine->use.refcount)) अणु
 			mutex_lock(&engine->use.mutex);
-			if (!refcount_inc_not_zero(&engine->use.refcount)) {
+			अगर (!refcount_inc_not_zero(&engine->use.refcount)) अणु
 				engine->use.enabled = true;
-				if ((ret = nvkm_subdev_init(&engine->subdev))) {
+				अगर ((ret = nvkm_subdev_init(&engine->subdev))) अणु
 					engine->use.enabled = false;
 					mutex_unlock(&engine->use.mutex);
-					return ERR_PTR(ret);
-				}
+					वापस ERR_PTR(ret);
+				पूर्ण
 				refcount_set(&engine->use.refcount, 1);
-			}
+			पूर्ण
 			mutex_unlock(&engine->use.mutex);
-		}
-	}
-	return engine;
-}
+		पूर्ण
+	पूर्ण
+	वापस engine;
+पूर्ण
 
-void
-nvkm_engine_tile(struct nvkm_engine *engine, int region)
-{
-	struct nvkm_fb *fb = engine->subdev.device->fb;
-	if (engine->func->tile)
+व्योम
+nvkm_engine_tile(काष्ठा nvkm_engine *engine, पूर्णांक region)
+अणु
+	काष्ठा nvkm_fb *fb = engine->subdev.device->fb;
+	अगर (engine->func->tile)
 		engine->func->tile(engine, region, &fb->tile.region[region]);
-}
+पूर्ण
 
-static void
-nvkm_engine_intr(struct nvkm_subdev *subdev)
-{
-	struct nvkm_engine *engine = nvkm_engine(subdev);
-	if (engine->func->intr)
-		engine->func->intr(engine);
-}
+अटल व्योम
+nvkm_engine_पूर्णांकr(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_engine *engine = nvkm_engine(subdev);
+	अगर (engine->func->पूर्णांकr)
+		engine->func->पूर्णांकr(engine);
+पूर्ण
 
-static int
-nvkm_engine_info(struct nvkm_subdev *subdev, u64 mthd, u64 *data)
-{
-	struct nvkm_engine *engine = nvkm_engine(subdev);
-	if (engine->func->info) {
-		if (!IS_ERR((engine = nvkm_engine_ref(engine)))) {
-			int ret = engine->func->info(engine, mthd, data);
+अटल पूर्णांक
+nvkm_engine_info(काष्ठा nvkm_subdev *subdev, u64 mthd, u64 *data)
+अणु
+	काष्ठा nvkm_engine *engine = nvkm_engine(subdev);
+	अगर (engine->func->info) अणु
+		अगर (!IS_ERR((engine = nvkm_engine_ref(engine)))) अणु
+			पूर्णांक ret = engine->func->info(engine, mthd, data);
 			nvkm_engine_unref(&engine);
-			return ret;
-		}
-		return PTR_ERR(engine);
-	}
-	return -ENOSYS;
-}
+			वापस ret;
+		पूर्ण
+		वापस PTR_ERR(engine);
+	पूर्ण
+	वापस -ENOSYS;
+पूर्ण
 
-static int
-nvkm_engine_fini(struct nvkm_subdev *subdev, bool suspend)
-{
-	struct nvkm_engine *engine = nvkm_engine(subdev);
-	if (engine->func->fini)
-		return engine->func->fini(engine, suspend);
-	return 0;
-}
+अटल पूर्णांक
+nvkm_engine_fini(काष्ठा nvkm_subdev *subdev, bool suspend)
+अणु
+	काष्ठा nvkm_engine *engine = nvkm_engine(subdev);
+	अगर (engine->func->fini)
+		वापस engine->func->fini(engine, suspend);
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_engine_init(struct nvkm_subdev *subdev)
-{
-	struct nvkm_engine *engine = nvkm_engine(subdev);
-	struct nvkm_fb *fb = subdev->device->fb;
-	int ret = 0, i;
-	s64 time;
+अटल पूर्णांक
+nvkm_engine_init(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_engine *engine = nvkm_engine(subdev);
+	काष्ठा nvkm_fb *fb = subdev->device->fb;
+	पूर्णांक ret = 0, i;
+	s64 समय;
 
-	if (!engine->use.enabled) {
+	अगर (!engine->use.enabled) अणु
 		nvkm_trace(subdev, "init skipped, engine has no users\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (engine->func->oneinit && !engine->subdev.oneinit) {
+	अगर (engine->func->oneinit && !engine->subdev.oneinit) अणु
 		nvkm_trace(subdev, "one-time init running...\n");
-		time = ktime_to_us(ktime_get());
+		समय = kसमय_प्रकारo_us(kसमय_get());
 		ret = engine->func->oneinit(engine);
-		if (ret) {
+		अगर (ret) अणु
 			nvkm_trace(subdev, "one-time init failed, %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		engine->subdev.oneinit = true;
-		time = ktime_to_us(ktime_get()) - time;
-		nvkm_trace(subdev, "one-time init completed in %lldus\n", time);
-	}
+		समय = kसमय_प्रकारo_us(kसमय_get()) - समय;
+		nvkm_trace(subdev, "one-time init completed in %lldus\n", समय);
+	पूर्ण
 
-	if (engine->func->init)
+	अगर (engine->func->init)
 		ret = engine->func->init(engine);
 
-	for (i = 0; fb && i < fb->tile.regions; i++)
+	क्रम (i = 0; fb && i < fb->tile.regions; i++)
 		nvkm_engine_tile(engine, i);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-nvkm_engine_preinit(struct nvkm_subdev *subdev)
-{
-	struct nvkm_engine *engine = nvkm_engine(subdev);
-	if (engine->func->preinit)
+अटल पूर्णांक
+nvkm_engine_preinit(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_engine *engine = nvkm_engine(subdev);
+	अगर (engine->func->preinit)
 		engine->func->preinit(engine);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *
-nvkm_engine_dtor(struct nvkm_subdev *subdev)
-{
-	struct nvkm_engine *engine = nvkm_engine(subdev);
-	if (engine->func->dtor)
-		return engine->func->dtor(engine);
+अटल व्योम *
+nvkm_engine_dtor(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_engine *engine = nvkm_engine(subdev);
+	अगर (engine->func->dtor)
+		वापस engine->func->dtor(engine);
 	mutex_destroy(&engine->use.mutex);
-	return engine;
-}
+	वापस engine;
+पूर्ण
 
-const struct nvkm_subdev_func
-nvkm_engine = {
+स्थिर काष्ठा nvkm_subdev_func
+nvkm_engine = अणु
 	.dtor = nvkm_engine_dtor,
 	.preinit = nvkm_engine_preinit,
 	.init = nvkm_engine_init,
 	.fini = nvkm_engine_fini,
 	.info = nvkm_engine_info,
-	.intr = nvkm_engine_intr,
-};
+	.पूर्णांकr = nvkm_engine_पूर्णांकr,
+पूर्ण;
 
-int
-nvkm_engine_ctor(const struct nvkm_engine_func *func, struct nvkm_device *device,
-		 enum nvkm_subdev_type type, int inst, bool enable, struct nvkm_engine *engine)
-{
+पूर्णांक
+nvkm_engine_ctor(स्थिर काष्ठा nvkm_engine_func *func, काष्ठा nvkm_device *device,
+		 क्रमागत nvkm_subdev_type type, पूर्णांक inst, bool enable, काष्ठा nvkm_engine *engine)
+अणु
 	nvkm_subdev_ctor(&nvkm_engine, device, type, inst, &engine->subdev);
 	engine->func = func;
 	refcount_set(&engine->use.refcount, 0);
 	mutex_init(&engine->use.mutex);
 
-	if (!nvkm_boolopt(device->cfgopt, engine->subdev.name, enable)) {
+	अगर (!nvkm_boolopt(device->cfgopt, engine->subdev.name, enable)) अणु
 		nvkm_debug(&engine->subdev, "disabled\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	spin_lock_init(&engine->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvkm_engine_new_(const struct nvkm_engine_func *func, struct nvkm_device *device,
-		 enum nvkm_subdev_type type, int inst, bool enable,
-		 struct nvkm_engine **pengine)
-{
-	if (!(*pengine = kzalloc(sizeof(**pengine), GFP_KERNEL)))
-		return -ENOMEM;
-	return nvkm_engine_ctor(func, device, type, inst, enable, *pengine);
-}
+पूर्णांक
+nvkm_engine_new_(स्थिर काष्ठा nvkm_engine_func *func, काष्ठा nvkm_device *device,
+		 क्रमागत nvkm_subdev_type type, पूर्णांक inst, bool enable,
+		 काष्ठा nvkm_engine **pengine)
+अणु
+	अगर (!(*pengine = kzalloc(माप(**pengine), GFP_KERNEL)))
+		वापस -ENOMEM;
+	वापस nvkm_engine_ctor(func, device, type, inst, enable, *pengine);
+पूर्ण

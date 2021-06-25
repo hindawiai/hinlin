@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 //
 // Code shared between 32 and 64 bit
 
-#include <asm/spec-ctrl.h>
+#समावेश <यंत्र/spec-ctrl.h>
 
-void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p);
+व्योम __चयन_to_xtra(काष्ठा task_काष्ठा *prev_p, काष्ठा task_काष्ठा *next_p);
 
 /*
- * This needs to be inline to optimize for the common case where no extra
- * work needs to be done.
+ * This needs to be अंतरभूत to optimize क्रम the common हाल where no extra
+ * work needs to be करोne.
  */
-static inline void switch_to_extra(struct task_struct *prev,
-				   struct task_struct *next)
-{
-	unsigned long next_tif = task_thread_info(next)->flags;
-	unsigned long prev_tif = task_thread_info(prev)->flags;
+अटल अंतरभूत व्योम चयन_to_extra(काष्ठा task_काष्ठा *prev,
+				   काष्ठा task_काष्ठा *next)
+अणु
+	अचिन्हित दीर्घ next_tअगर = task_thपढ़ो_info(next)->flags;
+	अचिन्हित दीर्घ prev_tअगर = task_thपढ़ो_info(prev)->flags;
 
-	if (IS_ENABLED(CONFIG_SMP)) {
+	अगर (IS_ENABLED(CONFIG_SMP)) अणु
 		/*
-		 * Avoid __switch_to_xtra() invocation when conditional
-		 * STIBP is disabled and the only different bit is
+		 * Aव्योम __चयन_to_xtra() invocation when conditional
+		 * STIBP is disabled and the only dअगरferent bit is
 		 * TIF_SPEC_IB. For CONFIG_SMP=n TIF_SPEC_IB is not
 		 * in the TIF_WORK_CTXSW masks.
 		 */
-		if (!static_branch_likely(&switch_to_cond_stibp)) {
-			prev_tif &= ~_TIF_SPEC_IB;
-			next_tif &= ~_TIF_SPEC_IB;
-		}
-	}
+		अगर (!अटल_branch_likely(&चयन_to_cond_stibp)) अणु
+			prev_tअगर &= ~_TIF_SPEC_IB;
+			next_tअगर &= ~_TIF_SPEC_IB;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * __switch_to_xtra() handles debug registers, i/o bitmaps,
+	 * __चयन_to_xtra() handles debug रेजिस्टरs, i/o biपंचांगaps,
 	 * speculation mitigations etc.
 	 */
-	if (unlikely(next_tif & _TIF_WORK_CTXSW_NEXT ||
-		     prev_tif & _TIF_WORK_CTXSW_PREV))
-		__switch_to_xtra(prev, next);
-}
+	अगर (unlikely(next_tअगर & _TIF_WORK_CTXSW_NEXT ||
+		     prev_tअगर & _TIF_WORK_CTXSW_PREV))
+		__चयन_to_xtra(prev, next);
+पूर्ण

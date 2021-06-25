@@ -1,116 +1,117 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2009-2010, Lars-Peter Clausen <lars@metafoo.de>
- *  Ingenic XBurst platform IRQ support
+ *  Ingenic XBurst platक्रमm IRQ support
  */
 
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/irqchip.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/timex.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-struct ingenic_intc_data {
-	void __iomem *base;
-	struct irq_domain *domain;
-	unsigned num_chips;
-};
+काष्ठा ingenic_पूर्णांकc_data अणु
+	व्योम __iomem *base;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+	अचिन्हित num_chips;
+पूर्ण;
 
-#define JZ_REG_INTC_STATUS	0x00
-#define JZ_REG_INTC_MASK	0x04
-#define JZ_REG_INTC_SET_MASK	0x08
-#define JZ_REG_INTC_CLEAR_MASK	0x0c
-#define JZ_REG_INTC_PENDING	0x10
-#define CHIP_SIZE		0x20
+#घोषणा JZ_REG_INTC_STATUS	0x00
+#घोषणा JZ_REG_INTC_MASK	0x04
+#घोषणा JZ_REG_INTC_SET_MASK	0x08
+#घोषणा JZ_REG_INTC_CLEAR_MASK	0x0c
+#घोषणा JZ_REG_INTC_PENDING	0x10
+#घोषणा CHIP_SIZE		0x20
 
-static irqreturn_t intc_cascade(int irq, void *data)
-{
-	struct ingenic_intc_data *intc = irq_get_handler_data(irq);
-	struct irq_domain *domain = intc->domain;
-	struct irq_chip_generic *gc;
-	uint32_t pending;
-	unsigned i;
+अटल irqवापस_t पूर्णांकc_cascade(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ingenic_पूर्णांकc_data *पूर्णांकc = irq_get_handler_data(irq);
+	काष्ठा irq_करोमुख्य *करोमुख्य = पूर्णांकc->करोमुख्य;
+	काष्ठा irq_chip_generic *gc;
+	uपूर्णांक32_t pending;
+	अचिन्हित i;
 
-	for (i = 0; i < intc->num_chips; i++) {
-		gc = irq_get_domain_generic_chip(domain, i * 32);
+	क्रम (i = 0; i < पूर्णांकc->num_chips; i++) अणु
+		gc = irq_get_करोमुख्य_generic_chip(करोमुख्य, i * 32);
 
-		pending = irq_reg_readl(gc, JZ_REG_INTC_PENDING);
-		if (!pending)
-			continue;
+		pending = irq_reg_पढ़ोl(gc, JZ_REG_INTC_PENDING);
+		अगर (!pending)
+			जारी;
 
-		while (pending) {
-			int bit = __fls(pending);
+		जबतक (pending) अणु
+			पूर्णांक bit = __fls(pending);
 
-			irq = irq_linear_revmap(domain, bit + (i * 32));
+			irq = irq_linear_revmap(करोमुख्य, bit + (i * 32));
 			generic_handle_irq(irq);
 			pending &= ~BIT(bit);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __init ingenic_intc_of_init(struct device_node *node,
-				       unsigned num_chips)
-{
-	struct ingenic_intc_data *intc;
-	struct irq_chip_generic *gc;
-	struct irq_chip_type *ct;
-	struct irq_domain *domain;
-	int parent_irq, err = 0;
-	unsigned i;
+अटल पूर्णांक __init ingenic_पूर्णांकc_of_init(काष्ठा device_node *node,
+				       अचिन्हित num_chips)
+अणु
+	काष्ठा ingenic_पूर्णांकc_data *पूर्णांकc;
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा irq_chip_type *ct;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+	पूर्णांक parent_irq, err = 0;
+	अचिन्हित i;
 
-	intc = kzalloc(sizeof(*intc), GFP_KERNEL);
-	if (!intc) {
+	पूर्णांकc = kzalloc(माप(*पूर्णांकc), GFP_KERNEL);
+	अगर (!पूर्णांकc) अणु
 		err = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	parent_irq = irq_of_parse_and_map(node, 0);
-	if (!parent_irq) {
+	अगर (!parent_irq) अणु
 		err = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	err = irq_set_handler_data(parent_irq, intc);
-	if (err)
-		goto out_unmap_irq;
+	err = irq_set_handler_data(parent_irq, पूर्णांकc);
+	अगर (err)
+		जाओ out_unmap_irq;
 
-	intc->num_chips = num_chips;
-	intc->base = of_iomap(node, 0);
-	if (!intc->base) {
+	पूर्णांकc->num_chips = num_chips;
+	पूर्णांकc->base = of_iomap(node, 0);
+	अगर (!पूर्णांकc->base) अणु
 		err = -ENODEV;
-		goto out_unmap_irq;
-	}
+		जाओ out_unmap_irq;
+	पूर्ण
 
-	domain = irq_domain_add_linear(node, num_chips * 32,
-				       &irq_generic_chip_ops, NULL);
-	if (!domain) {
+	करोमुख्य = irq_करोमुख्य_add_linear(node, num_chips * 32,
+				       &irq_generic_chip_ops, शून्य);
+	अगर (!करोमुख्य) अणु
 		err = -ENOMEM;
-		goto out_unmap_base;
-	}
+		जाओ out_unmap_base;
+	पूर्ण
 
-	intc->domain = domain;
+	पूर्णांकc->करोमुख्य = करोमुख्य;
 
-	err = irq_alloc_domain_generic_chips(domain, 32, 1, "INTC",
+	err = irq_alloc_करोमुख्य_generic_chips(करोमुख्य, 32, 1, "INTC",
 					     handle_level_irq, 0,
 					     IRQ_NOPROBE | IRQ_LEVEL, 0);
-	if (err)
-		goto out_domain_remove;
+	अगर (err)
+		जाओ out_करोमुख्य_हटाओ;
 
-	for (i = 0; i < num_chips; i++) {
-		gc = irq_get_domain_generic_chip(domain, i * 32);
+	क्रम (i = 0; i < num_chips; i++) अणु
+		gc = irq_get_करोमुख्य_generic_chip(करोमुख्य, i * 32);
 
 		gc->wake_enabled = IRQ_MSK(32);
-		gc->reg_base = intc->base + (i * CHIP_SIZE);
+		gc->reg_base = पूर्णांकc->base + (i * CHIP_SIZE);
 
 		ct = gc->chip_types;
 		ct->regs.enable = JZ_REG_INTC_CLEAR_MASK;
@@ -122,40 +123,40 @@ static int __init ingenic_intc_of_init(struct device_node *node,
 		ct->chip.flags = IRQCHIP_MASK_ON_SUSPEND;
 
 		/* Mask all irqs */
-		irq_reg_writel(gc, IRQ_MSK(32), JZ_REG_INTC_SET_MASK);
-	}
+		irq_reg_ग_लिखोl(gc, IRQ_MSK(32), JZ_REG_INTC_SET_MASK);
+	पूर्ण
 
-	if (request_irq(parent_irq, intc_cascade, IRQF_NO_SUSPEND,
-			"SoC intc cascade interrupt", NULL))
+	अगर (request_irq(parent_irq, पूर्णांकc_cascade, IRQF_NO_SUSPEND,
+			"SoC intc cascade interrupt", शून्य))
 		pr_err("Failed to register SoC intc cascade interrupt\n");
-	return 0;
+	वापस 0;
 
-out_domain_remove:
-	irq_domain_remove(domain);
+out_करोमुख्य_हटाओ:
+	irq_करोमुख्य_हटाओ(करोमुख्य);
 out_unmap_base:
-	iounmap(intc->base);
+	iounmap(पूर्णांकc->base);
 out_unmap_irq:
 	irq_dispose_mapping(parent_irq);
-out_free:
-	kfree(intc);
+out_मुक्त:
+	kमुक्त(पूर्णांकc);
 out_err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __init intc_1chip_of_init(struct device_node *node,
-				     struct device_node *parent)
-{
-	return ingenic_intc_of_init(node, 1);
-}
-IRQCHIP_DECLARE(jz4740_intc, "ingenic,jz4740-intc", intc_1chip_of_init);
-IRQCHIP_DECLARE(jz4725b_intc, "ingenic,jz4725b-intc", intc_1chip_of_init);
+अटल पूर्णांक __init पूर्णांकc_1chip_of_init(काष्ठा device_node *node,
+				     काष्ठा device_node *parent)
+अणु
+	वापस ingenic_पूर्णांकc_of_init(node, 1);
+पूर्ण
+IRQCHIP_DECLARE(jz4740_पूर्णांकc, "ingenic,jz4740-intc", पूर्णांकc_1chip_of_init);
+IRQCHIP_DECLARE(jz4725b_पूर्णांकc, "ingenic,jz4725b-intc", पूर्णांकc_1chip_of_init);
 
-static int __init intc_2chip_of_init(struct device_node *node,
-	struct device_node *parent)
-{
-	return ingenic_intc_of_init(node, 2);
-}
-IRQCHIP_DECLARE(jz4760_intc, "ingenic,jz4760-intc", intc_2chip_of_init);
-IRQCHIP_DECLARE(jz4770_intc, "ingenic,jz4770-intc", intc_2chip_of_init);
-IRQCHIP_DECLARE(jz4775_intc, "ingenic,jz4775-intc", intc_2chip_of_init);
-IRQCHIP_DECLARE(jz4780_intc, "ingenic,jz4780-intc", intc_2chip_of_init);
+अटल पूर्णांक __init पूर्णांकc_2chip_of_init(काष्ठा device_node *node,
+	काष्ठा device_node *parent)
+अणु
+	वापस ingenic_पूर्णांकc_of_init(node, 2);
+पूर्ण
+IRQCHIP_DECLARE(jz4760_पूर्णांकc, "ingenic,jz4760-intc", पूर्णांकc_2chip_of_init);
+IRQCHIP_DECLARE(jz4770_पूर्णांकc, "ingenic,jz4770-intc", पूर्णांकc_2chip_of_init);
+IRQCHIP_DECLARE(jz4775_पूर्णांकc, "ingenic,jz4775-intc", पूर्णांकc_2chip_of_init);
+IRQCHIP_DECLARE(jz4780_पूर्णांकc, "ingenic,jz4780-intc", पूर्णांकc_2chip_of_init);

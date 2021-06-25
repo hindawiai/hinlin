@@ -1,1094 +1,1095 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Released under the GPLv2 only.
  */
 
-#include <linux/usb.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/hcd.h>
-#include <linux/usb/quirks.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <asm/byteorder.h>
-#include "usb.h"
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <linux/usb/quirks.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश "usb.h"
 
 
-#define USB_MAXALTSETTING		128	/* Hard limit */
+#घोषणा USB_MAXALTSETTING		128	/* Hard limit */
 
-#define USB_MAXCONFIG			8	/* Arbitrary limit */
+#घोषणा USB_MAXCONFIG			8	/* Arbitrary limit */
 
 
-static inline const char *plural(int n)
-{
-	return (n == 1 ? "" : "s");
-}
+अटल अंतरभूत स्थिर अक्षर *plural(पूर्णांक n)
+अणु
+	वापस (n == 1 ? "" : "s");
+पूर्ण
 
-static int find_next_descriptor(unsigned char *buffer, int size,
-    int dt1, int dt2, int *num_skipped)
-{
-	struct usb_descriptor_header *h;
-	int n = 0;
-	unsigned char *buffer0 = buffer;
+अटल पूर्णांक find_next_descriptor(अचिन्हित अक्षर *buffer, पूर्णांक size,
+    पूर्णांक dt1, पूर्णांक dt2, पूर्णांक *num_skipped)
+अणु
+	काष्ठा usb_descriptor_header *h;
+	पूर्णांक n = 0;
+	अचिन्हित अक्षर *buffer0 = buffer;
 
 	/* Find the next descriptor of type dt1 or dt2 */
-	while (size > 0) {
-		h = (struct usb_descriptor_header *) buffer;
-		if (h->bDescriptorType == dt1 || h->bDescriptorType == dt2)
-			break;
+	जबतक (size > 0) अणु
+		h = (काष्ठा usb_descriptor_header *) buffer;
+		अगर (h->bDescriptorType == dt1 || h->bDescriptorType == dt2)
+			अवरोध;
 		buffer += h->bLength;
 		size -= h->bLength;
 		++n;
-	}
+	पूर्ण
 
-	/* Store the number of descriptors skipped and return the
+	/* Store the number of descriptors skipped and वापस the
 	 * number of bytes skipped */
-	if (num_skipped)
+	अगर (num_skipped)
 		*num_skipped = n;
-	return buffer - buffer0;
-}
+	वापस buffer - buffer0;
+पूर्ण
 
-static void usb_parse_ssp_isoc_endpoint_companion(struct device *ddev,
-		int cfgno, int inum, int asnum, struct usb_host_endpoint *ep,
-		unsigned char *buffer, int size)
-{
-	struct usb_ssp_isoc_ep_comp_descriptor *desc;
+अटल व्योम usb_parse_ssp_isoc_endpoपूर्णांक_companion(काष्ठा device *ddev,
+		पूर्णांक cfgno, पूर्णांक inum, पूर्णांक asnum, काष्ठा usb_host_endpoपूर्णांक *ep,
+		अचिन्हित अक्षर *buffer, पूर्णांक size)
+अणु
+	काष्ठा usb_ssp_isoc_ep_comp_descriptor *desc;
 
 	/*
-	 * The SuperSpeedPlus Isoc endpoint companion descriptor immediately
-	 * follows the SuperSpeed Endpoint Companion descriptor
+	 * The SuperSpeedPlus Isoc endpoपूर्णांक companion descriptor immediately
+	 * follows the SuperSpeed Endpoपूर्णांक Companion descriptor
 	 */
-	desc = (struct usb_ssp_isoc_ep_comp_descriptor *) buffer;
-	if (desc->bDescriptorType != USB_DT_SSP_ISOC_ENDPOINT_COMP ||
-	    size < USB_DT_SSP_ISOC_EP_COMP_SIZE) {
+	desc = (काष्ठा usb_ssp_isoc_ep_comp_descriptor *) buffer;
+	अगर (desc->bDescriptorType != USB_DT_SSP_ISOC_ENDPOINT_COMP ||
+	    size < USB_DT_SSP_ISOC_EP_COMP_SIZE) अणु
 		dev_warn(ddev, "Invalid SuperSpeedPlus isoc endpoint companion"
 			 "for config %d interface %d altsetting %d ep %d.\n",
-			 cfgno, inum, asnum, ep->desc.bEndpointAddress);
-		return;
-	}
-	memcpy(&ep->ssp_isoc_ep_comp, desc, USB_DT_SSP_ISOC_EP_COMP_SIZE);
-}
+			 cfgno, inum, asnum, ep->desc.bEndpoपूर्णांकAddress);
+		वापस;
+	पूर्ण
+	स_नकल(&ep->ssp_isoc_ep_comp, desc, USB_DT_SSP_ISOC_EP_COMP_SIZE);
+पूर्ण
 
-static void usb_parse_ss_endpoint_companion(struct device *ddev, int cfgno,
-		int inum, int asnum, struct usb_host_endpoint *ep,
-		unsigned char *buffer, int size)
-{
-	struct usb_ss_ep_comp_descriptor *desc;
-	int max_tx;
+अटल व्योम usb_parse_ss_endpoपूर्णांक_companion(काष्ठा device *ddev, पूर्णांक cfgno,
+		पूर्णांक inum, पूर्णांक asnum, काष्ठा usb_host_endpoपूर्णांक *ep,
+		अचिन्हित अक्षर *buffer, पूर्णांक size)
+अणु
+	काष्ठा usb_ss_ep_comp_descriptor *desc;
+	पूर्णांक max_tx;
 
-	/* The SuperSpeed endpoint companion descriptor is supposed to
-	 * be the first thing immediately following the endpoint descriptor.
+	/* The SuperSpeed endpoपूर्णांक companion descriptor is supposed to
+	 * be the first thing immediately following the endpoपूर्णांक descriptor.
 	 */
-	desc = (struct usb_ss_ep_comp_descriptor *) buffer;
+	desc = (काष्ठा usb_ss_ep_comp_descriptor *) buffer;
 
-	if (desc->bDescriptorType != USB_DT_SS_ENDPOINT_COMP ||
-			size < USB_DT_SS_EP_COMP_SIZE) {
+	अगर (desc->bDescriptorType != USB_DT_SS_ENDPOINT_COMP ||
+			size < USB_DT_SS_EP_COMP_SIZE) अणु
 		dev_warn(ddev, "No SuperSpeed endpoint companion for config %d "
 				" interface %d altsetting %d ep %d: "
 				"using minimum values\n",
-				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+				cfgno, inum, asnum, ep->desc.bEndpoपूर्णांकAddress);
 
-		/* Fill in some default values.
-		 * Leave bmAttributes as zero, which will mean no streams for
+		/* Fill in some शेष values.
+		 * Leave bmAttributes as zero, which will mean no streams क्रम
 		 * bulk, and isoc won't support multiple bursts of packets.
 		 * With bursts of only one packet, and a Mult of 1, the max
-		 * amount of data moved per endpoint service interval is one
+		 * amount of data moved per endpoपूर्णांक service पूर्णांकerval is one
 		 * packet.
 		 */
 		ep->ss_ep_comp.bLength = USB_DT_SS_EP_COMP_SIZE;
 		ep->ss_ep_comp.bDescriptorType = USB_DT_SS_ENDPOINT_COMP;
-		if (usb_endpoint_xfer_isoc(&ep->desc) ||
-				usb_endpoint_xfer_int(&ep->desc))
+		अगर (usb_endpoपूर्णांक_xfer_isoc(&ep->desc) ||
+				usb_endpoपूर्णांक_xfer_पूर्णांक(&ep->desc))
 			ep->ss_ep_comp.wBytesPerInterval =
 					ep->desc.wMaxPacketSize;
-		return;
-	}
+		वापस;
+	पूर्ण
 	buffer += desc->bLength;
 	size -= desc->bLength;
-	memcpy(&ep->ss_ep_comp, desc, USB_DT_SS_EP_COMP_SIZE);
+	स_नकल(&ep->ss_ep_comp, desc, USB_DT_SS_EP_COMP_SIZE);
 
 	/* Check the various values */
-	if (usb_endpoint_xfer_control(&ep->desc) && desc->bMaxBurst != 0) {
+	अगर (usb_endpoपूर्णांक_xfer_control(&ep->desc) && desc->bMaxBurst != 0) अणु
 		dev_warn(ddev, "Control endpoint with bMaxBurst = %d in "
 				"config %d interface %d altsetting %d ep %d: "
 				"setting to zero\n", desc->bMaxBurst,
-				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+				cfgno, inum, asnum, ep->desc.bEndpoपूर्णांकAddress);
 		ep->ss_ep_comp.bMaxBurst = 0;
-	} else if (desc->bMaxBurst > 15) {
+	पूर्ण अन्यथा अगर (desc->bMaxBurst > 15) अणु
 		dev_warn(ddev, "Endpoint with bMaxBurst = %d in "
 				"config %d interface %d altsetting %d ep %d: "
 				"setting to 15\n", desc->bMaxBurst,
-				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+				cfgno, inum, asnum, ep->desc.bEndpoपूर्णांकAddress);
 		ep->ss_ep_comp.bMaxBurst = 15;
-	}
+	पूर्ण
 
-	if ((usb_endpoint_xfer_control(&ep->desc) ||
-			usb_endpoint_xfer_int(&ep->desc)) &&
-				desc->bmAttributes != 0) {
+	अगर ((usb_endpoपूर्णांक_xfer_control(&ep->desc) ||
+			usb_endpoपूर्णांक_xfer_पूर्णांक(&ep->desc)) &&
+				desc->bmAttributes != 0) अणु
 		dev_warn(ddev, "%s endpoint with bmAttributes = %d in "
 				"config %d interface %d altsetting %d ep %d: "
 				"setting to zero\n",
-				usb_endpoint_xfer_control(&ep->desc) ? "Control" : "Bulk",
+				usb_endpoपूर्णांक_xfer_control(&ep->desc) ? "Control" : "Bulk",
 				desc->bmAttributes,
-				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+				cfgno, inum, asnum, ep->desc.bEndpoपूर्णांकAddress);
 		ep->ss_ep_comp.bmAttributes = 0;
-	} else if (usb_endpoint_xfer_bulk(&ep->desc) &&
-			desc->bmAttributes > 16) {
+	पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_xfer_bulk(&ep->desc) &&
+			desc->bmAttributes > 16) अणु
 		dev_warn(ddev, "Bulk endpoint with more than 65536 streams in "
 				"config %d interface %d altsetting %d ep %d: "
 				"setting to max\n",
-				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+				cfgno, inum, asnum, ep->desc.bEndpoपूर्णांकAddress);
 		ep->ss_ep_comp.bmAttributes = 16;
-	} else if (usb_endpoint_xfer_isoc(&ep->desc) &&
+	पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_xfer_isoc(&ep->desc) &&
 		   !USB_SS_SSP_ISOC_COMP(desc->bmAttributes) &&
-		   USB_SS_MULT(desc->bmAttributes) > 3) {
+		   USB_SS_MULT(desc->bmAttributes) > 3) अणु
 		dev_warn(ddev, "Isoc endpoint has Mult of %d in "
 				"config %d interface %d altsetting %d ep %d: "
 				"setting to 3\n",
 				USB_SS_MULT(desc->bmAttributes),
-				cfgno, inum, asnum, ep->desc.bEndpointAddress);
+				cfgno, inum, asnum, ep->desc.bEndpoपूर्णांकAddress);
 		ep->ss_ep_comp.bmAttributes = 2;
-	}
+	पूर्ण
 
-	if (usb_endpoint_xfer_isoc(&ep->desc))
+	अगर (usb_endpoपूर्णांक_xfer_isoc(&ep->desc))
 		max_tx = (desc->bMaxBurst + 1) *
 			(USB_SS_MULT(desc->bmAttributes)) *
-			usb_endpoint_maxp(&ep->desc);
-	else if (usb_endpoint_xfer_int(&ep->desc))
-		max_tx = usb_endpoint_maxp(&ep->desc) *
+			usb_endpoपूर्णांक_maxp(&ep->desc);
+	अन्यथा अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(&ep->desc))
+		max_tx = usb_endpoपूर्णांक_maxp(&ep->desc) *
 			(desc->bMaxBurst + 1);
-	else
+	अन्यथा
 		max_tx = 999999;
-	if (le16_to_cpu(desc->wBytesPerInterval) > max_tx) {
+	अगर (le16_to_cpu(desc->wBytesPerInterval) > max_tx) अणु
 		dev_warn(ddev, "%s endpoint with wBytesPerInterval of %d in "
 				"config %d interface %d altsetting %d ep %d: "
 				"setting to %d\n",
-				usb_endpoint_xfer_isoc(&ep->desc) ? "Isoc" : "Int",
+				usb_endpoपूर्णांक_xfer_isoc(&ep->desc) ? "Isoc" : "Int",
 				le16_to_cpu(desc->wBytesPerInterval),
-				cfgno, inum, asnum, ep->desc.bEndpointAddress,
+				cfgno, inum, asnum, ep->desc.bEndpoपूर्णांकAddress,
 				max_tx);
 		ep->ss_ep_comp.wBytesPerInterval = cpu_to_le16(max_tx);
-	}
+	पूर्ण
 	/* Parse a possible SuperSpeedPlus isoc ep companion descriptor */
-	if (usb_endpoint_xfer_isoc(&ep->desc) &&
+	अगर (usb_endpoपूर्णांक_xfer_isoc(&ep->desc) &&
 	    USB_SS_SSP_ISOC_COMP(desc->bmAttributes))
-		usb_parse_ssp_isoc_endpoint_companion(ddev, cfgno, inum, asnum,
+		usb_parse_ssp_isoc_endpoपूर्णांक_companion(ddev, cfgno, inum, asnum,
 							ep, buffer, size);
-}
+पूर्ण
 
-static const unsigned short low_speed_maxpacket_maxes[4] = {
+अटल स्थिर अचिन्हित लघु low_speed_maxpacket_maxes[4] = अणु
 	[USB_ENDPOINT_XFER_CONTROL] = 8,
 	[USB_ENDPOINT_XFER_ISOC] = 0,
 	[USB_ENDPOINT_XFER_BULK] = 0,
 	[USB_ENDPOINT_XFER_INT] = 8,
-};
-static const unsigned short full_speed_maxpacket_maxes[4] = {
+पूर्ण;
+अटल स्थिर अचिन्हित लघु full_speed_maxpacket_maxes[4] = अणु
 	[USB_ENDPOINT_XFER_CONTROL] = 64,
 	[USB_ENDPOINT_XFER_ISOC] = 1023,
 	[USB_ENDPOINT_XFER_BULK] = 64,
 	[USB_ENDPOINT_XFER_INT] = 64,
-};
-static const unsigned short high_speed_maxpacket_maxes[4] = {
+पूर्ण;
+अटल स्थिर अचिन्हित लघु high_speed_maxpacket_maxes[4] = अणु
 	[USB_ENDPOINT_XFER_CONTROL] = 64,
 	[USB_ENDPOINT_XFER_ISOC] = 1024,
 
 	/* Bulk should be 512, but some devices use 1024: we will warn below */
 	[USB_ENDPOINT_XFER_BULK] = 1024,
 	[USB_ENDPOINT_XFER_INT] = 1024,
-};
-static const unsigned short super_speed_maxpacket_maxes[4] = {
+पूर्ण;
+अटल स्थिर अचिन्हित लघु super_speed_maxpacket_maxes[4] = अणु
 	[USB_ENDPOINT_XFER_CONTROL] = 512,
 	[USB_ENDPOINT_XFER_ISOC] = 1024,
 	[USB_ENDPOINT_XFER_BULK] = 1024,
 	[USB_ENDPOINT_XFER_INT] = 1024,
-};
+पूर्ण;
 
-static bool endpoint_is_duplicate(struct usb_endpoint_descriptor *e1,
-		struct usb_endpoint_descriptor *e2)
-{
-	if (e1->bEndpointAddress == e2->bEndpointAddress)
-		return true;
+अटल bool endpoपूर्णांक_is_duplicate(काष्ठा usb_endpoपूर्णांक_descriptor *e1,
+		काष्ठा usb_endpoपूर्णांक_descriptor *e2)
+अणु
+	अगर (e1->bEndpoपूर्णांकAddress == e2->bEndpoपूर्णांकAddress)
+		वापस true;
 
-	if (usb_endpoint_xfer_control(e1) || usb_endpoint_xfer_control(e2)) {
-		if (usb_endpoint_num(e1) == usb_endpoint_num(e2))
-			return true;
-	}
+	अगर (usb_endpoपूर्णांक_xfer_control(e1) || usb_endpoपूर्णांक_xfer_control(e2)) अणु
+		अगर (usb_endpoपूर्णांक_num(e1) == usb_endpoपूर्णांक_num(e2))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Check for duplicate endpoint addresses in other interfaces and in the
+ * Check क्रम duplicate endpoपूर्णांक addresses in other पूर्णांकerfaces and in the
  * altsetting currently being parsed.
  */
-static bool config_endpoint_is_duplicate(struct usb_host_config *config,
-		int inum, int asnum, struct usb_endpoint_descriptor *d)
-{
-	struct usb_endpoint_descriptor *epd;
-	struct usb_interface_cache *intfc;
-	struct usb_host_interface *alt;
-	int i, j, k;
+अटल bool config_endpoपूर्णांक_is_duplicate(काष्ठा usb_host_config *config,
+		पूर्णांक inum, पूर्णांक asnum, काष्ठा usb_endpoपूर्णांक_descriptor *d)
+अणु
+	काष्ठा usb_endpoपूर्णांक_descriptor *epd;
+	काष्ठा usb_पूर्णांकerface_cache *पूर्णांकfc;
+	काष्ठा usb_host_पूर्णांकerface *alt;
+	पूर्णांक i, j, k;
 
-	for (i = 0; i < config->desc.bNumInterfaces; ++i) {
-		intfc = config->intf_cache[i];
+	क्रम (i = 0; i < config->desc.bNumInterfaces; ++i) अणु
+		पूर्णांकfc = config->पूर्णांकf_cache[i];
 
-		for (j = 0; j < intfc->num_altsetting; ++j) {
-			alt = &intfc->altsetting[j];
+		क्रम (j = 0; j < पूर्णांकfc->num_altsetting; ++j) अणु
+			alt = &पूर्णांकfc->altsetting[j];
 
-			if (alt->desc.bInterfaceNumber == inum &&
+			अगर (alt->desc.bInterfaceNumber == inum &&
 					alt->desc.bAlternateSetting != asnum)
-				continue;
+				जारी;
 
-			for (k = 0; k < alt->desc.bNumEndpoints; ++k) {
-				epd = &alt->endpoint[k].desc;
+			क्रम (k = 0; k < alt->desc.bNumEndpoपूर्णांकs; ++k) अणु
+				epd = &alt->endpoपूर्णांक[k].desc;
 
-				if (endpoint_is_duplicate(epd, d))
-					return true;
-			}
-		}
-	}
+				अगर (endpoपूर्णांक_is_duplicate(epd, d))
+					वापस true;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int usb_parse_endpoint(struct device *ddev, int cfgno,
-		struct usb_host_config *config, int inum, int asnum,
-		struct usb_host_interface *ifp, int num_ep,
-		unsigned char *buffer, int size)
-{
-	struct usb_device *udev = to_usb_device(ddev);
-	unsigned char *buffer0 = buffer;
-	struct usb_endpoint_descriptor *d;
-	struct usb_host_endpoint *endpoint;
-	int n, i, j, retval;
-	unsigned int maxp;
-	const unsigned short *maxpacket_maxes;
+अटल पूर्णांक usb_parse_endpoपूर्णांक(काष्ठा device *ddev, पूर्णांक cfgno,
+		काष्ठा usb_host_config *config, पूर्णांक inum, पूर्णांक asnum,
+		काष्ठा usb_host_पूर्णांकerface *अगरp, पूर्णांक num_ep,
+		अचिन्हित अक्षर *buffer, पूर्णांक size)
+अणु
+	काष्ठा usb_device *udev = to_usb_device(ddev);
+	अचिन्हित अक्षर *buffer0 = buffer;
+	काष्ठा usb_endpoपूर्णांक_descriptor *d;
+	काष्ठा usb_host_endpoपूर्णांक *endpoपूर्णांक;
+	पूर्णांक n, i, j, retval;
+	अचिन्हित पूर्णांक maxp;
+	स्थिर अचिन्हित लघु *maxpacket_maxes;
 
-	d = (struct usb_endpoint_descriptor *) buffer;
+	d = (काष्ठा usb_endpoपूर्णांक_descriptor *) buffer;
 	buffer += d->bLength;
 	size -= d->bLength;
 
-	if (d->bLength >= USB_DT_ENDPOINT_AUDIO_SIZE)
+	अगर (d->bLength >= USB_DT_ENDPOINT_AUDIO_SIZE)
 		n = USB_DT_ENDPOINT_AUDIO_SIZE;
-	else if (d->bLength >= USB_DT_ENDPOINT_SIZE)
+	अन्यथा अगर (d->bLength >= USB_DT_ENDPOINT_SIZE)
 		n = USB_DT_ENDPOINT_SIZE;
-	else {
+	अन्यथा अणु
 		dev_warn(ddev, "config %d interface %d altsetting %d has an "
 		    "invalid endpoint descriptor of length %d, skipping\n",
 		    cfgno, inum, asnum, d->bLength);
-		goto skip_to_next_endpoint_or_interface_descriptor;
-	}
+		जाओ skip_to_next_endpoपूर्णांक_or_पूर्णांकerface_descriptor;
+	पूर्ण
 
-	i = d->bEndpointAddress & ~USB_ENDPOINT_DIR_MASK;
-	if (i >= 16 || i == 0) {
+	i = d->bEndpoपूर्णांकAddress & ~USB_ENDPOINT_सूची_MASK;
+	अगर (i >= 16 || i == 0) अणु
 		dev_warn(ddev, "config %d interface %d altsetting %d has an "
 		    "invalid endpoint with address 0x%X, skipping\n",
-		    cfgno, inum, asnum, d->bEndpointAddress);
-		goto skip_to_next_endpoint_or_interface_descriptor;
-	}
+		    cfgno, inum, asnum, d->bEndpoपूर्णांकAddress);
+		जाओ skip_to_next_endpoपूर्णांक_or_पूर्णांकerface_descriptor;
+	पूर्ण
 
-	/* Only store as many endpoints as we have room for */
-	if (ifp->desc.bNumEndpoints >= num_ep)
-		goto skip_to_next_endpoint_or_interface_descriptor;
+	/* Only store as many endpoपूर्णांकs as we have room क्रम */
+	अगर (अगरp->desc.bNumEndpoपूर्णांकs >= num_ep)
+		जाओ skip_to_next_endpoपूर्णांक_or_पूर्णांकerface_descriptor;
 
-	/* Check for duplicate endpoint addresses */
-	if (config_endpoint_is_duplicate(config, inum, asnum, d)) {
+	/* Check क्रम duplicate endpoपूर्णांक addresses */
+	अगर (config_endpoपूर्णांक_is_duplicate(config, inum, asnum, d)) अणु
 		dev_warn(ddev, "config %d interface %d altsetting %d has a duplicate endpoint with address 0x%X, skipping\n",
-				cfgno, inum, asnum, d->bEndpointAddress);
-		goto skip_to_next_endpoint_or_interface_descriptor;
-	}
+				cfgno, inum, asnum, d->bEndpoपूर्णांकAddress);
+		जाओ skip_to_next_endpoपूर्णांक_or_पूर्णांकerface_descriptor;
+	पूर्ण
 
-	/* Ignore some endpoints */
-	if (udev->quirks & USB_QUIRK_ENDPOINT_IGNORE) {
-		if (usb_endpoint_is_ignored(udev, ifp, d)) {
+	/* Ignore some endpoपूर्णांकs */
+	अगर (udev->quirks & USB_QUIRK_ENDPOINT_IGNORE) अणु
+		अगर (usb_endpoपूर्णांक_is_ignored(udev, अगरp, d)) अणु
 			dev_warn(ddev, "config %d interface %d altsetting %d has an ignored endpoint with address 0x%X, skipping\n",
 					cfgno, inum, asnum,
-					d->bEndpointAddress);
-			goto skip_to_next_endpoint_or_interface_descriptor;
-		}
-	}
+					d->bEndpoपूर्णांकAddress);
+			जाओ skip_to_next_endpoपूर्णांक_or_पूर्णांकerface_descriptor;
+		पूर्ण
+	पूर्ण
 
-	endpoint = &ifp->endpoint[ifp->desc.bNumEndpoints];
-	++ifp->desc.bNumEndpoints;
+	endpoपूर्णांक = &अगरp->endpoपूर्णांक[अगरp->desc.bNumEndpoपूर्णांकs];
+	++अगरp->desc.bNumEndpoपूर्णांकs;
 
-	memcpy(&endpoint->desc, d, n);
-	INIT_LIST_HEAD(&endpoint->urb_list);
+	स_नकल(&endpoपूर्णांक->desc, d, n);
+	INIT_LIST_HEAD(&endpoपूर्णांक->urb_list);
 
 	/*
 	 * Fix up bInterval values outside the legal range.
-	 * Use 10 or 8 ms if no proper value can be guessed.
+	 * Use 10 or 8 ms अगर no proper value can be guessed.
 	 */
-	i = 0;		/* i = min, j = max, n = default */
+	i = 0;		/* i = min, j = max, n = शेष */
 	j = 255;
-	if (usb_endpoint_xfer_int(d)) {
+	अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(d)) अणु
 		i = 1;
-		switch (udev->speed) {
-		case USB_SPEED_SUPER_PLUS:
-		case USB_SPEED_SUPER:
-		case USB_SPEED_HIGH:
+		चयन (udev->speed) अणु
+		हाल USB_SPEED_SUPER_PLUS:
+		हाल USB_SPEED_SUPER:
+		हाल USB_SPEED_HIGH:
 			/*
 			 * Many device manufacturers are using full-speed
-			 * bInterval values in high-speed interrupt endpoint
+			 * bInterval values in high-speed पूर्णांकerrupt endpoपूर्णांक
 			 * descriptors. Try to fix those and fall back to an
-			 * 8-ms default value otherwise.
+			 * 8-ms शेष value otherwise.
 			 */
 			n = fls(d->bInterval*8);
-			if (n == 0)
+			अगर (n == 0)
 				n = 7;	/* 8 ms = 2^(7-1) uframes */
 			j = 16;
 
 			/*
-			 * Adjust bInterval for quirked devices.
+			 * Adjust bInterval क्रम quirked devices.
 			 */
 			/*
 			 * This quirk fixes bIntervals reported in ms.
 			 */
-			if (udev->quirks & USB_QUIRK_LINEAR_FRAME_INTR_BINTERVAL) {
+			अगर (udev->quirks & USB_QUIRK_LINEAR_FRAME_INTR_BINTERVAL) अणु
 				n = clamp(fls(d->bInterval) + 3, i, j);
 				i = j = n;
-			}
+			पूर्ण
 			/*
 			 * This quirk fixes bIntervals reported in
 			 * linear microframes.
 			 */
-			if (udev->quirks & USB_QUIRK_LINEAR_UFRAME_INTR_BINTERVAL) {
+			अगर (udev->quirks & USB_QUIRK_LINEAR_UFRAME_INTR_BINTERVAL) अणु
 				n = clamp(fls(d->bInterval), i, j);
 				i = j = n;
-			}
-			break;
-		default:		/* USB_SPEED_FULL or _LOW */
+			पूर्ण
+			अवरोध;
+		शेष:		/* USB_SPEED_FULL or _LOW */
 			/*
 			 * For low-speed, 10 ms is the official minimum.
 			 * But some "overclocked" devices might want faster
 			 * polling so we'll allow it.
 			 */
 			n = 10;
-			break;
-		}
-	} else if (usb_endpoint_xfer_isoc(d)) {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_xfer_isoc(d)) अणु
 		i = 1;
 		j = 16;
-		switch (udev->speed) {
-		case USB_SPEED_HIGH:
+		चयन (udev->speed) अणु
+		हाल USB_SPEED_HIGH:
 			n = 7;		/* 8 ms = 2^(7-1) uframes */
-			break;
-		default:		/* USB_SPEED_FULL */
+			अवरोध;
+		शेष:		/* USB_SPEED_FULL */
 			n = 4;		/* 8 ms = 2^(4-1) frames */
-			break;
-		}
-	}
-	if (d->bInterval < i || d->bInterval > j) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (d->bInterval < i || d->bInterval > j) अणु
 		dev_warn(ddev, "config %d interface %d altsetting %d "
 		    "endpoint 0x%X has an invalid bInterval %d, "
 		    "changing to %d\n",
 		    cfgno, inum, asnum,
-		    d->bEndpointAddress, d->bInterval, n);
-		endpoint->desc.bInterval = n;
-	}
+		    d->bEndpoपूर्णांकAddress, d->bInterval, n);
+		endpoपूर्णांक->desc.bInterval = n;
+	पूर्ण
 
-	/* Some buggy low-speed devices have Bulk endpoints, which is
-	 * explicitly forbidden by the USB spec.  In an attempt to make
-	 * them usable, we will try treating them as Interrupt endpoints.
+	/* Some buggy low-speed devices have Bulk endpoपूर्णांकs, which is
+	 * explicitly क्रमbidden by the USB spec.  In an attempt to make
+	 * them usable, we will try treating them as Interrupt endpoपूर्णांकs.
 	 */
-	if (udev->speed == USB_SPEED_LOW && usb_endpoint_xfer_bulk(d)) {
+	अगर (udev->speed == USB_SPEED_LOW && usb_endpoपूर्णांक_xfer_bulk(d)) अणु
 		dev_warn(ddev, "config %d interface %d altsetting %d "
 		    "endpoint 0x%X is Bulk; changing to Interrupt\n",
-		    cfgno, inum, asnum, d->bEndpointAddress);
-		endpoint->desc.bmAttributes = USB_ENDPOINT_XFER_INT;
-		endpoint->desc.bInterval = 1;
-		if (usb_endpoint_maxp(&endpoint->desc) > 8)
-			endpoint->desc.wMaxPacketSize = cpu_to_le16(8);
-	}
+		    cfgno, inum, asnum, d->bEndpoपूर्णांकAddress);
+		endpoपूर्णांक->desc.bmAttributes = USB_ENDPOINT_XFER_INT;
+		endpoपूर्णांक->desc.bInterval = 1;
+		अगर (usb_endpoपूर्णांक_maxp(&endpoपूर्णांक->desc) > 8)
+			endpoपूर्णांक->desc.wMaxPacketSize = cpu_to_le16(8);
+	पूर्ण
 
 	/*
 	 * Validate the wMaxPacketSize field.
-	 * Some devices have isochronous endpoints in altsetting 0;
-	 * the USB-2 spec requires such endpoints to have wMaxPacketSize = 0
-	 * (see the end of section 5.6.3), so don't warn about them.
+	 * Some devices have isochronous endpoपूर्णांकs in altsetting 0;
+	 * the USB-2 spec requires such endpoपूर्णांकs to have wMaxPacketSize = 0
+	 * (see the end of section 5.6.3), so करोn't warn about them.
 	 */
-	maxp = usb_endpoint_maxp(&endpoint->desc);
-	if (maxp == 0 && !(usb_endpoint_xfer_isoc(d) && asnum == 0)) {
+	maxp = usb_endpoपूर्णांक_maxp(&endpoपूर्णांक->desc);
+	अगर (maxp == 0 && !(usb_endpoपूर्णांक_xfer_isoc(d) && asnum == 0)) अणु
 		dev_warn(ddev, "config %d interface %d altsetting %d endpoint 0x%X has invalid wMaxPacketSize 0\n",
-		    cfgno, inum, asnum, d->bEndpointAddress);
-	}
+		    cfgno, inum, asnum, d->bEndpoपूर्णांकAddress);
+	पूर्ण
 
-	/* Find the highest legal maxpacket size for this endpoint */
+	/* Find the highest legal maxpacket size क्रम this endpoपूर्णांक */
 	i = 0;		/* additional transactions per microframe */
-	switch (udev->speed) {
-	case USB_SPEED_LOW:
+	चयन (udev->speed) अणु
+	हाल USB_SPEED_LOW:
 		maxpacket_maxes = low_speed_maxpacket_maxes;
-		break;
-	case USB_SPEED_FULL:
+		अवरोध;
+	हाल USB_SPEED_FULL:
 		maxpacket_maxes = full_speed_maxpacket_maxes;
-		break;
-	case USB_SPEED_HIGH:
-		/* Bits 12..11 are allowed only for HS periodic endpoints */
-		if (usb_endpoint_xfer_int(d) || usb_endpoint_xfer_isoc(d)) {
+		अवरोध;
+	हाल USB_SPEED_HIGH:
+		/* Bits 12..11 are allowed only क्रम HS periodic endpoपूर्णांकs */
+		अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(d) || usb_endpoपूर्णांक_xfer_isoc(d)) अणु
 			i = maxp & (BIT(12) | BIT(11));
 			maxp &= ~i;
-		}
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		maxpacket_maxes = high_speed_maxpacket_maxes;
-		break;
-	case USB_SPEED_SUPER:
-	case USB_SPEED_SUPER_PLUS:
+		अवरोध;
+	हाल USB_SPEED_SUPER:
+	हाल USB_SPEED_SUPER_PLUS:
 		maxpacket_maxes = super_speed_maxpacket_maxes;
-		break;
-	}
-	j = maxpacket_maxes[usb_endpoint_type(&endpoint->desc)];
+		अवरोध;
+	पूर्ण
+	j = maxpacket_maxes[usb_endpoपूर्णांक_type(&endpoपूर्णांक->desc)];
 
-	if (maxp > j) {
+	अगर (maxp > j) अणु
 		dev_warn(ddev, "config %d interface %d altsetting %d endpoint 0x%X has invalid maxpacket %d, setting to %d\n",
-		    cfgno, inum, asnum, d->bEndpointAddress, maxp, j);
+		    cfgno, inum, asnum, d->bEndpoपूर्णांकAddress, maxp, j);
 		maxp = j;
-		endpoint->desc.wMaxPacketSize = cpu_to_le16(i | maxp);
-	}
+		endpoपूर्णांक->desc.wMaxPacketSize = cpu_to_le16(i | maxp);
+	पूर्ण
 
 	/*
-	 * Some buggy high speed devices have bulk endpoints using
+	 * Some buggy high speed devices have bulk endpoपूर्णांकs using
 	 * maxpacket sizes other than 512.  High speed HCDs may not
 	 * be able to handle that particular bug, so let's warn...
 	 */
-	if (udev->speed == USB_SPEED_HIGH && usb_endpoint_xfer_bulk(d)) {
-		if (maxp != 512)
+	अगर (udev->speed == USB_SPEED_HIGH && usb_endpoपूर्णांक_xfer_bulk(d)) अणु
+		अगर (maxp != 512)
 			dev_warn(ddev, "config %d interface %d altsetting %d "
 				"bulk endpoint 0x%X has invalid maxpacket %d\n",
-				cfgno, inum, asnum, d->bEndpointAddress,
+				cfgno, inum, asnum, d->bEndpoपूर्णांकAddress,
 				maxp);
-	}
+	पूर्ण
 
-	/* Parse a possible SuperSpeed endpoint companion descriptor */
-	if (udev->speed >= USB_SPEED_SUPER)
-		usb_parse_ss_endpoint_companion(ddev, cfgno,
-				inum, asnum, endpoint, buffer, size);
+	/* Parse a possible SuperSpeed endpoपूर्णांक companion descriptor */
+	अगर (udev->speed >= USB_SPEED_SUPER)
+		usb_parse_ss_endpoपूर्णांक_companion(ddev, cfgno,
+				inum, asnum, endpoपूर्णांक, buffer, size);
 
-	/* Skip over any Class Specific or Vendor Specific descriptors;
-	 * find the next endpoint or interface descriptor */
-	endpoint->extra = buffer;
+	/* Skip over any Class Specअगरic or Venकरोr Specअगरic descriptors;
+	 * find the next endpoपूर्णांक or पूर्णांकerface descriptor */
+	endpoपूर्णांक->extra = buffer;
 	i = find_next_descriptor(buffer, size, USB_DT_ENDPOINT,
 			USB_DT_INTERFACE, &n);
-	endpoint->extralen = i;
+	endpoपूर्णांक->extralen = i;
 	retval = buffer - buffer0 + i;
-	if (n > 0)
+	अगर (n > 0)
 		dev_dbg(ddev, "skipped %d descriptor%s after %s\n",
 		    n, plural(n), "endpoint");
-	return retval;
+	वापस retval;
 
-skip_to_next_endpoint_or_interface_descriptor:
+skip_to_next_endpoपूर्णांक_or_पूर्णांकerface_descriptor:
 	i = find_next_descriptor(buffer, size, USB_DT_ENDPOINT,
-	    USB_DT_INTERFACE, NULL);
-	return buffer - buffer0 + i;
-}
+	    USB_DT_INTERFACE, शून्य);
+	वापस buffer - buffer0 + i;
+पूर्ण
 
-void usb_release_interface_cache(struct kref *ref)
-{
-	struct usb_interface_cache *intfc = ref_to_usb_interface_cache(ref);
-	int j;
+व्योम usb_release_पूर्णांकerface_cache(काष्ठा kref *ref)
+अणु
+	काष्ठा usb_पूर्णांकerface_cache *पूर्णांकfc = ref_to_usb_पूर्णांकerface_cache(ref);
+	पूर्णांक j;
 
-	for (j = 0; j < intfc->num_altsetting; j++) {
-		struct usb_host_interface *alt = &intfc->altsetting[j];
+	क्रम (j = 0; j < पूर्णांकfc->num_altsetting; j++) अणु
+		काष्ठा usb_host_पूर्णांकerface *alt = &पूर्णांकfc->altsetting[j];
 
-		kfree(alt->endpoint);
-		kfree(alt->string);
-	}
-	kfree(intfc);
-}
+		kमुक्त(alt->endpoपूर्णांक);
+		kमुक्त(alt->string);
+	पूर्ण
+	kमुक्त(पूर्णांकfc);
+पूर्ण
 
-static int usb_parse_interface(struct device *ddev, int cfgno,
-    struct usb_host_config *config, unsigned char *buffer, int size,
+अटल पूर्णांक usb_parse_पूर्णांकerface(काष्ठा device *ddev, पूर्णांक cfgno,
+    काष्ठा usb_host_config *config, अचिन्हित अक्षर *buffer, पूर्णांक size,
     u8 inums[], u8 nalts[])
-{
-	unsigned char *buffer0 = buffer;
-	struct usb_interface_descriptor	*d;
-	int inum, asnum;
-	struct usb_interface_cache *intfc;
-	struct usb_host_interface *alt;
-	int i, n;
-	int len, retval;
-	int num_ep, num_ep_orig;
+अणु
+	अचिन्हित अक्षर *buffer0 = buffer;
+	काष्ठा usb_पूर्णांकerface_descriptor	*d;
+	पूर्णांक inum, asnum;
+	काष्ठा usb_पूर्णांकerface_cache *पूर्णांकfc;
+	काष्ठा usb_host_पूर्णांकerface *alt;
+	पूर्णांक i, n;
+	पूर्णांक len, retval;
+	पूर्णांक num_ep, num_ep_orig;
 
-	d = (struct usb_interface_descriptor *) buffer;
+	d = (काष्ठा usb_पूर्णांकerface_descriptor *) buffer;
 	buffer += d->bLength;
 	size -= d->bLength;
 
-	if (d->bLength < USB_DT_INTERFACE_SIZE)
-		goto skip_to_next_interface_descriptor;
+	अगर (d->bLength < USB_DT_INTERFACE_SIZE)
+		जाओ skip_to_next_पूर्णांकerface_descriptor;
 
-	/* Which interface entry is this? */
-	intfc = NULL;
+	/* Which पूर्णांकerface entry is this? */
+	पूर्णांकfc = शून्य;
 	inum = d->bInterfaceNumber;
-	for (i = 0; i < config->desc.bNumInterfaces; ++i) {
-		if (inums[i] == inum) {
-			intfc = config->intf_cache[i];
-			break;
-		}
-	}
-	if (!intfc || intfc->num_altsetting >= nalts[i])
-		goto skip_to_next_interface_descriptor;
+	क्रम (i = 0; i < config->desc.bNumInterfaces; ++i) अणु
+		अगर (inums[i] == inum) अणु
+			पूर्णांकfc = config->पूर्णांकf_cache[i];
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!पूर्णांकfc || पूर्णांकfc->num_altsetting >= nalts[i])
+		जाओ skip_to_next_पूर्णांकerface_descriptor;
 
-	/* Check for duplicate altsetting entries */
+	/* Check क्रम duplicate altsetting entries */
 	asnum = d->bAlternateSetting;
-	for ((i = 0, alt = &intfc->altsetting[0]);
-	      i < intfc->num_altsetting;
-	     (++i, ++alt)) {
-		if (alt->desc.bAlternateSetting == asnum) {
+	क्रम ((i = 0, alt = &पूर्णांकfc->altsetting[0]);
+	      i < पूर्णांकfc->num_altsetting;
+	     (++i, ++alt)) अणु
+		अगर (alt->desc.bAlternateSetting == asnum) अणु
 			dev_warn(ddev, "Duplicate descriptor for config %d "
 			    "interface %d altsetting %d, skipping\n",
 			    cfgno, inum, asnum);
-			goto skip_to_next_interface_descriptor;
-		}
-	}
+			जाओ skip_to_next_पूर्णांकerface_descriptor;
+		पूर्ण
+	पूर्ण
 
-	++intfc->num_altsetting;
-	memcpy(&alt->desc, d, USB_DT_INTERFACE_SIZE);
+	++पूर्णांकfc->num_altsetting;
+	स_नकल(&alt->desc, d, USB_DT_INTERFACE_SIZE);
 
-	/* Skip over any Class Specific or Vendor Specific descriptors;
-	 * find the first endpoint or interface descriptor */
+	/* Skip over any Class Specअगरic or Venकरोr Specअगरic descriptors;
+	 * find the first endpoपूर्णांक or पूर्णांकerface descriptor */
 	alt->extra = buffer;
 	i = find_next_descriptor(buffer, size, USB_DT_ENDPOINT,
 	    USB_DT_INTERFACE, &n);
 	alt->extralen = i;
-	if (n > 0)
+	अगर (n > 0)
 		dev_dbg(ddev, "skipped %d descriptor%s after %s\n",
 		    n, plural(n), "interface");
 	buffer += i;
 	size -= i;
 
-	/* Allocate space for the right(?) number of endpoints */
-	num_ep = num_ep_orig = alt->desc.bNumEndpoints;
-	alt->desc.bNumEndpoints = 0;		/* Use as a counter */
-	if (num_ep > USB_MAXENDPOINTS) {
+	/* Allocate space क्रम the right(?) number of endpoपूर्णांकs */
+	num_ep = num_ep_orig = alt->desc.bNumEndpoपूर्णांकs;
+	alt->desc.bNumEndpoपूर्णांकs = 0;		/* Use as a counter */
+	अगर (num_ep > USB_MAXENDPOINTS) अणु
 		dev_warn(ddev, "too many endpoints for config %d interface %d "
 		    "altsetting %d: %d, using maximum allowed: %d\n",
 		    cfgno, inum, asnum, num_ep, USB_MAXENDPOINTS);
 		num_ep = USB_MAXENDPOINTS;
-	}
+	पूर्ण
 
-	if (num_ep > 0) {
+	अगर (num_ep > 0) अणु
 		/* Can't allocate 0 bytes */
-		len = sizeof(struct usb_host_endpoint) * num_ep;
-		alt->endpoint = kzalloc(len, GFP_KERNEL);
-		if (!alt->endpoint)
-			return -ENOMEM;
-	}
+		len = माप(काष्ठा usb_host_endpoपूर्णांक) * num_ep;
+		alt->endpoपूर्णांक = kzalloc(len, GFP_KERNEL);
+		अगर (!alt->endpoपूर्णांक)
+			वापस -ENOMEM;
+	पूर्ण
 
-	/* Parse all the endpoint descriptors */
+	/* Parse all the endpoपूर्णांक descriptors */
 	n = 0;
-	while (size > 0) {
-		if (((struct usb_descriptor_header *) buffer)->bDescriptorType
+	जबतक (size > 0) अणु
+		अगर (((काष्ठा usb_descriptor_header *) buffer)->bDescriptorType
 		     == USB_DT_INTERFACE)
-			break;
-		retval = usb_parse_endpoint(ddev, cfgno, config, inum, asnum,
+			अवरोध;
+		retval = usb_parse_endpoपूर्णांक(ddev, cfgno, config, inum, asnum,
 				alt, num_ep, buffer, size);
-		if (retval < 0)
-			return retval;
+		अगर (retval < 0)
+			वापस retval;
 		++n;
 
 		buffer += retval;
 		size -= retval;
-	}
+	पूर्ण
 
-	if (n != num_ep_orig)
+	अगर (n != num_ep_orig)
 		dev_warn(ddev, "config %d interface %d altsetting %d has %d "
 		    "endpoint descriptor%s, different from the interface "
 		    "descriptor's value: %d\n",
 		    cfgno, inum, asnum, n, plural(n), num_ep_orig);
-	return buffer - buffer0;
+	वापस buffer - buffer0;
 
-skip_to_next_interface_descriptor:
+skip_to_next_पूर्णांकerface_descriptor:
 	i = find_next_descriptor(buffer, size, USB_DT_INTERFACE,
-	    USB_DT_INTERFACE, NULL);
-	return buffer - buffer0 + i;
-}
+	    USB_DT_INTERFACE, शून्य);
+	वापस buffer - buffer0 + i;
+पूर्ण
 
-static int usb_parse_configuration(struct usb_device *dev, int cfgidx,
-    struct usb_host_config *config, unsigned char *buffer, int size)
-{
-	struct device *ddev = &dev->dev;
-	unsigned char *buffer0 = buffer;
-	int cfgno;
-	int nintf, nintf_orig;
-	int i, j, n;
-	struct usb_interface_cache *intfc;
-	unsigned char *buffer2;
-	int size2;
-	struct usb_descriptor_header *header;
-	int retval;
+अटल पूर्णांक usb_parse_configuration(काष्ठा usb_device *dev, पूर्णांक cfgidx,
+    काष्ठा usb_host_config *config, अचिन्हित अक्षर *buffer, पूर्णांक size)
+अणु
+	काष्ठा device *ddev = &dev->dev;
+	अचिन्हित अक्षर *buffer0 = buffer;
+	पूर्णांक cfgno;
+	पूर्णांक nपूर्णांकf, nपूर्णांकf_orig;
+	पूर्णांक i, j, n;
+	काष्ठा usb_पूर्णांकerface_cache *पूर्णांकfc;
+	अचिन्हित अक्षर *buffer2;
+	पूर्णांक size2;
+	काष्ठा usb_descriptor_header *header;
+	पूर्णांक retval;
 	u8 inums[USB_MAXINTERFACES], nalts[USB_MAXINTERFACES];
-	unsigned iad_num = 0;
+	अचिन्हित iad_num = 0;
 
-	memcpy(&config->desc, buffer, USB_DT_CONFIG_SIZE);
-	nintf = nintf_orig = config->desc.bNumInterfaces;
+	स_नकल(&config->desc, buffer, USB_DT_CONFIG_SIZE);
+	nपूर्णांकf = nपूर्णांकf_orig = config->desc.bNumInterfaces;
 	config->desc.bNumInterfaces = 0;	// Adjusted later
 
-	if (config->desc.bDescriptorType != USB_DT_CONFIG ||
+	अगर (config->desc.bDescriptorType != USB_DT_CONFIG ||
 	    config->desc.bLength < USB_DT_CONFIG_SIZE ||
-	    config->desc.bLength > size) {
+	    config->desc.bLength > size) अणु
 		dev_err(ddev, "invalid descriptor for config index %d: "
 		    "type = 0x%X, length = %d\n", cfgidx,
 		    config->desc.bDescriptorType, config->desc.bLength);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	cfgno = config->desc.bConfigurationValue;
 
 	buffer += config->desc.bLength;
 	size -= config->desc.bLength;
 
-	if (nintf > USB_MAXINTERFACES) {
+	अगर (nपूर्णांकf > USB_MAXINTERFACES) अणु
 		dev_warn(ddev, "config %d has too many interfaces: %d, "
 		    "using maximum allowed: %d\n",
-		    cfgno, nintf, USB_MAXINTERFACES);
-		nintf = USB_MAXINTERFACES;
-	}
+		    cfgno, nपूर्णांकf, USB_MAXINTERFACES);
+		nपूर्णांकf = USB_MAXINTERFACES;
+	पूर्ण
 
 	/* Go through the descriptors, checking their length and counting the
-	 * number of altsettings for each interface */
+	 * number of altsettings क्रम each पूर्णांकerface */
 	n = 0;
-	for ((buffer2 = buffer, size2 = size);
+	क्रम ((buffer2 = buffer, size2 = size);
 	      size2 > 0;
-	     (buffer2 += header->bLength, size2 -= header->bLength)) {
+	     (buffer2 += header->bLength, size2 -= header->bLength)) अणु
 
-		if (size2 < sizeof(struct usb_descriptor_header)) {
+		अगर (size2 < माप(काष्ठा usb_descriptor_header)) अणु
 			dev_warn(ddev, "config %d descriptor has %d excess "
 			    "byte%s, ignoring\n",
 			    cfgno, size2, plural(size2));
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		header = (struct usb_descriptor_header *) buffer2;
-		if ((header->bLength > size2) || (header->bLength < 2)) {
+		header = (काष्ठा usb_descriptor_header *) buffer2;
+		अगर ((header->bLength > size2) || (header->bLength < 2)) अणु
 			dev_warn(ddev, "config %d has an invalid descriptor "
 			    "of length %d, skipping remainder of the config\n",
 			    cfgno, header->bLength);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (header->bDescriptorType == USB_DT_INTERFACE) {
-			struct usb_interface_descriptor *d;
-			int inum;
+		अगर (header->bDescriptorType == USB_DT_INTERFACE) अणु
+			काष्ठा usb_पूर्णांकerface_descriptor *d;
+			पूर्णांक inum;
 
-			d = (struct usb_interface_descriptor *) header;
-			if (d->bLength < USB_DT_INTERFACE_SIZE) {
+			d = (काष्ठा usb_पूर्णांकerface_descriptor *) header;
+			अगर (d->bLength < USB_DT_INTERFACE_SIZE) अणु
 				dev_warn(ddev, "config %d has an invalid "
 				    "interface descriptor of length %d, "
 				    "skipping\n", cfgno, d->bLength);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			inum = d->bInterfaceNumber;
 
-			if ((dev->quirks & USB_QUIRK_HONOR_BNUMINTERFACES) &&
-			    n >= nintf_orig) {
+			अगर ((dev->quirks & USB_QUIRK_HONOR_BNUMINTERFACES) &&
+			    n >= nपूर्णांकf_orig) अणु
 				dev_warn(ddev, "config %d has more interface "
 				    "descriptors, than it declares in "
 				    "bNumInterfaces, ignoring interface "
 				    "number: %d\n", cfgno, inum);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (inum >= nintf_orig)
+			अगर (inum >= nपूर्णांकf_orig)
 				dev_warn(ddev, "config %d has an invalid "
 				    "interface number: %d but max is %d\n",
-				    cfgno, inum, nintf_orig - 1);
+				    cfgno, inum, nपूर्णांकf_orig - 1);
 
-			/* Have we already encountered this interface?
+			/* Have we alपढ़ोy encountered this पूर्णांकerface?
 			 * Count its altsettings */
-			for (i = 0; i < n; ++i) {
-				if (inums[i] == inum)
-					break;
-			}
-			if (i < n) {
-				if (nalts[i] < 255)
+			क्रम (i = 0; i < n; ++i) अणु
+				अगर (inums[i] == inum)
+					अवरोध;
+			पूर्ण
+			अगर (i < n) अणु
+				अगर (nalts[i] < 255)
 					++nalts[i];
-			} else if (n < USB_MAXINTERFACES) {
+			पूर्ण अन्यथा अगर (n < USB_MAXINTERFACES) अणु
 				inums[n] = inum;
 				nalts[n] = 1;
 				++n;
-			}
+			पूर्ण
 
-		} else if (header->bDescriptorType ==
-				USB_DT_INTERFACE_ASSOCIATION) {
-			struct usb_interface_assoc_descriptor *d;
+		पूर्ण अन्यथा अगर (header->bDescriptorType ==
+				USB_DT_INTERFACE_ASSOCIATION) अणु
+			काष्ठा usb_पूर्णांकerface_assoc_descriptor *d;
 
-			d = (struct usb_interface_assoc_descriptor *)header;
-			if (d->bLength < USB_DT_INTERFACE_ASSOCIATION_SIZE) {
+			d = (काष्ठा usb_पूर्णांकerface_assoc_descriptor *)header;
+			अगर (d->bLength < USB_DT_INTERFACE_ASSOCIATION_SIZE) अणु
 				dev_warn(ddev,
 					 "config %d has an invalid interface association descriptor of length %d, skipping\n",
 					 cfgno, d->bLength);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (iad_num == USB_MAXIADS) {
+			अगर (iad_num == USB_MAXIADS) अणु
 				dev_warn(ddev, "found more Interface "
 					       "Association Descriptors "
 					       "than allocated for in "
 					       "configuration %d\n", cfgno);
-			} else {
-				config->intf_assoc[iad_num] = d;
+			पूर्ण अन्यथा अणु
+				config->पूर्णांकf_assoc[iad_num] = d;
 				iad_num++;
-			}
+			पूर्ण
 
-		} else if (header->bDescriptorType == USB_DT_DEVICE ||
+		पूर्ण अन्यथा अगर (header->bDescriptorType == USB_DT_DEVICE ||
 			    header->bDescriptorType == USB_DT_CONFIG)
 			dev_warn(ddev, "config %d contains an unexpected "
 			    "descriptor of type 0x%X, skipping\n",
 			    cfgno, header->bDescriptorType);
 
-	}	/* for ((buffer2 = buffer, size2 = size); ...) */
+	पूर्ण	/* क्रम ((buffer2 = buffer, size2 = size); ...) */
 	size = buffer2 - buffer;
 	config->desc.wTotalLength = cpu_to_le16(buffer2 - buffer0);
 
-	if (n != nintf)
+	अगर (n != nपूर्णांकf)
 		dev_warn(ddev, "config %d has %d interface%s, different from "
 		    "the descriptor's value: %d\n",
-		    cfgno, n, plural(n), nintf_orig);
-	else if (n == 0)
+		    cfgno, n, plural(n), nपूर्णांकf_orig);
+	अन्यथा अगर (n == 0)
 		dev_warn(ddev, "config %d has no interfaces?\n", cfgno);
-	config->desc.bNumInterfaces = nintf = n;
+	config->desc.bNumInterfaces = nपूर्णांकf = n;
 
-	/* Check for missing interface numbers */
-	for (i = 0; i < nintf; ++i) {
-		for (j = 0; j < nintf; ++j) {
-			if (inums[j] == i)
-				break;
-		}
-		if (j >= nintf)
+	/* Check क्रम missing पूर्णांकerface numbers */
+	क्रम (i = 0; i < nपूर्णांकf; ++i) अणु
+		क्रम (j = 0; j < nपूर्णांकf; ++j) अणु
+			अगर (inums[j] == i)
+				अवरोध;
+		पूर्ण
+		अगर (j >= nपूर्णांकf)
 			dev_warn(ddev, "config %d has no interface number "
 			    "%d\n", cfgno, i);
-	}
+	पूर्ण
 
-	/* Allocate the usb_interface_caches and altsetting arrays */
-	for (i = 0; i < nintf; ++i) {
+	/* Allocate the usb_पूर्णांकerface_caches and altsetting arrays */
+	क्रम (i = 0; i < nपूर्णांकf; ++i) अणु
 		j = nalts[i];
-		if (j > USB_MAXALTSETTING) {
+		अगर (j > USB_MAXALTSETTING) अणु
 			dev_warn(ddev, "too many alternate settings for "
 			    "config %d interface %d: %d, "
 			    "using maximum allowed: %d\n",
 			    cfgno, inums[i], j, USB_MAXALTSETTING);
 			nalts[i] = j = USB_MAXALTSETTING;
-		}
+		पूर्ण
 
-		intfc = kzalloc(struct_size(intfc, altsetting, j), GFP_KERNEL);
-		config->intf_cache[i] = intfc;
-		if (!intfc)
-			return -ENOMEM;
-		kref_init(&intfc->ref);
-	}
+		पूर्णांकfc = kzalloc(काष्ठा_size(पूर्णांकfc, altsetting, j), GFP_KERNEL);
+		config->पूर्णांकf_cache[i] = पूर्णांकfc;
+		अगर (!पूर्णांकfc)
+			वापस -ENOMEM;
+		kref_init(&पूर्णांकfc->ref);
+	पूर्ण
 
 	/* FIXME: parse the BOS descriptor */
 
-	/* Skip over any Class Specific or Vendor Specific descriptors;
-	 * find the first interface descriptor */
+	/* Skip over any Class Specअगरic or Venकरोr Specअगरic descriptors;
+	 * find the first पूर्णांकerface descriptor */
 	config->extra = buffer;
 	i = find_next_descriptor(buffer, size, USB_DT_INTERFACE,
 	    USB_DT_INTERFACE, &n);
 	config->extralen = i;
-	if (n > 0)
+	अगर (n > 0)
 		dev_dbg(ddev, "skipped %d descriptor%s after %s\n",
 		    n, plural(n), "configuration");
 	buffer += i;
 	size -= i;
 
-	/* Parse all the interface/altsetting descriptors */
-	while (size > 0) {
-		retval = usb_parse_interface(ddev, cfgno, config,
+	/* Parse all the पूर्णांकerface/altsetting descriptors */
+	जबतक (size > 0) अणु
+		retval = usb_parse_पूर्णांकerface(ddev, cfgno, config,
 		    buffer, size, inums, nalts);
-		if (retval < 0)
-			return retval;
+		अगर (retval < 0)
+			वापस retval;
 
 		buffer += retval;
 		size -= retval;
-	}
+	पूर्ण
 
-	/* Check for missing altsettings */
-	for (i = 0; i < nintf; ++i) {
-		intfc = config->intf_cache[i];
-		for (j = 0; j < intfc->num_altsetting; ++j) {
-			for (n = 0; n < intfc->num_altsetting; ++n) {
-				if (intfc->altsetting[n].desc.
+	/* Check क्रम missing altsettings */
+	क्रम (i = 0; i < nपूर्णांकf; ++i) अणु
+		पूर्णांकfc = config->पूर्णांकf_cache[i];
+		क्रम (j = 0; j < पूर्णांकfc->num_altsetting; ++j) अणु
+			क्रम (n = 0; n < पूर्णांकfc->num_altsetting; ++n) अणु
+				अगर (पूर्णांकfc->altsetting[n].desc.
 				    bAlternateSetting == j)
-					break;
-			}
-			if (n >= intfc->num_altsetting)
+					अवरोध;
+			पूर्ण
+			अगर (n >= पूर्णांकfc->num_altsetting)
 				dev_warn(ddev, "config %d interface %d has no "
 				    "altsetting %d\n", cfgno, inums[i], j);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* hub-only!! ... and only exported for reset/reinit path.
- * otherwise used internally on disconnect/destroy path
+/* hub-only!! ... and only exported क्रम reset/reinit path.
+ * otherwise used पूर्णांकernally on disconnect/destroy path
  */
-void usb_destroy_configuration(struct usb_device *dev)
-{
-	int c, i;
+व्योम usb_destroy_configuration(काष्ठा usb_device *dev)
+अणु
+	पूर्णांक c, i;
 
-	if (!dev->config)
-		return;
+	अगर (!dev->config)
+		वापस;
 
-	if (dev->rawdescriptors) {
-		for (i = 0; i < dev->descriptor.bNumConfigurations; i++)
-			kfree(dev->rawdescriptors[i]);
+	अगर (dev->rawdescriptors) अणु
+		क्रम (i = 0; i < dev->descriptor.bNumConfigurations; i++)
+			kमुक्त(dev->rawdescriptors[i]);
 
-		kfree(dev->rawdescriptors);
-		dev->rawdescriptors = NULL;
-	}
+		kमुक्त(dev->rawdescriptors);
+		dev->rawdescriptors = शून्य;
+	पूर्ण
 
-	for (c = 0; c < dev->descriptor.bNumConfigurations; c++) {
-		struct usb_host_config *cf = &dev->config[c];
+	क्रम (c = 0; c < dev->descriptor.bNumConfigurations; c++) अणु
+		काष्ठा usb_host_config *cf = &dev->config[c];
 
-		kfree(cf->string);
-		for (i = 0; i < cf->desc.bNumInterfaces; i++) {
-			if (cf->intf_cache[i])
-				kref_put(&cf->intf_cache[i]->ref,
-					  usb_release_interface_cache);
-		}
-	}
-	kfree(dev->config);
-	dev->config = NULL;
-}
+		kमुक्त(cf->string);
+		क्रम (i = 0; i < cf->desc.bNumInterfaces; i++) अणु
+			अगर (cf->पूर्णांकf_cache[i])
+				kref_put(&cf->पूर्णांकf_cache[i]->ref,
+					  usb_release_पूर्णांकerface_cache);
+		पूर्ण
+	पूर्ण
+	kमुक्त(dev->config);
+	dev->config = शून्य;
+पूर्ण
 
 
 /*
  * Get the USB config descriptors, cache and parse'em
  *
  * hub-only!! ... and only in reset path, or usb_new_device()
- * (used by real hubs and virtual root hubs)
+ * (used by real hubs and भव root hubs)
  */
-int usb_get_configuration(struct usb_device *dev)
-{
-	struct device *ddev = &dev->dev;
-	int ncfg = dev->descriptor.bNumConfigurations;
-	unsigned int cfgno, length;
-	unsigned char *bigbuffer;
-	struct usb_config_descriptor *desc;
-	int result;
+पूर्णांक usb_get_configuration(काष्ठा usb_device *dev)
+अणु
+	काष्ठा device *ddev = &dev->dev;
+	पूर्णांक ncfg = dev->descriptor.bNumConfigurations;
+	अचिन्हित पूर्णांक cfgno, length;
+	अचिन्हित अक्षर *bigbuffer;
+	काष्ठा usb_config_descriptor *desc;
+	पूर्णांक result;
 
-	if (ncfg > USB_MAXCONFIG) {
+	अगर (ncfg > USB_MAXCONFIG) अणु
 		dev_warn(ddev, "too many configurations: %d, "
 		    "using maximum allowed: %d\n", ncfg, USB_MAXCONFIG);
 		dev->descriptor.bNumConfigurations = ncfg = USB_MAXCONFIG;
-	}
+	पूर्ण
 
-	if (ncfg < 1) {
+	अगर (ncfg < 1) अणु
 		dev_err(ddev, "no configurations\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	length = ncfg * sizeof(struct usb_host_config);
+	length = ncfg * माप(काष्ठा usb_host_config);
 	dev->config = kzalloc(length, GFP_KERNEL);
-	if (!dev->config)
-		return -ENOMEM;
+	अगर (!dev->config)
+		वापस -ENOMEM;
 
-	length = ncfg * sizeof(char *);
+	length = ncfg * माप(अक्षर *);
 	dev->rawdescriptors = kzalloc(length, GFP_KERNEL);
-	if (!dev->rawdescriptors)
-		return -ENOMEM;
+	अगर (!dev->rawdescriptors)
+		वापस -ENOMEM;
 
-	desc = kmalloc(USB_DT_CONFIG_SIZE, GFP_KERNEL);
-	if (!desc)
-		return -ENOMEM;
+	desc = kदो_स्मृति(USB_DT_CONFIG_SIZE, GFP_KERNEL);
+	अगर (!desc)
+		वापस -ENOMEM;
 
-	for (cfgno = 0; cfgno < ncfg; cfgno++) {
-		/* We grab just the first descriptor so we know how long
+	क्रम (cfgno = 0; cfgno < ncfg; cfgno++) अणु
+		/* We grab just the first descriptor so we know how दीर्घ
 		 * the whole configuration is */
 		result = usb_get_descriptor(dev, USB_DT_CONFIG, cfgno,
 		    desc, USB_DT_CONFIG_SIZE);
-		if (result < 0) {
+		अगर (result < 0) अणु
 			dev_err(ddev, "unable to read config index %d "
 			    "descriptor/%s: %d\n", cfgno, "start", result);
-			if (result != -EPIPE)
-				goto err;
+			अगर (result != -EPIPE)
+				जाओ err;
 			dev_err(ddev, "chopping to %d config(s)\n", cfgno);
 			dev->descriptor.bNumConfigurations = cfgno;
-			break;
-		} else if (result < 4) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (result < 4) अणु
 			dev_err(ddev, "config index %d descriptor too short "
 			    "(expected %i, got %i)\n", cfgno,
 			    USB_DT_CONFIG_SIZE, result);
 			result = -EINVAL;
-			goto err;
-		}
-		length = max((int) le16_to_cpu(desc->wTotalLength),
+			जाओ err;
+		पूर्ण
+		length = max((पूर्णांक) le16_to_cpu(desc->wTotalLength),
 		    USB_DT_CONFIG_SIZE);
 
 		/* Now that we know the length, get the whole thing */
-		bigbuffer = kmalloc(length, GFP_KERNEL);
-		if (!bigbuffer) {
+		bigbuffer = kदो_स्मृति(length, GFP_KERNEL);
+		अगर (!bigbuffer) अणु
 			result = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		if (dev->quirks & USB_QUIRK_DELAY_INIT)
+		अगर (dev->quirks & USB_QUIRK_DELAY_INIT)
 			msleep(200);
 
 		result = usb_get_descriptor(dev, USB_DT_CONFIG, cfgno,
 		    bigbuffer, length);
-		if (result < 0) {
+		अगर (result < 0) अणु
 			dev_err(ddev, "unable to read config index %d "
 			    "descriptor/%s\n", cfgno, "all");
-			kfree(bigbuffer);
-			goto err;
-		}
-		if (result < length) {
+			kमुक्त(bigbuffer);
+			जाओ err;
+		पूर्ण
+		अगर (result < length) अणु
 			dev_warn(ddev, "config index %d descriptor too short "
 			    "(expected %i, got %i)\n", cfgno, length, result);
 			length = result;
-		}
+		पूर्ण
 
 		dev->rawdescriptors[cfgno] = bigbuffer;
 
 		result = usb_parse_configuration(dev, cfgno,
 		    &dev->config[cfgno], bigbuffer, length);
-		if (result < 0) {
+		अगर (result < 0) अणु
 			++cfgno;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 err:
-	kfree(desc);
+	kमुक्त(desc);
 	dev->descriptor.bNumConfigurations = cfgno;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-void usb_release_bos_descriptor(struct usb_device *dev)
-{
-	if (dev->bos) {
-		kfree(dev->bos->desc);
-		kfree(dev->bos);
-		dev->bos = NULL;
-	}
-}
+व्योम usb_release_bos_descriptor(काष्ठा usb_device *dev)
+अणु
+	अगर (dev->bos) अणु
+		kमुक्त(dev->bos->desc);
+		kमुक्त(dev->bos);
+		dev->bos = शून्य;
+	पूर्ण
+पूर्ण
 
-static const __u8 bos_desc_len[256] = {
+अटल स्थिर __u8 bos_desc_len[256] = अणु
 	[USB_CAP_TYPE_WIRELESS_USB] = USB_DT_USB_WIRELESS_CAP_SIZE,
 	[USB_CAP_TYPE_EXT]          = USB_DT_USB_EXT_CAP_SIZE,
 	[USB_SS_CAP_TYPE]           = USB_DT_USB_SS_CAP_SIZE,
 	[USB_SSP_CAP_TYPE]          = USB_DT_USB_SSP_CAP_SIZE(1),
 	[CONTAINER_ID_TYPE]         = USB_DT_USB_SS_CONTN_ID_SIZE,
 	[USB_PTM_CAP_TYPE]          = USB_DT_USB_PTM_ID_SIZE,
-};
+पूर्ण;
 
 /* Get BOS descriptor set */
-int usb_get_bos_descriptor(struct usb_device *dev)
-{
-	struct device *ddev = &dev->dev;
-	struct usb_bos_descriptor *bos;
-	struct usb_dev_cap_header *cap;
-	struct usb_ssp_cap_descriptor *ssp_cap;
-	unsigned char *buffer, *buffer0;
-	int length, total_len, num, i, ssac;
+पूर्णांक usb_get_bos_descriptor(काष्ठा usb_device *dev)
+अणु
+	काष्ठा device *ddev = &dev->dev;
+	काष्ठा usb_bos_descriptor *bos;
+	काष्ठा usb_dev_cap_header *cap;
+	काष्ठा usb_ssp_cap_descriptor *ssp_cap;
+	अचिन्हित अक्षर *buffer, *buffer0;
+	पूर्णांक length, total_len, num, i, ssac;
 	__u8 cap_type;
-	int ret;
+	पूर्णांक ret;
 
-	bos = kzalloc(sizeof(struct usb_bos_descriptor), GFP_KERNEL);
-	if (!bos)
-		return -ENOMEM;
+	bos = kzalloc(माप(काष्ठा usb_bos_descriptor), GFP_KERNEL);
+	अगर (!bos)
+		वापस -ENOMEM;
 
 	/* Get BOS descriptor */
 	ret = usb_get_descriptor(dev, USB_DT_BOS, 0, bos, USB_DT_BOS_SIZE);
-	if (ret < USB_DT_BOS_SIZE || bos->bLength < USB_DT_BOS_SIZE) {
+	अगर (ret < USB_DT_BOS_SIZE || bos->bLength < USB_DT_BOS_SIZE) अणु
 		dev_err(ddev, "unable to get BOS descriptor or descriptor too short\n");
-		if (ret >= 0)
+		अगर (ret >= 0)
 			ret = -ENOMSG;
-		kfree(bos);
-		return ret;
-	}
+		kमुक्त(bos);
+		वापस ret;
+	पूर्ण
 
 	length = bos->bLength;
 	total_len = le16_to_cpu(bos->wTotalLength);
 	num = bos->bNumDeviceCaps;
-	kfree(bos);
-	if (total_len < length)
-		return -EINVAL;
+	kमुक्त(bos);
+	अगर (total_len < length)
+		वापस -EINVAL;
 
-	dev->bos = kzalloc(sizeof(struct usb_host_bos), GFP_KERNEL);
-	if (!dev->bos)
-		return -ENOMEM;
+	dev->bos = kzalloc(माप(काष्ठा usb_host_bos), GFP_KERNEL);
+	अगर (!dev->bos)
+		वापस -ENOMEM;
 
 	/* Now let's get the whole BOS descriptor set */
 	buffer = kzalloc(total_len, GFP_KERNEL);
-	if (!buffer) {
+	अगर (!buffer) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
-	dev->bos->desc = (struct usb_bos_descriptor *)buffer;
+		जाओ err;
+	पूर्ण
+	dev->bos->desc = (काष्ठा usb_bos_descriptor *)buffer;
 
 	ret = usb_get_descriptor(dev, USB_DT_BOS, 0, buffer, total_len);
-	if (ret < total_len) {
+	अगर (ret < total_len) अणु
 		dev_err(ddev, "unable to get BOS descriptor set\n");
-		if (ret >= 0)
+		अगर (ret >= 0)
 			ret = -ENOMSG;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	buffer0 = buffer;
 	total_len -= length;
 	buffer += length;
 
-	for (i = 0; i < num; i++) {
-		cap = (struct usb_dev_cap_header *)buffer;
+	क्रम (i = 0; i < num; i++) अणु
+		cap = (काष्ठा usb_dev_cap_header *)buffer;
 
-		if (total_len < sizeof(*cap) || total_len < cap->bLength) {
+		अगर (total_len < माप(*cap) || total_len < cap->bLength) अणु
 			dev->bos->desc->bNumDeviceCaps = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		cap_type = cap->bDevCapabilityType;
 		length = cap->bLength;
-		if (bos_desc_len[cap_type] && length < bos_desc_len[cap_type]) {
+		अगर (bos_desc_len[cap_type] && length < bos_desc_len[cap_type]) अणु
 			dev->bos->desc->bNumDeviceCaps = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (cap->bDescriptorType != USB_DT_DEVICE_CAPABILITY) {
+		अगर (cap->bDescriptorType != USB_DT_DEVICE_CAPABILITY) अणु
 			dev_warn(ddev, "descriptor type invalid, skip\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		switch (cap_type) {
-		case USB_CAP_TYPE_WIRELESS_USB:
+		चयन (cap_type) अणु
+		हाल USB_CAP_TYPE_WIRELESS_USB:
 			/* Wireless USB cap descriptor is handled by wusb */
-			break;
-		case USB_CAP_TYPE_EXT:
+			अवरोध;
+		हाल USB_CAP_TYPE_EXT:
 			dev->bos->ext_cap =
-				(struct usb_ext_cap_descriptor *)buffer;
-			break;
-		case USB_SS_CAP_TYPE:
+				(काष्ठा usb_ext_cap_descriptor *)buffer;
+			अवरोध;
+		हाल USB_SS_CAP_TYPE:
 			dev->bos->ss_cap =
-				(struct usb_ss_cap_descriptor *)buffer;
-			break;
-		case USB_SSP_CAP_TYPE:
-			ssp_cap = (struct usb_ssp_cap_descriptor *)buffer;
+				(काष्ठा usb_ss_cap_descriptor *)buffer;
+			अवरोध;
+		हाल USB_SSP_CAP_TYPE:
+			ssp_cap = (काष्ठा usb_ssp_cap_descriptor *)buffer;
 			ssac = (le32_to_cpu(ssp_cap->bmAttributes) &
 				USB_SSP_SUBLINK_SPEED_ATTRIBS);
-			if (length >= USB_DT_USB_SSP_CAP_SIZE(ssac))
+			अगर (length >= USB_DT_USB_SSP_CAP_SIZE(ssac))
 				dev->bos->ssp_cap = ssp_cap;
-			break;
-		case CONTAINER_ID_TYPE:
+			अवरोध;
+		हाल CONTAINER_ID_TYPE:
 			dev->bos->ss_id =
-				(struct usb_ss_container_id_descriptor *)buffer;
-			break;
-		case USB_PTM_CAP_TYPE:
-			dev->bos->ptm_cap =
-				(struct usb_ptm_cap_descriptor *)buffer;
-			break;
-		default:
-			break;
-		}
+				(काष्ठा usb_ss_container_id_descriptor *)buffer;
+			अवरोध;
+		हाल USB_PTM_CAP_TYPE:
+			dev->bos->pपंचांग_cap =
+				(काष्ठा usb_pपंचांग_cap_descriptor *)buffer;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		total_len -= length;
 		buffer += length;
-	}
+	पूर्ण
 	dev->bos->desc->wTotalLength = cpu_to_le16(buffer - buffer0);
 
-	return 0;
+	वापस 0;
 
 err:
 	usb_release_bos_descriptor(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright 2017 IBM Corp.
-#include <linux/fs.h>
-#include <linux/poll.h>
-#include <linux/sched/signal.h>
-#include <linux/eventfd.h>
-#include <linux/uaccess.h>
-#include <uapi/misc/ocxl.h>
-#include <asm/reg.h>
-#include <asm/switch_to.h>
-#include "ocxl_internal.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/eventfd.h>
+#समावेश <linux/uaccess.h>
+#समावेश <uapi/misc/ocxl.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश "ocxl_internal.h"
 
 
-#define OCXL_NUM_MINORS 256 /* Total to reserve */
+#घोषणा OCXL_NUM_MINORS 256 /* Total to reserve */
 
-static dev_t ocxl_dev;
-static struct class *ocxl_class;
-static DEFINE_MUTEX(minors_idr_lock);
-static struct idr minors_idr;
+अटल dev_t ocxl_dev;
+अटल काष्ठा class *ocxl_class;
+अटल DEFINE_MUTEX(minors_idr_lock);
+अटल काष्ठा idr minors_idr;
 
-static struct ocxl_file_info *find_and_get_file_info(dev_t devno)
-{
-	struct ocxl_file_info *info;
+अटल काष्ठा ocxl_file_info *find_and_get_file_info(dev_t devno)
+अणु
+	काष्ठा ocxl_file_info *info;
 
 	mutex_lock(&minors_idr_lock);
 	info = idr_find(&minors_idr, MINOR(devno));
-	if (info)
+	अगर (info)
 		get_device(&info->dev);
 	mutex_unlock(&minors_idr_lock);
-	return info;
-}
+	वापस info;
+पूर्ण
 
-static int allocate_minor(struct ocxl_file_info *info)
-{
-	int minor;
+अटल पूर्णांक allocate_minor(काष्ठा ocxl_file_info *info)
+अणु
+	पूर्णांक minor;
 
 	mutex_lock(&minors_idr_lock);
 	minor = idr_alloc(&minors_idr, info, 0, OCXL_NUM_MINORS, GFP_KERNEL);
 	mutex_unlock(&minors_idr_lock);
-	return minor;
-}
+	वापस minor;
+पूर्ण
 
-static void free_minor(struct ocxl_file_info *info)
-{
+अटल व्योम मुक्त_minor(काष्ठा ocxl_file_info *info)
+अणु
 	mutex_lock(&minors_idr_lock);
-	idr_remove(&minors_idr, MINOR(info->dev.devt));
+	idr_हटाओ(&minors_idr, MINOR(info->dev.devt));
 	mutex_unlock(&minors_idr_lock);
-}
+पूर्ण
 
-static int afu_open(struct inode *inode, struct file *file)
-{
-	struct ocxl_file_info *info;
-	struct ocxl_context *ctx;
-	int rc;
+अटल पूर्णांक afu_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा ocxl_file_info *info;
+	काष्ठा ocxl_context *ctx;
+	पूर्णांक rc;
 
 	pr_debug("%s for device %x\n", __func__, inode->i_rdev);
 
 	info = find_and_get_file_info(inode->i_rdev);
-	if (!info)
-		return -ENODEV;
+	अगर (!info)
+		वापस -ENODEV;
 
 	rc = ocxl_context_alloc(&ctx, info->afu, inode->i_mapping);
-	if (rc) {
+	अगर (rc) अणु
 		put_device(&info->dev);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	put_device(&info->dev);
-	file->private_data = ctx;
-	return 0;
-}
+	file->निजी_data = ctx;
+	वापस 0;
+पूर्ण
 
-static long afu_ioctl_attach(struct ocxl_context *ctx,
-			struct ocxl_ioctl_attach __user *uarg)
-{
-	struct ocxl_ioctl_attach arg;
+अटल दीर्घ afu_ioctl_attach(काष्ठा ocxl_context *ctx,
+			काष्ठा ocxl_ioctl_attach __user *uarg)
+अणु
+	काष्ठा ocxl_ioctl_attach arg;
 	u64 amr = 0;
-	int rc;
+	पूर्णांक rc;
 
 	pr_debug("%s for context %d\n", __func__, ctx->pasid);
 
-	if (copy_from_user(&arg, uarg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_from_user(&arg, uarg, माप(arg)))
+		वापस -EFAULT;
 
-	/* Make sure reserved fields are not set for forward compatibility */
-	if (arg.reserved1 || arg.reserved2 || arg.reserved3)
-		return -EINVAL;
+	/* Make sure reserved fields are not set क्रम क्रमward compatibility */
+	अगर (arg.reserved1 || arg.reserved2 || arg.reserved3)
+		वापस -EINVAL;
 
 	amr = arg.amr & mfspr(SPRN_UAMOR);
 	rc = ocxl_context_attach(ctx, amr, current->mm);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static long afu_ioctl_get_metadata(struct ocxl_context *ctx,
-		struct ocxl_ioctl_metadata __user *uarg)
-{
-	struct ocxl_ioctl_metadata arg;
+अटल दीर्घ afu_ioctl_get_metadata(काष्ठा ocxl_context *ctx,
+		काष्ठा ocxl_ioctl_metadata __user *uarg)
+अणु
+	काष्ठा ocxl_ioctl_metadata arg;
 
-	memset(&arg, 0, sizeof(arg));
+	स_रखो(&arg, 0, माप(arg));
 
 	arg.version = 0;
 
@@ -105,76 +106,76 @@ static long afu_ioctl_get_metadata(struct ocxl_context *ctx,
 	arg.pp_mmio_size = ctx->afu->config.pp_mmio_stride;
 	arg.global_mmio_size = ctx->afu->config.global_mmio_size;
 
-	if (copy_to_user(uarg, &arg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_to_user(uarg, &arg, माप(arg)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PPC64
-static long afu_ioctl_enable_p9_wait(struct ocxl_context *ctx,
-		struct ocxl_ioctl_p9_wait __user *uarg)
-{
-	struct ocxl_ioctl_p9_wait arg;
+#अगर_घोषित CONFIG_PPC64
+अटल दीर्घ afu_ioctl_enable_p9_रुको(काष्ठा ocxl_context *ctx,
+		काष्ठा ocxl_ioctl_p9_रुको __user *uarg)
+अणु
+	काष्ठा ocxl_ioctl_p9_रुको arg;
 
-	memset(&arg, 0, sizeof(arg));
+	स_रखो(&arg, 0, माप(arg));
 
-	if (cpu_has_feature(CPU_FTR_P9_TIDR)) {
-		enum ocxl_context_status status;
+	अगर (cpu_has_feature(CPU_FTR_P9_TIDR)) अणु
+		क्रमागत ocxl_context_status status;
 
 		// Locks both status & tidr
 		mutex_lock(&ctx->status_mutex);
-		if (!ctx->tidr) {
-			if (set_thread_tidr(current)) {
+		अगर (!ctx->tidr) अणु
+			अगर (set_thपढ़ो_tidr(current)) अणु
 				mutex_unlock(&ctx->status_mutex);
-				return -ENOENT;
-			}
+				वापस -ENOENT;
+			पूर्ण
 
-			ctx->tidr = current->thread.tidr;
-		}
+			ctx->tidr = current->thपढ़ो.tidr;
+		पूर्ण
 
 		status = ctx->status;
 		mutex_unlock(&ctx->status_mutex);
 
-		if (status == ATTACHED) {
-			int rc = ocxl_link_update_pe(ctx->afu->fn->link,
+		अगर (status == ATTACHED) अणु
+			पूर्णांक rc = ocxl_link_update_pe(ctx->afu->fn->link,
 				ctx->pasid, ctx->tidr);
 
-			if (rc)
-				return rc;
-		}
+			अगर (rc)
+				वापस rc;
+		पूर्ण
 
-		arg.thread_id = ctx->tidr;
-	} else
-		return -ENOENT;
+		arg.thपढ़ो_id = ctx->tidr;
+	पूर्ण अन्यथा
+		वापस -ENOENT;
 
-	if (copy_to_user(uarg, &arg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_to_user(uarg, &arg, माप(arg)))
+		वापस -EFAULT;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 
-static long afu_ioctl_get_features(struct ocxl_context *ctx,
-		struct ocxl_ioctl_features __user *uarg)
-{
-	struct ocxl_ioctl_features arg;
+अटल दीर्घ afu_ioctl_get_features(काष्ठा ocxl_context *ctx,
+		काष्ठा ocxl_ioctl_features __user *uarg)
+अणु
+	काष्ठा ocxl_ioctl_features arg;
 
-	memset(&arg, 0, sizeof(arg));
+	स_रखो(&arg, 0, माप(arg));
 
-#ifdef CONFIG_PPC64
-	if (cpu_has_feature(CPU_FTR_P9_TIDR))
+#अगर_घोषित CONFIG_PPC64
+	अगर (cpu_has_feature(CPU_FTR_P9_TIDR))
 		arg.flags[0] |= OCXL_IOCTL_FEATURES_FLAGS0_P9_WAIT;
-#endif
+#पूर्ण_अगर
 
-	if (copy_to_user(uarg, &arg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_to_user(uarg, &arg, माप(arg)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define CMD_STR(x) (x == OCXL_IOCTL_ATTACH ? "ATTACH" :			\
+#घोषणा CMD_STR(x) (x == OCXL_IOCTL_ATTACH ? "ATTACH" :			\
 			x == OCXL_IOCTL_IRQ_ALLOC ? "IRQ_ALLOC" :	\
 			x == OCXL_IOCTL_IRQ_FREE ? "IRQ_FREE" :		\
 			x == OCXL_IOCTL_IRQ_SET_FD ? "IRQ_SET_FD" :	\
@@ -183,187 +184,187 @@ static long afu_ioctl_get_features(struct ocxl_context *ctx,
 			x == OCXL_IOCTL_GET_FEATURES ? "GET_FEATURES" :	\
 			"UNKNOWN")
 
-static irqreturn_t irq_handler(void *private)
-{
-	struct eventfd_ctx *ev_ctx = private;
+अटल irqवापस_t irq_handler(व्योम *निजी)
+अणु
+	काष्ठा eventfd_ctx *ev_ctx = निजी;
 
-	eventfd_signal(ev_ctx, 1);
-	return IRQ_HANDLED;
-}
+	eventfd_संकेत(ev_ctx, 1);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void irq_free(void *private)
-{
-	struct eventfd_ctx *ev_ctx = private;
+अटल व्योम irq_मुक्त(व्योम *निजी)
+अणु
+	काष्ठा eventfd_ctx *ev_ctx = निजी;
 
 	eventfd_ctx_put(ev_ctx);
-}
+पूर्ण
 
-static long afu_ioctl(struct file *file, unsigned int cmd,
-		unsigned long args)
-{
-	struct ocxl_context *ctx = file->private_data;
-	struct ocxl_ioctl_irq_fd irq_fd;
-	struct eventfd_ctx *ev_ctx;
-	int irq_id;
+अटल दीर्घ afu_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+		अचिन्हित दीर्घ args)
+अणु
+	काष्ठा ocxl_context *ctx = file->निजी_data;
+	काष्ठा ocxl_ioctl_irq_fd irq_fd;
+	काष्ठा eventfd_ctx *ev_ctx;
+	पूर्णांक irq_id;
 	u64 irq_offset;
-	long rc;
-	bool closed;
+	दीर्घ rc;
+	bool बंदd;
 
 	pr_debug("%s for context %d, command %s\n", __func__, ctx->pasid,
 		CMD_STR(cmd));
 
 	mutex_lock(&ctx->status_mutex);
-	closed = (ctx->status == CLOSED);
+	बंदd = (ctx->status == CLOSED);
 	mutex_unlock(&ctx->status_mutex);
 
-	if (closed)
-		return -EIO;
+	अगर (बंदd)
+		वापस -EIO;
 
-	switch (cmd) {
-	case OCXL_IOCTL_ATTACH:
+	चयन (cmd) अणु
+	हाल OCXL_IOCTL_ATTACH:
 		rc = afu_ioctl_attach(ctx,
-				(struct ocxl_ioctl_attach __user *) args);
-		break;
+				(काष्ठा ocxl_ioctl_attach __user *) args);
+		अवरोध;
 
-	case OCXL_IOCTL_IRQ_ALLOC:
+	हाल OCXL_IOCTL_IRQ_ALLOC:
 		rc = ocxl_afu_irq_alloc(ctx, &irq_id);
-		if (!rc) {
+		अगर (!rc) अणु
 			irq_offset = ocxl_irq_id_to_offset(ctx, irq_id);
 			rc = copy_to_user((u64 __user *) args, &irq_offset,
-					sizeof(irq_offset));
-			if (rc) {
-				ocxl_afu_irq_free(ctx, irq_id);
-				return -EFAULT;
-			}
-		}
-		break;
+					माप(irq_offset));
+			अगर (rc) अणु
+				ocxl_afu_irq_मुक्त(ctx, irq_id);
+				वापस -EFAULT;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case OCXL_IOCTL_IRQ_FREE:
+	हाल OCXL_IOCTL_IRQ_FREE:
 		rc = copy_from_user(&irq_offset, (u64 __user *) args,
-				sizeof(irq_offset));
-		if (rc)
-			return -EFAULT;
+				माप(irq_offset));
+		अगर (rc)
+			वापस -EFAULT;
 		irq_id = ocxl_irq_offset_to_id(ctx, irq_offset);
-		rc = ocxl_afu_irq_free(ctx, irq_id);
-		break;
+		rc = ocxl_afu_irq_मुक्त(ctx, irq_id);
+		अवरोध;
 
-	case OCXL_IOCTL_IRQ_SET_FD:
+	हाल OCXL_IOCTL_IRQ_SET_FD:
 		rc = copy_from_user(&irq_fd, (u64 __user *) args,
-				sizeof(irq_fd));
-		if (rc)
-			return -EFAULT;
-		if (irq_fd.reserved)
-			return -EINVAL;
+				माप(irq_fd));
+		अगर (rc)
+			वापस -EFAULT;
+		अगर (irq_fd.reserved)
+			वापस -EINVAL;
 		irq_id = ocxl_irq_offset_to_id(ctx, irq_fd.irq_offset);
 		ev_ctx = eventfd_ctx_fdget(irq_fd.eventfd);
-		if (IS_ERR(ev_ctx))
-			return PTR_ERR(ev_ctx);
-		rc = ocxl_irq_set_handler(ctx, irq_id, irq_handler, irq_free, ev_ctx);
-		break;
+		अगर (IS_ERR(ev_ctx))
+			वापस PTR_ERR(ev_ctx);
+		rc = ocxl_irq_set_handler(ctx, irq_id, irq_handler, irq_मुक्त, ev_ctx);
+		अवरोध;
 
-	case OCXL_IOCTL_GET_METADATA:
+	हाल OCXL_IOCTL_GET_METADATA:
 		rc = afu_ioctl_get_metadata(ctx,
-				(struct ocxl_ioctl_metadata __user *) args);
-		break;
+				(काष्ठा ocxl_ioctl_metadata __user *) args);
+		अवरोध;
 
-#ifdef CONFIG_PPC64
-	case OCXL_IOCTL_ENABLE_P9_WAIT:
-		rc = afu_ioctl_enable_p9_wait(ctx,
-				(struct ocxl_ioctl_p9_wait __user *) args);
-		break;
-#endif
+#अगर_घोषित CONFIG_PPC64
+	हाल OCXL_IOCTL_ENABLE_P9_WAIT:
+		rc = afu_ioctl_enable_p9_रुको(ctx,
+				(काष्ठा ocxl_ioctl_p9_रुको __user *) args);
+		अवरोध;
+#पूर्ण_अगर
 
-	case OCXL_IOCTL_GET_FEATURES:
+	हाल OCXL_IOCTL_GET_FEATURES:
 		rc = afu_ioctl_get_features(ctx,
-				(struct ocxl_ioctl_features __user *) args);
-		break;
+				(काष्ठा ocxl_ioctl_features __user *) args);
+		अवरोध;
 
-	default:
+	शेष:
 		rc = -EINVAL;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static long afu_compat_ioctl(struct file *file, unsigned int cmd,
-			unsigned long args)
-{
-	return afu_ioctl(file, cmd, args);
-}
+अटल दीर्घ afu_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			अचिन्हित दीर्घ args)
+अणु
+	वापस afu_ioctl(file, cmd, args);
+पूर्ण
 
-static int afu_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	struct ocxl_context *ctx = file->private_data;
+अटल पूर्णांक afu_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा ocxl_context *ctx = file->निजी_data;
 
 	pr_debug("%s for context %d\n", __func__, ctx->pasid);
-	return ocxl_context_mmap(ctx, vma);
-}
+	वापस ocxl_context_mmap(ctx, vma);
+पूर्ण
 
-static bool has_xsl_error(struct ocxl_context *ctx)
-{
+अटल bool has_xsl_error(काष्ठा ocxl_context *ctx)
+अणु
 	bool ret;
 
 	mutex_lock(&ctx->xsl_error_lock);
 	ret = !!ctx->xsl_error.addr;
 	mutex_unlock(&ctx->xsl_error_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Are there any events pending on the AFU
  * ctx: The AFU context
- * Returns: true if there are events pending
+ * Returns: true अगर there are events pending
  */
-static bool afu_events_pending(struct ocxl_context *ctx)
-{
-	if (has_xsl_error(ctx))
-		return true;
-	return false;
-}
+अटल bool afu_events_pending(काष्ठा ocxl_context *ctx)
+अणु
+	अगर (has_xsl_error(ctx))
+		वापस true;
+	वापस false;
+पूर्ण
 
-static unsigned int afu_poll(struct file *file, struct poll_table_struct *wait)
-{
-	struct ocxl_context *ctx = file->private_data;
-	unsigned int mask = 0;
-	bool closed;
+अटल अचिन्हित पूर्णांक afu_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *रुको)
+अणु
+	काष्ठा ocxl_context *ctx = file->निजी_data;
+	अचिन्हित पूर्णांक mask = 0;
+	bool बंदd;
 
 	pr_debug("%s for context %d\n", __func__, ctx->pasid);
 
-	poll_wait(file, &ctx->events_wq, wait);
+	poll_रुको(file, &ctx->events_wq, रुको);
 
 	mutex_lock(&ctx->status_mutex);
-	closed = (ctx->status == CLOSED);
+	बंदd = (ctx->status == CLOSED);
 	mutex_unlock(&ctx->status_mutex);
 
-	if (afu_events_pending(ctx))
+	अगर (afu_events_pending(ctx))
 		mask = EPOLLIN | EPOLLRDNORM;
-	else if (closed)
+	अन्यथा अगर (बंदd)
 		mask = EPOLLERR;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 /*
  * Populate the supplied buffer with a single XSL error
  * ctx:	The AFU context to report the error from
  * header: the event header to populate
- * buf: The buffer to write the body into (should be at least
+ * buf: The buffer to ग_लिखो the body पूर्णांकo (should be at least
  *      AFU_EVENT_BODY_XSL_ERROR_SIZE)
  * Return: the amount of buffer that was populated
  */
-static ssize_t append_xsl_error(struct ocxl_context *ctx,
-				struct ocxl_kernel_event_header *header,
-				char __user *buf)
-{
-	struct ocxl_kernel_event_xsl_fault_error body;
+अटल sमाप_प्रकार append_xsl_error(काष्ठा ocxl_context *ctx,
+				काष्ठा ocxl_kernel_event_header *header,
+				अक्षर __user *buf)
+अणु
+	काष्ठा ocxl_kernel_event_xsl_fault_error body;
 
-	memset(&body, 0, sizeof(body));
+	स_रखो(&body, 0, माप(body));
 
 	mutex_lock(&ctx->xsl_error_lock);
-	if (!ctx->xsl_error.addr) {
+	अगर (!ctx->xsl_error.addr) अणु
 		mutex_unlock(&ctx->xsl_error_lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	body.addr = ctx->xsl_error.addr;
 	body.dsisr = ctx->xsl_error.dsisr;
@@ -377,155 +378,155 @@ static ssize_t append_xsl_error(struct ocxl_context *ctx,
 
 	header->type = OCXL_AFU_EVENT_XSL_FAULT_ERROR;
 
-	if (copy_to_user(buf, &body, sizeof(body)))
-		return -EFAULT;
+	अगर (copy_to_user(buf, &body, माप(body)))
+		वापस -EFAULT;
 
-	return sizeof(body);
-}
+	वापस माप(body);
+पूर्ण
 
-#define AFU_EVENT_BODY_MAX_SIZE sizeof(struct ocxl_kernel_event_xsl_fault_error)
+#घोषणा AFU_EVENT_BODY_MAX_SIZE माप(काष्ठा ocxl_kernel_event_xsl_fault_error)
 
 /*
  * Reports events on the AFU
  * Format:
- *	Header (struct ocxl_kernel_event_header)
- *	Body (struct ocxl_kernel_event_*)
+ *	Header (काष्ठा ocxl_kernel_event_header)
+ *	Body (काष्ठा ocxl_kernel_event_*)
  *	Header...
  */
-static ssize_t afu_read(struct file *file, char __user *buf, size_t count,
+अटल sमाप_प्रकार afu_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
 			loff_t *off)
-{
-	struct ocxl_context *ctx = file->private_data;
-	struct ocxl_kernel_event_header header;
-	ssize_t rc;
-	ssize_t used = 0;
-	DEFINE_WAIT(event_wait);
+अणु
+	काष्ठा ocxl_context *ctx = file->निजी_data;
+	काष्ठा ocxl_kernel_event_header header;
+	sमाप_प्रकार rc;
+	sमाप_प्रकार used = 0;
+	DEFINE_WAIT(event_रुको);
 
-	memset(&header, 0, sizeof(header));
+	स_रखो(&header, 0, माप(header));
 
 	/* Require offset to be 0 */
-	if (*off != 0)
-		return -EINVAL;
+	अगर (*off != 0)
+		वापस -EINVAL;
 
-	if (count < (sizeof(struct ocxl_kernel_event_header) +
+	अगर (count < (माप(काष्ठा ocxl_kernel_event_header) +
 			AFU_EVENT_BODY_MAX_SIZE))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	for (;;) {
-		prepare_to_wait(&ctx->events_wq, &event_wait,
+	क्रम (;;) अणु
+		prepare_to_रुको(&ctx->events_wq, &event_रुको,
 				TASK_INTERRUPTIBLE);
 
-		if (afu_events_pending(ctx))
-			break;
+		अगर (afu_events_pending(ctx))
+			अवरोध;
 
-		if (ctx->status == CLOSED)
-			break;
+		अगर (ctx->status == CLOSED)
+			अवरोध;
 
-		if (file->f_flags & O_NONBLOCK) {
-			finish_wait(&ctx->events_wq, &event_wait);
-			return -EAGAIN;
-		}
+		अगर (file->f_flags & O_NONBLOCK) अणु
+			finish_रुको(&ctx->events_wq, &event_रुको);
+			वापस -EAGAIN;
+		पूर्ण
 
-		if (signal_pending(current)) {
-			finish_wait(&ctx->events_wq, &event_wait);
-			return -ERESTARTSYS;
-		}
+		अगर (संकेत_pending(current)) अणु
+			finish_रुको(&ctx->events_wq, &event_रुको);
+			वापस -ERESTARTSYS;
+		पूर्ण
 
 		schedule();
-	}
+	पूर्ण
 
-	finish_wait(&ctx->events_wq, &event_wait);
+	finish_रुको(&ctx->events_wq, &event_रुको);
 
-	if (has_xsl_error(ctx)) {
-		used = append_xsl_error(ctx, &header, buf + sizeof(header));
-		if (used < 0)
-			return used;
-	}
+	अगर (has_xsl_error(ctx)) अणु
+		used = append_xsl_error(ctx, &header, buf + माप(header));
+		अगर (used < 0)
+			वापस used;
+	पूर्ण
 
-	if (!afu_events_pending(ctx))
+	अगर (!afu_events_pending(ctx))
 		header.flags |= OCXL_KERNEL_EVENT_FLAG_LAST;
 
-	if (copy_to_user(buf, &header, sizeof(header)))
-		return -EFAULT;
+	अगर (copy_to_user(buf, &header, माप(header)))
+		वापस -EFAULT;
 
-	used += sizeof(header);
+	used += माप(header);
 
 	rc = used;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int afu_release(struct inode *inode, struct file *file)
-{
-	struct ocxl_context *ctx = file->private_data;
-	int rc;
+अटल पूर्णांक afu_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा ocxl_context *ctx = file->निजी_data;
+	पूर्णांक rc;
 
 	pr_debug("%s for device %x\n", __func__, inode->i_rdev);
 	rc = ocxl_context_detach(ctx);
 	mutex_lock(&ctx->mapping_lock);
-	ctx->mapping = NULL;
+	ctx->mapping = शून्य;
 	mutex_unlock(&ctx->mapping_lock);
 	wake_up_all(&ctx->events_wq);
-	if (rc != -EBUSY)
-		ocxl_context_free(ctx);
-	return 0;
-}
+	अगर (rc != -EBUSY)
+		ocxl_context_मुक्त(ctx);
+	वापस 0;
+पूर्ण
 
-static const struct file_operations ocxl_afu_fops = {
+अटल स्थिर काष्ठा file_operations ocxl_afu_fops = अणु
 	.owner		= THIS_MODULE,
-	.open           = afu_open,
+	.खोलो           = afu_खोलो,
 	.unlocked_ioctl = afu_ioctl,
 	.compat_ioctl   = afu_compat_ioctl,
 	.mmap           = afu_mmap,
 	.poll           = afu_poll,
-	.read           = afu_read,
+	.पढ़ो           = afu_पढ़ो,
 	.release        = afu_release,
-};
+पूर्ण;
 
-// Free the info struct
-static void info_release(struct device *dev)
-{
-	struct ocxl_file_info *info = container_of(dev, struct ocxl_file_info, dev);
+// Free the info काष्ठा
+अटल व्योम info_release(काष्ठा device *dev)
+अणु
+	काष्ठा ocxl_file_info *info = container_of(dev, काष्ठा ocxl_file_info, dev);
 
 	ocxl_afu_put(info->afu);
-	kfree(info);
-}
+	kमुक्त(info);
+पूर्ण
 
-static int ocxl_file_make_visible(struct ocxl_file_info *info)
-{
-	int rc;
+अटल पूर्णांक ocxl_file_make_visible(काष्ठा ocxl_file_info *info)
+अणु
+	पूर्णांक rc;
 
 	cdev_init(&info->cdev, &ocxl_afu_fops);
 	rc = cdev_add(&info->cdev, info->dev.devt, 1);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&info->dev, "Unable to add afu char device: %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ocxl_file_make_invisible(struct ocxl_file_info *info)
-{
+अटल व्योम ocxl_file_make_invisible(काष्ठा ocxl_file_info *info)
+अणु
 	cdev_del(&info->cdev);
-}
+पूर्ण
 
-int ocxl_file_register_afu(struct ocxl_afu *afu)
-{
-	int minor;
-	int rc;
-	struct ocxl_file_info *info;
-	struct ocxl_fn *fn = afu->fn;
-	struct pci_dev *pci_dev = to_pci_dev(fn->dev.parent);
+पूर्णांक ocxl_file_रेजिस्टर_afu(काष्ठा ocxl_afu *afu)
+अणु
+	पूर्णांक minor;
+	पूर्णांक rc;
+	काष्ठा ocxl_file_info *info;
+	काष्ठा ocxl_fn *fn = afu->fn;
+	काष्ठा pci_dev *pci_dev = to_pci_dev(fn->dev.parent);
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (info == NULL)
-		return -ENOMEM;
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (info == शून्य)
+		वापस -ENOMEM;
 
 	minor = allocate_minor(info);
-	if (minor < 0) {
-		kfree(info);
-		return minor;
-	}
+	अगर (minor < 0) अणु
+		kमुक्त(info);
+		वापस minor;
+	पूर्ण
 
 	info->dev.parent = &fn->dev;
 	info->dev.devt = MKDEV(MAJOR(ocxl_dev), minor);
@@ -537,79 +538,79 @@ int ocxl_file_register_afu(struct ocxl_afu *afu)
 
 	rc = dev_set_name(&info->dev, "%s.%s.%hhu",
 		afu->config.name, dev_name(&pci_dev->dev), afu->config.idx);
-	if (rc)
-		goto err_put;
+	अगर (rc)
+		जाओ err_put;
 
-	rc = device_register(&info->dev);
-	if (rc)
-		goto err_put;
+	rc = device_रेजिस्टर(&info->dev);
+	अगर (rc)
+		जाओ err_put;
 
-	rc = ocxl_sysfs_register_afu(info);
-	if (rc)
-		goto err_unregister;
+	rc = ocxl_sysfs_रेजिस्टर_afu(info);
+	अगर (rc)
+		जाओ err_unरेजिस्टर;
 
 	rc = ocxl_file_make_visible(info);
-	if (rc)
-		goto err_unregister;
+	अगर (rc)
+		जाओ err_unरेजिस्टर;
 
-	ocxl_afu_set_private(afu, info);
+	ocxl_afu_set_निजी(afu, info);
 
-	return 0;
+	वापस 0;
 
-err_unregister:
-	ocxl_sysfs_unregister_afu(info); // safe to call even if register failed
-	device_unregister(&info->dev);
+err_unरेजिस्टर:
+	ocxl_sysfs_unरेजिस्टर_afu(info); // safe to call even अगर रेजिस्टर failed
+	device_unरेजिस्टर(&info->dev);
 err_put:
 	ocxl_afu_put(afu);
-	free_minor(info);
-	kfree(info);
-	return rc;
-}
+	मुक्त_minor(info);
+	kमुक्त(info);
+	वापस rc;
+पूर्ण
 
-void ocxl_file_unregister_afu(struct ocxl_afu *afu)
-{
-	struct ocxl_file_info *info = ocxl_afu_get_private(afu);
+व्योम ocxl_file_unरेजिस्टर_afu(काष्ठा ocxl_afu *afu)
+अणु
+	काष्ठा ocxl_file_info *info = ocxl_afu_get_निजी(afu);
 
-	if (!info)
-		return;
+	अगर (!info)
+		वापस;
 
 	ocxl_file_make_invisible(info);
-	ocxl_sysfs_unregister_afu(info);
-	free_minor(info);
-	device_unregister(&info->dev);
-}
+	ocxl_sysfs_unरेजिस्टर_afu(info);
+	मुक्त_minor(info);
+	device_unरेजिस्टर(&info->dev);
+पूर्ण
 
-static char *ocxl_devnode(struct device *dev, umode_t *mode)
-{
-	return kasprintf(GFP_KERNEL, "ocxl/%s", dev_name(dev));
-}
+अटल अक्षर *ocxl_devnode(काष्ठा device *dev, umode_t *mode)
+अणु
+	वापस kaप्र_लिखो(GFP_KERNEL, "ocxl/%s", dev_name(dev));
+पूर्ण
 
-int ocxl_file_init(void)
-{
-	int rc;
+पूर्णांक ocxl_file_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	idr_init(&minors_idr);
 
 	rc = alloc_chrdev_region(&ocxl_dev, 0, OCXL_NUM_MINORS, "ocxl");
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("Unable to allocate ocxl major number: %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	ocxl_class = class_create(THIS_MODULE, "ocxl");
-	if (IS_ERR(ocxl_class)) {
+	अगर (IS_ERR(ocxl_class)) अणु
 		pr_err("Unable to create ocxl class\n");
-		unregister_chrdev_region(ocxl_dev, OCXL_NUM_MINORS);
-		return PTR_ERR(ocxl_class);
-	}
+		unरेजिस्टर_chrdev_region(ocxl_dev, OCXL_NUM_MINORS);
+		वापस PTR_ERR(ocxl_class);
+	पूर्ण
 
 	ocxl_class->devnode = ocxl_devnode;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ocxl_file_exit(void)
-{
+व्योम ocxl_file_निकास(व्योम)
+अणु
 	class_destroy(ocxl_class);
-	unregister_chrdev_region(ocxl_dev, OCXL_NUM_MINORS);
+	unरेजिस्टर_chrdev_region(ocxl_dev, OCXL_NUM_MINORS);
 	idr_destroy(&minors_idr);
-}
+पूर्ण

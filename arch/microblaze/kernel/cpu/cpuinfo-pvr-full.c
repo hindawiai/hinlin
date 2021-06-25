@@ -1,56 +1,57 @@
+<शैली गुरु>
 /*
- * Support for MicroBlaze PVR (processor version register)
+ * Support क्रम MicroBlaze PVR (processor version रेजिस्टर)
  *
  * Copyright (C) 2007-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2007-2009 PetaLogix
  * Copyright (C) 2007 John Williams <john.williams@petalogix.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License. See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/init.h>
-#include <linux/string.h>
-#include <asm/pvr.h>
-#include <asm/cpuinfo.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/pvr.h>
+#समावेश <यंत्र/cpuinfo.h>
 
 /*
- * Helper macro to map between fields in our struct cpuinfo, and
+ * Helper macro to map between fields in our काष्ठा cpuinfo, and
  * the PVR macros in pvr.h.
  */
 
-#define CI(c, p) { ci->c = PVR_##p(pvr); }
+#घोषणा CI(c, p) अणु ci->c = PVR_##p(pvr); पूर्ण
 
-#define err_printk(x) \
+#घोषणा err_prपूर्णांकk(x) \
 	pr_err("ERROR: Microblaze " x "-different for PVR and DTS\n");
 
-void set_cpuinfo_pvr_full(struct cpuinfo *ci, struct device_node *cpu)
-{
-	struct pvr_s pvr;
-	u32 temp; /* for saving temp value */
+व्योम set_cpuinfo_pvr_full(काष्ठा cpuinfo *ci, काष्ठा device_node *cpu)
+अणु
+	काष्ठा pvr_s pvr;
+	u32 temp; /* क्रम saving temp value */
 	get_pvr(&pvr);
 
 	CI(ver_code, VERSION);
-	if (!ci->ver_code) {
+	अगर (!ci->ver_code) अणु
 		pr_err("ERROR: MB has broken PVR regs -> use DTS setting\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	temp = PVR_USE_BARREL(pvr) | PVR_USE_MSR_INSTR(pvr) |
 		PVR_USE_PCMP_INSTR(pvr) | PVR_USE_DIV(pvr);
-	if (ci->use_instr != temp)
-		err_printk("BARREL, MSR, PCMP or DIV");
+	अगर (ci->use_instr != temp)
+		err_prपूर्णांकk("BARREL, MSR, PCMP or DIV");
 	ci->use_instr = temp;
 
 	temp = PVR_USE_HW_MUL(pvr) | PVR_USE_MUL64(pvr);
-	if (ci->use_mult != temp)
-		err_printk("HW_MUL");
+	अगर (ci->use_mult != temp)
+		err_prपूर्णांकk("HW_MUL");
 	ci->use_mult = temp;
 
 	temp = PVR_USE_FPU(pvr) | PVR_USE_FPU2(pvr);
-	if (ci->use_fpu != temp)
-		err_printk("HW_FPU");
+	अगर (ci->use_fpu != temp)
+		err_prपूर्णांकk("HW_FPU");
 	ci->use_fpu = temp;
 
 	ci->use_exc = PVR_OPCODE_0x0_ILLEGAL(pvr) |
@@ -71,7 +72,7 @@ void set_cpuinfo_pvr_full(struct cpuinfo *ci, struct device_node *cpu)
 
 	CI(use_icache, USE_ICACHE);
 	CI(icache_tagbits, ICACHE_ADDR_TAG_BITS);
-	CI(icache_write, ICACHE_ALLOW_WR);
+	CI(icache_ग_लिखो, ICACHE_ALLOW_WR);
 	ci->icache_line_length = PVR_ICACHE_LINE_LEN(pvr) << 2;
 	CI(icache_size, ICACHE_BYTE_SIZE);
 	CI(icache_base, ICACHE_BASEADDR);
@@ -79,18 +80,18 @@ void set_cpuinfo_pvr_full(struct cpuinfo *ci, struct device_node *cpu)
 
 	CI(use_dcache, USE_DCACHE);
 	CI(dcache_tagbits, DCACHE_ADDR_TAG_BITS);
-	CI(dcache_write, DCACHE_ALLOW_WR);
+	CI(dcache_ग_लिखो, DCACHE_ALLOW_WR);
 	ci->dcache_line_length = PVR_DCACHE_LINE_LEN(pvr) << 2;
 	CI(dcache_size, DCACHE_BYTE_SIZE);
 	CI(dcache_base, DCACHE_BASEADDR);
 	CI(dcache_high, DCACHE_HIGHADDR);
 
 	temp = PVR_DCACHE_USE_WRITEBACK(pvr);
-	if (ci->dcache_wb != temp)
-		err_printk("DCACHE WB");
+	अगर (ci->dcache_wb != temp)
+		err_prपूर्णांकk("DCACHE WB");
 	ci->dcache_wb = temp;
 
-	CI(use_dopb, D_OPB);
+	CI(use_करोpb, D_OPB);
 	CI(use_iopb, I_OPB);
 	CI(use_dlmb, D_LMB);
 	CI(use_ilmb, I_LMB);
@@ -107,4 +108,4 @@ void set_cpuinfo_pvr_full(struct cpuinfo *ci, struct device_node *cpu)
 	CI(num_wr_brk, NUMBER_OF_WR_ADDR_BRK);
 
 	CI(fpga_family_code, TARGET_FAMILY);
-}
+पूर्ण

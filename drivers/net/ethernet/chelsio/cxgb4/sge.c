@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio T4 Ethernet driver for Linux.
+ * This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
  *
  * Copyright (c) 2003-2014 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,546 +33,546 @@
  * SOFTWARE.
  */
 
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/if_vlan.h>
-#include <linux/ip.h>
-#include <linux/dma-mapping.h>
-#include <linux/jiffies.h>
-#include <linux/prefetch.h>
-#include <linux/export.h>
-#include <net/xfrm.h>
-#include <net/ipv6.h>
-#include <net/tcp.h>
-#include <net/busy_poll.h>
-#ifdef CONFIG_CHELSIO_T4_FCOE
-#include <scsi/fc/fc_fcoe.h>
-#endif /* CONFIG_CHELSIO_T4_FCOE */
-#include "cxgb4.h"
-#include "t4_regs.h"
-#include "t4_values.h"
-#include "t4_msg.h"
-#include "t4fw_api.h"
-#include "cxgb4_ptp.h"
-#include "cxgb4_uld.h"
-#include "cxgb4_tc_mqprio.h"
-#include "sched.h"
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/export.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/tcp.h>
+#समावेश <net/busy_poll.h>
+#अगर_घोषित CONFIG_CHELSIO_T4_FCOE
+#समावेश <scsi/fc/fc_fcoe.h>
+#पूर्ण_अगर /* CONFIG_CHELSIO_T4_FCOE */
+#समावेश "cxgb4.h"
+#समावेश "t4_regs.h"
+#समावेश "t4_values.h"
+#समावेश "t4_msg.h"
+#समावेश "t4fw_api.h"
+#समावेश "cxgb4_ptp.h"
+#समावेश "cxgb4_uld.h"
+#समावेश "cxgb4_tc_mqprio.h"
+#समावेश "sched.h"
 
 /*
- * Rx buffer size.  We use largish buffers if possible but settle for single
- * pages under memory shortage.
+ * Rx buffer size.  We use largish buffers अगर possible but settle क्रम single
+ * pages under memory लघुage.
  */
-#if PAGE_SHIFT >= 16
+#अगर PAGE_SHIFT >= 16
 # define FL_PG_ORDER 0
-#else
+#अन्यथा
 # define FL_PG_ORDER (16 - PAGE_SHIFT)
-#endif
+#पूर्ण_अगर
 
 /* RX_PULL_LEN should be <= RX_COPY_THRES */
-#define RX_COPY_THRES    256
-#define RX_PULL_LEN      128
+#घोषणा RX_COPY_THRES    256
+#घोषणा RX_PULL_LEN      128
 
 /*
- * Main body length for sk_buffs used for Rx Ethernet packets with fragments.
+ * Main body length क्रम sk_buffs used क्रम Rx Ethernet packets with fragments.
  * Should be >= RX_PULL_LEN but possibly bigger to give pskb_may_pull some room.
  */
-#define RX_PKT_SKB_LEN   512
+#घोषणा RX_PKT_SKB_LEN   512
 
 /*
- * Max number of Tx descriptors we clean up at a time.  Should be modest as
- * freeing skbs isn't cheap and it happens while holding locks.  We just need
- * to free packets faster than they arrive, we eventually catch up and keep
+ * Max number of Tx descriptors we clean up at a समय.  Should be modest as
+ * मुक्तing skbs isn't cheap and it happens जबतक holding locks.  We just need
+ * to मुक्त packets faster than they arrive, we eventually catch up and keep
  * the amortized cost reasonable.  Must be >= 2 * TXQ_STOP_THRES.  It should
  * also match the CIDX Flush Threshold.
  */
-#define MAX_TX_RECLAIM 32
+#घोषणा MAX_TX_RECLAIM 32
 
 /*
- * Max number of Rx buffers we replenish at a time.  Again keep this modest,
+ * Max number of Rx buffers we replenish at a समय.  Again keep this modest,
  * allocating buffers isn't cheap either.
  */
-#define MAX_RX_REFILL 16U
+#घोषणा MAX_RX_REFILL 16U
 
 /*
- * Period of the Rx queue check timer.  This timer is infrequent as it has
- * something to do only when the system experiences severe memory shortage.
+ * Period of the Rx queue check समयr.  This समयr is infrequent as it has
+ * something to करो only when the प्रणाली experiences severe memory लघुage.
  */
-#define RX_QCHECK_PERIOD (HZ / 2)
+#घोषणा RX_QCHECK_PERIOD (HZ / 2)
 
 /*
- * Period of the Tx queue check timer.
+ * Period of the Tx queue check समयr.
  */
-#define TX_QCHECK_PERIOD (HZ / 2)
+#घोषणा TX_QCHECK_PERIOD (HZ / 2)
 
 /*
- * Max number of Tx descriptors to be reclaimed by the Tx timer.
+ * Max number of Tx descriptors to be reclaimed by the Tx समयr.
  */
-#define MAX_TIMER_TX_RECLAIM 100
+#घोषणा MAX_TIMER_TX_RECLAIM 100
 
 /*
- * Timer index used when backing off due to memory shortage.
+ * Timer index used when backing off due to memory लघुage.
  */
-#define NOMEM_TMR_IDX (SGE_NTIMERS - 1)
+#घोषणा NOMEM_TMR_IDX (SGE_NTIMERS - 1)
 
 /*
- * Suspension threshold for non-Ethernet Tx queues.  We require enough room
- * for a full sized WR.
+ * Suspension threshold क्रम non-Ethernet Tx queues.  We require enough room
+ * क्रम a full sized WR.
  */
-#define TXQ_STOP_THRES (SGE_MAX_WR_LEN / sizeof(struct tx_desc))
+#घोषणा TXQ_STOP_THRES (SGE_MAX_WR_LEN / माप(काष्ठा tx_desc))
 
 /*
- * Max Tx descriptor space we allow for an Ethernet packet to be inlined
- * into a WR.
+ * Max Tx descriptor space we allow क्रम an Ethernet packet to be अंतरभूतd
+ * पूर्णांकo a WR.
  */
-#define MAX_IMM_TX_PKT_LEN 256
+#घोषणा MAX_IMM_TX_PKT_LEN 256
 
 /*
  * Max size of a WR sent through a control Tx queue.
  */
-#define MAX_CTRL_WR_LEN SGE_MAX_WR_LEN
+#घोषणा MAX_CTRL_WR_LEN SGE_MAX_WR_LEN
 
-struct rx_sw_desc {                /* SW state per Rx descriptor */
-	struct page *page;
+काष्ठा rx_sw_desc अणु                /* SW state per Rx descriptor */
+	काष्ठा page *page;
 	dma_addr_t dma_addr;
-};
+पूर्ण;
 
 /*
- * Rx buffer sizes for "useskbs" Free List buffers (one ingress packet pe skb
- * buffer).  We currently only support two sizes for 1500- and 9000-byte MTUs.
- * We could easily support more but there doesn't seem to be much need for
+ * Rx buffer sizes क्रम "useskbs" Free List buffers (one ingress packet pe skb
+ * buffer).  We currently only support two sizes क्रम 1500- and 9000-byte MTUs.
+ * We could easily support more but there करोesn't seem to be much need क्रम
  * that ...
  */
-#define FL_MTU_SMALL 1500
-#define FL_MTU_LARGE 9000
+#घोषणा FL_MTU_SMALL 1500
+#घोषणा FL_MTU_LARGE 9000
 
-static inline unsigned int fl_mtu_bufsize(struct adapter *adapter,
-					  unsigned int mtu)
-{
-	struct sge *s = &adapter->sge;
+अटल अंतरभूत अचिन्हित पूर्णांक fl_mtu_bufsize(काष्ठा adapter *adapter,
+					  अचिन्हित पूर्णांक mtu)
+अणु
+	काष्ठा sge *s = &adapter->sge;
 
-	return ALIGN(s->pktshift + ETH_HLEN + VLAN_HLEN + mtu, s->fl_align);
-}
+	वापस ALIGN(s->pktshअगरt + ETH_HLEN + VLAN_HLEN + mtu, s->fl_align);
+पूर्ण
 
-#define FL_MTU_SMALL_BUFSIZE(adapter) fl_mtu_bufsize(adapter, FL_MTU_SMALL)
-#define FL_MTU_LARGE_BUFSIZE(adapter) fl_mtu_bufsize(adapter, FL_MTU_LARGE)
+#घोषणा FL_MTU_SMALL_बफ_मानE(adapter) fl_mtu_bufsize(adapter, FL_MTU_SMALL)
+#घोषणा FL_MTU_LARGE_बफ_मानE(adapter) fl_mtu_bufsize(adapter, FL_MTU_LARGE)
 
 /*
  * Bits 0..3 of rx_sw_desc.dma_addr have special meaning.  The hardware uses
- * these to specify the buffer size as an index into the SGE Free List Buffer
- * Size register array.  We also use bit 4, when the buffer has been unmapped
- * for DMA, but this is of course never sent to the hardware and is only used
- * to prevent double unmappings.  All of the above requires that the Free List
- * Buffers which we allocate have the bottom 5 bits free (0) -- i.e. are
- * 32-byte or or a power of 2 greater in alignment.  Since the SGE's minimal
- * Free List Buffer alignment is 32 bytes, this works out for us ...
+ * these to specअगरy the buffer size as an index पूर्णांकo the SGE Free List Buffer
+ * Size रेजिस्टर array.  We also use bit 4, when the buffer has been unmapped
+ * क्रम DMA, but this is of course never sent to the hardware and is only used
+ * to prevent द्विगुन unmappings.  All of the above requires that the Free List
+ * Buffers which we allocate have the bottom 5 bits मुक्त (0) -- i.e. are
+ * 32-byte or or a घातer of 2 greater in alignment.  Since the SGE's minimal
+ * Free List Buffer alignment is 32 bytes, this works out क्रम us ...
  */
-enum {
+क्रमागत अणु
 	RX_BUF_FLAGS     = 0x1f,   /* bottom five bits are special */
-	RX_BUF_SIZE      = 0x0f,   /* bottom three bits are for buf sizes */
+	RX_BUF_SIZE      = 0x0f,   /* bottom three bits are क्रम buf sizes */
 	RX_UNMAPPED_BUF  = 0x10,   /* buffer is not mapped */
 
 	/*
 	 * XXX We shouldn't depend on being able to use these indices.
 	 * XXX Especially when some other Master PF has initialized the
 	 * XXX adapter or we use the Firmware Configuration File.  We
-	 * XXX should really search through the Host Buffer Size register
-	 * XXX array for the appropriately sized buffer indices.
+	 * XXX should really search through the Host Buffer Size रेजिस्टर
+	 * XXX array क्रम the appropriately sized buffer indices.
 	 */
 	RX_SMALL_PG_BUF  = 0x0,   /* small (PAGE_SIZE) page buffer */
 	RX_LARGE_PG_BUF  = 0x1,   /* buffer large (FL_PG_ORDER) page buffer */
 
 	RX_SMALL_MTU_BUF = 0x2,   /* small MTU buffer */
 	RX_LARGE_MTU_BUF = 0x3,   /* large MTU buffer */
-};
+पूर्ण;
 
-static int timer_pkt_quota[] = {1, 1, 2, 3, 4, 5};
-#define MIN_NAPI_WORK  1
+अटल पूर्णांक समयr_pkt_quota[] = अणु1, 1, 2, 3, 4, 5पूर्ण;
+#घोषणा MIN_NAPI_WORK  1
 
-static inline dma_addr_t get_buf_addr(const struct rx_sw_desc *d)
-{
-	return d->dma_addr & ~(dma_addr_t)RX_BUF_FLAGS;
-}
+अटल अंतरभूत dma_addr_t get_buf_addr(स्थिर काष्ठा rx_sw_desc *d)
+अणु
+	वापस d->dma_addr & ~(dma_addr_t)RX_BUF_FLAGS;
+पूर्ण
 
-static inline bool is_buf_mapped(const struct rx_sw_desc *d)
-{
-	return !(d->dma_addr & RX_UNMAPPED_BUF);
-}
+अटल अंतरभूत bool is_buf_mapped(स्थिर काष्ठा rx_sw_desc *d)
+अणु
+	वापस !(d->dma_addr & RX_UNMAPPED_BUF);
+पूर्ण
 
 /**
- *	txq_avail - return the number of available slots in a Tx queue
+ *	txq_avail - वापस the number of available slots in a Tx queue
  *	@q: the Tx queue
  *
- *	Returns the number of descriptors in a Tx queue available to write new
+ *	Returns the number of descriptors in a Tx queue available to ग_लिखो new
  *	packets.
  */
-static inline unsigned int txq_avail(const struct sge_txq *q)
-{
-	return q->size - 1 - q->in_use;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक txq_avail(स्थिर काष्ठा sge_txq *q)
+अणु
+	वापस q->size - 1 - q->in_use;
+पूर्ण
 
 /**
- *	fl_cap - return the capacity of a free-buffer list
+ *	fl_cap - वापस the capacity of a मुक्त-buffer list
  *	@fl: the FL
  *
- *	Returns the capacity of a free-buffer list.  The capacity is less than
+ *	Returns the capacity of a मुक्त-buffer list.  The capacity is less than
  *	the size because one descriptor needs to be left unpopulated, otherwise
  *	HW will think the FL is empty.
  */
-static inline unsigned int fl_cap(const struct sge_fl *fl)
-{
-	return fl->size - 8;   /* 1 descriptor = 8 buffers */
-}
+अटल अंतरभूत अचिन्हित पूर्णांक fl_cap(स्थिर काष्ठा sge_fl *fl)
+अणु
+	वापस fl->size - 8;   /* 1 descriptor = 8 buffers */
+पूर्ण
 
 /**
- *	fl_starving - return whether a Free List is starving.
- *	@adapter: pointer to the adapter
+ *	fl_starving - वापस whether a Free List is starving.
+ *	@adapter: poपूर्णांकer to the adapter
  *	@fl: the Free List
  *
- *	Tests specified Free List to see whether the number of buffers
+ *	Tests specअगरied Free List to see whether the number of buffers
  *	available to the hardware has falled below our "starvation"
  *	threshold.
  */
-static inline bool fl_starving(const struct adapter *adapter,
-			       const struct sge_fl *fl)
-{
-	const struct sge *s = &adapter->sge;
+अटल अंतरभूत bool fl_starving(स्थिर काष्ठा adapter *adapter,
+			       स्थिर काष्ठा sge_fl *fl)
+अणु
+	स्थिर काष्ठा sge *s = &adapter->sge;
 
-	return fl->avail - fl->pend_cred <= s->fl_starve_thres;
-}
+	वापस fl->avail - fl->pend_cred <= s->fl_starve_thres;
+पूर्ण
 
-int cxgb4_map_skb(struct device *dev, const struct sk_buff *skb,
+पूर्णांक cxgb4_map_skb(काष्ठा device *dev, स्थिर काष्ठा sk_buff *skb,
 		  dma_addr_t *addr)
-{
-	const skb_frag_t *fp, *end;
-	const struct skb_shared_info *si;
+अणु
+	स्थिर skb_frag_t *fp, *end;
+	स्थिर काष्ठा skb_shared_info *si;
 
 	*addr = dma_map_single(dev, skb->data, skb_headlen(skb), DMA_TO_DEVICE);
-	if (dma_mapping_error(dev, *addr))
-		goto out_err;
+	अगर (dma_mapping_error(dev, *addr))
+		जाओ out_err;
 
 	si = skb_shinfo(skb);
 	end = &si->frags[si->nr_frags];
 
-	for (fp = si->frags; fp < end; fp++) {
+	क्रम (fp = si->frags; fp < end; fp++) अणु
 		*++addr = skb_frag_dma_map(dev, fp, 0, skb_frag_size(fp),
 					   DMA_TO_DEVICE);
-		if (dma_mapping_error(dev, *addr))
-			goto unwind;
-	}
-	return 0;
+		अगर (dma_mapping_error(dev, *addr))
+			जाओ unwind;
+	पूर्ण
+	वापस 0;
 
 unwind:
-	while (fp-- > si->frags)
+	जबतक (fp-- > si->frags)
 		dma_unmap_page(dev, *--addr, skb_frag_size(fp), DMA_TO_DEVICE);
 
 	dma_unmap_single(dev, addr[-1], skb_headlen(skb), DMA_TO_DEVICE);
 out_err:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 EXPORT_SYMBOL(cxgb4_map_skb);
 
-static void unmap_skb(struct device *dev, const struct sk_buff *skb,
-		      const dma_addr_t *addr)
-{
-	const skb_frag_t *fp, *end;
-	const struct skb_shared_info *si;
+अटल व्योम unmap_skb(काष्ठा device *dev, स्थिर काष्ठा sk_buff *skb,
+		      स्थिर dma_addr_t *addr)
+अणु
+	स्थिर skb_frag_t *fp, *end;
+	स्थिर काष्ठा skb_shared_info *si;
 
 	dma_unmap_single(dev, *addr++, skb_headlen(skb), DMA_TO_DEVICE);
 
 	si = skb_shinfo(skb);
 	end = &si->frags[si->nr_frags];
-	for (fp = si->frags; fp < end; fp++)
+	क्रम (fp = si->frags; fp < end; fp++)
 		dma_unmap_page(dev, *addr++, skb_frag_size(fp), DMA_TO_DEVICE);
-}
+पूर्ण
 
-#ifdef CONFIG_NEED_DMA_MAP_STATE
+#अगर_घोषित CONFIG_NEED_DMA_MAP_STATE
 /**
- *	deferred_unmap_destructor - unmap a packet when it is freed
+ *	deferred_unmap_deकाष्ठाor - unmap a packet when it is मुक्तd
  *	@skb: the packet
  *
- *	This is the packet destructor used for Tx packets that need to remain
- *	mapped until they are freed rather than until their Tx descriptors are
- *	freed.
+ *	This is the packet deकाष्ठाor used क्रम Tx packets that need to reमुख्य
+ *	mapped until they are मुक्तd rather than until their Tx descriptors are
+ *	मुक्तd.
  */
-static void deferred_unmap_destructor(struct sk_buff *skb)
-{
+अटल व्योम deferred_unmap_deकाष्ठाor(काष्ठा sk_buff *skb)
+अणु
 	unmap_skb(skb->dev->dev.parent, skb, (dma_addr_t *)skb->head);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /**
- *	free_tx_desc - reclaims Tx descriptors and their buffers
+ *	मुक्त_tx_desc - reclaims Tx descriptors and their buffers
  *	@adap: the adapter
  *	@q: the Tx queue to reclaim descriptors from
  *	@n: the number of descriptors to reclaim
- *	@unmap: whether the buffers should be unmapped for DMA
+ *	@unmap: whether the buffers should be unmapped क्रम DMA
  *
- *	Reclaims Tx descriptors from an SGE Tx queue and frees the associated
+ *	Reclaims Tx descriptors from an SGE Tx queue and मुक्तs the associated
  *	Tx buffers.  Called with the Tx queue lock held.
  */
-void free_tx_desc(struct adapter *adap, struct sge_txq *q,
-		  unsigned int n, bool unmap)
-{
-	unsigned int cidx = q->cidx;
-	struct tx_sw_desc *d;
+व्योम मुक्त_tx_desc(काष्ठा adapter *adap, काष्ठा sge_txq *q,
+		  अचिन्हित पूर्णांक n, bool unmap)
+अणु
+	अचिन्हित पूर्णांक cidx = q->cidx;
+	काष्ठा tx_sw_desc *d;
 
 	d = &q->sdesc[cidx];
-	while (n--) {
-		if (d->skb) {                       /* an SGL is present */
-			if (unmap && d->addr[0]) {
+	जबतक (n--) अणु
+		अगर (d->skb) अणु                       /* an SGL is present */
+			अगर (unmap && d->addr[0]) अणु
 				unmap_skb(adap->pdev_dev, d->skb, d->addr);
-				memset(d->addr, 0, sizeof(d->addr));
-			}
+				स_रखो(d->addr, 0, माप(d->addr));
+			पूर्ण
 			dev_consume_skb_any(d->skb);
-			d->skb = NULL;
-		}
+			d->skb = शून्य;
+		पूर्ण
 		++d;
-		if (++cidx == q->size) {
+		अगर (++cidx == q->size) अणु
 			cidx = 0;
 			d = q->sdesc;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	q->cidx = cidx;
-}
+पूर्ण
 
 /*
  * Return the number of reclaimable descriptors in a Tx queue.
  */
-static inline int reclaimable(const struct sge_txq *q)
-{
-	int hw_cidx = ntohs(READ_ONCE(q->stat->cidx));
+अटल अंतरभूत पूर्णांक reclaimable(स्थिर काष्ठा sge_txq *q)
+अणु
+	पूर्णांक hw_cidx = ntohs(READ_ONCE(q->stat->cidx));
 	hw_cidx -= q->cidx;
-	return hw_cidx < 0 ? hw_cidx + q->size : hw_cidx;
-}
+	वापस hw_cidx < 0 ? hw_cidx + q->size : hw_cidx;
+पूर्ण
 
 /**
  *	reclaim_completed_tx - reclaims completed TX Descriptors
  *	@adap: the adapter
  *	@q: the Tx queue to reclaim completed descriptors from
  *	@maxreclaim: the maximum number of TX Descriptors to reclaim or -1
- *	@unmap: whether the buffers should be unmapped for DMA
+ *	@unmap: whether the buffers should be unmapped क्रम DMA
  *
  *	Reclaims Tx Descriptors that the SGE has indicated it has processed,
- *	and frees the associated buffers if possible.  If @max == -1, then
+ *	and मुक्तs the associated buffers अगर possible.  If @max == -1, then
  *	we'll use a defaiult maximum.  Called with the TX Queue locked.
  */
-static inline int reclaim_completed_tx(struct adapter *adap, struct sge_txq *q,
-				       int maxreclaim, bool unmap)
-{
-	int reclaim = reclaimable(q);
+अटल अंतरभूत पूर्णांक reclaim_completed_tx(काष्ठा adapter *adap, काष्ठा sge_txq *q,
+				       पूर्णांक maxreclaim, bool unmap)
+अणु
+	पूर्णांक reclaim = reclaimable(q);
 
-	if (reclaim) {
+	अगर (reclaim) अणु
 		/*
-		 * Limit the amount of clean up work we do at a time to keep
-		 * the Tx lock hold time O(1).
+		 * Limit the amount of clean up work we करो at a समय to keep
+		 * the Tx lock hold समय O(1).
 		 */
-		if (maxreclaim < 0)
+		अगर (maxreclaim < 0)
 			maxreclaim = MAX_TX_RECLAIM;
-		if (reclaim > maxreclaim)
+		अगर (reclaim > maxreclaim)
 			reclaim = maxreclaim;
 
-		free_tx_desc(adap, q, reclaim, unmap);
+		मुक्त_tx_desc(adap, q, reclaim, unmap);
 		q->in_use -= reclaim;
-	}
+	पूर्ण
 
-	return reclaim;
-}
+	वापस reclaim;
+पूर्ण
 
 /**
  *	cxgb4_reclaim_completed_tx - reclaims completed Tx descriptors
  *	@adap: the adapter
  *	@q: the Tx queue to reclaim completed descriptors from
- *	@unmap: whether the buffers should be unmapped for DMA
+ *	@unmap: whether the buffers should be unmapped क्रम DMA
  *
  *	Reclaims Tx descriptors that the SGE has indicated it has processed,
- *	and frees the associated buffers if possible.  Called with the Tx
+ *	and मुक्तs the associated buffers अगर possible.  Called with the Tx
  *	queue locked.
  */
-void cxgb4_reclaim_completed_tx(struct adapter *adap, struct sge_txq *q,
+व्योम cxgb4_reclaim_completed_tx(काष्ठा adapter *adap, काष्ठा sge_txq *q,
 				bool unmap)
-{
-	(void)reclaim_completed_tx(adap, q, -1, unmap);
-}
+अणु
+	(व्योम)reclaim_completed_tx(adap, q, -1, unmap);
+पूर्ण
 EXPORT_SYMBOL(cxgb4_reclaim_completed_tx);
 
-static inline int get_buf_size(struct adapter *adapter,
-			       const struct rx_sw_desc *d)
-{
-	struct sge *s = &adapter->sge;
-	unsigned int rx_buf_size_idx = d->dma_addr & RX_BUF_SIZE;
-	int buf_size;
+अटल अंतरभूत पूर्णांक get_buf_size(काष्ठा adapter *adapter,
+			       स्थिर काष्ठा rx_sw_desc *d)
+अणु
+	काष्ठा sge *s = &adapter->sge;
+	अचिन्हित पूर्णांक rx_buf_size_idx = d->dma_addr & RX_BUF_SIZE;
+	पूर्णांक buf_size;
 
-	switch (rx_buf_size_idx) {
-	case RX_SMALL_PG_BUF:
+	चयन (rx_buf_size_idx) अणु
+	हाल RX_SMALL_PG_BUF:
 		buf_size = PAGE_SIZE;
-		break;
+		अवरोध;
 
-	case RX_LARGE_PG_BUF:
+	हाल RX_LARGE_PG_BUF:
 		buf_size = PAGE_SIZE << s->fl_pg_order;
-		break;
+		अवरोध;
 
-	case RX_SMALL_MTU_BUF:
-		buf_size = FL_MTU_SMALL_BUFSIZE(adapter);
-		break;
+	हाल RX_SMALL_MTU_BUF:
+		buf_size = FL_MTU_SMALL_बफ_मानE(adapter);
+		अवरोध;
 
-	case RX_LARGE_MTU_BUF:
-		buf_size = FL_MTU_LARGE_BUFSIZE(adapter);
-		break;
+	हाल RX_LARGE_MTU_BUF:
+		buf_size = FL_MTU_LARGE_बफ_मानE(adapter);
+		अवरोध;
 
-	default:
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return buf_size;
-}
+	वापस buf_size;
+पूर्ण
 
 /**
- *	free_rx_bufs - free the Rx buffers on an SGE free list
+ *	मुक्त_rx_bufs - मुक्त the Rx buffers on an SGE मुक्त list
  *	@adap: the adapter
- *	@q: the SGE free list to free buffers from
- *	@n: how many buffers to free
+ *	@q: the SGE मुक्त list to मुक्त buffers from
+ *	@n: how many buffers to मुक्त
  *
- *	Release the next @n buffers on an SGE free-buffer Rx queue.   The
- *	buffers must be made inaccessible to HW before calling this function.
+ *	Release the next @n buffers on an SGE मुक्त-buffer Rx queue.   The
+ *	buffers must be made inaccessible to HW beक्रमe calling this function.
  */
-static void free_rx_bufs(struct adapter *adap, struct sge_fl *q, int n)
-{
-	while (n--) {
-		struct rx_sw_desc *d = &q->sdesc[q->cidx];
+अटल व्योम मुक्त_rx_bufs(काष्ठा adapter *adap, काष्ठा sge_fl *q, पूर्णांक n)
+अणु
+	जबतक (n--) अणु
+		काष्ठा rx_sw_desc *d = &q->sdesc[q->cidx];
 
-		if (is_buf_mapped(d))
+		अगर (is_buf_mapped(d))
 			dma_unmap_page(adap->pdev_dev, get_buf_addr(d),
 				       get_buf_size(adap, d),
 				       PCI_DMA_FROMDEVICE);
 		put_page(d->page);
-		d->page = NULL;
-		if (++q->cidx == q->size)
+		d->page = शून्य;
+		अगर (++q->cidx == q->size)
 			q->cidx = 0;
 		q->avail--;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- *	unmap_rx_buf - unmap the current Rx buffer on an SGE free list
+ *	unmap_rx_buf - unmap the current Rx buffer on an SGE मुक्त list
  *	@adap: the adapter
- *	@q: the SGE free list
+ *	@q: the SGE मुक्त list
  *
- *	Unmap the current buffer on an SGE free-buffer Rx queue.   The
- *	buffer must be made inaccessible to HW before calling this function.
+ *	Unmap the current buffer on an SGE मुक्त-buffer Rx queue.   The
+ *	buffer must be made inaccessible to HW beक्रमe calling this function.
  *
- *	This is similar to @free_rx_bufs above but does not free the buffer.
+ *	This is similar to @मुक्त_rx_bufs above but करोes not मुक्त the buffer.
  *	Do note that the FL still loses any further access to the buffer.
  */
-static void unmap_rx_buf(struct adapter *adap, struct sge_fl *q)
-{
-	struct rx_sw_desc *d = &q->sdesc[q->cidx];
+अटल व्योम unmap_rx_buf(काष्ठा adapter *adap, काष्ठा sge_fl *q)
+अणु
+	काष्ठा rx_sw_desc *d = &q->sdesc[q->cidx];
 
-	if (is_buf_mapped(d))
+	अगर (is_buf_mapped(d))
 		dma_unmap_page(adap->pdev_dev, get_buf_addr(d),
 			       get_buf_size(adap, d), PCI_DMA_FROMDEVICE);
-	d->page = NULL;
-	if (++q->cidx == q->size)
+	d->page = शून्य;
+	अगर (++q->cidx == q->size)
 		q->cidx = 0;
 	q->avail--;
-}
+पूर्ण
 
-static inline void ring_fl_db(struct adapter *adap, struct sge_fl *q)
-{
-	if (q->pend_cred >= 8) {
+अटल अंतरभूत व्योम ring_fl_db(काष्ठा adapter *adap, काष्ठा sge_fl *q)
+अणु
+	अगर (q->pend_cred >= 8) अणु
 		u32 val = adap->params.arch.sge_fl_db;
 
-		if (is_t4(adap->params.chip))
+		अगर (is_t4(adap->params.chip))
 			val |= PIDX_V(q->pend_cred / 8);
-		else
+		अन्यथा
 			val |= PIDX_T5_V(q->pend_cred / 8);
 
-		/* Make sure all memory writes to the Free List queue are
-		 * committed before we tell the hardware about them.
+		/* Make sure all memory ग_लिखोs to the Free List queue are
+		 * committed beक्रमe we tell the hardware about them.
 		 */
 		wmb();
 
-		/* If we don't have access to the new User Doorbell (T5+), use
-		 * the old doorbell mechanism; otherwise use the new BAR2
+		/* If we करोn't have access to the new User Doorbell (T5+), use
+		 * the old करोorbell mechanism; otherwise use the new BAR2
 		 * mechanism.
 		 */
-		if (unlikely(q->bar2_addr == NULL)) {
-			t4_write_reg(adap, MYPF_REG(SGE_PF_KDOORBELL_A),
+		अगर (unlikely(q->bar2_addr == शून्य)) अणु
+			t4_ग_लिखो_reg(adap, MYPF_REG(SGE_PF_KDOORBELL_A),
 				     val | QID_V(q->cntxt_id));
-		} else {
-			writel(val | QID_V(q->bar2_qid),
+		पूर्ण अन्यथा अणु
+			ग_लिखोl(val | QID_V(q->bar2_qid),
 			       q->bar2_addr + SGE_UDB_KDOORBELL);
 
-			/* This Write memory Barrier will force the write to
+			/* This Write memory Barrier will क्रमce the ग_लिखो to
 			 * the User Doorbell area to be flushed.
 			 */
 			wmb();
-		}
+		पूर्ण
 		q->pend_cred &= 7;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void set_rx_sw_desc(struct rx_sw_desc *sd, struct page *pg,
+अटल अंतरभूत व्योम set_rx_sw_desc(काष्ठा rx_sw_desc *sd, काष्ठा page *pg,
 				  dma_addr_t mapping)
-{
+अणु
 	sd->page = pg;
 	sd->dma_addr = mapping;      /* includes size low bits */
-}
+पूर्ण
 
 /**
  *	refill_fl - refill an SGE Rx buffer ring
  *	@adap: the adapter
  *	@q: the ring to refill
  *	@n: the number of new buffers to allocate
- *	@gfp: the gfp flags for the allocations
+ *	@gfp: the gfp flags क्रम the allocations
  *
- *	(Re)populate an SGE free-buffer queue with up to @n new packet buffers,
+ *	(Re)populate an SGE मुक्त-buffer queue with up to @n new packet buffers,
  *	allocated with the supplied gfp flags.  The caller must assure that
- *	@n does not exceed the queue's capacity.  If afterwards the queue is
- *	found critically low mark it as starving in the bitmap of starving FLs.
+ *	@n करोes not exceed the queue's capacity.  If afterwards the queue is
+ *	found critically low mark it as starving in the biपंचांगap of starving FLs.
  *
  *	Returns the number of buffers allocated.
  */
-static unsigned int refill_fl(struct adapter *adap, struct sge_fl *q, int n,
+अटल अचिन्हित पूर्णांक refill_fl(काष्ठा adapter *adap, काष्ठा sge_fl *q, पूर्णांक n,
 			      gfp_t gfp)
-{
-	struct sge *s = &adap->sge;
-	struct page *pg;
+अणु
+	काष्ठा sge *s = &adap->sge;
+	काष्ठा page *pg;
 	dma_addr_t mapping;
-	unsigned int cred = q->avail;
+	अचिन्हित पूर्णांक cred = q->avail;
 	__be64 *d = &q->desc[q->pidx];
-	struct rx_sw_desc *sd = &q->sdesc[q->pidx];
-	int node;
+	काष्ठा rx_sw_desc *sd = &q->sdesc[q->pidx];
+	पूर्णांक node;
 
-#ifdef CONFIG_DEBUG_FS
-	if (test_bit(q->cntxt_id - adap->sge.egr_start, adap->sge.blocked_fl))
-		goto out;
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+	अगर (test_bit(q->cntxt_id - adap->sge.egr_start, adap->sge.blocked_fl))
+		जाओ out;
+#पूर्ण_अगर
 
 	gfp |= __GFP_NOWARN;
 	node = dev_to_node(adap->pdev_dev);
 
-	if (s->fl_pg_order == 0)
-		goto alloc_small_pages;
+	अगर (s->fl_pg_order == 0)
+		जाओ alloc_small_pages;
 
 	/*
 	 * Prefer large buffers
 	 */
-	while (n) {
+	जबतक (n) अणु
 		pg = alloc_pages_node(node, gfp | __GFP_COMP, s->fl_pg_order);
-		if (unlikely(!pg)) {
+		अगर (unlikely(!pg)) अणु
 			q->large_alloc_failed++;
-			break;       /* fall back to single pages */
-		}
+			अवरोध;       /* fall back to single pages */
+		पूर्ण
 
 		mapping = dma_map_page(adap->pdev_dev, pg, 0,
 				       PAGE_SIZE << s->fl_pg_order,
 				       PCI_DMA_FROMDEVICE);
-		if (unlikely(dma_mapping_error(adap->pdev_dev, mapping))) {
-			__free_pages(pg, s->fl_pg_order);
+		अगर (unlikely(dma_mapping_error(adap->pdev_dev, mapping))) अणु
+			__मुक्त_pages(pg, s->fl_pg_order);
 			q->mapping_err++;
-			goto out;   /* do not try small pages for this error */
-		}
+			जाओ out;   /* करो not try small pages क्रम this error */
+		पूर्ण
 		mapping |= RX_LARGE_PG_BUF;
 		*d++ = cpu_to_be64(mapping);
 
@@ -579,145 +580,145 @@ static unsigned int refill_fl(struct adapter *adap, struct sge_fl *q, int n,
 		sd++;
 
 		q->avail++;
-		if (++q->pidx == q->size) {
+		अगर (++q->pidx == q->size) अणु
 			q->pidx = 0;
 			sd = q->sdesc;
 			d = q->desc;
-		}
+		पूर्ण
 		n--;
-	}
+	पूर्ण
 
 alloc_small_pages:
-	while (n--) {
+	जबतक (n--) अणु
 		pg = alloc_pages_node(node, gfp, 0);
-		if (unlikely(!pg)) {
+		अगर (unlikely(!pg)) अणु
 			q->alloc_failed++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mapping = dma_map_page(adap->pdev_dev, pg, 0, PAGE_SIZE,
 				       PCI_DMA_FROMDEVICE);
-		if (unlikely(dma_mapping_error(adap->pdev_dev, mapping))) {
+		अगर (unlikely(dma_mapping_error(adap->pdev_dev, mapping))) अणु
 			put_page(pg);
 			q->mapping_err++;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		*d++ = cpu_to_be64(mapping);
 
 		set_rx_sw_desc(sd, pg, mapping);
 		sd++;
 
 		q->avail++;
-		if (++q->pidx == q->size) {
+		अगर (++q->pidx == q->size) अणु
 			q->pidx = 0;
 			sd = q->sdesc;
 			d = q->desc;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:	cred = q->avail - cred;
 	q->pend_cred += cred;
 	ring_fl_db(adap, q);
 
-	if (unlikely(fl_starving(adap, q))) {
+	अगर (unlikely(fl_starving(adap, q))) अणु
 		smp_wmb();
 		q->low++;
 		set_bit(q->cntxt_id - adap->sge.egr_start,
 			adap->sge.starving_fl);
-	}
+	पूर्ण
 
-	return cred;
-}
+	वापस cred;
+पूर्ण
 
-static inline void __refill_fl(struct adapter *adap, struct sge_fl *fl)
-{
+अटल अंतरभूत व्योम __refill_fl(काष्ठा adapter *adap, काष्ठा sge_fl *fl)
+अणु
 	refill_fl(adap, fl, min(MAX_RX_REFILL, fl_cap(fl) - fl->avail),
 		  GFP_ATOMIC);
-}
+पूर्ण
 
 /**
- *	alloc_ring - allocate resources for an SGE descriptor ring
+ *	alloc_ring - allocate resources क्रम an SGE descriptor ring
  *	@dev: the PCI device's core device
  *	@nelem: the number of descriptors
  *	@elem_size: the size of each descriptor
  *	@sw_size: the size of the SW state associated with each ring element
  *	@phys: the physical address of the allocated ring
- *	@metadata: address of the array holding the SW state for the ring
- *	@stat_size: extra space in HW ring for status information
- *	@node: preferred node for memory allocations
+ *	@metadata: address of the array holding the SW state क्रम the ring
+ *	@stat_size: extra space in HW ring क्रम status inक्रमmation
+ *	@node: preferred node क्रम memory allocations
  *
- *	Allocates resources for an SGE descriptor ring, such as Tx queues,
- *	free buffer lists, or response queues.  Each SGE ring requires
- *	space for its HW descriptors plus, optionally, space for the SW state
- *	associated with each HW entry (the metadata).  The function returns
- *	three values: the virtual address for the HW ring (the return value
+ *	Allocates resources क्रम an SGE descriptor ring, such as Tx queues,
+ *	मुक्त buffer lists, or response queues.  Each SGE ring requires
+ *	space क्रम its HW descriptors plus, optionally, space क्रम the SW state
+ *	associated with each HW entry (the metadata).  The function वापसs
+ *	three values: the भव address क्रम the HW ring (the वापस value
  *	of the function), the bus address of the HW ring, and the address
  *	of the SW ring.
  */
-static void *alloc_ring(struct device *dev, size_t nelem, size_t elem_size,
-			size_t sw_size, dma_addr_t *phys, void *metadata,
-			size_t stat_size, int node)
-{
-	size_t len = nelem * elem_size + stat_size;
-	void *s = NULL;
-	void *p = dma_alloc_coherent(dev, len, phys, GFP_KERNEL);
+अटल व्योम *alloc_ring(काष्ठा device *dev, माप_प्रकार nelem, माप_प्रकार elem_size,
+			माप_प्रकार sw_size, dma_addr_t *phys, व्योम *metadata,
+			माप_प्रकार stat_size, पूर्णांक node)
+अणु
+	माप_प्रकार len = nelem * elem_size + stat_size;
+	व्योम *s = शून्य;
+	व्योम *p = dma_alloc_coherent(dev, len, phys, GFP_KERNEL);
 
-	if (!p)
-		return NULL;
-	if (sw_size) {
-		s = kcalloc_node(sw_size, nelem, GFP_KERNEL, node);
+	अगर (!p)
+		वापस शून्य;
+	अगर (sw_size) अणु
+		s = kसुस्मृति_node(sw_size, nelem, GFP_KERNEL, node);
 
-		if (!s) {
-			dma_free_coherent(dev, len, p, *phys);
-			return NULL;
-		}
-	}
-	if (metadata)
-		*(void **)metadata = s;
-	return p;
-}
+		अगर (!s) अणु
+			dma_मुक्त_coherent(dev, len, p, *phys);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
+	अगर (metadata)
+		*(व्योम **)metadata = s;
+	वापस p;
+पूर्ण
 
 /**
  *	sgl_len - calculates the size of an SGL of the given capacity
  *	@n: the number of SGL entries
  *
- *	Calculates the number of flits needed for a scatter/gather list that
+ *	Calculates the number of flits needed क्रम a scatter/gather list that
  *	can hold the given number of entries.
  */
-static inline unsigned int sgl_len(unsigned int n)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक sgl_len(अचिन्हित पूर्णांक n)
+अणु
 	/* A Direct Scatter Gather List uses 32-bit lengths and 64-bit PCI DMA
 	 * addresses.  The DSGL Work Request starts off with a 32-bit DSGL
-	 * ULPTX header, then Length0, then Address0, then, for 1 <= i <= N,
-	 * repeated sequences of { Length[i], Length[i+1], Address[i],
-	 * Address[i+1] } (this ensures that all addresses are on 64-bit
+	 * ULPTX header, then Length0, then Address0, then, क्रम 1 <= i <= N,
+	 * repeated sequences of अणु Length[i], Length[i+1], Address[i],
+	 * Address[i+1] पूर्ण (this ensures that all addresses are on 64-bit
 	 * boundaries).  If N is even, then Length[N+1] should be set to 0 and
 	 * Address[N+1] is omitted.
 	 *
 	 * The following calculation incorporates all of the above.  It's
-	 * somewhat hard to follow but, briefly: the "+2" accounts for the
+	 * somewhat hard to follow but, briefly: the "+2" accounts क्रम the
 	 * first two flits which include the DSGL header, Length0 and
-	 * Address0; the "(3*(n-1))/2" covers the main body of list entries (3
-	 * flits for every pair of the remaining N) +1 if (n-1) is odd; and
-	 * finally the "+((n-1)&1)" adds the one remaining flit needed if
+	 * Address0; the "(3*(n-1))/2" covers the मुख्य body of list entries (3
+	 * flits क्रम every pair of the reमुख्यing N) +1 अगर (n-1) is odd; and
+	 * finally the "+((n-1)&1)" adds the one reमुख्यing flit needed अगर
 	 * (n-1) is odd ...
 	 */
 	n--;
-	return (3 * n) / 2 + (n & 1) + 2;
-}
+	वापस (3 * n) / 2 + (n & 1) + 2;
+पूर्ण
 
 /**
- *	flits_to_desc - returns the num of Tx descriptors for the given flits
+ *	flits_to_desc - वापसs the num of Tx descriptors क्रम the given flits
  *	@n: the number of flits
  *
- *	Returns the number of Tx descriptors needed for the supplied number
+ *	Returns the number of Tx descriptors needed क्रम the supplied number
  *	of flits.
  */
-static inline unsigned int flits_to_desc(unsigned int n)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक flits_to_desc(अचिन्हित पूर्णांक n)
+अणु
 	BUG_ON(n > SGE_MAX_WR_LEN / 8);
-	return DIV_ROUND_UP(n, 8);
-}
+	वापस DIV_ROUND_UP(n, 8);
+पूर्ण
 
 /**
  *	is_eth_imm - can an Ethernet packet be sent as immediate data?
@@ -727,212 +728,212 @@ static inline unsigned int flits_to_desc(unsigned int n)
  *	Returns whether an Ethernet packet is small enough to fit as
  *	immediate data. Return value corresponds to headroom required.
  */
-static inline int is_eth_imm(const struct sk_buff *skb, unsigned int chip_ver)
-{
-	int hdrlen = 0;
+अटल अंतरभूत पूर्णांक is_eth_imm(स्थिर काष्ठा sk_buff *skb, अचिन्हित पूर्णांक chip_ver)
+अणु
+	पूर्णांक hdrlen = 0;
 
-	if (skb->encapsulation && skb_shinfo(skb)->gso_size &&
-	    chip_ver > CHELSIO_T5) {
-		hdrlen = sizeof(struct cpl_tx_tnl_lso);
-		hdrlen += sizeof(struct cpl_tx_pkt_core);
-	} else if (skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4) {
-		return 0;
-	} else {
+	अगर (skb->encapsulation && skb_shinfo(skb)->gso_size &&
+	    chip_ver > CHELSIO_T5) अणु
+		hdrlen = माप(काष्ठा cpl_tx_tnl_lso);
+		hdrlen += माप(काष्ठा cpl_tx_pkt_core);
+	पूर्ण अन्यथा अगर (skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4) अणु
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		hdrlen = skb_shinfo(skb)->gso_size ?
-			 sizeof(struct cpl_tx_pkt_lso_core) : 0;
-		hdrlen += sizeof(struct cpl_tx_pkt);
-	}
-	if (skb->len <= MAX_IMM_TX_PKT_LEN - hdrlen)
-		return hdrlen;
-	return 0;
-}
+			 माप(काष्ठा cpl_tx_pkt_lso_core) : 0;
+		hdrlen += माप(काष्ठा cpl_tx_pkt);
+	पूर्ण
+	अगर (skb->len <= MAX_IMM_TX_PKT_LEN - hdrlen)
+		वापस hdrlen;
+	वापस 0;
+पूर्ण
 
 /**
- *	calc_tx_flits - calculate the number of flits for a packet Tx WR
+ *	calc_tx_flits - calculate the number of flits क्रम a packet Tx WR
  *	@skb: the packet
  *	@chip_ver: chip version
  *
- *	Returns the number of flits needed for a Tx WR for the given Ethernet
+ *	Returns the number of flits needed क्रम a Tx WR क्रम the given Ethernet
  *	packet, including the needed WR and CPL headers.
  */
-static inline unsigned int calc_tx_flits(const struct sk_buff *skb,
-					 unsigned int chip_ver)
-{
-	unsigned int flits;
-	int hdrlen = is_eth_imm(skb, chip_ver);
+अटल अंतरभूत अचिन्हित पूर्णांक calc_tx_flits(स्थिर काष्ठा sk_buff *skb,
+					 अचिन्हित पूर्णांक chip_ver)
+अणु
+	अचिन्हित पूर्णांक flits;
+	पूर्णांक hdrlen = is_eth_imm(skb, chip_ver);
 
 	/* If the skb is small enough, we can pump it out as a work request
-	 * with only immediate data.  In that case we just have to have the
+	 * with only immediate data.  In that हाल we just have to have the
 	 * TX Packet header plus the skb data in the Work Request.
 	 */
 
-	if (hdrlen)
-		return DIV_ROUND_UP(skb->len + hdrlen, sizeof(__be64));
+	अगर (hdrlen)
+		वापस DIV_ROUND_UP(skb->len + hdrlen, माप(__be64));
 
-	/* Otherwise, we're going to have to construct a Scatter gather list
+	/* Otherwise, we're going to have to स्थिरruct a Scatter gather list
 	 * of the skb body and fragments.  We also include the flits necessary
-	 * for the TX Packet Work Request and CPL.  We always have a firmware
+	 * क्रम the TX Packet Work Request and CPL.  We always have a firmware
 	 * Write Header (incorporated as part of the cpl_tx_pkt_lso and
-	 * cpl_tx_pkt structures), followed by either a TX Packet Write CPL
-	 * message or, if we're doing a Large Send Offload, an LSO CPL message
+	 * cpl_tx_pkt काष्ठाures), followed by either a TX Packet Write CPL
+	 * message or, अगर we're करोing a Large Send Offload, an LSO CPL message
 	 * with an embedded TX Packet Write CPL message.
 	 */
 	flits = sgl_len(skb_shinfo(skb)->nr_frags + 1);
-	if (skb_shinfo(skb)->gso_size) {
-		if (skb->encapsulation && chip_ver > CHELSIO_T5) {
-			hdrlen = sizeof(struct fw_eth_tx_pkt_wr) +
-				 sizeof(struct cpl_tx_tnl_lso);
-		} else if (skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4) {
+	अगर (skb_shinfo(skb)->gso_size) अणु
+		अगर (skb->encapsulation && chip_ver > CHELSIO_T5) अणु
+			hdrlen = माप(काष्ठा fw_eth_tx_pkt_wr) +
+				 माप(काष्ठा cpl_tx_tnl_lso);
+		पूर्ण अन्यथा अगर (skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4) अणु
 			u32 pkt_hdrlen;
 
 			pkt_hdrlen = eth_get_headlen(skb->dev, skb->data,
 						     skb_headlen(skb));
-			hdrlen = sizeof(struct fw_eth_tx_eo_wr) +
+			hdrlen = माप(काष्ठा fw_eth_tx_eo_wr) +
 				 round_up(pkt_hdrlen, 16);
-		} else {
-			hdrlen = sizeof(struct fw_eth_tx_pkt_wr) +
-				 sizeof(struct cpl_tx_pkt_lso_core);
-		}
+		पूर्ण अन्यथा अणु
+			hdrlen = माप(काष्ठा fw_eth_tx_pkt_wr) +
+				 माप(काष्ठा cpl_tx_pkt_lso_core);
+		पूर्ण
 
-		hdrlen += sizeof(struct cpl_tx_pkt_core);
-		flits += (hdrlen / sizeof(__be64));
-	} else {
-		flits += (sizeof(struct fw_eth_tx_pkt_wr) +
-			  sizeof(struct cpl_tx_pkt_core)) / sizeof(__be64);
-	}
-	return flits;
-}
+		hdrlen += माप(काष्ठा cpl_tx_pkt_core);
+		flits += (hdrlen / माप(__be64));
+	पूर्ण अन्यथा अणु
+		flits += (माप(काष्ठा fw_eth_tx_pkt_wr) +
+			  माप(काष्ठा cpl_tx_pkt_core)) / माप(__be64);
+	पूर्ण
+	वापस flits;
+पूर्ण
 
 /**
- *	calc_tx_descs - calculate the number of Tx descriptors for a packet
+ *	calc_tx_descs - calculate the number of Tx descriptors क्रम a packet
  *	@skb: the packet
  *	@chip_ver: chip version
  *
- *	Returns the number of Tx descriptors needed for the given Ethernet
+ *	Returns the number of Tx descriptors needed क्रम the given Ethernet
  *	packet, including the needed WR and CPL headers.
  */
-static inline unsigned int calc_tx_descs(const struct sk_buff *skb,
-					 unsigned int chip_ver)
-{
-	return flits_to_desc(calc_tx_flits(skb, chip_ver));
-}
+अटल अंतरभूत अचिन्हित पूर्णांक calc_tx_descs(स्थिर काष्ठा sk_buff *skb,
+					 अचिन्हित पूर्णांक chip_ver)
+अणु
+	वापस flits_to_desc(calc_tx_flits(skb, chip_ver));
+पूर्ण
 
 /**
- *	cxgb4_write_sgl - populate a scatter/gather list for a packet
+ *	cxgb4_ग_लिखो_sgl - populate a scatter/gather list क्रम a packet
  *	@skb: the packet
- *	@q: the Tx queue we are writing into
- *	@sgl: starting location for writing the SGL
- *	@end: points right after the end of the SGL
- *	@start: start offset into skb main-body data to include in the SGL
- *	@addr: the list of bus addresses for the SGL elements
+ *	@q: the Tx queue we are writing पूर्णांकo
+ *	@sgl: starting location क्रम writing the SGL
+ *	@end: poपूर्णांकs right after the end of the SGL
+ *	@start: start offset पूर्णांकo skb मुख्य-body data to include in the SGL
+ *	@addr: the list of bus addresses क्रम the SGL elements
  *
- *	Generates a gather list for the buffers that make up a packet.
- *	The caller must provide adequate space for the SGL that will be written.
+ *	Generates a gather list क्रम the buffers that make up a packet.
+ *	The caller must provide adequate space क्रम the SGL that will be written.
  *	The SGL includes all of the packet's page fragments and the data in its
- *	main body except for the first @start bytes.  @sgl must be 16-byte
- *	aligned and within a Tx descriptor with available space.  @end points
- *	right after the end of the SGL but does not account for any potential
+ *	मुख्य body except क्रम the first @start bytes.  @sgl must be 16-byte
+ *	aligned and within a Tx descriptor with available space.  @end poपूर्णांकs
+ *	right after the end of the SGL but करोes not account क्रम any potential
  *	wrap around, i.e., @end > @sgl.
  */
-void cxgb4_write_sgl(const struct sk_buff *skb, struct sge_txq *q,
-		     struct ulptx_sgl *sgl, u64 *end, unsigned int start,
-		     const dma_addr_t *addr)
-{
-	unsigned int i, len;
-	struct ulptx_sge_pair *to;
-	const struct skb_shared_info *si = skb_shinfo(skb);
-	unsigned int nfrags = si->nr_frags;
-	struct ulptx_sge_pair buf[MAX_SKB_FRAGS / 2 + 1];
+व्योम cxgb4_ग_लिखो_sgl(स्थिर काष्ठा sk_buff *skb, काष्ठा sge_txq *q,
+		     काष्ठा ulptx_sgl *sgl, u64 *end, अचिन्हित पूर्णांक start,
+		     स्थिर dma_addr_t *addr)
+अणु
+	अचिन्हित पूर्णांक i, len;
+	काष्ठा ulptx_sge_pair *to;
+	स्थिर काष्ठा skb_shared_info *si = skb_shinfo(skb);
+	अचिन्हित पूर्णांक nfrags = si->nr_frags;
+	काष्ठा ulptx_sge_pair buf[MAX_SKB_FRAGS / 2 + 1];
 
 	len = skb_headlen(skb) - start;
-	if (likely(len)) {
+	अगर (likely(len)) अणु
 		sgl->len0 = htonl(len);
 		sgl->addr0 = cpu_to_be64(addr[0] + start);
 		nfrags++;
-	} else {
+	पूर्ण अन्यथा अणु
 		sgl->len0 = htonl(skb_frag_size(&si->frags[0]));
 		sgl->addr0 = cpu_to_be64(addr[1]);
-	}
+	पूर्ण
 
 	sgl->cmd_nsge = htonl(ULPTX_CMD_V(ULP_TX_SC_DSGL) |
 			      ULPTX_NSGE_V(nfrags));
-	if (likely(--nfrags == 0))
-		return;
+	अगर (likely(--nfrags == 0))
+		वापस;
 	/*
-	 * Most of the complexity below deals with the possibility we hit the
-	 * end of the queue in the middle of writing the SGL.  For this case
+	 * Most of the complनिकासy below deals with the possibility we hit the
+	 * end of the queue in the middle of writing the SGL.  For this हाल
 	 * only we create the SGL in a temporary buffer and then copy it.
 	 */
 	to = (u8 *)end > (u8 *)q->stat ? buf : sgl->sge;
 
-	for (i = (nfrags != si->nr_frags); nfrags >= 2; nfrags -= 2, to++) {
+	क्रम (i = (nfrags != si->nr_frags); nfrags >= 2; nfrags -= 2, to++) अणु
 		to->len[0] = cpu_to_be32(skb_frag_size(&si->frags[i]));
 		to->len[1] = cpu_to_be32(skb_frag_size(&si->frags[++i]));
 		to->addr[0] = cpu_to_be64(addr[i]);
 		to->addr[1] = cpu_to_be64(addr[++i]);
-	}
-	if (nfrags) {
+	पूर्ण
+	अगर (nfrags) अणु
 		to->len[0] = cpu_to_be32(skb_frag_size(&si->frags[i]));
 		to->len[1] = cpu_to_be32(0);
 		to->addr[0] = cpu_to_be64(addr[i + 1]);
-	}
-	if (unlikely((u8 *)end > (u8 *)q->stat)) {
-		unsigned int part0 = (u8 *)q->stat - (u8 *)sgl->sge, part1;
+	पूर्ण
+	अगर (unlikely((u8 *)end > (u8 *)q->stat)) अणु
+		अचिन्हित पूर्णांक part0 = (u8 *)q->stat - (u8 *)sgl->sge, part1;
 
-		if (likely(part0))
-			memcpy(sgl->sge, buf, part0);
+		अगर (likely(part0))
+			स_नकल(sgl->sge, buf, part0);
 		part1 = (u8 *)end - (u8 *)q->stat;
-		memcpy(q->desc, (u8 *)buf + part0, part1);
-		end = (void *)q->desc + part1;
-	}
-	if ((uintptr_t)end & 8)           /* 0-pad to multiple of 16 */
+		स_नकल(q->desc, (u8 *)buf + part0, part1);
+		end = (व्योम *)q->desc + part1;
+	पूर्ण
+	अगर ((uपूर्णांकptr_t)end & 8)           /* 0-pad to multiple of 16 */
 		*end = 0;
-}
-EXPORT_SYMBOL(cxgb4_write_sgl);
+पूर्ण
+EXPORT_SYMBOL(cxgb4_ग_लिखो_sgl);
 
-/*	cxgb4_write_partial_sgl - populate SGL for partial packet
+/*	cxgb4_ग_लिखो_partial_sgl - populate SGL क्रम partial packet
  *	@skb: the packet
- *	@q: the Tx queue we are writing into
- *	@sgl: starting location for writing the SGL
- *	@end: points right after the end of the SGL
- *	@addr: the list of bus addresses for the SGL elements
+ *	@q: the Tx queue we are writing पूर्णांकo
+ *	@sgl: starting location क्रम writing the SGL
+ *	@end: poपूर्णांकs right after the end of the SGL
+ *	@addr: the list of bus addresses क्रम the SGL elements
  *	@start: start offset in the SKB where partial data starts
  *	@len: length of data from @start to send out
  *
- *	This API will handle sending out partial data of a skb if required.
- *	Unlike cxgb4_write_sgl, @start can be any offset into the skb data,
+ *	This API will handle sending out partial data of a skb अगर required.
+ *	Unlike cxgb4_ग_लिखो_sgl, @start can be any offset पूर्णांकo the skb data,
  *	and @len will decide how much data after @start offset to send out.
  */
-void cxgb4_write_partial_sgl(const struct sk_buff *skb, struct sge_txq *q,
-			     struct ulptx_sgl *sgl, u64 *end,
-			     const dma_addr_t *addr, u32 start, u32 len)
-{
-	struct ulptx_sge_pair buf[MAX_SKB_FRAGS / 2 + 1] = {0}, *to;
+व्योम cxgb4_ग_लिखो_partial_sgl(स्थिर काष्ठा sk_buff *skb, काष्ठा sge_txq *q,
+			     काष्ठा ulptx_sgl *sgl, u64 *end,
+			     स्थिर dma_addr_t *addr, u32 start, u32 len)
+अणु
+	काष्ठा ulptx_sge_pair buf[MAX_SKB_FRAGS / 2 + 1] = अणु0पूर्ण, *to;
 	u32 frag_size, skb_linear_data_len = skb_headlen(skb);
-	struct skb_shared_info *si = skb_shinfo(skb);
+	काष्ठा skb_shared_info *si = skb_shinfo(skb);
 	u8 i = 0, frag_idx = 0, nfrags = 0;
 	skb_frag_t *frag;
 
 	/* Fill the first SGL either from linear data or from partial
 	 * frag based on @start.
 	 */
-	if (unlikely(start < skb_linear_data_len)) {
+	अगर (unlikely(start < skb_linear_data_len)) अणु
 		frag_size = min(len, skb_linear_data_len - start);
 		sgl->len0 = htonl(frag_size);
 		sgl->addr0 = cpu_to_be64(addr[0] + start);
 		len -= frag_size;
 		nfrags++;
-	} else {
+	पूर्ण अन्यथा अणु
 		start -= skb_linear_data_len;
 		frag = &si->frags[frag_idx];
 		frag_size = skb_frag_size(frag);
 		/* find the first frag */
-		while (start >= frag_size) {
+		जबतक (start >= frag_size) अणु
 			start -= frag_size;
 			frag_idx++;
 			frag = &si->frags[frag_idx];
 			frag_size = skb_frag_size(frag);
-		}
+		पूर्ण
 
 		frag_size = min(len, skb_frag_size(frag) - start);
 		sgl->len0 = cpu_to_be32(frag_size);
@@ -940,16 +941,16 @@ void cxgb4_write_partial_sgl(const struct sk_buff *skb, struct sge_txq *q,
 		len -= frag_size;
 		nfrags++;
 		frag_idx++;
-	}
+	पूर्ण
 
 	/* If the entire partial data fit in one SGL, then send it out
 	 * now.
 	 */
-	if (!len)
-		goto done;
+	अगर (!len)
+		जाओ करोne;
 
-	/* Most of the complexity below deals with the possibility we hit the
-	 * end of the queue in the middle of writing the SGL.  For this case
+	/* Most of the complनिकासy below deals with the possibility we hit the
+	 * end of the queue in the middle of writing the SGL.  For this हाल
 	 * only we create the SGL in a temporary buffer and then copy it.
 	 */
 	to = (u8 *)end > (u8 *)q->stat ? buf : sgl->sge;
@@ -958,112 +959,112 @@ void cxgb4_write_partial_sgl(const struct sk_buff *skb, struct sge_txq *q,
 	 * rest of the frags in subsequent SGLs. Note that each SGL
 	 * pair can store 2 frags.
 	 */
-	while (len) {
+	जबतक (len) अणु
 		frag_size = min(len, skb_frag_size(&si->frags[frag_idx]));
 		to->len[i & 1] = cpu_to_be32(frag_size);
 		to->addr[i & 1] = cpu_to_be64(addr[frag_idx + 1]);
-		if (i && (i & 1))
+		अगर (i && (i & 1))
 			to++;
 		nfrags++;
 		frag_idx++;
 		i++;
 		len -= frag_size;
-	}
+	पूर्ण
 
 	/* If we ended in an odd boundary, then set the second SGL's
 	 * length in the pair to 0.
 	 */
-	if (i & 1)
+	अगर (i & 1)
 		to->len[1] = cpu_to_be32(0);
 
-	/* Copy from temporary buffer to Tx ring, in case we hit the
+	/* Copy from temporary buffer to Tx ring, in हाल we hit the
 	 * end of the queue in the middle of writing the SGL.
 	 */
-	if (unlikely((u8 *)end > (u8 *)q->stat)) {
+	अगर (unlikely((u8 *)end > (u8 *)q->stat)) अणु
 		u32 part0 = (u8 *)q->stat - (u8 *)sgl->sge, part1;
 
-		if (likely(part0))
-			memcpy(sgl->sge, buf, part0);
+		अगर (likely(part0))
+			स_नकल(sgl->sge, buf, part0);
 		part1 = (u8 *)end - (u8 *)q->stat;
-		memcpy(q->desc, (u8 *)buf + part0, part1);
-		end = (void *)q->desc + part1;
-	}
+		स_नकल(q->desc, (u8 *)buf + part0, part1);
+		end = (व्योम *)q->desc + part1;
+	पूर्ण
 
 	/* 0-pad to multiple of 16 */
-	if ((uintptr_t)end & 8)
+	अगर ((uपूर्णांकptr_t)end & 8)
 		*end = 0;
-done:
+करोne:
 	sgl->cmd_nsge = htonl(ULPTX_CMD_V(ULP_TX_SC_DSGL) |
 			ULPTX_NSGE_V(nfrags));
-}
-EXPORT_SYMBOL(cxgb4_write_partial_sgl);
+पूर्ण
+EXPORT_SYMBOL(cxgb4_ग_लिखो_partial_sgl);
 
 /* This function copies 64 byte coalesced work request to
  * memory mapped BAR2 space. For coalesced WR SGE fetches
  * data from the FIFO instead of from Host.
  */
-static void cxgb_pio_copy(u64 __iomem *dst, u64 *src)
-{
-	int count = 8;
+अटल व्योम cxgb_pio_copy(u64 __iomem *dst, u64 *src)
+अणु
+	पूर्णांक count = 8;
 
-	while (count) {
-		writeq(*src, dst);
+	जबतक (count) अणु
+		ग_लिखोq(*src, dst);
 		src++;
 		dst++;
 		count--;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- *	cxgb4_ring_tx_db - check and potentially ring a Tx queue's doorbell
+ *	cxgb4_ring_tx_db - check and potentially ring a Tx queue's करोorbell
  *	@adap: the adapter
  *	@q: the Tx queue
  *	@n: number of new descriptors to give to HW
  *
- *	Ring the doorbel for a Tx queue.
+ *	Ring the करोorbel क्रम a Tx queue.
  */
-inline void cxgb4_ring_tx_db(struct adapter *adap, struct sge_txq *q, int n)
-{
-	/* Make sure that all writes to the TX Descriptors are committed
-	 * before we tell the hardware about them.
+अंतरभूत व्योम cxgb4_ring_tx_db(काष्ठा adapter *adap, काष्ठा sge_txq *q, पूर्णांक n)
+अणु
+	/* Make sure that all ग_लिखोs to the TX Descriptors are committed
+	 * beक्रमe we tell the hardware about them.
 	 */
 	wmb();
 
-	/* If we don't have access to the new User Doorbell (T5+), use the old
-	 * doorbell mechanism; otherwise use the new BAR2 mechanism.
+	/* If we करोn't have access to the new User Doorbell (T5+), use the old
+	 * करोorbell mechanism; otherwise use the new BAR2 mechanism.
 	 */
-	if (unlikely(q->bar2_addr == NULL)) {
+	अगर (unlikely(q->bar2_addr == शून्य)) अणु
 		u32 val = PIDX_V(n);
-		unsigned long flags;
+		अचिन्हित दीर्घ flags;
 
 		/* For T4 we need to participate in the Doorbell Recovery
 		 * mechanism.
 		 */
 		spin_lock_irqsave(&q->db_lock, flags);
-		if (!q->db_disabled)
-			t4_write_reg(adap, MYPF_REG(SGE_PF_KDOORBELL_A),
+		अगर (!q->db_disabled)
+			t4_ग_लिखो_reg(adap, MYPF_REG(SGE_PF_KDOORBELL_A),
 				     QID_V(q->cntxt_id) | val);
-		else
+		अन्यथा
 			q->db_pidx_inc += n;
 		q->db_pidx = q->pidx;
 		spin_unlock_irqrestore(&q->db_lock, flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		u32 val = PIDX_T5_V(n);
 
 		/* T4 and later chips share the same PIDX field offset within
-		 * the doorbell, but T5 and later shrank the field in order to
-		 * gain a bit for Doorbell Priority.  The field was absurdly
+		 * the करोorbell, but T5 and later shrank the field in order to
+		 * gain a bit क्रम Doorbell Priority.  The field was असलurdly
 		 * large in the first place (14 bits) so we just use the T5
-		 * and later limits and warn if a Queue ID is too large.
+		 * and later limits and warn अगर a Queue ID is too large.
 		 */
 		WARN_ON(val & DBPRIO_F);
 
 		/* If we're only writing a single TX Descriptor and we can use
-		 * Inferred QID registers, we can use the Write Combining
-		 * Gather Buffer; otherwise we use the simple doorbell.
+		 * Inferred QID रेजिस्टरs, we can use the Write Combining
+		 * Gather Buffer; otherwise we use the simple करोorbell.
 		 */
-		if (n == 1 && q->bar2_qid == 0) {
-			int index = (q->pidx
+		अगर (n == 1 && q->bar2_qid == 0) अणु
+			पूर्णांक index = (q->pidx
 				     ? (q->pidx - 1)
 				     : (q->size - 1));
 			u64 *wr = (u64 *)&q->desc[index];
@@ -1071,199 +1072,199 @@ inline void cxgb4_ring_tx_db(struct adapter *adap, struct sge_txq *q, int n)
 			cxgb_pio_copy((u64 __iomem *)
 				      (q->bar2_addr + SGE_UDB_WCDOORBELL),
 				      wr);
-		} else {
-			writel(val | QID_V(q->bar2_qid),
+		पूर्ण अन्यथा अणु
+			ग_लिखोl(val | QID_V(q->bar2_qid),
 			       q->bar2_addr + SGE_UDB_KDOORBELL);
-		}
+		पूर्ण
 
-		/* This Write Memory Barrier will force the write to the User
+		/* This Write Memory Barrier will क्रमce the ग_लिखो to the User
 		 * Doorbell area to be flushed.  This is needed to prevent
-		 * writes on different CPUs for the same queue from hitting
+		 * ग_लिखोs on dअगरferent CPUs क्रम the same queue from hitting
 		 * the adapter out of order.  This is required when some Work
 		 * Requests take the Write Combine Gather Buffer path (user
-		 * doorbell area offset [SGE_UDB_WCDOORBELL..+63]) and some
+		 * करोorbell area offset [SGE_UDB_WCDOORBELL..+63]) and some
 		 * take the traditional path where we simply increment the
 		 * PIDX (User Doorbell area SGE_UDB_KDOORBELL) and have the
-		 * hardware DMA read the actual Work Request.
+		 * hardware DMA पढ़ो the actual Work Request.
 		 */
 		wmb();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(cxgb4_ring_tx_db);
 
 /**
- *	cxgb4_inline_tx_skb - inline a packet's data into Tx descriptors
+ *	cxgb4_अंतरभूत_tx_skb - अंतरभूत a packet's data पूर्णांकo Tx descriptors
  *	@skb: the packet
- *	@q: the Tx queue where the packet will be inlined
- *	@pos: starting position in the Tx queue where to inline the packet
+ *	@q: the Tx queue where the packet will be अंतरभूतd
+ *	@pos: starting position in the Tx queue where to अंतरभूत the packet
  *
- *	Inline a packet's contents directly into Tx descriptors, starting at
+ *	Inline a packet's contents directly पूर्णांकo Tx descriptors, starting at
  *	the given position within the Tx DMA ring.
- *	Most of the complexity of this operation is dealing with wrap arounds
- *	in the middle of the packet we want to inline.
+ *	Most of the complनिकासy of this operation is dealing with wrap arounds
+ *	in the middle of the packet we want to अंतरभूत.
  */
-void cxgb4_inline_tx_skb(const struct sk_buff *skb,
-			 const struct sge_txq *q, void *pos)
-{
-	int left = (void *)q->stat - pos;
+व्योम cxgb4_अंतरभूत_tx_skb(स्थिर काष्ठा sk_buff *skb,
+			 स्थिर काष्ठा sge_txq *q, व्योम *pos)
+अणु
+	पूर्णांक left = (व्योम *)q->stat - pos;
 	u64 *p;
 
-	if (likely(skb->len <= left)) {
-		if (likely(!skb->data_len))
+	अगर (likely(skb->len <= left)) अणु
+		अगर (likely(!skb->data_len))
 			skb_copy_from_linear_data(skb, pos, skb->len);
-		else
+		अन्यथा
 			skb_copy_bits(skb, 0, pos, skb->len);
 		pos += skb->len;
-	} else {
+	पूर्ण अन्यथा अणु
 		skb_copy_bits(skb, 0, pos, left);
 		skb_copy_bits(skb, left, q->desc, skb->len - left);
-		pos = (void *)q->desc + (skb->len - left);
-	}
+		pos = (व्योम *)q->desc + (skb->len - left);
+	पूर्ण
 
 	/* 0-pad to multiple of 16 */
 	p = PTR_ALIGN(pos, 8);
-	if ((uintptr_t)p & 8)
+	अगर ((uपूर्णांकptr_t)p & 8)
 		*p = 0;
-}
-EXPORT_SYMBOL(cxgb4_inline_tx_skb);
+पूर्ण
+EXPORT_SYMBOL(cxgb4_अंतरभूत_tx_skb);
 
-static void *inline_tx_skb_header(const struct sk_buff *skb,
-				  const struct sge_txq *q,  void *pos,
-				  int length)
-{
+अटल व्योम *अंतरभूत_tx_skb_header(स्थिर काष्ठा sk_buff *skb,
+				  स्थिर काष्ठा sge_txq *q,  व्योम *pos,
+				  पूर्णांक length)
+अणु
 	u64 *p;
-	int left = (void *)q->stat - pos;
+	पूर्णांक left = (व्योम *)q->stat - pos;
 
-	if (likely(length <= left)) {
-		memcpy(pos, skb->data, length);
+	अगर (likely(length <= left)) अणु
+		स_नकल(pos, skb->data, length);
 		pos += length;
-	} else {
-		memcpy(pos, skb->data, left);
-		memcpy(q->desc, skb->data + left, length - left);
-		pos = (void *)q->desc + (length - left);
-	}
+	पूर्ण अन्यथा अणु
+		स_नकल(pos, skb->data, left);
+		स_नकल(q->desc, skb->data + left, length - left);
+		pos = (व्योम *)q->desc + (length - left);
+	पूर्ण
 	/* 0-pad to multiple of 16 */
 	p = PTR_ALIGN(pos, 8);
-	if ((uintptr_t)p & 8) {
+	अगर ((uपूर्णांकptr_t)p & 8) अणु
 		*p = 0;
-		return p + 1;
-	}
-	return p;
-}
+		वापस p + 1;
+	पूर्ण
+	वापस p;
+पूर्ण
 
 /*
- * Figure out what HW csum a packet wants and return the appropriate control
+ * Figure out what HW csum a packet wants and वापस the appropriate control
  * bits.
  */
-static u64 hwcsum(enum chip_type chip, const struct sk_buff *skb)
-{
-	int csum_type;
+अटल u64 hwcsum(क्रमागत chip_type chip, स्थिर काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक csum_type;
 	bool inner_hdr_csum = false;
 	u16 proto, ver;
 
-	if (skb->encapsulation &&
+	अगर (skb->encapsulation &&
 	    (CHELSIO_CHIP_VERSION(chip) > CHELSIO_T5))
 		inner_hdr_csum = true;
 
-	if (inner_hdr_csum) {
+	अगर (inner_hdr_csum) अणु
 		ver = inner_ip_hdr(skb)->version;
 		proto = (ver == 4) ? inner_ip_hdr(skb)->protocol :
 			inner_ipv6_hdr(skb)->nexthdr;
-	} else {
+	पूर्ण अन्यथा अणु
 		ver = ip_hdr(skb)->version;
 		proto = (ver == 4) ? ip_hdr(skb)->protocol :
 			ipv6_hdr(skb)->nexthdr;
-	}
+	पूर्ण
 
-	if (ver == 4) {
-		if (proto == IPPROTO_TCP)
+	अगर (ver == 4) अणु
+		अगर (proto == IPPROTO_TCP)
 			csum_type = TX_CSUM_TCPIP;
-		else if (proto == IPPROTO_UDP)
+		अन्यथा अगर (proto == IPPROTO_UDP)
 			csum_type = TX_CSUM_UDPIP;
-		else {
+		अन्यथा अणु
 nocsum:			/*
 			 * unknown protocol, disable HW csum
 			 * and hope a bad packet is detected
 			 */
-			return TXPKT_L4CSUM_DIS_F;
-		}
-	} else {
+			वापस TXPKT_L4CSUM_DIS_F;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * this doesn't work with extension headers
+		 * this करोesn't work with extension headers
 		 */
-		if (proto == IPPROTO_TCP)
+		अगर (proto == IPPROTO_TCP)
 			csum_type = TX_CSUM_TCPIP6;
-		else if (proto == IPPROTO_UDP)
+		अन्यथा अगर (proto == IPPROTO_UDP)
 			csum_type = TX_CSUM_UDPIP6;
-		else
-			goto nocsum;
-	}
+		अन्यथा
+			जाओ nocsum;
+	पूर्ण
 
-	if (likely(csum_type >= TX_CSUM_TCPIP)) {
-		int eth_hdr_len, l4_len;
+	अगर (likely(csum_type >= TX_CSUM_TCPIP)) अणु
+		पूर्णांक eth_hdr_len, l4_len;
 		u64 hdr_len;
 
-		if (inner_hdr_csum) {
-			/* This allows checksum offload for all encapsulated
+		अगर (inner_hdr_csum) अणु
+			/* This allows checksum offload क्रम all encapsulated
 			 * packets like GRE etc..
 			 */
 			l4_len = skb_inner_network_header_len(skb);
 			eth_hdr_len = skb_inner_network_offset(skb) - ETH_HLEN;
-		} else {
+		पूर्ण अन्यथा अणु
 			l4_len = skb_network_header_len(skb);
 			eth_hdr_len = skb_network_offset(skb) - ETH_HLEN;
-		}
+		पूर्ण
 		hdr_len = TXPKT_IPHDR_LEN_V(l4_len);
 
-		if (CHELSIO_CHIP_VERSION(chip) <= CHELSIO_T5)
+		अगर (CHELSIO_CHIP_VERSION(chip) <= CHELSIO_T5)
 			hdr_len |= TXPKT_ETHHDR_LEN_V(eth_hdr_len);
-		else
+		अन्यथा
 			hdr_len |= T6_TXPKT_ETHHDR_LEN_V(eth_hdr_len);
-		return TXPKT_CSUM_TYPE_V(csum_type) | hdr_len;
-	} else {
-		int start = skb_transport_offset(skb);
+		वापस TXPKT_CSUM_TYPE_V(csum_type) | hdr_len;
+	पूर्ण अन्यथा अणु
+		पूर्णांक start = skb_transport_offset(skb);
 
-		return TXPKT_CSUM_TYPE_V(csum_type) |
+		वापस TXPKT_CSUM_TYPE_V(csum_type) |
 			TXPKT_CSUM_START_V(start) |
 			TXPKT_CSUM_LOC_V(start + skb->csum_offset);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void eth_txq_stop(struct sge_eth_txq *q)
-{
-	netif_tx_stop_queue(q->txq);
+अटल व्योम eth_txq_stop(काष्ठा sge_eth_txq *q)
+अणु
+	netअगर_tx_stop_queue(q->txq);
 	q->q.stops++;
-}
+पूर्ण
 
-static inline void txq_advance(struct sge_txq *q, unsigned int n)
-{
+अटल अंतरभूत व्योम txq_advance(काष्ठा sge_txq *q, अचिन्हित पूर्णांक n)
+अणु
 	q->in_use += n;
 	q->pidx += n;
-	if (q->pidx >= q->size)
+	अगर (q->pidx >= q->size)
 		q->pidx -= q->size;
-}
+पूर्ण
 
-#ifdef CONFIG_CHELSIO_T4_FCOE
-static inline int
-cxgb_fcoe_offload(struct sk_buff *skb, struct adapter *adap,
-		  const struct port_info *pi, u64 *cntrl)
-{
-	const struct cxgb_fcoe *fcoe = &pi->fcoe;
+#अगर_घोषित CONFIG_CHELSIO_T4_FCOE
+अटल अंतरभूत पूर्णांक
+cxgb_fcoe_offload(काष्ठा sk_buff *skb, काष्ठा adapter *adap,
+		  स्थिर काष्ठा port_info *pi, u64 *cntrl)
+अणु
+	स्थिर काष्ठा cxgb_fcoe *fcoe = &pi->fcoe;
 
-	if (!(fcoe->flags & CXGB_FCOE_ENABLED))
-		return 0;
+	अगर (!(fcoe->flags & CXGB_FCOE_ENABLED))
+		वापस 0;
 
-	if (skb->protocol != htons(ETH_P_FCOE))
-		return 0;
+	अगर (skb->protocol != htons(ETH_P_FCOE))
+		वापस 0;
 
 	skb_reset_mac_header(skb);
-	skb->mac_len = sizeof(struct ethhdr);
+	skb->mac_len = माप(काष्ठा ethhdr);
 
 	skb_set_network_header(skb, skb->mac_len);
-	skb_set_transport_header(skb, skb->mac_len + sizeof(struct fcoe_hdr));
+	skb_set_transport_header(skb, skb->mac_len + माप(काष्ठा fcoe_hdr));
 
-	if (!cxgb_fcoe_sof_eof_supported(adap, skb))
-		return -ENOTSUPP;
+	अगर (!cxgb_fcoe_sof_eof_supported(adap, skb))
+		वापस -ENOTSUPP;
 
 	/* FC CRC offload */
 	*cntrl = TXPKT_CSUM_TYPE_V(TX_CSUM_FCOE) |
@@ -1271,58 +1272,58 @@ cxgb_fcoe_offload(struct sk_buff *skb, struct adapter *adap,
 		     TXPKT_CSUM_START_V(CXGB_FCOE_TXPKT_CSUM_START) |
 		     TXPKT_CSUM_END_V(CXGB_FCOE_TXPKT_CSUM_END) |
 		     TXPKT_CSUM_LOC_V(CXGB_FCOE_TXPKT_CSUM_END);
-	return 0;
-}
-#endif /* CONFIG_CHELSIO_T4_FCOE */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CHELSIO_T4_FCOE */
 
-/* Returns tunnel type if hardware supports offloading of the same.
- * It is called only for T5 and onwards.
+/* Returns tunnel type अगर hardware supports offloading of the same.
+ * It is called only क्रम T5 and onwards.
  */
-enum cpl_tx_tnl_lso_type cxgb_encap_offload_supported(struct sk_buff *skb)
-{
+क्रमागत cpl_tx_tnl_lso_type cxgb_encap_offload_supported(काष्ठा sk_buff *skb)
+अणु
 	u8 l4_hdr = 0;
-	enum cpl_tx_tnl_lso_type tnl_type = TX_TNL_TYPE_OPAQUE;
-	struct port_info *pi = netdev_priv(skb->dev);
-	struct adapter *adapter = pi->adapter;
+	क्रमागत cpl_tx_tnl_lso_type tnl_type = TX_TNL_TYPE_OPAQUE;
+	काष्ठा port_info *pi = netdev_priv(skb->dev);
+	काष्ठा adapter *adapter = pi->adapter;
 
-	if (skb->inner_protocol_type != ENCAP_TYPE_ETHER ||
+	अगर (skb->inner_protocol_type != ENCAP_TYPE_ETHER ||
 	    skb->inner_protocol != htons(ETH_P_TEB))
-		return tnl_type;
+		वापस tnl_type;
 
-	switch (vlan_get_protocol(skb)) {
-	case htons(ETH_P_IP):
+	चयन (vlan_get_protocol(skb)) अणु
+	हाल htons(ETH_P_IP):
 		l4_hdr = ip_hdr(skb)->protocol;
-		break;
-	case htons(ETH_P_IPV6):
+		अवरोध;
+	हाल htons(ETH_P_IPV6):
 		l4_hdr = ipv6_hdr(skb)->nexthdr;
-		break;
-	default:
-		return tnl_type;
-	}
+		अवरोध;
+	शेष:
+		वापस tnl_type;
+	पूर्ण
 
-	switch (l4_hdr) {
-	case IPPROTO_UDP:
-		if (adapter->vxlan_port == udp_hdr(skb)->dest)
+	चयन (l4_hdr) अणु
+	हाल IPPROTO_UDP:
+		अगर (adapter->vxlan_port == udp_hdr(skb)->dest)
 			tnl_type = TX_TNL_TYPE_VXLAN;
-		else if (adapter->geneve_port == udp_hdr(skb)->dest)
+		अन्यथा अगर (adapter->geneve_port == udp_hdr(skb)->dest)
 			tnl_type = TX_TNL_TYPE_GENEVE;
-		break;
-	default:
-		return tnl_type;
-	}
+		अवरोध;
+	शेष:
+		वापस tnl_type;
+	पूर्ण
 
-	return tnl_type;
-}
+	वापस tnl_type;
+पूर्ण
 
-static inline void t6_fill_tnl_lso(struct sk_buff *skb,
-				   struct cpl_tx_tnl_lso *tnl_lso,
-				   enum cpl_tx_tnl_lso_type tnl_type)
-{
+अटल अंतरभूत व्योम t6_fill_tnl_lso(काष्ठा sk_buff *skb,
+				   काष्ठा cpl_tx_tnl_lso *tnl_lso,
+				   क्रमागत cpl_tx_tnl_lso_type tnl_type)
+अणु
 	u32 val;
-	int in_eth_xtra_len;
-	int l3hdr_len = skb_network_header_len(skb);
-	int eth_xtra_len = skb_network_offset(skb) - ETH_HLEN;
-	const struct skb_shared_info *ssi = skb_shinfo(skb);
+	पूर्णांक in_eth_xtra_len;
+	पूर्णांक l3hdr_len = skb_network_header_len(skb);
+	पूर्णांक eth_xtra_len = skb_network_offset(skb) - ETH_HLEN;
+	स्थिर काष्ठा skb_shared_info *ssi = skb_shinfo(skb);
 	bool v6 = (ip_hdr(skb)->version == 6);
 
 	val = CPL_TX_TNL_LSO_OPCODE_V(CPL_TX_TNL_LSO) |
@@ -1343,17 +1344,17 @@ static inline void t6_fill_tnl_lso(struct sk_buff *skb,
 	in_eth_xtra_len = skb_inner_network_header(skb) -
 			  skb_inner_mac_header(skb) - ETH_HLEN;
 
-	switch (tnl_type) {
-	case TX_TNL_TYPE_VXLAN:
-	case TX_TNL_TYPE_GENEVE:
+	चयन (tnl_type) अणु
+	हाल TX_TNL_TYPE_VXLAN:
+	हाल TX_TNL_TYPE_GENEVE:
 		tnl_lso->UdpLenSetOut_to_TnlHdrLen =
 			htons(CPL_TX_TNL_LSO_UDPCHKCLROUT_F |
 			CPL_TX_TNL_LSO_UDPLENSETOUT_F);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		tnl_lso->UdpLenSetOut_to_TnlHdrLen = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	tnl_lso->UdpLenSetOut_to_TnlHdrLen |=
 		 htons(CPL_TX_TNL_LSO_TNLHDRLEN_V(val) |
@@ -1372,18 +1373,18 @@ static inline void t6_fill_tnl_lso(struct sk_buff *skb,
 	tnl_lso->IpIdSplit_to_Mss = htons(CPL_TX_TNL_LSO_MSS_V(ssi->gso_size));
 	tnl_lso->TCPSeqOffset = htonl(0);
 	tnl_lso->EthLenOffset_Size = htonl(CPL_TX_TNL_LSO_SIZE_V(skb->len));
-}
+पूर्ण
 
-static inline void *write_tso_wr(struct adapter *adap, struct sk_buff *skb,
-				 struct cpl_tx_pkt_lso_core *lso)
-{
-	int eth_xtra_len = skb_network_offset(skb) - ETH_HLEN;
-	int l3hdr_len = skb_network_header_len(skb);
-	const struct skb_shared_info *ssi;
+अटल अंतरभूत व्योम *ग_लिखो_tso_wr(काष्ठा adapter *adap, काष्ठा sk_buff *skb,
+				 काष्ठा cpl_tx_pkt_lso_core *lso)
+अणु
+	पूर्णांक eth_xtra_len = skb_network_offset(skb) - ETH_HLEN;
+	पूर्णांक l3hdr_len = skb_network_header_len(skb);
+	स्थिर काष्ठा skb_shared_info *ssi;
 	bool ipv6 = false;
 
 	ssi = skb_shinfo(skb);
-	if (ssi->gso_type & SKB_GSO_TCPV6)
+	अगर (ssi->gso_type & SKB_GSO_TCPV6)
 		ipv6 = true;
 
 	lso->lso_ctrl = htonl(LSO_OPCODE_V(CPL_TX_PKT_LSO) |
@@ -1391,17 +1392,17 @@ static inline void *write_tso_wr(struct adapter *adap, struct sk_buff *skb,
 			      LSO_IPV6_V(ipv6) |
 			      LSO_ETHHDR_LEN_V(eth_xtra_len / 4) |
 			      LSO_IPHDR_LEN_V(l3hdr_len / 4) |
-			      LSO_TCPHDR_LEN_V(tcp_hdr(skb)->doff));
+			      LSO_TCPHDR_LEN_V(tcp_hdr(skb)->करोff));
 	lso->ipid_ofst = htons(0);
 	lso->mss = htons(ssi->gso_size);
 	lso->seqno_offset = htonl(0);
-	if (is_t4(adap->params.chip))
+	अगर (is_t4(adap->params.chip))
 		lso->len = htonl(skb->len);
-	else
+	अन्यथा
 		lso->len = htonl(LSO_T5_XFER_SIZE_V(skb->len));
 
-	return (void *)(lso + 1);
-}
+	वापस (व्योम *)(lso + 1);
+पूर्ण
 
 /**
  *	t4_sge_eth_txq_egress_update - handle Ethernet TX Queue update
@@ -1413,83 +1414,83 @@ static inline void *write_tso_wr(struct adapter *adap, struct sk_buff *skb,
  *	Queue with respect to the hardware's progress in consuming the TX
  *	Work Requests that we've put on that Egress Queue.  This happens
  *	when we get Egress Queue Update messages and also prophylactically
- *	in regular timer-based Ethernet TX Queue maintenance.
+ *	in regular समयr-based Ethernet TX Queue मुख्यtenance.
  */
-int t4_sge_eth_txq_egress_update(struct adapter *adap, struct sge_eth_txq *eq,
-				 int maxreclaim)
-{
-	unsigned int reclaimed, hw_cidx;
-	struct sge_txq *q = &eq->q;
-	int hw_in_use;
+पूर्णांक t4_sge_eth_txq_egress_update(काष्ठा adapter *adap, काष्ठा sge_eth_txq *eq,
+				 पूर्णांक maxreclaim)
+अणु
+	अचिन्हित पूर्णांक reclaimed, hw_cidx;
+	काष्ठा sge_txq *q = &eq->q;
+	पूर्णांक hw_in_use;
 
-	if (!q->in_use || !__netif_tx_trylock(eq->txq))
-		return 0;
+	अगर (!q->in_use || !__netअगर_tx_trylock(eq->txq))
+		वापस 0;
 
 	/* Reclaim pending completed TX Descriptors. */
 	reclaimed = reclaim_completed_tx(adap, &eq->q, maxreclaim, true);
 
 	hw_cidx = ntohs(READ_ONCE(q->stat->cidx));
 	hw_in_use = q->pidx - hw_cidx;
-	if (hw_in_use < 0)
+	अगर (hw_in_use < 0)
 		hw_in_use += q->size;
 
 	/* If the TX Queue is currently stopped and there's now more than half
 	 * the queue available, restart it.  Otherwise bail out since the rest
-	 * of what we want do here is with the possibility of shipping any
+	 * of what we want करो here is with the possibility of shipping any
 	 * currently buffered Coalesced TX Work Request.
 	 */
-	if (netif_tx_queue_stopped(eq->txq) && hw_in_use < (q->size / 2)) {
-		netif_tx_wake_queue(eq->txq);
+	अगर (netअगर_tx_queue_stopped(eq->txq) && hw_in_use < (q->size / 2)) अणु
+		netअगर_tx_wake_queue(eq->txq);
 		eq->q.restarts++;
-	}
+	पूर्ण
 
-	__netif_tx_unlock(eq->txq);
-	return reclaimed;
-}
+	__netअगर_tx_unlock(eq->txq);
+	वापस reclaimed;
+पूर्ण
 
-static inline int cxgb4_validate_skb(struct sk_buff *skb,
-				     struct net_device *dev,
+अटल अंतरभूत पूर्णांक cxgb4_validate_skb(काष्ठा sk_buff *skb,
+				     काष्ठा net_device *dev,
 				     u32 min_pkt_len)
-{
+अणु
 	u32 max_pkt_len;
 
 	/* The chip min packet length is 10 octets but some firmware
 	 * commands have a minimum packet length requirement. So, play
-	 * safe and reject anything shorter than @min_pkt_len.
+	 * safe and reject anything लघुer than @min_pkt_len.
 	 */
-	if (unlikely(skb->len < min_pkt_len))
-		return -EINVAL;
+	अगर (unlikely(skb->len < min_pkt_len))
+		वापस -EINVAL;
 
-	/* Discard the packet if the length is greater than mtu */
+	/* Discard the packet अगर the length is greater than mtu */
 	max_pkt_len = ETH_HLEN + dev->mtu;
 
-	if (skb_vlan_tagged(skb))
+	अगर (skb_vlan_tagged(skb))
 		max_pkt_len += VLAN_HLEN;
 
-	if (!skb_shinfo(skb)->gso_size && (unlikely(skb->len > max_pkt_len)))
-		return -EINVAL;
+	अगर (!skb_shinfo(skb)->gso_size && (unlikely(skb->len > max_pkt_len)))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *write_eo_udp_wr(struct sk_buff *skb, struct fw_eth_tx_eo_wr *wr,
+अटल व्योम *ग_लिखो_eo_udp_wr(काष्ठा sk_buff *skb, काष्ठा fw_eth_tx_eo_wr *wr,
 			     u32 hdr_len)
-{
+अणु
 	wr->u.udpseg.type = FW_ETH_TX_EO_TYPE_UDPSEG;
 	wr->u.udpseg.ethlen = skb_network_offset(skb);
 	wr->u.udpseg.iplen = cpu_to_be16(skb_network_header_len(skb));
-	wr->u.udpseg.udplen = sizeof(struct udphdr);
+	wr->u.udpseg.udplen = माप(काष्ठा udphdr);
 	wr->u.udpseg.rtplen = 0;
 	wr->u.udpseg.r4 = 0;
-	if (skb_shinfo(skb)->gso_size)
+	अगर (skb_shinfo(skb)->gso_size)
 		wr->u.udpseg.mss = cpu_to_be16(skb_shinfo(skb)->gso_size);
-	else
+	अन्यथा
 		wr->u.udpseg.mss = cpu_to_be16(skb->len - hdr_len);
 	wr->u.udpseg.schedpktsize = wr->u.udpseg.mss;
 	wr->u.udpseg.plen = cpu_to_be32(skb->len - hdr_len);
 
-	return (void *)(wr + 1);
-}
+	वापस (व्योम *)(wr + 1);
+पूर्ण
 
 /**
  *	cxgb4_eth_xmit - add a packet to an Ethernet Tx queue
@@ -1498,157 +1499,157 @@ static void *write_eo_udp_wr(struct sk_buff *skb, struct fw_eth_tx_eo_wr *wr,
  *
  *	Add a packet to an SGE Ethernet Tx queue.  Runs with softirqs disabled.
  */
-static netdev_tx_t cxgb4_eth_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	enum cpl_tx_tnl_lso_type tnl_type = TX_TNL_TYPE_OPAQUE;
+अटल netdev_tx_t cxgb4_eth_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	क्रमागत cpl_tx_tnl_lso_type tnl_type = TX_TNL_TYPE_OPAQUE;
 	bool ptp_enabled = is_ptp_enabled(skb, dev);
-	unsigned int last_desc, flits, ndesc;
+	अचिन्हित पूर्णांक last_desc, flits, ndesc;
 	u32 wr_mid, ctrl0, op, sgl_off = 0;
-	const struct skb_shared_info *ssi;
-	int len, qidx, credits, ret, left;
-	struct tx_sw_desc *sgl_sdesc;
-	struct fw_eth_tx_eo_wr *eowr;
-	struct fw_eth_tx_pkt_wr *wr;
-	struct cpl_tx_pkt_core *cpl;
-	const struct port_info *pi;
+	स्थिर काष्ठा skb_shared_info *ssi;
+	पूर्णांक len, qidx, credits, ret, left;
+	काष्ठा tx_sw_desc *sgl_sdesc;
+	काष्ठा fw_eth_tx_eo_wr *eowr;
+	काष्ठा fw_eth_tx_pkt_wr *wr;
+	काष्ठा cpl_tx_pkt_core *cpl;
+	स्थिर काष्ठा port_info *pi;
 	bool immediate = false;
 	u64 cntrl, *end, *sgl;
-	struct sge_eth_txq *q;
-	unsigned int chip_ver;
-	struct adapter *adap;
+	काष्ठा sge_eth_txq *q;
+	अचिन्हित पूर्णांक chip_ver;
+	काष्ठा adapter *adap;
 
 	ret = cxgb4_validate_skb(skb, dev, ETH_HLEN);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	pi = netdev_priv(dev);
 	adap = pi->adapter;
 	ssi = skb_shinfo(skb);
-#if IS_ENABLED(CONFIG_CHELSIO_IPSEC_INLINE)
-	if (xfrm_offload(skb) && !ssi->gso_size)
-		return adap->uld[CXGB4_ULD_IPSEC].tx_handler(skb, dev);
-#endif /* CHELSIO_IPSEC_INLINE */
+#अगर IS_ENABLED(CONFIG_CHELSIO_IPSEC_INLINE)
+	अगर (xfrm_offload(skb) && !ssi->gso_size)
+		वापस adap->uld[CXGB4_ULD_IPSEC].tx_handler(skb, dev);
+#पूर्ण_अगर /* CHELSIO_IPSEC_INLINE */
 
-#if IS_ENABLED(CONFIG_CHELSIO_TLS_DEVICE)
-	if (cxgb4_is_ktls_skb(skb) &&
+#अगर IS_ENABLED(CONFIG_CHELSIO_TLS_DEVICE)
+	अगर (cxgb4_is_ktls_skb(skb) &&
 	    (skb->len - (skb_transport_offset(skb) + tcp_hdrlen(skb))))
-		return adap->uld[CXGB4_ULD_KTLS].tx_handler(skb, dev);
-#endif /* CHELSIO_TLS_DEVICE */
+		वापस adap->uld[CXGB4_ULD_KTLS].tx_handler(skb, dev);
+#पूर्ण_अगर /* CHELSIO_TLS_DEVICE */
 
 	qidx = skb_get_queue_mapping(skb);
-	if (ptp_enabled) {
-		if (!(adap->ptp_tx_skb)) {
+	अगर (ptp_enabled) अणु
+		अगर (!(adap->ptp_tx_skb)) अणु
 			skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
 			adap->ptp_tx_skb = skb_get(skb);
-		} else {
-			goto out_free;
-		}
+		पूर्ण अन्यथा अणु
+			जाओ out_मुक्त;
+		पूर्ण
 		q = &adap->sge.ptptxq;
-	} else {
+	पूर्ण अन्यथा अणु
 		q = &adap->sge.ethtxq[qidx + pi->first_qset];
-	}
-	skb_tx_timestamp(skb);
+	पूर्ण
+	skb_tx_बारtamp(skb);
 
 	reclaim_completed_tx(adap, &q->q, -1, true);
 	cntrl = TXPKT_L4CSUM_DIS_F | TXPKT_IPCSUM_DIS_F;
 
-#ifdef CONFIG_CHELSIO_T4_FCOE
+#अगर_घोषित CONFIG_CHELSIO_T4_FCOE
 	ret = cxgb_fcoe_offload(skb, adap, pi, &cntrl);
-	if (unlikely(ret == -EOPNOTSUPP))
-		goto out_free;
-#endif /* CONFIG_CHELSIO_T4_FCOE */
+	अगर (unlikely(ret == -EOPNOTSUPP))
+		जाओ out_मुक्त;
+#पूर्ण_अगर /* CONFIG_CHELSIO_T4_FCOE */
 
 	chip_ver = CHELSIO_CHIP_VERSION(adap->params.chip);
 	flits = calc_tx_flits(skb, chip_ver);
 	ndesc = flits_to_desc(flits);
 	credits = txq_avail(&q->q) - ndesc;
 
-	if (unlikely(credits < 0)) {
+	अगर (unlikely(credits < 0)) अणु
 		eth_txq_stop(q);
 		dev_err(adap->pdev_dev,
 			"%s: Tx ring %u full while queue awake!\n",
 			dev->name, qidx);
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (is_eth_imm(skb, chip_ver))
+	अगर (is_eth_imm(skb, chip_ver))
 		immediate = true;
 
-	if (skb->encapsulation && chip_ver > CHELSIO_T5)
+	अगर (skb->encapsulation && chip_ver > CHELSIO_T5)
 		tnl_type = cxgb_encap_offload_supported(skb);
 
 	last_desc = q->q.pidx + ndesc - 1;
-	if (last_desc >= q->q.size)
+	अगर (last_desc >= q->q.size)
 		last_desc -= q->q.size;
 	sgl_sdesc = &q->q.sdesc[last_desc];
 
-	if (!immediate &&
-	    unlikely(cxgb4_map_skb(adap->pdev_dev, skb, sgl_sdesc->addr) < 0)) {
-		memset(sgl_sdesc->addr, 0, sizeof(sgl_sdesc->addr));
+	अगर (!immediate &&
+	    unlikely(cxgb4_map_skb(adap->pdev_dev, skb, sgl_sdesc->addr) < 0)) अणु
+		स_रखो(sgl_sdesc->addr, 0, माप(sgl_sdesc->addr));
 		q->mapping_err++;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	wr_mid = FW_WR_LEN16_V(DIV_ROUND_UP(flits, 2));
-	if (unlikely(credits < ETHTXQ_STOP_THRES)) {
-		/* After we're done injecting the Work Request for this
+	अगर (unlikely(credits < ETHTXQ_STOP_THRES)) अणु
+		/* After we're करोne injecting the Work Request क्रम this
 		 * packet, we'll be below our "stop threshold" so stop the TX
-		 * Queue now and schedule a request for an SGE Egress Queue
+		 * Queue now and schedule a request क्रम an SGE Egress Queue
 		 * Update message. The queue will get started later on when
 		 * the firmware processes this Work Request and sends us an
 		 * Egress Queue Status Update message indicating that space
-		 * has opened up.
+		 * has खोलोed up.
 		 */
 		eth_txq_stop(q);
-		if (chip_ver > CHELSIO_T5)
+		अगर (chip_ver > CHELSIO_T5)
 			wr_mid |= FW_WR_EQUEQ_F | FW_WR_EQUIQ_F;
-	}
+	पूर्ण
 
-	wr = (void *)&q->q.desc[q->q.pidx];
-	eowr = (void *)&q->q.desc[q->q.pidx];
+	wr = (व्योम *)&q->q.desc[q->q.pidx];
+	eowr = (व्योम *)&q->q.desc[q->q.pidx];
 	wr->equiq_to_len16 = htonl(wr_mid);
 	wr->r3 = cpu_to_be64(0);
-	if (skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4)
+	अगर (skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4)
 		end = (u64 *)eowr + flits;
-	else
+	अन्यथा
 		end = (u64 *)wr + flits;
 
 	len = immediate ? skb->len : 0;
-	len += sizeof(*cpl);
-	if (ssi->gso_size && !(ssi->gso_type & SKB_GSO_UDP_L4)) {
-		struct cpl_tx_pkt_lso_core *lso = (void *)(wr + 1);
-		struct cpl_tx_tnl_lso *tnl_lso = (void *)(wr + 1);
+	len += माप(*cpl);
+	अगर (ssi->gso_size && !(ssi->gso_type & SKB_GSO_UDP_L4)) अणु
+		काष्ठा cpl_tx_pkt_lso_core *lso = (व्योम *)(wr + 1);
+		काष्ठा cpl_tx_tnl_lso *tnl_lso = (व्योम *)(wr + 1);
 
-		if (tnl_type)
-			len += sizeof(*tnl_lso);
-		else
-			len += sizeof(*lso);
+		अगर (tnl_type)
+			len += माप(*tnl_lso);
+		अन्यथा
+			len += माप(*lso);
 
 		wr->op_immdlen = htonl(FW_WR_OP_V(FW_ETH_TX_PKT_WR) |
 				       FW_WR_IMMDLEN_V(len));
-		if (tnl_type) {
-			struct iphdr *iph = ip_hdr(skb);
+		अगर (tnl_type) अणु
+			काष्ठा iphdr *iph = ip_hdr(skb);
 
 			t6_fill_tnl_lso(skb, tnl_lso, tnl_type);
-			cpl = (void *)(tnl_lso + 1);
+			cpl = (व्योम *)(tnl_lso + 1);
 			/* Driver is expected to compute partial checksum that
-			 * does not include the IP Total Length.
+			 * करोes not include the IP Total Length.
 			 */
-			if (iph->version == 4) {
+			अगर (iph->version == 4) अणु
 				iph->check = 0;
 				iph->tot_len = 0;
 				iph->check = ~ip_fast_csum((u8 *)iph, iph->ihl);
-			}
-			if (skb->ip_summed == CHECKSUM_PARTIAL)
+			पूर्ण
+			अगर (skb->ip_summed == CHECKSUM_PARTIAL)
 				cntrl = hwcsum(adap->params.chip, skb);
-		} else {
-			cpl = write_tso_wr(adap, skb, lso);
+		पूर्ण अन्यथा अणु
+			cpl = ग_लिखो_tso_wr(adap, skb, lso);
 			cntrl = hwcsum(adap->params.chip, skb);
-		}
+		पूर्ण
 		sgl = (u64 *)(cpl + 1); /* sgl start here */
 		q->tso++;
 		q->tx_cso += ssi->gso_segs;
-	} else if (ssi->gso_size) {
+	पूर्ण अन्यथा अगर (ssi->gso_size) अणु
 		u64 *start;
 		u32 hdrlen;
 
@@ -1656,106 +1657,106 @@ static netdev_tx_t cxgb4_eth_xmit(struct sk_buff *skb, struct net_device *dev)
 		len += hdrlen;
 		wr->op_immdlen = cpu_to_be32(FW_WR_OP_V(FW_ETH_TX_EO_WR) |
 					     FW_ETH_TX_EO_WR_IMMDLEN_V(len));
-		cpl = write_eo_udp_wr(skb, eowr, hdrlen);
+		cpl = ग_लिखो_eo_udp_wr(skb, eowr, hdrlen);
 		cntrl = hwcsum(adap->params.chip, skb);
 
 		start = (u64 *)(cpl + 1);
-		sgl = (u64 *)inline_tx_skb_header(skb, &q->q, (void *)start,
+		sgl = (u64 *)अंतरभूत_tx_skb_header(skb, &q->q, (व्योम *)start,
 						  hdrlen);
-		if (unlikely(start > sgl)) {
+		अगर (unlikely(start > sgl)) अणु
 			left = (u8 *)end - (u8 *)q->q.stat;
-			end = (void *)q->q.desc + left;
-		}
+			end = (व्योम *)q->q.desc + left;
+		पूर्ण
 		sgl_off = hdrlen;
 		q->uso++;
 		q->tx_cso += ssi->gso_segs;
-	} else {
-		if (ptp_enabled)
+	पूर्ण अन्यथा अणु
+		अगर (ptp_enabled)
 			op = FW_PTP_TX_PKT_WR;
-		else
+		अन्यथा
 			op = FW_ETH_TX_PKT_WR;
 		wr->op_immdlen = htonl(FW_WR_OP_V(op) |
 				       FW_WR_IMMDLEN_V(len));
-		cpl = (void *)(wr + 1);
+		cpl = (व्योम *)(wr + 1);
 		sgl = (u64 *)(cpl + 1);
-		if (skb->ip_summed == CHECKSUM_PARTIAL) {
+		अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
 			cntrl = hwcsum(adap->params.chip, skb) |
 				TXPKT_IPCSUM_DIS_F;
 			q->tx_cso++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (unlikely((u8 *)sgl >= (u8 *)q->q.stat)) {
-		/* If current position is already at the end of the
-		 * txq, reset the current to point to start of the queue
+	अगर (unlikely((u8 *)sgl >= (u8 *)q->q.stat)) अणु
+		/* If current position is alपढ़ोy at the end of the
+		 * txq, reset the current to poपूर्णांक to start of the queue
 		 * and update the end ptr as well.
 		 */
 		left = (u8 *)end - (u8 *)q->q.stat;
-		end = (void *)q->q.desc + left;
-		sgl = (void *)q->q.desc;
-	}
+		end = (व्योम *)q->q.desc + left;
+		sgl = (व्योम *)q->q.desc;
+	पूर्ण
 
-	if (skb_vlan_tag_present(skb)) {
+	अगर (skb_vlan_tag_present(skb)) अणु
 		q->vlan_ins++;
 		cntrl |= TXPKT_VLAN_VLD_F | TXPKT_VLAN_V(skb_vlan_tag_get(skb));
-#ifdef CONFIG_CHELSIO_T4_FCOE
-		if (skb->protocol == htons(ETH_P_FCOE))
+#अगर_घोषित CONFIG_CHELSIO_T4_FCOE
+		अगर (skb->protocol == htons(ETH_P_FCOE))
 			cntrl |= TXPKT_VLAN_V(
 				 ((skb->priority & 0x7) << VLAN_PRIO_SHIFT));
-#endif /* CONFIG_CHELSIO_T4_FCOE */
-	}
+#पूर्ण_अगर /* CONFIG_CHELSIO_T4_FCOE */
+	पूर्ण
 
 	ctrl0 = TXPKT_OPCODE_V(CPL_TX_PKT_XT) | TXPKT_INTF_V(pi->tx_chan) |
 		TXPKT_PF_V(adap->pf);
-	if (ptp_enabled)
+	अगर (ptp_enabled)
 		ctrl0 |= TXPKT_TSTAMP_F;
-#ifdef CONFIG_CHELSIO_T4_DCB
-	if (is_t4(adap->params.chip))
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+	अगर (is_t4(adap->params.chip))
 		ctrl0 |= TXPKT_OVLAN_IDX_V(q->dcb_prio);
-	else
+	अन्यथा
 		ctrl0 |= TXPKT_T5_OVLAN_IDX_V(q->dcb_prio);
-#endif
+#पूर्ण_अगर
 	cpl->ctrl0 = htonl(ctrl0);
 	cpl->pack = htons(0);
 	cpl->len = htons(skb->len);
 	cpl->ctrl1 = cpu_to_be64(cntrl);
 
-	if (immediate) {
-		cxgb4_inline_tx_skb(skb, &q->q, sgl);
+	अगर (immediate) अणु
+		cxgb4_अंतरभूत_tx_skb(skb, &q->q, sgl);
 		dev_consume_skb_any(skb);
-	} else {
-		cxgb4_write_sgl(skb, &q->q, (void *)sgl, end, sgl_off,
+	पूर्ण अन्यथा अणु
+		cxgb4_ग_लिखो_sgl(skb, &q->q, (व्योम *)sgl, end, sgl_off,
 				sgl_sdesc->addr);
 		skb_orphan(skb);
 		sgl_sdesc->skb = skb;
-	}
+	पूर्ण
 
 	txq_advance(&q->q, ndesc);
 
 	cxgb4_ring_tx_db(adap, &q->q, ndesc);
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
-out_free:
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_OK;
-}
+out_मुक्त:
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 /* Constants ... */
-enum {
+क्रमागत अणु
 	/* Egress Queue sizes, producer and consumer indices are all in units
 	 * of Egress Context Units bytes.  Note that as far as the hardware is
-	 * concerned, the free list is an Egress Queue (the host produces free
-	 * buffers which the hardware consumes) and free list entries are
+	 * concerned, the मुक्त list is an Egress Queue (the host produces मुक्त
+	 * buffers which the hardware consumes) and मुक्त list entries are
 	 * 64-bit PCI DMA addresses.
 	 */
 	EQ_UNIT = SGE_EQ_IDXSIZE,
-	FL_PER_EQ_UNIT = EQ_UNIT / sizeof(__be64),
-	TXD_PER_EQ_UNIT = EQ_UNIT / sizeof(__be64),
+	FL_PER_EQ_UNIT = EQ_UNIT / माप(__be64),
+	TXD_PER_EQ_UNIT = EQ_UNIT / माप(__be64),
 
-	T4VF_ETHTXQ_MAX_HDR = (sizeof(struct fw_eth_tx_pkt_vm_wr) +
-			       sizeof(struct cpl_tx_pkt_lso_core) +
-			       sizeof(struct cpl_tx_pkt_core)) / sizeof(__be64),
-};
+	T4VF_ETHTXQ_MAX_HDR = (माप(काष्ठा fw_eth_tx_pkt_vm_wr) +
+			       माप(काष्ठा cpl_tx_pkt_lso_core) +
+			       माप(काष्ठा cpl_tx_pkt_core)) / माप(__be64),
+पूर्ण;
 
 /**
  *	t4vf_is_eth_imm - can an Ethernet packet be sent as immediate data?
@@ -1764,54 +1765,54 @@ enum {
  *	Returns whether an Ethernet packet is small enough to fit completely as
  *	immediate data.
  */
-static inline int t4vf_is_eth_imm(const struct sk_buff *skb)
-{
+अटल अंतरभूत पूर्णांक t4vf_is_eth_imm(स्थिर काष्ठा sk_buff *skb)
+अणु
 	/* The VF Driver uses the FW_ETH_TX_PKT_VM_WR firmware Work Request
-	 * which does not accommodate immediate data.  We could dike out all
-	 * of the support code for immediate data but that would tie our hands
-	 * too much if we ever want to enhace the firmware.  It would also
-	 * create more differences between the PF and VF Drivers.
+	 * which करोes not accommodate immediate data.  We could dike out all
+	 * of the support code क्रम immediate data but that would tie our hands
+	 * too much अगर we ever want to enhace the firmware.  It would also
+	 * create more dअगरferences between the PF and VF Drivers.
 	 */
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- *	t4vf_calc_tx_flits - calculate the number of flits for a packet TX WR
+ *	t4vf_calc_tx_flits - calculate the number of flits क्रम a packet TX WR
  *	@skb: the packet
  *
- *	Returns the number of flits needed for a TX Work Request for the
+ *	Returns the number of flits needed क्रम a TX Work Request क्रम the
  *	given Ethernet packet, including the needed WR and CPL headers.
  */
-static inline unsigned int t4vf_calc_tx_flits(const struct sk_buff *skb)
-{
-	unsigned int flits;
+अटल अंतरभूत अचिन्हित पूर्णांक t4vf_calc_tx_flits(स्थिर काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक flits;
 
 	/* If the skb is small enough, we can pump it out as a work request
-	 * with only immediate data.  In that case we just have to have the
+	 * with only immediate data.  In that हाल we just have to have the
 	 * TX Packet header plus the skb data in the Work Request.
 	 */
-	if (t4vf_is_eth_imm(skb))
-		return DIV_ROUND_UP(skb->len + sizeof(struct cpl_tx_pkt),
-				    sizeof(__be64));
+	अगर (t4vf_is_eth_imm(skb))
+		वापस DIV_ROUND_UP(skb->len + माप(काष्ठा cpl_tx_pkt),
+				    माप(__be64));
 
-	/* Otherwise, we're going to have to construct a Scatter gather list
+	/* Otherwise, we're going to have to स्थिरruct a Scatter gather list
 	 * of the skb body and fragments.  We also include the flits necessary
-	 * for the TX Packet Work Request and CPL.  We always have a firmware
+	 * क्रम the TX Packet Work Request and CPL.  We always have a firmware
 	 * Write Header (incorporated as part of the cpl_tx_pkt_lso and
-	 * cpl_tx_pkt structures), followed by either a TX Packet Write CPL
-	 * message or, if we're doing a Large Send Offload, an LSO CPL message
+	 * cpl_tx_pkt काष्ठाures), followed by either a TX Packet Write CPL
+	 * message or, अगर we're करोing a Large Send Offload, an LSO CPL message
 	 * with an embedded TX Packet Write CPL message.
 	 */
 	flits = sgl_len(skb_shinfo(skb)->nr_frags + 1);
-	if (skb_shinfo(skb)->gso_size)
-		flits += (sizeof(struct fw_eth_tx_pkt_vm_wr) +
-			  sizeof(struct cpl_tx_pkt_lso_core) +
-			  sizeof(struct cpl_tx_pkt_core)) / sizeof(__be64);
-	else
-		flits += (sizeof(struct fw_eth_tx_pkt_vm_wr) +
-			  sizeof(struct cpl_tx_pkt_core)) / sizeof(__be64);
-	return flits;
-}
+	अगर (skb_shinfo(skb)->gso_size)
+		flits += (माप(काष्ठा fw_eth_tx_pkt_vm_wr) +
+			  माप(काष्ठा cpl_tx_pkt_lso_core) +
+			  माप(काष्ठा cpl_tx_pkt_core)) / माप(__be64);
+	अन्यथा
+		flits += (माप(काष्ठा fw_eth_tx_pkt_vm_wr) +
+			  माप(काष्ठा cpl_tx_pkt_core)) / माप(__be64);
+	वापस flits;
+पूर्ण
 
 /**
  *	cxgb4_vf_eth_xmit - add a packet to an Ethernet TX queue
@@ -1820,33 +1821,33 @@ static inline unsigned int t4vf_calc_tx_flits(const struct sk_buff *skb)
  *
  *	Add a packet to an SGE Ethernet TX queue.  Runs with softirqs disabled.
  */
-static netdev_tx_t cxgb4_vf_eth_xmit(struct sk_buff *skb,
-				     struct net_device *dev)
-{
-	unsigned int last_desc, flits, ndesc;
-	const struct skb_shared_info *ssi;
-	struct fw_eth_tx_pkt_vm_wr *wr;
-	struct tx_sw_desc *sgl_sdesc;
-	struct cpl_tx_pkt_core *cpl;
-	const struct port_info *pi;
-	struct sge_eth_txq *txq;
-	struct adapter *adapter;
-	int qidx, credits, ret;
-	size_t fw_hdr_copy_len;
-	unsigned int chip_ver;
+अटल netdev_tx_t cxgb4_vf_eth_xmit(काष्ठा sk_buff *skb,
+				     काष्ठा net_device *dev)
+अणु
+	अचिन्हित पूर्णांक last_desc, flits, ndesc;
+	स्थिर काष्ठा skb_shared_info *ssi;
+	काष्ठा fw_eth_tx_pkt_vm_wr *wr;
+	काष्ठा tx_sw_desc *sgl_sdesc;
+	काष्ठा cpl_tx_pkt_core *cpl;
+	स्थिर काष्ठा port_info *pi;
+	काष्ठा sge_eth_txq *txq;
+	काष्ठा adapter *adapter;
+	पूर्णांक qidx, credits, ret;
+	माप_प्रकार fw_hdr_copy_len;
+	अचिन्हित पूर्णांक chip_ver;
 	u64 cntrl, *end;
 	u32 wr_mid;
 
 	/* The chip minimum packet length is 10 octets but the firmware
 	 * command that we are using requires that we copy the Ethernet header
-	 * (including the VLAN tag) into the header so we reject anything
+	 * (including the VLAN tag) पूर्णांकo the header so we reject anything
 	 * smaller than that ...
 	 */
-	fw_hdr_copy_len = sizeof(wr->ethmacdst) + sizeof(wr->ethmacsrc) +
-			  sizeof(wr->ethtype) + sizeof(wr->vlantci);
+	fw_hdr_copy_len = माप(wr->ethmacdst) + माप(wr->ethmacsrc) +
+			  माप(wr->ethtype) + माप(wr->vlantci);
 	ret = cxgb4_validate_skb(skb, dev, fw_hdr_copy_len);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	/* Figure out which TX Queue we're going to use. */
 	pi = netdev_priv(dev);
@@ -1861,70 +1862,70 @@ static netdev_tx_t cxgb4_vf_eth_xmit(struct sk_buff *skb,
 	reclaim_completed_tx(adapter, &txq->q, -1, true);
 
 	/* Calculate the number of flits and TX Descriptors we're going to
-	 * need along with how many TX Descriptors will be left over after
+	 * need aदीर्घ with how many TX Descriptors will be left over after
 	 * we inject our Work Request.
 	 */
 	flits = t4vf_calc_tx_flits(skb);
 	ndesc = flits_to_desc(flits);
 	credits = txq_avail(&txq->q) - ndesc;
 
-	if (unlikely(credits < 0)) {
-		/* Not enough room for this packet's Work Request.  Stop the
-		 * TX Queue and return a "busy" condition.  The queue will get
-		 * started later on when the firmware informs us that space
-		 * has opened up.
+	अगर (unlikely(credits < 0)) अणु
+		/* Not enough room क्रम this packet's Work Request.  Stop the
+		 * TX Queue and वापस a "busy" condition.  The queue will get
+		 * started later on when the firmware inक्रमms us that space
+		 * has खोलोed up.
 		 */
 		eth_txq_stop(txq);
 		dev_err(adapter->pdev_dev,
 			"%s: TX ring %u full while queue awake!\n",
 			dev->name, qidx);
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	last_desc = txq->q.pidx + ndesc - 1;
-	if (last_desc >= txq->q.size)
+	अगर (last_desc >= txq->q.size)
 		last_desc -= txq->q.size;
 	sgl_sdesc = &txq->q.sdesc[last_desc];
 
-	if (!t4vf_is_eth_imm(skb) &&
+	अगर (!t4vf_is_eth_imm(skb) &&
 	    unlikely(cxgb4_map_skb(adapter->pdev_dev, skb,
-				   sgl_sdesc->addr) < 0)) {
-		/* We need to map the skb into PCI DMA space (because it can't
-		 * be in-lined directly into the Work Request) and the mapping
+				   sgl_sdesc->addr) < 0)) अणु
+		/* We need to map the skb पूर्णांकo PCI DMA space (because it can't
+		 * be in-lined directly पूर्णांकo the Work Request) and the mapping
 		 * operation failed.  Record the error and drop the packet.
 		 */
-		memset(sgl_sdesc->addr, 0, sizeof(sgl_sdesc->addr));
+		स_रखो(sgl_sdesc->addr, 0, माप(sgl_sdesc->addr));
 		txq->mapping_err++;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	chip_ver = CHELSIO_CHIP_VERSION(adapter->params.chip);
 	wr_mid = FW_WR_LEN16_V(DIV_ROUND_UP(flits, 2));
-	if (unlikely(credits < ETHTXQ_STOP_THRES)) {
-		/* After we're done injecting the Work Request for this
+	अगर (unlikely(credits < ETHTXQ_STOP_THRES)) अणु
+		/* After we're करोne injecting the Work Request क्रम this
 		 * packet, we'll be below our "stop threshold" so stop the TX
-		 * Queue now and schedule a request for an SGE Egress Queue
+		 * Queue now and schedule a request क्रम an SGE Egress Queue
 		 * Update message.  The queue will get started later on when
 		 * the firmware processes this Work Request and sends us an
 		 * Egress Queue Status Update message indicating that space
-		 * has opened up.
+		 * has खोलोed up.
 		 */
 		eth_txq_stop(txq);
-		if (chip_ver > CHELSIO_T5)
+		अगर (chip_ver > CHELSIO_T5)
 			wr_mid |= FW_WR_EQUEQ_F | FW_WR_EQUIQ_F;
-	}
+	पूर्ण
 
-	/* Start filling in our Work Request.  Note that we do _not_ handle
+	/* Start filling in our Work Request.  Note that we करो _not_ handle
 	 * the WR Header wrapping around the TX Descriptor Ring.  If our
 	 * maximum header size ever exceeds one TX Descriptor, we'll need to
-	 * do something else here.
+	 * करो something अन्यथा here.
 	 */
 	WARN_ON(DIV_ROUND_UP(T4VF_ETHTXQ_MAX_HDR, TXD_PER_EQ_UNIT) > 1);
-	wr = (void *)&txq->q.desc[txq->q.pidx];
+	wr = (व्योम *)&txq->q.desc[txq->q.pidx];
 	wr->equiq_to_len16 = cpu_to_be32(wr_mid);
 	wr->r3[0] = cpu_to_be32(0);
 	wr->r3[1] = cpu_to_be32(0);
-	skb_copy_from_linear_data(skb, (void *)wr->ethmacdst, fw_hdr_copy_len);
+	skb_copy_from_linear_data(skb, (व्योम *)wr->ethmacdst, fw_hdr_copy_len);
 	end = (u64 *)wr + flits;
 
 	/* If this is a Large Send Offload packet we'll put in an LSO CPL
@@ -1932,16 +1933,16 @@ static netdev_tx_t cxgb4_vf_eth_xmit(struct sk_buff *skb,
 	 * just use a TX Packet CPL message.
 	 */
 	ssi = skb_shinfo(skb);
-	if (ssi->gso_size) {
-		struct cpl_tx_pkt_lso_core *lso = (void *)(wr + 1);
+	अगर (ssi->gso_size) अणु
+		काष्ठा cpl_tx_pkt_lso_core *lso = (व्योम *)(wr + 1);
 		bool v6 = (ssi->gso_type & SKB_GSO_TCPV6) != 0;
-		int l3hdr_len = skb_network_header_len(skb);
-		int eth_xtra_len = skb_network_offset(skb) - ETH_HLEN;
+		पूर्णांक l3hdr_len = skb_network_header_len(skb);
+		पूर्णांक eth_xtra_len = skb_network_offset(skb) - ETH_HLEN;
 
 		wr->op_immdlen =
 			cpu_to_be32(FW_WR_OP_V(FW_ETH_TX_PKT_VM_WR) |
-				    FW_WR_IMMDLEN_V(sizeof(*lso) +
-						    sizeof(*cpl)));
+				    FW_WR_IMMDLEN_V(माप(*lso) +
+						    माप(*cpl)));
 		 /* Fill in the LSO CPL message. */
 		lso->lso_ctrl =
 			cpu_to_be32(LSO_OPCODE_V(CPL_TX_PKT_LSO) |
@@ -1950,23 +1951,23 @@ static netdev_tx_t cxgb4_vf_eth_xmit(struct sk_buff *skb,
 				    LSO_IPV6_V(v6) |
 				    LSO_ETHHDR_LEN_V(eth_xtra_len / 4) |
 				    LSO_IPHDR_LEN_V(l3hdr_len / 4) |
-				    LSO_TCPHDR_LEN_V(tcp_hdr(skb)->doff));
+				    LSO_TCPHDR_LEN_V(tcp_hdr(skb)->करोff));
 		lso->ipid_ofst = cpu_to_be16(0);
 		lso->mss = cpu_to_be16(ssi->gso_size);
 		lso->seqno_offset = cpu_to_be32(0);
-		if (is_t4(adapter->params.chip))
+		अगर (is_t4(adapter->params.chip))
 			lso->len = cpu_to_be32(skb->len);
-		else
+		अन्यथा
 			lso->len = cpu_to_be32(LSO_T5_XFER_SIZE_V(skb->len));
 
-		/* Set up TX Packet CPL pointer, control word and perform
+		/* Set up TX Packet CPL poपूर्णांकer, control word and perक्रमm
 		 * accounting.
 		 */
-		cpl = (void *)(lso + 1);
+		cpl = (व्योम *)(lso + 1);
 
-		if (chip_ver <= CHELSIO_T5)
+		अगर (chip_ver <= CHELSIO_T5)
 			cntrl = TXPKT_ETHHDR_LEN_V(eth_xtra_len);
-		else
+		अन्यथा
 			cntrl = T6_TXPKT_ETHHDR_LEN_V(eth_xtra_len);
 
 		cntrl |= TXPKT_CSUM_TYPE_V(v6 ?
@@ -1974,36 +1975,36 @@ static netdev_tx_t cxgb4_vf_eth_xmit(struct sk_buff *skb,
 			 TXPKT_IPHDR_LEN_V(l3hdr_len);
 		txq->tso++;
 		txq->tx_cso += ssi->gso_segs;
-	} else {
-		int len;
+	पूर्ण अन्यथा अणु
+		पूर्णांक len;
 
 		len = (t4vf_is_eth_imm(skb)
-		       ? skb->len + sizeof(*cpl)
-		       : sizeof(*cpl));
+		       ? skb->len + माप(*cpl)
+		       : माप(*cpl));
 		wr->op_immdlen =
 			cpu_to_be32(FW_WR_OP_V(FW_ETH_TX_PKT_VM_WR) |
 				    FW_WR_IMMDLEN_V(len));
 
-		/* Set up TX Packet CPL pointer, control word and perform
+		/* Set up TX Packet CPL poपूर्णांकer, control word and perक्रमm
 		 * accounting.
 		 */
-		cpl = (void *)(wr + 1);
-		if (skb->ip_summed == CHECKSUM_PARTIAL) {
+		cpl = (व्योम *)(wr + 1);
+		अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
 			cntrl = hwcsum(adapter->params.chip, skb) |
 				TXPKT_IPCSUM_DIS_F;
 			txq->tx_cso++;
-		} else {
+		पूर्ण अन्यथा अणु
 			cntrl = TXPKT_L4CSUM_DIS_F | TXPKT_IPCSUM_DIS_F;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* If there's a VLAN tag present, add that to the list of things to
-	 * do in this Work Request.
+	 * करो in this Work Request.
 	 */
-	if (skb_vlan_tag_present(skb)) {
+	अगर (skb_vlan_tag_present(skb)) अणु
 		txq->vlan_ins++;
 		cntrl |= TXPKT_VLAN_VLD_F | TXPKT_VLAN_V(skb_vlan_tag_get(skb));
-	}
+	पूर्ण
 
 	 /* Fill in the TX Packet CPL message header. */
 	cpl->ctrl0 = cpu_to_be32(TXPKT_OPCODE_V(CPL_TX_PKT_XT) |
@@ -2016,191 +2017,191 @@ static netdev_tx_t cxgb4_vf_eth_xmit(struct sk_buff *skb,
 	/* Fill in the body of the TX Packet CPL message with either in-lined
 	 * data or a Scatter/Gather List.
 	 */
-	if (t4vf_is_eth_imm(skb)) {
+	अगर (t4vf_is_eth_imm(skb)) अणु
 		/* In-line the packet's data and free the skb since we don't
-		 * need it any longer.
+		 * need it any दीर्घer.
 		 */
-		cxgb4_inline_tx_skb(skb, &txq->q, cpl + 1);
+		cxgb4_अंतरभूत_tx_skb(skb, &txq->q, cpl + 1);
 		dev_consume_skb_any(skb);
-	} else {
-		/* Write the skb's Scatter/Gather list into the TX Packet CPL
-		 * message and retain a pointer to the skb so we can free it
-		 * later when its DMA completes.  (We store the skb pointer
+	पूर्ण अन्यथा अणु
+		/* Write the skb's Scatter/Gather list पूर्णांकo the TX Packet CPL
+		 * message and retain a poपूर्णांकer to the skb so we can मुक्त it
+		 * later when its DMA completes.  (We store the skb poपूर्णांकer
 		 * in the Software Descriptor corresponding to the last TX
 		 * Descriptor used by the Work Request.)
 		 *
-		 * The retained skb will be freed when the corresponding TX
+		 * The retained skb will be मुक्तd when the corresponding TX
 		 * Descriptors are reclaimed after their DMAs complete.
-		 * However, this could take quite a while since, in general,
+		 * However, this could take quite a जबतक since, in general,
 		 * the hardware is set up to be lazy about sending DMA
-		 * completion notifications to us and we mostly perform TX
+		 * completion notअगरications to us and we mostly perक्रमm TX
 		 * reclaims in the transmit routine.
 		 *
-		 * This is good for performamce but means that we rely on new
-		 * TX packets arriving to run the destructors of completed
-		 * packets, which open up space in their sockets' send queues.
-		 * Sometimes we do not get such new packets causing TX to
+		 * This is good क्रम perक्रमmamce but means that we rely on new
+		 * TX packets arriving to run the deकाष्ठाors of completed
+		 * packets, which खोलो up space in their sockets' send queues.
+		 * Someबार we करो not get such new packets causing TX to
 		 * stall.  A single UDP transmitter is a good example of this
-		 * situation.  We have a clean up timer that periodically
-		 * reclaims completed packets but it doesn't run often enough
-		 * (nor do we want it to) to prevent lengthy stalls.  A
-		 * solution to this problem is to run the destructor early,
-		 * after the packet is queued but before it's DMAd.  A con is
+		 * situation.  We have a clean up समयr that periodically
+		 * reclaims completed packets but it करोesn't run often enough
+		 * (nor करो we want it to) to prevent lengthy stalls.  A
+		 * solution to this problem is to run the deकाष्ठाor early,
+		 * after the packet is queued but beक्रमe it's DMAd.  A con is
 		 * that we lie to socket memory accounting, but the amount of
 		 * extra memory is reasonable (limited by the number of TX
-		 * descriptors), the packets do actually get freed quickly by
-		 * new packets almost always, and for protocols like TCP that
-		 * wait for acks to really free up the data the extra memory
-		 * is even less.  On the positive side we run the destructors
-		 * on the sending CPU rather than on a potentially different
+		 * descriptors), the packets करो actually get मुक्तd quickly by
+		 * new packets almost always, and क्रम protocols like TCP that
+		 * रुको क्रम acks to really मुक्त up the data the extra memory
+		 * is even less.  On the positive side we run the deकाष्ठाors
+		 * on the sending CPU rather than on a potentially dअगरferent
 		 * completing CPU, usually a good thing.
 		 *
-		 * Run the destructor before telling the DMA engine about the
-		 * packet to make sure it doesn't complete and get freed
+		 * Run the deकाष्ठाor beक्रमe telling the DMA engine about the
+		 * packet to make sure it करोesn't complete and get मुक्तd
 		 * prematurely.
 		 */
-		struct ulptx_sgl *sgl = (struct ulptx_sgl *)(cpl + 1);
-		struct sge_txq *tq = &txq->q;
+		काष्ठा ulptx_sgl *sgl = (काष्ठा ulptx_sgl *)(cpl + 1);
+		काष्ठा sge_txq *tq = &txq->q;
 
 		/* If the Work Request header was an exact multiple of our TX
 		 * Descriptor length, then it's possible that the starting SGL
-		 * pointer lines up exactly with the end of our TX Descriptor
-		 * ring.  If that's the case, wrap around to the beginning
+		 * poपूर्णांकer lines up exactly with the end of our TX Descriptor
+		 * ring.  If that's the हाल, wrap around to the beginning
 		 * here ...
 		 */
-		if (unlikely((void *)sgl == (void *)tq->stat)) {
-			sgl = (void *)tq->desc;
-			end = (void *)((void *)tq->desc +
-				       ((void *)end - (void *)tq->stat));
-		}
+		अगर (unlikely((व्योम *)sgl == (व्योम *)tq->stat)) अणु
+			sgl = (व्योम *)tq->desc;
+			end = (व्योम *)((व्योम *)tq->desc +
+				       ((व्योम *)end - (व्योम *)tq->stat));
+		पूर्ण
 
-		cxgb4_write_sgl(skb, tq, sgl, end, 0, sgl_sdesc->addr);
+		cxgb4_ग_लिखो_sgl(skb, tq, sgl, end, 0, sgl_sdesc->addr);
 		skb_orphan(skb);
 		sgl_sdesc->skb = skb;
-	}
+	पूर्ण
 
-	/* Advance our internal TX Queue state, tell the hardware about
-	 * the new TX descriptors and return success.
+	/* Advance our पूर्णांकernal TX Queue state, tell the hardware about
+	 * the new TX descriptors and वापस success.
 	 */
 	txq_advance(&txq->q, ndesc);
 
 	cxgb4_ring_tx_db(adapter, &txq->q, ndesc);
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
-out_free:
+out_मुक्त:
 	/* An error of some sort happened.  Free the TX skb and tell the
 	 * OS that we've "dealt" with the packet ...
 	 */
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 /**
  * reclaim_completed_tx_imm - reclaim completed control-queue Tx descs
  * @q: the SGE control Tx queue
  *
  * This is a variant of cxgb4_reclaim_completed_tx() that is used
- * for Tx queues that send only immediate data (presently just
- * the control queues) and	thus do not have any sk_buffs to release.
+ * क्रम Tx queues that send only immediate data (presently just
+ * the control queues) and	thus करो not have any sk_buffs to release.
  */
-static inline void reclaim_completed_tx_imm(struct sge_txq *q)
-{
-	int hw_cidx = ntohs(READ_ONCE(q->stat->cidx));
-	int reclaim = hw_cidx - q->cidx;
+अटल अंतरभूत व्योम reclaim_completed_tx_imm(काष्ठा sge_txq *q)
+अणु
+	पूर्णांक hw_cidx = ntohs(READ_ONCE(q->stat->cidx));
+	पूर्णांक reclaim = hw_cidx - q->cidx;
 
-	if (reclaim < 0)
+	अगर (reclaim < 0)
 		reclaim += q->size;
 
 	q->in_use -= reclaim;
 	q->cidx = hw_cidx;
-}
+पूर्ण
 
-static inline void eosw_txq_advance_index(u32 *idx, u32 n, u32 max)
-{
+अटल अंतरभूत व्योम eosw_txq_advance_index(u32 *idx, u32 n, u32 max)
+अणु
 	u32 val = *idx + n;
 
-	if (val >= max)
+	अगर (val >= max)
 		val -= max;
 
 	*idx = val;
-}
+पूर्ण
 
-void cxgb4_eosw_txq_free_desc(struct adapter *adap,
-			      struct sge_eosw_txq *eosw_txq, u32 ndesc)
-{
-	struct tx_sw_desc *d;
+व्योम cxgb4_eosw_txq_मुक्त_desc(काष्ठा adapter *adap,
+			      काष्ठा sge_eosw_txq *eosw_txq, u32 ndesc)
+अणु
+	काष्ठा tx_sw_desc *d;
 
 	d = &eosw_txq->desc[eosw_txq->last_cidx];
-	while (ndesc--) {
-		if (d->skb) {
-			if (d->addr[0]) {
+	जबतक (ndesc--) अणु
+		अगर (d->skb) अणु
+			अगर (d->addr[0]) अणु
 				unmap_skb(adap->pdev_dev, d->skb, d->addr);
-				memset(d->addr, 0, sizeof(d->addr));
-			}
+				स_रखो(d->addr, 0, माप(d->addr));
+			पूर्ण
 			dev_consume_skb_any(d->skb);
-			d->skb = NULL;
-		}
+			d->skb = शून्य;
+		पूर्ण
 		eosw_txq_advance_index(&eosw_txq->last_cidx, 1,
 				       eosw_txq->ndesc);
 		d = &eosw_txq->desc[eosw_txq->last_cidx];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void eosw_txq_advance(struct sge_eosw_txq *eosw_txq, u32 n)
-{
+अटल अंतरभूत व्योम eosw_txq_advance(काष्ठा sge_eosw_txq *eosw_txq, u32 n)
+अणु
 	eosw_txq_advance_index(&eosw_txq->pidx, n, eosw_txq->ndesc);
 	eosw_txq->inuse += n;
-}
+पूर्ण
 
-static inline int eosw_txq_enqueue(struct sge_eosw_txq *eosw_txq,
-				   struct sk_buff *skb)
-{
-	if (eosw_txq->inuse == eosw_txq->ndesc)
-		return -ENOMEM;
+अटल अंतरभूत पूर्णांक eosw_txq_enqueue(काष्ठा sge_eosw_txq *eosw_txq,
+				   काष्ठा sk_buff *skb)
+अणु
+	अगर (eosw_txq->inuse == eosw_txq->ndesc)
+		वापस -ENOMEM;
 
 	eosw_txq->desc[eosw_txq->pidx].skb = skb;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline struct sk_buff *eosw_txq_peek(struct sge_eosw_txq *eosw_txq)
-{
-	return eosw_txq->desc[eosw_txq->last_pidx].skb;
-}
+अटल अंतरभूत काष्ठा sk_buff *eosw_txq_peek(काष्ठा sge_eosw_txq *eosw_txq)
+अणु
+	वापस eosw_txq->desc[eosw_txq->last_pidx].skb;
+पूर्ण
 
-static inline u8 ethofld_calc_tx_flits(struct adapter *adap,
-				       struct sk_buff *skb, u32 hdr_len)
-{
+अटल अंतरभूत u8 ethofld_calc_tx_flits(काष्ठा adapter *adap,
+				       काष्ठा sk_buff *skb, u32 hdr_len)
+अणु
 	u8 flits, nsgl = 0;
 	u32 wrlen;
 
-	wrlen = sizeof(struct fw_eth_tx_eo_wr) + sizeof(struct cpl_tx_pkt_core);
-	if (skb_shinfo(skb)->gso_size &&
+	wrlen = माप(काष्ठा fw_eth_tx_eo_wr) + माप(काष्ठा cpl_tx_pkt_core);
+	अगर (skb_shinfo(skb)->gso_size &&
 	    !(skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4))
-		wrlen += sizeof(struct cpl_tx_pkt_lso_core);
+		wrlen += माप(काष्ठा cpl_tx_pkt_lso_core);
 
 	wrlen += roundup(hdr_len, 16);
 
 	/* Packet headers + WR + CPLs */
 	flits = DIV_ROUND_UP(wrlen, 8);
 
-	if (skb_shinfo(skb)->nr_frags > 0) {
-		if (skb_headlen(skb) - hdr_len)
+	अगर (skb_shinfo(skb)->nr_frags > 0) अणु
+		अगर (skb_headlen(skb) - hdr_len)
 			nsgl = sgl_len(skb_shinfo(skb)->nr_frags + 1);
-		else
+		अन्यथा
 			nsgl = sgl_len(skb_shinfo(skb)->nr_frags);
-	} else if (skb->len - hdr_len) {
+	पूर्ण अन्यथा अगर (skb->len - hdr_len) अणु
 		nsgl = sgl_len(1);
-	}
+	पूर्ण
 
-	return flits + nsgl;
-}
+	वापस flits + nsgl;
+पूर्ण
 
-static void *write_eo_wr(struct adapter *adap, struct sge_eosw_txq *eosw_txq,
-			 struct sk_buff *skb, struct fw_eth_tx_eo_wr *wr,
+अटल व्योम *ग_लिखो_eo_wr(काष्ठा adapter *adap, काष्ठा sge_eosw_txq *eosw_txq,
+			 काष्ठा sk_buff *skb, काष्ठा fw_eth_tx_eo_wr *wr,
 			 u32 hdr_len, u32 wrlen)
-{
-	const struct skb_shared_info *ssi = skb_shinfo(skb);
-	struct cpl_tx_pkt_core *cpl;
+अणु
+	स्थिर काष्ठा skb_shared_info *ssi = skb_shinfo(skb);
+	काष्ठा cpl_tx_pkt_core *cpl;
 	u32 immd_len, wrlen16;
 	bool compl = false;
 	u8 ver, proto;
@@ -2209,19 +2210,19 @@ static void *write_eo_wr(struct adapter *adap, struct sge_eosw_txq *eosw_txq,
 	proto = (ver == 6) ? ipv6_hdr(skb)->nexthdr : ip_hdr(skb)->protocol;
 
 	wrlen16 = DIV_ROUND_UP(wrlen, 16);
-	immd_len = sizeof(struct cpl_tx_pkt_core);
-	if (skb_shinfo(skb)->gso_size &&
+	immd_len = माप(काष्ठा cpl_tx_pkt_core);
+	अगर (skb_shinfo(skb)->gso_size &&
 	    !(skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4))
-		immd_len += sizeof(struct cpl_tx_pkt_lso_core);
+		immd_len += माप(काष्ठा cpl_tx_pkt_lso_core);
 	immd_len += hdr_len;
 
-	if (!eosw_txq->ncompl ||
+	अगर (!eosw_txq->ncompl ||
 	    (eosw_txq->last_compl + wrlen16) >=
-	    (adap->params.ofldq_wr_cred / 2)) {
+	    (adap->params.ofldq_wr_cred / 2)) अणु
 		compl = true;
 		eosw_txq->ncompl++;
 		eosw_txq->last_compl = 0;
-	}
+	पूर्ण
 
 	wr->op_immdlen = cpu_to_be32(FW_WR_OP_V(FW_ETH_TX_EO_WR) |
 				     FW_ETH_TX_EO_WR_IMMDLEN_V(immd_len) |
@@ -2229,9 +2230,9 @@ static void *write_eo_wr(struct adapter *adap, struct sge_eosw_txq *eosw_txq,
 	wr->equiq_to_len16 = cpu_to_be32(FW_WR_LEN16_V(wrlen16) |
 					 FW_WR_FLOWID_V(eosw_txq->hwtid));
 	wr->r3 = 0;
-	if (proto == IPPROTO_UDP) {
-		cpl = write_eo_udp_wr(skb, wr, hdr_len);
-	} else {
+	अगर (proto == IPPROTO_UDP) अणु
+		cpl = ग_लिखो_eo_udp_wr(skb, wr, hdr_len);
+	पूर्ण अन्यथा अणु
 		wr->u.tcpseg.type = FW_ETH_TX_EO_TYPE_TCPSEG;
 		wr->u.tcpseg.ethlen = skb_network_offset(skb);
 		wr->u.tcpseg.iplen = cpu_to_be16(skb_network_header_len(skb));
@@ -2241,37 +2242,37 @@ static void *write_eo_wr(struct adapter *adap, struct sge_eosw_txq *eosw_txq,
 		wr->u.tcpseg.r5 = 0;
 		wr->u.tcpseg.plen = cpu_to_be32(skb->len - hdr_len);
 
-		if (ssi->gso_size) {
-			struct cpl_tx_pkt_lso_core *lso = (void *)(wr + 1);
+		अगर (ssi->gso_size) अणु
+			काष्ठा cpl_tx_pkt_lso_core *lso = (व्योम *)(wr + 1);
 
 			wr->u.tcpseg.mss = cpu_to_be16(ssi->gso_size);
-			cpl = write_tso_wr(adap, skb, lso);
-		} else {
+			cpl = ग_लिखो_tso_wr(adap, skb, lso);
+		पूर्ण अन्यथा अणु
 			wr->u.tcpseg.mss = cpu_to_be16(0xffff);
-			cpl = (void *)(wr + 1);
-		}
-	}
+			cpl = (व्योम *)(wr + 1);
+		पूर्ण
+	पूर्ण
 
 	eosw_txq->cred -= wrlen16;
 	eosw_txq->last_compl += wrlen16;
-	return cpl;
-}
+	वापस cpl;
+पूर्ण
 
-static int ethofld_hard_xmit(struct net_device *dev,
-			     struct sge_eosw_txq *eosw_txq)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = netdev2adap(dev);
+अटल पूर्णांक ethofld_hard_xmit(काष्ठा net_device *dev,
+			     काष्ठा sge_eosw_txq *eosw_txq)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = netdev2adap(dev);
 	u32 wrlen, wrlen16, hdr_len, data_len;
-	enum sge_eosw_state next_state;
+	क्रमागत sge_eosw_state next_state;
 	u64 cntrl, *start, *end, *sgl;
-	struct sge_eohw_txq *eohw_txq;
-	struct cpl_tx_pkt_core *cpl;
-	struct fw_eth_tx_eo_wr *wr;
+	काष्ठा sge_eohw_txq *eohw_txq;
+	काष्ठा cpl_tx_pkt_core *cpl;
+	काष्ठा fw_eth_tx_eo_wr *wr;
 	bool skip_eotx_wr = false;
-	struct tx_sw_desc *d;
-	struct sk_buff *skb;
-	int left, ret = 0;
+	काष्ठा tx_sw_desc *d;
+	काष्ठा sk_buff *skb;
+	पूर्णांक left, ret = 0;
 	u8 flits, ndesc;
 
 	eohw_txq = &adap->sge.eohw_txq[eosw_txq->hwqid];
@@ -2280,24 +2281,24 @@ static int ethofld_hard_xmit(struct net_device *dev,
 
 	d = &eosw_txq->desc[eosw_txq->last_pidx];
 	skb = d->skb;
-	skb_tx_timestamp(skb);
+	skb_tx_बारtamp(skb);
 
-	wr = (struct fw_eth_tx_eo_wr *)&eohw_txq->q.desc[eohw_txq->q.pidx];
-	if (unlikely(eosw_txq->state != CXGB4_EO_STATE_ACTIVE &&
-		     eosw_txq->last_pidx == eosw_txq->flowc_idx)) {
+	wr = (काष्ठा fw_eth_tx_eo_wr *)&eohw_txq->q.desc[eohw_txq->q.pidx];
+	अगर (unlikely(eosw_txq->state != CXGB4_EO_STATE_ACTIVE &&
+		     eosw_txq->last_pidx == eosw_txq->flowc_idx)) अणु
 		hdr_len = skb->len;
 		data_len = 0;
 		flits = DIV_ROUND_UP(hdr_len, 8);
-		if (eosw_txq->state == CXGB4_EO_STATE_FLOWC_OPEN_SEND)
+		अगर (eosw_txq->state == CXGB4_EO_STATE_FLOWC_OPEN_SEND)
 			next_state = CXGB4_EO_STATE_FLOWC_OPEN_REPLY;
-		else
+		अन्यथा
 			next_state = CXGB4_EO_STATE_FLOWC_CLOSE_REPLY;
 		skip_eotx_wr = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		hdr_len = eth_get_headlen(dev, skb->data, skb_headlen(skb));
 		data_len = skb->len - hdr_len;
 		flits = ethofld_calc_tx_flits(adap, skb, hdr_len);
-	}
+	पूर्ण
 	ndesc = flits_to_desc(flits);
 	wrlen = flits * 8;
 	wrlen16 = DIV_ROUND_UP(wrlen, 16);
@@ -2305,29 +2306,29 @@ static int ethofld_hard_xmit(struct net_device *dev,
 	left = txq_avail(&eohw_txq->q) - ndesc;
 
 	/* If there are no descriptors left in hardware queues or no
-	 * CPL credits left in software queues, then wait for them
+	 * CPL credits left in software queues, then रुको क्रम them
 	 * to come back and retry again. Note that we always request
-	 * for credits update via interrupt for every half credits
-	 * consumed. So, the interrupt will eventually restore the
+	 * क्रम credits update via पूर्णांकerrupt क्रम every half credits
+	 * consumed. So, the पूर्णांकerrupt will eventually restore the
 	 * credits and invoke the Tx path again.
 	 */
-	if (unlikely(left < 0 || wrlen16 > eosw_txq->cred)) {
+	अगर (unlikely(left < 0 || wrlen16 > eosw_txq->cred)) अणु
 		ret = -ENOMEM;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (unlikely(skip_eotx_wr)) {
+	अगर (unlikely(skip_eotx_wr)) अणु
 		start = (u64 *)wr;
 		eosw_txq->state = next_state;
 		eosw_txq->cred -= wrlen16;
 		eosw_txq->ncompl++;
 		eosw_txq->last_compl = 0;
-		goto write_wr_headers;
-	}
+		जाओ ग_लिखो_wr_headers;
+	पूर्ण
 
-	cpl = write_eo_wr(adap, eosw_txq, skb, wr, hdr_len, wrlen);
+	cpl = ग_लिखो_eo_wr(adap, eosw_txq, skb, wr, hdr_len, wrlen);
 	cntrl = hwcsum(adap->params.chip, skb);
-	if (skb_vlan_tag_present(skb))
+	अगर (skb_vlan_tag_present(skb))
 		cntrl |= TXPKT_VLAN_VLD_F | TXPKT_VLAN_V(skb_vlan_tag_get(skb));
 
 	cpl->ctrl0 = cpu_to_be32(TXPKT_OPCODE_V(CPL_TX_PKT_XT) |
@@ -2339,49 +2340,49 @@ static int ethofld_hard_xmit(struct net_device *dev,
 
 	start = (u64 *)(cpl + 1);
 
-write_wr_headers:
-	sgl = (u64 *)inline_tx_skb_header(skb, &eohw_txq->q, (void *)start,
+ग_लिखो_wr_headers:
+	sgl = (u64 *)अंतरभूत_tx_skb_header(skb, &eohw_txq->q, (व्योम *)start,
 					  hdr_len);
-	if (data_len) {
+	अगर (data_len) अणु
 		ret = cxgb4_map_skb(adap->pdev_dev, skb, d->addr);
-		if (unlikely(ret)) {
-			memset(d->addr, 0, sizeof(d->addr));
+		अगर (unlikely(ret)) अणु
+			स_रखो(d->addr, 0, माप(d->addr));
 			eohw_txq->mapping_err++;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		end = (u64 *)wr + flits;
-		if (unlikely(start > sgl)) {
+		अगर (unlikely(start > sgl)) अणु
 			left = (u8 *)end - (u8 *)eohw_txq->q.stat;
-			end = (void *)eohw_txq->q.desc + left;
-		}
+			end = (व्योम *)eohw_txq->q.desc + left;
+		पूर्ण
 
-		if (unlikely((u8 *)sgl >= (u8 *)eohw_txq->q.stat)) {
-			/* If current position is already at the end of the
-			 * txq, reset the current to point to start of the queue
+		अगर (unlikely((u8 *)sgl >= (u8 *)eohw_txq->q.stat)) अणु
+			/* If current position is alपढ़ोy at the end of the
+			 * txq, reset the current to poपूर्णांक to start of the queue
 			 * and update the end ptr as well.
 			 */
 			left = (u8 *)end - (u8 *)eohw_txq->q.stat;
 
-			end = (void *)eohw_txq->q.desc + left;
-			sgl = (void *)eohw_txq->q.desc;
-		}
+			end = (व्योम *)eohw_txq->q.desc + left;
+			sgl = (व्योम *)eohw_txq->q.desc;
+		पूर्ण
 
-		cxgb4_write_sgl(skb, &eohw_txq->q, (void *)sgl, end, hdr_len,
+		cxgb4_ग_लिखो_sgl(skb, &eohw_txq->q, (व्योम *)sgl, end, hdr_len,
 				d->addr);
-	}
+	पूर्ण
 
-	if (skb_shinfo(skb)->gso_size) {
-		if (skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4)
+	अगर (skb_shinfo(skb)->gso_size) अणु
+		अगर (skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4)
 			eohw_txq->uso++;
-		else
+		अन्यथा
 			eohw_txq->tso++;
 		eohw_txq->tx_cso += skb_shinfo(skb)->gso_segs;
-	} else if (skb->ip_summed == CHECKSUM_PARTIAL) {
+	पूर्ण अन्यथा अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
 		eohw_txq->tx_cso++;
-	}
+	पूर्ण
 
-	if (skb_vlan_tag_present(skb))
+	अगर (skb_vlan_tag_present(skb))
 		eohw_txq->vlan_ins++;
 
 	txq_advance(&eohw_txq->q, ndesc);
@@ -2390,70 +2391,70 @@ write_wr_headers:
 
 out_unlock:
 	spin_unlock(&eohw_txq->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ethofld_xmit(struct net_device *dev, struct sge_eosw_txq *eosw_txq)
-{
-	struct sk_buff *skb;
-	int pktcount, ret;
+अटल व्योम ethofld_xmit(काष्ठा net_device *dev, काष्ठा sge_eosw_txq *eosw_txq)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक pktcount, ret;
 
-	switch (eosw_txq->state) {
-	case CXGB4_EO_STATE_ACTIVE:
-	case CXGB4_EO_STATE_FLOWC_OPEN_SEND:
-	case CXGB4_EO_STATE_FLOWC_CLOSE_SEND:
+	चयन (eosw_txq->state) अणु
+	हाल CXGB4_EO_STATE_ACTIVE:
+	हाल CXGB4_EO_STATE_FLOWC_OPEN_SEND:
+	हाल CXGB4_EO_STATE_FLOWC_CLOSE_SEND:
 		pktcount = eosw_txq->pidx - eosw_txq->last_pidx;
-		if (pktcount < 0)
+		अगर (pktcount < 0)
 			pktcount += eosw_txq->ndesc;
-		break;
-	case CXGB4_EO_STATE_FLOWC_OPEN_REPLY:
-	case CXGB4_EO_STATE_FLOWC_CLOSE_REPLY:
-	case CXGB4_EO_STATE_CLOSED:
-	default:
-		return;
-	}
+		अवरोध;
+	हाल CXGB4_EO_STATE_FLOWC_OPEN_REPLY:
+	हाल CXGB4_EO_STATE_FLOWC_CLOSE_REPLY:
+	हाल CXGB4_EO_STATE_CLOSED:
+	शेष:
+		वापस;
+	पूर्ण
 
-	while (pktcount--) {
+	जबतक (pktcount--) अणु
 		skb = eosw_txq_peek(eosw_txq);
-		if (!skb) {
+		अगर (!skb) अणु
 			eosw_txq_advance_index(&eosw_txq->last_pidx, 1,
 					       eosw_txq->ndesc);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ret = ethofld_hard_xmit(dev, eosw_txq);
-		if (ret)
-			break;
-	}
-}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static netdev_tx_t cxgb4_ethofld_xmit(struct sk_buff *skb,
-				      struct net_device *dev)
-{
-	struct cxgb4_tc_port_mqprio *tc_port_mqprio;
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = netdev2adap(dev);
-	struct sge_eosw_txq *eosw_txq;
+अटल netdev_tx_t cxgb4_ethofld_xmit(काष्ठा sk_buff *skb,
+				      काष्ठा net_device *dev)
+अणु
+	काष्ठा cxgb4_tc_port_mqprio *tc_port_mqprio;
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = netdev2adap(dev);
+	काष्ठा sge_eosw_txq *eosw_txq;
 	u32 qid;
-	int ret;
+	पूर्णांक ret;
 
 	ret = cxgb4_validate_skb(skb, dev, ETH_HLEN);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	tc_port_mqprio = &adap->tc_mqprio->port_mqprio[pi->port_id];
 	qid = skb_get_queue_mapping(skb) - pi->nqsets;
 	eosw_txq = &tc_port_mqprio->eosw_txq[qid];
 	spin_lock_bh(&eosw_txq->lock);
-	if (eosw_txq->state != CXGB4_EO_STATE_ACTIVE)
-		goto out_unlock;
+	अगर (eosw_txq->state != CXGB4_EO_STATE_ACTIVE)
+		जाओ out_unlock;
 
 	ret = eosw_txq_enqueue(eosw_txq, skb);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
-	/* SKB is queued for processing until credits are available.
-	 * So, call the destructor now and we'll free the skb later
+	/* SKB is queued क्रम processing until credits are available.
+	 * So, call the deकाष्ठाor now and we'll मुक्त the skb later
 	 * after it has been successfully transmitted.
 	 */
 	skb_orphan(skb);
@@ -2461,66 +2462,66 @@ static netdev_tx_t cxgb4_ethofld_xmit(struct sk_buff *skb,
 	eosw_txq_advance(eosw_txq, 1);
 	ethofld_xmit(dev, eosw_txq);
 	spin_unlock_bh(&eosw_txq->lock);
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 out_unlock:
 	spin_unlock_bh(&eosw_txq->lock);
-out_free:
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_OK;
-}
+out_मुक्त:
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-netdev_tx_t t4_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct port_info *pi = netdev_priv(dev);
+netdev_tx_t t4_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा port_info *pi = netdev_priv(dev);
 	u16 qid = skb_get_queue_mapping(skb);
 
-	if (unlikely(pi->eth_flags & PRIV_FLAG_PORT_TX_VM))
-		return cxgb4_vf_eth_xmit(skb, dev);
+	अगर (unlikely(pi->eth_flags & PRIV_FLAG_PORT_TX_VM))
+		वापस cxgb4_vf_eth_xmit(skb, dev);
 
-	if (unlikely(qid >= pi->nqsets))
-		return cxgb4_ethofld_xmit(skb, dev);
+	अगर (unlikely(qid >= pi->nqsets))
+		वापस cxgb4_ethofld_xmit(skb, dev);
 
-	if (is_ptp_enabled(skb, dev)) {
-		struct adapter *adap = netdev2adap(dev);
+	अगर (is_ptp_enabled(skb, dev)) अणु
+		काष्ठा adapter *adap = netdev2adap(dev);
 		netdev_tx_t ret;
 
 		spin_lock(&adap->ptp_lock);
 		ret = cxgb4_eth_xmit(skb, dev);
 		spin_unlock(&adap->ptp_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return cxgb4_eth_xmit(skb, dev);
-}
+	वापस cxgb4_eth_xmit(skb, dev);
+पूर्ण
 
-static void eosw_txq_flush_pending_skbs(struct sge_eosw_txq *eosw_txq)
-{
-	int pktcount = eosw_txq->pidx - eosw_txq->last_pidx;
-	int pidx = eosw_txq->pidx;
-	struct sk_buff *skb;
+अटल व्योम eosw_txq_flush_pending_skbs(काष्ठा sge_eosw_txq *eosw_txq)
+अणु
+	पूर्णांक pktcount = eosw_txq->pidx - eosw_txq->last_pidx;
+	पूर्णांक pidx = eosw_txq->pidx;
+	काष्ठा sk_buff *skb;
 
-	if (!pktcount)
-		return;
+	अगर (!pktcount)
+		वापस;
 
-	if (pktcount < 0)
+	अगर (pktcount < 0)
 		pktcount += eosw_txq->ndesc;
 
-	while (pktcount--) {
+	जबतक (pktcount--) अणु
 		pidx--;
-		if (pidx < 0)
+		अगर (pidx < 0)
 			pidx += eosw_txq->ndesc;
 
 		skb = eosw_txq->desc[pidx].skb;
-		if (skb) {
+		अगर (skb) अणु
 			dev_consume_skb_any(skb);
-			eosw_txq->desc[pidx].skb = NULL;
+			eosw_txq->desc[pidx].skb = शून्य;
 			eosw_txq->inuse--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	eosw_txq->pidx = eosw_txq->last_pidx + 1;
-}
+पूर्ण
 
 /**
  * cxgb4_ethofld_send_flowc - Send ETHOFLD flowc request to bind eotid to tc.
@@ -2532,55 +2533,55 @@ static void eosw_txq_flush_pending_skbs(struct sge_eosw_txq *eosw_txq)
  * If @tc is set to FW_SCHED_CLS_NONE, then the @eotid is unbound from
  * a traffic class.
  */
-int cxgb4_ethofld_send_flowc(struct net_device *dev, u32 eotid, u32 tc)
-{
-	struct port_info *pi = netdev2pinfo(dev);
-	struct adapter *adap = netdev2adap(dev);
-	enum sge_eosw_state next_state;
-	struct sge_eosw_txq *eosw_txq;
+पूर्णांक cxgb4_ethofld_send_flowc(काष्ठा net_device *dev, u32 eotid, u32 tc)
+अणु
+	काष्ठा port_info *pi = netdev2pinfo(dev);
+	काष्ठा adapter *adap = netdev2adap(dev);
+	क्रमागत sge_eosw_state next_state;
+	काष्ठा sge_eosw_txq *eosw_txq;
 	u32 len, len16, nparams = 6;
-	struct fw_flowc_wr *flowc;
-	struct eotid_entry *entry;
-	struct sge_ofld_rxq *rxq;
-	struct sk_buff *skb;
-	int ret = 0;
+	काष्ठा fw_flowc_wr *flowc;
+	काष्ठा eotid_entry *entry;
+	काष्ठा sge_ofld_rxq *rxq;
+	काष्ठा sk_buff *skb;
+	पूर्णांक ret = 0;
 
-	len = struct_size(flowc, mnemval, nparams);
+	len = काष्ठा_size(flowc, mnemval, nparams);
 	len16 = DIV_ROUND_UP(len, 16);
 
 	entry = cxgb4_lookup_eotid(&adap->tids, eotid);
-	if (!entry)
-		return -ENOMEM;
+	अगर (!entry)
+		वापस -ENOMEM;
 
-	eosw_txq = (struct sge_eosw_txq *)entry->data;
-	if (!eosw_txq)
-		return -ENOMEM;
+	eosw_txq = (काष्ठा sge_eosw_txq *)entry->data;
+	अगर (!eosw_txq)
+		वापस -ENOMEM;
 
-	if (!(adap->flags & CXGB4_FW_OK)) {
+	अगर (!(adap->flags & CXGB4_FW_OK)) अणु
 		/* Don't stall caller when access to FW is lost */
 		complete(&eosw_txq->completion);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	skb = alloc_skb(len, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	spin_lock_bh(&eosw_txq->lock);
-	if (tc != FW_SCHED_CLS_NONE) {
-		if (eosw_txq->state != CXGB4_EO_STATE_CLOSED)
-			goto out_free_skb;
+	अगर (tc != FW_SCHED_CLS_NONE) अणु
+		अगर (eosw_txq->state != CXGB4_EO_STATE_CLOSED)
+			जाओ out_मुक्त_skb;
 
 		next_state = CXGB4_EO_STATE_FLOWC_OPEN_SEND;
-	} else {
-		if (eosw_txq->state != CXGB4_EO_STATE_ACTIVE)
-			goto out_free_skb;
+	पूर्ण अन्यथा अणु
+		अगर (eosw_txq->state != CXGB4_EO_STATE_ACTIVE)
+			जाओ out_मुक्त_skb;
 
 		next_state = CXGB4_EO_STATE_FLOWC_CLOSE_SEND;
-	}
+	पूर्ण
 
 	flowc = __skb_put(skb, len);
-	memset(flowc, 0, len);
+	स_रखो(flowc, 0, len);
 
 	rxq = &adap->sge.eohw_rxq[eosw_txq->hwqid];
 	flowc->flowid_len16 = cpu_to_be32(FW_WR_LEN16_V(len16) |
@@ -2595,7 +2596,7 @@ int cxgb4_ethofld_send_flowc(struct net_device *dev, u32 eotid, u32 tc)
 	flowc->mnemval[2].mnemonic = FW_FLOWC_MNEM_PORT;
 	flowc->mnemval[2].val = cpu_to_be32(pi->tx_chan);
 	flowc->mnemval[3].mnemonic = FW_FLOWC_MNEM_IQID;
-	flowc->mnemval[3].val = cpu_to_be32(rxq->rspq.abs_id);
+	flowc->mnemval[3].val = cpu_to_be32(rxq->rspq.असल_id);
 	flowc->mnemval[4].mnemonic = FW_FLOWC_MNEM_SCHEDCLASS;
 	flowc->mnemval[4].val = cpu_to_be32(tc);
 	flowc->mnemval[5].mnemonic = FW_FLOWC_MNEM_EOSTATE;
@@ -2603,15 +2604,15 @@ int cxgb4_ethofld_send_flowc(struct net_device *dev, u32 eotid, u32 tc)
 					    FW_FLOWC_MNEM_EOSTATE_CLOSING :
 					    FW_FLOWC_MNEM_EOSTATE_ESTABLISHED);
 
-	/* Free up any pending skbs to ensure there's room for
+	/* Free up any pending skbs to ensure there's room क्रम
 	 * termination FLOWC.
 	 */
-	if (tc == FW_SCHED_CLS_NONE)
+	अगर (tc == FW_SCHED_CLS_NONE)
 		eosw_txq_flush_pending_skbs(eosw_txq);
 
 	ret = eosw_txq_enqueue(eosw_txq, skb);
-	if (ret)
-		goto out_free_skb;
+	अगर (ret)
+		जाओ out_मुक्त_skb;
 
 	eosw_txq->state = next_state;
 	eosw_txq->flowc_idx = eosw_txq->pidx;
@@ -2619,88 +2620,88 @@ int cxgb4_ethofld_send_flowc(struct net_device *dev, u32 eotid, u32 tc)
 	ethofld_xmit(dev, eosw_txq);
 
 	spin_unlock_bh(&eosw_txq->lock);
-	return 0;
+	वापस 0;
 
-out_free_skb:
+out_मुक्त_skb:
 	dev_consume_skb_any(skb);
 	spin_unlock_bh(&eosw_txq->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  *	is_imm - check whether a packet can be sent as immediate data
  *	@skb: the packet
  *
- *	Returns true if a packet can be sent as a WR with immediate data.
+ *	Returns true अगर a packet can be sent as a WR with immediate data.
  */
-static inline int is_imm(const struct sk_buff *skb)
-{
-	return skb->len <= MAX_CTRL_WR_LEN;
-}
+अटल अंतरभूत पूर्णांक is_imm(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस skb->len <= MAX_CTRL_WR_LEN;
+पूर्ण
 
 /**
- *	ctrlq_check_stop - check if a control queue is full and should stop
+ *	ctrlq_check_stop - check अगर a control queue is full and should stop
  *	@q: the queue
  *	@wr: most recent WR written to the queue
  *
- *	Check if a control queue has become full and should be stopped.
+ *	Check अगर a control queue has become full and should be stopped.
  *	We clean up control queue descriptors very lazily, only when we are out.
  *	If the queue is still full after reclaiming any completed descriptors
  *	we suspend it and have the last WR wake it up.
  */
-static void ctrlq_check_stop(struct sge_ctrl_txq *q, struct fw_wr_hdr *wr)
-{
+अटल व्योम ctrlq_check_stop(काष्ठा sge_ctrl_txq *q, काष्ठा fw_wr_hdr *wr)
+अणु
 	reclaim_completed_tx_imm(&q->q);
-	if (unlikely(txq_avail(&q->q) < TXQ_STOP_THRES)) {
+	अगर (unlikely(txq_avail(&q->q) < TXQ_STOP_THRES)) अणु
 		wr->lo |= htonl(FW_WR_EQUEQ_F | FW_WR_EQUIQ_F);
 		q->q.stops++;
 		q->full = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define CXGB4_SELFTEST_LB_STR "CHELSIO_SELFTEST"
+#घोषणा CXGB4_SELFTEST_LB_STR "CHELSIO_SELFTEST"
 
-int cxgb4_selftest_lb_pkt(struct net_device *netdev)
-{
-	struct port_info *pi = netdev_priv(netdev);
-	struct adapter *adap = pi->adapter;
-	struct cxgb4_ethtool_lb_test *lb;
-	int ret, i = 0, pkt_len, credits;
-	struct fw_eth_tx_pkt_wr *wr;
-	struct cpl_tx_pkt_core *cpl;
+पूर्णांक cxgb4_selftest_lb_pkt(काष्ठा net_device *netdev)
+अणु
+	काष्ठा port_info *pi = netdev_priv(netdev);
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा cxgb4_ethtool_lb_test *lb;
+	पूर्णांक ret, i = 0, pkt_len, credits;
+	काष्ठा fw_eth_tx_pkt_wr *wr;
+	काष्ठा cpl_tx_pkt_core *cpl;
 	u32 ctrl0, ndesc, flits;
-	struct sge_eth_txq *q;
+	काष्ठा sge_eth_txq *q;
 	u8 *sgl;
 
-	pkt_len = ETH_HLEN + sizeof(CXGB4_SELFTEST_LB_STR);
+	pkt_len = ETH_HLEN + माप(CXGB4_SELFTEST_LB_STR);
 
-	flits = DIV_ROUND_UP(pkt_len + sizeof(*cpl) + sizeof(*wr),
-			     sizeof(__be64));
+	flits = DIV_ROUND_UP(pkt_len + माप(*cpl) + माप(*wr),
+			     माप(__be64));
 	ndesc = flits_to_desc(flits);
 
 	lb = &pi->ethtool_lb;
 	lb->loopback = 1;
 
 	q = &adap->sge.ethtxq[pi->first_qset];
-	__netif_tx_lock(q->txq, smp_processor_id());
+	__netअगर_tx_lock(q->txq, smp_processor_id());
 
 	reclaim_completed_tx(adap, &q->q, -1, true);
 	credits = txq_avail(&q->q) - ndesc;
-	if (unlikely(credits < 0)) {
-		__netif_tx_unlock(q->txq);
-		return -ENOMEM;
-	}
+	अगर (unlikely(credits < 0)) अणु
+		__netअगर_tx_unlock(q->txq);
+		वापस -ENOMEM;
+	पूर्ण
 
-	wr = (void *)&q->q.desc[q->q.pidx];
-	memset(wr, 0, sizeof(struct tx_desc));
+	wr = (व्योम *)&q->q.desc[q->q.pidx];
+	स_रखो(wr, 0, माप(काष्ठा tx_desc));
 
 	wr->op_immdlen = htonl(FW_WR_OP_V(FW_ETH_TX_PKT_WR) |
 			       FW_WR_IMMDLEN_V(pkt_len +
-			       sizeof(*cpl)));
+			       माप(*cpl)));
 	wr->equiq_to_len16 = htonl(FW_WR_LEN16_V(DIV_ROUND_UP(flits, 2)));
 	wr->r3 = cpu_to_be64(0);
 
-	cpl = (void *)(wr + 1);
+	cpl = (व्योम *)(wr + 1);
 	sgl = (u8 *)(cpl + 1);
 
 	ctrl0 = TXPKT_OPCODE_V(CPL_TX_PKT_XT) | TXPKT_PF_V(adap->pf) |
@@ -2716,25 +2717,25 @@ int cxgb4_selftest_lb_pkt(struct net_device *netdev)
 	ether_addr_copy(&sgl[i], netdev->dev_addr);
 	i += ETH_ALEN;
 
-	snprintf(&sgl[i], sizeof(CXGB4_SELFTEST_LB_STR), "%s",
+	snम_लिखो(&sgl[i], माप(CXGB4_SELFTEST_LB_STR), "%s",
 		 CXGB4_SELFTEST_LB_STR);
 
 	init_completion(&lb->completion);
 	txq_advance(&q->q, ndesc);
 	cxgb4_ring_tx_db(adap, &q->q, ndesc);
-	__netif_tx_unlock(q->txq);
+	__netअगर_tx_unlock(q->txq);
 
-	/* wait for the pkt to return */
-	ret = wait_for_completion_timeout(&lb->completion, 10 * HZ);
-	if (!ret)
+	/* रुको क्रम the pkt to वापस */
+	ret = रुको_क्रम_completion_समयout(&lb->completion, 10 * HZ);
+	अगर (!ret)
 		ret = -ETIMEDOUT;
-	else
+	अन्यथा
 		ret = lb->result;
 
 	lb->loopback = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  *	ctrl_xmit - send a packet through an SGE control Tx queue
@@ -2744,93 +2745,93 @@ int cxgb4_selftest_lb_pkt(struct net_device *netdev)
  *	Send a packet through an SGE control Tx queue.  Packets sent through
  *	a control queue must fit entirely as immediate data.
  */
-static int ctrl_xmit(struct sge_ctrl_txq *q, struct sk_buff *skb)
-{
-	unsigned int ndesc;
-	struct fw_wr_hdr *wr;
+अटल पूर्णांक ctrl_xmit(काष्ठा sge_ctrl_txq *q, काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक ndesc;
+	काष्ठा fw_wr_hdr *wr;
 
-	if (unlikely(!is_imm(skb))) {
+	अगर (unlikely(!is_imm(skb))) अणु
 		WARN_ON(1);
-		dev_kfree_skb(skb);
-		return NET_XMIT_DROP;
-	}
+		dev_kमुक्त_skb(skb);
+		वापस NET_XMIT_DROP;
+	पूर्ण
 
-	ndesc = DIV_ROUND_UP(skb->len, sizeof(struct tx_desc));
+	ndesc = DIV_ROUND_UP(skb->len, माप(काष्ठा tx_desc));
 	spin_lock(&q->sendq.lock);
 
-	if (unlikely(q->full)) {
-		skb->priority = ndesc;                  /* save for restart */
+	अगर (unlikely(q->full)) अणु
+		skb->priority = ndesc;                  /* save क्रम restart */
 		__skb_queue_tail(&q->sendq, skb);
 		spin_unlock(&q->sendq.lock);
-		return NET_XMIT_CN;
-	}
+		वापस NET_XMIT_CN;
+	पूर्ण
 
-	wr = (struct fw_wr_hdr *)&q->q.desc[q->q.pidx];
-	cxgb4_inline_tx_skb(skb, &q->q, wr);
+	wr = (काष्ठा fw_wr_hdr *)&q->q.desc[q->q.pidx];
+	cxgb4_अंतरभूत_tx_skb(skb, &q->q, wr);
 
 	txq_advance(&q->q, ndesc);
-	if (unlikely(txq_avail(&q->q) < TXQ_STOP_THRES))
+	अगर (unlikely(txq_avail(&q->q) < TXQ_STOP_THRES))
 		ctrlq_check_stop(q, wr);
 
 	cxgb4_ring_tx_db(q->adap, &q->q, ndesc);
 	spin_unlock(&q->sendq.lock);
 
-	kfree_skb(skb);
-	return NET_XMIT_SUCCESS;
-}
+	kमुक्त_skb(skb);
+	वापस NET_XMIT_SUCCESS;
+पूर्ण
 
 /**
  *	restart_ctrlq - restart a suspended control queue
- *	@t: pointer to the tasklet associated with this handler
+ *	@t: poपूर्णांकer to the tasklet associated with this handler
  *
  *	Resumes transmission on a suspended Tx control queue.
  */
-static void restart_ctrlq(struct tasklet_struct *t)
-{
-	struct sk_buff *skb;
-	unsigned int written = 0;
-	struct sge_ctrl_txq *q = from_tasklet(q, t, qresume_tsk);
+अटल व्योम restart_ctrlq(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित पूर्णांक written = 0;
+	काष्ठा sge_ctrl_txq *q = from_tasklet(q, t, qresume_tsk);
 
 	spin_lock(&q->sendq.lock);
 	reclaim_completed_tx_imm(&q->q);
 	BUG_ON(txq_avail(&q->q) < TXQ_STOP_THRES);  /* q should be empty */
 
-	while ((skb = __skb_dequeue(&q->sendq)) != NULL) {
-		struct fw_wr_hdr *wr;
-		unsigned int ndesc = skb->priority;     /* previously saved */
+	जबतक ((skb = __skb_dequeue(&q->sendq)) != शून्य) अणु
+		काष्ठा fw_wr_hdr *wr;
+		अचिन्हित पूर्णांक ndesc = skb->priority;     /* previously saved */
 
 		written += ndesc;
-		/* Write descriptors and free skbs outside the lock to limit
-		 * wait times.  q->full is still set so new skbs will be queued.
+		/* Write descriptors and मुक्त skbs outside the lock to limit
+		 * रुको बार.  q->full is still set so new skbs will be queued.
 		 */
-		wr = (struct fw_wr_hdr *)&q->q.desc[q->q.pidx];
+		wr = (काष्ठा fw_wr_hdr *)&q->q.desc[q->q.pidx];
 		txq_advance(&q->q, ndesc);
 		spin_unlock(&q->sendq.lock);
 
-		cxgb4_inline_tx_skb(skb, &q->q, wr);
-		kfree_skb(skb);
+		cxgb4_अंतरभूत_tx_skb(skb, &q->q, wr);
+		kमुक्त_skb(skb);
 
-		if (unlikely(txq_avail(&q->q) < TXQ_STOP_THRES)) {
-			unsigned long old = q->q.stops;
+		अगर (unlikely(txq_avail(&q->q) < TXQ_STOP_THRES)) अणु
+			अचिन्हित दीर्घ old = q->q.stops;
 
 			ctrlq_check_stop(q, wr);
-			if (q->q.stops != old) {          /* suspended anew */
+			अगर (q->q.stops != old) अणु          /* suspended anew */
 				spin_lock(&q->sendq.lock);
-				goto ringdb;
-			}
-		}
-		if (written > 16) {
+				जाओ ringdb;
+			पूर्ण
+		पूर्ण
+		अगर (written > 16) अणु
 			cxgb4_ring_tx_db(q->adap, &q->q, written);
 			written = 0;
-		}
+		पूर्ण
 		spin_lock(&q->sendq.lock);
-	}
+	पूर्ण
 	q->full = 0;
 ringdb:
-	if (written)
+	अगर (written)
 		cxgb4_ring_tx_db(q->adap, &q->q, written);
 	spin_unlock(&q->sendq.lock);
-}
+पूर्ण
 
 /**
  *	t4_mgmt_tx - send a management message
@@ -2839,91 +2840,91 @@ ringdb:
  *
  *	Send a management message through control queue 0.
  */
-int t4_mgmt_tx(struct adapter *adap, struct sk_buff *skb)
-{
-	int ret;
+पूर्णांक t4_mgmt_tx(काष्ठा adapter *adap, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
 
 	local_bh_disable();
 	ret = ctrl_xmit(&adap->sge.ctrlq[0], skb);
 	local_bh_enable();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  *	is_ofld_imm - check whether a packet can be sent as immediate data
  *	@skb: the packet
  *
- *	Returns true if a packet can be sent as an offload WR with immediate
+ *	Returns true अगर a packet can be sent as an offload WR with immediate
  *	data.
  *	FW_OFLD_TX_DATA_WR limits the payload to 255 bytes due to 8-bit field.
  *      However, FW_ULPTX_WR commands have a 256 byte immediate only
  *      payload limit.
  */
-static inline int is_ofld_imm(const struct sk_buff *skb)
-{
-	struct work_request_hdr *req = (struct work_request_hdr *)skb->data;
-	unsigned long opcode = FW_WR_OP_G(ntohl(req->wr_hi));
+अटल अंतरभूत पूर्णांक is_ofld_imm(स्थिर काष्ठा sk_buff *skb)
+अणु
+	काष्ठा work_request_hdr *req = (काष्ठा work_request_hdr *)skb->data;
+	अचिन्हित दीर्घ opcode = FW_WR_OP_G(ntohl(req->wr_hi));
 
-	if (unlikely(opcode == FW_ULPTX_WR))
-		return skb->len <= MAX_IMM_ULPTX_WR_LEN;
-	else if (opcode == FW_CRYPTO_LOOKASIDE_WR)
-		return skb->len <= SGE_MAX_WR_LEN;
-	else
-		return skb->len <= MAX_IMM_OFLD_TX_DATA_WR_LEN;
-}
+	अगर (unlikely(opcode == FW_ULPTX_WR))
+		वापस skb->len <= MAX_IMM_ULPTX_WR_LEN;
+	अन्यथा अगर (opcode == FW_CRYPTO_LOOKASIDE_WR)
+		वापस skb->len <= SGE_MAX_WR_LEN;
+	अन्यथा
+		वापस skb->len <= MAX_IMM_OFLD_TX_DATA_WR_LEN;
+पूर्ण
 
 /**
- *	calc_tx_flits_ofld - calculate # of flits for an offload packet
+ *	calc_tx_flits_ofld - calculate # of flits क्रम an offload packet
  *	@skb: the packet
  *
- *	Returns the number of flits needed for the given offload packet.
- *	These packets are already fully constructed and no additional headers
+ *	Returns the number of flits needed क्रम the given offload packet.
+ *	These packets are alपढ़ोy fully स्थिरructed and no additional headers
  *	will be added.
  */
-static inline unsigned int calc_tx_flits_ofld(const struct sk_buff *skb)
-{
-	unsigned int flits, cnt;
+अटल अंतरभूत अचिन्हित पूर्णांक calc_tx_flits_ofld(स्थिर काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक flits, cnt;
 
-	if (is_ofld_imm(skb))
-		return DIV_ROUND_UP(skb->len, 8);
+	अगर (is_ofld_imm(skb))
+		वापस DIV_ROUND_UP(skb->len, 8);
 
 	flits = skb_transport_offset(skb) / 8U;   /* headers */
 	cnt = skb_shinfo(skb)->nr_frags;
-	if (skb_tail_pointer(skb) != skb_transport_header(skb))
+	अगर (skb_tail_poपूर्णांकer(skb) != skb_transport_header(skb))
 		cnt++;
-	return flits + sgl_len(cnt);
-}
+	वापस flits + sgl_len(cnt);
+पूर्ण
 
 /**
  *	txq_stop_maperr - stop a Tx queue due to I/O MMU exhaustion
  *	@q: the queue to stop
  *
  *	Mark a Tx queue stopped due to I/O MMU exhaustion and resulting
- *	inability to map packets.  A periodic timer attempts to restart
+ *	inability to map packets.  A periodic समयr attempts to restart
  *	queues so marked.
  */
-static void txq_stop_maperr(struct sge_uld_txq *q)
-{
+अटल व्योम txq_stop_maperr(काष्ठा sge_uld_txq *q)
+अणु
 	q->mapping_err++;
 	q->q.stops++;
 	set_bit(q->q.cntxt_id - q->adap->sge.egr_start,
 		q->adap->sge.txq_maperr);
-}
+पूर्ण
 
 /**
  *	ofldtxq_stop - stop an offload Tx queue that has become full
  *	@q: the queue to stop
  *	@wr: the Work Request causing the queue to become full
  *
- *	Stops an offload Tx queue that has become full and modifies the packet
+ *	Stops an offload Tx queue that has become full and modअगरies the packet
  *	being written to request a wakeup.
  */
-static void ofldtxq_stop(struct sge_uld_txq *q, struct fw_wr_hdr *wr)
-{
+अटल व्योम ofldtxq_stop(काष्ठा sge_uld_txq *q, काष्ठा fw_wr_hdr *wr)
+अणु
 	wr->lo |= htonl(FW_WR_EQUEQ_F | FW_WR_EQUIQ_F);
 	q->q.stops++;
 	q->full = 1;
-}
+पूर्ण
 
 /**
  *	service_ofldq - service/restart a suspended offload queue
@@ -2931,46 +2932,46 @@ static void ofldtxq_stop(struct sge_uld_txq *q, struct fw_wr_hdr *wr)
  *
  *	Services an offload Tx queue by moving packets from its Pending Send
  *	Queue to the Hardware TX ring.  The function starts and ends with the
- *	Send Queue locked, but drops the lock while putting the skb at the
+ *	Send Queue locked, but drops the lock जबतक putting the skb at the
  *	head of the Send Queue onto the Hardware TX Ring.  Dropping the lock
- *	allows more skbs to be added to the Send Queue by other threads.
+ *	allows more skbs to be added to the Send Queue by other thपढ़ोs.
  *	The packet being processed at the head of the Pending Send Queue is
- *	left on the queue in case we experience DMA Mapping errors, etc.
+ *	left on the queue in हाल we experience DMA Mapping errors, etc.
  *	and need to give up and restart later.
  *
  *	service_ofldq() can be thought of as a task which opportunistically
- *	uses other threads execution contexts.  We use the Offload Queue
+ *	uses other thपढ़ोs execution contexts.  We use the Offload Queue
  *	boolean "service_ofldq_running" to make sure that only one instance
- *	is ever running at a time ...
+ *	is ever running at a समय ...
  */
-static void service_ofldq(struct sge_uld_txq *q)
+अटल व्योम service_ofldq(काष्ठा sge_uld_txq *q)
 	__must_hold(&q->sendq.lock)
-{
-	u64 *pos, *before, *end;
-	int credits;
-	struct sk_buff *skb;
-	struct sge_txq *txq;
-	unsigned int left;
-	unsigned int written = 0;
-	unsigned int flits, ndesc;
+अणु
+	u64 *pos, *beक्रमe, *end;
+	पूर्णांक credits;
+	काष्ठा sk_buff *skb;
+	काष्ठा sge_txq *txq;
+	अचिन्हित पूर्णांक left;
+	अचिन्हित पूर्णांक written = 0;
+	अचिन्हित पूर्णांक flits, ndesc;
 
-	/* If another thread is currently in service_ofldq() processing the
-	 * Pending Send Queue then there's nothing to do. Otherwise, flag
-	 * that we're doing the work and continue.  Examining/modifying
-	 * the Offload Queue boolean "service_ofldq_running" must be done
-	 * while holding the Pending Send Queue Lock.
+	/* If another thपढ़ो is currently in service_ofldq() processing the
+	 * Pending Send Queue then there's nothing to करो. Otherwise, flag
+	 * that we're करोing the work and जारी.  Examining/modअगरying
+	 * the Offload Queue boolean "service_ofldq_running" must be करोne
+	 * जबतक holding the Pending Send Queue Lock.
 	 */
-	if (q->service_ofldq_running)
-		return;
+	अगर (q->service_ofldq_running)
+		वापस;
 	q->service_ofldq_running = true;
 
-	while ((skb = skb_peek(&q->sendq)) != NULL && !q->full) {
-		/* We drop the lock while we're working with the skb at the
+	जबतक ((skb = skb_peek(&q->sendq)) != शून्य && !q->full) अणु
+		/* We drop the lock जबतक we're working with the skb at the
 		 * head of the Pending Send Queue.  This allows more skbs to
-		 * be added to the Pending Send Queue while we're working on
-		 * this one.  We don't need to lock to guard the TX Ring
-		 * updates because only one thread of execution is ever
-		 * allowed into service_ofldq() at a time.
+		 * be added to the Pending Send Queue जबतक we're working on
+		 * this one.  We करोn't need to lock to guard the TX Ring
+		 * updates because only one thपढ़ो of execution is ever
+		 * allowed पूर्णांकo service_ofldq() at a समय.
 		 */
 		spin_unlock(&q->sendq.lock);
 
@@ -2980,82 +2981,82 @@ static void service_ofldq(struct sge_uld_txq *q)
 		ndesc = flits_to_desc(flits);
 		credits = txq_avail(&q->q) - ndesc;
 		BUG_ON(credits < 0);
-		if (unlikely(credits < TXQ_STOP_THRES))
-			ofldtxq_stop(q, (struct fw_wr_hdr *)skb->data);
+		अगर (unlikely(credits < TXQ_STOP_THRES))
+			ofldtxq_stop(q, (काष्ठा fw_wr_hdr *)skb->data);
 
 		pos = (u64 *)&q->q.desc[q->q.pidx];
-		if (is_ofld_imm(skb))
-			cxgb4_inline_tx_skb(skb, &q->q, pos);
-		else if (cxgb4_map_skb(q->adap->pdev_dev, skb,
-				       (dma_addr_t *)skb->head)) {
+		अगर (is_ofld_imm(skb))
+			cxgb4_अंतरभूत_tx_skb(skb, &q->q, pos);
+		अन्यथा अगर (cxgb4_map_skb(q->adap->pdev_dev, skb,
+				       (dma_addr_t *)skb->head)) अणु
 			txq_stop_maperr(q);
 			spin_lock(&q->sendq.lock);
-			break;
-		} else {
-			int last_desc, hdr_len = skb_transport_offset(skb);
+			अवरोध;
+		पूर्ण अन्यथा अणु
+			पूर्णांक last_desc, hdr_len = skb_transport_offset(skb);
 
 			/* The WR headers  may not fit within one descriptor.
 			 * So we need to deal with wrap-around here.
 			 */
-			before = (u64 *)pos;
+			beक्रमe = (u64 *)pos;
 			end = (u64 *)pos + flits;
 			txq = &q->q;
-			pos = (void *)inline_tx_skb_header(skb, &q->q,
-							   (void *)pos,
+			pos = (व्योम *)अंतरभूत_tx_skb_header(skb, &q->q,
+							   (व्योम *)pos,
 							   hdr_len);
-			if (before > (u64 *)pos) {
+			अगर (beक्रमe > (u64 *)pos) अणु
 				left = (u8 *)end - (u8 *)txq->stat;
-				end = (void *)txq->desc + left;
-			}
+				end = (व्योम *)txq->desc + left;
+			पूर्ण
 
-			/* If current position is already at the end of the
-			 * ofld queue, reset the current to point to
+			/* If current position is alपढ़ोy at the end of the
+			 * ofld queue, reset the current to poपूर्णांक to
 			 * start of the queue and update the end ptr as well.
 			 */
-			if (pos == (u64 *)txq->stat) {
+			अगर (pos == (u64 *)txq->stat) अणु
 				left = (u8 *)end - (u8 *)txq->stat;
-				end = (void *)txq->desc + left;
-				pos = (void *)txq->desc;
-			}
+				end = (व्योम *)txq->desc + left;
+				pos = (व्योम *)txq->desc;
+			पूर्ण
 
-			cxgb4_write_sgl(skb, &q->q, (void *)pos,
+			cxgb4_ग_लिखो_sgl(skb, &q->q, (व्योम *)pos,
 					end, hdr_len,
 					(dma_addr_t *)skb->head);
-#ifdef CONFIG_NEED_DMA_MAP_STATE
+#अगर_घोषित CONFIG_NEED_DMA_MAP_STATE
 			skb->dev = q->adap->port[0];
-			skb->destructor = deferred_unmap_destructor;
-#endif
+			skb->deकाष्ठाor = deferred_unmap_deकाष्ठाor;
+#पूर्ण_अगर
 			last_desc = q->q.pidx + ndesc - 1;
-			if (last_desc >= q->q.size)
+			अगर (last_desc >= q->q.size)
 				last_desc -= q->q.size;
 			q->q.sdesc[last_desc].skb = skb;
-		}
+		पूर्ण
 
 		txq_advance(&q->q, ndesc);
 		written += ndesc;
-		if (unlikely(written > 32)) {
+		अगर (unlikely(written > 32)) अणु
 			cxgb4_ring_tx_db(q->adap, &q->q, written);
 			written = 0;
-		}
+		पूर्ण
 
 		/* Reacquire the Pending Send Queue Lock so we can unlink the
 		 * skb we've just successfully transferred to the TX Ring and
-		 * loop for the next skb which may be at the head of the
+		 * loop क्रम the next skb which may be at the head of the
 		 * Pending Send Queue.
 		 */
 		spin_lock(&q->sendq.lock);
 		__skb_unlink(skb, &q->sendq);
-		if (is_ofld_imm(skb))
-			kfree_skb(skb);
-	}
-	if (likely(written))
+		अगर (is_ofld_imm(skb))
+			kमुक्त_skb(skb);
+	पूर्ण
+	अगर (likely(written))
 		cxgb4_ring_tx_db(q->adap, &q->q, written);
 
-	/*Indicate that no thread is processing the Pending Send Queue
+	/*Indicate that no thपढ़ो is processing the Pending Send Queue
 	 * currently.
 	 */
 	q->service_ofldq_running = false;
-}
+पूर्ण
 
 /**
  *	ofld_xmit - send a packet through an offload queue
@@ -3064,91 +3065,91 @@ static void service_ofldq(struct sge_uld_txq *q)
  *
  *	Send an offload packet through an SGE offload queue.
  */
-static int ofld_xmit(struct sge_uld_txq *q, struct sk_buff *skb)
-{
-	skb->priority = calc_tx_flits_ofld(skb);       /* save for restart */
+अटल पूर्णांक ofld_xmit(काष्ठा sge_uld_txq *q, काष्ठा sk_buff *skb)
+अणु
+	skb->priority = calc_tx_flits_ofld(skb);       /* save क्रम restart */
 	spin_lock(&q->sendq.lock);
 
 	/* Queue the new skb onto the Offload Queue's Pending Send Queue.  If
 	 * that results in this new skb being the only one on the queue, start
-	 * servicing it.  If there are other skbs already on the list, then
+	 * servicing it.  If there are other skbs alपढ़ोy on the list, then
 	 * either the queue is currently being processed or it's been stopped
-	 * for some reason and it'll be restarted at a later time.  Restart
+	 * क्रम some reason and it'll be restarted at a later समय.  Restart
 	 * paths are triggered by events like experiencing a DMA Mapping Error
 	 * or filling the Hardware TX Ring.
 	 */
 	__skb_queue_tail(&q->sendq, skb);
-	if (q->sendq.qlen == 1)
+	अगर (q->sendq.qlen == 1)
 		service_ofldq(q);
 
 	spin_unlock(&q->sendq.lock);
-	return NET_XMIT_SUCCESS;
-}
+	वापस NET_XMIT_SUCCESS;
+पूर्ण
 
 /**
  *	restart_ofldq - restart a suspended offload queue
- *	@t: pointer to the tasklet associated with this handler
+ *	@t: poपूर्णांकer to the tasklet associated with this handler
  *
  *	Resumes transmission on a suspended Tx offload queue.
  */
-static void restart_ofldq(struct tasklet_struct *t)
-{
-	struct sge_uld_txq *q = from_tasklet(q, t, qresume_tsk);
+अटल व्योम restart_ofldq(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा sge_uld_txq *q = from_tasklet(q, t, qresume_tsk);
 
 	spin_lock(&q->sendq.lock);
 	q->full = 0;            /* the queue actually is completely empty now */
 	service_ofldq(q);
 	spin_unlock(&q->sendq.lock);
-}
+पूर्ण
 
 /**
- *	skb_txq - return the Tx queue an offload packet should use
+ *	skb_txq - वापस the Tx queue an offload packet should use
  *	@skb: the packet
  *
  *	Returns the Tx queue an offload packet should use as indicated by bits
  *	1-15 in the packet's queue_mapping.
  */
-static inline unsigned int skb_txq(const struct sk_buff *skb)
-{
-	return skb->queue_mapping >> 1;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक skb_txq(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस skb->queue_mapping >> 1;
+पूर्ण
 
 /**
- *	is_ctrl_pkt - return whether an offload packet is a control packet
+ *	is_ctrl_pkt - वापस whether an offload packet is a control packet
  *	@skb: the packet
  *
  *	Returns whether an offload packet should use an OFLD or a CTRL
  *	Tx queue as indicated by bit 0 in the packet's queue_mapping.
  */
-static inline unsigned int is_ctrl_pkt(const struct sk_buff *skb)
-{
-	return skb->queue_mapping & 1;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक is_ctrl_pkt(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस skb->queue_mapping & 1;
+पूर्ण
 
-static inline int uld_send(struct adapter *adap, struct sk_buff *skb,
-			   unsigned int tx_uld_type)
-{
-	struct sge_uld_txq_info *txq_info;
-	struct sge_uld_txq *txq;
-	unsigned int idx = skb_txq(skb);
+अटल अंतरभूत पूर्णांक uld_send(काष्ठा adapter *adap, काष्ठा sk_buff *skb,
+			   अचिन्हित पूर्णांक tx_uld_type)
+अणु
+	काष्ठा sge_uld_txq_info *txq_info;
+	काष्ठा sge_uld_txq *txq;
+	अचिन्हित पूर्णांक idx = skb_txq(skb);
 
-	if (unlikely(is_ctrl_pkt(skb))) {
-		/* Single ctrl queue is a requirement for LE workaround path */
-		if (adap->tids.nsftids)
+	अगर (unlikely(is_ctrl_pkt(skb))) अणु
+		/* Single ctrl queue is a requirement क्रम LE workaround path */
+		अगर (adap->tids.nsftids)
 			idx = 0;
-		return ctrl_xmit(&adap->sge.ctrlq[idx], skb);
-	}
+		वापस ctrl_xmit(&adap->sge.ctrlq[idx], skb);
+	पूर्ण
 
 	txq_info = adap->sge.uld_txq_info[tx_uld_type];
-	if (unlikely(!txq_info)) {
+	अगर (unlikely(!txq_info)) अणु
 		WARN_ON(true);
-		kfree_skb(skb);
-		return NET_XMIT_DROP;
-	}
+		kमुक्त_skb(skb);
+		वापस NET_XMIT_DROP;
+	पूर्ण
 
 	txq = &txq_info->uldtxq[idx];
-	return ofld_xmit(txq, skb);
-}
+	वापस ofld_xmit(txq, skb);
+पूर्ण
 
 /**
  *	t4_ofld_send - send an offload packet
@@ -3159,15 +3160,15 @@ static inline int uld_send(struct adapter *adap, struct sk_buff *skb,
  *	appropriate Tx queue as follows: bit 0 indicates whether the packet
  *	should be sent as regular or control, bits 1-15 select the queue.
  */
-int t4_ofld_send(struct adapter *adap, struct sk_buff *skb)
-{
-	int ret;
+पूर्णांक t4_ofld_send(काष्ठा adapter *adap, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
 
 	local_bh_disable();
 	ret = uld_send(adap, skb, CXGB4_TX_OFLD);
 	local_bh_enable();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  *	cxgb4_ofld_send - send an offload packet
@@ -3175,109 +3176,109 @@ int t4_ofld_send(struct adapter *adap, struct sk_buff *skb)
  *	@skb: the packet
  *
  *	Sends an offload packet.  This is an exported version of @t4_ofld_send,
- *	intended for ULDs.
+ *	पूर्णांकended क्रम ULDs.
  */
-int cxgb4_ofld_send(struct net_device *dev, struct sk_buff *skb)
-{
-	return t4_ofld_send(netdev2adap(dev), skb);
-}
+पूर्णांक cxgb4_ofld_send(काष्ठा net_device *dev, काष्ठा sk_buff *skb)
+अणु
+	वापस t4_ofld_send(netdev2adap(dev), skb);
+पूर्ण
 EXPORT_SYMBOL(cxgb4_ofld_send);
 
-static void *inline_tx_header(const void *src,
-			      const struct sge_txq *q,
-			      void *pos, int length)
-{
-	int left = (void *)q->stat - pos;
+अटल व्योम *अंतरभूत_tx_header(स्थिर व्योम *src,
+			      स्थिर काष्ठा sge_txq *q,
+			      व्योम *pos, पूर्णांक length)
+अणु
+	पूर्णांक left = (व्योम *)q->stat - pos;
 	u64 *p;
 
-	if (likely(length <= left)) {
-		memcpy(pos, src, length);
+	अगर (likely(length <= left)) अणु
+		स_नकल(pos, src, length);
 		pos += length;
-	} else {
-		memcpy(pos, src, left);
-		memcpy(q->desc, src + left, length - left);
-		pos = (void *)q->desc + (length - left);
-	}
+	पूर्ण अन्यथा अणु
+		स_नकल(pos, src, left);
+		स_नकल(q->desc, src + left, length - left);
+		pos = (व्योम *)q->desc + (length - left);
+	पूर्ण
 	/* 0-pad to multiple of 16 */
 	p = PTR_ALIGN(pos, 8);
-	if ((uintptr_t)p & 8) {
+	अगर ((uपूर्णांकptr_t)p & 8) अणु
 		*p = 0;
-		return p + 1;
-	}
-	return p;
-}
+		वापस p + 1;
+	पूर्ण
+	वापस p;
+पूर्ण
 
 /**
- *      ofld_xmit_direct - copy a WR into offload queue
+ *      ofld_xmit_direct - copy a WR पूर्णांकo offload queue
  *      @q: the Tx offload queue
  *      @src: location of WR
  *      @len: WR length
  *
- *      Copy an immediate WR into an uncontended SGE offload queue.
+ *      Copy an immediate WR पूर्णांकo an uncontended SGE offload queue.
  */
-static int ofld_xmit_direct(struct sge_uld_txq *q, const void *src,
-			    unsigned int len)
-{
-	unsigned int ndesc;
-	int credits;
+अटल पूर्णांक ofld_xmit_direct(काष्ठा sge_uld_txq *q, स्थिर व्योम *src,
+			    अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक ndesc;
+	पूर्णांक credits;
 	u64 *pos;
 
 	/* Use the lower limit as the cut-off */
-	if (len > MAX_IMM_OFLD_TX_DATA_WR_LEN) {
+	अगर (len > MAX_IMM_OFLD_TX_DATA_WR_LEN) अणु
 		WARN_ON(1);
-		return NET_XMIT_DROP;
-	}
+		वापस NET_XMIT_DROP;
+	पूर्ण
 
-	/* Don't return NET_XMIT_CN here as the current
-	 * implementation doesn't queue the request
+	/* Don't वापस NET_XMIT_CN here as the current
+	 * implementation करोesn't queue the request
 	 * using an skb when the following conditions not met
 	 */
-	if (!spin_trylock(&q->sendq.lock))
-		return NET_XMIT_DROP;
+	अगर (!spin_trylock(&q->sendq.lock))
+		वापस NET_XMIT_DROP;
 
-	if (q->full || !skb_queue_empty(&q->sendq) ||
-	    q->service_ofldq_running) {
+	अगर (q->full || !skb_queue_empty(&q->sendq) ||
+	    q->service_ofldq_running) अणु
 		spin_unlock(&q->sendq.lock);
-		return NET_XMIT_DROP;
-	}
+		वापस NET_XMIT_DROP;
+	पूर्ण
 	ndesc = flits_to_desc(DIV_ROUND_UP(len, 8));
 	credits = txq_avail(&q->q) - ndesc;
 	pos = (u64 *)&q->q.desc[q->q.pidx];
 
-	/* ofldtxq_stop modifies WR header in-situ */
-	inline_tx_header(src, &q->q, pos, len);
-	if (unlikely(credits < TXQ_STOP_THRES))
-		ofldtxq_stop(q, (struct fw_wr_hdr *)pos);
+	/* ofldtxq_stop modअगरies WR header in-situ */
+	अंतरभूत_tx_header(src, &q->q, pos, len);
+	अगर (unlikely(credits < TXQ_STOP_THRES))
+		ofldtxq_stop(q, (काष्ठा fw_wr_hdr *)pos);
 	txq_advance(&q->q, ndesc);
 	cxgb4_ring_tx_db(q->adap, &q->q, ndesc);
 
 	spin_unlock(&q->sendq.lock);
-	return NET_XMIT_SUCCESS;
-}
+	वापस NET_XMIT_SUCCESS;
+पूर्ण
 
-int cxgb4_immdata_send(struct net_device *dev, unsigned int idx,
-		       const void *src, unsigned int len)
-{
-	struct sge_uld_txq_info *txq_info;
-	struct sge_uld_txq *txq;
-	struct adapter *adap;
-	int ret;
+पूर्णांक cxgb4_immdata_send(काष्ठा net_device *dev, अचिन्हित पूर्णांक idx,
+		       स्थिर व्योम *src, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा sge_uld_txq_info *txq_info;
+	काष्ठा sge_uld_txq *txq;
+	काष्ठा adapter *adap;
+	पूर्णांक ret;
 
 	adap = netdev2adap(dev);
 
 	local_bh_disable();
 	txq_info = adap->sge.uld_txq_info[CXGB4_TX_OFLD];
-	if (unlikely(!txq_info)) {
+	अगर (unlikely(!txq_info)) अणु
 		WARN_ON(true);
 		local_bh_enable();
-		return NET_XMIT_DROP;
-	}
+		वापस NET_XMIT_DROP;
+	पूर्ण
 	txq = &txq_info->uldtxq[idx];
 
 	ret = ofld_xmit_direct(txq, src, len);
 	local_bh_enable();
-	return net_xmit_eval(ret);
-}
+	वापस net_xmit_eval(ret);
+पूर्ण
 EXPORT_SYMBOL(cxgb4_immdata_send);
 
 /**
@@ -3289,15 +3290,15 @@ EXPORT_SYMBOL(cxgb4_immdata_send);
  *	appropriate Tx queue as follows: bit 0 indicates whether the packet
  *	should be sent as regular or control, bits 1-15 select the queue.
  */
-static int t4_crypto_send(struct adapter *adap, struct sk_buff *skb)
-{
-	int ret;
+अटल पूर्णांक t4_crypto_send(काष्ठा adapter *adap, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
 
 	local_bh_disable();
 	ret = uld_send(adap, skb, CXGB4_TX_CRYPTO);
 	local_bh_enable();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  *	cxgb4_crypto_send - send crypto packet
@@ -3305,62 +3306,62 @@ static int t4_crypto_send(struct adapter *adap, struct sk_buff *skb)
  *	@skb: the packet
  *
  *	Sends crypto packet.  This is an exported version of @t4_crypto_send,
- *	intended for ULDs.
+ *	पूर्णांकended क्रम ULDs.
  */
-int cxgb4_crypto_send(struct net_device *dev, struct sk_buff *skb)
-{
-	return t4_crypto_send(netdev2adap(dev), skb);
-}
+पूर्णांक cxgb4_crypto_send(काष्ठा net_device *dev, काष्ठा sk_buff *skb)
+अणु
+	वापस t4_crypto_send(netdev2adap(dev), skb);
+पूर्ण
 EXPORT_SYMBOL(cxgb4_crypto_send);
 
-static inline void copy_frags(struct sk_buff *skb,
-			      const struct pkt_gl *gl, unsigned int offset)
-{
-	int i;
+अटल अंतरभूत व्योम copy_frags(काष्ठा sk_buff *skb,
+			      स्थिर काष्ठा pkt_gl *gl, अचिन्हित पूर्णांक offset)
+अणु
+	पूर्णांक i;
 
 	/* usually there's just one frag */
 	__skb_fill_page_desc(skb, 0, gl->frags[0].page,
 			     gl->frags[0].offset + offset,
 			     gl->frags[0].size - offset);
 	skb_shinfo(skb)->nr_frags = gl->nfrags;
-	for (i = 1; i < gl->nfrags; i++)
+	क्रम (i = 1; i < gl->nfrags; i++)
 		__skb_fill_page_desc(skb, i, gl->frags[i].page,
 				     gl->frags[i].offset,
 				     gl->frags[i].size);
 
-	/* get a reference to the last page, we don't own it */
+	/* get a reference to the last page, we करोn't own it */
 	get_page(gl->frags[gl->nfrags - 1].page);
-}
+पूर्ण
 
 /**
  *	cxgb4_pktgl_to_skb - build an sk_buff from a packet gather list
  *	@gl: the gather list
- *	@skb_len: size of sk_buff main body if it carries fragments
- *	@pull_len: amount of data to move to the sk_buff's main body
+ *	@skb_len: size of sk_buff मुख्य body अगर it carries fragments
+ *	@pull_len: amount of data to move to the sk_buff's मुख्य body
  *
  *	Builds an sk_buff from the given packet gather list.  Returns the
- *	sk_buff or %NULL if sk_buff allocation failed.
+ *	sk_buff or %शून्य अगर sk_buff allocation failed.
  */
-struct sk_buff *cxgb4_pktgl_to_skb(const struct pkt_gl *gl,
-				   unsigned int skb_len, unsigned int pull_len)
-{
-	struct sk_buff *skb;
+काष्ठा sk_buff *cxgb4_pktgl_to_skb(स्थिर काष्ठा pkt_gl *gl,
+				   अचिन्हित पूर्णांक skb_len, अचिन्हित पूर्णांक pull_len)
+अणु
+	काष्ठा sk_buff *skb;
 
 	/*
 	 * Below we rely on RX_COPY_THRES being less than the smallest Rx buffer
 	 * size, which is expected since buffers are at least PAGE_SIZEd.
-	 * In this case packets up to RX_COPY_THRES have only one fragment.
+	 * In this हाल packets up to RX_COPY_THRES have only one fragment.
 	 */
-	if (gl->tot_len <= RX_COPY_THRES) {
+	अगर (gl->tot_len <= RX_COPY_THRES) अणु
 		skb = dev_alloc_skb(gl->tot_len);
-		if (unlikely(!skb))
-			goto out;
+		अगर (unlikely(!skb))
+			जाओ out;
 		__skb_put(skb, gl->tot_len);
 		skb_copy_to_linear_data(skb, gl->va, gl->tot_len);
-	} else {
+	पूर्ण अन्यथा अणु
 		skb = dev_alloc_skb(skb_len);
-		if (unlikely(!skb))
-			goto out;
+		अगर (unlikely(!skb))
+			जाओ out;
 		__skb_put(skb, pull_len);
 		skb_copy_to_linear_data(skb, gl->va, pull_len);
 
@@ -3368,160 +3369,160 @@ struct sk_buff *cxgb4_pktgl_to_skb(const struct pkt_gl *gl,
 		skb->len = gl->tot_len;
 		skb->data_len = skb->len - pull_len;
 		skb->truesize += skb->data_len;
-	}
-out:	return skb;
-}
+	पूर्ण
+out:	वापस skb;
+पूर्ण
 EXPORT_SYMBOL(cxgb4_pktgl_to_skb);
 
 /**
- *	t4_pktgl_free - free a packet gather list
+ *	t4_pktgl_मुक्त - मुक्त a packet gather list
  *	@gl: the gather list
  *
- *	Releases the pages of a packet gather list.  We do not own the last
- *	page on the list and do not free it.
+ *	Releases the pages of a packet gather list.  We करो not own the last
+ *	page on the list and करो not मुक्त it.
  */
-static void t4_pktgl_free(const struct pkt_gl *gl)
-{
-	int n;
-	const struct page_frag *p;
+अटल व्योम t4_pktgl_मुक्त(स्थिर काष्ठा pkt_gl *gl)
+अणु
+	पूर्णांक n;
+	स्थिर काष्ठा page_frag *p;
 
-	for (p = gl->frags, n = gl->nfrags - 1; n--; p++)
+	क्रम (p = gl->frags, n = gl->nfrags - 1; n--; p++)
 		put_page(p->page);
-}
+पूर्ण
 
 /*
  * Process an MPS trace packet.  Give it an unused protocol number so it won't
- * be delivered to anyone and send it to the stack for capture.
+ * be delivered to anyone and send it to the stack क्रम capture.
  */
-static noinline int handle_trace_pkt(struct adapter *adap,
-				     const struct pkt_gl *gl)
-{
-	struct sk_buff *skb;
+अटल noअंतरभूत पूर्णांक handle_trace_pkt(काष्ठा adapter *adap,
+				     स्थिर काष्ठा pkt_gl *gl)
+अणु
+	काष्ठा sk_buff *skb;
 
 	skb = cxgb4_pktgl_to_skb(gl, RX_PULL_LEN, RX_PULL_LEN);
-	if (unlikely(!skb)) {
-		t4_pktgl_free(gl);
-		return 0;
-	}
+	अगर (unlikely(!skb)) अणु
+		t4_pktgl_मुक्त(gl);
+		वापस 0;
+	पूर्ण
 
-	if (is_t4(adap->params.chip))
-		__skb_pull(skb, sizeof(struct cpl_trace_pkt));
-	else
-		__skb_pull(skb, sizeof(struct cpl_t5_trace_pkt));
+	अगर (is_t4(adap->params.chip))
+		__skb_pull(skb, माप(काष्ठा cpl_trace_pkt));
+	अन्यथा
+		__skb_pull(skb, माप(काष्ठा cpl_t5_trace_pkt));
 
 	skb_reset_mac_header(skb);
 	skb->protocol = htons(0xffff);
 	skb->dev = adap->port[0];
-	netif_receive_skb(skb);
-	return 0;
-}
+	netअगर_receive_skb(skb);
+	वापस 0;
+पूर्ण
 
 /**
- * cxgb4_sgetim_to_hwtstamp - convert sge time stamp to hw time stamp
+ * cxgb4_sgetim_to_hwtstamp - convert sge समय stamp to hw समय stamp
  * @adap: the adapter
- * @hwtstamps: time stamp structure to update
- * @sgetstamp: 60bit iqe timestamp
+ * @hwtstamps: समय stamp काष्ठाure to update
+ * @sमाला_लोtamp: 60bit iqe बारtamp
  *
- * Every ingress queue entry has the 60-bit timestamp, convert that timestamp
- * which is in Core Clock ticks into ktime_t and assign it
+ * Every ingress queue entry has the 60-bit बारtamp, convert that बारtamp
+ * which is in Core Clock ticks पूर्णांकo kसमय_प्रकार and assign it
  **/
-static void cxgb4_sgetim_to_hwtstamp(struct adapter *adap,
-				     struct skb_shared_hwtstamps *hwtstamps,
-				     u64 sgetstamp)
-{
+अटल व्योम cxgb4_sgetim_to_hwtstamp(काष्ठा adapter *adap,
+				     काष्ठा skb_shared_hwtstamps *hwtstamps,
+				     u64 sमाला_लोtamp)
+अणु
 	u64 ns;
-	u64 tmp = (sgetstamp * 1000 * 1000 + adap->params.vpd.cclk / 2);
+	u64 पंचांगp = (sमाला_लोtamp * 1000 * 1000 + adap->params.vpd.cclk / 2);
 
-	ns = div_u64(tmp, adap->params.vpd.cclk);
+	ns = भाग_u64(पंचांगp, adap->params.vpd.cclk);
 
-	memset(hwtstamps, 0, sizeof(*hwtstamps));
-	hwtstamps->hwtstamp = ns_to_ktime(ns);
-}
+	स_रखो(hwtstamps, 0, माप(*hwtstamps));
+	hwtstamps->hwtstamp = ns_to_kसमय(ns);
+पूर्ण
 
-static void do_gro(struct sge_eth_rxq *rxq, const struct pkt_gl *gl,
-		   const struct cpl_rx_pkt *pkt, unsigned long tnl_hdr_len)
-{
-	struct adapter *adapter = rxq->rspq.adap;
-	struct sge *s = &adapter->sge;
-	struct port_info *pi;
-	int ret;
-	struct sk_buff *skb;
+अटल व्योम करो_gro(काष्ठा sge_eth_rxq *rxq, स्थिर काष्ठा pkt_gl *gl,
+		   स्थिर काष्ठा cpl_rx_pkt *pkt, अचिन्हित दीर्घ tnl_hdr_len)
+अणु
+	काष्ठा adapter *adapter = rxq->rspq.adap;
+	काष्ठा sge *s = &adapter->sge;
+	काष्ठा port_info *pi;
+	पूर्णांक ret;
+	काष्ठा sk_buff *skb;
 
 	skb = napi_get_frags(&rxq->rspq.napi);
-	if (unlikely(!skb)) {
-		t4_pktgl_free(gl);
+	अगर (unlikely(!skb)) अणु
+		t4_pktgl_मुक्त(gl);
 		rxq->stats.rx_drops++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	copy_frags(skb, gl, s->pktshift);
-	if (tnl_hdr_len)
+	copy_frags(skb, gl, s->pktshअगरt);
+	अगर (tnl_hdr_len)
 		skb->csum_level = 1;
-	skb->len = gl->tot_len - s->pktshift;
+	skb->len = gl->tot_len - s->pktshअगरt;
 	skb->data_len = skb->len;
 	skb->truesize += skb->data_len;
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	skb_record_rx_queue(skb, rxq->rspq.idx);
 	pi = netdev_priv(skb->dev);
-	if (pi->rxtstamp)
+	अगर (pi->rxtstamp)
 		cxgb4_sgetim_to_hwtstamp(adapter, skb_hwtstamps(skb),
-					 gl->sgetstamp);
-	if (rxq->rspq.netdev->features & NETIF_F_RXHASH)
-		skb_set_hash(skb, (__force u32)pkt->rsshdr.hash_val,
+					 gl->sमाला_लोtamp);
+	अगर (rxq->rspq.netdev->features & NETIF_F_RXHASH)
+		skb_set_hash(skb, (__क्रमce u32)pkt->rsshdr.hash_val,
 			     PKT_HASH_TYPE_L3);
 
-	if (unlikely(pkt->vlan_ex)) {
+	अगर (unlikely(pkt->vlan_ex)) अणु
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), ntohs(pkt->vlan));
 		rxq->stats.vlan_ex++;
-	}
+	पूर्ण
 	ret = napi_gro_frags(&rxq->rspq.napi);
-	if (ret == GRO_HELD)
+	अगर (ret == GRO_HELD)
 		rxq->stats.lro_pkts++;
-	else if (ret == GRO_MERGED || ret == GRO_MERGED_FREE)
+	अन्यथा अगर (ret == GRO_MERGED || ret == GRO_MERGED_FREE)
 		rxq->stats.lro_merged++;
 	rxq->stats.pkts++;
 	rxq->stats.rx_cso++;
-}
+पूर्ण
 
-enum {
+क्रमागत अणु
 	RX_NON_PTP_PKT = 0,
 	RX_PTP_PKT_SUC = 1,
 	RX_PTP_PKT_ERR = 2
-};
+पूर्ण;
 
 /**
- *     t4_systim_to_hwstamp - read hardware time stamp
+ *     t4_systim_to_hwstamp - पढ़ो hardware समय stamp
  *     @adapter: the adapter
  *     @skb: the packet
  *
  *     Read Time Stamp from MPS packet and insert in skb which
- *     is forwarded to PTP application
+ *     is क्रमwarded to PTP application
  */
-static noinline int t4_systim_to_hwstamp(struct adapter *adapter,
-					 struct sk_buff *skb)
-{
-	struct skb_shared_hwtstamps *hwtstamps;
-	struct cpl_rx_mps_pkt *cpl = NULL;
-	unsigned char *data;
-	int offset;
+अटल noअंतरभूत पूर्णांक t4_systim_to_hwstamp(काष्ठा adapter *adapter,
+					 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा skb_shared_hwtstamps *hwtstamps;
+	काष्ठा cpl_rx_mps_pkt *cpl = शून्य;
+	अचिन्हित अक्षर *data;
+	पूर्णांक offset;
 
-	cpl = (struct cpl_rx_mps_pkt *)skb->data;
-	if (!(CPL_RX_MPS_PKT_TYPE_G(ntohl(cpl->op_to_r1_hi)) &
+	cpl = (काष्ठा cpl_rx_mps_pkt *)skb->data;
+	अगर (!(CPL_RX_MPS_PKT_TYPE_G(ntohl(cpl->op_to_r1_hi)) &
 	     X_CPL_RX_MPS_PKT_TYPE_PTP))
-		return RX_PTP_PKT_ERR;
+		वापस RX_PTP_PKT_ERR;
 
-	data = skb->data + sizeof(*cpl);
-	skb_pull(skb, 2 * sizeof(u64) + sizeof(struct cpl_rx_mps_pkt));
+	data = skb->data + माप(*cpl);
+	skb_pull(skb, 2 * माप(u64) + माप(काष्ठा cpl_rx_mps_pkt));
 	offset = ETH_HLEN + IPV4_HLEN(skb->data) + UDP_HLEN;
-	if (skb->len < offset + OFF_PTP_SEQUENCE_ID + sizeof(short))
-		return RX_PTP_PKT_ERR;
+	अगर (skb->len < offset + OFF_PTP_SEQUENCE_ID + माप(लघु))
+		वापस RX_PTP_PKT_ERR;
 
 	hwtstamps = skb_hwtstamps(skb);
-	memset(hwtstamps, 0, sizeof(*hwtstamps));
-	hwtstamps->hwtstamp = ns_to_ktime(get_unaligned_be64(data));
+	स_रखो(hwtstamps, 0, माप(*hwtstamps));
+	hwtstamps->hwtstamp = ns_to_kसमय(get_unaligned_be64(data));
 
-	return RX_PTP_PKT_SUC;
-}
+	वापस RX_PTP_PKT_SUC;
+पूर्ण
 
 /**
  *     t4_rx_hststamp - Recv PTP Event Message
@@ -3530,24 +3531,24 @@ static noinline int t4_systim_to_hwstamp(struct adapter *adapter,
  *     @rxq: the response queue holding the RX_PKT message
  *     @skb: the packet
  *
- *     PTP enabled and MPS packet, read HW timestamp
+ *     PTP enabled and MPS packet, पढ़ो HW बारtamp
  */
-static int t4_rx_hststamp(struct adapter *adapter, const __be64 *rsp,
-			  struct sge_eth_rxq *rxq, struct sk_buff *skb)
-{
-	int ret;
+अटल पूर्णांक t4_rx_hststamp(काष्ठा adapter *adapter, स्थिर __be64 *rsp,
+			  काष्ठा sge_eth_rxq *rxq, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
 
-	if (unlikely((*(u8 *)rsp == CPL_RX_MPS_PKT) &&
-		     !is_t4(adapter->params.chip))) {
+	अगर (unlikely((*(u8 *)rsp == CPL_RX_MPS_PKT) &&
+		     !is_t4(adapter->params.chip))) अणु
 		ret = t4_systim_to_hwstamp(adapter, skb);
-		if (ret == RX_PTP_PKT_ERR) {
-			kfree_skb(skb);
+		अगर (ret == RX_PTP_PKT_ERR) अणु
+			kमुक्त_skb(skb);
 			rxq->stats.rx_drops++;
-		}
-		return ret;
-	}
-	return RX_NON_PTP_PKT;
-}
+		पूर्ण
+		वापस ret;
+	पूर्ण
+	वापस RX_NON_PTP_PKT;
+पूर्ण
 
 /**
  *      t4_tx_hststamp - Loopback PTP Transmit Event Message
@@ -3555,71 +3556,71 @@ static int t4_rx_hststamp(struct adapter *adapter, const __be64 *rsp,
  *      @skb: the packet
  *      @dev: the ingress net device
  *
- *      Read hardware timestamp for the loopback PTP Tx event message
+ *      Read hardware बारtamp क्रम the loopback PTP Tx event message
  */
-static int t4_tx_hststamp(struct adapter *adapter, struct sk_buff *skb,
-			  struct net_device *dev)
-{
-	struct port_info *pi = netdev_priv(dev);
+अटल पूर्णांक t4_tx_hststamp(काष्ठा adapter *adapter, काष्ठा sk_buff *skb,
+			  काष्ठा net_device *dev)
+अणु
+	काष्ठा port_info *pi = netdev_priv(dev);
 
-	if (!is_t4(adapter->params.chip) && adapter->ptp_tx_skb) {
-		cxgb4_ptp_read_hwstamp(adapter, pi);
-		kfree_skb(skb);
-		return 0;
-	}
-	return 1;
-}
+	अगर (!is_t4(adapter->params.chip) && adapter->ptp_tx_skb) अणु
+		cxgb4_ptp_पढ़ो_hwstamp(adapter, pi);
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /**
  *	t4_tx_completion_handler - handle CPL_SGE_EGR_UPDATE messages
  *	@rspq: Ethernet RX Response Queue associated with Ethernet TX Queue
- *	@rsp: Response Entry pointer into Response Queue
- *	@gl: Gather List pointer
+ *	@rsp: Response Entry poपूर्णांकer पूर्णांकo Response Queue
+ *	@gl: Gather List poपूर्णांकer
  *
  *	For adapters which support the SGE Doorbell Queue Timer facility,
  *	we configure the Ethernet TX Queues to send CIDX Updates to the
  *	Associated Ethernet RX Response Queue with CPL_SGE_EGR_UPDATE
  *	messages.  This adds a small load to PCIe Link RX bandwidth and,
  *	potentially, higher CPU Interrupt load, but allows us to respond
- *	much more quickly to the CIDX Updates.  This is important for
+ *	much more quickly to the CIDX Updates.  This is important क्रम
  *	Upper Layer Software which isn't willing to have a large amount
- *	of TX Data outstanding before receiving DMA Completions.
+ *	of TX Data outstanding beक्रमe receiving DMA Completions.
  */
-static void t4_tx_completion_handler(struct sge_rspq *rspq,
-				     const __be64 *rsp,
-				     const struct pkt_gl *gl)
-{
-	u8 opcode = ((const struct rss_header *)rsp)->opcode;
-	struct port_info *pi = netdev_priv(rspq->netdev);
-	struct adapter *adapter = rspq->adap;
-	struct sge *s = &adapter->sge;
-	struct sge_eth_txq *txq;
+अटल व्योम t4_tx_completion_handler(काष्ठा sge_rspq *rspq,
+				     स्थिर __be64 *rsp,
+				     स्थिर काष्ठा pkt_gl *gl)
+अणु
+	u8 opcode = ((स्थिर काष्ठा rss_header *)rsp)->opcode;
+	काष्ठा port_info *pi = netdev_priv(rspq->netdev);
+	काष्ठा adapter *adapter = rspq->adap;
+	काष्ठा sge *s = &adapter->sge;
+	काष्ठा sge_eth_txq *txq;
 
 	/* skip RSS header */
 	rsp++;
 
 	/* FW can send EGR_UPDATEs encapsulated in a CPL_FW4_MSG.
 	 */
-	if (unlikely(opcode == CPL_FW4_MSG &&
-		     ((const struct cpl_fw4_msg *)rsp)->type ==
-							FW_TYPE_RSSCPL)) {
+	अगर (unlikely(opcode == CPL_FW4_MSG &&
+		     ((स्थिर काष्ठा cpl_fw4_msg *)rsp)->type ==
+							FW_TYPE_RSSCPL)) अणु
 		rsp++;
-		opcode = ((const struct rss_header *)rsp)->opcode;
+		opcode = ((स्थिर काष्ठा rss_header *)rsp)->opcode;
 		rsp++;
-	}
+	पूर्ण
 
-	if (unlikely(opcode != CPL_SGE_EGR_UPDATE)) {
+	अगर (unlikely(opcode != CPL_SGE_EGR_UPDATE)) अणु
 		pr_info("%s: unexpected FW4/CPL %#x on Rx queue\n",
 			__func__, opcode);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	txq = &s->ethtxq[pi->first_qset + rspq->idx];
 
 	/* We've got the Hardware Consumer Index Update in the Egress Update
 	 * message. These Egress Update messages will be our sole CIDX Updates
-	 * we get since we don't want to chew up PCIe bandwidth for both Ingress
-	 * Messages and Status Page writes.  However, The code which manages
+	 * we get since we करोn't want to chew up PCIe bandwidth क्रम both Ingress
+	 * Messages and Status Page ग_लिखोs.  However, The code which manages
 	 * reclaiming successfully DMA'ed TX Work Requests uses the CIDX value
 	 * stored in the Status Page at the end of the TX Queue.  It's easiest
 	 * to simply copy the CIDX Update value from the Egress Update message
@@ -3627,40 +3628,40 @@ static void t4_tx_completion_handler(struct sge_rspq *rspq,
 	 * considered here since both are Big Endian and we're just copying
 	 * bytes consistently ...
 	 */
-	if (CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5) {
-		struct cpl_sge_egr_update *egr;
+	अगर (CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5) अणु
+		काष्ठा cpl_sge_egr_update *egr;
 
-		egr = (struct cpl_sge_egr_update *)rsp;
+		egr = (काष्ठा cpl_sge_egr_update *)rsp;
 		WRITE_ONCE(txq->q.stat->cidx, egr->cidx);
-	}
+	पूर्ण
 
 	t4_sge_eth_txq_egress_update(adapter, txq, -1);
-}
+पूर्ण
 
-static int cxgb4_validate_lb_pkt(struct port_info *pi, const struct pkt_gl *si)
-{
-	struct adapter *adap = pi->adapter;
-	struct cxgb4_ethtool_lb_test *lb;
-	struct sge *s = &adap->sge;
-	struct net_device *netdev;
+अटल पूर्णांक cxgb4_validate_lb_pkt(काष्ठा port_info *pi, स्थिर काष्ठा pkt_gl *si)
+अणु
+	काष्ठा adapter *adap = pi->adapter;
+	काष्ठा cxgb4_ethtool_lb_test *lb;
+	काष्ठा sge *s = &adap->sge;
+	काष्ठा net_device *netdev;
 	u8 *data;
-	int i;
+	पूर्णांक i;
 
 	netdev = adap->port[pi->port_id];
 	lb = &pi->ethtool_lb;
-	data = si->va + s->pktshift;
+	data = si->va + s->pktshअगरt;
 
 	i = ETH_ALEN;
-	if (!ether_addr_equal(data + i, netdev->dev_addr))
-		return -1;
+	अगर (!ether_addr_equal(data + i, netdev->dev_addr))
+		वापस -1;
 
 	i += ETH_ALEN;
-	if (strcmp(&data[i], CXGB4_SELFTEST_LB_STR))
+	अगर (म_भेद(&data[i], CXGB4_SELFTEST_LB_STR))
 		lb->result = -EIO;
 
 	complete(&lb->completion);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	t4_ethrx_handler - process an ingress ethernet packet
@@ -3670,190 +3671,190 @@ static int cxgb4_validate_lb_pkt(struct port_info *pi, const struct pkt_gl *si)
  *
  *	Process an ingress ethernet packet and deliver it to the stack.
  */
-int t4_ethrx_handler(struct sge_rspq *q, const __be64 *rsp,
-		     const struct pkt_gl *si)
-{
+पूर्णांक t4_ethrx_handler(काष्ठा sge_rspq *q, स्थिर __be64 *rsp,
+		     स्थिर काष्ठा pkt_gl *si)
+अणु
 	bool csum_ok;
-	struct sk_buff *skb;
-	const struct cpl_rx_pkt *pkt;
-	struct sge_eth_rxq *rxq = container_of(q, struct sge_eth_rxq, rspq);
-	struct adapter *adapter = q->adap;
-	struct sge *s = &q->adap->sge;
-	int cpl_trace_pkt = is_t4(q->adap->params.chip) ?
+	काष्ठा sk_buff *skb;
+	स्थिर काष्ठा cpl_rx_pkt *pkt;
+	काष्ठा sge_eth_rxq *rxq = container_of(q, काष्ठा sge_eth_rxq, rspq);
+	काष्ठा adapter *adapter = q->adap;
+	काष्ठा sge *s = &q->adap->sge;
+	पूर्णांक cpl_trace_pkt = is_t4(q->adap->params.chip) ?
 			    CPL_TRACE_PKT : CPL_TRACE_PKT_T5;
 	u16 err_vec, tnl_hdr_len = 0;
-	struct port_info *pi;
-	int ret = 0;
+	काष्ठा port_info *pi;
+	पूर्णांक ret = 0;
 
 	pi = netdev_priv(q->netdev);
 	/* If we're looking at TX Queue CIDX Update, handle that separately
-	 * and return.
+	 * and वापस.
 	 */
-	if (unlikely((*(u8 *)rsp == CPL_FW4_MSG) ||
-		     (*(u8 *)rsp == CPL_SGE_EGR_UPDATE))) {
+	अगर (unlikely((*(u8 *)rsp == CPL_FW4_MSG) ||
+		     (*(u8 *)rsp == CPL_SGE_EGR_UPDATE))) अणु
 		t4_tx_completion_handler(q, rsp, si);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (unlikely(*(u8 *)rsp == cpl_trace_pkt))
-		return handle_trace_pkt(q->adap, si);
+	अगर (unlikely(*(u8 *)rsp == cpl_trace_pkt))
+		वापस handle_trace_pkt(q->adap, si);
 
-	pkt = (const struct cpl_rx_pkt *)rsp;
-	/* Compressed error vector is enabled for T6 only */
-	if (q->adap->params.tp.rx_pkt_encap) {
+	pkt = (स्थिर काष्ठा cpl_rx_pkt *)rsp;
+	/* Compressed error vector is enabled क्रम T6 only */
+	अगर (q->adap->params.tp.rx_pkt_encap) अणु
 		err_vec = T6_COMPR_RXERR_VEC_G(be16_to_cpu(pkt->err_vec));
 		tnl_hdr_len = T6_RX_TNLHDR_LEN_G(ntohs(pkt->err_vec));
-	} else {
+	पूर्ण अन्यथा अणु
 		err_vec = be16_to_cpu(pkt->err_vec);
-	}
+	पूर्ण
 
 	csum_ok = pkt->csum_calc && !err_vec &&
 		  (q->netdev->features & NETIF_F_RXCSUM);
 
-	if (err_vec)
+	अगर (err_vec)
 		rxq->stats.bad_rx_pkts++;
 
-	if (unlikely(pi->ethtool_lb.loopback && pkt->iff >= NCHAN)) {
+	अगर (unlikely(pi->ethtool_lb.loopback && pkt->अगरf >= NCHAN)) अणु
 		ret = cxgb4_validate_lb_pkt(pi, si);
-		if (!ret)
-			return 0;
-	}
+		अगर (!ret)
+			वापस 0;
+	पूर्ण
 
-	if (((pkt->l2info & htonl(RXF_TCP_F)) ||
+	अगर (((pkt->l2info & htonl(RXF_TCP_F)) ||
 	     tnl_hdr_len) &&
-	    (q->netdev->features & NETIF_F_GRO) && csum_ok && !pkt->ip_frag) {
-		do_gro(rxq, si, pkt, tnl_hdr_len);
-		return 0;
-	}
+	    (q->netdev->features & NETIF_F_GRO) && csum_ok && !pkt->ip_frag) अणु
+		करो_gro(rxq, si, pkt, tnl_hdr_len);
+		वापस 0;
+	पूर्ण
 
 	skb = cxgb4_pktgl_to_skb(si, RX_PKT_SKB_LEN, RX_PULL_LEN);
-	if (unlikely(!skb)) {
-		t4_pktgl_free(si);
+	अगर (unlikely(!skb)) अणु
+		t4_pktgl_मुक्त(si);
 		rxq->stats.rx_drops++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Handle PTP Event Rx packet */
-	if (unlikely(pi->ptp_enable)) {
+	अगर (unlikely(pi->ptp_enable)) अणु
 		ret = t4_rx_hststamp(adapter, rsp, rxq, skb);
-		if (ret == RX_PTP_PKT_ERR)
-			return 0;
-	}
-	if (likely(!ret))
-		__skb_pull(skb, s->pktshift); /* remove ethernet header pad */
+		अगर (ret == RX_PTP_PKT_ERR)
+			वापस 0;
+	पूर्ण
+	अगर (likely(!ret))
+		__skb_pull(skb, s->pktshअगरt); /* हटाओ ethernet header pad */
 
 	/* Handle the PTP Event Tx Loopback packet */
-	if (unlikely(pi->ptp_enable && !ret &&
+	अगर (unlikely(pi->ptp_enable && !ret &&
 		     (pkt->l2info & htonl(RXF_UDP_F)) &&
-		     cxgb4_ptp_is_ptp_rx(skb))) {
-		if (!t4_tx_hststamp(adapter, skb, q->netdev))
-			return 0;
-	}
+		     cxgb4_ptp_is_ptp_rx(skb))) अणु
+		अगर (!t4_tx_hststamp(adapter, skb, q->netdev))
+			वापस 0;
+	पूर्ण
 
 	skb->protocol = eth_type_trans(skb, q->netdev);
 	skb_record_rx_queue(skb, q->idx);
-	if (skb->dev->features & NETIF_F_RXHASH)
-		skb_set_hash(skb, (__force u32)pkt->rsshdr.hash_val,
+	अगर (skb->dev->features & NETIF_F_RXHASH)
+		skb_set_hash(skb, (__क्रमce u32)pkt->rsshdr.hash_val,
 			     PKT_HASH_TYPE_L3);
 
 	rxq->stats.pkts++;
 
-	if (pi->rxtstamp)
+	अगर (pi->rxtstamp)
 		cxgb4_sgetim_to_hwtstamp(q->adap, skb_hwtstamps(skb),
-					 si->sgetstamp);
-	if (csum_ok && (pkt->l2info & htonl(RXF_UDP_F | RXF_TCP_F))) {
-		if (!pkt->ip_frag) {
+					 si->sमाला_लोtamp);
+	अगर (csum_ok && (pkt->l2info & htonl(RXF_UDP_F | RXF_TCP_F))) अणु
+		अगर (!pkt->ip_frag) अणु
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 			rxq->stats.rx_cso++;
-		} else if (pkt->l2info & htonl(RXF_IP_F)) {
-			__sum16 c = (__force __sum16)pkt->csum;
+		पूर्ण अन्यथा अगर (pkt->l2info & htonl(RXF_IP_F)) अणु
+			__sum16 c = (__क्रमce __sum16)pkt->csum;
 			skb->csum = csum_unfold(c);
 
-			if (tnl_hdr_len) {
+			अगर (tnl_hdr_len) अणु
 				skb->ip_summed = CHECKSUM_UNNECESSARY;
 				skb->csum_level = 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				skb->ip_summed = CHECKSUM_COMPLETE;
-			}
+			पूर्ण
 			rxq->stats.rx_cso++;
-		}
-	} else {
-		skb_checksum_none_assert(skb);
-#ifdef CONFIG_CHELSIO_T4_FCOE
-#define CPL_RX_PKT_FLAGS (RXF_PSH_F | RXF_SYN_F | RXF_UDP_F | \
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		skb_checksum_none_निश्चित(skb);
+#अगर_घोषित CONFIG_CHELSIO_T4_FCOE
+#घोषणा CPL_RX_PKT_FLAGS (RXF_PSH_F | RXF_SYN_F | RXF_UDP_F | \
 			  RXF_TCP_F | RXF_IP_F | RXF_IP6_F | RXF_LRO_F)
 
-		if (!(pkt->l2info & cpu_to_be32(CPL_RX_PKT_FLAGS))) {
-			if ((pkt->l2info & cpu_to_be32(RXF_FCOE_F)) &&
-			    (pi->fcoe.flags & CXGB_FCOE_ENABLED)) {
-				if (q->adap->params.tp.rx_pkt_encap)
+		अगर (!(pkt->l2info & cpu_to_be32(CPL_RX_PKT_FLAGS))) अणु
+			अगर ((pkt->l2info & cpu_to_be32(RXF_FCOE_F)) &&
+			    (pi->fcoe.flags & CXGB_FCOE_ENABLED)) अणु
+				अगर (q->adap->params.tp.rx_pkt_encap)
 					csum_ok = err_vec &
 						  T6_COMPR_RXERR_SUM_F;
-				else
+				अन्यथा
 					csum_ok = err_vec & RXERR_CSUM_F;
-				if (!csum_ok)
+				अगर (!csum_ok)
 					skb->ip_summed = CHECKSUM_UNNECESSARY;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-#undef CPL_RX_PKT_FLAGS
-#endif /* CONFIG_CHELSIO_T4_FCOE */
-	}
+#अघोषित CPL_RX_PKT_FLAGS
+#पूर्ण_अगर /* CONFIG_CHELSIO_T4_FCOE */
+	पूर्ण
 
-	if (unlikely(pkt->vlan_ex)) {
+	अगर (unlikely(pkt->vlan_ex)) अणु
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), ntohs(pkt->vlan));
 		rxq->stats.vlan_ex++;
-	}
+	पूर्ण
 	skb_mark_napi_id(skb, &q->napi);
-	netif_receive_skb(skb);
-	return 0;
-}
+	netअगर_receive_skb(skb);
+	वापस 0;
+पूर्ण
 
 /**
  *	restore_rx_bufs - put back a packet's Rx buffers
  *	@si: the packet gather list
- *	@q: the SGE free list
+ *	@q: the SGE मुक्त list
  *	@frags: number of FL buffers to restore
  *
  *	Puts back on an FL the Rx buffers associated with @si.  The buffers
- *	have already been unmapped and are left unmapped, we mark them so to
+ *	have alपढ़ोy been unmapped and are left unmapped, we mark them so to
  *	prevent further unmapping attempts.
  *
- *	This function undoes a series of @unmap_rx_buf calls when we find out
+ *	This function unकरोes a series of @unmap_rx_buf calls when we find out
  *	that the current packet can't be processed right away afterall and we
  *	need to come back to it later.  This is a very rare event and there's
- *	no effort to make this particularly efficient.
+ *	no efक्रमt to make this particularly efficient.
  */
-static void restore_rx_bufs(const struct pkt_gl *si, struct sge_fl *q,
-			    int frags)
-{
-	struct rx_sw_desc *d;
+अटल व्योम restore_rx_bufs(स्थिर काष्ठा pkt_gl *si, काष्ठा sge_fl *q,
+			    पूर्णांक frags)
+अणु
+	काष्ठा rx_sw_desc *d;
 
-	while (frags--) {
-		if (q->cidx == 0)
+	जबतक (frags--) अणु
+		अगर (q->cidx == 0)
 			q->cidx = q->size - 1;
-		else
+		अन्यथा
 			q->cidx--;
 		d = &q->sdesc[q->cidx];
 		d->page = si->frags[frags].page;
 		d->dma_addr |= RX_UNMAPPED_BUF;
 		q->avail++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- *	is_new_response - check if a response is newly written
+ *	is_new_response - check अगर a response is newly written
  *	@r: the response descriptor
  *	@q: the response queue
  *
- *	Returns true if a response descriptor contains a yet unprocessed
+ *	Returns true अगर a response descriptor contains a yet unprocessed
  *	response.
  */
-static inline bool is_new_response(const struct rsp_ctrl *r,
-				   const struct sge_rspq *q)
-{
-	return (r->type_gen >> RSPD_GEN_S) == q->gen;
-}
+अटल अंतरभूत bool is_new_response(स्थिर काष्ठा rsp_ctrl *r,
+				   स्थिर काष्ठा sge_rspq *q)
+अणु
+	वापस (r->type_gen >> RSPD_GEN_S) == q->gen;
+पूर्ण
 
 /**
  *	rspq_next - advance to the next entry in a response queue
@@ -3861,15 +3862,15 @@ static inline bool is_new_response(const struct rsp_ctrl *r,
  *
  *	Updates the state of a response queue to advance it to the next entry.
  */
-static inline void rspq_next(struct sge_rspq *q)
-{
-	q->cur_desc = (void *)q->cur_desc + q->iqe_len;
-	if (unlikely(++q->cidx == q->size)) {
+अटल अंतरभूत व्योम rspq_next(काष्ठा sge_rspq *q)
+अणु
+	q->cur_desc = (व्योम *)q->cur_desc + q->iqe_len;
+	अगर (unlikely(++q->cidx == q->size)) अणु
 		q->cidx = 0;
 		q->gen ^= 1;
 		q->cur_desc = q->desc;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  *	process_responses - process responses from an SGE response queue
@@ -3880,64 +3881,64 @@ static inline void rspq_next(struct sge_rspq *q)
  *	Responses include received packets as well as control messages from FW
  *	or HW.
  *
- *	Additionally choose the interrupt holdoff time for the next interrupt
- *	on this queue.  If the system is under memory shortage use a fairly
- *	long delay to help recovery.
+ *	Additionally choose the पूर्णांकerrupt holकरोff समय क्रम the next पूर्णांकerrupt
+ *	on this queue.  If the प्रणाली is under memory लघुage use a fairly
+ *	दीर्घ delay to help recovery.
  */
-static int process_responses(struct sge_rspq *q, int budget)
-{
-	int ret, rsp_type;
-	int budget_left = budget;
-	const struct rsp_ctrl *rc;
-	struct sge_eth_rxq *rxq = container_of(q, struct sge_eth_rxq, rspq);
-	struct adapter *adapter = q->adap;
-	struct sge *s = &adapter->sge;
+अटल पूर्णांक process_responses(काष्ठा sge_rspq *q, पूर्णांक budget)
+अणु
+	पूर्णांक ret, rsp_type;
+	पूर्णांक budget_left = budget;
+	स्थिर काष्ठा rsp_ctrl *rc;
+	काष्ठा sge_eth_rxq *rxq = container_of(q, काष्ठा sge_eth_rxq, rspq);
+	काष्ठा adapter *adapter = q->adap;
+	काष्ठा sge *s = &adapter->sge;
 
-	while (likely(budget_left)) {
-		rc = (void *)q->cur_desc + (q->iqe_len - sizeof(*rc));
-		if (!is_new_response(rc, q)) {
-			if (q->flush_handler)
+	जबतक (likely(budget_left)) अणु
+		rc = (व्योम *)q->cur_desc + (q->iqe_len - माप(*rc));
+		अगर (!is_new_response(rc, q)) अणु
+			अगर (q->flush_handler)
 				q->flush_handler(q);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dma_rmb();
 		rsp_type = RSPD_TYPE_G(rc->type_gen);
-		if (likely(rsp_type == RSPD_TYPE_FLBUF_X)) {
-			struct page_frag *fp;
-			struct pkt_gl si;
-			const struct rx_sw_desc *rsd;
+		अगर (likely(rsp_type == RSPD_TYPE_FLBUF_X)) अणु
+			काष्ठा page_frag *fp;
+			काष्ठा pkt_gl si;
+			स्थिर काष्ठा rx_sw_desc *rsd;
 			u32 len = ntohl(rc->pldbuflen_qid), bufsz, frags;
 
-			if (len & RSPD_NEWBUF_F) {
-				if (likely(q->offset > 0)) {
-					free_rx_bufs(q->adap, &rxq->fl, 1);
+			अगर (len & RSPD_NEWBUF_F) अणु
+				अगर (likely(q->offset > 0)) अणु
+					मुक्त_rx_bufs(q->adap, &rxq->fl, 1);
 					q->offset = 0;
-				}
+				पूर्ण
 				len = RSPD_LEN_G(len);
-			}
+			पूर्ण
 			si.tot_len = len;
 
 			/* gather packet fragments */
-			for (frags = 0, fp = si.frags; ; frags++, fp++) {
+			क्रम (frags = 0, fp = si.frags; ; frags++, fp++) अणु
 				rsd = &rxq->fl.sdesc[rxq->fl.cidx];
 				bufsz = get_buf_size(adapter, rsd);
 				fp->page = rsd->page;
 				fp->offset = q->offset;
 				fp->size = min(bufsz, len);
 				len -= fp->size;
-				if (!len)
-					break;
+				अगर (!len)
+					अवरोध;
 				unmap_rx_buf(q->adap, &rxq->fl);
-			}
+			पूर्ण
 
-			si.sgetstamp = SGE_TIMESTAMP_G(
+			si.sमाला_लोtamp = SGE_TIMESTAMP_G(
 					be64_to_cpu(rc->last_flit));
 			/*
-			 * Last buffer remains mapped so explicitly make it
-			 * coherent for CPU access.
+			 * Last buffer reमुख्यs mapped so explicitly make it
+			 * coherent क्रम CPU access.
 			 */
-			dma_sync_single_for_cpu(q->adap->pdev_dev,
+			dma_sync_single_क्रम_cpu(q->adap->pdev_dev,
 						get_buf_addr(rsd),
 						fp->size, DMA_FROM_DEVICE);
 
@@ -3947,114 +3948,114 @@ static int process_responses(struct sge_rspq *q, int budget)
 
 			si.nfrags = frags + 1;
 			ret = q->handler(q, q->cur_desc, &si);
-			if (likely(ret == 0))
+			अगर (likely(ret == 0))
 				q->offset += ALIGN(fp->size, s->fl_align);
-			else
+			अन्यथा
 				restore_rx_bufs(&si, &rxq->fl, frags);
-		} else if (likely(rsp_type == RSPD_TYPE_CPL_X)) {
-			ret = q->handler(q, q->cur_desc, NULL);
-		} else {
-			ret = q->handler(q, (const __be64 *)rc, CXGB4_MSG_AN);
-		}
+		पूर्ण अन्यथा अगर (likely(rsp_type == RSPD_TYPE_CPL_X)) अणु
+			ret = q->handler(q, q->cur_desc, शून्य);
+		पूर्ण अन्यथा अणु
+			ret = q->handler(q, (स्थिर __be64 *)rc, CXGB4_MSG_AN);
+		पूर्ण
 
-		if (unlikely(ret)) {
-			/* couldn't process descriptor, back off for recovery */
-			q->next_intr_params = QINTR_TIMER_IDX_V(NOMEM_TMR_IDX);
-			break;
-		}
+		अगर (unlikely(ret)) अणु
+			/* couldn't process descriptor, back off क्रम recovery */
+			q->next_पूर्णांकr_params = QINTR_TIMER_IDX_V(NOMEM_TMR_IDX);
+			अवरोध;
+		पूर्ण
 
 		rspq_next(q);
 		budget_left--;
-	}
+	पूर्ण
 
-	if (q->offset >= 0 && fl_cap(&rxq->fl) - rxq->fl.avail >= 16)
+	अगर (q->offset >= 0 && fl_cap(&rxq->fl) - rxq->fl.avail >= 16)
 		__refill_fl(q->adap, &rxq->fl);
-	return budget - budget_left;
-}
+	वापस budget - budget_left;
+पूर्ण
 
 /**
- *	napi_rx_handler - the NAPI handler for Rx processing
+ *	napi_rx_handler - the NAPI handler क्रम Rx processing
  *	@napi: the napi instance
  *	@budget: how many packets we can process in this round
  *
- *	Handler for new data events when using NAPI.  This does not need any
- *	locking or protection from interrupts as data interrupts are off at
- *	this point and other adapter interrupts do not interfere (the latter
- *	in not a concern at all with MSI-X as non-data interrupts then have
+ *	Handler क्रम new data events when using NAPI.  This करोes not need any
+ *	locking or protection from पूर्णांकerrupts as data पूर्णांकerrupts are off at
+ *	this poपूर्णांक and other adapter पूर्णांकerrupts करो not पूर्णांकerfere (the latter
+ *	in not a concern at all with MSI-X as non-data पूर्णांकerrupts then have
  *	a separate handler).
  */
-static int napi_rx_handler(struct napi_struct *napi, int budget)
-{
-	unsigned int params;
-	struct sge_rspq *q = container_of(napi, struct sge_rspq, napi);
-	int work_done;
+अटल पूर्णांक napi_rx_handler(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	अचिन्हित पूर्णांक params;
+	काष्ठा sge_rspq *q = container_of(napi, काष्ठा sge_rspq, napi);
+	पूर्णांक work_करोne;
 	u32 val;
 
-	work_done = process_responses(q, budget);
-	if (likely(work_done < budget)) {
-		int timer_index;
+	work_करोne = process_responses(q, budget);
+	अगर (likely(work_करोne < budget)) अणु
+		पूर्णांक समयr_index;
 
-		napi_complete_done(napi, work_done);
-		timer_index = QINTR_TIMER_IDX_G(q->next_intr_params);
+		napi_complete_करोne(napi, work_करोne);
+		समयr_index = QINTR_TIMER_IDX_G(q->next_पूर्णांकr_params);
 
-		if (q->adaptive_rx) {
-			if (work_done > max(timer_pkt_quota[timer_index],
+		अगर (q->adaptive_rx) अणु
+			अगर (work_करोne > max(समयr_pkt_quota[समयr_index],
 					    MIN_NAPI_WORK))
-				timer_index = (timer_index + 1);
-			else
-				timer_index = timer_index - 1;
+				समयr_index = (समयr_index + 1);
+			अन्यथा
+				समयr_index = समयr_index - 1;
 
-			timer_index = clamp(timer_index, 0, SGE_TIMERREGS - 1);
-			q->next_intr_params =
-					QINTR_TIMER_IDX_V(timer_index) |
+			समयr_index = clamp(समयr_index, 0, SGE_TIMERREGS - 1);
+			q->next_पूर्णांकr_params =
+					QINTR_TIMER_IDX_V(समयr_index) |
 					QINTR_CNT_EN_V(0);
-			params = q->next_intr_params;
-		} else {
-			params = q->next_intr_params;
-			q->next_intr_params = q->intr_params;
-		}
-	} else
+			params = q->next_पूर्णांकr_params;
+		पूर्ण अन्यथा अणु
+			params = q->next_पूर्णांकr_params;
+			q->next_पूर्णांकr_params = q->पूर्णांकr_params;
+		पूर्ण
+	पूर्ण अन्यथा
 		params = QINTR_TIMER_IDX_V(7);
 
-	val = CIDXINC_V(work_done) | SEINTARM_V(params);
+	val = CIDXINC_V(work_करोne) | SEINTARM_V(params);
 
-	/* If we don't have access to the new User GTS (T5+), use the old
-	 * doorbell mechanism; otherwise use the new BAR2 mechanism.
+	/* If we करोn't have access to the new User GTS (T5+), use the old
+	 * करोorbell mechanism; otherwise use the new BAR2 mechanism.
 	 */
-	if (unlikely(q->bar2_addr == NULL)) {
-		t4_write_reg(q->adap, MYPF_REG(SGE_PF_GTS_A),
+	अगर (unlikely(q->bar2_addr == शून्य)) अणु
+		t4_ग_लिखो_reg(q->adap, MYPF_REG(SGE_PF_GTS_A),
 			     val | INGRESSQID_V((u32)q->cntxt_id));
-	} else {
-		writel(val | INGRESSQID_V(q->bar2_qid),
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(val | INGRESSQID_V(q->bar2_qid),
 		       q->bar2_addr + SGE_UDB_GTS);
 		wmb();
-	}
-	return work_done;
-}
+	पूर्ण
+	वापस work_करोne;
+पूर्ण
 
-void cxgb4_ethofld_restart(struct tasklet_struct *t)
-{
-	struct sge_eosw_txq *eosw_txq = from_tasklet(eosw_txq, t,
+व्योम cxgb4_ethofld_restart(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा sge_eosw_txq *eosw_txq = from_tasklet(eosw_txq, t,
 						     qresume_tsk);
-	int pktcount;
+	पूर्णांक pktcount;
 
 	spin_lock(&eosw_txq->lock);
 	pktcount = eosw_txq->cidx - eosw_txq->last_cidx;
-	if (pktcount < 0)
+	अगर (pktcount < 0)
 		pktcount += eosw_txq->ndesc;
 
-	if (pktcount) {
-		cxgb4_eosw_txq_free_desc(netdev2adap(eosw_txq->netdev),
+	अगर (pktcount) अणु
+		cxgb4_eosw_txq_मुक्त_desc(netdev2adap(eosw_txq->netdev),
 					 eosw_txq, pktcount);
 		eosw_txq->inuse -= pktcount;
-	}
+	पूर्ण
 
-	/* There may be some packets waiting for completions. So,
+	/* There may be some packets रुकोing क्रम completions. So,
 	 * attempt to send these packets now.
 	 */
 	ethofld_xmit(eosw_txq->netdev, eosw_txq);
 	spin_unlock(&eosw_txq->lock);
-}
+पूर्ण
 
 /* cxgb4_ethofld_rx_handler - Process ETHOFLD Tx completions
  * @q: the response queue that received the packet
@@ -4062,67 +4063,67 @@ void cxgb4_ethofld_restart(struct tasklet_struct *t)
  * @si: the gather list of packet fragments
  *
  * Process a ETHOFLD Tx completion. Increment the cidx here, but
- * free up the descriptors in a tasklet later.
+ * मुक्त up the descriptors in a tasklet later.
  */
-int cxgb4_ethofld_rx_handler(struct sge_rspq *q, const __be64 *rsp,
-			     const struct pkt_gl *si)
-{
-	u8 opcode = ((const struct rss_header *)rsp)->opcode;
+पूर्णांक cxgb4_ethofld_rx_handler(काष्ठा sge_rspq *q, स्थिर __be64 *rsp,
+			     स्थिर काष्ठा pkt_gl *si)
+अणु
+	u8 opcode = ((स्थिर काष्ठा rss_header *)rsp)->opcode;
 
 	/* skip RSS header */
 	rsp++;
 
-	if (opcode == CPL_FW4_ACK) {
-		const struct cpl_fw4_ack *cpl;
-		struct sge_eosw_txq *eosw_txq;
-		struct eotid_entry *entry;
-		struct sk_buff *skb;
+	अगर (opcode == CPL_FW4_ACK) अणु
+		स्थिर काष्ठा cpl_fw4_ack *cpl;
+		काष्ठा sge_eosw_txq *eosw_txq;
+		काष्ठा eotid_entry *entry;
+		काष्ठा sk_buff *skb;
 		u32 hdr_len, eotid;
 		u8 flits, wrlen16;
-		int credits;
+		पूर्णांक credits;
 
-		cpl = (const struct cpl_fw4_ack *)rsp;
+		cpl = (स्थिर काष्ठा cpl_fw4_ack *)rsp;
 		eotid = CPL_FW4_ACK_FLOWID_G(ntohl(OPCODE_TID(cpl))) -
 			q->adap->tids.eotid_base;
 		entry = cxgb4_lookup_eotid(&q->adap->tids, eotid);
-		if (!entry)
-			goto out_done;
+		अगर (!entry)
+			जाओ out_करोne;
 
-		eosw_txq = (struct sge_eosw_txq *)entry->data;
-		if (!eosw_txq)
-			goto out_done;
+		eosw_txq = (काष्ठा sge_eosw_txq *)entry->data;
+		अगर (!eosw_txq)
+			जाओ out_करोne;
 
 		spin_lock(&eosw_txq->lock);
 		credits = cpl->credits;
-		while (credits > 0) {
+		जबतक (credits > 0) अणु
 			skb = eosw_txq->desc[eosw_txq->cidx].skb;
-			if (!skb)
-				break;
+			अगर (!skb)
+				अवरोध;
 
-			if (unlikely((eosw_txq->state ==
+			अगर (unlikely((eosw_txq->state ==
 				      CXGB4_EO_STATE_FLOWC_OPEN_REPLY ||
 				      eosw_txq->state ==
 				      CXGB4_EO_STATE_FLOWC_CLOSE_REPLY) &&
-				     eosw_txq->cidx == eosw_txq->flowc_idx)) {
+				     eosw_txq->cidx == eosw_txq->flowc_idx)) अणु
 				flits = DIV_ROUND_UP(skb->len, 8);
-				if (eosw_txq->state ==
+				अगर (eosw_txq->state ==
 				    CXGB4_EO_STATE_FLOWC_OPEN_REPLY)
 					eosw_txq->state = CXGB4_EO_STATE_ACTIVE;
-				else
+				अन्यथा
 					eosw_txq->state = CXGB4_EO_STATE_CLOSED;
 				complete(&eosw_txq->completion);
-			} else {
+			पूर्ण अन्यथा अणु
 				hdr_len = eth_get_headlen(eosw_txq->netdev,
 							  skb->data,
 							  skb_headlen(skb));
 				flits = ethofld_calc_tx_flits(q->adap, skb,
 							      hdr_len);
-			}
+			पूर्ण
 			eosw_txq_advance_index(&eosw_txq->cidx, 1,
 					       eosw_txq->ndesc);
 			wrlen16 = DIV_ROUND_UP(flits * 8, 16);
 			credits -= wrlen16;
-		}
+		पूर्ण
 
 		eosw_txq->cred += cpl->credits;
 		eosw_txq->ncompl--;
@@ -4130,265 +4131,265 @@ int cxgb4_ethofld_rx_handler(struct sge_rspq *q, const __be64 *rsp,
 		spin_unlock(&eosw_txq->lock);
 
 		/* Schedule a tasklet to reclaim SKBs and restart ETHOFLD Tx,
-		 * if there were packets waiting for completion.
+		 * अगर there were packets रुकोing क्रम completion.
 		 */
 		tasklet_schedule(&eosw_txq->qresume_tsk);
-	}
+	पूर्ण
 
-out_done:
-	return 0;
-}
+out_करोne:
+	वापस 0;
+पूर्ण
 
 /*
- * The MSI-X interrupt handler for an SGE response queue.
+ * The MSI-X पूर्णांकerrupt handler क्रम an SGE response queue.
  */
-irqreturn_t t4_sge_intr_msix(int irq, void *cookie)
-{
-	struct sge_rspq *q = cookie;
+irqवापस_t t4_sge_पूर्णांकr_msix(पूर्णांक irq, व्योम *cookie)
+अणु
+	काष्ठा sge_rspq *q = cookie;
 
 	napi_schedule(&q->napi);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * Process the indirect interrupt entries in the interrupt queue and kick off
- * NAPI for each queue that has generated an entry.
+ * Process the indirect पूर्णांकerrupt entries in the पूर्णांकerrupt queue and kick off
+ * NAPI क्रम each queue that has generated an entry.
  */
-static unsigned int process_intrq(struct adapter *adap)
-{
-	unsigned int credits;
-	const struct rsp_ctrl *rc;
-	struct sge_rspq *q = &adap->sge.intrq;
+अटल अचिन्हित पूर्णांक process_पूर्णांकrq(काष्ठा adapter *adap)
+अणु
+	अचिन्हित पूर्णांक credits;
+	स्थिर काष्ठा rsp_ctrl *rc;
+	काष्ठा sge_rspq *q = &adap->sge.पूर्णांकrq;
 	u32 val;
 
-	spin_lock(&adap->sge.intrq_lock);
-	for (credits = 0; ; credits++) {
-		rc = (void *)q->cur_desc + (q->iqe_len - sizeof(*rc));
-		if (!is_new_response(rc, q))
-			break;
+	spin_lock(&adap->sge.पूर्णांकrq_lock);
+	क्रम (credits = 0; ; credits++) अणु
+		rc = (व्योम *)q->cur_desc + (q->iqe_len - माप(*rc));
+		अगर (!is_new_response(rc, q))
+			अवरोध;
 
 		dma_rmb();
-		if (RSPD_TYPE_G(rc->type_gen) == RSPD_TYPE_INTR_X) {
-			unsigned int qid = ntohl(rc->pldbuflen_qid);
+		अगर (RSPD_TYPE_G(rc->type_gen) == RSPD_TYPE_INTR_X) अणु
+			अचिन्हित पूर्णांक qid = ntohl(rc->pldbuflen_qid);
 
 			qid -= adap->sge.ingr_start;
 			napi_schedule(&adap->sge.ingr_map[qid]->napi);
-		}
+		पूर्ण
 
 		rspq_next(q);
-	}
+	पूर्ण
 
-	val =  CIDXINC_V(credits) | SEINTARM_V(q->intr_params);
+	val =  CIDXINC_V(credits) | SEINTARM_V(q->पूर्णांकr_params);
 
-	/* If we don't have access to the new User GTS (T5+), use the old
-	 * doorbell mechanism; otherwise use the new BAR2 mechanism.
+	/* If we करोn't have access to the new User GTS (T5+), use the old
+	 * करोorbell mechanism; otherwise use the new BAR2 mechanism.
 	 */
-	if (unlikely(q->bar2_addr == NULL)) {
-		t4_write_reg(adap, MYPF_REG(SGE_PF_GTS_A),
+	अगर (unlikely(q->bar2_addr == शून्य)) अणु
+		t4_ग_लिखो_reg(adap, MYPF_REG(SGE_PF_GTS_A),
 			     val | INGRESSQID_V(q->cntxt_id));
-	} else {
-		writel(val | INGRESSQID_V(q->bar2_qid),
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(val | INGRESSQID_V(q->bar2_qid),
 		       q->bar2_addr + SGE_UDB_GTS);
 		wmb();
-	}
-	spin_unlock(&adap->sge.intrq_lock);
-	return credits;
-}
+	पूर्ण
+	spin_unlock(&adap->sge.पूर्णांकrq_lock);
+	वापस credits;
+पूर्ण
 
 /*
- * The MSI interrupt handler, which handles data events from SGE response queues
+ * The MSI पूर्णांकerrupt handler, which handles data events from SGE response queues
  * as well as error and other async events as they all use the same MSI vector.
  */
-static irqreturn_t t4_intr_msi(int irq, void *cookie)
-{
-	struct adapter *adap = cookie;
+अटल irqवापस_t t4_पूर्णांकr_msi(पूर्णांक irq, व्योम *cookie)
+अणु
+	काष्ठा adapter *adap = cookie;
 
-	if (adap->flags & CXGB4_MASTER_PF)
-		t4_slow_intr_handler(adap);
-	process_intrq(adap);
-	return IRQ_HANDLED;
-}
+	अगर (adap->flags & CXGB4_MASTER_PF)
+		t4_slow_पूर्णांकr_handler(adap);
+	process_पूर्णांकrq(adap);
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * Interrupt handler for legacy INTx interrupts.
+ * Interrupt handler क्रम legacy INTx पूर्णांकerrupts.
  * Handles data events from SGE response queues as well as error and other
- * async events as they all use the same interrupt line.
+ * async events as they all use the same पूर्णांकerrupt line.
  */
-static irqreturn_t t4_intr_intx(int irq, void *cookie)
-{
-	struct adapter *adap = cookie;
+अटल irqवापस_t t4_पूर्णांकr_पूर्णांकx(पूर्णांक irq, व्योम *cookie)
+अणु
+	काष्ठा adapter *adap = cookie;
 
-	t4_write_reg(adap, MYPF_REG(PCIE_PF_CLI_A), 0);
-	if (((adap->flags & CXGB4_MASTER_PF) && t4_slow_intr_handler(adap)) |
-	    process_intrq(adap))
-		return IRQ_HANDLED;
-	return IRQ_NONE;             /* probably shared interrupt */
-}
+	t4_ग_लिखो_reg(adap, MYPF_REG(PCIE_PF_CLI_A), 0);
+	अगर (((adap->flags & CXGB4_MASTER_PF) && t4_slow_पूर्णांकr_handler(adap)) |
+	    process_पूर्णांकrq(adap))
+		वापस IRQ_HANDLED;
+	वापस IRQ_NONE;             /* probably shared पूर्णांकerrupt */
+पूर्ण
 
 /**
- *	t4_intr_handler - select the top-level interrupt handler
+ *	t4_पूर्णांकr_handler - select the top-level पूर्णांकerrupt handler
  *	@adap: the adapter
  *
- *	Selects the top-level interrupt handler based on the type of interrupts
+ *	Selects the top-level पूर्णांकerrupt handler based on the type of पूर्णांकerrupts
  *	(MSI-X, MSI, or INTx).
  */
-irq_handler_t t4_intr_handler(struct adapter *adap)
-{
-	if (adap->flags & CXGB4_USING_MSIX)
-		return t4_sge_intr_msix;
-	if (adap->flags & CXGB4_USING_MSI)
-		return t4_intr_msi;
-	return t4_intr_intx;
-}
+irq_handler_t t4_पूर्णांकr_handler(काष्ठा adapter *adap)
+अणु
+	अगर (adap->flags & CXGB4_USING_MSIX)
+		वापस t4_sge_पूर्णांकr_msix;
+	अगर (adap->flags & CXGB4_USING_MSI)
+		वापस t4_पूर्णांकr_msi;
+	वापस t4_पूर्णांकr_पूर्णांकx;
+पूर्ण
 
-static void sge_rx_timer_cb(struct timer_list *t)
-{
-	unsigned long m;
-	unsigned int i;
-	struct adapter *adap = from_timer(adap, t, sge.rx_timer);
-	struct sge *s = &adap->sge;
+अटल व्योम sge_rx_समयr_cb(काष्ठा समयr_list *t)
+अणु
+	अचिन्हित दीर्घ m;
+	अचिन्हित पूर्णांक i;
+	काष्ठा adapter *adap = from_समयr(adap, t, sge.rx_समयr);
+	काष्ठा sge *s = &adap->sge;
 
-	for (i = 0; i < BITS_TO_LONGS(s->egr_sz); i++)
-		for (m = s->starving_fl[i]; m; m &= m - 1) {
-			struct sge_eth_rxq *rxq;
-			unsigned int id = __ffs(m) + i * BITS_PER_LONG;
-			struct sge_fl *fl = s->egr_map[id];
+	क्रम (i = 0; i < BITS_TO_LONGS(s->egr_sz); i++)
+		क्रम (m = s->starving_fl[i]; m; m &= m - 1) अणु
+			काष्ठा sge_eth_rxq *rxq;
+			अचिन्हित पूर्णांक id = __ffs(m) + i * BITS_PER_LONG;
+			काष्ठा sge_fl *fl = s->egr_map[id];
 
 			clear_bit(id, s->starving_fl);
 			smp_mb__after_atomic();
 
-			if (fl_starving(adap, fl)) {
-				rxq = container_of(fl, struct sge_eth_rxq, fl);
-				if (napi_reschedule(&rxq->rspq.napi))
+			अगर (fl_starving(adap, fl)) अणु
+				rxq = container_of(fl, काष्ठा sge_eth_rxq, fl);
+				अगर (napi_reschedule(&rxq->rspq.napi))
 					fl->starving++;
-				else
+				अन्यथा
 					set_bit(id, s->starving_fl);
-			}
-		}
-	/* The remainder of the SGE RX Timer Callback routine is dedicated to
-	 * global Master PF activities like checking for chip ingress stalls,
+			पूर्ण
+		पूर्ण
+	/* The reमुख्यder of the SGE RX Timer Callback routine is dedicated to
+	 * global Master PF activities like checking क्रम chip ingress stalls,
 	 * etc.
 	 */
-	if (!(adap->flags & CXGB4_MASTER_PF))
-		goto done;
+	अगर (!(adap->flags & CXGB4_MASTER_PF))
+		जाओ करोne;
 
 	t4_idma_monitor(adap, &s->idma_monitor, HZ, RX_QCHECK_PERIOD);
 
-done:
-	mod_timer(&s->rx_timer, jiffies + RX_QCHECK_PERIOD);
-}
+करोne:
+	mod_समयr(&s->rx_समयr, jअगरfies + RX_QCHECK_PERIOD);
+पूर्ण
 
-static void sge_tx_timer_cb(struct timer_list *t)
-{
-	struct adapter *adap = from_timer(adap, t, sge.tx_timer);
-	struct sge *s = &adap->sge;
-	unsigned long m, period;
-	unsigned int i, budget;
+अटल व्योम sge_tx_समयr_cb(काष्ठा समयr_list *t)
+अणु
+	काष्ठा adapter *adap = from_समयr(adap, t, sge.tx_समयr);
+	काष्ठा sge *s = &adap->sge;
+	अचिन्हित दीर्घ m, period;
+	अचिन्हित पूर्णांक i, budget;
 
-	for (i = 0; i < BITS_TO_LONGS(s->egr_sz); i++)
-		for (m = s->txq_maperr[i]; m; m &= m - 1) {
-			unsigned long id = __ffs(m) + i * BITS_PER_LONG;
-			struct sge_uld_txq *txq = s->egr_map[id];
+	क्रम (i = 0; i < BITS_TO_LONGS(s->egr_sz); i++)
+		क्रम (m = s->txq_maperr[i]; m; m &= m - 1) अणु
+			अचिन्हित दीर्घ id = __ffs(m) + i * BITS_PER_LONG;
+			काष्ठा sge_uld_txq *txq = s->egr_map[id];
 
 			clear_bit(id, s->txq_maperr);
 			tasklet_schedule(&txq->qresume_tsk);
-		}
+		पूर्ण
 
-	if (!is_t4(adap->params.chip)) {
-		struct sge_eth_txq *q = &s->ptptxq;
-		int avail;
+	अगर (!is_t4(adap->params.chip)) अणु
+		काष्ठा sge_eth_txq *q = &s->ptptxq;
+		पूर्णांक avail;
 
 		spin_lock(&adap->ptp_lock);
 		avail = reclaimable(&q->q);
 
-		if (avail) {
-			free_tx_desc(adap, &q->q, avail, false);
+		अगर (avail) अणु
+			मुक्त_tx_desc(adap, &q->q, avail, false);
 			q->q.in_use -= avail;
-		}
+		पूर्ण
 		spin_unlock(&adap->ptp_lock);
-	}
+	पूर्ण
 
 	budget = MAX_TIMER_TX_RECLAIM;
 	i = s->ethtxq_rover;
-	do {
+	करो अणु
 		budget -= t4_sge_eth_txq_egress_update(adap, &s->ethtxq[i],
 						       budget);
-		if (!budget)
-			break;
+		अगर (!budget)
+			अवरोध;
 
-		if (++i >= s->ethqsets)
+		अगर (++i >= s->ethqsets)
 			i = 0;
-	} while (i != s->ethtxq_rover);
+	पूर्ण जबतक (i != s->ethtxq_rover);
 	s->ethtxq_rover = i;
 
-	if (budget == 0) {
-		/* If we found too many reclaimable packets schedule a timer
-		 * in the near future to continue where we left off.
+	अगर (budget == 0) अणु
+		/* If we found too many reclaimable packets schedule a समयr
+		 * in the near future to जारी where we left off.
 		 */
 		period = 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* We reclaimed all reclaimable TX Descriptors, so reschedule
 		 * at the normal period.
 		 */
 		period = TX_QCHECK_PERIOD;
-	}
+	पूर्ण
 
-	mod_timer(&s->tx_timer, jiffies + period);
-}
+	mod_समयr(&s->tx_समयr, jअगरfies + period);
+पूर्ण
 
 /**
- *	bar2_address - return the BAR2 address for an SGE Queue's Registers
+ *	bar2_address - वापस the BAR2 address क्रम an SGE Queue's Registers
  *	@adapter: the adapter
  *	@qid: the SGE Queue ID
  *	@qtype: the SGE Queue Type (Egress or Ingress)
- *	@pbar2_qid: BAR2 Queue ID or 0 for Queue ID inferred SGE Queues
+ *	@pbar2_qid: BAR2 Queue ID or 0 क्रम Queue ID inferred SGE Queues
  *
- *	Returns the BAR2 address for the SGE Queue Registers associated with
- *	@qid.  If BAR2 SGE Registers aren't available, returns NULL.  Also
- *	returns the BAR2 Queue ID to be used with writes to the BAR2 SGE
+ *	Returns the BAR2 address क्रम the SGE Queue Registers associated with
+ *	@qid.  If BAR2 SGE Registers aren't available, वापसs शून्य.  Also
+ *	वापसs the BAR2 Queue ID to be used with ग_लिखोs to the BAR2 SGE
  *	Queue Registers.  If the BAR2 Queue ID is 0, then "Inferred Queue ID"
  *	Registers are supported (e.g. the Write Combining Doorbell Buffer).
  */
-static void __iomem *bar2_address(struct adapter *adapter,
-				  unsigned int qid,
-				  enum t4_bar2_qtype qtype,
-				  unsigned int *pbar2_qid)
-{
+अटल व्योम __iomem *bar2_address(काष्ठा adapter *adapter,
+				  अचिन्हित पूर्णांक qid,
+				  क्रमागत t4_bar2_qtype qtype,
+				  अचिन्हित पूर्णांक *pbar2_qid)
+अणु
 	u64 bar2_qoffset;
-	int ret;
+	पूर्णांक ret;
 
 	ret = t4_bar2_sge_qregs(adapter, qid, qtype, 0,
 				&bar2_qoffset, pbar2_qid);
-	if (ret)
-		return NULL;
+	अगर (ret)
+		वापस शून्य;
 
-	return adapter->bar2 + bar2_qoffset;
-}
+	वापस adapter->bar2 + bar2_qoffset;
+पूर्ण
 
-/* @intr_idx: MSI/MSI-X vector if >=0, -(absolute qid + 1) if < 0
+/* @पूर्णांकr_idx: MSI/MSI-X vector अगर >=0, -(असलolute qid + 1) अगर < 0
  * @cong: < 0 -> no congestion feedback, >= 0 -> congestion channel map
  */
-int t4_sge_alloc_rxq(struct adapter *adap, struct sge_rspq *iq, bool fwevtq,
-		     struct net_device *dev, int intr_idx,
-		     struct sge_fl *fl, rspq_handler_t hnd,
-		     rspq_flush_handler_t flush_hnd, int cong)
-{
-	int ret, flsz = 0;
-	struct fw_iq_cmd c;
-	struct sge *s = &adap->sge;
-	struct port_info *pi = netdev_priv(dev);
-	int relaxed = !(adap->flags & CXGB4_ROOT_NO_RELAXED_ORDERING);
+पूर्णांक t4_sge_alloc_rxq(काष्ठा adapter *adap, काष्ठा sge_rspq *iq, bool fwevtq,
+		     काष्ठा net_device *dev, पूर्णांक पूर्णांकr_idx,
+		     काष्ठा sge_fl *fl, rspq_handler_t hnd,
+		     rspq_flush_handler_t flush_hnd, पूर्णांक cong)
+अणु
+	पूर्णांक ret, flsz = 0;
+	काष्ठा fw_iq_cmd c;
+	काष्ठा sge *s = &adap->sge;
+	काष्ठा port_info *pi = netdev_priv(dev);
+	पूर्णांक relaxed = !(adap->flags & CXGB4_ROOT_NO_RELAXED_ORDERING);
 
 	/* Size needs to be multiple of 16, including status entry. */
 	iq->size = roundup(iq->size, 16);
 
 	iq->desc = alloc_ring(adap->pdev_dev, iq->size, iq->iqe_len, 0,
-			      &iq->phys_addr, NULL, 0,
+			      &iq->phys_addr, शून्य, 0,
 			      dev_to_node(adap->pdev_dev));
-	if (!iq->desc)
-		return -ENOMEM;
+	अगर (!iq->desc)
+		वापस -ENOMEM;
 
-	memset(&c, 0, sizeof(c));
+	स_रखो(&c, 0, माप(c));
 	c.op_to_vfn = htonl(FW_CMD_OP_V(FW_IQ_CMD) | FW_CMD_REQUEST_F |
 			    FW_CMD_WRITE_F | FW_CMD_EXEC_F |
 			    FW_IQ_CMD_PFN_V(adap->pf) | FW_IQ_CMD_VFN_V(0));
@@ -4396,57 +4397,57 @@ int t4_sge_alloc_rxq(struct adapter *adap, struct sge_rspq *iq, bool fwevtq,
 				 FW_LEN16(c));
 	c.type_to_iqandstindex = htonl(FW_IQ_CMD_TYPE_V(FW_IQ_TYPE_FL_INT_CAP) |
 		FW_IQ_CMD_IQASYNCH_V(fwevtq) | FW_IQ_CMD_VIID_V(pi->viid) |
-		FW_IQ_CMD_IQANDST_V(intr_idx < 0) |
+		FW_IQ_CMD_IQANDST_V(पूर्णांकr_idx < 0) |
 		FW_IQ_CMD_IQANUD_V(UPDATEDELIVERY_INTERRUPT_X) |
-		FW_IQ_CMD_IQANDSTINDEX_V(intr_idx >= 0 ? intr_idx :
-							-intr_idx - 1));
+		FW_IQ_CMD_IQANDSTINDEX_V(पूर्णांकr_idx >= 0 ? पूर्णांकr_idx :
+							-पूर्णांकr_idx - 1));
 	c.iqdroprss_to_iqesize = htons(FW_IQ_CMD_IQPCIECH_V(pi->tx_chan) |
 		FW_IQ_CMD_IQGTSMODE_F |
 		FW_IQ_CMD_IQINTCNTTHRESH_V(iq->pktcnt_idx) |
 		FW_IQ_CMD_IQESIZE_V(ilog2(iq->iqe_len) - 4));
 	c.iqsize = htons(iq->size);
 	c.iqaddr = cpu_to_be64(iq->phys_addr);
-	if (cong >= 0)
+	अगर (cong >= 0)
 		c.iqns_to_fl0congen = htonl(FW_IQ_CMD_IQFLINTCONGEN_F |
 				FW_IQ_CMD_IQTYPE_V(cong ? FW_IQ_IQTYPE_NIC
 							:  FW_IQ_IQTYPE_OFLD));
 
-	if (fl) {
-		unsigned int chip_ver =
+	अगर (fl) अणु
+		अचिन्हित पूर्णांक chip_ver =
 			CHELSIO_CHIP_VERSION(adap->params.chip);
 
-		/* Allocate the ring for the hardware free list (with space
-		 * for its status page) along with the associated software
-		 * descriptor ring.  The free list size needs to be a multiple
+		/* Allocate the ring क्रम the hardware मुक्त list (with space
+		 * क्रम its status page) aदीर्घ with the associated software
+		 * descriptor ring.  The मुक्त list size needs to be a multiple
 		 * of the Egress Queue Unit and at least 2 Egress Units larger
 		 * than the SGE's Egress Congrestion Threshold
 		 * (fl_starve_thres - 1).
 		 */
-		if (fl->size < s->fl_starve_thres - 1 + 2 * 8)
+		अगर (fl->size < s->fl_starve_thres - 1 + 2 * 8)
 			fl->size = s->fl_starve_thres - 1 + 2 * 8;
 		fl->size = roundup(fl->size, 8);
-		fl->desc = alloc_ring(adap->pdev_dev, fl->size, sizeof(__be64),
-				      sizeof(struct rx_sw_desc), &fl->addr,
+		fl->desc = alloc_ring(adap->pdev_dev, fl->size, माप(__be64),
+				      माप(काष्ठा rx_sw_desc), &fl->addr,
 				      &fl->sdesc, s->stat_len,
 				      dev_to_node(adap->pdev_dev));
-		if (!fl->desc)
-			goto fl_nomem;
+		अगर (!fl->desc)
+			जाओ fl_nomem;
 
-		flsz = fl->size / 8 + s->stat_len / sizeof(struct tx_desc);
+		flsz = fl->size / 8 + s->stat_len / माप(काष्ठा tx_desc);
 		c.iqns_to_fl0congen |= htonl(FW_IQ_CMD_FL0PACKEN_F |
 					     FW_IQ_CMD_FL0FETCHRO_V(relaxed) |
 					     FW_IQ_CMD_FL0DATARO_V(relaxed) |
 					     FW_IQ_CMD_FL0PADEN_F);
-		if (cong >= 0)
+		अगर (cong >= 0)
 			c.iqns_to_fl0congen |=
 				htonl(FW_IQ_CMD_FL0CNGCHMAP_V(cong) |
 				      FW_IQ_CMD_FL0CONGCIF_F |
 				      FW_IQ_CMD_FL0CONGEN_F);
-		/* In T6, for egress queue type FL there is internal overhead
-		 * of 16B for header going into FLM module.  Hence the maximum
+		/* In T6, क्रम egress queue type FL there is पूर्णांकernal overhead
+		 * of 16B क्रम header going पूर्णांकo FLM module.  Hence the maximum
 		 * allowed burst size is 448 bytes.  For T4/T5, the hardware
-		 * doesn't coalesce fetch requests if more than 64 bytes of
-		 * Free List pointers are provided, so we use a 128-byte Fetch
+		 * करोesn't coalesce fetch requests अगर more than 64 bytes of
+		 * Free List poपूर्णांकers are provided, so we use a 128-byte Fetch
 		 * Burst Minimum there (T6 implements coalescing so we can use
 		 * the smaller 64-byte value there).
 		 */
@@ -4459,19 +4460,19 @@ int t4_sge_alloc_rxq(struct adapter *adap, struct sge_rspq *iq, bool fwevtq,
 						   FETCHBURSTMAX_256B_X));
 		c.fl0size = htons(flsz);
 		c.fl0addr = cpu_to_be64(fl->addr);
-	}
+	पूर्ण
 
-	ret = t4_wr_mbox(adap, adap->mbox, &c, sizeof(c), &c);
-	if (ret)
-		goto err;
+	ret = t4_wr_mbox(adap, adap->mbox, &c, माप(c), &c);
+	अगर (ret)
+		जाओ err;
 
-	netif_napi_add(dev, &iq->napi, napi_rx_handler, 64);
+	netअगर_napi_add(dev, &iq->napi, napi_rx_handler, 64);
 	iq->cur_desc = iq->desc;
 	iq->cidx = 0;
 	iq->gen = 1;
-	iq->next_intr_params = iq->intr_params;
+	iq->next_पूर्णांकr_params = iq->पूर्णांकr_params;
 	iq->cntxt_id = ntohs(c.iqid);
-	iq->abs_id = ntohs(c.physiqid);
+	iq->असल_id = ntohs(c.physiqid);
 	iq->bar2_addr = bar2_address(adap,
 				     iq->cntxt_id,
 				     T4_BAR2_QTYPE_INGRESS,
@@ -4481,7 +4482,7 @@ int t4_sge_alloc_rxq(struct adapter *adap, struct sge_rspq *iq, bool fwevtq,
 	iq->handler = hnd;
 	iq->flush_handler = flush_hnd;
 
-	memset(&iq->lro_mgr, 0, sizeof(struct t4_lro_mgr));
+	स_रखो(&iq->lro_mgr, 0, माप(काष्ठा t4_lro_mgr));
 	skb_queue_head_init(&iq->lro_mgr.lroq);
 
 	/* set offset to -1 to distinguish ingress queues without FL */
@@ -4489,7 +4490,7 @@ int t4_sge_alloc_rxq(struct adapter *adap, struct sge_rspq *iq, bool fwevtq,
 
 	adap->sge.ingr_map[iq->cntxt_id - adap->sge.ingr_start] = iq;
 
-	if (fl) {
+	अगर (fl) अणु
 		fl->cntxt_id = ntohs(c.fl0id);
 		fl->avail = fl->pend_cred = 0;
 		fl->pidx = fl->cidx = 0;
@@ -4497,72 +4498,72 @@ int t4_sge_alloc_rxq(struct adapter *adap, struct sge_rspq *iq, bool fwevtq,
 		adap->sge.egr_map[fl->cntxt_id - adap->sge.egr_start] = fl;
 
 		/* Note, we must initialize the BAR2 Free List User Doorbell
-		 * information before refilling the Free List!
+		 * inक्रमmation beक्रमe refilling the Free List!
 		 */
 		fl->bar2_addr = bar2_address(adap,
 					     fl->cntxt_id,
 					     T4_BAR2_QTYPE_EGRESS,
 					     &fl->bar2_qid);
 		refill_fl(adap, fl, fl_cap(fl), GFP_KERNEL);
-	}
+	पूर्ण
 
 	/* For T5 and later we attempt to set up the Congestion Manager values
 	 * of the new RX Ethernet Queue.  This should really be handled by
 	 * firmware because it's more complex than any host driver wants to
-	 * get involved with and it's different per chip and this is almost
+	 * get involved with and it's dअगरferent per chip and this is almost
 	 * certainly wrong.  Firmware would be wrong as well, but it would be
-	 * a lot easier to fix in one place ...  For now we do something very
+	 * a lot easier to fix in one place ...  For now we करो something very
 	 * simple (and hopefully less wrong).
 	 */
-	if (!is_t4(adap->params.chip) && cong >= 0) {
+	अगर (!is_t4(adap->params.chip) && cong >= 0) अणु
 		u32 param, val, ch_map = 0;
-		int i;
+		पूर्णांक i;
 		u16 cng_ch_bits_log = adap->params.arch.cng_ch_bits_log;
 
 		param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DMAQ) |
 			 FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DMAQ_CONM_CTXT) |
 			 FW_PARAMS_PARAM_YZ_V(iq->cntxt_id));
-		if (cong == 0) {
+		अगर (cong == 0) अणु
 			val = CONMCTXT_CNGTPMODE_V(CONMCTXT_CNGTPMODE_QUEUE_X);
-		} else {
+		पूर्ण अन्यथा अणु
 			val =
 			    CONMCTXT_CNGTPMODE_V(CONMCTXT_CNGTPMODE_CHANNEL_X);
-			for (i = 0; i < 4; i++) {
-				if (cong & (1 << i))
+			क्रम (i = 0; i < 4; i++) अणु
+				अगर (cong & (1 << i))
 					ch_map |= 1 << (i << cng_ch_bits_log);
-			}
+			पूर्ण
 			val |= CONMCTXT_CNGCHMAP_V(ch_map);
-		}
+		पूर्ण
 		ret = t4_set_params(adap, adap->mbox, adap->pf, 0, 1,
 				    &param, &val);
-		if (ret)
+		अगर (ret)
 			dev_warn(adap->pdev_dev, "Failed to set Congestion"
 				 " Manager Context for Ingress Queue %d: %d\n",
 				 iq->cntxt_id, -ret);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fl_nomem:
 	ret = -ENOMEM;
 err:
-	if (iq->desc) {
-		dma_free_coherent(adap->pdev_dev, iq->size * iq->iqe_len,
+	अगर (iq->desc) अणु
+		dma_मुक्त_coherent(adap->pdev_dev, iq->size * iq->iqe_len,
 				  iq->desc, iq->phys_addr);
-		iq->desc = NULL;
-	}
-	if (fl && fl->desc) {
-		kfree(fl->sdesc);
-		fl->sdesc = NULL;
-		dma_free_coherent(adap->pdev_dev, flsz * sizeof(struct tx_desc),
+		iq->desc = शून्य;
+	पूर्ण
+	अगर (fl && fl->desc) अणु
+		kमुक्त(fl->sdesc);
+		fl->sdesc = शून्य;
+		dma_मुक्त_coherent(adap->pdev_dev, flsz * माप(काष्ठा tx_desc),
 				  fl->desc, fl->addr);
-		fl->desc = NULL;
-	}
-	return ret;
-}
+		fl->desc = शून्य;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void init_txq(struct adapter *adap, struct sge_txq *q, unsigned int id)
-{
+अटल व्योम init_txq(काष्ठा adapter *adap, काष्ठा sge_txq *q, अचिन्हित पूर्णांक id)
+अणु
 	q->cntxt_id = id;
 	q->bar2_addr = bar2_address(adap,
 				    q->cntxt_id,
@@ -4571,10 +4572,10 @@ static void init_txq(struct adapter *adap, struct sge_txq *q, unsigned int id)
 	q->in_use = 0;
 	q->cidx = q->pidx = 0;
 	q->stops = q->restarts = 0;
-	q->stat = (void *)&q->desc[q->size];
+	q->stat = (व्योम *)&q->desc[q->size];
 	spin_lock_init(&q->db_lock);
 	adap->sge.egr_map[id - adap->sge.egr_start] = q;
-}
+पूर्ण
 
 /**
  *	t4_sge_alloc_eth_txq - allocate an Ethernet TX Queue
@@ -4585,27 +4586,27 @@ static void init_txq(struct adapter *adap, struct sge_txq *q, unsigned int id)
  *	@iqid: the Ingress Queue to which to deliver CIDX Update messages
  *	@dbqt: whether this TX Queue will use the SGE Doorbell Queue Timers
  */
-int t4_sge_alloc_eth_txq(struct adapter *adap, struct sge_eth_txq *txq,
-			 struct net_device *dev, struct netdev_queue *netdevq,
-			 unsigned int iqid, u8 dbqt)
-{
-	unsigned int chip_ver = CHELSIO_CHIP_VERSION(adap->params.chip);
-	struct port_info *pi = netdev_priv(dev);
-	struct sge *s = &adap->sge;
-	struct fw_eq_eth_cmd c;
-	int ret, nentries;
+पूर्णांक t4_sge_alloc_eth_txq(काष्ठा adapter *adap, काष्ठा sge_eth_txq *txq,
+			 काष्ठा net_device *dev, काष्ठा netdev_queue *netdevq,
+			 अचिन्हित पूर्णांक iqid, u8 dbqt)
+अणु
+	अचिन्हित पूर्णांक chip_ver = CHELSIO_CHIP_VERSION(adap->params.chip);
+	काष्ठा port_info *pi = netdev_priv(dev);
+	काष्ठा sge *s = &adap->sge;
+	काष्ठा fw_eq_eth_cmd c;
+	पूर्णांक ret, nentries;
 
 	/* Add status entries */
-	nentries = txq->q.size + s->stat_len / sizeof(struct tx_desc);
+	nentries = txq->q.size + s->stat_len / माप(काष्ठा tx_desc);
 
 	txq->q.desc = alloc_ring(adap->pdev_dev, txq->q.size,
-			sizeof(struct tx_desc), sizeof(struct tx_sw_desc),
+			माप(काष्ठा tx_desc), माप(काष्ठा tx_sw_desc),
 			&txq->q.phys_addr, &txq->q.sdesc, s->stat_len,
-			netdev_queue_numa_node_read(netdevq));
-	if (!txq->q.desc)
-		return -ENOMEM;
+			netdev_queue_numa_node_पढ़ो(netdevq));
+	अगर (!txq->q.desc)
+		वापस -ENOMEM;
 
-	memset(&c, 0, sizeof(c));
+	स_रखो(&c, 0, माप(c));
 	c.op_to_vfn = htonl(FW_CMD_OP_V(FW_EQ_ETH_CMD) | FW_CMD_REQUEST_F |
 			    FW_CMD_WRITE_F | FW_CMD_EXEC_F |
 			    FW_EQ_ETH_CMD_PFN_V(adap->pf) |
@@ -4614,12 +4615,12 @@ int t4_sge_alloc_eth_txq(struct adapter *adap, struct sge_eth_txq *txq,
 				 FW_EQ_ETH_CMD_EQSTART_F | FW_LEN16(c));
 
 	/* For TX Ethernet Queues using the SGE Doorbell Queue Timer
-	 * mechanism, we use Ingress Queue messages for Hardware Consumer
+	 * mechanism, we use Ingress Queue messages क्रम Hardware Consumer
 	 * Index Updates on the TX Queue.  Otherwise we have the Hardware
-	 * write the CIDX Updates into the Status Page at the end of the
+	 * ग_लिखो the CIDX Updates पूर्णांकo the Status Page at the end of the
 	 * TX Queue.
 	 */
-	c.autoequiqe_to_viid = htonl(((chip_ver <= CHELSIO_T5) ?
+	c.स्वतःequiqe_to_viid = htonl(((chip_ver <= CHELSIO_T5) ?
 				      FW_EQ_ETH_CMD_AUTOEQUIQE_F :
 				      FW_EQ_ETH_CMD_AUTOEQUEQE_F) |
 				     FW_EQ_ETH_CMD_VIID_V(pi->viid));
@@ -4645,25 +4646,25 @@ int t4_sge_alloc_eth_txq(struct adapter *adap, struct sge_eth_txq *txq,
 
 	/* If we're using the SGE Doorbell Queue Timer mechanism, pass in the
 	 * currently configured Timer Index.  THis can be changed later via an
-	 * ethtool -C tx-usecs {Timer Val} command.  Note that the SGE
-	 * Doorbell Queue mode is currently automatically enabled in the
+	 * ethtool -C tx-usecs अणुTimer Valपूर्ण command.  Note that the SGE
+	 * Doorbell Queue mode is currently स्वतःmatically enabled in the
 	 * Firmware by setting either AUTOEQUEQE or AUTOEQUIQE ...
 	 */
-	if (dbqt)
-		c.timeren_timerix =
+	अगर (dbqt)
+		c.समयren_समयrix =
 			cpu_to_be32(FW_EQ_ETH_CMD_TIMEREN_F |
-				    FW_EQ_ETH_CMD_TIMERIX_V(txq->dbqtimerix));
+				    FW_EQ_ETH_CMD_TIMERIX_V(txq->dbqसमयrix));
 
-	ret = t4_wr_mbox(adap, adap->mbox, &c, sizeof(c), &c);
-	if (ret) {
-		kfree(txq->q.sdesc);
-		txq->q.sdesc = NULL;
-		dma_free_coherent(adap->pdev_dev,
-				  nentries * sizeof(struct tx_desc),
+	ret = t4_wr_mbox(adap, adap->mbox, &c, माप(c), &c);
+	अगर (ret) अणु
+		kमुक्त(txq->q.sdesc);
+		txq->q.sdesc = शून्य;
+		dma_मुक्त_coherent(adap->pdev_dev,
+				  nentries * माप(काष्ठा tx_desc),
 				  txq->q.desc, txq->q.phys_addr);
-		txq->q.desc = NULL;
-		return ret;
-	}
+		txq->q.desc = शून्य;
+		वापस ret;
+	पूर्ण
 
 	txq->q.q_type = CXGB4_TXQ_ETH;
 	init_txq(adap, &txq->q, FW_EQ_ETH_CMD_EQID_G(ntohl(c.eqid_pkd)));
@@ -4675,27 +4676,27 @@ int t4_sge_alloc_eth_txq(struct adapter *adap, struct sge_eth_txq *txq,
 	txq->mapping_err = 0;
 	txq->dbqt = dbqt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int t4_sge_alloc_ctrl_txq(struct adapter *adap, struct sge_ctrl_txq *txq,
-			  struct net_device *dev, unsigned int iqid,
-			  unsigned int cmplqid)
-{
-	unsigned int chip_ver = CHELSIO_CHIP_VERSION(adap->params.chip);
-	struct port_info *pi = netdev_priv(dev);
-	struct sge *s = &adap->sge;
-	struct fw_eq_ctrl_cmd c;
-	int ret, nentries;
+पूर्णांक t4_sge_alloc_ctrl_txq(काष्ठा adapter *adap, काष्ठा sge_ctrl_txq *txq,
+			  काष्ठा net_device *dev, अचिन्हित पूर्णांक iqid,
+			  अचिन्हित पूर्णांक cmplqid)
+अणु
+	अचिन्हित पूर्णांक chip_ver = CHELSIO_CHIP_VERSION(adap->params.chip);
+	काष्ठा port_info *pi = netdev_priv(dev);
+	काष्ठा sge *s = &adap->sge;
+	काष्ठा fw_eq_ctrl_cmd c;
+	पूर्णांक ret, nentries;
 
 	/* Add status entries */
-	nentries = txq->q.size + s->stat_len / sizeof(struct tx_desc);
+	nentries = txq->q.size + s->stat_len / माप(काष्ठा tx_desc);
 
 	txq->q.desc = alloc_ring(adap->pdev_dev, nentries,
-				 sizeof(struct tx_desc), 0, &txq->q.phys_addr,
-				 NULL, 0, dev_to_node(adap->pdev_dev));
-	if (!txq->q.desc)
-		return -ENOMEM;
+				 माप(काष्ठा tx_desc), 0, &txq->q.phys_addr,
+				 शून्य, 0, dev_to_node(adap->pdev_dev));
+	अगर (!txq->q.desc)
+		वापस -ENOMEM;
 
 	c.op_to_vfn = htonl(FW_CMD_OP_V(FW_EQ_CTRL_CMD) | FW_CMD_REQUEST_F |
 			    FW_CMD_WRITE_F | FW_CMD_EXEC_F |
@@ -4718,14 +4719,14 @@ int t4_sge_alloc_ctrl_txq(struct adapter *adap, struct sge_ctrl_txq *txq,
 		      FW_EQ_CTRL_CMD_EQSIZE_V(nentries));
 	c.eqaddr = cpu_to_be64(txq->q.phys_addr);
 
-	ret = t4_wr_mbox(adap, adap->mbox, &c, sizeof(c), &c);
-	if (ret) {
-		dma_free_coherent(adap->pdev_dev,
-				  nentries * sizeof(struct tx_desc),
+	ret = t4_wr_mbox(adap, adap->mbox, &c, माप(c), &c);
+	अगर (ret) अणु
+		dma_मुक्त_coherent(adap->pdev_dev,
+				  nentries * माप(काष्ठा tx_desc),
 				  txq->q.desc, txq->q.phys_addr);
-		txq->q.desc = NULL;
-		return ret;
-	}
+		txq->q.desc = शून्य;
+		वापस ret;
+	पूर्ण
 
 	txq->q.q_type = CXGB4_TXQ_CTRL;
 	init_txq(adap, &txq->q, FW_EQ_CTRL_CMD_EQID_G(ntohl(c.cmpliqid_eqid)));
@@ -4733,45 +4734,45 @@ int t4_sge_alloc_ctrl_txq(struct adapter *adap, struct sge_ctrl_txq *txq,
 	skb_queue_head_init(&txq->sendq);
 	tasklet_setup(&txq->qresume_tsk, restart_ctrlq);
 	txq->full = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int t4_sge_mod_ctrl_txq(struct adapter *adap, unsigned int eqid,
-			unsigned int cmplqid)
-{
+पूर्णांक t4_sge_mod_ctrl_txq(काष्ठा adapter *adap, अचिन्हित पूर्णांक eqid,
+			अचिन्हित पूर्णांक cmplqid)
+अणु
 	u32 param, val;
 
 	param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DMAQ) |
 		 FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DMAQ_EQ_CMPLIQID_CTRL) |
 		 FW_PARAMS_PARAM_YZ_V(eqid));
 	val = cmplqid;
-	return t4_set_params(adap, adap->mbox, adap->pf, 0, 1, &param, &val);
-}
+	वापस t4_set_params(adap, adap->mbox, adap->pf, 0, 1, &param, &val);
+पूर्ण
 
-static int t4_sge_alloc_ofld_txq(struct adapter *adap, struct sge_txq *q,
-				 struct net_device *dev, u32 cmd, u32 iqid)
-{
-	unsigned int chip_ver = CHELSIO_CHIP_VERSION(adap->params.chip);
-	struct port_info *pi = netdev_priv(dev);
-	struct sge *s = &adap->sge;
-	struct fw_eq_ofld_cmd c;
+अटल पूर्णांक t4_sge_alloc_ofld_txq(काष्ठा adapter *adap, काष्ठा sge_txq *q,
+				 काष्ठा net_device *dev, u32 cmd, u32 iqid)
+अणु
+	अचिन्हित पूर्णांक chip_ver = CHELSIO_CHIP_VERSION(adap->params.chip);
+	काष्ठा port_info *pi = netdev_priv(dev);
+	काष्ठा sge *s = &adap->sge;
+	काष्ठा fw_eq_ofld_cmd c;
 	u32 fb_min, nentries;
-	int ret;
+	पूर्णांक ret;
 
 	/* Add status entries */
-	nentries = q->size + s->stat_len / sizeof(struct tx_desc);
-	q->desc = alloc_ring(adap->pdev_dev, q->size, sizeof(struct tx_desc),
-			     sizeof(struct tx_sw_desc), &q->phys_addr,
+	nentries = q->size + s->stat_len / माप(काष्ठा tx_desc);
+	q->desc = alloc_ring(adap->pdev_dev, q->size, माप(काष्ठा tx_desc),
+			     माप(काष्ठा tx_sw_desc), &q->phys_addr,
 			     &q->sdesc, s->stat_len, NUMA_NO_NODE);
-	if (!q->desc)
-		return -ENOMEM;
+	अगर (!q->desc)
+		वापस -ENOMEM;
 
-	if (chip_ver <= CHELSIO_T5)
+	अगर (chip_ver <= CHELSIO_T5)
 		fb_min = FETCHBURSTMIN_64B_X;
-	else
+	अन्यथा
 		fb_min = FETCHBURSTMIN_64B_T6_X;
 
-	memset(&c, 0, sizeof(c));
+	स_रखो(&c, 0, माप(c));
 	c.op_to_vfn = htonl(FW_CMD_OP_V(cmd) | FW_CMD_REQUEST_F |
 			    FW_CMD_WRITE_F | FW_CMD_EXEC_F |
 			    FW_EQ_OFLD_CMD_PFN_V(adap->pf) |
@@ -4789,34 +4790,34 @@ static int t4_sge_alloc_ofld_txq(struct adapter *adap, struct sge_txq *q,
 		      FW_EQ_OFLD_CMD_EQSIZE_V(nentries));
 	c.eqaddr = cpu_to_be64(q->phys_addr);
 
-	ret = t4_wr_mbox(adap, adap->mbox, &c, sizeof(c), &c);
-	if (ret) {
-		kfree(q->sdesc);
-		q->sdesc = NULL;
-		dma_free_coherent(adap->pdev_dev,
-				  nentries * sizeof(struct tx_desc),
+	ret = t4_wr_mbox(adap, adap->mbox, &c, माप(c), &c);
+	अगर (ret) अणु
+		kमुक्त(q->sdesc);
+		q->sdesc = शून्य;
+		dma_मुक्त_coherent(adap->pdev_dev,
+				  nentries * माप(काष्ठा tx_desc),
 				  q->desc, q->phys_addr);
-		q->desc = NULL;
-		return ret;
-	}
+		q->desc = शून्य;
+		वापस ret;
+	पूर्ण
 
 	init_txq(adap, q, FW_EQ_OFLD_CMD_EQID_G(ntohl(c.eqid_pkd)));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int t4_sge_alloc_uld_txq(struct adapter *adap, struct sge_uld_txq *txq,
-			 struct net_device *dev, unsigned int iqid,
-			 unsigned int uld_type)
-{
+पूर्णांक t4_sge_alloc_uld_txq(काष्ठा adapter *adap, काष्ठा sge_uld_txq *txq,
+			 काष्ठा net_device *dev, अचिन्हित पूर्णांक iqid,
+			 अचिन्हित पूर्णांक uld_type)
+अणु
 	u32 cmd = FW_EQ_OFLD_CMD;
-	int ret;
+	पूर्णांक ret;
 
-	if (unlikely(uld_type == CXGB4_TX_CRYPTO))
+	अगर (unlikely(uld_type == CXGB4_TX_CRYPTO))
 		cmd = FW_EQ_CTRL_CMD;
 
 	ret = t4_sge_alloc_ofld_txq(adap, &txq->q, dev, cmd, iqid);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	txq->q.q_type = CXGB4_TXQ_ULD;
 	txq->adap = adap;
@@ -4824,17 +4825,17 @@ int t4_sge_alloc_uld_txq(struct adapter *adap, struct sge_uld_txq *txq,
 	tasklet_setup(&txq->qresume_tsk, restart_ofldq);
 	txq->full = 0;
 	txq->mapping_err = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int t4_sge_alloc_ethofld_txq(struct adapter *adap, struct sge_eohw_txq *txq,
-			     struct net_device *dev, u32 iqid)
-{
-	int ret;
+पूर्णांक t4_sge_alloc_ethofld_txq(काष्ठा adapter *adap, काष्ठा sge_eohw_txq *txq,
+			     काष्ठा net_device *dev, u32 iqid)
+अणु
+	पूर्णांक ret;
 
 	ret = t4_sge_alloc_ofld_txq(adap, &txq->q, dev, FW_EQ_OFLD_CMD, iqid);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	txq->q.q_type = CXGB4_TXQ_ULD;
 	spin_lock_init(&txq->lock);
@@ -4844,389 +4845,389 @@ int t4_sge_alloc_ethofld_txq(struct adapter *adap, struct sge_eohw_txq *txq,
 	txq->tx_cso = 0;
 	txq->vlan_ins = 0;
 	txq->mapping_err = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void free_txq(struct adapter *adap, struct sge_txq *q)
-{
-	struct sge *s = &adap->sge;
+व्योम मुक्त_txq(काष्ठा adapter *adap, काष्ठा sge_txq *q)
+अणु
+	काष्ठा sge *s = &adap->sge;
 
-	dma_free_coherent(adap->pdev_dev,
-			  q->size * sizeof(struct tx_desc) + s->stat_len,
+	dma_मुक्त_coherent(adap->pdev_dev,
+			  q->size * माप(काष्ठा tx_desc) + s->stat_len,
 			  q->desc, q->phys_addr);
 	q->cntxt_id = 0;
-	q->sdesc = NULL;
-	q->desc = NULL;
-}
+	q->sdesc = शून्य;
+	q->desc = शून्य;
+पूर्ण
 
-void free_rspq_fl(struct adapter *adap, struct sge_rspq *rq,
-		  struct sge_fl *fl)
-{
-	struct sge *s = &adap->sge;
-	unsigned int fl_id = fl ? fl->cntxt_id : 0xffff;
+व्योम मुक्त_rspq_fl(काष्ठा adapter *adap, काष्ठा sge_rspq *rq,
+		  काष्ठा sge_fl *fl)
+अणु
+	काष्ठा sge *s = &adap->sge;
+	अचिन्हित पूर्णांक fl_id = fl ? fl->cntxt_id : 0xffff;
 
-	adap->sge.ingr_map[rq->cntxt_id - adap->sge.ingr_start] = NULL;
-	t4_iq_free(adap, adap->mbox, adap->pf, 0, FW_IQ_TYPE_FL_INT_CAP,
+	adap->sge.ingr_map[rq->cntxt_id - adap->sge.ingr_start] = शून्य;
+	t4_iq_मुक्त(adap, adap->mbox, adap->pf, 0, FW_IQ_TYPE_FL_INT_CAP,
 		   rq->cntxt_id, fl_id, 0xffff);
-	dma_free_coherent(adap->pdev_dev, (rq->size + 1) * rq->iqe_len,
+	dma_मुक्त_coherent(adap->pdev_dev, (rq->size + 1) * rq->iqe_len,
 			  rq->desc, rq->phys_addr);
-	netif_napi_del(&rq->napi);
-	rq->netdev = NULL;
-	rq->cntxt_id = rq->abs_id = 0;
-	rq->desc = NULL;
+	netअगर_napi_del(&rq->napi);
+	rq->netdev = शून्य;
+	rq->cntxt_id = rq->असल_id = 0;
+	rq->desc = शून्य;
 
-	if (fl) {
-		free_rx_bufs(adap, fl, fl->avail);
-		dma_free_coherent(adap->pdev_dev, fl->size * 8 + s->stat_len,
+	अगर (fl) अणु
+		मुक्त_rx_bufs(adap, fl, fl->avail);
+		dma_मुक्त_coherent(adap->pdev_dev, fl->size * 8 + s->stat_len,
 				  fl->desc, fl->addr);
-		kfree(fl->sdesc);
-		fl->sdesc = NULL;
+		kमुक्त(fl->sdesc);
+		fl->sdesc = शून्य;
 		fl->cntxt_id = 0;
-		fl->desc = NULL;
-	}
-}
+		fl->desc = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- *      t4_free_ofld_rxqs - free a block of consecutive Rx queues
+ *      t4_मुक्त_ofld_rxqs - मुक्त a block of consecutive Rx queues
  *      @adap: the adapter
  *      @n: number of queues
- *      @q: pointer to first queue
+ *      @q: poपूर्णांकer to first queue
  *
  *      Release the resources of a consecutive block of offload Rx queues.
  */
-void t4_free_ofld_rxqs(struct adapter *adap, int n, struct sge_ofld_rxq *q)
-{
-	for ( ; n; n--, q++)
-		if (q->rspq.desc)
-			free_rspq_fl(adap, &q->rspq,
-				     q->fl.size ? &q->fl : NULL);
-}
+व्योम t4_मुक्त_ofld_rxqs(काष्ठा adapter *adap, पूर्णांक n, काष्ठा sge_ofld_rxq *q)
+अणु
+	क्रम ( ; n; n--, q++)
+		अगर (q->rspq.desc)
+			मुक्त_rspq_fl(adap, &q->rspq,
+				     q->fl.size ? &q->fl : शून्य);
+पूर्ण
 
-void t4_sge_free_ethofld_txq(struct adapter *adap, struct sge_eohw_txq *txq)
-{
-	if (txq->q.desc) {
-		t4_ofld_eq_free(adap, adap->mbox, adap->pf, 0,
+व्योम t4_sge_मुक्त_ethofld_txq(काष्ठा adapter *adap, काष्ठा sge_eohw_txq *txq)
+अणु
+	अगर (txq->q.desc) अणु
+		t4_ofld_eq_मुक्त(adap, adap->mbox, adap->pf, 0,
 				txq->q.cntxt_id);
-		free_tx_desc(adap, &txq->q, txq->q.in_use, false);
-		kfree(txq->q.sdesc);
-		free_txq(adap, &txq->q);
-	}
-}
+		मुक्त_tx_desc(adap, &txq->q, txq->q.in_use, false);
+		kमुक्त(txq->q.sdesc);
+		मुक्त_txq(adap, &txq->q);
+	पूर्ण
+पूर्ण
 
 /**
- *	t4_free_sge_resources - free SGE resources
+ *	t4_मुक्त_sge_resources - मुक्त SGE resources
  *	@adap: the adapter
  *
  *	Frees resources used by the SGE queue sets.
  */
-void t4_free_sge_resources(struct adapter *adap)
-{
-	int i;
-	struct sge_eth_rxq *eq;
-	struct sge_eth_txq *etq;
+व्योम t4_मुक्त_sge_resources(काष्ठा adapter *adap)
+अणु
+	पूर्णांक i;
+	काष्ठा sge_eth_rxq *eq;
+	काष्ठा sge_eth_txq *etq;
 
 	/* stop all Rx queues in order to start them draining */
-	for (i = 0; i < adap->sge.ethqsets; i++) {
+	क्रम (i = 0; i < adap->sge.ethqsets; i++) अणु
 		eq = &adap->sge.ethrxq[i];
-		if (eq->rspq.desc)
+		अगर (eq->rspq.desc)
 			t4_iq_stop(adap, adap->mbox, adap->pf, 0,
 				   FW_IQ_TYPE_FL_INT_CAP,
 				   eq->rspq.cntxt_id,
 				   eq->fl.size ? eq->fl.cntxt_id : 0xffff,
 				   0xffff);
-	}
+	पूर्ण
 
 	/* clean up Ethernet Tx/Rx queues */
-	for (i = 0; i < adap->sge.ethqsets; i++) {
+	क्रम (i = 0; i < adap->sge.ethqsets; i++) अणु
 		eq = &adap->sge.ethrxq[i];
-		if (eq->rspq.desc)
-			free_rspq_fl(adap, &eq->rspq,
-				     eq->fl.size ? &eq->fl : NULL);
-		if (eq->msix) {
-			cxgb4_free_msix_idx_in_bmap(adap, eq->msix->idx);
-			eq->msix = NULL;
-		}
+		अगर (eq->rspq.desc)
+			मुक्त_rspq_fl(adap, &eq->rspq,
+				     eq->fl.size ? &eq->fl : शून्य);
+		अगर (eq->msix) अणु
+			cxgb4_मुक्त_msix_idx_in_bmap(adap, eq->msix->idx);
+			eq->msix = शून्य;
+		पूर्ण
 
 		etq = &adap->sge.ethtxq[i];
-		if (etq->q.desc) {
-			t4_eth_eq_free(adap, adap->mbox, adap->pf, 0,
+		अगर (etq->q.desc) अणु
+			t4_eth_eq_मुक्त(adap, adap->mbox, adap->pf, 0,
 				       etq->q.cntxt_id);
-			__netif_tx_lock_bh(etq->txq);
-			free_tx_desc(adap, &etq->q, etq->q.in_use, true);
-			__netif_tx_unlock_bh(etq->txq);
-			kfree(etq->q.sdesc);
-			free_txq(adap, &etq->q);
-		}
-	}
+			__netअगर_tx_lock_bh(etq->txq);
+			मुक्त_tx_desc(adap, &etq->q, etq->q.in_use, true);
+			__netअगर_tx_unlock_bh(etq->txq);
+			kमुक्त(etq->q.sdesc);
+			मुक्त_txq(adap, &etq->q);
+		पूर्ण
+	पूर्ण
 
 	/* clean up control Tx queues */
-	for (i = 0; i < ARRAY_SIZE(adap->sge.ctrlq); i++) {
-		struct sge_ctrl_txq *cq = &adap->sge.ctrlq[i];
+	क्रम (i = 0; i < ARRAY_SIZE(adap->sge.ctrlq); i++) अणु
+		काष्ठा sge_ctrl_txq *cq = &adap->sge.ctrlq[i];
 
-		if (cq->q.desc) {
-			tasklet_kill(&cq->qresume_tsk);
-			t4_ctrl_eq_free(adap, adap->mbox, adap->pf, 0,
+		अगर (cq->q.desc) अणु
+			tasklet_समाप्त(&cq->qresume_tsk);
+			t4_ctrl_eq_मुक्त(adap, adap->mbox, adap->pf, 0,
 					cq->q.cntxt_id);
 			__skb_queue_purge(&cq->sendq);
-			free_txq(adap, &cq->q);
-		}
-	}
+			मुक्त_txq(adap, &cq->q);
+		पूर्ण
+	पूर्ण
 
-	if (adap->sge.fw_evtq.desc) {
-		free_rspq_fl(adap, &adap->sge.fw_evtq, NULL);
-		if (adap->sge.fwevtq_msix_idx >= 0)
-			cxgb4_free_msix_idx_in_bmap(adap,
+	अगर (adap->sge.fw_evtq.desc) अणु
+		मुक्त_rspq_fl(adap, &adap->sge.fw_evtq, शून्य);
+		अगर (adap->sge.fwevtq_msix_idx >= 0)
+			cxgb4_मुक्त_msix_idx_in_bmap(adap,
 						    adap->sge.fwevtq_msix_idx);
-	}
+	पूर्ण
 
-	if (adap->sge.nd_msix_idx >= 0)
-		cxgb4_free_msix_idx_in_bmap(adap, adap->sge.nd_msix_idx);
+	अगर (adap->sge.nd_msix_idx >= 0)
+		cxgb4_मुक्त_msix_idx_in_bmap(adap, adap->sge.nd_msix_idx);
 
-	if (adap->sge.intrq.desc)
-		free_rspq_fl(adap, &adap->sge.intrq, NULL);
+	अगर (adap->sge.पूर्णांकrq.desc)
+		मुक्त_rspq_fl(adap, &adap->sge.पूर्णांकrq, शून्य);
 
-	if (!is_t4(adap->params.chip)) {
+	अगर (!is_t4(adap->params.chip)) अणु
 		etq = &adap->sge.ptptxq;
-		if (etq->q.desc) {
-			t4_eth_eq_free(adap, adap->mbox, adap->pf, 0,
+		अगर (etq->q.desc) अणु
+			t4_eth_eq_मुक्त(adap, adap->mbox, adap->pf, 0,
 				       etq->q.cntxt_id);
 			spin_lock_bh(&adap->ptp_lock);
-			free_tx_desc(adap, &etq->q, etq->q.in_use, true);
+			मुक्त_tx_desc(adap, &etq->q, etq->q.in_use, true);
 			spin_unlock_bh(&adap->ptp_lock);
-			kfree(etq->q.sdesc);
-			free_txq(adap, &etq->q);
-		}
-	}
+			kमुक्त(etq->q.sdesc);
+			मुक्त_txq(adap, &etq->q);
+		पूर्ण
+	पूर्ण
 
 	/* clear the reverse egress queue map */
-	memset(adap->sge.egr_map, 0,
-	       adap->sge.egr_sz * sizeof(*adap->sge.egr_map));
-}
+	स_रखो(adap->sge.egr_map, 0,
+	       adap->sge.egr_sz * माप(*adap->sge.egr_map));
+पूर्ण
 
-void t4_sge_start(struct adapter *adap)
-{
+व्योम t4_sge_start(काष्ठा adapter *adap)
+अणु
 	adap->sge.ethtxq_rover = 0;
-	mod_timer(&adap->sge.rx_timer, jiffies + RX_QCHECK_PERIOD);
-	mod_timer(&adap->sge.tx_timer, jiffies + TX_QCHECK_PERIOD);
-}
+	mod_समयr(&adap->sge.rx_समयr, jअगरfies + RX_QCHECK_PERIOD);
+	mod_समयr(&adap->sge.tx_समयr, jअगरfies + TX_QCHECK_PERIOD);
+पूर्ण
 
 /**
  *	t4_sge_stop - disable SGE operation
  *	@adap: the adapter
  *
- *	Stop tasklets and timers associated with the DMA engine.  Note that
- *	this is effective only if measures have been taken to disable any HW
+ *	Stop tasklets and समयrs associated with the DMA engine.  Note that
+ *	this is effective only अगर measures have been taken to disable any HW
  *	events that may restart them.
  */
-void t4_sge_stop(struct adapter *adap)
-{
-	int i;
-	struct sge *s = &adap->sge;
+व्योम t4_sge_stop(काष्ठा adapter *adap)
+अणु
+	पूर्णांक i;
+	काष्ठा sge *s = &adap->sge;
 
-	if (s->rx_timer.function)
-		del_timer_sync(&s->rx_timer);
-	if (s->tx_timer.function)
-		del_timer_sync(&s->tx_timer);
+	अगर (s->rx_समयr.function)
+		del_समयr_sync(&s->rx_समयr);
+	अगर (s->tx_समयr.function)
+		del_समयr_sync(&s->tx_समयr);
 
-	if (is_offload(adap)) {
-		struct sge_uld_txq_info *txq_info;
+	अगर (is_offload(adap)) अणु
+		काष्ठा sge_uld_txq_info *txq_info;
 
 		txq_info = adap->sge.uld_txq_info[CXGB4_TX_OFLD];
-		if (txq_info) {
-			struct sge_uld_txq *txq = txq_info->uldtxq;
+		अगर (txq_info) अणु
+			काष्ठा sge_uld_txq *txq = txq_info->uldtxq;
 
-			for_each_ofldtxq(&adap->sge, i) {
-				if (txq->q.desc)
-					tasklet_kill(&txq->qresume_tsk);
-			}
-		}
-	}
+			क्रम_each_ofldtxq(&adap->sge, i) अणु
+				अगर (txq->q.desc)
+					tasklet_समाप्त(&txq->qresume_tsk);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (is_pci_uld(adap)) {
-		struct sge_uld_txq_info *txq_info;
+	अगर (is_pci_uld(adap)) अणु
+		काष्ठा sge_uld_txq_info *txq_info;
 
 		txq_info = adap->sge.uld_txq_info[CXGB4_TX_CRYPTO];
-		if (txq_info) {
-			struct sge_uld_txq *txq = txq_info->uldtxq;
+		अगर (txq_info) अणु
+			काष्ठा sge_uld_txq *txq = txq_info->uldtxq;
 
-			for_each_ofldtxq(&adap->sge, i) {
-				if (txq->q.desc)
-					tasklet_kill(&txq->qresume_tsk);
-			}
-		}
-	}
+			क्रम_each_ofldtxq(&adap->sge, i) अणु
+				अगर (txq->q.desc)
+					tasklet_समाप्त(&txq->qresume_tsk);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(s->ctrlq); i++) {
-		struct sge_ctrl_txq *cq = &s->ctrlq[i];
+	क्रम (i = 0; i < ARRAY_SIZE(s->ctrlq); i++) अणु
+		काष्ठा sge_ctrl_txq *cq = &s->ctrlq[i];
 
-		if (cq->q.desc)
-			tasklet_kill(&cq->qresume_tsk);
-	}
-}
+		अगर (cq->q.desc)
+			tasklet_समाप्त(&cq->qresume_tsk);
+	पूर्ण
+पूर्ण
 
 /**
  *	t4_sge_init_soft - grab core SGE values needed by SGE code
  *	@adap: the adapter
  *
  *	We need to grab the SGE operating parameters that we need to have
- *	in order to do our job and make sure we can live with them.
+ *	in order to करो our job and make sure we can live with them.
  */
 
-static int t4_sge_init_soft(struct adapter *adap)
-{
-	struct sge *s = &adap->sge;
+अटल पूर्णांक t4_sge_init_soft(काष्ठा adapter *adap)
+अणु
+	काष्ठा sge *s = &adap->sge;
 	u32 fl_small_pg, fl_large_pg, fl_small_mtu, fl_large_mtu;
-	u32 timer_value_0_and_1, timer_value_2_and_3, timer_value_4_and_5;
+	u32 समयr_value_0_and_1, समयr_value_2_and_3, समयr_value_4_and_5;
 	u32 ingress_rx_threshold;
 
 	/*
-	 * Verify that CPL messages are going to the Ingress Queue for
+	 * Verअगरy that CPL messages are going to the Ingress Queue क्रम
 	 * process_responses() and that only packet data is going to the
 	 * Free Lists.
 	 */
-	if ((t4_read_reg(adap, SGE_CONTROL_A) & RXPKTCPLMODE_F) !=
-	    RXPKTCPLMODE_V(RXPKTCPLMODE_SPLIT_X)) {
+	अगर ((t4_पढ़ो_reg(adap, SGE_CONTROL_A) & RXPKTCPLMODE_F) !=
+	    RXPKTCPLMODE_V(RXPKTCPLMODE_SPLIT_X)) अणु
 		dev_err(adap->pdev_dev, "bad SGE CPL MODE\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Validate the Host Buffer Register Array indices that we want to
 	 * use ...
 	 *
-	 * XXX Note that we should really read through the Host Buffer Size
-	 * XXX register array and find the indices of the Buffer Sizes which
+	 * XXX Note that we should really पढ़ो through the Host Buffer Size
+	 * XXX रेजिस्टर array and find the indices of the Buffer Sizes which
 	 * XXX meet our needs!
 	 */
-	#define READ_FL_BUF(x) \
-		t4_read_reg(adap, SGE_FL_BUFFER_SIZE0_A+(x)*sizeof(u32))
+	#घोषणा READ_FL_BUF(x) \
+		t4_पढ़ो_reg(adap, SGE_FL_BUFFER_SIZE0_A+(x)*माप(u32))
 
 	fl_small_pg = READ_FL_BUF(RX_SMALL_PG_BUF);
 	fl_large_pg = READ_FL_BUF(RX_LARGE_PG_BUF);
 	fl_small_mtu = READ_FL_BUF(RX_SMALL_MTU_BUF);
 	fl_large_mtu = READ_FL_BUF(RX_LARGE_MTU_BUF);
 
-	/* We only bother using the Large Page logic if the Large Page Buffer
+	/* We only bother using the Large Page logic अगर the Large Page Buffer
 	 * is larger than our Page Size Buffer.
 	 */
-	if (fl_large_pg <= fl_small_pg)
+	अगर (fl_large_pg <= fl_small_pg)
 		fl_large_pg = 0;
 
-	#undef READ_FL_BUF
+	#अघोषित READ_FL_BUF
 
 	/* The Page Size Buffer must be exactly equal to our Page Size and the
-	 * Large Page Size Buffer should be 0 (per above) or a power of 2.
+	 * Large Page Size Buffer should be 0 (per above) or a घातer of 2.
 	 */
-	if (fl_small_pg != PAGE_SIZE ||
-	    (fl_large_pg & (fl_large_pg-1)) != 0) {
+	अगर (fl_small_pg != PAGE_SIZE ||
+	    (fl_large_pg & (fl_large_pg-1)) != 0) अणु
 		dev_err(adap->pdev_dev, "bad SGE FL page buffer sizes [%d, %d]\n",
 			fl_small_pg, fl_large_pg);
-		return -EINVAL;
-	}
-	if (fl_large_pg)
+		वापस -EINVAL;
+	पूर्ण
+	अगर (fl_large_pg)
 		s->fl_pg_order = ilog2(fl_large_pg) - PAGE_SHIFT;
 
-	if (fl_small_mtu < FL_MTU_SMALL_BUFSIZE(adap) ||
-	    fl_large_mtu < FL_MTU_LARGE_BUFSIZE(adap)) {
+	अगर (fl_small_mtu < FL_MTU_SMALL_बफ_मानE(adap) ||
+	    fl_large_mtu < FL_MTU_LARGE_बफ_मानE(adap)) अणु
 		dev_err(adap->pdev_dev, "bad SGE FL MTU sizes [%d, %d]\n",
 			fl_small_mtu, fl_large_mtu);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Retrieve our RX interrupt holdoff timer values and counter
+	 * Retrieve our RX पूर्णांकerrupt holकरोff समयr values and counter
 	 * threshold values from the SGE parameters.
 	 */
-	timer_value_0_and_1 = t4_read_reg(adap, SGE_TIMER_VALUE_0_AND_1_A);
-	timer_value_2_and_3 = t4_read_reg(adap, SGE_TIMER_VALUE_2_AND_3_A);
-	timer_value_4_and_5 = t4_read_reg(adap, SGE_TIMER_VALUE_4_AND_5_A);
-	s->timer_val[0] = core_ticks_to_us(adap,
-		TIMERVALUE0_G(timer_value_0_and_1));
-	s->timer_val[1] = core_ticks_to_us(adap,
-		TIMERVALUE1_G(timer_value_0_and_1));
-	s->timer_val[2] = core_ticks_to_us(adap,
-		TIMERVALUE2_G(timer_value_2_and_3));
-	s->timer_val[3] = core_ticks_to_us(adap,
-		TIMERVALUE3_G(timer_value_2_and_3));
-	s->timer_val[4] = core_ticks_to_us(adap,
-		TIMERVALUE4_G(timer_value_4_and_5));
-	s->timer_val[5] = core_ticks_to_us(adap,
-		TIMERVALUE5_G(timer_value_4_and_5));
+	समयr_value_0_and_1 = t4_पढ़ो_reg(adap, SGE_TIMER_VALUE_0_AND_1_A);
+	समयr_value_2_and_3 = t4_पढ़ो_reg(adap, SGE_TIMER_VALUE_2_AND_3_A);
+	समयr_value_4_and_5 = t4_पढ़ो_reg(adap, SGE_TIMER_VALUE_4_AND_5_A);
+	s->समयr_val[0] = core_ticks_to_us(adap,
+		TIMERVALUE0_G(समयr_value_0_and_1));
+	s->समयr_val[1] = core_ticks_to_us(adap,
+		TIMERVALUE1_G(समयr_value_0_and_1));
+	s->समयr_val[2] = core_ticks_to_us(adap,
+		TIMERVALUE2_G(समयr_value_2_and_3));
+	s->समयr_val[3] = core_ticks_to_us(adap,
+		TIMERVALUE3_G(समयr_value_2_and_3));
+	s->समयr_val[4] = core_ticks_to_us(adap,
+		TIMERVALUE4_G(समयr_value_4_and_5));
+	s->समयr_val[5] = core_ticks_to_us(adap,
+		TIMERVALUE5_G(समयr_value_4_and_5));
 
-	ingress_rx_threshold = t4_read_reg(adap, SGE_INGRESS_RX_THRESHOLD_A);
+	ingress_rx_threshold = t4_पढ़ो_reg(adap, SGE_INGRESS_RX_THRESHOLD_A);
 	s->counter_val[0] = THRESHOLD_0_G(ingress_rx_threshold);
 	s->counter_val[1] = THRESHOLD_1_G(ingress_rx_threshold);
 	s->counter_val[2] = THRESHOLD_2_G(ingress_rx_threshold);
 	s->counter_val[3] = THRESHOLD_3_G(ingress_rx_threshold);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *     t4_sge_init - initialize SGE
  *     @adap: the adapter
  *
- *     Perform low-level SGE code initialization needed every time after a
+ *     Perक्रमm low-level SGE code initialization needed every समय after a
  *     chip reset.
  */
-int t4_sge_init(struct adapter *adap)
-{
-	struct sge *s = &adap->sge;
+पूर्णांक t4_sge_init(काष्ठा adapter *adap)
+अणु
+	काष्ठा sge *s = &adap->sge;
 	u32 sge_control, sge_conm_ctrl;
-	int ret, egress_threshold;
+	पूर्णांक ret, egress_threshold;
 
 	/*
 	 * Ingress Padding Boundary and Egress Status Page Size are set up by
 	 * t4_fixup_host_params().
 	 */
-	sge_control = t4_read_reg(adap, SGE_CONTROL_A);
-	s->pktshift = PKTSHIFT_G(sge_control);
+	sge_control = t4_पढ़ो_reg(adap, SGE_CONTROL_A);
+	s->pktshअगरt = PKTSHIFT_G(sge_control);
 	s->stat_len = (sge_control & EGRSTATUSPAGESIZE_F) ? 128 : 64;
 
 	s->fl_align = t4_fl_pkt_align(adap);
 	ret = t4_sge_init_soft(adap);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
 	 * A FL with <= fl_starve_thres buffers is starving and a periodic
-	 * timer will attempt to refill it.  This needs to be larger than the
+	 * समयr will attempt to refill it.  This needs to be larger than the
 	 * SGE's Egress Congestion Threshold.  If it isn't, then we can get
-	 * stuck waiting for new packets while the SGE is waiting for us to
+	 * stuck रुकोing क्रम new packets जबतक the SGE is रुकोing क्रम us to
 	 * give it more Free List entries.  (Note that the SGE's Egress
-	 * Congestion Threshold is in units of 2 Free List pointers.) For T4,
+	 * Congestion Threshold is in units of 2 Free List poपूर्णांकers.) For T4,
 	 * there was only a single field to control this.  For T5 there's the
 	 * original field which now only applies to Unpacked Mode Free List
 	 * buffers and a new field which only applies to Packed Mode Free List
 	 * buffers.
 	 */
-	sge_conm_ctrl = t4_read_reg(adap, SGE_CONM_CTRL_A);
-	switch (CHELSIO_CHIP_VERSION(adap->params.chip)) {
-	case CHELSIO_T4:
+	sge_conm_ctrl = t4_पढ़ो_reg(adap, SGE_CONM_CTRL_A);
+	चयन (CHELSIO_CHIP_VERSION(adap->params.chip)) अणु
+	हाल CHELSIO_T4:
 		egress_threshold = EGRTHRESHOLD_G(sge_conm_ctrl);
-		break;
-	case CHELSIO_T5:
+		अवरोध;
+	हाल CHELSIO_T5:
 		egress_threshold = EGRTHRESHOLDPACKING_G(sge_conm_ctrl);
-		break;
-	case CHELSIO_T6:
+		अवरोध;
+	हाल CHELSIO_T6:
 		egress_threshold = T6_EGRTHRESHOLDPACKING_G(sge_conm_ctrl);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(adap->pdev_dev, "Unsupported Chip version %d\n",
 			CHELSIO_CHIP_VERSION(adap->params.chip));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	s->fl_starve_thres = 2*egress_threshold + 1;
 
 	t4_idma_monitor_init(adap, &s->idma_monitor);
 
-	/* Set up timers used for recuring callbacks to process RX and TX
+	/* Set up समयrs used क्रम recuring callbacks to process RX and TX
 	 * administrative tasks.
 	 */
-	timer_setup(&s->rx_timer, sge_rx_timer_cb, 0);
-	timer_setup(&s->tx_timer, sge_tx_timer_cb, 0);
+	समयr_setup(&s->rx_समयr, sge_rx_समयr_cb, 0);
+	समयr_setup(&s->tx_समयr, sge_tx_समयr_cb, 0);
 
-	spin_lock_init(&s->intrq_lock);
+	spin_lock_init(&s->पूर्णांकrq_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __M68K_ENTRY_H
-#define __M68K_ENTRY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __M68K_ENTRY_H
+#घोषणा __M68K_ENTRY_H
 
-#include <asm/setup.h>
-#include <asm/page.h>
-#ifdef __ASSEMBLY__
-#include <asm/thread_info.h>
-#endif
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/page.h>
+#अगर_घोषित __ASSEMBLY__
+#समावेश <यंत्र/thपढ़ो_info.h>
+#पूर्ण_अगर
 
 /*
  * Stack layout in 'ret_from_exception':
  *
- *	This allows access to the syscall arguments in registers d1-d5
+ *	This allows access to the syscall arguments in रेजिस्टरs d1-d5
  *
  *	 0(sp) - d1
  *	 4(sp) - d2
@@ -23,87 +24,87 @@
  *	1C(sp) - a2
  *	20(sp) - d0
  *	24(sp) - orig_d0
- *	28(sp) - stack adjustment
- *	2C(sp) - [ sr              ] [ format & vector ]
+ *	28(sp) - stack adjusपंचांगent
+ *	2C(sp) - [ sr              ] [ क्रमmat & vector ]
  *	2E(sp) - [ pc-hiword       ] [ sr              ]
  *	30(sp) - [ pc-loword       ] [ pc-hiword       ]
- *	32(sp) - [ format & vector ] [ pc-loword       ]
+ *	32(sp) - [ क्रमmat & vector ] [ pc-loword       ]
  *		  ^^^^^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^^^
  *			M68K		  COLDFIRE
  */
 
-/* the following macro is used when enabling interrupts */
-#if defined(MACH_ATARI_ONLY)
+/* the following macro is used when enabling पूर्णांकerrupts */
+#अगर defined(MACH_ATARI_ONLY)
 	/* block out HSYNC = ipl 2 on the atari */
-#define ALLOWINT	(~0x500)
-#else
+#घोषणा ALLOWINT	(~0x500)
+#अन्यथा
 	/* portable version */
-#define ALLOWINT	(~0x700)
-#endif /* machine compilation types */
+#घोषणा ALLOWINT	(~0x700)
+#पूर्ण_अगर /* machine compilation types */
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 /*
  * This defines the normal kernel pt-regs layout.
  *
  * regs a3-a6 and d6-d7 are preserved by C code
- * the kernel doesn't mess with usp unless it needs to
+ * the kernel करोesn't mess with usp unless it needs to
  */
-#define SWITCH_STACK_SIZE	(6*4+4)	/* includes return address */
+#घोषणा SWITCH_STACK_SIZE	(6*4+4)	/* includes वापस address */
 
-#ifdef CONFIG_COLDFIRE
-#ifdef CONFIG_COLDFIRE_SW_A7
+#अगर_घोषित CONFIG_COLDFIRE
+#अगर_घोषित CONFIG_COLDFIRE_SW_A7
 /*
  * This is made a little more tricky on older ColdFires. There is no
- * separate supervisor and user stack pointers. Need to artificially
- * construct a usp in software... When doing this we need to disable
- * interrupts, otherwise bad things will happen.
+ * separate supervisor and user stack poपूर्णांकers. Need to artअगरicially
+ * स्थिरruct a usp in software... When करोing this we need to disable
+ * पूर्णांकerrupts, otherwise bad things will happen.
  */
 .globl sw_usp
 .globl sw_ksp
 
 .macro SAVE_ALL_SYS
-	move	#0x2700,%sr		/* disable intrs */
+	move	#0x2700,%sr		/* disable पूर्णांकrs */
 	btst	#5,%sp@(2)		/* from user? */
 	bnes	6f			/* no, skip */
 	movel	%sp,sw_usp		/* save user sp */
-	addql	#8,sw_usp		/* remove exception */
+	addql	#8,sw_usp		/* हटाओ exception */
 	movel	sw_ksp,%sp		/* kernel sp */
-	subql	#8,%sp			/* room for exception */
+	subql	#8,%sp			/* room क्रम exception */
 	clrl	%sp@-			/* stkadj */
 	movel	%d0,%sp@-		/* orig d0 */
 	movel	%d0,%sp@-		/* d0 */
-	lea	%sp@(-32),%sp		/* space for 8 regs */
+	lea	%sp@(-32),%sp		/* space क्रम 8 regs */
 	moveml	%d1-%d5/%a0-%a2,%sp@
 	movel	sw_usp,%a0		/* get usp */
 	movel	%a0@-,%sp@(PT_OFF_PC)	/* copy exception program counter */
-	movel	%a0@-,%sp@(PT_OFF_FORMATVEC)/*copy exception format/vector/sr */
+	movel	%a0@-,%sp@(PT_OFF_FORMATVEC)/*copy exception क्रमmat/vector/sr */
 	bra	7f
 	6:
 	clrl	%sp@-			/* stkadj */
 	movel	%d0,%sp@-		/* orig d0 */
 	movel	%d0,%sp@-		/* d0 */
-	lea	%sp@(-32),%sp		/* space for 8 regs */
+	lea	%sp@(-32),%sp		/* space क्रम 8 regs */
 	moveml	%d1-%d5/%a0-%a2,%sp@
 	7:
 .endm
 
 .macro SAVE_ALL_INT
 	SAVE_ALL_SYS
-	moveq	#-1,%d0			/* not system call entry */
+	moveq	#-1,%d0			/* not प्रणाली call entry */
 	movel	%d0,%sp@(PT_OFF_ORIG_D0)
 .endm
 
 .macro RESTORE_USER
-	move	#0x2700,%sr		/* disable intrs */
+	move	#0x2700,%sr		/* disable पूर्णांकrs */
 	movel	sw_usp,%a0		/* get usp */
 	movel	%sp@(PT_OFF_PC),%a0@-	/* copy exception program counter */
-	movel	%sp@(PT_OFF_FORMATVEC),%a0@-/*copy exception format/vector/sr */
+	movel	%sp@(PT_OFF_FORMATVEC),%a0@-/*copy exception क्रमmat/vector/sr */
 	moveml	%sp@,%d1-%d5/%a0-%a2
-	lea	%sp@(32),%sp		/* space for 8 regs */
+	lea	%sp@(32),%sp		/* space क्रम 8 regs */
 	movel	%sp@+,%d0
 	addql	#4,%sp			/* orig d0 */
 	addl	%sp@+,%sp		/* stkadj */
-	addql	#8,%sp			/* remove exception */
+	addql	#8,%sp			/* हटाओ exception */
 	movel	%sp,sw_ksp		/* save ksp */
 	subql	#8,sw_usp		/* set exception */
 	movel	sw_usp,%sp		/* restore usp */
@@ -118,32 +119,32 @@
 	movel	%a3,sw_usp
 .endm
 
-#else /* !CONFIG_COLDFIRE_SW_A7 */
+#अन्यथा /* !CONFIG_COLDFIRE_SW_A7 */
 /*
  * Modern ColdFire parts have separate supervisor and user stack
- * pointers. Simple load and restore macros for this case.
+ * poपूर्णांकers. Simple load and restore macros क्रम this हाल.
  */
 .macro SAVE_ALL_SYS
-	move	#0x2700,%sr		/* disable intrs */
+	move	#0x2700,%sr		/* disable पूर्णांकrs */
 	clrl	%sp@-			/* stkadj */
 	movel	%d0,%sp@-		/* orig d0 */
 	movel	%d0,%sp@-		/* d0 */
-	lea	%sp@(-32),%sp		/* space for 8 regs */
+	lea	%sp@(-32),%sp		/* space क्रम 8 regs */
 	moveml	%d1-%d5/%a0-%a2,%sp@
 .endm
 
 .macro SAVE_ALL_INT
-	move	#0x2700,%sr		/* disable intrs */
+	move	#0x2700,%sr		/* disable पूर्णांकrs */
 	clrl	%sp@-			/* stkadj */
 	pea	-1:w			/* orig d0 */
 	movel	%d0,%sp@-		/* d0 */
-	lea	%sp@(-32),%sp		/* space for 8 regs */
+	lea	%sp@(-32),%sp		/* space क्रम 8 regs */
 	moveml	%d1-%d5/%a0-%a2,%sp@
 .endm
 
 .macro RESTORE_USER
 	moveml	%sp@,%d1-%d5/%a0-%a2
-	lea	%sp@(32),%sp		/* space for 8 regs */
+	lea	%sp@(32),%sp		/* space क्रम 8 regs */
 	movel	%sp@+,%d0
 	addql	#4,%sp			/* orig d0 */
 	addl	%sp@+,%sp		/* stkadj */
@@ -160,7 +161,7 @@
 	.word	0x4e63
 .endm
 
-#endif /* !CONFIG_COLDFIRE_SW_A7 */
+#पूर्ण_अगर /* !CONFIG_COLDFIRE_SW_A7 */
 
 .macro SAVE_SWITCH_STACK
 	lea	%sp@(-24),%sp		/* 6 regs */
@@ -172,16 +173,16 @@
 	lea	%sp@(24),%sp		/* 6 regs */
 .endm
 
-#else /* !CONFIG_COLDFIRE */
+#अन्यथा /* !CONFIG_COLDFIRE */
 
 /*
  * All other types of m68k parts (68000, 680x0, CPU32) have the same
- * entry and exit code.
+ * entry and निकास code.
  */
 
 /*
- * a -1 in the orig_d0 field signifies
- * that the stack frame is NOT for syscall
+ * a -1 in the orig_d0 field signअगरies
+ * that the stack frame is NOT क्रम syscall
  */
 .macro SAVE_ALL_INT
 	clrl	%sp@-			/* stk_adj */
@@ -214,48 +215,48 @@
 	moveml	%sp@+,%a3-%a6/%d6-%d7
 .endm
 
-#endif /* !CONFIG_COLDFIRE */
+#पूर्ण_अगर /* !CONFIG_COLDFIRE */
 
 /*
- * Register %a2 is reserved and set to current task on MMU enabled systems.
- * Non-MMU systems do not reserve %a2 in this way, and this definition is
- * not used for them.
+ * Register %a2 is reserved and set to current task on MMU enabled प्रणालीs.
+ * Non-MMU प्रणालीs करो not reserve %a2 in this way, and this definition is
+ * not used क्रम them.
  */
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 
-#define curptr a2
+#घोषणा curptr a2
 
-#define GET_CURRENT(tmp) get_current tmp
+#घोषणा GET_CURRENT(पंचांगp) get_current पंचांगp
 .macro get_current reg=%d0
-	movel	%sp,\reg
-	andl	#-THREAD_SIZE,\reg
-	movel	\reg,%curptr
+	movel	%sp,\लeg
+	andl	#-THREAD_SIZE,\लeg
+	movel	\लeg,%curptr
 	movel	%curptr@,%curptr
 .endm
 
-#else
+#अन्यथा
 
-#define GET_CURRENT(tmp)
+#घोषणा GET_CURRENT(पंचांगp)
 
-#endif /* CONFIG_MMU */
+#पूर्ण_अगर /* CONFIG_MMU */
 
-#else /* C source */
+#अन्यथा /* C source */
 
-#define STR(X) STR1(X)
-#define STR1(X) #X
+#घोषणा STR(X) STR1(X)
+#घोषणा STR1(X) #X
 
-#define SAVE_ALL_INT				\
+#घोषणा SAVE_ALL_INT				\
 	"clrl	%%sp@-;"    /* stk_adj */	\
 	"pea	-1:w;"	    /* orig d0 = -1 */	\
 	"movel	%%d0,%%sp@-;" /* d0 */		\
 	"moveml	%%d1-%%d5/%%a0-%%a2,%%sp@-"
 
-#define GET_CURRENT(tmp) \
-	"movel	%%sp,"#tmp"\n\t" \
-	"andw	#-"STR(THREAD_SIZE)","#tmp"\n\t" \
-	"movel	"#tmp",%%a2\n\t" \
+#घोषणा GET_CURRENT(पंचांगp) \
+	"movel	%%sp,"#पंचांगp"\n\t" \
+	"andw	#-"STR(THREAD_SIZE)","#पंचांगp"\n\t" \
+	"movel	"#पंचांगp",%%a2\n\t" \
 	"movel	%%a2@,%%a2"
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __M68K_ENTRY_H */
+#पूर्ण_अगर /* __M68K_ENTRY_H */

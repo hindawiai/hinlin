@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * arch/sh/mm/cache-sh2.c
  *
@@ -6,85 +7,85 @@
  * Copyright (C) 2008 Yoshinori Sato
  */
 
-#include <linux/init.h>
-#include <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
 
-#include <asm/cache.h>
-#include <asm/addrspace.h>
-#include <asm/processor.h>
-#include <asm/cacheflush.h>
-#include <asm/io.h>
+#समावेश <यंत्र/cache.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/पन.स>
 
-static void sh2__flush_wback_region(void *start, int size)
-{
-	unsigned long v;
-	unsigned long begin, end;
+अटल व्योम sh2__flush_wback_region(व्योम *start, पूर्णांक size)
+अणु
+	अचिन्हित दीर्घ v;
+	अचिन्हित दीर्घ begin, end;
 
-	begin = (unsigned long)start & ~(L1_CACHE_BYTES-1);
-	end = ((unsigned long)start + size + L1_CACHE_BYTES-1)
+	begin = (अचिन्हित दीर्घ)start & ~(L1_CACHE_BYTES-1);
+	end = ((अचिन्हित दीर्घ)start + size + L1_CACHE_BYTES-1)
 		& ~(L1_CACHE_BYTES-1);
-	for (v = begin; v < end; v+=L1_CACHE_BYTES) {
-		unsigned long addr = CACHE_OC_ADDRESS_ARRAY | (v & 0x00000ff0);
-		int way;
-		for (way = 0; way < 4; way++) {
-			unsigned long data =  __raw_readl(addr | (way << 12));
-			if ((data & CACHE_PHYSADDR_MASK) == (v & CACHE_PHYSADDR_MASK)) {
+	क्रम (v = begin; v < end; v+=L1_CACHE_BYTES) अणु
+		अचिन्हित दीर्घ addr = CACHE_OC_ADDRESS_ARRAY | (v & 0x00000ff0);
+		पूर्णांक way;
+		क्रम (way = 0; way < 4; way++) अणु
+			अचिन्हित दीर्घ data =  __raw_पढ़ोl(addr | (way << 12));
+			अगर ((data & CACHE_PHYSADDR_MASK) == (v & CACHE_PHYSADDR_MASK)) अणु
 				data &= ~SH_CACHE_UPDATED;
-				__raw_writel(data, addr | (way << 12));
-			}
-		}
-	}
-}
+				__raw_ग_लिखोl(data, addr | (way << 12));
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void sh2__flush_purge_region(void *start, int size)
-{
-	unsigned long v;
-	unsigned long begin, end;
+अटल व्योम sh2__flush_purge_region(व्योम *start, पूर्णांक size)
+अणु
+	अचिन्हित दीर्घ v;
+	अचिन्हित दीर्घ begin, end;
 
-	begin = (unsigned long)start & ~(L1_CACHE_BYTES-1);
-	end = ((unsigned long)start + size + L1_CACHE_BYTES-1)
+	begin = (अचिन्हित दीर्घ)start & ~(L1_CACHE_BYTES-1);
+	end = ((अचिन्हित दीर्घ)start + size + L1_CACHE_BYTES-1)
 		& ~(L1_CACHE_BYTES-1);
 
-	for (v = begin; v < end; v+=L1_CACHE_BYTES)
-		__raw_writel((v & CACHE_PHYSADDR_MASK),
+	क्रम (v = begin; v < end; v+=L1_CACHE_BYTES)
+		__raw_ग_लिखोl((v & CACHE_PHYSADDR_MASK),
 			  CACHE_OC_ADDRESS_ARRAY | (v & 0x00000ff0) | 0x00000008);
-}
+पूर्ण
 
-static void sh2__flush_invalidate_region(void *start, int size)
-{
-#ifdef CONFIG_CACHE_WRITEBACK
+अटल व्योम sh2__flush_invalidate_region(व्योम *start, पूर्णांक size)
+अणु
+#अगर_घोषित CONFIG_CACHE_WRITEBACK
 	/*
-	 * SH-2 does not support individual line invalidation, only a
+	 * SH-2 करोes not support inभागidual line invalidation, only a
 	 * global invalidate.
 	 */
-	unsigned long ccr;
-	unsigned long flags;
+	अचिन्हित दीर्घ ccr;
+	अचिन्हित दीर्घ flags;
 	local_irq_save(flags);
 	jump_to_uncached();
 
-	ccr = __raw_readl(SH_CCR);
+	ccr = __raw_पढ़ोl(SH_CCR);
 	ccr |= CCR_CACHE_INVALIDATE;
-	__raw_writel(ccr, SH_CCR);
+	__raw_ग_लिखोl(ccr, SH_CCR);
 
 	back_to_cached();
 	local_irq_restore(flags);
-#else
-	unsigned long v;
-	unsigned long begin, end;
+#अन्यथा
+	अचिन्हित दीर्घ v;
+	अचिन्हित दीर्घ begin, end;
 
-	begin = (unsigned long)start & ~(L1_CACHE_BYTES-1);
-	end = ((unsigned long)start + size + L1_CACHE_BYTES-1)
+	begin = (अचिन्हित दीर्घ)start & ~(L1_CACHE_BYTES-1);
+	end = ((अचिन्हित दीर्घ)start + size + L1_CACHE_BYTES-1)
 		& ~(L1_CACHE_BYTES-1);
 
-	for (v = begin; v < end; v+=L1_CACHE_BYTES)
-		__raw_writel((v & CACHE_PHYSADDR_MASK),
+	क्रम (v = begin; v < end; v+=L1_CACHE_BYTES)
+		__raw_ग_लिखोl((v & CACHE_PHYSADDR_MASK),
 			  CACHE_OC_ADDRESS_ARRAY | (v & 0x00000ff0) | 0x00000008);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void __init sh2_cache_init(void)
-{
+व्योम __init sh2_cache_init(व्योम)
+अणु
 	__flush_wback_region		= sh2__flush_wback_region;
 	__flush_purge_region		= sh2__flush_purge_region;
 	__flush_invalidate_region	= sh2__flush_invalidate_region;
-}
+पूर्ण

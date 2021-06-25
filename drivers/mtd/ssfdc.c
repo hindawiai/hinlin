@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Linux driver for SSFDC Flash Translation Layer (Read only)
- * © 2005 Eptar srl
+ * Linux driver क्रम SSFDC Flash Translation Layer (Read only)
+ * तऊ 2005 Eptar srl
  * Author: Claudio Lanconelli <lanconelli.claudio@eptar.com>
  *
  * Based on NTFL and MTDBLOCK_RO drivers
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/hdreg.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/blktrans.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/blktrans.h>
 
-struct ssfdcr_record {
-	struct mtd_blktrans_dev mbd;
-	int usecount;
-	unsigned char heads;
-	unsigned char sectors;
-	unsigned short cylinders;
-	int cis_block;			/* block n. containing CIS/IDI */
-	int erase_size;			/* phys_block_size */
-	unsigned short *logic_block_map; /* all zones (max 8192 phys blocks on
+काष्ठा ssfdcr_record अणु
+	काष्ठा mtd_blktrans_dev mbd;
+	पूर्णांक usecount;
+	अचिन्हित अक्षर heads;
+	अचिन्हित अक्षर sectors;
+	अचिन्हित लघु cylinders;
+	पूर्णांक cis_block;			/* block n. containing CIS/IDI */
+	पूर्णांक erase_size;			/* phys_block_size */
+	अचिन्हित लघु *logic_block_map; /* all zones (max 8192 phys blocks on
 					    the 128MiB) */
-	int map_len;			/* n. phys_blocks on the card */
-};
+	पूर्णांक map_len;			/* n. phys_blocks on the card */
+पूर्ण;
 
-#define SSFDCR_MAJOR		257
-#define SSFDCR_PARTN_BITS	3
+#घोषणा SSFDCR_MAJOR		257
+#घोषणा SSFDCR_PARTN_BITS	3
 
-#define SECTOR_SIZE		512
-#define SECTOR_SHIFT		9
-#define OOB_SIZE		16
+#घोषणा SECTOR_SIZE		512
+#घोषणा SECTOR_SHIFT		9
+#घोषणा OOB_SIZE		16
 
-#define MAX_LOGIC_BLK_PER_ZONE	1000
-#define MAX_PHYS_BLK_PER_ZONE	1024
+#घोषणा MAX_LOGIC_BLK_PER_ZONE	1000
+#घोषणा MAX_PHYS_BLK_PER_ZONE	1024
 
-#define KiB(x)	( (x) * 1024L )
-#define MiB(x)	( KiB(x) * 1024L )
+#घोषणा KiB(x)	( (x) * 1024L )
+#घोषणा MiB(x)	( KiB(x) * 1024L )
 
 /** CHS Table
 		1MiB	2MiB	4MiB	8MiB	16MiB	32MiB	64MiB	128MiB
@@ -51,259 +52,259 @@ SumSector	2,000	4,000	8,000	16,000	32,000	64,000	128,000	256,000
 SectorSize	512	512	512	512	512	512	512	512
 **/
 
-typedef struct {
-	unsigned long size;
-	unsigned short cyl;
-	unsigned char head;
-	unsigned char sec;
-} chs_entry_t;
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ size;
+	अचिन्हित लघु cyl;
+	अचिन्हित अक्षर head;
+	अचिन्हित अक्षर sec;
+पूर्ण chs_entry_t;
 
 /* Must be ordered by size */
-static const chs_entry_t chs_table[] = {
-	{ MiB(  1), 125,  4,  4 },
-	{ MiB(  2), 125,  4,  8 },
-	{ MiB(  4), 250,  4,  8 },
-	{ MiB(  8), 250,  4, 16 },
-	{ MiB( 16), 500,  4, 16 },
-	{ MiB( 32), 500,  8, 16 },
-	{ MiB( 64), 500,  8, 32 },
-	{ MiB(128), 500, 16, 32 },
-	{ 0 },
-};
+अटल स्थिर chs_entry_t chs_table[] = अणु
+	अणु MiB(  1), 125,  4,  4 पूर्ण,
+	अणु MiB(  2), 125,  4,  8 पूर्ण,
+	अणु MiB(  4), 250,  4,  8 पूर्ण,
+	अणु MiB(  8), 250,  4, 16 पूर्ण,
+	अणु MiB( 16), 500,  4, 16 पूर्ण,
+	अणु MiB( 32), 500,  8, 16 पूर्ण,
+	अणु MiB( 64), 500,  8, 32 पूर्ण,
+	अणु MiB(128), 500, 16, 32 पूर्ण,
+	अणु 0 पूर्ण,
+पूर्ण;
 
-static int get_chs(unsigned long size, unsigned short *cyl, unsigned char *head,
-			unsigned char *sec)
-{
-	int k;
-	int found = 0;
+अटल पूर्णांक get_chs(अचिन्हित दीर्घ size, अचिन्हित लघु *cyl, अचिन्हित अक्षर *head,
+			अचिन्हित अक्षर *sec)
+अणु
+	पूर्णांक k;
+	पूर्णांक found = 0;
 
 	k = 0;
-	while (chs_table[k].size > 0 && size > chs_table[k].size)
+	जबतक (chs_table[k].size > 0 && size > chs_table[k].size)
 		k++;
 
-	if (chs_table[k].size > 0) {
-		if (cyl)
+	अगर (chs_table[k].size > 0) अणु
+		अगर (cyl)
 			*cyl = chs_table[k].cyl;
-		if (head)
+		अगर (head)
 			*head = chs_table[k].head;
-		if (sec)
+		अगर (sec)
 			*sec = chs_table[k].sec;
 		found = 1;
-	}
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-/* These bytes are the signature for the CIS/IDI sector */
-static const uint8_t cis_numbers[] = {
+/* These bytes are the signature क्रम the CIS/IDI sector */
+अटल स्थिर uपूर्णांक8_t cis_numbers[] = अणु
 	0x01, 0x03, 0xD9, 0x01, 0xFF, 0x18, 0x02, 0xDF, 0x01, 0x20
-};
+पूर्ण;
 
-/* Read and check for a valid CIS sector */
-static int get_valid_cis_sector(struct mtd_info *mtd)
-{
-	int ret, k, cis_sector;
-	size_t retlen;
+/* Read and check क्रम a valid CIS sector */
+अटल पूर्णांक get_valid_cis_sector(काष्ठा mtd_info *mtd)
+अणु
+	पूर्णांक ret, k, cis_sector;
+	माप_प्रकार retlen;
 	loff_t offset;
-	uint8_t *sect_buf;
+	uपूर्णांक8_t *sect_buf;
 
 	cis_sector = -1;
 
-	sect_buf = kmalloc(SECTOR_SIZE, GFP_KERNEL);
-	if (!sect_buf)
-		goto out;
+	sect_buf = kदो_स्मृति(SECTOR_SIZE, GFP_KERNEL);
+	अगर (!sect_buf)
+		जाओ out;
 
 	/*
-	 * Look for CIS/IDI sector on the first GOOD block (give up after 4 bad
-	 * blocks). If the first good block doesn't contain CIS number the flash
-	 * is not SSFDC formatted
+	 * Look क्रम CIS/IDI sector on the first GOOD block (give up after 4 bad
+	 * blocks). If the first good block करोesn't contain CIS number the flash
+	 * is not SSFDC क्रमmatted
 	 */
-	for (k = 0, offset = 0; k < 4; k++, offset += mtd->erasesize) {
-		if (mtd_block_isbad(mtd, offset)) {
-			ret = mtd_read(mtd, offset, SECTOR_SIZE, &retlen,
+	क्रम (k = 0, offset = 0; k < 4; k++, offset += mtd->erasesize) अणु
+		अगर (mtd_block_isbad(mtd, offset)) अणु
+			ret = mtd_पढ़ो(mtd, offset, SECTOR_SIZE, &retlen,
 				       sect_buf);
 
 			/* CIS pattern match on the sector buffer */
-			if (ret < 0 || retlen != SECTOR_SIZE) {
-				printk(KERN_WARNING
+			अगर (ret < 0 || retlen != SECTOR_SIZE) अणु
+				prपूर्णांकk(KERN_WARNING
 					"SSFDC_RO:can't read CIS/IDI sector\n");
-			} else if (!memcmp(sect_buf, cis_numbers,
-					sizeof(cis_numbers))) {
+			पूर्ण अन्यथा अगर (!स_भेद(sect_buf, cis_numbers,
+					माप(cis_numbers))) अणु
 				/* Found */
-				cis_sector = (int)(offset >> SECTOR_SHIFT);
-			} else {
+				cis_sector = (पूर्णांक)(offset >> SECTOR_SHIFT);
+			पूर्ण अन्यथा अणु
 				pr_debug("SSFDC_RO: CIS/IDI sector not found"
 					" on %s (mtd%d)\n", mtd->name,
 					mtd->index);
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	kfree(sect_buf);
+	kमुक्त(sect_buf);
  out:
-	return cis_sector;
-}
+	वापस cis_sector;
+पूर्ण
 
 /* Read physical sector (wrapper to MTD_READ) */
-static int read_physical_sector(struct mtd_info *mtd, uint8_t *sect_buf,
-				int sect_no)
-{
-	int ret;
-	size_t retlen;
+अटल पूर्णांक पढ़ो_physical_sector(काष्ठा mtd_info *mtd, uपूर्णांक8_t *sect_buf,
+				पूर्णांक sect_no)
+अणु
+	पूर्णांक ret;
+	माप_प्रकार retlen;
 	loff_t offset = (loff_t)sect_no << SECTOR_SHIFT;
 
-	ret = mtd_read(mtd, offset, SECTOR_SIZE, &retlen, sect_buf);
-	if (ret < 0 || retlen != SECTOR_SIZE)
-		return -1;
+	ret = mtd_पढ़ो(mtd, offset, SECTOR_SIZE, &retlen, sect_buf);
+	अगर (ret < 0 || retlen != SECTOR_SIZE)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Read redundancy area (wrapper to MTD_READ_OOB */
-static int read_raw_oob(struct mtd_info *mtd, loff_t offs, uint8_t *buf)
-{
-	struct mtd_oob_ops ops;
-	int ret;
+अटल पूर्णांक पढ़ो_raw_oob(काष्ठा mtd_info *mtd, loff_t offs, uपूर्णांक8_t *buf)
+अणु
+	काष्ठा mtd_oob_ops ops;
+	पूर्णांक ret;
 
 	ops.mode = MTD_OPS_RAW;
 	ops.ooboffs = 0;
 	ops.ooblen = OOB_SIZE;
 	ops.oobbuf = buf;
-	ops.datbuf = NULL;
+	ops.datbuf = शून्य;
 
-	ret = mtd_read_oob(mtd, offs, &ops);
-	if (ret < 0 || ops.oobretlen != OOB_SIZE)
-		return -1;
+	ret = mtd_पढ़ो_oob(mtd, offs, &ops);
+	अगर (ret < 0 || ops.oobretlen != OOB_SIZE)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Parity calculator on a word of n bit size */
-static int get_parity(int number, int size)
-{
- 	int k;
-	int parity;
+अटल पूर्णांक get_parity(पूर्णांक number, पूर्णांक size)
+अणु
+ 	पूर्णांक k;
+	पूर्णांक parity;
 
 	parity = 1;
-	for (k = 0; k < size; k++) {
+	क्रम (k = 0; k < size; k++) अणु
 		parity += (number >> k);
 		parity &= 1;
-	}
-	return parity;
-}
+	पूर्ण
+	वापस parity;
+पूर्ण
 
 /* Read and validate the logical block address field stored in the OOB */
-static int get_logical_address(uint8_t *oob_buf)
-{
-	int block_address, parity;
-	int offset[2] = {6, 11}; /* offset of the 2 address fields within OOB */
-	int j;
-	int ok = 0;
+अटल पूर्णांक get_logical_address(uपूर्णांक8_t *oob_buf)
+अणु
+	पूर्णांक block_address, parity;
+	पूर्णांक offset[2] = अणु6, 11पूर्ण; /* offset of the 2 address fields within OOB */
+	पूर्णांक j;
+	पूर्णांक ok = 0;
 
 	/*
-	 * Look for the first valid logical address
-	 * Valid address has fixed pattern on most significant bits and
+	 * Look क्रम the first valid logical address
+	 * Valid address has fixed pattern on most signअगरicant bits and
 	 * parity check
 	 */
-	for (j = 0; j < ARRAY_SIZE(offset); j++) {
-		block_address = ((int)oob_buf[offset[j]] << 8) |
+	क्रम (j = 0; j < ARRAY_SIZE(offset); j++) अणु
+		block_address = ((पूर्णांक)oob_buf[offset[j]] << 8) |
 			oob_buf[offset[j]+1];
 
-		/* Check for the signature bits in the address field (MSBits) */
-		if ((block_address & ~0x7FF) == 0x1000) {
+		/* Check क्रम the signature bits in the address field (MSBits) */
+		अगर ((block_address & ~0x7FF) == 0x1000) अणु
 			parity = block_address & 0x01;
 			block_address &= 0x7FF;
 			block_address >>= 1;
 
-			if (get_parity(block_address, 10) != parity) {
+			अगर (get_parity(block_address, 10) != parity) अणु
 				pr_debug("SSFDC_RO: logical address field%d"
 					"parity error(0x%04X)\n", j+1,
 					block_address);
-			} else {
+			पूर्ण अन्यथा अणु
 				ok = 1;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!ok)
+	अगर (!ok)
 		block_address = -2;
 
 	pr_debug("SSFDC_RO: get_logical_address() %d\n",
 		block_address);
 
-	return block_address;
-}
+	वापस block_address;
+पूर्ण
 
 /* Build the logic block map */
-static int build_logical_block_map(struct ssfdcr_record *ssfdc)
-{
-	unsigned long offset;
-	uint8_t oob_buf[OOB_SIZE];
-	int ret, block_address, phys_block;
-	struct mtd_info *mtd = ssfdc->mbd.mtd;
+अटल पूर्णांक build_logical_block_map(काष्ठा ssfdcr_record *ssfdc)
+अणु
+	अचिन्हित दीर्घ offset;
+	uपूर्णांक8_t oob_buf[OOB_SIZE];
+	पूर्णांक ret, block_address, phys_block;
+	काष्ठा mtd_info *mtd = ssfdc->mbd.mtd;
 
 	pr_debug("SSFDC_RO: build_block_map() nblks=%d (%luK)\n",
 	      ssfdc->map_len,
-	      (unsigned long)ssfdc->map_len * ssfdc->erase_size / 1024);
+	      (अचिन्हित दीर्घ)ssfdc->map_len * ssfdc->erase_size / 1024);
 
 	/* Scan every physical block, skip CIS block */
-	for (phys_block = ssfdc->cis_block + 1; phys_block < ssfdc->map_len;
-			phys_block++) {
-		offset = (unsigned long)phys_block * ssfdc->erase_size;
-		if (mtd_block_isbad(mtd, offset))
-			continue;	/* skip bad blocks */
+	क्रम (phys_block = ssfdc->cis_block + 1; phys_block < ssfdc->map_len;
+			phys_block++) अणु
+		offset = (अचिन्हित दीर्घ)phys_block * ssfdc->erase_size;
+		अगर (mtd_block_isbad(mtd, offset))
+			जारी;	/* skip bad blocks */
 
-		ret = read_raw_oob(mtd, offset, oob_buf);
-		if (ret < 0) {
+		ret = पढ़ो_raw_oob(mtd, offset, oob_buf);
+		अगर (ret < 0) अणु
 			pr_debug("SSFDC_RO: mtd read_oob() failed at %lu\n",
 				offset);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		block_address = get_logical_address(oob_buf);
 
 		/* Skip invalid addresses */
-		if (block_address >= 0 &&
-				block_address < MAX_LOGIC_BLK_PER_ZONE) {
-			int zone_index;
+		अगर (block_address >= 0 &&
+				block_address < MAX_LOGIC_BLK_PER_ZONE) अणु
+			पूर्णांक zone_index;
 
 			zone_index = phys_block / MAX_PHYS_BLK_PER_ZONE;
 			block_address += zone_index * MAX_LOGIC_BLK_PER_ZONE;
 			ssfdc->logic_block_map[block_address] =
-				(unsigned short)phys_block;
+				(अचिन्हित लघु)phys_block;
 
 			pr_debug("SSFDC_RO: build_block_map() phys_block=%d,"
 				"logic_block_addr=%d, zone=%d\n",
 				phys_block, block_address, zone_index);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void ssfdcr_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
-{
-	struct ssfdcr_record *ssfdc;
-	int cis_sector;
+अटल व्योम ssfdcr_add_mtd(काष्ठा mtd_blktrans_ops *tr, काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा ssfdcr_record *ssfdc;
+	पूर्णांक cis_sector;
 
-	/* Check for small page NAND flash */
-	if (!mtd_type_is_nand(mtd) || mtd->oobsize != OOB_SIZE ||
-	    mtd->size > UINT_MAX)
-		return;
+	/* Check क्रम small page न_अंकD flash */
+	अगर (!mtd_type_is_nand(mtd) || mtd->oobsize != OOB_SIZE ||
+	    mtd->size > अच_पूर्णांक_उच्च)
+		वापस;
 
-	/* Check for SSDFC format by reading CIS/IDI sector */
+	/* Check क्रम SSDFC क्रमmat by पढ़ोing CIS/IDI sector */
 	cis_sector = get_valid_cis_sector(mtd);
-	if (cis_sector == -1)
-		return;
+	अगर (cis_sector == -1)
+		वापस;
 
-	ssfdc = kzalloc(sizeof(struct ssfdcr_record), GFP_KERNEL);
-	if (!ssfdc)
-		return;
+	ssfdc = kzalloc(माप(काष्ठा ssfdcr_record), GFP_KERNEL);
+	अगर (!ssfdc)
+		वापस;
 
 	ssfdc->mbd.mtd = mtd;
 	ssfdc->mbd.devnum = -1;
 	ssfdc->mbd.tr = tr;
-	ssfdc->mbd.readonly = 1;
+	ssfdc->mbd.पढ़ोonly = 1;
 
 	ssfdc->cis_block = cis_sector / (mtd->erasesize >> SECTOR_SHIFT);
 	ssfdc->erase_size = mtd->erasesize;
@@ -316,63 +317,63 @@ static void ssfdcr_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
 	/* Set geometry */
 	ssfdc->heads = 16;
 	ssfdc->sectors = 32;
-	get_chs(mtd->size, NULL, &ssfdc->heads, &ssfdc->sectors);
-	ssfdc->cylinders = (unsigned short)(((u32)mtd->size >> SECTOR_SHIFT) /
-			((long)ssfdc->sectors * (long)ssfdc->heads));
+	get_chs(mtd->size, शून्य, &ssfdc->heads, &ssfdc->sectors);
+	ssfdc->cylinders = (अचिन्हित लघु)(((u32)mtd->size >> SECTOR_SHIFT) /
+			((दीर्घ)ssfdc->sectors * (दीर्घ)ssfdc->heads));
 
 	pr_debug("SSFDC_RO: using C:%d H:%d S:%d == %ld sects\n",
 		ssfdc->cylinders, ssfdc->heads , ssfdc->sectors,
-		(long)ssfdc->cylinders * (long)ssfdc->heads *
-		(long)ssfdc->sectors);
+		(दीर्घ)ssfdc->cylinders * (दीर्घ)ssfdc->heads *
+		(दीर्घ)ssfdc->sectors);
 
-	ssfdc->mbd.size = (long)ssfdc->heads * (long)ssfdc->cylinders *
-				(long)ssfdc->sectors;
+	ssfdc->mbd.size = (दीर्घ)ssfdc->heads * (दीर्घ)ssfdc->cylinders *
+				(दीर्घ)ssfdc->sectors;
 
 	/* Allocate logical block map */
 	ssfdc->logic_block_map =
-		kmalloc_array(ssfdc->map_len,
-			      sizeof(ssfdc->logic_block_map[0]), GFP_KERNEL);
-	if (!ssfdc->logic_block_map)
-		goto out_err;
-	memset(ssfdc->logic_block_map, 0xff, sizeof(ssfdc->logic_block_map[0]) *
+		kदो_स्मृति_array(ssfdc->map_len,
+			      माप(ssfdc->logic_block_map[0]), GFP_KERNEL);
+	अगर (!ssfdc->logic_block_map)
+		जाओ out_err;
+	स_रखो(ssfdc->logic_block_map, 0xff, माप(ssfdc->logic_block_map[0]) *
 		ssfdc->map_len);
 
 	/* Build logical block map */
-	if (build_logical_block_map(ssfdc) < 0)
-		goto out_err;
+	अगर (build_logical_block_map(ssfdc) < 0)
+		जाओ out_err;
 
 	/* Register device + partitions */
-	if (add_mtd_blktrans_dev(&ssfdc->mbd))
-		goto out_err;
+	अगर (add_mtd_blktrans_dev(&ssfdc->mbd))
+		जाओ out_err;
 
-	printk(KERN_INFO "SSFDC_RO: Found ssfdc%c on mtd%d (%s)\n",
+	prपूर्णांकk(KERN_INFO "SSFDC_RO: Found ssfdc%c on mtd%d (%s)\n",
 		ssfdc->mbd.devnum + 'a', mtd->index, mtd->name);
-	return;
+	वापस;
 
 out_err:
-	kfree(ssfdc->logic_block_map);
-        kfree(ssfdc);
-}
+	kमुक्त(ssfdc->logic_block_map);
+        kमुक्त(ssfdc);
+पूर्ण
 
-static void ssfdcr_remove_dev(struct mtd_blktrans_dev *dev)
-{
-	struct ssfdcr_record *ssfdc = (struct ssfdcr_record *)dev;
+अटल व्योम ssfdcr_हटाओ_dev(काष्ठा mtd_blktrans_dev *dev)
+अणु
+	काष्ठा ssfdcr_record *ssfdc = (काष्ठा ssfdcr_record *)dev;
 
 	pr_debug("SSFDC_RO: remove_dev (i=%d)\n", dev->devnum);
 
 	del_mtd_blktrans_dev(dev);
-	kfree(ssfdc->logic_block_map);
-}
+	kमुक्त(ssfdc->logic_block_map);
+पूर्ण
 
-static int ssfdcr_readsect(struct mtd_blktrans_dev *dev,
-				unsigned long logic_sect_no, char *buf)
-{
-	struct ssfdcr_record *ssfdc = (struct ssfdcr_record *)dev;
-	int sectors_per_block, offset, block_address;
+अटल पूर्णांक ssfdcr_पढ़ोsect(काष्ठा mtd_blktrans_dev *dev,
+				अचिन्हित दीर्घ logic_sect_no, अक्षर *buf)
+अणु
+	काष्ठा ssfdcr_record *ssfdc = (काष्ठा ssfdcr_record *)dev;
+	पूर्णांक sectors_per_block, offset, block_address;
 
 	sectors_per_block = ssfdc->erase_size >> SECTOR_SHIFT;
-	offset = (int)(logic_sect_no % sectors_per_block);
-	block_address = (int)(logic_sect_no / sectors_per_block);
+	offset = (पूर्णांक)(logic_sect_no % sectors_per_block);
+	block_address = (पूर्णांक)(logic_sect_no / sectors_per_block);
 
 	pr_debug("SSFDC_RO: ssfdcr_readsect(%lu) sec_per_blk=%d, ofst=%d,"
 		" block_addr=%d\n", logic_sect_no, sectors_per_block, offset,
@@ -385,27 +386,27 @@ static int ssfdcr_readsect(struct mtd_blktrans_dev *dev,
 	pr_debug("SSFDC_RO: ssfdcr_readsect() phys_block_addr=%d\n",
 		block_address);
 
-	if (block_address < 0xffff) {
-		unsigned long sect_no;
+	अगर (block_address < 0xffff) अणु
+		अचिन्हित दीर्घ sect_no;
 
-		sect_no = (unsigned long)block_address * sectors_per_block +
+		sect_no = (अचिन्हित दीर्घ)block_address * sectors_per_block +
 				offset;
 
 		pr_debug("SSFDC_RO: ssfdcr_readsect() phys_sect_no=%lu\n",
 			sect_no);
 
-		if (read_physical_sector(ssfdc->mbd.mtd, buf, sect_no) < 0)
-			return -EIO;
-	} else {
-		memset(buf, 0xff, SECTOR_SIZE);
-	}
+		अगर (पढ़ो_physical_sector(ssfdc->mbd.mtd, buf, sect_no) < 0)
+			वापस -EIO;
+	पूर्ण अन्यथा अणु
+		स_रखो(buf, 0xff, SECTOR_SIZE);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ssfdcr_getgeo(struct mtd_blktrans_dev *dev,  struct hd_geometry *geo)
-{
-	struct ssfdcr_record *ssfdc = (struct ssfdcr_record *)dev;
+अटल पूर्णांक ssfdcr_getgeo(काष्ठा mtd_blktrans_dev *dev,  काष्ठा hd_geometry *geo)
+अणु
+	काष्ठा ssfdcr_record *ssfdc = (काष्ठा ssfdcr_record *)dev;
 
 	pr_debug("SSFDC_RO: ssfdcr_getgeo() C=%d, H=%d, S=%d\n",
 			ssfdc->cylinders, ssfdc->heads, ssfdc->sectors);
@@ -414,8 +415,8 @@ static int ssfdcr_getgeo(struct mtd_blktrans_dev *dev,  struct hd_geometry *geo)
 	geo->sectors = ssfdc->sectors;
 	geo->cylinders = ssfdc->cylinders;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /****************************************************************************
  *
@@ -423,32 +424,32 @@ static int ssfdcr_getgeo(struct mtd_blktrans_dev *dev,  struct hd_geometry *geo)
  *
  ****************************************************************************/
 
-static struct mtd_blktrans_ops ssfdcr_tr = {
+अटल काष्ठा mtd_blktrans_ops ssfdcr_tr = अणु
 	.name		= "ssfdc",
 	.major		= SSFDCR_MAJOR,
 	.part_bits	= SSFDCR_PARTN_BITS,
 	.blksize	= SECTOR_SIZE,
 	.getgeo		= ssfdcr_getgeo,
-	.readsect	= ssfdcr_readsect,
+	.पढ़ोsect	= ssfdcr_पढ़ोsect,
 	.add_mtd	= ssfdcr_add_mtd,
-	.remove_dev	= ssfdcr_remove_dev,
+	.हटाओ_dev	= ssfdcr_हटाओ_dev,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init init_ssfdcr(void)
-{
-	printk(KERN_INFO "SSFDC read-only Flash Translation layer\n");
+अटल पूर्णांक __init init_ssfdcr(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "SSFDC read-only Flash Translation layer\n");
 
-	return register_mtd_blktrans(&ssfdcr_tr);
-}
+	वापस रेजिस्टर_mtd_blktrans(&ssfdcr_tr);
+पूर्ण
 
-static void __exit cleanup_ssfdcr(void)
-{
-	deregister_mtd_blktrans(&ssfdcr_tr);
-}
+अटल व्योम __निकास cleanup_ssfdcr(व्योम)
+अणु
+	deरेजिस्टर_mtd_blktrans(&ssfdcr_tr);
+पूर्ण
 
 module_init(init_ssfdcr);
-module_exit(cleanup_ssfdcr);
+module_निकास(cleanup_ssfdcr);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Claudio Lanconelli <lanconelli.claudio@eptar.com>");

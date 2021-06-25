@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PERF_STRING_H
-#define PERF_STRING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PERF_STRING_H
+#घोषणा PERF_STRING_H
 
-#include <linux/string.h>
-#include <linux/types.h>
-#include <sys/types.h> // pid_t
-#include <stddef.h>
-#include <string.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <sys/types.h> // pid_t
+#समावेश <मानकघोष.स>
+#समावेश <माला.स>
 
-extern const char *graph_dotted_line;
-extern const char *dots;
+बाह्य स्थिर अक्षर *graph_करोtted_line;
+बाह्य स्थिर अक्षर *करोts;
 
-s64 perf_atoll(const char *str);
-bool strglobmatch(const char *str, const char *pat);
-bool strglobmatch_nocase(const char *str, const char *pat);
-bool strlazymatch(const char *str, const char *pat);
-static inline bool strisglob(const char *str)
-{
-	return strpbrk(str, "*?[") != NULL;
-}
-int strtailcmp(const char *s1, const char *s2);
+s64 perf_म_से_दl(स्थिर अक्षर *str);
+bool strglobmatch(स्थिर अक्षर *str, स्थिर अक्षर *pat);
+bool strglobmatch_noहाल(स्थिर अक्षर *str, स्थिर अक्षर *pat);
+bool strlazymatch(स्थिर अक्षर *str, स्थिर अक्षर *pat);
+अटल अंतरभूत bool strisglob(स्थिर अक्षर *str)
+अणु
+	वापस strpbrk(str, "*?[") != शून्य;
+पूर्ण
+पूर्णांक strtailcmp(स्थिर अक्षर *s1, स्थिर अक्षर *s2);
 
-char *asprintf_expr_inout_ints(const char *var, bool in, size_t nints, int *ints);
+अक्षर *aप्र_लिखो_expr_inout_पूर्णांकs(स्थिर अक्षर *var, bool in, माप_प्रकार nपूर्णांकs, पूर्णांक *पूर्णांकs);
 
-static inline char *asprintf_expr_in_ints(const char *var, size_t nints, int *ints)
-{
-	return asprintf_expr_inout_ints(var, true, nints, ints);
-}
+अटल अंतरभूत अक्षर *aप्र_लिखो_expr_in_पूर्णांकs(स्थिर अक्षर *var, माप_प्रकार nपूर्णांकs, पूर्णांक *पूर्णांकs)
+अणु
+	वापस aप्र_लिखो_expr_inout_पूर्णांकs(var, true, nपूर्णांकs, पूर्णांकs);
+पूर्ण
 
-static inline char *asprintf_expr_not_in_ints(const char *var, size_t nints, int *ints)
-{
-	return asprintf_expr_inout_ints(var, false, nints, ints);
-}
+अटल अंतरभूत अक्षर *aप्र_लिखो_expr_not_in_पूर्णांकs(स्थिर अक्षर *var, माप_प्रकार nपूर्णांकs, पूर्णांक *पूर्णांकs)
+अणु
+	वापस aप्र_लिखो_expr_inout_पूर्णांकs(var, false, nपूर्णांकs, पूर्णांकs);
+पूर्ण
 
-char *asprintf__tp_filter_pids(size_t npids, pid_t *pids);
+अक्षर *aप्र_लिखो__tp_filter_pids(माप_प्रकार npids, pid_t *pids);
 
-char *strpbrk_esc(char *str, const char *stopset);
-char *strdup_esc(const char *str);
+अक्षर *strpbrk_esc(अक्षर *str, स्थिर अक्षर *stopset);
+अक्षर *strdup_esc(स्थिर अक्षर *str);
 
-unsigned int hex(char c);
+अचिन्हित पूर्णांक hex(अक्षर c);
 
-#endif /* PERF_STRING_H */
+#पूर्ण_अगर /* PERF_STRING_H */

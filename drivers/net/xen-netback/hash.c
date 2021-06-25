@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016 Citrix Systems Inc.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Softare Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -26,332 +27,332 @@
  * IN THE SOFTWARE.
  */
 
-#define XEN_NETIF_DEFINE_TOEPLITZ
+#घोषणा XEN_NETIF_DEFINE_TOEPLITZ
 
-#include "common.h"
-#include <linux/vmalloc.h>
-#include <linux/rculist.h>
+#समावेश "common.h"
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/rculist.h>
 
-static void xenvif_add_hash(struct xenvif *vif, const u8 *tag,
-			    unsigned int len, u32 val)
-{
-	struct xenvif_hash_cache_entry *new, *entry, *oldest;
-	unsigned long flags;
+अटल व्योम xenvअगर_add_hash(काष्ठा xenvअगर *vअगर, स्थिर u8 *tag,
+			    अचिन्हित पूर्णांक len, u32 val)
+अणु
+	काष्ठा xenvअगर_hash_cache_entry *new, *entry, *oldest;
+	अचिन्हित दीर्घ flags;
 	bool found;
 
-	new = kmalloc(sizeof(*entry), GFP_ATOMIC);
-	if (!new)
-		return;
+	new = kदो_स्मृति(माप(*entry), GFP_ATOMIC);
+	अगर (!new)
+		वापस;
 
-	memcpy(new->tag, tag, len);
+	स_नकल(new->tag, tag, len);
 	new->len = len;
 	new->val = val;
 
-	spin_lock_irqsave(&vif->hash.cache.lock, flags);
+	spin_lock_irqsave(&vअगर->hash.cache.lock, flags);
 
 	found = false;
-	oldest = NULL;
-	list_for_each_entry_rcu(entry, &vif->hash.cache.list, link,
-				lockdep_is_held(&vif->hash.cache.lock)) {
-		/* Make sure we don't add duplicate entries */
-		if (entry->len == len &&
-		    memcmp(entry->tag, tag, len) == 0)
+	oldest = शून्य;
+	list_क्रम_each_entry_rcu(entry, &vअगर->hash.cache.list, link,
+				lockdep_is_held(&vअगर->hash.cache.lock)) अणु
+		/* Make sure we करोn't add duplicate entries */
+		अगर (entry->len == len &&
+		    स_भेद(entry->tag, tag, len) == 0)
 			found = true;
-		if (!oldest || entry->seq < oldest->seq)
+		अगर (!oldest || entry->seq < oldest->seq)
 			oldest = entry;
-	}
+	पूर्ण
 
-	if (!found) {
-		new->seq = atomic_inc_return(&vif->hash.cache.seq);
-		list_add_rcu(&new->link, &vif->hash.cache.list);
+	अगर (!found) अणु
+		new->seq = atomic_inc_वापस(&vअगर->hash.cache.seq);
+		list_add_rcu(&new->link, &vअगर->hash.cache.list);
 
-		if (++vif->hash.cache.count > xenvif_hash_cache_size) {
+		अगर (++vअगर->hash.cache.count > xenvअगर_hash_cache_size) अणु
 			list_del_rcu(&oldest->link);
-			vif->hash.cache.count--;
-			kfree_rcu(oldest, rcu);
-		}
-	}
+			vअगर->hash.cache.count--;
+			kमुक्त_rcu(oldest, rcu);
+		पूर्ण
+	पूर्ण
 
-	spin_unlock_irqrestore(&vif->hash.cache.lock, flags);
+	spin_unlock_irqrestore(&vअगर->hash.cache.lock, flags);
 
-	if (found)
-		kfree(new);
-}
+	अगर (found)
+		kमुक्त(new);
+पूर्ण
 
-static u32 xenvif_new_hash(struct xenvif *vif, const u8 *data,
-			   unsigned int len)
-{
+अटल u32 xenvअगर_new_hash(काष्ठा xenvअगर *vअगर, स्थिर u8 *data,
+			   अचिन्हित पूर्णांक len)
+अणु
 	u32 val;
 
-	val = xen_netif_toeplitz_hash(vif->hash.key,
-				      sizeof(vif->hash.key),
+	val = xen_netअगर_toeplitz_hash(vअगर->hash.key,
+				      माप(vअगर->hash.key),
 				      data, len);
 
-	if (xenvif_hash_cache_size != 0)
-		xenvif_add_hash(vif, data, len, val);
+	अगर (xenvअगर_hash_cache_size != 0)
+		xenvअगर_add_hash(vअगर, data, len, val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void xenvif_flush_hash(struct xenvif *vif)
-{
-	struct xenvif_hash_cache_entry *entry;
-	unsigned long flags;
+अटल व्योम xenvअगर_flush_hash(काष्ठा xenvअगर *vअगर)
+अणु
+	काष्ठा xenvअगर_hash_cache_entry *entry;
+	अचिन्हित दीर्घ flags;
 
-	if (xenvif_hash_cache_size == 0)
-		return;
+	अगर (xenvअगर_hash_cache_size == 0)
+		वापस;
 
-	spin_lock_irqsave(&vif->hash.cache.lock, flags);
+	spin_lock_irqsave(&vअगर->hash.cache.lock, flags);
 
-	list_for_each_entry_rcu(entry, &vif->hash.cache.list, link,
-				lockdep_is_held(&vif->hash.cache.lock)) {
+	list_क्रम_each_entry_rcu(entry, &vअगर->hash.cache.list, link,
+				lockdep_is_held(&vअगर->hash.cache.lock)) अणु
 		list_del_rcu(&entry->link);
-		vif->hash.cache.count--;
-		kfree_rcu(entry, rcu);
-	}
+		vअगर->hash.cache.count--;
+		kमुक्त_rcu(entry, rcu);
+	पूर्ण
 
-	spin_unlock_irqrestore(&vif->hash.cache.lock, flags);
-}
+	spin_unlock_irqrestore(&vअगर->hash.cache.lock, flags);
+पूर्ण
 
-static u32 xenvif_find_hash(struct xenvif *vif, const u8 *data,
-			    unsigned int len)
-{
-	struct xenvif_hash_cache_entry *entry;
+अटल u32 xenvअगर_find_hash(काष्ठा xenvअगर *vअगर, स्थिर u8 *data,
+			    अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा xenvअगर_hash_cache_entry *entry;
 	u32 val;
 	bool found;
 
-	if (len >= XEN_NETBK_HASH_TAG_SIZE)
-		return 0;
+	अगर (len >= XEN_NETBK_HASH_TAG_SIZE)
+		वापस 0;
 
-	if (xenvif_hash_cache_size == 0)
-		return xenvif_new_hash(vif, data, len);
+	अगर (xenvअगर_hash_cache_size == 0)
+		वापस xenvअगर_new_hash(vअगर, data, len);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	found = false;
 
-	list_for_each_entry_rcu(entry, &vif->hash.cache.list, link) {
-		if (entry->len == len &&
-		    memcmp(entry->tag, data, len) == 0) {
+	list_क्रम_each_entry_rcu(entry, &vअगर->hash.cache.list, link) अणु
+		अगर (entry->len == len &&
+		    स_भेद(entry->tag, data, len) == 0) अणु
 			val = entry->val;
-			entry->seq = atomic_inc_return(&vif->hash.cache.seq);
+			entry->seq = atomic_inc_वापस(&vअगर->hash.cache.seq);
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (!found)
-		val = xenvif_new_hash(vif, data, len);
+	अगर (!found)
+		val = xenvअगर_new_hash(vअगर, data, len);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-void xenvif_set_skb_hash(struct xenvif *vif, struct sk_buff *skb)
-{
-	struct flow_keys flow;
+व्योम xenvअगर_set_skb_hash(काष्ठा xenvअगर *vअगर, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा flow_keys flow;
 	u32 hash = 0;
-	enum pkt_hash_types type = PKT_HASH_TYPE_NONE;
-	u32 flags = vif->hash.flags;
+	क्रमागत pkt_hash_types type = PKT_HASH_TYPE_NONE;
+	u32 flags = vअगर->hash.flags;
 	bool has_tcp_hdr;
 
-	/* Quick rejection test: If the network protocol doesn't
-	 * correspond to any enabled hash type then there's no point
+	/* Quick rejection test: If the network protocol करोesn't
+	 * correspond to any enabled hash type then there's no poपूर्णांक
 	 * in parsing the packet header.
 	 */
-	switch (skb->protocol) {
-	case htons(ETH_P_IP):
-		if (flags & (XEN_NETIF_CTRL_HASH_TYPE_IPV4_TCP |
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IP):
+		अगर (flags & (XEN_NETIF_CTRL_HASH_TYPE_IPV4_TCP |
 			     XEN_NETIF_CTRL_HASH_TYPE_IPV4))
-			break;
+			अवरोध;
 
-		goto done;
+		जाओ करोne;
 
-	case htons(ETH_P_IPV6):
-		if (flags & (XEN_NETIF_CTRL_HASH_TYPE_IPV6_TCP |
+	हाल htons(ETH_P_IPV6):
+		अगर (flags & (XEN_NETIF_CTRL_HASH_TYPE_IPV6_TCP |
 			     XEN_NETIF_CTRL_HASH_TYPE_IPV6))
-			break;
+			अवरोध;
 
-		goto done;
+		जाओ करोne;
 
-	default:
-		goto done;
-	}
+	शेष:
+		जाओ करोne;
+	पूर्ण
 
-	memset(&flow, 0, sizeof(flow));
-	if (!skb_flow_dissect_flow_keys(skb, &flow, 0))
-		goto done;
+	स_रखो(&flow, 0, माप(flow));
+	अगर (!skb_flow_dissect_flow_keys(skb, &flow, 0))
+		जाओ करोne;
 
 	has_tcp_hdr = (flow.basic.ip_proto == IPPROTO_TCP) &&
 		      !(flow.control.flags & FLOW_DIS_IS_FRAGMENT);
 
-	switch (skb->protocol) {
-	case htons(ETH_P_IP):
-		if (has_tcp_hdr &&
-		    (flags & XEN_NETIF_CTRL_HASH_TYPE_IPV4_TCP)) {
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IP):
+		अगर (has_tcp_hdr &&
+		    (flags & XEN_NETIF_CTRL_HASH_TYPE_IPV4_TCP)) अणु
 			u8 data[12];
 
-			memcpy(&data[0], &flow.addrs.v4addrs.src, 4);
-			memcpy(&data[4], &flow.addrs.v4addrs.dst, 4);
-			memcpy(&data[8], &flow.ports.src, 2);
-			memcpy(&data[10], &flow.ports.dst, 2);
+			स_नकल(&data[0], &flow.addrs.v4addrs.src, 4);
+			स_नकल(&data[4], &flow.addrs.v4addrs.dst, 4);
+			स_नकल(&data[8], &flow.ports.src, 2);
+			स_नकल(&data[10], &flow.ports.dst, 2);
 
-			hash = xenvif_find_hash(vif, data, sizeof(data));
+			hash = xenvअगर_find_hash(vअगर, data, माप(data));
 			type = PKT_HASH_TYPE_L4;
-		} else if (flags & XEN_NETIF_CTRL_HASH_TYPE_IPV4) {
+		पूर्ण अन्यथा अगर (flags & XEN_NETIF_CTRL_HASH_TYPE_IPV4) अणु
 			u8 data[8];
 
-			memcpy(&data[0], &flow.addrs.v4addrs.src, 4);
-			memcpy(&data[4], &flow.addrs.v4addrs.dst, 4);
+			स_नकल(&data[0], &flow.addrs.v4addrs.src, 4);
+			स_नकल(&data[4], &flow.addrs.v4addrs.dst, 4);
 
-			hash = xenvif_find_hash(vif, data, sizeof(data));
+			hash = xenvअगर_find_hash(vअगर, data, माप(data));
 			type = PKT_HASH_TYPE_L3;
-		}
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case htons(ETH_P_IPV6):
-		if (has_tcp_hdr &&
-		    (flags & XEN_NETIF_CTRL_HASH_TYPE_IPV6_TCP)) {
+	हाल htons(ETH_P_IPV6):
+		अगर (has_tcp_hdr &&
+		    (flags & XEN_NETIF_CTRL_HASH_TYPE_IPV6_TCP)) अणु
 			u8 data[36];
 
-			memcpy(&data[0], &flow.addrs.v6addrs.src, 16);
-			memcpy(&data[16], &flow.addrs.v6addrs.dst, 16);
-			memcpy(&data[32], &flow.ports.src, 2);
-			memcpy(&data[34], &flow.ports.dst, 2);
+			स_नकल(&data[0], &flow.addrs.v6addrs.src, 16);
+			स_नकल(&data[16], &flow.addrs.v6addrs.dst, 16);
+			स_नकल(&data[32], &flow.ports.src, 2);
+			स_नकल(&data[34], &flow.ports.dst, 2);
 
-			hash = xenvif_find_hash(vif, data, sizeof(data));
+			hash = xenvअगर_find_hash(vअगर, data, माप(data));
 			type = PKT_HASH_TYPE_L4;
-		} else if (flags & XEN_NETIF_CTRL_HASH_TYPE_IPV6) {
+		पूर्ण अन्यथा अगर (flags & XEN_NETIF_CTRL_HASH_TYPE_IPV6) अणु
 			u8 data[32];
 
-			memcpy(&data[0], &flow.addrs.v6addrs.src, 16);
-			memcpy(&data[16], &flow.addrs.v6addrs.dst, 16);
+			स_नकल(&data[0], &flow.addrs.v6addrs.src, 16);
+			स_नकल(&data[16], &flow.addrs.v6addrs.dst, 16);
 
-			hash = xenvif_find_hash(vif, data, sizeof(data));
+			hash = xenvअगर_find_hash(vअगर, data, माप(data));
 			type = PKT_HASH_TYPE_L3;
-		}
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-done:
-	if (type == PKT_HASH_TYPE_NONE)
+करोne:
+	अगर (type == PKT_HASH_TYPE_NONE)
 		skb_clear_hash(skb);
-	else
+	अन्यथा
 		__skb_set_sw_hash(skb, hash, type == PKT_HASH_TYPE_L4);
-}
+पूर्ण
 
-u32 xenvif_set_hash_alg(struct xenvif *vif, u32 alg)
-{
-	switch (alg) {
-	case XEN_NETIF_CTRL_HASH_ALGORITHM_NONE:
-	case XEN_NETIF_CTRL_HASH_ALGORITHM_TOEPLITZ:
-		break;
+u32 xenvअगर_set_hash_alg(काष्ठा xenvअगर *vअगर, u32 alg)
+अणु
+	चयन (alg) अणु
+	हाल XEN_NETIF_CTRL_HASH_ALGORITHM_NONE:
+	हाल XEN_NETIF_CTRL_HASH_ALGORITHM_TOEPLITZ:
+		अवरोध;
 
-	default:
-		return XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
-	}
+	शेष:
+		वापस XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
+	पूर्ण
 
-	vif->hash.alg = alg;
+	vअगर->hash.alg = alg;
 
-	return XEN_NETIF_CTRL_STATUS_SUCCESS;
-}
+	वापस XEN_NETIF_CTRL_STATUS_SUCCESS;
+पूर्ण
 
-u32 xenvif_get_hash_flags(struct xenvif *vif, u32 *flags)
-{
-	if (vif->hash.alg == XEN_NETIF_CTRL_HASH_ALGORITHM_NONE)
-		return XEN_NETIF_CTRL_STATUS_NOT_SUPPORTED;
+u32 xenvअगर_get_hash_flags(काष्ठा xenvअगर *vअगर, u32 *flags)
+अणु
+	अगर (vअगर->hash.alg == XEN_NETIF_CTRL_HASH_ALGORITHM_NONE)
+		वापस XEN_NETIF_CTRL_STATUS_NOT_SUPPORTED;
 
 	*flags = XEN_NETIF_CTRL_HASH_TYPE_IPV4 |
 		 XEN_NETIF_CTRL_HASH_TYPE_IPV4_TCP |
 		 XEN_NETIF_CTRL_HASH_TYPE_IPV6 |
 		 XEN_NETIF_CTRL_HASH_TYPE_IPV6_TCP;
 
-	return XEN_NETIF_CTRL_STATUS_SUCCESS;
-}
+	वापस XEN_NETIF_CTRL_STATUS_SUCCESS;
+पूर्ण
 
-u32 xenvif_set_hash_flags(struct xenvif *vif, u32 flags)
-{
-	if (flags & ~(XEN_NETIF_CTRL_HASH_TYPE_IPV4 |
+u32 xenvअगर_set_hash_flags(काष्ठा xenvअगर *vअगर, u32 flags)
+अणु
+	अगर (flags & ~(XEN_NETIF_CTRL_HASH_TYPE_IPV4 |
 		      XEN_NETIF_CTRL_HASH_TYPE_IPV4_TCP |
 		      XEN_NETIF_CTRL_HASH_TYPE_IPV6 |
 		      XEN_NETIF_CTRL_HASH_TYPE_IPV6_TCP))
-		return XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
+		वापस XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
 
-	if (vif->hash.alg == XEN_NETIF_CTRL_HASH_ALGORITHM_NONE)
-		return XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
+	अगर (vअगर->hash.alg == XEN_NETIF_CTRL_HASH_ALGORITHM_NONE)
+		वापस XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
 
-	vif->hash.flags = flags;
+	vअगर->hash.flags = flags;
 
-	return XEN_NETIF_CTRL_STATUS_SUCCESS;
-}
+	वापस XEN_NETIF_CTRL_STATUS_SUCCESS;
+पूर्ण
 
-u32 xenvif_set_hash_key(struct xenvif *vif, u32 gref, u32 len)
-{
-	u8 *key = vif->hash.key;
-	struct gnttab_copy copy_op = {
+u32 xenvअगर_set_hash_key(काष्ठा xenvअगर *vअगर, u32 gref, u32 len)
+अणु
+	u8 *key = vअगर->hash.key;
+	काष्ठा gnttab_copy copy_op = अणु
 		.source.u.ref = gref,
-		.source.domid = vif->domid,
+		.source.करोmid = vअगर->करोmid,
 		.dest.u.gmfn = virt_to_gfn(key),
-		.dest.domid = DOMID_SELF,
+		.dest.करोmid = DOMID_SELF,
 		.dest.offset = xen_offset_in_page(key),
 		.len = len,
 		.flags = GNTCOPY_source_gref
-	};
+	पूर्ण;
 
-	if (len > XEN_NETBK_MAX_HASH_KEY_SIZE)
-		return XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
+	अगर (len > XEN_NETBK_MAX_HASH_KEY_SIZE)
+		वापस XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
 
-	if (copy_op.len != 0) {
+	अगर (copy_op.len != 0) अणु
 		gnttab_batch_copy(&copy_op, 1);
 
-		if (copy_op.status != GNTST_okay)
-			return XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
-	}
+		अगर (copy_op.status != GNTST_okay)
+			वापस XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
+	पूर्ण
 
-	/* Clear any remaining key octets */
-	if (len < XEN_NETBK_MAX_HASH_KEY_SIZE)
-		memset(key + len, 0, XEN_NETBK_MAX_HASH_KEY_SIZE - len);
+	/* Clear any reमुख्यing key octets */
+	अगर (len < XEN_NETBK_MAX_HASH_KEY_SIZE)
+		स_रखो(key + len, 0, XEN_NETBK_MAX_HASH_KEY_SIZE - len);
 
-	xenvif_flush_hash(vif);
+	xenvअगर_flush_hash(vअगर);
 
-	return XEN_NETIF_CTRL_STATUS_SUCCESS;
-}
+	वापस XEN_NETIF_CTRL_STATUS_SUCCESS;
+पूर्ण
 
-u32 xenvif_set_hash_mapping_size(struct xenvif *vif, u32 size)
-{
-	if (size > XEN_NETBK_MAX_HASH_MAPPING_SIZE)
-		return XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
+u32 xenvअगर_set_hash_mapping_size(काष्ठा xenvअगर *vअगर, u32 size)
+अणु
+	अगर (size > XEN_NETBK_MAX_HASH_MAPPING_SIZE)
+		वापस XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
 
-	vif->hash.size = size;
-	memset(vif->hash.mapping[vif->hash.mapping_sel], 0,
-	       sizeof(u32) * size);
+	vअगर->hash.size = size;
+	स_रखो(vअगर->hash.mapping[vअगर->hash.mapping_sel], 0,
+	       माप(u32) * size);
 
-	return XEN_NETIF_CTRL_STATUS_SUCCESS;
-}
+	वापस XEN_NETIF_CTRL_STATUS_SUCCESS;
+पूर्ण
 
-u32 xenvif_set_hash_mapping(struct xenvif *vif, u32 gref, u32 len,
+u32 xenvअगर_set_hash_mapping(काष्ठा xenvअगर *vअगर, u32 gref, u32 len,
 			    u32 off)
-{
-	u32 *mapping = vif->hash.mapping[!vif->hash.mapping_sel];
-	unsigned int nr = 1;
-	struct gnttab_copy copy_op[2] = {{
+अणु
+	u32 *mapping = vअगर->hash.mapping[!vअगर->hash.mapping_sel];
+	अचिन्हित पूर्णांक nr = 1;
+	काष्ठा gnttab_copy copy_op[2] = अणुअणु
 		.source.u.ref = gref,
-		.source.domid = vif->domid,
-		.dest.domid = DOMID_SELF,
-		.len = len * sizeof(*mapping),
+		.source.करोmid = vअगर->करोmid,
+		.dest.करोmid = DOMID_SELF,
+		.len = len * माप(*mapping),
 		.flags = GNTCOPY_source_gref
-	}};
+	पूर्णपूर्ण;
 
-	if ((off + len < off) || (off + len > vif->hash.size) ||
-	    len > XEN_PAGE_SIZE / sizeof(*mapping))
-		return XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
+	अगर ((off + len < off) || (off + len > vअगर->hash.size) ||
+	    len > XEN_PAGE_SIZE / माप(*mapping))
+		वापस XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
 
 	copy_op[0].dest.u.gmfn = virt_to_gfn(mapping + off);
 	copy_op[0].dest.offset = xen_offset_in_page(mapping + off);
-	if (copy_op[0].dest.offset + copy_op[0].len > XEN_PAGE_SIZE) {
+	अगर (copy_op[0].dest.offset + copy_op[0].len > XEN_PAGE_SIZE) अणु
 		copy_op[1] = copy_op[0];
 		copy_op[1].source.offset = XEN_PAGE_SIZE - copy_op[0].dest.offset;
 		copy_op[1].dest.u.gmfn = virt_to_gfn(mapping + off + len);
@@ -359,110 +360,110 @@ u32 xenvif_set_hash_mapping(struct xenvif *vif, u32 gref, u32 len,
 		copy_op[1].len = copy_op[0].len - copy_op[1].source.offset;
 		copy_op[0].len = copy_op[1].source.offset;
 		nr = 2;
-	}
+	पूर्ण
 
-	memcpy(mapping, vif->hash.mapping[vif->hash.mapping_sel],
-	       vif->hash.size * sizeof(*mapping));
+	स_नकल(mapping, vअगर->hash.mapping[vअगर->hash.mapping_sel],
+	       vअगर->hash.size * माप(*mapping));
 
-	if (copy_op[0].len != 0) {
+	अगर (copy_op[0].len != 0) अणु
 		gnttab_batch_copy(copy_op, nr);
 
-		if (copy_op[0].status != GNTST_okay ||
+		अगर (copy_op[0].status != GNTST_okay ||
 		    copy_op[nr - 1].status != GNTST_okay)
-			return XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
-	}
+			वापस XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
+	पूर्ण
 
-	while (len-- != 0)
-		if (mapping[off++] >= vif->num_queues)
-			return XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
+	जबतक (len-- != 0)
+		अगर (mapping[off++] >= vअगर->num_queues)
+			वापस XEN_NETIF_CTRL_STATUS_INVALID_PARAMETER;
 
-	vif->hash.mapping_sel = !vif->hash.mapping_sel;
+	vअगर->hash.mapping_sel = !vअगर->hash.mapping_sel;
 
-	return XEN_NETIF_CTRL_STATUS_SUCCESS;
-}
+	वापस XEN_NETIF_CTRL_STATUS_SUCCESS;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-void xenvif_dump_hash_info(struct xenvif *vif, struct seq_file *m)
-{
-	unsigned int i;
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम xenvअगर_dump_hash_info(काष्ठा xenvअगर *vअगर, काष्ठा seq_file *m)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	switch (vif->hash.alg) {
-	case XEN_NETIF_CTRL_HASH_ALGORITHM_TOEPLITZ:
-		seq_puts(m, "Hash Algorithm: TOEPLITZ\n");
-		break;
+	चयन (vअगर->hash.alg) अणु
+	हाल XEN_NETIF_CTRL_HASH_ALGORITHM_TOEPLITZ:
+		seq_माला_दो(m, "Hash Algorithm: TOEPLITZ\n");
+		अवरोध;
 
-	case XEN_NETIF_CTRL_HASH_ALGORITHM_NONE:
-		seq_puts(m, "Hash Algorithm: NONE\n");
+	हाल XEN_NETIF_CTRL_HASH_ALGORITHM_NONE:
+		seq_माला_दो(m, "Hash Algorithm: NONE\n");
 		fallthrough;
-	default:
-		return;
-	}
+	शेष:
+		वापस;
+	पूर्ण
 
-	if (vif->hash.flags) {
-		seq_puts(m, "\nHash Flags:\n");
+	अगर (vअगर->hash.flags) अणु
+		seq_माला_दो(m, "\nHash Flags:\n");
 
-		if (vif->hash.flags & XEN_NETIF_CTRL_HASH_TYPE_IPV4)
-			seq_puts(m, "- IPv4\n");
-		if (vif->hash.flags & XEN_NETIF_CTRL_HASH_TYPE_IPV4_TCP)
-			seq_puts(m, "- IPv4 + TCP\n");
-		if (vif->hash.flags & XEN_NETIF_CTRL_HASH_TYPE_IPV6)
-			seq_puts(m, "- IPv6\n");
-		if (vif->hash.flags & XEN_NETIF_CTRL_HASH_TYPE_IPV6_TCP)
-			seq_puts(m, "- IPv6 + TCP\n");
-	}
+		अगर (vअगर->hash.flags & XEN_NETIF_CTRL_HASH_TYPE_IPV4)
+			seq_माला_दो(m, "- IPv4\n");
+		अगर (vअगर->hash.flags & XEN_NETIF_CTRL_HASH_TYPE_IPV4_TCP)
+			seq_माला_दो(m, "- IPv4 + TCP\n");
+		अगर (vअगर->hash.flags & XEN_NETIF_CTRL_HASH_TYPE_IPV6)
+			seq_माला_दो(m, "- IPv6\n");
+		अगर (vअगर->hash.flags & XEN_NETIF_CTRL_HASH_TYPE_IPV6_TCP)
+			seq_माला_दो(m, "- IPv6 + TCP\n");
+	पूर्ण
 
-	seq_puts(m, "\nHash Key:\n");
+	seq_माला_दो(m, "\nHash Key:\n");
 
-	for (i = 0; i < XEN_NETBK_MAX_HASH_KEY_SIZE; ) {
-		unsigned int j, n;
+	क्रम (i = 0; i < XEN_NETBK_MAX_HASH_KEY_SIZE; ) अणु
+		अचिन्हित पूर्णांक j, n;
 
 		n = 8;
-		if (i + n >= XEN_NETBK_MAX_HASH_KEY_SIZE)
+		अगर (i + n >= XEN_NETBK_MAX_HASH_KEY_SIZE)
 			n = XEN_NETBK_MAX_HASH_KEY_SIZE - i;
 
-		seq_printf(m, "[%2u - %2u]: ", i, i + n - 1);
+		seq_म_लिखो(m, "[%2u - %2u]: ", i, i + n - 1);
 
-		for (j = 0; j < n; j++, i++)
-			seq_printf(m, "%02x ", vif->hash.key[i]);
+		क्रम (j = 0; j < n; j++, i++)
+			seq_म_लिखो(m, "%02x ", vअगर->hash.key[i]);
 
-		seq_puts(m, "\n");
-	}
+		seq_माला_दो(m, "\n");
+	पूर्ण
 
-	if (vif->hash.size != 0) {
-		const u32 *mapping = vif->hash.mapping[vif->hash.mapping_sel];
+	अगर (vअगर->hash.size != 0) अणु
+		स्थिर u32 *mapping = vअगर->hash.mapping[vअगर->hash.mapping_sel];
 
-		seq_puts(m, "\nHash Mapping:\n");
+		seq_माला_दो(m, "\nHash Mapping:\n");
 
-		for (i = 0; i < vif->hash.size; ) {
-			unsigned int j, n;
+		क्रम (i = 0; i < vअगर->hash.size; ) अणु
+			अचिन्हित पूर्णांक j, n;
 
 			n = 8;
-			if (i + n >= vif->hash.size)
-				n = vif->hash.size - i;
+			अगर (i + n >= vअगर->hash.size)
+				n = vअगर->hash.size - i;
 
-			seq_printf(m, "[%4u - %4u]: ", i, i + n - 1);
+			seq_म_लिखो(m, "[%4u - %4u]: ", i, i + n - 1);
 
-			for (j = 0; j < n; j++, i++)
-				seq_printf(m, "%4u ", mapping[i]);
+			क्रम (j = 0; j < n; j++, i++)
+				seq_म_लिखो(m, "%4u ", mapping[i]);
 
-			seq_puts(m, "\n");
-		}
-	}
-}
-#endif /* CONFIG_DEBUG_FS */
+			seq_माला_दो(m, "\n");
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-void xenvif_init_hash(struct xenvif *vif)
-{
-	if (xenvif_hash_cache_size == 0)
-		return;
+व्योम xenvअगर_init_hash(काष्ठा xenvअगर *vअगर)
+अणु
+	अगर (xenvअगर_hash_cache_size == 0)
+		वापस;
 
-	BUG_ON(vif->hash.cache.count);
+	BUG_ON(vअगर->hash.cache.count);
 
-	spin_lock_init(&vif->hash.cache.lock);
-	INIT_LIST_HEAD(&vif->hash.cache.list);
-}
+	spin_lock_init(&vअगर->hash.cache.lock);
+	INIT_LIST_HEAD(&vअगर->hash.cache.list);
+पूर्ण
 
-void xenvif_deinit_hash(struct xenvif *vif)
-{
-	xenvif_flush_hash(vif);
-}
+व्योम xenvअगर_deinit_hash(काष्ठा xenvअगर *vअगर)
+अणु
+	xenvअगर_flush_hash(vअगर);
+पूर्ण

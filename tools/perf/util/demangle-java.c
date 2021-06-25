@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "symbol.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <sys/types.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश "symbol.h"
 
-#include "demangle-java.h"
+#समावेश "demangle-java.h"
 
-#include <linux/ctype.h>
-#include <linux/kernel.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/kernel.h>
 
-enum {
+क्रमागत अणु
 	MODE_PREFIX = 0,
 	MODE_CLASS  = 1,
 	MODE_FUNC   = 2,
 	MODE_TYPE   = 3,
 	MODE_CTYPE  = 4, /* class arg */
-};
+पूर्ण;
 
-#define BASE_ENT(c, n)	[c - 'A']=n
-static const char *base_types['Z' - 'A' + 1] = {
+#घोषणा BASE_ENT(c, n)	[c - 'A']=n
+अटल स्थिर अक्षर *base_types['Z' - 'A' + 1] = अणु
 	BASE_ENT('B', "byte" ),
 	BASE_ENT('C', "char" ),
 	BASE_ENT('D', "double" ),
@@ -28,176 +29,176 @@ static const char *base_types['Z' - 'A' + 1] = {
 	BASE_ENT('J', "long" ),
 	BASE_ENT('S', "short" ),
 	BASE_ENT('Z', "boolean" ),
-};
+पूर्ण;
 
 /*
  * demangle Java symbol between str and end positions and stores
- * up to maxlen characters into buf. The parser starts in mode.
+ * up to maxlen अक्षरacters पूर्णांकo buf. The parser starts in mode.
  *
  * Use MODE_PREFIX to process entire prototype till end position
- * Use MODE_TYPE to process return type if str starts on return type char
+ * Use MODE_TYPE to process वापस type अगर str starts on वापस type अक्षर
  *
  *  Return:
  *	success: buf
- *	error  : NULL
+ *	error  : शून्य
  */
-static char *
-__demangle_java_sym(const char *str, const char *end, char *buf, int maxlen, int mode)
-{
-	int rlen = 0;
-	int array = 0;
-	int narg = 0;
-	const char *q;
+अटल अक्षर *
+__demangle_java_sym(स्थिर अक्षर *str, स्थिर अक्षर *end, अक्षर *buf, पूर्णांक maxlen, पूर्णांक mode)
+अणु
+	पूर्णांक rlen = 0;
+	पूर्णांक array = 0;
+	पूर्णांक narg = 0;
+	स्थिर अक्षर *q;
 
-	if (!end)
-		end = str + strlen(str);
+	अगर (!end)
+		end = str + म_माप(str);
 
-	for (q = str; q != end; q++) {
+	क्रम (q = str; q != end; q++) अणु
 
-		if (rlen == (maxlen - 1))
-			break;
+		अगर (rlen == (maxlen - 1))
+			अवरोध;
 
-		switch (*q) {
-		case 'L':
-			if (mode == MODE_PREFIX || mode == MODE_TYPE) {
-				if (mode == MODE_TYPE) {
-					if (narg)
-						rlen += scnprintf(buf + rlen, maxlen - rlen, ", ");
+		चयन (*q) अणु
+		हाल 'L':
+			अगर (mode == MODE_PREFIX || mode == MODE_TYPE) अणु
+				अगर (mode == MODE_TYPE) अणु
+					अगर (narg)
+						rlen += scnम_लिखो(buf + rlen, maxlen - rlen, ", ");
 					narg++;
-				}
-				if (mode == MODE_PREFIX)
+				पूर्ण
+				अगर (mode == MODE_PREFIX)
 					mode = MODE_CLASS;
-				else
+				अन्यथा
 					mode = MODE_CTYPE;
-			} else
+			पूर्ण अन्यथा
 				buf[rlen++] = *q;
-			break;
-		case 'B':
-		case 'C':
-		case 'D':
-		case 'F':
-		case 'I':
-		case 'J':
-		case 'S':
-		case 'Z':
-			if (mode == MODE_TYPE) {
-				if (narg)
-					rlen += scnprintf(buf + rlen, maxlen - rlen, ", ");
-				rlen += scnprintf(buf + rlen, maxlen - rlen, "%s", base_types[*q - 'A']);
-				while (array--)
-					rlen += scnprintf(buf + rlen, maxlen - rlen, "[]");
+			अवरोध;
+		हाल 'B':
+		हाल 'C':
+		हाल 'D':
+		हाल 'F':
+		हाल 'I':
+		हाल 'J':
+		हाल 'S':
+		हाल 'Z':
+			अगर (mode == MODE_TYPE) अणु
+				अगर (narg)
+					rlen += scnम_लिखो(buf + rlen, maxlen - rlen, ", ");
+				rlen += scnम_लिखो(buf + rlen, maxlen - rlen, "%s", base_types[*q - 'A']);
+				जबतक (array--)
+					rlen += scnम_लिखो(buf + rlen, maxlen - rlen, "[]");
 				array = 0;
 				narg++;
-			} else
+			पूर्ण अन्यथा
 				buf[rlen++] = *q;
-			break;
-		case 'V':
-			if (mode == MODE_TYPE) {
-				rlen += scnprintf(buf + rlen, maxlen - rlen, "void");
-				while (array--)
-					rlen += scnprintf(buf + rlen, maxlen - rlen, "[]");
+			अवरोध;
+		हाल 'V':
+			अगर (mode == MODE_TYPE) अणु
+				rlen += scnम_लिखो(buf + rlen, maxlen - rlen, "void");
+				जबतक (array--)
+					rlen += scnम_लिखो(buf + rlen, maxlen - rlen, "[]");
 				array = 0;
-			} else
+			पूर्ण अन्यथा
 				buf[rlen++] = *q;
-			break;
-		case '[':
-			if (mode != MODE_TYPE)
-				goto error;
+			अवरोध;
+		हाल '[':
+			अगर (mode != MODE_TYPE)
+				जाओ error;
 			array++;
-			break;
-		case '(':
-			if (mode != MODE_FUNC)
-				goto error;
+			अवरोध;
+		हाल '(':
+			अगर (mode != MODE_FUNC)
+				जाओ error;
 			buf[rlen++] = *q;
 			mode = MODE_TYPE;
-			break;
-		case ')':
-			if (mode != MODE_TYPE)
-				goto error;
+			अवरोध;
+		हाल ')':
+			अगर (mode != MODE_TYPE)
+				जाओ error;
 			buf[rlen++] = *q;
 			narg = 0;
-			break;
-		case ';':
-			if (mode != MODE_CLASS && mode != MODE_CTYPE)
-				goto error;
-			/* safe because at least one other char to process */
-			if (isalpha(*(q + 1)) && mode == MODE_CLASS)
-				rlen += scnprintf(buf + rlen, maxlen - rlen, ".");
-			if (mode == MODE_CLASS)
+			अवरोध;
+		हाल ';':
+			अगर (mode != MODE_CLASS && mode != MODE_CTYPE)
+				जाओ error;
+			/* safe because at least one other अक्षर to process */
+			अगर (है_अक्षर(*(q + 1)) && mode == MODE_CLASS)
+				rlen += scnम_लिखो(buf + rlen, maxlen - rlen, ".");
+			अगर (mode == MODE_CLASS)
 				mode = MODE_FUNC;
-			else if (mode == MODE_CTYPE)
+			अन्यथा अगर (mode == MODE_CTYPE)
 				mode = MODE_TYPE;
-			break;
-		case '/':
-			if (mode != MODE_CLASS && mode != MODE_CTYPE)
-				goto error;
-			rlen += scnprintf(buf + rlen, maxlen - rlen, ".");
-			break;
-		default :
+			अवरोध;
+		हाल '/':
+			अगर (mode != MODE_CLASS && mode != MODE_CTYPE)
+				जाओ error;
+			rlen += scnम_लिखो(buf + rlen, maxlen - rlen, ".");
+			अवरोध;
+		शेष :
 			buf[rlen++] = *q;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	buf[rlen] = '\0';
-	return buf;
+	वापस buf;
 error:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Demangle Java function signature (openJDK, not GCJ)
+ * Demangle Java function signature (खोलोJDK, not GCJ)
  * input:
- * 	str: string to parse. String is not modified
- *    flags: combination of JAVA_DEMANGLE_* flags to modify demangling
- * return:
- *	if input can be demangled, then a newly allocated string is returned.
- *	if input cannot be demangled, then NULL is returned
+ * 	str: string to parse. String is not modअगरied
+ *    flags: combination of JAVA_DEMANGLE_* flags to modअगरy demangling
+ * वापस:
+ *	अगर input can be demangled, then a newly allocated string is वापसed.
+ *	अगर input cannot be demangled, then शून्य is वापसed
  *
- * Note: caller is responsible for freeing demangled string
+ * Note: caller is responsible क्रम मुक्तing demangled string
  */
-char *
-java_demangle_sym(const char *str, int flags)
-{
-	char *buf, *ptr;
-	char *p;
-	size_t len, l1 = 0;
+अक्षर *
+java_demangle_sym(स्थिर अक्षर *str, पूर्णांक flags)
+अणु
+	अक्षर *buf, *ptr;
+	अक्षर *p;
+	माप_प्रकार len, l1 = 0;
 
-	if (!str)
-		return NULL;
+	अगर (!str)
+		वापस शून्य;
 
-	/* find start of return type */
-	p = strrchr(str, ')');
-	if (!p)
-		return NULL;
+	/* find start of वापस type */
+	p = म_खोजप(str, ')');
+	अगर (!p)
+		वापस शून्य;
 
 	/*
 	 * expansion factor estimated to 3x
 	 */
-	len = strlen(str) * 3 + 1;
-	buf = malloc(len);
-	if (!buf)
-		return NULL;
+	len = म_माप(str) * 3 + 1;
+	buf = दो_स्मृति(len);
+	अगर (!buf)
+		वापस शून्य;
 
 	buf[0] = '\0';
-	if (!(flags & JAVA_DEMANGLE_NORET)) {
+	अगर (!(flags & JAVA_DEMANGLE_NORET)) अणु
 		/*
-		 * get return type first
+		 * get वापस type first
 		 */
-		ptr = __demangle_java_sym(p + 1, NULL, buf, len, MODE_TYPE);
-		if (!ptr)
-			goto error;
+		ptr = __demangle_java_sym(p + 1, शून्य, buf, len, MODE_TYPE);
+		अगर (!ptr)
+			जाओ error;
 
-		/* add space between return type and function prototype */
-		l1 = strlen(buf);
+		/* add space between वापस type and function prototype */
+		l1 = म_माप(buf);
 		buf[l1++] = ' ';
-	}
+	पूर्ण
 
-	/* process function up to return type */
+	/* process function up to वापस type */
 	ptr = __demangle_java_sym(str, p + 1, buf + l1, len - l1, MODE_PREFIX);
-	if (!ptr)
-		goto error;
+	अगर (!ptr)
+		जाओ error;
 
-	return buf;
+	वापस buf;
 error:
-	free(buf);
-	return NULL;
-}
+	मुक्त(buf);
+	वापस शून्य;
+पूर्ण

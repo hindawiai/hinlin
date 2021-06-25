@@ -1,68 +1,69 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *    Copyright IBM Corp. 1999, 2012
  *    Author(s): Denis Joseph Barrow,
  *		 Martin Schwidefsky <schwidefsky@de.ibm.com>,
  *		 Heiko Carstens <heiko.carstens@de.ibm.com>,
  */
-#ifndef __ASM_SMP_H
-#define __ASM_SMP_H
+#अगर_अघोषित __ASM_SMP_H
+#घोषणा __ASM_SMP_H
 
-#include <asm/sigp.h>
-#include <asm/lowcore.h>
-#include <asm/processor.h>
+#समावेश <यंत्र/sigp.h>
+#समावेश <यंत्र/lowcore.h>
+#समावेश <यंत्र/processor.h>
 
-#define raw_smp_processor_id()	(S390_lowcore.cpu_nr)
+#घोषणा raw_smp_processor_id()	(S390_lowcore.cpu_nr)
 
-extern struct mutex smp_cpu_state_mutex;
-extern unsigned int smp_cpu_mt_shift;
-extern unsigned int smp_cpu_mtid;
-extern __vector128 __initdata boot_cpu_vector_save_area[__NUM_VXRS];
+बाह्य काष्ठा mutex smp_cpu_state_mutex;
+बाह्य अचिन्हित पूर्णांक smp_cpu_mt_shअगरt;
+बाह्य अचिन्हित पूर्णांक smp_cpu_mtid;
+बाह्य __vector128 __initdata boot_cpu_vector_save_area[__NUM_VXRS];
 
-extern int __cpu_up(unsigned int cpu, struct task_struct *tidle);
+बाह्य पूर्णांक __cpu_up(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *tidle);
 
-extern void arch_send_call_function_single_ipi(int cpu);
-extern void arch_send_call_function_ipi_mask(const struct cpumask *mask);
+बाह्य व्योम arch_send_call_function_single_ipi(पूर्णांक cpu);
+बाह्य व्योम arch_send_call_function_ipi_mask(स्थिर काष्ठा cpumask *mask);
 
-extern void smp_call_online_cpu(void (*func)(void *), void *);
-extern void smp_call_ipl_cpu(void (*func)(void *), void *);
-extern void smp_emergency_stop(void);
+बाह्य व्योम smp_call_online_cpu(व्योम (*func)(व्योम *), व्योम *);
+बाह्य व्योम smp_call_ipl_cpu(व्योम (*func)(व्योम *), व्योम *);
+बाह्य व्योम smp_emergency_stop(व्योम);
 
-extern int smp_find_processor_id(u16 address);
-extern int smp_store_status(int cpu);
-extern void smp_save_dump_cpus(void);
-extern void smp_yield_cpu(int cpu);
-extern void smp_cpu_set_polarization(int cpu, int val);
-extern int smp_cpu_get_polarization(int cpu);
-extern int smp_cpu_get_cpu_address(int cpu);
-extern void smp_fill_possible_mask(void);
-extern void smp_detect_cpus(void);
+बाह्य पूर्णांक smp_find_processor_id(u16 address);
+बाह्य पूर्णांक smp_store_status(पूर्णांक cpu);
+बाह्य व्योम smp_save_dump_cpus(व्योम);
+बाह्य व्योम smp_yield_cpu(पूर्णांक cpu);
+बाह्य व्योम smp_cpu_set_polarization(पूर्णांक cpu, पूर्णांक val);
+बाह्य पूर्णांक smp_cpu_get_polarization(पूर्णांक cpu);
+बाह्य पूर्णांक smp_cpu_get_cpu_address(पूर्णांक cpu);
+बाह्य व्योम smp_fill_possible_mask(व्योम);
+बाह्य व्योम smp_detect_cpus(व्योम);
 
-static inline void smp_stop_cpu(void)
-{
+अटल अंतरभूत व्योम smp_stop_cpu(व्योम)
+अणु
 	u16 pcpu = stap();
 
-	for (;;) {
-		__pcpu_sigp(pcpu, SIGP_STOP, 0, NULL);
+	क्रम (;;) अणु
+		__pcpu_sigp(pcpu, SIGP_STOP, 0, शून्य);
 		cpu_relax();
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Return thread 0 CPU number as base CPU */
-static inline int smp_get_base_cpu(int cpu)
-{
-	return cpu - (cpu % (smp_cpu_mtid + 1));
-}
+/* Return thपढ़ो 0 CPU number as base CPU */
+अटल अंतरभूत पूर्णांक smp_get_base_cpu(पूर्णांक cpu)
+अणु
+	वापस cpu - (cpu % (smp_cpu_mtid + 1));
+पूर्ण
 
-static inline void smp_cpus_done(unsigned int max_cpus)
-{
-}
+अटल अंतरभूत व्योम smp_cpus_करोne(अचिन्हित पूर्णांक max_cpus)
+अणु
+पूर्ण
 
-extern int smp_rescan_cpus(void);
-extern void __noreturn cpu_die(void);
-extern void __cpu_die(unsigned int cpu);
-extern int __cpu_disable(void);
-extern void schedule_mcck_handler(void);
-void notrace smp_yield_cpu(int cpu);
+बाह्य पूर्णांक smp_rescan_cpus(व्योम);
+बाह्य व्योम __noवापस cpu_die(व्योम);
+बाह्य व्योम __cpu_die(अचिन्हित पूर्णांक cpu);
+बाह्य पूर्णांक __cpu_disable(व्योम);
+बाह्य व्योम schedule_mcck_handler(व्योम);
+व्योम notrace smp_yield_cpu(पूर्णांक cpu);
 
-#endif /* __ASM_SMP_H */
+#पूर्ण_अगर /* __ASM_SMP_H */

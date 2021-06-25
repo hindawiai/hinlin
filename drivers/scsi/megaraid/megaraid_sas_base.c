@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Linux MegaRAID driver for SAS based RAID controllers
+ *  Linux MegaRAID driver क्रम SAS based RAID controllers
  *
  *  Copyright (c) 2003-2013  LSI Corporation
  *  Copyright (c) 2013-2016  Avago Technologies
@@ -10,92 +11,92 @@
  *           Sreenivas Bagalkote
  *           Sumant Patro
  *           Bo Yang
- *           Adam Radford
+ *           Adam Radक्रमd
  *           Kashyap Desai <kashyap.desai@broadcom.com>
  *           Sumit Saxena <sumit.saxena@broadcom.com>
  *
  *  Send feedback to: megaraidlinux.pdl@broadcom.com
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/list.h>
-#include <linux/moduleparam.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/uio.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <asm/unaligned.h>
-#include <linux/fs.h>
-#include <linux/compat.h>
-#include <linux/blkdev.h>
-#include <linux/mutex.h>
-#include <linux/poll.h>
-#include <linux/vmalloc.h>
-#include <linux/irq_poll.h>
-#include <linux/blk-mq-pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/list.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/irq_poll.h>
+#समावेश <linux/blk-mq-pci.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_tcq.h>
-#include <scsi/scsi_dbg.h>
-#include "megaraid_sas_fusion.h"
-#include "megaraid_sas.h"
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <scsi/scsi_dbg.h>
+#समावेश "megaraid_sas_fusion.h"
+#समावेश "megaraid_sas.h"
 
 /*
  * Number of sectors per IO command
- * Will be set in megasas_init_mfi if user does not provide
+ * Will be set in megasas_init_mfi अगर user करोes not provide
  */
-static unsigned int max_sectors;
-module_param_named(max_sectors, max_sectors, int, 0444);
+अटल अचिन्हित पूर्णांक max_sectors;
+module_param_named(max_sectors, max_sectors, पूर्णांक, 0444);
 MODULE_PARM_DESC(max_sectors,
 	"Maximum number of sectors per IO command");
 
-static int msix_disable;
-module_param(msix_disable, int, 0444);
+अटल पूर्णांक msix_disable;
+module_param(msix_disable, पूर्णांक, 0444);
 MODULE_PARM_DESC(msix_disable, "Disable MSI-X interrupt handling. Default: 0");
 
-static unsigned int msix_vectors;
-module_param(msix_vectors, int, 0444);
+अटल अचिन्हित पूर्णांक msix_vectors;
+module_param(msix_vectors, पूर्णांक, 0444);
 MODULE_PARM_DESC(msix_vectors, "MSI-X max vector count. Default: Set by FW");
 
-static int allow_vf_ioctls;
-module_param(allow_vf_ioctls, int, 0444);
+अटल पूर्णांक allow_vf_ioctls;
+module_param(allow_vf_ioctls, पूर्णांक, 0444);
 MODULE_PARM_DESC(allow_vf_ioctls, "Allow ioctls in SR-IOV VF mode. Default: 0");
 
-static unsigned int throttlequeuedepth = MEGASAS_THROTTLE_QUEUE_DEPTH;
-module_param(throttlequeuedepth, int, 0444);
+अटल अचिन्हित पूर्णांक throttlequeuedepth = MEGASAS_THROTTLE_QUEUE_DEPTH;
+module_param(throttlequeuedepth, पूर्णांक, 0444);
 MODULE_PARM_DESC(throttlequeuedepth,
 	"Adapter queue depth when throttled due to I/O timeout. Default: 16");
 
-unsigned int resetwaittime = MEGASAS_RESET_WAIT_TIME;
-module_param(resetwaittime, int, 0444);
-MODULE_PARM_DESC(resetwaittime, "Wait time in (1-180s) after I/O timeout before resetting adapter. Default: 180s");
+अचिन्हित पूर्णांक resetरुकोसमय = MEGASAS_RESET_WAIT_TIME;
+module_param(resetरुकोसमय, पूर्णांक, 0444);
+MODULE_PARM_DESC(resetरुकोसमय, "Wait time in (1-180s) after I/O timeout before resetting adapter. Default: 180s");
 
-static int smp_affinity_enable = 1;
-module_param(smp_affinity_enable, int, 0444);
+अटल पूर्णांक smp_affinity_enable = 1;
+module_param(smp_affinity_enable, पूर्णांक, 0444);
 MODULE_PARM_DESC(smp_affinity_enable, "SMP affinity feature enable/disable Default: enable(1)");
 
-static int rdpq_enable = 1;
-module_param(rdpq_enable, int, 0444);
+अटल पूर्णांक rdpq_enable = 1;
+module_param(rdpq_enable, पूर्णांक, 0444);
 MODULE_PARM_DESC(rdpq_enable, "Allocate reply queue in chunks for large queue depth enable/disable Default: enable(1)");
 
-unsigned int dual_qdepth_disable;
-module_param(dual_qdepth_disable, int, 0444);
+अचिन्हित पूर्णांक dual_qdepth_disable;
+module_param(dual_qdepth_disable, पूर्णांक, 0444);
 MODULE_PARM_DESC(dual_qdepth_disable, "Disable dual queue depth feature. Default: 0");
 
-static unsigned int scmd_timeout = MEGASAS_DEFAULT_CMD_TIMEOUT;
-module_param(scmd_timeout, int, 0444);
-MODULE_PARM_DESC(scmd_timeout, "scsi command timeout (10-90s), default 90s. See megasas_reset_timer.");
+अटल अचिन्हित पूर्णांक scmd_समयout = MEGASAS_DEFAULT_CMD_TIMEOUT;
+module_param(scmd_समयout, पूर्णांक, 0444);
+MODULE_PARM_DESC(scmd_समयout, "scsi command timeout (10-90s), default 90s. See megasas_reset_timer.");
 
-int perf_mode = -1;
-module_param(perf_mode, int, 0444);
+पूर्णांक perf_mode = -1;
+module_param(perf_mode, पूर्णांक, 0444);
 MODULE_PARM_DESC(perf_mode, "Performance mode (only for Aero adapters), options:\n\t\t"
 		"0 - balanced: High iops and low latency queues are allocated &\n\t\t"
 		"interrupt coalescing is enabled only on high iops queues\n\t\t"
@@ -106,16 +107,16 @@ MODULE_PARM_DESC(perf_mode, "Performance mode (only for Aero adapters), options:
 		"default mode is 'balanced'"
 		);
 
-int event_log_level = MFI_EVT_CLASS_CRITICAL;
-module_param(event_log_level, int, 0644);
+पूर्णांक event_log_level = MFI_EVT_CLASS_CRITICAL;
+module_param(event_log_level, पूर्णांक, 0644);
 MODULE_PARM_DESC(event_log_level, "Asynchronous event logging level- range is: -2(CLASS_DEBUG) to 4(CLASS_DEAD), Default: 2(CLASS_CRITICAL)");
 
-unsigned int enable_sdev_max_qd;
-module_param(enable_sdev_max_qd, int, 0444);
+अचिन्हित पूर्णांक enable_sdev_max_qd;
+module_param(enable_sdev_max_qd, पूर्णांक, 0444);
 MODULE_PARM_DESC(enable_sdev_max_qd, "Enable sdev max qd as can_queue. Default: 0");
 
-int poll_queues;
-module_param(poll_queues, int, 0444);
+पूर्णांक poll_queues;
+module_param(poll_queues, पूर्णांक, 0444);
 MODULE_PARM_DESC(poll_queues, "Number of queues to be use for io_uring poll mode.\n\t\t"
 		"This parameter is effective only if host_tagset_enable=1 &\n\t\t"
 		"It is not applicable for MFI_SERIES. &\n\t\t"
@@ -123,8 +124,8 @@ MODULE_PARM_DESC(poll_queues, "Number of queues to be use for io_uring poll mode
 		"High iops queues are not allocated &\n\t\t"
 		);
 
-int host_tagset_enable = 1;
-module_param(host_tagset_enable, int, 0444);
+पूर्णांक host_tagset_enable = 1;
+module_param(host_tagset_enable, पूर्णांक, 0444);
 MODULE_PARM_DESC(host_tagset_enable, "Shared host tagset enable/disable Default: enable(1)");
 
 MODULE_LICENSE("GPL");
@@ -132,478 +133,478 @@ MODULE_VERSION(MEGASAS_VERSION);
 MODULE_AUTHOR("megaraidlinux.pdl@broadcom.com");
 MODULE_DESCRIPTION("Broadcom MegaRAID SAS Driver");
 
-int megasas_transition_to_ready(struct megasas_instance *instance, int ocr);
-static int megasas_get_pd_list(struct megasas_instance *instance);
-static int megasas_ld_list_query(struct megasas_instance *instance,
+पूर्णांक megasas_transition_to_पढ़ोy(काष्ठा megasas_instance *instance, पूर्णांक ocr);
+अटल पूर्णांक megasas_get_pd_list(काष्ठा megasas_instance *instance);
+अटल पूर्णांक megasas_ld_list_query(काष्ठा megasas_instance *instance,
 				 u8 query_type);
-static int megasas_issue_init_mfi(struct megasas_instance *instance);
-static int megasas_register_aen(struct megasas_instance *instance,
+अटल पूर्णांक megasas_issue_init_mfi(काष्ठा megasas_instance *instance);
+अटल पूर्णांक megasas_रेजिस्टर_aen(काष्ठा megasas_instance *instance,
 				u32 seq_num, u32 class_locale_word);
-static void megasas_get_pd_info(struct megasas_instance *instance,
-				struct scsi_device *sdev);
+अटल व्योम megasas_get_pd_info(काष्ठा megasas_instance *instance,
+				काष्ठा scsi_device *sdev);
 
 /*
- * PCI ID table for all supported controllers
+ * PCI ID table क्रम all supported controllers
  */
-static struct pci_device_id megasas_pci_table[] = {
+अटल काष्ठा pci_device_id megasas_pci_table[] = अणु
 
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS1064R)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS1064R)पूर्ण,
 	/* xscale IOP */
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS1078R)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS1078R)पूर्ण,
 	/* ppc IOP */
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS1078DE)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS1078DE)पूर्ण,
 	/* ppc IOP */
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS1078GEN2)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS1078GEN2)पूर्ण,
 	/* gen2*/
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS0079GEN2)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS0079GEN2)पूर्ण,
 	/* gen2*/
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS0073SKINNY)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS0073SKINNY)पूर्ण,
 	/* skinny*/
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS0071SKINNY)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_SAS0071SKINNY)पूर्ण,
 	/* skinny*/
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_VERDE_ZCR)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_VERDE_ZCR)पूर्ण,
 	/* xscale IOP, vega */
-	{PCI_DEVICE(PCI_VENDOR_ID_DELL, PCI_DEVICE_ID_DELL_PERC5)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_DELL, PCI_DEVICE_ID_DELL_PERC5)पूर्ण,
 	/* xscale IOP */
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_FUSION)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_FUSION)पूर्ण,
 	/* Fusion */
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_PLASMA)},
-	/* Plasma */
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_INVADER)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_PLASMA)पूर्ण,
+	/* Plयंत्रa */
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_INVADER)पूर्ण,
 	/* Invader */
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_FURY)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_FURY)पूर्ण,
 	/* Fury */
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_INTRUDER)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_INTRUDER)पूर्ण,
 	/* Intruder */
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_INTRUDER_24)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_INTRUDER_24)पूर्ण,
 	/* Intruder 24 port*/
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_CUTLASS_52)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_CUTLASS_53)},
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_CUTLASS_52)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_CUTLASS_53)पूर्ण,
 	/* VENTURA */
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_VENTURA)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_CRUSADER)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_HARPOON)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_TOMCAT)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_VENTURA_4PORT)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_CRUSADER_4PORT)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E1)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E2)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E5)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E6)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E0)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E3)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E4)},
-	{PCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E7)},
-	{}
-};
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_VENTURA)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_CRUSADER)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_HARPOON)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_TOMCAT)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_VENTURA_4PORT)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_CRUSADER_4PORT)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E1)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E2)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E5)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E6)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E0)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E3)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E4)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_LSI_AERO_10E7)पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, megasas_pci_table);
 
-static int megasas_mgmt_majorno;
-struct megasas_mgmt_info megasas_mgmt_info;
-static struct fasync_struct *megasas_async_queue;
-static DEFINE_MUTEX(megasas_async_queue_mutex);
+अटल पूर्णांक megasas_mgmt_majorno;
+काष्ठा megasas_mgmt_info megasas_mgmt_info;
+अटल काष्ठा fasync_काष्ठा *megasas_async_queue;
+अटल DEFINE_MUTEX(megasas_async_queue_mutex);
 
-static int megasas_poll_wait_aen;
-static DECLARE_WAIT_QUEUE_HEAD(megasas_poll_wait);
-static u32 support_poll_for_event;
+अटल पूर्णांक megasas_poll_रुको_aen;
+अटल DECLARE_WAIT_QUEUE_HEAD(megasas_poll_रुको);
+अटल u32 support_poll_क्रम_event;
 u32 megasas_dbg_lvl;
-static u32 support_device_change;
-static bool support_nvme_encapsulation;
-static bool support_pci_lane_margining;
+अटल u32 support_device_change;
+अटल bool support_nvme_encapsulation;
+अटल bool support_pci_lane_margining;
 
-/* define lock for aen poll */
-static spinlock_t poll_aen_lock;
+/* define lock क्रम aen poll */
+अटल spinlock_t poll_aen_lock;
 
-extern struct dentry *megasas_debugfs_root;
-extern int megasas_blk_mq_poll(struct Scsi_Host *shost, unsigned int queue_num);
+बाह्य काष्ठा dentry *megasas_debugfs_root;
+बाह्य पूर्णांक megasas_blk_mq_poll(काष्ठा Scsi_Host *shost, अचिन्हित पूर्णांक queue_num);
 
-void
-megasas_complete_cmd(struct megasas_instance *instance, struct megasas_cmd *cmd,
+व्योम
+megasas_complete_cmd(काष्ठा megasas_instance *instance, काष्ठा megasas_cmd *cmd,
 		     u8 alt_status);
-static u32
-megasas_read_fw_status_reg_gen2(struct megasas_instance *instance);
-static int
-megasas_adp_reset_gen2(struct megasas_instance *instance,
-		       struct megasas_register_set __iomem *reg_set);
-static irqreturn_t megasas_isr(int irq, void *devp);
-static u32
-megasas_init_adapter_mfi(struct megasas_instance *instance);
+अटल u32
+megasas_पढ़ो_fw_status_reg_gen2(काष्ठा megasas_instance *instance);
+अटल पूर्णांक
+megasas_adp_reset_gen2(काष्ठा megasas_instance *instance,
+		       काष्ठा megasas_रेजिस्टर_set __iomem *reg_set);
+अटल irqवापस_t megasas_isr(पूर्णांक irq, व्योम *devp);
+अटल u32
+megasas_init_adapter_mfi(काष्ठा megasas_instance *instance);
 u32
-megasas_build_and_issue_cmd(struct megasas_instance *instance,
-			    struct scsi_cmnd *scmd);
-static void megasas_complete_cmd_dpc(unsigned long instance_addr);
-int
-wait_and_poll(struct megasas_instance *instance, struct megasas_cmd *cmd,
-	int seconds);
-void megasas_fusion_ocr_wq(struct work_struct *work);
-static int megasas_get_ld_vf_affiliation(struct megasas_instance *instance,
-					 int initial);
-static int
-megasas_set_dma_mask(struct megasas_instance *instance);
-static int
-megasas_alloc_ctrl_mem(struct megasas_instance *instance);
-static inline void
-megasas_free_ctrl_mem(struct megasas_instance *instance);
-static inline int
-megasas_alloc_ctrl_dma_buffers(struct megasas_instance *instance);
-static inline void
-megasas_free_ctrl_dma_buffers(struct megasas_instance *instance);
-static inline void
-megasas_init_ctrl_params(struct megasas_instance *instance);
+megasas_build_and_issue_cmd(काष्ठा megasas_instance *instance,
+			    काष्ठा scsi_cmnd *scmd);
+अटल व्योम megasas_complete_cmd_dpc(अचिन्हित दीर्घ instance_addr);
+पूर्णांक
+रुको_and_poll(काष्ठा megasas_instance *instance, काष्ठा megasas_cmd *cmd,
+	पूर्णांक seconds);
+व्योम megasas_fusion_ocr_wq(काष्ठा work_काष्ठा *work);
+अटल पूर्णांक megasas_get_ld_vf_affiliation(काष्ठा megasas_instance *instance,
+					 पूर्णांक initial);
+अटल पूर्णांक
+megasas_set_dma_mask(काष्ठा megasas_instance *instance);
+अटल पूर्णांक
+megasas_alloc_ctrl_mem(काष्ठा megasas_instance *instance);
+अटल अंतरभूत व्योम
+megasas_मुक्त_ctrl_mem(काष्ठा megasas_instance *instance);
+अटल अंतरभूत पूर्णांक
+megasas_alloc_ctrl_dma_buffers(काष्ठा megasas_instance *instance);
+अटल अंतरभूत व्योम
+megasas_मुक्त_ctrl_dma_buffers(काष्ठा megasas_instance *instance);
+अटल अंतरभूत व्योम
+megasas_init_ctrl_params(काष्ठा megasas_instance *instance);
 
-u32 megasas_readl(struct megasas_instance *instance,
-		  const volatile void __iomem *addr)
-{
+u32 megasas_पढ़ोl(काष्ठा megasas_instance *instance,
+		  स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u32 i = 0, ret_val;
 	/*
-	 * Due to a HW errata in Aero controllers, reads to certain
-	 * Fusion registers could intermittently return all zeroes.
-	 * This behavior is transient in nature and subsequent reads will
-	 * return valid value. As a workaround in driver, retry readl for
-	 * upto three times until a non-zero value is read.
+	 * Due to a HW errata in Aero controllers, पढ़ोs to certain
+	 * Fusion रेजिस्टरs could पूर्णांकermittently वापस all zeroes.
+	 * This behavior is transient in nature and subsequent पढ़ोs will
+	 * वापस valid value. As a workaround in driver, retry पढ़ोl क्रम
+	 * upto three बार until a non-zero value is पढ़ो.
 	 */
-	if (instance->adapter_type == AERO_SERIES) {
-		do {
-			ret_val = readl(addr);
+	अगर (instance->adapter_type == AERO_SERIES) अणु
+		करो अणु
+			ret_val = पढ़ोl(addr);
 			i++;
-		} while (ret_val == 0 && i < 3);
-		return ret_val;
-	} else {
-		return readl(addr);
-	}
-}
+		पूर्ण जबतक (ret_val == 0 && i < 3);
+		वापस ret_val;
+	पूर्ण अन्यथा अणु
+		वापस पढ़ोl(addr);
+	पूर्ण
+पूर्ण
 
 /**
- * megasas_set_dma_settings -	Populate DMA address, length and flags for DCMDs
+ * megasas_set_dma_settings -	Populate DMA address, length and flags क्रम DCMDs
  * @instance:			Adapter soft state
  * @dcmd:			DCMD frame inside MFI command
  * @dma_addr:			DMA address of buffer to be passed to FW
  * @dma_len:			Length of DMA buffer to be passed to FW
- * @return:			void
+ * @वापस:			व्योम
  */
-void megasas_set_dma_settings(struct megasas_instance *instance,
-			      struct megasas_dcmd_frame *dcmd,
+व्योम megasas_set_dma_settings(काष्ठा megasas_instance *instance,
+			      काष्ठा megasas_dcmd_frame *dcmd,
 			      dma_addr_t dma_addr, u32 dma_len)
-{
-	if (instance->consistent_mask_64bit) {
+अणु
+	अगर (instance->consistent_mask_64bit) अणु
 		dcmd->sgl.sge64[0].phys_addr = cpu_to_le64(dma_addr);
 		dcmd->sgl.sge64[0].length = cpu_to_le32(dma_len);
 		dcmd->flags = cpu_to_le16(dcmd->flags | MFI_FRAME_SGL64);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		dcmd->sgl.sge32[0].phys_addr =
 				cpu_to_le32(lower_32_bits(dma_addr));
 		dcmd->sgl.sge32[0].length = cpu_to_le32(dma_len);
 		dcmd->flags = cpu_to_le16(dcmd->flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-megasas_issue_dcmd(struct megasas_instance *instance, struct megasas_cmd *cmd)
-{
+अटल व्योम
+megasas_issue_dcmd(काष्ठा megasas_instance *instance, काष्ठा megasas_cmd *cmd)
+अणु
 	instance->instancet->fire_cmd(instance,
 		cmd->frame_phys_addr, 0, instance->reg_set);
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
- * megasas_get_cmd -	Get a command from the free pool
+ * megasas_get_cmd -	Get a command from the मुक्त pool
  * @instance:		Adapter soft state
  *
- * Returns a free command from the pool
+ * Returns a मुक्त command from the pool
  */
-struct megasas_cmd *megasas_get_cmd(struct megasas_instance
+काष्ठा megasas_cmd *megasas_get_cmd(काष्ठा megasas_instance
 						  *instance)
-{
-	unsigned long flags;
-	struct megasas_cmd *cmd = NULL;
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा megasas_cmd *cmd = शून्य;
 
 	spin_lock_irqsave(&instance->mfi_pool_lock, flags);
 
-	if (!list_empty(&instance->cmd_pool)) {
+	अगर (!list_empty(&instance->cmd_pool)) अणु
 		cmd = list_entry((&instance->cmd_pool)->next,
-				 struct megasas_cmd, list);
+				 काष्ठा megasas_cmd, list);
 		list_del_init(&cmd->list);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&instance->pdev->dev, "Command pool empty!\n");
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&instance->mfi_pool_lock, flags);
-	return cmd;
-}
+	वापस cmd;
+पूर्ण
 
 /**
- * megasas_return_cmd -	Return a cmd to free command pool
+ * megasas_वापस_cmd -	Return a cmd to मुक्त command pool
  * @instance:		Adapter soft state
- * @cmd:		Command packet to be returned to free command pool
+ * @cmd:		Command packet to be वापसed to मुक्त command pool
  */
-void
-megasas_return_cmd(struct megasas_instance *instance, struct megasas_cmd *cmd)
-{
-	unsigned long flags;
+व्योम
+megasas_वापस_cmd(काष्ठा megasas_instance *instance, काष्ठा megasas_cmd *cmd)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 blk_tags;
-	struct megasas_cmd_fusion *cmd_fusion;
-	struct fusion_context *fusion = instance->ctrl_context;
+	काष्ठा megasas_cmd_fusion *cmd_fusion;
+	काष्ठा fusion_context *fusion = instance->ctrl_context;
 
-	/* This flag is used only for fusion adapter.
-	 * Wait for Interrupt for Polled mode DCMD
+	/* This flag is used only क्रम fusion adapter.
+	 * Wait क्रम Interrupt क्रम Polled mode DCMD
 	 */
-	if (cmd->flags & DRV_DCMD_POLLED_MODE)
-		return;
+	अगर (cmd->flags & DRV_DCMD_POLLED_MODE)
+		वापस;
 
 	spin_lock_irqsave(&instance->mfi_pool_lock, flags);
 
-	if (fusion) {
+	अगर (fusion) अणु
 		blk_tags = instance->max_scsi_cmds + cmd->index;
 		cmd_fusion = fusion->cmd_list[blk_tags];
-		megasas_return_cmd_fusion(instance, cmd_fusion);
-	}
-	cmd->scmd = NULL;
+		megasas_वापस_cmd_fusion(instance, cmd_fusion);
+	पूर्ण
+	cmd->scmd = शून्य;
 	cmd->frame_count = 0;
 	cmd->flags = 0;
-	memset(cmd->frame, 0, instance->mfi_frame_size);
+	स_रखो(cmd->frame, 0, instance->mfi_frame_size);
 	cmd->frame->io.context = cpu_to_le32(cmd->index);
-	if (!fusion && reset_devices)
+	अगर (!fusion && reset_devices)
 		cmd->frame->hdr.cmd = MFI_CMD_INVALID;
 	list_add(&cmd->list, (&instance->cmd_pool)->next);
 
 	spin_unlock_irqrestore(&instance->mfi_pool_lock, flags);
 
-}
+पूर्ण
 
-static const char *
-format_timestamp(uint32_t timestamp)
-{
-	static char buffer[32];
+अटल स्थिर अक्षर *
+क्रमmat_बारtamp(uपूर्णांक32_t बारtamp)
+अणु
+	अटल अक्षर buffer[32];
 
-	if ((timestamp & 0xff000000) == 0xff000000)
-		snprintf(buffer, sizeof(buffer), "boot + %us", timestamp &
+	अगर ((बारtamp & 0xff000000) == 0xff000000)
+		snम_लिखो(buffer, माप(buffer), "boot + %us", बारtamp &
 		0x00ffffff);
-	else
-		snprintf(buffer, sizeof(buffer), "%us", timestamp);
-	return buffer;
-}
+	अन्यथा
+		snम_लिखो(buffer, माप(buffer), "%us", बारtamp);
+	वापस buffer;
+पूर्ण
 
-static const char *
-format_class(int8_t class)
-{
-	static char buffer[6];
+अटल स्थिर अक्षर *
+क्रमmat_class(पूर्णांक8_t class)
+अणु
+	अटल अक्षर buffer[6];
 
-	switch (class) {
-	case MFI_EVT_CLASS_DEBUG:
-		return "debug";
-	case MFI_EVT_CLASS_PROGRESS:
-		return "progress";
-	case MFI_EVT_CLASS_INFO:
-		return "info";
-	case MFI_EVT_CLASS_WARNING:
-		return "WARN";
-	case MFI_EVT_CLASS_CRITICAL:
-		return "CRIT";
-	case MFI_EVT_CLASS_FATAL:
-		return "FATAL";
-	case MFI_EVT_CLASS_DEAD:
-		return "DEAD";
-	default:
-		snprintf(buffer, sizeof(buffer), "%d", class);
-		return buffer;
-	}
-}
+	चयन (class) अणु
+	हाल MFI_EVT_CLASS_DEBUG:
+		वापस "debug";
+	हाल MFI_EVT_CLASS_PROGRESS:
+		वापस "progress";
+	हाल MFI_EVT_CLASS_INFO:
+		वापस "info";
+	हाल MFI_EVT_CLASS_WARNING:
+		वापस "WARN";
+	हाल MFI_EVT_CLASS_CRITICAL:
+		वापस "CRIT";
+	हाल MFI_EVT_CLASS_FATAL:
+		वापस "FATAL";
+	हाल MFI_EVT_CLASS_DEAD:
+		वापस "DEAD";
+	शेष:
+		snम_लिखो(buffer, माप(buffer), "%d", class);
+		वापस buffer;
+	पूर्ण
+पूर्ण
 
 /**
-  * megasas_decode_evt: Decode FW AEN event and print critical event
-  * for information.
+  * megasas_decode_evt: Decode FW AEN event and prपूर्णांक critical event
+  * क्रम inक्रमmation.
   * @instance:			Adapter soft state
   */
-static void
-megasas_decode_evt(struct megasas_instance *instance)
-{
-	struct megasas_evt_detail *evt_detail = instance->evt_detail;
-	union megasas_evt_class_locale class_locale;
+अटल व्योम
+megasas_decode_evt(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_evt_detail *evt_detail = instance->evt_detail;
+	जोड़ megasas_evt_class_locale class_locale;
 	class_locale.word = le32_to_cpu(evt_detail->cl.word);
 
-	if ((event_log_level < MFI_EVT_CLASS_DEBUG) ||
-	    (event_log_level > MFI_EVT_CLASS_DEAD)) {
-		printk(KERN_WARNING "megaraid_sas: provided event log level is out of range, setting it to default 2(CLASS_CRITICAL), permissible range is: -2 to 4\n");
+	अगर ((event_log_level < MFI_EVT_CLASS_DEBUG) ||
+	    (event_log_level > MFI_EVT_CLASS_DEAD)) अणु
+		prपूर्णांकk(KERN_WARNING "megaraid_sas: provided event log level is out of range, setting it to default 2(CLASS_CRITICAL), permissible range is: -2 to 4\n");
 		event_log_level = MFI_EVT_CLASS_CRITICAL;
-	}
+	पूर्ण
 
-	if (class_locale.members.class >= event_log_level)
+	अगर (class_locale.members.class >= event_log_level)
 		dev_info(&instance->pdev->dev, "%d (%s/0x%04x/%s) - %s\n",
 			le32_to_cpu(evt_detail->seq_num),
-			format_timestamp(le32_to_cpu(evt_detail->time_stamp)),
+			क्रमmat_बारtamp(le32_to_cpu(evt_detail->समय_stamp)),
 			(class_locale.members.locale),
-			format_class(class_locale.members.class),
+			क्रमmat_class(class_locale.members.class),
 			evt_detail->description);
-}
+पूर्ण
 
 /*
- * The following functions are defined for xscale
+ * The following functions are defined क्रम xscale
  * (deviceid : 1064R, PERC5) controllers
  */
 
 /**
- * megasas_enable_intr_xscale -	Enables interrupts
+ * megasas_enable_पूर्णांकr_xscale -	Enables पूर्णांकerrupts
  * @instance:	Adapter soft state
  */
-static inline void
-megasas_enable_intr_xscale(struct megasas_instance *instance)
-{
-	struct megasas_register_set __iomem *regs;
+अटल अंतरभूत व्योम
+megasas_enable_पूर्णांकr_xscale(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 
 	regs = instance->reg_set;
-	writel(0, &(regs)->outbound_intr_mask);
+	ग_लिखोl(0, &(regs)->outbound_पूर्णांकr_mask);
 
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_intr_mask);
-}
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_पूर्णांकr_mask);
+पूर्ण
 
 /**
- * megasas_disable_intr_xscale -Disables interrupt
+ * megasas_disable_पूर्णांकr_xscale -Disables पूर्णांकerrupt
  * @instance:	Adapter soft state
  */
-static inline void
-megasas_disable_intr_xscale(struct megasas_instance *instance)
-{
-	struct megasas_register_set __iomem *regs;
+अटल अंतरभूत व्योम
+megasas_disable_पूर्णांकr_xscale(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 	u32 mask = 0x1f;
 
 	regs = instance->reg_set;
-	writel(mask, &regs->outbound_intr_mask);
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_intr_mask);
-}
+	ग_लिखोl(mask, &regs->outbound_पूर्णांकr_mask);
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_पूर्णांकr_mask);
+पूर्ण
 
 /**
- * megasas_read_fw_status_reg_xscale - returns the current FW status value
+ * megasas_पढ़ो_fw_status_reg_xscale - वापसs the current FW status value
  * @instance:	Adapter soft state
  */
-static u32
-megasas_read_fw_status_reg_xscale(struct megasas_instance *instance)
-{
-	return readl(&instance->reg_set->outbound_msg_0);
-}
+अटल u32
+megasas_पढ़ो_fw_status_reg_xscale(काष्ठा megasas_instance *instance)
+अणु
+	वापस पढ़ोl(&instance->reg_set->outbound_msg_0);
+पूर्ण
 /**
- * megasas_clear_intr_xscale -	Check & clear interrupt
+ * megasas_clear_पूर्णांकr_xscale -	Check & clear पूर्णांकerrupt
  * @instance:	Adapter soft state
  */
-static int
-megasas_clear_intr_xscale(struct megasas_instance *instance)
-{
+अटल पूर्णांक
+megasas_clear_पूर्णांकr_xscale(काष्ठा megasas_instance *instance)
+अणु
 	u32 status;
 	u32 mfiStatus = 0;
-	struct megasas_register_set __iomem *regs;
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 	regs = instance->reg_set;
 
 	/*
-	 * Check if it is our interrupt
+	 * Check अगर it is our पूर्णांकerrupt
 	 */
-	status = readl(&regs->outbound_intr_status);
+	status = पढ़ोl(&regs->outbound_पूर्णांकr_status);
 
-	if (status & MFI_OB_INTR_STATUS_MASK)
+	अगर (status & MFI_OB_INTR_STATUS_MASK)
 		mfiStatus = MFI_INTR_FLAG_REPLY_MESSAGE;
-	if (status & MFI_XSCALE_OMR0_CHANGE_INTERRUPT)
+	अगर (status & MFI_XSCALE_OMR0_CHANGE_INTERRUPT)
 		mfiStatus |= MFI_INTR_FLAG_FIRMWARE_STATE_CHANGE;
 
 	/*
-	 * Clear the interrupt by writing back the same value
+	 * Clear the पूर्णांकerrupt by writing back the same value
 	 */
-	if (mfiStatus)
-		writel(status, &regs->outbound_intr_status);
+	अगर (mfiStatus)
+		ग_लिखोl(status, &regs->outbound_पूर्णांकr_status);
 
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_intr_status);
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_पूर्णांकr_status);
 
-	return mfiStatus;
-}
+	वापस mfiStatus;
+पूर्ण
 
 /**
  * megasas_fire_cmd_xscale -	Sends command to the FW
  * @instance:		Adapter soft state
  * @frame_phys_addr :	Physical address of cmd
- * @frame_count :	Number of frames for the command
- * @regs :		MFI register set
+ * @frame_count :	Number of frames क्रम the command
+ * @regs :		MFI रेजिस्टर set
  */
-static inline void
-megasas_fire_cmd_xscale(struct megasas_instance *instance,
+अटल अंतरभूत व्योम
+megasas_fire_cmd_xscale(काष्ठा megasas_instance *instance,
 		dma_addr_t frame_phys_addr,
 		u32 frame_count,
-		struct megasas_register_set __iomem *regs)
-{
-	unsigned long flags;
+		काष्ठा megasas_रेजिस्टर_set __iomem *regs)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&instance->hba_lock, flags);
-	writel((frame_phys_addr >> 3)|(frame_count),
+	ग_लिखोl((frame_phys_addr >> 3)|(frame_count),
 	       &(regs)->inbound_queue_port);
 	spin_unlock_irqrestore(&instance->hba_lock, flags);
-}
+पूर्ण
 
 /**
  * megasas_adp_reset_xscale -  For controller reset
  * @instance:	Adapter soft state
- * @regs:	MFI register set
+ * @regs:	MFI रेजिस्टर set
  */
-static int
-megasas_adp_reset_xscale(struct megasas_instance *instance,
-	struct megasas_register_set __iomem *regs)
-{
+अटल पूर्णांक
+megasas_adp_reset_xscale(काष्ठा megasas_instance *instance,
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs)
+अणु
 	u32 i;
 	u32 pcidata;
 
-	writel(MFI_ADP_RESET, &regs->inbound_doorbell);
+	ग_लिखोl(MFI_ADP_RESET, &regs->inbound_करोorbell);
 
-	for (i = 0; i < 3; i++)
-		msleep(1000); /* sleep for 3 secs */
+	क्रम (i = 0; i < 3; i++)
+		msleep(1000); /* sleep क्रम 3 secs */
 	pcidata  = 0;
-	pci_read_config_dword(instance->pdev, MFI_1068_PCSR_OFFSET, &pcidata);
+	pci_पढ़ो_config_dword(instance->pdev, MFI_1068_PCSR_OFFSET, &pcidata);
 	dev_notice(&instance->pdev->dev, "pcidata = %x\n", pcidata);
-	if (pcidata & 0x2) {
+	अगर (pcidata & 0x2) अणु
 		dev_notice(&instance->pdev->dev, "mfi 1068 offset read=%x\n", pcidata);
 		pcidata &= ~0x2;
-		pci_write_config_dword(instance->pdev,
+		pci_ग_लिखो_config_dword(instance->pdev,
 				MFI_1068_PCSR_OFFSET, pcidata);
 
-		for (i = 0; i < 2; i++)
-			msleep(1000); /* need to wait 2 secs again */
+		क्रम (i = 0; i < 2; i++)
+			msleep(1000); /* need to रुको 2 secs again */
 
 		pcidata  = 0;
-		pci_read_config_dword(instance->pdev,
+		pci_पढ़ो_config_dword(instance->pdev,
 				MFI_1068_FW_HANDSHAKE_OFFSET, &pcidata);
 		dev_notice(&instance->pdev->dev, "1068 offset handshake read=%x\n", pcidata);
-		if ((pcidata & 0xffff0000) == MFI_1068_FW_READY) {
+		अगर ((pcidata & 0xffff0000) == MFI_1068_FW_READY) अणु
 			dev_notice(&instance->pdev->dev, "1068 offset pcidt=%x\n", pcidata);
 			pcidata = 0;
-			pci_write_config_dword(instance->pdev,
+			pci_ग_लिखो_config_dword(instance->pdev,
 				MFI_1068_FW_HANDSHAKE_OFFSET, pcidata);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * megasas_check_reset_xscale -	For controller reset check
  * @instance:	Adapter soft state
- * @regs:	MFI register set
+ * @regs:	MFI रेजिस्टर set
  */
-static int
-megasas_check_reset_xscale(struct megasas_instance *instance,
-		struct megasas_register_set __iomem *regs)
-{
-	if ((atomic_read(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL) &&
+अटल पूर्णांक
+megasas_check_reset_xscale(काष्ठा megasas_instance *instance,
+		काष्ठा megasas_रेजिस्टर_set __iomem *regs)
+अणु
+	अगर ((atomic_पढ़ो(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL) &&
 	    (le32_to_cpu(*instance->consumer) ==
 		MEGASAS_ADPRESET_INPROG_SIGN))
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static struct megasas_instance_template megasas_instance_template_xscale = {
+अटल काष्ठा megasas_instance_ढाँचा megasas_instance_ढाँचा_xscale = अणु
 
 	.fire_cmd = megasas_fire_cmd_xscale,
-	.enable_intr = megasas_enable_intr_xscale,
-	.disable_intr = megasas_disable_intr_xscale,
-	.clear_intr = megasas_clear_intr_xscale,
-	.read_fw_status_reg = megasas_read_fw_status_reg_xscale,
+	.enable_पूर्णांकr = megasas_enable_पूर्णांकr_xscale,
+	.disable_पूर्णांकr = megasas_disable_पूर्णांकr_xscale,
+	.clear_पूर्णांकr = megasas_clear_पूर्णांकr_xscale,
+	.पढ़ो_fw_status_reg = megasas_पढ़ो_fw_status_reg_xscale,
 	.adp_reset = megasas_adp_reset_xscale,
 	.check_reset = megasas_check_reset_xscale,
 	.service_isr = megasas_isr,
@@ -611,138 +612,138 @@ static struct megasas_instance_template megasas_instance_template_xscale = {
 	.init_adapter = megasas_init_adapter_mfi,
 	.build_and_issue_cmd = megasas_build_and_issue_cmd,
 	.issue_dcmd = megasas_issue_dcmd,
-};
+पूर्ण;
 
 /*
- * This is the end of set of functions & definitions specific
+ * This is the end of set of functions & definitions specअगरic
  * to xscale (deviceid : 1064R, PERC5) controllers
  */
 
 /*
- * The following functions are defined for ppc (deviceid : 0x60)
+ * The following functions are defined क्रम ppc (deviceid : 0x60)
  * controllers
  */
 
 /**
- * megasas_enable_intr_ppc -	Enables interrupts
+ * megasas_enable_पूर्णांकr_ppc -	Enables पूर्णांकerrupts
  * @instance:	Adapter soft state
  */
-static inline void
-megasas_enable_intr_ppc(struct megasas_instance *instance)
-{
-	struct megasas_register_set __iomem *regs;
+अटल अंतरभूत व्योम
+megasas_enable_पूर्णांकr_ppc(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 
 	regs = instance->reg_set;
-	writel(0xFFFFFFFF, &(regs)->outbound_doorbell_clear);
+	ग_लिखोl(0xFFFFFFFF, &(regs)->outbound_करोorbell_clear);
 
-	writel(~0x80000000, &(regs)->outbound_intr_mask);
+	ग_लिखोl(~0x80000000, &(regs)->outbound_पूर्णांकr_mask);
 
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_intr_mask);
-}
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_पूर्णांकr_mask);
+पूर्ण
 
 /**
- * megasas_disable_intr_ppc -	Disable interrupt
+ * megasas_disable_पूर्णांकr_ppc -	Disable पूर्णांकerrupt
  * @instance:	Adapter soft state
  */
-static inline void
-megasas_disable_intr_ppc(struct megasas_instance *instance)
-{
-	struct megasas_register_set __iomem *regs;
+अटल अंतरभूत व्योम
+megasas_disable_पूर्णांकr_ppc(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 	u32 mask = 0xFFFFFFFF;
 
 	regs = instance->reg_set;
-	writel(mask, &regs->outbound_intr_mask);
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_intr_mask);
-}
+	ग_लिखोl(mask, &regs->outbound_पूर्णांकr_mask);
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_पूर्णांकr_mask);
+पूर्ण
 
 /**
- * megasas_read_fw_status_reg_ppc - returns the current FW status value
+ * megasas_पढ़ो_fw_status_reg_ppc - वापसs the current FW status value
  * @instance:	Adapter soft state
  */
-static u32
-megasas_read_fw_status_reg_ppc(struct megasas_instance *instance)
-{
-	return readl(&instance->reg_set->outbound_scratch_pad_0);
-}
+अटल u32
+megasas_पढ़ो_fw_status_reg_ppc(काष्ठा megasas_instance *instance)
+अणु
+	वापस पढ़ोl(&instance->reg_set->outbound_scratch_pad_0);
+पूर्ण
 
 /**
- * megasas_clear_intr_ppc -	Check & clear interrupt
+ * megasas_clear_पूर्णांकr_ppc -	Check & clear पूर्णांकerrupt
  * @instance:	Adapter soft state
  */
-static int
-megasas_clear_intr_ppc(struct megasas_instance *instance)
-{
+अटल पूर्णांक
+megasas_clear_पूर्णांकr_ppc(काष्ठा megasas_instance *instance)
+अणु
 	u32 status, mfiStatus = 0;
-	struct megasas_register_set __iomem *regs;
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 	regs = instance->reg_set;
 
 	/*
-	 * Check if it is our interrupt
+	 * Check अगर it is our पूर्णांकerrupt
 	 */
-	status = readl(&regs->outbound_intr_status);
+	status = पढ़ोl(&regs->outbound_पूर्णांकr_status);
 
-	if (status & MFI_REPLY_1078_MESSAGE_INTERRUPT)
+	अगर (status & MFI_REPLY_1078_MESSAGE_INTERRUPT)
 		mfiStatus = MFI_INTR_FLAG_REPLY_MESSAGE;
 
-	if (status & MFI_G2_OUTBOUND_DOORBELL_CHANGE_INTERRUPT)
+	अगर (status & MFI_G2_OUTBOUND_DOORBELL_CHANGE_INTERRUPT)
 		mfiStatus |= MFI_INTR_FLAG_FIRMWARE_STATE_CHANGE;
 
 	/*
-	 * Clear the interrupt by writing back the same value
+	 * Clear the पूर्णांकerrupt by writing back the same value
 	 */
-	writel(status, &regs->outbound_doorbell_clear);
+	ग_लिखोl(status, &regs->outbound_करोorbell_clear);
 
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_doorbell_clear);
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_करोorbell_clear);
 
-	return mfiStatus;
-}
+	वापस mfiStatus;
+पूर्ण
 
 /**
  * megasas_fire_cmd_ppc -	Sends command to the FW
  * @instance:		Adapter soft state
  * @frame_phys_addr:	Physical address of cmd
- * @frame_count:	Number of frames for the command
- * @regs:		MFI register set
+ * @frame_count:	Number of frames क्रम the command
+ * @regs:		MFI रेजिस्टर set
  */
-static inline void
-megasas_fire_cmd_ppc(struct megasas_instance *instance,
+अटल अंतरभूत व्योम
+megasas_fire_cmd_ppc(काष्ठा megasas_instance *instance,
 		dma_addr_t frame_phys_addr,
 		u32 frame_count,
-		struct megasas_register_set __iomem *regs)
-{
-	unsigned long flags;
+		काष्ठा megasas_रेजिस्टर_set __iomem *regs)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&instance->hba_lock, flags);
-	writel((frame_phys_addr | (frame_count<<1))|1,
+	ग_लिखोl((frame_phys_addr | (frame_count<<1))|1,
 			&(regs)->inbound_queue_port);
 	spin_unlock_irqrestore(&instance->hba_lock, flags);
-}
+पूर्ण
 
 /**
  * megasas_check_reset_ppc -	For controller reset check
  * @instance:	Adapter soft state
- * @regs:	MFI register set
+ * @regs:	MFI रेजिस्टर set
  */
-static int
-megasas_check_reset_ppc(struct megasas_instance *instance,
-			struct megasas_register_set __iomem *regs)
-{
-	if (atomic_read(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL)
-		return 1;
+अटल पूर्णांक
+megasas_check_reset_ppc(काष्ठा megasas_instance *instance,
+			काष्ठा megasas_रेजिस्टर_set __iomem *regs)
+अणु
+	अगर (atomic_पढ़ो(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct megasas_instance_template megasas_instance_template_ppc = {
+अटल काष्ठा megasas_instance_ढाँचा megasas_instance_ढाँचा_ppc = अणु
 
 	.fire_cmd = megasas_fire_cmd_ppc,
-	.enable_intr = megasas_enable_intr_ppc,
-	.disable_intr = megasas_disable_intr_ppc,
-	.clear_intr = megasas_clear_intr_ppc,
-	.read_fw_status_reg = megasas_read_fw_status_reg_ppc,
+	.enable_पूर्णांकr = megasas_enable_पूर्णांकr_ppc,
+	.disable_पूर्णांकr = megasas_disable_पूर्णांकr_ppc,
+	.clear_पूर्णांकr = megasas_clear_पूर्णांकr_ppc,
+	.पढ़ो_fw_status_reg = megasas_पढ़ो_fw_status_reg_ppc,
 	.adp_reset = megasas_adp_reset_xscale,
 	.check_reset = megasas_check_reset_ppc,
 	.service_isr = megasas_isr,
@@ -750,140 +751,140 @@ static struct megasas_instance_template megasas_instance_template_ppc = {
 	.init_adapter = megasas_init_adapter_mfi,
 	.build_and_issue_cmd = megasas_build_and_issue_cmd,
 	.issue_dcmd = megasas_issue_dcmd,
-};
+पूर्ण;
 
 /**
- * megasas_enable_intr_skinny -	Enables interrupts
+ * megasas_enable_पूर्णांकr_skinny -	Enables पूर्णांकerrupts
  * @instance:	Adapter soft state
  */
-static inline void
-megasas_enable_intr_skinny(struct megasas_instance *instance)
-{
-	struct megasas_register_set __iomem *regs;
+अटल अंतरभूत व्योम
+megasas_enable_पूर्णांकr_skinny(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 
 	regs = instance->reg_set;
-	writel(0xFFFFFFFF, &(regs)->outbound_intr_mask);
+	ग_लिखोl(0xFFFFFFFF, &(regs)->outbound_पूर्णांकr_mask);
 
-	writel(~MFI_SKINNY_ENABLE_INTERRUPT_MASK, &(regs)->outbound_intr_mask);
+	ग_लिखोl(~MFI_SKINNY_ENABLE_INTERRUPT_MASK, &(regs)->outbound_पूर्णांकr_mask);
 
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_intr_mask);
-}
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_पूर्णांकr_mask);
+पूर्ण
 
 /**
- * megasas_disable_intr_skinny -	Disables interrupt
+ * megasas_disable_पूर्णांकr_skinny -	Disables पूर्णांकerrupt
  * @instance:	Adapter soft state
  */
-static inline void
-megasas_disable_intr_skinny(struct megasas_instance *instance)
-{
-	struct megasas_register_set __iomem *regs;
+अटल अंतरभूत व्योम
+megasas_disable_पूर्णांकr_skinny(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 	u32 mask = 0xFFFFFFFF;
 
 	regs = instance->reg_set;
-	writel(mask, &regs->outbound_intr_mask);
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_intr_mask);
-}
+	ग_लिखोl(mask, &regs->outbound_पूर्णांकr_mask);
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_पूर्णांकr_mask);
+पूर्ण
 
 /**
- * megasas_read_fw_status_reg_skinny - returns the current FW status value
+ * megasas_पढ़ो_fw_status_reg_skinny - वापसs the current FW status value
  * @instance:	Adapter soft state
  */
-static u32
-megasas_read_fw_status_reg_skinny(struct megasas_instance *instance)
-{
-	return readl(&instance->reg_set->outbound_scratch_pad_0);
-}
+अटल u32
+megasas_पढ़ो_fw_status_reg_skinny(काष्ठा megasas_instance *instance)
+अणु
+	वापस पढ़ोl(&instance->reg_set->outbound_scratch_pad_0);
+पूर्ण
 
 /**
- * megasas_clear_intr_skinny -	Check & clear interrupt
+ * megasas_clear_पूर्णांकr_skinny -	Check & clear पूर्णांकerrupt
  * @instance:	Adapter soft state
  */
-static int
-megasas_clear_intr_skinny(struct megasas_instance *instance)
-{
+अटल पूर्णांक
+megasas_clear_पूर्णांकr_skinny(काष्ठा megasas_instance *instance)
+अणु
 	u32 status;
 	u32 mfiStatus = 0;
-	struct megasas_register_set __iomem *regs;
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 	regs = instance->reg_set;
 
 	/*
-	 * Check if it is our interrupt
+	 * Check अगर it is our पूर्णांकerrupt
 	 */
-	status = readl(&regs->outbound_intr_status);
+	status = पढ़ोl(&regs->outbound_पूर्णांकr_status);
 
-	if (!(status & MFI_SKINNY_ENABLE_INTERRUPT_MASK)) {
-		return 0;
-	}
+	अगर (!(status & MFI_SKINNY_ENABLE_INTERRUPT_MASK)) अणु
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * Check if it is our interrupt
+	 * Check अगर it is our पूर्णांकerrupt
 	 */
-	if ((megasas_read_fw_status_reg_skinny(instance) & MFI_STATE_MASK) ==
-	    MFI_STATE_FAULT) {
+	अगर ((megasas_पढ़ो_fw_status_reg_skinny(instance) & MFI_STATE_MASK) ==
+	    MFI_STATE_FAULT) अणु
 		mfiStatus = MFI_INTR_FLAG_FIRMWARE_STATE_CHANGE;
-	} else
+	पूर्ण अन्यथा
 		mfiStatus = MFI_INTR_FLAG_REPLY_MESSAGE;
 
 	/*
-	 * Clear the interrupt by writing back the same value
+	 * Clear the पूर्णांकerrupt by writing back the same value
 	 */
-	writel(status, &regs->outbound_intr_status);
+	ग_लिखोl(status, &regs->outbound_पूर्णांकr_status);
 
 	/*
-	 * dummy read to flush PCI
+	 * dummy पढ़ो to flush PCI
 	 */
-	readl(&regs->outbound_intr_status);
+	पढ़ोl(&regs->outbound_पूर्णांकr_status);
 
-	return mfiStatus;
-}
+	वापस mfiStatus;
+पूर्ण
 
 /**
  * megasas_fire_cmd_skinny -	Sends command to the FW
  * @instance:		Adapter soft state
  * @frame_phys_addr:	Physical address of cmd
- * @frame_count:	Number of frames for the command
- * @regs:		MFI register set
+ * @frame_count:	Number of frames क्रम the command
+ * @regs:		MFI रेजिस्टर set
  */
-static inline void
-megasas_fire_cmd_skinny(struct megasas_instance *instance,
+अटल अंतरभूत व्योम
+megasas_fire_cmd_skinny(काष्ठा megasas_instance *instance,
 			dma_addr_t frame_phys_addr,
 			u32 frame_count,
-			struct megasas_register_set __iomem *regs)
-{
-	unsigned long flags;
+			काष्ठा megasas_रेजिस्टर_set __iomem *regs)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&instance->hba_lock, flags);
-	writel(upper_32_bits(frame_phys_addr),
+	ग_लिखोl(upper_32_bits(frame_phys_addr),
 	       &(regs)->inbound_high_queue_port);
-	writel((lower_32_bits(frame_phys_addr) | (frame_count<<1))|1,
+	ग_लिखोl((lower_32_bits(frame_phys_addr) | (frame_count<<1))|1,
 	       &(regs)->inbound_low_queue_port);
 	spin_unlock_irqrestore(&instance->hba_lock, flags);
-}
+पूर्ण
 
 /**
  * megasas_check_reset_skinny -	For controller reset check
  * @instance:	Adapter soft state
- * @regs:	MFI register set
+ * @regs:	MFI रेजिस्टर set
  */
-static int
-megasas_check_reset_skinny(struct megasas_instance *instance,
-				struct megasas_register_set __iomem *regs)
-{
-	if (atomic_read(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL)
-		return 1;
+अटल पूर्णांक
+megasas_check_reset_skinny(काष्ठा megasas_instance *instance,
+				काष्ठा megasas_रेजिस्टर_set __iomem *regs)
+अणु
+	अगर (atomic_पढ़ो(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct megasas_instance_template megasas_instance_template_skinny = {
+अटल काष्ठा megasas_instance_ढाँचा megasas_instance_ढाँचा_skinny = अणु
 
 	.fire_cmd = megasas_fire_cmd_skinny,
-	.enable_intr = megasas_enable_intr_skinny,
-	.disable_intr = megasas_disable_intr_skinny,
-	.clear_intr = megasas_clear_intr_skinny,
-	.read_fw_status_reg = megasas_read_fw_status_reg_skinny,
+	.enable_पूर्णांकr = megasas_enable_पूर्णांकr_skinny,
+	.disable_पूर्णांकr = megasas_disable_पूर्णांकr_skinny,
+	.clear_पूर्णांकr = megasas_clear_पूर्णांकr_skinny,
+	.पढ़ो_fw_status_reg = megasas_पढ़ो_fw_status_reg_skinny,
 	.adp_reset = megasas_adp_reset_gen2,
 	.check_reset = megasas_check_reset_skinny,
 	.service_isr = megasas_isr,
@@ -891,199 +892,199 @@ static struct megasas_instance_template megasas_instance_template_skinny = {
 	.init_adapter = megasas_init_adapter_mfi,
 	.build_and_issue_cmd = megasas_build_and_issue_cmd,
 	.issue_dcmd = megasas_issue_dcmd,
-};
+पूर्ण;
 
 
 /*
- * The following functions are defined for gen2 (deviceid : 0x78 0x79)
+ * The following functions are defined क्रम gen2 (deviceid : 0x78 0x79)
  * controllers
  */
 
 /**
- * megasas_enable_intr_gen2 -  Enables interrupts
+ * megasas_enable_पूर्णांकr_gen2 -  Enables पूर्णांकerrupts
  * @instance:	Adapter soft state
  */
-static inline void
-megasas_enable_intr_gen2(struct megasas_instance *instance)
-{
-	struct megasas_register_set __iomem *regs;
+अटल अंतरभूत व्योम
+megasas_enable_पूर्णांकr_gen2(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 
 	regs = instance->reg_set;
-	writel(0xFFFFFFFF, &(regs)->outbound_doorbell_clear);
+	ग_लिखोl(0xFFFFFFFF, &(regs)->outbound_करोorbell_clear);
 
-	/* write ~0x00000005 (4 & 1) to the intr mask*/
-	writel(~MFI_GEN2_ENABLE_INTERRUPT_MASK, &(regs)->outbound_intr_mask);
+	/* ग_लिखो ~0x00000005 (4 & 1) to the पूर्णांकr mask*/
+	ग_लिखोl(~MFI_GEN2_ENABLE_INTERRUPT_MASK, &(regs)->outbound_पूर्णांकr_mask);
 
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_intr_mask);
-}
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_पूर्णांकr_mask);
+पूर्ण
 
 /**
- * megasas_disable_intr_gen2 - Disables interrupt
+ * megasas_disable_पूर्णांकr_gen2 - Disables पूर्णांकerrupt
  * @instance:	Adapter soft state
  */
-static inline void
-megasas_disable_intr_gen2(struct megasas_instance *instance)
-{
-	struct megasas_register_set __iomem *regs;
+अटल अंतरभूत व्योम
+megasas_disable_पूर्णांकr_gen2(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 	u32 mask = 0xFFFFFFFF;
 
 	regs = instance->reg_set;
-	writel(mask, &regs->outbound_intr_mask);
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_intr_mask);
-}
+	ग_लिखोl(mask, &regs->outbound_पूर्णांकr_mask);
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_पूर्णांकr_mask);
+पूर्ण
 
 /**
- * megasas_read_fw_status_reg_gen2 - returns the current FW status value
+ * megasas_पढ़ो_fw_status_reg_gen2 - वापसs the current FW status value
  * @instance:	Adapter soft state
  */
-static u32
-megasas_read_fw_status_reg_gen2(struct megasas_instance *instance)
-{
-	return readl(&instance->reg_set->outbound_scratch_pad_0);
-}
+अटल u32
+megasas_पढ़ो_fw_status_reg_gen2(काष्ठा megasas_instance *instance)
+अणु
+	वापस पढ़ोl(&instance->reg_set->outbound_scratch_pad_0);
+पूर्ण
 
 /**
- * megasas_clear_intr_gen2 -      Check & clear interrupt
+ * megasas_clear_पूर्णांकr_gen2 -      Check & clear पूर्णांकerrupt
  * @instance:	Adapter soft state
  */
-static int
-megasas_clear_intr_gen2(struct megasas_instance *instance)
-{
+अटल पूर्णांक
+megasas_clear_पूर्णांकr_gen2(काष्ठा megasas_instance *instance)
+अणु
 	u32 status;
 	u32 mfiStatus = 0;
-	struct megasas_register_set __iomem *regs;
+	काष्ठा megasas_रेजिस्टर_set __iomem *regs;
 	regs = instance->reg_set;
 
 	/*
-	 * Check if it is our interrupt
+	 * Check अगर it is our पूर्णांकerrupt
 	 */
-	status = readl(&regs->outbound_intr_status);
+	status = पढ़ोl(&regs->outbound_पूर्णांकr_status);
 
-	if (status & MFI_INTR_FLAG_REPLY_MESSAGE) {
+	अगर (status & MFI_INTR_FLAG_REPLY_MESSAGE) अणु
 		mfiStatus = MFI_INTR_FLAG_REPLY_MESSAGE;
-	}
-	if (status & MFI_G2_OUTBOUND_DOORBELL_CHANGE_INTERRUPT) {
+	पूर्ण
+	अगर (status & MFI_G2_OUTBOUND_DOORBELL_CHANGE_INTERRUPT) अणु
 		mfiStatus |= MFI_INTR_FLAG_FIRMWARE_STATE_CHANGE;
-	}
+	पूर्ण
 
 	/*
-	 * Clear the interrupt by writing back the same value
+	 * Clear the पूर्णांकerrupt by writing back the same value
 	 */
-	if (mfiStatus)
-		writel(status, &regs->outbound_doorbell_clear);
+	अगर (mfiStatus)
+		ग_लिखोl(status, &regs->outbound_करोorbell_clear);
 
-	/* Dummy readl to force pci flush */
-	readl(&regs->outbound_intr_status);
+	/* Dummy पढ़ोl to क्रमce pci flush */
+	पढ़ोl(&regs->outbound_पूर्णांकr_status);
 
-	return mfiStatus;
-}
+	वापस mfiStatus;
+पूर्ण
 
 /**
  * megasas_fire_cmd_gen2 -     Sends command to the FW
  * @instance:		Adapter soft state
  * @frame_phys_addr:	Physical address of cmd
- * @frame_count:	Number of frames for the command
- * @regs:		MFI register set
+ * @frame_count:	Number of frames क्रम the command
+ * @regs:		MFI रेजिस्टर set
  */
-static inline void
-megasas_fire_cmd_gen2(struct megasas_instance *instance,
+अटल अंतरभूत व्योम
+megasas_fire_cmd_gen2(काष्ठा megasas_instance *instance,
 			dma_addr_t frame_phys_addr,
 			u32 frame_count,
-			struct megasas_register_set __iomem *regs)
-{
-	unsigned long flags;
+			काष्ठा megasas_रेजिस्टर_set __iomem *regs)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&instance->hba_lock, flags);
-	writel((frame_phys_addr | (frame_count<<1))|1,
+	ग_लिखोl((frame_phys_addr | (frame_count<<1))|1,
 			&(regs)->inbound_queue_port);
 	spin_unlock_irqrestore(&instance->hba_lock, flags);
-}
+पूर्ण
 
 /**
  * megasas_adp_reset_gen2 -	For controller reset
  * @instance:	Adapter soft state
- * @reg_set:	MFI register set
+ * @reg_set:	MFI रेजिस्टर set
  */
-static int
-megasas_adp_reset_gen2(struct megasas_instance *instance,
-			struct megasas_register_set __iomem *reg_set)
-{
+अटल पूर्णांक
+megasas_adp_reset_gen2(काष्ठा megasas_instance *instance,
+			काष्ठा megasas_रेजिस्टर_set __iomem *reg_set)
+अणु
 	u32 retry = 0 ;
 	u32 HostDiag;
 	u32 __iomem *seq_offset = &reg_set->seq_offset;
 	u32 __iomem *hostdiag_offset = &reg_set->host_diag;
 
-	if (instance->instancet == &megasas_instance_template_skinny) {
+	अगर (instance->instancet == &megasas_instance_ढाँचा_skinny) अणु
 		seq_offset = &reg_set->fusion_seq_offset;
 		hostdiag_offset = &reg_set->fusion_host_diag;
-	}
+	पूर्ण
 
-	writel(0, seq_offset);
-	writel(4, seq_offset);
-	writel(0xb, seq_offset);
-	writel(2, seq_offset);
-	writel(7, seq_offset);
-	writel(0xd, seq_offset);
+	ग_लिखोl(0, seq_offset);
+	ग_लिखोl(4, seq_offset);
+	ग_लिखोl(0xb, seq_offset);
+	ग_लिखोl(2, seq_offset);
+	ग_लिखोl(7, seq_offset);
+	ग_लिखोl(0xd, seq_offset);
 
 	msleep(1000);
 
-	HostDiag = (u32)readl(hostdiag_offset);
+	HostDiag = (u32)पढ़ोl(hostdiag_offset);
 
-	while (!(HostDiag & DIAG_WRITE_ENABLE)) {
+	जबतक (!(HostDiag & DIAG_WRITE_ENABLE)) अणु
 		msleep(100);
-		HostDiag = (u32)readl(hostdiag_offset);
+		HostDiag = (u32)पढ़ोl(hostdiag_offset);
 		dev_notice(&instance->pdev->dev, "RESETGEN2: retry=%x, hostdiag=%x\n",
 					retry, HostDiag);
 
-		if (retry++ >= 100)
-			return 1;
+		अगर (retry++ >= 100)
+			वापस 1;
 
-	}
+	पूर्ण
 
 	dev_notice(&instance->pdev->dev, "ADP_RESET_GEN2: HostDiag=%x\n", HostDiag);
 
-	writel((HostDiag | DIAG_RESET_ADAPTER), hostdiag_offset);
+	ग_लिखोl((HostDiag | DIAG_RESET_ADAPTER), hostdiag_offset);
 
 	ssleep(10);
 
-	HostDiag = (u32)readl(hostdiag_offset);
-	while (HostDiag & DIAG_RESET_ADAPTER) {
+	HostDiag = (u32)पढ़ोl(hostdiag_offset);
+	जबतक (HostDiag & DIAG_RESET_ADAPTER) अणु
 		msleep(100);
-		HostDiag = (u32)readl(hostdiag_offset);
+		HostDiag = (u32)पढ़ोl(hostdiag_offset);
 		dev_notice(&instance->pdev->dev, "RESET_GEN2: retry=%x, hostdiag=%x\n",
 				retry, HostDiag);
 
-		if (retry++ >= 1000)
-			return 1;
+		अगर (retry++ >= 1000)
+			वापस 1;
 
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * megasas_check_reset_gen2 -	For controller reset check
  * @instance:	Adapter soft state
- * @regs:	MFI register set
+ * @regs:	MFI रेजिस्टर set
  */
-static int
-megasas_check_reset_gen2(struct megasas_instance *instance,
-		struct megasas_register_set __iomem *regs)
-{
-	if (atomic_read(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL)
-		return 1;
+अटल पूर्णांक
+megasas_check_reset_gen2(काष्ठा megasas_instance *instance,
+		काष्ठा megasas_रेजिस्टर_set __iomem *regs)
+अणु
+	अगर (atomic_पढ़ो(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct megasas_instance_template megasas_instance_template_gen2 = {
+अटल काष्ठा megasas_instance_ढाँचा megasas_instance_ढाँचा_gen2 = अणु
 
 	.fire_cmd = megasas_fire_cmd_gen2,
-	.enable_intr = megasas_enable_intr_gen2,
-	.disable_intr = megasas_disable_intr_gen2,
-	.clear_intr = megasas_clear_intr_gen2,
-	.read_fw_status_reg = megasas_read_fw_status_reg_gen2,
+	.enable_पूर्णांकr = megasas_enable_पूर्णांकr_gen2,
+	.disable_पूर्णांकr = megasas_disable_पूर्णांकr_gen2,
+	.clear_पूर्णांकr = megasas_clear_पूर्णांकr_gen2,
+	.पढ़ो_fw_status_reg = megasas_पढ़ो_fw_status_reg_gen2,
 	.adp_reset = megasas_adp_reset_gen2,
 	.check_reset = megasas_check_reset_gen2,
 	.service_isr = megasas_isr,
@@ -1091,155 +1092,155 @@ static struct megasas_instance_template megasas_instance_template_gen2 = {
 	.init_adapter = megasas_init_adapter_mfi,
 	.build_and_issue_cmd = megasas_build_and_issue_cmd,
 	.issue_dcmd = megasas_issue_dcmd,
-};
+पूर्ण;
 
 /*
  * This is the end of set of functions & definitions
- * specific to gen2 (deviceid : 0x78, 0x79) controllers
+ * specअगरic to gen2 (deviceid : 0x78, 0x79) controllers
  */
 
 /*
- * Template added for TB (Fusion)
+ * Template added क्रम TB (Fusion)
  */
-extern struct megasas_instance_template megasas_instance_template_fusion;
+बाह्य काष्ठा megasas_instance_ढाँचा megasas_instance_ढाँचा_fusion;
 
 /**
  * megasas_issue_polled -	Issues a polling command
  * @instance:			Adapter soft state
  * @cmd:			Command packet to be issued
  *
- * For polling, MFI requires the cmd_status to be set to MFI_STAT_INVALID_STATUS before posting.
+ * For polling, MFI requires the cmd_status to be set to MFI_STAT_INVALID_STATUS beक्रमe posting.
  */
-int
-megasas_issue_polled(struct megasas_instance *instance, struct megasas_cmd *cmd)
-{
-	struct megasas_header *frame_hdr = &cmd->frame->hdr;
+पूर्णांक
+megasas_issue_polled(काष्ठा megasas_instance *instance, काष्ठा megasas_cmd *cmd)
+अणु
+	काष्ठा megasas_header *frame_hdr = &cmd->frame->hdr;
 
 	frame_hdr->cmd_status = MFI_STAT_INVALID_STATUS;
 	frame_hdr->flags |= cpu_to_le16(MFI_FRAME_DONT_POST_IN_REPLY_QUEUE);
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) {
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) अणु
 		dev_err(&instance->pdev->dev, "Failed from %s %d\n",
 			__func__, __LINE__);
-		return DCMD_INIT;
-	}
+		वापस DCMD_INIT;
+	पूर्ण
 
 	instance->instancet->issue_dcmd(instance, cmd);
 
-	return wait_and_poll(instance, cmd, instance->requestorId ?
+	वापस रुको_and_poll(instance, cmd, instance->requestorId ?
 			MEGASAS_ROUTINE_WAIT_TIME_VF : MFI_IO_TIMEOUT_SECS);
-}
+पूर्ण
 
 /**
  * megasas_issue_blocked_cmd -	Synchronous wrapper around regular FW cmds
  * @instance:			Adapter soft state
  * @cmd:			Command to be issued
- * @timeout:			Timeout in seconds
+ * @समयout:			Timeout in seconds
  *
- * This function waits on an event for the command to be returned from ISR.
- * Max wait time is MEGASAS_INTERNAL_CMD_WAIT_TIME secs
+ * This function रुकोs on an event क्रम the command to be वापसed from ISR.
+ * Max रुको समय is MEGASAS_INTERNAL_CMD_WAIT_TIME secs
  * Used to issue ioctl commands.
  */
-int
-megasas_issue_blocked_cmd(struct megasas_instance *instance,
-			  struct megasas_cmd *cmd, int timeout)
-{
-	int ret = 0;
+पूर्णांक
+megasas_issue_blocked_cmd(काष्ठा megasas_instance *instance,
+			  काष्ठा megasas_cmd *cmd, पूर्णांक समयout)
+अणु
+	पूर्णांक ret = 0;
 	cmd->cmd_status_drv = DCMD_INIT;
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) {
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) अणु
 		dev_err(&instance->pdev->dev, "Failed from %s %d\n",
 			__func__, __LINE__);
-		return DCMD_INIT;
-	}
+		वापस DCMD_INIT;
+	पूर्ण
 
 	instance->instancet->issue_dcmd(instance, cmd);
 
-	if (timeout) {
-		ret = wait_event_timeout(instance->int_cmd_wait_q,
-		cmd->cmd_status_drv != DCMD_INIT, timeout * HZ);
-		if (!ret) {
+	अगर (समयout) अणु
+		ret = रुको_event_समयout(instance->पूर्णांक_cmd_रुको_q,
+		cmd->cmd_status_drv != DCMD_INIT, समयout * HZ);
+		अगर (!ret) अणु
 			dev_err(&instance->pdev->dev,
 				"DCMD(opcode: 0x%x) is timed out, func:%s\n",
 				cmd->frame->dcmd.opcode, __func__);
-			return DCMD_TIMEOUT;
-		}
-	} else
-		wait_event(instance->int_cmd_wait_q,
+			वापस DCMD_TIMEOUT;
+		पूर्ण
+	पूर्ण अन्यथा
+		रुको_event(instance->पूर्णांक_cmd_रुको_q,
 				cmd->cmd_status_drv != DCMD_INIT);
 
-	return cmd->cmd_status_drv;
-}
+	वापस cmd->cmd_status_drv;
+पूर्ण
 
 /**
- * megasas_issue_blocked_abort_cmd -	Aborts previously issued cmd
+ * megasas_issue_blocked_पात_cmd -	Aborts previously issued cmd
  * @instance:				Adapter soft state
- * @cmd_to_abort:			Previously issued cmd to be aborted
- * @timeout:				Timeout in seconds
+ * @cmd_to_पात:			Previously issued cmd to be पातed
+ * @समयout:				Timeout in seconds
  *
- * MFI firmware can abort previously issued AEN comamnd (automatic event
- * notification). The megasas_issue_blocked_abort_cmd() issues such abort
- * cmd and waits for return status.
- * Max wait time is MEGASAS_INTERNAL_CMD_WAIT_TIME secs
+ * MFI firmware can पात previously issued AEN comamnd (स्वतःmatic event
+ * notअगरication). The megasas_issue_blocked_पात_cmd() issues such पात
+ * cmd and रुकोs क्रम वापस status.
+ * Max रुको समय is MEGASAS_INTERNAL_CMD_WAIT_TIME secs
  */
-static int
-megasas_issue_blocked_abort_cmd(struct megasas_instance *instance,
-				struct megasas_cmd *cmd_to_abort, int timeout)
-{
-	struct megasas_cmd *cmd;
-	struct megasas_abort_frame *abort_fr;
-	int ret = 0;
+अटल पूर्णांक
+megasas_issue_blocked_पात_cmd(काष्ठा megasas_instance *instance,
+				काष्ठा megasas_cmd *cmd_to_पात, पूर्णांक समयout)
+अणु
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_पात_frame *पात_fr;
+	पूर्णांक ret = 0;
 	u32 opcode;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd)
-		return -1;
+	अगर (!cmd)
+		वापस -1;
 
-	abort_fr = &cmd->frame->abort;
+	पात_fr = &cmd->frame->पात;
 
 	/*
-	 * Prepare and issue the abort frame
+	 * Prepare and issue the पात frame
 	 */
-	abort_fr->cmd = MFI_CMD_ABORT;
-	abort_fr->cmd_status = MFI_STAT_INVALID_STATUS;
-	abort_fr->flags = cpu_to_le16(0);
-	abort_fr->abort_context = cpu_to_le32(cmd_to_abort->index);
-	abort_fr->abort_mfi_phys_addr_lo =
-		cpu_to_le32(lower_32_bits(cmd_to_abort->frame_phys_addr));
-	abort_fr->abort_mfi_phys_addr_hi =
-		cpu_to_le32(upper_32_bits(cmd_to_abort->frame_phys_addr));
+	पात_fr->cmd = MFI_CMD_ABORT;
+	पात_fr->cmd_status = MFI_STAT_INVALID_STATUS;
+	पात_fr->flags = cpu_to_le16(0);
+	पात_fr->पात_context = cpu_to_le32(cmd_to_पात->index);
+	पात_fr->पात_mfi_phys_addr_lo =
+		cpu_to_le32(lower_32_bits(cmd_to_पात->frame_phys_addr));
+	पात_fr->पात_mfi_phys_addr_hi =
+		cpu_to_le32(upper_32_bits(cmd_to_पात->frame_phys_addr));
 
 	cmd->sync_cmd = 1;
 	cmd->cmd_status_drv = DCMD_INIT;
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) {
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) अणु
 		dev_err(&instance->pdev->dev, "Failed from %s %d\n",
 			__func__, __LINE__);
-		return DCMD_INIT;
-	}
+		वापस DCMD_INIT;
+	पूर्ण
 
 	instance->instancet->issue_dcmd(instance, cmd);
 
-	if (timeout) {
-		ret = wait_event_timeout(instance->abort_cmd_wait_q,
-		cmd->cmd_status_drv != DCMD_INIT, timeout * HZ);
-		if (!ret) {
-			opcode = cmd_to_abort->frame->dcmd.opcode;
+	अगर (समयout) अणु
+		ret = रुको_event_समयout(instance->पात_cmd_रुको_q,
+		cmd->cmd_status_drv != DCMD_INIT, समयout * HZ);
+		अगर (!ret) अणु
+			opcode = cmd_to_पात->frame->dcmd.opcode;
 			dev_err(&instance->pdev->dev,
 				"Abort(to be aborted DCMD opcode: 0x%x) is timed out func:%s\n",
 				opcode,  __func__);
-			return DCMD_TIMEOUT;
-		}
-	} else
-		wait_event(instance->abort_cmd_wait_q,
+			वापस DCMD_TIMEOUT;
+		पूर्ण
+	पूर्ण अन्यथा
+		रुको_event(instance->पात_cmd_रुको_q,
 		cmd->cmd_status_drv != DCMD_INIT);
 
 	cmd->sync_cmd = 0;
 
-	megasas_return_cmd(instance, cmd);
-	return cmd->cmd_status_drv;
-}
+	megasas_वापस_cmd(instance, cmd);
+	वापस cmd->cmd_status_drv;
+पूर्ण
 
 /**
  * megasas_make_sgl32 -	Prepares 32-bit SGL
@@ -1247,28 +1248,28 @@ megasas_issue_blocked_abort_cmd(struct megasas_instance *instance,
  * @scp:		SCSI command from the mid-layer
  * @mfi_sgl:		SGL to be filled in
  *
- * If successful, this function returns the number of SG elements. Otherwise,
- * it returnes -1.
+ * If successful, this function वापसs the number of SG elements. Otherwise,
+ * it वापसes -1.
  */
-static int
-megasas_make_sgl32(struct megasas_instance *instance, struct scsi_cmnd *scp,
-		   union megasas_sgl *mfi_sgl)
-{
-	int i;
-	int sge_count;
-	struct scatterlist *os_sgl;
+अटल पूर्णांक
+megasas_make_sgl32(काष्ठा megasas_instance *instance, काष्ठा scsi_cmnd *scp,
+		   जोड़ megasas_sgl *mfi_sgl)
+अणु
+	पूर्णांक i;
+	पूर्णांक sge_count;
+	काष्ठा scatterlist *os_sgl;
 
 	sge_count = scsi_dma_map(scp);
 	BUG_ON(sge_count < 0);
 
-	if (sge_count) {
-		scsi_for_each_sg(scp, os_sgl, sge_count, i) {
+	अगर (sge_count) अणु
+		scsi_क्रम_each_sg(scp, os_sgl, sge_count, i) अणु
 			mfi_sgl->sge32[i].length = cpu_to_le32(sg_dma_len(os_sgl));
 			mfi_sgl->sge32[i].phys_addr = cpu_to_le32(sg_dma_address(os_sgl));
-		}
-	}
-	return sge_count;
-}
+		पूर्ण
+	पूर्ण
+	वापस sge_count;
+पूर्ण
 
 /**
  * megasas_make_sgl64 -	Prepares 64-bit SGL
@@ -1276,28 +1277,28 @@ megasas_make_sgl32(struct megasas_instance *instance, struct scsi_cmnd *scp,
  * @scp:		SCSI command from the mid-layer
  * @mfi_sgl:		SGL to be filled in
  *
- * If successful, this function returns the number of SG elements. Otherwise,
- * it returnes -1.
+ * If successful, this function वापसs the number of SG elements. Otherwise,
+ * it वापसes -1.
  */
-static int
-megasas_make_sgl64(struct megasas_instance *instance, struct scsi_cmnd *scp,
-		   union megasas_sgl *mfi_sgl)
-{
-	int i;
-	int sge_count;
-	struct scatterlist *os_sgl;
+अटल पूर्णांक
+megasas_make_sgl64(काष्ठा megasas_instance *instance, काष्ठा scsi_cmnd *scp,
+		   जोड़ megasas_sgl *mfi_sgl)
+अणु
+	पूर्णांक i;
+	पूर्णांक sge_count;
+	काष्ठा scatterlist *os_sgl;
 
 	sge_count = scsi_dma_map(scp);
 	BUG_ON(sge_count < 0);
 
-	if (sge_count) {
-		scsi_for_each_sg(scp, os_sgl, sge_count, i) {
+	अगर (sge_count) अणु
+		scsi_क्रम_each_sg(scp, os_sgl, sge_count, i) अणु
 			mfi_sgl->sge64[i].length = cpu_to_le32(sg_dma_len(os_sgl));
 			mfi_sgl->sge64[i].phys_addr = cpu_to_le64(sg_dma_address(os_sgl));
-		}
-	}
-	return sge_count;
-}
+		पूर्ण
+	पूर्ण
+	वापस sge_count;
+पूर्ण
 
 /**
  * megasas_make_sgl_skinny - Prepares IEEE SGL
@@ -1305,89 +1306,89 @@ megasas_make_sgl64(struct megasas_instance *instance, struct scsi_cmnd *scp,
  * @scp:                SCSI command from the mid-layer
  * @mfi_sgl:            SGL to be filled in
  *
- * If successful, this function returns the number of SG elements. Otherwise,
- * it returnes -1.
+ * If successful, this function वापसs the number of SG elements. Otherwise,
+ * it वापसes -1.
  */
-static int
-megasas_make_sgl_skinny(struct megasas_instance *instance,
-		struct scsi_cmnd *scp, union megasas_sgl *mfi_sgl)
-{
-	int i;
-	int sge_count;
-	struct scatterlist *os_sgl;
+अटल पूर्णांक
+megasas_make_sgl_skinny(काष्ठा megasas_instance *instance,
+		काष्ठा scsi_cmnd *scp, जोड़ megasas_sgl *mfi_sgl)
+अणु
+	पूर्णांक i;
+	पूर्णांक sge_count;
+	काष्ठा scatterlist *os_sgl;
 
 	sge_count = scsi_dma_map(scp);
 
-	if (sge_count) {
-		scsi_for_each_sg(scp, os_sgl, sge_count, i) {
+	अगर (sge_count) अणु
+		scsi_क्रम_each_sg(scp, os_sgl, sge_count, i) अणु
 			mfi_sgl->sge_skinny[i].length =
 				cpu_to_le32(sg_dma_len(os_sgl));
 			mfi_sgl->sge_skinny[i].phys_addr =
 				cpu_to_le64(sg_dma_address(os_sgl));
 			mfi_sgl->sge_skinny[i].flag = cpu_to_le32(0);
-		}
-	}
-	return sge_count;
-}
+		पूर्ण
+	पूर्ण
+	वापस sge_count;
+पूर्ण
 
  /**
  * megasas_get_frame_count - Computes the number of frames
  * @frame_type		: type of frame- io or pthru frame
  * @sge_count		: number of sg elements
  *
- * Returns the number of frames required for numnber of sge's (sge_count)
+ * Returns the number of frames required क्रम numnber of sge's (sge_count)
  */
 
-static u32 megasas_get_frame_count(struct megasas_instance *instance,
+अटल u32 megasas_get_frame_count(काष्ठा megasas_instance *instance,
 			u8 sge_count, u8 frame_type)
-{
-	int num_cnt;
-	int sge_bytes;
+अणु
+	पूर्णांक num_cnt;
+	पूर्णांक sge_bytes;
 	u32 sge_sz;
 	u32 frame_count = 0;
 
-	sge_sz = (IS_DMA64) ? sizeof(struct megasas_sge64) :
-	    sizeof(struct megasas_sge32);
+	sge_sz = (IS_DMA64) ? माप(काष्ठा megasas_sge64) :
+	    माप(काष्ठा megasas_sge32);
 
-	if (instance->flag_ieee) {
-		sge_sz = sizeof(struct megasas_sge_skinny);
-	}
+	अगर (instance->flag_ieee) अणु
+		sge_sz = माप(काष्ठा megasas_sge_skinny);
+	पूर्ण
 
 	/*
-	 * Main frame can contain 2 SGEs for 64-bit SGLs and
-	 * 3 SGEs for 32-bit SGLs for ldio &
-	 * 1 SGEs for 64-bit SGLs and
-	 * 2 SGEs for 32-bit SGLs for pthru frame
+	 * Main frame can contain 2 SGEs क्रम 64-bit SGLs and
+	 * 3 SGEs क्रम 32-bit SGLs क्रम ldio &
+	 * 1 SGEs क्रम 64-bit SGLs and
+	 * 2 SGEs क्रम 32-bit SGLs क्रम pthru frame
 	 */
-	if (unlikely(frame_type == PTHRU_FRAME)) {
-		if (instance->flag_ieee == 1) {
+	अगर (unlikely(frame_type == PTHRU_FRAME)) अणु
+		अगर (instance->flag_ieee == 1) अणु
 			num_cnt = sge_count - 1;
-		} else if (IS_DMA64)
+		पूर्ण अन्यथा अगर (IS_DMA64)
 			num_cnt = sge_count - 1;
-		else
+		अन्यथा
 			num_cnt = sge_count - 2;
-	} else {
-		if (instance->flag_ieee == 1) {
+	पूर्ण अन्यथा अणु
+		अगर (instance->flag_ieee == 1) अणु
 			num_cnt = sge_count - 1;
-		} else if (IS_DMA64)
+		पूर्ण अन्यथा अगर (IS_DMA64)
 			num_cnt = sge_count - 2;
-		else
+		अन्यथा
 			num_cnt = sge_count - 3;
-	}
+	पूर्ण
 
-	if (num_cnt > 0) {
+	अगर (num_cnt > 0) अणु
 		sge_bytes = sge_sz * num_cnt;
 
 		frame_count = (sge_bytes / MEGAMFI_FRAME_SIZE) +
 		    ((sge_bytes % MEGAMFI_FRAME_SIZE) ? 1 : 0) ;
-	}
+	पूर्ण
 	/* Main frame */
 	frame_count += 1;
 
-	if (frame_count > 7)
+	अगर (frame_count > 7)
 		frame_count = 8;
-	return frame_count;
-}
+	वापस frame_count;
+पूर्ण
 
 /**
  * megasas_build_dcdb -	Prepares a direct cdb (DCDB) command
@@ -1398,29 +1399,29 @@ static u32 megasas_get_frame_count(struct megasas_instance *instance,
  * This function prepares CDB commands. These are typcially pass-through
  * commands to the devices.
  */
-static int
-megasas_build_dcdb(struct megasas_instance *instance, struct scsi_cmnd *scp,
-		   struct megasas_cmd *cmd)
-{
+अटल पूर्णांक
+megasas_build_dcdb(काष्ठा megasas_instance *instance, काष्ठा scsi_cmnd *scp,
+		   काष्ठा megasas_cmd *cmd)
+अणु
 	u32 is_logical;
 	u32 device_id;
 	u16 flags = 0;
-	struct megasas_pthru_frame *pthru;
+	काष्ठा megasas_pthru_frame *pthru;
 
 	is_logical = MEGASAS_IS_LOGICAL(scp->device);
 	device_id = MEGASAS_DEV_INDEX(scp);
-	pthru = (struct megasas_pthru_frame *)cmd->frame;
+	pthru = (काष्ठा megasas_pthru_frame *)cmd->frame;
 
-	if (scp->sc_data_direction == DMA_TO_DEVICE)
-		flags = MFI_FRAME_DIR_WRITE;
-	else if (scp->sc_data_direction == DMA_FROM_DEVICE)
-		flags = MFI_FRAME_DIR_READ;
-	else if (scp->sc_data_direction == DMA_NONE)
-		flags = MFI_FRAME_DIR_NONE;
+	अगर (scp->sc_data_direction == DMA_TO_DEVICE)
+		flags = MFI_FRAME_सूची_WRITE;
+	अन्यथा अगर (scp->sc_data_direction == DMA_FROM_DEVICE)
+		flags = MFI_FRAME_सूची_READ;
+	अन्यथा अगर (scp->sc_data_direction == DMA_NONE)
+		flags = MFI_FRAME_सूची_NONE;
 
-	if (instance->flag_ieee == 1) {
+	अगर (instance->flag_ieee == 1) अणु
 		flags |= MFI_FRAME_IEEE;
-	}
+	पूर्ण
 
 	/*
 	 * Prepare the DCDB frame
@@ -1431,47 +1432,47 @@ megasas_build_dcdb(struct megasas_instance *instance, struct scsi_cmnd *scp,
 	pthru->target_id = device_id;
 	pthru->lun = scp->device->lun;
 	pthru->cdb_len = scp->cmd_len;
-	pthru->timeout = 0;
+	pthru->समयout = 0;
 	pthru->pad_0 = 0;
 	pthru->flags = cpu_to_le16(flags);
 	pthru->data_xfer_len = cpu_to_le32(scsi_bufflen(scp));
 
-	memcpy(pthru->cdb, scp->cmnd, scp->cmd_len);
+	स_नकल(pthru->cdb, scp->cmnd, scp->cmd_len);
 
 	/*
-	 * If the command is for the tape device, set the
-	 * pthru timeout to the os layer timeout value.
+	 * If the command is क्रम the tape device, set the
+	 * pthru समयout to the os layer समयout value.
 	 */
-	if (scp->device->type == TYPE_TAPE) {
-		if ((scp->request->timeout / HZ) > 0xFFFF)
-			pthru->timeout = cpu_to_le16(0xFFFF);
-		else
-			pthru->timeout = cpu_to_le16(scp->request->timeout / HZ);
-	}
+	अगर (scp->device->type == TYPE_TAPE) अणु
+		अगर ((scp->request->समयout / HZ) > 0xFFFF)
+			pthru->समयout = cpu_to_le16(0xFFFF);
+		अन्यथा
+			pthru->समयout = cpu_to_le16(scp->request->समयout / HZ);
+	पूर्ण
 
 	/*
-	 * Construct SGL
+	 * Conकाष्ठा SGL
 	 */
-	if (instance->flag_ieee == 1) {
+	अगर (instance->flag_ieee == 1) अणु
 		pthru->flags |= cpu_to_le16(MFI_FRAME_SGL64);
 		pthru->sge_count = megasas_make_sgl_skinny(instance, scp,
 						      &pthru->sgl);
-	} else if (IS_DMA64) {
+	पूर्ण अन्यथा अगर (IS_DMA64) अणु
 		pthru->flags |= cpu_to_le16(MFI_FRAME_SGL64);
 		pthru->sge_count = megasas_make_sgl64(instance, scp,
 						      &pthru->sgl);
-	} else
+	पूर्ण अन्यथा
 		pthru->sge_count = megasas_make_sgl32(instance, scp,
 						      &pthru->sgl);
 
-	if (pthru->sge_count > instance->max_num_sge) {
+	अगर (pthru->sge_count > instance->max_num_sge) अणु
 		dev_err(&instance->pdev->dev, "DCDB too many SGE NUM=%x\n",
 			pthru->sge_count);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * Sense info specific
+	 * Sense info specअगरic
 	 */
 	pthru->sense_len = SCSI_SENSE_BUFFERSIZE;
 	pthru->sense_buf_phys_addr_hi =
@@ -1486,8 +1487,8 @@ megasas_build_dcdb(struct megasas_instance *instance, struct scsi_cmnd *scp,
 	cmd->frame_count = megasas_get_frame_count(instance, pthru->sge_count,
 							PTHRU_FRAME);
 
-	return cmd->frame_count;
-}
+	वापस cmd->frame_count;
+पूर्ण
 
 /**
  * megasas_build_ldio -	Prepares IOs to logical devices
@@ -1495,37 +1496,37 @@ megasas_build_dcdb(struct megasas_instance *instance, struct scsi_cmnd *scp,
  * @scp:		SCSI command
  * @cmd:		Command to be prepared
  *
- * Frames (and accompanying SGLs) for regular SCSI IOs use this function.
+ * Frames (and accompanying SGLs) क्रम regular SCSI IOs use this function.
  */
-static int
-megasas_build_ldio(struct megasas_instance *instance, struct scsi_cmnd *scp,
-		   struct megasas_cmd *cmd)
-{
+अटल पूर्णांक
+megasas_build_ldio(काष्ठा megasas_instance *instance, काष्ठा scsi_cmnd *scp,
+		   काष्ठा megasas_cmd *cmd)
+अणु
 	u32 device_id;
 	u8 sc = scp->cmnd[0];
 	u16 flags = 0;
-	struct megasas_io_frame *ldio;
+	काष्ठा megasas_io_frame *ldio;
 
 	device_id = MEGASAS_DEV_INDEX(scp);
-	ldio = (struct megasas_io_frame *)cmd->frame;
+	ldio = (काष्ठा megasas_io_frame *)cmd->frame;
 
-	if (scp->sc_data_direction == DMA_TO_DEVICE)
-		flags = MFI_FRAME_DIR_WRITE;
-	else if (scp->sc_data_direction == DMA_FROM_DEVICE)
-		flags = MFI_FRAME_DIR_READ;
+	अगर (scp->sc_data_direction == DMA_TO_DEVICE)
+		flags = MFI_FRAME_सूची_WRITE;
+	अन्यथा अगर (scp->sc_data_direction == DMA_FROM_DEVICE)
+		flags = MFI_FRAME_सूची_READ;
 
-	if (instance->flag_ieee == 1) {
+	अगर (instance->flag_ieee == 1) अणु
 		flags |= MFI_FRAME_IEEE;
-	}
+	पूर्ण
 
 	/*
-	 * Prepare the Logical IO frame: 2nd bit is zero for all read cmds
+	 * Prepare the Logical IO frame: 2nd bit is zero क्रम all पढ़ो cmds
 	 */
 	ldio->cmd = (sc & 0x02) ? MFI_CMD_LD_WRITE : MFI_CMD_LD_READ;
 	ldio->cmd_status = 0x0;
 	ldio->scsi_status = 0x0;
 	ldio->target_id = device_id;
-	ldio->timeout = 0;
+	ldio->समयout = 0;
 	ldio->reserved_0 = 0;
 	ldio->pad_0 = 0;
 	ldio->flags = cpu_to_le16(flags);
@@ -1535,31 +1536,31 @@ megasas_build_ldio(struct megasas_instance *instance, struct scsi_cmnd *scp,
 	/*
 	 * 6-byte READ(0x08) or WRITE(0x0A) cdb
 	 */
-	if (scp->cmd_len == 6) {
+	अगर (scp->cmd_len == 6) अणु
 		ldio->lba_count = cpu_to_le32((u32) scp->cmnd[4]);
 		ldio->start_lba_lo = cpu_to_le32(((u32) scp->cmnd[1] << 16) |
 						 ((u32) scp->cmnd[2] << 8) |
 						 (u32) scp->cmnd[3]);
 
 		ldio->start_lba_lo &= cpu_to_le32(0x1FFFFF);
-	}
+	पूर्ण
 
 	/*
 	 * 10-byte READ(0x28) or WRITE(0x2A) cdb
 	 */
-	else if (scp->cmd_len == 10) {
+	अन्यथा अगर (scp->cmd_len == 10) अणु
 		ldio->lba_count = cpu_to_le32((u32) scp->cmnd[8] |
 					      ((u32) scp->cmnd[7] << 8));
 		ldio->start_lba_lo = cpu_to_le32(((u32) scp->cmnd[2] << 24) |
 						 ((u32) scp->cmnd[3] << 16) |
 						 ((u32) scp->cmnd[4] << 8) |
 						 (u32) scp->cmnd[5]);
-	}
+	पूर्ण
 
 	/*
 	 * 12-byte READ(0xA8) or WRITE(0xAA) cdb
 	 */
-	else if (scp->cmd_len == 12) {
+	अन्यथा अगर (scp->cmd_len == 12) अणु
 		ldio->lba_count = cpu_to_le32(((u32) scp->cmnd[6] << 24) |
 					      ((u32) scp->cmnd[7] << 16) |
 					      ((u32) scp->cmnd[8] << 8) |
@@ -1569,12 +1570,12 @@ megasas_build_ldio(struct megasas_instance *instance, struct scsi_cmnd *scp,
 						 ((u32) scp->cmnd[3] << 16) |
 						 ((u32) scp->cmnd[4] << 8) |
 						 (u32) scp->cmnd[5]);
-	}
+	पूर्ण
 
 	/*
 	 * 16-byte READ(0x88) or WRITE(0x8A) cdb
 	 */
-	else if (scp->cmd_len == 16) {
+	अन्यथा अगर (scp->cmd_len == 16) अणु
 		ldio->lba_count = cpu_to_le32(((u32) scp->cmnd[10] << 24) |
 					      ((u32) scp->cmnd[11] << 16) |
 					      ((u32) scp->cmnd[12] << 8) |
@@ -1590,29 +1591,29 @@ megasas_build_ldio(struct megasas_instance *instance, struct scsi_cmnd *scp,
 						 ((u32) scp->cmnd[4] << 8) |
 						 (u32) scp->cmnd[5]);
 
-	}
+	पूर्ण
 
 	/*
-	 * Construct SGL
+	 * Conकाष्ठा SGL
 	 */
-	if (instance->flag_ieee) {
+	अगर (instance->flag_ieee) अणु
 		ldio->flags |= cpu_to_le16(MFI_FRAME_SGL64);
 		ldio->sge_count = megasas_make_sgl_skinny(instance, scp,
 					      &ldio->sgl);
-	} else if (IS_DMA64) {
+	पूर्ण अन्यथा अगर (IS_DMA64) अणु
 		ldio->flags |= cpu_to_le16(MFI_FRAME_SGL64);
 		ldio->sge_count = megasas_make_sgl64(instance, scp, &ldio->sgl);
-	} else
+	पूर्ण अन्यथा
 		ldio->sge_count = megasas_make_sgl32(instance, scp, &ldio->sgl);
 
-	if (ldio->sge_count > instance->max_num_sge) {
+	अगर (ldio->sge_count > instance->max_num_sge) अणु
 		dev_err(&instance->pdev->dev, "build_ld_io: sge_count = %x\n",
 			ldio->sge_count);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * Sense info specific
+	 * Sense info specअगरic
 	 */
 	ldio->sense_len = SCSI_SENSE_BUFFERSIZE;
 	ldio->sense_buf_phys_addr_hi = 0;
@@ -1625,69 +1626,69 @@ megasas_build_ldio(struct megasas_instance *instance, struct scsi_cmnd *scp,
 	cmd->frame_count = megasas_get_frame_count(instance,
 			ldio->sge_count, IO_FRAME);
 
-	return cmd->frame_count;
-}
+	वापस cmd->frame_count;
+पूर्ण
 
 /**
- * megasas_cmd_type -		Checks if the cmd is for logical drive/sysPD
+ * megasas_cmd_type -		Checks अगर the cmd is क्रम logical drive/sysPD
  *				and whether it's RW or non RW
  * @cmd:			SCSI command
  *
  */
-inline int megasas_cmd_type(struct scsi_cmnd *cmd)
-{
-	int ret;
+अंतरभूत पूर्णांक megasas_cmd_type(काष्ठा scsi_cmnd *cmd)
+अणु
+	पूर्णांक ret;
 
-	switch (cmd->cmnd[0]) {
-	case READ_10:
-	case WRITE_10:
-	case READ_12:
-	case WRITE_12:
-	case READ_6:
-	case WRITE_6:
-	case READ_16:
-	case WRITE_16:
+	चयन (cmd->cmnd[0]) अणु
+	हाल READ_10:
+	हाल WRITE_10:
+	हाल READ_12:
+	हाल WRITE_12:
+	हाल READ_6:
+	हाल WRITE_6:
+	हाल READ_16:
+	हाल WRITE_16:
 		ret = (MEGASAS_IS_LOGICAL(cmd->device)) ?
 			READ_WRITE_LDIO : READ_WRITE_SYSPDIO;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = (MEGASAS_IS_LOGICAL(cmd->device)) ?
 			NON_READ_WRITE_LDIO : NON_READ_WRITE_SYSPDIO;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
  /**
  * megasas_dump_pending_frames -	Dumps the frame address of all pending cmds
  *					in FW
  * @instance:				Adapter soft state
  */
-static inline void
-megasas_dump_pending_frames(struct megasas_instance *instance)
-{
-	struct megasas_cmd *cmd;
-	int i,n;
-	union megasas_sgl *mfi_sgl;
-	struct megasas_io_frame *ldio;
-	struct megasas_pthru_frame *pthru;
+अटल अंतरभूत व्योम
+megasas_dump_pending_frames(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_cmd *cmd;
+	पूर्णांक i,n;
+	जोड़ megasas_sgl *mfi_sgl;
+	काष्ठा megasas_io_frame *ldio;
+	काष्ठा megasas_pthru_frame *pthru;
 	u32 sgcount;
 	u16 max_cmd = instance->max_fw_cmds;
 
 	dev_err(&instance->pdev->dev, "[%d]: Dumping Frame Phys Address of all pending cmds in FW\n",instance->host->host_no);
-	dev_err(&instance->pdev->dev, "[%d]: Total OS Pending cmds : %d\n",instance->host->host_no,atomic_read(&instance->fw_outstanding));
-	if (IS_DMA64)
+	dev_err(&instance->pdev->dev, "[%d]: Total OS Pending cmds : %d\n",instance->host->host_no,atomic_पढ़ो(&instance->fw_outstanding));
+	अगर (IS_DMA64)
 		dev_err(&instance->pdev->dev, "[%d]: 64 bit SGLs were sent to FW\n",instance->host->host_no);
-	else
+	अन्यथा
 		dev_err(&instance->pdev->dev, "[%d]: 32 bit SGLs were sent to FW\n",instance->host->host_no);
 
 	dev_err(&instance->pdev->dev, "[%d]: Pending OS cmds in FW : \n",instance->host->host_no);
-	for (i = 0; i < max_cmd; i++) {
+	क्रम (i = 0; i < max_cmd; i++) अणु
 		cmd = instance->cmd_list[i];
-		if (!cmd->scmd)
-			continue;
-		dev_err(&instance->pdev->dev, "[%d]: Frame addr :0x%08lx : ",instance->host->host_no,(unsigned long)cmd->frame_phys_addr);
-		if (megasas_cmd_type(cmd->scmd) == READ_WRITE_LDIO) {
-			ldio = (struct megasas_io_frame *)cmd->frame;
+		अगर (!cmd->scmd)
+			जारी;
+		dev_err(&instance->pdev->dev, "[%d]: Frame addr :0x%08lx : ",instance->host->host_no,(अचिन्हित दीर्घ)cmd->frame_phys_addr);
+		अगर (megasas_cmd_type(cmd->scmd) == READ_WRITE_LDIO) अणु
+			ldio = (काष्ठा megasas_io_frame *)cmd->frame;
 			mfi_sgl = &ldio->sgl;
 			sgcount = ldio->sge_count;
 			dev_err(&instance->pdev->dev, "[%d]: frame count : 0x%x, Cmd : 0x%x, Tgt id : 0x%x,"
@@ -1695,8 +1696,8 @@ megasas_dump_pending_frames(struct megasas_instance *instance)
 			instance->host->host_no, cmd->frame_count, ldio->cmd, ldio->target_id,
 			le32_to_cpu(ldio->start_lba_lo), le32_to_cpu(ldio->start_lba_hi),
 			le32_to_cpu(ldio->sense_buf_phys_addr_lo), sgcount);
-		} else {
-			pthru = (struct megasas_pthru_frame *) cmd->frame;
+		पूर्ण अन्यथा अणु
+			pthru = (काष्ठा megasas_pthru_frame *) cmd->frame;
 			mfi_sgl = &pthru->sgl;
 			sgcount = pthru->sge_count;
 			dev_err(&instance->pdev->dev, "[%d]: frame count : 0x%x, Cmd : 0x%x, Tgt id : 0x%x, "
@@ -1704,55 +1705,55 @@ megasas_dump_pending_frames(struct megasas_instance *instance)
 			instance->host->host_no, cmd->frame_count, pthru->cmd, pthru->target_id,
 			pthru->lun, pthru->cdb_len, le32_to_cpu(pthru->data_xfer_len),
 			le32_to_cpu(pthru->sense_buf_phys_addr_lo), sgcount);
-		}
-		if (megasas_dbg_lvl & MEGASAS_DBG_LVL) {
-			for (n = 0; n < sgcount; n++) {
-				if (IS_DMA64)
+		पूर्ण
+		अगर (megasas_dbg_lvl & MEGASAS_DBG_LVL) अणु
+			क्रम (n = 0; n < sgcount; n++) अणु
+				अगर (IS_DMA64)
 					dev_err(&instance->pdev->dev, "sgl len : 0x%x, sgl addr : 0x%llx\n",
 						le32_to_cpu(mfi_sgl->sge64[n].length),
 						le64_to_cpu(mfi_sgl->sge64[n].phys_addr));
-				else
+				अन्यथा
 					dev_err(&instance->pdev->dev, "sgl len : 0x%x, sgl addr : 0x%x\n",
 						le32_to_cpu(mfi_sgl->sge32[n].length),
 						le32_to_cpu(mfi_sgl->sge32[n].phys_addr));
-			}
-		}
-	} /*for max_cmd*/
+			पूर्ण
+		पूर्ण
+	पूर्ण /*क्रम max_cmd*/
 	dev_err(&instance->pdev->dev, "[%d]: Pending Internal cmds in FW : \n",instance->host->host_no);
-	for (i = 0; i < max_cmd; i++) {
+	क्रम (i = 0; i < max_cmd; i++) अणु
 
 		cmd = instance->cmd_list[i];
 
-		if (cmd->sync_cmd == 1)
-			dev_err(&instance->pdev->dev, "0x%08lx : ", (unsigned long)cmd->frame_phys_addr);
-	}
+		अगर (cmd->sync_cmd == 1)
+			dev_err(&instance->pdev->dev, "0x%08lx : ", (अचिन्हित दीर्घ)cmd->frame_phys_addr);
+	पूर्ण
 	dev_err(&instance->pdev->dev, "[%d]: Dumping Done\n\n",instance->host->host_no);
-}
+पूर्ण
 
 u32
-megasas_build_and_issue_cmd(struct megasas_instance *instance,
-			    struct scsi_cmnd *scmd)
-{
-	struct megasas_cmd *cmd;
+megasas_build_and_issue_cmd(काष्ठा megasas_instance *instance,
+			    काष्ठा scsi_cmnd *scmd)
+अणु
+	काष्ठा megasas_cmd *cmd;
 	u32 frame_count;
 
 	cmd = megasas_get_cmd(instance);
-	if (!cmd)
-		return SCSI_MLQUEUE_HOST_BUSY;
+	अगर (!cmd)
+		वापस SCSI_MLQUEUE_HOST_BUSY;
 
 	/*
 	 * Logical drive command
 	 */
-	if (megasas_cmd_type(scmd) == READ_WRITE_LDIO)
+	अगर (megasas_cmd_type(scmd) == READ_WRITE_LDIO)
 		frame_count = megasas_build_ldio(instance, scmd, cmd);
-	else
+	अन्यथा
 		frame_count = megasas_build_dcdb(instance, scmd, cmd);
 
-	if (!frame_count)
-		goto out_return_cmd;
+	अगर (!frame_count)
+		जाओ out_वापस_cmd;
 
 	cmd->scmd = scmd;
-	scmd->SCp.ptr = (char *)cmd;
+	scmd->SCp.ptr = (अक्षर *)cmd;
 
 	/*
 	 * Issue the command to the FW
@@ -1762,204 +1763,204 @@ megasas_build_and_issue_cmd(struct megasas_instance *instance,
 	instance->instancet->fire_cmd(instance, cmd->frame_phys_addr,
 				cmd->frame_count-1, instance->reg_set);
 
-	return 0;
-out_return_cmd:
-	megasas_return_cmd(instance, cmd);
-	return SCSI_MLQUEUE_HOST_BUSY;
-}
+	वापस 0;
+out_वापस_cmd:
+	megasas_वापस_cmd(instance, cmd);
+	वापस SCSI_MLQUEUE_HOST_BUSY;
+पूर्ण
 
 
 /**
- * megasas_queue_command -	Queue entry point
+ * megasas_queue_command -	Queue entry poपूर्णांक
  * @shost:			adapter SCSI host
  * @scmd:			SCSI command to be queued
  */
-static int
-megasas_queue_command(struct Scsi_Host *shost, struct scsi_cmnd *scmd)
-{
-	struct megasas_instance *instance;
-	struct MR_PRIV_DEVICE *mr_device_priv_data;
+अटल पूर्णांक
+megasas_queue_command(काष्ठा Scsi_Host *shost, काष्ठा scsi_cmnd *scmd)
+अणु
+	काष्ठा megasas_instance *instance;
+	काष्ठा MR_PRIV_DEVICE *mr_device_priv_data;
 
-	instance = (struct megasas_instance *)
+	instance = (काष्ठा megasas_instance *)
 	    scmd->device->host->hostdata;
 
-	if (instance->unload == 1) {
+	अगर (instance->unload == 1) अणु
 		scmd->result = DID_NO_CONNECT << 16;
-		scmd->scsi_done(scmd);
-		return 0;
-	}
+		scmd->scsi_करोne(scmd);
+		वापस 0;
+	पूर्ण
 
-	if (instance->issuepend_done == 0)
-		return SCSI_MLQUEUE_HOST_BUSY;
+	अगर (instance->issuepend_करोne == 0)
+		वापस SCSI_MLQUEUE_HOST_BUSY;
 
 
-	/* Check for an mpio path and adjust behavior */
-	if (atomic_read(&instance->adprecovery) == MEGASAS_ADPRESET_SM_INFAULT) {
-		if (megasas_check_mpio_paths(instance, scmd) ==
-		    (DID_REQUEUE << 16)) {
-			return SCSI_MLQUEUE_HOST_BUSY;
-		} else {
+	/* Check क्रम an mpio path and adjust behavior */
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_ADPRESET_SM_INFAULT) अणु
+		अगर (megasas_check_mpio_paths(instance, scmd) ==
+		    (DID_REQUEUE << 16)) अणु
+			वापस SCSI_MLQUEUE_HOST_BUSY;
+		पूर्ण अन्यथा अणु
 			scmd->result = DID_NO_CONNECT << 16;
-			scmd->scsi_done(scmd);
-			return 0;
-		}
-	}
+			scmd->scsi_करोne(scmd);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) {
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) अणु
 		scmd->result = DID_NO_CONNECT << 16;
-		scmd->scsi_done(scmd);
-		return 0;
-	}
+		scmd->scsi_करोne(scmd);
+		वापस 0;
+	पूर्ण
 
 	mr_device_priv_data = scmd->device->hostdata;
-	if (!mr_device_priv_data) {
+	अगर (!mr_device_priv_data) अणु
 		scmd->result = DID_NO_CONNECT << 16;
-		scmd->scsi_done(scmd);
-		return 0;
-	}
+		scmd->scsi_करोne(scmd);
+		वापस 0;
+	पूर्ण
 
-	if (atomic_read(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL)
-		return SCSI_MLQUEUE_HOST_BUSY;
+	अगर (atomic_पढ़ो(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL)
+		वापस SCSI_MLQUEUE_HOST_BUSY;
 
-	if (mr_device_priv_data->tm_busy)
-		return SCSI_MLQUEUE_DEVICE_BUSY;
+	अगर (mr_device_priv_data->पंचांग_busy)
+		वापस SCSI_MLQUEUE_DEVICE_BUSY;
 
 
 	scmd->result = 0;
 
-	if (MEGASAS_IS_LOGICAL(scmd->device) &&
+	अगर (MEGASAS_IS_LOGICAL(scmd->device) &&
 	    (scmd->device->id >= instance->fw_supported_vd_count ||
-		scmd->device->lun)) {
+		scmd->device->lun)) अणु
 		scmd->result = DID_BAD_TARGET << 16;
-		goto out_done;
-	}
+		जाओ out_करोne;
+	पूर्ण
 
-	if ((scmd->cmnd[0] == SYNCHRONIZE_CACHE) &&
+	अगर ((scmd->cmnd[0] == SYNCHRONIZE_CACHE) &&
 	    MEGASAS_IS_LOGICAL(scmd->device) &&
-	    (!instance->fw_sync_cache_support)) {
+	    (!instance->fw_sync_cache_support)) अणु
 		scmd->result = DID_OK << 16;
-		goto out_done;
-	}
+		जाओ out_करोne;
+	पूर्ण
 
-	return instance->instancet->build_and_issue_cmd(instance, scmd);
+	वापस instance->instancet->build_and_issue_cmd(instance, scmd);
 
- out_done:
-	scmd->scsi_done(scmd);
-	return 0;
-}
+ out_करोne:
+	scmd->scsi_करोne(scmd);
+	वापस 0;
+पूर्ण
 
-static struct megasas_instance *megasas_lookup_instance(u16 host_no)
-{
-	int i;
+अटल काष्ठा megasas_instance *megasas_lookup_instance(u16 host_no)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < megasas_mgmt_info.max_index; i++) {
+	क्रम (i = 0; i < megasas_mgmt_info.max_index; i++) अणु
 
-		if ((megasas_mgmt_info.instance[i]) &&
+		अगर ((megasas_mgmt_info.instance[i]) &&
 		    (megasas_mgmt_info.instance[i]->host->host_no == host_no))
-			return megasas_mgmt_info.instance[i];
-	}
+			वापस megasas_mgmt_info.instance[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
 * megasas_set_dynamic_target_properties -
-* Device property set by driver may not be static and it is required to be
+* Device property set by driver may not be अटल and it is required to be
 * updated after OCR
 *
-* set tm_capable.
-* set dma alignment (only for eedp protection enable vd).
+* set पंचांग_capable.
+* set dma alignment (only क्रम eedp protection enable vd).
 *
 * @sdev: OS provided scsi device
 *
-* Returns void
+* Returns व्योम
 */
-void megasas_set_dynamic_target_properties(struct scsi_device *sdev,
+व्योम megasas_set_dynamic_target_properties(काष्ठा scsi_device *sdev,
 					   bool is_target_prop)
-{
+अणु
 	u16 pd_index = 0, ld;
 	u32 device_id;
-	struct megasas_instance *instance;
-	struct fusion_context *fusion;
-	struct MR_PRIV_DEVICE *mr_device_priv_data;
-	struct MR_PD_CFG_SEQ_NUM_SYNC *pd_sync;
-	struct MR_LD_RAID *raid;
-	struct MR_DRV_RAID_MAP_ALL *local_map_ptr;
+	काष्ठा megasas_instance *instance;
+	काष्ठा fusion_context *fusion;
+	काष्ठा MR_PRIV_DEVICE *mr_device_priv_data;
+	काष्ठा MR_PD_CFG_SEQ_NUM_SYNC *pd_sync;
+	काष्ठा MR_LD_RAID *raid;
+	काष्ठा MR_DRV_RAID_MAP_ALL *local_map_ptr;
 
 	instance = megasas_lookup_instance(sdev->host->host_no);
 	fusion = instance->ctrl_context;
 	mr_device_priv_data = sdev->hostdata;
 
-	if (!fusion || !mr_device_priv_data)
-		return;
+	अगर (!fusion || !mr_device_priv_data)
+		वापस;
 
-	if (MEGASAS_IS_LOGICAL(sdev)) {
+	अगर (MEGASAS_IS_LOGICAL(sdev)) अणु
 		device_id = ((sdev->channel % 2) * MEGASAS_MAX_DEV_PER_CHANNEL)
 					+ sdev->id;
 		local_map_ptr = fusion->ld_drv_map[(instance->map_id & 1)];
 		ld = MR_TargetIdToLdGet(device_id, local_map_ptr);
-		if (ld >= instance->fw_supported_vd_count)
-			return;
+		अगर (ld >= instance->fw_supported_vd_count)
+			वापस;
 		raid = MR_LdRaidGet(ld, local_map_ptr);
 
-		if (raid->capability.ldPiMode == MR_PROT_INFO_TYPE_CONTROLLER)
+		अगर (raid->capability.ldPiMode == MR_PROT_INFO_TYPE_CONTROLLER)
 		blk_queue_update_dma_alignment(sdev->request_queue, 0x7);
 
-		mr_device_priv_data->is_tm_capable =
-			raid->capability.tmCapable;
+		mr_device_priv_data->is_पंचांग_capable =
+			raid->capability.पंचांगCapable;
 
-		if (!raid->flags.isEPD)
-			sdev->no_write_same = 1;
+		अगर (!raid->flags.isEPD)
+			sdev->no_ग_लिखो_same = 1;
 
-	} else if (instance->use_seqnum_jbod_fp) {
+	पूर्ण अन्यथा अगर (instance->use_seqnum_jbod_fp) अणु
 		pd_index = (sdev->channel * MEGASAS_MAX_DEV_PER_CHANNEL) +
 			sdev->id;
-		pd_sync = (void *)fusion->pd_seq_sync
+		pd_sync = (व्योम *)fusion->pd_seq_sync
 				[(instance->pd_seq_map_id - 1) & 1];
-		mr_device_priv_data->is_tm_capable =
-			pd_sync->seq[pd_index].capability.tmCapable;
-	}
+		mr_device_priv_data->is_पंचांग_capable =
+			pd_sync->seq[pd_index].capability.पंचांगCapable;
+	पूर्ण
 
-	if (is_target_prop && instance->tgt_prop->reset_tmo) {
+	अगर (is_target_prop && instance->tgt_prop->reset_पंचांगo) अणु
 		/*
-		 * If FW provides a target reset timeout value, driver will use
-		 * it. If not set, fallback to default values.
+		 * If FW provides a target reset समयout value, driver will use
+		 * it. If not set, fallback to शेष values.
 		 */
-		mr_device_priv_data->target_reset_tmo =
-			min_t(u8, instance->max_reset_tmo,
-			      instance->tgt_prop->reset_tmo);
-		mr_device_priv_data->task_abort_tmo = instance->task_abort_tmo;
-	} else {
-		mr_device_priv_data->target_reset_tmo =
+		mr_device_priv_data->target_reset_पंचांगo =
+			min_t(u8, instance->max_reset_पंचांगo,
+			      instance->tgt_prop->reset_पंचांगo);
+		mr_device_priv_data->task_पात_पंचांगo = instance->task_पात_पंचांगo;
+	पूर्ण अन्यथा अणु
+		mr_device_priv_data->target_reset_पंचांगo =
 						MEGASAS_DEFAULT_TM_TIMEOUT;
-		mr_device_priv_data->task_abort_tmo =
+		mr_device_priv_data->task_पात_पंचांगo =
 						MEGASAS_DEFAULT_TM_TIMEOUT;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * megasas_set_nvme_device_properties -
  * set nomerges=2
- * set virtual page boundary = 4K (current mr_nvme_pg_size is 4K).
+ * set भव page boundary = 4K (current mr_nvme_pg_size is 4K).
  * set maximum io transfer = MDTS of NVME device provided by MR firmware.
  *
  * MR firmware provides value in KB. Caller of this function converts
- * kb into bytes.
+ * kb पूर्णांकo bytes.
  *
- * e.a MDTS=5 means 2^5 * nvme page size. (In case of 4K page size,
+ * e.a MDTS=5 means 2^5 * nvme page size. (In हाल of 4K page size,
  * MR firmware provides value 128 as (32 * 4K) = 128K.
  *
  * @sdev:				scsi device
  * @max_io_size:				maximum io transfer size
  *
  */
-static inline void
-megasas_set_nvme_device_properties(struct scsi_device *sdev, u32 max_io_size)
-{
-	struct megasas_instance *instance;
+अटल अंतरभूत व्योम
+megasas_set_nvme_device_properties(काष्ठा scsi_device *sdev, u32 max_io_size)
+अणु
+	काष्ठा megasas_instance *instance;
 	u32 mr_nvme_pg_size;
 
-	instance = (struct megasas_instance *)sdev->host->hostdata;
+	instance = (काष्ठा megasas_instance *)sdev->host->hostdata;
 	mr_nvme_pg_size = max_t(u32, instance->nvme_page_size,
 				MR_DEFAULT_NVME_PAGE_SIZE);
 
@@ -1967,7 +1968,7 @@ megasas_set_nvme_device_properties(struct scsi_device *sdev, u32 max_io_size)
 
 	blk_queue_flag_set(QUEUE_FLAG_NOMERGES, sdev->request_queue);
 	blk_queue_virt_boundary(sdev->request_queue, mr_nvme_pg_size - 1);
-}
+पूर्ण
 
 /*
  * megasas_set_fw_assisted_qd -
@@ -1975,783 +1976,783 @@ megasas_set_nvme_device_properties(struct scsi_device *sdev, u32 max_io_size)
  * set device queue depth to fw assisted qd
  *
  * @sdev:				scsi device
- * @is_target_prop			true, if fw provided target properties.
+ * @is_target_prop			true, अगर fw provided target properties.
  */
-static void megasas_set_fw_assisted_qd(struct scsi_device *sdev,
+अटल व्योम megasas_set_fw_assisted_qd(काष्ठा scsi_device *sdev,
 						 bool is_target_prop)
-{
-	u8 interface_type;
+अणु
+	u8 पूर्णांकerface_type;
 	u32 device_qd = MEGASAS_DEFAULT_CMD_PER_LUN;
 	u32 tgt_device_qd;
-	struct megasas_instance *instance;
-	struct MR_PRIV_DEVICE *mr_device_priv_data;
+	काष्ठा megasas_instance *instance;
+	काष्ठा MR_PRIV_DEVICE *mr_device_priv_data;
 
 	instance = megasas_lookup_instance(sdev->host->host_no);
 	mr_device_priv_data = sdev->hostdata;
-	interface_type  = mr_device_priv_data->interface_type;
+	पूर्णांकerface_type  = mr_device_priv_data->पूर्णांकerface_type;
 
-	switch (interface_type) {
-	case SAS_PD:
+	चयन (पूर्णांकerface_type) अणु
+	हाल SAS_PD:
 		device_qd = MEGASAS_SAS_QD;
-		break;
-	case SATA_PD:
+		अवरोध;
+	हाल SATA_PD:
 		device_qd = MEGASAS_SATA_QD;
-		break;
-	case NVME_PD:
+		अवरोध;
+	हाल NVME_PD:
 		device_qd = MEGASAS_NVME_QD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (is_target_prop) {
+	अगर (is_target_prop) अणु
 		tgt_device_qd = le32_to_cpu(instance->tgt_prop->device_qdepth);
-		if (tgt_device_qd)
+		अगर (tgt_device_qd)
 			device_qd = min(instance->host->can_queue,
-					(int)tgt_device_qd);
-	}
+					(पूर्णांक)tgt_device_qd);
+	पूर्ण
 
-	if (instance->enable_sdev_max_qd && interface_type != UNKNOWN_DRIVE)
+	अगर (instance->enable_sdev_max_qd && पूर्णांकerface_type != UNKNOWN_DRIVE)
 		device_qd = instance->host->can_queue;
 
 	scsi_change_queue_depth(sdev, device_qd);
-}
+पूर्ण
 
 /*
- * megasas_set_static_target_properties -
- * Device property set by driver are static and it is not required to be
+ * megasas_set_अटल_target_properties -
+ * Device property set by driver are अटल and it is not required to be
  * updated after OCR.
  *
- * set io timeout
+ * set io समयout
  * set device queue depth
  * set nvme device properties. see - megasas_set_nvme_device_properties
  *
  * @sdev:				scsi device
- * @is_target_prop			true, if fw provided target properties.
+ * @is_target_prop			true, अगर fw provided target properties.
  */
-static void megasas_set_static_target_properties(struct scsi_device *sdev,
+अटल व्योम megasas_set_अटल_target_properties(काष्ठा scsi_device *sdev,
 						 bool is_target_prop)
-{
+अणु
 	u32 max_io_size_kb = MR_DEFAULT_NVME_MDTS_KB;
-	struct megasas_instance *instance;
+	काष्ठा megasas_instance *instance;
 
 	instance = megasas_lookup_instance(sdev->host->host_no);
 
 	/*
-	 * The RAID firmware may require extended timeouts.
+	 * The RAID firmware may require extended समयouts.
 	 */
-	blk_queue_rq_timeout(sdev->request_queue, scmd_timeout * HZ);
+	blk_queue_rq_समयout(sdev->request_queue, scmd_समयout * HZ);
 
-	/* max_io_size_kb will be set to non zero for
+	/* max_io_size_kb will be set to non zero क्रम
 	 * nvme based vd and syspd.
 	 */
-	if (is_target_prop)
+	अगर (is_target_prop)
 		max_io_size_kb = le32_to_cpu(instance->tgt_prop->max_io_size_kb);
 
-	if (instance->nvme_page_size && max_io_size_kb)
+	अगर (instance->nvme_page_size && max_io_size_kb)
 		megasas_set_nvme_device_properties(sdev, (max_io_size_kb << 10));
 
 	megasas_set_fw_assisted_qd(sdev, is_target_prop);
-}
+पूर्ण
 
 
-static int megasas_slave_configure(struct scsi_device *sdev)
-{
+अटल पूर्णांक megasas_slave_configure(काष्ठा scsi_device *sdev)
+अणु
 	u16 pd_index = 0;
-	struct megasas_instance *instance;
-	int ret_target_prop = DCMD_FAILED;
+	काष्ठा megasas_instance *instance;
+	पूर्णांक ret_target_prop = DCMD_FAILED;
 	bool is_target_prop = false;
 
 	instance = megasas_lookup_instance(sdev->host->host_no);
-	if (instance->pd_list_not_supported) {
-		if (!MEGASAS_IS_LOGICAL(sdev) && sdev->type == TYPE_DISK) {
+	अगर (instance->pd_list_not_supported) अणु
+		अगर (!MEGASAS_IS_LOGICAL(sdev) && sdev->type == TYPE_DISK) अणु
 			pd_index = (sdev->channel * MEGASAS_MAX_DEV_PER_CHANNEL) +
 				sdev->id;
-			if (instance->pd_list[pd_index].driveState !=
+			अगर (instance->pd_list[pd_index].driveState !=
 				MR_PD_STATE_SYSTEM)
-				return -ENXIO;
-		}
-	}
+				वापस -ENXIO;
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&instance->reset_mutex);
-	/* Send DCMD to Firmware and cache the information */
-	if ((instance->pd_info) && !MEGASAS_IS_LOGICAL(sdev))
+	/* Send DCMD to Firmware and cache the inक्रमmation */
+	अगर ((instance->pd_info) && !MEGASAS_IS_LOGICAL(sdev))
 		megasas_get_pd_info(instance, sdev);
 
 	/* Some ventura firmware may not have instance->nvme_page_size set.
 	 * Do not send MR_DCMD_DRV_GET_TARGET_PROP
 	 */
-	if ((instance->tgt_prop) && (instance->nvme_page_size))
+	अगर ((instance->tgt_prop) && (instance->nvme_page_size))
 		ret_target_prop = megasas_get_target_prop(instance, sdev);
 
 	is_target_prop = (ret_target_prop == DCMD_SUCCESS) ? true : false;
-	megasas_set_static_target_properties(sdev, is_target_prop);
+	megasas_set_अटल_target_properties(sdev, is_target_prop);
 
 	/* This sdev property may change post OCR */
 	megasas_set_dynamic_target_properties(sdev, is_target_prop);
 
 	mutex_unlock(&instance->reset_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int megasas_slave_alloc(struct scsi_device *sdev)
-{
+अटल पूर्णांक megasas_slave_alloc(काष्ठा scsi_device *sdev)
+अणु
 	u16 pd_index = 0;
-	struct megasas_instance *instance ;
-	struct MR_PRIV_DEVICE *mr_device_priv_data;
+	काष्ठा megasas_instance *instance ;
+	काष्ठा MR_PRIV_DEVICE *mr_device_priv_data;
 
 	instance = megasas_lookup_instance(sdev->host->host_no);
-	if (!MEGASAS_IS_LOGICAL(sdev)) {
+	अगर (!MEGASAS_IS_LOGICAL(sdev)) अणु
 		/*
 		 * Open the OS scan to the SYSTEM PD
 		 */
 		pd_index =
 			(sdev->channel * MEGASAS_MAX_DEV_PER_CHANNEL) +
 			sdev->id;
-		if ((instance->pd_list_not_supported ||
+		अगर ((instance->pd_list_not_supported ||
 			instance->pd_list[pd_index].driveState ==
-			MR_PD_STATE_SYSTEM)) {
-			goto scan_target;
-		}
-		return -ENXIO;
-	}
+			MR_PD_STATE_SYSTEM)) अणु
+			जाओ scan_target;
+		पूर्ण
+		वापस -ENXIO;
+	पूर्ण
 
 scan_target:
-	mr_device_priv_data = kzalloc(sizeof(*mr_device_priv_data),
+	mr_device_priv_data = kzalloc(माप(*mr_device_priv_data),
 					GFP_KERNEL);
-	if (!mr_device_priv_data)
-		return -ENOMEM;
+	अगर (!mr_device_priv_data)
+		वापस -ENOMEM;
 	sdev->hostdata = mr_device_priv_data;
 
-	atomic_set(&mr_device_priv_data->r1_ldio_hint,
-		   instance->r1_ldio_hint_default);
-	return 0;
-}
+	atomic_set(&mr_device_priv_data->r1_ldio_hपूर्णांक,
+		   instance->r1_ldio_hपूर्णांक_शेष);
+	वापस 0;
+पूर्ण
 
-static void megasas_slave_destroy(struct scsi_device *sdev)
-{
-	kfree(sdev->hostdata);
-	sdev->hostdata = NULL;
-}
+अटल व्योम megasas_slave_destroy(काष्ठा scsi_device *sdev)
+अणु
+	kमुक्त(sdev->hostdata);
+	sdev->hostdata = शून्य;
+पूर्ण
 
 /*
 * megasas_complete_outstanding_ioctls - Complete outstanding ioctls after a
-*                                       kill adapter
+*                                       समाप्त adapter
 * @instance:				Adapter soft state
 *
 */
-static void megasas_complete_outstanding_ioctls(struct megasas_instance *instance)
-{
-	int i;
-	struct megasas_cmd *cmd_mfi;
-	struct megasas_cmd_fusion *cmd_fusion;
-	struct fusion_context *fusion = instance->ctrl_context;
+अटल व्योम megasas_complete_outstanding_ioctls(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक i;
+	काष्ठा megasas_cmd *cmd_mfi;
+	काष्ठा megasas_cmd_fusion *cmd_fusion;
+	काष्ठा fusion_context *fusion = instance->ctrl_context;
 
 	/* Find all outstanding ioctls */
-	if (fusion) {
-		for (i = 0; i < instance->max_fw_cmds; i++) {
+	अगर (fusion) अणु
+		क्रम (i = 0; i < instance->max_fw_cmds; i++) अणु
 			cmd_fusion = fusion->cmd_list[i];
-			if (cmd_fusion->sync_cmd_idx != (u32)ULONG_MAX) {
+			अगर (cmd_fusion->sync_cmd_idx != (u32)अच_दीर्घ_उच्च) अणु
 				cmd_mfi = instance->cmd_list[cmd_fusion->sync_cmd_idx];
-				if (cmd_mfi->sync_cmd &&
-				    (cmd_mfi->frame->hdr.cmd != MFI_CMD_ABORT)) {
+				अगर (cmd_mfi->sync_cmd &&
+				    (cmd_mfi->frame->hdr.cmd != MFI_CMD_ABORT)) अणु
 					cmd_mfi->frame->hdr.cmd_status =
 							MFI_STAT_WRONG_STATE;
 					megasas_complete_cmd(instance,
 							     cmd_mfi, DID_OK);
-				}
-			}
-		}
-	} else {
-		for (i = 0; i < instance->max_fw_cmds; i++) {
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < instance->max_fw_cmds; i++) अणु
 			cmd_mfi = instance->cmd_list[i];
-			if (cmd_mfi->sync_cmd && cmd_mfi->frame->hdr.cmd !=
+			अगर (cmd_mfi->sync_cmd && cmd_mfi->frame->hdr.cmd !=
 				MFI_CMD_ABORT)
 				megasas_complete_cmd(instance, cmd_mfi, DID_OK);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-void megaraid_sas_kill_hba(struct megasas_instance *instance)
-{
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) {
+व्योम megaraid_sas_समाप्त_hba(काष्ठा megasas_instance *instance)
+अणु
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) अणु
 		dev_warn(&instance->pdev->dev,
 			 "Adapter already dead, skipping kill HBA\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Set critical error to block I/O & ioctls in case caller didn't */
+	/* Set critical error to block I/O & ioctls in हाल caller didn't */
 	atomic_set(&instance->adprecovery, MEGASAS_HW_CRITICAL_ERROR);
 	/* Wait 1 second to ensure IO or ioctls in build have posted */
 	msleep(1000);
-	if ((instance->pdev->device == PCI_DEVICE_ID_LSI_SAS0073SKINNY) ||
+	अगर ((instance->pdev->device == PCI_DEVICE_ID_LSI_SAS0073SKINNY) ||
 		(instance->pdev->device == PCI_DEVICE_ID_LSI_SAS0071SKINNY) ||
-		(instance->adapter_type != MFI_SERIES)) {
-		if (!instance->requestorId) {
-			writel(MFI_STOP_ADP, &instance->reg_set->doorbell);
+		(instance->adapter_type != MFI_SERIES)) अणु
+		अगर (!instance->requestorId) अणु
+			ग_लिखोl(MFI_STOP_ADP, &instance->reg_set->करोorbell);
 			/* Flush */
-			readl(&instance->reg_set->doorbell);
-		}
-		if (instance->requestorId && instance->peerIsPresent)
-			memset(instance->ld_ids, 0xff, MEGASAS_MAX_LD_IDS);
-	} else {
-		writel(MFI_STOP_ADP,
-			&instance->reg_set->inbound_doorbell);
-	}
-	/* Complete outstanding ioctls when adapter is killed */
+			पढ़ोl(&instance->reg_set->करोorbell);
+		पूर्ण
+		अगर (instance->requestorId && instance->peerIsPresent)
+			स_रखो(instance->ld_ids, 0xff, MEGASAS_MAX_LD_IDS);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(MFI_STOP_ADP,
+			&instance->reg_set->inbound_करोorbell);
+	पूर्ण
+	/* Complete outstanding ioctls when adapter is समाप्तed */
 	megasas_complete_outstanding_ioctls(instance);
-}
+पूर्ण
 
  /**
-  * megasas_check_and_restore_queue_depth - Check if queue depth needs to be
+  * megasas_check_and_restore_queue_depth - Check अगर queue depth needs to be
   *					restored to max value
   * @instance:			Adapter soft state
   *
   */
-void
-megasas_check_and_restore_queue_depth(struct megasas_instance *instance)
-{
-	unsigned long flags;
+व्योम
+megasas_check_and_restore_queue_depth(काष्ठा megasas_instance *instance)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (instance->flag & MEGASAS_FW_BUSY
-	    && time_after(jiffies, instance->last_time + 5 * HZ)
-	    && atomic_read(&instance->fw_outstanding) <
-	    instance->throttlequeuedepth + 1) {
+	अगर (instance->flag & MEGASAS_FW_BUSY
+	    && समय_after(jअगरfies, instance->last_समय + 5 * HZ)
+	    && atomic_पढ़ो(&instance->fw_outstanding) <
+	    instance->throttlequeuedepth + 1) अणु
 
 		spin_lock_irqsave(instance->host->host_lock, flags);
 		instance->flag &= ~MEGASAS_FW_BUSY;
 
 		instance->host->can_queue = instance->cur_can_queue;
 		spin_unlock_irqrestore(instance->host->host_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * megasas_complete_cmd_dpc	 -	Returns FW's controller structure
+ * megasas_complete_cmd_dpc	 -	Returns FW's controller काष्ठाure
  * @instance_addr:			Address of adapter soft state
  *
  * Tasklet to complete cmds
  */
-static void megasas_complete_cmd_dpc(unsigned long instance_addr)
-{
+अटल व्योम megasas_complete_cmd_dpc(अचिन्हित दीर्घ instance_addr)
+अणु
 	u32 producer;
 	u32 consumer;
 	u32 context;
-	struct megasas_cmd *cmd;
-	struct megasas_instance *instance =
-				(struct megasas_instance *)instance_addr;
-	unsigned long flags;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_instance *instance =
+				(काष्ठा megasas_instance *)instance_addr;
+	अचिन्हित दीर्घ flags;
 
-	/* If we have already declared adapter dead, donot complete cmds */
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR)
-		return;
+	/* If we have alपढ़ोy declared adapter dead, करोnot complete cmds */
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR)
+		वापस;
 
 	spin_lock_irqsave(&instance->completion_lock, flags);
 
 	producer = le32_to_cpu(*instance->producer);
 	consumer = le32_to_cpu(*instance->consumer);
 
-	while (consumer != producer) {
+	जबतक (consumer != producer) अणु
 		context = le32_to_cpu(instance->reply_queue[consumer]);
-		if (context >= instance->max_fw_cmds) {
+		अगर (context >= instance->max_fw_cmds) अणु
 			dev_err(&instance->pdev->dev, "Unexpected context value %x\n",
 				context);
 			BUG();
-		}
+		पूर्ण
 
 		cmd = instance->cmd_list[context];
 
 		megasas_complete_cmd(instance, cmd, DID_OK);
 
 		consumer++;
-		if (consumer == (instance->max_fw_cmds + 1)) {
+		अगर (consumer == (instance->max_fw_cmds + 1)) अणु
 			consumer = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*instance->consumer = cpu_to_le32(producer);
 
 	spin_unlock_irqrestore(&instance->completion_lock, flags);
 
 	/*
-	 * Check if we can restore can_queue
+	 * Check अगर we can restore can_queue
 	 */
 	megasas_check_and_restore_queue_depth(instance);
-}
+पूर्ण
 
-static void megasas_sriov_heartbeat_handler(struct timer_list *t);
+अटल व्योम megasas_sriov_heartbeat_handler(काष्ठा समयr_list *t);
 
 /**
- * megasas_start_timer - Initializes sriov heartbeat timer object
+ * megasas_start_समयr - Initializes sriov heartbeat समयr object
  * @instance:		Adapter soft state
  *
  */
-void megasas_start_timer(struct megasas_instance *instance)
-{
-	struct timer_list *timer = &instance->sriov_heartbeat_timer;
+व्योम megasas_start_समयr(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा समयr_list *समयr = &instance->sriov_heartbeat_समयr;
 
-	timer_setup(timer, megasas_sriov_heartbeat_handler, 0);
-	timer->expires = jiffies + MEGASAS_SRIOV_HEARTBEAT_INTERVAL_VF;
-	add_timer(timer);
-}
+	समयr_setup(समयr, megasas_sriov_heartbeat_handler, 0);
+	समयr->expires = jअगरfies + MEGASAS_SRIOV_HEARTBEAT_INTERVAL_VF;
+	add_समयr(समयr);
+पूर्ण
 
-static void
-megasas_internal_reset_defer_cmds(struct megasas_instance *instance);
+अटल व्योम
+megasas_पूर्णांकernal_reset_defer_cmds(काष्ठा megasas_instance *instance);
 
-static void
-process_fw_state_change_wq(struct work_struct *work);
+अटल व्योम
+process_fw_state_change_wq(काष्ठा work_काष्ठा *work);
 
-static void megasas_do_ocr(struct megasas_instance *instance)
-{
-	if ((instance->pdev->device == PCI_DEVICE_ID_LSI_SAS1064R) ||
+अटल व्योम megasas_करो_ocr(काष्ठा megasas_instance *instance)
+अणु
+	अगर ((instance->pdev->device == PCI_DEVICE_ID_LSI_SAS1064R) ||
 	(instance->pdev->device == PCI_DEVICE_ID_DELL_PERC5) ||
-	(instance->pdev->device == PCI_DEVICE_ID_LSI_VERDE_ZCR)) {
+	(instance->pdev->device == PCI_DEVICE_ID_LSI_VERDE_ZCR)) अणु
 		*instance->consumer = cpu_to_le32(MEGASAS_ADPRESET_INPROG_SIGN);
-	}
-	instance->instancet->disable_intr(instance);
+	पूर्ण
+	instance->instancet->disable_पूर्णांकr(instance);
 	atomic_set(&instance->adprecovery, MEGASAS_ADPRESET_SM_INFAULT);
-	instance->issuepend_done = 0;
+	instance->issuepend_करोne = 0;
 
 	atomic_set(&instance->fw_outstanding, 0);
-	megasas_internal_reset_defer_cmds(instance);
+	megasas_पूर्णांकernal_reset_defer_cmds(instance);
 	process_fw_state_change_wq(&instance->work_init);
-}
+पूर्ण
 
-static int megasas_get_ld_vf_affiliation_111(struct megasas_instance *instance,
-					    int initial)
-{
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	struct MR_LD_VF_AFFILIATION_111 *new_affiliation_111 = NULL;
+अटल पूर्णांक megasas_get_ld_vf_affiliation_111(काष्ठा megasas_instance *instance,
+					    पूर्णांक initial)
+अणु
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	काष्ठा MR_LD_VF_AFFILIATION_111 *new_affiliation_111 = शून्य;
 	dma_addr_t new_affiliation_111_h;
-	int ld, retval = 0;
+	पूर्णांक ld, retval = 0;
 	u8 thisVf;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "megasas_get_ld_vf_affiliation_111:"
+	अगर (!cmd) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "megasas_get_ld_vf_affiliation_111:"
 		       "Failed to get cmd for scsi%d\n",
 			instance->host->host_no);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	if (!instance->vf_affiliation_111) {
+	अगर (!instance->vf_affiliation_111) अणु
 		dev_warn(&instance->pdev->dev, "SR-IOV: Couldn't get LD/VF "
 		       "affiliation for scsi%d\n", instance->host->host_no);
-		megasas_return_cmd(instance, cmd);
-		return -ENOMEM;
-	}
+		megasas_वापस_cmd(instance, cmd);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (initial)
-			memset(instance->vf_affiliation_111, 0,
-			       sizeof(struct MR_LD_VF_AFFILIATION_111));
-	else {
+	अगर (initial)
+			स_रखो(instance->vf_affiliation_111, 0,
+			       माप(काष्ठा MR_LD_VF_AFFILIATION_111));
+	अन्यथा अणु
 		new_affiliation_111 =
 			dma_alloc_coherent(&instance->pdev->dev,
-					   sizeof(struct MR_LD_VF_AFFILIATION_111),
+					   माप(काष्ठा MR_LD_VF_AFFILIATION_111),
 					   &new_affiliation_111_h, GFP_KERNEL);
-		if (!new_affiliation_111) {
-			dev_printk(KERN_DEBUG, &instance->pdev->dev, "SR-IOV: Couldn't allocate "
+		अगर (!new_affiliation_111) अणु
+			dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "SR-IOV: Couldn't allocate "
 			       "memory for new affiliation for scsi%d\n",
 			       instance->host->host_no);
-			megasas_return_cmd(instance, cmd);
-			return -ENOMEM;
-		}
-	}
+			megasas_वापस_cmd(instance, cmd);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = MFI_STAT_INVALID_STATUS;
 	dcmd->sge_count = 1;
-	dcmd->flags = cpu_to_le16(MFI_FRAME_DIR_BOTH);
-	dcmd->timeout = 0;
+	dcmd->flags = cpu_to_le16(MFI_FRAME_सूची_BOTH);
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
 	dcmd->data_xfer_len =
-		cpu_to_le32(sizeof(struct MR_LD_VF_AFFILIATION_111));
+		cpu_to_le32(माप(काष्ठा MR_LD_VF_AFFILIATION_111));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_LD_VF_MAP_GET_ALL_LDS_111);
 
-	if (initial)
+	अगर (initial)
 		dcmd->sgl.sge32[0].phys_addr =
 			cpu_to_le32(instance->vf_affiliation_111_h);
-	else
+	अन्यथा
 		dcmd->sgl.sge32[0].phys_addr =
 			cpu_to_le32(new_affiliation_111_h);
 
 	dcmd->sgl.sge32[0].length = cpu_to_le32(
-		sizeof(struct MR_LD_VF_AFFILIATION_111));
+		माप(काष्ठा MR_LD_VF_AFFILIATION_111));
 
 	dev_warn(&instance->pdev->dev, "SR-IOV: Getting LD/VF affiliation for "
 	       "scsi%d\n", instance->host->host_no);
 
-	if (megasas_issue_blocked_cmd(instance, cmd, 0) != DCMD_SUCCESS) {
+	अगर (megasas_issue_blocked_cmd(instance, cmd, 0) != DCMD_SUCCESS) अणु
 		dev_warn(&instance->pdev->dev, "SR-IOV: LD/VF affiliation DCMD"
 		       " failed with status 0x%x for scsi%d\n",
 		       dcmd->cmd_status, instance->host->host_no);
-		retval = 1; /* Do a scan if we couldn't get affiliation */
-		goto out;
-	}
+		retval = 1; /* Do a scan अगर we couldn't get affiliation */
+		जाओ out;
+	पूर्ण
 
-	if (!initial) {
+	अगर (!initial) अणु
 		thisVf = new_affiliation_111->thisVf;
-		for (ld = 0 ; ld < new_affiliation_111->vdCount; ld++)
-			if (instance->vf_affiliation_111->map[ld].policy[thisVf] !=
-			    new_affiliation_111->map[ld].policy[thisVf]) {
+		क्रम (ld = 0 ; ld < new_affiliation_111->vdCount; ld++)
+			अगर (instance->vf_affiliation_111->map[ld].policy[thisVf] !=
+			    new_affiliation_111->map[ld].policy[thisVf]) अणु
 				dev_warn(&instance->pdev->dev, "SR-IOV: "
 				       "Got new LD/VF affiliation for scsi%d\n",
 				       instance->host->host_no);
-				memcpy(instance->vf_affiliation_111,
+				स_नकल(instance->vf_affiliation_111,
 				       new_affiliation_111,
-				       sizeof(struct MR_LD_VF_AFFILIATION_111));
+				       माप(काष्ठा MR_LD_VF_AFFILIATION_111));
 				retval = 1;
-				goto out;
-			}
-	}
+				जाओ out;
+			पूर्ण
+	पूर्ण
 out:
-	if (new_affiliation_111) {
-		dma_free_coherent(&instance->pdev->dev,
-				    sizeof(struct MR_LD_VF_AFFILIATION_111),
+	अगर (new_affiliation_111) अणु
+		dma_मुक्त_coherent(&instance->pdev->dev,
+				    माप(काष्ठा MR_LD_VF_AFFILIATION_111),
 				    new_affiliation_111,
 				    new_affiliation_111_h);
-	}
+	पूर्ण
 
-	megasas_return_cmd(instance, cmd);
+	megasas_वापस_cmd(instance, cmd);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int megasas_get_ld_vf_affiliation_12(struct megasas_instance *instance,
-					    int initial)
-{
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	struct MR_LD_VF_AFFILIATION *new_affiliation = NULL;
-	struct MR_LD_VF_MAP *newmap = NULL, *savedmap = NULL;
+अटल पूर्णांक megasas_get_ld_vf_affiliation_12(काष्ठा megasas_instance *instance,
+					    पूर्णांक initial)
+अणु
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	काष्ठा MR_LD_VF_AFFILIATION *new_affiliation = शून्य;
+	काष्ठा MR_LD_VF_MAP *newmap = शून्य, *savedmap = शून्य;
 	dma_addr_t new_affiliation_h;
-	int i, j, retval = 0, found = 0, doscan = 0;
+	पूर्णांक i, j, retval = 0, found = 0, करोscan = 0;
 	u8 thisVf;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "megasas_get_ld_vf_affiliation12: "
+	अगर (!cmd) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "megasas_get_ld_vf_affiliation12: "
 		       "Failed to get cmd for scsi%d\n",
 		       instance->host->host_no);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	if (!instance->vf_affiliation) {
+	अगर (!instance->vf_affiliation) अणु
 		dev_warn(&instance->pdev->dev, "SR-IOV: Couldn't get LD/VF "
 		       "affiliation for scsi%d\n", instance->host->host_no);
-		megasas_return_cmd(instance, cmd);
-		return -ENOMEM;
-	}
+		megasas_वापस_cmd(instance, cmd);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (initial)
-		memset(instance->vf_affiliation, 0, (MAX_LOGICAL_DRIVES + 1) *
-		       sizeof(struct MR_LD_VF_AFFILIATION));
-	else {
+	अगर (initial)
+		स_रखो(instance->vf_affiliation, 0, (MAX_LOGICAL_DRIVES + 1) *
+		       माप(काष्ठा MR_LD_VF_AFFILIATION));
+	अन्यथा अणु
 		new_affiliation =
 			dma_alloc_coherent(&instance->pdev->dev,
-					   (MAX_LOGICAL_DRIVES + 1) * sizeof(struct MR_LD_VF_AFFILIATION),
+					   (MAX_LOGICAL_DRIVES + 1) * माप(काष्ठा MR_LD_VF_AFFILIATION),
 					   &new_affiliation_h, GFP_KERNEL);
-		if (!new_affiliation) {
-			dev_printk(KERN_DEBUG, &instance->pdev->dev, "SR-IOV: Couldn't allocate "
+		अगर (!new_affiliation) अणु
+			dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "SR-IOV: Couldn't allocate "
 			       "memory for new affiliation for scsi%d\n",
 			       instance->host->host_no);
-			megasas_return_cmd(instance, cmd);
-			return -ENOMEM;
-		}
-	}
+			megasas_वापस_cmd(instance, cmd);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = MFI_STAT_INVALID_STATUS;
 	dcmd->sge_count = 1;
-	dcmd->flags = cpu_to_le16(MFI_FRAME_DIR_BOTH);
-	dcmd->timeout = 0;
+	dcmd->flags = cpu_to_le16(MFI_FRAME_सूची_BOTH);
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
 	dcmd->data_xfer_len = cpu_to_le32((MAX_LOGICAL_DRIVES + 1) *
-		sizeof(struct MR_LD_VF_AFFILIATION));
+		माप(काष्ठा MR_LD_VF_AFFILIATION));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_LD_VF_MAP_GET_ALL_LDS);
 
-	if (initial)
+	अगर (initial)
 		dcmd->sgl.sge32[0].phys_addr =
 			cpu_to_le32(instance->vf_affiliation_h);
-	else
+	अन्यथा
 		dcmd->sgl.sge32[0].phys_addr =
 			cpu_to_le32(new_affiliation_h);
 
 	dcmd->sgl.sge32[0].length = cpu_to_le32((MAX_LOGICAL_DRIVES + 1) *
-		sizeof(struct MR_LD_VF_AFFILIATION));
+		माप(काष्ठा MR_LD_VF_AFFILIATION));
 
 	dev_warn(&instance->pdev->dev, "SR-IOV: Getting LD/VF affiliation for "
 	       "scsi%d\n", instance->host->host_no);
 
 
-	if (megasas_issue_blocked_cmd(instance, cmd, 0) != DCMD_SUCCESS) {
+	अगर (megasas_issue_blocked_cmd(instance, cmd, 0) != DCMD_SUCCESS) अणु
 		dev_warn(&instance->pdev->dev, "SR-IOV: LD/VF affiliation DCMD"
 		       " failed with status 0x%x for scsi%d\n",
 		       dcmd->cmd_status, instance->host->host_no);
-		retval = 1; /* Do a scan if we couldn't get affiliation */
-		goto out;
-	}
+		retval = 1; /* Do a scan अगर we couldn't get affiliation */
+		जाओ out;
+	पूर्ण
 
-	if (!initial) {
-		if (!new_affiliation->ldCount) {
+	अगर (!initial) अणु
+		अगर (!new_affiliation->ldCount) अणु
 			dev_warn(&instance->pdev->dev, "SR-IOV: Got new LD/VF "
 			       "affiliation for passive path for scsi%d\n",
 			       instance->host->host_no);
 			retval = 1;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		newmap = new_affiliation->map;
 		savedmap = instance->vf_affiliation->map;
 		thisVf = new_affiliation->thisVf;
-		for (i = 0 ; i < new_affiliation->ldCount; i++) {
+		क्रम (i = 0 ; i < new_affiliation->ldCount; i++) अणु
 			found = 0;
-			for (j = 0; j < instance->vf_affiliation->ldCount;
-			     j++) {
-				if (newmap->ref.targetId ==
-				    savedmap->ref.targetId) {
+			क्रम (j = 0; j < instance->vf_affiliation->ldCount;
+			     j++) अणु
+				अगर (newmap->ref.targetId ==
+				    savedmap->ref.targetId) अणु
 					found = 1;
-					if (newmap->policy[thisVf] !=
-					    savedmap->policy[thisVf]) {
-						doscan = 1;
-						goto out;
-					}
-				}
-				savedmap = (struct MR_LD_VF_MAP *)
-					((unsigned char *)savedmap +
+					अगर (newmap->policy[thisVf] !=
+					    savedmap->policy[thisVf]) अणु
+						करोscan = 1;
+						जाओ out;
+					पूर्ण
+				पूर्ण
+				savedmap = (काष्ठा MR_LD_VF_MAP *)
+					((अचिन्हित अक्षर *)savedmap +
 					 savedmap->size);
-			}
-			if (!found && newmap->policy[thisVf] !=
-			    MR_LD_ACCESS_HIDDEN) {
-				doscan = 1;
-				goto out;
-			}
-			newmap = (struct MR_LD_VF_MAP *)
-				((unsigned char *)newmap + newmap->size);
-		}
+			पूर्ण
+			अगर (!found && newmap->policy[thisVf] !=
+			    MR_LD_ACCESS_HIDDEN) अणु
+				करोscan = 1;
+				जाओ out;
+			पूर्ण
+			newmap = (काष्ठा MR_LD_VF_MAP *)
+				((अचिन्हित अक्षर *)newmap + newmap->size);
+		पूर्ण
 
 		newmap = new_affiliation->map;
 		savedmap = instance->vf_affiliation->map;
 
-		for (i = 0 ; i < instance->vf_affiliation->ldCount; i++) {
+		क्रम (i = 0 ; i < instance->vf_affiliation->ldCount; i++) अणु
 			found = 0;
-			for (j = 0 ; j < new_affiliation->ldCount; j++) {
-				if (savedmap->ref.targetId ==
-				    newmap->ref.targetId) {
+			क्रम (j = 0 ; j < new_affiliation->ldCount; j++) अणु
+				अगर (savedmap->ref.targetId ==
+				    newmap->ref.targetId) अणु
 					found = 1;
-					if (savedmap->policy[thisVf] !=
-					    newmap->policy[thisVf]) {
-						doscan = 1;
-						goto out;
-					}
-				}
-				newmap = (struct MR_LD_VF_MAP *)
-					((unsigned char *)newmap +
+					अगर (savedmap->policy[thisVf] !=
+					    newmap->policy[thisVf]) अणु
+						करोscan = 1;
+						जाओ out;
+					पूर्ण
+				पूर्ण
+				newmap = (काष्ठा MR_LD_VF_MAP *)
+					((अचिन्हित अक्षर *)newmap +
 					 newmap->size);
-			}
-			if (!found && savedmap->policy[thisVf] !=
-			    MR_LD_ACCESS_HIDDEN) {
-				doscan = 1;
-				goto out;
-			}
-			savedmap = (struct MR_LD_VF_MAP *)
-				((unsigned char *)savedmap +
+			पूर्ण
+			अगर (!found && savedmap->policy[thisVf] !=
+			    MR_LD_ACCESS_HIDDEN) अणु
+				करोscan = 1;
+				जाओ out;
+			पूर्ण
+			savedmap = (काष्ठा MR_LD_VF_MAP *)
+				((अचिन्हित अक्षर *)savedmap +
 				 savedmap->size);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	if (doscan) {
+	अगर (करोscan) अणु
 		dev_warn(&instance->pdev->dev, "SR-IOV: Got new LD/VF "
 		       "affiliation for scsi%d\n", instance->host->host_no);
-		memcpy(instance->vf_affiliation, new_affiliation,
+		स_नकल(instance->vf_affiliation, new_affiliation,
 		       new_affiliation->size);
 		retval = 1;
-	}
+	पूर्ण
 
-	if (new_affiliation)
-		dma_free_coherent(&instance->pdev->dev,
+	अगर (new_affiliation)
+		dma_मुक्त_coherent(&instance->pdev->dev,
 				    (MAX_LOGICAL_DRIVES + 1) *
-				    sizeof(struct MR_LD_VF_AFFILIATION),
+				    माप(काष्ठा MR_LD_VF_AFFILIATION),
 				    new_affiliation, new_affiliation_h);
-	megasas_return_cmd(instance, cmd);
+	megasas_वापस_cmd(instance, cmd);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* This function will get the current SR-IOV LD/VF affiliation */
-static int megasas_get_ld_vf_affiliation(struct megasas_instance *instance,
-	int initial)
-{
-	int retval;
+अटल पूर्णांक megasas_get_ld_vf_affiliation(काष्ठा megasas_instance *instance,
+	पूर्णांक initial)
+अणु
+	पूर्णांक retval;
 
-	if (instance->PlasmaFW111)
+	अगर (instance->Plयंत्रaFW111)
 		retval = megasas_get_ld_vf_affiliation_111(instance, initial);
-	else
+	अन्यथा
 		retval = megasas_get_ld_vf_affiliation_12(instance, initial);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* This function will tell FW to start the SR-IOV heartbeat */
-int megasas_sriov_start_heartbeat(struct megasas_instance *instance,
-					 int initial)
-{
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	int retval = 0;
+पूर्णांक megasas_sriov_start_heartbeat(काष्ठा megasas_instance *instance,
+					 पूर्णांक initial)
+अणु
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	पूर्णांक retval = 0;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "megasas_sriov_start_heartbeat: "
+	अगर (!cmd) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "megasas_sriov_start_heartbeat: "
 		       "Failed to get cmd for scsi%d\n",
 		       instance->host->host_no);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	if (initial) {
+	अगर (initial) अणु
 		instance->hb_host_mem =
 			dma_alloc_coherent(&instance->pdev->dev,
-					   sizeof(struct MR_CTRL_HB_HOST_MEM),
+					   माप(काष्ठा MR_CTRL_HB_HOST_MEM),
 					   &instance->hb_host_mem_h,
 					   GFP_KERNEL);
-		if (!instance->hb_host_mem) {
-			dev_printk(KERN_DEBUG, &instance->pdev->dev, "SR-IOV: Couldn't allocate"
+		अगर (!instance->hb_host_mem) अणु
+			dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "SR-IOV: Couldn't allocate"
 			       " memory for heartbeat host memory for scsi%d\n",
 			       instance->host->host_no);
 			retval = -ENOMEM;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
-	dcmd->mbox.s[0] = cpu_to_le16(sizeof(struct MR_CTRL_HB_HOST_MEM));
+	dcmd->mbox.s[0] = cpu_to_le16(माप(काष्ठा MR_CTRL_HB_HOST_MEM));
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = MFI_STAT_INVALID_STATUS;
 	dcmd->sge_count = 1;
-	dcmd->flags = cpu_to_le16(MFI_FRAME_DIR_BOTH);
-	dcmd->timeout = 0;
+	dcmd->flags = cpu_to_le16(MFI_FRAME_सूची_BOTH);
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
-	dcmd->data_xfer_len = cpu_to_le32(sizeof(struct MR_CTRL_HB_HOST_MEM));
+	dcmd->data_xfer_len = cpu_to_le32(माप(काष्ठा MR_CTRL_HB_HOST_MEM));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_CTRL_SHARED_HOST_MEM_ALLOC);
 
 	megasas_set_dma_settings(instance, dcmd, instance->hb_host_mem_h,
-				 sizeof(struct MR_CTRL_HB_HOST_MEM));
+				 माप(काष्ठा MR_CTRL_HB_HOST_MEM));
 
 	dev_warn(&instance->pdev->dev, "SR-IOV: Starting heartbeat for scsi%d\n",
 	       instance->host->host_no);
 
-	if ((instance->adapter_type != MFI_SERIES) &&
-	    !instance->mask_interrupts)
+	अगर ((instance->adapter_type != MFI_SERIES) &&
+	    !instance->mask_पूर्णांकerrupts)
 		retval = megasas_issue_blocked_cmd(instance, cmd,
 			MEGASAS_ROUTINE_WAIT_TIME_VF);
-	else
+	अन्यथा
 		retval = megasas_issue_polled(instance, cmd);
 
-	if (retval) {
+	अगर (retval) अणु
 		dev_warn(&instance->pdev->dev, "SR-IOV: MR_DCMD_CTRL_SHARED_HOST"
 			"_MEM_ALLOC DCMD %s for scsi%d\n",
 			(dcmd->cmd_status == MFI_STAT_INVALID_STATUS) ?
 			"timed out" : "failed", instance->host->host_no);
 		retval = 1;
-	}
+	पूर्ण
 
 out:
-	megasas_return_cmd(instance, cmd);
+	megasas_वापस_cmd(instance, cmd);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-/* Handler for SR-IOV heartbeat */
-static void megasas_sriov_heartbeat_handler(struct timer_list *t)
-{
-	struct megasas_instance *instance =
-		from_timer(instance, t, sriov_heartbeat_timer);
+/* Handler क्रम SR-IOV heartbeat */
+अटल व्योम megasas_sriov_heartbeat_handler(काष्ठा समयr_list *t)
+अणु
+	काष्ठा megasas_instance *instance =
+		from_समयr(instance, t, sriov_heartbeat_समयr);
 
-	if (instance->hb_host_mem->HB.fwCounter !=
-	    instance->hb_host_mem->HB.driverCounter) {
+	अगर (instance->hb_host_mem->HB.fwCounter !=
+	    instance->hb_host_mem->HB.driverCounter) अणु
 		instance->hb_host_mem->HB.driverCounter =
 			instance->hb_host_mem->HB.fwCounter;
-		mod_timer(&instance->sriov_heartbeat_timer,
-			  jiffies + MEGASAS_SRIOV_HEARTBEAT_INTERVAL_VF);
-	} else {
+		mod_समयr(&instance->sriov_heartbeat_समयr,
+			  jअगरfies + MEGASAS_SRIOV_HEARTBEAT_INTERVAL_VF);
+	पूर्ण अन्यथा अणु
 		dev_warn(&instance->pdev->dev, "SR-IOV: Heartbeat never "
 		       "completed for scsi%d\n", instance->host->host_no);
 		schedule_work(&instance->work_init);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * megasas_wait_for_outstanding -	Wait for all outstanding cmds
+ * megasas_रुको_क्रम_outstanding -	Wait क्रम all outstanding cmds
  * @instance:				Adapter soft state
  *
- * This function waits for up to MEGASAS_RESET_WAIT_TIME seconds for FW to
- * complete all its outstanding commands. Returns error if one or more IOs
- * are pending after this time period. It also marks the controller dead.
+ * This function रुकोs क्रम up to MEGASAS_RESET_WAIT_TIME seconds क्रम FW to
+ * complete all its outstanding commands. Returns error अगर one or more IOs
+ * are pending after this समय period. It also marks the controller dead.
  */
-static int megasas_wait_for_outstanding(struct megasas_instance *instance)
-{
-	int i, sl, outstanding;
+अटल पूर्णांक megasas_रुको_क्रम_outstanding(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक i, sl, outstanding;
 	u32 reset_index;
-	u32 wait_time = MEGASAS_RESET_WAIT_TIME;
-	unsigned long flags;
-	struct list_head clist_local;
-	struct megasas_cmd *reset_cmd;
+	u32 रुको_समय = MEGASAS_RESET_WAIT_TIME;
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head clist_local;
+	काष्ठा megasas_cmd *reset_cmd;
 	u32 fw_state;
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) {
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) अणु
 		dev_info(&instance->pdev->dev, "%s:%d HBA is killed.\n",
 		__func__, __LINE__);
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
-	if (atomic_read(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL) {
+	अगर (atomic_पढ़ो(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL) अणु
 
 		INIT_LIST_HEAD(&clist_local);
 		spin_lock_irqsave(&instance->hba_lock, flags);
-		list_splice_init(&instance->internal_reset_pending_q,
+		list_splice_init(&instance->पूर्णांकernal_reset_pending_q,
 				&clist_local);
 		spin_unlock_irqrestore(&instance->hba_lock, flags);
 
 		dev_notice(&instance->pdev->dev, "HBA reset wait ...\n");
-		for (i = 0; i < wait_time; i++) {
+		क्रम (i = 0; i < रुको_समय; i++) अणु
 			msleep(1000);
-			if (atomic_read(&instance->adprecovery) == MEGASAS_HBA_OPERATIONAL)
-				break;
-		}
+			अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HBA_OPERATIONAL)
+				अवरोध;
+		पूर्ण
 
-		if (atomic_read(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL) {
+		अगर (atomic_पढ़ो(&instance->adprecovery) != MEGASAS_HBA_OPERATIONAL) अणु
 			dev_notice(&instance->pdev->dev, "reset: Stopping HBA.\n");
 			atomic_set(&instance->adprecovery, MEGASAS_HW_CRITICAL_ERROR);
-			return FAILED;
-		}
+			वापस FAILED;
+		पूर्ण
 
 		reset_index = 0;
-		while (!list_empty(&clist_local)) {
+		जबतक (!list_empty(&clist_local)) अणु
 			reset_cmd = list_entry((&clist_local)->next,
-						struct megasas_cmd, list);
+						काष्ठा megasas_cmd, list);
 			list_del_init(&reset_cmd->list);
-			if (reset_cmd->scmd) {
+			अगर (reset_cmd->scmd) अणु
 				reset_cmd->scmd->result = DID_REQUEUE << 16;
 				dev_notice(&instance->pdev->dev, "%d:%p reset [%02x]\n",
 					reset_index, reset_cmd,
 					reset_cmd->scmd->cmnd[0]);
 
-				reset_cmd->scmd->scsi_done(reset_cmd->scmd);
-				megasas_return_cmd(instance, reset_cmd);
-			} else if (reset_cmd->sync_cmd) {
+				reset_cmd->scmd->scsi_करोne(reset_cmd->scmd);
+				megasas_वापस_cmd(instance, reset_cmd);
+			पूर्ण अन्यथा अगर (reset_cmd->sync_cmd) अणु
 				dev_notice(&instance->pdev->dev, "%p synch cmds"
 						"reset queue\n",
 						reset_cmd);
@@ -2760,390 +2761,390 @@ static int megasas_wait_for_outstanding(struct megasas_instance *instance)
 				instance->instancet->fire_cmd(instance,
 						reset_cmd->frame_phys_addr,
 						0, instance->reg_set);
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_notice(&instance->pdev->dev, "%p unexpected"
 					"cmds lst\n",
 					reset_cmd);
-			}
+			पूर्ण
 			reset_index++;
-		}
+		पूर्ण
 
-		return SUCCESS;
-	}
+		वापस SUCCESS;
+	पूर्ण
 
-	for (i = 0; i < resetwaittime; i++) {
-		outstanding = atomic_read(&instance->fw_outstanding);
+	क्रम (i = 0; i < resetरुकोसमय; i++) अणु
+		outstanding = atomic_पढ़ो(&instance->fw_outstanding);
 
-		if (!outstanding)
-			break;
+		अगर (!outstanding)
+			अवरोध;
 
-		if (!(i % MEGASAS_RESET_NOTICE_INTERVAL)) {
+		अगर (!(i % MEGASAS_RESET_NOTICE_INTERVAL)) अणु
 			dev_notice(&instance->pdev->dev, "[%2d]waiting for %d "
 			       "commands to complete\n",i,outstanding);
 			/*
 			 * Call cmd completion routine. Cmd to be
 			 * be completed directly without depending on isr.
 			 */
-			megasas_complete_cmd_dpc((unsigned long)instance);
-		}
+			megasas_complete_cmd_dpc((अचिन्हित दीर्घ)instance);
+		पूर्ण
 
 		msleep(1000);
-	}
+	पूर्ण
 
 	i = 0;
-	outstanding = atomic_read(&instance->fw_outstanding);
-	fw_state = instance->instancet->read_fw_status_reg(instance) & MFI_STATE_MASK;
+	outstanding = atomic_पढ़ो(&instance->fw_outstanding);
+	fw_state = instance->instancet->पढ़ो_fw_status_reg(instance) & MFI_STATE_MASK;
 
-	if ((!outstanding && (fw_state == MFI_STATE_OPERATIONAL)))
-		goto no_outstanding;
+	अगर ((!outstanding && (fw_state == MFI_STATE_OPERATIONAL)))
+		जाओ no_outstanding;
 
-	if (instance->disableOnlineCtrlReset)
-		goto kill_hba_and_failed;
-	do {
-		if ((fw_state == MFI_STATE_FAULT) || atomic_read(&instance->fw_outstanding)) {
+	अगर (instance->disableOnlineCtrlReset)
+		जाओ समाप्त_hba_and_failed;
+	करो अणु
+		अगर ((fw_state == MFI_STATE_FAULT) || atomic_पढ़ो(&instance->fw_outstanding)) अणु
 			dev_info(&instance->pdev->dev,
 				"%s:%d waiting_for_outstanding: before issue OCR. FW state = 0x%x, outstanding 0x%x\n",
-				__func__, __LINE__, fw_state, atomic_read(&instance->fw_outstanding));
-			if (i == 3)
-				goto kill_hba_and_failed;
-			megasas_do_ocr(instance);
+				__func__, __LINE__, fw_state, atomic_पढ़ो(&instance->fw_outstanding));
+			अगर (i == 3)
+				जाओ समाप्त_hba_and_failed;
+			megasas_करो_ocr(instance);
 
-			if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) {
+			अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) अणु
 				dev_info(&instance->pdev->dev, "%s:%d OCR failed and HBA is killed.\n",
 				__func__, __LINE__);
-				return FAILED;
-			}
+				वापस FAILED;
+			पूर्ण
 			dev_info(&instance->pdev->dev, "%s:%d waiting_for_outstanding: after issue OCR.\n",
 				__func__, __LINE__);
 
-			for (sl = 0; sl < 10; sl++)
+			क्रम (sl = 0; sl < 10; sl++)
 				msleep(500);
 
-			outstanding = atomic_read(&instance->fw_outstanding);
+			outstanding = atomic_पढ़ो(&instance->fw_outstanding);
 
-			fw_state = instance->instancet->read_fw_status_reg(instance) & MFI_STATE_MASK;
-			if ((!outstanding && (fw_state == MFI_STATE_OPERATIONAL)))
-				goto no_outstanding;
-		}
+			fw_state = instance->instancet->पढ़ो_fw_status_reg(instance) & MFI_STATE_MASK;
+			अगर ((!outstanding && (fw_state == MFI_STATE_OPERATIONAL)))
+				जाओ no_outstanding;
+		पूर्ण
 		i++;
-	} while (i <= 3);
+	पूर्ण जबतक (i <= 3);
 
 no_outstanding:
 
 	dev_info(&instance->pdev->dev, "%s:%d no more pending commands remain after reset handling.\n",
 		__func__, __LINE__);
-	return SUCCESS;
+	वापस SUCCESS;
 
-kill_hba_and_failed:
+समाप्त_hba_and_failed:
 
-	/* Reset not supported, kill adapter */
+	/* Reset not supported, समाप्त adapter */
 	dev_info(&instance->pdev->dev, "%s:%d killing adapter scsi%d"
 		" disableOnlineCtrlReset %d fw_outstanding %d \n",
 		__func__, __LINE__, instance->host->host_no, instance->disableOnlineCtrlReset,
-		atomic_read(&instance->fw_outstanding));
+		atomic_पढ़ो(&instance->fw_outstanding));
 	megasas_dump_pending_frames(instance);
-	megaraid_sas_kill_hba(instance);
+	megaraid_sas_समाप्त_hba(instance);
 
-	return FAILED;
-}
+	वापस FAILED;
+पूर्ण
 
 /**
  * megasas_generic_reset -	Generic reset routine
  * @scmd:			Mid-layer SCSI command
  *
- * This routine implements a generic reset handler for device, bus and host
- * reset requests. Device, bus and host specific reset handlers can use this
- * function after they do their specific tasks.
+ * This routine implements a generic reset handler क्रम device, bus and host
+ * reset requests. Device, bus and host specअगरic reset handlers can use this
+ * function after they करो their specअगरic tasks.
  */
-static int megasas_generic_reset(struct scsi_cmnd *scmd)
-{
-	int ret_val;
-	struct megasas_instance *instance;
+अटल पूर्णांक megasas_generic_reset(काष्ठा scsi_cmnd *scmd)
+अणु
+	पूर्णांक ret_val;
+	काष्ठा megasas_instance *instance;
 
-	instance = (struct megasas_instance *)scmd->device->host->hostdata;
+	instance = (काष्ठा megasas_instance *)scmd->device->host->hostdata;
 
-	scmd_printk(KERN_NOTICE, scmd, "megasas: RESET cmd=%x retries=%x\n",
+	scmd_prपूर्णांकk(KERN_NOTICE, scmd, "megasas: RESET cmd=%x retries=%x\n",
 		 scmd->cmnd[0], scmd->retries);
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) {
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) अणु
 		dev_err(&instance->pdev->dev, "cannot recover from previous reset failures\n");
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
-	ret_val = megasas_wait_for_outstanding(instance);
-	if (ret_val == SUCCESS)
+	ret_val = megasas_रुको_क्रम_outstanding(instance);
+	अगर (ret_val == SUCCESS)
 		dev_notice(&instance->pdev->dev, "reset successful\n");
-	else
+	अन्यथा
 		dev_err(&instance->pdev->dev, "failed to do reset\n");
 
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- * megasas_reset_timer - quiesce the adapter if required
+ * megasas_reset_समयr - quiesce the adapter अगर required
  * @scmd:		scsi cmnd
  *
- * Sets the FW busy flag and reduces the host->can_queue if the
- * cmd has not been completed within the timeout period.
+ * Sets the FW busy flag and reduces the host->can_queue अगर the
+ * cmd has not been completed within the समयout period.
  */
-static enum
-blk_eh_timer_return megasas_reset_timer(struct scsi_cmnd *scmd)
-{
-	struct megasas_instance *instance;
-	unsigned long flags;
+अटल क्रमागत
+blk_eh_समयr_वापस megasas_reset_समयr(काष्ठा scsi_cmnd *scmd)
+अणु
+	काष्ठा megasas_instance *instance;
+	अचिन्हित दीर्घ flags;
 
-	if (time_after(jiffies, scmd->jiffies_at_alloc +
-				(scmd_timeout * 2) * HZ)) {
-		return BLK_EH_DONE;
-	}
+	अगर (समय_after(jअगरfies, scmd->jअगरfies_at_alloc +
+				(scmd_समयout * 2) * HZ)) अणु
+		वापस BLK_EH_DONE;
+	पूर्ण
 
-	instance = (struct megasas_instance *)scmd->device->host->hostdata;
-	if (!(instance->flag & MEGASAS_FW_BUSY)) {
+	instance = (काष्ठा megasas_instance *)scmd->device->host->hostdata;
+	अगर (!(instance->flag & MEGASAS_FW_BUSY)) अणु
 		/* FW is busy, throttle IO */
 		spin_lock_irqsave(instance->host->host_lock, flags);
 
 		instance->host->can_queue = instance->throttlequeuedepth;
-		instance->last_time = jiffies;
+		instance->last_समय = jअगरfies;
 		instance->flag |= MEGASAS_FW_BUSY;
 
 		spin_unlock_irqrestore(instance->host->host_lock, flags);
-	}
-	return BLK_EH_RESET_TIMER;
-}
+	पूर्ण
+	वापस BLK_EH_RESET_TIMER;
+पूर्ण
 
 /**
- * megasas_dump -	This function will print hexdump of provided buffer.
+ * megasas_dump -	This function will prपूर्णांक hexdump of provided buffer.
  * @buf:		Buffer to be dumped
  * @sz:		Size in bytes
- * @format:		Different formats of dumping e.g. format=n will
+ * @क्रमmat:		Dअगरferent क्रमmats of dumping e.g. क्रमmat=n will
  *			cause only 'n' 32 bit words to be dumped in a single
  *			line.
  */
-inline void
-megasas_dump(void *buf, int sz, int format)
-{
-	int i;
+अंतरभूत व्योम
+megasas_dump(व्योम *buf, पूर्णांक sz, पूर्णांक क्रमmat)
+अणु
+	पूर्णांक i;
 	__le32 *buf_loc = (__le32 *)buf;
 
-	for (i = 0; i < (sz / sizeof(__le32)); i++) {
-		if ((i % format) == 0) {
-			if (i != 0)
-				printk(KERN_CONT "\n");
-			printk(KERN_CONT "%08x: ", (i * 4));
-		}
-		printk(KERN_CONT "%08x ", le32_to_cpu(buf_loc[i]));
-	}
-	printk(KERN_CONT "\n");
-}
+	क्रम (i = 0; i < (sz / माप(__le32)); i++) अणु
+		अगर ((i % क्रमmat) == 0) अणु
+			अगर (i != 0)
+				prपूर्णांकk(KERN_CONT "\n");
+			prपूर्णांकk(KERN_CONT "%08x: ", (i * 4));
+		पूर्ण
+		prपूर्णांकk(KERN_CONT "%08x ", le32_to_cpu(buf_loc[i]));
+	पूर्ण
+	prपूर्णांकk(KERN_CONT "\n");
+पूर्ण
 
 /**
- * megasas_dump_reg_set -	This function will print hexdump of register set
+ * megasas_dump_reg_set -	This function will prपूर्णांक hexdump of रेजिस्टर set
  * @reg_set:	Register set to be dumped
  */
-inline void
-megasas_dump_reg_set(void __iomem *reg_set)
-{
-	unsigned int i, sz = 256;
+अंतरभूत व्योम
+megasas_dump_reg_set(व्योम __iomem *reg_set)
+अणु
+	अचिन्हित पूर्णांक i, sz = 256;
 	u32 __iomem *reg = (u32 __iomem *)reg_set;
 
-	for (i = 0; i < (sz / sizeof(u32)); i++)
-		printk("%08x: %08x\n", (i * 4), readl(&reg[i]));
-}
+	क्रम (i = 0; i < (sz / माप(u32)); i++)
+		prपूर्णांकk("%08x: %08x\n", (i * 4), पढ़ोl(&reg[i]));
+पूर्ण
 
 /**
- * megasas_dump_fusion_io -	This function will print key details
+ * megasas_dump_fusion_io -	This function will prपूर्णांक key details
  *				of SCSI IO
- * @scmd:			SCSI command pointer of SCSI IO
+ * @scmd:			SCSI command poपूर्णांकer of SCSI IO
  */
-void
-megasas_dump_fusion_io(struct scsi_cmnd *scmd)
-{
-	struct megasas_cmd_fusion *cmd;
-	union MEGASAS_REQUEST_DESCRIPTOR_UNION *req_desc;
-	struct megasas_instance *instance;
+व्योम
+megasas_dump_fusion_io(काष्ठा scsi_cmnd *scmd)
+अणु
+	काष्ठा megasas_cmd_fusion *cmd;
+	जोड़ MEGASAS_REQUEST_DESCRIPTOR_UNION *req_desc;
+	काष्ठा megasas_instance *instance;
 
-	cmd = (struct megasas_cmd_fusion *)scmd->SCp.ptr;
-	instance = (struct megasas_instance *)scmd->device->host->hostdata;
+	cmd = (काष्ठा megasas_cmd_fusion *)scmd->SCp.ptr;
+	instance = (काष्ठा megasas_instance *)scmd->device->host->hostdata;
 
-	scmd_printk(KERN_INFO, scmd,
+	scmd_prपूर्णांकk(KERN_INFO, scmd,
 		    "scmd: (0x%p)  retries: 0x%x  allowed: 0x%x\n",
 		    scmd, scmd->retries, scmd->allowed);
-	scsi_print_command(scmd);
+	scsi_prपूर्णांक_command(scmd);
 
-	if (cmd) {
-		req_desc = (union MEGASAS_REQUEST_DESCRIPTOR_UNION *)cmd->request_desc;
-		scmd_printk(KERN_INFO, scmd, "Request descriptor details:\n");
-		scmd_printk(KERN_INFO, scmd,
+	अगर (cmd) अणु
+		req_desc = (जोड़ MEGASAS_REQUEST_DESCRIPTOR_UNION *)cmd->request_desc;
+		scmd_prपूर्णांकk(KERN_INFO, scmd, "Request descriptor details:\n");
+		scmd_prपूर्णांकk(KERN_INFO, scmd,
 			    "RequestFlags:0x%x  MSIxIndex:0x%x  SMID:0x%x  LMID:0x%x  DevHandle:0x%x\n",
 			    req_desc->SCSIIO.RequestFlags,
 			    req_desc->SCSIIO.MSIxIndex, req_desc->SCSIIO.SMID,
 			    req_desc->SCSIIO.LMID, req_desc->SCSIIO.DevHandle);
 
-		printk(KERN_INFO "IO request frame:\n");
+		prपूर्णांकk(KERN_INFO "IO request frame:\n");
 		megasas_dump(cmd->io_request,
 			     MEGA_MPI2_RAID_DEFAULT_IO_FRAME_SIZE, 8);
-		printk(KERN_INFO "Chain frame:\n");
+		prपूर्णांकk(KERN_INFO "Chain frame:\n");
 		megasas_dump(cmd->sg_frame,
 			     instance->max_chain_frame_sz, 8);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 /*
- * megasas_dump_sys_regs - This function will dump system registers through
+ * megasas_dump_sys_regs - This function will dump प्रणाली रेजिस्टरs through
  *			    sysfs.
- * @reg_set:		    Pointer to System register set.
+ * @reg_set:		    Poपूर्णांकer to System रेजिस्टर set.
  * @buf:		    Buffer to which output is to be written.
- * @return:		    Number of bytes written to buffer.
+ * @वापस:		    Number of bytes written to buffer.
  */
-static inline ssize_t
-megasas_dump_sys_regs(void __iomem *reg_set, char *buf)
-{
-	unsigned int i, sz = 256;
-	int bytes_wrote = 0;
-	char *loc = (char *)buf;
+अटल अंतरभूत sमाप_प्रकार
+megasas_dump_sys_regs(व्योम __iomem *reg_set, अक्षर *buf)
+अणु
+	अचिन्हित पूर्णांक i, sz = 256;
+	पूर्णांक bytes_wrote = 0;
+	अक्षर *loc = (अक्षर *)buf;
 	u32 __iomem *reg = (u32 __iomem *)reg_set;
 
-	for (i = 0; i < sz / sizeof(u32); i++) {
-		bytes_wrote += scnprintf(loc + bytes_wrote,
+	क्रम (i = 0; i < sz / माप(u32); i++) अणु
+		bytes_wrote += scnम_लिखो(loc + bytes_wrote,
 					 PAGE_SIZE - bytes_wrote,
 					 "%08x: %08x\n", (i * 4),
-					 readl(&reg[i]));
-	}
-	return bytes_wrote;
-}
+					 पढ़ोl(&reg[i]));
+	पूर्ण
+	वापस bytes_wrote;
+पूर्ण
 
 /**
- * megasas_reset_bus_host -	Bus & host reset handler entry point
+ * megasas_reset_bus_host -	Bus & host reset handler entry poपूर्णांक
  * @scmd:			Mid-layer SCSI command
  */
-static int megasas_reset_bus_host(struct scsi_cmnd *scmd)
-{
-	int ret;
-	struct megasas_instance *instance;
+अटल पूर्णांक megasas_reset_bus_host(काष्ठा scsi_cmnd *scmd)
+अणु
+	पूर्णांक ret;
+	काष्ठा megasas_instance *instance;
 
-	instance = (struct megasas_instance *)scmd->device->host->hostdata;
+	instance = (काष्ठा megasas_instance *)scmd->device->host->hostdata;
 
-	scmd_printk(KERN_INFO, scmd,
+	scmd_prपूर्णांकk(KERN_INFO, scmd,
 		"OCR is requested due to IO timeout!!\n");
 
-	scmd_printk(KERN_INFO, scmd,
+	scmd_prपूर्णांकk(KERN_INFO, scmd,
 		"SCSI host state: %d  SCSI host busy: %d  FW outstanding: %d\n",
 		scmd->device->host->shost_state,
 		scsi_host_busy(scmd->device->host),
-		atomic_read(&instance->fw_outstanding));
+		atomic_पढ़ो(&instance->fw_outstanding));
 	/*
-	 * First wait for all commands to complete
+	 * First रुको क्रम all commands to complete
 	 */
-	if (instance->adapter_type == MFI_SERIES) {
+	अगर (instance->adapter_type == MFI_SERIES) अणु
 		ret = megasas_generic_reset(scmd);
-	} else {
+	पूर्ण अन्यथा अणु
 		megasas_dump_fusion_io(scmd);
 		ret = megasas_reset_fusion(scmd->device->host,
 				SCSIIO_TIMEOUT_OCR);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * megasas_task_abort - Issues task abort request to firmware
- *			(supported only for fusion adapters)
- * @scmd:		SCSI command pointer
+ * megasas_task_पात - Issues task पात request to firmware
+ *			(supported only क्रम fusion adapters)
+ * @scmd:		SCSI command poपूर्णांकer
  */
-static int megasas_task_abort(struct scsi_cmnd *scmd)
-{
-	int ret;
-	struct megasas_instance *instance;
+अटल पूर्णांक megasas_task_पात(काष्ठा scsi_cmnd *scmd)
+अणु
+	पूर्णांक ret;
+	काष्ठा megasas_instance *instance;
 
-	instance = (struct megasas_instance *)scmd->device->host->hostdata;
+	instance = (काष्ठा megasas_instance *)scmd->device->host->hostdata;
 
-	if (instance->adapter_type != MFI_SERIES)
-		ret = megasas_task_abort_fusion(scmd);
-	else {
-		sdev_printk(KERN_NOTICE, scmd->device, "TASK ABORT not supported\n");
+	अगर (instance->adapter_type != MFI_SERIES)
+		ret = megasas_task_पात_fusion(scmd);
+	अन्यथा अणु
+		sdev_prपूर्णांकk(KERN_NOTICE, scmd->device, "TASK ABORT not supported\n");
 		ret = FAILED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * megasas_reset_target:  Issues target reset request to firmware
- *                        (supported only for fusion adapters)
- * @scmd:                 SCSI command pointer
+ *                        (supported only क्रम fusion adapters)
+ * @scmd:                 SCSI command poपूर्णांकer
  */
-static int megasas_reset_target(struct scsi_cmnd *scmd)
-{
-	int ret;
-	struct megasas_instance *instance;
+अटल पूर्णांक megasas_reset_target(काष्ठा scsi_cmnd *scmd)
+अणु
+	पूर्णांक ret;
+	काष्ठा megasas_instance *instance;
 
-	instance = (struct megasas_instance *)scmd->device->host->hostdata;
+	instance = (काष्ठा megasas_instance *)scmd->device->host->hostdata;
 
-	if (instance->adapter_type != MFI_SERIES)
+	अगर (instance->adapter_type != MFI_SERIES)
 		ret = megasas_reset_target_fusion(scmd);
-	else {
-		sdev_printk(KERN_NOTICE, scmd->device, "TARGET RESET not supported\n");
+	अन्यथा अणु
+		sdev_prपूर्णांकk(KERN_NOTICE, scmd->device, "TARGET RESET not supported\n");
 		ret = FAILED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * megasas_bios_param - Returns disk geometry for a disk
+ * megasas_bios_param - Returns disk geometry क्रम a disk
  * @sdev:		device handle
  * @bdev:		block device
  * @capacity:		drive capacity
  * @geom:		geometry parameters
  */
-static int
-megasas_bios_param(struct scsi_device *sdev, struct block_device *bdev,
-		 sector_t capacity, int geom[])
-{
-	int heads;
-	int sectors;
+अटल पूर्णांक
+megasas_bios_param(काष्ठा scsi_device *sdev, काष्ठा block_device *bdev,
+		 sector_t capacity, पूर्णांक geom[])
+अणु
+	पूर्णांक heads;
+	पूर्णांक sectors;
 	sector_t cylinders;
-	unsigned long tmp;
+	अचिन्हित दीर्घ पंचांगp;
 
 	/* Default heads (64) & sectors (32) */
 	heads = 64;
 	sectors = 32;
 
-	tmp = heads * sectors;
+	पंचांगp = heads * sectors;
 	cylinders = capacity;
 
-	sector_div(cylinders, tmp);
+	sector_भाग(cylinders, पंचांगp);
 
 	/*
-	 * Handle extended translation size for logical drives > 1Gb
+	 * Handle extended translation size क्रम logical drives > 1Gb
 	 */
 
-	if (capacity >= 0x200000) {
+	अगर (capacity >= 0x200000) अणु
 		heads = 255;
 		sectors = 63;
-		tmp = heads*sectors;
+		पंचांगp = heads*sectors;
 		cylinders = capacity;
-		sector_div(cylinders, tmp);
-	}
+		sector_भाग(cylinders, पंचांगp);
+	पूर्ण
 
 	geom[0] = heads;
 	geom[1] = sectors;
 	geom[2] = cylinders;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int megasas_map_queues(struct Scsi_Host *shost)
-{
-	struct megasas_instance *instance;
-	int qoff = 0, offset;
-	struct blk_mq_queue_map *map;
+अटल पूर्णांक megasas_map_queues(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा megasas_instance *instance;
+	पूर्णांक qoff = 0, offset;
+	काष्ठा blk_mq_queue_map *map;
 
-	instance = (struct megasas_instance *)shost->hostdata;
+	instance = (काष्ठा megasas_instance *)shost->hostdata;
 
-	if (shost->nr_hw_queues == 1)
-		return 0;
+	अगर (shost->nr_hw_queues == 1)
+		वापस 0;
 
 	offset = instance->low_latency_index_start;
 
@@ -3158,296 +3159,296 @@ static int megasas_map_queues(struct Scsi_Host *shost)
 	/* Setup Poll hctx */
 	map = &shost->tag_set.map[HCTX_TYPE_POLL];
 	map->nr_queues = instance->iopoll_q_count;
-	if (map->nr_queues) {
+	अगर (map->nr_queues) अणु
 		/*
-		 * The poll queue(s) doesn't have an IRQ (and hence IRQ
+		 * The poll queue(s) करोesn't have an IRQ (and hence IRQ
 		 * affinity), so use the regular blk-mq cpu mapping
 		 */
 		map->queue_offset = qoff;
 		blk_mq_map_queues(map);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void megasas_aen_polling(struct work_struct *work);
+अटल व्योम megasas_aen_polling(काष्ठा work_काष्ठा *work);
 
 /**
- * megasas_service_aen -	Processes an event notification
+ * megasas_service_aen -	Processes an event notअगरication
  * @instance:			Adapter soft state
  * @cmd:			AEN command completed by the ISR
  *
- * For AEN, driver sends a command down to FW that is held by the FW till an
- * event occurs. When an event of interest occurs, FW completes the command
+ * For AEN, driver sends a command करोwn to FW that is held by the FW till an
+ * event occurs. When an event of पूर्णांकerest occurs, FW completes the command
  * that it was previously holding.
  *
- * This routines sends SIGIO signal to processes that have registered with the
- * driver for AEN.
+ * This routines sends SIGIO संकेत to processes that have रेजिस्टरed with the
+ * driver क्रम AEN.
  */
-static void
-megasas_service_aen(struct megasas_instance *instance, struct megasas_cmd *cmd)
-{
-	unsigned long flags;
+अटल व्योम
+megasas_service_aen(काष्ठा megasas_instance *instance, काष्ठा megasas_cmd *cmd)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * Don't signal app if it is just an aborted previously registered aen
+	 * Don't संकेत app अगर it is just an पातed previously रेजिस्टरed aen
 	 */
-	if ((!cmd->abort_aen) && (instance->unload == 0)) {
+	अगर ((!cmd->पात_aen) && (instance->unload == 0)) अणु
 		spin_lock_irqsave(&poll_aen_lock, flags);
-		megasas_poll_wait_aen = 1;
+		megasas_poll_रुको_aen = 1;
 		spin_unlock_irqrestore(&poll_aen_lock, flags);
-		wake_up(&megasas_poll_wait);
-		kill_fasync(&megasas_async_queue, SIGIO, POLL_IN);
-	}
-	else
-		cmd->abort_aen = 0;
+		wake_up(&megasas_poll_रुको);
+		समाप्त_fasync(&megasas_async_queue, SIGIO, POLL_IN);
+	पूर्ण
+	अन्यथा
+		cmd->पात_aen = 0;
 
-	instance->aen_cmd = NULL;
+	instance->aen_cmd = शून्य;
 
-	megasas_return_cmd(instance, cmd);
+	megasas_वापस_cmd(instance, cmd);
 
-	if ((instance->unload == 0) &&
-		((instance->issuepend_done == 1))) {
-		struct megasas_aen_event *ev;
+	अगर ((instance->unload == 0) &&
+		((instance->issuepend_करोne == 1))) अणु
+		काष्ठा megasas_aen_event *ev;
 
-		ev = kzalloc(sizeof(*ev), GFP_ATOMIC);
-		if (!ev) {
+		ev = kzalloc(माप(*ev), GFP_ATOMIC);
+		अगर (!ev) अणु
 			dev_err(&instance->pdev->dev, "megasas_service_aen: out of memory\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			ev->instance = instance;
 			instance->ev = ev;
 			INIT_DELAYED_WORK(&ev->hotplug_work,
 					  megasas_aen_polling);
 			schedule_delayed_work(&ev->hotplug_work, 0);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static ssize_t
-fw_crash_buffer_store(struct device *cdev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance =
-		(struct megasas_instance *) shost->hostdata;
-	int val = 0;
-	unsigned long flags;
+अटल sमाप_प्रकार
+fw_crash_buffer_store(काष्ठा device *cdev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance =
+		(काष्ठा megasas_instance *) shost->hostdata;
+	पूर्णांक val = 0;
+	अचिन्हित दीर्घ flags;
 
-	if (kstrtoint(buf, 0, &val) != 0)
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 0, &val) != 0)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&instance->crashdump_lock, flags);
 	instance->fw_crash_buffer_offset = val;
 	spin_unlock_irqrestore(&instance->crashdump_lock, flags);
-	return strlen(buf);
-}
+	वापस म_माप(buf);
+पूर्ण
 
-static ssize_t
-fw_crash_buffer_show(struct device *cdev,
-	struct device_attribute *attr, char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance =
-		(struct megasas_instance *) shost->hostdata;
+अटल sमाप_प्रकार
+fw_crash_buffer_show(काष्ठा device *cdev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance =
+		(काष्ठा megasas_instance *) shost->hostdata;
 	u32 size;
-	unsigned long dmachunk = CRASH_DMA_BUF_SIZE;
-	unsigned long chunk_left_bytes;
-	unsigned long src_addr;
-	unsigned long flags;
+	अचिन्हित दीर्घ dmachunk = CRASH_DMA_BUF_SIZE;
+	अचिन्हित दीर्घ chunk_left_bytes;
+	अचिन्हित दीर्घ src_addr;
+	अचिन्हित दीर्घ flags;
 	u32 buff_offset;
 
 	spin_lock_irqsave(&instance->crashdump_lock, flags);
 	buff_offset = instance->fw_crash_buffer_offset;
-	if (!instance->crash_dump_buf &&
+	अगर (!instance->crash_dump_buf &&
 		!((instance->fw_crash_state == AVAILABLE) ||
-		(instance->fw_crash_state == COPYING))) {
+		(instance->fw_crash_state == COPYING))) अणु
 		dev_err(&instance->pdev->dev,
 			"Firmware crash dump is not available\n");
 		spin_unlock_irqrestore(&instance->crashdump_lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (buff_offset > (instance->fw_crash_buffer_size * dmachunk)) {
+	अगर (buff_offset > (instance->fw_crash_buffer_size * dmachunk)) अणु
 		dev_err(&instance->pdev->dev,
 			"Firmware crash dump offset is out of range\n");
 		spin_unlock_irqrestore(&instance->crashdump_lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	size = (instance->fw_crash_buffer_size * dmachunk) - buff_offset;
 	chunk_left_bytes = dmachunk - (buff_offset % dmachunk);
 	size = (size > chunk_left_bytes) ? chunk_left_bytes : size;
 	size = (size >= PAGE_SIZE) ? (PAGE_SIZE - 1) : size;
 
-	src_addr = (unsigned long)instance->crash_buf[buff_offset / dmachunk] +
+	src_addr = (अचिन्हित दीर्घ)instance->crash_buf[buff_offset / dmachunk] +
 		(buff_offset % dmachunk);
-	memcpy(buf, (void *)src_addr, size);
+	स_नकल(buf, (व्योम *)src_addr, size);
 	spin_unlock_irqrestore(&instance->crashdump_lock, flags);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t
-fw_crash_buffer_size_show(struct device *cdev,
-	struct device_attribute *attr, char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance =
-		(struct megasas_instance *) shost->hostdata;
+अटल sमाप_प्रकार
+fw_crash_buffer_size_show(काष्ठा device *cdev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance =
+		(काष्ठा megasas_instance *) shost->hostdata;
 
-	return snprintf(buf, PAGE_SIZE, "%ld\n", (unsigned long)
+	वापस snम_लिखो(buf, PAGE_SIZE, "%ld\n", (अचिन्हित दीर्घ)
 		((instance->fw_crash_buffer_size) * 1024 * 1024)/PAGE_SIZE);
-}
+पूर्ण
 
-static ssize_t
-fw_crash_state_store(struct device *cdev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance =
-		(struct megasas_instance *) shost->hostdata;
-	int val = 0;
-	unsigned long flags;
+अटल sमाप_प्रकार
+fw_crash_state_store(काष्ठा device *cdev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance =
+		(काष्ठा megasas_instance *) shost->hostdata;
+	पूर्णांक val = 0;
+	अचिन्हित दीर्घ flags;
 
-	if (kstrtoint(buf, 0, &val) != 0)
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 0, &val) != 0)
+		वापस -EINVAL;
 
-	if ((val <= AVAILABLE || val > COPY_ERROR)) {
+	अगर ((val <= AVAILABLE || val > COPY_ERROR)) अणु
 		dev_err(&instance->pdev->dev, "application updates invalid "
 			"firmware crash state\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	instance->fw_crash_state = val;
 
-	if ((val == COPIED) || (val == COPY_ERROR)) {
+	अगर ((val == COPIED) || (val == COPY_ERROR)) अणु
 		spin_lock_irqsave(&instance->crashdump_lock, flags);
-		megasas_free_host_crash_buffer(instance);
+		megasas_मुक्त_host_crash_buffer(instance);
 		spin_unlock_irqrestore(&instance->crashdump_lock, flags);
-		if (val == COPY_ERROR)
+		अगर (val == COPY_ERROR)
 			dev_info(&instance->pdev->dev, "application failed to "
 				"copy Firmware crash dump\n");
-		else
+		अन्यथा
 			dev_info(&instance->pdev->dev, "Firmware crash dump "
 				"copied successfully\n");
-	}
-	return strlen(buf);
-}
+	पूर्ण
+	वापस म_माप(buf);
+पूर्ण
 
-static ssize_t
-fw_crash_state_show(struct device *cdev,
-	struct device_attribute *attr, char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance =
-		(struct megasas_instance *) shost->hostdata;
+अटल sमाप_प्रकार
+fw_crash_state_show(काष्ठा device *cdev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance =
+		(काष्ठा megasas_instance *) shost->hostdata;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", instance->fw_crash_state);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", instance->fw_crash_state);
+पूर्ण
 
-static ssize_t
-page_size_show(struct device *cdev,
-	struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%ld\n", (unsigned long)PAGE_SIZE - 1);
-}
+अटल sमाप_प्रकार
+page_size_show(काष्ठा device *cdev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%ld\n", (अचिन्हित दीर्घ)PAGE_SIZE - 1);
+पूर्ण
 
-static ssize_t
-ldio_outstanding_show(struct device *cdev, struct device_attribute *attr,
-	char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance = (struct megasas_instance *)shost->hostdata;
+अटल sमाप_प्रकार
+ldio_outstanding_show(काष्ठा device *cdev, काष्ठा device_attribute *attr,
+	अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance = (काष्ठा megasas_instance *)shost->hostdata;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&instance->ldio_outstanding));
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", atomic_पढ़ो(&instance->ldio_outstanding));
+पूर्ण
 
-static ssize_t
-fw_cmds_outstanding_show(struct device *cdev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance = (struct megasas_instance *)shost->hostdata;
+अटल sमाप_प्रकार
+fw_cmds_outstanding_show(काष्ठा device *cdev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance = (काष्ठा megasas_instance *)shost->hostdata;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&instance->fw_outstanding));
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", atomic_पढ़ो(&instance->fw_outstanding));
+पूर्ण
 
-static ssize_t
-enable_sdev_max_qd_show(struct device *cdev,
-	struct device_attribute *attr, char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance = (struct megasas_instance *)shost->hostdata;
+अटल sमाप_प्रकार
+enable_sdev_max_qd_show(काष्ठा device *cdev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance = (काष्ठा megasas_instance *)shost->hostdata;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", instance->enable_sdev_max_qd);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", instance->enable_sdev_max_qd);
+पूर्ण
 
-static ssize_t
-enable_sdev_max_qd_store(struct device *cdev,
-	struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance = (struct megasas_instance *)shost->hostdata;
+अटल sमाप_प्रकार
+enable_sdev_max_qd_store(काष्ठा device *cdev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance = (काष्ठा megasas_instance *)shost->hostdata;
 	u32 val = 0;
 	bool is_target_prop;
-	int ret_target_prop = DCMD_FAILED;
-	struct scsi_device *sdev;
+	पूर्णांक ret_target_prop = DCMD_FAILED;
+	काष्ठा scsi_device *sdev;
 
-	if (kstrtou32(buf, 0, &val) != 0) {
+	अगर (kstrtou32(buf, 0, &val) != 0) अणु
 		pr_err("megasas: could not set enable_sdev_max_qd\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&instance->reset_mutex);
-	if (val)
+	अगर (val)
 		instance->enable_sdev_max_qd = true;
-	else
+	अन्यथा
 		instance->enable_sdev_max_qd = false;
 
-	shost_for_each_device(sdev, shost) {
+	shost_क्रम_each_device(sdev, shost) अणु
 		ret_target_prop = megasas_get_target_prop(instance, sdev);
 		is_target_prop = (ret_target_prop == DCMD_SUCCESS) ? true : false;
 		megasas_set_fw_assisted_qd(sdev, is_target_prop);
-	}
+	पूर्ण
 	mutex_unlock(&instance->reset_mutex);
 
-	return strlen(buf);
-}
+	वापस म_माप(buf);
+पूर्ण
 
-static ssize_t
-dump_system_regs_show(struct device *cdev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance =
-			(struct megasas_instance *)shost->hostdata;
+अटल sमाप_प्रकार
+dump_प्रणाली_regs_show(काष्ठा device *cdev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance =
+			(काष्ठा megasas_instance *)shost->hostdata;
 
-	return megasas_dump_sys_regs(instance->reg_set, buf);
-}
+	वापस megasas_dump_sys_regs(instance->reg_set, buf);
+पूर्ण
 
-static ssize_t
-raid_map_id_show(struct device *cdev, struct device_attribute *attr,
-			  char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(cdev);
-	struct megasas_instance *instance =
-			(struct megasas_instance *)shost->hostdata;
+अटल sमाप_प्रकार
+raid_map_id_show(काष्ठा device *cdev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(cdev);
+	काष्ठा megasas_instance *instance =
+			(काष्ठा megasas_instance *)shost->hostdata;
 
-	return snprintf(buf, PAGE_SIZE, "%ld\n",
-			(unsigned long)instance->map_id);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%ld\n",
+			(अचिन्हित दीर्घ)instance->map_id);
+पूर्ण
 
-static DEVICE_ATTR_RW(fw_crash_buffer);
-static DEVICE_ATTR_RO(fw_crash_buffer_size);
-static DEVICE_ATTR_RW(fw_crash_state);
-static DEVICE_ATTR_RO(page_size);
-static DEVICE_ATTR_RO(ldio_outstanding);
-static DEVICE_ATTR_RO(fw_cmds_outstanding);
-static DEVICE_ATTR_RW(enable_sdev_max_qd);
-static DEVICE_ATTR_RO(dump_system_regs);
-static DEVICE_ATTR_RO(raid_map_id);
+अटल DEVICE_ATTR_RW(fw_crash_buffer);
+अटल DEVICE_ATTR_RO(fw_crash_buffer_size);
+अटल DEVICE_ATTR_RW(fw_crash_state);
+अटल DEVICE_ATTR_RO(page_size);
+अटल DEVICE_ATTR_RO(ldio_outstanding);
+अटल DEVICE_ATTR_RO(fw_cmds_outstanding);
+अटल DEVICE_ATTR_RW(enable_sdev_max_qd);
+अटल DEVICE_ATTR_RO(dump_प्रणाली_regs);
+अटल DEVICE_ATTR_RO(raid_map_id);
 
-static struct device_attribute *megaraid_host_attrs[] = {
+अटल काष्ठा device_attribute *megaraid_host_attrs[] = अणु
 	&dev_attr_fw_crash_buffer_size,
 	&dev_attr_fw_crash_buffer,
 	&dev_attr_fw_crash_state,
@@ -3455,15 +3456,15 @@ static struct device_attribute *megaraid_host_attrs[] = {
 	&dev_attr_ldio_outstanding,
 	&dev_attr_fw_cmds_outstanding,
 	&dev_attr_enable_sdev_max_qd,
-	&dev_attr_dump_system_regs,
+	&dev_attr_dump_प्रणाली_regs,
 	&dev_attr_raid_map_id,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*
- * Scsi host template for megaraid_sas driver
+ * Scsi host ढाँचा क्रम megaraid_sas driver
  */
-static struct scsi_host_template megasas_template = {
+अटल काष्ठा scsi_host_ढाँचा megasas_ढाँचा = अणु
 
 	.module = THIS_MODULE,
 	.name = "Avago SAS based MegaRAID driver",
@@ -3473,326 +3474,326 @@ static struct scsi_host_template megasas_template = {
 	.slave_destroy = megasas_slave_destroy,
 	.queuecommand = megasas_queue_command,
 	.eh_target_reset_handler = megasas_reset_target,
-	.eh_abort_handler = megasas_task_abort,
+	.eh_पात_handler = megasas_task_पात,
 	.eh_host_reset_handler = megasas_reset_bus_host,
-	.eh_timed_out = megasas_reset_timer,
+	.eh_समयd_out = megasas_reset_समयr,
 	.shost_attrs = megaraid_host_attrs,
 	.bios_param = megasas_bios_param,
 	.map_queues = megasas_map_queues,
 	.mq_poll = megasas_blk_mq_poll,
 	.change_queue_depth = scsi_change_queue_depth,
 	.max_segment_size = 0xffffffff,
-};
+पूर्ण;
 
 /**
- * megasas_complete_int_cmd -	Completes an internal command
+ * megasas_complete_पूर्णांक_cmd -	Completes an पूर्णांकernal command
  * @instance:			Adapter soft state
  * @cmd:			Command to be completed
  *
- * The megasas_issue_blocked_cmd() function waits for a command to complete
- * after it issues a command. This function wakes up that waiting routine by
- * calling wake_up() on the wait queue.
+ * The megasas_issue_blocked_cmd() function रुकोs क्रम a command to complete
+ * after it issues a command. This function wakes up that रुकोing routine by
+ * calling wake_up() on the रुको queue.
  */
-static void
-megasas_complete_int_cmd(struct megasas_instance *instance,
-			 struct megasas_cmd *cmd)
-{
-	if (cmd->cmd_status_drv == DCMD_INIT)
+अटल व्योम
+megasas_complete_पूर्णांक_cmd(काष्ठा megasas_instance *instance,
+			 काष्ठा megasas_cmd *cmd)
+अणु
+	अगर (cmd->cmd_status_drv == DCMD_INIT)
 		cmd->cmd_status_drv =
 		(cmd->frame->io.cmd_status == MFI_STAT_OK) ?
 		DCMD_SUCCESS : DCMD_FAILED;
 
-	wake_up(&instance->int_cmd_wait_q);
-}
+	wake_up(&instance->पूर्णांक_cmd_रुको_q);
+पूर्ण
 
 /**
- * megasas_complete_abort -	Completes aborting a command
+ * megasas_complete_पात -	Completes पातing a command
  * @instance:			Adapter soft state
- * @cmd:			Cmd that was issued to abort another cmd
+ * @cmd:			Cmd that was issued to पात another cmd
  *
- * The megasas_issue_blocked_abort_cmd() function waits on abort_cmd_wait_q
- * after it issues an abort on a previously issued command. This function
- * wakes up all functions waiting on the same wait queue.
+ * The megasas_issue_blocked_पात_cmd() function रुकोs on पात_cmd_रुको_q
+ * after it issues an पात on a previously issued command. This function
+ * wakes up all functions रुकोing on the same रुको queue.
  */
-static void
-megasas_complete_abort(struct megasas_instance *instance,
-		       struct megasas_cmd *cmd)
-{
-	if (cmd->sync_cmd) {
+अटल व्योम
+megasas_complete_पात(काष्ठा megasas_instance *instance,
+		       काष्ठा megasas_cmd *cmd)
+अणु
+	अगर (cmd->sync_cmd) अणु
 		cmd->sync_cmd = 0;
 		cmd->cmd_status_drv = DCMD_SUCCESS;
-		wake_up(&instance->abort_cmd_wait_q);
-	}
-}
+		wake_up(&instance->पात_cmd_रुको_q);
+	पूर्ण
+पूर्ण
 
 /**
  * megasas_complete_cmd -	Completes a command
  * @instance:			Adapter soft state
  * @cmd:			Command to be completed
  * @alt_status:			If non-zero, use this value as status to
- *				SCSI mid-layer instead of the value returned
- *				by the FW. This should be used if caller wants
- *				an alternate status (as in the case of aborted
+ *				SCSI mid-layer instead of the value वापसed
+ *				by the FW. This should be used अगर caller wants
+ *				an alternate status (as in the हाल of पातed
  *				commands)
  */
-void
-megasas_complete_cmd(struct megasas_instance *instance, struct megasas_cmd *cmd,
+व्योम
+megasas_complete_cmd(काष्ठा megasas_instance *instance, काष्ठा megasas_cmd *cmd,
 		     u8 alt_status)
-{
-	int exception = 0;
-	struct megasas_header *hdr = &cmd->frame->hdr;
-	unsigned long flags;
-	struct fusion_context *fusion = instance->ctrl_context;
+अणु
+	पूर्णांक exception = 0;
+	काष्ठा megasas_header *hdr = &cmd->frame->hdr;
+	अचिन्हित दीर्घ flags;
+	काष्ठा fusion_context *fusion = instance->ctrl_context;
 	u32 opcode, status;
 
-	/* flag for the retry reset */
-	cmd->retry_for_fw_reset = 0;
+	/* flag क्रम the retry reset */
+	cmd->retry_क्रम_fw_reset = 0;
 
-	if (cmd->scmd)
-		cmd->scmd->SCp.ptr = NULL;
+	अगर (cmd->scmd)
+		cmd->scmd->SCp.ptr = शून्य;
 
-	switch (hdr->cmd) {
-	case MFI_CMD_INVALID:
+	चयन (hdr->cmd) अणु
+	हाल MFI_CMD_INVALID:
 		/* Some older 1068 controller FW may keep a pended
-		   MR_DCMD_CTRL_EVENT_GET_INFO left over from the main kernel
+		   MR_DCMD_CTRL_EVENT_GET_INFO left over from the मुख्य kernel
 		   when booting the kdump kernel.  Ignore this command to
-		   prevent a kernel panic on shutdown of the kdump kernel. */
+		   prevent a kernel panic on shutकरोwn of the kdump kernel. */
 		dev_warn(&instance->pdev->dev, "MFI_CMD_INVALID command "
 		       "completed\n");
 		dev_warn(&instance->pdev->dev, "If you have a controller "
 		       "other than PERC5, please upgrade your firmware\n");
-		break;
-	case MFI_CMD_PD_SCSI_IO:
-	case MFI_CMD_LD_SCSI_IO:
+		अवरोध;
+	हाल MFI_CMD_PD_SCSI_IO:
+	हाल MFI_CMD_LD_SCSI_IO:
 
 		/*
 		 * MFI_CMD_PD_SCSI_IO and MFI_CMD_LD_SCSI_IO could have been
 		 * issued either through an IO path or an IOCTL path. If it
-		 * was via IOCTL, we will send it to internal completion.
+		 * was via IOCTL, we will send it to पूर्णांकernal completion.
 		 */
-		if (cmd->sync_cmd) {
+		अगर (cmd->sync_cmd) अणु
 			cmd->sync_cmd = 0;
-			megasas_complete_int_cmd(instance, cmd);
-			break;
-		}
+			megasas_complete_पूर्णांक_cmd(instance, cmd);
+			अवरोध;
+		पूर्ण
 		fallthrough;
 
-	case MFI_CMD_LD_READ:
-	case MFI_CMD_LD_WRITE:
+	हाल MFI_CMD_LD_READ:
+	हाल MFI_CMD_LD_WRITE:
 
-		if (alt_status) {
+		अगर (alt_status) अणु
 			cmd->scmd->result = alt_status << 16;
 			exception = 1;
-		}
+		पूर्ण
 
-		if (exception) {
+		अगर (exception) अणु
 
 			atomic_dec(&instance->fw_outstanding);
 
 			scsi_dma_unmap(cmd->scmd);
-			cmd->scmd->scsi_done(cmd->scmd);
-			megasas_return_cmd(instance, cmd);
+			cmd->scmd->scsi_करोne(cmd->scmd);
+			megasas_वापस_cmd(instance, cmd);
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (hdr->cmd_status) {
+		चयन (hdr->cmd_status) अणु
 
-		case MFI_STAT_OK:
+		हाल MFI_STAT_OK:
 			cmd->scmd->result = DID_OK << 16;
-			break;
+			अवरोध;
 
-		case MFI_STAT_SCSI_IO_FAILED:
-		case MFI_STAT_LD_INIT_IN_PROGRESS:
+		हाल MFI_STAT_SCSI_IO_FAILED:
+		हाल MFI_STAT_LD_INIT_IN_PROGRESS:
 			cmd->scmd->result =
 			    (DID_ERROR << 16) | hdr->scsi_status;
-			break;
+			अवरोध;
 
-		case MFI_STAT_SCSI_DONE_WITH_ERROR:
+		हाल MFI_STAT_SCSI_DONE_WITH_ERROR:
 
 			cmd->scmd->result = (DID_OK << 16) | hdr->scsi_status;
 
-			if (hdr->scsi_status == SAM_STAT_CHECK_CONDITION) {
-				memset(cmd->scmd->sense_buffer, 0,
+			अगर (hdr->scsi_status == SAM_STAT_CHECK_CONDITION) अणु
+				स_रखो(cmd->scmd->sense_buffer, 0,
 				       SCSI_SENSE_BUFFERSIZE);
-				memcpy(cmd->scmd->sense_buffer, cmd->sense,
+				स_नकल(cmd->scmd->sense_buffer, cmd->sense,
 				       hdr->sense_len);
 
 				cmd->scmd->result |= DRIVER_SENSE << 24;
-			}
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case MFI_STAT_LD_OFFLINE:
-		case MFI_STAT_DEVICE_NOT_FOUND:
+		हाल MFI_STAT_LD_OFFLINE:
+		हाल MFI_STAT_DEVICE_NOT_FOUND:
 			cmd->scmd->result = DID_BAD_TARGET << 16;
-			break;
+			अवरोध;
 
-		default:
-			dev_printk(KERN_DEBUG, &instance->pdev->dev, "MFI FW status %#x\n",
+		शेष:
+			dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "MFI FW status %#x\n",
 			       hdr->cmd_status);
 			cmd->scmd->result = DID_ERROR << 16;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		atomic_dec(&instance->fw_outstanding);
 
 		scsi_dma_unmap(cmd->scmd);
-		cmd->scmd->scsi_done(cmd->scmd);
-		megasas_return_cmd(instance, cmd);
+		cmd->scmd->scsi_करोne(cmd->scmd);
+		megasas_वापस_cmd(instance, cmd);
 
-		break;
+		अवरोध;
 
-	case MFI_CMD_SMP:
-	case MFI_CMD_STP:
-	case MFI_CMD_NVME:
-	case MFI_CMD_TOOLBOX:
-		megasas_complete_int_cmd(instance, cmd);
-		break;
+	हाल MFI_CMD_SMP:
+	हाल MFI_CMD_STP:
+	हाल MFI_CMD_NVME:
+	हाल MFI_CMD_TOOLBOX:
+		megasas_complete_पूर्णांक_cmd(instance, cmd);
+		अवरोध;
 
-	case MFI_CMD_DCMD:
+	हाल MFI_CMD_DCMD:
 		opcode = le32_to_cpu(cmd->frame->dcmd.opcode);
-		/* Check for LD map update */
-		if ((opcode == MR_DCMD_LD_MAP_GET_INFO)
-			&& (cmd->frame->dcmd.mbox.b[1] == 1)) {
+		/* Check क्रम LD map update */
+		अगर ((opcode == MR_DCMD_LD_MAP_GET_INFO)
+			&& (cmd->frame->dcmd.mbox.b[1] == 1)) अणु
 			fusion->fast_path_io = 0;
 			spin_lock_irqsave(instance->host->host_lock, flags);
 			status = cmd->frame->hdr.cmd_status;
-			instance->map_update_cmd = NULL;
-			if (status != MFI_STAT_OK) {
-				if (status != MFI_STAT_NOT_FOUND)
+			instance->map_update_cmd = शून्य;
+			अगर (status != MFI_STAT_OK) अणु
+				अगर (status != MFI_STAT_NOT_FOUND)
 					dev_warn(&instance->pdev->dev, "map syncfailed, status = 0x%x\n",
 					       cmd->frame->hdr.cmd_status);
-				else {
-					megasas_return_cmd(instance, cmd);
+				अन्यथा अणु
+					megasas_वापस_cmd(instance, cmd);
 					spin_unlock_irqrestore(
 						instance->host->host_lock,
 						flags);
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
-			megasas_return_cmd(instance, cmd);
+			megasas_वापस_cmd(instance, cmd);
 
 			/*
 			 * Set fast path IO to ZERO.
 			 * Validate Map will set proper value.
-			 * Meanwhile all IOs will go as LD IO.
+			 * Meanजबतक all IOs will go as LD IO.
 			 */
-			if (status == MFI_STAT_OK &&
-			    (MR_ValidateMapInfo(instance, (instance->map_id + 1)))) {
+			अगर (status == MFI_STAT_OK &&
+			    (MR_ValidateMapInfo(instance, (instance->map_id + 1)))) अणु
 				instance->map_id++;
 				fusion->fast_path_io = 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				fusion->fast_path_io = 0;
-			}
+			पूर्ण
 
 			megasas_sync_map_info(instance);
 			spin_unlock_irqrestore(instance->host->host_lock,
 					       flags);
-			break;
-		}
-		if (opcode == MR_DCMD_CTRL_EVENT_GET_INFO ||
-		    opcode == MR_DCMD_CTRL_EVENT_GET) {
+			अवरोध;
+		पूर्ण
+		अगर (opcode == MR_DCMD_CTRL_EVENT_GET_INFO ||
+		    opcode == MR_DCMD_CTRL_EVENT_GET) अणु
 			spin_lock_irqsave(&poll_aen_lock, flags);
-			megasas_poll_wait_aen = 0;
+			megasas_poll_रुको_aen = 0;
 			spin_unlock_irqrestore(&poll_aen_lock, flags);
-		}
+		पूर्ण
 
 		/* FW has an updated PD sequence */
-		if ((opcode == MR_DCMD_SYSTEM_PD_MAP_GET_INFO) &&
-			(cmd->frame->dcmd.mbox.b[0] == 1)) {
+		अगर ((opcode == MR_DCMD_SYSTEM_PD_MAP_GET_INFO) &&
+			(cmd->frame->dcmd.mbox.b[0] == 1)) अणु
 
 			spin_lock_irqsave(instance->host->host_lock, flags);
 			status = cmd->frame->hdr.cmd_status;
-			instance->jbod_seq_cmd = NULL;
-			megasas_return_cmd(instance, cmd);
+			instance->jbod_seq_cmd = शून्य;
+			megasas_वापस_cmd(instance, cmd);
 
-			if (status == MFI_STAT_OK) {
+			अगर (status == MFI_STAT_OK) अणु
 				instance->pd_seq_map_id++;
-				/* Re-register a pd sync seq num cmd */
-				if (megasas_sync_pd_seq_num(instance, true))
+				/* Re-रेजिस्टर a pd sync seq num cmd */
+				अगर (megasas_sync_pd_seq_num(instance, true))
 					instance->use_seqnum_jbod_fp = false;
-			} else
+			पूर्ण अन्यथा
 				instance->use_seqnum_jbod_fp = false;
 
 			spin_unlock_irqrestore(instance->host->host_lock, flags);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * See if got an event notification
+		 * See अगर got an event notअगरication
 		 */
-		if (opcode == MR_DCMD_CTRL_EVENT_WAIT)
+		अगर (opcode == MR_DCMD_CTRL_EVENT_WAIT)
 			megasas_service_aen(instance, cmd);
-		else
-			megasas_complete_int_cmd(instance, cmd);
+		अन्यथा
+			megasas_complete_पूर्णांक_cmd(instance, cmd);
 
-		break;
+		अवरोध;
 
-	case MFI_CMD_ABORT:
+	हाल MFI_CMD_ABORT:
 		/*
-		 * Cmd issued to abort another cmd returned
+		 * Cmd issued to पात another cmd वापसed
 		 */
-		megasas_complete_abort(instance, cmd);
-		break;
+		megasas_complete_पात(instance, cmd);
+		अवरोध;
 
-	default:
+	शेष:
 		dev_info(&instance->pdev->dev, "Unknown command completed! [0x%X]\n",
 		       hdr->cmd);
-		megasas_complete_int_cmd(instance, cmd);
-		break;
-	}
-}
+		megasas_complete_पूर्णांक_cmd(instance, cmd);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * megasas_issue_pending_cmds_again -	issue all pending cmds
  *					in FW again because of the fw reset
  * @instance:				Adapter soft state
  */
-static inline void
-megasas_issue_pending_cmds_again(struct megasas_instance *instance)
-{
-	struct megasas_cmd *cmd;
-	struct list_head clist_local;
-	union megasas_evt_class_locale class_locale;
-	unsigned long flags;
+अटल अंतरभूत व्योम
+megasas_issue_pending_cmds_again(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा list_head clist_local;
+	जोड़ megasas_evt_class_locale class_locale;
+	अचिन्हित दीर्घ flags;
 	u32 seq_num;
 
 	INIT_LIST_HEAD(&clist_local);
 	spin_lock_irqsave(&instance->hba_lock, flags);
-	list_splice_init(&instance->internal_reset_pending_q, &clist_local);
+	list_splice_init(&instance->पूर्णांकernal_reset_pending_q, &clist_local);
 	spin_unlock_irqrestore(&instance->hba_lock, flags);
 
-	while (!list_empty(&clist_local)) {
+	जबतक (!list_empty(&clist_local)) अणु
 		cmd = list_entry((&clist_local)->next,
-					struct megasas_cmd, list);
+					काष्ठा megasas_cmd, list);
 		list_del_init(&cmd->list);
 
-		if (cmd->sync_cmd || cmd->scmd) {
+		अगर (cmd->sync_cmd || cmd->scmd) अणु
 			dev_notice(&instance->pdev->dev, "command %p, %p:%d"
 				"detected to be pending while HBA reset\n",
 					cmd, cmd->scmd, cmd->sync_cmd);
 
-			cmd->retry_for_fw_reset++;
+			cmd->retry_क्रम_fw_reset++;
 
-			if (cmd->retry_for_fw_reset == 3) {
+			अगर (cmd->retry_क्रम_fw_reset == 3) अणु
 				dev_notice(&instance->pdev->dev, "cmd %p, %p:%d"
 					"was tried multiple times during reset."
 					"Shutting down the HBA\n",
 					cmd, cmd->scmd, cmd->sync_cmd);
-				instance->instancet->disable_intr(instance);
+				instance->instancet->disable_पूर्णांकr(instance);
 				atomic_set(&instance->fw_reset_no_pci_access, 1);
-				megaraid_sas_kill_hba(instance);
-				return;
-			}
-		}
+				megaraid_sas_समाप्त_hba(instance);
+				वापस;
+			पूर्ण
+		पूर्ण
 
-		if (cmd->sync_cmd == 1) {
-			if (cmd->scmd) {
+		अगर (cmd->sync_cmd == 1) अणु
+			अगर (cmd->scmd) अणु
 				dev_notice(&instance->pdev->dev, "unexpected"
 					"cmd attached to internal command!\n");
-			}
+			पूर्ण
 			dev_notice(&instance->pdev->dev, "%p synchronous cmd"
 						"on the internal reset queue,"
 						"issue it again.\n", cmd);
@@ -3800,7 +3801,7 @@ megasas_issue_pending_cmds_again(struct megasas_instance *instance)
 			instance->instancet->fire_cmd(instance,
 							cmd->frame_phys_addr,
 							0, instance->reg_set);
-		} else if (cmd->scmd) {
+		पूर्ण अन्यथा अगर (cmd->scmd) अणु
 			dev_notice(&instance->pdev->dev, "%p scsi cmd [%02x]"
 			"detected on the internal queue, issue again.\n",
 			cmd, cmd->scmd->cmnd[0]);
@@ -3809,94 +3810,94 @@ megasas_issue_pending_cmds_again(struct megasas_instance *instance)
 			instance->instancet->fire_cmd(instance,
 					cmd->frame_phys_addr,
 					cmd->frame_count-1, instance->reg_set);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_notice(&instance->pdev->dev, "%p unexpected cmd on the"
 				"internal reset defer list while re-issue!!\n",
 				cmd);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (instance->aen_cmd) {
+	अगर (instance->aen_cmd) अणु
 		dev_notice(&instance->pdev->dev, "aen_cmd in def process\n");
-		megasas_return_cmd(instance, instance->aen_cmd);
+		megasas_वापस_cmd(instance, instance->aen_cmd);
 
-		instance->aen_cmd = NULL;
-	}
+		instance->aen_cmd = शून्य;
+	पूर्ण
 
 	/*
-	 * Initiate AEN (Asynchronous Event Notification)
+	 * Initiate AEN (Asynchronous Event Notअगरication)
 	 */
 	seq_num = instance->last_seq_num;
 	class_locale.members.reserved = 0;
 	class_locale.members.locale = MR_EVT_LOCALE_ALL;
 	class_locale.members.class = MR_EVT_CLASS_DEBUG;
 
-	megasas_register_aen(instance, seq_num, class_locale.word);
-}
+	megasas_रेजिस्टर_aen(instance, seq_num, class_locale.word);
+पूर्ण
 
 /*
- * Move the internal reset pending commands to a deferred queue.
+ * Move the पूर्णांकernal reset pending commands to a deferred queue.
  *
- * We move the commands pending at internal reset time to a
+ * We move the commands pending at पूर्णांकernal reset समय to a
  * pending queue. This queue would be flushed after successful
- * completion of the internal reset sequence. if the internal reset
- * did not complete in time, the kernel reset handler would flush
+ * completion of the पूर्णांकernal reset sequence. अगर the पूर्णांकernal reset
+ * did not complete in समय, the kernel reset handler would flush
  * these commands.
  */
-static void
-megasas_internal_reset_defer_cmds(struct megasas_instance *instance)
-{
-	struct megasas_cmd *cmd;
-	int i;
+अटल व्योम
+megasas_पूर्णांकernal_reset_defer_cmds(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_cmd *cmd;
+	पूर्णांक i;
 	u16 max_cmd = instance->max_fw_cmds;
 	u32 defer_index;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	defer_index = 0;
 	spin_lock_irqsave(&instance->mfi_pool_lock, flags);
-	for (i = 0; i < max_cmd; i++) {
+	क्रम (i = 0; i < max_cmd; i++) अणु
 		cmd = instance->cmd_list[i];
-		if (cmd->sync_cmd == 1 || cmd->scmd) {
+		अगर (cmd->sync_cmd == 1 || cmd->scmd) अणु
 			dev_notice(&instance->pdev->dev, "moving cmd[%d]:%p:%d:%p"
 					"on the defer queue as internal\n",
 				defer_index, cmd, cmd->sync_cmd, cmd->scmd);
 
-			if (!list_empty(&cmd->list)) {
+			अगर (!list_empty(&cmd->list)) अणु
 				dev_notice(&instance->pdev->dev, "ERROR while"
 					" moving this cmd:%p, %d %p, it was"
 					"discovered on some list?\n",
 					cmd, cmd->sync_cmd, cmd->scmd);
 
 				list_del_init(&cmd->list);
-			}
+			पूर्ण
 			defer_index++;
 			list_add_tail(&cmd->list,
-				&instance->internal_reset_pending_q);
-		}
-	}
+				&instance->पूर्णांकernal_reset_pending_q);
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&instance->mfi_pool_lock, flags);
-}
+पूर्ण
 
 
-static void
-process_fw_state_change_wq(struct work_struct *work)
-{
-	struct megasas_instance *instance =
-		container_of(work, struct megasas_instance, work_init);
-	u32 wait;
-	unsigned long flags;
+अटल व्योम
+process_fw_state_change_wq(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा megasas_instance *instance =
+		container_of(work, काष्ठा megasas_instance, work_init);
+	u32 रुको;
+	अचिन्हित दीर्घ flags;
 
-    if (atomic_read(&instance->adprecovery) != MEGASAS_ADPRESET_SM_INFAULT) {
+    अगर (atomic_पढ़ो(&instance->adprecovery) != MEGASAS_ADPRESET_SM_INFAULT) अणु
 		dev_notice(&instance->pdev->dev, "error, recovery st %x\n",
-				atomic_read(&instance->adprecovery));
-		return ;
-	}
+				atomic_पढ़ो(&instance->adprecovery));
+		वापस ;
+	पूर्ण
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_ADPRESET_SM_INFAULT) {
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_ADPRESET_SM_INFAULT) अणु
 		dev_notice(&instance->pdev->dev, "FW detected to be in fault"
 					"state, restarting it...\n");
 
-		instance->instancet->disable_intr(instance);
+		instance->instancet->disable_पूर्णांकr(instance);
 		atomic_set(&instance->fw_outstanding, 0);
 
 		atomic_set(&instance->fw_reset_no_pci_access, 1);
@@ -3909,345 +3910,345 @@ process_fw_state_change_wq(struct work_struct *work)
 		dev_notice(&instance->pdev->dev, "HBA recovery state machine,"
 					"state 2 starting...\n");
 
-		/* waiting for about 20 second before start the second init */
-		for (wait = 0; wait < 30; wait++) {
+		/* रुकोing क्रम about 20 second beक्रमe start the second init */
+		क्रम (रुको = 0; रुको < 30; रुको++) अणु
 			msleep(1000);
-		}
+		पूर्ण
 
-		if (megasas_transition_to_ready(instance, 1)) {
+		अगर (megasas_transition_to_पढ़ोy(instance, 1)) अणु
 			dev_notice(&instance->pdev->dev, "adapter not ready\n");
 
 			atomic_set(&instance->fw_reset_no_pci_access, 1);
-			megaraid_sas_kill_hba(instance);
-			return ;
-		}
+			megaraid_sas_समाप्त_hba(instance);
+			वापस ;
+		पूर्ण
 
-		if ((instance->pdev->device == PCI_DEVICE_ID_LSI_SAS1064R) ||
+		अगर ((instance->pdev->device == PCI_DEVICE_ID_LSI_SAS1064R) ||
 			(instance->pdev->device == PCI_DEVICE_ID_DELL_PERC5) ||
 			(instance->pdev->device == PCI_DEVICE_ID_LSI_VERDE_ZCR)
-			) {
+			) अणु
 			*instance->consumer = *instance->producer;
-		} else {
+		पूर्ण अन्यथा अणु
 			*instance->consumer = 0;
 			*instance->producer = 0;
-		}
+		पूर्ण
 
 		megasas_issue_init_mfi(instance);
 
 		spin_lock_irqsave(&instance->hba_lock, flags);
 		atomic_set(&instance->adprecovery, MEGASAS_HBA_OPERATIONAL);
 		spin_unlock_irqrestore(&instance->hba_lock, flags);
-		instance->instancet->enable_intr(instance);
+		instance->instancet->enable_पूर्णांकr(instance);
 
 		megasas_issue_pending_cmds_again(instance);
-		instance->issuepend_done = 1;
-	}
-}
+		instance->issuepend_करोne = 1;
+	पूर्ण
+पूर्ण
 
 /**
  * megasas_deplete_reply_queue -	Processes all completed commands
  * @instance:				Adapter soft state
- * @alt_status:				Alternate status to be returned to
+ * @alt_status:				Alternate status to be वापसed to
  *					SCSI mid-layer instead of the status
- *					returned by the FW
+ *					वापसed by the FW
  * Note: this must be called with hba lock held
  */
-static int
-megasas_deplete_reply_queue(struct megasas_instance *instance,
+अटल पूर्णांक
+megasas_deplete_reply_queue(काष्ठा megasas_instance *instance,
 					u8 alt_status)
-{
+अणु
 	u32 mfiStatus;
 	u32 fw_state;
 
-	if ((mfiStatus = instance->instancet->check_reset(instance,
-					instance->reg_set)) == 1) {
-		return IRQ_HANDLED;
-	}
+	अगर ((mfiStatus = instance->instancet->check_reset(instance,
+					instance->reg_set)) == 1) अणु
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	mfiStatus = instance->instancet->clear_intr(instance);
-	if (mfiStatus == 0) {
-		/* Hardware may not set outbound_intr_status in MSI-X mode */
-		if (!instance->msix_vectors)
-			return IRQ_NONE;
-	}
+	mfiStatus = instance->instancet->clear_पूर्णांकr(instance);
+	अगर (mfiStatus == 0) अणु
+		/* Hardware may not set outbound_पूर्णांकr_status in MSI-X mode */
+		अगर (!instance->msix_vectors)
+			वापस IRQ_NONE;
+	पूर्ण
 
 	instance->mfiStatus = mfiStatus;
 
-	if ((mfiStatus & MFI_INTR_FLAG_FIRMWARE_STATE_CHANGE)) {
-		fw_state = instance->instancet->read_fw_status_reg(
+	अगर ((mfiStatus & MFI_INTR_FLAG_FIRMWARE_STATE_CHANGE)) अणु
+		fw_state = instance->instancet->पढ़ो_fw_status_reg(
 				instance) & MFI_STATE_MASK;
 
-		if (fw_state != MFI_STATE_FAULT) {
+		अगर (fw_state != MFI_STATE_FAULT) अणु
 			dev_notice(&instance->pdev->dev, "fw state:%x\n",
 						fw_state);
-		}
+		पूर्ण
 
-		if ((fw_state == MFI_STATE_FAULT) &&
-				(instance->disableOnlineCtrlReset == 0)) {
+		अगर ((fw_state == MFI_STATE_FAULT) &&
+				(instance->disableOnlineCtrlReset == 0)) अणु
 			dev_notice(&instance->pdev->dev, "wait adp restart\n");
 
-			if ((instance->pdev->device ==
+			अगर ((instance->pdev->device ==
 					PCI_DEVICE_ID_LSI_SAS1064R) ||
 				(instance->pdev->device ==
 					PCI_DEVICE_ID_DELL_PERC5) ||
 				(instance->pdev->device ==
-					PCI_DEVICE_ID_LSI_VERDE_ZCR)) {
+					PCI_DEVICE_ID_LSI_VERDE_ZCR)) अणु
 
 				*instance->consumer =
 					cpu_to_le32(MEGASAS_ADPRESET_INPROG_SIGN);
-			}
+			पूर्ण
 
 
-			instance->instancet->disable_intr(instance);
+			instance->instancet->disable_पूर्णांकr(instance);
 			atomic_set(&instance->adprecovery, MEGASAS_ADPRESET_SM_INFAULT);
-			instance->issuepend_done = 0;
+			instance->issuepend_करोne = 0;
 
 			atomic_set(&instance->fw_outstanding, 0);
-			megasas_internal_reset_defer_cmds(instance);
+			megasas_पूर्णांकernal_reset_defer_cmds(instance);
 
 			dev_notice(&instance->pdev->dev, "fwState=%x, stage:%d\n",
-					fw_state, atomic_read(&instance->adprecovery));
+					fw_state, atomic_पढ़ो(&instance->adprecovery));
 
 			schedule_work(&instance->work_init);
-			return IRQ_HANDLED;
+			वापस IRQ_HANDLED;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_notice(&instance->pdev->dev, "fwstate:%x, dis_OCR=%x\n",
 				fw_state, instance->disableOnlineCtrlReset);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	tasklet_schedule(&instance->isr_tasklet);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * megasas_isr - isr entry point
+ * megasas_isr - isr entry poपूर्णांक
  * @irq:	IRQ number
  * @devp:	IRQ context address
  */
-static irqreturn_t megasas_isr(int irq, void *devp)
-{
-	struct megasas_irq_context *irq_context = devp;
-	struct megasas_instance *instance = irq_context->instance;
-	unsigned long flags;
-	irqreturn_t rc;
+अटल irqवापस_t megasas_isr(पूर्णांक irq, व्योम *devp)
+अणु
+	काष्ठा megasas_irq_context *irq_context = devp;
+	काष्ठा megasas_instance *instance = irq_context->instance;
+	अचिन्हित दीर्घ flags;
+	irqवापस_t rc;
 
-	if (atomic_read(&instance->fw_reset_no_pci_access))
-		return IRQ_HANDLED;
+	अगर (atomic_पढ़ो(&instance->fw_reset_no_pci_access))
+		वापस IRQ_HANDLED;
 
 	spin_lock_irqsave(&instance->hba_lock, flags);
 	rc = megasas_deplete_reply_queue(instance, DID_OK);
 	spin_unlock_irqrestore(&instance->hba_lock, flags);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * megasas_transition_to_ready -	Move the FW to READY state
+ * megasas_transition_to_पढ़ोy -	Move the FW to READY state
  * @instance:				Adapter soft state
  * @ocr:				Adapter reset state
  *
  * During the initialization, FW passes can potentially be in any one of
- * several possible states. If the FW in operational, waiting-for-handshake
- * states, driver must take steps to bring it to ready state. Otherwise, it
- * has to wait for the ready state.
+ * several possible states. If the FW in operational, रुकोing-क्रम-handshake
+ * states, driver must take steps to bring it to पढ़ोy state. Otherwise, it
+ * has to रुको क्रम the पढ़ोy state.
  */
-int
-megasas_transition_to_ready(struct megasas_instance *instance, int ocr)
-{
-	int i;
-	u8 max_wait;
+पूर्णांक
+megasas_transition_to_पढ़ोy(काष्ठा megasas_instance *instance, पूर्णांक ocr)
+अणु
+	पूर्णांक i;
+	u8 max_रुको;
 	u32 fw_state;
-	u32 abs_state, curr_abs_state;
+	u32 असल_state, curr_असल_state;
 
-	abs_state = instance->instancet->read_fw_status_reg(instance);
-	fw_state = abs_state & MFI_STATE_MASK;
+	असल_state = instance->instancet->पढ़ो_fw_status_reg(instance);
+	fw_state = असल_state & MFI_STATE_MASK;
 
-	if (fw_state != MFI_STATE_READY)
+	अगर (fw_state != MFI_STATE_READY)
 		dev_info(&instance->pdev->dev, "Waiting for FW to come to ready"
 		       " state\n");
 
-	while (fw_state != MFI_STATE_READY) {
+	जबतक (fw_state != MFI_STATE_READY) अणु
 
-		switch (fw_state) {
+		चयन (fw_state) अणु
 
-		case MFI_STATE_FAULT:
-			dev_printk(KERN_ERR, &instance->pdev->dev,
+		हाल MFI_STATE_FAULT:
+			dev_prपूर्णांकk(KERN_ERR, &instance->pdev->dev,
 				   "FW in FAULT state, Fault code:0x%x subcode:0x%x func:%s\n",
-				   abs_state & MFI_STATE_FAULT_CODE,
-				   abs_state & MFI_STATE_FAULT_SUBCODE, __func__);
-			if (ocr) {
-				max_wait = MEGASAS_RESET_WAIT_TIME;
-				break;
-			} else {
-				dev_printk(KERN_DEBUG, &instance->pdev->dev, "System Register set:\n");
+				   असल_state & MFI_STATE_FAULT_CODE,
+				   असल_state & MFI_STATE_FAULT_SUBCODE, __func__);
+			अगर (ocr) अणु
+				max_रुको = MEGASAS_RESET_WAIT_TIME;
+				अवरोध;
+			पूर्ण अन्यथा अणु
+				dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "System Register set:\n");
 				megasas_dump_reg_set(instance->reg_set);
-				return -ENODEV;
-			}
+				वापस -ENODEV;
+			पूर्ण
 
-		case MFI_STATE_WAIT_HANDSHAKE:
+		हाल MFI_STATE_WAIT_HANDSHAKE:
 			/*
-			 * Set the CLR bit in inbound doorbell
+			 * Set the CLR bit in inbound करोorbell
 			 */
-			if ((instance->pdev->device ==
+			अगर ((instance->pdev->device ==
 				PCI_DEVICE_ID_LSI_SAS0073SKINNY) ||
 				(instance->pdev->device ==
 				 PCI_DEVICE_ID_LSI_SAS0071SKINNY) ||
 				(instance->adapter_type != MFI_SERIES))
-				writel(
+				ग_लिखोl(
 				  MFI_INIT_CLEAR_HANDSHAKE|MFI_INIT_HOTPLUG,
-				  &instance->reg_set->doorbell);
-			else
-				writel(
+				  &instance->reg_set->करोorbell);
+			अन्यथा
+				ग_लिखोl(
 				    MFI_INIT_CLEAR_HANDSHAKE|MFI_INIT_HOTPLUG,
-					&instance->reg_set->inbound_doorbell);
+					&instance->reg_set->inbound_करोorbell);
 
-			max_wait = MEGASAS_RESET_WAIT_TIME;
-			break;
+			max_रुको = MEGASAS_RESET_WAIT_TIME;
+			अवरोध;
 
-		case MFI_STATE_BOOT_MESSAGE_PENDING:
-			if ((instance->pdev->device ==
+		हाल MFI_STATE_BOOT_MESSAGE_PENDING:
+			अगर ((instance->pdev->device ==
 			     PCI_DEVICE_ID_LSI_SAS0073SKINNY) ||
 				(instance->pdev->device ==
 				 PCI_DEVICE_ID_LSI_SAS0071SKINNY) ||
 				(instance->adapter_type != MFI_SERIES))
-				writel(MFI_INIT_HOTPLUG,
-				       &instance->reg_set->doorbell);
-			else
-				writel(MFI_INIT_HOTPLUG,
-					&instance->reg_set->inbound_doorbell);
+				ग_लिखोl(MFI_INIT_HOTPLUG,
+				       &instance->reg_set->करोorbell);
+			अन्यथा
+				ग_लिखोl(MFI_INIT_HOTPLUG,
+					&instance->reg_set->inbound_करोorbell);
 
-			max_wait = MEGASAS_RESET_WAIT_TIME;
-			break;
+			max_रुको = MEGASAS_RESET_WAIT_TIME;
+			अवरोध;
 
-		case MFI_STATE_OPERATIONAL:
+		हाल MFI_STATE_OPERATIONAL:
 			/*
-			 * Bring it to READY state; assuming max wait 10 secs
+			 * Bring it to READY state; assuming max रुको 10 secs
 			 */
-			instance->instancet->disable_intr(instance);
-			if ((instance->pdev->device ==
+			instance->instancet->disable_पूर्णांकr(instance);
+			अगर ((instance->pdev->device ==
 				PCI_DEVICE_ID_LSI_SAS0073SKINNY) ||
 				(instance->pdev->device ==
 				PCI_DEVICE_ID_LSI_SAS0071SKINNY)  ||
-				(instance->adapter_type != MFI_SERIES)) {
-				writel(MFI_RESET_FLAGS,
-					&instance->reg_set->doorbell);
+				(instance->adapter_type != MFI_SERIES)) अणु
+				ग_लिखोl(MFI_RESET_FLAGS,
+					&instance->reg_set->करोorbell);
 
-				if (instance->adapter_type != MFI_SERIES) {
-					for (i = 0; i < (10 * 1000); i += 20) {
-						if (megasas_readl(
+				अगर (instance->adapter_type != MFI_SERIES) अणु
+					क्रम (i = 0; i < (10 * 1000); i += 20) अणु
+						अगर (megasas_पढ़ोl(
 							    instance,
 							    &instance->
 							    reg_set->
-							    doorbell) & 1)
+							    करोorbell) & 1)
 							msleep(20);
-						else
-							break;
-					}
-				}
-			} else
-				writel(MFI_RESET_FLAGS,
-					&instance->reg_set->inbound_doorbell);
+						अन्यथा
+							अवरोध;
+					पूर्ण
+				पूर्ण
+			पूर्ण अन्यथा
+				ग_लिखोl(MFI_RESET_FLAGS,
+					&instance->reg_set->inbound_करोorbell);
 
-			max_wait = MEGASAS_RESET_WAIT_TIME;
-			break;
+			max_रुको = MEGASAS_RESET_WAIT_TIME;
+			अवरोध;
 
-		case MFI_STATE_UNDEFINED:
+		हाल MFI_STATE_UNDEFINED:
 			/*
-			 * This state should not last for more than 2 seconds
+			 * This state should not last क्रम more than 2 seconds
 			 */
-			max_wait = MEGASAS_RESET_WAIT_TIME;
-			break;
+			max_रुको = MEGASAS_RESET_WAIT_TIME;
+			अवरोध;
 
-		case MFI_STATE_BB_INIT:
-			max_wait = MEGASAS_RESET_WAIT_TIME;
-			break;
+		हाल MFI_STATE_BB_INIT:
+			max_रुको = MEGASAS_RESET_WAIT_TIME;
+			अवरोध;
 
-		case MFI_STATE_FW_INIT:
-			max_wait = MEGASAS_RESET_WAIT_TIME;
-			break;
+		हाल MFI_STATE_FW_INIT:
+			max_रुको = MEGASAS_RESET_WAIT_TIME;
+			अवरोध;
 
-		case MFI_STATE_FW_INIT_2:
-			max_wait = MEGASAS_RESET_WAIT_TIME;
-			break;
+		हाल MFI_STATE_FW_INIT_2:
+			max_रुको = MEGASAS_RESET_WAIT_TIME;
+			अवरोध;
 
-		case MFI_STATE_DEVICE_SCAN:
-			max_wait = MEGASAS_RESET_WAIT_TIME;
-			break;
+		हाल MFI_STATE_DEVICE_SCAN:
+			max_रुको = MEGASAS_RESET_WAIT_TIME;
+			अवरोध;
 
-		case MFI_STATE_FLUSH_CACHE:
-			max_wait = MEGASAS_RESET_WAIT_TIME;
-			break;
+		हाल MFI_STATE_FLUSH_CACHE:
+			max_रुको = MEGASAS_RESET_WAIT_TIME;
+			अवरोध;
 
-		default:
-			dev_printk(KERN_DEBUG, &instance->pdev->dev, "Unknown state 0x%x\n",
+		शेष:
+			dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "Unknown state 0x%x\n",
 			       fw_state);
-			dev_printk(KERN_DEBUG, &instance->pdev->dev, "System Register set:\n");
+			dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "System Register set:\n");
 			megasas_dump_reg_set(instance->reg_set);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		/*
-		 * The cur_state should not last for more than max_wait secs
+		 * The cur_state should not last क्रम more than max_रुको secs
 		 */
-		for (i = 0; i < max_wait * 50; i++) {
-			curr_abs_state = instance->instancet->
-				read_fw_status_reg(instance);
+		क्रम (i = 0; i < max_रुको * 50; i++) अणु
+			curr_असल_state = instance->instancet->
+				पढ़ो_fw_status_reg(instance);
 
-			if (abs_state == curr_abs_state) {
+			अगर (असल_state == curr_असल_state) अणु
 				msleep(20);
-			} else
-				break;
-		}
+			पूर्ण अन्यथा
+				अवरोध;
+		पूर्ण
 
 		/*
-		 * Return error if fw_state hasn't changed after max_wait
+		 * Return error अगर fw_state hasn't changed after max_रुको
 		 */
-		if (curr_abs_state == abs_state) {
-			dev_printk(KERN_DEBUG, &instance->pdev->dev, "FW state [%d] hasn't changed "
-			       "in %d secs\n", fw_state, max_wait);
-			dev_printk(KERN_DEBUG, &instance->pdev->dev, "System Register set:\n");
+		अगर (curr_असल_state == असल_state) अणु
+			dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "FW state [%d] hasn't changed "
+			       "in %d secs\n", fw_state, max_रुको);
+			dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "System Register set:\n");
 			megasas_dump_reg_set(instance->reg_set);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		abs_state = curr_abs_state;
-		fw_state = curr_abs_state & MFI_STATE_MASK;
-	}
+		असल_state = curr_असल_state;
+		fw_state = curr_असल_state & MFI_STATE_MASK;
+	पूर्ण
 	dev_info(&instance->pdev->dev, "FW now in Ready state\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * megasas_teardown_frame_pool -	Destroy the cmd frame DMA pool
+ * megasas_tearकरोwn_frame_pool -	Destroy the cmd frame DMA pool
  * @instance:				Adapter soft state
  */
-static void megasas_teardown_frame_pool(struct megasas_instance *instance)
-{
-	int i;
+अटल व्योम megasas_tearकरोwn_frame_pool(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक i;
 	u16 max_cmd = instance->max_mfi_cmds;
-	struct megasas_cmd *cmd;
+	काष्ठा megasas_cmd *cmd;
 
-	if (!instance->frame_dma_pool)
-		return;
+	अगर (!instance->frame_dma_pool)
+		वापस;
 
 	/*
 	 * Return all frames to pool
 	 */
-	for (i = 0; i < max_cmd; i++) {
+	क्रम (i = 0; i < max_cmd; i++) अणु
 
 		cmd = instance->cmd_list[i];
 
-		if (cmd->frame)
-			dma_pool_free(instance->frame_dma_pool, cmd->frame,
+		अगर (cmd->frame)
+			dma_pool_मुक्त(instance->frame_dma_pool, cmd->frame,
 				      cmd->frame_phys_addr);
 
-		if (cmd->sense)
-			dma_pool_free(instance->sense_dma_pool, cmd->sense,
+		अगर (cmd->sense)
+			dma_pool_मुक्त(instance->sense_dma_pool, cmd->sense,
 				      cmd->sense_phys_addr);
-	}
+	पूर्ण
 
 	/*
 	 * Now destroy the pool itself
@@ -4255,37 +4256,37 @@ static void megasas_teardown_frame_pool(struct megasas_instance *instance)
 	dma_pool_destroy(instance->frame_dma_pool);
 	dma_pool_destroy(instance->sense_dma_pool);
 
-	instance->frame_dma_pool = NULL;
-	instance->sense_dma_pool = NULL;
-}
+	instance->frame_dma_pool = शून्य;
+	instance->sense_dma_pool = शून्य;
+पूर्ण
 
 /**
- * megasas_create_frame_pool -	Creates DMA pool for cmd frames
+ * megasas_create_frame_pool -	Creates DMA pool क्रम cmd frames
  * @instance:			Adapter soft state
  *
- * Each command packet has an embedded DMA memory buffer that is used for
+ * Each command packet has an embedded DMA memory buffer that is used क्रम
  * filling MFI frame and the SG list that immediately follows the frame. This
- * function creates those DMA memory buffers for each command packet by using
+ * function creates those DMA memory buffers क्रम each command packet by using
  * PCI pool facility.
  */
-static int megasas_create_frame_pool(struct megasas_instance *instance)
-{
-	int i;
+अटल पूर्णांक megasas_create_frame_pool(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक i;
 	u16 max_cmd;
 	u32 frame_count;
-	struct megasas_cmd *cmd;
+	काष्ठा megasas_cmd *cmd;
 
 	max_cmd = instance->max_mfi_cmds;
 
 	/*
 	 * For MFI controllers.
 	 * max_num_sge = 60
-	 * max_sge_sz  = 16 byte (sizeof megasas_sge_skinny)
+	 * max_sge_sz  = 16 byte (माप megasas_sge_skinny)
 	 * Total 960 byte (15 MFI frame of 64 byte)
 	 *
 	 * Fusion adapter require only 3 extra frame.
 	 * max_num_sge = 16 (defined as MAX_IOCTL_SGE)
-	 * max_sge_sz  = 12 byte (sizeof  megasas_sge64)
+	 * max_sge_sz  = 12 byte (माप  megasas_sge64)
 	 * Total 192 byte (3 MFI frame of 64 byte)
 	 */
 	frame_count = (instance->adapter_type == MFI_SERIES) ?
@@ -4298,30 +4299,30 @@ static int megasas_create_frame_pool(struct megasas_instance *instance)
 					&instance->pdev->dev,
 					instance->mfi_frame_size, 256, 0);
 
-	if (!instance->frame_dma_pool) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "failed to setup frame pool\n");
-		return -ENOMEM;
-	}
+	अगर (!instance->frame_dma_pool) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "failed to setup frame pool\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	instance->sense_dma_pool = dma_pool_create("megasas sense pool",
 						   &instance->pdev->dev, 128,
 						   4, 0);
 
-	if (!instance->sense_dma_pool) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "failed to setup sense pool\n");
+	अगर (!instance->sense_dma_pool) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "failed to setup sense pool\n");
 
 		dma_pool_destroy(instance->frame_dma_pool);
-		instance->frame_dma_pool = NULL;
+		instance->frame_dma_pool = शून्य;
 
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
 	 * Allocate and attach a frame to each of the commands in cmd_list.
 	 * By making cmd->index as the context instead of the &cmd, we can
 	 * always use 32bit context regardless of the architecture
 	 */
-	for (i = 0; i < max_cmd; i++) {
+	क्रम (i = 0; i < max_cmd; i++) अणु
 
 		cmd = instance->cmd_list[i];
 
@@ -4332,374 +4333,374 @@ static int megasas_create_frame_pool(struct megasas_instance *instance)
 					    GFP_KERNEL, &cmd->sense_phys_addr);
 
 		/*
-		 * megasas_teardown_frame_pool() takes care of freeing
+		 * megasas_tearकरोwn_frame_pool() takes care of मुक्तing
 		 * whatever has been allocated
 		 */
-		if (!cmd->frame || !cmd->sense) {
-			dev_printk(KERN_DEBUG, &instance->pdev->dev, "dma_pool_alloc failed\n");
-			megasas_teardown_frame_pool(instance);
-			return -ENOMEM;
-		}
+		अगर (!cmd->frame || !cmd->sense) अणु
+			dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "dma_pool_alloc failed\n");
+			megasas_tearकरोwn_frame_pool(instance);
+			वापस -ENOMEM;
+		पूर्ण
 
 		cmd->frame->io.context = cpu_to_le32(cmd->index);
 		cmd->frame->io.pad_0 = 0;
-		if ((instance->adapter_type == MFI_SERIES) && reset_devices)
+		अगर ((instance->adapter_type == MFI_SERIES) && reset_devices)
 			cmd->frame->hdr.cmd = MFI_CMD_INVALID;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * megasas_free_cmds -	Free all the cmds in the free cmd pool
+ * megasas_मुक्त_cmds -	Free all the cmds in the मुक्त cmd pool
  * @instance:		Adapter soft state
  */
-void megasas_free_cmds(struct megasas_instance *instance)
-{
-	int i;
+व्योम megasas_मुक्त_cmds(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक i;
 
-	/* First free the MFI frame pool */
-	megasas_teardown_frame_pool(instance);
+	/* First मुक्त the MFI frame pool */
+	megasas_tearकरोwn_frame_pool(instance);
 
 	/* Free all the commands in the cmd_list */
-	for (i = 0; i < instance->max_mfi_cmds; i++)
+	क्रम (i = 0; i < instance->max_mfi_cmds; i++)
 
-		kfree(instance->cmd_list[i]);
+		kमुक्त(instance->cmd_list[i]);
 
 	/* Free the cmd_list buffer itself */
-	kfree(instance->cmd_list);
-	instance->cmd_list = NULL;
+	kमुक्त(instance->cmd_list);
+	instance->cmd_list = शून्य;
 
 	INIT_LIST_HEAD(&instance->cmd_pool);
-}
+पूर्ण
 
 /**
  * megasas_alloc_cmds -	Allocates the command packets
  * @instance:		Adapter soft state
  *
  * Each command that is issued to the FW, whether IO commands from the OS or
- * internal commands like IOCTLs, are wrapped in local data structure called
+ * पूर्णांकernal commands like IOCTLs, are wrapped in local data काष्ठाure called
  * megasas_cmd. The frame embedded in this megasas_cmd is actually issued to
  * the FW.
  *
  * Each frame has a 32-bit field called context (tag). This context is used
- * to get back the megasas_cmd from the frame when a frame gets completed in
+ * to get back the megasas_cmd from the frame when a frame माला_लो completed in
  * the ISR. Typically the address of the megasas_cmd itself would be used as
- * the context. But we wanted to keep the differences between 32 and 64 bit
- * systems to the mininum. We always use 32 bit integers for the context. In
- * this driver, the 32 bit values are the indices into an array cmd_list.
+ * the context. But we wanted to keep the dअगरferences between 32 and 64 bit
+ * प्रणालीs to the mininum. We always use 32 bit पूर्णांकegers क्रम the context. In
+ * this driver, the 32 bit values are the indices पूर्णांकo an array cmd_list.
  * This array is used only to look up the megasas_cmd given the context. The
- * free commands themselves are maintained in a linked list called cmd_pool.
+ * मुक्त commands themselves are मुख्यtained in a linked list called cmd_pool.
  */
-int megasas_alloc_cmds(struct megasas_instance *instance)
-{
-	int i;
-	int j;
+पूर्णांक megasas_alloc_cmds(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक i;
+	पूर्णांक j;
 	u16 max_cmd;
-	struct megasas_cmd *cmd;
+	काष्ठा megasas_cmd *cmd;
 
 	max_cmd = instance->max_mfi_cmds;
 
 	/*
-	 * instance->cmd_list is an array of struct megasas_cmd pointers.
-	 * Allocate the dynamic array first and then allocate individual
+	 * instance->cmd_list is an array of काष्ठा megasas_cmd poपूर्णांकers.
+	 * Allocate the dynamic array first and then allocate inभागidual
 	 * commands.
 	 */
-	instance->cmd_list = kcalloc(max_cmd, sizeof(struct megasas_cmd*), GFP_KERNEL);
+	instance->cmd_list = kसुस्मृति(max_cmd, माप(काष्ठा megasas_cmd*), GFP_KERNEL);
 
-	if (!instance->cmd_list) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "out of memory\n");
-		return -ENOMEM;
-	}
+	अगर (!instance->cmd_list) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "out of memory\n");
+		वापस -ENOMEM;
+	पूर्ण
 
-	memset(instance->cmd_list, 0, sizeof(struct megasas_cmd *) *max_cmd);
+	स_रखो(instance->cmd_list, 0, माप(काष्ठा megasas_cmd *) *max_cmd);
 
-	for (i = 0; i < max_cmd; i++) {
-		instance->cmd_list[i] = kmalloc(sizeof(struct megasas_cmd),
+	क्रम (i = 0; i < max_cmd; i++) अणु
+		instance->cmd_list[i] = kदो_स्मृति(माप(काष्ठा megasas_cmd),
 						GFP_KERNEL);
 
-		if (!instance->cmd_list[i]) {
+		अगर (!instance->cmd_list[i]) अणु
 
-			for (j = 0; j < i; j++)
-				kfree(instance->cmd_list[j]);
+			क्रम (j = 0; j < i; j++)
+				kमुक्त(instance->cmd_list[j]);
 
-			kfree(instance->cmd_list);
-			instance->cmd_list = NULL;
+			kमुक्त(instance->cmd_list);
+			instance->cmd_list = शून्य;
 
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < max_cmd; i++) {
+	क्रम (i = 0; i < max_cmd; i++) अणु
 		cmd = instance->cmd_list[i];
-		memset(cmd, 0, sizeof(struct megasas_cmd));
+		स_रखो(cmd, 0, माप(काष्ठा megasas_cmd));
 		cmd->index = i;
-		cmd->scmd = NULL;
+		cmd->scmd = शून्य;
 		cmd->instance = instance;
 
 		list_add_tail(&cmd->list, &instance->cmd_pool);
-	}
+	पूर्ण
 
 	/*
 	 * Create a frame pool and assign one frame to each cmd
 	 */
-	if (megasas_create_frame_pool(instance)) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "Error creating frame DMA pool\n");
-		megasas_free_cmds(instance);
-		return -ENOMEM;
-	}
+	अगर (megasas_create_frame_pool(instance)) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "Error creating frame DMA pool\n");
+		megasas_मुक्त_cmds(instance);
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * dcmd_timeout_ocr_possible -	Check if OCR is possible based on Driver/FW state.
+ * dcmd_समयout_ocr_possible -	Check अगर OCR is possible based on Driver/FW state.
  * @instance:				Adapter soft state
  *
- * Return 0 for only Fusion adapter, if driver load/unload is not in progress
+ * Return 0 क्रम only Fusion adapter, अगर driver load/unload is not in progress
  * or FW is not under OCR.
  */
-inline int
-dcmd_timeout_ocr_possible(struct megasas_instance *instance) {
+अंतरभूत पूर्णांक
+dcmd_समयout_ocr_possible(काष्ठा megasas_instance *instance) अणु
 
-	if (instance->adapter_type == MFI_SERIES)
-		return KILL_ADAPTER;
-	else if (instance->unload ||
+	अगर (instance->adapter_type == MFI_SERIES)
+		वापस KILL_ADAPTER;
+	अन्यथा अगर (instance->unload ||
 			test_bit(MEGASAS_FUSION_OCR_NOT_POSSIBLE,
 				 &instance->reset_flags))
-		return IGNORE_TIMEOUT;
-	else
-		return INITIATE_OCR;
-}
+		वापस IGNORE_TIMEOUT;
+	अन्यथा
+		वापस INITIATE_OCR;
+पूर्ण
 
-static void
-megasas_get_pd_info(struct megasas_instance *instance, struct scsi_device *sdev)
-{
-	int ret;
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
+अटल व्योम
+megasas_get_pd_info(काष्ठा megasas_instance *instance, काष्ठा scsi_device *sdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
 
-	struct MR_PRIV_DEVICE *mr_device_priv_data;
+	काष्ठा MR_PRIV_DEVICE *mr_device_priv_data;
 	u16 device_id = 0;
 
 	device_id = (sdev->channel * MEGASAS_MAX_DEV_PER_CHANNEL) + sdev->id;
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
+	अगर (!cmd) अणु
 		dev_err(&instance->pdev->dev, "Failed to get cmd %s\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(instance->pd_info, 0, sizeof(*instance->pd_info));
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(instance->pd_info, 0, माप(*instance->pd_info));
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->mbox.s[0] = cpu_to_le16(device_id);
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = 0xFF;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_READ;
-	dcmd->timeout = 0;
+	dcmd->flags = MFI_FRAME_सूची_READ;
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
-	dcmd->data_xfer_len = cpu_to_le32(sizeof(struct MR_PD_INFO));
+	dcmd->data_xfer_len = cpu_to_le32(माप(काष्ठा MR_PD_INFO));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_PD_GET_INFO);
 
 	megasas_set_dma_settings(instance, dcmd, instance->pd_info_h,
-				 sizeof(struct MR_PD_INFO));
+				 माप(काष्ठा MR_PD_INFO));
 
-	if ((instance->adapter_type != MFI_SERIES) &&
-	    !instance->mask_interrupts)
+	अगर ((instance->adapter_type != MFI_SERIES) &&
+	    !instance->mask_पूर्णांकerrupts)
 		ret = megasas_issue_blocked_cmd(instance, cmd, MFI_IO_TIMEOUT_SECS);
-	else
+	अन्यथा
 		ret = megasas_issue_polled(instance, cmd);
 
-	switch (ret) {
-	case DCMD_SUCCESS:
+	चयन (ret) अणु
+	हाल DCMD_SUCCESS:
 		mr_device_priv_data = sdev->hostdata;
 		le16_to_cpus((u16 *)&instance->pd_info->state.ddf.pdType);
-		mr_device_priv_data->interface_type =
-				instance->pd_info->state.ddf.pdType.intf;
-		break;
+		mr_device_priv_data->पूर्णांकerface_type =
+				instance->pd_info->state.ddf.pdType.पूर्णांकf;
+		अवरोध;
 
-	case DCMD_TIMEOUT:
+	हाल DCMD_TIMEOUT:
 
-		switch (dcmd_timeout_ocr_possible(instance)) {
-		case INITIATE_OCR:
+		चयन (dcmd_समयout_ocr_possible(instance)) अणु
+		हाल INITIATE_OCR:
 			cmd->flags |= DRV_DCMD_SKIP_REFIRE;
 			mutex_unlock(&instance->reset_mutex);
 			megasas_reset_fusion(instance->host,
 				MFI_IO_TIMEOUT_OCR);
 			mutex_lock(&instance->reset_mutex);
-			break;
-		case KILL_ADAPTER:
-			megaraid_sas_kill_hba(instance);
-			break;
-		case IGNORE_TIMEOUT:
+			अवरोध;
+		हाल KILL_ADAPTER:
+			megaraid_sas_समाप्त_hba(instance);
+			अवरोध;
+		हाल IGNORE_TIMEOUT:
 			dev_info(&instance->pdev->dev, "Ignore DCMD timeout: %s %d\n",
 				__func__, __LINE__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret != DCMD_TIMEOUT)
-		megasas_return_cmd(instance, cmd);
+	अगर (ret != DCMD_TIMEOUT)
+		megasas_वापस_cmd(instance, cmd);
 
-	return;
-}
+	वापस;
+पूर्ण
 /*
- * megasas_get_pd_list_info -	Returns FW's pd_list structure
+ * megasas_get_pd_list_info -	Returns FW's pd_list काष्ठाure
  * @instance:				Adapter soft state
- * @pd_list:				pd_list structure
+ * @pd_list:				pd_list काष्ठाure
  *
- * Issues an internal command (DCMD) to get the FW's controller PD
- * list structure.  This information is mainly used to find out SYSTEM
+ * Issues an पूर्णांकernal command (DCMD) to get the FW's controller PD
+ * list काष्ठाure.  This inक्रमmation is मुख्यly used to find out SYSTEM
  * supported by the FW.
  */
-static int
-megasas_get_pd_list(struct megasas_instance *instance)
-{
-	int ret = 0, pd_index = 0;
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	struct MR_PD_LIST *ci;
-	struct MR_PD_ADDRESS *pd_addr;
+अटल पूर्णांक
+megasas_get_pd_list(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक ret = 0, pd_index = 0;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	काष्ठा MR_PD_LIST *ci;
+	काष्ठा MR_PD_ADDRESS *pd_addr;
 
-	if (instance->pd_list_not_supported) {
+	अगर (instance->pd_list_not_supported) अणु
 		dev_info(&instance->pdev->dev, "MR_DCMD_PD_LIST_QUERY "
 		"not supported by firmware\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ci = instance->pd_list_buf;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "(get_pd_list): Failed to get cmd\n");
-		return -ENOMEM;
-	}
+	अगर (!cmd) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "(get_pd_list): Failed to get cmd\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(ci, 0, sizeof(*ci));
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(ci, 0, माप(*ci));
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->mbox.b[0] = MR_PD_QUERY_TYPE_EXPOSED_TO_HOST;
 	dcmd->mbox.b[1] = 0;
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = MFI_STAT_INVALID_STATUS;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_READ;
-	dcmd->timeout = 0;
+	dcmd->flags = MFI_FRAME_सूची_READ;
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
-	dcmd->data_xfer_len = cpu_to_le32(MEGASAS_MAX_PD * sizeof(struct MR_PD_LIST));
+	dcmd->data_xfer_len = cpu_to_le32(MEGASAS_MAX_PD * माप(काष्ठा MR_PD_LIST));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_PD_LIST_QUERY);
 
 	megasas_set_dma_settings(instance, dcmd, instance->pd_list_buf_h,
-				 (MEGASAS_MAX_PD * sizeof(struct MR_PD_LIST)));
+				 (MEGASAS_MAX_PD * माप(काष्ठा MR_PD_LIST)));
 
-	if ((instance->adapter_type != MFI_SERIES) &&
-	    !instance->mask_interrupts)
+	अगर ((instance->adapter_type != MFI_SERIES) &&
+	    !instance->mask_पूर्णांकerrupts)
 		ret = megasas_issue_blocked_cmd(instance, cmd,
 			MFI_IO_TIMEOUT_SECS);
-	else
+	अन्यथा
 		ret = megasas_issue_polled(instance, cmd);
 
-	switch (ret) {
-	case DCMD_FAILED:
+	चयन (ret) अणु
+	हाल DCMD_FAILED:
 		dev_info(&instance->pdev->dev, "MR_DCMD_PD_LIST_QUERY "
 			"failed/not supported by firmware\n");
 
-		if (instance->adapter_type != MFI_SERIES)
-			megaraid_sas_kill_hba(instance);
-		else
+		अगर (instance->adapter_type != MFI_SERIES)
+			megaraid_sas_समाप्त_hba(instance);
+		अन्यथा
 			instance->pd_list_not_supported = 1;
-		break;
-	case DCMD_TIMEOUT:
+		अवरोध;
+	हाल DCMD_TIMEOUT:
 
-		switch (dcmd_timeout_ocr_possible(instance)) {
-		case INITIATE_OCR:
+		चयन (dcmd_समयout_ocr_possible(instance)) अणु
+		हाल INITIATE_OCR:
 			cmd->flags |= DRV_DCMD_SKIP_REFIRE;
 			/*
 			 * DCMD failed from AEN path.
-			 * AEN path already hold reset_mutex to avoid PCI access
-			 * while OCR is in progress.
+			 * AEN path alपढ़ोy hold reset_mutex to aव्योम PCI access
+			 * जबतक OCR is in progress.
 			 */
 			mutex_unlock(&instance->reset_mutex);
 			megasas_reset_fusion(instance->host,
 						MFI_IO_TIMEOUT_OCR);
 			mutex_lock(&instance->reset_mutex);
-			break;
-		case KILL_ADAPTER:
-			megaraid_sas_kill_hba(instance);
-			break;
-		case IGNORE_TIMEOUT:
+			अवरोध;
+		हाल KILL_ADAPTER:
+			megaraid_sas_समाप्त_hba(instance);
+			अवरोध;
+		हाल IGNORE_TIMEOUT:
 			dev_info(&instance->pdev->dev, "Ignore DCMD timeout: %s %d \n",
 				__func__, __LINE__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case DCMD_SUCCESS:
+	हाल DCMD_SUCCESS:
 		pd_addr = ci->addr;
-		if (megasas_dbg_lvl & LD_PD_DEBUG)
+		अगर (megasas_dbg_lvl & LD_PD_DEBUG)
 			dev_info(&instance->pdev->dev, "%s, sysPD count: 0x%x\n",
 				 __func__, le32_to_cpu(ci->count));
 
-		if ((le32_to_cpu(ci->count) >
+		अगर ((le32_to_cpu(ci->count) >
 			(MEGASAS_MAX_PD_CHANNELS * MEGASAS_MAX_DEV_PER_CHANNEL)))
-			break;
+			अवरोध;
 
-		memset(instance->local_pd_list, 0,
-				MEGASAS_MAX_PD * sizeof(struct megasas_pd_list));
+		स_रखो(instance->local_pd_list, 0,
+				MEGASAS_MAX_PD * माप(काष्ठा megasas_pd_list));
 
-		for (pd_index = 0; pd_index < le32_to_cpu(ci->count); pd_index++) {
+		क्रम (pd_index = 0; pd_index < le32_to_cpu(ci->count); pd_index++) अणु
 			instance->local_pd_list[le16_to_cpu(pd_addr->deviceId)].tid	=
 					le16_to_cpu(pd_addr->deviceId);
 			instance->local_pd_list[le16_to_cpu(pd_addr->deviceId)].driveType	=
 					pd_addr->scsiDevType;
 			instance->local_pd_list[le16_to_cpu(pd_addr->deviceId)].driveState	=
 					MR_PD_STATE_SYSTEM;
-			if (megasas_dbg_lvl & LD_PD_DEBUG)
+			अगर (megasas_dbg_lvl & LD_PD_DEBUG)
 				dev_info(&instance->pdev->dev,
 					 "PD%d: targetID: 0x%03x deviceType:0x%x\n",
 					 pd_index, le16_to_cpu(pd_addr->deviceId),
 					 pd_addr->scsiDevType);
 			pd_addr++;
-		}
+		पूर्ण
 
-		memcpy(instance->pd_list, instance->local_pd_list,
-			sizeof(instance->pd_list));
-		break;
+		स_नकल(instance->pd_list, instance->local_pd_list,
+			माप(instance->pd_list));
+		अवरोध;
 
-	}
+	पूर्ण
 
-	if (ret != DCMD_TIMEOUT)
-		megasas_return_cmd(instance, cmd);
+	अगर (ret != DCMD_TIMEOUT)
+		megasas_वापस_cmd(instance, cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * megasas_get_ld_list_info -	Returns FW's ld_list structure
+ * megasas_get_ld_list_info -	Returns FW's ld_list काष्ठाure
  * @instance:				Adapter soft state
- * @ld_list:				ld_list structure
+ * @ld_list:				ld_list काष्ठाure
  *
- * Issues an internal command (DCMD) to get the FW's controller PD
- * list structure.  This information is mainly used to find out SYSTEM
+ * Issues an पूर्णांकernal command (DCMD) to get the FW's controller PD
+ * list काष्ठाure.  This inक्रमmation is मुख्यly used to find out SYSTEM
  * supported by the FW.
  */
-static int
-megasas_get_ld_list(struct megasas_instance *instance)
-{
-	int ret = 0, ld_index = 0, ids = 0;
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	struct MR_LD_LIST *ci;
+अटल पूर्णांक
+megasas_get_ld_list(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक ret = 0, ld_index = 0, ids = 0;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	काष्ठा MR_LD_LIST *ci;
 	dma_addr_t ci_h = 0;
 	u32 ld_count;
 
@@ -4708,115 +4709,115 @@ megasas_get_ld_list(struct megasas_instance *instance)
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "megasas_get_ld_list: Failed to get cmd\n");
-		return -ENOMEM;
-	}
+	अगर (!cmd) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "megasas_get_ld_list: Failed to get cmd\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(ci, 0, sizeof(*ci));
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(ci, 0, माप(*ci));
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
-	if (instance->supportmax256vd)
+	अगर (instance->supporपंचांगax256vd)
 		dcmd->mbox.b[0] = 1;
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = MFI_STAT_INVALID_STATUS;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_READ;
-	dcmd->timeout = 0;
-	dcmd->data_xfer_len = cpu_to_le32(sizeof(struct MR_LD_LIST));
+	dcmd->flags = MFI_FRAME_सूची_READ;
+	dcmd->समयout = 0;
+	dcmd->data_xfer_len = cpu_to_le32(माप(काष्ठा MR_LD_LIST));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_LD_GET_LIST);
 	dcmd->pad_0  = 0;
 
 	megasas_set_dma_settings(instance, dcmd, ci_h,
-				 sizeof(struct MR_LD_LIST));
+				 माप(काष्ठा MR_LD_LIST));
 
-	if ((instance->adapter_type != MFI_SERIES) &&
-	    !instance->mask_interrupts)
+	अगर ((instance->adapter_type != MFI_SERIES) &&
+	    !instance->mask_पूर्णांकerrupts)
 		ret = megasas_issue_blocked_cmd(instance, cmd,
 			MFI_IO_TIMEOUT_SECS);
-	else
+	अन्यथा
 		ret = megasas_issue_polled(instance, cmd);
 
 	ld_count = le32_to_cpu(ci->ldCount);
 
-	switch (ret) {
-	case DCMD_FAILED:
-		megaraid_sas_kill_hba(instance);
-		break;
-	case DCMD_TIMEOUT:
+	चयन (ret) अणु
+	हाल DCMD_FAILED:
+		megaraid_sas_समाप्त_hba(instance);
+		अवरोध;
+	हाल DCMD_TIMEOUT:
 
-		switch (dcmd_timeout_ocr_possible(instance)) {
-		case INITIATE_OCR:
+		चयन (dcmd_समयout_ocr_possible(instance)) अणु
+		हाल INITIATE_OCR:
 			cmd->flags |= DRV_DCMD_SKIP_REFIRE;
 			/*
 			 * DCMD failed from AEN path.
-			 * AEN path already hold reset_mutex to avoid PCI access
-			 * while OCR is in progress.
+			 * AEN path alपढ़ोy hold reset_mutex to aव्योम PCI access
+			 * जबतक OCR is in progress.
 			 */
 			mutex_unlock(&instance->reset_mutex);
 			megasas_reset_fusion(instance->host,
 						MFI_IO_TIMEOUT_OCR);
 			mutex_lock(&instance->reset_mutex);
-			break;
-		case KILL_ADAPTER:
-			megaraid_sas_kill_hba(instance);
-			break;
-		case IGNORE_TIMEOUT:
+			अवरोध;
+		हाल KILL_ADAPTER:
+			megaraid_sas_समाप्त_hba(instance);
+			अवरोध;
+		हाल IGNORE_TIMEOUT:
 			dev_info(&instance->pdev->dev, "Ignore DCMD timeout: %s %d\n",
 				__func__, __LINE__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case DCMD_SUCCESS:
-		if (megasas_dbg_lvl & LD_PD_DEBUG)
+	हाल DCMD_SUCCESS:
+		अगर (megasas_dbg_lvl & LD_PD_DEBUG)
 			dev_info(&instance->pdev->dev, "%s, LD count: 0x%x\n",
 				 __func__, ld_count);
 
-		if (ld_count > instance->fw_supported_vd_count)
-			break;
+		अगर (ld_count > instance->fw_supported_vd_count)
+			अवरोध;
 
-		memset(instance->ld_ids, 0xff, MAX_LOGICAL_DRIVES_EXT);
+		स_रखो(instance->ld_ids, 0xff, MAX_LOGICAL_DRIVES_EXT);
 
-		for (ld_index = 0; ld_index < ld_count; ld_index++) {
-			if (ci->ldList[ld_index].state != 0) {
+		क्रम (ld_index = 0; ld_index < ld_count; ld_index++) अणु
+			अगर (ci->ldList[ld_index].state != 0) अणु
 				ids = ci->ldList[ld_index].ref.targetId;
 				instance->ld_ids[ids] = ci->ldList[ld_index].ref.targetId;
-				if (megasas_dbg_lvl & LD_PD_DEBUG)
+				अगर (megasas_dbg_lvl & LD_PD_DEBUG)
 					dev_info(&instance->pdev->dev,
 						 "LD%d: targetID: 0x%03x\n",
 						 ld_index, ids);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret != DCMD_TIMEOUT)
-		megasas_return_cmd(instance, cmd);
+	अगर (ret != DCMD_TIMEOUT)
+		megasas_वापस_cmd(instance, cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * megasas_ld_list_query -	Returns FW's ld_list structure
+ * megasas_ld_list_query -	Returns FW's ld_list काष्ठाure
  * @instance:				Adapter soft state
- * @query_type:				ld_list structure type
+ * @query_type:				ld_list काष्ठाure type
  *
- * Issues an internal command (DCMD) to get the FW's controller PD
- * list structure.  This information is mainly used to find out SYSTEM
+ * Issues an पूर्णांकernal command (DCMD) to get the FW's controller PD
+ * list काष्ठाure.  This inक्रमmation is मुख्यly used to find out SYSTEM
  * supported by the FW.
  */
-static int
-megasas_ld_list_query(struct megasas_instance *instance, u8 query_type)
-{
-	int ret = 0, ld_index = 0, ids = 0;
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	struct MR_LD_TARGETID_LIST *ci;
+अटल पूर्णांक
+megasas_ld_list_query(काष्ठा megasas_instance *instance, u8 query_type)
+अणु
+	पूर्णांक ret = 0, ld_index = 0, ids = 0;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	काष्ठा MR_LD_TARGETID_LIST *ci;
 	dma_addr_t ci_h = 0;
 	u32 tgtid_count;
 
@@ -4825,120 +4826,120 @@ megasas_ld_list_query(struct megasas_instance *instance, u8 query_type)
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
+	अगर (!cmd) अणु
 		dev_warn(&instance->pdev->dev,
 		         "megasas_ld_list_query: Failed to get cmd\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(ci, 0, sizeof(*ci));
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(ci, 0, माप(*ci));
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->mbox.b[0] = query_type;
-	if (instance->supportmax256vd)
+	अगर (instance->supporपंचांगax256vd)
 		dcmd->mbox.b[2] = 1;
 
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = MFI_STAT_INVALID_STATUS;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_READ;
-	dcmd->timeout = 0;
-	dcmd->data_xfer_len = cpu_to_le32(sizeof(struct MR_LD_TARGETID_LIST));
+	dcmd->flags = MFI_FRAME_सूची_READ;
+	dcmd->समयout = 0;
+	dcmd->data_xfer_len = cpu_to_le32(माप(काष्ठा MR_LD_TARGETID_LIST));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_LD_LIST_QUERY);
 	dcmd->pad_0  = 0;
 
 	megasas_set_dma_settings(instance, dcmd, ci_h,
-				 sizeof(struct MR_LD_TARGETID_LIST));
+				 माप(काष्ठा MR_LD_TARGETID_LIST));
 
-	if ((instance->adapter_type != MFI_SERIES) &&
-	    !instance->mask_interrupts)
+	अगर ((instance->adapter_type != MFI_SERIES) &&
+	    !instance->mask_पूर्णांकerrupts)
 		ret = megasas_issue_blocked_cmd(instance, cmd, MFI_IO_TIMEOUT_SECS);
-	else
+	अन्यथा
 		ret = megasas_issue_polled(instance, cmd);
 
-	switch (ret) {
-	case DCMD_FAILED:
+	चयन (ret) अणु
+	हाल DCMD_FAILED:
 		dev_info(&instance->pdev->dev,
 			"DCMD not supported by firmware - %s %d\n",
 				__func__, __LINE__);
 		ret = megasas_get_ld_list(instance);
-		break;
-	case DCMD_TIMEOUT:
-		switch (dcmd_timeout_ocr_possible(instance)) {
-		case INITIATE_OCR:
+		अवरोध;
+	हाल DCMD_TIMEOUT:
+		चयन (dcmd_समयout_ocr_possible(instance)) अणु
+		हाल INITIATE_OCR:
 			cmd->flags |= DRV_DCMD_SKIP_REFIRE;
 			/*
 			 * DCMD failed from AEN path.
-			 * AEN path already hold reset_mutex to avoid PCI access
-			 * while OCR is in progress.
+			 * AEN path alपढ़ोy hold reset_mutex to aव्योम PCI access
+			 * जबतक OCR is in progress.
 			 */
 			mutex_unlock(&instance->reset_mutex);
 			megasas_reset_fusion(instance->host,
 						MFI_IO_TIMEOUT_OCR);
 			mutex_lock(&instance->reset_mutex);
-			break;
-		case KILL_ADAPTER:
-			megaraid_sas_kill_hba(instance);
-			break;
-		case IGNORE_TIMEOUT:
+			अवरोध;
+		हाल KILL_ADAPTER:
+			megaraid_sas_समाप्त_hba(instance);
+			अवरोध;
+		हाल IGNORE_TIMEOUT:
 			dev_info(&instance->pdev->dev, "Ignore DCMD timeout: %s %d\n",
 				__func__, __LINE__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
-	case DCMD_SUCCESS:
+		अवरोध;
+	हाल DCMD_SUCCESS:
 		tgtid_count = le32_to_cpu(ci->count);
 
-		if (megasas_dbg_lvl & LD_PD_DEBUG)
+		अगर (megasas_dbg_lvl & LD_PD_DEBUG)
 			dev_info(&instance->pdev->dev, "%s, LD count: 0x%x\n",
 				 __func__, tgtid_count);
 
-		if ((tgtid_count > (instance->fw_supported_vd_count)))
-			break;
+		अगर ((tgtid_count > (instance->fw_supported_vd_count)))
+			अवरोध;
 
-		memset(instance->ld_ids, 0xff, MEGASAS_MAX_LD_IDS);
-		for (ld_index = 0; ld_index < tgtid_count; ld_index++) {
+		स_रखो(instance->ld_ids, 0xff, MEGASAS_MAX_LD_IDS);
+		क्रम (ld_index = 0; ld_index < tgtid_count; ld_index++) अणु
 			ids = ci->targetId[ld_index];
 			instance->ld_ids[ids] = ci->targetId[ld_index];
-			if (megasas_dbg_lvl & LD_PD_DEBUG)
+			अगर (megasas_dbg_lvl & LD_PD_DEBUG)
 				dev_info(&instance->pdev->dev, "LD%d: targetID: 0x%03x\n",
 					 ld_index, ci->targetId[ld_index]);
-		}
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret != DCMD_TIMEOUT)
-		megasas_return_cmd(instance, cmd);
+	अगर (ret != DCMD_TIMEOUT)
+		megasas_वापस_cmd(instance, cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * megasas_host_device_list_query
  * dcmd.opcode            - MR_DCMD_CTRL_DEVICE_LIST_GET
  * dcmd.mbox              - reserved
- * dcmd.sge IN            - ptr to return MR_HOST_DEVICE_LIST structure
- * Desc:    This DCMD will return the combined device list
- * Status:  MFI_STAT_OK - List returned successfully
- *          MFI_STAT_INVALID_CMD - Firmware support for the feature has been
+ * dcmd.sge IN            - ptr to वापस MR_HOST_DEVICE_LIST काष्ठाure
+ * Desc:    This DCMD will वापस the combined device list
+ * Status:  MFI_STAT_OK - List वापसed successfully
+ *          MFI_STAT_INVALID_CMD - Firmware support क्रम the feature has been
  *                                 disabled
  * @instance:			Adapter soft state
  * @is_probe:			Driver probe check
- * Return:			0 if DCMD succeeded
- *				 non-zero if failed
+ * Return:			0 अगर DCMD succeeded
+ *				 non-zero अगर failed
  */
-static int
-megasas_host_device_list_query(struct megasas_instance *instance,
+अटल पूर्णांक
+megasas_host_device_list_query(काष्ठा megasas_instance *instance,
 			       bool is_probe)
-{
-	int ret, i, target_id;
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	struct MR_HOST_DEVICE_LIST *ci;
+अणु
+	पूर्णांक ret, i, target_id;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	काष्ठा MR_HOST_DEVICE_LIST *ci;
 	u32 count;
 	dma_addr_t ci_h;
 
@@ -4947,269 +4948,269 @@ megasas_host_device_list_query(struct megasas_instance *instance,
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
+	अगर (!cmd) अणु
 		dev_warn(&instance->pdev->dev,
 			 "%s: failed to get cmd\n",
 			 __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(ci, 0, sizeof(*ci));
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(ci, 0, माप(*ci));
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->mbox.b[0] = is_probe ? 0 : 1;
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = MFI_STAT_INVALID_STATUS;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_READ;
-	dcmd->timeout = 0;
+	dcmd->flags = MFI_FRAME_सूची_READ;
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
 	dcmd->data_xfer_len = cpu_to_le32(HOST_DEVICE_LIST_SZ);
 	dcmd->opcode = cpu_to_le32(MR_DCMD_CTRL_DEVICE_LIST_GET);
 
 	megasas_set_dma_settings(instance, dcmd, ci_h, HOST_DEVICE_LIST_SZ);
 
-	if (!instance->mask_interrupts) {
+	अगर (!instance->mask_पूर्णांकerrupts) अणु
 		ret = megasas_issue_blocked_cmd(instance, cmd,
 						MFI_IO_TIMEOUT_SECS);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = megasas_issue_polled(instance, cmd);
 		cmd->flags |= DRV_DCMD_SKIP_REFIRE;
-	}
+	पूर्ण
 
-	switch (ret) {
-	case DCMD_SUCCESS:
-		/* Fill the internal pd_list and ld_ids array based on
-		 * targetIds returned by FW
+	चयन (ret) अणु
+	हाल DCMD_SUCCESS:
+		/* Fill the पूर्णांकernal pd_list and ld_ids array based on
+		 * targetIds वापसed by FW
 		 */
 		count = le32_to_cpu(ci->count);
 
-		if (count > (MEGASAS_MAX_PD + MAX_LOGICAL_DRIVES_EXT))
-			break;
+		अगर (count > (MEGASAS_MAX_PD + MAX_LOGICAL_DRIVES_EXT))
+			अवरोध;
 
-		if (megasas_dbg_lvl & LD_PD_DEBUG)
+		अगर (megasas_dbg_lvl & LD_PD_DEBUG)
 			dev_info(&instance->pdev->dev, "%s, Device count: 0x%x\n",
 				 __func__, count);
 
-		memset(instance->local_pd_list, 0,
-		       MEGASAS_MAX_PD * sizeof(struct megasas_pd_list));
-		memset(instance->ld_ids, 0xff, MAX_LOGICAL_DRIVES_EXT);
-		for (i = 0; i < count; i++) {
+		स_रखो(instance->local_pd_list, 0,
+		       MEGASAS_MAX_PD * माप(काष्ठा megasas_pd_list));
+		स_रखो(instance->ld_ids, 0xff, MAX_LOGICAL_DRIVES_EXT);
+		क्रम (i = 0; i < count; i++) अणु
 			target_id = le16_to_cpu(ci->host_device_list[i].target_id);
-			if (ci->host_device_list[i].flags.u.bits.is_sys_pd) {
+			अगर (ci->host_device_list[i].flags.u.bits.is_sys_pd) अणु
 				instance->local_pd_list[target_id].tid = target_id;
 				instance->local_pd_list[target_id].driveType =
 						ci->host_device_list[i].scsi_type;
 				instance->local_pd_list[target_id].driveState =
 						MR_PD_STATE_SYSTEM;
-				if (megasas_dbg_lvl & LD_PD_DEBUG)
+				अगर (megasas_dbg_lvl & LD_PD_DEBUG)
 					dev_info(&instance->pdev->dev,
 						 "Device %d: PD targetID: 0x%03x deviceType:0x%x\n",
 						 i, target_id, ci->host_device_list[i].scsi_type);
-			} else {
+			पूर्ण अन्यथा अणु
 				instance->ld_ids[target_id] = target_id;
-				if (megasas_dbg_lvl & LD_PD_DEBUG)
+				अगर (megasas_dbg_lvl & LD_PD_DEBUG)
 					dev_info(&instance->pdev->dev,
 						 "Device %d: LD targetID: 0x%03x\n",
 						 i, target_id);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		memcpy(instance->pd_list, instance->local_pd_list,
-		       sizeof(instance->pd_list));
-		break;
+		स_नकल(instance->pd_list, instance->local_pd_list,
+		       माप(instance->pd_list));
+		अवरोध;
 
-	case DCMD_TIMEOUT:
-		switch (dcmd_timeout_ocr_possible(instance)) {
-		case INITIATE_OCR:
+	हाल DCMD_TIMEOUT:
+		चयन (dcmd_समयout_ocr_possible(instance)) अणु
+		हाल INITIATE_OCR:
 			cmd->flags |= DRV_DCMD_SKIP_REFIRE;
 			mutex_unlock(&instance->reset_mutex);
 			megasas_reset_fusion(instance->host,
 				MFI_IO_TIMEOUT_OCR);
 			mutex_lock(&instance->reset_mutex);
-			break;
-		case KILL_ADAPTER:
-			megaraid_sas_kill_hba(instance);
-			break;
-		case IGNORE_TIMEOUT:
+			अवरोध;
+		हाल KILL_ADAPTER:
+			megaraid_sas_समाप्त_hba(instance);
+			अवरोध;
+		हाल IGNORE_TIMEOUT:
 			dev_info(&instance->pdev->dev, "Ignore DCMD timeout: %s %d\n",
 				 __func__, __LINE__);
-			break;
-		}
-		break;
-	case DCMD_FAILED:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल DCMD_FAILED:
 		dev_err(&instance->pdev->dev,
 			"%s: MR_DCMD_CTRL_DEVICE_LIST_GET failed\n",
 			__func__);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret != DCMD_TIMEOUT)
-		megasas_return_cmd(instance, cmd);
+	अगर (ret != DCMD_TIMEOUT)
+		megasas_वापस_cmd(instance, cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * megasas_update_ext_vd_details : Update details w.r.t Extended VD
  * instance			 : Controller's instance
 */
-static void megasas_update_ext_vd_details(struct megasas_instance *instance)
-{
-	struct fusion_context *fusion;
+अटल व्योम megasas_update_ext_vd_details(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा fusion_context *fusion;
 	u32 ventura_map_sz = 0;
 
 	fusion = instance->ctrl_context;
-	/* For MFI based controllers return dummy success */
-	if (!fusion)
-		return;
+	/* For MFI based controllers वापस dummy success */
+	अगर (!fusion)
+		वापस;
 
-	instance->supportmax256vd =
+	instance->supporपंचांगax256vd =
 		instance->ctrl_info_buf->adapterOperations3.supportMaxExtLDs;
 	/* Below is additional check to address future FW enhancement */
-	if (instance->ctrl_info_buf->max_lds > 64)
-		instance->supportmax256vd = 1;
+	अगर (instance->ctrl_info_buf->max_lds > 64)
+		instance->supporपंचांगax256vd = 1;
 
 	instance->drv_supported_vd_count = MEGASAS_MAX_LD_CHANNELS
 					* MEGASAS_MAX_DEV_PER_CHANNEL;
 	instance->drv_supported_pd_count = MEGASAS_MAX_PD_CHANNELS
 					* MEGASAS_MAX_DEV_PER_CHANNEL;
-	if (instance->supportmax256vd) {
+	अगर (instance->supporपंचांगax256vd) अणु
 		instance->fw_supported_vd_count = MAX_LOGICAL_DRIVES_EXT;
 		instance->fw_supported_pd_count = MAX_PHYSICAL_DEVICES;
-	} else {
+	पूर्ण अन्यथा अणु
 		instance->fw_supported_vd_count = MAX_LOGICAL_DRIVES;
 		instance->fw_supported_pd_count = MAX_PHYSICAL_DEVICES;
-	}
+	पूर्ण
 
 	dev_info(&instance->pdev->dev,
 		"FW provided supportMaxExtLDs: %d\tmax_lds: %d\n",
 		instance->ctrl_info_buf->adapterOperations3.supportMaxExtLDs ? 1 : 0,
 		instance->ctrl_info_buf->max_lds);
 
-	if (instance->max_raid_mapsize) {
+	अगर (instance->max_raid_mapsize) अणु
 		ventura_map_sz = instance->max_raid_mapsize *
 						MR_MIN_MAP_SIZE; /* 64k */
 		fusion->current_map_sz = ventura_map_sz;
 		fusion->max_map_sz = ventura_map_sz;
-	} else {
-		fusion->old_map_sz =  sizeof(struct MR_FW_RAID_MAP) +
-					(sizeof(struct MR_LD_SPAN_MAP) *
+	पूर्ण अन्यथा अणु
+		fusion->old_map_sz =  माप(काष्ठा MR_FW_RAID_MAP) +
+					(माप(काष्ठा MR_LD_SPAN_MAP) *
 					(instance->fw_supported_vd_count - 1));
-		fusion->new_map_sz =  sizeof(struct MR_FW_RAID_MAP_EXT);
+		fusion->new_map_sz =  माप(काष्ठा MR_FW_RAID_MAP_EXT);
 
 		fusion->max_map_sz =
 			max(fusion->old_map_sz, fusion->new_map_sz);
 
-		if (instance->supportmax256vd)
+		अगर (instance->supporपंचांगax256vd)
 			fusion->current_map_sz = fusion->new_map_sz;
-		else
+		अन्यथा
 			fusion->current_map_sz = fusion->old_map_sz;
-	}
-	/* irrespective of FW raid maps, driver raid map is constant */
-	fusion->drv_map_sz = sizeof(struct MR_DRV_RAID_MAP_ALL);
-}
+	पूर्ण
+	/* irrespective of FW raid maps, driver raid map is स्थिरant */
+	fusion->drv_map_sz = माप(काष्ठा MR_DRV_RAID_MAP_ALL);
+पूर्ण
 
 /*
  * dcmd.opcode                - MR_DCMD_CTRL_SNAPDUMP_GET_PROPERTIES
- * dcmd.hdr.length            - number of bytes to read
+ * dcmd.hdr.length            - number of bytes to पढ़ो
  * dcmd.sge                   - Ptr to MR_SNAPDUMP_PROPERTIES
  * Desc:			 Fill in snapdump properties
  * Status:			 MFI_STAT_OK- Command successful
  */
-void megasas_get_snapdump_properties(struct megasas_instance *instance)
-{
-	int ret = 0;
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	struct MR_SNAPDUMP_PROPERTIES *ci;
+व्योम megasas_get_snapdump_properties(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	काष्ठा MR_SNAPDUMP_PROPERTIES *ci;
 	dma_addr_t ci_h = 0;
 
 	ci = instance->snapdump_prop;
 	ci_h = instance->snapdump_prop_h;
 
-	if (!ci)
-		return;
+	अगर (!ci)
+		वापस;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
+	अगर (!cmd) अणु
 		dev_dbg(&instance->pdev->dev, "Failed to get a free cmd\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(ci, 0, sizeof(*ci));
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(ci, 0, माप(*ci));
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = MFI_STAT_INVALID_STATUS;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_READ;
-	dcmd->timeout = 0;
+	dcmd->flags = MFI_FRAME_सूची_READ;
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
-	dcmd->data_xfer_len = cpu_to_le32(sizeof(struct MR_SNAPDUMP_PROPERTIES));
+	dcmd->data_xfer_len = cpu_to_le32(माप(काष्ठा MR_SNAPDUMP_PROPERTIES));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_CTRL_SNAPDUMP_GET_PROPERTIES);
 
 	megasas_set_dma_settings(instance, dcmd, ci_h,
-				 sizeof(struct MR_SNAPDUMP_PROPERTIES));
+				 माप(काष्ठा MR_SNAPDUMP_PROPERTIES));
 
-	if (!instance->mask_interrupts) {
+	अगर (!instance->mask_पूर्णांकerrupts) अणु
 		ret = megasas_issue_blocked_cmd(instance, cmd,
 						MFI_IO_TIMEOUT_SECS);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = megasas_issue_polled(instance, cmd);
 		cmd->flags |= DRV_DCMD_SKIP_REFIRE;
-	}
+	पूर्ण
 
-	switch (ret) {
-	case DCMD_SUCCESS:
-		instance->snapdump_wait_time =
-			min_t(u8, ci->trigger_min_num_sec_before_ocr,
+	चयन (ret) अणु
+	हाल DCMD_SUCCESS:
+		instance->snapdump_रुको_समय =
+			min_t(u8, ci->trigger_min_num_sec_beक्रमe_ocr,
 				MEGASAS_MAX_SNAP_DUMP_WAIT_TIME);
-		break;
+		अवरोध;
 
-	case DCMD_TIMEOUT:
-		switch (dcmd_timeout_ocr_possible(instance)) {
-		case INITIATE_OCR:
+	हाल DCMD_TIMEOUT:
+		चयन (dcmd_समयout_ocr_possible(instance)) अणु
+		हाल INITIATE_OCR:
 			cmd->flags |= DRV_DCMD_SKIP_REFIRE;
 			mutex_unlock(&instance->reset_mutex);
 			megasas_reset_fusion(instance->host,
 				MFI_IO_TIMEOUT_OCR);
 			mutex_lock(&instance->reset_mutex);
-			break;
-		case KILL_ADAPTER:
-			megaraid_sas_kill_hba(instance);
-			break;
-		case IGNORE_TIMEOUT:
+			अवरोध;
+		हाल KILL_ADAPTER:
+			megaraid_sas_समाप्त_hba(instance);
+			अवरोध;
+		हाल IGNORE_TIMEOUT:
 			dev_info(&instance->pdev->dev, "Ignore DCMD timeout: %s %d\n",
 				__func__, __LINE__);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ret != DCMD_TIMEOUT)
-		megasas_return_cmd(instance, cmd);
-}
+	अगर (ret != DCMD_TIMEOUT)
+		megasas_वापस_cmd(instance, cmd);
+पूर्ण
 
 /**
- * megasas_get_ctrl_info -	Returns FW's controller structure
+ * megasas_get_ctrl_info -	Returns FW's controller काष्ठाure
  * @instance:				Adapter soft state
  *
- * Issues an internal command (DCMD) to get the FW's controller structure.
- * This information is mainly used to find out the maximum IO transfer per
+ * Issues an पूर्णांकernal command (DCMD) to get the FW's controller काष्ठाure.
+ * This inक्रमmation is मुख्यly used to find out the maximum IO transfer per
  * command supported by the FW.
  */
-int
-megasas_get_ctrl_info(struct megasas_instance *instance)
-{
-	int ret = 0;
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	struct megasas_ctrl_info *ci;
+पूर्णांक
+megasas_get_ctrl_info(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	काष्ठा megasas_ctrl_info *ci;
 	dma_addr_t ci_h = 0;
 
 	ci = instance->ctrl_info_buf;
@@ -5217,41 +5218,41 @@ megasas_get_ctrl_info(struct megasas_instance *instance)
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "Failed to get a free cmd\n");
-		return -ENOMEM;
-	}
+	अगर (!cmd) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "Failed to get a free cmd\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(ci, 0, sizeof(*ci));
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(ci, 0, माप(*ci));
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = MFI_STAT_INVALID_STATUS;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_READ;
-	dcmd->timeout = 0;
+	dcmd->flags = MFI_FRAME_सूची_READ;
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
-	dcmd->data_xfer_len = cpu_to_le32(sizeof(struct megasas_ctrl_info));
+	dcmd->data_xfer_len = cpu_to_le32(माप(काष्ठा megasas_ctrl_info));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_CTRL_GET_INFO);
 	dcmd->mbox.b[0] = 1;
 
 	megasas_set_dma_settings(instance, dcmd, ci_h,
-				 sizeof(struct megasas_ctrl_info));
+				 माप(काष्ठा megasas_ctrl_info));
 
-	if ((instance->adapter_type != MFI_SERIES) &&
-	    !instance->mask_interrupts) {
+	अगर ((instance->adapter_type != MFI_SERIES) &&
+	    !instance->mask_पूर्णांकerrupts) अणु
 		ret = megasas_issue_blocked_cmd(instance, cmd, MFI_IO_TIMEOUT_SECS);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = megasas_issue_polled(instance, cmd);
 		cmd->flags |= DRV_DCMD_SKIP_REFIRE;
-	}
+	पूर्ण
 
-	switch (ret) {
-	case DCMD_SUCCESS:
-		/* Save required controller information in
-		 * CPU endianness format.
+	चयन (ret) अणु
+	हाल DCMD_SUCCESS:
+		/* Save required controller inक्रमmation in
+		 * CPU endianness क्रमmat.
 		 */
 		le32_to_cpus((u32 *)&ci->properties.OnOffProperties);
 		le16_to_cpus((u16 *)&ci->properties.on_off_properties2);
@@ -5263,7 +5264,7 @@ megasas_get_ctrl_info(struct megasas_instance *instance)
 		/* Update the latest Ext VD info.
 		 * From Init path, store current firmware details.
 		 * From OCR path, detect any firmware properties changes.
-		 * in case of Firmware upgrade without system reboot.
+		 * in हाल of Firmware upgrade without प्रणाली reboot.
 		 */
 		megasas_update_ext_vd_details(instance);
 		instance->support_seqnum_jbod_fp =
@@ -5274,13 +5275,13 @@ megasas_get_ctrl_info(struct megasas_instance *instance)
 			ci->adapter_operations4.support_nvme_passthru;
 		instance->support_pci_lane_margining =
 			ci->adapter_operations5.support_pci_lane_margining;
-		instance->task_abort_tmo = ci->TaskAbortTO;
-		instance->max_reset_tmo = ci->MaxResetTO;
+		instance->task_पात_पंचांगo = ci->TaskAbortTO;
+		instance->max_reset_पंचांगo = ci->MaxResetTO;
 
 		/*Check whether controller is iMR or MR */
 		instance->is_imr = (ci->memory_size ? 0 : 1);
 
-		instance->snapdump_wait_time =
+		instance->snapdump_रुको_समय =
 			(ci->properties.on_off_properties2.enable_snap_dump ?
 			 MEGASAS_DEFAULT_SNAP_DUMP_WAIT_TIME : 0);
 
@@ -5304,43 +5305,43 @@ megasas_get_ctrl_info(struct megasas_instance *instance)
 			 instance->support_nvme_passthru ? "Yes" : "No");
 		dev_info(&instance->pdev->dev,
 			 "FW provided TM TaskAbort/Reset timeout\t: %d secs/%d secs\n",
-			 instance->task_abort_tmo, instance->max_reset_tmo);
+			 instance->task_पात_पंचांगo, instance->max_reset_पंचांगo);
 		dev_info(&instance->pdev->dev, "JBOD sequence map support\t: %s\n",
 			 instance->support_seqnum_jbod_fp ? "Yes" : "No");
 		dev_info(&instance->pdev->dev, "PCI Lane Margining support\t: %s\n",
 			 instance->support_pci_lane_margining ? "Yes" : "No");
 
-		break;
+		अवरोध;
 
-	case DCMD_TIMEOUT:
-		switch (dcmd_timeout_ocr_possible(instance)) {
-		case INITIATE_OCR:
+	हाल DCMD_TIMEOUT:
+		चयन (dcmd_समयout_ocr_possible(instance)) अणु
+		हाल INITIATE_OCR:
 			cmd->flags |= DRV_DCMD_SKIP_REFIRE;
 			mutex_unlock(&instance->reset_mutex);
 			megasas_reset_fusion(instance->host,
 				MFI_IO_TIMEOUT_OCR);
 			mutex_lock(&instance->reset_mutex);
-			break;
-		case KILL_ADAPTER:
-			megaraid_sas_kill_hba(instance);
-			break;
-		case IGNORE_TIMEOUT:
+			अवरोध;
+		हाल KILL_ADAPTER:
+			megaraid_sas_समाप्त_hba(instance);
+			अवरोध;
+		हाल IGNORE_TIMEOUT:
 			dev_info(&instance->pdev->dev, "Ignore DCMD timeout: %s %d\n",
 				__func__, __LINE__);
-			break;
-		}
-		break;
-	case DCMD_FAILED:
-		megaraid_sas_kill_hba(instance);
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल DCMD_FAILED:
+		megaraid_sas_समाप्त_hba(instance);
+		अवरोध;
 
-	}
+	पूर्ण
 
-	if (ret != DCMD_TIMEOUT)
-		megasas_return_cmd(instance, cmd);
+	अगर (ret != DCMD_TIMEOUT)
+		megasas_वापस_cmd(instance, cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * megasas_set_crash_dump_params -	Sends address of crash dump DMA buffer
@@ -5350,37 +5351,37 @@ megasas_get_ctrl_info(struct megasas_instance *instance)
  * @crash_buf_state		-	tell FW to turn ON/OFF crash dump feature
 					MR_CRASH_BUF_TURN_OFF = 0
 					MR_CRASH_BUF_TURN_ON = 1
- * @return 0 on success non-zero on failure.
- * Issues an internal command (DCMD) to set parameters for crash dump feature.
+ * @वापस 0 on success non-zero on failure.
+ * Issues an पूर्णांकernal command (DCMD) to set parameters क्रम crash dump feature.
  * Driver will send address of crash dump DMA buffer and set mbox to tell FW
- * that driver supports crash dump feature. This DCMD will be sent only if
+ * that driver supports crash dump feature. This DCMD will be sent only अगर
  * crash dump feature is supported by the FW.
  *
  */
-int megasas_set_crash_dump_params(struct megasas_instance *instance,
+पूर्णांक megasas_set_crash_dump_params(काष्ठा megasas_instance *instance,
 	u8 crash_buf_state)
-{
-	int ret = 0;
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
+	अगर (!cmd) अणु
 		dev_err(&instance->pdev->dev, "Failed to get a free cmd\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 	dcmd->mbox.b[0] = crash_buf_state;
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = MFI_STAT_INVALID_STATUS;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_NONE;
-	dcmd->timeout = 0;
+	dcmd->flags = MFI_FRAME_सूची_NONE;
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
 	dcmd->data_xfer_len = cpu_to_le32(CRASH_DMA_BUF_SIZE);
 	dcmd->opcode = cpu_to_le32(MR_DCMD_CTRL_SET_CRASH_DUMP_PARAMS);
@@ -5388,32 +5389,32 @@ int megasas_set_crash_dump_params(struct megasas_instance *instance,
 	megasas_set_dma_settings(instance, dcmd, instance->crash_dump_h,
 				 CRASH_DMA_BUF_SIZE);
 
-	if ((instance->adapter_type != MFI_SERIES) &&
-	    !instance->mask_interrupts)
+	अगर ((instance->adapter_type != MFI_SERIES) &&
+	    !instance->mask_पूर्णांकerrupts)
 		ret = megasas_issue_blocked_cmd(instance, cmd, MFI_IO_TIMEOUT_SECS);
-	else
+	अन्यथा
 		ret = megasas_issue_polled(instance, cmd);
 
-	if (ret == DCMD_TIMEOUT) {
-		switch (dcmd_timeout_ocr_possible(instance)) {
-		case INITIATE_OCR:
+	अगर (ret == DCMD_TIMEOUT) अणु
+		चयन (dcmd_समयout_ocr_possible(instance)) अणु
+		हाल INITIATE_OCR:
 			cmd->flags |= DRV_DCMD_SKIP_REFIRE;
 			megasas_reset_fusion(instance->host,
 					MFI_IO_TIMEOUT_OCR);
-			break;
-		case KILL_ADAPTER:
-			megaraid_sas_kill_hba(instance);
-			break;
-		case IGNORE_TIMEOUT:
+			अवरोध;
+		हाल KILL_ADAPTER:
+			megaraid_sas_समाप्त_hba(instance);
+			अवरोध;
+		हाल IGNORE_TIMEOUT:
 			dev_info(&instance->pdev->dev, "Ignore DCMD timeout: %s %d\n",
 				__func__, __LINE__);
-			break;
-		}
-	} else
-		megasas_return_cmd(instance, cmd);
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा
+		megasas_वापस_cmd(instance, cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * megasas_issue_init_mfi -	Initializes the FW
@@ -5421,36 +5422,36 @@ int megasas_set_crash_dump_params(struct megasas_instance *instance,
  *
  * Issues the INIT MFI cmd
  */
-static int
-megasas_issue_init_mfi(struct megasas_instance *instance)
-{
+अटल पूर्णांक
+megasas_issue_init_mfi(काष्ठा megasas_instance *instance)
+अणु
 	__le32 context;
-	struct megasas_cmd *cmd;
-	struct megasas_init_frame *init_frame;
-	struct megasas_init_queue_info *initq_info;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_init_frame *init_frame;
+	काष्ठा megasas_init_queue_info *initq_info;
 	dma_addr_t init_frame_h;
 	dma_addr_t initq_info_h;
 
 	/*
-	 * Prepare a init frame. Note the init frame points to queue info
-	 * structure. Each frame has SGL allocated after first 64 bytes. For
-	 * this frame - since we don't need any SGL - we use SGL's space as
-	 * queue info structure
+	 * Prepare a init frame. Note the init frame poपूर्णांकs to queue info
+	 * काष्ठाure. Each frame has SGL allocated after first 64 bytes. For
+	 * this frame - since we करोn't need any SGL - we use SGL's space as
+	 * queue info काष्ठाure
 	 *
-	 * We will not get a NULL command below. We just created the pool.
+	 * We will not get a शून्य command below. We just created the pool.
 	 */
 	cmd = megasas_get_cmd(instance);
 
-	init_frame = (struct megasas_init_frame *)cmd->frame;
-	initq_info = (struct megasas_init_queue_info *)
-		((unsigned long)init_frame + 64);
+	init_frame = (काष्ठा megasas_init_frame *)cmd->frame;
+	initq_info = (काष्ठा megasas_init_queue_info *)
+		((अचिन्हित दीर्घ)init_frame + 64);
 
 	init_frame_h = cmd->frame_phys_addr;
 	initq_info_h = init_frame_h + 64;
 
 	context = init_frame->context;
-	memset(init_frame, 0, MEGAMFI_FRAME_SIZE);
-	memset(initq_info, 0, sizeof(struct megasas_init_queue_info));
+	स_रखो(init_frame, 0, MEGAMFI_FRAME_SIZE);
+	स_रखो(initq_info, 0, माप(काष्ठा megasas_init_queue_info));
 	init_frame->context = context;
 
 	initq_info->reply_queue_entries = cpu_to_le32(instance->max_fw_cmds + 1);
@@ -5466,74 +5467,74 @@ megasas_issue_init_mfi(struct megasas_instance *instance)
 	init_frame->queue_info_new_phys_addr_hi =
 		cpu_to_le32(upper_32_bits(initq_info_h));
 
-	init_frame->data_xfer_len = cpu_to_le32(sizeof(struct megasas_init_queue_info));
+	init_frame->data_xfer_len = cpu_to_le32(माप(काष्ठा megasas_init_queue_info));
 
 	/*
-	 * disable the intr before firing the init frame to FW
+	 * disable the पूर्णांकr beक्रमe firing the init frame to FW
 	 */
-	instance->instancet->disable_intr(instance);
+	instance->instancet->disable_पूर्णांकr(instance);
 
 	/*
 	 * Issue the init frame in polled mode
 	 */
 
-	if (megasas_issue_polled(instance, cmd)) {
+	अगर (megasas_issue_polled(instance, cmd)) अणु
 		dev_err(&instance->pdev->dev, "Failed to init firmware\n");
-		megasas_return_cmd(instance, cmd);
-		goto fail_fw_init;
-	}
+		megasas_वापस_cmd(instance, cmd);
+		जाओ fail_fw_init;
+	पूर्ण
 
-	megasas_return_cmd(instance, cmd);
+	megasas_वापस_cmd(instance, cmd);
 
-	return 0;
+	वापस 0;
 
 fail_fw_init:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static u32
-megasas_init_adapter_mfi(struct megasas_instance *instance)
-{
+अटल u32
+megasas_init_adapter_mfi(काष्ठा megasas_instance *instance)
+अणु
 	u32 context_sz;
 	u32 reply_q_sz;
 
 	/*
-	 * Get various operational parameters from status register
+	 * Get various operational parameters from status रेजिस्टर
 	 */
-	instance->max_fw_cmds = instance->instancet->read_fw_status_reg(instance) & 0x00FFFF;
+	instance->max_fw_cmds = instance->instancet->पढ़ो_fw_status_reg(instance) & 0x00FFFF;
 	/*
 	 * Reduce the max supported cmds by 1. This is to ensure that the
 	 * reply_q_sz (1 more than the max cmd that driver may send)
-	 * does not exceed max cmds that the FW can support
+	 * करोes not exceed max cmds that the FW can support
 	 */
 	instance->max_fw_cmds = instance->max_fw_cmds-1;
 	instance->max_mfi_cmds = instance->max_fw_cmds;
-	instance->max_num_sge = (instance->instancet->read_fw_status_reg(instance) & 0xFF0000) >>
+	instance->max_num_sge = (instance->instancet->पढ़ो_fw_status_reg(instance) & 0xFF0000) >>
 					0x10;
 	/*
 	 * For MFI skinny adapters, MEGASAS_SKINNY_INT_CMDS commands
-	 * are reserved for IOCTL + driver's internal DCMDs.
+	 * are reserved क्रम IOCTL + driver's पूर्णांकernal DCMDs.
 	 */
-	if ((instance->pdev->device == PCI_DEVICE_ID_LSI_SAS0073SKINNY) ||
-		(instance->pdev->device == PCI_DEVICE_ID_LSI_SAS0071SKINNY)) {
+	अगर ((instance->pdev->device == PCI_DEVICE_ID_LSI_SAS0073SKINNY) ||
+		(instance->pdev->device == PCI_DEVICE_ID_LSI_SAS0071SKINNY)) अणु
 		instance->max_scsi_cmds = (instance->max_fw_cmds -
 			MEGASAS_SKINNY_INT_CMDS);
 		sema_init(&instance->ioctl_sem, MEGASAS_SKINNY_INT_CMDS);
-	} else {
+	पूर्ण अन्यथा अणु
 		instance->max_scsi_cmds = (instance->max_fw_cmds -
 			MEGASAS_INT_CMDS);
 		sema_init(&instance->ioctl_sem, (MEGASAS_MFI_IOCTL_CMDS));
-	}
+	पूर्ण
 
 	instance->cur_can_queue = instance->max_scsi_cmds;
 	/*
 	 * Create a pool of commands
 	 */
-	if (megasas_alloc_cmds(instance))
-		goto fail_alloc_cmds;
+	अगर (megasas_alloc_cmds(instance))
+		जाओ fail_alloc_cmds;
 
 	/*
-	 * Allocate memory for reply queue. Length of reply queue should
+	 * Allocate memory क्रम reply queue. Length of reply queue should
 	 * be _one_ more than the maximum commands handled by the firmware.
 	 *
 	 * Note: When FW completes commands, it places corresponding contex
@@ -5541,386 +5542,386 @@ megasas_init_adapter_mfi(struct megasas_instance *instance)
 	 * typical producer-consumer queue. FW is the producer (of completed
 	 * commands) and the driver is the consumer.
 	 */
-	context_sz = sizeof(u32);
+	context_sz = माप(u32);
 	reply_q_sz = context_sz * (instance->max_fw_cmds + 1);
 
 	instance->reply_queue = dma_alloc_coherent(&instance->pdev->dev,
 			reply_q_sz, &instance->reply_queue_h, GFP_KERNEL);
 
-	if (!instance->reply_queue) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "Out of DMA mem for reply queue\n");
-		goto fail_reply_queue;
-	}
+	अगर (!instance->reply_queue) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "Out of DMA mem for reply queue\n");
+		जाओ fail_reply_queue;
+	पूर्ण
 
-	if (megasas_issue_init_mfi(instance))
-		goto fail_fw_init;
+	अगर (megasas_issue_init_mfi(instance))
+		जाओ fail_fw_init;
 
-	if (megasas_get_ctrl_info(instance)) {
+	अगर (megasas_get_ctrl_info(instance)) अणु
 		dev_err(&instance->pdev->dev, "(%d): Could get controller info "
 			"Fail from %s %d\n", instance->unique_id,
 			__func__, __LINE__);
-		goto fail_fw_init;
-	}
+		जाओ fail_fw_init;
+	पूर्ण
 
 	instance->fw_support_ieee = 0;
 	instance->fw_support_ieee =
-		(instance->instancet->read_fw_status_reg(instance) &
+		(instance->instancet->पढ़ो_fw_status_reg(instance) &
 		0x04000000);
 
 	dev_notice(&instance->pdev->dev, "megasas_init_mfi: fw_support_ieee=%d",
 			instance->fw_support_ieee);
 
-	if (instance->fw_support_ieee)
+	अगर (instance->fw_support_ieee)
 		instance->flag_ieee = 1;
 
-	return 0;
+	वापस 0;
 
 fail_fw_init:
 
-	dma_free_coherent(&instance->pdev->dev, reply_q_sz,
+	dma_मुक्त_coherent(&instance->pdev->dev, reply_q_sz,
 			    instance->reply_queue, instance->reply_queue_h);
 fail_reply_queue:
-	megasas_free_cmds(instance);
+	megasas_मुक्त_cmds(instance);
 
 fail_alloc_cmds:
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static
-void megasas_setup_irq_poll(struct megasas_instance *instance)
-{
-	struct megasas_irq_context *irq_ctx;
+अटल
+व्योम megasas_setup_irq_poll(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_irq_context *irq_ctx;
 	u32 count, i;
 
 	count = instance->msix_vectors > 0 ? instance->msix_vectors : 1;
 
 	/* Initialize IRQ poll */
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		irq_ctx = &instance->irq_context[i];
 		irq_ctx->os_irq = pci_irq_vector(instance->pdev, i);
 		irq_ctx->irq_poll_scheduled = false;
 		irq_poll_init(&irq_ctx->irqpoll,
 			      instance->threshold_reply_count,
 			      megasas_irqpoll);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * megasas_setup_irqs_ioapic -		register legacy interrupts.
+ * megasas_setup_irqs_ioapic -		रेजिस्टर legacy पूर्णांकerrupts.
  * @instance:				Adapter soft state
  *
- * Do not enable interrupt, only setup ISRs.
+ * Do not enable पूर्णांकerrupt, only setup ISRs.
  *
  * Return 0 on success.
  */
-static int
-megasas_setup_irqs_ioapic(struct megasas_instance *instance)
-{
-	struct pci_dev *pdev;
+अटल पूर्णांक
+megasas_setup_irqs_ioapic(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा pci_dev *pdev;
 
 	pdev = instance->pdev;
 	instance->irq_context[0].instance = instance;
 	instance->irq_context[0].MSIxIndex = 0;
-	snprintf(instance->irq_context->name, MEGASAS_MSIX_NAME_LEN, "%s%u",
+	snम_लिखो(instance->irq_context->name, MEGASAS_MSIX_NAME_LEN, "%s%u",
 		"megasas", instance->host->host_no);
-	if (request_irq(pci_irq_vector(pdev, 0),
+	अगर (request_irq(pci_irq_vector(pdev, 0),
 			instance->instancet->service_isr, IRQF_SHARED,
-			instance->irq_context->name, &instance->irq_context[0])) {
+			instance->irq_context->name, &instance->irq_context[0])) अणु
 		dev_err(&instance->pdev->dev,
 				"Failed to register IRQ from %s %d\n",
 				__func__, __LINE__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	instance->perf_mode = MR_LATENCY_PERF_MODE;
 	instance->low_latency_index_start = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * megasas_setup_irqs_msix -		register MSI-x interrupts.
+ * megasas_setup_irqs_msix -		रेजिस्टर MSI-x पूर्णांकerrupts.
  * @instance:				Adapter soft state
  * @is_probe:				Driver probe check
  *
- * Do not enable interrupt, only setup ISRs.
+ * Do not enable पूर्णांकerrupt, only setup ISRs.
  *
  * Return 0 on success.
  */
-static int
-megasas_setup_irqs_msix(struct megasas_instance *instance, u8 is_probe)
-{
-	int i, j;
-	struct pci_dev *pdev;
+अटल पूर्णांक
+megasas_setup_irqs_msix(काष्ठा megasas_instance *instance, u8 is_probe)
+अणु
+	पूर्णांक i, j;
+	काष्ठा pci_dev *pdev;
 
 	pdev = instance->pdev;
 
 	/* Try MSI-x */
-	for (i = 0; i < instance->msix_vectors; i++) {
+	क्रम (i = 0; i < instance->msix_vectors; i++) अणु
 		instance->irq_context[i].instance = instance;
 		instance->irq_context[i].MSIxIndex = i;
-		snprintf(instance->irq_context[i].name, MEGASAS_MSIX_NAME_LEN, "%s%u-msix%u",
+		snम_लिखो(instance->irq_context[i].name, MEGASAS_MSIX_NAME_LEN, "%s%u-msix%u",
 			"megasas", instance->host->host_no, i);
-		if (request_irq(pci_irq_vector(pdev, i),
+		अगर (request_irq(pci_irq_vector(pdev, i),
 			instance->instancet->service_isr, 0, instance->irq_context[i].name,
-			&instance->irq_context[i])) {
+			&instance->irq_context[i])) अणु
 			dev_err(&instance->pdev->dev,
 				"Failed to register IRQ for vector %d.\n", i);
-			for (j = 0; j < i; j++) {
-				if (j < instance->low_latency_index_start)
-					irq_set_affinity_hint(
-						pci_irq_vector(pdev, j), NULL);
-				free_irq(pci_irq_vector(pdev, j),
+			क्रम (j = 0; j < i; j++) अणु
+				अगर (j < instance->low_latency_index_start)
+					irq_set_affinity_hपूर्णांक(
+						pci_irq_vector(pdev, j), शून्य);
+				मुक्त_irq(pci_irq_vector(pdev, j),
 					 &instance->irq_context[j]);
-			}
-			/* Retry irq register for IO_APIC*/
+			पूर्ण
+			/* Retry irq रेजिस्टर क्रम IO_APIC*/
 			instance->msix_vectors = 0;
 			instance->msix_load_balance = false;
-			if (is_probe) {
-				pci_free_irq_vectors(instance->pdev);
-				return megasas_setup_irqs_ioapic(instance);
-			} else {
-				return -1;
-			}
-		}
-	}
+			अगर (is_probe) अणु
+				pci_मुक्त_irq_vectors(instance->pdev);
+				वापस megasas_setup_irqs_ioapic(instance);
+			पूर्ण अन्यथा अणु
+				वापस -1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * megasas_destroy_irqs-		unregister interrupts.
+ * megasas_destroy_irqs-		unरेजिस्टर पूर्णांकerrupts.
  * @instance:				Adapter soft state
- * return:				void
+ * वापस:				व्योम
  */
-static void
-megasas_destroy_irqs(struct megasas_instance *instance) {
+अटल व्योम
+megasas_destroy_irqs(काष्ठा megasas_instance *instance) अणु
 
-	int i;
-	int count;
-	struct megasas_irq_context *irq_ctx;
+	पूर्णांक i;
+	पूर्णांक count;
+	काष्ठा megasas_irq_context *irq_ctx;
 
 	count = instance->msix_vectors > 0 ? instance->msix_vectors : 1;
-	if (instance->adapter_type != MFI_SERIES) {
-		for (i = 0; i < count; i++) {
+	अगर (instance->adapter_type != MFI_SERIES) अणु
+		क्रम (i = 0; i < count; i++) अणु
 			irq_ctx = &instance->irq_context[i];
 			irq_poll_disable(&irq_ctx->irqpoll);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (instance->msix_vectors)
-		for (i = 0; i < instance->msix_vectors; i++) {
-			if (i < instance->low_latency_index_start)
-				irq_set_affinity_hint(
-				    pci_irq_vector(instance->pdev, i), NULL);
-			free_irq(pci_irq_vector(instance->pdev, i),
+	अगर (instance->msix_vectors)
+		क्रम (i = 0; i < instance->msix_vectors; i++) अणु
+			अगर (i < instance->low_latency_index_start)
+				irq_set_affinity_hपूर्णांक(
+				    pci_irq_vector(instance->pdev, i), शून्य);
+			मुक्त_irq(pci_irq_vector(instance->pdev, i),
 				 &instance->irq_context[i]);
-		}
-	else
-		free_irq(pci_irq_vector(instance->pdev, 0),
+		पूर्ण
+	अन्यथा
+		मुक्त_irq(pci_irq_vector(instance->pdev, 0),
 			 &instance->irq_context[0]);
-}
+पूर्ण
 
 /**
- * megasas_setup_jbod_map -	setup jbod map for FP seq_number.
+ * megasas_setup_jbod_map -	setup jbod map क्रम FP seq_number.
  * @instance:				Adapter soft state
  *
  * Return 0 on success.
  */
-void
-megasas_setup_jbod_map(struct megasas_instance *instance)
-{
-	int i;
-	struct fusion_context *fusion = instance->ctrl_context;
+व्योम
+megasas_setup_jbod_map(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक i;
+	काष्ठा fusion_context *fusion = instance->ctrl_context;
 	u32 pd_seq_map_sz;
 
-	pd_seq_map_sz = sizeof(struct MR_PD_CFG_SEQ_NUM_SYNC) +
-		(sizeof(struct MR_PD_CFG_SEQ) * (MAX_PHYSICAL_DEVICES - 1));
+	pd_seq_map_sz = माप(काष्ठा MR_PD_CFG_SEQ_NUM_SYNC) +
+		(माप(काष्ठा MR_PD_CFG_SEQ) * (MAX_PHYSICAL_DEVICES - 1));
 
 	instance->use_seqnum_jbod_fp =
 		instance->support_seqnum_jbod_fp;
-	if (reset_devices || !fusion ||
-		!instance->support_seqnum_jbod_fp) {
+	अगर (reset_devices || !fusion ||
+		!instance->support_seqnum_jbod_fp) अणु
 		dev_info(&instance->pdev->dev,
 			"JBOD sequence map is disabled %s %d\n",
 			__func__, __LINE__);
 		instance->use_seqnum_jbod_fp = false;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (fusion->pd_seq_sync[0])
-		goto skip_alloc;
+	अगर (fusion->pd_seq_sync[0])
+		जाओ skip_alloc;
 
-	for (i = 0; i < JBOD_MAPS_COUNT; i++) {
+	क्रम (i = 0; i < JBOD_MAPS_COUNT; i++) अणु
 		fusion->pd_seq_sync[i] = dma_alloc_coherent
 			(&instance->pdev->dev, pd_seq_map_sz,
 			&fusion->pd_seq_phys[i], GFP_KERNEL);
-		if (!fusion->pd_seq_sync[i]) {
+		अगर (!fusion->pd_seq_sync[i]) अणु
 			dev_err(&instance->pdev->dev,
 				"Failed to allocate memory from %s %d\n",
 				__func__, __LINE__);
-			if (i == 1) {
-				dma_free_coherent(&instance->pdev->dev,
+			अगर (i == 1) अणु
+				dma_मुक्त_coherent(&instance->pdev->dev,
 					pd_seq_map_sz, fusion->pd_seq_sync[0],
 					fusion->pd_seq_phys[0]);
-				fusion->pd_seq_sync[0] = NULL;
-			}
+				fusion->pd_seq_sync[0] = शून्य;
+			पूर्ण
 			instance->use_seqnum_jbod_fp = false;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 skip_alloc:
-	if (!megasas_sync_pd_seq_num(instance, false) &&
+	अगर (!megasas_sync_pd_seq_num(instance, false) &&
 		!megasas_sync_pd_seq_num(instance, true))
 		instance->use_seqnum_jbod_fp = true;
-	else
+	अन्यथा
 		instance->use_seqnum_jbod_fp = false;
-}
+पूर्ण
 
-static void megasas_setup_reply_map(struct megasas_instance *instance)
-{
-	const struct cpumask *mask;
-	unsigned int queue, cpu, low_latency_index_start;
+अटल व्योम megasas_setup_reply_map(काष्ठा megasas_instance *instance)
+अणु
+	स्थिर काष्ठा cpumask *mask;
+	अचिन्हित पूर्णांक queue, cpu, low_latency_index_start;
 
 	low_latency_index_start = instance->low_latency_index_start;
 
-	for (queue = low_latency_index_start; queue < instance->msix_vectors; queue++) {
+	क्रम (queue = low_latency_index_start; queue < instance->msix_vectors; queue++) अणु
 		mask = pci_irq_get_affinity(instance->pdev, queue);
-		if (!mask)
-			goto fallback;
+		अगर (!mask)
+			जाओ fallback;
 
-		for_each_cpu(cpu, mask)
+		क्रम_each_cpu(cpu, mask)
 			instance->reply_map[cpu] = queue;
-	}
-	return;
+	पूर्ण
+	वापस;
 
 fallback:
 	queue = low_latency_index_start;
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		instance->reply_map[cpu] = queue;
-		if (queue == (instance->msix_vectors - 1))
+		अगर (queue == (instance->msix_vectors - 1))
 			queue = low_latency_index_start;
-		else
+		अन्यथा
 			queue++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * megasas_get_device_list -	Get the PD and LD device list from FW.
  * @instance:			Adapter soft state
- * @return:			Success or failure
+ * @वापस:			Success or failure
  *
  * Issue DCMDs to Firmware to get the PD and LD list.
  * Based on the FW support, driver sends the HOST_DEVICE_LIST or combination
  * of PD_LIST/LD_LIST_QUERY DCMDs to get the device list.
  */
-static
-int megasas_get_device_list(struct megasas_instance *instance)
-{
-	memset(instance->pd_list, 0,
-	       (MEGASAS_MAX_PD * sizeof(struct megasas_pd_list)));
-	memset(instance->ld_ids, 0xff, MEGASAS_MAX_LD_IDS);
+अटल
+पूर्णांक megasas_get_device_list(काष्ठा megasas_instance *instance)
+अणु
+	स_रखो(instance->pd_list, 0,
+	       (MEGASAS_MAX_PD * माप(काष्ठा megasas_pd_list)));
+	स_रखो(instance->ld_ids, 0xff, MEGASAS_MAX_LD_IDS);
 
-	if (instance->enable_fw_dev_list) {
-		if (megasas_host_device_list_query(instance, true))
-			return FAILED;
-	} else {
-		if (megasas_get_pd_list(instance) < 0) {
+	अगर (instance->enable_fw_dev_list) अणु
+		अगर (megasas_host_device_list_query(instance, true))
+			वापस FAILED;
+	पूर्ण अन्यथा अणु
+		अगर (megasas_get_pd_list(instance) < 0) अणु
 			dev_err(&instance->pdev->dev, "failed to get PD list\n");
-			return FAILED;
-		}
+			वापस FAILED;
+		पूर्ण
 
-		if (megasas_ld_list_query(instance,
-					  MR_LD_QUERY_TYPE_EXPOSED_TO_HOST)) {
+		अगर (megasas_ld_list_query(instance,
+					  MR_LD_QUERY_TYPE_EXPOSED_TO_HOST)) अणु
 			dev_err(&instance->pdev->dev, "failed to get LD list\n");
-			return FAILED;
-		}
-	}
+			वापस FAILED;
+		पूर्ण
+	पूर्ण
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
 /**
- * megasas_set_high_iops_queue_affinity_hint -	Set affinity hint for high IOPS queues
+ * megasas_set_high_iops_queue_affinity_hपूर्णांक -	Set affinity hपूर्णांक क्रम high IOPS queues
  * @instance:					Adapter soft state
- * return:					void
+ * वापस:					व्योम
  */
-static inline void
-megasas_set_high_iops_queue_affinity_hint(struct megasas_instance *instance)
-{
-	int i;
-	int local_numa_node;
+अटल अंतरभूत व्योम
+megasas_set_high_iops_queue_affinity_hपूर्णांक(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक i;
+	पूर्णांक local_numa_node;
 
-	if (instance->perf_mode == MR_BALANCED_PERF_MODE) {
+	अगर (instance->perf_mode == MR_BALANCED_PERF_MODE) अणु
 		local_numa_node = dev_to_node(&instance->pdev->dev);
 
-		for (i = 0; i < instance->low_latency_index_start; i++)
-			irq_set_affinity_hint(pci_irq_vector(instance->pdev, i),
+		क्रम (i = 0; i < instance->low_latency_index_start; i++)
+			irq_set_affinity_hपूर्णांक(pci_irq_vector(instance->pdev, i),
 				cpumask_of_node(local_numa_node));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-__megasas_alloc_irq_vectors(struct megasas_instance *instance)
-{
-	int i, irq_flags;
-	struct irq_affinity desc = { .pre_vectors = instance->low_latency_index_start };
-	struct irq_affinity *descp = &desc;
+अटल पूर्णांक
+__megasas_alloc_irq_vectors(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक i, irq_flags;
+	काष्ठा irq_affinity desc = अणु .pre_vectors = instance->low_latency_index_start पूर्ण;
+	काष्ठा irq_affinity *descp = &desc;
 
 	irq_flags = PCI_IRQ_MSIX;
 
-	if (instance->smp_affinity_enable)
+	अगर (instance->smp_affinity_enable)
 		irq_flags |= PCI_IRQ_AFFINITY | PCI_IRQ_ALL_TYPES;
-	else
-		descp = NULL;
+	अन्यथा
+		descp = शून्य;
 
-	/* Do not allocate msix vectors for poll_queues.
+	/* Do not allocate msix vectors क्रम poll_queues.
 	 * msix_vectors is always within a range of FW supported reply queue.
 	 */
 	i = pci_alloc_irq_vectors_affinity(instance->pdev,
 		instance->low_latency_index_start,
 		instance->msix_vectors - instance->iopoll_q_count, irq_flags, descp);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /**
  * megasas_alloc_irq_vectors -	Allocate IRQ vectors/enable MSI-x vectors
  * @instance:			Adapter soft state
- * return:			void
+ * वापस:			व्योम
  */
-static void
-megasas_alloc_irq_vectors(struct megasas_instance *instance)
-{
-	int i;
-	unsigned int num_msix_req;
+अटल व्योम
+megasas_alloc_irq_vectors(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक num_msix_req;
 
 	instance->iopoll_q_count = 0;
-	if ((instance->adapter_type != MFI_SERIES) &&
-		poll_queues) {
+	अगर ((instance->adapter_type != MFI_SERIES) &&
+		poll_queues) अणु
 
 		instance->perf_mode = MR_LATENCY_PERF_MODE;
 		instance->low_latency_index_start = 1;
 
-		/* reserve for default and non-mananged pre-vector. */
-		if (instance->msix_vectors > (poll_queues + 2))
+		/* reserve क्रम शेष and non-mananged pre-vector. */
+		अगर (instance->msix_vectors > (poll_queues + 2))
 			instance->iopoll_q_count = poll_queues;
-		else
+		अन्यथा
 			instance->iopoll_q_count = 0;
 
 		num_msix_req = num_online_cpus() + instance->low_latency_index_start;
 		instance->msix_vectors = min(num_msix_req,
 				instance->msix_vectors);
 
-	}
+	पूर्ण
 
 	i = __megasas_alloc_irq_vectors(instance);
 
-	if (((instance->perf_mode == MR_BALANCED_PERF_MODE)
+	अगर (((instance->perf_mode == MR_BALANCED_PERF_MODE)
 		|| instance->iopoll_q_count) &&
-	    (i != (instance->msix_vectors - instance->iopoll_q_count))) {
-		if (instance->msix_vectors)
-			pci_free_irq_vectors(instance->pdev);
-		/* Disable Balanced IOPS mode and try realloc vectors */
+	    (i != (instance->msix_vectors - instance->iopoll_q_count))) अणु
+		अगर (instance->msix_vectors)
+			pci_मुक्त_irq_vectors(instance->pdev);
+		/* Disable Balanced IOPS mode and try पुनः_स्मृति vectors */
 		instance->perf_mode = MR_LATENCY_PERF_MODE;
 		instance->low_latency_index_start = 1;
 		num_msix_req = num_online_cpus() + instance->low_latency_index_start;
@@ -5931,43 +5932,43 @@ megasas_alloc_irq_vectors(struct megasas_instance *instance)
 		instance->iopoll_q_count = 0;
 		i = __megasas_alloc_irq_vectors(instance);
 
-	}
+	पूर्ण
 
 	dev_info(&instance->pdev->dev,
 		"requested/available msix %d/%d poll_queue %d\n",
 			instance->msix_vectors - instance->iopoll_q_count,
 			i, instance->iopoll_q_count);
 
-	if (i > 0)
+	अगर (i > 0)
 		instance->msix_vectors = i;
-	else
+	अन्यथा
 		instance->msix_vectors = 0;
 
-	if (instance->smp_affinity_enable)
-		megasas_set_high_iops_queue_affinity_hint(instance);
-}
+	अगर (instance->smp_affinity_enable)
+		megasas_set_high_iops_queue_affinity_hपूर्णांक(instance);
+पूर्ण
 
 /**
  * megasas_init_fw -	Initializes the FW
  * @instance:		Adapter soft state
  *
- * This is the main function for initializing firmware
+ * This is the मुख्य function क्रम initializing firmware
  */
 
-static int megasas_init_fw(struct megasas_instance *instance)
-{
+अटल पूर्णांक megasas_init_fw(काष्ठा megasas_instance *instance)
+अणु
 	u32 max_sectors_1;
-	u32 max_sectors_2, tmp_sectors, msix_enable;
+	u32 max_sectors_2, पंचांगp_sectors, msix_enable;
 	u32 scratch_pad_1, scratch_pad_2, scratch_pad_3, status_reg;
-	resource_size_t base_addr;
-	void *base_addr_phys;
-	struct megasas_ctrl_info *ctrl_info = NULL;
-	unsigned long bar_list;
-	int i, j, loop;
-	struct IOV_111 *iovPtr;
-	struct fusion_context *fusion;
-	bool intr_coalescing;
-	unsigned int num_msix_req;
+	resource_माप_प्रकार base_addr;
+	व्योम *base_addr_phys;
+	काष्ठा megasas_ctrl_info *ctrl_info = शून्य;
+	अचिन्हित दीर्घ bar_list;
+	पूर्णांक i, j, loop;
+	काष्ठा IOV_111 *iovPtr;
+	काष्ठा fusion_context *fusion;
+	bool पूर्णांकr_coalescing;
+	अचिन्हित पूर्णांक num_msix_req;
 	u16 lnksta, speed;
 
 	fusion = instance->ctrl_context;
@@ -5975,131 +5976,131 @@ static int megasas_init_fw(struct megasas_instance *instance)
 	/* Find first memory bar */
 	bar_list = pci_select_bars(instance->pdev, IORESOURCE_MEM);
 	instance->bar = find_first_bit(&bar_list, BITS_PER_LONG);
-	if (pci_request_selected_regions(instance->pdev, 1<<instance->bar,
-					 "megasas: LSI")) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "IO memory region busy!\n");
-		return -EBUSY;
-	}
+	अगर (pci_request_selected_regions(instance->pdev, 1<<instance->bar,
+					 "megasas: LSI")) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "IO memory region busy!\n");
+		वापस -EBUSY;
+	पूर्ण
 
 	base_addr = pci_resource_start(instance->pdev, instance->bar);
 	instance->reg_set = ioremap(base_addr, 8192);
 
-	if (!instance->reg_set) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "Failed to map IO mem\n");
-		goto fail_ioremap;
-	}
+	अगर (!instance->reg_set) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "Failed to map IO mem\n");
+		जाओ fail_ioremap;
+	पूर्ण
 
 	base_addr_phys = &base_addr;
-	dev_printk(KERN_DEBUG, &instance->pdev->dev,
+	dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev,
 		   "BAR:0x%lx  BAR's base_addr(phys):%pa  mapped virt_addr:0x%p\n",
 		   instance->bar, base_addr_phys, instance->reg_set);
 
-	if (instance->adapter_type != MFI_SERIES)
-		instance->instancet = &megasas_instance_template_fusion;
-	else {
-		switch (instance->pdev->device) {
-		case PCI_DEVICE_ID_LSI_SAS1078R:
-		case PCI_DEVICE_ID_LSI_SAS1078DE:
-			instance->instancet = &megasas_instance_template_ppc;
-			break;
-		case PCI_DEVICE_ID_LSI_SAS1078GEN2:
-		case PCI_DEVICE_ID_LSI_SAS0079GEN2:
-			instance->instancet = &megasas_instance_template_gen2;
-			break;
-		case PCI_DEVICE_ID_LSI_SAS0073SKINNY:
-		case PCI_DEVICE_ID_LSI_SAS0071SKINNY:
-			instance->instancet = &megasas_instance_template_skinny;
-			break;
-		case PCI_DEVICE_ID_LSI_SAS1064R:
-		case PCI_DEVICE_ID_DELL_PERC5:
-		default:
-			instance->instancet = &megasas_instance_template_xscale;
+	अगर (instance->adapter_type != MFI_SERIES)
+		instance->instancet = &megasas_instance_ढाँचा_fusion;
+	अन्यथा अणु
+		चयन (instance->pdev->device) अणु
+		हाल PCI_DEVICE_ID_LSI_SAS1078R:
+		हाल PCI_DEVICE_ID_LSI_SAS1078DE:
+			instance->instancet = &megasas_instance_ढाँचा_ppc;
+			अवरोध;
+		हाल PCI_DEVICE_ID_LSI_SAS1078GEN2:
+		हाल PCI_DEVICE_ID_LSI_SAS0079GEN2:
+			instance->instancet = &megasas_instance_ढाँचा_gen2;
+			अवरोध;
+		हाल PCI_DEVICE_ID_LSI_SAS0073SKINNY:
+		हाल PCI_DEVICE_ID_LSI_SAS0071SKINNY:
+			instance->instancet = &megasas_instance_ढाँचा_skinny;
+			अवरोध;
+		हाल PCI_DEVICE_ID_LSI_SAS1064R:
+		हाल PCI_DEVICE_ID_DELL_PERC5:
+		शेष:
+			instance->instancet = &megasas_instance_ढाँचा_xscale;
 			instance->pd_list_not_supported = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (megasas_transition_to_ready(instance, 0)) {
+	अगर (megasas_transition_to_पढ़ोy(instance, 0)) अणु
 		dev_info(&instance->pdev->dev,
 			 "Failed to transition controller to ready from %s!\n",
 			 __func__);
-		if (instance->adapter_type != MFI_SERIES) {
-			status_reg = instance->instancet->read_fw_status_reg(
+		अगर (instance->adapter_type != MFI_SERIES) अणु
+			status_reg = instance->instancet->पढ़ो_fw_status_reg(
 					instance);
-			if (status_reg & MFI_RESET_ADAPTER) {
-				if (megasas_adp_reset_wait_for_ready
+			अगर (status_reg & MFI_RESET_ADAPTER) अणु
+				अगर (megasas_adp_reset_रुको_क्रम_पढ़ोy
 					(instance, true, 0) == FAILED)
-					goto fail_ready_state;
-			} else {
-				goto fail_ready_state;
-			}
-		} else {
+					जाओ fail_पढ़ोy_state;
+			पूर्ण अन्यथा अणु
+				जाओ fail_पढ़ोy_state;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			atomic_set(&instance->fw_reset_no_pci_access, 1);
 			instance->instancet->adp_reset
 				(instance, instance->reg_set);
 			atomic_set(&instance->fw_reset_no_pci_access, 0);
 
-			/*waiting for about 30 second before retry*/
+			/*रुकोing क्रम about 30 second beक्रमe retry*/
 			ssleep(30);
 
-			if (megasas_transition_to_ready(instance, 0))
-				goto fail_ready_state;
-		}
+			अगर (megasas_transition_to_पढ़ोy(instance, 0))
+				जाओ fail_पढ़ोy_state;
+		पूर्ण
 
 		dev_info(&instance->pdev->dev,
 			 "FW restarted successfully from %s!\n",
 			 __func__);
-	}
+	पूर्ण
 
 	megasas_init_ctrl_params(instance);
 
-	if (megasas_set_dma_mask(instance))
-		goto fail_ready_state;
+	अगर (megasas_set_dma_mask(instance))
+		जाओ fail_पढ़ोy_state;
 
-	if (megasas_alloc_ctrl_mem(instance))
-		goto fail_alloc_dma_buf;
+	अगर (megasas_alloc_ctrl_mem(instance))
+		जाओ fail_alloc_dma_buf;
 
-	if (megasas_alloc_ctrl_dma_buffers(instance))
-		goto fail_alloc_dma_buf;
+	अगर (megasas_alloc_ctrl_dma_buffers(instance))
+		जाओ fail_alloc_dma_buf;
 
 	fusion = instance->ctrl_context;
 
-	if (instance->adapter_type >= VENTURA_SERIES) {
+	अगर (instance->adapter_type >= VENTURA_SERIES) अणु
 		scratch_pad_2 =
-			megasas_readl(instance,
+			megasas_पढ़ोl(instance,
 				      &instance->reg_set->outbound_scratch_pad_2);
 		instance->max_raid_mapsize = ((scratch_pad_2 >>
 			MR_MAX_RAID_MAP_SIZE_OFFSET_SHIFT) &
 			MR_MAX_RAID_MAP_SIZE_MASK);
-	}
+	पूर्ण
 
 	instance->enable_sdev_max_qd = enable_sdev_max_qd;
 
-	switch (instance->adapter_type) {
-	case VENTURA_SERIES:
+	चयन (instance->adapter_type) अणु
+	हाल VENTURA_SERIES:
 		fusion->pcie_bw_limitation = true;
-		break;
-	case AERO_SERIES:
-		fusion->r56_div_offload = true;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	हाल AERO_SERIES:
+		fusion->r56_भाग_offload = true;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	/* Check if MSI-X is supported while in ready state */
-	msix_enable = (instance->instancet->read_fw_status_reg(instance) &
+	/* Check अगर MSI-X is supported जबतक in पढ़ोy state */
+	msix_enable = (instance->instancet->पढ़ो_fw_status_reg(instance) &
 		       0x4000000) >> 0x1a;
-	if (msix_enable && !msix_disable) {
+	अगर (msix_enable && !msix_disable) अणु
 
-		scratch_pad_1 = megasas_readl
+		scratch_pad_1 = megasas_पढ़ोl
 			(instance, &instance->reg_set->outbound_scratch_pad_1);
 		/* Check max MSI-X vectors */
-		if (fusion) {
-			if (instance->adapter_type == THUNDERBOLT_SERIES) {
+		अगर (fusion) अणु
+			अगर (instance->adapter_type == THUNDERBOLT_SERIES) अणु
 				/* Thunderbolt Series*/
 				instance->msix_vectors = (scratch_pad_1
 					& MR_MAX_REPLY_QUEUES_OFFSET) + 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				instance->msix_vectors = ((scratch_pad_1
 					& MR_MAX_REPLY_QUEUES_EXT_OFFSET)
 					>> MR_MAX_REPLY_QUEUES_EXT_OFFSET_SHIFT) + 1;
@@ -6112,115 +6113,115 @@ static int megasas_init_fw(struct megasas_instance *instance)
 				 * supported by FW/HW implies combined
 				 * reply queue mode is enabled.
 				 */
-				switch (instance->adapter_type) {
-				case INVADER_SERIES:
-					if (instance->msix_vectors > 8)
+				चयन (instance->adapter_type) अणु
+				हाल INVADER_SERIES:
+					अगर (instance->msix_vectors > 8)
 						instance->msix_combined = true;
-					break;
-				case AERO_SERIES:
-				case VENTURA_SERIES:
-					if (instance->msix_vectors > 16)
+					अवरोध;
+				हाल AERO_SERIES:
+				हाल VENTURA_SERIES:
+					अगर (instance->msix_vectors > 16)
 						instance->msix_combined = true;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
-				if (rdpq_enable)
+				अगर (rdpq_enable)
 					instance->is_rdpq = (scratch_pad_1 & MR_RDPQ_MODE_OFFSET) ?
 								1 : 0;
 
-				if (instance->adapter_type >= INVADER_SERIES &&
-				    !instance->msix_combined) {
+				अगर (instance->adapter_type >= INVADER_SERIES &&
+				    !instance->msix_combined) अणु
 					instance->msix_load_balance = true;
 					instance->smp_affinity_enable = false;
-				}
+				पूर्ण
 
 				/* Save 1-15 reply post index address to local memory
-				 * Index 0 is already saved from reg offset
+				 * Index 0 is alपढ़ोy saved from reg offset
 				 * MPI2_REPLY_POST_HOST_INDEX_OFFSET
 				 */
-				for (loop = 1; loop < MR_MAX_MSIX_REG_ARRAY; loop++) {
+				क्रम (loop = 1; loop < MR_MAX_MSIX_REG_ARRAY; loop++) अणु
 					instance->reply_post_host_index_addr[loop] =
 						(u32 __iomem *)
 						((u8 __iomem *)instance->reg_set +
 						MPI2_SUP_REPLY_POST_HOST_INDEX_OFFSET
 						+ (loop * 0x10));
-				}
-			}
+				पूर्ण
+			पूर्ण
 
 			dev_info(&instance->pdev->dev,
 				 "firmware supports msix\t: (%d)",
 				 instance->msix_vectors);
-			if (msix_vectors)
+			अगर (msix_vectors)
 				instance->msix_vectors = min(msix_vectors,
 					instance->msix_vectors);
-		} else /* MFI adapters */
+		पूर्ण अन्यथा /* MFI adapters */
 			instance->msix_vectors = 1;
 
 
 		/*
-		 * For Aero (if some conditions are met), driver will configure a
-		 * few additional reply queues with interrupt coalescing enabled.
-		 * These queues with interrupt coalescing enabled are called
+		 * For Aero (अगर some conditions are met), driver will configure a
+		 * few additional reply queues with पूर्णांकerrupt coalescing enabled.
+		 * These queues with पूर्णांकerrupt coalescing enabled are called
 		 * High IOPS queues and rest of reply queues (based on number of
 		 * logical CPUs) are termed as Low latency queues.
 		 *
 		 * Total Number of reply queues = High IOPS queues + low latency queues
 		 *
 		 * For rest of fusion adapters, 1 additional reply queue will be
-		 * reserved for management commands, rest of reply queues
-		 * (based on number of logical CPUs) will be used for IOs and
+		 * reserved क्रम management commands, rest of reply queues
+		 * (based on number of logical CPUs) will be used क्रम IOs and
 		 * referenced as IO queues.
 		 * Total Number of reply queues = 1 + IO queues
 		 *
 		 * MFI adapters supports single MSI-x so single reply queue
-		 * will be used for IO and management commands.
+		 * will be used क्रम IO and management commands.
 		 */
 
-		intr_coalescing = (scratch_pad_1 & MR_INTR_COALESCING_SUPPORT_OFFSET) ?
+		पूर्णांकr_coalescing = (scratch_pad_1 & MR_INTR_COALESCING_SUPPORT_OFFSET) ?
 								true : false;
-		if (intr_coalescing &&
+		अगर (पूर्णांकr_coalescing &&
 			(num_online_cpus() >= MR_HIGH_IOPS_QUEUE_COUNT) &&
 			(instance->msix_vectors == MEGASAS_MAX_MSIX_QUEUES))
 			instance->perf_mode = MR_BALANCED_PERF_MODE;
-		else
+		अन्यथा
 			instance->perf_mode = MR_LATENCY_PERF_MODE;
 
 
-		if (instance->adapter_type == AERO_SERIES) {
-			pcie_capability_read_word(instance->pdev, PCI_EXP_LNKSTA, &lnksta);
+		अगर (instance->adapter_type == AERO_SERIES) अणु
+			pcie_capability_पढ़ो_word(instance->pdev, PCI_EXP_LNKSTA, &lnksta);
 			speed = lnksta & PCI_EXP_LNKSTA_CLS;
 
 			/*
-			 * For Aero, if PCIe link speed is <16 GT/s, then driver should operate
+			 * For Aero, अगर PCIe link speed is <16 GT/s, then driver should operate
 			 * in latency perf mode and enable R1 PCI bandwidth algorithm
 			 */
-			if (speed < 0x4) {
+			अगर (speed < 0x4) अणु
 				instance->perf_mode = MR_LATENCY_PERF_MODE;
 				fusion->pcie_bw_limitation = true;
-			}
+			पूर्ण
 
 			/*
-			 * Performance mode settings provided through module parameter-perf_mode will
-			 * take affect only for:
+			 * Perक्रमmance mode settings provided through module parameter-perf_mode will
+			 * take affect only क्रम:
 			 * 1. Aero family of adapters.
 			 * 2. When user sets module parameter- perf_mode in range of 0-2.
 			 */
-			if ((perf_mode >= MR_BALANCED_PERF_MODE) &&
+			अगर ((perf_mode >= MR_BALANCED_PERF_MODE) &&
 				(perf_mode <= MR_LATENCY_PERF_MODE))
 				instance->perf_mode = perf_mode;
 			/*
-			 * If intr coalescing is not supported by controller FW, then IOPS
+			 * If पूर्णांकr coalescing is not supported by controller FW, then IOPS
 			 * and Balanced modes are not feasible.
 			 */
-			if (!intr_coalescing)
+			अगर (!पूर्णांकr_coalescing)
 				instance->perf_mode = MR_LATENCY_PERF_MODE;
 
-		}
+		पूर्ण
 
-		if (instance->perf_mode == MR_BALANCED_PERF_MODE)
+		अगर (instance->perf_mode == MR_BALANCED_PERF_MODE)
 			instance->low_latency_index_start =
 				MR_HIGH_IOPS_QUEUE_COUNT;
-		else
+		अन्यथा
 			instance->low_latency_index_start = 1;
 
 		num_msix_req = num_online_cpus() + instance->low_latency_index_start;
@@ -6229,112 +6230,112 @@ static int megasas_init_fw(struct megasas_instance *instance)
 				instance->msix_vectors);
 
 		megasas_alloc_irq_vectors(instance);
-		if (!instance->msix_vectors)
+		अगर (!instance->msix_vectors)
 			instance->msix_load_balance = false;
-	}
+	पूर्ण
 	/*
-	 * MSI-X host index 0 is common for all adapter.
-	 * It is used for all MPT based Adapters.
+	 * MSI-X host index 0 is common क्रम all adapter.
+	 * It is used क्रम all MPT based Adapters.
 	 */
-	if (instance->msix_combined) {
+	अगर (instance->msix_combined) अणु
 		instance->reply_post_host_index_addr[0] =
 				(u32 *)((u8 *)instance->reg_set +
 				MPI2_SUP_REPLY_POST_HOST_INDEX_OFFSET);
-	} else {
+	पूर्ण अन्यथा अणु
 		instance->reply_post_host_index_addr[0] =
 			(u32 *)((u8 *)instance->reg_set +
 			MPI2_REPLY_POST_HOST_INDEX_OFFSET);
-	}
+	पूर्ण
 
-	if (!instance->msix_vectors) {
+	अगर (!instance->msix_vectors) अणु
 		i = pci_alloc_irq_vectors(instance->pdev, 1, 1, PCI_IRQ_LEGACY);
-		if (i < 0)
-			goto fail_init_adapter;
-	}
+		अगर (i < 0)
+			जाओ fail_init_adapter;
+	पूर्ण
 
 	megasas_setup_reply_map(instance);
 
 	dev_info(&instance->pdev->dev,
 		"current msix/online cpus\t: (%d/%d)\n",
-		instance->msix_vectors, (unsigned int)num_online_cpus());
+		instance->msix_vectors, (अचिन्हित पूर्णांक)num_online_cpus());
 	dev_info(&instance->pdev->dev,
 		"RDPQ mode\t: (%s)\n", instance->is_rdpq ? "enabled" : "disabled");
 
 	tasklet_init(&instance->isr_tasklet, instance->instancet->tasklet,
-		(unsigned long)instance);
+		(अचिन्हित दीर्घ)instance);
 
 	/*
-	 * Below are default value for legacy Firmware.
+	 * Below are शेष value क्रम legacy Firmware.
 	 * non-fusion based controllers
 	 */
 	instance->fw_supported_vd_count = MAX_LOGICAL_DRIVES;
 	instance->fw_supported_pd_count = MAX_PHYSICAL_DEVICES;
 	/* Get operational params, sge flags, send init cmd to controller */
-	if (instance->instancet->init_adapter(instance))
-		goto fail_init_adapter;
+	अगर (instance->instancet->init_adapter(instance))
+		जाओ fail_init_adapter;
 
-	if (instance->adapter_type >= VENTURA_SERIES) {
+	अगर (instance->adapter_type >= VENTURA_SERIES) अणु
 		scratch_pad_3 =
-			megasas_readl(instance,
+			megasas_पढ़ोl(instance,
 				      &instance->reg_set->outbound_scratch_pad_3);
-		if ((scratch_pad_3 & MR_NVME_PAGE_SIZE_MASK) >=
+		अगर ((scratch_pad_3 & MR_NVME_PAGE_SIZE_MASK) >=
 			MR_DEFAULT_NVME_PAGE_SHIFT)
 			instance->nvme_page_size =
 				(1 << (scratch_pad_3 & MR_NVME_PAGE_SIZE_MASK));
 
 		dev_info(&instance->pdev->dev,
 			 "NVME page size\t: (%d)\n", instance->nvme_page_size);
-	}
+	पूर्ण
 
-	if (instance->msix_vectors ?
+	अगर (instance->msix_vectors ?
 		megasas_setup_irqs_msix(instance, 1) :
 		megasas_setup_irqs_ioapic(instance))
-		goto fail_init_adapter;
+		जाओ fail_init_adapter;
 
-	if (instance->adapter_type != MFI_SERIES)
+	अगर (instance->adapter_type != MFI_SERIES)
 		megasas_setup_irq_poll(instance);
 
-	instance->instancet->enable_intr(instance);
+	instance->instancet->enable_पूर्णांकr(instance);
 
 	dev_info(&instance->pdev->dev, "INIT adapter done\n");
 
 	megasas_setup_jbod_map(instance);
 
-	if (megasas_get_device_list(instance) != SUCCESS) {
+	अगर (megasas_get_device_list(instance) != SUCCESS) अणु
 		dev_err(&instance->pdev->dev,
 			"%s: megasas_get_device_list failed\n",
 			__func__);
-		goto fail_get_ld_pd_list;
-	}
+		जाओ fail_get_ld_pd_list;
+	पूर्ण
 
 	/* stream detection initialization */
-	if (instance->adapter_type >= VENTURA_SERIES) {
+	अगर (instance->adapter_type >= VENTURA_SERIES) अणु
 		fusion->stream_detect_by_ld =
-			kcalloc(MAX_LOGICAL_DRIVES_EXT,
-				sizeof(struct LD_STREAM_DETECT *),
+			kसुस्मृति(MAX_LOGICAL_DRIVES_EXT,
+				माप(काष्ठा LD_STREAM_DETECT *),
 				GFP_KERNEL);
-		if (!fusion->stream_detect_by_ld) {
+		अगर (!fusion->stream_detect_by_ld) अणु
 			dev_err(&instance->pdev->dev,
 				"unable to allocate stream detection for pool of LDs\n");
-			goto fail_get_ld_pd_list;
-		}
-		for (i = 0; i < MAX_LOGICAL_DRIVES_EXT; ++i) {
+			जाओ fail_get_ld_pd_list;
+		पूर्ण
+		क्रम (i = 0; i < MAX_LOGICAL_DRIVES_EXT; ++i) अणु
 			fusion->stream_detect_by_ld[i] =
-				kzalloc(sizeof(struct LD_STREAM_DETECT),
+				kzalloc(माप(काष्ठा LD_STREAM_DETECT),
 				GFP_KERNEL);
-			if (!fusion->stream_detect_by_ld[i]) {
+			अगर (!fusion->stream_detect_by_ld[i]) अणु
 				dev_err(&instance->pdev->dev,
 					"unable to allocate stream detect by LD\n ");
-				for (j = 0; j < i; ++j)
-					kfree(fusion->stream_detect_by_ld[j]);
-				kfree(fusion->stream_detect_by_ld);
-				fusion->stream_detect_by_ld = NULL;
-				goto fail_get_ld_pd_list;
-			}
+				क्रम (j = 0; j < i; ++j)
+					kमुक्त(fusion->stream_detect_by_ld[j]);
+				kमुक्त(fusion->stream_detect_by_ld);
+				fusion->stream_detect_by_ld = शून्य;
+				जाओ fail_get_ld_pd_list;
+			पूर्ण
 			fusion->stream_detect_by_ld[i]->mru_bit_map
 				= MR_STREAM_BITMAP;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Compute the max allowed sectors per IO: The controller info has two
@@ -6342,79 +6343,79 @@ static int megasas_init_fw(struct megasas_instance *instance)
 	 *
 	 * 1 << stripe_sz_ops.min = max sectors per strip
 	 *
-	 * Note that older firmwares ( < FW ver 30) didn't report information
+	 * Note that older firmwares ( < FW ver 30) didn't report inक्रमmation
 	 * to calculate max_sectors_1. So the number ended up as zero always.
 	 */
-	tmp_sectors = 0;
+	पंचांगp_sectors = 0;
 	ctrl_info = instance->ctrl_info_buf;
 
 	max_sectors_1 = (1 << ctrl_info->stripe_sz_ops.min) *
 		le16_to_cpu(ctrl_info->max_strips_per_io);
 	max_sectors_2 = le32_to_cpu(ctrl_info->max_request_size);
 
-	tmp_sectors = min_t(u32, max_sectors_1, max_sectors_2);
+	पंचांगp_sectors = min_t(u32, max_sectors_1, max_sectors_2);
 
 	instance->peerIsPresent = ctrl_info->cluster.peerIsPresent;
 	instance->passive = ctrl_info->cluster.passive;
-	memcpy(instance->clusterId, ctrl_info->clusterId, sizeof(instance->clusterId));
+	स_नकल(instance->clusterId, ctrl_info->clusterId, माप(instance->clusterId));
 	instance->UnevenSpanSupport =
 		ctrl_info->adapterOperations2.supportUnevenSpans;
-	if (instance->UnevenSpanSupport) {
-		struct fusion_context *fusion = instance->ctrl_context;
-		if (MR_ValidateMapInfo(instance, instance->map_id))
+	अगर (instance->UnevenSpanSupport) अणु
+		काष्ठा fusion_context *fusion = instance->ctrl_context;
+		अगर (MR_ValidateMapInfo(instance, instance->map_id))
 			fusion->fast_path_io = 1;
-		else
+		अन्यथा
 			fusion->fast_path_io = 0;
 
-	}
-	if (ctrl_info->host_interface.SRIOV) {
+	पूर्ण
+	अगर (ctrl_info->host_पूर्णांकerface.SRIOV) अणु
 		instance->requestorId = ctrl_info->iov.requestorId;
-		if (instance->pdev->device == PCI_DEVICE_ID_LSI_PLASMA) {
-			if (!ctrl_info->adapterOperations2.activePassive)
-			    instance->PlasmaFW111 = 1;
+		अगर (instance->pdev->device == PCI_DEVICE_ID_LSI_PLASMA) अणु
+			अगर (!ctrl_info->adapterOperations2.activePassive)
+			    instance->Plयंत्रaFW111 = 1;
 
 			dev_info(&instance->pdev->dev, "SR-IOV: firmware type: %s\n",
-			    instance->PlasmaFW111 ? "1.11" : "new");
+			    instance->Plयंत्रaFW111 ? "1.11" : "new");
 
-			if (instance->PlasmaFW111) {
-			    iovPtr = (struct IOV_111 *)
-				((unsigned char *)ctrl_info + IOV_111_OFFSET);
+			अगर (instance->Plयंत्रaFW111) अणु
+			    iovPtr = (काष्ठा IOV_111 *)
+				((अचिन्हित अक्षर *)ctrl_info + IOV_111_OFFSET);
 			    instance->requestorId = iovPtr->requestorId;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		dev_info(&instance->pdev->dev, "SRIOV: VF requestorId %d\n",
 			instance->requestorId);
-	}
+	पूर्ण
 
 	instance->crash_dump_fw_support =
 		ctrl_info->adapterOperations3.supportCrashDump;
 	instance->crash_dump_drv_support =
 		(instance->crash_dump_fw_support &&
 		instance->crash_dump_buf);
-	if (instance->crash_dump_drv_support)
+	अगर (instance->crash_dump_drv_support)
 		megasas_set_crash_dump_params(instance,
 			MR_CRASH_BUF_TURN_OFF);
 
-	else {
-		if (instance->crash_dump_buf)
-			dma_free_coherent(&instance->pdev->dev,
+	अन्यथा अणु
+		अगर (instance->crash_dump_buf)
+			dma_मुक्त_coherent(&instance->pdev->dev,
 				CRASH_DMA_BUF_SIZE,
 				instance->crash_dump_buf,
 				instance->crash_dump_h);
-		instance->crash_dump_buf = NULL;
-	}
+		instance->crash_dump_buf = शून्य;
+	पूर्ण
 
-	if (instance->snapdump_wait_time) {
+	अगर (instance->snapdump_रुको_समय) अणु
 		megasas_get_snapdump_properties(instance);
 		dev_info(&instance->pdev->dev, "Snap dump wait time\t: %d\n",
-			 instance->snapdump_wait_time);
-	}
+			 instance->snapdump_रुको_समय);
+	पूर्ण
 
 	dev_info(&instance->pdev->dev,
 		"pci id\t\t: (0x%04x)/(0x%04x)/(0x%04x)/(0x%04x)\n",
-		le16_to_cpu(ctrl_info->pci.vendor_id),
+		le16_to_cpu(ctrl_info->pci.venकरोr_id),
 		le16_to_cpu(ctrl_info->pci.device_id),
-		le16_to_cpu(ctrl_info->pci.sub_vendor_id),
+		le16_to_cpu(ctrl_info->pci.sub_venकरोr_id),
 		le16_to_cpu(ctrl_info->pci.sub_device_id));
 	dev_info(&instance->pdev->dev, "unevenspan support	: %s\n",
 		instance->UnevenSpanSupport ? "yes" : "no");
@@ -6425,59 +6426,59 @@ static int megasas_init_fw(struct megasas_instance *instance)
 
 	instance->max_sectors_per_req = instance->max_num_sge *
 						SGE_BUFFER_SIZE / 512;
-	if (tmp_sectors && (instance->max_sectors_per_req > tmp_sectors))
-		instance->max_sectors_per_req = tmp_sectors;
+	अगर (पंचांगp_sectors && (instance->max_sectors_per_req > पंचांगp_sectors))
+		instance->max_sectors_per_req = पंचांगp_sectors;
 
-	/* Check for valid throttlequeuedepth module parameter */
-	if (throttlequeuedepth &&
+	/* Check क्रम valid throttlequeuedepth module parameter */
+	अगर (throttlequeuedepth &&
 			throttlequeuedepth <= instance->max_scsi_cmds)
 		instance->throttlequeuedepth = throttlequeuedepth;
-	else
+	अन्यथा
 		instance->throttlequeuedepth =
 				MEGASAS_THROTTLE_QUEUE_DEPTH;
 
-	if ((resetwaittime < 1) ||
-	    (resetwaittime > MEGASAS_RESET_WAIT_TIME))
-		resetwaittime = MEGASAS_RESET_WAIT_TIME;
+	अगर ((resetरुकोसमय < 1) ||
+	    (resetरुकोसमय > MEGASAS_RESET_WAIT_TIME))
+		resetरुकोसमय = MEGASAS_RESET_WAIT_TIME;
 
-	if ((scmd_timeout < 10) || (scmd_timeout > MEGASAS_DEFAULT_CMD_TIMEOUT))
-		scmd_timeout = MEGASAS_DEFAULT_CMD_TIMEOUT;
+	अगर ((scmd_समयout < 10) || (scmd_समयout > MEGASAS_DEFAULT_CMD_TIMEOUT))
+		scmd_समयout = MEGASAS_DEFAULT_CMD_TIMEOUT;
 
-	/* Launch SR-IOV heartbeat timer */
-	if (instance->requestorId) {
-		if (!megasas_sriov_start_heartbeat(instance, 1)) {
-			megasas_start_timer(instance);
-		} else {
-			instance->skip_heartbeat_timer_del = 1;
-			goto fail_get_ld_pd_list;
-		}
-	}
+	/* Launch SR-IOV heartbeat समयr */
+	अगर (instance->requestorId) अणु
+		अगर (!megasas_sriov_start_heartbeat(instance, 1)) अणु
+			megasas_start_समयr(instance);
+		पूर्ण अन्यथा अणु
+			instance->skip_heartbeat_समयr_del = 1;
+			जाओ fail_get_ld_pd_list;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Create and start watchdog thread which will monitor
+	 * Create and start watchकरोg thपढ़ो which will monitor
 	 * controller state every 1 sec and trigger OCR when
 	 * it enters fault state
 	 */
-	if (instance->adapter_type != MFI_SERIES)
-		if (megasas_fusion_start_watchdog(instance) != SUCCESS)
-			goto fail_start_watchdog;
+	अगर (instance->adapter_type != MFI_SERIES)
+		अगर (megasas_fusion_start_watchकरोg(instance) != SUCCESS)
+			जाओ fail_start_watchकरोg;
 
-	return 0;
+	वापस 0;
 
-fail_start_watchdog:
-	if (instance->requestorId && !instance->skip_heartbeat_timer_del)
-		del_timer_sync(&instance->sriov_heartbeat_timer);
+fail_start_watchकरोg:
+	अगर (instance->requestorId && !instance->skip_heartbeat_समयr_del)
+		del_समयr_sync(&instance->sriov_heartbeat_समयr);
 fail_get_ld_pd_list:
-	instance->instancet->disable_intr(instance);
+	instance->instancet->disable_पूर्णांकr(instance);
 	megasas_destroy_irqs(instance);
 fail_init_adapter:
-	if (instance->msix_vectors)
-		pci_free_irq_vectors(instance->pdev);
+	अगर (instance->msix_vectors)
+		pci_मुक्त_irq_vectors(instance->pdev);
 	instance->msix_vectors = 0;
 fail_alloc_dma_buf:
-	megasas_free_ctrl_dma_buffers(instance);
-	megasas_free_ctrl_mem(instance);
-fail_ready_state:
+	megasas_मुक्त_ctrl_dma_buffers(instance);
+	megasas_मुक्त_ctrl_mem(instance);
+fail_पढ़ोy_state:
 	iounmap(instance->reg_set);
 
 fail_ioremap:
@@ -6485,227 +6486,227 @@ fail_ioremap:
 
 	dev_err(&instance->pdev->dev, "Failed from %s %d\n",
 		__func__, __LINE__);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * megasas_release_mfi -	Reverses the FW initialization
  * @instance:			Adapter soft state
  */
-static void megasas_release_mfi(struct megasas_instance *instance)
-{
-	u32 reply_q_sz = sizeof(u32) *(instance->max_mfi_cmds + 1);
+अटल व्योम megasas_release_mfi(काष्ठा megasas_instance *instance)
+अणु
+	u32 reply_q_sz = माप(u32) *(instance->max_mfi_cmds + 1);
 
-	if (instance->reply_queue)
-		dma_free_coherent(&instance->pdev->dev, reply_q_sz,
+	अगर (instance->reply_queue)
+		dma_मुक्त_coherent(&instance->pdev->dev, reply_q_sz,
 			    instance->reply_queue, instance->reply_queue_h);
 
-	megasas_free_cmds(instance);
+	megasas_मुक्त_cmds(instance);
 
 	iounmap(instance->reg_set);
 
 	pci_release_selected_regions(instance->pdev, 1<<instance->bar);
-}
+पूर्ण
 
 /**
  * megasas_get_seq_num -	Gets latest event sequence numbers
  * @instance:			Adapter soft state
- * @eli:			FW event log sequence numbers information
+ * @eli:			FW event log sequence numbers inक्रमmation
  *
- * FW maintains a log of all events in a non-volatile area. Upper layers would
+ * FW मुख्यtains a log of all events in a non-अस्थिर area. Upper layers would
  * usually find out the latest sequence number of the events, the seq number at
  * the boot etc. They would "read" all the events below the latest seq number
  * by issuing a direct fw cmd (DCMD). For the future events (beyond latest seq
- * number), they would subsribe to AEN (asynchronous event notification) and
- * wait for the events to happen.
+ * number), they would subsribe to AEN (asynchronous event notअगरication) and
+ * रुको क्रम the events to happen.
  */
-static int
-megasas_get_seq_num(struct megasas_instance *instance,
-		    struct megasas_evt_log_info *eli)
-{
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	struct megasas_evt_log_info *el_info;
+अटल पूर्णांक
+megasas_get_seq_num(काष्ठा megasas_instance *instance,
+		    काष्ठा megasas_evt_log_info *eli)
+अणु
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	काष्ठा megasas_evt_log_info *el_info;
 	dma_addr_t el_info_h = 0;
-	int ret;
+	पूर्णांक ret;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
-		return -ENOMEM;
-	}
+	अगर (!cmd) अणु
+		वापस -ENOMEM;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 	el_info = dma_alloc_coherent(&instance->pdev->dev,
-				     sizeof(struct megasas_evt_log_info),
+				     माप(काष्ठा megasas_evt_log_info),
 				     &el_info_h, GFP_KERNEL);
-	if (!el_info) {
-		megasas_return_cmd(instance, cmd);
-		return -ENOMEM;
-	}
+	अगर (!el_info) अणु
+		megasas_वापस_cmd(instance, cmd);
+		वापस -ENOMEM;
+	पूर्ण
 
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = 0x0;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_READ;
-	dcmd->timeout = 0;
+	dcmd->flags = MFI_FRAME_सूची_READ;
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
-	dcmd->data_xfer_len = cpu_to_le32(sizeof(struct megasas_evt_log_info));
+	dcmd->data_xfer_len = cpu_to_le32(माप(काष्ठा megasas_evt_log_info));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_CTRL_EVENT_GET_INFO);
 
 	megasas_set_dma_settings(instance, dcmd, el_info_h,
-				 sizeof(struct megasas_evt_log_info));
+				 माप(काष्ठा megasas_evt_log_info));
 
 	ret = megasas_issue_blocked_cmd(instance, cmd, MFI_IO_TIMEOUT_SECS);
-	if (ret != DCMD_SUCCESS) {
+	अगर (ret != DCMD_SUCCESS) अणु
 		dev_err(&instance->pdev->dev, "Failed from %s %d\n",
 			__func__, __LINE__);
-		goto dcmd_failed;
-	}
+		जाओ dcmd_failed;
+	पूर्ण
 
 	/*
-	 * Copy the data back into callers buffer
+	 * Copy the data back पूर्णांकo callers buffer
 	 */
 	eli->newest_seq_num = el_info->newest_seq_num;
 	eli->oldest_seq_num = el_info->oldest_seq_num;
 	eli->clear_seq_num = el_info->clear_seq_num;
-	eli->shutdown_seq_num = el_info->shutdown_seq_num;
+	eli->shutकरोwn_seq_num = el_info->shutकरोwn_seq_num;
 	eli->boot_seq_num = el_info->boot_seq_num;
 
 dcmd_failed:
-	dma_free_coherent(&instance->pdev->dev,
-			sizeof(struct megasas_evt_log_info),
+	dma_मुक्त_coherent(&instance->pdev->dev,
+			माप(काष्ठा megasas_evt_log_info),
 			el_info, el_info_h);
 
-	megasas_return_cmd(instance, cmd);
+	megasas_वापस_cmd(instance, cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * megasas_register_aen -	Registers for asynchronous event notification
+ * megasas_रेजिस्टर_aen -	Registers क्रम asynchronous event notअगरication
  * @instance:			Adapter soft state
  * @seq_num:			The starting sequence number
  * @class_locale_word:		Class of the event
  *
- * This function subscribes for AEN for events beyond the @seq_num. It requests
- * to be notified if and only if the event is of type @class_locale
+ * This function subscribes क्रम AEN क्रम events beyond the @seq_num. It requests
+ * to be notअगरied अगर and only अगर the event is of type @class_locale
  */
-static int
-megasas_register_aen(struct megasas_instance *instance, u32 seq_num,
+अटल पूर्णांक
+megasas_रेजिस्टर_aen(काष्ठा megasas_instance *instance, u32 seq_num,
 		     u32 class_locale_word)
-{
-	int ret_val;
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
-	union megasas_evt_class_locale curr_aen;
-	union megasas_evt_class_locale prev_aen;
+अणु
+	पूर्णांक ret_val;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
+	जोड़ megasas_evt_class_locale curr_aen;
+	जोड़ megasas_evt_class_locale prev_aen;
 
 	/*
-	 * If there an AEN pending already (aen_cmd), check if the
+	 * If there an AEN pending alपढ़ोy (aen_cmd), check अगर the
 	 * class_locale of that pending AEN is inclusive of the new
-	 * AEN request we currently have. If it is, then we don't have
-	 * to do anything. In other words, whichever events the current
-	 * AEN request is subscribing to, have already been subscribed
+	 * AEN request we currently have. If it is, then we करोn't have
+	 * to करो anything. In other words, whichever events the current
+	 * AEN request is subscribing to, have alपढ़ोy been subscribed
 	 * to.
 	 *
-	 * If the old_cmd is _not_ inclusive, then we have to abort
-	 * that command, form a class_locale that is superset of both
+	 * If the old_cmd is _not_ inclusive, then we have to पात
+	 * that command, क्रमm a class_locale that is superset of both
 	 * old and current and re-issue to the FW
 	 */
 
 	curr_aen.word = class_locale_word;
 
-	if (instance->aen_cmd) {
+	अगर (instance->aen_cmd) अणु
 
 		prev_aen.word =
 			le32_to_cpu(instance->aen_cmd->frame->dcmd.mbox.w[1]);
 
-		if ((curr_aen.members.class < MFI_EVT_CLASS_DEBUG) ||
-		    (curr_aen.members.class > MFI_EVT_CLASS_DEAD)) {
+		अगर ((curr_aen.members.class < MFI_EVT_CLASS_DEBUG) ||
+		    (curr_aen.members.class > MFI_EVT_CLASS_DEAD)) अणु
 			dev_info(&instance->pdev->dev,
 				 "%s %d out of range class %d send by application\n",
 				 __func__, __LINE__, curr_aen.members.class);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/*
-		 * A class whose enum value is smaller is inclusive of all
+		 * A class whose क्रमागत value is smaller is inclusive of all
 		 * higher values. If a PROGRESS (= -1) was previously
-		 * registered, then a new registration requests for higher
-		 * classes need not be sent to FW. They are automatically
+		 * रेजिस्टरed, then a new registration requests क्रम higher
+		 * classes need not be sent to FW. They are स्वतःmatically
 		 * included.
 		 *
-		 * Locale numbers don't have such hierarchy. They are bitmap
+		 * Locale numbers करोn't have such hierarchy. They are biपंचांगap
 		 * values
 		 */
-		if ((prev_aen.members.class <= curr_aen.members.class) &&
+		अगर ((prev_aen.members.class <= curr_aen.members.class) &&
 		    !((prev_aen.members.locale & curr_aen.members.locale) ^
-		      curr_aen.members.locale)) {
+		      curr_aen.members.locale)) अणु
 			/*
 			 * Previously issued event registration includes
-			 * current request. Nothing to do.
+			 * current request. Nothing to करो.
 			 */
-			return 0;
-		} else {
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			curr_aen.members.locale |= prev_aen.members.locale;
 
-			if (prev_aen.members.class < curr_aen.members.class)
+			अगर (prev_aen.members.class < curr_aen.members.class)
 				curr_aen.members.class = prev_aen.members.class;
 
-			instance->aen_cmd->abort_aen = 1;
-			ret_val = megasas_issue_blocked_abort_cmd(instance,
+			instance->aen_cmd->पात_aen = 1;
+			ret_val = megasas_issue_blocked_पात_cmd(instance,
 								  instance->
 								  aen_cmd, 30);
 
-			if (ret_val) {
-				dev_printk(KERN_DEBUG, &instance->pdev->dev, "Failed to abort "
+			अगर (ret_val) अणु
+				dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "Failed to abort "
 				       "previous AEN command\n");
-				return ret_val;
-			}
-		}
-	}
+				वापस ret_val;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd)
-		return -ENOMEM;
+	अगर (!cmd)
+		वापस -ENOMEM;
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(instance->evt_detail, 0, sizeof(struct megasas_evt_detail));
+	स_रखो(instance->evt_detail, 0, माप(काष्ठा megasas_evt_detail));
 
 	/*
-	 * Prepare DCMD for aen registration
+	 * Prepare DCMD क्रम aen registration
 	 */
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = 0x0;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_READ;
-	dcmd->timeout = 0;
+	dcmd->flags = MFI_FRAME_सूची_READ;
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
-	dcmd->data_xfer_len = cpu_to_le32(sizeof(struct megasas_evt_detail));
+	dcmd->data_xfer_len = cpu_to_le32(माप(काष्ठा megasas_evt_detail));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_CTRL_EVENT_WAIT);
 	dcmd->mbox.w[0] = cpu_to_le32(seq_num);
 	instance->last_seq_num = seq_num;
 	dcmd->mbox.w[1] = cpu_to_le32(curr_aen.word);
 
 	megasas_set_dma_settings(instance, dcmd, instance->evt_detail_h,
-				 sizeof(struct megasas_evt_detail));
+				 माप(काष्ठा megasas_evt_detail));
 
-	if (instance->aen_cmd != NULL) {
-		megasas_return_cmd(instance, cmd);
-		return 0;
-	}
+	अगर (instance->aen_cmd != शून्य) अणु
+		megasas_वापस_cmd(instance, cmd);
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * Store reference to the cmd used to register for AEN. When an
-	 * application wants us to register for AEN, we have to abort this
-	 * cmd and re-register with a new EVENT LOCALE supplied by that app
+	 * Store reference to the cmd used to रेजिस्टर क्रम AEN. When an
+	 * application wants us to रेजिस्टर क्रम AEN, we have to पात this
+	 * cmd and re-रेजिस्टर with a new EVENT LOCALE supplied by that app
 	 */
 	instance->aen_cmd = cmd;
 
@@ -6714,140 +6715,140 @@ megasas_register_aen(struct megasas_instance *instance, u32 seq_num,
 	 */
 	instance->instancet->issue_dcmd(instance, cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* megasas_get_target_prop - Send DCMD with below details to firmware.
  *
- * This DCMD will fetch few properties of LD/system PD defined
+ * This DCMD will fetch few properties of LD/प्रणाली PD defined
  * in MR_TARGET_DEV_PROPERTIES. eg. Queue Depth, MDTS value.
  *
  * DCMD send by drivers whenever new target is added to the OS.
  *
  * dcmd.opcode         - MR_DCMD_DEV_GET_TARGET_PROP
- * dcmd.mbox.b[0]      - DCMD is to be fired for LD or system PD.
- *                       0 = system PD, 1 = LD.
- * dcmd.mbox.s[1]      - TargetID for LD/system PD.
- * dcmd.sge IN         - Pointer to return MR_TARGET_DEV_PROPERTIES.
+ * dcmd.mbox.b[0]      - DCMD is to be fired क्रम LD or प्रणाली PD.
+ *                       0 = प्रणाली PD, 1 = LD.
+ * dcmd.mbox.s[1]      - TargetID क्रम LD/प्रणाली PD.
+ * dcmd.sge IN         - Poपूर्णांकer to वापस MR_TARGET_DEV_PROPERTIES.
  *
  * @instance:		Adapter soft state
  * @sdev:		OS provided scsi device
  *
  * Returns 0 on success non-zero on failure.
  */
-int
-megasas_get_target_prop(struct megasas_instance *instance,
-			struct scsi_device *sdev)
-{
-	int ret;
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
+पूर्णांक
+megasas_get_target_prop(काष्ठा megasas_instance *instance,
+			काष्ठा scsi_device *sdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
 	u16 targetId = ((sdev->channel % 2) * MEGASAS_MAX_DEV_PER_CHANNEL) +
 			sdev->id;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd) {
+	अगर (!cmd) अणु
 		dev_err(&instance->pdev->dev,
 			"Failed to get cmd %s\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(instance->tgt_prop, 0, sizeof(*instance->tgt_prop));
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(instance->tgt_prop, 0, माप(*instance->tgt_prop));
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 	dcmd->mbox.b[0] = MEGASAS_IS_LOGICAL(sdev);
 
 	dcmd->mbox.s[1] = cpu_to_le16(targetId);
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = 0xFF;
 	dcmd->sge_count = 1;
-	dcmd->flags = MFI_FRAME_DIR_READ;
-	dcmd->timeout = 0;
+	dcmd->flags = MFI_FRAME_सूची_READ;
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
 	dcmd->data_xfer_len =
-		cpu_to_le32(sizeof(struct MR_TARGET_PROPERTIES));
+		cpu_to_le32(माप(काष्ठा MR_TARGET_PROPERTIES));
 	dcmd->opcode = cpu_to_le32(MR_DCMD_DRV_GET_TARGET_PROP);
 
 	megasas_set_dma_settings(instance, dcmd, instance->tgt_prop_h,
-				 sizeof(struct MR_TARGET_PROPERTIES));
+				 माप(काष्ठा MR_TARGET_PROPERTIES));
 
-	if ((instance->adapter_type != MFI_SERIES) &&
-	    !instance->mask_interrupts)
+	अगर ((instance->adapter_type != MFI_SERIES) &&
+	    !instance->mask_पूर्णांकerrupts)
 		ret = megasas_issue_blocked_cmd(instance,
 						cmd, MFI_IO_TIMEOUT_SECS);
-	else
+	अन्यथा
 		ret = megasas_issue_polled(instance, cmd);
 
-	switch (ret) {
-	case DCMD_TIMEOUT:
-		switch (dcmd_timeout_ocr_possible(instance)) {
-		case INITIATE_OCR:
+	चयन (ret) अणु
+	हाल DCMD_TIMEOUT:
+		चयन (dcmd_समयout_ocr_possible(instance)) अणु
+		हाल INITIATE_OCR:
 			cmd->flags |= DRV_DCMD_SKIP_REFIRE;
 			mutex_unlock(&instance->reset_mutex);
 			megasas_reset_fusion(instance->host,
 					     MFI_IO_TIMEOUT_OCR);
 			mutex_lock(&instance->reset_mutex);
-			break;
-		case KILL_ADAPTER:
-			megaraid_sas_kill_hba(instance);
-			break;
-		case IGNORE_TIMEOUT:
+			अवरोध;
+		हाल KILL_ADAPTER:
+			megaraid_sas_समाप्त_hba(instance);
+			अवरोध;
+		हाल IGNORE_TIMEOUT:
 			dev_info(&instance->pdev->dev,
 				 "Ignore DCMD timeout: %s %d\n",
 				 __func__, __LINE__);
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	default:
-		megasas_return_cmd(instance, cmd);
-	}
-	if (ret != DCMD_SUCCESS)
+	शेष:
+		megasas_वापस_cmd(instance, cmd);
+	पूर्ण
+	अगर (ret != DCMD_SUCCESS)
 		dev_err(&instance->pdev->dev,
 			"return from %s %d return value %d\n",
 			__func__, __LINE__, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * megasas_start_aen -	Subscribes to AEN during driver load time
+ * megasas_start_aen -	Subscribes to AEN during driver load समय
  * @instance:		Adapter soft state
  */
-static int megasas_start_aen(struct megasas_instance *instance)
-{
-	struct megasas_evt_log_info eli;
-	union megasas_evt_class_locale class_locale;
+अटल पूर्णांक megasas_start_aen(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_evt_log_info eli;
+	जोड़ megasas_evt_class_locale class_locale;
 
 	/*
 	 * Get the latest sequence number from FW
 	 */
-	memset(&eli, 0, sizeof(eli));
+	स_रखो(&eli, 0, माप(eli));
 
-	if (megasas_get_seq_num(instance, &eli))
-		return -1;
+	अगर (megasas_get_seq_num(instance, &eli))
+		वापस -1;
 
 	/*
-	 * Register AEN with FW for latest sequence number plus 1
+	 * Register AEN with FW क्रम latest sequence number plus 1
 	 */
 	class_locale.members.reserved = 0;
 	class_locale.members.locale = MR_EVT_LOCALE_ALL;
 	class_locale.members.class = MR_EVT_CLASS_DEBUG;
 
-	return megasas_register_aen(instance,
+	वापस megasas_रेजिस्टर_aen(instance,
 			le32_to_cpu(eli.newest_seq_num) + 1,
 			class_locale.word);
-}
+पूर्ण
 
 /**
  * megasas_io_attach -	Attaches this driver to SCSI mid-layer
  * @instance:		Adapter soft state
  */
-static int megasas_io_attach(struct megasas_instance *instance)
-{
-	struct Scsi_Host *host = instance->host;
+अटल पूर्णांक megasas_io_attach(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा Scsi_Host *host = instance->host;
 
 	/*
 	 * Export parameters required by SCSI mid-layer
@@ -6857,29 +6858,29 @@ static int megasas_io_attach(struct megasas_instance *instance)
 	host->this_id = instance->init_id;
 	host->sg_tablesize = instance->max_num_sge;
 
-	if (instance->fw_support_ieee)
+	अगर (instance->fw_support_ieee)
 		instance->max_sectors_per_req = MEGASAS_MAX_SECTORS_IEEE;
 
 	/*
-	 * Check if the module parameter value for max_sectors can be used
+	 * Check अगर the module parameter value क्रम max_sectors can be used
 	 */
-	if (max_sectors && max_sectors < instance->max_sectors_per_req)
+	अगर (max_sectors && max_sectors < instance->max_sectors_per_req)
 		instance->max_sectors_per_req = max_sectors;
-	else {
-		if (max_sectors) {
-			if (((instance->pdev->device ==
+	अन्यथा अणु
+		अगर (max_sectors) अणु
+			अगर (((instance->pdev->device ==
 				PCI_DEVICE_ID_LSI_SAS1078GEN2) ||
 				(instance->pdev->device ==
 				PCI_DEVICE_ID_LSI_SAS0079GEN2)) &&
-				(max_sectors <= MEGASAS_MAX_SECTORS)) {
+				(max_sectors <= MEGASAS_MAX_SECTORS)) अणु
 				instance->max_sectors_per_req = max_sectors;
-			} else {
+			पूर्ण अन्यथा अणु
 			dev_info(&instance->pdev->dev, "max_sectors should be > 0"
 				"and <= %d (or < 1MB for GEN2 controller)\n",
 				instance->max_sectors_per_req);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	host->max_sectors = instance->max_sectors_per_req;
 	host->cmd_per_lun = MEGASAS_DEFAULT_CMD_PER_LUN;
@@ -6888,26 +6889,26 @@ static int megasas_io_attach(struct megasas_instance *instance)
 	host->max_lun = MEGASAS_MAX_LUN;
 	host->max_cmd_len = 16;
 
-	/* Use shared host tagset only for fusion adaptors
-	 * if there are managed interrupts (smp affinity enabled case).
+	/* Use shared host tagset only क्रम fusion adaptors
+	 * अगर there are managed पूर्णांकerrupts (smp affinity enabled हाल).
 	 * Single msix_vectors in kdump, so shared host tag is also disabled.
 	 */
 
 	host->host_tagset = 0;
 	host->nr_hw_queues = 1;
 
-	if ((instance->adapter_type != MFI_SERIES) &&
+	अगर ((instance->adapter_type != MFI_SERIES) &&
 		(instance->msix_vectors > instance->low_latency_index_start) &&
 		host_tagset_enable &&
-		instance->smp_affinity_enable) {
+		instance->smp_affinity_enable) अणु
 		host->host_tagset = 1;
 		host->nr_hw_queues = instance->msix_vectors -
 			instance->low_latency_index_start + instance->iopoll_q_count;
-		if (instance->iopoll_q_count)
+		अगर (instance->iopoll_q_count)
 			host->nr_maps = 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		instance->iopoll_q_count = 0;
-	}
+	पूर्ण
 
 	dev_info(&instance->pdev->dev,
 		"Max firmware commands: %d shared with default "
@@ -6915,20 +6916,20 @@ static int megasas_io_attach(struct megasas_instance *instance)
 		host->nr_hw_queues - instance->iopoll_q_count,
 		instance->iopoll_q_count);
 	/*
-	 * Notify the mid-layer about the new controller
+	 * Notअगरy the mid-layer about the new controller
 	 */
-	if (scsi_add_host(host, &instance->pdev->dev)) {
+	अगर (scsi_add_host(host, &instance->pdev->dev)) अणु
 		dev_err(&instance->pdev->dev,
 			"Failed to add host from %s %d\n",
 			__func__, __LINE__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * megasas_set_dma_mask -	Set DMA mask for supported controllers
+ * megasas_set_dma_mask -	Set DMA mask क्रम supported controllers
  *
  * @instance:		Adapter soft state
  * Description:
@@ -6936,242 +6937,242 @@ static int megasas_io_attach(struct megasas_instance *instance)
  * For Ventura, driver/FW will operate in 63bit DMA addresses.
  *
  * For invader-
- *	By default, driver/FW will operate in 32bit DMA addresses
- *	for consistent DMA mapping but if 32 bit consistent
+ *	By शेष, driver/FW will operate in 32bit DMA addresses
+ *	क्रम consistent DMA mapping but अगर 32 bit consistent
  *	DMA mask fails, driver will try with 63 bit consistent
  *	mask provided FW is true 63bit DMA capable
  *
  * For older controllers(Thunderbolt and MFI based adapters)-
  *	driver/FW will operate in 32 bit consistent DMA addresses.
  */
-static int
-megasas_set_dma_mask(struct megasas_instance *instance)
-{
+अटल पूर्णांक
+megasas_set_dma_mask(काष्ठा megasas_instance *instance)
+अणु
 	u64 consistent_mask;
-	struct pci_dev *pdev;
+	काष्ठा pci_dev *pdev;
 	u32 scratch_pad_1;
 
 	pdev = instance->pdev;
 	consistent_mask = (instance->adapter_type >= VENTURA_SERIES) ?
 				DMA_BIT_MASK(63) : DMA_BIT_MASK(32);
 
-	if (IS_DMA64) {
-		if (dma_set_mask(&pdev->dev, DMA_BIT_MASK(63)) &&
+	अगर (IS_DMA64) अणु
+		अगर (dma_set_mask(&pdev->dev, DMA_BIT_MASK(63)) &&
 		    dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32)))
-			goto fail_set_dma_mask;
+			जाओ fail_set_dma_mask;
 
-		if ((*pdev->dev.dma_mask == DMA_BIT_MASK(63)) &&
+		अगर ((*pdev->dev.dma_mask == DMA_BIT_MASK(63)) &&
 		    (dma_set_coherent_mask(&pdev->dev, consistent_mask) &&
-		     dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32)))) {
+		     dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32)))) अणु
 			/*
-			 * If 32 bit DMA mask fails, then try for 64 bit mask
-			 * for FW capable of handling 64 bit DMA.
+			 * If 32 bit DMA mask fails, then try क्रम 64 bit mask
+			 * क्रम FW capable of handling 64 bit DMA.
 			 */
-			scratch_pad_1 = megasas_readl
+			scratch_pad_1 = megasas_पढ़ोl
 				(instance, &instance->reg_set->outbound_scratch_pad_1);
 
-			if (!(scratch_pad_1 & MR_CAN_HANDLE_64_BIT_DMA_OFFSET))
-				goto fail_set_dma_mask;
-			else if (dma_set_mask_and_coherent(&pdev->dev,
+			अगर (!(scratch_pad_1 & MR_CAN_HANDLE_64_BIT_DMA_OFFSET))
+				जाओ fail_set_dma_mask;
+			अन्यथा अगर (dma_set_mask_and_coherent(&pdev->dev,
 							   DMA_BIT_MASK(63)))
-				goto fail_set_dma_mask;
-		}
-	} else if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32)))
-		goto fail_set_dma_mask;
+				जाओ fail_set_dma_mask;
+		पूर्ण
+	पूर्ण अन्यथा अगर (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32)))
+		जाओ fail_set_dma_mask;
 
-	if (pdev->dev.coherent_dma_mask == DMA_BIT_MASK(32))
+	अगर (pdev->dev.coherent_dma_mask == DMA_BIT_MASK(32))
 		instance->consistent_mask_64bit = false;
-	else
+	अन्यथा
 		instance->consistent_mask_64bit = true;
 
 	dev_info(&pdev->dev, "%s bit DMA mask and %s bit consistent mask\n",
 		 ((*pdev->dev.dma_mask == DMA_BIT_MASK(63)) ? "63" : "32"),
 		 (instance->consistent_mask_64bit ? "63" : "32"));
 
-	return 0;
+	वापस 0;
 
 fail_set_dma_mask:
 	dev_err(&pdev->dev, "Failed to set DMA mask\n");
-	return -1;
+	वापस -1;
 
-}
+पूर्ण
 
 /*
  * megasas_set_adapter_type -	Set adapter type.
- *				Supported controllers can be divided in
- *				different categories-
- *					enum MR_ADAPTER_TYPE {
+ *				Supported controllers can be भागided in
+ *				dअगरferent categories-
+ *					क्रमागत MR_ADAPTER_TYPE अणु
  *						MFI_SERIES = 1,
  *						THUNDERBOLT_SERIES = 2,
  *						INVADER_SERIES = 3,
  *						VENTURA_SERIES = 4,
  *						AERO_SERIES = 5,
- *					};
+ *					पूर्ण;
  * @instance:			Adapter soft state
- * return:			void
+ * वापस:			व्योम
  */
-static inline void megasas_set_adapter_type(struct megasas_instance *instance)
-{
-	if ((instance->pdev->vendor == PCI_VENDOR_ID_DELL) &&
-	    (instance->pdev->device == PCI_DEVICE_ID_DELL_PERC5)) {
+अटल अंतरभूत व्योम megasas_set_adapter_type(काष्ठा megasas_instance *instance)
+अणु
+	अगर ((instance->pdev->venकरोr == PCI_VENDOR_ID_DELL) &&
+	    (instance->pdev->device == PCI_DEVICE_ID_DELL_PERC5)) अणु
 		instance->adapter_type = MFI_SERIES;
-	} else {
-		switch (instance->pdev->device) {
-		case PCI_DEVICE_ID_LSI_AERO_10E1:
-		case PCI_DEVICE_ID_LSI_AERO_10E2:
-		case PCI_DEVICE_ID_LSI_AERO_10E5:
-		case PCI_DEVICE_ID_LSI_AERO_10E6:
+	पूर्ण अन्यथा अणु
+		चयन (instance->pdev->device) अणु
+		हाल PCI_DEVICE_ID_LSI_AERO_10E1:
+		हाल PCI_DEVICE_ID_LSI_AERO_10E2:
+		हाल PCI_DEVICE_ID_LSI_AERO_10E5:
+		हाल PCI_DEVICE_ID_LSI_AERO_10E6:
 			instance->adapter_type = AERO_SERIES;
-			break;
-		case PCI_DEVICE_ID_LSI_VENTURA:
-		case PCI_DEVICE_ID_LSI_CRUSADER:
-		case PCI_DEVICE_ID_LSI_HARPOON:
-		case PCI_DEVICE_ID_LSI_TOMCAT:
-		case PCI_DEVICE_ID_LSI_VENTURA_4PORT:
-		case PCI_DEVICE_ID_LSI_CRUSADER_4PORT:
+			अवरोध;
+		हाल PCI_DEVICE_ID_LSI_VENTURA:
+		हाल PCI_DEVICE_ID_LSI_CRUSADER:
+		हाल PCI_DEVICE_ID_LSI_HARPOON:
+		हाल PCI_DEVICE_ID_LSI_TOMCAT:
+		हाल PCI_DEVICE_ID_LSI_VENTURA_4PORT:
+		हाल PCI_DEVICE_ID_LSI_CRUSADER_4PORT:
 			instance->adapter_type = VENTURA_SERIES;
-			break;
-		case PCI_DEVICE_ID_LSI_FUSION:
-		case PCI_DEVICE_ID_LSI_PLASMA:
+			अवरोध;
+		हाल PCI_DEVICE_ID_LSI_FUSION:
+		हाल PCI_DEVICE_ID_LSI_PLASMA:
 			instance->adapter_type = THUNDERBOLT_SERIES;
-			break;
-		case PCI_DEVICE_ID_LSI_INVADER:
-		case PCI_DEVICE_ID_LSI_INTRUDER:
-		case PCI_DEVICE_ID_LSI_INTRUDER_24:
-		case PCI_DEVICE_ID_LSI_CUTLASS_52:
-		case PCI_DEVICE_ID_LSI_CUTLASS_53:
-		case PCI_DEVICE_ID_LSI_FURY:
+			अवरोध;
+		हाल PCI_DEVICE_ID_LSI_INVADER:
+		हाल PCI_DEVICE_ID_LSI_INTRUDER:
+		हाल PCI_DEVICE_ID_LSI_INTRUDER_24:
+		हाल PCI_DEVICE_ID_LSI_CUTLASS_52:
+		हाल PCI_DEVICE_ID_LSI_CUTLASS_53:
+		हाल PCI_DEVICE_ID_LSI_FURY:
 			instance->adapter_type = INVADER_SERIES;
-			break;
-		default: /* For all other supported controllers */
+			अवरोध;
+		शेष: /* For all other supported controllers */
 			instance->adapter_type = MFI_SERIES;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline int megasas_alloc_mfi_ctrl_mem(struct megasas_instance *instance)
-{
+अटल अंतरभूत पूर्णांक megasas_alloc_mfi_ctrl_mem(काष्ठा megasas_instance *instance)
+अणु
 	instance->producer = dma_alloc_coherent(&instance->pdev->dev,
-			sizeof(u32), &instance->producer_h, GFP_KERNEL);
+			माप(u32), &instance->producer_h, GFP_KERNEL);
 	instance->consumer = dma_alloc_coherent(&instance->pdev->dev,
-			sizeof(u32), &instance->consumer_h, GFP_KERNEL);
+			माप(u32), &instance->consumer_h, GFP_KERNEL);
 
-	if (!instance->producer || !instance->consumer) {
+	अगर (!instance->producer || !instance->consumer) अणु
 		dev_err(&instance->pdev->dev,
 			"Failed to allocate memory for producer, consumer\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	*instance->producer = 0;
 	*instance->consumer = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * megasas_alloc_ctrl_mem -	Allocate per controller memory for core data
- *				structures which are not common across MFI
+ * megasas_alloc_ctrl_mem -	Allocate per controller memory क्रम core data
+ *				काष्ठाures which are not common across MFI
  *				adapters and fusion adapters.
  *				For MFI based adapters, allocate producer and
  *				consumer buffers. For fusion adapters, allocate
- *				memory for fusion context.
+ *				memory क्रम fusion context.
  * @instance:			Adapter soft state
- * return:			0 for SUCCESS
+ * वापस:			0 क्रम SUCCESS
  */
-static int megasas_alloc_ctrl_mem(struct megasas_instance *instance)
-{
-	instance->reply_map = kcalloc(nr_cpu_ids, sizeof(unsigned int),
+अटल पूर्णांक megasas_alloc_ctrl_mem(काष्ठा megasas_instance *instance)
+अणु
+	instance->reply_map = kसुस्मृति(nr_cpu_ids, माप(अचिन्हित पूर्णांक),
 				      GFP_KERNEL);
-	if (!instance->reply_map)
-		return -ENOMEM;
+	अगर (!instance->reply_map)
+		वापस -ENOMEM;
 
-	switch (instance->adapter_type) {
-	case MFI_SERIES:
-		if (megasas_alloc_mfi_ctrl_mem(instance))
-			goto fail;
-		break;
-	case AERO_SERIES:
-	case VENTURA_SERIES:
-	case THUNDERBOLT_SERIES:
-	case INVADER_SERIES:
-		if (megasas_alloc_fusion_context(instance))
-			goto fail;
-		break;
-	}
+	चयन (instance->adapter_type) अणु
+	हाल MFI_SERIES:
+		अगर (megasas_alloc_mfi_ctrl_mem(instance))
+			जाओ fail;
+		अवरोध;
+	हाल AERO_SERIES:
+	हाल VENTURA_SERIES:
+	हाल THUNDERBOLT_SERIES:
+	हाल INVADER_SERIES:
+		अगर (megasas_alloc_fusion_context(instance))
+			जाओ fail;
+		अवरोध;
+	पूर्ण
 
-	return 0;
+	वापस 0;
  fail:
-	kfree(instance->reply_map);
-	instance->reply_map = NULL;
-	return -ENOMEM;
-}
+	kमुक्त(instance->reply_map);
+	instance->reply_map = शून्य;
+	वापस -ENOMEM;
+पूर्ण
 
 /*
- * megasas_free_ctrl_mem -	Free fusion context for fusion adapters and
- *				producer, consumer buffers for MFI adapters
+ * megasas_मुक्त_ctrl_mem -	Free fusion context क्रम fusion adapters and
+ *				producer, consumer buffers क्रम MFI adapters
  *
  * @instance -			Adapter soft instance
  *
  */
-static inline void megasas_free_ctrl_mem(struct megasas_instance *instance)
-{
-	kfree(instance->reply_map);
-	if (instance->adapter_type == MFI_SERIES) {
-		if (instance->producer)
-			dma_free_coherent(&instance->pdev->dev, sizeof(u32),
+अटल अंतरभूत व्योम megasas_मुक्त_ctrl_mem(काष्ठा megasas_instance *instance)
+अणु
+	kमुक्त(instance->reply_map);
+	अगर (instance->adapter_type == MFI_SERIES) अणु
+		अगर (instance->producer)
+			dma_मुक्त_coherent(&instance->pdev->dev, माप(u32),
 					    instance->producer,
 					    instance->producer_h);
-		if (instance->consumer)
-			dma_free_coherent(&instance->pdev->dev, sizeof(u32),
+		अगर (instance->consumer)
+			dma_मुक्त_coherent(&instance->pdev->dev, माप(u32),
 					    instance->consumer,
 					    instance->consumer_h);
-	} else {
-		megasas_free_fusion_context(instance);
-	}
-}
+	पूर्ण अन्यथा अणु
+		megasas_मुक्त_fusion_context(instance);
+	पूर्ण
+पूर्ण
 
 /**
  * megasas_alloc_ctrl_dma_buffers -	Allocate consistent DMA buffers during
- *					driver load time
+ *					driver load समय
  *
  * @instance:				Adapter soft instance
  *
- * @return:				O for SUCCESS
+ * @वापस:				O क्रम SUCCESS
  */
-static inline
-int megasas_alloc_ctrl_dma_buffers(struct megasas_instance *instance)
-{
-	struct pci_dev *pdev = instance->pdev;
-	struct fusion_context *fusion = instance->ctrl_context;
+अटल अंतरभूत
+पूर्णांक megasas_alloc_ctrl_dma_buffers(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा pci_dev *pdev = instance->pdev;
+	काष्ठा fusion_context *fusion = instance->ctrl_context;
 
 	instance->evt_detail = dma_alloc_coherent(&pdev->dev,
-			sizeof(struct megasas_evt_detail),
+			माप(काष्ठा megasas_evt_detail),
 			&instance->evt_detail_h, GFP_KERNEL);
 
-	if (!instance->evt_detail) {
+	अगर (!instance->evt_detail) अणु
 		dev_err(&instance->pdev->dev,
 			"Failed to allocate event detail buffer\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (fusion) {
+	अगर (fusion) अणु
 		fusion->ioc_init_request =
 			dma_alloc_coherent(&pdev->dev,
-					   sizeof(struct MPI2_IOC_INIT_REQUEST),
+					   माप(काष्ठा MPI2_IOC_INIT_REQUEST),
 					   &fusion->ioc_init_request_phys,
 					   GFP_KERNEL);
 
-		if (!fusion->ioc_init_request) {
+		अगर (!fusion->ioc_init_request) अणु
 			dev_err(&pdev->dev,
 				"Failed to allocate PD list buffer\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		instance->snapdump_prop = dma_alloc_coherent(&pdev->dev,
-				sizeof(struct MR_SNAPDUMP_PROPERTIES),
+				माप(काष्ठा MR_SNAPDUMP_PROPERTIES),
 				&instance->snapdump_prop_h, GFP_KERNEL);
 
-		if (!instance->snapdump_prop)
+		अगर (!instance->snapdump_prop)
 			dev_err(&pdev->dev,
 				"Failed to allocate snapdump properties buffer\n");
 
@@ -7180,195 +7181,195 @@ int megasas_alloc_ctrl_dma_buffers(struct megasas_instance *instance)
 							&instance->host_device_list_buf_h,
 							GFP_KERNEL);
 
-		if (!instance->host_device_list_buf) {
+		अगर (!instance->host_device_list_buf) अणु
 			dev_err(&pdev->dev,
 				"Failed to allocate targetid list buffer\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-	}
+	पूर्ण
 
 	instance->pd_list_buf =
 		dma_alloc_coherent(&pdev->dev,
-				     MEGASAS_MAX_PD * sizeof(struct MR_PD_LIST),
+				     MEGASAS_MAX_PD * माप(काष्ठा MR_PD_LIST),
 				     &instance->pd_list_buf_h, GFP_KERNEL);
 
-	if (!instance->pd_list_buf) {
+	अगर (!instance->pd_list_buf) अणु
 		dev_err(&pdev->dev, "Failed to allocate PD list buffer\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	instance->ctrl_info_buf =
 		dma_alloc_coherent(&pdev->dev,
-				     sizeof(struct megasas_ctrl_info),
+				     माप(काष्ठा megasas_ctrl_info),
 				     &instance->ctrl_info_buf_h, GFP_KERNEL);
 
-	if (!instance->ctrl_info_buf) {
+	अगर (!instance->ctrl_info_buf) अणु
 		dev_err(&pdev->dev,
 			"Failed to allocate controller info buffer\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	instance->ld_list_buf =
 		dma_alloc_coherent(&pdev->dev,
-				     sizeof(struct MR_LD_LIST),
+				     माप(काष्ठा MR_LD_LIST),
 				     &instance->ld_list_buf_h, GFP_KERNEL);
 
-	if (!instance->ld_list_buf) {
+	अगर (!instance->ld_list_buf) अणु
 		dev_err(&pdev->dev, "Failed to allocate LD list buffer\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	instance->ld_targetid_list_buf =
 		dma_alloc_coherent(&pdev->dev,
-				sizeof(struct MR_LD_TARGETID_LIST),
+				माप(काष्ठा MR_LD_TARGETID_LIST),
 				&instance->ld_targetid_list_buf_h, GFP_KERNEL);
 
-	if (!instance->ld_targetid_list_buf) {
+	अगर (!instance->ld_targetid_list_buf) अणु
 		dev_err(&pdev->dev,
 			"Failed to allocate LD targetid list buffer\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (!reset_devices) {
-		instance->system_info_buf =
+	अगर (!reset_devices) अणु
+		instance->प्रणाली_info_buf =
 			dma_alloc_coherent(&pdev->dev,
-					sizeof(struct MR_DRV_SYSTEM_INFO),
-					&instance->system_info_h, GFP_KERNEL);
+					माप(काष्ठा MR_DRV_SYSTEM_INFO),
+					&instance->प्रणाली_info_h, GFP_KERNEL);
 		instance->pd_info =
 			dma_alloc_coherent(&pdev->dev,
-					sizeof(struct MR_PD_INFO),
+					माप(काष्ठा MR_PD_INFO),
 					&instance->pd_info_h, GFP_KERNEL);
 		instance->tgt_prop =
 			dma_alloc_coherent(&pdev->dev,
-					sizeof(struct MR_TARGET_PROPERTIES),
+					माप(काष्ठा MR_TARGET_PROPERTIES),
 					&instance->tgt_prop_h, GFP_KERNEL);
 		instance->crash_dump_buf =
 			dma_alloc_coherent(&pdev->dev, CRASH_DMA_BUF_SIZE,
 					&instance->crash_dump_h, GFP_KERNEL);
 
-		if (!instance->system_info_buf)
+		अगर (!instance->प्रणाली_info_buf)
 			dev_err(&instance->pdev->dev,
 				"Failed to allocate system info buffer\n");
 
-		if (!instance->pd_info)
+		अगर (!instance->pd_info)
 			dev_err(&instance->pdev->dev,
 				"Failed to allocate pd_info buffer\n");
 
-		if (!instance->tgt_prop)
+		अगर (!instance->tgt_prop)
 			dev_err(&instance->pdev->dev,
 				"Failed to allocate tgt_prop buffer\n");
 
-		if (!instance->crash_dump_buf)
+		अगर (!instance->crash_dump_buf)
 			dev_err(&instance->pdev->dev,
 				"Failed to allocate crash dump buffer\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * megasas_free_ctrl_dma_buffers -	Free consistent DMA buffers allocated
- *					during driver load time
+ * megasas_मुक्त_ctrl_dma_buffers -	Free consistent DMA buffers allocated
+ *					during driver load समय
  *
  * @instance-				Adapter soft instance
  *
  */
-static inline
-void megasas_free_ctrl_dma_buffers(struct megasas_instance *instance)
-{
-	struct pci_dev *pdev = instance->pdev;
-	struct fusion_context *fusion = instance->ctrl_context;
+अटल अंतरभूत
+व्योम megasas_मुक्त_ctrl_dma_buffers(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा pci_dev *pdev = instance->pdev;
+	काष्ठा fusion_context *fusion = instance->ctrl_context;
 
-	if (instance->evt_detail)
-		dma_free_coherent(&pdev->dev, sizeof(struct megasas_evt_detail),
+	अगर (instance->evt_detail)
+		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा megasas_evt_detail),
 				    instance->evt_detail,
 				    instance->evt_detail_h);
 
-	if (fusion && fusion->ioc_init_request)
-		dma_free_coherent(&pdev->dev,
-				  sizeof(struct MPI2_IOC_INIT_REQUEST),
+	अगर (fusion && fusion->ioc_init_request)
+		dma_मुक्त_coherent(&pdev->dev,
+				  माप(काष्ठा MPI2_IOC_INIT_REQUEST),
 				  fusion->ioc_init_request,
 				  fusion->ioc_init_request_phys);
 
-	if (instance->pd_list_buf)
-		dma_free_coherent(&pdev->dev,
-				    MEGASAS_MAX_PD * sizeof(struct MR_PD_LIST),
+	अगर (instance->pd_list_buf)
+		dma_मुक्त_coherent(&pdev->dev,
+				    MEGASAS_MAX_PD * माप(काष्ठा MR_PD_LIST),
 				    instance->pd_list_buf,
 				    instance->pd_list_buf_h);
 
-	if (instance->ld_list_buf)
-		dma_free_coherent(&pdev->dev, sizeof(struct MR_LD_LIST),
+	अगर (instance->ld_list_buf)
+		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा MR_LD_LIST),
 				    instance->ld_list_buf,
 				    instance->ld_list_buf_h);
 
-	if (instance->ld_targetid_list_buf)
-		dma_free_coherent(&pdev->dev, sizeof(struct MR_LD_TARGETID_LIST),
+	अगर (instance->ld_targetid_list_buf)
+		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा MR_LD_TARGETID_LIST),
 				    instance->ld_targetid_list_buf,
 				    instance->ld_targetid_list_buf_h);
 
-	if (instance->ctrl_info_buf)
-		dma_free_coherent(&pdev->dev, sizeof(struct megasas_ctrl_info),
+	अगर (instance->ctrl_info_buf)
+		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा megasas_ctrl_info),
 				    instance->ctrl_info_buf,
 				    instance->ctrl_info_buf_h);
 
-	if (instance->system_info_buf)
-		dma_free_coherent(&pdev->dev, sizeof(struct MR_DRV_SYSTEM_INFO),
-				    instance->system_info_buf,
-				    instance->system_info_h);
+	अगर (instance->प्रणाली_info_buf)
+		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा MR_DRV_SYSTEM_INFO),
+				    instance->प्रणाली_info_buf,
+				    instance->प्रणाली_info_h);
 
-	if (instance->pd_info)
-		dma_free_coherent(&pdev->dev, sizeof(struct MR_PD_INFO),
+	अगर (instance->pd_info)
+		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा MR_PD_INFO),
 				    instance->pd_info, instance->pd_info_h);
 
-	if (instance->tgt_prop)
-		dma_free_coherent(&pdev->dev, sizeof(struct MR_TARGET_PROPERTIES),
+	अगर (instance->tgt_prop)
+		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा MR_TARGET_PROPERTIES),
 				    instance->tgt_prop, instance->tgt_prop_h);
 
-	if (instance->crash_dump_buf)
-		dma_free_coherent(&pdev->dev, CRASH_DMA_BUF_SIZE,
+	अगर (instance->crash_dump_buf)
+		dma_मुक्त_coherent(&pdev->dev, CRASH_DMA_BUF_SIZE,
 				    instance->crash_dump_buf,
 				    instance->crash_dump_h);
 
-	if (instance->snapdump_prop)
-		dma_free_coherent(&pdev->dev,
-				  sizeof(struct MR_SNAPDUMP_PROPERTIES),
+	अगर (instance->snapdump_prop)
+		dma_मुक्त_coherent(&pdev->dev,
+				  माप(काष्ठा MR_SNAPDUMP_PROPERTIES),
 				  instance->snapdump_prop,
 				  instance->snapdump_prop_h);
 
-	if (instance->host_device_list_buf)
-		dma_free_coherent(&pdev->dev,
+	अगर (instance->host_device_list_buf)
+		dma_मुक्त_coherent(&pdev->dev,
 				  HOST_DEVICE_LIST_SZ,
 				  instance->host_device_list_buf,
 				  instance->host_device_list_buf_h);
 
-}
+पूर्ण
 
 /*
  * megasas_init_ctrl_params -		Initialize controller's instance
- *					parameters before FW init
+ *					parameters beक्रमe FW init
  * @instance -				Adapter soft instance
- * @return -				void
+ * @वापस -				व्योम
  */
-static inline void megasas_init_ctrl_params(struct megasas_instance *instance)
-{
+अटल अंतरभूत व्योम megasas_init_ctrl_params(काष्ठा megasas_instance *instance)
+अणु
 	instance->fw_crash_state = UNAVAILABLE;
 
-	megasas_poll_wait_aen = 0;
-	instance->issuepend_done = 1;
+	megasas_poll_रुको_aen = 0;
+	instance->issuepend_करोne = 1;
 	atomic_set(&instance->adprecovery, MEGASAS_HBA_OPERATIONAL);
 
 	/*
 	 * Initialize locks and queues
 	 */
 	INIT_LIST_HEAD(&instance->cmd_pool);
-	INIT_LIST_HEAD(&instance->internal_reset_pending_q);
+	INIT_LIST_HEAD(&instance->पूर्णांकernal_reset_pending_q);
 
 	atomic_set(&instance->fw_outstanding, 0);
 	atomic64_set(&instance->total_io_count, 0);
 
-	init_waitqueue_head(&instance->int_cmd_wait_q);
-	init_waitqueue_head(&instance->abort_cmd_wait_q);
+	init_रुकोqueue_head(&instance->पूर्णांक_cmd_रुको_q);
+	init_रुकोqueue_head(&instance->पात_cmd_रुको_q);
 
 	spin_lock_init(&instance->crashdump_lock);
 	spin_lock_init(&instance->mfi_pool_lock);
@@ -7378,88 +7379,88 @@ static inline void megasas_init_ctrl_params(struct megasas_instance *instance)
 
 	mutex_init(&instance->reset_mutex);
 
-	if ((instance->pdev->device == PCI_DEVICE_ID_LSI_SAS0073SKINNY) ||
+	अगर ((instance->pdev->device == PCI_DEVICE_ID_LSI_SAS0073SKINNY) ||
 	    (instance->pdev->device == PCI_DEVICE_ID_LSI_SAS0071SKINNY))
 		instance->flag_ieee = 1;
 
 	megasas_dbg_lvl = 0;
 	instance->flag = 0;
 	instance->unload = 1;
-	instance->last_time = 0;
+	instance->last_समय = 0;
 	instance->disableOnlineCtrlReset = 1;
 	instance->UnevenSpanSupport = 0;
 	instance->smp_affinity_enable = smp_affinity_enable ? true : false;
 	instance->msix_load_balance = false;
 
-	if (instance->adapter_type != MFI_SERIES)
+	अगर (instance->adapter_type != MFI_SERIES)
 		INIT_WORK(&instance->work_init, megasas_fusion_ocr_wq);
-	else
+	अन्यथा
 		INIT_WORK(&instance->work_init, process_fw_state_change_wq);
-}
+पूर्ण
 
 /**
- * megasas_probe_one -	PCI hotplug entry point
- * @pdev:		PCI device structure
+ * megasas_probe_one -	PCI hotplug entry poपूर्णांक
+ * @pdev:		PCI device काष्ठाure
  * @id:			PCI ids of supported hotplugged adapter
  */
-static int megasas_probe_one(struct pci_dev *pdev,
-			     const struct pci_device_id *id)
-{
-	int rval, pos;
-	struct Scsi_Host *host;
-	struct megasas_instance *instance;
+अटल पूर्णांक megasas_probe_one(काष्ठा pci_dev *pdev,
+			     स्थिर काष्ठा pci_device_id *id)
+अणु
+	पूर्णांक rval, pos;
+	काष्ठा Scsi_Host *host;
+	काष्ठा megasas_instance *instance;
 	u16 control = 0;
 
-	switch (pdev->device) {
-	case PCI_DEVICE_ID_LSI_AERO_10E0:
-	case PCI_DEVICE_ID_LSI_AERO_10E3:
-	case PCI_DEVICE_ID_LSI_AERO_10E4:
-	case PCI_DEVICE_ID_LSI_AERO_10E7:
+	चयन (pdev->device) अणु
+	हाल PCI_DEVICE_ID_LSI_AERO_10E0:
+	हाल PCI_DEVICE_ID_LSI_AERO_10E3:
+	हाल PCI_DEVICE_ID_LSI_AERO_10E4:
+	हाल PCI_DEVICE_ID_LSI_AERO_10E7:
 		dev_err(&pdev->dev, "Adapter is in non secure mode\n");
-		return 1;
-	case PCI_DEVICE_ID_LSI_AERO_10E1:
-	case PCI_DEVICE_ID_LSI_AERO_10E5:
+		वापस 1;
+	हाल PCI_DEVICE_ID_LSI_AERO_10E1:
+	हाल PCI_DEVICE_ID_LSI_AERO_10E5:
 		dev_info(&pdev->dev, "Adapter is in configurable secure mode\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Reset MSI-X in the kdump kernel */
-	if (reset_devices) {
+	अगर (reset_devices) अणु
 		pos = pci_find_capability(pdev, PCI_CAP_ID_MSIX);
-		if (pos) {
-			pci_read_config_word(pdev, pos + PCI_MSIX_FLAGS,
+		अगर (pos) अणु
+			pci_पढ़ो_config_word(pdev, pos + PCI_MSIX_FLAGS,
 					     &control);
-			if (control & PCI_MSIX_FLAGS_ENABLE) {
+			अगर (control & PCI_MSIX_FLAGS_ENABLE) अणु
 				dev_info(&pdev->dev, "resetting MSI-X\n");
-				pci_write_config_word(pdev,
+				pci_ग_लिखो_config_word(pdev,
 						      pos + PCI_MSIX_FLAGS,
 						      control &
 						      ~PCI_MSIX_FLAGS_ENABLE);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * PCI prepping: enable device set bus mastering and dma mask
 	 */
 	rval = pci_enable_device_mem(pdev);
 
-	if (rval) {
-		return rval;
-	}
+	अगर (rval) अणु
+		वापस rval;
+	पूर्ण
 
 	pci_set_master(pdev);
 
-	host = scsi_host_alloc(&megasas_template,
-			       sizeof(struct megasas_instance));
+	host = scsi_host_alloc(&megasas_ढाँचा,
+			       माप(काष्ठा megasas_instance));
 
-	if (!host) {
-		dev_printk(KERN_DEBUG, &pdev->dev, "scsi_host_alloc failed\n");
-		goto fail_alloc_instance;
-	}
+	अगर (!host) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &pdev->dev, "scsi_host_alloc failed\n");
+		जाओ fail_alloc_instance;
+	पूर्ण
 
-	instance = (struct megasas_instance *)host->hostdata;
-	memset(instance, 0, sizeof(*instance));
+	instance = (काष्ठा megasas_instance *)host->hostdata;
+	स_रखो(instance, 0, माप(*instance));
 	atomic_set(&instance->fw_reset_no_pci_access, 0);
 
 	/*
@@ -7475,31 +7476,31 @@ static int megasas_probe_one(struct pci_dev *pdev,
 	/*
 	 * Initialize MFI Firmware
 	 */
-	if (megasas_init_fw(instance))
-		goto fail_init_mfi;
+	अगर (megasas_init_fw(instance))
+		जाओ fail_init_mfi;
 
-	if (instance->requestorId) {
-		if (instance->PlasmaFW111) {
+	अगर (instance->requestorId) अणु
+		अगर (instance->Plयंत्रaFW111) अणु
 			instance->vf_affiliation_111 =
 				dma_alloc_coherent(&pdev->dev,
-					sizeof(struct MR_LD_VF_AFFILIATION_111),
+					माप(काष्ठा MR_LD_VF_AFFILIATION_111),
 					&instance->vf_affiliation_111_h,
 					GFP_KERNEL);
-			if (!instance->vf_affiliation_111)
+			अगर (!instance->vf_affiliation_111)
 				dev_warn(&pdev->dev, "Can't allocate "
 				       "memory for VF affiliation buffer\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			instance->vf_affiliation =
 				dma_alloc_coherent(&pdev->dev,
 					(MAX_LOGICAL_DRIVES + 1) *
-					sizeof(struct MR_LD_VF_AFFILIATION),
+					माप(काष्ठा MR_LD_VF_AFFILIATION),
 					&instance->vf_affiliation_h,
 					GFP_KERNEL);
-			if (!instance->vf_affiliation)
+			अगर (!instance->vf_affiliation)
 				dev_warn(&pdev->dev, "Can't allocate "
 				       "memory for VF affiliation buffer\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Store instance in PCI softstate
@@ -7507,7 +7508,7 @@ static int megasas_probe_one(struct pci_dev *pdev,
 	pci_set_drvdata(pdev, instance);
 
 	/*
-	 * Add this controller to megasas_mgmt_info structure so that it
+	 * Add this controller to megasas_mgmt_info काष्ठाure so that it
 	 * can be exported to management applications
 	 */
 	megasas_mgmt_info.count++;
@@ -7517,214 +7518,214 @@ static int megasas_probe_one(struct pci_dev *pdev,
 	/*
 	 * Register with SCSI mid-layer
 	 */
-	if (megasas_io_attach(instance))
-		goto fail_io_attach;
+	अगर (megasas_io_attach(instance))
+		जाओ fail_io_attach;
 
 	instance->unload = 0;
 	/*
 	 * Trigger SCSI to scan our drives
 	 */
-	if (!instance->enable_fw_dev_list ||
+	अगर (!instance->enable_fw_dev_list ||
 	    (instance->host_device_list_buf->count > 0))
 		scsi_scan_host(host);
 
 	/*
-	 * Initiate AEN (Asynchronous Event Notification)
+	 * Initiate AEN (Asynchronous Event Notअगरication)
 	 */
-	if (megasas_start_aen(instance)) {
-		dev_printk(KERN_DEBUG, &pdev->dev, "start aen failed\n");
-		goto fail_start_aen;
-	}
+	अगर (megasas_start_aen(instance)) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &pdev->dev, "start aen failed\n");
+		जाओ fail_start_aen;
+	पूर्ण
 
 	megasas_setup_debugfs(instance);
 
 	/* Get current SR-IOV LD/VF affiliation */
-	if (instance->requestorId)
+	अगर (instance->requestorId)
 		megasas_get_ld_vf_affiliation(instance, 1);
 
-	return 0;
+	वापस 0;
 
 fail_start_aen:
 fail_io_attach:
 	megasas_mgmt_info.count--;
 	megasas_mgmt_info.max_index--;
-	megasas_mgmt_info.instance[megasas_mgmt_info.max_index] = NULL;
+	megasas_mgmt_info.instance[megasas_mgmt_info.max_index] = शून्य;
 
-	instance->instancet->disable_intr(instance);
+	instance->instancet->disable_पूर्णांकr(instance);
 	megasas_destroy_irqs(instance);
 
-	if (instance->adapter_type != MFI_SERIES)
+	अगर (instance->adapter_type != MFI_SERIES)
 		megasas_release_fusion(instance);
-	else
+	अन्यथा
 		megasas_release_mfi(instance);
-	if (instance->msix_vectors)
-		pci_free_irq_vectors(instance->pdev);
+	अगर (instance->msix_vectors)
+		pci_मुक्त_irq_vectors(instance->pdev);
 fail_init_mfi:
 	scsi_host_put(host);
 fail_alloc_instance:
 	pci_disable_device(pdev);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /**
  * megasas_flush_cache -	Requests FW to flush all its caches
  * @instance:			Adapter soft state
  */
-static void megasas_flush_cache(struct megasas_instance *instance)
-{
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
+अटल व्योम megasas_flush_cache(काष्ठा megasas_instance *instance)
+अणु
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR)
-		return;
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR)
+		वापस;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd)
-		return;
+	अगर (!cmd)
+		वापस;
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = 0x0;
 	dcmd->sge_count = 0;
-	dcmd->flags = cpu_to_le16(MFI_FRAME_DIR_NONE);
-	dcmd->timeout = 0;
+	dcmd->flags = cpu_to_le16(MFI_FRAME_सूची_NONE);
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
 	dcmd->data_xfer_len = 0;
 	dcmd->opcode = cpu_to_le32(MR_DCMD_CTRL_CACHE_FLUSH);
 	dcmd->mbox.b[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
 
-	if (megasas_issue_blocked_cmd(instance, cmd, MFI_IO_TIMEOUT_SECS)
-			!= DCMD_SUCCESS) {
+	अगर (megasas_issue_blocked_cmd(instance, cmd, MFI_IO_TIMEOUT_SECS)
+			!= DCMD_SUCCESS) अणु
 		dev_err(&instance->pdev->dev,
 			"return from %s %d\n", __func__, __LINE__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	megasas_return_cmd(instance, cmd);
-}
+	megasas_वापस_cmd(instance, cmd);
+पूर्ण
 
 /**
- * megasas_shutdown_controller -	Instructs FW to shutdown the controller
+ * megasas_shutकरोwn_controller -	Inकाष्ठाs FW to shutकरोwn the controller
  * @instance:				Adapter soft state
- * @opcode:				Shutdown/Hibernate
+ * @opcode:				Shutकरोwn/Hibernate
  */
-static void megasas_shutdown_controller(struct megasas_instance *instance,
+अटल व्योम megasas_shutकरोwn_controller(काष्ठा megasas_instance *instance,
 					u32 opcode)
-{
-	struct megasas_cmd *cmd;
-	struct megasas_dcmd_frame *dcmd;
+अणु
+	काष्ठा megasas_cmd *cmd;
+	काष्ठा megasas_dcmd_frame *dcmd;
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR)
-		return;
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR)
+		वापस;
 
 	cmd = megasas_get_cmd(instance);
 
-	if (!cmd)
-		return;
+	अगर (!cmd)
+		वापस;
 
-	if (instance->aen_cmd)
-		megasas_issue_blocked_abort_cmd(instance,
+	अगर (instance->aen_cmd)
+		megasas_issue_blocked_पात_cmd(instance,
 			instance->aen_cmd, MFI_IO_TIMEOUT_SECS);
-	if (instance->map_update_cmd)
-		megasas_issue_blocked_abort_cmd(instance,
+	अगर (instance->map_update_cmd)
+		megasas_issue_blocked_पात_cmd(instance,
 			instance->map_update_cmd, MFI_IO_TIMEOUT_SECS);
-	if (instance->jbod_seq_cmd)
-		megasas_issue_blocked_abort_cmd(instance,
+	अगर (instance->jbod_seq_cmd)
+		megasas_issue_blocked_पात_cmd(instance,
 			instance->jbod_seq_cmd, MFI_IO_TIMEOUT_SECS);
 
 	dcmd = &cmd->frame->dcmd;
 
-	memset(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
+	स_रखो(dcmd->mbox.b, 0, MFI_MBOX_SIZE);
 
 	dcmd->cmd = MFI_CMD_DCMD;
 	dcmd->cmd_status = 0x0;
 	dcmd->sge_count = 0;
-	dcmd->flags = cpu_to_le16(MFI_FRAME_DIR_NONE);
-	dcmd->timeout = 0;
+	dcmd->flags = cpu_to_le16(MFI_FRAME_सूची_NONE);
+	dcmd->समयout = 0;
 	dcmd->pad_0 = 0;
 	dcmd->data_xfer_len = 0;
 	dcmd->opcode = cpu_to_le32(opcode);
 
-	if (megasas_issue_blocked_cmd(instance, cmd, MFI_IO_TIMEOUT_SECS)
-			!= DCMD_SUCCESS) {
+	अगर (megasas_issue_blocked_cmd(instance, cmd, MFI_IO_TIMEOUT_SECS)
+			!= DCMD_SUCCESS) अणु
 		dev_err(&instance->pdev->dev,
 			"return from %s %d\n", __func__, __LINE__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	megasas_return_cmd(instance, cmd);
-}
+	megasas_वापस_cmd(instance, cmd);
+पूर्ण
 
 /**
- * megasas_suspend -	driver suspend entry point
- * @dev:		Device structure
+ * megasas_suspend -	driver suspend entry poपूर्णांक
+ * @dev:		Device काष्ठाure
  */
-static int __maybe_unused
-megasas_suspend(struct device *dev)
-{
-	struct megasas_instance *instance;
+अटल पूर्णांक __maybe_unused
+megasas_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा megasas_instance *instance;
 
 	instance = dev_get_drvdata(dev);
 
-	if (!instance)
-		return 0;
+	अगर (!instance)
+		वापस 0;
 
 	instance->unload = 1;
 
 	dev_info(dev, "%s is called\n", __func__);
 
-	/* Shutdown SR-IOV heartbeat timer */
-	if (instance->requestorId && !instance->skip_heartbeat_timer_del)
-		del_timer_sync(&instance->sriov_heartbeat_timer);
+	/* Shutकरोwn SR-IOV heartbeat समयr */
+	अगर (instance->requestorId && !instance->skip_heartbeat_समयr_del)
+		del_समयr_sync(&instance->sriov_heartbeat_समयr);
 
-	/* Stop the FW fault detection watchdog */
-	if (instance->adapter_type != MFI_SERIES)
-		megasas_fusion_stop_watchdog(instance);
+	/* Stop the FW fault detection watchकरोg */
+	अगर (instance->adapter_type != MFI_SERIES)
+		megasas_fusion_stop_watchकरोg(instance);
 
 	megasas_flush_cache(instance);
-	megasas_shutdown_controller(instance, MR_DCMD_HIBERNATE_SHUTDOWN);
+	megasas_shutकरोwn_controller(instance, MR_DCMD_HIBERNATE_SHUTDOWN);
 
-	/* cancel the delayed work if this work still in queue */
-	if (instance->ev != NULL) {
-		struct megasas_aen_event *ev = instance->ev;
+	/* cancel the delayed work अगर this work still in queue */
+	अगर (instance->ev != शून्य) अणु
+		काष्ठा megasas_aen_event *ev = instance->ev;
 		cancel_delayed_work_sync(&ev->hotplug_work);
-		instance->ev = NULL;
-	}
+		instance->ev = शून्य;
+	पूर्ण
 
-	tasklet_kill(&instance->isr_tasklet);
+	tasklet_समाप्त(&instance->isr_tasklet);
 
 	pci_set_drvdata(instance->pdev, instance);
-	instance->instancet->disable_intr(instance);
+	instance->instancet->disable_पूर्णांकr(instance);
 
 	megasas_destroy_irqs(instance);
 
-	if (instance->msix_vectors)
-		pci_free_irq_vectors(instance->pdev);
+	अगर (instance->msix_vectors)
+		pci_मुक्त_irq_vectors(instance->pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * megasas_resume-      driver resume entry point
- * @dev:		Device structure
+ * megasas_resume-      driver resume entry poपूर्णांक
+ * @dev:		Device काष्ठाure
  */
-static int __maybe_unused
-megasas_resume(struct device *dev)
-{
-	int rval;
-	struct Scsi_Host *host;
-	struct megasas_instance *instance;
+अटल पूर्णांक __maybe_unused
+megasas_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक rval;
+	काष्ठा Scsi_Host *host;
+	काष्ठा megasas_instance *instance;
 	u32 status_reg;
 
 	instance = dev_get_drvdata(dev);
 
-	if (!instance)
-		return 0;
+	अगर (!instance)
+		वापस 0;
 
 	host = instance->host;
 
@@ -7734,36 +7735,36 @@ megasas_resume(struct device *dev)
 	 * We expect the FW state to be READY
 	 */
 
-	if (megasas_transition_to_ready(instance, 0)) {
+	अगर (megasas_transition_to_पढ़ोy(instance, 0)) अणु
 		dev_info(&instance->pdev->dev,
 			 "Failed to transition controller to ready from %s!\n",
 			 __func__);
-		if (instance->adapter_type != MFI_SERIES) {
+		अगर (instance->adapter_type != MFI_SERIES) अणु
 			status_reg =
-				instance->instancet->read_fw_status_reg(instance);
-			if (!(status_reg & MFI_RESET_ADAPTER) ||
-				((megasas_adp_reset_wait_for_ready
+				instance->instancet->पढ़ो_fw_status_reg(instance);
+			अगर (!(status_reg & MFI_RESET_ADAPTER) ||
+				((megasas_adp_reset_रुको_क्रम_पढ़ोy
 				(instance, true, 0)) == FAILED))
-				goto fail_ready_state;
-		} else {
+				जाओ fail_पढ़ोy_state;
+		पूर्ण अन्यथा अणु
 			atomic_set(&instance->fw_reset_no_pci_access, 1);
 			instance->instancet->adp_reset
 				(instance, instance->reg_set);
 			atomic_set(&instance->fw_reset_no_pci_access, 0);
 
-			/* waiting for about 30 seconds before retry */
+			/* रुकोing क्रम about 30 seconds beक्रमe retry */
 			ssleep(30);
 
-			if (megasas_transition_to_ready(instance, 0))
-				goto fail_ready_state;
-		}
+			अगर (megasas_transition_to_पढ़ोy(instance, 0))
+				जाओ fail_पढ़ोy_state;
+		पूर्ण
 
 		dev_info(&instance->pdev->dev,
 			 "FW restarted successfully from %s!\n",
 			 __func__);
-	}
-	if (megasas_set_dma_mask(instance))
-		goto fail_set_dma_mask;
+	पूर्ण
+	अगर (megasas_set_dma_mask(instance))
+		जाओ fail_set_dma_mask;
 
 	/*
 	 * Initialize MFI Firmware
@@ -7773,311 +7774,311 @@ megasas_resume(struct device *dev)
 	atomic_set(&instance->ldio_outstanding, 0);
 
 	/* Now re-enable MSI-X */
-	if (instance->msix_vectors)
+	अगर (instance->msix_vectors)
 		megasas_alloc_irq_vectors(instance);
 
-	if (!instance->msix_vectors) {
+	अगर (!instance->msix_vectors) अणु
 		rval = pci_alloc_irq_vectors(instance->pdev, 1, 1,
 					     PCI_IRQ_LEGACY);
-		if (rval < 0)
-			goto fail_reenable_msix;
-	}
+		अगर (rval < 0)
+			जाओ fail_reenable_msix;
+	पूर्ण
 
 	megasas_setup_reply_map(instance);
 
-	if (instance->adapter_type != MFI_SERIES) {
+	अगर (instance->adapter_type != MFI_SERIES) अणु
 		megasas_reset_reply_desc(instance);
-		if (megasas_ioc_init_fusion(instance)) {
-			megasas_free_cmds(instance);
-			megasas_free_cmds_fusion(instance);
-			goto fail_init_mfi;
-		}
-		if (!megasas_get_map_info(instance))
+		अगर (megasas_ioc_init_fusion(instance)) अणु
+			megasas_मुक्त_cmds(instance);
+			megasas_मुक्त_cmds_fusion(instance);
+			जाओ fail_init_mfi;
+		पूर्ण
+		अगर (!megasas_get_map_info(instance))
 			megasas_sync_map_info(instance);
-	} else {
+	पूर्ण अन्यथा अणु
 		*instance->producer = 0;
 		*instance->consumer = 0;
-		if (megasas_issue_init_mfi(instance))
-			goto fail_init_mfi;
-	}
+		अगर (megasas_issue_init_mfi(instance))
+			जाओ fail_init_mfi;
+	पूर्ण
 
-	if (megasas_get_ctrl_info(instance) != DCMD_SUCCESS)
-		goto fail_init_mfi;
+	अगर (megasas_get_ctrl_info(instance) != DCMD_SUCCESS)
+		जाओ fail_init_mfi;
 
 	tasklet_init(&instance->isr_tasklet, instance->instancet->tasklet,
-		     (unsigned long)instance);
+		     (अचिन्हित दीर्घ)instance);
 
-	if (instance->msix_vectors ?
+	अगर (instance->msix_vectors ?
 			megasas_setup_irqs_msix(instance, 0) :
 			megasas_setup_irqs_ioapic(instance))
-		goto fail_init_mfi;
+		जाओ fail_init_mfi;
 
-	if (instance->adapter_type != MFI_SERIES)
+	अगर (instance->adapter_type != MFI_SERIES)
 		megasas_setup_irq_poll(instance);
 
-	/* Re-launch SR-IOV heartbeat timer */
-	if (instance->requestorId) {
-		if (!megasas_sriov_start_heartbeat(instance, 0))
-			megasas_start_timer(instance);
-		else {
-			instance->skip_heartbeat_timer_del = 1;
-			goto fail_init_mfi;
-		}
-	}
+	/* Re-launch SR-IOV heartbeat समयr */
+	अगर (instance->requestorId) अणु
+		अगर (!megasas_sriov_start_heartbeat(instance, 0))
+			megasas_start_समयr(instance);
+		अन्यथा अणु
+			instance->skip_heartbeat_समयr_del = 1;
+			जाओ fail_init_mfi;
+		पूर्ण
+	पूर्ण
 
-	instance->instancet->enable_intr(instance);
+	instance->instancet->enable_पूर्णांकr(instance);
 	megasas_setup_jbod_map(instance);
 	instance->unload = 0;
 
 	/*
-	 * Initiate AEN (Asynchronous Event Notification)
+	 * Initiate AEN (Asynchronous Event Notअगरication)
 	 */
-	if (megasas_start_aen(instance))
+	अगर (megasas_start_aen(instance))
 		dev_err(&instance->pdev->dev, "Start AEN failed\n");
 
-	/* Re-launch FW fault watchdog */
-	if (instance->adapter_type != MFI_SERIES)
-		if (megasas_fusion_start_watchdog(instance) != SUCCESS)
-			goto fail_start_watchdog;
+	/* Re-launch FW fault watchकरोg */
+	अगर (instance->adapter_type != MFI_SERIES)
+		अगर (megasas_fusion_start_watchकरोg(instance) != SUCCESS)
+			जाओ fail_start_watchकरोg;
 
-	return 0;
+	वापस 0;
 
-fail_start_watchdog:
-	if (instance->requestorId && !instance->skip_heartbeat_timer_del)
-		del_timer_sync(&instance->sriov_heartbeat_timer);
+fail_start_watchकरोg:
+	अगर (instance->requestorId && !instance->skip_heartbeat_समयr_del)
+		del_समयr_sync(&instance->sriov_heartbeat_समयr);
 fail_init_mfi:
-	megasas_free_ctrl_dma_buffers(instance);
-	megasas_free_ctrl_mem(instance);
+	megasas_मुक्त_ctrl_dma_buffers(instance);
+	megasas_मुक्त_ctrl_mem(instance);
 	scsi_host_put(host);
 
 fail_reenable_msix:
 fail_set_dma_mask:
-fail_ready_state:
+fail_पढ़ोy_state:
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static inline int
-megasas_wait_for_adapter_operational(struct megasas_instance *instance)
-{
-	int wait_time = MEGASAS_RESET_WAIT_TIME * 2;
-	int i;
+अटल अंतरभूत पूर्णांक
+megasas_रुको_क्रम_adapter_operational(काष्ठा megasas_instance *instance)
+अणु
+	पूर्णांक रुको_समय = MEGASAS_RESET_WAIT_TIME * 2;
+	पूर्णांक i;
 	u8 adp_state;
 
-	for (i = 0; i < wait_time; i++) {
-		adp_state = atomic_read(&instance->adprecovery);
-		if ((adp_state == MEGASAS_HBA_OPERATIONAL) ||
+	क्रम (i = 0; i < रुको_समय; i++) अणु
+		adp_state = atomic_पढ़ो(&instance->adprecovery);
+		अगर ((adp_state == MEGASAS_HBA_OPERATIONAL) ||
 		    (adp_state == MEGASAS_HW_CRITICAL_ERROR))
-			break;
+			अवरोध;
 
-		if (!(i % MEGASAS_RESET_NOTICE_INTERVAL))
+		अगर (!(i % MEGASAS_RESET_NOTICE_INTERVAL))
 			dev_notice(&instance->pdev->dev, "waiting for controller reset to finish\n");
 
 		msleep(1000);
-	}
+	पूर्ण
 
-	if (adp_state != MEGASAS_HBA_OPERATIONAL) {
+	अगर (adp_state != MEGASAS_HBA_OPERATIONAL) अणु
 		dev_info(&instance->pdev->dev,
 			 "%s HBA failed to become operational, adp_state %d\n",
 			 __func__, adp_state);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * megasas_detach_one -	PCI hot"un"plug entry point
- * @pdev:		PCI device structure
+ * megasas_detach_one -	PCI hot"un"plug entry poपूर्णांक
+ * @pdev:		PCI device काष्ठाure
  */
-static void megasas_detach_one(struct pci_dev *pdev)
-{
-	int i;
-	struct Scsi_Host *host;
-	struct megasas_instance *instance;
-	struct fusion_context *fusion;
+अटल व्योम megasas_detach_one(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक i;
+	काष्ठा Scsi_Host *host;
+	काष्ठा megasas_instance *instance;
+	काष्ठा fusion_context *fusion;
 	u32 pd_seq_map_sz;
 
 	instance = pci_get_drvdata(pdev);
 
-	if (!instance)
-		return;
+	अगर (!instance)
+		वापस;
 
 	host = instance->host;
 	fusion = instance->ctrl_context;
 
-	/* Shutdown SR-IOV heartbeat timer */
-	if (instance->requestorId && !instance->skip_heartbeat_timer_del)
-		del_timer_sync(&instance->sriov_heartbeat_timer);
+	/* Shutकरोwn SR-IOV heartbeat समयr */
+	अगर (instance->requestorId && !instance->skip_heartbeat_समयr_del)
+		del_समयr_sync(&instance->sriov_heartbeat_समयr);
 
-	/* Stop the FW fault detection watchdog */
-	if (instance->adapter_type != MFI_SERIES)
-		megasas_fusion_stop_watchdog(instance);
+	/* Stop the FW fault detection watchकरोg */
+	अगर (instance->adapter_type != MFI_SERIES)
+		megasas_fusion_stop_watchकरोg(instance);
 
-	if (instance->fw_crash_state != UNAVAILABLE)
-		megasas_free_host_crash_buffer(instance);
-	scsi_remove_host(instance->host);
+	अगर (instance->fw_crash_state != UNAVAILABLE)
+		megasas_मुक्त_host_crash_buffer(instance);
+	scsi_हटाओ_host(instance->host);
 	instance->unload = 1;
 
-	if (megasas_wait_for_adapter_operational(instance))
-		goto skip_firing_dcmds;
+	अगर (megasas_रुको_क्रम_adapter_operational(instance))
+		जाओ skip_firing_dcmds;
 
 	megasas_flush_cache(instance);
-	megasas_shutdown_controller(instance, MR_DCMD_CTRL_SHUTDOWN);
+	megasas_shutकरोwn_controller(instance, MR_DCMD_CTRL_SHUTDOWN);
 
 skip_firing_dcmds:
-	/* cancel the delayed work if this work still in queue*/
-	if (instance->ev != NULL) {
-		struct megasas_aen_event *ev = instance->ev;
+	/* cancel the delayed work अगर this work still in queue*/
+	अगर (instance->ev != शून्य) अणु
+		काष्ठा megasas_aen_event *ev = instance->ev;
 		cancel_delayed_work_sync(&ev->hotplug_work);
-		instance->ev = NULL;
-	}
+		instance->ev = शून्य;
+	पूर्ण
 
-	/* cancel all wait events */
-	wake_up_all(&instance->int_cmd_wait_q);
+	/* cancel all रुको events */
+	wake_up_all(&instance->पूर्णांक_cmd_रुको_q);
 
-	tasklet_kill(&instance->isr_tasklet);
+	tasklet_समाप्त(&instance->isr_tasklet);
 
 	/*
 	 * Take the instance off the instance array. Note that we will not
 	 * decrement the max_index. We let this array be sparse array
 	 */
-	for (i = 0; i < megasas_mgmt_info.max_index; i++) {
-		if (megasas_mgmt_info.instance[i] == instance) {
+	क्रम (i = 0; i < megasas_mgmt_info.max_index; i++) अणु
+		अगर (megasas_mgmt_info.instance[i] == instance) अणु
 			megasas_mgmt_info.count--;
-			megasas_mgmt_info.instance[i] = NULL;
+			megasas_mgmt_info.instance[i] = शून्य;
 
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	instance->instancet->disable_intr(instance);
+	instance->instancet->disable_पूर्णांकr(instance);
 
 	megasas_destroy_irqs(instance);
 
-	if (instance->msix_vectors)
-		pci_free_irq_vectors(instance->pdev);
+	अगर (instance->msix_vectors)
+		pci_मुक्त_irq_vectors(instance->pdev);
 
-	if (instance->adapter_type >= VENTURA_SERIES) {
-		for (i = 0; i < MAX_LOGICAL_DRIVES_EXT; ++i)
-			kfree(fusion->stream_detect_by_ld[i]);
-		kfree(fusion->stream_detect_by_ld);
-		fusion->stream_detect_by_ld = NULL;
-	}
+	अगर (instance->adapter_type >= VENTURA_SERIES) अणु
+		क्रम (i = 0; i < MAX_LOGICAL_DRIVES_EXT; ++i)
+			kमुक्त(fusion->stream_detect_by_ld[i]);
+		kमुक्त(fusion->stream_detect_by_ld);
+		fusion->stream_detect_by_ld = शून्य;
+	पूर्ण
 
 
-	if (instance->adapter_type != MFI_SERIES) {
+	अगर (instance->adapter_type != MFI_SERIES) अणु
 		megasas_release_fusion(instance);
-			pd_seq_map_sz = sizeof(struct MR_PD_CFG_SEQ_NUM_SYNC) +
-				(sizeof(struct MR_PD_CFG_SEQ) *
+			pd_seq_map_sz = माप(काष्ठा MR_PD_CFG_SEQ_NUM_SYNC) +
+				(माप(काष्ठा MR_PD_CFG_SEQ) *
 					(MAX_PHYSICAL_DEVICES - 1));
-		for (i = 0; i < 2 ; i++) {
-			if (fusion->ld_map[i])
-				dma_free_coherent(&instance->pdev->dev,
+		क्रम (i = 0; i < 2 ; i++) अणु
+			अगर (fusion->ld_map[i])
+				dma_मुक्त_coherent(&instance->pdev->dev,
 						  fusion->max_map_sz,
 						  fusion->ld_map[i],
 						  fusion->ld_map_phys[i]);
-			if (fusion->ld_drv_map[i]) {
-				if (is_vmalloc_addr(fusion->ld_drv_map[i]))
-					vfree(fusion->ld_drv_map[i]);
-				else
-					free_pages((ulong)fusion->ld_drv_map[i],
+			अगर (fusion->ld_drv_map[i]) अणु
+				अगर (is_vदो_स्मृति_addr(fusion->ld_drv_map[i]))
+					vमुक्त(fusion->ld_drv_map[i]);
+				अन्यथा
+					मुक्त_pages((uदीर्घ)fusion->ld_drv_map[i],
 						   fusion->drv_map_pages);
-			}
+			पूर्ण
 
-			if (fusion->pd_seq_sync[i])
-				dma_free_coherent(&instance->pdev->dev,
+			अगर (fusion->pd_seq_sync[i])
+				dma_मुक्त_coherent(&instance->pdev->dev,
 					pd_seq_map_sz,
 					fusion->pd_seq_sync[i],
 					fusion->pd_seq_phys[i]);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		megasas_release_mfi(instance);
-	}
+	पूर्ण
 
-	if (instance->vf_affiliation)
-		dma_free_coherent(&pdev->dev, (MAX_LOGICAL_DRIVES + 1) *
-				    sizeof(struct MR_LD_VF_AFFILIATION),
+	अगर (instance->vf_affiliation)
+		dma_मुक्त_coherent(&pdev->dev, (MAX_LOGICAL_DRIVES + 1) *
+				    माप(काष्ठा MR_LD_VF_AFFILIATION),
 				    instance->vf_affiliation,
 				    instance->vf_affiliation_h);
 
-	if (instance->vf_affiliation_111)
-		dma_free_coherent(&pdev->dev,
-				    sizeof(struct MR_LD_VF_AFFILIATION_111),
+	अगर (instance->vf_affiliation_111)
+		dma_मुक्त_coherent(&pdev->dev,
+				    माप(काष्ठा MR_LD_VF_AFFILIATION_111),
 				    instance->vf_affiliation_111,
 				    instance->vf_affiliation_111_h);
 
-	if (instance->hb_host_mem)
-		dma_free_coherent(&pdev->dev, sizeof(struct MR_CTRL_HB_HOST_MEM),
+	अगर (instance->hb_host_mem)
+		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा MR_CTRL_HB_HOST_MEM),
 				    instance->hb_host_mem,
 				    instance->hb_host_mem_h);
 
-	megasas_free_ctrl_dma_buffers(instance);
+	megasas_मुक्त_ctrl_dma_buffers(instance);
 
-	megasas_free_ctrl_mem(instance);
+	megasas_मुक्त_ctrl_mem(instance);
 
 	megasas_destroy_debugfs(instance);
 
 	scsi_host_put(host);
 
 	pci_disable_device(pdev);
-}
+पूर्ण
 
 /**
- * megasas_shutdown -	Shutdown entry point
- * @pdev:		PCI device structure
+ * megasas_shutकरोwn -	Shutकरोwn entry poपूर्णांक
+ * @pdev:		PCI device काष्ठाure
  */
-static void megasas_shutdown(struct pci_dev *pdev)
-{
-	struct megasas_instance *instance = pci_get_drvdata(pdev);
+अटल व्योम megasas_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा megasas_instance *instance = pci_get_drvdata(pdev);
 
-	if (!instance)
-		return;
+	अगर (!instance)
+		वापस;
 
 	instance->unload = 1;
 
-	if (megasas_wait_for_adapter_operational(instance))
-		goto skip_firing_dcmds;
+	अगर (megasas_रुको_क्रम_adapter_operational(instance))
+		जाओ skip_firing_dcmds;
 
 	megasas_flush_cache(instance);
-	megasas_shutdown_controller(instance, MR_DCMD_CTRL_SHUTDOWN);
+	megasas_shutकरोwn_controller(instance, MR_DCMD_CTRL_SHUTDOWN);
 
 skip_firing_dcmds:
-	instance->instancet->disable_intr(instance);
+	instance->instancet->disable_पूर्णांकr(instance);
 	megasas_destroy_irqs(instance);
 
-	if (instance->msix_vectors)
-		pci_free_irq_vectors(instance->pdev);
-}
+	अगर (instance->msix_vectors)
+		pci_मुक्त_irq_vectors(instance->pdev);
+पूर्ण
 
 /*
- * megasas_mgmt_open -	char node "open" entry point
- * @inode:	char node inode
- * @filep:	char node file
+ * megasas_mgmt_खोलो -	अक्षर node "open" entry poपूर्णांक
+ * @inode:	अक्षर node inode
+ * @filep:	अक्षर node file
  */
-static int megasas_mgmt_open(struct inode *inode, struct file *filep)
-{
+अटल पूर्णांक megasas_mgmt_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
 	/*
 	 * Allow only those users with admin rights
 	 */
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * megasas_mgmt_fasync -	Async notifier registration from applications
- * @fd:		char node file descriptor number
- * @filep:	char node file
- * @mode:	notifier on/off
+ * megasas_mgmt_fasync -	Async notअगरier registration from applications
+ * @fd:		अक्षर node file descriptor number
+ * @filep:	अक्षर node file
+ * @mode:	notअगरier on/off
  *
  * This function adds the calling process to a driver global queue. When an
  * event occurs, SIGIO will be sent to all processes in this queue.
  */
-static int megasas_mgmt_fasync(int fd, struct file *filep, int mode)
-{
-	int rc;
+अटल पूर्णांक megasas_mgmt_fasync(पूर्णांक fd, काष्ठा file *filep, पूर्णांक mode)
+अणु
+	पूर्णांक rc;
 
 	mutex_lock(&megasas_async_queue_mutex);
 
@@ -8085,37 +8086,37 @@ static int megasas_mgmt_fasync(int fd, struct file *filep, int mode)
 
 	mutex_unlock(&megasas_async_queue_mutex);
 
-	if (rc >= 0) {
+	अगर (rc >= 0) अणु
 		/* For sanity check when we get ioctl */
-		filep->private_data = filep;
-		return 0;
-	}
+		filep->निजी_data = filep;
+		वापस 0;
+	पूर्ण
 
-	printk(KERN_DEBUG "megasas: fasync_helper failed [%d]\n", rc);
+	prपूर्णांकk(KERN_DEBUG "megasas: fasync_helper failed [%d]\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * megasas_mgmt_poll -  char node "poll" entry point
- * @filep:	char node file
- * @wait:	Events to poll for
+ * megasas_mgmt_poll -  अक्षर node "poll" entry poपूर्णांक
+ * @filep:	अक्षर node file
+ * @रुको:	Events to poll क्रम
  */
-static __poll_t megasas_mgmt_poll(struct file *file, poll_table *wait)
-{
+अटल __poll_t megasas_mgmt_poll(काष्ठा file *file, poll_table *रुको)
+अणु
 	__poll_t mask;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	poll_wait(file, &megasas_poll_wait, wait);
+	poll_रुको(file, &megasas_poll_रुको, रुको);
 	spin_lock_irqsave(&poll_aen_lock, flags);
-	if (megasas_poll_wait_aen)
+	अगर (megasas_poll_रुको_aen)
 		mask = (EPOLLIN | EPOLLRDNORM);
-	else
+	अन्यथा
 		mask = 0;
-	megasas_poll_wait_aen = 0;
+	megasas_poll_रुको_aen = 0;
 	spin_unlock_irqrestore(&poll_aen_lock, flags);
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 /*
  * megasas_set_crash_dump_params_ioctl:
@@ -8123,37 +8124,37 @@ static __poll_t megasas_mgmt_poll(struct file *file, poll_table *wait)
  * @cmd:	MFI command frame
  */
 
-static int megasas_set_crash_dump_params_ioctl(struct megasas_cmd *cmd)
-{
-	struct megasas_instance *local_instance;
-	int i, error = 0;
-	int crash_support;
+अटल पूर्णांक megasas_set_crash_dump_params_ioctl(काष्ठा megasas_cmd *cmd)
+अणु
+	काष्ठा megasas_instance *local_instance;
+	पूर्णांक i, error = 0;
+	पूर्णांक crash_support;
 
 	crash_support = cmd->frame->dcmd.mbox.w[0];
 
-	for (i = 0; i < megasas_mgmt_info.max_index; i++) {
+	क्रम (i = 0; i < megasas_mgmt_info.max_index; i++) अणु
 		local_instance = megasas_mgmt_info.instance[i];
-		if (local_instance && local_instance->crash_dump_drv_support) {
-			if ((atomic_read(&local_instance->adprecovery) ==
+		अगर (local_instance && local_instance->crash_dump_drv_support) अणु
+			अगर ((atomic_पढ़ो(&local_instance->adprecovery) ==
 				MEGASAS_HBA_OPERATIONAL) &&
 				!megasas_set_crash_dump_params(local_instance,
-					crash_support)) {
+					crash_support)) अणु
 				local_instance->crash_dump_app_support =
 					crash_support;
 				dev_info(&local_instance->pdev->dev,
 					"Application firmware crash "
 					"dump mode set success\n");
 				error = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_info(&local_instance->pdev->dev,
 					"Application firmware crash "
 					"dump mode set failed\n");
 				error = -1;
-			}
-		}
-	}
-	return error;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस error;
+पूर्ण
 
 /**
  * megasas_mgmt_fw_ioctl -	Issues management ioctls to FW
@@ -8161,160 +8162,160 @@ static int megasas_set_crash_dump_params_ioctl(struct megasas_cmd *cmd)
  * @user_ioc:			User's ioctl packet
  * @ioc:			ioctl packet
  */
-static int
-megasas_mgmt_fw_ioctl(struct megasas_instance *instance,
-		      struct megasas_iocpacket __user * user_ioc,
-		      struct megasas_iocpacket *ioc)
-{
-	struct megasas_sge64 *kern_sge64 = NULL;
-	struct megasas_sge32 *kern_sge32 = NULL;
-	struct megasas_cmd *cmd;
-	void *kbuff_arr[MAX_IOCTL_SGE];
+अटल पूर्णांक
+megasas_mgmt_fw_ioctl(काष्ठा megasas_instance *instance,
+		      काष्ठा megasas_iocpacket __user * user_ioc,
+		      काष्ठा megasas_iocpacket *ioc)
+अणु
+	काष्ठा megasas_sge64 *kern_sge64 = शून्य;
+	काष्ठा megasas_sge32 *kern_sge32 = शून्य;
+	काष्ठा megasas_cmd *cmd;
+	व्योम *kbuff_arr[MAX_IOCTL_SGE];
 	dma_addr_t buf_handle = 0;
-	int error = 0, i;
-	void *sense = NULL;
+	पूर्णांक error = 0, i;
+	व्योम *sense = शून्य;
 	dma_addr_t sense_handle;
-	void *sense_ptr;
+	व्योम *sense_ptr;
 	u32 opcode = 0;
-	int ret = DCMD_SUCCESS;
+	पूर्णांक ret = DCMD_SUCCESS;
 
-	memset(kbuff_arr, 0, sizeof(kbuff_arr));
+	स_रखो(kbuff_arr, 0, माप(kbuff_arr));
 
-	if (ioc->sge_count > MAX_IOCTL_SGE) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "SGE count [%d] >  max limit [%d]\n",
+	अगर (ioc->sge_count > MAX_IOCTL_SGE) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "SGE count [%d] >  max limit [%d]\n",
 		       ioc->sge_count, MAX_IOCTL_SGE);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((ioc->frame.hdr.cmd >= MFI_CMD_OP_COUNT) ||
+	अगर ((ioc->frame.hdr.cmd >= MFI_CMD_OP_COUNT) ||
 	    ((ioc->frame.hdr.cmd == MFI_CMD_NVME) &&
 	    !instance->support_nvme_passthru) ||
 	    ((ioc->frame.hdr.cmd == MFI_CMD_TOOLBOX) &&
-	    !instance->support_pci_lane_margining)) {
+	    !instance->support_pci_lane_margining)) अणु
 		dev_err(&instance->pdev->dev,
 			"Received invalid ioctl command 0x%x\n",
 			ioc->frame.hdr.cmd);
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	cmd = megasas_get_cmd(instance);
-	if (!cmd) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "Failed to get a cmd packet\n");
-		return -ENOMEM;
-	}
+	अगर (!cmd) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "Failed to get a cmd packet\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
 	 * User's IOCTL packet has 2 frames (maximum). Copy those two
-	 * frames into our cmd's frames. cmd->frame's context will get
+	 * frames पूर्णांकo our cmd's frames. cmd->frame's context will get
 	 * overwritten when we copy from user's frames. So set that value
 	 * alone separately
 	 */
-	memcpy(cmd->frame, ioc->frame.raw, 2 * MEGAMFI_FRAME_SIZE);
+	स_नकल(cmd->frame, ioc->frame.raw, 2 * MEGAMFI_FRAME_SIZE);
 	cmd->frame->hdr.context = cpu_to_le32(cmd->index);
 	cmd->frame->hdr.pad_0 = 0;
 
 	cmd->frame->hdr.flags &= (~MFI_FRAME_IEEE);
 
-	if (instance->consistent_mask_64bit)
+	अगर (instance->consistent_mask_64bit)
 		cmd->frame->hdr.flags |= cpu_to_le16((MFI_FRAME_SGL64 |
 				       MFI_FRAME_SENSE64));
-	else
+	अन्यथा
 		cmd->frame->hdr.flags &= cpu_to_le16(~(MFI_FRAME_SGL64 |
 					       MFI_FRAME_SENSE64));
 
-	if (cmd->frame->hdr.cmd == MFI_CMD_DCMD)
+	अगर (cmd->frame->hdr.cmd == MFI_CMD_DCMD)
 		opcode = le32_to_cpu(cmd->frame->dcmd.opcode);
 
-	if (opcode == MR_DCMD_CTRL_SHUTDOWN) {
+	अगर (opcode == MR_DCMD_CTRL_SHUTDOWN) अणु
 		mutex_lock(&instance->reset_mutex);
-		if (megasas_get_ctrl_info(instance) != DCMD_SUCCESS) {
-			megasas_return_cmd(instance, cmd);
+		अगर (megasas_get_ctrl_info(instance) != DCMD_SUCCESS) अणु
+			megasas_वापस_cmd(instance, cmd);
 			mutex_unlock(&instance->reset_mutex);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		mutex_unlock(&instance->reset_mutex);
-	}
+	पूर्ण
 
-	if (opcode == MR_DRIVER_SET_APP_CRASHDUMP_MODE) {
+	अगर (opcode == MR_DRIVER_SET_APP_CRASHDUMP_MODE) अणु
 		error = megasas_set_crash_dump_params_ioctl(cmd);
-		megasas_return_cmd(instance, cmd);
-		return error;
-	}
+		megasas_वापस_cmd(instance, cmd);
+		वापस error;
+	पूर्ण
 
 	/*
-	 * The management interface between applications and the fw uses
+	 * The management पूर्णांकerface between applications and the fw uses
 	 * MFI frames. E.g, RAID configuration changes, LD property changes
-	 * etc are accomplishes through different kinds of MFI frames. The
+	 * etc are accomplishes through dअगरferent kinds of MFI frames. The
 	 * driver needs to care only about substituting user buffers with
 	 * kernel buffers in SGLs. The location of SGL is embedded in the
-	 * struct iocpacket itself.
+	 * काष्ठा iocpacket itself.
 	 */
-	if (instance->consistent_mask_64bit)
-		kern_sge64 = (struct megasas_sge64 *)
-			((unsigned long)cmd->frame + ioc->sgl_off);
-	else
-		kern_sge32 = (struct megasas_sge32 *)
-			((unsigned long)cmd->frame + ioc->sgl_off);
+	अगर (instance->consistent_mask_64bit)
+		kern_sge64 = (काष्ठा megasas_sge64 *)
+			((अचिन्हित दीर्घ)cmd->frame + ioc->sgl_off);
+	अन्यथा
+		kern_sge32 = (काष्ठा megasas_sge32 *)
+			((अचिन्हित दीर्घ)cmd->frame + ioc->sgl_off);
 
 	/*
 	 * For each user buffer, create a mirror buffer and copy in
 	 */
-	for (i = 0; i < ioc->sge_count; i++) {
-		if (!ioc->sgl[i].iov_len)
-			continue;
+	क्रम (i = 0; i < ioc->sge_count; i++) अणु
+		अगर (!ioc->sgl[i].iov_len)
+			जारी;
 
 		kbuff_arr[i] = dma_alloc_coherent(&instance->pdev->dev,
 						    ioc->sgl[i].iov_len,
 						    &buf_handle, GFP_KERNEL);
-		if (!kbuff_arr[i]) {
-			dev_printk(KERN_DEBUG, &instance->pdev->dev, "Failed to alloc "
+		अगर (!kbuff_arr[i]) अणु
+			dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "Failed to alloc "
 			       "kernel SGL buffer for IOCTL\n");
 			error = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/*
-		 * We don't change the dma_coherent_mask, so
-		 * dma_alloc_coherent only returns 32bit addresses
+		 * We करोn't change the dma_coherent_mask, so
+		 * dma_alloc_coherent only वापसs 32bit addresses
 		 */
-		if (instance->consistent_mask_64bit) {
+		अगर (instance->consistent_mask_64bit) अणु
 			kern_sge64[i].phys_addr = cpu_to_le64(buf_handle);
 			kern_sge64[i].length = cpu_to_le32(ioc->sgl[i].iov_len);
-		} else {
+		पूर्ण अन्यथा अणु
 			kern_sge32[i].phys_addr = cpu_to_le32(buf_handle);
 			kern_sge32[i].length = cpu_to_le32(ioc->sgl[i].iov_len);
-		}
+		पूर्ण
 
 		/*
 		 * We created a kernel buffer corresponding to the
 		 * user buffer. Now copy in from the user buffer
 		 */
-		if (copy_from_user(kbuff_arr[i], ioc->sgl[i].iov_base,
-				   (u32) (ioc->sgl[i].iov_len))) {
+		अगर (copy_from_user(kbuff_arr[i], ioc->sgl[i].iov_base,
+				   (u32) (ioc->sgl[i].iov_len))) अणु
 			error = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (ioc->sense_len) {
-		/* make sure the pointer is part of the frame */
-		if (ioc->sense_off >
-		    (sizeof(union megasas_frame) - sizeof(__le64))) {
+	अगर (ioc->sense_len) अणु
+		/* make sure the poपूर्णांकer is part of the frame */
+		अगर (ioc->sense_off >
+		    (माप(जोड़ megasas_frame) - माप(__le64))) अणु
 			error = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		sense = dma_alloc_coherent(&instance->pdev->dev, ioc->sense_len,
 					     &sense_handle, GFP_KERNEL);
-		if (!sense) {
+		अगर (!sense) अणु
 			error = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* always store 64 bits regardless of addressing */
-		sense_ptr = (void *)cmd->frame + ioc->sense_off;
+		sense_ptr = (व्योम *)cmd->frame + ioc->sense_off;
 		put_unaligned_le64(sense_handle, sense_ptr);
-	}
+	पूर्ण
 
 	/*
 	 * Set the sync_cmd flag so that the ISR knows not to complete this
@@ -8323,635 +8324,635 @@ megasas_mgmt_fw_ioctl(struct megasas_instance *instance,
 	cmd->sync_cmd = 1;
 
 	ret = megasas_issue_blocked_cmd(instance, cmd, 0);
-	switch (ret) {
-	case DCMD_INIT:
-	case DCMD_BUSY:
+	चयन (ret) अणु
+	हाल DCMD_INIT:
+	हाल DCMD_BUSY:
 		cmd->sync_cmd = 0;
 		dev_err(&instance->pdev->dev,
 			"return -EBUSY from %s %d cmd 0x%x opcode 0x%x cmd->cmd_status_drv 0x%x\n",
 			 __func__, __LINE__, cmd->frame->hdr.cmd, opcode,
 			 cmd->cmd_status_drv);
 		error = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	cmd->sync_cmd = 0;
 
-	if (instance->unload == 1) {
+	अगर (instance->unload == 1) अणु
 		dev_info(&instance->pdev->dev, "Driver unload is in progress "
 			"don't submit data to application\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/*
 	 * copy out the kernel buffers to user buffers
 	 */
-	for (i = 0; i < ioc->sge_count; i++) {
-		if (copy_to_user(ioc->sgl[i].iov_base, kbuff_arr[i],
-				 ioc->sgl[i].iov_len)) {
+	क्रम (i = 0; i < ioc->sge_count; i++) अणु
+		अगर (copy_to_user(ioc->sgl[i].iov_base, kbuff_arr[i],
+				 ioc->sgl[i].iov_len)) अणु
 			error = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * copy out the sense
 	 */
-	if (ioc->sense_len) {
-		void __user *uptr;
+	अगर (ioc->sense_len) अणु
+		व्योम __user *uptr;
 		/*
-		 * sense_ptr points to the location that has the user
+		 * sense_ptr poपूर्णांकs to the location that has the user
 		 * sense buffer address
 		 */
-		sense_ptr = (void *)ioc->frame.raw + ioc->sense_off;
-		if (in_compat_syscall())
+		sense_ptr = (व्योम *)ioc->frame.raw + ioc->sense_off;
+		अगर (in_compat_syscall())
 			uptr = compat_ptr(get_unaligned((compat_uptr_t *)
 							sense_ptr));
-		else
-			uptr = get_unaligned((void __user **)sense_ptr);
+		अन्यथा
+			uptr = get_unaligned((व्योम __user **)sense_ptr);
 
-		if (copy_to_user(uptr, sense, ioc->sense_len)) {
+		अगर (copy_to_user(uptr, sense, ioc->sense_len)) अणु
 			dev_err(&instance->pdev->dev, "Failed to copy out to user "
 					"sense data\n");
 			error = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * copy the status codes returned by the fw
+	 * copy the status codes वापसed by the fw
 	 */
-	if (copy_to_user(&user_ioc->frame.hdr.cmd_status,
-			 &cmd->frame->hdr.cmd_status, sizeof(u8))) {
-		dev_printk(KERN_DEBUG, &instance->pdev->dev, "Error copying out cmd_status\n");
+	अगर (copy_to_user(&user_ioc->frame.hdr.cmd_status,
+			 &cmd->frame->hdr.cmd_status, माप(u8))) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &instance->pdev->dev, "Error copying out cmd_status\n");
 		error = -EFAULT;
-	}
+	पूर्ण
 
 out:
-	if (sense) {
-		dma_free_coherent(&instance->pdev->dev, ioc->sense_len,
+	अगर (sense) अणु
+		dma_मुक्त_coherent(&instance->pdev->dev, ioc->sense_len,
 				    sense, sense_handle);
-	}
+	पूर्ण
 
-	for (i = 0; i < ioc->sge_count; i++) {
-		if (kbuff_arr[i]) {
-			if (instance->consistent_mask_64bit)
-				dma_free_coherent(&instance->pdev->dev,
+	क्रम (i = 0; i < ioc->sge_count; i++) अणु
+		अगर (kbuff_arr[i]) अणु
+			अगर (instance->consistent_mask_64bit)
+				dma_मुक्त_coherent(&instance->pdev->dev,
 					le32_to_cpu(kern_sge64[i].length),
 					kbuff_arr[i],
 					le64_to_cpu(kern_sge64[i].phys_addr));
-			else
-				dma_free_coherent(&instance->pdev->dev,
+			अन्यथा
+				dma_मुक्त_coherent(&instance->pdev->dev,
 					le32_to_cpu(kern_sge32[i].length),
 					kbuff_arr[i],
 					le32_to_cpu(kern_sge32[i].phys_addr));
-			kbuff_arr[i] = NULL;
-		}
-	}
+			kbuff_arr[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	megasas_return_cmd(instance, cmd);
-	return error;
-}
+	megasas_वापस_cmd(instance, cmd);
+	वापस error;
+पूर्ण
 
-static struct megasas_iocpacket *
-megasas_compat_iocpacket_get_user(void __user *arg)
-{
-	struct megasas_iocpacket *ioc;
-	struct compat_megasas_iocpacket __user *cioc = arg;
-	size_t size;
-	int err = -EFAULT;
-	int i;
+अटल काष्ठा megasas_iocpacket *
+megasas_compat_iocpacket_get_user(व्योम __user *arg)
+अणु
+	काष्ठा megasas_iocpacket *ioc;
+	काष्ठा compat_megasas_iocpacket __user *cioc = arg;
+	माप_प्रकार size;
+	पूर्णांक err = -EFAULT;
+	पूर्णांक i;
 
-	ioc = kzalloc(sizeof(*ioc), GFP_KERNEL);
-	if (!ioc)
-		return ERR_PTR(-ENOMEM);
-	size = offsetof(struct megasas_iocpacket, frame) + sizeof(ioc->frame);
-	if (copy_from_user(ioc, arg, size))
-		goto out;
+	ioc = kzalloc(माप(*ioc), GFP_KERNEL);
+	अगर (!ioc)
+		वापस ERR_PTR(-ENOMEM);
+	size = दुरत्व(काष्ठा megasas_iocpacket, frame) + माप(ioc->frame);
+	अगर (copy_from_user(ioc, arg, size))
+		जाओ out;
 
-	for (i = 0; i < MAX_IOCTL_SGE; i++) {
+	क्रम (i = 0; i < MAX_IOCTL_SGE; i++) अणु
 		compat_uptr_t iov_base;
 
-		if (get_user(iov_base, &cioc->sgl[i].iov_base) ||
+		अगर (get_user(iov_base, &cioc->sgl[i].iov_base) ||
 		    get_user(ioc->sgl[i].iov_len, &cioc->sgl[i].iov_len))
-			goto out;
+			जाओ out;
 
 		ioc->sgl[i].iov_base = compat_ptr(iov_base);
-	}
+	पूर्ण
 
-	return ioc;
+	वापस ioc;
 out:
-	kfree(ioc);
-	return ERR_PTR(err);
-}
+	kमुक्त(ioc);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static int megasas_mgmt_ioctl_fw(struct file *file, unsigned long arg)
-{
-	struct megasas_iocpacket __user *user_ioc =
-	    (struct megasas_iocpacket __user *)arg;
-	struct megasas_iocpacket *ioc;
-	struct megasas_instance *instance;
-	int error;
+अटल पूर्णांक megasas_mgmt_ioctl_fw(काष्ठा file *file, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा megasas_iocpacket __user *user_ioc =
+	    (काष्ठा megasas_iocpacket __user *)arg;
+	काष्ठा megasas_iocpacket *ioc;
+	काष्ठा megasas_instance *instance;
+	पूर्णांक error;
 
-	if (in_compat_syscall())
+	अगर (in_compat_syscall())
 		ioc = megasas_compat_iocpacket_get_user(user_ioc);
-	else
-		ioc = memdup_user(user_ioc, sizeof(struct megasas_iocpacket));
+	अन्यथा
+		ioc = memdup_user(user_ioc, माप(काष्ठा megasas_iocpacket));
 
-	if (IS_ERR(ioc))
-		return PTR_ERR(ioc);
+	अगर (IS_ERR(ioc))
+		वापस PTR_ERR(ioc);
 
 	instance = megasas_lookup_instance(ioc->host_no);
-	if (!instance) {
+	अगर (!instance) अणु
 		error = -ENODEV;
-		goto out_kfree_ioc;
-	}
+		जाओ out_kमुक्त_ioc;
+	पूर्ण
 
 	/* Block ioctls in VF mode */
-	if (instance->requestorId && !allow_vf_ioctls) {
+	अगर (instance->requestorId && !allow_vf_ioctls) अणु
 		error = -ENODEV;
-		goto out_kfree_ioc;
-	}
+		जाओ out_kमुक्त_ioc;
+	पूर्ण
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) {
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) अणु
 		dev_err(&instance->pdev->dev, "Controller in crit error\n");
 		error = -ENODEV;
-		goto out_kfree_ioc;
-	}
+		जाओ out_kमुक्त_ioc;
+	पूर्ण
 
-	if (instance->unload == 1) {
+	अगर (instance->unload == 1) अणु
 		error = -ENODEV;
-		goto out_kfree_ioc;
-	}
+		जाओ out_kमुक्त_ioc;
+	पूर्ण
 
-	if (down_interruptible(&instance->ioctl_sem)) {
+	अगर (करोwn_पूर्णांकerruptible(&instance->ioctl_sem)) अणु
 		error = -ERESTARTSYS;
-		goto out_kfree_ioc;
-	}
+		जाओ out_kमुक्त_ioc;
+	पूर्ण
 
-	if  (megasas_wait_for_adapter_operational(instance)) {
+	अगर  (megasas_रुको_क्रम_adapter_operational(instance)) अणु
 		error = -ENODEV;
-		goto out_up;
-	}
+		जाओ out_up;
+	पूर्ण
 
 	error = megasas_mgmt_fw_ioctl(instance, user_ioc, ioc);
 out_up:
 	up(&instance->ioctl_sem);
 
-out_kfree_ioc:
-	kfree(ioc);
-	return error;
-}
+out_kमुक्त_ioc:
+	kमुक्त(ioc);
+	वापस error;
+पूर्ण
 
-static int megasas_mgmt_ioctl_aen(struct file *file, unsigned long arg)
-{
-	struct megasas_instance *instance;
-	struct megasas_aen aen;
-	int error;
+अटल पूर्णांक megasas_mgmt_ioctl_aen(काष्ठा file *file, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा megasas_instance *instance;
+	काष्ठा megasas_aen aen;
+	पूर्णांक error;
 
-	if (file->private_data != file) {
-		printk(KERN_DEBUG "megasas: fasync_helper was not "
+	अगर (file->निजी_data != file) अणु
+		prपूर्णांकk(KERN_DEBUG "megasas: fasync_helper was not "
 		       "called first\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (copy_from_user(&aen, (void __user *)arg, sizeof(aen)))
-		return -EFAULT;
+	अगर (copy_from_user(&aen, (व्योम __user *)arg, माप(aen)))
+		वापस -EFAULT;
 
 	instance = megasas_lookup_instance(aen.host_no);
 
-	if (!instance)
-		return -ENODEV;
+	अगर (!instance)
+		वापस -ENODEV;
 
-	if (atomic_read(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) {
-		return -ENODEV;
-	}
+	अगर (atomic_पढ़ो(&instance->adprecovery) == MEGASAS_HW_CRITICAL_ERROR) अणु
+		वापस -ENODEV;
+	पूर्ण
 
-	if (instance->unload == 1) {
-		return -ENODEV;
-	}
+	अगर (instance->unload == 1) अणु
+		वापस -ENODEV;
+	पूर्ण
 
-	if  (megasas_wait_for_adapter_operational(instance))
-		return -ENODEV;
+	अगर  (megasas_रुको_क्रम_adapter_operational(instance))
+		वापस -ENODEV;
 
 	mutex_lock(&instance->reset_mutex);
-	error = megasas_register_aen(instance, aen.seq_num,
+	error = megasas_रेजिस्टर_aen(instance, aen.seq_num,
 				     aen.class_locale_word);
 	mutex_unlock(&instance->reset_mutex);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * megasas_mgmt_ioctl -	char node ioctl entry point
- * @file:	char device file pointer
+ * megasas_mgmt_ioctl -	अक्षर node ioctl entry poपूर्णांक
+ * @file:	अक्षर device file poपूर्णांकer
  * @cmd:	ioctl command
  * @arg:	ioctl command arguments address
  */
-static long
-megasas_mgmt_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	switch (cmd) {
-	case MEGASAS_IOC_FIRMWARE:
-		return megasas_mgmt_ioctl_fw(file, arg);
+अटल दीर्घ
+megasas_mgmt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल MEGASAS_IOC_FIRMWARE:
+		वापस megasas_mgmt_ioctl_fw(file, arg);
 
-	case MEGASAS_IOC_GET_AEN:
-		return megasas_mgmt_ioctl_aen(file, arg);
-	}
+	हाल MEGASAS_IOC_GET_AEN:
+		वापस megasas_mgmt_ioctl_aen(file, arg);
+	पूर्ण
 
-	return -ENOTTY;
-}
+	वापस -ENOTTY;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long
-megasas_mgmt_compat_ioctl(struct file *file, unsigned int cmd,
-			  unsigned long arg)
-{
-	switch (cmd) {
-	case MEGASAS_IOC_FIRMWARE32:
-		return megasas_mgmt_ioctl_fw(file, arg);
-	case MEGASAS_IOC_GET_AEN:
-		return megasas_mgmt_ioctl_aen(file, arg);
-	}
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ
+megasas_mgmt_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			  अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल MEGASAS_IOC_FIRMWARE32:
+		वापस megasas_mgmt_ioctl_fw(file, arg);
+	हाल MEGASAS_IOC_GET_AEN:
+		वापस megasas_mgmt_ioctl_aen(file, arg);
+	पूर्ण
 
-	return -ENOTTY;
-}
-#endif
+	वापस -ENOTTY;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * File operations structure for management interface
+ * File operations काष्ठाure क्रम management पूर्णांकerface
  */
-static const struct file_operations megasas_mgmt_fops = {
+अटल स्थिर काष्ठा file_operations megasas_mgmt_fops = अणु
 	.owner = THIS_MODULE,
-	.open = megasas_mgmt_open,
+	.खोलो = megasas_mgmt_खोलो,
 	.fasync = megasas_mgmt_fasync,
 	.unlocked_ioctl = megasas_mgmt_ioctl,
 	.poll = megasas_mgmt_poll,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl = megasas_mgmt_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-static SIMPLE_DEV_PM_OPS(megasas_pm_ops, megasas_suspend, megasas_resume);
+अटल SIMPLE_DEV_PM_OPS(megasas_pm_ops, megasas_suspend, megasas_resume);
 
 /*
- * PCI hotplug support registration structure
+ * PCI hotplug support registration काष्ठाure
  */
-static struct pci_driver megasas_pci_driver = {
+अटल काष्ठा pci_driver megasas_pci_driver = अणु
 
 	.name = "megaraid_sas",
 	.id_table = megasas_pci_table,
 	.probe = megasas_probe_one,
-	.remove = megasas_detach_one,
+	.हटाओ = megasas_detach_one,
 	.driver.pm = &megasas_pm_ops,
-	.shutdown = megasas_shutdown,
-};
+	.shutकरोwn = megasas_shutकरोwn,
+पूर्ण;
 
 /*
  * Sysfs driver attributes
  */
-static ssize_t version_show(struct device_driver *dd, char *buf)
-{
-	return snprintf(buf, strlen(MEGASAS_VERSION) + 2, "%s\n",
+अटल sमाप_प्रकार version_show(काष्ठा device_driver *dd, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, म_माप(MEGASAS_VERSION) + 2, "%s\n",
 			MEGASAS_VERSION);
-}
-static DRIVER_ATTR_RO(version);
+पूर्ण
+अटल DRIVER_ATTR_RO(version);
 
-static ssize_t release_date_show(struct device_driver *dd, char *buf)
-{
-	return snprintf(buf, strlen(MEGASAS_RELDATE) + 2, "%s\n",
+अटल sमाप_प्रकार release_date_show(काष्ठा device_driver *dd, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, म_माप(MEGASAS_RELDATE) + 2, "%s\n",
 		MEGASAS_RELDATE);
-}
-static DRIVER_ATTR_RO(release_date);
+पूर्ण
+अटल DRIVER_ATTR_RO(release_date);
 
-static ssize_t support_poll_for_event_show(struct device_driver *dd, char *buf)
-{
-	return sprintf(buf, "%u\n", support_poll_for_event);
-}
-static DRIVER_ATTR_RO(support_poll_for_event);
+अटल sमाप_प्रकार support_poll_क्रम_event_show(काष्ठा device_driver *dd, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", support_poll_क्रम_event);
+पूर्ण
+अटल DRIVER_ATTR_RO(support_poll_क्रम_event);
 
-static ssize_t support_device_change_show(struct device_driver *dd, char *buf)
-{
-	return sprintf(buf, "%u\n", support_device_change);
-}
-static DRIVER_ATTR_RO(support_device_change);
+अटल sमाप_प्रकार support_device_change_show(काष्ठा device_driver *dd, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", support_device_change);
+पूर्ण
+अटल DRIVER_ATTR_RO(support_device_change);
 
-static ssize_t dbg_lvl_show(struct device_driver *dd, char *buf)
-{
-	return sprintf(buf, "%u\n", megasas_dbg_lvl);
-}
+अटल sमाप_प्रकार dbg_lvl_show(काष्ठा device_driver *dd, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", megasas_dbg_lvl);
+पूर्ण
 
-static ssize_t dbg_lvl_store(struct device_driver *dd, const char *buf,
-			     size_t count)
-{
-	int retval = count;
+अटल sमाप_प्रकार dbg_lvl_store(काष्ठा device_driver *dd, स्थिर अक्षर *buf,
+			     माप_प्रकार count)
+अणु
+	पूर्णांक retval = count;
 
-	if (sscanf(buf, "%u", &megasas_dbg_lvl) < 1) {
-		printk(KERN_ERR "megasas: could not set dbg_lvl\n");
+	अगर (माला_पूछो(buf, "%u", &megasas_dbg_lvl) < 1) अणु
+		prपूर्णांकk(KERN_ERR "megasas: could not set dbg_lvl\n");
 		retval = -EINVAL;
-	}
-	return retval;
-}
-static DRIVER_ATTR_RW(dbg_lvl);
+	पूर्ण
+	वापस retval;
+पूर्ण
+अटल DRIVER_ATTR_RW(dbg_lvl);
 
-static ssize_t
-support_nvme_encapsulation_show(struct device_driver *dd, char *buf)
-{
-	return sprintf(buf, "%u\n", support_nvme_encapsulation);
-}
+अटल sमाप_प्रकार
+support_nvme_encapsulation_show(काष्ठा device_driver *dd, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", support_nvme_encapsulation);
+पूर्ण
 
-static DRIVER_ATTR_RO(support_nvme_encapsulation);
+अटल DRIVER_ATTR_RO(support_nvme_encapsulation);
 
-static ssize_t
-support_pci_lane_margining_show(struct device_driver *dd, char *buf)
-{
-	return sprintf(buf, "%u\n", support_pci_lane_margining);
-}
+अटल sमाप_प्रकार
+support_pci_lane_margining_show(काष्ठा device_driver *dd, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", support_pci_lane_margining);
+पूर्ण
 
-static DRIVER_ATTR_RO(support_pci_lane_margining);
+अटल DRIVER_ATTR_RO(support_pci_lane_margining);
 
-static inline void megasas_remove_scsi_device(struct scsi_device *sdev)
-{
-	sdev_printk(KERN_INFO, sdev, "SCSI device is removed\n");
-	scsi_remove_device(sdev);
+अटल अंतरभूत व्योम megasas_हटाओ_scsi_device(काष्ठा scsi_device *sdev)
+अणु
+	sdev_prपूर्णांकk(KERN_INFO, sdev, "SCSI device is removed\n");
+	scsi_हटाओ_device(sdev);
 	scsi_device_put(sdev);
-}
+पूर्ण
 
 /**
  * megasas_update_device_list -	Update the PD and LD device list from FW
- *				after an AEN event notification
+ *				after an AEN event notअगरication
  * @instance:			Adapter soft state
  * @event_type:			Indicates type of event (PD or LD event)
  *
- * @return:			Success or failure
+ * @वापस:			Success or failure
  *
- * Issue DCMDs to Firmware to update the internal device list in driver.
+ * Issue DCMDs to Firmware to update the पूर्णांकernal device list in driver.
  * Based on the FW support, driver sends the HOST_DEVICE_LIST or combination
  * of PD_LIST/LD_LIST_QUERY DCMDs to get the device list.
  */
-static
-int megasas_update_device_list(struct megasas_instance *instance,
-			       int event_type)
-{
-	int dcmd_ret = DCMD_SUCCESS;
+अटल
+पूर्णांक megasas_update_device_list(काष्ठा megasas_instance *instance,
+			       पूर्णांक event_type)
+अणु
+	पूर्णांक dcmd_ret = DCMD_SUCCESS;
 
-	if (instance->enable_fw_dev_list) {
+	अगर (instance->enable_fw_dev_list) अणु
 		dcmd_ret = megasas_host_device_list_query(instance, false);
-		if (dcmd_ret != DCMD_SUCCESS)
-			goto out;
-	} else {
-		if (event_type & SCAN_PD_CHANNEL) {
+		अगर (dcmd_ret != DCMD_SUCCESS)
+			जाओ out;
+	पूर्ण अन्यथा अणु
+		अगर (event_type & SCAN_PD_CHANNEL) अणु
 			dcmd_ret = megasas_get_pd_list(instance);
 
-			if (dcmd_ret != DCMD_SUCCESS)
-				goto out;
-		}
+			अगर (dcmd_ret != DCMD_SUCCESS)
+				जाओ out;
+		पूर्ण
 
-		if (event_type & SCAN_VD_CHANNEL) {
-			if (!instance->requestorId ||
+		अगर (event_type & SCAN_VD_CHANNEL) अणु
+			अगर (!instance->requestorId ||
 			    (instance->requestorId &&
-			     megasas_get_ld_vf_affiliation(instance, 0))) {
+			     megasas_get_ld_vf_affiliation(instance, 0))) अणु
 				dcmd_ret = megasas_ld_list_query(instance,
 						MR_LD_QUERY_TYPE_EXPOSED_TO_HOST);
-				if (dcmd_ret != DCMD_SUCCESS)
-					goto out;
-			}
-		}
-	}
+				अगर (dcmd_ret != DCMD_SUCCESS)
+					जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out:
-	return dcmd_ret;
-}
+	वापस dcmd_ret;
+पूर्ण
 
 /**
- * megasas_add_remove_devices -	Add/remove devices to SCSI mid-layer
- *				after an AEN event notification
+ * megasas_add_हटाओ_devices -	Add/हटाओ devices to SCSI mid-layer
+ *				after an AEN event notअगरication
  * @instance:			Adapter soft state
  * @scan_type:			Indicates type of devices (PD/LD) to add
- * @return			void
+ * @वापस			व्योम
  */
-static
-void megasas_add_remove_devices(struct megasas_instance *instance,
-				int scan_type)
-{
-	int i, j;
+अटल
+व्योम megasas_add_हटाओ_devices(काष्ठा megasas_instance *instance,
+				पूर्णांक scan_type)
+अणु
+	पूर्णांक i, j;
 	u16 pd_index = 0;
 	u16 ld_index = 0;
 	u16 channel = 0, id = 0;
-	struct Scsi_Host *host;
-	struct scsi_device *sdev1;
-	struct MR_HOST_DEVICE_LIST *targetid_list = NULL;
-	struct MR_HOST_DEVICE_LIST_ENTRY *targetid_entry = NULL;
+	काष्ठा Scsi_Host *host;
+	काष्ठा scsi_device *sdev1;
+	काष्ठा MR_HOST_DEVICE_LIST *targetid_list = शून्य;
+	काष्ठा MR_HOST_DEVICE_LIST_ENTRY *targetid_entry = शून्य;
 
 	host = instance->host;
 
-	if (instance->enable_fw_dev_list) {
+	अगर (instance->enable_fw_dev_list) अणु
 		targetid_list = instance->host_device_list_buf;
-		for (i = 0; i < targetid_list->count; i++) {
+		क्रम (i = 0; i < targetid_list->count; i++) अणु
 			targetid_entry = &targetid_list->host_device_list[i];
-			if (targetid_entry->flags.u.bits.is_sys_pd) {
+			अगर (targetid_entry->flags.u.bits.is_sys_pd) अणु
 				channel = le16_to_cpu(targetid_entry->target_id) /
 						MEGASAS_MAX_DEV_PER_CHANNEL;
 				id = le16_to_cpu(targetid_entry->target_id) %
 						MEGASAS_MAX_DEV_PER_CHANNEL;
-			} else {
+			पूर्ण अन्यथा अणु
 				channel = MEGASAS_MAX_PD_CHANNELS +
 					  (le16_to_cpu(targetid_entry->target_id) /
 					   MEGASAS_MAX_DEV_PER_CHANNEL);
 				id = le16_to_cpu(targetid_entry->target_id) %
 						MEGASAS_MAX_DEV_PER_CHANNEL;
-			}
+			पूर्ण
 			sdev1 = scsi_device_lookup(host, channel, id, 0);
-			if (!sdev1) {
+			अगर (!sdev1) अणु
 				scsi_add_device(host, channel, id, 0);
-			} else {
+			पूर्ण अन्यथा अणु
 				scsi_device_put(sdev1);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (scan_type & SCAN_PD_CHANNEL) {
-		for (i = 0; i < MEGASAS_MAX_PD_CHANNELS; i++) {
-			for (j = 0; j < MEGASAS_MAX_DEV_PER_CHANNEL; j++) {
+	अगर (scan_type & SCAN_PD_CHANNEL) अणु
+		क्रम (i = 0; i < MEGASAS_MAX_PD_CHANNELS; i++) अणु
+			क्रम (j = 0; j < MEGASAS_MAX_DEV_PER_CHANNEL; j++) अणु
 				pd_index = i * MEGASAS_MAX_DEV_PER_CHANNEL + j;
 				sdev1 = scsi_device_lookup(host, i, j, 0);
-				if (instance->pd_list[pd_index].driveState ==
-							MR_PD_STATE_SYSTEM) {
-					if (!sdev1)
+				अगर (instance->pd_list[pd_index].driveState ==
+							MR_PD_STATE_SYSTEM) अणु
+					अगर (!sdev1)
 						scsi_add_device(host, i, j, 0);
-					else
+					अन्यथा
 						scsi_device_put(sdev1);
-				} else {
-					if (sdev1)
-						megasas_remove_scsi_device(sdev1);
-				}
-			}
-		}
-	}
+				पूर्ण अन्यथा अणु
+					अगर (sdev1)
+						megasas_हटाओ_scsi_device(sdev1);
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (scan_type & SCAN_VD_CHANNEL) {
-		for (i = 0; i < MEGASAS_MAX_LD_CHANNELS; i++) {
-			for (j = 0; j < MEGASAS_MAX_DEV_PER_CHANNEL; j++) {
+	अगर (scan_type & SCAN_VD_CHANNEL) अणु
+		क्रम (i = 0; i < MEGASAS_MAX_LD_CHANNELS; i++) अणु
+			क्रम (j = 0; j < MEGASAS_MAX_DEV_PER_CHANNEL; j++) अणु
 				ld_index = (i * MEGASAS_MAX_DEV_PER_CHANNEL) + j;
 				sdev1 = scsi_device_lookup(host,
 						MEGASAS_MAX_PD_CHANNELS + i, j, 0);
-				if (instance->ld_ids[ld_index] != 0xff) {
-					if (!sdev1)
+				अगर (instance->ld_ids[ld_index] != 0xff) अणु
+					अगर (!sdev1)
 						scsi_add_device(host, MEGASAS_MAX_PD_CHANNELS + i, j, 0);
-					else
+					अन्यथा
 						scsi_device_put(sdev1);
-				} else {
-					if (sdev1)
-						megasas_remove_scsi_device(sdev1);
-				}
-			}
-		}
-	}
+				पूर्ण अन्यथा अणु
+					अगर (sdev1)
+						megasas_हटाओ_scsi_device(sdev1);
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-}
+पूर्ण
 
-static void
-megasas_aen_polling(struct work_struct *work)
-{
-	struct megasas_aen_event *ev =
-		container_of(work, struct megasas_aen_event, hotplug_work.work);
-	struct megasas_instance *instance = ev->instance;
-	union megasas_evt_class_locale class_locale;
-	int event_type = 0;
+अटल व्योम
+megasas_aen_polling(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा megasas_aen_event *ev =
+		container_of(work, काष्ठा megasas_aen_event, hotplug_work.work);
+	काष्ठा megasas_instance *instance = ev->instance;
+	जोड़ megasas_evt_class_locale class_locale;
+	पूर्णांक event_type = 0;
 	u32 seq_num;
-	int error;
+	पूर्णांक error;
 	u8  dcmd_ret = DCMD_SUCCESS;
 
-	if (!instance) {
-		printk(KERN_ERR "invalid instance!\n");
-		kfree(ev);
-		return;
-	}
+	अगर (!instance) अणु
+		prपूर्णांकk(KERN_ERR "invalid instance!\n");
+		kमुक्त(ev);
+		वापस;
+	पूर्ण
 
-	/* Don't run the event workqueue thread if OCR is running */
+	/* Don't run the event workqueue thपढ़ो अगर OCR is running */
 	mutex_lock(&instance->reset_mutex);
 
-	instance->ev = NULL;
-	if (instance->evt_detail) {
+	instance->ev = शून्य;
+	अगर (instance->evt_detail) अणु
 		megasas_decode_evt(instance);
 
-		switch (le32_to_cpu(instance->evt_detail->code)) {
+		चयन (le32_to_cpu(instance->evt_detail->code)) अणु
 
-		case MR_EVT_PD_INSERTED:
-		case MR_EVT_PD_REMOVED:
+		हाल MR_EVT_PD_INSERTED:
+		हाल MR_EVT_PD_REMOVED:
 			event_type = SCAN_PD_CHANNEL;
-			break;
+			अवरोध;
 
-		case MR_EVT_LD_OFFLINE:
-		case MR_EVT_CFG_CLEARED:
-		case MR_EVT_LD_DELETED:
-		case MR_EVT_LD_CREATED:
+		हाल MR_EVT_LD_OFFLINE:
+		हाल MR_EVT_CFG_CLEARED:
+		हाल MR_EVT_LD_DELETED:
+		हाल MR_EVT_LD_CREATED:
 			event_type = SCAN_VD_CHANNEL;
-			break;
+			अवरोध;
 
-		case MR_EVT_CTRL_HOST_BUS_SCAN_REQUESTED:
-		case MR_EVT_FOREIGN_CFG_IMPORTED:
-		case MR_EVT_LD_STATE_CHANGE:
+		हाल MR_EVT_CTRL_HOST_BUS_SCAN_REQUESTED:
+		हाल MR_EVT_FOREIGN_CFG_IMPORTED:
+		हाल MR_EVT_LD_STATE_CHANGE:
 			event_type = SCAN_PD_CHANNEL | SCAN_VD_CHANNEL;
 			dev_info(&instance->pdev->dev, "scanning for scsi%d...\n",
 				instance->host->host_no);
-			break;
+			अवरोध;
 
-		case MR_EVT_CTRL_PROP_CHANGED:
+		हाल MR_EVT_CTRL_PROP_CHANGED:
 			dcmd_ret = megasas_get_ctrl_info(instance);
-			if (dcmd_ret == DCMD_SUCCESS &&
-			    instance->snapdump_wait_time) {
+			अगर (dcmd_ret == DCMD_SUCCESS &&
+			    instance->snapdump_रुको_समय) अणु
 				megasas_get_snapdump_properties(instance);
 				dev_info(&instance->pdev->dev,
 					 "Snap dump wait time\t: %d\n",
-					 instance->snapdump_wait_time);
-			}
-			break;
-		default:
+					 instance->snapdump_रुको_समय);
+			पूर्ण
+			अवरोध;
+		शेष:
 			event_type = 0;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(&instance->pdev->dev, "invalid evt_detail!\n");
 		mutex_unlock(&instance->reset_mutex);
-		kfree(ev);
-		return;
-	}
+		kमुक्त(ev);
+		वापस;
+	पूर्ण
 
-	if (event_type)
+	अगर (event_type)
 		dcmd_ret = megasas_update_device_list(instance, event_type);
 
 	mutex_unlock(&instance->reset_mutex);
 
-	if (event_type && dcmd_ret == DCMD_SUCCESS)
-		megasas_add_remove_devices(instance, event_type);
+	अगर (event_type && dcmd_ret == DCMD_SUCCESS)
+		megasas_add_हटाओ_devices(instance, event_type);
 
-	if (dcmd_ret == DCMD_SUCCESS)
+	अगर (dcmd_ret == DCMD_SUCCESS)
 		seq_num = le32_to_cpu(instance->evt_detail->seq_num) + 1;
-	else
+	अन्यथा
 		seq_num = instance->last_seq_num;
 
-	/* Register AEN with FW for latest sequence number plus 1 */
+	/* Register AEN with FW क्रम latest sequence number plus 1 */
 	class_locale.members.reserved = 0;
 	class_locale.members.locale = MR_EVT_LOCALE_ALL;
 	class_locale.members.class = MR_EVT_CLASS_DEBUG;
 
-	if (instance->aen_cmd != NULL) {
-		kfree(ev);
-		return;
-	}
+	अगर (instance->aen_cmd != शून्य) अणु
+		kमुक्त(ev);
+		वापस;
+	पूर्ण
 
 	mutex_lock(&instance->reset_mutex);
-	error = megasas_register_aen(instance, seq_num,
+	error = megasas_रेजिस्टर_aen(instance, seq_num,
 					class_locale.word);
-	if (error)
+	अगर (error)
 		dev_err(&instance->pdev->dev,
 			"register aen failed error %x\n", error);
 
 	mutex_unlock(&instance->reset_mutex);
-	kfree(ev);
-}
+	kमुक्त(ev);
+पूर्ण
 
 /**
- * megasas_init - Driver load entry point
+ * megasas_init - Driver load entry poपूर्णांक
  */
-static int __init megasas_init(void)
-{
-	int rval;
+अटल पूर्णांक __init megasas_init(व्योम)
+अणु
+	पूर्णांक rval;
 
 	/*
-	 * Booted in kdump kernel, minimize memory footprints by
+	 * Booted in kdump kernel, minimize memory footprपूर्णांकs by
 	 * disabling few features
 	 */
-	if (reset_devices) {
+	अगर (reset_devices) अणु
 		msix_vectors = 1;
 		rdpq_enable = 0;
 		dual_qdepth_disable = 1;
 		poll_queues = 0;
-	}
+	पूर्ण
 
 	/*
-	 * Announce driver version and other information
+	 * Announce driver version and other inक्रमmation
 	 */
 	pr_info("megasas: %s\n", MEGASAS_VERSION);
 
 	spin_lock_init(&poll_aen_lock);
 
-	support_poll_for_event = 2;
+	support_poll_क्रम_event = 2;
 	support_device_change = 1;
 	support_nvme_encapsulation = true;
 	support_pci_lane_margining = true;
 
-	memset(&megasas_mgmt_info, 0, sizeof(megasas_mgmt_info));
+	स_रखो(&megasas_mgmt_info, 0, माप(megasas_mgmt_info));
 
 	/*
-	 * Register character device node
+	 * Register अक्षरacter device node
 	 */
-	rval = register_chrdev(0, "megaraid_sas_ioctl", &megasas_mgmt_fops);
+	rval = रेजिस्टर_chrdev(0, "megaraid_sas_ioctl", &megasas_mgmt_fops);
 
-	if (rval < 0) {
-		printk(KERN_DEBUG "megasas: failed to open device node\n");
-		return rval;
-	}
+	अगर (rval < 0) अणु
+		prपूर्णांकk(KERN_DEBUG "megasas: failed to open device node\n");
+		वापस rval;
+	पूर्ण
 
 	megasas_mgmt_majorno = rval;
 
@@ -8960,105 +8961,105 @@ static int __init megasas_init(void)
 	/*
 	 * Register ourselves as PCI hotplug module
 	 */
-	rval = pci_register_driver(&megasas_pci_driver);
+	rval = pci_रेजिस्टर_driver(&megasas_pci_driver);
 
-	if (rval) {
-		printk(KERN_DEBUG "megasas: PCI hotplug registration failed \n");
-		goto err_pcidrv;
-	}
+	अगर (rval) अणु
+		prपूर्णांकk(KERN_DEBUG "megasas: PCI hotplug registration failed \n");
+		जाओ err_pcidrv;
+	पूर्ण
 
-	if ((event_log_level < MFI_EVT_CLASS_DEBUG) ||
-	    (event_log_level > MFI_EVT_CLASS_DEAD)) {
+	अगर ((event_log_level < MFI_EVT_CLASS_DEBUG) ||
+	    (event_log_level > MFI_EVT_CLASS_DEAD)) अणु
 		pr_warn("megaraid_sas: provided event log level is out of range, setting it to default 2(CLASS_CRITICAL), permissible range is: -2 to 4\n");
 		event_log_level = MFI_EVT_CLASS_CRITICAL;
-	}
+	पूर्ण
 
 	rval = driver_create_file(&megasas_pci_driver.driver,
 				  &driver_attr_version);
-	if (rval)
-		goto err_dcf_attr_ver;
+	अगर (rval)
+		जाओ err_dcf_attr_ver;
 
 	rval = driver_create_file(&megasas_pci_driver.driver,
 				  &driver_attr_release_date);
-	if (rval)
-		goto err_dcf_rel_date;
+	अगर (rval)
+		जाओ err_dcf_rel_date;
 
 	rval = driver_create_file(&megasas_pci_driver.driver,
-				&driver_attr_support_poll_for_event);
-	if (rval)
-		goto err_dcf_support_poll_for_event;
+				&driver_attr_support_poll_क्रम_event);
+	अगर (rval)
+		जाओ err_dcf_support_poll_क्रम_event;
 
 	rval = driver_create_file(&megasas_pci_driver.driver,
 				  &driver_attr_dbg_lvl);
-	if (rval)
-		goto err_dcf_dbg_lvl;
+	अगर (rval)
+		जाओ err_dcf_dbg_lvl;
 	rval = driver_create_file(&megasas_pci_driver.driver,
 				&driver_attr_support_device_change);
-	if (rval)
-		goto err_dcf_support_device_change;
+	अगर (rval)
+		जाओ err_dcf_support_device_change;
 
 	rval = driver_create_file(&megasas_pci_driver.driver,
 				  &driver_attr_support_nvme_encapsulation);
-	if (rval)
-		goto err_dcf_support_nvme_encapsulation;
+	अगर (rval)
+		जाओ err_dcf_support_nvme_encapsulation;
 
 	rval = driver_create_file(&megasas_pci_driver.driver,
 				  &driver_attr_support_pci_lane_margining);
-	if (rval)
-		goto err_dcf_support_pci_lane_margining;
+	अगर (rval)
+		जाओ err_dcf_support_pci_lane_margining;
 
-	return rval;
+	वापस rval;
 
 err_dcf_support_pci_lane_margining:
-	driver_remove_file(&megasas_pci_driver.driver,
+	driver_हटाओ_file(&megasas_pci_driver.driver,
 			   &driver_attr_support_nvme_encapsulation);
 
 err_dcf_support_nvme_encapsulation:
-	driver_remove_file(&megasas_pci_driver.driver,
+	driver_हटाओ_file(&megasas_pci_driver.driver,
 			   &driver_attr_support_device_change);
 
 err_dcf_support_device_change:
-	driver_remove_file(&megasas_pci_driver.driver,
+	driver_हटाओ_file(&megasas_pci_driver.driver,
 			   &driver_attr_dbg_lvl);
 err_dcf_dbg_lvl:
-	driver_remove_file(&megasas_pci_driver.driver,
-			&driver_attr_support_poll_for_event);
-err_dcf_support_poll_for_event:
-	driver_remove_file(&megasas_pci_driver.driver,
+	driver_हटाओ_file(&megasas_pci_driver.driver,
+			&driver_attr_support_poll_क्रम_event);
+err_dcf_support_poll_क्रम_event:
+	driver_हटाओ_file(&megasas_pci_driver.driver,
 			   &driver_attr_release_date);
 err_dcf_rel_date:
-	driver_remove_file(&megasas_pci_driver.driver, &driver_attr_version);
+	driver_हटाओ_file(&megasas_pci_driver.driver, &driver_attr_version);
 err_dcf_attr_ver:
-	pci_unregister_driver(&megasas_pci_driver);
+	pci_unरेजिस्टर_driver(&megasas_pci_driver);
 err_pcidrv:
-	megasas_exit_debugfs();
-	unregister_chrdev(megasas_mgmt_majorno, "megaraid_sas_ioctl");
-	return rval;
-}
+	megasas_निकास_debugfs();
+	unरेजिस्टर_chrdev(megasas_mgmt_majorno, "megaraid_sas_ioctl");
+	वापस rval;
+पूर्ण
 
 /**
- * megasas_exit - Driver unload entry point
+ * megasas_निकास - Driver unload entry poपूर्णांक
  */
-static void __exit megasas_exit(void)
-{
-	driver_remove_file(&megasas_pci_driver.driver,
+अटल व्योम __निकास megasas_निकास(व्योम)
+अणु
+	driver_हटाओ_file(&megasas_pci_driver.driver,
 			   &driver_attr_dbg_lvl);
-	driver_remove_file(&megasas_pci_driver.driver,
-			&driver_attr_support_poll_for_event);
-	driver_remove_file(&megasas_pci_driver.driver,
+	driver_हटाओ_file(&megasas_pci_driver.driver,
+			&driver_attr_support_poll_क्रम_event);
+	driver_हटाओ_file(&megasas_pci_driver.driver,
 			&driver_attr_support_device_change);
-	driver_remove_file(&megasas_pci_driver.driver,
+	driver_हटाओ_file(&megasas_pci_driver.driver,
 			   &driver_attr_release_date);
-	driver_remove_file(&megasas_pci_driver.driver, &driver_attr_version);
-	driver_remove_file(&megasas_pci_driver.driver,
+	driver_हटाओ_file(&megasas_pci_driver.driver, &driver_attr_version);
+	driver_हटाओ_file(&megasas_pci_driver.driver,
 			   &driver_attr_support_nvme_encapsulation);
-	driver_remove_file(&megasas_pci_driver.driver,
+	driver_हटाओ_file(&megasas_pci_driver.driver,
 			   &driver_attr_support_pci_lane_margining);
 
-	pci_unregister_driver(&megasas_pci_driver);
-	megasas_exit_debugfs();
-	unregister_chrdev(megasas_mgmt_majorno, "megaraid_sas_ioctl");
-}
+	pci_unरेजिस्टर_driver(&megasas_pci_driver);
+	megasas_निकास_debugfs();
+	unरेजिस्टर_chrdev(megasas_mgmt_majorno, "megaraid_sas_ioctl");
+पूर्ण
 
 module_init(megasas_init);
-module_exit(megasas_exit);
+module_निकास(megasas_निकास);

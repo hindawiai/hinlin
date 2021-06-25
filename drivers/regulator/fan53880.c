@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0+
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/regulator/driver.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/driver.h>
 
-enum fan53880_regulator_ids {
+क्रमागत fan53880_regulator_ids अणु
 	FAN53880_LDO1,
 	FAN53880_LDO2,
 	FAN53880_LDO3,
 	FAN53880_LDO4,
 	FAN53880_BUCK,
 	FAN53880_BOOST,
-};
+पूर्ण;
 
-enum fan53880_registers {
+क्रमागत fan53880_रेजिस्टरs अणु
 	FAN53880_PRODUCT_ID = 0x00,
 	FAN53880_SILICON_REV,
 	FAN53880_BUCKVOUT,
@@ -25,11 +26,11 @@ enum fan53880_registers {
 	FAN53880_IOUT,
 	FAN53880_ENABLE,
 	FAN53880_ENABLE_BOOST,
-};
+पूर्ण;
 
-#define FAN53880_ID	0x01
+#घोषणा FAN53880_ID	0x01
 
-static const struct regulator_ops fan53880_ops = {
+अटल स्थिर काष्ठा regulator_ops fan53880_ops = अणु
 	.list_voltage = regulator_list_voltage_linear_range,
 	.map_voltage = regulator_map_voltage_linear_range,
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
@@ -37,149 +38,149 @@ static const struct regulator_ops fan53880_ops = {
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
-};
+पूर्ण;
 
-#define FAN53880_LDO(_num, _supply, _default)				\
-	[FAN53880_LDO ## _num] = {					\
+#घोषणा FAN53880_LDO(_num, _supply, _शेष)				\
+	[FAN53880_LDO ## _num] = अणु					\
 		.name =		   "LDO"#_num,				\
 		.of_match =	   of_match_ptr("LDO"#_num),		\
 		.regulators_node = of_match_ptr("regulators"),		\
 		.type =		   REGULATOR_VOLTAGE,			\
 		.owner =	   THIS_MODULE,				\
-		.linear_ranges =   (struct linear_range[]) {		\
-		      REGULATOR_LINEAR_RANGE(_default, 0x0, 0x0, 0),	\
+		.linear_ranges =   (काष्ठा linear_range[]) अणु		\
+		      REGULATOR_LINEAR_RANGE(_शेष, 0x0, 0x0, 0),	\
 		      REGULATOR_LINEAR_RANGE(800000, 0xf, 0x73, 25000),	\
-		},							\
+		पूर्ण,							\
 		.n_linear_ranges = 2,					\
 		.n_voltages =	   0x74,				\
 		.vsel_reg =	   FAN53880_LDO ## _num ## VOUT,	\
 		.vsel_mask =	   0x7f,				\
 		.enable_reg =	   FAN53880_ENABLE,			\
 		.enable_mask =	   BIT(_num - 1),			\
-		.enable_time =	   150,					\
+		.enable_समय =	   150,					\
 		.supply_name =	   _supply,				\
 		.ops =		   &fan53880_ops,			\
-	}
+	पूर्ण
 
-static const struct regulator_desc fan53880_regulators[] = {
+अटल स्थिर काष्ठा regulator_desc fan53880_regulators[] = अणु
 	FAN53880_LDO(1, "VIN12", 2800000),
 	FAN53880_LDO(2, "VIN12", 2800000),
 	FAN53880_LDO(3, "VIN3", 1800000),
 	FAN53880_LDO(4, "VIN4", 1800000),
-	[FAN53880_BUCK] = {
+	[FAN53880_BUCK] = अणु
 		.name =		   "BUCK",
 		.of_match =	   of_match_ptr("BUCK"),
 		.regulators_node = of_match_ptr("regulators"),
 		.type =		   REGULATOR_VOLTAGE,
 		.owner =	   THIS_MODULE,
-		.linear_ranges =   (struct linear_range[]) {
+		.linear_ranges =   (काष्ठा linear_range[]) अणु
 		      REGULATOR_LINEAR_RANGE(1100000, 0x0, 0x0, 0),
 		      REGULATOR_LINEAR_RANGE(600000, 0x1f, 0xf7, 12500),
-		},
+		पूर्ण,
 		.n_linear_ranges = 2,
 		.n_voltages =	   0xf8,
 		.vsel_reg =	   FAN53880_BUCKVOUT,
 		.vsel_mask =	   0x7f,
 		.enable_reg =	   FAN53880_ENABLE,
 		.enable_mask =	   0x10,
-		.enable_time =	   480,
+		.enable_समय =	   480,
 		.supply_name =	   "PVIN",
 		.ops =		   &fan53880_ops,
-	},
-	[FAN53880_BOOST] = {
+	पूर्ण,
+	[FAN53880_BOOST] = अणु
 		.name =		   "BOOST",
 		.of_match =	   of_match_ptr("BOOST"),
 		.regulators_node = of_match_ptr("regulators"),
 		.type =		   REGULATOR_VOLTAGE,
 		.owner =	   THIS_MODULE,
-		.linear_ranges =   (struct linear_range[]) {
+		.linear_ranges =   (काष्ठा linear_range[]) अणु
 		      REGULATOR_LINEAR_RANGE(5000000, 0x0, 0x0, 0),
 		      REGULATOR_LINEAR_RANGE(3000000, 0x4, 0x70, 25000),
-		},
+		पूर्ण,
 		.n_linear_ranges = 2,
 		.n_voltages =	   0x71,
 		.vsel_reg =	   FAN53880_BOOSTVOUT,
 		.vsel_mask =	   0x7f,
 		.enable_reg =	   FAN53880_ENABLE_BOOST,
 		.enable_mask =	   0xff,
-		.enable_time =	   580,
+		.enable_समय =	   580,
 		.supply_name =	   "PVIN",
 		.ops =		   &fan53880_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct regmap_config fan53880_regmap = {
+अटल स्थिर काष्ठा regmap_config fan53880_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = FAN53880_ENABLE_BOOST,
-};
+	.max_रेजिस्टर = FAN53880_ENABLE_BOOST,
+पूर्ण;
 
-static int fan53880_i2c_probe(struct i2c_client *i2c,
-			     const struct i2c_device_id *id)
-{
-	struct regulator_config config = { };
-	struct regulator_dev *rdev;
-	struct regmap *regmap;
-	int i, ret;
-	unsigned int data;
+अटल पूर्णांक fan53880_i2c_probe(काष्ठा i2c_client *i2c,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regulator_config config = अणु पूर्ण;
+	काष्ठा regulator_dev *rdev;
+	काष्ठा regmap *regmap;
+	पूर्णांक i, ret;
+	अचिन्हित पूर्णांक data;
 
 	regmap = devm_regmap_init_i2c(i2c, &fan53880_regmap);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		ret = PTR_ERR(regmap);
 		dev_err(&i2c->dev, "Failed to create regmap: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = regmap_read(regmap, FAN53880_PRODUCT_ID, &data);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(regmap, FAN53880_PRODUCT_ID, &data);
+	अगर (ret < 0) अणु
 		dev_err(&i2c->dev, "Failed to read PRODUCT_ID: %d\n", ret);
-		return ret;
-	}
-	if (data != FAN53880_ID) {
+		वापस ret;
+	पूर्ण
+	अगर (data != FAN53880_ID) अणु
 		dev_err(&i2c->dev, "Unsupported device id: 0x%x.\n", data);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	config.dev = &i2c->dev;
-	config.init_data = NULL;
+	config.init_data = शून्य;
 
-	for (i = 0; i < ARRAY_SIZE(fan53880_regulators); i++) {
-		rdev = devm_regulator_register(&i2c->dev,
+	क्रम (i = 0; i < ARRAY_SIZE(fan53880_regulators); i++) अणु
+		rdev = devm_regulator_रेजिस्टर(&i2c->dev,
 					       &fan53880_regulators[i],
 					       &config);
-		if (IS_ERR(rdev)) {
+		अगर (IS_ERR(rdev)) अणु
 			ret = PTR_ERR(rdev);
 			dev_err(&i2c->dev, "Failed to register %s: %d\n",
 				fan53880_regulators[i].name, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id fan53880_dt_ids[] = {
-	{ .compatible = "onnn,fan53880", },
-	{}
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id fan53880_dt_ids[] = अणु
+	अणु .compatible = "onnn,fan53880", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, fan53880_dt_ids);
-#endif
+#पूर्ण_अगर
 
-static const struct i2c_device_id fan53880_i2c_id[] = {
-	{ "fan53880", },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id fan53880_i2c_id[] = अणु
+	अणु "fan53880", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, fan53880_i2c_id);
 
-static struct i2c_driver fan53880_regulator_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver fan53880_regulator_driver = अणु
+	.driver = अणु
 		.name = "fan53880",
 		.of_match_table	= of_match_ptr(fan53880_dt_ids),
-	},
+	पूर्ण,
 	.probe = fan53880_i2c_probe,
 	.id_table = fan53880_i2c_id,
-};
+पूर्ण;
 module_i2c_driver(fan53880_regulator_driver);
 
 MODULE_DESCRIPTION("FAN53880 PMIC voltage regulator driver");

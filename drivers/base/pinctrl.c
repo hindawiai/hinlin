@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver core interface to the pinctrl subsystem.
+ * Driver core पूर्णांकerface to the pinctrl subप्रणाली.
  *
  * Copyright (C) 2012 ST-Ericsson SA
- * Written on behalf of Linaro for ST-Ericsson
+ * Written on behalf of Linaro क्रम ST-Ericsson
  * Based on bits of regulator core, gpio core and clk core
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
-#include <linux/device.h>
-#include <linux/pinctrl/devinfo.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/pinctrl/devinfo.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/slab.h>
 
 /**
- * pinctrl_bind_pins() - called by the device core before probe
+ * pinctrl_bind_pins() - called by the device core beक्रमe probe
  * @dev: the device that is just about to probe
  */
-int pinctrl_bind_pins(struct device *dev)
-{
-	int ret;
+पूर्णांक pinctrl_bind_pins(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
 
-	if (dev->of_node_reused)
-		return 0;
+	अगर (dev->of_node_reused)
+		वापस 0;
 
-	dev->pins = devm_kzalloc(dev, sizeof(*(dev->pins)), GFP_KERNEL);
-	if (!dev->pins)
-		return -ENOMEM;
+	dev->pins = devm_kzalloc(dev, माप(*(dev->pins)), GFP_KERNEL);
+	अगर (!dev->pins)
+		वापस -ENOMEM;
 
 	dev->pins->p = devm_pinctrl_get(dev);
-	if (IS_ERR(dev->pins->p)) {
+	अगर (IS_ERR(dev->pins->p)) अणु
 		dev_dbg(dev, "no pinctrl handle\n");
 		ret = PTR_ERR(dev->pins->p);
-		goto cleanup_alloc;
-	}
+		जाओ cleanup_alloc;
+	पूर्ण
 
-	dev->pins->default_state = pinctrl_lookup_state(dev->pins->p,
+	dev->pins->शेष_state = pinctrl_lookup_state(dev->pins->p,
 					PINCTRL_STATE_DEFAULT);
-	if (IS_ERR(dev->pins->default_state)) {
+	अगर (IS_ERR(dev->pins->शेष_state)) अणु
 		dev_dbg(dev, "no default pinctrl state\n");
 		ret = 0;
-		goto cleanup_get;
-	}
+		जाओ cleanup_get;
+	पूर्ण
 
 	dev->pins->init_state = pinctrl_lookup_state(dev->pins->p,
 					PINCTRL_STATE_INIT);
-	if (IS_ERR(dev->pins->init_state)) {
+	अगर (IS_ERR(dev->pins->init_state)) अणु
 		/* Not supplying this state is perfectly legal */
 		dev_dbg(dev, "no init pinctrl state\n");
 
 		ret = pinctrl_select_state(dev->pins->p,
-					   dev->pins->default_state);
-	} else {
+					   dev->pins->शेष_state);
+	पूर्ण अन्यथा अणु
 		ret = pinctrl_select_state(dev->pins->p, dev->pins->init_state);
-	}
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_dbg(dev, "failed to activate initial pinctrl state\n");
-		goto cleanup_get;
-	}
+		जाओ cleanup_get;
+	पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	/*
-	 * If power management is enabled, we also look for the optional
+	 * If घातer management is enabled, we also look क्रम the optional
 	 * sleep and idle pin states, with semantics as defined in
 	 * <linux/pinctrl/pinctrl-state.h>
 	 */
 	dev->pins->sleep_state = pinctrl_lookup_state(dev->pins->p,
 					PINCTRL_STATE_SLEEP);
-	if (IS_ERR(dev->pins->sleep_state))
+	अगर (IS_ERR(dev->pins->sleep_state))
 		/* Not supplying this state is perfectly legal */
 		dev_dbg(dev, "no sleep pinctrl state\n");
 
 	dev->pins->idle_state = pinctrl_lookup_state(dev->pins->p,
 					PINCTRL_STATE_IDLE);
-	if (IS_ERR(dev->pins->idle_state))
+	अगर (IS_ERR(dev->pins->idle_state))
 		/* Not supplying this state is perfectly legal */
 		dev_dbg(dev, "no idle pinctrl state\n");
-#endif
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
 	/*
-	 * If no pinctrl handle or default state was found for this device,
-	 * let's explicitly free the pin container in the device, there is
-	 * no point in keeping it around.
+	 * If no pinctrl handle or शेष state was found क्रम this device,
+	 * let's explicitly मुक्त the pin container in the device, there is
+	 * no poपूर्णांक in keeping it around.
 	 */
 cleanup_get:
 	devm_pinctrl_put(dev->pins->p);
 cleanup_alloc:
-	devm_kfree(dev, dev->pins);
-	dev->pins = NULL;
+	devm_kमुक्त(dev, dev->pins);
+	dev->pins = शून्य;
 
 	/* Return deferrals */
-	if (ret == -EPROBE_DEFER)
-		return ret;
+	अगर (ret == -EPROBE_DEFER)
+		वापस ret;
 	/* Return serious errors */
-	if (ret == -EINVAL)
-		return ret;
+	अगर (ret == -EINVAL)
+		वापस ret;
 	/* We ignore errors like -ENOENT meaning no pinctrl state */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

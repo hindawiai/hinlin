@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Medifield PNW Camera Imaging ISP subsystem.
+ * Support क्रम Medअगरield PNW Camera Imaging ISP subप्रणाली.
  *
  * Copyright (c) 2010 Intel Corporation. All Rights Reserved.
  *
  * Copyright (c) 2010 Silicon Hive www.siliconhive.com.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  *
  */
-#ifndef	__ATOMISP_TABLES_H__
-#define	__ATOMISP_TABLES_H__
+#अगर_अघोषित	__ATOMISP_TABLES_H__
+#घोषणा	__ATOMISP_TABLES_H__
 
-#include "sh_css_params.h"
+#समावेश "sh_css_params.h"
 
 /*Sepia image effect table*/
-static struct ia_css_cc_config sepia_cc_config = {
+अटल काष्ठा ia_css_cc_config sepia_cc_config = अणु
 	.fraction_bits  = 8,
-	.matrix	 = {141, 18, 68, -40, -5, -19, 35, 4, 16},
-};
+	.matrix	 = अणु141, 18, 68, -40, -5, -19, 35, 4, 16पूर्ण,
+पूर्ण;
 
 /*Negative image effect table*/
-static struct ia_css_cc_config nega_cc_config = {
+अटल काष्ठा ia_css_cc_config nega_cc_config = अणु
 	.fraction_bits  = 8,
-	.matrix	 = {255, 29, 120, 0, 374, 342, 0, 672, -301},
-};
+	.matrix	 = अणु255, 29, 120, 0, 374, 342, 0, 672, -301पूर्ण,
+पूर्ण;
 
 /*Mono image effect table*/
-static struct ia_css_cc_config mono_cc_config = {
+अटल काष्ठा ia_css_cc_config mono_cc_config = अणु
 	.fraction_bits  = 8,
-	.matrix	 = {255, 29, 120, 0, 0, 0, 0, 0, 0},
-};
+	.matrix	 = अणु255, 29, 120, 0, 0, 0, 0, 0, 0पूर्ण,
+पूर्ण;
 
 /*Skin whiten image effect table*/
-static struct ia_css_macc_table skin_low_macc_table = {
-	.data = {
+अटल काष्ठा ia_css_macc_table skin_low_macc_table = अणु
+	.data = अणु
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
@@ -59,11 +60,11 @@ static struct ia_css_macc_table skin_low_macc_table = {
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct ia_css_macc_table skin_medium_macc_table = {
-	.data = {
+अटल काष्ठा ia_css_macc_table skin_medium_macc_table = अणु
+	.data = अणु
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
@@ -80,11 +81,11 @@ static struct ia_css_macc_table skin_medium_macc_table = {
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct ia_css_macc_table skin_high_macc_table = {
-	.data = {
+अटल काष्ठा ia_css_macc_table skin_high_macc_table = अणु
+	.data = अणु
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
@@ -101,12 +102,12 @@ static struct ia_css_macc_table skin_high_macc_table = {
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /*Blue enhencement image effect table*/
-static struct ia_css_macc_table blue_macc_table = {
-	.data = {
+अटल काष्ठा ia_css_macc_table blue_macc_table = अणु
+	.data = अणु
 		9728, -3072, 0, 8192,
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
@@ -123,12 +124,12 @@ static struct ia_css_macc_table blue_macc_table = {
 		12800, 1536, -3072, 8192,
 		11264, 0, 0, 11264,
 		9728, -3072, 0, 11264
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /*Green enhencement image effect table*/
-static struct ia_css_macc_table green_macc_table = {
-	.data = {
+अटल काष्ठा ia_css_macc_table green_macc_table = अणु
+	.data = अणु
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
@@ -145,11 +146,11 @@ static struct ia_css_macc_table green_macc_table = {
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192,
 		8192, 0, 0, 8192
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct ia_css_ctc_table vivid_ctc_table = {
-	.data.vamem_2 = {
+अटल काष्ठा ia_css_ctc_table vivid_ctc_table = अणु
+	.data.vamem_2 = अणु
 		0,  384,  837,  957, 1011, 1062, 1083, 1080,
 		1078, 1077, 1053, 1039, 1012,  992,  969,  951,
 		929,  906,  886,  866,  845,  823,  809,  790,
@@ -183,6 +184,6 @@ static struct ia_css_ctc_table vivid_ctc_table = {
 		41,   40,   39,   39,   34,   33,   34,   32,
 		25,   23,   24,   20,   13,    9,   12,    0,
 		0
-	}
-};
-#endif
+	पूर्ण
+पूर्ण;
+#पूर्ण_अगर

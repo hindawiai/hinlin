@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Kernel Probes (KProbes)
  *  arch/ia64/kernel/kprobes.c
@@ -6,720 +7,720 @@
  * Copyright (C) IBM Corporation, 2002, 2004
  * Copyright (C) Intel Corporation, 2005
  *
- * 2005-Apr     Rusty Lynch <rusty.lynch@intel.com> and Anil S Keshavamurthy
- *              <anil.s.keshavamurthy@intel.com> adapted from i386
+ * 2005-Apr     Rusty Lynch <rusty.lynch@पूर्णांकel.com> and Anil S Keshavamurthy
+ *              <anil.s.keshavamurthy@पूर्णांकel.com> adapted from i386
  */
 
-#include <linux/kprobes.h>
-#include <linux/ptrace.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/preempt.h>
-#include <linux/extable.h>
-#include <linux/kdebug.h>
-#include <linux/pgtable.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/sections.h>
-#include <asm/exception.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/exception.h>
 
-DEFINE_PER_CPU(struct kprobe *, current_kprobe) = NULL;
-DEFINE_PER_CPU(struct kprobe_ctlblk, kprobe_ctlblk);
+DEFINE_PER_CPU(काष्ठा kprobe *, current_kprobe) = शून्य;
+DEFINE_PER_CPU(काष्ठा kprobe_ctlblk, kprobe_ctlblk);
 
-struct kretprobe_blackpoint kretprobe_blacklist[] = {{NULL, NULL}};
+काष्ठा kretprobe_blackpoपूर्णांक kretprobe_blacklist[] = अणुअणुशून्य, शून्यपूर्णपूर्ण;
 
-enum instruction_type {A, I, M, F, B, L, X, u};
-static enum instruction_type bundle_encoding[32][3] = {
-  { M, I, I },				/* 00 */
-  { M, I, I },				/* 01 */
-  { M, I, I },				/* 02 */
-  { M, I, I },				/* 03 */
-  { M, L, X },				/* 04 */
-  { M, L, X },				/* 05 */
-  { u, u, u },  			/* 06 */
-  { u, u, u },  			/* 07 */
-  { M, M, I },				/* 08 */
-  { M, M, I },				/* 09 */
-  { M, M, I },				/* 0A */
-  { M, M, I },				/* 0B */
-  { M, F, I },				/* 0C */
-  { M, F, I },				/* 0D */
-  { M, M, F },				/* 0E */
-  { M, M, F },				/* 0F */
-  { M, I, B },				/* 10 */
-  { M, I, B },				/* 11 */
-  { M, B, B },				/* 12 */
-  { M, B, B },				/* 13 */
-  { u, u, u },  			/* 14 */
-  { u, u, u },  			/* 15 */
-  { B, B, B },				/* 16 */
-  { B, B, B },				/* 17 */
-  { M, M, B },				/* 18 */
-  { M, M, B },				/* 19 */
-  { u, u, u },  			/* 1A */
-  { u, u, u },  			/* 1B */
-  { M, F, B },				/* 1C */
-  { M, F, B },				/* 1D */
-  { u, u, u },  			/* 1E */
-  { u, u, u },  			/* 1F */
-};
+क्रमागत inकाष्ठाion_type अणुA, I, M, F, B, L, X, uपूर्ण;
+अटल क्रमागत inकाष्ठाion_type bundle_encoding[32][3] = अणु
+  अणु M, I, I पूर्ण,				/* 00 */
+  अणु M, I, I पूर्ण,				/* 01 */
+  अणु M, I, I पूर्ण,				/* 02 */
+  अणु M, I, I पूर्ण,				/* 03 */
+  अणु M, L, X पूर्ण,				/* 04 */
+  अणु M, L, X पूर्ण,				/* 05 */
+  अणु u, u, u पूर्ण,  			/* 06 */
+  अणु u, u, u पूर्ण,  			/* 07 */
+  अणु M, M, I पूर्ण,				/* 08 */
+  अणु M, M, I पूर्ण,				/* 09 */
+  अणु M, M, I पूर्ण,				/* 0A */
+  अणु M, M, I पूर्ण,				/* 0B */
+  अणु M, F, I पूर्ण,				/* 0C */
+  अणु M, F, I पूर्ण,				/* 0D */
+  अणु M, M, F पूर्ण,				/* 0E */
+  अणु M, M, F पूर्ण,				/* 0F */
+  अणु M, I, B पूर्ण,				/* 10 */
+  अणु M, I, B पूर्ण,				/* 11 */
+  अणु M, B, B पूर्ण,				/* 12 */
+  अणु M, B, B पूर्ण,				/* 13 */
+  अणु u, u, u पूर्ण,  			/* 14 */
+  अणु u, u, u पूर्ण,  			/* 15 */
+  अणु B, B, B पूर्ण,				/* 16 */
+  अणु B, B, B पूर्ण,				/* 17 */
+  अणु M, M, B पूर्ण,				/* 18 */
+  अणु M, M, B पूर्ण,				/* 19 */
+  अणु u, u, u पूर्ण,  			/* 1A */
+  अणु u, u, u पूर्ण,  			/* 1B */
+  अणु M, F, B पूर्ण,				/* 1C */
+  अणु M, F, B पूर्ण,				/* 1D */
+  अणु u, u, u पूर्ण,  			/* 1E */
+  अणु u, u, u पूर्ण,  			/* 1F */
+पूर्ण;
 
-/* Insert a long branch code */
-static void __kprobes set_brl_inst(void *from, void *to)
-{
+/* Insert a दीर्घ branch code */
+अटल व्योम __kprobes set_brl_inst(व्योम *from, व्योम *to)
+अणु
 	s64 rel = ((s64) to - (s64) from) >> 4;
 	bundle_t *brl;
 	brl = (bundle_t *) ((u64) from & ~0xf);
-	brl->quad0.template = 0x05;	/* [MLX](stop) */
+	brl->quad0.ढाँचा = 0x05;	/* [MLX](stop) */
 	brl->quad0.slot0 = NOP_M_INST;	/* nop.m 0x0 */
 	brl->quad0.slot1_p0 = ((rel >> 20) & 0x7fffffffff) << 2;
 	brl->quad1.slot1_p1 = (((rel >> 20) & 0x7fffffffff) << 2) >> (64 - 46);
 	/* brl.cond.sptk.many.clr rel<<4 (qp=0) */
 	brl->quad1.slot2 = BRL_INST(rel >> 59, rel & 0xfffff);
-}
+पूर्ण
 
 /*
- * In this function we check to see if the instruction
- * is IP relative instruction and update the kprobe
+ * In this function we check to see अगर the inकाष्ठाion
+ * is IP relative inकाष्ठाion and update the kprobe
  * inst flag accordingly
  */
-static void __kprobes update_kprobe_inst_flag(uint template, uint  slot,
-					      uint major_opcode,
-					      unsigned long kprobe_inst,
-					      struct kprobe *p)
-{
+अटल व्योम __kprobes update_kprobe_inst_flag(uपूर्णांक ढाँचा, uपूर्णांक  slot,
+					      uपूर्णांक major_opcode,
+					      अचिन्हित दीर्घ kprobe_inst,
+					      काष्ठा kprobe *p)
+अणु
 	p->ainsn.inst_flag = 0;
 	p->ainsn.target_br_reg = 0;
 	p->ainsn.slot = slot;
 
-	/* Check for Break instruction
+	/* Check क्रम Break inकाष्ठाion
 	 * Bits 37:40 Major opcode to be zero
 	 * Bits 27:32 X6 to be zero
 	 * Bits 32:35 X3 to be zero
 	 */
-	if ((!major_opcode) && (!((kprobe_inst >> 27) & 0x1FF)) ) {
-		/* is a break instruction */
+	अगर ((!major_opcode) && (!((kprobe_inst >> 27) & 0x1FF)) ) अणु
+		/* is a अवरोध inकाष्ठाion */
 	 	p->ainsn.inst_flag |= INST_FLAG_BREAK_INST;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (bundle_encoding[template][slot] == B) {
-		switch (major_opcode) {
-		  case INDIRECT_CALL_OPCODE:
+	अगर (bundle_encoding[ढाँचा][slot] == B) अणु
+		चयन (major_opcode) अणु
+		  हाल INसूचीECT_CALL_OPCODE:
 	 		p->ainsn.inst_flag |= INST_FLAG_FIX_BRANCH_REG;
 			p->ainsn.target_br_reg = ((kprobe_inst >> 6) & 0x7);
-			break;
-		  case IP_RELATIVE_PREDICT_OPCODE:
-		  case IP_RELATIVE_BRANCH_OPCODE:
+			अवरोध;
+		  हाल IP_RELATIVE_PREDICT_OPCODE:
+		  हाल IP_RELATIVE_BRANCH_OPCODE:
 			p->ainsn.inst_flag |= INST_FLAG_FIX_RELATIVE_IP_ADDR;
-			break;
-		  case IP_RELATIVE_CALL_OPCODE:
+			अवरोध;
+		  हाल IP_RELATIVE_CALL_OPCODE:
 			p->ainsn.inst_flag |= INST_FLAG_FIX_RELATIVE_IP_ADDR;
 			p->ainsn.inst_flag |= INST_FLAG_FIX_BRANCH_REG;
 			p->ainsn.target_br_reg = ((kprobe_inst >> 6) & 0x7);
-			break;
-		}
-	} else if (bundle_encoding[template][slot] == X) {
-		switch (major_opcode) {
-		  case LONG_CALL_OPCODE:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (bundle_encoding[ढाँचा][slot] == X) अणु
+		चयन (major_opcode) अणु
+		  हाल LONG_CALL_OPCODE:
 			p->ainsn.inst_flag |= INST_FLAG_FIX_BRANCH_REG;
 			p->ainsn.target_br_reg = ((kprobe_inst >> 6) & 0x7);
-		  break;
-		}
-	}
-	return;
-}
+		  अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस;
+पूर्ण
 
 /*
- * In this function we check to see if the instruction
+ * In this function we check to see अगर the inकाष्ठाion
  * (qp) cmpx.crel.ctype p1,p2=r2,r3
- * on which we are inserting kprobe is cmp instruction
+ * on which we are inserting kprobe is cmp inकाष्ठाion
  * with ctype as unc.
  */
-static uint __kprobes is_cmp_ctype_unc_inst(uint template, uint slot,
-					    uint major_opcode,
-					    unsigned long kprobe_inst)
-{
+अटल uपूर्णांक __kprobes is_cmp_ctype_unc_inst(uपूर्णांक ढाँचा, uपूर्णांक slot,
+					    uपूर्णांक major_opcode,
+					    अचिन्हित दीर्घ kprobe_inst)
+अणु
 	cmp_inst_t cmp_inst;
-	uint ctype_unc = 0;
+	uपूर्णांक ctype_unc = 0;
 
-	if (!((bundle_encoding[template][slot] == I) ||
-		(bundle_encoding[template][slot] == M)))
-		goto out;
+	अगर (!((bundle_encoding[ढाँचा][slot] == I) ||
+		(bundle_encoding[ढाँचा][slot] == M)))
+		जाओ out;
 
-	if (!((major_opcode == 0xC) || (major_opcode == 0xD) ||
+	अगर (!((major_opcode == 0xC) || (major_opcode == 0xD) ||
 		(major_opcode == 0xE)))
-		goto out;
+		जाओ out;
 
 	cmp_inst.l = kprobe_inst;
-	if ((cmp_inst.f.x2 == 0) || (cmp_inst.f.x2 == 1)) {
+	अगर ((cmp_inst.f.x2 == 0) || (cmp_inst.f.x2 == 1)) अणु
 		/* Integer compare - Register Register (A6 type)*/
-		if ((cmp_inst.f.tb == 0) && (cmp_inst.f.ta == 0)
+		अगर ((cmp_inst.f.tb == 0) && (cmp_inst.f.ta == 0)
 				&&(cmp_inst.f.c == 1))
 			ctype_unc = 1;
-	} else if ((cmp_inst.f.x2 == 2)||(cmp_inst.f.x2 == 3)) {
+	पूर्ण अन्यथा अगर ((cmp_inst.f.x2 == 2)||(cmp_inst.f.x2 == 3)) अणु
 		/* Integer compare - Immediate Register (A8 type)*/
-		if ((cmp_inst.f.ta == 0) &&(cmp_inst.f.c == 1))
+		अगर ((cmp_inst.f.ta == 0) &&(cmp_inst.f.c == 1))
 			ctype_unc = 1;
-	}
+	पूर्ण
 out:
-	return ctype_unc;
-}
+	वापस ctype_unc;
+पूर्ण
 
 /*
- * In this function we check to see if the instruction
+ * In this function we check to see अगर the inकाष्ठाion
  * on which we are inserting kprobe is supported.
- * Returns qp value if supported
- * Returns -EINVAL if unsupported
+ * Returns qp value अगर supported
+ * Returns -EINVAL अगर unsupported
  */
-static int __kprobes unsupported_inst(uint template, uint  slot,
-				      uint major_opcode,
-				      unsigned long kprobe_inst,
-				      unsigned long addr)
-{
-	int qp;
+अटल पूर्णांक __kprobes unsupported_inst(uपूर्णांक ढाँचा, uपूर्णांक  slot,
+				      uपूर्णांक major_opcode,
+				      अचिन्हित दीर्घ kprobe_inst,
+				      अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक qp;
 
 	qp = kprobe_inst & 0x3f;
-	if (is_cmp_ctype_unc_inst(template, slot, major_opcode, kprobe_inst)) {
-		if (slot == 1 && qp)  {
-			printk(KERN_WARNING "Kprobes on cmp unc "
+	अगर (is_cmp_ctype_unc_inst(ढाँचा, slot, major_opcode, kprobe_inst)) अणु
+		अगर (slot == 1 && qp)  अणु
+			prपूर्णांकk(KERN_WARNING "Kprobes on cmp unc "
 					"instruction on slot 1 at <0x%lx> "
 					"is not supported\n", addr);
-			return -EINVAL;
+			वापस -EINVAL;
 
-		}
+		पूर्ण
 		qp = 0;
-	}
-	else if (bundle_encoding[template][slot] == I) {
-		if (major_opcode == 0) {
+	पूर्ण
+	अन्यथा अगर (bundle_encoding[ढाँचा][slot] == I) अणु
+		अगर (major_opcode == 0) अणु
 			/*
-			 * Check for Integer speculation instruction
+			 * Check क्रम Integer speculation inकाष्ठाion
 			 * - Bit 33-35 to be equal to 0x1
 			 */
-			if (((kprobe_inst >> 33) & 0x7) == 1) {
-				printk(KERN_WARNING
+			अगर (((kprobe_inst >> 33) & 0x7) == 1) अणु
+				prपूर्णांकk(KERN_WARNING
 					"Kprobes on speculation inst at <0x%lx> not supported\n",
 						addr);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			/*
-			 * IP relative mov instruction
+			 * IP relative mov inकाष्ठाion
 			 *  - Bit 27-35 to be equal to 0x30
 			 */
-			if (((kprobe_inst >> 27) & 0x1FF) == 0x30) {
-				printk(KERN_WARNING
+			अगर (((kprobe_inst >> 27) & 0x1FF) == 0x30) अणु
+				prपूर्णांकk(KERN_WARNING
 					"Kprobes on \"mov r1=ip\" at <0x%lx> not supported\n",
 						addr);
-				return -EINVAL;
+				वापस -EINVAL;
 
-			}
-		}
-		else if ((major_opcode == 5) &&	!(kprobe_inst & (0xFUl << 33)) &&
-				(kprobe_inst & (0x1UL << 12))) {
-			/* test bit instructions, tbit,tnat,tf
+			पूर्ण
+		पूर्ण
+		अन्यथा अगर ((major_opcode == 5) &&	!(kprobe_inst & (0xFUl << 33)) &&
+				(kprobe_inst & (0x1UL << 12))) अणु
+			/* test bit inकाष्ठाions, tbit,tnat,tf
 			 * bit 33-36 to be equal to 0
 			 * bit 12 to be equal to 1
 			 */
-			if (slot == 1 && qp) {
-				printk(KERN_WARNING "Kprobes on test bit "
+			अगर (slot == 1 && qp) अणु
+				prपूर्णांकk(KERN_WARNING "Kprobes on test bit "
 						"instruction on slot at <0x%lx> "
 						"is not supported\n", addr);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			qp = 0;
-		}
-	}
-	else if (bundle_encoding[template][slot] == B) {
-		if (major_opcode == 7) {
+		पूर्ण
+	पूर्ण
+	अन्यथा अगर (bundle_encoding[ढाँचा][slot] == B) अणु
+		अगर (major_opcode == 7) अणु
 			/* IP-Relative Predict major code is 7 */
-			printk(KERN_WARNING "Kprobes on IP-Relative"
+			prपूर्णांकk(KERN_WARNING "Kprobes on IP-Relative"
 					"Predict is not supported\n");
-			return -EINVAL;
-		}
-		else if (major_opcode == 2) {
+			वापस -EINVAL;
+		पूर्ण
+		अन्यथा अगर (major_opcode == 2) अणु
 			/* Indirect Predict, major code is 2
 			 * bit 27-32 to be equal to 10 or 11
 			 */
-			int x6=(kprobe_inst >> 27) & 0x3F;
-			if ((x6 == 0x10) || (x6 == 0x11)) {
-				printk(KERN_WARNING "Kprobes on "
+			पूर्णांक x6=(kprobe_inst >> 27) & 0x3F;
+			अगर ((x6 == 0x10) || (x6 == 0x11)) अणु
+				prपूर्णांकk(KERN_WARNING "Kprobes on "
 					"Indirect Predict is not supported\n");
-				return -EINVAL;
-			}
-		}
-	}
-	/* kernel does not use float instruction, here for safety kprobe
-	 * will judge whether it is fcmp/flass/float approximation instruction
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	/* kernel करोes not use भग्न inकाष्ठाion, here क्रम safety kprobe
+	 * will judge whether it is fcmp/flass/भग्न approximation inकाष्ठाion
 	 */
-	else if (unlikely(bundle_encoding[template][slot] == F)) {
-		if ((major_opcode == 4 || major_opcode == 5) &&
-				(kprobe_inst  & (0x1 << 12))) {
-			/* fcmp/fclass unc instruction */
-			if (slot == 1 && qp) {
-				printk(KERN_WARNING "Kprobes on fcmp/fclass "
+	अन्यथा अगर (unlikely(bundle_encoding[ढाँचा][slot] == F)) अणु
+		अगर ((major_opcode == 4 || major_opcode == 5) &&
+				(kprobe_inst  & (0x1 << 12))) अणु
+			/* fcmp/fclass unc inकाष्ठाion */
+			अगर (slot == 1 && qp) अणु
+				prपूर्णांकk(KERN_WARNING "Kprobes on fcmp/fclass "
 					"instruction on slot at <0x%lx> "
 					"is not supported\n", addr);
-				return -EINVAL;
+				वापस -EINVAL;
 
-			}
+			पूर्ण
 			qp = 0;
-		}
-		if ((major_opcode == 0 || major_opcode == 1) &&
-			(kprobe_inst & (0x1UL << 33))) {
-			/* float Approximation instruction */
-			if (slot == 1 && qp) {
-				printk(KERN_WARNING "Kprobes on float Approx "
+		पूर्ण
+		अगर ((major_opcode == 0 || major_opcode == 1) &&
+			(kprobe_inst & (0x1UL << 33))) अणु
+			/* भग्न Approximation inकाष्ठाion */
+			अगर (slot == 1 && qp) अणु
+				prपूर्णांकk(KERN_WARNING "Kprobes on float Approx "
 					"instr at <0x%lx> is not supported\n",
 						addr);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			qp = 0;
-		}
-	}
-	return qp;
-}
+		पूर्ण
+	पूर्ण
+	वापस qp;
+पूर्ण
 
 /*
  * In this function we override the bundle with
- * the break instruction at the given slot.
+ * the अवरोध inकाष्ठाion at the given slot.
  */
-static void __kprobes prepare_break_inst(uint template, uint  slot,
-					 uint major_opcode,
-					 unsigned long kprobe_inst,
-					 struct kprobe *p,
-					 int qp)
-{
-	unsigned long break_inst = BREAK_INST;
+अटल व्योम __kprobes prepare_अवरोध_inst(uपूर्णांक ढाँचा, uपूर्णांक  slot,
+					 uपूर्णांक major_opcode,
+					 अचिन्हित दीर्घ kprobe_inst,
+					 काष्ठा kprobe *p,
+					 पूर्णांक qp)
+अणु
+	अचिन्हित दीर्घ अवरोध_inst = BREAK_INST;
 	bundle_t *bundle = &p->opcode.bundle;
 
 	/*
-	 * Copy the original kprobe_inst qualifying predicate(qp)
-	 * to the break instruction
+	 * Copy the original kprobe_inst qualअगरying predicate(qp)
+	 * to the अवरोध inकाष्ठाion
 	 */
-	break_inst |= qp;
+	अवरोध_inst |= qp;
 
-	switch (slot) {
-	  case 0:
-		bundle->quad0.slot0 = break_inst;
-		break;
-	  case 1:
-		bundle->quad0.slot1_p0 = break_inst;
-		bundle->quad1.slot1_p1 = break_inst >> (64-46);
-		break;
-	  case 2:
-		bundle->quad1.slot2 = break_inst;
-		break;
-	}
+	चयन (slot) अणु
+	  हाल 0:
+		bundle->quad0.slot0 = अवरोध_inst;
+		अवरोध;
+	  हाल 1:
+		bundle->quad0.slot1_p0 = अवरोध_inst;
+		bundle->quad1.slot1_p1 = अवरोध_inst >> (64-46);
+		अवरोध;
+	  हाल 2:
+		bundle->quad1.slot2 = अवरोध_inst;
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * Update the instruction flag, so that we can
-	 * emulate the instruction properly after we
-	 * single step on original instruction
+	 * Update the inकाष्ठाion flag, so that we can
+	 * emulate the inकाष्ठाion properly after we
+	 * single step on original inकाष्ठाion
 	 */
-	update_kprobe_inst_flag(template, slot, major_opcode, kprobe_inst, p);
-}
+	update_kprobe_inst_flag(ढाँचा, slot, major_opcode, kprobe_inst, p);
+पूर्ण
 
-static void __kprobes get_kprobe_inst(bundle_t *bundle, uint slot,
-	       	unsigned long *kprobe_inst, uint *major_opcode)
-{
-	unsigned long kprobe_inst_p0, kprobe_inst_p1;
-	unsigned int template;
+अटल व्योम __kprobes get_kprobe_inst(bundle_t *bundle, uपूर्णांक slot,
+	       	अचिन्हित दीर्घ *kprobe_inst, uपूर्णांक *major_opcode)
+अणु
+	अचिन्हित दीर्घ kprobe_inst_p0, kprobe_inst_p1;
+	अचिन्हित पूर्णांक ढाँचा;
 
-	template = bundle->quad0.template;
+	ढाँचा = bundle->quad0.ढाँचा;
 
-	switch (slot) {
-	  case 0:
+	चयन (slot) अणु
+	  हाल 0:
 		*major_opcode = (bundle->quad0.slot0 >> SLOT0_OPCODE_SHIFT);
 		*kprobe_inst = bundle->quad0.slot0;
-		  break;
-	  case 1:
+		  अवरोध;
+	  हाल 1:
 		*major_opcode = (bundle->quad1.slot1_p1 >> SLOT1_p1_OPCODE_SHIFT);
 		kprobe_inst_p0 = bundle->quad0.slot1_p0;
 		kprobe_inst_p1 = bundle->quad1.slot1_p1;
 		*kprobe_inst = kprobe_inst_p0 | (kprobe_inst_p1 << (64-46));
-		break;
-	  case 2:
+		अवरोध;
+	  हाल 2:
 		*major_opcode = (bundle->quad1.slot2 >> SLOT2_OPCODE_SHIFT);
 		*kprobe_inst = bundle->quad1.slot2;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* Returns non-zero if the addr is in the Interrupt Vector Table */
-static int __kprobes in_ivt_functions(unsigned long addr)
-{
-	return (addr >= (unsigned long)__start_ivt_text
-		&& addr < (unsigned long)__end_ivt_text);
-}
+/* Returns non-zero अगर the addr is in the Interrupt Vector Table */
+अटल पूर्णांक __kprobes in_ivt_functions(अचिन्हित दीर्घ addr)
+अणु
+	वापस (addr >= (अचिन्हित दीर्घ)__start_ivt_text
+		&& addr < (अचिन्हित दीर्घ)__end_ivt_text);
+पूर्ण
 
-static int __kprobes valid_kprobe_addr(int template, int slot,
-				       unsigned long addr)
-{
-	if ((slot > 2) || ((bundle_encoding[template][1] == L) && slot > 1)) {
-		printk(KERN_WARNING "Attempting to insert unaligned kprobe "
+अटल पूर्णांक __kprobes valid_kprobe_addr(पूर्णांक ढाँचा, पूर्णांक slot,
+				       अचिन्हित दीर्घ addr)
+अणु
+	अगर ((slot > 2) || ((bundle_encoding[ढाँचा][1] == L) && slot > 1)) अणु
+		prपूर्णांकk(KERN_WARNING "Attempting to insert unaligned kprobe "
 				"at 0x%lx\n", addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (in_ivt_functions(addr)) {
-		printk(KERN_WARNING "Kprobes can't be inserted inside "
+	अगर (in_ivt_functions(addr)) अणु
+		prपूर्णांकk(KERN_WARNING "Kprobes can't be inserted inside "
 				"IVT functions at 0x%lx\n", addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __kprobes save_previous_kprobe(struct kprobe_ctlblk *kcb)
-{
-	unsigned int i;
-	i = atomic_add_return(1, &kcb->prev_kprobe_index);
+अटल व्योम __kprobes save_previous_kprobe(काष्ठा kprobe_ctlblk *kcb)
+अणु
+	अचिन्हित पूर्णांक i;
+	i = atomic_add_वापस(1, &kcb->prev_kprobe_index);
 	kcb->prev_kprobe[i-1].kp = kprobe_running();
 	kcb->prev_kprobe[i-1].status = kcb->kprobe_status;
-}
+पूर्ण
 
-static void __kprobes restore_previous_kprobe(struct kprobe_ctlblk *kcb)
-{
-	unsigned int i;
-	i = atomic_read(&kcb->prev_kprobe_index);
-	__this_cpu_write(current_kprobe, kcb->prev_kprobe[i-1].kp);
+अटल व्योम __kprobes restore_previous_kprobe(काष्ठा kprobe_ctlblk *kcb)
+अणु
+	अचिन्हित पूर्णांक i;
+	i = atomic_पढ़ो(&kcb->prev_kprobe_index);
+	__this_cpu_ग_लिखो(current_kprobe, kcb->prev_kprobe[i-1].kp);
 	kcb->kprobe_status = kcb->prev_kprobe[i-1].status;
 	atomic_sub(1, &kcb->prev_kprobe_index);
-}
+पूर्ण
 
-static void __kprobes set_current_kprobe(struct kprobe *p,
-			struct kprobe_ctlblk *kcb)
-{
-	__this_cpu_write(current_kprobe, p);
-}
+अटल व्योम __kprobes set_current_kprobe(काष्ठा kprobe *p,
+			काष्ठा kprobe_ctlblk *kcb)
+अणु
+	__this_cpu_ग_लिखो(current_kprobe, p);
+पूर्ण
 
-static void kretprobe_trampoline(void)
-{
-}
+अटल व्योम kretprobe_trampoline(व्योम)
+अणु
+पूर्ण
 
-int __kprobes trampoline_probe_handler(struct kprobe *p, struct pt_regs *regs)
-{
-	regs->cr_iip = __kretprobe_trampoline_handler(regs, kretprobe_trampoline, NULL);
+पूर्णांक __kprobes trampoline_probe_handler(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
+अणु
+	regs->cr_iip = __kretprobe_trampoline_handler(regs, kretprobe_trampoline, शून्य);
 	/*
-	 * By returning a non-zero value, we are telling
-	 * kprobe_handler() that we don't want the post_handler
+	 * By वापसing a non-zero value, we are telling
+	 * kprobe_handler() that we करोn't want the post_handler
 	 * to run (and have re-enabled preemption)
 	 */
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void __kprobes arch_prepare_kretprobe(struct kretprobe_instance *ri,
-				      struct pt_regs *regs)
-{
+व्योम __kprobes arch_prepare_kretprobe(काष्ठा kretprobe_instance *ri,
+				      काष्ठा pt_regs *regs)
+अणु
 	ri->ret_addr = (kprobe_opcode_t *)regs->b0;
-	ri->fp = NULL;
+	ri->fp = शून्य;
 
-	/* Replace the return addr with trampoline addr */
-	regs->b0 = ((struct fnptr *)kretprobe_trampoline)->ip;
-}
+	/* Replace the वापस addr with trampoline addr */
+	regs->b0 = ((काष्ठा fnptr *)kretprobe_trampoline)->ip;
+पूर्ण
 
-/* Check the instruction in the slot is break */
-static int __kprobes __is_ia64_break_inst(bundle_t *bundle, uint slot)
-{
-	unsigned int major_opcode;
-	unsigned int template = bundle->quad0.template;
-	unsigned long kprobe_inst;
+/* Check the inकाष्ठाion in the slot is अवरोध */
+अटल पूर्णांक __kprobes __is_ia64_अवरोध_inst(bundle_t *bundle, uपूर्णांक slot)
+अणु
+	अचिन्हित पूर्णांक major_opcode;
+	अचिन्हित पूर्णांक ढाँचा = bundle->quad0.ढाँचा;
+	अचिन्हित दीर्घ kprobe_inst;
 
-	/* Move to slot 2, if bundle is MLX type and kprobe slot is 1 */
-	if (slot == 1 && bundle_encoding[template][1] == L)
+	/* Move to slot 2, अगर bundle is MLX type and kprobe slot is 1 */
+	अगर (slot == 1 && bundle_encoding[ढाँचा][1] == L)
 		slot++;
 
-	/* Get Kprobe probe instruction at given slot*/
+	/* Get Kprobe probe inकाष्ठाion at given slot*/
 	get_kprobe_inst(bundle, slot, &kprobe_inst, &major_opcode);
 
-	/* For break instruction,
+	/* For अवरोध inकाष्ठाion,
 	 * Bits 37:40 Major opcode to be zero
 	 * Bits 27:32 X6 to be zero
 	 * Bits 32:35 X3 to be zero
 	 */
-	if (major_opcode || ((kprobe_inst >> 27) & 0x1FF)) {
-		/* Not a break instruction */
-		return 0;
-	}
+	अगर (major_opcode || ((kprobe_inst >> 27) & 0x1FF)) अणु
+		/* Not a अवरोध inकाष्ठाion */
+		वापस 0;
+	पूर्ण
 
-	/* Is a break instruction */
-	return 1;
-}
+	/* Is a अवरोध inकाष्ठाion */
+	वापस 1;
+पूर्ण
 
 /*
- * In this function, we check whether the target bundle modifies IP or
+ * In this function, we check whether the target bundle modअगरies IP or
  * it triggers an exception. If so, it cannot be boostable.
  */
-static int __kprobes can_boost(bundle_t *bundle, uint slot,
-			       unsigned long bundle_addr)
-{
-	unsigned int template = bundle->quad0.template;
+अटल पूर्णांक __kprobes can_boost(bundle_t *bundle, uपूर्णांक slot,
+			       अचिन्हित दीर्घ bundle_addr)
+अणु
+	अचिन्हित पूर्णांक ढाँचा = bundle->quad0.ढाँचा;
 
-	do {
-		if (search_exception_tables(bundle_addr + slot) ||
-		    __is_ia64_break_inst(bundle, slot))
-			return 0;	/* exception may occur in this bundle*/
-	} while ((++slot) < 3);
-	template &= 0x1e;
-	if (template >= 0x10 /* including B unit */ ||
-	    template == 0x04 /* including X unit */ ||
-	    template == 0x06) /* undefined */
-		return 0;
+	करो अणु
+		अगर (search_exception_tables(bundle_addr + slot) ||
+		    __is_ia64_अवरोध_inst(bundle, slot))
+			वापस 0;	/* exception may occur in this bundle*/
+	पूर्ण जबतक ((++slot) < 3);
+	ढाँचा &= 0x1e;
+	अगर (ढाँचा >= 0x10 /* including B unit */ ||
+	    ढाँचा == 0x04 /* including X unit */ ||
+	    ढाँचा == 0x06) /* undefined */
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Prepare long jump bundle and disables other boosters if need */
-static void __kprobes prepare_booster(struct kprobe *p)
-{
-	unsigned long addr = (unsigned long)p->addr & ~0xFULL;
-	unsigned int slot = (unsigned long)p->addr & 0xf;
-	struct kprobe *other_kp;
+/* Prepare दीर्घ jump bundle and disables other boosters अगर need */
+अटल व्योम __kprobes prepare_booster(काष्ठा kprobe *p)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)p->addr & ~0xFULL;
+	अचिन्हित पूर्णांक slot = (अचिन्हित दीर्घ)p->addr & 0xf;
+	काष्ठा kprobe *other_kp;
 
-	if (can_boost(&p->ainsn.insn[0].bundle, slot, addr)) {
+	अगर (can_boost(&p->ainsn.insn[0].bundle, slot, addr)) अणु
 		set_brl_inst(&p->ainsn.insn[1].bundle, (bundle_t *)addr + 1);
 		p->ainsn.inst_flag |= INST_FLAG_BOOSTABLE;
-	}
+	पूर्ण
 
 	/* disables boosters in previous slots */
-	for (; addr < (unsigned long)p->addr; addr++) {
-		other_kp = get_kprobe((void *)addr);
-		if (other_kp)
+	क्रम (; addr < (अचिन्हित दीर्घ)p->addr; addr++) अणु
+		other_kp = get_kprobe((व्योम *)addr);
+		अगर (other_kp)
 			other_kp->ainsn.inst_flag &= ~INST_FLAG_BOOSTABLE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int __kprobes arch_prepare_kprobe(struct kprobe *p)
-{
-	unsigned long addr = (unsigned long) p->addr;
-	unsigned long *kprobe_addr = (unsigned long *)(addr & ~0xFULL);
-	unsigned long kprobe_inst=0;
-	unsigned int slot = addr & 0xf, template, major_opcode = 0;
+पूर्णांक __kprobes arch_prepare_kprobe(काष्ठा kprobe *p)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) p->addr;
+	अचिन्हित दीर्घ *kprobe_addr = (अचिन्हित दीर्घ *)(addr & ~0xFULL);
+	अचिन्हित दीर्घ kprobe_inst=0;
+	अचिन्हित पूर्णांक slot = addr & 0xf, ढाँचा, major_opcode = 0;
 	bundle_t *bundle;
-	int qp;
+	पूर्णांक qp;
 
 	bundle = &((kprobe_opcode_t *)kprobe_addr)->bundle;
-	template = bundle->quad0.template;
+	ढाँचा = bundle->quad0.ढाँचा;
 
-	if(valid_kprobe_addr(template, slot, addr))
-		return -EINVAL;
+	अगर(valid_kprobe_addr(ढाँचा, slot, addr))
+		वापस -EINVAL;
 
-	/* Move to slot 2, if bundle is MLX type and kprobe slot is 1 */
-	if (slot == 1 && bundle_encoding[template][1] == L)
+	/* Move to slot 2, अगर bundle is MLX type and kprobe slot is 1 */
+	अगर (slot == 1 && bundle_encoding[ढाँचा][1] == L)
 		slot++;
 
 	/* Get kprobe_inst and major_opcode from the bundle */
 	get_kprobe_inst(bundle, slot, &kprobe_inst, &major_opcode);
 
-	qp = unsupported_inst(template, slot, major_opcode, kprobe_inst, addr);
-	if (qp < 0)
-		return -EINVAL;
+	qp = unsupported_inst(ढाँचा, slot, major_opcode, kprobe_inst, addr);
+	अगर (qp < 0)
+		वापस -EINVAL;
 
 	p->ainsn.insn = get_insn_slot();
-	if (!p->ainsn.insn)
-		return -ENOMEM;
-	memcpy(&p->opcode, kprobe_addr, sizeof(kprobe_opcode_t));
-	memcpy(p->ainsn.insn, kprobe_addr, sizeof(kprobe_opcode_t));
+	अगर (!p->ainsn.insn)
+		वापस -ENOMEM;
+	स_नकल(&p->opcode, kprobe_addr, माप(kprobe_opcode_t));
+	स_नकल(p->ainsn.insn, kprobe_addr, माप(kprobe_opcode_t));
 
-	prepare_break_inst(template, slot, major_opcode, kprobe_inst, p, qp);
+	prepare_अवरोध_inst(ढाँचा, slot, major_opcode, kprobe_inst, p, qp);
 
 	prepare_booster(p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __kprobes arch_arm_kprobe(struct kprobe *p)
-{
-	unsigned long arm_addr;
+व्योम __kprobes arch_arm_kprobe(काष्ठा kprobe *p)
+अणु
+	अचिन्हित दीर्घ arm_addr;
 	bundle_t *src, *dest;
 
-	arm_addr = ((unsigned long)p->addr) & ~0xFUL;
+	arm_addr = ((अचिन्हित दीर्घ)p->addr) & ~0xFUL;
 	dest = &((kprobe_opcode_t *)arm_addr)->bundle;
 	src = &p->opcode.bundle;
 
-	flush_icache_range((unsigned long)p->ainsn.insn,
-			   (unsigned long)p->ainsn.insn +
-			   sizeof(kprobe_opcode_t) * MAX_INSN_SIZE);
+	flush_icache_range((अचिन्हित दीर्घ)p->ainsn.insn,
+			   (अचिन्हित दीर्घ)p->ainsn.insn +
+			   माप(kprobe_opcode_t) * MAX_INSN_SIZE);
 
-	switch (p->ainsn.slot) {
-		case 0:
+	चयन (p->ainsn.slot) अणु
+		हाल 0:
 			dest->quad0.slot0 = src->quad0.slot0;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			dest->quad1.slot1_p1 = src->quad1.slot1_p1;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			dest->quad1.slot2 = src->quad1.slot2;
-			break;
-	}
-	flush_icache_range(arm_addr, arm_addr + sizeof(kprobe_opcode_t));
-}
+			अवरोध;
+	पूर्ण
+	flush_icache_range(arm_addr, arm_addr + माप(kprobe_opcode_t));
+पूर्ण
 
-void __kprobes arch_disarm_kprobe(struct kprobe *p)
-{
-	unsigned long arm_addr;
+व्योम __kprobes arch_disarm_kprobe(काष्ठा kprobe *p)
+अणु
+	अचिन्हित दीर्घ arm_addr;
 	bundle_t *src, *dest;
 
-	arm_addr = ((unsigned long)p->addr) & ~0xFUL;
+	arm_addr = ((अचिन्हित दीर्घ)p->addr) & ~0xFUL;
 	dest = &((kprobe_opcode_t *)arm_addr)->bundle;
 	/* p->ainsn.insn contains the original unaltered kprobe_opcode_t */
 	src = &p->ainsn.insn->bundle;
-	switch (p->ainsn.slot) {
-		case 0:
+	चयन (p->ainsn.slot) अणु
+		हाल 0:
 			dest->quad0.slot0 = src->quad0.slot0;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			dest->quad1.slot1_p1 = src->quad1.slot1_p1;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			dest->quad1.slot2 = src->quad1.slot2;
-			break;
-	}
-	flush_icache_range(arm_addr, arm_addr + sizeof(kprobe_opcode_t));
-}
+			अवरोध;
+	पूर्ण
+	flush_icache_range(arm_addr, arm_addr + माप(kprobe_opcode_t));
+पूर्ण
 
-void __kprobes arch_remove_kprobe(struct kprobe *p)
-{
-	if (p->ainsn.insn) {
-		free_insn_slot(p->ainsn.insn,
+व्योम __kprobes arch_हटाओ_kprobe(काष्ठा kprobe *p)
+अणु
+	अगर (p->ainsn.insn) अणु
+		मुक्त_insn_slot(p->ainsn.insn,
 			       p->ainsn.inst_flag & INST_FLAG_BOOSTABLE);
-		p->ainsn.insn = NULL;
-	}
-}
+		p->ainsn.insn = शून्य;
+	पूर्ण
+पूर्ण
 /*
  * We are resuming execution after a single step fault, so the pt_regs
- * structure reflects the register state after we executed the instruction
+ * काष्ठाure reflects the रेजिस्टर state after we executed the inकाष्ठाion
  * located in the kprobe (p->ainsn.insn->bundle).  We still need to adjust
- * the ip to point back to the original stack address. To set the IP address
- * to original stack address, handle the case where we need to fixup the
- * relative IP address and/or fixup branch register.
+ * the ip to poपूर्णांक back to the original stack address. To set the IP address
+ * to original stack address, handle the हाल where we need to fixup the
+ * relative IP address and/or fixup branch रेजिस्टर.
  */
-static void __kprobes resume_execution(struct kprobe *p, struct pt_regs *regs)
-{
-	unsigned long bundle_addr = (unsigned long) (&p->ainsn.insn->bundle);
-	unsigned long resume_addr = (unsigned long)p->addr & ~0xFULL;
-	unsigned long template;
-	int slot = ((unsigned long)p->addr & 0xf);
+अटल व्योम __kprobes resume_execution(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ bundle_addr = (अचिन्हित दीर्घ) (&p->ainsn.insn->bundle);
+	अचिन्हित दीर्घ resume_addr = (अचिन्हित दीर्घ)p->addr & ~0xFULL;
+	अचिन्हित दीर्घ ढाँचा;
+	पूर्णांक slot = ((अचिन्हित दीर्घ)p->addr & 0xf);
 
-	template = p->ainsn.insn->bundle.quad0.template;
+	ढाँचा = p->ainsn.insn->bundle.quad0.ढाँचा;
 
-	if (slot == 1 && bundle_encoding[template][1] == L)
+	अगर (slot == 1 && bundle_encoding[ढाँचा][1] == L)
 		slot = 2;
 
-	if (p->ainsn.inst_flag & ~INST_FLAG_BOOSTABLE) {
+	अगर (p->ainsn.inst_flag & ~INST_FLAG_BOOSTABLE) अणु
 
-		if (p->ainsn.inst_flag & INST_FLAG_FIX_RELATIVE_IP_ADDR) {
+		अगर (p->ainsn.inst_flag & INST_FLAG_FIX_RELATIVE_IP_ADDR) अणु
 			/* Fix relative IP address */
 			regs->cr_iip = (regs->cr_iip - bundle_addr) +
 					resume_addr;
-		}
+		पूर्ण
 
-		if (p->ainsn.inst_flag & INST_FLAG_FIX_BRANCH_REG) {
+		अगर (p->ainsn.inst_flag & INST_FLAG_FIX_BRANCH_REG) अणु
 		/*
-		 * Fix target branch register, software convention is
+		 * Fix target branch रेजिस्टर, software convention is
 		 * to use either b0 or b6 or b7, so just checking
-		 * only those registers
+		 * only those रेजिस्टरs
 		 */
-			switch (p->ainsn.target_br_reg) {
-			case 0:
-				if ((regs->b0 == bundle_addr) ||
-					(regs->b0 == bundle_addr + 0x10)) {
+			चयन (p->ainsn.target_br_reg) अणु
+			हाल 0:
+				अगर ((regs->b0 == bundle_addr) ||
+					(regs->b0 == bundle_addr + 0x10)) अणु
 					regs->b0 = (regs->b0 - bundle_addr) +
 						resume_addr;
-				}
-				break;
-			case 6:
-				if ((regs->b6 == bundle_addr) ||
-					(regs->b6 == bundle_addr + 0x10)) {
+				पूर्ण
+				अवरोध;
+			हाल 6:
+				अगर ((regs->b6 == bundle_addr) ||
+					(regs->b6 == bundle_addr + 0x10)) अणु
 					regs->b6 = (regs->b6 - bundle_addr) +
 						resume_addr;
-				}
-				break;
-			case 7:
-				if ((regs->b7 == bundle_addr) ||
-					(regs->b7 == bundle_addr + 0x10)) {
+				पूर्ण
+				अवरोध;
+			हाल 7:
+				अगर ((regs->b7 == bundle_addr) ||
+					(regs->b7 == bundle_addr + 0x10)) अणु
 					regs->b7 = (regs->b7 - bundle_addr) +
 						resume_addr;
-				}
-				break;
-			} /* end switch */
-		}
-		goto turn_ss_off;
-	}
+				पूर्ण
+				अवरोध;
+			पूर्ण /* end चयन */
+		पूर्ण
+		जाओ turn_ss_off;
+	पूर्ण
 
-	if (slot == 2) {
-		if (regs->cr_iip == bundle_addr + 0x10) {
+	अगर (slot == 2) अणु
+		अगर (regs->cr_iip == bundle_addr + 0x10) अणु
 			regs->cr_iip = resume_addr + 0x10;
-		}
-	} else {
-		if (regs->cr_iip == bundle_addr) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (regs->cr_iip == bundle_addr) अणु
 			regs->cr_iip = resume_addr;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 turn_ss_off:
 	/* Turn off Single Step bit */
 	ia64_psr(regs)->ss = 0;
-}
+पूर्ण
 
-static void __kprobes prepare_ss(struct kprobe *p, struct pt_regs *regs)
-{
-	unsigned long bundle_addr = (unsigned long) &p->ainsn.insn->bundle;
-	unsigned long slot = (unsigned long)p->addr & 0xf;
+अटल व्योम __kprobes prepare_ss(काष्ठा kprobe *p, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ bundle_addr = (अचिन्हित दीर्घ) &p->ainsn.insn->bundle;
+	अचिन्हित दीर्घ slot = (अचिन्हित दीर्घ)p->addr & 0xf;
 
-	/* single step inline if break instruction */
-	if (p->ainsn.inst_flag == INST_FLAG_BREAK_INST)
-		regs->cr_iip = (unsigned long)p->addr & ~0xFULL;
-	else
+	/* single step अंतरभूत अगर अवरोध inकाष्ठाion */
+	अगर (p->ainsn.inst_flag == INST_FLAG_BREAK_INST)
+		regs->cr_iip = (अचिन्हित दीर्घ)p->addr & ~0xFULL;
+	अन्यथा
 		regs->cr_iip = bundle_addr & ~0xFULL;
 
-	if (slot > 2)
+	अगर (slot > 2)
 		slot = 0;
 
 	ia64_psr(regs)->ri = slot;
 
 	/* turn on single stepping */
 	ia64_psr(regs)->ss = 1;
-}
+पूर्ण
 
-static int __kprobes is_ia64_break_inst(struct pt_regs *regs)
-{
-	unsigned int slot = ia64_psr(regs)->ri;
-	unsigned long *kprobe_addr = (unsigned long *)regs->cr_iip;
+अटल पूर्णांक __kprobes is_ia64_अवरोध_inst(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित पूर्णांक slot = ia64_psr(regs)->ri;
+	अचिन्हित दीर्घ *kprobe_addr = (अचिन्हित दीर्घ *)regs->cr_iip;
 	bundle_t bundle;
 
-	memcpy(&bundle, kprobe_addr, sizeof(bundle_t));
+	स_नकल(&bundle, kprobe_addr, माप(bundle_t));
 
-	return __is_ia64_break_inst(&bundle, slot);
-}
+	वापस __is_ia64_अवरोध_inst(&bundle, slot);
+पूर्ण
 
-static int __kprobes pre_kprobes_handler(struct die_args *args)
-{
-	struct kprobe *p;
-	int ret = 0;
-	struct pt_regs *regs = args->regs;
-	kprobe_opcode_t *addr = (kprobe_opcode_t *)instruction_pointer(regs);
-	struct kprobe_ctlblk *kcb;
+अटल पूर्णांक __kprobes pre_kprobes_handler(काष्ठा die_args *args)
+अणु
+	काष्ठा kprobe *p;
+	पूर्णांक ret = 0;
+	काष्ठा pt_regs *regs = args->regs;
+	kprobe_opcode_t *addr = (kprobe_opcode_t *)inकाष्ठाion_poपूर्णांकer(regs);
+	काष्ठा kprobe_ctlblk *kcb;
 
 	/*
-	 * We don't want to be preempted for the entire
+	 * We करोn't want to be preempted क्रम the entire
 	 * duration of kprobe processing
 	 */
 	preempt_disable();
 	kcb = get_kprobe_ctlblk();
 
-	/* Handle recursion cases */
-	if (kprobe_running()) {
+	/* Handle recursion हालs */
+	अगर (kprobe_running()) अणु
 		p = get_kprobe(addr);
-		if (p) {
-			if ((kcb->kprobe_status == KPROBE_HIT_SS) &&
-	 		     (p->ainsn.inst_flag == INST_FLAG_BREAK_INST)) {
+		अगर (p) अणु
+			अगर ((kcb->kprobe_status == KPROBE_HIT_SS) &&
+	 		     (p->ainsn.inst_flag == INST_FLAG_BREAK_INST)) अणु
 				ia64_psr(regs)->ss = 0;
-				goto no_kprobe;
-			}
+				जाओ no_kprobe;
+			पूर्ण
 			/* We have reentered the pre_kprobe_handler(), since
-			 * another probe was hit while within the handler.
+			 * another probe was hit जबतक within the handler.
 			 * We here save the original kprobes variables and
-			 * just single step on the instruction of the new probe
+			 * just single step on the inकाष्ठाion of the new probe
 			 * without calling any user handlers.
 			 */
 			save_previous_kprobe(kcb);
@@ -727,206 +728,206 @@ static int __kprobes pre_kprobes_handler(struct die_args *args)
 			kprobes_inc_nmissed_count(p);
 			prepare_ss(p, regs);
 			kcb->kprobe_status = KPROBE_REENTER;
-			return 1;
-		} else if (!is_ia64_break_inst(regs)) {
-			/* The breakpoint instruction was removed by
+			वापस 1;
+		पूर्ण अन्यथा अगर (!is_ia64_अवरोध_inst(regs)) अणु
+			/* The अवरोधpoपूर्णांक inकाष्ठाion was हटाओd by
 			 * another cpu right after we hit, no further
-			 * handling of this interrupt is appropriate
+			 * handling of this पूर्णांकerrupt is appropriate
 			 */
 			ret = 1;
-			goto no_kprobe;
-		} else {
-			/* Not our break */
-			goto no_kprobe;
-		}
-	}
+			जाओ no_kprobe;
+		पूर्ण अन्यथा अणु
+			/* Not our अवरोध */
+			जाओ no_kprobe;
+		पूर्ण
+	पूर्ण
 
 	p = get_kprobe(addr);
-	if (!p) {
-		if (!is_ia64_break_inst(regs)) {
+	अगर (!p) अणु
+		अगर (!is_ia64_अवरोध_inst(regs)) अणु
 			/*
-			 * The breakpoint instruction was removed right
-			 * after we hit it.  Another cpu has removed
-			 * either a probepoint or a debugger breakpoint
-			 * at this address.  In either case, no further
-			 * handling of this interrupt is appropriate.
+			 * The अवरोधpoपूर्णांक inकाष्ठाion was हटाओd right
+			 * after we hit it.  Another cpu has हटाओd
+			 * either a probepoपूर्णांक or a debugger अवरोधpoपूर्णांक
+			 * at this address.  In either हाल, no further
+			 * handling of this पूर्णांकerrupt is appropriate.
 			 */
 			ret = 1;
 
-		}
+		पूर्ण
 
-		/* Not one of our break, let kernel handle it */
-		goto no_kprobe;
-	}
+		/* Not one of our अवरोध, let kernel handle it */
+		जाओ no_kprobe;
+	पूर्ण
 
 	set_current_kprobe(p, kcb);
 	kcb->kprobe_status = KPROBE_HIT_ACTIVE;
 
-	if (p->pre_handler && p->pre_handler(p, regs)) {
+	अगर (p->pre_handler && p->pre_handler(p, regs)) अणु
 		reset_current_kprobe();
 		preempt_enable_no_resched();
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-#if !defined(CONFIG_PREEMPTION)
-	if (p->ainsn.inst_flag == INST_FLAG_BOOSTABLE && !p->post_handler) {
-		/* Boost up -- we can execute copied instructions directly */
+#अगर !defined(CONFIG_PREEMPTION)
+	अगर (p->ainsn.inst_flag == INST_FLAG_BOOSTABLE && !p->post_handler) अणु
+		/* Boost up -- we can execute copied inकाष्ठाions directly */
 		ia64_psr(regs)->ri = p->ainsn.slot;
-		regs->cr_iip = (unsigned long)&p->ainsn.insn->bundle & ~0xFULL;
+		regs->cr_iip = (अचिन्हित दीर्घ)&p->ainsn.insn->bundle & ~0xFULL;
 		/* turn single stepping off */
 		ia64_psr(regs)->ss = 0;
 
 		reset_current_kprobe();
 		preempt_enable_no_resched();
-		return 1;
-	}
-#endif
+		वापस 1;
+	पूर्ण
+#पूर्ण_अगर
 	prepare_ss(p, regs);
 	kcb->kprobe_status = KPROBE_HIT_SS;
-	return 1;
+	वापस 1;
 
 no_kprobe:
 	preempt_enable_no_resched();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __kprobes post_kprobes_handler(struct pt_regs *regs)
-{
-	struct kprobe *cur = kprobe_running();
-	struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+अटल पूर्णांक __kprobes post_kprobes_handler(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा kprobe *cur = kprobe_running();
+	काष्ठा kprobe_ctlblk *kcb = get_kprobe_ctlblk();
 
-	if (!cur)
-		return 0;
+	अगर (!cur)
+		वापस 0;
 
-	if ((kcb->kprobe_status != KPROBE_REENTER) && cur->post_handler) {
+	अगर ((kcb->kprobe_status != KPROBE_REENTER) && cur->post_handler) अणु
 		kcb->kprobe_status = KPROBE_HIT_SSDONE;
 		cur->post_handler(cur, regs, 0);
-	}
+	पूर्ण
 
 	resume_execution(cur, regs);
 
-	/*Restore back the original saved kprobes variables and continue. */
-	if (kcb->kprobe_status == KPROBE_REENTER) {
+	/*Restore back the original saved kprobes variables and जारी. */
+	अगर (kcb->kprobe_status == KPROBE_REENTER) अणु
 		restore_previous_kprobe(kcb);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	reset_current_kprobe();
 
 out:
 	preempt_enable_no_resched();
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int __kprobes kprobe_fault_handler(struct pt_regs *regs, int trapnr)
-{
-	struct kprobe *cur = kprobe_running();
-	struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+पूर्णांक __kprobes kprobe_fault_handler(काष्ठा pt_regs *regs, पूर्णांक trapnr)
+अणु
+	काष्ठा kprobe *cur = kprobe_running();
+	काष्ठा kprobe_ctlblk *kcb = get_kprobe_ctlblk();
 
 
-	switch(kcb->kprobe_status) {
-	case KPROBE_HIT_SS:
-	case KPROBE_REENTER:
+	चयन(kcb->kprobe_status) अणु
+	हाल KPROBE_HIT_SS:
+	हाल KPROBE_REENTER:
 		/*
-		 * We are here because the instruction being single
+		 * We are here because the inकाष्ठाion being single
 		 * stepped caused a page fault. We reset the current
-		 * kprobe and the instruction pointer points back to
+		 * kprobe and the inकाष्ठाion poपूर्णांकer poपूर्णांकs back to
 		 * the probe address and allow the page fault handler
-		 * to continue as a normal page fault.
+		 * to जारी as a normal page fault.
 		 */
-		regs->cr_iip = ((unsigned long)cur->addr) & ~0xFULL;
-		ia64_psr(regs)->ri = ((unsigned long)cur->addr) & 0xf;
-		if (kcb->kprobe_status == KPROBE_REENTER)
+		regs->cr_iip = ((अचिन्हित दीर्घ)cur->addr) & ~0xFULL;
+		ia64_psr(regs)->ri = ((अचिन्हित दीर्घ)cur->addr) & 0xf;
+		अगर (kcb->kprobe_status == KPROBE_REENTER)
 			restore_previous_kprobe(kcb);
-		else
+		अन्यथा
 			reset_current_kprobe();
 		preempt_enable_no_resched();
-		break;
-	case KPROBE_HIT_ACTIVE:
-	case KPROBE_HIT_SSDONE:
+		अवरोध;
+	हाल KPROBE_HIT_ACTIVE:
+	हाल KPROBE_HIT_SSDONE:
 		/*
-		 * We increment the nmissed count for accounting,
-		 * we can also use npre/npostfault count for accounting
-		 * these specific fault cases.
+		 * We increment the nmissed count क्रम accounting,
+		 * we can also use npre/npostfault count क्रम accounting
+		 * these specअगरic fault हालs.
 		 */
 		kprobes_inc_nmissed_count(cur);
 
 		/*
-		 * We come here because instructions in the pre/post
+		 * We come here because inकाष्ठाions in the pre/post
 		 * handler caused the page_fault, this could happen
-		 * if handler tries to access user space by
+		 * अगर handler tries to access user space by
 		 * copy_from_user(), get_user() etc. Let the
-		 * user-specified handler try to fix it first.
+		 * user-specअगरied handler try to fix it first.
 		 */
-		if (cur->fault_handler && cur->fault_handler(cur, regs, trapnr))
-			return 1;
+		अगर (cur->fault_handler && cur->fault_handler(cur, regs, trapnr))
+			वापस 1;
 		/*
-		 * In case the user-specified fault handler returned
+		 * In हाल the user-specअगरied fault handler वापसed
 		 * zero, try to fix up.
 		 */
-		if (ia64_done_with_exception(regs))
-			return 1;
+		अगर (ia64_करोne_with_exception(regs))
+			वापस 1;
 
 		/*
-		 * Let ia64_do_page_fault() fix it.
+		 * Let ia64_करो_page_fault() fix it.
 		 */
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __kprobes kprobe_exceptions_notify(struct notifier_block *self,
-				       unsigned long val, void *data)
-{
-	struct die_args *args = (struct die_args *)data;
-	int ret = NOTIFY_DONE;
+पूर्णांक __kprobes kprobe_exceptions_notअगरy(काष्ठा notअगरier_block *self,
+				       अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	काष्ठा die_args *args = (काष्ठा die_args *)data;
+	पूर्णांक ret = NOTIFY_DONE;
 
-	if (args->regs && user_mode(args->regs))
-		return ret;
+	अगर (args->regs && user_mode(args->regs))
+		वापस ret;
 
-	switch(val) {
-	case DIE_BREAK:
-		/* err is break number from ia64_bad_break() */
-		if ((args->err >> 12) == (__IA64_BREAK_KPROBE >> 12)
+	चयन(val) अणु
+	हाल DIE_BREAK:
+		/* err is अवरोध number from ia64_bad_अवरोध() */
+		अगर ((args->err >> 12) == (__IA64_BREAK_KPROBE >> 12)
 			|| args->err == 0)
-			if (pre_kprobes_handler(args))
+			अगर (pre_kprobes_handler(args))
 				ret = NOTIFY_STOP;
-		break;
-	case DIE_FAULT:
+		अवरोध;
+	हाल DIE_FAULT:
 		/* err is vector number from ia64_fault() */
-		if (args->err == 36)
-			if (post_kprobes_handler(args->regs))
+		अगर (args->err == 36)
+			अगर (post_kprobes_handler(args->regs))
 				ret = NOTIFY_STOP;
-		break;
-	default:
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-unsigned long arch_deref_entry_point(void *entry)
-{
-	return ((struct fnptr *)entry)->ip;
-}
+अचिन्हित दीर्घ arch_deref_entry_poपूर्णांक(व्योम *entry)
+अणु
+	वापस ((काष्ठा fnptr *)entry)->ip;
+पूर्ण
 
-static struct kprobe trampoline_p = {
+अटल काष्ठा kprobe trampoline_p = अणु
 	.pre_handler = trampoline_probe_handler
-};
+पूर्ण;
 
-int __init arch_init_kprobes(void)
-{
+पूर्णांक __init arch_init_kprobes(व्योम)
+अणु
 	trampoline_p.addr =
-		(kprobe_opcode_t *)((struct fnptr *)kretprobe_trampoline)->ip;
-	return register_kprobe(&trampoline_p);
-}
+		(kprobe_opcode_t *)((काष्ठा fnptr *)kretprobe_trampoline)->ip;
+	वापस रेजिस्टर_kprobe(&trampoline_p);
+पूर्ण
 
-int __kprobes arch_trampoline_kprobe(struct kprobe *p)
-{
-	if (p->addr ==
-		(kprobe_opcode_t *)((struct fnptr *)kretprobe_trampoline)->ip)
-		return 1;
+पूर्णांक __kprobes arch_trampoline_kprobe(काष्ठा kprobe *p)
+अणु
+	अगर (p->addr ==
+		(kprobe_opcode_t *)((काष्ठा fnptr *)kretprobe_trampoline)->ip)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

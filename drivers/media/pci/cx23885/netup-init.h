@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * netup-init.h
  *
@@ -8,4 +9,4 @@
  * Copyright (C) 2009 Igor M. Liplianin <liplianin@netup.ru>
  * Copyright (C) 2009 Abylay Ospan <aospan@netup.ru>
  */
-extern void netup_initialize(struct cx23885_dev *dev);
+बाह्य व्योम netup_initialize(काष्ठा cx23885_dev *dev);

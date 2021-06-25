@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2019-2020 Marvell International Ltd. All rights reserved. */
 
-#ifndef __PRESTERA_ETHTOOL_H_
-#define __PRESTERA_ETHTOOL_H_
+#अगर_अघोषित __PRESTERA_ETHTOOL_H_
+#घोषणा __PRESTERA_ETHTOOL_H_
 
-#include <linux/ethtool.h>
+#समावेश <linux/ethtool.h>
 
-extern const struct ethtool_ops prestera_ethtool_ops;
+बाह्य स्थिर काष्ठा ethtool_ops prestera_ethtool_ops;
 
-#endif /* _PRESTERA_ETHTOOL_H_ */
+#पूर्ण_अगर /* _PRESTERA_ETHTOOL_H_ */

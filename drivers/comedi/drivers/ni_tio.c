@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Support for NI general purpose counters
+ * Support क्रम NI general purpose counters
  *
- * Copyright (C) 2006 Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Copyright (C) 2006 Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  */
 
 /*
@@ -12,13 +13,13 @@
  *         Herman.Bruyninckx@mech.kuleuven.ac.be,
  *         Wim.Meeussen@mech.kuleuven.ac.be,
  *         Klaas.Gadeyne@mech.kuleuven.ac.be,
- *         Frank Mori Hess <fmhess@users.sourceforge.net>
+ *         Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  * Updated: Thu Nov 16 09:50:32 EST 2006
  * Status: works
  *
  * This module is not used directly by end-users.  Rather, it
- * is used by other drivers (for example ni_660x and ni_pcimio)
- * to provide support for NI's general purpose counters.  It was
+ * is used by other drivers (क्रम example ni_660x and ni_pcimio)
+ * to provide support क्रम NI's general purpose counters.  It was
  * originally based on the counter code from ni_660x.c and
  * ni_mio_common.c.
  *
@@ -30,480 +31,480 @@
  * TODO: Support use of both banks X and Y
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include "ni_tio_internal.h"
-
-/*
- * clock sources for ni e and m series boards,
- * get bits with GI_SRC_SEL()
- */
-#define NI_M_TIMEBASE_1_CLK		0x0	/* 20MHz */
-#define NI_M_PFI_CLK(x)			(((x) < 10) ? (1 + (x)) : (0xb + (x)))
-#define NI_M_RTSI_CLK(x)		(((x) == 7) ? 0x1b : (0xb + (x)))
-#define NI_M_TIMEBASE_2_CLK		0x12	/* 100KHz */
-#define NI_M_NEXT_TC_CLK		0x13
-#define NI_M_NEXT_GATE_CLK		0x14	/* Gi_Src_SubSelect=0 */
-#define NI_M_PXI_STAR_TRIGGER_CLK	0x14	/* Gi_Src_SubSelect=1 */
-#define NI_M_PXI10_CLK			0x1d
-#define NI_M_TIMEBASE_3_CLK		0x1e	/* 80MHz, Gi_Src_SubSelect=0 */
-#define NI_M_ANALOG_TRIGGER_OUT_CLK	0x1e	/* Gi_Src_SubSelect=1 */
-#define NI_M_LOGIC_LOW_CLK		0x1f
-#define NI_M_MAX_PFI_CHAN		15
-#define NI_M_MAX_RTSI_CHAN		7
+#समावेश "ni_tio_internal.h"
 
 /*
- * clock sources for ni_660x boards,
+ * घड़ी sources क्रम ni e and m series boards,
  * get bits with GI_SRC_SEL()
  */
-#define NI_660X_TIMEBASE_1_CLK		0x0	/* 20MHz */
-#define NI_660X_SRC_PIN_I_CLK		0x1
-#define NI_660X_SRC_PIN_CLK(x)		(0x2 + (x))
-#define NI_660X_NEXT_GATE_CLK		0xa
-#define NI_660X_RTSI_CLK(x)		(0xb + (x))
-#define NI_660X_TIMEBASE_2_CLK		0x12	/* 100KHz */
-#define NI_660X_NEXT_TC_CLK		0x13
-#define NI_660X_TIMEBASE_3_CLK		0x1e	/* 80MHz */
-#define NI_660X_LOGIC_LOW_CLK		0x1f
-#define NI_660X_MAX_SRC_PIN		7
-#define NI_660X_MAX_RTSI_CHAN		6
+#घोषणा NI_M_TIMEBASE_1_CLK		0x0	/* 20MHz */
+#घोषणा NI_M_PFI_CLK(x)			(((x) < 10) ? (1 + (x)) : (0xb + (x)))
+#घोषणा NI_M_RTSI_CLK(x)		(((x) == 7) ? 0x1b : (0xb + (x)))
+#घोषणा NI_M_TIMEBASE_2_CLK		0x12	/* 100KHz */
+#घोषणा NI_M_NEXT_TC_CLK		0x13
+#घोषणा NI_M_NEXT_GATE_CLK		0x14	/* Gi_Src_SubSelect=0 */
+#घोषणा NI_M_PXI_STAR_TRIGGER_CLK	0x14	/* Gi_Src_SubSelect=1 */
+#घोषणा NI_M_PXI10_CLK			0x1d
+#घोषणा NI_M_TIMEBASE_3_CLK		0x1e	/* 80MHz, Gi_Src_SubSelect=0 */
+#घोषणा NI_M_ANALOG_TRIGGER_OUT_CLK	0x1e	/* Gi_Src_SubSelect=1 */
+#घोषणा NI_M_LOGIC_LOW_CLK		0x1f
+#घोषणा NI_M_MAX_PFI_CHAN		15
+#घोषणा NI_M_MAX_RTSI_CHAN		7
+
+/*
+ * घड़ी sources क्रम ni_660x boards,
+ * get bits with GI_SRC_SEL()
+ */
+#घोषणा NI_660X_TIMEBASE_1_CLK		0x0	/* 20MHz */
+#घोषणा NI_660X_SRC_PIN_I_CLK		0x1
+#घोषणा NI_660X_SRC_PIN_CLK(x)		(0x2 + (x))
+#घोषणा NI_660X_NEXT_GATE_CLK		0xa
+#घोषणा NI_660X_RTSI_CLK(x)		(0xb + (x))
+#घोषणा NI_660X_TIMEBASE_2_CLK		0x12	/* 100KHz */
+#घोषणा NI_660X_NEXT_TC_CLK		0x13
+#घोषणा NI_660X_TIMEBASE_3_CLK		0x1e	/* 80MHz */
+#घोषणा NI_660X_LOGIC_LOW_CLK		0x1f
+#घोषणा NI_660X_MAX_SRC_PIN		7
+#घोषणा NI_660X_MAX_RTSI_CHAN		6
 
 /* ni m series gate_select */
-#define NI_M_TIMESTAMP_MUX_GATE_SEL	0x0
-#define NI_M_PFI_GATE_SEL(x)		(((x) < 10) ? (1 + (x)) : (0xb + (x)))
-#define NI_M_RTSI_GATE_SEL(x)		(((x) == 7) ? 0x1b : (0xb + (x)))
-#define NI_M_AI_START2_GATE_SEL		0x12
-#define NI_M_PXI_STAR_TRIGGER_GATE_SEL	0x13
-#define NI_M_NEXT_OUT_GATE_SEL		0x14
-#define NI_M_AI_START1_GATE_SEL		0x1c
-#define NI_M_NEXT_SRC_GATE_SEL		0x1d
-#define NI_M_ANALOG_TRIG_OUT_GATE_SEL	0x1e
-#define NI_M_LOGIC_LOW_GATE_SEL		0x1f
+#घोषणा NI_M_TIMESTAMP_MUX_GATE_SEL	0x0
+#घोषणा NI_M_PFI_GATE_SEL(x)		(((x) < 10) ? (1 + (x)) : (0xb + (x)))
+#घोषणा NI_M_RTSI_GATE_SEL(x)		(((x) == 7) ? 0x1b : (0xb + (x)))
+#घोषणा NI_M_AI_START2_GATE_SEL		0x12
+#घोषणा NI_M_PXI_STAR_TRIGGER_GATE_SEL	0x13
+#घोषणा NI_M_NEXT_OUT_GATE_SEL		0x14
+#घोषणा NI_M_AI_START1_GATE_SEL		0x1c
+#घोषणा NI_M_NEXT_SRC_GATE_SEL		0x1d
+#घोषणा NI_M_ANALOG_TRIG_OUT_GATE_SEL	0x1e
+#घोषणा NI_M_LOGIC_LOW_GATE_SEL		0x1f
 
 /* ni_660x gate select */
-#define NI_660X_SRC_PIN_I_GATE_SEL	0x0
-#define NI_660X_GATE_PIN_I_GATE_SEL	0x1
-#define NI_660X_PIN_GATE_SEL(x)		(0x2 + (x))
-#define NI_660X_NEXT_SRC_GATE_SEL	0xa
-#define NI_660X_RTSI_GATE_SEL(x)	(0xb + (x))
-#define NI_660X_NEXT_OUT_GATE_SEL	0x14
-#define NI_660X_LOGIC_LOW_GATE_SEL	0x1f
-#define NI_660X_MAX_GATE_PIN		7
+#घोषणा NI_660X_SRC_PIN_I_GATE_SEL	0x0
+#घोषणा NI_660X_GATE_PIN_I_GATE_SEL	0x1
+#घोषणा NI_660X_PIN_GATE_SEL(x)		(0x2 + (x))
+#घोषणा NI_660X_NEXT_SRC_GATE_SEL	0xa
+#घोषणा NI_660X_RTSI_GATE_SEL(x)	(0xb + (x))
+#घोषणा NI_660X_NEXT_OUT_GATE_SEL	0x14
+#घोषणा NI_660X_LOGIC_LOW_GATE_SEL	0x1f
+#घोषणा NI_660X_MAX_GATE_PIN		7
 
 /* ni_660x second gate select */
-#define NI_660X_SRC_PIN_I_GATE2_SEL	0x0
-#define NI_660X_UD_PIN_I_GATE2_SEL	0x1
-#define NI_660X_UD_PIN_GATE2_SEL(x)	(0x2 + (x))
-#define NI_660X_NEXT_SRC_GATE2_SEL	0xa
-#define NI_660X_RTSI_GATE2_SEL(x)	(0xb + (x))
-#define NI_660X_NEXT_OUT_GATE2_SEL	0x14
-#define NI_660X_SELECTED_GATE2_SEL	0x1e
-#define NI_660X_LOGIC_LOW_GATE2_SEL	0x1f
-#define NI_660X_MAX_UP_DOWN_PIN		7
+#घोषणा NI_660X_SRC_PIN_I_GATE2_SEL	0x0
+#घोषणा NI_660X_UD_PIN_I_GATE2_SEL	0x1
+#घोषणा NI_660X_UD_PIN_GATE2_SEL(x)	(0x2 + (x))
+#घोषणा NI_660X_NEXT_SRC_GATE2_SEL	0xa
+#घोषणा NI_660X_RTSI_GATE2_SEL(x)	(0xb + (x))
+#घोषणा NI_660X_NEXT_OUT_GATE2_SEL	0x14
+#घोषणा NI_660X_SELECTED_GATE2_SEL	0x1e
+#घोषणा NI_660X_LOGIC_LOW_GATE2_SEL	0x1f
+#घोषणा NI_660X_MAX_UP_DOWN_PIN		7
 
-static inline unsigned int GI_PRESCALE_X2(enum ni_gpct_variant variant)
-{
-	switch (variant) {
-	case ni_gpct_variant_e_series:
-	default:
-		return 0;
-	case ni_gpct_variant_m_series:
-		return GI_M_PRESCALE_X2;
-	case ni_gpct_variant_660x:
-		return GI_660X_PRESCALE_X2;
-	}
-}
+अटल अंतरभूत अचिन्हित पूर्णांक GI_PRESCALE_X2(क्रमागत ni_gpct_variant variant)
+अणु
+	चयन (variant) अणु
+	हाल ni_gpct_variant_e_series:
+	शेष:
+		वापस 0;
+	हाल ni_gpct_variant_m_series:
+		वापस GI_M_PRESCALE_X2;
+	हाल ni_gpct_variant_660x:
+		वापस GI_660X_PRESCALE_X2;
+	पूर्ण
+पूर्ण
 
-static inline unsigned int GI_PRESCALE_X8(enum ni_gpct_variant variant)
-{
-	switch (variant) {
-	case ni_gpct_variant_e_series:
-	default:
-		return 0;
-	case ni_gpct_variant_m_series:
-		return GI_M_PRESCALE_X8;
-	case ni_gpct_variant_660x:
-		return GI_660X_PRESCALE_X8;
-	}
-}
+अटल अंतरभूत अचिन्हित पूर्णांक GI_PRESCALE_X8(क्रमागत ni_gpct_variant variant)
+अणु
+	चयन (variant) अणु
+	हाल ni_gpct_variant_e_series:
+	शेष:
+		वापस 0;
+	हाल ni_gpct_variant_m_series:
+		वापस GI_M_PRESCALE_X8;
+	हाल ni_gpct_variant_660x:
+		वापस GI_660X_PRESCALE_X8;
+	पूर्ण
+पूर्ण
 
-static bool ni_tio_has_gate2_registers(const struct ni_gpct_device *counter_dev)
-{
-	switch (counter_dev->variant) {
-	case ni_gpct_variant_e_series:
-	default:
-		return false;
-	case ni_gpct_variant_m_series:
-	case ni_gpct_variant_660x:
-		return true;
-	}
-}
-
-/**
- * ni_tio_write() - Write a TIO register using the driver provided callback.
- * @counter: struct ni_gpct counter.
- * @value: the value to write
- * @reg: the register to write.
- */
-void ni_tio_write(struct ni_gpct *counter, unsigned int value,
-		  enum ni_gpct_register reg)
-{
-	if (reg < NITIO_NUM_REGS)
-		counter->counter_dev->write(counter, value, reg);
-}
-EXPORT_SYMBOL_GPL(ni_tio_write);
+अटल bool ni_tio_has_gate2_रेजिस्टरs(स्थिर काष्ठा ni_gpct_device *counter_dev)
+अणु
+	चयन (counter_dev->variant) अणु
+	हाल ni_gpct_variant_e_series:
+	शेष:
+		वापस false;
+	हाल ni_gpct_variant_m_series:
+	हाल ni_gpct_variant_660x:
+		वापस true;
+	पूर्ण
+पूर्ण
 
 /**
- * ni_tio_read() - Read a TIO register using the driver provided callback.
- * @counter: struct ni_gpct counter.
- * @reg: the register to read.
+ * ni_tio_ग_लिखो() - Write a TIO रेजिस्टर using the driver provided callback.
+ * @counter: काष्ठा ni_gpct counter.
+ * @value: the value to ग_लिखो
+ * @reg: the रेजिस्टर to ग_लिखो.
  */
-unsigned int ni_tio_read(struct ni_gpct *counter, enum ni_gpct_register reg)
-{
-	if (reg < NITIO_NUM_REGS)
-		return counter->counter_dev->read(counter, reg);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ni_tio_read);
+व्योम ni_tio_ग_लिखो(काष्ठा ni_gpct *counter, अचिन्हित पूर्णांक value,
+		  क्रमागत ni_gpct_रेजिस्टर reg)
+अणु
+	अगर (reg < NITIO_NUM_REGS)
+		counter->counter_dev->ग_लिखो(counter, value, reg);
+पूर्ण
+EXPORT_SYMBOL_GPL(ni_tio_ग_लिखो);
 
-static void ni_tio_reset_count_and_disarm(struct ni_gpct *counter)
-{
-	unsigned int cidx = counter->counter_index;
+/**
+ * ni_tio_पढ़ो() - Read a TIO रेजिस्टर using the driver provided callback.
+ * @counter: काष्ठा ni_gpct counter.
+ * @reg: the रेजिस्टर to पढ़ो.
+ */
+अचिन्हित पूर्णांक ni_tio_पढ़ो(काष्ठा ni_gpct *counter, क्रमागत ni_gpct_रेजिस्टर reg)
+अणु
+	अगर (reg < NITIO_NUM_REGS)
+		वापस counter->counter_dev->पढ़ो(counter, reg);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ni_tio_पढ़ो);
 
-	ni_tio_write(counter, GI_RESET(cidx), NITIO_RESET_REG(cidx));
-}
+अटल व्योम ni_tio_reset_count_and_disarm(काष्ठा ni_gpct *counter)
+अणु
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
 
-static int ni_tio_clock_period_ps(const struct ni_gpct *counter,
-				  unsigned int generic_clock_source,
+	ni_tio_ग_लिखो(counter, GI_RESET(cidx), NITIO_RESET_REG(cidx));
+पूर्ण
+
+अटल पूर्णांक ni_tio_घड़ी_period_ps(स्थिर काष्ठा ni_gpct *counter,
+				  अचिन्हित पूर्णांक generic_घड़ी_source,
 				  u64 *period_ps)
-{
-	u64 clock_period_ps;
+अणु
+	u64 घड़ी_period_ps;
 
-	switch (generic_clock_source & NI_GPCT_CLOCK_SRC_SELECT_MASK) {
-	case NI_GPCT_TIMEBASE_1_CLOCK_SRC_BITS:
-		clock_period_ps = 50000;
-		break;
-	case NI_GPCT_TIMEBASE_2_CLOCK_SRC_BITS:
-		clock_period_ps = 10000000;
-		break;
-	case NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS:
-		clock_period_ps = 12500;
-		break;
-	case NI_GPCT_PXI10_CLOCK_SRC_BITS:
-		clock_period_ps = 100000;
-		break;
-	default:
+	चयन (generic_घड़ी_source & NI_GPCT_CLOCK_SRC_SELECT_MASK) अणु
+	हाल NI_GPCT_TIMEBASE_1_CLOCK_SRC_BITS:
+		घड़ी_period_ps = 50000;
+		अवरोध;
+	हाल NI_GPCT_TIMEBASE_2_CLOCK_SRC_BITS:
+		घड़ी_period_ps = 10000000;
+		अवरोध;
+	हाल NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS:
+		घड़ी_period_ps = 12500;
+		अवरोध;
+	हाल NI_GPCT_PXI10_CLOCK_SRC_BITS:
+		घड़ी_period_ps = 100000;
+		अवरोध;
+	शेष:
 		/*
-		 * clock period is specified by user with prescaling
-		 * already taken into account.
+		 * घड़ी period is specअगरied by user with prescaling
+		 * alपढ़ोy taken पूर्णांकo account.
 		 */
-		*period_ps = counter->clock_period_ps;
-		return 0;
-	}
+		*period_ps = counter->घड़ी_period_ps;
+		वापस 0;
+	पूर्ण
 
-	switch (generic_clock_source & NI_GPCT_PRESCALE_MODE_CLOCK_SRC_MASK) {
-	case NI_GPCT_NO_PRESCALE_CLOCK_SRC_BITS:
-		break;
-	case NI_GPCT_PRESCALE_X2_CLOCK_SRC_BITS:
-		clock_period_ps *= 2;
-		break;
-	case NI_GPCT_PRESCALE_X8_CLOCK_SRC_BITS:
-		clock_period_ps *= 8;
-		break;
-	default:
-		return -EINVAL;
-	}
-	*period_ps = clock_period_ps;
-	return 0;
-}
+	चयन (generic_घड़ी_source & NI_GPCT_PRESCALE_MODE_CLOCK_SRC_MASK) अणु
+	हाल NI_GPCT_NO_PRESCALE_CLOCK_SRC_BITS:
+		अवरोध;
+	हाल NI_GPCT_PRESCALE_X2_CLOCK_SRC_BITS:
+		घड़ी_period_ps *= 2;
+		अवरोध;
+	हाल NI_GPCT_PRESCALE_X8_CLOCK_SRC_BITS:
+		घड़ी_period_ps *= 8;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	*period_ps = घड़ी_period_ps;
+	वापस 0;
+पूर्ण
 
-static void ni_tio_set_bits_transient(struct ni_gpct *counter,
-				      enum ni_gpct_register reg,
-				      unsigned int mask, unsigned int value,
-				      unsigned int transient)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int chip = counter->chip_index;
-	unsigned long flags;
+अटल व्योम ni_tio_set_bits_transient(काष्ठा ni_gpct *counter,
+				      क्रमागत ni_gpct_रेजिस्टर reg,
+				      अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक value,
+				      अचिन्हित पूर्णांक transient)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक chip = counter->chip_index;
+	अचिन्हित दीर्घ flags;
 
-	if (reg < NITIO_NUM_REGS && chip < counter_dev->num_chips) {
-		unsigned int *regs = counter_dev->regs[chip];
+	अगर (reg < NITIO_NUM_REGS && chip < counter_dev->num_chips) अणु
+		अचिन्हित पूर्णांक *regs = counter_dev->regs[chip];
 
 		spin_lock_irqsave(&counter_dev->regs_lock, flags);
 		regs[reg] &= ~mask;
 		regs[reg] |= (value & mask);
-		ni_tio_write(counter, regs[reg] | transient, reg);
+		ni_tio_ग_लिखो(counter, regs[reg] | transient, reg);
 		spin_unlock_irqrestore(&counter_dev->regs_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ni_tio_set_bits() - Safely write a counter register.
- * @counter: struct ni_gpct counter.
- * @reg: the register to write.
+ * ni_tio_set_bits() - Safely ग_लिखो a counter रेजिस्टर.
+ * @counter: काष्ठा ni_gpct counter.
+ * @reg: the रेजिस्टर to ग_लिखो.
  * @mask: the bits to change.
  * @value: the new bits value.
  *
- * Used to write to, and update the software copy, a register whose bits may
- * be twiddled in interrupt context, or whose software copy may be read in
- * interrupt context.
+ * Used to ग_लिखो to, and update the software copy, a रेजिस्टर whose bits may
+ * be twiddled in पूर्णांकerrupt context, or whose software copy may be पढ़ो in
+ * पूर्णांकerrupt context.
  */
-void ni_tio_set_bits(struct ni_gpct *counter, enum ni_gpct_register reg,
-		     unsigned int mask, unsigned int value)
-{
+व्योम ni_tio_set_bits(काष्ठा ni_gpct *counter, क्रमागत ni_gpct_रेजिस्टर reg,
+		     अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक value)
+अणु
 	ni_tio_set_bits_transient(counter, reg, mask, value, 0x0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_set_bits);
 
 /**
- * ni_tio_get_soft_copy() - Safely read the software copy of a counter register.
- * @counter: struct ni_gpct counter.
- * @reg: the register to read.
+ * ni_tio_get_soft_copy() - Safely पढ़ो the software copy of a counter रेजिस्टर.
+ * @counter: काष्ठा ni_gpct counter.
+ * @reg: the रेजिस्टर to पढ़ो.
  *
- * Used to get the software copy of a register whose bits might be modified
- * in interrupt context, or whose software copy might need to be read in
- * interrupt context.
+ * Used to get the software copy of a रेजिस्टर whose bits might be modअगरied
+ * in पूर्णांकerrupt context, or whose software copy might need to be पढ़ो in
+ * पूर्णांकerrupt context.
  */
-unsigned int ni_tio_get_soft_copy(const struct ni_gpct *counter,
-				  enum ni_gpct_register reg)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int chip = counter->chip_index;
-	unsigned int value = 0;
-	unsigned long flags;
+अचिन्हित पूर्णांक ni_tio_get_soft_copy(स्थिर काष्ठा ni_gpct *counter,
+				  क्रमागत ni_gpct_रेजिस्टर reg)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक chip = counter->chip_index;
+	अचिन्हित पूर्णांक value = 0;
+	अचिन्हित दीर्घ flags;
 
-	if (reg < NITIO_NUM_REGS && chip < counter_dev->num_chips) {
+	अगर (reg < NITIO_NUM_REGS && chip < counter_dev->num_chips) अणु
 		spin_lock_irqsave(&counter_dev->regs_lock, flags);
 		value = counter_dev->regs[chip][reg];
 		spin_unlock_irqrestore(&counter_dev->regs_lock, flags);
-	}
-	return value;
-}
+	पूर्ण
+	वापस value;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_get_soft_copy);
 
-static unsigned int ni_tio_clock_src_modifiers(const struct ni_gpct *counter)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	unsigned int counting_mode_bits =
+अटल अचिन्हित पूर्णांक ni_tio_घड़ी_src_modअगरiers(स्थिर काष्ठा ni_gpct *counter)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक counting_mode_bits =
 		ni_tio_get_soft_copy(counter, NITIO_CNT_MODE_REG(cidx));
-	unsigned int bits = 0;
+	अचिन्हित पूर्णांक bits = 0;
 
-	if (ni_tio_get_soft_copy(counter, NITIO_INPUT_SEL_REG(cidx)) &
+	अगर (ni_tio_get_soft_copy(counter, NITIO_INPUT_SEL_REG(cidx)) &
 	    GI_SRC_POL_INVERT)
 		bits |= NI_GPCT_INVERT_CLOCK_SRC_BIT;
-	if (counting_mode_bits & GI_PRESCALE_X2(counter_dev->variant))
+	अगर (counting_mode_bits & GI_PRESCALE_X2(counter_dev->variant))
 		bits |= NI_GPCT_PRESCALE_X2_CLOCK_SRC_BITS;
-	if (counting_mode_bits & GI_PRESCALE_X8(counter_dev->variant))
+	अगर (counting_mode_bits & GI_PRESCALE_X8(counter_dev->variant))
 		bits |= NI_GPCT_PRESCALE_X8_CLOCK_SRC_BITS;
-	return bits;
-}
+	वापस bits;
+पूर्ण
 
-static int ni_m_series_clock_src_select(const struct ni_gpct *counter,
-					unsigned int *clk_src)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	unsigned int chip = counter->chip_index;
-	unsigned int second_gate_reg = NITIO_GATE2_REG(cidx);
-	unsigned int clock_source = 0;
-	unsigned int src;
-	unsigned int i;
+अटल पूर्णांक ni_m_series_घड़ी_src_select(स्थिर काष्ठा ni_gpct *counter,
+					अचिन्हित पूर्णांक *clk_src)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक chip = counter->chip_index;
+	अचिन्हित पूर्णांक second_gate_reg = NITIO_GATE2_REG(cidx);
+	अचिन्हित पूर्णांक घड़ी_source = 0;
+	अचिन्हित पूर्णांक src;
+	अचिन्हित पूर्णांक i;
 
 	src = GI_BITS_TO_SRC(ni_tio_get_soft_copy(counter,
 						  NITIO_INPUT_SEL_REG(cidx)));
 
-	switch (src) {
-	case NI_M_TIMEBASE_1_CLK:
-		clock_source = NI_GPCT_TIMEBASE_1_CLOCK_SRC_BITS;
-		break;
-	case NI_M_TIMEBASE_2_CLK:
-		clock_source = NI_GPCT_TIMEBASE_2_CLOCK_SRC_BITS;
-		break;
-	case NI_M_TIMEBASE_3_CLK:
-		if (counter_dev->regs[chip][second_gate_reg] & GI_SRC_SUBSEL)
-			clock_source =
+	चयन (src) अणु
+	हाल NI_M_TIMEBASE_1_CLK:
+		घड़ी_source = NI_GPCT_TIMEBASE_1_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_M_TIMEBASE_2_CLK:
+		घड़ी_source = NI_GPCT_TIMEBASE_2_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_M_TIMEBASE_3_CLK:
+		अगर (counter_dev->regs[chip][second_gate_reg] & GI_SRC_SUBSEL)
+			घड़ी_source =
 			    NI_GPCT_ANALOG_TRIGGER_OUT_CLOCK_SRC_BITS;
-		else
-			clock_source = NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS;
-		break;
-	case NI_M_LOGIC_LOW_CLK:
-		clock_source = NI_GPCT_LOGIC_LOW_CLOCK_SRC_BITS;
-		break;
-	case NI_M_NEXT_GATE_CLK:
-		if (counter_dev->regs[chip][second_gate_reg] & GI_SRC_SUBSEL)
-			clock_source = NI_GPCT_PXI_STAR_TRIGGER_CLOCK_SRC_BITS;
-		else
-			clock_source = NI_GPCT_NEXT_GATE_CLOCK_SRC_BITS;
-		break;
-	case NI_M_PXI10_CLK:
-		clock_source = NI_GPCT_PXI10_CLOCK_SRC_BITS;
-		break;
-	case NI_M_NEXT_TC_CLK:
-		clock_source = NI_GPCT_NEXT_TC_CLOCK_SRC_BITS;
-		break;
-	default:
-		for (i = 0; i <= NI_M_MAX_RTSI_CHAN; ++i) {
-			if (src == NI_M_RTSI_CLK(i)) {
-				clock_source = NI_GPCT_RTSI_CLOCK_SRC_BITS(i);
-				break;
-			}
-		}
-		if (i <= NI_M_MAX_RTSI_CHAN)
-			break;
-		for (i = 0; i <= NI_M_MAX_PFI_CHAN; ++i) {
-			if (src == NI_M_PFI_CLK(i)) {
-				clock_source = NI_GPCT_PFI_CLOCK_SRC_BITS(i);
-				break;
-			}
-		}
-		if (i <= NI_M_MAX_PFI_CHAN)
-			break;
-		return -EINVAL;
-	}
-	clock_source |= ni_tio_clock_src_modifiers(counter);
-	*clk_src = clock_source;
-	return 0;
-}
+		अन्यथा
+			घड़ी_source = NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_M_LOGIC_LOW_CLK:
+		घड़ी_source = NI_GPCT_LOGIC_LOW_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_M_NEXT_GATE_CLK:
+		अगर (counter_dev->regs[chip][second_gate_reg] & GI_SRC_SUBSEL)
+			घड़ी_source = NI_GPCT_PXI_STAR_TRIGGER_CLOCK_SRC_BITS;
+		अन्यथा
+			घड़ी_source = NI_GPCT_NEXT_GATE_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_M_PXI10_CLK:
+		घड़ी_source = NI_GPCT_PXI10_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_M_NEXT_TC_CLK:
+		घड़ी_source = NI_GPCT_NEXT_TC_CLOCK_SRC_BITS;
+		अवरोध;
+	शेष:
+		क्रम (i = 0; i <= NI_M_MAX_RTSI_CHAN; ++i) अणु
+			अगर (src == NI_M_RTSI_CLK(i)) अणु
+				घड़ी_source = NI_GPCT_RTSI_CLOCK_SRC_BITS(i);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_M_MAX_RTSI_CHAN)
+			अवरोध;
+		क्रम (i = 0; i <= NI_M_MAX_PFI_CHAN; ++i) अणु
+			अगर (src == NI_M_PFI_CLK(i)) अणु
+				घड़ी_source = NI_GPCT_PFI_CLOCK_SRC_BITS(i);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_M_MAX_PFI_CHAN)
+			अवरोध;
+		वापस -EINVAL;
+	पूर्ण
+	घड़ी_source |= ni_tio_घड़ी_src_modअगरiers(counter);
+	*clk_src = घड़ी_source;
+	वापस 0;
+पूर्ण
 
-static int ni_660x_clock_src_select(const struct ni_gpct *counter,
-				    unsigned int *clk_src)
-{
-	unsigned int clock_source = 0;
-	unsigned int cidx = counter->counter_index;
-	unsigned int src;
-	unsigned int i;
+अटल पूर्णांक ni_660x_घड़ी_src_select(स्थिर काष्ठा ni_gpct *counter,
+				    अचिन्हित पूर्णांक *clk_src)
+अणु
+	अचिन्हित पूर्णांक घड़ी_source = 0;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक src;
+	अचिन्हित पूर्णांक i;
 
 	src = GI_BITS_TO_SRC(ni_tio_get_soft_copy(counter,
 						  NITIO_INPUT_SEL_REG(cidx)));
 
-	switch (src) {
-	case NI_660X_TIMEBASE_1_CLK:
-		clock_source = NI_GPCT_TIMEBASE_1_CLOCK_SRC_BITS;
-		break;
-	case NI_660X_TIMEBASE_2_CLK:
-		clock_source = NI_GPCT_TIMEBASE_2_CLOCK_SRC_BITS;
-		break;
-	case NI_660X_TIMEBASE_3_CLK:
-		clock_source = NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS;
-		break;
-	case NI_660X_LOGIC_LOW_CLK:
-		clock_source = NI_GPCT_LOGIC_LOW_CLOCK_SRC_BITS;
-		break;
-	case NI_660X_SRC_PIN_I_CLK:
-		clock_source = NI_GPCT_SOURCE_PIN_i_CLOCK_SRC_BITS;
-		break;
-	case NI_660X_NEXT_GATE_CLK:
-		clock_source = NI_GPCT_NEXT_GATE_CLOCK_SRC_BITS;
-		break;
-	case NI_660X_NEXT_TC_CLK:
-		clock_source = NI_GPCT_NEXT_TC_CLOCK_SRC_BITS;
-		break;
-	default:
-		for (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) {
-			if (src == NI_660X_RTSI_CLK(i)) {
-				clock_source = NI_GPCT_RTSI_CLOCK_SRC_BITS(i);
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_RTSI_CHAN)
-			break;
-		for (i = 0; i <= NI_660X_MAX_SRC_PIN; ++i) {
-			if (src == NI_660X_SRC_PIN_CLK(i)) {
-				clock_source =
+	चयन (src) अणु
+	हाल NI_660X_TIMEBASE_1_CLK:
+		घड़ी_source = NI_GPCT_TIMEBASE_1_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_660X_TIMEBASE_2_CLK:
+		घड़ी_source = NI_GPCT_TIMEBASE_2_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_660X_TIMEBASE_3_CLK:
+		घड़ी_source = NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_660X_LOGIC_LOW_CLK:
+		घड़ी_source = NI_GPCT_LOGIC_LOW_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_660X_SRC_PIN_I_CLK:
+		घड़ी_source = NI_GPCT_SOURCE_PIN_i_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_660X_NEXT_GATE_CLK:
+		घड़ी_source = NI_GPCT_NEXT_GATE_CLOCK_SRC_BITS;
+		अवरोध;
+	हाल NI_660X_NEXT_TC_CLK:
+		घड़ी_source = NI_GPCT_NEXT_TC_CLOCK_SRC_BITS;
+		अवरोध;
+	शेष:
+		क्रम (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) अणु
+			अगर (src == NI_660X_RTSI_CLK(i)) अणु
+				घड़ी_source = NI_GPCT_RTSI_CLOCK_SRC_BITS(i);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_RTSI_CHAN)
+			अवरोध;
+		क्रम (i = 0; i <= NI_660X_MAX_SRC_PIN; ++i) अणु
+			अगर (src == NI_660X_SRC_PIN_CLK(i)) अणु
+				घड़ी_source =
 				    NI_GPCT_SOURCE_PIN_CLOCK_SRC_BITS(i);
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_SRC_PIN)
-			break;
-		return -EINVAL;
-	}
-	clock_source |= ni_tio_clock_src_modifiers(counter);
-	*clk_src = clock_source;
-	return 0;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_SRC_PIN)
+			अवरोध;
+		वापस -EINVAL;
+	पूर्ण
+	घड़ी_source |= ni_tio_घड़ी_src_modअगरiers(counter);
+	*clk_src = घड़ी_source;
+	वापस 0;
+पूर्ण
 
-static int ni_tio_generic_clock_src_select(const struct ni_gpct *counter,
-					   unsigned int *clk_src)
-{
-	switch (counter->counter_dev->variant) {
-	case ni_gpct_variant_e_series:
-	case ni_gpct_variant_m_series:
-	default:
-		return ni_m_series_clock_src_select(counter, clk_src);
-	case ni_gpct_variant_660x:
-		return ni_660x_clock_src_select(counter, clk_src);
-	}
-}
+अटल पूर्णांक ni_tio_generic_घड़ी_src_select(स्थिर काष्ठा ni_gpct *counter,
+					   अचिन्हित पूर्णांक *clk_src)
+अणु
+	चयन (counter->counter_dev->variant) अणु
+	हाल ni_gpct_variant_e_series:
+	हाल ni_gpct_variant_m_series:
+	शेष:
+		वापस ni_m_series_घड़ी_src_select(counter, clk_src);
+	हाल ni_gpct_variant_660x:
+		वापस ni_660x_घड़ी_src_select(counter, clk_src);
+	पूर्ण
+पूर्ण
 
-static void ni_tio_set_sync_mode(struct ni_gpct *counter)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	static const u64 min_normal_sync_period_ps = 25000;
-	unsigned int mask = 0;
-	unsigned int bits = 0;
-	unsigned int reg;
-	unsigned int mode;
-	unsigned int clk_src = 0;
+अटल व्योम ni_tio_set_sync_mode(काष्ठा ni_gpct *counter)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अटल स्थिर u64 min_normal_sync_period_ps = 25000;
+	अचिन्हित पूर्णांक mask = 0;
+	अचिन्हित पूर्णांक bits = 0;
+	अचिन्हित पूर्णांक reg;
+	अचिन्हित पूर्णांक mode;
+	अचिन्हित पूर्णांक clk_src = 0;
 	u64 ps = 0;
-	int ret;
-	bool force_alt_sync;
+	पूर्णांक ret;
+	bool क्रमce_alt_sync;
 
-	/* only m series and 660x variants have counting mode registers */
-	switch (counter_dev->variant) {
-	case ni_gpct_variant_e_series:
-	default:
-		return;
-	case ni_gpct_variant_m_series:
+	/* only m series and 660x variants have counting mode रेजिस्टरs */
+	चयन (counter_dev->variant) अणु
+	हाल ni_gpct_variant_e_series:
+	शेष:
+		वापस;
+	हाल ni_gpct_variant_m_series:
 		mask = GI_M_ALT_SYNC;
-		break;
-	case ni_gpct_variant_660x:
+		अवरोध;
+	हाल ni_gpct_variant_660x:
 		mask = GI_660X_ALT_SYNC;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	reg = NITIO_CNT_MODE_REG(cidx);
 	mode = ni_tio_get_soft_copy(counter, reg);
-	switch (mode & GI_CNT_MODE_MASK) {
-	case GI_CNT_MODE_QUADX1:
-	case GI_CNT_MODE_QUADX2:
-	case GI_CNT_MODE_QUADX4:
-	case GI_CNT_MODE_SYNC_SRC:
-		force_alt_sync = true;
-		break;
-	default:
-		force_alt_sync = false;
-		break;
-	}
+	चयन (mode & GI_CNT_MODE_MASK) अणु
+	हाल GI_CNT_MODE_QUADX1:
+	हाल GI_CNT_MODE_QUADX2:
+	हाल GI_CNT_MODE_QUADX4:
+	हाल GI_CNT_MODE_SYNC_SRC:
+		क्रमce_alt_sync = true;
+		अवरोध;
+	शेष:
+		क्रमce_alt_sync = false;
+		अवरोध;
+	पूर्ण
 
-	ret = ni_tio_generic_clock_src_select(counter, &clk_src);
-	if (ret)
-		return;
-	ret = ni_tio_clock_period_ps(counter, clk_src, &ps);
-	if (ret)
-		return;
+	ret = ni_tio_generic_घड़ी_src_select(counter, &clk_src);
+	अगर (ret)
+		वापस;
+	ret = ni_tio_घड़ी_period_ps(counter, clk_src, &ps);
+	अगर (ret)
+		वापस;
 	/*
-	 * It's not clear what we should do if clock_period is unknown, so we
-	 * are not using the alt sync bit in that case.
+	 * It's not clear what we should करो अगर घड़ी_period is unknown, so we
+	 * are not using the alt sync bit in that हाल.
 	 */
-	if (force_alt_sync || (ps && ps < min_normal_sync_period_ps))
+	अगर (क्रमce_alt_sync || (ps && ps < min_normal_sync_period_ps))
 		bits = mask;
 
 	ni_tio_set_bits(counter, reg, mask, bits);
-}
+पूर्ण
 
-static int ni_tio_set_counter_mode(struct ni_gpct *counter, unsigned int mode)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	unsigned int mode_reg_mask;
-	unsigned int mode_reg_values;
-	unsigned int input_select_bits = 0;
-	/* these bits map directly on to the mode register */
-	static const unsigned int mode_reg_direct_mask =
+अटल पूर्णांक ni_tio_set_counter_mode(काष्ठा ni_gpct *counter, अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक mode_reg_mask;
+	अचिन्हित पूर्णांक mode_reg_values;
+	अचिन्हित पूर्णांक input_select_bits = 0;
+	/* these bits map directly on to the mode रेजिस्टर */
+	अटल स्थिर अचिन्हित पूर्णांक mode_reg_direct_mask =
 	    NI_GPCT_GATE_ON_BOTH_EDGES_BIT | NI_GPCT_EDGE_GATE_MODE_MASK |
 	    NI_GPCT_STOP_MODE_MASK | NI_GPCT_OUTPUT_MODE_MASK |
 	    NI_GPCT_HARDWARE_DISARM_MASK | NI_GPCT_LOADING_ON_TC_BIT |
@@ -511,534 +512,534 @@ static int ni_tio_set_counter_mode(struct ni_gpct *counter, unsigned int mode)
 
 	mode_reg_mask = mode_reg_direct_mask | GI_RELOAD_SRC_SWITCHING;
 	mode_reg_values = mode & mode_reg_direct_mask;
-	switch (mode & NI_GPCT_RELOAD_SOURCE_MASK) {
-	case NI_GPCT_RELOAD_SOURCE_FIXED_BITS:
-		break;
-	case NI_GPCT_RELOAD_SOURCE_SWITCHING_BITS:
+	चयन (mode & NI_GPCT_RELOAD_SOURCE_MASK) अणु
+	हाल NI_GPCT_RELOAD_SOURCE_FIXED_BITS:
+		अवरोध;
+	हाल NI_GPCT_RELOAD_SOURCE_SWITCHING_BITS:
 		mode_reg_values |= GI_RELOAD_SRC_SWITCHING;
-		break;
-	case NI_GPCT_RELOAD_SOURCE_GATE_SELECT_BITS:
+		अवरोध;
+	हाल NI_GPCT_RELOAD_SOURCE_GATE_SELECT_BITS:
 		input_select_bits |= GI_GATE_SEL_LOAD_SRC;
 		mode_reg_mask |= GI_GATING_MODE_MASK;
 		mode_reg_values |= GI_LEVEL_GATING;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	ni_tio_set_bits(counter, NITIO_MODE_REG(cidx),
 			mode_reg_mask, mode_reg_values);
 
-	if (ni_tio_counting_mode_registers_present(counter_dev)) {
-		unsigned int bits = 0;
+	अगर (ni_tio_counting_mode_रेजिस्टरs_present(counter_dev)) अणु
+		अचिन्हित पूर्णांक bits = 0;
 
 		bits |= GI_CNT_MODE(mode >> NI_GPCT_COUNTING_MODE_SHIFT);
 		bits |= GI_INDEX_PHASE((mode >> NI_GPCT_INDEX_PHASE_BITSHIFT));
-		if (mode & NI_GPCT_INDEX_ENABLE_BIT)
+		अगर (mode & NI_GPCT_INDEX_ENABLE_BIT)
 			bits |= GI_INDEX_MODE;
 		ni_tio_set_bits(counter, NITIO_CNT_MODE_REG(cidx),
 				GI_CNT_MODE_MASK | GI_INDEX_PHASE_MASK |
 				GI_INDEX_MODE, bits);
 		ni_tio_set_sync_mode(counter);
-	}
+	पूर्ण
 
-	ni_tio_set_bits(counter, NITIO_CMD_REG(cidx), GI_CNT_DIR_MASK,
-			GI_CNT_DIR(mode >> NI_GPCT_COUNTING_DIRECTION_SHIFT));
+	ni_tio_set_bits(counter, NITIO_CMD_REG(cidx), GI_CNT_सूची_MASK,
+			GI_CNT_सूची(mode >> NI_GPCT_COUNTING_सूचीECTION_SHIFT));
 
-	if (mode & NI_GPCT_OR_GATE_BIT)
+	अगर (mode & NI_GPCT_OR_GATE_BIT)
 		input_select_bits |= GI_OR_GATE;
-	if (mode & NI_GPCT_INVERT_OUTPUT_BIT)
+	अगर (mode & NI_GPCT_INVERT_OUTPUT_BIT)
 		input_select_bits |= GI_OUTPUT_POL_INVERT;
 	ni_tio_set_bits(counter, NITIO_INPUT_SEL_REG(cidx),
 			GI_GATE_SEL_LOAD_SRC | GI_OR_GATE |
 			GI_OUTPUT_POL_INVERT, input_select_bits);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ni_tio_arm(struct ni_gpct *counter, bool arm, unsigned int start_trigger)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	unsigned int transient_bits = 0;
+पूर्णांक ni_tio_arm(काष्ठा ni_gpct *counter, bool arm, अचिन्हित पूर्णांक start_trigger)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक transient_bits = 0;
 
-	if (arm) {
-		unsigned int mask = 0;
-		unsigned int bits = 0;
+	अगर (arm) अणु
+		अचिन्हित पूर्णांक mask = 0;
+		अचिन्हित पूर्णांक bits = 0;
 
-		/* only m series and 660x have counting mode registers */
-		switch (counter_dev->variant) {
-		case ni_gpct_variant_e_series:
-		default:
-			break;
-		case ni_gpct_variant_m_series:
+		/* only m series and 660x have counting mode रेजिस्टरs */
+		चयन (counter_dev->variant) अणु
+		हाल ni_gpct_variant_e_series:
+		शेष:
+			अवरोध;
+		हाल ni_gpct_variant_m_series:
 			mask = GI_M_HW_ARM_SEL_MASK;
-			break;
-		case ni_gpct_variant_660x:
+			अवरोध;
+		हाल ni_gpct_variant_660x:
 			mask = GI_660X_HW_ARM_SEL_MASK;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (start_trigger) {
-		case NI_GPCT_ARM_IMMEDIATE:
+		चयन (start_trigger) अणु
+		हाल NI_GPCT_ARM_IMMEDIATE:
 			transient_bits |= GI_ARM;
-			break;
-		case NI_GPCT_ARM_PAIRED_IMMEDIATE:
+			अवरोध;
+		हाल NI_GPCT_ARM_PAIRED_IMMEDIATE:
 			transient_bits |= GI_ARM | GI_ARM_COPY;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
-			 * for m series and 660x, pass-through the least
-			 * significant bits so we can figure out what select
+			 * क्रम m series and 660x, pass-through the least
+			 * signअगरicant bits so we can figure out what select
 			 * later
 			 */
-			if (mask && (start_trigger & NI_GPCT_ARM_UNKNOWN)) {
+			अगर (mask && (start_trigger & NI_GPCT_ARM_UNKNOWN)) अणु
 				bits |= GI_HW_ARM_ENA |
 					(GI_HW_ARM_SEL(start_trigger) & mask);
-			} else {
-				return -EINVAL;
-			}
-			break;
-		}
+			पूर्ण अन्यथा अणु
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		if (mask)
+		अगर (mask)
 			ni_tio_set_bits(counter, NITIO_CNT_MODE_REG(cidx),
 					GI_HW_ARM_ENA | mask, bits);
-	} else {
+	पूर्ण अन्यथा अणु
 		transient_bits |= GI_DISARM;
-	}
+	पूर्ण
 	ni_tio_set_bits_transient(counter, NITIO_CMD_REG(cidx),
 				  0, 0, transient_bits);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_arm);
 
-static int ni_660x_clk_src(unsigned int clock_source, unsigned int *bits)
-{
-	unsigned int clk_src = clock_source & NI_GPCT_CLOCK_SRC_SELECT_MASK;
-	unsigned int ni_660x_clock;
-	unsigned int i;
+अटल पूर्णांक ni_660x_clk_src(अचिन्हित पूर्णांक घड़ी_source, अचिन्हित पूर्णांक *bits)
+अणु
+	अचिन्हित पूर्णांक clk_src = घड़ी_source & NI_GPCT_CLOCK_SRC_SELECT_MASK;
+	अचिन्हित पूर्णांक ni_660x_घड़ी;
+	अचिन्हित पूर्णांक i;
 
-	switch (clk_src) {
-	case NI_GPCT_TIMEBASE_1_CLOCK_SRC_BITS:
-		ni_660x_clock = NI_660X_TIMEBASE_1_CLK;
-		break;
-	case NI_GPCT_TIMEBASE_2_CLOCK_SRC_BITS:
-		ni_660x_clock = NI_660X_TIMEBASE_2_CLK;
-		break;
-	case NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS:
-		ni_660x_clock = NI_660X_TIMEBASE_3_CLK;
-		break;
-	case NI_GPCT_LOGIC_LOW_CLOCK_SRC_BITS:
-		ni_660x_clock = NI_660X_LOGIC_LOW_CLK;
-		break;
-	case NI_GPCT_SOURCE_PIN_i_CLOCK_SRC_BITS:
-		ni_660x_clock = NI_660X_SRC_PIN_I_CLK;
-		break;
-	case NI_GPCT_NEXT_GATE_CLOCK_SRC_BITS:
-		ni_660x_clock = NI_660X_NEXT_GATE_CLK;
-		break;
-	case NI_GPCT_NEXT_TC_CLOCK_SRC_BITS:
-		ni_660x_clock = NI_660X_NEXT_TC_CLK;
-		break;
-	default:
-		for (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) {
-			if (clk_src == NI_GPCT_RTSI_CLOCK_SRC_BITS(i)) {
-				ni_660x_clock = NI_660X_RTSI_CLK(i);
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_RTSI_CHAN)
-			break;
-		for (i = 0; i <= NI_660X_MAX_SRC_PIN; ++i) {
-			if (clk_src == NI_GPCT_SOURCE_PIN_CLOCK_SRC_BITS(i)) {
-				ni_660x_clock = NI_660X_SRC_PIN_CLK(i);
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_SRC_PIN)
-			break;
-		return -EINVAL;
-	}
-	*bits = GI_SRC_SEL(ni_660x_clock);
-	return 0;
-}
+	चयन (clk_src) अणु
+	हाल NI_GPCT_TIMEBASE_1_CLOCK_SRC_BITS:
+		ni_660x_घड़ी = NI_660X_TIMEBASE_1_CLK;
+		अवरोध;
+	हाल NI_GPCT_TIMEBASE_2_CLOCK_SRC_BITS:
+		ni_660x_घड़ी = NI_660X_TIMEBASE_2_CLK;
+		अवरोध;
+	हाल NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS:
+		ni_660x_घड़ी = NI_660X_TIMEBASE_3_CLK;
+		अवरोध;
+	हाल NI_GPCT_LOGIC_LOW_CLOCK_SRC_BITS:
+		ni_660x_घड़ी = NI_660X_LOGIC_LOW_CLK;
+		अवरोध;
+	हाल NI_GPCT_SOURCE_PIN_i_CLOCK_SRC_BITS:
+		ni_660x_घड़ी = NI_660X_SRC_PIN_I_CLK;
+		अवरोध;
+	हाल NI_GPCT_NEXT_GATE_CLOCK_SRC_BITS:
+		ni_660x_घड़ी = NI_660X_NEXT_GATE_CLK;
+		अवरोध;
+	हाल NI_GPCT_NEXT_TC_CLOCK_SRC_BITS:
+		ni_660x_घड़ी = NI_660X_NEXT_TC_CLK;
+		अवरोध;
+	शेष:
+		क्रम (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) अणु
+			अगर (clk_src == NI_GPCT_RTSI_CLOCK_SRC_BITS(i)) अणु
+				ni_660x_घड़ी = NI_660X_RTSI_CLK(i);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_RTSI_CHAN)
+			अवरोध;
+		क्रम (i = 0; i <= NI_660X_MAX_SRC_PIN; ++i) अणु
+			अगर (clk_src == NI_GPCT_SOURCE_PIN_CLOCK_SRC_BITS(i)) अणु
+				ni_660x_घड़ी = NI_660X_SRC_PIN_CLK(i);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_SRC_PIN)
+			अवरोध;
+		वापस -EINVAL;
+	पूर्ण
+	*bits = GI_SRC_SEL(ni_660x_घड़ी);
+	वापस 0;
+पूर्ण
 
-static int ni_m_clk_src(unsigned int clock_source, unsigned int *bits)
-{
-	unsigned int clk_src = clock_source & NI_GPCT_CLOCK_SRC_SELECT_MASK;
-	unsigned int ni_m_series_clock;
-	unsigned int i;
+अटल पूर्णांक ni_m_clk_src(अचिन्हित पूर्णांक घड़ी_source, अचिन्हित पूर्णांक *bits)
+अणु
+	अचिन्हित पूर्णांक clk_src = घड़ी_source & NI_GPCT_CLOCK_SRC_SELECT_MASK;
+	अचिन्हित पूर्णांक ni_m_series_घड़ी;
+	अचिन्हित पूर्णांक i;
 
-	switch (clk_src) {
-	case NI_GPCT_TIMEBASE_1_CLOCK_SRC_BITS:
-		ni_m_series_clock = NI_M_TIMEBASE_1_CLK;
-		break;
-	case NI_GPCT_TIMEBASE_2_CLOCK_SRC_BITS:
-		ni_m_series_clock = NI_M_TIMEBASE_2_CLK;
-		break;
-	case NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS:
-		ni_m_series_clock = NI_M_TIMEBASE_3_CLK;
-		break;
-	case NI_GPCT_LOGIC_LOW_CLOCK_SRC_BITS:
-		ni_m_series_clock = NI_M_LOGIC_LOW_CLK;
-		break;
-	case NI_GPCT_NEXT_GATE_CLOCK_SRC_BITS:
-		ni_m_series_clock = NI_M_NEXT_GATE_CLK;
-		break;
-	case NI_GPCT_NEXT_TC_CLOCK_SRC_BITS:
-		ni_m_series_clock = NI_M_NEXT_TC_CLK;
-		break;
-	case NI_GPCT_PXI10_CLOCK_SRC_BITS:
-		ni_m_series_clock = NI_M_PXI10_CLK;
-		break;
-	case NI_GPCT_PXI_STAR_TRIGGER_CLOCK_SRC_BITS:
-		ni_m_series_clock = NI_M_PXI_STAR_TRIGGER_CLK;
-		break;
-	case NI_GPCT_ANALOG_TRIGGER_OUT_CLOCK_SRC_BITS:
-		ni_m_series_clock = NI_M_ANALOG_TRIGGER_OUT_CLK;
-		break;
-	default:
-		for (i = 0; i <= NI_M_MAX_RTSI_CHAN; ++i) {
-			if (clk_src == NI_GPCT_RTSI_CLOCK_SRC_BITS(i)) {
-				ni_m_series_clock = NI_M_RTSI_CLK(i);
-				break;
-			}
-		}
-		if (i <= NI_M_MAX_RTSI_CHAN)
-			break;
-		for (i = 0; i <= NI_M_MAX_PFI_CHAN; ++i) {
-			if (clk_src == NI_GPCT_PFI_CLOCK_SRC_BITS(i)) {
-				ni_m_series_clock = NI_M_PFI_CLK(i);
-				break;
-			}
-		}
-		if (i <= NI_M_MAX_PFI_CHAN)
-			break;
-		return -EINVAL;
-	}
-	*bits = GI_SRC_SEL(ni_m_series_clock);
-	return 0;
-};
+	चयन (clk_src) अणु
+	हाल NI_GPCT_TIMEBASE_1_CLOCK_SRC_BITS:
+		ni_m_series_घड़ी = NI_M_TIMEBASE_1_CLK;
+		अवरोध;
+	हाल NI_GPCT_TIMEBASE_2_CLOCK_SRC_BITS:
+		ni_m_series_घड़ी = NI_M_TIMEBASE_2_CLK;
+		अवरोध;
+	हाल NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS:
+		ni_m_series_घड़ी = NI_M_TIMEBASE_3_CLK;
+		अवरोध;
+	हाल NI_GPCT_LOGIC_LOW_CLOCK_SRC_BITS:
+		ni_m_series_घड़ी = NI_M_LOGIC_LOW_CLK;
+		अवरोध;
+	हाल NI_GPCT_NEXT_GATE_CLOCK_SRC_BITS:
+		ni_m_series_घड़ी = NI_M_NEXT_GATE_CLK;
+		अवरोध;
+	हाल NI_GPCT_NEXT_TC_CLOCK_SRC_BITS:
+		ni_m_series_घड़ी = NI_M_NEXT_TC_CLK;
+		अवरोध;
+	हाल NI_GPCT_PXI10_CLOCK_SRC_BITS:
+		ni_m_series_घड़ी = NI_M_PXI10_CLK;
+		अवरोध;
+	हाल NI_GPCT_PXI_STAR_TRIGGER_CLOCK_SRC_BITS:
+		ni_m_series_घड़ी = NI_M_PXI_STAR_TRIGGER_CLK;
+		अवरोध;
+	हाल NI_GPCT_ANALOG_TRIGGER_OUT_CLOCK_SRC_BITS:
+		ni_m_series_घड़ी = NI_M_ANALOG_TRIGGER_OUT_CLK;
+		अवरोध;
+	शेष:
+		क्रम (i = 0; i <= NI_M_MAX_RTSI_CHAN; ++i) अणु
+			अगर (clk_src == NI_GPCT_RTSI_CLOCK_SRC_BITS(i)) अणु
+				ni_m_series_घड़ी = NI_M_RTSI_CLK(i);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_M_MAX_RTSI_CHAN)
+			अवरोध;
+		क्रम (i = 0; i <= NI_M_MAX_PFI_CHAN; ++i) अणु
+			अगर (clk_src == NI_GPCT_PFI_CLOCK_SRC_BITS(i)) अणु
+				ni_m_series_घड़ी = NI_M_PFI_CLK(i);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_M_MAX_PFI_CHAN)
+			अवरोध;
+		वापस -EINVAL;
+	पूर्ण
+	*bits = GI_SRC_SEL(ni_m_series_घड़ी);
+	वापस 0;
+पूर्ण;
 
-static void ni_tio_set_source_subselect(struct ni_gpct *counter,
-					unsigned int clock_source)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	unsigned int chip = counter->chip_index;
-	unsigned int second_gate_reg = NITIO_GATE2_REG(cidx);
+अटल व्योम ni_tio_set_source_subselect(काष्ठा ni_gpct *counter,
+					अचिन्हित पूर्णांक घड़ी_source)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक chip = counter->chip_index;
+	अचिन्हित पूर्णांक second_gate_reg = NITIO_GATE2_REG(cidx);
 
-	if (counter_dev->variant != ni_gpct_variant_m_series)
-		return;
-	switch (clock_source & NI_GPCT_CLOCK_SRC_SELECT_MASK) {
+	अगर (counter_dev->variant != ni_gpct_variant_m_series)
+		वापस;
+	चयन (घड़ी_source & NI_GPCT_CLOCK_SRC_SELECT_MASK) अणु
 		/* Gi_Source_Subselect is zero */
-	case NI_GPCT_NEXT_GATE_CLOCK_SRC_BITS:
-	case NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS:
+	हाल NI_GPCT_NEXT_GATE_CLOCK_SRC_BITS:
+	हाल NI_GPCT_TIMEBASE_3_CLOCK_SRC_BITS:
 		counter_dev->regs[chip][second_gate_reg] &= ~GI_SRC_SUBSEL;
-		break;
+		अवरोध;
 		/* Gi_Source_Subselect is one */
-	case NI_GPCT_ANALOG_TRIGGER_OUT_CLOCK_SRC_BITS:
-	case NI_GPCT_PXI_STAR_TRIGGER_CLOCK_SRC_BITS:
+	हाल NI_GPCT_ANALOG_TRIGGER_OUT_CLOCK_SRC_BITS:
+	हाल NI_GPCT_PXI_STAR_TRIGGER_CLOCK_SRC_BITS:
 		counter_dev->regs[chip][second_gate_reg] |= GI_SRC_SUBSEL;
-		break;
-		/* Gi_Source_Subselect doesn't matter */
-	default:
-		return;
-	}
-	ni_tio_write(counter, counter_dev->regs[chip][second_gate_reg],
+		अवरोध;
+		/* Gi_Source_Subselect करोesn't matter */
+	शेष:
+		वापस;
+	पूर्ण
+	ni_tio_ग_लिखो(counter, counter_dev->regs[chip][second_gate_reg],
 		     second_gate_reg);
-}
+पूर्ण
 
-static int ni_tio_set_clock_src(struct ni_gpct *counter,
-				unsigned int clock_source,
-				unsigned int period_ns)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	unsigned int bits = 0;
-	int ret;
+अटल पूर्णांक ni_tio_set_घड़ी_src(काष्ठा ni_gpct *counter,
+				अचिन्हित पूर्णांक घड़ी_source,
+				अचिन्हित पूर्णांक period_ns)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक bits = 0;
+	पूर्णांक ret;
 
-	switch (counter_dev->variant) {
-	case ni_gpct_variant_660x:
-		ret = ni_660x_clk_src(clock_source, &bits);
-		break;
-	case ni_gpct_variant_e_series:
-	case ni_gpct_variant_m_series:
-	default:
-		ret = ni_m_clk_src(clock_source, &bits);
-		break;
-	}
-	if (ret) {
-		struct comedi_device *dev = counter_dev->dev;
+	चयन (counter_dev->variant) अणु
+	हाल ni_gpct_variant_660x:
+		ret = ni_660x_clk_src(घड़ी_source, &bits);
+		अवरोध;
+	हाल ni_gpct_variant_e_series:
+	हाल ni_gpct_variant_m_series:
+	शेष:
+		ret = ni_m_clk_src(घड़ी_source, &bits);
+		अवरोध;
+	पूर्ण
+	अगर (ret) अणु
+		काष्ठा comedi_device *dev = counter_dev->dev;
 
 		dev_err(dev->class_dev, "invalid clock source 0x%x\n",
-			clock_source);
-		return ret;
-	}
+			घड़ी_source);
+		वापस ret;
+	पूर्ण
 
-	if (clock_source & NI_GPCT_INVERT_CLOCK_SRC_BIT)
+	अगर (घड़ी_source & NI_GPCT_INVERT_CLOCK_SRC_BIT)
 		bits |= GI_SRC_POL_INVERT;
 	ni_tio_set_bits(counter, NITIO_INPUT_SEL_REG(cidx),
 			GI_SRC_SEL_MASK | GI_SRC_POL_INVERT, bits);
-	ni_tio_set_source_subselect(counter, clock_source);
+	ni_tio_set_source_subselect(counter, घड़ी_source);
 
-	if (ni_tio_counting_mode_registers_present(counter_dev)) {
+	अगर (ni_tio_counting_mode_रेजिस्टरs_present(counter_dev)) अणु
 		bits = 0;
-		switch (clock_source & NI_GPCT_PRESCALE_MODE_CLOCK_SRC_MASK) {
-		case NI_GPCT_NO_PRESCALE_CLOCK_SRC_BITS:
-			break;
-		case NI_GPCT_PRESCALE_X2_CLOCK_SRC_BITS:
+		चयन (घड़ी_source & NI_GPCT_PRESCALE_MODE_CLOCK_SRC_MASK) अणु
+		हाल NI_GPCT_NO_PRESCALE_CLOCK_SRC_BITS:
+			अवरोध;
+		हाल NI_GPCT_PRESCALE_X2_CLOCK_SRC_BITS:
 			bits |= GI_PRESCALE_X2(counter_dev->variant);
-			break;
-		case NI_GPCT_PRESCALE_X8_CLOCK_SRC_BITS:
+			अवरोध;
+		हाल NI_GPCT_PRESCALE_X8_CLOCK_SRC_BITS:
 			bits |= GI_PRESCALE_X8(counter_dev->variant);
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 		ni_tio_set_bits(counter, NITIO_CNT_MODE_REG(cidx),
 				GI_PRESCALE_X2(counter_dev->variant) |
 				GI_PRESCALE_X8(counter_dev->variant), bits);
-	}
-	counter->clock_period_ps = period_ns * 1000;
+	पूर्ण
+	counter->घड़ी_period_ps = period_ns * 1000;
 	ni_tio_set_sync_mode(counter);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ni_tio_get_clock_src(struct ni_gpct *counter,
-				unsigned int *clock_source,
-				unsigned int *period_ns)
-{
+अटल पूर्णांक ni_tio_get_घड़ी_src(काष्ठा ni_gpct *counter,
+				अचिन्हित पूर्णांक *घड़ी_source,
+				अचिन्हित पूर्णांक *period_ns)
+अणु
 	u64 temp64 = 0;
-	int ret;
+	पूर्णांक ret;
 
-	ret = ni_tio_generic_clock_src_select(counter, clock_source);
-	if (ret)
-		return ret;
-	ret = ni_tio_clock_period_ps(counter, *clock_source, &temp64);
-	if (ret)
-		return ret;
-	do_div(temp64, 1000);	/* ps to ns */
+	ret = ni_tio_generic_घड़ी_src_select(counter, घड़ी_source);
+	अगर (ret)
+		वापस ret;
+	ret = ni_tio_घड़ी_period_ps(counter, *घड़ी_source, &temp64);
+	अगर (ret)
+		वापस ret;
+	करो_भाग(temp64, 1000);	/* ps to ns */
 	*period_ns = temp64;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void ni_tio_set_gate_raw(struct ni_gpct *counter,
-				       unsigned int gate_source)
-{
+अटल अंतरभूत व्योम ni_tio_set_gate_raw(काष्ठा ni_gpct *counter,
+				       अचिन्हित पूर्णांक gate_source)
+अणु
 	ni_tio_set_bits(counter, NITIO_INPUT_SEL_REG(counter->counter_index),
 			GI_GATE_SEL_MASK, GI_GATE_SEL(gate_source));
-}
+पूर्ण
 
-static inline void ni_tio_set_gate2_raw(struct ni_gpct *counter,
-					unsigned int gate_source)
-{
+अटल अंतरभूत व्योम ni_tio_set_gate2_raw(काष्ठा ni_gpct *counter,
+					अचिन्हित पूर्णांक gate_source)
+अणु
 	ni_tio_set_bits(counter, NITIO_GATE2_REG(counter->counter_index),
 			GI_GATE2_SEL_MASK, GI_GATE2_SEL(gate_source));
-}
+पूर्ण
 
-/* Set the mode bits for gate. */
-static inline void ni_tio_set_gate_mode(struct ni_gpct *counter,
-					unsigned int src)
-{
-	unsigned int mode_bits = 0;
+/* Set the mode bits क्रम gate. */
+अटल अंतरभूत व्योम ni_tio_set_gate_mode(काष्ठा ni_gpct *counter,
+					अचिन्हित पूर्णांक src)
+अणु
+	अचिन्हित पूर्णांक mode_bits = 0;
 
-	if (CR_CHAN(src) & NI_GPCT_DISABLED_GATE_SELECT) {
+	अगर (CR_CHAN(src) & NI_GPCT_DISABLED_GATE_SELECT) अणु
 		/*
 		 * Allowing bitwise comparison here to allow non-zero raw
-		 * register value to be used for channel when disabling.
+		 * रेजिस्टर value to be used क्रम channel when disabling.
 		 */
 		mode_bits = GI_GATING_DISABLED;
-	} else {
-		if (src & CR_INVERT)
+	पूर्ण अन्यथा अणु
+		अगर (src & CR_INVERT)
 			mode_bits |= GI_GATE_POL_INVERT;
-		if (src & CR_EDGE)
+		अगर (src & CR_EDGE)
 			mode_bits |= GI_RISING_EDGE_GATING;
-		else
+		अन्यथा
 			mode_bits |= GI_LEVEL_GATING;
-	}
+	पूर्ण
 	ni_tio_set_bits(counter, NITIO_MODE_REG(counter->counter_index),
 			GI_GATE_POL_INVERT | GI_GATING_MODE_MASK,
 			mode_bits);
-}
+पूर्ण
 
 /*
- * Set the mode bits for gate2.
+ * Set the mode bits क्रम gate2.
  *
- * Previously, the code this function represents did not actually write anything
- * to the register.  Rather, writing to this register was reserved for the code
+ * Previously, the code this function represents did not actually ग_लिखो anything
+ * to the रेजिस्टर.  Rather, writing to this रेजिस्टर was reserved क्रम the code
  * ni ni_tio_set_gate2_raw.
  */
-static inline void ni_tio_set_gate2_mode(struct ni_gpct *counter,
-					 unsigned int src)
-{
+अटल अंतरभूत व्योम ni_tio_set_gate2_mode(काष्ठा ni_gpct *counter,
+					 अचिन्हित पूर्णांक src)
+अणु
 	/*
 	 * The GI_GATE2_MODE bit was previously set in the code that also sets
 	 * the gate2 source.
 	 * We'll set mode bits _after_ source bits now, and thus, this function
 	 * will effectively enable the second gate after all bits are set.
 	 */
-	unsigned int mode_bits = GI_GATE2_MODE;
+	अचिन्हित पूर्णांक mode_bits = GI_GATE2_MODE;
 
-	if (CR_CHAN(src) & NI_GPCT_DISABLED_GATE_SELECT)
+	अगर (CR_CHAN(src) & NI_GPCT_DISABLED_GATE_SELECT)
 		/*
 		 * Allowing bitwise comparison here to allow non-zero raw
-		 * register value to be used for channel when disabling.
+		 * रेजिस्टर value to be used क्रम channel when disabling.
 		 */
 		mode_bits = GI_GATING_DISABLED;
-	if (src & CR_INVERT)
+	अगर (src & CR_INVERT)
 		mode_bits |= GI_GATE2_POL_INVERT;
 
 	ni_tio_set_bits(counter, NITIO_GATE2_REG(counter->counter_index),
 			GI_GATE2_POL_INVERT | GI_GATE2_MODE, mode_bits);
-}
+पूर्ण
 
-static int ni_660x_set_gate(struct ni_gpct *counter, unsigned int gate_source)
-{
-	unsigned int chan = CR_CHAN(gate_source);
-	unsigned int gate_sel;
-	unsigned int i;
+अटल पूर्णांक ni_660x_set_gate(काष्ठा ni_gpct *counter, अचिन्हित पूर्णांक gate_source)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(gate_source);
+	अचिन्हित पूर्णांक gate_sel;
+	अचिन्हित पूर्णांक i;
 
-	switch (chan) {
-	case NI_GPCT_NEXT_SOURCE_GATE_SELECT:
+	चयन (chan) अणु
+	हाल NI_GPCT_NEXT_SOURCE_GATE_SELECT:
 		gate_sel = NI_660X_NEXT_SRC_GATE_SEL;
-		break;
-	case NI_GPCT_NEXT_OUT_GATE_SELECT:
-	case NI_GPCT_LOGIC_LOW_GATE_SELECT:
-	case NI_GPCT_SOURCE_PIN_i_GATE_SELECT:
-	case NI_GPCT_GATE_PIN_i_GATE_SELECT:
+		अवरोध;
+	हाल NI_GPCT_NEXT_OUT_GATE_SELECT:
+	हाल NI_GPCT_LOGIC_LOW_GATE_SELECT:
+	हाल NI_GPCT_SOURCE_PIN_i_GATE_SELECT:
+	हाल NI_GPCT_GATE_PIN_i_GATE_SELECT:
 		gate_sel = chan & 0x1f;
-		break;
-	default:
-		for (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) {
-			if (chan == NI_GPCT_RTSI_GATE_SELECT(i)) {
+		अवरोध;
+	शेष:
+		क्रम (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) अणु
+			अगर (chan == NI_GPCT_RTSI_GATE_SELECT(i)) अणु
 				gate_sel = chan & 0x1f;
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_RTSI_CHAN)
-			break;
-		for (i = 0; i <= NI_660X_MAX_GATE_PIN; ++i) {
-			if (chan == NI_GPCT_GATE_PIN_GATE_SELECT(i)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_RTSI_CHAN)
+			अवरोध;
+		क्रम (i = 0; i <= NI_660X_MAX_GATE_PIN; ++i) अणु
+			अगर (chan == NI_GPCT_GATE_PIN_GATE_SELECT(i)) अणु
 				gate_sel = chan & 0x1f;
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_GATE_PIN)
-			break;
-		return -EINVAL;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_GATE_PIN)
+			अवरोध;
+		वापस -EINVAL;
+	पूर्ण
 	ni_tio_set_gate_raw(counter, gate_sel);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ni_m_set_gate(struct ni_gpct *counter, unsigned int gate_source)
-{
-	unsigned int chan = CR_CHAN(gate_source);
-	unsigned int gate_sel;
-	unsigned int i;
+अटल पूर्णांक ni_m_set_gate(काष्ठा ni_gpct *counter, अचिन्हित पूर्णांक gate_source)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(gate_source);
+	अचिन्हित पूर्णांक gate_sel;
+	अचिन्हित पूर्णांक i;
 
-	switch (chan) {
-	case NI_GPCT_TIMESTAMP_MUX_GATE_SELECT:
-	case NI_GPCT_AI_START2_GATE_SELECT:
-	case NI_GPCT_PXI_STAR_TRIGGER_GATE_SELECT:
-	case NI_GPCT_NEXT_OUT_GATE_SELECT:
-	case NI_GPCT_AI_START1_GATE_SELECT:
-	case NI_GPCT_NEXT_SOURCE_GATE_SELECT:
-	case NI_GPCT_ANALOG_TRIGGER_OUT_GATE_SELECT:
-	case NI_GPCT_LOGIC_LOW_GATE_SELECT:
+	चयन (chan) अणु
+	हाल NI_GPCT_TIMESTAMP_MUX_GATE_SELECT:
+	हाल NI_GPCT_AI_START2_GATE_SELECT:
+	हाल NI_GPCT_PXI_STAR_TRIGGER_GATE_SELECT:
+	हाल NI_GPCT_NEXT_OUT_GATE_SELECT:
+	हाल NI_GPCT_AI_START1_GATE_SELECT:
+	हाल NI_GPCT_NEXT_SOURCE_GATE_SELECT:
+	हाल NI_GPCT_ANALOG_TRIGGER_OUT_GATE_SELECT:
+	हाल NI_GPCT_LOGIC_LOW_GATE_SELECT:
 		gate_sel = chan & 0x1f;
-		break;
-	default:
-		for (i = 0; i <= NI_M_MAX_RTSI_CHAN; ++i) {
-			if (chan == NI_GPCT_RTSI_GATE_SELECT(i)) {
+		अवरोध;
+	शेष:
+		क्रम (i = 0; i <= NI_M_MAX_RTSI_CHAN; ++i) अणु
+			अगर (chan == NI_GPCT_RTSI_GATE_SELECT(i)) अणु
 				gate_sel = chan & 0x1f;
-				break;
-			}
-		}
-		if (i <= NI_M_MAX_RTSI_CHAN)
-			break;
-		for (i = 0; i <= NI_M_MAX_PFI_CHAN; ++i) {
-			if (chan == NI_GPCT_PFI_GATE_SELECT(i)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_M_MAX_RTSI_CHAN)
+			अवरोध;
+		क्रम (i = 0; i <= NI_M_MAX_PFI_CHAN; ++i) अणु
+			अगर (chan == NI_GPCT_PFI_GATE_SELECT(i)) अणु
 				gate_sel = chan & 0x1f;
-				break;
-			}
-		}
-		if (i <= NI_M_MAX_PFI_CHAN)
-			break;
-		return -EINVAL;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_M_MAX_PFI_CHAN)
+			अवरोध;
+		वापस -EINVAL;
+	पूर्ण
 	ni_tio_set_gate_raw(counter, gate_sel);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ni_660x_set_gate2(struct ni_gpct *counter, unsigned int gate_source)
-{
-	unsigned int chan = CR_CHAN(gate_source);
-	unsigned int gate2_sel;
-	unsigned int i;
+अटल पूर्णांक ni_660x_set_gate2(काष्ठा ni_gpct *counter, अचिन्हित पूर्णांक gate_source)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(gate_source);
+	अचिन्हित पूर्णांक gate2_sel;
+	अचिन्हित पूर्णांक i;
 
-	switch (chan) {
-	case NI_GPCT_SOURCE_PIN_i_GATE_SELECT:
-	case NI_GPCT_UP_DOWN_PIN_i_GATE_SELECT:
-	case NI_GPCT_SELECTED_GATE_GATE_SELECT:
-	case NI_GPCT_NEXT_OUT_GATE_SELECT:
-	case NI_GPCT_LOGIC_LOW_GATE_SELECT:
+	चयन (chan) अणु
+	हाल NI_GPCT_SOURCE_PIN_i_GATE_SELECT:
+	हाल NI_GPCT_UP_DOWN_PIN_i_GATE_SELECT:
+	हाल NI_GPCT_SELECTED_GATE_GATE_SELECT:
+	हाल NI_GPCT_NEXT_OUT_GATE_SELECT:
+	हाल NI_GPCT_LOGIC_LOW_GATE_SELECT:
 		gate2_sel = chan & 0x1f;
-		break;
-	case NI_GPCT_NEXT_SOURCE_GATE_SELECT:
+		अवरोध;
+	हाल NI_GPCT_NEXT_SOURCE_GATE_SELECT:
 		gate2_sel = NI_660X_NEXT_SRC_GATE2_SEL;
-		break;
-	default:
-		for (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) {
-			if (chan == NI_GPCT_RTSI_GATE_SELECT(i)) {
+		अवरोध;
+	शेष:
+		क्रम (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) अणु
+			अगर (chan == NI_GPCT_RTSI_GATE_SELECT(i)) अणु
 				gate2_sel = chan & 0x1f;
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_RTSI_CHAN)
-			break;
-		for (i = 0; i <= NI_660X_MAX_UP_DOWN_PIN; ++i) {
-			if (chan == NI_GPCT_UP_DOWN_PIN_GATE_SELECT(i)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_RTSI_CHAN)
+			अवरोध;
+		क्रम (i = 0; i <= NI_660X_MAX_UP_DOWN_PIN; ++i) अणु
+			अगर (chan == NI_GPCT_UP_DOWN_PIN_GATE_SELECT(i)) अणु
 				gate2_sel = chan & 0x1f;
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_UP_DOWN_PIN)
-			break;
-		return -EINVAL;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_UP_DOWN_PIN)
+			अवरोध;
+		वापस -EINVAL;
+	पूर्ण
 	ni_tio_set_gate2_raw(counter, gate2_sel);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ni_m_set_gate2(struct ni_gpct *counter, unsigned int gate_source)
-{
+अटल पूर्णांक ni_m_set_gate2(काष्ठा ni_gpct *counter, अचिन्हित पूर्णांक gate_source)
+अणु
 	/*
-	 * FIXME: We don't know what the m-series second gate codes are,
-	 * so we'll just pass the bits through for now.
+	 * FIXME: We करोn't know what the m-series second gate codes are,
+	 * so we'll just pass the bits through क्रम now.
 	 */
 	ni_tio_set_gate2_raw(counter, gate_source);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ni_tio_set_gate_src_raw(struct ni_gpct *counter,
-			    unsigned int gate, unsigned int src)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
+पूर्णांक ni_tio_set_gate_src_raw(काष्ठा ni_gpct *counter,
+			    अचिन्हित पूर्णांक gate, अचिन्हित पूर्णांक src)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
 
-	switch (gate) {
-	case 0:
+	चयन (gate) अणु
+	हाल 0:
 		/* 1.  start by disabling gate */
 		ni_tio_set_gate_mode(counter, NI_GPCT_DISABLED_GATE_SELECT);
 		/* 2.  set the requested gate source */
 		ni_tio_set_gate_raw(counter, src);
 		/* 3.  reenable & set mode to starts things back up */
 		ni_tio_set_gate_mode(counter, src);
-		break;
-	case 1:
-		if (!ni_tio_has_gate2_registers(counter_dev))
-			return -EINVAL;
+		अवरोध;
+	हाल 1:
+		अगर (!ni_tio_has_gate2_रेजिस्टरs(counter_dev))
+			वापस -EINVAL;
 
 		/* 1.  start by disabling gate */
 		ni_tio_set_gate2_mode(counter, NI_GPCT_DISABLED_GATE_SELECT);
@@ -1046,691 +1047,691 @@ int ni_tio_set_gate_src_raw(struct ni_gpct *counter,
 		ni_tio_set_gate2_raw(counter, src);
 		/* 3.  reenable & set mode to starts things back up */
 		ni_tio_set_gate2_mode(counter, src);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_set_gate_src_raw);
 
-int ni_tio_set_gate_src(struct ni_gpct *counter,
-			unsigned int gate, unsigned int src)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
+पूर्णांक ni_tio_set_gate_src(काष्ठा ni_gpct *counter,
+			अचिन्हित पूर्णांक gate, अचिन्हित पूर्णांक src)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
 	/*
 	 * mask off disable flag.  This high bit still passes CR_CHAN.
 	 * Doing this allows one to both set the gate as disabled, but also
 	 * change the route value of the gate.
 	 */
-	int chan = CR_CHAN(src) & (~NI_GPCT_DISABLED_GATE_SELECT);
-	int ret;
+	पूर्णांक chan = CR_CHAN(src) & (~NI_GPCT_DISABLED_GATE_SELECT);
+	पूर्णांक ret;
 
-	switch (gate) {
-	case 0:
+	चयन (gate) अणु
+	हाल 0:
 		/* 1.  start by disabling gate */
 		ni_tio_set_gate_mode(counter, NI_GPCT_DISABLED_GATE_SELECT);
 		/* 2.  set the requested gate source */
-		switch (counter_dev->variant) {
-		case ni_gpct_variant_e_series:
-		case ni_gpct_variant_m_series:
+		चयन (counter_dev->variant) अणु
+		हाल ni_gpct_variant_e_series:
+		हाल ni_gpct_variant_m_series:
 			ret = ni_m_set_gate(counter, chan);
-			break;
-		case ni_gpct_variant_660x:
+			अवरोध;
+		हाल ni_gpct_variant_660x:
 			ret = ni_660x_set_gate(counter, chan);
-			break;
-		default:
-			return -EINVAL;
-		}
-		if (ret)
-			return ret;
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अगर (ret)
+			वापस ret;
 		/* 3.  reenable & set mode to starts things back up */
 		ni_tio_set_gate_mode(counter, src);
-		break;
-	case 1:
-		if (!ni_tio_has_gate2_registers(counter_dev))
-			return -EINVAL;
+		अवरोध;
+	हाल 1:
+		अगर (!ni_tio_has_gate2_रेजिस्टरs(counter_dev))
+			वापस -EINVAL;
 
 		/* 1.  start by disabling gate */
 		ni_tio_set_gate2_mode(counter, NI_GPCT_DISABLED_GATE_SELECT);
 		/* 2.  set the requested gate source */
-		switch (counter_dev->variant) {
-		case ni_gpct_variant_m_series:
+		चयन (counter_dev->variant) अणु
+		हाल ni_gpct_variant_m_series:
 			ret = ni_m_set_gate2(counter, chan);
-			break;
-		case ni_gpct_variant_660x:
+			अवरोध;
+		हाल ni_gpct_variant_660x:
 			ret = ni_660x_set_gate2(counter, chan);
-			break;
-		default:
-			return -EINVAL;
-		}
-		if (ret)
-			return ret;
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अगर (ret)
+			वापस ret;
 		/* 3.  reenable & set mode to starts things back up */
 		ni_tio_set_gate2_mode(counter, src);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_set_gate_src);
 
-static int ni_tio_set_other_src(struct ni_gpct *counter, unsigned int index,
-				unsigned int source)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	unsigned int chip = counter->chip_index;
-	unsigned int abz_reg, shift, mask;
+अटल पूर्णांक ni_tio_set_other_src(काष्ठा ni_gpct *counter, अचिन्हित पूर्णांक index,
+				अचिन्हित पूर्णांक source)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक chip = counter->chip_index;
+	अचिन्हित पूर्णांक abz_reg, shअगरt, mask;
 
-	if (counter_dev->variant != ni_gpct_variant_m_series)
-		return -EINVAL;
+	अगर (counter_dev->variant != ni_gpct_variant_m_series)
+		वापस -EINVAL;
 
 	abz_reg = NITIO_ABZ_REG(cidx);
 
-	/* allow for new device-global names */
-	if (index == NI_GPCT_SOURCE_ENCODER_A ||
-	    (index >= NI_CtrA(0) && index <= NI_CtrA(-1))) {
-		shift = 10;
-	} else if (index == NI_GPCT_SOURCE_ENCODER_B ||
-	    (index >= NI_CtrB(0) && index <= NI_CtrB(-1))) {
-		shift = 5;
-	} else if (index == NI_GPCT_SOURCE_ENCODER_Z ||
-	    (index >= NI_CtrZ(0) && index <= NI_CtrZ(-1))) {
-		shift = 0;
-	} else {
-		return -EINVAL;
-	}
+	/* allow क्रम new device-global names */
+	अगर (index == NI_GPCT_SOURCE_ENCODER_A ||
+	    (index >= NI_CtrA(0) && index <= NI_CtrA(-1))) अणु
+		shअगरt = 10;
+	पूर्ण अन्यथा अगर (index == NI_GPCT_SOURCE_ENCODER_B ||
+	    (index >= NI_CtrB(0) && index <= NI_CtrB(-1))) अणु
+		shअगरt = 5;
+	पूर्ण अन्यथा अगर (index == NI_GPCT_SOURCE_ENCODER_Z ||
+	    (index >= NI_CtrZ(0) && index <= NI_CtrZ(-1))) अणु
+		shअगरt = 0;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	mask = 0x1f << shift;
-	if (source > 0x1f)
+	mask = 0x1f << shअगरt;
+	अगर (source > 0x1f)
 		source = 0x1f;	/* Disable gate */
 
 	counter_dev->regs[chip][abz_reg] &= ~mask;
-	counter_dev->regs[chip][abz_reg] |= (source << shift) & mask;
-	ni_tio_write(counter, counter_dev->regs[chip][abz_reg], abz_reg);
-	return 0;
-}
+	counter_dev->regs[chip][abz_reg] |= (source << shअगरt) & mask;
+	ni_tio_ग_लिखो(counter, counter_dev->regs[chip][abz_reg], abz_reg);
+	वापस 0;
+पूर्ण
 
-static int ni_tio_get_other_src(struct ni_gpct *counter, unsigned int index,
-				unsigned int *source)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	unsigned int abz_reg, shift, mask;
+अटल पूर्णांक ni_tio_get_other_src(काष्ठा ni_gpct *counter, अचिन्हित पूर्णांक index,
+				अचिन्हित पूर्णांक *source)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक abz_reg, shअगरt, mask;
 
-	if (counter_dev->variant != ni_gpct_variant_m_series)
-		/* A,B,Z only valid for m-series */
-		return -EINVAL;
+	अगर (counter_dev->variant != ni_gpct_variant_m_series)
+		/* A,B,Z only valid क्रम m-series */
+		वापस -EINVAL;
 
 	abz_reg = NITIO_ABZ_REG(cidx);
 
-	/* allow for new device-global names */
-	if (index == NI_GPCT_SOURCE_ENCODER_A ||
-	    (index >= NI_CtrA(0) && index <= NI_CtrA(-1))) {
-		shift = 10;
-	} else if (index == NI_GPCT_SOURCE_ENCODER_B ||
-	    (index >= NI_CtrB(0) && index <= NI_CtrB(-1))) {
-		shift = 5;
-	} else if (index == NI_GPCT_SOURCE_ENCODER_Z ||
-	    (index >= NI_CtrZ(0) && index <= NI_CtrZ(-1))) {
-		shift = 0;
-	} else {
-		return -EINVAL;
-	}
+	/* allow क्रम new device-global names */
+	अगर (index == NI_GPCT_SOURCE_ENCODER_A ||
+	    (index >= NI_CtrA(0) && index <= NI_CtrA(-1))) अणु
+		shअगरt = 10;
+	पूर्ण अन्यथा अगर (index == NI_GPCT_SOURCE_ENCODER_B ||
+	    (index >= NI_CtrB(0) && index <= NI_CtrB(-1))) अणु
+		shअगरt = 5;
+	पूर्ण अन्यथा अगर (index == NI_GPCT_SOURCE_ENCODER_Z ||
+	    (index >= NI_CtrZ(0) && index <= NI_CtrZ(-1))) अणु
+		shअगरt = 0;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	mask = 0x1f;
 
-	*source = (ni_tio_get_soft_copy(counter, abz_reg) >> shift) & mask;
-	return 0;
-}
+	*source = (ni_tio_get_soft_copy(counter, abz_reg) >> shअगरt) & mask;
+	वापस 0;
+पूर्ण
 
-static int ni_660x_gate_to_generic_gate(unsigned int gate, unsigned int *src)
-{
-	unsigned int source;
-	unsigned int i;
+अटल पूर्णांक ni_660x_gate_to_generic_gate(अचिन्हित पूर्णांक gate, अचिन्हित पूर्णांक *src)
+अणु
+	अचिन्हित पूर्णांक source;
+	अचिन्हित पूर्णांक i;
 
-	switch (gate) {
-	case NI_660X_SRC_PIN_I_GATE_SEL:
+	चयन (gate) अणु
+	हाल NI_660X_SRC_PIN_I_GATE_SEL:
 		source = NI_GPCT_SOURCE_PIN_i_GATE_SELECT;
-		break;
-	case NI_660X_GATE_PIN_I_GATE_SEL:
+		अवरोध;
+	हाल NI_660X_GATE_PIN_I_GATE_SEL:
 		source = NI_GPCT_GATE_PIN_i_GATE_SELECT;
-		break;
-	case NI_660X_NEXT_SRC_GATE_SEL:
+		अवरोध;
+	हाल NI_660X_NEXT_SRC_GATE_SEL:
 		source = NI_GPCT_NEXT_SOURCE_GATE_SELECT;
-		break;
-	case NI_660X_NEXT_OUT_GATE_SEL:
+		अवरोध;
+	हाल NI_660X_NEXT_OUT_GATE_SEL:
 		source = NI_GPCT_NEXT_OUT_GATE_SELECT;
-		break;
-	case NI_660X_LOGIC_LOW_GATE_SEL:
+		अवरोध;
+	हाल NI_660X_LOGIC_LOW_GATE_SEL:
 		source = NI_GPCT_LOGIC_LOW_GATE_SELECT;
-		break;
-	default:
-		for (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) {
-			if (gate == NI_660X_RTSI_GATE_SEL(i)) {
+		अवरोध;
+	शेष:
+		क्रम (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) अणु
+			अगर (gate == NI_660X_RTSI_GATE_SEL(i)) अणु
 				source = NI_GPCT_RTSI_GATE_SELECT(i);
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_RTSI_CHAN)
-			break;
-		for (i = 0; i <= NI_660X_MAX_GATE_PIN; ++i) {
-			if (gate == NI_660X_PIN_GATE_SEL(i)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_RTSI_CHAN)
+			अवरोध;
+		क्रम (i = 0; i <= NI_660X_MAX_GATE_PIN; ++i) अणु
+			अगर (gate == NI_660X_PIN_GATE_SEL(i)) अणु
 				source = NI_GPCT_GATE_PIN_GATE_SELECT(i);
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_GATE_PIN)
-			break;
-		return -EINVAL;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_GATE_PIN)
+			अवरोध;
+		वापस -EINVAL;
+	पूर्ण
 	*src = source;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ni_m_gate_to_generic_gate(unsigned int gate, unsigned int *src)
-{
-	unsigned int source;
-	unsigned int i;
+अटल पूर्णांक ni_m_gate_to_generic_gate(अचिन्हित पूर्णांक gate, अचिन्हित पूर्णांक *src)
+अणु
+	अचिन्हित पूर्णांक source;
+	अचिन्हित पूर्णांक i;
 
-	switch (gate) {
-	case NI_M_TIMESTAMP_MUX_GATE_SEL:
+	चयन (gate) अणु
+	हाल NI_M_TIMESTAMP_MUX_GATE_SEL:
 		source = NI_GPCT_TIMESTAMP_MUX_GATE_SELECT;
-		break;
-	case NI_M_AI_START2_GATE_SEL:
+		अवरोध;
+	हाल NI_M_AI_START2_GATE_SEL:
 		source = NI_GPCT_AI_START2_GATE_SELECT;
-		break;
-	case NI_M_PXI_STAR_TRIGGER_GATE_SEL:
+		अवरोध;
+	हाल NI_M_PXI_STAR_TRIGGER_GATE_SEL:
 		source = NI_GPCT_PXI_STAR_TRIGGER_GATE_SELECT;
-		break;
-	case NI_M_NEXT_OUT_GATE_SEL:
+		अवरोध;
+	हाल NI_M_NEXT_OUT_GATE_SEL:
 		source = NI_GPCT_NEXT_OUT_GATE_SELECT;
-		break;
-	case NI_M_AI_START1_GATE_SEL:
+		अवरोध;
+	हाल NI_M_AI_START1_GATE_SEL:
 		source = NI_GPCT_AI_START1_GATE_SELECT;
-		break;
-	case NI_M_NEXT_SRC_GATE_SEL:
+		अवरोध;
+	हाल NI_M_NEXT_SRC_GATE_SEL:
 		source = NI_GPCT_NEXT_SOURCE_GATE_SELECT;
-		break;
-	case NI_M_ANALOG_TRIG_OUT_GATE_SEL:
+		अवरोध;
+	हाल NI_M_ANALOG_TRIG_OUT_GATE_SEL:
 		source = NI_GPCT_ANALOG_TRIGGER_OUT_GATE_SELECT;
-		break;
-	case NI_M_LOGIC_LOW_GATE_SEL:
+		अवरोध;
+	हाल NI_M_LOGIC_LOW_GATE_SEL:
 		source = NI_GPCT_LOGIC_LOW_GATE_SELECT;
-		break;
-	default:
-		for (i = 0; i <= NI_M_MAX_RTSI_CHAN; ++i) {
-			if (gate == NI_M_RTSI_GATE_SEL(i)) {
+		अवरोध;
+	शेष:
+		क्रम (i = 0; i <= NI_M_MAX_RTSI_CHAN; ++i) अणु
+			अगर (gate == NI_M_RTSI_GATE_SEL(i)) अणु
 				source = NI_GPCT_RTSI_GATE_SELECT(i);
-				break;
-			}
-		}
-		if (i <= NI_M_MAX_RTSI_CHAN)
-			break;
-		for (i = 0; i <= NI_M_MAX_PFI_CHAN; ++i) {
-			if (gate == NI_M_PFI_GATE_SEL(i)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_M_MAX_RTSI_CHAN)
+			अवरोध;
+		क्रम (i = 0; i <= NI_M_MAX_PFI_CHAN; ++i) अणु
+			अगर (gate == NI_M_PFI_GATE_SEL(i)) अणु
 				source = NI_GPCT_PFI_GATE_SELECT(i);
-				break;
-			}
-		}
-		if (i <= NI_M_MAX_PFI_CHAN)
-			break;
-		return -EINVAL;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_M_MAX_PFI_CHAN)
+			अवरोध;
+		वापस -EINVAL;
+	पूर्ण
 	*src = source;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ni_660x_gate2_to_generic_gate(unsigned int gate, unsigned int *src)
-{
-	unsigned int source;
-	unsigned int i;
+अटल पूर्णांक ni_660x_gate2_to_generic_gate(अचिन्हित पूर्णांक gate, अचिन्हित पूर्णांक *src)
+अणु
+	अचिन्हित पूर्णांक source;
+	अचिन्हित पूर्णांक i;
 
-	switch (gate) {
-	case NI_660X_SRC_PIN_I_GATE2_SEL:
+	चयन (gate) अणु
+	हाल NI_660X_SRC_PIN_I_GATE2_SEL:
 		source = NI_GPCT_SOURCE_PIN_i_GATE_SELECT;
-		break;
-	case NI_660X_UD_PIN_I_GATE2_SEL:
+		अवरोध;
+	हाल NI_660X_UD_PIN_I_GATE2_SEL:
 		source = NI_GPCT_UP_DOWN_PIN_i_GATE_SELECT;
-		break;
-	case NI_660X_NEXT_SRC_GATE2_SEL:
+		अवरोध;
+	हाल NI_660X_NEXT_SRC_GATE2_SEL:
 		source = NI_GPCT_NEXT_SOURCE_GATE_SELECT;
-		break;
-	case NI_660X_NEXT_OUT_GATE2_SEL:
+		अवरोध;
+	हाल NI_660X_NEXT_OUT_GATE2_SEL:
 		source = NI_GPCT_NEXT_OUT_GATE_SELECT;
-		break;
-	case NI_660X_SELECTED_GATE2_SEL:
+		अवरोध;
+	हाल NI_660X_SELECTED_GATE2_SEL:
 		source = NI_GPCT_SELECTED_GATE_GATE_SELECT;
-		break;
-	case NI_660X_LOGIC_LOW_GATE2_SEL:
+		अवरोध;
+	हाल NI_660X_LOGIC_LOW_GATE2_SEL:
 		source = NI_GPCT_LOGIC_LOW_GATE_SELECT;
-		break;
-	default:
-		for (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) {
-			if (gate == NI_660X_RTSI_GATE2_SEL(i)) {
+		अवरोध;
+	शेष:
+		क्रम (i = 0; i <= NI_660X_MAX_RTSI_CHAN; ++i) अणु
+			अगर (gate == NI_660X_RTSI_GATE2_SEL(i)) अणु
 				source = NI_GPCT_RTSI_GATE_SELECT(i);
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_RTSI_CHAN)
-			break;
-		for (i = 0; i <= NI_660X_MAX_UP_DOWN_PIN; ++i) {
-			if (gate == NI_660X_UD_PIN_GATE2_SEL(i)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_RTSI_CHAN)
+			अवरोध;
+		क्रम (i = 0; i <= NI_660X_MAX_UP_DOWN_PIN; ++i) अणु
+			अगर (gate == NI_660X_UD_PIN_GATE2_SEL(i)) अणु
 				source = NI_GPCT_UP_DOWN_PIN_GATE_SELECT(i);
-				break;
-			}
-		}
-		if (i <= NI_660X_MAX_UP_DOWN_PIN)
-			break;
-		return -EINVAL;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i <= NI_660X_MAX_UP_DOWN_PIN)
+			अवरोध;
+		वापस -EINVAL;
+	पूर्ण
 	*src = source;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ni_m_gate2_to_generic_gate(unsigned int gate, unsigned int *src)
-{
+अटल पूर्णांक ni_m_gate2_to_generic_gate(अचिन्हित पूर्णांक gate, अचिन्हित पूर्णांक *src)
+अणु
 	/*
-	 * FIXME: the second gate sources for the m series are undocumented,
-	 * so we just return the raw bits for now.
+	 * FIXME: the second gate sources क्रम the m series are unकरोcumented,
+	 * so we just वापस the raw bits क्रम now.
 	 */
 	*src = gate;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline unsigned int ni_tio_get_gate_mode(struct ni_gpct *counter)
-{
-	unsigned int mode = ni_tio_get_soft_copy(counter,
+अटल अंतरभूत अचिन्हित पूर्णांक ni_tio_get_gate_mode(काष्ठा ni_gpct *counter)
+अणु
+	अचिन्हित पूर्णांक mode = ni_tio_get_soft_copy(counter,
 				NITIO_MODE_REG(counter->counter_index));
-	unsigned int ret = 0;
+	अचिन्हित पूर्णांक ret = 0;
 
-	if ((mode & GI_GATING_MODE_MASK) == GI_GATING_DISABLED)
+	अगर ((mode & GI_GATING_MODE_MASK) == GI_GATING_DISABLED)
 		ret |= NI_GPCT_DISABLED_GATE_SELECT;
-	if (mode & GI_GATE_POL_INVERT)
+	अगर (mode & GI_GATE_POL_INVERT)
 		ret |= CR_INVERT;
-	if ((mode & GI_GATING_MODE_MASK) != GI_LEVEL_GATING)
+	अगर ((mode & GI_GATING_MODE_MASK) != GI_LEVEL_GATING)
 		ret |= CR_EDGE;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline unsigned int ni_tio_get_gate2_mode(struct ni_gpct *counter)
-{
-	unsigned int mode = ni_tio_get_soft_copy(counter,
+अटल अंतरभूत अचिन्हित पूर्णांक ni_tio_get_gate2_mode(काष्ठा ni_gpct *counter)
+अणु
+	अचिन्हित पूर्णांक mode = ni_tio_get_soft_copy(counter,
 				NITIO_GATE2_REG(counter->counter_index));
-	unsigned int ret = 0;
+	अचिन्हित पूर्णांक ret = 0;
 
-	if (!(mode & GI_GATE2_MODE))
+	अगर (!(mode & GI_GATE2_MODE))
 		ret |= NI_GPCT_DISABLED_GATE_SELECT;
-	if (mode & GI_GATE2_POL_INVERT)
+	अगर (mode & GI_GATE2_POL_INVERT)
 		ret |= CR_INVERT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline unsigned int ni_tio_get_gate_val(struct ni_gpct *counter)
-{
-	return GI_BITS_TO_GATE(ni_tio_get_soft_copy(counter,
+अटल अंतरभूत अचिन्हित पूर्णांक ni_tio_get_gate_val(काष्ठा ni_gpct *counter)
+अणु
+	वापस GI_BITS_TO_GATE(ni_tio_get_soft_copy(counter,
 		NITIO_INPUT_SEL_REG(counter->counter_index)));
-}
+पूर्ण
 
-static inline unsigned int ni_tio_get_gate2_val(struct ni_gpct *counter)
-{
-	return GI_BITS_TO_GATE2(ni_tio_get_soft_copy(counter,
+अटल अंतरभूत अचिन्हित पूर्णांक ni_tio_get_gate2_val(काष्ठा ni_gpct *counter)
+अणु
+	वापस GI_BITS_TO_GATE2(ni_tio_get_soft_copy(counter,
 		NITIO_GATE2_REG(counter->counter_index)));
-}
+पूर्ण
 
-static int ni_tio_get_gate_src(struct ni_gpct *counter, unsigned int gate_index,
-			       unsigned int *gate_source)
-{
-	unsigned int gate;
-	int ret;
+अटल पूर्णांक ni_tio_get_gate_src(काष्ठा ni_gpct *counter, अचिन्हित पूर्णांक gate_index,
+			       अचिन्हित पूर्णांक *gate_source)
+अणु
+	अचिन्हित पूर्णांक gate;
+	पूर्णांक ret;
 
-	switch (gate_index) {
-	case 0:
+	चयन (gate_index) अणु
+	हाल 0:
 		gate = ni_tio_get_gate_val(counter);
-		switch (counter->counter_dev->variant) {
-		case ni_gpct_variant_e_series:
-		case ni_gpct_variant_m_series:
-		default:
+		चयन (counter->counter_dev->variant) अणु
+		हाल ni_gpct_variant_e_series:
+		हाल ni_gpct_variant_m_series:
+		शेष:
 			ret = ni_m_gate_to_generic_gate(gate, gate_source);
-			break;
-		case ni_gpct_variant_660x:
+			अवरोध;
+		हाल ni_gpct_variant_660x:
 			ret = ni_660x_gate_to_generic_gate(gate, gate_source);
-			break;
-		}
-		if (ret)
-			return ret;
+			अवरोध;
+		पूर्ण
+		अगर (ret)
+			वापस ret;
 		*gate_source |= ni_tio_get_gate_mode(counter);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		gate = ni_tio_get_gate2_val(counter);
-		switch (counter->counter_dev->variant) {
-		case ni_gpct_variant_e_series:
-		case ni_gpct_variant_m_series:
-		default:
+		चयन (counter->counter_dev->variant) अणु
+		हाल ni_gpct_variant_e_series:
+		हाल ni_gpct_variant_m_series:
+		शेष:
 			ret = ni_m_gate2_to_generic_gate(gate, gate_source);
-			break;
-		case ni_gpct_variant_660x:
+			अवरोध;
+		हाल ni_gpct_variant_660x:
 			ret = ni_660x_gate2_to_generic_gate(gate, gate_source);
-			break;
-		}
-		if (ret)
-			return ret;
+			अवरोध;
+		पूर्ण
+		अगर (ret)
+			वापस ret;
 		*gate_source |= ni_tio_get_gate2_mode(counter);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ni_tio_get_gate_src_raw(struct ni_gpct *counter,
-				   unsigned int gate_index,
-				   unsigned int *gate_source)
-{
-	switch (gate_index) {
-	case 0:
+अटल पूर्णांक ni_tio_get_gate_src_raw(काष्ठा ni_gpct *counter,
+				   अचिन्हित पूर्णांक gate_index,
+				   अचिन्हित पूर्णांक *gate_source)
+अणु
+	चयन (gate_index) अणु
+	हाल 0:
 		*gate_source = ni_tio_get_gate_mode(counter)
 			     | ni_tio_get_gate_val(counter);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		*gate_source = ni_tio_get_gate2_mode(counter)
 			     | ni_tio_get_gate2_val(counter);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int ni_tio_insn_config(struct comedi_device *dev,
-		       struct comedi_subdevice *s,
-		       struct comedi_insn *insn,
-		       unsigned int *data)
-{
-	struct ni_gpct *counter = s->private;
-	unsigned int cidx = counter->counter_index;
-	unsigned int status;
-	int ret = 0;
+पूर्णांक ni_tio_insn_config(काष्ठा comedi_device *dev,
+		       काष्ठा comedi_subdevice *s,
+		       काष्ठा comedi_insn *insn,
+		       अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा ni_gpct *counter = s->निजी;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक status;
+	पूर्णांक ret = 0;
 
-	switch (data[0]) {
-	case INSN_CONFIG_SET_COUNTER_MODE:
+	चयन (data[0]) अणु
+	हाल INSN_CONFIG_SET_COUNTER_MODE:
 		ret = ni_tio_set_counter_mode(counter, data[1]);
-		break;
-	case INSN_CONFIG_ARM:
+		अवरोध;
+	हाल INSN_CONFIG_ARM:
 		ret = ni_tio_arm(counter, true, data[1]);
-		break;
-	case INSN_CONFIG_DISARM:
+		अवरोध;
+	हाल INSN_CONFIG_DISARM:
 		ret = ni_tio_arm(counter, false, 0);
-		break;
-	case INSN_CONFIG_GET_COUNTER_STATUS:
+		अवरोध;
+	हाल INSN_CONFIG_GET_COUNTER_STATUS:
 		data[1] = 0;
-		status = ni_tio_read(counter, NITIO_SHARED_STATUS_REG(cidx));
-		if (status & GI_ARMED(cidx)) {
+		status = ni_tio_पढ़ो(counter, NITIO_SHARED_STATUS_REG(cidx));
+		अगर (status & GI_ARMED(cidx)) अणु
 			data[1] |= COMEDI_COUNTER_ARMED;
-			if (status & GI_COUNTING(cidx))
+			अगर (status & GI_COUNTING(cidx))
 				data[1] |= COMEDI_COUNTER_COUNTING;
-		}
+		पूर्ण
 		data[2] = COMEDI_COUNTER_ARMED | COMEDI_COUNTER_COUNTING;
-		break;
-	case INSN_CONFIG_SET_CLOCK_SRC:
-		ret = ni_tio_set_clock_src(counter, data[1], data[2]);
-		break;
-	case INSN_CONFIG_GET_CLOCK_SRC:
-		ret = ni_tio_get_clock_src(counter, &data[1], &data[2]);
-		break;
-	case INSN_CONFIG_SET_GATE_SRC:
+		अवरोध;
+	हाल INSN_CONFIG_SET_CLOCK_SRC:
+		ret = ni_tio_set_घड़ी_src(counter, data[1], data[2]);
+		अवरोध;
+	हाल INSN_CONFIG_GET_CLOCK_SRC:
+		ret = ni_tio_get_घड़ी_src(counter, &data[1], &data[2]);
+		अवरोध;
+	हाल INSN_CONFIG_SET_GATE_SRC:
 		ret = ni_tio_set_gate_src(counter, data[1], data[2]);
-		break;
-	case INSN_CONFIG_GET_GATE_SRC:
+		अवरोध;
+	हाल INSN_CONFIG_GET_GATE_SRC:
 		ret = ni_tio_get_gate_src(counter, data[1], &data[2]);
-		break;
-	case INSN_CONFIG_SET_OTHER_SRC:
+		अवरोध;
+	हाल INSN_CONFIG_SET_OTHER_SRC:
 		ret = ni_tio_set_other_src(counter, data[1], data[2]);
-		break;
-	case INSN_CONFIG_RESET:
+		अवरोध;
+	हाल INSN_CONFIG_RESET:
 		ni_tio_reset_count_and_disarm(counter);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return ret ? ret : insn->n;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस ret ? ret : insn->n;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_insn_config);
 
 /**
- * Retrieves the register value of the current source of the output selector for
+ * Retrieves the रेजिस्टर value of the current source of the output selector क्रम
  * the given destination.
  *
- * If the terminal for the destination is not already configured as an output,
- * this function returns -EINVAL as error.
+ * If the terminal क्रम the destination is not alपढ़ोy configured as an output,
+ * this function वापसs -EINVAL as error.
  *
- * Return: the register value of the destination output selector;
- *         -EINVAL if terminal is not configured for output.
+ * Return: the रेजिस्टर value of the destination output selector;
+ *         -EINVAL अगर terminal is not configured क्रम output.
  */
-int ni_tio_get_routing(struct ni_gpct_device *counter_dev, unsigned int dest)
-{
+पूर्णांक ni_tio_get_routing(काष्ठा ni_gpct_device *counter_dev, अचिन्हित पूर्णांक dest)
+अणु
 	/* we need to know the actual counter below... */
-	int ctr_index = (dest - NI_COUNTER_NAMES_BASE) % NI_MAX_COUNTERS;
-	struct ni_gpct *counter = &counter_dev->counters[ctr_index];
-	int ret = 1;
-	unsigned int reg;
+	पूर्णांक ctr_index = (dest - NI_COUNTER_NAMES_BASE) % NI_MAX_COUNTERS;
+	काष्ठा ni_gpct *counter = &counter_dev->counters[ctr_index];
+	पूर्णांक ret = 1;
+	अचिन्हित पूर्णांक reg;
 
-	if (dest >= NI_CtrA(0) && dest <= NI_CtrZ(-1)) {
+	अगर (dest >= NI_CtrA(0) && dest <= NI_CtrZ(-1)) अणु
 		ret = ni_tio_get_other_src(counter, dest, &reg);
-	} else if (dest >= NI_CtrGate(0) && dest <= NI_CtrGate(-1)) {
+	पूर्ण अन्यथा अगर (dest >= NI_CtrGate(0) && dest <= NI_CtrGate(-1)) अणु
 		ret = ni_tio_get_gate_src_raw(counter, 0, &reg);
-	} else if (dest >= NI_CtrAux(0) && dest <= NI_CtrAux(-1)) {
+	पूर्ण अन्यथा अगर (dest >= NI_CtrAux(0) && dest <= NI_CtrAux(-1)) अणु
 		ret = ni_tio_get_gate_src_raw(counter, 1, &reg);
 	/*
-	 * This case is not possible through this interface.  A user must use
+	 * This हाल is not possible through this पूर्णांकerface.  A user must use
 	 * INSN_CONFIG_SET_CLOCK_SRC instead.
-	 * } else if (dest >= NI_CtrSource(0) && dest <= NI_CtrSource(-1)) {
-	 *	ret = ni_tio_set_clock_src(counter, &reg, &period_ns);
+	 * पूर्ण अन्यथा अगर (dest >= NI_CtrSource(0) && dest <= NI_CtrSource(-1)) अणु
+	 *	ret = ni_tio_set_घड़ी_src(counter, &reg, &period_ns);
 	 */
-	}
+	पूर्ण
 
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_get_routing);
 
 /**
- * Sets the register value of the selector MUX for the given destination.
- * @counter_dev:Pointer to general counter device.
- * @destination:Device-global identifier of route destination.
- * @register_value:
+ * Sets the रेजिस्टर value of the selector MUX क्रम the given destination.
+ * @counter_dev:Poपूर्णांकer to general counter device.
+ * @destination:Device-global identअगरier of route destination.
+ * @रेजिस्टर_value:
  *		The first several bits of this value should store the desired
- *		value to write to the register.  All other bits are for
- *		transmitting information that modify the mode of the particular
+ *		value to ग_लिखो to the रेजिस्टर.  All other bits are क्रम
+ *		transmitting inक्रमmation that modअगरy the mode of the particular
  *		destination/gate.  These mode bits might include a bitwise or of
  *		CR_INVERT and CR_EDGE.  Note that the calling function should
- *		have already validated the correctness of this value.
+ *		have alपढ़ोy validated the correctness of this value.
  */
-int ni_tio_set_routing(struct ni_gpct_device *counter_dev, unsigned int dest,
-		       unsigned int reg)
-{
+पूर्णांक ni_tio_set_routing(काष्ठा ni_gpct_device *counter_dev, अचिन्हित पूर्णांक dest,
+		       अचिन्हित पूर्णांक reg)
+अणु
 	/* we need to know the actual counter below... */
-	int ctr_index = (dest - NI_COUNTER_NAMES_BASE) % NI_MAX_COUNTERS;
-	struct ni_gpct *counter = &counter_dev->counters[ctr_index];
-	int ret;
+	पूर्णांक ctr_index = (dest - NI_COUNTER_NAMES_BASE) % NI_MAX_COUNTERS;
+	काष्ठा ni_gpct *counter = &counter_dev->counters[ctr_index];
+	पूर्णांक ret;
 
-	if (dest >= NI_CtrA(0) && dest <= NI_CtrZ(-1)) {
+	अगर (dest >= NI_CtrA(0) && dest <= NI_CtrZ(-1)) अणु
 		ret = ni_tio_set_other_src(counter, dest, reg);
-	} else if (dest >= NI_CtrGate(0) && dest <= NI_CtrGate(-1)) {
+	पूर्ण अन्यथा अगर (dest >= NI_CtrGate(0) && dest <= NI_CtrGate(-1)) अणु
 		ret = ni_tio_set_gate_src_raw(counter, 0, reg);
-	} else if (dest >= NI_CtrAux(0) && dest <= NI_CtrAux(-1)) {
+	पूर्ण अन्यथा अगर (dest >= NI_CtrAux(0) && dest <= NI_CtrAux(-1)) अणु
 		ret = ni_tio_set_gate_src_raw(counter, 1, reg);
 	/*
-	 * This case is not possible through this interface.  A user must use
+	 * This हाल is not possible through this पूर्णांकerface.  A user must use
 	 * INSN_CONFIG_SET_CLOCK_SRC instead.
-	 * } else if (dest >= NI_CtrSource(0) && dest <= NI_CtrSource(-1)) {
-	 *	ret = ni_tio_set_clock_src(counter, reg, period_ns);
+	 * पूर्ण अन्यथा अगर (dest >= NI_CtrSource(0) && dest <= NI_CtrSource(-1)) अणु
+	 *	ret = ni_tio_set_घड़ी_src(counter, reg, period_ns);
 	 */
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_set_routing);
 
 /**
- * Sets the given destination MUX to its default value or disable it.
+ * Sets the given destination MUX to its शेष value or disable it.
  *
- * Return: 0 if successful; -EINVAL if terminal is unknown.
+ * Return: 0 अगर successful; -EINVAL अगर terminal is unknown.
  */
-int ni_tio_unset_routing(struct ni_gpct_device *counter_dev, unsigned int dest)
-{
-	if (dest >= NI_GATES_NAMES_BASE && dest <= NI_GATES_NAMES_MAX)
-		/* Disable gate (via mode bits) and set to default 0-value */
-		return ni_tio_set_routing(counter_dev, dest,
+पूर्णांक ni_tio_unset_routing(काष्ठा ni_gpct_device *counter_dev, अचिन्हित पूर्णांक dest)
+अणु
+	अगर (dest >= NI_GATES_NAMES_BASE && dest <= NI_GATES_NAMES_MAX)
+		/* Disable gate (via mode bits) and set to शेष 0-value */
+		वापस ni_tio_set_routing(counter_dev, dest,
 					  NI_GPCT_DISABLED_GATE_SELECT);
 	/*
-	 * This case is not possible through this interface.  A user must use
+	 * This हाल is not possible through this पूर्णांकerface.  A user must use
 	 * INSN_CONFIG_SET_CLOCK_SRC instead.
-	 * if (dest >= NI_CtrSource(0) && dest <= NI_CtrSource(-1))
-	 *	return ni_tio_set_clock_src(counter, reg, period_ns);
+	 * अगर (dest >= NI_CtrSource(0) && dest <= NI_CtrSource(-1))
+	 *	वापस ni_tio_set_घड़ी_src(counter, reg, period_ns);
 	 */
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_unset_routing);
 
-static unsigned int ni_tio_read_sw_save_reg(struct comedi_device *dev,
-					    struct comedi_subdevice *s)
-{
-	struct ni_gpct *counter = s->private;
-	unsigned int cidx = counter->counter_index;
-	unsigned int val;
+अटल अचिन्हित पूर्णांक ni_tio_पढ़ो_sw_save_reg(काष्ठा comedi_device *dev,
+					    काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा ni_gpct *counter = s->निजी;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक val;
 
 	ni_tio_set_bits(counter, NITIO_CMD_REG(cidx), GI_SAVE_TRACE, 0);
 	ni_tio_set_bits(counter, NITIO_CMD_REG(cidx),
 			GI_SAVE_TRACE, GI_SAVE_TRACE);
 
 	/*
-	 * The count doesn't get latched until the next clock edge, so it is
-	 * possible the count may change (once) while we are reading. Since
-	 * the read of the SW_Save_Reg isn't atomic (apparently even when it's
-	 * a 32 bit register according to 660x docs), we need to read twice
-	 * and make sure the reading hasn't changed. If it has, a third read
+	 * The count करोesn't get latched until the next घड़ी edge, so it is
+	 * possible the count may change (once) जबतक we are पढ़ोing. Since
+	 * the पढ़ो of the SW_Save_Reg isn't atomic (apparently even when it's
+	 * a 32 bit रेजिस्टर according to 660x करोcs), we need to पढ़ो twice
+	 * and make sure the पढ़ोing hasn't changed. If it has, a third पढ़ो
 	 * will be correct since the count value will definitely have latched
 	 * by then.
 	 */
-	val = ni_tio_read(counter, NITIO_SW_SAVE_REG(cidx));
-	if (val != ni_tio_read(counter, NITIO_SW_SAVE_REG(cidx)))
-		val = ni_tio_read(counter, NITIO_SW_SAVE_REG(cidx));
+	val = ni_tio_पढ़ो(counter, NITIO_SW_SAVE_REG(cidx));
+	अगर (val != ni_tio_पढ़ो(counter, NITIO_SW_SAVE_REG(cidx)))
+		val = ni_tio_पढ़ो(counter, NITIO_SW_SAVE_REG(cidx));
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-int ni_tio_insn_read(struct comedi_device *dev,
-		     struct comedi_subdevice *s,
-		     struct comedi_insn *insn,
-		     unsigned int *data)
-{
-	struct ni_gpct *counter = s->private;
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int channel = CR_CHAN(insn->chanspec);
-	unsigned int cidx = counter->counter_index;
-	unsigned int chip = counter->chip_index;
-	int i;
+पूर्णांक ni_tio_insn_पढ़ो(काष्ठा comedi_device *dev,
+		     काष्ठा comedi_subdevice *s,
+		     काष्ठा comedi_insn *insn,
+		     अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा ni_gpct *counter = s->निजी;
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक channel = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक chip = counter->chip_index;
+	पूर्णांक i;
 
-	for (i = 0; i < insn->n; i++) {
-		switch (channel) {
-		case 0:
-			data[i] = ni_tio_read_sw_save_reg(dev, s);
-			break;
-		case 1:
+	क्रम (i = 0; i < insn->n; i++) अणु
+		चयन (channel) अणु
+		हाल 0:
+			data[i] = ni_tio_पढ़ो_sw_save_reg(dev, s);
+			अवरोध;
+		हाल 1:
 			data[i] =
 			    counter_dev->regs[chip][NITIO_LOADA_REG(cidx)];
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			data[i] =
 			    counter_dev->regs[chip][NITIO_LOADB_REG(cidx)];
-			break;
-		}
-	}
-	return insn->n;
-}
-EXPORT_SYMBOL_GPL(ni_tio_insn_read);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस insn->n;
+पूर्ण
+EXPORT_SYMBOL_GPL(ni_tio_insn_पढ़ो);
 
-static unsigned int ni_tio_next_load_register(struct ni_gpct *counter)
-{
-	unsigned int cidx = counter->counter_index;
-	unsigned int bits = ni_tio_read(counter, NITIO_SHARED_STATUS_REG(cidx));
+अटल अचिन्हित पूर्णांक ni_tio_next_load_रेजिस्टर(काष्ठा ni_gpct *counter)
+अणु
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक bits = ni_tio_पढ़ो(counter, NITIO_SHARED_STATUS_REG(cidx));
 
-	return (bits & GI_NEXT_LOAD_SRC(cidx))
+	वापस (bits & GI_NEXT_LOAD_SRC(cidx))
 			? NITIO_LOADB_REG(cidx)
 			: NITIO_LOADA_REG(cidx);
-}
+पूर्ण
 
-int ni_tio_insn_write(struct comedi_device *dev,
-		      struct comedi_subdevice *s,
-		      struct comedi_insn *insn,
-		      unsigned int *data)
-{
-	struct ni_gpct *counter = s->private;
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int channel = CR_CHAN(insn->chanspec);
-	unsigned int cidx = counter->counter_index;
-	unsigned int chip = counter->chip_index;
-	unsigned int load_reg;
-	unsigned int load_val;
+पूर्णांक ni_tio_insn_ग_लिखो(काष्ठा comedi_device *dev,
+		      काष्ठा comedi_subdevice *s,
+		      काष्ठा comedi_insn *insn,
+		      अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा ni_gpct *counter = s->निजी;
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक channel = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक chip = counter->chip_index;
+	अचिन्हित पूर्णांक load_reg;
+	अचिन्हित पूर्णांक load_val;
 
-	if (insn->n < 1)
-		return 0;
+	अगर (insn->n < 1)
+		वापस 0;
 	load_val = data[insn->n - 1];
-	switch (channel) {
-	case 0:
+	चयन (channel) अणु
+	हाल 0:
 		/*
-		 * Unsafe if counter is armed.
-		 * Should probably check status and return -EBUSY if armed.
+		 * Unsafe अगर counter is armed.
+		 * Should probably check status and वापस -EBUSY अगर armed.
 		 */
 
 		/*
 		 * Don't disturb load source select, just use whichever
-		 * load register is already selected.
+		 * load रेजिस्टर is alपढ़ोy selected.
 		 */
-		load_reg = ni_tio_next_load_register(counter);
-		ni_tio_write(counter, load_val, load_reg);
+		load_reg = ni_tio_next_load_रेजिस्टर(counter);
+		ni_tio_ग_लिखो(counter, load_val, load_reg);
 		ni_tio_set_bits_transient(counter, NITIO_CMD_REG(cidx),
 					  0, 0, GI_LOAD);
 		/* restore load reg */
-		ni_tio_write(counter, counter_dev->regs[chip][load_reg],
+		ni_tio_ग_लिखो(counter, counter_dev->regs[chip][load_reg],
 			     load_reg);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		counter_dev->regs[chip][NITIO_LOADA_REG(cidx)] = load_val;
-		ni_tio_write(counter, load_val, NITIO_LOADA_REG(cidx));
-		break;
-	case 2:
+		ni_tio_ग_लिखो(counter, load_val, NITIO_LOADA_REG(cidx));
+		अवरोध;
+	हाल 2:
 		counter_dev->regs[chip][NITIO_LOADB_REG(cidx)] = load_val;
-		ni_tio_write(counter, load_val, NITIO_LOADB_REG(cidx));
-		break;
-	default:
-		return -EINVAL;
-	}
-	return insn->n;
-}
-EXPORT_SYMBOL_GPL(ni_tio_insn_write);
+		ni_tio_ग_लिखो(counter, load_val, NITIO_LOADB_REG(cidx));
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस insn->n;
+पूर्ण
+EXPORT_SYMBOL_GPL(ni_tio_insn_ग_लिखो);
 
-void ni_tio_init_counter(struct ni_gpct *counter)
-{
-	struct ni_gpct_device *counter_dev = counter->counter_dev;
-	unsigned int cidx = counter->counter_index;
-	unsigned int chip = counter->chip_index;
+व्योम ni_tio_init_counter(काष्ठा ni_gpct *counter)
+अणु
+	काष्ठा ni_gpct_device *counter_dev = counter->counter_dev;
+	अचिन्हित पूर्णांक cidx = counter->counter_index;
+	अचिन्हित पूर्णांक chip = counter->chip_index;
 
 	ni_tio_reset_count_and_disarm(counter);
 
-	/* initialize counter registers */
+	/* initialize counter रेजिस्टरs */
 	counter_dev->regs[chip][NITIO_AUTO_INC_REG(cidx)] = 0x0;
-	ni_tio_write(counter, 0x0, NITIO_AUTO_INC_REG(cidx));
+	ni_tio_ग_लिखो(counter, 0x0, NITIO_AUTO_INC_REG(cidx));
 
 	ni_tio_set_bits(counter, NITIO_CMD_REG(cidx),
 			~0, GI_SYNC_GATE);
@@ -1738,53 +1739,53 @@ void ni_tio_init_counter(struct ni_gpct *counter)
 	ni_tio_set_bits(counter, NITIO_MODE_REG(cidx), ~0, 0);
 
 	counter_dev->regs[chip][NITIO_LOADA_REG(cidx)] = 0x0;
-	ni_tio_write(counter, 0x0, NITIO_LOADA_REG(cidx));
+	ni_tio_ग_लिखो(counter, 0x0, NITIO_LOADA_REG(cidx));
 
 	counter_dev->regs[chip][NITIO_LOADB_REG(cidx)] = 0x0;
-	ni_tio_write(counter, 0x0, NITIO_LOADB_REG(cidx));
+	ni_tio_ग_लिखो(counter, 0x0, NITIO_LOADB_REG(cidx));
 
 	ni_tio_set_bits(counter, NITIO_INPUT_SEL_REG(cidx), ~0, 0);
 
-	if (ni_tio_counting_mode_registers_present(counter_dev))
+	अगर (ni_tio_counting_mode_रेजिस्टरs_present(counter_dev))
 		ni_tio_set_bits(counter, NITIO_CNT_MODE_REG(cidx), ~0, 0);
 
-	if (ni_tio_has_gate2_registers(counter_dev)) {
+	अगर (ni_tio_has_gate2_रेजिस्टरs(counter_dev)) अणु
 		counter_dev->regs[chip][NITIO_GATE2_REG(cidx)] = 0x0;
-		ni_tio_write(counter, 0x0, NITIO_GATE2_REG(cidx));
-	}
+		ni_tio_ग_लिखो(counter, 0x0, NITIO_GATE2_REG(cidx));
+	पूर्ण
 
 	ni_tio_set_bits(counter, NITIO_DMA_CFG_REG(cidx), ~0, 0x0);
 
 	ni_tio_set_bits(counter, NITIO_INT_ENA_REG(cidx), ~0, 0x0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_tio_init_counter);
 
-struct ni_gpct_device *
-ni_gpct_device_construct(struct comedi_device *dev,
-			 void (*write)(struct ni_gpct *counter,
-				       unsigned int value,
-				       enum ni_gpct_register reg),
-			 unsigned int (*read)(struct ni_gpct *counter,
-					      enum ni_gpct_register reg),
-			 enum ni_gpct_variant variant,
-			 unsigned int num_counters,
-			 unsigned int counters_per_chip,
-			 const struct ni_route_tables *routing_tables)
-{
-	struct ni_gpct_device *counter_dev;
-	struct ni_gpct *counter;
-	unsigned int i;
+काष्ठा ni_gpct_device *
+ni_gpct_device_स्थिरruct(काष्ठा comedi_device *dev,
+			 व्योम (*ग_लिखो)(काष्ठा ni_gpct *counter,
+				       अचिन्हित पूर्णांक value,
+				       क्रमागत ni_gpct_रेजिस्टर reg),
+			 अचिन्हित पूर्णांक (*पढ़ो)(काष्ठा ni_gpct *counter,
+					      क्रमागत ni_gpct_रेजिस्टर reg),
+			 क्रमागत ni_gpct_variant variant,
+			 अचिन्हित पूर्णांक num_counters,
+			 अचिन्हित पूर्णांक counters_per_chip,
+			 स्थिर काष्ठा ni_route_tables *routing_tables)
+अणु
+	काष्ठा ni_gpct_device *counter_dev;
+	काष्ठा ni_gpct *counter;
+	अचिन्हित पूर्णांक i;
 
-	if (num_counters == 0 || counters_per_chip == 0)
-		return NULL;
+	अगर (num_counters == 0 || counters_per_chip == 0)
+		वापस शून्य;
 
-	counter_dev = kzalloc(sizeof(*counter_dev), GFP_KERNEL);
-	if (!counter_dev)
-		return NULL;
+	counter_dev = kzalloc(माप(*counter_dev), GFP_KERNEL);
+	अगर (!counter_dev)
+		वापस शून्य;
 
 	counter_dev->dev = dev;
-	counter_dev->write = write;
-	counter_dev->read = read;
+	counter_dev->ग_लिखो = ग_लिखो;
+	counter_dev->पढ़ो = पढ़ो;
 	counter_dev->variant = variant;
 	counter_dev->routing_tables = routing_tables;
 
@@ -1793,49 +1794,49 @@ ni_gpct_device_construct(struct comedi_device *dev,
 	counter_dev->num_counters = num_counters;
 	counter_dev->num_chips = DIV_ROUND_UP(num_counters, counters_per_chip);
 
-	counter_dev->counters = kcalloc(num_counters, sizeof(*counter),
+	counter_dev->counters = kसुस्मृति(num_counters, माप(*counter),
 					GFP_KERNEL);
-	counter_dev->regs = kcalloc(counter_dev->num_chips,
-				    sizeof(*counter_dev->regs), GFP_KERNEL);
-	if (!counter_dev->regs || !counter_dev->counters) {
-		kfree(counter_dev->regs);
-		kfree(counter_dev->counters);
-		kfree(counter_dev);
-		return NULL;
-	}
+	counter_dev->regs = kसुस्मृति(counter_dev->num_chips,
+				    माप(*counter_dev->regs), GFP_KERNEL);
+	अगर (!counter_dev->regs || !counter_dev->counters) अणु
+		kमुक्त(counter_dev->regs);
+		kमुक्त(counter_dev->counters);
+		kमुक्त(counter_dev);
+		वापस शून्य;
+	पूर्ण
 
-	for (i = 0; i < num_counters; ++i) {
+	क्रम (i = 0; i < num_counters; ++i) अणु
 		counter = &counter_dev->counters[i];
 		counter->counter_dev = counter_dev;
 		counter->chip_index = i / counters_per_chip;
 		counter->counter_index = i % counters_per_chip;
 		spin_lock_init(&counter->lock);
-	}
+	पूर्ण
 
-	return counter_dev;
-}
-EXPORT_SYMBOL_GPL(ni_gpct_device_construct);
+	वापस counter_dev;
+पूर्ण
+EXPORT_SYMBOL_GPL(ni_gpct_device_स्थिरruct);
 
-void ni_gpct_device_destroy(struct ni_gpct_device *counter_dev)
-{
-	if (!counter_dev)
-		return;
-	kfree(counter_dev->regs);
-	kfree(counter_dev->counters);
-	kfree(counter_dev);
-}
+व्योम ni_gpct_device_destroy(काष्ठा ni_gpct_device *counter_dev)
+अणु
+	अगर (!counter_dev)
+		वापस;
+	kमुक्त(counter_dev->regs);
+	kमुक्त(counter_dev->counters);
+	kमुक्त(counter_dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(ni_gpct_device_destroy);
 
-static int __init ni_tio_init_module(void)
-{
-	return 0;
-}
+अटल पूर्णांक __init ni_tio_init_module(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 module_init(ni_tio_init_module);
 
-static void __exit ni_tio_cleanup_module(void)
-{
-}
-module_exit(ni_tio_cleanup_module);
+अटल व्योम __निकास ni_tio_cleanup_module(व्योम)
+अणु
+पूर्ण
+module_निकास(ni_tio_cleanup_module);
 
 MODULE_AUTHOR("Comedi <comedi@comedi.org>");
 MODULE_DESCRIPTION("Comedi support for NI general-purpose counters");

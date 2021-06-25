@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,17 +31,17 @@
  * SOFTWARE.
  */
 
-#ifndef MLX4_DRIVER_H
-#define MLX4_DRIVER_H
+#अगर_अघोषित MLX4_DRIVER_H
+#घोषणा MLX4_DRIVER_H
 
-#include <net/devlink.h>
-#include <linux/mlx4/device.h>
+#समावेश <net/devlink.h>
+#समावेश <linux/mlx4/device.h>
 
-struct mlx4_dev;
+काष्ठा mlx4_dev;
 
-#define MLX4_MAC_MASK	   0xffffffffffffULL
+#घोषणा MLX4_MAC_MASK	   0xffffffffffffULL
 
-enum mlx4_dev_event {
+क्रमागत mlx4_dev_event अणु
 	MLX4_DEV_EVENT_CATASTROPHIC_ERROR,
 	MLX4_DEV_EVENT_PORT_UP,
 	MLX4_DEV_EVENT_PORT_DOWN,
@@ -48,70 +49,70 @@ enum mlx4_dev_event {
 	MLX4_DEV_EVENT_PORT_MGMT_CHANGE,
 	MLX4_DEV_EVENT_SLAVE_INIT,
 	MLX4_DEV_EVENT_SLAVE_SHUTDOWN,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX4_INTFF_BONDING	= 1 << 0
-};
+पूर्ण;
 
-struct mlx4_interface {
-	void *			(*add)	 (struct mlx4_dev *dev);
-	void			(*remove)(struct mlx4_dev *dev, void *context);
-	void			(*event) (struct mlx4_dev *dev, void *context,
-					  enum mlx4_dev_event event, unsigned long param);
-	void *			(*get_dev)(struct mlx4_dev *dev, void *context, u8 port);
-	void			(*activate)(struct mlx4_dev *dev, void *context);
-	struct list_head	list;
-	enum mlx4_protocol	protocol;
-	int			flags;
-};
+काष्ठा mlx4_पूर्णांकerface अणु
+	व्योम *			(*add)	 (काष्ठा mlx4_dev *dev);
+	व्योम			(*हटाओ)(काष्ठा mlx4_dev *dev, व्योम *context);
+	व्योम			(*event) (काष्ठा mlx4_dev *dev, व्योम *context,
+					  क्रमागत mlx4_dev_event event, अचिन्हित दीर्घ param);
+	व्योम *			(*get_dev)(काष्ठा mlx4_dev *dev, व्योम *context, u8 port);
+	व्योम			(*activate)(काष्ठा mlx4_dev *dev, व्योम *context);
+	काष्ठा list_head	list;
+	क्रमागत mlx4_protocol	protocol;
+	पूर्णांक			flags;
+पूर्ण;
 
-int mlx4_register_interface(struct mlx4_interface *intf);
-void mlx4_unregister_interface(struct mlx4_interface *intf);
+पूर्णांक mlx4_रेजिस्टर_पूर्णांकerface(काष्ठा mlx4_पूर्णांकerface *पूर्णांकf);
+व्योम mlx4_unरेजिस्टर_पूर्णांकerface(काष्ठा mlx4_पूर्णांकerface *पूर्णांकf);
 
-int mlx4_bond(struct mlx4_dev *dev);
-int mlx4_unbond(struct mlx4_dev *dev);
-static inline int mlx4_is_bonded(struct mlx4_dev *dev)
-{
-	return !!(dev->flags & MLX4_FLAG_BONDED);
-}
+पूर्णांक mlx4_bond(काष्ठा mlx4_dev *dev);
+पूर्णांक mlx4_unbond(काष्ठा mlx4_dev *dev);
+अटल अंतरभूत पूर्णांक mlx4_is_bonded(काष्ठा mlx4_dev *dev)
+अणु
+	वापस !!(dev->flags & MLX4_FLAG_BONDED);
+पूर्ण
 
-static inline int mlx4_is_mf_bonded(struct mlx4_dev *dev)
-{
-	return (mlx4_is_bonded(dev) && mlx4_is_mfunc(dev));
-}
+अटल अंतरभूत पूर्णांक mlx4_is_mf_bonded(काष्ठा mlx4_dev *dev)
+अणु
+	वापस (mlx4_is_bonded(dev) && mlx4_is_mfunc(dev));
+पूर्ण
 
-struct mlx4_port_map {
+काष्ठा mlx4_port_map अणु
 	u8	port1;
 	u8	port2;
-};
+पूर्ण;
 
-int mlx4_port_map_set(struct mlx4_dev *dev, struct mlx4_port_map *v2p);
+पूर्णांक mlx4_port_map_set(काष्ठा mlx4_dev *dev, काष्ठा mlx4_port_map *v2p);
 
-void *mlx4_get_protocol_dev(struct mlx4_dev *dev, enum mlx4_protocol proto, int port);
+व्योम *mlx4_get_protocol_dev(काष्ठा mlx4_dev *dev, क्रमागत mlx4_protocol proto, पूर्णांक port);
 
-struct devlink_port *mlx4_get_devlink_port(struct mlx4_dev *dev, int port);
+काष्ठा devlink_port *mlx4_get_devlink_port(काष्ठा mlx4_dev *dev, पूर्णांक port);
 
-static inline u64 mlx4_mac_to_u64(u8 *addr)
-{
+अटल अंतरभूत u64 mlx4_mac_to_u64(u8 *addr)
+अणु
 	u64 mac = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < ETH_ALEN; i++) {
+	क्रम (i = 0; i < ETH_ALEN; i++) अणु
 		mac <<= 8;
 		mac |= addr[i];
-	}
-	return mac;
-}
+	पूर्ण
+	वापस mac;
+पूर्ण
 
-static inline void mlx4_u64_to_mac(u8 *addr, u64 mac)
-{
-	int i;
+अटल अंतरभूत व्योम mlx4_u64_to_mac(u8 *addr, u64 mac)
+अणु
+	पूर्णांक i;
 
-	for (i = ETH_ALEN; i > 0; i--) {
+	क्रम (i = ETH_ALEN; i > 0; i--) अणु
 		addr[i - 1] = mac & 0xFF;
 		mac >>= 8;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif /* MLX4_DRIVER_H */
+#पूर्ण_अगर /* MLX4_DRIVER_H */

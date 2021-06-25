@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Performance events - AMD Processor Power Reporting Mechanism
+ * Perक्रमmance events - AMD Processor Power Reporting Mechanism
  *
  * Copyright (C) 2016 Advanced Micro Devices, Inc.
  *
  * Author: Huang Rui <ray.huang@amd.com>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/perf_event.h>
-#include <asm/cpu_device_id.h>
-#include "../perf_event.h"
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/perf_event.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश "../perf_event.h"
 
 /* Event code: LSB 8 bits, passed in attr->config any other bit is reserved. */
-#define AMD_POWER_EVENT_MASK		0xFFULL
+#घोषणा AMD_POWER_EVENT_MASK		0xFFULL
 
 /*
- * Accumulated power status counters.
+ * Accumulated घातer status counters.
  */
-#define AMD_POWER_EVENTSEL_PKG		1
+#घोषणा AMD_POWER_EVENTSEL_PKG		1
 
 /*
- * The ratio of compute unit power accumulator sample period to the
+ * The ratio of compute unit घातer accumulator sample period to the
  * PTSC period.
  */
-static unsigned int cpu_pwr_sample_ratio;
+अटल अचिन्हित पूर्णांक cpu_pwr_sample_ratio;
 
-/* Maximum accumulated power of a compute unit. */
-static u64 max_cu_acc_power;
+/* Maximum accumulated घातer of a compute unit. */
+अटल u64 max_cu_acc_घातer;
 
-static struct pmu pmu_class;
+अटल काष्ठा pmu pmu_class;
 
 /*
- * Accumulated power represents the sum of each compute unit's (CU) power
- * consumption. On any core of each CU we read the total accumulated power from
+ * Accumulated घातer represents the sum of each compute unit's (CU) घातer
+ * consumption. On any core of each CU we पढ़ो the total accumulated घातer from
  * MSR_F15H_CU_PWR_ACCUMULATOR. cpu_mask represents CPU bit map of all cores
- * which are picked to measure the power for the CUs they belong to.
+ * which are picked to measure the घातer क्रम the CUs they beदीर्घ to.
  */
-static cpumask_t cpu_mask;
+अटल cpumask_t cpu_mask;
 
-static void event_update(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम event_update(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 	u64 prev_pwr_acc, new_pwr_acc, prev_ptsc, new_ptsc;
 	u64 delta, tdelta;
 
@@ -52,252 +53,252 @@ static void event_update(struct perf_event *event)
 	rdmsrl(MSR_F15H_PTSC, new_ptsc);
 
 	/*
-	 * Calculate the CU power consumption over a time period, the unit of
+	 * Calculate the CU घातer consumption over a समय period, the unit of
 	 * final value (delta) is micro-Watts. Then add it to the event count.
 	 */
-	if (new_pwr_acc < prev_pwr_acc) {
-		delta = max_cu_acc_power + new_pwr_acc;
+	अगर (new_pwr_acc < prev_pwr_acc) अणु
+		delta = max_cu_acc_घातer + new_pwr_acc;
 		delta -= prev_pwr_acc;
-	} else
+	पूर्ण अन्यथा
 		delta = new_pwr_acc - prev_pwr_acc;
 
 	delta *= cpu_pwr_sample_ratio * 1000;
 	tdelta = new_ptsc - prev_ptsc;
 
-	do_div(delta, tdelta);
+	करो_भाग(delta, tdelta);
 	local64_add(delta, &event->count);
-}
+पूर्ण
 
-static void __pmu_event_start(struct perf_event *event)
-{
-	if (WARN_ON_ONCE(!(event->hw.state & PERF_HES_STOPPED)))
-		return;
+अटल व्योम __pmu_event_start(काष्ठा perf_event *event)
+अणु
+	अगर (WARN_ON_ONCE(!(event->hw.state & PERF_HES_STOPPED)))
+		वापस;
 
 	event->hw.state = 0;
 
 	rdmsrl(MSR_F15H_PTSC, event->hw.ptsc);
 	rdmsrl(MSR_F15H_CU_PWR_ACCUMULATOR, event->hw.pwr_acc);
-}
+पूर्ण
 
-static void pmu_event_start(struct perf_event *event, int mode)
-{
+अटल व्योम pmu_event_start(काष्ठा perf_event *event, पूर्णांक mode)
+अणु
 	__pmu_event_start(event);
-}
+पूर्ण
 
-static void pmu_event_stop(struct perf_event *event, int mode)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम pmu_event_stop(काष्ठा perf_event *event, पूर्णांक mode)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
 	/* Mark event as deactivated and stopped. */
-	if (!(hwc->state & PERF_HES_STOPPED))
+	अगर (!(hwc->state & PERF_HES_STOPPED))
 		hwc->state |= PERF_HES_STOPPED;
 
-	/* Check if software counter update is necessary. */
-	if ((mode & PERF_EF_UPDATE) && !(hwc->state & PERF_HES_UPTODATE)) {
+	/* Check अगर software counter update is necessary. */
+	अगर ((mode & PERF_EF_UPDATE) && !(hwc->state & PERF_HES_UPTODATE)) अणु
 		/*
-		 * Drain the remaining delta count out of an event
+		 * Drain the reमुख्यing delta count out of an event
 		 * that we are disabling:
 		 */
 		event_update(event);
 		hwc->state |= PERF_HES_UPTODATE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pmu_event_add(struct perf_event *event, int mode)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल पूर्णांक pmu_event_add(काष्ठा perf_event *event, पूर्णांक mode)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
 	hwc->state = PERF_HES_UPTODATE | PERF_HES_STOPPED;
 
-	if (mode & PERF_EF_START)
+	अगर (mode & PERF_EF_START)
 		__pmu_event_start(event);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pmu_event_del(struct perf_event *event, int flags)
-{
+अटल व्योम pmu_event_del(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
 	pmu_event_stop(event, PERF_EF_UPDATE);
-}
+पूर्ण
 
-static int pmu_event_init(struct perf_event *event)
-{
+अटल पूर्णांक pmu_event_init(काष्ठा perf_event *event)
+अणु
 	u64 cfg = event->attr.config & AMD_POWER_EVENT_MASK;
 
-	/* Only look at AMD power events. */
-	if (event->attr.type != pmu_class.type)
-		return -ENOENT;
+	/* Only look at AMD घातer events. */
+	अगर (event->attr.type != pmu_class.type)
+		वापस -ENOENT;
 
 	/* Unsupported modes and filters. */
-	if (event->attr.sample_period)
-		return -EINVAL;
+	अगर (event->attr.sample_period)
+		वापस -EINVAL;
 
-	if (cfg != AMD_POWER_EVENTSEL_PKG)
-		return -EINVAL;
+	अगर (cfg != AMD_POWER_EVENTSEL_PKG)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pmu_event_read(struct perf_event *event)
-{
+अटल व्योम pmu_event_पढ़ो(काष्ठा perf_event *event)
+अणु
 	event_update(event);
-}
+पूर्ण
 
-static ssize_t
-get_attr_cpumask(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	return cpumap_print_to_pagebuf(true, buf, &cpu_mask);
-}
+अटल sमाप_प्रकार
+get_attr_cpumask(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, &cpu_mask);
+पूर्ण
 
-static DEVICE_ATTR(cpumask, S_IRUGO, get_attr_cpumask, NULL);
+अटल DEVICE_ATTR(cpumask, S_IRUGO, get_attr_cpumask, शून्य);
 
-static struct attribute *pmu_attrs[] = {
+अटल काष्ठा attribute *pmu_attrs[] = अणु
 	&dev_attr_cpumask.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group pmu_attr_group = {
+अटल काष्ठा attribute_group pmu_attr_group = अणु
 	.attrs = pmu_attrs,
-};
+पूर्ण;
 
 /*
- * Currently it only supports to report the power of each
+ * Currently it only supports to report the घातer of each
  * processor/package.
  */
-EVENT_ATTR_STR(power-pkg, power_pkg, "event=0x01");
+EVENT_ATTR_STR(घातer-pkg, घातer_pkg, "event=0x01");
 
-EVENT_ATTR_STR(power-pkg.unit, power_pkg_unit, "mWatts");
+EVENT_ATTR_STR(घातer-pkg.unit, घातer_pkg_unit, "mWatts");
 
 /* Convert the count from micro-Watts to milli-Watts. */
-EVENT_ATTR_STR(power-pkg.scale, power_pkg_scale, "1.000000e-3");
+EVENT_ATTR_STR(घातer-pkg.scale, घातer_pkg_scale, "1.000000e-3");
 
-static struct attribute *events_attr[] = {
-	EVENT_PTR(power_pkg),
-	EVENT_PTR(power_pkg_unit),
-	EVENT_PTR(power_pkg_scale),
-	NULL,
-};
+अटल काष्ठा attribute *events_attr[] = अणु
+	EVENT_PTR(घातer_pkg),
+	EVENT_PTR(घातer_pkg_unit),
+	EVENT_PTR(घातer_pkg_scale),
+	शून्य,
+पूर्ण;
 
-static struct attribute_group pmu_events_group = {
+अटल काष्ठा attribute_group pmu_events_group = अणु
 	.name	= "events",
 	.attrs	= events_attr,
-};
+पूर्ण;
 
 PMU_FORMAT_ATTR(event, "config:0-7");
 
-static struct attribute *formats_attr[] = {
-	&format_attr_event.attr,
-	NULL,
-};
+अटल काष्ठा attribute *क्रमmats_attr[] = अणु
+	&क्रमmat_attr_event.attr,
+	शून्य,
+पूर्ण;
 
-static struct attribute_group pmu_format_group = {
+अटल काष्ठा attribute_group pmu_क्रमmat_group = अणु
 	.name	= "format",
-	.attrs	= formats_attr,
-};
+	.attrs	= क्रमmats_attr,
+पूर्ण;
 
-static const struct attribute_group *attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *attr_groups[] = अणु
 	&pmu_attr_group,
-	&pmu_format_group,
+	&pmu_क्रमmat_group,
 	&pmu_events_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct pmu pmu_class = {
+अटल काष्ठा pmu pmu_class = अणु
 	.attr_groups	= attr_groups,
-	/* system-wide only */
+	/* प्रणाली-wide only */
 	.task_ctx_nr	= perf_invalid_context,
 	.event_init	= pmu_event_init,
 	.add		= pmu_event_add,
 	.del		= pmu_event_del,
 	.start		= pmu_event_start,
 	.stop		= pmu_event_stop,
-	.read		= pmu_event_read,
+	.पढ़ो		= pmu_event_पढ़ो,
 	.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
-};
+पूर्ण;
 
-static int power_cpu_exit(unsigned int cpu)
-{
-	int target;
+अटल पूर्णांक घातer_cpu_निकास(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक target;
 
-	if (!cpumask_test_and_clear_cpu(cpu, &cpu_mask))
-		return 0;
+	अगर (!cpumask_test_and_clear_cpu(cpu, &cpu_mask))
+		वापस 0;
 
 	/*
-	 * Find a new CPU on the same compute unit, if was set in cpumask
+	 * Find a new CPU on the same compute unit, अगर was set in cpumask
 	 * and still some CPUs on compute unit. Then migrate event and
 	 * context to new CPU.
 	 */
 	target = cpumask_any_but(topology_sibling_cpumask(cpu), cpu);
-	if (target < nr_cpumask_bits) {
+	अगर (target < nr_cpumask_bits) अणु
 		cpumask_set_cpu(target, &cpu_mask);
 		perf_pmu_migrate_context(&pmu_class, cpu, target);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int power_cpu_init(unsigned int cpu)
-{
-	int target;
+अटल पूर्णांक घातer_cpu_init(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक target;
 
 	/*
-	 * 1) If any CPU is set at cpu_mask in the same compute unit, do
+	 * 1) If any CPU is set at cpu_mask in the same compute unit, करो
 	 * nothing.
 	 * 2) If no CPU is set at cpu_mask in the same compute unit,
 	 * set current ONLINE CPU.
 	 *
-	 * Note: if there is a CPU aside of the new one already in the
+	 * Note: अगर there is a CPU aside of the new one alपढ़ोy in the
 	 * sibling mask, then it is also in cpu_mask.
 	 */
 	target = cpumask_any_but(topology_sibling_cpumask(cpu), cpu);
-	if (target >= nr_cpumask_bits)
+	अगर (target >= nr_cpumask_bits)
 		cpumask_set_cpu(cpu, &cpu_mask);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct x86_cpu_id cpu_match[] = {
-	X86_MATCH_VENDOR_FAM(AMD, 0x15, NULL),
-	{},
-};
+अटल स्थिर काष्ठा x86_cpu_id cpu_match[] = अणु
+	X86_MATCH_VENDOR_FAM(AMD, 0x15, शून्य),
+	अणुपूर्ण,
+पूर्ण;
 
-static int __init amd_power_pmu_init(void)
-{
-	int ret;
+अटल पूर्णांक __init amd_घातer_pmu_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!x86_match_cpu(cpu_match))
-		return -ENODEV;
+	अगर (!x86_match_cpu(cpu_match))
+		वापस -ENODEV;
 
-	if (!boot_cpu_has(X86_FEATURE_ACC_POWER))
-		return -ENODEV;
+	अगर (!boot_cpu_has(X86_FEATURE_ACC_POWER))
+		वापस -ENODEV;
 
 	cpu_pwr_sample_ratio = cpuid_ecx(0x80000007);
 
-	if (rdmsrl_safe(MSR_F15H_CU_MAX_PWR_ACCUMULATOR, &max_cu_acc_power)) {
+	अगर (rdmsrl_safe(MSR_F15H_CU_MAX_PWR_ACCUMULATOR, &max_cu_acc_घातer)) अणु
 		pr_err("Failed to read max compute unit power accumulator MSR\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 
 	cpuhp_setup_state(CPUHP_AP_PERF_X86_AMD_POWER_ONLINE,
 			  "perf/x86/amd/power:online",
-			  power_cpu_init, power_cpu_exit);
+			  घातer_cpu_init, घातer_cpu_निकास);
 
-	ret = perf_pmu_register(&pmu_class, "power", -1);
-	if (WARN_ON(ret)) {
+	ret = perf_pmu_रेजिस्टर(&pmu_class, "power", -1);
+	अगर (WARN_ON(ret)) अणु
 		pr_warn("AMD Power PMU registration failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pr_info("AMD Power PMU detected\n");
-	return ret;
-}
-module_init(amd_power_pmu_init);
+	वापस ret;
+पूर्ण
+module_init(amd_घातer_pmu_init);
 
-static void __exit amd_power_pmu_exit(void)
-{
-	cpuhp_remove_state_nocalls(CPUHP_AP_PERF_X86_AMD_POWER_ONLINE);
-	perf_pmu_unregister(&pmu_class);
-}
-module_exit(amd_power_pmu_exit);
+अटल व्योम __निकास amd_घातer_pmu_निकास(व्योम)
+अणु
+	cpuhp_हटाओ_state_nocalls(CPUHP_AP_PERF_X86_AMD_POWER_ONLINE);
+	perf_pmu_unरेजिस्टर(&pmu_class);
+पूर्ण
+module_निकास(amd_घातer_pmu_निकास);
 
 MODULE_AUTHOR("Huang Rui <ray.huang@amd.com>");
 MODULE_DESCRIPTION("AMD Processor Power Reporting Mechanism");

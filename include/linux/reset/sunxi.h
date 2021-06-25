@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_RESET_SUNXI_H__
-#define __LINUX_RESET_SUNXI_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_RESET_SUNXI_H__
+#घोषणा __LINUX_RESET_SUNXI_H__
 
-void __init sun6i_reset_init(void);
+व्योम __init sun6i_reset_init(व्योम);
 
-#endif /* __LINUX_RESET_SUNXI_H__ */
+#पूर्ण_अगर /* __LINUX_RESET_SUNXI_H__ */

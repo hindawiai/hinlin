@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright Novell Inc 2010
@@ -6,154 +7,154 @@
  * Authors: Alexander Graf <agraf@suse.de>
  */
 
-#include <asm/kvm.h>
-#include <asm/kvm_ppc.h>
-#include <asm/disassemble.h>
-#include <asm/kvm_book3s.h>
-#include <asm/kvm_fpu.h>
-#include <asm/reg.h>
-#include <asm/cacheflush.h>
-#include <asm/switch_to.h>
-#include <linux/vmalloc.h>
+#समावेश <यंत्र/kvm.h>
+#समावेश <यंत्र/kvm_ppc.h>
+#समावेश <यंत्र/disassemble.h>
+#समावेश <यंत्र/kvm_book3s.h>
+#समावेश <यंत्र/kvm_fpu.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-/* #define DEBUG */
+/* #घोषणा DEBUG */
 
-#ifdef DEBUG
-#define dprintk printk
-#else
-#define dprintk(...) do { } while(0);
-#endif
+#अगर_घोषित DEBUG
+#घोषणा dprपूर्णांकk prपूर्णांकk
+#अन्यथा
+#घोषणा dprपूर्णांकk(...) करो अणु पूर्ण जबतक(0);
+#पूर्ण_अगर
 
-#define OP_LFS			48
-#define OP_LFSU			49
-#define OP_LFD			50
-#define OP_LFDU			51
-#define OP_STFS			52
-#define OP_STFSU		53
-#define OP_STFD			54
-#define OP_STFDU		55
-#define OP_PSQ_L		56
-#define OP_PSQ_LU		57
-#define OP_PSQ_ST		60
-#define OP_PSQ_STU		61
+#घोषणा OP_LFS			48
+#घोषणा OP_LFSU			49
+#घोषणा OP_LFD			50
+#घोषणा OP_LFDU			51
+#घोषणा OP_STFS			52
+#घोषणा OP_STFSU		53
+#घोषणा OP_STFD			54
+#घोषणा OP_STFDU		55
+#घोषणा OP_PSQ_L		56
+#घोषणा OP_PSQ_LU		57
+#घोषणा OP_PSQ_ST		60
+#घोषणा OP_PSQ_STU		61
 
-#define OP_31_LFSX		535
-#define OP_31_LFSUX		567
-#define OP_31_LFDX		599
-#define OP_31_LFDUX		631
-#define OP_31_STFSX		663
-#define OP_31_STFSUX		695
-#define OP_31_STFX		727
-#define OP_31_STFUX		759
-#define OP_31_LWIZX		887
-#define OP_31_STFIWX		983
+#घोषणा OP_31_LFSX		535
+#घोषणा OP_31_LFSUX		567
+#घोषणा OP_31_LFDX		599
+#घोषणा OP_31_LFDUX		631
+#घोषणा OP_31_STFSX		663
+#घोषणा OP_31_STFSUX		695
+#घोषणा OP_31_STFX		727
+#घोषणा OP_31_STFUX		759
+#घोषणा OP_31_LWIZX		887
+#घोषणा OP_31_STFIWX		983
 
-#define OP_59_FADDS		21
-#define OP_59_FSUBS		20
-#define OP_59_FSQRTS		22
-#define OP_59_FDIVS		18
-#define OP_59_FRES		24
-#define OP_59_FMULS		25
-#define OP_59_FRSQRTES		26
-#define OP_59_FMSUBS		28
-#define OP_59_FMADDS		29
-#define OP_59_FNMSUBS		30
-#define OP_59_FNMADDS		31
+#घोषणा OP_59_FADDS		21
+#घोषणा OP_59_FSUBS		20
+#घोषणा OP_59_FSQRTS		22
+#घोषणा OP_59_FDIVS		18
+#घोषणा OP_59_FRES		24
+#घोषणा OP_59_FMULS		25
+#घोषणा OP_59_FRSQRTES		26
+#घोषणा OP_59_FMSUBS		28
+#घोषणा OP_59_FMADDS		29
+#घोषणा OP_59_FNMSUBS		30
+#घोषणा OP_59_FNMADDS		31
 
-#define OP_63_FCMPU		0
-#define OP_63_FCPSGN		8
-#define OP_63_FRSP		12
-#define OP_63_FCTIW		14
-#define OP_63_FCTIWZ		15
-#define OP_63_FDIV		18
-#define OP_63_FADD		21
-#define OP_63_FSQRT		22
-#define OP_63_FSEL		23
-#define OP_63_FRE		24
-#define OP_63_FMUL		25
-#define OP_63_FRSQRTE		26
-#define OP_63_FMSUB		28
-#define OP_63_FMADD		29
-#define OP_63_FNMSUB		30
-#define OP_63_FNMADD		31
-#define OP_63_FCMPO		32
-#define OP_63_MTFSB1		38 // XXX
-#define OP_63_FSUB		20
-#define OP_63_FNEG		40
-#define OP_63_MCRFS		64
-#define OP_63_MTFSB0		70
-#define OP_63_FMR		72
-#define OP_63_MTFSFI		134
-#define OP_63_FABS		264
-#define OP_63_MFFS		583
-#define OP_63_MTFSF		711
+#घोषणा OP_63_FCMPU		0
+#घोषणा OP_63_FCPSGN		8
+#घोषणा OP_63_FRSP		12
+#घोषणा OP_63_FCTIW		14
+#घोषणा OP_63_FCTIWZ		15
+#घोषणा OP_63_FDIV		18
+#घोषणा OP_63_FADD		21
+#घोषणा OP_63_FSQRT		22
+#घोषणा OP_63_FSEL		23
+#घोषणा OP_63_FRE		24
+#घोषणा OP_63_FMUL		25
+#घोषणा OP_63_FRSQRTE		26
+#घोषणा OP_63_FMSUB		28
+#घोषणा OP_63_FMADD		29
+#घोषणा OP_63_FNMSUB		30
+#घोषणा OP_63_FNMADD		31
+#घोषणा OP_63_FCMPO		32
+#घोषणा OP_63_MTFSB1		38 // XXX
+#घोषणा OP_63_FSUB		20
+#घोषणा OP_63_FNEG		40
+#घोषणा OP_63_MCRFS		64
+#घोषणा OP_63_MTFSB0		70
+#घोषणा OP_63_FMR		72
+#घोषणा OP_63_MTFSFI		134
+#घोषणा OP_63_FABS		264
+#घोषणा OP_63_MFFS		583
+#घोषणा OP_63_MTFSF		711
 
-#define OP_4X_PS_CMPU0		0
-#define OP_4X_PSQ_LX		6
-#define OP_4XW_PSQ_STX		7
-#define OP_4A_PS_SUM0		10
-#define OP_4A_PS_SUM1		11
-#define OP_4A_PS_MULS0		12
-#define OP_4A_PS_MULS1		13
-#define OP_4A_PS_MADDS0		14
-#define OP_4A_PS_MADDS1		15
-#define OP_4A_PS_DIV		18
-#define OP_4A_PS_SUB		20
-#define OP_4A_PS_ADD		21
-#define OP_4A_PS_SEL		23
-#define OP_4A_PS_RES		24
-#define OP_4A_PS_MUL		25
-#define OP_4A_PS_RSQRTE		26
-#define OP_4A_PS_MSUB		28
-#define OP_4A_PS_MADD		29
-#define OP_4A_PS_NMSUB		30
-#define OP_4A_PS_NMADD		31
-#define OP_4X_PS_CMPO0		32
-#define OP_4X_PSQ_LUX		38
-#define OP_4XW_PSQ_STUX		39
-#define OP_4X_PS_NEG		40
-#define OP_4X_PS_CMPU1		64
-#define OP_4X_PS_MR		72
-#define OP_4X_PS_CMPO1		96
-#define OP_4X_PS_NABS		136
-#define OP_4X_PS_ABS		264
-#define OP_4X_PS_MERGE00	528
-#define OP_4X_PS_MERGE01	560
-#define OP_4X_PS_MERGE10	592
-#define OP_4X_PS_MERGE11	624
+#घोषणा OP_4X_PS_CMPU0		0
+#घोषणा OP_4X_PSQ_LX		6
+#घोषणा OP_4XW_PSQ_STX		7
+#घोषणा OP_4A_PS_SUM0		10
+#घोषणा OP_4A_PS_SUM1		11
+#घोषणा OP_4A_PS_MULS0		12
+#घोषणा OP_4A_PS_MULS1		13
+#घोषणा OP_4A_PS_MADDS0		14
+#घोषणा OP_4A_PS_MADDS1		15
+#घोषणा OP_4A_PS_DIV		18
+#घोषणा OP_4A_PS_SUB		20
+#घोषणा OP_4A_PS_ADD		21
+#घोषणा OP_4A_PS_SEL		23
+#घोषणा OP_4A_PS_RES		24
+#घोषणा OP_4A_PS_MUL		25
+#घोषणा OP_4A_PS_RSQRTE		26
+#घोषणा OP_4A_PS_MSUB		28
+#घोषणा OP_4A_PS_MADD		29
+#घोषणा OP_4A_PS_NMSUB		30
+#घोषणा OP_4A_PS_NMADD		31
+#घोषणा OP_4X_PS_CMPO0		32
+#घोषणा OP_4X_PSQ_LUX		38
+#घोषणा OP_4XW_PSQ_STUX		39
+#घोषणा OP_4X_PS_NEG		40
+#घोषणा OP_4X_PS_CMPU1		64
+#घोषणा OP_4X_PS_MR		72
+#घोषणा OP_4X_PS_CMPO1		96
+#घोषणा OP_4X_PS_NABS		136
+#घोषणा OP_4X_PS_ABS		264
+#घोषणा OP_4X_PS_MERGE00	528
+#घोषणा OP_4X_PS_MERGE01	560
+#घोषणा OP_4X_PS_MERGE10	592
+#घोषणा OP_4X_PS_MERGE11	624
 
-#define SCALAR_NONE		0
-#define SCALAR_HIGH		(1 << 0)
-#define SCALAR_LOW		(1 << 1)
-#define SCALAR_NO_PS0		(1 << 2)
-#define SCALAR_NO_PS1		(1 << 3)
+#घोषणा SCALAR_NONE		0
+#घोषणा SCALAR_HIGH		(1 << 0)
+#घोषणा SCALAR_LOW		(1 << 1)
+#घोषणा SCALAR_NO_PS0		(1 << 2)
+#घोषणा SCALAR_NO_PS1		(1 << 3)
 
-#define GQR_ST_TYPE_MASK	0x00000007
-#define GQR_ST_TYPE_SHIFT	0
-#define GQR_ST_SCALE_MASK	0x00003f00
-#define GQR_ST_SCALE_SHIFT	8
-#define GQR_LD_TYPE_MASK	0x00070000
-#define GQR_LD_TYPE_SHIFT	16
-#define GQR_LD_SCALE_MASK	0x3f000000
-#define GQR_LD_SCALE_SHIFT	24
+#घोषणा GQR_ST_TYPE_MASK	0x00000007
+#घोषणा GQR_ST_TYPE_SHIFT	0
+#घोषणा GQR_ST_SCALE_MASK	0x00003f00
+#घोषणा GQR_ST_SCALE_SHIFT	8
+#घोषणा GQR_LD_TYPE_MASK	0x00070000
+#घोषणा GQR_LD_TYPE_SHIFT	16
+#घोषणा GQR_LD_SCALE_MASK	0x3f000000
+#घोषणा GQR_LD_SCALE_SHIFT	24
 
-#define GQR_QUANTIZE_FLOAT	0
-#define GQR_QUANTIZE_U8		4
-#define GQR_QUANTIZE_U16	5
-#define GQR_QUANTIZE_S8		6
-#define GQR_QUANTIZE_S16	7
+#घोषणा GQR_QUANTIZE_FLOAT	0
+#घोषणा GQR_QUANTIZE_U8		4
+#घोषणा GQR_QUANTIZE_U16	5
+#घोषणा GQR_QUANTIZE_S8		6
+#घोषणा GQR_QUANTIZE_S16	7
 
-#define FPU_LS_SINGLE		0
-#define FPU_LS_DOUBLE		1
-#define FPU_LS_SINGLE_LOW	2
+#घोषणा FPU_LS_SINGLE		0
+#घोषणा FPU_LS_DOUBLE		1
+#घोषणा FPU_LS_SINGLE_LOW	2
 
-static inline void kvmppc_sync_qpr(struct kvm_vcpu *vcpu, int rt)
-{
+अटल अंतरभूत व्योम kvmppc_sync_qpr(काष्ठा kvm_vcpu *vcpu, पूर्णांक rt)
+अणु
 	kvm_cvt_df(&VCPU_FPR(vcpu, rt), &vcpu->arch.qpr[rt]);
-}
+पूर्ण
 
-static void kvmppc_inject_pf(struct kvm_vcpu *vcpu, ulong eaddr, bool is_store)
-{
+अटल व्योम kvmppc_inject_pf(काष्ठा kvm_vcpu *vcpu, uदीर्घ eaddr, bool is_store)
+अणु
 	u32 dsisr;
 	u64 msr = kvmppc_get_msr(vcpu);
 
@@ -163,337 +164,337 @@ static void kvmppc_inject_pf(struct kvm_vcpu *vcpu, ulong eaddr, bool is_store)
 	kvmppc_set_dar(vcpu, eaddr);
 	/* Page Fault */
 	dsisr = kvmppc_set_field(0, 33, 33, 1);
-	if (is_store)
+	अगर (is_store)
 		dsisr = kvmppc_set_field(dsisr, 38, 38, 1);
 	kvmppc_set_dsisr(vcpu, dsisr);
 	kvmppc_book3s_queue_irqprio(vcpu, BOOK3S_INTERRUPT_DATA_STORAGE);
-}
+पूर्ण
 
-static int kvmppc_emulate_fpr_load(struct kvm_vcpu *vcpu,
-				   int rs, ulong addr, int ls_type)
-{
-	int emulated = EMULATE_FAIL;
-	int r;
-	char tmp[8];
-	int len = sizeof(u32);
+अटल पूर्णांक kvmppc_emulate_fpr_load(काष्ठा kvm_vcpu *vcpu,
+				   पूर्णांक rs, uदीर्घ addr, पूर्णांक ls_type)
+अणु
+	पूर्णांक emulated = EMULATE_FAIL;
+	पूर्णांक r;
+	अक्षर पंचांगp[8];
+	पूर्णांक len = माप(u32);
 
-	if (ls_type == FPU_LS_DOUBLE)
-		len = sizeof(u64);
+	अगर (ls_type == FPU_LS_DOUBLE)
+		len = माप(u64);
 
-	/* read from memory */
-	r = kvmppc_ld(vcpu, &addr, len, tmp, true);
+	/* पढ़ो from memory */
+	r = kvmppc_ld(vcpu, &addr, len, पंचांगp, true);
 	vcpu->arch.paddr_accessed = addr;
 
-	if (r < 0) {
+	अगर (r < 0) अणु
 		kvmppc_inject_pf(vcpu, addr, false);
-		goto done_load;
-	} else if (r == EMULATE_DO_MMIO) {
+		जाओ करोne_load;
+	पूर्ण अन्यथा अगर (r == EMULATE_DO_MMIO) अणु
 		emulated = kvmppc_handle_load(vcpu, KVM_MMIO_REG_FPR | rs,
 					      len, 1);
-		goto done_load;
-	}
+		जाओ करोne_load;
+	पूर्ण
 
 	emulated = EMULATE_DONE;
 
-	/* put in registers */
-	switch (ls_type) {
-	case FPU_LS_SINGLE:
-		kvm_cvt_fd((u32*)tmp, &VCPU_FPR(vcpu, rs));
-		vcpu->arch.qpr[rs] = *((u32*)tmp);
-		break;
-	case FPU_LS_DOUBLE:
-		VCPU_FPR(vcpu, rs) = *((u64*)tmp);
-		break;
-	}
+	/* put in रेजिस्टरs */
+	चयन (ls_type) अणु
+	हाल FPU_LS_SINGLE:
+		kvm_cvt_fd((u32*)पंचांगp, &VCPU_FPR(vcpu, rs));
+		vcpu->arch.qpr[rs] = *((u32*)पंचांगp);
+		अवरोध;
+	हाल FPU_LS_DOUBLE:
+		VCPU_FPR(vcpu, rs) = *((u64*)पंचांगp);
+		अवरोध;
+	पूर्ण
 
-	dprintk(KERN_INFO "KVM: FPR_LD [0x%llx] at 0x%lx (%d)\n", *(u64*)tmp,
+	dprपूर्णांकk(KERN_INFO "KVM: FPR_LD [0x%llx] at 0x%lx (%d)\n", *(u64*)पंचांगp,
 			  addr, len);
 
-done_load:
-	return emulated;
-}
+करोne_load:
+	वापस emulated;
+पूर्ण
 
-static int kvmppc_emulate_fpr_store(struct kvm_vcpu *vcpu,
-				    int rs, ulong addr, int ls_type)
-{
-	int emulated = EMULATE_FAIL;
-	int r;
-	char tmp[8];
+अटल पूर्णांक kvmppc_emulate_fpr_store(काष्ठा kvm_vcpu *vcpu,
+				    पूर्णांक rs, uदीर्घ addr, पूर्णांक ls_type)
+अणु
+	पूर्णांक emulated = EMULATE_FAIL;
+	पूर्णांक r;
+	अक्षर पंचांगp[8];
 	u64 val;
-	int len;
+	पूर्णांक len;
 
-	switch (ls_type) {
-	case FPU_LS_SINGLE:
-		kvm_cvt_df(&VCPU_FPR(vcpu, rs), (u32*)tmp);
-		val = *((u32*)tmp);
-		len = sizeof(u32);
-		break;
-	case FPU_LS_SINGLE_LOW:
-		*((u32*)tmp) = VCPU_FPR(vcpu, rs);
+	चयन (ls_type) अणु
+	हाल FPU_LS_SINGLE:
+		kvm_cvt_df(&VCPU_FPR(vcpu, rs), (u32*)पंचांगp);
+		val = *((u32*)पंचांगp);
+		len = माप(u32);
+		अवरोध;
+	हाल FPU_LS_SINGLE_LOW:
+		*((u32*)पंचांगp) = VCPU_FPR(vcpu, rs);
 		val = VCPU_FPR(vcpu, rs) & 0xffffffff;
-		len = sizeof(u32);
-		break;
-	case FPU_LS_DOUBLE:
-		*((u64*)tmp) = VCPU_FPR(vcpu, rs);
+		len = माप(u32);
+		अवरोध;
+	हाल FPU_LS_DOUBLE:
+		*((u64*)पंचांगp) = VCPU_FPR(vcpu, rs);
 		val = VCPU_FPR(vcpu, rs);
-		len = sizeof(u64);
-		break;
-	default:
+		len = माप(u64);
+		अवरोध;
+	शेष:
 		val = 0;
 		len = 0;
-	}
+	पूर्ण
 
-	r = kvmppc_st(vcpu, &addr, len, tmp, true);
+	r = kvmppc_st(vcpu, &addr, len, पंचांगp, true);
 	vcpu->arch.paddr_accessed = addr;
-	if (r < 0) {
+	अगर (r < 0) अणु
 		kvmppc_inject_pf(vcpu, addr, true);
-	} else if (r == EMULATE_DO_MMIO) {
+	पूर्ण अन्यथा अगर (r == EMULATE_DO_MMIO) अणु
 		emulated = kvmppc_handle_store(vcpu, val, len, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		emulated = EMULATE_DONE;
-	}
+	पूर्ण
 
-	dprintk(KERN_INFO "KVM: FPR_ST [0x%llx] at 0x%lx (%d)\n",
+	dprपूर्णांकk(KERN_INFO "KVM: FPR_ST [0x%llx] at 0x%lx (%d)\n",
 			  val, addr, len);
 
-	return emulated;
-}
+	वापस emulated;
+पूर्ण
 
-static int kvmppc_emulate_psq_load(struct kvm_vcpu *vcpu,
-				   int rs, ulong addr, bool w, int i)
-{
-	int emulated = EMULATE_FAIL;
-	int r;
-	float one = 1.0;
-	u32 tmp[2];
+अटल पूर्णांक kvmppc_emulate_psq_load(काष्ठा kvm_vcpu *vcpu,
+				   पूर्णांक rs, uदीर्घ addr, bool w, पूर्णांक i)
+अणु
+	पूर्णांक emulated = EMULATE_FAIL;
+	पूर्णांक r;
+	भग्न one = 1.0;
+	u32 पंचांगp[2];
 
-	/* read from memory */
-	if (w) {
-		r = kvmppc_ld(vcpu, &addr, sizeof(u32), tmp, true);
-		memcpy(&tmp[1], &one, sizeof(u32));
-	} else {
-		r = kvmppc_ld(vcpu, &addr, sizeof(u32) * 2, tmp, true);
-	}
+	/* पढ़ो from memory */
+	अगर (w) अणु
+		r = kvmppc_ld(vcpu, &addr, माप(u32), पंचांगp, true);
+		स_नकल(&पंचांगp[1], &one, माप(u32));
+	पूर्ण अन्यथा अणु
+		r = kvmppc_ld(vcpu, &addr, माप(u32) * 2, पंचांगp, true);
+	पूर्ण
 	vcpu->arch.paddr_accessed = addr;
-	if (r < 0) {
+	अगर (r < 0) अणु
 		kvmppc_inject_pf(vcpu, addr, false);
-		goto done_load;
-	} else if ((r == EMULATE_DO_MMIO) && w) {
+		जाओ करोne_load;
+	पूर्ण अन्यथा अगर ((r == EMULATE_DO_MMIO) && w) अणु
 		emulated = kvmppc_handle_load(vcpu, KVM_MMIO_REG_FPR | rs,
 					      4, 1);
-		vcpu->arch.qpr[rs] = tmp[1];
-		goto done_load;
-	} else if (r == EMULATE_DO_MMIO) {
+		vcpu->arch.qpr[rs] = पंचांगp[1];
+		जाओ करोne_load;
+	पूर्ण अन्यथा अगर (r == EMULATE_DO_MMIO) अणु
 		emulated = kvmppc_handle_load(vcpu, KVM_MMIO_REG_FQPR | rs,
 					      8, 1);
-		goto done_load;
-	}
+		जाओ करोne_load;
+	पूर्ण
 
 	emulated = EMULATE_DONE;
 
-	/* put in registers */
-	kvm_cvt_fd(&tmp[0], &VCPU_FPR(vcpu, rs));
-	vcpu->arch.qpr[rs] = tmp[1];
+	/* put in रेजिस्टरs */
+	kvm_cvt_fd(&पंचांगp[0], &VCPU_FPR(vcpu, rs));
+	vcpu->arch.qpr[rs] = पंचांगp[1];
 
-	dprintk(KERN_INFO "KVM: PSQ_LD [0x%x, 0x%x] at 0x%lx (%d)\n", tmp[0],
-			  tmp[1], addr, w ? 4 : 8);
+	dprपूर्णांकk(KERN_INFO "KVM: PSQ_LD [0x%x, 0x%x] at 0x%lx (%d)\n", पंचांगp[0],
+			  पंचांगp[1], addr, w ? 4 : 8);
 
-done_load:
-	return emulated;
-}
+करोne_load:
+	वापस emulated;
+पूर्ण
 
-static int kvmppc_emulate_psq_store(struct kvm_vcpu *vcpu,
-				    int rs, ulong addr, bool w, int i)
-{
-	int emulated = EMULATE_FAIL;
-	int r;
-	u32 tmp[2];
-	int len = w ? sizeof(u32) : sizeof(u64);
+अटल पूर्णांक kvmppc_emulate_psq_store(काष्ठा kvm_vcpu *vcpu,
+				    पूर्णांक rs, uदीर्घ addr, bool w, पूर्णांक i)
+अणु
+	पूर्णांक emulated = EMULATE_FAIL;
+	पूर्णांक r;
+	u32 पंचांगp[2];
+	पूर्णांक len = w ? माप(u32) : माप(u64);
 
-	kvm_cvt_df(&VCPU_FPR(vcpu, rs), &tmp[0]);
-	tmp[1] = vcpu->arch.qpr[rs];
+	kvm_cvt_df(&VCPU_FPR(vcpu, rs), &पंचांगp[0]);
+	पंचांगp[1] = vcpu->arch.qpr[rs];
 
-	r = kvmppc_st(vcpu, &addr, len, tmp, true);
+	r = kvmppc_st(vcpu, &addr, len, पंचांगp, true);
 	vcpu->arch.paddr_accessed = addr;
-	if (r < 0) {
+	अगर (r < 0) अणु
 		kvmppc_inject_pf(vcpu, addr, true);
-	} else if ((r == EMULATE_DO_MMIO) && w) {
-		emulated = kvmppc_handle_store(vcpu, tmp[0], 4, 1);
-	} else if (r == EMULATE_DO_MMIO) {
-		u64 val = ((u64)tmp[0] << 32) | tmp[1];
+	पूर्ण अन्यथा अगर ((r == EMULATE_DO_MMIO) && w) अणु
+		emulated = kvmppc_handle_store(vcpu, पंचांगp[0], 4, 1);
+	पूर्ण अन्यथा अगर (r == EMULATE_DO_MMIO) अणु
+		u64 val = ((u64)पंचांगp[0] << 32) | पंचांगp[1];
 		emulated = kvmppc_handle_store(vcpu, val, 8, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		emulated = EMULATE_DONE;
-	}
+	पूर्ण
 
-	dprintk(KERN_INFO "KVM: PSQ_ST [0x%x, 0x%x] at 0x%lx (%d)\n",
-			  tmp[0], tmp[1], addr, len);
+	dprपूर्णांकk(KERN_INFO "KVM: PSQ_ST [0x%x, 0x%x] at 0x%lx (%d)\n",
+			  पंचांगp[0], पंचांगp[1], addr, len);
 
-	return emulated;
-}
+	वापस emulated;
+पूर्ण
 
 /*
  * Cuts out inst bits with ordering according to spec.
- * That means the leftmost bit is zero. All given bits are included.
+ * That means the lefपंचांगost bit is zero. All given bits are included.
  */
-static inline u32 inst_get_field(u32 inst, int msb, int lsb)
-{
-	return kvmppc_get_field(inst, msb + 32, lsb + 32);
-}
+अटल अंतरभूत u32 inst_get_field(u32 inst, पूर्णांक msb, पूर्णांक lsb)
+अणु
+	वापस kvmppc_get_field(inst, msb + 32, lsb + 32);
+पूर्ण
 
-static bool kvmppc_inst_is_paired_single(struct kvm_vcpu *vcpu, u32 inst)
-{
-	if (!(vcpu->arch.hflags & BOOK3S_HFLAG_PAIRED_SINGLE))
-		return false;
+अटल bool kvmppc_inst_is_paired_single(काष्ठा kvm_vcpu *vcpu, u32 inst)
+अणु
+	अगर (!(vcpu->arch.hflags & BOOK3S_HFLAG_PAIRED_SINGLE))
+		वापस false;
 
-	switch (get_op(inst)) {
-	case OP_PSQ_L:
-	case OP_PSQ_LU:
-	case OP_PSQ_ST:
-	case OP_PSQ_STU:
-	case OP_LFS:
-	case OP_LFSU:
-	case OP_LFD:
-	case OP_LFDU:
-	case OP_STFS:
-	case OP_STFSU:
-	case OP_STFD:
-	case OP_STFDU:
-		return true;
-	case 4:
-		/* X form */
-		switch (inst_get_field(inst, 21, 30)) {
-		case OP_4X_PS_CMPU0:
-		case OP_4X_PSQ_LX:
-		case OP_4X_PS_CMPO0:
-		case OP_4X_PSQ_LUX:
-		case OP_4X_PS_NEG:
-		case OP_4X_PS_CMPU1:
-		case OP_4X_PS_MR:
-		case OP_4X_PS_CMPO1:
-		case OP_4X_PS_NABS:
-		case OP_4X_PS_ABS:
-		case OP_4X_PS_MERGE00:
-		case OP_4X_PS_MERGE01:
-		case OP_4X_PS_MERGE10:
-		case OP_4X_PS_MERGE11:
-			return true;
-		}
-		/* XW form */
-		switch (inst_get_field(inst, 25, 30)) {
-		case OP_4XW_PSQ_STX:
-		case OP_4XW_PSQ_STUX:
-			return true;
-		}
-		/* A form */
-		switch (inst_get_field(inst, 26, 30)) {
-		case OP_4A_PS_SUM1:
-		case OP_4A_PS_SUM0:
-		case OP_4A_PS_MULS0:
-		case OP_4A_PS_MULS1:
-		case OP_4A_PS_MADDS0:
-		case OP_4A_PS_MADDS1:
-		case OP_4A_PS_DIV:
-		case OP_4A_PS_SUB:
-		case OP_4A_PS_ADD:
-		case OP_4A_PS_SEL:
-		case OP_4A_PS_RES:
-		case OP_4A_PS_MUL:
-		case OP_4A_PS_RSQRTE:
-		case OP_4A_PS_MSUB:
-		case OP_4A_PS_MADD:
-		case OP_4A_PS_NMSUB:
-		case OP_4A_PS_NMADD:
-			return true;
-		}
-		break;
-	case 59:
-		switch (inst_get_field(inst, 21, 30)) {
-		case OP_59_FADDS:
-		case OP_59_FSUBS:
-		case OP_59_FDIVS:
-		case OP_59_FRES:
-		case OP_59_FRSQRTES:
-			return true;
-		}
-		switch (inst_get_field(inst, 26, 30)) {
-		case OP_59_FMULS:
-		case OP_59_FMSUBS:
-		case OP_59_FMADDS:
-		case OP_59_FNMSUBS:
-		case OP_59_FNMADDS:
-			return true;
-		}
-		break;
-	case 63:
-		switch (inst_get_field(inst, 21, 30)) {
-		case OP_63_MTFSB0:
-		case OP_63_MTFSB1:
-		case OP_63_MTFSF:
-		case OP_63_MTFSFI:
-		case OP_63_MCRFS:
-		case OP_63_MFFS:
-		case OP_63_FCMPU:
-		case OP_63_FCMPO:
-		case OP_63_FNEG:
-		case OP_63_FMR:
-		case OP_63_FABS:
-		case OP_63_FRSP:
-		case OP_63_FDIV:
-		case OP_63_FADD:
-		case OP_63_FSUB:
-		case OP_63_FCTIW:
-		case OP_63_FCTIWZ:
-		case OP_63_FRSQRTE:
-		case OP_63_FCPSGN:
-			return true;
-		}
-		switch (inst_get_field(inst, 26, 30)) {
-		case OP_63_FMUL:
-		case OP_63_FSEL:
-		case OP_63_FMSUB:
-		case OP_63_FMADD:
-		case OP_63_FNMSUB:
-		case OP_63_FNMADD:
-			return true;
-		}
-		break;
-	case 31:
-		switch (inst_get_field(inst, 21, 30)) {
-		case OP_31_LFSX:
-		case OP_31_LFSUX:
-		case OP_31_LFDX:
-		case OP_31_LFDUX:
-		case OP_31_STFSX:
-		case OP_31_STFSUX:
-		case OP_31_STFX:
-		case OP_31_STFUX:
-		case OP_31_STFIWX:
-			return true;
-		}
-		break;
-	}
+	चयन (get_op(inst)) अणु
+	हाल OP_PSQ_L:
+	हाल OP_PSQ_LU:
+	हाल OP_PSQ_ST:
+	हाल OP_PSQ_STU:
+	हाल OP_LFS:
+	हाल OP_LFSU:
+	हाल OP_LFD:
+	हाल OP_LFDU:
+	हाल OP_STFS:
+	हाल OP_STFSU:
+	हाल OP_STFD:
+	हाल OP_STFDU:
+		वापस true;
+	हाल 4:
+		/* X क्रमm */
+		चयन (inst_get_field(inst, 21, 30)) अणु
+		हाल OP_4X_PS_CMPU0:
+		हाल OP_4X_PSQ_LX:
+		हाल OP_4X_PS_CMPO0:
+		हाल OP_4X_PSQ_LUX:
+		हाल OP_4X_PS_NEG:
+		हाल OP_4X_PS_CMPU1:
+		हाल OP_4X_PS_MR:
+		हाल OP_4X_PS_CMPO1:
+		हाल OP_4X_PS_NABS:
+		हाल OP_4X_PS_ABS:
+		हाल OP_4X_PS_MERGE00:
+		हाल OP_4X_PS_MERGE01:
+		हाल OP_4X_PS_MERGE10:
+		हाल OP_4X_PS_MERGE11:
+			वापस true;
+		पूर्ण
+		/* XW क्रमm */
+		चयन (inst_get_field(inst, 25, 30)) अणु
+		हाल OP_4XW_PSQ_STX:
+		हाल OP_4XW_PSQ_STUX:
+			वापस true;
+		पूर्ण
+		/* A क्रमm */
+		चयन (inst_get_field(inst, 26, 30)) अणु
+		हाल OP_4A_PS_SUM1:
+		हाल OP_4A_PS_SUM0:
+		हाल OP_4A_PS_MULS0:
+		हाल OP_4A_PS_MULS1:
+		हाल OP_4A_PS_MADDS0:
+		हाल OP_4A_PS_MADDS1:
+		हाल OP_4A_PS_DIV:
+		हाल OP_4A_PS_SUB:
+		हाल OP_4A_PS_ADD:
+		हाल OP_4A_PS_SEL:
+		हाल OP_4A_PS_RES:
+		हाल OP_4A_PS_MUL:
+		हाल OP_4A_PS_RSQRTE:
+		हाल OP_4A_PS_MSUB:
+		हाल OP_4A_PS_MADD:
+		हाल OP_4A_PS_NMSUB:
+		हाल OP_4A_PS_NMADD:
+			वापस true;
+		पूर्ण
+		अवरोध;
+	हाल 59:
+		चयन (inst_get_field(inst, 21, 30)) अणु
+		हाल OP_59_FADDS:
+		हाल OP_59_FSUBS:
+		हाल OP_59_FDIVS:
+		हाल OP_59_FRES:
+		हाल OP_59_FRSQRTES:
+			वापस true;
+		पूर्ण
+		चयन (inst_get_field(inst, 26, 30)) अणु
+		हाल OP_59_FMULS:
+		हाल OP_59_FMSUBS:
+		हाल OP_59_FMADDS:
+		हाल OP_59_FNMSUBS:
+		हाल OP_59_FNMADDS:
+			वापस true;
+		पूर्ण
+		अवरोध;
+	हाल 63:
+		चयन (inst_get_field(inst, 21, 30)) अणु
+		हाल OP_63_MTFSB0:
+		हाल OP_63_MTFSB1:
+		हाल OP_63_MTFSF:
+		हाल OP_63_MTFSFI:
+		हाल OP_63_MCRFS:
+		हाल OP_63_MFFS:
+		हाल OP_63_FCMPU:
+		हाल OP_63_FCMPO:
+		हाल OP_63_FNEG:
+		हाल OP_63_FMR:
+		हाल OP_63_FABS:
+		हाल OP_63_FRSP:
+		हाल OP_63_FDIV:
+		हाल OP_63_FADD:
+		हाल OP_63_FSUB:
+		हाल OP_63_FCTIW:
+		हाल OP_63_FCTIWZ:
+		हाल OP_63_FRSQRTE:
+		हाल OP_63_FCPSGN:
+			वापस true;
+		पूर्ण
+		चयन (inst_get_field(inst, 26, 30)) अणु
+		हाल OP_63_FMUL:
+		हाल OP_63_FSEL:
+		हाल OP_63_FMSUB:
+		हाल OP_63_FMADD:
+		हाल OP_63_FNMSUB:
+		हाल OP_63_FNMADD:
+			वापस true;
+		पूर्ण
+		अवरोध;
+	हाल 31:
+		चयन (inst_get_field(inst, 21, 30)) अणु
+		हाल OP_31_LFSX:
+		हाल OP_31_LFSUX:
+		हाल OP_31_LFDX:
+		हाल OP_31_LFDUX:
+		हाल OP_31_STFSX:
+		हाल OP_31_STFSUX:
+		हाल OP_31_STFX:
+		हाल OP_31_STFUX:
+		हाल OP_31_STFIWX:
+			वापस true;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int get_d_signext(u32 inst)
-{
-	int d = inst & 0x8ff;
+अटल पूर्णांक get_d_signext(u32 inst)
+अणु
+	पूर्णांक d = inst & 0x8ff;
 
-	if (d & 0x800)
-		return -(d & 0x7ff);
+	अगर (d & 0x800)
+		वापस -(d & 0x7ff);
 
-	return (d & 0x7ff);
-}
+	वापस (d & 0x7ff);
+पूर्ण
 
-static int kvmppc_ps_three_in(struct kvm_vcpu *vcpu, bool rc,
-				      int reg_out, int reg_in1, int reg_in2,
-				      int reg_in3, int scalar,
-				      void (*func)(u64 *fpscr,
+अटल पूर्णांक kvmppc_ps_three_in(काष्ठा kvm_vcpu *vcpu, bool rc,
+				      पूर्णांक reg_out, पूर्णांक reg_in1, पूर्णांक reg_in2,
+				      पूर्णांक reg_in3, पूर्णांक scalar,
+				      व्योम (*func)(u64 *fpscr,
 						 u32 *dst, u32 *src1,
 						 u32 *src2, u32 *src3))
-{
+अणु
 	u32 *qpr = vcpu->arch.qpr;
 	u32 ps0_out;
 	u32 ps0_in1, ps0_in2, ps0_in3;
@@ -507,15 +508,15 @@ static int kvmppc_ps_three_in(struct kvm_vcpu *vcpu, bool rc,
 	kvm_cvt_df(&VCPU_FPR(vcpu, reg_in2), &ps0_in2);
 	kvm_cvt_df(&VCPU_FPR(vcpu, reg_in3), &ps0_in3);
 
-	if (scalar & SCALAR_LOW)
+	अगर (scalar & SCALAR_LOW)
 		ps0_in2 = qpr[reg_in2];
 
 	func(&vcpu->arch.fp.fpscr, &ps0_out, &ps0_in1, &ps0_in2, &ps0_in3);
 
-	dprintk(KERN_INFO "PS3 ps0 -> f(0x%x, 0x%x, 0x%x) = 0x%x\n",
+	dprपूर्णांकk(KERN_INFO "PS3 ps0 -> f(0x%x, 0x%x, 0x%x) = 0x%x\n",
 			  ps0_in1, ps0_in2, ps0_in3, ps0_out);
 
-	if (!(scalar & SCALAR_NO_PS0))
+	अगर (!(scalar & SCALAR_NO_PS0))
 		kvm_cvt_fd(&ps0_out, &VCPU_FPR(vcpu, reg_out));
 
 	/* PS1 */
@@ -523,25 +524,25 @@ static int kvmppc_ps_three_in(struct kvm_vcpu *vcpu, bool rc,
 	ps1_in2 = qpr[reg_in2];
 	ps1_in3 = qpr[reg_in3];
 
-	if (scalar & SCALAR_HIGH)
+	अगर (scalar & SCALAR_HIGH)
 		ps1_in2 = ps0_in2;
 
-	if (!(scalar & SCALAR_NO_PS1))
+	अगर (!(scalar & SCALAR_NO_PS1))
 		func(&vcpu->arch.fp.fpscr, &qpr[reg_out], &ps1_in1, &ps1_in2, &ps1_in3);
 
-	dprintk(KERN_INFO "PS3 ps1 -> f(0x%x, 0x%x, 0x%x) = 0x%x\n",
+	dprपूर्णांकk(KERN_INFO "PS3 ps1 -> f(0x%x, 0x%x, 0x%x) = 0x%x\n",
 			  ps1_in1, ps1_in2, ps1_in3, qpr[reg_out]);
 
-	return EMULATE_DONE;
-}
+	वापस EMULATE_DONE;
+पूर्ण
 
-static int kvmppc_ps_two_in(struct kvm_vcpu *vcpu, bool rc,
-				    int reg_out, int reg_in1, int reg_in2,
-				    int scalar,
-				    void (*func)(u64 *fpscr,
+अटल पूर्णांक kvmppc_ps_two_in(काष्ठा kvm_vcpu *vcpu, bool rc,
+				    पूर्णांक reg_out, पूर्णांक reg_in1, पूर्णांक reg_in2,
+				    पूर्णांक scalar,
+				    व्योम (*func)(u64 *fpscr,
 						 u32 *dst, u32 *src1,
 						 u32 *src2))
-{
+अणु
 	u32 *qpr = vcpu->arch.qpr;
 	u32 ps0_out;
 	u32 ps0_in1, ps0_in2;
@@ -554,44 +555,44 @@ static int kvmppc_ps_two_in(struct kvm_vcpu *vcpu, bool rc,
 	/* PS0 */
 	kvm_cvt_df(&VCPU_FPR(vcpu, reg_in1), &ps0_in1);
 
-	if (scalar & SCALAR_LOW)
+	अगर (scalar & SCALAR_LOW)
 		ps0_in2 = qpr[reg_in2];
-	else
+	अन्यथा
 		kvm_cvt_df(&VCPU_FPR(vcpu, reg_in2), &ps0_in2);
 
 	func(&vcpu->arch.fp.fpscr, &ps0_out, &ps0_in1, &ps0_in2);
 
-	if (!(scalar & SCALAR_NO_PS0)) {
-		dprintk(KERN_INFO "PS2 ps0 -> f(0x%x, 0x%x) = 0x%x\n",
+	अगर (!(scalar & SCALAR_NO_PS0)) अणु
+		dprपूर्णांकk(KERN_INFO "PS2 ps0 -> f(0x%x, 0x%x) = 0x%x\n",
 				  ps0_in1, ps0_in2, ps0_out);
 
 		kvm_cvt_fd(&ps0_out, &VCPU_FPR(vcpu, reg_out));
-	}
+	पूर्ण
 
 	/* PS1 */
 	ps1_in1 = qpr[reg_in1];
 	ps1_in2 = qpr[reg_in2];
 
-	if (scalar & SCALAR_HIGH)
+	अगर (scalar & SCALAR_HIGH)
 		ps1_in2 = ps0_in2;
 
 	func(&vcpu->arch.fp.fpscr, &ps1_out, &ps1_in1, &ps1_in2);
 
-	if (!(scalar & SCALAR_NO_PS1)) {
+	अगर (!(scalar & SCALAR_NO_PS1)) अणु
 		qpr[reg_out] = ps1_out;
 
-		dprintk(KERN_INFO "PS2 ps1 -> f(0x%x, 0x%x) = 0x%x\n",
+		dprपूर्णांकk(KERN_INFO "PS2 ps1 -> f(0x%x, 0x%x) = 0x%x\n",
 				  ps1_in1, ps1_in2, qpr[reg_out]);
-	}
+	पूर्ण
 
-	return EMULATE_DONE;
-}
+	वापस EMULATE_DONE;
+पूर्ण
 
-static int kvmppc_ps_one_in(struct kvm_vcpu *vcpu, bool rc,
-				    int reg_out, int reg_in,
-				    void (*func)(u64 *t,
+अटल पूर्णांक kvmppc_ps_one_in(काष्ठा kvm_vcpu *vcpu, bool rc,
+				    पूर्णांक reg_out, पूर्णांक reg_in,
+				    व्योम (*func)(u64 *t,
 						 u32 *dst, u32 *src1))
-{
+अणु
 	u32 *qpr = vcpu->arch.qpr;
 	u32 ps0_out, ps0_in;
 	u32 ps1_in;
@@ -603,7 +604,7 @@ static int kvmppc_ps_one_in(struct kvm_vcpu *vcpu, bool rc,
 	kvm_cvt_df(&VCPU_FPR(vcpu, reg_in), &ps0_in);
 	func(&vcpu->arch.fp.fpscr, &ps0_out, &ps0_in);
 
-	dprintk(KERN_INFO "PS1 ps0 -> f(0x%x) = 0x%x\n",
+	dprपूर्णांकk(KERN_INFO "PS1 ps0 -> f(0x%x) = 0x%x\n",
 			  ps0_in, ps0_out);
 
 	kvm_cvt_fd(&ps0_out, &VCPU_FPR(vcpu, reg_out));
@@ -612,29 +613,29 @@ static int kvmppc_ps_one_in(struct kvm_vcpu *vcpu, bool rc,
 	ps1_in = qpr[reg_in];
 	func(&vcpu->arch.fp.fpscr, &qpr[reg_out], &ps1_in);
 
-	dprintk(KERN_INFO "PS1 ps1 -> f(0x%x) = 0x%x\n",
+	dprपूर्णांकk(KERN_INFO "PS1 ps1 -> f(0x%x) = 0x%x\n",
 			  ps1_in, qpr[reg_out]);
 
-	return EMULATE_DONE;
-}
+	वापस EMULATE_DONE;
+पूर्ण
 
-int kvmppc_emulate_paired_single(struct kvm_vcpu *vcpu)
-{
+पूर्णांक kvmppc_emulate_paired_single(काष्ठा kvm_vcpu *vcpu)
+अणु
 	u32 inst;
-	enum emulation_result emulated = EMULATE_DONE;
-	int ax_rd, ax_ra, ax_rb, ax_rc;
-	short full_d;
+	क्रमागत emulation_result emulated = EMULATE_DONE;
+	पूर्णांक ax_rd, ax_ra, ax_rb, ax_rc;
+	लघु full_d;
 	u64 *fpr_d, *fpr_a, *fpr_b, *fpr_c;
 
 	bool rcomp;
 	u32 cr;
-#ifdef DEBUG
-	int i;
-#endif
+#अगर_घोषित DEBUG
+	पूर्णांक i;
+#पूर्ण_अगर
 
 	emulated = kvmppc_get_last_inst(vcpu, INST_GENERIC, &inst);
-	if (emulated != EMULATE_DONE)
-		return emulated;
+	अगर (emulated != EMULATE_DONE)
+		वापस emulated;
 
 	ax_rd = inst_get_field(inst, 6, 10);
 	ax_ra = inst_get_field(inst, 11, 15);
@@ -650,155 +651,155 @@ int kvmppc_emulate_paired_single(struct kvm_vcpu *vcpu)
 	rcomp = (inst & 1) ? true : false;
 	cr = kvmppc_get_cr(vcpu);
 
-	if (!kvmppc_inst_is_paired_single(vcpu, inst))
-		return EMULATE_FAIL;
+	अगर (!kvmppc_inst_is_paired_single(vcpu, inst))
+		वापस EMULATE_FAIL;
 
-	if (!(kvmppc_get_msr(vcpu) & MSR_FP)) {
+	अगर (!(kvmppc_get_msr(vcpu) & MSR_FP)) अणु
 		kvmppc_book3s_queue_irqprio(vcpu, BOOK3S_INTERRUPT_FP_UNAVAIL);
-		return EMULATE_AGAIN;
-	}
+		वापस EMULATE_AGAIN;
+	पूर्ण
 
 	kvmppc_giveup_ext(vcpu, MSR_FP);
 	preempt_disable();
 	enable_kernel_fp();
 	/* Do we need to clear FE0 / FE1 here? Don't think so. */
 
-#ifdef DEBUG
-	for (i = 0; i < ARRAY_SIZE(vcpu->arch.fp.fpr); i++) {
+#अगर_घोषित DEBUG
+	क्रम (i = 0; i < ARRAY_SIZE(vcpu->arch.fp.fpr); i++) अणु
 		u32 f;
 		kvm_cvt_df(&VCPU_FPR(vcpu, i), &f);
-		dprintk(KERN_INFO "FPR[%d] = 0x%x / 0x%llx    QPR[%d] = 0x%x\n",
+		dprपूर्णांकk(KERN_INFO "FPR[%d] = 0x%x / 0x%llx    QPR[%d] = 0x%x\n",
 			i, f, VCPU_FPR(vcpu, i), i, vcpu->arch.qpr[i]);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	switch (get_op(inst)) {
-	case OP_PSQ_L:
-	{
-		ulong addr = ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0;
+	चयन (get_op(inst)) अणु
+	हाल OP_PSQ_L:
+	अणु
+		uदीर्घ addr = ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0;
 		bool w = inst_get_field(inst, 16, 16) ? true : false;
-		int i = inst_get_field(inst, 17, 19);
+		पूर्णांक i = inst_get_field(inst, 17, 19);
 
 		addr += get_d_signext(inst);
 		emulated = kvmppc_emulate_psq_load(vcpu, ax_rd, addr, w, i);
-		break;
-	}
-	case OP_PSQ_LU:
-	{
-		ulong addr = kvmppc_get_gpr(vcpu, ax_ra);
+		अवरोध;
+	पूर्ण
+	हाल OP_PSQ_LU:
+	अणु
+		uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra);
 		bool w = inst_get_field(inst, 16, 16) ? true : false;
-		int i = inst_get_field(inst, 17, 19);
+		पूर्णांक i = inst_get_field(inst, 17, 19);
 
 		addr += get_d_signext(inst);
 		emulated = kvmppc_emulate_psq_load(vcpu, ax_rd, addr, w, i);
 
-		if (emulated == EMULATE_DONE)
+		अगर (emulated == EMULATE_DONE)
 			kvmppc_set_gpr(vcpu, ax_ra, addr);
-		break;
-	}
-	case OP_PSQ_ST:
-	{
-		ulong addr = ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0;
+		अवरोध;
+	पूर्ण
+	हाल OP_PSQ_ST:
+	अणु
+		uदीर्घ addr = ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0;
 		bool w = inst_get_field(inst, 16, 16) ? true : false;
-		int i = inst_get_field(inst, 17, 19);
+		पूर्णांक i = inst_get_field(inst, 17, 19);
 
 		addr += get_d_signext(inst);
 		emulated = kvmppc_emulate_psq_store(vcpu, ax_rd, addr, w, i);
-		break;
-	}
-	case OP_PSQ_STU:
-	{
-		ulong addr = kvmppc_get_gpr(vcpu, ax_ra);
+		अवरोध;
+	पूर्ण
+	हाल OP_PSQ_STU:
+	अणु
+		uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra);
 		bool w = inst_get_field(inst, 16, 16) ? true : false;
-		int i = inst_get_field(inst, 17, 19);
+		पूर्णांक i = inst_get_field(inst, 17, 19);
 
 		addr += get_d_signext(inst);
 		emulated = kvmppc_emulate_psq_store(vcpu, ax_rd, addr, w, i);
 
-		if (emulated == EMULATE_DONE)
+		अगर (emulated == EMULATE_DONE)
 			kvmppc_set_gpr(vcpu, ax_ra, addr);
-		break;
-	}
-	case 4:
-		/* X form */
-		switch (inst_get_field(inst, 21, 30)) {
-		case OP_4X_PS_CMPU0:
+		अवरोध;
+	पूर्ण
+	हाल 4:
+		/* X क्रमm */
+		चयन (inst_get_field(inst, 21, 30)) अणु
+		हाल OP_4X_PS_CMPU0:
 			/* XXX */
 			emulated = EMULATE_FAIL;
-			break;
-		case OP_4X_PSQ_LX:
-		{
-			ulong addr = ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0;
+			अवरोध;
+		हाल OP_4X_PSQ_LX:
+		अणु
+			uदीर्घ addr = ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0;
 			bool w = inst_get_field(inst, 21, 21) ? true : false;
-			int i = inst_get_field(inst, 22, 24);
+			पूर्णांक i = inst_get_field(inst, 22, 24);
 
 			addr += kvmppc_get_gpr(vcpu, ax_rb);
 			emulated = kvmppc_emulate_psq_load(vcpu, ax_rd, addr, w, i);
-			break;
-		}
-		case OP_4X_PS_CMPO0:
+			अवरोध;
+		पूर्ण
+		हाल OP_4X_PS_CMPO0:
 			/* XXX */
 			emulated = EMULATE_FAIL;
-			break;
-		case OP_4X_PSQ_LUX:
-		{
-			ulong addr = kvmppc_get_gpr(vcpu, ax_ra);
+			अवरोध;
+		हाल OP_4X_PSQ_LUX:
+		अणु
+			uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra);
 			bool w = inst_get_field(inst, 21, 21) ? true : false;
-			int i = inst_get_field(inst, 22, 24);
+			पूर्णांक i = inst_get_field(inst, 22, 24);
 
 			addr += kvmppc_get_gpr(vcpu, ax_rb);
 			emulated = kvmppc_emulate_psq_load(vcpu, ax_rd, addr, w, i);
 
-			if (emulated == EMULATE_DONE)
+			अगर (emulated == EMULATE_DONE)
 				kvmppc_set_gpr(vcpu, ax_ra, addr);
-			break;
-		}
-		case OP_4X_PS_NEG:
+			अवरोध;
+		पूर्ण
+		हाल OP_4X_PS_NEG:
 			VCPU_FPR(vcpu, ax_rd) = VCPU_FPR(vcpu, ax_rb);
 			VCPU_FPR(vcpu, ax_rd) ^= 0x8000000000000000ULL;
 			vcpu->arch.qpr[ax_rd] = vcpu->arch.qpr[ax_rb];
 			vcpu->arch.qpr[ax_rd] ^= 0x80000000;
-			break;
-		case OP_4X_PS_CMPU1:
+			अवरोध;
+		हाल OP_4X_PS_CMPU1:
 			/* XXX */
 			emulated = EMULATE_FAIL;
-			break;
-		case OP_4X_PS_MR:
+			अवरोध;
+		हाल OP_4X_PS_MR:
 			WARN_ON(rcomp);
 			VCPU_FPR(vcpu, ax_rd) = VCPU_FPR(vcpu, ax_rb);
 			vcpu->arch.qpr[ax_rd] = vcpu->arch.qpr[ax_rb];
-			break;
-		case OP_4X_PS_CMPO1:
+			अवरोध;
+		हाल OP_4X_PS_CMPO1:
 			/* XXX */
 			emulated = EMULATE_FAIL;
-			break;
-		case OP_4X_PS_NABS:
+			अवरोध;
+		हाल OP_4X_PS_NABS:
 			WARN_ON(rcomp);
 			VCPU_FPR(vcpu, ax_rd) = VCPU_FPR(vcpu, ax_rb);
 			VCPU_FPR(vcpu, ax_rd) |= 0x8000000000000000ULL;
 			vcpu->arch.qpr[ax_rd] = vcpu->arch.qpr[ax_rb];
 			vcpu->arch.qpr[ax_rd] |= 0x80000000;
-			break;
-		case OP_4X_PS_ABS:
+			अवरोध;
+		हाल OP_4X_PS_ABS:
 			WARN_ON(rcomp);
 			VCPU_FPR(vcpu, ax_rd) = VCPU_FPR(vcpu, ax_rb);
 			VCPU_FPR(vcpu, ax_rd) &= ~0x8000000000000000ULL;
 			vcpu->arch.qpr[ax_rd] = vcpu->arch.qpr[ax_rb];
 			vcpu->arch.qpr[ax_rd] &= ~0x80000000;
-			break;
-		case OP_4X_PS_MERGE00:
+			अवरोध;
+		हाल OP_4X_PS_MERGE00:
 			WARN_ON(rcomp);
 			VCPU_FPR(vcpu, ax_rd) = VCPU_FPR(vcpu, ax_ra);
 			/* vcpu->arch.qpr[ax_rd] = VCPU_FPR(vcpu, ax_rb); */
 			kvm_cvt_df(&VCPU_FPR(vcpu, ax_rb),
 				   &vcpu->arch.qpr[ax_rd]);
-			break;
-		case OP_4X_PS_MERGE01:
+			अवरोध;
+		हाल OP_4X_PS_MERGE01:
 			WARN_ON(rcomp);
 			VCPU_FPR(vcpu, ax_rd) = VCPU_FPR(vcpu, ax_ra);
 			vcpu->arch.qpr[ax_rd] = vcpu->arch.qpr[ax_rb];
-			break;
-		case OP_4X_PS_MERGE10:
+			अवरोध;
+		हाल OP_4X_PS_MERGE10:
 			WARN_ON(rcomp);
 			/* VCPU_FPR(vcpu, ax_rd) = vcpu->arch.qpr[ax_ra]; */
 			kvm_cvt_fd(&vcpu->arch.qpr[ax_ra],
@@ -806,456 +807,456 @@ int kvmppc_emulate_paired_single(struct kvm_vcpu *vcpu)
 			/* vcpu->arch.qpr[ax_rd] = VCPU_FPR(vcpu, ax_rb); */
 			kvm_cvt_df(&VCPU_FPR(vcpu, ax_rb),
 				   &vcpu->arch.qpr[ax_rd]);
-			break;
-		case OP_4X_PS_MERGE11:
+			अवरोध;
+		हाल OP_4X_PS_MERGE11:
 			WARN_ON(rcomp);
 			/* VCPU_FPR(vcpu, ax_rd) = vcpu->arch.qpr[ax_ra]; */
 			kvm_cvt_fd(&vcpu->arch.qpr[ax_ra],
 				   &VCPU_FPR(vcpu, ax_rd));
 			vcpu->arch.qpr[ax_rd] = vcpu->arch.qpr[ax_rb];
-			break;
-		}
-		/* XW form */
-		switch (inst_get_field(inst, 25, 30)) {
-		case OP_4XW_PSQ_STX:
-		{
-			ulong addr = ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0;
+			अवरोध;
+		पूर्ण
+		/* XW क्रमm */
+		चयन (inst_get_field(inst, 25, 30)) अणु
+		हाल OP_4XW_PSQ_STX:
+		अणु
+			uदीर्घ addr = ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0;
 			bool w = inst_get_field(inst, 21, 21) ? true : false;
-			int i = inst_get_field(inst, 22, 24);
+			पूर्णांक i = inst_get_field(inst, 22, 24);
 
 			addr += kvmppc_get_gpr(vcpu, ax_rb);
 			emulated = kvmppc_emulate_psq_store(vcpu, ax_rd, addr, w, i);
-			break;
-		}
-		case OP_4XW_PSQ_STUX:
-		{
-			ulong addr = kvmppc_get_gpr(vcpu, ax_ra);
+			अवरोध;
+		पूर्ण
+		हाल OP_4XW_PSQ_STUX:
+		अणु
+			uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra);
 			bool w = inst_get_field(inst, 21, 21) ? true : false;
-			int i = inst_get_field(inst, 22, 24);
+			पूर्णांक i = inst_get_field(inst, 22, 24);
 
 			addr += kvmppc_get_gpr(vcpu, ax_rb);
 			emulated = kvmppc_emulate_psq_store(vcpu, ax_rd, addr, w, i);
 
-			if (emulated == EMULATE_DONE)
+			अगर (emulated == EMULATE_DONE)
 				kvmppc_set_gpr(vcpu, ax_ra, addr);
-			break;
-		}
-		}
-		/* A form */
-		switch (inst_get_field(inst, 26, 30)) {
-		case OP_4A_PS_SUM1:
+			अवरोध;
+		पूर्ण
+		पूर्ण
+		/* A क्रमm */
+		चयन (inst_get_field(inst, 26, 30)) अणु
+		हाल OP_4A_PS_SUM1:
 			emulated = kvmppc_ps_two_in(vcpu, rcomp, ax_rd,
 					ax_rb, ax_ra, SCALAR_NO_PS0 | SCALAR_HIGH, fps_fadds);
 			VCPU_FPR(vcpu, ax_rd) = VCPU_FPR(vcpu, ax_rc);
-			break;
-		case OP_4A_PS_SUM0:
+			अवरोध;
+		हाल OP_4A_PS_SUM0:
 			emulated = kvmppc_ps_two_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rb, SCALAR_NO_PS1 | SCALAR_LOW, fps_fadds);
 			vcpu->arch.qpr[ax_rd] = vcpu->arch.qpr[ax_rc];
-			break;
-		case OP_4A_PS_MULS0:
+			अवरोध;
+		हाल OP_4A_PS_MULS0:
 			emulated = kvmppc_ps_two_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rc, SCALAR_HIGH, fps_fmuls);
-			break;
-		case OP_4A_PS_MULS1:
+			अवरोध;
+		हाल OP_4A_PS_MULS1:
 			emulated = kvmppc_ps_two_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rc, SCALAR_LOW, fps_fmuls);
-			break;
-		case OP_4A_PS_MADDS0:
+			अवरोध;
+		हाल OP_4A_PS_MADDS0:
 			emulated = kvmppc_ps_three_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rc, ax_rb, SCALAR_HIGH, fps_fmadds);
-			break;
-		case OP_4A_PS_MADDS1:
+			अवरोध;
+		हाल OP_4A_PS_MADDS1:
 			emulated = kvmppc_ps_three_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rc, ax_rb, SCALAR_LOW, fps_fmadds);
-			break;
-		case OP_4A_PS_DIV:
+			अवरोध;
+		हाल OP_4A_PS_DIV:
 			emulated = kvmppc_ps_two_in(vcpu, rcomp, ax_rd,
-					ax_ra, ax_rb, SCALAR_NONE, fps_fdivs);
-			break;
-		case OP_4A_PS_SUB:
+					ax_ra, ax_rb, SCALAR_NONE, fps_fभागs);
+			अवरोध;
+		हाल OP_4A_PS_SUB:
 			emulated = kvmppc_ps_two_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rb, SCALAR_NONE, fps_fsubs);
-			break;
-		case OP_4A_PS_ADD:
+			अवरोध;
+		हाल OP_4A_PS_ADD:
 			emulated = kvmppc_ps_two_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rb, SCALAR_NONE, fps_fadds);
-			break;
-		case OP_4A_PS_SEL:
+			अवरोध;
+		हाल OP_4A_PS_SEL:
 			emulated = kvmppc_ps_three_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rc, ax_rb, SCALAR_NONE, fps_fsel);
-			break;
-		case OP_4A_PS_RES:
+			अवरोध;
+		हाल OP_4A_PS_RES:
 			emulated = kvmppc_ps_one_in(vcpu, rcomp, ax_rd,
 					ax_rb, fps_fres);
-			break;
-		case OP_4A_PS_MUL:
+			अवरोध;
+		हाल OP_4A_PS_MUL:
 			emulated = kvmppc_ps_two_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rc, SCALAR_NONE, fps_fmuls);
-			break;
-		case OP_4A_PS_RSQRTE:
+			अवरोध;
+		हाल OP_4A_PS_RSQRTE:
 			emulated = kvmppc_ps_one_in(vcpu, rcomp, ax_rd,
-					ax_rb, fps_frsqrte);
-			break;
-		case OP_4A_PS_MSUB:
+					ax_rb, fps_frवर्ग_मूलe);
+			अवरोध;
+		हाल OP_4A_PS_MSUB:
 			emulated = kvmppc_ps_three_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rc, ax_rb, SCALAR_NONE, fps_fmsubs);
-			break;
-		case OP_4A_PS_MADD:
+			अवरोध;
+		हाल OP_4A_PS_MADD:
 			emulated = kvmppc_ps_three_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rc, ax_rb, SCALAR_NONE, fps_fmadds);
-			break;
-		case OP_4A_PS_NMSUB:
+			अवरोध;
+		हाल OP_4A_PS_NMSUB:
 			emulated = kvmppc_ps_three_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rc, ax_rb, SCALAR_NONE, fps_fnmsubs);
-			break;
-		case OP_4A_PS_NMADD:
+			अवरोध;
+		हाल OP_4A_PS_NMADD:
 			emulated = kvmppc_ps_three_in(vcpu, rcomp, ax_rd,
 					ax_ra, ax_rc, ax_rb, SCALAR_NONE, fps_fnmadds);
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
 	/* Real FPU operations */
 
-	case OP_LFS:
-	{
-		ulong addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) + full_d;
+	हाल OP_LFS:
+	अणु
+		uदीर्घ addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) + full_d;
 
 		emulated = kvmppc_emulate_fpr_load(vcpu, ax_rd, addr,
 						   FPU_LS_SINGLE);
-		break;
-	}
-	case OP_LFSU:
-	{
-		ulong addr = kvmppc_get_gpr(vcpu, ax_ra) + full_d;
+		अवरोध;
+	पूर्ण
+	हाल OP_LFSU:
+	अणु
+		uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra) + full_d;
 
 		emulated = kvmppc_emulate_fpr_load(vcpu, ax_rd, addr,
 						   FPU_LS_SINGLE);
 
-		if (emulated == EMULATE_DONE)
+		अगर (emulated == EMULATE_DONE)
 			kvmppc_set_gpr(vcpu, ax_ra, addr);
-		break;
-	}
-	case OP_LFD:
-	{
-		ulong addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) + full_d;
+		अवरोध;
+	पूर्ण
+	हाल OP_LFD:
+	अणु
+		uदीर्घ addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) + full_d;
 
 		emulated = kvmppc_emulate_fpr_load(vcpu, ax_rd, addr,
 						   FPU_LS_DOUBLE);
-		break;
-	}
-	case OP_LFDU:
-	{
-		ulong addr = kvmppc_get_gpr(vcpu, ax_ra) + full_d;
+		अवरोध;
+	पूर्ण
+	हाल OP_LFDU:
+	अणु
+		uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra) + full_d;
 
 		emulated = kvmppc_emulate_fpr_load(vcpu, ax_rd, addr,
 						   FPU_LS_DOUBLE);
 
-		if (emulated == EMULATE_DONE)
+		अगर (emulated == EMULATE_DONE)
 			kvmppc_set_gpr(vcpu, ax_ra, addr);
-		break;
-	}
-	case OP_STFS:
-	{
-		ulong addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) + full_d;
+		अवरोध;
+	पूर्ण
+	हाल OP_STFS:
+	अणु
+		uदीर्घ addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) + full_d;
 
 		emulated = kvmppc_emulate_fpr_store(vcpu, ax_rd, addr,
 						    FPU_LS_SINGLE);
-		break;
-	}
-	case OP_STFSU:
-	{
-		ulong addr = kvmppc_get_gpr(vcpu, ax_ra) + full_d;
+		अवरोध;
+	पूर्ण
+	हाल OP_STFSU:
+	अणु
+		uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra) + full_d;
 
 		emulated = kvmppc_emulate_fpr_store(vcpu, ax_rd, addr,
 						    FPU_LS_SINGLE);
 
-		if (emulated == EMULATE_DONE)
+		अगर (emulated == EMULATE_DONE)
 			kvmppc_set_gpr(vcpu, ax_ra, addr);
-		break;
-	}
-	case OP_STFD:
-	{
-		ulong addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) + full_d;
+		अवरोध;
+	पूर्ण
+	हाल OP_STFD:
+	अणु
+		uदीर्घ addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) + full_d;
 
 		emulated = kvmppc_emulate_fpr_store(vcpu, ax_rd, addr,
 						    FPU_LS_DOUBLE);
-		break;
-	}
-	case OP_STFDU:
-	{
-		ulong addr = kvmppc_get_gpr(vcpu, ax_ra) + full_d;
+		अवरोध;
+	पूर्ण
+	हाल OP_STFDU:
+	अणु
+		uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra) + full_d;
 
 		emulated = kvmppc_emulate_fpr_store(vcpu, ax_rd, addr,
 						    FPU_LS_DOUBLE);
 
-		if (emulated == EMULATE_DONE)
+		अगर (emulated == EMULATE_DONE)
 			kvmppc_set_gpr(vcpu, ax_ra, addr);
-		break;
-	}
-	case 31:
-		switch (inst_get_field(inst, 21, 30)) {
-		case OP_31_LFSX:
-		{
-			ulong addr = ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0;
+		अवरोध;
+	पूर्ण
+	हाल 31:
+		चयन (inst_get_field(inst, 21, 30)) अणु
+		हाल OP_31_LFSX:
+		अणु
+			uदीर्घ addr = ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0;
 
 			addr += kvmppc_get_gpr(vcpu, ax_rb);
 			emulated = kvmppc_emulate_fpr_load(vcpu, ax_rd,
 							   addr, FPU_LS_SINGLE);
-			break;
-		}
-		case OP_31_LFSUX:
-		{
-			ulong addr = kvmppc_get_gpr(vcpu, ax_ra) +
+			अवरोध;
+		पूर्ण
+		हाल OP_31_LFSUX:
+		अणु
+			uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra) +
 				     kvmppc_get_gpr(vcpu, ax_rb);
 
 			emulated = kvmppc_emulate_fpr_load(vcpu, ax_rd,
 							   addr, FPU_LS_SINGLE);
 
-			if (emulated == EMULATE_DONE)
+			अगर (emulated == EMULATE_DONE)
 				kvmppc_set_gpr(vcpu, ax_ra, addr);
-			break;
-		}
-		case OP_31_LFDX:
-		{
-			ulong addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) +
+			अवरोध;
+		पूर्ण
+		हाल OP_31_LFDX:
+		अणु
+			uदीर्घ addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) +
 				     kvmppc_get_gpr(vcpu, ax_rb);
 
 			emulated = kvmppc_emulate_fpr_load(vcpu, ax_rd,
 							   addr, FPU_LS_DOUBLE);
-			break;
-		}
-		case OP_31_LFDUX:
-		{
-			ulong addr = kvmppc_get_gpr(vcpu, ax_ra) +
+			अवरोध;
+		पूर्ण
+		हाल OP_31_LFDUX:
+		अणु
+			uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra) +
 				     kvmppc_get_gpr(vcpu, ax_rb);
 
 			emulated = kvmppc_emulate_fpr_load(vcpu, ax_rd,
 							   addr, FPU_LS_DOUBLE);
 
-			if (emulated == EMULATE_DONE)
+			अगर (emulated == EMULATE_DONE)
 				kvmppc_set_gpr(vcpu, ax_ra, addr);
-			break;
-		}
-		case OP_31_STFSX:
-		{
-			ulong addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) +
+			अवरोध;
+		पूर्ण
+		हाल OP_31_STFSX:
+		अणु
+			uदीर्घ addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) +
 				     kvmppc_get_gpr(vcpu, ax_rb);
 
 			emulated = kvmppc_emulate_fpr_store(vcpu, ax_rd,
 							    addr, FPU_LS_SINGLE);
-			break;
-		}
-		case OP_31_STFSUX:
-		{
-			ulong addr = kvmppc_get_gpr(vcpu, ax_ra) +
+			अवरोध;
+		पूर्ण
+		हाल OP_31_STFSUX:
+		अणु
+			uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra) +
 				     kvmppc_get_gpr(vcpu, ax_rb);
 
 			emulated = kvmppc_emulate_fpr_store(vcpu, ax_rd,
 							    addr, FPU_LS_SINGLE);
 
-			if (emulated == EMULATE_DONE)
+			अगर (emulated == EMULATE_DONE)
 				kvmppc_set_gpr(vcpu, ax_ra, addr);
-			break;
-		}
-		case OP_31_STFX:
-		{
-			ulong addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) +
+			अवरोध;
+		पूर्ण
+		हाल OP_31_STFX:
+		अणु
+			uदीर्घ addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) +
 				     kvmppc_get_gpr(vcpu, ax_rb);
 
 			emulated = kvmppc_emulate_fpr_store(vcpu, ax_rd,
 							    addr, FPU_LS_DOUBLE);
-			break;
-		}
-		case OP_31_STFUX:
-		{
-			ulong addr = kvmppc_get_gpr(vcpu, ax_ra) +
+			अवरोध;
+		पूर्ण
+		हाल OP_31_STFUX:
+		अणु
+			uदीर्घ addr = kvmppc_get_gpr(vcpu, ax_ra) +
 				     kvmppc_get_gpr(vcpu, ax_rb);
 
 			emulated = kvmppc_emulate_fpr_store(vcpu, ax_rd,
 							    addr, FPU_LS_DOUBLE);
 
-			if (emulated == EMULATE_DONE)
+			अगर (emulated == EMULATE_DONE)
 				kvmppc_set_gpr(vcpu, ax_ra, addr);
-			break;
-		}
-		case OP_31_STFIWX:
-		{
-			ulong addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) +
+			अवरोध;
+		पूर्ण
+		हाल OP_31_STFIWX:
+		अणु
+			uदीर्घ addr = (ax_ra ? kvmppc_get_gpr(vcpu, ax_ra) : 0) +
 				     kvmppc_get_gpr(vcpu, ax_rb);
 
 			emulated = kvmppc_emulate_fpr_store(vcpu, ax_rd,
 							    addr,
 							    FPU_LS_SINGLE_LOW);
-			break;
-		}
-			break;
-		}
-		break;
-	case 59:
-		switch (inst_get_field(inst, 21, 30)) {
-		case OP_59_FADDS:
+			अवरोध;
+		पूर्ण
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 59:
+		चयन (inst_get_field(inst, 21, 30)) अणु
+		हाल OP_59_FADDS:
 			fpd_fadds(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_b);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		case OP_59_FSUBS:
+			अवरोध;
+		हाल OP_59_FSUBS:
 			fpd_fsubs(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_b);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		case OP_59_FDIVS:
-			fpd_fdivs(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_b);
+			अवरोध;
+		हाल OP_59_FDIVS:
+			fpd_fभागs(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_b);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		case OP_59_FRES:
+			अवरोध;
+		हाल OP_59_FRES:
 			fpd_fres(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		case OP_59_FRSQRTES:
-			fpd_frsqrtes(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
+			अवरोध;
+		हाल OP_59_FRSQRTES:
+			fpd_frवर्ग_मूलes(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		}
-		switch (inst_get_field(inst, 26, 30)) {
-		case OP_59_FMULS:
+			अवरोध;
+		पूर्ण
+		चयन (inst_get_field(inst, 26, 30)) अणु
+		हाल OP_59_FMULS:
 			fpd_fmuls(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		case OP_59_FMSUBS:
+			अवरोध;
+		हाल OP_59_FMSUBS:
 			fpd_fmsubs(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c, fpr_b);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		case OP_59_FMADDS:
+			अवरोध;
+		हाल OP_59_FMADDS:
 			fpd_fmadds(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c, fpr_b);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		case OP_59_FNMSUBS:
+			अवरोध;
+		हाल OP_59_FNMSUBS:
 			fpd_fnmsubs(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c, fpr_b);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		case OP_59_FNMADDS:
+			अवरोध;
+		हाल OP_59_FNMADDS:
 			fpd_fnmadds(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c, fpr_b);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		}
-		break;
-	case 63:
-		switch (inst_get_field(inst, 21, 30)) {
-		case OP_63_MTFSB0:
-		case OP_63_MTFSB1:
-		case OP_63_MCRFS:
-		case OP_63_MTFSFI:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 63:
+		चयन (inst_get_field(inst, 21, 30)) अणु
+		हाल OP_63_MTFSB0:
+		हाल OP_63_MTFSB1:
+		हाल OP_63_MCRFS:
+		हाल OP_63_MTFSFI:
 			/* XXX need to implement */
-			break;
-		case OP_63_MFFS:
+			अवरोध;
+		हाल OP_63_MFFS:
 			/* XXX missing CR */
 			*fpr_d = vcpu->arch.fp.fpscr;
-			break;
-		case OP_63_MTFSF:
+			अवरोध;
+		हाल OP_63_MTFSF:
 			/* XXX missing fm bits */
 			/* XXX missing CR */
 			vcpu->arch.fp.fpscr = *fpr_b;
-			break;
-		case OP_63_FCMPU:
-		{
-			u32 tmp_cr;
+			अवरोध;
+		हाल OP_63_FCMPU:
+		अणु
+			u32 पंचांगp_cr;
 			u32 cr0_mask = 0xf0000000;
-			u32 cr_shift = inst_get_field(inst, 6, 8) * 4;
+			u32 cr_shअगरt = inst_get_field(inst, 6, 8) * 4;
 
-			fpd_fcmpu(&vcpu->arch.fp.fpscr, &tmp_cr, fpr_a, fpr_b);
-			cr &= ~(cr0_mask >> cr_shift);
-			cr |= (cr & cr0_mask) >> cr_shift;
-			break;
-		}
-		case OP_63_FCMPO:
-		{
-			u32 tmp_cr;
+			fpd_fcmpu(&vcpu->arch.fp.fpscr, &पंचांगp_cr, fpr_a, fpr_b);
+			cr &= ~(cr0_mask >> cr_shअगरt);
+			cr |= (cr & cr0_mask) >> cr_shअगरt;
+			अवरोध;
+		पूर्ण
+		हाल OP_63_FCMPO:
+		अणु
+			u32 पंचांगp_cr;
 			u32 cr0_mask = 0xf0000000;
-			u32 cr_shift = inst_get_field(inst, 6, 8) * 4;
+			u32 cr_shअगरt = inst_get_field(inst, 6, 8) * 4;
 
-			fpd_fcmpo(&vcpu->arch.fp.fpscr, &tmp_cr, fpr_a, fpr_b);
-			cr &= ~(cr0_mask >> cr_shift);
-			cr |= (cr & cr0_mask) >> cr_shift;
-			break;
-		}
-		case OP_63_FNEG:
+			fpd_fcmpo(&vcpu->arch.fp.fpscr, &पंचांगp_cr, fpr_a, fpr_b);
+			cr &= ~(cr0_mask >> cr_shअगरt);
+			cr |= (cr & cr0_mask) >> cr_shअगरt;
+			अवरोध;
+		पूर्ण
+		हाल OP_63_FNEG:
 			fpd_fneg(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
-			break;
-		case OP_63_FMR:
+			अवरोध;
+		हाल OP_63_FMR:
 			*fpr_d = *fpr_b;
-			break;
-		case OP_63_FABS:
-			fpd_fabs(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
-			break;
-		case OP_63_FCPSGN:
+			अवरोध;
+		हाल OP_63_FABS:
+			fpd_भ_असल(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
+			अवरोध;
+		हाल OP_63_FCPSGN:
 			fpd_fcpsgn(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_b);
-			break;
-		case OP_63_FDIV:
-			fpd_fdiv(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_b);
-			break;
-		case OP_63_FADD:
+			अवरोध;
+		हाल OP_63_FDIV:
+			fpd_fभाग(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_b);
+			अवरोध;
+		हाल OP_63_FADD:
 			fpd_fadd(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_b);
-			break;
-		case OP_63_FSUB:
+			अवरोध;
+		हाल OP_63_FSUB:
 			fpd_fsub(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_b);
-			break;
-		case OP_63_FCTIW:
+			अवरोध;
+		हाल OP_63_FCTIW:
 			fpd_fctiw(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
-			break;
-		case OP_63_FCTIWZ:
+			अवरोध;
+		हाल OP_63_FCTIWZ:
 			fpd_fctiwz(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
-			break;
-		case OP_63_FRSP:
+			अवरोध;
+		हाल OP_63_FRSP:
 			fpd_frsp(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
 			kvmppc_sync_qpr(vcpu, ax_rd);
-			break;
-		case OP_63_FRSQRTE:
-		{
-			double one = 1.0f;
+			अवरोध;
+		हाल OP_63_FRSQRTE:
+		अणु
+			द्विगुन one = 1.0f;
 
-			/* fD = sqrt(fB) */
-			fpd_fsqrt(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
+			/* fD = वर्ग_मूल(fB) */
+			fpd_fवर्ग_मूल(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_b);
 			/* fD = 1.0f / fD */
-			fpd_fdiv(&vcpu->arch.fp.fpscr, &cr, fpr_d, (u64*)&one, fpr_d);
-			break;
-		}
-		}
-		switch (inst_get_field(inst, 26, 30)) {
-		case OP_63_FMUL:
+			fpd_fभाग(&vcpu->arch.fp.fpscr, &cr, fpr_d, (u64*)&one, fpr_d);
+			अवरोध;
+		पूर्ण
+		पूर्ण
+		चयन (inst_get_field(inst, 26, 30)) अणु
+		हाल OP_63_FMUL:
 			fpd_fmul(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c);
-			break;
-		case OP_63_FSEL:
+			अवरोध;
+		हाल OP_63_FSEL:
 			fpd_fsel(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c, fpr_b);
-			break;
-		case OP_63_FMSUB:
+			अवरोध;
+		हाल OP_63_FMSUB:
 			fpd_fmsub(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c, fpr_b);
-			break;
-		case OP_63_FMADD:
+			अवरोध;
+		हाल OP_63_FMADD:
 			fpd_fmadd(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c, fpr_b);
-			break;
-		case OP_63_FNMSUB:
+			अवरोध;
+		हाल OP_63_FNMSUB:
 			fpd_fnmsub(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c, fpr_b);
-			break;
-		case OP_63_FNMADD:
+			अवरोध;
+		हाल OP_63_FNMADD:
 			fpd_fnmadd(&vcpu->arch.fp.fpscr, &cr, fpr_d, fpr_a, fpr_c, fpr_b);
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-#ifdef DEBUG
-	for (i = 0; i < ARRAY_SIZE(vcpu->arch.fp.fpr); i++) {
+#अगर_घोषित DEBUG
+	क्रम (i = 0; i < ARRAY_SIZE(vcpu->arch.fp.fpr); i++) अणु
 		u32 f;
 		kvm_cvt_df(&VCPU_FPR(vcpu, i), &f);
-		dprintk(KERN_INFO "FPR[%d] = 0x%x\n", i, f);
-	}
-#endif
+		dprपूर्णांकk(KERN_INFO "FPR[%d] = 0x%x\n", i, f);
+	पूर्ण
+#पूर्ण_अगर
 
-	if (rcomp)
+	अगर (rcomp)
 		kvmppc_set_cr(vcpu, cr);
 
 	disable_kernel_fp();
 	preempt_enable();
 
-	return emulated;
-}
+	वापस emulated;
+पूर्ण

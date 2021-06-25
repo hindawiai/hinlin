@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies */
 
-#include <linux/mlx5/driver.h>
-#include "mlx5_core.h"
-#include "lib/pci_vsc.h"
-#include "lib/mlx5.h"
+#समावेश <linux/mlx5/driver.h>
+#समावेश "mlx5_core.h"
+#समावेश "lib/pci_vsc.h"
+#समावेश "lib/mlx5.h"
 
-#define BAD_ACCESS			0xBADACCE5
-#define MLX5_PROTECTED_CR_SCAN_CRSPACE	0x7
+#घोषणा BAD_ACCESS			0xBADACCE5
+#घोषणा MLX5_PROTECTED_CR_SCAN_CRSPACE	0x7
 
-static bool mlx5_crdump_enabled(struct mlx5_core_dev *dev)
-{
-	return !!dev->priv.health.crdump_size;
-}
+अटल bool mlx5_crdump_enabled(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस !!dev->priv.health.crdump_size;
+पूर्ण
 
-static int mlx5_crdump_fill(struct mlx5_core_dev *dev, u32 *cr_data)
-{
+अटल पूर्णांक mlx5_crdump_fill(काष्ठा mlx5_core_dev *dev, u32 *cr_data)
+अणु
 	u32 crdump_size = dev->priv.health.crdump_size;
-	int i, ret;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < (crdump_size / 4); i++)
+	क्रम (i = 0; i < (crdump_size / 4); i++)
 		cr_data[i] = BAD_ACCESS;
 
-	ret = mlx5_vsc_gw_read_block_fast(dev, cr_data, crdump_size);
-	if (ret <= 0) {
-		if (ret == 0)
-			return -EIO;
-		return ret;
-	}
+	ret = mlx5_vsc_gw_पढ़ो_block_fast(dev, cr_data, crdump_size);
+	अगर (ret <= 0) अणु
+		अगर (ret == 0)
+			वापस -EIO;
+		वापस ret;
+	पूर्ण
 
-	if (crdump_size != ret) {
+	अगर (crdump_size != ret) अणु
 		mlx5_core_warn(dev, "failed to read full dump, read %d out of %u\n",
 			       ret, crdump_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mlx5_crdump_collect(struct mlx5_core_dev *dev, u32 *cr_data)
-{
-	int ret;
+पूर्णांक mlx5_crdump_collect(काष्ठा mlx5_core_dev *dev, u32 *cr_data)
+अणु
+	पूर्णांक ret;
 
-	if (!mlx5_crdump_enabled(dev))
-		return -ENODEV;
+	अगर (!mlx5_crdump_enabled(dev))
+		वापस -ENODEV;
 
 	ret = mlx5_vsc_gw_lock(dev);
-	if (ret) {
+	अगर (ret) अणु
 		mlx5_core_warn(dev, "crdump: failed to lock vsc gw err %d\n",
 			       ret);
-		return ret;
-	}
-	/* Verify no other PF is running cr-dump or sw reset */
+		वापस ret;
+	पूर्ण
+	/* Verअगरy no other PF is running cr-dump or sw reset */
 	ret = mlx5_vsc_sem_set_space(dev, MLX5_SEMAPHORE_SW_RESET,
 				     MLX5_VSC_LOCK);
-	if (ret) {
+	अगर (ret) अणु
 		mlx5_core_warn(dev, "Failed to lock SW reset semaphore\n");
-		goto unlock_gw;
-	}
+		जाओ unlock_gw;
+	पूर्ण
 
-	ret = mlx5_vsc_gw_set_space(dev, MLX5_VSC_SPACE_SCAN_CRSPACE, NULL);
-	if (ret)
-		goto unlock_sem;
+	ret = mlx5_vsc_gw_set_space(dev, MLX5_VSC_SPACE_SCAN_CRSPACE, शून्य);
+	अगर (ret)
+		जाओ unlock_sem;
 
 	ret = mlx5_crdump_fill(dev, cr_data);
 
@@ -69,47 +70,47 @@ unlock_sem:
 	mlx5_vsc_sem_set_space(dev, MLX5_SEMAPHORE_SW_RESET, MLX5_VSC_UNLOCK);
 unlock_gw:
 	mlx5_vsc_gw_unlock(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int mlx5_crdump_enable(struct mlx5_core_dev *dev)
-{
-	struct mlx5_priv *priv = &dev->priv;
+पूर्णांक mlx5_crdump_enable(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_priv *priv = &dev->priv;
 	u32 space_size;
-	int ret;
+	पूर्णांक ret;
 
-	if (!mlx5_core_is_pf(dev) || !mlx5_vsc_accessible(dev) ||
+	अगर (!mlx5_core_is_pf(dev) || !mlx5_vsc_accessible(dev) ||
 	    mlx5_crdump_enabled(dev))
-		return 0;
+		वापस 0;
 
 	ret = mlx5_vsc_gw_lock(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Check if space is supported and get space size */
+	/* Check अगर space is supported and get space size */
 	ret = mlx5_vsc_gw_set_space(dev, MLX5_VSC_SPACE_SCAN_CRSPACE,
 				    &space_size);
-	if (ret) {
+	अगर (ret) अणु
 		/* Unlock and mask error since space is not supported */
 		mlx5_vsc_gw_unlock(dev);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!space_size) {
+	अगर (!space_size) अणु
 		mlx5_core_warn(dev, "Invalid Crspace size, zero\n");
 		mlx5_vsc_gw_unlock(dev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = mlx5_vsc_gw_unlock(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	priv->health.crdump_size = space_size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mlx5_crdump_disable(struct mlx5_core_dev *dev)
-{
+व्योम mlx5_crdump_disable(काष्ठा mlx5_core_dev *dev)
+अणु
 	dev->priv.health.crdump_size = 0;
-}
+पूर्ण

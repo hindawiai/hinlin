@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,334 +22,334 @@
  * SOFTWARE.
  *
  * Authors:
- *    Kevin Tian <kevin.tian@intel.com>
- *    Eddie Dong <eddie.dong@intel.com>
+ *    Kevin Tian <kevin.tian@पूर्णांकel.com>
+ *    Eddie Dong <eddie.करोng@पूर्णांकel.com>
  *
  * Contributors:
- *    Niu Bing <bing.niu@intel.com>
- *    Zhi Wang <zhi.a.wang@intel.com>
+ *    Niu Bing <bing.niu@पूर्णांकel.com>
+ *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
  *
  */
 
-#ifndef _GVT_H_
-#define _GVT_H_
+#अगर_अघोषित _GVT_H_
+#घोषणा _GVT_H_
 
-#include <uapi/linux/pci_regs.h>
+#समावेश <uapi/linux/pci_regs.h>
 
-#include "i915_drv.h"
+#समावेश "i915_drv.h"
 
-#include "debug.h"
-#include "hypercall.h"
-#include "mmio.h"
-#include "reg.h"
-#include "interrupt.h"
-#include "gtt.h"
-#include "display.h"
-#include "edid.h"
-#include "execlist.h"
-#include "scheduler.h"
-#include "sched_policy.h"
-#include "mmio_context.h"
-#include "cmd_parser.h"
-#include "fb_decoder.h"
-#include "dmabuf.h"
-#include "page_track.h"
+#समावेश "debug.h"
+#समावेश "hypercall.h"
+#समावेश "mmio.h"
+#समावेश "reg.h"
+#समावेश "interrupt.h"
+#समावेश "gtt.h"
+#समावेश "display.h"
+#समावेश "edid.h"
+#समावेश "execlist.h"
+#समावेश "scheduler.h"
+#समावेश "sched_policy.h"
+#समावेश "mmio_context.h"
+#समावेश "cmd_parser.h"
+#समावेश "fb_decoder.h"
+#समावेश "dmabuf.h"
+#समावेश "page_track.h"
 
-#define GVT_MAX_VGPU 8
+#घोषणा GVT_MAX_VGPU 8
 
-struct intel_gvt_host {
-	struct device *dev;
+काष्ठा पूर्णांकel_gvt_host अणु
+	काष्ठा device *dev;
 	bool initialized;
-	int hypervisor_type;
-	const struct intel_gvt_mpt *mpt;
-};
+	पूर्णांक hypervisor_type;
+	स्थिर काष्ठा पूर्णांकel_gvt_mpt *mpt;
+पूर्ण;
 
-extern struct intel_gvt_host intel_gvt_host;
+बाह्य काष्ठा पूर्णांकel_gvt_host पूर्णांकel_gvt_host;
 
-/* Describe per-platform limitations. */
-struct intel_gvt_device_info {
+/* Describe per-platक्रमm limitations. */
+काष्ठा पूर्णांकel_gvt_device_info अणु
 	u32 max_support_vgpus;
 	u32 cfg_space_size;
 	u32 mmio_size;
 	u32 mmio_bar;
-	unsigned long msi_cap_offset;
+	अचिन्हित दीर्घ msi_cap_offset;
 	u32 gtt_start_offset;
 	u32 gtt_entry_size;
-	u32 gtt_entry_size_shift;
-	int gmadr_bytes_in_cmd;
+	u32 gtt_entry_size_shअगरt;
+	पूर्णांक gmadr_bytes_in_cmd;
 	u32 max_surface_size;
-};
+पूर्ण;
 
 /* GM resources owned by a vGPU */
-struct intel_vgpu_gm {
+काष्ठा पूर्णांकel_vgpu_gm अणु
 	u64 aperture_sz;
 	u64 hidden_sz;
-	struct drm_mm_node low_gm_node;
-	struct drm_mm_node high_gm_node;
-};
+	काष्ठा drm_mm_node low_gm_node;
+	काष्ठा drm_mm_node high_gm_node;
+पूर्ण;
 
-#define INTEL_GVT_MAX_NUM_FENCES 32
+#घोषणा INTEL_GVT_MAX_NUM_FENCES 32
 
 /* Fences owned by a vGPU */
-struct intel_vgpu_fence {
-	struct i915_fence_reg *regs[INTEL_GVT_MAX_NUM_FENCES];
+काष्ठा पूर्णांकel_vgpu_fence अणु
+	काष्ठा i915_fence_reg *regs[INTEL_GVT_MAX_NUM_FENCES];
 	u32 base;
 	u32 size;
-};
+पूर्ण;
 
-struct intel_vgpu_mmio {
-	void *vreg;
-};
+काष्ठा पूर्णांकel_vgpu_mmio अणु
+	व्योम *vreg;
+पूर्ण;
 
-#define INTEL_GVT_MAX_BAR_NUM 4
+#घोषणा INTEL_GVT_MAX_BAR_NUM 4
 
-struct intel_vgpu_pci_bar {
+काष्ठा पूर्णांकel_vgpu_pci_bar अणु
 	u64 size;
 	bool tracked;
-};
+पूर्ण;
 
-struct intel_vgpu_cfg_space {
-	unsigned char virtual_cfg_space[PCI_CFG_SPACE_EXP_SIZE];
-	struct intel_vgpu_pci_bar bar[INTEL_GVT_MAX_BAR_NUM];
+काष्ठा पूर्णांकel_vgpu_cfg_space अणु
+	अचिन्हित अक्षर भव_cfg_space[PCI_CFG_SPACE_EXP_SIZE];
+	काष्ठा पूर्णांकel_vgpu_pci_bar bar[INTEL_GVT_MAX_BAR_NUM];
 	u32 pmcsr_off;
-};
+पूर्ण;
 
-#define vgpu_cfg_space(vgpu) ((vgpu)->cfg_space.virtual_cfg_space)
+#घोषणा vgpu_cfg_space(vgpu) ((vgpu)->cfg_space.भव_cfg_space)
 
-struct intel_vgpu_irq {
+काष्ठा पूर्णांकel_vgpu_irq अणु
 	bool irq_warn_once[INTEL_GVT_EVENT_MAX];
-	DECLARE_BITMAP(flip_done_event[I915_MAX_PIPES],
+	DECLARE_BITMAP(flip_करोne_event[I915_MAX_PIPES],
 		       INTEL_GVT_EVENT_MAX);
-};
+पूर्ण;
 
-struct intel_vgpu_opregion {
+काष्ठा पूर्णांकel_vgpu_opregion अणु
 	bool mapped;
-	void *va;
+	व्योम *va;
 	u32 gfn[INTEL_GVT_OPREGION_PAGES];
-};
+पूर्ण;
 
-#define vgpu_opregion(vgpu) (&(vgpu->opregion))
+#घोषणा vgpu_opregion(vgpu) (&(vgpu->opregion))
 
-struct intel_vgpu_display {
-	struct intel_vgpu_i2c_edid i2c_edid;
-	struct intel_vgpu_port ports[I915_MAX_PORTS];
-	struct intel_vgpu_sbi sbi;
-	enum port port_num;
-};
+काष्ठा पूर्णांकel_vgpu_display अणु
+	काष्ठा पूर्णांकel_vgpu_i2c_edid i2c_edid;
+	काष्ठा पूर्णांकel_vgpu_port ports[I915_MAX_PORTS];
+	काष्ठा पूर्णांकel_vgpu_sbi sbi;
+	क्रमागत port port_num;
+पूर्ण;
 
-struct vgpu_sched_ctl {
-	int weight;
-};
+काष्ठा vgpu_sched_ctl अणु
+	पूर्णांक weight;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	INTEL_VGPU_EXECLIST_SUBMISSION = 1,
 	INTEL_VGPU_GUC_SUBMISSION,
-};
+पूर्ण;
 
-struct intel_vgpu_submission_ops {
-	const char *name;
-	int (*init)(struct intel_vgpu *vgpu, intel_engine_mask_t engine_mask);
-	void (*clean)(struct intel_vgpu *vgpu, intel_engine_mask_t engine_mask);
-	void (*reset)(struct intel_vgpu *vgpu, intel_engine_mask_t engine_mask);
-};
+काष्ठा पूर्णांकel_vgpu_submission_ops अणु
+	स्थिर अक्षर *name;
+	पूर्णांक (*init)(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांकel_engine_mask_t engine_mask);
+	व्योम (*clean)(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांकel_engine_mask_t engine_mask);
+	व्योम (*reset)(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांकel_engine_mask_t engine_mask);
+पूर्ण;
 
-struct intel_vgpu_submission {
-	struct intel_vgpu_execlist execlist[I915_NUM_ENGINES];
-	struct list_head workload_q_head[I915_NUM_ENGINES];
-	struct intel_context *shadow[I915_NUM_ENGINES];
-	struct kmem_cache *workloads;
+काष्ठा पूर्णांकel_vgpu_submission अणु
+	काष्ठा पूर्णांकel_vgpu_execlist execlist[I915_NUM_ENGINES];
+	काष्ठा list_head workload_q_head[I915_NUM_ENGINES];
+	काष्ठा पूर्णांकel_context *shaकरोw[I915_NUM_ENGINES];
+	काष्ठा kmem_cache *workloads;
 	atomic_t running_workload_num;
-	union {
+	जोड़ अणु
 		u64 i915_context_pml4;
 		u64 i915_context_pdps[GEN8_3LVL_PDPES];
-	};
-	DECLARE_BITMAP(shadow_ctx_desc_updated, I915_NUM_ENGINES);
+	पूर्ण;
+	DECLARE_BITMAP(shaकरोw_ctx_desc_updated, I915_NUM_ENGINES);
 	DECLARE_BITMAP(tlb_handle_pending, I915_NUM_ENGINES);
-	void *ring_scan_buffer[I915_NUM_ENGINES];
-	int ring_scan_buffer_size[I915_NUM_ENGINES];
-	const struct intel_vgpu_submission_ops *ops;
-	int virtual_submission_interface;
+	व्योम *ring_scan_buffer[I915_NUM_ENGINES];
+	पूर्णांक ring_scan_buffer_size[I915_NUM_ENGINES];
+	स्थिर काष्ठा पूर्णांकel_vgpu_submission_ops *ops;
+	पूर्णांक भव_submission_पूर्णांकerface;
 	bool active;
-	struct {
+	काष्ठा अणु
 		u32 lrca;
 		bool valid;
 		u64 ring_context_gpa;
-	} last_ctx[I915_NUM_ENGINES];
-};
+	पूर्ण last_ctx[I915_NUM_ENGINES];
+पूर्ण;
 
-struct intel_vgpu {
-	struct intel_gvt *gvt;
-	struct mutex vgpu_lock;
-	int id;
-	unsigned long handle; /* vGPU handle used by hypervisor MPT modules */
+काष्ठा पूर्णांकel_vgpu अणु
+	काष्ठा पूर्णांकel_gvt *gvt;
+	काष्ठा mutex vgpu_lock;
+	पूर्णांक id;
+	अचिन्हित दीर्घ handle; /* vGPU handle used by hypervisor MPT modules */
 	bool active;
-	bool pv_notified;
+	bool pv_notअगरied;
 	bool failsafe;
-	unsigned int resetting_eng;
+	अचिन्हित पूर्णांक resetting_eng;
 
 	/* Both sched_data and sched_ctl can be seen a part of the global gvt
-	 * scheduler structure. So below 2 vgpu data are protected
+	 * scheduler काष्ठाure. So below 2 vgpu data are रक्षित
 	 * by sched_lock, not vgpu_lock.
 	 */
-	void *sched_data;
-	struct vgpu_sched_ctl sched_ctl;
+	व्योम *sched_data;
+	काष्ठा vgpu_sched_ctl sched_ctl;
 
-	struct intel_vgpu_fence fence;
-	struct intel_vgpu_gm gm;
-	struct intel_vgpu_cfg_space cfg_space;
-	struct intel_vgpu_mmio mmio;
-	struct intel_vgpu_irq irq;
-	struct intel_vgpu_gtt gtt;
-	struct intel_vgpu_opregion opregion;
-	struct intel_vgpu_display display;
-	struct intel_vgpu_submission submission;
-	struct radix_tree_root page_track_tree;
+	काष्ठा पूर्णांकel_vgpu_fence fence;
+	काष्ठा पूर्णांकel_vgpu_gm gm;
+	काष्ठा पूर्णांकel_vgpu_cfg_space cfg_space;
+	काष्ठा पूर्णांकel_vgpu_mmio mmio;
+	काष्ठा पूर्णांकel_vgpu_irq irq;
+	काष्ठा पूर्णांकel_vgpu_gtt gtt;
+	काष्ठा पूर्णांकel_vgpu_opregion opregion;
+	काष्ठा पूर्णांकel_vgpu_display display;
+	काष्ठा पूर्णांकel_vgpu_submission submission;
+	काष्ठा radix_tree_root page_track_tree;
 	u32 hws_pga[I915_NUM_ENGINES];
 	/* Set on PCI_D3, reset on DMLR, not reflecting the actual PM state */
 	bool d3_entered;
 
-	struct dentry *debugfs;
+	काष्ठा dentry *debugfs;
 
-	/* Hypervisor-specific device state. */
-	void *vdev;
+	/* Hypervisor-specअगरic device state. */
+	व्योम *vdev;
 
-	struct list_head dmabuf_obj_list_head;
-	struct mutex dmabuf_lock;
-	struct idr object_idr;
-	struct intel_vgpu_vblank_timer vblank_timer;
+	काष्ठा list_head dmabuf_obj_list_head;
+	काष्ठा mutex dmabuf_lock;
+	काष्ठा idr object_idr;
+	काष्ठा पूर्णांकel_vgpu_vblank_समयr vblank_समयr;
 
 	u32 scan_nonprivbb;
-};
+पूर्ण;
 
-static inline void *intel_vgpu_vdev(struct intel_vgpu *vgpu)
-{
-	return vgpu->vdev;
-}
+अटल अंतरभूत व्योम *पूर्णांकel_vgpu_vdev(काष्ठा पूर्णांकel_vgpu *vgpu)
+अणु
+	वापस vgpu->vdev;
+पूर्ण
 
 /* validating GM healthy status*/
-#define vgpu_is_vm_unhealthy(ret_val) \
+#घोषणा vgpu_is_vm_unhealthy(ret_val) \
 	(((ret_val) == -EBADRQC) || ((ret_val) == -EFAULT))
 
-struct intel_gvt_gm {
-	unsigned long vgpu_allocated_low_gm_size;
-	unsigned long vgpu_allocated_high_gm_size;
-};
+काष्ठा पूर्णांकel_gvt_gm अणु
+	अचिन्हित दीर्घ vgpu_allocated_low_gm_size;
+	अचिन्हित दीर्घ vgpu_allocated_high_gm_size;
+पूर्ण;
 
-struct intel_gvt_fence {
-	unsigned long vgpu_allocated_fence_num;
-};
+काष्ठा पूर्णांकel_gvt_fence अणु
+	अचिन्हित दीर्घ vgpu_allocated_fence_num;
+पूर्ण;
 
 /* Special MMIO blocks. */
-struct gvt_mmio_block {
-	unsigned int device;
+काष्ठा gvt_mmio_block अणु
+	अचिन्हित पूर्णांक device;
 	i915_reg_t   offset;
-	unsigned int size;
-	gvt_mmio_func read;
-	gvt_mmio_func write;
-};
+	अचिन्हित पूर्णांक size;
+	gvt_mmio_func पढ़ो;
+	gvt_mmio_func ग_लिखो;
+पूर्ण;
 
-#define INTEL_GVT_MMIO_HASH_BITS 11
+#घोषणा INTEL_GVT_MMIO_HASH_BITS 11
 
-struct intel_gvt_mmio {
+काष्ठा पूर्णांकel_gvt_mmio अणु
 	u16 *mmio_attribute;
 /* Register contains RO bits */
-#define F_RO		(1 << 0)
+#घोषणा F_RO		(1 << 0)
 /* Register contains graphics address */
-#define F_GMADR		(1 << 1)
-/* Mode mask registers with high 16 bits as the mask bits */
-#define F_MODE_MASK	(1 << 2)
+#घोषणा F_GMADR		(1 << 1)
+/* Mode mask रेजिस्टरs with high 16 bits as the mask bits */
+#घोषणा F_MODE_MASK	(1 << 2)
 /* This reg can be accessed by GPU commands */
-#define F_CMD_ACCESS	(1 << 3)
+#घोषणा F_CMD_ACCESS	(1 << 3)
 /* This reg has been accessed by a VM */
-#define F_ACCESSED	(1 << 4)
+#घोषणा F_ACCESSED	(1 << 4)
 /* This reg requires save & restore during host PM suspend/resume */
-#define F_PM_SAVE	(1 << 5)
+#घोषणा F_PM_SAVE	(1 << 5)
 /* This reg could be accessed by unaligned address */
-#define F_UNALIGN	(1 << 6)
+#घोषणा F_UNALIGN	(1 << 6)
 /* This reg is in GVT's mmio save-restor list and in hardware
  * logical context image
  */
-#define F_SR_IN_CTX	(1 << 7)
-/* Value of command write of this reg needs to be patched */
-#define F_CMD_WRITE_PATCH	(1 << 8)
+#घोषणा F_SR_IN_CTX	(1 << 7)
+/* Value of command ग_लिखो of this reg needs to be patched */
+#घोषणा F_CMD_WRITE_PATCH	(1 << 8)
 
-	struct gvt_mmio_block *mmio_block;
-	unsigned int num_mmio_block;
+	काष्ठा gvt_mmio_block *mmio_block;
+	अचिन्हित पूर्णांक num_mmio_block;
 
 	DECLARE_HASHTABLE(mmio_info_table, INTEL_GVT_MMIO_HASH_BITS);
-	unsigned long num_tracked_mmio;
-};
+	अचिन्हित दीर्घ num_tracked_mmio;
+पूर्ण;
 
-struct intel_gvt_firmware {
-	void *cfg_space;
-	void *mmio;
+काष्ठा पूर्णांकel_gvt_firmware अणु
+	व्योम *cfg_space;
+	व्योम *mmio;
 	bool firmware_loaded;
-};
+पूर्ण;
 
-#define NR_MAX_INTEL_VGPU_TYPES 20
-struct intel_vgpu_type {
-	char name[16];
-	unsigned int avail_instance;
-	unsigned int low_gm_size;
-	unsigned int high_gm_size;
-	unsigned int fence;
-	unsigned int weight;
-	enum intel_vgpu_edid resolution;
-};
+#घोषणा NR_MAX_INTEL_VGPU_TYPES 20
+काष्ठा पूर्णांकel_vgpu_type अणु
+	अक्षर name[16];
+	अचिन्हित पूर्णांक avail_instance;
+	अचिन्हित पूर्णांक low_gm_size;
+	अचिन्हित पूर्णांक high_gm_size;
+	अचिन्हित पूर्णांक fence;
+	अचिन्हित पूर्णांक weight;
+	क्रमागत पूर्णांकel_vgpu_edid resolution;
+पूर्ण;
 
-struct intel_gvt {
+काष्ठा पूर्णांकel_gvt अणु
 	/* GVT scope lock, protect GVT itself, and all resource currently
-	 * not yet protected by special locks(vgpu and scheduler lock).
+	 * not yet रक्षित by special locks(vgpu and scheduler lock).
 	 */
-	struct mutex lock;
+	काष्ठा mutex lock;
 	/* scheduler scope lock, protect gvt and vgpu schedule related data */
-	struct mutex sched_lock;
+	काष्ठा mutex sched_lock;
 
-	struct intel_gt *gt;
-	struct idr vgpu_idr;	/* vGPU IDR pool */
+	काष्ठा पूर्णांकel_gt *gt;
+	काष्ठा idr vgpu_idr;	/* vGPU IDR pool */
 
-	struct intel_gvt_device_info device_info;
-	struct intel_gvt_gm gm;
-	struct intel_gvt_fence fence;
-	struct intel_gvt_mmio mmio;
-	struct intel_gvt_firmware firmware;
-	struct intel_gvt_irq irq;
-	struct intel_gvt_gtt gtt;
-	struct intel_gvt_workload_scheduler scheduler;
-	struct notifier_block shadow_ctx_notifier_block[I915_NUM_ENGINES];
+	काष्ठा पूर्णांकel_gvt_device_info device_info;
+	काष्ठा पूर्णांकel_gvt_gm gm;
+	काष्ठा पूर्णांकel_gvt_fence fence;
+	काष्ठा पूर्णांकel_gvt_mmio mmio;
+	काष्ठा पूर्णांकel_gvt_firmware firmware;
+	काष्ठा पूर्णांकel_gvt_irq irq;
+	काष्ठा पूर्णांकel_gvt_gtt gtt;
+	काष्ठा पूर्णांकel_gvt_workload_scheduler scheduler;
+	काष्ठा notअगरier_block shaकरोw_ctx_notअगरier_block[I915_NUM_ENGINES];
 	DECLARE_HASHTABLE(cmd_table, GVT_CMD_HASH_BITS);
-	struct intel_vgpu_type *types;
-	unsigned int num_types;
-	struct intel_vgpu *idle_vgpu;
+	काष्ठा पूर्णांकel_vgpu_type *types;
+	अचिन्हित पूर्णांक num_types;
+	काष्ठा पूर्णांकel_vgpu *idle_vgpu;
 
-	struct task_struct *service_thread;
-	wait_queue_head_t service_thread_wq;
+	काष्ठा task_काष्ठा *service_thपढ़ो;
+	रुको_queue_head_t service_thपढ़ो_wq;
 
 	/* service_request is always used in bit operation, we should always
 	 * use it with atomic bit ops so that no need to use gvt big lock.
 	 */
-	unsigned long service_request;
+	अचिन्हित दीर्घ service_request;
 
-	struct {
-		struct engine_mmio *mmio;
-		int ctx_mmio_count[I915_NUM_ENGINES];
+	काष्ठा अणु
+		काष्ठा engine_mmio *mmio;
+		पूर्णांक ctx_mmio_count[I915_NUM_ENGINES];
 		u32 *tlb_mmio_offset_list;
 		u32 tlb_mmio_offset_list_cnt;
 		u32 *mocs_mmio_offset_list;
 		u32 mocs_mmio_offset_list_cnt;
-	} engine_mmio_list;
+	पूर्ण engine_mmio_list;
 	bool is_reg_whitelist_updated;
 
-	struct dentry *debugfs_root;
-};
+	काष्ठा dentry *debugfs_root;
+पूर्ण;
 
-static inline struct intel_gvt *to_gvt(struct drm_i915_private *i915)
-{
-	return i915->gvt;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_gvt *to_gvt(काष्ठा drm_i915_निजी *i915)
+अणु
+	वापस i915->gvt;
+पूर्ण
 
-enum {
-	/* Scheduling trigger by timer */
+क्रमागत अणु
+	/* Scheduling trigger by समयr */
 	INTEL_GVT_REQUEST_SCHED = 0,
 
 	/* Scheduling trigger by event */
@@ -358,76 +359,76 @@ enum {
 	INTEL_GVT_REQUEST_EMULATE_VBLANK = 2,
 	INTEL_GVT_REQUEST_EMULATE_VBLANK_MAX = INTEL_GVT_REQUEST_EMULATE_VBLANK
 		+ GVT_MAX_VGPU,
-};
+पूर्ण;
 
-static inline void intel_gvt_request_service(struct intel_gvt *gvt,
-		int service)
-{
-	set_bit(service, (void *)&gvt->service_request);
-	wake_up(&gvt->service_thread_wq);
-}
+अटल अंतरभूत व्योम पूर्णांकel_gvt_request_service(काष्ठा पूर्णांकel_gvt *gvt,
+		पूर्णांक service)
+अणु
+	set_bit(service, (व्योम *)&gvt->service_request);
+	wake_up(&gvt->service_thपढ़ो_wq);
+पूर्ण
 
-void intel_gvt_free_firmware(struct intel_gvt *gvt);
-int intel_gvt_load_firmware(struct intel_gvt *gvt);
+व्योम पूर्णांकel_gvt_मुक्त_firmware(काष्ठा पूर्णांकel_gvt *gvt);
+पूर्णांक पूर्णांकel_gvt_load_firmware(काष्ठा पूर्णांकel_gvt *gvt);
 
-/* Aperture/GM space definitions for GVT device */
-#define MB_TO_BYTES(mb) ((mb) << 20ULL)
-#define BYTES_TO_MB(b) ((b) >> 20ULL)
+/* Aperture/GM space definitions क्रम GVT device */
+#घोषणा MB_TO_BYTES(mb) ((mb) << 20ULL)
+#घोषणा BYTES_TO_MB(b) ((b) >> 20ULL)
 
-#define HOST_LOW_GM_SIZE MB_TO_BYTES(128)
-#define HOST_HIGH_GM_SIZE MB_TO_BYTES(384)
-#define HOST_FENCE 4
+#घोषणा HOST_LOW_GM_SIZE MB_TO_BYTES(128)
+#घोषणा HOST_HIGH_GM_SIZE MB_TO_BYTES(384)
+#घोषणा HOST_FENCE 4
 
-#define gvt_to_ggtt(gvt)	((gvt)->gt->ggtt)
+#घोषणा gvt_to_ggtt(gvt)	((gvt)->gt->ggtt)
 
-/* Aperture/GM space definitions for GVT device */
-#define gvt_aperture_sz(gvt)	  gvt_to_ggtt(gvt)->mappable_end
-#define gvt_aperture_pa_base(gvt) gvt_to_ggtt(gvt)->gmadr.start
+/* Aperture/GM space definitions क्रम GVT device */
+#घोषणा gvt_aperture_sz(gvt)	  gvt_to_ggtt(gvt)->mappable_end
+#घोषणा gvt_aperture_pa_base(gvt) gvt_to_ggtt(gvt)->gmadr.start
 
-#define gvt_ggtt_gm_sz(gvt)	gvt_to_ggtt(gvt)->vm.total
-#define gvt_ggtt_sz(gvt)	(gvt_to_ggtt(gvt)->vm.total >> PAGE_SHIFT << 3)
-#define gvt_hidden_sz(gvt)	(gvt_ggtt_gm_sz(gvt) - gvt_aperture_sz(gvt))
+#घोषणा gvt_ggtt_gm_sz(gvt)	gvt_to_ggtt(gvt)->vm.total
+#घोषणा gvt_ggtt_sz(gvt)	(gvt_to_ggtt(gvt)->vm.total >> PAGE_SHIFT << 3)
+#घोषणा gvt_hidden_sz(gvt)	(gvt_ggtt_gm_sz(gvt) - gvt_aperture_sz(gvt))
 
-#define gvt_aperture_gmadr_base(gvt) (0)
-#define gvt_aperture_gmadr_end(gvt) (gvt_aperture_gmadr_base(gvt) \
+#घोषणा gvt_aperture_gmadr_base(gvt) (0)
+#घोषणा gvt_aperture_gmadr_end(gvt) (gvt_aperture_gmadr_base(gvt) \
 				     + gvt_aperture_sz(gvt) - 1)
 
-#define gvt_hidden_gmadr_base(gvt) (gvt_aperture_gmadr_base(gvt) \
+#घोषणा gvt_hidden_gmadr_base(gvt) (gvt_aperture_gmadr_base(gvt) \
 				    + gvt_aperture_sz(gvt))
-#define gvt_hidden_gmadr_end(gvt) (gvt_hidden_gmadr_base(gvt) \
+#घोषणा gvt_hidden_gmadr_end(gvt) (gvt_hidden_gmadr_base(gvt) \
 				   + gvt_hidden_sz(gvt) - 1)
 
-#define gvt_fence_sz(gvt) (gvt_to_ggtt(gvt)->num_fences)
+#घोषणा gvt_fence_sz(gvt) (gvt_to_ggtt(gvt)->num_fences)
 
-/* Aperture/GM space definitions for vGPU */
-#define vgpu_aperture_offset(vgpu)	((vgpu)->gm.low_gm_node.start)
-#define vgpu_hidden_offset(vgpu)	((vgpu)->gm.high_gm_node.start)
-#define vgpu_aperture_sz(vgpu)		((vgpu)->gm.aperture_sz)
-#define vgpu_hidden_sz(vgpu)		((vgpu)->gm.hidden_sz)
+/* Aperture/GM space definitions क्रम vGPU */
+#घोषणा vgpu_aperture_offset(vgpu)	((vgpu)->gm.low_gm_node.start)
+#घोषणा vgpu_hidden_offset(vgpu)	((vgpu)->gm.high_gm_node.start)
+#घोषणा vgpu_aperture_sz(vgpu)		((vgpu)->gm.aperture_sz)
+#घोषणा vgpu_hidden_sz(vgpu)		((vgpu)->gm.hidden_sz)
 
-#define vgpu_aperture_pa_base(vgpu) \
+#घोषणा vgpu_aperture_pa_base(vgpu) \
 	(gvt_aperture_pa_base(vgpu->gvt) + vgpu_aperture_offset(vgpu))
 
-#define vgpu_ggtt_gm_sz(vgpu) ((vgpu)->gm.aperture_sz + (vgpu)->gm.hidden_sz)
+#घोषणा vgpu_ggtt_gm_sz(vgpu) ((vgpu)->gm.aperture_sz + (vgpu)->gm.hidden_sz)
 
-#define vgpu_aperture_pa_end(vgpu) \
+#घोषणा vgpu_aperture_pa_end(vgpu) \
 	(vgpu_aperture_pa_base(vgpu) + vgpu_aperture_sz(vgpu) - 1)
 
-#define vgpu_aperture_gmadr_base(vgpu) (vgpu_aperture_offset(vgpu))
-#define vgpu_aperture_gmadr_end(vgpu) \
+#घोषणा vgpu_aperture_gmadr_base(vgpu) (vgpu_aperture_offset(vgpu))
+#घोषणा vgpu_aperture_gmadr_end(vgpu) \
 	(vgpu_aperture_gmadr_base(vgpu) + vgpu_aperture_sz(vgpu) - 1)
 
-#define vgpu_hidden_gmadr_base(vgpu) (vgpu_hidden_offset(vgpu))
-#define vgpu_hidden_gmadr_end(vgpu) \
+#घोषणा vgpu_hidden_gmadr_base(vgpu) (vgpu_hidden_offset(vgpu))
+#घोषणा vgpu_hidden_gmadr_end(vgpu) \
 	(vgpu_hidden_gmadr_base(vgpu) + vgpu_hidden_sz(vgpu) - 1)
 
-#define vgpu_fence_base(vgpu) (vgpu->fence.base)
-#define vgpu_fence_sz(vgpu) (vgpu->fence.size)
+#घोषणा vgpu_fence_base(vgpu) (vgpu->fence.base)
+#घोषणा vgpu_fence_sz(vgpu) (vgpu->fence.size)
 
 /* ring context size i.e. the first 0x50 dwords*/
-#define RING_CTX_SIZE 320
+#घोषणा RING_CTX_SIZE 320
 
-struct intel_vgpu_creation_params {
+काष्ठा पूर्णांकel_vgpu_creation_params अणु
 	__u64 handle;
 	__u64 low_gm_sz;  /* in MB */
 	__u64 high_gm_sz; /* in MB */
@@ -437,300 +438,300 @@ struct intel_vgpu_creation_params {
 	__u64 vgpu_id;
 
 	__u32 weight;
-};
+पूर्ण;
 
-int intel_vgpu_alloc_resource(struct intel_vgpu *vgpu,
-			      struct intel_vgpu_creation_params *param);
-void intel_vgpu_reset_resource(struct intel_vgpu *vgpu);
-void intel_vgpu_free_resource(struct intel_vgpu *vgpu);
-void intel_vgpu_write_fence(struct intel_vgpu *vgpu,
+पूर्णांक पूर्णांकel_vgpu_alloc_resource(काष्ठा पूर्णांकel_vgpu *vgpu,
+			      काष्ठा पूर्णांकel_vgpu_creation_params *param);
+व्योम पूर्णांकel_vgpu_reset_resource(काष्ठा पूर्णांकel_vgpu *vgpu);
+व्योम पूर्णांकel_vgpu_मुक्त_resource(काष्ठा पूर्णांकel_vgpu *vgpu);
+व्योम पूर्णांकel_vgpu_ग_लिखो_fence(काष्ठा पूर्णांकel_vgpu *vgpu,
 	u32 fence, u64 value);
 
-/* Macros for easily accessing vGPU virtual/shadow register.
-   Explicitly seperate use for typed MMIO reg or real offset.*/
-#define vgpu_vreg_t(vgpu, reg) \
+/* Macros क्रम easily accessing vGPU भव/shaकरोw रेजिस्टर.
+   Explicitly seperate use क्रम typed MMIO reg or real offset.*/
+#घोषणा vgpu_vreg_t(vgpu, reg) \
 	(*(u32 *)(vgpu->mmio.vreg + i915_mmio_reg_offset(reg)))
-#define vgpu_vreg(vgpu, offset) \
+#घोषणा vgpu_vreg(vgpu, offset) \
 	(*(u32 *)(vgpu->mmio.vreg + (offset)))
-#define vgpu_vreg64_t(vgpu, reg) \
+#घोषणा vgpu_vreg64_t(vgpu, reg) \
 	(*(u64 *)(vgpu->mmio.vreg + i915_mmio_reg_offset(reg)))
-#define vgpu_vreg64(vgpu, offset) \
+#घोषणा vgpu_vreg64(vgpu, offset) \
 	(*(u64 *)(vgpu->mmio.vreg + (offset)))
 
-#define for_each_active_vgpu(gvt, vgpu, id) \
-	idr_for_each_entry((&(gvt)->vgpu_idr), (vgpu), (id)) \
-		for_each_if(vgpu->active)
+#घोषणा क्रम_each_active_vgpu(gvt, vgpu, id) \
+	idr_क्रम_each_entry((&(gvt)->vgpu_idr), (vgpu), (id)) \
+		क्रम_each_अगर(vgpu->active)
 
-static inline void intel_vgpu_write_pci_bar(struct intel_vgpu *vgpu,
+अटल अंतरभूत व्योम पूर्णांकel_vgpu_ग_लिखो_pci_bar(काष्ठा पूर्णांकel_vgpu *vgpu,
 					    u32 offset, u32 val, bool low)
-{
+अणु
 	u32 *pval;
 
 	/* BAR offset should be 32 bits algiend */
-	offset = rounddown(offset, 4);
+	offset = roundकरोwn(offset, 4);
 	pval = (u32 *)(vgpu_cfg_space(vgpu) + offset);
 
-	if (low) {
+	अगर (low) अणु
 		/*
 		 * only update bit 31 - bit 4,
 		 * leave the bit 3 - bit 0 unchanged.
 		 */
 		*pval = (val & GENMASK(31, 4)) | (*pval & GENMASK(3, 0));
-	} else {
+	पूर्ण अन्यथा अणु
 		*pval = val;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int intel_gvt_init_vgpu_types(struct intel_gvt *gvt);
-void intel_gvt_clean_vgpu_types(struct intel_gvt *gvt);
+पूर्णांक पूर्णांकel_gvt_init_vgpu_types(काष्ठा पूर्णांकel_gvt *gvt);
+व्योम पूर्णांकel_gvt_clean_vgpu_types(काष्ठा पूर्णांकel_gvt *gvt);
 
-struct intel_vgpu *intel_gvt_create_idle_vgpu(struct intel_gvt *gvt);
-void intel_gvt_destroy_idle_vgpu(struct intel_vgpu *vgpu);
-struct intel_vgpu *intel_gvt_create_vgpu(struct intel_gvt *gvt,
-					 struct intel_vgpu_type *type);
-void intel_gvt_destroy_vgpu(struct intel_vgpu *vgpu);
-void intel_gvt_release_vgpu(struct intel_vgpu *vgpu);
-void intel_gvt_reset_vgpu_locked(struct intel_vgpu *vgpu, bool dmlr,
-				 intel_engine_mask_t engine_mask);
-void intel_gvt_reset_vgpu(struct intel_vgpu *vgpu);
-void intel_gvt_activate_vgpu(struct intel_vgpu *vgpu);
-void intel_gvt_deactivate_vgpu(struct intel_vgpu *vgpu);
+काष्ठा पूर्णांकel_vgpu *पूर्णांकel_gvt_create_idle_vgpu(काष्ठा पूर्णांकel_gvt *gvt);
+व्योम पूर्णांकel_gvt_destroy_idle_vgpu(काष्ठा पूर्णांकel_vgpu *vgpu);
+काष्ठा पूर्णांकel_vgpu *पूर्णांकel_gvt_create_vgpu(काष्ठा पूर्णांकel_gvt *gvt,
+					 काष्ठा पूर्णांकel_vgpu_type *type);
+व्योम पूर्णांकel_gvt_destroy_vgpu(काष्ठा पूर्णांकel_vgpu *vgpu);
+व्योम पूर्णांकel_gvt_release_vgpu(काष्ठा पूर्णांकel_vgpu *vgpu);
+व्योम पूर्णांकel_gvt_reset_vgpu_locked(काष्ठा पूर्णांकel_vgpu *vgpu, bool dmlr,
+				 पूर्णांकel_engine_mask_t engine_mask);
+व्योम पूर्णांकel_gvt_reset_vgpu(काष्ठा पूर्णांकel_vgpu *vgpu);
+व्योम पूर्णांकel_gvt_activate_vgpu(काष्ठा पूर्णांकel_vgpu *vgpu);
+व्योम पूर्णांकel_gvt_deactivate_vgpu(काष्ठा पूर्णांकel_vgpu *vgpu);
 
 /* validating GM functions */
-#define vgpu_gmadr_is_aperture(vgpu, gmadr) \
+#घोषणा vgpu_gmadr_is_aperture(vgpu, gmadr) \
 	((gmadr >= vgpu_aperture_gmadr_base(vgpu)) && \
 	 (gmadr <= vgpu_aperture_gmadr_end(vgpu)))
 
-#define vgpu_gmadr_is_hidden(vgpu, gmadr) \
+#घोषणा vgpu_gmadr_is_hidden(vgpu, gmadr) \
 	((gmadr >= vgpu_hidden_gmadr_base(vgpu)) && \
 	 (gmadr <= vgpu_hidden_gmadr_end(vgpu)))
 
-#define vgpu_gmadr_is_valid(vgpu, gmadr) \
+#घोषणा vgpu_gmadr_is_valid(vgpu, gmadr) \
 	 ((vgpu_gmadr_is_aperture(vgpu, gmadr) || \
 	  (vgpu_gmadr_is_hidden(vgpu, gmadr))))
 
-#define gvt_gmadr_is_aperture(gvt, gmadr) \
+#घोषणा gvt_gmadr_is_aperture(gvt, gmadr) \
 	 ((gmadr >= gvt_aperture_gmadr_base(gvt)) && \
 	  (gmadr <= gvt_aperture_gmadr_end(gvt)))
 
-#define gvt_gmadr_is_hidden(gvt, gmadr) \
+#घोषणा gvt_gmadr_is_hidden(gvt, gmadr) \
 	  ((gmadr >= gvt_hidden_gmadr_base(gvt)) && \
 	   (gmadr <= gvt_hidden_gmadr_end(gvt)))
 
-#define gvt_gmadr_is_valid(gvt, gmadr) \
+#घोषणा gvt_gmadr_is_valid(gvt, gmadr) \
 	  (gvt_gmadr_is_aperture(gvt, gmadr) || \
 	    gvt_gmadr_is_hidden(gvt, gmadr))
 
-bool intel_gvt_ggtt_validate_range(struct intel_vgpu *vgpu, u64 addr, u32 size);
-int intel_gvt_ggtt_gmadr_g2h(struct intel_vgpu *vgpu, u64 g_addr, u64 *h_addr);
-int intel_gvt_ggtt_gmadr_h2g(struct intel_vgpu *vgpu, u64 h_addr, u64 *g_addr);
-int intel_gvt_ggtt_index_g2h(struct intel_vgpu *vgpu, unsigned long g_index,
-			     unsigned long *h_index);
-int intel_gvt_ggtt_h2g_index(struct intel_vgpu *vgpu, unsigned long h_index,
-			     unsigned long *g_index);
+bool पूर्णांकel_gvt_ggtt_validate_range(काष्ठा पूर्णांकel_vgpu *vgpu, u64 addr, u32 size);
+पूर्णांक पूर्णांकel_gvt_ggtt_gmadr_g2h(काष्ठा पूर्णांकel_vgpu *vgpu, u64 g_addr, u64 *h_addr);
+पूर्णांक पूर्णांकel_gvt_ggtt_gmadr_h2g(काष्ठा पूर्णांकel_vgpu *vgpu, u64 h_addr, u64 *g_addr);
+पूर्णांक पूर्णांकel_gvt_ggtt_index_g2h(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित दीर्घ g_index,
+			     अचिन्हित दीर्घ *h_index);
+पूर्णांक पूर्णांकel_gvt_ggtt_h2g_index(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित दीर्घ h_index,
+			     अचिन्हित दीर्घ *g_index);
 
-void intel_vgpu_init_cfg_space(struct intel_vgpu *vgpu,
+व्योम पूर्णांकel_vgpu_init_cfg_space(काष्ठा पूर्णांकel_vgpu *vgpu,
 		bool primary);
-void intel_vgpu_reset_cfg_space(struct intel_vgpu *vgpu);
+व्योम पूर्णांकel_vgpu_reset_cfg_space(काष्ठा पूर्णांकel_vgpu *vgpu);
 
-int intel_vgpu_emulate_cfg_read(struct intel_vgpu *vgpu, unsigned int offset,
-		void *p_data, unsigned int bytes);
+पूर्णांक पूर्णांकel_vgpu_emulate_cfg_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+		व्योम *p_data, अचिन्हित पूर्णांक bytes);
 
-int intel_vgpu_emulate_cfg_write(struct intel_vgpu *vgpu, unsigned int offset,
-		void *p_data, unsigned int bytes);
+पूर्णांक पूर्णांकel_vgpu_emulate_cfg_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
+		व्योम *p_data, अचिन्हित पूर्णांक bytes);
 
-void intel_vgpu_emulate_hotplug(struct intel_vgpu *vgpu, bool connected);
+व्योम पूर्णांकel_vgpu_emulate_hotplug(काष्ठा पूर्णांकel_vgpu *vgpu, bool connected);
 
-static inline u64 intel_vgpu_get_bar_gpa(struct intel_vgpu *vgpu, int bar)
-{
+अटल अंतरभूत u64 पूर्णांकel_vgpu_get_bar_gpa(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांक bar)
+अणु
 	/* We are 64bit bar. */
-	return (*(u64 *)(vgpu->cfg_space.virtual_cfg_space + bar)) &
+	वापस (*(u64 *)(vgpu->cfg_space.भव_cfg_space + bar)) &
 			PCI_BASE_ADDRESS_MEM_MASK;
-}
+पूर्ण
 
-void intel_vgpu_clean_opregion(struct intel_vgpu *vgpu);
-int intel_vgpu_init_opregion(struct intel_vgpu *vgpu);
-int intel_vgpu_opregion_base_write_handler(struct intel_vgpu *vgpu, u32 gpa);
+व्योम पूर्णांकel_vgpu_clean_opregion(काष्ठा पूर्णांकel_vgpu *vgpu);
+पूर्णांक पूर्णांकel_vgpu_init_opregion(काष्ठा पूर्णांकel_vgpu *vgpu);
+पूर्णांक पूर्णांकel_vgpu_opregion_base_ग_लिखो_handler(काष्ठा पूर्णांकel_vgpu *vgpu, u32 gpa);
 
-int intel_vgpu_emulate_opregion_request(struct intel_vgpu *vgpu, u32 swsci);
-void populate_pvinfo_page(struct intel_vgpu *vgpu);
+पूर्णांक पूर्णांकel_vgpu_emulate_opregion_request(काष्ठा पूर्णांकel_vgpu *vgpu, u32 swsci);
+व्योम populate_pvinfo_page(काष्ठा पूर्णांकel_vgpu *vgpu);
 
-int intel_gvt_scan_and_shadow_workload(struct intel_vgpu_workload *workload);
-void enter_failsafe_mode(struct intel_vgpu *vgpu, int reason);
+पूर्णांक पूर्णांकel_gvt_scan_and_shaकरोw_workload(काष्ठा पूर्णांकel_vgpu_workload *workload);
+व्योम enter_failsafe_mode(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांक reason);
 
-struct intel_gvt_ops {
-	int (*emulate_cfg_read)(struct intel_vgpu *, unsigned int, void *,
-				unsigned int);
-	int (*emulate_cfg_write)(struct intel_vgpu *, unsigned int, void *,
-				unsigned int);
-	int (*emulate_mmio_read)(struct intel_vgpu *, u64, void *,
-				unsigned int);
-	int (*emulate_mmio_write)(struct intel_vgpu *, u64, void *,
-				unsigned int);
-	struct intel_vgpu *(*vgpu_create)(struct intel_gvt *,
-				struct intel_vgpu_type *);
-	void (*vgpu_destroy)(struct intel_vgpu *vgpu);
-	void (*vgpu_release)(struct intel_vgpu *vgpu);
-	void (*vgpu_reset)(struct intel_vgpu *);
-	void (*vgpu_activate)(struct intel_vgpu *);
-	void (*vgpu_deactivate)(struct intel_vgpu *);
-	int (*vgpu_query_plane)(struct intel_vgpu *vgpu, void *);
-	int (*vgpu_get_dmabuf)(struct intel_vgpu *vgpu, unsigned int);
-	int (*write_protect_handler)(struct intel_vgpu *, u64, void *,
-				     unsigned int);
-	void (*emulate_hotplug)(struct intel_vgpu *vgpu, bool connected);
-};
+काष्ठा पूर्णांकel_gvt_ops अणु
+	पूर्णांक (*emulate_cfg_पढ़ो)(काष्ठा पूर्णांकel_vgpu *, अचिन्हित पूर्णांक, व्योम *,
+				अचिन्हित पूर्णांक);
+	पूर्णांक (*emulate_cfg_ग_लिखो)(काष्ठा पूर्णांकel_vgpu *, अचिन्हित पूर्णांक, व्योम *,
+				अचिन्हित पूर्णांक);
+	पूर्णांक (*emulate_mmio_पढ़ो)(काष्ठा पूर्णांकel_vgpu *, u64, व्योम *,
+				अचिन्हित पूर्णांक);
+	पूर्णांक (*emulate_mmio_ग_लिखो)(काष्ठा पूर्णांकel_vgpu *, u64, व्योम *,
+				अचिन्हित पूर्णांक);
+	काष्ठा पूर्णांकel_vgpu *(*vgpu_create)(काष्ठा पूर्णांकel_gvt *,
+				काष्ठा पूर्णांकel_vgpu_type *);
+	व्योम (*vgpu_destroy)(काष्ठा पूर्णांकel_vgpu *vgpu);
+	व्योम (*vgpu_release)(काष्ठा पूर्णांकel_vgpu *vgpu);
+	व्योम (*vgpu_reset)(काष्ठा पूर्णांकel_vgpu *);
+	व्योम (*vgpu_activate)(काष्ठा पूर्णांकel_vgpu *);
+	व्योम (*vgpu_deactivate)(काष्ठा पूर्णांकel_vgpu *);
+	पूर्णांक (*vgpu_query_plane)(काष्ठा पूर्णांकel_vgpu *vgpu, व्योम *);
+	पूर्णांक (*vgpu_get_dmabuf)(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक);
+	पूर्णांक (*ग_लिखो_protect_handler)(काष्ठा पूर्णांकel_vgpu *, u64, व्योम *,
+				     अचिन्हित पूर्णांक);
+	व्योम (*emulate_hotplug)(काष्ठा पूर्णांकel_vgpu *vgpu, bool connected);
+पूर्ण;
 
 
-enum {
+क्रमागत अणु
 	GVT_FAILSAFE_UNSUPPORTED_GUEST,
 	GVT_FAILSAFE_INSUFFICIENT_RESOURCE,
 	GVT_FAILSAFE_GUEST_ERR,
-};
+पूर्ण;
 
-static inline void mmio_hw_access_pre(struct intel_gt *gt)
-{
-	intel_runtime_pm_get(gt->uncore->rpm);
-}
+अटल अंतरभूत व्योम mmio_hw_access_pre(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	पूर्णांकel_runसमय_pm_get(gt->uncore->rpm);
+पूर्ण
 
-static inline void mmio_hw_access_post(struct intel_gt *gt)
-{
-	intel_runtime_pm_put_unchecked(gt->uncore->rpm);
-}
+अटल अंतरभूत व्योम mmio_hw_access_post(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	पूर्णांकel_runसमय_pm_put_unchecked(gt->uncore->rpm);
+पूर्ण
 
 /**
- * intel_gvt_mmio_set_accessed - mark a MMIO has been accessed
+ * पूर्णांकel_gvt_mmio_set_accessed - mark a MMIO has been accessed
  * @gvt: a GVT device
- * @offset: register offset
+ * @offset: रेजिस्टर offset
  *
  */
-static inline void intel_gvt_mmio_set_accessed(
-			struct intel_gvt *gvt, unsigned int offset)
-{
+अटल अंतरभूत व्योम पूर्णांकel_gvt_mmio_set_accessed(
+			काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक offset)
+अणु
 	gvt->mmio.mmio_attribute[offset >> 2] |= F_ACCESSED;
-}
+पूर्ण
 
 /**
- * intel_gvt_mmio_is_cmd_accessible - if a MMIO could be accessed by command
+ * पूर्णांकel_gvt_mmio_is_cmd_accessible - अगर a MMIO could be accessed by command
  * @gvt: a GVT device
- * @offset: register offset
+ * @offset: रेजिस्टर offset
  *
  * Returns:
- * True if an MMIO is able to be accessed by GPU commands
+ * True अगर an MMIO is able to be accessed by GPU commands
  */
-static inline bool intel_gvt_mmio_is_cmd_accessible(
-			struct intel_gvt *gvt, unsigned int offset)
-{
-	return gvt->mmio.mmio_attribute[offset >> 2] & F_CMD_ACCESS;
-}
+अटल अंतरभूत bool पूर्णांकel_gvt_mmio_is_cmd_accessible(
+			काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक offset)
+अणु
+	वापस gvt->mmio.mmio_attribute[offset >> 2] & F_CMD_ACCESS;
+पूर्ण
 
 /**
- * intel_gvt_mmio_set_cmd_accessible -
+ * पूर्णांकel_gvt_mmio_set_cmd_accessible -
  *				mark a MMIO could be accessible by command
  * @gvt: a GVT device
- * @offset: register offset
+ * @offset: रेजिस्टर offset
  *
  */
-static inline void intel_gvt_mmio_set_cmd_accessible(
-			struct intel_gvt *gvt, unsigned int offset)
-{
+अटल अंतरभूत व्योम पूर्णांकel_gvt_mmio_set_cmd_accessible(
+			काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक offset)
+अणु
 	gvt->mmio.mmio_attribute[offset >> 2] |= F_CMD_ACCESS;
-}
+पूर्ण
 
 /**
- * intel_gvt_mmio_is_unalign - mark a MMIO could be accessed unaligned
+ * पूर्णांकel_gvt_mmio_is_unalign - mark a MMIO could be accessed unaligned
  * @gvt: a GVT device
- * @offset: register offset
+ * @offset: रेजिस्टर offset
  *
  */
-static inline bool intel_gvt_mmio_is_unalign(
-			struct intel_gvt *gvt, unsigned int offset)
-{
-	return gvt->mmio.mmio_attribute[offset >> 2] & F_UNALIGN;
-}
+अटल अंतरभूत bool पूर्णांकel_gvt_mmio_is_unalign(
+			काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक offset)
+अणु
+	वापस gvt->mmio.mmio_attribute[offset >> 2] & F_UNALIGN;
+पूर्ण
 
 /**
- * intel_gvt_mmio_has_mode_mask - if a MMIO has a mode mask
+ * पूर्णांकel_gvt_mmio_has_mode_mask - अगर a MMIO has a mode mask
  * @gvt: a GVT device
- * @offset: register offset
+ * @offset: रेजिस्टर offset
  *
  * Returns:
- * True if a MMIO has a mode mask in its higher 16 bits, false if it isn't.
+ * True अगर a MMIO has a mode mask in its higher 16 bits, false अगर it isn't.
  *
  */
-static inline bool intel_gvt_mmio_has_mode_mask(
-			struct intel_gvt *gvt, unsigned int offset)
-{
-	return gvt->mmio.mmio_attribute[offset >> 2] & F_MODE_MASK;
-}
+अटल अंतरभूत bool पूर्णांकel_gvt_mmio_has_mode_mask(
+			काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक offset)
+अणु
+	वापस gvt->mmio.mmio_attribute[offset >> 2] & F_MODE_MASK;
+पूर्ण
 
 /**
- * intel_gvt_mmio_is_sr_in_ctx -
- *		check if an MMIO has F_SR_IN_CTX mask
+ * पूर्णांकel_gvt_mmio_is_sr_in_ctx -
+ *		check अगर an MMIO has F_SR_IN_CTX mask
  * @gvt: a GVT device
- * @offset: register offset
+ * @offset: रेजिस्टर offset
  *
  * Returns:
- * True if an MMIO has an F_SR_IN_CTX  mask, false if it isn't.
+ * True अगर an MMIO has an F_SR_IN_CTX  mask, false अगर it isn't.
  *
  */
-static inline bool intel_gvt_mmio_is_sr_in_ctx(
-			struct intel_gvt *gvt, unsigned int offset)
-{
-	return gvt->mmio.mmio_attribute[offset >> 2] & F_SR_IN_CTX;
-}
+अटल अंतरभूत bool पूर्णांकel_gvt_mmio_is_sr_in_ctx(
+			काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक offset)
+अणु
+	वापस gvt->mmio.mmio_attribute[offset >> 2] & F_SR_IN_CTX;
+पूर्ण
 
 /**
- * intel_gvt_mmio_set_sr_in_ctx -
+ * पूर्णांकel_gvt_mmio_set_sr_in_ctx -
  *		mask an MMIO in GVT's mmio save-restore list and also
  *		in hardware logical context image
  * @gvt: a GVT device
- * @offset: register offset
+ * @offset: रेजिस्टर offset
  *
  */
-static inline void intel_gvt_mmio_set_sr_in_ctx(
-			struct intel_gvt *gvt, unsigned int offset)
-{
+अटल अंतरभूत व्योम पूर्णांकel_gvt_mmio_set_sr_in_ctx(
+			काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक offset)
+अणु
 	gvt->mmio.mmio_attribute[offset >> 2] |= F_SR_IN_CTX;
-}
+पूर्ण
 
-void intel_gvt_debugfs_add_vgpu(struct intel_vgpu *vgpu);
+व्योम पूर्णांकel_gvt_debugfs_add_vgpu(काष्ठा पूर्णांकel_vgpu *vgpu);
 /**
- * intel_gvt_mmio_set_cmd_write_patch -
- *				mark an MMIO if its cmd write needs to be
+ * पूर्णांकel_gvt_mmio_set_cmd_ग_लिखो_patch -
+ *				mark an MMIO अगर its cmd ग_लिखो needs to be
  *				patched
  * @gvt: a GVT device
- * @offset: register offset
+ * @offset: रेजिस्टर offset
  *
  */
-static inline void intel_gvt_mmio_set_cmd_write_patch(
-			struct intel_gvt *gvt, unsigned int offset)
-{
+अटल अंतरभूत व्योम पूर्णांकel_gvt_mmio_set_cmd_ग_लिखो_patch(
+			काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक offset)
+अणु
 	gvt->mmio.mmio_attribute[offset >> 2] |= F_CMD_WRITE_PATCH;
-}
+पूर्ण
 
 /**
- * intel_gvt_mmio_is_cmd_write_patch - check if an mmio's cmd access needs to
+ * पूर्णांकel_gvt_mmio_is_cmd_ग_लिखो_patch - check अगर an mmio's cmd access needs to
  * be patched
  * @gvt: a GVT device
- * @offset: register offset
+ * @offset: रेजिस्टर offset
  *
  * Returns:
- * True if GPU commmand write to an MMIO should be patched
+ * True अगर GPU commmand ग_लिखो to an MMIO should be patched
  */
-static inline bool intel_gvt_mmio_is_cmd_write_patch(
-			struct intel_gvt *gvt, unsigned int offset)
-{
-	return gvt->mmio.mmio_attribute[offset >> 2] & F_CMD_WRITE_PATCH;
-}
+अटल अंतरभूत bool पूर्णांकel_gvt_mmio_is_cmd_ग_लिखो_patch(
+			काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक offset)
+अणु
+	वापस gvt->mmio.mmio_attribute[offset >> 2] & F_CMD_WRITE_PATCH;
+पूर्ण
 
-void intel_gvt_debugfs_remove_vgpu(struct intel_vgpu *vgpu);
-void intel_gvt_debugfs_init(struct intel_gvt *gvt);
-void intel_gvt_debugfs_clean(struct intel_gvt *gvt);
+व्योम पूर्णांकel_gvt_debugfs_हटाओ_vgpu(काष्ठा पूर्णांकel_vgpu *vgpu);
+व्योम पूर्णांकel_gvt_debugfs_init(काष्ठा पूर्णांकel_gvt *gvt);
+व्योम पूर्णांकel_gvt_debugfs_clean(काष्ठा पूर्णांकel_gvt *gvt);
 
-int intel_gvt_pm_resume(struct intel_gvt *gvt);
+पूर्णांक पूर्णांकel_gvt_pm_resume(काष्ठा पूर्णांकel_gvt *gvt);
 
-#include "trace.h"
-#include "mpt.h"
+#समावेश "trace.h"
+#समावेश "mpt.h"
 
-#endif
+#पूर्ण_अगर

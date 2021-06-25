@@ -1,257 +1,258 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2017-2018 Hisilicon Limited.
 // Copyright (c) 2017-2018 Linaro Limited.
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/mailbox_controller.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/mailbox_controller.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "mailbox.h"
+#समावेश "mailbox.h"
 
-#define MBOX_CHAN_MAX			32
+#घोषणा MBOX_CHAN_MAX			32
 
-#define MBOX_RX				0x0
-#define MBOX_TX				0x1
+#घोषणा MBOX_RX				0x0
+#घोषणा MBOX_TX				0x1
 
-#define MBOX_BASE(mbox, ch)		((mbox)->base + ((ch) * 0x40))
-#define MBOX_SRC_REG			0x00
-#define MBOX_DST_REG			0x04
-#define MBOX_DCLR_REG			0x08
-#define MBOX_DSTAT_REG			0x0c
-#define MBOX_MODE_REG			0x10
-#define MBOX_IMASK_REG			0x14
-#define MBOX_ICLR_REG			0x18
-#define MBOX_SEND_REG			0x1c
-#define MBOX_DATA_REG			0x20
+#घोषणा MBOX_BASE(mbox, ch)		((mbox)->base + ((ch) * 0x40))
+#घोषणा MBOX_SRC_REG			0x00
+#घोषणा MBOX_DST_REG			0x04
+#घोषणा MBOX_DCLR_REG			0x08
+#घोषणा MBOX_DSTAT_REG			0x0c
+#घोषणा MBOX_MODE_REG			0x10
+#घोषणा MBOX_IMASK_REG			0x14
+#घोषणा MBOX_ICLR_REG			0x18
+#घोषणा MBOX_SEND_REG			0x1c
+#घोषणा MBOX_DATA_REG			0x20
 
-#define MBOX_IPC_LOCK_REG		0xa00
-#define MBOX_IPC_UNLOCK			0x1acce551
+#घोषणा MBOX_IPC_LOCK_REG		0xa00
+#घोषणा MBOX_IPC_UNLOCK			0x1acce551
 
-#define MBOX_AUTOMATIC_ACK		1
+#घोषणा MBOX_AUTOMATIC_ACK		1
 
-#define MBOX_STATE_IDLE			BIT(4)
-#define MBOX_STATE_READY		BIT(5)
-#define MBOX_STATE_ACK			BIT(7)
+#घोषणा MBOX_STATE_IDLE			BIT(4)
+#घोषणा MBOX_STATE_READY		BIT(5)
+#घोषणा MBOX_STATE_ACK			BIT(7)
 
-#define MBOX_MSG_LEN			8
+#घोषणा MBOX_MSG_LEN			8
 
 /**
- * Hi3660 mailbox channel information
+ * Hi3660 mailbox channel inक्रमmation
  *
- * A channel can be used for TX or RX, it can trigger remote
- * processor interrupt to notify remote processor and can receive
- * interrupt if has incoming message.
+ * A channel can be used क्रम TX or RX, it can trigger remote
+ * processor पूर्णांकerrupt to notअगरy remote processor and can receive
+ * पूर्णांकerrupt अगर has incoming message.
  *
- * @dst_irq:	Interrupt vector for remote processor
- * @ack_irq:	Interrupt vector for local processor
+ * @dst_irq:	Interrupt vector क्रम remote processor
+ * @ack_irq:	Interrupt vector क्रम local processor
  */
-struct hi3660_chan_info {
-	unsigned int dst_irq;
-	unsigned int ack_irq;
-};
+काष्ठा hi3660_chan_info अणु
+	अचिन्हित पूर्णांक dst_irq;
+	अचिन्हित पूर्णांक ack_irq;
+पूर्ण;
 
 /**
  * Hi3660 mailbox controller data
  *
  * Mailbox controller includes 32 channels and can allocate
- * channel for message transferring.
+ * channel क्रम message transferring.
  *
  * @dev:	Device to which it is attached
- * @base:	Base address of the register mapping region
+ * @base:	Base address of the रेजिस्टर mapping region
  * @chan:	Representation of channels in mailbox controller
  * @mchan:	Representation of channel info
  * @controller:	Representation of a communication channel controller
  */
-struct hi3660_mbox {
-	struct device *dev;
-	void __iomem *base;
-	struct mbox_chan chan[MBOX_CHAN_MAX];
-	struct hi3660_chan_info mchan[MBOX_CHAN_MAX];
-	struct mbox_controller controller;
-};
+काष्ठा hi3660_mbox अणु
+	काष्ठा device *dev;
+	व्योम __iomem *base;
+	काष्ठा mbox_chan chan[MBOX_CHAN_MAX];
+	काष्ठा hi3660_chan_info mchan[MBOX_CHAN_MAX];
+	काष्ठा mbox_controller controller;
+पूर्ण;
 
-static struct hi3660_mbox *to_hi3660_mbox(struct mbox_controller *mbox)
-{
-	return container_of(mbox, struct hi3660_mbox, controller);
-}
+अटल काष्ठा hi3660_mbox *to_hi3660_mbox(काष्ठा mbox_controller *mbox)
+अणु
+	वापस container_of(mbox, काष्ठा hi3660_mbox, controller);
+पूर्ण
 
-static int hi3660_mbox_check_state(struct mbox_chan *chan)
-{
-	unsigned long ch = (unsigned long)chan->con_priv;
-	struct hi3660_mbox *mbox = to_hi3660_mbox(chan->mbox);
-	struct hi3660_chan_info *mchan = &mbox->mchan[ch];
-	void __iomem *base = MBOX_BASE(mbox, ch);
-	unsigned long val;
-	unsigned int ret;
+अटल पूर्णांक hi3660_mbox_check_state(काष्ठा mbox_chan *chan)
+अणु
+	अचिन्हित दीर्घ ch = (अचिन्हित दीर्घ)chan->con_priv;
+	काष्ठा hi3660_mbox *mbox = to_hi3660_mbox(chan->mbox);
+	काष्ठा hi3660_chan_info *mchan = &mbox->mchan[ch];
+	व्योम __iomem *base = MBOX_BASE(mbox, ch);
+	अचिन्हित दीर्घ val;
+	अचिन्हित पूर्णांक ret;
 
-	/* Mailbox is ready to use */
-	if (readl(base + MBOX_MODE_REG) & MBOX_STATE_READY)
-		return 0;
+	/* Mailbox is पढ़ोy to use */
+	अगर (पढ़ोl(base + MBOX_MODE_REG) & MBOX_STATE_READY)
+		वापस 0;
 
-	/* Wait for acknowledge from remote */
-	ret = readx_poll_timeout_atomic(readl, base + MBOX_MODE_REG,
+	/* Wait क्रम acknowledge from remote */
+	ret = पढ़ोx_poll_समयout_atomic(पढ़ोl, base + MBOX_MODE_REG,
 			val, (val & MBOX_STATE_ACK), 1000, 300000);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(mbox->dev, "%s: timeout for receiving ack\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* clear ack state, mailbox will get back to ready state */
-	writel(BIT(mchan->ack_irq), base + MBOX_ICLR_REG);
+	/* clear ack state, mailbox will get back to पढ़ोy state */
+	ग_लिखोl(BIT(mchan->ack_irq), base + MBOX_ICLR_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hi3660_mbox_unlock(struct mbox_chan *chan)
-{
-	struct hi3660_mbox *mbox = to_hi3660_mbox(chan->mbox);
-	unsigned int val, retry = 3;
+अटल पूर्णांक hi3660_mbox_unlock(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा hi3660_mbox *mbox = to_hi3660_mbox(chan->mbox);
+	अचिन्हित पूर्णांक val, retry = 3;
 
-	do {
-		writel(MBOX_IPC_UNLOCK, mbox->base + MBOX_IPC_LOCK_REG);
+	करो अणु
+		ग_लिखोl(MBOX_IPC_UNLOCK, mbox->base + MBOX_IPC_LOCK_REG);
 
-		val = readl(mbox->base + MBOX_IPC_LOCK_REG);
-		if (!val)
-			break;
+		val = पढ़ोl(mbox->base + MBOX_IPC_LOCK_REG);
+		अगर (!val)
+			अवरोध;
 
 		udelay(10);
-	} while (retry--);
+	पूर्ण जबतक (retry--);
 
-	if (val)
+	अगर (val)
 		dev_err(mbox->dev, "%s: failed to unlock mailbox\n", __func__);
 
-	return (!val) ? 0 : -ETIMEDOUT;
-}
+	वापस (!val) ? 0 : -ETIMEDOUT;
+पूर्ण
 
-static int hi3660_mbox_acquire_channel(struct mbox_chan *chan)
-{
-	unsigned long ch = (unsigned long)chan->con_priv;
-	struct hi3660_mbox *mbox = to_hi3660_mbox(chan->mbox);
-	struct hi3660_chan_info *mchan = &mbox->mchan[ch];
-	void __iomem *base = MBOX_BASE(mbox, ch);
-	unsigned int val, retry;
+अटल पूर्णांक hi3660_mbox_acquire_channel(काष्ठा mbox_chan *chan)
+अणु
+	अचिन्हित दीर्घ ch = (अचिन्हित दीर्घ)chan->con_priv;
+	काष्ठा hi3660_mbox *mbox = to_hi3660_mbox(chan->mbox);
+	काष्ठा hi3660_chan_info *mchan = &mbox->mchan[ch];
+	व्योम __iomem *base = MBOX_BASE(mbox, ch);
+	अचिन्हित पूर्णांक val, retry;
 
-	for (retry = 10; retry; retry--) {
-		/* Check if channel is in idle state */
-		if (readl(base + MBOX_MODE_REG) & MBOX_STATE_IDLE) {
-			writel(BIT(mchan->ack_irq), base + MBOX_SRC_REG);
+	क्रम (retry = 10; retry; retry--) अणु
+		/* Check अगर channel is in idle state */
+		अगर (पढ़ोl(base + MBOX_MODE_REG) & MBOX_STATE_IDLE) अणु
+			ग_लिखोl(BIT(mchan->ack_irq), base + MBOX_SRC_REG);
 
 			/* Check ack bit has been set successfully */
-			val = readl(base + MBOX_SRC_REG);
-			if (val & BIT(mchan->ack_irq))
-				break;
-		}
-	}
+			val = पढ़ोl(base + MBOX_SRC_REG);
+			अगर (val & BIT(mchan->ack_irq))
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!retry)
+	अगर (!retry)
 		dev_err(mbox->dev, "%s: failed to acquire channel\n", __func__);
 
-	return retry ? 0 : -ETIMEDOUT;
-}
+	वापस retry ? 0 : -ETIMEDOUT;
+पूर्ण
 
-static int hi3660_mbox_startup(struct mbox_chan *chan)
-{
-	int ret;
+अटल पूर्णांक hi3660_mbox_startup(काष्ठा mbox_chan *chan)
+अणु
+	पूर्णांक ret;
 
 	ret = hi3660_mbox_unlock(chan);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = hi3660_mbox_acquire_channel(chan);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hi3660_mbox_send_data(struct mbox_chan *chan, void *msg)
-{
-	unsigned long ch = (unsigned long)chan->con_priv;
-	struct hi3660_mbox *mbox = to_hi3660_mbox(chan->mbox);
-	struct hi3660_chan_info *mchan = &mbox->mchan[ch];
-	void __iomem *base = MBOX_BASE(mbox, ch);
+अटल पूर्णांक hi3660_mbox_send_data(काष्ठा mbox_chan *chan, व्योम *msg)
+अणु
+	अचिन्हित दीर्घ ch = (अचिन्हित दीर्घ)chan->con_priv;
+	काष्ठा hi3660_mbox *mbox = to_hi3660_mbox(chan->mbox);
+	काष्ठा hi3660_chan_info *mchan = &mbox->mchan[ch];
+	व्योम __iomem *base = MBOX_BASE(mbox, ch);
 	u32 *buf = msg;
-	unsigned int i;
-	int ret;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	ret = hi3660_mbox_check_state(chan);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Clear mask for destination interrupt */
-	writel_relaxed(~BIT(mchan->dst_irq), base + MBOX_IMASK_REG);
+	/* Clear mask क्रम destination पूर्णांकerrupt */
+	ग_लिखोl_relaxed(~BIT(mchan->dst_irq), base + MBOX_IMASK_REG);
 
-	/* Config destination for interrupt vector */
-	writel_relaxed(BIT(mchan->dst_irq), base + MBOX_DST_REG);
+	/* Config destination क्रम पूर्णांकerrupt vector */
+	ग_लिखोl_relaxed(BIT(mchan->dst_irq), base + MBOX_DST_REG);
 
 	/* Automatic acknowledge mode */
-	writel_relaxed(MBOX_AUTOMATIC_ACK, base + MBOX_MODE_REG);
+	ग_लिखोl_relaxed(MBOX_AUTOMATIC_ACK, base + MBOX_MODE_REG);
 
 	/* Fill message data */
-	for (i = 0; i < MBOX_MSG_LEN; i++)
-		writel_relaxed(buf[i], base + MBOX_DATA_REG + i * 4);
+	क्रम (i = 0; i < MBOX_MSG_LEN; i++)
+		ग_लिखोl_relaxed(buf[i], base + MBOX_DATA_REG + i * 4);
 
 	/* Trigger data transferring */
-	writel(BIT(mchan->ack_irq), base + MBOX_SEND_REG);
-	return 0;
-}
+	ग_लिखोl(BIT(mchan->ack_irq), base + MBOX_SEND_REG);
+	वापस 0;
+पूर्ण
 
-static const struct mbox_chan_ops hi3660_mbox_ops = {
+अटल स्थिर काष्ठा mbox_chan_ops hi3660_mbox_ops = अणु
 	.startup	= hi3660_mbox_startup,
 	.send_data	= hi3660_mbox_send_data,
-};
+पूर्ण;
 
-static struct mbox_chan *hi3660_mbox_xlate(struct mbox_controller *controller,
-					   const struct of_phandle_args *spec)
-{
-	struct hi3660_mbox *mbox = to_hi3660_mbox(controller);
-	struct hi3660_chan_info *mchan;
-	unsigned int ch = spec->args[0];
+अटल काष्ठा mbox_chan *hi3660_mbox_xlate(काष्ठा mbox_controller *controller,
+					   स्थिर काष्ठा of_phandle_args *spec)
+अणु
+	काष्ठा hi3660_mbox *mbox = to_hi3660_mbox(controller);
+	काष्ठा hi3660_chan_info *mchan;
+	अचिन्हित पूर्णांक ch = spec->args[0];
 
-	if (ch >= MBOX_CHAN_MAX) {
+	अगर (ch >= MBOX_CHAN_MAX) अणु
 		dev_err(mbox->dev, "Invalid channel idx %d\n", ch);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	mchan = &mbox->mchan[ch];
 	mchan->dst_irq = spec->args[1];
 	mchan->ack_irq = spec->args[2];
 
-	return &mbox->chan[ch];
-}
+	वापस &mbox->chan[ch];
+पूर्ण
 
-static const struct of_device_id hi3660_mbox_of_match[] = {
-	{ .compatible = "hisilicon,hi3660-mbox", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id hi3660_mbox_of_match[] = अणु
+	अणु .compatible = "hisilicon,hi3660-mbox", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, hi3660_mbox_of_match);
 
-static int hi3660_mbox_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct hi3660_mbox *mbox;
-	struct mbox_chan *chan;
-	struct resource *res;
-	unsigned long ch;
-	int err;
+अटल पूर्णांक hi3660_mbox_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा hi3660_mbox *mbox;
+	काष्ठा mbox_chan *chan;
+	काष्ठा resource *res;
+	अचिन्हित दीर्घ ch;
+	पूर्णांक err;
 
-	mbox = devm_kzalloc(dev, sizeof(*mbox), GFP_KERNEL);
-	if (!mbox)
-		return -ENOMEM;
+	mbox = devm_kzalloc(dev, माप(*mbox), GFP_KERNEL);
+	अगर (!mbox)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	mbox->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(mbox->base))
-		return PTR_ERR(mbox->base);
+	अगर (IS_ERR(mbox->base))
+		वापस PTR_ERR(mbox->base);
 
 	mbox->dev = dev;
 	mbox->controller.dev = dev;
@@ -262,39 +263,39 @@ static int hi3660_mbox_probe(struct platform_device *pdev)
 
 	/* Initialize mailbox channel data */
 	chan = mbox->chan;
-	for (ch = 0; ch < MBOX_CHAN_MAX; ch++)
-		chan[ch].con_priv = (void *)ch;
+	क्रम (ch = 0; ch < MBOX_CHAN_MAX; ch++)
+		chan[ch].con_priv = (व्योम *)ch;
 
-	err = devm_mbox_controller_register(dev, &mbox->controller);
-	if (err) {
+	err = devm_mbox_controller_रेजिस्टर(dev, &mbox->controller);
+	अगर (err) अणु
 		dev_err(dev, "Failed to register mailbox %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, mbox);
+	platक्रमm_set_drvdata(pdev, mbox);
 	dev_info(dev, "Mailbox enabled\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver hi3660_mbox_driver = {
+अटल काष्ठा platक्रमm_driver hi3660_mbox_driver = अणु
 	.probe  = hi3660_mbox_probe,
-	.driver = {
+	.driver = अणु
 		.name = "hi3660-mbox",
 		.of_match_table = hi3660_mbox_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init hi3660_mbox_init(void)
-{
-	return platform_driver_register(&hi3660_mbox_driver);
-}
+अटल पूर्णांक __init hi3660_mbox_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&hi3660_mbox_driver);
+पूर्ण
 core_initcall(hi3660_mbox_init);
 
-static void __exit hi3660_mbox_exit(void)
-{
-	platform_driver_unregister(&hi3660_mbox_driver);
-}
-module_exit(hi3660_mbox_exit);
+अटल व्योम __निकास hi3660_mbox_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&hi3660_mbox_driver);
+पूर्ण
+module_निकास(hi3660_mbox_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Hisilicon Hi3660 Mailbox Controller");

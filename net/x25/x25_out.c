@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	X.25 Packet Layer release 002
  *
- *	This is ALPHA test software. This code may break your machine,
- *	randomly fail to work with new releases, misbehave and/or generally
+ *	This is ALPHA test software. This code may अवरोध your machine,
+ *	अक्रमomly fail to work with new releases, misbehave and/or generally
  *	screw up. It might even work.
  *
  *	This code REQUIRES 2.1.15 or higher
  *
  *	History
  *	X.25 001	Jonathan Naylor	Started coding.
- *	X.25 002	Jonathan Naylor	New timer architecture.
+ *	X.25 002	Jonathan Naylor	New समयr architecture.
  *	2000-09-04	Henner Eisen	Prevented x25_output() skb leakage.
- *	2000-10-27	Henner Eisen	MSG_DONTWAIT for fragment allocation.
- *	2000-11-10	Henner Eisen	x25_send_iframe(): re-queued frames
+ *	2000-10-27	Henner Eisen	MSG_DONTWAIT क्रम fragment allocation.
+ *	2000-11-10	Henner Eisen	x25_send_अगरrame(): re-queued frames
  *					needed cleaned seq-number fields.
  */
 
-#include <linux/slab.h>
-#include <linux/socket.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <net/x25.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <net/x25.h>
 
-static int x25_pacsize_to_bytes(unsigned int pacsize)
-{
-	int bytes = 1;
+अटल पूर्णांक x25_pacमाप_प्रकारo_bytes(अचिन्हित पूर्णांक pacsize)
+अणु
+	पूर्णांक bytes = 1;
 
-	if (!pacsize)
-		return 128;
+	अगर (!pacsize)
+		वापस 128;
 
-	while (pacsize-- > 0)
+	जबतक (pacsize-- > 0)
 		bytes *= 2;
 
-	return bytes;
-}
+	वापस bytes;
+पूर्ण
 
 /*
- *	This is where all X.25 information frames pass.
+ *	This is where all X.25 inक्रमmation frames pass.
  *
  *      Returns the amount of user data bytes sent on success
  *      or a negative error code on failure.
  */
-int x25_output(struct sock *sk, struct sk_buff *skb)
-{
-	struct sk_buff *skbn;
-	unsigned char header[X25_EXT_MIN_LEN];
-	int err, frontlen, len;
-	int sent=0, noblock = X25_SKB_CB(skb)->flags & MSG_DONTWAIT;
-	struct x25_sock *x25 = x25_sk(sk);
-	int header_len = x25->neighbour->extended ? X25_EXT_MIN_LEN :
+पूर्णांक x25_output(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *skbn;
+	अचिन्हित अक्षर header[X25_EXT_MIN_LEN];
+	पूर्णांक err, frontlen, len;
+	पूर्णांक sent=0, noblock = X25_SKB_CB(skb)->flags & MSG_DONTWAIT;
+	काष्ठा x25_sock *x25 = x25_sk(sk);
+	पूर्णांक header_len = x25->neighbour->extended ? X25_EXT_MIN_LEN :
 						    X25_STD_MIN_LEN;
-	int max_len = x25_pacsize_to_bytes(x25->facilities.pacsize_out);
+	पूर्णांक max_len = x25_pacमाप_प्रकारo_bytes(x25->facilities.pacsize_out);
 
-	if (skb->len - header_len > max_len) {
+	अगर (skb->len - header_len > max_len) अणु
 		/* Save a copy of the Header */
 		skb_copy_from_linear_data(skb, header, header_len);
 		skb_pull(skb, header_len);
 
 		frontlen = skb_headroom(skb);
 
-		while (skb->len > 0) {
+		जबतक (skb->len > 0) अणु
 			release_sock(sk);
 			skbn = sock_alloc_send_skb(sk, frontlen + max_len,
 						   noblock, &err);
 			lock_sock(sk);
-			if (!skbn) {
-				if (err == -EWOULDBLOCK && noblock){
-					kfree_skb(skb);
-					return sent;
-				}
+			अगर (!skbn) अणु
+				अगर (err == -EWOULDBLOCK && noblock)अणु
+					kमुक्त_skb(skb);
+					वापस sent;
+				पूर्ण
 				SOCK_DEBUG(sk, "x25_output: fragment alloc"
 					       " failed, err=%d, %d bytes "
 					       "sent\n", err, sent);
-				return err;
-			}
+				वापस err;
+			पूर्ण
 
 			skb_reserve(skbn, frontlen);
 
@@ -90,104 +91,104 @@ int x25_output(struct sock *sk, struct sk_buff *skb)
 			skb_push(skbn, header_len);
 			skb_copy_to_linear_data(skbn, header, header_len);
 
-			if (skb->len > 0) {
-				if (x25->neighbour->extended)
+			अगर (skb->len > 0) अणु
+				अगर (x25->neighbour->extended)
 					skbn->data[3] |= X25_EXT_M_BIT;
-				else
+				अन्यथा
 					skbn->data[2] |= X25_STD_M_BIT;
-			}
+			पूर्ण
 
-			skb_queue_tail(&sk->sk_write_queue, skbn);
+			skb_queue_tail(&sk->sk_ग_लिखो_queue, skbn);
 			sent += len;
-		}
+		पूर्ण
 
-		kfree_skb(skb);
-	} else {
-		skb_queue_tail(&sk->sk_write_queue, skb);
+		kमुक्त_skb(skb);
+	पूर्ण अन्यथा अणु
+		skb_queue_tail(&sk->sk_ग_लिखो_queue, skb);
 		sent = skb->len - header_len;
-	}
-	return sent;
-}
+	पूर्ण
+	वापस sent;
+पूर्ण
 
 /*
- *	This procedure is passed a buffer descriptor for an iframe. It builds
- *	the rest of the control part of the frame and then writes it out.
+ *	This procedure is passed a buffer descriptor क्रम an अगरrame. It builds
+ *	the rest of the control part of the frame and then ग_लिखोs it out.
  */
-static void x25_send_iframe(struct sock *sk, struct sk_buff *skb)
-{
-	struct x25_sock *x25 = x25_sk(sk);
+अटल व्योम x25_send_अगरrame(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा x25_sock *x25 = x25_sk(sk);
 
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
-	if (x25->neighbour->extended) {
+	अगर (x25->neighbour->extended) अणु
 		skb->data[2]  = (x25->vs << 1) & 0xFE;
 		skb->data[3] &= X25_EXT_M_BIT;
 		skb->data[3] |= (x25->vr << 1) & 0xFE;
-	} else {
+	पूर्ण अन्यथा अणु
 		skb->data[2] &= X25_STD_M_BIT;
 		skb->data[2] |= (x25->vs << 1) & 0x0E;
 		skb->data[2] |= (x25->vr << 5) & 0xE0;
-	}
+	पूर्ण
 
 	x25_transmit_link(skb, x25->neighbour);
-}
+पूर्ण
 
-void x25_kick(struct sock *sk)
-{
-	struct sk_buff *skb, *skbn;
-	unsigned short start, end;
-	int modulus;
-	struct x25_sock *x25 = x25_sk(sk);
+व्योम x25_kick(काष्ठा sock *sk)
+अणु
+	काष्ठा sk_buff *skb, *skbn;
+	अचिन्हित लघु start, end;
+	पूर्णांक modulus;
+	काष्ठा x25_sock *x25 = x25_sk(sk);
 
-	if (x25->state != X25_STATE_3)
-		return;
+	अगर (x25->state != X25_STATE_3)
+		वापस;
 
 	/*
-	 *	Transmit interrupt data.
+	 *	Transmit पूर्णांकerrupt data.
 	 */
-	if (skb_peek(&x25->interrupt_out_queue) != NULL &&
-		!test_and_set_bit(X25_INTERRUPT_FLAG, &x25->flags)) {
+	अगर (skb_peek(&x25->पूर्णांकerrupt_out_queue) != शून्य &&
+		!test_and_set_bit(X25_INTERRUPT_FLAG, &x25->flags)) अणु
 
-		skb = skb_dequeue(&x25->interrupt_out_queue);
+		skb = skb_dequeue(&x25->पूर्णांकerrupt_out_queue);
 		x25_transmit_link(skb, x25->neighbour);
-	}
+	पूर्ण
 
-	if (x25->condition & X25_COND_PEER_RX_BUSY)
-		return;
+	अगर (x25->condition & X25_COND_PEER_RX_BUSY)
+		वापस;
 
-	if (!skb_peek(&sk->sk_write_queue))
-		return;
+	अगर (!skb_peek(&sk->sk_ग_लिखो_queue))
+		वापस;
 
 	modulus = x25->neighbour->extended ? X25_EMODULUS : X25_SMODULUS;
 
 	start   = skb_peek(&x25->ack_queue) ? x25->vs : x25->va;
 	end     = (x25->va + x25->facilities.winsize_out) % modulus;
 
-	if (start == end)
-		return;
+	अगर (start == end)
+		वापस;
 
 	x25->vs = start;
 
 	/*
 	 * Transmit data until either we're out of data to send or
-	 * the window is full.
+	 * the winकरोw is full.
 	 */
 
-	skb = skb_dequeue(&sk->sk_write_queue);
+	skb = skb_dequeue(&sk->sk_ग_लिखो_queue);
 
-	do {
-		if ((skbn = skb_clone(skb, GFP_ATOMIC)) == NULL) {
-			skb_queue_head(&sk->sk_write_queue, skb);
-			break;
-		}
+	करो अणु
+		अगर ((skbn = skb_clone(skb, GFP_ATOMIC)) == शून्य) अणु
+			skb_queue_head(&sk->sk_ग_लिखो_queue, skb);
+			अवरोध;
+		पूर्ण
 
 		skb_set_owner_w(skbn, sk);
 
 		/*
 		 * Transmit the frame copy.
 		 */
-		x25_send_iframe(sk, skbn);
+		x25_send_अगरrame(sk, skbn);
 
 		x25->vs = (x25->vs + 1) % modulus;
 
@@ -196,31 +197,31 @@ void x25_kick(struct sock *sk)
 		 */
 		skb_queue_tail(&x25->ack_queue, skb);
 
-	} while (x25->vs != end &&
-		 (skb = skb_dequeue(&sk->sk_write_queue)) != NULL);
+	पूर्ण जबतक (x25->vs != end &&
+		 (skb = skb_dequeue(&sk->sk_ग_लिखो_queue)) != शून्य);
 
 	x25->vl         = x25->vr;
 	x25->condition &= ~X25_COND_ACK_PENDING;
 
-	x25_stop_timer(sk);
-}
+	x25_stop_समयr(sk);
+पूर्ण
 
 /*
  * The following routines are taken from page 170 of the 7th ARRL Computer
  * Networking Conference paper, as is the whole state machine.
  */
 
-void x25_enquiry_response(struct sock *sk)
-{
-	struct x25_sock *x25 = x25_sk(sk);
+व्योम x25_enquiry_response(काष्ठा sock *sk)
+अणु
+	काष्ठा x25_sock *x25 = x25_sk(sk);
 
-	if (x25->condition & X25_COND_OWN_RX_BUSY)
-		x25_write_internal(sk, X25_RNR);
-	else
-		x25_write_internal(sk, X25_RR);
+	अगर (x25->condition & X25_COND_OWN_RX_BUSY)
+		x25_ग_लिखो_पूर्णांकernal(sk, X25_RNR);
+	अन्यथा
+		x25_ग_लिखो_पूर्णांकernal(sk, X25_RR);
 
 	x25->vl         = x25->vr;
 	x25->condition &= ~X25_COND_ACK_PENDING;
 
-	x25_stop_timer(sk);
-}
+	x25_stop_समयr(sk);
+पूर्ण

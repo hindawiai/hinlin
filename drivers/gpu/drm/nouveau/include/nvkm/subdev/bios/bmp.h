@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVBIOS_BMP_H__
-#define __NVBIOS_BMP_H__
-static inline u16
-bmp_version(struct nvkm_bios *bios)
-{
-	if (bios->bmp_offset) {
-		return nvbios_rd08(bios, bios->bmp_offset + 5) << 8 |
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVBIOS_BMP_H__
+#घोषणा __NVBIOS_BMP_H__
+अटल अंतरभूत u16
+bmp_version(काष्ठा nvkm_bios *bios)
+अणु
+	अगर (bios->bmp_offset) अणु
+		वापस nvbios_rd08(bios, bios->bmp_offset + 5) << 8 |
 		       nvbios_rd08(bios, bios->bmp_offset + 6);
-	}
+	पूर्ण
 
-	return 0x0000;
-}
+	वापस 0x0000;
+पूर्ण
 
-static inline u16
-bmp_mem_init_table(struct nvkm_bios *bios)
-{
-	if (bmp_version(bios) >= 0x0300)
-		return nvbios_rd16(bios, bios->bmp_offset + 24);
-	return 0x0000;
-}
+अटल अंतरभूत u16
+bmp_mem_init_table(काष्ठा nvkm_bios *bios)
+अणु
+	अगर (bmp_version(bios) >= 0x0300)
+		वापस nvbios_rd16(bios, bios->bmp_offset + 24);
+	वापस 0x0000;
+पूर्ण
 
-static inline u16
-bmp_sdr_seq_table(struct nvkm_bios *bios)
-{
-	if (bmp_version(bios) >= 0x0300)
-		return nvbios_rd16(bios, bios->bmp_offset + 26);
-	return 0x0000;
-}
+अटल अंतरभूत u16
+bmp_sdr_seq_table(काष्ठा nvkm_bios *bios)
+अणु
+	अगर (bmp_version(bios) >= 0x0300)
+		वापस nvbios_rd16(bios, bios->bmp_offset + 26);
+	वापस 0x0000;
+पूर्ण
 
-static inline u16
-bmp_ddr_seq_table(struct nvkm_bios *bios)
-{
-	if (bmp_version(bios) >= 0x0300)
-		return nvbios_rd16(bios, bios->bmp_offset + 28);
-	return 0x0000;
-}
-#endif
+अटल अंतरभूत u16
+bmp_ddr_seq_table(काष्ठा nvkm_bios *bios)
+अणु
+	अगर (bmp_version(bios) >= 0x0300)
+		वापस nvbios_rd16(bios, bios->bmp_offset + 28);
+	वापस 0x0000;
+पूर्ण
+#पूर्ण_अगर

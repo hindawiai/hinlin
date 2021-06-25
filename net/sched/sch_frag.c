@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
-#include <net/netlink.h>
-#include <net/sch_generic.h>
-#include <net/dst.h>
-#include <net/ip.h>
-#include <net/ip6_fib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+#समावेश <net/netlink.h>
+#समावेश <net/sch_generic.h>
+#समावेश <net/dst.h>
+#समावेश <net/ip.h>
+#समावेश <net/ip6_fib.h>
 
-struct sch_frag_data {
-	unsigned long dst;
-	struct qdisc_skb_cb cb;
+काष्ठा sch_frag_data अणु
+	अचिन्हित दीर्घ dst;
+	काष्ठा qdisc_skb_cb cb;
 	__be16 inner_protocol;
 	u16 vlan_tci;
 	__be16 vlan_proto;
-	unsigned int l2_len;
+	अचिन्हित पूर्णांक l2_len;
 	u8 l2_data[VLAN_ETH_HLEN];
-	int (*xmit)(struct sk_buff *skb);
-};
+	पूर्णांक (*xmit)(काष्ठा sk_buff *skb);
+पूर्ण;
 
-static DEFINE_PER_CPU(struct sch_frag_data, sch_frag_data_storage);
+अटल DEFINE_PER_CPU(काष्ठा sch_frag_data, sch_frag_data_storage);
 
-static int sch_frag_xmit(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	struct sch_frag_data *data = this_cpu_ptr(&sch_frag_data_storage);
+अटल पूर्णांक sch_frag_xmit(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sch_frag_data *data = this_cpu_ptr(&sch_frag_data_storage);
 
-	if (skb_cow_head(skb, data->l2_len) < 0) {
-		kfree_skb(skb);
-		return -ENOMEM;
-	}
+	अगर (skb_cow_head(skb, data->l2_len) < 0) अणु
+		kमुक्त_skb(skb);
+		वापस -ENOMEM;
+	पूर्ण
 
 	__skb_dst_copy(skb, data->dst);
 	*qdisc_skb_cb(skb) = data->cb;
 	skb->inner_protocol = data->inner_protocol;
-	if (data->vlan_tci & VLAN_CFI_MASK)
+	अगर (data->vlan_tci & VLAN_CFI_MASK)
 		__vlan_hwaccel_put_tag(skb, data->vlan_proto,
 				       data->vlan_tci & ~VLAN_CFI_MASK);
-	else
+	अन्यथा
 		__vlan_hwaccel_clear_tag(skb);
 
-	/* Reconstruct the MAC header.  */
+	/* Reस्थिरruct the MAC header.  */
 	skb_push(skb, data->l2_len);
-	memcpy(skb->data, &data->l2_data, data->l2_len);
+	स_नकल(skb->data, &data->l2_data, data->l2_len);
 	skb_postpush_rcsum(skb, skb->data, data->l2_len);
 	skb_reset_mac_header(skb);
 
-	return data->xmit(skb);
-}
+	वापस data->xmit(skb);
+पूर्ण
 
-static void sch_frag_prepare_frag(struct sk_buff *skb,
-				  int (*xmit)(struct sk_buff *skb))
-{
-	unsigned int hlen = skb_network_offset(skb);
-	struct sch_frag_data *data;
+अटल व्योम sch_frag_prepare_frag(काष्ठा sk_buff *skb,
+				  पूर्णांक (*xmit)(काष्ठा sk_buff *skb))
+अणु
+	अचिन्हित पूर्णांक hlen = skb_network_offset(skb);
+	काष्ठा sch_frag_data *data;
 
 	data = this_cpu_ptr(&sch_frag_data_storage);
 	data->dst = skb->_skb_refdst;
 	data->cb = *qdisc_skb_cb(skb);
 	data->xmit = xmit;
 	data->inner_protocol = skb->inner_protocol;
-	if (skb_vlan_tag_present(skb))
+	अगर (skb_vlan_tag_present(skb))
 		data->vlan_tci = skb_vlan_tag_get(skb) | VLAN_CFI_MASK;
-	else
+	अन्यथा
 		data->vlan_tci = 0;
 	data->vlan_proto = skb->vlan_proto;
 	data->l2_len = hlen;
-	memcpy(&data->l2_data, skb->data, hlen);
+	स_नकल(&data->l2_data, skb->data, hlen);
 
-	memset(IPCB(skb), 0, sizeof(struct inet_skb_parm));
+	स_रखो(IPCB(skb), 0, माप(काष्ठा inet_skb_parm));
 	skb_pull(skb, hlen);
-}
+पूर्ण
 
-static unsigned int
-sch_frag_dst_get_mtu(const struct dst_entry *dst)
-{
-	return dst->dev->mtu;
-}
+अटल अचिन्हित पूर्णांक
+sch_frag_dst_get_mtu(स्थिर काष्ठा dst_entry *dst)
+अणु
+	वापस dst->dev->mtu;
+पूर्ण
 
-static struct dst_ops sch_frag_dst_ops = {
+अटल काष्ठा dst_ops sch_frag_dst_ops = अणु
 	.family = AF_UNSPEC,
 	.mtu = sch_frag_dst_get_mtu,
-};
+पूर्ण;
 
-static int sch_fragment(struct net *net, struct sk_buff *skb,
-			u16 mru, int (*xmit)(struct sk_buff *skb))
-{
-	int ret = -1;
+अटल पूर्णांक sch_fragment(काष्ठा net *net, काष्ठा sk_buff *skb,
+			u16 mru, पूर्णांक (*xmit)(काष्ठा sk_buff *skb))
+अणु
+	पूर्णांक ret = -1;
 
-	if (skb_network_offset(skb) > VLAN_ETH_HLEN) {
+	अगर (skb_network_offset(skb) > VLAN_ETH_HLEN) अणु
 		net_warn_ratelimited("L2 header too long to fragment\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (skb_protocol(skb, true) == htons(ETH_P_IP)) {
-		struct rtable sch_frag_rt = { 0 };
-		unsigned long orig_dst;
+	अगर (skb_protocol(skb, true) == htons(ETH_P_IP)) अणु
+		काष्ठा rtable sch_frag_rt = अणु 0 पूर्ण;
+		अचिन्हित दीर्घ orig_dst;
 
 		sch_frag_prepare_frag(skb, xmit);
-		dst_init(&sch_frag_rt.dst, &sch_frag_dst_ops, NULL, 1,
+		dst_init(&sch_frag_rt.dst, &sch_frag_dst_ops, शून्य, 1,
 			 DST_OBSOLETE_NONE, DST_NOCOUNT);
 		sch_frag_rt.dst.dev = skb->dev;
 
@@ -102,15 +103,15 @@ static int sch_fragment(struct net *net, struct sk_buff *skb,
 		skb_dst_set_noref(skb, &sch_frag_rt.dst);
 		IPCB(skb)->frag_max_size = mru;
 
-		ret = ip_do_fragment(net, skb->sk, skb, sch_frag_xmit);
+		ret = ip_करो_fragment(net, skb->sk, skb, sch_frag_xmit);
 		refdst_drop(orig_dst);
-	} else if (skb_protocol(skb, true) == htons(ETH_P_IPV6)) {
-		unsigned long orig_dst;
-		struct rt6_info sch_frag_rt;
+	पूर्ण अन्यथा अगर (skb_protocol(skb, true) == htons(ETH_P_IPV6)) अणु
+		अचिन्हित दीर्घ orig_dst;
+		काष्ठा rt6_info sch_frag_rt;
 
 		sch_frag_prepare_frag(skb, xmit);
-		memset(&sch_frag_rt, 0, sizeof(sch_frag_rt));
-		dst_init(&sch_frag_rt.dst, &sch_frag_dst_ops, NULL, 1,
+		स_रखो(&sch_frag_rt, 0, माप(sch_frag_rt));
+		dst_init(&sch_frag_rt.dst, &sch_frag_dst_ops, शून्य, 1,
 			 DST_OBSOLETE_NONE, DST_NOCOUNT);
 		sch_frag_rt.dst.dev = skb->dev;
 
@@ -121,30 +122,30 @@ static int sch_fragment(struct net *net, struct sk_buff *skb,
 		ret = ipv6_stub->ipv6_fragment(net, skb->sk, skb,
 					       sch_frag_xmit);
 		refdst_drop(orig_dst);
-	} else {
+	पूर्ण अन्यथा अणु
 		net_warn_ratelimited("Fail frag %s: eth=%x, MRU=%d, MTU=%d\n",
 				     netdev_name(skb->dev),
 				     ntohs(skb_protocol(skb, true)), mru,
 				     skb->dev->mtu);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 err:
-	kfree_skb(skb);
-	return ret;
-}
+	kमुक्त_skb(skb);
+	वापस ret;
+पूर्ण
 
-int sch_frag_xmit_hook(struct sk_buff *skb, int (*xmit)(struct sk_buff *skb))
-{
+पूर्णांक sch_frag_xmit_hook(काष्ठा sk_buff *skb, पूर्णांक (*xmit)(काष्ठा sk_buff *skb))
+अणु
 	u16 mru = qdisc_skb_cb(skb)->mru;
-	int err;
+	पूर्णांक err;
 
-	if (mru && skb->len > mru + skb->dev->hard_header_len)
+	अगर (mru && skb->len > mru + skb->dev->hard_header_len)
 		err = sch_fragment(dev_net(skb->dev), skb, mru, xmit);
-	else
+	अन्यथा
 		err = xmit(skb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(sch_frag_xmit_hook);

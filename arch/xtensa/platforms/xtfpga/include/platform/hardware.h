@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
- * arch/xtensa/platform/xtavnet/include/platform/hardware.h
+ * arch/xtensa/platक्रमm/xtavnet/include/platक्रमm/hardware.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2006 Tensilica Inc.
  */
@@ -12,49 +13,49 @@
  * This file contains the hardware configuration of the XTAVNET boards.
  */
 
-#include <asm/types.h>
+#समावेश <यंत्र/types.h>
 
-#ifndef __XTENSA_XTAVNET_HARDWARE_H
-#define __XTENSA_XTAVNET_HARDWARE_H
+#अगर_अघोषित __XTENSA_XTAVNET_HARDWARE_H
+#घोषणा __XTENSA_XTAVNET_HARDWARE_H
 
-/* Default assignment of LX60 devices to external interrupts. */
+/* Default assignment of LX60 devices to बाह्यal पूर्णांकerrupts. */
 
-#ifdef CONFIG_XTENSA_MX
-#define DUART16552_INTNUM	XCHAL_EXTINT3_NUM
-#define OETH_IRQ		XCHAL_EXTINT4_NUM
-#define C67X00_IRQ		XCHAL_EXTINT8_NUM
-#else
-#define DUART16552_INTNUM	XCHAL_EXTINT0_NUM
-#define OETH_IRQ		XCHAL_EXTINT1_NUM
-#define C67X00_IRQ		XCHAL_EXTINT5_NUM
-#endif
+#अगर_घोषित CONFIG_XTENSA_MX
+#घोषणा DUART16552_INTNUM	XCHAL_EXTINT3_NUM
+#घोषणा OETH_IRQ		XCHAL_EXTINT4_NUM
+#घोषणा C67X00_IRQ		XCHAL_EXTINT8_NUM
+#अन्यथा
+#घोषणा DUART16552_INTNUM	XCHAL_EXTINT0_NUM
+#घोषणा OETH_IRQ		XCHAL_EXTINT1_NUM
+#घोषणा C67X00_IRQ		XCHAL_EXTINT5_NUM
+#पूर्ण_अगर
 
 /*
  *  Device addresses and parameters.
  */
 
 /* UART */
-#define DUART16552_PADDR	(XCHAL_KIO_PADDR + 0x0D050020)
+#घोषणा DUART16552_PADDR	(XCHAL_KIO_PADDR + 0x0D050020)
 
 /* Misc. */
-#define XTFPGA_FPGAREGS_VADDR	IOADDR(0x0D020000)
-/* Clock frequency in Hz (read-only):  */
-#define XTFPGA_CLKFRQ_VADDR	(XTFPGA_FPGAREGS_VADDR + 0x04)
-/* Setting of 8 DIP switches:  */
-#define DIP_SWITCHES_VADDR	(XTFPGA_FPGAREGS_VADDR + 0x0C)
-/* Software reset (write 0xdead):  */
-#define XTFPGA_SWRST_VADDR	(XTFPGA_FPGAREGS_VADDR + 0x10)
+#घोषणा XTFPGA_FPGAREGS_VADDR	IOADDR(0x0D020000)
+/* Clock frequency in Hz (पढ़ो-only):  */
+#घोषणा XTFPGA_CLKFRQ_VADDR	(XTFPGA_FPGAREGS_VADDR + 0x04)
+/* Setting of 8 DIP चयनes:  */
+#घोषणा DIP_SWITCHES_VADDR	(XTFPGA_FPGAREGS_VADDR + 0x0C)
+/* Software reset (ग_लिखो 0xdead):  */
+#घोषणा XTFPGA_SWRST_VADDR	(XTFPGA_FPGAREGS_VADDR + 0x10)
 
 /*  OpenCores Ethernet controller:  */
 				/* regs + RX/TX descriptors */
-#define OETH_REGS_PADDR		(XCHAL_KIO_PADDR + 0x0D030000)
-#define OETH_REGS_SIZE		0x1000
-#define OETH_SRAMBUFF_PADDR	(XCHAL_KIO_PADDR + 0x0D800000)
+#घोषणा OETH_REGS_PADDR		(XCHAL_KIO_PADDR + 0x0D030000)
+#घोषणा OETH_REGS_SIZE		0x1000
+#घोषणा OETH_SRAMBUFF_PADDR	(XCHAL_KIO_PADDR + 0x0D800000)
 
 				/* 5*rx buffs + 5*tx buffs */
-#define OETH_SRAMBUFF_SIZE	(5 * 0x600 + 5 * 0x600)
+#घोषणा OETH_SRAMBUFF_SIZE	(5 * 0x600 + 5 * 0x600)
 
-#define C67X00_PADDR		(XCHAL_KIO_PADDR + 0x0D0D0000)
-#define C67X00_SIZE		0x10
+#घोषणा C67X00_PADDR		(XCHAL_KIO_PADDR + 0x0D0D0000)
+#घोषणा C67X00_SIZE		0x10
 
-#endif /* __XTENSA_XTAVNET_HARDWARE_H */
+#पूर्ण_अगर /* __XTENSA_XTAVNET_HARDWARE_H */

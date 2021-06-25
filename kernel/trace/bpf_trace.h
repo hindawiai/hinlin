@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM bpf_trace
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM bpf_trace
 
-#if !defined(_TRACE_BPF_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#अगर !defined(_TRACE_BPF_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
 
-#define _TRACE_BPF_TRACE_H
+#घोषणा _TRACE_BPF_TRACE_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-TRACE_EVENT(bpf_trace_printk,
+TRACE_EVENT(bpf_trace_prपूर्णांकk,
 
-	TP_PROTO(const char *bpf_string),
+	TP_PROTO(स्थिर अक्षर *bpf_string),
 
 	TP_ARGS(bpf_string),
 
@@ -22,13 +23,13 @@ TRACE_EVENT(bpf_trace_printk,
 		__assign_str(bpf_string, bpf_string);
 	),
 
-	TP_printk("%s", __get_str(bpf_string))
+	TP_prपूर्णांकk("%s", __get_str(bpf_string))
 );
 
-#endif /* _TRACE_BPF_TRACE_H */
+#पूर्ण_अगर /* _TRACE_BPF_TRACE_H */
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#define TRACE_INCLUDE_FILE bpf_trace
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#घोषणा TRACE_INCLUDE_खाता bpf_trace
 
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

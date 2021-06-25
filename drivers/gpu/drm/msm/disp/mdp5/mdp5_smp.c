@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#include <drm/drm_fourcc.h>
-#include <drm/drm_util.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_util.h>
 
-#include "mdp5_kms.h"
-#include "mdp5_smp.h"
+#समावेश "mdp5_kms.h"
+#समावेश "mdp5_smp.h"
 
 
-struct mdp5_smp {
-	struct drm_device *dev;
+काष्ठा mdp5_smp अणु
+	काष्ठा drm_device *dev;
 
-	uint8_t reserved[MAX_CLIENTS]; /* fixed MMBs allocation per client */
+	uपूर्णांक8_t reserved[MAX_CLIENTS]; /* fixed MMBs allocation per client */
 
-	int blk_cnt;
-	int blk_size;
+	पूर्णांक blk_cnt;
+	पूर्णांक blk_size;
 
-	/* register cache */
+	/* रेजिस्टर cache */
 	u32 alloc_w[22];
 	u32 alloc_r[22];
-	u32 pipe_reqprio_fifo_wm0[SSPP_MAX];
-	u32 pipe_reqprio_fifo_wm1[SSPP_MAX];
-	u32 pipe_reqprio_fifo_wm2[SSPP_MAX];
-};
+	u32 pipe_reqprio_fअगरo_wm0[SSPP_MAX];
+	u32 pipe_reqprio_fअगरo_wm1[SSPP_MAX];
+	u32 pipe_reqprio_fअगरo_wm2[SSPP_MAX];
+पूर्ण;
 
-static inline
-struct mdp5_kms *get_kms(struct mdp5_smp *smp)
-{
-	struct msm_drm_private *priv = smp->dev->dev_private;
+अटल अंतरभूत
+काष्ठा mdp5_kms *get_kms(काष्ठा mdp5_smp *smp)
+अणु
+	काष्ठा msm_drm_निजी *priv = smp->dev->dev_निजी;
 
-	return to_mdp5_kms(to_mdp_kms(priv->kms));
-}
+	वापस to_mdp5_kms(to_mdp_kms(priv->kms));
+पूर्ण
 
-static inline u32 pipe2client(enum mdp5_pipe pipe, int plane)
-{
-#define CID_UNUSED	0
+अटल अंतरभूत u32 pipe2client(क्रमागत mdp5_pipe pipe, पूर्णांक plane)
+अणु
+#घोषणा CID_UNUSED	0
 
-	if (WARN_ON(plane >= pipe2nclients(pipe)))
-		return CID_UNUSED;
+	अगर (WARN_ON(plane >= pipe2nclients(pipe)))
+		वापस CID_UNUSED;
 
 	/*
 	 * Note on SMP clients:
@@ -49,295 +50,295 @@ static inline u32 pipe2client(enum mdp5_pipe pipe, int plane)
 	 * consecutive, and in that order.
 	 *
 	 * e.g.:
-	 * if mdp5_cfg->smp.clients[SSPP_VIG0] = N,
+	 * अगर mdp5_cfg->smp.clients[SSPP_VIG0] = N,
 	 *	Y  plane's client ID is N
 	 *	Cr plane's client ID is N + 1
 	 *	Cb plane's client ID is N + 2
 	 */
 
-	return mdp5_cfg->smp.clients[pipe] + plane;
-}
+	वापस mdp5_cfg->smp.clients[pipe] + plane;
+पूर्ण
 
-/* allocate blocks for the specified request: */
-static int smp_request_block(struct mdp5_smp *smp,
-		struct mdp5_smp_state *state,
-		u32 cid, int nblks)
-{
-	void *cs = state->client_state[cid];
-	int i, avail, cnt = smp->blk_cnt;
-	uint8_t reserved;
+/* allocate blocks क्रम the specअगरied request: */
+अटल पूर्णांक smp_request_block(काष्ठा mdp5_smp *smp,
+		काष्ठा mdp5_smp_state *state,
+		u32 cid, पूर्णांक nblks)
+अणु
+	व्योम *cs = state->client_state[cid];
+	पूर्णांक i, avail, cnt = smp->blk_cnt;
+	uपूर्णांक8_t reserved;
 
-	/* we shouldn't be requesting blocks for an in-use client: */
-	WARN_ON(bitmap_weight(cs, cnt) > 0);
+	/* we shouldn't be requesting blocks क्रम an in-use client: */
+	WARN_ON(biपंचांगap_weight(cs, cnt) > 0);
 
 	reserved = smp->reserved[cid];
 
-	if (reserved) {
+	अगर (reserved) अणु
 		nblks = max(0, nblks - reserved);
 		DBG("%d MMBs allocated (%d reserved)", nblks, reserved);
-	}
+	पूर्ण
 
-	avail = cnt - bitmap_weight(state->state, cnt);
-	if (nblks > avail) {
+	avail = cnt - biपंचांगap_weight(state->state, cnt);
+	अगर (nblks > avail) अणु
 		DRM_DEV_ERROR(smp->dev->dev, "out of blks (req=%d > avail=%d)\n",
 				nblks, avail);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	for (i = 0; i < nblks; i++) {
-		int blk = find_first_zero_bit(state->state, cnt);
+	क्रम (i = 0; i < nblks; i++) अणु
+		पूर्णांक blk = find_first_zero_bit(state->state, cnt);
 		set_bit(blk, cs);
 		set_bit(blk, state->state);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_fifo_thresholds(struct mdp5_smp *smp,
-		enum mdp5_pipe pipe, int nblks)
-{
+अटल व्योम set_fअगरo_thresholds(काष्ठा mdp5_smp *smp,
+		क्रमागत mdp5_pipe pipe, पूर्णांक nblks)
+अणु
 	u32 smp_entries_per_blk = smp->blk_size / (128 / BITS_PER_BYTE);
 	u32 val;
 
 	/* 1/4 of SMP pool that is being fetched */
 	val = (nblks * smp_entries_per_blk) / 4;
 
-	smp->pipe_reqprio_fifo_wm0[pipe] = val * 1;
-	smp->pipe_reqprio_fifo_wm1[pipe] = val * 2;
-	smp->pipe_reqprio_fifo_wm2[pipe] = val * 3;
-}
+	smp->pipe_reqprio_fअगरo_wm0[pipe] = val * 1;
+	smp->pipe_reqprio_fअगरo_wm1[pipe] = val * 2;
+	smp->pipe_reqprio_fअगरo_wm2[pipe] = val * 3;
+पूर्ण
 
 /*
- * NOTE: looks like if horizontal decimation is used (if we supported that)
+ * NOTE: looks like अगर horizontal decimation is used (अगर we supported that)
  * then the width used to calculate SMP block requirements is the post-
- * decimated width.  Ie. SMP buffering sits downstream of decimation (which
+ * decimated width.  Ie. SMP buffering sits करोwnstream of decimation (which
  * presumably happens during the dma from scanout buffer).
  */
-uint32_t mdp5_smp_calculate(struct mdp5_smp *smp,
-		const struct mdp_format *format,
+uपूर्णांक32_t mdp5_smp_calculate(काष्ठा mdp5_smp *smp,
+		स्थिर काष्ठा mdp_क्रमmat *क्रमmat,
 		u32 width, bool hdecim)
-{
-	const struct drm_format_info *info = drm_format_info(format->base.pixel_format);
-	struct mdp5_kms *mdp5_kms = get_kms(smp);
-	int rev = mdp5_cfg_get_hw_rev(mdp5_kms->cfg);
-	int i, hsub, nplanes, nlines;
-	uint32_t blkcfg = 0;
+अणु
+	स्थिर काष्ठा drm_क्रमmat_info *info = drm_क्रमmat_info(क्रमmat->base.pixel_क्रमmat);
+	काष्ठा mdp5_kms *mdp5_kms = get_kms(smp);
+	पूर्णांक rev = mdp5_cfg_get_hw_rev(mdp5_kms->cfg);
+	पूर्णांक i, hsub, nplanes, nlines;
+	uपूर्णांक32_t blkcfg = 0;
 
 	nplanes = info->num_planes;
 	hsub = info->hsub;
 
-	/* different if BWC (compressed framebuffer?) enabled: */
+	/* dअगरferent अगर BWC (compressed framebuffer?) enabled: */
 	nlines = 2;
 
 	/* Newer MDPs have split/packing logic, which fetches sub-sampled
-	 * U and V components (splits them from Y if necessary) and packs
-	 * them together, writes to SMP using a single client.
+	 * U and V components (splits them from Y अगर necessary) and packs
+	 * them together, ग_लिखोs to SMP using a single client.
 	 */
-	if ((rev > 0) && (format->chroma_sample > CHROMA_FULL)) {
+	अगर ((rev > 0) && (क्रमmat->chroma_sample > CHROMA_FULL)) अणु
 		nplanes = 2;
 
-		/* if decimation is enabled, HW decimates less on the
+		/* अगर decimation is enabled, HW decimates less on the
 		 * sub sampled chroma components
 		 */
-		if (hdecim && (hsub > 1))
+		अगर (hdecim && (hsub > 1))
 			hsub = 1;
-	}
+	पूर्ण
 
-	for (i = 0; i < nplanes; i++) {
-		int n, fetch_stride, cpp;
+	क्रम (i = 0; i < nplanes; i++) अणु
+		पूर्णांक n, fetch_stride, cpp;
 
 		cpp = info->cpp[i];
 		fetch_stride = width * cpp / (i ? hsub : 1);
 
 		n = DIV_ROUND_UP(fetch_stride * nlines, smp->blk_size);
 
-		/* for hw rev v1.00 */
-		if (rev == 0)
-			n = roundup_pow_of_two(n);
+		/* क्रम hw rev v1.00 */
+		अगर (rev == 0)
+			n = roundup_घात_of_two(n);
 
 		blkcfg |= (n << (8 * i));
-	}
+	पूर्ण
 
-	return blkcfg;
-}
+	वापस blkcfg;
+पूर्ण
 
-int mdp5_smp_assign(struct mdp5_smp *smp, struct mdp5_smp_state *state,
-		enum mdp5_pipe pipe, uint32_t blkcfg)
-{
-	struct mdp5_kms *mdp5_kms = get_kms(smp);
-	struct drm_device *dev = mdp5_kms->dev;
-	int i, ret;
+पूर्णांक mdp5_smp_assign(काष्ठा mdp5_smp *smp, काष्ठा mdp5_smp_state *state,
+		क्रमागत mdp5_pipe pipe, uपूर्णांक32_t blkcfg)
+अणु
+	काष्ठा mdp5_kms *mdp5_kms = get_kms(smp);
+	काष्ठा drm_device *dev = mdp5_kms->dev;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < pipe2nclients(pipe); i++) {
+	क्रम (i = 0; i < pipe2nclients(pipe); i++) अणु
 		u32 cid = pipe2client(pipe, i);
-		int n = blkcfg & 0xff;
+		पूर्णांक n = blkcfg & 0xff;
 
-		if (!n)
-			continue;
+		अगर (!n)
+			जारी;
 
 		DBG("%s[%d]: request %d SMP blocks", pipe2name(pipe), i, n);
 		ret = smp_request_block(smp, state, cid, n);
-		if (ret) {
+		अगर (ret) अणु
 			DRM_DEV_ERROR(dev->dev, "Cannot allocate %d SMP blocks: %d\n",
 					n, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		blkcfg >>= 8;
-	}
+	पूर्ण
 
-	state->assigned |= (1 << pipe);
+	state->asचिन्हित |= (1 << pipe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Release SMP blocks for all clients of the pipe */
-void mdp5_smp_release(struct mdp5_smp *smp, struct mdp5_smp_state *state,
-		enum mdp5_pipe pipe)
-{
-	int i;
-	int cnt = smp->blk_cnt;
+/* Release SMP blocks क्रम all clients of the pipe */
+व्योम mdp5_smp_release(काष्ठा mdp5_smp *smp, काष्ठा mdp5_smp_state *state,
+		क्रमागत mdp5_pipe pipe)
+अणु
+	पूर्णांक i;
+	पूर्णांक cnt = smp->blk_cnt;
 
-	for (i = 0; i < pipe2nclients(pipe); i++) {
+	क्रम (i = 0; i < pipe2nclients(pipe); i++) अणु
 		u32 cid = pipe2client(pipe, i);
-		void *cs = state->client_state[cid];
+		व्योम *cs = state->client_state[cid];
 
 		/* update global state: */
-		bitmap_andnot(state->state, state->state, cs, cnt);
+		biपंचांगap_andnot(state->state, state->state, cs, cnt);
 
 		/* clear client's state */
-		bitmap_zero(cs, cnt);
-	}
+		biपंचांगap_zero(cs, cnt);
+	पूर्ण
 
 	state->released |= (1 << pipe);
-}
+पूर्ण
 
-/* NOTE: SMP_ALLOC_* regs are *not* double buffered, so release has to
+/* NOTE: SMP_ALLOC_* regs are *not* द्विगुन buffered, so release has to
  * happen after scanout completes.
  */
-static unsigned update_smp_state(struct mdp5_smp *smp,
-		u32 cid, mdp5_smp_state_t *assigned)
-{
-	int cnt = smp->blk_cnt;
-	unsigned nblks = 0;
+अटल अचिन्हित update_smp_state(काष्ठा mdp5_smp *smp,
+		u32 cid, mdp5_smp_state_t *asचिन्हित)
+अणु
+	पूर्णांक cnt = smp->blk_cnt;
+	अचिन्हित nblks = 0;
 	u32 blk, val;
 
-	for_each_set_bit(blk, *assigned, cnt) {
-		int idx = blk / 3;
-		int fld = blk % 3;
+	क्रम_each_set_bit(blk, *asचिन्हित, cnt) अणु
+		पूर्णांक idx = blk / 3;
+		पूर्णांक fld = blk % 3;
 
 		val = smp->alloc_w[idx];
 
-		switch (fld) {
-		case 0:
+		चयन (fld) अणु
+		हाल 0:
 			val &= ~MDP5_SMP_ALLOC_W_REG_CLIENT0__MASK;
 			val |= MDP5_SMP_ALLOC_W_REG_CLIENT0(cid);
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			val &= ~MDP5_SMP_ALLOC_W_REG_CLIENT1__MASK;
 			val |= MDP5_SMP_ALLOC_W_REG_CLIENT1(cid);
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			val &= ~MDP5_SMP_ALLOC_W_REG_CLIENT2__MASK;
 			val |= MDP5_SMP_ALLOC_W_REG_CLIENT2(cid);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		smp->alloc_w[idx] = val;
 		smp->alloc_r[idx] = val;
 
 		nblks++;
-	}
+	पूर्ण
 
-	return nblks;
-}
+	वापस nblks;
+पूर्ण
 
-static void write_smp_alloc_regs(struct mdp5_smp *smp)
-{
-	struct mdp5_kms *mdp5_kms = get_kms(smp);
-	int i, num_regs;
+अटल व्योम ग_लिखो_smp_alloc_regs(काष्ठा mdp5_smp *smp)
+अणु
+	काष्ठा mdp5_kms *mdp5_kms = get_kms(smp);
+	पूर्णांक i, num_regs;
 
 	num_regs = smp->blk_cnt / 3 + 1;
 
-	for (i = 0; i < num_regs; i++) {
-		mdp5_write(mdp5_kms, REG_MDP5_SMP_ALLOC_W_REG(i),
+	क्रम (i = 0; i < num_regs; i++) अणु
+		mdp5_ग_लिखो(mdp5_kms, REG_MDP5_SMP_ALLOC_W_REG(i),
 			   smp->alloc_w[i]);
-		mdp5_write(mdp5_kms, REG_MDP5_SMP_ALLOC_R_REG(i),
+		mdp5_ग_लिखो(mdp5_kms, REG_MDP5_SMP_ALLOC_R_REG(i),
 			   smp->alloc_r[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void write_smp_fifo_regs(struct mdp5_smp *smp)
-{
-	struct mdp5_kms *mdp5_kms = get_kms(smp);
-	int i;
+अटल व्योम ग_लिखो_smp_fअगरo_regs(काष्ठा mdp5_smp *smp)
+अणु
+	काष्ठा mdp5_kms *mdp5_kms = get_kms(smp);
+	पूर्णांक i;
 
-	for (i = 0; i < mdp5_kms->num_hwpipes; i++) {
-		struct mdp5_hw_pipe *hwpipe = mdp5_kms->hwpipes[i];
-		enum mdp5_pipe pipe = hwpipe->pipe;
+	क्रम (i = 0; i < mdp5_kms->num_hwpipes; i++) अणु
+		काष्ठा mdp5_hw_pipe *hwpipe = mdp5_kms->hwpipes[i];
+		क्रमागत mdp5_pipe pipe = hwpipe->pipe;
 
-		mdp5_write(mdp5_kms, REG_MDP5_PIPE_REQPRIO_FIFO_WM_0(pipe),
-			   smp->pipe_reqprio_fifo_wm0[pipe]);
-		mdp5_write(mdp5_kms, REG_MDP5_PIPE_REQPRIO_FIFO_WM_1(pipe),
-			   smp->pipe_reqprio_fifo_wm1[pipe]);
-		mdp5_write(mdp5_kms, REG_MDP5_PIPE_REQPRIO_FIFO_WM_2(pipe),
-			   smp->pipe_reqprio_fifo_wm2[pipe]);
-	}
-}
+		mdp5_ग_लिखो(mdp5_kms, REG_MDP5_PIPE_REQPRIO_FIFO_WM_0(pipe),
+			   smp->pipe_reqprio_fअगरo_wm0[pipe]);
+		mdp5_ग_लिखो(mdp5_kms, REG_MDP5_PIPE_REQPRIO_FIFO_WM_1(pipe),
+			   smp->pipe_reqprio_fअगरo_wm1[pipe]);
+		mdp5_ग_लिखो(mdp5_kms, REG_MDP5_PIPE_REQPRIO_FIFO_WM_2(pipe),
+			   smp->pipe_reqprio_fअगरo_wm2[pipe]);
+	पूर्ण
+पूर्ण
 
-void mdp5_smp_prepare_commit(struct mdp5_smp *smp, struct mdp5_smp_state *state)
-{
-	enum mdp5_pipe pipe;
+व्योम mdp5_smp_prepare_commit(काष्ठा mdp5_smp *smp, काष्ठा mdp5_smp_state *state)
+अणु
+	क्रमागत mdp5_pipe pipe;
 
-	for_each_set_bit(pipe, &state->assigned, sizeof(state->assigned) * 8) {
-		unsigned i, nblks = 0;
+	क्रम_each_set_bit(pipe, &state->asचिन्हित, माप(state->asचिन्हित) * 8) अणु
+		अचिन्हित i, nblks = 0;
 
-		for (i = 0; i < pipe2nclients(pipe); i++) {
+		क्रम (i = 0; i < pipe2nclients(pipe); i++) अणु
 			u32 cid = pipe2client(pipe, i);
-			void *cs = state->client_state[cid];
+			व्योम *cs = state->client_state[cid];
 
 			nblks += update_smp_state(smp, cid, cs);
 
 			DBG("assign %s:%u, %u blks",
 				pipe2name(pipe), i, nblks);
-		}
+		पूर्ण
 
-		set_fifo_thresholds(smp, pipe, nblks);
-	}
+		set_fअगरo_thresholds(smp, pipe, nblks);
+	पूर्ण
 
-	write_smp_alloc_regs(smp);
-	write_smp_fifo_regs(smp);
+	ग_लिखो_smp_alloc_regs(smp);
+	ग_लिखो_smp_fअगरo_regs(smp);
 
-	state->assigned = 0;
-}
+	state->asचिन्हित = 0;
+पूर्ण
 
-void mdp5_smp_complete_commit(struct mdp5_smp *smp, struct mdp5_smp_state *state)
-{
-	enum mdp5_pipe pipe;
+व्योम mdp5_smp_complete_commit(काष्ठा mdp5_smp *smp, काष्ठा mdp5_smp_state *state)
+अणु
+	क्रमागत mdp5_pipe pipe;
 
-	for_each_set_bit(pipe, &state->released, sizeof(state->released) * 8) {
+	क्रम_each_set_bit(pipe, &state->released, माप(state->released) * 8) अणु
 		DBG("release %s", pipe2name(pipe));
-		set_fifo_thresholds(smp, pipe, 0);
-	}
+		set_fअगरo_thresholds(smp, pipe, 0);
+	पूर्ण
 
-	write_smp_fifo_regs(smp);
+	ग_लिखो_smp_fअगरo_regs(smp);
 
 	state->released = 0;
-}
+पूर्ण
 
-void mdp5_smp_dump(struct mdp5_smp *smp, struct drm_printer *p)
-{
-	struct mdp5_kms *mdp5_kms = get_kms(smp);
-	struct mdp5_hw_pipe_state *hwpstate;
-	struct mdp5_smp_state *state;
-	struct mdp5_global_state *global_state;
-	int total = 0, i, j;
+व्योम mdp5_smp_dump(काष्ठा mdp5_smp *smp, काष्ठा drm_prपूर्णांकer *p)
+अणु
+	काष्ठा mdp5_kms *mdp5_kms = get_kms(smp);
+	काष्ठा mdp5_hw_pipe_state *hwpstate;
+	काष्ठा mdp5_smp_state *state;
+	काष्ठा mdp5_global_state *global_state;
+	पूर्णांक total = 0, i, j;
 
-	drm_printf(p, "name\tinuse\tplane\n");
-	drm_printf(p, "----\t-----\t-----\n");
+	drm_म_लिखो(p, "name\tinuse\tplane\n");
+	drm_म_लिखो(p, "----\t-----\t-----\n");
 
-	if (drm_can_sleep())
-		drm_modeset_lock(&mdp5_kms->glob_state_lock, NULL);
+	अगर (drm_can_sleep())
+		drm_modeset_lock(&mdp5_kms->glob_state_lock, शून्य);
 
 	global_state = mdp5_get_existing_global_state(mdp5_kms);
 
@@ -345,48 +346,48 @@ void mdp5_smp_dump(struct mdp5_smp *smp, struct drm_printer *p)
 	hwpstate = &global_state->hwpipe;
 	state = &global_state->smp;
 
-	for (i = 0; i < mdp5_kms->num_hwpipes; i++) {
-		struct mdp5_hw_pipe *hwpipe = mdp5_kms->hwpipes[i];
-		struct drm_plane *plane = hwpstate->hwpipe_to_plane[hwpipe->idx];
-		enum mdp5_pipe pipe = hwpipe->pipe;
-		for (j = 0; j < pipe2nclients(pipe); j++) {
+	क्रम (i = 0; i < mdp5_kms->num_hwpipes; i++) अणु
+		काष्ठा mdp5_hw_pipe *hwpipe = mdp5_kms->hwpipes[i];
+		काष्ठा drm_plane *plane = hwpstate->hwpipe_to_plane[hwpipe->idx];
+		क्रमागत mdp5_pipe pipe = hwpipe->pipe;
+		क्रम (j = 0; j < pipe2nclients(pipe); j++) अणु
 			u32 cid = pipe2client(pipe, j);
-			void *cs = state->client_state[cid];
-			int inuse = bitmap_weight(cs, smp->blk_cnt);
+			व्योम *cs = state->client_state[cid];
+			पूर्णांक inuse = biपंचांगap_weight(cs, smp->blk_cnt);
 
-			drm_printf(p, "%s:%d\t%d\t%s\n",
+			drm_म_लिखो(p, "%s:%d\t%d\t%s\n",
 				pipe2name(pipe), j, inuse,
-				plane ? plane->name : NULL);
+				plane ? plane->name : शून्य);
 
 			total += inuse;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	drm_printf(p, "TOTAL:\t%d\t(of %d)\n", total, smp->blk_cnt);
-	drm_printf(p, "AVAIL:\t%d\n", smp->blk_cnt -
-			bitmap_weight(state->state, smp->blk_cnt));
+	drm_म_लिखो(p, "TOTAL:\t%d\t(of %d)\n", total, smp->blk_cnt);
+	drm_म_लिखो(p, "AVAIL:\t%d\n", smp->blk_cnt -
+			biपंचांगap_weight(state->state, smp->blk_cnt));
 
-	if (drm_can_sleep())
+	अगर (drm_can_sleep())
 		drm_modeset_unlock(&mdp5_kms->glob_state_lock);
-}
+पूर्ण
 
-void mdp5_smp_destroy(struct mdp5_smp *smp)
-{
-	kfree(smp);
-}
+व्योम mdp5_smp_destroy(काष्ठा mdp5_smp *smp)
+अणु
+	kमुक्त(smp);
+पूर्ण
 
-struct mdp5_smp *mdp5_smp_init(struct mdp5_kms *mdp5_kms, const struct mdp5_smp_block *cfg)
-{
-	struct mdp5_smp_state *state;
-	struct mdp5_global_state *global_state;
-	struct mdp5_smp *smp = NULL;
-	int ret;
+काष्ठा mdp5_smp *mdp5_smp_init(काष्ठा mdp5_kms *mdp5_kms, स्थिर काष्ठा mdp5_smp_block *cfg)
+अणु
+	काष्ठा mdp5_smp_state *state;
+	काष्ठा mdp5_global_state *global_state;
+	काष्ठा mdp5_smp *smp = शून्य;
+	पूर्णांक ret;
 
-	smp = kzalloc(sizeof(*smp), GFP_KERNEL);
-	if (unlikely(!smp)) {
+	smp = kzalloc(माप(*smp), GFP_KERNEL);
+	अगर (unlikely(!smp)) अणु
 		ret = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	smp->dev = mdp5_kms->dev;
 	smp->blk_cnt = cfg->mmb_count;
@@ -395,14 +396,14 @@ struct mdp5_smp *mdp5_smp_init(struct mdp5_kms *mdp5_kms, const struct mdp5_smp_
 	global_state = mdp5_get_existing_global_state(mdp5_kms);
 	state = &global_state->smp;
 
-	/* statically tied MMBs cannot be re-allocated: */
-	bitmap_copy(state->state, cfg->reserved_state, smp->blk_cnt);
-	memcpy(smp->reserved, cfg->reserved, sizeof(smp->reserved));
+	/* अटलally tied MMBs cannot be re-allocated: */
+	biपंचांगap_copy(state->state, cfg->reserved_state, smp->blk_cnt);
+	स_नकल(smp->reserved, cfg->reserved, माप(smp->reserved));
 
-	return smp;
+	वापस smp;
 fail:
-	if (smp)
+	अगर (smp)
 		mdp5_smp_destroy(smp);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण

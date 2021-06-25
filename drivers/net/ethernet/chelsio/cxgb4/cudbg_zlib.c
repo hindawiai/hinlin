@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 2018 Chelsio Communications.  All rights reserved.
  */
 
-#include <linux/zlib.h>
+#समावेश <linux/zlib.h>
 
-#include "cxgb4.h"
-#include "cudbg_if.h"
-#include "cudbg_lib_common.h"
-#include "cudbg_zlib.h"
+#समावेश "cxgb4.h"
+#समावेश "cudbg_if.h"
+#समावेश "cudbg_lib_common.h"
+#समावेश "cudbg_zlib.h"
 
-static int cudbg_get_compress_hdr(struct cudbg_buffer *pdbg_buff,
-				  struct cudbg_buffer *pin_buff)
-{
-	if (pdbg_buff->offset + sizeof(struct cudbg_compress_hdr) >
+अटल पूर्णांक cudbg_get_compress_hdr(काष्ठा cudbg_buffer *pdbg_buff,
+				  काष्ठा cudbg_buffer *pin_buff)
+अणु
+	अगर (pdbg_buff->offset + माप(काष्ठा cudbg_compress_hdr) >
 	    pdbg_buff->size)
-		return CUDBG_STATUS_NO_MEM;
+		वापस CUDBG_STATUS_NO_MEM;
 
-	pin_buff->data = (char *)pdbg_buff->data + pdbg_buff->offset;
+	pin_buff->data = (अक्षर *)pdbg_buff->data + pdbg_buff->offset;
 	pin_buff->offset = 0;
-	pin_buff->size = sizeof(struct cudbg_compress_hdr);
-	pdbg_buff->offset += sizeof(struct cudbg_compress_hdr);
-	return 0;
-}
+	pin_buff->size = माप(काष्ठा cudbg_compress_hdr);
+	pdbg_buff->offset += माप(काष्ठा cudbg_compress_hdr);
+	वापस 0;
+पूर्ण
 
-int cudbg_compress_buff(struct cudbg_init *pdbg_init,
-			struct cudbg_buffer *pin_buff,
-			struct cudbg_buffer *pout_buff)
-{
-	struct cudbg_buffer temp_buff = { 0 };
-	struct z_stream_s compress_stream;
-	struct cudbg_compress_hdr *c_hdr;
-	int rc;
+पूर्णांक cudbg_compress_buff(काष्ठा cudbg_init *pdbg_init,
+			काष्ठा cudbg_buffer *pin_buff,
+			काष्ठा cudbg_buffer *pout_buff)
+अणु
+	काष्ठा cudbg_buffer temp_buff = अणु 0 पूर्ण;
+	काष्ठा z_stream_s compress_stream;
+	काष्ठा cudbg_compress_hdr *c_hdr;
+	पूर्णांक rc;
 
-	/* Write compression header to output buffer before compression */
+	/* Write compression header to output buffer beक्रमe compression */
 	rc = cudbg_get_compress_hdr(pout_buff, &temp_buff);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	c_hdr = (struct cudbg_compress_hdr *)temp_buff.data;
+	c_hdr = (काष्ठा cudbg_compress_hdr *)temp_buff.data;
 	c_hdr->compress_id = CUDBG_ZLIB_COMPRESS_ID;
 
-	memset(&compress_stream, 0, sizeof(struct z_stream_s));
+	स_रखो(&compress_stream, 0, माप(काष्ठा z_stream_s));
 	compress_stream.workspace = pdbg_init->workspace;
 	rc = zlib_deflateInit2(&compress_stream, Z_DEFAULT_COMPRESSION,
 			       Z_DEFLATED, CUDBG_ZLIB_WIN_BITS,
 			       CUDBG_ZLIB_MEM_LVL, Z_DEFAULT_STRATEGY);
-	if (rc != Z_OK)
-		return CUDBG_SYSTEM_ERROR;
+	अगर (rc != Z_OK)
+		वापस CUDBG_SYSTEM_ERROR;
 
 	compress_stream.next_in = pin_buff->data;
 	compress_stream.avail_in = pin_buff->size;
@@ -55,16 +56,16 @@ int cudbg_compress_buff(struct cudbg_init *pdbg_init,
 	compress_stream.avail_out = pout_buff->size - pout_buff->offset;
 
 	rc = zlib_deflate(&compress_stream, Z_FINISH);
-	if (rc != Z_STREAM_END)
-		return CUDBG_SYSTEM_ERROR;
+	अगर (rc != Z_STREAM_END)
+		वापस CUDBG_SYSTEM_ERROR;
 
 	rc = zlib_deflateEnd(&compress_stream);
-	if (rc != Z_OK)
-		return CUDBG_SYSTEM_ERROR;
+	अगर (rc != Z_OK)
+		वापस CUDBG_SYSTEM_ERROR;
 
 	c_hdr->compress_size = compress_stream.total_out;
 	c_hdr->decompress_size = pin_buff->size;
 	pout_buff->offset += compress_stream.total_out;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

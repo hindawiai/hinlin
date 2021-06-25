@@ -1,530 +1,531 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Enable PCIe link L0s/L1 state and Clock Power Management
  *
  * Copyright (C) 2007 Intel
- * Copyright (C) Zhang Yanmin (yanmin.zhang@intel.com)
- * Copyright (C) Shaohua Li (shaohua.li@intel.com)
+ * Copyright (C) Zhang Yanmin (yanmin.zhang@पूर्णांकel.com)
+ * Copyright (C) Shaohua Li (shaohua.li@पूर्णांकel.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/pci.h>
-#include <linux/pci_regs.h>
-#include <linux/errno.h>
-#include <linux/pm.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <linux/delay.h>
-#include "../pci.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_regs.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/delay.h>
+#समावेश "../pci.h"
 
-#ifdef MODULE_PARAM_PREFIX
-#undef MODULE_PARAM_PREFIX
-#endif
-#define MODULE_PARAM_PREFIX "pcie_aspm."
+#अगर_घोषित MODULE_PARAM_PREFIX
+#अघोषित MODULE_PARAM_PREFIX
+#पूर्ण_अगर
+#घोषणा MODULE_PARAM_PREFIX "pcie_aspm."
 
-/* Note: those are not register definitions */
-#define ASPM_STATE_L0S_UP	(1)	/* Upstream direction L0s state */
-#define ASPM_STATE_L0S_DW	(2)	/* Downstream direction L0s state */
-#define ASPM_STATE_L1		(4)	/* L1 state */
-#define ASPM_STATE_L1_1		(8)	/* ASPM L1.1 state */
-#define ASPM_STATE_L1_2		(0x10)	/* ASPM L1.2 state */
-#define ASPM_STATE_L1_1_PCIPM	(0x20)	/* PCI PM L1.1 state */
-#define ASPM_STATE_L1_2_PCIPM	(0x40)	/* PCI PM L1.2 state */
-#define ASPM_STATE_L1_SS_PCIPM	(ASPM_STATE_L1_1_PCIPM | ASPM_STATE_L1_2_PCIPM)
-#define ASPM_STATE_L1_2_MASK	(ASPM_STATE_L1_2 | ASPM_STATE_L1_2_PCIPM)
-#define ASPM_STATE_L1SS		(ASPM_STATE_L1_1 | ASPM_STATE_L1_1_PCIPM |\
+/* Note: those are not रेजिस्टर definitions */
+#घोषणा ASPM_STATE_L0S_UP	(1)	/* Upstream direction L0s state */
+#घोषणा ASPM_STATE_L0S_DW	(2)	/* Downstream direction L0s state */
+#घोषणा ASPM_STATE_L1		(4)	/* L1 state */
+#घोषणा ASPM_STATE_L1_1		(8)	/* ASPM L1.1 state */
+#घोषणा ASPM_STATE_L1_2		(0x10)	/* ASPM L1.2 state */
+#घोषणा ASPM_STATE_L1_1_PCIPM	(0x20)	/* PCI PM L1.1 state */
+#घोषणा ASPM_STATE_L1_2_PCIPM	(0x40)	/* PCI PM L1.2 state */
+#घोषणा ASPM_STATE_L1_SS_PCIPM	(ASPM_STATE_L1_1_PCIPM | ASPM_STATE_L1_2_PCIPM)
+#घोषणा ASPM_STATE_L1_2_MASK	(ASPM_STATE_L1_2 | ASPM_STATE_L1_2_PCIPM)
+#घोषणा ASPM_STATE_L1SS		(ASPM_STATE_L1_1 | ASPM_STATE_L1_1_PCIPM |\
 				 ASPM_STATE_L1_2_MASK)
-#define ASPM_STATE_L0S		(ASPM_STATE_L0S_UP | ASPM_STATE_L0S_DW)
-#define ASPM_STATE_ALL		(ASPM_STATE_L0S | ASPM_STATE_L1 |	\
+#घोषणा ASPM_STATE_L0S		(ASPM_STATE_L0S_UP | ASPM_STATE_L0S_DW)
+#घोषणा ASPM_STATE_ALL		(ASPM_STATE_L0S | ASPM_STATE_L1 |	\
 				 ASPM_STATE_L1SS)
 
-struct aspm_latency {
+काष्ठा aspm_latency अणु
 	u32 l0s;			/* L0s latency (nsec) */
 	u32 l1;				/* L1 latency (nsec) */
-};
+पूर्ण;
 
-struct pcie_link_state {
-	struct pci_dev *pdev;		/* Upstream component of the Link */
-	struct pci_dev *downstream;	/* Downstream component, function 0 */
-	struct pcie_link_state *root;	/* pointer to the root port link */
-	struct pcie_link_state *parent;	/* pointer to the parent Link state */
-	struct list_head sibling;	/* node in link_list */
+काष्ठा pcie_link_state अणु
+	काष्ठा pci_dev *pdev;		/* Upstream component of the Link */
+	काष्ठा pci_dev *करोwnstream;	/* Downstream component, function 0 */
+	काष्ठा pcie_link_state *root;	/* poपूर्णांकer to the root port link */
+	काष्ठा pcie_link_state *parent;	/* poपूर्णांकer to the parent Link state */
+	काष्ठा list_head sibling;	/* node in link_list */
 
 	/* ASPM state */
 	u32 aspm_support:7;		/* Supported ASPM state */
 	u32 aspm_enabled:7;		/* Enabled ASPM state */
 	u32 aspm_capable:7;		/* Capable ASPM state with latency */
-	u32 aspm_default:7;		/* Default ASPM state by BIOS */
+	u32 aspm_शेष:7;		/* Default ASPM state by BIOS */
 	u32 aspm_disable:7;		/* Disabled ASPM state */
 
 	/* Clock PM state */
 	u32 clkpm_capable:1;		/* Clock PM capable? */
 	u32 clkpm_enabled:1;		/* Current Clock PM state */
-	u32 clkpm_default:1;		/* Default Clock PM state by BIOS */
+	u32 clkpm_शेष:1;		/* Default Clock PM state by BIOS */
 	u32 clkpm_disable:1;		/* Clock PM disabled */
 
 	/* Exit latencies */
-	struct aspm_latency latency_up;	/* Upstream direction exit latency */
-	struct aspm_latency latency_dw;	/* Downstream direction exit latency */
+	काष्ठा aspm_latency latency_up;	/* Upstream direction निकास latency */
+	काष्ठा aspm_latency latency_dw;	/* Downstream direction निकास latency */
 	/*
-	 * Endpoint acceptable latencies. A pcie downstream port only
+	 * Endpoपूर्णांक acceptable latencies. A pcie करोwnstream port only
 	 * has one slot under it, so at most there are 8 functions.
 	 */
-	struct aspm_latency acceptable[8];
-};
+	काष्ठा aspm_latency acceptable[8];
+पूर्ण;
 
-static int aspm_disabled, aspm_force;
-static bool aspm_support_enabled = true;
-static DEFINE_MUTEX(aspm_lock);
-static LIST_HEAD(link_list);
+अटल पूर्णांक aspm_disabled, aspm_क्रमce;
+अटल bool aspm_support_enabled = true;
+अटल DEFINE_MUTEX(aspm_lock);
+अटल LIST_HEAD(link_list);
 
-#define POLICY_DEFAULT 0	/* BIOS default setting */
-#define POLICY_PERFORMANCE 1	/* high performance */
-#define POLICY_POWERSAVE 2	/* high power saving */
-#define POLICY_POWER_SUPERSAVE 3 /* possibly even more power saving */
+#घोषणा POLICY_DEFAULT 0	/* BIOS शेष setting */
+#घोषणा POLICY_PERFORMANCE 1	/* high perक्रमmance */
+#घोषणा POLICY_POWERSAVE 2	/* high घातer saving */
+#घोषणा POLICY_POWER_SUPERSAVE 3 /* possibly even more घातer saving */
 
-#ifdef CONFIG_PCIEASPM_PERFORMANCE
-static int aspm_policy = POLICY_PERFORMANCE;
-#elif defined CONFIG_PCIEASPM_POWERSAVE
-static int aspm_policy = POLICY_POWERSAVE;
-#elif defined CONFIG_PCIEASPM_POWER_SUPERSAVE
-static int aspm_policy = POLICY_POWER_SUPERSAVE;
-#else
-static int aspm_policy;
-#endif
+#अगर_घोषित CONFIG_PCIEASPM_PERFORMANCE
+अटल पूर्णांक aspm_policy = POLICY_PERFORMANCE;
+#या_अगर defined CONFIG_PCIEASPM_POWERSAVE
+अटल पूर्णांक aspm_policy = POLICY_POWERSAVE;
+#या_अगर defined CONFIG_PCIEASPM_POWER_SUPERSAVE
+अटल पूर्णांक aspm_policy = POLICY_POWER_SUPERSAVE;
+#अन्यथा
+अटल पूर्णांक aspm_policy;
+#पूर्ण_अगर
 
-static const char *policy_str[] = {
+अटल स्थिर अक्षर *policy_str[] = अणु
 	[POLICY_DEFAULT] = "default",
 	[POLICY_PERFORMANCE] = "performance",
 	[POLICY_POWERSAVE] = "powersave",
 	[POLICY_POWER_SUPERSAVE] = "powersupersave"
-};
+पूर्ण;
 
-#define LINK_RETRAIN_TIMEOUT HZ
+#घोषणा LINK_RETRAIN_TIMEOUT HZ
 
-static int policy_to_aspm_state(struct pcie_link_state *link)
-{
-	switch (aspm_policy) {
-	case POLICY_PERFORMANCE:
+अटल पूर्णांक policy_to_aspm_state(काष्ठा pcie_link_state *link)
+अणु
+	चयन (aspm_policy) अणु
+	हाल POLICY_PERFORMANCE:
 		/* Disable ASPM and Clock PM */
-		return 0;
-	case POLICY_POWERSAVE:
+		वापस 0;
+	हाल POLICY_POWERSAVE:
 		/* Enable ASPM L0s/L1 */
-		return (ASPM_STATE_L0S | ASPM_STATE_L1);
-	case POLICY_POWER_SUPERSAVE:
+		वापस (ASPM_STATE_L0S | ASPM_STATE_L1);
+	हाल POLICY_POWER_SUPERSAVE:
 		/* Enable Everything */
-		return ASPM_STATE_ALL;
-	case POLICY_DEFAULT:
-		return link->aspm_default;
-	}
-	return 0;
-}
+		वापस ASPM_STATE_ALL;
+	हाल POLICY_DEFAULT:
+		वापस link->aspm_शेष;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int policy_to_clkpm_state(struct pcie_link_state *link)
-{
-	switch (aspm_policy) {
-	case POLICY_PERFORMANCE:
+अटल पूर्णांक policy_to_clkpm_state(काष्ठा pcie_link_state *link)
+अणु
+	चयन (aspm_policy) अणु
+	हाल POLICY_PERFORMANCE:
 		/* Disable ASPM and Clock PM */
-		return 0;
-	case POLICY_POWERSAVE:
-	case POLICY_POWER_SUPERSAVE:
+		वापस 0;
+	हाल POLICY_POWERSAVE:
+	हाल POLICY_POWER_SUPERSAVE:
 		/* Enable Clock PM */
-		return 1;
-	case POLICY_DEFAULT:
-		return link->clkpm_default;
-	}
-	return 0;
-}
+		वापस 1;
+	हाल POLICY_DEFAULT:
+		वापस link->clkpm_शेष;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void pcie_set_clkpm_nocheck(struct pcie_link_state *link, int enable)
-{
-	struct pci_dev *child;
-	struct pci_bus *linkbus = link->pdev->subordinate;
+अटल व्योम pcie_set_clkpm_nocheck(काष्ठा pcie_link_state *link, पूर्णांक enable)
+अणु
+	काष्ठा pci_dev *child;
+	काष्ठा pci_bus *linkbus = link->pdev->subordinate;
 	u32 val = enable ? PCI_EXP_LNKCTL_CLKREQ_EN : 0;
 
-	list_for_each_entry(child, &linkbus->devices, bus_list)
+	list_क्रम_each_entry(child, &linkbus->devices, bus_list)
 		pcie_capability_clear_and_set_word(child, PCI_EXP_LNKCTL,
 						   PCI_EXP_LNKCTL_CLKREQ_EN,
 						   val);
 	link->clkpm_enabled = !!enable;
-}
+पूर्ण
 
-static void pcie_set_clkpm(struct pcie_link_state *link, int enable)
-{
+अटल व्योम pcie_set_clkpm(काष्ठा pcie_link_state *link, पूर्णांक enable)
+अणु
 	/*
-	 * Don't enable Clock PM if the link is not Clock PM capable
+	 * Don't enable Clock PM अगर the link is not Clock PM capable
 	 * or Clock PM is disabled
 	 */
-	if (!link->clkpm_capable || link->clkpm_disable)
+	अगर (!link->clkpm_capable || link->clkpm_disable)
 		enable = 0;
-	/* Need nothing if the specified equals to current state */
-	if (link->clkpm_enabled == enable)
-		return;
+	/* Need nothing अगर the specअगरied equals to current state */
+	अगर (link->clkpm_enabled == enable)
+		वापस;
 	pcie_set_clkpm_nocheck(link, enable);
-}
+पूर्ण
 
-static void pcie_clkpm_cap_init(struct pcie_link_state *link, int blacklist)
-{
-	int capable = 1, enabled = 1;
+अटल व्योम pcie_clkpm_cap_init(काष्ठा pcie_link_state *link, पूर्णांक blacklist)
+अणु
+	पूर्णांक capable = 1, enabled = 1;
 	u32 reg32;
 	u16 reg16;
-	struct pci_dev *child;
-	struct pci_bus *linkbus = link->pdev->subordinate;
+	काष्ठा pci_dev *child;
+	काष्ठा pci_bus *linkbus = link->pdev->subordinate;
 
 	/* All functions should have the same cap and state, take the worst */
-	list_for_each_entry(child, &linkbus->devices, bus_list) {
-		pcie_capability_read_dword(child, PCI_EXP_LNKCAP, &reg32);
-		if (!(reg32 & PCI_EXP_LNKCAP_CLKPM)) {
+	list_क्रम_each_entry(child, &linkbus->devices, bus_list) अणु
+		pcie_capability_पढ़ो_dword(child, PCI_EXP_LNKCAP, &reg32);
+		अगर (!(reg32 & PCI_EXP_LNKCAP_CLKPM)) अणु
 			capable = 0;
 			enabled = 0;
-			break;
-		}
-		pcie_capability_read_word(child, PCI_EXP_LNKCTL, &reg16);
-		if (!(reg16 & PCI_EXP_LNKCTL_CLKREQ_EN))
+			अवरोध;
+		पूर्ण
+		pcie_capability_पढ़ो_word(child, PCI_EXP_LNKCTL, &reg16);
+		अगर (!(reg16 & PCI_EXP_LNKCTL_CLKREQ_EN))
 			enabled = 0;
-	}
+	पूर्ण
 	link->clkpm_enabled = enabled;
-	link->clkpm_default = enabled;
+	link->clkpm_शेष = enabled;
 	link->clkpm_capable = capable;
 	link->clkpm_disable = blacklist ? 1 : 0;
-}
+पूर्ण
 
-static bool pcie_retrain_link(struct pcie_link_state *link)
-{
-	struct pci_dev *parent = link->pdev;
-	unsigned long end_jiffies;
+अटल bool pcie_retrain_link(काष्ठा pcie_link_state *link)
+अणु
+	काष्ठा pci_dev *parent = link->pdev;
+	अचिन्हित दीर्घ end_jअगरfies;
 	u16 reg16;
 
-	pcie_capability_read_word(parent, PCI_EXP_LNKCTL, &reg16);
+	pcie_capability_पढ़ो_word(parent, PCI_EXP_LNKCTL, &reg16);
 	reg16 |= PCI_EXP_LNKCTL_RL;
-	pcie_capability_write_word(parent, PCI_EXP_LNKCTL, reg16);
-	if (parent->clear_retrain_link) {
+	pcie_capability_ग_लिखो_word(parent, PCI_EXP_LNKCTL, reg16);
+	अगर (parent->clear_retrain_link) अणु
 		/*
 		 * Due to an erratum in some devices the Retrain Link bit
 		 * needs to be cleared again manually to allow the link
 		 * training to succeed.
 		 */
 		reg16 &= ~PCI_EXP_LNKCTL_RL;
-		pcie_capability_write_word(parent, PCI_EXP_LNKCTL, reg16);
-	}
+		pcie_capability_ग_लिखो_word(parent, PCI_EXP_LNKCTL, reg16);
+	पूर्ण
 
-	/* Wait for link training end. Break out after waiting for timeout */
-	end_jiffies = jiffies + LINK_RETRAIN_TIMEOUT;
-	do {
-		pcie_capability_read_word(parent, PCI_EXP_LNKSTA, &reg16);
-		if (!(reg16 & PCI_EXP_LNKSTA_LT))
-			break;
+	/* Wait क्रम link training end. Break out after रुकोing क्रम समयout */
+	end_jअगरfies = jअगरfies + LINK_RETRAIN_TIMEOUT;
+	करो अणु
+		pcie_capability_पढ़ो_word(parent, PCI_EXP_LNKSTA, &reg16);
+		अगर (!(reg16 & PCI_EXP_LNKSTA_LT))
+			अवरोध;
 		msleep(1);
-	} while (time_before(jiffies, end_jiffies));
-	return !(reg16 & PCI_EXP_LNKSTA_LT);
-}
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, end_jअगरfies));
+	वापस !(reg16 & PCI_EXP_LNKSTA_LT);
+पूर्ण
 
 /*
- * pcie_aspm_configure_common_clock: check if the 2 ends of a link
- *   could use common clock. If they are, configure them to use the
- *   common clock. That will reduce the ASPM state exit latency.
+ * pcie_aspm_configure_common_घड़ी: check अगर the 2 ends of a link
+ *   could use common घड़ी. If they are, configure them to use the
+ *   common घड़ी. That will reduce the ASPM state निकास latency.
  */
-static void pcie_aspm_configure_common_clock(struct pcie_link_state *link)
-{
-	int same_clock = 1;
+अटल व्योम pcie_aspm_configure_common_घड़ी(काष्ठा pcie_link_state *link)
+अणु
+	पूर्णांक same_घड़ी = 1;
 	u16 reg16, parent_reg, child_reg[8];
-	struct pci_dev *child, *parent = link->pdev;
-	struct pci_bus *linkbus = parent->subordinate;
+	काष्ठा pci_dev *child, *parent = link->pdev;
+	काष्ठा pci_bus *linkbus = parent->subordinate;
 	/*
 	 * All functions of a slot should have the same Slot Clock
 	 * Configuration, so just check one function
 	 */
-	child = list_entry(linkbus->devices.next, struct pci_dev, bus_list);
+	child = list_entry(linkbus->devices.next, काष्ठा pci_dev, bus_list);
 	BUG_ON(!pci_is_pcie(child));
 
-	/* Check downstream component if bit Slot Clock Configuration is 1 */
-	pcie_capability_read_word(child, PCI_EXP_LNKSTA, &reg16);
-	if (!(reg16 & PCI_EXP_LNKSTA_SLC))
-		same_clock = 0;
+	/* Check करोwnstream component अगर bit Slot Clock Configuration is 1 */
+	pcie_capability_पढ़ो_word(child, PCI_EXP_LNKSTA, &reg16);
+	अगर (!(reg16 & PCI_EXP_LNKSTA_SLC))
+		same_घड़ी = 0;
 
-	/* Check upstream component if bit Slot Clock Configuration is 1 */
-	pcie_capability_read_word(parent, PCI_EXP_LNKSTA, &reg16);
-	if (!(reg16 & PCI_EXP_LNKSTA_SLC))
-		same_clock = 0;
+	/* Check upstream component अगर bit Slot Clock Configuration is 1 */
+	pcie_capability_पढ़ो_word(parent, PCI_EXP_LNKSTA, &reg16);
+	अगर (!(reg16 & PCI_EXP_LNKSTA_SLC))
+		same_घड़ी = 0;
 
-	/* Port might be already in common clock mode */
-	pcie_capability_read_word(parent, PCI_EXP_LNKCTL, &reg16);
-	if (same_clock && (reg16 & PCI_EXP_LNKCTL_CCC)) {
+	/* Port might be alपढ़ोy in common घड़ी mode */
+	pcie_capability_पढ़ो_word(parent, PCI_EXP_LNKCTL, &reg16);
+	अगर (same_घड़ी && (reg16 & PCI_EXP_LNKCTL_CCC)) अणु
 		bool consistent = true;
 
-		list_for_each_entry(child, &linkbus->devices, bus_list) {
-			pcie_capability_read_word(child, PCI_EXP_LNKCTL,
+		list_क्रम_each_entry(child, &linkbus->devices, bus_list) अणु
+			pcie_capability_पढ़ो_word(child, PCI_EXP_LNKCTL,
 						  &reg16);
-			if (!(reg16 & PCI_EXP_LNKCTL_CCC)) {
+			अगर (!(reg16 & PCI_EXP_LNKCTL_CCC)) अणु
 				consistent = false;
-				break;
-			}
-		}
-		if (consistent)
-			return;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (consistent)
+			वापस;
 		pci_info(parent, "ASPM: current common clock configuration is inconsistent, reconfiguring\n");
-	}
+	पूर्ण
 
-	/* Configure downstream component, all functions */
-	list_for_each_entry(child, &linkbus->devices, bus_list) {
-		pcie_capability_read_word(child, PCI_EXP_LNKCTL, &reg16);
+	/* Configure करोwnstream component, all functions */
+	list_क्रम_each_entry(child, &linkbus->devices, bus_list) अणु
+		pcie_capability_पढ़ो_word(child, PCI_EXP_LNKCTL, &reg16);
 		child_reg[PCI_FUNC(child->devfn)] = reg16;
-		if (same_clock)
+		अगर (same_घड़ी)
 			reg16 |= PCI_EXP_LNKCTL_CCC;
-		else
+		अन्यथा
 			reg16 &= ~PCI_EXP_LNKCTL_CCC;
-		pcie_capability_write_word(child, PCI_EXP_LNKCTL, reg16);
-	}
+		pcie_capability_ग_लिखो_word(child, PCI_EXP_LNKCTL, reg16);
+	पूर्ण
 
 	/* Configure upstream component */
-	pcie_capability_read_word(parent, PCI_EXP_LNKCTL, &reg16);
+	pcie_capability_पढ़ो_word(parent, PCI_EXP_LNKCTL, &reg16);
 	parent_reg = reg16;
-	if (same_clock)
+	अगर (same_घड़ी)
 		reg16 |= PCI_EXP_LNKCTL_CCC;
-	else
+	अन्यथा
 		reg16 &= ~PCI_EXP_LNKCTL_CCC;
-	pcie_capability_write_word(parent, PCI_EXP_LNKCTL, reg16);
+	pcie_capability_ग_लिखो_word(parent, PCI_EXP_LNKCTL, reg16);
 
-	if (pcie_retrain_link(link))
-		return;
+	अगर (pcie_retrain_link(link))
+		वापस;
 
-	/* Training failed. Restore common clock configurations */
+	/* Training failed. Restore common घड़ी configurations */
 	pci_err(parent, "ASPM: Could not configure common clock\n");
-	list_for_each_entry(child, &linkbus->devices, bus_list)
-		pcie_capability_write_word(child, PCI_EXP_LNKCTL,
+	list_क्रम_each_entry(child, &linkbus->devices, bus_list)
+		pcie_capability_ग_लिखो_word(child, PCI_EXP_LNKCTL,
 					   child_reg[PCI_FUNC(child->devfn)]);
-	pcie_capability_write_word(parent, PCI_EXP_LNKCTL, parent_reg);
-}
+	pcie_capability_ग_लिखो_word(parent, PCI_EXP_LNKCTL, parent_reg);
+पूर्ण
 
 /* Convert L0s latency encoding to ns */
-static u32 calc_l0s_latency(u32 lnkcap)
-{
+अटल u32 calc_l0s_latency(u32 lnkcap)
+अणु
 	u32 encoding = (lnkcap & PCI_EXP_LNKCAP_L0SEL) >> 12;
 
-	if (encoding == 0x7)
-		return (5 * 1000);	/* > 4us */
-	return (64 << encoding);
-}
+	अगर (encoding == 0x7)
+		वापस (5 * 1000);	/* > 4us */
+	वापस (64 << encoding);
+पूर्ण
 
 /* Convert L0s acceptable latency encoding to ns */
-static u32 calc_l0s_acceptable(u32 encoding)
-{
-	if (encoding == 0x7)
-		return -1U;
-	return (64 << encoding);
-}
+अटल u32 calc_l0s_acceptable(u32 encoding)
+अणु
+	अगर (encoding == 0x7)
+		वापस -1U;
+	वापस (64 << encoding);
+पूर्ण
 
 /* Convert L1 latency encoding to ns */
-static u32 calc_l1_latency(u32 lnkcap)
-{
+अटल u32 calc_l1_latency(u32 lnkcap)
+अणु
 	u32 encoding = (lnkcap & PCI_EXP_LNKCAP_L1EL) >> 15;
 
-	if (encoding == 0x7)
-		return (65 * 1000);	/* > 64us */
-	return (1000 << encoding);
-}
+	अगर (encoding == 0x7)
+		वापस (65 * 1000);	/* > 64us */
+	वापस (1000 << encoding);
+पूर्ण
 
 /* Convert L1 acceptable latency encoding to ns */
-static u32 calc_l1_acceptable(u32 encoding)
-{
-	if (encoding == 0x7)
-		return -1U;
-	return (1000 << encoding);
-}
+अटल u32 calc_l1_acceptable(u32 encoding)
+अणु
+	अगर (encoding == 0x7)
+		वापस -1U;
+	वापस (1000 << encoding);
+पूर्ण
 
 /* Convert L1SS T_pwr encoding to usec */
-static u32 calc_l1ss_pwron(struct pci_dev *pdev, u32 scale, u32 val)
-{
-	switch (scale) {
-	case 0:
-		return val * 2;
-	case 1:
-		return val * 10;
-	case 2:
-		return val * 100;
-	}
+अटल u32 calc_l1ss_pwron(काष्ठा pci_dev *pdev, u32 scale, u32 val)
+अणु
+	चयन (scale) अणु
+	हाल 0:
+		वापस val * 2;
+	हाल 1:
+		वापस val * 10;
+	हाल 2:
+		वापस val * 100;
+	पूर्ण
 	pci_err(pdev, "%s: Invalid T_PwrOn scale: %u\n", __func__, scale);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void encode_l12_threshold(u32 threshold_us, u32 *scale, u32 *value)
-{
+अटल व्योम encode_l12_threshold(u32 threshold_us, u32 *scale, u32 *value)
+अणु
 	u32 threshold_ns = threshold_us * 1000;
 
 	/* See PCIe r3.1, sec 7.33.3 and sec 6.18 */
-	if (threshold_ns < 32) {
+	अगर (threshold_ns < 32) अणु
 		*scale = 0;
 		*value = threshold_ns;
-	} else if (threshold_ns < 1024) {
+	पूर्ण अन्यथा अगर (threshold_ns < 1024) अणु
 		*scale = 1;
 		*value = threshold_ns >> 5;
-	} else if (threshold_ns < 32768) {
+	पूर्ण अन्यथा अगर (threshold_ns < 32768) अणु
 		*scale = 2;
 		*value = threshold_ns >> 10;
-	} else if (threshold_ns < 1048576) {
+	पूर्ण अन्यथा अगर (threshold_ns < 1048576) अणु
 		*scale = 3;
 		*value = threshold_ns >> 15;
-	} else if (threshold_ns < 33554432) {
+	पूर्ण अन्यथा अगर (threshold_ns < 33554432) अणु
 		*scale = 4;
 		*value = threshold_ns >> 20;
-	} else {
+	पूर्ण अन्यथा अणु
 		*scale = 5;
 		*value = threshold_ns >> 25;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pcie_aspm_check_latency(struct pci_dev *endpoint)
-{
-	u32 latency, l1_switch_latency = 0;
-	struct aspm_latency *acceptable;
-	struct pcie_link_state *link;
+अटल व्योम pcie_aspm_check_latency(काष्ठा pci_dev *endpoपूर्णांक)
+अणु
+	u32 latency, l1_चयन_latency = 0;
+	काष्ठा aspm_latency *acceptable;
+	काष्ठा pcie_link_state *link;
 
-	/* Device not in D0 doesn't need latency check */
-	if ((endpoint->current_state != PCI_D0) &&
-	    (endpoint->current_state != PCI_UNKNOWN))
-		return;
+	/* Device not in D0 करोesn't need latency check */
+	अगर ((endpoपूर्णांक->current_state != PCI_D0) &&
+	    (endpoपूर्णांक->current_state != PCI_UNKNOWN))
+		वापस;
 
-	link = endpoint->bus->self->link_state;
-	acceptable = &link->acceptable[PCI_FUNC(endpoint->devfn)];
+	link = endpoपूर्णांक->bus->self->link_state;
+	acceptable = &link->acceptable[PCI_FUNC(endpoपूर्णांक->devfn)];
 
-	while (link) {
+	जबतक (link) अणु
 		/* Check upstream direction L0s latency */
-		if ((link->aspm_capable & ASPM_STATE_L0S_UP) &&
+		अगर ((link->aspm_capable & ASPM_STATE_L0S_UP) &&
 		    (link->latency_up.l0s > acceptable->l0s))
 			link->aspm_capable &= ~ASPM_STATE_L0S_UP;
 
-		/* Check downstream direction L0s latency */
-		if ((link->aspm_capable & ASPM_STATE_L0S_DW) &&
+		/* Check करोwnstream direction L0s latency */
+		अगर ((link->aspm_capable & ASPM_STATE_L0S_DW) &&
 		    (link->latency_dw.l0s > acceptable->l0s))
 			link->aspm_capable &= ~ASPM_STATE_L0S_DW;
 		/*
 		 * Check L1 latency.
-		 * Every switch on the path to root complex need 1
-		 * more microsecond for L1. Spec doesn't mention L0s.
+		 * Every चयन on the path to root complex need 1
+		 * more microsecond क्रम L1. Spec करोesn't mention L0s.
 		 *
-		 * The exit latencies for L1 substates are not advertised
-		 * by a device.  Since the spec also doesn't mention a way
-		 * to determine max latencies introduced by enabling L1
-		 * substates on the components, it is not clear how to do
-		 * a L1 substate exit latency check.  We assume that the
-		 * L1 exit latencies advertised by a device include L1
-		 * substate latencies (and hence do not do any check).
+		 * The निकास latencies क्रम L1 substates are not advertised
+		 * by a device.  Since the spec also करोesn't mention a way
+		 * to determine max latencies पूर्णांकroduced by enabling L1
+		 * substates on the components, it is not clear how to करो
+		 * a L1 substate निकास latency check.  We assume that the
+		 * L1 निकास latencies advertised by a device include L1
+		 * substate latencies (and hence करो not करो any check).
 		 */
 		latency = max_t(u32, link->latency_up.l1, link->latency_dw.l1);
-		if ((link->aspm_capable & ASPM_STATE_L1) &&
-		    (latency + l1_switch_latency > acceptable->l1))
+		अगर ((link->aspm_capable & ASPM_STATE_L1) &&
+		    (latency + l1_चयन_latency > acceptable->l1))
 			link->aspm_capable &= ~ASPM_STATE_L1;
-		l1_switch_latency += 1000;
+		l1_चयन_latency += 1000;
 
 		link = link->parent;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * The L1 PM substate capability is only implemented in function 0 in a
  * multi function device.
  */
-static struct pci_dev *pci_function_0(struct pci_bus *linkbus)
-{
-	struct pci_dev *child;
+अटल काष्ठा pci_dev *pci_function_0(काष्ठा pci_bus *linkbus)
+अणु
+	काष्ठा pci_dev *child;
 
-	list_for_each_entry(child, &linkbus->devices, bus_list)
-		if (PCI_FUNC(child->devfn) == 0)
-			return child;
-	return NULL;
-}
+	list_क्रम_each_entry(child, &linkbus->devices, bus_list)
+		अगर (PCI_FUNC(child->devfn) == 0)
+			वापस child;
+	वापस शून्य;
+पूर्ण
 
-static void pci_clear_and_set_dword(struct pci_dev *pdev, int pos,
+अटल व्योम pci_clear_and_set_dword(काष्ठा pci_dev *pdev, पूर्णांक pos,
 				    u32 clear, u32 set)
-{
+अणु
 	u32 val;
 
-	pci_read_config_dword(pdev, pos, &val);
+	pci_पढ़ो_config_dword(pdev, pos, &val);
 	val &= ~clear;
 	val |= set;
-	pci_write_config_dword(pdev, pos, val);
-}
+	pci_ग_लिखो_config_dword(pdev, pos, val);
+पूर्ण
 
 /* Calculate L1.2 PM substate timing parameters */
-static void aspm_calc_l1ss_info(struct pcie_link_state *link,
+अटल व्योम aspm_calc_l1ss_info(काष्ठा pcie_link_state *link,
 				u32 parent_l1ss_cap, u32 child_l1ss_cap)
-{
-	struct pci_dev *child = link->downstream, *parent = link->pdev;
+अणु
+	काष्ठा pci_dev *child = link->करोwnstream, *parent = link->pdev;
 	u32 val1, val2, scale1, scale2;
-	u32 t_common_mode, t_power_on, l1_2_threshold, scale, value;
+	u32 t_common_mode, t_घातer_on, l1_2_threshold, scale, value;
 	u32 ctl1 = 0, ctl2 = 0;
 	u32 pctl1, pctl2, cctl1, cctl2;
 	u32 pl1_2_enables, cl1_2_enables;
 
-	if (!(link->aspm_support & ASPM_STATE_L1_2_MASK))
-		return;
+	अगर (!(link->aspm_support & ASPM_STATE_L1_2_MASK))
+		वापस;
 
 	/* Choose the greater of the two Port Common_Mode_Restore_Times */
 	val1 = (parent_l1ss_cap & PCI_L1SS_CAP_CM_RESTORE_TIME) >> 8;
 	val2 = (child_l1ss_cap & PCI_L1SS_CAP_CM_RESTORE_TIME) >> 8;
 	t_common_mode = max(val1, val2);
 
-	/* Choose the greater of the two Port T_POWER_ON times */
+	/* Choose the greater of the two Port T_POWER_ON बार */
 	val1   = (parent_l1ss_cap & PCI_L1SS_CAP_P_PWR_ON_VALUE) >> 19;
 	scale1 = (parent_l1ss_cap & PCI_L1SS_CAP_P_PWR_ON_SCALE) >> 16;
 	val2   = (child_l1ss_cap & PCI_L1SS_CAP_P_PWR_ON_VALUE) >> 19;
 	scale2 = (child_l1ss_cap & PCI_L1SS_CAP_P_PWR_ON_SCALE) >> 16;
 
-	if (calc_l1ss_pwron(parent, scale1, val1) >
-	    calc_l1ss_pwron(child, scale2, val2)) {
+	अगर (calc_l1ss_pwron(parent, scale1, val1) >
+	    calc_l1ss_pwron(child, scale2, val2)) अणु
 		ctl2 |= scale1 | (val1 << 3);
-		t_power_on = calc_l1ss_pwron(parent, scale1, val1);
-	} else {
+		t_घातer_on = calc_l1ss_pwron(parent, scale1, val1);
+	पूर्ण अन्यथा अणु
 		ctl2 |= scale2 | (val2 << 3);
-		t_power_on = calc_l1ss_pwron(child, scale2, val2);
-	}
+		t_घातer_on = calc_l1ss_pwron(child, scale2, val2);
+	पूर्ण
 
 	/*
-	 * Set LTR_L1.2_THRESHOLD to the time required to transition the
-	 * Link from L0 to L1.2 and back to L0 so we enter L1.2 only if
-	 * downstream devices report (via LTR) that they can tolerate at
+	 * Set LTR_L1.2_THRESHOLD to the समय required to transition the
+	 * Link from L0 to L1.2 and back to L0 so we enter L1.2 only अगर
+	 * करोwnstream devices report (via LTR) that they can tolerate at
 	 * least that much latency.
 	 *
 	 * Based on PCIe r3.1, sec 5.5.3.3.1, Figures 5-16 and 5-17, and
 	 * Table 5-11.  T(POWER_OFF) is at most 2us and T(L1.2) is at
 	 * least 4us.
 	 */
-	l1_2_threshold = 2 + 4 + t_common_mode + t_power_on;
+	l1_2_threshold = 2 + 4 + t_common_mode + t_घातer_on;
 	encode_l12_threshold(l1_2_threshold, &scale, &value);
 	ctl1 |= t_common_mode << 8 | scale << 29 | value << 16;
 
-	pci_read_config_dword(parent, parent->l1ss + PCI_L1SS_CTL1, &pctl1);
-	pci_read_config_dword(parent, parent->l1ss + PCI_L1SS_CTL2, &pctl2);
-	pci_read_config_dword(child, child->l1ss + PCI_L1SS_CTL1, &cctl1);
-	pci_read_config_dword(child, child->l1ss + PCI_L1SS_CTL2, &cctl2);
+	pci_पढ़ो_config_dword(parent, parent->l1ss + PCI_L1SS_CTL1, &pctl1);
+	pci_पढ़ो_config_dword(parent, parent->l1ss + PCI_L1SS_CTL2, &pctl2);
+	pci_पढ़ो_config_dword(child, child->l1ss + PCI_L1SS_CTL1, &cctl1);
+	pci_पढ़ो_config_dword(child, child->l1ss + PCI_L1SS_CTL2, &cctl2);
 
-	if (ctl1 == pctl1 && ctl1 == cctl1 &&
+	अगर (ctl1 == pctl1 && ctl1 == cctl1 &&
 	    ctl2 == pctl2 && ctl2 == cctl2)
-		return;
+		वापस;
 
-	/* Disable L1.2 while updating.  See PCIe r5.0, sec 5.5.4, 7.8.3.3 */
+	/* Disable L1.2 जबतक updating.  See PCIe r5.0, sec 5.5.4, 7.8.3.3 */
 	pl1_2_enables = pctl1 & PCI_L1SS_CTL1_L1_2_MASK;
 	cl1_2_enables = cctl1 & PCI_L1SS_CTL1_L1_2_MASK;
 
-	if (pl1_2_enables || cl1_2_enables) {
+	अगर (pl1_2_enables || cl1_2_enables) अणु
 		pci_clear_and_set_dword(child, child->l1ss + PCI_L1SS_CTL1,
 					PCI_L1SS_CTL1_L1_2_MASK, 0);
 		pci_clear_and_set_dword(parent, parent->l1ss + PCI_L1SS_CTL1,
 					PCI_L1SS_CTL1_L1_2_MASK, 0);
-	}
+	पूर्ण
 
-	/* Program T_POWER_ON times in both ports */
-	pci_write_config_dword(parent, parent->l1ss + PCI_L1SS_CTL2, ctl2);
-	pci_write_config_dword(child, child->l1ss + PCI_L1SS_CTL2, ctl2);
+	/* Program T_POWER_ON बार in both ports */
+	pci_ग_लिखो_config_dword(parent, parent->l1ss + PCI_L1SS_CTL2, ctl2);
+	pci_ग_लिखो_config_dword(child, child->l1ss + PCI_L1SS_CTL2, ctl2);
 
 	/* Program Common_Mode_Restore_Time in upstream device */
 	pci_clear_and_set_dword(parent, parent->l1ss + PCI_L1SS_CTL1,
 				PCI_L1SS_CTL1_CM_RESTORE_TIME, ctl1);
 
-	/* Program LTR_L1.2_THRESHOLD time in both ports */
+	/* Program LTR_L1.2_THRESHOLD समय in both ports */
 	pci_clear_and_set_dword(parent,	parent->l1ss + PCI_L1SS_CTL1,
 				PCI_L1SS_CTL1_LTR_L12_TH_VALUE |
 				PCI_L1SS_CTL1_LTR_L12_TH_SCALE, ctl1);
@@ -532,52 +533,52 @@ static void aspm_calc_l1ss_info(struct pcie_link_state *link,
 				PCI_L1SS_CTL1_LTR_L12_TH_VALUE |
 				PCI_L1SS_CTL1_LTR_L12_TH_SCALE, ctl1);
 
-	if (pl1_2_enables || cl1_2_enables) {
+	अगर (pl1_2_enables || cl1_2_enables) अणु
 		pci_clear_and_set_dword(parent, parent->l1ss + PCI_L1SS_CTL1, 0,
 					pl1_2_enables);
 		pci_clear_and_set_dword(child, child->l1ss + PCI_L1SS_CTL1, 0,
 					cl1_2_enables);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pcie_aspm_cap_init(struct pcie_link_state *link, int blacklist)
-{
-	struct pci_dev *child = link->downstream, *parent = link->pdev;
+अटल व्योम pcie_aspm_cap_init(काष्ठा pcie_link_state *link, पूर्णांक blacklist)
+अणु
+	काष्ठा pci_dev *child = link->करोwnstream, *parent = link->pdev;
 	u32 parent_lnkcap, child_lnkcap;
 	u16 parent_lnkctl, child_lnkctl;
 	u32 parent_l1ss_cap, child_l1ss_cap;
 	u32 parent_l1ss_ctl1 = 0, child_l1ss_ctl1 = 0;
-	struct pci_bus *linkbus = parent->subordinate;
+	काष्ठा pci_bus *linkbus = parent->subordinate;
 
-	if (blacklist) {
+	अगर (blacklist) अणु
 		/* Set enabled/disable so that we will disable ASPM later */
 		link->aspm_enabled = ASPM_STATE_ALL;
 		link->aspm_disable = ASPM_STATE_ALL;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If ASPM not supported, don't mess with the clocks and link,
+	 * If ASPM not supported, करोn't mess with the घड़ीs and link,
 	 * bail out now.
 	 */
-	pcie_capability_read_dword(parent, PCI_EXP_LNKCAP, &parent_lnkcap);
-	pcie_capability_read_dword(child, PCI_EXP_LNKCAP, &child_lnkcap);
-	if (!(parent_lnkcap & child_lnkcap & PCI_EXP_LNKCAP_ASPMS))
-		return;
+	pcie_capability_पढ़ो_dword(parent, PCI_EXP_LNKCAP, &parent_lnkcap);
+	pcie_capability_पढ़ो_dword(child, PCI_EXP_LNKCAP, &child_lnkcap);
+	अगर (!(parent_lnkcap & child_lnkcap & PCI_EXP_LNKCAP_ASPMS))
+		वापस;
 
-	/* Configure common clock before checking latencies */
-	pcie_aspm_configure_common_clock(link);
+	/* Configure common घड़ी beक्रमe checking latencies */
+	pcie_aspm_configure_common_घड़ी(link);
 
 	/*
-	 * Re-read upstream/downstream components' register state after
-	 * clock configuration.  L0s & L1 exit latencies in the otherwise
-	 * read-only Link Capabilities may change depending on common clock
+	 * Re-पढ़ो upstream/करोwnstream components' रेजिस्टर state after
+	 * घड़ी configuration.  L0s & L1 निकास latencies in the otherwise
+	 * पढ़ो-only Link Capabilities may change depending on common घड़ी
 	 * configuration (PCIe r5.0, sec 7.5.3.6).
 	 */
-	pcie_capability_read_dword(parent, PCI_EXP_LNKCAP, &parent_lnkcap);
-	pcie_capability_read_dword(child, PCI_EXP_LNKCAP, &child_lnkcap);
-	pcie_capability_read_word(parent, PCI_EXP_LNKCTL, &parent_lnkctl);
-	pcie_capability_read_word(child, PCI_EXP_LNKCTL, &child_lnkctl);
+	pcie_capability_पढ़ो_dword(parent, PCI_EXP_LNKCAP, &parent_lnkcap);
+	pcie_capability_पढ़ो_dword(child, PCI_EXP_LNKCAP, &child_lnkcap);
+	pcie_capability_पढ़ो_word(parent, PCI_EXP_LNKCTL, &parent_lnkctl);
+	pcie_capability_पढ़ो_word(child, PCI_EXP_LNKCTL, &child_lnkctl);
 
 	/*
 	 * Setup L0s state
@@ -586,115 +587,115 @@ static void pcie_aspm_cap_init(struct pcie_link_state *link, int blacklist)
 	 * given link unless components on both sides of the link each
 	 * support L0s.
 	 */
-	if (parent_lnkcap & child_lnkcap & PCI_EXP_LNKCAP_ASPM_L0S)
+	अगर (parent_lnkcap & child_lnkcap & PCI_EXP_LNKCAP_ASPM_L0S)
 		link->aspm_support |= ASPM_STATE_L0S;
 
-	if (child_lnkctl & PCI_EXP_LNKCTL_ASPM_L0S)
+	अगर (child_lnkctl & PCI_EXP_LNKCTL_ASPM_L0S)
 		link->aspm_enabled |= ASPM_STATE_L0S_UP;
-	if (parent_lnkctl & PCI_EXP_LNKCTL_ASPM_L0S)
+	अगर (parent_lnkctl & PCI_EXP_LNKCTL_ASPM_L0S)
 		link->aspm_enabled |= ASPM_STATE_L0S_DW;
 	link->latency_up.l0s = calc_l0s_latency(parent_lnkcap);
 	link->latency_dw.l0s = calc_l0s_latency(child_lnkcap);
 
 	/* Setup L1 state */
-	if (parent_lnkcap & child_lnkcap & PCI_EXP_LNKCAP_ASPM_L1)
+	अगर (parent_lnkcap & child_lnkcap & PCI_EXP_LNKCAP_ASPM_L1)
 		link->aspm_support |= ASPM_STATE_L1;
 
-	if (parent_lnkctl & child_lnkctl & PCI_EXP_LNKCTL_ASPM_L1)
+	अगर (parent_lnkctl & child_lnkctl & PCI_EXP_LNKCTL_ASPM_L1)
 		link->aspm_enabled |= ASPM_STATE_L1;
 	link->latency_up.l1 = calc_l1_latency(parent_lnkcap);
 	link->latency_dw.l1 = calc_l1_latency(child_lnkcap);
 
 	/* Setup L1 substate */
-	pci_read_config_dword(parent, parent->l1ss + PCI_L1SS_CAP,
+	pci_पढ़ो_config_dword(parent, parent->l1ss + PCI_L1SS_CAP,
 			      &parent_l1ss_cap);
-	pci_read_config_dword(child, child->l1ss + PCI_L1SS_CAP,
+	pci_पढ़ो_config_dword(child, child->l1ss + PCI_L1SS_CAP,
 			      &child_l1ss_cap);
 
-	if (!(parent_l1ss_cap & PCI_L1SS_CAP_L1_PM_SS))
+	अगर (!(parent_l1ss_cap & PCI_L1SS_CAP_L1_PM_SS))
 		parent_l1ss_cap = 0;
-	if (!(child_l1ss_cap & PCI_L1SS_CAP_L1_PM_SS))
+	अगर (!(child_l1ss_cap & PCI_L1SS_CAP_L1_PM_SS))
 		child_l1ss_cap = 0;
 
 	/*
-	 * If we don't have LTR for the entire path from the Root Complex
+	 * If we करोn't have LTR क्रम the entire path from the Root Complex
 	 * to this device, we can't use ASPM L1.2 because it relies on the
 	 * LTR_L1.2_THRESHOLD.  See PCIe r4.0, secs 5.5.4, 6.18.
 	 */
-	if (!child->ltr_path)
+	अगर (!child->ltr_path)
 		child_l1ss_cap &= ~PCI_L1SS_CAP_ASPM_L1_2;
 
-	if (parent_l1ss_cap & child_l1ss_cap & PCI_L1SS_CAP_ASPM_L1_1)
+	अगर (parent_l1ss_cap & child_l1ss_cap & PCI_L1SS_CAP_ASPM_L1_1)
 		link->aspm_support |= ASPM_STATE_L1_1;
-	if (parent_l1ss_cap & child_l1ss_cap & PCI_L1SS_CAP_ASPM_L1_2)
+	अगर (parent_l1ss_cap & child_l1ss_cap & PCI_L1SS_CAP_ASPM_L1_2)
 		link->aspm_support |= ASPM_STATE_L1_2;
-	if (parent_l1ss_cap & child_l1ss_cap & PCI_L1SS_CAP_PCIPM_L1_1)
+	अगर (parent_l1ss_cap & child_l1ss_cap & PCI_L1SS_CAP_PCIPM_L1_1)
 		link->aspm_support |= ASPM_STATE_L1_1_PCIPM;
-	if (parent_l1ss_cap & child_l1ss_cap & PCI_L1SS_CAP_PCIPM_L1_2)
+	अगर (parent_l1ss_cap & child_l1ss_cap & PCI_L1SS_CAP_PCIPM_L1_2)
 		link->aspm_support |= ASPM_STATE_L1_2_PCIPM;
 
-	if (parent_l1ss_cap)
-		pci_read_config_dword(parent, parent->l1ss + PCI_L1SS_CTL1,
+	अगर (parent_l1ss_cap)
+		pci_पढ़ो_config_dword(parent, parent->l1ss + PCI_L1SS_CTL1,
 				      &parent_l1ss_ctl1);
-	if (child_l1ss_cap)
-		pci_read_config_dword(child, child->l1ss + PCI_L1SS_CTL1,
+	अगर (child_l1ss_cap)
+		pci_पढ़ो_config_dword(child, child->l1ss + PCI_L1SS_CTL1,
 				      &child_l1ss_ctl1);
 
-	if (parent_l1ss_ctl1 & child_l1ss_ctl1 & PCI_L1SS_CTL1_ASPM_L1_1)
+	अगर (parent_l1ss_ctl1 & child_l1ss_ctl1 & PCI_L1SS_CTL1_ASPM_L1_1)
 		link->aspm_enabled |= ASPM_STATE_L1_1;
-	if (parent_l1ss_ctl1 & child_l1ss_ctl1 & PCI_L1SS_CTL1_ASPM_L1_2)
+	अगर (parent_l1ss_ctl1 & child_l1ss_ctl1 & PCI_L1SS_CTL1_ASPM_L1_2)
 		link->aspm_enabled |= ASPM_STATE_L1_2;
-	if (parent_l1ss_ctl1 & child_l1ss_ctl1 & PCI_L1SS_CTL1_PCIPM_L1_1)
+	अगर (parent_l1ss_ctl1 & child_l1ss_ctl1 & PCI_L1SS_CTL1_PCIPM_L1_1)
 		link->aspm_enabled |= ASPM_STATE_L1_1_PCIPM;
-	if (parent_l1ss_ctl1 & child_l1ss_ctl1 & PCI_L1SS_CTL1_PCIPM_L1_2)
+	अगर (parent_l1ss_ctl1 & child_l1ss_ctl1 & PCI_L1SS_CTL1_PCIPM_L1_2)
 		link->aspm_enabled |= ASPM_STATE_L1_2_PCIPM;
 
-	if (link->aspm_support & ASPM_STATE_L1SS)
+	अगर (link->aspm_support & ASPM_STATE_L1SS)
 		aspm_calc_l1ss_info(link, parent_l1ss_cap, child_l1ss_cap);
 
-	/* Save default state */
-	link->aspm_default = link->aspm_enabled;
+	/* Save शेष state */
+	link->aspm_शेष = link->aspm_enabled;
 
 	/* Setup initial capable state. Will be updated later */
 	link->aspm_capable = link->aspm_support;
 
-	/* Get and check endpoint acceptable latencies */
-	list_for_each_entry(child, &linkbus->devices, bus_list) {
+	/* Get and check endpoपूर्णांक acceptable latencies */
+	list_क्रम_each_entry(child, &linkbus->devices, bus_list) अणु
 		u32 reg32, encoding;
-		struct aspm_latency *acceptable =
+		काष्ठा aspm_latency *acceptable =
 			&link->acceptable[PCI_FUNC(child->devfn)];
 
-		if (pci_pcie_type(child) != PCI_EXP_TYPE_ENDPOINT &&
+		अगर (pci_pcie_type(child) != PCI_EXP_TYPE_ENDPOINT &&
 		    pci_pcie_type(child) != PCI_EXP_TYPE_LEG_END)
-			continue;
+			जारी;
 
-		pcie_capability_read_dword(child, PCI_EXP_DEVCAP, &reg32);
-		/* Calculate endpoint L0s acceptable latency */
+		pcie_capability_पढ़ो_dword(child, PCI_EXP_DEVCAP, &reg32);
+		/* Calculate endpoपूर्णांक L0s acceptable latency */
 		encoding = (reg32 & PCI_EXP_DEVCAP_L0S) >> 6;
 		acceptable->l0s = calc_l0s_acceptable(encoding);
-		/* Calculate endpoint L1 acceptable latency */
+		/* Calculate endpoपूर्णांक L1 acceptable latency */
 		encoding = (reg32 & PCI_EXP_DEVCAP_L1) >> 9;
 		acceptable->l1 = calc_l1_acceptable(encoding);
 
 		pcie_aspm_check_latency(child);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Configure the ASPM L1 substates */
-static void pcie_config_aspm_l1ss(struct pcie_link_state *link, u32 state)
-{
+अटल व्योम pcie_config_aspm_l1ss(काष्ठा pcie_link_state *link, u32 state)
+अणु
 	u32 val, enable_req;
-	struct pci_dev *child = link->downstream, *parent = link->pdev;
+	काष्ठा pci_dev *child = link->करोwnstream, *parent = link->pdev;
 
 	enable_req = (link->aspm_enabled ^ state) & state;
 
 	/*
-	 * Here are the rules specified in the PCIe spec for enabling L1SS:
+	 * Here are the rules specअगरied in the PCIe spec क्रम enabling L1SS:
 	 * - When enabling L1.x, enable bit at parent first, then at child
 	 * - When disabling L1.x, disable bit at child first, then at parent
 	 * - When enabling ASPM L1.x, need to disable L1
 	 *   (at child followed by parent).
-	 * - The ASPM/PCIPM L1.2 must be disabled while programming timing
+	 * - The ASPM/PCIPM L1.2 must be disabled जबतक programming timing
 	 *   parameters
 	 *
 	 * To keep it simple, disable all L1SS bits first, and later enable
@@ -707,24 +708,24 @@ static void pcie_config_aspm_l1ss(struct pcie_link_state *link, u32 state)
 	pci_clear_and_set_dword(parent, parent->l1ss + PCI_L1SS_CTL1,
 				PCI_L1SS_CTL1_L1SS_MASK, 0);
 	/*
-	 * If needed, disable L1, and it gets enabled later
+	 * If needed, disable L1, and it माला_लो enabled later
 	 * in pcie_config_aspm_link().
 	 */
-	if (enable_req & (ASPM_STATE_L1_1 | ASPM_STATE_L1_2)) {
+	अगर (enable_req & (ASPM_STATE_L1_1 | ASPM_STATE_L1_2)) अणु
 		pcie_capability_clear_and_set_word(child, PCI_EXP_LNKCTL,
 						   PCI_EXP_LNKCTL_ASPM_L1, 0);
 		pcie_capability_clear_and_set_word(parent, PCI_EXP_LNKCTL,
 						   PCI_EXP_LNKCTL_ASPM_L1, 0);
-	}
+	पूर्ण
 
 	val = 0;
-	if (state & ASPM_STATE_L1_1)
+	अगर (state & ASPM_STATE_L1_1)
 		val |= PCI_L1SS_CTL1_ASPM_L1_1;
-	if (state & ASPM_STATE_L1_2)
+	अगर (state & ASPM_STATE_L1_2)
 		val |= PCI_L1SS_CTL1_ASPM_L1_2;
-	if (state & ASPM_STATE_L1_1_PCIPM)
+	अगर (state & ASPM_STATE_L1_1_PCIPM)
 		val |= PCI_L1SS_CTL1_PCIPM_L1_1;
-	if (state & ASPM_STATE_L1_2_PCIPM)
+	अगर (state & ASPM_STATE_L1_2_PCIPM)
 		val |= PCI_L1SS_CTL1_PCIPM_L1_2;
 
 	/* Enable what we need to enable */
@@ -732,91 +733,91 @@ static void pcie_config_aspm_l1ss(struct pcie_link_state *link, u32 state)
 				PCI_L1SS_CTL1_L1SS_MASK, val);
 	pci_clear_and_set_dword(child, child->l1ss + PCI_L1SS_CTL1,
 				PCI_L1SS_CTL1_L1SS_MASK, val);
-}
+पूर्ण
 
-static void pcie_config_aspm_dev(struct pci_dev *pdev, u32 val)
-{
+अटल व्योम pcie_config_aspm_dev(काष्ठा pci_dev *pdev, u32 val)
+अणु
 	pcie_capability_clear_and_set_word(pdev, PCI_EXP_LNKCTL,
 					   PCI_EXP_LNKCTL_ASPMC, val);
-}
+पूर्ण
 
-static void pcie_config_aspm_link(struct pcie_link_state *link, u32 state)
-{
+अटल व्योम pcie_config_aspm_link(काष्ठा pcie_link_state *link, u32 state)
+अणु
 	u32 upstream = 0, dwstream = 0;
-	struct pci_dev *child = link->downstream, *parent = link->pdev;
-	struct pci_bus *linkbus = parent->subordinate;
+	काष्ठा pci_dev *child = link->करोwnstream, *parent = link->pdev;
+	काष्ठा pci_bus *linkbus = parent->subordinate;
 
 	/* Enable only the states that were not explicitly disabled */
 	state &= (link->aspm_capable & ~link->aspm_disable);
 
-	/* Can't enable any substates if L1 is not enabled */
-	if (!(state & ASPM_STATE_L1))
+	/* Can't enable any substates अगर L1 is not enabled */
+	अगर (!(state & ASPM_STATE_L1))
 		state &= ~ASPM_STATE_L1SS;
 
-	/* Spec says both ports must be in D0 before enabling PCI PM substates*/
-	if (parent->current_state != PCI_D0 || child->current_state != PCI_D0) {
+	/* Spec says both ports must be in D0 beक्रमe enabling PCI PM substates*/
+	अगर (parent->current_state != PCI_D0 || child->current_state != PCI_D0) अणु
 		state &= ~ASPM_STATE_L1_SS_PCIPM;
 		state |= (link->aspm_enabled & ASPM_STATE_L1_SS_PCIPM);
-	}
+	पूर्ण
 
-	/* Nothing to do if the link is already in the requested state */
-	if (link->aspm_enabled == state)
-		return;
-	/* Convert ASPM state to upstream/downstream ASPM register state */
-	if (state & ASPM_STATE_L0S_UP)
+	/* Nothing to करो अगर the link is alपढ़ोy in the requested state */
+	अगर (link->aspm_enabled == state)
+		वापस;
+	/* Convert ASPM state to upstream/करोwnstream ASPM रेजिस्टर state */
+	अगर (state & ASPM_STATE_L0S_UP)
 		dwstream |= PCI_EXP_LNKCTL_ASPM_L0S;
-	if (state & ASPM_STATE_L0S_DW)
+	अगर (state & ASPM_STATE_L0S_DW)
 		upstream |= PCI_EXP_LNKCTL_ASPM_L0S;
-	if (state & ASPM_STATE_L1) {
+	अगर (state & ASPM_STATE_L1) अणु
 		upstream |= PCI_EXP_LNKCTL_ASPM_L1;
 		dwstream |= PCI_EXP_LNKCTL_ASPM_L1;
-	}
+	पूर्ण
 
-	if (link->aspm_capable & ASPM_STATE_L1SS)
+	अगर (link->aspm_capable & ASPM_STATE_L1SS)
 		pcie_config_aspm_l1ss(link, state);
 
 	/*
 	 * Spec 2.0 suggests all functions should be configured the
-	 * same setting for ASPM. Enabling ASPM L1 should be done in
-	 * upstream component first and then downstream, and vice
-	 * versa for disabling ASPM L1. Spec doesn't mention L0S.
+	 * same setting क्रम ASPM. Enabling ASPM L1 should be करोne in
+	 * upstream component first and then करोwnstream, and vice
+	 * versa क्रम disabling ASPM L1. Spec करोesn't mention L0S.
 	 */
-	if (state & ASPM_STATE_L1)
+	अगर (state & ASPM_STATE_L1)
 		pcie_config_aspm_dev(parent, upstream);
-	list_for_each_entry(child, &linkbus->devices, bus_list)
+	list_क्रम_each_entry(child, &linkbus->devices, bus_list)
 		pcie_config_aspm_dev(child, dwstream);
-	if (!(state & ASPM_STATE_L1))
+	अगर (!(state & ASPM_STATE_L1))
 		pcie_config_aspm_dev(parent, upstream);
 
 	link->aspm_enabled = state;
-}
+पूर्ण
 
-static void pcie_config_aspm_path(struct pcie_link_state *link)
-{
-	while (link) {
+अटल व्योम pcie_config_aspm_path(काष्ठा pcie_link_state *link)
+अणु
+	जबतक (link) अणु
 		pcie_config_aspm_link(link, policy_to_aspm_state(link));
 		link = link->parent;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void free_link_state(struct pcie_link_state *link)
-{
-	link->pdev->link_state = NULL;
-	kfree(link);
-}
+अटल व्योम मुक्त_link_state(काष्ठा pcie_link_state *link)
+अणु
+	link->pdev->link_state = शून्य;
+	kमुक्त(link);
+पूर्ण
 
-static int pcie_aspm_sanity_check(struct pci_dev *pdev)
-{
-	struct pci_dev *child;
+अटल पूर्णांक pcie_aspm_sanity_check(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_dev *child;
 	u32 reg32;
 
 	/*
 	 * Some functions in a slot might not all be PCIe functions,
-	 * very strange. Disable ASPM for the whole slot
+	 * very strange. Disable ASPM क्रम the whole slot
 	 */
-	list_for_each_entry(child, &pdev->subordinate->devices, bus_list) {
-		if (!pci_is_pcie(child))
-			return -EINVAL;
+	list_क्रम_each_entry(child, &pdev->subordinate->devices, bus_list) अणु
+		अगर (!pci_is_pcie(child))
+			वापस -EINVAL;
 
 		/*
 		 * If ASPM is disabled then we're not going to change
@@ -824,108 +825,108 @@ static int pcie_aspm_sanity_check(struct pci_dev *pdev)
 		 * pre-1.1 device
 		 */
 
-		if (aspm_disabled)
-			continue;
+		अगर (aspm_disabled)
+			जारी;
 
 		/*
-		 * Disable ASPM for pre-1.1 PCIe device, we follow MS to use
-		 * RBER bit to determine if a function is 1.1 version device
+		 * Disable ASPM क्रम pre-1.1 PCIe device, we follow MS to use
+		 * RBER bit to determine अगर a function is 1.1 version device
 		 */
-		pcie_capability_read_dword(child, PCI_EXP_DEVCAP, &reg32);
-		if (!(reg32 & PCI_EXP_DEVCAP_RBER) && !aspm_force) {
+		pcie_capability_पढ़ो_dword(child, PCI_EXP_DEVCAP, &reg32);
+		अगर (!(reg32 & PCI_EXP_DEVCAP_RBER) && !aspm_क्रमce) अणु
 			pci_info(child, "disabling ASPM on pre-1.1 PCIe device.  You can enable it with 'pcie_aspm=force'\n");
-			return -EINVAL;
-		}
-	}
-	return 0;
-}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct pcie_link_state *alloc_pcie_link_state(struct pci_dev *pdev)
-{
-	struct pcie_link_state *link;
+अटल काष्ठा pcie_link_state *alloc_pcie_link_state(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pcie_link_state *link;
 
-	link = kzalloc(sizeof(*link), GFP_KERNEL);
-	if (!link)
-		return NULL;
+	link = kzalloc(माप(*link), GFP_KERNEL);
+	अगर (!link)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&link->sibling);
 	link->pdev = pdev;
-	link->downstream = pci_function_0(pdev->subordinate);
+	link->करोwnstream = pci_function_0(pdev->subordinate);
 
 	/*
 	 * Root Ports and PCI/PCI-X to PCIe Bridges are roots of PCIe
 	 * hierarchies.  Note that some PCIe host implementations omit
-	 * the root ports entirely, in which case a downstream port on
-	 * a switch may become the root of the link state chain for all
-	 * its subordinate endpoints.
+	 * the root ports entirely, in which हाल a करोwnstream port on
+	 * a चयन may become the root of the link state chain क्रम all
+	 * its subordinate endpoपूर्णांकs.
 	 */
-	if (pci_pcie_type(pdev) == PCI_EXP_TYPE_ROOT_PORT ||
+	अगर (pci_pcie_type(pdev) == PCI_EXP_TYPE_ROOT_PORT ||
 	    pci_pcie_type(pdev) == PCI_EXP_TYPE_PCIE_BRIDGE ||
-	    !pdev->bus->parent->self) {
+	    !pdev->bus->parent->self) अणु
 		link->root = link;
-	} else {
-		struct pcie_link_state *parent;
+	पूर्ण अन्यथा अणु
+		काष्ठा pcie_link_state *parent;
 
 		parent = pdev->bus->parent->self->link_state;
-		if (!parent) {
-			kfree(link);
-			return NULL;
-		}
+		अगर (!parent) अणु
+			kमुक्त(link);
+			वापस शून्य;
+		पूर्ण
 
 		link->parent = parent;
 		link->root = link->parent->root;
-	}
+	पूर्ण
 
 	list_add(&link->sibling, &link_list);
 	pdev->link_state = link;
-	return link;
-}
+	वापस link;
+पूर्ण
 
-static void pcie_aspm_update_sysfs_visibility(struct pci_dev *pdev)
-{
-	struct pci_dev *child;
+अटल व्योम pcie_aspm_update_sysfs_visibility(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_dev *child;
 
-	list_for_each_entry(child, &pdev->subordinate->devices, bus_list)
+	list_क्रम_each_entry(child, &pdev->subordinate->devices, bus_list)
 		sysfs_update_group(&child->dev.kobj, &aspm_ctrl_attr_group);
-}
+पूर्ण
 
 /*
  * pcie_aspm_init_link_state: Initiate PCI express link state.
  * It is called after the pcie and its children devices are scanned.
- * @pdev: the root port or switch downstream port
+ * @pdev: the root port or चयन करोwnstream port
  */
-void pcie_aspm_init_link_state(struct pci_dev *pdev)
-{
-	struct pcie_link_state *link;
-	int blacklist = !!pcie_aspm_sanity_check(pdev);
+व्योम pcie_aspm_init_link_state(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pcie_link_state *link;
+	पूर्णांक blacklist = !!pcie_aspm_sanity_check(pdev);
 
-	if (!aspm_support_enabled)
-		return;
+	अगर (!aspm_support_enabled)
+		वापस;
 
-	if (pdev->link_state)
-		return;
+	अगर (pdev->link_state)
+		वापस;
 
 	/*
-	 * We allocate pcie_link_state for the component on the upstream
-	 * end of a Link, so there's nothing to do unless this device is
-	 * downstream port.
+	 * We allocate pcie_link_state क्रम the component on the upstream
+	 * end of a Link, so there's nothing to करो unless this device is
+	 * करोwnstream port.
 	 */
-	if (!pcie_downstream_port(pdev))
-		return;
+	अगर (!pcie_करोwnstream_port(pdev))
+		वापस;
 
 	/* VIA has a strange chipset, root port is under a bridge */
-	if (pci_pcie_type(pdev) == PCI_EXP_TYPE_ROOT_PORT &&
+	अगर (pci_pcie_type(pdev) == PCI_EXP_TYPE_ROOT_PORT &&
 	    pdev->bus->self)
-		return;
+		वापस;
 
-	down_read(&pci_bus_sem);
-	if (list_empty(&pdev->subordinate->devices))
-		goto out;
+	करोwn_पढ़ो(&pci_bus_sem);
+	अगर (list_empty(&pdev->subordinate->devices))
+		जाओ out;
 
 	mutex_lock(&aspm_lock);
 	link = alloc_pcie_link_state(pdev);
-	if (!link)
-		goto unlock;
+	अगर (!link)
+		जाओ unlock;
 	/*
 	 * Setup initial ASPM state. Note that we need to configure
 	 * upstream links also because capable state of them can be
@@ -939,318 +940,318 @@ void pcie_aspm_init_link_state(struct pci_dev *pdev)
 	/*
 	 * At this stage drivers haven't had an opportunity to change the
 	 * link policy setting. Enabling ASPM on broken hardware can cripple
-	 * it even before the driver has had a chance to disable ASPM, so
-	 * default to a safe level right now. If we're enabling ASPM beyond
-	 * the BIOS's expectation, we'll do so once pci_enable_device() is
+	 * it even beक्रमe the driver has had a chance to disable ASPM, so
+	 * शेष to a safe level right now. If we're enabling ASPM beyond
+	 * the BIOS's expectation, we'll करो so once pci_enable_device() is
 	 * called.
 	 */
-	if (aspm_policy != POLICY_POWERSAVE &&
-	    aspm_policy != POLICY_POWER_SUPERSAVE) {
+	अगर (aspm_policy != POLICY_POWERSAVE &&
+	    aspm_policy != POLICY_POWER_SUPERSAVE) अणु
 		pcie_config_aspm_path(link);
 		pcie_set_clkpm(link, policy_to_clkpm_state(link));
-	}
+	पूर्ण
 
 	pcie_aspm_update_sysfs_visibility(pdev);
 
 unlock:
 	mutex_unlock(&aspm_lock);
 out:
-	up_read(&pci_bus_sem);
-}
+	up_पढ़ो(&pci_bus_sem);
+पूर्ण
 
-/* Recheck latencies and update aspm_capable for links under the root */
-static void pcie_update_aspm_capable(struct pcie_link_state *root)
-{
-	struct pcie_link_state *link;
+/* Recheck latencies and update aspm_capable क्रम links under the root */
+अटल व्योम pcie_update_aspm_capable(काष्ठा pcie_link_state *root)
+अणु
+	काष्ठा pcie_link_state *link;
 	BUG_ON(root->parent);
-	list_for_each_entry(link, &link_list, sibling) {
-		if (link->root != root)
-			continue;
+	list_क्रम_each_entry(link, &link_list, sibling) अणु
+		अगर (link->root != root)
+			जारी;
 		link->aspm_capable = link->aspm_support;
-	}
-	list_for_each_entry(link, &link_list, sibling) {
-		struct pci_dev *child;
-		struct pci_bus *linkbus = link->pdev->subordinate;
-		if (link->root != root)
-			continue;
-		list_for_each_entry(child, &linkbus->devices, bus_list) {
-			if ((pci_pcie_type(child) != PCI_EXP_TYPE_ENDPOINT) &&
+	पूर्ण
+	list_क्रम_each_entry(link, &link_list, sibling) अणु
+		काष्ठा pci_dev *child;
+		काष्ठा pci_bus *linkbus = link->pdev->subordinate;
+		अगर (link->root != root)
+			जारी;
+		list_क्रम_each_entry(child, &linkbus->devices, bus_list) अणु
+			अगर ((pci_pcie_type(child) != PCI_EXP_TYPE_ENDPOINT) &&
 			    (pci_pcie_type(child) != PCI_EXP_TYPE_LEG_END))
-				continue;
+				जारी;
 			pcie_aspm_check_latency(child);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* @pdev: the endpoint device */
-void pcie_aspm_exit_link_state(struct pci_dev *pdev)
-{
-	struct pci_dev *parent = pdev->bus->self;
-	struct pcie_link_state *link, *root, *parent_link;
+/* @pdev: the endpoपूर्णांक device */
+व्योम pcie_aspm_निकास_link_state(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_dev *parent = pdev->bus->self;
+	काष्ठा pcie_link_state *link, *root, *parent_link;
 
-	if (!parent || !parent->link_state)
-		return;
+	अगर (!parent || !parent->link_state)
+		वापस;
 
-	down_read(&pci_bus_sem);
+	करोwn_पढ़ो(&pci_bus_sem);
 	mutex_lock(&aspm_lock);
 	/*
-	 * All PCIe functions are in one slot, remove one function will remove
-	 * the whole slot, so just wait until we are the last function left.
+	 * All PCIe functions are in one slot, हटाओ one function will हटाओ
+	 * the whole slot, so just रुको until we are the last function left.
 	 */
-	if (!list_empty(&parent->subordinate->devices))
-		goto out;
+	अगर (!list_empty(&parent->subordinate->devices))
+		जाओ out;
 
 	link = parent->link_state;
 	root = link->root;
 	parent_link = link->parent;
 
-	/* All functions are removed, so just disable ASPM for the link */
+	/* All functions are हटाओd, so just disable ASPM क्रम the link */
 	pcie_config_aspm_link(link, 0);
 	list_del(&link->sibling);
-	/* Clock PM is for endpoint device */
-	free_link_state(link);
+	/* Clock PM is क्रम endpoपूर्णांक device */
+	मुक्त_link_state(link);
 
 	/* Recheck latencies and configure upstream links */
-	if (parent_link) {
+	अगर (parent_link) अणु
 		pcie_update_aspm_capable(root);
 		pcie_config_aspm_path(parent_link);
-	}
+	पूर्ण
 out:
 	mutex_unlock(&aspm_lock);
-	up_read(&pci_bus_sem);
-}
+	up_पढ़ो(&pci_bus_sem);
+पूर्ण
 
-/* @pdev: the root port or switch downstream port */
-void pcie_aspm_pm_state_change(struct pci_dev *pdev)
-{
-	struct pcie_link_state *link = pdev->link_state;
+/* @pdev: the root port or चयन करोwnstream port */
+व्योम pcie_aspm_pm_state_change(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pcie_link_state *link = pdev->link_state;
 
-	if (aspm_disabled || !link)
-		return;
+	अगर (aspm_disabled || !link)
+		वापस;
 	/*
-	 * Devices changed PM state, we should recheck if latency
+	 * Devices changed PM state, we should recheck अगर latency
 	 * meets all functions' requirement
 	 */
-	down_read(&pci_bus_sem);
+	करोwn_पढ़ो(&pci_bus_sem);
 	mutex_lock(&aspm_lock);
 	pcie_update_aspm_capable(link->root);
 	pcie_config_aspm_path(link);
 	mutex_unlock(&aspm_lock);
-	up_read(&pci_bus_sem);
-}
+	up_पढ़ो(&pci_bus_sem);
+पूर्ण
 
-void pcie_aspm_powersave_config_link(struct pci_dev *pdev)
-{
-	struct pcie_link_state *link = pdev->link_state;
+व्योम pcie_aspm_घातersave_config_link(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pcie_link_state *link = pdev->link_state;
 
-	if (aspm_disabled || !link)
-		return;
+	अगर (aspm_disabled || !link)
+		वापस;
 
-	if (aspm_policy != POLICY_POWERSAVE &&
+	अगर (aspm_policy != POLICY_POWERSAVE &&
 	    aspm_policy != POLICY_POWER_SUPERSAVE)
-		return;
+		वापस;
 
-	down_read(&pci_bus_sem);
+	करोwn_पढ़ो(&pci_bus_sem);
 	mutex_lock(&aspm_lock);
 	pcie_config_aspm_path(link);
 	pcie_set_clkpm(link, policy_to_clkpm_state(link));
 	mutex_unlock(&aspm_lock);
-	up_read(&pci_bus_sem);
-}
+	up_पढ़ो(&pci_bus_sem);
+पूर्ण
 
-static struct pcie_link_state *pcie_aspm_get_link(struct pci_dev *pdev)
-{
-	struct pci_dev *bridge;
+अटल काष्ठा pcie_link_state *pcie_aspm_get_link(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_dev *bridge;
 
-	if (!pci_is_pcie(pdev))
-		return NULL;
+	अगर (!pci_is_pcie(pdev))
+		वापस शून्य;
 
 	bridge = pci_upstream_bridge(pdev);
-	if (!bridge || !pci_is_pcie(bridge))
-		return NULL;
+	अगर (!bridge || !pci_is_pcie(bridge))
+		वापस शून्य;
 
-	return bridge->link_state;
-}
+	वापस bridge->link_state;
+पूर्ण
 
-static int __pci_disable_link_state(struct pci_dev *pdev, int state, bool sem)
-{
-	struct pcie_link_state *link = pcie_aspm_get_link(pdev);
+अटल पूर्णांक __pci_disable_link_state(काष्ठा pci_dev *pdev, पूर्णांक state, bool sem)
+अणु
+	काष्ठा pcie_link_state *link = pcie_aspm_get_link(pdev);
 
-	if (!link)
-		return -EINVAL;
+	अगर (!link)
+		वापस -EINVAL;
 	/*
 	 * A driver requested that ASPM be disabled on this device, but
-	 * if we don't have permission to manage ASPM (e.g., on ACPI
-	 * systems we have to observe the FADT ACPI_FADT_NO_ASPM bit and
-	 * the _OSC method), we can't honor that request.  Windows has
+	 * अगर we करोn't have permission to manage ASPM (e.g., on ACPI
+	 * प्रणालीs we have to observe the FADT ACPI_FADT_NO_ASPM bit and
+	 * the _OSC method), we can't honor that request.  Winकरोws has
 	 * a similar mechanism using "PciASPMOptOut", which is also
 	 * ignored in this situation.
 	 */
-	if (aspm_disabled) {
+	अगर (aspm_disabled) अणु
 		pci_warn(pdev, "can't disable ASPM; OS doesn't have ASPM control\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	if (sem)
-		down_read(&pci_bus_sem);
+	अगर (sem)
+		करोwn_पढ़ो(&pci_bus_sem);
 	mutex_lock(&aspm_lock);
-	if (state & PCIE_LINK_STATE_L0S)
+	अगर (state & PCIE_LINK_STATE_L0S)
 		link->aspm_disable |= ASPM_STATE_L0S;
-	if (state & PCIE_LINK_STATE_L1)
+	अगर (state & PCIE_LINK_STATE_L1)
 		/* L1 PM substates require L1 */
 		link->aspm_disable |= ASPM_STATE_L1 | ASPM_STATE_L1SS;
-	if (state & PCIE_LINK_STATE_L1_1)
+	अगर (state & PCIE_LINK_STATE_L1_1)
 		link->aspm_disable |= ASPM_STATE_L1_1;
-	if (state & PCIE_LINK_STATE_L1_2)
+	अगर (state & PCIE_LINK_STATE_L1_2)
 		link->aspm_disable |= ASPM_STATE_L1_2;
-	if (state & PCIE_LINK_STATE_L1_1_PCIPM)
+	अगर (state & PCIE_LINK_STATE_L1_1_PCIPM)
 		link->aspm_disable |= ASPM_STATE_L1_1_PCIPM;
-	if (state & PCIE_LINK_STATE_L1_2_PCIPM)
+	अगर (state & PCIE_LINK_STATE_L1_2_PCIPM)
 		link->aspm_disable |= ASPM_STATE_L1_2_PCIPM;
 	pcie_config_aspm_link(link, policy_to_aspm_state(link));
 
-	if (state & PCIE_LINK_STATE_CLKPM)
+	अगर (state & PCIE_LINK_STATE_CLKPM)
 		link->clkpm_disable = 1;
 	pcie_set_clkpm(link, policy_to_clkpm_state(link));
 	mutex_unlock(&aspm_lock);
-	if (sem)
-		up_read(&pci_bus_sem);
+	अगर (sem)
+		up_पढ़ो(&pci_bus_sem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int pci_disable_link_state_locked(struct pci_dev *pdev, int state)
-{
-	return __pci_disable_link_state(pdev, state, false);
-}
+पूर्णांक pci_disable_link_state_locked(काष्ठा pci_dev *pdev, पूर्णांक state)
+अणु
+	वापस __pci_disable_link_state(pdev, state, false);
+पूर्ण
 EXPORT_SYMBOL(pci_disable_link_state_locked);
 
 /**
  * pci_disable_link_state - Disable device's link state, so the link will
- * never enter specific states.  Note that if the BIOS didn't grant ASPM
- * control to the OS, this does nothing because we can't touch the LNKCTL
- * register. Returns 0 or a negative errno.
+ * never enter specअगरic states.  Note that अगर the BIOS didn't grant ASPM
+ * control to the OS, this करोes nothing because we can't touch the LNKCTL
+ * रेजिस्टर. Returns 0 or a negative त्रुटि_सं.
  *
  * @pdev: PCI device
  * @state: ASPM link state to disable
  */
-int pci_disable_link_state(struct pci_dev *pdev, int state)
-{
-	return __pci_disable_link_state(pdev, state, true);
-}
+पूर्णांक pci_disable_link_state(काष्ठा pci_dev *pdev, पूर्णांक state)
+अणु
+	वापस __pci_disable_link_state(pdev, state, true);
+पूर्ण
 EXPORT_SYMBOL(pci_disable_link_state);
 
-static int pcie_aspm_set_policy(const char *val,
-				const struct kernel_param *kp)
-{
-	int i;
-	struct pcie_link_state *link;
+अटल पूर्णांक pcie_aspm_set_policy(स्थिर अक्षर *val,
+				स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक i;
+	काष्ठा pcie_link_state *link;
 
-	if (aspm_disabled)
-		return -EPERM;
+	अगर (aspm_disabled)
+		वापस -EPERM;
 	i = sysfs_match_string(policy_str, val);
-	if (i < 0)
-		return i;
-	if (i == aspm_policy)
-		return 0;
+	अगर (i < 0)
+		वापस i;
+	अगर (i == aspm_policy)
+		वापस 0;
 
-	down_read(&pci_bus_sem);
+	करोwn_पढ़ो(&pci_bus_sem);
 	mutex_lock(&aspm_lock);
 	aspm_policy = i;
-	list_for_each_entry(link, &link_list, sibling) {
+	list_क्रम_each_entry(link, &link_list, sibling) अणु
 		pcie_config_aspm_link(link, policy_to_aspm_state(link));
 		pcie_set_clkpm(link, policy_to_clkpm_state(link));
-	}
+	पूर्ण
 	mutex_unlock(&aspm_lock);
-	up_read(&pci_bus_sem);
-	return 0;
-}
+	up_पढ़ो(&pci_bus_sem);
+	वापस 0;
+पूर्ण
 
-static int pcie_aspm_get_policy(char *buffer, const struct kernel_param *kp)
-{
-	int i, cnt = 0;
-	for (i = 0; i < ARRAY_SIZE(policy_str); i++)
-		if (i == aspm_policy)
-			cnt += sprintf(buffer + cnt, "[%s] ", policy_str[i]);
-		else
-			cnt += sprintf(buffer + cnt, "%s ", policy_str[i]);
-	cnt += sprintf(buffer + cnt, "\n");
-	return cnt;
-}
+अटल पूर्णांक pcie_aspm_get_policy(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक i, cnt = 0;
+	क्रम (i = 0; i < ARRAY_SIZE(policy_str); i++)
+		अगर (i == aspm_policy)
+			cnt += प्र_लिखो(buffer + cnt, "[%s] ", policy_str[i]);
+		अन्यथा
+			cnt += प्र_लिखो(buffer + cnt, "%s ", policy_str[i]);
+	cnt += प्र_लिखो(buffer + cnt, "\n");
+	वापस cnt;
+पूर्ण
 
 module_param_call(policy, pcie_aspm_set_policy, pcie_aspm_get_policy,
-	NULL, 0644);
+	शून्य, 0644);
 
 /**
- * pcie_aspm_enabled - Check if PCIe ASPM has been enabled for a device.
+ * pcie_aspm_enabled - Check अगर PCIe ASPM has been enabled क्रम a device.
  * @pdev: Target device.
  *
  * Relies on the upstream bridge's link_state being valid.  The link_state
  * is deallocated only when the last child of the bridge (i.e., @pdev or a
- * sibling) is removed, and the caller should be holding a reference to
+ * sibling) is हटाओd, and the caller should be holding a reference to
  * @pdev, so this should be safe.
  */
-bool pcie_aspm_enabled(struct pci_dev *pdev)
-{
-	struct pcie_link_state *link = pcie_aspm_get_link(pdev);
+bool pcie_aspm_enabled(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pcie_link_state *link = pcie_aspm_get_link(pdev);
 
-	if (!link)
-		return false;
+	अगर (!link)
+		वापस false;
 
-	return link->aspm_enabled;
-}
+	वापस link->aspm_enabled;
+पूर्ण
 EXPORT_SYMBOL_GPL(pcie_aspm_enabled);
 
-static ssize_t aspm_attr_show_common(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf, u8 state)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct pcie_link_state *link = pcie_aspm_get_link(pdev);
+अटल sमाप_प्रकार aspm_attr_show_common(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf, u8 state)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा pcie_link_state *link = pcie_aspm_get_link(pdev);
 
-	return sprintf(buf, "%d\n", (link->aspm_enabled & state) ? 1 : 0);
-}
+	वापस प्र_लिखो(buf, "%d\n", (link->aspm_enabled & state) ? 1 : 0);
+पूर्ण
 
-static ssize_t aspm_attr_store_common(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf, size_t len, u8 state)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct pcie_link_state *link = pcie_aspm_get_link(pdev);
+अटल sमाप_प्रकार aspm_attr_store_common(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf, माप_प्रकार len, u8 state)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा pcie_link_state *link = pcie_aspm_get_link(pdev);
 	bool state_enable;
 
-	if (strtobool(buf, &state_enable) < 0)
-		return -EINVAL;
+	अगर (strtobool(buf, &state_enable) < 0)
+		वापस -EINVAL;
 
-	down_read(&pci_bus_sem);
+	करोwn_पढ़ो(&pci_bus_sem);
 	mutex_lock(&aspm_lock);
 
-	if (state_enable) {
+	अगर (state_enable) अणु
 		link->aspm_disable &= ~state;
-		/* need to enable L1 for substates */
-		if (state & ASPM_STATE_L1SS)
+		/* need to enable L1 क्रम substates */
+		अगर (state & ASPM_STATE_L1SS)
 			link->aspm_disable &= ~ASPM_STATE_L1;
-	} else {
+	पूर्ण अन्यथा अणु
 		link->aspm_disable |= state;
-	}
+	पूर्ण
 
 	pcie_config_aspm_link(link, policy_to_aspm_state(link));
 
 	mutex_unlock(&aspm_lock);
-	up_read(&pci_bus_sem);
+	up_पढ़ो(&pci_bus_sem);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-#define ASPM_ATTR(_f, _s)						\
-static ssize_t _f##_show(struct device *dev,				\
-			 struct device_attribute *attr, char *buf)	\
-{ return aspm_attr_show_common(dev, attr, buf, ASPM_STATE_##_s); }	\
+#घोषणा ASPM_ATTR(_f, _s)						\
+अटल sमाप_प्रकार _f##_show(काष्ठा device *dev,				\
+			 काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु वापस aspm_attr_show_common(dev, attr, buf, ASPM_STATE_##_s); पूर्ण	\
 									\
-static ssize_t _f##_store(struct device *dev,				\
-			  struct device_attribute *attr,		\
-			  const char *buf, size_t len)			\
-{ return aspm_attr_store_common(dev, attr, buf, len, ASPM_STATE_##_s); }
+अटल sमाप_प्रकार _f##_store(काष्ठा device *dev,				\
+			  काष्ठा device_attribute *attr,		\
+			  स्थिर अक्षर *buf, माप_प्रकार len)			\
+अणु वापस aspm_attr_store_common(dev, attr, buf, len, ASPM_STATE_##_s); पूर्ण
 
 ASPM_ATTR(l0s_aspm, L0S)
 ASPM_ATTR(l1_aspm, L1)
@@ -1259,47 +1260,47 @@ ASPM_ATTR(l1_2_aspm, L1_2)
 ASPM_ATTR(l1_1_pcipm, L1_1_PCIPM)
 ASPM_ATTR(l1_2_pcipm, L1_2_PCIPM)
 
-static ssize_t clkpm_show(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct pcie_link_state *link = pcie_aspm_get_link(pdev);
+अटल sमाप_प्रकार clkpm_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा pcie_link_state *link = pcie_aspm_get_link(pdev);
 
-	return sprintf(buf, "%d\n", link->clkpm_enabled);
-}
+	वापस प्र_लिखो(buf, "%d\n", link->clkpm_enabled);
+पूर्ण
 
-static ssize_t clkpm_store(struct device *dev,
-			   struct device_attribute *attr,
-			   const char *buf, size_t len)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct pcie_link_state *link = pcie_aspm_get_link(pdev);
+अटल sमाप_प्रकार clkpm_store(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा pcie_link_state *link = pcie_aspm_get_link(pdev);
 	bool state_enable;
 
-	if (strtobool(buf, &state_enable) < 0)
-		return -EINVAL;
+	अगर (strtobool(buf, &state_enable) < 0)
+		वापस -EINVAL;
 
-	down_read(&pci_bus_sem);
+	करोwn_पढ़ो(&pci_bus_sem);
 	mutex_lock(&aspm_lock);
 
 	link->clkpm_disable = !state_enable;
 	pcie_set_clkpm(link, policy_to_clkpm_state(link));
 
 	mutex_unlock(&aspm_lock);
-	up_read(&pci_bus_sem);
+	up_पढ़ो(&pci_bus_sem);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static DEVICE_ATTR_RW(clkpm);
-static DEVICE_ATTR_RW(l0s_aspm);
-static DEVICE_ATTR_RW(l1_aspm);
-static DEVICE_ATTR_RW(l1_1_aspm);
-static DEVICE_ATTR_RW(l1_2_aspm);
-static DEVICE_ATTR_RW(l1_1_pcipm);
-static DEVICE_ATTR_RW(l1_2_pcipm);
+अटल DEVICE_ATTR_RW(clkpm);
+अटल DEVICE_ATTR_RW(l0s_aspm);
+अटल DEVICE_ATTR_RW(l1_aspm);
+अटल DEVICE_ATTR_RW(l1_1_aspm);
+अटल DEVICE_ATTR_RW(l1_2_aspm);
+अटल DEVICE_ATTR_RW(l1_1_pcipm);
+अटल DEVICE_ATTR_RW(l1_2_pcipm);
 
-static struct attribute *aspm_ctrl_attrs[] = {
+अटल काष्ठा attribute *aspm_ctrl_attrs[] = अणु
 	&dev_attr_clkpm.attr,
 	&dev_attr_l0s_aspm.attr,
 	&dev_attr_l1_aspm.attr,
@@ -1307,71 +1308,71 @@ static struct attribute *aspm_ctrl_attrs[] = {
 	&dev_attr_l1_2_aspm.attr,
 	&dev_attr_l1_1_pcipm.attr,
 	&dev_attr_l1_2_pcipm.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t aspm_ctrl_attrs_are_visible(struct kobject *kobj,
-					   struct attribute *a, int n)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct pcie_link_state *link = pcie_aspm_get_link(pdev);
-	static const u8 aspm_state_map[] = {
+अटल umode_t aspm_ctrl_attrs_are_visible(काष्ठा kobject *kobj,
+					   काष्ठा attribute *a, पूर्णांक n)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा pcie_link_state *link = pcie_aspm_get_link(pdev);
+	अटल स्थिर u8 aspm_state_map[] = अणु
 		ASPM_STATE_L0S,
 		ASPM_STATE_L1,
 		ASPM_STATE_L1_1,
 		ASPM_STATE_L1_2,
 		ASPM_STATE_L1_1_PCIPM,
 		ASPM_STATE_L1_2_PCIPM,
-	};
+	पूर्ण;
 
-	if (aspm_disabled || !link)
-		return 0;
+	अगर (aspm_disabled || !link)
+		वापस 0;
 
-	if (n == 0)
-		return link->clkpm_capable ? a->mode : 0;
+	अगर (n == 0)
+		वापस link->clkpm_capable ? a->mode : 0;
 
-	return link->aspm_capable & aspm_state_map[n - 1] ? a->mode : 0;
-}
+	वापस link->aspm_capable & aspm_state_map[n - 1] ? a->mode : 0;
+पूर्ण
 
-const struct attribute_group aspm_ctrl_attr_group = {
+स्थिर काष्ठा attribute_group aspm_ctrl_attr_group = अणु
 	.name = "link",
 	.attrs = aspm_ctrl_attrs,
 	.is_visible = aspm_ctrl_attrs_are_visible,
-};
+पूर्ण;
 
-static int __init pcie_aspm_disable(char *str)
-{
-	if (!strcmp(str, "off")) {
+अटल पूर्णांक __init pcie_aspm_disable(अक्षर *str)
+अणु
+	अगर (!म_भेद(str, "off")) अणु
 		aspm_policy = POLICY_DEFAULT;
 		aspm_disabled = 1;
 		aspm_support_enabled = false;
-		printk(KERN_INFO "PCIe ASPM is disabled\n");
-	} else if (!strcmp(str, "force")) {
-		aspm_force = 1;
-		printk(KERN_INFO "PCIe ASPM is forcibly enabled\n");
-	}
-	return 1;
-}
+		prपूर्णांकk(KERN_INFO "PCIe ASPM is disabled\n");
+	पूर्ण अन्यथा अगर (!म_भेद(str, "force")) अणु
+		aspm_क्रमce = 1;
+		prपूर्णांकk(KERN_INFO "PCIe ASPM is forcibly enabled\n");
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 __setup("pcie_aspm=", pcie_aspm_disable);
 
-void pcie_no_aspm(void)
-{
+व्योम pcie_no_aspm(व्योम)
+अणु
 	/*
-	 * Disabling ASPM is intended to prevent the kernel from modifying
+	 * Disabling ASPM is पूर्णांकended to prevent the kernel from modअगरying
 	 * existing hardware state, not to clear existing state. To that end:
-	 * (a) set policy to POLICY_DEFAULT in order to avoid changing state
+	 * (a) set policy to POLICY_DEFAULT in order to aव्योम changing state
 	 * (b) prevent userspace from changing policy
 	 */
-	if (!aspm_force) {
+	अगर (!aspm_क्रमce) अणु
 		aspm_policy = POLICY_DEFAULT;
 		aspm_disabled = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool pcie_aspm_support_enabled(void)
-{
-	return aspm_support_enabled;
-}
+bool pcie_aspm_support_enabled(व्योम)
+अणु
+	वापस aspm_support_enabled;
+पूर्ण
 EXPORT_SYMBOL(pcie_aspm_support_enabled);

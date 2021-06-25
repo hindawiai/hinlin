@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_S390_EADM_H
-#define _ASM_S390_EADM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_S390_EADM_H
+#घोषणा _ASM_S390_EADM_H
 
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/blk_types.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/blk_types.h>
 
-struct arqb {
+काष्ठा arqb अणु
 	u64 data;
 	u16 fmt:4;
 	u16:12;
@@ -14,11 +15,11 @@ struct arqb {
 	u16:16;
 	u16 msb_count;
 	u32 reserved[12];
-} __packed;
+पूर्ण __packed;
 
-#define ARQB_CMD_MOVE	1
+#घोषणा ARQB_CMD_MOVE	1
 
-struct arsb {
+काष्ठा arsb अणु
 	u16 fmt:4;
 	u32:28;
 	u8 ef;
@@ -34,11 +35,11 @@ struct arsb {
 	u64 fail_ms;
 	u64 fail_scm;
 	u32 reserved[4];
-} __packed;
+पूर्ण __packed;
 
-#define EQC_WR_PROHIBIT 22
+#घोषणा EQC_WR_PROHIBIT 22
 
-struct msb {
+काष्ठा msb अणु
 	u8 fmt:4;
 	u8 oc:4;
 	u8 flags;
@@ -48,73 +49,73 @@ struct msb {
 	u64 data_addr;
 	u64 scm_addr;
 	u64:64;
-} __packed;
+पूर्ण __packed;
 
-struct aidaw {
+काष्ठा aidaw अणु
 	u8 flags;
 	u32 :24;
 	u32 :32;
 	u64 data_addr;
-} __packed;
+पूर्ण __packed;
 
-#define MSB_OC_CLEAR	0
-#define MSB_OC_READ	1
-#define MSB_OC_WRITE	2
-#define MSB_OC_RELEASE	3
+#घोषणा MSB_OC_CLEAR	0
+#घोषणा MSB_OC_READ	1
+#घोषणा MSB_OC_WRITE	2
+#घोषणा MSB_OC_RELEASE	3
 
-#define MSB_FLAG_BNM	0x80
-#define MSB_FLAG_IDA	0x40
+#घोषणा MSB_FLAG_BNM	0x80
+#घोषणा MSB_FLAG_IDA	0x40
 
-#define MSB_BS_4K	0
-#define MSB_BS_1M	1
+#घोषणा MSB_BS_4K	0
+#घोषणा MSB_BS_1M	1
 
-#define AOB_NR_MSB	124
+#घोषणा AOB_NR_MSB	124
 
-struct aob {
-	struct arqb request;
-	struct arsb response;
-	struct msb msb[AOB_NR_MSB];
-} __packed __aligned(PAGE_SIZE);
+काष्ठा aob अणु
+	काष्ठा arqb request;
+	काष्ठा arsb response;
+	काष्ठा msb msb[AOB_NR_MSB];
+पूर्ण __packed __aligned(PAGE_SIZE);
 
-struct aob_rq_header {
-	struct scm_device *scmdev;
-	char data[0];
-};
+काष्ठा aob_rq_header अणु
+	काष्ठा scm_device *scmdev;
+	अक्षर data[0];
+पूर्ण;
 
-struct scm_device {
+काष्ठा scm_device अणु
 	u64 address;
 	u64 size;
-	unsigned int nr_max_block;
-	struct device dev;
-	struct {
-		unsigned int persistence:4;
-		unsigned int oper_state:4;
-		unsigned int data_state:4;
-		unsigned int rank:4;
-		unsigned int release:1;
-		unsigned int res_id:8;
-	} __packed attrs;
-};
+	अचिन्हित पूर्णांक nr_max_block;
+	काष्ठा device dev;
+	काष्ठा अणु
+		अचिन्हित पूर्णांक persistence:4;
+		अचिन्हित पूर्णांक oper_state:4;
+		अचिन्हित पूर्णांक data_state:4;
+		अचिन्हित पूर्णांक rank:4;
+		अचिन्हित पूर्णांक release:1;
+		अचिन्हित पूर्णांक res_id:8;
+	पूर्ण __packed attrs;
+पूर्ण;
 
-#define OP_STATE_GOOD		1
-#define OP_STATE_TEMP_ERR	2
-#define OP_STATE_PERM_ERR	3
+#घोषणा OP_STATE_GOOD		1
+#घोषणा OP_STATE_TEMP_ERR	2
+#घोषणा OP_STATE_PERM_ERR	3
 
-enum scm_event {SCM_CHANGE, SCM_AVAIL};
+क्रमागत scm_event अणुSCM_CHANGE, SCM_AVAILपूर्ण;
 
-struct scm_driver {
-	struct device_driver drv;
-	int (*probe) (struct scm_device *scmdev);
-	int (*remove) (struct scm_device *scmdev);
-	void (*notify) (struct scm_device *scmdev, enum scm_event event);
-	void (*handler) (struct scm_device *scmdev, void *data,
+काष्ठा scm_driver अणु
+	काष्ठा device_driver drv;
+	पूर्णांक (*probe) (काष्ठा scm_device *scmdev);
+	पूर्णांक (*हटाओ) (काष्ठा scm_device *scmdev);
+	व्योम (*notअगरy) (काष्ठा scm_device *scmdev, क्रमागत scm_event event);
+	व्योम (*handler) (काष्ठा scm_device *scmdev, व्योम *data,
 			blk_status_t error);
-};
+पूर्ण;
 
-int scm_driver_register(struct scm_driver *scmdrv);
-void scm_driver_unregister(struct scm_driver *scmdrv);
+पूर्णांक scm_driver_रेजिस्टर(काष्ठा scm_driver *scmdrv);
+व्योम scm_driver_unरेजिस्टर(काष्ठा scm_driver *scmdrv);
 
-int eadm_start_aob(struct aob *aob);
-void scm_irq_handler(struct aob *aob, blk_status_t error);
+पूर्णांक eadm_start_aob(काष्ठा aob *aob);
+व्योम scm_irq_handler(काष्ठा aob *aob, blk_status_t error);
 
-#endif /* _ASM_S390_EADM_H */
+#पूर्ण_अगर /* _ASM_S390_EADM_H */

@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2018, The Linux Foundation. All rights reserved.*/
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/pm_domain.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_opp.h>
-#include <soc/qcom/cmd-db.h>
-#include <soc/qcom/rpmh.h>
-#include <dt-bindings/power/qcom-rpmpd.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_opp.h>
+#समावेश <soc/qcom/cmd-db.h>
+#समावेश <soc/qcom/rpmh.h>
+#समावेश <dt-bindings/घातer/qcom-rpmpd.h>
 
-#define domain_to_rpmhpd(domain) container_of(domain, struct rpmhpd, pd)
+#घोषणा करोमुख्य_to_rpmhpd(करोमुख्य) container_of(करोमुख्य, काष्ठा rpmhpd, pd)
 
-#define RPMH_ARC_MAX_LEVELS	16
+#घोषणा RPMH_ARC_MAX_LEVELS	16
 
 /**
- * struct rpmhpd - top level RPMh power domain resource data structure
- * @dev:		rpmh power domain controller device
- * @pd:			generic_pm_domain corrresponding to the power domain
- * @parent:		generic_pm_domain corrresponding to the parent's power domain
- * @peer:		A peer power domain in case Active only Voting is
+ * काष्ठा rpmhpd - top level RPMh घातer करोमुख्य resource data काष्ठाure
+ * @dev:		rpmh घातer करोमुख्य controller device
+ * @pd:			generic_pm_करोमुख्य corrresponding to the घातer करोमुख्य
+ * @parent:		generic_pm_करोमुख्य corrresponding to the parent's घातer करोमुख्य
+ * @peer:		A peer घातer करोमुख्य in हाल Active only Voting is
  *			supported
- * @active_only:	True if it represents an Active only peer
+ * @active_only:	True अगर it represents an Active only peer
  * @corner:		current corner
  * @active_corner:	current active corner
  * @level:		An array of level (vlvl) to corner (hlvl) mappings
  *			derived from cmd-db
- * @level_count:	Number of levels supported by the power domain. max
+ * @level_count:	Number of levels supported by the घातer करोमुख्य. max
  *			being 16 (0 - 15)
- * @enabled:		true if the power domain is enabled
- * @res_name:		Resource name used for cmd-db lookup
+ * @enabled:		true अगर the घातer करोमुख्य is enabled
+ * @res_name:		Resource name used क्रम cmd-db lookup
  * @addr:		Resource address as looped up using resource name from
  *			cmd-db
  */
-struct rpmhpd {
-	struct device	*dev;
-	struct generic_pm_domain pd;
-	struct generic_pm_domain *parent;
-	struct rpmhpd	*peer;
-	const bool	active_only;
-	unsigned int	corner;
-	unsigned int	active_corner;
+काष्ठा rpmhpd अणु
+	काष्ठा device	*dev;
+	काष्ठा generic_pm_करोमुख्य pd;
+	काष्ठा generic_pm_करोमुख्य *parent;
+	काष्ठा rpmhpd	*peer;
+	स्थिर bool	active_only;
+	अचिन्हित पूर्णांक	corner;
+	अचिन्हित पूर्णांक	active_corner;
 	u32		level[RPMH_ARC_MAX_LEVELS];
-	size_t		level_count;
+	माप_प्रकार		level_count;
 	bool		enabled;
-	const char	*res_name;
+	स्थिर अक्षर	*res_name;
 	u32		addr;
-};
+पूर्ण;
 
-struct rpmhpd_desc {
-	struct rpmhpd **rpmhpds;
-	size_t num_pds;
-};
+काष्ठा rpmhpd_desc अणु
+	काष्ठा rpmhpd **rpmhpds;
+	माप_प्रकार num_pds;
+पूर्ण;
 
-static DEFINE_MUTEX(rpmhpd_lock);
+अटल DEFINE_MUTEX(rpmhpd_lock);
 
-/* SDM845 RPMH powerdomains */
+/* SDM845 RPMH घातerकरोमुख्यs */
 
-static struct rpmhpd sdm845_ebi = {
-	.pd = { .name = "ebi", },
+अटल काष्ठा rpmhpd sdm845_ebi = अणु
+	.pd = अणु .name = "ebi", पूर्ण,
 	.res_name = "ebi.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd sdm845_lmx = {
-	.pd = { .name = "lmx", },
+अटल काष्ठा rpmhpd sdm845_lmx = अणु
+	.pd = अणु .name = "lmx", पूर्ण,
 	.res_name = "lmx.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd sdm845_lcx = {
-	.pd = { .name = "lcx", },
+अटल काष्ठा rpmhpd sdm845_lcx = अणु
+	.pd = अणु .name = "lcx", पूर्ण,
 	.res_name = "lcx.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd sdm845_gfx = {
-	.pd = { .name = "gfx", },
+अटल काष्ठा rpmhpd sdm845_gfx = अणु
+	.pd = अणु .name = "gfx", पूर्ण,
 	.res_name = "gfx.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd sdm845_mss = {
-	.pd = { .name = "mss", },
+अटल काष्ठा rpmhpd sdm845_mss = अणु
+	.pd = अणु .name = "mss", पूर्ण,
 	.res_name = "mss.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd sdm845_mx_ao;
-static struct rpmhpd sdm845_mx = {
-	.pd = { .name = "mx", },
+अटल काष्ठा rpmhpd sdm845_mx_ao;
+अटल काष्ठा rpmhpd sdm845_mx = अणु
+	.pd = अणु .name = "mx", पूर्ण,
 	.peer = &sdm845_mx_ao,
 	.res_name = "mx.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd sdm845_mx_ao = {
-	.pd = { .name = "mx_ao", },
+अटल काष्ठा rpmhpd sdm845_mx_ao = अणु
+	.pd = अणु .name = "mx_ao", पूर्ण,
 	.active_only = true,
 	.peer = &sdm845_mx,
 	.res_name = "mx.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd sdm845_cx_ao;
-static struct rpmhpd sdm845_cx = {
-	.pd = { .name = "cx", },
+अटल काष्ठा rpmhpd sdm845_cx_ao;
+अटल काष्ठा rpmhpd sdm845_cx = अणु
+	.pd = अणु .name = "cx", पूर्ण,
 	.peer = &sdm845_cx_ao,
 	.parent = &sdm845_mx.pd,
 	.res_name = "cx.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd sdm845_cx_ao = {
-	.pd = { .name = "cx_ao", },
+अटल काष्ठा rpmhpd sdm845_cx_ao = अणु
+	.pd = अणु .name = "cx_ao", पूर्ण,
 	.active_only = true,
 	.peer = &sdm845_cx,
 	.parent = &sdm845_mx_ao.pd,
 	.res_name = "cx.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd *sdm845_rpmhpds[] = {
+अटल काष्ठा rpmhpd *sdm845_rpmhpds[] = अणु
 	[SDM845_EBI] = &sdm845_ebi,
 	[SDM845_MX] = &sdm845_mx,
 	[SDM845_MX_AO] = &sdm845_mx_ao,
@@ -128,42 +129,42 @@ static struct rpmhpd *sdm845_rpmhpds[] = {
 	[SDM845_LCX] = &sdm845_lcx,
 	[SDM845_GFX] = &sdm845_gfx,
 	[SDM845_MSS] = &sdm845_mss,
-};
+पूर्ण;
 
-static const struct rpmhpd_desc sdm845_desc = {
+अटल स्थिर काष्ठा rpmhpd_desc sdm845_desc = अणु
 	.rpmhpds = sdm845_rpmhpds,
 	.num_pds = ARRAY_SIZE(sdm845_rpmhpds),
-};
+पूर्ण;
 
-/* SDX55 RPMH powerdomains */
-static struct rpmhpd *sdx55_rpmhpds[] = {
+/* SDX55 RPMH घातerकरोमुख्यs */
+अटल काष्ठा rpmhpd *sdx55_rpmhpds[] = अणु
 	[SDX55_MSS] = &sdm845_mss,
 	[SDX55_MX] = &sdm845_mx,
 	[SDX55_CX] = &sdm845_cx,
-};
+पूर्ण;
 
-static const struct rpmhpd_desc sdx55_desc = {
+अटल स्थिर काष्ठा rpmhpd_desc sdx55_desc = अणु
 	.rpmhpds = sdx55_rpmhpds,
 	.num_pds = ARRAY_SIZE(sdx55_rpmhpds),
-};
+पूर्ण;
 
-/* SM8150 RPMH powerdomains */
+/* SM8150 RPMH घातerकरोमुख्यs */
 
-static struct rpmhpd sm8150_mmcx_ao;
-static struct rpmhpd sm8150_mmcx = {
-	.pd = { .name = "mmcx", },
+अटल काष्ठा rpmhpd sm8150_mmcx_ao;
+अटल काष्ठा rpmhpd sm8150_mmcx = अणु
+	.pd = अणु .name = "mmcx", पूर्ण,
 	.peer = &sm8150_mmcx_ao,
 	.res_name = "mmcx.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd sm8150_mmcx_ao = {
-	.pd = { .name = "mmcx_ao", },
+अटल काष्ठा rpmhpd sm8150_mmcx_ao = अणु
+	.pd = अणु .name = "mmcx_ao", पूर्ण,
 	.active_only = true,
 	.peer = &sm8150_mmcx,
 	.res_name = "mmcx.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd *sm8150_rpmhpds[] = {
+अटल काष्ठा rpmhpd *sm8150_rpmhpds[] = अणु
 	[SM8150_MSS] = &sdm845_mss,
 	[SM8150_EBI] = &sdm845_ebi,
 	[SM8150_LMX] = &sdm845_lmx,
@@ -175,14 +176,14 @@ static struct rpmhpd *sm8150_rpmhpds[] = {
 	[SM8150_CX_AO] = &sdm845_cx_ao,
 	[SM8150_MMCX] = &sm8150_mmcx,
 	[SM8150_MMCX_AO] = &sm8150_mmcx_ao,
-};
+पूर्ण;
 
-static const struct rpmhpd_desc sm8150_desc = {
+अटल स्थिर काष्ठा rpmhpd_desc sm8150_desc = अणु
 	.rpmhpds = sm8150_rpmhpds,
 	.num_pds = ARRAY_SIZE(sm8150_rpmhpds),
-};
+पूर्ण;
 
-static struct rpmhpd *sm8250_rpmhpds[] = {
+अटल काष्ठा rpmhpd *sm8250_rpmhpds[] = अणु
 	[SM8250_CX] = &sdm845_cx,
 	[SM8250_CX_AO] = &sdm845_cx_ao,
 	[SM8250_EBI] = &sdm845_ebi,
@@ -193,29 +194,29 @@ static struct rpmhpd *sm8250_rpmhpds[] = {
 	[SM8250_MMCX_AO] = &sm8150_mmcx_ao,
 	[SM8250_MX] = &sdm845_mx,
 	[SM8250_MX_AO] = &sdm845_mx_ao,
-};
+पूर्ण;
 
-static const struct rpmhpd_desc sm8250_desc = {
+अटल स्थिर काष्ठा rpmhpd_desc sm8250_desc = अणु
 	.rpmhpds = sm8250_rpmhpds,
 	.num_pds = ARRAY_SIZE(sm8250_rpmhpds),
-};
+पूर्ण;
 
-/* SM8350 Power domains */
-static struct rpmhpd sm8350_mxc_ao;
-static struct rpmhpd sm8350_mxc = {
-	.pd = { .name = "mxc", },
+/* SM8350 Power करोमुख्यs */
+अटल काष्ठा rpmhpd sm8350_mxc_ao;
+अटल काष्ठा rpmhpd sm8350_mxc = अणु
+	.pd = अणु .name = "mxc", पूर्ण,
 	.peer = &sm8150_mmcx_ao,
 	.res_name = "mxc.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd sm8350_mxc_ao = {
-	.pd = { .name = "mxc_ao", },
+अटल काष्ठा rpmhpd sm8350_mxc_ao = अणु
+	.pd = अणु .name = "mxc_ao", पूर्ण,
 	.active_only = true,
 	.peer = &sm8350_mxc,
 	.res_name = "mxc.lvl",
-};
+पूर्ण;
 
-static struct rpmhpd *sm8350_rpmhpds[] = {
+अटल काष्ठा rpmhpd *sm8350_rpmhpds[] = अणु
 	[SM8350_CX] = &sdm845_cx,
 	[SM8350_CX_AO] = &sdm845_cx_ao,
 	[SM8350_EBI] = &sdm845_ebi,
@@ -229,15 +230,15 @@ static struct rpmhpd *sm8350_rpmhpds[] = {
 	[SM8350_MXC] = &sm8350_mxc,
 	[SM8350_MXC_AO] = &sm8350_mxc_ao,
 	[SM8350_MSS] = &sdm845_mss,
-};
+पूर्ण;
 
-static const struct rpmhpd_desc sm8350_desc = {
+अटल स्थिर काष्ठा rpmhpd_desc sm8350_desc = अणु
 	.rpmhpds = sm8350_rpmhpds,
 	.num_pds = ARRAY_SIZE(sm8350_rpmhpds),
-};
+पूर्ण;
 
-/* SC7180 RPMH powerdomains */
-static struct rpmhpd *sc7180_rpmhpds[] = {
+/* SC7180 RPMH घातerकरोमुख्यs */
+अटल काष्ठा rpmhpd *sc7180_rpmhpds[] = अणु
 	[SC7180_CX] = &sdm845_cx,
 	[SC7180_CX_AO] = &sdm845_cx_ao,
 	[SC7180_GFX] = &sdm845_gfx,
@@ -246,15 +247,15 @@ static struct rpmhpd *sc7180_rpmhpds[] = {
 	[SC7180_LMX] = &sdm845_lmx,
 	[SC7180_LCX] = &sdm845_lcx,
 	[SC7180_MSS] = &sdm845_mss,
-};
+पूर्ण;
 
-static const struct rpmhpd_desc sc7180_desc = {
+अटल स्थिर काष्ठा rpmhpd_desc sc7180_desc = अणु
 	.rpmhpds = sc7180_rpmhpds,
 	.num_pds = ARRAY_SIZE(sc7180_rpmhpds),
-};
+पूर्ण;
 
-/* SC7280 RPMH powerdomains */
-static struct rpmhpd *sc7280_rpmhpds[] = {
+/* SC7280 RPMH घातerकरोमुख्यs */
+अटल काष्ठा rpmhpd *sc7280_rpmhpds[] = अणु
 	[SC7280_CX] = &sdm845_cx,
 	[SC7280_CX_AO] = &sdm845_cx_ao,
 	[SC7280_EBI] = &sdm845_ebi,
@@ -264,74 +265,74 @@ static struct rpmhpd *sc7280_rpmhpds[] = {
 	[SC7280_LMX] = &sdm845_lmx,
 	[SC7280_LCX] = &sdm845_lcx,
 	[SC7280_MSS] = &sdm845_mss,
-};
+पूर्ण;
 
-static const struct rpmhpd_desc sc7280_desc = {
+अटल स्थिर काष्ठा rpmhpd_desc sc7280_desc = अणु
 	.rpmhpds = sc7280_rpmhpds,
 	.num_pds = ARRAY_SIZE(sc7280_rpmhpds),
-};
+पूर्ण;
 
-static const struct of_device_id rpmhpd_match_table[] = {
-	{ .compatible = "qcom,sc7180-rpmhpd", .data = &sc7180_desc },
-	{ .compatible = "qcom,sc7280-rpmhpd", .data = &sc7280_desc },
-	{ .compatible = "qcom,sdm845-rpmhpd", .data = &sdm845_desc },
-	{ .compatible = "qcom,sdx55-rpmhpd", .data = &sdx55_desc},
-	{ .compatible = "qcom,sm8150-rpmhpd", .data = &sm8150_desc },
-	{ .compatible = "qcom,sm8250-rpmhpd", .data = &sm8250_desc },
-	{ .compatible = "qcom,sm8350-rpmhpd", .data = &sm8350_desc },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id rpmhpd_match_table[] = अणु
+	अणु .compatible = "qcom,sc7180-rpmhpd", .data = &sc7180_desc पूर्ण,
+	अणु .compatible = "qcom,sc7280-rpmhpd", .data = &sc7280_desc पूर्ण,
+	अणु .compatible = "qcom,sdm845-rpmhpd", .data = &sdm845_desc पूर्ण,
+	अणु .compatible = "qcom,sdx55-rpmhpd", .data = &sdx55_descपूर्ण,
+	अणु .compatible = "qcom,sm8150-rpmhpd", .data = &sm8150_desc पूर्ण,
+	अणु .compatible = "qcom,sm8250-rpmhpd", .data = &sm8250_desc पूर्ण,
+	अणु .compatible = "qcom,sm8350-rpmhpd", .data = &sm8350_desc पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rpmhpd_match_table);
 
-static int rpmhpd_send_corner(struct rpmhpd *pd, int state,
-			      unsigned int corner, bool sync)
-{
-	struct tcs_cmd cmd = {
+अटल पूर्णांक rpmhpd_send_corner(काष्ठा rpmhpd *pd, पूर्णांक state,
+			      अचिन्हित पूर्णांक corner, bool sync)
+अणु
+	काष्ठा tcs_cmd cmd = अणु
 		.addr = pd->addr,
 		.data = corner,
-	};
+	पूर्ण;
 
 	/*
-	 * Wait for an ack only when we are increasing the
-	 * perf state of the power domain
+	 * Wait क्रम an ack only when we are increasing the
+	 * perf state of the घातer करोमुख्य
 	 */
-	if (sync)
-		return rpmh_write(pd->dev, state, &cmd, 1);
-	else
-		return rpmh_write_async(pd->dev, state, &cmd, 1);
-}
+	अगर (sync)
+		वापस rpmh_ग_लिखो(pd->dev, state, &cmd, 1);
+	अन्यथा
+		वापस rpmh_ग_लिखो_async(pd->dev, state, &cmd, 1);
+पूर्ण
 
-static void to_active_sleep(struct rpmhpd *pd, unsigned int corner,
-			    unsigned int *active, unsigned int *sleep)
-{
+अटल व्योम to_active_sleep(काष्ठा rpmhpd *pd, अचिन्हित पूर्णांक corner,
+			    अचिन्हित पूर्णांक *active, अचिन्हित पूर्णांक *sleep)
+अणु
 	*active = corner;
 
-	if (pd->active_only)
+	अगर (pd->active_only)
 		*sleep = 0;
-	else
+	अन्यथा
 		*sleep = *active;
-}
+पूर्ण
 
 /*
  * This function is used to aggregate the votes across the active only
  * resources and its peers. The aggregated votes are sent to RPMh as
  * ACTIVE_ONLY votes (which take effect immediately), as WAKE_ONLY votes
- * (applied by RPMh on system wakeup) and as SLEEP votes (applied by RPMh
- * on system sleep).
- * We send ACTIVE_ONLY votes for resources without any peers. For others,
+ * (applied by RPMh on प्रणाली wakeup) and as SLEEP votes (applied by RPMh
+ * on प्रणाली sleep).
+ * We send ACTIVE_ONLY votes क्रम resources without any peers. For others,
  * which have an active only peer, all 3 votes are sent.
  */
-static int rpmhpd_aggregate_corner(struct rpmhpd *pd, unsigned int corner)
-{
-	int ret;
-	struct rpmhpd *peer = pd->peer;
-	unsigned int active_corner, sleep_corner;
-	unsigned int this_active_corner = 0, this_sleep_corner = 0;
-	unsigned int peer_active_corner = 0, peer_sleep_corner = 0;
+अटल पूर्णांक rpmhpd_aggregate_corner(काष्ठा rpmhpd *pd, अचिन्हित पूर्णांक corner)
+अणु
+	पूर्णांक ret;
+	काष्ठा rpmhpd *peer = pd->peer;
+	अचिन्हित पूर्णांक active_corner, sleep_corner;
+	अचिन्हित पूर्णांक this_active_corner = 0, this_sleep_corner = 0;
+	अचिन्हित पूर्णांक peer_active_corner = 0, peer_sleep_corner = 0;
 
 	to_active_sleep(pd, corner, &this_active_corner, &this_sleep_corner);
 
-	if (peer && peer->enabled)
+	अगर (peer && peer->enabled)
 		to_active_sleep(peer, peer->corner, &peer_active_corner,
 				&peer_sleep_corner);
 
@@ -339,219 +340,219 @@ static int rpmhpd_aggregate_corner(struct rpmhpd *pd, unsigned int corner)
 
 	ret = rpmhpd_send_corner(pd, RPMH_ACTIVE_ONLY_STATE, active_corner,
 				 active_corner > pd->active_corner);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pd->active_corner = active_corner;
 
-	if (peer) {
+	अगर (peer) अणु
 		peer->active_corner = active_corner;
 
 		ret = rpmhpd_send_corner(pd, RPMH_WAKE_ONLY_STATE,
 					 active_corner, false);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		sleep_corner = max(this_sleep_corner, peer_sleep_corner);
 
-		return rpmhpd_send_corner(pd, RPMH_SLEEP_STATE, sleep_corner,
+		वापस rpmhpd_send_corner(pd, RPMH_SLEEP_STATE, sleep_corner,
 					  false);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rpmhpd_power_on(struct generic_pm_domain *domain)
-{
-	struct rpmhpd *pd = domain_to_rpmhpd(domain);
-	int ret = 0;
+अटल पूर्णांक rpmhpd_घातer_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा rpmhpd *pd = करोमुख्य_to_rpmhpd(करोमुख्य);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&rpmhpd_lock);
 
-	if (pd->corner)
+	अगर (pd->corner)
 		ret = rpmhpd_aggregate_corner(pd, pd->corner);
 
-	if (!ret)
+	अगर (!ret)
 		pd->enabled = true;
 
 	mutex_unlock(&rpmhpd_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rpmhpd_power_off(struct generic_pm_domain *domain)
-{
-	struct rpmhpd *pd = domain_to_rpmhpd(domain);
-	int ret = 0;
+अटल पूर्णांक rpmhpd_घातer_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा rpmhpd *pd = करोमुख्य_to_rpmhpd(करोमुख्य);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&rpmhpd_lock);
 
 	ret = rpmhpd_aggregate_corner(pd, pd->level[0]);
 
-	if (!ret)
+	अगर (!ret)
 		pd->enabled = false;
 
 	mutex_unlock(&rpmhpd_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rpmhpd_set_performance_state(struct generic_pm_domain *domain,
-					unsigned int level)
-{
-	struct rpmhpd *pd = domain_to_rpmhpd(domain);
-	int ret = 0, i;
+अटल पूर्णांक rpmhpd_set_perक्रमmance_state(काष्ठा generic_pm_करोमुख्य *करोमुख्य,
+					अचिन्हित पूर्णांक level)
+अणु
+	काष्ठा rpmhpd *pd = करोमुख्य_to_rpmhpd(करोमुख्य);
+	पूर्णांक ret = 0, i;
 
 	mutex_lock(&rpmhpd_lock);
 
-	for (i = 0; i < pd->level_count; i++)
-		if (level <= pd->level[i])
-			break;
+	क्रम (i = 0; i < pd->level_count; i++)
+		अगर (level <= pd->level[i])
+			अवरोध;
 
 	/*
 	 * If the level requested is more than that supported by the
 	 * max corner, just set it to max anyway.
 	 */
-	if (i == pd->level_count)
+	अगर (i == pd->level_count)
 		i--;
 
-	if (pd->enabled) {
+	अगर (pd->enabled) अणु
 		ret = rpmhpd_aggregate_corner(pd, i);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	pd->corner = i;
 out:
 	mutex_unlock(&rpmhpd_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int rpmhpd_get_performance_state(struct generic_pm_domain *genpd,
-						 struct dev_pm_opp *opp)
-{
-	return dev_pm_opp_get_level(opp);
-}
+अटल अचिन्हित पूर्णांक rpmhpd_get_perक्रमmance_state(काष्ठा generic_pm_करोमुख्य *genpd,
+						 काष्ठा dev_pm_opp *opp)
+अणु
+	वापस dev_pm_opp_get_level(opp);
+पूर्ण
 
-static int rpmhpd_update_level_mapping(struct rpmhpd *rpmhpd)
-{
-	int i;
-	const u16 *buf;
+अटल पूर्णांक rpmhpd_update_level_mapping(काष्ठा rpmhpd *rpmhpd)
+अणु
+	पूर्णांक i;
+	स्थिर u16 *buf;
 
-	buf = cmd_db_read_aux_data(rpmhpd->res_name, &rpmhpd->level_count);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	buf = cmd_db_पढ़ो_aux_data(rpmhpd->res_name, &rpmhpd->level_count);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
-	/* 2 bytes used for each command DB aux data entry */
+	/* 2 bytes used क्रम each command DB aux data entry */
 	rpmhpd->level_count >>= 1;
 
-	if (rpmhpd->level_count > RPMH_ARC_MAX_LEVELS)
-		return -EINVAL;
+	अगर (rpmhpd->level_count > RPMH_ARC_MAX_LEVELS)
+		वापस -EINVAL;
 
-	for (i = 0; i < rpmhpd->level_count; i++) {
+	क्रम (i = 0; i < rpmhpd->level_count; i++) अणु
 		rpmhpd->level[i] = buf[i];
 
 		/*
 		 * The AUX data may be zero padded.  These 0 valued entries at
 		 * the end of the map must be ignored.
 		 */
-		if (i > 0 && rpmhpd->level[i] == 0) {
+		अगर (i > 0 && rpmhpd->level[i] == 0) अणु
 			rpmhpd->level_count = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pr_debug("%s: ARC hlvl=%2d --> vlvl=%4u\n", rpmhpd->res_name, i,
 			 rpmhpd->level[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rpmhpd_probe(struct platform_device *pdev)
-{
-	int i, ret;
-	size_t num_pds;
-	struct device *dev = &pdev->dev;
-	struct genpd_onecell_data *data;
-	struct rpmhpd **rpmhpds;
-	const struct rpmhpd_desc *desc;
+अटल पूर्णांक rpmhpd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक i, ret;
+	माप_प्रकार num_pds;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा genpd_onecell_data *data;
+	काष्ठा rpmhpd **rpmhpds;
+	स्थिर काष्ठा rpmhpd_desc *desc;
 
 	desc = of_device_get_match_data(dev);
-	if (!desc)
-		return -EINVAL;
+	अगर (!desc)
+		वापस -EINVAL;
 
 	rpmhpds = desc->rpmhpds;
 	num_pds = desc->num_pds;
 
-	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
-	data->domains = devm_kcalloc(dev, num_pds, sizeof(*data->domains),
+	data->करोमुख्यs = devm_kसुस्मृति(dev, num_pds, माप(*data->करोमुख्यs),
 				     GFP_KERNEL);
-	if (!data->domains)
-		return -ENOMEM;
+	अगर (!data->करोमुख्यs)
+		वापस -ENOMEM;
 
-	data->num_domains = num_pds;
+	data->num_करोमुख्यs = num_pds;
 
-	for (i = 0; i < num_pds; i++) {
-		if (!rpmhpds[i]) {
+	क्रम (i = 0; i < num_pds; i++) अणु
+		अगर (!rpmhpds[i]) अणु
 			dev_warn(dev, "rpmhpds[%d] is empty\n", i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		rpmhpds[i]->dev = dev;
-		rpmhpds[i]->addr = cmd_db_read_addr(rpmhpds[i]->res_name);
-		if (!rpmhpds[i]->addr) {
+		rpmhpds[i]->addr = cmd_db_पढ़ो_addr(rpmhpds[i]->res_name);
+		अगर (!rpmhpds[i]->addr) अणु
 			dev_err(dev, "Could not find RPMh address for resource %s\n",
 				rpmhpds[i]->res_name);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		ret = cmd_db_read_slave_id(rpmhpds[i]->res_name);
-		if (ret != CMD_DB_HW_ARC) {
+		ret = cmd_db_पढ़ो_slave_id(rpmhpds[i]->res_name);
+		अगर (ret != CMD_DB_HW_ARC) अणु
 			dev_err(dev, "RPMh slave ID mismatch\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		ret = rpmhpd_update_level_mapping(rpmhpds[i]);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		rpmhpds[i]->pd.power_off = rpmhpd_power_off;
-		rpmhpds[i]->pd.power_on = rpmhpd_power_on;
-		rpmhpds[i]->pd.set_performance_state = rpmhpd_set_performance_state;
-		rpmhpds[i]->pd.opp_to_performance_state = rpmhpd_get_performance_state;
-		pm_genpd_init(&rpmhpds[i]->pd, NULL, true);
+		rpmhpds[i]->pd.घातer_off = rpmhpd_घातer_off;
+		rpmhpds[i]->pd.घातer_on = rpmhpd_घातer_on;
+		rpmhpds[i]->pd.set_perक्रमmance_state = rpmhpd_set_perक्रमmance_state;
+		rpmhpds[i]->pd.opp_to_perक्रमmance_state = rpmhpd_get_perक्रमmance_state;
+		pm_genpd_init(&rpmhpds[i]->pd, शून्य, true);
 
-		data->domains[i] = &rpmhpds[i]->pd;
-	}
+		data->करोमुख्यs[i] = &rpmhpds[i]->pd;
+	पूर्ण
 
-	/* Add subdomains */
-	for (i = 0; i < num_pds; i++) {
-		if (!rpmhpds[i])
-			continue;
-		if (rpmhpds[i]->parent)
-			pm_genpd_add_subdomain(rpmhpds[i]->parent,
+	/* Add subकरोमुख्यs */
+	क्रम (i = 0; i < num_pds; i++) अणु
+		अगर (!rpmhpds[i])
+			जारी;
+		अगर (rpmhpds[i]->parent)
+			pm_genpd_add_subकरोमुख्य(rpmhpds[i]->parent,
 					       &rpmhpds[i]->pd);
-	}
+	पूर्ण
 
-	return of_genpd_add_provider_onecell(pdev->dev.of_node, data);
-}
+	वापस of_genpd_add_provider_onecell(pdev->dev.of_node, data);
+पूर्ण
 
-static struct platform_driver rpmhpd_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver rpmhpd_driver = अणु
+	.driver = अणु
 		.name = "qcom-rpmhpd",
 		.of_match_table = rpmhpd_match_table,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = rpmhpd_probe,
-};
+पूर्ण;
 
-static int __init rpmhpd_init(void)
-{
-	return platform_driver_register(&rpmhpd_driver);
-}
+अटल पूर्णांक __init rpmhpd_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&rpmhpd_driver);
+पूर्ण
 core_initcall(rpmhpd_init);
 
 MODULE_DESCRIPTION("Qualcomm Technologies, Inc. RPMh Power Domain Driver");

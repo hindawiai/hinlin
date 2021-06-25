@@ -1,153 +1,154 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2013 by John Crispin <john@phrozen.org>
  */
 
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/interrupt.h>
-#include <linux/reset.h>
-#include <linux/init.h>
-#include <linux/time.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/of_address.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/init.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_address.h>
 
-#include <asm/mach-ralink/ralink_regs.h>
+#समावेश <यंत्र/mach-ralink/ralink_regs.h>
 
-#define SYSTICK_FREQ		(50 * 1000)
+#घोषणा SYSTICK_FREQ		(50 * 1000)
 
-#define SYSTICK_CONFIG		0x00
-#define SYSTICK_COMPARE		0x04
-#define SYSTICK_COUNT		0x08
+#घोषणा SYSTICK_CONFIG		0x00
+#घोषणा SYSTICK_COMPARE		0x04
+#घोषणा SYSTICK_COUNT		0x08
 
-/* route systick irq to mips irq 7 instead of the r4k-timer */
-#define CFG_EXT_STK_EN		0x2
+/* route systick irq to mips irq 7 instead of the r4k-समयr */
+#घोषणा CFG_EXT_STK_EN		0x2
 /* enable the counter */
-#define CFG_CNT_EN		0x1
+#घोषणा CFG_CNT_EN		0x1
 
-struct systick_device {
-	void __iomem *membase;
-	struct clock_event_device dev;
-	int irq_requested;
-	int freq_scale;
-};
+काष्ठा systick_device अणु
+	व्योम __iomem *membase;
+	काष्ठा घड़ी_event_device dev;
+	पूर्णांक irq_requested;
+	पूर्णांक freq_scale;
+पूर्ण;
 
-static int systick_set_oneshot(struct clock_event_device *evt);
-static int systick_shutdown(struct clock_event_device *evt);
+अटल पूर्णांक systick_set_oneshot(काष्ठा घड़ी_event_device *evt);
+अटल पूर्णांक systick_shutकरोwn(काष्ठा घड़ी_event_device *evt);
 
-static int systick_next_event(unsigned long delta,
-				struct clock_event_device *evt)
-{
-	struct systick_device *sdev;
+अटल पूर्णांक systick_next_event(अचिन्हित दीर्घ delta,
+				काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा systick_device *sdev;
 	u32 count;
 
-	sdev = container_of(evt, struct systick_device, dev);
-	count = ioread32(sdev->membase + SYSTICK_COUNT);
+	sdev = container_of(evt, काष्ठा systick_device, dev);
+	count = ioपढ़ो32(sdev->membase + SYSTICK_COUNT);
 	count = (count + delta) % SYSTICK_FREQ;
-	iowrite32(count, sdev->membase + SYSTICK_COMPARE);
+	ioग_लिखो32(count, sdev->membase + SYSTICK_COMPARE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void systick_event_handler(struct clock_event_device *dev)
-{
-	/* noting to do here */
-}
+अटल व्योम systick_event_handler(काष्ठा घड़ी_event_device *dev)
+अणु
+	/* noting to करो here */
+पूर्ण
 
-static irqreturn_t systick_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *dev = (struct clock_event_device *) dev_id;
+अटल irqवापस_t systick_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *dev = (काष्ठा घड़ी_event_device *) dev_id;
 
 	dev->event_handler(dev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct systick_device systick = {
-	.dev = {
+अटल काष्ठा systick_device systick = अणु
+	.dev = अणु
 		/*
 		 * cevt-r4k uses 300, make sure systick
-		 * gets used if available
+		 * माला_लो used अगर available
 		 */
 		.rating			= 310,
 		.features		= CLOCK_EVT_FEAT_ONESHOT,
 		.set_next_event		= systick_next_event,
-		.set_state_shutdown	= systick_shutdown,
+		.set_state_shutकरोwn	= systick_shutकरोwn,
 		.set_state_oneshot	= systick_set_oneshot,
 		.event_handler		= systick_event_handler,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int systick_shutdown(struct clock_event_device *evt)
-{
-	struct systick_device *sdev;
+अटल पूर्णांक systick_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा systick_device *sdev;
 
-	sdev = container_of(evt, struct systick_device, dev);
+	sdev = container_of(evt, काष्ठा systick_device, dev);
 
-	if (sdev->irq_requested)
-		free_irq(systick.dev.irq, &systick.dev);
+	अगर (sdev->irq_requested)
+		मुक्त_irq(systick.dev.irq, &systick.dev);
 	sdev->irq_requested = 0;
-	iowrite32(0, systick.membase + SYSTICK_CONFIG);
+	ioग_लिखो32(0, systick.membase + SYSTICK_CONFIG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int systick_set_oneshot(struct clock_event_device *evt)
-{
-	const char *name = systick.dev.name;
-	struct systick_device *sdev;
-	int irq = systick.dev.irq;
+अटल पूर्णांक systick_set_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	स्थिर अक्षर *name = systick.dev.name;
+	काष्ठा systick_device *sdev;
+	पूर्णांक irq = systick.dev.irq;
 
-	sdev = container_of(evt, struct systick_device, dev);
+	sdev = container_of(evt, काष्ठा systick_device, dev);
 
-	if (!sdev->irq_requested) {
-		if (request_irq(irq, systick_interrupt,
+	अगर (!sdev->irq_requested) अणु
+		अगर (request_irq(irq, systick_पूर्णांकerrupt,
 				IRQF_PERCPU | IRQF_TIMER, name, &systick.dev))
 			pr_err("Failed to request irq %d (%s)\n", irq, name);
-	}
+	पूर्ण
 	sdev->irq_requested = 1;
-	iowrite32(CFG_EXT_STK_EN | CFG_CNT_EN,
+	ioग_लिखो32(CFG_EXT_STK_EN | CFG_CNT_EN,
 		  systick.membase + SYSTICK_CONFIG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init ralink_systick_init(struct device_node *np)
-{
-	int ret;
+अटल पूर्णांक __init ralink_systick_init(काष्ठा device_node *np)
+अणु
+	पूर्णांक ret;
 
 	systick.membase = of_iomap(np, 0);
-	if (!systick.membase)
-		return -ENXIO;
+	अगर (!systick.membase)
+		वापस -ENXIO;
 
 	systick.dev.name = np->name;
-	clockevents_calc_mult_shift(&systick.dev, SYSTICK_FREQ, 60);
-	systick.dev.max_delta_ns = clockevent_delta2ns(0x7fff, &systick.dev);
+	घड़ीevents_calc_mult_shअगरt(&systick.dev, SYSTICK_FREQ, 60);
+	systick.dev.max_delta_ns = घड़ीevent_delta2ns(0x7fff, &systick.dev);
 	systick.dev.max_delta_ticks = 0x7fff;
-	systick.dev.min_delta_ns = clockevent_delta2ns(0x3, &systick.dev);
+	systick.dev.min_delta_ns = घड़ीevent_delta2ns(0x3, &systick.dev);
 	systick.dev.min_delta_ticks = 0x3;
 	systick.dev.irq = irq_of_parse_and_map(np, 0);
-	if (!systick.dev.irq) {
+	अगर (!systick.dev.irq) अणु
 		pr_err("%pOFn: request_irq failed", np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = clocksource_mmio_init(systick.membase + SYSTICK_COUNT, np->name,
+	ret = घड़ीsource_mmio_init(systick.membase + SYSTICK_COUNT, np->name,
 				    SYSTICK_FREQ, 301, 16,
-				    clocksource_mmio_readl_up);
-	if (ret)
-		return ret;
+				    घड़ीsource_mmio_पढ़ोl_up);
+	अगर (ret)
+		वापस ret;
 
-	clockevents_register_device(&systick.dev);
+	घड़ीevents_रेजिस्टर_device(&systick.dev);
 
 	pr_info("%pOFn: running - mult: %d, shift: %d\n",
-			np, systick.dev.mult, systick.dev.shift);
+			np, systick.dev.mult, systick.dev.shअगरt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 TIMER_OF_DECLARE(systick, "ralink,cevt-systick", ralink_systick_init);

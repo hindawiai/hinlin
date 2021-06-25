@@ -1,220 +1,221 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * OSS compatible sequencer driver
  *
- * open/close and reset interface
+ * खोलो/बंद and reset पूर्णांकerface
  *
  * Copyright (C) 1998-1999 Takashi Iwai <tiwai@suse.de>
  */
 
-#include "seq_oss_device.h"
-#include "seq_oss_synth.h"
-#include "seq_oss_midi.h"
-#include "seq_oss_writeq.h"
-#include "seq_oss_readq.h"
-#include "seq_oss_timer.h"
-#include "seq_oss_event.h"
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/moduleparam.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
+#समावेश "seq_oss_device.h"
+#समावेश "seq_oss_synth.h"
+#समावेश "seq_oss_midi.h"
+#समावेश "seq_oss_writeq.h"
+#समावेश "seq_oss_readq.h"
+#समावेश "seq_oss_timer.h"
+#समावेश "seq_oss_event.h"
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
 
 /*
  * common variables
  */
-static int maxqlen = SNDRV_SEQ_OSS_MAX_QLEN;
-module_param(maxqlen, int, 0444);
+अटल पूर्णांक maxqlen = SNDRV_SEQ_OSS_MAX_QLEN;
+module_param(maxqlen, पूर्णांक, 0444);
 MODULE_PARM_DESC(maxqlen, "maximum queue length");
 
-static int system_client = -1; /* ALSA sequencer client number */
-static int system_port = -1;
+अटल पूर्णांक प्रणाली_client = -1; /* ALSA sequencer client number */
+अटल पूर्णांक प्रणाली_port = -1;
 
-static int num_clients;
-static struct seq_oss_devinfo *client_table[SNDRV_SEQ_OSS_MAX_CLIENTS];
+अटल पूर्णांक num_clients;
+अटल काष्ठा seq_oss_devinfo *client_table[SNDRV_SEQ_OSS_MAX_CLIENTS];
 
 
 /*
  * prototypes
  */
-static int receive_announce(struct snd_seq_event *ev, int direct, void *private, int atomic, int hop);
-static int translate_mode(struct file *file);
-static int create_port(struct seq_oss_devinfo *dp);
-static int delete_port(struct seq_oss_devinfo *dp);
-static int alloc_seq_queue(struct seq_oss_devinfo *dp);
-static int delete_seq_queue(int queue);
-static void free_devinfo(void *private);
+अटल पूर्णांक receive_announce(काष्ठा snd_seq_event *ev, पूर्णांक direct, व्योम *निजी, पूर्णांक atomic, पूर्णांक hop);
+अटल पूर्णांक translate_mode(काष्ठा file *file);
+अटल पूर्णांक create_port(काष्ठा seq_oss_devinfo *dp);
+अटल पूर्णांक delete_port(काष्ठा seq_oss_devinfo *dp);
+अटल पूर्णांक alloc_seq_queue(काष्ठा seq_oss_devinfo *dp);
+अटल पूर्णांक delete_seq_queue(पूर्णांक queue);
+अटल व्योम मुक्त_devinfo(व्योम *निजी);
 
-#define call_ctl(type,rec) snd_seq_kernel_client_ctl(system_client, type, rec)
+#घोषणा call_ctl(type,rec) snd_seq_kernel_client_ctl(प्रणाली_client, type, rec)
 
 
 /* call snd_seq_oss_midi_lookup_ports() asynchronously */
-static void async_call_lookup_ports(struct work_struct *work)
-{
-	snd_seq_oss_midi_lookup_ports(system_client);
-}
+अटल व्योम async_call_lookup_ports(काष्ठा work_काष्ठा *work)
+अणु
+	snd_seq_oss_midi_lookup_ports(प्रणाली_client);
+पूर्ण
 
-static DECLARE_WORK(async_lookup_work, async_call_lookup_ports);
+अटल DECLARE_WORK(async_lookup_work, async_call_lookup_ports);
 
 /*
- * create sequencer client for OSS sequencer
+ * create sequencer client क्रम OSS sequencer
  */
-int __init
-snd_seq_oss_create_client(void)
-{
-	int rc;
-	struct snd_seq_port_info *port;
-	struct snd_seq_port_callback port_callback;
+पूर्णांक __init
+snd_seq_oss_create_client(व्योम)
+अणु
+	पूर्णांक rc;
+	काष्ठा snd_seq_port_info *port;
+	काष्ठा snd_seq_port_callback port_callback;
 
-	port = kmalloc(sizeof(*port), GFP_KERNEL);
-	if (!port) {
+	port = kदो_स्मृति(माप(*port), GFP_KERNEL);
+	अगर (!port) अणु
 		rc = -ENOMEM;
-		goto __error;
-	}
+		जाओ __error;
+	पूर्ण
 
 	/* create ALSA client */
-	rc = snd_seq_create_kernel_client(NULL, SNDRV_SEQ_CLIENT_OSS,
+	rc = snd_seq_create_kernel_client(शून्य, SNDRV_SEQ_CLIENT_OSS,
 					  "OSS sequencer");
-	if (rc < 0)
-		goto __error;
+	अगर (rc < 0)
+		जाओ __error;
 
-	system_client = rc;
+	प्रणाली_client = rc;
 
 	/* create annoucement receiver port */
-	memset(port, 0, sizeof(*port));
-	strcpy(port->name, "Receiver");
-	port->addr.client = system_client;
+	स_रखो(port, 0, माप(*port));
+	म_नकल(port->name, "Receiver");
+	port->addr.client = प्रणाली_client;
 	port->capability = SNDRV_SEQ_PORT_CAP_WRITE; /* receive only */
 	port->type = 0;
 
-	memset(&port_callback, 0, sizeof(port_callback));
-	/* don't set port_callback.owner here. otherwise the module counter
-	 * is incremented and we can no longer release the module..
+	स_रखो(&port_callback, 0, माप(port_callback));
+	/* करोn't set port_callback.owner here. otherwise the module counter
+	 * is incremented and we can no दीर्घer release the module..
 	 */
 	port_callback.event_input = receive_announce;
 	port->kernel = &port_callback;
 	
 	call_ctl(SNDRV_SEQ_IOCTL_CREATE_PORT, port);
-	if ((system_port = port->addr.port) >= 0) {
-		struct snd_seq_port_subscribe subs;
+	अगर ((प्रणाली_port = port->addr.port) >= 0) अणु
+		काष्ठा snd_seq_port_subscribe subs;
 
-		memset(&subs, 0, sizeof(subs));
+		स_रखो(&subs, 0, माप(subs));
 		subs.sender.client = SNDRV_SEQ_CLIENT_SYSTEM;
 		subs.sender.port = SNDRV_SEQ_PORT_SYSTEM_ANNOUNCE;
-		subs.dest.client = system_client;
-		subs.dest.port = system_port;
+		subs.dest.client = प्रणाली_client;
+		subs.dest.port = प्रणाली_port;
 		call_ctl(SNDRV_SEQ_IOCTL_SUBSCRIBE_PORT, &subs);
-	}
+	पूर्ण
 	rc = 0;
 
 	/* look up midi devices */
 	schedule_work(&async_lookup_work);
 
  __error:
-	kfree(port);
-	return rc;
-}
+	kमुक्त(port);
+	वापस rc;
+पूर्ण
 
 
 /*
- * receive annoucement from system port, and check the midi device
+ * receive annoucement from प्रणाली port, and check the midi device
  */
-static int
-receive_announce(struct snd_seq_event *ev, int direct, void *private, int atomic, int hop)
-{
-	struct snd_seq_port_info pinfo;
+अटल पूर्णांक
+receive_announce(काष्ठा snd_seq_event *ev, पूर्णांक direct, व्योम *निजी, पूर्णांक atomic, पूर्णांक hop)
+अणु
+	काष्ठा snd_seq_port_info pinfo;
 
-	if (atomic)
-		return 0; /* it must not happen */
+	अगर (atomic)
+		वापस 0; /* it must not happen */
 
-	switch (ev->type) {
-	case SNDRV_SEQ_EVENT_PORT_START:
-	case SNDRV_SEQ_EVENT_PORT_CHANGE:
-		if (ev->data.addr.client == system_client)
-			break; /* ignore myself */
-		memset(&pinfo, 0, sizeof(pinfo));
+	चयन (ev->type) अणु
+	हाल SNDRV_SEQ_EVENT_PORT_START:
+	हाल SNDRV_SEQ_EVENT_PORT_CHANGE:
+		अगर (ev->data.addr.client == प्रणाली_client)
+			अवरोध; /* ignore myself */
+		स_रखो(&pinfo, 0, माप(pinfo));
 		pinfo.addr = ev->data.addr;
-		if (call_ctl(SNDRV_SEQ_IOCTL_GET_PORT_INFO, &pinfo) >= 0)
+		अगर (call_ctl(SNDRV_SEQ_IOCTL_GET_PORT_INFO, &pinfo) >= 0)
 			snd_seq_oss_midi_check_new_port(&pinfo);
-		break;
+		अवरोध;
 
-	case SNDRV_SEQ_EVENT_PORT_EXIT:
-		if (ev->data.addr.client == system_client)
-			break; /* ignore myself */
-		snd_seq_oss_midi_check_exit_port(ev->data.addr.client,
+	हाल SNDRV_SEQ_EVENT_PORT_EXIT:
+		अगर (ev->data.addr.client == प्रणाली_client)
+			अवरोध; /* ignore myself */
+		snd_seq_oss_midi_check_निकास_port(ev->data.addr.client,
 						ev->data.addr.port);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /*
  * delete OSS sequencer client
  */
-int
-snd_seq_oss_delete_client(void)
-{
+पूर्णांक
+snd_seq_oss_delete_client(व्योम)
+अणु
 	cancel_work_sync(&async_lookup_work);
-	if (system_client >= 0)
-		snd_seq_delete_kernel_client(system_client);
+	अगर (प्रणाली_client >= 0)
+		snd_seq_delete_kernel_client(प्रणाली_client);
 
 	snd_seq_oss_midi_clear_all();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * open sequencer device
+ * खोलो sequencer device
  */
-int
-snd_seq_oss_open(struct file *file, int level)
-{
-	int i, rc;
-	struct seq_oss_devinfo *dp;
+पूर्णांक
+snd_seq_oss_खोलो(काष्ठा file *file, पूर्णांक level)
+अणु
+	पूर्णांक i, rc;
+	काष्ठा seq_oss_devinfo *dp;
 
-	dp = kzalloc(sizeof(*dp), GFP_KERNEL);
-	if (!dp)
-		return -ENOMEM;
+	dp = kzalloc(माप(*dp), GFP_KERNEL);
+	अगर (!dp)
+		वापस -ENOMEM;
 
-	dp->cseq = system_client;
+	dp->cseq = प्रणाली_client;
 	dp->port = -1;
 	dp->queue = -1;
 
-	for (i = 0; i < SNDRV_SEQ_OSS_MAX_CLIENTS; i++) {
-		if (client_table[i] == NULL)
-			break;
-	}
+	क्रम (i = 0; i < SNDRV_SEQ_OSS_MAX_CLIENTS; i++) अणु
+		अगर (client_table[i] == शून्य)
+			अवरोध;
+	पूर्ण
 
 	dp->index = i;
-	if (i >= SNDRV_SEQ_OSS_MAX_CLIENTS) {
+	अगर (i >= SNDRV_SEQ_OSS_MAX_CLIENTS) अणु
 		pr_debug("ALSA: seq_oss: too many applications\n");
 		rc = -ENOMEM;
-		goto _error;
-	}
+		जाओ _error;
+	पूर्ण
 
 	/* look up synth and midi devices */
 	snd_seq_oss_synth_setup(dp);
 	snd_seq_oss_midi_setup(dp);
 
-	if (dp->synth_opened == 0 && dp->max_mididev == 0) {
+	अगर (dp->synth_खोलोed == 0 && dp->max_mididev == 0) अणु
 		/* pr_err("ALSA: seq_oss: no device found\n"); */
 		rc = -ENODEV;
-		goto _error;
-	}
+		जाओ _error;
+	पूर्ण
 
 	/* create port */
 	rc = create_port(dp);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		pr_err("ALSA: seq_oss: can't create port\n");
-		goto _error;
-	}
+		जाओ _error;
+	पूर्ण
 
 	/* allocate queue */
 	rc = alloc_seq_queue(dp);
-	if (rc < 0)
-		goto _error;
+	अगर (rc < 0)
+		जाओ _error;
 
 	/* set address */
 	dp->addr.client = dp->cseq;
@@ -227,45 +228,45 @@ snd_seq_oss_open(struct file *file, int level)
 	/* set up file mode */
 	dp->file_mode = translate_mode(file);
 
-	/* initialize read queue */
-	if (is_read_mode(dp->file_mode)) {
-		dp->readq = snd_seq_oss_readq_new(dp, maxqlen);
-		if (!dp->readq) {
+	/* initialize पढ़ो queue */
+	अगर (is_पढ़ो_mode(dp->file_mode)) अणु
+		dp->पढ़ोq = snd_seq_oss_पढ़ोq_new(dp, maxqlen);
+		अगर (!dp->पढ़ोq) अणु
 			rc = -ENOMEM;
-			goto _error;
-		}
-	}
+			जाओ _error;
+		पूर्ण
+	पूर्ण
 
-	/* initialize write queue */
-	if (is_write_mode(dp->file_mode)) {
-		dp->writeq = snd_seq_oss_writeq_new(dp, maxqlen);
-		if (!dp->writeq) {
+	/* initialize ग_लिखो queue */
+	अगर (is_ग_लिखो_mode(dp->file_mode)) अणु
+		dp->ग_लिखोq = snd_seq_oss_ग_लिखोq_new(dp, maxqlen);
+		अगर (!dp->ग_लिखोq) अणु
 			rc = -ENOMEM;
-			goto _error;
-		}
-	}
+			जाओ _error;
+		पूर्ण
+	पूर्ण
 
-	/* initialize timer */
-	dp->timer = snd_seq_oss_timer_new(dp);
-	if (!dp->timer) {
+	/* initialize समयr */
+	dp->समयr = snd_seq_oss_समयr_new(dp);
+	अगर (!dp->समयr) अणु
 		pr_err("ALSA: seq_oss: can't alloc timer\n");
 		rc = -ENOMEM;
-		goto _error;
-	}
+		जाओ _error;
+	पूर्ण
 
-	/* set private data pointer */
-	file->private_data = dp;
+	/* set निजी data poपूर्णांकer */
+	file->निजी_data = dp;
 
-	/* set up for mode2 */
-	if (level == SNDRV_SEQ_OSS_MODE_MUSIC)
+	/* set up क्रम mode2 */
+	अगर (level == SNDRV_SEQ_OSS_MODE_MUSIC)
 		snd_seq_oss_synth_setup_midi(dp);
-	else if (is_read_mode(dp->file_mode))
-		snd_seq_oss_midi_open_all(dp, SNDRV_SEQ_OSS_FILE_READ);
+	अन्यथा अगर (is_पढ़ो_mode(dp->file_mode))
+		snd_seq_oss_midi_खोलो_all(dp, SNDRV_SEQ_OSS_खाता_READ);
 
 	client_table[dp->index] = dp;
 	num_clients++;
 
-	return 0;
+	वापस 0;
 
  _error:
 	snd_seq_oss_synth_cleanup(dp);
@@ -273,140 +274,140 @@ snd_seq_oss_open(struct file *file, int level)
 	delete_seq_queue(dp->queue);
 	delete_port(dp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * translate file flags to private mode
+ * translate file flags to निजी mode
  */
-static int
-translate_mode(struct file *file)
-{
-	int file_mode = 0;
-	if ((file->f_flags & O_ACCMODE) != O_RDONLY)
-		file_mode |= SNDRV_SEQ_OSS_FILE_WRITE;
-	if ((file->f_flags & O_ACCMODE) != O_WRONLY)
-		file_mode |= SNDRV_SEQ_OSS_FILE_READ;
-	if (file->f_flags & O_NONBLOCK)
-		file_mode |= SNDRV_SEQ_OSS_FILE_NONBLOCK;
-	return file_mode;
-}
+अटल पूर्णांक
+translate_mode(काष्ठा file *file)
+अणु
+	पूर्णांक file_mode = 0;
+	अगर ((file->f_flags & O_ACCMODE) != O_RDONLY)
+		file_mode |= SNDRV_SEQ_OSS_खाता_WRITE;
+	अगर ((file->f_flags & O_ACCMODE) != O_WRONLY)
+		file_mode |= SNDRV_SEQ_OSS_खाता_READ;
+	अगर (file->f_flags & O_NONBLOCK)
+		file_mode |= SNDRV_SEQ_OSS_खाता_NONBLOCK;
+	वापस file_mode;
+पूर्ण
 
 
 /*
  * create sequencer port
  */
-static int
-create_port(struct seq_oss_devinfo *dp)
-{
-	int rc;
-	struct snd_seq_port_info port;
-	struct snd_seq_port_callback callback;
+अटल पूर्णांक
+create_port(काष्ठा seq_oss_devinfo *dp)
+अणु
+	पूर्णांक rc;
+	काष्ठा snd_seq_port_info port;
+	काष्ठा snd_seq_port_callback callback;
 
-	memset(&port, 0, sizeof(port));
+	स_रखो(&port, 0, माप(port));
 	port.addr.client = dp->cseq;
-	sprintf(port.name, "Sequencer-%d", dp->index);
+	प्र_लिखो(port.name, "Sequencer-%d", dp->index);
 	port.capability = SNDRV_SEQ_PORT_CAP_READ|SNDRV_SEQ_PORT_CAP_WRITE; /* no subscription */
 	port.type = SNDRV_SEQ_PORT_TYPE_SPECIFIC;
 	port.midi_channels = 128;
 	port.synth_voices = 128;
 
-	memset(&callback, 0, sizeof(callback));
+	स_रखो(&callback, 0, माप(callback));
 	callback.owner = THIS_MODULE;
-	callback.private_data = dp;
+	callback.निजी_data = dp;
 	callback.event_input = snd_seq_oss_event_input;
-	callback.private_free = free_devinfo;
+	callback.निजी_मुक्त = मुक्त_devinfo;
 	port.kernel = &callback;
 
 	rc = call_ctl(SNDRV_SEQ_IOCTL_CREATE_PORT, &port);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	dp->port = port.addr.port;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * delete ALSA port
  */
-static int
-delete_port(struct seq_oss_devinfo *dp)
-{
-	if (dp->port < 0) {
-		kfree(dp);
-		return 0;
-	}
+अटल पूर्णांक
+delete_port(काष्ठा seq_oss_devinfo *dp)
+अणु
+	अगर (dp->port < 0) अणु
+		kमुक्त(dp);
+		वापस 0;
+	पूर्ण
 
-	return snd_seq_event_port_detach(dp->cseq, dp->port);
-}
+	वापस snd_seq_event_port_detach(dp->cseq, dp->port);
+पूर्ण
 
 /*
  * allocate a queue
  */
-static int
-alloc_seq_queue(struct seq_oss_devinfo *dp)
-{
-	struct snd_seq_queue_info qinfo;
-	int rc;
+अटल पूर्णांक
+alloc_seq_queue(काष्ठा seq_oss_devinfo *dp)
+अणु
+	काष्ठा snd_seq_queue_info qinfo;
+	पूर्णांक rc;
 
-	memset(&qinfo, 0, sizeof(qinfo));
-	qinfo.owner = system_client;
+	स_रखो(&qinfo, 0, माप(qinfo));
+	qinfo.owner = प्रणाली_client;
 	qinfo.locked = 1;
-	strcpy(qinfo.name, "OSS Sequencer Emulation");
-	if ((rc = call_ctl(SNDRV_SEQ_IOCTL_CREATE_QUEUE, &qinfo)) < 0)
-		return rc;
+	म_नकल(qinfo.name, "OSS Sequencer Emulation");
+	अगर ((rc = call_ctl(SNDRV_SEQ_IOCTL_CREATE_QUEUE, &qinfo)) < 0)
+		वापस rc;
 	dp->queue = qinfo.queue;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * release queue
  */
-static int
-delete_seq_queue(int queue)
-{
-	struct snd_seq_queue_info qinfo;
-	int rc;
+अटल पूर्णांक
+delete_seq_queue(पूर्णांक queue)
+अणु
+	काष्ठा snd_seq_queue_info qinfo;
+	पूर्णांक rc;
 
-	if (queue < 0)
-		return 0;
-	memset(&qinfo, 0, sizeof(qinfo));
+	अगर (queue < 0)
+		वापस 0;
+	स_रखो(&qinfo, 0, माप(qinfo));
 	qinfo.queue = queue;
 	rc = call_ctl(SNDRV_SEQ_IOCTL_DELETE_QUEUE, &qinfo);
-	if (rc < 0)
+	अगर (rc < 0)
 		pr_err("ALSA: seq_oss: unable to delete queue %d (%d)\n", queue, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /*
- * free device informations - private_free callback of port
+ * मुक्त device inक्रमmations - निजी_मुक्त callback of port
  */
-static void
-free_devinfo(void *private)
-{
-	struct seq_oss_devinfo *dp = (struct seq_oss_devinfo *)private;
+अटल व्योम
+मुक्त_devinfo(व्योम *निजी)
+अणु
+	काष्ठा seq_oss_devinfo *dp = (काष्ठा seq_oss_devinfo *)निजी;
 
-	snd_seq_oss_timer_delete(dp->timer);
+	snd_seq_oss_समयr_delete(dp->समयr);
 		
-	snd_seq_oss_writeq_delete(dp->writeq);
+	snd_seq_oss_ग_लिखोq_delete(dp->ग_लिखोq);
 
-	snd_seq_oss_readq_delete(dp->readq);
+	snd_seq_oss_पढ़ोq_delete(dp->पढ़ोq);
 	
-	kfree(dp);
-}
+	kमुक्त(dp);
+पूर्ण
 
 
 /*
- * close sequencer device
+ * बंद sequencer device
  */
-void
-snd_seq_oss_release(struct seq_oss_devinfo *dp)
-{
-	int queue;
+व्योम
+snd_seq_oss_release(काष्ठा seq_oss_devinfo *dp)
+अणु
+	पूर्णांक queue;
 
-	client_table[dp->index] = NULL;
+	client_table[dp->index] = शून्य;
 	num_clients--;
 
 	snd_seq_oss_reset(dp);
@@ -416,89 +417,89 @@ snd_seq_oss_release(struct seq_oss_devinfo *dp)
 
 	/* clear slot */
 	queue = dp->queue;
-	if (dp->port >= 0)
+	अगर (dp->port >= 0)
 		delete_port(dp);
 	delete_seq_queue(queue);
-}
+पूर्ण
 
 
 /*
  * reset sequencer devices
  */
-void
-snd_seq_oss_reset(struct seq_oss_devinfo *dp)
-{
-	int i;
+व्योम
+snd_seq_oss_reset(काष्ठा seq_oss_devinfo *dp)
+अणु
+	पूर्णांक i;
 
 	/* reset all synth devices */
-	for (i = 0; i < dp->max_synthdev; i++)
+	क्रम (i = 0; i < dp->max_synthdev; i++)
 		snd_seq_oss_synth_reset(dp, i);
 
 	/* reset all midi devices */
-	if (dp->seq_mode != SNDRV_SEQ_OSS_MODE_MUSIC) {
-		for (i = 0; i < dp->max_mididev; i++)
+	अगर (dp->seq_mode != SNDRV_SEQ_OSS_MODE_MUSIC) अणु
+		क्रम (i = 0; i < dp->max_mididev; i++)
 			snd_seq_oss_midi_reset(dp, i);
-	}
+	पूर्ण
 
-	/* remove queues */
-	if (dp->readq)
-		snd_seq_oss_readq_clear(dp->readq);
-	if (dp->writeq)
-		snd_seq_oss_writeq_clear(dp->writeq);
+	/* हटाओ queues */
+	अगर (dp->पढ़ोq)
+		snd_seq_oss_पढ़ोq_clear(dp->पढ़ोq);
+	अगर (dp->ग_लिखोq)
+		snd_seq_oss_ग_लिखोq_clear(dp->ग_लिखोq);
 
-	/* reset timer */
-	snd_seq_oss_timer_stop(dp->timer);
-}
+	/* reset समयr */
+	snd_seq_oss_समयr_stop(dp->समयr);
+पूर्ण
 
-#ifdef CONFIG_SND_PROC_FS
+#अगर_घोषित CONFIG_SND_PROC_FS
 /*
- * misc. functions for proc interface
+ * misc. functions क्रम proc पूर्णांकerface
  */
-char *
-enabled_str(int bool)
-{
-	return bool ? "enabled" : "disabled";
-}
+अक्षर *
+enabled_str(पूर्णांक bool)
+अणु
+	वापस bool ? "enabled" : "disabled";
+पूर्ण
 
-static const char *
-filemode_str(int val)
-{
-	static const char * const str[] = {
+अटल स्थिर अक्षर *
+filemode_str(पूर्णांक val)
+अणु
+	अटल स्थिर अक्षर * स्थिर str[] = अणु
 		"none", "read", "write", "read/write",
-	};
-	return str[val & SNDRV_SEQ_OSS_FILE_ACMODE];
-}
+	पूर्ण;
+	वापस str[val & SNDRV_SEQ_OSS_खाता_ACMODE];
+पूर्ण
 
 
 /*
- * proc interface
+ * proc पूर्णांकerface
  */
-void
-snd_seq_oss_system_info_read(struct snd_info_buffer *buf)
-{
-	int i;
-	struct seq_oss_devinfo *dp;
+व्योम
+snd_seq_oss_प्रणाली_info_पढ़ो(काष्ठा snd_info_buffer *buf)
+अणु
+	पूर्णांक i;
+	काष्ठा seq_oss_devinfo *dp;
 
-	snd_iprintf(buf, "ALSA client number %d\n", system_client);
-	snd_iprintf(buf, "ALSA receiver port %d\n", system_port);
+	snd_iम_लिखो(buf, "ALSA client number %d\n", प्रणाली_client);
+	snd_iम_लिखो(buf, "ALSA receiver port %d\n", प्रणाली_port);
 
-	snd_iprintf(buf, "\nNumber of applications: %d\n", num_clients);
-	for (i = 0; i < num_clients; i++) {
-		snd_iprintf(buf, "\nApplication %d: ", i);
-		if ((dp = client_table[i]) == NULL) {
-			snd_iprintf(buf, "*empty*\n");
-			continue;
-		}
-		snd_iprintf(buf, "port %d : queue %d\n", dp->port, dp->queue);
-		snd_iprintf(buf, "  sequencer mode = %s : file open mode = %s\n",
+	snd_iम_लिखो(buf, "\nNumber of applications: %d\n", num_clients);
+	क्रम (i = 0; i < num_clients; i++) अणु
+		snd_iम_लिखो(buf, "\nApplication %d: ", i);
+		अगर ((dp = client_table[i]) == शून्य) अणु
+			snd_iम_लिखो(buf, "*empty*\n");
+			जारी;
+		पूर्ण
+		snd_iम_लिखो(buf, "port %d : queue %d\n", dp->port, dp->queue);
+		snd_iम_लिखो(buf, "  sequencer mode = %s : file open mode = %s\n",
 			    (dp->seq_mode ? "music" : "synth"),
 			    filemode_str(dp->file_mode));
-		if (dp->seq_mode)
-			snd_iprintf(buf, "  timer tempo = %d, timebase = %d\n",
-				    dp->timer->oss_tempo, dp->timer->oss_timebase);
-		snd_iprintf(buf, "  max queue length %d\n", maxqlen);
-		if (is_read_mode(dp->file_mode) && dp->readq)
-			snd_seq_oss_readq_info_read(dp->readq, buf);
-	}
-}
-#endif /* CONFIG_SND_PROC_FS */
+		अगर (dp->seq_mode)
+			snd_iम_लिखो(buf, "  timer tempo = %d, timebase = %d\n",
+				    dp->समयr->oss_tempo, dp->समयr->oss_समयbase);
+		snd_iम_लिखो(buf, "  max queue length %d\n", maxqlen);
+		अगर (is_पढ़ो_mode(dp->file_mode) && dp->पढ़ोq)
+			snd_seq_oss_पढ़ोq_info_पढ़ो(dp->पढ़ोq, buf);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SND_PROC_FS */

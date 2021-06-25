@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Defines macros and constants for Renesas RZ/A2 pin controller pin
+ * Defines macros and स्थिरants क्रम Renesas RZ/A2 pin controller pin
  * muxing functions.
  */
-#ifndef __DT_BINDINGS_PINCTRL_RENESAS_RZA2_H
-#define __DT_BINDINGS_PINCTRL_RENESAS_RZA2_H
+#अगर_अघोषित __DT_BINDINGS_PINCTRL_RENESAS_RZA2_H
+#घोषणा __DT_BINDINGS_PINCTRL_RENESAS_RZA2_H
 
-#define RZA2_PINS_PER_PORT	8
+#घोषणा RZA2_PINS_PER_PORT	8
 
 /* Port names as labeled in the Hardware Manual */
-#define PORT0 0
-#define PORT1 1
-#define PORT2 2
-#define PORT3 3
-#define PORT4 4
-#define PORT5 5
-#define PORT6 6
-#define PORT7 7
-#define PORT8 8
-#define PORT9 9
-#define PORTA 10
-#define PORTB 11
-#define PORTC 12
-#define PORTD 13
-#define PORTE 14
-#define PORTF 15
-#define PORTG 16
-#define PORTH 17
+#घोषणा PORT0 0
+#घोषणा PORT1 1
+#घोषणा PORT2 2
+#घोषणा PORT3 3
+#घोषणा PORT4 4
+#घोषणा PORT5 5
+#घोषणा PORT6 6
+#घोषणा PORT7 7
+#घोषणा PORT8 8
+#घोषणा PORT9 9
+#घोषणा PORTA 10
+#घोषणा PORTB 11
+#घोषणा PORTC 12
+#घोषणा PORTD 13
+#घोषणा PORTE 14
+#घोषणा PORTF 15
+#घोषणा PORTG 16
+#घोषणा PORTH 17
 /* No I */
-#define PORTJ 18
-#define PORTK 19
-#define PORTL 20
-#define PORTM 21	/* Pins PM_0/1 are labeled JP_0/1 in HW manual */
+#घोषणा PORTJ 18
+#घोषणा PORTK 19
+#घोषणा PORTL 20
+#घोषणा PORTM 21	/* Pins PM_0/1 are labeled JP_0/1 in HW manual */
 
 /*
  * Create the pin index from its bank and position numbers and store in
- * the upper 16 bits the alternate function identifier
+ * the upper 16 bits the alternate function identअगरier
  */
-#define RZA2_PINMUX(b, p, f)	((b) * RZA2_PINS_PER_PORT + (p) | (f << 16))
+#घोषणा RZA2_PINMUX(b, p, f)	((b) * RZA2_PINS_PER_PORT + (p) | (f << 16))
 
 /*
  * Convert a port and pin label to its global pin index
  */
- #define RZA2_PIN(port, pin)	((port) * RZA2_PINS_PER_PORT + (pin))
+ #घोषणा RZA2_PIN(port, pin)	((port) * RZA2_PINS_PER_PORT + (pin))
 
-#endif /* __DT_BINDINGS_PINCTRL_RENESAS_RZA2_H */
+#पूर्ण_अगर /* __DT_BINDINGS_PINCTRL_RENESAS_RZA2_H */

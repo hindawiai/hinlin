@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#include <linux/bpf.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_core_read.h>
+#समावेश <linux/bpf.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <stdbool.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_core_पढ़ो.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-struct {
-	char in[256];
-	char out[256];
+काष्ठा अणु
+	अक्षर in[256];
+	अक्षर out[256];
 	bool skip;
-	uint64_t my_pid_tgid;
-} data = {};
+	uपूर्णांक64_t my_pid_tgid;
+पूर्ण data = अणुपूर्ण;
 
-struct core_reloc_kernel_output {
-	int valid[10];
+काष्ठा core_reloc_kernel_output अणु
+	पूर्णांक valid[10];
 	/* we have test_progs[-flavor], so cut flavor part */
-	char comm[sizeof("test_progs")];
-	int comm_len;
-};
+	अक्षर comm[माप("test_progs")];
+	पूर्णांक comm_len;
+पूर्ण;
 
-struct task_struct {
-	int pid;
-	int tgid;
-	char comm[16];
-	struct task_struct *group_leader;
-};
+काष्ठा task_काष्ठा अणु
+	पूर्णांक pid;
+	पूर्णांक tgid;
+	अक्षर comm[16];
+	काष्ठा task_काष्ठा *group_leader;
+पूर्ण;
 
-#define CORE_READ(dst, src) bpf_core_read(dst, sizeof(*(dst)), src)
+#घोषणा CORE_READ(dst, src) bpf_core_पढ़ो(dst, माप(*(dst)), src)
 
 SEC("raw_tracepoint/sys_enter")
-int test_core_kernel(void *ctx)
-{
-	struct task_struct *task = (void *)bpf_get_current_task();
-	struct core_reloc_kernel_output *out = (void *)&data.out;
-	uint64_t pid_tgid = bpf_get_current_pid_tgid();
-	uint32_t real_tgid = (uint32_t)pid_tgid;
-	int pid, tgid;
+पूर्णांक test_core_kernel(व्योम *ctx)
+अणु
+	काष्ठा task_काष्ठा *task = (व्योम *)bpf_get_current_task();
+	काष्ठा core_reloc_kernel_output *out = (व्योम *)&data.out;
+	uपूर्णांक64_t pid_tgid = bpf_get_current_pid_tgid();
+	uपूर्णांक32_t real_tgid = (uपूर्णांक32_t)pid_tgid;
+	पूर्णांक pid, tgid;
 
-	if (data.my_pid_tgid != pid_tgid)
-		return 0;
+	अगर (data.my_pid_tgid != pid_tgid)
+		वापस 0;
 
-	if (CORE_READ(&pid, &task->pid) ||
+	अगर (CORE_READ(&pid, &task->pid) ||
 	    CORE_READ(&tgid, &task->tgid))
-		return 1;
+		वापस 1;
 
 	/* validate pid + tgid matches */
-	out->valid[0] = (((uint64_t)pid << 32) | tgid) == pid_tgid;
+	out->valid[0] = (((uपूर्णांक64_t)pid << 32) | tgid) == pid_tgid;
 
 	/* test variadic BPF_CORE_READ macros */
 	out->valid[1] = BPF_CORE_READ(task,
@@ -86,13 +87,13 @@ int test_core_kernel(void *ctx)
 				      group_leader, group_leader,
 				      tgid) == real_tgid;
 
-	/* test BPF_CORE_READ_STR_INTO() returns correct code and contents */
+	/* test BPF_CORE_READ_STR_INTO() वापसs correct code and contents */
 	out->comm_len = BPF_CORE_READ_STR_INTO(
 		&out->comm, task,
 		group_leader, group_leader, group_leader, group_leader,
 		group_leader, group_leader, group_leader, group_leader,
 		comm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

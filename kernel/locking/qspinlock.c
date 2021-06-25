@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Queued spinlock
  *
@@ -7,31 +8,31 @@
  * (C) Copyright 2015 Intel Corp.
  * (C) Copyright 2015 Hewlett-Packard Enterprise Development LP
  *
- * Authors: Waiman Long <longman@redhat.com>
+ * Authors: Waiman Long <दीर्घman@redhat.com>
  *          Peter Zijlstra <peterz@infradead.org>
  */
 
-#ifndef _GEN_PV_LOCK_SLOWPATH
+#अगर_अघोषित _GEN_PV_LOCK_SLOWPATH
 
-#include <linux/smp.h>
-#include <linux/bug.h>
-#include <linux/cpumask.h>
-#include <linux/percpu.h>
-#include <linux/hardirq.h>
-#include <linux/mutex.h>
-#include <linux/prefetch.h>
-#include <asm/byteorder.h>
-#include <asm/qspinlock.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/prefetch.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/qspinlock.h>
 
 /*
  * Include queued spinlock statistics code
  */
-#include "qspinlock_stat.h"
+#समावेश "qspinlock_stat.h"
 
 /*
  * The basic principle of a queue-based spinlock can best be understood
  * by studying a classic queue-based spinlock implementation called the
- * MCS lock. A copy of the original MCS lock paper ("Algorithms for Scalable
+ * MCS lock. A copy of the original MCS lock paper ("Algorithms क्रम Scalable
  * Synchronization on Shared-Memory Multiprocessors by Mellor-Crummey and
  * Scott") is available at
  *
@@ -39,24 +40,24 @@
  *
  * This queued spinlock implementation is based on the MCS lock, however to
  * make it fit the 4 bytes we assume spinlock_t to be, and preserve its
- * existing API, we must modify it somehow.
+ * existing API, we must modअगरy it somehow.
  *
- * In particular; where the traditional MCS lock consists of a tail pointer
- * (8 bytes) and needs the next pointer (another 8 bytes) of its own node to
- * unlock the next pending (next->locked), we compress both these: {tail,
- * next->locked} into a single u32 value.
+ * In particular; where the traditional MCS lock consists of a tail poपूर्णांकer
+ * (8 bytes) and needs the next poपूर्णांकer (another 8 bytes) of its own node to
+ * unlock the next pending (next->locked), we compress both these: अणुtail,
+ * next->lockedपूर्ण पूर्णांकo a single u32 value.
  *
  * Since a spinlock disables recursion of its own context and there is a limit
  * to the contexts that can nest; namely: task, softirq, hardirq, nmi. As there
  * are at most 4 nesting levels, it can be encoded by a 2-bit number. Now
  * we can encode the tail by combining the 2-bit nesting level with the cpu
- * number. With one byte for the lock value and 3 bytes for the tail, only a
- * 32-bit word is now needed. Even though we only need 1 bit for the lock,
- * we extend it to a full byte to achieve better performance for architectures
- * that support atomic byte write.
+ * number. With one byte क्रम the lock value and 3 bytes क्रम the tail, only a
+ * 32-bit word is now needed. Even though we only need 1 bit क्रम the lock,
+ * we extend it to a full byte to achieve better perक्रमmance क्रम architectures
+ * that support atomic byte ग_लिखो.
  *
  * We also change the first spinner to spin on the lock bit instead of its
- * node; whereby avoiding the need to carry a node from lock to unlock, and
+ * node; whereby aव्योमing the need to carry a node from lock to unlock, and
  * preserving existing lock API. This also makes the unlock code simpler and
  * faster.
  *
@@ -65,107 +66,107 @@
  *
  */
 
-#include "mcs_spinlock.h"
-#define MAX_NODES	4
+#समावेश "mcs_spinlock.h"
+#घोषणा MAX_NODES	4
 
 /*
- * On 64-bit architectures, the mcs_spinlock structure will be 16 bytes in
+ * On 64-bit architectures, the mcs_spinlock काष्ठाure will be 16 bytes in
  * size and four of them will fit nicely in one 64-byte cacheline. For
- * pvqspinlock, however, we need more space for extra data. To accommodate
- * that, we insert two more long words to pad it up to 32 bytes. IOW, only
- * two of them can fit in a cacheline in this case. That is OK as it is rare
- * to have more than 2 levels of slowpath nesting in actual use. We don't
- * want to penalize pvqspinlocks to optimize for a rare case in native
+ * pvqspinlock, however, we need more space क्रम extra data. To accommodate
+ * that, we insert two more दीर्घ words to pad it up to 32 bytes. IOW, only
+ * two of them can fit in a cacheline in this हाल. That is OK as it is rare
+ * to have more than 2 levels of slowpath nesting in actual use. We करोn't
+ * want to penalize pvqspinlocks to optimize क्रम a rare हाल in native
  * qspinlocks.
  */
-struct qnode {
-	struct mcs_spinlock mcs;
-#ifdef CONFIG_PARAVIRT_SPINLOCKS
-	long reserved[2];
-#endif
-};
+काष्ठा qnode अणु
+	काष्ठा mcs_spinlock mcs;
+#अगर_घोषित CONFIG_PARAVIRT_SPINLOCKS
+	दीर्घ reserved[2];
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * The pending bit spinning loop count.
  * This heuristic is used to limit the number of lockword accesses
- * made by atomic_cond_read_relaxed when waiting for the lock to
- * transition out of the "== _Q_PENDING_VAL" state. We don't spin
- * indefinitely because there's no guarantee that we'll make forward
+ * made by atomic_cond_पढ़ो_relaxed when रुकोing क्रम the lock to
+ * transition out of the "== _Q_PENDING_VAL" state. We करोn't spin
+ * indefinitely because there's no guarantee that we'll make क्रमward
  * progress.
  */
-#ifndef _Q_PENDING_LOOPS
-#define _Q_PENDING_LOOPS	1
-#endif
+#अगर_अघोषित _Q_PENDING_LOOPS
+#घोषणा _Q_PENDING_LOOPS	1
+#पूर्ण_अगर
 
 /*
- * Per-CPU queue node structures; we can never have more than 4 nested
+ * Per-CPU queue node काष्ठाures; we can never have more than 4 nested
  * contexts: task, softirq, hardirq, nmi.
  *
  * Exactly fits one 64-byte cacheline on a 64-bit architecture.
  *
- * PV doubles the storage and uses the second cacheline for PV state.
+ * PV द्विगुनs the storage and uses the second cacheline क्रम PV state.
  */
-static DEFINE_PER_CPU_ALIGNED(struct qnode, qnodes[MAX_NODES]);
+अटल DEFINE_PER_CPU_ALIGNED(काष्ठा qnode, qnodes[MAX_NODES]);
 
 /*
  * We must be able to distinguish between no-tail and the tail at 0:0,
- * therefore increment the cpu number by one.
+ * thereक्रमe increment the cpu number by one.
  */
 
-static inline __pure u32 encode_tail(int cpu, int idx)
-{
+अटल अंतरभूत __pure u32 encode_tail(पूर्णांक cpu, पूर्णांक idx)
+अणु
 	u32 tail;
 
 	tail  = (cpu + 1) << _Q_TAIL_CPU_OFFSET;
 	tail |= idx << _Q_TAIL_IDX_OFFSET; /* assume < 4 */
 
-	return tail;
-}
+	वापस tail;
+पूर्ण
 
-static inline __pure struct mcs_spinlock *decode_tail(u32 tail)
-{
-	int cpu = (tail >> _Q_TAIL_CPU_OFFSET) - 1;
-	int idx = (tail &  _Q_TAIL_IDX_MASK) >> _Q_TAIL_IDX_OFFSET;
+अटल अंतरभूत __pure काष्ठा mcs_spinlock *decode_tail(u32 tail)
+अणु
+	पूर्णांक cpu = (tail >> _Q_TAIL_CPU_OFFSET) - 1;
+	पूर्णांक idx = (tail &  _Q_TAIL_IDX_MASK) >> _Q_TAIL_IDX_OFFSET;
 
-	return per_cpu_ptr(&qnodes[idx].mcs, cpu);
-}
+	वापस per_cpu_ptr(&qnodes[idx].mcs, cpu);
+पूर्ण
 
-static inline __pure
-struct mcs_spinlock *grab_mcs_node(struct mcs_spinlock *base, int idx)
-{
-	return &((struct qnode *)base + idx)->mcs;
-}
+अटल अंतरभूत __pure
+काष्ठा mcs_spinlock *grab_mcs_node(काष्ठा mcs_spinlock *base, पूर्णांक idx)
+अणु
+	वापस &((काष्ठा qnode *)base + idx)->mcs;
+पूर्ण
 
-#define _Q_LOCKED_PENDING_MASK (_Q_LOCKED_MASK | _Q_PENDING_MASK)
+#घोषणा _Q_LOCKED_PENDING_MASK (_Q_LOCKED_MASK | _Q_PENDING_MASK)
 
-#if _Q_PENDING_BITS == 8
+#अगर _Q_PENDING_BITS == 8
 /**
  * clear_pending - clear the pending bit.
- * @lock: Pointer to queued spinlock structure
+ * @lock: Poपूर्णांकer to queued spinlock काष्ठाure
  *
  * *,1,* -> *,0,*
  */
-static __always_inline void clear_pending(struct qspinlock *lock)
-{
+अटल __always_अंतरभूत व्योम clear_pending(काष्ठा qspinlock *lock)
+अणु
 	WRITE_ONCE(lock->pending, 0);
-}
+पूर्ण
 
 /**
  * clear_pending_set_locked - take ownership and clear the pending bit.
- * @lock: Pointer to queued spinlock structure
+ * @lock: Poपूर्णांकer to queued spinlock काष्ठाure
  *
  * *,1,0 -> *,0,1
  *
- * Lock stealing is not allowed if this function is used.
+ * Lock stealing is not allowed अगर this function is used.
  */
-static __always_inline void clear_pending_set_locked(struct qspinlock *lock)
-{
+अटल __always_अंतरभूत व्योम clear_pending_set_locked(काष्ठा qspinlock *lock)
+अणु
 	WRITE_ONCE(lock->locked_pending, _Q_LOCKED_VAL);
-}
+पूर्ण
 
 /*
  * xchg_tail - Put in the new queue tail code word & retrieve previous one
- * @lock : Pointer to queued spinlock structure
+ * @lock : Poपूर्णांकer to queued spinlock काष्ठाure
  * @tail : The new queue tail code word
  * Return: The previous queue tail code word
  *
@@ -173,43 +174,43 @@ static __always_inline void clear_pending_set_locked(struct qspinlock *lock)
  *
  * p,*,* -> n,*,* ; prev = xchg(lock, node)
  */
-static __always_inline u32 xchg_tail(struct qspinlock *lock, u32 tail)
-{
+अटल __always_अंतरभूत u32 xchg_tail(काष्ठा qspinlock *lock, u32 tail)
+अणु
 	/*
 	 * We can use relaxed semantics since the caller ensures that the
-	 * MCS node is properly initialized before updating the tail.
+	 * MCS node is properly initialized beक्रमe updating the tail.
 	 */
-	return (u32)xchg_relaxed(&lock->tail,
+	वापस (u32)xchg_relaxed(&lock->tail,
 				 tail >> _Q_TAIL_OFFSET) << _Q_TAIL_OFFSET;
-}
+पूर्ण
 
-#else /* _Q_PENDING_BITS == 8 */
+#अन्यथा /* _Q_PENDING_BITS == 8 */
 
 /**
  * clear_pending - clear the pending bit.
- * @lock: Pointer to queued spinlock structure
+ * @lock: Poपूर्णांकer to queued spinlock काष्ठाure
  *
  * *,1,* -> *,0,*
  */
-static __always_inline void clear_pending(struct qspinlock *lock)
-{
+अटल __always_अंतरभूत व्योम clear_pending(काष्ठा qspinlock *lock)
+अणु
 	atomic_andnot(_Q_PENDING_VAL, &lock->val);
-}
+पूर्ण
 
 /**
  * clear_pending_set_locked - take ownership and clear the pending bit.
- * @lock: Pointer to queued spinlock structure
+ * @lock: Poपूर्णांकer to queued spinlock काष्ठाure
  *
  * *,1,0 -> *,0,1
  */
-static __always_inline void clear_pending_set_locked(struct qspinlock *lock)
-{
+अटल __always_अंतरभूत व्योम clear_pending_set_locked(काष्ठा qspinlock *lock)
+अणु
 	atomic_add(-_Q_PENDING_VAL + _Q_LOCKED_VAL, &lock->val);
-}
+पूर्ण
 
 /**
  * xchg_tail - Put in the new queue tail code word & retrieve previous one
- * @lock : Pointer to queued spinlock structure
+ * @lock : Poपूर्णांकer to queued spinlock काष्ठाure
  * @tail : The new queue tail code word
  * Return: The previous queue tail code word
  *
@@ -217,83 +218,83 @@ static __always_inline void clear_pending_set_locked(struct qspinlock *lock)
  *
  * p,*,* -> n,*,* ; prev = xchg(lock, node)
  */
-static __always_inline u32 xchg_tail(struct qspinlock *lock, u32 tail)
-{
-	u32 old, new, val = atomic_read(&lock->val);
+अटल __always_अंतरभूत u32 xchg_tail(काष्ठा qspinlock *lock, u32 tail)
+अणु
+	u32 old, new, val = atomic_पढ़ो(&lock->val);
 
-	for (;;) {
+	क्रम (;;) अणु
 		new = (val & _Q_LOCKED_PENDING_MASK) | tail;
 		/*
 		 * We can use relaxed semantics since the caller ensures that
-		 * the MCS node is properly initialized before updating the
+		 * the MCS node is properly initialized beक्रमe updating the
 		 * tail.
 		 */
 		old = atomic_cmpxchg_relaxed(&lock->val, val, new);
-		if (old == val)
-			break;
+		अगर (old == val)
+			अवरोध;
 
 		val = old;
-	}
-	return old;
-}
-#endif /* _Q_PENDING_BITS == 8 */
+	पूर्ण
+	वापस old;
+पूर्ण
+#पूर्ण_अगर /* _Q_PENDING_BITS == 8 */
 
 /**
  * queued_fetch_set_pending_acquire - fetch the whole lock value and set pending
- * @lock : Pointer to queued spinlock structure
+ * @lock : Poपूर्णांकer to queued spinlock काष्ठाure
  * Return: The previous lock value
  *
  * *,*,* -> *,1,*
  */
-#ifndef queued_fetch_set_pending_acquire
-static __always_inline u32 queued_fetch_set_pending_acquire(struct qspinlock *lock)
-{
-	return atomic_fetch_or_acquire(_Q_PENDING_VAL, &lock->val);
-}
-#endif
+#अगर_अघोषित queued_fetch_set_pending_acquire
+अटल __always_अंतरभूत u32 queued_fetch_set_pending_acquire(काष्ठा qspinlock *lock)
+अणु
+	वापस atomic_fetch_or_acquire(_Q_PENDING_VAL, &lock->val);
+पूर्ण
+#पूर्ण_अगर
 
 /**
  * set_locked - Set the lock bit and own the lock
- * @lock: Pointer to queued spinlock structure
+ * @lock: Poपूर्णांकer to queued spinlock काष्ठाure
  *
  * *,*,0 -> *,0,1
  */
-static __always_inline void set_locked(struct qspinlock *lock)
-{
+अटल __always_अंतरभूत व्योम set_locked(काष्ठा qspinlock *lock)
+अणु
 	WRITE_ONCE(lock->locked, _Q_LOCKED_VAL);
-}
+पूर्ण
 
 
 /*
- * Generate the native code for queued_spin_unlock_slowpath(); provide NOPs for
+ * Generate the native code क्रम queued_spin_unlock_slowpath(); provide NOPs क्रम
  * all the PV callbacks.
  */
 
-static __always_inline void __pv_init_node(struct mcs_spinlock *node) { }
-static __always_inline void __pv_wait_node(struct mcs_spinlock *node,
-					   struct mcs_spinlock *prev) { }
-static __always_inline void __pv_kick_node(struct qspinlock *lock,
-					   struct mcs_spinlock *node) { }
-static __always_inline u32  __pv_wait_head_or_lock(struct qspinlock *lock,
-						   struct mcs_spinlock *node)
-						   { return 0; }
+अटल __always_अंतरभूत व्योम __pv_init_node(काष्ठा mcs_spinlock *node) अणु पूर्ण
+अटल __always_अंतरभूत व्योम __pv_रुको_node(काष्ठा mcs_spinlock *node,
+					   काष्ठा mcs_spinlock *prev) अणु पूर्ण
+अटल __always_अंतरभूत व्योम __pv_kick_node(काष्ठा qspinlock *lock,
+					   काष्ठा mcs_spinlock *node) अणु पूर्ण
+अटल __always_अंतरभूत u32  __pv_रुको_head_or_lock(काष्ठा qspinlock *lock,
+						   काष्ठा mcs_spinlock *node)
+						   अणु वापस 0; पूर्ण
 
-#define pv_enabled()		false
+#घोषणा pv_enabled()		false
 
-#define pv_init_node		__pv_init_node
-#define pv_wait_node		__pv_wait_node
-#define pv_kick_node		__pv_kick_node
-#define pv_wait_head_or_lock	__pv_wait_head_or_lock
+#घोषणा pv_init_node		__pv_init_node
+#घोषणा pv_रुको_node		__pv_रुको_node
+#घोषणा pv_kick_node		__pv_kick_node
+#घोषणा pv_रुको_head_or_lock	__pv_रुको_head_or_lock
 
-#ifdef CONFIG_PARAVIRT_SPINLOCKS
-#define queued_spin_lock_slowpath	native_queued_spin_lock_slowpath
-#endif
+#अगर_घोषित CONFIG_PARAVIRT_SPINLOCKS
+#घोषणा queued_spin_lock_slowpath	native_queued_spin_lock_slowpath
+#पूर्ण_अगर
 
-#endif /* _GEN_PV_LOCK_SLOWPATH */
+#पूर्ण_अगर /* _GEN_PV_LOCK_SLOWPATH */
 
 /**
  * queued_spin_lock_slowpath - acquire the queued spinlock
- * @lock: Pointer to queued spinlock structure
+ * @lock: Poपूर्णांकer to queued spinlock काष्ठाure
  * @val: Current value of the queued spinlock 32-bit word
  *
  * (queue tail, pending bit, lock value)
@@ -312,37 +313,37 @@ static __always_inline u32  __pv_wait_head_or_lock(struct qspinlock *lock,
  * contended             :    (*,x,y) +--> (*,0,0) ---> (*,0,1) -'  :
  *   queue               :         ^--'                             :
  */
-void queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
-{
-	struct mcs_spinlock *prev, *next, *node;
+व्योम queued_spin_lock_slowpath(काष्ठा qspinlock *lock, u32 val)
+अणु
+	काष्ठा mcs_spinlock *prev, *next, *node;
 	u32 old, tail;
-	int idx;
+	पूर्णांक idx;
 
 	BUILD_BUG_ON(CONFIG_NR_CPUS >= (1U << _Q_TAIL_CPU_BITS));
 
-	if (pv_enabled())
-		goto pv_queue;
+	अगर (pv_enabled())
+		जाओ pv_queue;
 
-	if (virt_spin_lock(lock))
-		return;
+	अगर (virt_spin_lock(lock))
+		वापस;
 
 	/*
-	 * Wait for in-progress pending->locked hand-overs with a bounded
-	 * number of spins so that we guarantee forward progress.
+	 * Wait क्रम in-progress pending->locked hand-overs with a bounded
+	 * number of spins so that we guarantee क्रमward progress.
 	 *
 	 * 0,1,0 -> 0,0,1
 	 */
-	if (val == _Q_PENDING_VAL) {
-		int cnt = _Q_PENDING_LOOPS;
-		val = atomic_cond_read_relaxed(&lock->val,
+	अगर (val == _Q_PENDING_VAL) अणु
+		पूर्णांक cnt = _Q_PENDING_LOOPS;
+		val = atomic_cond_पढ़ो_relaxed(&lock->val,
 					       (VAL != _Q_PENDING_VAL) || !cnt--);
-	}
+	पूर्ण
 
 	/*
 	 * If we observe any contention; queue.
 	 */
-	if (val & ~_Q_LOCKED_MASK)
-		goto queue;
+	अगर (val & ~_Q_LOCKED_MASK)
+		जाओ queue;
 
 	/*
 	 * trylock || pending
@@ -354,32 +355,32 @@ void queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 	/*
 	 * If we observe contention, there is a concurrent locker.
 	 *
-	 * Undo and queue; our setting of PENDING might have made the
-	 * n,0,0 -> 0,0,0 transition fail and it will now be waiting
-	 * on @next to become !NULL.
+	 * Unकरो and queue; our setting of PENDING might have made the
+	 * n,0,0 -> 0,0,0 transition fail and it will now be रुकोing
+	 * on @next to become !शून्य.
 	 */
-	if (unlikely(val & ~_Q_LOCKED_MASK)) {
+	अगर (unlikely(val & ~_Q_LOCKED_MASK)) अणु
 
-		/* Undo PENDING if we set it. */
-		if (!(val & _Q_PENDING_MASK))
+		/* Unकरो PENDING अगर we set it. */
+		अगर (!(val & _Q_PENDING_MASK))
 			clear_pending(lock);
 
-		goto queue;
-	}
+		जाओ queue;
+	पूर्ण
 
 	/*
-	 * We're pending, wait for the owner to go away.
+	 * We're pending, रुको क्रम the owner to go away.
 	 *
 	 * 0,1,1 -> 0,1,0
 	 *
-	 * this wait loop must be a load-acquire such that we match the
+	 * this रुको loop must be a load-acquire such that we match the
 	 * store-release that clears the locked bit and create lock
 	 * sequentiality; this is because not all
 	 * clear_pending_set_locked() implementations imply full
 	 * barriers.
 	 */
-	if (val & _Q_LOCKED_MASK)
-		atomic_cond_read_acquire(&lock->val, !(VAL & _Q_LOCKED_MASK));
+	अगर (val & _Q_LOCKED_MASK)
+		atomic_cond_पढ़ो_acquire(&lock->val, !(VAL & _Q_LOCKED_MASK));
 
 	/*
 	 * take ownership and clear the pending bit.
@@ -388,7 +389,7 @@ void queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 	 */
 	clear_pending_set_locked(lock);
 	lockevent_inc(lock_pending);
-	return;
+	वापस;
 
 	/*
 	 * End of pending bit optimistic spinning and beginning of MCS
@@ -410,12 +411,12 @@ pv_queue:
 	 * any MCS node. This is not the most elegant solution, but is
 	 * simple enough.
 	 */
-	if (unlikely(idx >= MAX_NODES)) {
+	अगर (unlikely(idx >= MAX_NODES)) अणु
 		lockevent_inc(lock_no_node);
-		while (!queued_spin_trylock(lock))
+		जबतक (!queued_spin_trylock(lock))
 			cpu_relax();
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 
 	node = grab_mcs_node(node, idx);
 
@@ -425,90 +426,90 @@ pv_queue:
 	lockevent_cond_inc(lock_use_node2 + idx - 1, idx);
 
 	/*
-	 * Ensure that we increment the head node->count before initialising
+	 * Ensure that we increment the head node->count beक्रमe initialising
 	 * the actual node. If the compiler is kind enough to reorder these
-	 * stores, then an IRQ could overwrite our assignments.
+	 * stores, then an IRQ could overग_लिखो our assignments.
 	 */
 	barrier();
 
 	node->locked = 0;
-	node->next = NULL;
+	node->next = शून्य;
 	pv_init_node(node);
 
 	/*
 	 * We touched a (possibly) cold cacheline in the per-cpu queue node;
-	 * attempt the trylock once more in the hope someone let go while we
+	 * attempt the trylock once more in the hope someone let go जबतक we
 	 * weren't watching.
 	 */
-	if (queued_spin_trylock(lock))
-		goto release;
+	अगर (queued_spin_trylock(lock))
+		जाओ release;
 
 	/*
-	 * Ensure that the initialisation of @node is complete before we
+	 * Ensure that the initialisation of @node is complete beक्रमe we
 	 * publish the updated tail via xchg_tail() and potentially link
-	 * @node into the waitqueue via WRITE_ONCE(prev->next, node) below.
+	 * @node पूर्णांकo the रुकोqueue via WRITE_ONCE(prev->next, node) below.
 	 */
 	smp_wmb();
 
 	/*
 	 * Publish the updated tail.
-	 * We have already touched the queueing cacheline; don't bother with
+	 * We have alपढ़ोy touched the queueing cacheline; करोn't bother with
 	 * pending stuff.
 	 *
 	 * p,*,* -> n,*,*
 	 */
 	old = xchg_tail(lock, tail);
-	next = NULL;
+	next = शून्य;
 
 	/*
-	 * if there was a previous node; link it and wait until reaching the
-	 * head of the waitqueue.
+	 * अगर there was a previous node; link it and रुको until reaching the
+	 * head of the रुकोqueue.
 	 */
-	if (old & _Q_TAIL_MASK) {
+	अगर (old & _Q_TAIL_MASK) अणु
 		prev = decode_tail(old);
 
-		/* Link @node into the waitqueue. */
+		/* Link @node पूर्णांकo the रुकोqueue. */
 		WRITE_ONCE(prev->next, node);
 
-		pv_wait_node(node, prev);
+		pv_रुको_node(node, prev);
 		arch_mcs_spin_lock_contended(&node->locked);
 
 		/*
-		 * While waiting for the MCS lock, the next pointer may have
-		 * been set by another lock waiter. We optimistically load
-		 * the next pointer & prefetch the cacheline for writing
+		 * While रुकोing क्रम the MCS lock, the next poपूर्णांकer may have
+		 * been set by another lock रुकोer. We optimistically load
+		 * the next poपूर्णांकer & prefetch the cacheline क्रम writing
 		 * to reduce latency in the upcoming MCS unlock operation.
 		 */
 		next = READ_ONCE(node->next);
-		if (next)
+		अगर (next)
 			prefetchw(next);
-	}
+	पूर्ण
 
 	/*
-	 * we're at the head of the waitqueue, wait for the owner & pending to
+	 * we're at the head of the रुकोqueue, रुको क्रम the owner & pending to
 	 * go away.
 	 *
 	 * *,x,y -> *,0,0
 	 *
-	 * this wait loop must use a load-acquire such that we match the
+	 * this रुको loop must use a load-acquire such that we match the
 	 * store-release that clears the locked bit and create lock
 	 * sequentiality; this is because the set_locked() function below
-	 * does not imply a full barrier.
+	 * करोes not imply a full barrier.
 	 *
-	 * The PV pv_wait_head_or_lock function, if active, will acquire
-	 * the lock and return a non-zero value. So we have to skip the
-	 * atomic_cond_read_acquire() call. As the next PV queue head hasn't
-	 * been designated yet, there is no way for the locked value to become
+	 * The PV pv_रुको_head_or_lock function, अगर active, will acquire
+	 * the lock and वापस a non-zero value. So we have to skip the
+	 * atomic_cond_पढ़ो_acquire() call. As the next PV queue head hasn't
+	 * been designated yet, there is no way क्रम the locked value to become
 	 * _Q_SLOW_VAL. So both the set_locked() and the
 	 * atomic_cmpxchg_relaxed() calls will be safe.
 	 *
-	 * If PV isn't active, 0 will be returned instead.
+	 * If PV isn't active, 0 will be वापसed instead.
 	 *
 	 */
-	if ((val = pv_wait_head_or_lock(lock, node)))
-		goto locked;
+	अगर ((val = pv_रुको_head_or_lock(lock, node)))
+		जाओ locked;
 
-	val = atomic_cond_read_acquire(&lock->val, !(VAL & _Q_LOCKED_PENDING_MASK));
+	val = atomic_cond_पढ़ो_acquire(&lock->val, !(VAL & _Q_LOCKED_PENDING_MASK));
 
 locked:
 	/*
@@ -523,31 +524,31 @@ locked:
 	 */
 
 	/*
-	 * In the PV case we might already have _Q_LOCKED_VAL set, because
-	 * of lock stealing; therefore we must also allow:
+	 * In the PV हाल we might alपढ़ोy have _Q_LOCKED_VAL set, because
+	 * of lock stealing; thereक्रमe we must also allow:
 	 *
 	 * n,0,1 -> 0,0,1
 	 *
-	 * Note: at this point: (val & _Q_PENDING_MASK) == 0, because of the
-	 *       above wait condition, therefore any concurrent setting of
+	 * Note: at this poपूर्णांक: (val & _Q_PENDING_MASK) == 0, because of the
+	 *       above रुको condition, thereक्रमe any concurrent setting of
 	 *       PENDING will make the uncontended transition fail.
 	 */
-	if ((val & _Q_TAIL_MASK) == tail) {
-		if (atomic_try_cmpxchg_relaxed(&lock->val, &val, _Q_LOCKED_VAL))
-			goto release; /* No contention */
-	}
+	अगर ((val & _Q_TAIL_MASK) == tail) अणु
+		अगर (atomic_try_cmpxchg_relaxed(&lock->val, &val, _Q_LOCKED_VAL))
+			जाओ release; /* No contention */
+	पूर्ण
 
 	/*
 	 * Either somebody is queued behind us or _Q_PENDING_VAL got set
-	 * which will then detect the remaining tail and queue behind us
+	 * which will then detect the reमुख्यing tail and queue behind us
 	 * ensuring we'll see a @next.
 	 */
 	set_locked(lock);
 
 	/*
-	 * contended path; wait for next if not observed yet, release.
+	 * contended path; रुको क्रम next अगर not observed yet, release.
 	 */
-	if (!next)
+	अगर (!next)
 		next = smp_cond_load_relaxed(&node->next, (VAL));
 
 	arch_mcs_spin_unlock_contended(&next->locked);
@@ -558,34 +559,34 @@ release:
 	 * release the node
 	 */
 	__this_cpu_dec(qnodes[0].mcs.count);
-}
+पूर्ण
 EXPORT_SYMBOL(queued_spin_lock_slowpath);
 
 /*
- * Generate the paravirt code for queued_spin_unlock_slowpath().
+ * Generate the paravirt code क्रम queued_spin_unlock_slowpath().
  */
-#if !defined(_GEN_PV_LOCK_SLOWPATH) && defined(CONFIG_PARAVIRT_SPINLOCKS)
-#define _GEN_PV_LOCK_SLOWPATH
+#अगर !defined(_GEN_PV_LOCK_SLOWPATH) && defined(CONFIG_PARAVIRT_SPINLOCKS)
+#घोषणा _GEN_PV_LOCK_SLOWPATH
 
-#undef  pv_enabled
-#define pv_enabled()	true
+#अघोषित  pv_enabled
+#घोषणा pv_enabled()	true
 
-#undef pv_init_node
-#undef pv_wait_node
-#undef pv_kick_node
-#undef pv_wait_head_or_lock
+#अघोषित pv_init_node
+#अघोषित pv_रुको_node
+#अघोषित pv_kick_node
+#अघोषित pv_रुको_head_or_lock
 
-#undef  queued_spin_lock_slowpath
-#define queued_spin_lock_slowpath	__pv_queued_spin_lock_slowpath
+#अघोषित  queued_spin_lock_slowpath
+#घोषणा queued_spin_lock_slowpath	__pv_queued_spin_lock_slowpath
 
-#include "qspinlock_paravirt.h"
-#include "qspinlock.c"
+#समावेश "qspinlock_paravirt.h"
+#समावेश "qspinlock.c"
 
 bool nopvspin __initdata;
-static __init int parse_nopvspin(char *arg)
-{
+अटल __init पूर्णांक parse_nopvspin(अक्षर *arg)
+अणु
 	nopvspin = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("nopvspin", parse_nopvspin);
-#endif
+#पूर्ण_अगर

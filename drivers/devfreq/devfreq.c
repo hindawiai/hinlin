@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * devfreq: Generic Dynamic Voltage and Frequency Scaling (DVFS) Framework
- *	    for Non-CPU Devices.
+ *	    क्रम Non-CPU Devices.
  *
  * Copyright (C) 2011 Samsung Electronics
  *	MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/kmod.h>
-#include <linux/sched.h>
-#include <linux/debugfs.h>
-#include <linux/devfreq_cooling.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/stat.h>
-#include <linux/pm_opp.h>
-#include <linux/devfreq.h>
-#include <linux/workqueue.h>
-#include <linux/platform_device.h>
-#include <linux/list.h>
-#include <linux/printk.h>
-#include <linux/hrtimer.h>
-#include <linux/of.h>
-#include <linux/pm_qos.h>
-#include "governor.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/devfreq_cooling.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/pm_opp.h>
+#समावेश <linux/devfreq.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/list.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pm_qos.h>
+#समावेश "governor.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/devfreq.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/devfreq.h>
 
-#define IS_SUPPORTED_FLAG(f, name) ((f & DEVFREQ_GOV_FLAG_##name) ? true : false)
-#define IS_SUPPORTED_ATTR(f, name) ((f & DEVFREQ_GOV_ATTR_##name) ? true : false)
-#define HZ_PER_KHZ	1000
+#घोषणा IS_SUPPORTED_FLAG(f, name) ((f & DEVFREQ_GOV_FLAG_##name) ? true : false)
+#घोषणा IS_SUPPORTED_ATTR(f, name) ((f & DEVFREQ_GOV_ATTR_##name) ? true : false)
+#घोषणा HZ_PER_KHZ	1000
 
-static struct class *devfreq_class;
-static struct dentry *devfreq_debugfs;
+अटल काष्ठा class *devfreq_class;
+अटल काष्ठा dentry *devfreq_debugfs;
 
 /*
  * devfreq core provides delayed work based load monitoring helper
  * functions. Governors can use these or can implement their own
  * monitoring mechanism.
  */
-static struct workqueue_struct *devfreq_wq;
+अटल काष्ठा workqueue_काष्ठा *devfreq_wq;
 
 /* The list of all device-devfreq governors */
-static LIST_HEAD(devfreq_governor_list);
+अटल LIST_HEAD(devfreq_governor_list);
 /* The list of all device-devfreq */
-static LIST_HEAD(devfreq_list);
-static DEFINE_MUTEX(devfreq_list_lock);
+अटल LIST_HEAD(devfreq_list);
+अटल DEFINE_MUTEX(devfreq_list_lock);
 
-static const char timer_name[][DEVFREQ_NAME_LEN] = {
-	[DEVFREQ_TIMER_DEFERRABLE] = { "deferrable" },
-	[DEVFREQ_TIMER_DELAYED] = { "delayed" },
-};
+अटल स्थिर अक्षर समयr_name[][DEVFREQ_NAME_LEN] = अणु
+	[DEVFREQ_TIMER_DEFERRABLE] = अणु "deferrable" पूर्ण,
+	[DEVFREQ_TIMER_DELAYED] = अणु "delayed" पूर्ण,
+पूर्ण;
 
 /**
- * find_device_devfreq() - find devfreq struct using device pointer
- * @dev:	device pointer used to lookup device devfreq.
+ * find_device_devfreq() - find devfreq काष्ठा using device poपूर्णांकer
+ * @dev:	device poपूर्णांकer used to lookup device devfreq.
  *
- * Search the list of device devfreqs and return the matched device's
+ * Search the list of device devfreqs and वापस the matched device's
  * devfreq info. devfreq_list_lock should be held by the caller.
  */
-static struct devfreq *find_device_devfreq(struct device *dev)
-{
-	struct devfreq *tmp_devfreq;
+अटल काष्ठा devfreq *find_device_devfreq(काष्ठा device *dev)
+अणु
+	काष्ठा devfreq *पंचांगp_devfreq;
 
-	lockdep_assert_held(&devfreq_list_lock);
+	lockdep_निश्चित_held(&devfreq_list_lock);
 
-	if (IS_ERR_OR_NULL(dev)) {
+	अगर (IS_ERR_OR_शून्य(dev)) अणु
 		pr_err("DEVFREQ: %s: Invalid parameters\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	list_for_each_entry(tmp_devfreq, &devfreq_list, node) {
-		if (tmp_devfreq->dev.parent == dev)
-			return tmp_devfreq;
-	}
+	list_क्रम_each_entry(पंचांगp_devfreq, &devfreq_list, node) अणु
+		अगर (पंचांगp_devfreq->dev.parent == dev)
+			वापस पंचांगp_devfreq;
+	पूर्ण
 
-	return ERR_PTR(-ENODEV);
-}
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static unsigned long find_available_min_freq(struct devfreq *devfreq)
-{
-	struct dev_pm_opp *opp;
-	unsigned long min_freq = 0;
+अटल अचिन्हित दीर्घ find_available_min_freq(काष्ठा devfreq *devfreq)
+अणु
+	काष्ठा dev_pm_opp *opp;
+	अचिन्हित दीर्घ min_freq = 0;
 
-	opp = dev_pm_opp_find_freq_ceil(devfreq->dev.parent, &min_freq);
-	if (IS_ERR(opp))
+	opp = dev_pm_opp_find_freq_उच्चमान(devfreq->dev.parent, &min_freq);
+	अगर (IS_ERR(opp))
 		min_freq = 0;
-	else
+	अन्यथा
 		dev_pm_opp_put(opp);
 
-	return min_freq;
-}
+	वापस min_freq;
+पूर्ण
 
-static unsigned long find_available_max_freq(struct devfreq *devfreq)
-{
-	struct dev_pm_opp *opp;
-	unsigned long max_freq = ULONG_MAX;
+अटल अचिन्हित दीर्घ find_available_max_freq(काष्ठा devfreq *devfreq)
+अणु
+	काष्ठा dev_pm_opp *opp;
+	अचिन्हित दीर्घ max_freq = अच_दीर्घ_उच्च;
 
-	opp = dev_pm_opp_find_freq_floor(devfreq->dev.parent, &max_freq);
-	if (IS_ERR(opp))
+	opp = dev_pm_opp_find_freq_न्यूनमान(devfreq->dev.parent, &max_freq);
+	अगर (IS_ERR(opp))
 		max_freq = 0;
-	else
+	अन्यथा
 		dev_pm_opp_put(opp);
 
-	return max_freq;
-}
+	वापस max_freq;
+पूर्ण
 
 /**
  * get_freq_range() - Get the current freq range
@@ -117,389 +118,389 @@ static unsigned long find_available_max_freq(struct devfreq *devfreq)
  * @min_freq:	the min frequency
  * @max_freq:	the max frequency
  *
- * This takes into consideration all constraints.
+ * This takes पूर्णांकo consideration all स्थिरraपूर्णांकs.
  */
-static void get_freq_range(struct devfreq *devfreq,
-			   unsigned long *min_freq,
-			   unsigned long *max_freq)
-{
-	unsigned long *freq_table = devfreq->profile->freq_table;
+अटल व्योम get_freq_range(काष्ठा devfreq *devfreq,
+			   अचिन्हित दीर्घ *min_freq,
+			   अचिन्हित दीर्घ *max_freq)
+अणु
+	अचिन्हित दीर्घ *freq_table = devfreq->profile->freq_table;
 	s32 qos_min_freq, qos_max_freq;
 
-	lockdep_assert_held(&devfreq->lock);
+	lockdep_निश्चित_held(&devfreq->lock);
 
 	/*
 	 * Initialize minimum/maximum frequency from freq table.
 	 * The devfreq drivers can initialize this in either ascending or
 	 * descending order and devfreq core supports both.
 	 */
-	if (freq_table[0] < freq_table[devfreq->profile->max_state - 1]) {
+	अगर (freq_table[0] < freq_table[devfreq->profile->max_state - 1]) अणु
 		*min_freq = freq_table[0];
 		*max_freq = freq_table[devfreq->profile->max_state - 1];
-	} else {
+	पूर्ण अन्यथा अणु
 		*min_freq = freq_table[devfreq->profile->max_state - 1];
 		*max_freq = freq_table[0];
-	}
+	पूर्ण
 
-	/* Apply constraints from PM QoS */
-	qos_min_freq = dev_pm_qos_read_value(devfreq->dev.parent,
+	/* Apply स्थिरraपूर्णांकs from PM QoS */
+	qos_min_freq = dev_pm_qos_पढ़ो_value(devfreq->dev.parent,
 					     DEV_PM_QOS_MIN_FREQUENCY);
-	qos_max_freq = dev_pm_qos_read_value(devfreq->dev.parent,
+	qos_max_freq = dev_pm_qos_पढ़ो_value(devfreq->dev.parent,
 					     DEV_PM_QOS_MAX_FREQUENCY);
-	*min_freq = max(*min_freq, (unsigned long)HZ_PER_KHZ * qos_min_freq);
-	if (qos_max_freq != PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE)
+	*min_freq = max(*min_freq, (अचिन्हित दीर्घ)HZ_PER_KHZ * qos_min_freq);
+	अगर (qos_max_freq != PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE)
 		*max_freq = min(*max_freq,
-				(unsigned long)HZ_PER_KHZ * qos_max_freq);
+				(अचिन्हित दीर्घ)HZ_PER_KHZ * qos_max_freq);
 
-	/* Apply constraints from OPP interface */
+	/* Apply स्थिरraपूर्णांकs from OPP पूर्णांकerface */
 	*min_freq = max(*min_freq, devfreq->scaling_min_freq);
 	*max_freq = min(*max_freq, devfreq->scaling_max_freq);
 
-	if (*min_freq > *max_freq)
+	अगर (*min_freq > *max_freq)
 		*min_freq = *max_freq;
-}
+पूर्ण
 
 /**
- * devfreq_get_freq_level() - Lookup freq_table for the frequency
+ * devfreq_get_freq_level() - Lookup freq_table क्रम the frequency
  * @devfreq:	the devfreq instance
  * @freq:	the target frequency
  */
-static int devfreq_get_freq_level(struct devfreq *devfreq, unsigned long freq)
-{
-	int lev;
+अटल पूर्णांक devfreq_get_freq_level(काष्ठा devfreq *devfreq, अचिन्हित दीर्घ freq)
+अणु
+	पूर्णांक lev;
 
-	for (lev = 0; lev < devfreq->profile->max_state; lev++)
-		if (freq == devfreq->profile->freq_table[lev])
-			return lev;
+	क्रम (lev = 0; lev < devfreq->profile->max_state; lev++)
+		अगर (freq == devfreq->profile->freq_table[lev])
+			वापस lev;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int set_freq_table(struct devfreq *devfreq)
-{
-	struct devfreq_dev_profile *profile = devfreq->profile;
-	struct dev_pm_opp *opp;
-	unsigned long freq;
-	int i, count;
+अटल पूर्णांक set_freq_table(काष्ठा devfreq *devfreq)
+अणु
+	काष्ठा devfreq_dev_profile *profile = devfreq->profile;
+	काष्ठा dev_pm_opp *opp;
+	अचिन्हित दीर्घ freq;
+	पूर्णांक i, count;
 
 	/* Initialize the freq_table from OPP table */
 	count = dev_pm_opp_get_opp_count(devfreq->dev.parent);
-	if (count <= 0)
-		return -EINVAL;
+	अगर (count <= 0)
+		वापस -EINVAL;
 
 	profile->max_state = count;
-	profile->freq_table = devm_kcalloc(devfreq->dev.parent,
+	profile->freq_table = devm_kसुस्मृति(devfreq->dev.parent,
 					profile->max_state,
-					sizeof(*profile->freq_table),
+					माप(*profile->freq_table),
 					GFP_KERNEL);
-	if (!profile->freq_table) {
+	अगर (!profile->freq_table) अणु
 		profile->max_state = 0;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0, freq = 0; i < profile->max_state; i++, freq++) {
-		opp = dev_pm_opp_find_freq_ceil(devfreq->dev.parent, &freq);
-		if (IS_ERR(opp)) {
-			devm_kfree(devfreq->dev.parent, profile->freq_table);
+	क्रम (i = 0, freq = 0; i < profile->max_state; i++, freq++) अणु
+		opp = dev_pm_opp_find_freq_उच्चमान(devfreq->dev.parent, &freq);
+		अगर (IS_ERR(opp)) अणु
+			devm_kमुक्त(devfreq->dev.parent, profile->freq_table);
 			profile->max_state = 0;
-			return PTR_ERR(opp);
-		}
+			वापस PTR_ERR(opp);
+		पूर्ण
 		dev_pm_opp_put(opp);
 		profile->freq_table[i] = freq;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * devfreq_update_status() - Update statistics of devfreq behavior
  * @devfreq:	the devfreq instance
  * @freq:	the update target frequency
  */
-int devfreq_update_status(struct devfreq *devfreq, unsigned long freq)
-{
-	int lev, prev_lev, ret = 0;
-	u64 cur_time;
+पूर्णांक devfreq_update_status(काष्ठा devfreq *devfreq, अचिन्हित दीर्घ freq)
+अणु
+	पूर्णांक lev, prev_lev, ret = 0;
+	u64 cur_समय;
 
-	lockdep_assert_held(&devfreq->lock);
-	cur_time = get_jiffies_64();
+	lockdep_निश्चित_held(&devfreq->lock);
+	cur_समय = get_jअगरfies_64();
 
-	/* Immediately exit if previous_freq is not initialized yet. */
-	if (!devfreq->previous_freq)
-		goto out;
+	/* Immediately निकास अगर previous_freq is not initialized yet. */
+	अगर (!devfreq->previous_freq)
+		जाओ out;
 
 	prev_lev = devfreq_get_freq_level(devfreq, devfreq->previous_freq);
-	if (prev_lev < 0) {
+	अगर (prev_lev < 0) अणु
 		ret = prev_lev;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	devfreq->stats.time_in_state[prev_lev] +=
-			cur_time - devfreq->stats.last_update;
+	devfreq->stats.समय_in_state[prev_lev] +=
+			cur_समय - devfreq->stats.last_update;
 
 	lev = devfreq_get_freq_level(devfreq, freq);
-	if (lev < 0) {
+	अगर (lev < 0) अणु
 		ret = lev;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (lev != prev_lev) {
+	अगर (lev != prev_lev) अणु
 		devfreq->stats.trans_table[
 			(prev_lev * devfreq->profile->max_state) + lev]++;
 		devfreq->stats.total_trans++;
-	}
+	पूर्ण
 
 out:
-	devfreq->stats.last_update = cur_time;
-	return ret;
-}
+	devfreq->stats.last_update = cur_समय;
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(devfreq_update_status);
 
 /**
  * find_devfreq_governor() - find devfreq governor from name
  * @name:	name of the governor
  *
- * Search the list of devfreq governors and return the matched
- * governor's pointer. devfreq_list_lock should be held by the caller.
+ * Search the list of devfreq governors and वापस the matched
+ * governor's poपूर्णांकer. devfreq_list_lock should be held by the caller.
  */
-static struct devfreq_governor *find_devfreq_governor(const char *name)
-{
-	struct devfreq_governor *tmp_governor;
+अटल काष्ठा devfreq_governor *find_devfreq_governor(स्थिर अक्षर *name)
+अणु
+	काष्ठा devfreq_governor *पंचांगp_governor;
 
-	lockdep_assert_held(&devfreq_list_lock);
+	lockdep_निश्चित_held(&devfreq_list_lock);
 
-	if (IS_ERR_OR_NULL(name)) {
+	अगर (IS_ERR_OR_शून्य(name)) अणु
 		pr_err("DEVFREQ: %s: Invalid parameters\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	list_for_each_entry(tmp_governor, &devfreq_governor_list, node) {
-		if (!strncmp(tmp_governor->name, name, DEVFREQ_NAME_LEN))
-			return tmp_governor;
-	}
+	list_क्रम_each_entry(पंचांगp_governor, &devfreq_governor_list, node) अणु
+		अगर (!म_भेदन(पंचांगp_governor->name, name, DEVFREQ_NAME_LEN))
+			वापस पंचांगp_governor;
+	पूर्ण
 
-	return ERR_PTR(-ENODEV);
-}
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
 /**
  * try_then_request_governor() - Try to find the governor and request the
- *                               module if is not found.
+ *                               module अगर is not found.
  * @name:	name of the governor
  *
  * Search the list of devfreq governors and request the module and try again
- * if is not found. This can happen when both drivers (the governor driver
+ * अगर is not found. This can happen when both drivers (the governor driver
  * and the driver that call devfreq_add_device) are built as modules.
  * devfreq_list_lock should be held by the caller. Returns the matched
- * governor's pointer or an error pointer.
+ * governor's poपूर्णांकer or an error poपूर्णांकer.
  */
-static struct devfreq_governor *try_then_request_governor(const char *name)
-{
-	struct devfreq_governor *governor;
-	int err = 0;
+अटल काष्ठा devfreq_governor *try_then_request_governor(स्थिर अक्षर *name)
+अणु
+	काष्ठा devfreq_governor *governor;
+	पूर्णांक err = 0;
 
-	lockdep_assert_held(&devfreq_list_lock);
+	lockdep_निश्चित_held(&devfreq_list_lock);
 
-	if (IS_ERR_OR_NULL(name)) {
+	अगर (IS_ERR_OR_शून्य(name)) अणु
 		pr_err("DEVFREQ: %s: Invalid parameters\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	governor = find_devfreq_governor(name);
-	if (IS_ERR(governor)) {
+	अगर (IS_ERR(governor)) अणु
 		mutex_unlock(&devfreq_list_lock);
 
-		if (!strncmp(name, DEVFREQ_GOV_SIMPLE_ONDEMAND,
+		अगर (!म_भेदन(name, DEVFREQ_GOV_SIMPLE_ONDEMAND,
 			     DEVFREQ_NAME_LEN))
 			err = request_module("governor_%s", "simpleondemand");
-		else
+		अन्यथा
 			err = request_module("governor_%s", name);
-		/* Restore previous state before return */
+		/* Restore previous state beक्रमe वापस */
 		mutex_lock(&devfreq_list_lock);
-		if (err)
-			return (err < 0) ? ERR_PTR(err) : ERR_PTR(-EINVAL);
+		अगर (err)
+			वापस (err < 0) ? ERR_PTR(err) : ERR_PTR(-EINVAL);
 
 		governor = find_devfreq_governor(name);
-	}
+	पूर्ण
 
-	return governor;
-}
+	वापस governor;
+पूर्ण
 
-static int devfreq_notify_transition(struct devfreq *devfreq,
-		struct devfreq_freqs *freqs, unsigned int state)
-{
-	if (!devfreq)
-		return -EINVAL;
+अटल पूर्णांक devfreq_notअगरy_transition(काष्ठा devfreq *devfreq,
+		काष्ठा devfreq_freqs *freqs, अचिन्हित पूर्णांक state)
+अणु
+	अगर (!devfreq)
+		वापस -EINVAL;
 
-	switch (state) {
-	case DEVFREQ_PRECHANGE:
-		srcu_notifier_call_chain(&devfreq->transition_notifier_list,
+	चयन (state) अणु
+	हाल DEVFREQ_PRECHANGE:
+		srcu_notअगरier_call_chain(&devfreq->transition_notअगरier_list,
 				DEVFREQ_PRECHANGE, freqs);
-		break;
+		अवरोध;
 
-	case DEVFREQ_POSTCHANGE:
-		srcu_notifier_call_chain(&devfreq->transition_notifier_list,
+	हाल DEVFREQ_POSTCHANGE:
+		srcu_notअगरier_call_chain(&devfreq->transition_notअगरier_list,
 				DEVFREQ_POSTCHANGE, freqs);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int devfreq_set_target(struct devfreq *devfreq, unsigned long new_freq,
+अटल पूर्णांक devfreq_set_target(काष्ठा devfreq *devfreq, अचिन्हित दीर्घ new_freq,
 			      u32 flags)
-{
-	struct devfreq_freqs freqs;
-	unsigned long cur_freq;
-	int err = 0;
+अणु
+	काष्ठा devfreq_freqs freqs;
+	अचिन्हित दीर्घ cur_freq;
+	पूर्णांक err = 0;
 
-	if (devfreq->profile->get_cur_freq)
+	अगर (devfreq->profile->get_cur_freq)
 		devfreq->profile->get_cur_freq(devfreq->dev.parent, &cur_freq);
-	else
+	अन्यथा
 		cur_freq = devfreq->previous_freq;
 
 	freqs.old = cur_freq;
 	freqs.new = new_freq;
-	devfreq_notify_transition(devfreq, &freqs, DEVFREQ_PRECHANGE);
+	devfreq_notअगरy_transition(devfreq, &freqs, DEVFREQ_PRECHANGE);
 
 	err = devfreq->profile->target(devfreq->dev.parent, &new_freq, flags);
-	if (err) {
+	अगर (err) अणु
 		freqs.new = cur_freq;
-		devfreq_notify_transition(devfreq, &freqs, DEVFREQ_POSTCHANGE);
-		return err;
-	}
+		devfreq_notअगरy_transition(devfreq, &freqs, DEVFREQ_POSTCHANGE);
+		वापस err;
+	पूर्ण
 
 	/*
-	 * Print devfreq_frequency trace information between DEVFREQ_PRECHANGE
-	 * and DEVFREQ_POSTCHANGE because for showing the correct frequency
+	 * Prपूर्णांक devfreq_frequency trace inक्रमmation between DEVFREQ_PRECHANGE
+	 * and DEVFREQ_POSTCHANGE because क्रम showing the correct frequency
 	 * change order of between devfreq device and passive devfreq device.
 	 */
-	if (trace_devfreq_frequency_enabled() && new_freq != cur_freq)
+	अगर (trace_devfreq_frequency_enabled() && new_freq != cur_freq)
 		trace_devfreq_frequency(devfreq, new_freq, cur_freq);
 
 	freqs.new = new_freq;
-	devfreq_notify_transition(devfreq, &freqs, DEVFREQ_POSTCHANGE);
+	devfreq_notअगरy_transition(devfreq, &freqs, DEVFREQ_POSTCHANGE);
 
-	if (devfreq_update_status(devfreq, new_freq))
+	अगर (devfreq_update_status(devfreq, new_freq))
 		dev_err(&devfreq->dev,
 			"Couldn't update frequency transition information.\n");
 
 	devfreq->previous_freq = new_freq;
 
-	if (devfreq->suspend_freq)
+	अगर (devfreq->suspend_freq)
 		devfreq->resume_freq = new_freq;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * devfreq_update_target() - Reevaluate the device and configure frequency
  *			   on the final stage.
  * @devfreq:	the devfreq instance.
  * @freq:	the new frequency of parent device. This argument
- *		is only used for devfreq device using passive governor.
+ *		is only used क्रम devfreq device using passive governor.
  *
- * Note: Lock devfreq->lock before calling devfreq_update_target. This function
+ * Note: Lock devfreq->lock beक्रमe calling devfreq_update_target. This function
  *	 should be only used by both update_devfreq() and devfreq governors.
  */
-int devfreq_update_target(struct devfreq *devfreq, unsigned long freq)
-{
-	unsigned long min_freq, max_freq;
-	int err = 0;
+पूर्णांक devfreq_update_target(काष्ठा devfreq *devfreq, अचिन्हित दीर्घ freq)
+अणु
+	अचिन्हित दीर्घ min_freq, max_freq;
+	पूर्णांक err = 0;
 	u32 flags = 0;
 
-	lockdep_assert_held(&devfreq->lock);
+	lockdep_निश्चित_held(&devfreq->lock);
 
-	if (!devfreq->governor)
-		return -EINVAL;
+	अगर (!devfreq->governor)
+		वापस -EINVAL;
 
 	/* Reevaluate the proper frequency */
 	err = devfreq->governor->get_target_freq(devfreq, &freq);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	get_freq_range(devfreq, &min_freq, &max_freq);
 
-	if (freq < min_freq) {
+	अगर (freq < min_freq) अणु
 		freq = min_freq;
 		flags &= ~DEVFREQ_FLAG_LEAST_UPPER_BOUND; /* Use GLB */
-	}
-	if (freq > max_freq) {
+	पूर्ण
+	अगर (freq > max_freq) अणु
 		freq = max_freq;
 		flags |= DEVFREQ_FLAG_LEAST_UPPER_BOUND; /* Use LUB */
-	}
+	पूर्ण
 
-	return devfreq_set_target(devfreq, freq, flags);
-}
+	वापस devfreq_set_target(devfreq, freq, flags);
+पूर्ण
 EXPORT_SYMBOL(devfreq_update_target);
 
-/* Load monitoring helper functions for governors use */
+/* Load monitoring helper functions क्रम governors use */
 
 /**
  * update_devfreq() - Reevaluate the device and configure frequency.
  * @devfreq:	the devfreq instance.
  *
- * Note: Lock devfreq->lock before calling update_devfreq
- *	 This function is exported for governors.
+ * Note: Lock devfreq->lock beक्रमe calling update_devfreq
+ *	 This function is exported क्रम governors.
  */
-int update_devfreq(struct devfreq *devfreq)
-{
-	return devfreq_update_target(devfreq, 0L);
-}
+पूर्णांक update_devfreq(काष्ठा devfreq *devfreq)
+अणु
+	वापस devfreq_update_target(devfreq, 0L);
+पूर्ण
 EXPORT_SYMBOL(update_devfreq);
 
 /**
  * devfreq_monitor() - Periodically poll devfreq objects.
- * @work:	the work struct used to run devfreq_monitor periodically.
+ * @work:	the work काष्ठा used to run devfreq_monitor periodically.
  *
  */
-static void devfreq_monitor(struct work_struct *work)
-{
-	int err;
-	struct devfreq *devfreq = container_of(work,
-					struct devfreq, work.work);
+अटल व्योम devfreq_monitor(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक err;
+	काष्ठा devfreq *devfreq = container_of(work,
+					काष्ठा devfreq, work.work);
 
 	mutex_lock(&devfreq->lock);
 	err = update_devfreq(devfreq);
-	if (err)
+	अगर (err)
 		dev_err(&devfreq->dev, "dvfs failed with (%d) error\n", err);
 
 	queue_delayed_work(devfreq_wq, &devfreq->work,
-				msecs_to_jiffies(devfreq->profile->polling_ms));
+				msecs_to_jअगरfies(devfreq->profile->polling_ms));
 	mutex_unlock(&devfreq->lock);
 
 	trace_devfreq_monitor(devfreq);
-}
+पूर्ण
 
 /**
  * devfreq_monitor_start() - Start load monitoring of devfreq instance
  * @devfreq:	the devfreq instance.
  *
- * Helper function for starting devfreq device load monitoring. By
- * default delayed work based monitoring is supported. Function
+ * Helper function क्रम starting devfreq device load monitoring. By
+ * शेष delayed work based monitoring is supported. Function
  * to be called from governor in response to DEVFREQ_GOV_START
  * event when device is added to devfreq framework.
  */
-void devfreq_monitor_start(struct devfreq *devfreq)
-{
-	if (IS_SUPPORTED_FLAG(devfreq->governor->flags, IRQ_DRIVEN))
-		return;
+व्योम devfreq_monitor_start(काष्ठा devfreq *devfreq)
+अणु
+	अगर (IS_SUPPORTED_FLAG(devfreq->governor->flags, IRQ_DRIVEN))
+		वापस;
 
-	switch (devfreq->profile->timer) {
-	case DEVFREQ_TIMER_DEFERRABLE:
+	चयन (devfreq->profile->समयr) अणु
+	हाल DEVFREQ_TIMER_DEFERRABLE:
 		INIT_DEFERRABLE_WORK(&devfreq->work, devfreq_monitor);
-		break;
-	case DEVFREQ_TIMER_DELAYED:
+		अवरोध;
+	हाल DEVFREQ_TIMER_DELAYED:
 		INIT_DELAYED_WORK(&devfreq->work, devfreq_monitor);
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	if (devfreq->profile->polling_ms)
+	अगर (devfreq->profile->polling_ms)
 		queue_delayed_work(devfreq_wq, &devfreq->work,
-			msecs_to_jiffies(devfreq->profile->polling_ms));
-}
+			msecs_to_jअगरfies(devfreq->profile->polling_ms));
+पूर्ण
 EXPORT_SYMBOL(devfreq_monitor_start);
 
 /**
@@ -508,15 +509,15 @@ EXPORT_SYMBOL(devfreq_monitor_start);
  *
  * Helper function to stop devfreq device load monitoring. Function
  * to be called from governor in response to DEVFREQ_GOV_STOP
- * event when device is removed from devfreq framework.
+ * event when device is हटाओd from devfreq framework.
  */
-void devfreq_monitor_stop(struct devfreq *devfreq)
-{
-	if (IS_SUPPORTED_FLAG(devfreq->governor->flags, IRQ_DRIVEN))
-		return;
+व्योम devfreq_monitor_stop(काष्ठा devfreq *devfreq)
+अणु
+	अगर (IS_SUPPORTED_FLAG(devfreq->governor->flags, IRQ_DRIVEN))
+		वापस;
 
 	cancel_delayed_work_sync(&devfreq->work);
-}
+पूर्ण
 EXPORT_SYMBOL(devfreq_monitor_stop);
 
 /**
@@ -525,29 +526,29 @@ EXPORT_SYMBOL(devfreq_monitor_stop);
  *
  * Helper function to suspend devfreq device load monitoring. Function
  * to be called from governor in response to DEVFREQ_GOV_SUSPEND
- * event or when polling interval is set to zero.
+ * event or when polling पूर्णांकerval is set to zero.
  *
  * Note: Though this function is same as devfreq_monitor_stop(),
- * intentionally kept separate to provide hooks for collecting
+ * पूर्णांकentionally kept separate to provide hooks क्रम collecting
  * transition statistics.
  */
-void devfreq_monitor_suspend(struct devfreq *devfreq)
-{
+व्योम devfreq_monitor_suspend(काष्ठा devfreq *devfreq)
+अणु
 	mutex_lock(&devfreq->lock);
-	if (devfreq->stop_polling) {
+	अगर (devfreq->stop_polling) अणु
 		mutex_unlock(&devfreq->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	devfreq_update_status(devfreq, devfreq->previous_freq);
 	devfreq->stop_polling = true;
 	mutex_unlock(&devfreq->lock);
 
-	if (IS_SUPPORTED_FLAG(devfreq->governor->flags, IRQ_DRIVEN))
-		return;
+	अगर (IS_SUPPORTED_FLAG(devfreq->governor->flags, IRQ_DRIVEN))
+		वापस;
 
 	cancel_delayed_work_sync(&devfreq->work);
-}
+पूर्ण
 EXPORT_SYMBOL(devfreq_monitor_suspend);
 
 /**
@@ -556,257 +557,257 @@ EXPORT_SYMBOL(devfreq_monitor_suspend);
  *
  * Helper function to resume devfreq device load monitoring. Function
  * to be called from governor in response to DEVFREQ_GOV_RESUME
- * event or when polling interval is set to non-zero.
+ * event or when polling पूर्णांकerval is set to non-zero.
  */
-void devfreq_monitor_resume(struct devfreq *devfreq)
-{
-	unsigned long freq;
+व्योम devfreq_monitor_resume(काष्ठा devfreq *devfreq)
+अणु
+	अचिन्हित दीर्घ freq;
 
 	mutex_lock(&devfreq->lock);
 
-	if (IS_SUPPORTED_FLAG(devfreq->governor->flags, IRQ_DRIVEN))
-		goto out_update;
+	अगर (IS_SUPPORTED_FLAG(devfreq->governor->flags, IRQ_DRIVEN))
+		जाओ out_update;
 
-	if (!devfreq->stop_polling)
-		goto out;
+	अगर (!devfreq->stop_polling)
+		जाओ out;
 
-	if (!delayed_work_pending(&devfreq->work) &&
+	अगर (!delayed_work_pending(&devfreq->work) &&
 			devfreq->profile->polling_ms)
 		queue_delayed_work(devfreq_wq, &devfreq->work,
-			msecs_to_jiffies(devfreq->profile->polling_ms));
+			msecs_to_jअगरfies(devfreq->profile->polling_ms));
 
 out_update:
-	devfreq->stats.last_update = get_jiffies_64();
+	devfreq->stats.last_update = get_jअगरfies_64();
 	devfreq->stop_polling = false;
 
-	if (devfreq->profile->get_cur_freq &&
+	अगर (devfreq->profile->get_cur_freq &&
 		!devfreq->profile->get_cur_freq(devfreq->dev.parent, &freq))
 		devfreq->previous_freq = freq;
 
 out:
 	mutex_unlock(&devfreq->lock);
-}
+पूर्ण
 EXPORT_SYMBOL(devfreq_monitor_resume);
 
 /**
- * devfreq_update_interval() - Update device devfreq monitoring interval
+ * devfreq_update_पूर्णांकerval() - Update device devfreq monitoring पूर्णांकerval
  * @devfreq:    the devfreq instance.
- * @delay:      new polling interval to be set.
+ * @delay:      new polling पूर्णांकerval to be set.
  *
- * Helper function to set new load monitoring polling interval. Function
+ * Helper function to set new load monitoring polling पूर्णांकerval. Function
  * to be called from governor in response to DEVFREQ_GOV_UPDATE_INTERVAL event.
  */
-void devfreq_update_interval(struct devfreq *devfreq, unsigned int *delay)
-{
-	unsigned int cur_delay = devfreq->profile->polling_ms;
-	unsigned int new_delay = *delay;
+व्योम devfreq_update_पूर्णांकerval(काष्ठा devfreq *devfreq, अचिन्हित पूर्णांक *delay)
+अणु
+	अचिन्हित पूर्णांक cur_delay = devfreq->profile->polling_ms;
+	अचिन्हित पूर्णांक new_delay = *delay;
 
 	mutex_lock(&devfreq->lock);
 	devfreq->profile->polling_ms = new_delay;
 
-	if (IS_SUPPORTED_FLAG(devfreq->governor->flags, IRQ_DRIVEN))
-		goto out;
+	अगर (IS_SUPPORTED_FLAG(devfreq->governor->flags, IRQ_DRIVEN))
+		जाओ out;
 
-	if (devfreq->stop_polling)
-		goto out;
+	अगर (devfreq->stop_polling)
+		जाओ out;
 
-	/* if new delay is zero, stop polling */
-	if (!new_delay) {
+	/* अगर new delay is zero, stop polling */
+	अगर (!new_delay) अणु
 		mutex_unlock(&devfreq->lock);
 		cancel_delayed_work_sync(&devfreq->work);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* if current delay is zero, start polling with new delay */
-	if (!cur_delay) {
+	/* अगर current delay is zero, start polling with new delay */
+	अगर (!cur_delay) अणु
 		queue_delayed_work(devfreq_wq, &devfreq->work,
-			msecs_to_jiffies(devfreq->profile->polling_ms));
-		goto out;
-	}
+			msecs_to_jअगरfies(devfreq->profile->polling_ms));
+		जाओ out;
+	पूर्ण
 
-	/* if current delay is greater than new delay, restart polling */
-	if (cur_delay > new_delay) {
+	/* अगर current delay is greater than new delay, restart polling */
+	अगर (cur_delay > new_delay) अणु
 		mutex_unlock(&devfreq->lock);
 		cancel_delayed_work_sync(&devfreq->work);
 		mutex_lock(&devfreq->lock);
-		if (!devfreq->stop_polling)
+		अगर (!devfreq->stop_polling)
 			queue_delayed_work(devfreq_wq, &devfreq->work,
-				msecs_to_jiffies(devfreq->profile->polling_ms));
-	}
+				msecs_to_jअगरfies(devfreq->profile->polling_ms));
+	पूर्ण
 out:
 	mutex_unlock(&devfreq->lock);
-}
-EXPORT_SYMBOL(devfreq_update_interval);
+पूर्ण
+EXPORT_SYMBOL(devfreq_update_पूर्णांकerval);
 
 /**
- * devfreq_notifier_call() - Notify that the device frequency requirements
+ * devfreq_notअगरier_call() - Notअगरy that the device frequency requirements
  *			     has been changed out of devfreq framework.
- * @nb:		the notifier_block (supposed to be devfreq->nb)
+ * @nb:		the notअगरier_block (supposed to be devfreq->nb)
  * @type:	not used
  * @devp:	not used
  *
- * Called by a notifier that uses devfreq->nb.
+ * Called by a notअगरier that uses devfreq->nb.
  */
-static int devfreq_notifier_call(struct notifier_block *nb, unsigned long type,
-				 void *devp)
-{
-	struct devfreq *devfreq = container_of(nb, struct devfreq, nb);
-	int err = -EINVAL;
+अटल पूर्णांक devfreq_notअगरier_call(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ type,
+				 व्योम *devp)
+अणु
+	काष्ठा devfreq *devfreq = container_of(nb, काष्ठा devfreq, nb);
+	पूर्णांक err = -EINVAL;
 
 	mutex_lock(&devfreq->lock);
 
 	devfreq->scaling_min_freq = find_available_min_freq(devfreq);
-	if (!devfreq->scaling_min_freq)
-		goto out;
+	अगर (!devfreq->scaling_min_freq)
+		जाओ out;
 
 	devfreq->scaling_max_freq = find_available_max_freq(devfreq);
-	if (!devfreq->scaling_max_freq) {
-		devfreq->scaling_max_freq = ULONG_MAX;
-		goto out;
-	}
+	अगर (!devfreq->scaling_max_freq) अणु
+		devfreq->scaling_max_freq = अच_दीर्घ_उच्च;
+		जाओ out;
+	पूर्ण
 
 	err = update_devfreq(devfreq);
 
 out:
 	mutex_unlock(&devfreq->lock);
-	if (err)
+	अगर (err)
 		dev_err(devfreq->dev.parent,
 			"failed to update frequency from OPP notifier (%d)\n",
 			err);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
 /**
- * qos_notifier_call() - Common handler for QoS constraints.
+ * qos_notअगरier_call() - Common handler क्रम QoS स्थिरraपूर्णांकs.
  * @devfreq:    the devfreq instance.
  */
-static int qos_notifier_call(struct devfreq *devfreq)
-{
-	int err;
+अटल पूर्णांक qos_notअगरier_call(काष्ठा devfreq *devfreq)
+अणु
+	पूर्णांक err;
 
 	mutex_lock(&devfreq->lock);
 	err = update_devfreq(devfreq);
 	mutex_unlock(&devfreq->lock);
-	if (err)
+	अगर (err)
 		dev_err(devfreq->dev.parent,
 			"failed to update frequency from PM QoS (%d)\n",
 			err);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
 /**
- * qos_min_notifier_call() - Callback for QoS min_freq changes.
+ * qos_min_notअगरier_call() - Callback क्रम QoS min_freq changes.
  * @nb:		Should be devfreq->nb_min
  */
-static int qos_min_notifier_call(struct notifier_block *nb,
-					 unsigned long val, void *ptr)
-{
-	return qos_notifier_call(container_of(nb, struct devfreq, nb_min));
-}
+अटल पूर्णांक qos_min_notअगरier_call(काष्ठा notअगरier_block *nb,
+					 अचिन्हित दीर्घ val, व्योम *ptr)
+अणु
+	वापस qos_notअगरier_call(container_of(nb, काष्ठा devfreq, nb_min));
+पूर्ण
 
 /**
- * qos_max_notifier_call() - Callback for QoS max_freq changes.
+ * qos_max_notअगरier_call() - Callback क्रम QoS max_freq changes.
  * @nb:		Should be devfreq->nb_max
  */
-static int qos_max_notifier_call(struct notifier_block *nb,
-					 unsigned long val, void *ptr)
-{
-	return qos_notifier_call(container_of(nb, struct devfreq, nb_max));
-}
+अटल पूर्णांक qos_max_notअगरier_call(काष्ठा notअगरier_block *nb,
+					 अचिन्हित दीर्घ val, व्योम *ptr)
+अणु
+	वापस qos_notअगरier_call(container_of(nb, काष्ठा devfreq, nb_max));
+पूर्ण
 
 /**
- * devfreq_dev_release() - Callback for struct device to release the device.
+ * devfreq_dev_release() - Callback क्रम काष्ठा device to release the device.
  * @dev:	the devfreq device
  *
  * Remove devfreq from the list and release its resources.
  */
-static void devfreq_dev_release(struct device *dev)
-{
-	struct devfreq *devfreq = to_devfreq(dev);
-	int err;
+अटल व्योम devfreq_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा devfreq *devfreq = to_devfreq(dev);
+	पूर्णांक err;
 
 	mutex_lock(&devfreq_list_lock);
 	list_del(&devfreq->node);
 	mutex_unlock(&devfreq_list_lock);
 
-	err = dev_pm_qos_remove_notifier(devfreq->dev.parent, &devfreq->nb_max,
+	err = dev_pm_qos_हटाओ_notअगरier(devfreq->dev.parent, &devfreq->nb_max,
 					 DEV_PM_QOS_MAX_FREQUENCY);
-	if (err && err != -ENOENT)
+	अगर (err && err != -ENOENT)
 		dev_warn(dev->parent,
 			"Failed to remove max_freq notifier: %d\n", err);
-	err = dev_pm_qos_remove_notifier(devfreq->dev.parent, &devfreq->nb_min,
+	err = dev_pm_qos_हटाओ_notअगरier(devfreq->dev.parent, &devfreq->nb_min,
 					 DEV_PM_QOS_MIN_FREQUENCY);
-	if (err && err != -ENOENT)
+	अगर (err && err != -ENOENT)
 		dev_warn(dev->parent,
 			"Failed to remove min_freq notifier: %d\n", err);
 
-	if (dev_pm_qos_request_active(&devfreq->user_max_freq_req)) {
-		err = dev_pm_qos_remove_request(&devfreq->user_max_freq_req);
-		if (err < 0)
+	अगर (dev_pm_qos_request_active(&devfreq->user_max_freq_req)) अणु
+		err = dev_pm_qos_हटाओ_request(&devfreq->user_max_freq_req);
+		अगर (err < 0)
 			dev_warn(dev->parent,
 				"Failed to remove max_freq request: %d\n", err);
-	}
-	if (dev_pm_qos_request_active(&devfreq->user_min_freq_req)) {
-		err = dev_pm_qos_remove_request(&devfreq->user_min_freq_req);
-		if (err < 0)
+	पूर्ण
+	अगर (dev_pm_qos_request_active(&devfreq->user_min_freq_req)) अणु
+		err = dev_pm_qos_हटाओ_request(&devfreq->user_min_freq_req);
+		अगर (err < 0)
 			dev_warn(dev->parent,
 				"Failed to remove min_freq request: %d\n", err);
-	}
+	पूर्ण
 
-	if (devfreq->profile->exit)
-		devfreq->profile->exit(devfreq->dev.parent);
+	अगर (devfreq->profile->निकास)
+		devfreq->profile->निकास(devfreq->dev.parent);
 
-	if (devfreq->opp_table)
+	अगर (devfreq->opp_table)
 		dev_pm_opp_put_opp_table(devfreq->opp_table);
 
 	mutex_destroy(&devfreq->lock);
-	kfree(devfreq);
-}
+	kमुक्त(devfreq);
+पूर्ण
 
-static void create_sysfs_files(struct devfreq *devfreq,
-				const struct devfreq_governor *gov);
-static void remove_sysfs_files(struct devfreq *devfreq,
-				const struct devfreq_governor *gov);
+अटल व्योम create_sysfs_files(काष्ठा devfreq *devfreq,
+				स्थिर काष्ठा devfreq_governor *gov);
+अटल व्योम हटाओ_sysfs_files(काष्ठा devfreq *devfreq,
+				स्थिर काष्ठा devfreq_governor *gov);
 
 /**
  * devfreq_add_device() - Add devfreq feature to the device
  * @dev:	the device to add devfreq feature.
- * @profile:	device-specific profile to run devfreq.
+ * @profile:	device-specअगरic profile to run devfreq.
  * @governor_name:	name of the policy to choose frequency.
- * @data:	private data for the governor. The devfreq framework does not
+ * @data:	निजी data क्रम the governor. The devfreq framework करोes not
  *		touch this value.
  */
-struct devfreq *devfreq_add_device(struct device *dev,
-				   struct devfreq_dev_profile *profile,
-				   const char *governor_name,
-				   void *data)
-{
-	struct devfreq *devfreq;
-	struct devfreq_governor *governor;
-	int err = 0;
+काष्ठा devfreq *devfreq_add_device(काष्ठा device *dev,
+				   काष्ठा devfreq_dev_profile *profile,
+				   स्थिर अक्षर *governor_name,
+				   व्योम *data)
+अणु
+	काष्ठा devfreq *devfreq;
+	काष्ठा devfreq_governor *governor;
+	पूर्णांक err = 0;
 
-	if (!dev || !profile || !governor_name) {
+	अगर (!dev || !profile || !governor_name) अणु
 		dev_err(dev, "%s: Invalid parameters.\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	mutex_lock(&devfreq_list_lock);
 	devfreq = find_device_devfreq(dev);
 	mutex_unlock(&devfreq_list_lock);
-	if (!IS_ERR(devfreq)) {
+	अगर (!IS_ERR(devfreq)) अणु
 		dev_err(dev, "%s: devfreq device already exists!\n",
 			__func__);
 		err = -EINVAL;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	devfreq = kzalloc(sizeof(struct devfreq), GFP_KERNEL);
-	if (!devfreq) {
+	devfreq = kzalloc(माप(काष्ठा devfreq), GFP_KERNEL);
+	अगर (!devfreq) अणु
 		err = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	mutex_init(&devfreq->lock);
 	mutex_lock(&devfreq->lock);
@@ -818,629 +819,629 @@ struct devfreq *devfreq_add_device(struct device *dev,
 	devfreq->previous_freq = profile->initial_freq;
 	devfreq->last_status.current_frequency = profile->initial_freq;
 	devfreq->data = data;
-	devfreq->nb.notifier_call = devfreq_notifier_call;
+	devfreq->nb.notअगरier_call = devfreq_notअगरier_call;
 
-	if (devfreq->profile->timer < 0
-		|| devfreq->profile->timer >= DEVFREQ_TIMER_NUM) {
+	अगर (devfreq->profile->समयr < 0
+		|| devfreq->profile->समयr >= DEVFREQ_TIMER_NUM) अणु
 		mutex_unlock(&devfreq->lock);
-		goto err_dev;
-	}
+		जाओ err_dev;
+	पूर्ण
 
-	if (!devfreq->profile->max_state && !devfreq->profile->freq_table) {
+	अगर (!devfreq->profile->max_state && !devfreq->profile->freq_table) अणु
 		mutex_unlock(&devfreq->lock);
 		err = set_freq_table(devfreq);
-		if (err < 0)
-			goto err_dev;
+		अगर (err < 0)
+			जाओ err_dev;
 		mutex_lock(&devfreq->lock);
-	}
+	पूर्ण
 
 	devfreq->scaling_min_freq = find_available_min_freq(devfreq);
-	if (!devfreq->scaling_min_freq) {
+	अगर (!devfreq->scaling_min_freq) अणु
 		mutex_unlock(&devfreq->lock);
 		err = -EINVAL;
-		goto err_dev;
-	}
+		जाओ err_dev;
+	पूर्ण
 
 	devfreq->scaling_max_freq = find_available_max_freq(devfreq);
-	if (!devfreq->scaling_max_freq) {
+	अगर (!devfreq->scaling_max_freq) अणु
 		mutex_unlock(&devfreq->lock);
 		err = -EINVAL;
-		goto err_dev;
-	}
+		जाओ err_dev;
+	पूर्ण
 
 	devfreq->suspend_freq = dev_pm_opp_get_suspend_opp_freq(dev);
 	devfreq->opp_table = dev_pm_opp_get_opp_table(dev);
-	if (IS_ERR(devfreq->opp_table))
-		devfreq->opp_table = NULL;
+	अगर (IS_ERR(devfreq->opp_table))
+		devfreq->opp_table = शून्य;
 
 	atomic_set(&devfreq->suspend_count, 0);
 
 	dev_set_name(&devfreq->dev, "%s", dev_name(dev));
-	err = device_register(&devfreq->dev);
-	if (err) {
+	err = device_रेजिस्टर(&devfreq->dev);
+	अगर (err) अणु
 		mutex_unlock(&devfreq->lock);
 		put_device(&devfreq->dev);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	devfreq->stats.trans_table = devm_kzalloc(&devfreq->dev,
-			array3_size(sizeof(unsigned int),
+			array3_size(माप(अचिन्हित पूर्णांक),
 				    devfreq->profile->max_state,
 				    devfreq->profile->max_state),
 			GFP_KERNEL);
-	if (!devfreq->stats.trans_table) {
+	अगर (!devfreq->stats.trans_table) अणु
 		mutex_unlock(&devfreq->lock);
 		err = -ENOMEM;
-		goto err_devfreq;
-	}
+		जाओ err_devfreq;
+	पूर्ण
 
-	devfreq->stats.time_in_state = devm_kcalloc(&devfreq->dev,
+	devfreq->stats.समय_in_state = devm_kसुस्मृति(&devfreq->dev,
 			devfreq->profile->max_state,
-			sizeof(*devfreq->stats.time_in_state),
+			माप(*devfreq->stats.समय_in_state),
 			GFP_KERNEL);
-	if (!devfreq->stats.time_in_state) {
+	अगर (!devfreq->stats.समय_in_state) अणु
 		mutex_unlock(&devfreq->lock);
 		err = -ENOMEM;
-		goto err_devfreq;
-	}
+		जाओ err_devfreq;
+	पूर्ण
 
 	devfreq->stats.total_trans = 0;
-	devfreq->stats.last_update = get_jiffies_64();
+	devfreq->stats.last_update = get_jअगरfies_64();
 
-	srcu_init_notifier_head(&devfreq->transition_notifier_list);
+	srcu_init_notअगरier_head(&devfreq->transition_notअगरier_list);
 
 	mutex_unlock(&devfreq->lock);
 
 	err = dev_pm_qos_add_request(dev, &devfreq->user_min_freq_req,
 				     DEV_PM_QOS_MIN_FREQUENCY, 0);
-	if (err < 0)
-		goto err_devfreq;
+	अगर (err < 0)
+		जाओ err_devfreq;
 	err = dev_pm_qos_add_request(dev, &devfreq->user_max_freq_req,
 				     DEV_PM_QOS_MAX_FREQUENCY,
 				     PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE);
-	if (err < 0)
-		goto err_devfreq;
+	अगर (err < 0)
+		जाओ err_devfreq;
 
-	devfreq->nb_min.notifier_call = qos_min_notifier_call;
-	err = dev_pm_qos_add_notifier(dev, &devfreq->nb_min,
+	devfreq->nb_min.notअगरier_call = qos_min_notअगरier_call;
+	err = dev_pm_qos_add_notअगरier(dev, &devfreq->nb_min,
 				      DEV_PM_QOS_MIN_FREQUENCY);
-	if (err)
-		goto err_devfreq;
+	अगर (err)
+		जाओ err_devfreq;
 
-	devfreq->nb_max.notifier_call = qos_max_notifier_call;
-	err = dev_pm_qos_add_notifier(dev, &devfreq->nb_max,
+	devfreq->nb_max.notअगरier_call = qos_max_notअगरier_call;
+	err = dev_pm_qos_add_notअगरier(dev, &devfreq->nb_max,
 				      DEV_PM_QOS_MAX_FREQUENCY);
-	if (err)
-		goto err_devfreq;
+	अगर (err)
+		जाओ err_devfreq;
 
 	mutex_lock(&devfreq_list_lock);
 
 	governor = try_then_request_governor(governor_name);
-	if (IS_ERR(governor)) {
+	अगर (IS_ERR(governor)) अणु
 		dev_err(dev, "%s: Unable to find governor for the device\n",
 			__func__);
 		err = PTR_ERR(governor);
-		goto err_init;
-	}
+		जाओ err_init;
+	पूर्ण
 
 	devfreq->governor = governor;
 	err = devfreq->governor->event_handler(devfreq, DEVFREQ_GOV_START,
-						NULL);
-	if (err) {
+						शून्य);
+	अगर (err) अणु
 		dev_err(dev, "%s: Unable to start governor for the device\n",
 			__func__);
-		goto err_init;
-	}
+		जाओ err_init;
+	पूर्ण
 	create_sysfs_files(devfreq, devfreq->governor);
 
 	list_add(&devfreq->node, &devfreq_list);
 
 	mutex_unlock(&devfreq_list_lock);
 
-	if (devfreq->profile->is_cooling_device) {
-		devfreq->cdev = devfreq_cooling_em_register(devfreq, NULL);
-		if (IS_ERR(devfreq->cdev))
-			devfreq->cdev = NULL;
-	}
+	अगर (devfreq->profile->is_cooling_device) अणु
+		devfreq->cdev = devfreq_cooling_em_रेजिस्टर(devfreq, शून्य);
+		अगर (IS_ERR(devfreq->cdev))
+			devfreq->cdev = शून्य;
+	पूर्ण
 
-	return devfreq;
+	वापस devfreq;
 
 err_init:
 	mutex_unlock(&devfreq_list_lock);
 err_devfreq:
-	devfreq_remove_device(devfreq);
-	devfreq = NULL;
+	devfreq_हटाओ_device(devfreq);
+	devfreq = शून्य;
 err_dev:
-	kfree(devfreq);
+	kमुक्त(devfreq);
 err_out:
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 EXPORT_SYMBOL(devfreq_add_device);
 
 /**
- * devfreq_remove_device() - Remove devfreq feature from a device.
- * @devfreq:	the devfreq instance to be removed
+ * devfreq_हटाओ_device() - Remove devfreq feature from a device.
+ * @devfreq:	the devfreq instance to be हटाओd
  *
  * The opposite of devfreq_add_device().
  */
-int devfreq_remove_device(struct devfreq *devfreq)
-{
-	if (!devfreq)
-		return -EINVAL;
+पूर्णांक devfreq_हटाओ_device(काष्ठा devfreq *devfreq)
+अणु
+	अगर (!devfreq)
+		वापस -EINVAL;
 
-	devfreq_cooling_unregister(devfreq->cdev);
+	devfreq_cooling_unरेजिस्टर(devfreq->cdev);
 
-	if (devfreq->governor) {
+	अगर (devfreq->governor) अणु
 		devfreq->governor->event_handler(devfreq,
-						 DEVFREQ_GOV_STOP, NULL);
-		remove_sysfs_files(devfreq, devfreq->governor);
-	}
+						 DEVFREQ_GOV_STOP, शून्य);
+		हटाओ_sysfs_files(devfreq, devfreq->governor);
+	पूर्ण
 
-	device_unregister(&devfreq->dev);
+	device_unरेजिस्टर(&devfreq->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL(devfreq_remove_device);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(devfreq_हटाओ_device);
 
-static int devm_devfreq_dev_match(struct device *dev, void *res, void *data)
-{
-	struct devfreq **r = res;
+अटल पूर्णांक devm_devfreq_dev_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा devfreq **r = res;
 
-	if (WARN_ON(!r || !*r))
-		return 0;
+	अगर (WARN_ON(!r || !*r))
+		वापस 0;
 
-	return *r == data;
-}
+	वापस *r == data;
+पूर्ण
 
-static void devm_devfreq_dev_release(struct device *dev, void *res)
-{
-	devfreq_remove_device(*(struct devfreq **)res);
-}
+अटल व्योम devm_devfreq_dev_release(काष्ठा device *dev, व्योम *res)
+अणु
+	devfreq_हटाओ_device(*(काष्ठा devfreq **)res);
+पूर्ण
 
 /**
  * devm_devfreq_add_device() - Resource-managed devfreq_add_device()
  * @dev:	the device to add devfreq feature.
- * @profile:	device-specific profile to run devfreq.
+ * @profile:	device-specअगरic profile to run devfreq.
  * @governor_name:	name of the policy to choose frequency.
- * @data:	private data for the governor. The devfreq framework does not
+ * @data:	निजी data क्रम the governor. The devfreq framework करोes not
  *		touch this value.
  *
- * This function manages automatically the memory of devfreq device using device
- * resource management and simplify the free operation for memory of devfreq
+ * This function manages स्वतःmatically the memory of devfreq device using device
+ * resource management and simplअगरy the मुक्त operation क्रम memory of devfreq
  * device.
  */
-struct devfreq *devm_devfreq_add_device(struct device *dev,
-					struct devfreq_dev_profile *profile,
-					const char *governor_name,
-					void *data)
-{
-	struct devfreq **ptr, *devfreq;
+काष्ठा devfreq *devm_devfreq_add_device(काष्ठा device *dev,
+					काष्ठा devfreq_dev_profile *profile,
+					स्थिर अक्षर *governor_name,
+					व्योम *data)
+अणु
+	काष्ठा devfreq **ptr, *devfreq;
 
-	ptr = devres_alloc(devm_devfreq_dev_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_devfreq_dev_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
 	devfreq = devfreq_add_device(dev, profile, governor_name, data);
-	if (IS_ERR(devfreq)) {
-		devres_free(ptr);
-		return devfreq;
-	}
+	अगर (IS_ERR(devfreq)) अणु
+		devres_मुक्त(ptr);
+		वापस devfreq;
+	पूर्ण
 
 	*ptr = devfreq;
 	devres_add(dev, ptr);
 
-	return devfreq;
-}
+	वापस devfreq;
+पूर्ण
 EXPORT_SYMBOL(devm_devfreq_add_device);
 
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 /*
  * devfreq_get_devfreq_by_node - Get the devfreq device from devicetree
- * @node - pointer to device_node
+ * @node - poपूर्णांकer to device_node
  *
- * return the instance of devfreq device
+ * वापस the instance of devfreq device
  */
-struct devfreq *devfreq_get_devfreq_by_node(struct device_node *node)
-{
-	struct devfreq *devfreq;
+काष्ठा devfreq *devfreq_get_devfreq_by_node(काष्ठा device_node *node)
+अणु
+	काष्ठा devfreq *devfreq;
 
-	if (!node)
-		return ERR_PTR(-EINVAL);
+	अगर (!node)
+		वापस ERR_PTR(-EINVAL);
 
 	mutex_lock(&devfreq_list_lock);
-	list_for_each_entry(devfreq, &devfreq_list, node) {
-		if (devfreq->dev.parent
-			&& devfreq->dev.parent->of_node == node) {
+	list_क्रम_each_entry(devfreq, &devfreq_list, node) अणु
+		अगर (devfreq->dev.parent
+			&& devfreq->dev.parent->of_node == node) अणु
 			mutex_unlock(&devfreq_list_lock);
-			return devfreq;
-		}
-	}
+			वापस devfreq;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&devfreq_list_lock);
 
-	return ERR_PTR(-ENODEV);
-}
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
 /*
  * devfreq_get_devfreq_by_phandle - Get the devfreq device from devicetree
  * @dev - instance to the given device
  * @phandle_name - name of property holding a phandle value
- * @index - index into list of devfreq
+ * @index - index पूर्णांकo list of devfreq
  *
- * return the instance of devfreq device
+ * वापस the instance of devfreq device
  */
-struct devfreq *devfreq_get_devfreq_by_phandle(struct device *dev,
-					const char *phandle_name, int index)
-{
-	struct device_node *node;
-	struct devfreq *devfreq;
+काष्ठा devfreq *devfreq_get_devfreq_by_phandle(काष्ठा device *dev,
+					स्थिर अक्षर *phandle_name, पूर्णांक index)
+अणु
+	काष्ठा device_node *node;
+	काष्ठा devfreq *devfreq;
 
-	if (!dev || !phandle_name)
-		return ERR_PTR(-EINVAL);
+	अगर (!dev || !phandle_name)
+		वापस ERR_PTR(-EINVAL);
 
-	if (!dev->of_node)
-		return ERR_PTR(-EINVAL);
+	अगर (!dev->of_node)
+		वापस ERR_PTR(-EINVAL);
 
 	node = of_parse_phandle(dev->of_node, phandle_name, index);
-	if (!node)
-		return ERR_PTR(-ENODEV);
+	अगर (!node)
+		वापस ERR_PTR(-ENODEV);
 
 	devfreq = devfreq_get_devfreq_by_node(node);
 	of_node_put(node);
 
-	return devfreq;
-}
+	वापस devfreq;
+पूर्ण
 
-#else
-struct devfreq *devfreq_get_devfreq_by_node(struct device_node *node)
-{
-	return ERR_PTR(-ENODEV);
-}
+#अन्यथा
+काष्ठा devfreq *devfreq_get_devfreq_by_node(काष्ठा device_node *node)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-struct devfreq *devfreq_get_devfreq_by_phandle(struct device *dev,
-					const char *phandle_name, int index)
-{
-	return ERR_PTR(-ENODEV);
-}
-#endif /* CONFIG_OF */
+काष्ठा devfreq *devfreq_get_devfreq_by_phandle(काष्ठा device *dev,
+					स्थिर अक्षर *phandle_name, पूर्णांक index)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF */
 EXPORT_SYMBOL_GPL(devfreq_get_devfreq_by_node);
 EXPORT_SYMBOL_GPL(devfreq_get_devfreq_by_phandle);
 
 /**
- * devm_devfreq_remove_device() - Resource-managed devfreq_remove_device()
- * @dev:	the device from which to remove devfreq feature.
- * @devfreq:	the devfreq instance to be removed
+ * devm_devfreq_हटाओ_device() - Resource-managed devfreq_हटाओ_device()
+ * @dev:	the device from which to हटाओ devfreq feature.
+ * @devfreq:	the devfreq instance to be हटाओd
  */
-void devm_devfreq_remove_device(struct device *dev, struct devfreq *devfreq)
-{
+व्योम devm_devfreq_हटाओ_device(काष्ठा device *dev, काष्ठा devfreq *devfreq)
+अणु
 	WARN_ON(devres_release(dev, devm_devfreq_dev_release,
 			       devm_devfreq_dev_match, devfreq));
-}
-EXPORT_SYMBOL(devm_devfreq_remove_device);
+पूर्ण
+EXPORT_SYMBOL(devm_devfreq_हटाओ_device);
 
 /**
  * devfreq_suspend_device() - Suspend devfreq of a device.
  * @devfreq: the devfreq instance to be suspended
  *
- * This function is intended to be called by the pm callbacks
- * (e.g., runtime_suspend, suspend) of the device driver that
+ * This function is पूर्णांकended to be called by the pm callbacks
+ * (e.g., runसमय_suspend, suspend) of the device driver that
  * holds the devfreq.
  */
-int devfreq_suspend_device(struct devfreq *devfreq)
-{
-	int ret;
+पूर्णांक devfreq_suspend_device(काष्ठा devfreq *devfreq)
+अणु
+	पूर्णांक ret;
 
-	if (!devfreq)
-		return -EINVAL;
+	अगर (!devfreq)
+		वापस -EINVAL;
 
-	if (atomic_inc_return(&devfreq->suspend_count) > 1)
-		return 0;
+	अगर (atomic_inc_वापस(&devfreq->suspend_count) > 1)
+		वापस 0;
 
-	if (devfreq->governor) {
+	अगर (devfreq->governor) अणु
 		ret = devfreq->governor->event_handler(devfreq,
-					DEVFREQ_GOV_SUSPEND, NULL);
-		if (ret)
-			return ret;
-	}
+					DEVFREQ_GOV_SUSPEND, शून्य);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (devfreq->suspend_freq) {
+	अगर (devfreq->suspend_freq) अणु
 		mutex_lock(&devfreq->lock);
 		ret = devfreq_set_target(devfreq, devfreq->suspend_freq, 0);
 		mutex_unlock(&devfreq->lock);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(devfreq_suspend_device);
 
 /**
  * devfreq_resume_device() - Resume devfreq of a device.
  * @devfreq: the devfreq instance to be resumed
  *
- * This function is intended to be called by the pm callbacks
- * (e.g., runtime_resume, resume) of the device driver that
+ * This function is पूर्णांकended to be called by the pm callbacks
+ * (e.g., runसमय_resume, resume) of the device driver that
  * holds the devfreq.
  */
-int devfreq_resume_device(struct devfreq *devfreq)
-{
-	int ret;
+पूर्णांक devfreq_resume_device(काष्ठा devfreq *devfreq)
+अणु
+	पूर्णांक ret;
 
-	if (!devfreq)
-		return -EINVAL;
+	अगर (!devfreq)
+		वापस -EINVAL;
 
-	if (atomic_dec_return(&devfreq->suspend_count) >= 1)
-		return 0;
+	अगर (atomic_dec_वापस(&devfreq->suspend_count) >= 1)
+		वापस 0;
 
-	if (devfreq->resume_freq) {
+	अगर (devfreq->resume_freq) अणु
 		mutex_lock(&devfreq->lock);
 		ret = devfreq_set_target(devfreq, devfreq->resume_freq, 0);
 		mutex_unlock(&devfreq->lock);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (devfreq->governor) {
+	अगर (devfreq->governor) अणु
 		ret = devfreq->governor->event_handler(devfreq,
-					DEVFREQ_GOV_RESUME, NULL);
-		if (ret)
-			return ret;
-	}
+					DEVFREQ_GOV_RESUME, शून्य);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(devfreq_resume_device);
 
 /**
  * devfreq_suspend() - Suspend devfreq governors and devices
  *
- * Called during system wide Suspend/Hibernate cycles for suspending governors
- * and devices preserving the state for resume. On some platforms the devfreq
+ * Called during प्रणाली wide Suspend/Hibernate cycles क्रम suspending governors
+ * and devices preserving the state क्रम resume. On some platक्रमms the devfreq
  * device must have precise state (frequency) after resume in order to provide
  * fully operating setup.
  */
-void devfreq_suspend(void)
-{
-	struct devfreq *devfreq;
-	int ret;
+व्योम devfreq_suspend(व्योम)
+अणु
+	काष्ठा devfreq *devfreq;
+	पूर्णांक ret;
 
 	mutex_lock(&devfreq_list_lock);
-	list_for_each_entry(devfreq, &devfreq_list, node) {
+	list_क्रम_each_entry(devfreq, &devfreq_list, node) अणु
 		ret = devfreq_suspend_device(devfreq);
-		if (ret)
+		अगर (ret)
 			dev_err(&devfreq->dev,
 				"failed to suspend devfreq device\n");
-	}
+	पूर्ण
 	mutex_unlock(&devfreq_list_lock);
-}
+पूर्ण
 
 /**
  * devfreq_resume() - Resume devfreq governors and devices
  *
- * Called during system wide Suspend/Hibernate cycle for resuming governors and
+ * Called during प्रणाली wide Suspend/Hibernate cycle क्रम resuming governors and
  * devices that are suspended with devfreq_suspend().
  */
-void devfreq_resume(void)
-{
-	struct devfreq *devfreq;
-	int ret;
+व्योम devfreq_resume(व्योम)
+अणु
+	काष्ठा devfreq *devfreq;
+	पूर्णांक ret;
 
 	mutex_lock(&devfreq_list_lock);
-	list_for_each_entry(devfreq, &devfreq_list, node) {
+	list_क्रम_each_entry(devfreq, &devfreq_list, node) अणु
 		ret = devfreq_resume_device(devfreq);
-		if (ret)
+		अगर (ret)
 			dev_warn(&devfreq->dev,
 				 "failed to resume devfreq device\n");
-	}
+	पूर्ण
 	mutex_unlock(&devfreq_list_lock);
-}
+पूर्ण
 
 /**
  * devfreq_add_governor() - Add devfreq governor
  * @governor:	the devfreq governor to be added
  */
-int devfreq_add_governor(struct devfreq_governor *governor)
-{
-	struct devfreq_governor *g;
-	struct devfreq *devfreq;
-	int err = 0;
+पूर्णांक devfreq_add_governor(काष्ठा devfreq_governor *governor)
+अणु
+	काष्ठा devfreq_governor *g;
+	काष्ठा devfreq *devfreq;
+	पूर्णांक err = 0;
 
-	if (!governor) {
+	अगर (!governor) अणु
 		pr_err("%s: Invalid parameters.\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&devfreq_list_lock);
 	g = find_devfreq_governor(governor->name);
-	if (!IS_ERR(g)) {
+	अगर (!IS_ERR(g)) अणु
 		pr_err("%s: governor %s already registered\n", __func__,
 		       g->name);
 		err = -EINVAL;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	list_add(&governor->node, &devfreq_governor_list);
 
-	list_for_each_entry(devfreq, &devfreq_list, node) {
-		int ret = 0;
-		struct device *dev = devfreq->dev.parent;
+	list_क्रम_each_entry(devfreq, &devfreq_list, node) अणु
+		पूर्णांक ret = 0;
+		काष्ठा device *dev = devfreq->dev.parent;
 
-		if (!strncmp(devfreq->governor->name, governor->name,
-			     DEVFREQ_NAME_LEN)) {
+		अगर (!म_भेदन(devfreq->governor->name, governor->name,
+			     DEVFREQ_NAME_LEN)) अणु
 			/* The following should never occur */
-			if (devfreq->governor) {
+			अगर (devfreq->governor) अणु
 				dev_warn(dev,
 					 "%s: Governor %s already present\n",
 					 __func__, devfreq->governor->name);
 				ret = devfreq->governor->event_handler(devfreq,
-							DEVFREQ_GOV_STOP, NULL);
-				if (ret) {
+							DEVFREQ_GOV_STOP, शून्य);
+				अगर (ret) अणु
 					dev_warn(dev,
 						 "%s: Governor %s stop = %d\n",
 						 __func__,
 						 devfreq->governor->name, ret);
-				}
+				पूर्ण
 				/* Fall through */
-			}
+			पूर्ण
 			devfreq->governor = governor;
 			ret = devfreq->governor->event_handler(devfreq,
-						DEVFREQ_GOV_START, NULL);
-			if (ret) {
+						DEVFREQ_GOV_START, शून्य);
+			अगर (ret) अणु
 				dev_warn(dev, "%s: Governor %s start=%d\n",
 					 __func__, devfreq->governor->name,
 					 ret);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 err_out:
 	mutex_unlock(&devfreq_list_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(devfreq_add_governor);
 
 /**
- * devfreq_remove_governor() - Remove devfreq feature from a device.
- * @governor:	the devfreq governor to be removed
+ * devfreq_हटाओ_governor() - Remove devfreq feature from a device.
+ * @governor:	the devfreq governor to be हटाओd
  */
-int devfreq_remove_governor(struct devfreq_governor *governor)
-{
-	struct devfreq_governor *g;
-	struct devfreq *devfreq;
-	int err = 0;
+पूर्णांक devfreq_हटाओ_governor(काष्ठा devfreq_governor *governor)
+अणु
+	काष्ठा devfreq_governor *g;
+	काष्ठा devfreq *devfreq;
+	पूर्णांक err = 0;
 
-	if (!governor) {
+	अगर (!governor) अणु
 		pr_err("%s: Invalid parameters.\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&devfreq_list_lock);
 	g = find_devfreq_governor(governor->name);
-	if (IS_ERR(g)) {
+	अगर (IS_ERR(g)) अणु
 		pr_err("%s: governor %s not registered\n", __func__,
 		       governor->name);
 		err = PTR_ERR(g);
-		goto err_out;
-	}
-	list_for_each_entry(devfreq, &devfreq_list, node) {
-		int ret;
-		struct device *dev = devfreq->dev.parent;
+		जाओ err_out;
+	पूर्ण
+	list_क्रम_each_entry(devfreq, &devfreq_list, node) अणु
+		पूर्णांक ret;
+		काष्ठा device *dev = devfreq->dev.parent;
 
-		if (!strncmp(devfreq->governor->name, governor->name,
-			     DEVFREQ_NAME_LEN)) {
+		अगर (!म_भेदन(devfreq->governor->name, governor->name,
+			     DEVFREQ_NAME_LEN)) अणु
 			/* we should have a devfreq governor! */
-			if (!devfreq->governor) {
+			अगर (!devfreq->governor) अणु
 				dev_warn(dev, "%s: Governor %s NOT present\n",
 					 __func__, governor->name);
-				continue;
+				जारी;
 				/* Fall through */
-			}
+			पूर्ण
 			ret = devfreq->governor->event_handler(devfreq,
-						DEVFREQ_GOV_STOP, NULL);
-			if (ret) {
+						DEVFREQ_GOV_STOP, शून्य);
+			अगर (ret) अणु
 				dev_warn(dev, "%s: Governor %s stop=%d\n",
 					 __func__, devfreq->governor->name,
 					 ret);
-			}
-			devfreq->governor = NULL;
-		}
-	}
+			पूर्ण
+			devfreq->governor = शून्य;
+		पूर्ण
+	पूर्ण
 
 	list_del(&governor->node);
 err_out:
 	mutex_unlock(&devfreq_list_lock);
 
-	return err;
-}
-EXPORT_SYMBOL(devfreq_remove_governor);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(devfreq_हटाओ_governor);
 
-static ssize_t name_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
-	return sprintf(buf, "%s\n", dev_name(df->dev.parent));
-}
-static DEVICE_ATTR_RO(name);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
+	वापस प्र_लिखो(buf, "%s\n", dev_name(df->dev.parent));
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t governor_show(struct device *dev,
-			     struct device_attribute *attr, char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
+अटल sमाप_प्रकार governor_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
 
-	if (!df->governor)
-		return -EINVAL;
+	अगर (!df->governor)
+		वापस -EINVAL;
 
-	return sprintf(buf, "%s\n", df->governor->name);
-}
+	वापस प्र_लिखो(buf, "%s\n", df->governor->name);
+पूर्ण
 
-static ssize_t governor_store(struct device *dev, struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct devfreq *df = to_devfreq(dev);
-	int ret;
-	char str_governor[DEVFREQ_NAME_LEN + 1];
-	const struct devfreq_governor *governor, *prev_governor;
+अटल sमाप_प्रकार governor_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
+	पूर्णांक ret;
+	अक्षर str_governor[DEVFREQ_NAME_LEN + 1];
+	स्थिर काष्ठा devfreq_governor *governor, *prev_governor;
 
-	if (!df->governor)
-		return -EINVAL;
+	अगर (!df->governor)
+		वापस -EINVAL;
 
-	ret = sscanf(buf, "%" __stringify(DEVFREQ_NAME_LEN) "s", str_governor);
-	if (ret != 1)
-		return -EINVAL;
+	ret = माला_पूछो(buf, "%" __stringअगरy(DEVFREQ_NAME_LEN) "s", str_governor);
+	अगर (ret != 1)
+		वापस -EINVAL;
 
 	mutex_lock(&devfreq_list_lock);
 	governor = try_then_request_governor(str_governor);
-	if (IS_ERR(governor)) {
+	अगर (IS_ERR(governor)) अणु
 		ret = PTR_ERR(governor);
-		goto out;
-	}
-	if (df->governor == governor) {
+		जाओ out;
+	पूर्ण
+	अगर (df->governor == governor) अणु
 		ret = 0;
-		goto out;
-	} else if (IS_SUPPORTED_FLAG(df->governor->flags, IMMUTABLE)
-		|| IS_SUPPORTED_FLAG(governor->flags, IMMUTABLE)) {
+		जाओ out;
+	पूर्ण अन्यथा अगर (IS_SUPPORTED_FLAG(df->governor->flags, IMMUTABLE)
+		|| IS_SUPPORTED_FLAG(governor->flags, IMMUTABLE)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Stop the current governor and remove the specific sysfs files
+	 * Stop the current governor and हटाओ the specअगरic sysfs files
 	 * which depend on current governor.
 	 */
-	ret = df->governor->event_handler(df, DEVFREQ_GOV_STOP, NULL);
-	if (ret) {
+	ret = df->governor->event_handler(df, DEVFREQ_GOV_STOP, शून्य);
+	अगर (ret) अणु
 		dev_warn(dev, "%s: Governor %s not stopped(%d)\n",
 			 __func__, df->governor->name, ret);
-		goto out;
-	}
-	remove_sysfs_files(df, df->governor);
+		जाओ out;
+	पूर्ण
+	हटाओ_sysfs_files(df, df->governor);
 
 	/*
-	 * Start the new governor and create the specific sysfs files
+	 * Start the new governor and create the specअगरic sysfs files
 	 * which depend on the new governor.
 	 */
 	prev_governor = df->governor;
 	df->governor = governor;
-	ret = df->governor->event_handler(df, DEVFREQ_GOV_START, NULL);
-	if (ret) {
+	ret = df->governor->event_handler(df, DEVFREQ_GOV_START, शून्य);
+	अगर (ret) अणु
 		dev_warn(dev, "%s: Governor %s not started(%d)\n",
 			 __func__, df->governor->name, ret);
 
 		/* Restore previous governor */
 		df->governor = prev_governor;
-		ret = df->governor->event_handler(df, DEVFREQ_GOV_START, NULL);
-		if (ret) {
+		ret = df->governor->event_handler(df, DEVFREQ_GOV_START, शून्य);
+		अगर (ret) अणु
 			dev_err(dev,
 				"%s: reverting to Governor %s failed (%d)\n",
 				__func__, prev_governor->name, ret);
-			df->governor = NULL;
-			goto out;
-		}
-	}
+			df->governor = शून्य;
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Create the sysfs files for the new governor. But if failed to start
+	 * Create the sysfs files क्रम the new governor. But अगर failed to start
 	 * the new governor, restore the sysfs files of previous governor.
 	 */
 	create_sysfs_files(df, df->governor);
@@ -1448,21 +1449,21 @@ static ssize_t governor_store(struct device *dev, struct device_attribute *attr,
 out:
 	mutex_unlock(&devfreq_list_lock);
 
-	if (!ret)
+	अगर (!ret)
 		ret = count;
-	return ret;
-}
-static DEVICE_ATTR_RW(governor);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RW(governor);
 
-static ssize_t available_governors_show(struct device *d,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct devfreq *df = to_devfreq(d);
-	ssize_t count = 0;
+अटल sमाप_प्रकार available_governors_show(काष्ठा device *d,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा devfreq *df = to_devfreq(d);
+	sमाप_प्रकार count = 0;
 
-	if (!df->governor)
-		return -EINVAL;
+	अगर (!df->governor)
+		वापस -EINVAL;
 
 	mutex_lock(&devfreq_list_lock);
 
@@ -1470,270 +1471,270 @@ static ssize_t available_governors_show(struct device *d,
 	 * The devfreq with immutable governor (e.g., passive) shows
 	 * only own governor.
 	 */
-	if (IS_SUPPORTED_FLAG(df->governor->flags, IMMUTABLE)) {
-		count = scnprintf(&buf[count], DEVFREQ_NAME_LEN,
+	अगर (IS_SUPPORTED_FLAG(df->governor->flags, IMMUTABLE)) अणु
+		count = scnम_लिखो(&buf[count], DEVFREQ_NAME_LEN,
 				  "%s ", df->governor->name);
 	/*
-	 * The devfreq device shows the registered governor except for
+	 * The devfreq device shows the रेजिस्टरed governor except क्रम
 	 * immutable governors such as passive governor .
 	 */
-	} else {
-		struct devfreq_governor *governor;
+	पूर्ण अन्यथा अणु
+		काष्ठा devfreq_governor *governor;
 
-		list_for_each_entry(governor, &devfreq_governor_list, node) {
-			if (IS_SUPPORTED_FLAG(governor->flags, IMMUTABLE))
-				continue;
-			count += scnprintf(&buf[count], (PAGE_SIZE - count - 2),
+		list_क्रम_each_entry(governor, &devfreq_governor_list, node) अणु
+			अगर (IS_SUPPORTED_FLAG(governor->flags, IMMUTABLE))
+				जारी;
+			count += scnम_लिखो(&buf[count], (PAGE_SIZE - count - 2),
 					   "%s ", governor->name);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&devfreq_list_lock);
 
 	/* Truncate the trailing space */
-	if (count)
+	अगर (count)
 		count--;
 
-	count += sprintf(&buf[count], "\n");
+	count += प्र_लिखो(&buf[count], "\n");
 
-	return count;
-}
-static DEVICE_ATTR_RO(available_governors);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RO(available_governors);
 
-static ssize_t cur_freq_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	unsigned long freq;
-	struct devfreq *df = to_devfreq(dev);
+अटल sमाप_प्रकार cur_freq_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ freq;
+	काष्ठा devfreq *df = to_devfreq(dev);
 
-	if (!df->profile)
-		return -EINVAL;
+	अगर (!df->profile)
+		वापस -EINVAL;
 
-	if (df->profile->get_cur_freq &&
+	अगर (df->profile->get_cur_freq &&
 		!df->profile->get_cur_freq(df->dev.parent, &freq))
-		return sprintf(buf, "%lu\n", freq);
+		वापस प्र_लिखो(buf, "%lu\n", freq);
 
-	return sprintf(buf, "%lu\n", df->previous_freq);
-}
-static DEVICE_ATTR_RO(cur_freq);
+	वापस प्र_लिखो(buf, "%lu\n", df->previous_freq);
+पूर्ण
+अटल DEVICE_ATTR_RO(cur_freq);
 
-static ssize_t target_freq_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
+अटल sमाप_प्रकार target_freq_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
 
-	return sprintf(buf, "%lu\n", df->previous_freq);
-}
-static DEVICE_ATTR_RO(target_freq);
+	वापस प्र_लिखो(buf, "%lu\n", df->previous_freq);
+पूर्ण
+अटल DEVICE_ATTR_RO(target_freq);
 
-static ssize_t min_freq_store(struct device *dev, struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct devfreq *df = to_devfreq(dev);
-	unsigned long value;
-	int ret;
+अटल sमाप_प्रकार min_freq_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
+	अचिन्हित दीर्घ value;
+	पूर्णांक ret;
 
 	/*
-	 * Protect against theoretical sysfs writes between
+	 * Protect against theoretical sysfs ग_लिखोs between
 	 * device_add and dev_pm_qos_add_request
 	 */
-	if (!dev_pm_qos_request_active(&df->user_min_freq_req))
-		return -EAGAIN;
+	अगर (!dev_pm_qos_request_active(&df->user_min_freq_req))
+		वापस -EAGAIN;
 
-	ret = sscanf(buf, "%lu", &value);
-	if (ret != 1)
-		return -EINVAL;
+	ret = माला_पूछो(buf, "%lu", &value);
+	अगर (ret != 1)
+		वापस -EINVAL;
 
-	/* Round down to kHz for PM QoS */
+	/* Round करोwn to kHz क्रम PM QoS */
 	ret = dev_pm_qos_update_request(&df->user_min_freq_req,
 					value / HZ_PER_KHZ);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t min_freq_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
-	unsigned long min_freq, max_freq;
+अटल sमाप_प्रकार min_freq_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
+	अचिन्हित दीर्घ min_freq, max_freq;
 
 	mutex_lock(&df->lock);
 	get_freq_range(df, &min_freq, &max_freq);
 	mutex_unlock(&df->lock);
 
-	return sprintf(buf, "%lu\n", min_freq);
-}
-static DEVICE_ATTR_RW(min_freq);
+	वापस प्र_लिखो(buf, "%lu\n", min_freq);
+पूर्ण
+अटल DEVICE_ATTR_RW(min_freq);
 
-static ssize_t max_freq_store(struct device *dev, struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct devfreq *df = to_devfreq(dev);
-	unsigned long value;
-	int ret;
+अटल sमाप_प्रकार max_freq_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
+	अचिन्हित दीर्घ value;
+	पूर्णांक ret;
 
 	/*
-	 * Protect against theoretical sysfs writes between
+	 * Protect against theoretical sysfs ग_लिखोs between
 	 * device_add and dev_pm_qos_add_request
 	 */
-	if (!dev_pm_qos_request_active(&df->user_max_freq_req))
-		return -EINVAL;
+	अगर (!dev_pm_qos_request_active(&df->user_max_freq_req))
+		वापस -EINVAL;
 
-	ret = sscanf(buf, "%lu", &value);
-	if (ret != 1)
-		return -EINVAL;
+	ret = माला_पूछो(buf, "%lu", &value);
+	अगर (ret != 1)
+		वापस -EINVAL;
 
 	/*
 	 * PM QoS frequencies are in kHz so we need to convert. Convert by
-	 * rounding upwards so that the acceptable interval never shrinks.
+	 * rounding upwards so that the acceptable पूर्णांकerval never shrinks.
 	 *
-	 * For example if the user writes "666666666" to sysfs this value will
-	 * be converted to 666667 kHz and back to 666667000 Hz before an OPP
+	 * For example अगर the user ग_लिखोs "666666666" to sysfs this value will
+	 * be converted to 666667 kHz and back to 666667000 Hz beक्रमe an OPP
 	 * lookup, this ensures that an OPP of 666666666Hz is still accepted.
 	 *
 	 * A value of zero means "no limit".
 	 */
-	if (value)
+	अगर (value)
 		value = DIV_ROUND_UP(value, HZ_PER_KHZ);
-	else
+	अन्यथा
 		value = PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE;
 
 	ret = dev_pm_qos_update_request(&df->user_max_freq_req, value);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t max_freq_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
-	unsigned long min_freq, max_freq;
+अटल sमाप_प्रकार max_freq_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
+	अचिन्हित दीर्घ min_freq, max_freq;
 
 	mutex_lock(&df->lock);
 	get_freq_range(df, &min_freq, &max_freq);
 	mutex_unlock(&df->lock);
 
-	return sprintf(buf, "%lu\n", max_freq);
-}
-static DEVICE_ATTR_RW(max_freq);
+	वापस प्र_लिखो(buf, "%lu\n", max_freq);
+पूर्ण
+अटल DEVICE_ATTR_RW(max_freq);
 
-static ssize_t available_frequencies_show(struct device *d,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct devfreq *df = to_devfreq(d);
-	ssize_t count = 0;
-	int i;
+अटल sमाप_प्रकार available_frequencies_show(काष्ठा device *d,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	काष्ठा devfreq *df = to_devfreq(d);
+	sमाप_प्रकार count = 0;
+	पूर्णांक i;
 
-	if (!df->profile)
-		return -EINVAL;
+	अगर (!df->profile)
+		वापस -EINVAL;
 
 	mutex_lock(&df->lock);
 
-	for (i = 0; i < df->profile->max_state; i++)
-		count += scnprintf(&buf[count], (PAGE_SIZE - count - 2),
+	क्रम (i = 0; i < df->profile->max_state; i++)
+		count += scnम_लिखो(&buf[count], (PAGE_SIZE - count - 2),
 				"%lu ", df->profile->freq_table[i]);
 
 	mutex_unlock(&df->lock);
 	/* Truncate the trailing space */
-	if (count)
+	अगर (count)
 		count--;
 
-	count += sprintf(&buf[count], "\n");
+	count += प्र_लिखो(&buf[count], "\n");
 
-	return count;
-}
-static DEVICE_ATTR_RO(available_frequencies);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RO(available_frequencies);
 
-static ssize_t trans_stat_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
-	ssize_t len;
-	int i, j;
-	unsigned int max_state;
+अटल sमाप_प्रकार trans_stat_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
+	sमाप_प्रकार len;
+	पूर्णांक i, j;
+	अचिन्हित पूर्णांक max_state;
 
-	if (!df->profile)
-		return -EINVAL;
+	अगर (!df->profile)
+		वापस -EINVAL;
 	max_state = df->profile->max_state;
 
-	if (max_state == 0)
-		return sprintf(buf, "Not Supported.\n");
+	अगर (max_state == 0)
+		वापस प्र_लिखो(buf, "Not Supported.\n");
 
 	mutex_lock(&df->lock);
-	if (!df->stop_polling &&
-			devfreq_update_status(df, df->previous_freq)) {
+	अगर (!df->stop_polling &&
+			devfreq_update_status(df, df->previous_freq)) अणु
 		mutex_unlock(&df->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	mutex_unlock(&df->lock);
 
-	len = sprintf(buf, "     From  :   To\n");
-	len += sprintf(buf + len, "           :");
-	for (i = 0; i < max_state; i++)
-		len += sprintf(buf + len, "%10lu",
+	len = प्र_लिखो(buf, "     From  :   To\n");
+	len += प्र_लिखो(buf + len, "           :");
+	क्रम (i = 0; i < max_state; i++)
+		len += प्र_लिखो(buf + len, "%10lu",
 				df->profile->freq_table[i]);
 
-	len += sprintf(buf + len, "   time(ms)\n");
+	len += प्र_लिखो(buf + len, "   time(ms)\n");
 
-	for (i = 0; i < max_state; i++) {
-		if (df->profile->freq_table[i]
-					== df->previous_freq) {
-			len += sprintf(buf + len, "*");
-		} else {
-			len += sprintf(buf + len, " ");
-		}
-		len += sprintf(buf + len, "%10lu:",
+	क्रम (i = 0; i < max_state; i++) अणु
+		अगर (df->profile->freq_table[i]
+					== df->previous_freq) अणु
+			len += प्र_लिखो(buf + len, "*");
+		पूर्ण अन्यथा अणु
+			len += प्र_लिखो(buf + len, " ");
+		पूर्ण
+		len += प्र_लिखो(buf + len, "%10lu:",
 				df->profile->freq_table[i]);
-		for (j = 0; j < max_state; j++)
-			len += sprintf(buf + len, "%10u",
+		क्रम (j = 0; j < max_state; j++)
+			len += प्र_लिखो(buf + len, "%10u",
 				df->stats.trans_table[(i * max_state) + j]);
 
-		len += sprintf(buf + len, "%10llu\n", (u64)
-			jiffies64_to_msecs(df->stats.time_in_state[i]));
-	}
+		len += प्र_लिखो(buf + len, "%10llu\n", (u64)
+			jअगरfies64_to_msecs(df->stats.समय_in_state[i]));
+	पूर्ण
 
-	len += sprintf(buf + len, "Total transition : %u\n",
+	len += प्र_लिखो(buf + len, "Total transition : %u\n",
 					df->stats.total_trans);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t trans_stat_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct devfreq *df = to_devfreq(dev);
-	int err, value;
+अटल sमाप_प्रकार trans_stat_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
+	पूर्णांक err, value;
 
-	if (!df->profile)
-		return -EINVAL;
+	अगर (!df->profile)
+		वापस -EINVAL;
 
-	if (df->profile->max_state == 0)
-		return count;
+	अगर (df->profile->max_state == 0)
+		वापस count;
 
-	err = kstrtoint(buf, 10, &value);
-	if (err || value != 0)
-		return -EINVAL;
+	err = kstrtoपूर्णांक(buf, 10, &value);
+	अगर (err || value != 0)
+		वापस -EINVAL;
 
 	mutex_lock(&df->lock);
-	memset(df->stats.time_in_state, 0, (df->profile->max_state *
-					sizeof(*df->stats.time_in_state)));
-	memset(df->stats.trans_table, 0, array3_size(sizeof(unsigned int),
+	स_रखो(df->stats.समय_in_state, 0, (df->profile->max_state *
+					माप(*df->stats.समय_in_state)));
+	स_रखो(df->stats.trans_table, 0, array3_size(माप(अचिन्हित पूर्णांक),
 					df->profile->max_state,
 					df->profile->max_state));
 	df->stats.total_trans = 0;
-	df->stats.last_update = get_jiffies_64();
+	df->stats.last_update = get_jअगरfies_64();
 	mutex_unlock(&df->lock);
 
-	return count;
-}
-static DEVICE_ATTR_RW(trans_stat);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(trans_stat);
 
-static struct attribute *devfreq_attrs[] = {
+अटल काष्ठा attribute *devfreq_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_governor.attr,
 	&dev_attr_available_governors.attr,
@@ -1743,136 +1744,136 @@ static struct attribute *devfreq_attrs[] = {
 	&dev_attr_min_freq.attr,
 	&dev_attr_max_freq.attr,
 	&dev_attr_trans_stat.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(devfreq);
 
-static ssize_t polling_interval_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
+अटल sमाप_प्रकार polling_पूर्णांकerval_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
 
-	if (!df->profile)
-		return -EINVAL;
+	अगर (!df->profile)
+		वापस -EINVAL;
 
-	return sprintf(buf, "%d\n", df->profile->polling_ms);
-}
+	वापस प्र_लिखो(buf, "%d\n", df->profile->polling_ms);
+पूर्ण
 
-static ssize_t polling_interval_store(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf, size_t count)
-{
-	struct devfreq *df = to_devfreq(dev);
-	unsigned int value;
-	int ret;
+अटल sमाप_प्रकार polling_पूर्णांकerval_store(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
+	अचिन्हित पूर्णांक value;
+	पूर्णांक ret;
 
-	if (!df->governor)
-		return -EINVAL;
+	अगर (!df->governor)
+		वापस -EINVAL;
 
-	ret = sscanf(buf, "%u", &value);
-	if (ret != 1)
-		return -EINVAL;
+	ret = माला_पूछो(buf, "%u", &value);
+	अगर (ret != 1)
+		वापस -EINVAL;
 
 	df->governor->event_handler(df, DEVFREQ_GOV_UPDATE_INTERVAL, &value);
 	ret = count;
 
-	return ret;
-}
-static DEVICE_ATTR_RW(polling_interval);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RW(polling_पूर्णांकerval);
 
-static ssize_t timer_show(struct device *dev,
-			     struct device_attribute *attr, char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
+अटल sमाप_प्रकार समयr_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
 
-	if (!df->profile)
-		return -EINVAL;
+	अगर (!df->profile)
+		वापस -EINVAL;
 
-	return sprintf(buf, "%s\n", timer_name[df->profile->timer]);
-}
+	वापस प्र_लिखो(buf, "%s\n", समयr_name[df->profile->समयr]);
+पूर्ण
 
-static ssize_t timer_store(struct device *dev, struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct devfreq *df = to_devfreq(dev);
-	char str_timer[DEVFREQ_NAME_LEN + 1];
-	int timer = -1;
-	int ret = 0, i;
+अटल sमाप_प्रकार समयr_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा devfreq *df = to_devfreq(dev);
+	अक्षर str_समयr[DEVFREQ_NAME_LEN + 1];
+	पूर्णांक समयr = -1;
+	पूर्णांक ret = 0, i;
 
-	if (!df->governor || !df->profile)
-		return -EINVAL;
+	अगर (!df->governor || !df->profile)
+		वापस -EINVAL;
 
-	ret = sscanf(buf, "%16s", str_timer);
-	if (ret != 1)
-		return -EINVAL;
+	ret = माला_पूछो(buf, "%16s", str_समयr);
+	अगर (ret != 1)
+		वापस -EINVAL;
 
-	for (i = 0; i < DEVFREQ_TIMER_NUM; i++) {
-		if (!strncmp(timer_name[i], str_timer, DEVFREQ_NAME_LEN)) {
-			timer = i;
-			break;
-		}
-	}
+	क्रम (i = 0; i < DEVFREQ_TIMER_NUM; i++) अणु
+		अगर (!म_भेदन(समयr_name[i], str_समयr, DEVFREQ_NAME_LEN)) अणु
+			समयr = i;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (timer < 0) {
+	अगर (समयr < 0) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (df->profile->timer == timer) {
+	अगर (df->profile->समयr == समयr) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mutex_lock(&df->lock);
-	df->profile->timer = timer;
+	df->profile->समयr = समयr;
 	mutex_unlock(&df->lock);
 
-	ret = df->governor->event_handler(df, DEVFREQ_GOV_STOP, NULL);
-	if (ret) {
+	ret = df->governor->event_handler(df, DEVFREQ_GOV_STOP, शून्य);
+	अगर (ret) अणु
 		dev_warn(dev, "%s: Governor %s not stopped(%d)\n",
 			 __func__, df->governor->name, ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = df->governor->event_handler(df, DEVFREQ_GOV_START, NULL);
-	if (ret)
+	ret = df->governor->event_handler(df, DEVFREQ_GOV_START, शून्य);
+	अगर (ret)
 		dev_warn(dev, "%s: Governor %s not started(%d)\n",
 			 __func__, df->governor->name, ret);
 out:
-	return ret ? ret : count;
-}
-static DEVICE_ATTR_RW(timer);
+	वापस ret ? ret : count;
+पूर्ण
+अटल DEVICE_ATTR_RW(समयr);
 
-#define CREATE_SYSFS_FILE(df, name)					\
-{									\
-	int ret;							\
+#घोषणा CREATE_SYSFS_खाता(df, name)					\
+अणु									\
+	पूर्णांक ret;							\
 	ret = sysfs_create_file(&df->dev.kobj, &dev_attr_##name.attr);	\
-	if (ret < 0) {							\
+	अगर (ret < 0) अणु							\
 		dev_warn(&df->dev,					\
 			"Unable to create attr(%s)\n", "##name");	\
-	}								\
-}									\
+	पूर्ण								\
+पूर्ण									\
 
-/* Create the specific sysfs files which depend on each governor. */
-static void create_sysfs_files(struct devfreq *devfreq,
-				const struct devfreq_governor *gov)
-{
-	if (IS_SUPPORTED_ATTR(gov->attrs, POLLING_INTERVAL))
-		CREATE_SYSFS_FILE(devfreq, polling_interval);
-	if (IS_SUPPORTED_ATTR(gov->attrs, TIMER))
-		CREATE_SYSFS_FILE(devfreq, timer);
-}
+/* Create the specअगरic sysfs files which depend on each governor. */
+अटल व्योम create_sysfs_files(काष्ठा devfreq *devfreq,
+				स्थिर काष्ठा devfreq_governor *gov)
+अणु
+	अगर (IS_SUPPORTED_ATTR(gov->attrs, POLLING_INTERVAL))
+		CREATE_SYSFS_खाता(devfreq, polling_पूर्णांकerval);
+	अगर (IS_SUPPORTED_ATTR(gov->attrs, TIMER))
+		CREATE_SYSFS_खाता(devfreq, समयr);
+पूर्ण
 
-/* Remove the specific sysfs files which depend on each governor. */
-static void remove_sysfs_files(struct devfreq *devfreq,
-				const struct devfreq_governor *gov)
-{
-	if (IS_SUPPORTED_ATTR(gov->attrs, POLLING_INTERVAL))
-		sysfs_remove_file(&devfreq->dev.kobj,
-				&dev_attr_polling_interval.attr);
-	if (IS_SUPPORTED_ATTR(gov->attrs, TIMER))
-		sysfs_remove_file(&devfreq->dev.kobj, &dev_attr_timer.attr);
-}
+/* Remove the specअगरic sysfs files which depend on each governor. */
+अटल व्योम हटाओ_sysfs_files(काष्ठा devfreq *devfreq,
+				स्थिर काष्ठा devfreq_governor *gov)
+अणु
+	अगर (IS_SUPPORTED_ATTR(gov->attrs, POLLING_INTERVAL))
+		sysfs_हटाओ_file(&devfreq->dev.kobj,
+				&dev_attr_polling_पूर्णांकerval.attr);
+	अगर (IS_SUPPORTED_ATTR(gov->attrs, TIMER))
+		sysfs_हटाओ_file(&devfreq->dev.kobj, &dev_attr_समयr.attr);
+पूर्ण
 
 /**
  * devfreq_summary_show() - Show the summary of the devfreq devices
@@ -1880,19 +1881,19 @@ static void remove_sysfs_files(struct devfreq *devfreq,
  * @data:	not used
  *
  * Show the summary of the devfreq devices via 'devfreq_summary' debugfs file.
- * It helps that user can know the detailed information of the devfreq devices.
+ * It helps that user can know the detailed inक्रमmation of the devfreq devices.
  *
- * Return 0 always because it shows the information without any data change.
+ * Return 0 always because it shows the inक्रमmation without any data change.
  */
-static int devfreq_summary_show(struct seq_file *s, void *data)
-{
-	struct devfreq *devfreq;
-	struct devfreq *p_devfreq = NULL;
-	unsigned long cur_freq, min_freq, max_freq;
-	unsigned int polling_ms;
-	unsigned int timer;
+अटल पूर्णांक devfreq_summary_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा devfreq *devfreq;
+	काष्ठा devfreq *p_devfreq = शून्य;
+	अचिन्हित दीर्घ cur_freq, min_freq, max_freq;
+	अचिन्हित पूर्णांक polling_ms;
+	अचिन्हित पूर्णांक समयr;
 
-	seq_printf(s, "%-30s %-30s %-15s %-10s %10s %12s %12s %12s\n",
+	seq_म_लिखो(s, "%-30s %-30s %-15s %-10s %10s %12s %12s %12s\n",
 			"dev",
 			"parent_dev",
 			"governor",
@@ -1901,7 +1902,7 @@ static int devfreq_summary_show(struct seq_file *s, void *data)
 			"cur_freq_Hz",
 			"min_freq_Hz",
 			"max_freq_Hz");
-	seq_printf(s, "%30s %30s %15s %10s %10s %12s %12s %12s\n",
+	seq_म_लिखो(s, "%30s %30s %15s %10s %10s %12s %12s %12s\n",
 			"------------------------------",
 			"------------------------------",
 			"---------------",
@@ -1913,310 +1914,310 @@ static int devfreq_summary_show(struct seq_file *s, void *data)
 
 	mutex_lock(&devfreq_list_lock);
 
-	list_for_each_entry_reverse(devfreq, &devfreq_list, node) {
-#if IS_ENABLED(CONFIG_DEVFREQ_GOV_PASSIVE)
-		if (!strncmp(devfreq->governor->name, DEVFREQ_GOV_PASSIVE,
-							DEVFREQ_NAME_LEN)) {
-			struct devfreq_passive_data *data = devfreq->data;
+	list_क्रम_each_entry_reverse(devfreq, &devfreq_list, node) अणु
+#अगर IS_ENABLED(CONFIG_DEVFREQ_GOV_PASSIVE)
+		अगर (!म_भेदन(devfreq->governor->name, DEVFREQ_GOV_PASSIVE,
+							DEVFREQ_NAME_LEN)) अणु
+			काष्ठा devfreq_passive_data *data = devfreq->data;
 
-			if (data)
+			अगर (data)
 				p_devfreq = data->parent;
-		} else {
-			p_devfreq = NULL;
-		}
-#endif
+		पूर्ण अन्यथा अणु
+			p_devfreq = शून्य;
+		पूर्ण
+#पूर्ण_अगर
 
 		mutex_lock(&devfreq->lock);
 		cur_freq = devfreq->previous_freq;
 		get_freq_range(devfreq, &min_freq, &max_freq);
-		timer = devfreq->profile->timer;
+		समयr = devfreq->profile->समयr;
 
-		if (IS_SUPPORTED_ATTR(devfreq->governor->attrs, POLLING_INTERVAL))
+		अगर (IS_SUPPORTED_ATTR(devfreq->governor->attrs, POLLING_INTERVAL))
 			polling_ms = devfreq->profile->polling_ms;
-		else
+		अन्यथा
 			polling_ms = 0;
 		mutex_unlock(&devfreq->lock);
 
-		seq_printf(s,
+		seq_म_लिखो(s,
 			"%-30s %-30s %-15s %-10s %10d %12ld %12ld %12ld\n",
 			dev_name(&devfreq->dev),
 			p_devfreq ? dev_name(&p_devfreq->dev) : "null",
 			devfreq->governor->name,
-			polling_ms ? timer_name[timer] : "null",
+			polling_ms ? समयr_name[समयr] : "null",
 			polling_ms,
 			cur_freq,
 			min_freq,
 			max_freq);
-	}
+	पूर्ण
 
 	mutex_unlock(&devfreq_list_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(devfreq_summary);
 
-static int __init devfreq_init(void)
-{
+अटल पूर्णांक __init devfreq_init(व्योम)
+अणु
 	devfreq_class = class_create(THIS_MODULE, "devfreq");
-	if (IS_ERR(devfreq_class)) {
-		pr_err("%s: couldn't create class\n", __FILE__);
-		return PTR_ERR(devfreq_class);
-	}
+	अगर (IS_ERR(devfreq_class)) अणु
+		pr_err("%s: couldn't create class\n", __खाता__);
+		वापस PTR_ERR(devfreq_class);
+	पूर्ण
 
-	devfreq_wq = create_freezable_workqueue("devfreq_wq");
-	if (!devfreq_wq) {
+	devfreq_wq = create_मुक्तzable_workqueue("devfreq_wq");
+	अगर (!devfreq_wq) अणु
 		class_destroy(devfreq_class);
-		pr_err("%s: couldn't create workqueue\n", __FILE__);
-		return -ENOMEM;
-	}
+		pr_err("%s: couldn't create workqueue\n", __खाता__);
+		वापस -ENOMEM;
+	पूर्ण
 	devfreq_class->dev_groups = devfreq_groups;
 
-	devfreq_debugfs = debugfs_create_dir("devfreq", NULL);
+	devfreq_debugfs = debugfs_create_dir("devfreq", शून्य);
 	debugfs_create_file("devfreq_summary", 0444,
-				devfreq_debugfs, NULL,
+				devfreq_debugfs, शून्य,
 				&devfreq_summary_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(devfreq_init);
 
 /*
- * The following are helper functions for devfreq user device drivers with
+ * The following are helper functions क्रम devfreq user device drivers with
  * OPP framework.
  */
 
 /**
- * devfreq_recommended_opp() - Helper function to get proper OPP for the
+ * devfreq_recommended_opp() - Helper function to get proper OPP क्रम the
  *			     freq value given to target callback.
  * @dev:	The devfreq user device. (parent of devfreq)
  * @freq:	The frequency given to target function
  * @flags:	Flags handed from devfreq framework.
  *
- * The callers are required to call dev_pm_opp_put() for the returned OPP after
+ * The callers are required to call dev_pm_opp_put() क्रम the वापसed OPP after
  * use.
  */
-struct dev_pm_opp *devfreq_recommended_opp(struct device *dev,
-					   unsigned long *freq,
+काष्ठा dev_pm_opp *devfreq_recommended_opp(काष्ठा device *dev,
+					   अचिन्हित दीर्घ *freq,
 					   u32 flags)
-{
-	struct dev_pm_opp *opp;
+अणु
+	काष्ठा dev_pm_opp *opp;
 
-	if (flags & DEVFREQ_FLAG_LEAST_UPPER_BOUND) {
+	अगर (flags & DEVFREQ_FLAG_LEAST_UPPER_BOUND) अणु
 		/* The freq is an upper bound. opp should be lower */
-		opp = dev_pm_opp_find_freq_floor(dev, freq);
+		opp = dev_pm_opp_find_freq_न्यूनमान(dev, freq);
 
-		/* If not available, use the closest opp */
-		if (opp == ERR_PTR(-ERANGE))
-			opp = dev_pm_opp_find_freq_ceil(dev, freq);
-	} else {
+		/* If not available, use the बंदst opp */
+		अगर (opp == ERR_PTR(-दुस्फल))
+			opp = dev_pm_opp_find_freq_उच्चमान(dev, freq);
+	पूर्ण अन्यथा अणु
 		/* The freq is an lower bound. opp should be higher */
-		opp = dev_pm_opp_find_freq_ceil(dev, freq);
+		opp = dev_pm_opp_find_freq_उच्चमान(dev, freq);
 
-		/* If not available, use the closest opp */
-		if (opp == ERR_PTR(-ERANGE))
-			opp = dev_pm_opp_find_freq_floor(dev, freq);
-	}
+		/* If not available, use the बंदst opp */
+		अगर (opp == ERR_PTR(-दुस्फल))
+			opp = dev_pm_opp_find_freq_न्यूनमान(dev, freq);
+	पूर्ण
 
-	return opp;
-}
+	वापस opp;
+पूर्ण
 EXPORT_SYMBOL(devfreq_recommended_opp);
 
 /**
- * devfreq_register_opp_notifier() - Helper function to get devfreq notified
- *				     for any changes in the OPP availability
+ * devfreq_रेजिस्टर_opp_notअगरier() - Helper function to get devfreq notअगरied
+ *				     क्रम any changes in the OPP availability
  *				     changes
  * @dev:	The devfreq user device. (parent of devfreq)
  * @devfreq:	The devfreq object.
  */
-int devfreq_register_opp_notifier(struct device *dev, struct devfreq *devfreq)
-{
-	return dev_pm_opp_register_notifier(dev, &devfreq->nb);
-}
-EXPORT_SYMBOL(devfreq_register_opp_notifier);
+पूर्णांक devfreq_रेजिस्टर_opp_notअगरier(काष्ठा device *dev, काष्ठा devfreq *devfreq)
+अणु
+	वापस dev_pm_opp_रेजिस्टर_notअगरier(dev, &devfreq->nb);
+पूर्ण
+EXPORT_SYMBOL(devfreq_रेजिस्टर_opp_notअगरier);
 
 /**
- * devfreq_unregister_opp_notifier() - Helper function to stop getting devfreq
- *				       notified for any changes in the OPP
+ * devfreq_unरेजिस्टर_opp_notअगरier() - Helper function to stop getting devfreq
+ *				       notअगरied क्रम any changes in the OPP
  *				       availability changes anymore.
  * @dev:	The devfreq user device. (parent of devfreq)
  * @devfreq:	The devfreq object.
  *
- * At exit() callback of devfreq_dev_profile, this must be included if
+ * At निकास() callback of devfreq_dev_profile, this must be included अगर
  * devfreq_recommended_opp is used.
  */
-int devfreq_unregister_opp_notifier(struct device *dev, struct devfreq *devfreq)
-{
-	return dev_pm_opp_unregister_notifier(dev, &devfreq->nb);
-}
-EXPORT_SYMBOL(devfreq_unregister_opp_notifier);
+पूर्णांक devfreq_unरेजिस्टर_opp_notअगरier(काष्ठा device *dev, काष्ठा devfreq *devfreq)
+अणु
+	वापस dev_pm_opp_unरेजिस्टर_notअगरier(dev, &devfreq->nb);
+पूर्ण
+EXPORT_SYMBOL(devfreq_unरेजिस्टर_opp_notअगरier);
 
-static void devm_devfreq_opp_release(struct device *dev, void *res)
-{
-	devfreq_unregister_opp_notifier(dev, *(struct devfreq **)res);
-}
+अटल व्योम devm_devfreq_opp_release(काष्ठा device *dev, व्योम *res)
+अणु
+	devfreq_unरेजिस्टर_opp_notअगरier(dev, *(काष्ठा devfreq **)res);
+पूर्ण
 
 /**
- * devm_devfreq_register_opp_notifier() - Resource-managed
- *					  devfreq_register_opp_notifier()
+ * devm_devfreq_रेजिस्टर_opp_notअगरier() - Resource-managed
+ *					  devfreq_रेजिस्टर_opp_notअगरier()
  * @dev:	The devfreq user device. (parent of devfreq)
  * @devfreq:	The devfreq object.
  */
-int devm_devfreq_register_opp_notifier(struct device *dev,
-				       struct devfreq *devfreq)
-{
-	struct devfreq **ptr;
-	int ret;
+पूर्णांक devm_devfreq_रेजिस्टर_opp_notअगरier(काष्ठा device *dev,
+				       काष्ठा devfreq *devfreq)
+अणु
+	काष्ठा devfreq **ptr;
+	पूर्णांक ret;
 
-	ptr = devres_alloc(devm_devfreq_opp_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	ptr = devres_alloc(devm_devfreq_opp_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस -ENOMEM;
 
-	ret = devfreq_register_opp_notifier(dev, devfreq);
-	if (ret) {
-		devres_free(ptr);
-		return ret;
-	}
+	ret = devfreq_रेजिस्टर_opp_notअगरier(dev, devfreq);
+	अगर (ret) अणु
+		devres_मुक्त(ptr);
+		वापस ret;
+	पूर्ण
 
 	*ptr = devfreq;
 	devres_add(dev, ptr);
 
-	return 0;
-}
-EXPORT_SYMBOL(devm_devfreq_register_opp_notifier);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(devm_devfreq_रेजिस्टर_opp_notअगरier);
 
 /**
- * devm_devfreq_unregister_opp_notifier() - Resource-managed
- *					    devfreq_unregister_opp_notifier()
+ * devm_devfreq_unरेजिस्टर_opp_notअगरier() - Resource-managed
+ *					    devfreq_unरेजिस्टर_opp_notअगरier()
  * @dev:	The devfreq user device. (parent of devfreq)
  * @devfreq:	The devfreq object.
  */
-void devm_devfreq_unregister_opp_notifier(struct device *dev,
-					 struct devfreq *devfreq)
-{
+व्योम devm_devfreq_unरेजिस्टर_opp_notअगरier(काष्ठा device *dev,
+					 काष्ठा devfreq *devfreq)
+अणु
 	WARN_ON(devres_release(dev, devm_devfreq_opp_release,
 			       devm_devfreq_dev_match, devfreq));
-}
-EXPORT_SYMBOL(devm_devfreq_unregister_opp_notifier);
+पूर्ण
+EXPORT_SYMBOL(devm_devfreq_unरेजिस्टर_opp_notअगरier);
 
 /**
- * devfreq_register_notifier() - Register a driver with devfreq
+ * devfreq_रेजिस्टर_notअगरier() - Register a driver with devfreq
  * @devfreq:	The devfreq object.
- * @nb:		The notifier block to register.
+ * @nb:		The notअगरier block to रेजिस्टर.
  * @list:	DEVFREQ_TRANSITION_NOTIFIER.
  */
-int devfreq_register_notifier(struct devfreq *devfreq,
-			      struct notifier_block *nb,
-			      unsigned int list)
-{
-	int ret = 0;
+पूर्णांक devfreq_रेजिस्टर_notअगरier(काष्ठा devfreq *devfreq,
+			      काष्ठा notअगरier_block *nb,
+			      अचिन्हित पूर्णांक list)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!devfreq)
-		return -EINVAL;
+	अगर (!devfreq)
+		वापस -EINVAL;
 
-	switch (list) {
-	case DEVFREQ_TRANSITION_NOTIFIER:
-		ret = srcu_notifier_chain_register(
-				&devfreq->transition_notifier_list, nb);
-		break;
-	default:
+	चयन (list) अणु
+	हाल DEVFREQ_TRANSITION_NOTIFIER:
+		ret = srcu_notअगरier_chain_रेजिस्टर(
+				&devfreq->transition_notअगरier_list, nb);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(devfreq_register_notifier);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(devfreq_रेजिस्टर_notअगरier);
 
 /*
- * devfreq_unregister_notifier() - Unregister a driver with devfreq
+ * devfreq_unरेजिस्टर_notअगरier() - Unरेजिस्टर a driver with devfreq
  * @devfreq:	The devfreq object.
- * @nb:		The notifier block to be unregistered.
+ * @nb:		The notअगरier block to be unरेजिस्टरed.
  * @list:	DEVFREQ_TRANSITION_NOTIFIER.
  */
-int devfreq_unregister_notifier(struct devfreq *devfreq,
-				struct notifier_block *nb,
-				unsigned int list)
-{
-	int ret = 0;
+पूर्णांक devfreq_unरेजिस्टर_notअगरier(काष्ठा devfreq *devfreq,
+				काष्ठा notअगरier_block *nb,
+				अचिन्हित पूर्णांक list)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!devfreq)
-		return -EINVAL;
+	अगर (!devfreq)
+		वापस -EINVAL;
 
-	switch (list) {
-	case DEVFREQ_TRANSITION_NOTIFIER:
-		ret = srcu_notifier_chain_unregister(
-				&devfreq->transition_notifier_list, nb);
-		break;
-	default:
+	चयन (list) अणु
+	हाल DEVFREQ_TRANSITION_NOTIFIER:
+		ret = srcu_notअगरier_chain_unरेजिस्टर(
+				&devfreq->transition_notअगरier_list, nb);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(devfreq_unregister_notifier);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(devfreq_unरेजिस्टर_notअगरier);
 
-struct devfreq_notifier_devres {
-	struct devfreq *devfreq;
-	struct notifier_block *nb;
-	unsigned int list;
-};
+काष्ठा devfreq_notअगरier_devres अणु
+	काष्ठा devfreq *devfreq;
+	काष्ठा notअगरier_block *nb;
+	अचिन्हित पूर्णांक list;
+पूर्ण;
 
-static void devm_devfreq_notifier_release(struct device *dev, void *res)
-{
-	struct devfreq_notifier_devres *this = res;
+अटल व्योम devm_devfreq_notअगरier_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा devfreq_notअगरier_devres *this = res;
 
-	devfreq_unregister_notifier(this->devfreq, this->nb, this->list);
-}
+	devfreq_unरेजिस्टर_notअगरier(this->devfreq, this->nb, this->list);
+पूर्ण
 
 /**
- * devm_devfreq_register_notifier()
- *	- Resource-managed devfreq_register_notifier()
+ * devm_devfreq_रेजिस्टर_notअगरier()
+ *	- Resource-managed devfreq_रेजिस्टर_notअगरier()
  * @dev:	The devfreq user device. (parent of devfreq)
  * @devfreq:	The devfreq object.
- * @nb:		The notifier block to be unregistered.
+ * @nb:		The notअगरier block to be unरेजिस्टरed.
  * @list:	DEVFREQ_TRANSITION_NOTIFIER.
  */
-int devm_devfreq_register_notifier(struct device *dev,
-				struct devfreq *devfreq,
-				struct notifier_block *nb,
-				unsigned int list)
-{
-	struct devfreq_notifier_devres *ptr;
-	int ret;
+पूर्णांक devm_devfreq_रेजिस्टर_notअगरier(काष्ठा device *dev,
+				काष्ठा devfreq *devfreq,
+				काष्ठा notअगरier_block *nb,
+				अचिन्हित पूर्णांक list)
+अणु
+	काष्ठा devfreq_notअगरier_devres *ptr;
+	पूर्णांक ret;
 
-	ptr = devres_alloc(devm_devfreq_notifier_release, sizeof(*ptr),
+	ptr = devres_alloc(devm_devfreq_notअगरier_release, माप(*ptr),
 				GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	अगर (!ptr)
+		वापस -ENOMEM;
 
-	ret = devfreq_register_notifier(devfreq, nb, list);
-	if (ret) {
-		devres_free(ptr);
-		return ret;
-	}
+	ret = devfreq_रेजिस्टर_notअगरier(devfreq, nb, list);
+	अगर (ret) अणु
+		devres_मुक्त(ptr);
+		वापस ret;
+	पूर्ण
 
 	ptr->devfreq = devfreq;
 	ptr->nb = nb;
 	ptr->list = list;
 	devres_add(dev, ptr);
 
-	return 0;
-}
-EXPORT_SYMBOL(devm_devfreq_register_notifier);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(devm_devfreq_रेजिस्टर_notअगरier);
 
 /**
- * devm_devfreq_unregister_notifier()
- *	- Resource-managed devfreq_unregister_notifier()
+ * devm_devfreq_unरेजिस्टर_notअगरier()
+ *	- Resource-managed devfreq_unरेजिस्टर_notअगरier()
  * @dev:	The devfreq user device. (parent of devfreq)
  * @devfreq:	The devfreq object.
- * @nb:		The notifier block to be unregistered.
+ * @nb:		The notअगरier block to be unरेजिस्टरed.
  * @list:	DEVFREQ_TRANSITION_NOTIFIER.
  */
-void devm_devfreq_unregister_notifier(struct device *dev,
-				      struct devfreq *devfreq,
-				      struct notifier_block *nb,
-				      unsigned int list)
-{
-	WARN_ON(devres_release(dev, devm_devfreq_notifier_release,
+व्योम devm_devfreq_unरेजिस्टर_notअगरier(काष्ठा device *dev,
+				      काष्ठा devfreq *devfreq,
+				      काष्ठा notअगरier_block *nb,
+				      अचिन्हित पूर्णांक list)
+अणु
+	WARN_ON(devres_release(dev, devm_devfreq_notअगरier_release,
 			       devm_devfreq_dev_match, devfreq));
-}
-EXPORT_SYMBOL(devm_devfreq_unregister_notifier);
+पूर्ण
+EXPORT_SYMBOL(devm_devfreq_unरेजिस्टर_notअगरier);

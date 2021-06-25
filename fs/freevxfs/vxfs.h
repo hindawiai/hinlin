@@ -1,16 +1,17 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2000-2001 Christoph Hellwig.
  * Copyright (c) 2016 Krzysztof Blaszkowski
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    without modअगरication.
+ * 2. The name of the author may not be used to enकरोrse or promote products
+ *    derived from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL").
@@ -19,7 +20,7 @@
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -28,55 +29,55 @@
  * SUCH DAMAGE.
  *
  */
-#ifndef _VXFS_SUPER_H_
-#define _VXFS_SUPER_H_
+#अगर_अघोषित _VXFS_SUPER_H_
+#घोषणा _VXFS_SUPER_H_
 
 /*
- * Veritas filesystem driver - superblock structure.
+ * Veritas fileप्रणाली driver - superblock काष्ठाure.
  *
  * This file contains the definition of the disk and core
- * superblocks of the Veritas Filesystem.
+ * superblocks of the Veritas Fileप्रणाली.
  */
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
  * Superblock magic number (vxfs_super->vs_magic).
  */
-#define VXFS_SUPER_MAGIC	0xa501FCF5
+#घोषणा VXFS_SUPER_MAGIC	0xa501FCF5
 
 /*
  * The root inode.
  */
-#define VXFS_ROOT_INO		2
+#घोषणा VXFS_ROOT_INO		2
 
 /*
- * Num of entries in free extent array
+ * Num of entries in मुक्त extent array
  */
-#define VXFS_NEFREE		32
+#घोषणा VXFS_NEFREE		32
 
-enum vxfs_byte_order {
+क्रमागत vxfs_byte_order अणु
 	VXFS_BO_LE,
 	VXFS_BO_BE,
-};
+पूर्ण;
 
-typedef __u16 __bitwise __fs16;
-typedef __u32 __bitwise __fs32;
-typedef __u64 __bitwise __fs64;
+प्रकार __u16 __bitwise __fs16;
+प्रकार __u32 __bitwise __fs32;
+प्रकार __u64 __bitwise __fs64;
 
 /*
  * VxFS superblock (disk).
  */
-struct vxfs_sb {
+काष्ठा vxfs_sb अणु
 	/*
-	 * Readonly fields for the version 1 superblock.
+	 * Reaकरोnly fields क्रम the version 1 superblock.
 	 *
 	 * Lots of this fields are no more used by version 2
-	 * and never filesystems.
+	 * and never fileप्रणालीs.
 	 */
 	__fs32		vs_magic;		/* Magic number */
 	__fs32		vs_version;		/* VxFS version */
-	__fs32		vs_ctime;		/* create time - secs */
-	__fs32		vs_cutime;		/* create time - usecs */
+	__fs32		vs_स_समय;		/* create समय - secs */
+	__fs32		vs_cuसमय;		/* create समय - usecs */
 	__fs32		__unused1;		/* unused */
 	__fs32		__unused2;		/* unused */
 	__fs32		vs_old_logstart;	/* obsolete */
@@ -115,8 +116,8 @@ struct vxfs_sb {
 	__fs32		vs_old_inopilb;		/* obsolete */
 	__fs32		vs_old_ndiripau;	/* obsolete */
 	__fs32		vs_iaddrlen;		/* size of indirect addr ext. */
-	__fs32		vs_bshift;		/* log base 2 of bsize */
-	__fs32		vs_inoshift;		/* log base 2 of inobp */
+	__fs32		vs_bshअगरt;		/* log base 2 of bsize */
+	__fs32		vs_inoshअगरt;		/* log base 2 of inobp */
 	__fs32		vs_bmask;		/* ~( bsize - 1 ) */
 	__fs32		vs_boffmask;		/* bsize - 1 */
 	__fs32		vs_old_inomask;		/* old_inopilb - 1 */
@@ -125,19 +126,19 @@ struct vxfs_sb {
 	/*
 	 * Version 1, writable
 	 */
-	__fs32		vs_free;		/* number of free blocks */
-	__fs32		vs_ifree;		/* number of free inodes */
-	__fs32		vs_efree[VXFS_NEFREE];	/* number of free extents by size */
+	__fs32		vs_मुक्त;		/* number of मुक्त blocks */
+	__fs32		vs_अगरree;		/* number of मुक्त inodes */
+	__fs32		vs_eमुक्त[VXFS_NEFREE];	/* number of मुक्त extents by size */
 	__fs32		vs_flags;		/* flags ?!? */
-	__u8		vs_mod;			/* filesystem has been changed */
+	__u8		vs_mod;			/* fileप्रणाली has been changed */
 	__u8		vs_clean;		/* clean FS */
 	__fs16		__unused4;		/* unused */
-	__fs32		vs_firstlogid;		/* mount time log ID */
-	__fs32		vs_wtime;		/* last time written - sec */
-	__fs32		vs_wutime;		/* last time written - usec */
+	__fs32		vs_firstlogid;		/* mount समय log ID */
+	__fs32		vs_wसमय;		/* last समय written - sec */
+	__fs32		vs_wuसमय;		/* last समय written - usec */
 	__u8		vs_fname[6];		/* FS name */
 	__u8		vs_fpack[6];		/* FS pack name */
-	__fs32		vs_logversion;		/* log format version */
+	__fs32		vs_logversion;		/* log क्रमmat version */
 	__u32		__unused5;		/* unused */
 	
 	/*
@@ -154,65 +155,65 @@ struct vxfs_sb {
 	/*
 	 * Actually much more...
 	 */
-};
+पूर्ण;
 
 
 /*
- * In core superblock filesystem private data for VxFS.
+ * In core superblock fileप्रणाली निजी data क्रम VxFS.
  */
-struct vxfs_sb_info {
-	struct vxfs_sb		*vsi_raw;	/* raw (on disk) superblock */
-	struct buffer_head	*vsi_bp;	/* buffer for raw superblock*/
-	struct inode		*vsi_fship;	/* fileset header inode */
-	struct inode		*vsi_ilist;	/* inode list inode */
-	struct inode		*vsi_stilist;	/* structural inode list inode */
-	u_long			vsi_iext;	/* initial inode list */
+काष्ठा vxfs_sb_info अणु
+	काष्ठा vxfs_sb		*vsi_raw;	/* raw (on disk) superblock */
+	काष्ठा buffer_head	*vsi_bp;	/* buffer क्रम raw superblock*/
+	काष्ठा inode		*vsi_fship;	/* fileset header inode */
+	काष्ठा inode		*vsi_ilist;	/* inode list inode */
+	काष्ठा inode		*vsi_stilist;	/* काष्ठाural inode list inode */
+	u_दीर्घ			vsi_iext;	/* initial inode list */
 	ino_t			vsi_fshino;	/* fileset header inode */
 	daddr_t			vsi_oltext;	/* OLT extent */
 	daddr_t			vsi_oltsize;	/* OLT size */
-	enum vxfs_byte_order	byte_order;
-};
+	क्रमागत vxfs_byte_order	byte_order;
+पूर्ण;
 
-static inline u16 fs16_to_cpu(struct vxfs_sb_info *sbi, __fs16 a)
-{
-	if (sbi->byte_order == VXFS_BO_BE)
-		return be16_to_cpu((__force __be16)a);
-	else
-		return le16_to_cpu((__force __le16)a);
-}
+अटल अंतरभूत u16 fs16_to_cpu(काष्ठा vxfs_sb_info *sbi, __fs16 a)
+अणु
+	अगर (sbi->byte_order == VXFS_BO_BE)
+		वापस be16_to_cpu((__क्रमce __be16)a);
+	अन्यथा
+		वापस le16_to_cpu((__क्रमce __le16)a);
+पूर्ण
 
-static inline u32 fs32_to_cpu(struct vxfs_sb_info *sbi, __fs32 a)
-{
-	if (sbi->byte_order == VXFS_BO_BE)
-		return be32_to_cpu((__force __be32)a);
-	else
-		return le32_to_cpu((__force __le32)a);
-}
+अटल अंतरभूत u32 fs32_to_cpu(काष्ठा vxfs_sb_info *sbi, __fs32 a)
+अणु
+	अगर (sbi->byte_order == VXFS_BO_BE)
+		वापस be32_to_cpu((__क्रमce __be32)a);
+	अन्यथा
+		वापस le32_to_cpu((__क्रमce __le32)a);
+पूर्ण
 
-static inline u64 fs64_to_cpu(struct vxfs_sb_info *sbi, __fs64 a)
-{
-	if (sbi->byte_order == VXFS_BO_BE)
-		return be64_to_cpu((__force __be64)a);
-	else
-		return le64_to_cpu((__force __le64)a);
-}
+अटल अंतरभूत u64 fs64_to_cpu(काष्ठा vxfs_sb_info *sbi, __fs64 a)
+अणु
+	अगर (sbi->byte_order == VXFS_BO_BE)
+		वापस be64_to_cpu((__क्रमce __be64)a);
+	अन्यथा
+		वापस le64_to_cpu((__क्रमce __le64)a);
+पूर्ण
 
 /*
- * File modes.  File types above 0xf000 are vxfs internal only, they should
- * not be passed back to higher levels of the system.  vxfs file types must
+ * File modes.  File types above 0xf000 are vxfs पूर्णांकernal only, they should
+ * not be passed back to higher levels of the प्रणाली.  vxfs file types must
  * never have one of the regular file type bits set.
  */
-enum vxfs_mode {
+क्रमागत vxfs_mode अणु
 	VXFS_ISUID = 0x00000800,	/* setuid */
 	VXFS_ISGID = 0x00000400,	/* setgid */
 	VXFS_ISVTX = 0x00000200,	/* sticky bit */
-	VXFS_IREAD = 0x00000100,	/* read */
-	VXFS_IWRITE = 0x00000080,	/* write */
+	VXFS_IREAD = 0x00000100,	/* पढ़ो */
+	VXFS_IWRITE = 0x00000080,	/* ग_लिखो */
 	VXFS_IEXEC = 0x00000040,	/* exec */
 
 	VXFS_IFIFO = 0x00001000,	/* Named pipe */
 	VXFS_IFCHR = 0x00002000,	/* Character device */
-	VXFS_IFDIR = 0x00004000,	/* Directory */
+	VXFS_IFसूची = 0x00004000,	/* Directory */
 	VXFS_IFNAM = 0x00005000,	/* Xenix device ?? */
 	VXFS_IFBLK = 0x00006000,	/* Block device */
 	VXFS_IFREG = 0x00008000,	/* Regular file */
@@ -220,7 +221,7 @@ enum vxfs_mode {
 	VXFS_IFLNK = 0x0000a000,	/* Symlink */
 	VXFS_IFSOC = 0x0000c000,	/* Socket */
 
-	/* VxFS internal */
+	/* VxFS पूर्णांकernal */
 	VXFS_IFFSH = 0x10000000,	/* Fileset header */
 	VXFS_IFILT = 0x20000000,	/* Inode list */
 	VXFS_IFIAU = 0x30000000,	/* Inode allocation unit */
@@ -239,44 +240,44 @@ enum vxfs_mode {
 	VXFS_IFAUS = 0x16000000,	/* Extent AU summary file */
 	VXFS_IFDEV = 0x17000000,	/* Device config file */
 
-};
+पूर्ण;
 
-#define	VXFS_TYPE_MASK		0xfffff000
+#घोषणा	VXFS_TYPE_MASK		0xfffff000
 
-#define VXFS_IS_TYPE(ip,type)	(((ip)->vii_mode & VXFS_TYPE_MASK) == (type))
-#define VXFS_ISFIFO(x)		VXFS_IS_TYPE((x),VXFS_IFIFO)
-#define VXFS_ISCHR(x)		VXFS_IS_TYPE((x),VXFS_IFCHR)
-#define VXFS_ISDIR(x)		VXFS_IS_TYPE((x),VXFS_IFDIR)
-#define VXFS_ISNAM(x)		VXFS_IS_TYPE((x),VXFS_IFNAM)
-#define VXFS_ISBLK(x)		VXFS_IS_TYPE((x),VXFS_IFBLK)
-#define VXFS_ISLNK(x)		VXFS_IS_TYPE((x),VXFS_IFLNK)
-#define VXFS_ISREG(x)		VXFS_IS_TYPE((x),VXFS_IFREG)
-#define VXFS_ISCMP(x)		VXFS_IS_TYPE((x),VXFS_IFCMP)
-#define VXFS_ISSOC(x)		VXFS_IS_TYPE((x),VXFS_IFSOC)
+#घोषणा VXFS_IS_TYPE(ip,type)	(((ip)->vii_mode & VXFS_TYPE_MASK) == (type))
+#घोषणा VXFS_ISFIFO(x)		VXFS_IS_TYPE((x),VXFS_IFIFO)
+#घोषणा VXFS_ISCHR(x)		VXFS_IS_TYPE((x),VXFS_IFCHR)
+#घोषणा VXFS_ISसूची(x)		VXFS_IS_TYPE((x),VXFS_IFसूची)
+#घोषणा VXFS_ISNAM(x)		VXFS_IS_TYPE((x),VXFS_IFNAM)
+#घोषणा VXFS_ISBLK(x)		VXFS_IS_TYPE((x),VXFS_IFBLK)
+#घोषणा VXFS_ISLNK(x)		VXFS_IS_TYPE((x),VXFS_IFLNK)
+#घोषणा VXFS_ISREG(x)		VXFS_IS_TYPE((x),VXFS_IFREG)
+#घोषणा VXFS_ISCMP(x)		VXFS_IS_TYPE((x),VXFS_IFCMP)
+#घोषणा VXFS_ISSOC(x)		VXFS_IS_TYPE((x),VXFS_IFSOC)
 
-#define VXFS_ISFSH(x)		VXFS_IS_TYPE((x),VXFS_IFFSH)
-#define VXFS_ISILT(x)		VXFS_IS_TYPE((x),VXFS_IFILT)
+#घोषणा VXFS_ISFSH(x)		VXFS_IS_TYPE((x),VXFS_IFFSH)
+#घोषणा VXFS_ISILT(x)		VXFS_IS_TYPE((x),VXFS_IFILT)
 
 /*
  * Inmode organisation types.
  */
-enum {
-	VXFS_ORG_NONE	= 0,	/* Inode has *no* format ?!? */
+क्रमागत अणु
+	VXFS_ORG_NONE	= 0,	/* Inode has *no* क्रमmat ?!? */
 	VXFS_ORG_EXT4	= 1,	/* Ext4 */
 	VXFS_ORG_IMMED	= 2,	/* All data stored in inode */
 	VXFS_ORG_TYPED	= 3,	/* Typed extents */
-};
+पूर्ण;
 
-#define VXFS_IS_ORG(ip,org)	((ip)->vii_orgtype == (org))
-#define VXFS_ISNONE(ip)		VXFS_IS_ORG((ip), VXFS_ORG_NONE)
-#define VXFS_ISEXT4(ip)		VXFS_IS_ORG((ip), VXFS_ORG_EXT4)
-#define VXFS_ISIMMED(ip)	VXFS_IS_ORG((ip), VXFS_ORG_IMMED)
-#define VXFS_ISTYPED(ip)	VXFS_IS_ORG((ip), VXFS_ORG_TYPED)
+#घोषणा VXFS_IS_ORG(ip,org)	((ip)->vii_orgtype == (org))
+#घोषणा VXFS_ISNONE(ip)		VXFS_IS_ORG((ip), VXFS_ORG_NONE)
+#घोषणा VXFS_ISEXT4(ip)		VXFS_IS_ORG((ip), VXFS_ORG_EXT4)
+#घोषणा VXFS_ISIMMED(ip)	VXFS_IS_ORG((ip), VXFS_ORG_IMMED)
+#घोषणा VXFS_ISTYPED(ip)	VXFS_IS_ORG((ip), VXFS_ORG_TYPED)
 
 /*
- * Get filesystem private data from VFS superblock.
+ * Get fileप्रणाली निजी data from VFS superblock.
  */
-#define VXFS_SBI(sbp) \
-	((struct vxfs_sb_info *)(sbp)->s_fs_info)
+#घोषणा VXFS_SBI(sbp) \
+	((काष्ठा vxfs_sb_info *)(sbp)->s_fs_info)
 
-#endif /* _VXFS_SUPER_H_ */
+#पूर्ण_अगर /* _VXFS_SUPER_H_ */

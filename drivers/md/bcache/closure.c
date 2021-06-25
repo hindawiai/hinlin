@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Asynchronous refcounty things
  *
@@ -6,136 +7,136 @@
  * Copyright 2012 Google, Inc.
  */
 
-#include <linux/debugfs.h>
-#include <linux/module.h>
-#include <linux/seq_file.h>
-#include <linux/sched/debug.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/sched/debug.h>
 
-#include "closure.h"
+#समावेश "closure.h"
 
-static inline void closure_put_after_sub(struct closure *cl, int flags)
-{
-	int r = flags & CLOSURE_REMAINING_MASK;
+अटल अंतरभूत व्योम closure_put_after_sub(काष्ठा closure *cl, पूर्णांक flags)
+अणु
+	पूर्णांक r = flags & CLOSURE_REMAINING_MASK;
 
 	BUG_ON(flags & CLOSURE_GUARD_MASK);
 	BUG_ON(!r && (flags & ~CLOSURE_DESTRUCTOR));
 
-	if (!r) {
-		if (cl->fn && !(flags & CLOSURE_DESTRUCTOR)) {
-			atomic_set(&cl->remaining,
+	अगर (!r) अणु
+		अगर (cl->fn && !(flags & CLOSURE_DESTRUCTOR)) अणु
+			atomic_set(&cl->reमुख्यing,
 				   CLOSURE_REMAINING_INITIALIZER);
 			closure_queue(cl);
-		} else {
-			struct closure *parent = cl->parent;
-			closure_fn *destructor = cl->fn;
+		पूर्ण अन्यथा अणु
+			काष्ठा closure *parent = cl->parent;
+			closure_fn *deकाष्ठाor = cl->fn;
 
 			closure_debug_destroy(cl);
 
-			if (destructor)
-				destructor(cl);
+			अगर (deकाष्ठाor)
+				deकाष्ठाor(cl);
 
-			if (parent)
+			अगर (parent)
 				closure_put(parent);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* For clearing flags with the same atomic op as a put */
-void closure_sub(struct closure *cl, int v)
-{
-	closure_put_after_sub(cl, atomic_sub_return(v, &cl->remaining));
-}
+व्योम closure_sub(काष्ठा closure *cl, पूर्णांक v)
+अणु
+	closure_put_after_sub(cl, atomic_sub_वापस(v, &cl->reमुख्यing));
+पूर्ण
 
 /*
  * closure_put - decrement a closure's refcount
  */
-void closure_put(struct closure *cl)
-{
-	closure_put_after_sub(cl, atomic_dec_return(&cl->remaining));
-}
+व्योम closure_put(काष्ठा closure *cl)
+अणु
+	closure_put_after_sub(cl, atomic_dec_वापस(&cl->reमुख्यing));
+पूर्ण
 
 /*
- * closure_wake_up - wake up all closures on a wait list, without memory barrier
+ * closure_wake_up - wake up all closures on a रुको list, without memory barrier
  */
-void __closure_wake_up(struct closure_waitlist *wait_list)
-{
-	struct llist_node *list;
-	struct closure *cl, *t;
-	struct llist_node *reverse = NULL;
+व्योम __closure_wake_up(काष्ठा closure_रुकोlist *रुको_list)
+अणु
+	काष्ठा llist_node *list;
+	काष्ठा closure *cl, *t;
+	काष्ठा llist_node *reverse = शून्य;
 
-	list = llist_del_all(&wait_list->list);
+	list = llist_del_all(&रुको_list->list);
 
 	/* We first reverse the list to preserve FIFO ordering and fairness */
 	reverse = llist_reverse_order(list);
 
-	/* Then do the wakeups */
-	llist_for_each_entry_safe(cl, t, reverse, list) {
-		closure_set_waiting(cl, 0);
+	/* Then करो the wakeups */
+	llist_क्रम_each_entry_safe(cl, t, reverse, list) अणु
+		closure_set_रुकोing(cl, 0);
 		closure_sub(cl, CLOSURE_WAITING + 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * closure_wait - add a closure to a waitlist
- * @waitlist: will own a ref on @cl, which will be released when
- * closure_wake_up() is called on @waitlist.
- * @cl: closure pointer.
+ * closure_रुको - add a closure to a रुकोlist
+ * @रुकोlist: will own a ref on @cl, which will be released when
+ * closure_wake_up() is called on @रुकोlist.
+ * @cl: closure poपूर्णांकer.
  *
  */
-bool closure_wait(struct closure_waitlist *waitlist, struct closure *cl)
-{
-	if (atomic_read(&cl->remaining) & CLOSURE_WAITING)
-		return false;
+bool closure_रुको(काष्ठा closure_रुकोlist *रुकोlist, काष्ठा closure *cl)
+अणु
+	अगर (atomic_पढ़ो(&cl->reमुख्यing) & CLOSURE_WAITING)
+		वापस false;
 
-	closure_set_waiting(cl, _RET_IP_);
-	atomic_add(CLOSURE_WAITING + 1, &cl->remaining);
-	llist_add(&cl->list, &waitlist->list);
+	closure_set_रुकोing(cl, _RET_IP_);
+	atomic_add(CLOSURE_WAITING + 1, &cl->reमुख्यing);
+	llist_add(&cl->list, &रुकोlist->list);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-struct closure_syncer {
-	struct task_struct	*task;
-	int			done;
-};
+काष्ठा closure_syncer अणु
+	काष्ठा task_काष्ठा	*task;
+	पूर्णांक			करोne;
+पूर्ण;
 
-static void closure_sync_fn(struct closure *cl)
-{
-	struct closure_syncer *s = cl->s;
-	struct task_struct *p;
+अटल व्योम closure_sync_fn(काष्ठा closure *cl)
+अणु
+	काष्ठा closure_syncer *s = cl->s;
+	काष्ठा task_काष्ठा *p;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	p = READ_ONCE(s->task);
-	s->done = 1;
+	s->करोne = 1;
 	wake_up_process(p);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-void __sched __closure_sync(struct closure *cl)
-{
-	struct closure_syncer s = { .task = current };
+व्योम __sched __closure_sync(काष्ठा closure *cl)
+अणु
+	काष्ठा closure_syncer s = अणु .task = current पूर्ण;
 
 	cl->s = &s;
-	continue_at(cl, closure_sync_fn, NULL);
+	जारी_at(cl, closure_sync_fn, शून्य);
 
-	while (1) {
+	जबतक (1) अणु
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		if (s.done)
-			break;
+		अगर (s.करोne)
+			अवरोध;
 		schedule();
-	}
+	पूर्ण
 
 	__set_current_state(TASK_RUNNING);
-}
+पूर्ण
 
-#ifdef CONFIG_BCACHE_CLOSURES_DEBUG
+#अगर_घोषित CONFIG_BCACHE_CLOSURES_DEBUG
 
-static LIST_HEAD(closure_list);
-static DEFINE_SPINLOCK(closure_list_lock);
+अटल LIST_HEAD(closure_list);
+अटल DEFINE_SPINLOCK(closure_list_lock);
 
-void closure_debug_create(struct closure *cl)
-{
-	unsigned long flags;
+व्योम closure_debug_create(काष्ठा closure *cl)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	BUG_ON(cl->magic == CLOSURE_MAGIC_ALIVE);
 	cl->magic = CLOSURE_MAGIC_ALIVE;
@@ -143,11 +144,11 @@ void closure_debug_create(struct closure *cl)
 	spin_lock_irqsave(&closure_list_lock, flags);
 	list_add(&cl->all, &closure_list);
 	spin_unlock_irqrestore(&closure_list_lock, flags);
-}
+पूर्ण
 
-void closure_debug_destroy(struct closure *cl)
-{
-	unsigned long flags;
+व्योम closure_debug_destroy(काष्ठा closure *cl)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	BUG_ON(cl->magic != CLOSURE_MAGIC_ALIVE);
 	cl->magic = CLOSURE_MAGIC_DEAD;
@@ -155,53 +156,53 @@ void closure_debug_destroy(struct closure *cl)
 	spin_lock_irqsave(&closure_list_lock, flags);
 	list_del(&cl->all);
 	spin_unlock_irqrestore(&closure_list_lock, flags);
-}
+पूर्ण
 
-static struct dentry *closure_debug;
+अटल काष्ठा dentry *closure_debug;
 
-static int debug_show(struct seq_file *f, void *data)
-{
-	struct closure *cl;
+अटल पूर्णांक debug_show(काष्ठा seq_file *f, व्योम *data)
+अणु
+	काष्ठा closure *cl;
 
 	spin_lock_irq(&closure_list_lock);
 
-	list_for_each_entry(cl, &closure_list, all) {
-		int r = atomic_read(&cl->remaining);
+	list_क्रम_each_entry(cl, &closure_list, all) अणु
+		पूर्णांक r = atomic_पढ़ो(&cl->reमुख्यing);
 
-		seq_printf(f, "%p: %pS -> %pS p %p r %i ",
-			   cl, (void *) cl->ip, cl->fn, cl->parent,
+		seq_म_लिखो(f, "%p: %pS -> %pS p %p r %i ",
+			   cl, (व्योम *) cl->ip, cl->fn, cl->parent,
 			   r & CLOSURE_REMAINING_MASK);
 
-		seq_printf(f, "%s%s\n",
+		seq_म_लिखो(f, "%s%s\n",
 			   test_bit(WORK_STRUCT_PENDING_BIT,
 				    work_data_bits(&cl->work)) ? "Q" : "",
 			   r & CLOSURE_RUNNING	? "R" : "");
 
-		if (r & CLOSURE_WAITING)
-			seq_printf(f, " W %pS\n",
-				   (void *) cl->waiting_on);
+		अगर (r & CLOSURE_WAITING)
+			seq_म_लिखो(f, " W %pS\n",
+				   (व्योम *) cl->रुकोing_on);
 
-		seq_printf(f, "\n");
-	}
+		seq_म_लिखो(f, "\n");
+	पूर्ण
 
 	spin_unlock_irq(&closure_list_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(debug);
 
-void  __init closure_debug_init(void)
-{
-	if (!IS_ERR_OR_NULL(bcache_debug))
+व्योम  __init closure_debug_init(व्योम)
+अणु
+	अगर (!IS_ERR_OR_शून्य(bcache_debug))
 		/*
-		 * it is unnecessary to check return value of
+		 * it is unnecessary to check वापस value of
 		 * debugfs_create_file(), we should not care
 		 * about this.
 		 */
 		closure_debug = debugfs_create_file(
-			"closures", 0400, bcache_debug, NULL, &debug_fops);
-}
-#endif
+			"closures", 0400, bcache_debug, शून्य, &debug_fops);
+पूर्ण
+#पूर्ण_अगर
 
 MODULE_AUTHOR("Kent Overstreet <koverstreet@google.com>");
 MODULE_LICENSE("GPL");

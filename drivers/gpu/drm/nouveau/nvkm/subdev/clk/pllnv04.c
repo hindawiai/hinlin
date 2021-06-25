@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 1993-2003 NVIDIA, Corporation
  * Copyright 2007-2009 Stuart Bennett
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,192 +21,192 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "pll.h"
+#समावेश "pll.h"
 
-#include <subdev/bios.h>
-#include <subdev/bios/pll.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/pll.h>
 
-static int
-getMNP_single(struct nvkm_subdev *subdev, struct nvbios_pll *info, int clk,
-	      int *pN, int *pM, int *pP)
-{
-	/* Find M, N and P for a single stage PLL
+अटल पूर्णांक
+getMNP_single(काष्ठा nvkm_subdev *subdev, काष्ठा nvbios_pll *info, पूर्णांक clk,
+	      पूर्णांक *pN, पूर्णांक *pM, पूर्णांक *pP)
+अणु
+	/* Find M, N and P क्रम a single stage PLL
 	 *
 	 * Note that some bioses (NV3x) have lookup tables of precomputed MNP
-	 * values, but we're too lazy to use those atm
+	 * values, but we're too lazy to use those aपंचांग
 	 *
 	 * "clk" parameter in kHz
-	 * returns calculated clock
+	 * वापसs calculated घड़ी
 	 */
-	struct nvkm_bios *bios = subdev->device->bios;
-	int minvco = info->vco1.min_freq, maxvco = info->vco1.max_freq;
-	int minM = info->vco1.min_m, maxM = info->vco1.max_m;
-	int minN = info->vco1.min_n, maxN = info->vco1.max_n;
-	int minU = info->vco1.min_inputfreq;
-	int maxU = info->vco1.max_inputfreq;
-	int minP = info->min_p;
-	int maxP = info->max_p_usable;
-	int crystal = info->refclk;
-	int M, N, thisP, P;
-	int clkP, calcclk;
-	int delta, bestdelta = INT_MAX;
-	int bestclk = 0;
+	काष्ठा nvkm_bios *bios = subdev->device->bios;
+	पूर्णांक minvco = info->vco1.min_freq, maxvco = info->vco1.max_freq;
+	पूर्णांक minM = info->vco1.min_m, maxM = info->vco1.max_m;
+	पूर्णांक minN = info->vco1.min_n, maxN = info->vco1.max_n;
+	पूर्णांक minU = info->vco1.min_inputfreq;
+	पूर्णांक maxU = info->vco1.max_inputfreq;
+	पूर्णांक minP = info->min_p;
+	पूर्णांक maxP = info->max_p_usable;
+	पूर्णांक crystal = info->refclk;
+	पूर्णांक M, N, thisP, P;
+	पूर्णांक clkP, calcclk;
+	पूर्णांक delta, bestdelta = पूर्णांक_उच्च;
+	पूर्णांक bestclk = 0;
 
-	/* this division verified for nv20, nv18, nv28 (Haiku), and nv34 */
-	/* possibly correlated with introduction of 27MHz crystal */
-	if (bios->version.major < 0x60) {
-		int cv = bios->version.chip;
-		if (cv < 0x17 || cv == 0x1a || cv == 0x20) {
-			if (clk > 250000)
+	/* this भागision verअगरied क्रम nv20, nv18, nv28 (Haiku), and nv34 */
+	/* possibly correlated with पूर्णांकroduction of 27MHz crystal */
+	अगर (bios->version.major < 0x60) अणु
+		पूर्णांक cv = bios->version.chip;
+		अगर (cv < 0x17 || cv == 0x1a || cv == 0x20) अणु
+			अगर (clk > 250000)
 				maxM = 6;
-			if (clk > 340000)
+			अगर (clk > 340000)
 				maxM = 2;
-		} else if (cv < 0x40) {
-			if (clk > 150000)
+		पूर्ण अन्यथा अगर (cv < 0x40) अणु
+			अगर (clk > 150000)
 				maxM = 6;
-			if (clk > 200000)
+			अगर (clk > 200000)
 				maxM = 4;
-			if (clk > 340000)
+			अगर (clk > 340000)
 				maxM = 2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	P = 1 << maxP;
-	if ((clk * P) < minvco) {
+	अगर ((clk * P) < minvco) अणु
 		minvco = clk * maxP;
 		maxvco = minvco * 2;
-	}
+	पूर्ण
 
-	if (clk + clk/200 > maxvco)	/* +0.5% */
+	अगर (clk + clk/200 > maxvco)	/* +0.5% */
 		maxvco = clk + clk/200;
 
 	/* NV34 goes maxlog2P->0, NV20 goes 0->maxlog2P */
-	for (thisP = minP; thisP <= maxP; thisP++) {
+	क्रम (thisP = minP; thisP <= maxP; thisP++) अणु
 		P = 1 << thisP;
 		clkP = clk * P;
 
-		if (clkP < minvco)
-			continue;
-		if (clkP > maxvco)
-			return bestclk;
+		अगर (clkP < minvco)
+			जारी;
+		अगर (clkP > maxvco)
+			वापस bestclk;
 
-		for (M = minM; M <= maxM; M++) {
-			if (crystal/M < minU)
-				return bestclk;
-			if (crystal/M > maxU)
-				continue;
+		क्रम (M = minM; M <= maxM; M++) अणु
+			अगर (crystal/M < minU)
+				वापस bestclk;
+			अगर (crystal/M > maxU)
+				जारी;
 
 			/* add crystal/2 to round better */
 			N = (clkP * M + crystal/2) / crystal;
 
-			if (N < minN)
-				continue;
-			if (N > maxN)
-				break;
+			अगर (N < minN)
+				जारी;
+			अगर (N > maxN)
+				अवरोध;
 
 			/* more rounding additions */
 			calcclk = ((N * crystal + P/2) / P + M/2) / M;
-			delta = abs(calcclk - clk);
-			/* we do an exhaustive search rather than terminating
+			delta = असल(calcclk - clk);
+			/* we करो an exhaustive search rather than terminating
 			 * on an optimality condition...
 			 */
-			if (delta < bestdelta) {
+			अगर (delta < bestdelta) अणु
 				bestdelta = delta;
 				bestclk = calcclk;
 				*pN = N;
 				*pM = M;
 				*pP = thisP;
-				if (delta == 0)	/* except this one */
-					return bestclk;
-			}
-		}
-	}
+				अगर (delta == 0)	/* except this one */
+					वापस bestclk;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return bestclk;
-}
+	वापस bestclk;
+पूर्ण
 
-static int
-getMNP_double(struct nvkm_subdev *subdev, struct nvbios_pll *info, int clk,
-	      int *pN1, int *pM1, int *pN2, int *pM2, int *pP)
-{
-	/* Find M, N and P for a two stage PLL
+अटल पूर्णांक
+getMNP_द्विगुन(काष्ठा nvkm_subdev *subdev, काष्ठा nvbios_pll *info, पूर्णांक clk,
+	      पूर्णांक *pN1, पूर्णांक *pM1, पूर्णांक *pN2, पूर्णांक *pM2, पूर्णांक *pP)
+अणु
+	/* Find M, N and P क्रम a two stage PLL
 	 *
 	 * Note that some bioses (NV30+) have lookup tables of precomputed MNP
-	 * values, but we're too lazy to use those atm
+	 * values, but we're too lazy to use those aपंचांग
 	 *
 	 * "clk" parameter in kHz
-	 * returns calculated clock
+	 * वापसs calculated घड़ी
 	 */
-	int chip_version = subdev->device->bios->version.chip;
-	int minvco1 = info->vco1.min_freq, maxvco1 = info->vco1.max_freq;
-	int minvco2 = info->vco2.min_freq, maxvco2 = info->vco2.max_freq;
-	int minU1 = info->vco1.min_inputfreq, minU2 = info->vco2.min_inputfreq;
-	int maxU1 = info->vco1.max_inputfreq, maxU2 = info->vco2.max_inputfreq;
-	int minM1 = info->vco1.min_m, maxM1 = info->vco1.max_m;
-	int minN1 = info->vco1.min_n, maxN1 = info->vco1.max_n;
-	int minM2 = info->vco2.min_m, maxM2 = info->vco2.max_m;
-	int minN2 = info->vco2.min_n, maxN2 = info->vco2.max_n;
-	int maxlog2P = info->max_p_usable;
-	int crystal = info->refclk;
+	पूर्णांक chip_version = subdev->device->bios->version.chip;
+	पूर्णांक minvco1 = info->vco1.min_freq, maxvco1 = info->vco1.max_freq;
+	पूर्णांक minvco2 = info->vco2.min_freq, maxvco2 = info->vco2.max_freq;
+	पूर्णांक minU1 = info->vco1.min_inputfreq, minU2 = info->vco2.min_inputfreq;
+	पूर्णांक maxU1 = info->vco1.max_inputfreq, maxU2 = info->vco2.max_inputfreq;
+	पूर्णांक minM1 = info->vco1.min_m, maxM1 = info->vco1.max_m;
+	पूर्णांक minN1 = info->vco1.min_n, maxN1 = info->vco1.max_n;
+	पूर्णांक minM2 = info->vco2.min_m, maxM2 = info->vco2.max_m;
+	पूर्णांक minN2 = info->vco2.min_n, maxN2 = info->vco2.max_n;
+	पूर्णांक maxlog2P = info->max_p_usable;
+	पूर्णांक crystal = info->refclk;
 	bool fixedgain2 = (minM2 == maxM2 && minN2 == maxN2);
-	int M1, N1, M2, N2, log2P;
-	int clkP, calcclk1, calcclk2, calcclkout;
-	int delta, bestdelta = INT_MAX;
-	int bestclk = 0;
+	पूर्णांक M1, N1, M2, N2, log2P;
+	पूर्णांक clkP, calcclk1, calcclk2, calcclkout;
+	पूर्णांक delta, bestdelta = पूर्णांक_उच्च;
+	पूर्णांक bestclk = 0;
 
-	int vco2 = (maxvco2 - maxvco2/200) / 2;
-	for (log2P = 0; clk && log2P < maxlog2P && clk <= (vco2 >> log2P); log2P++)
+	पूर्णांक vco2 = (maxvco2 - maxvco2/200) / 2;
+	क्रम (log2P = 0; clk && log2P < maxlog2P && clk <= (vco2 >> log2P); log2P++)
 		;
 	clkP = clk << log2P;
 
-	if (maxvco2 < clk + clk/200)	/* +0.5% */
+	अगर (maxvco2 < clk + clk/200)	/* +0.5% */
 		maxvco2 = clk + clk/200;
 
-	for (M1 = minM1; M1 <= maxM1; M1++) {
-		if (crystal/M1 < minU1)
-			return bestclk;
-		if (crystal/M1 > maxU1)
-			continue;
+	क्रम (M1 = minM1; M1 <= maxM1; M1++) अणु
+		अगर (crystal/M1 < minU1)
+			वापस bestclk;
+		अगर (crystal/M1 > maxU1)
+			जारी;
 
-		for (N1 = minN1; N1 <= maxN1; N1++) {
+		क्रम (N1 = minN1; N1 <= maxN1; N1++) अणु
 			calcclk1 = crystal * N1 / M1;
-			if (calcclk1 < minvco1)
-				continue;
-			if (calcclk1 > maxvco1)
-				break;
+			अगर (calcclk1 < minvco1)
+				जारी;
+			अगर (calcclk1 > maxvco1)
+				अवरोध;
 
-			for (M2 = minM2; M2 <= maxM2; M2++) {
-				if (calcclk1/M2 < minU2)
-					break;
-				if (calcclk1/M2 > maxU2)
-					continue;
+			क्रम (M2 = minM2; M2 <= maxM2; M2++) अणु
+				अगर (calcclk1/M2 < minU2)
+					अवरोध;
+				अगर (calcclk1/M2 > maxU2)
+					जारी;
 
 				/* add calcclk1/2 to round better */
 				N2 = (clkP * M2 + calcclk1/2) / calcclk1;
-				if (N2 < minN2)
-					continue;
-				if (N2 > maxN2)
-					break;
+				अगर (N2 < minN2)
+					जारी;
+				अगर (N2 > maxN2)
+					अवरोध;
 
-				if (!fixedgain2) {
-					if (chip_version < 0x60)
-						if (N2/M2 < 4 || N2/M2 > 10)
-							continue;
+				अगर (!fixedgain2) अणु
+					अगर (chip_version < 0x60)
+						अगर (N2/M2 < 4 || N2/M2 > 10)
+							जारी;
 
 					calcclk2 = calcclk1 * N2 / M2;
-					if (calcclk2 < minvco2)
-						break;
-					if (calcclk2 > maxvco2)
-						continue;
-				} else
+					अगर (calcclk2 < minvco2)
+						अवरोध;
+					अगर (calcclk2 > maxvco2)
+						जारी;
+				पूर्ण अन्यथा
 					calcclk2 = calcclk1;
 
 				calcclkout = calcclk2 >> log2P;
-				delta = abs(calcclkout - clk);
-				/* we do an exhaustive search rather than terminating
+				delta = असल(calcclkout - clk);
+				/* we करो an exhaustive search rather than terminating
 				 * on an optimality condition...
 				 */
-				if (delta < bestdelta) {
+				अगर (delta < bestdelta) अणु
 					bestdelta = delta;
 					bestclk = calcclkout;
 					*pN1 = N1;
@@ -213,33 +214,33 @@ getMNP_double(struct nvkm_subdev *subdev, struct nvbios_pll *info, int clk,
 					*pN2 = N2;
 					*pM2 = M2;
 					*pP = log2P;
-					if (delta == 0)	/* except this one */
-						return bestclk;
-				}
-			}
-		}
-	}
+					अगर (delta == 0)	/* except this one */
+						वापस bestclk;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return bestclk;
-}
+	वापस bestclk;
+पूर्ण
 
-int
-nv04_pll_calc(struct nvkm_subdev *subdev, struct nvbios_pll *info, u32 freq,
-	      int *N1, int *M1, int *N2, int *M2, int *P)
-{
-	int ret;
+पूर्णांक
+nv04_pll_calc(काष्ठा nvkm_subdev *subdev, काष्ठा nvbios_pll *info, u32 freq,
+	      पूर्णांक *N1, पूर्णांक *M1, पूर्णांक *N2, पूर्णांक *M2, पूर्णांक *P)
+अणु
+	पूर्णांक ret;
 
-	if (!info->vco2.max_freq || !N2) {
+	अगर (!info->vco2.max_freq || !N2) अणु
 		ret = getMNP_single(subdev, info, freq, N1, M1, P);
-		if (N2) {
+		अगर (N2) अणु
 			*N2 = 1;
 			*M2 = 1;
-		}
-	} else {
-		ret = getMNP_double(subdev, info, freq, N1, M1, N2, M2, P);
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ret = getMNP_द्विगुन(subdev, info, freq, N1, M1, N2, M2, P);
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		nvkm_error(subdev, "unable to compute acceptable pll values\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण

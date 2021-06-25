@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019 MediaTek Inc.
  * Author: Andy Teng <andy.teng@mediatek.com>
  *
  */
 
-#ifndef __PINCTRL_MTK_MT6779_H
-#define __PINCTRL_MTK_MT6779_H
+#अगर_अघोषित __PINCTRL_MTK_MT6779_H
+#घोषणा __PINCTRL_MTK_MT6779_H
 
-#include "pinctrl-paris.h"
+#समावेश "pinctrl-paris.h"
 
-static const struct mtk_pin_desc mtk_pins_mt6779[] = {
+अटल स्थिर काष्ठा mtk_pin_desc mtk_pins_mt6779[] = अणु
 	MTK_PIN(
 		0, "GPIO0",
 		MTK_EINT_FUNCTION(0, 0),
@@ -2042,44 +2043,44 @@ static const struct mtk_pin_desc mtk_pins_mt6779[] = {
 		203, "GPIO203",
 		MTK_EINT_FUNCTION(0, 187),
 		DRV_GRP4,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		204, "GPIO204",
 		MTK_EINT_FUNCTION(0, 188),
 		DRV_GRP4,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		205, "GPIO205",
 		MTK_EINT_FUNCTION(0, 189),
 		DRV_GRP4,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		206, "GPIO206",
 		MTK_EINT_FUNCTION(0, 190),
 		DRV_GRP4,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		207, "GPIO207",
 		MTK_EINT_FUNCTION(0, 191),
 		DRV_GRP4,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		208, "GPIO208",
 		MTK_EINT_FUNCTION(0, 193),
 		DRV_GRP4,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		209, "GPIO209",
 		MTK_EINT_FUNCTION(0, 194),
 		DRV_GRP4,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
-};
+पूर्ण;
 
-#endif /* __PINCTRL-MTK-MT6779_H */
+#पूर्ण_अगर /* __PINCTRL-MTK-MT6779_H */

@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_X86_SWAB_H
-#define _ASM_X86_SWAB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_X86_SWAB_H
+#घोषणा _ASM_X86_SWAB_H
 
-#include <linux/types.h>
-#include <linux/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <linux/compiler.h>
 
-static inline __attribute_const__ __u32 __arch_swab32(__u32 val)
-{
-	asm("bswapl %0" : "=r" (val) : "0" (val));
-	return val;
-}
-#define __arch_swab32 __arch_swab32
+अटल अंतरभूत __attribute_स्थिर__ __u32 __arch_swab32(__u32 val)
+अणु
+	यंत्र("bswapl %0" : "=r" (val) : "0" (val));
+	वापस val;
+पूर्ण
+#घोषणा __arch_swab32 __arch_swab32
 
-static inline __attribute_const__ __u64 __arch_swab64(__u64 val)
-{
-#ifdef __i386__
-	union {
-		struct {
+अटल अंतरभूत __attribute_स्थिर__ __u64 __arch_swab64(__u64 val)
+अणु
+#अगर_घोषित __i386__
+	जोड़ अणु
+		काष्ठा अणु
 			__u32 a;
 			__u32 b;
-		} s;
+		पूर्ण s;
 		__u64 u;
-	} v;
+	पूर्ण v;
 	v.u = val;
-	asm("bswapl %0 ; bswapl %1 ; xchgl %0,%1"
+	यंत्र("bswapl %0 ; bswapl %1 ; xchgl %0,%1"
 	    : "=r" (v.s.a), "=r" (v.s.b)
 	    : "0" (v.s.a), "1" (v.s.b));
-	return v.u;
-#else /* __i386__ */
-	asm("bswapq %0" : "=r" (val) : "0" (val));
-	return val;
-#endif
-}
-#define __arch_swab64 __arch_swab64
+	वापस v.u;
+#अन्यथा /* __i386__ */
+	यंत्र("bswapq %0" : "=r" (val) : "0" (val));
+	वापस val;
+#पूर्ण_अगर
+पूर्ण
+#घोषणा __arch_swab64 __arch_swab64
 
-#endif /* _ASM_X86_SWAB_H */
+#पूर्ण_अगर /* _ASM_X86_SWAB_H */

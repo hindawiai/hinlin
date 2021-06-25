@@ -1,412 +1,413 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_PLPAR_WRAPPERS_H
-#define _ASM_POWERPC_PLPAR_WRAPPERS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_PLPAR_WRAPPERS_H
+#घोषणा _ASM_POWERPC_PLPAR_WRAPPERS_H
 
-#ifdef CONFIG_PPC_PSERIES
+#अगर_घोषित CONFIG_PPC_PSERIES
 
-#include <linux/string.h>
-#include <linux/irqflags.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/irqflags.h>
 
-#include <asm/hvcall.h>
-#include <asm/paca.h>
-#include <asm/page.h>
+#समावेश <यंत्र/hvcall.h>
+#समावेश <यंत्र/paca.h>
+#समावेश <यंत्र/page.h>
 
-static inline long poll_pending(void)
-{
-	return plpar_hcall_norets(H_POLL_PENDING);
-}
+अटल अंतरभूत दीर्घ poll_pending(व्योम)
+अणु
+	वापस plpar_hcall_norets(H_POLL_PENDING);
+पूर्ण
 
-static inline u8 get_cede_latency_hint(void)
-{
-	return get_lppaca()->cede_latency_hint;
-}
+अटल अंतरभूत u8 get_cede_latency_hपूर्णांक(व्योम)
+अणु
+	वापस get_lppaca()->cede_latency_hपूर्णांक;
+पूर्ण
 
-static inline void set_cede_latency_hint(u8 latency_hint)
-{
-	get_lppaca()->cede_latency_hint = latency_hint;
-}
+अटल अंतरभूत व्योम set_cede_latency_hपूर्णांक(u8 latency_hपूर्णांक)
+अणु
+	get_lppaca()->cede_latency_hपूर्णांक = latency_hपूर्णांक;
+पूर्ण
 
-static inline long cede_processor(void)
-{
+अटल अंतरभूत दीर्घ cede_processor(व्योम)
+अणु
 	/*
-	 * We cannot call tracepoints inside RCU idle regions which
+	 * We cannot call tracepoपूर्णांकs inside RCU idle regions which
 	 * means we must not trace H_CEDE.
 	 */
-	return plpar_hcall_norets_notrace(H_CEDE);
-}
+	वापस plpar_hcall_norets_notrace(H_CEDE);
+पूर्ण
 
-static inline long extended_cede_processor(unsigned long latency_hint)
-{
-	long rc;
-	u8 old_latency_hint = get_cede_latency_hint();
+अटल अंतरभूत दीर्घ extended_cede_processor(अचिन्हित दीर्घ latency_hपूर्णांक)
+अणु
+	दीर्घ rc;
+	u8 old_latency_hपूर्णांक = get_cede_latency_hपूर्णांक();
 
-	set_cede_latency_hint(latency_hint);
+	set_cede_latency_hपूर्णांक(latency_hपूर्णांक);
 
 	rc = cede_processor();
-#ifdef CONFIG_PPC_IRQ_SOFT_MASK_DEBUG
-	/* Ensure that H_CEDE returns with IRQs on */
-	if (WARN_ON(!(mfmsr() & MSR_EE)))
+#अगर_घोषित CONFIG_PPC_IRQ_SOFT_MASK_DEBUG
+	/* Ensure that H_CEDE वापसs with IRQs on */
+	अगर (WARN_ON(!(mfmsr() & MSR_EE)))
 		__hard_irq_enable();
-#endif
+#पूर्ण_अगर
 
-	set_cede_latency_hint(old_latency_hint);
+	set_cede_latency_hपूर्णांक(old_latency_hपूर्णांक);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline long vpa_call(unsigned long flags, unsigned long cpu,
-		unsigned long vpa)
-{
+अटल अंतरभूत दीर्घ vpa_call(अचिन्हित दीर्घ flags, अचिन्हित दीर्घ cpu,
+		अचिन्हित दीर्घ vpa)
+अणु
 	flags = flags << H_VPA_FUNC_SHIFT;
 
-	return plpar_hcall_norets(H_REGISTER_VPA, flags, cpu, vpa);
-}
+	वापस plpar_hcall_norets(H_REGISTER_VPA, flags, cpu, vpa);
+पूर्ण
 
-static inline long unregister_vpa(unsigned long cpu)
-{
-	return vpa_call(H_VPA_DEREG_VPA, cpu, 0);
-}
+अटल अंतरभूत दीर्घ unरेजिस्टर_vpa(अचिन्हित दीर्घ cpu)
+अणु
+	वापस vpa_call(H_VPA_DEREG_VPA, cpu, 0);
+पूर्ण
 
-static inline long register_vpa(unsigned long cpu, unsigned long vpa)
-{
-	return vpa_call(H_VPA_REG_VPA, cpu, vpa);
-}
+अटल अंतरभूत दीर्घ रेजिस्टर_vpa(अचिन्हित दीर्घ cpu, अचिन्हित दीर्घ vpa)
+अणु
+	वापस vpa_call(H_VPA_REG_VPA, cpu, vpa);
+पूर्ण
 
-static inline long unregister_slb_shadow(unsigned long cpu)
-{
-	return vpa_call(H_VPA_DEREG_SLB, cpu, 0);
-}
+अटल अंतरभूत दीर्घ unरेजिस्टर_slb_shaकरोw(अचिन्हित दीर्घ cpu)
+अणु
+	वापस vpa_call(H_VPA_DEREG_SLB, cpu, 0);
+पूर्ण
 
-static inline long register_slb_shadow(unsigned long cpu, unsigned long vpa)
-{
-	return vpa_call(H_VPA_REG_SLB, cpu, vpa);
-}
+अटल अंतरभूत दीर्घ रेजिस्टर_slb_shaकरोw(अचिन्हित दीर्घ cpu, अचिन्हित दीर्घ vpa)
+अणु
+	वापस vpa_call(H_VPA_REG_SLB, cpu, vpa);
+पूर्ण
 
-static inline long unregister_dtl(unsigned long cpu)
-{
-	return vpa_call(H_VPA_DEREG_DTL, cpu, 0);
-}
+अटल अंतरभूत दीर्घ unरेजिस्टर_dtl(अचिन्हित दीर्घ cpu)
+अणु
+	वापस vpa_call(H_VPA_DEREG_DTL, cpu, 0);
+पूर्ण
 
-static inline long register_dtl(unsigned long cpu, unsigned long vpa)
-{
-	return vpa_call(H_VPA_REG_DTL, cpu, vpa);
-}
+अटल अंतरभूत दीर्घ रेजिस्टर_dtl(अचिन्हित दीर्घ cpu, अचिन्हित दीर्घ vpa)
+अणु
+	वापस vpa_call(H_VPA_REG_DTL, cpu, vpa);
+पूर्ण
 
-extern void vpa_init(int cpu);
+बाह्य व्योम vpa_init(पूर्णांक cpu);
 
-static inline long plpar_pte_enter(unsigned long flags,
-		unsigned long hpte_group, unsigned long hpte_v,
-		unsigned long hpte_r, unsigned long *slot)
-{
-	long rc;
-	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
+अटल अंतरभूत दीर्घ plpar_pte_enter(अचिन्हित दीर्घ flags,
+		अचिन्हित दीर्घ hpte_group, अचिन्हित दीर्घ hpte_v,
+		अचिन्हित दीर्घ hpte_r, अचिन्हित दीर्घ *slot)
+अणु
+	दीर्घ rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
 
 	rc = plpar_hcall(H_ENTER, retbuf, flags, hpte_group, hpte_v, hpte_r);
 
 	*slot = retbuf[0];
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline long plpar_pte_remove(unsigned long flags, unsigned long ptex,
-		unsigned long avpn, unsigned long *old_pteh_ret,
-		unsigned long *old_ptel_ret)
-{
-	long rc;
-	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
+अटल अंतरभूत दीर्घ plpar_pte_हटाओ(अचिन्हित दीर्घ flags, अचिन्हित दीर्घ ptex,
+		अचिन्हित दीर्घ avpn, अचिन्हित दीर्घ *old_pteh_ret,
+		अचिन्हित दीर्घ *old_ptel_ret)
+अणु
+	दीर्घ rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
 
 	rc = plpar_hcall(H_REMOVE, retbuf, flags, ptex, avpn);
 
 	*old_pteh_ret = retbuf[0];
 	*old_ptel_ret = retbuf[1];
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* plpar_pte_remove_raw can be called in real mode. It calls plpar_hcall_raw */
-static inline long plpar_pte_remove_raw(unsigned long flags, unsigned long ptex,
-		unsigned long avpn, unsigned long *old_pteh_ret,
-		unsigned long *old_ptel_ret)
-{
-	long rc;
-	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
+/* plpar_pte_हटाओ_raw can be called in real mode. It calls plpar_hcall_raw */
+अटल अंतरभूत दीर्घ plpar_pte_हटाओ_raw(अचिन्हित दीर्घ flags, अचिन्हित दीर्घ ptex,
+		अचिन्हित दीर्घ avpn, अचिन्हित दीर्घ *old_pteh_ret,
+		अचिन्हित दीर्घ *old_ptel_ret)
+अणु
+	दीर्घ rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
 
 	rc = plpar_hcall_raw(H_REMOVE, retbuf, flags, ptex, avpn);
 
 	*old_pteh_ret = retbuf[0];
 	*old_ptel_ret = retbuf[1];
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline long plpar_pte_read(unsigned long flags, unsigned long ptex,
-		unsigned long *old_pteh_ret, unsigned long *old_ptel_ret)
-{
-	long rc;
-	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
+अटल अंतरभूत दीर्घ plpar_pte_पढ़ो(अचिन्हित दीर्घ flags, अचिन्हित दीर्घ ptex,
+		अचिन्हित दीर्घ *old_pteh_ret, अचिन्हित दीर्घ *old_ptel_ret)
+अणु
+	दीर्घ rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
 
 	rc = plpar_hcall(H_READ, retbuf, flags, ptex);
 
 	*old_pteh_ret = retbuf[0];
 	*old_ptel_ret = retbuf[1];
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* plpar_pte_read_raw can be called in real mode. It calls plpar_hcall_raw */
-static inline long plpar_pte_read_raw(unsigned long flags, unsigned long ptex,
-		unsigned long *old_pteh_ret, unsigned long *old_ptel_ret)
-{
-	long rc;
-	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
+/* plpar_pte_पढ़ो_raw can be called in real mode. It calls plpar_hcall_raw */
+अटल अंतरभूत दीर्घ plpar_pte_पढ़ो_raw(अचिन्हित दीर्घ flags, अचिन्हित दीर्घ ptex,
+		अचिन्हित दीर्घ *old_pteh_ret, अचिन्हित दीर्घ *old_ptel_ret)
+अणु
+	दीर्घ rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
 
 	rc = plpar_hcall_raw(H_READ, retbuf, flags, ptex);
 
 	*old_pteh_ret = retbuf[0];
 	*old_ptel_ret = retbuf[1];
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * ptes must be 8*sizeof(unsigned long)
+ * ptes must be 8*माप(अचिन्हित दीर्घ)
  */
-static inline long plpar_pte_read_4(unsigned long flags, unsigned long ptex,
-				    unsigned long *ptes)
+अटल अंतरभूत दीर्घ plpar_pte_पढ़ो_4(अचिन्हित दीर्घ flags, अचिन्हित दीर्घ ptex,
+				    अचिन्हित दीर्घ *ptes)
 
-{
-	long rc;
-	unsigned long retbuf[PLPAR_HCALL9_BUFSIZE];
+अणु
+	दीर्घ rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL9_बफ_मानE];
 
 	rc = plpar_hcall9(H_READ, retbuf, flags | H_READ_4, ptex);
 
-	memcpy(ptes, retbuf, 8*sizeof(unsigned long));
+	स_नकल(ptes, retbuf, 8*माप(अचिन्हित दीर्घ));
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * plpar_pte_read_4_raw can be called in real mode.
- * ptes must be 8*sizeof(unsigned long)
+ * plpar_pte_पढ़ो_4_raw can be called in real mode.
+ * ptes must be 8*माप(अचिन्हित दीर्घ)
  */
-static inline long plpar_pte_read_4_raw(unsigned long flags, unsigned long ptex,
-					unsigned long *ptes)
+अटल अंतरभूत दीर्घ plpar_pte_पढ़ो_4_raw(अचिन्हित दीर्घ flags, अचिन्हित दीर्घ ptex,
+					अचिन्हित दीर्घ *ptes)
 
-{
-	long rc;
-	unsigned long retbuf[PLPAR_HCALL9_BUFSIZE];
+अणु
+	दीर्घ rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL9_बफ_मानE];
 
 	rc = plpar_hcall9_raw(H_READ, retbuf, flags | H_READ_4, ptex);
 
-	memcpy(ptes, retbuf, 8*sizeof(unsigned long));
+	स_नकल(ptes, retbuf, 8*माप(अचिन्हित दीर्घ));
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline long plpar_pte_protect(unsigned long flags, unsigned long ptex,
-		unsigned long avpn)
-{
-	return plpar_hcall_norets(H_PROTECT, flags, ptex, avpn);
-}
+अटल अंतरभूत दीर्घ plpar_pte_protect(अचिन्हित दीर्घ flags, अचिन्हित दीर्घ ptex,
+		अचिन्हित दीर्घ avpn)
+अणु
+	वापस plpar_hcall_norets(H_PROTECT, flags, ptex, avpn);
+पूर्ण
 
-static inline long plpar_resize_hpt_prepare(unsigned long flags,
-					    unsigned long shift)
-{
-	return plpar_hcall_norets(H_RESIZE_HPT_PREPARE, flags, shift);
-}
+अटल अंतरभूत दीर्घ plpar_resize_hpt_prepare(अचिन्हित दीर्घ flags,
+					    अचिन्हित दीर्घ shअगरt)
+अणु
+	वापस plpar_hcall_norets(H_RESIZE_HPT_PREPARE, flags, shअगरt);
+पूर्ण
 
-static inline long plpar_resize_hpt_commit(unsigned long flags,
-					   unsigned long shift)
-{
-	return plpar_hcall_norets(H_RESIZE_HPT_COMMIT, flags, shift);
-}
+अटल अंतरभूत दीर्घ plpar_resize_hpt_commit(अचिन्हित दीर्घ flags,
+					   अचिन्हित दीर्घ shअगरt)
+अणु
+	वापस plpar_hcall_norets(H_RESIZE_HPT_COMMIT, flags, shअगरt);
+पूर्ण
 
-static inline long plpar_tce_get(unsigned long liobn, unsigned long ioba,
-		unsigned long *tce_ret)
-{
-	long rc;
-	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
+अटल अंतरभूत दीर्घ plpar_tce_get(अचिन्हित दीर्घ liobn, अचिन्हित दीर्घ ioba,
+		अचिन्हित दीर्घ *tce_ret)
+अणु
+	दीर्घ rc;
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
 
 	rc = plpar_hcall(H_GET_TCE, retbuf, liobn, ioba);
 
 	*tce_ret = retbuf[0];
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline long plpar_tce_put(unsigned long liobn, unsigned long ioba,
-		unsigned long tceval)
-{
-	return plpar_hcall_norets(H_PUT_TCE, liobn, ioba, tceval);
-}
+अटल अंतरभूत दीर्घ plpar_tce_put(अचिन्हित दीर्घ liobn, अचिन्हित दीर्घ ioba,
+		अचिन्हित दीर्घ tceval)
+अणु
+	वापस plpar_hcall_norets(H_PUT_TCE, liobn, ioba, tceval);
+पूर्ण
 
-static inline long plpar_tce_put_indirect(unsigned long liobn,
-		unsigned long ioba, unsigned long page, unsigned long count)
-{
-	return plpar_hcall_norets(H_PUT_TCE_INDIRECT, liobn, ioba, page, count);
-}
+अटल अंतरभूत दीर्घ plpar_tce_put_indirect(अचिन्हित दीर्घ liobn,
+		अचिन्हित दीर्घ ioba, अचिन्हित दीर्घ page, अचिन्हित दीर्घ count)
+अणु
+	वापस plpar_hcall_norets(H_PUT_TCE_INसूचीECT, liobn, ioba, page, count);
+पूर्ण
 
-static inline long plpar_tce_stuff(unsigned long liobn, unsigned long ioba,
-		unsigned long tceval, unsigned long count)
-{
-	return plpar_hcall_norets(H_STUFF_TCE, liobn, ioba, tceval, count);
-}
+अटल अंतरभूत दीर्घ plpar_tce_stuff(अचिन्हित दीर्घ liobn, अचिन्हित दीर्घ ioba,
+		अचिन्हित दीर्घ tceval, अचिन्हित दीर्घ count)
+अणु
+	वापस plpar_hcall_norets(H_STUFF_TCE, liobn, ioba, tceval, count);
+पूर्ण
 
 /* Set various resource mode parameters */
-static inline long plpar_set_mode(unsigned long mflags, unsigned long resource,
-		unsigned long value1, unsigned long value2)
-{
-	return plpar_hcall_norets(H_SET_MODE, mflags, resource, value1, value2);
-}
+अटल अंतरभूत दीर्घ plpar_set_mode(अचिन्हित दीर्घ mflags, अचिन्हित दीर्घ resource,
+		अचिन्हित दीर्घ value1, अचिन्हित दीर्घ value2)
+अणु
+	वापस plpar_hcall_norets(H_SET_MODE, mflags, resource, value1, value2);
+पूर्ण
 
 /*
  * Enable relocation on exceptions on this partition
  *
- * Note: this call has a partition wide scope and can take a while to complete.
- * If it returns H_LONG_BUSY_* it should be retried periodically until it
- * returns H_SUCCESS.
+ * Note: this call has a partition wide scope and can take a जबतक to complete.
+ * If it वापसs H_LONG_BUSY_* it should be retried periodically until it
+ * वापसs H_SUCCESS.
  */
-static inline long enable_reloc_on_exceptions(void)
-{
+अटल अंतरभूत दीर्घ enable_reloc_on_exceptions(व्योम)
+अणु
 	/* mflags = 3: Exceptions at 0xC000000000004000 */
-	return plpar_set_mode(3, H_SET_MODE_RESOURCE_ADDR_TRANS_MODE, 0, 0);
-}
+	वापस plpar_set_mode(3, H_SET_MODE_RESOURCE_ADDR_TRANS_MODE, 0, 0);
+पूर्ण
 
 /*
  * Disable relocation on exceptions on this partition
  *
- * Note: this call has a partition wide scope and can take a while to complete.
- * If it returns H_LONG_BUSY_* it should be retried periodically until it
- * returns H_SUCCESS.
+ * Note: this call has a partition wide scope and can take a जबतक to complete.
+ * If it वापसs H_LONG_BUSY_* it should be retried periodically until it
+ * वापसs H_SUCCESS.
  */
-static inline long disable_reloc_on_exceptions(void) {
-	return plpar_set_mode(0, H_SET_MODE_RESOURCE_ADDR_TRANS_MODE, 0, 0);
-}
+अटल अंतरभूत दीर्घ disable_reloc_on_exceptions(व्योम) अणु
+	वापस plpar_set_mode(0, H_SET_MODE_RESOURCE_ADDR_TRANS_MODE, 0, 0);
+पूर्ण
 
 /*
  * Take exceptions in big endian mode on this partition
  *
- * Note: this call has a partition wide scope and can take a while to complete.
- * If it returns H_LONG_BUSY_* it should be retried periodically until it
- * returns H_SUCCESS.
+ * Note: this call has a partition wide scope and can take a जबतक to complete.
+ * If it वापसs H_LONG_BUSY_* it should be retried periodically until it
+ * वापसs H_SUCCESS.
  */
-static inline long enable_big_endian_exceptions(void)
-{
+अटल अंतरभूत दीर्घ enable_big_endian_exceptions(व्योम)
+अणु
 	/* mflags = 0: big endian exceptions */
-	return plpar_set_mode(0, H_SET_MODE_RESOURCE_LE, 0, 0);
-}
+	वापस plpar_set_mode(0, H_SET_MODE_RESOURCE_LE, 0, 0);
+पूर्ण
 
 /*
  * Take exceptions in little endian mode on this partition
  *
- * Note: this call has a partition wide scope and can take a while to complete.
- * If it returns H_LONG_BUSY_* it should be retried periodically until it
- * returns H_SUCCESS.
+ * Note: this call has a partition wide scope and can take a जबतक to complete.
+ * If it वापसs H_LONG_BUSY_* it should be retried periodically until it
+ * वापसs H_SUCCESS.
  */
-static inline long enable_little_endian_exceptions(void)
-{
+अटल अंतरभूत दीर्घ enable_little_endian_exceptions(व्योम)
+अणु
 	/* mflags = 1: little endian exceptions */
-	return plpar_set_mode(1, H_SET_MODE_RESOURCE_LE, 0, 0);
-}
+	वापस plpar_set_mode(1, H_SET_MODE_RESOURCE_LE, 0, 0);
+पूर्ण
 
-static inline long plpar_set_ciabr(unsigned long ciabr)
-{
-	return plpar_set_mode(0, H_SET_MODE_RESOURCE_SET_CIABR, ciabr, 0);
-}
+अटल अंतरभूत दीर्घ plpar_set_ciabr(अचिन्हित दीर्घ ciabr)
+अणु
+	वापस plpar_set_mode(0, H_SET_MODE_RESOURCE_SET_CIABR, ciabr, 0);
+पूर्ण
 
-static inline long plpar_set_watchpoint0(unsigned long dawr0, unsigned long dawrx0)
-{
-	return plpar_set_mode(0, H_SET_MODE_RESOURCE_SET_DAWR0, dawr0, dawrx0);
-}
+अटल अंतरभूत दीर्घ plpar_set_watchpoपूर्णांक0(अचिन्हित दीर्घ dawr0, अचिन्हित दीर्घ dawrx0)
+अणु
+	वापस plpar_set_mode(0, H_SET_MODE_RESOURCE_SET_DAWR0, dawr0, dawrx0);
+पूर्ण
 
-static inline long plpar_set_watchpoint1(unsigned long dawr1, unsigned long dawrx1)
-{
-	return plpar_set_mode(0, H_SET_MODE_RESOURCE_SET_DAWR1, dawr1, dawrx1);
-}
+अटल अंतरभूत दीर्घ plpar_set_watchpoपूर्णांक1(अचिन्हित दीर्घ dawr1, अचिन्हित दीर्घ dawrx1)
+अणु
+	वापस plpar_set_mode(0, H_SET_MODE_RESOURCE_SET_DAWR1, dawr1, dawrx1);
+पूर्ण
 
-static inline long plpar_signal_sys_reset(long cpu)
-{
-	return plpar_hcall_norets(H_SIGNAL_SYS_RESET, cpu);
-}
+अटल अंतरभूत दीर्घ plpar_संकेत_sys_reset(दीर्घ cpu)
+अणु
+	वापस plpar_hcall_norets(H_SIGNAL_SYS_RESET, cpu);
+पूर्ण
 
-static inline long plpar_get_cpu_characteristics(struct h_cpu_char_result *p)
-{
-	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
-	long rc;
+अटल अंतरभूत दीर्घ plpar_get_cpu_अक्षरacteristics(काष्ठा h_cpu_अक्षर_result *p)
+अणु
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
+	दीर्घ rc;
 
 	rc = plpar_hcall(H_GET_CPU_CHARACTERISTICS, retbuf);
-	if (rc == H_SUCCESS) {
-		p->character = retbuf[0];
+	अगर (rc == H_SUCCESS) अणु
+		p->अक्षरacter = retbuf[0];
 		p->behaviour = retbuf[1];
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Wrapper to H_RPT_INVALIDATE hcall that handles return values appropriately
+ * Wrapper to H_RPT_INVALIDATE hcall that handles वापस values appropriately
  *
  * - Returns H_SUCCESS on success
- * - For H_BUSY return value, we retry the hcall.
- * - For any other hcall failures, attempt a full flush once before
+ * - For H_BUSY वापस value, we retry the hcall.
+ * - For any other hcall failures, attempt a full flush once beक्रमe
  *   resorting to BUG().
  *
  * Note: This hcall is expected to fail only very rarely. The correct
- * error recovery of killing the process/guest will be eventually
+ * error recovery of समाप्तing the process/guest will be eventually
  * needed.
  */
-static inline long pseries_rpt_invalidate(u32 pid, u64 target, u64 type,
+अटल अंतरभूत दीर्घ pseries_rpt_invalidate(u32 pid, u64 target, u64 type,
 					  u64 page_sizes, u64 start, u64 end)
-{
-	long rc;
-	unsigned long all;
+अणु
+	दीर्घ rc;
+	अचिन्हित दीर्घ all;
 
-	while (true) {
+	जबतक (true) अणु
 		rc = plpar_hcall_norets(H_RPT_INVALIDATE, pid, target, type,
 					page_sizes, start, end);
-		if (rc == H_BUSY) {
+		अगर (rc == H_BUSY) अणु
 			cpu_relax();
-			continue;
-		} else if (rc == H_SUCCESS)
-			return rc;
+			जारी;
+		पूर्ण अन्यथा अगर (rc == H_SUCCESS)
+			वापस rc;
 
 		/* Flush request failed, try with a full flush once */
-		if (type & H_RPTI_TYPE_NESTED)
+		अगर (type & H_RPTI_TYPE_NESTED)
 			all = H_RPTI_TYPE_NESTED | H_RPTI_TYPE_NESTED_ALL;
-		else
+		अन्यथा
 			all = H_RPTI_TYPE_ALL;
 retry:
 		rc = plpar_hcall_norets(H_RPT_INVALIDATE, pid, target,
 					all, page_sizes, 0, -1UL);
-		if (rc == H_BUSY) {
+		अगर (rc == H_BUSY) अणु
 			cpu_relax();
-			goto retry;
-		} else if (rc == H_SUCCESS)
-			return rc;
+			जाओ retry;
+		पूर्ण अन्यथा अगर (rc == H_SUCCESS)
+			वापस rc;
 
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else /* !CONFIG_PPC_PSERIES */
+#अन्यथा /* !CONFIG_PPC_PSERIES */
 
-static inline long plpar_set_ciabr(unsigned long ciabr)
-{
-	return 0;
-}
+अटल अंतरभूत दीर्घ plpar_set_ciabr(अचिन्हित दीर्घ ciabr)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline long plpar_pte_read_4(unsigned long flags, unsigned long ptex,
-				    unsigned long *ptes)
-{
-	return 0;
-}
+अटल अंतरभूत दीर्घ plpar_pte_पढ़ो_4(अचिन्हित दीर्घ flags, अचिन्हित दीर्घ ptex,
+				    अचिन्हित दीर्घ *ptes)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline long pseries_rpt_invalidate(u32 pid, u64 target, u64 type,
+अटल अंतरभूत दीर्घ pseries_rpt_invalidate(u32 pid, u64 target, u64 type,
 					  u64 page_sizes, u64 start, u64 end)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_PPC_PSERIES */
+#पूर्ण_अगर /* CONFIG_PPC_PSERIES */
 
-#endif /* _ASM_POWERPC_PLPAR_WRAPPERS_H */
+#पूर्ण_अगर /* _ASM_POWERPC_PLPAR_WRAPPERS_H */

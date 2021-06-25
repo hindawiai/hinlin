@@ -1,447 +1,448 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * misc.c:  Miscellaneous prom functions that don't belong
- *          anywhere else.
+ * misc.c:  Miscellaneous prom functions that करोn't beदीर्घ
+ *          anywhere अन्यथा.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  * Copyright (C) 1996,1997 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
 
-#include <asm/openprom.h>
-#include <asm/oplib.h>
-#include <asm/ldc.h>
+#समावेश <यंत्र/खोलोprom.h>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/ldc.h>
 
-static int prom_service_exists(const char *service_name)
-{
-	unsigned long args[5];
+अटल पूर्णांक prom_service_exists(स्थिर अक्षर *service_name)
+अणु
+	अचिन्हित दीर्घ args[5];
 
-	args[0] = (unsigned long) "test";
+	args[0] = (अचिन्हित दीर्घ) "test";
 	args[1] = 1;
 	args[2] = 1;
-	args[3] = (unsigned long) service_name;
-	args[4] = (unsigned long) -1;
+	args[3] = (अचिन्हित दीर्घ) service_name;
+	args[4] = (अचिन्हित दीर्घ) -1;
 
 	p1275_cmd_direct(args);
 
-	if (args[4])
-		return 0;
-	return 1;
-}
+	अगर (args[4])
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-void prom_sun4v_guest_soft_state(void)
-{
-	const char *svc = "SUNW,soft-state-supported";
-	unsigned long args[3];
+व्योम prom_sun4v_guest_soft_state(व्योम)
+अणु
+	स्थिर अक्षर *svc = "SUNW,soft-state-supported";
+	अचिन्हित दीर्घ args[3];
 
-	if (!prom_service_exists(svc))
-		return;
-	args[0] = (unsigned long) svc;
+	अगर (!prom_service_exists(svc))
+		वापस;
+	args[0] = (अचिन्हित दीर्घ) svc;
 	args[1] = 0;
 	args[2] = 0;
 	p1275_cmd_direct(args);
-}
+पूर्ण
 
 /* Reset and reboot the machine with the command 'bcommand'. */
-void prom_reboot(const char *bcommand)
-{
-	unsigned long args[4];
+व्योम prom_reboot(स्थिर अक्षर *bcommand)
+अणु
+	अचिन्हित दीर्घ args[4];
 
-#ifdef CONFIG_SUN_LDOMS
-	if (ldom_domaining_enabled)
-		ldom_reboot(bcommand);
-#endif
-	args[0] = (unsigned long) "boot";
+#अगर_घोषित CONFIG_SUN_LDOMS
+	अगर (lकरोm_करोमुख्यing_enabled)
+		lकरोm_reboot(bcommand);
+#पूर्ण_अगर
+	args[0] = (अचिन्हित दीर्घ) "boot";
 	args[1] = 1;
 	args[2] = 0;
-	args[3] = (unsigned long) bcommand;
+	args[3] = (अचिन्हित दीर्घ) bcommand;
 
 	p1275_cmd_direct(args);
-}
+पूर्ण
 
 /* Forth evaluate the expression contained in 'fstring'. */
-void prom_feval(const char *fstring)
-{
-	unsigned long args[5];
+व्योम prom_feval(स्थिर अक्षर *fstring)
+अणु
+	अचिन्हित दीर्घ args[5];
 
-	if (!fstring || fstring[0] == 0)
-		return;
-	args[0] = (unsigned long) "interpret";
+	अगर (!fstring || fstring[0] == 0)
+		वापस;
+	args[0] = (अचिन्हित दीर्घ) "interpret";
 	args[1] = 1;
 	args[2] = 1;
-	args[3] = (unsigned long) fstring;
-	args[4] = (unsigned long) -1;
+	args[3] = (अचिन्हित दीर्घ) fstring;
+	args[4] = (अचिन्हित दीर्घ) -1;
 
 	p1275_cmd_direct(args);
-}
+पूर्ण
 EXPORT_SYMBOL(prom_feval);
 
-/* Drop into the prom, with the chance to continue with the 'go'
+/* Drop पूर्णांकo the prom, with the chance to जारी with the 'go'
  * prom command.
  */
-void prom_cmdline(void)
-{
-	unsigned long args[3];
-	unsigned long flags;
+व्योम prom_cmdline(व्योम)
+अणु
+	अचिन्हित दीर्घ args[3];
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	smp_capture();
-#endif
+#पूर्ण_अगर
 
-	args[0] = (unsigned long) "enter";
+	args[0] = (अचिन्हित दीर्घ) "enter";
 	args[1] = 0;
 	args[2] = 0;
 
 	p1275_cmd_direct(args);
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	smp_release();
-#endif
+#पूर्ण_अगर
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
-/* Drop into the prom, but completely terminate the program.
+/* Drop पूर्णांकo the prom, but completely terminate the program.
  * No chance of continuing.
  */
-void notrace prom_halt(void)
-{
-	unsigned long args[3];
+व्योम notrace prom_halt(व्योम)
+अणु
+	अचिन्हित दीर्घ args[3];
 
-#ifdef CONFIG_SUN_LDOMS
-	if (ldom_domaining_enabled)
-		ldom_power_off();
-#endif
+#अगर_घोषित CONFIG_SUN_LDOMS
+	अगर (lकरोm_करोमुख्यing_enabled)
+		lकरोm_घातer_off();
+#पूर्ण_अगर
 again:
-	args[0] = (unsigned long) "exit";
+	args[0] = (अचिन्हित दीर्घ) "exit";
 	args[1] = 0;
 	args[2] = 0;
 	p1275_cmd_direct(args);
-	goto again; /* PROM is out to get me -DaveM */
-}
+	जाओ again; /* PROM is out to get me -DaveM */
+पूर्ण
 
-void prom_halt_power_off(void)
-{
-	unsigned long args[3];
+व्योम prom_halt_घातer_off(व्योम)
+अणु
+	अचिन्हित दीर्घ args[3];
 
-#ifdef CONFIG_SUN_LDOMS
-	if (ldom_domaining_enabled)
-		ldom_power_off();
-#endif
-	args[0] = (unsigned long) "SUNW,power-off";
+#अगर_घोषित CONFIG_SUN_LDOMS
+	अगर (lकरोm_करोमुख्यing_enabled)
+		lकरोm_घातer_off();
+#पूर्ण_अगर
+	args[0] = (अचिन्हित दीर्घ) "SUNW,power-off";
 	args[1] = 0;
 	args[2] = 0;
 	p1275_cmd_direct(args);
 
-	/* if nothing else helps, we just halt */
+	/* अगर nothing अन्यथा helps, we just halt */
 	prom_halt();
-}
+पूर्ण
 
-/* Get the idprom and stuff it into buffer 'idbuf'.  Returns the
- * format type.  'num_bytes' is the number of bytes that your idbuf
- * has space for.  Returns 0xff on error.
+/* Get the idprom and stuff it पूर्णांकo buffer 'idbuf'.  Returns the
+ * क्रमmat type.  'num_bytes' is the number of bytes that your idbuf
+ * has space क्रम.  Returns 0xff on error.
  */
-unsigned char prom_get_idprom(char *idbuf, int num_bytes)
-{
-	int len;
+अचिन्हित अक्षर prom_get_idprom(अक्षर *idbuf, पूर्णांक num_bytes)
+अणु
+	पूर्णांक len;
 
 	len = prom_getproplen(prom_root_node, "idprom");
-	if ((len >num_bytes) || (len == -1))
-		return 0xff;
-	if (!prom_getproperty(prom_root_node, "idprom", idbuf, num_bytes))
-		return idbuf[0];
+	अगर ((len >num_bytes) || (len == -1))
+		वापस 0xff;
+	अगर (!prom_getproperty(prom_root_node, "idprom", idbuf, num_bytes))
+		वापस idbuf[0];
 
-	return 0xff;
-}
+	वापस 0xff;
+पूर्ण
 
-int prom_get_mmu_ihandle(void)
-{
+पूर्णांक prom_get_mmu_ihandle(व्योम)
+अणु
 	phandle node;
-	int ret;
+	पूर्णांक ret;
 
-	if (prom_mmu_ihandle_cache != 0)
-		return prom_mmu_ihandle_cache;
+	अगर (prom_mmu_ihandle_cache != 0)
+		वापस prom_mmu_ihandle_cache;
 
 	node = prom_finddevice(prom_chosen_path);
-	ret = prom_getint(node, prom_mmu_name);
-	if (ret == -1 || ret == 0)
+	ret = prom_getपूर्णांक(node, prom_mmu_name);
+	अगर (ret == -1 || ret == 0)
 		prom_mmu_ihandle_cache = -1;
-	else
+	अन्यथा
 		prom_mmu_ihandle_cache = ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int prom_get_memory_ihandle(void)
-{
-	static int memory_ihandle_cache;
+अटल पूर्णांक prom_get_memory_ihandle(व्योम)
+अणु
+	अटल पूर्णांक memory_ihandle_cache;
 	phandle node;
-	int ret;
+	पूर्णांक ret;
 
-	if (memory_ihandle_cache != 0)
-		return memory_ihandle_cache;
+	अगर (memory_ihandle_cache != 0)
+		वापस memory_ihandle_cache;
 
 	node = prom_finddevice("/chosen");
-	ret = prom_getint(node, "memory");
-	if (ret == -1 || ret == 0)
+	ret = prom_getपूर्णांक(node, "memory");
+	अगर (ret == -1 || ret == 0)
 		memory_ihandle_cache = -1;
-	else
+	अन्यथा
 		memory_ihandle_cache = ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Load explicit I/D TLB entries. */
-static long tlb_load(const char *type, unsigned long index,
-		     unsigned long tte_data, unsigned long vaddr)
-{
-	unsigned long args[9];
+अटल दीर्घ tlb_load(स्थिर अक्षर *type, अचिन्हित दीर्घ index,
+		     अचिन्हित दीर्घ tte_data, अचिन्हित दीर्घ vaddr)
+अणु
+	अचिन्हित दीर्घ args[9];
 
-	args[0] = (unsigned long) prom_callmethod_name;
+	args[0] = (अचिन्हित दीर्घ) prom_callmethod_name;
 	args[1] = 5;
 	args[2] = 1;
-	args[3] = (unsigned long) type;
-	args[4] = (unsigned int) prom_get_mmu_ihandle();
+	args[3] = (अचिन्हित दीर्घ) type;
+	args[4] = (अचिन्हित पूर्णांक) prom_get_mmu_ihandle();
 	args[5] = vaddr;
 	args[6] = tte_data;
 	args[7] = index;
-	args[8] = (unsigned long) -1;
+	args[8] = (अचिन्हित दीर्घ) -1;
 
 	p1275_cmd_direct(args);
 
-	return (long) args[8];
-}
+	वापस (दीर्घ) args[8];
+पूर्ण
 
-long prom_itlb_load(unsigned long index,
-		    unsigned long tte_data,
-		    unsigned long vaddr)
-{
-	return tlb_load("SUNW,itlb-load", index, tte_data, vaddr);
-}
+दीर्घ prom_itlb_load(अचिन्हित दीर्घ index,
+		    अचिन्हित दीर्घ tte_data,
+		    अचिन्हित दीर्घ vaddr)
+अणु
+	वापस tlb_load("SUNW,itlb-load", index, tte_data, vaddr);
+पूर्ण
 
-long prom_dtlb_load(unsigned long index,
-		    unsigned long tte_data,
-		    unsigned long vaddr)
-{
-	return tlb_load("SUNW,dtlb-load", index, tte_data, vaddr);
-}
+दीर्घ prom_dtlb_load(अचिन्हित दीर्घ index,
+		    अचिन्हित दीर्घ tte_data,
+		    अचिन्हित दीर्घ vaddr)
+अणु
+	वापस tlb_load("SUNW,dtlb-load", index, tte_data, vaddr);
+पूर्ण
 
-int prom_map(int mode, unsigned long size,
-	     unsigned long vaddr, unsigned long paddr)
-{
-	unsigned long args[11];
-	int ret;
+पूर्णांक prom_map(पूर्णांक mode, अचिन्हित दीर्घ size,
+	     अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ paddr)
+अणु
+	अचिन्हित दीर्घ args[11];
+	पूर्णांक ret;
 
-	args[0] = (unsigned long) prom_callmethod_name;
+	args[0] = (अचिन्हित दीर्घ) prom_callmethod_name;
 	args[1] = 7;
 	args[2] = 1;
-	args[3] = (unsigned long) prom_map_name;
-	args[4] = (unsigned int) prom_get_mmu_ihandle();
-	args[5] = (unsigned int) mode;
+	args[3] = (अचिन्हित दीर्घ) prom_map_name;
+	args[4] = (अचिन्हित पूर्णांक) prom_get_mmu_ihandle();
+	args[5] = (अचिन्हित पूर्णांक) mode;
 	args[6] = size;
 	args[7] = vaddr;
 	args[8] = 0;
 	args[9] = paddr;
-	args[10] = (unsigned long) -1;
+	args[10] = (अचिन्हित दीर्घ) -1;
 
 	p1275_cmd_direct(args);
 
-	ret = (int) args[10];
-	if (ret == 0)
+	ret = (पूर्णांक) args[10];
+	अगर (ret == 0)
 		ret = -1;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void prom_unmap(unsigned long size, unsigned long vaddr)
-{
-	unsigned long args[7];
+व्योम prom_unmap(अचिन्हित दीर्घ size, अचिन्हित दीर्घ vaddr)
+अणु
+	अचिन्हित दीर्घ args[7];
 
-	args[0] = (unsigned long) prom_callmethod_name;
+	args[0] = (अचिन्हित दीर्घ) prom_callmethod_name;
 	args[1] = 4;
 	args[2] = 0;
-	args[3] = (unsigned long) prom_unmap_name;
-	args[4] = (unsigned int) prom_get_mmu_ihandle();
+	args[3] = (अचिन्हित दीर्घ) prom_unmap_name;
+	args[4] = (अचिन्हित पूर्णांक) prom_get_mmu_ihandle();
 	args[5] = size;
 	args[6] = vaddr;
 
 	p1275_cmd_direct(args);
-}
+पूर्ण
 
-/* Set aside physical memory which is not touched or modified
+/* Set aside physical memory which is not touched or modअगरied
  * across soft resets.
  */
-int prom_retain(const char *name, unsigned long size,
-		unsigned long align, unsigned long *paddr)
-{
-	unsigned long args[11];
+पूर्णांक prom_retain(स्थिर अक्षर *name, अचिन्हित दीर्घ size,
+		अचिन्हित दीर्घ align, अचिन्हित दीर्घ *paddr)
+अणु
+	अचिन्हित दीर्घ args[11];
 
-	args[0] = (unsigned long) prom_callmethod_name;
+	args[0] = (अचिन्हित दीर्घ) prom_callmethod_name;
 	args[1] = 5;
 	args[2] = 3;
-	args[3] = (unsigned long) "SUNW,retain";
-	args[4] = (unsigned int) prom_get_memory_ihandle();
+	args[3] = (अचिन्हित दीर्घ) "SUNW,retain";
+	args[4] = (अचिन्हित पूर्णांक) prom_get_memory_ihandle();
 	args[5] = align;
 	args[6] = size;
-	args[7] = (unsigned long) name;
-	args[8] = (unsigned long) -1;
-	args[9] = (unsigned long) -1;
-	args[10] = (unsigned long) -1;
+	args[7] = (अचिन्हित दीर्घ) name;
+	args[8] = (अचिन्हित दीर्घ) -1;
+	args[9] = (अचिन्हित दीर्घ) -1;
+	args[10] = (अचिन्हित दीर्घ) -1;
 
 	p1275_cmd_direct(args);
 
-	if (args[8])
-		return (int) args[8];
+	अगर (args[8])
+		वापस (पूर्णांक) args[8];
 
 	/* Next we get "phys_high" then "phys_low".  On 64-bit
-	 * the phys_high cell is don't care since the phys_low
+	 * the phys_high cell is करोn't care since the phys_low
 	 * cell has the full value.
 	 */
 	*paddr = args[10];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Get "Unumber" string for the SIMM at the given
- * memory address.  Usually this will be of the form
+/* Get "Unumber" string क्रम the SIMM at the given
+ * memory address.  Usually this will be of the क्रमm
  * "Uxxxx" where xxxx is a decimal number which is
- * etched into the motherboard next to the SIMM slot
+ * etched पूर्णांकo the motherboard next to the SIMM slot
  * in question.
  */
-int prom_getunumber(int syndrome_code,
-		    unsigned long phys_addr,
-		    char *buf, int buflen)
-{
-	unsigned long args[12];
+पूर्णांक prom_getunumber(पूर्णांक syndrome_code,
+		    अचिन्हित दीर्घ phys_addr,
+		    अक्षर *buf, पूर्णांक buflen)
+अणु
+	अचिन्हित दीर्घ args[12];
 
-	args[0] = (unsigned long) prom_callmethod_name;
+	args[0] = (अचिन्हित दीर्घ) prom_callmethod_name;
 	args[1] = 7;
 	args[2] = 2;
-	args[3] = (unsigned long) "SUNW,get-unumber";
-	args[4] = (unsigned int) prom_get_memory_ihandle();
+	args[3] = (अचिन्हित दीर्घ) "SUNW,get-unumber";
+	args[4] = (अचिन्हित पूर्णांक) prom_get_memory_ihandle();
 	args[5] = buflen;
-	args[6] = (unsigned long) buf;
+	args[6] = (अचिन्हित दीर्घ) buf;
 	args[7] = 0;
 	args[8] = phys_addr;
-	args[9] = (unsigned int) syndrome_code;
-	args[10] = (unsigned long) -1;
-	args[11] = (unsigned long) -1;
+	args[9] = (अचिन्हित पूर्णांक) syndrome_code;
+	args[10] = (अचिन्हित दीर्घ) -1;
+	args[11] = (अचिन्हित दीर्घ) -1;
 
 	p1275_cmd_direct(args);
 
-	return (int) args[10];
-}
+	वापस (पूर्णांक) args[10];
+पूर्ण
 
 /* Power management extensions. */
-void prom_sleepself(void)
-{
-	unsigned long args[3];
+व्योम prom_sleepself(व्योम)
+अणु
+	अचिन्हित दीर्घ args[3];
 
-	args[0] = (unsigned long) "SUNW,sleep-self";
+	args[0] = (अचिन्हित दीर्घ) "SUNW,sleep-self";
 	args[1] = 0;
 	args[2] = 0;
 	p1275_cmd_direct(args);
-}
+पूर्ण
 
-int prom_sleepsystem(void)
-{
-	unsigned long args[4];
+पूर्णांक prom_sleepप्रणाली(व्योम)
+अणु
+	अचिन्हित दीर्घ args[4];
 
-	args[0] = (unsigned long) "SUNW,sleep-system";
+	args[0] = (अचिन्हित दीर्घ) "SUNW,sleep-system";
 	args[1] = 0;
 	args[2] = 1;
-	args[3] = (unsigned long) -1;
+	args[3] = (अचिन्हित दीर्घ) -1;
 	p1275_cmd_direct(args);
 
-	return (int) args[3];
-}
+	वापस (पूर्णांक) args[3];
+पूर्ण
 
-int prom_wakeupsystem(void)
-{
-	unsigned long args[4];
+पूर्णांक prom_wakeupप्रणाली(व्योम)
+अणु
+	अचिन्हित दीर्घ args[4];
 
-	args[0] = (unsigned long) "SUNW,wakeup-system";
+	args[0] = (अचिन्हित दीर्घ) "SUNW,wakeup-system";
 	args[1] = 0;
 	args[2] = 1;
-	args[3] = (unsigned long) -1;
+	args[3] = (अचिन्हित दीर्घ) -1;
 	p1275_cmd_direct(args);
 
-	return (int) args[3];
-}
+	वापस (पूर्णांक) args[3];
+पूर्ण
 
-#ifdef CONFIG_SMP
-void prom_startcpu(int cpunode, unsigned long pc, unsigned long arg)
-{
-	unsigned long args[6];
+#अगर_घोषित CONFIG_SMP
+व्योम prom_startcpu(पूर्णांक cpunode, अचिन्हित दीर्घ pc, अचिन्हित दीर्घ arg)
+अणु
+	अचिन्हित दीर्घ args[6];
 
-	args[0] = (unsigned long) "SUNW,start-cpu";
+	args[0] = (अचिन्हित दीर्घ) "SUNW,start-cpu";
 	args[1] = 3;
 	args[2] = 0;
-	args[3] = (unsigned int) cpunode;
+	args[3] = (अचिन्हित पूर्णांक) cpunode;
 	args[4] = pc;
 	args[5] = arg;
 	p1275_cmd_direct(args);
-}
+पूर्ण
 
-void prom_startcpu_cpuid(int cpuid, unsigned long pc, unsigned long arg)
-{
-	unsigned long args[6];
+व्योम prom_startcpu_cpuid(पूर्णांक cpuid, अचिन्हित दीर्घ pc, अचिन्हित दीर्घ arg)
+अणु
+	अचिन्हित दीर्घ args[6];
 
-	args[0] = (unsigned long) "SUNW,start-cpu-by-cpuid";
+	args[0] = (अचिन्हित दीर्घ) "SUNW,start-cpu-by-cpuid";
 	args[1] = 3;
 	args[2] = 0;
-	args[3] = (unsigned int) cpuid;
+	args[3] = (अचिन्हित पूर्णांक) cpuid;
 	args[4] = pc;
 	args[5] = arg;
 	p1275_cmd_direct(args);
-}
+पूर्ण
 
-void prom_stopcpu_cpuid(int cpuid)
-{
-	unsigned long args[4];
+व्योम prom_stopcpu_cpuid(पूर्णांक cpuid)
+अणु
+	अचिन्हित दीर्घ args[4];
 
-	args[0] = (unsigned long) "SUNW,stop-cpu-by-cpuid";
+	args[0] = (अचिन्हित दीर्घ) "SUNW,stop-cpu-by-cpuid";
 	args[1] = 1;
 	args[2] = 0;
-	args[3] = (unsigned int) cpuid;
+	args[3] = (अचिन्हित पूर्णांक) cpuid;
 	p1275_cmd_direct(args);
-}
+पूर्ण
 
-void prom_stopself(void)
-{
-	unsigned long args[3];
+व्योम prom_stopself(व्योम)
+अणु
+	अचिन्हित दीर्घ args[3];
 
-	args[0] = (unsigned long) "SUNW,stop-self";
+	args[0] = (अचिन्हित दीर्घ) "SUNW,stop-self";
 	args[1] = 0;
 	args[2] = 0;
 	p1275_cmd_direct(args);
-}
+पूर्ण
 
-void prom_idleself(void)
-{
-	unsigned long args[3];
+व्योम prom_idleself(व्योम)
+अणु
+	अचिन्हित दीर्घ args[3];
 
-	args[0] = (unsigned long) "SUNW,idle-self";
+	args[0] = (अचिन्हित दीर्घ) "SUNW,idle-self";
 	args[1] = 0;
 	args[2] = 0;
 	p1275_cmd_direct(args);
-}
+पूर्ण
 
-void prom_resumecpu(int cpunode)
-{
-	unsigned long args[4];
+व्योम prom_resumecpu(पूर्णांक cpunode)
+अणु
+	अचिन्हित दीर्घ args[4];
 
-	args[0] = (unsigned long) "SUNW,resume-cpu";
+	args[0] = (अचिन्हित दीर्घ) "SUNW,resume-cpu";
 	args[1] = 1;
 	args[2] = 0;
-	args[3] = (unsigned int) cpunode;
+	args[3] = (अचिन्हित पूर्णांक) cpunode;
 	p1275_cmd_direct(args);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

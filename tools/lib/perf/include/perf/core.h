@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LIBPERF_CORE_H
-#define __LIBPERF_CORE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LIBPERF_CORE_H
+#घोषणा __LIBPERF_CORE_H
 
-#include <stdarg.h>
+#समावेश <मानकतर्क.स>
 
-#ifndef LIBPERF_API
-#define LIBPERF_API __attribute__((visibility("default")))
-#endif
+#अगर_अघोषित LIBPERF_API
+#घोषणा LIBPERF_API __attribute__((visibility("default")))
+#पूर्ण_अगर
 
-enum libperf_print_level {
+क्रमागत libperf_prपूर्णांक_level अणु
 	LIBPERF_ERR,
 	LIBPERF_WARN,
 	LIBPERF_INFO,
 	LIBPERF_DEBUG,
 	LIBPERF_DEBUG2,
 	LIBPERF_DEBUG3,
-};
+पूर्ण;
 
-typedef int (*libperf_print_fn_t)(enum libperf_print_level level,
-				  const char *, va_list ap);
+प्रकार पूर्णांक (*libperf_prपूर्णांक_fn_t)(क्रमागत libperf_prपूर्णांक_level level,
+				  स्थिर अक्षर *, बहु_सूची ap);
 
-LIBPERF_API void libperf_init(libperf_print_fn_t fn);
+LIBPERF_API व्योम libperf_init(libperf_prपूर्णांक_fn_t fn);
 
-#endif /* __LIBPERF_CORE_H */
+#पूर्ण_अगर /* __LIBPERF_CORE_H */

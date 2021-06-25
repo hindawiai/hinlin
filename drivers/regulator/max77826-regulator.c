@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 //
-// max77826-regulator.c  - regulator driver for Maxim MAX77826
+// max77826-regulator.c  - regulator driver क्रम Maxim MAX77826
 //
 // Author: Iskren Chernev <iskren.chernev@gmail.com>
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/of_regulator.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/of_regulator.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
 
-enum max77826_registers {
+क्रमागत max77826_रेजिस्टरs अणु
 	MAX77826_REG_INT_SRC = 0x00,
 	MAX77826_REG_SYS_INT,
 	MAX77826_REG_INT1,
@@ -63,9 +64,9 @@ enum max77826_registers {
 	MAX77826_REG_UVLO_FALL,
 	/* 0x42 - 0xCE: Reserved */
 	MAX77826_REG_DEVICE_ID = 0xCF,
-};
+पूर्ण;
 
-enum max77826_regulators {
+क्रमागत max77826_regulators अणु
 	MAX77826_LDO1 = 0,
 	MAX77826_LDO2,
 	MAX77826_LDO3,
@@ -84,40 +85,40 @@ enum max77826_regulators {
 	MAX77826_BUCK,
 	MAX77826_BUCKBOOST,
 	MAX77826_MAX_REGULATORS,
-};
+पूर्ण;
 
-#define MAX77826_MASK_LDO		0x7f
-#define MAX77826_MASK_BUCK		0xff
-#define MAX77826_MASK_BUCKBOOST		0x7f
-#define MAX77826_BUCK_RAMP_DELAY	12500
+#घोषणा MAX77826_MASK_LDO		0x7f
+#घोषणा MAX77826_MASK_BUCK		0xff
+#घोषणा MAX77826_MASK_BUCKBOOST		0x7f
+#घोषणा MAX77826_BUCK_RAMP_DELAY	12500
 
 /* values in mV */
-/* for LDO1-3 */
-#define MAX77826_NMOS_LDO_VOLT_MIN	600000
-#define MAX77826_NMOS_LDO_VOLT_MAX	2187500
-#define MAX77826_NMOS_LDO_VOLT_STEP	12500
+/* क्रम LDO1-3 */
+#घोषणा MAX77826_NMOS_LDO_VOLT_MIN	600000
+#घोषणा MAX77826_NMOS_LDO_VOLT_MAX	2187500
+#घोषणा MAX77826_NMOS_LDO_VOLT_STEP	12500
 
-/* for LDO4-15 */
-#define MAX77826_PMOS_LDO_VOLT_MIN	800000
-#define MAX77826_PMOS_LDO_VOLT_MAX	3975000
-#define MAX77826_PMOS_LDO_VOLT_STEP	25000
+/* क्रम LDO4-15 */
+#घोषणा MAX77826_PMOS_LDO_VOLT_MIN	800000
+#घोषणा MAX77826_PMOS_LDO_VOLT_MAX	3975000
+#घोषणा MAX77826_PMOS_LDO_VOLT_STEP	25000
 
-/* for BUCK */
-#define MAX77826_BUCK_VOLT_MIN		500000
-#define MAX77826_BUCK_VOLT_MAX		1800000
-#define MAX77826_BUCK_VOLT_STEP		6250
+/* क्रम BUCK */
+#घोषणा MAX77826_BUCK_VOLT_MIN		500000
+#घोषणा MAX77826_BUCK_VOLT_MAX		1800000
+#घोषणा MAX77826_BUCK_VOLT_STEP		6250
 
-/* for BUCKBOOST */
-#define MAX77826_BUCKBOOST_VOLT_MIN	2600000
-#define MAX77826_BUCKBOOST_VOLT_MAX	4187500
-#define MAX77826_BUCKBOOST_VOLT_STEP	12500
-#define MAX77826_VOLT_RANGE(_type)					\
+/* क्रम BUCKBOOST */
+#घोषणा MAX77826_BUCKBOOST_VOLT_MIN	2600000
+#घोषणा MAX77826_BUCKBOOST_VOLT_MAX	4187500
+#घोषणा MAX77826_BUCKBOOST_VOLT_STEP	12500
+#घोषणा MAX77826_VOLT_RANGE(_type)					\
 	((MAX77826_ ## _type ## _VOLT_MAX -				\
 	  MAX77826_ ## _type ## _VOLT_MIN) /				\
 	 MAX77826_ ## _type ## _VOLT_STEP + 1)
 
-#define MAX77826_LDO(_id, _type)					\
-	[MAX77826_LDO ## _id] = {					\
+#घोषणा MAX77826_LDO(_id, _type)					\
+	[MAX77826_LDO ## _id] = अणु					\
 		.id = MAX77826_LDO ## _id,				\
 		.name = "LDO"#_id,					\
 		.of_match = of_match_ptr("LDO"#_id),			\
@@ -131,10 +132,10 @@ enum max77826_regulators {
 		.vsel_reg = MAX77826_REG_LDO1_CFG + (_id - 1),		\
 		.vsel_mask = MAX77826_MASK_LDO,				\
 		.owner = THIS_MODULE,					\
-	}
+	पूर्ण
 
-#define MAX77826_BUCK(_idx, _id, _ops)					\
-	[MAX77826_ ## _id] = {						\
+#घोषणा MAX77826_BUCK(_idx, _id, _ops)					\
+	[MAX77826_ ## _id] = अणु						\
 		.id = MAX77826_ ## _id,					\
 		.name = #_id,						\
 		.of_match = of_match_ptr(#_id),				\
@@ -148,26 +149,26 @@ enum max77826_regulators {
 		.vsel_reg = MAX77826_REG_BUCK_VOUT + _idx * 2,		\
 		.vsel_mask = MAX77826_MASK_ ## _id,			\
 		.owner = THIS_MODULE,					\
-	}
+	पूर्ण
 
 
 
-struct max77826_regulator_info {
-	struct regmap *regmap;
-	struct regulator_desc *rdesc;
-};
+काष्ठा max77826_regulator_info अणु
+	काष्ठा regmap *regmap;
+	काष्ठा regulator_desc *rdesc;
+पूर्ण;
 
-static const struct regmap_config max77826_regmap_config = {
+अटल स्थिर काष्ठा regmap_config max77826_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = MAX77826_REG_DEVICE_ID,
-};
+	.max_रेजिस्टर = MAX77826_REG_DEVICE_ID,
+पूर्ण;
 
-static int max77826_set_voltage_time_sel(struct regulator_dev *,
-				unsigned int old_selector,
-				unsigned int new_selector);
+अटल पूर्णांक max77826_set_voltage_समय_sel(काष्ठा regulator_dev *,
+				अचिन्हित पूर्णांक old_selector,
+				अचिन्हित पूर्णांक new_selector);
 
-static const struct regulator_ops max77826_most_ops = {
+अटल स्थिर काष्ठा regulator_ops max77826_most_ops = अणु
 	.enable			= regulator_enable_regmap,
 	.disable		= regulator_disable_regmap,
 	.is_enabled		= regulator_is_enabled_regmap,
@@ -175,9 +176,9 @@ static const struct regulator_ops max77826_most_ops = {
 	.map_voltage		= regulator_map_voltage_linear,
 	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
-};
+पूर्ण;
 
-static const struct regulator_ops max77826_buck_ops = {
+अटल स्थिर काष्ठा regulator_ops max77826_buck_ops = अणु
 	.enable			= regulator_enable_regmap,
 	.disable		= regulator_disable_regmap,
 	.is_enabled		= regulator_is_enabled_regmap,
@@ -185,10 +186,10 @@ static const struct regulator_ops max77826_buck_ops = {
 	.map_voltage		= regulator_map_voltage_linear,
 	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
-	.set_voltage_time_sel	= max77826_set_voltage_time_sel,
-};
+	.set_voltage_समय_sel	= max77826_set_voltage_समय_sel,
+पूर्ण;
 
-static struct regulator_desc max77826_regulators_desc[] = {
+अटल काष्ठा regulator_desc max77826_regulators_desc[] = अणु
 	MAX77826_LDO(1, NMOS),
 	MAX77826_LDO(2, NMOS),
 	MAX77826_LDO(3, NMOS),
@@ -206,53 +207,53 @@ static struct regulator_desc max77826_regulators_desc[] = {
 	MAX77826_LDO(15, PMOS),
 	MAX77826_BUCK(0, BUCK, max77826_buck_ops),
 	MAX77826_BUCK(1, BUCKBOOST, max77826_most_ops),
-};
+पूर्ण;
 
-static int max77826_set_voltage_time_sel(struct regulator_dev *rdev,
-				unsigned int old_selector,
-				unsigned int new_selector)
-{
-	if (new_selector > old_selector) {
-		return DIV_ROUND_UP(MAX77826_BUCK_VOLT_STEP *
+अटल पूर्णांक max77826_set_voltage_समय_sel(काष्ठा regulator_dev *rdev,
+				अचिन्हित पूर्णांक old_selector,
+				अचिन्हित पूर्णांक new_selector)
+अणु
+	अगर (new_selector > old_selector) अणु
+		वापस DIV_ROUND_UP(MAX77826_BUCK_VOLT_STEP *
 				(new_selector - old_selector),
 				MAX77826_BUCK_RAMP_DELAY);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max77826_read_device_id(struct regmap *regmap, struct device *dev)
-{
-	unsigned int device_id;
-	int res;
+अटल पूर्णांक max77826_पढ़ो_device_id(काष्ठा regmap *regmap, काष्ठा device *dev)
+अणु
+	अचिन्हित पूर्णांक device_id;
+	पूर्णांक res;
 
-	res = regmap_read(regmap, MAX77826_REG_DEVICE_ID, &device_id);
-	if (!res)
+	res = regmap_पढ़ो(regmap, MAX77826_REG_DEVICE_ID, &device_id);
+	अगर (!res)
 		dev_dbg(dev, "DEVICE_ID: 0x%x\n", device_id);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int max77826_i2c_probe(struct i2c_client *client)
-{
-	struct device *dev = &client->dev;
-	struct max77826_regulator_info *info;
-	struct regulator_config config = {};
-	struct regulator_dev *rdev;
-	struct regmap *regmap;
-	int i;
+अटल पूर्णांक max77826_i2c_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा max77826_regulator_info *info;
+	काष्ठा regulator_config config = अणुपूर्ण;
+	काष्ठा regulator_dev *rdev;
+	काष्ठा regmap *regmap;
+	पूर्णांक i;
 
-	info = devm_kzalloc(dev, sizeof(struct max77826_regulator_info),
+	info = devm_kzalloc(dev, माप(काष्ठा max77826_regulator_info),
 				GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->rdesc = max77826_regulators_desc;
 	regmap = devm_regmap_init_i2c(client, &max77826_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(dev, "Failed to allocate regmap!\n");
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
 	info->regmap = regmap;
 	i2c_set_clientdata(client, info);
@@ -261,39 +262,39 @@ static int max77826_i2c_probe(struct i2c_client *client)
 	config.regmap = regmap;
 	config.driver_data = info;
 
-	for (i = 0; i < MAX77826_MAX_REGULATORS; i++) {
-		rdev = devm_regulator_register(dev,
+	क्रम (i = 0; i < MAX77826_MAX_REGULATORS; i++) अणु
+		rdev = devm_regulator_रेजिस्टर(dev,
 					       &max77826_regulators_desc[i],
 					       &config);
-		if (IS_ERR(rdev)) {
+		अगर (IS_ERR(rdev)) अणु
 			dev_err(dev, "Failed to register regulator!\n");
-			return PTR_ERR(rdev);
-		}
-	}
+			वापस PTR_ERR(rdev);
+		पूर्ण
+	पूर्ण
 
-	return max77826_read_device_id(regmap, dev);
-}
+	वापस max77826_पढ़ो_device_id(regmap, dev);
+पूर्ण
 
-static const struct of_device_id __maybe_unused max77826_of_match[] = {
-	{ .compatible = "maxim,max77826" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id __maybe_unused max77826_of_match[] = अणु
+	अणु .compatible = "maxim,max77826" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, max77826_of_match);
 
-static const struct i2c_device_id max77826_id[] = {
-	{ "max77826-regulator" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा i2c_device_id max77826_id[] = अणु
+	अणु "max77826-regulator" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, max77826_id);
 
-static struct i2c_driver max77826_regulator_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max77826_regulator_driver = अणु
+	.driver = अणु
 		.name = "max77826",
 		.of_match_table = of_match_ptr(max77826_of_match),
-	},
+	पूर्ण,
 	.probe_new = max77826_i2c_probe,
 	.id_table = max77826_id,
-};
+पूर्ण;
 module_i2c_driver(max77826_regulator_driver);
 
 MODULE_AUTHOR("Iskren Chernev <iskren.chernev@gmail.com>");

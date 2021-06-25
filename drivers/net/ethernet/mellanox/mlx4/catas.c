@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2007 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
@@ -5,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,300 +32,300 @@
  * SOFTWARE.
  */
 
-#include <linux/workqueue.h>
-#include <linux/module.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/module.h>
 
-#include "mlx4.h"
+#समावेश "mlx4.h"
 
-enum {
+क्रमागत अणु
 	MLX4_CATAS_POLL_INTERVAL	= 5 * HZ,
-};
+पूर्ण;
 
 
 
-int mlx4_internal_err_reset = 1;
-module_param_named(internal_err_reset, mlx4_internal_err_reset,  int, 0644);
-MODULE_PARM_DESC(internal_err_reset,
+पूर्णांक mlx4_पूर्णांकernal_err_reset = 1;
+module_param_named(पूर्णांकernal_err_reset, mlx4_पूर्णांकernal_err_reset,  पूर्णांक, 0644);
+MODULE_PARM_DESC(पूर्णांकernal_err_reset,
 		 "Reset device on internal errors if non-zero (default 1)");
 
-static int read_vendor_id(struct mlx4_dev *dev)
-{
-	u16 vendor_id = 0;
-	int ret;
+अटल पूर्णांक पढ़ो_venकरोr_id(काष्ठा mlx4_dev *dev)
+अणु
+	u16 venकरोr_id = 0;
+	पूर्णांक ret;
 
-	ret = pci_read_config_word(dev->persist->pdev, 0, &vendor_id);
-	if (ret) {
+	ret = pci_पढ़ो_config_word(dev->persist->pdev, 0, &venकरोr_id);
+	अगर (ret) अणु
 		mlx4_err(dev, "Failed to read vendor ID, ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (vendor_id == 0xffff) {
+	अगर (venकरोr_id == 0xffff) अणु
 		mlx4_err(dev, "PCI can't be accessed to read vendor id\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx4_reset_master(struct mlx4_dev *dev)
-{
-	int err = 0;
+अटल पूर्णांक mlx4_reset_master(काष्ठा mlx4_dev *dev)
+अणु
+	पूर्णांक err = 0;
 
-	if (mlx4_is_master(dev))
-		mlx4_report_internal_err_comm_event(dev);
+	अगर (mlx4_is_master(dev))
+		mlx4_report_पूर्णांकernal_err_comm_event(dev);
 
-	if (!pci_channel_offline(dev->persist->pdev)) {
-		err = read_vendor_id(dev);
-		/* If PCI can't be accessed to read vendor ID we assume that its
-		 * link was disabled and chip was already reset.
+	अगर (!pci_channel_offline(dev->persist->pdev)) अणु
+		err = पढ़ो_venकरोr_id(dev);
+		/* If PCI can't be accessed to पढ़ो venकरोr ID we assume that its
+		 * link was disabled and chip was alपढ़ोy reset.
 		 */
-		if (err)
-			return 0;
+		अगर (err)
+			वापस 0;
 
 		err = mlx4_reset(dev);
-		if (err)
+		अगर (err)
 			mlx4_err(dev, "Fail to reset HCA\n");
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx4_reset_slave(struct mlx4_dev *dev)
-{
-#define COM_CHAN_RST_REQ_OFFSET 0x10
-#define COM_CHAN_RST_ACK_OFFSET 0x08
+अटल पूर्णांक mlx4_reset_slave(काष्ठा mlx4_dev *dev)
+अणु
+#घोषणा COM_CHAN_RST_REQ_OFFSET 0x10
+#घोषणा COM_CHAN_RST_ACK_OFFSET 0x08
 
 	u32 comm_flags;
 	u32 rst_req;
 	u32 rst_ack;
-	unsigned long end;
-	struct mlx4_priv *priv = mlx4_priv(dev);
+	अचिन्हित दीर्घ end;
+	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
 
-	if (pci_channel_offline(dev->persist->pdev))
-		return 0;
+	अगर (pci_channel_offline(dev->persist->pdev))
+		वापस 0;
 
-	comm_flags = swab32(readl((__iomem char *)priv->mfunc.comm +
+	comm_flags = swab32(पढ़ोl((__iomem अक्षर *)priv->mfunc.comm +
 				  MLX4_COMM_CHAN_FLAGS));
-	if (comm_flags == 0xffffffff) {
+	अगर (comm_flags == 0xffffffff) अणु
 		mlx4_err(dev, "VF reset is not needed\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!(dev->caps.vf_caps & MLX4_VF_CAP_FLAG_RESET)) {
+	अगर (!(dev->caps.vf_caps & MLX4_VF_CAP_FLAG_RESET)) अणु
 		mlx4_err(dev, "VF reset is not supported\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	rst_req = (comm_flags & (u32)(1 << COM_CHAN_RST_REQ_OFFSET)) >>
 		COM_CHAN_RST_REQ_OFFSET;
 	rst_ack = (comm_flags & (u32)(1 << COM_CHAN_RST_ACK_OFFSET)) >>
 		COM_CHAN_RST_ACK_OFFSET;
-	if (rst_req != rst_ack) {
+	अगर (rst_req != rst_ack) अणु
 		mlx4_err(dev, "Communication channel isn't sync, fail to send reset\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	rst_req ^= 1;
 	mlx4_warn(dev, "VF is sending reset request to Firmware\n");
 	comm_flags = rst_req << COM_CHAN_RST_REQ_OFFSET;
-	__raw_writel((__force u32)cpu_to_be32(comm_flags),
-		     (__iomem char *)priv->mfunc.comm + MLX4_COMM_CHAN_FLAGS);
+	__raw_ग_लिखोl((__क्रमce u32)cpu_to_be32(comm_flags),
+		     (__iomem अक्षर *)priv->mfunc.comm + MLX4_COMM_CHAN_FLAGS);
 
-	end = msecs_to_jiffies(MLX4_COMM_TIME) + jiffies;
-	while (time_before(jiffies, end)) {
-		comm_flags = swab32(readl((__iomem char *)priv->mfunc.comm +
+	end = msecs_to_jअगरfies(MLX4_COMM_TIME) + jअगरfies;
+	जबतक (समय_beक्रमe(jअगरfies, end)) अणु
+		comm_flags = swab32(पढ़ोl((__iomem अक्षर *)priv->mfunc.comm +
 					  MLX4_COMM_CHAN_FLAGS));
 		rst_ack = (comm_flags & (u32)(1 << COM_CHAN_RST_ACK_OFFSET)) >>
 			COM_CHAN_RST_ACK_OFFSET;
 
 		/* Reading rst_req again since the communication channel can
-		 * be reset at any time by the PF and all its bits will be
+		 * be reset at any समय by the PF and all its bits will be
 		 * set to zero.
 		 */
 		rst_req = (comm_flags & (u32)(1 << COM_CHAN_RST_REQ_OFFSET)) >>
 			COM_CHAN_RST_REQ_OFFSET;
 
-		if (rst_ack == rst_req) {
+		अगर (rst_ack == rst_req) अणु
 			mlx4_warn(dev, "VF Reset succeed\n");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		cond_resched();
-	}
+	पूर्ण
 	mlx4_err(dev, "Fail to send reset over the communication channel\n");
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-int mlx4_comm_internal_err(u32 slave_read)
-{
-	return (u32)COMM_CHAN_EVENT_INTERNAL_ERR ==
-		(slave_read & (u32)COMM_CHAN_EVENT_INTERNAL_ERR) ? 1 : 0;
-}
+पूर्णांक mlx4_comm_पूर्णांकernal_err(u32 slave_पढ़ो)
+अणु
+	वापस (u32)COMM_CHAN_EVENT_INTERNAL_ERR ==
+		(slave_पढ़ो & (u32)COMM_CHAN_EVENT_INTERNAL_ERR) ? 1 : 0;
+पूर्ण
 
-void mlx4_enter_error_state(struct mlx4_dev_persistent *persist)
-{
-	int err;
-	struct mlx4_dev *dev;
+व्योम mlx4_enter_error_state(काष्ठा mlx4_dev_persistent *persist)
+अणु
+	पूर्णांक err;
+	काष्ठा mlx4_dev *dev;
 
-	if (!mlx4_internal_err_reset)
-		return;
+	अगर (!mlx4_पूर्णांकernal_err_reset)
+		वापस;
 
 	mutex_lock(&persist->device_state_mutex);
-	if (persist->state & MLX4_DEVICE_STATE_INTERNAL_ERROR)
-		goto out;
+	अगर (persist->state & MLX4_DEVICE_STATE_INTERNAL_ERROR)
+		जाओ out;
 
 	dev = persist->dev;
 	mlx4_err(dev, "device is going to be reset\n");
-	if (mlx4_is_slave(dev)) {
+	अगर (mlx4_is_slave(dev)) अणु
 		err = mlx4_reset_slave(dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		mlx4_crdump_collect(dev);
 		err = mlx4_reset_master(dev);
-	}
+	पूर्ण
 
-	if (!err) {
+	अगर (!err) अणु
 		mlx4_err(dev, "device was reset successfully\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		/* EEH could have disabled the PCI channel during reset. That's
 		 * recoverable and the PCI error flow will handle it.
 		 */
-		if (!pci_channel_offline(dev->persist->pdev))
+		अगर (!pci_channel_offline(dev->persist->pdev))
 			BUG_ON(1);
-	}
+	पूर्ण
 	dev->persist->state |= MLX4_DEVICE_STATE_INTERNAL_ERROR;
 	mutex_unlock(&persist->device_state_mutex);
 
-	/* At that step HW was already reset, now notify clients */
+	/* At that step HW was alपढ़ोy reset, now notअगरy clients */
 	mlx4_dispatch_event(dev, MLX4_DEV_EVENT_CATASTROPHIC_ERROR, 0);
 	mlx4_cmd_wake_completions(dev);
-	return;
+	वापस;
 
 out:
 	mutex_unlock(&persist->device_state_mutex);
-}
+पूर्ण
 
-static void mlx4_handle_error_state(struct mlx4_dev_persistent *persist)
-{
-	int err = 0;
+अटल व्योम mlx4_handle_error_state(काष्ठा mlx4_dev_persistent *persist)
+अणु
+	पूर्णांक err = 0;
 
 	mlx4_enter_error_state(persist);
-	mutex_lock(&persist->interface_state_mutex);
-	if (persist->interface_state & MLX4_INTERFACE_STATE_UP &&
-	    !(persist->interface_state & MLX4_INTERFACE_STATE_DELETION)) {
+	mutex_lock(&persist->पूर्णांकerface_state_mutex);
+	अगर (persist->पूर्णांकerface_state & MLX4_INTERFACE_STATE_UP &&
+	    !(persist->पूर्णांकerface_state & MLX4_INTERFACE_STATE_DELETION)) अणु
 		err = mlx4_restart_one(persist->pdev);
 		mlx4_info(persist->dev, "mlx4_restart_one was ended, ret=%d\n",
 			  err);
-	}
-	mutex_unlock(&persist->interface_state_mutex);
-}
+	पूर्ण
+	mutex_unlock(&persist->पूर्णांकerface_state_mutex);
+पूर्ण
 
-static void dump_err_buf(struct mlx4_dev *dev)
-{
-	struct mlx4_priv *priv = mlx4_priv(dev);
+अटल व्योम dump_err_buf(काष्ठा mlx4_dev *dev)
+अणु
+	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
 
-	int i;
+	पूर्णांक i;
 
 	mlx4_err(dev, "Internal error detected:\n");
-	for (i = 0; i < priv->fw.catas_size; ++i)
+	क्रम (i = 0; i < priv->fw.catas_size; ++i)
 		mlx4_err(dev, "  buf[%02x]: %08x\n",
-			 i, swab32(readl(priv->catas_err.map + i)));
-}
+			 i, swab32(पढ़ोl(priv->catas_err.map + i)));
+पूर्ण
 
-static void poll_catas(struct timer_list *t)
-{
-	struct mlx4_priv *priv = from_timer(priv, t, catas_err.timer);
-	struct mlx4_dev *dev = &priv->dev;
-	u32 slave_read;
+अटल व्योम poll_catas(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mlx4_priv *priv = from_समयr(priv, t, catas_err.समयr);
+	काष्ठा mlx4_dev *dev = &priv->dev;
+	u32 slave_पढ़ो;
 
-	if (mlx4_is_slave(dev)) {
-		slave_read = swab32(readl(&priv->mfunc.comm->slave_read));
-		if (mlx4_comm_internal_err(slave_read)) {
+	अगर (mlx4_is_slave(dev)) अणु
+		slave_पढ़ो = swab32(पढ़ोl(&priv->mfunc.comm->slave_पढ़ो));
+		अगर (mlx4_comm_पूर्णांकernal_err(slave_पढ़ो)) अणु
 			mlx4_warn(dev, "Internal error detected on the communication channel\n");
-			goto internal_err;
-		}
-	} else if (readl(priv->catas_err.map)) {
+			जाओ पूर्णांकernal_err;
+		पूर्ण
+	पूर्ण अन्यथा अगर (पढ़ोl(priv->catas_err.map)) अणु
 		dump_err_buf(dev);
-		goto internal_err;
-	}
+		जाओ पूर्णांकernal_err;
+	पूर्ण
 
-	if (dev->persist->state & MLX4_DEVICE_STATE_INTERNAL_ERROR) {
+	अगर (dev->persist->state & MLX4_DEVICE_STATE_INTERNAL_ERROR) अणु
 		mlx4_warn(dev, "Internal error mark was detected on device\n");
-		goto internal_err;
-	}
+		जाओ पूर्णांकernal_err;
+	पूर्ण
 
-	mod_timer(&priv->catas_err.timer,
-		  round_jiffies(jiffies + MLX4_CATAS_POLL_INTERVAL));
-	return;
+	mod_समयr(&priv->catas_err.समयr,
+		  round_jअगरfies(jअगरfies + MLX4_CATAS_POLL_INTERVAL));
+	वापस;
 
-internal_err:
-	if (mlx4_internal_err_reset)
+पूर्णांकernal_err:
+	अगर (mlx4_पूर्णांकernal_err_reset)
 		queue_work(dev->persist->catas_wq, &dev->persist->catas_work);
-}
+पूर्ण
 
-static void catas_reset(struct work_struct *work)
-{
-	struct mlx4_dev_persistent *persist =
-		container_of(work, struct mlx4_dev_persistent,
+अटल व्योम catas_reset(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mlx4_dev_persistent *persist =
+		container_of(work, काष्ठा mlx4_dev_persistent,
 			     catas_work);
 
 	mlx4_handle_error_state(persist);
-}
+पूर्ण
 
-void mlx4_start_catas_poll(struct mlx4_dev *dev)
-{
-	struct mlx4_priv *priv = mlx4_priv(dev);
+व्योम mlx4_start_catas_poll(काष्ठा mlx4_dev *dev)
+अणु
+	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
 	phys_addr_t addr;
 
 	INIT_LIST_HEAD(&priv->catas_err.list);
-	timer_setup(&priv->catas_err.timer, poll_catas, 0);
-	priv->catas_err.map = NULL;
+	समयr_setup(&priv->catas_err.समयr, poll_catas, 0);
+	priv->catas_err.map = शून्य;
 
-	if (!mlx4_is_slave(dev)) {
+	अगर (!mlx4_is_slave(dev)) अणु
 		addr = pci_resource_start(dev->persist->pdev,
 					  priv->fw.catas_bar) +
 					  priv->fw.catas_offset;
 
 		priv->catas_err.map = ioremap(addr, priv->fw.catas_size * 4);
-		if (!priv->catas_err.map) {
+		अगर (!priv->catas_err.map) अणु
 			mlx4_warn(dev, "Failed to map internal error buffer at 0x%llx\n",
-				  (unsigned long long)addr);
-			return;
-		}
-	}
+				  (अचिन्हित दीर्घ दीर्घ)addr);
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	priv->catas_err.timer.expires  =
-		round_jiffies(jiffies + MLX4_CATAS_POLL_INTERVAL);
-	add_timer(&priv->catas_err.timer);
-}
+	priv->catas_err.समयr.expires  =
+		round_jअगरfies(jअगरfies + MLX4_CATAS_POLL_INTERVAL);
+	add_समयr(&priv->catas_err.समयr);
+पूर्ण
 
-void mlx4_stop_catas_poll(struct mlx4_dev *dev)
-{
-	struct mlx4_priv *priv = mlx4_priv(dev);
+व्योम mlx4_stop_catas_poll(काष्ठा mlx4_dev *dev)
+अणु
+	काष्ठा mlx4_priv *priv = mlx4_priv(dev);
 
-	del_timer_sync(&priv->catas_err.timer);
+	del_समयr_sync(&priv->catas_err.समयr);
 
-	if (priv->catas_err.map) {
+	अगर (priv->catas_err.map) अणु
 		iounmap(priv->catas_err.map);
-		priv->catas_err.map = NULL;
-	}
+		priv->catas_err.map = शून्य;
+	पूर्ण
 
-	if (dev->persist->interface_state & MLX4_INTERFACE_STATE_DELETION)
+	अगर (dev->persist->पूर्णांकerface_state & MLX4_INTERFACE_STATE_DELETION)
 		flush_workqueue(dev->persist->catas_wq);
-}
+पूर्ण
 
-int  mlx4_catas_init(struct mlx4_dev *dev)
-{
+पूर्णांक  mlx4_catas_init(काष्ठा mlx4_dev *dev)
+अणु
 	INIT_WORK(&dev->persist->catas_work, catas_reset);
-	dev->persist->catas_wq = create_singlethread_workqueue("mlx4_health");
-	if (!dev->persist->catas_wq)
-		return -ENOMEM;
+	dev->persist->catas_wq = create_singlethपढ़ो_workqueue("mlx4_health");
+	अगर (!dev->persist->catas_wq)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mlx4_catas_end(struct mlx4_dev *dev)
-{
-	if (dev->persist->catas_wq) {
+व्योम mlx4_catas_end(काष्ठा mlx4_dev *dev)
+अणु
+	अगर (dev->persist->catas_wq) अणु
 		destroy_workqueue(dev->persist->catas_wq);
-		dev->persist->catas_wq = NULL;
-	}
-}
+		dev->persist->catas_wq = शून्य;
+	पूर्ण
+पूर्ण

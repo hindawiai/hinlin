@@ -1,5 +1,6 @@
-/* Simple code to turn various tables in an ELF file into alias definitions.
- * This deals with kernel datastructures where they should be
+<शैली गुरु>
+/* Simple code to turn various tables in an ELF file पूर्णांकo alias definitions.
+ * This deals with kernel dataकाष्ठाures where they should be
  * dealt with: in the kernel source.
  *
  * Copyright 2002-2003  Rusty Russell, IBM Corporation
@@ -10,158 +11,158 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
-#include "modpost.h"
-#include "devicetable-offsets.h"
+#समावेश "modpost.h"
+#समावेश "devicetable-offsets.h"
 
-/* We use the ELF typedefs for kernel_ulong_t but bite the bullet and
- * use either stdint.h or inttypes.h for the rest. */
-#if KERNEL_ELFCLASS == ELFCLASS32
-typedef Elf32_Addr	kernel_ulong_t;
-#define BITS_PER_LONG 32
-#else
-typedef Elf64_Addr	kernel_ulong_t;
-#define BITS_PER_LONG 64
-#endif
-#ifdef __sun__
-#include <inttypes.h>
-#else
-#include <stdint.h>
-#endif
+/* We use the ELF प्रकारs क्रम kernel_uदीर्घ_t but bite the bullet and
+ * use either मानक_निवेशt.h or पूर्णांकtypes.h क्रम the rest. */
+#अगर KERNEL_ELFCLASS == ELFCLASS32
+प्रकार Elf32_Addr	kernel_uदीर्घ_t;
+#घोषणा BITS_PER_LONG 32
+#अन्यथा
+प्रकार Elf64_Addr	kernel_uदीर्घ_t;
+#घोषणा BITS_PER_LONG 64
+#पूर्ण_अगर
+#अगर_घोषित __sun__
+#समावेश <पूर्णांकtypes.h>
+#अन्यथा
+#समावेश <मानक_निवेशt.h>
+#पूर्ण_अगर
 
-#include <ctype.h>
-#include <stdbool.h>
+#समावेश <प्रकार.स>
+#समावेश <stdbool.h>
 
-typedef uint32_t	__u32;
-typedef uint16_t	__u16;
-typedef unsigned char	__u8;
-typedef struct {
+प्रकार uपूर्णांक32_t	__u32;
+प्रकार uपूर्णांक16_t	__u16;
+प्रकार अचिन्हित अक्षर	__u8;
+प्रकार काष्ठा अणु
 	__u8 b[16];
-} guid_t;
+पूर्ण guid_t;
 
-/* backwards compatibility, don't use in new code */
-typedef struct {
+/* backwards compatibility, करोn't use in new code */
+प्रकार काष्ठा अणु
 	__u8 b[16];
-} uuid_le;
-typedef struct {
+पूर्ण uuid_le;
+प्रकार काष्ठा अणु
 	__u8 b[16];
-} uuid_t;
-#define	UUID_STRING_LEN		36
+पूर्ण uuid_t;
+#घोषणा	UUID_STRING_LEN		36
 
-/* Big exception to the "don't include kernel headers into userspace, which
- * even potentially has different endianness and word sizes, since
- * we handle those differences explicitly below */
-#include "../../include/linux/mod_devicetable.h"
+/* Big exception to the "करोn't include kernel headers पूर्णांकo userspace, which
+ * even potentially has dअगरferent endianness and word sizes, since
+ * we handle those dअगरferences explicitly below */
+#समावेश "../../include/linux/mod_devicetable.h"
 
-/* This array collects all instances that use the generic do_table */
-struct devtable {
-	const char *device_id; /* name of table, __mod_<name>__*_device_table. */
-	unsigned long id_size;
-	int (*do_entry)(const char *filename, void *symval, char *alias);
-};
+/* This array collects all instances that use the generic करो_table */
+काष्ठा devtable अणु
+	स्थिर अक्षर *device_id; /* name of table, __mod_<name>__*_device_table. */
+	अचिन्हित दीर्घ id_size;
+	पूर्णांक (*करो_entry)(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias);
+पूर्ण;
 
-/* Size of alias provided to do_entry functions */
-#define ALIAS_SIZE 500
+/* Size of alias provided to करो_entry functions */
+#घोषणा ALIAS_SIZE 500
 
-/* Define a variable f that holds the value of field f of struct devid
+/* Define a variable f that holds the value of field f of काष्ठा devid
  * based at address m.
  */
-#define DEF_FIELD(m, devid, f) \
-	typeof(((struct devid *)0)->f) f = TO_NATIVE(*(typeof(f) *)((m) + OFF_##devid##_##f))
+#घोषणा DEF_FIELD(m, devid, f) \
+	typeof(((काष्ठा devid *)0)->f) f = TO_NATIVE(*(typeof(f) *)((m) + OFF_##devid##_##f))
 
-/* Define a variable v that holds the address of field f of struct devid
- * based at address m.  Due to the way typeof works, for a field of type
+/* Define a variable v that holds the address of field f of काष्ठा devid
+ * based at address m.  Due to the way typeof works, क्रम a field of type
  * T[N] the variable has type T(*)[N], _not_ T*.
  */
-#define DEF_FIELD_ADDR_VAR(m, devid, f, v) \
-	typeof(((struct devid *)0)->f) *v = ((m) + OFF_##devid##_##f)
+#घोषणा DEF_FIELD_ADDR_VAR(m, devid, f, v) \
+	typeof(((काष्ठा devid *)0)->f) *v = ((m) + OFF_##devid##_##f)
 
-/* Define a variable f that holds the address of field f of struct devid
- * based at address m.  Due to the way typeof works, for a field of type
+/* Define a variable f that holds the address of field f of काष्ठा devid
+ * based at address m.  Due to the way typeof works, क्रम a field of type
  * T[N] the variable has type T(*)[N], _not_ T*.
  */
-#define DEF_FIELD_ADDR(m, devid, f) \
+#घोषणा DEF_FIELD_ADDR(m, devid, f) \
 	DEF_FIELD_ADDR_VAR(m, devid, f, f)
 
-#define ADD(str, sep, cond, field)                              \
-do {                                                            \
-        strcat(str, sep);                                       \
-        if (cond)                                               \
-                sprintf(str + strlen(str),                      \
-                        sizeof(field) == 1 ? "%02X" :           \
-                        sizeof(field) == 2 ? "%04X" :           \
-                        sizeof(field) == 4 ? "%08X" : "",       \
+#घोषणा ADD(str, sep, cond, field)                              \
+करो अणु                                                            \
+        म_जोड़ो(str, sep);                                       \
+        अगर (cond)                                               \
+                प्र_लिखो(str + म_माप(str),                      \
+                        माप(field) == 1 ? "%02X" :           \
+                        माप(field) == 2 ? "%04X" :           \
+                        माप(field) == 4 ? "%08X" : "",       \
                         field);                                 \
-        else                                                    \
-                sprintf(str + strlen(str), "*");                \
-} while(0)
+        अन्यथा                                                    \
+                प्र_लिखो(str + म_माप(str), "*");                \
+पूर्ण जबतक(0)
 
-/* End in a wildcard, for future extension */
-static inline void add_wildcard(char *str)
-{
-	int len = strlen(str);
+/* End in a wildcard, क्रम future extension */
+अटल अंतरभूत व्योम add_wildcard(अक्षर *str)
+अणु
+	पूर्णांक len = म_माप(str);
 
-	if (str[len - 1] != '*')
-		strcat(str + len, "*");
-}
+	अगर (str[len - 1] != '*')
+		म_जोड़ो(str + len, "*");
+पूर्ण
 
-static inline void add_uuid(char *str, uuid_le uuid)
-{
-	int len = strlen(str);
+अटल अंतरभूत व्योम add_uuid(अक्षर *str, uuid_le uuid)
+अणु
+	पूर्णांक len = म_माप(str);
 
-	sprintf(str + len, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+	प्र_लिखो(str + len, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 		uuid.b[3], uuid.b[2], uuid.b[1], uuid.b[0],
 		uuid.b[5], uuid.b[4], uuid.b[7], uuid.b[6],
 		uuid.b[8], uuid.b[9], uuid.b[10], uuid.b[11],
 		uuid.b[12], uuid.b[13], uuid.b[14], uuid.b[15]);
-}
+पूर्ण
 
 /**
- * Check that sizeof(device_id type) are consistent with size of section
- * in .o file. If in-consistent then userspace and kernel does not agree
+ * Check that माप(device_id type) are consistent with size of section
+ * in .o file. If in-consistent then userspace and kernel करोes not agree
  * on actual size which is a bug.
- * Also verify that the final entry in the table is all zeros.
- * Ignore both checks if build host differ from target host and size differs.
+ * Also verअगरy that the final entry in the table is all zeros.
+ * Ignore both checks अगर build host dअगरfer from target host and size dअगरfers.
  **/
-static void device_id_check(const char *modname, const char *device_id,
-			    unsigned long size, unsigned long id_size,
-			    void *symval)
-{
-	int i;
+अटल व्योम device_id_check(स्थिर अक्षर *modname, स्थिर अक्षर *device_id,
+			    अचिन्हित दीर्घ size, अचिन्हित दीर्घ id_size,
+			    व्योम *symval)
+अणु
+	पूर्णांक i;
 
-	if (size % id_size || size < id_size) {
+	अगर (size % id_size || size < id_size) अणु
 		fatal("%s: sizeof(struct %s_device_id)=%lu is not a modulo "
 		      "of the size of "
 		      "section __mod_%s__<identifier>_device_table=%lu.\n"
 		      "Fix definition of struct %s_device_id "
 		      "in mod_devicetable.h\n",
 		      modname, device_id, id_size, device_id, size, device_id);
-	}
-	/* Verify last one is a terminator */
-	for (i = 0; i < id_size; i++ ) {
-		if (*(uint8_t*)(symval+size-id_size+i)) {
-			fprintf(stderr,"%s: struct %s_device_id is %lu bytes.  "
+	पूर्ण
+	/* Verअगरy last one is a terminator */
+	क्रम (i = 0; i < id_size; i++ ) अणु
+		अगर (*(uपूर्णांक8_t*)(symval+size-id_size+i)) अणु
+			ख_लिखो(मानक_त्रुटि,"%s: struct %s_device_id is %lu bytes.  "
 				"The last of %lu is:\n",
 				modname, device_id, id_size, size / id_size);
-			for (i = 0; i < id_size; i++ )
-				fprintf(stderr,"0x%02x ",
-					*(uint8_t*)(symval+size-id_size+i) );
-			fprintf(stderr,"\n");
+			क्रम (i = 0; i < id_size; i++ )
+				ख_लिखो(मानक_त्रुटि,"0x%02x ",
+					*(uपूर्णांक8_t*)(symval+size-id_size+i) );
+			ख_लिखो(मानक_त्रुटि,"\n");
 			fatal("%s: struct %s_device_id is not terminated "
 				"with a NULL entry!\n", modname, device_id);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* USB is special because the bcdDevice can be matched against a numeric range */
 /* Looks like "usb:vNpNdNdcNdscNdpNicNiscNipNinN" */
-static void do_usb_entry(void *symval,
-			 unsigned int bcdDevice_initial, int bcdDevice_initial_digits,
-			 unsigned char range_lo, unsigned char range_hi,
-			 unsigned char max, struct module *mod)
-{
-	char alias[500];
+अटल व्योम करो_usb_entry(व्योम *symval,
+			 अचिन्हित पूर्णांक bcdDevice_initial, पूर्णांक bcdDevice_initial_digits,
+			 अचिन्हित अक्षर range_lo, अचिन्हित अक्षर range_hi,
+			 अचिन्हित अक्षर max, काष्ठा module *mod)
+अणु
+	अक्षर alias[500];
 	DEF_FIELD(symval, usb_device_id, match_flags);
-	DEF_FIELD(symval, usb_device_id, idVendor);
+	DEF_FIELD(symval, usb_device_id, idVenकरोr);
 	DEF_FIELD(symval, usb_device_id, idProduct);
 	DEF_FIELD(symval, usb_device_id, bcdDevice_lo);
 	DEF_FIELD(symval, usb_device_id, bDeviceClass);
@@ -172,35 +173,35 @@ static void do_usb_entry(void *symval,
 	DEF_FIELD(symval, usb_device_id, bInterfaceProtocol);
 	DEF_FIELD(symval, usb_device_id, bInterfaceNumber);
 
-	strcpy(alias, "usb:");
+	म_नकल(alias, "usb:");
 	ADD(alias, "v", match_flags&USB_DEVICE_ID_MATCH_VENDOR,
-	    idVendor);
+	    idVenकरोr);
 	ADD(alias, "p", match_flags&USB_DEVICE_ID_MATCH_PRODUCT,
 	    idProduct);
 
-	strcat(alias, "d");
-	if (bcdDevice_initial_digits)
-		sprintf(alias + strlen(alias), "%0*X",
+	म_जोड़ो(alias, "d");
+	अगर (bcdDevice_initial_digits)
+		प्र_लिखो(alias + म_माप(alias), "%0*X",
 			bcdDevice_initial_digits, bcdDevice_initial);
-	if (range_lo == range_hi)
-		sprintf(alias + strlen(alias), "%X", range_lo);
-	else if (range_lo > 0 || range_hi < max) {
-		if (range_lo > 0x9 || range_hi < 0xA)
-			sprintf(alias + strlen(alias),
+	अगर (range_lo == range_hi)
+		प्र_लिखो(alias + म_माप(alias), "%X", range_lo);
+	अन्यथा अगर (range_lo > 0 || range_hi < max) अणु
+		अगर (range_lo > 0x9 || range_hi < 0xA)
+			प्र_लिखो(alias + म_माप(alias),
 				"[%X-%X]",
 				range_lo,
 				range_hi);
-		else {
-			sprintf(alias + strlen(alias),
+		अन्यथा अणु
+			प्र_लिखो(alias + म_माप(alias),
 				range_lo < 0x9 ? "[%X-9" : "[%X",
 				range_lo);
-			sprintf(alias + strlen(alias),
+			प्र_लिखो(alias + म_माप(alias),
 				range_hi > 0xA ? "A-%X]" : "%X]",
 				range_hi);
-		}
-	}
-	if (bcdDevice_initial_digits < (sizeof(bcdDevice_lo) * 2 - 1))
-		strcat(alias, "*");
+		पूर्ण
+	पूर्ण
+	अगर (bcdDevice_initial_digits < (माप(bcdDevice_lo) * 2 - 1))
+		म_जोड़ो(alias, "*");
 
 	ADD(alias, "dc", match_flags&USB_DEVICE_ID_MATCH_DEV_CLASS,
 	    bDeviceClass);
@@ -218,57 +219,57 @@ static void do_usb_entry(void *symval,
 	    bInterfaceNumber);
 
 	add_wildcard(alias);
-	buf_printf(&mod->dev_table_buf,
+	buf_म_लिखो(&mod->dev_table_buf,
 		   "MODULE_ALIAS(\"%s\");\n", alias);
-}
+पूर्ण
 
-/* Handles increment/decrement of BCD formatted integers */
+/* Handles increment/decrement of BCD क्रमmatted पूर्णांकegers */
 /* Returns the previous value, so it works like i++ or i-- */
-static unsigned int incbcd(unsigned int *bcd,
-			   int inc,
-			   unsigned char max,
-			   size_t chars)
-{
-	unsigned int init = *bcd, i, j;
-	unsigned long long c, dec = 0;
+अटल अचिन्हित पूर्णांक incbcd(अचिन्हित पूर्णांक *bcd,
+			   पूर्णांक inc,
+			   अचिन्हित अक्षर max,
+			   माप_प्रकार अक्षरs)
+अणु
+	अचिन्हित पूर्णांक init = *bcd, i, j;
+	अचिन्हित दीर्घ दीर्घ c, dec = 0;
 
-	/* If bcd is not in BCD format, just increment */
-	if (max > 0x9) {
+	/* If bcd is not in BCD क्रमmat, just increment */
+	अगर (max > 0x9) अणु
 		*bcd += inc;
-		return init;
-	}
+		वापस init;
+	पूर्ण
 
 	/* Convert BCD to Decimal */
-	for (i=0 ; i < chars ; i++) {
+	क्रम (i=0 ; i < अक्षरs ; i++) अणु
 		c = (*bcd >> (i << 2)) & 0xf;
-		c = c > 9 ? 9 : c; /* force to bcd just in case */
-		for (j=0 ; j < i ; j++)
+		c = c > 9 ? 9 : c; /* क्रमce to bcd just in हाल */
+		क्रम (j=0 ; j < i ; j++)
 			c = c * 10;
 		dec += c;
-	}
+	पूर्ण
 
 	/* Do our increment/decrement */
 	dec += inc;
 	*bcd  = 0;
 
 	/* Convert back to BCD */
-	for (i=0 ; i < chars ; i++) {
-		for (c=1,j=0 ; j < i ; j++)
+	क्रम (i=0 ; i < अक्षरs ; i++) अणु
+		क्रम (c=1,j=0 ; j < i ; j++)
 			c = c * 10;
 		c = (dec / c) % 10;
 		*bcd += c << (i << 2);
-	}
-	return init;
-}
+	पूर्ण
+	वापस init;
+पूर्ण
 
-static void do_usb_entry_multi(void *symval, struct module *mod)
-{
-	unsigned int devlo, devhi;
-	unsigned char chi, clo, max;
-	int ndigits;
+अटल व्योम करो_usb_entry_multi(व्योम *symval, काष्ठा module *mod)
+अणु
+	अचिन्हित पूर्णांक devlo, devhi;
+	अचिन्हित अक्षर chi, clo, max;
+	पूर्णांक ndigits;
 
 	DEF_FIELD(symval, usb_device_id, match_flags);
-	DEF_FIELD(symval, usb_device_id, idVendor);
+	DEF_FIELD(symval, usb_device_id, idVenकरोr);
 	DEF_FIELD(symval, usb_device_id, idProduct);
 	DEF_FIELD(symval, usb_device_id, bcdDevice_lo);
 	DEF_FIELD(symval, usb_device_id, bcdDevice_hi);
@@ -280,206 +281,206 @@ static void do_usb_entry_multi(void *symval, struct module *mod)
 	devhi = match_flags & USB_DEVICE_ID_MATCH_DEV_HI ?
 		bcdDevice_hi : ~0x0U;
 
-	/* Figure out if this entry is in bcd or hex format */
-	max = 0x9; /* Default to decimal format */
-	for (ndigits = 0 ; ndigits < sizeof(bcdDevice_lo) * 2 ; ndigits++) {
+	/* Figure out अगर this entry is in bcd or hex क्रमmat */
+	max = 0x9; /* Default to decimal क्रमmat */
+	क्रम (ndigits = 0 ; ndigits < माप(bcdDevice_lo) * 2 ; ndigits++) अणु
 		clo = (devlo >> (ndigits << 2)) & 0xf;
 		chi = ((devhi > 0x9999 ? 0x9999 : devhi) >> (ndigits << 2)) & 0xf;
-		if (clo > max || chi > max) {
+		अगर (clo > max || chi > max) अणु
 			max = 0xf;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Some modules (visor) have empty slots as placeholder for
-	 * run-time specification that results in catch-all alias
+	 * Some modules (visor) have empty slots as placeholder क्रम
+	 * run-समय specअगरication that results in catch-all alias
 	 */
-	if (!(idVendor | idProduct | bDeviceClass | bInterfaceClass))
-		return;
+	अगर (!(idVenकरोr | idProduct | bDeviceClass | bInterfaceClass))
+		वापस;
 
-	/* Convert numeric bcdDevice range into fnmatch-able pattern(s) */
-	for (ndigits = sizeof(bcdDevice_lo) * 2 - 1; devlo <= devhi; ndigits--) {
+	/* Convert numeric bcdDevice range पूर्णांकo fnmatch-able pattern(s) */
+	क्रम (ndigits = माप(bcdDevice_lo) * 2 - 1; devlo <= devhi; ndigits--) अणु
 		clo = devlo & 0xf;
 		chi = devhi & 0xf;
-		if (chi > max)	/* If we are in bcd mode, truncate if necessary */
+		अगर (chi > max)	/* If we are in bcd mode, truncate अगर necessary */
 			chi = max;
 		devlo >>= 4;
 		devhi >>= 4;
 
-		if (devlo == devhi || !ndigits) {
-			do_usb_entry(symval, devlo, ndigits, clo, chi, max, mod);
-			break;
-		}
+		अगर (devlo == devhi || !ndigits) अणु
+			करो_usb_entry(symval, devlo, ndigits, clo, chi, max, mod);
+			अवरोध;
+		पूर्ण
 
-		if (clo > 0x0)
-			do_usb_entry(symval,
+		अगर (clo > 0x0)
+			करो_usb_entry(symval,
 				     incbcd(&devlo, 1, max,
-					    sizeof(bcdDevice_lo) * 2),
+					    माप(bcdDevice_lo) * 2),
 				     ndigits, clo, max, max, mod);
 
-		if (chi < max)
-			do_usb_entry(symval,
+		अगर (chi < max)
+			करो_usb_entry(symval,
 				     incbcd(&devhi, -1, max,
-					    sizeof(bcdDevice_lo) * 2),
+					    माप(bcdDevice_lo) * 2),
 				     ndigits, 0x0, chi, max, mod);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void do_usb_table(void *symval, unsigned long size,
-			 struct module *mod)
-{
-	unsigned int i;
-	const unsigned long id_size = SIZE_usb_device_id;
+अटल व्योम करो_usb_table(व्योम *symval, अचिन्हित दीर्घ size,
+			 काष्ठा module *mod)
+अणु
+	अचिन्हित पूर्णांक i;
+	स्थिर अचिन्हित दीर्घ id_size = SIZE_usb_device_id;
 
 	device_id_check(mod->name, "usb", size, id_size, symval);
 
 	/* Leave last one: it's the terminator. */
 	size -= id_size;
 
-	for (i = 0; i < size; i += id_size)
-		do_usb_entry_multi(symval + i, mod);
-}
+	क्रम (i = 0; i < size; i += id_size)
+		करो_usb_entry_multi(symval + i, mod);
+पूर्ण
 
-static void do_of_entry_multi(void *symval, struct module *mod)
-{
-	char alias[500];
-	int len;
-	char *tmp;
+अटल व्योम करो_of_entry_multi(व्योम *symval, काष्ठा module *mod)
+अणु
+	अक्षर alias[500];
+	पूर्णांक len;
+	अक्षर *पंचांगp;
 
 	DEF_FIELD_ADDR(symval, of_device_id, name);
 	DEF_FIELD_ADDR(symval, of_device_id, type);
 	DEF_FIELD_ADDR(symval, of_device_id, compatible);
 
-	len = sprintf(alias, "of:N%sT%s", (*name)[0] ? *name : "*",
+	len = प्र_लिखो(alias, "of:N%sT%s", (*name)[0] ? *name : "*",
 		      (*type)[0] ? *type : "*");
 
-	if ((*compatible)[0])
-		sprintf(&alias[len], "%sC%s", (*type)[0] ? "*" : "",
+	अगर ((*compatible)[0])
+		प्र_लिखो(&alias[len], "%sC%s", (*type)[0] ? "*" : "",
 			*compatible);
 
 	/* Replace all whitespace with underscores */
-	for (tmp = alias; tmp && *tmp; tmp++)
-		if (isspace(*tmp))
-			*tmp = '_';
+	क्रम (पंचांगp = alias; पंचांगp && *पंचांगp; पंचांगp++)
+		अगर (है_खाली(*पंचांगp))
+			*पंचांगp = '_';
 
-	buf_printf(&mod->dev_table_buf, "MODULE_ALIAS(\"%s\");\n", alias);
-	strcat(alias, "C");
+	buf_म_लिखो(&mod->dev_table_buf, "MODULE_ALIAS(\"%s\");\n", alias);
+	म_जोड़ो(alias, "C");
 	add_wildcard(alias);
-	buf_printf(&mod->dev_table_buf, "MODULE_ALIAS(\"%s\");\n", alias);
-}
+	buf_म_लिखो(&mod->dev_table_buf, "MODULE_ALIAS(\"%s\");\n", alias);
+पूर्ण
 
-static void do_of_table(void *symval, unsigned long size,
-			struct module *mod)
-{
-	unsigned int i;
-	const unsigned long id_size = SIZE_of_device_id;
+अटल व्योम करो_of_table(व्योम *symval, अचिन्हित दीर्घ size,
+			काष्ठा module *mod)
+अणु
+	अचिन्हित पूर्णांक i;
+	स्थिर अचिन्हित दीर्घ id_size = SIZE_of_device_id;
 
 	device_id_check(mod->name, "of", size, id_size, symval);
 
 	/* Leave last one: it's the terminator. */
 	size -= id_size;
 
-	for (i = 0; i < size; i += id_size)
-		do_of_entry_multi(symval + i, mod);
-}
+	क्रम (i = 0; i < size; i += id_size)
+		करो_of_entry_multi(symval + i, mod);
+पूर्ण
 
 /* Looks like: hid:bNvNpN */
-static int do_hid_entry(const char *filename,
-			     void *symval, char *alias)
-{
+अटल पूर्णांक करो_hid_entry(स्थिर अक्षर *filename,
+			     व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, hid_device_id, bus);
 	DEF_FIELD(symval, hid_device_id, group);
-	DEF_FIELD(symval, hid_device_id, vendor);
+	DEF_FIELD(symval, hid_device_id, venकरोr);
 	DEF_FIELD(symval, hid_device_id, product);
 
-	sprintf(alias, "hid:");
+	प्र_लिखो(alias, "hid:");
 	ADD(alias, "b", bus != HID_BUS_ANY, bus);
 	ADD(alias, "g", group != HID_GROUP_ANY, group);
-	ADD(alias, "v", vendor != HID_ANY_ID, vendor);
+	ADD(alias, "v", venकरोr != HID_ANY_ID, venकरोr);
 	ADD(alias, "p", product != HID_ANY_ID, product);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: ieee1394:venNmoNspNverN */
-static int do_ieee1394_entry(const char *filename,
-			     void *symval, char *alias)
-{
+अटल पूर्णांक करो_ieee1394_entry(स्थिर अक्षर *filename,
+			     व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, ieee1394_device_id, match_flags);
-	DEF_FIELD(symval, ieee1394_device_id, vendor_id);
+	DEF_FIELD(symval, ieee1394_device_id, venकरोr_id);
 	DEF_FIELD(symval, ieee1394_device_id, model_id);
-	DEF_FIELD(symval, ieee1394_device_id, specifier_id);
+	DEF_FIELD(symval, ieee1394_device_id, specअगरier_id);
 	DEF_FIELD(symval, ieee1394_device_id, version);
 
-	strcpy(alias, "ieee1394:");
+	म_नकल(alias, "ieee1394:");
 	ADD(alias, "ven", match_flags & IEEE1394_MATCH_VENDOR_ID,
-	    vendor_id);
+	    venकरोr_id);
 	ADD(alias, "mo", match_flags & IEEE1394_MATCH_MODEL_ID,
 	    model_id);
 	ADD(alias, "sp", match_flags & IEEE1394_MATCH_SPECIFIER_ID,
-	    specifier_id);
+	    specअगरier_id);
 	ADD(alias, "ver", match_flags & IEEE1394_MATCH_VERSION,
 	    version);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: pci:vNdNsvNsdNbcNscNiN. */
-static int do_pci_entry(const char *filename,
-			void *symval, char *alias)
-{
-	/* Class field can be divided into these three. */
-	unsigned char baseclass, subclass, interface,
-		baseclass_mask, subclass_mask, interface_mask;
+अटल पूर्णांक करो_pci_entry(स्थिर अक्षर *filename,
+			व्योम *symval, अक्षर *alias)
+अणु
+	/* Class field can be भागided पूर्णांकo these three. */
+	अचिन्हित अक्षर baseclass, subclass, पूर्णांकerface,
+		baseclass_mask, subclass_mask, पूर्णांकerface_mask;
 
-	DEF_FIELD(symval, pci_device_id, vendor);
+	DEF_FIELD(symval, pci_device_id, venकरोr);
 	DEF_FIELD(symval, pci_device_id, device);
-	DEF_FIELD(symval, pci_device_id, subvendor);
+	DEF_FIELD(symval, pci_device_id, subvenकरोr);
 	DEF_FIELD(symval, pci_device_id, subdevice);
 	DEF_FIELD(symval, pci_device_id, class);
 	DEF_FIELD(symval, pci_device_id, class_mask);
 
-	strcpy(alias, "pci:");
-	ADD(alias, "v", vendor != PCI_ANY_ID, vendor);
+	म_नकल(alias, "pci:");
+	ADD(alias, "v", venकरोr != PCI_ANY_ID, venकरोr);
 	ADD(alias, "d", device != PCI_ANY_ID, device);
-	ADD(alias, "sv", subvendor != PCI_ANY_ID, subvendor);
+	ADD(alias, "sv", subvenकरोr != PCI_ANY_ID, subvenकरोr);
 	ADD(alias, "sd", subdevice != PCI_ANY_ID, subdevice);
 
 	baseclass = (class) >> 16;
 	baseclass_mask = (class_mask) >> 16;
 	subclass = (class) >> 8;
 	subclass_mask = (class_mask) >> 8;
-	interface = class;
-	interface_mask = class_mask;
+	पूर्णांकerface = class;
+	पूर्णांकerface_mask = class_mask;
 
-	if ((baseclass_mask != 0 && baseclass_mask != 0xFF)
+	अगर ((baseclass_mask != 0 && baseclass_mask != 0xFF)
 	    || (subclass_mask != 0 && subclass_mask != 0xFF)
-	    || (interface_mask != 0 && interface_mask != 0xFF)) {
+	    || (पूर्णांकerface_mask != 0 && पूर्णांकerface_mask != 0xFF)) अणु
 		warn("Can't handle masks in %s:%04X\n",
 		     filename, class_mask);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ADD(alias, "bc", baseclass_mask == 0xFF, baseclass);
 	ADD(alias, "sc", subclass_mask == 0xFF, subclass);
-	ADD(alias, "i", interface_mask == 0xFF, interface);
+	ADD(alias, "i", पूर्णांकerface_mask == 0xFF, पूर्णांकerface);
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* looks like: "ccw:tNmNdtNdmN" */
-static int do_ccw_entry(const char *filename,
-			void *symval, char *alias)
-{
+अटल पूर्णांक करो_ccw_entry(स्थिर अक्षर *filename,
+			व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, ccw_device_id, match_flags);
 	DEF_FIELD(symval, ccw_device_id, cu_type);
 	DEF_FIELD(symval, ccw_device_id, cu_model);
 	DEF_FIELD(symval, ccw_device_id, dev_type);
 	DEF_FIELD(symval, ccw_device_id, dev_model);
 
-	strcpy(alias, "ccw:");
+	म_नकल(alias, "ccw:");
 	ADD(alias, "t", match_flags&CCW_DEVICE_ID_MATCH_CU_TYPE,
 	    cu_type);
 	ADD(alias, "m", match_flags&CCW_DEVICE_ID_MATCH_CU_MODEL,
@@ -489,176 +490,176 @@ static int do_ccw_entry(const char *filename,
 	ADD(alias, "dm", match_flags&CCW_DEVICE_ID_MATCH_DEVICE_MODEL,
 	    dev_model);
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* looks like: "ap:tN" */
-static int do_ap_entry(const char *filename,
-		       void *symval, char *alias)
-{
+अटल पूर्णांक करो_ap_entry(स्थिर अक्षर *filename,
+		       व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, ap_device_id, dev_type);
 
-	sprintf(alias, "ap:t%02X*", dev_type);
-	return 1;
-}
+	प्र_लिखो(alias, "ap:t%02X*", dev_type);
+	वापस 1;
+पूर्ण
 
 /* looks like: "css:tN" */
-static int do_css_entry(const char *filename,
-			void *symval, char *alias)
-{
+अटल पूर्णांक करो_css_entry(स्थिर अक्षर *filename,
+			व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, css_device_id, type);
 
-	sprintf(alias, "css:t%01X", type);
-	return 1;
-}
+	प्र_लिखो(alias, "css:t%01X", type);
+	वापस 1;
+पूर्ण
 
 /* Looks like: "serio:tyNprNidNexN" */
-static int do_serio_entry(const char *filename,
-			  void *symval, char *alias)
-{
+अटल पूर्णांक करो_serio_entry(स्थिर अक्षर *filename,
+			  व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, serio_device_id, type);
 	DEF_FIELD(symval, serio_device_id, proto);
 	DEF_FIELD(symval, serio_device_id, id);
 	DEF_FIELD(symval, serio_device_id, extra);
 
-	strcpy(alias, "serio:");
+	म_नकल(alias, "serio:");
 	ADD(alias, "ty", type != SERIO_ANY, type);
 	ADD(alias, "pr", proto != SERIO_ANY, proto);
 	ADD(alias, "id", id != SERIO_ANY, id);
 	ADD(alias, "ex", extra != SERIO_ANY, extra);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* looks like: "acpi:ACPI0003" or "acpi:PNP0C0B" or "acpi:LNXVIDEO" or
- *             "acpi:bbsspp" (bb=base-class, ss=sub-class, pp=prog-if)
+ *             "acpi:bbsspp" (bb=base-class, ss=sub-class, pp=prog-अगर)
  *
  * NOTE: Each driver should use one of the following : _HID, _CIDs
  *       or _CLS. Also, bb, ss, and pp can be substituted with ??
- *       as don't care byte.
+ *       as करोn't care byte.
  */
-static int do_acpi_entry(const char *filename,
-			void *symval, char *alias)
-{
+अटल पूर्णांक करो_acpi_entry(स्थिर अक्षर *filename,
+			व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD_ADDR(symval, acpi_device_id, id);
 	DEF_FIELD_ADDR(symval, acpi_device_id, cls);
 	DEF_FIELD_ADDR(symval, acpi_device_id, cls_msk);
 
-	if (id && strlen((const char *)*id))
-		sprintf(alias, "acpi*:%s:*", *id);
-	else if (cls) {
-		int i, byte_shift, cnt = 0;
-		unsigned int msk;
+	अगर (id && म_माप((स्थिर अक्षर *)*id))
+		प्र_लिखो(alias, "acpi*:%s:*", *id);
+	अन्यथा अगर (cls) अणु
+		पूर्णांक i, byte_shअगरt, cnt = 0;
+		अचिन्हित पूर्णांक msk;
 
-		sprintf(&alias[cnt], "acpi*:");
+		प्र_लिखो(&alias[cnt], "acpi*:");
 		cnt = 6;
-		for (i = 1; i <= 3; i++) {
-			byte_shift = 8 * (3-i);
-			msk = (*cls_msk >> byte_shift) & 0xFF;
-			if (msk)
-				sprintf(&alias[cnt], "%02x",
-					(*cls >> byte_shift) & 0xFF);
-			else
-				sprintf(&alias[cnt], "??");
+		क्रम (i = 1; i <= 3; i++) अणु
+			byte_shअगरt = 8 * (3-i);
+			msk = (*cls_msk >> byte_shअगरt) & 0xFF;
+			अगर (msk)
+				प्र_लिखो(&alias[cnt], "%02x",
+					(*cls >> byte_shअगरt) & 0xFF);
+			अन्यथा
+				प्र_लिखो(&alias[cnt], "??");
 			cnt += 2;
-		}
-		sprintf(&alias[cnt], ":*");
-	}
-	return 1;
-}
+		पूर्ण
+		प्र_लिखो(&alias[cnt], ":*");
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /* looks like: "pnp:dD" */
-static void do_pnp_device_entry(void *symval, unsigned long size,
-				struct module *mod)
-{
-	const unsigned long id_size = SIZE_pnp_device_id;
-	const unsigned int count = (size / id_size)-1;
-	unsigned int i;
+अटल व्योम करो_pnp_device_entry(व्योम *symval, अचिन्हित दीर्घ size,
+				काष्ठा module *mod)
+अणु
+	स्थिर अचिन्हित दीर्घ id_size = SIZE_pnp_device_id;
+	स्थिर अचिन्हित पूर्णांक count = (size / id_size)-1;
+	अचिन्हित पूर्णांक i;
 
 	device_id_check(mod->name, "pnp", size, id_size, symval);
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		DEF_FIELD_ADDR(symval + i*id_size, pnp_device_id, id);
-		char acpi_id[sizeof(*id)];
-		int j;
+		अक्षर acpi_id[माप(*id)];
+		पूर्णांक j;
 
-		buf_printf(&mod->dev_table_buf,
+		buf_म_लिखो(&mod->dev_table_buf,
 			   "MODULE_ALIAS(\"pnp:d%s*\");\n", *id);
 
 		/* fix broken pnp bus lowercasing */
-		for (j = 0; j < sizeof(acpi_id); j++)
-			acpi_id[j] = toupper((*id)[j]);
-		buf_printf(&mod->dev_table_buf,
+		क्रम (j = 0; j < माप(acpi_id); j++)
+			acpi_id[j] = बड़े((*id)[j]);
+		buf_म_लिखो(&mod->dev_table_buf,
 			   "MODULE_ALIAS(\"acpi*:%s:*\");\n", acpi_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* looks like: "pnp:dD" for every device of the card */
-static void do_pnp_card_entries(void *symval, unsigned long size,
-				struct module *mod)
-{
-	const unsigned long id_size = SIZE_pnp_card_device_id;
-	const unsigned int count = (size / id_size)-1;
-	unsigned int i;
+/* looks like: "pnp:dD" क्रम every device of the card */
+अटल व्योम करो_pnp_card_entries(व्योम *symval, अचिन्हित दीर्घ size,
+				काष्ठा module *mod)
+अणु
+	स्थिर अचिन्हित दीर्घ id_size = SIZE_pnp_card_device_id;
+	स्थिर अचिन्हित पूर्णांक count = (size / id_size)-1;
+	अचिन्हित पूर्णांक i;
 
 	device_id_check(mod->name, "pnp", size, id_size, symval);
 
-	for (i = 0; i < count; i++) {
-		unsigned int j;
+	क्रम (i = 0; i < count; i++) अणु
+		अचिन्हित पूर्णांक j;
 		DEF_FIELD_ADDR(symval + i * id_size, pnp_card_device_id, devs);
 
-		for (j = 0; j < PNP_MAX_DEVICES; j++) {
-			const char *id = (char *)(*devs)[j].id;
-			int i2, j2;
-			int dup = 0;
+		क्रम (j = 0; j < PNP_MAX_DEVICES; j++) अणु
+			स्थिर अक्षर *id = (अक्षर *)(*devs)[j].id;
+			पूर्णांक i2, j2;
+			पूर्णांक dup = 0;
 
-			if (!id[0])
-				break;
+			अगर (!id[0])
+				अवरोध;
 
-			/* find duplicate, already added value */
-			for (i2 = 0; i2 < i && !dup; i2++) {
+			/* find duplicate, alपढ़ोy added value */
+			क्रम (i2 = 0; i2 < i && !dup; i2++) अणु
 				DEF_FIELD_ADDR_VAR(symval + i2 * id_size,
 						   pnp_card_device_id,
 						   devs, devs_dup);
 
-				for (j2 = 0; j2 < PNP_MAX_DEVICES; j2++) {
-					const char *id2 =
-						(char *)(*devs_dup)[j2].id;
+				क्रम (j2 = 0; j2 < PNP_MAX_DEVICES; j2++) अणु
+					स्थिर अक्षर *id2 =
+						(अक्षर *)(*devs_dup)[j2].id;
 
-					if (!id2[0])
-						break;
+					अगर (!id2[0])
+						अवरोध;
 
-					if (!strcmp(id, id2)) {
+					अगर (!म_भेद(id, id2)) अणु
 						dup = 1;
-						break;
-					}
-				}
-			}
+						अवरोध;
+					पूर्ण
+				पूर्ण
+			पूर्ण
 
-			/* add an individual alias for every device entry */
-			if (!dup) {
-				char acpi_id[PNP_ID_LEN];
-				int k;
+			/* add an inभागidual alias क्रम every device entry */
+			अगर (!dup) अणु
+				अक्षर acpi_id[PNP_ID_LEN];
+				पूर्णांक k;
 
-				buf_printf(&mod->dev_table_buf,
+				buf_म_लिखो(&mod->dev_table_buf,
 					   "MODULE_ALIAS(\"pnp:d%s*\");\n", id);
 
 				/* fix broken pnp bus lowercasing */
-				for (k = 0; k < sizeof(acpi_id); k++)
-					acpi_id[k] = toupper(id[k]);
-				buf_printf(&mod->dev_table_buf,
+				क्रम (k = 0; k < माप(acpi_id); k++)
+					acpi_id[k] = बड़े(id[k]);
+				buf_म_लिखो(&mod->dev_table_buf,
 					   "MODULE_ALIAS(\"acpi*:%s:*\");\n", acpi_id);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* Looks like: pcmcia:mNcNfNfnNpfnNvaNvbNvcNvdN. */
-static int do_pcmcia_entry(const char *filename,
-			   void *symval, char *alias)
-{
-	unsigned int i;
+अटल पूर्णांक करो_pcmcia_entry(स्थिर अक्षर *filename,
+			   व्योम *symval, अक्षर *alias)
+अणु
+	अचिन्हित पूर्णांक i;
 	DEF_FIELD(symval, pcmcia_device_id, match_flags);
 	DEF_FIELD(symval, pcmcia_device_id, manf_id);
 	DEF_FIELD(symval, pcmcia_device_id, card_id);
@@ -667,11 +668,11 @@ static int do_pcmcia_entry(const char *filename,
 	DEF_FIELD(symval, pcmcia_device_id, device_no);
 	DEF_FIELD_ADDR(symval, pcmcia_device_id, prod_id_hash);
 
-	for (i=0; i<4; i++) {
+	क्रम (i=0; i<4; i++) अणु
 		(*prod_id_hash)[i] = TO_NATIVE((*prod_id_hash)[i]);
-	}
+	पूर्ण
 
-	strcpy(alias, "pcmcia:");
+	म_नकल(alias, "pcmcia:");
 	ADD(alias, "m", match_flags & PCMCIA_DEV_ID_MATCH_MANF_ID,
 	    manf_id);
 	ADD(alias, "c", match_flags & PCMCIA_DEV_ID_MATCH_CARD_ID,
@@ -688,619 +689,619 @@ static int do_pcmcia_entry(const char *filename,
 	ADD(alias, "pd", match_flags & PCMCIA_DEV_ID_MATCH_PROD_ID4, (*prod_id_hash)[3]);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int do_vio_entry(const char *filename, void *symval,
-		char *alias)
-{
-	char *tmp;
+अटल पूर्णांक करो_vio_entry(स्थिर अक्षर *filename, व्योम *symval,
+		अक्षर *alias)
+अणु
+	अक्षर *पंचांगp;
 	DEF_FIELD_ADDR(symval, vio_device_id, type);
 	DEF_FIELD_ADDR(symval, vio_device_id, compat);
 
-	sprintf(alias, "vio:T%sS%s", (*type)[0] ? *type : "*",
+	प्र_लिखो(alias, "vio:T%sS%s", (*type)[0] ? *type : "*",
 			(*compat)[0] ? *compat : "*");
 
 	/* Replace all whitespace with underscores */
-	for (tmp = alias; tmp && *tmp; tmp++)
-		if (isspace (*tmp))
-			*tmp = '_';
+	क्रम (पंचांगp = alias; पंचांगp && *पंचांगp; पंचांगp++)
+		अगर (है_खाली (*पंचांगp))
+			*पंचांगp = '_';
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
 
-static void do_input(char *alias,
-		     kernel_ulong_t *arr, unsigned int min, unsigned int max)
-{
-	unsigned int i;
+अटल व्योम करो_input(अक्षर *alias,
+		     kernel_uदीर्घ_t *arr, अचिन्हित पूर्णांक min, अचिन्हित पूर्णांक max)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = min / BITS_PER_LONG; i < max / BITS_PER_LONG + 1; i++)
+	क्रम (i = min / BITS_PER_LONG; i < max / BITS_PER_LONG + 1; i++)
 		arr[i] = TO_NATIVE(arr[i]);
-	for (i = min; i < max; i++)
-		if (arr[i / BITS_PER_LONG] & (1L << (i%BITS_PER_LONG)))
-			sprintf(alias + strlen(alias), "%X,*", i);
-}
+	क्रम (i = min; i < max; i++)
+		अगर (arr[i / BITS_PER_LONG] & (1L << (i%BITS_PER_LONG)))
+			प्र_लिखो(alias + म_माप(alias), "%X,*", i);
+पूर्ण
 
 /* input:b0v0p0e0-eXkXrXaXmXlXsXfXwX where X is comma-separated %02X. */
-static int do_input_entry(const char *filename, void *symval,
-			  char *alias)
-{
+अटल पूर्णांक करो_input_entry(स्थिर अक्षर *filename, व्योम *symval,
+			  अक्षर *alias)
+अणु
 	DEF_FIELD(symval, input_device_id, flags);
 	DEF_FIELD(symval, input_device_id, bustype);
-	DEF_FIELD(symval, input_device_id, vendor);
+	DEF_FIELD(symval, input_device_id, venकरोr);
 	DEF_FIELD(symval, input_device_id, product);
 	DEF_FIELD(symval, input_device_id, version);
 	DEF_FIELD_ADDR(symval, input_device_id, evbit);
 	DEF_FIELD_ADDR(symval, input_device_id, keybit);
 	DEF_FIELD_ADDR(symval, input_device_id, relbit);
-	DEF_FIELD_ADDR(symval, input_device_id, absbit);
+	DEF_FIELD_ADDR(symval, input_device_id, असलbit);
 	DEF_FIELD_ADDR(symval, input_device_id, mscbit);
 	DEF_FIELD_ADDR(symval, input_device_id, ledbit);
 	DEF_FIELD_ADDR(symval, input_device_id, sndbit);
 	DEF_FIELD_ADDR(symval, input_device_id, ffbit);
 	DEF_FIELD_ADDR(symval, input_device_id, swbit);
 
-	sprintf(alias, "input:");
+	प्र_लिखो(alias, "input:");
 
 	ADD(alias, "b", flags & INPUT_DEVICE_ID_MATCH_BUS, bustype);
-	ADD(alias, "v", flags & INPUT_DEVICE_ID_MATCH_VENDOR, vendor);
+	ADD(alias, "v", flags & INPUT_DEVICE_ID_MATCH_VENDOR, venकरोr);
 	ADD(alias, "p", flags & INPUT_DEVICE_ID_MATCH_PRODUCT, product);
 	ADD(alias, "e", flags & INPUT_DEVICE_ID_MATCH_VERSION, version);
 
-	sprintf(alias + strlen(alias), "-e*");
-	if (flags & INPUT_DEVICE_ID_MATCH_EVBIT)
-		do_input(alias, *evbit, 0, INPUT_DEVICE_ID_EV_MAX);
-	sprintf(alias + strlen(alias), "k*");
-	if (flags & INPUT_DEVICE_ID_MATCH_KEYBIT)
-		do_input(alias, *keybit,
+	प्र_लिखो(alias + म_माप(alias), "-e*");
+	अगर (flags & INPUT_DEVICE_ID_MATCH_EVBIT)
+		करो_input(alias, *evbit, 0, INPUT_DEVICE_ID_EV_MAX);
+	प्र_लिखो(alias + म_माप(alias), "k*");
+	अगर (flags & INPUT_DEVICE_ID_MATCH_KEYBIT)
+		करो_input(alias, *keybit,
 			 INPUT_DEVICE_ID_KEY_MIN_INTERESTING,
 			 INPUT_DEVICE_ID_KEY_MAX);
-	sprintf(alias + strlen(alias), "r*");
-	if (flags & INPUT_DEVICE_ID_MATCH_RELBIT)
-		do_input(alias, *relbit, 0, INPUT_DEVICE_ID_REL_MAX);
-	sprintf(alias + strlen(alias), "a*");
-	if (flags & INPUT_DEVICE_ID_MATCH_ABSBIT)
-		do_input(alias, *absbit, 0, INPUT_DEVICE_ID_ABS_MAX);
-	sprintf(alias + strlen(alias), "m*");
-	if (flags & INPUT_DEVICE_ID_MATCH_MSCIT)
-		do_input(alias, *mscbit, 0, INPUT_DEVICE_ID_MSC_MAX);
-	sprintf(alias + strlen(alias), "l*");
-	if (flags & INPUT_DEVICE_ID_MATCH_LEDBIT)
-		do_input(alias, *ledbit, 0, INPUT_DEVICE_ID_LED_MAX);
-	sprintf(alias + strlen(alias), "s*");
-	if (flags & INPUT_DEVICE_ID_MATCH_SNDBIT)
-		do_input(alias, *sndbit, 0, INPUT_DEVICE_ID_SND_MAX);
-	sprintf(alias + strlen(alias), "f*");
-	if (flags & INPUT_DEVICE_ID_MATCH_FFBIT)
-		do_input(alias, *ffbit, 0, INPUT_DEVICE_ID_FF_MAX);
-	sprintf(alias + strlen(alias), "w*");
-	if (flags & INPUT_DEVICE_ID_MATCH_SWBIT)
-		do_input(alias, *swbit, 0, INPUT_DEVICE_ID_SW_MAX);
-	return 1;
-}
+	प्र_लिखो(alias + म_माप(alias), "r*");
+	अगर (flags & INPUT_DEVICE_ID_MATCH_RELBIT)
+		करो_input(alias, *relbit, 0, INPUT_DEVICE_ID_REL_MAX);
+	प्र_लिखो(alias + म_माप(alias), "a*");
+	अगर (flags & INPUT_DEVICE_ID_MATCH_ABSBIT)
+		करो_input(alias, *असलbit, 0, INPUT_DEVICE_ID_ABS_MAX);
+	प्र_लिखो(alias + म_माप(alias), "m*");
+	अगर (flags & INPUT_DEVICE_ID_MATCH_MSCIT)
+		करो_input(alias, *mscbit, 0, INPUT_DEVICE_ID_MSC_MAX);
+	प्र_लिखो(alias + म_माप(alias), "l*");
+	अगर (flags & INPUT_DEVICE_ID_MATCH_LEDBIT)
+		करो_input(alias, *ledbit, 0, INPUT_DEVICE_ID_LED_MAX);
+	प्र_लिखो(alias + म_माप(alias), "s*");
+	अगर (flags & INPUT_DEVICE_ID_MATCH_SNDBIT)
+		करो_input(alias, *sndbit, 0, INPUT_DEVICE_ID_SND_MAX);
+	प्र_लिखो(alias + म_माप(alias), "f*");
+	अगर (flags & INPUT_DEVICE_ID_MATCH_FFBIT)
+		करो_input(alias, *ffbit, 0, INPUT_DEVICE_ID_FF_MAX);
+	प्र_लिखो(alias + म_माप(alias), "w*");
+	अगर (flags & INPUT_DEVICE_ID_MATCH_SWBIT)
+		करो_input(alias, *swbit, 0, INPUT_DEVICE_ID_SW_MAX);
+	वापस 1;
+पूर्ण
 
-static int do_eisa_entry(const char *filename, void *symval,
-		char *alias)
-{
+अटल पूर्णांक करो_eisa_entry(स्थिर अक्षर *filename, व्योम *symval,
+		अक्षर *alias)
+अणु
 	DEF_FIELD_ADDR(symval, eisa_device_id, sig);
-	if (sig[0])
-		sprintf(alias, EISA_DEVICE_MODALIAS_FMT "*", *sig);
-	else
-		strcat(alias, "*");
-	return 1;
-}
+	अगर (sig[0])
+		प्र_लिखो(alias, EISA_DEVICE_MODALIAS_FMT "*", *sig);
+	अन्यथा
+		म_जोड़ो(alias, "*");
+	वापस 1;
+पूर्ण
 
 /* Looks like: parisc:tNhvNrevNsvN */
-static int do_parisc_entry(const char *filename, void *symval,
-		char *alias)
-{
+अटल पूर्णांक करो_parisc_entry(स्थिर अक्षर *filename, व्योम *symval,
+		अक्षर *alias)
+अणु
 	DEF_FIELD(symval, parisc_device_id, hw_type);
 	DEF_FIELD(symval, parisc_device_id, hversion);
 	DEF_FIELD(symval, parisc_device_id, hversion_rev);
 	DEF_FIELD(symval, parisc_device_id, sversion);
 
-	strcpy(alias, "parisc:");
+	म_नकल(alias, "parisc:");
 	ADD(alias, "t", hw_type != PA_HWTYPE_ANY_ID, hw_type);
 	ADD(alias, "hv", hversion != PA_HVERSION_ANY_ID, hversion);
 	ADD(alias, "rev", hversion_rev != PA_HVERSION_REV_ANY_ID, hversion_rev);
 	ADD(alias, "sv", sversion != PA_SVERSION_ANY_ID, sversion);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: sdio:cNvNdN. */
-static int do_sdio_entry(const char *filename,
-			void *symval, char *alias)
-{
+अटल पूर्णांक करो_sdio_entry(स्थिर अक्षर *filename,
+			व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, sdio_device_id, class);
-	DEF_FIELD(symval, sdio_device_id, vendor);
+	DEF_FIELD(symval, sdio_device_id, venकरोr);
 	DEF_FIELD(symval, sdio_device_id, device);
 
-	strcpy(alias, "sdio:");
+	म_नकल(alias, "sdio:");
 	ADD(alias, "c", class != (__u8)SDIO_ANY_ID, class);
-	ADD(alias, "v", vendor != (__u16)SDIO_ANY_ID, vendor);
+	ADD(alias, "v", venकरोr != (__u16)SDIO_ANY_ID, venकरोr);
 	ADD(alias, "d", device != (__u16)SDIO_ANY_ID, device);
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: ssb:vNidNrevN. */
-static int do_ssb_entry(const char *filename,
-			void *symval, char *alias)
-{
-	DEF_FIELD(symval, ssb_device_id, vendor);
+अटल पूर्णांक करो_ssb_entry(स्थिर अक्षर *filename,
+			व्योम *symval, अक्षर *alias)
+अणु
+	DEF_FIELD(symval, ssb_device_id, venकरोr);
 	DEF_FIELD(symval, ssb_device_id, coreid);
 	DEF_FIELD(symval, ssb_device_id, revision);
 
-	strcpy(alias, "ssb:");
-	ADD(alias, "v", vendor != SSB_ANY_VENDOR, vendor);
+	म_नकल(alias, "ssb:");
+	ADD(alias, "v", venकरोr != SSB_ANY_VENDOR, venकरोr);
 	ADD(alias, "id", coreid != SSB_ANY_ID, coreid);
 	ADD(alias, "rev", revision != SSB_ANY_REV, revision);
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: bcma:mNidNrevNclN. */
-static int do_bcma_entry(const char *filename,
-			 void *symval, char *alias)
-{
+अटल पूर्णांक करो_bcma_entry(स्थिर अक्षर *filename,
+			 व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, bcma_device_id, manuf);
 	DEF_FIELD(symval, bcma_device_id, id);
 	DEF_FIELD(symval, bcma_device_id, rev);
 	DEF_FIELD(symval, bcma_device_id, class);
 
-	strcpy(alias, "bcma:");
+	म_नकल(alias, "bcma:");
 	ADD(alias, "m", manuf != BCMA_ANY_MANUF, manuf);
 	ADD(alias, "id", id != BCMA_ANY_ID, id);
 	ADD(alias, "rev", rev != BCMA_ANY_REV, rev);
 	ADD(alias, "cl", class != BCMA_ANY_CLASS, class);
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: virtio:dNvN */
-static int do_virtio_entry(const char *filename, void *symval,
-			   char *alias)
-{
+अटल पूर्णांक करो_virtio_entry(स्थिर अक्षर *filename, व्योम *symval,
+			   अक्षर *alias)
+अणु
 	DEF_FIELD(symval, virtio_device_id, device);
-	DEF_FIELD(symval, virtio_device_id, vendor);
+	DEF_FIELD(symval, virtio_device_id, venकरोr);
 
-	strcpy(alias, "virtio:");
+	म_नकल(alias, "virtio:");
 	ADD(alias, "d", device != VIRTIO_DEV_ANY_ID, device);
-	ADD(alias, "v", vendor != VIRTIO_DEV_ANY_ID, vendor);
+	ADD(alias, "v", venकरोr != VIRTIO_DEV_ANY_ID, venकरोr);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Looks like: vmbus:guid
- * Each byte of the guid will be represented by two hex characters
+ * Each byte of the guid will be represented by two hex अक्षरacters
  * in the name.
  */
 
-static int do_vmbus_entry(const char *filename, void *symval,
-			  char *alias)
-{
-	int i;
+अटल पूर्णांक करो_vmbus_entry(स्थिर अक्षर *filename, व्योम *symval,
+			  अक्षर *alias)
+अणु
+	पूर्णांक i;
 	DEF_FIELD_ADDR(symval, hv_vmbus_device_id, guid);
-	char guid_name[(sizeof(*guid) + 1) * 2];
+	अक्षर guid_name[(माप(*guid) + 1) * 2];
 
-	for (i = 0; i < (sizeof(*guid) * 2); i += 2)
-		sprintf(&guid_name[i], "%02x", TO_NATIVE((guid->b)[i/2]));
+	क्रम (i = 0; i < (माप(*guid) * 2); i += 2)
+		प्र_लिखो(&guid_name[i], "%02x", TO_NATIVE((guid->b)[i/2]));
 
-	strcpy(alias, "vmbus:");
-	strcat(alias, guid_name);
+	म_नकल(alias, "vmbus:");
+	म_जोड़ो(alias, guid_name);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: rpmsg:S */
-static int do_rpmsg_entry(const char *filename, void *symval,
-			  char *alias)
-{
+अटल पूर्णांक करो_rpmsg_entry(स्थिर अक्षर *filename, व्योम *symval,
+			  अक्षर *alias)
+अणु
 	DEF_FIELD_ADDR(symval, rpmsg_device_id, name);
-	sprintf(alias, RPMSG_DEVICE_MODALIAS_FMT, *name);
+	प्र_लिखो(alias, RPMSG_DEVICE_MODALIAS_FMT, *name);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: i2c:S */
-static int do_i2c_entry(const char *filename, void *symval,
-			char *alias)
-{
+अटल पूर्णांक करो_i2c_entry(स्थिर अक्षर *filename, व्योम *symval,
+			अक्षर *alias)
+अणु
 	DEF_FIELD_ADDR(symval, i2c_device_id, name);
-	sprintf(alias, I2C_MODULE_PREFIX "%s", *name);
+	प्र_लिखो(alias, I2C_MODULE_PREFIX "%s", *name);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int do_i3c_entry(const char *filename, void *symval,
-			char *alias)
-{
+अटल पूर्णांक करो_i3c_entry(स्थिर अक्षर *filename, व्योम *symval,
+			अक्षर *alias)
+अणु
 	DEF_FIELD(symval, i3c_device_id, match_flags);
 	DEF_FIELD(symval, i3c_device_id, dcr);
 	DEF_FIELD(symval, i3c_device_id, manuf_id);
 	DEF_FIELD(symval, i3c_device_id, part_id);
 	DEF_FIELD(symval, i3c_device_id, extra_info);
 
-	strcpy(alias, "i3c:");
+	म_नकल(alias, "i3c:");
 	ADD(alias, "dcr", match_flags & I3C_MATCH_DCR, dcr);
 	ADD(alias, "manuf", match_flags & I3C_MATCH_MANUF, manuf_id);
 	ADD(alias, "part", match_flags & I3C_MATCH_PART, part_id);
 	ADD(alias, "ext", match_flags & I3C_MATCH_EXTRA_INFO, extra_info);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: spi:S */
-static int do_spi_entry(const char *filename, void *symval,
-			char *alias)
-{
+अटल पूर्णांक करो_spi_entry(स्थिर अक्षर *filename, व्योम *symval,
+			अक्षर *alias)
+अणु
 	DEF_FIELD_ADDR(symval, spi_device_id, name);
-	sprintf(alias, SPI_MODULE_PREFIX "%s", *name);
+	प्र_लिखो(alias, SPI_MODULE_PREFIX "%s", *name);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct dmifield {
-	const char *prefix;
-	int field;
-} dmi_fields[] = {
-	{ "bvn", DMI_BIOS_VENDOR },
-	{ "bvr", DMI_BIOS_VERSION },
-	{ "bd",  DMI_BIOS_DATE },
-	{ "br",  DMI_BIOS_RELEASE },
-	{ "efr", DMI_EC_FIRMWARE_RELEASE },
-	{ "svn", DMI_SYS_VENDOR },
-	{ "pn",  DMI_PRODUCT_NAME },
-	{ "pvr", DMI_PRODUCT_VERSION },
-	{ "rvn", DMI_BOARD_VENDOR },
-	{ "rn",  DMI_BOARD_NAME },
-	{ "rvr", DMI_BOARD_VERSION },
-	{ "cvn", DMI_CHASSIS_VENDOR },
-	{ "ct",  DMI_CHASSIS_TYPE },
-	{ "cvr", DMI_CHASSIS_VERSION },
-	{ NULL,  DMI_NONE }
-};
+अटल स्थिर काष्ठा dmअगरield अणु
+	स्थिर अक्षर *prefix;
+	पूर्णांक field;
+पूर्ण dmi_fields[] = अणु
+	अणु "bvn", DMI_BIOS_VENDOR पूर्ण,
+	अणु "bvr", DMI_BIOS_VERSION पूर्ण,
+	अणु "bd",  DMI_BIOS_DATE पूर्ण,
+	अणु "br",  DMI_BIOS_RELEASE पूर्ण,
+	अणु "efr", DMI_EC_FIRMWARE_RELEASE पूर्ण,
+	अणु "svn", DMI_SYS_VENDOR पूर्ण,
+	अणु "pn",  DMI_PRODUCT_NAME पूर्ण,
+	अणु "pvr", DMI_PRODUCT_VERSION पूर्ण,
+	अणु "rvn", DMI_BOARD_VENDOR पूर्ण,
+	अणु "rn",  DMI_BOARD_NAME पूर्ण,
+	अणु "rvr", DMI_BOARD_VERSION पूर्ण,
+	अणु "cvn", DMI_CHASSIS_VENDOR पूर्ण,
+	अणु "ct",  DMI_CHASSIS_TYPE पूर्ण,
+	अणु "cvr", DMI_CHASSIS_VERSION पूर्ण,
+	अणु शून्य,  DMI_NONE पूर्ण
+पूर्ण;
 
-static void dmi_ascii_filter(char *d, const char *s)
-{
-	/* Filter out characters we don't want to see in the modalias string */
-	for (; *s; s++)
-		if (*s > ' ' && *s < 127 && *s != ':')
+अटल व्योम dmi_ascii_filter(अक्षर *d, स्थिर अक्षर *s)
+अणु
+	/* Filter out अक्षरacters we करोn't want to see in the modalias string */
+	क्रम (; *s; s++)
+		अगर (*s > ' ' && *s < 127 && *s != ':')
 			*(d++) = *s;
 
 	*d = 0;
-}
+पूर्ण
 
 
-static int do_dmi_entry(const char *filename, void *symval,
-			char *alias)
-{
-	int i, j;
-	DEF_FIELD_ADDR(symval, dmi_system_id, matches);
-	sprintf(alias, "dmi*");
+अटल पूर्णांक करो_dmi_entry(स्थिर अक्षर *filename, व्योम *symval,
+			अक्षर *alias)
+अणु
+	पूर्णांक i, j;
+	DEF_FIELD_ADDR(symval, dmi_प्रणाली_id, matches);
+	प्र_लिखो(alias, "dmi*");
 
-	for (i = 0; i < ARRAY_SIZE(dmi_fields); i++) {
-		for (j = 0; j < 4; j++) {
-			if ((*matches)[j].slot &&
-			    (*matches)[j].slot == dmi_fields[i].field) {
-				sprintf(alias + strlen(alias), ":%s*",
+	क्रम (i = 0; i < ARRAY_SIZE(dmi_fields); i++) अणु
+		क्रम (j = 0; j < 4; j++) अणु
+			अगर ((*matches)[j].slot &&
+			    (*matches)[j].slot == dmi_fields[i].field) अणु
+				प्र_लिखो(alias + म_माप(alias), ":%s*",
 					dmi_fields[i].prefix);
-				dmi_ascii_filter(alias + strlen(alias),
+				dmi_ascii_filter(alias + म_माप(alias),
 						 (*matches)[j].substr);
-				strcat(alias, "*");
-			}
-		}
-	}
+				म_जोड़ो(alias, "*");
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	strcat(alias, ":");
-	return 1;
-}
+	म_जोड़ो(alias, ":");
+	वापस 1;
+पूर्ण
 
-static int do_platform_entry(const char *filename,
-			     void *symval, char *alias)
-{
-	DEF_FIELD_ADDR(symval, platform_device_id, name);
-	sprintf(alias, PLATFORM_MODULE_PREFIX "%s", *name);
-	return 1;
-}
+अटल पूर्णांक करो_platक्रमm_entry(स्थिर अक्षर *filename,
+			     व्योम *symval, अक्षर *alias)
+अणु
+	DEF_FIELD_ADDR(symval, platक्रमm_device_id, name);
+	प्र_लिखो(alias, PLATFORM_MODULE_PREFIX "%s", *name);
+	वापस 1;
+पूर्ण
 
-static int do_mdio_entry(const char *filename,
-			 void *symval, char *alias)
-{
-	int i;
+अटल पूर्णांक करो_mdio_entry(स्थिर अक्षर *filename,
+			 व्योम *symval, अक्षर *alias)
+अणु
+	पूर्णांक i;
 	DEF_FIELD(symval, mdio_device_id, phy_id);
 	DEF_FIELD(symval, mdio_device_id, phy_id_mask);
 
-	alias += sprintf(alias, MDIO_MODULE_PREFIX);
+	alias += प्र_लिखो(alias, MDIO_MODULE_PREFIX);
 
-	for (i = 0; i < 32; i++) {
-		if (!((phy_id_mask >> (31-i)) & 1))
+	क्रम (i = 0; i < 32; i++) अणु
+		अगर (!((phy_id_mask >> (31-i)) & 1))
 			*(alias++) = '?';
-		else if ((phy_id >> (31-i)) & 1)
+		अन्यथा अगर ((phy_id >> (31-i)) & 1)
 			*(alias++) = '1';
-		else
+		अन्यथा
 			*(alias++) = '0';
-	}
+	पूर्ण
 
 	/* Terminate the string */
 	*alias = 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: zorro:iN. */
-static int do_zorro_entry(const char *filename, void *symval,
-			  char *alias)
-{
+अटल पूर्णांक करो_zorro_entry(स्थिर अक्षर *filename, व्योम *symval,
+			  अक्षर *alias)
+अणु
 	DEF_FIELD(symval, zorro_device_id, id);
-	strcpy(alias, "zorro:");
+	म_नकल(alias, "zorro:");
 	ADD(alias, "i", id != ZORRO_WILDCARD, id);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* looks like: "pnp:dD" */
-static int do_isapnp_entry(const char *filename,
-			   void *symval, char *alias)
-{
-	DEF_FIELD(symval, isapnp_device_id, vendor);
+अटल पूर्णांक करो_isapnp_entry(स्थिर अक्षर *filename,
+			   व्योम *symval, अक्षर *alias)
+अणु
+	DEF_FIELD(symval, isapnp_device_id, venकरोr);
 	DEF_FIELD(symval, isapnp_device_id, function);
-	sprintf(alias, "pnp:d%c%c%c%x%x%x%x*",
-		'A' + ((vendor >> 2) & 0x3f) - 1,
-		'A' + (((vendor & 3) << 3) | ((vendor >> 13) & 7)) - 1,
-		'A' + ((vendor >> 8) & 0x1f) - 1,
+	प्र_लिखो(alias, "pnp:d%c%c%c%x%x%x%x*",
+		'A' + ((venकरोr >> 2) & 0x3f) - 1,
+		'A' + (((venकरोr & 3) << 3) | ((venकरोr >> 13) & 7)) - 1,
+		'A' + ((venकरोr >> 8) & 0x1f) - 1,
 		(function >> 4) & 0x0f, function & 0x0f,
 		(function >> 12) & 0x0f, (function >> 8) & 0x0f);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: "ipack:fNvNdN". */
-static int do_ipack_entry(const char *filename,
-			  void *symval, char *alias)
-{
-	DEF_FIELD(symval, ipack_device_id, format);
-	DEF_FIELD(symval, ipack_device_id, vendor);
+अटल पूर्णांक करो_ipack_entry(स्थिर अक्षर *filename,
+			  व्योम *symval, अक्षर *alias)
+अणु
+	DEF_FIELD(symval, ipack_device_id, क्रमmat);
+	DEF_FIELD(symval, ipack_device_id, venकरोr);
 	DEF_FIELD(symval, ipack_device_id, device);
-	strcpy(alias, "ipack:");
-	ADD(alias, "f", format != IPACK_ANY_FORMAT, format);
-	ADD(alias, "v", vendor != IPACK_ANY_ID, vendor);
+	म_नकल(alias, "ipack:");
+	ADD(alias, "f", क्रमmat != IPACK_ANY_FORMAT, क्रमmat);
+	ADD(alias, "v", venकरोr != IPACK_ANY_ID, venकरोr);
 	ADD(alias, "d", device != IPACK_ANY_ID, device);
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Append a match expression for a single masked hex digit.
- * outp points to a pointer to the character at which to append.
- *	*outp is updated on return to point just after the appended text,
+ * Append a match expression क्रम a single masked hex digit.
+ * outp poपूर्णांकs to a poपूर्णांकer to the अक्षरacter at which to append.
+ *	*outp is updated on वापस to poपूर्णांक just after the appended text,
  *	to facilitate further appending.
  */
-static void append_nibble_mask(char **outp,
-			       unsigned int nibble, unsigned int mask)
-{
-	char *p = *outp;
-	unsigned int i;
+अटल व्योम append_nibble_mask(अक्षर **outp,
+			       अचिन्हित पूर्णांक nibble, अचिन्हित पूर्णांक mask)
+अणु
+	अक्षर *p = *outp;
+	अचिन्हित पूर्णांक i;
 
-	switch (mask) {
-	case 0:
+	चयन (mask) अणु
+	हाल 0:
 		*p++ = '?';
-		break;
+		अवरोध;
 
-	case 0xf:
-		p += sprintf(p, "%X",  nibble);
-		break;
+	हाल 0xf:
+		p += प्र_लिखो(p, "%X",  nibble);
+		अवरोध;
 
-	default:
+	शेष:
 		/*
-		 * Dumbly emit a match pattern for all possible matching
-		 * digits.  This could be improved in some cases using ranges,
+		 * Dumbly emit a match pattern क्रम all possible matching
+		 * digits.  This could be improved in some हालs using ranges,
 		 * but it has the advantage of being trivially correct, and is
 		 * often optimal.
 		 */
 		*p++ = '[';
-		for (i = 0; i < 0x10; i++)
-			if ((i & mask) == nibble)
-				p += sprintf(p, "%X", i);
+		क्रम (i = 0; i < 0x10; i++)
+			अगर ((i & mask) == nibble)
+				p += प्र_लिखो(p, "%X", i);
 		*p++ = ']';
-	}
+	पूर्ण
 
-	/* Ensure that the string remains NUL-terminated: */
+	/* Ensure that the string reमुख्यs NUL-terminated: */
 	*p = '\0';
 
-	/* Advance the caller's end-of-string pointer: */
+	/* Advance the caller's end-of-string poपूर्णांकer: */
 	*outp = p;
-}
+पूर्ण
 
 /*
  * looks like: "amba:dN"
  *
- * N is exactly 8 digits, where each is an upper-case hex digit, or
+ * N is exactly 8 digits, where each is an upper-हाल hex digit, or
  *	a ? or [] pattern matching exactly one digit.
  */
-static int do_amba_entry(const char *filename,
-			 void *symval, char *alias)
-{
-	unsigned int digit;
-	char *p = alias;
+अटल पूर्णांक करो_amba_entry(स्थिर अक्षर *filename,
+			 व्योम *symval, अक्षर *alias)
+अणु
+	अचिन्हित पूर्णांक digit;
+	अक्षर *p = alias;
 	DEF_FIELD(symval, amba_id, id);
 	DEF_FIELD(symval, amba_id, mask);
 
-	if ((id & mask) != id)
+	अगर ((id & mask) != id)
 		fatal("%s: Masked-off bit(s) of AMBA device ID are non-zero: "
 		      "id=0x%08X, mask=0x%08X.  Please fix this driver.\n",
 		      filename, id, mask);
 
-	p += sprintf(alias, "amba:d");
-	for (digit = 0; digit < 8; digit++)
+	p += प्र_लिखो(alias, "amba:d");
+	क्रम (digit = 0; digit < 8; digit++)
 		append_nibble_mask(&p,
 				   (id >> (4 * (7 - digit))) & 0xf,
 				   (mask >> (4 * (7 - digit))) & 0xf);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * looks like: "mipscdmm:tN"
  *
- * N is exactly 2 digits, where each is an upper-case hex digit, or
+ * N is exactly 2 digits, where each is an upper-हाल hex digit, or
  *	a ? or [] pattern matching exactly one digit.
  */
-static int do_mips_cdmm_entry(const char *filename,
-			      void *symval, char *alias)
-{
+अटल पूर्णांक करो_mips_cdmm_entry(स्थिर अक्षर *filename,
+			      व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, mips_cdmm_device_id, type);
 
-	sprintf(alias, "mipscdmm:t%02X*", type);
-	return 1;
-}
+	प्र_लिखो(alias, "mipscdmm:t%02X*", type);
+	वापस 1;
+पूर्ण
 
 /* LOOKS like cpu:type:x86,venVVVVfamFFFFmodMMMM:feature:*,FEAT,*
- * All fields are numbers. It would be nicer to use strings for vendor
- * and feature, but getting those out of the build system here is too
+ * All fields are numbers. It would be nicer to use strings क्रम venकरोr
+ * and feature, but getting those out of the build प्रणाली here is too
  * complicated.
  */
 
-static int do_x86cpu_entry(const char *filename, void *symval,
-			   char *alias)
-{
+अटल पूर्णांक करो_x86cpu_entry(स्थिर अक्षर *filename, व्योम *symval,
+			   अक्षर *alias)
+अणु
 	DEF_FIELD(symval, x86_cpu_id, feature);
 	DEF_FIELD(symval, x86_cpu_id, family);
 	DEF_FIELD(symval, x86_cpu_id, model);
-	DEF_FIELD(symval, x86_cpu_id, vendor);
+	DEF_FIELD(symval, x86_cpu_id, venकरोr);
 
-	strcpy(alias, "cpu:type:x86,");
-	ADD(alias, "ven", vendor != X86_VENDOR_ANY, vendor);
+	म_नकल(alias, "cpu:type:x86,");
+	ADD(alias, "ven", venकरोr != X86_VENDOR_ANY, venकरोr);
 	ADD(alias, "fam", family != X86_FAMILY_ANY, family);
 	ADD(alias, "mod", model  != X86_MODEL_ANY,  model);
-	strcat(alias, ":feature:*");
-	if (feature != X86_FEATURE_ANY)
-		sprintf(alias + strlen(alias), "%04X*", feature);
-	return 1;
-}
+	म_जोड़ो(alias, ":feature:*");
+	अगर (feature != X86_FEATURE_ANY)
+		प्र_लिखो(alias + म_माप(alias), "%04X*", feature);
+	वापस 1;
+पूर्ण
 
 /* LOOKS like cpu:type:*:feature:*FEAT* */
-static int do_cpu_entry(const char *filename, void *symval, char *alias)
-{
+अटल पूर्णांक करो_cpu_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, cpu_feature, feature);
 
-	sprintf(alias, "cpu:type:*:feature:*%04X*", feature);
-	return 1;
-}
+	प्र_लिखो(alias, "cpu:type:*:feature:*%04X*", feature);
+	वापस 1;
+पूर्ण
 
 /* Looks like: mei:S:uuid:N:* */
-static int do_mei_entry(const char *filename, void *symval,
-			char *alias)
-{
+अटल पूर्णांक करो_mei_entry(स्थिर अक्षर *filename, व्योम *symval,
+			अक्षर *alias)
+अणु
 	DEF_FIELD_ADDR(symval, mei_cl_device_id, name);
 	DEF_FIELD_ADDR(symval, mei_cl_device_id, uuid);
 	DEF_FIELD(symval, mei_cl_device_id, version);
 
-	sprintf(alias, MEI_CL_MODULE_PREFIX);
-	sprintf(alias + strlen(alias), "%s:",  (*name)[0]  ? *name : "*");
+	प्र_लिखो(alias, MEI_CL_MODULE_PREFIX);
+	प्र_लिखो(alias + म_माप(alias), "%s:",  (*name)[0]  ? *name : "*");
 	add_uuid(alias, *uuid);
 	ADD(alias, ":", version != MEI_CL_VERSION_ANY, version);
 
-	strcat(alias, ":*");
+	म_जोड़ो(alias, ":*");
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: rapidio:vNdNavNadN */
-static int do_rio_entry(const char *filename,
-			void *symval, char *alias)
-{
+अटल पूर्णांक करो_rio_entry(स्थिर अक्षर *filename,
+			व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, rio_device_id, did);
 	DEF_FIELD(symval, rio_device_id, vid);
-	DEF_FIELD(symval, rio_device_id, asm_did);
-	DEF_FIELD(symval, rio_device_id, asm_vid);
+	DEF_FIELD(symval, rio_device_id, यंत्र_did);
+	DEF_FIELD(symval, rio_device_id, यंत्र_vid);
 
-	strcpy(alias, "rapidio:");
+	म_नकल(alias, "rapidio:");
 	ADD(alias, "v", vid != RIO_ANY_ID, vid);
 	ADD(alias, "d", did != RIO_ANY_ID, did);
-	ADD(alias, "av", asm_vid != RIO_ANY_ID, asm_vid);
-	ADD(alias, "ad", asm_did != RIO_ANY_ID, asm_did);
+	ADD(alias, "av", यंत्र_vid != RIO_ANY_ID, यंत्र_vid);
+	ADD(alias, "ad", यंत्र_did != RIO_ANY_ID, यंत्र_did);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: ulpi:vNpN */
-static int do_ulpi_entry(const char *filename, void *symval,
-			 char *alias)
-{
-	DEF_FIELD(symval, ulpi_device_id, vendor);
+अटल पूर्णांक करो_ulpi_entry(स्थिर अक्षर *filename, व्योम *symval,
+			 अक्षर *alias)
+अणु
+	DEF_FIELD(symval, ulpi_device_id, venकरोr);
 	DEF_FIELD(symval, ulpi_device_id, product);
 
-	sprintf(alias, "ulpi:v%04xp%04x", vendor, product);
+	प्र_लिखो(alias, "ulpi:v%04xp%04x", venकरोr, product);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: hdaudio:vNrNaN */
-static int do_hda_entry(const char *filename, void *symval, char *alias)
-{
-	DEF_FIELD(symval, hda_device_id, vendor_id);
+अटल पूर्णांक करो_hda_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
+	DEF_FIELD(symval, hda_device_id, venकरोr_id);
 	DEF_FIELD(symval, hda_device_id, rev_id);
 	DEF_FIELD(symval, hda_device_id, api_version);
 
-	strcpy(alias, "hdaudio:");
-	ADD(alias, "v", vendor_id != 0, vendor_id);
+	म_नकल(alias, "hdaudio:");
+	ADD(alias, "v", venकरोr_id != 0, venकरोr_id);
 	ADD(alias, "r", rev_id != 0, rev_id);
 	ADD(alias, "a", api_version != 0, api_version);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: sdw:mNpNvNcN */
-static int do_sdw_entry(const char *filename, void *symval, char *alias)
-{
+अटल पूर्णांक करो_sdw_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, sdw_device_id, mfg_id);
 	DEF_FIELD(symval, sdw_device_id, part_id);
 	DEF_FIELD(symval, sdw_device_id, sdw_version);
 	DEF_FIELD(symval, sdw_device_id, class_id);
 
-	strcpy(alias, "sdw:");
+	म_नकल(alias, "sdw:");
 	ADD(alias, "m", mfg_id != 0, mfg_id);
 	ADD(alias, "p", part_id != 0, part_id);
 	ADD(alias, "v", sdw_version != 0, sdw_version);
 	ADD(alias, "c", class_id != 0, class_id);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: fsl-mc:vNdN */
-static int do_fsl_mc_entry(const char *filename, void *symval,
-			   char *alias)
-{
-	DEF_FIELD(symval, fsl_mc_device_id, vendor);
+अटल पूर्णांक करो_fsl_mc_entry(स्थिर अक्षर *filename, व्योम *symval,
+			   अक्षर *alias)
+अणु
+	DEF_FIELD(symval, fsl_mc_device_id, venकरोr);
 	DEF_FIELD_ADDR(symval, fsl_mc_device_id, obj_type);
 
-	sprintf(alias, "fsl-mc:v%08Xd%s", vendor, *obj_type);
-	return 1;
-}
+	प्र_लिखो(alias, "fsl-mc:v%08Xd%s", venकरोr, *obj_type);
+	वापस 1;
+पूर्ण
 
 /* Looks like: tbsvc:kSpNvNrN */
-static int do_tbsvc_entry(const char *filename, void *symval, char *alias)
-{
+अटल पूर्णांक करो_tbsvc_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, tb_service_id, match_flags);
 	DEF_FIELD_ADDR(symval, tb_service_id, protocol_key);
 	DEF_FIELD(symval, tb_service_id, protocol_id);
 	DEF_FIELD(symval, tb_service_id, protocol_version);
 	DEF_FIELD(symval, tb_service_id, protocol_revision);
 
-	strcpy(alias, "tbsvc:");
-	if (match_flags & TBSVC_MATCH_PROTOCOL_KEY)
-		sprintf(alias + strlen(alias), "k%s", *protocol_key);
-	else
-		strcat(alias + strlen(alias), "k*");
+	म_नकल(alias, "tbsvc:");
+	अगर (match_flags & TBSVC_MATCH_PROTOCOL_KEY)
+		प्र_लिखो(alias + म_माप(alias), "k%s", *protocol_key);
+	अन्यथा
+		म_जोड़ो(alias + म_माप(alias), "k*");
 	ADD(alias, "p", match_flags & TBSVC_MATCH_PROTOCOL_ID, protocol_id);
 	ADD(alias, "v", match_flags & TBSVC_MATCH_PROTOCOL_VERSION,
 	    protocol_version);
@@ -1308,258 +1309,258 @@ static int do_tbsvc_entry(const char *filename, void *symval, char *alias)
 	    protocol_revision);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: typec:idNmN */
-static int do_typec_entry(const char *filename, void *symval, char *alias)
-{
+अटल पूर्णांक करो_typec_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, typec_device_id, svid);
 	DEF_FIELD(symval, typec_device_id, mode);
 
-	sprintf(alias, "typec:id%04X", svid);
+	प्र_लिखो(alias, "typec:id%04X", svid);
 	ADD(alias, "m", mode != TYPEC_ANY_MODE, mode);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: tee:uuid */
-static int do_tee_entry(const char *filename, void *symval, char *alias)
-{
+अटल पूर्णांक करो_tee_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, tee_client_device_id, uuid);
 
-	sprintf(alias, "tee:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+	प्र_लिखो(alias, "tee:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 		uuid.b[0], uuid.b[1], uuid.b[2], uuid.b[3], uuid.b[4],
 		uuid.b[5], uuid.b[6], uuid.b[7], uuid.b[8], uuid.b[9],
 		uuid.b[10], uuid.b[11], uuid.b[12], uuid.b[13], uuid.b[14],
 		uuid.b[15]);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: wmi:guid */
-static int do_wmi_entry(const char *filename, void *symval, char *alias)
-{
-	int len;
+अटल पूर्णांक करो_wmi_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
+	पूर्णांक len;
 	DEF_FIELD_ADDR(symval, wmi_device_id, guid_string);
 
-	if (strlen(*guid_string) != UUID_STRING_LEN) {
+	अगर (म_माप(*guid_string) != UUID_STRING_LEN) अणु
 		warn("Invalid WMI device id 'wmi:%s' in '%s'\n",
 				*guid_string, filename);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	len = snprintf(alias, ALIAS_SIZE, WMI_MODULE_PREFIX "%s", *guid_string);
-	if (len < 0 || len >= ALIAS_SIZE) {
+	len = snम_लिखो(alias, ALIAS_SIZE, WMI_MODULE_PREFIX "%s", *guid_string);
+	अगर (len < 0 || len >= ALIAS_SIZE) अणु
 		warn("Could not generate all MODULE_ALIAS's in '%s'\n",
 				filename);
-		return 0;
-	}
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /* Looks like: mhi:S */
-static int do_mhi_entry(const char *filename, void *symval, char *alias)
-{
+अटल पूर्णांक करो_mhi_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD_ADDR(symval, mhi_device_id, chan);
-	sprintf(alias, MHI_DEVICE_MODALIAS_FMT, *chan);
-	return 1;
-}
+	प्र_लिखो(alias, MHI_DEVICE_MODALIAS_FMT, *chan);
+	वापस 1;
+पूर्ण
 
-static int do_auxiliary_entry(const char *filename, void *symval, char *alias)
-{
+अटल पूर्णांक करो_auxiliary_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD_ADDR(symval, auxiliary_device_id, name);
-	sprintf(alias, AUXILIARY_MODULE_PREFIX "%s", *name);
+	प्र_लिखो(alias, AUXILIARY_MODULE_PREFIX "%s", *name);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Looks like: ssam:dNcNtNiNfN
  *
- * N is exactly 2 digits, where each is an upper-case hex digit.
+ * N is exactly 2 digits, where each is an upper-हाल hex digit.
  */
-static int do_ssam_entry(const char *filename, void *symval, char *alias)
-{
+अटल पूर्णांक करो_ssam_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, ssam_device_id, match_flags);
-	DEF_FIELD(symval, ssam_device_id, domain);
+	DEF_FIELD(symval, ssam_device_id, करोमुख्य);
 	DEF_FIELD(symval, ssam_device_id, category);
 	DEF_FIELD(symval, ssam_device_id, target);
 	DEF_FIELD(symval, ssam_device_id, instance);
 	DEF_FIELD(symval, ssam_device_id, function);
 
-	sprintf(alias, "ssam:d%02Xc%02X", domain, category);
+	प्र_लिखो(alias, "ssam:d%02Xc%02X", करोमुख्य, category);
 	ADD(alias, "t", match_flags & SSAM_MATCH_TARGET, target);
 	ADD(alias, "i", match_flags & SSAM_MATCH_INSTANCE, instance);
 	ADD(alias, "f", match_flags & SSAM_MATCH_FUNCTION, function);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Looks like: dfl:tNfN */
-static int do_dfl_entry(const char *filename, void *symval, char *alias)
-{
+अटल पूर्णांक करो_dfl_entry(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias)
+अणु
 	DEF_FIELD(symval, dfl_device_id, type);
 	DEF_FIELD(symval, dfl_device_id, feature_id);
 
-	sprintf(alias, "dfl:t%04Xf%04X", type, feature_id);
+	प्र_लिखो(alias, "dfl:t%04Xf%04X", type, feature_id);
 
 	add_wildcard(alias);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Does namelen bytes of name exactly match the symbol? */
-static bool sym_is(const char *name, unsigned namelen, const char *symbol)
-{
-	if (namelen != strlen(symbol))
-		return false;
+अटल bool sym_is(स्थिर अक्षर *name, अचिन्हित namelen, स्थिर अक्षर *symbol)
+अणु
+	अगर (namelen != म_माप(symbol))
+		वापस false;
 
-	return memcmp(name, symbol, namelen) == 0;
-}
+	वापस स_भेद(name, symbol, namelen) == 0;
+पूर्ण
 
-static void do_table(void *symval, unsigned long size,
-		     unsigned long id_size,
-		     const char *device_id,
-		     int (*do_entry)(const char *filename, void *symval, char *alias),
-		     struct module *mod)
-{
-	unsigned int i;
-	char alias[ALIAS_SIZE];
+अटल व्योम करो_table(व्योम *symval, अचिन्हित दीर्घ size,
+		     अचिन्हित दीर्घ id_size,
+		     स्थिर अक्षर *device_id,
+		     पूर्णांक (*करो_entry)(स्थिर अक्षर *filename, व्योम *symval, अक्षर *alias),
+		     काष्ठा module *mod)
+अणु
+	अचिन्हित पूर्णांक i;
+	अक्षर alias[ALIAS_SIZE];
 
 	device_id_check(mod->name, device_id, size, id_size, symval);
 	/* Leave last one: it's the terminator. */
 	size -= id_size;
 
-	for (i = 0; i < size; i += id_size) {
-		if (do_entry(mod->name, symval+i, alias)) {
-			buf_printf(&mod->dev_table_buf,
+	क्रम (i = 0; i < size; i += id_size) अणु
+		अगर (करो_entry(mod->name, symval+i, alias)) अणु
+			buf_म_लिखो(&mod->dev_table_buf,
 				   "MODULE_ALIAS(\"%s\");\n", alias);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static const struct devtable devtable[] = {
-	{"hid", SIZE_hid_device_id, do_hid_entry},
-	{"ieee1394", SIZE_ieee1394_device_id, do_ieee1394_entry},
-	{"pci", SIZE_pci_device_id, do_pci_entry},
-	{"ccw", SIZE_ccw_device_id, do_ccw_entry},
-	{"ap", SIZE_ap_device_id, do_ap_entry},
-	{"css", SIZE_css_device_id, do_css_entry},
-	{"serio", SIZE_serio_device_id, do_serio_entry},
-	{"acpi", SIZE_acpi_device_id, do_acpi_entry},
-	{"pcmcia", SIZE_pcmcia_device_id, do_pcmcia_entry},
-	{"vio", SIZE_vio_device_id, do_vio_entry},
-	{"input", SIZE_input_device_id, do_input_entry},
-	{"eisa", SIZE_eisa_device_id, do_eisa_entry},
-	{"parisc", SIZE_parisc_device_id, do_parisc_entry},
-	{"sdio", SIZE_sdio_device_id, do_sdio_entry},
-	{"ssb", SIZE_ssb_device_id, do_ssb_entry},
-	{"bcma", SIZE_bcma_device_id, do_bcma_entry},
-	{"virtio", SIZE_virtio_device_id, do_virtio_entry},
-	{"vmbus", SIZE_hv_vmbus_device_id, do_vmbus_entry},
-	{"rpmsg", SIZE_rpmsg_device_id, do_rpmsg_entry},
-	{"i2c", SIZE_i2c_device_id, do_i2c_entry},
-	{"i3c", SIZE_i3c_device_id, do_i3c_entry},
-	{"spi", SIZE_spi_device_id, do_spi_entry},
-	{"dmi", SIZE_dmi_system_id, do_dmi_entry},
-	{"platform", SIZE_platform_device_id, do_platform_entry},
-	{"mdio", SIZE_mdio_device_id, do_mdio_entry},
-	{"zorro", SIZE_zorro_device_id, do_zorro_entry},
-	{"isapnp", SIZE_isapnp_device_id, do_isapnp_entry},
-	{"ipack", SIZE_ipack_device_id, do_ipack_entry},
-	{"amba", SIZE_amba_id, do_amba_entry},
-	{"mipscdmm", SIZE_mips_cdmm_device_id, do_mips_cdmm_entry},
-	{"x86cpu", SIZE_x86_cpu_id, do_x86cpu_entry},
-	{"cpu", SIZE_cpu_feature, do_cpu_entry},
-	{"mei", SIZE_mei_cl_device_id, do_mei_entry},
-	{"rapidio", SIZE_rio_device_id, do_rio_entry},
-	{"ulpi", SIZE_ulpi_device_id, do_ulpi_entry},
-	{"hdaudio", SIZE_hda_device_id, do_hda_entry},
-	{"sdw", SIZE_sdw_device_id, do_sdw_entry},
-	{"fslmc", SIZE_fsl_mc_device_id, do_fsl_mc_entry},
-	{"tbsvc", SIZE_tb_service_id, do_tbsvc_entry},
-	{"typec", SIZE_typec_device_id, do_typec_entry},
-	{"tee", SIZE_tee_client_device_id, do_tee_entry},
-	{"wmi", SIZE_wmi_device_id, do_wmi_entry},
-	{"mhi", SIZE_mhi_device_id, do_mhi_entry},
-	{"auxiliary", SIZE_auxiliary_device_id, do_auxiliary_entry},
-	{"ssam", SIZE_ssam_device_id, do_ssam_entry},
-	{"dfl", SIZE_dfl_device_id, do_dfl_entry},
-};
+अटल स्थिर काष्ठा devtable devtable[] = अणु
+	अणु"hid", SIZE_hid_device_id, करो_hid_entryपूर्ण,
+	अणु"ieee1394", SIZE_ieee1394_device_id, करो_ieee1394_entryपूर्ण,
+	अणु"pci", SIZE_pci_device_id, करो_pci_entryपूर्ण,
+	अणु"ccw", SIZE_ccw_device_id, करो_ccw_entryपूर्ण,
+	अणु"ap", SIZE_ap_device_id, करो_ap_entryपूर्ण,
+	अणु"css", SIZE_css_device_id, करो_css_entryपूर्ण,
+	अणु"serio", SIZE_serio_device_id, करो_serio_entryपूर्ण,
+	अणु"acpi", SIZE_acpi_device_id, करो_acpi_entryपूर्ण,
+	अणु"pcmcia", SIZE_pcmcia_device_id, करो_pcmcia_entryपूर्ण,
+	अणु"vio", SIZE_vio_device_id, करो_vio_entryपूर्ण,
+	अणु"input", SIZE_input_device_id, करो_input_entryपूर्ण,
+	अणु"eisa", SIZE_eisa_device_id, करो_eisa_entryपूर्ण,
+	अणु"parisc", SIZE_parisc_device_id, करो_parisc_entryपूर्ण,
+	अणु"sdio", SIZE_sdio_device_id, करो_sdio_entryपूर्ण,
+	अणु"ssb", SIZE_ssb_device_id, करो_ssb_entryपूर्ण,
+	अणु"bcma", SIZE_bcma_device_id, करो_bcma_entryपूर्ण,
+	अणु"virtio", SIZE_virtio_device_id, करो_virtio_entryपूर्ण,
+	अणु"vmbus", SIZE_hv_vmbus_device_id, करो_vmbus_entryपूर्ण,
+	अणु"rpmsg", SIZE_rpmsg_device_id, करो_rpmsg_entryपूर्ण,
+	अणु"i2c", SIZE_i2c_device_id, करो_i2c_entryपूर्ण,
+	अणु"i3c", SIZE_i3c_device_id, करो_i3c_entryपूर्ण,
+	अणु"spi", SIZE_spi_device_id, करो_spi_entryपूर्ण,
+	अणु"dmi", SIZE_dmi_प्रणाली_id, करो_dmi_entryपूर्ण,
+	अणु"platform", SIZE_platक्रमm_device_id, करो_platक्रमm_entryपूर्ण,
+	अणु"mdio", SIZE_mdio_device_id, करो_mdio_entryपूर्ण,
+	अणु"zorro", SIZE_zorro_device_id, करो_zorro_entryपूर्ण,
+	अणु"isapnp", SIZE_isapnp_device_id, करो_isapnp_entryपूर्ण,
+	अणु"ipack", SIZE_ipack_device_id, करो_ipack_entryपूर्ण,
+	अणु"amba", SIZE_amba_id, करो_amba_entryपूर्ण,
+	अणु"mipscdmm", SIZE_mips_cdmm_device_id, करो_mips_cdmm_entryपूर्ण,
+	अणु"x86cpu", SIZE_x86_cpu_id, करो_x86cpu_entryपूर्ण,
+	अणु"cpu", SIZE_cpu_feature, करो_cpu_entryपूर्ण,
+	अणु"mei", SIZE_mei_cl_device_id, करो_mei_entryपूर्ण,
+	अणु"rapidio", SIZE_rio_device_id, करो_rio_entryपूर्ण,
+	अणु"ulpi", SIZE_ulpi_device_id, करो_ulpi_entryपूर्ण,
+	अणु"hdaudio", SIZE_hda_device_id, करो_hda_entryपूर्ण,
+	अणु"sdw", SIZE_sdw_device_id, करो_sdw_entryपूर्ण,
+	अणु"fslmc", SIZE_fsl_mc_device_id, करो_fsl_mc_entryपूर्ण,
+	अणु"tbsvc", SIZE_tb_service_id, करो_tbsvc_entryपूर्ण,
+	अणु"typec", SIZE_typec_device_id, करो_typec_entryपूर्ण,
+	अणु"tee", SIZE_tee_client_device_id, करो_tee_entryपूर्ण,
+	अणु"wmi", SIZE_wmi_device_id, करो_wmi_entryपूर्ण,
+	अणु"mhi", SIZE_mhi_device_id, करो_mhi_entryपूर्ण,
+	अणु"auxiliary", SIZE_auxiliary_device_id, करो_auxiliary_entryपूर्ण,
+	अणु"ssam", SIZE_ssam_device_id, करो_ssam_entryपूर्ण,
+	अणु"dfl", SIZE_dfl_device_id, करो_dfl_entryपूर्ण,
+पूर्ण;
 
 /* Create MODULE_ALIAS() statements.
- * At this time, we cannot write the actual output C source yet,
- * so we write into the mod->dev_table_buf buffer. */
-void handle_moddevtable(struct module *mod, struct elf_info *info,
-			Elf_Sym *sym, const char *symname)
-{
-	void *symval;
-	char *zeros = NULL;
-	const char *name, *identifier;
-	unsigned int namelen;
+ * At this समय, we cannot ग_लिखो the actual output C source yet,
+ * so we ग_लिखो पूर्णांकo the mod->dev_table_buf buffer. */
+व्योम handle_moddevtable(काष्ठा module *mod, काष्ठा elf_info *info,
+			Elf_Sym *sym, स्थिर अक्षर *symname)
+अणु
+	व्योम *symval;
+	अक्षर *zeros = शून्य;
+	स्थिर अक्षर *name, *identअगरier;
+	अचिन्हित पूर्णांक namelen;
 
-	/* We're looking for a section relative symbol */
-	if (!sym->st_shndx || get_secindex(info, sym) >= info->num_sections)
-		return;
+	/* We're looking क्रम a section relative symbol */
+	अगर (!sym->st_shndx || get_secindex(info, sym) >= info->num_sections)
+		वापस;
 
-	/* We're looking for an object */
-	if (ELF_ST_TYPE(sym->st_info) != STT_OBJECT)
-		return;
+	/* We're looking क्रम an object */
+	अगर (ELF_ST_TYPE(sym->st_info) != STT_OBJECT)
+		वापस;
 
-	/* All our symbols are of form __mod_<name>__<identifier>_device_table. */
-	if (strncmp(symname, "__mod_", strlen("__mod_")))
-		return;
-	name = symname + strlen("__mod_");
-	namelen = strlen(name);
-	if (namelen < strlen("_device_table"))
-		return;
-	if (strcmp(name + namelen - strlen("_device_table"), "_device_table"))
-		return;
-	identifier = strstr(name, "__");
-	if (!identifier)
-		return;
-	namelen = identifier - name;
+	/* All our symbols are of क्रमm __mod_<name>__<identअगरier>_device_table. */
+	अगर (म_भेदन(symname, "__mod_", म_माप("__mod_")))
+		वापस;
+	name = symname + म_माप("__mod_");
+	namelen = म_माप(name);
+	अगर (namelen < म_माप("_device_table"))
+		वापस;
+	अगर (म_भेद(name + namelen - म_माप("_device_table"), "_device_table"))
+		वापस;
+	identअगरier = म_माला(name, "__");
+	अगर (!identअगरier)
+		वापस;
+	namelen = identअगरier - name;
 
-	/* Handle all-NULL symbols allocated into .bss */
-	if (info->sechdrs[get_secindex(info, sym)].sh_type & SHT_NOBITS) {
-		zeros = calloc(1, sym->st_size);
+	/* Handle all-शून्य symbols allocated पूर्णांकo .bss */
+	अगर (info->sechdrs[get_secindex(info, sym)].sh_type & SHT_NOBITS) अणु
+		zeros = सुस्मृति(1, sym->st_size);
 		symval = zeros;
-	} else {
-		symval = (void *)info->hdr
+	पूर्ण अन्यथा अणु
+		symval = (व्योम *)info->hdr
 			+ info->sechdrs[get_secindex(info, sym)].sh_offset
 			+ sym->st_value;
-	}
+	पूर्ण
 
-	/* First handle the "special" cases */
-	if (sym_is(name, namelen, "usb"))
-		do_usb_table(symval, sym->st_size, mod);
-	if (sym_is(name, namelen, "of"))
-		do_of_table(symval, sym->st_size, mod);
-	else if (sym_is(name, namelen, "pnp"))
-		do_pnp_device_entry(symval, sym->st_size, mod);
-	else if (sym_is(name, namelen, "pnp_card"))
-		do_pnp_card_entries(symval, sym->st_size, mod);
-	else {
-		int i;
+	/* First handle the "special" हालs */
+	अगर (sym_is(name, namelen, "usb"))
+		करो_usb_table(symval, sym->st_size, mod);
+	अगर (sym_is(name, namelen, "of"))
+		करो_of_table(symval, sym->st_size, mod);
+	अन्यथा अगर (sym_is(name, namelen, "pnp"))
+		करो_pnp_device_entry(symval, sym->st_size, mod);
+	अन्यथा अगर (sym_is(name, namelen, "pnp_card"))
+		करो_pnp_card_entries(symval, sym->st_size, mod);
+	अन्यथा अणु
+		पूर्णांक i;
 
-		for (i = 0; i < ARRAY_SIZE(devtable); i++) {
-			const struct devtable *p = &devtable[i];
+		क्रम (i = 0; i < ARRAY_SIZE(devtable); i++) अणु
+			स्थिर काष्ठा devtable *p = &devtable[i];
 
-			if (sym_is(name, namelen, p->device_id)) {
-				do_table(symval, sym->st_size, p->id_size,
-					 p->device_id, p->do_entry, mod);
-				break;
-			}
-		}
-	}
-	free(zeros);
-}
+			अगर (sym_is(name, namelen, p->device_id)) अणु
+				करो_table(symval, sym->st_size, p->id_size,
+					 p->device_id, p->करो_entry, mod);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	मुक्त(zeros);
+पूर्ण
 
-/* Now add out buffered information to the generated C source */
-void add_moddevtable(struct buffer *buf, struct module *mod)
-{
-	buf_printf(buf, "\n");
-	buf_write(buf, mod->dev_table_buf.p, mod->dev_table_buf.pos);
-	free(mod->dev_table_buf.p);
-}
+/* Now add out buffered inक्रमmation to the generated C source */
+व्योम add_moddevtable(काष्ठा buffer *buf, काष्ठा module *mod)
+अणु
+	buf_म_लिखो(buf, "\n");
+	buf_ग_लिखो(buf, mod->dev_table_buf.p, mod->dev_table_buf.pos);
+	मुक्त(mod->dev_table_buf.p);
+पूर्ण

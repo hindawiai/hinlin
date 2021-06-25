@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Device driver for regulators in HISI PMIC IC
+ * Device driver क्रम regulators in HISI PMIC IC
  *
  * Copyright (c) 2013 Linaro Ltd.
  * Copyright (c) 2011 Hisilicon.
  * Copyright (c) 2020-2021 Huawei Technologies Co., Ltd
  */
 
-#include <linux/bitops.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/mfd/core.h>
-#include <linux/mfd/hi6421-spmi-pmic.h>
-#include <linux/module.h>
-#include <linux/of_gpio.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spmi.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/mfd/hi6421-spmi-pmic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spmi.h>
 
-enum hi6421_spmi_pmic_irq_list {
+क्रमागत hi6421_spmi_pmic_irq_list अणु
 	OTMP = 0,
 	VBUS_CONNECT,
 	VBUS_DISCONNECT,
@@ -34,16 +35,16 @@ enum hi6421_spmi_pmic_irq_list {
 	SIM1_HPD_R,
 	SIM1_HPD_F,
 	PMIC_IRQ_LIST_MAX,
-};
+पूर्ण;
 
-#define HISI_IRQ_ARRAY			2
-#define HISI_IRQ_NUM			(HISI_IRQ_ARRAY * 8)
+#घोषणा HISI_IRQ_ARRAY			2
+#घोषणा HISI_IRQ_NUM			(HISI_IRQ_ARRAY * 8)
 
-#define HISI_IRQ_KEY_NUM		0
+#घोषणा HISI_IRQ_KEY_NUM		0
 
-#define HISI_BITS			8
-#define HISI_IRQ_KEY_VALUE		(BIT(POWERKEY_DOWN) | BIT(POWERKEY_UP))
-#define HISI_MASK			GENMASK(HISI_BITS - 1, 0)
+#घोषणा HISI_BITS			8
+#घोषणा HISI_IRQ_KEY_VALUE		(BIT(POWERKEY_DOWN) | BIT(POWERKEY_UP))
+#घोषणा HISI_MASK			GENMASK(HISI_BITS - 1, 0)
 
 /*
  * The IRQs are mapped as:
@@ -68,229 +69,229 @@ enum hi6421_spmi_pmic_irq_list {
  *	SIM1_HPD_F		0x0203		0x213		bit 5
  *	======================  =============   ============	=====
  */
-#define SOC_PMIC_IRQ_MASK_0_ADDR	0x0202
-#define SOC_PMIC_IRQ0_ADDR		0x0212
+#घोषणा SOC_PMIC_IRQ_MASK_0_ADDR	0x0202
+#घोषणा SOC_PMIC_IRQ0_ADDR		0x0212
 
-#define IRQ_MASK_REGISTER(irq_data)	(SOC_PMIC_IRQ_MASK_0_ADDR + \
+#घोषणा IRQ_MASK_REGISTER(irq_data)	(SOC_PMIC_IRQ_MASK_0_ADDR + \
 					 (irqd_to_hwirq(irq_data) >> 3))
-#define IRQ_MASK_BIT(irq_data)		BIT(irqd_to_hwirq(irq_data) & 0x07)
+#घोषणा IRQ_MASK_BIT(irq_data)		BIT(irqd_to_hwirq(irq_data) & 0x07)
 
-static const struct mfd_cell hi6421v600_devs[] = {
-	{ .name = "hi6421v600-regulator", },
-};
+अटल स्थिर काष्ठा mfd_cell hi6421v600_devs[] = अणु
+	अणु .name = "hi6421v600-regulator", पूर्ण,
+पूर्ण;
 
-static irqreturn_t hi6421_spmi_irq_handler(int irq, void *priv)
-{
-	struct hi6421_spmi_pmic *ddata = (struct hi6421_spmi_pmic *)priv;
-	unsigned long pending;
-	unsigned int in;
-	int i, offset;
+अटल irqवापस_t hi6421_spmi_irq_handler(पूर्णांक irq, व्योम *priv)
+अणु
+	काष्ठा hi6421_spmi_pmic *ddata = (काष्ठा hi6421_spmi_pmic *)priv;
+	अचिन्हित दीर्घ pending;
+	अचिन्हित पूर्णांक in;
+	पूर्णांक i, offset;
 
-	for (i = 0; i < HISI_IRQ_ARRAY; i++) {
-		regmap_read(ddata->regmap, SOC_PMIC_IRQ0_ADDR + i, &in);
+	क्रम (i = 0; i < HISI_IRQ_ARRAY; i++) अणु
+		regmap_पढ़ो(ddata->regmap, SOC_PMIC_IRQ0_ADDR + i, &in);
 		pending = HISI_MASK & in;
-		regmap_write(ddata->regmap, SOC_PMIC_IRQ0_ADDR + i, pending);
+		regmap_ग_लिखो(ddata->regmap, SOC_PMIC_IRQ0_ADDR + i, pending);
 
-		if (i == HISI_IRQ_KEY_NUM &&
-		    (pending & HISI_IRQ_KEY_VALUE) == HISI_IRQ_KEY_VALUE) {
+		अगर (i == HISI_IRQ_KEY_NUM &&
+		    (pending & HISI_IRQ_KEY_VALUE) == HISI_IRQ_KEY_VALUE) अणु
 			generic_handle_irq(ddata->irqs[POWERKEY_DOWN]);
 			generic_handle_irq(ddata->irqs[POWERKEY_UP]);
 			pending &= (~HISI_IRQ_KEY_VALUE);
-		}
+		पूर्ण
 
-		if (!pending)
-			continue;
+		अगर (!pending)
+			जारी;
 
-		for_each_set_bit(offset, &pending, HISI_BITS)
+		क्रम_each_set_bit(offset, &pending, HISI_BITS)
 			generic_handle_irq(ddata->irqs[offset + i * HISI_BITS]);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void hi6421_spmi_irq_mask(struct irq_data *d)
-{
-	struct hi6421_spmi_pmic *ddata = irq_data_get_irq_chip_data(d);
-	unsigned long flags;
-	unsigned int data;
+अटल व्योम hi6421_spmi_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा hi6421_spmi_pmic *ddata = irq_data_get_irq_chip_data(d);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक data;
 	u32 offset;
 
 	offset = IRQ_MASK_REGISTER(d);
 
 	spin_lock_irqsave(&ddata->lock, flags);
 
-	regmap_read(ddata->regmap, offset, &data);
+	regmap_पढ़ो(ddata->regmap, offset, &data);
 	data |= IRQ_MASK_BIT(d);
-	regmap_write(ddata->regmap, offset, data);
+	regmap_ग_लिखो(ddata->regmap, offset, data);
 
 	spin_unlock_irqrestore(&ddata->lock, flags);
-}
+पूर्ण
 
-static void hi6421_spmi_irq_unmask(struct irq_data *d)
-{
-	struct hi6421_spmi_pmic *ddata = irq_data_get_irq_chip_data(d);
+अटल व्योम hi6421_spmi_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा hi6421_spmi_pmic *ddata = irq_data_get_irq_chip_data(d);
 	u32 data, offset;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	offset = (irqd_to_hwirq(d) >> 3);
 	offset += SOC_PMIC_IRQ_MASK_0_ADDR;
 
 	spin_lock_irqsave(&ddata->lock, flags);
 
-	regmap_read(ddata->regmap, offset, &data);
+	regmap_पढ़ो(ddata->regmap, offset, &data);
 	data &= ~(1 << (irqd_to_hwirq(d) & 0x07));
-	regmap_write(ddata->regmap, offset, data);
+	regmap_ग_लिखो(ddata->regmap, offset, data);
 
 	spin_unlock_irqrestore(&ddata->lock, flags);
-}
+पूर्ण
 
-static struct irq_chip hi6421_spmi_pmu_irqchip = {
+अटल काष्ठा irq_chip hi6421_spmi_pmu_irqchip = अणु
 	.name		= "hisi-irq",
 	.irq_mask	= hi6421_spmi_irq_mask,
 	.irq_unmask	= hi6421_spmi_irq_unmask,
 	.irq_disable	= hi6421_spmi_irq_mask,
 	.irq_enable	= hi6421_spmi_irq_unmask,
-};
+पूर्ण;
 
-static int hi6421_spmi_irq_map(struct irq_domain *d, unsigned int virq,
+अटल पूर्णांक hi6421_spmi_irq_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक virq,
 			       irq_hw_number_t hw)
-{
-	struct hi6421_spmi_pmic *ddata = d->host_data;
+अणु
+	काष्ठा hi6421_spmi_pmic *ddata = d->host_data;
 
 	irq_set_chip_and_handler_name(virq, &hi6421_spmi_pmu_irqchip,
 				      handle_simple_irq, "hisi");
 	irq_set_chip_data(virq, ddata);
 	irq_set_irq_type(virq, IRQ_TYPE_NONE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops hi6421_spmi_domain_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops hi6421_spmi_करोमुख्य_ops = अणु
 	.map	= hi6421_spmi_irq_map,
-	.xlate	= irq_domain_xlate_twocell,
-};
+	.xlate	= irq_करोमुख्य_xlate_twocell,
+पूर्ण;
 
-static void hi6421_spmi_pmic_irq_init(struct hi6421_spmi_pmic *ddata)
-{
-	int i;
-	unsigned int pending;
+अटल व्योम hi6421_spmi_pmic_irq_init(काष्ठा hi6421_spmi_pmic *ddata)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक pending;
 
-	for (i = 0; i < HISI_IRQ_ARRAY; i++)
-		regmap_write(ddata->regmap, SOC_PMIC_IRQ_MASK_0_ADDR + i,
+	क्रम (i = 0; i < HISI_IRQ_ARRAY; i++)
+		regmap_ग_लिखो(ddata->regmap, SOC_PMIC_IRQ_MASK_0_ADDR + i,
 			     HISI_MASK);
 
-	for (i = 0; i < HISI_IRQ_ARRAY; i++) {
-		regmap_read(ddata->regmap, SOC_PMIC_IRQ0_ADDR + i, &pending);
-		regmap_write(ddata->regmap, SOC_PMIC_IRQ0_ADDR + i,
+	क्रम (i = 0; i < HISI_IRQ_ARRAY; i++) अणु
+		regmap_पढ़ो(ddata->regmap, SOC_PMIC_IRQ0_ADDR + i, &pending);
+		regmap_ग_लिखो(ddata->regmap, SOC_PMIC_IRQ0_ADDR + i,
 			     HISI_MASK);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct regmap_config regmap_config = {
+अटल स्थिर काष्ठा regmap_config regmap_config = अणु
 	.reg_bits		= 16,
 	.val_bits		= HISI_BITS,
-	.max_register		= 0xffff,
+	.max_रेजिस्टर		= 0xffff,
 	.fast_io		= true
-};
+पूर्ण;
 
-static int hi6421_spmi_pmic_probe(struct spmi_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct hi6421_spmi_pmic *ddata;
-	unsigned int virq;
-	int ret, i;
+अटल पूर्णांक hi6421_spmi_pmic_probe(काष्ठा spmi_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा hi6421_spmi_pmic *ddata;
+	अचिन्हित पूर्णांक virq;
+	पूर्णांक ret, i;
 
-	ddata = devm_kzalloc(dev, sizeof(*ddata), GFP_KERNEL);
-	if (!ddata)
-		return -ENOMEM;
+	ddata = devm_kzalloc(dev, माप(*ddata), GFP_KERNEL);
+	अगर (!ddata)
+		वापस -ENOMEM;
 
 	ddata->regmap = devm_regmap_init_spmi_ext(pdev, &regmap_config);
-	if (IS_ERR(ddata->regmap))
-		return PTR_ERR(ddata->regmap);
+	अगर (IS_ERR(ddata->regmap))
+		वापस PTR_ERR(ddata->regmap);
 
 	spin_lock_init(&ddata->lock);
 
 	ddata->dev = dev;
 
 	ddata->gpio = of_get_gpio(np, 0);
-	if (ddata->gpio < 0)
-		return ddata->gpio;
+	अगर (ddata->gpio < 0)
+		वापस ddata->gpio;
 
-	if (!gpio_is_valid(ddata->gpio))
-		return -EINVAL;
+	अगर (!gpio_is_valid(ddata->gpio))
+		वापस -EINVAL;
 
 	ret = devm_gpio_request_one(dev, ddata->gpio, GPIOF_IN, "pmic");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to request gpio%d\n", ddata->gpio);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ddata->irq = gpio_to_irq(ddata->gpio);
 
 	hi6421_spmi_pmic_irq_init(ddata);
 
-	ddata->irqs = devm_kzalloc(dev, HISI_IRQ_NUM * sizeof(int), GFP_KERNEL);
-	if (!ddata->irqs)
-		return -ENOMEM;
+	ddata->irqs = devm_kzalloc(dev, HISI_IRQ_NUM * माप(पूर्णांक), GFP_KERNEL);
+	अगर (!ddata->irqs)
+		वापस -ENOMEM;
 
-	ddata->domain = irq_domain_add_simple(np, HISI_IRQ_NUM, 0,
-					      &hi6421_spmi_domain_ops, ddata);
-	if (!ddata->domain) {
+	ddata->करोमुख्य = irq_करोमुख्य_add_simple(np, HISI_IRQ_NUM, 0,
+					      &hi6421_spmi_करोमुख्य_ops, ddata);
+	अगर (!ddata->करोमुख्य) अणु
 		dev_err(dev, "Failed to create IRQ domain\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for (i = 0; i < HISI_IRQ_NUM; i++) {
-		virq = irq_create_mapping(ddata->domain, i);
-		if (!virq) {
+	क्रम (i = 0; i < HISI_IRQ_NUM; i++) अणु
+		virq = irq_create_mapping(ddata->करोमुख्य, i);
+		अगर (!virq) अणु
 			dev_err(dev, "Failed to map H/W IRQ\n");
-			return -ENOSPC;
-		}
+			वापस -ENOSPC;
+		पूर्ण
 		ddata->irqs[i] = virq;
-	}
+	पूर्ण
 
-	ret = request_threaded_irq(ddata->irq, hi6421_spmi_irq_handler, NULL,
+	ret = request_thपढ़ोed_irq(ddata->irq, hi6421_spmi_irq_handler, शून्य,
 				   IRQF_TRIGGER_LOW | IRQF_SHARED | IRQF_NO_SUSPEND,
 				   "pmic", ddata);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to start IRQ handling thread: error %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_set_drvdata(&pdev->dev, ddata);
 
 	ret = devm_mfd_add_devices(&pdev->dev, PLATFORM_DEVID_NONE,
 				   hi6421v600_devs, ARRAY_SIZE(hi6421v600_devs),
-				   NULL, 0, NULL);
-	if (ret < 0)
+				   शून्य, 0, शून्य);
+	अगर (ret < 0)
 		dev_err(dev, "Failed to add child devices: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hi6421_spmi_pmic_remove(struct spmi_device *pdev)
-{
-	struct hi6421_spmi_pmic *ddata = dev_get_drvdata(&pdev->dev);
+अटल व्योम hi6421_spmi_pmic_हटाओ(काष्ठा spmi_device *pdev)
+अणु
+	काष्ठा hi6421_spmi_pmic *ddata = dev_get_drvdata(&pdev->dev);
 
-	free_irq(ddata->irq, ddata);
-}
+	मुक्त_irq(ddata->irq, ddata);
+पूर्ण
 
-static const struct of_device_id pmic_spmi_id_table[] = {
-	{ .compatible = "hisilicon,hi6421-spmi" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id pmic_spmi_id_table[] = अणु
+	अणु .compatible = "hisilicon,hi6421-spmi" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pmic_spmi_id_table);
 
-static struct spmi_driver hi6421_spmi_pmic_driver = {
-	.driver = {
+अटल काष्ठा spmi_driver hi6421_spmi_pmic_driver = अणु
+	.driver = अणु
 		.name	= "hi6421-spmi-pmic",
 		.of_match_table = pmic_spmi_id_table,
-	},
+	पूर्ण,
 	.probe	= hi6421_spmi_pmic_probe,
-	.remove	= hi6421_spmi_pmic_remove,
-};
+	.हटाओ	= hi6421_spmi_pmic_हटाओ,
+पूर्ण;
 module_spmi_driver(hi6421_spmi_pmic_driver);
 
 MODULE_DESCRIPTION("HiSilicon Hi6421v600 SPMI PMIC driver");

@@ -1,374 +1,375 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * i2c-algo-bit.c: i2c driver algorithms for bit-shift adapters
+ * i2c-algo-bit.c: i2c driver algorithms क्रम bit-shअगरt adapters
  *
  *   Copyright (C) 1995-2000 Simon G. Vogl
  *
- * With some changes from Frodo Looijaard <frodol@dds.nl>, Kyösti Mälkki
+ * With some changes from Froकरो Looijaard <froकरोl@dds.nl>, Kyथघsti Mथअlkki
  * <kmalkki@cc.hut.fi> and Jean Delvare <jdelvare@suse.de>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/i2c.h>
-#include <linux/i2c-algo-bit.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-algo-bit.h>
 
 
 /* ----- global defines ----------------------------------------------- */
 
-#ifdef DEBUG
-#define bit_dbg(level, dev, format, args...) \
-	do { \
-		if (i2c_debug >= level) \
-			dev_dbg(dev, format, ##args); \
-	} while (0)
-#else
-#define bit_dbg(level, dev, format, args...) \
-	do {} while (0)
-#endif /* DEBUG */
+#अगर_घोषित DEBUG
+#घोषणा bit_dbg(level, dev, क्रमmat, args...) \
+	करो अणु \
+		अगर (i2c_debug >= level) \
+			dev_dbg(dev, क्रमmat, ##args); \
+	पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा bit_dbg(level, dev, क्रमmat, args...) \
+	करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर /* DEBUG */
 
 /* ----- global variables ---------------------------------------------	*/
 
-static int bit_test;	/* see if the line-setting functions work	*/
-module_param(bit_test, int, S_IRUGO);
+अटल पूर्णांक bit_test;	/* see अगर the line-setting functions work	*/
+module_param(bit_test, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(bit_test, "lines testing - 0 off; 1 report; 2 fail if stuck");
 
-#ifdef DEBUG
-static int i2c_debug = 1;
-module_param(i2c_debug, int, S_IRUGO | S_IWUSR);
+#अगर_घोषित DEBUG
+अटल पूर्णांक i2c_debug = 1;
+module_param(i2c_debug, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(i2c_debug,
 		 "debug level - 0 off; 1 normal; 2 verbose; 3 very verbose");
-#endif
+#पूर्ण_अगर
 
 /* --- setting states on the bus with the right timing: ---------------	*/
 
-#define setsda(adap, val)	adap->setsda(adap->data, val)
-#define setscl(adap, val)	adap->setscl(adap->data, val)
-#define getsda(adap)		adap->getsda(adap->data)
-#define getscl(adap)		adap->getscl(adap->data)
+#घोषणा setsda(adap, val)	adap->setsda(adap->data, val)
+#घोषणा setscl(adap, val)	adap->setscl(adap->data, val)
+#घोषणा माला_लोda(adap)		adap->माला_लोda(adap->data)
+#घोषणा माला_लोcl(adap)		adap->माला_लोcl(adap->data)
 
-static inline void sdalo(struct i2c_algo_bit_data *adap)
-{
+अटल अंतरभूत व्योम sdalo(काष्ठा i2c_algo_bit_data *adap)
+अणु
 	setsda(adap, 0);
 	udelay((adap->udelay + 1) / 2);
-}
+पूर्ण
 
-static inline void sdahi(struct i2c_algo_bit_data *adap)
-{
+अटल अंतरभूत व्योम sdahi(काष्ठा i2c_algo_bit_data *adap)
+अणु
 	setsda(adap, 1);
 	udelay((adap->udelay + 1) / 2);
-}
+पूर्ण
 
-static inline void scllo(struct i2c_algo_bit_data *adap)
-{
+अटल अंतरभूत व्योम scllo(काष्ठा i2c_algo_bit_data *adap)
+अणु
 	setscl(adap, 0);
 	udelay(adap->udelay / 2);
-}
+पूर्ण
 
 /*
- * Raise scl line, and do checking for delays. This is necessary for slower
+ * Raise scl line, and करो checking क्रम delays. This is necessary क्रम slower
  * devices.
  */
-static int sclhi(struct i2c_algo_bit_data *adap)
-{
-	unsigned long start;
+अटल पूर्णांक sclhi(काष्ठा i2c_algo_bit_data *adap)
+अणु
+	अचिन्हित दीर्घ start;
 
 	setscl(adap, 1);
 
 	/* Not all adapters have scl sense line... */
-	if (!adap->getscl)
-		goto done;
+	अगर (!adap->माला_लोcl)
+		जाओ करोne;
 
-	start = jiffies;
-	while (!getscl(adap)) {
-		/* This hw knows how to read the clock line, so we wait
-		 * until it actually gets high.  This is safer as some
-		 * chips may hold it low ("clock stretching") while they
-		 * are processing data internally.
+	start = jअगरfies;
+	जबतक (!माला_लोcl(adap)) अणु
+		/* This hw knows how to पढ़ो the घड़ी line, so we रुको
+		 * until it actually माला_लो high.  This is safer as some
+		 * chips may hold it low ("clock stretching") जबतक they
+		 * are processing data पूर्णांकernally.
 		 */
-		if (time_after(jiffies, start + adap->timeout)) {
-			/* Test one last time, as we may have been preempted
-			 * between last check and timeout test.
+		अगर (समय_after(jअगरfies, start + adap->समयout)) अणु
+			/* Test one last समय, as we may have been preempted
+			 * between last check and समयout test.
 			 */
-			if (getscl(adap))
-				break;
-			return -ETIMEDOUT;
-		}
+			अगर (माला_लोcl(adap))
+				अवरोध;
+			वापस -ETIMEDOUT;
+		पूर्ण
 		cpu_relax();
-	}
-#ifdef DEBUG
-	if (jiffies != start && i2c_debug >= 3)
+	पूर्ण
+#अगर_घोषित DEBUG
+	अगर (jअगरfies != start && i2c_debug >= 3)
 		pr_debug("i2c-algo-bit: needed %ld jiffies for SCL to go high\n",
-			 jiffies - start);
-#endif
+			 jअगरfies - start);
+#पूर्ण_अगर
 
-done:
+करोne:
 	udelay(adap->udelay);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /* --- other auxiliary functions --------------------------------------	*/
-static void i2c_start(struct i2c_algo_bit_data *adap)
-{
-	/* assert: scl, sda are high */
+अटल व्योम i2c_start(काष्ठा i2c_algo_bit_data *adap)
+अणु
+	/* निश्चित: scl, sda are high */
 	setsda(adap, 0);
 	udelay(adap->udelay);
 	scllo(adap);
-}
+पूर्ण
 
-static void i2c_repstart(struct i2c_algo_bit_data *adap)
-{
-	/* assert: scl is low */
+अटल व्योम i2c_repstart(काष्ठा i2c_algo_bit_data *adap)
+अणु
+	/* निश्चित: scl is low */
 	sdahi(adap);
 	sclhi(adap);
 	setsda(adap, 0);
 	udelay(adap->udelay);
 	scllo(adap);
-}
+पूर्ण
 
 
-static void i2c_stop(struct i2c_algo_bit_data *adap)
-{
-	/* assert: scl is low */
+अटल व्योम i2c_stop(काष्ठा i2c_algo_bit_data *adap)
+अणु
+	/* निश्चित: scl is low */
 	sdalo(adap);
 	sclhi(adap);
 	setsda(adap, 1);
 	udelay(adap->udelay);
-}
+पूर्ण
 
 
 
-/* send a byte without start cond., look for arbitration,
+/* send a byte without start cond., look क्रम arbitration,
    check ackn. from slave */
-/* returns:
- * 1 if the device acknowledged
- * 0 if the device did not ack
- * -ETIMEDOUT if an error occurred (while raising the scl line)
+/* वापसs:
+ * 1 अगर the device acknowledged
+ * 0 अगर the device did not ack
+ * -ETIMEDOUT अगर an error occurred (जबतक raising the scl line)
  */
-static int i2c_outb(struct i2c_adapter *i2c_adap, unsigned char c)
-{
-	int i;
-	int sb;
-	int ack;
-	struct i2c_algo_bit_data *adap = i2c_adap->algo_data;
+अटल पूर्णांक i2c_outb(काष्ठा i2c_adapter *i2c_adap, अचिन्हित अक्षर c)
+अणु
+	पूर्णांक i;
+	पूर्णांक sb;
+	पूर्णांक ack;
+	काष्ठा i2c_algo_bit_data *adap = i2c_adap->algo_data;
 
-	/* assert: scl is low */
-	for (i = 7; i >= 0; i--) {
+	/* निश्चित: scl is low */
+	क्रम (i = 7; i >= 0; i--) अणु
 		sb = (c >> i) & 1;
 		setsda(adap, sb);
 		udelay((adap->udelay + 1) / 2);
-		if (sclhi(adap) < 0) { /* timed out */
+		अगर (sclhi(adap) < 0) अणु /* समयd out */
 			bit_dbg(1, &i2c_adap->dev,
 				"i2c_outb: 0x%02x, timeout at bit #%d\n",
-				(int)c, i);
-			return -ETIMEDOUT;
-		}
-		/* FIXME do arbitration here:
-		 * if (sb && !getsda(adap)) -> ouch! Get out of here.
+				(पूर्णांक)c, i);
+			वापस -ETIMEDOUT;
+		पूर्ण
+		/* FIXME करो arbitration here:
+		 * अगर (sb && !माला_लोda(adap)) -> ouch! Get out of here.
 		 *
 		 * Report a unique code, so higher level code can retry
 		 * the whole (combined) message and *NOT* issue STOP.
 		 */
 		scllo(adap);
-	}
+	पूर्ण
 	sdahi(adap);
-	if (sclhi(adap) < 0) { /* timeout */
+	अगर (sclhi(adap) < 0) अणु /* समयout */
 		bit_dbg(1, &i2c_adap->dev,
-			"i2c_outb: 0x%02x, timeout at ack\n", (int)c);
-		return -ETIMEDOUT;
-	}
+			"i2c_outb: 0x%02x, timeout at ack\n", (पूर्णांक)c);
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	/* read ack: SDA should be pulled down by slave, or it may
+	/* पढ़ो ack: SDA should be pulled करोwn by slave, or it may
 	 * NAK (usually to report problems with the data we wrote).
 	 */
-	ack = !getsda(adap);    /* ack: sda is pulled low -> success */
-	bit_dbg(2, &i2c_adap->dev, "i2c_outb: 0x%02x %s\n", (int)c,
+	ack = !माला_लोda(adap);    /* ack: sda is pulled low -> success */
+	bit_dbg(2, &i2c_adap->dev, "i2c_outb: 0x%02x %s\n", (पूर्णांक)c,
 		ack ? "A" : "NA");
 
 	scllo(adap);
-	return ack;
-	/* assert: scl is low (sda undef) */
-}
+	वापस ack;
+	/* निश्चित: scl is low (sda undef) */
+पूर्ण
 
 
-static int i2c_inb(struct i2c_adapter *i2c_adap)
-{
-	/* read byte via i2c port, without start/stop sequence	*/
-	/* acknowledge is sent in i2c_read.			*/
-	int i;
-	unsigned char indata = 0;
-	struct i2c_algo_bit_data *adap = i2c_adap->algo_data;
+अटल पूर्णांक i2c_inb(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	/* पढ़ो byte via i2c port, without start/stop sequence	*/
+	/* acknowledge is sent in i2c_पढ़ो.			*/
+	पूर्णांक i;
+	अचिन्हित अक्षर indata = 0;
+	काष्ठा i2c_algo_bit_data *adap = i2c_adap->algo_data;
 
-	/* assert: scl is low */
+	/* निश्चित: scl is low */
 	sdahi(adap);
-	for (i = 0; i < 8; i++) {
-		if (sclhi(adap) < 0) { /* timeout */
+	क्रम (i = 0; i < 8; i++) अणु
+		अगर (sclhi(adap) < 0) अणु /* समयout */
 			bit_dbg(1, &i2c_adap->dev,
 				"i2c_inb: timeout at bit #%d\n",
 				7 - i);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		indata *= 2;
-		if (getsda(adap))
+		अगर (माला_लोda(adap))
 			indata |= 0x01;
 		setscl(adap, 0);
 		udelay(i == 7 ? adap->udelay / 2 : adap->udelay);
-	}
-	/* assert: scl is low */
-	return indata;
-}
+	पूर्ण
+	/* निश्चित: scl is low */
+	वापस indata;
+पूर्ण
 
 /*
- * Sanity check for the adapter hardware - check the reaction of
- * the bus lines only if it seems to be idle.
+ * Sanity check क्रम the adapter hardware - check the reaction of
+ * the bus lines only अगर it seems to be idle.
  */
-static int test_bus(struct i2c_adapter *i2c_adap)
-{
-	struct i2c_algo_bit_data *adap = i2c_adap->algo_data;
-	const char *name = i2c_adap->name;
-	int scl, sda, ret;
+अटल पूर्णांक test_bus(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	काष्ठा i2c_algo_bit_data *adap = i2c_adap->algo_data;
+	स्थिर अक्षर *name = i2c_adap->name;
+	पूर्णांक scl, sda, ret;
 
-	if (adap->pre_xfer) {
+	अगर (adap->pre_xfer) अणु
 		ret = adap->pre_xfer(i2c_adap);
-		if (ret < 0)
-			return -ENODEV;
-	}
+		अगर (ret < 0)
+			वापस -ENODEV;
+	पूर्ण
 
-	if (adap->getscl == NULL)
+	अगर (adap->माला_लोcl == शून्य)
 		pr_info("%s: Testing SDA only, SCL is not readable\n", name);
 
-	sda = getsda(adap);
-	scl = (adap->getscl == NULL) ? 1 : getscl(adap);
-	if (!scl || !sda) {
-		printk(KERN_WARNING
+	sda = माला_लोda(adap);
+	scl = (adap->माला_लोcl == शून्य) ? 1 : माला_लोcl(adap);
+	अगर (!scl || !sda) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "%s: bus seems to be busy (scl=%d, sda=%d)\n",
 		       name, scl, sda);
-		goto bailout;
-	}
+		जाओ bailout;
+	पूर्ण
 
 	sdalo(adap);
-	sda = getsda(adap);
-	scl = (adap->getscl == NULL) ? 1 : getscl(adap);
-	if (sda) {
-		printk(KERN_WARNING "%s: SDA stuck high!\n", name);
-		goto bailout;
-	}
-	if (!scl) {
-		printk(KERN_WARNING
+	sda = माला_लोda(adap);
+	scl = (adap->माला_लोcl == शून्य) ? 1 : माला_लोcl(adap);
+	अगर (sda) अणु
+		prपूर्णांकk(KERN_WARNING "%s: SDA stuck high!\n", name);
+		जाओ bailout;
+	पूर्ण
+	अगर (!scl) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "%s: SCL unexpected low while pulling SDA low!\n",
 		       name);
-		goto bailout;
-	}
+		जाओ bailout;
+	पूर्ण
 
 	sdahi(adap);
-	sda = getsda(adap);
-	scl = (adap->getscl == NULL) ? 1 : getscl(adap);
-	if (!sda) {
-		printk(KERN_WARNING "%s: SDA stuck low!\n", name);
-		goto bailout;
-	}
-	if (!scl) {
-		printk(KERN_WARNING
+	sda = माला_लोda(adap);
+	scl = (adap->माला_लोcl == शून्य) ? 1 : माला_लोcl(adap);
+	अगर (!sda) अणु
+		prपूर्णांकk(KERN_WARNING "%s: SDA stuck low!\n", name);
+		जाओ bailout;
+	पूर्ण
+	अगर (!scl) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "%s: SCL unexpected low while pulling SDA high!\n",
 		       name);
-		goto bailout;
-	}
+		जाओ bailout;
+	पूर्ण
 
 	scllo(adap);
-	sda = getsda(adap);
-	scl = (adap->getscl == NULL) ? 0 : getscl(adap);
-	if (scl) {
-		printk(KERN_WARNING "%s: SCL stuck high!\n", name);
-		goto bailout;
-	}
-	if (!sda) {
-		printk(KERN_WARNING
+	sda = माला_लोda(adap);
+	scl = (adap->माला_लोcl == शून्य) ? 0 : माला_लोcl(adap);
+	अगर (scl) अणु
+		prपूर्णांकk(KERN_WARNING "%s: SCL stuck high!\n", name);
+		जाओ bailout;
+	पूर्ण
+	अगर (!sda) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "%s: SDA unexpected low while pulling SCL low!\n",
 		       name);
-		goto bailout;
-	}
+		जाओ bailout;
+	पूर्ण
 
 	sclhi(adap);
-	sda = getsda(adap);
-	scl = (adap->getscl == NULL) ? 1 : getscl(adap);
-	if (!scl) {
-		printk(KERN_WARNING "%s: SCL stuck low!\n", name);
-		goto bailout;
-	}
-	if (!sda) {
-		printk(KERN_WARNING
+	sda = माला_लोda(adap);
+	scl = (adap->माला_लोcl == शून्य) ? 1 : माला_लोcl(adap);
+	अगर (!scl) अणु
+		prपूर्णांकk(KERN_WARNING "%s: SCL stuck low!\n", name);
+		जाओ bailout;
+	पूर्ण
+	अगर (!sda) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "%s: SDA unexpected low while pulling SCL high!\n",
 		       name);
-		goto bailout;
-	}
+		जाओ bailout;
+	पूर्ण
 
-	if (adap->post_xfer)
+	अगर (adap->post_xfer)
 		adap->post_xfer(i2c_adap);
 
 	pr_info("%s: Test OK\n", name);
-	return 0;
+	वापस 0;
 bailout:
 	sdahi(adap);
 	sclhi(adap);
 
-	if (adap->post_xfer)
+	अगर (adap->post_xfer)
 		adap->post_xfer(i2c_adap);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /* ----- Utility functions
  */
 
-/* try_address tries to contact a chip for a number of
- * times before it gives up.
- * return values:
+/* try_address tries to contact a chip क्रम a number of
+ * बार beक्रमe it gives up.
+ * वापस values:
  * 1 chip answered
  * 0 chip did not answer
  * -x transmission error
  */
-static int try_address(struct i2c_adapter *i2c_adap,
-		       unsigned char addr, int retries)
-{
-	struct i2c_algo_bit_data *adap = i2c_adap->algo_data;
-	int i, ret = 0;
+अटल पूर्णांक try_address(काष्ठा i2c_adapter *i2c_adap,
+		       अचिन्हित अक्षर addr, पूर्णांक retries)
+अणु
+	काष्ठा i2c_algo_bit_data *adap = i2c_adap->algo_data;
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i <= retries; i++) {
+	क्रम (i = 0; i <= retries; i++) अणु
 		ret = i2c_outb(i2c_adap, addr);
-		if (ret == 1 || i == retries)
-			break;
+		अगर (ret == 1 || i == retries)
+			अवरोध;
 		bit_dbg(3, &i2c_adap->dev, "emitting stop condition\n");
 		i2c_stop(adap);
 		udelay(adap->udelay);
 		yield();
 		bit_dbg(3, &i2c_adap->dev, "emitting start condition\n");
 		i2c_start(adap);
-	}
-	if (i && ret)
+	पूर्ण
+	अगर (i && ret)
 		bit_dbg(1, &i2c_adap->dev,
 			"Used %d tries to %s client at 0x%02x: %s\n", i + 1,
 			addr & 1 ? "read from" : "write to", addr >> 1,
 			ret == 1 ? "success" : "failed, timeout?");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sendbytes(struct i2c_adapter *i2c_adap, struct i2c_msg *msg)
-{
-	const unsigned char *temp = msg->buf;
-	int count = msg->len;
-	unsigned short nak_ok = msg->flags & I2C_M_IGNORE_NAK;
-	int retval;
-	int wrcount = 0;
+अटल पूर्णांक sendbytes(काष्ठा i2c_adapter *i2c_adap, काष्ठा i2c_msg *msg)
+अणु
+	स्थिर अचिन्हित अक्षर *temp = msg->buf;
+	पूर्णांक count = msg->len;
+	अचिन्हित लघु nak_ok = msg->flags & I2C_M_IGNORE_NAK;
+	पूर्णांक retval;
+	पूर्णांक wrcount = 0;
 
-	while (count > 0) {
+	जबतक (count > 0) अणु
 		retval = i2c_outb(i2c_adap, *temp);
 
 		/* OK/ACK; or ignored NAK */
-		if ((retval > 0) || (nak_ok && (retval == 0))) {
+		अगर ((retval > 0) || (nak_ok && (retval == 0))) अणु
 			count--;
 			temp++;
 			wrcount++;
@@ -377,9 +378,9 @@ static int sendbytes(struct i2c_adapter *i2c_adap, struct i2c_msg *msg)
 		 * something about the data it saw.  For example, maybe
 		 * the SMBus PEC was wrong.
 		 */
-		} else if (retval == 0) {
+		पूर्ण अन्यथा अगर (retval == 0) अणु
 			dev_err(&i2c_adap->dev, "sendbytes: NAK bailout.\n");
-			return -EIO;
+			वापस -EIO;
 
 		/* Timeout; or (someday) lost arbitration
 		 *
@@ -388,68 +389,68 @@ static int sendbytes(struct i2c_adapter *i2c_adap, struct i2c_msg *msg)
 		 * its STOP.  As a rule, upper layer code has no reason
 		 * to know or care about this ... it is *NOT* an error.
 		 */
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&i2c_adap->dev, "sendbytes: error %d\n",
 					retval);
-			return retval;
-		}
-	}
-	return wrcount;
-}
+			वापस retval;
+		पूर्ण
+	पूर्ण
+	वापस wrcount;
+पूर्ण
 
-static int acknak(struct i2c_adapter *i2c_adap, int is_ack)
-{
-	struct i2c_algo_bit_data *adap = i2c_adap->algo_data;
+अटल पूर्णांक acknak(काष्ठा i2c_adapter *i2c_adap, पूर्णांक is_ack)
+अणु
+	काष्ठा i2c_algo_bit_data *adap = i2c_adap->algo_data;
 
-	/* assert: sda is high */
-	if (is_ack)		/* send ack */
+	/* निश्चित: sda is high */
+	अगर (is_ack)		/* send ack */
 		setsda(adap, 0);
 	udelay((adap->udelay + 1) / 2);
-	if (sclhi(adap) < 0) {	/* timeout */
+	अगर (sclhi(adap) < 0) अणु	/* समयout */
 		dev_err(&i2c_adap->dev, "readbytes: ack/nak timeout\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 	scllo(adap);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int readbytes(struct i2c_adapter *i2c_adap, struct i2c_msg *msg)
-{
-	int inval;
-	int rdcount = 0;	/* counts bytes read */
-	unsigned char *temp = msg->buf;
-	int count = msg->len;
-	const unsigned flags = msg->flags;
+अटल पूर्णांक पढ़ोbytes(काष्ठा i2c_adapter *i2c_adap, काष्ठा i2c_msg *msg)
+अणु
+	पूर्णांक inval;
+	पूर्णांक rdcount = 0;	/* counts bytes पढ़ो */
+	अचिन्हित अक्षर *temp = msg->buf;
+	पूर्णांक count = msg->len;
+	स्थिर अचिन्हित flags = msg->flags;
 
-	while (count > 0) {
+	जबतक (count > 0) अणु
 		inval = i2c_inb(i2c_adap);
-		if (inval >= 0) {
+		अगर (inval >= 0) अणु
 			*temp = inval;
 			rdcount++;
-		} else {   /* read timed out */
-			break;
-		}
+		पूर्ण अन्यथा अणु   /* पढ़ो समयd out */
+			अवरोध;
+		पूर्ण
 
 		temp++;
 		count--;
 
 		/* Some SMBus transactions require that we receive the
-		   transaction length as the first read byte. */
-		if (rdcount == 1 && (flags & I2C_M_RECV_LEN)) {
-			if (inval <= 0 || inval > I2C_SMBUS_BLOCK_MAX) {
-				if (!(flags & I2C_M_NO_RD_ACK))
+		   transaction length as the first पढ़ो byte. */
+		अगर (rdcount == 1 && (flags & I2C_M_RECV_LEN)) अणु
+			अगर (inval <= 0 || inval > I2C_SMBUS_BLOCK_MAX) अणु
+				अगर (!(flags & I2C_M_NO_RD_ACK))
 					acknak(i2c_adap, 0);
 				dev_err(&i2c_adap->dev,
 					"readbytes: invalid block length (%d)\n",
 					inval);
-				return -EPROTO;
-			}
-			/* The original count value accounts for the extra
-			   bytes, that is, either 1 for a regular transaction,
-			   or 2 for a PEC transaction. */
+				वापस -EPROTO;
+			पूर्ण
+			/* The original count value accounts क्रम the extra
+			   bytes, that is, either 1 क्रम a regular transaction,
+			   or 2 क्रम a PEC transaction. */
 			count += inval;
 			msg->len += inval;
-		}
+		पूर्ण
 
 		bit_dbg(2, &i2c_adap->dev, "readbytes: 0x%02x %s\n",
 			inval,
@@ -457,237 +458,237 @@ static int readbytes(struct i2c_adapter *i2c_adap, struct i2c_msg *msg)
 				? "(no ack/nak)"
 				: (count ? "A" : "NA"));
 
-		if (!(flags & I2C_M_NO_RD_ACK)) {
+		अगर (!(flags & I2C_M_NO_RD_ACK)) अणु
 			inval = acknak(i2c_adap, count);
-			if (inval < 0)
-				return inval;
-		}
-	}
-	return rdcount;
-}
+			अगर (inval < 0)
+				वापस inval;
+		पूर्ण
+	पूर्ण
+	वापस rdcount;
+पूर्ण
 
-/* doAddress initiates the transfer by generating the start condition (in
- * try_address) and transmits the address in the necessary format to handle
- * reads, writes as well as 10bit-addresses.
- * returns:
+/* करोAddress initiates the transfer by generating the start condition (in
+ * try_address) and transmits the address in the necessary क्रमmat to handle
+ * पढ़ोs, ग_लिखोs as well as 10bit-addresses.
+ * वापसs:
  *  0 everything went okay, the chip ack'ed, or IGNORE_NAK flag was set
- * -x an error occurred (like: -ENXIO if the device did not answer, or
- *	-ETIMEDOUT, for example if the lines are stuck...)
+ * -x an error occurred (like: -ENXIO अगर the device did not answer, or
+ *	-ETIMEDOUT, क्रम example अगर the lines are stuck...)
  */
-static int bit_doAddress(struct i2c_adapter *i2c_adap, struct i2c_msg *msg)
-{
-	unsigned short flags = msg->flags;
-	unsigned short nak_ok = msg->flags & I2C_M_IGNORE_NAK;
-	struct i2c_algo_bit_data *adap = i2c_adap->algo_data;
+अटल पूर्णांक bit_करोAddress(काष्ठा i2c_adapter *i2c_adap, काष्ठा i2c_msg *msg)
+अणु
+	अचिन्हित लघु flags = msg->flags;
+	अचिन्हित लघु nak_ok = msg->flags & I2C_M_IGNORE_NAK;
+	काष्ठा i2c_algo_bit_data *adap = i2c_adap->algo_data;
 
-	unsigned char addr;
-	int ret, retries;
+	अचिन्हित अक्षर addr;
+	पूर्णांक ret, retries;
 
 	retries = nak_ok ? 0 : i2c_adap->retries;
 
-	if (flags & I2C_M_TEN) {
+	अगर (flags & I2C_M_TEN) अणु
 		/* a ten bit address */
 		addr = 0xf0 | ((msg->addr >> 7) & 0x06);
 		bit_dbg(2, &i2c_adap->dev, "addr0: %d\n", addr);
 		/* try extended address code...*/
 		ret = try_address(i2c_adap, addr, retries);
-		if ((ret != 1) && !nak_ok)  {
+		अगर ((ret != 1) && !nak_ok)  अणु
 			dev_err(&i2c_adap->dev,
 				"died at extended address code\n");
-			return -ENXIO;
-		}
-		/* the remaining 8 bit address */
+			वापस -ENXIO;
+		पूर्ण
+		/* the reमुख्यing 8 bit address */
 		ret = i2c_outb(i2c_adap, msg->addr & 0xff);
-		if ((ret != 1) && !nak_ok) {
+		अगर ((ret != 1) && !nak_ok) अणु
 			/* the chip did not ack / xmission error occurred */
 			dev_err(&i2c_adap->dev, "died at 2nd address code\n");
-			return -ENXIO;
-		}
-		if (flags & I2C_M_RD) {
+			वापस -ENXIO;
+		पूर्ण
+		अगर (flags & I2C_M_RD) अणु
 			bit_dbg(3, &i2c_adap->dev,
 				"emitting repeated start condition\n");
 			i2c_repstart(adap);
-			/* okay, now switch into reading mode */
+			/* okay, now चयन पूर्णांकo पढ़ोing mode */
 			addr |= 0x01;
 			ret = try_address(i2c_adap, addr, retries);
-			if ((ret != 1) && !nak_ok) {
+			अगर ((ret != 1) && !nak_ok) अणु
 				dev_err(&i2c_adap->dev,
 					"died at repeated address code\n");
-				return -EIO;
-			}
-		}
-	} else {		/* normal 7bit address	*/
+				वापस -EIO;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु		/* normal 7bit address	*/
 		addr = i2c_8bit_addr_from_msg(msg);
-		if (flags & I2C_M_REV_DIR_ADDR)
+		अगर (flags & I2C_M_REV_सूची_ADDR)
 			addr ^= 1;
 		ret = try_address(i2c_adap, addr, retries);
-		if ((ret != 1) && !nak_ok)
-			return -ENXIO;
-	}
+		अगर ((ret != 1) && !nak_ok)
+			वापस -ENXIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bit_xfer(struct i2c_adapter *i2c_adap,
-		    struct i2c_msg msgs[], int num)
-{
-	struct i2c_msg *pmsg;
-	struct i2c_algo_bit_data *adap = i2c_adap->algo_data;
-	int i, ret;
-	unsigned short nak_ok;
+अटल पूर्णांक bit_xfer(काष्ठा i2c_adapter *i2c_adap,
+		    काष्ठा i2c_msg msgs[], पूर्णांक num)
+अणु
+	काष्ठा i2c_msg *pmsg;
+	काष्ठा i2c_algo_bit_data *adap = i2c_adap->algo_data;
+	पूर्णांक i, ret;
+	अचिन्हित लघु nak_ok;
 
-	if (adap->pre_xfer) {
+	अगर (adap->pre_xfer) अणु
 		ret = adap->pre_xfer(i2c_adap);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	bit_dbg(3, &i2c_adap->dev, "emitting start condition\n");
 	i2c_start(adap);
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		pmsg = &msgs[i];
 		nak_ok = pmsg->flags & I2C_M_IGNORE_NAK;
-		if (!(pmsg->flags & I2C_M_NOSTART)) {
-			if (i) {
-				if (msgs[i - 1].flags & I2C_M_STOP) {
+		अगर (!(pmsg->flags & I2C_M_NOSTART)) अणु
+			अगर (i) अणु
+				अगर (msgs[i - 1].flags & I2C_M_STOP) अणु
 					bit_dbg(3, &i2c_adap->dev,
 						"emitting enforced stop/start condition\n");
 					i2c_stop(adap);
 					i2c_start(adap);
-				} else {
+				पूर्ण अन्यथा अणु
 					bit_dbg(3, &i2c_adap->dev,
 						"emitting repeated start condition\n");
 					i2c_repstart(adap);
-				}
-			}
-			ret = bit_doAddress(i2c_adap, pmsg);
-			if ((ret != 0) && !nak_ok) {
+				पूर्ण
+			पूर्ण
+			ret = bit_करोAddress(i2c_adap, pmsg);
+			अगर ((ret != 0) && !nak_ok) अणु
 				bit_dbg(1, &i2c_adap->dev,
 					"NAK from device addr 0x%02x msg #%d\n",
 					msgs[i].addr, i);
-				goto bailout;
-			}
-		}
-		if (pmsg->flags & I2C_M_RD) {
-			/* read bytes into buffer*/
-			ret = readbytes(i2c_adap, pmsg);
-			if (ret >= 1)
+				जाओ bailout;
+			पूर्ण
+		पूर्ण
+		अगर (pmsg->flags & I2C_M_RD) अणु
+			/* पढ़ो bytes पूर्णांकo buffer*/
+			ret = पढ़ोbytes(i2c_adap, pmsg);
+			अगर (ret >= 1)
 				bit_dbg(2, &i2c_adap->dev, "read %d byte%s\n",
 					ret, ret == 1 ? "" : "s");
-			if (ret < pmsg->len) {
-				if (ret >= 0)
+			अगर (ret < pmsg->len) अणु
+				अगर (ret >= 0)
 					ret = -EIO;
-				goto bailout;
-			}
-		} else {
-			/* write bytes from buffer */
+				जाओ bailout;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* ग_लिखो bytes from buffer */
 			ret = sendbytes(i2c_adap, pmsg);
-			if (ret >= 1)
+			अगर (ret >= 1)
 				bit_dbg(2, &i2c_adap->dev, "wrote %d byte%s\n",
 					ret, ret == 1 ? "" : "s");
-			if (ret < pmsg->len) {
-				if (ret >= 0)
+			अगर (ret < pmsg->len) अणु
+				अगर (ret >= 0)
 					ret = -EIO;
-				goto bailout;
-			}
-		}
-	}
+				जाओ bailout;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	ret = i;
 
 bailout:
 	bit_dbg(3, &i2c_adap->dev, "emitting stop condition\n");
 	i2c_stop(adap);
 
-	if (adap->post_xfer)
+	अगर (adap->post_xfer)
 		adap->post_xfer(i2c_adap);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * We print a warning when we are not flagged to support atomic transfers but
+ * We prपूर्णांक a warning when we are not flagged to support atomic transfers but
  * will try anyhow. That's what the I2C core would do as well. Sadly, we can't
- * modify the algorithm struct at probe time because this struct is exported
+ * modअगरy the algorithm काष्ठा at probe समय because this काष्ठा is exported
  * 'const'.
  */
-static int bit_xfer_atomic(struct i2c_adapter *i2c_adap, struct i2c_msg msgs[],
-			   int num)
-{
-	struct i2c_algo_bit_data *adap = i2c_adap->algo_data;
+अटल पूर्णांक bit_xfer_atomic(काष्ठा i2c_adapter *i2c_adap, काष्ठा i2c_msg msgs[],
+			   पूर्णांक num)
+अणु
+	काष्ठा i2c_algo_bit_data *adap = i2c_adap->algo_data;
 
-	if (!adap->can_do_atomic)
+	अगर (!adap->can_करो_atomic)
 		dev_warn(&i2c_adap->dev, "not flagged for atomic transfers\n");
 
-	return bit_xfer(i2c_adap, msgs, num);
-}
+	वापस bit_xfer(i2c_adap, msgs, num);
+पूर्ण
 
-static u32 bit_func(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_NOSTART | I2C_FUNC_SMBUS_EMUL_ALL |
+अटल u32 bit_func(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_NOSTART | I2C_FUNC_SMBUS_EMUL_ALL |
 	       I2C_FUNC_10BIT_ADDR | I2C_FUNC_PROTOCOL_MANGLING;
-}
+पूर्ण
 
 
 /* -----exported algorithm data: -------------------------------------	*/
 
-const struct i2c_algorithm i2c_bit_algo = {
+स्थिर काष्ठा i2c_algorithm i2c_bit_algo = अणु
 	.master_xfer = bit_xfer,
 	.master_xfer_atomic = bit_xfer_atomic,
 	.functionality = bit_func,
-};
+पूर्ण;
 EXPORT_SYMBOL(i2c_bit_algo);
 
-static const struct i2c_adapter_quirks i2c_bit_quirk_no_clk_stretch = {
+अटल स्थिर काष्ठा i2c_adapter_quirks i2c_bit_quirk_no_clk_stretch = अणु
 	.flags = I2C_AQ_NO_CLK_STRETCH,
-};
+पूर्ण;
 
 /*
- * registering functions to load algorithms at runtime
+ * रेजिस्टरing functions to load algorithms at runसमय
  */
-static int __i2c_bit_add_bus(struct i2c_adapter *adap,
-			     int (*add_adapter)(struct i2c_adapter *))
-{
-	struct i2c_algo_bit_data *bit_adap = adap->algo_data;
-	int ret;
+अटल पूर्णांक __i2c_bit_add_bus(काष्ठा i2c_adapter *adap,
+			     पूर्णांक (*add_adapter)(काष्ठा i2c_adapter *))
+अणु
+	काष्ठा i2c_algo_bit_data *bit_adap = adap->algo_data;
+	पूर्णांक ret;
 
-	if (bit_test) {
+	अगर (bit_test) अणु
 		ret = test_bus(adap);
-		if (bit_test >= 2 && ret < 0)
-			return -ENODEV;
-	}
+		अगर (bit_test >= 2 && ret < 0)
+			वापस -ENODEV;
+	पूर्ण
 
-	/* register new adapter to i2c module... */
+	/* रेजिस्टर new adapter to i2c module... */
 	adap->algo = &i2c_bit_algo;
 	adap->retries = 3;
-	if (bit_adap->getscl == NULL)
+	अगर (bit_adap->माला_लोcl == शून्य)
 		adap->quirks = &i2c_bit_quirk_no_clk_stretch;
 
 	/*
-	 * We tried forcing SCL/SDA to an initial state here. But that caused a
-	 * regression, sadly. Check Bugzilla #200045 for details.
+	 * We tried क्रमcing SCL/SDA to an initial state here. But that caused a
+	 * regression, sadly. Check Bugzilla #200045 क्रम details.
 	 */
 
 	ret = add_adapter(adap);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Complain if SCL can't be read */
-	if (bit_adap->getscl == NULL) {
+	/* Complain अगर SCL can't be पढ़ो */
+	अगर (bit_adap->माला_लोcl == शून्य) अणु
 		dev_warn(&adap->dev, "Not I2C compliant: can't read SCL\n");
 		dev_warn(&adap->dev, "Bus may be unreliable\n");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int i2c_bit_add_bus(struct i2c_adapter *adap)
-{
-	return __i2c_bit_add_bus(adap, i2c_add_adapter);
-}
+पूर्णांक i2c_bit_add_bus(काष्ठा i2c_adapter *adap)
+अणु
+	वापस __i2c_bit_add_bus(adap, i2c_add_adapter);
+पूर्ण
 EXPORT_SYMBOL(i2c_bit_add_bus);
 
-int i2c_bit_add_numbered_bus(struct i2c_adapter *adap)
-{
-	return __i2c_bit_add_bus(adap, i2c_add_numbered_adapter);
-}
+पूर्णांक i2c_bit_add_numbered_bus(काष्ठा i2c_adapter *adap)
+अणु
+	वापस __i2c_bit_add_bus(adap, i2c_add_numbered_adapter);
+पूर्ण
 EXPORT_SYMBOL(i2c_bit_add_numbered_bus);
 
 MODULE_AUTHOR("Simon G. Vogl <simon@tk.uni-linz.ac.at>");

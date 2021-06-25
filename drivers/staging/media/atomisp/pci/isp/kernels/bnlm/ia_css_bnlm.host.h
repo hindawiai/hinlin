@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __IA_CSS_BNLM_HOST_H
-#define __IA_CSS_BNLM_HOST_H
+#अगर_अघोषित __IA_CSS_BNLM_HOST_H
+#घोषणा __IA_CSS_BNLM_HOST_H
 
-#include "ia_css_bnlm_types.h"
-#include "ia_css_bnlm_param.h"
+#समावेश "ia_css_bnlm_types.h"
+#समावेश "ia_css_bnlm_param.h"
 
-void
+व्योम
 ia_css_bnlm_vmem_encode(
-    struct bnlm_vmem_params *to,
-    const struct ia_css_bnlm_config *from,
-    size_t size);
+    काष्ठा bnlm_vmem_params *to,
+    स्थिर काष्ठा ia_css_bnlm_config *from,
+    माप_प्रकार size);
 
-void
+व्योम
 ia_css_bnlm_encode(
-    struct bnlm_dmem_params *to,
-    const struct ia_css_bnlm_config *from,
-    size_t size);
+    काष्ठा bnlm_dmem_params *to,
+    स्थिर काष्ठा ia_css_bnlm_config *from,
+    माप_प्रकार size);
 
-#ifndef IA_CSS_NO_DEBUG
-void
+#अगर_अघोषित IA_CSS_NO_DEBUG
+व्योम
 ia_css_bnlm_debug_trace(
-    const struct ia_css_bnlm_config *config,
-    unsigned int level);
-#endif
+    स्थिर काष्ठा ia_css_bnlm_config *config,
+    अचिन्हित पूर्णांक level);
+#पूर्ण_अगर
 
-#endif /* __IA_CSS_BNLM_HOST_H */
+#पूर्ण_अगर /* __IA_CSS_BNLM_HOST_H */

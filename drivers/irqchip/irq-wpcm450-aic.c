@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: GPL-2.0-only
-// Copyright 2021 Jonathan Neuschäfer
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+// Copyright 2021 Jonathan Neuschथअfer
 
-#include <linux/irqchip.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/printk.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/prपूर्णांकk.h>
 
-#include <asm/exception.h>
+#समावेश <यंत्र/exception.h>
 
-#define AIC_SCR(x)	((x)*4)	/* Source control registers */
-#define AIC_GEN		0x84	/* Interrupt group enable control register */
-#define AIC_GRSR	0x88	/* Interrupt group raw status register */
-#define AIC_IRSR	0x100	/* Interrupt raw status register */
-#define AIC_IASR	0x104	/* Interrupt active status register */
-#define AIC_ISR		0x108	/* Interrupt status register */
-#define AIC_IPER	0x10c	/* Interrupt priority encoding register */
-#define AIC_ISNR	0x110	/* Interrupt source number register */
-#define AIC_IMR		0x114	/* Interrupt mask register */
-#define AIC_OISR	0x118	/* Output interrupt status register */
-#define AIC_MECR	0x120	/* Mask enable command register */
-#define AIC_MDCR	0x124	/* Mask disable command register */
-#define AIC_SSCR	0x128	/* Source set command register */
-#define AIC_SCCR	0x12c	/* Source clear command register */
-#define AIC_EOSCR	0x130	/* End of service command register */
+#घोषणा AIC_SCR(x)	((x)*4)	/* Source control रेजिस्टरs */
+#घोषणा AIC_GEN		0x84	/* Interrupt group enable control रेजिस्टर */
+#घोषणा AIC_GRSR	0x88	/* Interrupt group raw status रेजिस्टर */
+#घोषणा AIC_IRSR	0x100	/* Interrupt raw status रेजिस्टर */
+#घोषणा AIC_IASR	0x104	/* Interrupt active status रेजिस्टर */
+#घोषणा AIC_ISR		0x108	/* Interrupt status रेजिस्टर */
+#घोषणा AIC_IPER	0x10c	/* Interrupt priority encoding रेजिस्टर */
+#घोषणा AIC_ISNR	0x110	/* Interrupt source number रेजिस्टर */
+#घोषणा AIC_IMR		0x114	/* Interrupt mask रेजिस्टर */
+#घोषणा AIC_OISR	0x118	/* Output पूर्णांकerrupt status रेजिस्टर */
+#घोषणा AIC_MECR	0x120	/* Mask enable command रेजिस्टर */
+#घोषणा AIC_MDCR	0x124	/* Mask disable command रेजिस्टर */
+#घोषणा AIC_SSCR	0x128	/* Source set command रेजिस्टर */
+#घोषणा AIC_SCCR	0x12c	/* Source clear command रेजिस्टर */
+#घोषणा AIC_EOSCR	0x130	/* End of service command रेजिस्टर */
 
-#define AIC_SCR_SRCTYPE_LOW_LEVEL	(0 << 6)
-#define AIC_SCR_SRCTYPE_HIGH_LEVEL	(1 << 6)
-#define AIC_SCR_SRCTYPE_NEG_EDGE	(2 << 6)
-#define AIC_SCR_SRCTYPE_POS_EDGE	(3 << 6)
-#define AIC_SCR_PRIORITY(x)		(x)
-#define AIC_SCR_PRIORITY_MASK		0x7
+#घोषणा AIC_SCR_SRCTYPE_LOW_LEVEL	(0 << 6)
+#घोषणा AIC_SCR_SRCTYPE_HIGH_LEVEL	(1 << 6)
+#घोषणा AIC_SCR_SRCTYPE_NEG_EDGE	(2 << 6)
+#घोषणा AIC_SCR_SRCTYPE_POS_EDGE	(3 << 6)
+#घोषणा AIC_SCR_PRIORITY(x)		(x)
+#घोषणा AIC_SCR_PRIORITY_MASK		0x7
 
-#define AIC_NUM_IRQS		32
+#घोषणा AIC_NUM_IRQS		32
 
-struct wpcm450_aic {
-	void __iomem *regs;
-	struct irq_domain *domain;
-};
+काष्ठा wpcm450_aic अणु
+	व्योम __iomem *regs;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+पूर्ण;
 
-static struct wpcm450_aic *aic;
+अटल काष्ठा wpcm450_aic *aic;
 
-static void wpcm450_aic_init_hw(void)
-{
-	int i;
+अटल व्योम wpcm450_aic_init_hw(व्योम)
+अणु
+	पूर्णांक i;
 
-	/* Disable (mask) all interrupts */
-	writel(0xffffffff, aic->regs + AIC_MDCR);
+	/* Disable (mask) all पूर्णांकerrupts */
+	ग_लिखोl(0xffffffff, aic->regs + AIC_MDCR);
 
 	/*
-	 * Make sure the interrupt controller is ready to serve new interrupts.
-	 * Reading from IPER indicates that the nIRQ signal may be deasserted,
-	 * and writing to EOSCR indicates that interrupt handling has finished.
+	 * Make sure the पूर्णांकerrupt controller is पढ़ोy to serve new पूर्णांकerrupts.
+	 * Reading from IPER indicates that the nIRQ संकेत may be deनिश्चितed,
+	 * and writing to EOSCR indicates that पूर्णांकerrupt handling has finished.
 	 */
-	readl(aic->regs + AIC_IPER);
-	writel(0, aic->regs + AIC_EOSCR);
+	पढ़ोl(aic->regs + AIC_IPER);
+	ग_लिखोl(0, aic->regs + AIC_EOSCR);
 
-	/* Initialize trigger mode and priority of each interrupt source */
-	for (i = 0; i < AIC_NUM_IRQS; i++)
-		writel(AIC_SCR_SRCTYPE_HIGH_LEVEL | AIC_SCR_PRIORITY(7),
+	/* Initialize trigger mode and priority of each पूर्णांकerrupt source */
+	क्रम (i = 0; i < AIC_NUM_IRQS; i++)
+		ग_लिखोl(AIC_SCR_SRCTYPE_HIGH_LEVEL | AIC_SCR_PRIORITY(7),
 		       aic->regs + AIC_SCR(i));
-}
+पूर्ण
 
-static void __exception_irq_entry wpcm450_aic_handle_irq(struct pt_regs *regs)
-{
-	int hwirq;
+अटल व्योम __exception_irq_entry wpcm450_aic_handle_irq(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक hwirq;
 
-	/* Determine the interrupt source */
-	/* Read IPER to signal that nIRQ can be de-asserted */
-	hwirq = readl(aic->regs + AIC_IPER) / 4;
+	/* Determine the पूर्णांकerrupt source */
+	/* Read IPER to संकेत that nIRQ can be de-निश्चितed */
+	hwirq = पढ़ोl(aic->regs + AIC_IPER) / 4;
 
-	handle_domain_irq(aic->domain, hwirq, regs);
-}
+	handle_करोमुख्य_irq(aic->करोमुख्य, hwirq, regs);
+पूर्ण
 
-static void wpcm450_aic_eoi(struct irq_data *d)
-{
+अटल व्योम wpcm450_aic_eoi(काष्ठा irq_data *d)
+अणु
 	/* Signal end-of-service */
-	writel(0, aic->regs + AIC_EOSCR);
-}
+	ग_लिखोl(0, aic->regs + AIC_EOSCR);
+पूर्ण
 
-static void wpcm450_aic_mask(struct irq_data *d)
-{
-	unsigned int mask = BIT(d->hwirq);
+अटल व्योम wpcm450_aic_mask(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक mask = BIT(d->hwirq);
 
-	/* Disable (mask) the interrupt */
-	writel(mask, aic->regs + AIC_MDCR);
-}
+	/* Disable (mask) the पूर्णांकerrupt */
+	ग_लिखोl(mask, aic->regs + AIC_MDCR);
+पूर्ण
 
-static void wpcm450_aic_unmask(struct irq_data *d)
-{
-	unsigned int mask = BIT(d->hwirq);
+अटल व्योम wpcm450_aic_unmask(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक mask = BIT(d->hwirq);
 
-	/* Enable (unmask) the interrupt */
-	writel(mask, aic->regs + AIC_MECR);
-}
+	/* Enable (unmask) the पूर्णांकerrupt */
+	ग_लिखोl(mask, aic->regs + AIC_MECR);
+पूर्ण
 
-static int wpcm450_aic_set_type(struct irq_data *d, unsigned int flow_type)
-{
+अटल पूर्णांक wpcm450_aic_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक flow_type)
+अणु
 	/*
 	 * The hardware supports high/low level, as well as rising/falling edge
-	 * modes, and the DT binding accommodates for that, but as long as
+	 * modes, and the DT binding accommodates क्रम that, but as दीर्घ as
 	 * other modes than high level mode are not used and can't be tested,
 	 * they are rejected in this driver.
 	 */
-	if ((flow_type & IRQ_TYPE_SENSE_MASK) != IRQ_TYPE_LEVEL_HIGH)
-		return -EINVAL;
+	अगर ((flow_type & IRQ_TYPE_SENSE_MASK) != IRQ_TYPE_LEVEL_HIGH)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip wpcm450_aic_chip = {
+अटल काष्ठा irq_chip wpcm450_aic_chip = अणु
 	.name = "wpcm450-aic",
 	.irq_eoi = wpcm450_aic_eoi,
 	.irq_mask = wpcm450_aic_mask,
 	.irq_unmask = wpcm450_aic_unmask,
 	.irq_set_type = wpcm450_aic_set_type,
-};
+पूर्ण;
 
-static int wpcm450_aic_map(struct irq_domain *d, unsigned int irq, irq_hw_number_t hwirq)
-{
-	if (hwirq >= AIC_NUM_IRQS)
-		return -EPERM;
+अटल पूर्णांक wpcm450_aic_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq, irq_hw_number_t hwirq)
+अणु
+	अगर (hwirq >= AIC_NUM_IRQS)
+		वापस -EPERM;
 
 	irq_set_chip_and_handler(irq, &wpcm450_aic_chip, handle_fasteoi_irq);
 	irq_set_chip_data(irq, aic);
 	irq_set_probe(irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops wpcm450_aic_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops wpcm450_aic_ops = अणु
 	.map = wpcm450_aic_map,
-	.xlate = irq_domain_xlate_twocell,
-};
+	.xlate = irq_करोमुख्य_xlate_twocell,
+पूर्ण;
 
-static int __init wpcm450_aic_of_init(struct device_node *node,
-				      struct device_node *parent)
-{
-	if (parent)
-		return -EINVAL;
+अटल पूर्णांक __init wpcm450_aic_of_init(काष्ठा device_node *node,
+				      काष्ठा device_node *parent)
+अणु
+	अगर (parent)
+		वापस -EINVAL;
 
-	aic = kzalloc(sizeof(*aic), GFP_KERNEL);
-	if (!aic)
-		return -ENOMEM;
+	aic = kzalloc(माप(*aic), GFP_KERNEL);
+	अगर (!aic)
+		वापस -ENOMEM;
 
 	aic->regs = of_iomap(node, 0);
-	if (!aic->regs) {
+	अगर (!aic->regs) अणु
 		pr_err("Failed to map WPCM450 AIC registers\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	wpcm450_aic_init_hw();
 
 	set_handle_irq(wpcm450_aic_handle_irq);
 
-	aic->domain = irq_domain_add_linear(node, AIC_NUM_IRQS, &wpcm450_aic_ops, aic);
+	aic->करोमुख्य = irq_करोमुख्य_add_linear(node, AIC_NUM_IRQS, &wpcm450_aic_ops, aic);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 IRQCHIP_DECLARE(wpcm450_aic, "nuvoton,wpcm450-aic", wpcm450_aic_of_init);

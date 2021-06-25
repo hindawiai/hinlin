@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  Support for the Marvell PXA168 Teton BGA Development Platform.
+ *  Support क्रम the Marvell PXA168 Teton BGA Development Platक्रमm.
  */
-#ifndef __ASM_MACH_TETON_BGA_H
-#define __ASM_MACH_TETON_BGA_H
+#अगर_अघोषित __ASM_MACH_TETON_BGA_H
+#घोषणा __ASM_MACH_TETON_BGA_H
 
 /* GPIOs */
-#define MMC_PWENA_GPIO		27
-#define USBHPENB_GPIO		55
-#define RTC_INT_GPIO		78
-#define LCD_VBLK_EN_GPIO	79
-#define LCD_DVDD_EN_GPIO	80
-#define RST_WIFI_GPIO		81
-#define CF_PWEN_GPIO		82
-#define USB_OC_GPIO		83
-#define PWM_GPIO		84
-#define USBHPENA_GPIO		85
-#define TS_INT_GPIO		86
-#define CIR_GPIO		108
+#घोषणा MMC_PWENA_GPIO		27
+#घोषणा USBHPENB_GPIO		55
+#घोषणा RTC_INT_GPIO		78
+#घोषणा LCD_VBLK_EN_GPIO	79
+#घोषणा LCD_DVDD_EN_GPIO	80
+#घोषणा RST_WIFI_GPIO		81
+#घोषणा CF_PWEN_GPIO		82
+#घोषणा USB_OC_GPIO		83
+#घोषणा PWM_GPIO		84
+#घोषणा USBHPENA_GPIO		85
+#घोषणा TS_INT_GPIO		86
+#घोषणा CIR_GPIO		108
 
-#endif /* __ASM_MACH_TETON_BGA_H */
+#पूर्ण_अगर /* __ASM_MACH_TETON_BGA_H */

@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * xhci-dbgcap.c - xHCI debug capability support
  *
  * Copyright (C) 2017 Intel Corporation
  *
- * Author: Lu Baolu <baolu.lu@linux.intel.com>
+ * Author: Lu Baolu <baolu.lu@linux.पूर्णांकel.com>
  */
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/nls.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/nls.h>
 
-#include "xhci.h"
-#include "xhci-trace.h"
-#include "xhci-dbgcap.h"
+#समावेश "xhci.h"
+#समावेश "xhci-trace.h"
+#समावेश "xhci-dbgcap.h"
 
-static void dbc_free_ctx(struct device *dev, struct xhci_container_ctx *ctx)
-{
-	if (!ctx)
-		return;
-	dma_free_coherent(dev, ctx->size, ctx->bytes, ctx->dma);
-	kfree(ctx);
-}
+अटल व्योम dbc_मुक्त_ctx(काष्ठा device *dev, काष्ठा xhci_container_ctx *ctx)
+अणु
+	अगर (!ctx)
+		वापस;
+	dma_मुक्त_coherent(dev, ctx->size, ctx->bytes, ctx->dma);
+	kमुक्त(ctx);
+पूर्ण
 
-/* we use only one segment for DbC rings */
-static void dbc_ring_free(struct device *dev, struct xhci_ring *ring)
-{
-	if (!ring)
-		return;
+/* we use only one segment क्रम DbC rings */
+अटल व्योम dbc_ring_मुक्त(काष्ठा device *dev, काष्ठा xhci_ring *ring)
+अणु
+	अगर (!ring)
+		वापस;
 
-	if (ring->first_seg && ring->first_seg->trbs) {
-		dma_free_coherent(dev, TRB_SEGMENT_SIZE,
+	अगर (ring->first_seg && ring->first_seg->trbs) अणु
+		dma_मुक्त_coherent(dev, TRB_SEGMENT_SIZE,
 				  ring->first_seg->trbs,
 				  ring->first_seg->dma);
-		kfree(ring->first_seg);
-	}
-	kfree(ring);
-}
+		kमुक्त(ring->first_seg);
+	पूर्ण
+	kमुक्त(ring);
+पूर्ण
 
-static u32 xhci_dbc_populate_strings(struct dbc_str_descs *strings)
-{
-	struct usb_string_descriptor	*s_desc;
+अटल u32 xhci_dbc_populate_strings(काष्ठा dbc_str_descs *strings)
+अणु
+	काष्ठा usb_string_descriptor	*s_desc;
 	u32				string_length;
 
 	/* Serial string: */
-	s_desc = (struct usb_string_descriptor *)strings->serial;
-	utf8s_to_utf16s(DBC_STRING_SERIAL, strlen(DBC_STRING_SERIAL),
-			UTF16_LITTLE_ENDIAN, (wchar_t *)s_desc->wData,
+	s_desc = (काष्ठा usb_string_descriptor *)strings->serial;
+	utf8s_to_utf16s(DBC_STRING_SERIAL, म_माप(DBC_STRING_SERIAL),
+			UTF16_LITTLE_ENDIAN, (ब_अक्षर_प्रकार *)s_desc->wData,
 			DBC_MAX_STRING_LENGTH);
 
-	s_desc->bLength		= (strlen(DBC_STRING_SERIAL) + 1) * 2;
+	s_desc->bLength		= (म_माप(DBC_STRING_SERIAL) + 1) * 2;
 	s_desc->bDescriptorType	= USB_DT_STRING;
 	string_length		= s_desc->bLength;
 	string_length		<<= 8;
 
 	/* Product string: */
-	s_desc = (struct usb_string_descriptor *)strings->product;
-	utf8s_to_utf16s(DBC_STRING_PRODUCT, strlen(DBC_STRING_PRODUCT),
-			UTF16_LITTLE_ENDIAN, (wchar_t *)s_desc->wData,
+	s_desc = (काष्ठा usb_string_descriptor *)strings->product;
+	utf8s_to_utf16s(DBC_STRING_PRODUCT, म_माप(DBC_STRING_PRODUCT),
+			UTF16_LITTLE_ENDIAN, (ब_अक्षर_प्रकार *)s_desc->wData,
 			DBC_MAX_STRING_LENGTH);
 
-	s_desc->bLength		= (strlen(DBC_STRING_PRODUCT) + 1) * 2;
+	s_desc->bLength		= (म_माप(DBC_STRING_PRODUCT) + 1) * 2;
 	s_desc->bDescriptorType	= USB_DT_STRING;
 	string_length		+= s_desc->bLength;
 	string_length		<<= 8;
 
 	/* Manufacture string: */
-	s_desc = (struct usb_string_descriptor *)strings->manufacturer;
+	s_desc = (काष्ठा usb_string_descriptor *)strings->manufacturer;
 	utf8s_to_utf16s(DBC_STRING_MANUFACTURER,
-			strlen(DBC_STRING_MANUFACTURER),
-			UTF16_LITTLE_ENDIAN, (wchar_t *)s_desc->wData,
+			म_माप(DBC_STRING_MANUFACTURER),
+			UTF16_LITTLE_ENDIAN, (ब_अक्षर_प्रकार *)s_desc->wData,
 			DBC_MAX_STRING_LENGTH);
 
-	s_desc->bLength		= (strlen(DBC_STRING_MANUFACTURER) + 1) * 2;
+	s_desc->bLength		= (म_माप(DBC_STRING_MANUFACTURER) + 1) * 2;
 	s_desc->bDescriptorType	= USB_DT_STRING;
 	string_length		+= s_desc->bLength;
 	string_length		<<= 8;
@@ -83,22 +84,22 @@ static u32 xhci_dbc_populate_strings(struct dbc_str_descs *strings)
 	strings->string0[3]	= 0x04;
 	string_length		+= 4;
 
-	return string_length;
-}
+	वापस string_length;
+पूर्ण
 
-static void xhci_dbc_init_contexts(struct xhci_dbc *dbc, u32 string_length)
-{
-	struct dbc_info_context	*info;
-	struct xhci_ep_ctx	*ep_ctx;
+अटल व्योम xhci_dbc_init_contexts(काष्ठा xhci_dbc *dbc, u32 string_length)
+अणु
+	काष्ठा dbc_info_context	*info;
+	काष्ठा xhci_ep_ctx	*ep_ctx;
 	u32			dev_info;
 	dma_addr_t		deq, dma;
-	unsigned int		max_burst;
+	अचिन्हित पूर्णांक		max_burst;
 
-	if (!dbc)
-		return;
+	अगर (!dbc)
+		वापस;
 
 	/* Populate info Context: */
-	info			= (struct dbc_info_context *)dbc->ctx->bytes;
+	info			= (काष्ठा dbc_info_context *)dbc->ctx->bytes;
 	dma			= dbc->string_dma;
 	info->string0		= cpu_to_le64(dma);
 	info->manufacturer	= cpu_to_le64(dma + DBC_MAX_STRING_LENGTH);
@@ -106,43 +107,43 @@ static void xhci_dbc_init_contexts(struct xhci_dbc *dbc, u32 string_length)
 	info->serial		= cpu_to_le64(dma + DBC_MAX_STRING_LENGTH * 3);
 	info->length		= cpu_to_le32(string_length);
 
-	/* Populate bulk out endpoint context: */
+	/* Populate bulk out endpoपूर्णांक context: */
 	ep_ctx			= dbc_bulkout_ctx(dbc);
-	max_burst		= DBC_CTRL_MAXBURST(readl(&dbc->regs->control));
+	max_burst		= DBC_CTRL_MAXBURST(पढ़ोl(&dbc->regs->control));
 	deq			= dbc_bulkout_enq(dbc);
 	ep_ctx->ep_info		= 0;
 	ep_ctx->ep_info2	= dbc_epctx_info2(BULK_OUT_EP, 1024, max_burst);
 	ep_ctx->deq		= cpu_to_le64(deq | dbc->ring_out->cycle_state);
 
-	/* Populate bulk in endpoint context: */
+	/* Populate bulk in endpoपूर्णांक context: */
 	ep_ctx			= dbc_bulkin_ctx(dbc);
 	deq			= dbc_bulkin_enq(dbc);
 	ep_ctx->ep_info		= 0;
 	ep_ctx->ep_info2	= dbc_epctx_info2(BULK_IN_EP, 1024, max_burst);
 	ep_ctx->deq		= cpu_to_le64(deq | dbc->ring_in->cycle_state);
 
-	/* Set DbC context and info registers: */
-	lo_hi_writeq(dbc->ctx->dma, &dbc->regs->dccp);
+	/* Set DbC context and info रेजिस्टरs: */
+	lo_hi_ग_लिखोq(dbc->ctx->dma, &dbc->regs->dccp);
 
 	dev_info = cpu_to_le32((DBC_VENDOR_ID << 16) | DBC_PROTOCOL);
-	writel(dev_info, &dbc->regs->devinfo1);
+	ग_लिखोl(dev_info, &dbc->regs->devinfo1);
 
 	dev_info = cpu_to_le32((DBC_DEVICE_REV << 16) | DBC_PRODUCT_ID);
-	writel(dev_info, &dbc->regs->devinfo2);
-}
+	ग_लिखोl(dev_info, &dbc->regs->devinfo2);
+पूर्ण
 
-static void xhci_dbc_giveback(struct dbc_request *req, int status)
+अटल व्योम xhci_dbc_giveback(काष्ठा dbc_request *req, पूर्णांक status)
 	__releases(&dbc->lock)
 	__acquires(&dbc->lock)
-{
-	struct xhci_dbc		*dbc = req->dbc;
-	struct device		*dev = dbc->dev;
+अणु
+	काष्ठा xhci_dbc		*dbc = req->dbc;
+	काष्ठा device		*dev = dbc->dev;
 
 	list_del_init(&req->list_pending);
 	req->trb_dma = 0;
-	req->trb = NULL;
+	req->trb = शून्य;
 
-	if (req->status == -EINPROGRESS)
+	अगर (req->status == -EINPROGRESS)
 		req->status = status;
 
 	trace_xhci_dbc_giveback_request(req);
@@ -156,11 +157,11 @@ static void xhci_dbc_giveback(struct dbc_request *req, int status)
 	spin_unlock(&dbc->lock);
 	req->complete(dbc, req);
 	spin_lock(&dbc->lock);
-}
+पूर्ण
 
-static void xhci_dbc_flush_single_request(struct dbc_request *req)
-{
-	union xhci_trb	*trb = req->trb;
+अटल व्योम xhci_dbc_flush_single_request(काष्ठा dbc_request *req)
+अणु
+	जोड़ xhci_trb	*trb = req->trb;
 
 	trb->generic.field[0]	= 0;
 	trb->generic.field[1]	= 0;
@@ -169,37 +170,37 @@ static void xhci_dbc_flush_single_request(struct dbc_request *req)
 	trb->generic.field[3]	|= cpu_to_le32(TRB_TYPE(TRB_TR_NOOP));
 
 	xhci_dbc_giveback(req, -ESHUTDOWN);
-}
+पूर्ण
 
-static void xhci_dbc_flush_endpoint_requests(struct dbc_ep *dep)
-{
-	struct dbc_request	*req, *tmp;
+अटल व्योम xhci_dbc_flush_endpoपूर्णांक_requests(काष्ठा dbc_ep *dep)
+अणु
+	काष्ठा dbc_request	*req, *पंचांगp;
 
-	list_for_each_entry_safe(req, tmp, &dep->list_pending, list_pending)
+	list_क्रम_each_entry_safe(req, पंचांगp, &dep->list_pending, list_pending)
 		xhci_dbc_flush_single_request(req);
-}
+पूर्ण
 
-static void xhci_dbc_flush_requests(struct xhci_dbc *dbc)
-{
-	xhci_dbc_flush_endpoint_requests(&dbc->eps[BULK_OUT]);
-	xhci_dbc_flush_endpoint_requests(&dbc->eps[BULK_IN]);
-}
+अटल व्योम xhci_dbc_flush_requests(काष्ठा xhci_dbc *dbc)
+अणु
+	xhci_dbc_flush_endpoपूर्णांक_requests(&dbc->eps[BULK_OUT]);
+	xhci_dbc_flush_endpoपूर्णांक_requests(&dbc->eps[BULK_IN]);
+पूर्ण
 
-struct dbc_request *
-dbc_alloc_request(struct xhci_dbc *dbc, unsigned int direction, gfp_t flags)
-{
-	struct dbc_request	*req;
+काष्ठा dbc_request *
+dbc_alloc_request(काष्ठा xhci_dbc *dbc, अचिन्हित पूर्णांक direction, gfp_t flags)
+अणु
+	काष्ठा dbc_request	*req;
 
-	if (direction != BULK_IN &&
+	अगर (direction != BULK_IN &&
 	    direction != BULK_OUT)
-		return NULL;
+		वापस शून्य;
 
-	if (!dbc)
-		return NULL;
+	अगर (!dbc)
+		वापस शून्य;
 
-	req = kzalloc(sizeof(*req), flags);
-	if (!req)
-		return NULL;
+	req = kzalloc(माप(*req), flags);
+	अगर (!req)
+		वापस शून्य;
 
 	req->dbc = dbc;
 	INIT_LIST_HEAD(&req->list_pending);
@@ -208,22 +209,22 @@ dbc_alloc_request(struct xhci_dbc *dbc, unsigned int direction, gfp_t flags)
 
 	trace_xhci_dbc_alloc_request(req);
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
-void
-dbc_free_request(struct dbc_request *req)
-{
-	trace_xhci_dbc_free_request(req);
+व्योम
+dbc_मुक्त_request(काष्ठा dbc_request *req)
+अणु
+	trace_xhci_dbc_मुक्त_request(req);
 
-	kfree(req);
-}
+	kमुक्त(req);
+पूर्ण
 
-static void
-xhci_dbc_queue_trb(struct xhci_ring *ring, u32 field1,
+अटल व्योम
+xhci_dbc_queue_trb(काष्ठा xhci_ring *ring, u32 field1,
 		   u32 field2, u32 field3, u32 field4)
-{
-	union xhci_trb		*trb, *next;
+अणु
+	जोड़ xhci_trb		*trb, *next;
 
 	trb = ring->enqueue;
 	trb->generic.field[0]	= cpu_to_le32(field1);
@@ -233,29 +234,29 @@ xhci_dbc_queue_trb(struct xhci_ring *ring, u32 field1,
 
 	trace_xhci_dbc_gadget_ep_queue(ring, &trb->generic);
 
-	ring->num_trbs_free--;
+	ring->num_trbs_मुक्त--;
 	next = ++(ring->enqueue);
-	if (TRB_TYPE_LINK_LE32(next->link.control)) {
+	अगर (TRB_TYPE_LINK_LE32(next->link.control)) अणु
 		next->link.control ^= cpu_to_le32(TRB_CYCLE);
 		ring->enqueue = ring->enq_seg->trbs;
 		ring->cycle_state ^= 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int xhci_dbc_queue_bulk_tx(struct dbc_ep *dep,
-				  struct dbc_request *req)
-{
+अटल पूर्णांक xhci_dbc_queue_bulk_tx(काष्ठा dbc_ep *dep,
+				  काष्ठा dbc_request *req)
+अणु
 	u64			addr;
-	union xhci_trb		*trb;
-	unsigned int		num_trbs;
-	struct xhci_dbc		*dbc = req->dbc;
-	struct xhci_ring	*ring = dep->ring;
+	जोड़ xhci_trb		*trb;
+	अचिन्हित पूर्णांक		num_trbs;
+	काष्ठा xhci_dbc		*dbc = req->dbc;
+	काष्ठा xhci_ring	*ring = dep->ring;
 	u32			length, control, cycle;
 
 	num_trbs = count_trbs(req->dma, req->length);
 	WARN_ON(num_trbs != 1);
-	if (ring->num_trbs_free < num_trbs)
-		return -EBUSY;
+	अगर (ring->num_trbs_मुक्त < num_trbs)
+		वापस -EBUSY;
 
 	addr	= req->dma;
 	trb	= ring->enqueue;
@@ -263,9 +264,9 @@ static int xhci_dbc_queue_bulk_tx(struct dbc_ep *dep,
 	length	= TRB_LEN(req->length);
 	control	= TRB_TYPE(TRB_NORMAL) | TRB_IOC;
 
-	if (cycle)
+	अगर (cycle)
 		control &= cpu_to_le32(~TRB_CYCLE);
-	else
+	अन्यथा
 		control |= cpu_to_le32(TRB_CYCLE);
 
 	req->trb = ring->enqueue;
@@ -276,31 +277,31 @@ static int xhci_dbc_queue_bulk_tx(struct dbc_ep *dep,
 			   length, control);
 
 	/*
-	 * Add a barrier between writes of trb fields and flipping
+	 * Add a barrier between ग_लिखोs of trb fields and flipping
 	 * the cycle bit:
 	 */
 	wmb();
 
-	if (cycle)
+	अगर (cycle)
 		trb->generic.field[3] |= cpu_to_le32(TRB_CYCLE);
-	else
+	अन्यथा
 		trb->generic.field[3] &= cpu_to_le32(~TRB_CYCLE);
 
-	writel(DBC_DOOR_BELL_TARGET(dep->direction), &dbc->regs->doorbell);
+	ग_लिखोl(DBC_DOOR_BELL_TARGET(dep->direction), &dbc->regs->करोorbell);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-dbc_ep_do_queue(struct dbc_request *req)
-{
-	int			ret;
-	struct xhci_dbc		*dbc = req->dbc;
-	struct device		*dev = dbc->dev;
-	struct dbc_ep		*dep = &dbc->eps[req->direction];
+अटल पूर्णांक
+dbc_ep_करो_queue(काष्ठा dbc_request *req)
+अणु
+	पूर्णांक			ret;
+	काष्ठा xhci_dbc		*dbc = req->dbc;
+	काष्ठा device		*dev = dbc->dev;
+	काष्ठा dbc_ep		*dep = &dbc->eps[req->direction];
 
-	if (!req->length || !req->buf)
-		return -EINVAL;
+	अगर (!req->length || !req->buf)
+		वापस -EINVAL;
 
 	req->actual		= 0;
 	req->status		= -EINPROGRESS;
@@ -309,54 +310,54 @@ dbc_ep_do_queue(struct dbc_request *req)
 				  req->buf,
 				  req->length,
 				  dbc_ep_dma_direction(dep));
-	if (dma_mapping_error(dev, req->dma)) {
+	अगर (dma_mapping_error(dev, req->dma)) अणु
 		dev_err(dbc->dev, "failed to map buffer\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	ret = xhci_dbc_queue_bulk_tx(dep, req);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dbc->dev, "failed to queue trbs\n");
 		dma_unmap_single(dev,
 				 req->dma,
 				 req->length,
 				 dbc_ep_dma_direction(dep));
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	list_add_tail(&req->list_pending, &dep->list_pending);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dbc_ep_queue(struct dbc_request *req)
-{
-	unsigned long		flags;
-	struct xhci_dbc		*dbc = req->dbc;
-	int			ret = -ESHUTDOWN;
+पूर्णांक dbc_ep_queue(काष्ठा dbc_request *req)
+अणु
+	अचिन्हित दीर्घ		flags;
+	काष्ठा xhci_dbc		*dbc = req->dbc;
+	पूर्णांक			ret = -ESHUTDOWN;
 
-	if (!dbc)
-		return -ENODEV;
+	अगर (!dbc)
+		वापस -ENODEV;
 
-	if (req->direction != BULK_IN &&
+	अगर (req->direction != BULK_IN &&
 	    req->direction != BULK_OUT)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&dbc->lock, flags);
-	if (dbc->state == DS_CONFIGURED)
-		ret = dbc_ep_do_queue(req);
+	अगर (dbc->state == DS_CONFIGURED)
+		ret = dbc_ep_करो_queue(req);
 	spin_unlock_irqrestore(&dbc->lock, flags);
 
-	mod_delayed_work(system_wq, &dbc->event_work, 0);
+	mod_delayed_work(प्रणाली_wq, &dbc->event_work, 0);
 
 	trace_xhci_dbc_queue_request(req);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void xhci_dbc_do_eps_init(struct xhci_dbc *dbc, bool direction)
-{
-	struct dbc_ep		*dep;
+अटल अंतरभूत व्योम xhci_dbc_करो_eps_init(काष्ठा xhci_dbc *dbc, bool direction)
+अणु
+	काष्ठा dbc_ep		*dep;
 
 	dep			= &dbc->eps[direction];
 	dep->dbc		= dbc;
@@ -364,150 +365,150 @@ static inline void xhci_dbc_do_eps_init(struct xhci_dbc *dbc, bool direction)
 	dep->ring		= direction ? dbc->ring_in : dbc->ring_out;
 
 	INIT_LIST_HEAD(&dep->list_pending);
-}
+पूर्ण
 
-static void xhci_dbc_eps_init(struct xhci_dbc *dbc)
-{
-	xhci_dbc_do_eps_init(dbc, BULK_OUT);
-	xhci_dbc_do_eps_init(dbc, BULK_IN);
-}
+अटल व्योम xhci_dbc_eps_init(काष्ठा xhci_dbc *dbc)
+अणु
+	xhci_dbc_करो_eps_init(dbc, BULK_OUT);
+	xhci_dbc_करो_eps_init(dbc, BULK_IN);
+पूर्ण
 
-static void xhci_dbc_eps_exit(struct xhci_dbc *dbc)
-{
-	memset(dbc->eps, 0, sizeof(struct dbc_ep) * ARRAY_SIZE(dbc->eps));
-}
+अटल व्योम xhci_dbc_eps_निकास(काष्ठा xhci_dbc *dbc)
+अणु
+	स_रखो(dbc->eps, 0, माप(काष्ठा dbc_ep) * ARRAY_SIZE(dbc->eps));
+पूर्ण
 
-static int dbc_erst_alloc(struct device *dev, struct xhci_ring *evt_ring,
-		    struct xhci_erst *erst, gfp_t flags)
-{
-	erst->entries = dma_alloc_coherent(dev, sizeof(struct xhci_erst_entry),
+अटल पूर्णांक dbc_erst_alloc(काष्ठा device *dev, काष्ठा xhci_ring *evt_ring,
+		    काष्ठा xhci_erst *erst, gfp_t flags)
+अणु
+	erst->entries = dma_alloc_coherent(dev, माप(काष्ठा xhci_erst_entry),
 					   &erst->erst_dma_addr, flags);
-	if (!erst->entries)
-		return -ENOMEM;
+	अगर (!erst->entries)
+		वापस -ENOMEM;
 
 	erst->num_entries = 1;
 	erst->entries[0].seg_addr = cpu_to_le64(evt_ring->first_seg->dma);
 	erst->entries[0].seg_size = cpu_to_le32(TRBS_PER_SEGMENT);
 	erst->entries[0].rsvd = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dbc_erst_free(struct device *dev, struct xhci_erst *erst)
-{
-	if (erst->entries)
-		dma_free_coherent(dev, sizeof(struct xhci_erst_entry),
+अटल व्योम dbc_erst_मुक्त(काष्ठा device *dev, काष्ठा xhci_erst *erst)
+अणु
+	अगर (erst->entries)
+		dma_मुक्त_coherent(dev, माप(काष्ठा xhci_erst_entry),
 				  erst->entries, erst->erst_dma_addr);
-	erst->entries = NULL;
-}
+	erst->entries = शून्य;
+पूर्ण
 
-static struct xhci_container_ctx *
-dbc_alloc_ctx(struct device *dev, gfp_t flags)
-{
-	struct xhci_container_ctx *ctx;
+अटल काष्ठा xhci_container_ctx *
+dbc_alloc_ctx(काष्ठा device *dev, gfp_t flags)
+अणु
+	काष्ठा xhci_container_ctx *ctx;
 
-	ctx = kzalloc(sizeof(*ctx), flags);
-	if (!ctx)
-		return NULL;
+	ctx = kzalloc(माप(*ctx), flags);
+	अगर (!ctx)
+		वापस शून्य;
 
 	/* xhci 7.6.9, all three contexts; info, ep-out and ep-in. Each 64 bytes*/
 	ctx->size = 3 * DBC_CONTEXT_SIZE;
 	ctx->bytes = dma_alloc_coherent(dev, ctx->size, &ctx->dma, flags);
-	if (!ctx->bytes) {
-		kfree(ctx);
-		return NULL;
-	}
-	return ctx;
-}
+	अगर (!ctx->bytes) अणु
+		kमुक्त(ctx);
+		वापस शून्य;
+	पूर्ण
+	वापस ctx;
+पूर्ण
 
-static struct xhci_ring *
-xhci_dbc_ring_alloc(struct device *dev, enum xhci_ring_type type, gfp_t flags)
-{
-	struct xhci_ring *ring;
-	struct xhci_segment *seg;
+अटल काष्ठा xhci_ring *
+xhci_dbc_ring_alloc(काष्ठा device *dev, क्रमागत xhci_ring_type type, gfp_t flags)
+अणु
+	काष्ठा xhci_ring *ring;
+	काष्ठा xhci_segment *seg;
 	dma_addr_t dma;
 
-	ring = kzalloc(sizeof(*ring), flags);
-	if (!ring)
-		return NULL;
+	ring = kzalloc(माप(*ring), flags);
+	अगर (!ring)
+		वापस शून्य;
 
 	ring->num_segs = 1;
 	ring->type = type;
 
-	seg = kzalloc(sizeof(*seg), flags);
-	if (!seg)
-		goto seg_fail;
+	seg = kzalloc(माप(*seg), flags);
+	अगर (!seg)
+		जाओ seg_fail;
 
 	ring->first_seg = seg;
 	ring->last_seg = seg;
 	seg->next = seg;
 
 	seg->trbs = dma_alloc_coherent(dev, TRB_SEGMENT_SIZE, &dma, flags);
-	if (!seg->trbs)
-		goto dma_fail;
+	अगर (!seg->trbs)
+		जाओ dma_fail;
 
 	seg->dma = dma;
 
-	/* Only event ring does not use link TRB */
-	if (type != TYPE_EVENT) {
-		union xhci_trb *trb = &seg->trbs[TRBS_PER_SEGMENT - 1];
+	/* Only event ring करोes not use link TRB */
+	अगर (type != TYPE_EVENT) अणु
+		जोड़ xhci_trb *trb = &seg->trbs[TRBS_PER_SEGMENT - 1];
 
 		trb->link.segment_ptr = cpu_to_le64(dma);
 		trb->link.control = cpu_to_le32(LINK_TOGGLE | TRB_TYPE(TRB_LINK));
-	}
+	पूर्ण
 	INIT_LIST_HEAD(&ring->td_list);
 	xhci_initialize_ring_info(ring, 1);
-	return ring;
+	वापस ring;
 dma_fail:
-	kfree(seg);
+	kमुक्त(seg);
 seg_fail:
-	kfree(ring);
-	return NULL;
-}
+	kमुक्त(ring);
+	वापस शून्य;
+पूर्ण
 
-static int xhci_dbc_mem_init(struct xhci_dbc *dbc, gfp_t flags)
-{
-	int			ret;
+अटल पूर्णांक xhci_dbc_mem_init(काष्ठा xhci_dbc *dbc, gfp_t flags)
+अणु
+	पूर्णांक			ret;
 	dma_addr_t		deq;
 	u32			string_length;
-	struct device		*dev = dbc->dev;
+	काष्ठा device		*dev = dbc->dev;
 
-	/* Allocate various rings for events and transfers: */
+	/* Allocate various rings क्रम events and transfers: */
 	dbc->ring_evt = xhci_dbc_ring_alloc(dev, TYPE_EVENT, flags);
-	if (!dbc->ring_evt)
-		goto evt_fail;
+	अगर (!dbc->ring_evt)
+		जाओ evt_fail;
 
 	dbc->ring_in = xhci_dbc_ring_alloc(dev, TYPE_BULK, flags);
-	if (!dbc->ring_in)
-		goto in_fail;
+	अगर (!dbc->ring_in)
+		जाओ in_fail;
 
 	dbc->ring_out = xhci_dbc_ring_alloc(dev, TYPE_BULK, flags);
-	if (!dbc->ring_out)
-		goto out_fail;
+	अगर (!dbc->ring_out)
+		जाओ out_fail;
 
 	/* Allocate and populate ERST: */
 	ret = dbc_erst_alloc(dev, dbc->ring_evt, &dbc->erst, flags);
-	if (ret)
-		goto erst_fail;
+	अगर (ret)
+		जाओ erst_fail;
 
-	/* Allocate context data structure: */
+	/* Allocate context data काष्ठाure: */
 	dbc->ctx = dbc_alloc_ctx(dev, flags); /* was sysdev, and is still */
-	if (!dbc->ctx)
-		goto ctx_fail;
+	अगर (!dbc->ctx)
+		जाओ ctx_fail;
 
 	/* Allocate the string table: */
-	dbc->string_size = sizeof(struct dbc_str_descs);
+	dbc->string_size = माप(काष्ठा dbc_str_descs);
 	dbc->string = dma_alloc_coherent(dev, dbc->string_size,
 					 &dbc->string_dma, flags);
-	if (!dbc->string)
-		goto string_fail;
+	अगर (!dbc->string)
+		जाओ string_fail;
 
-	/* Setup ERST register: */
-	writel(dbc->erst.erst_size, &dbc->regs->ersts);
+	/* Setup ERST रेजिस्टर: */
+	ग_लिखोl(dbc->erst.erst_size, &dbc->regs->ersts);
 
-	lo_hi_writeq(dbc->erst.erst_dma_addr, &dbc->regs->erstba);
+	lo_hi_ग_लिखोq(dbc->erst.erst_dma_addr, &dbc->regs->erstba);
 	deq = xhci_trb_virt_to_dma(dbc->ring_evt->deq_seg,
 				   dbc->ring_evt->dequeue);
-	lo_hi_writeq(deq, &dbc->regs->erdp);
+	lo_hi_ग_लिखोq(deq, &dbc->regs->erdp);
 
 	/* Setup strings and contexts: */
 	string_length = xhci_dbc_populate_strings(dbc->string);
@@ -516,446 +517,446 @@ static int xhci_dbc_mem_init(struct xhci_dbc *dbc, gfp_t flags)
 	xhci_dbc_eps_init(dbc);
 	dbc->state = DS_INITIALIZED;
 
-	return 0;
+	वापस 0;
 
 string_fail:
-	dbc_free_ctx(dev, dbc->ctx);
-	dbc->ctx = NULL;
+	dbc_मुक्त_ctx(dev, dbc->ctx);
+	dbc->ctx = शून्य;
 ctx_fail:
-	dbc_erst_free(dev, &dbc->erst);
+	dbc_erst_मुक्त(dev, &dbc->erst);
 erst_fail:
-	dbc_ring_free(dev, dbc->ring_out);
-	dbc->ring_out = NULL;
+	dbc_ring_मुक्त(dev, dbc->ring_out);
+	dbc->ring_out = शून्य;
 out_fail:
-	dbc_ring_free(dev, dbc->ring_in);
-	dbc->ring_in = NULL;
+	dbc_ring_मुक्त(dev, dbc->ring_in);
+	dbc->ring_in = शून्य;
 in_fail:
-	dbc_ring_free(dev, dbc->ring_evt);
-	dbc->ring_evt = NULL;
+	dbc_ring_मुक्त(dev, dbc->ring_evt);
+	dbc->ring_evt = शून्य;
 evt_fail:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void xhci_dbc_mem_cleanup(struct xhci_dbc *dbc)
-{
-	if (!dbc)
-		return;
+अटल व्योम xhci_dbc_mem_cleanup(काष्ठा xhci_dbc *dbc)
+अणु
+	अगर (!dbc)
+		वापस;
 
-	xhci_dbc_eps_exit(dbc);
+	xhci_dbc_eps_निकास(dbc);
 
-	if (dbc->string) {
-		dma_free_coherent(dbc->dev, dbc->string_size,
+	अगर (dbc->string) अणु
+		dma_मुक्त_coherent(dbc->dev, dbc->string_size,
 				  dbc->string, dbc->string_dma);
-		dbc->string = NULL;
-	}
+		dbc->string = शून्य;
+	पूर्ण
 
-	dbc_free_ctx(dbc->dev, dbc->ctx);
-	dbc->ctx = NULL;
+	dbc_मुक्त_ctx(dbc->dev, dbc->ctx);
+	dbc->ctx = शून्य;
 
-	dbc_erst_free(dbc->dev, &dbc->erst);
-	dbc_ring_free(dbc->dev, dbc->ring_out);
-	dbc_ring_free(dbc->dev, dbc->ring_in);
-	dbc_ring_free(dbc->dev, dbc->ring_evt);
-	dbc->ring_in = NULL;
-	dbc->ring_out = NULL;
-	dbc->ring_evt = NULL;
-}
+	dbc_erst_मुक्त(dbc->dev, &dbc->erst);
+	dbc_ring_मुक्त(dbc->dev, dbc->ring_out);
+	dbc_ring_मुक्त(dbc->dev, dbc->ring_in);
+	dbc_ring_मुक्त(dbc->dev, dbc->ring_evt);
+	dbc->ring_in = शून्य;
+	dbc->ring_out = शून्य;
+	dbc->ring_evt = शून्य;
+पूर्ण
 
-static int xhci_do_dbc_start(struct xhci_dbc *dbc)
-{
-	int			ret;
+अटल पूर्णांक xhci_करो_dbc_start(काष्ठा xhci_dbc *dbc)
+अणु
+	पूर्णांक			ret;
 	u32			ctrl;
 
-	if (dbc->state != DS_DISABLED)
-		return -EINVAL;
+	अगर (dbc->state != DS_DISABLED)
+		वापस -EINVAL;
 
-	writel(0, &dbc->regs->control);
+	ग_लिखोl(0, &dbc->regs->control);
 	ret = xhci_handshake(&dbc->regs->control,
 			     DBC_CTRL_DBC_ENABLE,
 			     0, 1000);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = xhci_dbc_mem_init(dbc, GFP_ATOMIC);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ctrl = readl(&dbc->regs->control);
-	writel(ctrl | DBC_CTRL_DBC_ENABLE | DBC_CTRL_PORT_ENABLE,
+	ctrl = पढ़ोl(&dbc->regs->control);
+	ग_लिखोl(ctrl | DBC_CTRL_DBC_ENABLE | DBC_CTRL_PORT_ENABLE,
 	       &dbc->regs->control);
 	ret = xhci_handshake(&dbc->regs->control,
 			     DBC_CTRL_DBC_ENABLE,
 			     DBC_CTRL_DBC_ENABLE, 1000);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dbc->state = DS_ENABLED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xhci_do_dbc_stop(struct xhci_dbc *dbc)
-{
-	if (dbc->state == DS_DISABLED)
-		return -1;
+अटल पूर्णांक xhci_करो_dbc_stop(काष्ठा xhci_dbc *dbc)
+अणु
+	अगर (dbc->state == DS_DISABLED)
+		वापस -1;
 
-	writel(0, &dbc->regs->control);
+	ग_लिखोl(0, &dbc->regs->control);
 	dbc->state = DS_DISABLED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xhci_dbc_start(struct xhci_dbc *dbc)
-{
-	int			ret;
-	unsigned long		flags;
+अटल पूर्णांक xhci_dbc_start(काष्ठा xhci_dbc *dbc)
+अणु
+	पूर्णांक			ret;
+	अचिन्हित दीर्घ		flags;
 
 	WARN_ON(!dbc);
 
-	pm_runtime_get_sync(dbc->dev); /* note this was self.controller */
+	pm_runसमय_get_sync(dbc->dev); /* note this was self.controller */
 
 	spin_lock_irqsave(&dbc->lock, flags);
-	ret = xhci_do_dbc_start(dbc);
+	ret = xhci_करो_dbc_start(dbc);
 	spin_unlock_irqrestore(&dbc->lock, flags);
 
-	if (ret) {
-		pm_runtime_put(dbc->dev); /* note this was self.controller */
-		return ret;
-	}
+	अगर (ret) अणु
+		pm_runसमय_put(dbc->dev); /* note this was self.controller */
+		वापस ret;
+	पूर्ण
 
-	return mod_delayed_work(system_wq, &dbc->event_work, 1);
-}
+	वापस mod_delayed_work(प्रणाली_wq, &dbc->event_work, 1);
+पूर्ण
 
-static void xhci_dbc_stop(struct xhci_dbc *dbc)
-{
-	int ret;
-	unsigned long		flags;
+अटल व्योम xhci_dbc_stop(काष्ठा xhci_dbc *dbc)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ		flags;
 
 	WARN_ON(!dbc);
 
-	switch (dbc->state) {
-	case DS_DISABLED:
-		return;
-	case DS_CONFIGURED:
-	case DS_STALLED:
-		if (dbc->driver->disconnect)
+	चयन (dbc->state) अणु
+	हाल DS_DISABLED:
+		वापस;
+	हाल DS_CONFIGURED:
+	हाल DS_STALLED:
+		अगर (dbc->driver->disconnect)
 			dbc->driver->disconnect(dbc);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	cancel_delayed_work_sync(&dbc->event_work);
 
 	spin_lock_irqsave(&dbc->lock, flags);
-	ret = xhci_do_dbc_stop(dbc);
+	ret = xhci_करो_dbc_stop(dbc);
 	spin_unlock_irqrestore(&dbc->lock, flags);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		xhci_dbc_mem_cleanup(dbc);
-		pm_runtime_put_sync(dbc->dev); /* note, was self.controller */
-	}
-}
+		pm_runसमय_put_sync(dbc->dev); /* note, was self.controller */
+	पूर्ण
+पूर्ण
 
-static void
-dbc_handle_port_status(struct xhci_dbc *dbc, union xhci_trb *event)
-{
+अटल व्योम
+dbc_handle_port_status(काष्ठा xhci_dbc *dbc, जोड़ xhci_trb *event)
+अणु
 	u32			portsc;
 
-	portsc = readl(&dbc->regs->portsc);
-	if (portsc & DBC_PORTSC_CONN_CHANGE)
+	portsc = पढ़ोl(&dbc->regs->portsc);
+	अगर (portsc & DBC_PORTSC_CONN_CHANGE)
 		dev_info(dbc->dev, "DbC port connect change\n");
 
-	if (portsc & DBC_PORTSC_RESET_CHANGE)
+	अगर (portsc & DBC_PORTSC_RESET_CHANGE)
 		dev_info(dbc->dev, "DbC port reset change\n");
 
-	if (portsc & DBC_PORTSC_LINK_CHANGE)
+	अगर (portsc & DBC_PORTSC_LINK_CHANGE)
 		dev_info(dbc->dev, "DbC port link status change\n");
 
-	if (portsc & DBC_PORTSC_CONFIG_CHANGE)
+	अगर (portsc & DBC_PORTSC_CONFIG_CHANGE)
 		dev_info(dbc->dev, "DbC config error change\n");
 
 	/* Port reset change bit will be cleared in other place: */
-	writel(portsc & ~DBC_PORTSC_RESET_CHANGE, &dbc->regs->portsc);
-}
+	ग_लिखोl(portsc & ~DBC_PORTSC_RESET_CHANGE, &dbc->regs->portsc);
+पूर्ण
 
-static void dbc_handle_xfer_event(struct xhci_dbc *dbc, union xhci_trb *event)
-{
-	struct dbc_ep		*dep;
-	struct xhci_ring	*ring;
-	int			ep_id;
-	int			status;
+अटल व्योम dbc_handle_xfer_event(काष्ठा xhci_dbc *dbc, जोड़ xhci_trb *event)
+अणु
+	काष्ठा dbc_ep		*dep;
+	काष्ठा xhci_ring	*ring;
+	पूर्णांक			ep_id;
+	पूर्णांक			status;
 	u32			comp_code;
-	size_t			remain_length;
-	struct dbc_request	*req = NULL, *r;
+	माप_प्रकार			reमुख्य_length;
+	काष्ठा dbc_request	*req = शून्य, *r;
 
 	comp_code	= GET_COMP_CODE(le32_to_cpu(event->generic.field[2]));
-	remain_length	= EVENT_TRB_LEN(le32_to_cpu(event->generic.field[2]));
+	reमुख्य_length	= EVENT_TRB_LEN(le32_to_cpu(event->generic.field[2]));
 	ep_id		= TRB_TO_EP_ID(le32_to_cpu(event->generic.field[3]));
 	dep		= (ep_id == EPID_OUT) ?
 				get_out_ep(dbc) : get_in_ep(dbc);
 	ring		= dep->ring;
 
-	switch (comp_code) {
-	case COMP_SUCCESS:
-		remain_length = 0;
+	चयन (comp_code) अणु
+	हाल COMP_SUCCESS:
+		reमुख्य_length = 0;
 		fallthrough;
-	case COMP_SHORT_PACKET:
+	हाल COMP_SHORT_PACKET:
 		status = 0;
-		break;
-	case COMP_TRB_ERROR:
-	case COMP_BABBLE_DETECTED_ERROR:
-	case COMP_USB_TRANSACTION_ERROR:
-	case COMP_STALL_ERROR:
+		अवरोध;
+	हाल COMP_TRB_ERROR:
+	हाल COMP_BABBLE_DETECTED_ERROR:
+	हाल COMP_USB_TRANSACTION_ERROR:
+	हाल COMP_STALL_ERROR:
 		dev_warn(dbc->dev, "tx error %d detected\n", comp_code);
 		status = -comp_code;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dbc->dev, "unknown tx error %d\n", comp_code);
 		status = -comp_code;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Match the pending request: */
-	list_for_each_entry(r, &dep->list_pending, list_pending) {
-		if (r->trb_dma == event->trans_event.buffer) {
+	list_क्रम_each_entry(r, &dep->list_pending, list_pending) अणु
+		अगर (r->trb_dma == event->trans_event.buffer) अणु
 			req = r;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!req) {
+	अगर (!req) अणु
 		dev_warn(dbc->dev, "no matched request\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	trace_xhci_dbc_handle_transfer(ring, &req->trb->generic);
 
-	ring->num_trbs_free++;
-	req->actual = req->length - remain_length;
+	ring->num_trbs_मुक्त++;
+	req->actual = req->length - reमुख्य_length;
 	xhci_dbc_giveback(req, status);
-}
+पूर्ण
 
-static void inc_evt_deq(struct xhci_ring *ring)
-{
+अटल व्योम inc_evt_deq(काष्ठा xhci_ring *ring)
+अणु
 	/* If on the last TRB of the segment go back to the beginning */
-	if (ring->dequeue == &ring->deq_seg->trbs[TRBS_PER_SEGMENT - 1]) {
+	अगर (ring->dequeue == &ring->deq_seg->trbs[TRBS_PER_SEGMENT - 1]) अणु
 		ring->cycle_state ^= 1;
 		ring->dequeue = ring->deq_seg->trbs;
-		return;
-	}
+		वापस;
+	पूर्ण
 	ring->dequeue++;
-}
+पूर्ण
 
-static enum evtreturn xhci_dbc_do_handle_events(struct xhci_dbc *dbc)
-{
+अटल क्रमागत evtवापस xhci_dbc_करो_handle_events(काष्ठा xhci_dbc *dbc)
+अणु
 	dma_addr_t		deq;
-	struct dbc_ep		*dep;
-	union xhci_trb		*evt;
+	काष्ठा dbc_ep		*dep;
+	जोड़ xhci_trb		*evt;
 	u32			ctrl, portsc;
 	bool			update_erdp = false;
 
 	/* DbC state machine: */
-	switch (dbc->state) {
-	case DS_DISABLED:
-	case DS_INITIALIZED:
+	चयन (dbc->state) अणु
+	हाल DS_DISABLED:
+	हाल DS_INITIALIZED:
 
-		return EVT_ERR;
-	case DS_ENABLED:
-		portsc = readl(&dbc->regs->portsc);
-		if (portsc & DBC_PORTSC_CONN_STATUS) {
+		वापस EVT_ERR;
+	हाल DS_ENABLED:
+		portsc = पढ़ोl(&dbc->regs->portsc);
+		अगर (portsc & DBC_PORTSC_CONN_STATUS) अणु
 			dbc->state = DS_CONNECTED;
 			dev_info(dbc->dev, "DbC connected\n");
-		}
+		पूर्ण
 
-		return EVT_DONE;
-	case DS_CONNECTED:
-		ctrl = readl(&dbc->regs->control);
-		if (ctrl & DBC_CTRL_DBC_RUN) {
+		वापस EVT_DONE;
+	हाल DS_CONNECTED:
+		ctrl = पढ़ोl(&dbc->regs->control);
+		अगर (ctrl & DBC_CTRL_DBC_RUN) अणु
 			dbc->state = DS_CONFIGURED;
 			dev_info(dbc->dev, "DbC configured\n");
-			portsc = readl(&dbc->regs->portsc);
-			writel(portsc, &dbc->regs->portsc);
-			return EVT_GSER;
-		}
+			portsc = पढ़ोl(&dbc->regs->portsc);
+			ग_लिखोl(portsc, &dbc->regs->portsc);
+			वापस EVT_GSER;
+		पूर्ण
 
-		return EVT_DONE;
-	case DS_CONFIGURED:
+		वापस EVT_DONE;
+	हाल DS_CONFIGURED:
 		/* Handle cable unplug event: */
-		portsc = readl(&dbc->regs->portsc);
-		if (!(portsc & DBC_PORTSC_PORT_ENABLED) &&
-		    !(portsc & DBC_PORTSC_CONN_STATUS)) {
+		portsc = पढ़ोl(&dbc->regs->portsc);
+		अगर (!(portsc & DBC_PORTSC_PORT_ENABLED) &&
+		    !(portsc & DBC_PORTSC_CONN_STATUS)) अणु
 			dev_info(dbc->dev, "DbC cable unplugged\n");
 			dbc->state = DS_ENABLED;
 			xhci_dbc_flush_requests(dbc);
 
-			return EVT_DISC;
-		}
+			वापस EVT_DISC;
+		पूर्ण
 
 		/* Handle debug port reset event: */
-		if (portsc & DBC_PORTSC_RESET_CHANGE) {
+		अगर (portsc & DBC_PORTSC_RESET_CHANGE) अणु
 			dev_info(dbc->dev, "DbC port reset\n");
-			writel(portsc, &dbc->regs->portsc);
+			ग_लिखोl(portsc, &dbc->regs->portsc);
 			dbc->state = DS_ENABLED;
 			xhci_dbc_flush_requests(dbc);
 
-			return EVT_DISC;
-		}
+			वापस EVT_DISC;
+		पूर्ण
 
-		/* Handle endpoint stall event: */
-		ctrl = readl(&dbc->regs->control);
-		if ((ctrl & DBC_CTRL_HALT_IN_TR) ||
-		    (ctrl & DBC_CTRL_HALT_OUT_TR)) {
+		/* Handle endpoपूर्णांक stall event: */
+		ctrl = पढ़ोl(&dbc->regs->control);
+		अगर ((ctrl & DBC_CTRL_HALT_IN_TR) ||
+		    (ctrl & DBC_CTRL_HALT_OUT_TR)) अणु
 			dev_info(dbc->dev, "DbC Endpoint stall\n");
 			dbc->state = DS_STALLED;
 
-			if (ctrl & DBC_CTRL_HALT_IN_TR) {
+			अगर (ctrl & DBC_CTRL_HALT_IN_TR) अणु
 				dep = get_in_ep(dbc);
-				xhci_dbc_flush_endpoint_requests(dep);
-			}
+				xhci_dbc_flush_endpoपूर्णांक_requests(dep);
+			पूर्ण
 
-			if (ctrl & DBC_CTRL_HALT_OUT_TR) {
+			अगर (ctrl & DBC_CTRL_HALT_OUT_TR) अणु
 				dep = get_out_ep(dbc);
-				xhci_dbc_flush_endpoint_requests(dep);
-			}
+				xhci_dbc_flush_endpoपूर्णांक_requests(dep);
+			पूर्ण
 
-			return EVT_DONE;
-		}
+			वापस EVT_DONE;
+		पूर्ण
 
 		/* Clear DbC run change bit: */
-		if (ctrl & DBC_CTRL_DBC_RUN_CHANGE) {
-			writel(ctrl, &dbc->regs->control);
-			ctrl = readl(&dbc->regs->control);
-		}
+		अगर (ctrl & DBC_CTRL_DBC_RUN_CHANGE) अणु
+			ग_लिखोl(ctrl, &dbc->regs->control);
+			ctrl = पढ़ोl(&dbc->regs->control);
+		पूर्ण
 
-		break;
-	case DS_STALLED:
-		ctrl = readl(&dbc->regs->control);
-		if (!(ctrl & DBC_CTRL_HALT_IN_TR) &&
+		अवरोध;
+	हाल DS_STALLED:
+		ctrl = पढ़ोl(&dbc->regs->control);
+		अगर (!(ctrl & DBC_CTRL_HALT_IN_TR) &&
 		    !(ctrl & DBC_CTRL_HALT_OUT_TR) &&
-		    (ctrl & DBC_CTRL_DBC_RUN)) {
+		    (ctrl & DBC_CTRL_DBC_RUN)) अणु
 			dbc->state = DS_CONFIGURED;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		return EVT_DONE;
-	default:
+		वापस EVT_DONE;
+	शेष:
 		dev_err(dbc->dev, "Unknown DbC state %d\n", dbc->state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Handle the events in the event ring: */
 	evt = dbc->ring_evt->dequeue;
-	while ((le32_to_cpu(evt->event_cmd.flags) & TRB_CYCLE) ==
-			dbc->ring_evt->cycle_state) {
+	जबतक ((le32_to_cpu(evt->event_cmd.flags) & TRB_CYCLE) ==
+			dbc->ring_evt->cycle_state) अणु
 		/*
-		 * Add a barrier between reading the cycle flag and any
-		 * reads of the event's flags/data below:
+		 * Add a barrier between पढ़ोing the cycle flag and any
+		 * पढ़ोs of the event's flags/data below:
 		 */
 		rmb();
 
 		trace_xhci_dbc_handle_event(dbc->ring_evt, &evt->generic);
 
-		switch (le32_to_cpu(evt->event_cmd.flags) & TRB_TYPE_BITMASK) {
-		case TRB_TYPE(TRB_PORT_STATUS):
+		चयन (le32_to_cpu(evt->event_cmd.flags) & TRB_TYPE_BITMASK) अणु
+		हाल TRB_TYPE(TRB_PORT_STATUS):
 			dbc_handle_port_status(dbc, evt);
-			break;
-		case TRB_TYPE(TRB_TRANSFER):
+			अवरोध;
+		हाल TRB_TYPE(TRB_TRANSFER):
 			dbc_handle_xfer_event(dbc, evt);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		inc_evt_deq(dbc->ring_evt);
 
 		evt = dbc->ring_evt->dequeue;
 		update_erdp = true;
-	}
+	पूर्ण
 
-	/* Update event ring dequeue pointer: */
-	if (update_erdp) {
+	/* Update event ring dequeue poपूर्णांकer: */
+	अगर (update_erdp) अणु
 		deq = xhci_trb_virt_to_dma(dbc->ring_evt->deq_seg,
 					   dbc->ring_evt->dequeue);
-		lo_hi_writeq(deq, &dbc->regs->erdp);
-	}
+		lo_hi_ग_लिखोq(deq, &dbc->regs->erdp);
+	पूर्ण
 
-	return EVT_DONE;
-}
+	वापस EVT_DONE;
+पूर्ण
 
-static void xhci_dbc_handle_events(struct work_struct *work)
-{
-	enum evtreturn		evtr;
-	struct xhci_dbc		*dbc;
-	unsigned long		flags;
+अटल व्योम xhci_dbc_handle_events(काष्ठा work_काष्ठा *work)
+अणु
+	क्रमागत evtवापस		evtr;
+	काष्ठा xhci_dbc		*dbc;
+	अचिन्हित दीर्घ		flags;
 
-	dbc = container_of(to_delayed_work(work), struct xhci_dbc, event_work);
+	dbc = container_of(to_delayed_work(work), काष्ठा xhci_dbc, event_work);
 
 	spin_lock_irqsave(&dbc->lock, flags);
-	evtr = xhci_dbc_do_handle_events(dbc);
+	evtr = xhci_dbc_करो_handle_events(dbc);
 	spin_unlock_irqrestore(&dbc->lock, flags);
 
-	switch (evtr) {
-	case EVT_GSER:
-		if (dbc->driver->configure)
+	चयन (evtr) अणु
+	हाल EVT_GSER:
+		अगर (dbc->driver->configure)
 			dbc->driver->configure(dbc);
-		break;
-	case EVT_DISC:
-		if (dbc->driver->disconnect)
+		अवरोध;
+	हाल EVT_DISC:
+		अगर (dbc->driver->disconnect)
 			dbc->driver->disconnect(dbc);
-		break;
-	case EVT_DONE:
-		break;
-	default:
+		अवरोध;
+	हाल EVT_DONE:
+		अवरोध;
+	शेष:
 		dev_info(dbc->dev, "stop handling dbc events\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mod_delayed_work(system_wq, &dbc->event_work, 1);
-}
+	mod_delayed_work(प्रणाली_wq, &dbc->event_work, 1);
+पूर्ण
 
-static void xhci_do_dbc_exit(struct xhci_hcd *xhci)
-{
-	unsigned long		flags;
+अटल व्योम xhci_करो_dbc_निकास(काष्ठा xhci_hcd *xhci)
+अणु
+	अचिन्हित दीर्घ		flags;
 
 	spin_lock_irqsave(&xhci->lock, flags);
-	kfree(xhci->dbc);
-	xhci->dbc = NULL;
+	kमुक्त(xhci->dbc);
+	xhci->dbc = शून्य;
 	spin_unlock_irqrestore(&xhci->lock, flags);
-}
+पूर्ण
 
-static int xhci_do_dbc_init(struct xhci_hcd *xhci)
-{
+अटल पूर्णांक xhci_करो_dbc_init(काष्ठा xhci_hcd *xhci)
+अणु
 	u32			reg;
-	struct xhci_dbc		*dbc;
-	unsigned long		flags;
-	void __iomem		*base;
-	int			dbc_cap_offs;
+	काष्ठा xhci_dbc		*dbc;
+	अचिन्हित दीर्घ		flags;
+	व्योम __iomem		*base;
+	पूर्णांक			dbc_cap_offs;
 
 	base = &xhci->cap_regs->hc_capbase;
 	dbc_cap_offs = xhci_find_next_ext_cap(base, 0, XHCI_EXT_CAPS_DEBUG);
-	if (!dbc_cap_offs)
-		return -ENODEV;
+	अगर (!dbc_cap_offs)
+		वापस -ENODEV;
 
-	dbc = kzalloc(sizeof(*dbc), GFP_KERNEL);
-	if (!dbc)
-		return -ENOMEM;
+	dbc = kzalloc(माप(*dbc), GFP_KERNEL);
+	अगर (!dbc)
+		वापस -ENOMEM;
 
 	dbc->regs = base + dbc_cap_offs;
 
-	/* We will avoid using DbC in xhci driver if it's in use. */
-	reg = readl(&dbc->regs->control);
-	if (reg & DBC_CTRL_DBC_ENABLE) {
-		kfree(dbc);
-		return -EBUSY;
-	}
+	/* We will aव्योम using DbC in xhci driver अगर it's in use. */
+	reg = पढ़ोl(&dbc->regs->control);
+	अगर (reg & DBC_CTRL_DBC_ENABLE) अणु
+		kमुक्त(dbc);
+		वापस -EBUSY;
+	पूर्ण
 
 	spin_lock_irqsave(&xhci->lock, flags);
-	if (xhci->dbc) {
+	अगर (xhci->dbc) अणु
 		spin_unlock_irqrestore(&xhci->lock, flags);
-		kfree(dbc);
-		return -EBUSY;
-	}
+		kमुक्त(dbc);
+		वापस -EBUSY;
+	पूर्ण
 	xhci->dbc = dbc;
 	spin_unlock_irqrestore(&xhci->lock, flags);
 
@@ -964,137 +965,137 @@ static int xhci_do_dbc_init(struct xhci_hcd *xhci)
 	INIT_DELAYED_WORK(&dbc->event_work, xhci_dbc_handle_events);
 	spin_lock_init(&dbc->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t dbc_show(struct device *dev,
-			struct device_attribute *attr,
-			char *buf)
-{
-	const char		*p;
-	struct xhci_dbc		*dbc;
-	struct xhci_hcd		*xhci;
+अटल sमाप_प्रकार dbc_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr,
+			अक्षर *buf)
+अणु
+	स्थिर अक्षर		*p;
+	काष्ठा xhci_dbc		*dbc;
+	काष्ठा xhci_hcd		*xhci;
 
 	xhci = hcd_to_xhci(dev_get_drvdata(dev));
 	dbc = xhci->dbc;
 
-	switch (dbc->state) {
-	case DS_DISABLED:
+	चयन (dbc->state) अणु
+	हाल DS_DISABLED:
 		p = "disabled";
-		break;
-	case DS_INITIALIZED:
+		अवरोध;
+	हाल DS_INITIALIZED:
 		p = "initialized";
-		break;
-	case DS_ENABLED:
+		अवरोध;
+	हाल DS_ENABLED:
 		p = "enabled";
-		break;
-	case DS_CONNECTED:
+		अवरोध;
+	हाल DS_CONNECTED:
 		p = "connected";
-		break;
-	case DS_CONFIGURED:
+		अवरोध;
+	हाल DS_CONFIGURED:
 		p = "configured";
-		break;
-	case DS_STALLED:
+		अवरोध;
+	हाल DS_STALLED:
 		p = "stalled";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		p = "unknown";
-	}
+	पूर्ण
 
-	return sprintf(buf, "%s\n", p);
-}
+	वापस प्र_लिखो(buf, "%s\n", p);
+पूर्ण
 
-static ssize_t dbc_store(struct device *dev,
-			 struct device_attribute *attr,
-			 const char *buf, size_t count)
-{
-	struct xhci_hcd		*xhci;
-	struct xhci_dbc		*dbc;
+अटल sमाप_प्रकार dbc_store(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr,
+			 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा xhci_hcd		*xhci;
+	काष्ठा xhci_dbc		*dbc;
 
 	xhci = hcd_to_xhci(dev_get_drvdata(dev));
 	dbc = xhci->dbc;
 
-	if (!strncmp(buf, "enable", 6))
+	अगर (!म_भेदन(buf, "enable", 6))
 		xhci_dbc_start(dbc);
-	else if (!strncmp(buf, "disable", 7))
+	अन्यथा अगर (!म_भेदन(buf, "disable", 7))
 		xhci_dbc_stop(dbc);
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(dbc);
+अटल DEVICE_ATTR_RW(dbc);
 
-int xhci_dbc_init(struct xhci_hcd *xhci)
-{
-	int			ret;
-	struct device		*dev = xhci_to_hcd(xhci)->self.controller;
+पूर्णांक xhci_dbc_init(काष्ठा xhci_hcd *xhci)
+अणु
+	पूर्णांक			ret;
+	काष्ठा device		*dev = xhci_to_hcd(xhci)->self.controller;
 
-	ret = xhci_do_dbc_init(xhci);
-	if (ret)
-		goto init_err3;
+	ret = xhci_करो_dbc_init(xhci);
+	अगर (ret)
+		जाओ init_err3;
 
 	ret = xhci_dbc_tty_probe(xhci);
-	if (ret)
-		goto init_err2;
+	अगर (ret)
+		जाओ init_err2;
 
 	ret = device_create_file(dev, &dev_attr_dbc);
-	if (ret)
-		goto init_err1;
+	अगर (ret)
+		जाओ init_err1;
 
-	return 0;
+	वापस 0;
 
 init_err1:
-	xhci_dbc_tty_remove(xhci->dbc);
+	xhci_dbc_tty_हटाओ(xhci->dbc);
 init_err2:
-	xhci_do_dbc_exit(xhci);
+	xhci_करो_dbc_निकास(xhci);
 init_err3:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void xhci_dbc_exit(struct xhci_hcd *xhci)
-{
-	struct device		*dev = xhci_to_hcd(xhci)->self.controller;
+व्योम xhci_dbc_निकास(काष्ठा xhci_hcd *xhci)
+अणु
+	काष्ठा device		*dev = xhci_to_hcd(xhci)->self.controller;
 
-	if (!xhci->dbc)
-		return;
+	अगर (!xhci->dbc)
+		वापस;
 
-	device_remove_file(dev, &dev_attr_dbc);
-	xhci_dbc_tty_remove(xhci->dbc);
+	device_हटाओ_file(dev, &dev_attr_dbc);
+	xhci_dbc_tty_हटाओ(xhci->dbc);
 	xhci_dbc_stop(xhci->dbc);
-	xhci_do_dbc_exit(xhci);
-}
+	xhci_करो_dbc_निकास(xhci);
+पूर्ण
 
-#ifdef CONFIG_PM
-int xhci_dbc_suspend(struct xhci_hcd *xhci)
-{
-	struct xhci_dbc		*dbc = xhci->dbc;
+#अगर_घोषित CONFIG_PM
+पूर्णांक xhci_dbc_suspend(काष्ठा xhci_hcd *xhci)
+अणु
+	काष्ठा xhci_dbc		*dbc = xhci->dbc;
 
-	if (!dbc)
-		return 0;
+	अगर (!dbc)
+		वापस 0;
 
-	if (dbc->state == DS_CONFIGURED)
+	अगर (dbc->state == DS_CONFIGURED)
 		dbc->resume_required = 1;
 
 	xhci_dbc_stop(dbc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int xhci_dbc_resume(struct xhci_hcd *xhci)
-{
-	int			ret = 0;
-	struct xhci_dbc		*dbc = xhci->dbc;
+पूर्णांक xhci_dbc_resume(काष्ठा xhci_hcd *xhci)
+अणु
+	पूर्णांक			ret = 0;
+	काष्ठा xhci_dbc		*dbc = xhci->dbc;
 
-	if (!dbc)
-		return 0;
+	अगर (!dbc)
+		वापस 0;
 
-	if (dbc->resume_required) {
+	अगर (dbc->resume_required) अणु
 		dbc->resume_required = 0;
 		xhci_dbc_start(dbc);
-	}
+	पूर्ण
 
-	return ret;
-}
-#endif /* CONFIG_PM */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */

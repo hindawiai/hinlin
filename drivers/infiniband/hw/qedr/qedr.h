@@ -1,23 +1,24 @@
+<शैली गुरु>
 /* QLogic qedr NIC Driver
  * Copyright (c) 2015-2016  QLogic Corporation
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and /or other materials
+ *        disclaimer in the करोcumentation and /or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -29,69 +30,69 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef __QEDR_H__
-#define __QEDR_H__
+#अगर_अघोषित __QEDR_H__
+#घोषणा __QEDR_H__
 
-#include <linux/pci.h>
-#include <linux/xarray.h>
-#include <rdma/ib_addr.h>
-#include <linux/qed/qed_if.h>
-#include <linux/qed/qed_chain.h>
-#include <linux/qed/qed_rdma_if.h>
-#include <linux/qed/qede_rdma.h>
-#include <linux/qed/roce_common.h>
-#include <linux/completion.h>
-#include "qedr_hsi_rdma.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/xarray.h>
+#समावेश <rdma/ib_addr.h>
+#समावेश <linux/qed/qed_अगर.h>
+#समावेश <linux/qed/qed_chain.h>
+#समावेश <linux/qed/qed_rdma_अगर.h>
+#समावेश <linux/qed/qede_rdma.h>
+#समावेश <linux/qed/roce_common.h>
+#समावेश <linux/completion.h>
+#समावेश "qedr_hsi_rdma.h"
 
-#define QEDR_NODE_DESC "QLogic 579xx RoCE HCA"
-#define DP_NAME(_dev) dev_name(&(_dev)->ibdev.dev)
-#define IS_IWARP(_dev) ((_dev)->rdma_type == QED_RDMA_TYPE_IWARP)
-#define IS_ROCE(_dev) ((_dev)->rdma_type == QED_RDMA_TYPE_ROCE)
+#घोषणा QEDR_NODE_DESC "QLogic 579xx RoCE HCA"
+#घोषणा DP_NAME(_dev) dev_name(&(_dev)->ibdev.dev)
+#घोषणा IS_IWARP(_dev) ((_dev)->rdma_type == QED_RDMA_TYPE_IWARP)
+#घोषणा IS_ROCE(_dev) ((_dev)->rdma_type == QED_RDMA_TYPE_ROCE)
 
-#define DP_DEBUG(dev, module, fmt, ...)					\
+#घोषणा DP_DEBUG(dev, module, fmt, ...)					\
 	pr_debug("(%s) " module ": " fmt,				\
 		 DP_NAME(dev) ? DP_NAME(dev) : "", ## __VA_ARGS__)
 
-#define QEDR_MSG_INIT "INIT"
-#define QEDR_MSG_MISC "MISC"
-#define QEDR_MSG_CQ   "  CQ"
-#define QEDR_MSG_MR   "  MR"
-#define QEDR_MSG_RQ   "  RQ"
-#define QEDR_MSG_SQ   "  SQ"
-#define QEDR_MSG_QP   "  QP"
-#define QEDR_MSG_SRQ  " SRQ"
-#define QEDR_MSG_GSI  " GSI"
-#define QEDR_MSG_IWARP  " IW"
+#घोषणा QEDR_MSG_INIT "INIT"
+#घोषणा QEDR_MSG_MISC "MISC"
+#घोषणा QEDR_MSG_CQ   "  CQ"
+#घोषणा QEDR_MSG_MR   "  MR"
+#घोषणा QEDR_MSG_RQ   "  RQ"
+#घोषणा QEDR_MSG_SQ   "  SQ"
+#घोषणा QEDR_MSG_QP   "  QP"
+#घोषणा QEDR_MSG_SRQ  " SRQ"
+#घोषणा QEDR_MSG_GSI  " GSI"
+#घोषणा QEDR_MSG_IWARP  " IW"
 
-#define QEDR_CQ_MAGIC_NUMBER	(0x11223344)
+#घोषणा QEDR_CQ_MAGIC_NUMBER	(0x11223344)
 
-#define FW_PAGE_SIZE		(RDMA_RING_PAGE_SIZE)
-#define FW_PAGE_SHIFT		(12)
+#घोषणा FW_PAGE_SIZE		(RDMA_RING_PAGE_SIZE)
+#घोषणा FW_PAGE_SHIFT		(12)
 
-struct qedr_dev;
+काष्ठा qedr_dev;
 
-struct qedr_cnq {
-	struct qedr_dev		*dev;
-	struct qed_chain	pbl;
-	struct qed_sb_info	*sb;
-	char			name[32];
+काष्ठा qedr_cnq अणु
+	काष्ठा qedr_dev		*dev;
+	काष्ठा qed_chain	pbl;
+	काष्ठा qed_sb_info	*sb;
+	अक्षर			name[32];
 	u64			n_comp;
 	__le16			*hw_cons_ptr;
 	u8			index;
-};
+पूर्ण;
 
-#define QEDR_MAX_SGID 128
+#घोषणा QEDR_MAX_SGID 128
 
-struct qedr_device_attr {
-	u32	vendor_id;
-	u32	vendor_part_id;
+काष्ठा qedr_device_attr अणु
+	u32	venकरोr_id;
+	u32	venकरोr_part_id;
 	u32	hw_ver;
 	u64	fw_ver;
 	u64	node_guid;
 	u64	sys_image_guid;
 	u8	max_cnq;
 	u8	max_sge;
-	u16	max_inline;
+	u16	max_अंतरभूत;
 	u32	max_sqe;
 	u32	max_rqe;
 	u8	max_qp_resp_rd_atomic_resc;
@@ -118,38 +119,38 @@ struct qedr_device_attr {
 	u8	dev_ack_delay;
 	u32	reserved_lkey;
 	u32	bad_pkey_counter;
-	struct qed_rdma_events events;
-};
+	काष्ठा qed_rdma_events events;
+पूर्ण;
 
-#define QEDR_ENET_STATE_BIT	(0)
+#घोषणा QEDR_ENET_STATE_BIT	(0)
 
-struct qedr_dev {
-	struct ib_device	ibdev;
-	struct qed_dev		*cdev;
-	struct pci_dev		*pdev;
-	struct net_device	*ndev;
+काष्ठा qedr_dev अणु
+	काष्ठा ib_device	ibdev;
+	काष्ठा qed_dev		*cdev;
+	काष्ठा pci_dev		*pdev;
+	काष्ठा net_device	*ndev;
 
-	enum ib_atomic_cap	atomic_cap;
+	क्रमागत ib_atomic_cap	atomic_cap;
 
-	void *rdma_ctx;
-	struct qedr_device_attr attr;
+	व्योम *rdma_ctx;
+	काष्ठा qedr_device_attr attr;
 
-	const struct qed_rdma_ops *ops;
-	struct qed_int_info	int_info;
+	स्थिर काष्ठा qed_rdma_ops *ops;
+	काष्ठा qed_पूर्णांक_info	पूर्णांक_info;
 
-	struct qed_sb_info	*sb_array;
-	struct qedr_cnq		*cnq_array;
-	int			num_cnq;
-	int			sb_start;
+	काष्ठा qed_sb_info	*sb_array;
+	काष्ठा qedr_cnq		*cnq_array;
+	पूर्णांक			num_cnq;
+	पूर्णांक			sb_start;
 
-	void __iomem		*db_addr;
+	व्योम __iomem		*db_addr;
 	u64			db_phys_addr;
 	u32			db_size;
 	u16			dpi;
 
-	union ib_gid *sgid_tbl;
+	जोड़ ib_gid *sgid_tbl;
 
-	/* Lock for sgid table */
+	/* Lock क्रम sgid table */
 	spinlock_t sgid_lock;
 
 	u64			guid;
@@ -157,130 +158,130 @@ struct qedr_dev {
 	u32			dp_module;
 	u8			dp_level;
 	u8			num_hwfns;
-#define QEDR_IS_CMT(dev)        ((dev)->num_hwfns > 1)
+#घोषणा QEDR_IS_CMT(dev)        ((dev)->num_hwfns > 1)
 	u8			affin_hwfn_idx;
 	u8			gsi_ll2_handle;
 
-	uint			wq_multiplier;
+	uपूर्णांक			wq_multiplier;
 	u8			gsi_ll2_mac_address[ETH_ALEN];
-	int			gsi_qp_created;
-	struct qedr_cq		*gsi_sqcq;
-	struct qedr_cq		*gsi_rqcq;
-	struct qedr_qp		*gsi_qp;
-	enum qed_rdma_type	rdma_type;
-	struct xarray		qps;
-	struct xarray		srqs;
-	struct workqueue_struct *iwarp_wq;
+	पूर्णांक			gsi_qp_created;
+	काष्ठा qedr_cq		*gsi_sqcq;
+	काष्ठा qedr_cq		*gsi_rqcq;
+	काष्ठा qedr_qp		*gsi_qp;
+	क्रमागत qed_rdma_type	rdma_type;
+	काष्ठा xarray		qps;
+	काष्ठा xarray		srqs;
+	काष्ठा workqueue_काष्ठा *iwarp_wq;
 	u16			iwarp_max_mtu;
 
-	unsigned long enet_state;
+	अचिन्हित दीर्घ enet_state;
 
 	u8 user_dpm_enabled;
-};
+पूर्ण;
 
-#define QEDR_MAX_SQ_PBL			(0x8000)
-#define QEDR_MAX_SQ_PBL_ENTRIES		(0x10000 / sizeof(void *))
-#define QEDR_SQE_ELEMENT_SIZE		(sizeof(struct rdma_sq_sge))
-#define QEDR_MAX_SQE_ELEMENTS_PER_SQE	(ROCE_REQ_MAX_SINGLE_SQ_WQE_SIZE / \
+#घोषणा QEDR_MAX_SQ_PBL			(0x8000)
+#घोषणा QEDR_MAX_SQ_PBL_ENTRIES		(0x10000 / माप(व्योम *))
+#घोषणा QEDR_SQE_ELEMENT_SIZE		(माप(काष्ठा rdma_sq_sge))
+#घोषणा QEDR_MAX_SQE_ELEMENTS_PER_SQE	(ROCE_REQ_MAX_SINGLE_SQ_WQE_SIZE / \
 					 QEDR_SQE_ELEMENT_SIZE)
-#define QEDR_MAX_SQE_ELEMENTS_PER_PAGE	((RDMA_RING_PAGE_SIZE) / \
+#घोषणा QEDR_MAX_SQE_ELEMENTS_PER_PAGE	((RDMA_RING_PAGE_SIZE) / \
 					 QEDR_SQE_ELEMENT_SIZE)
-#define QEDR_MAX_SQE			((QEDR_MAX_SQ_PBL_ENTRIES) *\
+#घोषणा QEDR_MAX_SQE			((QEDR_MAX_SQ_PBL_ENTRIES) *\
 					 (RDMA_RING_PAGE_SIZE) / \
 					 (QEDR_SQE_ELEMENT_SIZE) /\
 					 (QEDR_MAX_SQE_ELEMENTS_PER_SQE))
 /* RQ */
-#define QEDR_MAX_RQ_PBL			(0x2000)
-#define QEDR_MAX_RQ_PBL_ENTRIES		(0x10000 / sizeof(void *))
-#define QEDR_RQE_ELEMENT_SIZE		(sizeof(struct rdma_rq_sge))
-#define QEDR_MAX_RQE_ELEMENTS_PER_RQE	(RDMA_MAX_SGE_PER_RQ_WQE)
-#define QEDR_MAX_RQE_ELEMENTS_PER_PAGE	((RDMA_RING_PAGE_SIZE) / \
+#घोषणा QEDR_MAX_RQ_PBL			(0x2000)
+#घोषणा QEDR_MAX_RQ_PBL_ENTRIES		(0x10000 / माप(व्योम *))
+#घोषणा QEDR_RQE_ELEMENT_SIZE		(माप(काष्ठा rdma_rq_sge))
+#घोषणा QEDR_MAX_RQE_ELEMENTS_PER_RQE	(RDMA_MAX_SGE_PER_RQ_WQE)
+#घोषणा QEDR_MAX_RQE_ELEMENTS_PER_PAGE	((RDMA_RING_PAGE_SIZE) / \
 					 QEDR_RQE_ELEMENT_SIZE)
-#define QEDR_MAX_RQE			((QEDR_MAX_RQ_PBL_ENTRIES) *\
+#घोषणा QEDR_MAX_RQE			((QEDR_MAX_RQ_PBL_ENTRIES) *\
 					 (RDMA_RING_PAGE_SIZE) / \
 					 (QEDR_RQE_ELEMENT_SIZE) /\
 					 (QEDR_MAX_RQE_ELEMENTS_PER_RQE))
 
-#define QEDR_CQE_SIZE	(sizeof(union rdma_cqe))
-#define QEDR_MAX_CQE_PBL_SIZE (512 * 1024)
-#define QEDR_MAX_CQE_PBL_ENTRIES (((QEDR_MAX_CQE_PBL_SIZE) / \
-				  sizeof(u64)) - 1)
-#define QEDR_MAX_CQES ((u32)((QEDR_MAX_CQE_PBL_ENTRIES) * \
+#घोषणा QEDR_CQE_SIZE	(माप(जोड़ rdma_cqe))
+#घोषणा QEDR_MAX_CQE_PBL_SIZE (512 * 1024)
+#घोषणा QEDR_MAX_CQE_PBL_ENTRIES (((QEDR_MAX_CQE_PBL_SIZE) / \
+				  माप(u64)) - 1)
+#घोषणा QEDR_MAX_CQES ((u32)((QEDR_MAX_CQE_PBL_ENTRIES) * \
 			     (QED_CHAIN_PAGE_SIZE) / QEDR_CQE_SIZE))
 
-#define QEDR_ROCE_MAX_CNQ_SIZE		(0x4000)
+#घोषणा QEDR_ROCE_MAX_CNQ_SIZE		(0x4000)
 
-#define QEDR_MAX_PORT			(1)
-#define QEDR_PORT			(1)
+#घोषणा QEDR_MAX_PORT			(1)
+#घोषणा QEDR_PORT			(1)
 
-#define QEDR_UVERBS(CMD_NAME) (1ull << IB_USER_VERBS_CMD_##CMD_NAME)
+#घोषणा QEDR_UVERBS(CMD_NAME) (1ull << IB_USER_VERBS_CMD_##CMD_NAME)
 
-#define QEDR_ROCE_PKEY_MAX 1
-#define QEDR_ROCE_PKEY_TABLE_LEN 1
-#define QEDR_ROCE_PKEY_DEFAULT 0xffff
+#घोषणा QEDR_ROCE_PKEY_MAX 1
+#घोषणा QEDR_ROCE_PKEY_TABLE_LEN 1
+#घोषणा QEDR_ROCE_PKEY_DEFAULT 0xffff
 
-struct qedr_pbl {
-	struct list_head list_entry;
-	void *va;
+काष्ठा qedr_pbl अणु
+	काष्ठा list_head list_entry;
+	व्योम *va;
 	dma_addr_t pa;
-};
+पूर्ण;
 
-struct qedr_ucontext {
-	struct ib_ucontext ibucontext;
-	struct qedr_dev *dev;
-	struct qedr_pd *pd;
-	void __iomem *dpi_addr;
-	struct rdma_user_mmap_entry *db_mmap_entry;
+काष्ठा qedr_ucontext अणु
+	काष्ठा ib_ucontext ibucontext;
+	काष्ठा qedr_dev *dev;
+	काष्ठा qedr_pd *pd;
+	व्योम __iomem *dpi_addr;
+	काष्ठा rdma_user_mmap_entry *db_mmap_entry;
 	u64 dpi_phys_addr;
 	u32 dpi_size;
 	u16 dpi;
 	bool db_rec;
 	u8 edpm_mode;
-};
+पूर्ण;
 
-union db_prod32 {
-	struct rdma_pwm_val16_data data;
+जोड़ db_prod32 अणु
+	काष्ठा rdma_pwm_val16_data data;
 	u32 raw;
-};
+पूर्ण;
 
-union db_prod64 {
-	struct rdma_pwm_val32_data data;
+जोड़ db_prod64 अणु
+	काष्ठा rdma_pwm_val32_data data;
 	u64 raw;
-};
+पूर्ण;
 
-enum qedr_cq_type {
+क्रमागत qedr_cq_type अणु
 	QEDR_CQ_TYPE_GSI,
 	QEDR_CQ_TYPE_KERNEL,
 	QEDR_CQ_TYPE_USER,
-};
+पूर्ण;
 
-struct qedr_pbl_info {
+काष्ठा qedr_pbl_info अणु
 	u32 num_pbls;
 	u32 num_pbes;
 	u32 pbl_size;
 	u32 pbe_size;
 	bool two_layered;
-};
+पूर्ण;
 
-struct qedr_userq {
-	struct ib_umem *umem;
-	struct qedr_pbl_info pbl_info;
-	struct qedr_pbl *pbl_tbl;
+काष्ठा qedr_userq अणु
+	काष्ठा ib_umem *umem;
+	काष्ठा qedr_pbl_info pbl_info;
+	काष्ठा qedr_pbl *pbl_tbl;
 	u64 buf_addr;
-	size_t buf_len;
+	माप_प्रकार buf_len;
 
-	/* doorbell recovery */
-	void __iomem *db_addr;
-	struct qedr_user_db_rec *db_rec_data;
-	struct rdma_user_mmap_entry *db_mmap_entry;
-	void __iomem *db_rec_db2_addr;
-	union db_prod32 db_rec_db2_data;
-};
+	/* करोorbell recovery */
+	व्योम __iomem *db_addr;
+	काष्ठा qedr_user_db_rec *db_rec_data;
+	काष्ठा rdma_user_mmap_entry *db_mmap_entry;
+	व्योम __iomem *db_rec_db2_addr;
+	जोड़ db_prod32 db_rec_db2_data;
+पूर्ण;
 
-struct qedr_cq {
-	struct ib_cq ibcq;
+काष्ठा qedr_cq अणु
+	काष्ठा ib_cq ibcq;
 
-	enum qedr_cq_type cq_type;
+	क्रमागत qedr_cq_type cq_type;
 	u32 sig;
 
 	u16 icid;
@@ -288,36 +289,36 @@ struct qedr_cq {
 	/* Lock to protect multiplem CQ's */
 	spinlock_t cq_lock;
 	u8 arm_flags;
-	struct qed_chain pbl;
+	काष्ठा qed_chain pbl;
 
-	void __iomem *db_addr;
-	union db_prod64 db;
+	व्योम __iomem *db_addr;
+	जोड़ db_prod64 db;
 
 	u8 pbl_toggle;
-	union rdma_cqe *latest_cqe;
-	union rdma_cqe *toggle_cqe;
+	जोड़ rdma_cqe *latest_cqe;
+	जोड़ rdma_cqe *toggle_cqe;
 
 	u32 cq_cons;
 
-	struct qedr_userq q;
+	काष्ठा qedr_userq q;
 	u8 destroyed;
-	u16 cnq_notif;
-};
+	u16 cnq_notअगर;
+पूर्ण;
 
-struct qedr_pd {
-	struct ib_pd ibpd;
+काष्ठा qedr_pd अणु
+	काष्ठा ib_pd ibpd;
 	u32 pd_id;
-	struct qedr_ucontext *uctx;
-};
+	काष्ठा qedr_ucontext *uctx;
+पूर्ण;
 
-struct qedr_xrcd {
-	struct ib_xrcd ibxrcd;
+काष्ठा qedr_xrcd अणु
+	काष्ठा ib_xrcd ibxrcd;
 	u16 xrcd_id;
-};
+पूर्ण;
 
-struct qedr_qp_hwq_info {
+काष्ठा qedr_qp_hwq_info अणु
 	/* WQE Elements */
-	struct qed_chain pbl;
+	काष्ठा qed_chain pbl;
 	u64 p_phys_addr_tbl;
 	u32 max_sges;
 
@@ -329,23 +330,23 @@ struct qedr_qp_hwq_info {
 	u16 max_wr;
 
 	/* DB */
-	void __iomem *db;
-	union db_prod32 db_data;
+	व्योम __iomem *db;
+	जोड़ db_prod32 db_data;
 
-	void __iomem *iwarp_db2;
-	union db_prod32 iwarp_db2_data;
-};
+	व्योम __iomem *iwarp_db2;
+	जोड़ db_prod32 iwarp_db2_data;
+पूर्ण;
 
-#define QEDR_INC_SW_IDX(p_info, index)					\
-	do {								\
+#घोषणा QEDR_INC_SW_IDX(p_info, index)					\
+	करो अणु								\
 		p_info->index = (p_info->index + 1) &			\
 				qed_chain_get_capacity(p_info->pbl)	\
-	} while (0)
+	पूर्ण जबतक (0)
 
-struct qedr_srq_hwq_info {
+काष्ठा qedr_srq_hwq_info अणु
 	u32 max_sges;
 	u32 max_wr;
-	struct qed_chain pbl;
+	काष्ठा qed_chain pbl;
 	u64 p_phys_addr_tbl;
 	u32 wqe_prod;
 	u32 sge_prod;
@@ -353,67 +354,67 @@ struct qedr_srq_hwq_info {
 	atomic_t wr_cons_cnt;
 	u32 num_elems;
 
-	struct rdma_srq_producers *virt_prod_pair_addr;
+	काष्ठा rdma_srq_producers *virt_prod_pair_addr;
 	dma_addr_t phy_prod_pair_addr;
-};
+पूर्ण;
 
-struct qedr_srq {
-	struct ib_srq ibsrq;
-	struct qedr_dev *dev;
+काष्ठा qedr_srq अणु
+	काष्ठा ib_srq ibsrq;
+	काष्ठा qedr_dev *dev;
 
-	struct qedr_userq	usrq;
-	struct qedr_srq_hwq_info hw_srq;
-	struct ib_umem *prod_umem;
+	काष्ठा qedr_userq	usrq;
+	काष्ठा qedr_srq_hwq_info hw_srq;
+	काष्ठा ib_umem *prod_umem;
 	u16 srq_id;
 	u32 srq_limit;
 	bool is_xrc;
 	/* lock to protect srq recv post */
 	spinlock_t lock;
-};
+पूर्ण;
 
-enum qedr_qp_err_bitmap {
+क्रमागत qedr_qp_err_biपंचांगap अणु
 	QEDR_QP_ERR_SQ_FULL = 1,
 	QEDR_QP_ERR_RQ_FULL = 2,
 	QEDR_QP_ERR_BAD_SR = 4,
 	QEDR_QP_ERR_BAD_RR = 8,
 	QEDR_QP_ERR_SQ_PBL_FULL = 16,
 	QEDR_QP_ERR_RQ_PBL_FULL = 32,
-};
+पूर्ण;
 
-enum qedr_qp_create_type {
+क्रमागत qedr_qp_create_type अणु
 	QEDR_QP_CREATE_NONE,
 	QEDR_QP_CREATE_USER,
 	QEDR_QP_CREATE_KERNEL,
-};
+पूर्ण;
 
-enum qedr_iwarp_cm_flags {
+क्रमागत qedr_iwarp_cm_flags अणु
 	QEDR_IWARP_CM_WAIT_FOR_CONNECT    = BIT(0),
 	QEDR_IWARP_CM_WAIT_FOR_DISCONNECT = BIT(1),
-};
+पूर्ण;
 
-struct qedr_qp {
-	struct ib_qp ibqp;	/* must be first */
-	struct qedr_dev *dev;
-	struct qedr_qp_hwq_info sq;
-	struct qedr_qp_hwq_info rq;
+काष्ठा qedr_qp अणु
+	काष्ठा ib_qp ibqp;	/* must be first */
+	काष्ठा qedr_dev *dev;
+	काष्ठा qedr_qp_hwq_info sq;
+	काष्ठा qedr_qp_hwq_info rq;
 
-	u32 max_inline_data;
+	u32 max_अंतरभूत_data;
 
-	/* Lock for QP's */
+	/* Lock क्रम QP's */
 	spinlock_t q_lock;
-	struct qedr_cq *sq_cq;
-	struct qedr_cq *rq_cq;
-	struct qedr_srq *srq;
-	enum qed_roce_qp_state state;
+	काष्ठा qedr_cq *sq_cq;
+	काष्ठा qedr_cq *rq_cq;
+	काष्ठा qedr_srq *srq;
+	क्रमागत qed_roce_qp_state state;
 	u32 id;
-	struct qedr_pd *pd;
-	enum ib_qp_type qp_type;
-	enum qedr_qp_create_type create_type;
-	struct qed_rdma_qp *qed_qp;
+	काष्ठा qedr_pd *pd;
+	क्रमागत ib_qp_type qp_type;
+	क्रमागत qedr_qp_create_type create_type;
+	काष्ठा qed_rdma_qp *qed_qp;
 	u32 qp_id;
 	u16 icid;
 	u16 mtu;
-	int sgid_idx;
+	पूर्णांक sgid_idx;
 	u32 rq_psn;
 	u32 sq_psn;
 	u32 qkey;
@@ -422,219 +423,219 @@ struct qedr_qp {
 	/* Relevant to qps created from kernel space only (ULPs) */
 	u8 prev_wqe_size;
 	u16 wqe_cons;
-	u32 err_bitmap;
-	bool signaled;
+	u32 err_biपंचांगap;
+	bool संकेतed;
 
-	/* SQ shadow */
-	struct {
+	/* SQ shaकरोw */
+	काष्ठा अणु
 		u64 wr_id;
-		enum ib_wc_opcode opcode;
+		क्रमागत ib_wc_opcode opcode;
 		u32 bytes_len;
 		u8 wqe_size;
-		bool signaled;
+		bool संकेतed;
 		dma_addr_t icrc_mapping;
 		u32 *icrc;
-		struct qedr_mr *mr;
-	} *wqe_wr_id;
+		काष्ठा qedr_mr *mr;
+	पूर्ण *wqe_wr_id;
 
-	/* RQ shadow */
-	struct {
+	/* RQ shaकरोw */
+	काष्ठा अणु
 		u64 wr_id;
-		struct ib_sge sg_list[RDMA_MAX_SGE_PER_RQ_WQE];
+		काष्ठा ib_sge sg_list[RDMA_MAX_SGE_PER_RQ_WQE];
 		u8 wqe_size;
 
 		u8 smac[ETH_ALEN];
 		u16 vlan;
-		int rc;
-	} *rqe_wr_id;
+		पूर्णांक rc;
+	पूर्ण *rqe_wr_id;
 
 	/* Relevant to qps created from user space only (applications) */
-	struct qedr_userq usq;
-	struct qedr_userq urq;
+	काष्ठा qedr_userq usq;
+	काष्ठा qedr_userq urq;
 
 	/* synchronization objects used with iwarp ep */
-	struct kref refcnt;
-	struct completion iwarp_cm_comp;
-	unsigned long iwarp_cm_flags; /* enum iwarp_cm_flags */
-};
+	काष्ठा kref refcnt;
+	काष्ठा completion iwarp_cm_comp;
+	अचिन्हित दीर्घ iwarp_cm_flags; /* क्रमागत iwarp_cm_flags */
+पूर्ण;
 
-struct qedr_ah {
-	struct ib_ah ibah;
-	struct rdma_ah_attr attr;
-};
+काष्ठा qedr_ah अणु
+	काष्ठा ib_ah ibah;
+	काष्ठा rdma_ah_attr attr;
+पूर्ण;
 
-enum qedr_mr_type {
+क्रमागत qedr_mr_type अणु
 	QEDR_MR_USER,
 	QEDR_MR_KERNEL,
 	QEDR_MR_DMA,
 	QEDR_MR_FRMR,
-};
+पूर्ण;
 
-struct mr_info {
-	struct qedr_pbl *pbl_table;
-	struct qedr_pbl_info pbl_info;
-	struct list_head free_pbl_list;
-	struct list_head inuse_pbl_list;
+काष्ठा mr_info अणु
+	काष्ठा qedr_pbl *pbl_table;
+	काष्ठा qedr_pbl_info pbl_info;
+	काष्ठा list_head मुक्त_pbl_list;
+	काष्ठा list_head inuse_pbl_list;
 	u32 completed;
 	u32 completed_handled;
-};
+पूर्ण;
 
-struct qedr_mr {
-	struct ib_mr ibmr;
-	struct ib_umem *umem;
+काष्ठा qedr_mr अणु
+	काष्ठा ib_mr ibmr;
+	काष्ठा ib_umem *umem;
 
-	struct qed_rdma_register_tid_in_params hw_mr;
-	enum qedr_mr_type type;
+	काष्ठा qed_rdma_रेजिस्टर_tid_in_params hw_mr;
+	क्रमागत qedr_mr_type type;
 
-	struct qedr_dev *dev;
-	struct mr_info info;
+	काष्ठा qedr_dev *dev;
+	काष्ठा mr_info info;
 
 	u64 *pages;
 	u32 npages;
-};
+पूर्ण;
 
-struct qedr_user_mmap_entry {
-	struct rdma_user_mmap_entry rdma_entry;
-	struct qedr_dev *dev;
-	union {
+काष्ठा qedr_user_mmap_entry अणु
+	काष्ठा rdma_user_mmap_entry rdma_entry;
+	काष्ठा qedr_dev *dev;
+	जोड़ अणु
 		u64 io_address;
-		void *address;
-	};
-	size_t length;
+		व्योम *address;
+	पूर्ण;
+	माप_प्रकार length;
 	u16 dpi;
 	u8 mmap_flag;
-};
+पूर्ण;
 
-#define SET_FIELD2(value, name, flag) ((value) |= ((flag) << (name ## _SHIFT)))
+#घोषणा SET_FIELD2(value, name, flag) ((value) |= ((flag) << (name ## _SHIFT)))
 
-#define QEDR_RESP_IMM	(RDMA_CQE_RESPONDER_IMM_FLG_MASK << \
+#घोषणा QEDR_RESP_IMM	(RDMA_CQE_RESPONDER_IMM_FLG_MASK << \
 			 RDMA_CQE_RESPONDER_IMM_FLG_SHIFT)
-#define QEDR_RESP_RDMA	(RDMA_CQE_RESPONDER_RDMA_FLG_MASK << \
+#घोषणा QEDR_RESP_RDMA	(RDMA_CQE_RESPONDER_RDMA_FLG_MASK << \
 			 RDMA_CQE_RESPONDER_RDMA_FLG_SHIFT)
-#define QEDR_RESP_INV	(RDMA_CQE_RESPONDER_INV_FLG_MASK << \
+#घोषणा QEDR_RESP_INV	(RDMA_CQE_RESPONDER_INV_FLG_MASK << \
 			 RDMA_CQE_RESPONDER_INV_FLG_SHIFT)
 
-static inline void qedr_inc_sw_cons(struct qedr_qp_hwq_info *info)
-{
+अटल अंतरभूत व्योम qedr_inc_sw_cons(काष्ठा qedr_qp_hwq_info *info)
+अणु
 	info->cons = (info->cons + 1) % info->max_wr;
 	info->wqe_cons++;
-}
+पूर्ण
 
-static inline void qedr_inc_sw_prod(struct qedr_qp_hwq_info *info)
-{
+अटल अंतरभूत व्योम qedr_inc_sw_prod(काष्ठा qedr_qp_hwq_info *info)
+अणु
 	info->prod = (info->prod + 1) % info->max_wr;
-}
+पूर्ण
 
-static inline int qedr_get_dmac(struct qedr_dev *dev,
-				struct rdma_ah_attr *ah_attr, u8 *mac_addr)
-{
-	union ib_gid zero_sgid = { { 0 } };
-	struct in6_addr in6;
-	const struct ib_global_route *grh = rdma_ah_read_grh(ah_attr);
+अटल अंतरभूत पूर्णांक qedr_get_dmac(काष्ठा qedr_dev *dev,
+				काष्ठा rdma_ah_attr *ah_attr, u8 *mac_addr)
+अणु
+	जोड़ ib_gid zero_sgid = अणु अणु 0 पूर्ण पूर्ण;
+	काष्ठा in6_addr in6;
+	स्थिर काष्ठा ib_global_route *grh = rdma_ah_पढ़ो_grh(ah_attr);
 	u8 *dmac;
 
-	if (!memcmp(&grh->dgid, &zero_sgid, sizeof(union ib_gid))) {
+	अगर (!स_भेद(&grh->dgid, &zero_sgid, माप(जोड़ ib_gid))) अणु
 		DP_ERR(dev, "Local port GID not supported\n");
 		eth_zero_addr(mac_addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memcpy(&in6, grh->dgid.raw, sizeof(in6));
+	स_नकल(&in6, grh->dgid.raw, माप(in6));
 	dmac = rdma_ah_retrieve_dmac(ah_attr);
-	if (!dmac)
-		return -EINVAL;
+	अगर (!dmac)
+		वापस -EINVAL;
 	ether_addr_copy(mac_addr, dmac);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct qedr_iw_listener {
-	struct qedr_dev *dev;
-	struct iw_cm_id *cm_id;
-	int		backlog;
-	void		*qed_handle;
-};
+काष्ठा qedr_iw_listener अणु
+	काष्ठा qedr_dev *dev;
+	काष्ठा iw_cm_id *cm_id;
+	पूर्णांक		backlog;
+	व्योम		*qed_handle;
+पूर्ण;
 
-struct qedr_iw_ep {
-	struct qedr_dev	*dev;
-	struct iw_cm_id	*cm_id;
-	struct qedr_qp	*qp;
-	void		*qed_context;
-	struct kref	refcnt;
-};
+काष्ठा qedr_iw_ep अणु
+	काष्ठा qedr_dev	*dev;
+	काष्ठा iw_cm_id	*cm_id;
+	काष्ठा qedr_qp	*qp;
+	व्योम		*qed_context;
+	काष्ठा kref	refcnt;
+पूर्ण;
 
-static inline
-struct qedr_ucontext *get_qedr_ucontext(struct ib_ucontext *ibucontext)
-{
-	return container_of(ibucontext, struct qedr_ucontext, ibucontext);
-}
+अटल अंतरभूत
+काष्ठा qedr_ucontext *get_qedr_ucontext(काष्ठा ib_ucontext *ibucontext)
+अणु
+	वापस container_of(ibucontext, काष्ठा qedr_ucontext, ibucontext);
+पूर्ण
 
-static inline struct qedr_dev *get_qedr_dev(struct ib_device *ibdev)
-{
-	return container_of(ibdev, struct qedr_dev, ibdev);
-}
+अटल अंतरभूत काष्ठा qedr_dev *get_qedr_dev(काष्ठा ib_device *ibdev)
+अणु
+	वापस container_of(ibdev, काष्ठा qedr_dev, ibdev);
+पूर्ण
 
-static inline struct qedr_pd *get_qedr_pd(struct ib_pd *ibpd)
-{
-	return container_of(ibpd, struct qedr_pd, ibpd);
-}
+अटल अंतरभूत काष्ठा qedr_pd *get_qedr_pd(काष्ठा ib_pd *ibpd)
+अणु
+	वापस container_of(ibpd, काष्ठा qedr_pd, ibpd);
+पूर्ण
 
-static inline struct qedr_xrcd *get_qedr_xrcd(struct ib_xrcd *ibxrcd)
-{
-	return container_of(ibxrcd, struct qedr_xrcd, ibxrcd);
-}
+अटल अंतरभूत काष्ठा qedr_xrcd *get_qedr_xrcd(काष्ठा ib_xrcd *ibxrcd)
+अणु
+	वापस container_of(ibxrcd, काष्ठा qedr_xrcd, ibxrcd);
+पूर्ण
 
-static inline struct qedr_cq *get_qedr_cq(struct ib_cq *ibcq)
-{
-	return container_of(ibcq, struct qedr_cq, ibcq);
-}
+अटल अंतरभूत काष्ठा qedr_cq *get_qedr_cq(काष्ठा ib_cq *ibcq)
+अणु
+	वापस container_of(ibcq, काष्ठा qedr_cq, ibcq);
+पूर्ण
 
-static inline struct qedr_qp *get_qedr_qp(struct ib_qp *ibqp)
-{
-	return container_of(ibqp, struct qedr_qp, ibqp);
-}
+अटल अंतरभूत काष्ठा qedr_qp *get_qedr_qp(काष्ठा ib_qp *ibqp)
+अणु
+	वापस container_of(ibqp, काष्ठा qedr_qp, ibqp);
+पूर्ण
 
-static inline struct qedr_ah *get_qedr_ah(struct ib_ah *ibah)
-{
-	return container_of(ibah, struct qedr_ah, ibah);
-}
+अटल अंतरभूत काष्ठा qedr_ah *get_qedr_ah(काष्ठा ib_ah *ibah)
+अणु
+	वापस container_of(ibah, काष्ठा qedr_ah, ibah);
+पूर्ण
 
-static inline struct qedr_mr *get_qedr_mr(struct ib_mr *ibmr)
-{
-	return container_of(ibmr, struct qedr_mr, ibmr);
-}
+अटल अंतरभूत काष्ठा qedr_mr *get_qedr_mr(काष्ठा ib_mr *ibmr)
+अणु
+	वापस container_of(ibmr, काष्ठा qedr_mr, ibmr);
+पूर्ण
 
-static inline struct qedr_srq *get_qedr_srq(struct ib_srq *ibsrq)
-{
-	return container_of(ibsrq, struct qedr_srq, ibsrq);
-}
+अटल अंतरभूत काष्ठा qedr_srq *get_qedr_srq(काष्ठा ib_srq *ibsrq)
+अणु
+	वापस container_of(ibsrq, काष्ठा qedr_srq, ibsrq);
+पूर्ण
 
-static inline bool qedr_qp_has_srq(struct qedr_qp *qp)
-{
-	return qp->srq;
-}
+अटल अंतरभूत bool qedr_qp_has_srq(काष्ठा qedr_qp *qp)
+अणु
+	वापस qp->srq;
+पूर्ण
 
-static inline bool qedr_qp_has_sq(struct qedr_qp *qp)
-{
-	if (qp->qp_type == IB_QPT_GSI || qp->qp_type == IB_QPT_XRC_TGT)
-		return false;
+अटल अंतरभूत bool qedr_qp_has_sq(काष्ठा qedr_qp *qp)
+अणु
+	अगर (qp->qp_type == IB_QPT_GSI || qp->qp_type == IB_QPT_XRC_TGT)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool qedr_qp_has_rq(struct qedr_qp *qp)
-{
-	if (qp->qp_type == IB_QPT_GSI || qp->qp_type == IB_QPT_XRC_INI ||
+अटल अंतरभूत bool qedr_qp_has_rq(काष्ठा qedr_qp *qp)
+अणु
+	अगर (qp->qp_type == IB_QPT_GSI || qp->qp_type == IB_QPT_XRC_INI ||
 	    qp->qp_type == IB_QPT_XRC_TGT || qedr_qp_has_srq(qp))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline struct qedr_user_mmap_entry *
-get_qedr_mmap_entry(struct rdma_user_mmap_entry *rdma_entry)
-{
-	return container_of(rdma_entry, struct qedr_user_mmap_entry,
+अटल अंतरभूत काष्ठा qedr_user_mmap_entry *
+get_qedr_mmap_entry(काष्ठा rdma_user_mmap_entry *rdma_entry)
+अणु
+	वापस container_of(rdma_entry, काष्ठा qedr_user_mmap_entry,
 			    rdma_entry);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

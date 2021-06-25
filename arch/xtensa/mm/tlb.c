@@ -1,11 +1,12 @@
+<शैली गुरु>
 /*
  * arch/xtensa/mm/tlb.c
  *
  * Logic that manipulates the Xtensa MMU.  Derived from MIPS.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2003 Tensilica Inc.
  *
@@ -14,200 +15,200 @@
  * Marc Gauthier
  */
 
-#include <linux/mm.h>
-#include <asm/processor.h>
-#include <asm/mmu_context.h>
-#include <asm/tlbflush.h>
-#include <asm/cacheflush.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/cacheflush.h>
 
 
-static inline void __flush_itlb_all (void)
-{
-	int w, i;
+अटल अंतरभूत व्योम __flush_itlb_all (व्योम)
+अणु
+	पूर्णांक w, i;
 
-	for (w = 0; w < ITLB_ARF_WAYS; w++) {
-		for (i = 0; i < (1 << XCHAL_ITLB_ARF_ENTRIES_LOG2); i++) {
-			int e = w + (i << PAGE_SHIFT);
+	क्रम (w = 0; w < ITLB_ARF_WAYS; w++) अणु
+		क्रम (i = 0; i < (1 << XCHAL_ITLB_ARF_ENTRIES_LOG2); i++) अणु
+			पूर्णांक e = w + (i << PAGE_SHIFT);
 			invalidate_itlb_entry_no_isync(e);
-		}
-	}
-	asm volatile ("isync\n");
-}
+		पूर्ण
+	पूर्ण
+	यंत्र अस्थिर ("isync\n");
+पूर्ण
 
-static inline void __flush_dtlb_all (void)
-{
-	int w, i;
+अटल अंतरभूत व्योम __flush_dtlb_all (व्योम)
+अणु
+	पूर्णांक w, i;
 
-	for (w = 0; w < DTLB_ARF_WAYS; w++) {
-		for (i = 0; i < (1 << XCHAL_DTLB_ARF_ENTRIES_LOG2); i++) {
-			int e = w + (i << PAGE_SHIFT);
+	क्रम (w = 0; w < DTLB_ARF_WAYS; w++) अणु
+		क्रम (i = 0; i < (1 << XCHAL_DTLB_ARF_ENTRIES_LOG2); i++) अणु
+			पूर्णांक e = w + (i << PAGE_SHIFT);
 			invalidate_dtlb_entry_no_isync(e);
-		}
-	}
-	asm volatile ("isync\n");
-}
+		पूर्ण
+	पूर्ण
+	यंत्र अस्थिर ("isync\n");
+पूर्ण
 
 
-void local_flush_tlb_all(void)
-{
+व्योम local_flush_tlb_all(व्योम)
+अणु
 	__flush_itlb_all();
 	__flush_dtlb_all();
-}
+पूर्ण
 
 /* If mm is current, we simply assign the current task a new ASID, thus,
- * invalidating all previous tlb entries. If mm is someone else's user mapping,
+ * invalidating all previous tlb entries. If mm is someone अन्यथा's user mapping,
  * wie invalidate the context, thus, when that user mapping is swapped in,
- * a new context will be assigned to it.
+ * a new context will be asचिन्हित to it.
  */
 
-void local_flush_tlb_mm(struct mm_struct *mm)
-{
-	int cpu = smp_processor_id();
+व्योम local_flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	पूर्णांक cpu = smp_processor_id();
 
-	if (mm == current->active_mm) {
-		unsigned long flags;
+	अगर (mm == current->active_mm) अणु
+		अचिन्हित दीर्घ flags;
 		local_irq_save(flags);
 		mm->context.asid[cpu] = NO_CONTEXT;
 		activate_context(mm, cpu);
 		local_irq_restore(flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		mm->context.asid[cpu] = NO_CONTEXT;
 		mm->context.cpu = -1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-#define _ITLB_ENTRIES (ITLB_ARF_WAYS << XCHAL_ITLB_ARF_ENTRIES_LOG2)
-#define _DTLB_ENTRIES (DTLB_ARF_WAYS << XCHAL_DTLB_ARF_ENTRIES_LOG2)
-#if _ITLB_ENTRIES > _DTLB_ENTRIES
+#घोषणा _ITLB_ENTRIES (ITLB_ARF_WAYS << XCHAL_ITLB_ARF_ENTRIES_LOG2)
+#घोषणा _DTLB_ENTRIES (DTLB_ARF_WAYS << XCHAL_DTLB_ARF_ENTRIES_LOG2)
+#अगर _ITLB_ENTRIES > _DTLB_ENTRIES
 # define _TLB_ENTRIES _ITLB_ENTRIES
-#else
+#अन्यथा
 # define _TLB_ENTRIES _DTLB_ENTRIES
-#endif
+#पूर्ण_अगर
 
-void local_flush_tlb_range(struct vm_area_struct *vma,
-		unsigned long start, unsigned long end)
-{
-	int cpu = smp_processor_id();
-	struct mm_struct *mm = vma->vm_mm;
-	unsigned long flags;
+व्योम local_flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+	अचिन्हित दीर्घ flags;
 
-	if (mm->context.asid[cpu] == NO_CONTEXT)
-		return;
+	अगर (mm->context.asid[cpu] == NO_CONTEXT)
+		वापस;
 
 	pr_debug("[tlbrange<%02lx,%08lx,%08lx>]\n",
-		 (unsigned long)mm->context.asid[cpu], start, end);
+		 (अचिन्हित दीर्घ)mm->context.asid[cpu], start, end);
 	local_irq_save(flags);
 
-	if (end-start + (PAGE_SIZE-1) <= _TLB_ENTRIES << PAGE_SHIFT) {
-		int oldpid = get_rasid_register();
+	अगर (end-start + (PAGE_SIZE-1) <= _TLB_ENTRIES << PAGE_SHIFT) अणु
+		पूर्णांक oldpid = get_rasid_रेजिस्टर();
 
-		set_rasid_register(ASID_INSERT(mm->context.asid[cpu]));
+		set_rasid_रेजिस्टर(ASID_INSERT(mm->context.asid[cpu]));
 		start &= PAGE_MASK;
-		if (vma->vm_flags & VM_EXEC)
-			while(start < end) {
+		अगर (vma->vm_flags & VM_EXEC)
+			जबतक(start < end) अणु
 				invalidate_itlb_mapping(start);
 				invalidate_dtlb_mapping(start);
 				start += PAGE_SIZE;
-			}
-		else
-			while(start < end) {
+			पूर्ण
+		अन्यथा
+			जबतक(start < end) अणु
 				invalidate_dtlb_mapping(start);
 				start += PAGE_SIZE;
-			}
+			पूर्ण
 
-		set_rasid_register(oldpid);
-	} else {
+		set_rasid_रेजिस्टर(oldpid);
+	पूर्ण अन्यथा अणु
 		local_flush_tlb_mm(mm);
-	}
+	पूर्ण
 	local_irq_restore(flags);
-}
+पूर्ण
 
-void local_flush_tlb_page(struct vm_area_struct *vma, unsigned long page)
-{
-	int cpu = smp_processor_id();
-	struct mm_struct* mm = vma->vm_mm;
-	unsigned long flags;
-	int oldpid;
+व्योम local_flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ page)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा mm_काष्ठा* mm = vma->vm_mm;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक oldpid;
 
-	if (mm->context.asid[cpu] == NO_CONTEXT)
-		return;
+	अगर (mm->context.asid[cpu] == NO_CONTEXT)
+		वापस;
 
 	local_irq_save(flags);
 
-	oldpid = get_rasid_register();
-	set_rasid_register(ASID_INSERT(mm->context.asid[cpu]));
+	oldpid = get_rasid_रेजिस्टर();
+	set_rasid_रेजिस्टर(ASID_INSERT(mm->context.asid[cpu]));
 
-	if (vma->vm_flags & VM_EXEC)
+	अगर (vma->vm_flags & VM_EXEC)
 		invalidate_itlb_mapping(page);
 	invalidate_dtlb_mapping(page);
 
-	set_rasid_register(oldpid);
+	set_rasid_रेजिस्टर(oldpid);
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
-void local_flush_tlb_kernel_range(unsigned long start, unsigned long end)
-{
-	if (end > start && start >= TASK_SIZE && end <= PAGE_OFFSET &&
-	    end - start < _TLB_ENTRIES << PAGE_SHIFT) {
+व्योम local_flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अगर (end > start && start >= TASK_SIZE && end <= PAGE_OFFSET &&
+	    end - start < _TLB_ENTRIES << PAGE_SHIFT) अणु
 		start &= PAGE_MASK;
-		while (start < end) {
+		जबतक (start < end) अणु
 			invalidate_itlb_mapping(start);
 			invalidate_dtlb_mapping(start);
 			start += PAGE_SIZE;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		local_flush_tlb_all();
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_DEBUG_TLB_SANITY
+#अगर_घोषित CONFIG_DEBUG_TLB_SANITY
 
-static unsigned get_pte_for_vaddr(unsigned vaddr)
-{
-	struct task_struct *task = get_current();
-	struct mm_struct *mm = task->mm;
+अटल अचिन्हित get_pte_क्रम_vaddr(अचिन्हित vaddr)
+अणु
+	काष्ठा task_काष्ठा *task = get_current();
+	काष्ठा mm_काष्ठा *mm = task->mm;
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
 
-	if (!mm)
+	अगर (!mm)
 		mm = task->active_mm;
 	pgd = pgd_offset(mm, vaddr);
-	if (pgd_none_or_clear_bad(pgd))
-		return 0;
+	अगर (pgd_none_or_clear_bad(pgd))
+		वापस 0;
 	p4d = p4d_offset(pgd, vaddr);
-	if (p4d_none_or_clear_bad(p4d))
-		return 0;
+	अगर (p4d_none_or_clear_bad(p4d))
+		वापस 0;
 	pud = pud_offset(p4d, vaddr);
-	if (pud_none_or_clear_bad(pud))
-		return 0;
+	अगर (pud_none_or_clear_bad(pud))
+		वापस 0;
 	pmd = pmd_offset(pud, vaddr);
-	if (pmd_none_or_clear_bad(pmd))
-		return 0;
+	अगर (pmd_none_or_clear_bad(pmd))
+		वापस 0;
 	pte = pte_offset_map(pmd, vaddr);
-	if (!pte)
-		return 0;
-	return pte_val(*pte);
-}
+	अगर (!pte)
+		वापस 0;
+	वापस pte_val(*pte);
+पूर्ण
 
-enum {
+क्रमागत अणु
 	TLB_SUSPICIOUS	= 1,
 	TLB_INSANE	= 2,
-};
+पूर्ण;
 
-static void tlb_insane(void)
-{
+अटल व्योम tlb_insane(व्योम)
+अणु
 	BUG_ON(1);
-}
+पूर्ण
 
-static void tlb_suspicious(void)
-{
+अटल व्योम tlb_suspicious(व्योम)
+अणु
 	WARN_ON(1);
-}
+पूर्ण
 
 /*
  * Check that TLB entries with kernel ASID (1) have kernel VMA (>= TASK_SIZE),
@@ -215,70 +216,70 @@ static void tlb_suspicious(void)
  *
  * Check that valid TLB entries either have the same PA as the PTE, or PTE is
  * marked as non-present. Non-present PTE and the page with non-zero refcount
- * and zero mapcount is normal for batched TLB flush operation. Zero refcount
- * means that the page was freed prematurely. Non-zero mapcount is unusual,
- * but does not necessary means an error, thus marked as suspicious.
+ * and zero mapcount is normal क्रम batched TLB flush operation. Zero refcount
+ * means that the page was मुक्तd prematurely. Non-zero mapcount is unusual,
+ * but करोes not necessary means an error, thus marked as suspicious.
  */
-static int check_tlb_entry(unsigned w, unsigned e, bool dtlb)
-{
-	unsigned tlbidx = w | (e << PAGE_SHIFT);
-	unsigned r0 = dtlb ?
-		read_dtlb_virtual(tlbidx) : read_itlb_virtual(tlbidx);
-	unsigned r1 = dtlb ?
-		read_dtlb_translation(tlbidx) : read_itlb_translation(tlbidx);
-	unsigned vpn = (r0 & PAGE_MASK) | (e << PAGE_SHIFT);
-	unsigned pte = get_pte_for_vaddr(vpn);
-	unsigned mm_asid = (get_rasid_register() >> 8) & ASID_MASK;
-	unsigned tlb_asid = r0 & ASID_MASK;
+अटल पूर्णांक check_tlb_entry(अचिन्हित w, अचिन्हित e, bool dtlb)
+अणु
+	अचिन्हित tlbidx = w | (e << PAGE_SHIFT);
+	अचिन्हित r0 = dtlb ?
+		पढ़ो_dtlb_भव(tlbidx) : पढ़ो_itlb_भव(tlbidx);
+	अचिन्हित r1 = dtlb ?
+		पढ़ो_dtlb_translation(tlbidx) : पढ़ो_itlb_translation(tlbidx);
+	अचिन्हित vpn = (r0 & PAGE_MASK) | (e << PAGE_SHIFT);
+	अचिन्हित pte = get_pte_क्रम_vaddr(vpn);
+	अचिन्हित mm_asid = (get_rasid_रेजिस्टर() >> 8) & ASID_MASK;
+	अचिन्हित tlb_asid = r0 & ASID_MASK;
 	bool kernel = tlb_asid == 1;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	if (tlb_asid > 0 && ((vpn < TASK_SIZE) == kernel)) {
+	अगर (tlb_asid > 0 && ((vpn < TASK_SIZE) == kernel)) अणु
 		pr_err("%cTLB: way: %u, entry: %u, VPN %08x in %s PTE\n",
 				dtlb ? 'D' : 'I', w, e, vpn,
 				kernel ? "kernel" : "user");
 		rc |= TLB_INSANE;
-	}
+	पूर्ण
 
-	if (tlb_asid == mm_asid) {
-		if ((pte ^ r1) & PAGE_MASK) {
+	अगर (tlb_asid == mm_asid) अणु
+		अगर ((pte ^ r1) & PAGE_MASK) अणु
 			pr_err("%cTLB: way: %u, entry: %u, mapping: %08x->%08x, PTE: %08x\n",
 					dtlb ? 'D' : 'I', w, e, r0, r1, pte);
-			if (pte == 0 || !pte_present(__pte(pte))) {
-				struct page *p = pfn_to_page(r1 >> PAGE_SHIFT);
+			अगर (pte == 0 || !pte_present(__pte(pte))) अणु
+				काष्ठा page *p = pfn_to_page(r1 >> PAGE_SHIFT);
 				pr_err("page refcount: %d, mapcount: %d\n",
 						page_count(p),
 						page_mapcount(p));
-				if (!page_count(p))
+				अगर (!page_count(p))
 					rc |= TLB_INSANE;
-				else if (page_mapcount(p))
+				अन्यथा अगर (page_mapcount(p))
 					rc |= TLB_SUSPICIOUS;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc |= TLB_INSANE;
-			}
-		}
-	}
-	return rc;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-void check_tlb_sanity(void)
-{
-	unsigned long flags;
-	unsigned w, e;
-	int bug = 0;
+व्योम check_tlb_sanity(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित w, e;
+	पूर्णांक bug = 0;
 
 	local_irq_save(flags);
-	for (w = 0; w < DTLB_ARF_WAYS; ++w)
-		for (e = 0; e < (1 << XCHAL_DTLB_ARF_ENTRIES_LOG2); ++e)
+	क्रम (w = 0; w < DTLB_ARF_WAYS; ++w)
+		क्रम (e = 0; e < (1 << XCHAL_DTLB_ARF_ENTRIES_LOG2); ++e)
 			bug |= check_tlb_entry(w, e, true);
-	for (w = 0; w < ITLB_ARF_WAYS; ++w)
-		for (e = 0; e < (1 << XCHAL_ITLB_ARF_ENTRIES_LOG2); ++e)
+	क्रम (w = 0; w < ITLB_ARF_WAYS; ++w)
+		क्रम (e = 0; e < (1 << XCHAL_ITLB_ARF_ENTRIES_LOG2); ++e)
 			bug |= check_tlb_entry(w, e, false);
-	if (bug & TLB_INSANE)
+	अगर (bug & TLB_INSANE)
 		tlb_insane();
-	if (bug & TLB_SUSPICIOUS)
+	अगर (bug & TLB_SUSPICIOUS)
 		tlb_suspicious();
 	local_irq_restore(flags);
-}
+पूर्ण
 
-#endif /* CONFIG_DEBUG_TLB_SANITY */
+#पूर्ण_अगर /* CONFIG_DEBUG_TLB_SANITY */

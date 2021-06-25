@@ -1,259 +1,260 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_address.h>
-#include <linux/of_iommu.h>
-#include <linux/dma-direct.h> /* for bus_dma_region */
-#include <linux/dma-map-ops.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_iommu.h>
+#समावेश <linux/dma-direct.h> /* क्रम bus_dma_region */
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/errno.h>
-#include "of_private.h"
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश "of_private.h"
 
 /**
- * of_match_device - Tell if a struct device matches an of_device_id list
- * @matches: array of of device match structures to search in
- * @dev: the of device structure to match against
+ * of_match_device - Tell अगर a काष्ठा device matches an of_device_id list
+ * @matches: array of of device match काष्ठाures to search in
+ * @dev: the of device काष्ठाure to match against
  *
- * Used by a driver to check whether an platform_device present in the
- * system is in its list of supported devices.
+ * Used by a driver to check whether an platक्रमm_device present in the
+ * प्रणाली is in its list of supported devices.
  */
-const struct of_device_id *of_match_device(const struct of_device_id *matches,
-					   const struct device *dev)
-{
-	if ((!matches) || (!dev->of_node))
-		return NULL;
-	return of_match_node(matches, dev->of_node);
-}
+स्थिर काष्ठा of_device_id *of_match_device(स्थिर काष्ठा of_device_id *matches,
+					   स्थिर काष्ठा device *dev)
+अणु
+	अगर ((!matches) || (!dev->of_node))
+		वापस शून्य;
+	वापस of_match_node(matches, dev->of_node);
+पूर्ण
 EXPORT_SYMBOL(of_match_device);
 
-int of_device_add(struct platform_device *ofdev)
-{
-	BUG_ON(ofdev->dev.of_node == NULL);
+पूर्णांक of_device_add(काष्ठा platक्रमm_device *ofdev)
+अणु
+	BUG_ON(ofdev->dev.of_node == शून्य);
 
-	/* name and id have to be set so that the platform bus doesn't get
+	/* name and id have to be set so that the platक्रमm bus करोesn't get
 	 * confused on matching */
 	ofdev->name = dev_name(&ofdev->dev);
 	ofdev->id = PLATFORM_DEVID_NONE;
 
 	/*
 	 * If this device has not binding numa node in devicetree, that is
-	 * of_node_to_nid returns NUMA_NO_NODE. device_add will assume that this
+	 * of_node_to_nid वापसs NUMA_NO_NODE. device_add will assume that this
 	 * device is on the same node as the parent.
 	 */
 	set_dev_node(&ofdev->dev, of_node_to_nid(ofdev->dev.of_node));
 
-	return device_add(&ofdev->dev);
-}
+	वापस device_add(&ofdev->dev);
+पूर्ण
 
 /**
  * of_dma_configure_id - Setup DMA configuration
  * @dev:	Device to apply DMA configuration
- * @np:		Pointer to OF node having DMA configuration
- * @force_dma:  Whether device is to be set up by of_dma_configure() even if
+ * @np:		Poपूर्णांकer to OF node having DMA configuration
+ * @क्रमce_dma:  Whether device is to be set up by of_dma_configure() even अगर
  *		DMA capability is not explicitly described by firmware.
- * @id:		Optional const pointer value input id
+ * @id:		Optional स्थिर poपूर्णांकer value input id
  *
  * Try to get devices's DMA configuration from DT and update it
  * accordingly.
  *
- * If platform code needs to use its own special DMA configuration, it
- * can use a platform bus notifier and handle BUS_NOTIFY_ADD_DEVICE events
+ * If platक्रमm code needs to use its own special DMA configuration, it
+ * can use a platक्रमm bus notअगरier and handle BUS_NOTIFY_ADD_DEVICE events
  * to fix up DMA configuration.
  */
-int of_dma_configure_id(struct device *dev, struct device_node *np,
-			bool force_dma, const u32 *id)
-{
-	const struct iommu_ops *iommu;
-	const struct bus_dma_region *map = NULL;
+पूर्णांक of_dma_configure_id(काष्ठा device *dev, काष्ठा device_node *np,
+			bool क्रमce_dma, स्थिर u32 *id)
+अणु
+	स्थिर काष्ठा iommu_ops *iommu;
+	स्थिर काष्ठा bus_dma_region *map = शून्य;
 	u64 dma_start = 0;
 	u64 mask, end, size = 0;
 	bool coherent;
-	int ret;
+	पूर्णांक ret;
 
 	ret = of_dma_get_range(np, &map);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		/*
 		 * For legacy reasons, we have to assume some devices need
 		 * DMA configuration regardless of whether "dma-ranges" is
-		 * correctly specified or not.
+		 * correctly specअगरied or not.
 		 */
-		if (!force_dma)
-			return ret == -ENODEV ? 0 : ret;
-	} else {
-		const struct bus_dma_region *r = map;
+		अगर (!क्रमce_dma)
+			वापस ret == -ENODEV ? 0 : ret;
+	पूर्ण अन्यथा अणु
+		स्थिर काष्ठा bus_dma_region *r = map;
 		u64 dma_end = 0;
 
 		/* Determine the overall bounds of all DMA regions */
-		for (dma_start = ~0; r->size; r++) {
+		क्रम (dma_start = ~0; r->size; r++) अणु
 			/* Take lower and upper limits */
-			if (r->dma_start < dma_start)
+			अगर (r->dma_start < dma_start)
 				dma_start = r->dma_start;
-			if (r->dma_start + r->size > dma_end)
+			अगर (r->dma_start + r->size > dma_end)
 				dma_end = r->dma_start + r->size;
-		}
+		पूर्ण
 		size = dma_end - dma_start;
 
 		/*
-		 * Add a work around to treat the size as mask + 1 in case
+		 * Add a work around to treat the size as mask + 1 in हाल
 		 * it is defined in DT as a mask.
 		 */
-		if (size & 1) {
+		अगर (size & 1) अणु
 			dev_warn(dev, "Invalid size 0x%llx for dma-range(s)\n",
 				 size);
 			size = size + 1;
-		}
+		पूर्ण
 
-		if (!size) {
+		अगर (!size) अणु
 			dev_err(dev, "Adjusted size 0x%llx invalid\n", size);
-			kfree(map);
-			return -EINVAL;
-		}
-	}
+			kमुक्त(map);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If @dev is expected to be DMA-capable then the bus code that created
-	 * it should have initialised its dma_mask pointer by this point. For
-	 * now, we'll continue the legacy behaviour of coercing it to the
-	 * coherent mask if not, but we'll no longer do so quietly.
+	 * it should have initialised its dma_mask poपूर्णांकer by this poपूर्णांक. For
+	 * now, we'll जारी the legacy behaviour of coercing it to the
+	 * coherent mask अगर not, but we'll no दीर्घer करो so quietly.
 	 */
-	if (!dev->dma_mask) {
+	अगर (!dev->dma_mask) अणु
 		dev_warn(dev, "DMA mask not set\n");
 		dev->dma_mask = &dev->coherent_dma_mask;
-	}
+	पूर्ण
 
-	if (!size && dev->coherent_dma_mask)
+	अगर (!size && dev->coherent_dma_mask)
 		size = max(dev->coherent_dma_mask, dev->coherent_dma_mask + 1);
-	else if (!size)
+	अन्यथा अगर (!size)
 		size = 1ULL << 32;
 
 	/*
-	 * Limit coherent and dma mask based on size and default mask
+	 * Limit coherent and dma mask based on size and शेष mask
 	 * set by the driver.
 	 */
 	end = dma_start + size - 1;
 	mask = DMA_BIT_MASK(ilog2(end) + 1);
 	dev->coherent_dma_mask &= mask;
 	*dev->dma_mask &= mask;
-	/* ...but only set bus limit and range map if we found valid dma-ranges earlier */
-	if (!ret) {
+	/* ...but only set bus limit and range map अगर we found valid dma-ranges earlier */
+	अगर (!ret) अणु
 		dev->bus_dma_limit = end;
 		dev->dma_range_map = map;
-	}
+	पूर्ण
 
 	coherent = of_dma_is_coherent(np);
 	dev_dbg(dev, "device is%sdma coherent\n",
 		coherent ? " " : " not ");
 
 	iommu = of_iommu_configure(dev, np, id);
-	if (PTR_ERR(iommu) == -EPROBE_DEFER) {
+	अगर (PTR_ERR(iommu) == -EPROBE_DEFER) अणु
 		/* Don't touch range map if it wasn't set from a valid dma-ranges */
-		if (!ret)
-			dev->dma_range_map = NULL;
-		kfree(map);
-		return -EPROBE_DEFER;
-	}
+		अगर (!ret)
+			dev->dma_range_map = शून्य;
+		kमुक्त(map);
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
 	dev_dbg(dev, "device is%sbehind an iommu\n",
 		iommu ? " " : " not ");
 
 	arch_setup_dma_ops(dev, dma_start, size, iommu, coherent);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_dma_configure_id);
 
-int of_device_register(struct platform_device *pdev)
-{
+पूर्णांक of_device_रेजिस्टर(काष्ठा platक्रमm_device *pdev)
+अणु
 	device_initialize(&pdev->dev);
-	return of_device_add(pdev);
-}
-EXPORT_SYMBOL(of_device_register);
+	वापस of_device_add(pdev);
+पूर्ण
+EXPORT_SYMBOL(of_device_रेजिस्टर);
 
-void of_device_unregister(struct platform_device *ofdev)
-{
-	device_unregister(&ofdev->dev);
-}
-EXPORT_SYMBOL(of_device_unregister);
+व्योम of_device_unरेजिस्टर(काष्ठा platक्रमm_device *ofdev)
+अणु
+	device_unरेजिस्टर(&ofdev->dev);
+पूर्ण
+EXPORT_SYMBOL(of_device_unरेजिस्टर);
 
-const void *of_device_get_match_data(const struct device *dev)
-{
-	const struct of_device_id *match;
+स्थिर व्योम *of_device_get_match_data(स्थिर काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
 
 	match = of_match_device(dev->driver->of_match_table, dev);
-	if (!match)
-		return NULL;
+	अगर (!match)
+		वापस शून्य;
 
-	return match->data;
-}
+	वापस match->data;
+पूर्ण
 EXPORT_SYMBOL(of_device_get_match_data);
 
-static ssize_t of_device_get_modalias(struct device *dev, char *str, ssize_t len)
-{
-	const char *compat;
-	char *c;
-	struct property *p;
-	ssize_t csize;
-	ssize_t tsize;
+अटल sमाप_प्रकार of_device_get_modalias(काष्ठा device *dev, अक्षर *str, sमाप_प्रकार len)
+अणु
+	स्थिर अक्षर *compat;
+	अक्षर *c;
+	काष्ठा property *p;
+	sमाप_प्रकार csize;
+	sमाप_प्रकार tsize;
 
-	if ((!dev) || (!dev->of_node))
-		return -ENODEV;
+	अगर ((!dev) || (!dev->of_node))
+		वापस -ENODEV;
 
 	/* Name & Type */
-	/* %p eats all alphanum characters, so %c must be used here */
-	csize = snprintf(str, len, "of:N%pOFn%c%s", dev->of_node, 'T',
+	/* %p eats all alphanum अक्षरacters, so %c must be used here */
+	csize = snम_लिखो(str, len, "of:N%pOFn%c%s", dev->of_node, 'T',
 			 of_node_get_device_type(dev->of_node));
 	tsize = csize;
 	len -= csize;
-	if (str)
+	अगर (str)
 		str += csize;
 
-	of_property_for_each_string(dev->of_node, "compatible", p, compat) {
-		csize = strlen(compat) + 1;
+	of_property_क्रम_each_string(dev->of_node, "compatible", p, compat) अणु
+		csize = म_माप(compat) + 1;
 		tsize += csize;
-		if (csize > len)
-			continue;
+		अगर (csize > len)
+			जारी;
 
-		csize = snprintf(str, len, "C%s", compat);
-		for (c = str; c; ) {
-			c = strchr(c, ' ');
-			if (c)
+		csize = snम_लिखो(str, len, "C%s", compat);
+		क्रम (c = str; c; ) अणु
+			c = म_अक्षर(c, ' ');
+			अगर (c)
 				*c++ = '_';
-		}
+		पूर्ण
 		len -= csize;
 		str += csize;
-	}
+	पूर्ण
 
-	return tsize;
-}
+	वापस tsize;
+पूर्ण
 
-int of_device_request_module(struct device *dev)
-{
-	char *str;
-	ssize_t size;
-	int ret;
+पूर्णांक of_device_request_module(काष्ठा device *dev)
+अणु
+	अक्षर *str;
+	sमाप_प्रकार size;
+	पूर्णांक ret;
 
-	size = of_device_get_modalias(dev, NULL, 0);
-	if (size < 0)
-		return size;
+	size = of_device_get_modalias(dev, शून्य, 0);
+	अगर (size < 0)
+		वापस size;
 
-	str = kmalloc(size + 1, GFP_KERNEL);
-	if (!str)
-		return -ENOMEM;
+	str = kदो_स्मृति(size + 1, GFP_KERNEL);
+	अगर (!str)
+		वापस -ENOMEM;
 
 	of_device_get_modalias(dev, str, size);
 	str[size] = '\0';
 	ret = request_module(str);
-	kfree(str);
+	kमुक्त(str);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_device_request_module);
 
 /**
@@ -262,79 +263,79 @@ EXPORT_SYMBOL_GPL(of_device_request_module);
  * @str:	Modalias string
  * @len:	Size of @str
  */
-ssize_t of_device_modalias(struct device *dev, char *str, ssize_t len)
-{
-	ssize_t sl = of_device_get_modalias(dev, str, len - 2);
-	if (sl < 0)
-		return sl;
-	if (sl > len - 2)
-		return -ENOMEM;
+sमाप_प्रकार of_device_modalias(काष्ठा device *dev, अक्षर *str, sमाप_प्रकार len)
+अणु
+	sमाप_प्रकार sl = of_device_get_modalias(dev, str, len - 2);
+	अगर (sl < 0)
+		वापस sl;
+	अगर (sl > len - 2)
+		वापस -ENOMEM;
 
 	str[sl++] = '\n';
 	str[sl] = 0;
-	return sl;
-}
+	वापस sl;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_device_modalias);
 
 /**
- * of_device_uevent - Display OF related uevent information
+ * of_device_uevent - Display OF related uevent inक्रमmation
  * @dev:	Device to apply DMA configuration
  * @env:	Kernel object's userspace event reference
  */
-void of_device_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	const char *compat, *type;
-	struct alias_prop *app;
-	struct property *p;
-	int seen = 0;
+व्योम of_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	स्थिर अक्षर *compat, *type;
+	काष्ठा alias_prop *app;
+	काष्ठा property *p;
+	पूर्णांक seen = 0;
 
-	if ((!dev) || (!dev->of_node))
-		return;
+	अगर ((!dev) || (!dev->of_node))
+		वापस;
 
 	add_uevent_var(env, "OF_NAME=%pOFn", dev->of_node);
 	add_uevent_var(env, "OF_FULLNAME=%pOF", dev->of_node);
 	type = of_node_get_device_type(dev->of_node);
-	if (type)
+	अगर (type)
 		add_uevent_var(env, "OF_TYPE=%s", type);
 
 	/* Since the compatible field can contain pretty much anything
 	 * it's not really legal to split it out with commas. We split it
 	 * up using a number of environment variables instead. */
-	of_property_for_each_string(dev->of_node, "compatible", p, compat) {
+	of_property_क्रम_each_string(dev->of_node, "compatible", p, compat) अणु
 		add_uevent_var(env, "OF_COMPATIBLE_%d=%s", seen, compat);
 		seen++;
-	}
+	पूर्ण
 	add_uevent_var(env, "OF_COMPATIBLE_N=%d", seen);
 
 	seen = 0;
 	mutex_lock(&of_mutex);
-	list_for_each_entry(app, &aliases_lookup, link) {
-		if (dev->of_node == app->np) {
+	list_क्रम_each_entry(app, &aliases_lookup, link) अणु
+		अगर (dev->of_node == app->np) अणु
 			add_uevent_var(env, "OF_ALIAS_%d=%s", seen,
 				       app->alias);
 			seen++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&of_mutex);
-}
+पूर्ण
 
-int of_device_uevent_modalias(struct device *dev, struct kobj_uevent_env *env)
-{
-	int sl;
+पूर्णांक of_device_uevent_modalias(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	पूर्णांक sl;
 
-	if ((!dev) || (!dev->of_node))
-		return -ENODEV;
+	अगर ((!dev) || (!dev->of_node))
+		वापस -ENODEV;
 
 	/* Devicetree modalias is tricky, we add it in 2 steps */
-	if (add_uevent_var(env, "MODALIAS="))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "MODALIAS="))
+		वापस -ENOMEM;
 
 	sl = of_device_get_modalias(dev, &env->buf[env->buflen-1],
-				    sizeof(env->buf) - env->buflen);
-	if (sl >= (sizeof(env->buf) - env->buflen))
-		return -ENOMEM;
+				    माप(env->buf) - env->buflen);
+	अगर (sl >= (माप(env->buf) - env->buflen))
+		वापस -ENOMEM;
 	env->buflen += sl;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_device_uevent_modalias);

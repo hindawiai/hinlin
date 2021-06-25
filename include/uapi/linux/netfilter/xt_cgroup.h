@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_XT_CGROUP_H
-#define _UAPI_XT_CGROUP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_XT_CGROUP_H
+#घोषणा _UAPI_XT_CGROUP_H
 
-#include <linux/types.h>
-#include <linux/limits.h>
+#समावेश <linux/types.h>
+#समावेश <linux/सीमा.स>
 
-struct xt_cgroup_info_v0 {
+काष्ठा xt_cgroup_info_v0 अणु
 	__u32 id;
 	__u32 invert;
-};
+पूर्ण;
 
-struct xt_cgroup_info_v1 {
+काष्ठा xt_cgroup_info_v1 अणु
 	__u8		has_path;
 	__u8		has_classid;
 	__u8		invert_path;
 	__u8		invert_classid;
-	char		path[PATH_MAX];
+	अक्षर		path[PATH_MAX];
 	__u32		classid;
 
-	/* kernel internal data */
-	void		*priv __attribute__((aligned(8)));
-};
+	/* kernel पूर्णांकernal data */
+	व्योम		*priv __attribute__((aligned(8)));
+पूर्ण;
 
-#define XT_CGROUP_PATH_MAX	512
+#घोषणा XT_CGROUP_PATH_MAX	512
 
-struct xt_cgroup_info_v2 {
+काष्ठा xt_cgroup_info_v2 अणु
 	__u8		has_path;
 	__u8		has_classid;
 	__u8		invert_path;
 	__u8		invert_classid;
-	union {
-		char	path[XT_CGROUP_PATH_MAX];
+	जोड़ अणु
+		अक्षर	path[XT_CGROUP_PATH_MAX];
 		__u32	classid;
-	};
+	पूर्ण;
 
-	/* kernel internal data */
-	void		*priv __attribute__((aligned(8)));
-};
+	/* kernel पूर्णांकernal data */
+	व्योम		*priv __attribute__((aligned(8)));
+पूर्ण;
 
-#endif /* _UAPI_XT_CGROUP_H */
+#पूर्ण_अगर /* _UAPI_XT_CGROUP_H */

@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
-#ifndef __RTW_DEBUG_H
-#define __RTW_DEBUG_H
+#अगर_अघोषित __RTW_DEBUG_H
+#घोषणा __RTW_DEBUG_H
 
-enum rtw_debug_mask {
+क्रमागत rtw_debug_mask अणु
 	RTW_DBG_PCI		= 0x00000001,
 	RTW_DBG_TX		= 0x00000002,
 	RTW_DBG_RX		= 0x00000004,
@@ -22,36 +23,36 @@ enum rtw_debug_mask {
 	RTW_DBG_CFO		= 0x00002000,
 
 	RTW_DBG_ALL		= 0xffffffff
-};
+पूर्ण;
 
-#ifdef CONFIG_RTW88_DEBUGFS
+#अगर_घोषित CONFIG_RTW88_DEBUGFS
 
-void rtw_debugfs_init(struct rtw_dev *rtwdev);
-void rtw_debugfs_get_simple_phy_info(struct seq_file *m);
+व्योम rtw_debugfs_init(काष्ठा rtw_dev *rtwdev);
+व्योम rtw_debugfs_get_simple_phy_info(काष्ठा seq_file *m);
 
-#else
+#अन्यथा
 
-static inline void rtw_debugfs_init(struct rtw_dev *rtwdev) {}
+अटल अंतरभूत व्योम rtw_debugfs_init(काष्ठा rtw_dev *rtwdev) अणुपूर्ण
 
-#endif /* CONFIG_RTW88_DEBUGFS */
+#पूर्ण_अगर /* CONFIG_RTW88_DEBUGFS */
 
-#ifdef CONFIG_RTW88_DEBUG
+#अगर_घोषित CONFIG_RTW88_DEBUG
 
-__printf(3, 4)
-void __rtw_dbg(struct rtw_dev *rtwdev, enum rtw_debug_mask mask,
-	       const char *fmt, ...);
+__म_लिखो(3, 4)
+व्योम __rtw_dbg(काष्ठा rtw_dev *rtwdev, क्रमागत rtw_debug_mask mask,
+	       स्थिर अक्षर *fmt, ...);
 
-#define rtw_dbg(rtwdev, a...) __rtw_dbg(rtwdev, ##a)
+#घोषणा rtw_dbg(rtwdev, a...) __rtw_dbg(rtwdev, ##a)
 
-#else
+#अन्यथा
 
-static inline void rtw_dbg(struct rtw_dev *rtwdev, enum rtw_debug_mask mask,
-			   const char *fmt, ...) {}
+अटल अंतरभूत व्योम rtw_dbg(काष्ठा rtw_dev *rtwdev, क्रमागत rtw_debug_mask mask,
+			   स्थिर अक्षर *fmt, ...) अणुपूर्ण
 
-#endif /* CONFIG_RTW88_DEBUG */
+#पूर्ण_अगर /* CONFIG_RTW88_DEBUG */
 
-#define rtw_info(rtwdev, a...) dev_info(rtwdev->dev, ##a)
-#define rtw_warn(rtwdev, a...) dev_warn(rtwdev->dev, ##a)
-#define rtw_err(rtwdev, a...) dev_err(rtwdev->dev, ##a)
+#घोषणा rtw_info(rtwdev, a...) dev_info(rtwdev->dev, ##a)
+#घोषणा rtw_warn(rtwdev, a...) dev_warn(rtwdev->dev, ##a)
+#घोषणा rtw_err(rtwdev, a...) dev_err(rtwdev->dev, ##a)
 
-#endif
+#पूर्ण_अगर

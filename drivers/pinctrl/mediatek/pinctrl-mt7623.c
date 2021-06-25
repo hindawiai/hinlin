@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * The MT7623 driver based on Linux generic pinctrl binding.
  *
@@ -8,48 +9,48 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
-#include "pinctrl-moore.h"
+#समावेश "pinctrl-moore.h"
 
-#define PIN_BOND_REG0		0xb10
-#define PIN_BOND_REG1		0xf20
-#define PIN_BOND_REG2		0xef0
-#define BOND_PCIE_CLR		(0x77 << 3)
-#define BOND_I2S_CLR		0x3
-#define BOND_MSDC0E_CLR		0x1
+#घोषणा PIN_BOND_REG0		0xb10
+#घोषणा PIN_BOND_REG1		0xf20
+#घोषणा PIN_BOND_REG2		0xef0
+#घोषणा BOND_PCIE_CLR		(0x77 << 3)
+#घोषणा BOND_I2S_CLR		0x3
+#घोषणा BOND_MSDC0E_CLR		0x1
 
-#define PIN_FIELD15(_s_pin, _e_pin, _s_addr, _x_addrs, _s_bit, _x_bits)	\
+#घोषणा PIN_FIELD15(_s_pin, _e_pin, _s_addr, _x_addrs, _s_bit, _x_bits)	\
 	PIN_FIELD_CALC(_s_pin, _e_pin, 0, _s_addr, _x_addrs, _s_bit,	\
 		       _x_bits, 15, false)
 
-#define PIN_FIELD16(_s_pin, _e_pin, _s_addr, _x_addrs, _s_bit, _x_bits)	\
+#घोषणा PIN_FIELD16(_s_pin, _e_pin, _s_addr, _x_addrs, _s_bit, _x_bits)	\
 	PIN_FIELD_CALC(_s_pin, _e_pin, 0, _s_addr, _x_addrs, _s_bit,	\
 		       _x_bits, 16, 0)
 
-#define PINS_FIELD16(_s_pin, _e_pin, _s_addr, _x_addrs, _s_bit, _x_bits)	\
+#घोषणा PINS_FIELD16(_s_pin, _e_pin, _s_addr, _x_addrs, _s_bit, _x_bits)	\
 	PIN_FIELD_CALC(_s_pin, _e_pin, 0, _s_addr, _x_addrs, _s_bit,	\
 		       _x_bits, 16, 1)
 
-#define MT7623_PIN(_number, _name, _eint_n, _drv_grp)			\
-	MTK_PIN(_number, _name, 0, _eint_n, _drv_grp)
+#घोषणा MT7623_PIN(_number, _name, _eपूर्णांक_n, _drv_grp)			\
+	MTK_PIN(_number, _name, 0, _eपूर्णांक_n, _drv_grp)
 
-static const struct mtk_pin_field_calc mt7623_pin_mode_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_mode_range[] = अणु
 	PIN_FIELD15(0, 278, 0x760, 0x10, 0, 3),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_dir_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_dir_range[] = अणु
 	PIN_FIELD16(0, 175, 0x0, 0x10, 0, 1),
 	PIN_FIELD16(176, 278, 0xc0, 0x10, 0, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_di_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_di_range[] = अणु
 	PIN_FIELD16(0, 278, 0x630, 0x10, 0, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_do_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_करो_range[] = अणु
 	PIN_FIELD16(0, 278, 0x500, 0x10, 0, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_ies_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_ies_range[] = अणु
 	PINS_FIELD16(0, 6, 0xb20, 0x10, 0, 1),
 	PINS_FIELD16(7, 9, 0xb20, 0x10, 1, 1),
 	PINS_FIELD16(10, 13, 0xb30, 0x10, 3, 1),
@@ -114,9 +115,9 @@ static const struct mtk_pin_field_calc mt7623_pin_ies_range[] = {
 	PIN_FIELD16(261, 261, 0xd50, 0x10, 4, 1),
 	PINS_FIELD16(262, 277, 0xb40, 0x10, 12, 1),
 	PIN_FIELD16(278, 278, 0xb40, 0x10, 13, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_smt_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_smt_range[] = अणु
 	PINS_FIELD16(0, 6, 0xb50, 0x10, 0, 1),
 	PINS_FIELD16(7, 9, 0xb50, 0x10, 1, 1),
 	PINS_FIELD16(10, 13, 0xb60, 0x10, 3, 1),
@@ -202,17 +203,17 @@ static const struct mtk_pin_field_calc mt7623_pin_smt_range[] = {
 	PIN_FIELD16(261, 261, 0x0b0, 0x10, 3, 1),
 	PINS_FIELD16(262, 277, 0xb70, 0x10, 12, 1),
 	PIN_FIELD16(278, 278, 0xb70, 0x10, 13, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_pullen_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_pullen_range[] = अणु
 	PIN_FIELD16(0, 278, 0x150, 0x10, 0, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_pullsel_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_pullsel_range[] = अणु
 	PIN_FIELD16(0, 278, 0x280, 0x10, 0, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_drv_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_drv_range[] = अणु
 	PINS_FIELD16(0, 6, 0xf50, 0x10, 0, 4),
 	PINS_FIELD16(7, 9, 0xf50, 0x10, 4, 4),
 	PINS_FIELD16(10, 13, 0xf50, 0x10, 4, 4),
@@ -265,13 +266,13 @@ static const struct mtk_pin_field_calc mt7623_pin_drv_range[] = {
 	PIN_FIELD16(261, 261, 0xd50, 0x10, 0, 4),
 	PINS_FIELD16(262, 277, 0xf00, 0x10, 8, 4),
 	PIN_FIELD16(278, 278, 0xf70, 0x10, 8, 4),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_tdsel_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_tdsel_range[] = अणु
 	PINS_FIELD16(262, 276, 0x4c0, 0x10, 0, 4),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_pupd_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_pupd_range[] = अणु
 	/* MSDC0 */
 	PIN_FIELD16(111, 111, 0xd00, 0x10, 12, 1),
 	PIN_FIELD16(112, 112, 0xd00, 0x10, 8, 1),
@@ -311,9 +312,9 @@ static const struct mtk_pin_field_calc mt7623_pin_pupd_range[] = {
 	PIN_FIELD16(258, 258, 0xcb0, 0x10, 8, 1),
 	PIN_FIELD16(259, 259, 0xc90, 0x10, 8, 1),
 	PIN_FIELD16(261, 261, 0x140, 0x10, 8, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_r1_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_r1_range[] = अणु
 	/* MSDC0 */
 	PIN_FIELD16(111, 111, 0xd00, 0x10, 13, 1),
 	PIN_FIELD16(112, 112, 0xd00, 0x10, 9, 1),
@@ -353,9 +354,9 @@ static const struct mtk_pin_field_calc mt7623_pin_r1_range[] = {
 	PIN_FIELD16(258, 258, 0xcb0, 0x10, 9, 1),
 	PIN_FIELD16(259, 259, 0xc90, 0x10, 9, 1),
 	PIN_FIELD16(261, 261, 0x140, 0x10, 9, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_field_calc mt7623_pin_r0_range[] = {
+अटल स्थिर काष्ठा mtk_pin_field_calc mt7623_pin_r0_range[] = अणु
 	/* MSDC0 */
 	PIN_FIELD16(111, 111, 0xd00, 0x10, 14, 1),
 	PIN_FIELD16(112, 112, 0xd00, 0x10, 10, 1),
@@ -395,13 +396,13 @@ static const struct mtk_pin_field_calc mt7623_pin_r0_range[] = {
 	PIN_FIELD16(258, 258, 0xcb0, 0x10, 10, 1),
 	PIN_FIELD16(259, 259, 0xc90, 0x10, 10, 1),
 	PIN_FIELD16(261, 261, 0x140, 0x10, 10, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_reg_calc mt7623_reg_cals[] = {
+अटल स्थिर काष्ठा mtk_pin_reg_calc mt7623_reg_cals[] = अणु
 	[PINCTRL_PIN_REG_MODE] = MTK_RANGE(mt7623_pin_mode_range),
-	[PINCTRL_PIN_REG_DIR] = MTK_RANGE(mt7623_pin_dir_range),
+	[PINCTRL_PIN_REG_सूची] = MTK_RANGE(mt7623_pin_dir_range),
 	[PINCTRL_PIN_REG_DI] = MTK_RANGE(mt7623_pin_di_range),
-	[PINCTRL_PIN_REG_DO] = MTK_RANGE(mt7623_pin_do_range),
+	[PINCTRL_PIN_REG_DO] = MTK_RANGE(mt7623_pin_करो_range),
 	[PINCTRL_PIN_REG_SMT] = MTK_RANGE(mt7623_pin_smt_range),
 	[PINCTRL_PIN_REG_PULLSEL] = MTK_RANGE(mt7623_pin_pullsel_range),
 	[PINCTRL_PIN_REG_PULLEN] = MTK_RANGE(mt7623_pin_pullen_range),
@@ -411,9 +412,9 @@ static const struct mtk_pin_reg_calc mt7623_reg_cals[] = {
 	[PINCTRL_PIN_REG_PUPD] = MTK_RANGE(mt7623_pin_pupd_range),
 	[PINCTRL_PIN_REG_R0] = MTK_RANGE(mt7623_pin_r0_range),
 	[PINCTRL_PIN_REG_R1] = MTK_RANGE(mt7623_pin_r1_range),
-};
+पूर्ण;
 
-static const struct mtk_pin_desc mt7623_pins[] = {
+अटल स्थिर काष्ठा mtk_pin_desc mt7623_pins[] = अणु
 	MT7623_PIN(0, "PWRAP_SPI0_MI", 148, DRV_GRP3),
 	MT7623_PIN(1, "PWRAP_SPI0_MO", 149, DRV_GRP3),
 	MT7623_PIN(2, "PWRAP_INT", 150, DRV_GRP3),
@@ -694,388 +695,388 @@ static const struct mtk_pin_desc mt7623_pins[] = {
 	MT7623_PIN(277, "ESW_RST", EINT_NA, DRV_GRP1),
 	MT7623_PIN(278, "JTAG_RESET", 147, DRV_GRP3),
 	MT7623_PIN(279, "USB3_RES_BOND", EINT_NA, DRV_GRP1),
-};
+पूर्ण;
 
 /* List all groups consisting of these pins dedicated to the enablement of
- * certain hardware block and the corresponding mode for all of the pins.
+ * certain hardware block and the corresponding mode क्रम all of the pins.
  * The hardware probably has multiple combinations of these pinouts.
  */
 
 /* AUDIO EXT CLK */
-static int mt7623_aud_ext_clk0_pins[] = { 208, };
-static int mt7623_aud_ext_clk0_funcs[] = { 1, };
-static int mt7623_aud_ext_clk1_pins[] = { 209, };
-static int mt7623_aud_ext_clk1_funcs[] = { 1, };
+अटल पूर्णांक mt7623_aud_ext_clk0_pins[] = अणु 208, पूर्ण;
+अटल पूर्णांक mt7623_aud_ext_clk0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_aud_ext_clk1_pins[] = अणु 209, पूर्ण;
+अटल पूर्णांक mt7623_aud_ext_clk1_funcs[] = अणु 1, पूर्ण;
 
 /* DISP PWM */
-static int mt7623_disp_pwm_0_pins[] = { 72, };
-static int mt7623_disp_pwm_0_funcs[] = { 5, };
-static int mt7623_disp_pwm_1_pins[] = { 203, };
-static int mt7623_disp_pwm_1_funcs[] = { 2, };
-static int mt7623_disp_pwm_2_pins[] = { 208, };
-static int mt7623_disp_pwm_2_funcs[] = { 5, };
+अटल पूर्णांक mt7623_disp_pwm_0_pins[] = अणु 72, पूर्ण;
+अटल पूर्णांक mt7623_disp_pwm_0_funcs[] = अणु 5, पूर्ण;
+अटल पूर्णांक mt7623_disp_pwm_1_pins[] = अणु 203, पूर्ण;
+अटल पूर्णांक mt7623_disp_pwm_1_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_disp_pwm_2_pins[] = अणु 208, पूर्ण;
+अटल पूर्णांक mt7623_disp_pwm_2_funcs[] = अणु 5, पूर्ण;
 
 /* ESW */
-static int mt7623_esw_int_pins[] = { 273, };
-static int mt7623_esw_int_funcs[] = { 1, };
-static int mt7623_esw_rst_pins[] = { 277, };
-static int mt7623_esw_rst_funcs[] = { 1, };
+अटल पूर्णांक mt7623_esw_पूर्णांक_pins[] = अणु 273, पूर्ण;
+अटल पूर्णांक mt7623_esw_पूर्णांक_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_esw_rst_pins[] = अणु 277, पूर्ण;
+अटल पूर्णांक mt7623_esw_rst_funcs[] = अणु 1, पूर्ण;
 
 /* EPHY */
-static int mt7623_ephy_pins[] = { 262, 263, 264, 265, 266, 267, 268,
-				  269, 270, 271, 272, 274, };
-static int mt7623_ephy_funcs[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, };
+अटल पूर्णांक mt7623_ephy_pins[] = अणु 262, 263, 264, 265, 266, 267, 268,
+				  269, 270, 271, 272, 274, पूर्ण;
+अटल पूर्णांक mt7623_ephy_funcs[] = अणु 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, पूर्ण;
 
 /* EXT_SDIO */
-static int mt7623_ext_sdio_pins[] = { 236, 237, 238, 239, 240, 241, };
-static int mt7623_ext_sdio_funcs[] = { 1, 1, 1, 1, 1, 1, };
+अटल पूर्णांक mt7623_ext_sdio_pins[] = अणु 236, 237, 238, 239, 240, 241, पूर्ण;
+अटल पूर्णांक mt7623_ext_sdio_funcs[] = अणु 1, 1, 1, 1, 1, 1, पूर्ण;
 
 /* HDMI RX */
-static int mt7623_hdmi_rx_pins[] = { 247, 248, };
-static int mt7623_hdmi_rx_funcs[] = { 1, 1 };
-static int mt7623_hdmi_rx_i2c_pins[] = { 244, 245, };
-static int mt7623_hdmi_rx_i2c_funcs[] = { 1, 1 };
+अटल पूर्णांक mt7623_hdmi_rx_pins[] = अणु 247, 248, पूर्ण;
+अटल पूर्णांक mt7623_hdmi_rx_funcs[] = अणु 1, 1 पूर्ण;
+अटल पूर्णांक mt7623_hdmi_rx_i2c_pins[] = अणु 244, 245, पूर्ण;
+अटल पूर्णांक mt7623_hdmi_rx_i2c_funcs[] = अणु 1, 1 पूर्ण;
 
 /* HDMI TX */
-static int mt7623_hdmi_cec_pins[] = { 122, };
-static int mt7623_hdmi_cec_funcs[] = { 1, };
-static int mt7623_hdmi_htplg_pins[] = { 123, };
-static int mt7623_hdmi_htplg_funcs[] = { 1, };
-static int mt7623_hdmi_i2c_pins[] = { 124, 125, };
-static int mt7623_hdmi_i2c_funcs[] = { 1, 1 };
+अटल पूर्णांक mt7623_hdmi_cec_pins[] = अणु 122, पूर्ण;
+अटल पूर्णांक mt7623_hdmi_cec_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_hdmi_htplg_pins[] = अणु 123, पूर्ण;
+अटल पूर्णांक mt7623_hdmi_htplg_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_hdmi_i2c_pins[] = अणु 124, 125, पूर्ण;
+अटल पूर्णांक mt7623_hdmi_i2c_funcs[] = अणु 1, 1 पूर्ण;
 
 /* I2C */
-static int mt7623_i2c0_pins[] = { 75, 76, };
-static int mt7623_i2c0_funcs[] = { 1, 1, };
-static int mt7623_i2c1_0_pins[] = { 57, 58, };
-static int mt7623_i2c1_0_funcs[] = { 1, 1, };
-static int mt7623_i2c1_1_pins[] = { 242, 243, };
-static int mt7623_i2c1_1_funcs[] = { 4, 4, };
-static int mt7623_i2c1_2_pins[] = { 85, 86, };
-static int mt7623_i2c1_2_funcs[] = { 3, 3, };
-static int mt7623_i2c1_3_pins[] = { 105, 106, };
-static int mt7623_i2c1_3_funcs[] = { 3, 3, };
-static int mt7623_i2c1_4_pins[] = { 124, 125, };
-static int mt7623_i2c1_4_funcs[] = { 4, 4, };
-static int mt7623_i2c2_0_pins[] = { 77, 78, };
-static int mt7623_i2c2_0_funcs[] = { 1, 1, };
-static int mt7623_i2c2_1_pins[] = { 89, 90, };
-static int mt7623_i2c2_1_funcs[] = { 3, 3, };
-static int mt7623_i2c2_2_pins[] = { 109, 110, };
-static int mt7623_i2c2_2_funcs[] = { 3, 3, };
-static int mt7623_i2c2_3_pins[] = { 122, 123, };
-static int mt7623_i2c2_3_funcs[] = { 4, 4, };
+अटल पूर्णांक mt7623_i2c0_pins[] = अणु 75, 76, पूर्ण;
+अटल पूर्णांक mt7623_i2c0_funcs[] = अणु 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_i2c1_0_pins[] = अणु 57, 58, पूर्ण;
+अटल पूर्णांक mt7623_i2c1_0_funcs[] = अणु 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_i2c1_1_pins[] = अणु 242, 243, पूर्ण;
+अटल पूर्णांक mt7623_i2c1_1_funcs[] = अणु 4, 4, पूर्ण;
+अटल पूर्णांक mt7623_i2c1_2_pins[] = अणु 85, 86, पूर्ण;
+अटल पूर्णांक mt7623_i2c1_2_funcs[] = अणु 3, 3, पूर्ण;
+अटल पूर्णांक mt7623_i2c1_3_pins[] = अणु 105, 106, पूर्ण;
+अटल पूर्णांक mt7623_i2c1_3_funcs[] = अणु 3, 3, पूर्ण;
+अटल पूर्णांक mt7623_i2c1_4_pins[] = अणु 124, 125, पूर्ण;
+अटल पूर्णांक mt7623_i2c1_4_funcs[] = अणु 4, 4, पूर्ण;
+अटल पूर्णांक mt7623_i2c2_0_pins[] = अणु 77, 78, पूर्ण;
+अटल पूर्णांक mt7623_i2c2_0_funcs[] = अणु 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_i2c2_1_pins[] = अणु 89, 90, पूर्ण;
+अटल पूर्णांक mt7623_i2c2_1_funcs[] = अणु 3, 3, पूर्ण;
+अटल पूर्णांक mt7623_i2c2_2_pins[] = अणु 109, 110, पूर्ण;
+अटल पूर्णांक mt7623_i2c2_2_funcs[] = अणु 3, 3, पूर्ण;
+अटल पूर्णांक mt7623_i2c2_3_pins[] = अणु 122, 123, पूर्ण;
+अटल पूर्णांक mt7623_i2c2_3_funcs[] = अणु 4, 4, पूर्ण;
 
 /* I2S */
-static int mt7623_i2s0_pins[] = { 49, 72, 73, 74, 126, };
-static int mt7623_i2s0_funcs[] = { 1, 1, 1, 1, 1, };
-static int mt7623_i2s1_pins[] = { 33, 34, 35, 36, 37, };
-static int mt7623_i2s1_funcs[] = { 1, 1, 1, 1, 1, };
-static int mt7623_i2s2_bclk_lrclk_mclk_pins[] = { 50, 52, 188, };
-static int mt7623_i2s2_bclk_lrclk_mclk_funcs[] = { 1, 1, 1, };
-static int mt7623_i2s2_data_in_pins[] = { 51, };
-static int mt7623_i2s2_data_in_funcs[] = { 1, };
-static int mt7623_i2s2_data_0_pins[] = { 203, };
-static int mt7623_i2s2_data_0_funcs[] = { 9, };
-static int mt7623_i2s2_data_1_pins[] = { 38,  };
-static int mt7623_i2s2_data_1_funcs[] = { 4, };
-static int mt7623_i2s3_bclk_lrclk_mclk_pins[] = { 191, 192, 193, };
-static int mt7623_i2s3_bclk_lrclk_mclk_funcs[] = { 1, 1, 1, };
-static int mt7623_i2s3_data_in_pins[] = { 190, };
-static int mt7623_i2s3_data_in_funcs[] = { 1, };
-static int mt7623_i2s3_data_0_pins[] = { 204, };
-static int mt7623_i2s3_data_0_funcs[] = { 9, };
-static int mt7623_i2s3_data_1_pins[] = { 2, };
-static int mt7623_i2s3_data_1_funcs[] = { 0, };
-static int mt7623_i2s4_pins[] = { 194, 195, 196, 197, 198, };
-static int mt7623_i2s4_funcs[] = { 1, 1, 1, 1, 1, };
-static int mt7623_i2s5_pins[] = { 16, 17, 30, 31, 32, };
-static int mt7623_i2s5_funcs[] = { 1, 1, 1, 1, 1, };
+अटल पूर्णांक mt7623_i2s0_pins[] = अणु 49, 72, 73, 74, 126, पूर्ण;
+अटल पूर्णांक mt7623_i2s0_funcs[] = अणु 1, 1, 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_i2s1_pins[] = अणु 33, 34, 35, 36, 37, पूर्ण;
+अटल पूर्णांक mt7623_i2s1_funcs[] = अणु 1, 1, 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_i2s2_bclk_lrclk_mclk_pins[] = अणु 50, 52, 188, पूर्ण;
+अटल पूर्णांक mt7623_i2s2_bclk_lrclk_mclk_funcs[] = अणु 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_i2s2_data_in_pins[] = अणु 51, पूर्ण;
+अटल पूर्णांक mt7623_i2s2_data_in_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_i2s2_data_0_pins[] = अणु 203, पूर्ण;
+अटल पूर्णांक mt7623_i2s2_data_0_funcs[] = अणु 9, पूर्ण;
+अटल पूर्णांक mt7623_i2s2_data_1_pins[] = अणु 38,  पूर्ण;
+अटल पूर्णांक mt7623_i2s2_data_1_funcs[] = अणु 4, पूर्ण;
+अटल पूर्णांक mt7623_i2s3_bclk_lrclk_mclk_pins[] = अणु 191, 192, 193, पूर्ण;
+अटल पूर्णांक mt7623_i2s3_bclk_lrclk_mclk_funcs[] = अणु 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_i2s3_data_in_pins[] = अणु 190, पूर्ण;
+अटल पूर्णांक mt7623_i2s3_data_in_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_i2s3_data_0_pins[] = अणु 204, पूर्ण;
+अटल पूर्णांक mt7623_i2s3_data_0_funcs[] = अणु 9, पूर्ण;
+अटल पूर्णांक mt7623_i2s3_data_1_pins[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_i2s3_data_1_funcs[] = अणु 0, पूर्ण;
+अटल पूर्णांक mt7623_i2s4_pins[] = अणु 194, 195, 196, 197, 198, पूर्ण;
+अटल पूर्णांक mt7623_i2s4_funcs[] = अणु 1, 1, 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_i2s5_pins[] = अणु 16, 17, 30, 31, 32, पूर्ण;
+अटल पूर्णांक mt7623_i2s5_funcs[] = अणु 1, 1, 1, 1, 1, पूर्ण;
 
 /* IR */
-static int mt7623_ir_pins[] = { 46, };
-static int mt7623_ir_funcs[] = { 1, };
+अटल पूर्णांक mt7623_ir_pins[] = अणु 46, पूर्ण;
+अटल पूर्णांक mt7623_ir_funcs[] = अणु 1, पूर्ण;
 
 /* LCD */
-static int mt7623_mipi_tx_pins[] = { 91, 92, 93, 94, 95, 96, 97, 98,
-				     99, 100, };
-static int mt7623_mipi_tx_funcs[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, };
-static int mt7623_dsi_te_pins[] = { 84, };
-static int mt7623_dsi_te_funcs[] = { 1, };
-static int mt7623_lcm_rst_pins[] = { 83, };
-static int mt7623_lcm_rst_funcs[] = { 1, };
+अटल पूर्णांक mt7623_mipi_tx_pins[] = अणु 91, 92, 93, 94, 95, 96, 97, 98,
+				     99, 100, पूर्ण;
+अटल पूर्णांक mt7623_mipi_tx_funcs[] = अणु 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_dsi_te_pins[] = अणु 84, पूर्ण;
+अटल पूर्णांक mt7623_dsi_te_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_lcm_rst_pins[] = अणु 83, पूर्ण;
+अटल पूर्णांक mt7623_lcm_rst_funcs[] = अणु 1, पूर्ण;
 
 /* MDC/MDIO */
-static int mt7623_mdc_mdio_pins[] = { 275, 276, };
-static int mt7623_mdc_mdio_funcs[] = { 1, 1, };
+अटल पूर्णांक mt7623_mdc_mdio_pins[] = अणु 275, 276, पूर्ण;
+अटल पूर्णांक mt7623_mdc_mdio_funcs[] = अणु 1, 1, पूर्ण;
 
 /* MSDC */
-static int mt7623_msdc0_pins[] = { 111, 112, 113, 114, 115, 116, 117, 118,
-				   119, 120, 121, };
-static int mt7623_msdc0_funcs[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, };
-static int mt7623_msdc1_pins[] = { 105, 106, 107, 108, 109, 110, };
-static int mt7623_msdc1_funcs[] = { 1, 1, 1, 1, 1, 1, };
-static int mt7623_msdc1_ins_pins[] = { 261, };
-static int mt7623_msdc1_ins_funcs[] = { 1, };
-static int mt7623_msdc1_wp_0_pins[] = { 29, };
-static int mt7623_msdc1_wp_0_funcs[] = { 1, };
-static int mt7623_msdc1_wp_1_pins[] = { 55, };
-static int mt7623_msdc1_wp_1_funcs[] = { 3, };
-static int mt7623_msdc1_wp_2_pins[] = { 209, };
-static int mt7623_msdc1_wp_2_funcs[] = { 2, };
-static int mt7623_msdc2_pins[] = { 85, 86, 87, 88, 89, 90, };
-static int mt7623_msdc2_funcs[] = { 1, 1, 1, 1, 1, 1, };
-static int mt7623_msdc3_pins[] = { 249, 250, 251, 252, 253, 254, 255, 256,
-				   257, 258, 259, 260, };
-static int mt7623_msdc3_funcs[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, };
+अटल पूर्णांक mt7623_msdc0_pins[] = अणु 111, 112, 113, 114, 115, 116, 117, 118,
+				   119, 120, 121, पूर्ण;
+अटल पूर्णांक mt7623_msdc0_funcs[] = अणु 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_msdc1_pins[] = अणु 105, 106, 107, 108, 109, 110, पूर्ण;
+अटल पूर्णांक mt7623_msdc1_funcs[] = अणु 1, 1, 1, 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_msdc1_ins_pins[] = अणु 261, पूर्ण;
+अटल पूर्णांक mt7623_msdc1_ins_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_msdc1_wp_0_pins[] = अणु 29, पूर्ण;
+अटल पूर्णांक mt7623_msdc1_wp_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_msdc1_wp_1_pins[] = अणु 55, पूर्ण;
+अटल पूर्णांक mt7623_msdc1_wp_1_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_msdc1_wp_2_pins[] = अणु 209, पूर्ण;
+अटल पूर्णांक mt7623_msdc1_wp_2_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_msdc2_pins[] = अणु 85, 86, 87, 88, 89, 90, पूर्ण;
+अटल पूर्णांक mt7623_msdc2_funcs[] = अणु 1, 1, 1, 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_msdc3_pins[] = अणु 249, 250, 251, 252, 253, 254, 255, 256,
+				   257, 258, 259, 260, पूर्ण;
+अटल पूर्णांक mt7623_msdc3_funcs[] = अणु 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, पूर्ण;
 
-/* NAND */
-static int mt7623_nandc_pins[] = { 43, 47, 48, 111, 112, 113, 114, 115,
-				   116, 117, 118, 119, 120, 121, };
-static int mt7623_nandc_funcs[] = { 1, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-				   4, 4, };
-static int mt7623_nandc_ceb0_pins[] = { 45, };
-static int mt7623_nandc_ceb0_funcs[] = { 1, };
-static int mt7623_nandc_ceb1_pins[] = { 44, };
-static int mt7623_nandc_ceb1_funcs[] = { 1, };
+/* न_अंकD */
+अटल पूर्णांक mt7623_nandc_pins[] = अणु 43, 47, 48, 111, 112, 113, 114, 115,
+				   116, 117, 118, 119, 120, 121, पूर्ण;
+अटल पूर्णांक mt7623_nandc_funcs[] = अणु 1, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+				   4, 4, पूर्ण;
+अटल पूर्णांक mt7623_nandc_ceb0_pins[] = अणु 45, पूर्ण;
+अटल पूर्णांक mt7623_nandc_ceb0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_nandc_ceb1_pins[] = अणु 44, पूर्ण;
+अटल पूर्णांक mt7623_nandc_ceb1_funcs[] = अणु 1, पूर्ण;
 
 /* RTC */
-static int mt7623_rtc_pins[] = { 10, };
-static int mt7623_rtc_funcs[] = { 1, };
+अटल पूर्णांक mt7623_rtc_pins[] = अणु 10, पूर्ण;
+अटल पूर्णांक mt7623_rtc_funcs[] = अणु 1, पूर्ण;
 
 /* OTG */
-static int mt7623_otg_iddig0_0_pins[] = { 29, };
-static int mt7623_otg_iddig0_0_funcs[] = { 1, };
-static int mt7623_otg_iddig0_1_pins[] = { 44, };
-static int mt7623_otg_iddig0_1_funcs[] = { 2, };
-static int mt7623_otg_iddig0_2_pins[] = { 236, };
-static int mt7623_otg_iddig0_2_funcs[] = { 2, };
-static int mt7623_otg_iddig1_0_pins[] = { 27, };
-static int mt7623_otg_iddig1_0_funcs[] = { 2, };
-static int mt7623_otg_iddig1_1_pins[] = { 47, };
-static int mt7623_otg_iddig1_1_funcs[] = { 2, };
-static int mt7623_otg_iddig1_2_pins[] = { 238, };
-static int mt7623_otg_iddig1_2_funcs[] = { 2, };
-static int mt7623_otg_drv_vbus0_0_pins[] = { 28, };
-static int mt7623_otg_drv_vbus0_0_funcs[] = { 1, };
-static int mt7623_otg_drv_vbus0_1_pins[] = { 45, };
-static int mt7623_otg_drv_vbus0_1_funcs[] = { 2, };
-static int mt7623_otg_drv_vbus0_2_pins[] = { 237, };
-static int mt7623_otg_drv_vbus0_2_funcs[] = { 2, };
-static int mt7623_otg_drv_vbus1_0_pins[] = { 26, };
-static int mt7623_otg_drv_vbus1_0_funcs[] = { 2, };
-static int mt7623_otg_drv_vbus1_1_pins[] = { 48, };
-static int mt7623_otg_drv_vbus1_1_funcs[] = { 2, };
-static int mt7623_otg_drv_vbus1_2_pins[] = { 239, };
-static int mt7623_otg_drv_vbus1_2_funcs[] = { 2, };
+अटल पूर्णांक mt7623_otg_iddig0_0_pins[] = अणु 29, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig0_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig0_1_pins[] = अणु 44, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig0_1_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig0_2_pins[] = अणु 236, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig0_2_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig1_0_pins[] = अणु 27, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig1_0_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig1_1_pins[] = अणु 47, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig1_1_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig1_2_pins[] = अणु 238, पूर्ण;
+अटल पूर्णांक mt7623_otg_iddig1_2_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus0_0_pins[] = अणु 28, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus0_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus0_1_pins[] = अणु 45, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus0_1_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus0_2_pins[] = अणु 237, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus0_2_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus1_0_pins[] = अणु 26, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus1_0_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus1_1_pins[] = अणु 48, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus1_1_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus1_2_pins[] = अणु 239, पूर्ण;
+अटल पूर्णांक mt7623_otg_drv_vbus1_2_funcs[] = अणु 2, पूर्ण;
 
 /* PCIE */
-static int mt7623_pcie0_0_perst_pins[] = { 208, };
-static int mt7623_pcie0_0_perst_funcs[] = { 3, };
-static int mt7623_pcie0_1_perst_pins[] = { 22, };
-static int mt7623_pcie0_1_perst_funcs[] = { 2, };
-static int mt7623_pcie1_0_perst_pins[] = { 209, };
-static int mt7623_pcie1_0_perst_funcs[] = { 3, };
-static int mt7623_pcie1_1_perst_pins[] = { 23, };
-static int mt7623_pcie1_1_perst_funcs[] = { 2, };
-static int mt7623_pcie2_0_perst_pins[] = { 24, };
-static int mt7623_pcie2_0_perst_funcs[] = { 2, };
-static int mt7623_pcie2_1_perst_pins[] = { 29, };
-static int mt7623_pcie2_1_perst_funcs[] = { 6, };
-static int mt7623_pcie0_0_wake_pins[] = { 28, };
-static int mt7623_pcie0_0_wake_funcs[] = { 6, };
-static int mt7623_pcie0_1_wake_pins[] = { 251, };
-static int mt7623_pcie0_1_wake_funcs[] = { 6, };
-static int mt7623_pcie1_0_wake_pins[] = { 27, };
-static int mt7623_pcie1_0_wake_funcs[] = { 6, };
-static int mt7623_pcie1_1_wake_pins[] = { 253, };
-static int mt7623_pcie1_1_wake_funcs[] = { 6, };
-static int mt7623_pcie2_0_wake_pins[] = { 26, };
-static int mt7623_pcie2_0_wake_funcs[] = { 6, };
-static int mt7623_pcie2_1_wake_pins[] = { 255, };
-static int mt7623_pcie2_1_wake_funcs[] = { 6, };
-static int mt7623_pcie0_clkreq_pins[] = { 250, };
-static int mt7623_pcie0_clkreq_funcs[] = { 6, };
-static int mt7623_pcie1_clkreq_pins[] = { 252, };
-static int mt7623_pcie1_clkreq_funcs[] = { 6, };
-static int mt7623_pcie2_clkreq_pins[] = { 254, };
-static int mt7623_pcie2_clkreq_funcs[] = { 6, };
+अटल पूर्णांक mt7623_pcie0_0_perst_pins[] = अणु 208, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_0_perst_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_1_perst_pins[] = अणु 22, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_1_perst_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_0_perst_pins[] = अणु 209, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_0_perst_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_1_perst_pins[] = अणु 23, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_1_perst_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_0_perst_pins[] = अणु 24, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_0_perst_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_1_perst_pins[] = अणु 29, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_1_perst_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_0_wake_pins[] = अणु 28, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_0_wake_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_1_wake_pins[] = अणु 251, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_1_wake_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_0_wake_pins[] = अणु 27, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_0_wake_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_1_wake_pins[] = अणु 253, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_1_wake_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_0_wake_pins[] = अणु 26, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_0_wake_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_1_wake_pins[] = अणु 255, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_1_wake_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_clkreq_pins[] = अणु 250, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_clkreq_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_clkreq_pins[] = अणु 252, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_clkreq_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_clkreq_pins[] = अणु 254, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_clkreq_funcs[] = अणु 6, पूर्ण;
 
-/* the pcie_*_rev are only used for MT7623 */
-static int mt7623_pcie0_0_rev_perst_pins[] = { 208, };
-static int mt7623_pcie0_0_rev_perst_funcs[] = { 11, };
-static int mt7623_pcie0_1_rev_perst_pins[] = { 22, };
-static int mt7623_pcie0_1_rev_perst_funcs[] = { 10, };
-static int mt7623_pcie1_0_rev_perst_pins[] = { 209, };
-static int mt7623_pcie1_0_rev_perst_funcs[] = { 11, };
-static int mt7623_pcie1_1_rev_perst_pins[] = { 23, };
-static int mt7623_pcie1_1_rev_perst_funcs[] = { 10, };
-static int mt7623_pcie2_0_rev_perst_pins[] = { 24, };
-static int mt7623_pcie2_0_rev_perst_funcs[] = { 11, };
-static int mt7623_pcie2_1_rev_perst_pins[] = { 29, };
-static int mt7623_pcie2_1_rev_perst_funcs[] = { 14, };
+/* the pcie_*_rev are only used क्रम MT7623 */
+अटल पूर्णांक mt7623_pcie0_0_rev_perst_pins[] = अणु 208, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_0_rev_perst_funcs[] = अणु 11, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_1_rev_perst_pins[] = अणु 22, पूर्ण;
+अटल पूर्णांक mt7623_pcie0_1_rev_perst_funcs[] = अणु 10, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_0_rev_perst_pins[] = अणु 209, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_0_rev_perst_funcs[] = अणु 11, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_1_rev_perst_pins[] = अणु 23, पूर्ण;
+अटल पूर्णांक mt7623_pcie1_1_rev_perst_funcs[] = अणु 10, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_0_rev_perst_pins[] = अणु 24, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_0_rev_perst_funcs[] = अणु 11, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_1_rev_perst_pins[] = अणु 29, पूर्ण;
+अटल पूर्णांक mt7623_pcie2_1_rev_perst_funcs[] = अणु 14, पूर्ण;
 
 /* PCM */
-static int mt7623_pcm_clk_0_pins[] = { 18, };
-static int mt7623_pcm_clk_0_funcs[] = { 1, };
-static int mt7623_pcm_clk_1_pins[] = { 17, };
-static int mt7623_pcm_clk_1_funcs[] = { 3, };
-static int mt7623_pcm_clk_2_pins[] = { 35, };
-static int mt7623_pcm_clk_2_funcs[] = { 3, };
-static int mt7623_pcm_clk_3_pins[] = { 50, };
-static int mt7623_pcm_clk_3_funcs[] = { 3, };
-static int mt7623_pcm_clk_4_pins[] = { 74, };
-static int mt7623_pcm_clk_4_funcs[] = { 3, };
-static int mt7623_pcm_clk_5_pins[] = { 191, };
-static int mt7623_pcm_clk_5_funcs[] = { 3, };
-static int mt7623_pcm_clk_6_pins[] = { 196, };
-static int mt7623_pcm_clk_6_funcs[] = { 3, };
-static int mt7623_pcm_sync_0_pins[] = { 19, };
-static int mt7623_pcm_sync_0_funcs[] = { 1, };
-static int mt7623_pcm_sync_1_pins[] = { 30, };
-static int mt7623_pcm_sync_1_funcs[] = { 3, };
-static int mt7623_pcm_sync_2_pins[] = { 36, };
-static int mt7623_pcm_sync_2_funcs[] = { 3, };
-static int mt7623_pcm_sync_3_pins[] = { 52, };
-static int mt7623_pcm_sync_3_funcs[] = { 31, };
-static int mt7623_pcm_sync_4_pins[] = { 73, };
-static int mt7623_pcm_sync_4_funcs[] = { 3, };
-static int mt7623_pcm_sync_5_pins[] = { 192, };
-static int mt7623_pcm_sync_5_funcs[] = { 3, };
-static int mt7623_pcm_sync_6_pins[] = { 197, };
-static int mt7623_pcm_sync_6_funcs[] = { 3, };
-static int mt7623_pcm_rx_0_pins[] = { 20, };
-static int mt7623_pcm_rx_0_funcs[] = { 1, };
-static int mt7623_pcm_rx_1_pins[] = { 16, };
-static int mt7623_pcm_rx_1_funcs[] = { 3, };
-static int mt7623_pcm_rx_2_pins[] = { 34, };
-static int mt7623_pcm_rx_2_funcs[] = { 3, };
-static int mt7623_pcm_rx_3_pins[] = { 51, };
-static int mt7623_pcm_rx_3_funcs[] = { 3, };
-static int mt7623_pcm_rx_4_pins[] = { 72, };
-static int mt7623_pcm_rx_4_funcs[] = { 3, };
-static int mt7623_pcm_rx_5_pins[] = { 190, };
-static int mt7623_pcm_rx_5_funcs[] = { 3, };
-static int mt7623_pcm_rx_6_pins[] = { 195, };
-static int mt7623_pcm_rx_6_funcs[] = { 3, };
-static int mt7623_pcm_tx_0_pins[] = { 21, };
-static int mt7623_pcm_tx_0_funcs[] = { 1, };
-static int mt7623_pcm_tx_1_pins[] = { 32, };
-static int mt7623_pcm_tx_1_funcs[] = { 3, };
-static int mt7623_pcm_tx_2_pins[] = { 33, };
-static int mt7623_pcm_tx_2_funcs[] = { 3, };
-static int mt7623_pcm_tx_3_pins[] = { 38, };
-static int mt7623_pcm_tx_3_funcs[] = { 3, };
-static int mt7623_pcm_tx_4_pins[] = { 49, };
-static int mt7623_pcm_tx_4_funcs[] = { 3, };
-static int mt7623_pcm_tx_5_pins[] = { 189, };
-static int mt7623_pcm_tx_5_funcs[] = { 3, };
-static int mt7623_pcm_tx_6_pins[] = { 194, };
-static int mt7623_pcm_tx_6_funcs[] = { 3, };
+अटल पूर्णांक mt7623_pcm_clk_0_pins[] = अणु 18, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_1_pins[] = अणु 17, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_1_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_2_pins[] = अणु 35, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_2_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_3_pins[] = अणु 50, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_3_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_4_pins[] = अणु 74, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_4_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_5_pins[] = अणु 191, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_5_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_6_pins[] = अणु 196, पूर्ण;
+अटल पूर्णांक mt7623_pcm_clk_6_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_0_pins[] = अणु 19, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_1_pins[] = अणु 30, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_1_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_2_pins[] = अणु 36, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_2_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_3_pins[] = अणु 52, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_3_funcs[] = अणु 31, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_4_pins[] = अणु 73, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_4_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_5_pins[] = अणु 192, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_5_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_6_pins[] = अणु 197, पूर्ण;
+अटल पूर्णांक mt7623_pcm_sync_6_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_0_pins[] = अणु 20, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_1_pins[] = अणु 16, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_1_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_2_pins[] = अणु 34, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_2_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_3_pins[] = अणु 51, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_3_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_4_pins[] = अणु 72, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_4_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_5_pins[] = अणु 190, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_5_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_6_pins[] = अणु 195, पूर्ण;
+अटल पूर्णांक mt7623_pcm_rx_6_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_0_pins[] = अणु 21, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_1_pins[] = अणु 32, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_1_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_2_pins[] = अणु 33, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_2_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_3_pins[] = अणु 38, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_3_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_4_pins[] = अणु 49, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_4_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_5_pins[] = अणु 189, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_5_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_6_pins[] = अणु 194, पूर्ण;
+अटल पूर्णांक mt7623_pcm_tx_6_funcs[] = अणु 3, पूर्ण;
 
 /* PWM */
-static int mt7623_pwm_ch1_0_pins[] = { 203, };
-static int mt7623_pwm_ch1_0_funcs[] = { 1, };
-static int mt7623_pwm_ch1_1_pins[] = { 208, };
-static int mt7623_pwm_ch1_1_funcs[] = { 2, };
-static int mt7623_pwm_ch1_2_pins[] = { 72, };
-static int mt7623_pwm_ch1_2_funcs[] = { 4, };
-static int mt7623_pwm_ch1_3_pins[] = { 88, };
-static int mt7623_pwm_ch1_3_funcs[] = { 3, };
-static int mt7623_pwm_ch1_4_pins[] = { 108, };
-static int mt7623_pwm_ch1_4_funcs[] = { 3, };
-static int mt7623_pwm_ch2_0_pins[] = { 204, };
-static int mt7623_pwm_ch2_0_funcs[] = { 1, };
-static int mt7623_pwm_ch2_1_pins[] = { 53, };
-static int mt7623_pwm_ch2_1_funcs[] = { 5, };
-static int mt7623_pwm_ch2_2_pins[] = { 88, };
-static int mt7623_pwm_ch2_2_funcs[] = { 6, };
-static int mt7623_pwm_ch2_3_pins[] = { 108, };
-static int mt7623_pwm_ch2_3_funcs[] = { 6, };
-static int mt7623_pwm_ch2_4_pins[] = { 209, };
-static int mt7623_pwm_ch2_4_funcs[] = { 5, };
-static int mt7623_pwm_ch3_0_pins[] = { 205, };
-static int mt7623_pwm_ch3_0_funcs[] = { 1, };
-static int mt7623_pwm_ch3_1_pins[] = { 55, };
-static int mt7623_pwm_ch3_1_funcs[] = { 5, };
-static int mt7623_pwm_ch3_2_pins[] = { 89, };
-static int mt7623_pwm_ch3_2_funcs[] = { 6, };
-static int mt7623_pwm_ch3_3_pins[] = { 109, };
-static int mt7623_pwm_ch3_3_funcs[] = { 6, };
-static int mt7623_pwm_ch4_0_pins[] = { 206, };
-static int mt7623_pwm_ch4_0_funcs[] = { 1, };
-static int mt7623_pwm_ch4_1_pins[] = { 90, };
-static int mt7623_pwm_ch4_1_funcs[] = { 6, };
-static int mt7623_pwm_ch4_2_pins[] = { 110, };
-static int mt7623_pwm_ch4_2_funcs[] = { 6, };
-static int mt7623_pwm_ch4_3_pins[] = { 124, };
-static int mt7623_pwm_ch4_3_funcs[] = { 5, };
-static int mt7623_pwm_ch5_0_pins[] = { 207, };
-static int mt7623_pwm_ch5_0_funcs[] = { 1, };
-static int mt7623_pwm_ch5_1_pins[] = { 125, };
-static int mt7623_pwm_ch5_1_funcs[] = { 5, };
+अटल पूर्णांक mt7623_pwm_ch1_0_pins[] = अणु 203, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch1_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch1_1_pins[] = अणु 208, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch1_1_funcs[] = अणु 2, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch1_2_pins[] = अणु 72, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch1_2_funcs[] = अणु 4, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch1_3_pins[] = अणु 88, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch1_3_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch1_4_pins[] = अणु 108, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch1_4_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch2_0_pins[] = अणु 204, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch2_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch2_1_pins[] = अणु 53, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch2_1_funcs[] = अणु 5, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch2_2_pins[] = अणु 88, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch2_2_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch2_3_pins[] = अणु 108, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch2_3_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch2_4_pins[] = अणु 209, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch2_4_funcs[] = अणु 5, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch3_0_pins[] = अणु 205, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch3_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch3_1_pins[] = अणु 55, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch3_1_funcs[] = अणु 5, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch3_2_pins[] = अणु 89, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch3_2_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch3_3_pins[] = अणु 109, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch3_3_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch4_0_pins[] = अणु 206, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch4_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch4_1_pins[] = अणु 90, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch4_1_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch4_2_pins[] = अणु 110, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch4_2_funcs[] = अणु 6, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch4_3_pins[] = अणु 124, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch4_3_funcs[] = अणु 5, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch5_0_pins[] = अणु 207, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch5_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch5_1_pins[] = अणु 125, पूर्ण;
+अटल पूर्णांक mt7623_pwm_ch5_1_funcs[] = अणु 5, पूर्ण;
 
 /* PWRAP */
-static int mt7623_pwrap_pins[] = { 0, 1, 2, 3, 4, 5, 6, };
-static int mt7623_pwrap_funcs[] = { 1, 1, 1, 1, 1, 1, 1, };
+अटल पूर्णांक mt7623_pwrap_pins[] = अणु 0, 1, 2, 3, 4, 5, 6, पूर्ण;
+अटल पूर्णांक mt7623_pwrap_funcs[] = अणु 1, 1, 1, 1, 1, 1, 1, पूर्ण;
 
 /* SPDIF */
-static int mt7623_spdif_in0_0_pins[] = { 56, };
-static int mt7623_spdif_in0_0_funcs[] = { 3, };
-static int mt7623_spdif_in0_1_pins[] = { 201, };
-static int mt7623_spdif_in0_1_funcs[] = { 1, };
-static int mt7623_spdif_in1_0_pins[] = { 54, };
-static int mt7623_spdif_in1_0_funcs[] = { 3, };
-static int mt7623_spdif_in1_1_pins[] = { 202, };
-static int mt7623_spdif_in1_1_funcs[] = { 1, };
-static int mt7623_spdif_out_pins[] = { 202, };
-static int mt7623_spdif_out_funcs[] = { 1, };
+अटल पूर्णांक mt7623_spdअगर_in0_0_pins[] = अणु 56, पूर्ण;
+अटल पूर्णांक mt7623_spdअगर_in0_0_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_spdअगर_in0_1_pins[] = अणु 201, पूर्ण;
+अटल पूर्णांक mt7623_spdअगर_in0_1_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_spdअगर_in1_0_pins[] = अणु 54, पूर्ण;
+अटल पूर्णांक mt7623_spdअगर_in1_0_funcs[] = अणु 3, पूर्ण;
+अटल पूर्णांक mt7623_spdअगर_in1_1_pins[] = अणु 202, पूर्ण;
+अटल पूर्णांक mt7623_spdअगर_in1_1_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_spdअगर_out_pins[] = अणु 202, पूर्ण;
+अटल पूर्णांक mt7623_spdअगर_out_funcs[] = अणु 1, पूर्ण;
 
 /* SPI */
-static int mt7623_spi0_pins[] = { 53, 54, 55, 56, };
-static int mt7623_spi0_funcs[] = { 1, 1, 1, 1, };
-static int mt7623_spi1_pins[] = { 7, 199, 8, 9, };
-static int mt7623_spi1_funcs[] = { 1, 1, 1, 1, };
-static int mt7623_spi2_pins[] = { 101, 104, 102, 103, };
-static int mt7623_spi2_funcs[] = { 1, 1, 1, 1, };
+अटल पूर्णांक mt7623_spi0_pins[] = अणु 53, 54, 55, 56, पूर्ण;
+अटल पूर्णांक mt7623_spi0_funcs[] = अणु 1, 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_spi1_pins[] = अणु 7, 199, 8, 9, पूर्ण;
+अटल पूर्णांक mt7623_spi1_funcs[] = अणु 1, 1, 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_spi2_pins[] = अणु 101, 104, 102, 103, पूर्ण;
+अटल पूर्णांक mt7623_spi2_funcs[] = अणु 1, 1, 1, 1, पूर्ण;
 
 /* UART */
-static int mt7623_uart0_0_txd_rxd_pins[] = { 79, 80, };
-static int mt7623_uart0_0_txd_rxd_funcs[] = { 1, 1, };
-static int mt7623_uart0_1_txd_rxd_pins[] = { 87, 88, };
-static int mt7623_uart0_1_txd_rxd_funcs[] = { 5, 5, };
-static int mt7623_uart0_2_txd_rxd_pins[] = { 107, 108, };
-static int mt7623_uart0_2_txd_rxd_funcs[] = { 5, 5, };
-static int mt7623_uart0_3_txd_rxd_pins[] = { 123, 122, };
-static int mt7623_uart0_3_txd_rxd_funcs[] = { 5, 5, };
-static int mt7623_uart0_rts_cts_pins[] = { 22, 23, };
-static int mt7623_uart0_rts_cts_funcs[] = { 1, 1, };
-static int mt7623_uart1_0_txd_rxd_pins[] = { 81, 82, };
-static int mt7623_uart1_0_txd_rxd_funcs[] = { 1, 1, };
-static int mt7623_uart1_1_txd_rxd_pins[] = { 89, 90, };
-static int mt7623_uart1_1_txd_rxd_funcs[] = { 5, 5, };
-static int mt7623_uart1_2_txd_rxd_pins[] = { 109, 110, };
-static int mt7623_uart1_2_txd_rxd_funcs[] = { 5, 5, };
-static int mt7623_uart1_rts_cts_pins[] = { 24, 25, };
-static int mt7623_uart1_rts_cts_funcs[] = { 1, 1, };
-static int mt7623_uart2_0_txd_rxd_pins[] = { 14, 15, };
-static int mt7623_uart2_0_txd_rxd_funcs[] = { 1, 1, };
-static int mt7623_uart2_1_txd_rxd_pins[] = { 200, 201, };
-static int mt7623_uart2_1_txd_rxd_funcs[] = { 6, 6, };
-static int mt7623_uart2_rts_cts_pins[] = { 242, 243, };
-static int mt7623_uart2_rts_cts_funcs[] = { 1, 1, };
-static int mt7623_uart3_txd_rxd_pins[] = { 242, 243, };
-static int mt7623_uart3_txd_rxd_funcs[] = { 2, 2, };
-static int mt7623_uart3_rts_cts_pins[] = { 26, 27, };
-static int mt7623_uart3_rts_cts_funcs[] = { 1, 1, };
+अटल पूर्णांक mt7623_uart0_0_txd_rxd_pins[] = अणु 79, 80, पूर्ण;
+अटल पूर्णांक mt7623_uart0_0_txd_rxd_funcs[] = अणु 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_uart0_1_txd_rxd_pins[] = अणु 87, 88, पूर्ण;
+अटल पूर्णांक mt7623_uart0_1_txd_rxd_funcs[] = अणु 5, 5, पूर्ण;
+अटल पूर्णांक mt7623_uart0_2_txd_rxd_pins[] = अणु 107, 108, पूर्ण;
+अटल पूर्णांक mt7623_uart0_2_txd_rxd_funcs[] = अणु 5, 5, पूर्ण;
+अटल पूर्णांक mt7623_uart0_3_txd_rxd_pins[] = अणु 123, 122, पूर्ण;
+अटल पूर्णांक mt7623_uart0_3_txd_rxd_funcs[] = अणु 5, 5, पूर्ण;
+अटल पूर्णांक mt7623_uart0_rts_cts_pins[] = अणु 22, 23, पूर्ण;
+अटल पूर्णांक mt7623_uart0_rts_cts_funcs[] = अणु 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_uart1_0_txd_rxd_pins[] = अणु 81, 82, पूर्ण;
+अटल पूर्णांक mt7623_uart1_0_txd_rxd_funcs[] = अणु 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_uart1_1_txd_rxd_pins[] = अणु 89, 90, पूर्ण;
+अटल पूर्णांक mt7623_uart1_1_txd_rxd_funcs[] = अणु 5, 5, पूर्ण;
+अटल पूर्णांक mt7623_uart1_2_txd_rxd_pins[] = अणु 109, 110, पूर्ण;
+अटल पूर्णांक mt7623_uart1_2_txd_rxd_funcs[] = अणु 5, 5, पूर्ण;
+अटल पूर्णांक mt7623_uart1_rts_cts_pins[] = अणु 24, 25, पूर्ण;
+अटल पूर्णांक mt7623_uart1_rts_cts_funcs[] = अणु 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_uart2_0_txd_rxd_pins[] = अणु 14, 15, पूर्ण;
+अटल पूर्णांक mt7623_uart2_0_txd_rxd_funcs[] = अणु 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_uart2_1_txd_rxd_pins[] = अणु 200, 201, पूर्ण;
+अटल पूर्णांक mt7623_uart2_1_txd_rxd_funcs[] = अणु 6, 6, पूर्ण;
+अटल पूर्णांक mt7623_uart2_rts_cts_pins[] = अणु 242, 243, पूर्ण;
+अटल पूर्णांक mt7623_uart2_rts_cts_funcs[] = अणु 1, 1, पूर्ण;
+अटल पूर्णांक mt7623_uart3_txd_rxd_pins[] = अणु 242, 243, पूर्ण;
+अटल पूर्णांक mt7623_uart3_txd_rxd_funcs[] = अणु 2, 2, पूर्ण;
+अटल पूर्णांक mt7623_uart3_rts_cts_pins[] = अणु 26, 27, पूर्ण;
+अटल पूर्णांक mt7623_uart3_rts_cts_funcs[] = अणु 1, 1, पूर्ण;
 
-/* Watchdog */
-static int mt7623_watchdog_0_pins[] = { 11, };
-static int mt7623_watchdog_0_funcs[] = { 1, };
-static int mt7623_watchdog_1_pins[] = { 121, };
-static int mt7623_watchdog_1_funcs[] = { 5, };
+/* Watchकरोg */
+अटल पूर्णांक mt7623_watchकरोg_0_pins[] = अणु 11, पूर्ण;
+अटल पूर्णांक mt7623_watchकरोg_0_funcs[] = अणु 1, पूर्ण;
+अटल पूर्णांक mt7623_watchकरोg_1_pins[] = अणु 121, पूर्ण;
+अटल पूर्णांक mt7623_watchकरोg_1_funcs[] = अणु 5, पूर्ण;
 
-static const struct group_desc mt7623_groups[] = {
+अटल स्थिर काष्ठा group_desc mt7623_groups[] = अणु
 	PINCTRL_PIN_GROUP("aud_ext_clk0", mt7623_aud_ext_clk0),
 	PINCTRL_PIN_GROUP("aud_ext_clk1", mt7623_aud_ext_clk1),
 	PINCTRL_PIN_GROUP("dsi_te", mt7623_dsi_te),
@@ -1083,7 +1084,7 @@ static const struct group_desc mt7623_groups[] = {
 	PINCTRL_PIN_GROUP("disp_pwm_1", mt7623_disp_pwm_1),
 	PINCTRL_PIN_GROUP("disp_pwm_2", mt7623_disp_pwm_2),
 	PINCTRL_PIN_GROUP("ephy", mt7623_ephy),
-	PINCTRL_PIN_GROUP("esw_int", mt7623_esw_int),
+	PINCTRL_PIN_GROUP("esw_int", mt7623_esw_पूर्णांक),
 	PINCTRL_PIN_GROUP("esw_rst", mt7623_esw_rst),
 	PINCTRL_PIN_GROUP("ext_sdio", mt7623_ext_sdio),
 	PINCTRL_PIN_GROUP("hdmi_cec", mt7623_hdmi_cec),
@@ -1212,11 +1213,11 @@ static const struct group_desc mt7623_groups[] = {
 	PINCTRL_PIN_GROUP("pwm_ch5_1", mt7623_pwm_ch5_1),
 	PINCTRL_PIN_GROUP("pwrap", mt7623_pwrap),
 	PINCTRL_PIN_GROUP("rtc", mt7623_rtc),
-	PINCTRL_PIN_GROUP("spdif_in0_0", mt7623_spdif_in0_0),
-	PINCTRL_PIN_GROUP("spdif_in0_1", mt7623_spdif_in0_1),
-	PINCTRL_PIN_GROUP("spdif_in1_0", mt7623_spdif_in1_0),
-	PINCTRL_PIN_GROUP("spdif_in1_1", mt7623_spdif_in1_1),
-	PINCTRL_PIN_GROUP("spdif_out", mt7623_spdif_out),
+	PINCTRL_PIN_GROUP("spdif_in0_0", mt7623_spdअगर_in0_0),
+	PINCTRL_PIN_GROUP("spdif_in0_1", mt7623_spdअगर_in0_1),
+	PINCTRL_PIN_GROUP("spdif_in1_0", mt7623_spdअगर_in1_0),
+	PINCTRL_PIN_GROUP("spdif_in1_1", mt7623_spdअगर_in1_1),
+	PINCTRL_PIN_GROUP("spdif_out", mt7623_spdअगर_out),
 	PINCTRL_PIN_GROUP("spi0", mt7623_spi0),
 	PINCTRL_PIN_GROUP("spi1", mt7623_spi1),
 	PINCTRL_PIN_GROUP("spi2", mt7623_spi2),
@@ -1234,43 +1235,43 @@ static const struct group_desc mt7623_groups[] = {
 	PINCTRL_PIN_GROUP("uart1_rts_cts",  mt7623_uart1_rts_cts),
 	PINCTRL_PIN_GROUP("uart2_rts_cts",  mt7623_uart2_rts_cts),
 	PINCTRL_PIN_GROUP("uart3_rts_cts",  mt7623_uart3_rts_cts),
-	PINCTRL_PIN_GROUP("watchdog_0", mt7623_watchdog_0),
-	PINCTRL_PIN_GROUP("watchdog_1", mt7623_watchdog_1),
-};
+	PINCTRL_PIN_GROUP("watchdog_0", mt7623_watchकरोg_0),
+	PINCTRL_PIN_GROUP("watchdog_1", mt7623_watchकरोg_1),
+पूर्ण;
 
-/* Joint those groups owning the same capability in user point of view which
+/* Joपूर्णांक those groups owning the same capability in user poपूर्णांक of view which
  * allows that people tend to use through the device tree.
  */
-static const char *mt7623_aud_clk_groups[] = { "aud_ext_clk0",
-					       "aud_ext_clk1", };
-static const char *mt7623_disp_pwm_groups[] = { "disp_pwm_0", "disp_pwm_1",
-						"disp_pwm_2", };
-static const char *mt7623_ethernet_groups[] = { "esw_int", "esw_rst",
-						"ephy", "mdc_mdio", };
-static const char *mt7623_ext_sdio_groups[] = { "ext_sdio", };
-static const char *mt7623_hdmi_groups[] = { "hdmi_cec", "hdmi_htplg",
+अटल स्थिर अक्षर *mt7623_aud_clk_groups[] = अणु "aud_ext_clk0",
+					       "aud_ext_clk1", पूर्ण;
+अटल स्थिर अक्षर *mt7623_disp_pwm_groups[] = अणु "disp_pwm_0", "disp_pwm_1",
+						"disp_pwm_2", पूर्ण;
+अटल स्थिर अक्षर *mt7623_ethernet_groups[] = अणु "esw_int", "esw_rst",
+						"ephy", "mdc_mdio", पूर्ण;
+अटल स्थिर अक्षर *mt7623_ext_sdio_groups[] = अणु "ext_sdio", पूर्ण;
+अटल स्थिर अक्षर *mt7623_hdmi_groups[] = अणु "hdmi_cec", "hdmi_htplg",
 					    "hdmi_i2c", "hdmi_rx",
-					    "hdmi_rx_i2c", };
-static const char *mt7623_i2c_groups[] = { "i2c0", "i2c1_0", "i2c1_1",
+					    "hdmi_rx_i2c", पूर्ण;
+अटल स्थिर अक्षर *mt7623_i2c_groups[] = अणु "i2c0", "i2c1_0", "i2c1_1",
 					   "i2c1_2", "i2c1_3", "i2c1_4",
 					   "i2c2_0", "i2c2_1", "i2c2_2",
-					   "i2c2_3", };
-static const char *mt7623_i2s_groups[] = { "i2s0", "i2s1",
+					   "i2c2_3", पूर्ण;
+अटल स्थिर अक्षर *mt7623_i2s_groups[] = अणु "i2s0", "i2s1",
 					   "i2s2_bclk_lrclk_mclk",
 					   "i2s3_bclk_lrclk_mclk",
 					   "i2s4", "i2s5",
 					   "i2s2_data_in", "i2s3_data_in",
 					   "i2s2_data_0", "i2s2_data_1",
-					   "i2s3_data_0", "i2s3_data_1", };
-static const char *mt7623_ir_groups[] = { "ir", };
-static const char *mt7623_lcd_groups[] = { "dsi_te", "lcm_rst", "mipi_tx", };
-static const char *mt7623_msdc_groups[] = { "msdc0", "msdc1", "msdc1_ins",
+					   "i2s3_data_0", "i2s3_data_1", पूर्ण;
+अटल स्थिर अक्षर *mt7623_ir_groups[] = अणु "ir", पूर्ण;
+अटल स्थिर अक्षर *mt7623_lcd_groups[] = अणु "dsi_te", "lcm_rst", "mipi_tx", पूर्ण;
+अटल स्थिर अक्षर *mt7623_msdc_groups[] = अणु "msdc0", "msdc1", "msdc1_ins",
 					    "msdc1_wp_0", "msdc1_wp_1",
 					    "msdc1_wp_2", "msdc2",
-						"msdc3", };
-static const char *mt7623_nandc_groups[] = { "nandc", "nandc_ceb0",
-					     "nandc_ceb1", };
-static const char *mt7623_otg_groups[] = { "otg_iddig0_0", "otg_iddig0_1",
+						"msdc3", पूर्ण;
+अटल स्थिर अक्षर *mt7623_nandc_groups[] = अणु "nandc", "nandc_ceb0",
+					     "nandc_ceb1", पूर्ण;
+अटल स्थिर अक्षर *mt7623_otg_groups[] = अणु "otg_iddig0_0", "otg_iddig0_1",
 					    "otg_iddig0_2", "otg_iddig1_0",
 					    "otg_iddig1_1", "otg_iddig1_2",
 					    "otg_drv_vbus0_0",
@@ -1278,8 +1279,8 @@ static const char *mt7623_otg_groups[] = { "otg_iddig0_0", "otg_iddig0_1",
 					    "otg_drv_vbus0_2",
 					    "otg_drv_vbus1_0",
 					    "otg_drv_vbus1_1",
-					    "otg_drv_vbus1_2", };
-static const char *mt7623_pcie_groups[] = { "pcie0_0_perst", "pcie0_1_perst",
+					    "otg_drv_vbus1_2", पूर्ण;
+अटल स्थिर अक्षर *mt7623_pcie_groups[] = अणु "pcie0_0_perst", "pcie0_1_perst",
 					    "pcie1_0_perst", "pcie1_1_perst",
 					    "pcie2_0_perst", "pcie2_1_perst",
 					    "pcie0_0_rev_perst",
@@ -1291,8 +1292,8 @@ static const char *mt7623_pcie_groups[] = { "pcie0_0_perst", "pcie0_1_perst",
 					    "pcie0_0_wake", "pcie0_1_wake",
 					    "pcie2_0_wake", "pcie2_1_wake",
 					    "pcie0_clkreq", "pcie1_clkreq",
-					    "pcie2_clkreq", };
-static const char *mt7623_pcm_groups[] = { "pcm_clk_0", "pcm_clk_1",
+					    "pcie2_clkreq", पूर्ण;
+अटल स्थिर अक्षर *mt7623_pcm_groups[] = अणु "pcm_clk_0", "pcm_clk_1",
 					   "pcm_clk_2", "pcm_clk_3",
 					   "pcm_clk_4", "pcm_clk_5",
 					   "pcm_clk_6", "pcm_sync_0",
@@ -1305,8 +1306,8 @@ static const char *mt7623_pcm_groups[] = { "pcm_clk_0", "pcm_clk_1",
 					   "pcm_rx_6", "pcm_tx_0",
 					   "pcm_tx_1", "pcm_tx_2",
 					   "pcm_tx_3", "pcm_tx_4",
-					   "pcm_tx_5", "pcm_tx_6", };
-static const char *mt7623_pwm_groups[] = { "pwm_ch1_0", "pwm_ch1_1",
+					   "pcm_tx_5", "pcm_tx_6", पूर्ण;
+अटल स्थिर अक्षर *mt7623_pwm_groups[] = अणु "pwm_ch1_0", "pwm_ch1_1",
 					   "pwm_ch1_2", "pwm_ch2_0",
 					   "pwm_ch2_1", "pwm_ch2_2",
 					   "pwm_ch3_0", "pwm_ch3_1",
@@ -1317,14 +1318,14 @@ static const char *mt7623_pwm_groups[] = { "pwm_ch1_0", "pwm_ch1_1",
 					   "pwm_ch6_0", "pwm_ch6_1",
 					   "pwm_ch6_2", "pwm_ch6_3",
 					   "pwm_ch7_0", "pwm_ch7_1",
-					   "pwm_ch7_2", };
-static const char *mt7623_pwrap_groups[] = { "pwrap", };
-static const char *mt7623_rtc_groups[] = { "rtc", };
-static const char *mt7623_spi_groups[] = { "spi0", "spi2", "spi2", };
-static const char *mt7623_spdif_groups[] = { "spdif_in0_0", "spdif_in0_1",
+					   "pwm_ch7_2", पूर्ण;
+अटल स्थिर अक्षर *mt7623_pwrap_groups[] = अणु "pwrap", पूर्ण;
+अटल स्थिर अक्षर *mt7623_rtc_groups[] = अणु "rtc", पूर्ण;
+अटल स्थिर अक्षर *mt7623_spi_groups[] = अणु "spi0", "spi2", "spi2", पूर्ण;
+अटल स्थिर अक्षर *mt7623_spdअगर_groups[] = अणु "spdif_in0_0", "spdif_in0_1",
 					     "spdif_in1_0", "spdif_in1_1",
-					     "spdif_out", };
-static const char *mt7623_uart_groups[] = { "uart0_0_txd_rxd",
+					     "spdif_out", पूर्ण;
+अटल स्थिर अक्षर *mt7623_uart_groups[] = अणु "uart0_0_txd_rxd",
 					    "uart0_1_txd_rxd",
 					    "uart0_2_txd_rxd",
 					    "uart0_3_txd_rxd",
@@ -1337,41 +1338,41 @@ static const char *mt7623_uart_groups[] = { "uart0_0_txd_rxd",
 					    "uart0_rts_cts",
 					    "uart1_rts_cts",
 					    "uart2_rts_cts",
-					    "uart3_rts_cts", };
-static const char *mt7623_wdt_groups[] = { "watchdog_0", "watchdog_1", };
+					    "uart3_rts_cts", पूर्ण;
+अटल स्थिर अक्षर *mt7623_wdt_groups[] = अणु "watchdog_0", "watchdog_1", पूर्ण;
 
-static const struct function_desc mt7623_functions[] = {
-	{"audck", mt7623_aud_clk_groups, ARRAY_SIZE(mt7623_aud_clk_groups)},
-	{"disp", mt7623_disp_pwm_groups, ARRAY_SIZE(mt7623_disp_pwm_groups)},
-	{"eth",	mt7623_ethernet_groups, ARRAY_SIZE(mt7623_ethernet_groups)},
-	{"sdio", mt7623_ext_sdio_groups, ARRAY_SIZE(mt7623_ext_sdio_groups)},
-	{"hdmi", mt7623_hdmi_groups, ARRAY_SIZE(mt7623_hdmi_groups)},
-	{"i2c", mt7623_i2c_groups, ARRAY_SIZE(mt7623_i2c_groups)},
-	{"i2s",	mt7623_i2s_groups, ARRAY_SIZE(mt7623_i2s_groups)},
-	{"ir",	mt7623_ir_groups, ARRAY_SIZE(mt7623_ir_groups)},
-	{"lcd", mt7623_lcd_groups, ARRAY_SIZE(mt7623_lcd_groups)},
-	{"msdc", mt7623_msdc_groups, ARRAY_SIZE(mt7623_msdc_groups)},
-	{"nand", mt7623_nandc_groups, ARRAY_SIZE(mt7623_nandc_groups)},
-	{"otg", mt7623_otg_groups, ARRAY_SIZE(mt7623_otg_groups)},
-	{"pcie", mt7623_pcie_groups, ARRAY_SIZE(mt7623_pcie_groups)},
-	{"pcm",	mt7623_pcm_groups, ARRAY_SIZE(mt7623_pcm_groups)},
-	{"pwm",	mt7623_pwm_groups, ARRAY_SIZE(mt7623_pwm_groups)},
-	{"pwrap", mt7623_pwrap_groups, ARRAY_SIZE(mt7623_pwrap_groups)},
-	{"rtc", mt7623_rtc_groups, ARRAY_SIZE(mt7623_rtc_groups)},
-	{"spi",	mt7623_spi_groups, ARRAY_SIZE(mt7623_spi_groups)},
-	{"spdif", mt7623_spdif_groups, ARRAY_SIZE(mt7623_spdif_groups)},
-	{"uart", mt7623_uart_groups, ARRAY_SIZE(mt7623_uart_groups)},
-	{"watchdog", mt7623_wdt_groups, ARRAY_SIZE(mt7623_wdt_groups)},
-};
+अटल स्थिर काष्ठा function_desc mt7623_functions[] = अणु
+	अणु"audck", mt7623_aud_clk_groups, ARRAY_SIZE(mt7623_aud_clk_groups)पूर्ण,
+	अणु"disp", mt7623_disp_pwm_groups, ARRAY_SIZE(mt7623_disp_pwm_groups)पूर्ण,
+	अणु"eth",	mt7623_ethernet_groups, ARRAY_SIZE(mt7623_ethernet_groups)पूर्ण,
+	अणु"sdio", mt7623_ext_sdio_groups, ARRAY_SIZE(mt7623_ext_sdio_groups)पूर्ण,
+	अणु"hdmi", mt7623_hdmi_groups, ARRAY_SIZE(mt7623_hdmi_groups)पूर्ण,
+	अणु"i2c", mt7623_i2c_groups, ARRAY_SIZE(mt7623_i2c_groups)पूर्ण,
+	अणु"i2s",	mt7623_i2s_groups, ARRAY_SIZE(mt7623_i2s_groups)पूर्ण,
+	अणु"ir",	mt7623_ir_groups, ARRAY_SIZE(mt7623_ir_groups)पूर्ण,
+	अणु"lcd", mt7623_lcd_groups, ARRAY_SIZE(mt7623_lcd_groups)पूर्ण,
+	अणु"msdc", mt7623_msdc_groups, ARRAY_SIZE(mt7623_msdc_groups)पूर्ण,
+	अणु"nand", mt7623_nandc_groups, ARRAY_SIZE(mt7623_nandc_groups)पूर्ण,
+	अणु"otg", mt7623_otg_groups, ARRAY_SIZE(mt7623_otg_groups)पूर्ण,
+	अणु"pcie", mt7623_pcie_groups, ARRAY_SIZE(mt7623_pcie_groups)पूर्ण,
+	अणु"pcm",	mt7623_pcm_groups, ARRAY_SIZE(mt7623_pcm_groups)पूर्ण,
+	अणु"pwm",	mt7623_pwm_groups, ARRAY_SIZE(mt7623_pwm_groups)पूर्ण,
+	अणु"pwrap", mt7623_pwrap_groups, ARRAY_SIZE(mt7623_pwrap_groups)पूर्ण,
+	अणु"rtc", mt7623_rtc_groups, ARRAY_SIZE(mt7623_rtc_groups)पूर्ण,
+	अणु"spi",	mt7623_spi_groups, ARRAY_SIZE(mt7623_spi_groups)पूर्ण,
+	अणु"spdif", mt7623_spdअगर_groups, ARRAY_SIZE(mt7623_spdअगर_groups)पूर्ण,
+	अणु"uart", mt7623_uart_groups, ARRAY_SIZE(mt7623_uart_groups)पूर्ण,
+	अणु"watchdog", mt7623_wdt_groups, ARRAY_SIZE(mt7623_wdt_groups)पूर्ण,
+पूर्ण;
 
-static const struct mtk_eint_hw mt7623_eint_hw = {
+अटल स्थिर काष्ठा mtk_eपूर्णांक_hw mt7623_eपूर्णांक_hw = अणु
 	.port_mask = 6,
 	.ports     = 6,
 	.ap_num    = 169,
 	.db_cnt    = 20,
-};
+पूर्ण;
 
-static struct mtk_pin_soc mt7623_data = {
+अटल काष्ठा mtk_pin_soc mt7623_data = अणु
 	.reg_cal = mt7623_reg_cals,
 	.pins = mt7623_pins,
 	.npins = ARRAY_SIZE(mt7623_pins),
@@ -1379,11 +1380,11 @@ static struct mtk_pin_soc mt7623_data = {
 	.ngrps = ARRAY_SIZE(mt7623_groups),
 	.funcs = mt7623_functions,
 	.nfuncs = ARRAY_SIZE(mt7623_functions),
-	.eint_hw = &mt7623_eint_hw,
+	.eपूर्णांक_hw = &mt7623_eपूर्णांक_hw,
 	.gpio_m = 0,
 	.ies_present = true,
-	.base_names = mtk_default_register_base_names,
-	.nbase_names = ARRAY_SIZE(mtk_default_register_base_names),
+	.base_names = mtk_शेष_रेजिस्टर_base_names,
+	.nbase_names = ARRAY_SIZE(mtk_शेष_रेजिस्टर_base_names),
 	.bias_disable_set = mtk_pinconf_bias_disable_set_rev1,
 	.bias_disable_get = mtk_pinconf_bias_disable_get_rev1,
 	.bias_set = mtk_pinconf_bias_set_rev1,
@@ -1392,50 +1393,50 @@ static struct mtk_pin_soc mt7623_data = {
 	.drive_get = mtk_pinconf_drive_get_rev1,
 	.adv_pull_get = mtk_pinconf_adv_pull_get,
 	.adv_pull_set = mtk_pinconf_adv_pull_set,
-};
+पूर्ण;
 
 /*
- * There are some specific pins have mux functions greater than 8,
- * and if we want to switch thees high modes we need to disable
- * bonding constraints firstly.
+ * There are some specअगरic pins have mux functions greater than 8,
+ * and अगर we want to चयन thees high modes we need to disable
+ * bonding स्थिरraपूर्णांकs firstly.
  */
-static void mt7623_bonding_disable(struct platform_device *pdev)
-{
-	struct mtk_pinctrl *hw = platform_get_drvdata(pdev);
+अटल व्योम mt7623_bonding_disable(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mtk_pinctrl *hw = platक्रमm_get_drvdata(pdev);
 
 	mtk_rmw(hw, 0, PIN_BOND_REG0, BOND_PCIE_CLR, BOND_PCIE_CLR);
 	mtk_rmw(hw, 0, PIN_BOND_REG1, BOND_I2S_CLR, BOND_I2S_CLR);
 	mtk_rmw(hw, 0, PIN_BOND_REG2, BOND_MSDC0E_CLR, BOND_MSDC0E_CLR);
-}
+पूर्ण
 
-static const struct of_device_id mt7623_pctrl_match[] = {
-	{ .compatible = "mediatek,mt7623-moore-pinctrl", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id mt7623_pctrl_match[] = अणु
+	अणु .compatible = "mediatek,mt7623-moore-pinctrl", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int mt7623_pinctrl_probe(struct platform_device *pdev)
-{
-	int err;
+अटल पूर्णांक mt7623_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक err;
 
 	err = mtk_moore_pinctrl_probe(pdev, &mt7623_data);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mt7623_bonding_disable(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mtk_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver mtk_pinctrl_driver = अणु
 	.probe = mt7623_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name = "mt7623-moore-pinctrl",
 		.of_match_table = mt7623_pctrl_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init mtk_pinctrl_init(void)
-{
-	return platform_driver_register(&mtk_pinctrl_driver);
-}
+अटल पूर्णांक __init mtk_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mtk_pinctrl_driver);
+पूर्ण
 arch_initcall(mtk_pinctrl_init);

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * mm/fadvise.c
  *
@@ -8,109 +9,109 @@
  *		Initial version.
  */
 
-#include <linux/kernel.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/pagemap.h>
-#include <linux/backing-dev.h>
-#include <linux/pagevec.h>
-#include <linux/fadvise.h>
-#include <linux/writeback.h>
-#include <linux/syscalls.h>
-#include <linux/swap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/pagevec.h>
+#समावेश <linux/fadvise.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/swap.h>
 
-#include <asm/unistd.h>
+#समावेश <यंत्र/unistd.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
 /*
  * POSIX_FADV_WILLNEED could set PG_Referenced, and POSIX_FADV_NOREUSE could
  * deactivate the pages and clear PG_Referenced.
  */
 
-int generic_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
-{
-	struct inode *inode;
-	struct address_space *mapping;
-	struct backing_dev_info *bdi;
+पूर्णांक generic_fadvise(काष्ठा file *file, loff_t offset, loff_t len, पूर्णांक advice)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा address_space *mapping;
+	काष्ठा backing_dev_info *bdi;
 	loff_t endbyte;			/* inclusive */
 	pgoff_t start_index;
 	pgoff_t end_index;
-	unsigned long nrpages;
+	अचिन्हित दीर्घ nrpages;
 
 	inode = file_inode(file);
-	if (S_ISFIFO(inode->i_mode))
-		return -ESPIPE;
+	अगर (S_ISFIFO(inode->i_mode))
+		वापस -ESPIPE;
 
 	mapping = file->f_mapping;
-	if (!mapping || len < 0)
-		return -EINVAL;
+	अगर (!mapping || len < 0)
+		वापस -EINVAL;
 
 	bdi = inode_to_bdi(mapping->host);
 
-	if (IS_DAX(inode) || (bdi == &noop_backing_dev_info)) {
-		switch (advice) {
-		case POSIX_FADV_NORMAL:
-		case POSIX_FADV_RANDOM:
-		case POSIX_FADV_SEQUENTIAL:
-		case POSIX_FADV_WILLNEED:
-		case POSIX_FADV_NOREUSE:
-		case POSIX_FADV_DONTNEED:
-			/* no bad return value, but ignore advice */
-			break;
-		default:
-			return -EINVAL;
-		}
-		return 0;
-	}
+	अगर (IS_DAX(inode) || (bdi == &noop_backing_dev_info)) अणु
+		चयन (advice) अणु
+		हाल POSIX_FADV_NORMAL:
+		हाल POSIX_FADV_RANDOM:
+		हाल POSIX_FADV_SEQUENTIAL:
+		हाल POSIX_FADV_WILLNEED:
+		हाल POSIX_FADV_NOREUSE:
+		हाल POSIX_FADV_DONTNEED:
+			/* no bad वापस value, but ignore advice */
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * Careful about overflows. Len == 0 means "as much as possible".  Use
-	 * unsigned math because signed overflows are undefined and UBSan
+	 * अचिन्हित math because चिन्हित overflows are undefined and UBSan
 	 * complains.
 	 */
 	endbyte = (u64)offset + (u64)len;
-	if (!len || endbyte < len)
+	अगर (!len || endbyte < len)
 		endbyte = -1;
-	else
+	अन्यथा
 		endbyte--;		/* inclusive */
 
-	switch (advice) {
-	case POSIX_FADV_NORMAL:
+	चयन (advice) अणु
+	हाल POSIX_FADV_NORMAL:
 		file->f_ra.ra_pages = bdi->ra_pages;
 		spin_lock(&file->f_lock);
 		file->f_mode &= ~FMODE_RANDOM;
 		spin_unlock(&file->f_lock);
-		break;
-	case POSIX_FADV_RANDOM:
+		अवरोध;
+	हाल POSIX_FADV_RANDOM:
 		spin_lock(&file->f_lock);
 		file->f_mode |= FMODE_RANDOM;
 		spin_unlock(&file->f_lock);
-		break;
-	case POSIX_FADV_SEQUENTIAL:
+		अवरोध;
+	हाल POSIX_FADV_SEQUENTIAL:
 		file->f_ra.ra_pages = bdi->ra_pages * 2;
 		spin_lock(&file->f_lock);
 		file->f_mode &= ~FMODE_RANDOM;
 		spin_unlock(&file->f_lock);
-		break;
-	case POSIX_FADV_WILLNEED:
+		अवरोध;
+	हाल POSIX_FADV_WILLNEED:
 		/* First and last PARTIAL page! */
 		start_index = offset >> PAGE_SHIFT;
 		end_index = endbyte >> PAGE_SHIFT;
 
 		/* Careful about overflow on the "+1" */
 		nrpages = end_index - start_index + 1;
-		if (!nrpages)
+		अगर (!nrpages)
 			nrpages = ~0UL;
 
-		force_page_cache_readahead(mapping, file, start_index, nrpages);
-		break;
-	case POSIX_FADV_NOREUSE:
-		break;
-	case POSIX_FADV_DONTNEED:
-		if (!inode_write_congested(mapping->host))
-			__filemap_fdatawrite_range(mapping, offset, endbyte,
+		क्रमce_page_cache_पढ़ोahead(mapping, file, start_index, nrpages);
+		अवरोध;
+	हाल POSIX_FADV_NOREUSE:
+		अवरोध;
+	हाल POSIX_FADV_DONTNEED:
+		अगर (!inode_ग_लिखो_congested(mapping->host))
+			__filemap_fdataग_लिखो_range(mapping, offset, endbyte,
 						   WB_SYNC_NONE);
 
 		/*
@@ -123,32 +124,32 @@ int generic_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
 		/*
 		 * The page at end_index will be inclusively discarded according
 		 * by invalidate_mapping_pages(), so subtracting 1 from
-		 * end_index means we will skip the last page.  But if endbyte
+		 * end_index means we will skip the last page.  But अगर endbyte
 		 * is page aligned or is at the end of file, we should not skip
 		 * that page - discarding the last page is safe enough.
 		 */
-		if ((endbyte & ~PAGE_MASK) != ~PAGE_MASK &&
-				endbyte != inode->i_size - 1) {
+		अगर ((endbyte & ~PAGE_MASK) != ~PAGE_MASK &&
+				endbyte != inode->i_size - 1) अणु
 			/* First page is tricky as 0 - 1 = -1, but pgoff_t
-			 * is unsigned, so the end_index >= start_index
+			 * is अचिन्हित, so the end_index >= start_index
 			 * check below would be true and we'll discard the whole
 			 * file cache which is not what was asked.
 			 */
-			if (end_index == 0)
-				break;
+			अगर (end_index == 0)
+				अवरोध;
 
 			end_index--;
-		}
+		पूर्ण
 
-		if (end_index >= start_index) {
-			unsigned long nr_pagevec = 0;
+		अगर (end_index >= start_index) अणु
+			अचिन्हित दीर्घ nr_pagevec = 0;
 
 			/*
 			 * It's common to FADV_DONTNEED right after
-			 * the read or write that instantiates the
-			 * pages, in which case there will be some
+			 * the पढ़ो or ग_लिखो that instantiates the
+			 * pages, in which हाल there will be some
 			 * sitting on the local LRU cache. Try to
-			 * avoid the expensive remote drain and the
+			 * aव्योम the expensive remote drain and the
 			 * second cache tree walk below by flushing
 			 * them out right away.
 			 */
@@ -161,59 +162,59 @@ int generic_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
 			/*
 			 * If fewer pages were invalidated than expected then
 			 * it is possible that some of the pages were on
-			 * a per-cpu pagevec for a remote CPU. Drain all
+			 * a per-cpu pagevec क्रम a remote CPU. Drain all
 			 * pagevecs and try again.
 			 */
-			if (nr_pagevec) {
+			अगर (nr_pagevec) अणु
 				lru_add_drain_all();
 				invalidate_mapping_pages(mapping, start_index,
 						end_index);
-			}
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(generic_fadvise);
 
-int vfs_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
-{
-	if (file->f_op->fadvise)
-		return file->f_op->fadvise(file, offset, len, advice);
+पूर्णांक vfs_fadvise(काष्ठा file *file, loff_t offset, loff_t len, पूर्णांक advice)
+अणु
+	अगर (file->f_op->fadvise)
+		वापस file->f_op->fadvise(file, offset, len, advice);
 
-	return generic_fadvise(file, offset, len, advice);
-}
+	वापस generic_fadvise(file, offset, len, advice);
+पूर्ण
 EXPORT_SYMBOL(vfs_fadvise);
 
-#ifdef CONFIG_ADVISE_SYSCALLS
+#अगर_घोषित CONFIG_ADVISE_SYSCALLS
 
-int ksys_fadvise64_64(int fd, loff_t offset, loff_t len, int advice)
-{
-	struct fd f = fdget(fd);
-	int ret;
+पूर्णांक ksys_fadvise64_64(पूर्णांक fd, loff_t offset, loff_t len, पूर्णांक advice)
+अणु
+	काष्ठा fd f = fdget(fd);
+	पूर्णांक ret;
 
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
 	ret = vfs_fadvise(f.file, offset, len, advice);
 
 	fdput(f);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE4(fadvise64_64, int, fd, loff_t, offset, loff_t, len, int, advice)
-{
-	return ksys_fadvise64_64(fd, offset, len, advice);
-}
+SYSCALL_DEFINE4(fadvise64_64, पूर्णांक, fd, loff_t, offset, loff_t, len, पूर्णांक, advice)
+अणु
+	वापस ksys_fadvise64_64(fd, offset, len, advice);
+पूर्ण
 
-#ifdef __ARCH_WANT_SYS_FADVISE64
+#अगर_घोषित __ARCH_WANT_SYS_FADVISE64
 
-SYSCALL_DEFINE4(fadvise64, int, fd, loff_t, offset, size_t, len, int, advice)
-{
-	return ksys_fadvise64_64(fd, offset, len, advice);
-}
+SYSCALL_DEFINE4(fadvise64, पूर्णांक, fd, loff_t, offset, माप_प्रकार, len, पूर्णांक, advice)
+अणु
+	वापस ksys_fadvise64_64(fd, offset, len, advice);
+पूर्ण
 
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर

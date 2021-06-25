@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2012 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -6,156 +7,156 @@
  * License version 2. This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  *
- * Auxiliary Synthesizer clock implementation
+ * Auxiliary Synthesizer घड़ी implementation
  */
 
-#define pr_fmt(fmt) "clk-aux-synth: " fmt
+#घोषणा pr_fmt(fmt) "clk-aux-synth: " fmt
 
-#include <linux/clk-provider.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include "clk.h"
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश "clk.h"
 
 /*
- * DOC: Auxiliary Synthesizer clock
+ * DOC: Auxiliary Synthesizer घड़ी
  *
- * Aux synth gives rate for different values of eq, x and y
+ * Aux synth gives rate क्रम dअगरferent values of eq, x and y
  *
  * Fout from synthesizer can be given from two equations:
  * Fout1 = (Fin * X/Y)/2		EQ1
  * Fout2 = Fin * X/Y			EQ2
  */
 
-#define to_clk_aux(_hw) container_of(_hw, struct clk_aux, hw)
+#घोषणा to_clk_aux(_hw) container_of(_hw, काष्ठा clk_aux, hw)
 
-static const  struct aux_clk_masks default_aux_masks = {
+अटल स्थिर  काष्ठा aux_clk_masks शेष_aux_masks = अणु
 	.eq_sel_mask = AUX_EQ_SEL_MASK,
-	.eq_sel_shift = AUX_EQ_SEL_SHIFT,
+	.eq_sel_shअगरt = AUX_EQ_SEL_SHIFT,
 	.eq1_mask = AUX_EQ1_SEL,
 	.eq2_mask = AUX_EQ2_SEL,
 	.xscale_sel_mask = AUX_XSCALE_MASK,
-	.xscale_sel_shift = AUX_XSCALE_SHIFT,
+	.xscale_sel_shअगरt = AUX_XSCALE_SHIFT,
 	.yscale_sel_mask = AUX_YSCALE_MASK,
-	.yscale_sel_shift = AUX_YSCALE_SHIFT,
+	.yscale_sel_shअगरt = AUX_YSCALE_SHIFT,
 	.enable_bit = AUX_SYNT_ENB,
-};
+पूर्ण;
 
-static unsigned long aux_calc_rate(struct clk_hw *hw, unsigned long prate,
-		int index)
-{
-	struct clk_aux *aux = to_clk_aux(hw);
-	struct aux_rate_tbl *rtbl = aux->rtbl;
+अटल अचिन्हित दीर्घ aux_calc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ prate,
+		पूर्णांक index)
+अणु
+	काष्ठा clk_aux *aux = to_clk_aux(hw);
+	काष्ठा aux_rate_tbl *rtbl = aux->rtbl;
 	u8 eq = rtbl[index].eq ? 1 : 2;
 
-	return (((prate / 10000) * rtbl[index].xscale) /
+	वापस (((prate / 10000) * rtbl[index].xscale) /
 			(rtbl[index].yscale * eq)) * 10000;
-}
+पूर्ण
 
-static long clk_aux_round_rate(struct clk_hw *hw, unsigned long drate,
-		unsigned long *prate)
-{
-	struct clk_aux *aux = to_clk_aux(hw);
-	int unused;
+अटल दीर्घ clk_aux_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
+		अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा clk_aux *aux = to_clk_aux(hw);
+	पूर्णांक unused;
 
-	return clk_round_rate_index(hw, drate, *prate, aux_calc_rate,
+	वापस clk_round_rate_index(hw, drate, *prate, aux_calc_rate,
 			aux->rtbl_cnt, &unused);
-}
+पूर्ण
 
-static unsigned long clk_aux_recalc_rate(struct clk_hw *hw,
-		unsigned long parent_rate)
-{
-	struct clk_aux *aux = to_clk_aux(hw);
-	unsigned int num = 1, den = 1, val, eqn;
-	unsigned long flags = 0;
+अटल अचिन्हित दीर्घ clk_aux_recalc_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_aux *aux = to_clk_aux(hw);
+	अचिन्हित पूर्णांक num = 1, den = 1, val, eqn;
+	अचिन्हित दीर्घ flags = 0;
 
-	if (aux->lock)
+	अगर (aux->lock)
 		spin_lock_irqsave(aux->lock, flags);
 
-	val = readl_relaxed(aux->reg);
+	val = पढ़ोl_relaxed(aux->reg);
 
-	if (aux->lock)
+	अगर (aux->lock)
 		spin_unlock_irqrestore(aux->lock, flags);
 
-	eqn = (val >> aux->masks->eq_sel_shift) & aux->masks->eq_sel_mask;
-	if (eqn == aux->masks->eq1_mask)
+	eqn = (val >> aux->masks->eq_sel_shअगरt) & aux->masks->eq_sel_mask;
+	अगर (eqn == aux->masks->eq1_mask)
 		den = 2;
 
 	/* calculate numerator */
-	num = (val >> aux->masks->xscale_sel_shift) &
+	num = (val >> aux->masks->xscale_sel_shअगरt) &
 		aux->masks->xscale_sel_mask;
 
 	/* calculate denominator */
-	den *= (val >> aux->masks->yscale_sel_shift) &
+	den *= (val >> aux->masks->yscale_sel_shअगरt) &
 		aux->masks->yscale_sel_mask;
 
-	if (!den)
-		return 0;
+	अगर (!den)
+		वापस 0;
 
-	return (((parent_rate / 10000) * num) / den) * 10000;
-}
+	वापस (((parent_rate / 10000) * num) / den) * 10000;
+पूर्ण
 
-/* Configures new clock rate of aux */
-static int clk_aux_set_rate(struct clk_hw *hw, unsigned long drate,
-				unsigned long prate)
-{
-	struct clk_aux *aux = to_clk_aux(hw);
-	struct aux_rate_tbl *rtbl = aux->rtbl;
-	unsigned long val, flags = 0;
-	int i;
+/* Configures new घड़ी rate of aux */
+अटल पूर्णांक clk_aux_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
+				अचिन्हित दीर्घ prate)
+अणु
+	काष्ठा clk_aux *aux = to_clk_aux(hw);
+	काष्ठा aux_rate_tbl *rtbl = aux->rtbl;
+	अचिन्हित दीर्घ val, flags = 0;
+	पूर्णांक i;
 
 	clk_round_rate_index(hw, drate, prate, aux_calc_rate, aux->rtbl_cnt,
 			&i);
 
-	if (aux->lock)
+	अगर (aux->lock)
 		spin_lock_irqsave(aux->lock, flags);
 
-	val = readl_relaxed(aux->reg) &
-		~(aux->masks->eq_sel_mask << aux->masks->eq_sel_shift);
+	val = पढ़ोl_relaxed(aux->reg) &
+		~(aux->masks->eq_sel_mask << aux->masks->eq_sel_shअगरt);
 	val |= (rtbl[i].eq & aux->masks->eq_sel_mask) <<
-		aux->masks->eq_sel_shift;
-	val &= ~(aux->masks->xscale_sel_mask << aux->masks->xscale_sel_shift);
+		aux->masks->eq_sel_shअगरt;
+	val &= ~(aux->masks->xscale_sel_mask << aux->masks->xscale_sel_shअगरt);
 	val |= (rtbl[i].xscale & aux->masks->xscale_sel_mask) <<
-		aux->masks->xscale_sel_shift;
-	val &= ~(aux->masks->yscale_sel_mask << aux->masks->yscale_sel_shift);
+		aux->masks->xscale_sel_shअगरt;
+	val &= ~(aux->masks->yscale_sel_mask << aux->masks->yscale_sel_shअगरt);
 	val |= (rtbl[i].yscale & aux->masks->yscale_sel_mask) <<
-		aux->masks->yscale_sel_shift;
-	writel_relaxed(val, aux->reg);
+		aux->masks->yscale_sel_shअगरt;
+	ग_लिखोl_relaxed(val, aux->reg);
 
-	if (aux->lock)
+	अगर (aux->lock)
 		spin_unlock_irqrestore(aux->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops clk_aux_ops = {
+अटल स्थिर काष्ठा clk_ops clk_aux_ops = अणु
 	.recalc_rate = clk_aux_recalc_rate,
 	.round_rate = clk_aux_round_rate,
 	.set_rate = clk_aux_set_rate,
-};
+पूर्ण;
 
-struct clk *clk_register_aux(const char *aux_name, const char *gate_name,
-		const char *parent_name, unsigned long flags, void __iomem *reg,
-	        const struct aux_clk_masks *masks, struct aux_rate_tbl *rtbl,
-		u8 rtbl_cnt, spinlock_t *lock, struct clk **gate_clk)
-{
-	struct clk_aux *aux;
-	struct clk_init_data init;
-	struct clk *clk;
+काष्ठा clk *clk_रेजिस्टर_aux(स्थिर अक्षर *aux_name, स्थिर अक्षर *gate_name,
+		स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags, व्योम __iomem *reg,
+	        स्थिर काष्ठा aux_clk_masks *masks, काष्ठा aux_rate_tbl *rtbl,
+		u8 rtbl_cnt, spinlock_t *lock, काष्ठा clk **gate_clk)
+अणु
+	काष्ठा clk_aux *aux;
+	काष्ठा clk_init_data init;
+	काष्ठा clk *clk;
 
-	if (!aux_name || !parent_name || !reg || !rtbl || !rtbl_cnt) {
+	अगर (!aux_name || !parent_name || !reg || !rtbl || !rtbl_cnt) अणु
 		pr_err("Invalid arguments passed");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	aux = kzalloc(sizeof(*aux), GFP_KERNEL);
-	if (!aux)
-		return ERR_PTR(-ENOMEM);
+	aux = kzalloc(माप(*aux), GFP_KERNEL);
+	अगर (!aux)
+		वापस ERR_PTR(-ENOMEM);
 
-	/* struct clk_aux assignments */
-	if (!masks)
-		aux->masks = &default_aux_masks;
-	else
+	/* काष्ठा clk_aux assignments */
+	अगर (!masks)
+		aux->masks = &शेष_aux_masks;
+	अन्यथा
 		aux->masks = masks;
 
 	aux->reg = reg;
@@ -170,28 +171,28 @@ struct clk *clk_register_aux(const char *aux_name, const char *gate_name,
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 
-	clk = clk_register(NULL, &aux->hw);
-	if (IS_ERR_OR_NULL(clk))
-		goto free_aux;
+	clk = clk_रेजिस्टर(शून्य, &aux->hw);
+	अगर (IS_ERR_OR_शून्य(clk))
+		जाओ मुक्त_aux;
 
-	if (gate_name) {
-		struct clk *tgate_clk;
+	अगर (gate_name) अणु
+		काष्ठा clk *tgate_clk;
 
-		tgate_clk = clk_register_gate(NULL, gate_name, aux_name,
+		tgate_clk = clk_रेजिस्टर_gate(शून्य, gate_name, aux_name,
 				CLK_SET_RATE_PARENT, reg,
 				aux->masks->enable_bit, 0, lock);
-		if (IS_ERR_OR_NULL(tgate_clk))
-			goto free_aux;
+		अगर (IS_ERR_OR_शून्य(tgate_clk))
+			जाओ मुक्त_aux;
 
-		if (gate_clk)
+		अगर (gate_clk)
 			*gate_clk = tgate_clk;
-	}
+	पूर्ण
 
-	return clk;
+	वापस clk;
 
-free_aux:
-	kfree(aux);
+मुक्त_aux:
+	kमुक्त(aux);
 	pr_err("clk register failed\n");
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

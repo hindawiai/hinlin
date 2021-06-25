@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2014 - 2020 Intel Corporation */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/workqueue.h>
-#include "adf_accel_devices.h"
-#include "adf_common_drv.h"
-#include "adf_cfg.h"
-#include "adf_cfg_strings.h"
-#include "adf_cfg_common.h"
-#include "adf_transport_access_macros.h"
-#include "adf_transport_internal.h"
-#include "adf_pf2vf_msg.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/workqueue.h>
+#समावेश "adf_accel_devices.h"
+#समावेश "adf_common_drv.h"
+#समावेश "adf_cfg.h"
+#समावेश "adf_cfg_strings.h"
+#समावेश "adf_cfg_common.h"
+#समावेश "adf_transport_access_macros.h"
+#समावेश "adf_transport_internal.h"
+#समावेश "adf_pf2vf_msg.h"
 
-#define ADF_VINTSOU_OFFSET	0x204
-#define ADF_VINTSOU_BUN		BIT(0)
-#define ADF_VINTSOU_PF2VF	BIT(1)
+#घोषणा ADF_VINTSOU_OFFSET	0x204
+#घोषणा ADF_VINTSOU_BUN		BIT(0)
+#घोषणा ADF_VINTSOU_PF2VF	BIT(1)
 
-static struct workqueue_struct *adf_vf_stop_wq;
+अटल काष्ठा workqueue_काष्ठा *adf_vf_stop_wq;
 
-struct adf_vf_stop_data {
-	struct adf_accel_dev *accel_dev;
-	struct work_struct work;
-};
+काष्ठा adf_vf_stop_data अणु
+	काष्ठा adf_accel_dev *accel_dev;
+	काष्ठा work_काष्ठा work;
+पूर्ण;
 
-static int adf_enable_msi(struct adf_accel_dev *accel_dev)
-{
-	struct adf_accel_pci *pci_dev_info = &accel_dev->accel_pci_dev;
-	int stat = pci_enable_msi(pci_dev_info->pci_dev);
+अटल पूर्णांक adf_enable_msi(काष्ठा adf_accel_dev *accel_dev)
+अणु
+	काष्ठा adf_accel_pci *pci_dev_info = &accel_dev->accel_pci_dev;
+	पूर्णांक stat = pci_enable_msi(pci_dev_info->pci_dev);
 
-	if (stat) {
+	अगर (stat) अणु
 		dev_err(&GET_DEV(accel_dev),
 			"Failed to enable MSI interrupts\n");
-		return stat;
-	}
+		वापस stat;
+	पूर्ण
 
 	accel_dev->vf.irq_name = kzalloc(ADF_MAX_MSIX_VECTOR_NAME, GFP_KERNEL);
-	if (!accel_dev->vf.irq_name)
-		return -ENOMEM;
+	अगर (!accel_dev->vf.irq_name)
+		वापस -ENOMEM;
 
-	return stat;
-}
+	वापस stat;
+पूर्ण
 
-static void adf_disable_msi(struct adf_accel_dev *accel_dev)
-{
-	struct pci_dev *pdev = accel_to_pci_dev(accel_dev);
+अटल व्योम adf_disable_msi(काष्ठा adf_accel_dev *accel_dev)
+अणु
+	काष्ठा pci_dev *pdev = accel_to_pci_dev(accel_dev);
 
-	kfree(accel_dev->vf.irq_name);
+	kमुक्त(accel_dev->vf.irq_name);
 	pci_disable_msi(pdev);
-}
+पूर्ण
 
-static void adf_dev_stop_async(struct work_struct *work)
-{
-	struct adf_vf_stop_data *stop_data =
-		container_of(work, struct adf_vf_stop_data, work);
-	struct adf_accel_dev *accel_dev = stop_data->accel_dev;
+अटल व्योम adf_dev_stop_async(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा adf_vf_stop_data *stop_data =
+		container_of(work, काष्ठा adf_vf_stop_data, work);
+	काष्ठा adf_accel_dev *accel_dev = stop_data->accel_dev;
 
 	adf_dev_stop(accel_dev);
-	adf_dev_shutdown(accel_dev);
+	adf_dev_shutकरोwn(accel_dev);
 
-	/* Re-enable PF2VF interrupts */
-	adf_enable_pf2vf_interrupts(accel_dev);
-	kfree(stop_data);
-}
+	/* Re-enable PF2VF पूर्णांकerrupts */
+	adf_enable_pf2vf_पूर्णांकerrupts(accel_dev);
+	kमुक्त(stop_data);
+पूर्ण
 
-static void adf_pf2vf_bh_handler(void *data)
-{
-	struct adf_accel_dev *accel_dev = data;
-	struct adf_hw_device_data *hw_data = accel_dev->hw_device;
-	struct adf_bar *pmisc =
+अटल व्योम adf_pf2vf_bh_handler(व्योम *data)
+अणु
+	काष्ठा adf_accel_dev *accel_dev = data;
+	काष्ठा adf_hw_device_data *hw_data = accel_dev->hw_device;
+	काष्ठा adf_bar *pmisc =
 			&GET_BARS(accel_dev)[hw_data->get_misc_bar_id(hw_data)];
-	void __iomem *pmisc_bar_addr = pmisc->virt_addr;
+	व्योम __iomem *pmisc_bar_addr = pmisc->virt_addr;
 	u32 msg;
 
 	/* Read the message from PF */
 	msg = ADF_CSR_RD(pmisc_bar_addr, hw_data->get_pf2vf_offset(0));
 
-	if (!(msg & ADF_PF2VF_MSGORIGIN_SYSTEM))
-		/* Ignore legacy non-system (non-kernel) PF2VF messages */
-		goto err;
+	अगर (!(msg & ADF_PF2VF_MSGORIGIN_SYSTEM))
+		/* Ignore legacy non-प्रणाली (non-kernel) PF2VF messages */
+		जाओ err;
 
-	switch ((msg & ADF_PF2VF_MSGTYPE_MASK) >> ADF_PF2VF_MSGTYPE_SHIFT) {
-	case ADF_PF2VF_MSGTYPE_RESTARTING: {
-		struct adf_vf_stop_data *stop_data;
+	चयन ((msg & ADF_PF2VF_MSGTYPE_MASK) >> ADF_PF2VF_MSGTYPE_SHIFT) अणु
+	हाल ADF_PF2VF_MSGTYPE_RESTARTING: अणु
+		काष्ठा adf_vf_stop_data *stop_data;
 
 		dev_dbg(&GET_DEV(accel_dev),
 			"Restarting msg received from PF 0x%x\n", msg);
 
 		clear_bit(ADF_STATUS_PF_RUNNING, &accel_dev->status);
 
-		stop_data = kzalloc(sizeof(*stop_data), GFP_ATOMIC);
-		if (!stop_data) {
+		stop_data = kzalloc(माप(*stop_data), GFP_ATOMIC);
+		अगर (!stop_data) अणु
 			dev_err(&GET_DEV(accel_dev),
 				"Couldn't schedule stop for vf_%d\n",
 				accel_dev->accel_id);
-			return;
-		}
+			वापस;
+		पूर्ण
 		stop_data->accel_dev = accel_dev;
 		INIT_WORK(&stop_data->work, adf_dev_stop_async);
 		queue_work(adf_vf_stop_wq, &stop_data->work);
 		/* To ack, clear the PF2VFINT bit */
 		msg &= ~ADF_PF2VF_INT;
 		ADF_CSR_WR(pmisc_bar_addr, hw_data->get_pf2vf_offset(0), msg);
-		return;
-	}
-	case ADF_PF2VF_MSGTYPE_VERSION_RESP:
+		वापस;
+	पूर्ण
+	हाल ADF_PF2VF_MSGTYPE_VERSION_RESP:
 		dev_dbg(&GET_DEV(accel_dev),
 			"Version resp received from PF 0x%x\n", msg);
 		accel_dev->vf.pf_version =
@@ -118,158 +119,158 @@ static void adf_pf2vf_bh_handler(void *data)
 			(msg & ADF_PF2VF_VERSION_RESP_RESULT_MASK) >>
 			ADF_PF2VF_VERSION_RESP_RESULT_SHIFT;
 		complete(&accel_dev->vf.iov_msg_completion);
-		break;
-	default:
-		goto err;
-	}
+		अवरोध;
+	शेष:
+		जाओ err;
+	पूर्ण
 
 	/* To ack, clear the PF2VFINT bit */
 	msg &= ~ADF_PF2VF_INT;
 	ADF_CSR_WR(pmisc_bar_addr, hw_data->get_pf2vf_offset(0), msg);
 
-	/* Re-enable PF2VF interrupts */
-	adf_enable_pf2vf_interrupts(accel_dev);
-	return;
+	/* Re-enable PF2VF पूर्णांकerrupts */
+	adf_enable_pf2vf_पूर्णांकerrupts(accel_dev);
+	वापस;
 err:
 	dev_err(&GET_DEV(accel_dev),
 		"Unknown message from PF (0x%x); leaving PF2VF ints disabled\n",
 		msg);
-}
+पूर्ण
 
-static int adf_setup_pf2vf_bh(struct adf_accel_dev *accel_dev)
-{
+अटल पूर्णांक adf_setup_pf2vf_bh(काष्ठा adf_accel_dev *accel_dev)
+अणु
 	tasklet_init(&accel_dev->vf.pf2vf_bh_tasklet,
-		     (void *)adf_pf2vf_bh_handler, (unsigned long)accel_dev);
+		     (व्योम *)adf_pf2vf_bh_handler, (अचिन्हित दीर्घ)accel_dev);
 
 	mutex_init(&accel_dev->vf.vf2pf_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void adf_cleanup_pf2vf_bh(struct adf_accel_dev *accel_dev)
-{
+अटल व्योम adf_cleanup_pf2vf_bh(काष्ठा adf_accel_dev *accel_dev)
+अणु
 	tasklet_disable(&accel_dev->vf.pf2vf_bh_tasklet);
-	tasklet_kill(&accel_dev->vf.pf2vf_bh_tasklet);
+	tasklet_समाप्त(&accel_dev->vf.pf2vf_bh_tasklet);
 	mutex_destroy(&accel_dev->vf.vf2pf_lock);
-}
+पूर्ण
 
-static irqreturn_t adf_isr(int irq, void *privdata)
-{
-	struct adf_accel_dev *accel_dev = privdata;
-	struct adf_hw_device_data *hw_data = accel_dev->hw_device;
-	struct adf_hw_csr_ops *csr_ops = &hw_data->csr_ops;
-	struct adf_bar *pmisc =
+अटल irqवापस_t adf_isr(पूर्णांक irq, व्योम *privdata)
+अणु
+	काष्ठा adf_accel_dev *accel_dev = privdata;
+	काष्ठा adf_hw_device_data *hw_data = accel_dev->hw_device;
+	काष्ठा adf_hw_csr_ops *csr_ops = &hw_data->csr_ops;
+	काष्ठा adf_bar *pmisc =
 			&GET_BARS(accel_dev)[hw_data->get_misc_bar_id(hw_data)];
-	void __iomem *pmisc_bar_addr = pmisc->virt_addr;
-	u32 v_int;
+	व्योम __iomem *pmisc_bar_addr = pmisc->virt_addr;
+	u32 v_पूर्णांक;
 
-	/* Read VF INT source CSR to determine the source of VF interrupt */
-	v_int = ADF_CSR_RD(pmisc_bar_addr, ADF_VINTSOU_OFFSET);
+	/* Read VF INT source CSR to determine the source of VF पूर्णांकerrupt */
+	v_पूर्णांक = ADF_CSR_RD(pmisc_bar_addr, ADF_VINTSOU_OFFSET);
 
-	/* Check for PF2VF interrupt */
-	if (v_int & ADF_VINTSOU_PF2VF) {
-		/* Disable PF to VF interrupt */
-		adf_disable_pf2vf_interrupts(accel_dev);
+	/* Check क्रम PF2VF पूर्णांकerrupt */
+	अगर (v_पूर्णांक & ADF_VINTSOU_PF2VF) अणु
+		/* Disable PF to VF पूर्णांकerrupt */
+		adf_disable_pf2vf_पूर्णांकerrupts(accel_dev);
 
-		/* Schedule tasklet to handle interrupt BH */
+		/* Schedule tasklet to handle पूर्णांकerrupt BH */
 		tasklet_hi_schedule(&accel_dev->vf.pf2vf_bh_tasklet);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	/* Check bundle interrupt */
-	if (v_int & ADF_VINTSOU_BUN) {
-		struct adf_etr_data *etr_data = accel_dev->transport;
-		struct adf_etr_bank_data *bank = &etr_data->banks[0];
+	/* Check bundle पूर्णांकerrupt */
+	अगर (v_पूर्णांक & ADF_VINTSOU_BUN) अणु
+		काष्ठा adf_etr_data *etr_data = accel_dev->transport;
+		काष्ठा adf_etr_bank_data *bank = &etr_data->banks[0];
 
 		/* Disable Flag and Coalesce Ring Interrupts */
-		csr_ops->write_csr_int_flag_and_col(bank->csr_addr,
+		csr_ops->ग_लिखो_csr_पूर्णांक_flag_and_col(bank->csr_addr,
 						    bank->bank_number, 0);
 		tasklet_hi_schedule(&bank->resp_handler);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static int adf_request_msi_irq(struct adf_accel_dev *accel_dev)
-{
-	struct pci_dev *pdev = accel_to_pci_dev(accel_dev);
-	unsigned int cpu;
-	int ret;
+अटल पूर्णांक adf_request_msi_irq(काष्ठा adf_accel_dev *accel_dev)
+अणु
+	काष्ठा pci_dev *pdev = accel_to_pci_dev(accel_dev);
+	अचिन्हित पूर्णांक cpu;
+	पूर्णांक ret;
 
-	snprintf(accel_dev->vf.irq_name, ADF_MAX_MSIX_VECTOR_NAME,
+	snम_लिखो(accel_dev->vf.irq_name, ADF_MAX_MSIX_VECTOR_NAME,
 		 "qat_%02x:%02d.%02d", pdev->bus->number, PCI_SLOT(pdev->devfn),
 		 PCI_FUNC(pdev->devfn));
 	ret = request_irq(pdev->irq, adf_isr, 0, accel_dev->vf.irq_name,
-			  (void *)accel_dev);
-	if (ret) {
+			  (व्योम *)accel_dev);
+	अगर (ret) अणु
 		dev_err(&GET_DEV(accel_dev), "failed to enable irq for %s\n",
 			accel_dev->vf.irq_name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	cpu = accel_dev->accel_id % num_online_cpus();
-	irq_set_affinity_hint(pdev->irq, get_cpu_mask(cpu));
+	irq_set_affinity_hपूर्णांक(pdev->irq, get_cpu_mask(cpu));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int adf_setup_bh(struct adf_accel_dev *accel_dev)
-{
-	struct adf_etr_data *priv_data = accel_dev->transport;
+अटल पूर्णांक adf_setup_bh(काष्ठा adf_accel_dev *accel_dev)
+अणु
+	काष्ठा adf_etr_data *priv_data = accel_dev->transport;
 
 	tasklet_init(&priv_data->banks[0].resp_handler, adf_response_handler,
-		     (unsigned long)priv_data->banks);
-	return 0;
-}
+		     (अचिन्हित दीर्घ)priv_data->banks);
+	वापस 0;
+पूर्ण
 
-static void adf_cleanup_bh(struct adf_accel_dev *accel_dev)
-{
-	struct adf_etr_data *priv_data = accel_dev->transport;
+अटल व्योम adf_cleanup_bh(काष्ठा adf_accel_dev *accel_dev)
+अणु
+	काष्ठा adf_etr_data *priv_data = accel_dev->transport;
 
 	tasklet_disable(&priv_data->banks[0].resp_handler);
-	tasklet_kill(&priv_data->banks[0].resp_handler);
-}
+	tasklet_समाप्त(&priv_data->banks[0].resp_handler);
+पूर्ण
 
 /**
- * adf_vf_isr_resource_free() - Free IRQ for acceleration device
- * @accel_dev:  Pointer to acceleration device.
+ * adf_vf_isr_resource_मुक्त() - Free IRQ क्रम acceleration device
+ * @accel_dev:  Poपूर्णांकer to acceleration device.
  *
- * Function frees interrupts for acceleration device virtual function.
+ * Function मुक्तs पूर्णांकerrupts क्रम acceleration device भव function.
  */
-void adf_vf_isr_resource_free(struct adf_accel_dev *accel_dev)
-{
-	struct pci_dev *pdev = accel_to_pci_dev(accel_dev);
+व्योम adf_vf_isr_resource_मुक्त(काष्ठा adf_accel_dev *accel_dev)
+अणु
+	काष्ठा pci_dev *pdev = accel_to_pci_dev(accel_dev);
 
-	irq_set_affinity_hint(pdev->irq, NULL);
-	free_irq(pdev->irq, (void *)accel_dev);
+	irq_set_affinity_hपूर्णांक(pdev->irq, शून्य);
+	मुक्त_irq(pdev->irq, (व्योम *)accel_dev);
 	adf_cleanup_bh(accel_dev);
 	adf_cleanup_pf2vf_bh(accel_dev);
 	adf_disable_msi(accel_dev);
-}
-EXPORT_SYMBOL_GPL(adf_vf_isr_resource_free);
+पूर्ण
+EXPORT_SYMBOL_GPL(adf_vf_isr_resource_मुक्त);
 
 /**
- * adf_vf_isr_resource_alloc() - Allocate IRQ for acceleration device
- * @accel_dev:  Pointer to acceleration device.
+ * adf_vf_isr_resource_alloc() - Allocate IRQ क्रम acceleration device
+ * @accel_dev:  Poपूर्णांकer to acceleration device.
  *
- * Function allocates interrupts for acceleration device virtual function.
+ * Function allocates पूर्णांकerrupts क्रम acceleration device भव function.
  *
  * Return: 0 on success, error code otherwise.
  */
-int adf_vf_isr_resource_alloc(struct adf_accel_dev *accel_dev)
-{
-	if (adf_enable_msi(accel_dev))
-		goto err_out;
+पूर्णांक adf_vf_isr_resource_alloc(काष्ठा adf_accel_dev *accel_dev)
+अणु
+	अगर (adf_enable_msi(accel_dev))
+		जाओ err_out;
 
-	if (adf_setup_pf2vf_bh(accel_dev))
-		goto err_disable_msi;
+	अगर (adf_setup_pf2vf_bh(accel_dev))
+		जाओ err_disable_msi;
 
-	if (adf_setup_bh(accel_dev))
-		goto err_cleanup_pf2vf_bh;
+	अगर (adf_setup_bh(accel_dev))
+		जाओ err_cleanup_pf2vf_bh;
 
-	if (adf_request_msi_irq(accel_dev))
-		goto err_cleanup_bh;
+	अगर (adf_request_msi_irq(accel_dev))
+		जाओ err_cleanup_bh;
 
-	return 0;
+	वापस 0;
 
 err_cleanup_bh:
 	adf_cleanup_bh(accel_dev);
@@ -281,21 +282,21 @@ err_disable_msi:
 	adf_disable_msi(accel_dev);
 
 err_out:
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 EXPORT_SYMBOL_GPL(adf_vf_isr_resource_alloc);
 
-int __init adf_init_vf_wq(void)
-{
+पूर्णांक __init adf_init_vf_wq(व्योम)
+अणु
 	adf_vf_stop_wq = alloc_workqueue("adf_vf_stop_wq", WQ_MEM_RECLAIM, 0);
 
-	return !adf_vf_stop_wq ? -EFAULT : 0;
-}
+	वापस !adf_vf_stop_wq ? -EFAULT : 0;
+पूर्ण
 
-void adf_exit_vf_wq(void)
-{
-	if (adf_vf_stop_wq)
+व्योम adf_निकास_vf_wq(व्योम)
+अणु
+	अगर (adf_vf_stop_wq)
 		destroy_workqueue(adf_vf_stop_wq);
 
-	adf_vf_stop_wq = NULL;
-}
+	adf_vf_stop_wq = शून्य;
+पूर्ण

@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
  * Copyright 2008-2015 Freescale Semiconductor Inc.
  * Copyright 2020 NXP
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
+ *     * Redistributions in binary क्रमm must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
+ *       करोcumentation and/or other materials provided with the distribution.
  *     * Neither the name of Freescale Semiconductor nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this software without specific prior written permission.
+ *       names of its contributors may be used to enकरोrse or promote products
+ *       derived from this software without specअगरic prior written permission.
  *
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
@@ -23,7 +24,7 @@
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL Freescale Semiconductor BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -31,90 +32,90 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __FM_H
-#define __FM_H
+#अगर_अघोषित __FM_H
+#घोषणा __FM_H
 
-#include <linux/io.h>
-#include <linux/interrupt.h>
-#include <linux/of_irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of_irq.h>
 
 /* FM Frame descriptor macros  */
 /* Frame queue Context Override */
-#define FM_FD_CMD_FCO                   0x80000000
-#define FM_FD_CMD_RPD                   0x40000000  /* Read Prepended Data */
-#define FM_FD_CMD_UPD			0x20000000  /* Update Prepended Data */
-#define FM_FD_CMD_DTC                   0x10000000  /* Do L4 Checksum */
+#घोषणा FM_FD_CMD_FCO                   0x80000000
+#घोषणा FM_FD_CMD_RPD                   0x40000000  /* Read Prepended Data */
+#घोषणा FM_FD_CMD_UPD			0x20000000  /* Update Prepended Data */
+#घोषणा FM_FD_CMD_DTC                   0x10000000  /* Do L4 Checksum */
 
 /* TX-Port: Unsupported Format */
-#define FM_FD_ERR_UNSUPPORTED_FORMAT    0x04000000
+#घोषणा FM_FD_ERR_UNSUPPORTED_FORMAT    0x04000000
 /* TX Port: Length Error */
-#define FM_FD_ERR_LENGTH                0x02000000
-#define FM_FD_ERR_DMA                   0x01000000  /* DMA Data error */
+#घोषणा FM_FD_ERR_LENGTH                0x02000000
+#घोषणा FM_FD_ERR_DMA                   0x01000000  /* DMA Data error */
 
 /* IPR frame (not error) */
-#define FM_FD_IPR                       0x00000001
+#घोषणा FM_FD_IPR                       0x00000001
 /* IPR non-consistent-sp */
-#define FM_FD_ERR_IPR_NCSP              (0x00100000 | FM_FD_IPR)
+#घोषणा FM_FD_ERR_IPR_NCSP              (0x00100000 | FM_FD_IPR)
 /* IPR error */
-#define FM_FD_ERR_IPR                   (0x00200000 | FM_FD_IPR)
-/* IPR timeout */
-#define FM_FD_ERR_IPR_TO                (0x00300000 | FM_FD_IPR)
+#घोषणा FM_FD_ERR_IPR                   (0x00200000 | FM_FD_IPR)
+/* IPR समयout */
+#घोषणा FM_FD_ERR_IPR_TO                (0x00300000 | FM_FD_IPR)
 /* TX Port: Length Error */
-#define FM_FD_ERR_IPRE                  (FM_FD_ERR_IPR & ~FM_FD_IPR)
+#घोषणा FM_FD_ERR_IPRE                  (FM_FD_ERR_IPR & ~FM_FD_IPR)
 
 /* Rx FIFO overflow, FCS error, code error, running disparity error
  * (SGMII and TBI modes), FIFO parity error. PHY Sequence error,
- * PHY error control character detected.
+ * PHY error control अक्षरacter detected.
  */
-#define FM_FD_ERR_PHYSICAL              0x00080000
-/* Frame too long OR Frame size exceeds max_length_frame  */
-#define FM_FD_ERR_SIZE                  0x00040000
-/* classification discard */
-#define FM_FD_ERR_CLS_DISCARD           0x00020000
+#घोषणा FM_FD_ERR_PHYSICAL              0x00080000
+/* Frame too दीर्घ OR Frame size exceeds max_length_frame  */
+#घोषणा FM_FD_ERR_SIZE                  0x00040000
+/* classअगरication discard */
+#घोषणा FM_FD_ERR_CLS_DISCARD           0x00020000
 /* Extract Out of Frame */
-#define FM_FD_ERR_EXTRACTION            0x00008000
+#घोषणा FM_FD_ERR_EXTRACTION            0x00008000
 /* No Scheme Selected */
-#define FM_FD_ERR_NO_SCHEME             0x00004000
+#घोषणा FM_FD_ERR_NO_SCHEME             0x00004000
 /* Keysize Overflow */
-#define FM_FD_ERR_KEYSIZE_OVERFLOW      0x00002000
+#घोषणा FM_FD_ERR_KEYSIZE_OVERFLOW      0x00002000
 /* Frame color is red */
-#define FM_FD_ERR_COLOR_RED             0x00000800
+#घोषणा FM_FD_ERR_COLOR_RED             0x00000800
 /* Frame color is yellow */
-#define FM_FD_ERR_COLOR_YELLOW          0x00000400
+#घोषणा FM_FD_ERR_COLOR_YELLOW          0x00000400
 /* Parser Time out Exceed */
-#define FM_FD_ERR_PRS_TIMEOUT           0x00000080
-/* Invalid Soft Parser instruction */
-#define FM_FD_ERR_PRS_ILL_INSTRUCT      0x00000040
-/* Header error was identified during parsing */
-#define FM_FD_ERR_PRS_HDR_ERR           0x00000020
+#घोषणा FM_FD_ERR_PRS_TIMEOUT           0x00000080
+/* Invalid Soft Parser inकाष्ठाion */
+#घोषणा FM_FD_ERR_PRS_ILL_INSTRUCT      0x00000040
+/* Header error was identअगरied during parsing */
+#घोषणा FM_FD_ERR_PRS_HDR_ERR           0x00000020
 /* Frame parsed beyind 256 first bytes */
-#define FM_FD_ERR_BLOCK_LIMIT_EXCEEDED  0x00000008
+#घोषणा FM_FD_ERR_BLOCK_LIMIT_EXCEEDED  0x00000008
 
 /* non Frame-Manager error */
-#define FM_FD_RX_STATUS_ERR_NON_FM      0x00400000
+#घोषणा FM_FD_RX_STATUS_ERR_NON_FM      0x00400000
 
 /* FMan driver defines */
-#define FMAN_BMI_FIFO_UNITS		0x100
-#define OFFSET_UNITS			16
+#घोषणा FMAN_BMI_FIFO_UNITS		0x100
+#घोषणा OFFSET_UNITS			16
 
 /* BMan defines */
-#define BM_MAX_NUM_OF_POOLS		64 /* Buffers pools */
-#define FMAN_PORT_MAX_EXT_POOLS_NUM	8  /* External BM pools per Rx port */
+#घोषणा BM_MAX_NUM_OF_POOLS		64 /* Buffers pools */
+#घोषणा FMAN_PORT_MAX_EXT_POOLS_NUM	8  /* External BM pools per Rx port */
 
-struct fman; /* FMan data */
+काष्ठा fman; /* FMan data */
 
-/* Enum for defining port types */
-enum fman_port_type {
+/* Enum क्रम defining port types */
+क्रमागत fman_port_type अणु
 	FMAN_PORT_TYPE_TX = 0,	/* TX Port */
 	FMAN_PORT_TYPE_RX,	/* RX Port */
-};
+पूर्ण;
 
-struct fman_rev_info {
+काष्ठा fman_rev_info अणु
 	u8 major;			/* Major revision */
 	u8 minor;			/* Minor revision */
-};
+पूर्ण;
 
-enum fman_exceptions {
+क्रमागत fman_exceptions अणु
 	FMAN_EX_DMA_BUS_ERROR = 0,	/* DMA bus error. */
 	FMAN_EX_DMA_READ_ECC,		/* Read Buffer ECC error */
 	FMAN_EX_DMA_SYSTEM_WRITE_ECC,	/* Write Buffer ECC err on sys side */
@@ -127,21 +128,21 @@ enum fman_exceptions {
 	FMAN_EX_QMI_DOUBLE_ECC,	/* Double bit ECC occurred on QMI */
 	FMAN_EX_QMI_DEQ_FROM_UNKNOWN_PORTID,/* DeQ from unknown port id */
 	FMAN_EX_BMI_LIST_RAM_ECC,	/* Linked List RAM ECC error */
-	FMAN_EX_BMI_STORAGE_PROFILE_ECC,/* storage profile */
+	FMAN_EX_BMI_STORAGE_PROखाता_ECC,/* storage profile */
 	FMAN_EX_BMI_STATISTICS_RAM_ECC,/* Statistics RAM ECC Err Enable */
 	FMAN_EX_BMI_DISPATCH_RAM_ECC,	/* Dispatch RAM ECC Error Enable */
 	FMAN_EX_IRAM_ECC,		/* Double bit ECC occurred on IRAM */
 	FMAN_EX_MURAM_ECC		/* Double bit ECC occurred on MURAM */
-};
+पूर्ण;
 
 /* Parse results memory layout */
-struct fman_prs_result {
+काष्ठा fman_prs_result अणु
 	u8 lpid;		/* Logical port id */
 	u8 shimr;		/* Shim header result  */
 	__be16 l2r;		/* Layer 2 result */
 	__be16 l3r;		/* Layer 3 result */
 	u8 l4r;		/* Layer 4 result */
-	u8 cplan;		/* Classification plan id */
+	u8 cplan;		/* Classअगरication plan id */
 	__be16 nxthdr;		/* Next Header  */
 	__be16 cksum;		/* Running-sum */
 	/* Flags&fragment-offset field of the last IP-header */
@@ -161,13 +162,13 @@ struct fman_prs_result {
 	u8 ip_off[2];		/* IP offset */
 	u8 gre_off;		/* GRE offset */
 	u8 l4_off;		/* Layer 4 offset */
-	u8 nxthdr_off;		/* Parser end point */
-};
+	u8 nxthdr_off;		/* Parser end poपूर्णांक */
+पूर्ण;
 
-/* A structure for defining buffer prefix area content. */
-struct fman_buffer_prefix_content {
-	/* Number of bytes to be left at the beginning of the external
-	 * buffer; Note that the private-area will start from the base
+/* A काष्ठाure क्रम defining buffer prefix area content. */
+काष्ठा fman_buffer_prefix_content अणु
+	/* Number of bytes to be left at the beginning of the बाह्यal
+	 * buffer; Note that the निजी-area will start from the base
 	 * of the buffer address.
 	 */
 	u16 priv_data_size;
@@ -176,76 +177,76 @@ struct fman_buffer_prefix_content {
 	 * order to get the parser-result from a buffer.
 	 */
 	bool pass_prs_result;
-	/* true to pass the timeStamp to/from the FM User */
-	bool pass_time_stamp;
+	/* true to pass the समयStamp to/from the FM User */
+	bool pass_समय_stamp;
 	/* true to pass the KG hash result to/from the FM User may
 	 * use FM_PORT_GetBufferHashResult() in order to get the
 	 * parser-result from a buffer.
 	 */
 	bool pass_hash_result;
-	/* Add all other Internal-Context information: AD,
+	/* Add all other Internal-Context inक्रमmation: AD,
 	 * hash-result, key, etc.
 	 */
 	u16 data_align;
-};
+पूर्ण;
 
-/* A structure of information about each of the external
+/* A काष्ठाure of inक्रमmation about each of the बाह्यal
  * buffer pools used by a port or storage-profile.
  */
-struct fman_ext_pool_params {
+काष्ठा fman_ext_pool_params अणु
 	u8 id;		    /* External buffer pool id */
 	u16 size;		    /* External buffer pool buffer size */
-};
+पूर्ण;
 
-/* A structure for informing the driver about the external
+/* A काष्ठाure क्रम inक्रमming the driver about the बाह्यal
  * buffer pools allocated in the BM and used by a port or a
  * storage-profile.
  */
-struct fman_ext_pools {
+काष्ठा fman_ext_pools अणु
 	u8 num_of_pools_used; /* Number of pools use by this port */
-	struct fman_ext_pool_params ext_buf_pool[FMAN_PORT_MAX_EXT_POOLS_NUM];
-					/* Parameters for each port */
-};
+	काष्ठा fman_ext_pool_params ext_buf_pool[FMAN_PORT_MAX_EXT_POOLS_NUM];
+					/* Parameters क्रम each port */
+पूर्ण;
 
-/* A structure for defining BM pool depletion criteria */
-struct fman_buf_pool_depletion {
-	/* select mode in which pause frames will be sent after a
+/* A काष्ठाure क्रम defining BM pool depletion criteria */
+काष्ठा fman_buf_pool_depletion अणु
+	/* select mode in which छोड़ो frames will be sent after a
 	 * number of pools (all together!) are depleted
 	 */
 	bool pools_grp_mode_enable;
-	/* the number of depleted pools that will invoke pause
+	/* the number of depleted pools that will invoke छोड़ो
 	 * frames transmission.
 	 */
 	u8 num_of_pools;
-	/* For each pool, true if it should be considered for
+	/* For each pool, true अगर it should be considered क्रम
 	 * depletion (Note - this pool must be used by this port!).
 	 */
 	bool pools_to_consider[BM_MAX_NUM_OF_POOLS];
-	/* select mode in which pause frames will be sent
+	/* select mode in which छोड़ो frames will be sent
 	 * after a single-pool is depleted;
 	 */
 	bool single_pool_mode_enable;
-	/* For each pool, true if it should be considered
-	 * for depletion (Note - this pool must be used by this port!)
+	/* For each pool, true अगर it should be considered
+	 * क्रम depletion (Note - this pool must be used by this port!)
 	 */
-	bool pools_to_consider_for_single_mode[BM_MAX_NUM_OF_POOLS];
-};
+	bool pools_to_consider_क्रम_single_mode[BM_MAX_NUM_OF_POOLS];
+पूर्ण;
 
-/* Enum for inter-module interrupts registration */
-enum fman_event_modules {
+/* Enum क्रम पूर्णांकer-module पूर्णांकerrupts registration */
+क्रमागत fman_event_modules अणु
 	FMAN_MOD_MAC = 0,		/* MAC event */
 	FMAN_MOD_FMAN_CTRL,	/* FMAN Controller */
 	FMAN_MOD_DUMMY_LAST
-};
+पूर्ण;
 
-/* Enum for interrupts types */
-enum fman_intr_type {
+/* Enum क्रम पूर्णांकerrupts types */
+क्रमागत fman_पूर्णांकr_type अणु
 	FMAN_INTR_TYPE_ERR,
 	FMAN_INTR_TYPE_NORMAL
-};
+पूर्ण;
 
-/* Enum for inter-module interrupts registration */
-enum fman_inter_module_event {
+/* Enum क्रम पूर्णांकer-module पूर्णांकerrupts registration */
+क्रमागत fman_पूर्णांकer_module_event अणु
 	FMAN_EV_ERR_MAC0 = 0,	/* MAC 0 error event */
 	FMAN_EV_ERR_MAC1,		/* MAC 1 error event */
 	FMAN_EV_ERR_MAC2,		/* MAC 2 error event */
@@ -271,26 +272,26 @@ enum fman_inter_module_event {
 	FMAN_EV_FMAN_CTRL_2,	/* Fman controller event 2 */
 	FMAN_EV_FMAN_CTRL_3,	/* Fman controller event 3 */
 	FMAN_EV_CNT
-};
+पूर्ण;
 
-struct fman_intr_src {
-	void (*isr_cb)(void *src_arg);
-	void *src_handle;
-};
+काष्ठा fman_पूर्णांकr_src अणु
+	व्योम (*isr_cb)(व्योम *src_arg);
+	व्योम *src_handle;
+पूर्ण;
 
 /** fman_exceptions_cb
- * fman         - Pointer to FMan
+ * fman         - Poपूर्णांकer to FMan
  * exception    - The exception.
  *
  * Exceptions user callback routine, will be called upon an exception
- * passing the exception identification.
+ * passing the exception identअगरication.
  *
  * Return: irq status
  */
-typedef irqreturn_t (fman_exceptions_cb)(struct fman *fman,
-					 enum fman_exceptions exception);
+प्रकार irqवापस_t (fman_exceptions_cb)(काष्ठा fman *fman,
+					 क्रमागत fman_exceptions exception);
 /** fman_bus_error_cb
- * fman         - Pointer to FMan
+ * fman         - Poपूर्णांकer to FMan
  * port_id      - Port id
  * addr         - Address that caused the error
  * tnum         - Owner of error
@@ -301,108 +302,108 @@ typedef irqreturn_t (fman_exceptions_cb)(struct fman *fman,
  *
  * Return: IRQ status
  */
-typedef irqreturn_t (fman_bus_error_cb)(struct fman *fman, u8 port_id,
+प्रकार irqवापस_t (fman_bus_error_cb)(काष्ठा fman *fman, u8 port_id,
 					u64 addr, u8 tnum, u16 liodn);
 
-/* Structure that holds information received from device tree */
-struct fman_dts_params {
-	void __iomem *base_addr;                /* FMan virtual address */
-	struct resource *res;                   /* FMan memory resource */
+/* Structure that holds inक्रमmation received from device tree */
+काष्ठा fman_dts_params अणु
+	व्योम __iomem *base_addr;                /* FMan भव address */
+	काष्ठा resource *res;                   /* FMan memory resource */
 	u8 id;                                  /* FMan ID */
 
-	int err_irq;                            /* FMan Error IRQ */
+	पूर्णांक err_irq;                            /* FMan Error IRQ */
 
-	u16 clk_freq;                           /* FMan clock freq (In Mhz) */
+	u16 clk_freq;                           /* FMan घड़ी freq (In Mhz) */
 
 	u32 qman_channel_base;                  /* QMan channels base */
 	u32 num_of_qman_channels;               /* Number of QMan channels */
 
-	struct resource muram_res;              /* MURAM resource */
-};
+	काष्ठा resource muram_res;              /* MURAM resource */
+पूर्ण;
 
-struct fman {
-	struct device *dev;
-	void __iomem *base_addr;
-	struct fman_intr_src intr_mng[FMAN_EV_CNT];
+काष्ठा fman अणु
+	काष्ठा device *dev;
+	व्योम __iomem *base_addr;
+	काष्ठा fman_पूर्णांकr_src पूर्णांकr_mng[FMAN_EV_CNT];
 
-	struct fman_fpm_regs __iomem *fpm_regs;
-	struct fman_bmi_regs __iomem *bmi_regs;
-	struct fman_qmi_regs __iomem *qmi_regs;
-	struct fman_dma_regs __iomem *dma_regs;
-	struct fman_hwp_regs __iomem *hwp_regs;
-	struct fman_kg_regs __iomem *kg_regs;
+	काष्ठा fman_fpm_regs __iomem *fpm_regs;
+	काष्ठा fman_bmi_regs __iomem *bmi_regs;
+	काष्ठा fman_qmi_regs __iomem *qmi_regs;
+	काष्ठा fman_dma_regs __iomem *dma_regs;
+	काष्ठा fman_hwp_regs __iomem *hwp_regs;
+	काष्ठा fman_kg_regs __iomem *kg_regs;
 	fman_exceptions_cb *exception_cb;
 	fman_bus_error_cb *bus_error_cb;
-	/* Spinlock for FMan use */
+	/* Spinlock क्रम FMan use */
 	spinlock_t spinlock;
-	struct fman_state_struct *state;
+	काष्ठा fman_state_काष्ठा *state;
 
-	struct fman_cfg *cfg;
-	struct muram_info *muram;
-	struct fman_keygen *keygen;
+	काष्ठा fman_cfg *cfg;
+	काष्ठा muram_info *muram;
+	काष्ठा fman_keygen *keygen;
 	/* cam section in muram */
-	unsigned long cam_offset;
-	size_t cam_size;
-	/* Fifo in MURAM */
-	unsigned long fifo_offset;
-	size_t fifo_size;
+	अचिन्हित दीर्घ cam_offset;
+	माप_प्रकार cam_size;
+	/* Fअगरo in MURAM */
+	अचिन्हित दीर्घ fअगरo_offset;
+	माप_प्रकार fअगरo_size;
 
 	u32 liodn_base[64];
 	u32 liodn_offset[64];
 
-	struct fman_dts_params dts_params;
-};
+	काष्ठा fman_dts_params dts_params;
+पूर्ण;
 
-/* Structure for port-FM communication during fman_port_init. */
-struct fman_port_init_params {
+/* Structure क्रम port-FM communication during fman_port_init. */
+काष्ठा fman_port_init_params अणु
 	u8 port_id;			/* port Id */
-	enum fman_port_type port_type;	/* Port type */
+	क्रमागत fman_port_type port_type;	/* Port type */
 	u16 port_speed;			/* Port speed */
 	u16 liodn_offset;		/* Port's requested resource */
 	u8 num_of_tasks;		/* Port's requested resource */
 	u8 num_of_extra_tasks;		/* Port's requested resource */
-	u8 num_of_open_dmas;		/* Port's requested resource */
-	u8 num_of_extra_open_dmas;	/* Port's requested resource */
-	u32 size_of_fifo;		/* Port's requested resource */
-	u32 extra_size_of_fifo;		/* Port's requested resource */
+	u8 num_of_खोलो_dmas;		/* Port's requested resource */
+	u8 num_of_extra_खोलो_dmas;	/* Port's requested resource */
+	u32 size_of_fअगरo;		/* Port's requested resource */
+	u32 extra_size_of_fअगरo;		/* Port's requested resource */
 	u8 deq_pipeline_depth;		/* Port's requested resource */
 	u16 max_frame_length;		/* Port's max frame length. */
 	u16 liodn_base;
-	/* LIODN base for this port, to be used together with LIODN offset. */
-};
+	/* LIODN base क्रम this port, to be used together with LIODN offset. */
+पूर्ण;
 
-void fman_get_revision(struct fman *fman, struct fman_rev_info *rev_info);
+व्योम fman_get_revision(काष्ठा fman *fman, काष्ठा fman_rev_info *rev_info);
 
-void fman_register_intr(struct fman *fman, enum fman_event_modules mod,
-			u8 mod_id, enum fman_intr_type intr_type,
-			void (*f_isr)(void *h_src_arg), void *h_src_arg);
+व्योम fman_रेजिस्टर_पूर्णांकr(काष्ठा fman *fman, क्रमागत fman_event_modules mod,
+			u8 mod_id, क्रमागत fman_पूर्णांकr_type पूर्णांकr_type,
+			व्योम (*f_isr)(व्योम *h_src_arg), व्योम *h_src_arg);
 
-void fman_unregister_intr(struct fman *fman, enum fman_event_modules mod,
-			  u8 mod_id, enum fman_intr_type intr_type);
+व्योम fman_unरेजिस्टर_पूर्णांकr(काष्ठा fman *fman, क्रमागत fman_event_modules mod,
+			  u8 mod_id, क्रमागत fman_पूर्णांकr_type पूर्णांकr_type);
 
-int fman_set_port_params(struct fman *fman,
-			 struct fman_port_init_params *port_params);
+पूर्णांक fman_set_port_params(काष्ठा fman *fman,
+			 काष्ठा fman_port_init_params *port_params);
 
-int fman_reset_mac(struct fman *fman, u8 mac_id);
+पूर्णांक fman_reset_mac(काष्ठा fman *fman, u8 mac_id);
 
-u16 fman_get_clock_freq(struct fman *fman);
+u16 fman_get_घड़ी_freq(काष्ठा fman *fman);
 
-u32 fman_get_bmi_max_fifo_size(struct fman *fman);
+u32 fman_get_bmi_max_fअगरo_size(काष्ठा fman *fman);
 
-int fman_set_mac_max_frame(struct fman *fman, u8 mac_id, u16 mfl);
+पूर्णांक fman_set_mac_max_frame(काष्ठा fman *fman, u8 mac_id, u16 mfl);
 
-u32 fman_get_qman_channel_id(struct fman *fman, u32 port_id);
+u32 fman_get_qman_channel_id(काष्ठा fman *fman, u32 port_id);
 
-struct resource *fman_get_mem_region(struct fman *fman);
+काष्ठा resource *fman_get_mem_region(काष्ठा fman *fman);
 
-u16 fman_get_max_frm(void);
+u16 fman_get_max_frm(व्योम);
 
-int fman_get_rx_extra_headroom(void);
+पूर्णांक fman_get_rx_extra_headroom(व्योम);
 
-#ifdef CONFIG_DPAA_ERRATUM_A050385
-bool fman_has_errata_a050385(void);
-#endif
+#अगर_घोषित CONFIG_DPAA_ERRATUM_A050385
+bool fman_has_errata_a050385(व्योम);
+#पूर्ण_अगर
 
-struct fman *fman_bind(struct device *dev);
+काष्ठा fman *fman_bind(काष्ठा device *dev);
 
-#endif /* __FM_H */
+#पूर्ण_अगर /* __FM_H */

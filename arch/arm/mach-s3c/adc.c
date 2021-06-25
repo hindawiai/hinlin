@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-1.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-1.0+
 //
 // Copyright (c) 2008 Simtec Electronics
 //	http://armlinux.simtec.co.uk/
@@ -6,23 +7,23 @@
 //
 // Samsung ADC device core
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/mod_devicetable.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/regulator/consumer.h>
 
-#include "regs-adc.h"
-#include <linux/soc/samsung/s3c-adc.h>
+#समावेश "regs-adc.h"
+#समावेश <linux/soc/samsung/s3c-adc.h>
 
-/* This driver is designed to control the usage of the ADC block between
+/* This driver is deचिन्हित to control the usage of the ADC block between
  * the touchscreen and any other drivers that may need to use it, such as
  * the hwmon driver.
  *
@@ -30,316 +31,316 @@
  * rate limited it should not starve other requests which are processed in
  * order that they are received.
  *
- * Each user registers to get a client block which uniquely identifies it
- * and stores information such as the necessary functions to callback when
+ * Each user रेजिस्टरs to get a client block which uniquely identअगरies it
+ * and stores inक्रमmation such as the necessary functions to callback when
  * action is required.
  */
 
-enum s3c_cpu_type {
+क्रमागत s3c_cpu_type अणु
 	TYPE_ADCV1, /* S3C24XX */
 	TYPE_ADCV11, /* S3C2443 */
 	TYPE_ADCV12, /* S3C2416, S3C2450 */
 	TYPE_ADCV2, /* S3C64XX */
 	TYPE_ADCV3, /* S5PV210, S5PC110, Exynos4210 */
-};
+पूर्ण;
 
-struct s3c_adc_client {
-	struct platform_device	*pdev;
-	struct list_head	 pend;
-	wait_queue_head_t	*wait;
+काष्ठा s3c_adc_client अणु
+	काष्ठा platक्रमm_device	*pdev;
+	काष्ठा list_head	 pend;
+	रुको_queue_head_t	*रुको;
 
-	unsigned int		 nr_samples;
-	int			 result;
-	unsigned char		 is_ts;
-	unsigned char		 channel;
+	अचिन्हित पूर्णांक		 nr_samples;
+	पूर्णांक			 result;
+	अचिन्हित अक्षर		 is_ts;
+	अचिन्हित अक्षर		 channel;
 
-	void	(*select_cb)(struct s3c_adc_client *c, unsigned selected);
-	void	(*convert_cb)(struct s3c_adc_client *c,
-			      unsigned val1, unsigned val2,
-			      unsigned *samples_left);
-};
+	व्योम	(*select_cb)(काष्ठा s3c_adc_client *c, अचिन्हित selected);
+	व्योम	(*convert_cb)(काष्ठा s3c_adc_client *c,
+			      अचिन्हित val1, अचिन्हित val2,
+			      अचिन्हित *samples_left);
+पूर्ण;
 
-struct adc_device {
-	struct platform_device	*pdev;
-	struct platform_device	*owner;
-	struct clk		*clk;
-	struct s3c_adc_client	*cur;
-	struct s3c_adc_client	*ts_pend;
-	void __iomem		*regs;
+काष्ठा adc_device अणु
+	काष्ठा platक्रमm_device	*pdev;
+	काष्ठा platक्रमm_device	*owner;
+	काष्ठा clk		*clk;
+	काष्ठा s3c_adc_client	*cur;
+	काष्ठा s3c_adc_client	*ts_pend;
+	व्योम __iomem		*regs;
 	spinlock_t		 lock;
 
-	unsigned int		 prescale;
+	अचिन्हित पूर्णांक		 prescale;
 
-	int			 irq;
-	struct regulator	*vdd;
-};
+	पूर्णांक			 irq;
+	काष्ठा regulator	*vdd;
+पूर्ण;
 
-static struct adc_device *adc_dev;
+अटल काष्ठा adc_device *adc_dev;
 
-static LIST_HEAD(adc_pending);	/* protected by adc_device.lock */
+अटल LIST_HEAD(adc_pending);	/* रक्षित by adc_device.lock */
 
-#define adc_dbg(_adc, msg...) dev_dbg(&(_adc)->pdev->dev, msg)
+#घोषणा adc_dbg(_adc, msg...) dev_dbg(&(_adc)->pdev->dev, msg)
 
-static inline void s3c_adc_convert(struct adc_device *adc)
-{
-	unsigned con = readl(adc->regs + S3C2410_ADCCON);
+अटल अंतरभूत व्योम s3c_adc_convert(काष्ठा adc_device *adc)
+अणु
+	अचिन्हित con = पढ़ोl(adc->regs + S3C2410_ADCCON);
 
 	con |= S3C2410_ADCCON_ENABLE_START;
-	writel(con, adc->regs + S3C2410_ADCCON);
-}
+	ग_लिखोl(con, adc->regs + S3C2410_ADCCON);
+पूर्ण
 
-static inline void s3c_adc_select(struct adc_device *adc,
-				  struct s3c_adc_client *client)
-{
-	unsigned con = readl(adc->regs + S3C2410_ADCCON);
-	enum s3c_cpu_type cpu = platform_get_device_id(adc->pdev)->driver_data;
+अटल अंतरभूत व्योम s3c_adc_select(काष्ठा adc_device *adc,
+				  काष्ठा s3c_adc_client *client)
+अणु
+	अचिन्हित con = पढ़ोl(adc->regs + S3C2410_ADCCON);
+	क्रमागत s3c_cpu_type cpu = platक्रमm_get_device_id(adc->pdev)->driver_data;
 
 	client->select_cb(client, 1);
 
-	if (cpu == TYPE_ADCV1 || cpu == TYPE_ADCV2)
+	अगर (cpu == TYPE_ADCV1 || cpu == TYPE_ADCV2)
 		con &= ~S3C2410_ADCCON_MUXMASK;
 	con &= ~S3C2410_ADCCON_STDBM;
 	con &= ~S3C2410_ADCCON_STARTMASK;
 
-	if (!client->is_ts) {
-		if (cpu == TYPE_ADCV3)
-			writel(client->channel & 0xf, adc->regs + S5P_ADCMUX);
-		else if (cpu == TYPE_ADCV11 || cpu == TYPE_ADCV12)
-			writel(client->channel & 0xf,
+	अगर (!client->is_ts) अणु
+		अगर (cpu == TYPE_ADCV3)
+			ग_लिखोl(client->channel & 0xf, adc->regs + S5P_ADCMUX);
+		अन्यथा अगर (cpu == TYPE_ADCV11 || cpu == TYPE_ADCV12)
+			ग_लिखोl(client->channel & 0xf,
 						adc->regs + S3C2443_ADCMUX);
-		else
+		अन्यथा
 			con |= S3C2410_ADCCON_SELMUX(client->channel);
-	}
+	पूर्ण
 
-	writel(con, adc->regs + S3C2410_ADCCON);
-}
+	ग_लिखोl(con, adc->regs + S3C2410_ADCCON);
+पूर्ण
 
-static void s3c_adc_dbgshow(struct adc_device *adc)
-{
+अटल व्योम s3c_adc_dbgshow(काष्ठा adc_device *adc)
+अणु
 	adc_dbg(adc, "CON=%08x, TSC=%08x, DLY=%08x\n",
-		readl(adc->regs + S3C2410_ADCCON),
-		readl(adc->regs + S3C2410_ADCTSC),
-		readl(adc->regs + S3C2410_ADCDLY));
-}
+		पढ़ोl(adc->regs + S3C2410_ADCCON),
+		पढ़ोl(adc->regs + S3C2410_ADCTSC),
+		पढ़ोl(adc->regs + S3C2410_ADCDLY));
+पूर्ण
 
-static void s3c_adc_try(struct adc_device *adc)
-{
-	struct s3c_adc_client *next = adc->ts_pend;
+अटल व्योम s3c_adc_try(काष्ठा adc_device *adc)
+अणु
+	काष्ठा s3c_adc_client *next = adc->ts_pend;
 
-	if (!next && !list_empty(&adc_pending)) {
+	अगर (!next && !list_empty(&adc_pending)) अणु
 		next = list_first_entry(&adc_pending,
-					struct s3c_adc_client, pend);
+					काष्ठा s3c_adc_client, pend);
 		list_del(&next->pend);
-	} else
-		adc->ts_pend = NULL;
+	पूर्ण अन्यथा
+		adc->ts_pend = शून्य;
 
-	if (next) {
+	अगर (next) अणु
 		adc_dbg(adc, "new client is %p\n", next);
 		adc->cur = next;
 		s3c_adc_select(adc, next);
 		s3c_adc_convert(adc);
 		s3c_adc_dbgshow(adc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int s3c_adc_start(struct s3c_adc_client *client,
-		  unsigned int channel, unsigned int nr_samples)
-{
-	struct adc_device *adc = adc_dev;
-	unsigned long flags;
+पूर्णांक s3c_adc_start(काष्ठा s3c_adc_client *client,
+		  अचिन्हित पूर्णांक channel, अचिन्हित पूर्णांक nr_samples)
+अणु
+	काष्ठा adc_device *adc = adc_dev;
+	अचिन्हित दीर्घ flags;
 
-	if (!adc) {
-		printk(KERN_ERR "%s: failed to find adc\n", __func__);
-		return -EINVAL;
-	}
+	अगर (!adc) अणु
+		prपूर्णांकk(KERN_ERR "%s: failed to find adc\n", __func__);
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irqsave(&adc->lock, flags);
 
-	if (client->is_ts && adc->ts_pend) {
+	अगर (client->is_ts && adc->ts_pend) अणु
 		spin_unlock_irqrestore(&adc->lock, flags);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	client->channel = channel;
 	client->nr_samples = nr_samples;
 
-	if (client->is_ts)
+	अगर (client->is_ts)
 		adc->ts_pend = client;
-	else
+	अन्यथा
 		list_add_tail(&client->pend, &adc_pending);
 
-	if (!adc->cur)
+	अगर (!adc->cur)
 		s3c_adc_try(adc);
 
 	spin_unlock_irqrestore(&adc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(s3c_adc_start);
 
-static void s3c_convert_done(struct s3c_adc_client *client,
-			     unsigned v, unsigned u, unsigned *left)
-{
+अटल व्योम s3c_convert_करोne(काष्ठा s3c_adc_client *client,
+			     अचिन्हित v, अचिन्हित u, अचिन्हित *left)
+अणु
 	client->result = v;
-	wake_up(client->wait);
-}
+	wake_up(client->रुको);
+पूर्ण
 
-int s3c_adc_read(struct s3c_adc_client *client, unsigned int ch)
-{
+पूर्णांक s3c_adc_पढ़ो(काष्ठा s3c_adc_client *client, अचिन्हित पूर्णांक ch)
+अणु
 	DECLARE_WAIT_QUEUE_HEAD_ONSTACK(wake);
-	int ret;
+	पूर्णांक ret;
 
-	client->convert_cb = s3c_convert_done;
-	client->wait = &wake;
+	client->convert_cb = s3c_convert_करोne;
+	client->रुको = &wake;
 	client->result = -1;
 
 	ret = s3c_adc_start(client, ch, 1);
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
-	ret = wait_event_timeout(wake, client->result >= 0, HZ / 2);
-	if (client->result < 0) {
+	ret = रुको_event_समयout(wake, client->result >= 0, HZ / 2);
+	अगर (client->result < 0) अणु
 		ret = -ETIMEDOUT;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	client->convert_cb = NULL;
-	return client->result;
+	client->convert_cb = शून्य;
+	वापस client->result;
 
 err:
-	return ret;
-}
-EXPORT_SYMBOL_GPL(s3c_adc_read);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(s3c_adc_पढ़ो);
 
-static void s3c_adc_default_select(struct s3c_adc_client *client,
-				   unsigned select)
-{
-}
+अटल व्योम s3c_adc_शेष_select(काष्ठा s3c_adc_client *client,
+				   अचिन्हित select)
+अणु
+पूर्ण
 
-struct s3c_adc_client *s3c_adc_register(struct platform_device *pdev,
-					void (*select)(struct s3c_adc_client *client,
-						       unsigned int selected),
-					void (*conv)(struct s3c_adc_client *client,
-						     unsigned d0, unsigned d1,
-						     unsigned *samples_left),
-					unsigned int is_ts)
-{
-	struct s3c_adc_client *client;
+काष्ठा s3c_adc_client *s3c_adc_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
+					व्योम (*select)(काष्ठा s3c_adc_client *client,
+						       अचिन्हित पूर्णांक selected),
+					व्योम (*conv)(काष्ठा s3c_adc_client *client,
+						     अचिन्हित d0, अचिन्हित d1,
+						     अचिन्हित *samples_left),
+					अचिन्हित पूर्णांक is_ts)
+अणु
+	काष्ठा s3c_adc_client *client;
 
 	WARN_ON(!pdev);
 
-	if (!select)
-		select = s3c_adc_default_select;
+	अगर (!select)
+		select = s3c_adc_शेष_select;
 
-	if (!pdev)
-		return ERR_PTR(-EINVAL);
+	अगर (!pdev)
+		वापस ERR_PTR(-EINVAL);
 
-	client = kzalloc(sizeof(*client), GFP_KERNEL);
-	if (!client)
-		return ERR_PTR(-ENOMEM);
+	client = kzalloc(माप(*client), GFP_KERNEL);
+	अगर (!client)
+		वापस ERR_PTR(-ENOMEM);
 
 	client->pdev = pdev;
 	client->is_ts = is_ts;
 	client->select_cb = select;
 	client->convert_cb = conv;
 
-	return client;
-}
-EXPORT_SYMBOL_GPL(s3c_adc_register);
+	वापस client;
+पूर्ण
+EXPORT_SYMBOL_GPL(s3c_adc_रेजिस्टर);
 
-void s3c_adc_release(struct s3c_adc_client *client)
-{
-	unsigned long flags;
+व्योम s3c_adc_release(काष्ठा s3c_adc_client *client)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&adc_dev->lock, flags);
 
 	/* We should really check that nothing is in progress. */
-	if (adc_dev->cur == client)
-		adc_dev->cur = NULL;
-	if (adc_dev->ts_pend == client)
-		adc_dev->ts_pend = NULL;
-	else {
-		struct list_head *p, *n;
-		struct s3c_adc_client *tmp;
+	अगर (adc_dev->cur == client)
+		adc_dev->cur = शून्य;
+	अगर (adc_dev->ts_pend == client)
+		adc_dev->ts_pend = शून्य;
+	अन्यथा अणु
+		काष्ठा list_head *p, *n;
+		काष्ठा s3c_adc_client *पंचांगp;
 
-		list_for_each_safe(p, n, &adc_pending) {
-			tmp = list_entry(p, struct s3c_adc_client, pend);
-			if (tmp == client)
-				list_del(&tmp->pend);
-		}
-	}
+		list_क्रम_each_safe(p, n, &adc_pending) अणु
+			पंचांगp = list_entry(p, काष्ठा s3c_adc_client, pend);
+			अगर (पंचांगp == client)
+				list_del(&पंचांगp->pend);
+		पूर्ण
+	पूर्ण
 
-	if (adc_dev->cur == NULL)
+	अगर (adc_dev->cur == शून्य)
 		s3c_adc_try(adc_dev);
 
 	spin_unlock_irqrestore(&adc_dev->lock, flags);
-	kfree(client);
-}
+	kमुक्त(client);
+पूर्ण
 EXPORT_SYMBOL_GPL(s3c_adc_release);
 
-static irqreturn_t s3c_adc_irq(int irq, void *pw)
-{
-	struct adc_device *adc = pw;
-	struct s3c_adc_client *client = adc->cur;
-	enum s3c_cpu_type cpu = platform_get_device_id(adc->pdev)->driver_data;
-	unsigned data0, data1;
+अटल irqवापस_t s3c_adc_irq(पूर्णांक irq, व्योम *pw)
+अणु
+	काष्ठा adc_device *adc = pw;
+	काष्ठा s3c_adc_client *client = adc->cur;
+	क्रमागत s3c_cpu_type cpu = platक्रमm_get_device_id(adc->pdev)->driver_data;
+	अचिन्हित data0, data1;
 
-	if (!client) {
+	अगर (!client) अणु
 		dev_warn(&adc->pdev->dev, "%s: no adc pending\n", __func__);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	data0 = readl(adc->regs + S3C2410_ADCDAT0);
-	data1 = readl(adc->regs + S3C2410_ADCDAT1);
+	data0 = पढ़ोl(adc->regs + S3C2410_ADCDAT0);
+	data1 = पढ़ोl(adc->regs + S3C2410_ADCDAT1);
 	adc_dbg(adc, "read %d: 0x%04x, 0x%04x\n", client->nr_samples, data0, data1);
 
 	client->nr_samples--;
 
-	if (cpu == TYPE_ADCV1 || cpu == TYPE_ADCV11) {
+	अगर (cpu == TYPE_ADCV1 || cpu == TYPE_ADCV11) अणु
 		data0 &= 0x3ff;
 		data1 &= 0x3ff;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* S3C2416/S3C64XX/S5P ADC resolution is 12-bit */
 		data0 &= 0xfff;
 		data1 &= 0xfff;
-	}
+	पूर्ण
 
-	if (client->convert_cb)
+	अगर (client->convert_cb)
 		(client->convert_cb)(client, data0, data1, &client->nr_samples);
 
-	if (client->nr_samples > 0) {
-		/* fire another conversion for this */
+	अगर (client->nr_samples > 0) अणु
+		/* fire another conversion क्रम this */
 
 		client->select_cb(client, 1);
 		s3c_adc_convert(adc);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_lock(&adc->lock);
 		(client->select_cb)(client, 0);
-		adc->cur = NULL;
+		adc->cur = शून्य;
 
 		s3c_adc_try(adc);
 		spin_unlock(&adc->lock);
-	}
+	पूर्ण
 
-exit:
-	if (cpu == TYPE_ADCV2 || cpu == TYPE_ADCV3) {
-		/* Clear ADC interrupt */
-		writel(0, adc->regs + S3C64XX_ADCCLRINT);
-	}
-	return IRQ_HANDLED;
-}
+निकास:
+	अगर (cpu == TYPE_ADCV2 || cpu == TYPE_ADCV3) अणु
+		/* Clear ADC पूर्णांकerrupt */
+		ग_लिखोl(0, adc->regs + S3C64XX_ADCCLRINT);
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int s3c_adc_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct adc_device *adc;
-	enum s3c_cpu_type cpu = platform_get_device_id(pdev)->driver_data;
-	int ret;
-	unsigned tmp;
+अटल पूर्णांक s3c_adc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा adc_device *adc;
+	क्रमागत s3c_cpu_type cpu = platक्रमm_get_device_id(pdev)->driver_data;
+	पूर्णांक ret;
+	अचिन्हित पंचांगp;
 
-	adc = devm_kzalloc(dev, sizeof(*adc), GFP_KERNEL);
-	if (!adc)
-		return -ENOMEM;
+	adc = devm_kzalloc(dev, माप(*adc), GFP_KERNEL);
+	अगर (!adc)
+		वापस -ENOMEM;
 
 	spin_lock_init(&adc->lock);
 
@@ -347,164 +348,164 @@ static int s3c_adc_probe(struct platform_device *pdev)
 	adc->prescale = S3C2410_ADCCON_PRSCVL(49);
 
 	adc->vdd = devm_regulator_get(dev, "vdd");
-	if (IS_ERR(adc->vdd)) {
+	अगर (IS_ERR(adc->vdd)) अणु
 		dev_err(dev, "operating without regulator \"vdd\" .\n");
-		return PTR_ERR(adc->vdd);
-	}
+		वापस PTR_ERR(adc->vdd);
+	पूर्ण
 
-	adc->irq = platform_get_irq(pdev, 1);
-	if (adc->irq <= 0)
-		return -ENOENT;
+	adc->irq = platक्रमm_get_irq(pdev, 1);
+	अगर (adc->irq <= 0)
+		वापस -ENOENT;
 
 	ret = devm_request_irq(dev, adc->irq, s3c_adc_irq, 0, dev_name(dev),
 				adc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to attach adc irq\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	adc->clk = devm_clk_get(dev, "adc");
-	if (IS_ERR(adc->clk)) {
+	अगर (IS_ERR(adc->clk)) अणु
 		dev_err(dev, "failed to get adc clock\n");
-		return PTR_ERR(adc->clk);
-	}
+		वापस PTR_ERR(adc->clk);
+	पूर्ण
 
-	adc->regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(adc->regs))
-		return PTR_ERR(adc->regs);
+	adc->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(adc->regs))
+		वापस PTR_ERR(adc->regs);
 
 	ret = regulator_enable(adc->vdd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	clk_prepare_enable(adc->clk);
 
-	tmp = adc->prescale | S3C2410_ADCCON_PRSCEN;
+	पंचांगp = adc->prescale | S3C2410_ADCCON_PRSCEN;
 
 	/* Enable 12-bit ADC resolution */
-	if (cpu == TYPE_ADCV12)
-		tmp |= S3C2416_ADCCON_RESSEL;
-	if (cpu == TYPE_ADCV2 || cpu == TYPE_ADCV3)
-		tmp |= S3C64XX_ADCCON_RESSEL;
+	अगर (cpu == TYPE_ADCV12)
+		पंचांगp |= S3C2416_ADCCON_RESSEL;
+	अगर (cpu == TYPE_ADCV2 || cpu == TYPE_ADCV3)
+		पंचांगp |= S3C64XX_ADCCON_RESSEL;
 
-	writel(tmp, adc->regs + S3C2410_ADCCON);
+	ग_लिखोl(पंचांगp, adc->regs + S3C2410_ADCCON);
 
 	dev_info(dev, "attached adc driver\n");
 
-	platform_set_drvdata(pdev, adc);
+	platक्रमm_set_drvdata(pdev, adc);
 	adc_dev = adc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3c_adc_remove(struct platform_device *pdev)
-{
-	struct adc_device *adc = platform_get_drvdata(pdev);
+अटल पूर्णांक s3c_adc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा adc_device *adc = platक्रमm_get_drvdata(pdev);
 
 	clk_disable_unprepare(adc->clk);
 	regulator_disable(adc->vdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int s3c_adc_suspend(struct device *dev)
-{
-	struct adc_device *adc = dev_get_drvdata(dev);
-	unsigned long flags;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक s3c_adc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा adc_device *adc = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
 	u32 con;
 
 	spin_lock_irqsave(&adc->lock, flags);
 
-	con = readl(adc->regs + S3C2410_ADCCON);
+	con = पढ़ोl(adc->regs + S3C2410_ADCCON);
 	con |= S3C2410_ADCCON_STDBM;
-	writel(con, adc->regs + S3C2410_ADCCON);
+	ग_लिखोl(con, adc->regs + S3C2410_ADCCON);
 
 	disable_irq(adc->irq);
 	spin_unlock_irqrestore(&adc->lock, flags);
 	clk_disable(adc->clk);
 	regulator_disable(adc->vdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3c_adc_resume(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct adc_device *adc = platform_get_drvdata(pdev);
-	enum s3c_cpu_type cpu = platform_get_device_id(pdev)->driver_data;
-	int ret;
-	unsigned long tmp;
+अटल पूर्णांक s3c_adc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा adc_device *adc = platक्रमm_get_drvdata(pdev);
+	क्रमागत s3c_cpu_type cpu = platक्रमm_get_device_id(pdev)->driver_data;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ पंचांगp;
 
 	ret = regulator_enable(adc->vdd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	clk_enable(adc->clk);
 	enable_irq(adc->irq);
 
-	tmp = adc->prescale | S3C2410_ADCCON_PRSCEN;
+	पंचांगp = adc->prescale | S3C2410_ADCCON_PRSCEN;
 
 	/* Enable 12-bit ADC resolution */
-	if (cpu == TYPE_ADCV12)
-		tmp |= S3C2416_ADCCON_RESSEL;
-	if (cpu == TYPE_ADCV2 || cpu == TYPE_ADCV3)
-		tmp |= S3C64XX_ADCCON_RESSEL;
+	अगर (cpu == TYPE_ADCV12)
+		पंचांगp |= S3C2416_ADCCON_RESSEL;
+	अगर (cpu == TYPE_ADCV2 || cpu == TYPE_ADCV3)
+		पंचांगp |= S3C64XX_ADCCON_RESSEL;
 
-	writel(tmp, adc->regs + S3C2410_ADCCON);
+	ग_लिखोl(पंचांगp, adc->regs + S3C2410_ADCCON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else
-#define s3c_adc_suspend NULL
-#define s3c_adc_resume NULL
-#endif
+#अन्यथा
+#घोषणा s3c_adc_suspend शून्य
+#घोषणा s3c_adc_resume शून्य
+#पूर्ण_अगर
 
-static const struct platform_device_id s3c_adc_driver_ids[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id s3c_adc_driver_ids[] = अणु
+	अणु
 		.name           = "s3c24xx-adc",
 		.driver_data    = TYPE_ADCV1,
-	}, {
+	पूर्ण, अणु
 		.name		= "s3c2443-adc",
 		.driver_data	= TYPE_ADCV11,
-	}, {
+	पूर्ण, अणु
 		.name		= "s3c2416-adc",
 		.driver_data	= TYPE_ADCV12,
-	}, {
+	पूर्ण, अणु
 		.name           = "s3c64xx-adc",
 		.driver_data    = TYPE_ADCV2,
-	}, {
+	पूर्ण, अणु
 		.name		= "samsung-adc-v3",
 		.driver_data	= TYPE_ADCV3,
-	},
-	{ }
-};
-MODULE_DEVICE_TABLE(platform, s3c_adc_driver_ids);
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, s3c_adc_driver_ids);
 
-static const struct dev_pm_ops adc_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops adc_pm_ops = अणु
 	.suspend	= s3c_adc_suspend,
 	.resume		= s3c_adc_resume,
-};
+पूर्ण;
 
-static struct platform_driver s3c_adc_driver = {
+अटल काष्ठा platक्रमm_driver s3c_adc_driver = अणु
 	.id_table	= s3c_adc_driver_ids,
-	.driver		= {
+	.driver		= अणु
 		.name	= "s3c-adc",
 		.pm	= &adc_pm_ops,
-	},
+	पूर्ण,
 	.probe		= s3c_adc_probe,
-	.remove		= s3c_adc_remove,
-};
+	.हटाओ		= s3c_adc_हटाओ,
+पूर्ण;
 
-static int __init adc_init(void)
-{
-	int ret;
+अटल पूर्णांक __init adc_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&s3c_adc_driver);
-	if (ret)
-		printk(KERN_ERR "%s: failed to add adc driver\n", __func__);
+	ret = platक्रमm_driver_रेजिस्टर(&s3c_adc_driver);
+	अगर (ret)
+		prपूर्णांकk(KERN_ERR "%s: failed to add adc driver\n", __func__);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 module_init(adc_init);

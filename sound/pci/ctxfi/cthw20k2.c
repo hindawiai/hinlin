@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
  * @File	cthw20k2.c
  *
  * @Brief
- * This file contains the implementation of hardware access method for 20k2.
+ * This file contains the implementation of hardware access method क्रम 20k2.
  *
  * @Author	Liu Chun
  * @Date 	May 14 2008
  */
 
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include <linux/io.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include "cthw20k2.h"
-#include "ct20k2reg.h"
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश "cthw20k2.h"
+#समावेश "ct20k2reg.h"
 
-struct hw20k2 {
-	struct hw hw;
-	/* for i2c */
-	unsigned char dev_id;
-	unsigned char addr_size;
-	unsigned char data_size;
+काष्ठा hw20k2 अणु
+	काष्ठा hw hw;
+	/* क्रम i2c */
+	अचिन्हित अक्षर dev_id;
+	अचिन्हित अक्षर addr_size;
+	अचिन्हित अक्षर data_size;
 
-	int mic_source;
-};
+	पूर्णांक mic_source;
+पूर्ण;
 
-static u32 hw_read_20kx(struct hw *hw, u32 reg);
-static void hw_write_20kx(struct hw *hw, u32 reg, u32 data);
+अटल u32 hw_पढ़ो_20kx(काष्ठा hw *hw, u32 reg);
+अटल व्योम hw_ग_लिखो_20kx(काष्ठा hw *hw, u32 reg, u32 data);
 
 /*
  * Type definition block.
- * The layout of control structures can be directly applied on 20k2 chip.
+ * The layout of control काष्ठाures can be directly applied on 20k2 chip.
  */
 
 /*
@@ -45,40 +46,40 @@ static void hw_write_20kx(struct hw *hw, u32 reg, u32 data);
  */
 
 /* SRC resource control block */
-#define SRCCTL_STATE	0x00000007
-#define SRCCTL_BM	0x00000008
-#define SRCCTL_RSR	0x00000030
-#define SRCCTL_SF	0x000001C0
-#define SRCCTL_WR	0x00000200
-#define SRCCTL_PM	0x00000400
-#define SRCCTL_ROM	0x00001800
-#define SRCCTL_VO	0x00002000
-#define SRCCTL_ST	0x00004000
-#define SRCCTL_IE	0x00008000
-#define SRCCTL_ILSZ	0x000F0000
-#define SRCCTL_BP	0x00100000
+#घोषणा SRCCTL_STATE	0x00000007
+#घोषणा SRCCTL_BM	0x00000008
+#घोषणा SRCCTL_RSR	0x00000030
+#घोषणा SRCCTL_SF	0x000001C0
+#घोषणा SRCCTL_WR	0x00000200
+#घोषणा SRCCTL_PM	0x00000400
+#घोषणा SRCCTL_ROM	0x00001800
+#घोषणा SRCCTL_VO	0x00002000
+#घोषणा SRCCTL_ST	0x00004000
+#घोषणा SRCCTL_IE	0x00008000
+#घोषणा SRCCTL_ILSZ	0x000F0000
+#घोषणा SRCCTL_BP	0x00100000
 
-#define SRCCCR_CISZ	0x000007FF
-#define SRCCCR_CWA	0x001FF800
-#define SRCCCR_D	0x00200000
-#define SRCCCR_RS	0x01C00000
-#define SRCCCR_NAL	0x3E000000
-#define SRCCCR_RA	0xC0000000
+#घोषणा SRCCCR_CISZ	0x000007FF
+#घोषणा SRCCCR_CWA	0x001FF800
+#घोषणा SRCCCR_D	0x00200000
+#घोषणा SRCCCR_RS	0x01C00000
+#घोषणा SRCCCR_NAL	0x3E000000
+#घोषणा SRCCCR_RA	0xC0000000
 
-#define SRCCA_CA	0x0FFFFFFF
-#define SRCCA_RS	0xE0000000
+#घोषणा SRCCA_CA	0x0FFFFFFF
+#घोषणा SRCCA_RS	0xE0000000
 
-#define SRCSA_SA	0x0FFFFFFF
+#घोषणा SRCSA_SA	0x0FFFFFFF
 
-#define SRCLA_LA	0x0FFFFFFF
+#घोषणा SRCLA_LA	0x0FFFFFFF
 
-/* Mixer Parameter Ring ram Low and Hight register.
- * Fixed-point value in 8.24 format for parameter channel */
-#define MPRLH_PITCH	0xFFFFFFFF
+/* Mixer Parameter Ring ram Low and Hight रेजिस्टर.
+ * Fixed-poपूर्णांक value in 8.24 क्रमmat क्रम parameter channel */
+#घोषणा MPRLH_PITCH	0xFFFFFFFF
 
-/* SRC resource register dirty flags */
-union src_dirty {
-	struct {
+/* SRC resource रेजिस्टर dirty flags */
+जोड़ src_dirty अणु
+	काष्ठा अणु
 		u16 ctl:1;
 		u16 ccr:1;
 		u16 sa:1;
@@ -87,23 +88,23 @@ union src_dirty {
 		u16 mpr:1;
 		u16 czbfs:1;	/* Clear Z-Buffers */
 		u16 rsv:9;
-	} bf;
+	पूर्ण bf;
 	u16 data;
-};
+पूर्ण;
 
-struct src_rsc_ctrl_blk {
-	unsigned int	ctl;
-	unsigned int 	ccr;
-	unsigned int	ca;
-	unsigned int	sa;
-	unsigned int	la;
-	unsigned int	mpr;
-	union src_dirty	dirty;
-};
+काष्ठा src_rsc_ctrl_blk अणु
+	अचिन्हित पूर्णांक	ctl;
+	अचिन्हित पूर्णांक 	ccr;
+	अचिन्हित पूर्णांक	ca;
+	अचिन्हित पूर्णांक	sa;
+	अचिन्हित पूर्णांक	la;
+	अचिन्हित पूर्णांक	mpr;
+	जोड़ src_dirty	dirty;
+पूर्ण;
 
 /* SRC manager control block */
-union src_mgr_dirty {
-	struct {
+जोड़ src_mgr_dirty अणु
+	काष्ठा अणु
 		u16 enb0:1;
 		u16 enb1:1;
 		u16 enb2:1;
@@ -114,899 +115,899 @@ union src_mgr_dirty {
 		u16 enb7:1;
 		u16 enbsa:1;
 		u16 rsv:7;
-	} bf;
+	पूर्ण bf;
 	u16 data;
-};
+पूर्ण;
 
-struct src_mgr_ctrl_blk {
-	unsigned int		enbsa;
-	unsigned int		enb[8];
-	union src_mgr_dirty	dirty;
-};
+काष्ठा src_mgr_ctrl_blk अणु
+	अचिन्हित पूर्णांक		enbsa;
+	अचिन्हित पूर्णांक		enb[8];
+	जोड़ src_mgr_dirty	dirty;
+पूर्ण;
 
 /* SRCIMP manager control block */
-#define SRCAIM_ARC	0x00000FFF
-#define SRCAIM_NXT	0x00FF0000
-#define SRCAIM_SRC	0xFF000000
+#घोषणा SRCAIM_ARC	0x00000FFF
+#घोषणा SRCAIM_NXT	0x00FF0000
+#घोषणा SRCAIM_SRC	0xFF000000
 
-struct srcimap {
-	unsigned int srcaim;
-	unsigned int idx;
-};
+काष्ठा srcimap अणु
+	अचिन्हित पूर्णांक srcaim;
+	अचिन्हित पूर्णांक idx;
+पूर्ण;
 
-/* SRCIMP manager register dirty flags */
-union srcimp_mgr_dirty {
-	struct {
+/* SRCIMP manager रेजिस्टर dirty flags */
+जोड़ srcimp_mgr_dirty अणु
+	काष्ठा अणु
 		u16 srcimap:1;
 		u16 rsv:15;
-	} bf;
+	पूर्ण bf;
 	u16 data;
-};
+पूर्ण;
 
-struct srcimp_mgr_ctrl_blk {
-	struct srcimap		srcimap;
-	union srcimp_mgr_dirty	dirty;
-};
+काष्ठा srcimp_mgr_ctrl_blk अणु
+	काष्ठा srcimap		srcimap;
+	जोड़ srcimp_mgr_dirty	dirty;
+पूर्ण;
 
 /*
  * Function implementation block.
  */
 
-static int src_get_rsc_ctrl_blk(void **rblk)
-{
-	struct src_rsc_ctrl_blk *blk;
+अटल पूर्णांक src_get_rsc_ctrl_blk(व्योम **rblk)
+अणु
+	काष्ठा src_rsc_ctrl_blk *blk;
 
-	*rblk = NULL;
-	blk = kzalloc(sizeof(*blk), GFP_KERNEL);
-	if (!blk)
-		return -ENOMEM;
+	*rblk = शून्य;
+	blk = kzalloc(माप(*blk), GFP_KERNEL);
+	अगर (!blk)
+		वापस -ENOMEM;
 
 	*rblk = blk;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_put_rsc_ctrl_blk(void *blk)
-{
-	kfree(blk);
+अटल पूर्णांक src_put_rsc_ctrl_blk(व्योम *blk)
+अणु
+	kमुक्त(blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_state(void *blk, unsigned int state)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_state(व्योम *blk, अचिन्हित पूर्णांक state)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_STATE, state);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_bm(void *blk, unsigned int bm)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_bm(व्योम *blk, अचिन्हित पूर्णांक bm)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_BM, bm);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_rsr(void *blk, unsigned int rsr)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_rsr(व्योम *blk, अचिन्हित पूर्णांक rsr)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_RSR, rsr);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_sf(void *blk, unsigned int sf)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_sf(व्योम *blk, अचिन्हित पूर्णांक sf)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_SF, sf);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_wr(void *blk, unsigned int wr)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_wr(व्योम *blk, अचिन्हित पूर्णांक wr)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_WR, wr);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_pm(void *blk, unsigned int pm)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_pm(व्योम *blk, अचिन्हित पूर्णांक pm)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_PM, pm);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_rom(void *blk, unsigned int rom)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_rom(व्योम *blk, अचिन्हित पूर्णांक rom)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_ROM, rom);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_vo(void *blk, unsigned int vo)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_vo(व्योम *blk, अचिन्हित पूर्णांक vo)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_VO, vo);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_st(void *blk, unsigned int st)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_st(व्योम *blk, अचिन्हित पूर्णांक st)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_ST, st);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_ie(void *blk, unsigned int ie)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_ie(व्योम *blk, अचिन्हित पूर्णांक ie)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_IE, ie);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_ilsz(void *blk, unsigned int ilsz)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_ilsz(व्योम *blk, अचिन्हित पूर्णांक ilsz)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_ILSZ, ilsz);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_bp(void *blk, unsigned int bp)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_bp(व्योम *blk, अचिन्हित पूर्णांक bp)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ctl, SRCCTL_BP, bp);
 	ctl->dirty.bf.ctl = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_cisz(void *blk, unsigned int cisz)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_cisz(व्योम *blk, अचिन्हित पूर्णांक cisz)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ccr, SRCCCR_CISZ, cisz);
 	ctl->dirty.bf.ccr = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_ca(void *blk, unsigned int ca)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_ca(व्योम *blk, अचिन्हित पूर्णांक ca)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->ca, SRCCA_CA, ca);
 	ctl->dirty.bf.ca = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_sa(void *blk, unsigned int sa)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_sa(व्योम *blk, अचिन्हित पूर्णांक sa)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->sa, SRCSA_SA, sa);
 	ctl->dirty.bf.sa = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_la(void *blk, unsigned int la)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_la(व्योम *blk, अचिन्हित पूर्णांक la)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->la, SRCLA_LA, la);
 	ctl->dirty.bf.la = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_pitch(void *blk, unsigned int pitch)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_set_pitch(व्योम *blk, अचिन्हित पूर्णांक pitch)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->mpr, MPRLH_PITCH, pitch);
 	ctl->dirty.bf.mpr = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_clear_zbufs(void *blk, unsigned int clear)
-{
-	((struct src_rsc_ctrl_blk *)blk)->dirty.bf.czbfs = (clear ? 1 : 0);
-	return 0;
-}
+अटल पूर्णांक src_set_clear_zbufs(व्योम *blk, अचिन्हित पूर्णांक clear)
+अणु
+	((काष्ठा src_rsc_ctrl_blk *)blk)->dirty.bf.czbfs = (clear ? 1 : 0);
+	वापस 0;
+पूर्ण
 
-static int src_set_dirty(void *blk, unsigned int flags)
-{
-	((struct src_rsc_ctrl_blk *)blk)->dirty.data = (flags & 0xffff);
-	return 0;
-}
+अटल पूर्णांक src_set_dirty(व्योम *blk, अचिन्हित पूर्णांक flags)
+अणु
+	((काष्ठा src_rsc_ctrl_blk *)blk)->dirty.data = (flags & 0xffff);
+	वापस 0;
+पूर्ण
 
-static int src_set_dirty_all(void *blk)
-{
-	((struct src_rsc_ctrl_blk *)blk)->dirty.data = ~(0x0);
-	return 0;
-}
+अटल पूर्णांक src_set_dirty_all(व्योम *blk)
+अणु
+	((काष्ठा src_rsc_ctrl_blk *)blk)->dirty.data = ~(0x0);
+	वापस 0;
+पूर्ण
 
-#define AR_SLOT_SIZE		4096
-#define AR_SLOT_BLOCK_SIZE	16
-#define AR_PTS_PITCH		6
-#define AR_PARAM_SRC_OFFSET	0x60
+#घोषणा AR_SLOT_SIZE		4096
+#घोषणा AR_SLOT_BLOCK_SIZE	16
+#घोषणा AR_PTS_PITCH		6
+#घोषणा AR_PARAM_SRC_OFFSET	0x60
 
-static unsigned int src_param_pitch_mixer(unsigned int src_idx)
-{
-	return ((src_idx << 4) + AR_PTS_PITCH + AR_SLOT_SIZE
+अटल अचिन्हित पूर्णांक src_param_pitch_mixer(अचिन्हित पूर्णांक src_idx)
+अणु
+	वापस ((src_idx << 4) + AR_PTS_PITCH + AR_SLOT_SIZE
 			- AR_PARAM_SRC_OFFSET) % AR_SLOT_SIZE;
 
-}
+पूर्ण
 
-static int src_commit_write(struct hw *hw, unsigned int idx, void *blk)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
-	int i;
+अटल पूर्णांक src_commit_ग_लिखो(काष्ठा hw *hw, अचिन्हित पूर्णांक idx, व्योम *blk)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
+	पूर्णांक i;
 
-	if (ctl->dirty.bf.czbfs) {
-		/* Clear Z-Buffer registers */
-		for (i = 0; i < 8; i++)
-			hw_write_20kx(hw, SRC_UPZ+idx*0x100+i*0x4, 0);
+	अगर (ctl->dirty.bf.czbfs) अणु
+		/* Clear Z-Buffer रेजिस्टरs */
+		क्रम (i = 0; i < 8; i++)
+			hw_ग_लिखो_20kx(hw, SRC_UPZ+idx*0x100+i*0x4, 0);
 
-		for (i = 0; i < 4; i++)
-			hw_write_20kx(hw, SRC_DN0Z+idx*0x100+i*0x4, 0);
+		क्रम (i = 0; i < 4; i++)
+			hw_ग_लिखो_20kx(hw, SRC_DN0Z+idx*0x100+i*0x4, 0);
 
-		for (i = 0; i < 8; i++)
-			hw_write_20kx(hw, SRC_DN1Z+idx*0x100+i*0x4, 0);
+		क्रम (i = 0; i < 8; i++)
+			hw_ग_लिखो_20kx(hw, SRC_DN1Z+idx*0x100+i*0x4, 0);
 
 		ctl->dirty.bf.czbfs = 0;
-	}
-	if (ctl->dirty.bf.mpr) {
+	पूर्ण
+	अगर (ctl->dirty.bf.mpr) अणु
 		/* Take the parameter mixer resource in the same group as that
-		 * the idx src is in for simplicity. Unlike src, all conjugate
-		 * parameter mixer resources must be programmed for
+		 * the idx src is in क्रम simplicity. Unlike src, all conjugate
+		 * parameter mixer resources must be programmed क्रम
 		 * corresponding conjugate src resources. */
-		unsigned int pm_idx = src_param_pitch_mixer(idx);
-		hw_write_20kx(hw, MIXER_PRING_LO_HI+4*pm_idx, ctl->mpr);
-		hw_write_20kx(hw, MIXER_PMOPLO+8*pm_idx, 0x3);
-		hw_write_20kx(hw, MIXER_PMOPHI+8*pm_idx, 0x0);
+		अचिन्हित पूर्णांक pm_idx = src_param_pitch_mixer(idx);
+		hw_ग_लिखो_20kx(hw, MIXER_PRING_LO_HI+4*pm_idx, ctl->mpr);
+		hw_ग_लिखो_20kx(hw, MIXER_PMOPLO+8*pm_idx, 0x3);
+		hw_ग_लिखो_20kx(hw, MIXER_PMOPHI+8*pm_idx, 0x0);
 		ctl->dirty.bf.mpr = 0;
-	}
-	if (ctl->dirty.bf.sa) {
-		hw_write_20kx(hw, SRC_SA+idx*0x100, ctl->sa);
+	पूर्ण
+	अगर (ctl->dirty.bf.sa) अणु
+		hw_ग_लिखो_20kx(hw, SRC_SA+idx*0x100, ctl->sa);
 		ctl->dirty.bf.sa = 0;
-	}
-	if (ctl->dirty.bf.la) {
-		hw_write_20kx(hw, SRC_LA+idx*0x100, ctl->la);
+	पूर्ण
+	अगर (ctl->dirty.bf.la) अणु
+		hw_ग_लिखो_20kx(hw, SRC_LA+idx*0x100, ctl->la);
 		ctl->dirty.bf.la = 0;
-	}
-	if (ctl->dirty.bf.ca) {
-		hw_write_20kx(hw, SRC_CA+idx*0x100, ctl->ca);
+	पूर्ण
+	अगर (ctl->dirty.bf.ca) अणु
+		hw_ग_लिखो_20kx(hw, SRC_CA+idx*0x100, ctl->ca);
 		ctl->dirty.bf.ca = 0;
-	}
+	पूर्ण
 
-	/* Write srccf register */
-	hw_write_20kx(hw, SRC_CF+idx*0x100, 0x0);
+	/* Write srccf रेजिस्टर */
+	hw_ग_लिखो_20kx(hw, SRC_CF+idx*0x100, 0x0);
 
-	if (ctl->dirty.bf.ccr) {
-		hw_write_20kx(hw, SRC_CCR+idx*0x100, ctl->ccr);
+	अगर (ctl->dirty.bf.ccr) अणु
+		hw_ग_लिखो_20kx(hw, SRC_CCR+idx*0x100, ctl->ccr);
 		ctl->dirty.bf.ccr = 0;
-	}
-	if (ctl->dirty.bf.ctl) {
-		hw_write_20kx(hw, SRC_CTL+idx*0x100, ctl->ctl);
+	पूर्ण
+	अगर (ctl->dirty.bf.ctl) अणु
+		hw_ग_लिखो_20kx(hw, SRC_CTL+idx*0x100, ctl->ctl);
 		ctl->dirty.bf.ctl = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_get_ca(struct hw *hw, unsigned int idx, void *blk)
-{
-	struct src_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक src_get_ca(काष्ठा hw *hw, अचिन्हित पूर्णांक idx, व्योम *blk)
+अणु
+	काष्ठा src_rsc_ctrl_blk *ctl = blk;
 
-	ctl->ca = hw_read_20kx(hw, SRC_CA+idx*0x100);
+	ctl->ca = hw_पढ़ो_20kx(hw, SRC_CA+idx*0x100);
 	ctl->dirty.bf.ca = 0;
 
-	return get_field(ctl->ca, SRCCA_CA);
-}
+	वापस get_field(ctl->ca, SRCCA_CA);
+पूर्ण
 
-static unsigned int src_get_dirty(void *blk)
-{
-	return ((struct src_rsc_ctrl_blk *)blk)->dirty.data;
-}
+अटल अचिन्हित पूर्णांक src_get_dirty(व्योम *blk)
+अणु
+	वापस ((काष्ठा src_rsc_ctrl_blk *)blk)->dirty.data;
+पूर्ण
 
-static unsigned int src_dirty_conj_mask(void)
-{
-	return 0x20;
-}
+अटल अचिन्हित पूर्णांक src_dirty_conj_mask(व्योम)
+अणु
+	वापस 0x20;
+पूर्ण
 
-static int src_mgr_enbs_src(void *blk, unsigned int idx)
-{
-	((struct src_mgr_ctrl_blk *)blk)->enbsa |= (0x1 << ((idx%128)/4));
-	((struct src_mgr_ctrl_blk *)blk)->dirty.bf.enbsa = 1;
-	((struct src_mgr_ctrl_blk *)blk)->enb[idx/32] |= (0x1 << (idx%32));
-	return 0;
-}
+अटल पूर्णांक src_mgr_enbs_src(व्योम *blk, अचिन्हित पूर्णांक idx)
+अणु
+	((काष्ठा src_mgr_ctrl_blk *)blk)->enbsa |= (0x1 << ((idx%128)/4));
+	((काष्ठा src_mgr_ctrl_blk *)blk)->dirty.bf.enbsa = 1;
+	((काष्ठा src_mgr_ctrl_blk *)blk)->enb[idx/32] |= (0x1 << (idx%32));
+	वापस 0;
+पूर्ण
 
-static int src_mgr_enb_src(void *blk, unsigned int idx)
-{
-	((struct src_mgr_ctrl_blk *)blk)->enb[idx/32] |= (0x1 << (idx%32));
-	((struct src_mgr_ctrl_blk *)blk)->dirty.data |= (0x1 << (idx/32));
-	return 0;
-}
+अटल पूर्णांक src_mgr_enb_src(व्योम *blk, अचिन्हित पूर्णांक idx)
+अणु
+	((काष्ठा src_mgr_ctrl_blk *)blk)->enb[idx/32] |= (0x1 << (idx%32));
+	((काष्ठा src_mgr_ctrl_blk *)blk)->dirty.data |= (0x1 << (idx/32));
+	वापस 0;
+पूर्ण
 
-static int src_mgr_dsb_src(void *blk, unsigned int idx)
-{
-	((struct src_mgr_ctrl_blk *)blk)->enb[idx/32] &= ~(0x1 << (idx%32));
-	((struct src_mgr_ctrl_blk *)blk)->dirty.data |= (0x1 << (idx/32));
-	return 0;
-}
+अटल पूर्णांक src_mgr_dsb_src(व्योम *blk, अचिन्हित पूर्णांक idx)
+अणु
+	((काष्ठा src_mgr_ctrl_blk *)blk)->enb[idx/32] &= ~(0x1 << (idx%32));
+	((काष्ठा src_mgr_ctrl_blk *)blk)->dirty.data |= (0x1 << (idx/32));
+	वापस 0;
+पूर्ण
 
-static int src_mgr_commit_write(struct hw *hw, void *blk)
-{
-	struct src_mgr_ctrl_blk *ctl = blk;
-	int i;
-	unsigned int ret;
+अटल पूर्णांक src_mgr_commit_ग_लिखो(काष्ठा hw *hw, व्योम *blk)
+अणु
+	काष्ठा src_mgr_ctrl_blk *ctl = blk;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक ret;
 
-	if (ctl->dirty.bf.enbsa) {
-		do {
-			ret = hw_read_20kx(hw, SRC_ENBSTAT);
-		} while (ret & 0x1);
-		hw_write_20kx(hw, SRC_ENBSA, ctl->enbsa);
+	अगर (ctl->dirty.bf.enbsa) अणु
+		करो अणु
+			ret = hw_पढ़ो_20kx(hw, SRC_ENBSTAT);
+		पूर्ण जबतक (ret & 0x1);
+		hw_ग_लिखो_20kx(hw, SRC_ENBSA, ctl->enbsa);
 		ctl->dirty.bf.enbsa = 0;
-	}
-	for (i = 0; i < 8; i++) {
-		if ((ctl->dirty.data & (0x1 << i))) {
-			hw_write_20kx(hw, SRC_ENB+(i*0x100), ctl->enb[i]);
+	पूर्ण
+	क्रम (i = 0; i < 8; i++) अणु
+		अगर ((ctl->dirty.data & (0x1 << i))) अणु
+			hw_ग_लिखो_20kx(hw, SRC_ENB+(i*0x100), ctl->enb[i]);
 			ctl->dirty.data &= ~(0x1 << i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_mgr_get_ctrl_blk(void **rblk)
-{
-	struct src_mgr_ctrl_blk *blk;
+अटल पूर्णांक src_mgr_get_ctrl_blk(व्योम **rblk)
+अणु
+	काष्ठा src_mgr_ctrl_blk *blk;
 
-	*rblk = NULL;
-	blk = kzalloc(sizeof(*blk), GFP_KERNEL);
-	if (!blk)
-		return -ENOMEM;
-
-	*rblk = blk;
-
-	return 0;
-}
-
-static int src_mgr_put_ctrl_blk(void *blk)
-{
-	kfree(blk);
-
-	return 0;
-}
-
-static int srcimp_mgr_get_ctrl_blk(void **rblk)
-{
-	struct srcimp_mgr_ctrl_blk *blk;
-
-	*rblk = NULL;
-	blk = kzalloc(sizeof(*blk), GFP_KERNEL);
-	if (!blk)
-		return -ENOMEM;
+	*rblk = शून्य;
+	blk = kzalloc(माप(*blk), GFP_KERNEL);
+	अगर (!blk)
+		वापस -ENOMEM;
 
 	*rblk = blk;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int srcimp_mgr_put_ctrl_blk(void *blk)
-{
-	kfree(blk);
+अटल पूर्णांक src_mgr_put_ctrl_blk(व्योम *blk)
+अणु
+	kमुक्त(blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int srcimp_mgr_set_imaparc(void *blk, unsigned int slot)
-{
-	struct srcimp_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक srcimp_mgr_get_ctrl_blk(व्योम **rblk)
+अणु
+	काष्ठा srcimp_mgr_ctrl_blk *blk;
+
+	*rblk = शून्य;
+	blk = kzalloc(माप(*blk), GFP_KERNEL);
+	अगर (!blk)
+		वापस -ENOMEM;
+
+	*rblk = blk;
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक srcimp_mgr_put_ctrl_blk(व्योम *blk)
+अणु
+	kमुक्त(blk);
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक srcimp_mgr_set_imaparc(व्योम *blk, अचिन्हित पूर्णांक slot)
+अणु
+	काष्ठा srcimp_mgr_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->srcimap.srcaim, SRCAIM_ARC, slot);
 	ctl->dirty.bf.srcimap = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int srcimp_mgr_set_imapuser(void *blk, unsigned int user)
-{
-	struct srcimp_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक srcimp_mgr_set_imapuser(व्योम *blk, अचिन्हित पूर्णांक user)
+अणु
+	काष्ठा srcimp_mgr_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->srcimap.srcaim, SRCAIM_SRC, user);
 	ctl->dirty.bf.srcimap = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int srcimp_mgr_set_imapnxt(void *blk, unsigned int next)
-{
-	struct srcimp_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक srcimp_mgr_set_imapnxt(व्योम *blk, अचिन्हित पूर्णांक next)
+अणु
+	काष्ठा srcimp_mgr_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->srcimap.srcaim, SRCAIM_NXT, next);
 	ctl->dirty.bf.srcimap = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int srcimp_mgr_set_imapaddr(void *blk, unsigned int addr)
-{
-	((struct srcimp_mgr_ctrl_blk *)blk)->srcimap.idx = addr;
-	((struct srcimp_mgr_ctrl_blk *)blk)->dirty.bf.srcimap = 1;
-	return 0;
-}
+अटल पूर्णांक srcimp_mgr_set_imapaddr(व्योम *blk, अचिन्हित पूर्णांक addr)
+अणु
+	((काष्ठा srcimp_mgr_ctrl_blk *)blk)->srcimap.idx = addr;
+	((काष्ठा srcimp_mgr_ctrl_blk *)blk)->dirty.bf.srcimap = 1;
+	वापस 0;
+पूर्ण
 
-static int srcimp_mgr_commit_write(struct hw *hw, void *blk)
-{
-	struct srcimp_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक srcimp_mgr_commit_ग_लिखो(काष्ठा hw *hw, व्योम *blk)
+अणु
+	काष्ठा srcimp_mgr_ctrl_blk *ctl = blk;
 
-	if (ctl->dirty.bf.srcimap) {
-		hw_write_20kx(hw, SRC_IMAP+ctl->srcimap.idx*0x100,
+	अगर (ctl->dirty.bf.srcimap) अणु
+		hw_ग_लिखो_20kx(hw, SRC_IMAP+ctl->srcimap.idx*0x100,
 						ctl->srcimap.srcaim);
 		ctl->dirty.bf.srcimap = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * AMIXER control block definitions.
  */
 
-#define AMOPLO_M	0x00000003
-#define AMOPLO_IV	0x00000004
-#define AMOPLO_X	0x0003FFF0
-#define AMOPLO_Y	0xFFFC0000
+#घोषणा AMOPLO_M	0x00000003
+#घोषणा AMOPLO_IV	0x00000004
+#घोषणा AMOPLO_X	0x0003FFF0
+#घोषणा AMOPLO_Y	0xFFFC0000
 
-#define AMOPHI_SADR	0x000000FF
-#define AMOPHI_SE	0x80000000
+#घोषणा AMOPHI_SADR	0x000000FF
+#घोषणा AMOPHI_SE	0x80000000
 
-/* AMIXER resource register dirty flags */
-union amixer_dirty {
-	struct {
+/* AMIXER resource रेजिस्टर dirty flags */
+जोड़ amixer_dirty अणु
+	काष्ठा अणु
 		u16 amoplo:1;
 		u16 amophi:1;
 		u16 rsv:14;
-	} bf;
+	पूर्ण bf;
 	u16 data;
-};
+पूर्ण;
 
 /* AMIXER resource control block */
-struct amixer_rsc_ctrl_blk {
-	unsigned int		amoplo;
-	unsigned int		amophi;
-	union amixer_dirty	dirty;
-};
+काष्ठा amixer_rsc_ctrl_blk अणु
+	अचिन्हित पूर्णांक		amoplo;
+	अचिन्हित पूर्णांक		amophi;
+	जोड़ amixer_dirty	dirty;
+पूर्ण;
 
-static int amixer_set_mode(void *blk, unsigned int mode)
-{
-	struct amixer_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक amixer_set_mode(व्योम *blk, अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा amixer_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->amoplo, AMOPLO_M, mode);
 	ctl->dirty.bf.amoplo = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amixer_set_iv(void *blk, unsigned int iv)
-{
-	struct amixer_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक amixer_set_iv(व्योम *blk, अचिन्हित पूर्णांक iv)
+अणु
+	काष्ठा amixer_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->amoplo, AMOPLO_IV, iv);
 	ctl->dirty.bf.amoplo = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amixer_set_x(void *blk, unsigned int x)
-{
-	struct amixer_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक amixer_set_x(व्योम *blk, अचिन्हित पूर्णांक x)
+अणु
+	काष्ठा amixer_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->amoplo, AMOPLO_X, x);
 	ctl->dirty.bf.amoplo = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amixer_set_y(void *blk, unsigned int y)
-{
-	struct amixer_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक amixer_set_y(व्योम *blk, अचिन्हित पूर्णांक y)
+अणु
+	काष्ठा amixer_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->amoplo, AMOPLO_Y, y);
 	ctl->dirty.bf.amoplo = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amixer_set_sadr(void *blk, unsigned int sadr)
-{
-	struct amixer_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक amixer_set_sadr(व्योम *blk, अचिन्हित पूर्णांक sadr)
+अणु
+	काष्ठा amixer_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->amophi, AMOPHI_SADR, sadr);
 	ctl->dirty.bf.amophi = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amixer_set_se(void *blk, unsigned int se)
-{
-	struct amixer_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक amixer_set_se(व्योम *blk, अचिन्हित पूर्णांक se)
+अणु
+	काष्ठा amixer_rsc_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->amophi, AMOPHI_SE, se);
 	ctl->dirty.bf.amophi = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amixer_set_dirty(void *blk, unsigned int flags)
-{
-	((struct amixer_rsc_ctrl_blk *)blk)->dirty.data = (flags & 0xffff);
-	return 0;
-}
+अटल पूर्णांक amixer_set_dirty(व्योम *blk, अचिन्हित पूर्णांक flags)
+अणु
+	((काष्ठा amixer_rsc_ctrl_blk *)blk)->dirty.data = (flags & 0xffff);
+	वापस 0;
+पूर्ण
 
-static int amixer_set_dirty_all(void *blk)
-{
-	((struct amixer_rsc_ctrl_blk *)blk)->dirty.data = ~(0x0);
-	return 0;
-}
+अटल पूर्णांक amixer_set_dirty_all(व्योम *blk)
+अणु
+	((काष्ठा amixer_rsc_ctrl_blk *)blk)->dirty.data = ~(0x0);
+	वापस 0;
+पूर्ण
 
-static int amixer_commit_write(struct hw *hw, unsigned int idx, void *blk)
-{
-	struct amixer_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक amixer_commit_ग_लिखो(काष्ठा hw *hw, अचिन्हित पूर्णांक idx, व्योम *blk)
+अणु
+	काष्ठा amixer_rsc_ctrl_blk *ctl = blk;
 
-	if (ctl->dirty.bf.amoplo || ctl->dirty.bf.amophi) {
-		hw_write_20kx(hw, MIXER_AMOPLO+idx*8, ctl->amoplo);
+	अगर (ctl->dirty.bf.amoplo || ctl->dirty.bf.amophi) अणु
+		hw_ग_लिखो_20kx(hw, MIXER_AMOPLO+idx*8, ctl->amoplo);
 		ctl->dirty.bf.amoplo = 0;
-		hw_write_20kx(hw, MIXER_AMOPHI+idx*8, ctl->amophi);
+		hw_ग_लिखो_20kx(hw, MIXER_AMOPHI+idx*8, ctl->amophi);
 		ctl->dirty.bf.amophi = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amixer_get_y(void *blk)
-{
-	struct amixer_rsc_ctrl_blk *ctl = blk;
+अटल पूर्णांक amixer_get_y(व्योम *blk)
+अणु
+	काष्ठा amixer_rsc_ctrl_blk *ctl = blk;
 
-	return get_field(ctl->amoplo, AMOPLO_Y);
-}
+	वापस get_field(ctl->amoplo, AMOPLO_Y);
+पूर्ण
 
-static unsigned int amixer_get_dirty(void *blk)
-{
-	return ((struct amixer_rsc_ctrl_blk *)blk)->dirty.data;
-}
+अटल अचिन्हित पूर्णांक amixer_get_dirty(व्योम *blk)
+अणु
+	वापस ((काष्ठा amixer_rsc_ctrl_blk *)blk)->dirty.data;
+पूर्ण
 
-static int amixer_rsc_get_ctrl_blk(void **rblk)
-{
-	struct amixer_rsc_ctrl_blk *blk;
+अटल पूर्णांक amixer_rsc_get_ctrl_blk(व्योम **rblk)
+अणु
+	काष्ठा amixer_rsc_ctrl_blk *blk;
 
-	*rblk = NULL;
-	blk = kzalloc(sizeof(*blk), GFP_KERNEL);
-	if (!blk)
-		return -ENOMEM;
+	*rblk = शून्य;
+	blk = kzalloc(माप(*blk), GFP_KERNEL);
+	अगर (!blk)
+		वापस -ENOMEM;
 
 	*rblk = blk;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amixer_rsc_put_ctrl_blk(void *blk)
-{
-	kfree(blk);
+अटल पूर्णांक amixer_rsc_put_ctrl_blk(व्योम *blk)
+अणु
+	kमुक्त(blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amixer_mgr_get_ctrl_blk(void **rblk)
-{
-	*rblk = NULL;
+अटल पूर्णांक amixer_mgr_get_ctrl_blk(व्योम **rblk)
+अणु
+	*rblk = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amixer_mgr_put_ctrl_blk(void *blk)
-{
-	return 0;
-}
+अटल पूर्णांक amixer_mgr_put_ctrl_blk(व्योम *blk)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
  * DAIO control block definitions.
  */
 
-/* Receiver Sample Rate Tracker Control register */
-#define SRTCTL_SRCO	0x000000FF
-#define SRTCTL_SRCM	0x0000FF00
-#define SRTCTL_RSR	0x00030000
-#define SRTCTL_DRAT	0x00300000
-#define SRTCTL_EC	0x01000000
-#define SRTCTL_ET	0x10000000
+/* Receiver Sample Rate Tracker Control रेजिस्टर */
+#घोषणा SRTCTL_SRCO	0x000000FF
+#घोषणा SRTCTL_SRCM	0x0000FF00
+#घोषणा SRTCTL_RSR	0x00030000
+#घोषणा SRTCTL_DRAT	0x00300000
+#घोषणा SRTCTL_EC	0x01000000
+#घोषणा SRTCTL_ET	0x10000000
 
-/* DAIO Receiver register dirty flags */
-union dai_dirty {
-	struct {
+/* DAIO Receiver रेजिस्टर dirty flags */
+जोड़ dai_dirty अणु
+	काष्ठा अणु
 		u16 srt:1;
 		u16 rsv:15;
-	} bf;
+	पूर्ण bf;
 	u16 data;
-};
+पूर्ण;
 
 /* DAIO Receiver control block */
-struct dai_ctrl_blk {
-	unsigned int	srt;
-	union dai_dirty	dirty;
-};
+काष्ठा dai_ctrl_blk अणु
+	अचिन्हित पूर्णांक	srt;
+	जोड़ dai_dirty	dirty;
+पूर्ण;
 
 /* Audio Input Mapper RAM */
-#define AIM_ARC		0x00000FFF
-#define AIM_NXT		0x007F0000
+#घोषणा AIM_ARC		0x00000FFF
+#घोषणा AIM_NXT		0x007F0000
 
-struct daoimap {
-	unsigned int aim;
-	unsigned int idx;
-};
+काष्ठा daoimap अणु
+	अचिन्हित पूर्णांक aim;
+	अचिन्हित पूर्णांक idx;
+पूर्ण;
 
-/* Audio Transmitter Control and Status register */
-#define ATXCTL_EN	0x00000001
-#define ATXCTL_MODE	0x00000010
-#define ATXCTL_CD	0x00000020
-#define ATXCTL_RAW	0x00000100
-#define ATXCTL_MT	0x00000200
-#define ATXCTL_NUC	0x00003000
-#define ATXCTL_BEN	0x00010000
-#define ATXCTL_BMUX	0x00700000
-#define ATXCTL_B24	0x01000000
-#define ATXCTL_CPF	0x02000000
-#define ATXCTL_RIV	0x10000000
-#define ATXCTL_LIV	0x20000000
-#define ATXCTL_RSAT	0x40000000
-#define ATXCTL_LSAT	0x80000000
+/* Audio Transmitter Control and Status रेजिस्टर */
+#घोषणा ATXCTL_EN	0x00000001
+#घोषणा ATXCTL_MODE	0x00000010
+#घोषणा ATXCTL_CD	0x00000020
+#घोषणा ATXCTL_RAW	0x00000100
+#घोषणा ATXCTL_MT	0x00000200
+#घोषणा ATXCTL_NUC	0x00003000
+#घोषणा ATXCTL_BEN	0x00010000
+#घोषणा ATXCTL_BMUX	0x00700000
+#घोषणा ATXCTL_B24	0x01000000
+#घोषणा ATXCTL_CPF	0x02000000
+#घोषणा ATXCTL_RIV	0x10000000
+#घोषणा ATXCTL_LIV	0x20000000
+#घोषणा ATXCTL_RSAT	0x40000000
+#घोषणा ATXCTL_LSAT	0x80000000
 
-/* XDIF Transmitter register dirty flags */
-union dao_dirty {
-	struct {
+/* XDIF Transmitter रेजिस्टर dirty flags */
+जोड़ dao_dirty अणु
+	काष्ठा अणु
 		u16 atxcsl:1;
 		u16 rsv:15;
-	} bf;
+	पूर्ण bf;
 	u16 data;
-};
+पूर्ण;
 
 /* XDIF Transmitter control block */
-struct dao_ctrl_blk {
+काष्ठा dao_ctrl_blk अणु
 	/* XDIF Transmitter Channel Status Low Register */
-	unsigned int	atxcsl;
-	union dao_dirty	dirty;
-};
+	अचिन्हित पूर्णांक	atxcsl;
+	जोड़ dao_dirty	dirty;
+पूर्ण;
 
-/* Audio Receiver Control register */
-#define ARXCTL_EN	0x00000001
+/* Audio Receiver Control रेजिस्टर */
+#घोषणा ARXCTL_EN	0x00000001
 
-/* DAIO manager register dirty flags */
-union daio_mgr_dirty {
-	struct {
+/* DAIO manager रेजिस्टर dirty flags */
+जोड़ daio_mgr_dirty अणु
+	काष्ठा अणु
 		u32 atxctl:8;
 		u32 arxctl:8;
 		u32 daoimap:1;
 		u32 rsv:15;
-	} bf;
+	पूर्ण bf;
 	u32 data;
-};
+पूर्ण;
 
 /* DAIO manager control block */
-struct daio_mgr_ctrl_blk {
-	struct daoimap		daoimap;
-	unsigned int		txctl[8];
-	unsigned int		rxctl[8];
-	union daio_mgr_dirty	dirty;
-};
+काष्ठा daio_mgr_ctrl_blk अणु
+	काष्ठा daoimap		daoimap;
+	अचिन्हित पूर्णांक		txctl[8];
+	अचिन्हित पूर्णांक		rxctl[8];
+	जोड़ daio_mgr_dirty	dirty;
+पूर्ण;
 
-static int dai_srt_set_srco(void *blk, unsigned int src)
-{
-	struct dai_ctrl_blk *ctl = blk;
+अटल पूर्णांक dai_srt_set_srco(व्योम *blk, अचिन्हित पूर्णांक src)
+अणु
+	काष्ठा dai_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->srt, SRTCTL_SRCO, src);
 	ctl->dirty.bf.srt = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dai_srt_set_srcm(void *blk, unsigned int src)
-{
-	struct dai_ctrl_blk *ctl = blk;
+अटल पूर्णांक dai_srt_set_srcm(व्योम *blk, अचिन्हित पूर्णांक src)
+अणु
+	काष्ठा dai_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->srt, SRTCTL_SRCM, src);
 	ctl->dirty.bf.srt = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dai_srt_set_rsr(void *blk, unsigned int rsr)
-{
-	struct dai_ctrl_blk *ctl = blk;
+अटल पूर्णांक dai_srt_set_rsr(व्योम *blk, अचिन्हित पूर्णांक rsr)
+अणु
+	काष्ठा dai_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->srt, SRTCTL_RSR, rsr);
 	ctl->dirty.bf.srt = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dai_srt_set_drat(void *blk, unsigned int drat)
-{
-	struct dai_ctrl_blk *ctl = blk;
+अटल पूर्णांक dai_srt_set_drat(व्योम *blk, अचिन्हित पूर्णांक drat)
+अणु
+	काष्ठा dai_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->srt, SRTCTL_DRAT, drat);
 	ctl->dirty.bf.srt = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dai_srt_set_ec(void *blk, unsigned int ec)
-{
-	struct dai_ctrl_blk *ctl = blk;
+अटल पूर्णांक dai_srt_set_ec(व्योम *blk, अचिन्हित पूर्णांक ec)
+अणु
+	काष्ठा dai_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->srt, SRTCTL_EC, ec ? 1 : 0);
 	ctl->dirty.bf.srt = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dai_srt_set_et(void *blk, unsigned int et)
-{
-	struct dai_ctrl_blk *ctl = blk;
+अटल पूर्णांक dai_srt_set_et(व्योम *blk, अचिन्हित पूर्णांक et)
+अणु
+	काष्ठा dai_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->srt, SRTCTL_ET, et ? 1 : 0);
 	ctl->dirty.bf.srt = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dai_commit_write(struct hw *hw, unsigned int idx, void *blk)
-{
-	struct dai_ctrl_blk *ctl = blk;
+अटल पूर्णांक dai_commit_ग_लिखो(काष्ठा hw *hw, अचिन्हित पूर्णांक idx, व्योम *blk)
+अणु
+	काष्ठा dai_ctrl_blk *ctl = blk;
 
-	if (ctl->dirty.bf.srt) {
-		hw_write_20kx(hw, AUDIO_IO_RX_SRT_CTL+0x40*idx, ctl->srt);
+	अगर (ctl->dirty.bf.srt) अणु
+		hw_ग_लिखो_20kx(hw, AUDIO_IO_RX_SRT_CTL+0x40*idx, ctl->srt);
 		ctl->dirty.bf.srt = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dai_get_ctrl_blk(void **rblk)
-{
-	struct dai_ctrl_blk *blk;
+अटल पूर्णांक dai_get_ctrl_blk(व्योम **rblk)
+अणु
+	काष्ठा dai_ctrl_blk *blk;
 
-	*rblk = NULL;
-	blk = kzalloc(sizeof(*blk), GFP_KERNEL);
-	if (!blk)
-		return -ENOMEM;
+	*rblk = शून्य;
+	blk = kzalloc(माप(*blk), GFP_KERNEL);
+	अगर (!blk)
+		वापस -ENOMEM;
 
 	*rblk = blk;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dai_put_ctrl_blk(void *blk)
-{
-	kfree(blk);
+अटल पूर्णांक dai_put_ctrl_blk(व्योम *blk)
+अणु
+	kमुक्त(blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dao_set_spos(void *blk, unsigned int spos)
-{
-	((struct dao_ctrl_blk *)blk)->atxcsl = spos;
-	((struct dao_ctrl_blk *)blk)->dirty.bf.atxcsl = 1;
-	return 0;
-}
+अटल पूर्णांक dao_set_spos(व्योम *blk, अचिन्हित पूर्णांक spos)
+अणु
+	((काष्ठा dao_ctrl_blk *)blk)->atxcsl = spos;
+	((काष्ठा dao_ctrl_blk *)blk)->dirty.bf.atxcsl = 1;
+	वापस 0;
+पूर्ण
 
-static int dao_commit_write(struct hw *hw, unsigned int idx, void *blk)
-{
-	struct dao_ctrl_blk *ctl = blk;
+अटल पूर्णांक dao_commit_ग_लिखो(काष्ठा hw *hw, अचिन्हित पूर्णांक idx, व्योम *blk)
+अणु
+	काष्ठा dao_ctrl_blk *ctl = blk;
 
-	if (ctl->dirty.bf.atxcsl) {
-		if (idx < 4) {
+	अगर (ctl->dirty.bf.atxcsl) अणु
+		अगर (idx < 4) अणु
 			/* S/PDIF SPOSx */
-			hw_write_20kx(hw, AUDIO_IO_TX_CSTAT_L+0x40*idx,
+			hw_ग_लिखो_20kx(hw, AUDIO_IO_TX_CSTAT_L+0x40*idx,
 							ctl->atxcsl);
-		}
+		पूर्ण
 		ctl->dirty.bf.atxcsl = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dao_get_spos(void *blk, unsigned int *spos)
-{
-	*spos = ((struct dao_ctrl_blk *)blk)->atxcsl;
-	return 0;
-}
+अटल पूर्णांक dao_get_spos(व्योम *blk, अचिन्हित पूर्णांक *spos)
+अणु
+	*spos = ((काष्ठा dao_ctrl_blk *)blk)->atxcsl;
+	वापस 0;
+पूर्ण
 
-static int dao_get_ctrl_blk(void **rblk)
-{
-	struct dao_ctrl_blk *blk;
+अटल पूर्णांक dao_get_ctrl_blk(व्योम **rblk)
+अणु
+	काष्ठा dao_ctrl_blk *blk;
 
-	*rblk = NULL;
-	blk = kzalloc(sizeof(*blk), GFP_KERNEL);
-	if (!blk)
-		return -ENOMEM;
+	*rblk = शून्य;
+	blk = kzalloc(माप(*blk), GFP_KERNEL);
+	अगर (!blk)
+		वापस -ENOMEM;
 
 	*rblk = blk;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dao_put_ctrl_blk(void *blk)
-{
-	kfree(blk);
+अटल पूर्णांक dao_put_ctrl_blk(व्योम *blk)
+अणु
+	kमुक्त(blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_enb_dai(void *blk, unsigned int idx)
-{
-	struct daio_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक daio_mgr_enb_dai(व्योम *blk, अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा daio_mgr_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->rxctl[idx], ARXCTL_EN, 1);
 	ctl->dirty.bf.arxctl |= (0x1 << idx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_dsb_dai(void *blk, unsigned int idx)
-{
-	struct daio_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक daio_mgr_dsb_dai(व्योम *blk, अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा daio_mgr_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->rxctl[idx], ARXCTL_EN, 0);
 
 	ctl->dirty.bf.arxctl |= (0x1 << idx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_enb_dao(void *blk, unsigned int idx)
-{
-	struct daio_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक daio_mgr_enb_dao(व्योम *blk, अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा daio_mgr_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->txctl[idx], ATXCTL_EN, 1);
 	ctl->dirty.bf.atxctl |= (0x1 << idx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_dsb_dao(void *blk, unsigned int idx)
-{
-	struct daio_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक daio_mgr_dsb_dao(व्योम *blk, अचिन्हित पूर्णांक idx)
+अणु
+	काष्ठा daio_mgr_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->txctl[idx], ATXCTL_EN, 0);
 	ctl->dirty.bf.atxctl |= (0x1 << idx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_dao_init(void *blk, unsigned int idx, unsigned int conf)
-{
-	struct daio_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक daio_mgr_dao_init(व्योम *blk, अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक conf)
+अणु
+	काष्ठा daio_mgr_ctrl_blk *ctl = blk;
 
-	if (idx < 4) {
+	अगर (idx < 4) अणु
 		/* S/PDIF output */
-		switch ((conf & 0xf)) {
-		case 1:
+		चयन ((conf & 0xf)) अणु
+		हाल 1:
 			set_field(&ctl->txctl[idx], ATXCTL_NUC, 0);
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			set_field(&ctl->txctl[idx], ATXCTL_NUC, 1);
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			set_field(&ctl->txctl[idx], ATXCTL_NUC, 2);
-			break;
-		case 8:
+			अवरोध;
+		हाल 8:
 			set_field(&ctl->txctl[idx], ATXCTL_NUC, 3);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		/* CDIF */
 		set_field(&ctl->txctl[idx], ATXCTL_CD, (!(conf & 0x7)));
 		/* Non-audio */
@@ -1016,152 +1017,152 @@ static int daio_mgr_dao_init(void *blk, unsigned int idx, unsigned int conf)
 		set_field(&ctl->txctl[idx], ATXCTL_RAW,
 			  ((conf >> 3) & 0x1) ? 0 : 0);
 		ctl->dirty.bf.atxctl |= (0x1 << idx);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* I2S output */
 		/*idx %= 4; */
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_set_imaparc(void *blk, unsigned int slot)
-{
-	struct daio_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक daio_mgr_set_imaparc(व्योम *blk, अचिन्हित पूर्णांक slot)
+अणु
+	काष्ठा daio_mgr_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->daoimap.aim, AIM_ARC, slot);
 	ctl->dirty.bf.daoimap = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_set_imapnxt(void *blk, unsigned int next)
-{
-	struct daio_mgr_ctrl_blk *ctl = blk;
+अटल पूर्णांक daio_mgr_set_imapnxt(व्योम *blk, अचिन्हित पूर्णांक next)
+अणु
+	काष्ठा daio_mgr_ctrl_blk *ctl = blk;
 
 	set_field(&ctl->daoimap.aim, AIM_NXT, next);
 	ctl->dirty.bf.daoimap = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_set_imapaddr(void *blk, unsigned int addr)
-{
-	((struct daio_mgr_ctrl_blk *)blk)->daoimap.idx = addr;
-	((struct daio_mgr_ctrl_blk *)blk)->dirty.bf.daoimap = 1;
-	return 0;
-}
+अटल पूर्णांक daio_mgr_set_imapaddr(व्योम *blk, अचिन्हित पूर्णांक addr)
+अणु
+	((काष्ठा daio_mgr_ctrl_blk *)blk)->daoimap.idx = addr;
+	((काष्ठा daio_mgr_ctrl_blk *)blk)->dirty.bf.daoimap = 1;
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_commit_write(struct hw *hw, void *blk)
-{
-	struct daio_mgr_ctrl_blk *ctl = blk;
-	unsigned int data;
-	int i;
+अटल पूर्णांक daio_mgr_commit_ग_लिखो(काष्ठा hw *hw, व्योम *blk)
+अणु
+	काष्ठा daio_mgr_ctrl_blk *ctl = blk;
+	अचिन्हित पूर्णांक data;
+	पूर्णांक i;
 
-	for (i = 0; i < 8; i++) {
-		if ((ctl->dirty.bf.atxctl & (0x1 << i))) {
+	क्रम (i = 0; i < 8; i++) अणु
+		अगर ((ctl->dirty.bf.atxctl & (0x1 << i))) अणु
 			data = ctl->txctl[i];
-			hw_write_20kx(hw, (AUDIO_IO_TX_CTL+(0x40*i)), data);
+			hw_ग_लिखो_20kx(hw, (AUDIO_IO_TX_CTL+(0x40*i)), data);
 			ctl->dirty.bf.atxctl &= ~(0x1 << i);
 			mdelay(1);
-		}
-		if ((ctl->dirty.bf.arxctl & (0x1 << i))) {
+		पूर्ण
+		अगर ((ctl->dirty.bf.arxctl & (0x1 << i))) अणु
 			data = ctl->rxctl[i];
-			hw_write_20kx(hw, (AUDIO_IO_RX_CTL+(0x40*i)), data);
+			hw_ग_लिखो_20kx(hw, (AUDIO_IO_RX_CTL+(0x40*i)), data);
 			ctl->dirty.bf.arxctl &= ~(0x1 << i);
 			mdelay(1);
-		}
-	}
-	if (ctl->dirty.bf.daoimap) {
-		hw_write_20kx(hw, AUDIO_IO_AIM+ctl->daoimap.idx*4,
+		पूर्ण
+	पूर्ण
+	अगर (ctl->dirty.bf.daoimap) अणु
+		hw_ग_लिखो_20kx(hw, AUDIO_IO_AIM+ctl->daoimap.idx*4,
 						ctl->daoimap.aim);
 		ctl->dirty.bf.daoimap = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_get_ctrl_blk(struct hw *hw, void **rblk)
-{
-	struct daio_mgr_ctrl_blk *blk;
-	int i;
+अटल पूर्णांक daio_mgr_get_ctrl_blk(काष्ठा hw *hw, व्योम **rblk)
+अणु
+	काष्ठा daio_mgr_ctrl_blk *blk;
+	पूर्णांक i;
 
-	*rblk = NULL;
-	blk = kzalloc(sizeof(*blk), GFP_KERNEL);
-	if (!blk)
-		return -ENOMEM;
+	*rblk = शून्य;
+	blk = kzalloc(माप(*blk), GFP_KERNEL);
+	अगर (!blk)
+		वापस -ENOMEM;
 
-	for (i = 0; i < 8; i++) {
-		blk->txctl[i] = hw_read_20kx(hw, AUDIO_IO_TX_CTL+(0x40*i));
-		blk->rxctl[i] = hw_read_20kx(hw, AUDIO_IO_RX_CTL+(0x40*i));
-	}
+	क्रम (i = 0; i < 8; i++) अणु
+		blk->txctl[i] = hw_पढ़ो_20kx(hw, AUDIO_IO_TX_CTL+(0x40*i));
+		blk->rxctl[i] = hw_पढ़ो_20kx(hw, AUDIO_IO_RX_CTL+(0x40*i));
+	पूर्ण
 
 	*rblk = blk;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int daio_mgr_put_ctrl_blk(void *blk)
-{
-	kfree(blk);
+अटल पूर्णांक daio_mgr_put_ctrl_blk(व्योम *blk)
+अणु
+	kमुक्त(blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Timer interrupt */
-static int set_timer_irq(struct hw *hw, int enable)
-{
-	hw_write_20kx(hw, GIE, enable ? IT_INT : 0);
-	return 0;
-}
+/* Timer पूर्णांकerrupt */
+अटल पूर्णांक set_समयr_irq(काष्ठा hw *hw, पूर्णांक enable)
+अणु
+	hw_ग_लिखो_20kx(hw, GIE, enable ? IT_INT : 0);
+	वापस 0;
+पूर्ण
 
-static int set_timer_tick(struct hw *hw, unsigned int ticks)
-{
-	if (ticks)
+अटल पूर्णांक set_समयr_tick(काष्ठा hw *hw, अचिन्हित पूर्णांक ticks)
+अणु
+	अगर (ticks)
 		ticks |= TIMR_IE | TIMR_IP;
-	hw_write_20kx(hw, TIMR, ticks);
-	return 0;
-}
+	hw_ग_लिखो_20kx(hw, TIMR, ticks);
+	वापस 0;
+पूर्ण
 
-static unsigned int get_wc(struct hw *hw)
-{
-	return hw_read_20kx(hw, WC);
-}
+अटल अचिन्हित पूर्णांक get_wc(काष्ठा hw *hw)
+अणु
+	वापस hw_पढ़ो_20kx(hw, WC);
+पूर्ण
 
 /* Card hardware initialization block */
-struct dac_conf {
-	unsigned int msr; /* master sample rate in rsrs */
-};
+काष्ठा dac_conf अणु
+	अचिन्हित पूर्णांक msr; /* master sample rate in rsrs */
+पूर्ण;
 
-struct adc_conf {
-	unsigned int msr; 	/* master sample rate in rsrs */
-	unsigned char input; 	/* the input source of ADC */
-	unsigned char mic20db; 	/* boost mic by 20db if input is microphone */
-};
+काष्ठा adc_conf अणु
+	अचिन्हित पूर्णांक msr; 	/* master sample rate in rsrs */
+	अचिन्हित अक्षर input; 	/* the input source of ADC */
+	अचिन्हित अक्षर mic20db; 	/* boost mic by 20db अगर input is microphone */
+पूर्ण;
 
-struct daio_conf {
-	unsigned int msr; /* master sample rate in rsrs */
-};
+काष्ठा daio_conf अणु
+	अचिन्हित पूर्णांक msr; /* master sample rate in rsrs */
+पूर्ण;
 
-struct trn_conf {
-	unsigned long vm_pgt_phys;
-};
+काष्ठा trn_conf अणु
+	अचिन्हित दीर्घ vm_pgt_phys;
+पूर्ण;
 
-static int hw_daio_init(struct hw *hw, const struct daio_conf *info)
-{
+अटल पूर्णांक hw_daio_init(काष्ठा hw *hw, स्थिर काष्ठा daio_conf *info)
+अणु
 	u32 data;
-	int i;
+	पूर्णांक i;
 
 	/* Program I2S with proper sample rate and enable the correct I2S
-	 * channel. ED(0/8/16/24): Enable all I2S/I2X master clock output */
-	if (1 == info->msr) {
-		hw_write_20kx(hw, AUDIO_IO_MCLK, 0x01010101);
-		hw_write_20kx(hw, AUDIO_IO_TX_BLRCLK, 0x01010101);
-		hw_write_20kx(hw, AUDIO_IO_RX_BLRCLK, 0);
-	} else if (2 == info->msr) {
-		if (hw->model != CTSB1270) {
-			hw_write_20kx(hw, AUDIO_IO_MCLK, 0x11111111);
-		} else {
-			/* PCM4220 on Titanium HD is different. */
-			hw_write_20kx(hw, AUDIO_IO_MCLK, 0x11011111);
-		}
-		/* Specify all playing 96khz
+	 * channel. ED(0/8/16/24): Enable all I2S/I2X master घड़ी output */
+	अगर (1 == info->msr) अणु
+		hw_ग_लिखो_20kx(hw, AUDIO_IO_MCLK, 0x01010101);
+		hw_ग_लिखो_20kx(hw, AUDIO_IO_TX_BLRCLK, 0x01010101);
+		hw_ग_लिखो_20kx(hw, AUDIO_IO_RX_BLRCLK, 0);
+	पूर्ण अन्यथा अगर (2 == info->msr) अणु
+		अगर (hw->model != CTSB1270) अणु
+			hw_ग_लिखो_20kx(hw, AUDIO_IO_MCLK, 0x11111111);
+		पूर्ण अन्यथा अणु
+			/* PCM4220 on Titanium HD is dअगरferent. */
+			hw_ग_लिखो_20kx(hw, AUDIO_IO_MCLK, 0x11011111);
+		पूर्ण
+		/* Specअगरy all playing 96khz
 		 * EA [0]	- Enabled
 		 * RTA [4:5]	- 96kHz
 		 * EB [8]	- Enabled
@@ -1170,248 +1171,248 @@ static int hw_daio_init(struct hw *hw, const struct daio_conf *info)
 		 * RTC [20:21]	- 96kHz
 		 * ED [24]	- Enabled
 		 * RTD [28:29]	- 96kHz */
-		hw_write_20kx(hw, AUDIO_IO_TX_BLRCLK, 0x11111111);
-		hw_write_20kx(hw, AUDIO_IO_RX_BLRCLK, 0);
-	} else if ((4 == info->msr) && (hw->model == CTSB1270)) {
-		hw_write_20kx(hw, AUDIO_IO_MCLK, 0x21011111);
-		hw_write_20kx(hw, AUDIO_IO_TX_BLRCLK, 0x21212121);
-		hw_write_20kx(hw, AUDIO_IO_RX_BLRCLK, 0);
-	} else {
+		hw_ग_लिखो_20kx(hw, AUDIO_IO_TX_BLRCLK, 0x11111111);
+		hw_ग_लिखो_20kx(hw, AUDIO_IO_RX_BLRCLK, 0);
+	पूर्ण अन्यथा अगर ((4 == info->msr) && (hw->model == CTSB1270)) अणु
+		hw_ग_लिखो_20kx(hw, AUDIO_IO_MCLK, 0x21011111);
+		hw_ग_लिखो_20kx(hw, AUDIO_IO_TX_BLRCLK, 0x21212121);
+		hw_ग_लिखो_20kx(hw, AUDIO_IO_RX_BLRCLK, 0);
+	पूर्ण अन्यथा अणु
 		dev_alert(hw->card->dev,
 			  "ERROR!!! Invalid sampling rate!!!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < 8; i++) {
-		if (i <= 3) {
+	क्रम (i = 0; i < 8; i++) अणु
+		अगर (i <= 3) अणु
 			/* This comment looks wrong since loop is over 4  */
-			/* channels and emu20k2 supports 4 spdif IOs.     */
+			/* channels and emu20k2 supports 4 spdअगर IOs.     */
 			/* 1st 3 channels are SPDIFs (SB0960) */
-			if (i == 3)
+			अगर (i == 3)
 				data = 0x1001001;
-			else
+			अन्यथा
 				data = 0x1000001;
 
-			hw_write_20kx(hw, (AUDIO_IO_TX_CTL+(0x40*i)), data);
-			hw_write_20kx(hw, (AUDIO_IO_RX_CTL+(0x40*i)), data);
+			hw_ग_लिखो_20kx(hw, (AUDIO_IO_TX_CTL+(0x40*i)), data);
+			hw_ग_लिखो_20kx(hw, (AUDIO_IO_RX_CTL+(0x40*i)), data);
 
-			/* Initialize the SPDIF Out Channel status registers.
-			 * The value specified here is based on the typical
-			 * values provided in the specification, namely: Clock
+			/* Initialize the SPDIF Out Channel status रेजिस्टरs.
+			 * The value specअगरied here is based on the typical
+			 * values provided in the specअगरication, namely: Clock
 			 * Accuracy of 1000ppm, Sample Rate of 48KHz,
-			 * unspecified source number, Generation status = 1,
+			 * unspecअगरied source number, Generation status = 1,
 			 * Category code = 0x12 (Digital Signal Mixer),
 			 * Mode = 0, Emph = 0, Copy Permitted, AN = 0
 			 * (indicating that we're transmitting digital audio,
 			 * and the Professional Use bit is 0. */
 
-			hw_write_20kx(hw, AUDIO_IO_TX_CSTAT_L+(0x40*i),
+			hw_ग_लिखो_20kx(hw, AUDIO_IO_TX_CSTAT_L+(0x40*i),
 					0x02109204); /* Default to 48kHz */
 
-			hw_write_20kx(hw, AUDIO_IO_TX_CSTAT_H+(0x40*i), 0x0B);
-		} else {
+			hw_ग_लिखो_20kx(hw, AUDIO_IO_TX_CSTAT_H+(0x40*i), 0x0B);
+		पूर्ण अन्यथा अणु
 			/* Again, loop is over 4 channels not 5. */
 			/* Next 5 channels are I2S (SB0960) */
 			data = 0x11;
-			hw_write_20kx(hw, AUDIO_IO_RX_CTL+(0x40*i), data);
-			if (2 == info->msr) {
+			hw_ग_लिखो_20kx(hw, AUDIO_IO_RX_CTL+(0x40*i), data);
+			अगर (2 == info->msr) अणु
 				/* Four channels per sample period */
 				data |= 0x1000;
-			} else if (4 == info->msr) {
+			पूर्ण अन्यथा अगर (4 == info->msr) अणु
 				/* FIXME: check this against the chip spec */
 				data |= 0x2000;
-			}
-			hw_write_20kx(hw, AUDIO_IO_TX_CTL+(0x40*i), data);
-		}
-	}
+			पूर्ण
+			hw_ग_लिखो_20kx(hw, AUDIO_IO_TX_CTL+(0x40*i), data);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* TRANSPORT operations */
-static int hw_trn_init(struct hw *hw, const struct trn_conf *info)
-{
+अटल पूर्णांक hw_trn_init(काष्ठा hw *hw, स्थिर काष्ठा trn_conf *info)
+अणु
 	u32 vmctl, data;
 	u32 ptp_phys_low, ptp_phys_high;
-	int i;
+	पूर्णांक i;
 
 	/* Set up device page table */
-	if ((~0UL) == info->vm_pgt_phys) {
+	अगर ((~0UL) == info->vm_pgt_phys) अणु
 		dev_alert(hw->card->dev,
 			  "Wrong device page table page address!!!\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	vmctl = 0x80000C0F;  /* 32-bit, 4k-size page */
 	ptp_phys_low = (u32)info->vm_pgt_phys;
 	ptp_phys_high = upper_32_bits(info->vm_pgt_phys);
-	if (sizeof(void *) == 8) /* 64bit address */
+	अगर (माप(व्योम *) == 8) /* 64bit address */
 		vmctl |= (3 << 8);
-	/* Write page table physical address to all PTPAL registers */
-	for (i = 0; i < 64; i++) {
-		hw_write_20kx(hw, VMEM_PTPAL+(16*i), ptp_phys_low);
-		hw_write_20kx(hw, VMEM_PTPAH+(16*i), ptp_phys_high);
-	}
-	/* Enable virtual memory transfer */
-	hw_write_20kx(hw, VMEM_CTL, vmctl);
+	/* Write page table physical address to all PTPAL रेजिस्टरs */
+	क्रम (i = 0; i < 64; i++) अणु
+		hw_ग_लिखो_20kx(hw, VMEM_PTPAL+(16*i), ptp_phys_low);
+		hw_ग_लिखो_20kx(hw, VMEM_PTPAH+(16*i), ptp_phys_high);
+	पूर्ण
+	/* Enable भव memory transfer */
+	hw_ग_लिखो_20kx(hw, VMEM_CTL, vmctl);
 	/* Enable transport bus master and queueing of request */
-	hw_write_20kx(hw, TRANSPORT_CTL, 0x03);
-	hw_write_20kx(hw, TRANSPORT_INT, 0x200c01);
+	hw_ग_लिखो_20kx(hw, TRANSPORT_CTL, 0x03);
+	hw_ग_लिखो_20kx(hw, TRANSPORT_INT, 0x200c01);
 	/* Enable transport ring */
-	data = hw_read_20kx(hw, TRANSPORT_ENB);
-	hw_write_20kx(hw, TRANSPORT_ENB, (data | 0x03));
+	data = hw_पढ़ो_20kx(hw, TRANSPORT_ENB);
+	hw_ग_लिखो_20kx(hw, TRANSPORT_ENB, (data | 0x03));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Card initialization */
-#define GCTL_AIE	0x00000001
-#define GCTL_UAA	0x00000002
-#define GCTL_DPC	0x00000004
-#define GCTL_DBP	0x00000008
-#define GCTL_ABP	0x00000010
-#define GCTL_TBP	0x00000020
-#define GCTL_SBP	0x00000040
-#define GCTL_FBP	0x00000080
-#define GCTL_ME		0x00000100
-#define GCTL_AID	0x00001000
+#घोषणा GCTL_AIE	0x00000001
+#घोषणा GCTL_UAA	0x00000002
+#घोषणा GCTL_DPC	0x00000004
+#घोषणा GCTL_DBP	0x00000008
+#घोषणा GCTL_ABP	0x00000010
+#घोषणा GCTL_TBP	0x00000020
+#घोषणा GCTL_SBP	0x00000040
+#घोषणा GCTL_FBP	0x00000080
+#घोषणा GCTL_ME		0x00000100
+#घोषणा GCTL_AID	0x00001000
 
-#define PLLCTL_SRC	0x00000007
-#define PLLCTL_SPE	0x00000008
-#define PLLCTL_RD	0x000000F0
-#define PLLCTL_FD	0x0001FF00
-#define PLLCTL_OD	0x00060000
-#define PLLCTL_B	0x00080000
-#define PLLCTL_AS	0x00100000
-#define PLLCTL_LF	0x03E00000
-#define PLLCTL_SPS	0x1C000000
-#define PLLCTL_AD	0x60000000
+#घोषणा PLLCTL_SRC	0x00000007
+#घोषणा PLLCTL_SPE	0x00000008
+#घोषणा PLLCTL_RD	0x000000F0
+#घोषणा PLLCTL_FD	0x0001FF00
+#घोषणा PLLCTL_OD	0x00060000
+#घोषणा PLLCTL_B	0x00080000
+#घोषणा PLLCTL_AS	0x00100000
+#घोषणा PLLCTL_LF	0x03E00000
+#घोषणा PLLCTL_SPS	0x1C000000
+#घोषणा PLLCTL_AD	0x60000000
 
-#define PLLSTAT_CCS	0x00000007
-#define PLLSTAT_SPL	0x00000008
-#define PLLSTAT_CRD	0x000000F0
-#define PLLSTAT_CFD	0x0001FF00
-#define PLLSTAT_SL	0x00020000
-#define PLLSTAT_FAS	0x00040000
-#define PLLSTAT_B	0x00080000
-#define PLLSTAT_PD	0x00100000
-#define PLLSTAT_OCA	0x00200000
-#define PLLSTAT_NCA	0x00400000
+#घोषणा PLLSTAT_CCS	0x00000007
+#घोषणा PLLSTAT_SPL	0x00000008
+#घोषणा PLLSTAT_CRD	0x000000F0
+#घोषणा PLLSTAT_CFD	0x0001FF00
+#घोषणा PLLSTAT_SL	0x00020000
+#घोषणा PLLSTAT_FAS	0x00040000
+#घोषणा PLLSTAT_B	0x00080000
+#घोषणा PLLSTAT_PD	0x00100000
+#घोषणा PLLSTAT_OCA	0x00200000
+#घोषणा PLLSTAT_NCA	0x00400000
 
-static int hw_pll_init(struct hw *hw, unsigned int rsr)
-{
-	unsigned int pllenb;
-	unsigned int pllctl;
-	unsigned int pllstat;
-	int i;
+अटल पूर्णांक hw_pll_init(काष्ठा hw *hw, अचिन्हित पूर्णांक rsr)
+अणु
+	अचिन्हित पूर्णांक pllenb;
+	अचिन्हित पूर्णांक pllctl;
+	अचिन्हित पूर्णांक pllstat;
+	पूर्णांक i;
 
 	pllenb = 0xB;
-	hw_write_20kx(hw, PLL_ENB, pllenb);
+	hw_ग_लिखो_20kx(hw, PLL_ENB, pllenb);
 	pllctl = 0x20C00000;
 	set_field(&pllctl, PLLCTL_B, 0);
 	set_field(&pllctl, PLLCTL_FD, 48000 == rsr ? 16 - 4 : 147 - 4);
 	set_field(&pllctl, PLLCTL_RD, 48000 == rsr ? 1 - 1 : 10 - 1);
-	hw_write_20kx(hw, PLL_CTL, pllctl);
+	hw_ग_लिखो_20kx(hw, PLL_CTL, pllctl);
 	msleep(40);
 
-	pllctl = hw_read_20kx(hw, PLL_CTL);
+	pllctl = hw_पढ़ो_20kx(hw, PLL_CTL);
 	set_field(&pllctl, PLLCTL_FD, 48000 == rsr ? 16 - 2 : 147 - 2);
-	hw_write_20kx(hw, PLL_CTL, pllctl);
+	hw_ग_लिखो_20kx(hw, PLL_CTL, pllctl);
 	msleep(40);
 
-	for (i = 0; i < 1000; i++) {
-		pllstat = hw_read_20kx(hw, PLL_STAT);
-		if (get_field(pllstat, PLLSTAT_PD))
-			continue;
+	क्रम (i = 0; i < 1000; i++) अणु
+		pllstat = hw_पढ़ो_20kx(hw, PLL_STAT);
+		अगर (get_field(pllstat, PLLSTAT_PD))
+			जारी;
 
-		if (get_field(pllstat, PLLSTAT_B) !=
+		अगर (get_field(pllstat, PLLSTAT_B) !=
 					get_field(pllctl, PLLCTL_B))
-			continue;
+			जारी;
 
-		if (get_field(pllstat, PLLSTAT_CCS) !=
+		अगर (get_field(pllstat, PLLSTAT_CCS) !=
 					get_field(pllctl, PLLCTL_SRC))
-			continue;
+			जारी;
 
-		if (get_field(pllstat, PLLSTAT_CRD) !=
+		अगर (get_field(pllstat, PLLSTAT_CRD) !=
 					get_field(pllctl, PLLCTL_RD))
-			continue;
+			जारी;
 
-		if (get_field(pllstat, PLLSTAT_CFD) !=
+		अगर (get_field(pllstat, PLLSTAT_CFD) !=
 					get_field(pllctl, PLLCTL_FD))
-			continue;
+			जारी;
 
-		break;
-	}
-	if (i >= 1000) {
+		अवरोध;
+	पूर्ण
+	अगर (i >= 1000) अणु
 		dev_alert(hw->card->dev,
 			  "PLL initialization failed!!!\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hw_auto_init(struct hw *hw)
-{
-	unsigned int gctl;
-	int i;
+अटल पूर्णांक hw_स्वतः_init(काष्ठा hw *hw)
+अणु
+	अचिन्हित पूर्णांक gctl;
+	पूर्णांक i;
 
-	gctl = hw_read_20kx(hw, GLOBAL_CNTL_GCTL);
+	gctl = hw_पढ़ो_20kx(hw, GLOBAL_CNTL_GCTL);
 	set_field(&gctl, GCTL_AIE, 0);
-	hw_write_20kx(hw, GLOBAL_CNTL_GCTL, gctl);
+	hw_ग_लिखो_20kx(hw, GLOBAL_CNTL_GCTL, gctl);
 	set_field(&gctl, GCTL_AIE, 1);
-	hw_write_20kx(hw, GLOBAL_CNTL_GCTL, gctl);
+	hw_ग_लिखो_20kx(hw, GLOBAL_CNTL_GCTL, gctl);
 	mdelay(10);
-	for (i = 0; i < 400000; i++) {
-		gctl = hw_read_20kx(hw, GLOBAL_CNTL_GCTL);
-		if (get_field(gctl, GCTL_AID))
-			break;
-	}
-	if (!get_field(gctl, GCTL_AID)) {
+	क्रम (i = 0; i < 400000; i++) अणु
+		gctl = hw_पढ़ो_20kx(hw, GLOBAL_CNTL_GCTL);
+		अगर (get_field(gctl, GCTL_AID))
+			अवरोध;
+	पूर्ण
+	अगर (!get_field(gctl, GCTL_AID)) अणु
 		dev_alert(hw->card->dev, "Card Auto-init failed!!!\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* DAC operations */
 
-#define CS4382_MC1 		0x1
-#define CS4382_MC2 		0x2
-#define CS4382_MC3		0x3
-#define CS4382_FC		0x4
-#define CS4382_IC		0x5
-#define CS4382_XC1		0x6
-#define CS4382_VCA1 		0x7
-#define CS4382_VCB1 		0x8
-#define CS4382_XC2		0x9
-#define CS4382_VCA2 		0xA
-#define CS4382_VCB2 		0xB
-#define CS4382_XC3		0xC
-#define CS4382_VCA3		0xD
-#define CS4382_VCB3		0xE
-#define CS4382_XC4 		0xF
-#define CS4382_VCA4 		0x10
-#define CS4382_VCB4 		0x11
-#define CS4382_CREV 		0x12
+#घोषणा CS4382_MC1 		0x1
+#घोषणा CS4382_MC2 		0x2
+#घोषणा CS4382_MC3		0x3
+#घोषणा CS4382_FC		0x4
+#घोषणा CS4382_IC		0x5
+#घोषणा CS4382_XC1		0x6
+#घोषणा CS4382_VCA1 		0x7
+#घोषणा CS4382_VCB1 		0x8
+#घोषणा CS4382_XC2		0x9
+#घोषणा CS4382_VCA2 		0xA
+#घोषणा CS4382_VCB2 		0xB
+#घोषणा CS4382_XC3		0xC
+#घोषणा CS4382_VCA3		0xD
+#घोषणा CS4382_VCB3		0xE
+#घोषणा CS4382_XC4 		0xF
+#घोषणा CS4382_VCA4 		0x10
+#घोषणा CS4382_VCB4 		0x11
+#घोषणा CS4382_CREV 		0x12
 
 /* I2C status */
-#define STATE_LOCKED		0x00
-#define STATE_UNLOCKED		0xAA
-#define DATA_READY		0x800000    /* Used with I2C_IF_STATUS */
-#define DATA_ABORT		0x10000     /* Used with I2C_IF_STATUS */
+#घोषणा STATE_LOCKED		0x00
+#घोषणा STATE_UNLOCKED		0xAA
+#घोषणा DATA_READY		0x800000    /* Used with I2C_IF_STATUS */
+#घोषणा DATA_ABORT		0x10000     /* Used with I2C_IF_STATUS */
 
-#define I2C_STATUS_DCM	0x00000001
-#define I2C_STATUS_BC	0x00000006
-#define I2C_STATUS_APD	0x00000008
-#define I2C_STATUS_AB	0x00010000
-#define I2C_STATUS_DR	0x00800000
+#घोषणा I2C_STATUS_DCM	0x00000001
+#घोषणा I2C_STATUS_BC	0x00000006
+#घोषणा I2C_STATUS_APD	0x00000008
+#घोषणा I2C_STATUS_AB	0x00010000
+#घोषणा I2C_STATUS_DR	0x00800000
 
-#define I2C_ADDRESS_PTAD	0x0000FFFF
-#define I2C_ADDRESS_SLAD	0x007F0000
+#घोषणा I2C_ADDRESS_PTAD	0x0000FFFF
+#घोषणा I2C_ADDRESS_SLAD	0x007F0000
 
-struct regs_cs4382 {
+काष्ठा regs_cs4382 अणु
 	u32 mode_control_1;
 	u32 mode_control_2;
 	u32 mode_control_3;
@@ -1434,45 +1435,45 @@ struct regs_cs4382 {
 	u32 mix_control_P4;
 	u32 vol_control_A4;
 	u32 vol_control_B4;
-};
+पूर्ण;
 
-static int hw20k2_i2c_unlock_full_access(struct hw *hw)
-{
-	u8 UnlockKeySequence_FLASH_FULLACCESS_MODE[2] =  {0xB3, 0xD4};
+अटल पूर्णांक hw20k2_i2c_unlock_full_access(काष्ठा hw *hw)
+अणु
+	u8 UnlockKeySequence_FLASH_FULLACCESS_MODE[2] =  अणु0xB3, 0xD4पूर्ण;
 
-	/* Send keys for forced BIOS mode */
-	hw_write_20kx(hw, I2C_IF_WLOCK,
+	/* Send keys क्रम क्रमced BIOS mode */
+	hw_ग_लिखो_20kx(hw, I2C_IF_WLOCK,
 			UnlockKeySequence_FLASH_FULLACCESS_MODE[0]);
-	hw_write_20kx(hw, I2C_IF_WLOCK,
+	hw_ग_लिखो_20kx(hw, I2C_IF_WLOCK,
 			UnlockKeySequence_FLASH_FULLACCESS_MODE[1]);
 	/* Check whether the chip is unlocked */
-	if (hw_read_20kx(hw, I2C_IF_WLOCK) == STATE_UNLOCKED)
-		return 0;
+	अगर (hw_पढ़ो_20kx(hw, I2C_IF_WLOCK) == STATE_UNLOCKED)
+		वापस 0;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int hw20k2_i2c_lock_chip(struct hw *hw)
-{
+अटल पूर्णांक hw20k2_i2c_lock_chip(काष्ठा hw *hw)
+अणु
 	/* Write twice */
-	hw_write_20kx(hw, I2C_IF_WLOCK, STATE_LOCKED);
-	hw_write_20kx(hw, I2C_IF_WLOCK, STATE_LOCKED);
-	if (hw_read_20kx(hw, I2C_IF_WLOCK) == STATE_LOCKED)
-		return 0;
+	hw_ग_लिखो_20kx(hw, I2C_IF_WLOCK, STATE_LOCKED);
+	hw_ग_लिखो_20kx(hw, I2C_IF_WLOCK, STATE_LOCKED);
+	अगर (hw_पढ़ो_20kx(hw, I2C_IF_WLOCK) == STATE_LOCKED)
+		वापस 0;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int hw20k2_i2c_init(struct hw *hw, u8 dev_id, u8 addr_size, u8 data_size)
-{
-	struct hw20k2 *hw20k2 = (struct hw20k2 *)hw;
-	int err;
-	unsigned int i2c_status;
-	unsigned int i2c_addr;
+अटल पूर्णांक hw20k2_i2c_init(काष्ठा hw *hw, u8 dev_id, u8 addr_size, u8 data_size)
+अणु
+	काष्ठा hw20k2 *hw20k2 = (काष्ठा hw20k2 *)hw;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक i2c_status;
+	अचिन्हित पूर्णांक i2c_addr;
 
 	err = hw20k2_i2c_unlock_full_access(hw);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	hw20k2->addr_size = addr_size;
 	hw20k2->data_size = data_size;
@@ -1481,130 +1482,130 @@ static int hw20k2_i2c_init(struct hw *hw, u8 dev_id, u8 addr_size, u8 data_size)
 	i2c_addr = 0;
 	set_field(&i2c_addr, I2C_ADDRESS_SLAD, dev_id);
 
-	hw_write_20kx(hw, I2C_IF_ADDRESS, i2c_addr);
+	hw_ग_लिखो_20kx(hw, I2C_IF_ADDRESS, i2c_addr);
 
-	i2c_status = hw_read_20kx(hw, I2C_IF_STATUS);
+	i2c_status = hw_पढ़ो_20kx(hw, I2C_IF_STATUS);
 
 	set_field(&i2c_status, I2C_STATUS_DCM, 1); /* Direct control mode */
 
-	hw_write_20kx(hw, I2C_IF_STATUS, i2c_status);
+	hw_ग_लिखो_20kx(hw, I2C_IF_STATUS, i2c_status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hw20k2_i2c_uninit(struct hw *hw)
-{
-	unsigned int i2c_status;
-	unsigned int i2c_addr;
+अटल पूर्णांक hw20k2_i2c_uninit(काष्ठा hw *hw)
+अणु
+	अचिन्हित पूर्णांक i2c_status;
+	अचिन्हित पूर्णांक i2c_addr;
 
 	i2c_addr = 0;
 	set_field(&i2c_addr, I2C_ADDRESS_SLAD, 0x57); /* I2C id */
 
-	hw_write_20kx(hw, I2C_IF_ADDRESS, i2c_addr);
+	hw_ग_लिखो_20kx(hw, I2C_IF_ADDRESS, i2c_addr);
 
-	i2c_status = hw_read_20kx(hw, I2C_IF_STATUS);
+	i2c_status = hw_पढ़ो_20kx(hw, I2C_IF_STATUS);
 
 	set_field(&i2c_status, I2C_STATUS_DCM, 0); /* I2C mode */
 
-	hw_write_20kx(hw, I2C_IF_STATUS, i2c_status);
+	hw_ग_लिखो_20kx(hw, I2C_IF_STATUS, i2c_status);
 
-	return hw20k2_i2c_lock_chip(hw);
-}
+	वापस hw20k2_i2c_lock_chip(hw);
+पूर्ण
 
-static int hw20k2_i2c_wait_data_ready(struct hw *hw)
-{
-	int i = 0x400000;
-	unsigned int ret;
+अटल पूर्णांक hw20k2_i2c_रुको_data_पढ़ोy(काष्ठा hw *hw)
+अणु
+	पूर्णांक i = 0x400000;
+	अचिन्हित पूर्णांक ret;
 
-	do {
-		ret = hw_read_20kx(hw, I2C_IF_STATUS);
-	} while ((!(ret & DATA_READY)) && --i);
+	करो अणु
+		ret = hw_पढ़ो_20kx(hw, I2C_IF_STATUS);
+	पूर्ण जबतक ((!(ret & DATA_READY)) && --i);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int hw20k2_i2c_read(struct hw *hw, u16 addr, u32 *datap)
-{
-	struct hw20k2 *hw20k2 = (struct hw20k2 *)hw;
-	unsigned int i2c_status;
+अटल पूर्णांक hw20k2_i2c_पढ़ो(काष्ठा hw *hw, u16 addr, u32 *datap)
+अणु
+	काष्ठा hw20k2 *hw20k2 = (काष्ठा hw20k2 *)hw;
+	अचिन्हित पूर्णांक i2c_status;
 
-	i2c_status = hw_read_20kx(hw, I2C_IF_STATUS);
+	i2c_status = hw_पढ़ो_20kx(hw, I2C_IF_STATUS);
 	set_field(&i2c_status, I2C_STATUS_BC,
 		  (4 == hw20k2->addr_size) ? 0 : hw20k2->addr_size);
-	hw_write_20kx(hw, I2C_IF_STATUS, i2c_status);
-	if (!hw20k2_i2c_wait_data_ready(hw))
-		return -1;
+	hw_ग_लिखो_20kx(hw, I2C_IF_STATUS, i2c_status);
+	अगर (!hw20k2_i2c_रुको_data_पढ़ोy(hw))
+		वापस -1;
 
-	hw_write_20kx(hw, I2C_IF_WDATA, addr);
-	if (!hw20k2_i2c_wait_data_ready(hw))
-		return -1;
+	hw_ग_लिखो_20kx(hw, I2C_IF_WDATA, addr);
+	अगर (!hw20k2_i2c_रुको_data_पढ़ोy(hw))
+		वापस -1;
 
-	/* Force a read operation */
-	hw_write_20kx(hw, I2C_IF_RDATA, 0);
-	if (!hw20k2_i2c_wait_data_ready(hw))
-		return -1;
+	/* Force a पढ़ो operation */
+	hw_ग_लिखो_20kx(hw, I2C_IF_RDATA, 0);
+	अगर (!hw20k2_i2c_रुको_data_पढ़ोy(hw))
+		वापस -1;
 
-	*datap = hw_read_20kx(hw, I2C_IF_RDATA);
+	*datap = hw_पढ़ो_20kx(hw, I2C_IF_RDATA);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hw20k2_i2c_write(struct hw *hw, u16 addr, u32 data)
-{
-	struct hw20k2 *hw20k2 = (struct hw20k2 *)hw;
-	unsigned int i2c_data = (data << (hw20k2->addr_size * 8)) | addr;
-	unsigned int i2c_status;
+अटल पूर्णांक hw20k2_i2c_ग_लिखो(काष्ठा hw *hw, u16 addr, u32 data)
+अणु
+	काष्ठा hw20k2 *hw20k2 = (काष्ठा hw20k2 *)hw;
+	अचिन्हित पूर्णांक i2c_data = (data << (hw20k2->addr_size * 8)) | addr;
+	अचिन्हित पूर्णांक i2c_status;
 
-	i2c_status = hw_read_20kx(hw, I2C_IF_STATUS);
+	i2c_status = hw_पढ़ो_20kx(hw, I2C_IF_STATUS);
 
 	set_field(&i2c_status, I2C_STATUS_BC,
 		  (4 == (hw20k2->addr_size + hw20k2->data_size)) ?
 		  0 : (hw20k2->addr_size + hw20k2->data_size));
 
-	hw_write_20kx(hw, I2C_IF_STATUS, i2c_status);
-	hw20k2_i2c_wait_data_ready(hw);
-	/* Dummy write to trigger the write operation */
-	hw_write_20kx(hw, I2C_IF_WDATA, 0);
-	hw20k2_i2c_wait_data_ready(hw);
+	hw_ग_लिखो_20kx(hw, I2C_IF_STATUS, i2c_status);
+	hw20k2_i2c_रुको_data_पढ़ोy(hw);
+	/* Dummy ग_लिखो to trigger the ग_लिखो operation */
+	hw_ग_लिखो_20kx(hw, I2C_IF_WDATA, 0);
+	hw20k2_i2c_रुको_data_पढ़ोy(hw);
 
 	/* This is the real data */
-	hw_write_20kx(hw, I2C_IF_WDATA, i2c_data);
-	hw20k2_i2c_wait_data_ready(hw);
+	hw_ग_लिखो_20kx(hw, I2C_IF_WDATA, i2c_data);
+	hw20k2_i2c_रुको_data_पढ़ोy(hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hw_dac_stop(struct hw *hw)
-{
+अटल व्योम hw_dac_stop(काष्ठा hw *hw)
+अणु
 	u32 data;
-	data = hw_read_20kx(hw, GPIO_DATA);
+	data = hw_पढ़ो_20kx(hw, GPIO_DATA);
 	data &= 0xFFFFFFFD;
-	hw_write_20kx(hw, GPIO_DATA, data);
+	hw_ग_लिखो_20kx(hw, GPIO_DATA, data);
 	usleep_range(10000, 11000);
-}
+पूर्ण
 
-static void hw_dac_start(struct hw *hw)
-{
+अटल व्योम hw_dac_start(काष्ठा hw *hw)
+अणु
 	u32 data;
-	data = hw_read_20kx(hw, GPIO_DATA);
+	data = hw_पढ़ो_20kx(hw, GPIO_DATA);
 	data |= 0x2;
-	hw_write_20kx(hw, GPIO_DATA, data);
+	hw_ग_लिखो_20kx(hw, GPIO_DATA, data);
 	msleep(50);
-}
+पूर्ण
 
-static void hw_dac_reset(struct hw *hw)
-{
+अटल व्योम hw_dac_reset(काष्ठा hw *hw)
+अणु
 	hw_dac_stop(hw);
 	hw_dac_start(hw);
-}
+पूर्ण
 
-static int hw_dac_init(struct hw *hw, const struct dac_conf *info)
-{
-	int err;
+अटल पूर्णांक hw_dac_init(काष्ठा hw *hw, स्थिर काष्ठा dac_conf *info)
+अणु
+	पूर्णांक err;
 	u32 data;
-	int i;
-	struct regs_cs4382 cs_read = {0};
-	struct regs_cs4382 cs_def = {
+	पूर्णांक i;
+	काष्ठा regs_cs4382 cs_पढ़ो = अणु0पूर्ण;
+	काष्ठा regs_cs4382 cs_def = अणु
 		.mode_control_1 = 0x00000001, /* Mode Control 1 */
 		.mode_control_2 = 0x00000000, /* Mode Control 2 */
 		.mode_control_3 = 0x00000084, /* Mode Control 3 */
@@ -1622,598 +1623,598 @@ static int hw_dac_init(struct hw *hw, const struct dac_conf *info)
 		.mix_control_P4 = 0x00000024, /* Mixing Control Pair 4 */
 		.vol_control_A4 = 0x00000000, /* Vol Control A4 */
 		.vol_control_B4 = 0x00000000  /* Vol Control B4 */
-				 };
+				 पूर्ण;
 
-	if (hw->model == CTSB1270) {
+	अगर (hw->model == CTSB1270) अणु
 		hw_dac_stop(hw);
-		data = hw_read_20kx(hw, GPIO_DATA);
+		data = hw_पढ़ो_20kx(hw, GPIO_DATA);
 		data &= ~0x0600;
-		if (1 == info->msr)
+		अगर (1 == info->msr)
 			data |= 0x0000; /* Single Speed Mode 0-50kHz */
-		else if (2 == info->msr)
+		अन्यथा अगर (2 == info->msr)
 			data |= 0x0200; /* Double Speed Mode 50-100kHz */
-		else
+		अन्यथा
 			data |= 0x0600; /* Quad Speed Mode 100-200kHz */
-		hw_write_20kx(hw, GPIO_DATA, data);
+		hw_ग_लिखो_20kx(hw, GPIO_DATA, data);
 		hw_dac_start(hw);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Set DAC reset bit as output */
-	data = hw_read_20kx(hw, GPIO_CTRL);
+	data = hw_पढ़ो_20kx(hw, GPIO_CTRL);
 	data |= 0x02;
-	hw_write_20kx(hw, GPIO_CTRL, data);
+	hw_ग_लिखो_20kx(hw, GPIO_CTRL, data);
 
 	err = hw20k2_i2c_init(hw, 0x18, 1, 1);
-	if (err < 0)
-		goto End;
+	अगर (err < 0)
+		जाओ End;
 
-	for (i = 0; i < 2; i++) {
-		/* Reset DAC twice just in-case the chip
+	क्रम (i = 0; i < 2; i++) अणु
+		/* Reset DAC twice just in-हाल the chip
 		 * didn't initialized properly */
 		hw_dac_reset(hw);
 		hw_dac_reset(hw);
 
-		if (hw20k2_i2c_read(hw, CS4382_MC1,  &cs_read.mode_control_1))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_MC1,  &cs_पढ़ो.mode_control_1))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_MC2,  &cs_read.mode_control_2))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_MC2,  &cs_पढ़ो.mode_control_2))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_MC3,  &cs_read.mode_control_3))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_MC3,  &cs_पढ़ो.mode_control_3))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_FC,   &cs_read.filter_control))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_FC,   &cs_पढ़ो.filter_control))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_IC,   &cs_read.invert_control))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_IC,   &cs_पढ़ो.invert_control))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_XC1,  &cs_read.mix_control_P1))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_XC1,  &cs_पढ़ो.mix_control_P1))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_VCA1, &cs_read.vol_control_A1))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_VCA1, &cs_पढ़ो.vol_control_A1))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_VCB1, &cs_read.vol_control_B1))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_VCB1, &cs_पढ़ो.vol_control_B1))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_XC2,  &cs_read.mix_control_P2))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_XC2,  &cs_पढ़ो.mix_control_P2))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_VCA2, &cs_read.vol_control_A2))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_VCA2, &cs_पढ़ो.vol_control_A2))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_VCB2, &cs_read.vol_control_B2))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_VCB2, &cs_पढ़ो.vol_control_B2))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_XC3,  &cs_read.mix_control_P3))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_XC3,  &cs_पढ़ो.mix_control_P3))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_VCA3, &cs_read.vol_control_A3))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_VCA3, &cs_पढ़ो.vol_control_A3))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_VCB3, &cs_read.vol_control_B3))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_VCB3, &cs_पढ़ो.vol_control_B3))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_XC4,  &cs_read.mix_control_P4))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_XC4,  &cs_पढ़ो.mix_control_P4))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_VCA4, &cs_read.vol_control_A4))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_VCA4, &cs_पढ़ो.vol_control_A4))
+			जारी;
 
-		if (hw20k2_i2c_read(hw, CS4382_VCB4, &cs_read.vol_control_B4))
-			continue;
+		अगर (hw20k2_i2c_पढ़ो(hw, CS4382_VCB4, &cs_पढ़ो.vol_control_B4))
+			जारी;
 
-		if (memcmp(&cs_read, &cs_def, sizeof(cs_read)))
-			continue;
-		else
-			break;
-	}
+		अगर (स_भेद(&cs_पढ़ो, &cs_def, माप(cs_पढ़ो)))
+			जारी;
+		अन्यथा
+			अवरोध;
+	पूर्ण
 
-	if (i >= 2)
-		goto End;
+	अगर (i >= 2)
+		जाओ End;
 
-	/* Note: Every I2C write must have some delay.
+	/* Note: Every I2C ग_लिखो must have some delay.
 	 * This is not a requirement but the delay works here... */
-	hw20k2_i2c_write(hw, CS4382_MC1, 0x80);
-	hw20k2_i2c_write(hw, CS4382_MC2, 0x10);
-	if (1 == info->msr) {
-		hw20k2_i2c_write(hw, CS4382_XC1, 0x24);
-		hw20k2_i2c_write(hw, CS4382_XC2, 0x24);
-		hw20k2_i2c_write(hw, CS4382_XC3, 0x24);
-		hw20k2_i2c_write(hw, CS4382_XC4, 0x24);
-	} else if (2 == info->msr) {
-		hw20k2_i2c_write(hw, CS4382_XC1, 0x25);
-		hw20k2_i2c_write(hw, CS4382_XC2, 0x25);
-		hw20k2_i2c_write(hw, CS4382_XC3, 0x25);
-		hw20k2_i2c_write(hw, CS4382_XC4, 0x25);
-	} else {
-		hw20k2_i2c_write(hw, CS4382_XC1, 0x26);
-		hw20k2_i2c_write(hw, CS4382_XC2, 0x26);
-		hw20k2_i2c_write(hw, CS4382_XC3, 0x26);
-		hw20k2_i2c_write(hw, CS4382_XC4, 0x26);
-	}
+	hw20k2_i2c_ग_लिखो(hw, CS4382_MC1, 0x80);
+	hw20k2_i2c_ग_लिखो(hw, CS4382_MC2, 0x10);
+	अगर (1 == info->msr) अणु
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC1, 0x24);
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC2, 0x24);
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC3, 0x24);
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC4, 0x24);
+	पूर्ण अन्यथा अगर (2 == info->msr) अणु
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC1, 0x25);
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC2, 0x25);
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC3, 0x25);
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC4, 0x25);
+	पूर्ण अन्यथा अणु
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC1, 0x26);
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC2, 0x26);
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC3, 0x26);
+		hw20k2_i2c_ग_लिखो(hw, CS4382_XC4, 0x26);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 End:
 
 	hw20k2_i2c_uninit(hw);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /* ADC operations */
-#define MAKE_WM8775_ADDR(addr, data)	(u32)(((addr<<1)&0xFE)|((data>>8)&0x1))
-#define MAKE_WM8775_DATA(data)	(u32)(data&0xFF)
+#घोषणा MAKE_WM8775_ADDR(addr, data)	(u32)(((addr<<1)&0xFE)|((data>>8)&0x1))
+#घोषणा MAKE_WM8775_DATA(data)	(u32)(data&0xFF)
 
-#define WM8775_IC       0x0B
-#define WM8775_MMC      0x0C
-#define WM8775_AADCL    0x0E
-#define WM8775_AADCR    0x0F
-#define WM8775_ADCMC    0x15
-#define WM8775_RESET    0x17
+#घोषणा WM8775_IC       0x0B
+#घोषणा WM8775_MMC      0x0C
+#घोषणा WM8775_AADCL    0x0E
+#घोषणा WM8775_AADCR    0x0F
+#घोषणा WM8775_ADCMC    0x15
+#घोषणा WM8775_RESET    0x17
 
-static int hw_is_adc_input_selected(struct hw *hw, enum ADCSRC type)
-{
+अटल पूर्णांक hw_is_adc_input_selected(काष्ठा hw *hw, क्रमागत ADCSRC type)
+अणु
 	u32 data;
-	if (hw->model == CTSB1270) {
-		/* Titanium HD has two ADC chips, one for line in and one */
-		/* for MIC. We don't need to switch the ADC input. */
-		return 1;
-	}
-	data = hw_read_20kx(hw, GPIO_DATA);
-	switch (type) {
-	case ADC_MICIN:
+	अगर (hw->model == CTSB1270) अणु
+		/* Titanium HD has two ADC chips, one क्रम line in and one */
+		/* क्रम MIC. We करोn't need to चयन the ADC input. */
+		वापस 1;
+	पूर्ण
+	data = hw_पढ़ो_20kx(hw, GPIO_DATA);
+	चयन (type) अणु
+	हाल ADC_MICIN:
 		data = (data & (0x1 << 14)) ? 1 : 0;
-		break;
-	case ADC_LINEIN:
+		अवरोध;
+	हाल ADC_LINEIN:
 		data = (data & (0x1 << 14)) ? 0 : 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		data = 0;
-	}
-	return data;
-}
+	पूर्ण
+	वापस data;
+पूर्ण
 
-#define MIC_BOOST_0DB 0xCF
-#define MIC_BOOST_STEPS_PER_DB 2
+#घोषणा MIC_BOOST_0DB 0xCF
+#घोषणा MIC_BOOST_STEPS_PER_DB 2
 
-static void hw_wm8775_input_select(struct hw *hw, u8 input, s8 gain_in_db)
-{
+अटल व्योम hw_wm8775_input_select(काष्ठा hw *hw, u8 input, s8 gain_in_db)
+अणु
 	u32 adcmc, gain;
 
-	if (input > 3)
+	अगर (input > 3)
 		input = 3;
 
 	adcmc = ((u32)1 << input) | 0x100; /* Link L+R gain... */
 
-	hw20k2_i2c_write(hw, MAKE_WM8775_ADDR(WM8775_ADCMC, adcmc),
+	hw20k2_i2c_ग_लिखो(hw, MAKE_WM8775_ADDR(WM8775_ADCMC, adcmc),
 				MAKE_WM8775_DATA(adcmc));
 
-	if (gain_in_db < -103)
+	अगर (gain_in_db < -103)
 		gain_in_db = -103;
-	if (gain_in_db > 24)
+	अगर (gain_in_db > 24)
 		gain_in_db = 24;
 
 	gain = gain_in_db * MIC_BOOST_STEPS_PER_DB + MIC_BOOST_0DB;
 
-	hw20k2_i2c_write(hw, MAKE_WM8775_ADDR(WM8775_AADCL, gain),
+	hw20k2_i2c_ग_लिखो(hw, MAKE_WM8775_ADDR(WM8775_AADCL, gain),
 				MAKE_WM8775_DATA(gain));
-	/* ...so there should be no need for the following. */
-	hw20k2_i2c_write(hw, MAKE_WM8775_ADDR(WM8775_AADCR, gain),
+	/* ...so there should be no need क्रम the following. */
+	hw20k2_i2c_ग_लिखो(hw, MAKE_WM8775_ADDR(WM8775_AADCR, gain),
 				MAKE_WM8775_DATA(gain));
-}
+पूर्ण
 
-static int hw_adc_input_select(struct hw *hw, enum ADCSRC type)
-{
+अटल पूर्णांक hw_adc_input_select(काष्ठा hw *hw, क्रमागत ADCSRC type)
+अणु
 	u32 data;
-	data = hw_read_20kx(hw, GPIO_DATA);
-	switch (type) {
-	case ADC_MICIN:
+	data = hw_पढ़ो_20kx(hw, GPIO_DATA);
+	चयन (type) अणु
+	हाल ADC_MICIN:
 		data |= (0x1 << 14);
-		hw_write_20kx(hw, GPIO_DATA, data);
+		hw_ग_लिखो_20kx(hw, GPIO_DATA, data);
 		hw_wm8775_input_select(hw, 0, 20); /* Mic, 20dB */
-		break;
-	case ADC_LINEIN:
+		अवरोध;
+	हाल ADC_LINEIN:
 		data &= ~(0x1 << 14);
-		hw_write_20kx(hw, GPIO_DATA, data);
+		hw_ग_लिखो_20kx(hw, GPIO_DATA, data);
 		hw_wm8775_input_select(hw, 1, 0); /* Line-in, 0dB */
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hw_adc_init(struct hw *hw, const struct adc_conf *info)
-{
-	int err;
+अटल पूर्णांक hw_adc_init(काष्ठा hw *hw, स्थिर काष्ठा adc_conf *info)
+अणु
+	पूर्णांक err;
 	u32 data, ctl;
 
 	/*  Set ADC reset bit as output */
-	data = hw_read_20kx(hw, GPIO_CTRL);
+	data = hw_पढ़ो_20kx(hw, GPIO_CTRL);
 	data |= (0x1 << 15);
-	hw_write_20kx(hw, GPIO_CTRL, data);
+	hw_ग_लिखो_20kx(hw, GPIO_CTRL, data);
 
 	/* Initialize I2C */
 	err = hw20k2_i2c_init(hw, 0x1A, 1, 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_alert(hw->card->dev, "Failure to acquire I2C!!!\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* Reset the ADC (reset is active low). */
-	data = hw_read_20kx(hw, GPIO_DATA);
+	data = hw_पढ़ो_20kx(hw, GPIO_DATA);
 	data &= ~(0x1 << 15);
-	hw_write_20kx(hw, GPIO_DATA, data);
+	hw_ग_लिखो_20kx(hw, GPIO_DATA, data);
 
-	if (hw->model == CTSB1270) {
+	अगर (hw->model == CTSB1270) अणु
 		/* Set up the PCM4220 ADC on Titanium HD */
 		data &= ~0x0C;
-		if (1 == info->msr)
+		अगर (1 == info->msr)
 			data |= 0x00; /* Single Speed Mode 32-50kHz */
-		else if (2 == info->msr)
+		अन्यथा अगर (2 == info->msr)
 			data |= 0x08; /* Double Speed Mode 50-108kHz */
-		else
+		अन्यथा
 			data |= 0x04; /* Quad Speed Mode 108kHz-216kHz */
-		hw_write_20kx(hw, GPIO_DATA, data);
-	}
+		hw_ग_लिखो_20kx(hw, GPIO_DATA, data);
+	पूर्ण
 
 	usleep_range(10000, 11000);
 	/* Return the ADC to normal operation. */
 	data |= (0x1 << 15);
-	hw_write_20kx(hw, GPIO_DATA, data);
+	hw_ग_लिखो_20kx(hw, GPIO_DATA, data);
 	msleep(50);
 
-	/* I2C write to register offset 0x0B to set ADC LRCLK polarity */
-	/* invert bit, interface format to I2S, word length to 24-bit, */
+	/* I2C ग_लिखो to रेजिस्टर offset 0x0B to set ADC LRCLK polarity */
+	/* invert bit, पूर्णांकerface क्रमmat to I2S, word length to 24-bit, */
 	/* enable ADC high pass filter. Fixes bug 5323?		*/
-	hw20k2_i2c_write(hw, MAKE_WM8775_ADDR(WM8775_IC, 0x26),
+	hw20k2_i2c_ग_लिखो(hw, MAKE_WM8775_ADDR(WM8775_IC, 0x26),
 			 MAKE_WM8775_DATA(0x26));
 
 	/* Set the master mode (256fs) */
-	if (1 == info->msr) {
+	अगर (1 == info->msr) अणु
 		/* slave mode, 128x oversampling 256fs */
-		hw20k2_i2c_write(hw, MAKE_WM8775_ADDR(WM8775_MMC, 0x02),
+		hw20k2_i2c_ग_लिखो(hw, MAKE_WM8775_ADDR(WM8775_MMC, 0x02),
 						MAKE_WM8775_DATA(0x02));
-	} else if ((2 == info->msr) || (4 == info->msr)) {
+	पूर्ण अन्यथा अगर ((2 == info->msr) || (4 == info->msr)) अणु
 		/* slave mode, 64x oversampling, 256fs */
-		hw20k2_i2c_write(hw, MAKE_WM8775_ADDR(WM8775_MMC, 0x0A),
+		hw20k2_i2c_ग_लिखो(hw, MAKE_WM8775_ADDR(WM8775_MMC, 0x0A),
 						MAKE_WM8775_DATA(0x0A));
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_alert(hw->card->dev,
 			  "Invalid master sampling rate (msr %d)!!!\n",
 			  info->msr);
 		err = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (hw->model != CTSB1270) {
+	अगर (hw->model != CTSB1270) अणु
 		/* Configure GPIO bit 14 change to line-in/mic-in */
-		ctl = hw_read_20kx(hw, GPIO_CTRL);
+		ctl = hw_पढ़ो_20kx(hw, GPIO_CTRL);
 		ctl |= 0x1 << 14;
-		hw_write_20kx(hw, GPIO_CTRL, ctl);
+		hw_ग_लिखो_20kx(hw, GPIO_CTRL, ctl);
 		hw_adc_input_select(hw, ADC_LINEIN);
-	} else {
+	पूर्ण अन्यथा अणु
 		hw_wm8775_input_select(hw, 0, 0);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error:
 	hw20k2_i2c_uninit(hw);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct capabilities hw_capabilities(struct hw *hw)
-{
-	struct capabilities cap;
+अटल काष्ठा capabilities hw_capabilities(काष्ठा hw *hw)
+अणु
+	काष्ठा capabilities cap;
 
-	cap.digit_io_switch = 0;
+	cap.digit_io_चयन = 0;
 	cap.dedicated_mic = hw->model == CTSB1270;
-	cap.output_switch = hw->model == CTSB1270;
-	cap.mic_source_switch = hw->model == CTSB1270;
+	cap.output_चयन = hw->model == CTSB1270;
+	cap.mic_source_चयन = hw->model == CTSB1270;
 
-	return cap;
-}
+	वापस cap;
+पूर्ण
 
-static int hw_output_switch_get(struct hw *hw)
-{
-	u32 data = hw_read_20kx(hw, GPIO_EXT_DATA);
+अटल पूर्णांक hw_output_चयन_get(काष्ठा hw *hw)
+अणु
+	u32 data = hw_पढ़ो_20kx(hw, GPIO_EXT_DATA);
 
-	switch (data & 0x30) {
-	case 0x00:
-	     return 0;
-	case 0x10:
-	     return 1;
-	case 0x20:
-	     return 2;
-	default:
-	     return 3;
-	}
-}
+	चयन (data & 0x30) अणु
+	हाल 0x00:
+	     वापस 0;
+	हाल 0x10:
+	     वापस 1;
+	हाल 0x20:
+	     वापस 2;
+	शेष:
+	     वापस 3;
+	पूर्ण
+पूर्ण
 
-static int hw_output_switch_put(struct hw *hw, int position)
-{
+अटल पूर्णांक hw_output_चयन_put(काष्ठा hw *hw, पूर्णांक position)
+अणु
 	u32 data;
 
-	if (position == hw_output_switch_get(hw))
-		return 0;
+	अगर (position == hw_output_चयन_get(hw))
+		वापस 0;
 
-	/* Mute line and headphones (intended for anti-pop). */
-	data = hw_read_20kx(hw, GPIO_DATA);
+	/* Mute line and headphones (पूर्णांकended क्रम anti-pop). */
+	data = hw_पढ़ो_20kx(hw, GPIO_DATA);
 	data |= (0x03 << 11);
-	hw_write_20kx(hw, GPIO_DATA, data);
+	hw_ग_लिखो_20kx(hw, GPIO_DATA, data);
 
-	data = hw_read_20kx(hw, GPIO_EXT_DATA) & ~0x30;
-	switch (position) {
-	case 0:
-		break;
-	case 1:
+	data = hw_पढ़ो_20kx(hw, GPIO_EXT_DATA) & ~0x30;
+	चयन (position) अणु
+	हाल 0:
+		अवरोध;
+	हाल 1:
 		data |= 0x10;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		data |= 0x20;
-	}
-	hw_write_20kx(hw, GPIO_EXT_DATA, data);
+	पूर्ण
+	hw_ग_लिखो_20kx(hw, GPIO_EXT_DATA, data);
 
 	/* Unmute line and headphones. */
-	data = hw_read_20kx(hw, GPIO_DATA);
+	data = hw_पढ़ो_20kx(hw, GPIO_DATA);
 	data &= ~(0x03 << 11);
-	hw_write_20kx(hw, GPIO_DATA, data);
+	hw_ग_लिखो_20kx(hw, GPIO_DATA, data);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int hw_mic_source_switch_get(struct hw *hw)
-{
-	struct hw20k2 *hw20k2 = (struct hw20k2 *)hw;
+अटल पूर्णांक hw_mic_source_चयन_get(काष्ठा hw *hw)
+अणु
+	काष्ठा hw20k2 *hw20k2 = (काष्ठा hw20k2 *)hw;
 
-	return hw20k2->mic_source;
-}
+	वापस hw20k2->mic_source;
+पूर्ण
 
-static int hw_mic_source_switch_put(struct hw *hw, int position)
-{
-	struct hw20k2 *hw20k2 = (struct hw20k2 *)hw;
+अटल पूर्णांक hw_mic_source_चयन_put(काष्ठा hw *hw, पूर्णांक position)
+अणु
+	काष्ठा hw20k2 *hw20k2 = (काष्ठा hw20k2 *)hw;
 
-	if (position == hw20k2->mic_source)
-		return 0;
+	अगर (position == hw20k2->mic_source)
+		वापस 0;
 
-	switch (position) {
-	case 0:
+	चयन (position) अणु
+	हाल 0:
 		hw_wm8775_input_select(hw, 0, 0); /* Mic, 0dB */
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		hw_wm8775_input_select(hw, 1, 0); /* FP Mic, 0dB */
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		hw_wm8775_input_select(hw, 3, 0); /* Aux Ext, 0dB */
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	hw20k2->mic_source = position;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static irqreturn_t ct_20k2_interrupt(int irq, void *dev_id)
-{
-	struct hw *hw = dev_id;
-	unsigned int status;
+अटल irqवापस_t ct_20k2_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा hw *hw = dev_id;
+	अचिन्हित पूर्णांक status;
 
-	status = hw_read_20kx(hw, GIP);
-	if (!status)
-		return IRQ_NONE;
+	status = hw_पढ़ो_20kx(hw, GIP);
+	अगर (!status)
+		वापस IRQ_NONE;
 
-	if (hw->irq_callback)
+	अगर (hw->irq_callback)
 		hw->irq_callback(hw->irq_callback_data, status);
 
-	hw_write_20kx(hw, GIP, status);
-	return IRQ_HANDLED;
-}
+	hw_ग_लिखो_20kx(hw, GIP, status);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int hw_card_start(struct hw *hw)
-{
-	int err = 0;
-	struct pci_dev *pci = hw->pci;
-	unsigned int gctl;
-	const unsigned int dma_bits = BITS_PER_LONG;
+अटल पूर्णांक hw_card_start(काष्ठा hw *hw)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा pci_dev *pci = hw->pci;
+	अचिन्हित पूर्णांक gctl;
+	स्थिर अचिन्हित पूर्णांक dma_bits = BITS_PER_LONG;
 
 	err = pci_enable_device(pci);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* Set DMA transfer mask */
-	if (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(dma_bits)))
+	अगर (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(dma_bits)))
 		dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(32));
 
-	if (!hw->io_base) {
+	अगर (!hw->io_base) अणु
 		err = pci_request_regions(pci, "XFi");
-		if (err < 0)
-			goto error1;
+		अगर (err < 0)
+			जाओ error1;
 
 		hw->io_base = pci_resource_start(hw->pci, 2);
 		hw->mem_base = ioremap(hw->io_base,
 				       pci_resource_len(hw->pci, 2));
-		if (!hw->mem_base) {
+		अगर (!hw->mem_base) अणु
 			err = -ENOENT;
-			goto error2;
-		}
-	}
+			जाओ error2;
+		पूर्ण
+	पूर्ण
 
 	/* Switch to 20k2 mode from UAA mode. */
-	gctl = hw_read_20kx(hw, GLOBAL_CNTL_GCTL);
+	gctl = hw_पढ़ो_20kx(hw, GLOBAL_CNTL_GCTL);
 	set_field(&gctl, GCTL_UAA, 0);
-	hw_write_20kx(hw, GLOBAL_CNTL_GCTL, gctl);
+	hw_ग_लिखो_20kx(hw, GLOBAL_CNTL_GCTL, gctl);
 
-	if (hw->irq < 0) {
-		err = request_irq(pci->irq, ct_20k2_interrupt, IRQF_SHARED,
+	अगर (hw->irq < 0) अणु
+		err = request_irq(pci->irq, ct_20k2_पूर्णांकerrupt, IRQF_SHARED,
 				  KBUILD_MODNAME, hw);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(hw->card->dev,
 				"XFi: Cannot get irq %d\n", pci->irq);
-			goto error2;
-		}
+			जाओ error2;
+		पूर्ण
 		hw->irq = pci->irq;
 		hw->card->sync_irq = hw->irq;
-	}
+	पूर्ण
 
 	pci_set_master(pci);
 
-	return 0;
+	वापस 0;
 
 /*error3:
-	iounmap((void *)hw->mem_base);
-	hw->mem_base = (unsigned long)NULL;*/
+	iounmap((व्योम *)hw->mem_base);
+	hw->mem_base = (अचिन्हित दीर्घ)शून्य;*/
 error2:
 	pci_release_regions(pci);
 	hw->io_base = 0;
 error1:
 	pci_disable_device(pci);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hw_card_stop(struct hw *hw)
-{
-	unsigned int data;
+अटल पूर्णांक hw_card_stop(काष्ठा hw *hw)
+अणु
+	अचिन्हित पूर्णांक data;
 
 	/* disable transport bus master and queueing of request */
-	hw_write_20kx(hw, TRANSPORT_CTL, 0x00);
+	hw_ग_लिखो_20kx(hw, TRANSPORT_CTL, 0x00);
 
 	/* disable pll */
-	data = hw_read_20kx(hw, PLL_ENB);
-	hw_write_20kx(hw, PLL_ENB, (data & (~0x07)));
+	data = hw_पढ़ो_20kx(hw, PLL_ENB);
+	hw_ग_लिखो_20kx(hw, PLL_ENB, (data & (~0x07)));
 
-	/* TODO: Disable interrupt and so on... */
-	return 0;
-}
+	/* TODO: Disable पूर्णांकerrupt and so on... */
+	वापस 0;
+पूर्ण
 
-static int hw_card_shutdown(struct hw *hw)
-{
-	if (hw->irq >= 0)
-		free_irq(hw->irq, hw);
+अटल पूर्णांक hw_card_shutकरोwn(काष्ठा hw *hw)
+अणु
+	अगर (hw->irq >= 0)
+		मुक्त_irq(hw->irq, hw);
 
 	hw->irq	= -1;
 	iounmap(hw->mem_base);
-	hw->mem_base = NULL;
+	hw->mem_base = शून्य;
 
-	if (hw->io_base)
+	अगर (hw->io_base)
 		pci_release_regions(hw->pci);
 
 	hw->io_base = 0;
 
 	pci_disable_device(hw->pci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hw_card_init(struct hw *hw, struct card_conf *info)
-{
-	int err;
-	unsigned int gctl;
+अटल पूर्णांक hw_card_init(काष्ठा hw *hw, काष्ठा card_conf *info)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक gctl;
 	u32 data = 0;
-	struct dac_conf dac_info = {0};
-	struct adc_conf adc_info = {0};
-	struct daio_conf daio_info = {0};
-	struct trn_conf trn_info = {0};
+	काष्ठा dac_conf dac_info = अणु0पूर्ण;
+	काष्ठा adc_conf adc_info = अणु0पूर्ण;
+	काष्ठा daio_conf daio_info = अणु0पूर्ण;
+	काष्ठा trn_conf trn_info = अणु0पूर्ण;
 
 	/* Get PCI io port/memory base address and
-	 * do 20kx core switch if needed. */
+	 * करो 20kx core चयन अगर needed. */
 	err = hw_card_start(hw);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* PLL init */
 	err = hw_pll_init(hw, info->rsr);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* kick off auto-init */
-	err = hw_auto_init(hw);
-	if (err < 0)
-		return err;
+	/* kick off स्वतः-init */
+	err = hw_स्वतः_init(hw);
+	अगर (err < 0)
+		वापस err;
 
-	gctl = hw_read_20kx(hw, GLOBAL_CNTL_GCTL);
+	gctl = hw_पढ़ो_20kx(hw, GLOBAL_CNTL_GCTL);
 	set_field(&gctl, GCTL_DBP, 1);
 	set_field(&gctl, GCTL_TBP, 1);
 	set_field(&gctl, GCTL_FBP, 1);
 	set_field(&gctl, GCTL_DPC, 0);
-	hw_write_20kx(hw, GLOBAL_CNTL_GCTL, gctl);
+	hw_ग_लिखो_20kx(hw, GLOBAL_CNTL_GCTL, gctl);
 
-	/* Reset all global pending interrupts */
-	hw_write_20kx(hw, GIE, 0);
-	/* Reset all SRC pending interrupts */
-	hw_write_20kx(hw, SRC_IP, 0);
+	/* Reset all global pending पूर्णांकerrupts */
+	hw_ग_लिखो_20kx(hw, GIE, 0);
+	/* Reset all SRC pending पूर्णांकerrupts */
+	hw_ग_लिखो_20kx(hw, SRC_IP, 0);
 
-	if (hw->model != CTSB1270) {
+	अगर (hw->model != CTSB1270) अणु
 		/* TODO: detect the card ID and configure GPIO accordingly. */
 		/* Configures GPIO (0xD802 0x98028) */
-		/*hw_write_20kx(hw, GPIO_CTRL, 0x7F07);*/
+		/*hw_ग_लिखो_20kx(hw, GPIO_CTRL, 0x7F07);*/
 		/* Configures GPIO (SB0880) */
-		/*hw_write_20kx(hw, GPIO_CTRL, 0xFF07);*/
-		hw_write_20kx(hw, GPIO_CTRL, 0xD802);
-	} else {
-		hw_write_20kx(hw, GPIO_CTRL, 0x9E5F);
-	}
+		/*hw_ग_लिखो_20kx(hw, GPIO_CTRL, 0xFF07);*/
+		hw_ग_लिखो_20kx(hw, GPIO_CTRL, 0xD802);
+	पूर्ण अन्यथा अणु
+		hw_ग_लिखो_20kx(hw, GPIO_CTRL, 0x9E5F);
+	पूर्ण
 	/* Enable audio ring */
-	hw_write_20kx(hw, MIXER_AR_ENABLE, 0x01);
+	hw_ग_लिखो_20kx(hw, MIXER_AR_ENABLE, 0x01);
 
 	trn_info.vm_pgt_phys = info->vm_pgt_phys;
 	err = hw_trn_init(hw, &trn_info);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	daio_info.msr = info->msr;
 	err = hw_daio_init(hw, &daio_info);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	dac_info.msr = info->msr;
 	err = hw_dac_init(hw, &dac_info);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	adc_info.msr = info->msr;
 	adc_info.input = ADC_LINEIN;
 	adc_info.mic20db = 0;
 	err = hw_adc_init(hw, &adc_info);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	data = hw_read_20kx(hw, SRC_MCTL);
+	data = hw_पढ़ो_20kx(hw, SRC_MCTL);
 	data |= 0x1; /* Enables input from the audio ring */
-	hw_write_20kx(hw, SRC_MCTL, data);
+	hw_ग_लिखो_20kx(hw, SRC_MCTL, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int hw_suspend(struct hw *hw)
-{
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक hw_suspend(काष्ठा hw *hw)
+अणु
 	hw_card_stop(hw);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hw_resume(struct hw *hw, struct card_conf *info)
-{
+अटल पूर्णांक hw_resume(काष्ठा hw *hw, काष्ठा card_conf *info)
+अणु
 	/* Re-initialize card hardware. */
-	return hw_card_init(hw, info);
-}
-#endif
+	वापस hw_card_init(hw, info);
+पूर्ण
+#पूर्ण_अगर
 
-static u32 hw_read_20kx(struct hw *hw, u32 reg)
-{
-	return readl(hw->mem_base + reg);
-}
+अटल u32 hw_पढ़ो_20kx(काष्ठा hw *hw, u32 reg)
+अणु
+	वापस पढ़ोl(hw->mem_base + reg);
+पूर्ण
 
-static void hw_write_20kx(struct hw *hw, u32 reg, u32 data)
-{
-	writel(data, hw->mem_base + reg);
-}
+अटल व्योम hw_ग_लिखो_20kx(काष्ठा hw *hw, u32 reg, u32 data)
+अणु
+	ग_लिखोl(data, hw->mem_base + reg);
+पूर्ण
 
-static const struct hw ct20k2_preset = {
+अटल स्थिर काष्ठा hw ct20k2_preset = अणु
 	.irq = -1,
 
 	.card_init = hw_card_init,
@@ -2222,14 +2223,14 @@ static const struct hw ct20k2_preset = {
 	.is_adc_source_selected = hw_is_adc_input_selected,
 	.select_adc_source = hw_adc_input_select,
 	.capabilities = hw_capabilities,
-	.output_switch_get = hw_output_switch_get,
-	.output_switch_put = hw_output_switch_put,
-	.mic_source_switch_get = hw_mic_source_switch_get,
-	.mic_source_switch_put = hw_mic_source_switch_put,
-#ifdef CONFIG_PM_SLEEP
+	.output_चयन_get = hw_output_चयन_get,
+	.output_चयन_put = hw_output_चयन_put,
+	.mic_source_चयन_get = hw_mic_source_चयन_get,
+	.mic_source_चयन_put = hw_mic_source_चयन_put,
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend = hw_suspend,
 	.resume = hw_resume,
-#endif
+#पूर्ण_अगर
 
 	.src_rsc_get_ctrl_blk = src_get_rsc_ctrl_blk,
 	.src_rsc_put_ctrl_blk = src_put_rsc_ctrl_blk,
@@ -2255,14 +2256,14 @@ static const struct hw ct20k2_preset = {
 	.src_set_dirty = src_set_dirty,
 	.src_set_clear_zbufs = src_set_clear_zbufs,
 	.src_set_dirty_all = src_set_dirty_all,
-	.src_commit_write = src_commit_write,
+	.src_commit_ग_लिखो = src_commit_ग_लिखो,
 	.src_get_ca = src_get_ca,
 	.src_get_dirty = src_get_dirty,
 	.src_dirty_conj_mask = src_dirty_conj_mask,
 	.src_mgr_enbs_src = src_mgr_enbs_src,
 	.src_mgr_enb_src = src_mgr_enb_src,
 	.src_mgr_dsb_src = src_mgr_dsb_src,
-	.src_mgr_commit_write = src_mgr_commit_write,
+	.src_mgr_commit_ग_लिखो = src_mgr_commit_ग_लिखो,
 
 	.srcimp_mgr_get_ctrl_blk = srcimp_mgr_get_ctrl_blk,
 	.srcimp_mgr_put_ctrl_blk = srcimp_mgr_put_ctrl_blk,
@@ -2270,7 +2271,7 @@ static const struct hw ct20k2_preset = {
 	.srcimp_mgr_set_imapuser = srcimp_mgr_set_imapuser,
 	.srcimp_mgr_set_imapnxt = srcimp_mgr_set_imapnxt,
 	.srcimp_mgr_set_imapaddr = srcimp_mgr_set_imapaddr,
-	.srcimp_mgr_commit_write = srcimp_mgr_commit_write,
+	.srcimp_mgr_commit_ग_लिखो = srcimp_mgr_commit_ग_लिखो,
 
 	.amixer_rsc_get_ctrl_blk = amixer_rsc_get_ctrl_blk,
 	.amixer_rsc_put_ctrl_blk = amixer_rsc_put_ctrl_blk,
@@ -2284,7 +2285,7 @@ static const struct hw ct20k2_preset = {
 	.amixer_set_se = amixer_set_se,
 	.amixer_set_dirty = amixer_set_dirty,
 	.amixer_set_dirty_all = amixer_set_dirty_all,
-	.amixer_commit_write = amixer_commit_write,
+	.amixer_commit_ग_लिखो = amixer_commit_ग_लिखो,
 	.amixer_get_y = amixer_get_y,
 	.amixer_get_dirty = amixer_get_dirty,
 
@@ -2296,12 +2297,12 @@ static const struct hw ct20k2_preset = {
 	.dai_srt_set_drat = dai_srt_set_drat,
 	.dai_srt_set_ec = dai_srt_set_ec,
 	.dai_srt_set_et = dai_srt_set_et,
-	.dai_commit_write = dai_commit_write,
+	.dai_commit_ग_लिखो = dai_commit_ग_लिखो,
 
 	.dao_get_ctrl_blk = dao_get_ctrl_blk,
 	.dao_put_ctrl_blk = dao_put_ctrl_blk,
 	.dao_set_spos = dao_set_spos,
-	.dao_commit_write = dao_commit_write,
+	.dao_commit_ग_लिखो = dao_commit_ग_लिखो,
 	.dao_get_spos = dao_get_spos,
 
 	.daio_mgr_get_ctrl_blk = daio_mgr_get_ctrl_blk,
@@ -2314,33 +2315,33 @@ static const struct hw ct20k2_preset = {
 	.daio_mgr_set_imaparc = daio_mgr_set_imaparc,
 	.daio_mgr_set_imapnxt = daio_mgr_set_imapnxt,
 	.daio_mgr_set_imapaddr = daio_mgr_set_imapaddr,
-	.daio_mgr_commit_write = daio_mgr_commit_write,
+	.daio_mgr_commit_ग_लिखो = daio_mgr_commit_ग_लिखो,
 
-	.set_timer_irq = set_timer_irq,
-	.set_timer_tick = set_timer_tick,
+	.set_समयr_irq = set_समयr_irq,
+	.set_समयr_tick = set_समयr_tick,
 	.get_wc = get_wc,
-};
+पूर्ण;
 
-int create_20k2_hw_obj(struct hw **rhw)
-{
-	struct hw20k2 *hw20k2;
+पूर्णांक create_20k2_hw_obj(काष्ठा hw **rhw)
+अणु
+	काष्ठा hw20k2 *hw20k2;
 
-	*rhw = NULL;
-	hw20k2 = kzalloc(sizeof(*hw20k2), GFP_KERNEL);
-	if (!hw20k2)
-		return -ENOMEM;
+	*rhw = शून्य;
+	hw20k2 = kzalloc(माप(*hw20k2), GFP_KERNEL);
+	अगर (!hw20k2)
+		वापस -ENOMEM;
 
 	hw20k2->hw = ct20k2_preset;
 	*rhw = &hw20k2->hw;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int destroy_20k2_hw_obj(struct hw *hw)
-{
-	if (hw->io_base)
-		hw_card_shutdown(hw);
+पूर्णांक destroy_20k2_hw_obj(काष्ठा hw *hw)
+अणु
+	अगर (hw->io_base)
+		hw_card_shutकरोwn(hw);
 
-	kfree(hw);
-	return 0;
-}
+	kमुक्त(hw);
+	वापस 0;
+पूर्ण

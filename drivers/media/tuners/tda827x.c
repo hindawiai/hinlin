@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
- * (c) 2005 Hartmut Hackmann
+ * (c) 2005 Harपंचांगut Hackmann
  * (c) 2007 Michael Krufky
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <asm/types.h>
-#include <linux/dvb/frontend.h>
-#include <linux/videodev2.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/types.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/videodev2.h>
 
-#include "tda827x.h"
+#समावेश "tda827x.h"
 
-static int debug;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off frontend debugging (default:off).");
 
-#define dprintk(args...) \
-	do {					    \
-		if (debug) printk(KERN_DEBUG "tda827x: " args); \
-	} while (0)
+#घोषणा dprपूर्णांकk(args...) \
+	करो अणु					    \
+		अगर (debug) prपूर्णांकk(KERN_DEBUG "tda827x: " args); \
+	पूर्ण जबतक (0)
 
-struct tda827x_priv {
-	int i2c_addr;
-	struct i2c_adapter *i2c_adap;
-	struct tda827x_config *cfg;
+काष्ठा tda827x_priv अणु
+	पूर्णांक i2c_addr;
+	काष्ठा i2c_adapter *i2c_adap;
+	काष्ठा tda827x_config *cfg;
 
-	unsigned int sgIF;
-	unsigned char lpsel;
+	अचिन्हित पूर्णांक sgIF;
+	अचिन्हित अक्षर lpsel;
 
 	u32 frequency;
 	u32 bandwidth;
-};
+पूर्ण;
 
-static void tda827x_set_std(struct dvb_frontend *fe,
-			    struct analog_parameters *params)
-{
-	struct tda827x_priv *priv = fe->tuner_priv;
-	char *mode;
+अटल व्योम tda827x_set_std(काष्ठा dvb_frontend *fe,
+			    काष्ठा analog_parameters *params)
+अणु
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	अक्षर *mode;
 
 	priv->lpsel = 0;
-	if (params->std & V4L2_STD_MN) {
+	अगर (params->std & V4L2_STD_MN) अणु
 		priv->sgIF = 92;
 		priv->lpsel = 1;
 		mode = "MN";
-	} else if (params->std & V4L2_STD_B) {
+	पूर्ण अन्यथा अगर (params->std & V4L2_STD_B) अणु
 		priv->sgIF = 108;
 		mode = "B";
-	} else if (params->std & V4L2_STD_GH) {
+	पूर्ण अन्यथा अगर (params->std & V4L2_STD_GH) अणु
 		priv->sgIF = 124;
 		mode = "GH";
-	} else if (params->std & V4L2_STD_PAL_I) {
+	पूर्ण अन्यथा अगर (params->std & V4L2_STD_PAL_I) अणु
 		priv->sgIF = 124;
 		mode = "I";
-	} else if (params->std & V4L2_STD_DK) {
+	पूर्ण अन्यथा अगर (params->std & V4L2_STD_DK) अणु
 		priv->sgIF = 124;
 		mode = "DK";
-	} else if (params->std & V4L2_STD_SECAM_L) {
+	पूर्ण अन्यथा अगर (params->std & V4L2_STD_SECAM_L) अणु
 		priv->sgIF = 124;
 		mode = "L";
-	} else if (params->std & V4L2_STD_SECAM_LC) {
+	पूर्ण अन्यथा अगर (params->std & V4L2_STD_SECAM_LC) अणु
 		priv->sgIF = 20;
 		mode = "LC";
-	} else {
+	पूर्ण अन्यथा अणु
 		priv->sgIF = 124;
 		mode = "xx";
-	}
+	पूर्ण
 
-	if (params->mode == V4L2_TUNER_RADIO) {
-		priv->sgIF = 88; /* if frequency is 5.5 MHz */
-		dprintk("setting tda827x to radio FM\n");
-	} else
-		dprintk("setting tda827x to system %s\n", mode);
-}
+	अगर (params->mode == V4L2_TUNER_RADIO) अणु
+		priv->sgIF = 88; /* अगर frequency is 5.5 MHz */
+		dprपूर्णांकk("setting tda827x to radio FM\n");
+	पूर्ण अन्यथा
+		dprपूर्णांकk("setting tda827x to system %s\n", mode);
+पूर्ण
 
 
 /* ------------------------------------------------------------------ */
 
-struct tda827x_data {
+काष्ठा tda827x_data अणु
 	u32 lomax;
 	u8  spd;
 	u8  bs;
 	u8  bp;
 	u8  cp;
 	u8  gc3;
-	u8 div1p5;
-};
+	u8 भाग1p5;
+पूर्ण;
 
-static const struct tda827x_data tda827x_table[] = {
-	{ .lomax =  62000000, .spd = 3, .bs = 2, .bp = 0, .cp = 0, .gc3 = 3, .div1p5 = 1},
-	{ .lomax =  66000000, .spd = 3, .bs = 3, .bp = 0, .cp = 0, .gc3 = 3, .div1p5 = 1},
-	{ .lomax =  76000000, .spd = 3, .bs = 1, .bp = 0, .cp = 0, .gc3 = 3, .div1p5 = 0},
-	{ .lomax =  84000000, .spd = 3, .bs = 2, .bp = 0, .cp = 0, .gc3 = 3, .div1p5 = 0},
-	{ .lomax =  93000000, .spd = 3, .bs = 2, .bp = 0, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax =  98000000, .spd = 3, .bs = 3, .bp = 0, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 109000000, .spd = 3, .bs = 3, .bp = 1, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 123000000, .spd = 2, .bs = 2, .bp = 1, .cp = 0, .gc3 = 1, .div1p5 = 1},
-	{ .lomax = 133000000, .spd = 2, .bs = 3, .bp = 1, .cp = 0, .gc3 = 1, .div1p5 = 1},
-	{ .lomax = 151000000, .spd = 2, .bs = 1, .bp = 1, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 154000000, .spd = 2, .bs = 2, .bp = 1, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 181000000, .spd = 2, .bs = 2, .bp = 1, .cp = 0, .gc3 = 0, .div1p5 = 0},
-	{ .lomax = 185000000, .spd = 2, .bs = 2, .bp = 2, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 217000000, .spd = 2, .bs = 3, .bp = 2, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 244000000, .spd = 1, .bs = 2, .bp = 2, .cp = 0, .gc3 = 1, .div1p5 = 1},
-	{ .lomax = 265000000, .spd = 1, .bs = 3, .bp = 2, .cp = 0, .gc3 = 1, .div1p5 = 1},
-	{ .lomax = 302000000, .spd = 1, .bs = 1, .bp = 2, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 324000000, .spd = 1, .bs = 2, .bp = 2, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 370000000, .spd = 1, .bs = 2, .bp = 3, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 454000000, .spd = 1, .bs = 3, .bp = 3, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 493000000, .spd = 0, .bs = 2, .bp = 3, .cp = 0, .gc3 = 1, .div1p5 = 1},
-	{ .lomax = 530000000, .spd = 0, .bs = 3, .bp = 3, .cp = 0, .gc3 = 1, .div1p5 = 1},
-	{ .lomax = 554000000, .spd = 0, .bs = 1, .bp = 3, .cp = 0, .gc3 = 1, .div1p5 = 0},
-	{ .lomax = 604000000, .spd = 0, .bs = 1, .bp = 4, .cp = 0, .gc3 = 0, .div1p5 = 0},
-	{ .lomax = 696000000, .spd = 0, .bs = 2, .bp = 4, .cp = 0, .gc3 = 0, .div1p5 = 0},
-	{ .lomax = 740000000, .spd = 0, .bs = 2, .bp = 4, .cp = 1, .gc3 = 0, .div1p5 = 0},
-	{ .lomax = 820000000, .spd = 0, .bs = 3, .bp = 4, .cp = 0, .gc3 = 0, .div1p5 = 0},
-	{ .lomax = 865000000, .spd = 0, .bs = 3, .bp = 4, .cp = 1, .gc3 = 0, .div1p5 = 0},
-	{ .lomax =         0, .spd = 0, .bs = 0, .bp = 0, .cp = 0, .gc3 = 0, .div1p5 = 0}
-};
+अटल स्थिर काष्ठा tda827x_data tda827x_table[] = अणु
+	अणु .lomax =  62000000, .spd = 3, .bs = 2, .bp = 0, .cp = 0, .gc3 = 3, .भाग1p5 = 1पूर्ण,
+	अणु .lomax =  66000000, .spd = 3, .bs = 3, .bp = 0, .cp = 0, .gc3 = 3, .भाग1p5 = 1पूर्ण,
+	अणु .lomax =  76000000, .spd = 3, .bs = 1, .bp = 0, .cp = 0, .gc3 = 3, .भाग1p5 = 0पूर्ण,
+	अणु .lomax =  84000000, .spd = 3, .bs = 2, .bp = 0, .cp = 0, .gc3 = 3, .भाग1p5 = 0पूर्ण,
+	अणु .lomax =  93000000, .spd = 3, .bs = 2, .bp = 0, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax =  98000000, .spd = 3, .bs = 3, .bp = 0, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 109000000, .spd = 3, .bs = 3, .bp = 1, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 123000000, .spd = 2, .bs = 2, .bp = 1, .cp = 0, .gc3 = 1, .भाग1p5 = 1पूर्ण,
+	अणु .lomax = 133000000, .spd = 2, .bs = 3, .bp = 1, .cp = 0, .gc3 = 1, .भाग1p5 = 1पूर्ण,
+	अणु .lomax = 151000000, .spd = 2, .bs = 1, .bp = 1, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 154000000, .spd = 2, .bs = 2, .bp = 1, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 181000000, .spd = 2, .bs = 2, .bp = 1, .cp = 0, .gc3 = 0, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 185000000, .spd = 2, .bs = 2, .bp = 2, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 217000000, .spd = 2, .bs = 3, .bp = 2, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 244000000, .spd = 1, .bs = 2, .bp = 2, .cp = 0, .gc3 = 1, .भाग1p5 = 1पूर्ण,
+	अणु .lomax = 265000000, .spd = 1, .bs = 3, .bp = 2, .cp = 0, .gc3 = 1, .भाग1p5 = 1पूर्ण,
+	अणु .lomax = 302000000, .spd = 1, .bs = 1, .bp = 2, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 324000000, .spd = 1, .bs = 2, .bp = 2, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 370000000, .spd = 1, .bs = 2, .bp = 3, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 454000000, .spd = 1, .bs = 3, .bp = 3, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 493000000, .spd = 0, .bs = 2, .bp = 3, .cp = 0, .gc3 = 1, .भाग1p5 = 1पूर्ण,
+	अणु .lomax = 530000000, .spd = 0, .bs = 3, .bp = 3, .cp = 0, .gc3 = 1, .भाग1p5 = 1पूर्ण,
+	अणु .lomax = 554000000, .spd = 0, .bs = 1, .bp = 3, .cp = 0, .gc3 = 1, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 604000000, .spd = 0, .bs = 1, .bp = 4, .cp = 0, .gc3 = 0, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 696000000, .spd = 0, .bs = 2, .bp = 4, .cp = 0, .gc3 = 0, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 740000000, .spd = 0, .bs = 2, .bp = 4, .cp = 1, .gc3 = 0, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 820000000, .spd = 0, .bs = 3, .bp = 4, .cp = 0, .gc3 = 0, .भाग1p5 = 0पूर्ण,
+	अणु .lomax = 865000000, .spd = 0, .bs = 3, .bp = 4, .cp = 1, .gc3 = 0, .भाग1p5 = 0पूर्ण,
+	अणु .lomax =         0, .spd = 0, .bs = 0, .bp = 0, .cp = 0, .gc3 = 0, .भाग1p5 = 0पूर्ण
+पूर्ण;
 
-static int tuner_transfer(struct dvb_frontend *fe,
-			  struct i2c_msg *msg,
-			  const int size)
-{
-	int rc;
-	struct tda827x_priv *priv = fe->tuner_priv;
+अटल पूर्णांक tuner_transfer(काष्ठा dvb_frontend *fe,
+			  काष्ठा i2c_msg *msg,
+			  स्थिर पूर्णांक size)
+अणु
+	पूर्णांक rc;
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 	rc = i2c_transfer(priv->i2c_adap, msg, size);
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	if (rc >= 0 && rc != size)
-		return -EIO;
+	अगर (rc >= 0 && rc != size)
+		वापस -EIO;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int tda827xo_set_params(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	struct tda827x_priv *priv = fe->tuner_priv;
+अटल पूर्णांक tda827xo_set_params(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
 	u8 buf[14];
-	int rc;
+	पूर्णांक rc;
 
-	struct i2c_msg msg = { .addr = priv->i2c_addr, .flags = 0,
-			       .buf = buf, .len = sizeof(buf) };
-	int i, tuner_freq, if_freq;
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_addr, .flags = 0,
+			       .buf = buf, .len = माप(buf) पूर्ण;
+	पूर्णांक i, tuner_freq, अगर_freq;
 	u32 N;
 
-	dprintk("%s:\n", __func__);
-	if (c->bandwidth_hz == 0) {
-		if_freq = 5000000;
-	} else if (c->bandwidth_hz <= 6000000) {
-		if_freq = 4000000;
-	} else if (c->bandwidth_hz <= 7000000) {
-		if_freq = 4500000;
-	} else {	/* 8 MHz */
-		if_freq = 5000000;
-	}
+	dprपूर्णांकk("%s:\n", __func__);
+	अगर (c->bandwidth_hz == 0) अणु
+		अगर_freq = 5000000;
+	पूर्ण अन्यथा अगर (c->bandwidth_hz <= 6000000) अणु
+		अगर_freq = 4000000;
+	पूर्ण अन्यथा अगर (c->bandwidth_hz <= 7000000) अणु
+		अगर_freq = 4500000;
+	पूर्ण अन्यथा अणु	/* 8 MHz */
+		अगर_freq = 5000000;
+	पूर्ण
 	tuner_freq = c->frequency;
 
 	i = 0;
-	while (tda827x_table[i].lomax < tuner_freq) {
-		if (tda827x_table[i + 1].lomax == 0)
-			break;
+	जबतक (tda827x_table[i].lomax < tuner_freq) अणु
+		अगर (tda827x_table[i + 1].lomax == 0)
+			अवरोध;
 		i++;
-	}
+	पूर्ण
 
-	tuner_freq += if_freq;
+	tuner_freq += अगर_freq;
 
 	N = ((tuner_freq + 125000) / 250000) << (tda827x_table[i].spd + 2);
 	buf[0] = 0;
@@ -178,7 +179,7 @@ static int tda827xo_set_params(struct dvb_frontend *fe)
 	buf[2] = N & 0xff;
 	buf[3] = 0;
 	buf[4] = 0x52;
-	buf[5] = (tda827x_table[i].spd << 6) + (tda827x_table[i].div1p5 << 5) +
+	buf[5] = (tda827x_table[i].spd << 6) + (tda827x_table[i].भाग1p5 << 5) +
 				(tda827x_table[i].bs << 3) +
 				tda827x_table[i].bp;
 	buf[6] = (tda827x_table[i].gc3 << 4) + 0x8f;
@@ -192,8 +193,8 @@ static int tda827xo_set_params(struct dvb_frontend *fe)
 
 	msg.len = 14;
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	msleep(500);
 	/* correct CP value */
@@ -202,72 +203,72 @@ static int tda827xo_set_params(struct dvb_frontend *fe)
 	msg.len = 2;
 
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	priv->frequency = c->frequency;
 	priv->bandwidth = c->bandwidth_hz;
 
-	return 0;
+	वापस 0;
 
 err:
-	printk(KERN_ERR "%s: could not write to tuner at addr: 0x%02x\n",
+	prपूर्णांकk(KERN_ERR "%s: could not write to tuner at addr: 0x%02x\n",
 	       __func__, priv->i2c_addr << 1);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int tda827xo_sleep(struct dvb_frontend *fe)
-{
-	struct tda827x_priv *priv = fe->tuner_priv;
-	static u8 buf[] = { 0x30, 0xd0 };
-	struct i2c_msg msg = { .addr = priv->i2c_addr, .flags = 0,
-			       .buf = buf, .len = sizeof(buf) };
+अटल पूर्णांक tda827xo_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	अटल u8 buf[] = अणु 0x30, 0xd0 पूर्ण;
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_addr, .flags = 0,
+			       .buf = buf, .len = माप(buf) पूर्ण;
 
-	dprintk("%s:\n", __func__);
+	dprपूर्णांकk("%s:\n", __func__);
 	tuner_transfer(fe, &msg, 1);
 
-	if (priv->cfg && priv->cfg->sleep)
+	अगर (priv->cfg && priv->cfg->sleep)
 		priv->cfg->sleep(fe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ------------------------------------------------------------------ */
 
-static int tda827xo_set_analog_params(struct dvb_frontend *fe,
-				      struct analog_parameters *params)
-{
-	unsigned char tuner_reg[8];
-	unsigned char reg2[2];
+अटल पूर्णांक tda827xo_set_analog_params(काष्ठा dvb_frontend *fe,
+				      काष्ठा analog_parameters *params)
+अणु
+	अचिन्हित अक्षर tuner_reg[8];
+	अचिन्हित अक्षर reg2[2];
 	u32 N;
-	int i;
-	struct tda827x_priv *priv = fe->tuner_priv;
-	struct i2c_msg msg = { .addr = priv->i2c_addr, .flags = 0 };
-	unsigned int freq = params->frequency;
+	पूर्णांक i;
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_addr, .flags = 0 पूर्ण;
+	अचिन्हित पूर्णांक freq = params->frequency;
 
 	tda827x_set_std(fe, params);
 
-	if (params->mode == V4L2_TUNER_RADIO)
+	अगर (params->mode == V4L2_TUNER_RADIO)
 		freq = freq / 1000;
 
 	N = freq + priv->sgIF;
 
 	i = 0;
-	while (tda827x_table[i].lomax < N * 62500) {
-		if (tda827x_table[i + 1].lomax == 0)
-			break;
+	जबतक (tda827x_table[i].lomax < N * 62500) अणु
+		अगर (tda827x_table[i + 1].lomax == 0)
+			अवरोध;
 		i++;
-	}
+	पूर्ण
 
 	N = N << tda827x_table[i].spd;
 
 	tuner_reg[0] = 0;
-	tuner_reg[1] = (unsigned char)(N>>8);
-	tuner_reg[2] = (unsigned char) N;
+	tuner_reg[1] = (अचिन्हित अक्षर)(N>>8);
+	tuner_reg[2] = (अचिन्हित अक्षर) N;
 	tuner_reg[3] = 0x40;
 	tuner_reg[4] = 0x52 + (priv->lpsel << 5);
 	tuner_reg[5] = (tda827x_table[i].spd    << 6) +
-		       (tda827x_table[i].div1p5 << 5) +
+		       (tda827x_table[i].भाग1p5 << 5) +
 		       (tda827x_table[i].bs     << 3) + tda827x_table[i].bp;
 	tuner_reg[6] = 0x8f + (tda827x_table[i].gc3 << 4);
 	tuner_reg[7] = 0x8f;
@@ -315,236 +316,236 @@ static int tda827xo_set_analog_params(struct dvb_frontend *fe,
 
 	priv->frequency = params->frequency;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tda827xo_agcf(struct dvb_frontend *fe)
-{
-	struct tda827x_priv *priv = fe->tuner_priv;
-	unsigned char data[] = { 0x80, 0x0c };
-	struct i2c_msg msg = { .addr = priv->i2c_addr, .flags = 0,
-			       .buf = data, .len = 2};
+अटल व्योम tda827xo_agcf(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर data[] = अणु 0x80, 0x0c पूर्ण;
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_addr, .flags = 0,
+			       .buf = data, .len = 2पूर्ण;
 
 	tuner_transfer(fe, &msg, 1);
-}
+पूर्ण
 
 /* ------------------------------------------------------------------ */
 
-struct tda827xa_data {
+काष्ठा tda827xa_data अणु
 	u32 lomax;
 	u8  svco;
 	u8  spd;
 	u8  scr;
 	u8  sbs;
 	u8  gc3;
-};
+पूर्ण;
 
-static struct tda827xa_data tda827xa_dvbt[] = {
-	{ .lomax =  56875000, .svco = 3, .spd = 4, .scr = 0, .sbs = 0, .gc3 = 1},
-	{ .lomax =  67250000, .svco = 0, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 1},
-	{ .lomax =  81250000, .svco = 1, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 1},
-	{ .lomax =  97500000, .svco = 2, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 1},
-	{ .lomax = 113750000, .svco = 3, .spd = 3, .scr = 0, .sbs = 1, .gc3 = 1},
-	{ .lomax = 134500000, .svco = 0, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1},
-	{ .lomax = 154000000, .svco = 1, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1},
-	{ .lomax = 162500000, .svco = 1, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1},
-	{ .lomax = 183000000, .svco = 2, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1},
-	{ .lomax = 195000000, .svco = 2, .spd = 2, .scr = 0, .sbs = 2, .gc3 = 1},
-	{ .lomax = 227500000, .svco = 3, .spd = 2, .scr = 0, .sbs = 2, .gc3 = 1},
-	{ .lomax = 269000000, .svco = 0, .spd = 1, .scr = 0, .sbs = 2, .gc3 = 1},
-	{ .lomax = 290000000, .svco = 1, .spd = 1, .scr = 0, .sbs = 2, .gc3 = 1},
-	{ .lomax = 325000000, .svco = 1, .spd = 1, .scr = 0, .sbs = 3, .gc3 = 1},
-	{ .lomax = 390000000, .svco = 2, .spd = 1, .scr = 0, .sbs = 3, .gc3 = 1},
-	{ .lomax = 455000000, .svco = 3, .spd = 1, .scr = 0, .sbs = 3, .gc3 = 1},
-	{ .lomax = 520000000, .svco = 0, .spd = 0, .scr = 0, .sbs = 3, .gc3 = 1},
-	{ .lomax = 538000000, .svco = 0, .spd = 0, .scr = 1, .sbs = 3, .gc3 = 1},
-	{ .lomax = 550000000, .svco = 1, .spd = 0, .scr = 0, .sbs = 3, .gc3 = 1},
-	{ .lomax = 620000000, .svco = 1, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0},
-	{ .lomax = 650000000, .svco = 1, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0},
-	{ .lomax = 700000000, .svco = 2, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0},
-	{ .lomax = 780000000, .svco = 2, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0},
-	{ .lomax = 820000000, .svco = 3, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0},
-	{ .lomax = 870000000, .svco = 3, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0},
-	{ .lomax = 911000000, .svco = 3, .spd = 0, .scr = 2, .sbs = 4, .gc3 = 0},
-	{ .lomax =         0, .svco = 0, .spd = 0, .scr = 0, .sbs = 0, .gc3 = 0}
-};
+अटल काष्ठा tda827xa_data tda827xa_dvbt[] = अणु
+	अणु .lomax =  56875000, .svco = 3, .spd = 4, .scr = 0, .sbs = 0, .gc3 = 1पूर्ण,
+	अणु .lomax =  67250000, .svco = 0, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 1पूर्ण,
+	अणु .lomax =  81250000, .svco = 1, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 1पूर्ण,
+	अणु .lomax =  97500000, .svco = 2, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 1पूर्ण,
+	अणु .lomax = 113750000, .svco = 3, .spd = 3, .scr = 0, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 134500000, .svco = 0, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 154000000, .svco = 1, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 162500000, .svco = 1, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 183000000, .svco = 2, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 195000000, .svco = 2, .spd = 2, .scr = 0, .sbs = 2, .gc3 = 1पूर्ण,
+	अणु .lomax = 227500000, .svco = 3, .spd = 2, .scr = 0, .sbs = 2, .gc3 = 1पूर्ण,
+	अणु .lomax = 269000000, .svco = 0, .spd = 1, .scr = 0, .sbs = 2, .gc3 = 1पूर्ण,
+	अणु .lomax = 290000000, .svco = 1, .spd = 1, .scr = 0, .sbs = 2, .gc3 = 1पूर्ण,
+	अणु .lomax = 325000000, .svco = 1, .spd = 1, .scr = 0, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 390000000, .svco = 2, .spd = 1, .scr = 0, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 455000000, .svco = 3, .spd = 1, .scr = 0, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 520000000, .svco = 0, .spd = 0, .scr = 0, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 538000000, .svco = 0, .spd = 0, .scr = 1, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 550000000, .svco = 1, .spd = 0, .scr = 0, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 620000000, .svco = 1, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 650000000, .svco = 1, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 700000000, .svco = 2, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 780000000, .svco = 2, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 820000000, .svco = 3, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 870000000, .svco = 3, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 911000000, .svco = 3, .spd = 0, .scr = 2, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax =         0, .svco = 0, .spd = 0, .scr = 0, .sbs = 0, .gc3 = 0पूर्ण
+पूर्ण;
 
-static struct tda827xa_data tda827xa_dvbc[] = {
-	{ .lomax =  50125000, .svco = 2, .spd = 4, .scr = 2, .sbs = 0, .gc3 = 3},
-	{ .lomax =  58500000, .svco = 3, .spd = 4, .scr = 2, .sbs = 0, .gc3 = 3},
-	{ .lomax =  69250000, .svco = 0, .spd = 3, .scr = 2, .sbs = 0, .gc3 = 3},
-	{ .lomax =  83625000, .svco = 1, .spd = 3, .scr = 2, .sbs = 0, .gc3 = 3},
-	{ .lomax =  97500000, .svco = 2, .spd = 3, .scr = 2, .sbs = 0, .gc3 = 3},
-	{ .lomax = 100250000, .svco = 2, .spd = 3, .scr = 2, .sbs = 1, .gc3 = 1},
-	{ .lomax = 117000000, .svco = 3, .spd = 3, .scr = 2, .sbs = 1, .gc3 = 1},
-	{ .lomax = 138500000, .svco = 0, .spd = 2, .scr = 2, .sbs = 1, .gc3 = 1},
-	{ .lomax = 167250000, .svco = 1, .spd = 2, .scr = 2, .sbs = 1, .gc3 = 1},
-	{ .lomax = 187000000, .svco = 2, .spd = 2, .scr = 2, .sbs = 1, .gc3 = 1},
-	{ .lomax = 200500000, .svco = 2, .spd = 2, .scr = 2, .sbs = 2, .gc3 = 1},
-	{ .lomax = 234000000, .svco = 3, .spd = 2, .scr = 2, .sbs = 2, .gc3 = 3},
-	{ .lomax = 277000000, .svco = 0, .spd = 1, .scr = 2, .sbs = 2, .gc3 = 3},
-	{ .lomax = 325000000, .svco = 1, .spd = 1, .scr = 2, .sbs = 2, .gc3 = 1},
-	{ .lomax = 334500000, .svco = 1, .spd = 1, .scr = 2, .sbs = 3, .gc3 = 3},
-	{ .lomax = 401000000, .svco = 2, .spd = 1, .scr = 2, .sbs = 3, .gc3 = 3},
-	{ .lomax = 468000000, .svco = 3, .spd = 1, .scr = 2, .sbs = 3, .gc3 = 1},
-	{ .lomax = 535000000, .svco = 0, .spd = 0, .scr = 1, .sbs = 3, .gc3 = 1},
-	{ .lomax = 554000000, .svco = 0, .spd = 0, .scr = 2, .sbs = 3, .gc3 = 1},
-	{ .lomax = 638000000, .svco = 1, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 1},
-	{ .lomax = 669000000, .svco = 1, .spd = 0, .scr = 2, .sbs = 4, .gc3 = 1},
-	{ .lomax = 720000000, .svco = 2, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 1},
-	{ .lomax = 802000000, .svco = 2, .spd = 0, .scr = 2, .sbs = 4, .gc3 = 1},
-	{ .lomax = 835000000, .svco = 3, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 1},
-	{ .lomax = 885000000, .svco = 3, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 1},
-	{ .lomax = 911000000, .svco = 3, .spd = 0, .scr = 2, .sbs = 4, .gc3 = 1},
-	{ .lomax =         0, .svco = 0, .spd = 0, .scr = 0, .sbs = 0, .gc3 = 0}
-};
+अटल काष्ठा tda827xa_data tda827xa_dvbc[] = अणु
+	अणु .lomax =  50125000, .svco = 2, .spd = 4, .scr = 2, .sbs = 0, .gc3 = 3पूर्ण,
+	अणु .lomax =  58500000, .svco = 3, .spd = 4, .scr = 2, .sbs = 0, .gc3 = 3पूर्ण,
+	अणु .lomax =  69250000, .svco = 0, .spd = 3, .scr = 2, .sbs = 0, .gc3 = 3पूर्ण,
+	अणु .lomax =  83625000, .svco = 1, .spd = 3, .scr = 2, .sbs = 0, .gc3 = 3पूर्ण,
+	अणु .lomax =  97500000, .svco = 2, .spd = 3, .scr = 2, .sbs = 0, .gc3 = 3पूर्ण,
+	अणु .lomax = 100250000, .svco = 2, .spd = 3, .scr = 2, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 117000000, .svco = 3, .spd = 3, .scr = 2, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 138500000, .svco = 0, .spd = 2, .scr = 2, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 167250000, .svco = 1, .spd = 2, .scr = 2, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 187000000, .svco = 2, .spd = 2, .scr = 2, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 200500000, .svco = 2, .spd = 2, .scr = 2, .sbs = 2, .gc3 = 1पूर्ण,
+	अणु .lomax = 234000000, .svco = 3, .spd = 2, .scr = 2, .sbs = 2, .gc3 = 3पूर्ण,
+	अणु .lomax = 277000000, .svco = 0, .spd = 1, .scr = 2, .sbs = 2, .gc3 = 3पूर्ण,
+	अणु .lomax = 325000000, .svco = 1, .spd = 1, .scr = 2, .sbs = 2, .gc3 = 1पूर्ण,
+	अणु .lomax = 334500000, .svco = 1, .spd = 1, .scr = 2, .sbs = 3, .gc3 = 3पूर्ण,
+	अणु .lomax = 401000000, .svco = 2, .spd = 1, .scr = 2, .sbs = 3, .gc3 = 3पूर्ण,
+	अणु .lomax = 468000000, .svco = 3, .spd = 1, .scr = 2, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 535000000, .svco = 0, .spd = 0, .scr = 1, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 554000000, .svco = 0, .spd = 0, .scr = 2, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 638000000, .svco = 1, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 1पूर्ण,
+	अणु .lomax = 669000000, .svco = 1, .spd = 0, .scr = 2, .sbs = 4, .gc3 = 1पूर्ण,
+	अणु .lomax = 720000000, .svco = 2, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 1पूर्ण,
+	अणु .lomax = 802000000, .svco = 2, .spd = 0, .scr = 2, .sbs = 4, .gc3 = 1पूर्ण,
+	अणु .lomax = 835000000, .svco = 3, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 1पूर्ण,
+	अणु .lomax = 885000000, .svco = 3, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 1पूर्ण,
+	अणु .lomax = 911000000, .svco = 3, .spd = 0, .scr = 2, .sbs = 4, .gc3 = 1पूर्ण,
+	अणु .lomax =         0, .svco = 0, .spd = 0, .scr = 0, .sbs = 0, .gc3 = 0पूर्ण
+पूर्ण;
 
-static struct tda827xa_data tda827xa_analog[] = {
-	{ .lomax =  56875000, .svco = 3, .spd = 4, .scr = 0, .sbs = 0, .gc3 = 3},
-	{ .lomax =  67250000, .svco = 0, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 3},
-	{ .lomax =  81250000, .svco = 1, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 3},
-	{ .lomax =  97500000, .svco = 2, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 3},
-	{ .lomax = 113750000, .svco = 3, .spd = 3, .scr = 0, .sbs = 1, .gc3 = 1},
-	{ .lomax = 134500000, .svco = 0, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1},
-	{ .lomax = 154000000, .svco = 1, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1},
-	{ .lomax = 162500000, .svco = 1, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1},
-	{ .lomax = 183000000, .svco = 2, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1},
-	{ .lomax = 195000000, .svco = 2, .spd = 2, .scr = 0, .sbs = 2, .gc3 = 1},
-	{ .lomax = 227500000, .svco = 3, .spd = 2, .scr = 0, .sbs = 2, .gc3 = 3},
-	{ .lomax = 269000000, .svco = 0, .spd = 1, .scr = 0, .sbs = 2, .gc3 = 3},
-	{ .lomax = 325000000, .svco = 1, .spd = 1, .scr = 0, .sbs = 2, .gc3 = 1},
-	{ .lomax = 390000000, .svco = 2, .spd = 1, .scr = 0, .sbs = 3, .gc3 = 3},
-	{ .lomax = 455000000, .svco = 3, .spd = 1, .scr = 0, .sbs = 3, .gc3 = 3},
-	{ .lomax = 520000000, .svco = 0, .spd = 0, .scr = 0, .sbs = 3, .gc3 = 1},
-	{ .lomax = 538000000, .svco = 0, .spd = 0, .scr = 1, .sbs = 3, .gc3 = 1},
-	{ .lomax = 554000000, .svco = 1, .spd = 0, .scr = 0, .sbs = 3, .gc3 = 1},
-	{ .lomax = 620000000, .svco = 1, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0},
-	{ .lomax = 650000000, .svco = 1, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0},
-	{ .lomax = 700000000, .svco = 2, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0},
-	{ .lomax = 780000000, .svco = 2, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0},
-	{ .lomax = 820000000, .svco = 3, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0},
-	{ .lomax = 870000000, .svco = 3, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0},
-	{ .lomax = 911000000, .svco = 3, .spd = 0, .scr = 2, .sbs = 4, .gc3 = 0},
-	{ .lomax =         0, .svco = 0, .spd = 0, .scr = 0, .sbs = 0, .gc3 = 0}
-};
+अटल काष्ठा tda827xa_data tda827xa_analog[] = अणु
+	अणु .lomax =  56875000, .svco = 3, .spd = 4, .scr = 0, .sbs = 0, .gc3 = 3पूर्ण,
+	अणु .lomax =  67250000, .svco = 0, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 3पूर्ण,
+	अणु .lomax =  81250000, .svco = 1, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 3पूर्ण,
+	अणु .lomax =  97500000, .svco = 2, .spd = 3, .scr = 0, .sbs = 0, .gc3 = 3पूर्ण,
+	अणु .lomax = 113750000, .svco = 3, .spd = 3, .scr = 0, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 134500000, .svco = 0, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 154000000, .svco = 1, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 162500000, .svco = 1, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 183000000, .svco = 2, .spd = 2, .scr = 0, .sbs = 1, .gc3 = 1पूर्ण,
+	अणु .lomax = 195000000, .svco = 2, .spd = 2, .scr = 0, .sbs = 2, .gc3 = 1पूर्ण,
+	अणु .lomax = 227500000, .svco = 3, .spd = 2, .scr = 0, .sbs = 2, .gc3 = 3पूर्ण,
+	अणु .lomax = 269000000, .svco = 0, .spd = 1, .scr = 0, .sbs = 2, .gc3 = 3पूर्ण,
+	अणु .lomax = 325000000, .svco = 1, .spd = 1, .scr = 0, .sbs = 2, .gc3 = 1पूर्ण,
+	अणु .lomax = 390000000, .svco = 2, .spd = 1, .scr = 0, .sbs = 3, .gc3 = 3पूर्ण,
+	अणु .lomax = 455000000, .svco = 3, .spd = 1, .scr = 0, .sbs = 3, .gc3 = 3पूर्ण,
+	अणु .lomax = 520000000, .svco = 0, .spd = 0, .scr = 0, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 538000000, .svco = 0, .spd = 0, .scr = 1, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 554000000, .svco = 1, .spd = 0, .scr = 0, .sbs = 3, .gc3 = 1पूर्ण,
+	अणु .lomax = 620000000, .svco = 1, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 650000000, .svco = 1, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 700000000, .svco = 2, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 780000000, .svco = 2, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 820000000, .svco = 3, .spd = 0, .scr = 0, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 870000000, .svco = 3, .spd = 0, .scr = 1, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax = 911000000, .svco = 3, .spd = 0, .scr = 2, .sbs = 4, .gc3 = 0पूर्ण,
+	अणु .lomax =         0, .svco = 0, .spd = 0, .scr = 0, .sbs = 0, .gc3 = 0पूर्ण
+पूर्ण;
 
-static int tda827xa_sleep(struct dvb_frontend *fe)
-{
-	struct tda827x_priv *priv = fe->tuner_priv;
-	static u8 buf[] = { 0x30, 0x90 };
-	struct i2c_msg msg = { .addr = priv->i2c_addr, .flags = 0,
-			       .buf = buf, .len = sizeof(buf) };
+अटल पूर्णांक tda827xa_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	अटल u8 buf[] = अणु 0x30, 0x90 पूर्ण;
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_addr, .flags = 0,
+			       .buf = buf, .len = माप(buf) पूर्ण;
 
-	dprintk("%s:\n", __func__);
+	dprपूर्णांकk("%s:\n", __func__);
 
 	tuner_transfer(fe, &msg, 1);
 
-	if (priv->cfg && priv->cfg->sleep)
+	अगर (priv->cfg && priv->cfg->sleep)
 		priv->cfg->sleep(fe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tda827xa_lna_gain(struct dvb_frontend *fe, int high,
-			      struct analog_parameters *params)
-{
-	struct tda827x_priv *priv = fe->tuner_priv;
-	unsigned char buf[] = {0x22, 0x01};
-	int arg;
-	int gp_func;
-	struct i2c_msg msg = { .flags = 0, .buf = buf, .len = sizeof(buf) };
+अटल व्योम tda827xa_lna_gain(काष्ठा dvb_frontend *fe, पूर्णांक high,
+			      काष्ठा analog_parameters *params)
+अणु
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर buf[] = अणु0x22, 0x01पूर्ण;
+	पूर्णांक arg;
+	पूर्णांक gp_func;
+	काष्ठा i2c_msg msg = अणु .flags = 0, .buf = buf, .len = माप(buf) पूर्ण;
 
-	if (NULL == priv->cfg) {
-		dprintk("tda827x_config not defined, cannot set LNA gain!\n");
-		return;
-	}
-	msg.addr = priv->cfg->switch_addr;
-	if (priv->cfg->config) {
-		if (high)
-			dprintk("setting LNA to high gain\n");
-		else
-			dprintk("setting LNA to low gain\n");
-	}
-	switch (priv->cfg->config) {
-	case TDA8290_LNA_OFF: /* no LNA */
-		break;
-	case TDA8290_LNA_GP0_HIGH_ON: /* switch is GPIO 0 of tda8290 */
-	case TDA8290_LNA_GP0_HIGH_OFF:
-		if (params == NULL) {
+	अगर (शून्य == priv->cfg) अणु
+		dprपूर्णांकk("tda827x_config not defined, cannot set LNA gain!\n");
+		वापस;
+	पूर्ण
+	msg.addr = priv->cfg->चयन_addr;
+	अगर (priv->cfg->config) अणु
+		अगर (high)
+			dprपूर्णांकk("setting LNA to high gain\n");
+		अन्यथा
+			dprपूर्णांकk("setting LNA to low gain\n");
+	पूर्ण
+	चयन (priv->cfg->config) अणु
+	हाल TDA8290_LNA_OFF: /* no LNA */
+		अवरोध;
+	हाल TDA8290_LNA_GP0_HIGH_ON: /* चयन is GPIO 0 of tda8290 */
+	हाल TDA8290_LNA_GP0_HIGH_OFF:
+		अगर (params == शून्य) अणु
 			gp_func = 0;
 			arg  = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* turn Vsync on */
 			gp_func = 1;
-			if (params->std & V4L2_STD_MN)
+			अगर (params->std & V4L2_STD_MN)
 				arg = 1;
-			else
+			अन्यथा
 				arg = 0;
-		}
-		if (fe->callback)
+		पूर्ण
+		अगर (fe->callback)
 			fe->callback(priv->i2c_adap->algo_data,
 				     DVB_FRONTEND_COMPONENT_TUNER,
 				     gp_func, arg);
 		buf[1] = high ? 0 : 1;
-		if (priv->cfg->config == TDA8290_LNA_GP0_HIGH_OFF)
+		अगर (priv->cfg->config == TDA8290_LNA_GP0_HIGH_OFF)
 			buf[1] = high ? 1 : 0;
 		tuner_transfer(fe, &msg, 1);
-		break;
-	case TDA8290_LNA_ON_BRIDGE: /* switch with GPIO of saa713x */
-		if (fe->callback)
+		अवरोध;
+	हाल TDA8290_LNA_ON_BRIDGE: /* चयन with GPIO of saa713x */
+		अगर (fe->callback)
 			fe->callback(priv->i2c_adap->algo_data,
 				     DVB_FRONTEND_COMPONENT_TUNER, 0, high);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int tda827xa_set_params(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	struct tda827x_priv *priv = fe->tuner_priv;
-	struct tda827xa_data *frequency_map = tda827xa_dvbt;
+अटल पूर्णांक tda827xa_set_params(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	काष्ठा tda827xa_data *frequency_map = tda827xa_dvbt;
 	u8 buf[11];
 
-	struct i2c_msg msg = { .addr = priv->i2c_addr, .flags = 0,
-			       .buf = buf, .len = sizeof(buf) };
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_addr, .flags = 0,
+			       .buf = buf, .len = माप(buf) पूर्ण;
 
-	int i, tuner_freq, if_freq, rc;
+	पूर्णांक i, tuner_freq, अगर_freq, rc;
 	u32 N;
 
-	dprintk("%s:\n", __func__);
+	dprपूर्णांकk("%s:\n", __func__);
 
-	tda827xa_lna_gain(fe, 1, NULL);
+	tda827xa_lna_gain(fe, 1, शून्य);
 	msleep(20);
 
-	if (c->bandwidth_hz == 0) {
-		if_freq = 5000000;
-	} else if (c->bandwidth_hz <= 6000000) {
-		if_freq = 4000000;
-	} else if (c->bandwidth_hz <= 7000000) {
-		if_freq = 4500000;
-	} else {	/* 8 MHz */
-		if_freq = 5000000;
-	}
+	अगर (c->bandwidth_hz == 0) अणु
+		अगर_freq = 5000000;
+	पूर्ण अन्यथा अगर (c->bandwidth_hz <= 6000000) अणु
+		अगर_freq = 4000000;
+	पूर्ण अन्यथा अगर (c->bandwidth_hz <= 7000000) अणु
+		अगर_freq = 4500000;
+	पूर्ण अन्यथा अणु	/* 8 MHz */
+		अगर_freq = 5000000;
+	पूर्ण
 	tuner_freq = c->frequency;
 
-	switch (c->delivery_system) {
-	case SYS_DVBC_ANNEX_A:
-	case SYS_DVBC_ANNEX_C:
-		dprintk("%s select tda827xa_dvbc\n", __func__);
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_DVBC_ANNEX_A:
+	हाल SYS_DVBC_ANNEX_C:
+		dprपूर्णांकk("%s select tda827xa_dvbc\n", __func__);
 		frequency_map = tda827xa_dvbc;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	i = 0;
-	while (frequency_map[i].lomax < tuner_freq) {
-		if (frequency_map[i + 1].lomax == 0)
-			break;
+	जबतक (frequency_map[i].lomax < tuner_freq) अणु
+		अगर (frequency_map[i + 1].lomax == 0)
+			अवरोध;
 		i++;
-	}
+	पूर्ण
 
-	tuner_freq += if_freq;
+	tuner_freq += अगर_freq;
 
 	N = ((tuner_freq + 31250) / 62500) << frequency_map[i].spd;
 	buf[0] = 0;            // subaddress
@@ -561,123 +562,123 @@ static int tda827xa_set_params(struct dvb_frontend *fe)
 	buf[10] = 0x00;
 	msg.len = 11;
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	buf[0] = 0x90;
 	buf[1] = 0xff;
 	buf[2] = 0x60;
 	buf[3] = 0x00;
-	buf[4] = 0x59;  // lpsel, for 6MHz + 2
+	buf[4] = 0x59;  // lpsel, क्रम 6MHz + 2
 	msg.len = 5;
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	buf[0] = 0xa0;
 	buf[1] = 0x40;
 	msg.len = 2;
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	msleep(11);
 	msg.flags = I2C_M_RD;
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 	msg.flags = 0;
 
 	buf[1] >>= 4;
-	dprintk("tda8275a AGC2 gain is: %d\n", buf[1]);
-	if ((buf[1]) < 2) {
-		tda827xa_lna_gain(fe, 0, NULL);
+	dprपूर्णांकk("tda8275a AGC2 gain is: %d\n", buf[1]);
+	अगर ((buf[1]) < 2) अणु
+		tda827xa_lna_gain(fe, 0, शून्य);
 		buf[0] = 0x60;
 		buf[1] = 0x0c;
 		rc = tuner_transfer(fe, &msg, 1);
-		if (rc < 0)
-			goto err;
-	}
+		अगर (rc < 0)
+			जाओ err;
+	पूर्ण
 
 	buf[0] = 0xc0;
-	buf[1] = 0x99;    // lpsel, for 6MHz + 2
+	buf[1] = 0x99;    // lpsel, क्रम 6MHz + 2
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	buf[0] = 0x60;
 	buf[1] = 0x3c;
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	/* correct CP value */
 	buf[0] = 0x30;
 	buf[1] = 0x10 + frequency_map[i].scr;
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	msleep(163);
 	buf[0] = 0xc0;
-	buf[1] = 0x39;  // lpsel, for 6MHz + 2
+	buf[1] = 0x39;  // lpsel, क्रम 6MHz + 2
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	msleep(3);
-	/* freeze AGC1 */
+	/* मुक्तze AGC1 */
 	buf[0] = 0x50;
 	buf[1] = 0x4f + (frequency_map[i].gc3 << 4);
 	rc = tuner_transfer(fe, &msg, 1);
-	if (rc < 0)
-		goto err;
+	अगर (rc < 0)
+		जाओ err;
 
 	priv->frequency = c->frequency;
 	priv->bandwidth = c->bandwidth_hz;
 
-	return 0;
+	वापस 0;
 
 err:
-	printk(KERN_ERR "%s: could not write to tuner at addr: 0x%02x\n",
+	prपूर्णांकk(KERN_ERR "%s: could not write to tuner at addr: 0x%02x\n",
 	       __func__, priv->i2c_addr << 1);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-static int tda827xa_set_analog_params(struct dvb_frontend *fe,
-				      struct analog_parameters *params)
-{
-	unsigned char tuner_reg[11];
+अटल पूर्णांक tda827xa_set_analog_params(काष्ठा dvb_frontend *fe,
+				      काष्ठा analog_parameters *params)
+अणु
+	अचिन्हित अक्षर tuner_reg[11];
 	u32 N;
-	int i;
-	struct tda827x_priv *priv = fe->tuner_priv;
-	struct i2c_msg msg = { .addr = priv->i2c_addr, .flags = 0,
-			       .buf = tuner_reg, .len = sizeof(tuner_reg) };
-	unsigned int freq = params->frequency;
+	पूर्णांक i;
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_addr, .flags = 0,
+			       .buf = tuner_reg, .len = माप(tuner_reg) पूर्ण;
+	अचिन्हित पूर्णांक freq = params->frequency;
 
 	tda827x_set_std(fe, params);
 
 	tda827xa_lna_gain(fe, 1, params);
 	msleep(10);
 
-	if (params->mode == V4L2_TUNER_RADIO)
+	अगर (params->mode == V4L2_TUNER_RADIO)
 		freq = freq / 1000;
 
 	N = freq + priv->sgIF;
 
 	i = 0;
-	while (tda827xa_analog[i].lomax < N * 62500) {
-		if (tda827xa_analog[i + 1].lomax == 0)
-			break;
+	जबतक (tda827xa_analog[i].lomax < N * 62500) अणु
+		अगर (tda827xa_analog[i + 1].lomax == 0)
+			अवरोध;
 		i++;
-	}
+	पूर्ण
 
 	N = N << tda827xa_analog[i].spd;
 
 	tuner_reg[0] = 0;
-	tuner_reg[1] = (unsigned char)(N>>8);
-	tuner_reg[2] = (unsigned char) N;
+	tuner_reg[1] = (अचिन्हित अक्षर)(N>>8);
+	tuner_reg[2] = (अचिन्हित अक्षर) N;
 	tuner_reg[3] = 0;
 	tuner_reg[4] = 0x16;
 	tuner_reg[5] = (tda827xa_analog[i].spd << 5) +
@@ -712,8 +713,8 @@ static int tda827xa_set_analog_params(struct dvb_frontend *fe,
 	tuner_transfer(fe, &msg, 1);
 	msg.flags = 0;
 	tuner_reg[1] >>= 4;
-	dprintk("AGC2 gain is: %d\n", tuner_reg[1]);
-	if (tuner_reg[1] < 1)
+	dprपूर्णांकk("AGC2 gain is: %d\n", tuner_reg[1]);
+	अगर (tuner_reg[1] < 1)
 		tda827xa_lna_gain(fe, 0, params);
 
 	msleep(100);
@@ -740,77 +741,77 @@ static int tda827xa_set_analog_params(struct dvb_frontend *fe,
 
 	priv->frequency = params->frequency;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tda827xa_agcf(struct dvb_frontend *fe)
-{
-	struct tda827x_priv *priv = fe->tuner_priv;
-	unsigned char data[] = {0x80, 0x2c};
-	struct i2c_msg msg = {.addr = priv->i2c_addr, .flags = 0,
-			      .buf = data, .len = 2};
+अटल व्योम tda827xa_agcf(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर data[] = अणु0x80, 0x2cपूर्ण;
+	काष्ठा i2c_msg msg = अणु.addr = priv->i2c_addr, .flags = 0,
+			      .buf = data, .len = 2पूर्ण;
 	tuner_transfer(fe, &msg, 1);
-}
+पूर्ण
 
 /* ------------------------------------------------------------------ */
 
-static void tda827x_release(struct dvb_frontend *fe)
-{
-	kfree(fe->tuner_priv);
-	fe->tuner_priv = NULL;
-}
+अटल व्योम tda827x_release(काष्ठा dvb_frontend *fe)
+अणु
+	kमुक्त(fe->tuner_priv);
+	fe->tuner_priv = शून्य;
+पूर्ण
 
-static int tda827x_get_frequency(struct dvb_frontend *fe, u32 *frequency)
-{
-	struct tda827x_priv *priv = fe->tuner_priv;
+अटल पूर्णांक tda827x_get_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
+अणु
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
 	*frequency = priv->frequency;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda827x_get_bandwidth(struct dvb_frontend *fe, u32 *bandwidth)
-{
-	struct tda827x_priv *priv = fe->tuner_priv;
+अटल पूर्णांक tda827x_get_bandwidth(काष्ठा dvb_frontend *fe, u32 *bandwidth)
+अणु
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
 	*bandwidth = priv->bandwidth;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda827x_init(struct dvb_frontend *fe)
-{
-	struct tda827x_priv *priv = fe->tuner_priv;
-	dprintk("%s:\n", __func__);
-	if (priv->cfg && priv->cfg->init)
+अटल पूर्णांक tda827x_init(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	dprपूर्णांकk("%s:\n", __func__);
+	अगर (priv->cfg && priv->cfg->init)
 		priv->cfg->init(fe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda827x_probe_version(struct dvb_frontend *fe);
+अटल पूर्णांक tda827x_probe_version(काष्ठा dvb_frontend *fe);
 
-static int tda827x_initial_init(struct dvb_frontend *fe)
-{
-	int ret;
+अटल पूर्णांक tda827x_initial_init(काष्ठा dvb_frontend *fe)
+अणु
+	पूर्णांक ret;
 	ret = tda827x_probe_version(fe);
-	if (ret)
-		return ret;
-	return fe->ops.tuner_ops.init(fe);
-}
+	अगर (ret)
+		वापस ret;
+	वापस fe->ops.tuner_ops.init(fe);
+पूर्ण
 
-static int tda827x_initial_sleep(struct dvb_frontend *fe)
-{
-	int ret;
+अटल पूर्णांक tda827x_initial_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	पूर्णांक ret;
 	ret = tda827x_probe_version(fe);
-	if (ret)
-		return ret;
-	return fe->ops.tuner_ops.sleep(fe);
-}
+	अगर (ret)
+		वापस ret;
+	वापस fe->ops.tuner_ops.sleep(fe);
+पूर्ण
 
-static const struct dvb_tuner_ops tda827xo_tuner_ops = {
-	.info = {
+अटल स्थिर काष्ठा dvb_tuner_ops tda827xo_tuner_ops = अणु
+	.info = अणु
 		.name = "Philips TDA827X",
 		.frequency_min_hz  =  55 * MHz,
 		.frequency_max_hz  = 860 * MHz,
 		.frequency_step_hz = 250 * kHz
-	},
+	पूर्ण,
 	.release = tda827x_release,
 	.init = tda827x_initial_init,
 	.sleep = tda827x_initial_sleep,
@@ -818,15 +819,15 @@ static const struct dvb_tuner_ops tda827xo_tuner_ops = {
 	.set_analog_params = tda827xo_set_analog_params,
 	.get_frequency = tda827x_get_frequency,
 	.get_bandwidth = tda827x_get_bandwidth,
-};
+पूर्ण;
 
-static const struct dvb_tuner_ops tda827xa_tuner_ops = {
-	.info = {
+अटल स्थिर काष्ठा dvb_tuner_ops tda827xa_tuner_ops = अणु
+	.info = अणु
 		.name = "Philips TDA827XA",
 		.frequency_min_hz  =  44 * MHz,
 		.frequency_max_hz  = 906 * MHz,
 		.frequency_step_hz = 62500
-	},
+	पूर्ण,
 	.release = tda827x_release,
 	.init = tda827x_init,
 	.sleep = tda827xa_sleep,
@@ -834,59 +835,59 @@ static const struct dvb_tuner_ops tda827xa_tuner_ops = {
 	.set_analog_params = tda827xa_set_analog_params,
 	.get_frequency = tda827x_get_frequency,
 	.get_bandwidth = tda827x_get_bandwidth,
-};
+पूर्ण;
 
-static int tda827x_probe_version(struct dvb_frontend *fe)
-{
+अटल पूर्णांक tda827x_probe_version(काष्ठा dvb_frontend *fe)
+अणु
 	u8 data;
-	int rc;
-	struct tda827x_priv *priv = fe->tuner_priv;
-	struct i2c_msg msg = { .addr = priv->i2c_addr, .flags = I2C_M_RD,
-			       .buf = &data, .len = 1 };
+	पूर्णांक rc;
+	काष्ठा tda827x_priv *priv = fe->tuner_priv;
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_addr, .flags = I2C_M_RD,
+			       .buf = &data, .len = 1 पूर्ण;
 
 	rc = tuner_transfer(fe, &msg, 1);
 
-	if (rc < 0) {
-		printk("%s: could not read from tuner at addr: 0x%02x\n",
+	अगर (rc < 0) अणु
+		prपूर्णांकk("%s: could not read from tuner at addr: 0x%02x\n",
 		       __func__, msg.addr << 1);
-		return rc;
-	}
-	if ((data & 0x3c) == 0) {
-		dprintk("tda827x tuner found\n");
+		वापस rc;
+	पूर्ण
+	अगर ((data & 0x3c) == 0) अणु
+		dprपूर्णांकk("tda827x tuner found\n");
 		fe->ops.tuner_ops.init  = tda827x_init;
 		fe->ops.tuner_ops.sleep = tda827xo_sleep;
-		if (priv->cfg)
+		अगर (priv->cfg)
 			priv->cfg->agcf = tda827xo_agcf;
-	} else {
-		dprintk("tda827xa tuner found\n");
-		memcpy(&fe->ops.tuner_ops, &tda827xa_tuner_ops, sizeof(struct dvb_tuner_ops));
-		if (priv->cfg)
+	पूर्ण अन्यथा अणु
+		dprपूर्णांकk("tda827xa tuner found\n");
+		स_नकल(&fe->ops.tuner_ops, &tda827xa_tuner_ops, माप(काष्ठा dvb_tuner_ops));
+		अगर (priv->cfg)
 			priv->cfg->agcf = tda827xa_agcf;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-struct dvb_frontend *tda827x_attach(struct dvb_frontend *fe, int addr,
-				    struct i2c_adapter *i2c,
-				    struct tda827x_config *cfg)
-{
-	struct tda827x_priv *priv = NULL;
+काष्ठा dvb_frontend *tda827x_attach(काष्ठा dvb_frontend *fe, पूर्णांक addr,
+				    काष्ठा i2c_adapter *i2c,
+				    काष्ठा tda827x_config *cfg)
+अणु
+	काष्ठा tda827x_priv *priv = शून्य;
 
-	dprintk("%s:\n", __func__);
-	priv = kzalloc(sizeof(struct tda827x_priv), GFP_KERNEL);
-	if (priv == NULL)
-		return NULL;
+	dprपूर्णांकk("%s:\n", __func__);
+	priv = kzalloc(माप(काष्ठा tda827x_priv), GFP_KERNEL);
+	अगर (priv == शून्य)
+		वापस शून्य;
 
 	priv->i2c_addr = addr;
 	priv->i2c_adap = i2c;
 	priv->cfg = cfg;
-	memcpy(&fe->ops.tuner_ops, &tda827xo_tuner_ops, sizeof(struct dvb_tuner_ops));
+	स_नकल(&fe->ops.tuner_ops, &tda827xo_tuner_ops, माप(काष्ठा dvb_tuner_ops));
 	fe->tuner_priv = priv;
 
-	dprintk("type set to %s\n", fe->ops.tuner_ops.info.name);
+	dprपूर्णांकk("type set to %s\n", fe->ops.tuner_ops.info.name);
 
-	return fe;
-}
+	वापस fe;
+पूर्ण
 EXPORT_SYMBOL_GPL(tda827x_attach);
 
 MODULE_DESCRIPTION("DVB TDA827x driver");

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * ipmi_devintf.c
+ * ipmi_devपूर्णांकf.c
  *
- * Linux device interface for the IPMI message handler.
+ * Linux device पूर्णांकerface क्रम the IPMI message handler.
  *
  * Author: MontaVista Software, Inc.
  *         Corey Minyard <minyard@mvista.com>
@@ -11,233 +12,233 @@
  * Copyright 2002 MontaVista Software Inc.
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/errno.h>
-#include <linux/poll.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/ipmi.h>
-#include <linux/mutex.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/compat.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/poll.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ipmi.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/compat.h>
 
-struct ipmi_file_private
-{
-	struct ipmi_user     *user;
+काष्ठा ipmi_file_निजी
+अणु
+	काष्ठा ipmi_user     *user;
 	spinlock_t           recv_msg_lock;
-	struct list_head     recv_msgs;
-	struct fasync_struct *fasync_queue;
-	wait_queue_head_t    wait;
-	struct mutex	     recv_mutex;
-	int                  default_retries;
-	unsigned int         default_retry_time_ms;
-};
+	काष्ठा list_head     recv_msgs;
+	काष्ठा fasync_काष्ठा *fasync_queue;
+	रुको_queue_head_t    रुको;
+	काष्ठा mutex	     recv_mutex;
+	पूर्णांक                  शेष_retries;
+	अचिन्हित पूर्णांक         शेष_retry_समय_ms;
+पूर्ण;
 
-static void file_receive_handler(struct ipmi_recv_msg *msg,
-				 void                 *handler_data)
-{
-	struct ipmi_file_private *priv = handler_data;
-	int                      was_empty;
-	unsigned long            flags;
+अटल व्योम file_receive_handler(काष्ठा ipmi_recv_msg *msg,
+				 व्योम                 *handler_data)
+अणु
+	काष्ठा ipmi_file_निजी *priv = handler_data;
+	पूर्णांक                      was_empty;
+	अचिन्हित दीर्घ            flags;
 
 	spin_lock_irqsave(&priv->recv_msg_lock, flags);
 	was_empty = list_empty(&priv->recv_msgs);
 	list_add_tail(&msg->link, &priv->recv_msgs);
 	spin_unlock_irqrestore(&priv->recv_msg_lock, flags);
 
-	if (was_empty) {
-		wake_up_interruptible(&priv->wait);
-		kill_fasync(&priv->fasync_queue, SIGIO, POLL_IN);
-	}
-}
+	अगर (was_empty) अणु
+		wake_up_पूर्णांकerruptible(&priv->रुको);
+		समाप्त_fasync(&priv->fasync_queue, SIGIO, POLL_IN);
+	पूर्ण
+पूर्ण
 
-static __poll_t ipmi_poll(struct file *file, poll_table *wait)
-{
-	struct ipmi_file_private *priv = file->private_data;
+अटल __poll_t ipmi_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा ipmi_file_निजी *priv = file->निजी_data;
 	__poll_t             mask = 0;
-	unsigned long            flags;
+	अचिन्हित दीर्घ            flags;
 
-	poll_wait(file, &priv->wait, wait);
+	poll_रुको(file, &priv->रुको, रुको);
 
 	spin_lock_irqsave(&priv->recv_msg_lock, flags);
 
-	if (!list_empty(&priv->recv_msgs))
+	अगर (!list_empty(&priv->recv_msgs))
 		mask |= (EPOLLIN | EPOLLRDNORM);
 
 	spin_unlock_irqrestore(&priv->recv_msg_lock, flags);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int ipmi_fasync(int fd, struct file *file, int on)
-{
-	struct ipmi_file_private *priv = file->private_data;
+अटल पूर्णांक ipmi_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
+अणु
+	काष्ठा ipmi_file_निजी *priv = file->निजी_data;
 
-	return fasync_helper(fd, file, on, &priv->fasync_queue);
-}
+	वापस fasync_helper(fd, file, on, &priv->fasync_queue);
+पूर्ण
 
-static const struct ipmi_user_hndl ipmi_hndlrs =
-{
+अटल स्थिर काष्ठा ipmi_user_hndl ipmi_hndlrs =
+अणु
 	.ipmi_recv_hndl	= file_receive_handler,
-};
+पूर्ण;
 
-static int ipmi_open(struct inode *inode, struct file *file)
-{
-	int                      if_num = iminor(inode);
-	int                      rv;
-	struct ipmi_file_private *priv;
+अटल पूर्णांक ipmi_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक                      अगर_num = iminor(inode);
+	पूर्णांक                      rv;
+	काष्ठा ipmi_file_निजी *priv;
 
-	priv = kmalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kदो_स्मृति(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	rv = ipmi_create_user(if_num,
+	rv = ipmi_create_user(अगर_num,
 			      &ipmi_hndlrs,
 			      priv,
 			      &priv->user);
-	if (rv) {
-		kfree(priv);
-		goto out;
-	}
+	अगर (rv) अणु
+		kमुक्त(priv);
+		जाओ out;
+	पूर्ण
 
-	file->private_data = priv;
+	file->निजी_data = priv;
 
 	spin_lock_init(&priv->recv_msg_lock);
 	INIT_LIST_HEAD(&priv->recv_msgs);
-	init_waitqueue_head(&priv->wait);
-	priv->fasync_queue = NULL;
+	init_रुकोqueue_head(&priv->रुको);
+	priv->fasync_queue = शून्य;
 	mutex_init(&priv->recv_mutex);
 
-	/* Use the low-level defaults. */
-	priv->default_retries = -1;
-	priv->default_retry_time_ms = 0;
+	/* Use the low-level शेषs. */
+	priv->शेष_retries = -1;
+	priv->शेष_retry_समय_ms = 0;
 
 out:
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int ipmi_release(struct inode *inode, struct file *file)
-{
-	struct ipmi_file_private *priv = file->private_data;
-	int                      rv;
-	struct ipmi_recv_msg *msg, *next;
+अटल पूर्णांक ipmi_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा ipmi_file_निजी *priv = file->निजी_data;
+	पूर्णांक                      rv;
+	काष्ठा ipmi_recv_msg *msg, *next;
 
 	rv = ipmi_destroy_user(priv->user);
-	if (rv)
-		return rv;
+	अगर (rv)
+		वापस rv;
 
-	list_for_each_entry_safe(msg, next, &priv->recv_msgs, link)
-		ipmi_free_recv_msg(msg);
+	list_क्रम_each_entry_safe(msg, next, &priv->recv_msgs, link)
+		ipmi_मुक्त_recv_msg(msg);
 
-	kfree(priv);
+	kमुक्त(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int handle_send_req(struct ipmi_user *user,
-			   struct ipmi_req *req,
-			   int             retries,
-			   unsigned int    retry_time_ms)
-{
-	int              rv;
-	struct ipmi_addr addr;
-	struct kernel_ipmi_msg msg;
+अटल पूर्णांक handle_send_req(काष्ठा ipmi_user *user,
+			   काष्ठा ipmi_req *req,
+			   पूर्णांक             retries,
+			   अचिन्हित पूर्णांक    retry_समय_ms)
+अणु
+	पूर्णांक              rv;
+	काष्ठा ipmi_addr addr;
+	काष्ठा kernel_ipmi_msg msg;
 
-	if (req->addr_len > sizeof(struct ipmi_addr))
-		return -EINVAL;
+	अगर (req->addr_len > माप(काष्ठा ipmi_addr))
+		वापस -EINVAL;
 
-	if (copy_from_user(&addr, req->addr, req->addr_len))
-		return -EFAULT;
+	अगर (copy_from_user(&addr, req->addr, req->addr_len))
+		वापस -EFAULT;
 
 	msg.netfn = req->msg.netfn;
 	msg.cmd = req->msg.cmd;
 	msg.data_len = req->msg.data_len;
-	msg.data = kmalloc(IPMI_MAX_MSG_LENGTH, GFP_KERNEL);
-	if (!msg.data)
-		return -ENOMEM;
+	msg.data = kदो_स्मृति(IPMI_MAX_MSG_LENGTH, GFP_KERNEL);
+	अगर (!msg.data)
+		वापस -ENOMEM;
 
-	/* From here out we cannot return, we must jump to "out" for
-	   error exits to free msgdata. */
+	/* From here out we cannot वापस, we must jump to "out" क्रम
+	   error निकासs to मुक्त msgdata. */
 
 	rv = ipmi_validate_addr(&addr, req->addr_len);
-	if (rv)
-		goto out;
+	अगर (rv)
+		जाओ out;
 
-	if (req->msg.data != NULL) {
-		if (req->msg.data_len > IPMI_MAX_MSG_LENGTH) {
+	अगर (req->msg.data != शून्य) अणु
+		अगर (req->msg.data_len > IPMI_MAX_MSG_LENGTH) अणु
 			rv = -EMSGSIZE;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (copy_from_user(msg.data,
+		अगर (copy_from_user(msg.data,
 				   req->msg.data,
-				   req->msg.data_len)) {
+				   req->msg.data_len)) अणु
 			rv = -EFAULT;
-			goto out;
-		}
-	} else {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		msg.data_len = 0;
-	}
+	पूर्ण
 
-	rv = ipmi_request_settime(user,
+	rv = ipmi_request_समय_रखो(user,
 				  &addr,
 				  req->msgid,
 				  &msg,
-				  NULL,
+				  शून्य,
 				  0,
 				  retries,
-				  retry_time_ms);
+				  retry_समय_ms);
  out:
-	kfree(msg.data);
-	return rv;
-}
+	kमुक्त(msg.data);
+	वापस rv;
+पूर्ण
 
-static int handle_recv(struct ipmi_file_private *priv,
-			bool trunc, struct ipmi_recv *rsp,
-			int (*copyout)(struct ipmi_recv *, void __user *),
-			void __user *to)
-{
-	int              addr_len;
-	struct list_head *entry;
-	struct ipmi_recv_msg  *msg;
-	unsigned long    flags;
-	int rv = 0, rv2 = 0;
+अटल पूर्णांक handle_recv(काष्ठा ipmi_file_निजी *priv,
+			bool trunc, काष्ठा ipmi_recv *rsp,
+			पूर्णांक (*copyout)(काष्ठा ipmi_recv *, व्योम __user *),
+			व्योम __user *to)
+अणु
+	पूर्णांक              addr_len;
+	काष्ठा list_head *entry;
+	काष्ठा ipmi_recv_msg  *msg;
+	अचिन्हित दीर्घ    flags;
+	पूर्णांक rv = 0, rv2 = 0;
 
-	/* We claim a mutex because we don't want two
-	   users getting something from the queue at a time.
-	   Since we have to release the spinlock before we can
+	/* We claim a mutex because we करोn't want two
+	   users getting something from the queue at a समय.
+	   Since we have to release the spinlock beक्रमe we can
 	   copy the data to the user, it's possible another
 	   user will grab something from the queue, too.  Then
-	   the messages might get out of order if something
-	   fails and the message gets put back onto the
+	   the messages might get out of order अगर something
+	   fails and the message माला_लो put back onto the
 	   queue.  This mutex prevents that problem. */
 	mutex_lock(&priv->recv_mutex);
 
 	/* Grab the message off the list. */
 	spin_lock_irqsave(&priv->recv_msg_lock, flags);
-	if (list_empty(&(priv->recv_msgs))) {
+	अगर (list_empty(&(priv->recv_msgs))) अणु
 		spin_unlock_irqrestore(&priv->recv_msg_lock, flags);
 		rv = -EAGAIN;
-		goto recv_err;
-	}
+		जाओ recv_err;
+	पूर्ण
 	entry = priv->recv_msgs.next;
-	msg = list_entry(entry, struct ipmi_recv_msg, link);
+	msg = list_entry(entry, काष्ठा ipmi_recv_msg, link);
 	list_del(entry);
 	spin_unlock_irqrestore(&priv->recv_msg_lock, flags);
 
 	addr_len = ipmi_addr_length(msg->addr.addr_type);
-	if (rsp->addr_len < addr_len) {
+	अगर (rsp->addr_len < addr_len) अणु
 		rv = -EINVAL;
-		goto recv_putback_on_err;
-	}
+		जाओ recv_putback_on_err;
+	पूर्ण
 
-	if (copy_to_user(rsp->addr, &msg->addr, addr_len)) {
+	अगर (copy_to_user(rsp->addr, &msg->addr, addr_len)) अणु
 		rv = -EFAULT;
-		goto recv_putback_on_err;
-	}
+		जाओ recv_putback_on_err;
+	पूर्ण
 	rsp->addr_len = addr_len;
 
 	rsp->recv_type = msg->recv_type;
@@ -245,33 +246,33 @@ static int handle_recv(struct ipmi_file_private *priv,
 	rsp->msg.netfn = msg->msg.netfn;
 	rsp->msg.cmd = msg->msg.cmd;
 
-	if (msg->msg.data_len > 0) {
-		if (rsp->msg.data_len < msg->msg.data_len) {
+	अगर (msg->msg.data_len > 0) अणु
+		अगर (rsp->msg.data_len < msg->msg.data_len) अणु
 			rv2 = -EMSGSIZE;
-			if (trunc)
+			अगर (trunc)
 				msg->msg.data_len = rsp->msg.data_len;
-			else
-				goto recv_putback_on_err;
-		}
+			अन्यथा
+				जाओ recv_putback_on_err;
+		पूर्ण
 
-		if (copy_to_user(rsp->msg.data,
+		अगर (copy_to_user(rsp->msg.data,
 				 msg->msg.data,
-				 msg->msg.data_len)) {
+				 msg->msg.data_len)) अणु
 			rv = -EFAULT;
-			goto recv_putback_on_err;
-		}
+			जाओ recv_putback_on_err;
+		पूर्ण
 		rsp->msg.data_len = msg->msg.data_len;
-	} else {
+	पूर्ण अन्यथा अणु
 		rsp->msg.data_len = 0;
-	}
+	पूर्ण
 
 	rv = copyout(rsp, to);
-	if (rv)
-		goto recv_putback_on_err;
+	अगर (rv)
+		जाओ recv_putback_on_err;
 
 	mutex_unlock(&priv->recv_mutex);
-	ipmi_free_recv_msg(msg);
-	return rv2;
+	ipmi_मुक्त_recv_msg(msg);
+	वापस rv2;
 
 recv_putback_on_err:
 	/* If we got an error, put the message back onto
@@ -281,425 +282,425 @@ recv_putback_on_err:
 	spin_unlock_irqrestore(&priv->recv_msg_lock, flags);
 recv_err:
 	mutex_unlock(&priv->recv_mutex);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int copyout_recv(struct ipmi_recv *rsp, void __user *to)
-{
-	return copy_to_user(to, rsp, sizeof(struct ipmi_recv)) ? -EFAULT : 0;
-}
+अटल पूर्णांक copyout_recv(काष्ठा ipmi_recv *rsp, व्योम __user *to)
+अणु
+	वापस copy_to_user(to, rsp, माप(काष्ठा ipmi_recv)) ? -EFAULT : 0;
+पूर्ण
 
-static long ipmi_ioctl(struct file   *file,
-		       unsigned int  cmd,
-		       unsigned long data)
-{
-	int                      rv = -EINVAL;
-	struct ipmi_file_private *priv = file->private_data;
-	void __user *arg = (void __user *)data;
+अटल दीर्घ ipmi_ioctl(काष्ठा file   *file,
+		       अचिन्हित पूर्णांक  cmd,
+		       अचिन्हित दीर्घ data)
+अणु
+	पूर्णांक                      rv = -EINVAL;
+	काष्ठा ipmi_file_निजी *priv = file->निजी_data;
+	व्योम __user *arg = (व्योम __user *)data;
 
-	switch (cmd) 
-	{
-	case IPMICTL_SEND_COMMAND:
-	{
-		struct ipmi_req req;
-		int retries;
-		unsigned int retry_time_ms;
+	चयन (cmd) 
+	अणु
+	हाल IPMICTL_SEND_COMMAND:
+	अणु
+		काष्ठा ipmi_req req;
+		पूर्णांक retries;
+		अचिन्हित पूर्णांक retry_समय_ms;
 
-		if (copy_from_user(&req, arg, sizeof(req))) {
+		अगर (copy_from_user(&req, arg, माप(req))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mutex_lock(&priv->recv_mutex);
-		retries = priv->default_retries;
-		retry_time_ms = priv->default_retry_time_ms;
+		retries = priv->शेष_retries;
+		retry_समय_ms = priv->शेष_retry_समय_ms;
 		mutex_unlock(&priv->recv_mutex);
 
-		rv = handle_send_req(priv->user, &req, retries, retry_time_ms);
-		break;
-	}
+		rv = handle_send_req(priv->user, &req, retries, retry_समय_ms);
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_SEND_COMMAND_SETTIME:
-	{
-		struct ipmi_req_settime req;
+	हाल IPMICTL_SEND_COMMAND_SETTIME:
+	अणु
+		काष्ठा ipmi_req_समय_रखो req;
 
-		if (copy_from_user(&req, arg, sizeof(req))) {
+		अगर (copy_from_user(&req, arg, माप(req))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rv = handle_send_req(priv->user,
 				     &req.req,
 				     req.retries,
-				     req.retry_time_ms);
-		break;
-	}
+				     req.retry_समय_ms);
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_RECEIVE_MSG:
-	case IPMICTL_RECEIVE_MSG_TRUNC:
-	{
-		struct ipmi_recv      rsp;
+	हाल IPMICTL_RECEIVE_MSG:
+	हाल IPMICTL_RECEIVE_MSG_TRUNC:
+	अणु
+		काष्ठा ipmi_recv      rsp;
 
-		if (copy_from_user(&rsp, arg, sizeof(rsp)))
+		अगर (copy_from_user(&rsp, arg, माप(rsp)))
 			rv = -EFAULT;
-		else
+		अन्यथा
 			rv = handle_recv(priv, cmd == IPMICTL_RECEIVE_MSG_TRUNC,
 					 &rsp, copyout_recv, arg);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_REGISTER_FOR_CMD:
-	{
-		struct ipmi_cmdspec val;
+	हाल IPMICTL_REGISTER_FOR_CMD:
+	अणु
+		काष्ठा ipmi_cmdspec val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		rv = ipmi_register_for_cmd(priv->user, val.netfn, val.cmd,
+		rv = ipmi_रेजिस्टर_क्रम_cmd(priv->user, val.netfn, val.cmd,
 					   IPMI_CHAN_ALL);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_UNREGISTER_FOR_CMD:
-	{
-		struct ipmi_cmdspec   val;
+	हाल IPMICTL_UNREGISTER_FOR_CMD:
+	अणु
+		काष्ठा ipmi_cmdspec   val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		rv = ipmi_unregister_for_cmd(priv->user, val.netfn, val.cmd,
+		rv = ipmi_unरेजिस्टर_क्रम_cmd(priv->user, val.netfn, val.cmd,
 					     IPMI_CHAN_ALL);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_REGISTER_FOR_CMD_CHANS:
-	{
-		struct ipmi_cmdspec_chans val;
+	हाल IPMICTL_REGISTER_FOR_CMD_CHANS:
+	अणु
+		काष्ठा ipmi_cmdspec_chans val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		rv = ipmi_register_for_cmd(priv->user, val.netfn, val.cmd,
+		rv = ipmi_रेजिस्टर_क्रम_cmd(priv->user, val.netfn, val.cmd,
 					   val.chans);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_UNREGISTER_FOR_CMD_CHANS:
-	{
-		struct ipmi_cmdspec_chans val;
+	हाल IPMICTL_UNREGISTER_FOR_CMD_CHANS:
+	अणु
+		काष्ठा ipmi_cmdspec_chans val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		rv = ipmi_unregister_for_cmd(priv->user, val.netfn, val.cmd,
+		rv = ipmi_unरेजिस्टर_क्रम_cmd(priv->user, val.netfn, val.cmd,
 					     val.chans);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_SET_GETS_EVENTS_CMD:
-	{
-		int val;
+	हाल IPMICTL_SET_GETS_EVENTS_CMD:
+	अणु
+		पूर्णांक val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		rv = ipmi_set_gets_events(priv->user, val);
-		break;
-	}
+		rv = ipmi_set_माला_लो_events(priv->user, val);
+		अवरोध;
+	पूर्ण
 
 	/* The next four are legacy, not per-channel. */
-	case IPMICTL_SET_MY_ADDRESS_CMD:
-	{
-		unsigned int val;
+	हाल IPMICTL_SET_MY_ADDRESS_CMD:
+	अणु
+		अचिन्हित पूर्णांक val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rv = ipmi_set_my_address(priv->user, 0, val);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_GET_MY_ADDRESS_CMD:
-	{
-		unsigned int  val;
-		unsigned char rval;
+	हाल IPMICTL_GET_MY_ADDRESS_CMD:
+	अणु
+		अचिन्हित पूर्णांक  val;
+		अचिन्हित अक्षर rval;
 
 		rv = ipmi_get_my_address(priv->user, 0, &rval);
-		if (rv)
-			break;
+		अगर (rv)
+			अवरोध;
 
 		val = rval;
 
-		if (copy_to_user(arg, &val, sizeof(val))) {
+		अगर (copy_to_user(arg, &val, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_SET_MY_LUN_CMD:
-	{
-		unsigned int val;
+	हाल IPMICTL_SET_MY_LUN_CMD:
+	अणु
+		अचिन्हित पूर्णांक val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rv = ipmi_set_my_LUN(priv->user, 0, val);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_GET_MY_LUN_CMD:
-	{
-		unsigned int  val;
-		unsigned char rval;
+	हाल IPMICTL_GET_MY_LUN_CMD:
+	अणु
+		अचिन्हित पूर्णांक  val;
+		अचिन्हित अक्षर rval;
 
 		rv = ipmi_get_my_LUN(priv->user, 0, &rval);
-		if (rv)
-			break;
+		अगर (rv)
+			अवरोध;
 
 		val = rval;
 
-		if (copy_to_user(arg, &val, sizeof(val))) {
+		अगर (copy_to_user(arg, &val, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_SET_MY_CHANNEL_ADDRESS_CMD:
-	{
-		struct ipmi_channel_lun_address_set val;
+	हाल IPMICTL_SET_MY_CHANNEL_ADDRESS_CMD:
+	अणु
+		काष्ठा ipmi_channel_lun_address_set val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		return ipmi_set_my_address(priv->user, val.channel, val.value);
-	}
+		वापस ipmi_set_my_address(priv->user, val.channel, val.value);
+	पूर्ण
 
-	case IPMICTL_GET_MY_CHANNEL_ADDRESS_CMD:
-	{
-		struct ipmi_channel_lun_address_set val;
+	हाल IPMICTL_GET_MY_CHANNEL_ADDRESS_CMD:
+	अणु
+		काष्ठा ipmi_channel_lun_address_set val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rv = ipmi_get_my_address(priv->user, val.channel, &val.value);
-		if (rv)
-			break;
+		अगर (rv)
+			अवरोध;
 
-		if (copy_to_user(arg, &val, sizeof(val))) {
+		अगर (copy_to_user(arg, &val, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_SET_MY_CHANNEL_LUN_CMD:
-	{
-		struct ipmi_channel_lun_address_set val;
+	हाल IPMICTL_SET_MY_CHANNEL_LUN_CMD:
+	अणु
+		काष्ठा ipmi_channel_lun_address_set val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rv = ipmi_set_my_LUN(priv->user, val.channel, val.value);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_GET_MY_CHANNEL_LUN_CMD:
-	{
-		struct ipmi_channel_lun_address_set val;
+	हाल IPMICTL_GET_MY_CHANNEL_LUN_CMD:
+	अणु
+		काष्ठा ipmi_channel_lun_address_set val;
 
-		if (copy_from_user(&val, arg, sizeof(val))) {
+		अगर (copy_from_user(&val, arg, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rv = ipmi_get_my_LUN(priv->user, val.channel, &val.value);
-		if (rv)
-			break;
+		अगर (rv)
+			अवरोध;
 
-		if (copy_to_user(arg, &val, sizeof(val))) {
+		अगर (copy_to_user(arg, &val, माप(val))) अणु
 			rv = -EFAULT;
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_SET_TIMING_PARMS_CMD:
-	{
-		struct ipmi_timing_parms parms;
+	हाल IPMICTL_SET_TIMING_PARMS_CMD:
+	अणु
+		काष्ठा ipmi_timing_parms parms;
 
-		if (copy_from_user(&parms, arg, sizeof(parms))) {
+		अगर (copy_from_user(&parms, arg, माप(parms))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mutex_lock(&priv->recv_mutex);
-		priv->default_retries = parms.retries;
-		priv->default_retry_time_ms = parms.retry_time_ms;
+		priv->शेष_retries = parms.retries;
+		priv->शेष_retry_समय_ms = parms.retry_समय_ms;
 		mutex_unlock(&priv->recv_mutex);
 		rv = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_GET_TIMING_PARMS_CMD:
-	{
-		struct ipmi_timing_parms parms;
+	हाल IPMICTL_GET_TIMING_PARMS_CMD:
+	अणु
+		काष्ठा ipmi_timing_parms parms;
 
 		mutex_lock(&priv->recv_mutex);
-		parms.retries = priv->default_retries;
-		parms.retry_time_ms = priv->default_retry_time_ms;
+		parms.retries = priv->शेष_retries;
+		parms.retry_समय_ms = priv->शेष_retry_समय_ms;
 		mutex_unlock(&priv->recv_mutex);
 
-		if (copy_to_user(arg, &parms, sizeof(parms))) {
+		अगर (copy_to_user(arg, &parms, माप(parms))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rv = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_GET_MAINTENANCE_MODE_CMD:
-	{
-		int mode;
+	हाल IPMICTL_GET_MAINTEन_अंकCE_MODE_CMD:
+	अणु
+		पूर्णांक mode;
 
-		mode = ipmi_get_maintenance_mode(priv->user);
-		if (copy_to_user(arg, &mode, sizeof(mode))) {
+		mode = ipmi_get_मुख्यtenance_mode(priv->user);
+		अगर (copy_to_user(arg, &mode, माप(mode))) अणु
 			rv = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		rv = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case IPMICTL_SET_MAINTENANCE_MODE_CMD:
-	{
-		int mode;
+	हाल IPMICTL_SET_MAINTEन_अंकCE_MODE_CMD:
+	अणु
+		पूर्णांक mode;
 
-		if (copy_from_user(&mode, arg, sizeof(mode))) {
+		अगर (copy_from_user(&mode, arg, माप(mode))) अणु
 			rv = -EFAULT;
-			break;
-		}
-		rv = ipmi_set_maintenance_mode(priv->user, mode);
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		rv = ipmi_set_मुख्यtenance_mode(priv->user, mode);
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		rv = -ENOTTY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
   
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 /*
- * The following code contains code for supporting 32-bit compatible
+ * The following code contains code क्रम supporting 32-bit compatible
  * ioctls on 64-bit kernels.  This allows running 32-bit apps on the
  * 64-bit kernel
  */
-#define COMPAT_IPMICTL_SEND_COMMAND	\
-	_IOR(IPMI_IOC_MAGIC, 13, struct compat_ipmi_req)
-#define COMPAT_IPMICTL_SEND_COMMAND_SETTIME	\
-	_IOR(IPMI_IOC_MAGIC, 21, struct compat_ipmi_req_settime)
-#define COMPAT_IPMICTL_RECEIVE_MSG	\
-	_IOWR(IPMI_IOC_MAGIC, 12, struct compat_ipmi_recv)
-#define COMPAT_IPMICTL_RECEIVE_MSG_TRUNC	\
-	_IOWR(IPMI_IOC_MAGIC, 11, struct compat_ipmi_recv)
+#घोषणा COMPAT_IPMICTL_SEND_COMMAND	\
+	_IOR(IPMI_IOC_MAGIC, 13, काष्ठा compat_ipmi_req)
+#घोषणा COMPAT_IPMICTL_SEND_COMMAND_SETTIME	\
+	_IOR(IPMI_IOC_MAGIC, 21, काष्ठा compat_ipmi_req_समय_रखो)
+#घोषणा COMPAT_IPMICTL_RECEIVE_MSG	\
+	_IOWR(IPMI_IOC_MAGIC, 12, काष्ठा compat_ipmi_recv)
+#घोषणा COMPAT_IPMICTL_RECEIVE_MSG_TRUNC	\
+	_IOWR(IPMI_IOC_MAGIC, 11, काष्ठा compat_ipmi_recv)
 
-struct compat_ipmi_msg {
+काष्ठा compat_ipmi_msg अणु
 	u8		netfn;
 	u8		cmd;
 	u16		data_len;
 	compat_uptr_t	data;
-};
+पूर्ण;
 
-struct compat_ipmi_req {
+काष्ठा compat_ipmi_req अणु
 	compat_uptr_t		addr;
-	compat_uint_t		addr_len;
-	compat_long_t		msgid;
-	struct compat_ipmi_msg	msg;
-};
+	compat_uपूर्णांक_t		addr_len;
+	compat_दीर्घ_t		msgid;
+	काष्ठा compat_ipmi_msg	msg;
+पूर्ण;
 
-struct compat_ipmi_recv {
-	compat_int_t		recv_type;
+काष्ठा compat_ipmi_recv अणु
+	compat_पूर्णांक_t		recv_type;
 	compat_uptr_t		addr;
-	compat_uint_t		addr_len;
-	compat_long_t		msgid;
-	struct compat_ipmi_msg	msg;
-};
+	compat_uपूर्णांक_t		addr_len;
+	compat_दीर्घ_t		msgid;
+	काष्ठा compat_ipmi_msg	msg;
+पूर्ण;
 
-struct compat_ipmi_req_settime {
-	struct compat_ipmi_req	req;
-	compat_int_t		retries;
-	compat_uint_t		retry_time_ms;
-};
+काष्ठा compat_ipmi_req_समय_रखो अणु
+	काष्ठा compat_ipmi_req	req;
+	compat_पूर्णांक_t		retries;
+	compat_uपूर्णांक_t		retry_समय_ms;
+पूर्ण;
 
 /*
- * Define some helper functions for copying IPMI data
+ * Define some helper functions क्रम copying IPMI data
  */
-static void get_compat_ipmi_msg(struct ipmi_msg *p64,
-				struct compat_ipmi_msg *p32)
-{
+अटल व्योम get_compat_ipmi_msg(काष्ठा ipmi_msg *p64,
+				काष्ठा compat_ipmi_msg *p32)
+अणु
 	p64->netfn = p32->netfn;
 	p64->cmd = p32->cmd;
 	p64->data_len = p32->data_len;
 	p64->data = compat_ptr(p32->data);
-}
+पूर्ण
 
-static void get_compat_ipmi_req(struct ipmi_req *p64,
-				struct compat_ipmi_req *p32)
-{
+अटल व्योम get_compat_ipmi_req(काष्ठा ipmi_req *p64,
+				काष्ठा compat_ipmi_req *p32)
+अणु
 	p64->addr = compat_ptr(p32->addr);
 	p64->addr_len = p32->addr_len;
 	p64->msgid = p32->msgid;
 	get_compat_ipmi_msg(&p64->msg, &p32->msg);
-}
+पूर्ण
 
-static void get_compat_ipmi_req_settime(struct ipmi_req_settime *p64,
-		struct compat_ipmi_req_settime *p32)
-{
+अटल व्योम get_compat_ipmi_req_समय_रखो(काष्ठा ipmi_req_समय_रखो *p64,
+		काष्ठा compat_ipmi_req_समय_रखो *p32)
+अणु
 	get_compat_ipmi_req(&p64->req, &p32->req);
 	p64->retries = p32->retries;
-	p64->retry_time_ms = p32->retry_time_ms;
-}
+	p64->retry_समय_ms = p32->retry_समय_ms;
+पूर्ण
 
-static void get_compat_ipmi_recv(struct ipmi_recv *p64,
-				 struct compat_ipmi_recv *p32)
-{
-	memset(p64, 0, sizeof(struct ipmi_recv));
+अटल व्योम get_compat_ipmi_recv(काष्ठा ipmi_recv *p64,
+				 काष्ठा compat_ipmi_recv *p32)
+अणु
+	स_रखो(p64, 0, माप(काष्ठा ipmi_recv));
 	p64->recv_type = p32->recv_type;
 	p64->addr = compat_ptr(p32->addr);
 	p64->addr_len = p32->addr_len;
 	p64->msgid = p32->msgid;
 	get_compat_ipmi_msg(&p64->msg, &p32->msg);
-}
+पूर्ण
 
-static int copyout_recv32(struct ipmi_recv *p64, void __user *to)
-{
-	struct compat_ipmi_recv v32;
-	memset(&v32, 0, sizeof(struct compat_ipmi_recv));
+अटल पूर्णांक copyout_recv32(काष्ठा ipmi_recv *p64, व्योम __user *to)
+अणु
+	काष्ठा compat_ipmi_recv v32;
+	स_रखो(&v32, 0, माप(काष्ठा compat_ipmi_recv));
 	v32.recv_type = p64->recv_type;
 	v32.addr = ptr_to_compat(p64->addr);
 	v32.addr_len = p64->addr_len;
@@ -708,200 +709,200 @@ static int copyout_recv32(struct ipmi_recv *p64, void __user *to)
 	v32.msg.cmd = p64->msg.cmd;
 	v32.msg.data_len = p64->msg.data_len;
 	v32.msg.data = ptr_to_compat(p64->msg.data);
-	return copy_to_user(to, &v32, sizeof(v32)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(to, &v32, माप(v32)) ? -EFAULT : 0;
+पूर्ण
 
 /*
  * Handle compatibility ioctls
  */
-static long compat_ipmi_ioctl(struct file *filep, unsigned int cmd,
-			      unsigned long arg)
-{
-	struct ipmi_file_private *priv = filep->private_data;
+अटल दीर्घ compat_ipmi_ioctl(काष्ठा file *filep, अचिन्हित पूर्णांक cmd,
+			      अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा ipmi_file_निजी *priv = filep->निजी_data;
 
-	switch(cmd) {
-	case COMPAT_IPMICTL_SEND_COMMAND:
-	{
-		struct ipmi_req	rp;
-		struct compat_ipmi_req r32;
-		int retries;
-		unsigned int retry_time_ms;
+	चयन(cmd) अणु
+	हाल COMPAT_IPMICTL_SEND_COMMAND:
+	अणु
+		काष्ठा ipmi_req	rp;
+		काष्ठा compat_ipmi_req r32;
+		पूर्णांक retries;
+		अचिन्हित पूर्णांक retry_समय_ms;
 
-		if (copy_from_user(&r32, compat_ptr(arg), sizeof(r32)))
-			return -EFAULT;
+		अगर (copy_from_user(&r32, compat_ptr(arg), माप(r32)))
+			वापस -EFAULT;
 
 		get_compat_ipmi_req(&rp, &r32);
 
 		mutex_lock(&priv->recv_mutex);
-		retries = priv->default_retries;
-		retry_time_ms = priv->default_retry_time_ms;
+		retries = priv->शेष_retries;
+		retry_समय_ms = priv->शेष_retry_समय_ms;
 		mutex_unlock(&priv->recv_mutex);
 
-		return handle_send_req(priv->user, &rp,
-				       retries, retry_time_ms);
-	}
-	case COMPAT_IPMICTL_SEND_COMMAND_SETTIME:
-	{
-		struct ipmi_req_settime	sp;
-		struct compat_ipmi_req_settime sp32;
+		वापस handle_send_req(priv->user, &rp,
+				       retries, retry_समय_ms);
+	पूर्ण
+	हाल COMPAT_IPMICTL_SEND_COMMAND_SETTIME:
+	अणु
+		काष्ठा ipmi_req_समय_रखो	sp;
+		काष्ठा compat_ipmi_req_समय_रखो sp32;
 
-		if (copy_from_user(&sp32, compat_ptr(arg), sizeof(sp32)))
-			return -EFAULT;
+		अगर (copy_from_user(&sp32, compat_ptr(arg), माप(sp32)))
+			वापस -EFAULT;
 
-		get_compat_ipmi_req_settime(&sp, &sp32);
+		get_compat_ipmi_req_समय_रखो(&sp, &sp32);
 
-		return handle_send_req(priv->user, &sp.req,
-				sp.retries, sp.retry_time_ms);
-	}
-	case COMPAT_IPMICTL_RECEIVE_MSG:
-	case COMPAT_IPMICTL_RECEIVE_MSG_TRUNC:
-	{
-		struct ipmi_recv   recv64;
-		struct compat_ipmi_recv recv32;
+		वापस handle_send_req(priv->user, &sp.req,
+				sp.retries, sp.retry_समय_ms);
+	पूर्ण
+	हाल COMPAT_IPMICTL_RECEIVE_MSG:
+	हाल COMPAT_IPMICTL_RECEIVE_MSG_TRUNC:
+	अणु
+		काष्ठा ipmi_recv   recv64;
+		काष्ठा compat_ipmi_recv recv32;
 
-		if (copy_from_user(&recv32, compat_ptr(arg), sizeof(recv32)))
-			return -EFAULT;
+		अगर (copy_from_user(&recv32, compat_ptr(arg), माप(recv32)))
+			वापस -EFAULT;
 
 		get_compat_ipmi_recv(&recv64, &recv32);
 
-		return handle_recv(priv,
+		वापस handle_recv(priv,
 				 cmd == COMPAT_IPMICTL_RECEIVE_MSG_TRUNC,
 				 &recv64, copyout_recv32, compat_ptr(arg));
-	}
-	default:
-		return ipmi_ioctl(filep, cmd, arg);
-	}
-}
-#endif
+	पूर्ण
+	शेष:
+		वापस ipmi_ioctl(filep, cmd, arg);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static const struct file_operations ipmi_fops = {
+अटल स्थिर काष्ठा file_operations ipmi_fops = अणु
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= ipmi_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl   = compat_ipmi_ioctl,
-#endif
-	.open		= ipmi_open,
+#पूर्ण_अगर
+	.खोलो		= ipmi_खोलो,
 	.release	= ipmi_release,
 	.fasync		= ipmi_fasync,
 	.poll		= ipmi_poll,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-#define DEVICE_NAME     "ipmidev"
+#घोषणा DEVICE_NAME     "ipmidev"
 
-static int ipmi_major;
-module_param(ipmi_major, int, 0);
+अटल पूर्णांक ipmi_major;
+module_param(ipmi_major, पूर्णांक, 0);
 MODULE_PARM_DESC(ipmi_major, "Sets the major number of the IPMI device.  By"
 		 " default, or if you set it to zero, it will choose the next"
 		 " available device.  Setting it to -1 will disable the"
 		 " interface.  Other values will set the major device number"
 		 " to that value.");
 
-/* Keep track of the devices that are registered. */
-struct ipmi_reg_list {
+/* Keep track of the devices that are रेजिस्टरed. */
+काष्ठा ipmi_reg_list अणु
 	dev_t            dev;
-	struct list_head link;
-};
-static LIST_HEAD(reg_list);
-static DEFINE_MUTEX(reg_list_mutex);
+	काष्ठा list_head link;
+पूर्ण;
+अटल LIST_HEAD(reg_list);
+अटल DEFINE_MUTEX(reg_list_mutex);
 
-static struct class *ipmi_class;
+अटल काष्ठा class *ipmi_class;
 
-static void ipmi_new_smi(int if_num, struct device *device)
-{
-	dev_t dev = MKDEV(ipmi_major, if_num);
-	struct ipmi_reg_list *entry;
+अटल व्योम ipmi_new_smi(पूर्णांक अगर_num, काष्ठा device *device)
+अणु
+	dev_t dev = MKDEV(ipmi_major, अगर_num);
+	काष्ठा ipmi_reg_list *entry;
 
-	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
-	if (!entry) {
+	entry = kदो_स्मृति(माप(*entry), GFP_KERNEL);
+	अगर (!entry) अणु
 		pr_err("ipmi_devintf: Unable to create the ipmi class device link\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	entry->dev = dev;
 
 	mutex_lock(&reg_list_mutex);
-	device_create(ipmi_class, device, dev, NULL, "ipmi%d", if_num);
+	device_create(ipmi_class, device, dev, शून्य, "ipmi%d", अगर_num);
 	list_add(&entry->link, &reg_list);
 	mutex_unlock(&reg_list_mutex);
-}
+पूर्ण
 
-static void ipmi_smi_gone(int if_num)
-{
-	dev_t dev = MKDEV(ipmi_major, if_num);
-	struct ipmi_reg_list *entry;
+अटल व्योम ipmi_smi_gone(पूर्णांक अगर_num)
+अणु
+	dev_t dev = MKDEV(ipmi_major, अगर_num);
+	काष्ठा ipmi_reg_list *entry;
 
 	mutex_lock(&reg_list_mutex);
-	list_for_each_entry(entry, &reg_list, link) {
-		if (entry->dev == dev) {
+	list_क्रम_each_entry(entry, &reg_list, link) अणु
+		अगर (entry->dev == dev) अणु
 			list_del(&entry->link);
-			kfree(entry);
-			break;
-		}
-	}
+			kमुक्त(entry);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	device_destroy(ipmi_class, dev);
 	mutex_unlock(&reg_list_mutex);
-}
+पूर्ण
 
-static struct ipmi_smi_watcher smi_watcher =
-{
+अटल काष्ठा ipmi_smi_watcher smi_watcher =
+अणु
 	.owner    = THIS_MODULE,
 	.new_smi  = ipmi_new_smi,
 	.smi_gone = ipmi_smi_gone,
-};
+पूर्ण;
 
-static int __init init_ipmi_devintf(void)
-{
-	int rv;
+अटल पूर्णांक __init init_ipmi_devपूर्णांकf(व्योम)
+अणु
+	पूर्णांक rv;
 
-	if (ipmi_major < 0)
-		return -EINVAL;
+	अगर (ipmi_major < 0)
+		वापस -EINVAL;
 
 	pr_info("ipmi device interface\n");
 
 	ipmi_class = class_create(THIS_MODULE, "ipmi");
-	if (IS_ERR(ipmi_class)) {
+	अगर (IS_ERR(ipmi_class)) अणु
 		pr_err("ipmi: can't register device class\n");
-		return PTR_ERR(ipmi_class);
-	}
+		वापस PTR_ERR(ipmi_class);
+	पूर्ण
 
-	rv = register_chrdev(ipmi_major, DEVICE_NAME, &ipmi_fops);
-	if (rv < 0) {
+	rv = रेजिस्टर_chrdev(ipmi_major, DEVICE_NAME, &ipmi_fops);
+	अगर (rv < 0) अणु
 		class_destroy(ipmi_class);
 		pr_err("ipmi: can't get major %d\n", ipmi_major);
-		return rv;
-	}
+		वापस rv;
+	पूर्ण
 
-	if (ipmi_major == 0) {
+	अगर (ipmi_major == 0) अणु
 		ipmi_major = rv;
-	}
+	पूर्ण
 
-	rv = ipmi_smi_watcher_register(&smi_watcher);
-	if (rv) {
-		unregister_chrdev(ipmi_major, DEVICE_NAME);
+	rv = ipmi_smi_watcher_रेजिस्टर(&smi_watcher);
+	अगर (rv) अणु
+		unरेजिस्टर_chrdev(ipmi_major, DEVICE_NAME);
 		class_destroy(ipmi_class);
 		pr_warn("ipmi: can't register smi watcher\n");
-		return rv;
-	}
+		वापस rv;
+	पूर्ण
 
-	return 0;
-}
-module_init(init_ipmi_devintf);
+	वापस 0;
+पूर्ण
+module_init(init_ipmi_devपूर्णांकf);
 
-static void __exit cleanup_ipmi(void)
-{
-	struct ipmi_reg_list *entry, *entry2;
+अटल व्योम __निकास cleanup_ipmi(व्योम)
+अणु
+	काष्ठा ipmi_reg_list *entry, *entry2;
 	mutex_lock(&reg_list_mutex);
-	list_for_each_entry_safe(entry, entry2, &reg_list, link) {
+	list_क्रम_each_entry_safe(entry, entry2, &reg_list, link) अणु
 		list_del(&entry->link);
 		device_destroy(ipmi_class, entry->dev);
-		kfree(entry);
-	}
+		kमुक्त(entry);
+	पूर्ण
 	mutex_unlock(&reg_list_mutex);
 	class_destroy(ipmi_class);
-	ipmi_smi_watcher_unregister(&smi_watcher);
-	unregister_chrdev(ipmi_major, DEVICE_NAME);
-}
-module_exit(cleanup_ipmi);
+	ipmi_smi_watcher_unरेजिस्टर(&smi_watcher);
+	unरेजिस्टर_chrdev(ipmi_major, DEVICE_NAME);
+पूर्ण
+module_निकास(cleanup_ipmi);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Corey Minyard <minyard@mvista.com>");

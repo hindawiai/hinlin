@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_KASAN_CHECKS_H
-#define _LINUX_KASAN_CHECKS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_KASAN_CHECKS_H
+#घोषणा _LINUX_KASAN_CHECKS_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
- * The annotations present in this file are only relevant for the software
+ * The annotations present in this file are only relevant क्रम the software
  * KASAN modes that rely on compiler instrumentation, and will be optimized
- * away for the hardware tag-based KASAN mode. Use kasan_check_byte() instead.
+ * away क्रम the hardware tag-based KASAN mode. Use kasan_check_byte() instead.
  */
 
 /*
@@ -15,36 +16,36 @@
  * even in compilation units that selectively disable KASAN, but must use KASAN
  * to validate access to an address.   Never use these in header files!
  */
-#if defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)
-bool __kasan_check_read(const volatile void *p, unsigned int size);
-bool __kasan_check_write(const volatile void *p, unsigned int size);
-#else
-static inline bool __kasan_check_read(const volatile void *p, unsigned int size)
-{
-	return true;
-}
-static inline bool __kasan_check_write(const volatile void *p, unsigned int size)
-{
-	return true;
-}
-#endif
+#अगर defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)
+bool __kasan_check_पढ़ो(स्थिर अस्थिर व्योम *p, अचिन्हित पूर्णांक size);
+bool __kasan_check_ग_लिखो(स्थिर अस्थिर व्योम *p, अचिन्हित पूर्णांक size);
+#अन्यथा
+अटल अंतरभूत bool __kasan_check_पढ़ो(स्थिर अस्थिर व्योम *p, अचिन्हित पूर्णांक size)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत bool __kasan_check_ग_लिखो(स्थिर अस्थिर व्योम *p, अचिन्हित पूर्णांक size)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * kasan_check_*: Only available when the particular compilation unit has KASAN
  * instrumentation enabled. May be used in header files.
  */
-#ifdef __SANITIZE_ADDRESS__
-#define kasan_check_read __kasan_check_read
-#define kasan_check_write __kasan_check_write
-#else
-static inline bool kasan_check_read(const volatile void *p, unsigned int size)
-{
-	return true;
-}
-static inline bool kasan_check_write(const volatile void *p, unsigned int size)
-{
-	return true;
-}
-#endif
+#अगर_घोषित __SANITIZE_ADDRESS__
+#घोषणा kasan_check_पढ़ो __kasan_check_पढ़ो
+#घोषणा kasan_check_ग_लिखो __kasan_check_ग_लिखो
+#अन्यथा
+अटल अंतरभूत bool kasan_check_पढ़ो(स्थिर अस्थिर व्योम *p, अचिन्हित पूर्णांक size)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत bool kasan_check_ग_लिखो(स्थिर अस्थिर व्योम *p, अचिन्हित पूर्णांक size)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

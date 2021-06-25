@@ -1,265 +1,266 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * SMP initialisation and IPI support
  * Based on arch/arm64/kernel/smp.c
  *
  * Copyright (C) 2012 ARM Ltd.
- * Copyright (C) 2015 Regents of the University of California
+ * Copyright (C) 2015 Regents of the University of Calअगरornia
  * Copyright (C) 2017 SiFive
  */
 
-#include <linux/cpu.h>
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/profile.h>
-#include <linux/smp.h>
-#include <linux/sched.h>
-#include <linux/seq_file.h>
-#include <linux/delay.h>
-#include <linux/irq_work.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/profile.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/irq_work.h>
 
-#include <asm/sbi.h>
-#include <asm/tlbflush.h>
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/sbi.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/cacheflush.h>
 
-enum ipi_message_type {
+क्रमागत ipi_message_type अणु
 	IPI_RESCHEDULE,
 	IPI_CALL_FUNC,
 	IPI_CPU_STOP,
 	IPI_IRQ_WORK,
 	IPI_TIMER,
 	IPI_MAX
-};
+पूर्ण;
 
-unsigned long __cpuid_to_hartid_map[NR_CPUS] __ro_after_init = {
+अचिन्हित दीर्घ __cpuid_to_hartid_map[NR_CPUS] __ro_after_init = अणु
 	[0 ... NR_CPUS-1] = INVALID_HARTID
-};
+पूर्ण;
 
-void __init smp_setup_processor_id(void)
-{
+व्योम __init smp_setup_processor_id(व्योम)
+अणु
 	cpuid_to_hartid_map(0) = boot_cpu_hartid;
-}
+पूर्ण
 
 /* A collection of single bit ipi messages.  */
-static struct {
-	unsigned long stats[IPI_MAX] ____cacheline_aligned;
-	unsigned long bits ____cacheline_aligned;
-} ipi_data[NR_CPUS] __cacheline_aligned;
+अटल काष्ठा अणु
+	अचिन्हित दीर्घ stats[IPI_MAX] ____cacheline_aligned;
+	अचिन्हित दीर्घ bits ____cacheline_aligned;
+पूर्ण ipi_data[NR_CPUS] __cacheline_aligned;
 
-int riscv_hartid_to_cpuid(int hartid)
-{
-	int i;
+पूर्णांक riscv_hartid_to_cpuid(पूर्णांक hartid)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NR_CPUS; i++)
-		if (cpuid_to_hartid_map(i) == hartid)
-			return i;
+	क्रम (i = 0; i < NR_CPUS; i++)
+		अगर (cpuid_to_hartid_map(i) == hartid)
+			वापस i;
 
 	pr_err("Couldn't find cpu id for hartid [%d]\n", hartid);
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-void riscv_cpuid_to_hartid_mask(const struct cpumask *in, struct cpumask *out)
-{
-	int cpu;
+व्योम riscv_cpuid_to_hartid_mask(स्थिर काष्ठा cpumask *in, काष्ठा cpumask *out)
+अणु
+	पूर्णांक cpu;
 
 	cpumask_clear(out);
-	for_each_cpu(cpu, in)
+	क्रम_each_cpu(cpu, in)
 		cpumask_set_cpu(cpuid_to_hartid_map(cpu), out);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(riscv_cpuid_to_hartid_mask);
 
-bool arch_match_cpu_phys_id(int cpu, u64 phys_id)
-{
-	return phys_id == cpuid_to_hartid_map(cpu);
-}
+bool arch_match_cpu_phys_id(पूर्णांक cpu, u64 phys_id)
+अणु
+	वापस phys_id == cpuid_to_hartid_map(cpu);
+पूर्ण
 
 /* Unsupported */
-int setup_profiling_timer(unsigned int multiplier)
-{
-	return -EINVAL;
-}
+पूर्णांक setup_profiling_समयr(अचिन्हित पूर्णांक multiplier)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static void ipi_stop(void)
-{
+अटल व्योम ipi_stop(व्योम)
+अणु
 	set_cpu_online(smp_processor_id(), false);
-	while (1)
-		wait_for_interrupt();
-}
+	जबतक (1)
+		रुको_क्रम_पूर्णांकerrupt();
+पूर्ण
 
-static const struct riscv_ipi_ops *ipi_ops __ro_after_init;
+अटल स्थिर काष्ठा riscv_ipi_ops *ipi_ops __ro_after_init;
 
-void riscv_set_ipi_ops(const struct riscv_ipi_ops *ops)
-{
+व्योम riscv_set_ipi_ops(स्थिर काष्ठा riscv_ipi_ops *ops)
+अणु
 	ipi_ops = ops;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(riscv_set_ipi_ops);
 
-void riscv_clear_ipi(void)
-{
-	if (ipi_ops && ipi_ops->ipi_clear)
+व्योम riscv_clear_ipi(व्योम)
+अणु
+	अगर (ipi_ops && ipi_ops->ipi_clear)
 		ipi_ops->ipi_clear();
 
 	csr_clear(CSR_IP, IE_SIE);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(riscv_clear_ipi);
 
-static void send_ipi_mask(const struct cpumask *mask, enum ipi_message_type op)
-{
-	int cpu;
+अटल व्योम send_ipi_mask(स्थिर काष्ठा cpumask *mask, क्रमागत ipi_message_type op)
+अणु
+	पूर्णांक cpu;
 
-	smp_mb__before_atomic();
-	for_each_cpu(cpu, mask)
+	smp_mb__beक्रमe_atomic();
+	क्रम_each_cpu(cpu, mask)
 		set_bit(op, &ipi_data[cpu].bits);
 	smp_mb__after_atomic();
 
-	if (ipi_ops && ipi_ops->ipi_inject)
+	अगर (ipi_ops && ipi_ops->ipi_inject)
 		ipi_ops->ipi_inject(mask);
-	else
+	अन्यथा
 		pr_warn("SMP: IPI inject method not available\n");
-}
+पूर्ण
 
-static void send_ipi_single(int cpu, enum ipi_message_type op)
-{
-	smp_mb__before_atomic();
+अटल व्योम send_ipi_single(पूर्णांक cpu, क्रमागत ipi_message_type op)
+अणु
+	smp_mb__beक्रमe_atomic();
 	set_bit(op, &ipi_data[cpu].bits);
 	smp_mb__after_atomic();
 
-	if (ipi_ops && ipi_ops->ipi_inject)
+	अगर (ipi_ops && ipi_ops->ipi_inject)
 		ipi_ops->ipi_inject(cpumask_of(cpu));
-	else
+	अन्यथा
 		pr_warn("SMP: IPI inject method not available\n");
-}
+पूर्ण
 
-#ifdef CONFIG_IRQ_WORK
-void arch_irq_work_raise(void)
-{
+#अगर_घोषित CONFIG_IRQ_WORK
+व्योम arch_irq_work_उठाओ(व्योम)
+अणु
 	send_ipi_single(smp_processor_id(), IPI_IRQ_WORK);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void handle_IPI(struct pt_regs *regs)
-{
-	struct pt_regs *old_regs = set_irq_regs(regs);
-	unsigned long *pending_ipis = &ipi_data[smp_processor_id()].bits;
-	unsigned long *stats = ipi_data[smp_processor_id()].stats;
+व्योम handle_IPI(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा pt_regs *old_regs = set_irq_regs(regs);
+	अचिन्हित दीर्घ *pending_ipis = &ipi_data[smp_processor_id()].bits;
+	अचिन्हित दीर्घ *stats = ipi_data[smp_processor_id()].stats;
 
 	irq_enter();
 
 	riscv_clear_ipi();
 
-	while (true) {
-		unsigned long ops;
+	जबतक (true) अणु
+		अचिन्हित दीर्घ ops;
 
 		/* Order bit clearing and data access. */
 		mb();
 
 		ops = xchg(pending_ipis, 0);
-		if (ops == 0)
-			goto done;
+		अगर (ops == 0)
+			जाओ करोne;
 
-		if (ops & (1 << IPI_RESCHEDULE)) {
+		अगर (ops & (1 << IPI_RESCHEDULE)) अणु
 			stats[IPI_RESCHEDULE]++;
 			scheduler_ipi();
-		}
+		पूर्ण
 
-		if (ops & (1 << IPI_CALL_FUNC)) {
+		अगर (ops & (1 << IPI_CALL_FUNC)) अणु
 			stats[IPI_CALL_FUNC]++;
-			generic_smp_call_function_interrupt();
-		}
+			generic_smp_call_function_पूर्णांकerrupt();
+		पूर्ण
 
-		if (ops & (1 << IPI_CPU_STOP)) {
+		अगर (ops & (1 << IPI_CPU_STOP)) अणु
 			stats[IPI_CPU_STOP]++;
 			ipi_stop();
-		}
+		पूर्ण
 
-		if (ops & (1 << IPI_IRQ_WORK)) {
+		अगर (ops & (1 << IPI_IRQ_WORK)) अणु
 			stats[IPI_IRQ_WORK]++;
 			irq_work_run();
-		}
+		पूर्ण
 
-#ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-		if (ops & (1 << IPI_TIMER)) {
+#अगर_घोषित CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
+		अगर (ops & (1 << IPI_TIMER)) अणु
 			stats[IPI_TIMER]++;
 			tick_receive_broadcast();
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 		BUG_ON((ops >> IPI_MAX) != 0);
 
 		/* Order data access and bit testing. */
 		mb();
-	}
+	पूर्ण
 
-done:
-	irq_exit();
+करोne:
+	irq_निकास();
 	set_irq_regs(old_regs);
-}
+पूर्ण
 
-static const char * const ipi_names[] = {
+अटल स्थिर अक्षर * स्थिर ipi_names[] = अणु
 	[IPI_RESCHEDULE]	= "Rescheduling interrupts",
 	[IPI_CALL_FUNC]		= "Function call interrupts",
 	[IPI_CPU_STOP]		= "CPU stop interrupts",
 	[IPI_IRQ_WORK]		= "IRQ work interrupts",
 	[IPI_TIMER]		= "Timer broadcast interrupts",
-};
+पूर्ण;
 
-void show_ipi_stats(struct seq_file *p, int prec)
-{
-	unsigned int cpu, i;
+व्योम show_ipi_stats(काष्ठा seq_file *p, पूर्णांक prec)
+अणु
+	अचिन्हित पूर्णांक cpu, i;
 
-	for (i = 0; i < IPI_MAX; i++) {
-		seq_printf(p, "%*s%u:%s", prec - 1, "IPI", i,
+	क्रम (i = 0; i < IPI_MAX; i++) अणु
+		seq_म_लिखो(p, "%*s%u:%s", prec - 1, "IPI", i,
 			   prec >= 4 ? " " : "");
-		for_each_online_cpu(cpu)
-			seq_printf(p, "%10lu ", ipi_data[cpu].stats[i]);
-		seq_printf(p, " %s\n", ipi_names[i]);
-	}
-}
+		क्रम_each_online_cpu(cpu)
+			seq_म_लिखो(p, "%10lu ", ipi_data[cpu].stats[i]);
+		seq_म_लिखो(p, " %s\n", ipi_names[i]);
+	पूर्ण
+पूर्ण
 
-void arch_send_call_function_ipi_mask(struct cpumask *mask)
-{
+व्योम arch_send_call_function_ipi_mask(काष्ठा cpumask *mask)
+अणु
 	send_ipi_mask(mask, IPI_CALL_FUNC);
-}
+पूर्ण
 
-void arch_send_call_function_single_ipi(int cpu)
-{
+व्योम arch_send_call_function_single_ipi(पूर्णांक cpu)
+अणु
 	send_ipi_single(cpu, IPI_CALL_FUNC);
-}
+पूर्ण
 
-#ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-void tick_broadcast(const struct cpumask *mask)
-{
+#अगर_घोषित CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
+व्योम tick_broadcast(स्थिर काष्ठा cpumask *mask)
+अणु
 	send_ipi_mask(mask, IPI_TIMER);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void smp_send_stop(void)
-{
-	unsigned long timeout;
+व्योम smp_send_stop(व्योम)
+अणु
+	अचिन्हित दीर्घ समयout;
 
-	if (num_online_cpus() > 1) {
+	अगर (num_online_cpus() > 1) अणु
 		cpumask_t mask;
 
 		cpumask_copy(&mask, cpu_online_mask);
 		cpumask_clear_cpu(smp_processor_id(), &mask);
 
-		if (system_state <= SYSTEM_RUNNING)
+		अगर (प्रणाली_state <= SYSTEM_RUNNING)
 			pr_crit("SMP: stopping secondary CPUs\n");
 		send_ipi_mask(&mask, IPI_CPU_STOP);
-	}
+	पूर्ण
 
-	/* Wait up to one second for other CPUs to stop */
-	timeout = USEC_PER_SEC;
-	while (num_online_cpus() > 1 && timeout--)
+	/* Wait up to one second क्रम other CPUs to stop */
+	समयout = USEC_PER_SEC;
+	जबतक (num_online_cpus() > 1 && समयout--)
 		udelay(1);
 
-	if (num_online_cpus() > 1)
+	अगर (num_online_cpus() > 1)
 		pr_warn("SMP: failed to stop secondary CPUs %*pbl\n",
 			   cpumask_pr_args(cpu_online_mask));
-}
+पूर्ण
 
-void smp_send_reschedule(int cpu)
-{
+व्योम smp_send_reschedule(पूर्णांक cpu)
+अणु
 	send_ipi_single(cpu, IPI_RESCHEDULE);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(smp_send_reschedule);

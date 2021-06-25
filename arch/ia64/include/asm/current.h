@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_CURRENT_H
-#define _ASM_IA64_CURRENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_CURRENT_H
+#घोषणा _ASM_IA64_CURRENT_H
 
 /*
- * Modified 1998-2000
+ * Modअगरied 1998-2000
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  */
 
-#include <asm/intrinsics.h>
+#समावेश <यंत्र/पूर्णांकrinsics.h>
 
 /*
- * In kernel mode, thread pointer (r13) is used to point to the current task
- * structure.
+ * In kernel mode, thपढ़ो poपूर्णांकer (r13) is used to poपूर्णांक to the current task
+ * काष्ठाure.
  */
-#define current	((struct task_struct *) ia64_getreg(_IA64_REG_TP))
+#घोषणा current	((काष्ठा task_काष्ठा *) ia64_getreg(_IA64_REG_TP))
 
-#endif /* _ASM_IA64_CURRENT_H */
+#पूर्ण_अगर /* _ASM_IA64_CURRENT_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/mm/hugetlbpage.c
  *
@@ -9,74 +10,74 @@
  * Copyright (C) 2002, 2003 David S. Miller (davem@redhat.com)
  */
 
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/hugetlb.h>
-#include <linux/pagemap.h>
-#include <linux/sysctl.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/sysctl.h>
 
-#include <asm/mman.h>
-#include <asm/tlb.h>
-#include <asm/tlbflush.h>
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/mman.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/cacheflush.h>
 
-pte_t *huge_pte_alloc(struct mm_struct *mm, struct vm_area_struct *vma,
-			unsigned long addr, unsigned long sz)
-{
+pte_t *huge_pte_alloc(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
+			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ sz)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
-	pte_t *pte = NULL;
+	pte_t *pte = शून्य;
 
 	pgd = pgd_offset(mm, addr);
-	if (pgd) {
+	अगर (pgd) अणु
 		p4d = p4d_alloc(mm, pgd, addr);
-		if (p4d) {
+		अगर (p4d) अणु
 			pud = pud_alloc(mm, p4d, addr);
-			if (pud) {
+			अगर (pud) अणु
 				pmd = pmd_alloc(mm, pud, addr);
-				if (pmd)
+				अगर (pmd)
 					pte = pte_alloc_map(mm, pmd, addr);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-pte_t *huge_pte_offset(struct mm_struct *mm,
-		       unsigned long addr, unsigned long sz)
-{
+pte_t *huge_pte_offset(काष्ठा mm_काष्ठा *mm,
+		       अचिन्हित दीर्घ addr, अचिन्हित दीर्घ sz)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
-	pte_t *pte = NULL;
+	pte_t *pte = शून्य;
 
 	pgd = pgd_offset(mm, addr);
-	if (pgd) {
+	अगर (pgd) अणु
 		p4d = p4d_offset(pgd, addr);
-		if (p4d) {
+		अगर (p4d) अणु
 			pud = pud_offset(p4d, addr);
-			if (pud) {
+			अगर (pud) अणु
 				pmd = pmd_offset(pud, addr);
-				if (pmd)
+				अगर (pmd)
 					pte = pte_offset_map(pmd, addr);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-int pmd_huge(pmd_t pmd)
-{
-	return 0;
-}
+पूर्णांक pmd_huge(pmd_t pmd)
+अणु
+	वापस 0;
+पूर्ण
 
-int pud_huge(pud_t pud)
-{
-	return 0;
-}
+पूर्णांक pud_huge(pud_t pud)
+अणु
+	वापस 0;
+पूर्ण

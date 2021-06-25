@@ -1,3 +1,4 @@
+<शैली गुरु>
 /* gf128mul.c - GF(2^128) multiplication functions
  *
  * Copyright (c) 2003, Dr Brian Gladman, Worcester, UK.
@@ -7,7 +8,7 @@
  * http://gladman.plushost.co.uk/oldsite/cryptography_technology/index.php
  * See the original copyright notice below.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
@@ -19,28 +20,28 @@
 
  LICENSE TERMS
 
- The free distribution and use of this software in both source and binary
- form is allowed (with or without changes) provided that:
+ The मुक्त distribution and use of this software in both source and binary
+ क्रमm is allowed (with or without changes) provided that:
 
    1. distributions of this source code include the above copyright
       notice, this list of conditions and the following disclaimer;
 
-   2. distributions in binary form include the above copyright
+   2. distributions in binary क्रमm include the above copyright
       notice, this list of conditions and the following disclaimer
-      in the documentation and/or other associated materials;
+      in the करोcumentation and/or other associated materials;
 
-   3. the copyright holder's name is not used to endorse products
-      built using this software without specific written permission.
+   3. the copyright holder's name is not used to enकरोrse products
+      built using this software without specअगरic written permission.
 
  ALTERNATIVELY, provided that this notice is retained in full, this product
  may be distributed under the terms of the GNU General Public License (GPL),
- in which case the provisions of the GPL apply INSTEAD OF those given above.
+ in which हाल the provisions of the GPL apply INSTEAD OF those given above.
 
  DISCLAIMER
 
  This software is provided 'as is' with no explicit or implied warranties
  in respect of its properties, including, but not limited to, correctness
- and/or fitness for purpose.
+ and/or fitness क्रम purpose.
  ---------------------------------------------------------------------------
  Issue 31/01/2006
 
@@ -48,12 +49,12 @@
  cryptographic authentication modes
 */
 
-#include <crypto/gf128mul.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <crypto/gf128mul.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#define gf128mul_dat(q) { \
+#घोषणा gf128mul_dat(q) अणु \
 	q(0x00), q(0x01), q(0x02), q(0x03), q(0x04), q(0x05), q(0x06), q(0x07),\
 	q(0x08), q(0x09), q(0x0a), q(0x0b), q(0x0c), q(0x0d), q(0x0e), q(0x0f),\
 	q(0x10), q(0x11), q(0x12), q(0x13), q(0x14), q(0x15), q(0x16), q(0x17),\
@@ -86,170 +87,170 @@
 	q(0xe8), q(0xe9), q(0xea), q(0xeb), q(0xec), q(0xed), q(0xee), q(0xef),\
 	q(0xf0), q(0xf1), q(0xf2), q(0xf3), q(0xf4), q(0xf5), q(0xf6), q(0xf7),\
 	q(0xf8), q(0xf9), q(0xfa), q(0xfb), q(0xfc), q(0xfd), q(0xfe), q(0xff) \
-}
+पूर्ण
 
 /*
  * Given a value i in 0..255 as the byte overflow when a field element
- * in GF(2^128) is multiplied by x^8, the following macro returns the
- * 16-bit value that must be XOR-ed into the low-degree end of the
+ * in GF(2^128) is multiplied by x^8, the following macro वापसs the
+ * 16-bit value that must be XOR-ed पूर्णांकo the low-degree end of the
  * product to reduce it modulo the polynomial x^128 + x^7 + x^2 + x + 1.
  *
- * There are two versions of the macro, and hence two tables: one for
+ * There are two versions of the macro, and hence two tables: one क्रम
  * the "be" convention where the highest-order bit is the coefficient of
- * the highest-degree polynomial term, and one for the "le" convention
+ * the highest-degree polynomial term, and one क्रम the "le" convention
  * where the highest-order bit is the coefficient of the lowest-degree
- * polynomial term.  In both cases the values are stored in CPU byte
+ * polynomial term.  In both हालs the values are stored in CPU byte
  * endianness such that the coefficients are ordered consistently across
  * bytes, i.e. in the "be" table bits 15..0 of the stored value
  * correspond to the coefficients of x^15..x^0, and in the "le" table
  * bits 15..0 correspond to the coefficients of x^0..x^15.
  *
- * Therefore, provided that the appropriate byte endianness conversions
- * are done by the multiplication functions (and these must be in place
+ * Thereक्रमe, provided that the appropriate byte endianness conversions
+ * are करोne by the multiplication functions (and these must be in place
  * anyway to support both little endian and big endian CPUs), the "be"
- * table can be used for multiplications of both "bbe" and "ble"
- * elements, and the "le" table can be used for multiplications of both
+ * table can be used क्रम multiplications of both "bbe" and "ble"
+ * elements, and the "le" table can be used क्रम multiplications of both
  * "lle" and "lbe" elements.
  */
 
-#define xda_be(i) ( \
+#घोषणा xda_be(i) ( \
 	(i & 0x80 ? 0x4380 : 0) ^ (i & 0x40 ? 0x21c0 : 0) ^ \
 	(i & 0x20 ? 0x10e0 : 0) ^ (i & 0x10 ? 0x0870 : 0) ^ \
 	(i & 0x08 ? 0x0438 : 0) ^ (i & 0x04 ? 0x021c : 0) ^ \
 	(i & 0x02 ? 0x010e : 0) ^ (i & 0x01 ? 0x0087 : 0) \
 )
 
-#define xda_le(i) ( \
+#घोषणा xda_le(i) ( \
 	(i & 0x80 ? 0xe100 : 0) ^ (i & 0x40 ? 0x7080 : 0) ^ \
 	(i & 0x20 ? 0x3840 : 0) ^ (i & 0x10 ? 0x1c20 : 0) ^ \
 	(i & 0x08 ? 0x0e10 : 0) ^ (i & 0x04 ? 0x0708 : 0) ^ \
 	(i & 0x02 ? 0x0384 : 0) ^ (i & 0x01 ? 0x01c2 : 0) \
 )
 
-static const u16 gf128mul_table_le[256] = gf128mul_dat(xda_le);
-static const u16 gf128mul_table_be[256] = gf128mul_dat(xda_be);
+अटल स्थिर u16 gf128mul_table_le[256] = gf128mul_dat(xda_le);
+अटल स्थिर u16 gf128mul_table_be[256] = gf128mul_dat(xda_be);
 
 /*
  * The following functions multiply a field element by x^8 in
  * the polynomial field representation.  They use 64-bit word operations
- * to gain speed but compensate for machine endianness and hence work
+ * to gain speed but compensate क्रम machine endianness and hence work
  * correctly on both styles of machine.
  */
 
-static void gf128mul_x8_lle(be128 *x)
-{
+अटल व्योम gf128mul_x8_lle(be128 *x)
+अणु
 	u64 a = be64_to_cpu(x->a);
 	u64 b = be64_to_cpu(x->b);
 	u64 _tt = gf128mul_table_le[b & 0xff];
 
 	x->b = cpu_to_be64((b >> 8) | (a << 56));
 	x->a = cpu_to_be64((a >> 8) ^ (_tt << 48));
-}
+पूर्ण
 
-static void gf128mul_x8_bbe(be128 *x)
-{
+अटल व्योम gf128mul_x8_bbe(be128 *x)
+अणु
 	u64 a = be64_to_cpu(x->a);
 	u64 b = be64_to_cpu(x->b);
 	u64 _tt = gf128mul_table_be[a >> 56];
 
 	x->a = cpu_to_be64((a << 8) | (b >> 56));
 	x->b = cpu_to_be64((b << 8) ^ _tt);
-}
+पूर्ण
 
-void gf128mul_x8_ble(le128 *r, const le128 *x)
-{
+व्योम gf128mul_x8_ble(le128 *r, स्थिर le128 *x)
+अणु
 	u64 a = le64_to_cpu(x->a);
 	u64 b = le64_to_cpu(x->b);
 	u64 _tt = gf128mul_table_be[a >> 56];
 
 	r->a = cpu_to_le64((a << 8) | (b >> 56));
 	r->b = cpu_to_le64((b << 8) ^ _tt);
-}
+पूर्ण
 EXPORT_SYMBOL(gf128mul_x8_ble);
 
-void gf128mul_lle(be128 *r, const be128 *b)
-{
+व्योम gf128mul_lle(be128 *r, स्थिर be128 *b)
+अणु
 	be128 p[8];
-	int i;
+	पूर्णांक i;
 
 	p[0] = *r;
-	for (i = 0; i < 7; ++i)
+	क्रम (i = 0; i < 7; ++i)
 		gf128mul_x_lle(&p[i + 1], &p[i]);
 
-	memset(r, 0, sizeof(*r));
-	for (i = 0;;) {
+	स_रखो(r, 0, माप(*r));
+	क्रम (i = 0;;) अणु
 		u8 ch = ((u8 *)b)[15 - i];
 
-		if (ch & 0x80)
+		अगर (ch & 0x80)
 			be128_xor(r, r, &p[0]);
-		if (ch & 0x40)
+		अगर (ch & 0x40)
 			be128_xor(r, r, &p[1]);
-		if (ch & 0x20)
+		अगर (ch & 0x20)
 			be128_xor(r, r, &p[2]);
-		if (ch & 0x10)
+		अगर (ch & 0x10)
 			be128_xor(r, r, &p[3]);
-		if (ch & 0x08)
+		अगर (ch & 0x08)
 			be128_xor(r, r, &p[4]);
-		if (ch & 0x04)
+		अगर (ch & 0x04)
 			be128_xor(r, r, &p[5]);
-		if (ch & 0x02)
+		अगर (ch & 0x02)
 			be128_xor(r, r, &p[6]);
-		if (ch & 0x01)
+		अगर (ch & 0x01)
 			be128_xor(r, r, &p[7]);
 
-		if (++i >= 16)
-			break;
+		अगर (++i >= 16)
+			अवरोध;
 
 		gf128mul_x8_lle(r);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(gf128mul_lle);
 
-void gf128mul_bbe(be128 *r, const be128 *b)
-{
+व्योम gf128mul_bbe(be128 *r, स्थिर be128 *b)
+अणु
 	be128 p[8];
-	int i;
+	पूर्णांक i;
 
 	p[0] = *r;
-	for (i = 0; i < 7; ++i)
+	क्रम (i = 0; i < 7; ++i)
 		gf128mul_x_bbe(&p[i + 1], &p[i]);
 
-	memset(r, 0, sizeof(*r));
-	for (i = 0;;) {
+	स_रखो(r, 0, माप(*r));
+	क्रम (i = 0;;) अणु
 		u8 ch = ((u8 *)b)[i];
 
-		if (ch & 0x80)
+		अगर (ch & 0x80)
 			be128_xor(r, r, &p[7]);
-		if (ch & 0x40)
+		अगर (ch & 0x40)
 			be128_xor(r, r, &p[6]);
-		if (ch & 0x20)
+		अगर (ch & 0x20)
 			be128_xor(r, r, &p[5]);
-		if (ch & 0x10)
+		अगर (ch & 0x10)
 			be128_xor(r, r, &p[4]);
-		if (ch & 0x08)
+		अगर (ch & 0x08)
 			be128_xor(r, r, &p[3]);
-		if (ch & 0x04)
+		अगर (ch & 0x04)
 			be128_xor(r, r, &p[2]);
-		if (ch & 0x02)
+		अगर (ch & 0x02)
 			be128_xor(r, r, &p[1]);
-		if (ch & 0x01)
+		अगर (ch & 0x01)
 			be128_xor(r, r, &p[0]);
 
-		if (++i >= 16)
-			break;
+		अगर (++i >= 16)
+			अवरोध;
 
 		gf128mul_x8_bbe(r);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(gf128mul_bbe);
 
 /*      This version uses 64k bytes of table space.
     A 16 byte buffer has to be multiplied by a 16 byte key
     value in GF(2^128).  If we consider a GF(2^128) value in
-    the buffer's lowest byte, we can construct a table of
+    the buffer's lowest byte, we can स्थिरruct a table of
     the 256 16 byte values that result from the 256 values
     of this byte.  This requires 4096 bytes. But we also
-    need tables for each of the 16 higher bytes in the
+    need tables क्रम each of the 16 higher bytes in the
     buffer as well, which makes 64 kbytes in total.
 */
 /* additional explanation
@@ -257,160 +258,160 @@ EXPORT_SYMBOL(gf128mul_bbe);
  * t[1][BYTE] contains g*x^8*BYTE
  *  ..
  * t[15][BYTE] contains g*x^120*BYTE */
-struct gf128mul_64k *gf128mul_init_64k_bbe(const be128 *g)
-{
-	struct gf128mul_64k *t;
-	int i, j, k;
+काष्ठा gf128mul_64k *gf128mul_init_64k_bbe(स्थिर be128 *g)
+अणु
+	काष्ठा gf128mul_64k *t;
+	पूर्णांक i, j, k;
 
-	t = kzalloc(sizeof(*t), GFP_KERNEL);
-	if (!t)
-		goto out;
+	t = kzalloc(माप(*t), GFP_KERNEL);
+	अगर (!t)
+		जाओ out;
 
-	for (i = 0; i < 16; i++) {
-		t->t[i] = kzalloc(sizeof(*t->t[i]), GFP_KERNEL);
-		if (!t->t[i]) {
-			gf128mul_free_64k(t);
-			t = NULL;
-			goto out;
-		}
-	}
+	क्रम (i = 0; i < 16; i++) अणु
+		t->t[i] = kzalloc(माप(*t->t[i]), GFP_KERNEL);
+		अगर (!t->t[i]) अणु
+			gf128mul_मुक्त_64k(t);
+			t = शून्य;
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	t->t[0]->t[1] = *g;
-	for (j = 1; j <= 64; j <<= 1)
+	क्रम (j = 1; j <= 64; j <<= 1)
 		gf128mul_x_bbe(&t->t[0]->t[j + j], &t->t[0]->t[j]);
 
-	for (i = 0;;) {
-		for (j = 2; j < 256; j += j)
-			for (k = 1; k < j; ++k)
+	क्रम (i = 0;;) अणु
+		क्रम (j = 2; j < 256; j += j)
+			क्रम (k = 1; k < j; ++k)
 				be128_xor(&t->t[i]->t[j + k],
 					  &t->t[i]->t[j], &t->t[i]->t[k]);
 
-		if (++i >= 16)
-			break;
+		अगर (++i >= 16)
+			अवरोध;
 
-		for (j = 128; j > 0; j >>= 1) {
+		क्रम (j = 128; j > 0; j >>= 1) अणु
 			t->t[i]->t[j] = t->t[i - 1]->t[j];
 			gf128mul_x8_bbe(&t->t[i]->t[j]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	return t;
-}
+	वापस t;
+पूर्ण
 EXPORT_SYMBOL(gf128mul_init_64k_bbe);
 
-void gf128mul_free_64k(struct gf128mul_64k *t)
-{
-	int i;
+व्योम gf128mul_मुक्त_64k(काष्ठा gf128mul_64k *t)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 16; i++)
-		kfree_sensitive(t->t[i]);
-	kfree_sensitive(t);
-}
-EXPORT_SYMBOL(gf128mul_free_64k);
+	क्रम (i = 0; i < 16; i++)
+		kमुक्त_sensitive(t->t[i]);
+	kमुक्त_sensitive(t);
+पूर्ण
+EXPORT_SYMBOL(gf128mul_मुक्त_64k);
 
-void gf128mul_64k_bbe(be128 *a, const struct gf128mul_64k *t)
-{
+व्योम gf128mul_64k_bbe(be128 *a, स्थिर काष्ठा gf128mul_64k *t)
+अणु
 	u8 *ap = (u8 *)a;
 	be128 r[1];
-	int i;
+	पूर्णांक i;
 
 	*r = t->t[0]->t[ap[15]];
-	for (i = 1; i < 16; ++i)
+	क्रम (i = 1; i < 16; ++i)
 		be128_xor(r, r, &t->t[i]->t[ap[15 - i]]);
 	*a = *r;
-}
+पूर्ण
 EXPORT_SYMBOL(gf128mul_64k_bbe);
 
 /*      This version uses 4k bytes of table space.
     A 16 byte buffer has to be multiplied by a 16 byte key
     value in GF(2^128).  If we consider a GF(2^128) value in a
-    single byte, we can construct a table of the 256 16 byte
+    single byte, we can स्थिरruct a table of the 256 16 byte
     values that result from the 256 values of this byte.
     This requires 4096 bytes. If we take the highest byte in
     the buffer and use this table to get the result, we then
     have to multiply by x^120 to get the final value. For the
     next highest byte the result has to be multiplied by x^112
-    and so on. But we can do this by accumulating the result
-    in an accumulator starting with the result for the top
+    and so on. But we can करो this by accumulating the result
+    in an accumulator starting with the result क्रम the top
     byte.  We repeatedly multiply the accumulator value by
     x^8 and then add in (i.e. xor) the 16 bytes of the next
     lower byte in the buffer, stopping when we reach the
     lowest byte. This requires a 4096 byte table.
 */
-struct gf128mul_4k *gf128mul_init_4k_lle(const be128 *g)
-{
-	struct gf128mul_4k *t;
-	int j, k;
+काष्ठा gf128mul_4k *gf128mul_init_4k_lle(स्थिर be128 *g)
+अणु
+	काष्ठा gf128mul_4k *t;
+	पूर्णांक j, k;
 
-	t = kzalloc(sizeof(*t), GFP_KERNEL);
-	if (!t)
-		goto out;
+	t = kzalloc(माप(*t), GFP_KERNEL);
+	अगर (!t)
+		जाओ out;
 
 	t->t[128] = *g;
-	for (j = 64; j > 0; j >>= 1)
+	क्रम (j = 64; j > 0; j >>= 1)
 		gf128mul_x_lle(&t->t[j], &t->t[j+j]);
 
-	for (j = 2; j < 256; j += j)
-		for (k = 1; k < j; ++k)
+	क्रम (j = 2; j < 256; j += j)
+		क्रम (k = 1; k < j; ++k)
 			be128_xor(&t->t[j + k], &t->t[j], &t->t[k]);
 
 out:
-	return t;
-}
+	वापस t;
+पूर्ण
 EXPORT_SYMBOL(gf128mul_init_4k_lle);
 
-struct gf128mul_4k *gf128mul_init_4k_bbe(const be128 *g)
-{
-	struct gf128mul_4k *t;
-	int j, k;
+काष्ठा gf128mul_4k *gf128mul_init_4k_bbe(स्थिर be128 *g)
+अणु
+	काष्ठा gf128mul_4k *t;
+	पूर्णांक j, k;
 
-	t = kzalloc(sizeof(*t), GFP_KERNEL);
-	if (!t)
-		goto out;
+	t = kzalloc(माप(*t), GFP_KERNEL);
+	अगर (!t)
+		जाओ out;
 
 	t->t[1] = *g;
-	for (j = 1; j <= 64; j <<= 1)
+	क्रम (j = 1; j <= 64; j <<= 1)
 		gf128mul_x_bbe(&t->t[j + j], &t->t[j]);
 
-	for (j = 2; j < 256; j += j)
-		for (k = 1; k < j; ++k)
+	क्रम (j = 2; j < 256; j += j)
+		क्रम (k = 1; k < j; ++k)
 			be128_xor(&t->t[j + k], &t->t[j], &t->t[k]);
 
 out:
-	return t;
-}
+	वापस t;
+पूर्ण
 EXPORT_SYMBOL(gf128mul_init_4k_bbe);
 
-void gf128mul_4k_lle(be128 *a, const struct gf128mul_4k *t)
-{
+व्योम gf128mul_4k_lle(be128 *a, स्थिर काष्ठा gf128mul_4k *t)
+अणु
 	u8 *ap = (u8 *)a;
 	be128 r[1];
-	int i = 15;
+	पूर्णांक i = 15;
 
 	*r = t->t[ap[15]];
-	while (i--) {
+	जबतक (i--) अणु
 		gf128mul_x8_lle(r);
 		be128_xor(r, r, &t->t[ap[i]]);
-	}
+	पूर्ण
 	*a = *r;
-}
+पूर्ण
 EXPORT_SYMBOL(gf128mul_4k_lle);
 
-void gf128mul_4k_bbe(be128 *a, const struct gf128mul_4k *t)
-{
+व्योम gf128mul_4k_bbe(be128 *a, स्थिर काष्ठा gf128mul_4k *t)
+अणु
 	u8 *ap = (u8 *)a;
 	be128 r[1];
-	int i = 0;
+	पूर्णांक i = 0;
 
 	*r = t->t[ap[0]];
-	while (++i < 16) {
+	जबतक (++i < 16) अणु
 		gf128mul_x8_bbe(r);
 		be128_xor(r, r, &t->t[ap[i]]);
-	}
+	पूर्ण
 	*a = *r;
-}
+पूर्ण
 EXPORT_SYMBOL(gf128mul_4k_bbe);
 
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("Functions for multiplying elements of GF(2^128)");
+MODULE_DESCRIPTION("Functions क्रम multiplying elements of GF(2^128)");

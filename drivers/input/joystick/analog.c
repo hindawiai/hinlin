@@ -1,139 +1,140 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) 1996-2001 Vojtech Pavlik
  */
 
 /*
- * Analog joystick and gamepad driver for Linux
+ * Analog joystick and gamepad driver क्रम Linux
  */
 
 /*
  */
 
-#include <linux/delay.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
-#include <linux/init.h>
-#include <linux/input.h>
-#include <linux/gameport.h>
-#include <linux/jiffies.h>
-#include <linux/timex.h>
-#include <linux/timekeeping.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/input.h>
+#समावेश <linux/gameport.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/समयkeeping.h>
 
-#define DRIVER_DESC	"Analog joystick and gamepad driver"
+#घोषणा DRIVER_DESC	"Analog joystick and gamepad driver"
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-static bool use_ktime = true;
-module_param(use_ktime, bool, 0400);
-MODULE_PARM_DESC(use_ktime, "Use ktime for measuring I/O speed");
+अटल bool use_kसमय = true;
+module_param(use_kसमय, bool, 0400);
+MODULE_PARM_DESC(use_kसमय, "Use ktime for measuring I/O speed");
 
 /*
  * Option parsing.
  */
 
-#define ANALOG_PORTS		16
+#घोषणा ANALOG_PORTS		16
 
-static char *js[ANALOG_PORTS];
-static unsigned int js_nargs;
-static int analog_options[ANALOG_PORTS];
-module_param_array_named(map, js, charp, &js_nargs, 0);
+अटल अक्षर *js[ANALOG_PORTS];
+अटल अचिन्हित पूर्णांक js_nargs;
+अटल पूर्णांक analog_options[ANALOG_PORTS];
+module_param_array_named(map, js, अक्षरp, &js_nargs, 0);
 MODULE_PARM_DESC(map, "Describes analog joysticks type/capabilities");
 
 /*
  * Times, feature definitions.
  */
 
-#define ANALOG_RUDDER		0x00004
-#define ANALOG_THROTTLE		0x00008
-#define ANALOG_AXES_STD		0x0000f
-#define ANALOG_BTNS_STD		0x000f0
+#घोषणा ANALOG_RUDDER		0x00004
+#घोषणा ANALOG_THROTTLE		0x00008
+#घोषणा ANALOG_AXES_STD		0x0000f
+#घोषणा ANALOG_BTNS_STD		0x000f0
 
-#define ANALOG_BTNS_CHF		0x00100
-#define ANALOG_HAT1_CHF		0x00200
-#define ANALOG_HAT2_CHF		0x00400
-#define ANALOG_HAT_FCS		0x00800
-#define ANALOG_HATS_ALL		0x00e00
-#define ANALOG_BTN_TL		0x01000
-#define ANALOG_BTN_TR		0x02000
-#define ANALOG_BTN_TL2		0x04000
-#define ANALOG_BTN_TR2		0x08000
-#define ANALOG_BTNS_TLR		0x03000
-#define ANALOG_BTNS_TLR2	0x0c000
-#define ANALOG_BTNS_GAMEPAD	0x0f000
+#घोषणा ANALOG_BTNS_CHF		0x00100
+#घोषणा ANALOG_HAT1_CHF		0x00200
+#घोषणा ANALOG_HAT2_CHF		0x00400
+#घोषणा ANALOG_HAT_FCS		0x00800
+#घोषणा ANALOG_HATS_ALL		0x00e00
+#घोषणा ANALOG_BTN_TL		0x01000
+#घोषणा ANALOG_BTN_TR		0x02000
+#घोषणा ANALOG_BTN_TL2		0x04000
+#घोषणा ANALOG_BTN_TR2		0x08000
+#घोषणा ANALOG_BTNS_TLR		0x03000
+#घोषणा ANALOG_BTNS_TLR2	0x0c000
+#घोषणा ANALOG_BTNS_GAMEPAD	0x0f000
 
-#define ANALOG_HBTN_CHF		0x10000
-#define ANALOG_ANY_CHF		0x10700
-#define ANALOG_SAITEK		0x20000
-#define ANALOG_EXTENSIONS	0x7ff00
-#define ANALOG_GAMEPAD		0x80000
+#घोषणा ANALOG_HBTN_CHF		0x10000
+#घोषणा ANALOG_ANY_CHF		0x10700
+#घोषणा ANALOG_SAITEK		0x20000
+#घोषणा ANALOG_EXTENSIONS	0x7ff00
+#घोषणा ANALOG_GAMEPAD		0x80000
 
-#define ANALOG_MAX_TIME		3	/* 3 ms */
-#define ANALOG_LOOP_TIME	2000	/* 2 * loop */
-#define ANALOG_SAITEK_DELAY	200	/* 200 us */
-#define ANALOG_SAITEK_TIME	2000	/* 2000 us */
-#define ANALOG_AXIS_TIME	2	/* 2 * refresh */
-#define ANALOG_INIT_RETRIES	8	/* 8 times */
-#define ANALOG_FUZZ_BITS	2	/* 2 bit more */
-#define ANALOG_FUZZ_MAGIC	36	/* 36 u*ms/loop */
+#घोषणा ANALOG_MAX_TIME		3	/* 3 ms */
+#घोषणा ANALOG_LOOP_TIME	2000	/* 2 * loop */
+#घोषणा ANALOG_SAITEK_DELAY	200	/* 200 us */
+#घोषणा ANALOG_SAITEK_TIME	2000	/* 2000 us */
+#घोषणा ANALOG_AXIS_TIME	2	/* 2 * refresh */
+#घोषणा ANALOG_INIT_RETRIES	8	/* 8 बार */
+#घोषणा ANALOG_FUZZ_BITS	2	/* 2 bit more */
+#घोषणा ANALOG_FUZZ_MAGIC	36	/* 36 u*ms/loop */
 
-#define ANALOG_MAX_NAME_LENGTH  128
-#define ANALOG_MAX_PHYS_LENGTH	32
+#घोषणा ANALOG_MAX_NAME_LENGTH  128
+#घोषणा ANALOG_MAX_PHYS_LENGTH	32
 
-static short analog_axes[] = { ABS_X, ABS_Y, ABS_RUDDER, ABS_THROTTLE };
-static short analog_hats[] = { ABS_HAT0X, ABS_HAT0Y, ABS_HAT1X, ABS_HAT1Y, ABS_HAT2X, ABS_HAT2Y };
-static short analog_pads[] = { BTN_Y, BTN_Z, BTN_TL, BTN_TR };
-static short analog_exts[] = { ANALOG_HAT1_CHF, ANALOG_HAT2_CHF, ANALOG_HAT_FCS };
-static short analog_pad_btn[] = { BTN_A, BTN_B, BTN_C, BTN_X, BTN_TL2, BTN_TR2, BTN_SELECT, BTN_START, BTN_MODE, BTN_BASE };
-static short analog_joy_btn[] = { BTN_TRIGGER, BTN_THUMB, BTN_TOP, BTN_TOP2, BTN_BASE, BTN_BASE2,
-				  BTN_BASE3, BTN_BASE4, BTN_BASE5, BTN_BASE6 };
+अटल लघु analog_axes[] = अणु ABS_X, ABS_Y, ABS_RUDDER, ABS_THROTTLE पूर्ण;
+अटल लघु analog_hats[] = अणु ABS_HAT0X, ABS_HAT0Y, ABS_HAT1X, ABS_HAT1Y, ABS_HAT2X, ABS_HAT2Y पूर्ण;
+अटल लघु analog_pads[] = अणु BTN_Y, BTN_Z, BTN_TL, BTN_TR पूर्ण;
+अटल लघु analog_exts[] = अणु ANALOG_HAT1_CHF, ANALOG_HAT2_CHF, ANALOG_HAT_FCS पूर्ण;
+अटल लघु analog_pad_btn[] = अणु BTN_A, BTN_B, BTN_C, BTN_X, BTN_TL2, BTN_TR2, BTN_SELECT, BTN_START, BTN_MODE, BTN_BASE पूर्ण;
+अटल लघु analog_joy_btn[] = अणु BTN_TRIGGER, BTN_THUMB, BTN_TOP, BTN_TOP2, BTN_BASE, BTN_BASE2,
+				  BTN_BASE3, BTN_BASE4, BTN_BASE5, BTN_BASE6 पूर्ण;
 
-static unsigned char analog_chf[] = { 0xf, 0x0, 0x1, 0x9, 0x2, 0x4, 0xc, 0x8, 0x3, 0x5, 0xb, 0x7, 0xd, 0xe, 0xa, 0x6 };
+अटल अचिन्हित अक्षर analog_chf[] = अणु 0xf, 0x0, 0x1, 0x9, 0x2, 0x4, 0xc, 0x8, 0x3, 0x5, 0xb, 0x7, 0xd, 0xe, 0xa, 0x6 पूर्ण;
 
-struct analog {
-	struct input_dev *dev;
-	int mask;
-	short *buttons;
-	char name[ANALOG_MAX_NAME_LENGTH];
-	char phys[ANALOG_MAX_PHYS_LENGTH];
-};
+काष्ठा analog अणु
+	काष्ठा input_dev *dev;
+	पूर्णांक mask;
+	लघु *buttons;
+	अक्षर name[ANALOG_MAX_NAME_LENGTH];
+	अक्षर phys[ANALOG_MAX_PHYS_LENGTH];
+पूर्ण;
 
-struct analog_port {
-	struct gameport *gameport;
-	struct analog analog[2];
-	unsigned char mask;
-	char saitek;
-	char cooked;
-	int bads;
-	int reads;
-	int speed;
-	int loop;
-	int fuzz;
-	int axes[4];
-	int buttons;
-	int initial[4];
-	int axtime;
-};
+काष्ठा analog_port अणु
+	काष्ठा gameport *gameport;
+	काष्ठा analog analog[2];
+	अचिन्हित अक्षर mask;
+	अक्षर saitek;
+	अक्षर cooked;
+	पूर्णांक bads;
+	पूर्णांक पढ़ोs;
+	पूर्णांक speed;
+	पूर्णांक loop;
+	पूर्णांक fuzz;
+	पूर्णांक axes[4];
+	पूर्णांक buttons;
+	पूर्णांक initial[4];
+	पूर्णांक axसमय;
+पूर्ण;
 
 /*
  * Time macros.
  */
 
-#ifdef __i386__
+#अगर_घोषित __i386__
 
-#include <linux/i8253.h>
+#समावेश <linux/i8253.h>
 
-#define GET_TIME(x)	do { if (boot_cpu_has(X86_FEATURE_TSC)) x = (unsigned int)rdtsc(); else x = get_time_pit(); } while (0)
-#define DELTA(x,y)	(boot_cpu_has(X86_FEATURE_TSC) ? ((y) - (x)) : ((x) - (y) + ((x) < (y) ? PIT_TICK_RATE / HZ : 0)))
-#define TIME_NAME	(boot_cpu_has(X86_FEATURE_TSC)?"TSC":"PIT")
-static unsigned int get_time_pit(void)
-{
-        unsigned long flags;
-        unsigned int count;
+#घोषणा GET_TIME(x)	करो अणु अगर (boot_cpu_has(X86_FEATURE_TSC)) x = (अचिन्हित पूर्णांक)rdtsc(); अन्यथा x = get_समय_pit(); पूर्ण जबतक (0)
+#घोषणा DELTA(x,y)	(boot_cpu_has(X86_FEATURE_TSC) ? ((y) - (x)) : ((x) - (y) + ((x) < (y) ? PIT_TICK_RATE / HZ : 0)))
+#घोषणा TIME_NAME	(boot_cpu_has(X86_FEATURE_TSC)?"TSC":"PIT")
+अटल अचिन्हित पूर्णांक get_समय_pit(व्योम)
+अणु
+        अचिन्हित दीर्घ flags;
+        अचिन्हित पूर्णांक count;
 
         raw_spin_lock_irqsave(&i8253_lock, flags);
         outb_p(0x00, 0x43);
@@ -141,339 +142,339 @@ static unsigned int get_time_pit(void)
         count |= inb_p(0x40) << 8;
         raw_spin_unlock_irqrestore(&i8253_lock, flags);
 
-        return count;
-}
-#elif defined(__x86_64__)
-#define GET_TIME(x)	do { x = (unsigned int)rdtsc(); } while (0)
-#define DELTA(x,y)	((y)-(x))
-#define TIME_NAME	"TSC"
-#elif defined(__alpha__) || defined(CONFIG_ARM) || defined(CONFIG_ARM64) || defined(CONFIG_PPC) || defined(CONFIG_RISCV)
-#define GET_TIME(x)	do { x = get_cycles(); } while (0)
-#define DELTA(x,y)	((y)-(x))
-#define TIME_NAME	"get_cycles"
-#else
-#define FAKE_TIME
-static unsigned long analog_faketime = 0;
-#define GET_TIME(x)     do { x = analog_faketime++; } while(0)
-#define DELTA(x,y)	((y)-(x))
-#define TIME_NAME	"Unreliable"
-#warning Precise timer not defined for this architecture.
-#endif
+        वापस count;
+पूर्ण
+#या_अगर defined(__x86_64__)
+#घोषणा GET_TIME(x)	करो अणु x = (अचिन्हित पूर्णांक)rdtsc(); पूर्ण जबतक (0)
+#घोषणा DELTA(x,y)	((y)-(x))
+#घोषणा TIME_NAME	"TSC"
+#या_अगर defined(__alpha__) || defined(CONFIG_ARM) || defined(CONFIG_ARM64) || defined(CONFIG_PPC) || defined(CONFIG_RISCV)
+#घोषणा GET_TIME(x)	करो अणु x = get_cycles(); पूर्ण जबतक (0)
+#घोषणा DELTA(x,y)	((y)-(x))
+#घोषणा TIME_NAME	"get_cycles"
+#अन्यथा
+#घोषणा FAKE_TIME
+अटल अचिन्हित दीर्घ analog_fakeसमय = 0;
+#घोषणा GET_TIME(x)     करो अणु x = analog_fakeसमय++; पूर्ण जबतक(0)
+#घोषणा DELTA(x,y)	((y)-(x))
+#घोषणा TIME_NAME	"Unreliable"
+#warning Precise समयr not defined क्रम this architecture.
+#पूर्ण_अगर
 
-static inline u64 get_time(void)
-{
-	if (use_ktime) {
-		return ktime_get_ns();
-	} else {
-		unsigned int x;
+अटल अंतरभूत u64 get_समय(व्योम)
+अणु
+	अगर (use_kसमय) अणु
+		वापस kसमय_get_ns();
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक x;
 		GET_TIME(x);
-		return x;
-	}
-}
+		वापस x;
+	पूर्ण
+पूर्ण
 
-static inline unsigned int delta(u64 x, u64 y)
-{
-	if (use_ktime)
-		return y - x;
-	else
-		return DELTA((unsigned int)x, (unsigned int)y);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक delta(u64 x, u64 y)
+अणु
+	अगर (use_kसमय)
+		वापस y - x;
+	अन्यथा
+		वापस DELTA((अचिन्हित पूर्णांक)x, (अचिन्हित पूर्णांक)y);
+पूर्ण
 
 /*
  * analog_decode() decodes analog joystick data and reports input events.
  */
 
-static void analog_decode(struct analog *analog, int *axes, int *initial, int buttons)
-{
-	struct input_dev *dev = analog->dev;
-	int i, j;
+अटल व्योम analog_decode(काष्ठा analog *analog, पूर्णांक *axes, पूर्णांक *initial, पूर्णांक buttons)
+अणु
+	काष्ठा input_dev *dev = analog->dev;
+	पूर्णांक i, j;
 
-	if (analog->mask & ANALOG_HAT_FCS)
-		for (i = 0; i < 4; i++)
-			if (axes[3] < ((initial[3] * ((i << 1) + 1)) >> 3)) {
+	अगर (analog->mask & ANALOG_HAT_FCS)
+		क्रम (i = 0; i < 4; i++)
+			अगर (axes[3] < ((initial[3] * ((i << 1) + 1)) >> 3)) अणु
 				buttons |= 1 << (i + 14);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-	for (i = j = 0; i < 6; i++)
-		if (analog->mask & (0x10 << i))
+	क्रम (i = j = 0; i < 6; i++)
+		अगर (analog->mask & (0x10 << i))
 			input_report_key(dev, analog->buttons[j++], (buttons >> i) & 1);
 
-	if (analog->mask & ANALOG_HBTN_CHF)
-		for (i = 0; i < 4; i++)
+	अगर (analog->mask & ANALOG_HBTN_CHF)
+		क्रम (i = 0; i < 4; i++)
 			input_report_key(dev, analog->buttons[j++], (buttons >> (i + 10)) & 1);
 
-	if (analog->mask & ANALOG_BTN_TL)
+	अगर (analog->mask & ANALOG_BTN_TL)
 		input_report_key(dev, analog_pads[0], axes[2] < (initial[2] >> 1));
-	if (analog->mask & ANALOG_BTN_TR)
+	अगर (analog->mask & ANALOG_BTN_TR)
 		input_report_key(dev, analog_pads[1], axes[3] < (initial[3] >> 1));
-	if (analog->mask & ANALOG_BTN_TL2)
+	अगर (analog->mask & ANALOG_BTN_TL2)
 		input_report_key(dev, analog_pads[2], axes[2] > (initial[2] + (initial[2] >> 1)));
-	if (analog->mask & ANALOG_BTN_TR2)
+	अगर (analog->mask & ANALOG_BTN_TR2)
 		input_report_key(dev, analog_pads[3], axes[3] > (initial[3] + (initial[3] >> 1)));
 
-	for (i = j = 0; i < 4; i++)
-		if (analog->mask & (1 << i))
-			input_report_abs(dev, analog_axes[j++], axes[i]);
+	क्रम (i = j = 0; i < 4; i++)
+		अगर (analog->mask & (1 << i))
+			input_report_असल(dev, analog_axes[j++], axes[i]);
 
-	for (i = j = 0; i < 3; i++)
-		if (analog->mask & analog_exts[i]) {
-			input_report_abs(dev, analog_hats[j++],
+	क्रम (i = j = 0; i < 3; i++)
+		अगर (analog->mask & analog_exts[i]) अणु
+			input_report_असल(dev, analog_hats[j++],
 				((buttons >> ((i << 2) + 7)) & 1) - ((buttons >> ((i << 2) + 9)) & 1));
-			input_report_abs(dev, analog_hats[j++],
+			input_report_असल(dev, analog_hats[j++],
 				((buttons >> ((i << 2) + 8)) & 1) - ((buttons >> ((i << 2) + 6)) & 1));
-		}
+		पूर्ण
 
 	input_sync(dev);
-}
+पूर्ण
 
 /*
- * analog_cooked_read() reads analog joystick data.
+ * analog_cooked_पढ़ो() पढ़ोs analog joystick data.
  */
 
-static int analog_cooked_read(struct analog_port *port)
-{
-	struct gameport *gameport = port->gameport;
-	u64 time[4], start, loop, now;
-	unsigned int loopout, timeout;
-	unsigned char data[4], this, last;
-	unsigned long flags;
-	int i, j;
+अटल पूर्णांक analog_cooked_पढ़ो(काष्ठा analog_port *port)
+अणु
+	काष्ठा gameport *gameport = port->gameport;
+	u64 समय[4], start, loop, now;
+	अचिन्हित पूर्णांक loopout, समयout;
+	अचिन्हित अक्षर data[4], this, last;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, j;
 
 	loopout = (ANALOG_LOOP_TIME * port->loop) / 1000;
-	timeout = ANALOG_MAX_TIME * port->speed;
+	समयout = ANALOG_MAX_TIME * port->speed;
 
 	local_irq_save(flags);
 	gameport_trigger(gameport);
-	now = get_time();
+	now = get_समय();
 	local_irq_restore(flags);
 
 	start = now;
 	this = port->mask;
 	i = 0;
 
-	do {
+	करो अणु
 		loop = now;
 		last = this;
 
 		local_irq_disable();
-		this = gameport_read(gameport) & port->mask;
-		now = get_time();
+		this = gameport_पढ़ो(gameport) & port->mask;
+		now = get_समय();
 		local_irq_restore(flags);
 
-		if ((last ^ this) && (delta(loop, now) < loopout)) {
+		अगर ((last ^ this) && (delta(loop, now) < loopout)) अणु
 			data[i] = last ^ this;
-			time[i] = now;
+			समय[i] = now;
 			i++;
-		}
+		पूर्ण
 
-	} while (this && (i < 4) && (delta(start, now) < timeout));
+	पूर्ण जबतक (this && (i < 4) && (delta(start, now) < समयout));
 
 	this <<= 4;
 
-	for (--i; i >= 0; i--) {
+	क्रम (--i; i >= 0; i--) अणु
 		this |= data[i];
-		for (j = 0; j < 4; j++)
-			if (data[i] & (1 << j))
-				port->axes[j] = (delta(start, time[i]) << ANALOG_FUZZ_BITS) / port->loop;
-	}
+		क्रम (j = 0; j < 4; j++)
+			अगर (data[i] & (1 << j))
+				port->axes[j] = (delta(start, समय[i]) << ANALOG_FUZZ_BITS) / port->loop;
+	पूर्ण
 
-	return -(this != port->mask);
-}
+	वापस -(this != port->mask);
+पूर्ण
 
-static int analog_button_read(struct analog_port *port, char saitek, char chf)
-{
-	unsigned char u;
-	int t = 1, i = 0;
-	int strobe = gameport_time(port->gameport, ANALOG_SAITEK_TIME);
+अटल पूर्णांक analog_button_पढ़ो(काष्ठा analog_port *port, अक्षर saitek, अक्षर chf)
+अणु
+	अचिन्हित अक्षर u;
+	पूर्णांक t = 1, i = 0;
+	पूर्णांक strobe = gameport_समय(port->gameport, ANALOG_SAITEK_TIME);
 
-	u = gameport_read(port->gameport);
+	u = gameport_पढ़ो(port->gameport);
 
-	if (!chf) {
+	अगर (!chf) अणु
 		port->buttons = (~u >> 4) & 0xf;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	port->buttons = 0;
 
-	while ((~u & 0xf0) && (i < 16) && t) {
+	जबतक ((~u & 0xf0) && (i < 16) && t) अणु
 		port->buttons |= 1 << analog_chf[(~u >> 4) & 0xf];
-		if (!saitek) return 0;
+		अगर (!saitek) वापस 0;
 		udelay(ANALOG_SAITEK_DELAY);
 		t = strobe;
 		gameport_trigger(port->gameport);
-		while (((u = gameport_read(port->gameport)) & port->mask) && t) t--;
+		जबतक (((u = gameport_पढ़ो(port->gameport)) & port->mask) && t) t--;
 		i++;
-	}
+	पूर्ण
 
-	return -(!t || (i == 16));
-}
+	वापस -(!t || (i == 16));
+पूर्ण
 
 /*
  * analog_poll() repeatedly polls the Analog joysticks.
  */
 
-static void analog_poll(struct gameport *gameport)
-{
-	struct analog_port *port = gameport_get_drvdata(gameport);
-	int i;
+अटल व्योम analog_poll(काष्ठा gameport *gameport)
+अणु
+	काष्ठा analog_port *port = gameport_get_drvdata(gameport);
+	पूर्णांक i;
 
-	char saitek = !!(port->analog[0].mask & ANALOG_SAITEK);
-	char chf = !!(port->analog[0].mask & ANALOG_ANY_CHF);
+	अक्षर saitek = !!(port->analog[0].mask & ANALOG_SAITEK);
+	अक्षर chf = !!(port->analog[0].mask & ANALOG_ANY_CHF);
 
-	if (port->cooked) {
-		port->bads -= gameport_cooked_read(port->gameport, port->axes, &port->buttons);
-		if (chf)
+	अगर (port->cooked) अणु
+		port->bads -= gameport_cooked_पढ़ो(port->gameport, port->axes, &port->buttons);
+		अगर (chf)
 			port->buttons = port->buttons ? (1 << analog_chf[port->buttons]) : 0;
-		port->reads++;
-	} else {
-		if (!port->axtime--) {
-			port->bads -= analog_cooked_read(port);
-			port->bads -= analog_button_read(port, saitek, chf);
-			port->reads++;
-			port->axtime = ANALOG_AXIS_TIME - 1;
-		} else {
-			if (!saitek)
-				analog_button_read(port, saitek, chf);
-		}
-	}
+		port->पढ़ोs++;
+	पूर्ण अन्यथा अणु
+		अगर (!port->axसमय--) अणु
+			port->bads -= analog_cooked_पढ़ो(port);
+			port->bads -= analog_button_पढ़ो(port, saitek, chf);
+			port->पढ़ोs++;
+			port->axसमय = ANALOG_AXIS_TIME - 1;
+		पूर्ण अन्यथा अणु
+			अगर (!saitek)
+				analog_button_पढ़ो(port, saitek, chf);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 2; i++)
-		if (port->analog[i].mask)
+	क्रम (i = 0; i < 2; i++)
+		अगर (port->analog[i].mask)
 			analog_decode(port->analog + i, port->axes, port->initial, port->buttons);
-}
+पूर्ण
 
 /*
- * analog_open() is a callback from the input open routine.
+ * analog_खोलो() is a callback from the input खोलो routine.
  */
 
-static int analog_open(struct input_dev *dev)
-{
-	struct analog_port *port = input_get_drvdata(dev);
+अटल पूर्णांक analog_खोलो(काष्ठा input_dev *dev)
+अणु
+	काष्ठा analog_port *port = input_get_drvdata(dev);
 
 	gameport_start_polling(port->gameport);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * analog_close() is a callback from the input close routine.
+ * analog_बंद() is a callback from the input बंद routine.
  */
 
-static void analog_close(struct input_dev *dev)
-{
-	struct analog_port *port = input_get_drvdata(dev);
+अटल व्योम analog_बंद(काष्ठा input_dev *dev)
+अणु
+	काष्ठा analog_port *port = input_get_drvdata(dev);
 
 	gameport_stop_polling(port->gameport);
-}
+पूर्ण
 
 /*
- * analog_calibrate_timer() calibrates the timer and computes loop
- * and timeout values for a joystick port.
+ * analog_calibrate_समयr() calibrates the समयr and computes loop
+ * and समयout values क्रम a joystick port.
  */
 
-static void analog_calibrate_timer(struct analog_port *port)
-{
-	struct gameport *gameport = port->gameport;
-	unsigned int i, t, tx;
+अटल व्योम analog_calibrate_समयr(काष्ठा analog_port *port)
+अणु
+	काष्ठा gameport *gameport = port->gameport;
+	अचिन्हित पूर्णांक i, t, tx;
 	u64 t1, t2, t3;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (use_ktime) {
+	अगर (use_kसमय) अणु
 		port->speed = 1000000;
-	} else {
+	पूर्ण अन्यथा अणु
 		local_irq_save(flags);
-		t1 = get_time();
-#ifdef FAKE_TIME
-		analog_faketime += 830;
-#endif
+		t1 = get_समय();
+#अगर_घोषित FAKE_TIME
+		analog_fakeसमय += 830;
+#पूर्ण_अगर
 		mdelay(1);
-		t2 = get_time();
-		t3 = get_time();
+		t2 = get_समय();
+		t3 = get_समय();
 		local_irq_restore(flags);
 
 		port->speed = delta(t1, t2) - delta(t2, t3);
-	}
+	पूर्ण
 
 	tx = ~0;
 
-	for (i = 0; i < 50; i++) {
+	क्रम (i = 0; i < 50; i++) अणु
 		local_irq_save(flags);
-		t1 = get_time();
-		for (t = 0; t < 50; t++) {
-			gameport_read(gameport);
-			t2 = get_time();
-		}
-		t3 = get_time();
+		t1 = get_समय();
+		क्रम (t = 0; t < 50; t++) अणु
+			gameport_पढ़ो(gameport);
+			t2 = get_समय();
+		पूर्ण
+		t3 = get_समय();
 		local_irq_restore(flags);
 		udelay(i);
 		t = delta(t1, t2) - delta(t2, t3);
-		if (t < tx) tx = t;
-	}
+		अगर (t < tx) tx = t;
+	पूर्ण
 
         port->loop = tx / 50;
-}
+पूर्ण
 
 /*
- * analog_name() constructs a name for an analog joystick.
+ * analog_name() स्थिरructs a name क्रम an analog joystick.
  */
 
-static void analog_name(struct analog *analog)
-{
-	snprintf(analog->name, sizeof(analog->name), "Analog %d-axis %d-button",
+अटल व्योम analog_name(काष्ठा analog *analog)
+अणु
+	snम_लिखो(analog->name, माप(analog->name), "Analog %d-axis %d-button",
 		 hweight8(analog->mask & ANALOG_AXES_STD),
 		 hweight8(analog->mask & ANALOG_BTNS_STD) + !!(analog->mask & ANALOG_BTNS_CHF) * 2 +
 		 hweight16(analog->mask & ANALOG_BTNS_GAMEPAD) + !!(analog->mask & ANALOG_HBTN_CHF) * 4);
 
-	if (analog->mask & ANALOG_HATS_ALL)
-		snprintf(analog->name, sizeof(analog->name), "%s %d-hat",
+	अगर (analog->mask & ANALOG_HATS_ALL)
+		snम_लिखो(analog->name, माप(analog->name), "%s %d-hat",
 			 analog->name, hweight16(analog->mask & ANALOG_HATS_ALL));
 
-	if (analog->mask & ANALOG_HAT_FCS)
-		strlcat(analog->name, " FCS", sizeof(analog->name));
-	if (analog->mask & ANALOG_ANY_CHF)
+	अगर (analog->mask & ANALOG_HAT_FCS)
+		strlcat(analog->name, " FCS", माप(analog->name));
+	अगर (analog->mask & ANALOG_ANY_CHF)
 		strlcat(analog->name, (analog->mask & ANALOG_SAITEK) ? " Saitek" : " CHF",
-			sizeof(analog->name));
+			माप(analog->name));
 
 	strlcat(analog->name, (analog->mask & ANALOG_GAMEPAD) ? " gamepad": " joystick",
-		sizeof(analog->name));
-}
+		माप(analog->name));
+पूर्ण
 
 /*
  * analog_init_device()
  */
 
-static int analog_init_device(struct analog_port *port, struct analog *analog, int index)
-{
-	struct input_dev *input_dev;
-	int i, j, t, v, w, x, y, z;
-	int error;
+अटल पूर्णांक analog_init_device(काष्ठा analog_port *port, काष्ठा analog *analog, पूर्णांक index)
+अणु
+	काष्ठा input_dev *input_dev;
+	पूर्णांक i, j, t, v, w, x, y, z;
+	पूर्णांक error;
 
 	analog_name(analog);
-	snprintf(analog->phys, sizeof(analog->phys),
+	snम_लिखो(analog->phys, माप(analog->phys),
 		 "%s/input%d", port->gameport->phys, index);
 	analog->buttons = (analog->mask & ANALOG_GAMEPAD) ? analog_pad_btn : analog_joy_btn;
 
 	analog->dev = input_dev = input_allocate_device();
-	if (!input_dev)
-		return -ENOMEM;
+	अगर (!input_dev)
+		वापस -ENOMEM;
 
 	input_dev->name = analog->name;
 	input_dev->phys = analog->phys;
 	input_dev->id.bustype = BUS_GAMEPORT;
-	input_dev->id.vendor = GAMEPORT_ID_VENDOR_ANALOG;
+	input_dev->id.venकरोr = GAMEPORT_ID_VENDOR_ANALOG;
 	input_dev->id.product = analog->mask >> 4;
 	input_dev->id.version = 0x0100;
 	input_dev->dev.parent = &port->gameport->dev;
 
 	input_set_drvdata(input_dev, port);
 
-	input_dev->open = analog_open;
-	input_dev->close = analog_close;
+	input_dev->खोलो = analog_खोलो;
+	input_dev->बंद = analog_बंद;
 
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 
-	for (i = j = 0; i < 4; i++)
-		if (analog->mask & (1 << i)) {
+	क्रम (i = j = 0; i < 4; i++)
+		अगर (analog->mask & (1 << i)) अणु
 
 			t = analog_axes[j];
 			x = port->axes[i];
@@ -483,75 +484,75 @@ static int analog_init_device(struct analog_port *port, struct analog *analog, i
 			v = (x >> 3);
 			w = (x >> 3);
 
-			if ((i == 2 || i == 3) && (j == 2 || j == 3) && (z > (y >> 3)))
+			अगर ((i == 2 || i == 3) && (j == 2 || j == 3) && (z > (y >> 3)))
 				x = y;
 
-			if (analog->mask & ANALOG_SAITEK) {
-				if (i == 2) x = port->axes[i];
+			अगर (analog->mask & ANALOG_SAITEK) अणु
+				अगर (i == 2) x = port->axes[i];
 				v = x - (x >> 2);
 				w = (x >> 4);
-			}
+			पूर्ण
 
-			input_set_abs_params(input_dev, t, v, (x << 1) - v, port->fuzz, w);
+			input_set_असल_params(input_dev, t, v, (x << 1) - v, port->fuzz, w);
 			j++;
-		}
+		पूर्ण
 
-	for (i = j = 0; i < 3; i++)
-		if (analog->mask & analog_exts[i])
-			for (x = 0; x < 2; x++) {
+	क्रम (i = j = 0; i < 3; i++)
+		अगर (analog->mask & analog_exts[i])
+			क्रम (x = 0; x < 2; x++) अणु
 				t = analog_hats[j++];
-				input_set_abs_params(input_dev, t, -1, 1, 0, 0);
-			}
+				input_set_असल_params(input_dev, t, -1, 1, 0, 0);
+			पूर्ण
 
-	for (i = j = 0; i < 4; i++)
-		if (analog->mask & (0x10 << i))
+	क्रम (i = j = 0; i < 4; i++)
+		अगर (analog->mask & (0x10 << i))
 			set_bit(analog->buttons[j++], input_dev->keybit);
 
-	if (analog->mask & ANALOG_BTNS_CHF)
-		for (i = 0; i < 2; i++)
+	अगर (analog->mask & ANALOG_BTNS_CHF)
+		क्रम (i = 0; i < 2; i++)
 			set_bit(analog->buttons[j++], input_dev->keybit);
 
-	if (analog->mask & ANALOG_HBTN_CHF)
-		for (i = 0; i < 4; i++)
+	अगर (analog->mask & ANALOG_HBTN_CHF)
+		क्रम (i = 0; i < 4; i++)
 			set_bit(analog->buttons[j++], input_dev->keybit);
 
-	for (i = 0; i < 4; i++)
-		if (analog->mask & (ANALOG_BTN_TL << i))
+	क्रम (i = 0; i < 4; i++)
+		अगर (analog->mask & (ANALOG_BTN_TL << i))
 			set_bit(analog_pads[i], input_dev->keybit);
 
 	analog_decode(analog, port->axes, port->initial, port->buttons);
 
-	error = input_register_device(analog->dev);
-	if (error) {
-		input_free_device(analog->dev);
-		return error;
-	}
+	error = input_रेजिस्टर_device(analog->dev);
+	अगर (error) अणु
+		input_मुक्त_device(analog->dev);
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * analog_init_devices() sets up device-specific values and registers the input devices.
+ * analog_init_devices() sets up device-specअगरic values and रेजिस्टरs the input devices.
  */
 
-static int analog_init_masks(struct analog_port *port)
-{
-	int i;
-	struct analog *analog = port->analog;
-	int max[4];
+अटल पूर्णांक analog_init_masks(काष्ठा analog_port *port)
+अणु
+	पूर्णांक i;
+	काष्ठा analog *analog = port->analog;
+	पूर्णांक max[4];
 
-	if (!port->mask)
-		return -1;
+	अगर (!port->mask)
+		वापस -1;
 
-	if ((port->mask & 3) != 3 && port->mask != 0xc) {
-		printk(KERN_WARNING "analog.c: Unknown joystick device found  "
+	अगर ((port->mask & 3) != 3 && port->mask != 0xc) अणु
+		prपूर्णांकk(KERN_WARNING "analog.c: Unknown joystick device found  "
 			"(data=%#x, %s), probably not analog joystick.\n",
 			port->mask, port->gameport->phys);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 
-	i = analog_options[0]; /* FIXME !!! - need to specify options for different ports */
+	i = analog_options[0]; /* FIXME !!! - need to specअगरy options क्रम dअगरferent ports */
 
 	analog[0].mask = i & 0xfffff;
 
@@ -576,211 +577,211 @@ static int analog_init_masks(struct analog_port *port)
 	analog[1].mask &= (analog[0].mask & ANALOG_EXTENSIONS) ? ANALOG_GAMEPAD
 			: (((ANALOG_BTNS_STD | port->mask) & ~analog[0].mask) | ANALOG_GAMEPAD);
 
-	if (port->cooked) {
+	अगर (port->cooked) अणु
 
-		for (i = 0; i < 4; i++) max[i] = port->axes[i] << 1;
+		क्रम (i = 0; i < 4; i++) max[i] = port->axes[i] << 1;
 
-		if ((analog[0].mask & 0x7) == 0x7) max[2] = (max[0] + max[1]) >> 1;
-		if ((analog[0].mask & 0xb) == 0xb) max[3] = (max[0] + max[1]) >> 1;
-		if ((analog[0].mask & ANALOG_BTN_TL) && !(analog[0].mask & ANALOG_BTN_TL2)) max[2] >>= 1;
-		if ((analog[0].mask & ANALOG_BTN_TR) && !(analog[0].mask & ANALOG_BTN_TR2)) max[3] >>= 1;
-		if ((analog[0].mask & ANALOG_HAT_FCS)) max[3] >>= 1;
+		अगर ((analog[0].mask & 0x7) == 0x7) max[2] = (max[0] + max[1]) >> 1;
+		अगर ((analog[0].mask & 0xb) == 0xb) max[3] = (max[0] + max[1]) >> 1;
+		अगर ((analog[0].mask & ANALOG_BTN_TL) && !(analog[0].mask & ANALOG_BTN_TL2)) max[2] >>= 1;
+		अगर ((analog[0].mask & ANALOG_BTN_TR) && !(analog[0].mask & ANALOG_BTN_TR2)) max[3] >>= 1;
+		अगर ((analog[0].mask & ANALOG_HAT_FCS)) max[3] >>= 1;
 
 		gameport_calibrate(port->gameport, port->axes, max);
-	}
+	पूर्ण
 
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		port->initial[i] = port->axes[i];
 
-	return -!(analog[0].mask || analog[1].mask);
-}
+	वापस -!(analog[0].mask || analog[1].mask);
+पूर्ण
 
-static int analog_init_port(struct gameport *gameport, struct gameport_driver *drv, struct analog_port *port)
-{
-	int i, t, u, v;
+अटल पूर्णांक analog_init_port(काष्ठा gameport *gameport, काष्ठा gameport_driver *drv, काष्ठा analog_port *port)
+अणु
+	पूर्णांक i, t, u, v;
 
 	port->gameport = gameport;
 
 	gameport_set_drvdata(gameport, port);
 
-	if (!gameport_open(gameport, drv, GAMEPORT_MODE_RAW)) {
+	अगर (!gameport_खोलो(gameport, drv, GAMEPORT_MODE_RAW)) अणु
 
-		analog_calibrate_timer(port);
+		analog_calibrate_समयr(port);
 
 		gameport_trigger(gameport);
-		t = gameport_read(gameport);
+		t = gameport_पढ़ो(gameport);
 		msleep(ANALOG_MAX_TIME);
-		port->mask = (gameport_read(gameport) ^ t) & t & 0xf;
+		port->mask = (gameport_पढ़ो(gameport) ^ t) & t & 0xf;
 		port->fuzz = (port->speed * ANALOG_FUZZ_MAGIC) / port->loop / 1000 + ANALOG_FUZZ_BITS;
 
-		for (i = 0; i < ANALOG_INIT_RETRIES; i++) {
-			if (!analog_cooked_read(port))
-				break;
+		क्रम (i = 0; i < ANALOG_INIT_RETRIES; i++) अणु
+			अगर (!analog_cooked_पढ़ो(port))
+				अवरोध;
 			msleep(ANALOG_MAX_TIME);
-		}
+		पूर्ण
 
 		u = v = 0;
 
 		msleep(ANALOG_MAX_TIME);
-		t = gameport_time(gameport, ANALOG_MAX_TIME * 1000);
+		t = gameport_समय(gameport, ANALOG_MAX_TIME * 1000);
 		gameport_trigger(gameport);
-		while ((gameport_read(port->gameport) & port->mask) && (u < t))
+		जबतक ((gameport_पढ़ो(port->gameport) & port->mask) && (u < t))
 			u++;
 		udelay(ANALOG_SAITEK_DELAY);
-		t = gameport_time(gameport, ANALOG_SAITEK_TIME);
+		t = gameport_समय(gameport, ANALOG_SAITEK_TIME);
 		gameport_trigger(gameport);
-		while ((gameport_read(port->gameport) & port->mask) && (v < t))
+		जबतक ((gameport_पढ़ो(port->gameport) & port->mask) && (v < t))
 			v++;
 
-		if (v < (u >> 1)) { /* FIXME - more than one port */
+		अगर (v < (u >> 1)) अणु /* FIXME - more than one port */
 			analog_options[0] |= /* FIXME - more than one port */
 				ANALOG_SAITEK | ANALOG_BTNS_CHF | ANALOG_HBTN_CHF | ANALOG_HAT1_CHF;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		gameport_close(gameport);
-	}
+		gameport_बंद(gameport);
+	पूर्ण
 
-	if (!gameport_open(gameport, drv, GAMEPORT_MODE_COOKED)) {
+	अगर (!gameport_खोलो(gameport, drv, GAMEPORT_MODE_COOKED)) अणु
 
-		for (i = 0; i < ANALOG_INIT_RETRIES; i++)
-			if (!gameport_cooked_read(gameport, port->axes, &port->buttons))
-				break;
-		for (i = 0; i < 4; i++)
-			if (port->axes[i] != -1)
+		क्रम (i = 0; i < ANALOG_INIT_RETRIES; i++)
+			अगर (!gameport_cooked_पढ़ो(gameport, port->axes, &port->buttons))
+				अवरोध;
+		क्रम (i = 0; i < 4; i++)
+			अगर (port->axes[i] != -1)
 				port->mask |= 1 << i;
 
 		port->fuzz = gameport->fuzz;
 		port->cooked = 1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return gameport_open(gameport, drv, GAMEPORT_MODE_RAW);
-}
+	वापस gameport_खोलो(gameport, drv, GAMEPORT_MODE_RAW);
+पूर्ण
 
-static int analog_connect(struct gameport *gameport, struct gameport_driver *drv)
-{
-	struct analog_port *port;
-	int i;
-	int err;
+अटल पूर्णांक analog_connect(काष्ठा gameport *gameport, काष्ठा gameport_driver *drv)
+अणु
+	काष्ठा analog_port *port;
+	पूर्णांक i;
+	पूर्णांक err;
 
-	if (!(port = kzalloc(sizeof(struct analog_port), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(port = kzalloc(माप(काष्ठा analog_port), GFP_KERNEL)))
+		वापस -ENOMEM;
 
 	err = analog_init_port(gameport, drv, port);
-	if (err)
-		goto fail1;
+	अगर (err)
+		जाओ fail1;
 
 	err = analog_init_masks(port);
-	if (err)
-		goto fail2;
+	अगर (err)
+		जाओ fail2;
 
 	gameport_set_poll_handler(gameport, analog_poll);
-	gameport_set_poll_interval(gameport, 10);
+	gameport_set_poll_पूर्णांकerval(gameport, 10);
 
-	for (i = 0; i < 2; i++)
-		if (port->analog[i].mask) {
+	क्रम (i = 0; i < 2; i++)
+		अगर (port->analog[i].mask) अणु
 			err = analog_init_device(port, port->analog + i, i);
-			if (err)
-				goto fail3;
-		}
+			अगर (err)
+				जाओ fail3;
+		पूर्ण
 
-	return 0;
+	वापस 0;
 
- fail3: while (--i >= 0)
-		if (port->analog[i].mask)
-			input_unregister_device(port->analog[i].dev);
- fail2:	gameport_close(gameport);
- fail1:	gameport_set_drvdata(gameport, NULL);
-	kfree(port);
-	return err;
-}
+ fail3: जबतक (--i >= 0)
+		अगर (port->analog[i].mask)
+			input_unरेजिस्टर_device(port->analog[i].dev);
+ fail2:	gameport_बंद(gameport);
+ fail1:	gameport_set_drvdata(gameport, शून्य);
+	kमुक्त(port);
+	वापस err;
+पूर्ण
 
-static void analog_disconnect(struct gameport *gameport)
-{
-	struct analog_port *port = gameport_get_drvdata(gameport);
-	int i;
+अटल व्योम analog_disconnect(काष्ठा gameport *gameport)
+अणु
+	काष्ठा analog_port *port = gameport_get_drvdata(gameport);
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++)
-		if (port->analog[i].mask)
-			input_unregister_device(port->analog[i].dev);
-	gameport_close(gameport);
-	gameport_set_drvdata(gameport, NULL);
-	printk(KERN_INFO "analog.c: %d out of %d reads (%d%%) on %s failed\n",
-		port->bads, port->reads, port->reads ? (port->bads * 100 / port->reads) : 0,
+	क्रम (i = 0; i < 2; i++)
+		अगर (port->analog[i].mask)
+			input_unरेजिस्टर_device(port->analog[i].dev);
+	gameport_बंद(gameport);
+	gameport_set_drvdata(gameport, शून्य);
+	prपूर्णांकk(KERN_INFO "analog.c: %d out of %d reads (%d%%) on %s failed\n",
+		port->bads, port->पढ़ोs, port->पढ़ोs ? (port->bads * 100 / port->पढ़ोs) : 0,
 		port->gameport->phys);
-	kfree(port);
-}
+	kमुक्त(port);
+पूर्ण
 
-struct analog_types {
-	char *name;
-	int value;
-};
+काष्ठा analog_types अणु
+	अक्षर *name;
+	पूर्णांक value;
+पूर्ण;
 
-static struct analog_types analog_types[] = {
-	{ "none",	0x00000000 },
-	{ "auto",	0x000000ff },
-	{ "2btn",	0x0000003f },
-	{ "y-joy",	0x0cc00033 },
-	{ "y-pad",	0x8cc80033 },
-	{ "fcs",	0x000008f7 },
-	{ "chf",	0x000002ff },
-	{ "fullchf",	0x000007ff },
-	{ "gamepad",	0x000830f3 },
-	{ "gamepad8",	0x0008f0f3 },
-	{ NULL, 0 }
-};
+अटल काष्ठा analog_types analog_types[] = अणु
+	अणु "none",	0x00000000 पूर्ण,
+	अणु "auto",	0x000000ff पूर्ण,
+	अणु "2btn",	0x0000003f पूर्ण,
+	अणु "y-joy",	0x0cc00033 पूर्ण,
+	अणु "y-pad",	0x8cc80033 पूर्ण,
+	अणु "fcs",	0x000008f7 पूर्ण,
+	अणु "chf",	0x000002ff पूर्ण,
+	अणु "fullchf",	0x000007ff पूर्ण,
+	अणु "gamepad",	0x000830f3 पूर्ण,
+	अणु "gamepad8",	0x0008f0f3 पूर्ण,
+	अणु शून्य, 0 पूर्ण
+पूर्ण;
 
-static void analog_parse_options(void)
-{
-	int i, j;
-	char *end;
+अटल व्योम analog_parse_options(व्योम)
+अणु
+	पूर्णांक i, j;
+	अक्षर *end;
 
-	for (i = 0; i < js_nargs; i++) {
+	क्रम (i = 0; i < js_nargs; i++) अणु
 
-		for (j = 0; analog_types[j].name; j++)
-			if (!strcmp(analog_types[j].name, js[i])) {
+		क्रम (j = 0; analog_types[j].name; j++)
+			अगर (!म_भेद(analog_types[j].name, js[i])) अणु
 				analog_options[i] = analog_types[j].value;
-				break;
-			}
-		if (analog_types[j].name) continue;
+				अवरोध;
+			पूर्ण
+		अगर (analog_types[j].name) जारी;
 
-		analog_options[i] = simple_strtoul(js[i], &end, 0);
-		if (end != js[i]) continue;
+		analog_options[i] = simple_म_से_अदीर्घ(js[i], &end, 0);
+		अगर (end != js[i]) जारी;
 
 		analog_options[i] = 0xff;
-		if (!strlen(js[i])) continue;
+		अगर (!म_माप(js[i])) जारी;
 
-		printk(KERN_WARNING "analog.c: Bad config for port %d - \"%s\"\n", i, js[i]);
-	}
+		prपूर्णांकk(KERN_WARNING "analog.c: Bad config for port %d - \"%s\"\n", i, js[i]);
+	पूर्ण
 
-	for (; i < ANALOG_PORTS; i++)
+	क्रम (; i < ANALOG_PORTS; i++)
 		analog_options[i] = 0xff;
-}
+पूर्ण
 
 /*
- * The gameport device structure.
+ * The gameport device काष्ठाure.
  */
 
-static struct gameport_driver analog_drv = {
-	.driver		= {
+अटल काष्ठा gameport_driver analog_drv = अणु
+	.driver		= अणु
 		.name	= "analog",
-	},
+	पूर्ण,
 	.description	= DRIVER_DESC,
 	.connect	= analog_connect,
 	.disconnect	= analog_disconnect,
-};
+पूर्ण;
 
-static int __init analog_init(void)
-{
+अटल पूर्णांक __init analog_init(व्योम)
+अणु
 	analog_parse_options();
-	return gameport_register_driver(&analog_drv);
-}
+	वापस gameport_रेजिस्टर_driver(&analog_drv);
+पूर्ण
 
-static void __exit analog_exit(void)
-{
-	gameport_unregister_driver(&analog_drv);
-}
+अटल व्योम __निकास analog_निकास(व्योम)
+अणु
+	gameport_unरेजिस्टर_driver(&analog_drv);
+पूर्ण
 
 module_init(analog_init);
-module_exit(analog_exit);
+module_निकास(analog_निकास);

@@ -1,383 +1,384 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2008, Intel Corporation.
  *
- * Author: Alexander Duyck <alexander.h.duyck@intel.com>
+ * Author: Alexander Duyck <alexander.h.duyck@पूर्णांकel.com>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
-#include <net/netlink.h>
-#include <net/pkt_sched.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
+#समावेश <net/netlink.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/pkt_cls.h>
 
-struct multiq_sched_data {
+काष्ठा multiq_sched_data अणु
 	u16 bands;
 	u16 max_bands;
 	u16 curband;
-	struct tcf_proto __rcu *filter_list;
-	struct tcf_block *block;
-	struct Qdisc **queues;
-};
+	काष्ठा tcf_proto __rcu *filter_list;
+	काष्ठा tcf_block *block;
+	काष्ठा Qdisc **queues;
+पूर्ण;
 
 
-static struct Qdisc *
-multiq_classify(struct sk_buff *skb, struct Qdisc *sch, int *qerr)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
+अटल काष्ठा Qdisc *
+multiq_classअगरy(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch, पूर्णांक *qerr)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
 	u32 band;
-	struct tcf_result res;
-	struct tcf_proto *fl = rcu_dereference_bh(q->filter_list);
-	int err;
+	काष्ठा tcf_result res;
+	काष्ठा tcf_proto *fl = rcu_dereference_bh(q->filter_list);
+	पूर्णांक err;
 
 	*qerr = NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
-	err = tcf_classify(skb, fl, &res, false);
-#ifdef CONFIG_NET_CLS_ACT
-	switch (err) {
-	case TC_ACT_STOLEN:
-	case TC_ACT_QUEUED:
-	case TC_ACT_TRAP:
+	err = tcf_classअगरy(skb, fl, &res, false);
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	चयन (err) अणु
+	हाल TC_ACT_STOLEN:
+	हाल TC_ACT_QUEUED:
+	हाल TC_ACT_TRAP:
 		*qerr = NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
 		fallthrough;
-	case TC_ACT_SHOT:
-		return NULL;
-	}
-#endif
+	हाल TC_ACT_SHOT:
+		वापस शून्य;
+	पूर्ण
+#पूर्ण_अगर
 	band = skb_get_queue_mapping(skb);
 
-	if (band >= q->bands)
-		return q->queues[0];
+	अगर (band >= q->bands)
+		वापस q->queues[0];
 
-	return q->queues[band];
-}
+	वापस q->queues[band];
+पूर्ण
 
-static int
-multiq_enqueue(struct sk_buff *skb, struct Qdisc *sch,
-	       struct sk_buff **to_free)
-{
-	struct Qdisc *qdisc;
-	int ret;
+अटल पूर्णांक
+multiq_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+	       काष्ठा sk_buff **to_मुक्त)
+अणु
+	काष्ठा Qdisc *qdisc;
+	पूर्णांक ret;
 
-	qdisc = multiq_classify(skb, sch, &ret);
-#ifdef CONFIG_NET_CLS_ACT
-	if (qdisc == NULL) {
+	qdisc = multiq_classअगरy(skb, sch, &ret);
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	अगर (qdisc == शून्य) अणु
 
-		if (ret & __NET_XMIT_BYPASS)
+		अगर (ret & __NET_XMIT_BYPASS)
 			qdisc_qstats_drop(sch);
-		__qdisc_drop(skb, to_free);
-		return ret;
-	}
-#endif
+		__qdisc_drop(skb, to_मुक्त);
+		वापस ret;
+	पूर्ण
+#पूर्ण_अगर
 
-	ret = qdisc_enqueue(skb, qdisc, to_free);
-	if (ret == NET_XMIT_SUCCESS) {
+	ret = qdisc_enqueue(skb, qdisc, to_मुक्त);
+	अगर (ret == NET_XMIT_SUCCESS) अणु
 		sch->q.qlen++;
-		return NET_XMIT_SUCCESS;
-	}
-	if (net_xmit_drop_count(ret))
+		वापस NET_XMIT_SUCCESS;
+	पूर्ण
+	अगर (net_xmit_drop_count(ret))
 		qdisc_qstats_drop(sch);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct sk_buff *multiq_dequeue(struct Qdisc *sch)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
-	struct Qdisc *qdisc;
-	struct sk_buff *skb;
-	int band;
+अटल काष्ठा sk_buff *multiq_dequeue(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
+	काष्ठा Qdisc *qdisc;
+	काष्ठा sk_buff *skb;
+	पूर्णांक band;
 
-	for (band = 0; band < q->bands; band++) {
+	क्रम (band = 0; band < q->bands; band++) अणु
 		/* cycle through bands to ensure fairness */
 		q->curband++;
-		if (q->curband >= q->bands)
+		अगर (q->curband >= q->bands)
 			q->curband = 0;
 
-		/* Check that target subqueue is available before
-		 * pulling an skb to avoid head-of-line blocking.
+		/* Check that target subqueue is available beक्रमe
+		 * pulling an skb to aव्योम head-of-line blocking.
 		 */
-		if (!netif_xmit_stopped(
-		    netdev_get_tx_queue(qdisc_dev(sch), q->curband))) {
+		अगर (!netअगर_xmit_stopped(
+		    netdev_get_tx_queue(qdisc_dev(sch), q->curband))) अणु
 			qdisc = q->queues[q->curband];
 			skb = qdisc->dequeue(qdisc);
-			if (skb) {
+			अगर (skb) अणु
 				qdisc_bstats_update(sch, skb);
 				sch->q.qlen--;
-				return skb;
-			}
-		}
-	}
-	return NULL;
+				वापस skb;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
 
-}
+पूर्ण
 
-static struct sk_buff *multiq_peek(struct Qdisc *sch)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
-	unsigned int curband = q->curband;
-	struct Qdisc *qdisc;
-	struct sk_buff *skb;
-	int band;
+अटल काष्ठा sk_buff *multiq_peek(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
+	अचिन्हित पूर्णांक curband = q->curband;
+	काष्ठा Qdisc *qdisc;
+	काष्ठा sk_buff *skb;
+	पूर्णांक band;
 
-	for (band = 0; band < q->bands; band++) {
+	क्रम (band = 0; band < q->bands; band++) अणु
 		/* cycle through bands to ensure fairness */
 		curband++;
-		if (curband >= q->bands)
+		अगर (curband >= q->bands)
 			curband = 0;
 
-		/* Check that target subqueue is available before
-		 * pulling an skb to avoid head-of-line blocking.
+		/* Check that target subqueue is available beक्रमe
+		 * pulling an skb to aव्योम head-of-line blocking.
 		 */
-		if (!netif_xmit_stopped(
-		    netdev_get_tx_queue(qdisc_dev(sch), curband))) {
+		अगर (!netअगर_xmit_stopped(
+		    netdev_get_tx_queue(qdisc_dev(sch), curband))) अणु
 			qdisc = q->queues[curband];
 			skb = qdisc->ops->peek(qdisc);
-			if (skb)
-				return skb;
-		}
-	}
-	return NULL;
+			अगर (skb)
+				वापस skb;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
 
-}
+पूर्ण
 
-static void
-multiq_reset(struct Qdisc *sch)
-{
+अटल व्योम
+multiq_reset(काष्ठा Qdisc *sch)
+अणु
 	u16 band;
-	struct multiq_sched_data *q = qdisc_priv(sch);
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
 
-	for (band = 0; band < q->bands; band++)
+	क्रम (band = 0; band < q->bands; band++)
 		qdisc_reset(q->queues[band]);
 	sch->q.qlen = 0;
 	q->curband = 0;
-}
+पूर्ण
 
-static void
-multiq_destroy(struct Qdisc *sch)
-{
-	int band;
-	struct multiq_sched_data *q = qdisc_priv(sch);
+अटल व्योम
+multiq_destroy(काष्ठा Qdisc *sch)
+अणु
+	पूर्णांक band;
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
 
 	tcf_block_put(q->block);
-	for (band = 0; band < q->bands; band++)
+	क्रम (band = 0; band < q->bands; band++)
 		qdisc_put(q->queues[band]);
 
-	kfree(q->queues);
-}
+	kमुक्त(q->queues);
+पूर्ण
 
-static int multiq_tune(struct Qdisc *sch, struct nlattr *opt,
-		       struct netlink_ext_ack *extack)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
-	struct tc_multiq_qopt *qopt;
-	struct Qdisc **removed;
-	int i, n_removed = 0;
+अटल पूर्णांक multiq_tune(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
+	काष्ठा tc_multiq_qopt *qopt;
+	काष्ठा Qdisc **हटाओd;
+	पूर्णांक i, n_हटाओd = 0;
 
-	if (!netif_is_multiqueue(qdisc_dev(sch)))
-		return -EOPNOTSUPP;
-	if (nla_len(opt) < sizeof(*qopt))
-		return -EINVAL;
+	अगर (!netअगर_is_multiqueue(qdisc_dev(sch)))
+		वापस -EOPNOTSUPP;
+	अगर (nla_len(opt) < माप(*qopt))
+		वापस -EINVAL;
 
 	qopt = nla_data(opt);
 
 	qopt->bands = qdisc_dev(sch)->real_num_tx_queues;
 
-	removed = kmalloc(sizeof(*removed) * (q->max_bands - q->bands),
+	हटाओd = kदो_स्मृति(माप(*हटाओd) * (q->max_bands - q->bands),
 			  GFP_KERNEL);
-	if (!removed)
-		return -ENOMEM;
+	अगर (!हटाओd)
+		वापस -ENOMEM;
 
 	sch_tree_lock(sch);
 	q->bands = qopt->bands;
-	for (i = q->bands; i < q->max_bands; i++) {
-		if (q->queues[i] != &noop_qdisc) {
-			struct Qdisc *child = q->queues[i];
+	क्रम (i = q->bands; i < q->max_bands; i++) अणु
+		अगर (q->queues[i] != &noop_qdisc) अणु
+			काष्ठा Qdisc *child = q->queues[i];
 
 			q->queues[i] = &noop_qdisc;
 			qdisc_purge_queue(child);
-			removed[n_removed++] = child;
-		}
-	}
+			हटाओd[n_हटाओd++] = child;
+		पूर्ण
+	पूर्ण
 
 	sch_tree_unlock(sch);
 
-	for (i = 0; i < n_removed; i++)
-		qdisc_put(removed[i]);
-	kfree(removed);
+	क्रम (i = 0; i < n_हटाओd; i++)
+		qdisc_put(हटाओd[i]);
+	kमुक्त(हटाओd);
 
-	for (i = 0; i < q->bands; i++) {
-		if (q->queues[i] == &noop_qdisc) {
-			struct Qdisc *child, *old;
+	क्रम (i = 0; i < q->bands; i++) अणु
+		अगर (q->queues[i] == &noop_qdisc) अणु
+			काष्ठा Qdisc *child, *old;
 			child = qdisc_create_dflt(sch->dev_queue,
-						  &pfifo_qdisc_ops,
+						  &pfअगरo_qdisc_ops,
 						  TC_H_MAKE(sch->handle,
 							    i + 1), extack);
-			if (child) {
+			अगर (child) अणु
 				sch_tree_lock(sch);
 				old = q->queues[i];
 				q->queues[i] = child;
-				if (child != &noop_qdisc)
+				अगर (child != &noop_qdisc)
 					qdisc_hash_add(child, true);
 
-				if (old != &noop_qdisc)
+				अगर (old != &noop_qdisc)
 					qdisc_purge_queue(old);
 				sch_tree_unlock(sch);
 				qdisc_put(old);
-			}
-		}
-	}
-	return 0;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int multiq_init(struct Qdisc *sch, struct nlattr *opt,
-		       struct netlink_ext_ack *extack)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
-	int i, err;
+अटल पूर्णांक multiq_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
+	पूर्णांक i, err;
 
-	q->queues = NULL;
+	q->queues = शून्य;
 
-	if (!opt)
-		return -EINVAL;
+	अगर (!opt)
+		वापस -EINVAL;
 
 	err = tcf_block_get(&q->block, &q->filter_list, sch, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	q->max_bands = qdisc_dev(sch)->num_tx_queues;
 
-	q->queues = kcalloc(q->max_bands, sizeof(struct Qdisc *), GFP_KERNEL);
-	if (!q->queues)
-		return -ENOBUFS;
-	for (i = 0; i < q->max_bands; i++)
+	q->queues = kसुस्मृति(q->max_bands, माप(काष्ठा Qdisc *), GFP_KERNEL);
+	अगर (!q->queues)
+		वापस -ENOBUFS;
+	क्रम (i = 0; i < q->max_bands; i++)
 		q->queues[i] = &noop_qdisc;
 
-	return multiq_tune(sch, opt, extack);
-}
+	वापस multiq_tune(sch, opt, extack);
+पूर्ण
 
-static int multiq_dump(struct Qdisc *sch, struct sk_buff *skb)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
-	unsigned char *b = skb_tail_pointer(skb);
-	struct tc_multiq_qopt opt;
+अटल पूर्णांक multiq_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	काष्ठा tc_multiq_qopt opt;
 
 	opt.bands = q->bands;
 	opt.max_bands = q->max_bands;
 
-	if (nla_put(skb, TCA_OPTIONS, sizeof(opt), &opt))
-		goto nla_put_failure;
+	अगर (nla_put(skb, TCA_OPTIONS, माप(opt), &opt))
+		जाओ nla_put_failure;
 
-	return skb->len;
+	वापस skb->len;
 
 nla_put_failure:
 	nlmsg_trim(skb, b);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int multiq_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
-			struct Qdisc **old, struct netlink_ext_ack *extack)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
-	unsigned long band = arg - 1;
+अटल पूर्णांक multiq_graft(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg, काष्ठा Qdisc *new,
+			काष्ठा Qdisc **old, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
+	अचिन्हित दीर्घ band = arg - 1;
 
-	if (new == NULL)
+	अगर (new == शून्य)
 		new = &noop_qdisc;
 
 	*old = qdisc_replace(sch, new, &q->queues[band]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct Qdisc *
-multiq_leaf(struct Qdisc *sch, unsigned long arg)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
-	unsigned long band = arg - 1;
+अटल काष्ठा Qdisc *
+multiq_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
+	अचिन्हित दीर्घ band = arg - 1;
 
-	return q->queues[band];
-}
+	वापस q->queues[band];
+पूर्ण
 
-static unsigned long multiq_find(struct Qdisc *sch, u32 classid)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
-	unsigned long band = TC_H_MIN(classid);
+अटल अचिन्हित दीर्घ multiq_find(काष्ठा Qdisc *sch, u32 classid)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
+	अचिन्हित दीर्घ band = TC_H_MIN(classid);
 
-	if (band - 1 >= q->bands)
-		return 0;
-	return band;
-}
+	अगर (band - 1 >= q->bands)
+		वापस 0;
+	वापस band;
+पूर्ण
 
-static unsigned long multiq_bind(struct Qdisc *sch, unsigned long parent,
+अटल अचिन्हित दीर्घ multiq_bind(काष्ठा Qdisc *sch, अचिन्हित दीर्घ parent,
 				 u32 classid)
-{
-	return multiq_find(sch, classid);
-}
+अणु
+	वापस multiq_find(sch, classid);
+पूर्ण
 
 
-static void multiq_unbind(struct Qdisc *q, unsigned long cl)
-{
-}
+अटल व्योम multiq_unbind(काष्ठा Qdisc *q, अचिन्हित दीर्घ cl)
+अणु
+पूर्ण
 
-static int multiq_dump_class(struct Qdisc *sch, unsigned long cl,
-			     struct sk_buff *skb, struct tcmsg *tcm)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
+अटल पूर्णांक multiq_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
+			     काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
 
 	tcm->tcm_handle |= TC_H_MIN(cl);
 	tcm->tcm_info = q->queues[cl - 1]->handle;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int multiq_dump_class_stats(struct Qdisc *sch, unsigned long cl,
-				 struct gnet_dump *d)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
-	struct Qdisc *cl_q;
+अटल पूर्णांक multiq_dump_class_stats(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
+				 काष्ठा gnet_dump *d)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
+	काष्ठा Qdisc *cl_q;
 
 	cl_q = q->queues[cl - 1];
-	if (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
+	अगर (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
 				  d, cl_q->cpu_bstats, &cl_q->bstats) < 0 ||
 	    qdisc_qstats_copy(d, cl_q) < 0)
-		return -1;
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void multiq_walk(struct Qdisc *sch, struct qdisc_walker *arg)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
-	int band;
+अटल व्योम multiq_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *arg)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
+	पूर्णांक band;
 
-	if (arg->stop)
-		return;
+	अगर (arg->stop)
+		वापस;
 
-	for (band = 0; band < q->bands; band++) {
-		if (arg->count < arg->skip) {
+	क्रम (band = 0; band < q->bands; band++) अणु
+		अगर (arg->count < arg->skip) अणु
 			arg->count++;
-			continue;
-		}
-		if (arg->fn(sch, band + 1, arg) < 0) {
+			जारी;
+		पूर्ण
+		अगर (arg->fn(sch, band + 1, arg) < 0) अणु
 			arg->stop = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		arg->count++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct tcf_block *multiq_tcf_block(struct Qdisc *sch, unsigned long cl,
-					  struct netlink_ext_ack *extack)
-{
-	struct multiq_sched_data *q = qdisc_priv(sch);
+अटल काष्ठा tcf_block *multiq_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
+					  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा multiq_sched_data *q = qdisc_priv(sch);
 
-	if (cl)
-		return NULL;
-	return q->block;
-}
+	अगर (cl)
+		वापस शून्य;
+	वापस q->block;
+पूर्ण
 
-static const struct Qdisc_class_ops multiq_class_ops = {
+अटल स्थिर काष्ठा Qdisc_class_ops multiq_class_ops = अणु
 	.graft		=	multiq_graft,
 	.leaf		=	multiq_leaf,
 	.find		=	multiq_find,
@@ -387,13 +388,13 @@ static const struct Qdisc_class_ops multiq_class_ops = {
 	.unbind_tcf	=	multiq_unbind,
 	.dump		=	multiq_dump_class,
 	.dump_stats	=	multiq_dump_class_stats,
-};
+पूर्ण;
 
-static struct Qdisc_ops multiq_qdisc_ops __read_mostly = {
-	.next		=	NULL,
+अटल काष्ठा Qdisc_ops multiq_qdisc_ops __पढ़ो_mostly = अणु
+	.next		=	शून्य,
 	.cl_ops		=	&multiq_class_ops,
 	.id		=	"multiq",
-	.priv_size	=	sizeof(struct multiq_sched_data),
+	.priv_size	=	माप(काष्ठा multiq_sched_data),
 	.enqueue	=	multiq_enqueue,
 	.dequeue	=	multiq_dequeue,
 	.peek		=	multiq_peek,
@@ -403,19 +404,19 @@ static struct Qdisc_ops multiq_qdisc_ops __read_mostly = {
 	.change		=	multiq_tune,
 	.dump		=	multiq_dump,
 	.owner		=	THIS_MODULE,
-};
+पूर्ण;
 
-static int __init multiq_module_init(void)
-{
-	return register_qdisc(&multiq_qdisc_ops);
-}
+अटल पूर्णांक __init multiq_module_init(व्योम)
+अणु
+	वापस रेजिस्टर_qdisc(&multiq_qdisc_ops);
+पूर्ण
 
-static void __exit multiq_module_exit(void)
-{
-	unregister_qdisc(&multiq_qdisc_ops);
-}
+अटल व्योम __निकास multiq_module_निकास(व्योम)
+अणु
+	unरेजिस्टर_qdisc(&multiq_qdisc_ops);
+पूर्ण
 
 module_init(multiq_module_init)
-module_exit(multiq_module_exit)
+module_निकास(multiq_module_निकास)
 
 MODULE_LICENSE("GPL");

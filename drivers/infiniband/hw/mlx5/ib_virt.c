@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,113 +31,113 @@
  * SOFTWARE.
  */
 
-#include <linux/module.h>
-#include <linux/mlx5/vport.h>
-#include "mlx5_ib.h"
+#समावेश <linux/module.h>
+#समावेश <linux/mlx5/vport.h>
+#समावेश "mlx5_ib.h"
 
-static inline u32 mlx_to_net_policy(enum port_state_policy mlx_policy)
-{
-	switch (mlx_policy) {
-	case MLX5_POLICY_DOWN:
-		return IFLA_VF_LINK_STATE_DISABLE;
-	case MLX5_POLICY_UP:
-		return IFLA_VF_LINK_STATE_ENABLE;
-	case MLX5_POLICY_FOLLOW:
-		return IFLA_VF_LINK_STATE_AUTO;
-	default:
-		return __IFLA_VF_LINK_STATE_MAX;
-	}
-}
+अटल अंतरभूत u32 mlx_to_net_policy(क्रमागत port_state_policy mlx_policy)
+अणु
+	चयन (mlx_policy) अणु
+	हाल MLX5_POLICY_DOWN:
+		वापस IFLA_VF_LINK_STATE_DISABLE;
+	हाल MLX5_POLICY_UP:
+		वापस IFLA_VF_LINK_STATE_ENABLE;
+	हाल MLX5_POLICY_FOLLOW:
+		वापस IFLA_VF_LINK_STATE_AUTO;
+	शेष:
+		वापस __IFLA_VF_LINK_STATE_MAX;
+	पूर्ण
+पूर्ण
 
-int mlx5_ib_get_vf_config(struct ib_device *device, int vf, u32 port,
-			  struct ifla_vf_info *info)
-{
-	struct mlx5_ib_dev *dev = to_mdev(device);
-	struct mlx5_core_dev *mdev = dev->mdev;
-	struct mlx5_hca_vport_context *rep;
-	int err;
+पूर्णांक mlx5_ib_get_vf_config(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
+			  काष्ठा अगरla_vf_info *info)
+अणु
+	काष्ठा mlx5_ib_dev *dev = to_mdev(device);
+	काष्ठा mlx5_core_dev *mdev = dev->mdev;
+	काष्ठा mlx5_hca_vport_context *rep;
+	पूर्णांक err;
 
-	rep = kzalloc(sizeof(*rep), GFP_KERNEL);
-	if (!rep)
-		return -ENOMEM;
+	rep = kzalloc(माप(*rep), GFP_KERNEL);
+	अगर (!rep)
+		वापस -ENOMEM;
 
 	err = mlx5_query_hca_vport_context(mdev, 1, 1,  vf + 1, rep);
-	if (err) {
+	अगर (err) अणु
 		mlx5_ib_warn(dev, "failed to query port policy for vf %d (%d)\n",
 			     vf, err);
-		goto free;
-	}
-	memset(info, 0, sizeof(*info));
+		जाओ मुक्त;
+	पूर्ण
+	स_रखो(info, 0, माप(*info));
 	info->linkstate = mlx_to_net_policy(rep->policy);
-	if (info->linkstate == __IFLA_VF_LINK_STATE_MAX)
+	अगर (info->linkstate == __IFLA_VF_LINK_STATE_MAX)
 		err = -EINVAL;
 
-free:
-	kfree(rep);
-	return err;
-}
+मुक्त:
+	kमुक्त(rep);
+	वापस err;
+पूर्ण
 
-static inline enum port_state_policy net_to_mlx_policy(int policy)
-{
-	switch (policy) {
-	case IFLA_VF_LINK_STATE_DISABLE:
-		return MLX5_POLICY_DOWN;
-	case IFLA_VF_LINK_STATE_ENABLE:
-		return MLX5_POLICY_UP;
-	case IFLA_VF_LINK_STATE_AUTO:
-		return MLX5_POLICY_FOLLOW;
-	default:
-		return MLX5_POLICY_INVALID;
-	}
-}
+अटल अंतरभूत क्रमागत port_state_policy net_to_mlx_policy(पूर्णांक policy)
+अणु
+	चयन (policy) अणु
+	हाल IFLA_VF_LINK_STATE_DISABLE:
+		वापस MLX5_POLICY_DOWN;
+	हाल IFLA_VF_LINK_STATE_ENABLE:
+		वापस MLX5_POLICY_UP;
+	हाल IFLA_VF_LINK_STATE_AUTO:
+		वापस MLX5_POLICY_FOLLOW;
+	शेष:
+		वापस MLX5_POLICY_INVALID;
+	पूर्ण
+पूर्ण
 
-int mlx5_ib_set_vf_link_state(struct ib_device *device, int vf,
-			      u32 port, int state)
-{
-	struct mlx5_ib_dev *dev = to_mdev(device);
-	struct mlx5_core_dev *mdev = dev->mdev;
-	struct mlx5_hca_vport_context *in;
-	struct mlx5_vf_context *vfs_ctx = mdev->priv.sriov.vfs_ctx;
-	int err;
+पूर्णांक mlx5_ib_set_vf_link_state(काष्ठा ib_device *device, पूर्णांक vf,
+			      u32 port, पूर्णांक state)
+अणु
+	काष्ठा mlx5_ib_dev *dev = to_mdev(device);
+	काष्ठा mlx5_core_dev *mdev = dev->mdev;
+	काष्ठा mlx5_hca_vport_context *in;
+	काष्ठा mlx5_vf_context *vfs_ctx = mdev->priv.sriov.vfs_ctx;
+	पूर्णांक err;
 
-	in = kzalloc(sizeof(*in), GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	in = kzalloc(माप(*in), GFP_KERNEL);
+	अगर (!in)
+		वापस -ENOMEM;
 
 	in->policy = net_to_mlx_policy(state);
-	if (in->policy == MLX5_POLICY_INVALID) {
+	अगर (in->policy == MLX5_POLICY_INVALID) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	in->field_select = MLX5_HCA_VPORT_SEL_STATE_POLICY;
-	err = mlx5_core_modify_hca_vport_context(mdev, 1, 1, vf + 1, in);
-	if (!err)
+	err = mlx5_core_modअगरy_hca_vport_context(mdev, 1, 1, vf + 1, in);
+	अगर (!err)
 		vfs_ctx[vf].policy = in->policy;
 
 out:
-	kfree(in);
-	return err;
-}
+	kमुक्त(in);
+	वापस err;
+पूर्ण
 
-int mlx5_ib_get_vf_stats(struct ib_device *device, int vf,
-			 u32 port, struct ifla_vf_stats *stats)
-{
-	int out_sz = MLX5_ST_SZ_BYTES(query_vport_counter_out);
-	struct mlx5_core_dev *mdev;
-	struct mlx5_ib_dev *dev;
-	void *out;
-	int err;
+पूर्णांक mlx5_ib_get_vf_stats(काष्ठा ib_device *device, पूर्णांक vf,
+			 u32 port, काष्ठा अगरla_vf_stats *stats)
+अणु
+	पूर्णांक out_sz = MLX5_ST_SZ_BYTES(query_vport_counter_out);
+	काष्ठा mlx5_core_dev *mdev;
+	काष्ठा mlx5_ib_dev *dev;
+	व्योम *out;
+	पूर्णांक err;
 
 	dev = to_mdev(device);
 	mdev = dev->mdev;
 
 	out = kzalloc(out_sz, GFP_KERNEL);
-	if (!out)
-		return -ENOMEM;
+	अगर (!out)
+		वापस -ENOMEM;
 
 	err = mlx5_core_query_vport_counter(mdev, true, vf, port, out);
-	if (err)
-		goto ex;
+	अगर (err)
+		जाओ ex;
 
 	stats->rx_packets = MLX5_GET64_PR(query_vport_counter_out, out, received_ib_unicast.packets);
 	stats->tx_packets = MLX5_GET64_PR(query_vport_counter_out, out, transmitted_ib_unicast.packets);
@@ -145,81 +146,81 @@ int mlx5_ib_get_vf_stats(struct ib_device *device, int vf,
 	stats->multicast = MLX5_GET64_PR(query_vport_counter_out, out, received_ib_multicast.packets);
 
 ex:
-	kfree(out);
-	return err;
-}
+	kमुक्त(out);
+	वापस err;
+पूर्ण
 
-static int set_vf_node_guid(struct ib_device *device, int vf, u32 port,
+अटल पूर्णांक set_vf_node_guid(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
 			    u64 guid)
-{
-	struct mlx5_ib_dev *dev = to_mdev(device);
-	struct mlx5_core_dev *mdev = dev->mdev;
-	struct mlx5_hca_vport_context *in;
-	struct mlx5_vf_context *vfs_ctx = mdev->priv.sriov.vfs_ctx;
-	int err;
+अणु
+	काष्ठा mlx5_ib_dev *dev = to_mdev(device);
+	काष्ठा mlx5_core_dev *mdev = dev->mdev;
+	काष्ठा mlx5_hca_vport_context *in;
+	काष्ठा mlx5_vf_context *vfs_ctx = mdev->priv.sriov.vfs_ctx;
+	पूर्णांक err;
 
-	in = kzalloc(sizeof(*in), GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	in = kzalloc(माप(*in), GFP_KERNEL);
+	अगर (!in)
+		वापस -ENOMEM;
 
 	in->field_select = MLX5_HCA_VPORT_SEL_NODE_GUID;
 	in->node_guid = guid;
-	err = mlx5_core_modify_hca_vport_context(mdev, 1, 1, vf + 1, in);
-	if (!err) {
+	err = mlx5_core_modअगरy_hca_vport_context(mdev, 1, 1, vf + 1, in);
+	अगर (!err) अणु
 		vfs_ctx[vf].node_guid = guid;
 		vfs_ctx[vf].node_guid_valid = 1;
-	}
-	kfree(in);
-	return err;
-}
+	पूर्ण
+	kमुक्त(in);
+	वापस err;
+पूर्ण
 
-static int set_vf_port_guid(struct ib_device *device, int vf, u32 port,
+अटल पूर्णांक set_vf_port_guid(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
 			    u64 guid)
-{
-	struct mlx5_ib_dev *dev = to_mdev(device);
-	struct mlx5_core_dev *mdev = dev->mdev;
-	struct mlx5_hca_vport_context *in;
-	struct mlx5_vf_context *vfs_ctx = mdev->priv.sriov.vfs_ctx;
-	int err;
+अणु
+	काष्ठा mlx5_ib_dev *dev = to_mdev(device);
+	काष्ठा mlx5_core_dev *mdev = dev->mdev;
+	काष्ठा mlx5_hca_vport_context *in;
+	काष्ठा mlx5_vf_context *vfs_ctx = mdev->priv.sriov.vfs_ctx;
+	पूर्णांक err;
 
-	in = kzalloc(sizeof(*in), GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	in = kzalloc(माप(*in), GFP_KERNEL);
+	अगर (!in)
+		वापस -ENOMEM;
 
 	in->field_select = MLX5_HCA_VPORT_SEL_PORT_GUID;
 	in->port_guid = guid;
-	err = mlx5_core_modify_hca_vport_context(mdev, 1, 1, vf + 1, in);
-	if (!err) {
+	err = mlx5_core_modअगरy_hca_vport_context(mdev, 1, 1, vf + 1, in);
+	अगर (!err) अणु
 		vfs_ctx[vf].port_guid = guid;
 		vfs_ctx[vf].port_guid_valid = 1;
-	}
-	kfree(in);
-	return err;
-}
+	पूर्ण
+	kमुक्त(in);
+	वापस err;
+पूर्ण
 
-int mlx5_ib_set_vf_guid(struct ib_device *device, int vf, u32 port,
-			u64 guid, int type)
-{
-	if (type == IFLA_VF_IB_NODE_GUID)
-		return set_vf_node_guid(device, vf, port, guid);
-	else if (type == IFLA_VF_IB_PORT_GUID)
-		return set_vf_port_guid(device, vf, port, guid);
+पूर्णांक mlx5_ib_set_vf_guid(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
+			u64 guid, पूर्णांक type)
+अणु
+	अगर (type == IFLA_VF_IB_NODE_GUID)
+		वापस set_vf_node_guid(device, vf, port, guid);
+	अन्यथा अगर (type == IFLA_VF_IB_PORT_GUID)
+		वापस set_vf_port_guid(device, vf, port, guid);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int mlx5_ib_get_vf_guid(struct ib_device *device, int vf, u32 port,
-			struct ifla_vf_guid *node_guid,
-			struct ifla_vf_guid *port_guid)
-{
-	struct mlx5_ib_dev *dev = to_mdev(device);
-	struct mlx5_core_dev *mdev = dev->mdev;
-	struct mlx5_vf_context *vfs_ctx = mdev->priv.sriov.vfs_ctx;
+पूर्णांक mlx5_ib_get_vf_guid(काष्ठा ib_device *device, पूर्णांक vf, u32 port,
+			काष्ठा अगरla_vf_guid *node_guid,
+			काष्ठा अगरla_vf_guid *port_guid)
+अणु
+	काष्ठा mlx5_ib_dev *dev = to_mdev(device);
+	काष्ठा mlx5_core_dev *mdev = dev->mdev;
+	काष्ठा mlx5_vf_context *vfs_ctx = mdev->priv.sriov.vfs_ctx;
 
 	node_guid->guid =
 		vfs_ctx[vf].node_guid_valid ? vfs_ctx[vf].node_guid : 0;
 	port_guid->guid =
 		vfs_ctx[vf].port_guid_valid ? vfs_ctx[vf].port_guid : 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

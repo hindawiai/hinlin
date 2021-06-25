@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_IOMMU_H
-#define _ASM_IA64_IOMMU_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_IOMMU_H
+#घोषणा _ASM_IA64_IOMMU_H 1
 
-#include <linux/acpi.h>
+#समावेश <linux/acpi.h>
 
 /* 10 seconds */
-#define DMAR_OPERATION_TIMEOUT (((cycles_t) local_cpu_data->itc_freq)*10)
+#घोषणा DMAR_OPERATION_TIMEOUT (((cycles_t) local_cpu_data->itc_freq)*10)
 
-extern void no_iommu_init(void);
-#ifdef	CONFIG_INTEL_IOMMU
-extern int force_iommu, no_iommu;
-extern int iommu_detected;
+बाह्य व्योम no_iommu_init(व्योम);
+#अगर_घोषित	CONFIG_INTEL_IOMMU
+बाह्य पूर्णांक क्रमce_iommu, no_iommu;
+बाह्य पूर्णांक iommu_detected;
 
-static inline int __init
-arch_rmrr_sanity_check(struct acpi_dmar_reserved_memory *rmrr) { return 0; }
-#else
-#define no_iommu		(1)
-#define iommu_detected		(0)
-#endif
+अटल अंतरभूत पूर्णांक __init
+arch_rmrr_sanity_check(काष्ठा acpi_dmar_reserved_memory *rmrr) अणु वापस 0; पूर्ण
+#अन्यथा
+#घोषणा no_iommu		(1)
+#घोषणा iommu_detected		(0)
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

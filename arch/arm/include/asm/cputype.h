@@ -1,344 +1,345 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_ARM_CPUTYPE_H
-#define __ASM_ARM_CPUTYPE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_ARM_CPUTYPE_H
+#घोषणा __ASM_ARM_CPUTYPE_H
 
-#define CPUID_ID	0
-#define CPUID_CACHETYPE	1
-#define CPUID_TCM	2
-#define CPUID_TLBTYPE	3
-#define CPUID_MPUIR	4
-#define CPUID_MPIDR	5
-#define CPUID_REVIDR	6
+#घोषणा CPUID_ID	0
+#घोषणा CPUID_CACHETYPE	1
+#घोषणा CPUID_TCM	2
+#घोषणा CPUID_TLBTYPE	3
+#घोषणा CPUID_MPUIR	4
+#घोषणा CPUID_MPIDR	5
+#घोषणा CPUID_REVIDR	6
 
-#ifdef CONFIG_CPU_V7M
-#define CPUID_EXT_PFR0	0x40
-#define CPUID_EXT_PFR1	0x44
-#define CPUID_EXT_DFR0	0x48
-#define CPUID_EXT_AFR0	0x4c
-#define CPUID_EXT_MMFR0	0x50
-#define CPUID_EXT_MMFR1	0x54
-#define CPUID_EXT_MMFR2	0x58
-#define CPUID_EXT_MMFR3	0x5c
-#define CPUID_EXT_ISAR0	0x60
-#define CPUID_EXT_ISAR1	0x64
-#define CPUID_EXT_ISAR2	0x68
-#define CPUID_EXT_ISAR3	0x6c
-#define CPUID_EXT_ISAR4	0x70
-#define CPUID_EXT_ISAR5	0x74
-#else
-#define CPUID_EXT_PFR0	"c1, 0"
-#define CPUID_EXT_PFR1	"c1, 1"
-#define CPUID_EXT_DFR0	"c1, 2"
-#define CPUID_EXT_AFR0	"c1, 3"
-#define CPUID_EXT_MMFR0	"c1, 4"
-#define CPUID_EXT_MMFR1	"c1, 5"
-#define CPUID_EXT_MMFR2	"c1, 6"
-#define CPUID_EXT_MMFR3	"c1, 7"
-#define CPUID_EXT_ISAR0	"c2, 0"
-#define CPUID_EXT_ISAR1	"c2, 1"
-#define CPUID_EXT_ISAR2	"c2, 2"
-#define CPUID_EXT_ISAR3	"c2, 3"
-#define CPUID_EXT_ISAR4	"c2, 4"
-#define CPUID_EXT_ISAR5	"c2, 5"
-#endif
+#अगर_घोषित CONFIG_CPU_V7M
+#घोषणा CPUID_EXT_PFR0	0x40
+#घोषणा CPUID_EXT_PFR1	0x44
+#घोषणा CPUID_EXT_DFR0	0x48
+#घोषणा CPUID_EXT_AFR0	0x4c
+#घोषणा CPUID_EXT_MMFR0	0x50
+#घोषणा CPUID_EXT_MMFR1	0x54
+#घोषणा CPUID_EXT_MMFR2	0x58
+#घोषणा CPUID_EXT_MMFR3	0x5c
+#घोषणा CPUID_EXT_ISAR0	0x60
+#घोषणा CPUID_EXT_ISAR1	0x64
+#घोषणा CPUID_EXT_ISAR2	0x68
+#घोषणा CPUID_EXT_ISAR3	0x6c
+#घोषणा CPUID_EXT_ISAR4	0x70
+#घोषणा CPUID_EXT_ISAR5	0x74
+#अन्यथा
+#घोषणा CPUID_EXT_PFR0	"c1, 0"
+#घोषणा CPUID_EXT_PFR1	"c1, 1"
+#घोषणा CPUID_EXT_DFR0	"c1, 2"
+#घोषणा CPUID_EXT_AFR0	"c1, 3"
+#घोषणा CPUID_EXT_MMFR0	"c1, 4"
+#घोषणा CPUID_EXT_MMFR1	"c1, 5"
+#घोषणा CPUID_EXT_MMFR2	"c1, 6"
+#घोषणा CPUID_EXT_MMFR3	"c1, 7"
+#घोषणा CPUID_EXT_ISAR0	"c2, 0"
+#घोषणा CPUID_EXT_ISAR1	"c2, 1"
+#घोषणा CPUID_EXT_ISAR2	"c2, 2"
+#घोषणा CPUID_EXT_ISAR3	"c2, 3"
+#घोषणा CPUID_EXT_ISAR4	"c2, 4"
+#घोषणा CPUID_EXT_ISAR5	"c2, 5"
+#पूर्ण_अगर
 
-#define MPIDR_SMP_BITMASK (0x3 << 30)
-#define MPIDR_SMP_VALUE (0x2 << 30)
+#घोषणा MPIDR_SMP_BITMASK (0x3 << 30)
+#घोषणा MPIDR_SMP_VALUE (0x2 << 30)
 
-#define MPIDR_MT_BITMASK (0x1 << 24)
+#घोषणा MPIDR_MT_BITMASK (0x1 << 24)
 
-#define MPIDR_HWID_BITMASK 0xFFFFFF
+#घोषणा MPIDR_HWID_BITMASK 0xFFFFFF
 
-#define MPIDR_INVALID (~MPIDR_HWID_BITMASK)
+#घोषणा MPIDR_INVALID (~MPIDR_HWID_BITMASK)
 
-#define MPIDR_LEVEL_BITS 8
-#define MPIDR_LEVEL_MASK ((1 << MPIDR_LEVEL_BITS) - 1)
-#define MPIDR_LEVEL_SHIFT(level) (MPIDR_LEVEL_BITS * level)
+#घोषणा MPIDR_LEVEL_BITS 8
+#घोषणा MPIDR_LEVEL_MASK ((1 << MPIDR_LEVEL_BITS) - 1)
+#घोषणा MPIDR_LEVEL_SHIFT(level) (MPIDR_LEVEL_BITS * level)
 
-#define MPIDR_AFFINITY_LEVEL(mpidr, level) \
+#घोषणा MPIDR_AFFINITY_LEVEL(mpidr, level) \
 	((mpidr >> (MPIDR_LEVEL_BITS * level)) & MPIDR_LEVEL_MASK)
 
-#define ARM_CPU_IMP_ARM			0x41
-#define ARM_CPU_IMP_BRCM		0x42
-#define ARM_CPU_IMP_DEC			0x44
-#define ARM_CPU_IMP_INTEL		0x69
+#घोषणा ARM_CPU_IMP_ARM			0x41
+#घोषणा ARM_CPU_IMP_BRCM		0x42
+#घोषणा ARM_CPU_IMP_DEC			0x44
+#घोषणा ARM_CPU_IMP_INTEL		0x69
 
 /* ARM implemented processors */
-#define ARM_CPU_PART_ARM1136		0x4100b360
-#define ARM_CPU_PART_ARM1156		0x4100b560
-#define ARM_CPU_PART_ARM1176		0x4100b760
-#define ARM_CPU_PART_ARM11MPCORE	0x4100b020
-#define ARM_CPU_PART_CORTEX_A8		0x4100c080
-#define ARM_CPU_PART_CORTEX_A9		0x4100c090
-#define ARM_CPU_PART_CORTEX_A5		0x4100c050
-#define ARM_CPU_PART_CORTEX_A7		0x4100c070
-#define ARM_CPU_PART_CORTEX_A12		0x4100c0d0
-#define ARM_CPU_PART_CORTEX_A17		0x4100c0e0
-#define ARM_CPU_PART_CORTEX_A15		0x4100c0f0
-#define ARM_CPU_PART_CORTEX_A53		0x4100d030
-#define ARM_CPU_PART_CORTEX_A57		0x4100d070
-#define ARM_CPU_PART_CORTEX_A72		0x4100d080
-#define ARM_CPU_PART_CORTEX_A73		0x4100d090
-#define ARM_CPU_PART_CORTEX_A75		0x4100d0a0
-#define ARM_CPU_PART_MASK		0xff00fff0
+#घोषणा ARM_CPU_PART_ARM1136		0x4100b360
+#घोषणा ARM_CPU_PART_ARM1156		0x4100b560
+#घोषणा ARM_CPU_PART_ARM1176		0x4100b760
+#घोषणा ARM_CPU_PART_ARM11MPCORE	0x4100b020
+#घोषणा ARM_CPU_PART_CORTEX_A8		0x4100c080
+#घोषणा ARM_CPU_PART_CORTEX_A9		0x4100c090
+#घोषणा ARM_CPU_PART_CORTEX_A5		0x4100c050
+#घोषणा ARM_CPU_PART_CORTEX_A7		0x4100c070
+#घोषणा ARM_CPU_PART_CORTEX_A12		0x4100c0d0
+#घोषणा ARM_CPU_PART_CORTEX_A17		0x4100c0e0
+#घोषणा ARM_CPU_PART_CORTEX_A15		0x4100c0f0
+#घोषणा ARM_CPU_PART_CORTEX_A53		0x4100d030
+#घोषणा ARM_CPU_PART_CORTEX_A57		0x4100d070
+#घोषणा ARM_CPU_PART_CORTEX_A72		0x4100d080
+#घोषणा ARM_CPU_PART_CORTEX_A73		0x4100d090
+#घोषणा ARM_CPU_PART_CORTEX_A75		0x4100d0a0
+#घोषणा ARM_CPU_PART_MASK		0xff00fff0
 
 /* Broadcom implemented processors */
-#define ARM_CPU_PART_BRAHMA_B15		0x420000f0
-#define ARM_CPU_PART_BRAHMA_B53		0x42001000
+#घोषणा ARM_CPU_PART_BRAHMA_B15		0x420000f0
+#घोषणा ARM_CPU_PART_BRAHMA_B53		0x42001000
 
 /* DEC implemented cores */
-#define ARM_CPU_PART_SA1100		0x4400a110
+#घोषणा ARM_CPU_PART_SA1100		0x4400a110
 
 /* Intel implemented cores */
-#define ARM_CPU_PART_SA1110		0x6900b110
-#define ARM_CPU_REV_SA1110_A0		0
-#define ARM_CPU_REV_SA1110_B0		4
-#define ARM_CPU_REV_SA1110_B1		5
-#define ARM_CPU_REV_SA1110_B2		6
-#define ARM_CPU_REV_SA1110_B4		8
+#घोषणा ARM_CPU_PART_SA1110		0x6900b110
+#घोषणा ARM_CPU_REV_SA1110_A0		0
+#घोषणा ARM_CPU_REV_SA1110_B0		4
+#घोषणा ARM_CPU_REV_SA1110_B1		5
+#घोषणा ARM_CPU_REV_SA1110_B2		6
+#घोषणा ARM_CPU_REV_SA1110_B4		8
 
-#define ARM_CPU_XSCALE_ARCH_MASK	0xe000
-#define ARM_CPU_XSCALE_ARCH_V1		0x2000
-#define ARM_CPU_XSCALE_ARCH_V2		0x4000
-#define ARM_CPU_XSCALE_ARCH_V3		0x6000
+#घोषणा ARM_CPU_XSCALE_ARCH_MASK	0xe000
+#घोषणा ARM_CPU_XSCALE_ARCH_V1		0x2000
+#घोषणा ARM_CPU_XSCALE_ARCH_V2		0x4000
+#घोषणा ARM_CPU_XSCALE_ARCH_V3		0x6000
 
 /* Qualcomm implemented cores */
-#define ARM_CPU_PART_SCORPION		0x510002d0
+#घोषणा ARM_CPU_PART_SCORPION		0x510002d0
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/stringify.h>
-#include <linux/kernel.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/kernel.h>
 
-extern unsigned int processor_id;
-struct proc_info_list *lookup_processor(u32 midr);
+बाह्य अचिन्हित पूर्णांक processor_id;
+काष्ठा proc_info_list *lookup_processor(u32 midr);
 
-#ifdef CONFIG_CPU_CP15
-#define read_cpuid(reg)							\
-	({								\
-		unsigned int __val;					\
-		asm("mrc	p15, 0, %0, c0, c0, " __stringify(reg)	\
+#अगर_घोषित CONFIG_CPU_CP15
+#घोषणा पढ़ो_cpuid(reg)							\
+	(अणु								\
+		अचिन्हित पूर्णांक __val;					\
+		यंत्र("mrc	p15, 0, %0, c0, c0, " __stringअगरy(reg)	\
 		    : "=r" (__val)					\
 		    :							\
 		    : "cc");						\
 		__val;							\
-	})
+	पूर्ण)
 
 /*
- * The memory clobber prevents gcc 4.5 from reordering the mrc before
- * any is_smp() tests, which can cause undefined instruction aborts on
- * ARM1136 r0 due to the missing extended CP15 registers.
+ * The memory clobber prevents gcc 4.5 from reordering the mrc beक्रमe
+ * any is_smp() tests, which can cause undefined inकाष्ठाion पातs on
+ * ARM1136 r0 due to the missing extended CP15 रेजिस्टरs.
  */
-#define read_cpuid_ext(ext_reg)						\
-	({								\
-		unsigned int __val;					\
-		asm("mrc	p15, 0, %0, c0, " ext_reg		\
+#घोषणा पढ़ो_cpuid_ext(ext_reg)						\
+	(अणु								\
+		अचिन्हित पूर्णांक __val;					\
+		यंत्र("mrc	p15, 0, %0, c0, " ext_reg		\
 		    : "=r" (__val)					\
 		    :							\
 		    : "memory");					\
 		__val;							\
-	})
+	पूर्ण)
 
-#elif defined(CONFIG_CPU_V7M)
+#या_अगर defined(CONFIG_CPU_V7M)
 
-#include <asm/io.h>
-#include <asm/v7m.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/v7m.h>
 
-#define read_cpuid(reg)							\
-	({								\
+#घोषणा पढ़ो_cpuid(reg)							\
+	(अणु								\
 		WARN_ON_ONCE(1);					\
 		0;							\
-	})
+	पूर्ण)
 
-static inline unsigned int __attribute_const__ read_cpuid_ext(unsigned offset)
-{
-	return readl(BASEADDR_V7M_SCB + offset);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_ext(अचिन्हित offset)
+अणु
+	वापस पढ़ोl(BASEADDR_V7M_SCB + offset);
+पूर्ण
 
-#else /* ifdef CONFIG_CPU_CP15 / elif defined (CONFIG_CPU_V7M) */
+#अन्यथा /* अगरdef CONFIG_CPU_CP15 / elअगर defined (CONFIG_CPU_V7M) */
 
 /*
- * read_cpuid and read_cpuid_ext should only ever be called on machines that
+ * पढ़ो_cpuid and पढ़ो_cpuid_ext should only ever be called on machines that
  * have cp15 so warn on other usages.
  */
-#define read_cpuid(reg)							\
-	({								\
+#घोषणा पढ़ो_cpuid(reg)							\
+	(अणु								\
 		WARN_ON_ONCE(1);					\
 		0;							\
-	})
+	पूर्ण)
 
-#define read_cpuid_ext(reg) read_cpuid(reg)
+#घोषणा पढ़ो_cpuid_ext(reg) पढ़ो_cpuid(reg)
 
-#endif /* ifdef CONFIG_CPU_CP15 / else */
+#पूर्ण_अगर /* अगरdef CONFIG_CPU_CP15 / अन्यथा */
 
-#ifdef CONFIG_CPU_CP15
+#अगर_घोषित CONFIG_CPU_CP15
 /*
- * The CPU ID never changes at run time, so we might as well tell the
- * compiler that it's constant.  Use this function to read the CPU ID
- * rather than directly reading processor_id or read_cpuid() directly.
+ * The CPU ID never changes at run समय, so we might as well tell the
+ * compiler that it's स्थिरant.  Use this function to पढ़ो the CPU ID
+ * rather than directly पढ़ोing processor_id or पढ़ो_cpuid() directly.
  */
-static inline unsigned int __attribute_const__ read_cpuid_id(void)
-{
-	return read_cpuid(CPUID_ID);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_id(व्योम)
+अणु
+	वापस पढ़ो_cpuid(CPUID_ID);
+पूर्ण
 
-static inline unsigned int __attribute_const__ read_cpuid_cachetype(void)
-{
-	return read_cpuid(CPUID_CACHETYPE);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_cachetype(व्योम)
+अणु
+	वापस पढ़ो_cpuid(CPUID_CACHETYPE);
+पूर्ण
 
-static inline unsigned int __attribute_const__ read_cpuid_mputype(void)
-{
-	return read_cpuid(CPUID_MPUIR);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_mputype(व्योम)
+अणु
+	वापस पढ़ो_cpuid(CPUID_MPUIR);
+पूर्ण
 
-#elif defined(CONFIG_CPU_V7M)
+#या_अगर defined(CONFIG_CPU_V7M)
 
-static inline unsigned int __attribute_const__ read_cpuid_id(void)
-{
-	return readl(BASEADDR_V7M_SCB + V7M_SCB_CPUID);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_id(व्योम)
+अणु
+	वापस पढ़ोl(BASEADDR_V7M_SCB + V7M_SCB_CPUID);
+पूर्ण
 
-static inline unsigned int __attribute_const__ read_cpuid_cachetype(void)
-{
-	return readl(BASEADDR_V7M_SCB + V7M_SCB_CTR);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_cachetype(व्योम)
+अणु
+	वापस पढ़ोl(BASEADDR_V7M_SCB + V7M_SCB_CTR);
+पूर्ण
 
-static inline unsigned int __attribute_const__ read_cpuid_mputype(void)
-{
-	return readl(BASEADDR_V7M_SCB + MPU_TYPE);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_mputype(व्योम)
+अणु
+	वापस पढ़ोl(BASEADDR_V7M_SCB + MPU_TYPE);
+पूर्ण
 
-#else /* ifdef CONFIG_CPU_CP15 / elif defined(CONFIG_CPU_V7M) */
+#अन्यथा /* अगरdef CONFIG_CPU_CP15 / elअगर defined(CONFIG_CPU_V7M) */
 
-static inline unsigned int __attribute_const__ read_cpuid_id(void)
-{
-	return processor_id;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_id(व्योम)
+अणु
+	वापस processor_id;
+पूर्ण
 
-#endif /* ifdef CONFIG_CPU_CP15 / else */
+#पूर्ण_अगर /* अगरdef CONFIG_CPU_CP15 / अन्यथा */
 
-static inline unsigned int __attribute_const__ read_cpuid_implementor(void)
-{
-	return (read_cpuid_id() & 0xFF000000) >> 24;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_implementor(व्योम)
+अणु
+	वापस (पढ़ो_cpuid_id() & 0xFF000000) >> 24;
+पूर्ण
 
-static inline unsigned int __attribute_const__ read_cpuid_revision(void)
-{
-	return read_cpuid_id() & 0x0000000f;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_revision(व्योम)
+अणु
+	वापस पढ़ो_cpuid_id() & 0x0000000f;
+पूर्ण
 
 /*
  * The CPU part number is meaningless without referring to the CPU
- * implementer: implementers are free to define their own part numbers
+ * implementer: implementers are मुक्त to define their own part numbers
  * which are permitted to clash with other implementer part numbers.
  */
-static inline unsigned int __attribute_const__ read_cpuid_part(void)
-{
-	return read_cpuid_id() & ARM_CPU_PART_MASK;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_part(व्योम)
+अणु
+	वापस पढ़ो_cpuid_id() & ARM_CPU_PART_MASK;
+पूर्ण
 
-static inline unsigned int __attribute_const__ __deprecated read_cpuid_part_number(void)
-{
-	return read_cpuid_id() & 0xFFF0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ __deprecated पढ़ो_cpuid_part_number(व्योम)
+अणु
+	वापस पढ़ो_cpuid_id() & 0xFFF0;
+पूर्ण
 
-static inline unsigned int __attribute_const__ xscale_cpu_arch_version(void)
-{
-	return read_cpuid_id() & ARM_CPU_XSCALE_ARCH_MASK;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ xscale_cpu_arch_version(व्योम)
+अणु
+	वापस पढ़ो_cpuid_id() & ARM_CPU_XSCALE_ARCH_MASK;
+पूर्ण
 
-static inline unsigned int __attribute_const__ read_cpuid_tcmstatus(void)
-{
-	return read_cpuid(CPUID_TCM);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_tcmstatus(व्योम)
+अणु
+	वापस पढ़ो_cpuid(CPUID_TCM);
+पूर्ण
 
-static inline unsigned int __attribute_const__ read_cpuid_mpidr(void)
-{
-	return read_cpuid(CPUID_MPIDR);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक __attribute_स्थिर__ पढ़ो_cpuid_mpidr(व्योम)
+अणु
+	वापस पढ़ो_cpuid(CPUID_MPIDR);
+पूर्ण
 
 /* StrongARM-11x0 CPUs */
-#define cpu_is_sa1100() (read_cpuid_part() == ARM_CPU_PART_SA1100)
-#define cpu_is_sa1110() (read_cpuid_part() == ARM_CPU_PART_SA1110)
+#घोषणा cpu_is_sa1100() (पढ़ो_cpuid_part() == ARM_CPU_PART_SA1100)
+#घोषणा cpu_is_sa1110() (पढ़ो_cpuid_part() == ARM_CPU_PART_SA1110)
 
 /*
  * Intel's XScale3 core supports some v6 features (supersections, L2)
- * but advertises itself as v5 as it does not support the v6 ISA.  For
- * this reason, we need a way to explicitly test for this type of CPU.
+ * but advertises itself as v5 as it करोes not support the v6 ISA.  For
+ * this reason, we need a way to explicitly test क्रम this type of CPU.
  */
-#ifndef CONFIG_CPU_XSC3
-#define cpu_is_xsc3()	0
-#else
-static inline int cpu_is_xsc3(void)
-{
-	unsigned int id;
-	id = read_cpuid_id() & 0xffffe000;
+#अगर_अघोषित CONFIG_CPU_XSC3
+#घोषणा cpu_is_xsc3()	0
+#अन्यथा
+अटल अंतरभूत पूर्णांक cpu_is_xsc3(व्योम)
+अणु
+	अचिन्हित पूर्णांक id;
+	id = पढ़ो_cpuid_id() & 0xffffe000;
 	/* It covers both Intel ID and Marvell ID */
-	if ((id == 0x69056000) || (id == 0x56056000))
-		return 1;
+	अगर ((id == 0x69056000) || (id == 0x56056000))
+		वापस 1;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#if !defined(CONFIG_CPU_XSCALE) && !defined(CONFIG_CPU_XSC3) && \
+#अगर !defined(CONFIG_CPU_XSCALE) && !defined(CONFIG_CPU_XSC3) && \
     !defined(CONFIG_CPU_MOHAWK)
-#define	cpu_is_xscale_family() 0
-#else
-static inline int cpu_is_xscale_family(void)
-{
-	unsigned int id;
-	id = read_cpuid_id() & 0xffffe000;
+#घोषणा	cpu_is_xscale_family() 0
+#अन्यथा
+अटल अंतरभूत पूर्णांक cpu_is_xscale_family(व्योम)
+अणु
+	अचिन्हित पूर्णांक id;
+	id = पढ़ो_cpuid_id() & 0xffffe000;
 
-	switch (id) {
-	case 0x69052000: /* Intel XScale 1 */
-	case 0x69054000: /* Intel XScale 2 */
-	case 0x69056000: /* Intel XScale 3 */
-	case 0x56056000: /* Marvell XScale 3 */
-	case 0x56158000: /* Marvell Mohawk */
-		return 1;
-	}
+	चयन (id) अणु
+	हाल 0x69052000: /* Intel XScale 1 */
+	हाल 0x69054000: /* Intel XScale 2 */
+	हाल 0x69056000: /* Intel XScale 3 */
+	हाल 0x56056000: /* Marvell XScale 3 */
+	हाल 0x56158000: /* Marvell Mohawk */
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Marvell's PJ4 and PJ4B cores are based on V7 version,
- * but require a specical sequence for enabling coprocessors.
+ * but require a specical sequence क्रम enabling coprocessors.
  * For this reason, we need a way to distinguish them.
  */
-#if defined(CONFIG_CPU_PJ4) || defined(CONFIG_CPU_PJ4B)
-static inline int cpu_is_pj4(void)
-{
-	unsigned int id;
+#अगर defined(CONFIG_CPU_PJ4) || defined(CONFIG_CPU_PJ4B)
+अटल अंतरभूत पूर्णांक cpu_is_pj4(व्योम)
+अणु
+	अचिन्हित पूर्णांक id;
 
-	id = read_cpuid_id();
-	if ((id & 0xff0fff00) == 0x560f5800)
-		return 1;
+	id = पढ़ो_cpuid_id();
+	अगर ((id & 0xff0fff00) == 0x560f5800)
+		वापस 1;
 
-	return 0;
-}
-#else
-#define cpu_is_pj4()	0
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा cpu_is_pj4()	0
+#पूर्ण_अगर
 
-static inline int __attribute_const__ cpuid_feature_extract_field(u32 features,
-								  int field)
-{
-	int feature = (features >> field) & 15;
+अटल अंतरभूत पूर्णांक __attribute_स्थिर__ cpuid_feature_extract_field(u32 features,
+								  पूर्णांक field)
+अणु
+	पूर्णांक feature = (features >> field) & 15;
 
-	/* feature registers are signed values */
-	if (feature > 7)
+	/* feature रेजिस्टरs are चिन्हित values */
+	अगर (feature > 7)
 		feature -= 16;
 
-	return feature;
-}
+	वापस feature;
+पूर्ण
 
-#define cpuid_feature_extract(reg, field) \
-	cpuid_feature_extract_field(read_cpuid_ext(reg), field)
+#घोषणा cpuid_feature_extract(reg, field) \
+	cpuid_feature_extract_field(पढ़ो_cpuid_ext(reg), field)
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

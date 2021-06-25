@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  Driver for Microtune MT2266 "Direct conversion low power broadband tuner"
+ *  Driver क्रम Microtune MT2266 "Direct conversion low power broadband tuner"
  *
  *  Copyright (c) 2007 Olivier DANET <odanet@caramail.com>
  */
 
-#ifndef MT2266_H
-#define MT2266_H
+#अगर_अघोषित MT2266_H
+#घोषणा MT2266_H
 
-struct dvb_frontend;
-struct i2c_adapter;
+काष्ठा dvb_frontend;
+काष्ठा i2c_adapter;
 
-struct mt2266_config {
+काष्ठा mt2266_config अणु
 	u8 i2c_address;
-};
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_MEDIA_TUNER_MT2266)
-extern struct dvb_frontend * mt2266_attach(struct dvb_frontend *fe, struct i2c_adapter *i2c, struct mt2266_config *cfg);
-#else
-static inline struct dvb_frontend * mt2266_attach(struct dvb_frontend *fe, struct i2c_adapter *i2c, struct mt2266_config *cfg)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif // CONFIG_MEDIA_TUNER_MT2266
+#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_MT2266)
+बाह्य काष्ठा dvb_frontend * mt2266_attach(काष्ठा dvb_frontend *fe, काष्ठा i2c_adapter *i2c, काष्ठा mt2266_config *cfg);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend * mt2266_attach(काष्ठा dvb_frontend *fe, काष्ठा i2c_adapter *i2c, काष्ठा mt2266_config *cfg)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर // CONFIG_MEDIA_TUNER_MT2266
 
-#endif
+#पूर्ण_अगर

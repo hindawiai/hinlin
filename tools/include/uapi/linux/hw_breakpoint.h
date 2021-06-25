@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_HW_BREAKPOINT_H
-#define _UAPI_LINUX_HW_BREAKPOINT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_HW_BREAKPOINT_H
+#घोषणा _UAPI_LINUX_HW_BREAKPOINT_H
 
-enum {
+क्रमागत अणु
 	HW_BREAKPOINT_LEN_1 = 1,
 	HW_BREAKPOINT_LEN_2 = 2,
 	HW_BREAKPOINT_LEN_3 = 3,
@@ -11,25 +12,25 @@ enum {
 	HW_BREAKPOINT_LEN_6 = 6,
 	HW_BREAKPOINT_LEN_7 = 7,
 	HW_BREAKPOINT_LEN_8 = 8,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	HW_BREAKPOINT_EMPTY	= 0,
 	HW_BREAKPOINT_R		= 1,
 	HW_BREAKPOINT_W		= 2,
 	HW_BREAKPOINT_RW	= HW_BREAKPOINT_R | HW_BREAKPOINT_W,
 	HW_BREAKPOINT_X		= 4,
 	HW_BREAKPOINT_INVALID   = HW_BREAKPOINT_RW | HW_BREAKPOINT_X,
-};
+पूर्ण;
 
-enum bp_type_idx {
+क्रमागत bp_type_idx अणु
 	TYPE_INST 	= 0,
-#ifdef CONFIG_HAVE_MIXED_BREAKPOINTS_REGS
+#अगर_घोषित CONFIG_HAVE_MIXED_BREAKPOINTS_REGS
 	TYPE_DATA	= 0,
-#else
+#अन्यथा
 	TYPE_DATA	= 1,
-#endif
+#पूर्ण_अगर
 	TYPE_MAX
-};
+पूर्ण;
 
-#endif /* _UAPI_LINUX_HW_BREAKPOINT_H */
+#पूर्ण_अगर /* _UAPI_LINUX_HW_BREAKPOINT_H */

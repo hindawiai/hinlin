@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * platform data for the Au1550 NAND driver
+ * platक्रमm data क्रम the Au1550 न_अंकD driver
  */
 
-#ifndef _AU1550ND_H_
-#define _AU1550ND_H_
+#अगर_अघोषित _AU1550ND_H_
+#घोषणा _AU1550ND_H_
 
-#include <linux/mtd/partitions.h>
+#समावेश <linux/mtd/partitions.h>
 
-struct au1550nd_platdata {
-	struct mtd_partition *parts;
-	int num_parts;
-	int devwidth;	/* 0 = 8bit device, 1 = 16bit device */
-};
+काष्ठा au1550nd_platdata अणु
+	काष्ठा mtd_partition *parts;
+	पूर्णांक num_parts;
+	पूर्णांक devwidth;	/* 0 = 8bit device, 1 = 16bit device */
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

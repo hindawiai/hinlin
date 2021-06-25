@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Helpers for matrix keyboard bindings
+ * Helpers क्रम matrix keyboard bindings
  *
  * Copyright (C) 2012 Google, Inc
  *
@@ -8,38 +9,38 @@
  *	Olof Johansson <olof@lixom.net>
  */
 
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/gfp.h>
-#include <linux/input.h>
-#include <linux/input/matrix_keypad.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/property.h>
-#include <linux/slab.h>
-#include <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/matrix_keypad.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/property.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
 
-static bool matrix_keypad_map_key(struct input_dev *input_dev,
-				  unsigned int rows, unsigned int cols,
-				  unsigned int row_shift, unsigned int key)
-{
-	unsigned short *keymap = input_dev->keycode;
-	unsigned int row = KEY_ROW(key);
-	unsigned int col = KEY_COL(key);
-	unsigned short code = KEY_VAL(key);
+अटल bool matrix_keypad_map_key(काष्ठा input_dev *input_dev,
+				  अचिन्हित पूर्णांक rows, अचिन्हित पूर्णांक cols,
+				  अचिन्हित पूर्णांक row_shअगरt, अचिन्हित पूर्णांक key)
+अणु
+	अचिन्हित लघु *keymap = input_dev->keycode;
+	अचिन्हित पूर्णांक row = KEY_ROW(key);
+	अचिन्हित पूर्णांक col = KEY_COL(key);
+	अचिन्हित लघु code = KEY_VAL(key);
 
-	if (row >= rows || col >= cols) {
+	अगर (row >= rows || col >= cols) अणु
 		dev_err(input_dev->dev.parent,
 			"%s: invalid keymap entry 0x%x (row: %d, col: %d, rows: %d, cols: %d)\n",
 			__func__, key, row, col, rows, cols);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	keymap[MATRIX_SCAN_CODE(row, col, row_shift)] = code;
+	keymap[MATRIX_SCAN_CODE(row, col, row_shअगरt)] = code;
 	__set_bit(code, input_dev->keybit);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * matrix_keypad_parse_properties() - Read properties of matrix keypad
@@ -47,156 +48,156 @@ static bool matrix_keypad_map_key(struct input_dev *input_dev,
  * @dev: Device containing properties
  * @rows: Returns number of matrix rows
  * @cols: Returns number of matrix columns
- * @return 0 if OK, <0 on error
+ * @वापस 0 अगर OK, <0 on error
  */
-int matrix_keypad_parse_properties(struct device *dev,
-				   unsigned int *rows, unsigned int *cols)
-{
+पूर्णांक matrix_keypad_parse_properties(काष्ठा device *dev,
+				   अचिन्हित पूर्णांक *rows, अचिन्हित पूर्णांक *cols)
+अणु
 	*rows = *cols = 0;
 
-	device_property_read_u32(dev, "keypad,num-rows", rows);
-	device_property_read_u32(dev, "keypad,num-columns", cols);
+	device_property_पढ़ो_u32(dev, "keypad,num-rows", rows);
+	device_property_पढ़ो_u32(dev, "keypad,num-columns", cols);
 
-	if (!*rows || !*cols) {
+	अगर (!*rows || !*cols) अणु
 		dev_err(dev, "number of keypad rows/columns not specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(matrix_keypad_parse_properties);
 
-static int matrix_keypad_parse_keymap(const char *propname,
-				      unsigned int rows, unsigned int cols,
-				      struct input_dev *input_dev)
-{
-	struct device *dev = input_dev->dev.parent;
-	unsigned int row_shift = get_count_order(cols);
-	unsigned int max_keys = rows << row_shift;
+अटल पूर्णांक matrix_keypad_parse_keymap(स्थिर अक्षर *propname,
+				      अचिन्हित पूर्णांक rows, अचिन्हित पूर्णांक cols,
+				      काष्ठा input_dev *input_dev)
+अणु
+	काष्ठा device *dev = input_dev->dev.parent;
+	अचिन्हित पूर्णांक row_shअगरt = get_count_order(cols);
+	अचिन्हित पूर्णांक max_keys = rows << row_shअगरt;
 	u32 *keys;
-	int i;
-	int size;
-	int retval;
+	पूर्णांक i;
+	पूर्णांक size;
+	पूर्णांक retval;
 
-	if (!propname)
+	अगर (!propname)
 		propname = "linux,keymap";
 
 	size = device_property_count_u32(dev, propname);
-	if (size <= 0) {
+	अगर (size <= 0) अणु
 		dev_err(dev, "missing or malformed property %s: %d\n",
 			propname, size);
-		return size < 0 ? size : -EINVAL;
-	}
+		वापस size < 0 ? size : -EINVAL;
+	पूर्ण
 
-	if (size > max_keys) {
+	अगर (size > max_keys) अणु
 		dev_err(dev, "%s size overflow (%d vs max %u)\n",
 			propname, size, max_keys);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	keys = kmalloc_array(size, sizeof(u32), GFP_KERNEL);
-	if (!keys)
-		return -ENOMEM;
+	keys = kदो_स्मृति_array(size, माप(u32), GFP_KERNEL);
+	अगर (!keys)
+		वापस -ENOMEM;
 
-	retval = device_property_read_u32_array(dev, propname, keys, size);
-	if (retval) {
+	retval = device_property_पढ़ो_u32_array(dev, propname, keys, size);
+	अगर (retval) अणु
 		dev_err(dev, "failed to read %s property: %d\n",
 			propname, retval);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < size; i++) {
-		if (!matrix_keypad_map_key(input_dev, rows, cols,
-					   row_shift, keys[i])) {
+	क्रम (i = 0; i < size; i++) अणु
+		अगर (!matrix_keypad_map_key(input_dev, rows, cols,
+					   row_shअगरt, keys[i])) अणु
 			retval = -EINVAL;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	retval = 0;
 
 out:
-	kfree(keys);
-	return retval;
-}
+	kमुक्त(keys);
+	वापस retval;
+पूर्ण
 
 /**
- * matrix_keypad_build_keymap - convert platform keymap into matrix keymap
- * @keymap_data: keymap supplied by the platform code
- * @keymap_name: name of device tree property containing keymap (if device
+ * matrix_keypad_build_keymap - convert platक्रमm keymap पूर्णांकo matrix keymap
+ * @keymap_data: keymap supplied by the platक्रमm code
+ * @keymap_name: name of device tree property containing keymap (अगर device
  *	tree support is enabled).
  * @rows: number of rows in target keymap array
  * @cols: number of cols in target keymap array
- * @keymap: expanded version of keymap that is suitable for use by
+ * @keymap: expanded version of keymap that is suitable क्रम use by
  * matrix keyboard driver
- * @input_dev: input devices for which we are setting up the keymap
+ * @input_dev: input devices क्रम which we are setting up the keymap
  *
- * This function converts platform keymap (encoded with KEY() macro) into
- * an array of keycodes that is suitable for using in a standard matrix
+ * This function converts platक्रमm keymap (encoded with KEY() macro) पूर्णांकo
+ * an array of keycodes that is suitable क्रम using in a standard matrix
  * keyboard driver that uses row and col as indices.
  *
  * If @keymap_data is not supplied and device tree support is enabled
- * it will attempt load the keymap from property specified by @keymap_name
- * argument (or "linux,keymap" if @keymap_name is %NULL).
+ * it will attempt load the keymap from property specअगरied by @keymap_name
+ * argument (or "linux,keymap" अगर @keymap_name is %शून्य).
  *
- * If @keymap is %NULL the function will automatically allocate managed
+ * If @keymap is %शून्य the function will स्वतःmatically allocate managed
  * block of memory to store the keymap. This memory will be associated with
- * the parent device and automatically freed when device unbinds from the
+ * the parent device and स्वतःmatically मुक्तd when device unbinds from the
  * driver.
  *
- * Callers are expected to set up input_dev->dev.parent before calling this
+ * Callers are expected to set up input_dev->dev.parent beक्रमe calling this
  * function.
  */
-int matrix_keypad_build_keymap(const struct matrix_keymap_data *keymap_data,
-			       const char *keymap_name,
-			       unsigned int rows, unsigned int cols,
-			       unsigned short *keymap,
-			       struct input_dev *input_dev)
-{
-	unsigned int row_shift = get_count_order(cols);
-	size_t max_keys = rows << row_shift;
-	int i;
-	int error;
+पूर्णांक matrix_keypad_build_keymap(स्थिर काष्ठा matrix_keymap_data *keymap_data,
+			       स्थिर अक्षर *keymap_name,
+			       अचिन्हित पूर्णांक rows, अचिन्हित पूर्णांक cols,
+			       अचिन्हित लघु *keymap,
+			       काष्ठा input_dev *input_dev)
+अणु
+	अचिन्हित पूर्णांक row_shअगरt = get_count_order(cols);
+	माप_प्रकार max_keys = rows << row_shअगरt;
+	पूर्णांक i;
+	पूर्णांक error;
 
-	if (WARN_ON(!input_dev->dev.parent))
-		return -EINVAL;
+	अगर (WARN_ON(!input_dev->dev.parent))
+		वापस -EINVAL;
 
-	if (!keymap) {
-		keymap = devm_kcalloc(input_dev->dev.parent,
-				      max_keys, sizeof(*keymap),
+	अगर (!keymap) अणु
+		keymap = devm_kसुस्मृति(input_dev->dev.parent,
+				      max_keys, माप(*keymap),
 				      GFP_KERNEL);
-		if (!keymap) {
+		अगर (!keymap) अणु
 			dev_err(input_dev->dev.parent,
 				"Unable to allocate memory for keymap");
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	input_dev->keycode = keymap;
-	input_dev->keycodesize = sizeof(*keymap);
+	input_dev->keycodesize = माप(*keymap);
 	input_dev->keycodemax = max_keys;
 
 	__set_bit(EV_KEY, input_dev->evbit);
 
-	if (keymap_data) {
-		for (i = 0; i < keymap_data->keymap_size; i++) {
-			unsigned int key = keymap_data->keymap[i];
+	अगर (keymap_data) अणु
+		क्रम (i = 0; i < keymap_data->keymap_size; i++) अणु
+			अचिन्हित पूर्णांक key = keymap_data->keymap[i];
 
-			if (!matrix_keypad_map_key(input_dev, rows, cols,
-						   row_shift, key))
-				return -EINVAL;
-		}
-	} else {
+			अगर (!matrix_keypad_map_key(input_dev, rows, cols,
+						   row_shअगरt, key))
+				वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		error = matrix_keypad_parse_keymap(keymap_name, rows, cols,
 						   input_dev);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
 	__clear_bit(KEY_RESERVED, input_dev->keybit);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(matrix_keypad_build_keymap);
 
 MODULE_LICENSE("GPL");

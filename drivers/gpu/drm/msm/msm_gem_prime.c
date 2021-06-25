@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#include <linux/dma-buf.h>
+#समावेश <linux/dma-buf.h>
 
-#include <drm/drm_prime.h>
+#समावेश <drm/drm_prime.h>
 
-#include "msm_drv.h"
-#include "msm_gem.h"
+#समावेश "msm_drv.h"
+#समावेश "msm_gem.h"
 
-struct sg_table *msm_gem_prime_get_sg_table(struct drm_gem_object *obj)
-{
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
-	int npages = obj->size >> PAGE_SHIFT;
+काष्ठा sg_table *msm_gem_prime_get_sg_table(काष्ठा drm_gem_object *obj)
+अणु
+	काष्ठा msm_gem_object *msm_obj = to_msm_bo(obj);
+	पूर्णांक npages = obj->size >> PAGE_SHIFT;
 
-	if (WARN_ON(!msm_obj->pages))  /* should have already pinned! */
-		return NULL;
+	अगर (WARN_ON(!msm_obj->pages))  /* should have alपढ़ोy pinned! */
+		वापस शून्य;
 
-	return drm_prime_pages_to_sg(obj->dev, msm_obj->pages, npages);
-}
+	वापस drm_prime_pages_to_sg(obj->dev, msm_obj->pages, npages);
+पूर्ण
 
-int msm_gem_prime_vmap(struct drm_gem_object *obj, struct dma_buf_map *map)
-{
-	void *vaddr;
+पूर्णांक msm_gem_prime_vmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map)
+अणु
+	व्योम *vaddr;
 
 	vaddr = msm_gem_get_vaddr(obj);
-	if (IS_ERR(vaddr))
-		return PTR_ERR(vaddr);
+	अगर (IS_ERR(vaddr))
+		वापस PTR_ERR(vaddr);
 	dma_buf_map_set_vaddr(map, vaddr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void msm_gem_prime_vunmap(struct drm_gem_object *obj, struct dma_buf_map *map)
-{
+व्योम msm_gem_prime_vunmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map)
+अणु
 	msm_gem_put_vaddr(obj);
-}
+पूर्ण
 
-int msm_gem_prime_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
-{
-	int ret;
+पूर्णांक msm_gem_prime_mmap(काष्ठा drm_gem_object *obj, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	पूर्णांक ret;
 
 	ret = drm_gem_mmap_obj(obj, obj->size, vma);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return msm_gem_mmap_obj(vma->vm_private_data, vma);
-}
+	वापस msm_gem_mmap_obj(vma->vm_निजी_data, vma);
+पूर्ण
 
-struct drm_gem_object *msm_gem_prime_import_sg_table(struct drm_device *dev,
-		struct dma_buf_attachment *attach, struct sg_table *sg)
-{
-	return msm_gem_import(dev, attach->dmabuf, sg);
-}
+काष्ठा drm_gem_object *msm_gem_prime_import_sg_table(काष्ठा drm_device *dev,
+		काष्ठा dma_buf_attachment *attach, काष्ठा sg_table *sg)
+अणु
+	वापस msm_gem_import(dev, attach->dmabuf, sg);
+पूर्ण
 
-int msm_gem_prime_pin(struct drm_gem_object *obj)
-{
-	if (!obj->import_attach)
+पूर्णांक msm_gem_prime_pin(काष्ठा drm_gem_object *obj)
+अणु
+	अगर (!obj->import_attach)
 		msm_gem_get_pages(obj);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void msm_gem_prime_unpin(struct drm_gem_object *obj)
-{
-	if (!obj->import_attach)
+व्योम msm_gem_prime_unpin(काष्ठा drm_gem_object *obj)
+अणु
+	अगर (!obj->import_attach)
 		msm_gem_put_pages(obj);
-}
+पूर्ण

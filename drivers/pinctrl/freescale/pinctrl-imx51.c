@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // imx51 pinctrl driver based on imx pinmux core
 //
 // Copyright (C) 2012 Freescale Semiconductor, Inc.
 // Copyright (C) 2012 Linaro, Inc.
 //
-// Author: Dong Aisheng <dong.aisheng@linaro.org>
+// Author: Dong Aisheng <करोng.aisheng@linaro.org>
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-imx.h"
+#समावेश "pinctrl-imx.h"
 
-enum imx51_pads {
+क्रमागत imx51_pads अणु
 	MX51_PAD_RESERVE0 = 0,
 	MX51_PAD_RESERVE1 = 1,
 	MX51_PAD_RESERVE2 = 2,
@@ -83,41 +84,41 @@ enum imx51_pads {
 	MX51_PAD_EIM_LBA = 63,
 	MX51_PAD_EIM_CRE = 64,
 	MX51_PAD_DRAM_CS1 = 65,
-	MX51_PAD_NANDF_WE_B = 66,
-	MX51_PAD_NANDF_RE_B = 67,
-	MX51_PAD_NANDF_ALE = 68,
-	MX51_PAD_NANDF_CLE = 69,
-	MX51_PAD_NANDF_WP_B = 70,
-	MX51_PAD_NANDF_RB0 = 71,
-	MX51_PAD_NANDF_RB1 = 72,
-	MX51_PAD_NANDF_RB2 = 73,
-	MX51_PAD_NANDF_RB3 = 74,
-	MX51_PAD_GPIO_NAND = 75,
-	MX51_PAD_NANDF_CS0 = 76,
-	MX51_PAD_NANDF_CS1 = 77,
-	MX51_PAD_NANDF_CS2 = 78,
-	MX51_PAD_NANDF_CS3 = 79,
-	MX51_PAD_NANDF_CS4 = 80,
-	MX51_PAD_NANDF_CS5 = 81,
-	MX51_PAD_NANDF_CS6 = 82,
-	MX51_PAD_NANDF_CS7 = 83,
-	MX51_PAD_NANDF_RDY_INT = 84,
-	MX51_PAD_NANDF_D15 = 85,
-	MX51_PAD_NANDF_D14 = 86,
-	MX51_PAD_NANDF_D13 = 87,
-	MX51_PAD_NANDF_D12 = 88,
-	MX51_PAD_NANDF_D11 = 89,
-	MX51_PAD_NANDF_D10 = 90,
-	MX51_PAD_NANDF_D9 = 91,
-	MX51_PAD_NANDF_D8 = 92,
-	MX51_PAD_NANDF_D7 = 93,
-	MX51_PAD_NANDF_D6 = 94,
-	MX51_PAD_NANDF_D5 = 95,
-	MX51_PAD_NANDF_D4 = 96,
-	MX51_PAD_NANDF_D3 = 97,
-	MX51_PAD_NANDF_D2 = 98,
-	MX51_PAD_NANDF_D1 = 99,
-	MX51_PAD_NANDF_D0 = 100,
+	MX51_PAD_न_अंकDF_WE_B = 66,
+	MX51_PAD_न_अंकDF_RE_B = 67,
+	MX51_PAD_न_अंकDF_ALE = 68,
+	MX51_PAD_न_अंकDF_CLE = 69,
+	MX51_PAD_न_अंकDF_WP_B = 70,
+	MX51_PAD_न_अंकDF_RB0 = 71,
+	MX51_PAD_न_अंकDF_RB1 = 72,
+	MX51_PAD_न_अंकDF_RB2 = 73,
+	MX51_PAD_न_अंकDF_RB3 = 74,
+	MX51_PAD_GPIO_न_अंकD = 75,
+	MX51_PAD_न_अंकDF_CS0 = 76,
+	MX51_PAD_न_अंकDF_CS1 = 77,
+	MX51_PAD_न_अंकDF_CS2 = 78,
+	MX51_PAD_न_अंकDF_CS3 = 79,
+	MX51_PAD_न_अंकDF_CS4 = 80,
+	MX51_PAD_न_अंकDF_CS5 = 81,
+	MX51_PAD_न_अंकDF_CS6 = 82,
+	MX51_PAD_न_अंकDF_CS7 = 83,
+	MX51_PAD_न_अंकDF_RDY_INT = 84,
+	MX51_PAD_न_अंकDF_D15 = 85,
+	MX51_PAD_न_अंकDF_D14 = 86,
+	MX51_PAD_न_अंकDF_D13 = 87,
+	MX51_PAD_न_अंकDF_D12 = 88,
+	MX51_PAD_न_अंकDF_D11 = 89,
+	MX51_PAD_न_अंकDF_D10 = 90,
+	MX51_PAD_न_अंकDF_D9 = 91,
+	MX51_PAD_न_अंकDF_D8 = 92,
+	MX51_PAD_न_अंकDF_D7 = 93,
+	MX51_PAD_न_अंकDF_D6 = 94,
+	MX51_PAD_न_अंकDF_D5 = 95,
+	MX51_PAD_न_अंकDF_D4 = 96,
+	MX51_PAD_न_अंकDF_D3 = 97,
+	MX51_PAD_न_अंकDF_D2 = 98,
+	MX51_PAD_न_अंकDF_D1 = 99,
+	MX51_PAD_न_अंकDF_D0 = 100,
 	MX51_PAD_CSI1_D8 = 101,
 	MX51_PAD_CSI1_D9 = 102,
 	MX51_PAD_CSI1_D10 = 103,
@@ -176,7 +177,7 @@ enum imx51_pads {
 	MX51_PAD_KEY_COL5 = 156,
 	MX51_PAD_RESERVE7 = 157,
 	MX51_PAD_USBH1_CLK = 158,
-	MX51_PAD_USBH1_DIR = 159,
+	MX51_PAD_USBH1_सूची = 159,
 	MX51_PAD_USBH1_STP = 160,
 	MX51_PAD_USBH1_NXT = 161,
 	MX51_PAD_USBH1_DATA0 = 162,
@@ -384,10 +385,10 @@ enum imx51_pads {
 	MX51_PAD_RESERVE121 = 364,
 	MX51_PAD_CSI1_PIXCLK = 365,
 	MX51_PAD_CSI1_MCLK = 366,
-};
+पूर्ण;
 
-/* Pad names for the pinmux subsystem */
-static const struct pinctrl_pin_desc imx51_pinctrl_pads[] = {
+/* Pad names क्रम the pinmux subप्रणाली */
+अटल स्थिर काष्ठा pinctrl_pin_desc imx51_pinctrl_pads[] = अणु
 	IMX_PINCTRL_PIN(MX51_PAD_RESERVE0),
 	IMX_PINCTRL_PIN(MX51_PAD_RESERVE1),
 	IMX_PINCTRL_PIN(MX51_PAD_RESERVE2),
@@ -454,41 +455,41 @@ static const struct pinctrl_pin_desc imx51_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX51_PAD_EIM_LBA),
 	IMX_PINCTRL_PIN(MX51_PAD_EIM_CRE),
 	IMX_PINCTRL_PIN(MX51_PAD_DRAM_CS1),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_WE_B),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_RE_B),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_ALE),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_CLE),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_WP_B),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_RB0),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_RB1),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_RB2),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_RB3),
-	IMX_PINCTRL_PIN(MX51_PAD_GPIO_NAND),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_CS0),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_CS1),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_CS2),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_CS3),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_CS4),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_CS5),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_CS6),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_CS7),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_RDY_INT),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D15),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D14),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D13),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D12),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D11),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D10),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D9),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D8),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D7),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D6),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D5),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D4),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D3),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D2),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D1),
-	IMX_PINCTRL_PIN(MX51_PAD_NANDF_D0),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_WE_B),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_RE_B),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_ALE),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_CLE),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_WP_B),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_RB0),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_RB1),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_RB2),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_RB3),
+	IMX_PINCTRL_PIN(MX51_PAD_GPIO_न_अंकD),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_CS0),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_CS1),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_CS2),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_CS3),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_CS4),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_CS5),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_CS6),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_CS7),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_RDY_INT),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D15),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D14),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D13),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D12),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D11),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D10),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D9),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D8),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D7),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D6),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D5),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D4),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D3),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D2),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D1),
+	IMX_PINCTRL_PIN(MX51_PAD_न_अंकDF_D0),
 	IMX_PINCTRL_PIN(MX51_PAD_CSI1_D8),
 	IMX_PINCTRL_PIN(MX51_PAD_CSI1_D9),
 	IMX_PINCTRL_PIN(MX51_PAD_CSI1_D10),
@@ -547,7 +548,7 @@ static const struct pinctrl_pin_desc imx51_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX51_PAD_KEY_COL5),
 	IMX_PINCTRL_PIN(MX51_PAD_RESERVE7),
 	IMX_PINCTRL_PIN(MX51_PAD_USBH1_CLK),
-	IMX_PINCTRL_PIN(MX51_PAD_USBH1_DIR),
+	IMX_PINCTRL_PIN(MX51_PAD_USBH1_सूची),
 	IMX_PINCTRL_PIN(MX51_PAD_USBH1_STP),
 	IMX_PINCTRL_PIN(MX51_PAD_USBH1_NXT),
 	IMX_PINCTRL_PIN(MX51_PAD_USBH1_DATA0),
@@ -755,34 +756,34 @@ static const struct pinctrl_pin_desc imx51_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX51_PAD_RESERVE121),
 	IMX_PINCTRL_PIN(MX51_PAD_CSI1_PIXCLK),
 	IMX_PINCTRL_PIN(MX51_PAD_CSI1_MCLK),
-};
+पूर्ण;
 
-static const struct imx_pinctrl_soc_info imx51_pinctrl_info = {
+अटल स्थिर काष्ठा imx_pinctrl_soc_info imx51_pinctrl_info = अणु
 	.pins = imx51_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx51_pinctrl_pads),
-};
+पूर्ण;
 
-static const struct of_device_id imx51_pinctrl_of_match[] = {
-	{ .compatible = "fsl,imx51-iomuxc", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx51_pinctrl_of_match[] = अणु
+	अणु .compatible = "fsl,imx51-iomuxc", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int imx51_pinctrl_probe(struct platform_device *pdev)
-{
-	return imx_pinctrl_probe(pdev, &imx51_pinctrl_info);
-}
+अटल पूर्णांक imx51_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx_pinctrl_probe(pdev, &imx51_pinctrl_info);
+पूर्ण
 
-static struct platform_driver imx51_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx51_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "imx51-pinctrl",
 		.of_match_table = imx51_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = imx51_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init imx51_pinctrl_init(void)
-{
-	return platform_driver_register(&imx51_pinctrl_driver);
-}
+अटल पूर्णांक __init imx51_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&imx51_pinctrl_driver);
+पूर्ण
 arch_initcall(imx51_pinctrl_init);

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * TI OMAP4 ISS V4L2 Driver - CSI PHY module
  *
@@ -7,41 +8,41 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
-#ifndef OMAP4_ISS_CSI_PHY_H
-#define OMAP4_ISS_CSI_PHY_H
+#अगर_अघोषित OMAP4_ISS_CSI_PHY_H
+#घोषणा OMAP4_ISS_CSI_PHY_H
 
-#include <linux/platform_data/media/omap4iss.h>
+#समावेश <linux/platक्रमm_data/media/omap4iss.h>
 
-struct iss_csi2_device;
+काष्ठा iss_csi2_device;
 
-struct iss_csiphy_dphy_cfg {
+काष्ठा iss_csiphy_dphy_cfg अणु
 	u8 ths_term;
 	u8 ths_settle;
 	u8 tclk_term;
-	unsigned tclk_miss:1;
+	अचिन्हित tclk_miss:1;
 	u8 tclk_settle;
-};
+पूर्ण;
 
-struct iss_csiphy {
-	struct iss_device *iss;
-	struct mutex mutex;	/* serialize csiphy configuration */
+काष्ठा iss_csiphy अणु
+	काष्ठा iss_device *iss;
+	काष्ठा mutex mutex;	/* serialize csiphy configuration */
 	u8 phy_in_use;
-	struct iss_csi2_device *csi2;
+	काष्ठा iss_csi2_device *csi2;
 
-	/* memory resources, as defined in enum iss_mem_resources */
-	unsigned int cfg_regs;
-	unsigned int phy_regs;
+	/* memory resources, as defined in क्रमागत iss_mem_resources */
+	अचिन्हित पूर्णांक cfg_regs;
+	अचिन्हित पूर्णांक phy_regs;
 
 	u8 max_data_lanes;	/* number of CSI2 Data Lanes supported */
 	u8 used_data_lanes;	/* number of CSI2 Data Lanes used */
-	struct iss_csiphy_lanes_cfg lanes;
-	struct iss_csiphy_dphy_cfg dphy;
-};
+	काष्ठा iss_csiphy_lanes_cfg lanes;
+	काष्ठा iss_csiphy_dphy_cfg dphy;
+पूर्ण;
 
-int omap4iss_csiphy_config(struct iss_device *iss,
-			   struct v4l2_subdev *csi2_subdev);
-int omap4iss_csiphy_acquire(struct iss_csiphy *phy);
-void omap4iss_csiphy_release(struct iss_csiphy *phy);
-int omap4iss_csiphy_init(struct iss_device *iss);
+पूर्णांक omap4iss_csiphy_config(काष्ठा iss_device *iss,
+			   काष्ठा v4l2_subdev *csi2_subdev);
+पूर्णांक omap4iss_csiphy_acquire(काष्ठा iss_csiphy *phy);
+व्योम omap4iss_csiphy_release(काष्ठा iss_csiphy *phy);
+पूर्णांक omap4iss_csiphy_init(काष्ठा iss_device *iss);
 
-#endif	/* OMAP4_ISS_CSI_PHY_H */
+#पूर्ण_अगर	/* OMAP4_ISS_CSI_PHY_H */

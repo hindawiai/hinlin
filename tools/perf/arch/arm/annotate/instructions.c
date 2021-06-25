@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
-#include <linux/zalloc.h>
-#include <sys/types.h>
-#include <regex.h>
-#include <stdlib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
+#समावेश <linux/zभाग.स>
+#समावेश <sys/types.h>
+#समावेश <regex.h>
+#समावेश <मानककोष.स>
 
-struct arm_annotate {
+काष्ठा arm_annotate अणु
 	regex_t call_insn,
 		jump_insn;
-};
+पूर्ण;
 
-static struct ins_ops *arm__associate_instruction_ops(struct arch *arch, const char *name)
-{
-	struct arm_annotate *arm = arch->priv;
-	struct ins_ops *ops;
+अटल काष्ठा ins_ops *arm__associate_inकाष्ठाion_ops(काष्ठा arch *arch, स्थिर अक्षर *name)
+अणु
+	काष्ठा arm_annotate *arm = arch->priv;
+	काष्ठा ins_ops *ops;
 	regmatch_t match[2];
 
-	if (!regexec(&arm->call_insn, name, 2, match, 0))
+	अगर (!regexec(&arm->call_insn, name, 2, match, 0))
 		ops = &call_ops;
-	else if (!regexec(&arm->jump_insn, name, 2, match, 0))
+	अन्यथा अगर (!regexec(&arm->jump_insn, name, 2, match, 0))
 		ops = &jump_ops;
-	else
-		return NULL;
+	अन्यथा
+		वापस शून्य;
 
 	arch__associate_ins_ops(arch, name, ops);
-	return ops;
-}
+	वापस ops;
+पूर्ण
 
-static int arm__annotate_init(struct arch *arch, char *cpuid __maybe_unused)
-{
-	struct arm_annotate *arm;
-	int err;
+अटल पूर्णांक arm__annotate_init(काष्ठा arch *arch, अक्षर *cpuid __maybe_unused)
+अणु
+	काष्ठा arm_annotate *arm;
+	पूर्णांक err;
 
-	if (arch->initialized)
-		return 0;
+	अगर (arch->initialized)
+		वापस 0;
 
-	arm = zalloc(sizeof(*arm));
-	if (!arm)
-		return ENOMEM;
+	arm = zalloc(माप(*arm));
+	अगर (!arm)
+		वापस ENOMEM;
 
-#define ARM_CONDS "(cc|cs|eq|ge|gt|hi|le|ls|lt|mi|ne|pl|vc|vs)"
+#घोषणा ARM_CONDS "(cc|cs|eq|ge|gt|hi|le|ls|lt|mi|ne|pl|vc|vs)"
 	err = regcomp(&arm->call_insn, "^blx?" ARM_CONDS "?$", REG_EXTENDED);
-	if (err)
-		goto out_free_arm;
+	अगर (err)
+		जाओ out_मुक्त_arm;
 	err = regcomp(&arm->jump_insn, "^bx?" ARM_CONDS "?$", REG_EXTENDED);
-	if (err)
-		goto out_free_call;
-#undef ARM_CONDS
+	अगर (err)
+		जाओ out_मुक्त_call;
+#अघोषित ARM_CONDS
 
 	arch->initialized = true;
 	arch->priv	  = arm;
-	arch->associate_instruction_ops   = arm__associate_instruction_ops;
-	arch->objdump.comment_char	  = ';';
-	arch->objdump.skip_functions_char = '+';
-	return 0;
+	arch->associate_inकाष्ठाion_ops   = arm__associate_inकाष्ठाion_ops;
+	arch->objdump.comment_अक्षर	  = ';';
+	arch->objdump.skip_functions_अक्षर = '+';
+	वापस 0;
 
-out_free_call:
-	regfree(&arm->call_insn);
-out_free_arm:
-	free(arm);
-	return SYMBOL_ANNOTATE_ERRNO__ARCH_INIT_REGEXP;
-}
+out_मुक्त_call:
+	regमुक्त(&arm->call_insn);
+out_मुक्त_arm:
+	मुक्त(arm);
+	वापस SYMBOL_ANNOTATE_ERRNO__ARCH_INIT_REGEXP;
+पूर्ण

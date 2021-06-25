@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * drivers/base/devres.c - device resource management
  *
@@ -6,148 +7,148 @@
  * Copyright (c) 2006  Tejun Heo <teheo@suse.de>
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/percpu.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/percpu.h>
 
-#include <asm/sections.h>
+#समावेश <यंत्र/sections.h>
 
-#include "base.h"
+#समावेश "base.h"
 
-struct devres_node {
-	struct list_head		entry;
+काष्ठा devres_node अणु
+	काष्ठा list_head		entry;
 	dr_release_t			release;
-#ifdef CONFIG_DEBUG_DEVRES
-	const char			*name;
-	size_t				size;
-#endif
-};
+#अगर_घोषित CONFIG_DEBUG_DEVRES
+	स्थिर अक्षर			*name;
+	माप_प्रकार				size;
+#पूर्ण_अगर
+पूर्ण;
 
-struct devres {
-	struct devres_node		node;
+काष्ठा devres अणु
+	काष्ठा devres_node		node;
 	/*
-	 * Some archs want to perform DMA into kmalloc caches
+	 * Some archs want to perक्रमm DMA पूर्णांकo kदो_स्मृति caches
 	 * and need a guaranteed alignment larger than
-	 * the alignment of a 64-bit integer.
+	 * the alignment of a 64-bit पूर्णांकeger.
 	 * Thus we use ARCH_KMALLOC_MINALIGN here and get exactly the same
-	 * buffer alignment as if it was allocated by plain kmalloc().
+	 * buffer alignment as अगर it was allocated by plain kदो_स्मृति().
 	 */
 	u8 __aligned(ARCH_KMALLOC_MINALIGN) data[];
-};
+पूर्ण;
 
-struct devres_group {
-	struct devres_node		node[2];
-	void				*id;
-	int				color;
-	/* -- 8 pointers */
-};
+काष्ठा devres_group अणु
+	काष्ठा devres_node		node[2];
+	व्योम				*id;
+	पूर्णांक				color;
+	/* -- 8 poपूर्णांकers */
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_DEVRES
-static int log_devres = 0;
-module_param_named(log, log_devres, int, S_IRUGO | S_IWUSR);
+#अगर_घोषित CONFIG_DEBUG_DEVRES
+अटल पूर्णांक log_devres = 0;
+module_param_named(log, log_devres, पूर्णांक, S_IRUGO | S_IWUSR);
 
-static void set_node_dbginfo(struct devres_node *node, const char *name,
-			     size_t size)
-{
+अटल व्योम set_node_dbginfo(काष्ठा devres_node *node, स्थिर अक्षर *name,
+			     माप_प्रकार size)
+अणु
 	node->name = name;
 	node->size = size;
-}
+पूर्ण
 
-static void devres_log(struct device *dev, struct devres_node *node,
-		       const char *op)
-{
-	if (unlikely(log_devres))
+अटल व्योम devres_log(काष्ठा device *dev, काष्ठा devres_node *node,
+		       स्थिर अक्षर *op)
+अणु
+	अगर (unlikely(log_devres))
 		dev_err(dev, "DEVRES %3s %p %s (%zu bytes)\n",
 			op, node, node->name, node->size);
-}
-#else /* CONFIG_DEBUG_DEVRES */
-#define set_node_dbginfo(node, n, s)	do {} while (0)
-#define devres_log(dev, node, op)	do {} while (0)
-#endif /* CONFIG_DEBUG_DEVRES */
+पूर्ण
+#अन्यथा /* CONFIG_DEBUG_DEVRES */
+#घोषणा set_node_dbginfo(node, n, s)	करो अणुपूर्ण जबतक (0)
+#घोषणा devres_log(dev, node, op)	करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर /* CONFIG_DEBUG_DEVRES */
 
 /*
- * Release functions for devres group.  These callbacks are used only
- * for identification.
+ * Release functions क्रम devres group.  These callbacks are used only
+ * क्रम identअगरication.
  */
-static void group_open_release(struct device *dev, void *res)
-{
+अटल व्योम group_खोलो_release(काष्ठा device *dev, व्योम *res)
+अणु
 	/* noop */
-}
+पूर्ण
 
-static void group_close_release(struct device *dev, void *res)
-{
+अटल व्योम group_बंद_release(काष्ठा device *dev, व्योम *res)
+अणु
 	/* noop */
-}
+पूर्ण
 
-static struct devres_group * node_to_group(struct devres_node *node)
-{
-	if (node->release == &group_open_release)
-		return container_of(node, struct devres_group, node[0]);
-	if (node->release == &group_close_release)
-		return container_of(node, struct devres_group, node[1]);
-	return NULL;
-}
+अटल काष्ठा devres_group * node_to_group(काष्ठा devres_node *node)
+अणु
+	अगर (node->release == &group_खोलो_release)
+		वापस container_of(node, काष्ठा devres_group, node[0]);
+	अगर (node->release == &group_बंद_release)
+		वापस container_of(node, काष्ठा devres_group, node[1]);
+	वापस शून्य;
+पूर्ण
 
-static bool check_dr_size(size_t size, size_t *tot_size)
-{
-	/* We must catch any near-SIZE_MAX cases that could overflow. */
-	if (unlikely(check_add_overflow(sizeof(struct devres),
+अटल bool check_dr_size(माप_प्रकार size, माप_प्रकार *tot_size)
+अणु
+	/* We must catch any near-SIZE_MAX हालs that could overflow. */
+	अगर (unlikely(check_add_overflow(माप(काष्ठा devres),
 					size, tot_size)))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static __always_inline struct devres * alloc_dr(dr_release_t release,
-						size_t size, gfp_t gfp, int nid)
-{
-	size_t tot_size;
-	struct devres *dr;
+अटल __always_अंतरभूत काष्ठा devres * alloc_dr(dr_release_t release,
+						माप_प्रकार size, gfp_t gfp, पूर्णांक nid)
+अणु
+	माप_प्रकार tot_size;
+	काष्ठा devres *dr;
 
-	if (!check_dr_size(size, &tot_size))
-		return NULL;
+	अगर (!check_dr_size(size, &tot_size))
+		वापस शून्य;
 
-	dr = kmalloc_node_track_caller(tot_size, gfp, nid);
-	if (unlikely(!dr))
-		return NULL;
+	dr = kदो_स्मृति_node_track_caller(tot_size, gfp, nid);
+	अगर (unlikely(!dr))
+		वापस शून्य;
 
-	memset(dr, 0, offsetof(struct devres, data));
+	स_रखो(dr, 0, दुरत्व(काष्ठा devres, data));
 
 	INIT_LIST_HEAD(&dr->node.entry);
 	dr->node.release = release;
-	return dr;
-}
+	वापस dr;
+पूर्ण
 
-static void add_dr(struct device *dev, struct devres_node *node)
-{
+अटल व्योम add_dr(काष्ठा device *dev, काष्ठा devres_node *node)
+अणु
 	devres_log(dev, node, "ADD");
 	BUG_ON(!list_empty(&node->entry));
 	list_add_tail(&node->entry, &dev->devres_head);
-}
+पूर्ण
 
-static void replace_dr(struct device *dev,
-		       struct devres_node *old, struct devres_node *new)
-{
+अटल व्योम replace_dr(काष्ठा device *dev,
+		       काष्ठा devres_node *old, काष्ठा devres_node *new)
+अणु
 	devres_log(dev, old, "REPLACE");
 	BUG_ON(!list_empty(&new->entry));
 	list_replace(&old->entry, &new->entry);
-}
+पूर्ण
 
-#ifdef CONFIG_DEBUG_DEVRES
-void * __devres_alloc_node(dr_release_t release, size_t size, gfp_t gfp, int nid,
-		      const char *name)
-{
-	struct devres *dr;
+#अगर_घोषित CONFIG_DEBUG_DEVRES
+व्योम * __devres_alloc_node(dr_release_t release, माप_प्रकार size, gfp_t gfp, पूर्णांक nid,
+		      स्थिर अक्षर *name)
+अणु
+	काष्ठा devres *dr;
 
 	dr = alloc_dr(release, size, gfp | __GFP_ZERO, nid);
-	if (unlikely(!dr))
-		return NULL;
+	अगर (unlikely(!dr))
+		वापस शून्य;
 	set_node_dbginfo(&dr->node, name, size);
-	return dr->data;
-}
+	वापस dr->data;
+पूर्ण
 EXPORT_SYMBOL_GPL(__devres_alloc_node);
-#else
+#अन्यथा
 /**
  * devres_alloc_node - Allocate device resource data
  * @release: Release function devres will be associated with
@@ -156,770 +157,770 @@ EXPORT_SYMBOL_GPL(__devres_alloc_node);
  * @nid: NUMA node
  *
  * Allocate devres of @size bytes.  The allocated area is zeroed, then
- * associated with @release.  The returned pointer can be passed to
+ * associated with @release.  The वापसed poपूर्णांकer can be passed to
  * other devres_*() functions.
  *
  * RETURNS:
- * Pointer to allocated devres on success, NULL on failure.
+ * Poपूर्णांकer to allocated devres on success, शून्य on failure.
  */
-void * devres_alloc_node(dr_release_t release, size_t size, gfp_t gfp, int nid)
-{
-	struct devres *dr;
+व्योम * devres_alloc_node(dr_release_t release, माप_प्रकार size, gfp_t gfp, पूर्णांक nid)
+अणु
+	काष्ठा devres *dr;
 
 	dr = alloc_dr(release, size, gfp | __GFP_ZERO, nid);
-	if (unlikely(!dr))
-		return NULL;
-	return dr->data;
-}
+	अगर (unlikely(!dr))
+		वापस शून्य;
+	वापस dr->data;
+पूर्ण
 EXPORT_SYMBOL_GPL(devres_alloc_node);
-#endif
+#पूर्ण_अगर
 
 /**
- * devres_for_each_res - Resource iterator
+ * devres_क्रम_each_res - Resource iterator
  * @dev: Device to iterate resource from
- * @release: Look for resources associated with this release function
+ * @release: Look क्रम resources associated with this release function
  * @match: Match function (optional)
- * @match_data: Data for the match function
- * @fn: Function to be called for each matched resource.
- * @data: Data for @fn, the 3rd parameter of @fn
+ * @match_data: Data क्रम the match function
+ * @fn: Function to be called क्रम each matched resource.
+ * @data: Data क्रम @fn, the 3rd parameter of @fn
  *
- * Call @fn for each devres of @dev which is associated with @release
- * and for which @match returns 1.
+ * Call @fn क्रम each devres of @dev which is associated with @release
+ * and क्रम which @match वापसs 1.
  *
  * RETURNS:
- * 	void
+ * 	व्योम
  */
-void devres_for_each_res(struct device *dev, dr_release_t release,
-			dr_match_t match, void *match_data,
-			void (*fn)(struct device *, void *, void *),
-			void *data)
-{
-	struct devres_node *node;
-	struct devres_node *tmp;
-	unsigned long flags;
+व्योम devres_क्रम_each_res(काष्ठा device *dev, dr_release_t release,
+			dr_match_t match, व्योम *match_data,
+			व्योम (*fn)(काष्ठा device *, व्योम *, व्योम *),
+			व्योम *data)
+अणु
+	काष्ठा devres_node *node;
+	काष्ठा devres_node *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
-	if (!fn)
-		return;
+	अगर (!fn)
+		वापस;
 
 	spin_lock_irqsave(&dev->devres_lock, flags);
-	list_for_each_entry_safe_reverse(node, tmp,
-			&dev->devres_head, entry) {
-		struct devres *dr = container_of(node, struct devres, node);
+	list_क्रम_each_entry_safe_reverse(node, पंचांगp,
+			&dev->devres_head, entry) अणु
+		काष्ठा devres *dr = container_of(node, काष्ठा devres, node);
 
-		if (node->release != release)
-			continue;
-		if (match && !match(dev, dr->data, match_data))
-			continue;
+		अगर (node->release != release)
+			जारी;
+		अगर (match && !match(dev, dr->data, match_data))
+			जारी;
 		fn(dev, dr->data, data);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&dev->devres_lock, flags);
-}
-EXPORT_SYMBOL_GPL(devres_for_each_res);
+पूर्ण
+EXPORT_SYMBOL_GPL(devres_क्रम_each_res);
 
 /**
- * devres_free - Free device resource data
- * @res: Pointer to devres data to free
+ * devres_मुक्त - Free device resource data
+ * @res: Poपूर्णांकer to devres data to मुक्त
  *
  * Free devres created with devres_alloc().
  */
-void devres_free(void *res)
-{
-	if (res) {
-		struct devres *dr = container_of(res, struct devres, data);
+व्योम devres_मुक्त(व्योम *res)
+अणु
+	अगर (res) अणु
+		काष्ठा devres *dr = container_of(res, काष्ठा devres, data);
 
 		BUG_ON(!list_empty(&dr->node.entry));
-		kfree(dr);
-	}
-}
-EXPORT_SYMBOL_GPL(devres_free);
+		kमुक्त(dr);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(devres_मुक्त);
 
 /**
  * devres_add - Register device resource
  * @dev: Device to add resource to
- * @res: Resource to register
+ * @res: Resource to रेजिस्टर
  *
  * Register devres @res to @dev.  @res should have been allocated
  * using devres_alloc().  On driver detach, the associated release
- * function will be invoked and devres will be freed automatically.
+ * function will be invoked and devres will be मुक्तd स्वतःmatically.
  */
-void devres_add(struct device *dev, void *res)
-{
-	struct devres *dr = container_of(res, struct devres, data);
-	unsigned long flags;
+व्योम devres_add(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा devres *dr = container_of(res, काष्ठा devres, data);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->devres_lock, flags);
 	add_dr(dev, &dr->node);
 	spin_unlock_irqrestore(&dev->devres_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(devres_add);
 
-static struct devres *find_dr(struct device *dev, dr_release_t release,
-			      dr_match_t match, void *match_data)
-{
-	struct devres_node *node;
+अटल काष्ठा devres *find_dr(काष्ठा device *dev, dr_release_t release,
+			      dr_match_t match, व्योम *match_data)
+अणु
+	काष्ठा devres_node *node;
 
-	list_for_each_entry_reverse(node, &dev->devres_head, entry) {
-		struct devres *dr = container_of(node, struct devres, node);
+	list_क्रम_each_entry_reverse(node, &dev->devres_head, entry) अणु
+		काष्ठा devres *dr = container_of(node, काष्ठा devres, node);
 
-		if (node->release != release)
-			continue;
-		if (match && !match(dev, dr->data, match_data))
-			continue;
-		return dr;
-	}
+		अगर (node->release != release)
+			जारी;
+		अगर (match && !match(dev, dr->data, match_data))
+			जारी;
+		वापस dr;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * devres_find - Find device resource
  * @dev: Device to lookup resource from
- * @release: Look for resources associated with this release function
+ * @release: Look क्रम resources associated with this release function
  * @match: Match function (optional)
- * @match_data: Data for the match function
+ * @match_data: Data क्रम the match function
  *
  * Find the latest devres of @dev which is associated with @release
- * and for which @match returns 1.  If @match is NULL, it's considered
+ * and क्रम which @match वापसs 1.  If @match is शून्य, it's considered
  * to match all.
  *
  * RETURNS:
- * Pointer to found devres, NULL if not found.
+ * Poपूर्णांकer to found devres, शून्य अगर not found.
  */
-void * devres_find(struct device *dev, dr_release_t release,
-		   dr_match_t match, void *match_data)
-{
-	struct devres *dr;
-	unsigned long flags;
+व्योम * devres_find(काष्ठा device *dev, dr_release_t release,
+		   dr_match_t match, व्योम *match_data)
+अणु
+	काष्ठा devres *dr;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->devres_lock, flags);
 	dr = find_dr(dev, release, match, match_data);
 	spin_unlock_irqrestore(&dev->devres_lock, flags);
 
-	if (dr)
-		return dr->data;
-	return NULL;
-}
+	अगर (dr)
+		वापस dr->data;
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(devres_find);
 
 /**
- * devres_get - Find devres, if non-existent, add one atomically
- * @dev: Device to lookup or add devres for
- * @new_res: Pointer to new initialized devres to add if not found
+ * devres_get - Find devres, अगर non-existent, add one atomically
+ * @dev: Device to lookup or add devres क्रम
+ * @new_res: Poपूर्णांकer to new initialized devres to add अगर not found
  * @match: Match function (optional)
- * @match_data: Data for the match function
+ * @match_data: Data क्रम the match function
  *
  * Find the latest devres of @dev which has the same release function
- * as @new_res and for which @match return 1.  If found, @new_res is
- * freed; otherwise, @new_res is added atomically.
+ * as @new_res and क्रम which @match वापस 1.  If found, @new_res is
+ * मुक्तd; otherwise, @new_res is added atomically.
  *
  * RETURNS:
- * Pointer to found or added devres.
+ * Poपूर्णांकer to found or added devres.
  */
-void * devres_get(struct device *dev, void *new_res,
-		  dr_match_t match, void *match_data)
-{
-	struct devres *new_dr = container_of(new_res, struct devres, data);
-	struct devres *dr;
-	unsigned long flags;
+व्योम * devres_get(काष्ठा device *dev, व्योम *new_res,
+		  dr_match_t match, व्योम *match_data)
+अणु
+	काष्ठा devres *new_dr = container_of(new_res, काष्ठा devres, data);
+	काष्ठा devres *dr;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->devres_lock, flags);
 	dr = find_dr(dev, new_dr->node.release, match, match_data);
-	if (!dr) {
+	अगर (!dr) अणु
 		add_dr(dev, &new_dr->node);
 		dr = new_dr;
-		new_res = NULL;
-	}
+		new_res = शून्य;
+	पूर्ण
 	spin_unlock_irqrestore(&dev->devres_lock, flags);
-	devres_free(new_res);
+	devres_मुक्त(new_res);
 
-	return dr->data;
-}
+	वापस dr->data;
+पूर्ण
 EXPORT_SYMBOL_GPL(devres_get);
 
 /**
- * devres_remove - Find a device resource and remove it
+ * devres_हटाओ - Find a device resource and हटाओ it
  * @dev: Device to find resource from
- * @release: Look for resources associated with this release function
+ * @release: Look क्रम resources associated with this release function
  * @match: Match function (optional)
- * @match_data: Data for the match function
+ * @match_data: Data क्रम the match function
  *
- * Find the latest devres of @dev associated with @release and for
- * which @match returns 1.  If @match is NULL, it's considered to
- * match all.  If found, the resource is removed atomically and
- * returned.
+ * Find the latest devres of @dev associated with @release and क्रम
+ * which @match वापसs 1.  If @match is शून्य, it's considered to
+ * match all.  If found, the resource is हटाओd atomically and
+ * वापसed.
  *
  * RETURNS:
- * Pointer to removed devres on success, NULL if not found.
+ * Poपूर्णांकer to हटाओd devres on success, शून्य अगर not found.
  */
-void * devres_remove(struct device *dev, dr_release_t release,
-		     dr_match_t match, void *match_data)
-{
-	struct devres *dr;
-	unsigned long flags;
+व्योम * devres_हटाओ(काष्ठा device *dev, dr_release_t release,
+		     dr_match_t match, व्योम *match_data)
+अणु
+	काष्ठा devres *dr;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->devres_lock, flags);
 	dr = find_dr(dev, release, match, match_data);
-	if (dr) {
+	अगर (dr) अणु
 		list_del_init(&dr->node.entry);
 		devres_log(dev, &dr->node, "REM");
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&dev->devres_lock, flags);
 
-	if (dr)
-		return dr->data;
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(devres_remove);
+	अगर (dr)
+		वापस dr->data;
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(devres_हटाओ);
 
 /**
  * devres_destroy - Find a device resource and destroy it
  * @dev: Device to find resource from
- * @release: Look for resources associated with this release function
+ * @release: Look क्रम resources associated with this release function
  * @match: Match function (optional)
- * @match_data: Data for the match function
+ * @match_data: Data क्रम the match function
  *
- * Find the latest devres of @dev associated with @release and for
- * which @match returns 1.  If @match is NULL, it's considered to
- * match all.  If found, the resource is removed atomically and freed.
+ * Find the latest devres of @dev associated with @release and क्रम
+ * which @match वापसs 1.  If @match is शून्य, it's considered to
+ * match all.  If found, the resource is हटाओd atomically and मुक्तd.
  *
- * Note that the release function for the resource will not be called,
- * only the devres-allocated data will be freed.  The caller becomes
- * responsible for freeing any other data.
+ * Note that the release function क्रम the resource will not be called,
+ * only the devres-allocated data will be मुक्तd.  The caller becomes
+ * responsible क्रम मुक्तing any other data.
  *
  * RETURNS:
- * 0 if devres is found and freed, -ENOENT if not found.
+ * 0 अगर devres is found and मुक्तd, -ENOENT अगर not found.
  */
-int devres_destroy(struct device *dev, dr_release_t release,
-		   dr_match_t match, void *match_data)
-{
-	void *res;
+पूर्णांक devres_destroy(काष्ठा device *dev, dr_release_t release,
+		   dr_match_t match, व्योम *match_data)
+अणु
+	व्योम *res;
 
-	res = devres_remove(dev, release, match, match_data);
-	if (unlikely(!res))
-		return -ENOENT;
+	res = devres_हटाओ(dev, release, match, match_data);
+	अगर (unlikely(!res))
+		वापस -ENOENT;
 
-	devres_free(res);
-	return 0;
-}
+	devres_मुक्त(res);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(devres_destroy);
 
 
 /**
  * devres_release - Find a device resource and destroy it, calling release
  * @dev: Device to find resource from
- * @release: Look for resources associated with this release function
+ * @release: Look क्रम resources associated with this release function
  * @match: Match function (optional)
- * @match_data: Data for the match function
+ * @match_data: Data क्रम the match function
  *
- * Find the latest devres of @dev associated with @release and for
- * which @match returns 1.  If @match is NULL, it's considered to
- * match all.  If found, the resource is removed atomically, the
- * release function called and the resource freed.
+ * Find the latest devres of @dev associated with @release and क्रम
+ * which @match वापसs 1.  If @match is शून्य, it's considered to
+ * match all.  If found, the resource is हटाओd atomically, the
+ * release function called and the resource मुक्तd.
  *
  * RETURNS:
- * 0 if devres is found and freed, -ENOENT if not found.
+ * 0 अगर devres is found and मुक्तd, -ENOENT अगर not found.
  */
-int devres_release(struct device *dev, dr_release_t release,
-		   dr_match_t match, void *match_data)
-{
-	void *res;
+पूर्णांक devres_release(काष्ठा device *dev, dr_release_t release,
+		   dr_match_t match, व्योम *match_data)
+अणु
+	व्योम *res;
 
-	res = devres_remove(dev, release, match, match_data);
-	if (unlikely(!res))
-		return -ENOENT;
+	res = devres_हटाओ(dev, release, match, match_data);
+	अगर (unlikely(!res))
+		वापस -ENOENT;
 
 	(*release)(dev, res);
-	devres_free(res);
-	return 0;
-}
+	devres_मुक्त(res);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(devres_release);
 
-static int remove_nodes(struct device *dev,
-			struct list_head *first, struct list_head *end,
-			struct list_head *todo)
-{
-	int cnt = 0, nr_groups = 0;
-	struct list_head *cur;
+अटल पूर्णांक हटाओ_nodes(काष्ठा device *dev,
+			काष्ठा list_head *first, काष्ठा list_head *end,
+			काष्ठा list_head *toकरो)
+अणु
+	पूर्णांक cnt = 0, nr_groups = 0;
+	काष्ठा list_head *cur;
 
-	/* First pass - move normal devres entries to @todo and clear
+	/* First pass - move normal devres entries to @toकरो and clear
 	 * devres_group colors.
 	 */
 	cur = first;
-	while (cur != end) {
-		struct devres_node *node;
-		struct devres_group *grp;
+	जबतक (cur != end) अणु
+		काष्ठा devres_node *node;
+		काष्ठा devres_group *grp;
 
-		node = list_entry(cur, struct devres_node, entry);
+		node = list_entry(cur, काष्ठा devres_node, entry);
 		cur = cur->next;
 
 		grp = node_to_group(node);
-		if (grp) {
+		अगर (grp) अणु
 			/* clear color of group markers in the first pass */
 			grp->color = 0;
 			nr_groups++;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* regular devres entry */
-			if (&node->entry == first)
+			अगर (&node->entry == first)
 				first = first->next;
-			list_move_tail(&node->entry, todo);
+			list_move_tail(&node->entry, toकरो);
 			cnt++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!nr_groups)
-		return cnt;
+	अगर (!nr_groups)
+		वापस cnt;
 
-	/* Second pass - Scan groups and color them.  A group gets
-	 * color value of two iff the group is wholly contained in
-	 * [cur, end).  That is, for a closed group, both opening and
-	 * closing markers should be in the range, while just the
-	 * opening marker is enough for an open group.
+	/* Second pass - Scan groups and color them.  A group माला_लो
+	 * color value of two अगरf the group is wholly contained in
+	 * [cur, end).  That is, क्रम a बंदd group, both खोलोing and
+	 * closing markers should be in the range, जबतक just the
+	 * खोलोing marker is enough क्रम an खोलो group.
 	 */
 	cur = first;
-	while (cur != end) {
-		struct devres_node *node;
-		struct devres_group *grp;
+	जबतक (cur != end) अणु
+		काष्ठा devres_node *node;
+		काष्ठा devres_group *grp;
 
-		node = list_entry(cur, struct devres_node, entry);
+		node = list_entry(cur, काष्ठा devres_node, entry);
 		cur = cur->next;
 
 		grp = node_to_group(node);
 		BUG_ON(!grp || list_empty(&grp->node[0].entry));
 
 		grp->color++;
-		if (list_empty(&grp->node[1].entry))
+		अगर (list_empty(&grp->node[1].entry))
 			grp->color++;
 
 		BUG_ON(grp->color <= 0 || grp->color > 2);
-		if (grp->color == 2) {
-			/* No need to update cur or end.  The removed
-			 * nodes are always before both.
+		अगर (grp->color == 2) अणु
+			/* No need to update cur or end.  The हटाओd
+			 * nodes are always beक्रमe both.
 			 */
-			list_move_tail(&grp->node[0].entry, todo);
+			list_move_tail(&grp->node[0].entry, toकरो);
 			list_del_init(&grp->node[1].entry);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static int release_nodes(struct device *dev, struct list_head *first,
-			 struct list_head *end, unsigned long flags)
+अटल पूर्णांक release_nodes(काष्ठा device *dev, काष्ठा list_head *first,
+			 काष्ठा list_head *end, अचिन्हित दीर्घ flags)
 	__releases(&dev->devres_lock)
-{
-	LIST_HEAD(todo);
-	int cnt;
-	struct devres *dr, *tmp;
+अणु
+	LIST_HEAD(toकरो);
+	पूर्णांक cnt;
+	काष्ठा devres *dr, *पंचांगp;
 
-	cnt = remove_nodes(dev, first, end, &todo);
+	cnt = हटाओ_nodes(dev, first, end, &toकरो);
 
 	spin_unlock_irqrestore(&dev->devres_lock, flags);
 
 	/* Release.  Note that both devres and devres_group are
 	 * handled as devres in the following loop.  This is safe.
 	 */
-	list_for_each_entry_safe_reverse(dr, tmp, &todo, node.entry) {
+	list_क्रम_each_entry_safe_reverse(dr, पंचांगp, &toकरो, node.entry) अणु
 		devres_log(dev, &dr->node, "REL");
 		dr->node.release(dev, dr->data);
-		kfree(dr);
-	}
+		kमुक्त(dr);
+	पूर्ण
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
 /**
  * devres_release_all - Release all managed resources
- * @dev: Device to release resources for
+ * @dev: Device to release resources क्रम
  *
  * Release all resources associated with @dev.  This function is
  * called on driver detach.
  */
-int devres_release_all(struct device *dev)
-{
-	unsigned long flags;
+पूर्णांक devres_release_all(काष्ठा device *dev)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	/* Looks like an uninitialized device structure */
-	if (WARN_ON(dev->devres_head.next == NULL))
-		return -ENODEV;
+	/* Looks like an uninitialized device काष्ठाure */
+	अगर (WARN_ON(dev->devres_head.next == शून्य))
+		वापस -ENODEV;
 	spin_lock_irqsave(&dev->devres_lock, flags);
-	return release_nodes(dev, dev->devres_head.next, &dev->devres_head,
+	वापस release_nodes(dev, dev->devres_head.next, &dev->devres_head,
 			     flags);
-}
+पूर्ण
 
 /**
- * devres_open_group - Open a new devres group
- * @dev: Device to open devres group for
+ * devres_खोलो_group - Open a new devres group
+ * @dev: Device to खोलो devres group क्रम
  * @id: Separator ID
  * @gfp: Allocation flags
  *
- * Open a new devres group for @dev with @id.  For @id, using a
- * pointer to an object which won't be used for another group is
- * recommended.  If @id is NULL, address-wise unique ID is created.
+ * Open a new devres group क्रम @dev with @id.  For @id, using a
+ * poपूर्णांकer to an object which won't be used क्रम another group is
+ * recommended.  If @id is शून्य, address-wise unique ID is created.
  *
  * RETURNS:
- * ID of the new group, NULL on failure.
+ * ID of the new group, शून्य on failure.
  */
-void * devres_open_group(struct device *dev, void *id, gfp_t gfp)
-{
-	struct devres_group *grp;
-	unsigned long flags;
+व्योम * devres_खोलो_group(काष्ठा device *dev, व्योम *id, gfp_t gfp)
+अणु
+	काष्ठा devres_group *grp;
+	अचिन्हित दीर्घ flags;
 
-	grp = kmalloc(sizeof(*grp), gfp);
-	if (unlikely(!grp))
-		return NULL;
+	grp = kदो_स्मृति(माप(*grp), gfp);
+	अगर (unlikely(!grp))
+		वापस शून्य;
 
-	grp->node[0].release = &group_open_release;
-	grp->node[1].release = &group_close_release;
+	grp->node[0].release = &group_खोलो_release;
+	grp->node[1].release = &group_बंद_release;
 	INIT_LIST_HEAD(&grp->node[0].entry);
 	INIT_LIST_HEAD(&grp->node[1].entry);
 	set_node_dbginfo(&grp->node[0], "grp<", 0);
 	set_node_dbginfo(&grp->node[1], "grp>", 0);
 	grp->id = grp;
-	if (id)
+	अगर (id)
 		grp->id = id;
 
 	spin_lock_irqsave(&dev->devres_lock, flags);
 	add_dr(dev, &grp->node[0]);
 	spin_unlock_irqrestore(&dev->devres_lock, flags);
-	return grp->id;
-}
-EXPORT_SYMBOL_GPL(devres_open_group);
+	वापस grp->id;
+पूर्ण
+EXPORT_SYMBOL_GPL(devres_खोलो_group);
 
-/* Find devres group with ID @id.  If @id is NULL, look for the latest. */
-static struct devres_group * find_group(struct device *dev, void *id)
-{
-	struct devres_node *node;
+/* Find devres group with ID @id.  If @id is शून्य, look क्रम the latest. */
+अटल काष्ठा devres_group * find_group(काष्ठा device *dev, व्योम *id)
+अणु
+	काष्ठा devres_node *node;
 
-	list_for_each_entry_reverse(node, &dev->devres_head, entry) {
-		struct devres_group *grp;
+	list_क्रम_each_entry_reverse(node, &dev->devres_head, entry) अणु
+		काष्ठा devres_group *grp;
 
-		if (node->release != &group_open_release)
-			continue;
+		अगर (node->release != &group_खोलो_release)
+			जारी;
 
-		grp = container_of(node, struct devres_group, node[0]);
+		grp = container_of(node, काष्ठा devres_group, node[0]);
 
-		if (id) {
-			if (grp->id == id)
-				return grp;
-		} else if (list_empty(&grp->node[1].entry))
-			return grp;
-	}
+		अगर (id) अणु
+			अगर (grp->id == id)
+				वापस grp;
+		पूर्ण अन्यथा अगर (list_empty(&grp->node[1].entry))
+			वापस grp;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * devres_close_group - Close a devres group
- * @dev: Device to close devres group for
- * @id: ID of target group, can be NULL
+ * devres_बंद_group - Close a devres group
+ * @dev: Device to बंद devres group क्रम
+ * @id: ID of target group, can be शून्य
  *
- * Close the group identified by @id.  If @id is NULL, the latest open
+ * Close the group identअगरied by @id.  If @id is शून्य, the latest खोलो
  * group is selected.
  */
-void devres_close_group(struct device *dev, void *id)
-{
-	struct devres_group *grp;
-	unsigned long flags;
+व्योम devres_बंद_group(काष्ठा device *dev, व्योम *id)
+अणु
+	काष्ठा devres_group *grp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->devres_lock, flags);
 
 	grp = find_group(dev, id);
-	if (grp)
+	अगर (grp)
 		add_dr(dev, &grp->node[1]);
-	else
+	अन्यथा
 		WARN_ON(1);
 
 	spin_unlock_irqrestore(&dev->devres_lock, flags);
-}
-EXPORT_SYMBOL_GPL(devres_close_group);
+पूर्ण
+EXPORT_SYMBOL_GPL(devres_बंद_group);
 
 /**
- * devres_remove_group - Remove a devres group
- * @dev: Device to remove group for
- * @id: ID of target group, can be NULL
+ * devres_हटाओ_group - Remove a devres group
+ * @dev: Device to हटाओ group क्रम
+ * @id: ID of target group, can be शून्य
  *
- * Remove the group identified by @id.  If @id is NULL, the latest
- * open group is selected.  Note that removing a group doesn't affect
+ * Remove the group identअगरied by @id.  If @id is शून्य, the latest
+ * खोलो group is selected.  Note that removing a group करोesn't affect
  * any other resources.
  */
-void devres_remove_group(struct device *dev, void *id)
-{
-	struct devres_group *grp;
-	unsigned long flags;
+व्योम devres_हटाओ_group(काष्ठा device *dev, व्योम *id)
+अणु
+	काष्ठा devres_group *grp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->devres_lock, flags);
 
 	grp = find_group(dev, id);
-	if (grp) {
+	अगर (grp) अणु
 		list_del_init(&grp->node[0].entry);
 		list_del_init(&grp->node[1].entry);
 		devres_log(dev, &grp->node[0], "REM");
-	} else
+	पूर्ण अन्यथा
 		WARN_ON(1);
 
 	spin_unlock_irqrestore(&dev->devres_lock, flags);
 
-	kfree(grp);
-}
-EXPORT_SYMBOL_GPL(devres_remove_group);
+	kमुक्त(grp);
+पूर्ण
+EXPORT_SYMBOL_GPL(devres_हटाओ_group);
 
 /**
  * devres_release_group - Release resources in a devres group
- * @dev: Device to release group for
- * @id: ID of target group, can be NULL
+ * @dev: Device to release group क्रम
+ * @id: ID of target group, can be शून्य
  *
- * Release all resources in the group identified by @id.  If @id is
- * NULL, the latest open group is selected.  The selected group and
- * groups properly nested inside the selected group are removed.
+ * Release all resources in the group identअगरied by @id.  If @id is
+ * शून्य, the latest खोलो group is selected.  The selected group and
+ * groups properly nested inside the selected group are हटाओd.
  *
  * RETURNS:
  * The number of released non-group resources.
  */
-int devres_release_group(struct device *dev, void *id)
-{
-	struct devres_group *grp;
-	unsigned long flags;
-	int cnt = 0;
+पूर्णांक devres_release_group(काष्ठा device *dev, व्योम *id)
+अणु
+	काष्ठा devres_group *grp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक cnt = 0;
 
 	spin_lock_irqsave(&dev->devres_lock, flags);
 
 	grp = find_group(dev, id);
-	if (grp) {
-		struct list_head *first = &grp->node[0].entry;
-		struct list_head *end = &dev->devres_head;
+	अगर (grp) अणु
+		काष्ठा list_head *first = &grp->node[0].entry;
+		काष्ठा list_head *end = &dev->devres_head;
 
-		if (!list_empty(&grp->node[1].entry))
+		अगर (!list_empty(&grp->node[1].entry))
 			end = grp->node[1].entry.next;
 
 		cnt = release_nodes(dev, first, end, flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(1);
 		spin_unlock_irqrestore(&dev->devres_lock, flags);
-	}
+	पूर्ण
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 EXPORT_SYMBOL_GPL(devres_release_group);
 
 /*
  * Custom devres actions allow inserting a simple function call
- * into the teadown sequence.
+ * पूर्णांकo the teaकरोwn sequence.
  */
 
-struct action_devres {
-	void *data;
-	void (*action)(void *);
-};
+काष्ठा action_devres अणु
+	व्योम *data;
+	व्योम (*action)(व्योम *);
+पूर्ण;
 
-static int devm_action_match(struct device *dev, void *res, void *p)
-{
-	struct action_devres *devres = res;
-	struct action_devres *target = p;
+अटल पूर्णांक devm_action_match(काष्ठा device *dev, व्योम *res, व्योम *p)
+अणु
+	काष्ठा action_devres *devres = res;
+	काष्ठा action_devres *target = p;
 
-	return devres->action == target->action &&
+	वापस devres->action == target->action &&
 	       devres->data == target->data;
-}
+पूर्ण
 
-static void devm_action_release(struct device *dev, void *res)
-{
-	struct action_devres *devres = res;
+अटल व्योम devm_action_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा action_devres *devres = res;
 
 	devres->action(devres->data);
-}
+पूर्ण
 
 /**
  * devm_add_action() - add a custom action to list of managed resources
  * @dev: Device that owns the action
  * @action: Function that should be called
- * @data: Pointer to data passed to @action implementation
+ * @data: Poपूर्णांकer to data passed to @action implementation
  *
  * This adds a custom action to the list of managed resources so that
- * it gets executed as part of standard resource unwinding.
+ * it माला_लो executed as part of standard resource unwinding.
  */
-int devm_add_action(struct device *dev, void (*action)(void *), void *data)
-{
-	struct action_devres *devres;
+पूर्णांक devm_add_action(काष्ठा device *dev, व्योम (*action)(व्योम *), व्योम *data)
+अणु
+	काष्ठा action_devres *devres;
 
 	devres = devres_alloc(devm_action_release,
-			      sizeof(struct action_devres), GFP_KERNEL);
-	if (!devres)
-		return -ENOMEM;
+			      माप(काष्ठा action_devres), GFP_KERNEL);
+	अगर (!devres)
+		वापस -ENOMEM;
 
 	devres->data = data;
 	devres->action = action;
 
 	devres_add(dev, devres);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_add_action);
 
 /**
- * devm_remove_action() - removes previously added custom action
+ * devm_हटाओ_action() - हटाओs previously added custom action
  * @dev: Device that owns the action
  * @action: Function implementing the action
- * @data: Pointer to data passed to @action implementation
+ * @data: Poपूर्णांकer to data passed to @action implementation
  *
  * Removes instance of @action previously added by devm_add_action().
  * Both action and data should match one of the existing entries.
  */
-void devm_remove_action(struct device *dev, void (*action)(void *), void *data)
-{
-	struct action_devres devres = {
+व्योम devm_हटाओ_action(काष्ठा device *dev, व्योम (*action)(व्योम *), व्योम *data)
+अणु
+	काष्ठा action_devres devres = अणु
 		.data = data,
 		.action = action,
-	};
+	पूर्ण;
 
 	WARN_ON(devres_destroy(dev, devm_action_release, devm_action_match,
 			       &devres));
-}
-EXPORT_SYMBOL_GPL(devm_remove_action);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_हटाओ_action);
 
 /**
  * devm_release_action() - release previously added custom action
  * @dev: Device that owns the action
  * @action: Function implementing the action
- * @data: Pointer to data passed to @action implementation
+ * @data: Poपूर्णांकer to data passed to @action implementation
  *
- * Releases and removes instance of @action previously added by
+ * Releases and हटाओs instance of @action previously added by
  * devm_add_action().  Both action and data should match one of the
  * existing entries.
  */
-void devm_release_action(struct device *dev, void (*action)(void *), void *data)
-{
-	struct action_devres devres = {
+व्योम devm_release_action(काष्ठा device *dev, व्योम (*action)(व्योम *), व्योम *data)
+अणु
+	काष्ठा action_devres devres = अणु
 		.data = data,
 		.action = action,
-	};
+	पूर्ण;
 
 	WARN_ON(devres_release(dev, devm_action_release, devm_action_match,
 			       &devres));
 
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_release_action);
 
 /*
- * Managed kmalloc/kfree
+ * Managed kदो_स्मृति/kमुक्त
  */
-static void devm_kmalloc_release(struct device *dev, void *res)
-{
+अटल व्योम devm_kदो_स्मृति_release(काष्ठा device *dev, व्योम *res)
+अणु
 	/* noop */
-}
+पूर्ण
 
-static int devm_kmalloc_match(struct device *dev, void *res, void *data)
-{
-	return res == data;
-}
+अटल पूर्णांक devm_kदो_स्मृति_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	वापस res == data;
+पूर्ण
 
 /**
- * devm_kmalloc - Resource-managed kmalloc
- * @dev: Device to allocate memory for
+ * devm_kदो_स्मृति - Resource-managed kदो_स्मृति
+ * @dev: Device to allocate memory क्रम
  * @size: Allocation size
  * @gfp: Allocation gfp flags
  *
- * Managed kmalloc.  Memory allocated with this function is
- * automatically freed on driver detach.  Like all other devres
- * resources, guaranteed alignment is unsigned long long.
+ * Managed kदो_स्मृति.  Memory allocated with this function is
+ * स्वतःmatically मुक्तd on driver detach.  Like all other devres
+ * resources, guaranteed alignment is अचिन्हित दीर्घ दीर्घ.
  *
  * RETURNS:
- * Pointer to allocated memory on success, NULL on failure.
+ * Poपूर्णांकer to allocated memory on success, शून्य on failure.
  */
-void *devm_kmalloc(struct device *dev, size_t size, gfp_t gfp)
-{
-	struct devres *dr;
+व्योम *devm_kदो_स्मृति(काष्ठा device *dev, माप_प्रकार size, gfp_t gfp)
+अणु
+	काष्ठा devres *dr;
 
-	if (unlikely(!size))
-		return ZERO_SIZE_PTR;
+	अगर (unlikely(!size))
+		वापस ZERO_SIZE_PTR;
 
-	/* use raw alloc_dr for kmalloc caller tracing */
-	dr = alloc_dr(devm_kmalloc_release, size, gfp, dev_to_node(dev));
-	if (unlikely(!dr))
-		return NULL;
+	/* use raw alloc_dr क्रम kदो_स्मृति caller tracing */
+	dr = alloc_dr(devm_kदो_स्मृति_release, size, gfp, dev_to_node(dev));
+	अगर (unlikely(!dr))
+		वापस शून्य;
 
 	/*
-	 * This is named devm_kzalloc_release for historical reasons
-	 * The initial implementation did not support kmalloc, only kzalloc
+	 * This is named devm_kzalloc_release क्रम historical reasons
+	 * The initial implementation did not support kदो_स्मृति, only kzalloc
 	 */
 	set_node_dbginfo(&dr->node, "devm_kzalloc_release", size);
 	devres_add(dev, dr->data);
-	return dr->data;
-}
-EXPORT_SYMBOL_GPL(devm_kmalloc);
+	वापस dr->data;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_kदो_स्मृति);
 
 /**
- * devm_krealloc - Resource-managed krealloc()
- * @dev: Device to re-allocate memory for
- * @ptr: Pointer to the memory chunk to re-allocate
+ * devm_kपुनः_स्मृति - Resource-managed kपुनः_स्मृति()
+ * @dev: Device to re-allocate memory क्रम
+ * @ptr: Poपूर्णांकer to the memory chunk to re-allocate
  * @new_size: New allocation size
  * @gfp: Allocation gfp flags
  *
- * Managed krealloc(). Resizes the memory chunk allocated with devm_kmalloc().
- * Behaves similarly to regular krealloc(): if @ptr is NULL or ZERO_SIZE_PTR,
- * it's the equivalent of devm_kmalloc(). If new_size is zero, it frees the
- * previously allocated memory and returns ZERO_SIZE_PTR. This function doesn't
- * change the order in which the release callback for the re-alloc'ed devres
- * will be called (except when falling back to devm_kmalloc() or when freeing
+ * Managed kपुनः_स्मृति(). Resizes the memory chunk allocated with devm_kदो_स्मृति().
+ * Behaves similarly to regular kपुनः_स्मृति(): अगर @ptr is शून्य or ZERO_SIZE_PTR,
+ * it's the equivalent of devm_kदो_स्मृति(). If new_size is zero, it मुक्तs the
+ * previously allocated memory and वापसs ZERO_SIZE_PTR. This function करोesn't
+ * change the order in which the release callback क्रम the re-alloc'ed devres
+ * will be called (except when falling back to devm_kदो_स्मृति() or when मुक्तing
  * resources when new_size is zero). The contents of the memory are preserved
  * up to the lesser of new and old sizes.
  */
-void *devm_krealloc(struct device *dev, void *ptr, size_t new_size, gfp_t gfp)
-{
-	size_t total_new_size, total_old_size;
-	struct devres *old_dr, *new_dr;
-	unsigned long flags;
+व्योम *devm_kपुनः_स्मृति(काष्ठा device *dev, व्योम *ptr, माप_प्रकार new_size, gfp_t gfp)
+अणु
+	माप_प्रकार total_new_size, total_old_size;
+	काष्ठा devres *old_dr, *new_dr;
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!new_size)) {
-		devm_kfree(dev, ptr);
-		return ZERO_SIZE_PTR;
-	}
+	अगर (unlikely(!new_size)) अणु
+		devm_kमुक्त(dev, ptr);
+		वापस ZERO_SIZE_PTR;
+	पूर्ण
 
-	if (unlikely(ZERO_OR_NULL_PTR(ptr)))
-		return devm_kmalloc(dev, new_size, gfp);
+	अगर (unlikely(ZERO_OR_शून्य_PTR(ptr)))
+		वापस devm_kदो_स्मृति(dev, new_size, gfp);
 
-	if (WARN_ON(is_kernel_rodata((unsigned long)ptr)))
+	अगर (WARN_ON(is_kernel_rodata((अचिन्हित दीर्घ)ptr)))
 		/*
-		 * We cannot reliably realloc a const string returned by
-		 * devm_kstrdup_const().
+		 * We cannot reliably पुनः_स्मृति a स्थिर string वापसed by
+		 * devm_kstrdup_स्थिर().
 		 */
-		return NULL;
+		वापस शून्य;
 
-	if (!check_dr_size(new_size, &total_new_size))
-		return NULL;
+	अगर (!check_dr_size(new_size, &total_new_size))
+		वापस शून्य;
 
-	total_old_size = ksize(container_of(ptr, struct devres, data));
-	if (total_old_size == 0) {
+	total_old_size = ksize(container_of(ptr, काष्ठा devres, data));
+	अगर (total_old_size == 0) अणु
 		WARN(1, "Pointer doesn't point to dynamically allocated memory.");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
 	 * If new size is smaller or equal to the actual number of bytes
-	 * allocated previously - just return the same pointer.
+	 * allocated previously - just वापस the same poपूर्णांकer.
 	 */
-	if (total_new_size <= total_old_size)
-		return ptr;
+	अगर (total_new_size <= total_old_size)
+		वापस ptr;
 
 	/*
-	 * Otherwise: allocate new, larger chunk. We need to allocate before
+	 * Otherwise: allocate new, larger chunk. We need to allocate beक्रमe
 	 * taking the lock as most probably the caller uses GFP_KERNEL.
 	 */
-	new_dr = alloc_dr(devm_kmalloc_release,
+	new_dr = alloc_dr(devm_kदो_स्मृति_release,
 			  total_new_size, gfp, dev_to_node(dev));
-	if (!new_dr)
-		return NULL;
+	अगर (!new_dr)
+		वापस शून्य;
 
 	/*
 	 * The spinlock protects the linked list against concurrent
-	 * modifications but not the resource itself.
+	 * modअगरications but not the resource itself.
 	 */
 	spin_lock_irqsave(&dev->devres_lock, flags);
 
-	old_dr = find_dr(dev, devm_kmalloc_release, devm_kmalloc_match, ptr);
-	if (!old_dr) {
+	old_dr = find_dr(dev, devm_kदो_स्मृति_release, devm_kदो_स्मृति_match, ptr);
+	अगर (!old_dr) अणु
 		spin_unlock_irqrestore(&dev->devres_lock, flags);
-		kfree(new_dr);
+		kमुक्त(new_dr);
 		WARN(1, "Memory chunk not managed or managed by a different device.");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	replace_dr(dev, &old_dr->node, &new_dr->node);
 
@@ -927,307 +928,307 @@ void *devm_krealloc(struct device *dev, void *ptr, size_t new_size, gfp_t gfp)
 
 	/*
 	 * We can copy the memory contents after releasing the lock as we're
-	 * no longer modyfing the list links.
+	 * no दीर्घer modyfing the list links.
 	 */
-	memcpy(new_dr->data, old_dr->data,
-	       total_old_size - offsetof(struct devres, data));
+	स_नकल(new_dr->data, old_dr->data,
+	       total_old_size - दुरत्व(काष्ठा devres, data));
 	/*
-	 * Same for releasing the old devres - it's now been removed from the
-	 * list. This is also the reason why we must not use devm_kfree() - the
-	 * links are no longer valid.
+	 * Same क्रम releasing the old devres - it's now been हटाओd from the
+	 * list. This is also the reason why we must not use devm_kमुक्त() - the
+	 * links are no दीर्घer valid.
 	 */
-	kfree(old_dr);
+	kमुक्त(old_dr);
 
-	return new_dr->data;
-}
-EXPORT_SYMBOL_GPL(devm_krealloc);
+	वापस new_dr->data;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_kपुनः_स्मृति);
 
 /**
  * devm_kstrdup - Allocate resource managed space and
- *                copy an existing string into that.
- * @dev: Device to allocate memory for
+ *                copy an existing string पूर्णांकo that.
+ * @dev: Device to allocate memory क्रम
  * @s: the string to duplicate
- * @gfp: the GFP mask used in the devm_kmalloc() call when
+ * @gfp: the GFP mask used in the devm_kदो_स्मृति() call when
  *       allocating memory
  * RETURNS:
- * Pointer to allocated string on success, NULL on failure.
+ * Poपूर्णांकer to allocated string on success, शून्य on failure.
  */
-char *devm_kstrdup(struct device *dev, const char *s, gfp_t gfp)
-{
-	size_t size;
-	char *buf;
+अक्षर *devm_kstrdup(काष्ठा device *dev, स्थिर अक्षर *s, gfp_t gfp)
+अणु
+	माप_प्रकार size;
+	अक्षर *buf;
 
-	if (!s)
-		return NULL;
+	अगर (!s)
+		वापस शून्य;
 
-	size = strlen(s) + 1;
-	buf = devm_kmalloc(dev, size, gfp);
-	if (buf)
-		memcpy(buf, s, size);
-	return buf;
-}
+	size = म_माप(s) + 1;
+	buf = devm_kदो_स्मृति(dev, size, gfp);
+	अगर (buf)
+		स_नकल(buf, s, size);
+	वापस buf;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_kstrdup);
 
 /**
- * devm_kstrdup_const - resource managed conditional string duplication
- * @dev: device for which to duplicate the string
+ * devm_kstrdup_स्थिर - resource managed conditional string duplication
+ * @dev: device क्रम which to duplicate the string
  * @s: the string to duplicate
- * @gfp: the GFP mask used in the kmalloc() call when allocating memory
+ * @gfp: the GFP mask used in the kदो_स्मृति() call when allocating memory
  *
- * Strings allocated by devm_kstrdup_const will be automatically freed when
+ * Strings allocated by devm_kstrdup_स्थिर will be स्वतःmatically मुक्तd when
  * the associated device is detached.
  *
  * RETURNS:
- * Source string if it is in .rodata section otherwise it falls back to
+ * Source string अगर it is in .rodata section otherwise it falls back to
  * devm_kstrdup.
  */
-const char *devm_kstrdup_const(struct device *dev, const char *s, gfp_t gfp)
-{
-	if (is_kernel_rodata((unsigned long)s))
-		return s;
+स्थिर अक्षर *devm_kstrdup_स्थिर(काष्ठा device *dev, स्थिर अक्षर *s, gfp_t gfp)
+अणु
+	अगर (is_kernel_rodata((अचिन्हित दीर्घ)s))
+		वापस s;
 
-	return devm_kstrdup(dev, s, gfp);
-}
-EXPORT_SYMBOL_GPL(devm_kstrdup_const);
+	वापस devm_kstrdup(dev, s, gfp);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_kstrdup_स्थिर);
 
 /**
- * devm_kvasprintf - Allocate resource managed space and format a string
- *		     into that.
- * @dev: Device to allocate memory for
- * @gfp: the GFP mask used in the devm_kmalloc() call when
+ * devm_kvaप्र_लिखो - Allocate resource managed space and क्रमmat a string
+ *		     पूर्णांकo that.
+ * @dev: Device to allocate memory क्रम
+ * @gfp: the GFP mask used in the devm_kदो_स्मृति() call when
  *       allocating memory
- * @fmt: The printf()-style format string
- * @ap: Arguments for the format string
+ * @fmt: The म_लिखो()-style क्रमmat string
+ * @ap: Arguments क्रम the क्रमmat string
  * RETURNS:
- * Pointer to allocated string on success, NULL on failure.
+ * Poपूर्णांकer to allocated string on success, शून्य on failure.
  */
-char *devm_kvasprintf(struct device *dev, gfp_t gfp, const char *fmt,
-		      va_list ap)
-{
-	unsigned int len;
-	char *p;
-	va_list aq;
+अक्षर *devm_kvaप्र_लिखो(काष्ठा device *dev, gfp_t gfp, स्थिर अक्षर *fmt,
+		      बहु_सूची ap)
+अणु
+	अचिन्हित पूर्णांक len;
+	अक्षर *p;
+	बहु_सूची aq;
 
 	va_copy(aq, ap);
-	len = vsnprintf(NULL, 0, fmt, aq);
-	va_end(aq);
+	len = vsnम_लिखो(शून्य, 0, fmt, aq);
+	बहु_पूर्ण(aq);
 
-	p = devm_kmalloc(dev, len+1, gfp);
-	if (!p)
-		return NULL;
+	p = devm_kदो_स्मृति(dev, len+1, gfp);
+	अगर (!p)
+		वापस शून्य;
 
-	vsnprintf(p, len+1, fmt, ap);
+	vsnम_लिखो(p, len+1, fmt, ap);
 
-	return p;
-}
-EXPORT_SYMBOL(devm_kvasprintf);
+	वापस p;
+पूर्ण
+EXPORT_SYMBOL(devm_kvaप्र_लिखो);
 
 /**
- * devm_kasprintf - Allocate resource managed space and format a string
- *		    into that.
- * @dev: Device to allocate memory for
- * @gfp: the GFP mask used in the devm_kmalloc() call when
+ * devm_kaप्र_लिखो - Allocate resource managed space and क्रमmat a string
+ *		    पूर्णांकo that.
+ * @dev: Device to allocate memory क्रम
+ * @gfp: the GFP mask used in the devm_kदो_स्मृति() call when
  *       allocating memory
- * @fmt: The printf()-style format string
- * @...: Arguments for the format string
+ * @fmt: The म_लिखो()-style क्रमmat string
+ * @...: Arguments क्रम the क्रमmat string
  * RETURNS:
- * Pointer to allocated string on success, NULL on failure.
+ * Poपूर्णांकer to allocated string on success, शून्य on failure.
  */
-char *devm_kasprintf(struct device *dev, gfp_t gfp, const char *fmt, ...)
-{
-	va_list ap;
-	char *p;
+अक्षर *devm_kaप्र_लिखो(काष्ठा device *dev, gfp_t gfp, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
+	अक्षर *p;
 
-	va_start(ap, fmt);
-	p = devm_kvasprintf(dev, gfp, fmt, ap);
-	va_end(ap);
+	बहु_शुरू(ap, fmt);
+	p = devm_kvaप्र_लिखो(dev, gfp, fmt, ap);
+	बहु_पूर्ण(ap);
 
-	return p;
-}
-EXPORT_SYMBOL_GPL(devm_kasprintf);
+	वापस p;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_kaप्र_लिखो);
 
 /**
- * devm_kfree - Resource-managed kfree
- * @dev: Device this memory belongs to
- * @p: Memory to free
+ * devm_kमुक्त - Resource-managed kमुक्त
+ * @dev: Device this memory beदीर्घs to
+ * @p: Memory to मुक्त
  *
- * Free memory allocated with devm_kmalloc().
+ * Free memory allocated with devm_kदो_स्मृति().
  */
-void devm_kfree(struct device *dev, const void *p)
-{
-	int rc;
+व्योम devm_kमुक्त(काष्ठा device *dev, स्थिर व्योम *p)
+अणु
+	पूर्णांक rc;
 
 	/*
-	 * Special cases: pointer to a string in .rodata returned by
-	 * devm_kstrdup_const() or NULL/ZERO ptr.
+	 * Special हालs: poपूर्णांकer to a string in .rodata वापसed by
+	 * devm_kstrdup_स्थिर() or शून्य/ZERO ptr.
 	 */
-	if (unlikely(is_kernel_rodata((unsigned long)p) || ZERO_OR_NULL_PTR(p)))
-		return;
+	अगर (unlikely(is_kernel_rodata((अचिन्हित दीर्घ)p) || ZERO_OR_शून्य_PTR(p)))
+		वापस;
 
-	rc = devres_destroy(dev, devm_kmalloc_release,
-			    devm_kmalloc_match, (void *)p);
+	rc = devres_destroy(dev, devm_kदो_स्मृति_release,
+			    devm_kदो_स्मृति_match, (व्योम *)p);
 	WARN_ON(rc);
-}
-EXPORT_SYMBOL_GPL(devm_kfree);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_kमुक्त);
 
 /**
  * devm_kmemdup - Resource-managed kmemdup
- * @dev: Device this memory belongs to
+ * @dev: Device this memory beदीर्घs to
  * @src: Memory region to duplicate
  * @len: Memory region length
  * @gfp: GFP mask to use
  *
- * Duplicate region of a memory using resource managed kmalloc
+ * Duplicate region of a memory using resource managed kदो_स्मृति
  */
-void *devm_kmemdup(struct device *dev, const void *src, size_t len, gfp_t gfp)
-{
-	void *p;
+व्योम *devm_kmemdup(काष्ठा device *dev, स्थिर व्योम *src, माप_प्रकार len, gfp_t gfp)
+अणु
+	व्योम *p;
 
-	p = devm_kmalloc(dev, len, gfp);
-	if (p)
-		memcpy(p, src, len);
+	p = devm_kदो_स्मृति(dev, len, gfp);
+	अगर (p)
+		स_नकल(p, src, len);
 
-	return p;
-}
+	वापस p;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_kmemdup);
 
-struct pages_devres {
-	unsigned long addr;
-	unsigned int order;
-};
+काष्ठा pages_devres अणु
+	अचिन्हित दीर्घ addr;
+	अचिन्हित पूर्णांक order;
+पूर्ण;
 
-static int devm_pages_match(struct device *dev, void *res, void *p)
-{
-	struct pages_devres *devres = res;
-	struct pages_devres *target = p;
+अटल पूर्णांक devm_pages_match(काष्ठा device *dev, व्योम *res, व्योम *p)
+अणु
+	काष्ठा pages_devres *devres = res;
+	काष्ठा pages_devres *target = p;
 
-	return devres->addr == target->addr;
-}
+	वापस devres->addr == target->addr;
+पूर्ण
 
-static void devm_pages_release(struct device *dev, void *res)
-{
-	struct pages_devres *devres = res;
+अटल व्योम devm_pages_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा pages_devres *devres = res;
 
-	free_pages(devres->addr, devres->order);
-}
+	मुक्त_pages(devres->addr, devres->order);
+पूर्ण
 
 /**
- * devm_get_free_pages - Resource-managed __get_free_pages
- * @dev: Device to allocate memory for
+ * devm_get_मुक्त_pages - Resource-managed __get_मुक्त_pages
+ * @dev: Device to allocate memory क्रम
  * @gfp_mask: Allocation gfp flags
  * @order: Allocation size is (1 << order) pages
  *
- * Managed get_free_pages.  Memory allocated with this function is
- * automatically freed on driver detach.
+ * Managed get_मुक्त_pages.  Memory allocated with this function is
+ * स्वतःmatically मुक्तd on driver detach.
  *
  * RETURNS:
  * Address of allocated memory on success, 0 on failure.
  */
 
-unsigned long devm_get_free_pages(struct device *dev,
-				  gfp_t gfp_mask, unsigned int order)
-{
-	struct pages_devres *devres;
-	unsigned long addr;
+अचिन्हित दीर्घ devm_get_मुक्त_pages(काष्ठा device *dev,
+				  gfp_t gfp_mask, अचिन्हित पूर्णांक order)
+अणु
+	काष्ठा pages_devres *devres;
+	अचिन्हित दीर्घ addr;
 
-	addr = __get_free_pages(gfp_mask, order);
+	addr = __get_मुक्त_pages(gfp_mask, order);
 
-	if (unlikely(!addr))
-		return 0;
+	अगर (unlikely(!addr))
+		वापस 0;
 
 	devres = devres_alloc(devm_pages_release,
-			      sizeof(struct pages_devres), GFP_KERNEL);
-	if (unlikely(!devres)) {
-		free_pages(addr, order);
-		return 0;
-	}
+			      माप(काष्ठा pages_devres), GFP_KERNEL);
+	अगर (unlikely(!devres)) अणु
+		मुक्त_pages(addr, order);
+		वापस 0;
+	पूर्ण
 
 	devres->addr = addr;
 	devres->order = order;
 
 	devres_add(dev, devres);
-	return addr;
-}
-EXPORT_SYMBOL_GPL(devm_get_free_pages);
+	वापस addr;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_get_मुक्त_pages);
 
 /**
- * devm_free_pages - Resource-managed free_pages
- * @dev: Device this memory belongs to
- * @addr: Memory to free
+ * devm_मुक्त_pages - Resource-managed मुक्त_pages
+ * @dev: Device this memory beदीर्घs to
+ * @addr: Memory to मुक्त
  *
- * Free memory allocated with devm_get_free_pages(). Unlike free_pages,
+ * Free memory allocated with devm_get_मुक्त_pages(). Unlike मुक्त_pages,
  * there is no need to supply the @order.
  */
-void devm_free_pages(struct device *dev, unsigned long addr)
-{
-	struct pages_devres devres = { .addr = addr };
+व्योम devm_मुक्त_pages(काष्ठा device *dev, अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा pages_devres devres = अणु .addr = addr पूर्ण;
 
 	WARN_ON(devres_release(dev, devm_pages_release, devm_pages_match,
 			       &devres));
-}
-EXPORT_SYMBOL_GPL(devm_free_pages);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_मुक्त_pages);
 
-static void devm_percpu_release(struct device *dev, void *pdata)
-{
-	void __percpu *p;
+अटल व्योम devm_percpu_release(काष्ठा device *dev, व्योम *pdata)
+अणु
+	व्योम __percpu *p;
 
-	p = *(void __percpu **)pdata;
-	free_percpu(p);
-}
+	p = *(व्योम __percpu **)pdata;
+	मुक्त_percpu(p);
+पूर्ण
 
-static int devm_percpu_match(struct device *dev, void *data, void *p)
-{
-	struct devres *devr = container_of(data, struct devres, data);
+अटल पूर्णांक devm_percpu_match(काष्ठा device *dev, व्योम *data, व्योम *p)
+अणु
+	काष्ठा devres *devr = container_of(data, काष्ठा devres, data);
 
-	return *(void **)devr->data == p;
-}
+	वापस *(व्योम **)devr->data == p;
+पूर्ण
 
 /**
  * __devm_alloc_percpu - Resource-managed alloc_percpu
- * @dev: Device to allocate per-cpu memory for
+ * @dev: Device to allocate per-cpu memory क्रम
  * @size: Size of per-cpu memory to allocate
  * @align: Alignment of per-cpu memory to allocate
  *
  * Managed alloc_percpu. Per-cpu memory allocated with this function is
- * automatically freed on driver detach.
+ * स्वतःmatically मुक्तd on driver detach.
  *
  * RETURNS:
- * Pointer to allocated memory on success, NULL on failure.
+ * Poपूर्णांकer to allocated memory on success, शून्य on failure.
  */
-void __percpu *__devm_alloc_percpu(struct device *dev, size_t size,
-		size_t align)
-{
-	void *p;
-	void __percpu *pcpu;
+व्योम __percpu *__devm_alloc_percpu(काष्ठा device *dev, माप_प्रकार size,
+		माप_प्रकार align)
+अणु
+	व्योम *p;
+	व्योम __percpu *pcpu;
 
 	pcpu = __alloc_percpu(size, align);
-	if (!pcpu)
-		return NULL;
+	अगर (!pcpu)
+		वापस शून्य;
 
-	p = devres_alloc(devm_percpu_release, sizeof(void *), GFP_KERNEL);
-	if (!p) {
-		free_percpu(pcpu);
-		return NULL;
-	}
+	p = devres_alloc(devm_percpu_release, माप(व्योम *), GFP_KERNEL);
+	अगर (!p) अणु
+		मुक्त_percpu(pcpu);
+		वापस शून्य;
+	पूर्ण
 
-	*(void __percpu **)p = pcpu;
+	*(व्योम __percpu **)p = pcpu;
 
 	devres_add(dev, p);
 
-	return pcpu;
-}
+	वापस pcpu;
+पूर्ण
 EXPORT_SYMBOL_GPL(__devm_alloc_percpu);
 
 /**
- * devm_free_percpu - Resource-managed free_percpu
- * @dev: Device this memory belongs to
- * @pdata: Per-cpu memory to free
+ * devm_मुक्त_percpu - Resource-managed मुक्त_percpu
+ * @dev: Device this memory beदीर्घs to
+ * @pdata: Per-cpu memory to मुक्त
  *
  * Free memory allocated with devm_alloc_percpu().
  */
-void devm_free_percpu(struct device *dev, void __percpu *pdata)
-{
+व्योम devm_मुक्त_percpu(काष्ठा device *dev, व्योम __percpu *pdata)
+अणु
 	WARN_ON(devres_destroy(dev, devm_percpu_release, devm_percpu_match,
-			       (__force void *)pdata));
-}
-EXPORT_SYMBOL_GPL(devm_free_percpu);
+			       (__क्रमce व्योम *)pdata));
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_मुक्त_percpu);

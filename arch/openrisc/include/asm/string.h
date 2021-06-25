@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_OPENRISC_STRING_H
-#define __ASM_OPENRISC_STRING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_OPENRISC_STRING_H
+#घोषणा __ASM_OPENRISC_STRING_H
 
-#define __HAVE_ARCH_MEMSET
-extern void *memset(void *s, int c, __kernel_size_t n);
+#घोषणा __HAVE_ARCH_MEMSET
+बाह्य व्योम *स_रखो(व्योम *s, पूर्णांक c, __kernel_माप_प्रकार n);
 
-#define __HAVE_ARCH_MEMCPY
-extern void *memcpy(void *dest, __const void *src, __kernel_size_t n);
+#घोषणा __HAVE_ARCH_MEMCPY
+बाह्य व्योम *स_नकल(व्योम *dest, __स्थिर व्योम *src, __kernel_माप_प्रकार n);
 
-#endif /* __ASM_OPENRISC_STRING_H */
+#पूर्ण_अगर /* __ASM_OPENRISC_STRING_H */

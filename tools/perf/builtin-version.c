@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "builtin.h"
-#include "perf.h"
-#include "color.h"
-#include <tools/config.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#include <subcmd/parse-options.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "builtin.h"
+#समावेश "perf.h"
+#समावेश "color.h"
+#समावेश <tools/config.h>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <subcmd/parse-options.h>
 
-int version_verbose;
+पूर्णांक version_verbose;
 
-struct version {
+काष्ठा version अणु
 	bool	build_options;
-};
+पूर्ण;
 
-static struct version version;
+अटल काष्ठा version version;
 
-static struct option version_options[] = {
+अटल काष्ठा option version_options[] = अणु
 	OPT_BOOLEAN(0, "build-options", &version.build_options,
 		    "display the build options"),
 	OPT_END(),
-};
+पूर्ण;
 
-static const char * const version_usage[] = {
+अटल स्थिर अक्षर * स्थिर version_usage[] = अणु
 	"perf version [<options>]",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static void on_off_print(const char *status)
-{
-	printf("[ ");
+अटल व्योम on_off_prपूर्णांक(स्थिर अक्षर *status)
+अणु
+	म_लिखो("[ ");
 
-	if (!strcmp(status, "OFF"))
-		color_fprintf(stdout, PERF_COLOR_RED, "%-3s", status);
-	else
-		color_fprintf(stdout, PERF_COLOR_GREEN, "%-3s", status);
+	अगर (!म_भेद(status, "OFF"))
+		color_ख_लिखो(मानक_निकास, PERF_COLOR_RED, "%-3s", status);
+	अन्यथा
+		color_ख_लिखो(मानक_निकास, PERF_COLOR_GREEN, "%-3s", status);
 
-	printf(" ]");
-}
+	म_लिखो(" ]");
+पूर्ण
 
-static void status_print(const char *name, const char *macro,
-			 const char *status)
-{
-	printf("%22s: ", name);
-	on_off_print(status);
-	printf("  # %s\n", macro);
-}
+अटल व्योम status_prपूर्णांक(स्थिर अक्षर *name, स्थिर अक्षर *macro,
+			 स्थिर अक्षर *status)
+अणु
+	म_लिखो("%22s: ", name);
+	on_off_prपूर्णांक(status);
+	म_लिखो("  # %s\n", macro);
+पूर्ण
 
-#define STATUS(__d, __m)				\
-do {							\
-	if (IS_BUILTIN(__d))				\
-		status_print(#__m, #__d, "on");		\
-	else						\
-		status_print(#__m, #__d, "OFF");	\
-} while (0)
+#घोषणा STATUS(__d, __m)				\
+करो अणु							\
+	अगर (IS_BUILTIN(__d))				\
+		status_prपूर्णांक(#__m, #__d, "on");		\
+	अन्यथा						\
+		status_prपूर्णांक(#__m, #__d, "OFF");	\
+पूर्ण जबतक (0)
 
-static void library_status(void)
-{
+अटल व्योम library_status(व्योम)
+अणु
 	STATUS(HAVE_DWARF_SUPPORT, dwarf);
 	STATUS(HAVE_DWARF_GETLOCATIONS_SUPPORT, dwarf_getlocations);
 	STATUS(HAVE_GLIBC_SUPPORT, glibc);
-#ifndef HAVE_SYSCALL_TABLE_SUPPORT
+#अगर_अघोषित HAVE_SYSCALL_TABLE_SUPPORT
 	STATUS(HAVE_LIBAUDIT_SUPPORT, libaudit);
-#endif
+#पूर्ण_अगर
 	STATUS(HAVE_SYSCALL_TABLE_SUPPORT, syscall_table);
 	STATUS(HAVE_LIBBFD_SUPPORT, libbfd);
 	STATUS(HAVE_LIBELF_SUPPORT, libelf);
@@ -81,17 +82,17 @@ static void library_status(void)
 	STATUS(HAVE_AIO_SUPPORT, aio);
 	STATUS(HAVE_ZSTD_SUPPORT, zstd);
 	STATUS(HAVE_LIBPFM, libpfm4);
-}
+पूर्ण
 
-int cmd_version(int argc, const char **argv)
-{
+पूर्णांक cmd_version(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
 	argc = parse_options(argc, argv, version_options, version_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	printf("perf version %s\n", perf_version_string);
+	म_लिखो("perf version %s\n", perf_version_string);
 
-	if (version.build_options || version_verbose == 1)
+	अगर (version.build_options || version_verbose == 1)
 		library_status();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,189 +23,189 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 
-#include <nvif/client.h>
-#include <nvif/driver.h>
-#include <nvif/notify.h>
-#include <nvif/object.h>
-#include <nvif/ioctl.h>
-#include <nvif/event.h>
+#समावेश <nvअगर/client.h>
+#समावेश <nvअगर/driver.h>
+#समावेश <nvअगर/notअगरy.h>
+#समावेश <nvअगर/object.h>
+#समावेश <nvअगर/ioctl.h>
+#समावेश <nvअगर/event.h>
 
-static inline int
-nvif_notify_put_(struct nvif_notify *notify)
-{
-	struct nvif_object *object = notify->object;
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_ntfy_put_v0 ntfy;
-	} args = {
+अटल अंतरभूत पूर्णांक
+nvअगर_notअगरy_put_(काष्ठा nvअगर_notअगरy *notअगरy)
+अणु
+	काष्ठा nvअगर_object *object = notअगरy->object;
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_ntfy_put_v0 ntfy;
+	पूर्ण args = अणु
 		.ioctl.type = NVIF_IOCTL_V0_NTFY_PUT,
-		.ntfy.index = notify->index,
-	};
+		.ntfy.index = notअगरy->index,
+	पूर्ण;
 
-	if (atomic_inc_return(&notify->putcnt) != 1)
-		return 0;
+	अगर (atomic_inc_वापस(&notअगरy->अ_दोnt) != 1)
+		वापस 0;
 
-	return nvif_object_ioctl(object, &args, sizeof(args), NULL);
-}
+	वापस nvअगर_object_ioctl(object, &args, माप(args), शून्य);
+पूर्ण
 
-int
-nvif_notify_put(struct nvif_notify *notify)
-{
-	if (likely(notify->object) &&
-	    test_and_clear_bit(NVIF_NOTIFY_USER, &notify->flags)) {
-		int ret = nvif_notify_put_(notify);
-		if (test_bit(NVIF_NOTIFY_WORK, &notify->flags))
-			flush_work(&notify->work);
-		return ret;
-	}
-	return 0;
-}
+पूर्णांक
+nvअगर_notअगरy_put(काष्ठा nvअगर_notअगरy *notअगरy)
+अणु
+	अगर (likely(notअगरy->object) &&
+	    test_and_clear_bit(NVIF_NOTIFY_USER, &notअगरy->flags)) अणु
+		पूर्णांक ret = nvअगर_notअगरy_put_(notअगरy);
+		अगर (test_bit(NVIF_NOTIFY_WORK, &notअगरy->flags))
+			flush_work(&notअगरy->work);
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int
-nvif_notify_get_(struct nvif_notify *notify)
-{
-	struct nvif_object *object = notify->object;
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_ntfy_get_v0 ntfy;
-	} args = {
+अटल अंतरभूत पूर्णांक
+nvअगर_notअगरy_get_(काष्ठा nvअगर_notअगरy *notअगरy)
+अणु
+	काष्ठा nvअगर_object *object = notअगरy->object;
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_ntfy_get_v0 ntfy;
+	पूर्ण args = अणु
 		.ioctl.type = NVIF_IOCTL_V0_NTFY_GET,
-		.ntfy.index = notify->index,
-	};
+		.ntfy.index = notअगरy->index,
+	पूर्ण;
 
-	if (atomic_dec_return(&notify->putcnt) != 0)
-		return 0;
+	अगर (atomic_dec_वापस(&notअगरy->अ_दोnt) != 0)
+		वापस 0;
 
-	return nvif_object_ioctl(object, &args, sizeof(args), NULL);
-}
+	वापस nvअगर_object_ioctl(object, &args, माप(args), शून्य);
+पूर्ण
 
-int
-nvif_notify_get(struct nvif_notify *notify)
-{
-	if (likely(notify->object) &&
-	    !test_and_set_bit(NVIF_NOTIFY_USER, &notify->flags))
-		return nvif_notify_get_(notify);
-	return 0;
-}
+पूर्णांक
+nvअगर_notअगरy_get(काष्ठा nvअगर_notअगरy *notअगरy)
+अणु
+	अगर (likely(notअगरy->object) &&
+	    !test_and_set_bit(NVIF_NOTIFY_USER, &notअगरy->flags))
+		वापस nvअगर_notअगरy_get_(notअगरy);
+	वापस 0;
+पूर्ण
 
-static inline int
-nvif_notify_func(struct nvif_notify *notify, bool keep)
-{
-	int ret = notify->func(notify);
-	if (ret == NVIF_NOTIFY_KEEP ||
-	    !test_and_clear_bit(NVIF_NOTIFY_USER, &notify->flags)) {
-		if (!keep)
-			atomic_dec(&notify->putcnt);
-		else
-			nvif_notify_get_(notify);
-	}
-	return ret;
-}
+अटल अंतरभूत पूर्णांक
+nvअगर_notअगरy_func(काष्ठा nvअगर_notअगरy *notअगरy, bool keep)
+अणु
+	पूर्णांक ret = notअगरy->func(notअगरy);
+	अगर (ret == NVIF_NOTIFY_KEEP ||
+	    !test_and_clear_bit(NVIF_NOTIFY_USER, &notअगरy->flags)) अणु
+		अगर (!keep)
+			atomic_dec(&notअगरy->अ_दोnt);
+		अन्यथा
+			nvअगर_notअगरy_get_(notअगरy);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void
-nvif_notify_work(struct work_struct *work)
-{
-	struct nvif_notify *notify = container_of(work, typeof(*notify), work);
-	nvif_notify_func(notify, true);
-}
+अटल व्योम
+nvअगर_notअगरy_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nvअगर_notअगरy *notअगरy = container_of(work, typeof(*notअगरy), work);
+	nvअगर_notअगरy_func(notअगरy, true);
+पूर्ण
 
-int
-nvif_notify(const void *header, u32 length, const void *data, u32 size)
-{
-	struct nvif_notify *notify = NULL;
-	const union {
-		struct nvif_notify_rep_v0 v0;
-	} *args = header;
-	int ret = NVIF_NOTIFY_DROP;
+पूर्णांक
+nvअगर_notअगरy(स्थिर व्योम *header, u32 length, स्थिर व्योम *data, u32 size)
+अणु
+	काष्ठा nvअगर_notअगरy *notअगरy = शून्य;
+	स्थिर जोड़ अणु
+		काष्ठा nvअगर_notअगरy_rep_v0 v0;
+	पूर्ण *args = header;
+	पूर्णांक ret = NVIF_NOTIFY_DROP;
 
-	if (length == sizeof(args->v0) && args->v0.version == 0) {
-		if (WARN_ON(args->v0.route))
-			return NVIF_NOTIFY_DROP;
-		notify = (void *)(unsigned long)args->v0.token;
-	}
+	अगर (length == माप(args->v0) && args->v0.version == 0) अणु
+		अगर (WARN_ON(args->v0.route))
+			वापस NVIF_NOTIFY_DROP;
+		notअगरy = (व्योम *)(अचिन्हित दीर्घ)args->v0.token;
+	पूर्ण
 
-	if (!WARN_ON(notify == NULL)) {
-		struct nvif_client *client = notify->object->client;
-		if (!WARN_ON(notify->size != size)) {
-			atomic_inc(&notify->putcnt);
-			if (test_bit(NVIF_NOTIFY_WORK, &notify->flags)) {
-				memcpy((void *)notify->data, data, size);
-				schedule_work(&notify->work);
-				return NVIF_NOTIFY_DROP;
-			}
-			notify->data = data;
-			ret = nvif_notify_func(notify, client->driver->keep);
-			notify->data = NULL;
-		}
-	}
+	अगर (!WARN_ON(notअगरy == शून्य)) अणु
+		काष्ठा nvअगर_client *client = notअगरy->object->client;
+		अगर (!WARN_ON(notअगरy->size != size)) अणु
+			atomic_inc(&notअगरy->अ_दोnt);
+			अगर (test_bit(NVIF_NOTIFY_WORK, &notअगरy->flags)) अणु
+				स_नकल((व्योम *)notअगरy->data, data, size);
+				schedule_work(&notअगरy->work);
+				वापस NVIF_NOTIFY_DROP;
+			पूर्ण
+			notअगरy->data = data;
+			ret = nvअगर_notअगरy_func(notअगरy, client->driver->keep);
+			notअगरy->data = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-nvif_notify_dtor(struct nvif_notify *notify)
-{
-	struct nvif_object *object = notify->object;
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_ntfy_del_v0 ntfy;
-	} args = {
+पूर्णांक
+nvअगर_notअगरy_dtor(काष्ठा nvअगर_notअगरy *notअगरy)
+अणु
+	काष्ठा nvअगर_object *object = notअगरy->object;
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_ntfy_del_v0 ntfy;
+	पूर्ण args = अणु
 		.ioctl.type = NVIF_IOCTL_V0_NTFY_DEL,
-		.ntfy.index = notify->index,
-	};
-	int ret = nvif_notify_put(notify);
-	if (ret >= 0 && object) {
-		ret = nvif_object_ioctl(object, &args, sizeof(args), NULL);
-		notify->object = NULL;
-		kfree((void *)notify->data);
-	}
-	return ret;
-}
+		.ntfy.index = notअगरy->index,
+	पूर्ण;
+	पूर्णांक ret = nvअगर_notअगरy_put(notअगरy);
+	अगर (ret >= 0 && object) अणु
+		ret = nvअगर_object_ioctl(object, &args, माप(args), शून्य);
+		notअगरy->object = शून्य;
+		kमुक्त((व्योम *)notअगरy->data);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int
-nvif_notify_ctor(struct nvif_object *object, const char *name,
-		 int (*func)(struct nvif_notify *), bool work, u8 event,
-		 void *data, u32 size, u32 reply, struct nvif_notify *notify)
-{
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_ntfy_new_v0 ntfy;
-		struct nvif_notify_req_v0 req;
-	} *args;
-	int ret = -ENOMEM;
+पूर्णांक
+nvअगर_notअगरy_ctor(काष्ठा nvअगर_object *object, स्थिर अक्षर *name,
+		 पूर्णांक (*func)(काष्ठा nvअगर_notअगरy *), bool work, u8 event,
+		 व्योम *data, u32 size, u32 reply, काष्ठा nvअगर_notअगरy *notअगरy)
+अणु
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_ntfy_new_v0 ntfy;
+		काष्ठा nvअगर_notअगरy_req_v0 req;
+	पूर्ण *args;
+	पूर्णांक ret = -ENOMEM;
 
-	notify->object = object;
-	notify->name = name ? name : "nvifNotify";
-	notify->flags = 0;
-	atomic_set(&notify->putcnt, 1);
-	notify->func = func;
-	notify->data = NULL;
-	notify->size = reply;
-	if (work) {
-		INIT_WORK(&notify->work, nvif_notify_work);
-		set_bit(NVIF_NOTIFY_WORK, &notify->flags);
-		notify->data = kmalloc(notify->size, GFP_KERNEL);
-		if (!notify->data)
-			goto done;
-	}
+	notअगरy->object = object;
+	notअगरy->name = name ? name : "nvifNotify";
+	notअगरy->flags = 0;
+	atomic_set(&notअगरy->अ_दोnt, 1);
+	notअगरy->func = func;
+	notअगरy->data = शून्य;
+	notअगरy->size = reply;
+	अगर (work) अणु
+		INIT_WORK(&notअगरy->work, nvअगर_notअगरy_work);
+		set_bit(NVIF_NOTIFY_WORK, &notअगरy->flags);
+		notअगरy->data = kदो_स्मृति(notअगरy->size, GFP_KERNEL);
+		अगर (!notअगरy->data)
+			जाओ करोne;
+	पूर्ण
 
-	if (!(args = kmalloc(sizeof(*args) + size, GFP_KERNEL)))
-		goto done;
+	अगर (!(args = kदो_स्मृति(माप(*args) + size, GFP_KERNEL)))
+		जाओ करोne;
 	args->ioctl.version = 0;
 	args->ioctl.type = NVIF_IOCTL_V0_NTFY_NEW;
 	args->ntfy.version = 0;
 	args->ntfy.event = event;
 	args->req.version = 0;
-	args->req.reply = notify->size;
+	args->req.reply = notअगरy->size;
 	args->req.route = 0;
-	args->req.token = (unsigned long)(void *)notify;
+	args->req.token = (अचिन्हित दीर्घ)(व्योम *)notअगरy;
 
-	memcpy(args->req.data, data, size);
-	ret = nvif_object_ioctl(object, args, sizeof(*args) + size, NULL);
-	notify->index = args->ntfy.index;
-	kfree(args);
-done:
-	if (ret)
-		nvif_notify_dtor(notify);
-	return ret;
-}
+	स_नकल(args->req.data, data, size);
+	ret = nvअगर_object_ioctl(object, args, माप(*args) + size, शून्य);
+	notअगरy->index = args->ntfy.index;
+	kमुक्त(args);
+करोne:
+	अगर (ret)
+		nvअगर_notअगरy_dtor(notअगरy);
+	वापस ret;
+पूर्ण

@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright 2008 Freescale Semiconductor, Inc. All Rights Reserved.
  *
  *  Freescale DIU Frame Buffer device driver
  *
- *  Authors: Hongjun Chen <hong-jun.chen@freescale.com>
- *           Paul Widmer <paul.widmer@freescale.com>
- *           Srikanth Srinivasan <srikanth.srinivasan@freescale.com>
- *           York Sun <yorksun@freescale.com>
+ *  Authors: Hongjun Chen <hong-jun.chen@मुक्तscale.com>
+ *           Paul Widmer <paul.widmer@मुक्तscale.com>
+ *           Srikanth Srinivasan <srikanth.srinivasan@मुक्तscale.com>
+ *           York Sun <yorksun@मुक्तscale.com>
  *
  *   Based on imxfb.c Copyright (C) 2004 S.Hauer, Pengutronix
  */
 
-#ifndef __FSL_DIU_FB_H__
-#define __FSL_DIU_FB_H__
+#अगर_अघोषित __FSL_DIU_FB_H__
+#घोषणा __FSL_DIU_FB_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct mfb_chroma_key {
-	int enable;
+काष्ठा mfb_chroma_key अणु
+	पूर्णांक enable;
 	__u8  red_max;
 	__u8  green_max;
 	__u8  blue_max;
 	__u8  red_min;
 	__u8  green_min;
 	__u8  blue_min;
-};
+पूर्ण;
 
-struct aoi_display_offset {
+काष्ठा aoi_display_offset अणु
 	__s32 x_aoi_d;
 	__s32 y_aoi_d;
-};
+पूर्ण;
 
-#define MFB_SET_CHROMA_KEY	_IOW('M', 1, struct mfb_chroma_key)
-#define MFB_SET_BRIGHTNESS	_IOW('M', 3, __u8)
-#define MFB_SET_ALPHA		_IOW('M', 0, __u8)
-#define MFB_GET_ALPHA		_IOR('M', 0, __u8)
-#define MFB_SET_AOID		_IOW('M', 4, struct aoi_display_offset)
-#define MFB_GET_AOID		_IOR('M', 4, struct aoi_display_offset)
-#define MFB_SET_PIXFMT		_IOW('M', 8, __u32)
-#define MFB_GET_PIXFMT		_IOR('M', 8, __u32)
+#घोषणा MFB_SET_CHROMA_KEY	_IOW('M', 1, काष्ठा mfb_chroma_key)
+#घोषणा MFB_SET_BRIGHTNESS	_IOW('M', 3, __u8)
+#घोषणा MFB_SET_ALPHA		_IOW('M', 0, __u8)
+#घोषणा MFB_GET_ALPHA		_IOR('M', 0, __u8)
+#घोषणा MFB_SET_AOID		_IOW('M', 4, काष्ठा aoi_display_offset)
+#घोषणा MFB_GET_AOID		_IOR('M', 4, काष्ठा aoi_display_offset)
+#घोषणा MFB_SET_PIXFMT		_IOW('M', 8, __u32)
+#घोषणा MFB_GET_PIXFMT		_IOR('M', 8, __u32)
 
 /*
  * The MPC5121 BSP comes with a gamma_set utility that initializes the
- * gamma table.  Unfortunately, it uses bad values for the IOCTL commands,
- * but there's nothing we can do about it now.  These ioctls are only
+ * gamma table.  Unक्रमtunately, it uses bad values क्रम the IOCTL commands,
+ * but there's nothing we can करो about it now.  These ioctls are only
  * supported on the MPC5121.
  */
-#define MFB_SET_GAMMA		_IOW('M', 1, __u8)
-#define MFB_GET_GAMMA		_IOR('M', 1, __u8)
+#घोषणा MFB_SET_GAMMA		_IOW('M', 1, __u8)
+#घोषणा MFB_GET_GAMMA		_IOR('M', 1, __u8)
 
 /*
  * The original definitions of MFB_SET_PIXFMT and MFB_GET_PIXFMT used the
- * wrong value for 'size' field of the ioctl.  The current macros above use the
+ * wrong value क्रम 'size' field of the ioctl.  The current macros above use the
  * right size, but we still need to provide backwards compatibility, at least
- * for a while.
+ * क्रम a जबतक.
 */
-#define MFB_SET_PIXFMT_OLD	0x80014d08
-#define MFB_GET_PIXFMT_OLD	0x40014d08
+#घोषणा MFB_SET_PIXFMT_OLD	0x80014d08
+#घोषणा MFB_GET_PIXFMT_OLD	0x40014d08
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
 /*
- * These are the fields of area descriptor(in DDR memory) for every plane
+ * These are the fields of area descriptor(in DDR memory) क्रम every plane
  */
-struct diu_ad {
+काष्ठा diu_ad अणु
 	/* Word 0(32-bit) in DDR memory */
 /* 	__u16 comp; */
 /* 	__u16 pixel_s:2; */
@@ -76,7 +77,7 @@ struct diu_ad {
 /* 	__u16 byte_f:1; */
 /* 	__u16 res0:3; */
 
-	__be32 pix_fmt; /* hard coding pixel format */
+	__be32 pix_fmt; /* hard coding pixel क्रमmat */
 
 	/* Word 1(32-bit) in DDR memory */
 	__le32 addr;
@@ -129,12 +130,12 @@ struct diu_ad {
 	/* Word 8(32-bit) in DDR memory */
 	__le32 next_ad;
 
-	/* Word 9(32-bit) in DDR memory, just for 64-bit aligned */
+	/* Word 9(32-bit) in DDR memory, just क्रम 64-bit aligned */
 	__u32 paddr;
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
-/* DIU register map */
-struct diu {
+/* DIU रेजिस्टर map */
+काष्ठा diu अणु
 	__be32 desc[3];
 	__be32 gamma;
 	__be32 palette;
@@ -150,19 +151,19 @@ struct diu {
 	__be32 vsyn_para;
 	__be32 syn_pol;
 	__be32 thresholds;
-	__be32 int_status;
-	__be32 int_mask;
+	__be32 पूर्णांक_status;
+	__be32 पूर्णांक_mask;
 	__be32 colorbar[8];
 	__be32 filling;
 	__be32 plut;
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
 /*
- * Modes of operation of DIU.  The DIU supports five different modes, but
+ * Modes of operation of DIU.  The DIU supports five dअगरferent modes, but
  * the driver only supports modes 0 and 1.
  */
-#define MFB_MODE0	0	/* DIU off */
-#define MFB_MODE1	1	/* All three planes output to display */
+#घोषणा MFB_MODE0	0	/* DIU off */
+#घोषणा MFB_MODE1	1	/* All three planes output to display */
 
-#endif /* __KERNEL__ */
-#endif /* __FSL_DIU_FB_H__ */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* __FSL_DIU_FB_H__ */

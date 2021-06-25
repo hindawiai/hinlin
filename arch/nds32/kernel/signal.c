@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/errno.h>
-#include <linux/signal.h>
-#include <linux/ptrace.h>
-#include <linux/personality.h>
-#include <linux/freezer.h>
-#include <linux/tracehook.h>
-#include <linux/uaccess.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/cacheflush.h>
-#include <asm/ucontext.h>
-#include <asm/unistd.h>
-#include <asm/fpu.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/ucontext.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/fpu.h>
 
-#include <asm/ptrace.h>
-#include <asm/vdso.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/vdso.h>
 
-struct rt_sigframe {
-	struct siginfo info;
-	struct ucontext uc;
-};
-#if IS_ENABLED(CONFIG_FPU)
-static inline int restore_sigcontext_fpu(struct pt_regs *regs,
-					 struct sigcontext __user *sc)
-{
-	struct task_struct *tsk = current;
-	unsigned long used_math_flag;
-	int ret = 0;
+काष्ठा rt_sigframe अणु
+	काष्ठा siginfo info;
+	काष्ठा ucontext uc;
+पूर्ण;
+#अगर IS_ENABLED(CONFIG_FPU)
+अटल अंतरभूत पूर्णांक restore_sigcontext_fpu(काष्ठा pt_regs *regs,
+					 काष्ठा sigcontext __user *sc)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
+	अचिन्हित दीर्घ used_math_flag;
+	पूर्णांक ret = 0;
 
 	clear_used_math();
 	__get_user_error(used_math_flag, &sc->used_math_flag, ret);
 
-	if (!used_math_flag)
-		return 0;
+	अगर (!used_math_flag)
+		वापस 0;
 	set_used_math();
 
-#if IS_ENABLED(CONFIG_LAZY_FPU)
+#अगर IS_ENABLED(CONFIG_LAZY_FPU)
 	preempt_disable();
-	if (current == last_task_used_math) {
-		last_task_used_math = NULL;
+	अगर (current == last_task_used_math) अणु
+		last_task_used_math = शून्य;
 		disable_ptreg_fpu(regs);
-	}
+	पूर्ण
 	preempt_enable();
-#else
+#अन्यथा
 	clear_fpu(regs);
-#endif
+#पूर्ण_अगर
 
-	return __copy_from_user(&tsk->thread.fpu, &sc->fpu,
-				sizeof(struct fpu_struct));
-}
+	वापस __copy_from_user(&tsk->thपढ़ो.fpu, &sc->fpu,
+				माप(काष्ठा fpu_काष्ठा));
+पूर्ण
 
-static inline int setup_sigcontext_fpu(struct pt_regs *regs,
-				       struct sigcontext __user *sc)
-{
-	struct task_struct *tsk = current;
-	int ret = 0;
+अटल अंतरभूत पूर्णांक setup_sigcontext_fpu(काष्ठा pt_regs *regs,
+				       काष्ठा sigcontext __user *sc)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
+	पूर्णांक ret = 0;
 
 	__put_user_error(used_math(), &sc->used_math_flag, ret);
 
-	if (!used_math())
-		return ret;
+	अगर (!used_math())
+		वापस ret;
 
 	preempt_disable();
-#if IS_ENABLED(CONFIG_LAZY_FPU)
-	if (last_task_used_math == tsk)
+#अगर IS_ENABLED(CONFIG_LAZY_FPU)
+	अगर (last_task_used_math == tsk)
 		save_fpu(last_task_used_math);
-#else
+#अन्यथा
 	unlazy_fpu(tsk);
-#endif
-	ret = __copy_to_user(&sc->fpu, &tsk->thread.fpu,
-			     sizeof(struct fpu_struct));
+#पूर्ण_अगर
+	ret = __copy_to_user(&sc->fpu, &tsk->thपढ़ो.fpu,
+			     माप(काष्ठा fpu_काष्ठा));
 	preempt_enable();
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static int restore_sigframe(struct pt_regs *regs,
-			    struct rt_sigframe __user * sf)
-{
+अटल पूर्णांक restore_sigframe(काष्ठा pt_regs *regs,
+			    काष्ठा rt_sigframe __user * sf)
+अणु
 	sigset_t set;
-	int err;
+	पूर्णांक err;
 
-	err = __copy_from_user(&set, &sf->uc.uc_sigmask, sizeof(set));
-	if (err == 0) {
+	err = __copy_from_user(&set, &sf->uc.uc_sigmask, माप(set));
+	अगर (err == 0) अणु
 		set_current_blocked(&set);
-	}
+	पूर्ण
 
 	__get_user_error(regs->uregs[0], &sf->uc.uc_mcontext.nds32_r0, err);
 	__get_user_error(regs->uregs[1], &sf->uc.uc_mcontext.nds32_r1, err);
@@ -119,59 +120,59 @@ static int restore_sigframe(struct pt_regs *regs,
 	__get_user_error(regs->lp, &sf->uc.uc_mcontext.nds32_lp, err);
 	__get_user_error(regs->sp, &sf->uc.uc_mcontext.nds32_sp, err);
 	__get_user_error(regs->ipc, &sf->uc.uc_mcontext.nds32_ipc, err);
-#if defined(CONFIG_HWZOL)
+#अगर defined(CONFIG_HWZOL)
 	__get_user_error(regs->lc, &sf->uc.uc_mcontext.zol.nds32_lc, err);
 	__get_user_error(regs->le, &sf->uc.uc_mcontext.zol.nds32_le, err);
 	__get_user_error(regs->lb, &sf->uc.uc_mcontext.zol.nds32_lb, err);
-#endif
-#if IS_ENABLED(CONFIG_FPU)
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_FPU)
 	err |= restore_sigcontext_fpu(regs, &sf->uc.uc_mcontext);
-#endif
+#पूर्ण_अगर
 	/*
-	 * Avoid sys_rt_sigreturn() restarting.
+	 * Aव्योम sys_rt_sigवापस() restarting.
 	 */
-	forget_syscall(regs);
-	return err;
-}
+	क्रमget_syscall(regs);
+	वापस err;
+पूर्ण
 
-asmlinkage long sys_rt_sigreturn(struct pt_regs *regs)
-{
-	struct rt_sigframe __user *frame;
+यंत्रlinkage दीर्घ sys_rt_sigवापस(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा rt_sigframe __user *frame;
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
 	/*
-	 * Since we stacked the signal on a 64-bit boundary,
+	 * Since we stacked the संकेत on a 64-bit boundary,
 	 * then 'sp' should be two-word aligned here.  If it's
 	 * not, then the user is trying to mess with us.
 	 */
-	if (regs->sp & 7)
-		goto badframe;
+	अगर (regs->sp & 7)
+		जाओ badframe;
 
-	frame = (struct rt_sigframe __user *)regs->sp;
+	frame = (काष्ठा rt_sigframe __user *)regs->sp;
 
-	if (!access_ok(frame, sizeof(*frame)))
-		goto badframe;
+	अगर (!access_ok(frame, माप(*frame)))
+		जाओ badframe;
 
-	if (restore_sigframe(regs, frame))
-		goto badframe;
+	अगर (restore_sigframe(regs, frame))
+		जाओ badframe;
 
-	if (restore_altstack(&frame->uc.uc_stack))
-		goto badframe;
+	अगर (restore_altstack(&frame->uc.uc_stack))
+		जाओ badframe;
 
-	return regs->uregs[0];
+	वापस regs->uregs[0];
 
 badframe:
-	force_sig(SIGSEGV);
-	return 0;
-}
+	क्रमce_sig(संक_अंश);
+	वापस 0;
+पूर्ण
 
-static int
-setup_sigframe(struct rt_sigframe __user * sf, struct pt_regs *regs,
+अटल पूर्णांक
+setup_sigframe(काष्ठा rt_sigframe __user * sf, काष्ठा pt_regs *regs,
 	       sigset_t * set)
-{
-	int err = 0;
+अणु
+	पूर्णांक err = 0;
 
 	__put_user_error(regs->uregs[0], &sf->uc.uc_mcontext.nds32_r0, err);
 	__put_user_error(regs->uregs[1], &sf->uc.uc_mcontext.nds32_r1, err);
@@ -205,44 +206,44 @@ setup_sigframe(struct rt_sigframe __user * sf, struct pt_regs *regs,
 	__put_user_error(regs->lp, &sf->uc.uc_mcontext.nds32_lp, err);
 	__put_user_error(regs->sp, &sf->uc.uc_mcontext.nds32_sp, err);
 	__put_user_error(regs->ipc, &sf->uc.uc_mcontext.nds32_ipc, err);
-#if defined(CONFIG_HWZOL)
+#अगर defined(CONFIG_HWZOL)
 	__put_user_error(regs->lc, &sf->uc.uc_mcontext.zol.nds32_lc, err);
 	__put_user_error(regs->le, &sf->uc.uc_mcontext.zol.nds32_le, err);
 	__put_user_error(regs->lb, &sf->uc.uc_mcontext.zol.nds32_lb, err);
-#endif
-#if IS_ENABLED(CONFIG_FPU)
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_FPU)
 	err |= setup_sigcontext_fpu(regs, &sf->uc.uc_mcontext);
-#endif
+#पूर्ण_अगर
 
-	__put_user_error(current->thread.trap_no, &sf->uc.uc_mcontext.trap_no,
+	__put_user_error(current->thपढ़ो.trap_no, &sf->uc.uc_mcontext.trap_no,
 			 err);
-	__put_user_error(current->thread.error_code,
+	__put_user_error(current->thपढ़ो.error_code,
 			 &sf->uc.uc_mcontext.error_code, err);
-	__put_user_error(current->thread.address,
+	__put_user_error(current->thपढ़ो.address,
 			 &sf->uc.uc_mcontext.fault_address, err);
 	__put_user_error(set->sig[0], &sf->uc.uc_mcontext.oldmask, err);
 
-	err |= __copy_to_user(&sf->uc.uc_sigmask, set, sizeof(*set));
+	err |= __copy_to_user(&sf->uc.uc_sigmask, set, माप(*set));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline void __user *get_sigframe(struct ksignal *ksig,
-					struct pt_regs *regs, int framesize)
-{
-	unsigned long sp;
+अटल अंतरभूत व्योम __user *get_sigframe(काष्ठा kसंकेत *ksig,
+					काष्ठा pt_regs *regs, पूर्णांक framesize)
+अणु
+	अचिन्हित दीर्घ sp;
 
 	/* Default to using normal stack */
 	sp = regs->sp;
 
 	/*
-	 * If we are on the alternate signal stack and would overflow it, don't.
-	 * Return an always-bogus address instead so we will die with SIGSEGV.
+	 * If we are on the alternate संकेत stack and would overflow it, करोn't.
+	 * Return an always-bogus address instead so we will die with संक_अंश.
 	 */
-	if (on_sig_stack(sp) && !likely(on_sig_stack(sp - framesize)))
-		return (void __user __force *)(-1UL);
+	अगर (on_sig_stack(sp) && !likely(on_sig_stack(sp - framesize)))
+		वापस (व्योम __user __क्रमce *)(-1UL);
 
-	/* This is the X/Open sanctioned signal stack switching. */
+	/* This is the X/Open sanctioned संकेत stack चयनing. */
 	sp = (sigsp(sp, ksig) - framesize);
 
 	/*
@@ -250,135 +251,135 @@ static inline void __user *get_sigframe(struct ksignal *ksig,
 	 */
 	sp &= ~0x7UL;
 
-	return (void __user *)sp;
-}
+	वापस (व्योम __user *)sp;
+पूर्ण
 
-static int
-setup_return(struct pt_regs *regs, struct ksignal *ksig, void __user * frame)
-{
-	unsigned long handler = (unsigned long)ksig->ka.sa.sa_handler;
-	unsigned long retcode;
+अटल पूर्णांक
+setup_वापस(काष्ठा pt_regs *regs, काष्ठा kसंकेत *ksig, व्योम __user * frame)
+अणु
+	अचिन्हित दीर्घ handler = (अचिन्हित दीर्घ)ksig->ka.sa.sa_handler;
+	अचिन्हित दीर्घ retcode;
 
 	retcode = VDSO_SYMBOL(current->mm->context.vdso, rt_sigtramp);
 	regs->uregs[0] = ksig->sig;
-	regs->sp = (unsigned long)frame;
+	regs->sp = (अचिन्हित दीर्घ)frame;
 	regs->lp = retcode;
 	regs->ipc = handler;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-setup_rt_frame(struct ksignal *ksig, sigset_t * set, struct pt_regs *regs)
-{
-	struct rt_sigframe __user *frame =
-	    get_sigframe(ksig, regs, sizeof(*frame));
-	int err = 0;
+अटल पूर्णांक
+setup_rt_frame(काष्ठा kसंकेत *ksig, sigset_t * set, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा rt_sigframe __user *frame =
+	    get_sigframe(ksig, regs, माप(*frame));
+	पूर्णांक err = 0;
 
-	if (!access_ok(frame, sizeof(*frame)))
-		return -EFAULT;
+	अगर (!access_ok(frame, माप(*frame)))
+		वापस -EFAULT;
 
 	__put_user_error(0, &frame->uc.uc_flags, err);
-	__put_user_error(NULL, &frame->uc.uc_link, err);
+	__put_user_error(शून्य, &frame->uc.uc_link, err);
 
 	err |= __save_altstack(&frame->uc.uc_stack, regs->sp);
 	err |= setup_sigframe(frame, regs, set);
-	if (err == 0) {
-		setup_return(regs, ksig, frame);
-		if (ksig->ka.sa.sa_flags & SA_SIGINFO) {
+	अगर (err == 0) अणु
+		setup_वापस(regs, ksig, frame);
+		अगर (ksig->ka.sa.sa_flags & SA_SIGINFO) अणु
 			err |= copy_siginfo_to_user(&frame->info, &ksig->info);
-			regs->uregs[1] = (unsigned long)&frame->info;
-			regs->uregs[2] = (unsigned long)&frame->uc;
-		}
-	}
-	return err;
-}
+			regs->uregs[1] = (अचिन्हित दीर्घ)&frame->info;
+			regs->uregs[2] = (अचिन्हित दीर्घ)&frame->uc;
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /*
  * OK, we're invoking a handler
  */
-static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
-{
-	int ret;
+अटल व्योम handle_संकेत(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक ret;
 	sigset_t *oldset = sigmask_to_save();
 
-	if (in_syscall(regs)) {
-		/* Avoid additional syscall restarting via ret_slow_syscall. */
-		forget_syscall(regs);
+	अगर (in_syscall(regs)) अणु
+		/* Aव्योम additional syscall restarting via ret_slow_syscall. */
+		क्रमget_syscall(regs);
 
-		switch (regs->uregs[0]) {
-		case -ERESTART_RESTARTBLOCK:
-		case -ERESTARTNOHAND:
+		चयन (regs->uregs[0]) अणु
+		हाल -ERESTART_RESTARTBLOCK:
+		हाल -ERESTARTNOHAND:
 			regs->uregs[0] = -EINTR;
-			break;
-		case -ERESTARTSYS:
-			if (!(ksig->ka.sa.sa_flags & SA_RESTART)) {
+			अवरोध;
+		हाल -ERESTARTSYS:
+			अगर (!(ksig->ka.sa.sa_flags & SA_RESTART)) अणु
 				regs->uregs[0] = -EINTR;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			fallthrough;
-		case -ERESTARTNOINTR:
+		हाल -ERESTARTNOINTR:
 			regs->uregs[0] = regs->orig_r0;
 			regs->ipc -= 4;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/*
 	 * Set up the stack frame
 	 */
 	ret = setup_rt_frame(ksig, oldset, regs);
 
-	signal_setup_done(ret, ksig, 0);
-}
+	संकेत_setup_करोne(ret, ksig, 0);
+पूर्ण
 
 /*
  * Note that 'init' is a special process: it doesn't get signals it doesn't
- * want to handle. Thus you cannot kill init even with a SIGKILL even by
+ * want to handle. Thus you cannot समाप्त init even with a SIGKILL even by
  * mistake.
  *
- * Note that we go through the signals twice: once to check the signals that
- * the kernel can handle, and then we build all the user-level signal handling
+ * Note that we go through the संकेतs twice: once to check the संकेतs that
+ * the kernel can handle, and then we build all the user-level संकेत handling
  * stack-frames in one go after that.
  */
-static void do_signal(struct pt_regs *regs)
-{
-	struct ksignal ksig;
+अटल व्योम करो_संकेत(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा kसंकेत ksig;
 
-	if (get_signal(&ksig)) {
-		handle_signal(&ksig, regs);
-		return;
-	}
+	अगर (get_संकेत(&ksig)) अणु
+		handle_संकेत(&ksig, regs);
+		वापस;
+	पूर्ण
 
 	/*
-	 * If we were from a system call, check for system call restarting...
+	 * If we were from a प्रणाली call, check क्रम प्रणाली call restarting...
 	 */
-	if (in_syscall(regs)) {
-		/* Restart the system call - no handlers present */
+	अगर (in_syscall(regs)) अणु
+		/* Restart the प्रणाली call - no handlers present */
 
-		/* Avoid additional syscall restarting via ret_slow_syscall. */
-		forget_syscall(regs);
+		/* Aव्योम additional syscall restarting via ret_slow_syscall. */
+		क्रमget_syscall(regs);
 
-		switch (regs->uregs[0]) {
-		case -ERESTART_RESTARTBLOCK:
+		चयन (regs->uregs[0]) अणु
+		हाल -ERESTART_RESTARTBLOCK:
 			regs->uregs[15] = __NR_restart_syscall;
 			fallthrough;
-		case -ERESTARTNOHAND:
-		case -ERESTARTSYS:
-		case -ERESTARTNOINTR:
+		हाल -ERESTARTNOHAND:
+		हाल -ERESTARTSYS:
+		हाल -ERESTARTNOINTR:
 			regs->uregs[0] = regs->orig_r0;
 			regs->ipc -= 0x4;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	restore_saved_sigmask();
-}
+पूर्ण
 
-asmlinkage void
-do_notify_resume(struct pt_regs *regs, unsigned int thread_flags)
-{
-	if (thread_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL))
-		do_signal(regs);
+यंत्रlinkage व्योम
+करो_notअगरy_resume(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक thपढ़ो_flags)
+अणु
+	अगर (thपढ़ो_flags & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL))
+		करो_संकेत(regs);
 
-	if (thread_flags & _TIF_NOTIFY_RESUME)
-		tracehook_notify_resume(regs);
-}
+	अगर (thपढ़ो_flags & _TIF_NOTIFY_RESUME)
+		tracehook_notअगरy_resume(regs);
+पूर्ण

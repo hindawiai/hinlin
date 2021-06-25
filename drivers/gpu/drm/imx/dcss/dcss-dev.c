@@ -1,287 +1,288 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright 2019 NXP.
  */
 
-#include <linux/clk.h>
-#include <linux/of_device.h>
-#include <linux/of_graph.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <drm/drm_bridge_connector.h>
-#include <drm/drm_device.h>
-#include <drm/drm_modeset_helper.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <drm/drm_bridge_connector.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_modeset_helper.h>
 
-#include "dcss-dev.h"
-#include "dcss-kms.h"
+#समावेश "dcss-dev.h"
+#समावेश "dcss-kms.h"
 
-static void dcss_clocks_enable(struct dcss_dev *dcss)
-{
+अटल व्योम dcss_घड़ीs_enable(काष्ठा dcss_dev *dcss)
+अणु
 	clk_prepare_enable(dcss->axi_clk);
 	clk_prepare_enable(dcss->apb_clk);
 	clk_prepare_enable(dcss->rtrm_clk);
 	clk_prepare_enable(dcss->dtrc_clk);
 	clk_prepare_enable(dcss->pix_clk);
-}
+पूर्ण
 
-static void dcss_clocks_disable(struct dcss_dev *dcss)
-{
+अटल व्योम dcss_घड़ीs_disable(काष्ठा dcss_dev *dcss)
+अणु
 	clk_disable_unprepare(dcss->pix_clk);
 	clk_disable_unprepare(dcss->dtrc_clk);
 	clk_disable_unprepare(dcss->rtrm_clk);
 	clk_disable_unprepare(dcss->apb_clk);
 	clk_disable_unprepare(dcss->axi_clk);
-}
+पूर्ण
 
-static void dcss_disable_dtg_and_ss_cb(void *data)
-{
-	struct dcss_dev *dcss = data;
+अटल व्योम dcss_disable_dtg_and_ss_cb(व्योम *data)
+अणु
+	काष्ठा dcss_dev *dcss = data;
 
-	dcss->disable_callback = NULL;
+	dcss->disable_callback = शून्य;
 
 	dcss_ss_shutoff(dcss->ss);
 	dcss_dtg_shutoff(dcss->dtg);
 
 	complete(&dcss->disable_completion);
-}
+पूर्ण
 
-void dcss_disable_dtg_and_ss(struct dcss_dev *dcss)
-{
+व्योम dcss_disable_dtg_and_ss(काष्ठा dcss_dev *dcss)
+अणु
 	dcss->disable_callback = dcss_disable_dtg_and_ss_cb;
-}
+पूर्ण
 
-void dcss_enable_dtg_and_ss(struct dcss_dev *dcss)
-{
-	if (dcss->disable_callback)
-		dcss->disable_callback = NULL;
+व्योम dcss_enable_dtg_and_ss(काष्ठा dcss_dev *dcss)
+अणु
+	अगर (dcss->disable_callback)
+		dcss->disable_callback = शून्य;
 
 	dcss_dtg_enable(dcss->dtg);
 	dcss_ss_enable(dcss->ss);
-}
+पूर्ण
 
-static int dcss_submodules_init(struct dcss_dev *dcss)
-{
-	int ret = 0;
+अटल पूर्णांक dcss_submodules_init(काष्ठा dcss_dev *dcss)
+अणु
+	पूर्णांक ret = 0;
 	u32 base_addr = dcss->start_addr;
-	const struct dcss_type_data *devtype = dcss->devtype;
+	स्थिर काष्ठा dcss_type_data *devtype = dcss->devtype;
 
-	dcss_clocks_enable(dcss);
+	dcss_घड़ीs_enable(dcss);
 
 	ret = dcss_blkctl_init(dcss, base_addr + devtype->blkctl_ofs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = dcss_ctxld_init(dcss, base_addr + devtype->ctxld_ofs);
-	if (ret)
-		goto ctxld_err;
+	अगर (ret)
+		जाओ ctxld_err;
 
 	ret = dcss_dtg_init(dcss, base_addr + devtype->dtg_ofs);
-	if (ret)
-		goto dtg_err;
+	अगर (ret)
+		जाओ dtg_err;
 
 	ret = dcss_ss_init(dcss, base_addr + devtype->ss_ofs);
-	if (ret)
-		goto ss_err;
+	अगर (ret)
+		जाओ ss_err;
 
 	ret = dcss_dpr_init(dcss, base_addr + devtype->dpr_ofs);
-	if (ret)
-		goto dpr_err;
+	अगर (ret)
+		जाओ dpr_err;
 
 	ret = dcss_scaler_init(dcss, base_addr + devtype->scaler_ofs);
-	if (ret)
-		goto scaler_err;
+	अगर (ret)
+		जाओ scaler_err;
 
-	dcss_clocks_disable(dcss);
+	dcss_घड़ीs_disable(dcss);
 
-	return 0;
+	वापस 0;
 
 scaler_err:
-	dcss_dpr_exit(dcss->dpr);
+	dcss_dpr_निकास(dcss->dpr);
 
 dpr_err:
-	dcss_ss_exit(dcss->ss);
+	dcss_ss_निकास(dcss->ss);
 
 ss_err:
-	dcss_dtg_exit(dcss->dtg);
+	dcss_dtg_निकास(dcss->dtg);
 
 dtg_err:
-	dcss_ctxld_exit(dcss->ctxld);
+	dcss_ctxld_निकास(dcss->ctxld);
 
 ctxld_err:
-	dcss_blkctl_exit(dcss->blkctl);
+	dcss_blkctl_निकास(dcss->blkctl);
 
-	dcss_clocks_disable(dcss);
+	dcss_घड़ीs_disable(dcss);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dcss_submodules_stop(struct dcss_dev *dcss)
-{
-	dcss_clocks_enable(dcss);
-	dcss_scaler_exit(dcss->scaler);
-	dcss_dpr_exit(dcss->dpr);
-	dcss_ss_exit(dcss->ss);
-	dcss_dtg_exit(dcss->dtg);
-	dcss_ctxld_exit(dcss->ctxld);
-	dcss_blkctl_exit(dcss->blkctl);
-	dcss_clocks_disable(dcss);
-}
+अटल व्योम dcss_submodules_stop(काष्ठा dcss_dev *dcss)
+अणु
+	dcss_घड़ीs_enable(dcss);
+	dcss_scaler_निकास(dcss->scaler);
+	dcss_dpr_निकास(dcss->dpr);
+	dcss_ss_निकास(dcss->ss);
+	dcss_dtg_निकास(dcss->dtg);
+	dcss_ctxld_निकास(dcss->ctxld);
+	dcss_blkctl_निकास(dcss->blkctl);
+	dcss_घड़ीs_disable(dcss);
+पूर्ण
 
-static int dcss_clks_init(struct dcss_dev *dcss)
-{
-	int i;
-	struct {
-		const char *id;
-		struct clk **clk;
-	} clks[] = {
-		{"apb",   &dcss->apb_clk},
-		{"axi",   &dcss->axi_clk},
-		{"pix",   &dcss->pix_clk},
-		{"rtrm",  &dcss->rtrm_clk},
-		{"dtrc",  &dcss->dtrc_clk},
-	};
+अटल पूर्णांक dcss_clks_init(काष्ठा dcss_dev *dcss)
+अणु
+	पूर्णांक i;
+	काष्ठा अणु
+		स्थिर अक्षर *id;
+		काष्ठा clk **clk;
+	पूर्ण clks[] = अणु
+		अणु"apb",   &dcss->apb_clkपूर्ण,
+		अणु"axi",   &dcss->axi_clkपूर्ण,
+		अणु"pix",   &dcss->pix_clkपूर्ण,
+		अणु"rtrm",  &dcss->rtrm_clkपूर्ण,
+		अणु"dtrc",  &dcss->dtrc_clkपूर्ण,
+	पूर्ण;
 
-	for (i = 0; i < ARRAY_SIZE(clks); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(clks); i++) अणु
 		*clks[i].clk = devm_clk_get(dcss->dev, clks[i].id);
-		if (IS_ERR(*clks[i].clk)) {
+		अगर (IS_ERR(*clks[i].clk)) अणु
 			dev_err(dcss->dev, "failed to get %s clock\n",
 				clks[i].id);
-			return PTR_ERR(*clks[i].clk);
-		}
-	}
+			वापस PTR_ERR(*clks[i].clk);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dcss_clks_release(struct dcss_dev *dcss)
-{
+अटल व्योम dcss_clks_release(काष्ठा dcss_dev *dcss)
+अणु
 	devm_clk_put(dcss->dev, dcss->dtrc_clk);
 	devm_clk_put(dcss->dev, dcss->rtrm_clk);
 	devm_clk_put(dcss->dev, dcss->pix_clk);
 	devm_clk_put(dcss->dev, dcss->axi_clk);
 	devm_clk_put(dcss->dev, dcss->apb_clk);
-}
+पूर्ण
 
-struct dcss_dev *dcss_dev_create(struct device *dev, bool hdmi_output)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	int ret;
-	struct resource *res;
-	struct dcss_dev *dcss;
-	const struct dcss_type_data *devtype;
+काष्ठा dcss_dev *dcss_dev_create(काष्ठा device *dev, bool hdmi_output)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	पूर्णांक ret;
+	काष्ठा resource *res;
+	काष्ठा dcss_dev *dcss;
+	स्थिर काष्ठा dcss_type_data *devtype;
 
 	devtype = of_device_get_match_data(dev);
-	if (!devtype) {
+	अगर (!devtype) अणु
 		dev_err(dev, "no device match found\n");
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(dev, "cannot get memory resource\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	dcss = kzalloc(sizeof(*dcss), GFP_KERNEL);
-	if (!dcss)
-		return ERR_PTR(-ENOMEM);
+	dcss = kzalloc(माप(*dcss), GFP_KERNEL);
+	अगर (!dcss)
+		वापस ERR_PTR(-ENOMEM);
 
 	dcss->dev = dev;
 	dcss->devtype = devtype;
 	dcss->hdmi_output = hdmi_output;
 
 	ret = dcss_clks_init(dcss);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "clocks initialization failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	dcss->of_port = of_graph_get_port_by_id(dev->of_node, 0);
-	if (!dcss->of_port) {
+	अगर (!dcss->of_port) अणु
 		dev_err(dev, "no port@0 node in %s\n", dev->of_node->full_name);
 		ret = -ENODEV;
-		goto clks_err;
-	}
+		जाओ clks_err;
+	पूर्ण
 
 	dcss->start_addr = res->start;
 
 	ret = dcss_submodules_init(dcss);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "submodules initialization failed\n");
-		goto clks_err;
-	}
+		जाओ clks_err;
+	पूर्ण
 
 	init_completion(&dcss->disable_completion);
 
-	pm_runtime_set_autosuspend_delay(dev, 100);
-	pm_runtime_use_autosuspend(dev);
-	pm_runtime_set_suspended(dev);
-	pm_runtime_allow(dev);
-	pm_runtime_enable(dev);
+	pm_runसमय_set_स्वतःsuspend_delay(dev, 100);
+	pm_runसमय_use_स्वतःsuspend(dev);
+	pm_runसमय_set_suspended(dev);
+	pm_runसमय_allow(dev);
+	pm_runसमय_enable(dev);
 
-	return dcss;
+	वापस dcss;
 
 clks_err:
 	dcss_clks_release(dcss);
 
 err:
-	kfree(dcss);
+	kमुक्त(dcss);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-void dcss_dev_destroy(struct dcss_dev *dcss)
-{
-	if (!pm_runtime_suspended(dcss->dev)) {
+व्योम dcss_dev_destroy(काष्ठा dcss_dev *dcss)
+अणु
+	अगर (!pm_runसमय_suspended(dcss->dev)) अणु
 		dcss_ctxld_suspend(dcss->ctxld);
-		dcss_clocks_disable(dcss);
-	}
+		dcss_घड़ीs_disable(dcss);
+	पूर्ण
 
-	pm_runtime_disable(dcss->dev);
+	pm_runसमय_disable(dcss->dev);
 
 	dcss_submodules_stop(dcss);
 
 	dcss_clks_release(dcss);
 
-	kfree(dcss);
-}
+	kमुक्त(dcss);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-int dcss_dev_suspend(struct device *dev)
-{
-	struct dcss_dev *dcss = dcss_drv_dev_to_dcss(dev);
-	struct drm_device *ddev = dcss_drv_dev_to_drm(dev);
-	struct dcss_kms_dev *kms = container_of(ddev, struct dcss_kms_dev, base);
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+पूर्णांक dcss_dev_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा dcss_dev *dcss = dcss_drv_dev_to_dcss(dev);
+	काष्ठा drm_device *ddev = dcss_drv_dev_to_drm(dev);
+	काष्ठा dcss_kms_dev *kms = container_of(ddev, काष्ठा dcss_kms_dev, base);
+	पूर्णांक ret;
 
 	drm_bridge_connector_disable_hpd(kms->connector);
 
 	drm_mode_config_helper_suspend(ddev);
 
-	if (pm_runtime_suspended(dev))
-		return 0;
+	अगर (pm_runसमय_suspended(dev))
+		वापस 0;
 
 	ret = dcss_ctxld_suspend(dcss->ctxld);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	dcss_clocks_disable(dcss);
+	dcss_घड़ीs_disable(dcss);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dcss_dev_resume(struct device *dev)
-{
-	struct dcss_dev *dcss = dcss_drv_dev_to_dcss(dev);
-	struct drm_device *ddev = dcss_drv_dev_to_drm(dev);
-	struct dcss_kms_dev *kms = container_of(ddev, struct dcss_kms_dev, base);
+पूर्णांक dcss_dev_resume(काष्ठा device *dev)
+अणु
+	काष्ठा dcss_dev *dcss = dcss_drv_dev_to_dcss(dev);
+	काष्ठा drm_device *ddev = dcss_drv_dev_to_drm(dev);
+	काष्ठा dcss_kms_dev *kms = container_of(ddev, काष्ठा dcss_kms_dev, base);
 
-	if (pm_runtime_suspended(dev)) {
+	अगर (pm_runसमय_suspended(dev)) अणु
 		drm_mode_config_helper_resume(ddev);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	dcss_clocks_enable(dcss);
+	dcss_घड़ीs_enable(dcss);
 
 	dcss_blkctl_cfg(dcss->blkctl);
 
@@ -291,35 +292,35 @@ int dcss_dev_resume(struct device *dev)
 
 	drm_bridge_connector_enable_hpd(kms->connector);
 
-	return 0;
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-#ifdef CONFIG_PM
-int dcss_dev_runtime_suspend(struct device *dev)
-{
-	struct dcss_dev *dcss = dcss_drv_dev_to_dcss(dev);
-	int ret;
+#अगर_घोषित CONFIG_PM
+पूर्णांक dcss_dev_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा dcss_dev *dcss = dcss_drv_dev_to_dcss(dev);
+	पूर्णांक ret;
 
 	ret = dcss_ctxld_suspend(dcss->ctxld);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	dcss_clocks_disable(dcss);
+	dcss_घड़ीs_disable(dcss);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dcss_dev_runtime_resume(struct device *dev)
-{
-	struct dcss_dev *dcss = dcss_drv_dev_to_dcss(dev);
+पूर्णांक dcss_dev_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा dcss_dev *dcss = dcss_drv_dev_to_dcss(dev);
 
-	dcss_clocks_enable(dcss);
+	dcss_घड़ीs_enable(dcss);
 
 	dcss_blkctl_cfg(dcss->blkctl);
 
 	dcss_ctxld_resume(dcss->ctxld);
 
-	return 0;
-}
-#endif /* CONFIG_PM */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */

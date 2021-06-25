@@ -1,109 +1,110 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  dcdbas.c: Dell Systems Management Base Driver
  *
- *  The Dell Systems Management Base Driver provides a sysfs interface for
- *  systems management software to perform System Management Interrupts (SMIs)
- *  and Host Control Actions (power cycle or power off after OS shutdown) on
- *  Dell systems.
+ *  The Dell Systems Management Base Driver provides a sysfs पूर्णांकerface क्रम
+ *  प्रणालीs management software to perक्रमm System Management Interrupts (SMIs)
+ *  and Host Control Actions (घातer cycle or घातer off after OS shutकरोwn) on
+ *  Dell प्रणालीs.
  *
- *  See Documentation/driver-api/dcdbas.rst for more information.
+ *  See Documentation/driver-api/dcdbas.rst क्रम more inक्रमmation.
  *
  *  Copyright (C) 1995-2006 Dell Inc.
  */
 
-#include <linux/platform_device.h>
-#include <linux/acpi.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmi.h>
-#include <linux/errno.h>
-#include <linux/cpu.h>
-#include <linux/gfp.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mc146818rtc.h>
-#include <linux/module.h>
-#include <linux/reboot.h>
-#include <linux/sched.h>
-#include <linux/smp.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/mutex.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/cpu.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mc146818rtc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/mutex.h>
 
-#include "dcdbas.h"
+#समावेश "dcdbas.h"
 
-#define DRIVER_NAME		"dcdbas"
-#define DRIVER_VERSION		"5.6.0-3.4"
-#define DRIVER_DESCRIPTION	"Dell Systems Management Base Driver"
+#घोषणा DRIVER_NAME		"dcdbas"
+#घोषणा DRIVER_VERSION		"5.6.0-3.4"
+#घोषणा DRIVER_DESCRIPTION	"Dell Systems Management Base Driver"
 
-static struct platform_device *dcdbas_pdev;
+अटल काष्ठा platक्रमm_device *dcdbas_pdev;
 
-static u8 *smi_data_buf;
-static dma_addr_t smi_data_buf_handle;
-static unsigned long smi_data_buf_size;
-static unsigned long max_smi_data_buf_size = MAX_SMI_DATA_BUF_SIZE;
-static u32 smi_data_buf_phys_addr;
-static DEFINE_MUTEX(smi_data_lock);
-static u8 *bios_buffer;
+अटल u8 *smi_data_buf;
+अटल dma_addr_t smi_data_buf_handle;
+अटल अचिन्हित दीर्घ smi_data_buf_size;
+अटल अचिन्हित दीर्घ max_smi_data_buf_size = MAX_SMI_DATA_BUF_SIZE;
+अटल u32 smi_data_buf_phys_addr;
+अटल DEFINE_MUTEX(smi_data_lock);
+अटल u8 *bios_buffer;
 
-static unsigned int host_control_action;
-static unsigned int host_control_smi_type;
-static unsigned int host_control_on_shutdown;
+अटल अचिन्हित पूर्णांक host_control_action;
+अटल अचिन्हित पूर्णांक host_control_smi_type;
+अटल अचिन्हित पूर्णांक host_control_on_shutकरोwn;
 
-static bool wsmt_enabled;
+अटल bool wsmt_enabled;
 
 /**
- * smi_data_buf_free: free SMI data buffer
+ * smi_data_buf_मुक्त: मुक्त SMI data buffer
  */
-static void smi_data_buf_free(void)
-{
-	if (!smi_data_buf || wsmt_enabled)
-		return;
+अटल व्योम smi_data_buf_मुक्त(व्योम)
+अणु
+	अगर (!smi_data_buf || wsmt_enabled)
+		वापस;
 
 	dev_dbg(&dcdbas_pdev->dev, "%s: phys: %x size: %lu\n",
 		__func__, smi_data_buf_phys_addr, smi_data_buf_size);
 
-	dma_free_coherent(&dcdbas_pdev->dev, smi_data_buf_size, smi_data_buf,
+	dma_मुक्त_coherent(&dcdbas_pdev->dev, smi_data_buf_size, smi_data_buf,
 			  smi_data_buf_handle);
-	smi_data_buf = NULL;
+	smi_data_buf = शून्य;
 	smi_data_buf_handle = 0;
 	smi_data_buf_phys_addr = 0;
 	smi_data_buf_size = 0;
-}
+पूर्ण
 
 /**
- * smi_data_buf_realloc: grow SMI data buffer if needed
+ * smi_data_buf_पुनः_स्मृति: grow SMI data buffer अगर needed
  */
-static int smi_data_buf_realloc(unsigned long size)
-{
-	void *buf;
+अटल पूर्णांक smi_data_buf_पुनः_स्मृति(अचिन्हित दीर्घ size)
+अणु
+	व्योम *buf;
 	dma_addr_t handle;
 
-	if (smi_data_buf_size >= size)
-		return 0;
+	अगर (smi_data_buf_size >= size)
+		वापस 0;
 
-	if (size > max_smi_data_buf_size)
-		return -EINVAL;
+	अगर (size > max_smi_data_buf_size)
+		वापस -EINVAL;
 
 	/* new buffer is needed */
 	buf = dma_alloc_coherent(&dcdbas_pdev->dev, size, &handle, GFP_KERNEL);
-	if (!buf) {
+	अगर (!buf) अणु
 		dev_dbg(&dcdbas_pdev->dev,
 			"%s: failed to allocate memory size %lu\n",
 			__func__, size);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	/* memory zeroed by dma_alloc_coherent */
 
-	if (smi_data_buf)
-		memcpy(buf, smi_data_buf, smi_data_buf_size);
+	अगर (smi_data_buf)
+		स_नकल(buf, smi_data_buf, smi_data_buf_size);
 
-	/* free any existing buffer */
-	smi_data_buf_free();
+	/* मुक्त any existing buffer */
+	smi_data_buf_मुक्त();
 
-	/* set up new buffer for use */
+	/* set up new buffer क्रम use */
 	smi_data_buf = buf;
 	smi_data_buf_handle = handle;
 	smi_data_buf_phys_addr = (u32) virt_to_phys(buf);
@@ -112,144 +113,144 @@ static int smi_data_buf_realloc(unsigned long size)
 	dev_dbg(&dcdbas_pdev->dev, "%s: phys: %x size: %lu\n",
 		__func__, smi_data_buf_phys_addr, smi_data_buf_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t smi_data_buf_phys_addr_show(struct device *dev,
-					   struct device_attribute *attr,
-					   char *buf)
-{
-	return sprintf(buf, "%x\n", smi_data_buf_phys_addr);
-}
+अटल sमाप_प्रकार smi_data_buf_phys_addr_show(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%x\n", smi_data_buf_phys_addr);
+पूर्ण
 
-static ssize_t smi_data_buf_size_show(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	return sprintf(buf, "%lu\n", smi_data_buf_size);
-}
+अटल sमाप_प्रकार smi_data_buf_size_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%lu\n", smi_data_buf_size);
+पूर्ण
 
-static ssize_t smi_data_buf_size_store(struct device *dev,
-				       struct device_attribute *attr,
-				       const char *buf, size_t count)
-{
-	unsigned long buf_size;
-	ssize_t ret;
+अटल sमाप_प्रकार smi_data_buf_size_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ buf_size;
+	sमाप_प्रकार ret;
 
-	buf_size = simple_strtoul(buf, NULL, 10);
+	buf_size = simple_म_से_अदीर्घ(buf, शून्य, 10);
 
 	/* make sure SMI data buffer is at least buf_size */
 	mutex_lock(&smi_data_lock);
-	ret = smi_data_buf_realloc(buf_size);
+	ret = smi_data_buf_पुनः_स्मृति(buf_size);
 	mutex_unlock(&smi_data_lock);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t smi_data_read(struct file *filp, struct kobject *kobj,
-			     struct bin_attribute *bin_attr,
-			     char *buf, loff_t pos, size_t count)
-{
-	ssize_t ret;
+अटल sमाप_प्रकार smi_data_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			     काष्ठा bin_attribute *bin_attr,
+			     अक्षर *buf, loff_t pos, माप_प्रकार count)
+अणु
+	sमाप_प्रकार ret;
 
 	mutex_lock(&smi_data_lock);
-	ret = memory_read_from_buffer(buf, count, &pos, smi_data_buf,
+	ret = memory_पढ़ो_from_buffer(buf, count, &pos, smi_data_buf,
 					smi_data_buf_size);
 	mutex_unlock(&smi_data_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t smi_data_write(struct file *filp, struct kobject *kobj,
-			      struct bin_attribute *bin_attr,
-			      char *buf, loff_t pos, size_t count)
-{
-	ssize_t ret;
+अटल sमाप_प्रकार smi_data_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			      काष्ठा bin_attribute *bin_attr,
+			      अक्षर *buf, loff_t pos, माप_प्रकार count)
+अणु
+	sमाप_प्रकार ret;
 
-	if ((pos + count) > max_smi_data_buf_size)
-		return -EINVAL;
+	अगर ((pos + count) > max_smi_data_buf_size)
+		वापस -EINVAL;
 
 	mutex_lock(&smi_data_lock);
 
-	ret = smi_data_buf_realloc(pos + count);
-	if (ret)
-		goto out;
+	ret = smi_data_buf_पुनः_स्मृति(pos + count);
+	अगर (ret)
+		जाओ out;
 
-	memcpy(smi_data_buf + pos, buf, count);
+	स_नकल(smi_data_buf + pos, buf, count);
 	ret = count;
 out:
 	mutex_unlock(&smi_data_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t host_control_action_show(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	return sprintf(buf, "%u\n", host_control_action);
-}
+अटल sमाप_प्रकार host_control_action_show(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", host_control_action);
+पूर्ण
 
-static ssize_t host_control_action_store(struct device *dev,
-					 struct device_attribute *attr,
-					 const char *buf, size_t count)
-{
-	ssize_t ret;
+अटल sमाप_प्रकार host_control_action_store(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	sमाप_प्रकार ret;
 
-	/* make sure buffer is available for host control command */
+	/* make sure buffer is available क्रम host control command */
 	mutex_lock(&smi_data_lock);
-	ret = smi_data_buf_realloc(sizeof(struct apm_cmd));
+	ret = smi_data_buf_पुनः_स्मृति(माप(काष्ठा apm_cmd));
 	mutex_unlock(&smi_data_lock);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	host_control_action = simple_strtoul(buf, NULL, 10);
-	return count;
-}
+	host_control_action = simple_म_से_अदीर्घ(buf, शून्य, 10);
+	वापस count;
+पूर्ण
 
-static ssize_t host_control_smi_type_show(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	return sprintf(buf, "%u\n", host_control_smi_type);
-}
+अटल sमाप_प्रकार host_control_smi_type_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", host_control_smi_type);
+पूर्ण
 
-static ssize_t host_control_smi_type_store(struct device *dev,
-					   struct device_attribute *attr,
-					   const char *buf, size_t count)
-{
-	host_control_smi_type = simple_strtoul(buf, NULL, 10);
-	return count;
-}
+अटल sमाप_प्रकार host_control_smi_type_store(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	host_control_smi_type = simple_म_से_अदीर्घ(buf, शून्य, 10);
+	वापस count;
+पूर्ण
 
-static ssize_t host_control_on_shutdown_show(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	return sprintf(buf, "%u\n", host_control_on_shutdown);
-}
+अटल sमाप_प्रकार host_control_on_shutकरोwn_show(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", host_control_on_shutकरोwn);
+पूर्ण
 
-static ssize_t host_control_on_shutdown_store(struct device *dev,
-					      struct device_attribute *attr,
-					      const char *buf, size_t count)
-{
-	host_control_on_shutdown = simple_strtoul(buf, NULL, 10);
-	return count;
-}
+अटल sमाप_प्रकार host_control_on_shutकरोwn_store(काष्ठा device *dev,
+					      काष्ठा device_attribute *attr,
+					      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	host_control_on_shutकरोwn = simple_म_से_अदीर्घ(buf, शून्य, 10);
+	वापस count;
+पूर्ण
 
-static int raise_smi(void *par)
-{
-	struct smi_cmd *smi_cmd = par;
+अटल पूर्णांक उठाओ_smi(व्योम *par)
+अणु
+	काष्ठा smi_cmd *smi_cmd = par;
 
-	if (smp_processor_id() != 0) {
+	अगर (smp_processor_id() != 0) अणु
 		dev_dbg(&dcdbas_pdev->dev, "%s: failed to get CPU 0\n",
 			__func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/* generate SMI */
-	/* inb to force posted write through and make SMI happen now */
-	asm volatile (
+	/* inb to क्रमce posted ग_लिखो through and make SMI happen now */
+	यंत्र अस्थिर (
 		"outb %b0,%w1\n"
 		"inb %w1"
 		: /* no output args */
@@ -260,97 +261,97 @@ static int raise_smi(void *par)
 		: "memory"
 	);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /**
  * dcdbas_smi_request: generate SMI request
  *
  * Called with smi_data_lock.
  */
-int dcdbas_smi_request(struct smi_cmd *smi_cmd)
-{
-	int ret;
+पूर्णांक dcdbas_smi_request(काष्ठा smi_cmd *smi_cmd)
+अणु
+	पूर्णांक ret;
 
-	if (smi_cmd->magic != SMI_CMD_MAGIC) {
+	अगर (smi_cmd->magic != SMI_CMD_MAGIC) अणु
 		dev_info(&dcdbas_pdev->dev, "%s: invalid magic value\n",
 			 __func__);
-		return -EBADR;
-	}
+		वापस -EBADR;
+	पूर्ण
 
 	/* SMI requires CPU 0 */
 	get_online_cpus();
-	ret = smp_call_on_cpu(0, raise_smi, smi_cmd, true);
+	ret = smp_call_on_cpu(0, उठाओ_smi, smi_cmd, true);
 	put_online_cpus();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * smi_request_store:
  *
  * The valid values are:
  * 0: zero SMI data buffer
- * 1: generate calling interface SMI
+ * 1: generate calling पूर्णांकerface SMI
  * 2: generate raw SMI
  *
- * User application writes smi_cmd to smi_data before telling driver
+ * User application ग_लिखोs smi_cmd to smi_data beक्रमe telling driver
  * to generate SMI.
  */
-static ssize_t smi_request_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	struct smi_cmd *smi_cmd;
-	unsigned long val = simple_strtoul(buf, NULL, 10);
-	ssize_t ret;
+अटल sमाप_प्रकार smi_request_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा smi_cmd *smi_cmd;
+	अचिन्हित दीर्घ val = simple_म_से_अदीर्घ(buf, शून्य, 10);
+	sमाप_प्रकार ret;
 
 	mutex_lock(&smi_data_lock);
 
-	if (smi_data_buf_size < sizeof(struct smi_cmd)) {
+	अगर (smi_data_buf_size < माप(काष्ठा smi_cmd)) अणु
 		ret = -ENODEV;
-		goto out;
-	}
-	smi_cmd = (struct smi_cmd *)smi_data_buf;
+		जाओ out;
+	पूर्ण
+	smi_cmd = (काष्ठा smi_cmd *)smi_data_buf;
 
-	switch (val) {
-	case 2:
+	चयन (val) अणु
+	हाल 2:
 		/* Raw SMI */
 		ret = dcdbas_smi_request(smi_cmd);
-		if (!ret)
+		अगर (!ret)
 			ret = count;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		/*
 		 * Calling Interface SMI
 		 *
 		 * Provide physical address of command buffer field within
-		 * the struct smi_cmd to BIOS.
+		 * the काष्ठा smi_cmd to BIOS.
 		 *
-		 * Because the address that smi_cmd (smi_data_buf) points to
-		 * will be from memremap() of a non-memory address if WSMT
+		 * Because the address that smi_cmd (smi_data_buf) poपूर्णांकs to
+		 * will be from memremap() of a non-memory address अगर WSMT
 		 * is present, we can't use virt_to_phys() on smi_cmd, so
 		 * we have to use the physical address that was saved when
-		 * the virtual address for smi_cmd was received.
+		 * the भव address क्रम smi_cmd was received.
 		 */
 		smi_cmd->ebx = smi_data_buf_phys_addr +
-				offsetof(struct smi_cmd, command_buffer);
+				दुरत्व(काष्ठा smi_cmd, command_buffer);
 		ret = dcdbas_smi_request(smi_cmd);
-		if (!ret)
+		अगर (!ret)
 			ret = count;
-		break;
-	case 0:
-		memset(smi_data_buf, 0, smi_data_buf_size);
+		अवरोध;
+	हाल 0:
+		स_रखो(smi_data_buf, 0, smi_data_buf_size);
 		ret = count;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
 	mutex_unlock(&smi_data_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(dcdbas_smi_request);
 
 /**
@@ -358,31 +359,31 @@ EXPORT_SYMBOL(dcdbas_smi_request);
  *
  * Caller must set up the host control command in smi_data_buf.
  */
-static int host_control_smi(void)
-{
-	struct apm_cmd *apm_cmd;
+अटल पूर्णांक host_control_smi(व्योम)
+अणु
+	काष्ठा apm_cmd *apm_cmd;
 	u8 *data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 num_ticks;
 	s8 cmd_status;
 	u8 index;
 
-	apm_cmd = (struct apm_cmd *)smi_data_buf;
+	apm_cmd = (काष्ठा apm_cmd *)smi_data_buf;
 	apm_cmd->status = ESM_STATUS_CMD_UNSUCCESSFUL;
 
-	switch (host_control_smi_type) {
-	case HC_SMITYPE_TYPE1:
+	चयन (host_control_smi_type) अणु
+	हाल HC_SMITYPE_TYPE1:
 		spin_lock_irqsave(&rtc_lock, flags);
-		/* write SMI data buffer physical address */
+		/* ग_लिखो SMI data buffer physical address */
 		data = (u8 *)&smi_data_buf_phys_addr;
-		for (index = PE1300_CMOS_CMD_STRUCT_PTR;
+		क्रम (index = PE1300_CMOS_CMD_STRUCT_PTR;
 		     index < (PE1300_CMOS_CMD_STRUCT_PTR + 4);
-		     index++, data++) {
+		     index++, data++) अणु
 			outb(index,
 			     (CMOS_BASE_PORT + CMOS_PAGE2_INDEX_PORT_PIIX4));
 			outb(*data,
 			     (CMOS_BASE_PORT + CMOS_PAGE2_DATA_PORT_PIIX4));
-		}
+		पूर्ण
 
 		/* first set status to -1 as called by spec */
 		cmd_status = ESM_STATUS_CMD_UNSUCCESSFUL;
@@ -392,199 +393,199 @@ static int host_control_smi(void)
 		outb(ESM_APM_CMD, PCAT_APM_CONTROL_PORT);
 		spin_unlock_irqrestore(&rtc_lock, flags);
 
-		/* wait a few to see if it executed */
+		/* रुको a few to see अगर it executed */
 		num_ticks = TIMEOUT_USEC_SHORT_SEMA_BLOCKING;
-		while ((cmd_status = inb(PCAT_APM_STATUS_PORT))
-		       == ESM_STATUS_CMD_UNSUCCESSFUL) {
+		जबतक ((cmd_status = inb(PCAT_APM_STATUS_PORT))
+		       == ESM_STATUS_CMD_UNSUCCESSFUL) अणु
 			num_ticks--;
-			if (num_ticks == EXPIRED_TIMER)
-				return -ETIME;
-		}
-		break;
+			अगर (num_ticks == EXPIRED_TIMER)
+				वापस -ETIME;
+		पूर्ण
+		अवरोध;
 
-	case HC_SMITYPE_TYPE2:
-	case HC_SMITYPE_TYPE3:
+	हाल HC_SMITYPE_TYPE2:
+	हाल HC_SMITYPE_TYPE3:
 		spin_lock_irqsave(&rtc_lock, flags);
-		/* write SMI data buffer physical address */
+		/* ग_लिखो SMI data buffer physical address */
 		data = (u8 *)&smi_data_buf_phys_addr;
-		for (index = PE1400_CMOS_CMD_STRUCT_PTR;
+		क्रम (index = PE1400_CMOS_CMD_STRUCT_PTR;
 		     index < (PE1400_CMOS_CMD_STRUCT_PTR + 4);
-		     index++, data++) {
+		     index++, data++) अणु
 			outb(index, (CMOS_BASE_PORT + CMOS_PAGE1_INDEX_PORT));
 			outb(*data, (CMOS_BASE_PORT + CMOS_PAGE1_DATA_PORT));
-		}
+		पूर्ण
 
 		/* generate SMM call */
-		if (host_control_smi_type == HC_SMITYPE_TYPE3)
+		अगर (host_control_smi_type == HC_SMITYPE_TYPE3)
 			outb(ESM_APM_CMD, PCAT_APM_CONTROL_PORT);
-		else
+		अन्यथा
 			outb(ESM_APM_CMD, PE1400_APM_CONTROL_PORT);
 
-		/* restore RTC index pointer since it was written to above */
+		/* restore RTC index poपूर्णांकer since it was written to above */
 		CMOS_READ(RTC_REG_C);
 		spin_unlock_irqrestore(&rtc_lock, flags);
 
-		/* read control port back to serialize write */
+		/* पढ़ो control port back to serialize ग_लिखो */
 		cmd_status = inb(PE1400_APM_CONTROL_PORT);
 
-		/* wait a few to see if it executed */
+		/* रुको a few to see अगर it executed */
 		num_ticks = TIMEOUT_USEC_SHORT_SEMA_BLOCKING;
-		while (apm_cmd->status == ESM_STATUS_CMD_UNSUCCESSFUL) {
+		जबतक (apm_cmd->status == ESM_STATUS_CMD_UNSUCCESSFUL) अणु
 			num_ticks--;
-			if (num_ticks == EXPIRED_TIMER)
-				return -ETIME;
-		}
-		break;
+			अगर (num_ticks == EXPIRED_TIMER)
+				वापस -ETIME;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		dev_dbg(&dcdbas_pdev->dev, "%s: invalid SMI type %u\n",
 			__func__, host_control_smi_type);
-		return -ENOSYS;
-	}
+		वापस -ENOSYS;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * dcdbas_host_control: initiate host control
  *
- * This function is called by the driver after the system has
- * finished shutting down if the user application specified a
- * host control action to perform on shutdown.  It is safe to
- * use smi_data_buf at this point because the system has finished
- * shutting down and no userspace apps are running.
+ * This function is called by the driver after the प्रणाली has
+ * finished shutting करोwn अगर the user application specअगरied a
+ * host control action to perक्रमm on shutकरोwn.  It is safe to
+ * use smi_data_buf at this poपूर्णांक because the प्रणाली has finished
+ * shutting करोwn and no userspace apps are running.
  */
-static void dcdbas_host_control(void)
-{
-	struct apm_cmd *apm_cmd;
+अटल व्योम dcdbas_host_control(व्योम)
+अणु
+	काष्ठा apm_cmd *apm_cmd;
 	u8 action;
 
-	if (host_control_action == HC_ACTION_NONE)
-		return;
+	अगर (host_control_action == HC_ACTION_NONE)
+		वापस;
 
 	action = host_control_action;
 	host_control_action = HC_ACTION_NONE;
 
-	if (!smi_data_buf) {
+	अगर (!smi_data_buf) अणु
 		dev_dbg(&dcdbas_pdev->dev, "%s: no SMI buffer\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (smi_data_buf_size < sizeof(struct apm_cmd)) {
+	अगर (smi_data_buf_size < माप(काष्ठा apm_cmd)) अणु
 		dev_dbg(&dcdbas_pdev->dev, "%s: SMI buffer too small\n",
 			__func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	apm_cmd = (struct apm_cmd *)smi_data_buf;
+	apm_cmd = (काष्ठा apm_cmd *)smi_data_buf;
 
-	/* power off takes precedence */
-	if (action & HC_ACTION_HOST_CONTROL_POWEROFF) {
+	/* घातer off takes precedence */
+	अगर (action & HC_ACTION_HOST_CONTROL_POWEROFF) अणु
 		apm_cmd->command = ESM_APM_POWER_CYCLE;
 		apm_cmd->reserved = 0;
-		*((s16 *)&apm_cmd->parameters.shortreq.parm[0]) = (s16) 0;
+		*((s16 *)&apm_cmd->parameters.लघुreq.parm[0]) = (s16) 0;
 		host_control_smi();
-	} else if (action & HC_ACTION_HOST_CONTROL_POWERCYCLE) {
+	पूर्ण अन्यथा अगर (action & HC_ACTION_HOST_CONTROL_POWERCYCLE) अणु
 		apm_cmd->command = ESM_APM_POWER_CYCLE;
 		apm_cmd->reserved = 0;
-		*((s16 *)&apm_cmd->parameters.shortreq.parm[0]) = (s16) 20;
+		*((s16 *)&apm_cmd->parameters.लघुreq.parm[0]) = (s16) 20;
 		host_control_smi();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* WSMT */
 
-static u8 checksum(u8 *buffer, u8 length)
-{
+अटल u8 checksum(u8 *buffer, u8 length)
+अणु
 	u8 sum = 0;
 	u8 *end = buffer + length;
 
-	while (buffer < end)
+	जबतक (buffer < end)
 		sum += *buffer++;
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
-static inline struct smm_eps_table *check_eps_table(u8 *addr)
-{
-	struct smm_eps_table *eps = (struct smm_eps_table *)addr;
+अटल अंतरभूत काष्ठा smm_eps_table *check_eps_table(u8 *addr)
+अणु
+	काष्ठा smm_eps_table *eps = (काष्ठा smm_eps_table *)addr;
 
-	if (strncmp(eps->smm_comm_buff_anchor, SMM_EPS_SIG, 4) != 0)
-		return NULL;
+	अगर (म_भेदन(eps->smm_comm_buff_anchor, SMM_EPS_SIG, 4) != 0)
+		वापस शून्य;
 
-	if (checksum(addr, eps->length) != 0)
-		return NULL;
+	अगर (checksum(addr, eps->length) != 0)
+		वापस शून्य;
 
-	return eps;
-}
+	वापस eps;
+पूर्ण
 
-static int dcdbas_check_wsmt(void)
-{
-	const struct dmi_device *dev = NULL;
-	struct acpi_table_wsmt *wsmt = NULL;
-	struct smm_eps_table *eps = NULL;
+अटल पूर्णांक dcdbas_check_wsmt(व्योम)
+अणु
+	स्थिर काष्ठा dmi_device *dev = शून्य;
+	काष्ठा acpi_table_wsmt *wsmt = शून्य;
+	काष्ठा smm_eps_table *eps = शून्य;
 	u64 bios_buf_paddr;
 	u64 remap_size;
 	u8 *addr;
 
-	acpi_get_table(ACPI_SIG_WSMT, 0, (struct acpi_table_header **)&wsmt);
-	if (!wsmt)
-		return 0;
+	acpi_get_table(ACPI_SIG_WSMT, 0, (काष्ठा acpi_table_header **)&wsmt);
+	अगर (!wsmt)
+		वापस 0;
 
-	/* Check if WSMT ACPI table shows that protection is enabled */
-	if (!(wsmt->protection_flags & ACPI_WSMT_FIXED_COMM_BUFFERS) ||
+	/* Check अगर WSMT ACPI table shows that protection is enabled */
+	अगर (!(wsmt->protection_flags & ACPI_WSMT_FIXED_COMM_BUFFERS) ||
 	    !(wsmt->protection_flags & ACPI_WSMT_COMM_BUFFER_NESTED_PTR_PROTECTION))
-		return 0;
+		वापस 0;
 
 	/*
-	 * BIOS could provide the address/size of the protected buffer
-	 * in an SMBIOS string or in an EPS structure in 0xFxxxx.
+	 * BIOS could provide the address/size of the रक्षित buffer
+	 * in an SMBIOS string or in an EPS काष्ठाure in 0xFxxxx.
 	 */
 
-	/* Check SMBIOS for buffer address */
-	while ((dev = dmi_find_device(DMI_DEV_TYPE_OEM_STRING, NULL, dev)))
-		if (sscanf(dev->name, "30[%16llx;%8llx]", &bios_buf_paddr,
+	/* Check SMBIOS क्रम buffer address */
+	जबतक ((dev = dmi_find_device(DMI_DEV_TYPE_OEM_STRING, शून्य, dev)))
+		अगर (माला_पूछो(dev->name, "30[%16llx;%8llx]", &bios_buf_paddr,
 		    &remap_size) == 2)
-			goto remap;
+			जाओ remap;
 
-	/* Scan for EPS (entry point structure) */
-	for (addr = (u8 *)__va(0xf0000);
-	     addr < (u8 *)__va(0x100000 - sizeof(struct smm_eps_table));
-	     addr += 16) {
+	/* Scan क्रम EPS (entry poपूर्णांक काष्ठाure) */
+	क्रम (addr = (u8 *)__va(0xf0000);
+	     addr < (u8 *)__va(0x100000 - माप(काष्ठा smm_eps_table));
+	     addr += 16) अणु
 		eps = check_eps_table(addr);
-		if (eps)
-			break;
-	}
+		अगर (eps)
+			अवरोध;
+	पूर्ण
 
-	if (!eps) {
+	अगर (!eps) अणु
 		dev_dbg(&dcdbas_pdev->dev, "found WSMT, but no firmware buffer found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	bios_buf_paddr = eps->smm_comm_buff_addr;
 	remap_size = eps->num_of_4k_pages * PAGE_SIZE;
 
 remap:
 	/*
-	 * Get physical address of buffer and map to virtual address.
-	 * Table gives size in 4K pages, regardless of actual system page size.
+	 * Get physical address of buffer and map to भव address.
+	 * Table gives size in 4K pages, regardless of actual प्रणाली page size.
 	 */
-	if (upper_32_bits(bios_buf_paddr + 8)) {
+	अगर (upper_32_bits(bios_buf_paddr + 8)) अणु
 		dev_warn(&dcdbas_pdev->dev, "found WSMT, but buffer address is above 4GB\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	/*
 	 * Limit remap size to MAX_SMI_DATA_BUF_SIZE + 8 (since the first 8
-	 * bytes are used for a semaphore, not the data buffer itself).
+	 * bytes are used क्रम a semaphore, not the data buffer itself).
 	 */
-	if (remap_size > MAX_SMI_DATA_BUF_SIZE + 8)
+	अगर (remap_size > MAX_SMI_DATA_BUF_SIZE + 8)
 		remap_size = MAX_SMI_DATA_BUF_SIZE + 8;
 
 	bios_buffer = memremap(bios_buf_paddr, remap_size, MEMREMAP_WB);
-	if (!bios_buffer) {
+	अगर (!bios_buffer) अणु
 		dev_warn(&dcdbas_pdev->dev, "found WSMT, but failed to map buffer\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* First 8 bytes is for a semaphore, not part of the smi_data_buf */
+	/* First 8 bytes is क्रम a semaphore, not part of the smi_data_buf */
 	smi_data_buf_phys_addr = bios_buf_paddr + 8;
 	smi_data_buf = bios_buffer + 8;
 	smi_data_buf_size = remap_size - 8;
@@ -592,175 +593,175 @@ remap:
 	wsmt_enabled = true;
 	dev_info(&dcdbas_pdev->dev,
 		 "WSMT found, using firmware-provided SMI buffer.\n");
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
- * dcdbas_reboot_notify: handle reboot notification for host control
+ * dcdbas_reboot_notअगरy: handle reboot notअगरication क्रम host control
  */
-static int dcdbas_reboot_notify(struct notifier_block *nb, unsigned long code,
-				void *unused)
-{
-	switch (code) {
-	case SYS_DOWN:
-	case SYS_HALT:
-	case SYS_POWER_OFF:
-		if (host_control_on_shutdown) {
-			/* firmware is going to perform host control action */
-			printk(KERN_WARNING "Please wait for shutdown "
+अटल पूर्णांक dcdbas_reboot_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ code,
+				व्योम *unused)
+अणु
+	चयन (code) अणु
+	हाल SYS_DOWN:
+	हाल SYS_HALT:
+	हाल SYS_POWER_OFF:
+		अगर (host_control_on_shutकरोwn) अणु
+			/* firmware is going to perक्रमm host control action */
+			prपूर्णांकk(KERN_WARNING "Please wait for shutdown "
 			       "action to complete...\n");
 			dcdbas_host_control();
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block dcdbas_reboot_nb = {
-	.notifier_call = dcdbas_reboot_notify,
-	.next = NULL,
-	.priority = INT_MIN
-};
+अटल काष्ठा notअगरier_block dcdbas_reboot_nb = अणु
+	.notअगरier_call = dcdbas_reboot_notअगरy,
+	.next = शून्य,
+	.priority = पूर्णांक_न्यून
+पूर्ण;
 
-static DCDBAS_BIN_ATTR_RW(smi_data);
+अटल DCDBAS_BIN_ATTR_RW(smi_data);
 
-static struct bin_attribute *dcdbas_bin_attrs[] = {
+अटल काष्ठा bin_attribute *dcdbas_bin_attrs[] = अणु
 	&bin_attr_smi_data,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static DCDBAS_DEV_ATTR_RW(smi_data_buf_size);
-static DCDBAS_DEV_ATTR_RO(smi_data_buf_phys_addr);
-static DCDBAS_DEV_ATTR_WO(smi_request);
-static DCDBAS_DEV_ATTR_RW(host_control_action);
-static DCDBAS_DEV_ATTR_RW(host_control_smi_type);
-static DCDBAS_DEV_ATTR_RW(host_control_on_shutdown);
+अटल DCDBAS_DEV_ATTR_RW(smi_data_buf_size);
+अटल DCDBAS_DEV_ATTR_RO(smi_data_buf_phys_addr);
+अटल DCDBAS_DEV_ATTR_WO(smi_request);
+अटल DCDBAS_DEV_ATTR_RW(host_control_action);
+अटल DCDBAS_DEV_ATTR_RW(host_control_smi_type);
+अटल DCDBAS_DEV_ATTR_RW(host_control_on_shutकरोwn);
 
-static struct attribute *dcdbas_dev_attrs[] = {
+अटल काष्ठा attribute *dcdbas_dev_attrs[] = अणु
 	&dev_attr_smi_data_buf_size.attr,
 	&dev_attr_smi_data_buf_phys_addr.attr,
 	&dev_attr_smi_request.attr,
 	&dev_attr_host_control_action.attr,
 	&dev_attr_host_control_smi_type.attr,
-	&dev_attr_host_control_on_shutdown.attr,
-	NULL
-};
+	&dev_attr_host_control_on_shutकरोwn.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group dcdbas_attr_group = {
+अटल स्थिर काष्ठा attribute_group dcdbas_attr_group = अणु
 	.attrs = dcdbas_dev_attrs,
 	.bin_attrs = dcdbas_bin_attrs,
-};
+पूर्ण;
 
-static int dcdbas_probe(struct platform_device *dev)
-{
-	int error;
+अटल पूर्णांक dcdbas_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक error;
 
 	host_control_action = HC_ACTION_NONE;
 	host_control_smi_type = HC_SMITYPE_NONE;
 
 	dcdbas_pdev = dev;
 
-	/* Check if ACPI WSMT table specifies protected SMI buffer address */
+	/* Check अगर ACPI WSMT table specअगरies रक्षित SMI buffer address */
 	error = dcdbas_check_wsmt();
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
 	/*
 	 * BIOS SMI calls require buffer addresses be in 32-bit address space.
-	 * This is done by setting the DMA mask below.
+	 * This is करोne by setting the DMA mask below.
 	 */
 	error = dma_set_coherent_mask(&dcdbas_pdev->dev, DMA_BIT_MASK(32));
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = sysfs_create_group(&dev->dev.kobj, &dcdbas_attr_group);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	register_reboot_notifier(&dcdbas_reboot_nb);
+	रेजिस्टर_reboot_notअगरier(&dcdbas_reboot_nb);
 
 	dev_info(&dev->dev, "%s (version %s)\n",
 		 DRIVER_DESCRIPTION, DRIVER_VERSION);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcdbas_remove(struct platform_device *dev)
-{
-	unregister_reboot_notifier(&dcdbas_reboot_nb);
-	sysfs_remove_group(&dev->dev.kobj, &dcdbas_attr_group);
+अटल पूर्णांक dcdbas_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	unरेजिस्टर_reboot_notअगरier(&dcdbas_reboot_nb);
+	sysfs_हटाओ_group(&dev->dev.kobj, &dcdbas_attr_group);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver dcdbas_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver dcdbas_driver = अणु
+	.driver		= अणु
 		.name	= DRIVER_NAME,
-	},
+	पूर्ण,
 	.probe		= dcdbas_probe,
-	.remove		= dcdbas_remove,
-};
+	.हटाओ		= dcdbas_हटाओ,
+पूर्ण;
 
-static const struct platform_device_info dcdbas_dev_info __initconst = {
+अटल स्थिर काष्ठा platक्रमm_device_info dcdbas_dev_info __initस्थिर = अणु
 	.name		= DRIVER_NAME,
 	.id		= -1,
 	.dma_mask	= DMA_BIT_MASK(32),
-};
+पूर्ण;
 
-static struct platform_device *dcdbas_pdev_reg;
+अटल काष्ठा platक्रमm_device *dcdbas_pdev_reg;
 
 /**
  * dcdbas_init: initialize driver
  */
-static int __init dcdbas_init(void)
-{
-	int error;
+अटल पूर्णांक __init dcdbas_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	error = platform_driver_register(&dcdbas_driver);
-	if (error)
-		return error;
+	error = platक्रमm_driver_रेजिस्टर(&dcdbas_driver);
+	अगर (error)
+		वापस error;
 
-	dcdbas_pdev_reg = platform_device_register_full(&dcdbas_dev_info);
-	if (IS_ERR(dcdbas_pdev_reg)) {
+	dcdbas_pdev_reg = platक्रमm_device_रेजिस्टर_full(&dcdbas_dev_info);
+	अगर (IS_ERR(dcdbas_pdev_reg)) अणु
 		error = PTR_ERR(dcdbas_pdev_reg);
-		goto err_unregister_driver;
-	}
+		जाओ err_unरेजिस्टर_driver;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- err_unregister_driver:
-	platform_driver_unregister(&dcdbas_driver);
-	return error;
-}
+ err_unरेजिस्टर_driver:
+	platक्रमm_driver_unरेजिस्टर(&dcdbas_driver);
+	वापस error;
+पूर्ण
 
 /**
- * dcdbas_exit: perform driver cleanup
+ * dcdbas_निकास: perक्रमm driver cleanup
  */
-static void __exit dcdbas_exit(void)
-{
+अटल व्योम __निकास dcdbas_निकास(व्योम)
+अणु
 	/*
 	 * make sure functions that use dcdbas_pdev are called
-	 * before platform_device_unregister
+	 * beक्रमe platक्रमm_device_unरेजिस्टर
 	 */
-	unregister_reboot_notifier(&dcdbas_reboot_nb);
+	unरेजिस्टर_reboot_notअगरier(&dcdbas_reboot_nb);
 
 	/*
-	 * We have to free the buffer here instead of dcdbas_remove
-	 * because only in module exit function we can be sure that
-	 * all sysfs attributes belonging to this module have been
+	 * We have to मुक्त the buffer here instead of dcdbas_हटाओ
+	 * because only in module निकास function we can be sure that
+	 * all sysfs attributes beदीर्घing to this module have been
 	 * released.
 	 */
-	if (dcdbas_pdev)
-		smi_data_buf_free();
-	if (bios_buffer)
+	अगर (dcdbas_pdev)
+		smi_data_buf_मुक्त();
+	अगर (bios_buffer)
 		memunmap(bios_buffer);
-	platform_device_unregister(dcdbas_pdev_reg);
-	platform_driver_unregister(&dcdbas_driver);
-}
+	platक्रमm_device_unरेजिस्टर(dcdbas_pdev_reg);
+	platक्रमm_driver_unरेजिस्टर(&dcdbas_driver);
+पूर्ण
 
 subsys_initcall_sync(dcdbas_init);
-module_exit(dcdbas_exit);
+module_निकास(dcdbas_निकास);
 
 MODULE_DESCRIPTION(DRIVER_DESCRIPTION " (version " DRIVER_VERSION ")");
 MODULE_VERSION(DRIVER_VERSION);

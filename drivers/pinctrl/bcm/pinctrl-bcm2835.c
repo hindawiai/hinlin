@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for Broadcom BCM2835 GPIO unit (pinctrl + GPIO)
+ * Driver क्रम Broadcom BCM2835 GPIO unit (pinctrl + GPIO)
  *
  * Copyright (C) 2012 Chris Boot, Simon Arlott, Stephen Warren
  *
  * This driver is inspired by:
- * pinctrl-nomadik.c, please see original file for copyright information
- * pinctrl-tegra.c, please see original file for copyright information
+ * pinctrl-nomadik.c, please see original file क्रम copyright inक्रमmation
+ * pinctrl-tegra.c, please see original file क्रम copyright inक्रमmation
  */
 
-#include <linux/bitmap.h>
-#include <linux/bug.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/gpio/driver.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/irqdesc.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/of_address.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/pinctrl/machine.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/platform_device.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <dt-bindings/pinctrl/bcm2835.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqdesc.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/pinctrl/machine.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <dt-bindings/pinctrl/bcm2835.h>
 
-#define MODULE_NAME "pinctrl-bcm2835"
-#define BCM2835_NUM_GPIOS 54
-#define BCM2711_NUM_GPIOS 58
-#define BCM2835_NUM_BANKS 2
-#define BCM2835_NUM_IRQS  3
+#घोषणा MODULE_NAME "pinctrl-bcm2835"
+#घोषणा BCM2835_NUM_GPIOS 54
+#घोषणा BCM2711_NUM_GPIOS 58
+#घोषणा BCM2835_NUM_BANKS 2
+#घोषणा BCM2835_NUM_IRQS  3
 
-/* GPIO register offsets */
-#define GPFSEL0		0x0	/* Function Select */
-#define GPSET0		0x1c	/* Pin Output Set */
-#define GPCLR0		0x28	/* Pin Output Clear */
-#define GPLEV0		0x34	/* Pin Level */
-#define GPEDS0		0x40	/* Pin Event Detect Status */
-#define GPREN0		0x4c	/* Pin Rising Edge Detect Enable */
-#define GPFEN0		0x58	/* Pin Falling Edge Detect Enable */
-#define GPHEN0		0x64	/* Pin High Detect Enable */
-#define GPLEN0		0x70	/* Pin Low Detect Enable */
-#define GPAREN0		0x7c	/* Pin Async Rising Edge Detect */
-#define GPAFEN0		0x88	/* Pin Async Falling Edge Detect */
-#define GPPUD		0x94	/* Pin Pull-up/down Enable */
-#define GPPUDCLK0	0x98	/* Pin Pull-up/down Enable Clock */
-#define GP_GPIO_PUP_PDN_CNTRL_REG0 0xe4 /* 2711 Pin Pull-up/down select */
+/* GPIO रेजिस्टर offsets */
+#घोषणा GPFSEL0		0x0	/* Function Select */
+#घोषणा GPSET0		0x1c	/* Pin Output Set */
+#घोषणा GPCLR0		0x28	/* Pin Output Clear */
+#घोषणा GPLEV0		0x34	/* Pin Level */
+#घोषणा GPEDS0		0x40	/* Pin Event Detect Status */
+#घोषणा GPREN0		0x4c	/* Pin Rising Edge Detect Enable */
+#घोषणा GPFEN0		0x58	/* Pin Falling Edge Detect Enable */
+#घोषणा GPHEN0		0x64	/* Pin High Detect Enable */
+#घोषणा GPLEN0		0x70	/* Pin Low Detect Enable */
+#घोषणा GPAREN0		0x7c	/* Pin Async Rising Edge Detect */
+#घोषणा GPAFEN0		0x88	/* Pin Async Falling Edge Detect */
+#घोषणा GPPUD		0x94	/* Pin Pull-up/करोwn Enable */
+#घोषणा GPPUDCLK0	0x98	/* Pin Pull-up/करोwn Enable Clock */
+#घोषणा GP_GPIO_PUP_PDN_CNTRL_REG0 0xe4 /* 2711 Pin Pull-up/करोwn select */
 
-#define FSEL_REG(p)		(GPFSEL0 + (((p) / 10) * 4))
-#define FSEL_SHIFT(p)		(((p) % 10) * 3)
-#define GPIO_REG_OFFSET(p)	((p) / 32)
-#define GPIO_REG_SHIFT(p)	((p) % 32)
+#घोषणा FSEL_REG(p)		(GPFSEL0 + (((p) / 10) * 4))
+#घोषणा FSEL_SHIFT(p)		(((p) % 10) * 3)
+#घोषणा GPIO_REG_OFFSET(p)	((p) / 32)
+#घोषणा GPIO_REG_SHIFT(p)	((p) % 32)
 
-#define PUD_2711_MASK		0x3
-#define PUD_2711_REG_OFFSET(p)	((p) / 16)
-#define PUD_2711_REG_SHIFT(p)	(((p) % 16) * 2)
+#घोषणा PUD_2711_MASK		0x3
+#घोषणा PUD_2711_REG_OFFSET(p)	((p) / 16)
+#घोषणा PUD_2711_REG_SHIFT(p)	(((p) % 16) * 2)
 
 /* argument: bcm2835_pinconf_pull */
-#define BCM2835_PINCONF_PARAM_PULL	(PIN_CONFIG_END + 1)
+#घोषणा BCM2835_PINCONF_PARAM_PULL	(PIN_CONFIG_END + 1)
 
-#define BCM2711_PULL_NONE	0x0
-#define BCM2711_PULL_UP		0x1
-#define BCM2711_PULL_DOWN	0x2
+#घोषणा BCM2711_PULL_NONE	0x0
+#घोषणा BCM2711_PULL_UP		0x1
+#घोषणा BCM2711_PULL_DOWN	0x2
 
-struct bcm2835_pinctrl {
-	struct device *dev;
-	void __iomem *base;
-	int *wake_irq;
+काष्ठा bcm2835_pinctrl अणु
+	काष्ठा device *dev;
+	व्योम __iomem *base;
+	पूर्णांक *wake_irq;
 
-	/* note: locking assumes each bank will have its own unsigned long */
-	unsigned long enabled_irq_map[BCM2835_NUM_BANKS];
-	unsigned int irq_type[BCM2711_NUM_GPIOS];
+	/* note: locking assumes each bank will have its own अचिन्हित दीर्घ */
+	अचिन्हित दीर्घ enabled_irq_map[BCM2835_NUM_BANKS];
+	अचिन्हित पूर्णांक irq_type[BCM2711_NUM_GPIOS];
 
-	struct pinctrl_dev *pctl_dev;
-	struct gpio_chip gpio_chip;
-	struct pinctrl_desc pctl_desc;
-	struct pinctrl_gpio_range gpio_range;
+	काष्ठा pinctrl_dev *pctl_dev;
+	काष्ठा gpio_chip gpio_chip;
+	काष्ठा pinctrl_desc pctl_desc;
+	काष्ठा pinctrl_gpio_range gpio_range;
 
 	raw_spinlock_t irq_lock[BCM2835_NUM_BANKS];
-};
+पूर्ण;
 
 /* pins are just named GPIO0..GPIO53 */
-#define BCM2835_GPIO_PIN(a) PINCTRL_PIN(a, "gpio" #a)
-static struct pinctrl_pin_desc bcm2835_gpio_pins[] = {
+#घोषणा BCM2835_GPIO_PIN(a) PINCTRL_PIN(a, "gpio" #a)
+अटल काष्ठा pinctrl_pin_desc bcm2835_gpio_pins[] = अणु
 	BCM2835_GPIO_PIN(0),
 	BCM2835_GPIO_PIN(1),
 	BCM2835_GPIO_PIN(2),
@@ -152,10 +153,10 @@ static struct pinctrl_pin_desc bcm2835_gpio_pins[] = {
 	BCM2835_GPIO_PIN(55),
 	BCM2835_GPIO_PIN(56),
 	BCM2835_GPIO_PIN(57),
-};
+पूर्ण;
 
 /* one pin per group */
-static const char * const bcm2835_gpio_groups[] = {
+अटल स्थिर अक्षर * स्थिर bcm2835_gpio_groups[] = अणु
 	"gpio0",
 	"gpio1",
 	"gpio2",
@@ -214,14 +215,14 @@ static const char * const bcm2835_gpio_groups[] = {
 	"gpio55",
 	"gpio56",
 	"gpio57",
-};
+पूर्ण;
 
-enum bcm2835_fsel {
+क्रमागत bcm2835_fsel अणु
 	BCM2835_FSEL_COUNT = 8,
 	BCM2835_FSEL_MASK = 0x7,
-};
+पूर्ण;
 
-static const char * const bcm2835_functions[BCM2835_FSEL_COUNT] = {
+अटल स्थिर अक्षर * स्थिर bcm2835_functions[BCM2835_FSEL_COUNT] = अणु
 	[BCM2835_FSEL_GPIO_IN] = "gpio_in",
 	[BCM2835_FSEL_GPIO_OUT] = "gpio_out",
 	[BCM2835_FSEL_ALT0] = "alt0",
@@ -230,69 +231,69 @@ static const char * const bcm2835_functions[BCM2835_FSEL_COUNT] = {
 	[BCM2835_FSEL_ALT3] = "alt3",
 	[BCM2835_FSEL_ALT4] = "alt4",
 	[BCM2835_FSEL_ALT5] = "alt5",
-};
+पूर्ण;
 
-static const char * const irq_type_names[] = {
+अटल स्थिर अक्षर * स्थिर irq_type_names[] = अणु
 	[IRQ_TYPE_NONE] = "none",
 	[IRQ_TYPE_EDGE_RISING] = "edge-rising",
 	[IRQ_TYPE_EDGE_FALLING] = "edge-falling",
 	[IRQ_TYPE_EDGE_BOTH] = "edge-both",
 	[IRQ_TYPE_LEVEL_HIGH] = "level-high",
 	[IRQ_TYPE_LEVEL_LOW] = "level-low",
-};
+पूर्ण;
 
-static inline u32 bcm2835_gpio_rd(struct bcm2835_pinctrl *pc, unsigned reg)
-{
-	return readl(pc->base + reg);
-}
+अटल अंतरभूत u32 bcm2835_gpio_rd(काष्ठा bcm2835_pinctrl *pc, अचिन्हित reg)
+अणु
+	वापस पढ़ोl(pc->base + reg);
+पूर्ण
 
-static inline void bcm2835_gpio_wr(struct bcm2835_pinctrl *pc, unsigned reg,
+अटल अंतरभूत व्योम bcm2835_gpio_wr(काष्ठा bcm2835_pinctrl *pc, अचिन्हित reg,
 		u32 val)
-{
-	writel(val, pc->base + reg);
-}
+अणु
+	ग_लिखोl(val, pc->base + reg);
+पूर्ण
 
-static inline int bcm2835_gpio_get_bit(struct bcm2835_pinctrl *pc, unsigned reg,
-		unsigned bit)
-{
+अटल अंतरभूत पूर्णांक bcm2835_gpio_get_bit(काष्ठा bcm2835_pinctrl *pc, अचिन्हित reg,
+		अचिन्हित bit)
+अणु
 	reg += GPIO_REG_OFFSET(bit) * 4;
-	return (bcm2835_gpio_rd(pc, reg) >> GPIO_REG_SHIFT(bit)) & 1;
-}
+	वापस (bcm2835_gpio_rd(pc, reg) >> GPIO_REG_SHIFT(bit)) & 1;
+पूर्ण
 
-/* note NOT a read/modify/write cycle */
-static inline void bcm2835_gpio_set_bit(struct bcm2835_pinctrl *pc,
-		unsigned reg, unsigned bit)
-{
+/* note NOT a पढ़ो/modअगरy/ग_लिखो cycle */
+अटल अंतरभूत व्योम bcm2835_gpio_set_bit(काष्ठा bcm2835_pinctrl *pc,
+		अचिन्हित reg, अचिन्हित bit)
+अणु
 	reg += GPIO_REG_OFFSET(bit) * 4;
 	bcm2835_gpio_wr(pc, reg, BIT(GPIO_REG_SHIFT(bit)));
-}
+पूर्ण
 
-static inline enum bcm2835_fsel bcm2835_pinctrl_fsel_get(
-		struct bcm2835_pinctrl *pc, unsigned pin)
-{
+अटल अंतरभूत क्रमागत bcm2835_fsel bcm2835_pinctrl_fsel_get(
+		काष्ठा bcm2835_pinctrl *pc, अचिन्हित pin)
+अणु
 	u32 val = bcm2835_gpio_rd(pc, FSEL_REG(pin));
-	enum bcm2835_fsel status = (val >> FSEL_SHIFT(pin)) & BCM2835_FSEL_MASK;
+	क्रमागत bcm2835_fsel status = (val >> FSEL_SHIFT(pin)) & BCM2835_FSEL_MASK;
 
 	dev_dbg(pc->dev, "get %08x (%u => %s)\n", val, pin,
 			bcm2835_functions[status]);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static inline void bcm2835_pinctrl_fsel_set(
-		struct bcm2835_pinctrl *pc, unsigned pin,
-		enum bcm2835_fsel fsel)
-{
+अटल अंतरभूत व्योम bcm2835_pinctrl_fsel_set(
+		काष्ठा bcm2835_pinctrl *pc, अचिन्हित pin,
+		क्रमागत bcm2835_fsel fsel)
+अणु
 	u32 val = bcm2835_gpio_rd(pc, FSEL_REG(pin));
-	enum bcm2835_fsel cur = (val >> FSEL_SHIFT(pin)) & BCM2835_FSEL_MASK;
+	क्रमागत bcm2835_fsel cur = (val >> FSEL_SHIFT(pin)) & BCM2835_FSEL_MASK;
 
 	dev_dbg(pc->dev, "read %08x (%u => %s)\n", val, pin,
 			bcm2835_functions[cur]);
 
-	if (cur == fsel)
-		return;
+	अगर (cur == fsel)
+		वापस;
 
-	if (cur != BCM2835_FSEL_GPIO_IN && fsel != BCM2835_FSEL_GPIO_IN) {
+	अगर (cur != BCM2835_FSEL_GPIO_IN && fsel != BCM2835_FSEL_GPIO_IN) अणु
 		/* always transition through GPIO_IN */
 		val &= ~(BCM2835_FSEL_MASK << FSEL_SHIFT(pin));
 		val |= BCM2835_FSEL_GPIO_IN << FSEL_SHIFT(pin);
@@ -300,7 +301,7 @@ static inline void bcm2835_pinctrl_fsel_set(
 		dev_dbg(pc->dev, "trans %08x (%u <= %s)\n", val, pin,
 				bcm2835_functions[BCM2835_FSEL_GPIO_IN]);
 		bcm2835_gpio_wr(pc, FSEL_REG(pin), val);
-	}
+	पूर्ण
 
 	val &= ~(BCM2835_FSEL_MASK << FSEL_SHIFT(pin));
 	val |= fsel << FSEL_SHIFT(pin);
@@ -308,54 +309,54 @@ static inline void bcm2835_pinctrl_fsel_set(
 	dev_dbg(pc->dev, "write %08x (%u <= %s)\n", val, pin,
 			bcm2835_functions[fsel]);
 	bcm2835_gpio_wr(pc, FSEL_REG(pin), val);
-}
+पूर्ण
 
-static int bcm2835_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
-{
-	return pinctrl_gpio_direction_input(chip->base + offset);
-}
+अटल पूर्णांक bcm2835_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	वापस pinctrl_gpio_direction_input(chip->base + offset);
+पूर्ण
 
-static int bcm2835_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct bcm2835_pinctrl *pc = gpiochip_get_data(chip);
+अटल पूर्णांक bcm2835_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा bcm2835_pinctrl *pc = gpiochip_get_data(chip);
 
-	return bcm2835_gpio_get_bit(pc, GPLEV0, offset);
-}
+	वापस bcm2835_gpio_get_bit(pc, GPLEV0, offset);
+पूर्ण
 
-static int bcm2835_gpio_get_direction(struct gpio_chip *chip, unsigned int offset)
-{
-	struct bcm2835_pinctrl *pc = gpiochip_get_data(chip);
-	enum bcm2835_fsel fsel = bcm2835_pinctrl_fsel_get(pc, offset);
+अटल पूर्णांक bcm2835_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा bcm2835_pinctrl *pc = gpiochip_get_data(chip);
+	क्रमागत bcm2835_fsel fsel = bcm2835_pinctrl_fsel_get(pc, offset);
 
-	/* Alternative function doesn't clearly provide a direction */
-	if (fsel > BCM2835_FSEL_GPIO_OUT)
-		return -EINVAL;
+	/* Alternative function करोesn't clearly provide a direction */
+	अगर (fsel > BCM2835_FSEL_GPIO_OUT)
+		वापस -EINVAL;
 
-	if (fsel == BCM2835_FSEL_GPIO_IN)
-		return GPIO_LINE_DIRECTION_IN;
+	अगर (fsel == BCM2835_FSEL_GPIO_IN)
+		वापस GPIO_LINE_सूचीECTION_IN;
 
-	return GPIO_LINE_DIRECTION_OUT;
-}
+	वापस GPIO_LINE_सूचीECTION_OUT;
+पूर्ण
 
-static void bcm2835_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	struct bcm2835_pinctrl *pc = gpiochip_get_data(chip);
+अटल व्योम bcm2835_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा bcm2835_pinctrl *pc = gpiochip_get_data(chip);
 
 	bcm2835_gpio_set_bit(pc, value ? GPSET0 : GPCLR0, offset);
-}
+पूर्ण
 
-static int bcm2835_gpio_direction_output(struct gpio_chip *chip,
-		unsigned offset, int value)
-{
+अटल पूर्णांक bcm2835_gpio_direction_output(काष्ठा gpio_chip *chip,
+		अचिन्हित offset, पूर्णांक value)
+अणु
 	bcm2835_gpio_set(chip, offset, value);
-	return pinctrl_gpio_direction_output(chip->base + offset);
-}
+	वापस pinctrl_gpio_direction_output(chip->base + offset);
+पूर्ण
 
-static const struct gpio_chip bcm2835_gpio_chip = {
+अटल स्थिर काष्ठा gpio_chip bcm2835_gpio_chip = अणु
 	.label = MODULE_NAME,
 	.owner = THIS_MODULE,
 	.request = gpiochip_generic_request,
-	.free = gpiochip_generic_free,
+	.मुक्त = gpiochip_generic_मुक्त,
 	.direction_input = bcm2835_gpio_direction_input,
 	.direction_output = bcm2835_gpio_direction_output,
 	.get_direction = bcm2835_gpio_get_direction,
@@ -365,13 +366,13 @@ static const struct gpio_chip bcm2835_gpio_chip = {
 	.base = -1,
 	.ngpio = BCM2835_NUM_GPIOS,
 	.can_sleep = false,
-};
+पूर्ण;
 
-static const struct gpio_chip bcm2711_gpio_chip = {
+अटल स्थिर काष्ठा gpio_chip bcm2711_gpio_chip = अणु
 	.label = "pinctrl-bcm2711",
 	.owner = THIS_MODULE,
 	.request = gpiochip_generic_request,
-	.free = gpiochip_generic_free,
+	.मुक्त = gpiochip_generic_मुक्त,
 	.direction_input = bcm2835_gpio_direction_input,
 	.direction_output = bcm2835_gpio_direction_output,
 	.get_direction = bcm2835_gpio_get_direction,
@@ -381,131 +382,131 @@ static const struct gpio_chip bcm2711_gpio_chip = {
 	.base = -1,
 	.ngpio = BCM2711_NUM_GPIOS,
 	.can_sleep = false,
-};
+पूर्ण;
 
-static void bcm2835_gpio_irq_handle_bank(struct bcm2835_pinctrl *pc,
-					 unsigned int bank, u32 mask)
-{
-	unsigned long events;
-	unsigned offset;
-	unsigned gpio;
+अटल व्योम bcm2835_gpio_irq_handle_bank(काष्ठा bcm2835_pinctrl *pc,
+					 अचिन्हित पूर्णांक bank, u32 mask)
+अणु
+	अचिन्हित दीर्घ events;
+	अचिन्हित offset;
+	अचिन्हित gpio;
 
 	events = bcm2835_gpio_rd(pc, GPEDS0 + bank * 4);
 	events &= mask;
 	events &= pc->enabled_irq_map[bank];
-	for_each_set_bit(offset, &events, 32) {
+	क्रम_each_set_bit(offset, &events, 32) अणु
 		gpio = (32 * bank) + offset;
-		generic_handle_irq(irq_linear_revmap(pc->gpio_chip.irq.domain,
+		generic_handle_irq(irq_linear_revmap(pc->gpio_chip.irq.करोमुख्य,
 						     gpio));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bcm2835_gpio_irq_handler(struct irq_desc *desc)
-{
-	struct gpio_chip *chip = irq_desc_get_handler_data(desc);
-	struct bcm2835_pinctrl *pc = gpiochip_get_data(chip);
-	struct irq_chip *host_chip = irq_desc_get_chip(desc);
-	int irq = irq_desc_get_irq(desc);
-	int group;
-	int i;
+अटल व्योम bcm2835_gpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा gpio_chip *chip = irq_desc_get_handler_data(desc);
+	काष्ठा bcm2835_pinctrl *pc = gpiochip_get_data(chip);
+	काष्ठा irq_chip *host_chip = irq_desc_get_chip(desc);
+	पूर्णांक irq = irq_desc_get_irq(desc);
+	पूर्णांक group;
+	पूर्णांक i;
 
-	for (i = 0; i < BCM2835_NUM_IRQS; i++) {
-		if (chip->irq.parents[i] == irq) {
+	क्रम (i = 0; i < BCM2835_NUM_IRQS; i++) अणु
+		अगर (chip->irq.parents[i] == irq) अणु
 			group = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/* This should not happen, every IRQ has a bank */
-	if (i == BCM2835_NUM_IRQS)
+	अगर (i == BCM2835_NUM_IRQS)
 		BUG();
 
 	chained_irq_enter(host_chip, desc);
 
-	switch (group) {
-	case 0: /* IRQ0 covers GPIOs 0-27 */
+	चयन (group) अणु
+	हाल 0: /* IRQ0 covers GPIOs 0-27 */
 		bcm2835_gpio_irq_handle_bank(pc, 0, 0x0fffffff);
-		break;
-	case 1: /* IRQ1 covers GPIOs 28-45 */
+		अवरोध;
+	हाल 1: /* IRQ1 covers GPIOs 28-45 */
 		bcm2835_gpio_irq_handle_bank(pc, 0, 0xf0000000);
 		bcm2835_gpio_irq_handle_bank(pc, 1, 0x00003fff);
-		break;
-	case 2: /* IRQ2 covers GPIOs 46-57 */
+		अवरोध;
+	हाल 2: /* IRQ2 covers GPIOs 46-57 */
 		bcm2835_gpio_irq_handle_bank(pc, 1, 0x003fc000);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	chained_irq_exit(host_chip, desc);
-}
+	chained_irq_निकास(host_chip, desc);
+पूर्ण
 
-static irqreturn_t bcm2835_gpio_wake_irq_handler(int irq, void *dev_id)
-{
-	return IRQ_HANDLED;
-}
+अटल irqवापस_t bcm2835_gpio_wake_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static inline void __bcm2835_gpio_irq_config(struct bcm2835_pinctrl *pc,
-	unsigned reg, unsigned offset, bool enable)
-{
+अटल अंतरभूत व्योम __bcm2835_gpio_irq_config(काष्ठा bcm2835_pinctrl *pc,
+	अचिन्हित reg, अचिन्हित offset, bool enable)
+अणु
 	u32 value;
 	reg += GPIO_REG_OFFSET(offset) * 4;
 	value = bcm2835_gpio_rd(pc, reg);
-	if (enable)
+	अगर (enable)
 		value |= BIT(GPIO_REG_SHIFT(offset));
-	else
+	अन्यथा
 		value &= ~(BIT(GPIO_REG_SHIFT(offset)));
 	bcm2835_gpio_wr(pc, reg, value);
-}
+पूर्ण
 
-/* fast path for IRQ handler */
-static void bcm2835_gpio_irq_config(struct bcm2835_pinctrl *pc,
-	unsigned offset, bool enable)
-{
-	switch (pc->irq_type[offset]) {
-	case IRQ_TYPE_EDGE_RISING:
+/* fast path क्रम IRQ handler */
+अटल व्योम bcm2835_gpio_irq_config(काष्ठा bcm2835_pinctrl *pc,
+	अचिन्हित offset, bool enable)
+अणु
+	चयन (pc->irq_type[offset]) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		__bcm2835_gpio_irq_config(pc, GPREN0, offset, enable);
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_FALLING:
+	हाल IRQ_TYPE_EDGE_FALLING:
 		__bcm2835_gpio_irq_config(pc, GPFEN0, offset, enable);
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_BOTH:
+	हाल IRQ_TYPE_EDGE_BOTH:
 		__bcm2835_gpio_irq_config(pc, GPREN0, offset, enable);
 		__bcm2835_gpio_irq_config(pc, GPFEN0, offset, enable);
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_HIGH:
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		__bcm2835_gpio_irq_config(pc, GPHEN0, offset, enable);
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_LOW:
+	हाल IRQ_TYPE_LEVEL_LOW:
 		__bcm2835_gpio_irq_config(pc, GPLEN0, offset, enable);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void bcm2835_gpio_irq_enable(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct bcm2835_pinctrl *pc = gpiochip_get_data(chip);
-	unsigned gpio = irqd_to_hwirq(data);
-	unsigned offset = GPIO_REG_SHIFT(gpio);
-	unsigned bank = GPIO_REG_OFFSET(gpio);
-	unsigned long flags;
+अटल व्योम bcm2835_gpio_irq_enable(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा bcm2835_pinctrl *pc = gpiochip_get_data(chip);
+	अचिन्हित gpio = irqd_to_hwirq(data);
+	अचिन्हित offset = GPIO_REG_SHIFT(gpio);
+	अचिन्हित bank = GPIO_REG_OFFSET(gpio);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
 	set_bit(offset, &pc->enabled_irq_map[bank]);
 	bcm2835_gpio_irq_config(pc, gpio, true);
 	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-}
+पूर्ण
 
-static void bcm2835_gpio_irq_disable(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct bcm2835_pinctrl *pc = gpiochip_get_data(chip);
-	unsigned gpio = irqd_to_hwirq(data);
-	unsigned offset = GPIO_REG_SHIFT(gpio);
-	unsigned bank = GPIO_REG_OFFSET(gpio);
-	unsigned long flags;
+अटल व्योम bcm2835_gpio_irq_disable(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा bcm2835_pinctrl *pc = gpiochip_get_data(chip);
+	अचिन्हित gpio = irqd_to_hwirq(data);
+	अचिन्हित offset = GPIO_REG_SHIFT(gpio);
+	अचिन्हित bank = GPIO_REG_OFFSET(gpio);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
 	bcm2835_gpio_irq_config(pc, gpio, false);
@@ -513,163 +514,163 @@ static void bcm2835_gpio_irq_disable(struct irq_data *data)
 	bcm2835_gpio_set_bit(pc, GPEDS0, gpio);
 	clear_bit(offset, &pc->enabled_irq_map[bank]);
 	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-}
+पूर्ण
 
-static int __bcm2835_gpio_irq_set_type_disabled(struct bcm2835_pinctrl *pc,
-	unsigned offset, unsigned int type)
-{
-	switch (type) {
-	case IRQ_TYPE_NONE:
-	case IRQ_TYPE_EDGE_RISING:
-	case IRQ_TYPE_EDGE_FALLING:
-	case IRQ_TYPE_EDGE_BOTH:
-	case IRQ_TYPE_LEVEL_HIGH:
-	case IRQ_TYPE_LEVEL_LOW:
+अटल पूर्णांक __bcm2835_gpio_irq_set_type_disabled(काष्ठा bcm2835_pinctrl *pc,
+	अचिन्हित offset, अचिन्हित पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल IRQ_TYPE_NONE:
+	हाल IRQ_TYPE_EDGE_RISING:
+	हाल IRQ_TYPE_EDGE_FALLING:
+	हाल IRQ_TYPE_EDGE_BOTH:
+	हाल IRQ_TYPE_LEVEL_HIGH:
+	हाल IRQ_TYPE_LEVEL_LOW:
 		pc->irq_type[offset] = type;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* slower path for reconfiguring IRQ type */
-static int __bcm2835_gpio_irq_set_type_enabled(struct bcm2835_pinctrl *pc,
-	unsigned offset, unsigned int type)
-{
-	switch (type) {
-	case IRQ_TYPE_NONE:
-		if (pc->irq_type[offset] != type) {
+/* slower path क्रम reconfiguring IRQ type */
+अटल पूर्णांक __bcm2835_gpio_irq_set_type_enabled(काष्ठा bcm2835_pinctrl *pc,
+	अचिन्हित offset, अचिन्हित पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल IRQ_TYPE_NONE:
+		अगर (pc->irq_type[offset] != type) अणु
 			bcm2835_gpio_irq_config(pc, offset, false);
 			pc->irq_type[offset] = type;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_RISING:
-		if (pc->irq_type[offset] == IRQ_TYPE_EDGE_BOTH) {
-			/* RISING already enabled, disable FALLING */
+	हाल IRQ_TYPE_EDGE_RISING:
+		अगर (pc->irq_type[offset] == IRQ_TYPE_EDGE_BOTH) अणु
+			/* RISING alपढ़ोy enabled, disable FALLING */
 			pc->irq_type[offset] = IRQ_TYPE_EDGE_FALLING;
 			bcm2835_gpio_irq_config(pc, offset, false);
 			pc->irq_type[offset] = type;
-		} else if (pc->irq_type[offset] != type) {
+		पूर्ण अन्यथा अगर (pc->irq_type[offset] != type) अणु
 			bcm2835_gpio_irq_config(pc, offset, false);
 			pc->irq_type[offset] = type;
 			bcm2835_gpio_irq_config(pc, offset, true);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_FALLING:
-		if (pc->irq_type[offset] == IRQ_TYPE_EDGE_BOTH) {
-			/* FALLING already enabled, disable RISING */
+	हाल IRQ_TYPE_EDGE_FALLING:
+		अगर (pc->irq_type[offset] == IRQ_TYPE_EDGE_BOTH) अणु
+			/* FALLING alपढ़ोy enabled, disable RISING */
 			pc->irq_type[offset] = IRQ_TYPE_EDGE_RISING;
 			bcm2835_gpio_irq_config(pc, offset, false);
 			pc->irq_type[offset] = type;
-		} else if (pc->irq_type[offset] != type) {
+		पूर्ण अन्यथा अगर (pc->irq_type[offset] != type) अणु
 			bcm2835_gpio_irq_config(pc, offset, false);
 			pc->irq_type[offset] = type;
 			bcm2835_gpio_irq_config(pc, offset, true);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_BOTH:
-		if (pc->irq_type[offset] == IRQ_TYPE_EDGE_RISING) {
-			/* RISING already enabled, enable FALLING too */
+	हाल IRQ_TYPE_EDGE_BOTH:
+		अगर (pc->irq_type[offset] == IRQ_TYPE_EDGE_RISING) अणु
+			/* RISING alपढ़ोy enabled, enable FALLING too */
 			pc->irq_type[offset] = IRQ_TYPE_EDGE_FALLING;
 			bcm2835_gpio_irq_config(pc, offset, true);
 			pc->irq_type[offset] = type;
-		} else if (pc->irq_type[offset] == IRQ_TYPE_EDGE_FALLING) {
-			/* FALLING already enabled, enable RISING too */
+		पूर्ण अन्यथा अगर (pc->irq_type[offset] == IRQ_TYPE_EDGE_FALLING) अणु
+			/* FALLING alपढ़ोy enabled, enable RISING too */
 			pc->irq_type[offset] = IRQ_TYPE_EDGE_RISING;
 			bcm2835_gpio_irq_config(pc, offset, true);
 			pc->irq_type[offset] = type;
-		} else if (pc->irq_type[offset] != type) {
+		पूर्ण अन्यथा अगर (pc->irq_type[offset] != type) अणु
 			bcm2835_gpio_irq_config(pc, offset, false);
 			pc->irq_type[offset] = type;
 			bcm2835_gpio_irq_config(pc, offset, true);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_HIGH:
-	case IRQ_TYPE_LEVEL_LOW:
-		if (pc->irq_type[offset] != type) {
+	हाल IRQ_TYPE_LEVEL_HIGH:
+	हाल IRQ_TYPE_LEVEL_LOW:
+		अगर (pc->irq_type[offset] != type) अणु
 			bcm2835_gpio_irq_config(pc, offset, false);
 			pc->irq_type[offset] = type;
 			bcm2835_gpio_irq_config(pc, offset, true);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bcm2835_gpio_irq_set_type(struct irq_data *data, unsigned int type)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct bcm2835_pinctrl *pc = gpiochip_get_data(chip);
-	unsigned gpio = irqd_to_hwirq(data);
-	unsigned offset = GPIO_REG_SHIFT(gpio);
-	unsigned bank = GPIO_REG_OFFSET(gpio);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक bcm2835_gpio_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा bcm2835_pinctrl *pc = gpiochip_get_data(chip);
+	अचिन्हित gpio = irqd_to_hwirq(data);
+	अचिन्हित offset = GPIO_REG_SHIFT(gpio);
+	अचिन्हित bank = GPIO_REG_OFFSET(gpio);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
 
-	if (test_bit(offset, &pc->enabled_irq_map[bank]))
+	अगर (test_bit(offset, &pc->enabled_irq_map[bank]))
 		ret = __bcm2835_gpio_irq_set_type_enabled(pc, gpio, type);
-	else
+	अन्यथा
 		ret = __bcm2835_gpio_irq_set_type_disabled(pc, gpio, type);
 
-	if (type & IRQ_TYPE_EDGE_BOTH)
+	अगर (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(data, handle_edge_irq);
-	else
+	अन्यथा
 		irq_set_handler_locked(data, handle_level_irq);
 
 	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void bcm2835_gpio_irq_ack(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct bcm2835_pinctrl *pc = gpiochip_get_data(chip);
-	unsigned gpio = irqd_to_hwirq(data);
+अटल व्योम bcm2835_gpio_irq_ack(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा bcm2835_pinctrl *pc = gpiochip_get_data(chip);
+	अचिन्हित gpio = irqd_to_hwirq(data);
 
 	bcm2835_gpio_set_bit(pc, GPEDS0, gpio);
-}
+पूर्ण
 
-static int bcm2835_gpio_irq_set_wake(struct irq_data *data, unsigned int on)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct bcm2835_pinctrl *pc = gpiochip_get_data(chip);
-	unsigned gpio = irqd_to_hwirq(data);
-	unsigned int irqgroup;
-	int ret = -EINVAL;
+अटल पूर्णांक bcm2835_gpio_irq_set_wake(काष्ठा irq_data *data, अचिन्हित पूर्णांक on)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा bcm2835_pinctrl *pc = gpiochip_get_data(chip);
+	अचिन्हित gpio = irqd_to_hwirq(data);
+	अचिन्हित पूर्णांक irqgroup;
+	पूर्णांक ret = -EINVAL;
 
-	if (!pc->wake_irq)
-		return ret;
+	अगर (!pc->wake_irq)
+		वापस ret;
 
-	if (gpio <= 27)
+	अगर (gpio <= 27)
 		irqgroup = 0;
-	else if (gpio >= 28 && gpio <= 45)
+	अन्यथा अगर (gpio >= 28 && gpio <= 45)
 		irqgroup = 1;
-	else if (gpio >= 46 && gpio <= 57)
+	अन्यथा अगर (gpio >= 46 && gpio <= 57)
 		irqgroup = 2;
-	else
-		return ret;
+	अन्यथा
+		वापस ret;
 
-	if (on)
+	अगर (on)
 		ret = enable_irq_wake(pc->wake_irq[irqgroup]);
-	else
+	अन्यथा
 		ret = disable_irq_wake(pc->wake_irq[irqgroup]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct irq_chip bcm2835_gpio_irq_chip = {
+अटल काष्ठा irq_chip bcm2835_gpio_irq_chip = अणु
 	.name = MODULE_NAME,
 	.irq_enable = bcm2835_gpio_irq_enable,
 	.irq_disable = bcm2835_gpio_irq_disable,
@@ -679,92 +680,92 @@ static struct irq_chip bcm2835_gpio_irq_chip = {
 	.irq_unmask = bcm2835_gpio_irq_enable,
 	.irq_set_wake = bcm2835_gpio_irq_set_wake,
 	.flags = IRQCHIP_MASK_ON_SUSPEND,
-};
+पूर्ण;
 
-static int bcm2835_pctl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	return BCM2835_NUM_GPIOS;
-}
+अटल पूर्णांक bcm2835_pctl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस BCM2835_NUM_GPIOS;
+पूर्ण
 
-static const char *bcm2835_pctl_get_group_name(struct pinctrl_dev *pctldev,
-		unsigned selector)
-{
-	return bcm2835_gpio_groups[selector];
-}
+अटल स्थिर अक्षर *bcm2835_pctl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+		अचिन्हित selector)
+अणु
+	वापस bcm2835_gpio_groups[selector];
+पूर्ण
 
-static int bcm2835_pctl_get_group_pins(struct pinctrl_dev *pctldev,
-		unsigned selector,
-		const unsigned **pins,
-		unsigned *num_pins)
-{
+अटल पूर्णांक bcm2835_pctl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+		अचिन्हित selector,
+		स्थिर अचिन्हित **pins,
+		अचिन्हित *num_pins)
+अणु
 	*pins = &bcm2835_gpio_pins[selector].number;
 	*num_pins = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bcm2835_pctl_pin_dbg_show(struct pinctrl_dev *pctldev,
-		struct seq_file *s,
-		unsigned offset)
-{
-	struct bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
-	struct gpio_chip *chip = &pc->gpio_chip;
-	enum bcm2835_fsel fsel = bcm2835_pinctrl_fsel_get(pc, offset);
-	const char *fname = bcm2835_functions[fsel];
-	int value = bcm2835_gpio_get_bit(pc, GPLEV0, offset);
-	int irq = irq_find_mapping(chip->irq.domain, offset);
+अटल व्योम bcm2835_pctl_pin_dbg_show(काष्ठा pinctrl_dev *pctldev,
+		काष्ठा seq_file *s,
+		अचिन्हित offset)
+अणु
+	काष्ठा bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा gpio_chip *chip = &pc->gpio_chip;
+	क्रमागत bcm2835_fsel fsel = bcm2835_pinctrl_fsel_get(pc, offset);
+	स्थिर अक्षर *fname = bcm2835_functions[fsel];
+	पूर्णांक value = bcm2835_gpio_get_bit(pc, GPLEV0, offset);
+	पूर्णांक irq = irq_find_mapping(chip->irq.करोमुख्य, offset);
 
-	seq_printf(s, "function %s in %s; irq %d (%s)",
+	seq_म_लिखो(s, "function %s in %s; irq %d (%s)",
 		fname, value ? "hi" : "lo",
 		irq, irq_type_names[pc->irq_type[offset]]);
-}
+पूर्ण
 
-static void bcm2835_pctl_dt_free_map(struct pinctrl_dev *pctldev,
-		struct pinctrl_map *maps, unsigned num_maps)
-{
-	int i;
+अटल व्योम bcm2835_pctl_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
+		काष्ठा pinctrl_map *maps, अचिन्हित num_maps)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_maps; i++)
-		if (maps[i].type == PIN_MAP_TYPE_CONFIGS_PIN)
-			kfree(maps[i].data.configs.configs);
+	क्रम (i = 0; i < num_maps; i++)
+		अगर (maps[i].type == PIN_MAP_TYPE_CONFIGS_PIN)
+			kमुक्त(maps[i].data.configs.configs);
 
-	kfree(maps);
-}
+	kमुक्त(maps);
+पूर्ण
 
-static int bcm2835_pctl_dt_node_to_map_func(struct bcm2835_pinctrl *pc,
-		struct device_node *np, u32 pin, u32 fnum,
-		struct pinctrl_map **maps)
-{
-	struct pinctrl_map *map = *maps;
+अटल पूर्णांक bcm2835_pctl_dt_node_to_map_func(काष्ठा bcm2835_pinctrl *pc,
+		काष्ठा device_node *np, u32 pin, u32 fnum,
+		काष्ठा pinctrl_map **maps)
+अणु
+	काष्ठा pinctrl_map *map = *maps;
 
-	if (fnum >= ARRAY_SIZE(bcm2835_functions)) {
+	अगर (fnum >= ARRAY_SIZE(bcm2835_functions)) अणु
 		dev_err(pc->dev, "%pOF: invalid brcm,function %d\n", np, fnum);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	map->type = PIN_MAP_TYPE_MUX_GROUP;
 	map->data.mux.group = bcm2835_gpio_groups[pin];
 	map->data.mux.function = bcm2835_functions[fnum];
 	(*maps)++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm2835_pctl_dt_node_to_map_pull(struct bcm2835_pinctrl *pc,
-		struct device_node *np, u32 pin, u32 pull,
-		struct pinctrl_map **maps)
-{
-	struct pinctrl_map *map = *maps;
-	unsigned long *configs;
+अटल पूर्णांक bcm2835_pctl_dt_node_to_map_pull(काष्ठा bcm2835_pinctrl *pc,
+		काष्ठा device_node *np, u32 pin, u32 pull,
+		काष्ठा pinctrl_map **maps)
+अणु
+	काष्ठा pinctrl_map *map = *maps;
+	अचिन्हित दीर्घ *configs;
 
-	if (pull > 2) {
+	अगर (pull > 2) अणु
 		dev_err(pc->dev, "%pOF: invalid brcm,pull %d\n", np, pull);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	configs = kzalloc(sizeof(*configs), GFP_KERNEL);
-	if (!configs)
-		return -ENOMEM;
+	configs = kzalloc(माप(*configs), GFP_KERNEL);
+	अगर (!configs)
+		वापस -ENOMEM;
 	configs[0] = pinconf_to_config_packed(BCM2835_PINCONF_PARAM_PULL, pull);
 
 	map->type = PIN_MAP_TYPE_CONFIGS_PIN;
@@ -773,210 +774,210 @@ static int bcm2835_pctl_dt_node_to_map_pull(struct bcm2835_pinctrl *pc,
 	map->data.configs.num_configs = 1;
 	(*maps)++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm2835_pctl_dt_node_to_map(struct pinctrl_dev *pctldev,
-		struct device_node *np,
-		struct pinctrl_map **map, unsigned int *num_maps)
-{
-	struct bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
-	struct property *pins, *funcs, *pulls;
-	int num_pins, num_funcs, num_pulls, maps_per_pin;
-	struct pinctrl_map *maps, *cur_map;
-	int i, err;
+अटल पूर्णांक bcm2835_pctl_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
+		काष्ठा device_node *np,
+		काष्ठा pinctrl_map **map, अचिन्हित पूर्णांक *num_maps)
+अणु
+	काष्ठा bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा property *pins, *funcs, *pulls;
+	पूर्णांक num_pins, num_funcs, num_pulls, maps_per_pin;
+	काष्ठा pinctrl_map *maps, *cur_map;
+	पूर्णांक i, err;
 	u32 pin, func, pull;
 
-	/* Check for generic binding in this node */
+	/* Check क्रम generic binding in this node */
 	err = pinconf_generic_dt_node_to_map_all(pctldev, np, map, num_maps);
-	if (err || *num_maps)
-		return err;
+	अगर (err || *num_maps)
+		वापस err;
 
-	/* Generic binding did not find anything continue with legacy parse */
-	pins = of_find_property(np, "brcm,pins", NULL);
-	if (!pins) {
+	/* Generic binding did not find anything जारी with legacy parse */
+	pins = of_find_property(np, "brcm,pins", शून्य);
+	अगर (!pins) अणु
 		dev_err(pc->dev, "%pOF: missing brcm,pins property\n", np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	funcs = of_find_property(np, "brcm,function", NULL);
-	pulls = of_find_property(np, "brcm,pull", NULL);
+	funcs = of_find_property(np, "brcm,function", शून्य);
+	pulls = of_find_property(np, "brcm,pull", शून्य);
 
-	if (!funcs && !pulls) {
+	अगर (!funcs && !pulls) अणु
 		dev_err(pc->dev,
 			"%pOF: neither brcm,function nor brcm,pull specified\n",
 			np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	num_pins = pins->length / 4;
 	num_funcs = funcs ? (funcs->length / 4) : 0;
 	num_pulls = pulls ? (pulls->length / 4) : 0;
 
-	if (num_funcs > 1 && num_funcs != num_pins) {
+	अगर (num_funcs > 1 && num_funcs != num_pins) अणु
 		dev_err(pc->dev,
 			"%pOF: brcm,function must have 1 or %d entries\n",
 			np, num_pins);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (num_pulls > 1 && num_pulls != num_pins) {
+	अगर (num_pulls > 1 && num_pulls != num_pins) अणु
 		dev_err(pc->dev,
 			"%pOF: brcm,pull must have 1 or %d entries\n",
 			np, num_pins);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	maps_per_pin = 0;
-	if (num_funcs)
+	अगर (num_funcs)
 		maps_per_pin++;
-	if (num_pulls)
+	अगर (num_pulls)
 		maps_per_pin++;
-	cur_map = maps = kcalloc(num_pins * maps_per_pin, sizeof(*maps),
+	cur_map = maps = kसुस्मृति(num_pins * maps_per_pin, माप(*maps),
 				 GFP_KERNEL);
-	if (!maps)
-		return -ENOMEM;
+	अगर (!maps)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_pins; i++) {
-		err = of_property_read_u32_index(np, "brcm,pins", i, &pin);
-		if (err)
-			goto out;
-		if (pin >= pc->pctl_desc.npins) {
+	क्रम (i = 0; i < num_pins; i++) अणु
+		err = of_property_पढ़ो_u32_index(np, "brcm,pins", i, &pin);
+		अगर (err)
+			जाओ out;
+		अगर (pin >= pc->pctl_desc.npins) अणु
 			dev_err(pc->dev, "%pOF: invalid brcm,pins value %d\n",
 				np, pin);
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (num_funcs) {
-			err = of_property_read_u32_index(np, "brcm,function",
+		अगर (num_funcs) अणु
+			err = of_property_पढ़ो_u32_index(np, "brcm,function",
 					(num_funcs > 1) ? i : 0, &func);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 			err = bcm2835_pctl_dt_node_to_map_func(pc, np, pin,
 							func, &cur_map);
-			if (err)
-				goto out;
-		}
-		if (num_pulls) {
-			err = of_property_read_u32_index(np, "brcm,pull",
+			अगर (err)
+				जाओ out;
+		पूर्ण
+		अगर (num_pulls) अणु
+			err = of_property_पढ़ो_u32_index(np, "brcm,pull",
 					(num_pulls > 1) ? i : 0, &pull);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 			err = bcm2835_pctl_dt_node_to_map_pull(pc, np, pin,
 							pull, &cur_map);
-			if (err)
-				goto out;
-		}
-	}
+			अगर (err)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 	*map = maps;
 	*num_maps = num_pins * maps_per_pin;
 
-	return 0;
+	वापस 0;
 
 out:
-	bcm2835_pctl_dt_free_map(pctldev, maps, num_pins * maps_per_pin);
-	return err;
-}
+	bcm2835_pctl_dt_मुक्त_map(pctldev, maps, num_pins * maps_per_pin);
+	वापस err;
+पूर्ण
 
-static const struct pinctrl_ops bcm2835_pctl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops bcm2835_pctl_ops = अणु
 	.get_groups_count = bcm2835_pctl_get_groups_count,
 	.get_group_name = bcm2835_pctl_get_group_name,
 	.get_group_pins = bcm2835_pctl_get_group_pins,
 	.pin_dbg_show = bcm2835_pctl_pin_dbg_show,
 	.dt_node_to_map = bcm2835_pctl_dt_node_to_map,
-	.dt_free_map = bcm2835_pctl_dt_free_map,
-};
+	.dt_मुक्त_map = bcm2835_pctl_dt_मुक्त_map,
+पूर्ण;
 
-static int bcm2835_pmx_free(struct pinctrl_dev *pctldev,
-		unsigned offset)
-{
-	struct bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक bcm2835_pmx_मुक्त(काष्ठा pinctrl_dev *pctldev,
+		अचिन्हित offset)
+अणु
+	काष्ठा bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
 
 	/* disable by setting to GPIO_IN */
 	bcm2835_pinctrl_fsel_set(pc, offset, BCM2835_FSEL_GPIO_IN);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm2835_pmx_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	return BCM2835_FSEL_COUNT;
-}
+अटल पूर्णांक bcm2835_pmx_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस BCM2835_FSEL_COUNT;
+पूर्ण
 
-static const char *bcm2835_pmx_get_function_name(struct pinctrl_dev *pctldev,
-		unsigned selector)
-{
-	return bcm2835_functions[selector];
-}
+अटल स्थिर अक्षर *bcm2835_pmx_get_function_name(काष्ठा pinctrl_dev *pctldev,
+		अचिन्हित selector)
+अणु
+	वापस bcm2835_functions[selector];
+पूर्ण
 
-static int bcm2835_pmx_get_function_groups(struct pinctrl_dev *pctldev,
-		unsigned selector,
-		const char * const **groups,
-		unsigned * const num_groups)
-{
-	/* every pin can do every function */
+अटल पूर्णांक bcm2835_pmx_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+		अचिन्हित selector,
+		स्थिर अक्षर * स्थिर **groups,
+		अचिन्हित * स्थिर num_groups)
+अणु
+	/* every pin can करो every function */
 	*groups = bcm2835_gpio_groups;
 	*num_groups = BCM2835_NUM_GPIOS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm2835_pmx_set(struct pinctrl_dev *pctldev,
-		unsigned func_selector,
-		unsigned group_selector)
-{
-	struct bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक bcm2835_pmx_set(काष्ठा pinctrl_dev *pctldev,
+		अचिन्हित func_selector,
+		अचिन्हित group_selector)
+अणु
+	काष्ठा bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
 
 	bcm2835_pinctrl_fsel_set(pc, group_selector, func_selector);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bcm2835_pmx_gpio_disable_free(struct pinctrl_dev *pctldev,
-		struct pinctrl_gpio_range *range,
-		unsigned offset)
-{
-	struct bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
+अटल व्योम bcm2835_pmx_gpio_disable_मुक्त(काष्ठा pinctrl_dev *pctldev,
+		काष्ठा pinctrl_gpio_range *range,
+		अचिन्हित offset)
+अणु
+	काष्ठा bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
 
 	/* disable by setting to GPIO_IN */
 	bcm2835_pinctrl_fsel_set(pc, offset, BCM2835_FSEL_GPIO_IN);
-}
+पूर्ण
 
-static int bcm2835_pmx_gpio_set_direction(struct pinctrl_dev *pctldev,
-		struct pinctrl_gpio_range *range,
-		unsigned offset,
+अटल पूर्णांक bcm2835_pmx_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+		काष्ठा pinctrl_gpio_range *range,
+		अचिन्हित offset,
 		bool input)
-{
-	struct bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
-	enum bcm2835_fsel fsel = input ?
+अणु
+	काष्ठा bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत bcm2835_fsel fsel = input ?
 		BCM2835_FSEL_GPIO_IN : BCM2835_FSEL_GPIO_OUT;
 
 	bcm2835_pinctrl_fsel_set(pc, offset, fsel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops bcm2835_pmx_ops = {
-	.free = bcm2835_pmx_free,
+अटल स्थिर काष्ठा pinmux_ops bcm2835_pmx_ops = अणु
+	.मुक्त = bcm2835_pmx_मुक्त,
 	.get_functions_count = bcm2835_pmx_get_functions_count,
 	.get_function_name = bcm2835_pmx_get_function_name,
 	.get_function_groups = bcm2835_pmx_get_function_groups,
 	.set_mux = bcm2835_pmx_set,
-	.gpio_disable_free = bcm2835_pmx_gpio_disable_free,
+	.gpio_disable_मुक्त = bcm2835_pmx_gpio_disable_मुक्त,
 	.gpio_set_direction = bcm2835_pmx_gpio_set_direction,
-};
+पूर्ण;
 
-static int bcm2835_pinconf_get(struct pinctrl_dev *pctldev,
-			unsigned pin, unsigned long *config)
-{
-	/* No way to read back config in HW */
-	return -ENOTSUPP;
-}
+अटल पूर्णांक bcm2835_pinconf_get(काष्ठा pinctrl_dev *pctldev,
+			अचिन्हित pin, अचिन्हित दीर्घ *config)
+अणु
+	/* No way to पढ़ो back config in HW */
+	वापस -ENOTSUPP;
+पूर्ण
 
-static void bcm2835_pull_config_set(struct bcm2835_pinctrl *pc,
-		unsigned int pin, unsigned int arg)
-{
+अटल व्योम bcm2835_pull_config_set(काष्ठा bcm2835_pinctrl *pc,
+		अचिन्हित पूर्णांक pin, अचिन्हित पूर्णांक arg)
+अणु
 	u32 off, bit;
 
 	off = GPIO_REG_OFFSET(pin);
@@ -984,140 +985,140 @@ static void bcm2835_pull_config_set(struct bcm2835_pinctrl *pc,
 
 	bcm2835_gpio_wr(pc, GPPUD, arg & 3);
 	/*
-	 * BCM2835 datasheet say to wait 150 cycles, but not of what.
-	 * But the VideoCore firmware delay for this operation
-	 * based nearly on the same amount of VPU cycles and this clock
+	 * BCM2835 datasheet say to रुको 150 cycles, but not of what.
+	 * But the VideoCore firmware delay क्रम this operation
+	 * based nearly on the same amount of VPU cycles and this घड़ी
 	 * runs at 250 MHz.
 	 */
 	udelay(1);
 	bcm2835_gpio_wr(pc, GPPUDCLK0 + (off * 4), BIT(bit));
 	udelay(1);
 	bcm2835_gpio_wr(pc, GPPUDCLK0 + (off * 4), 0);
-}
+पूर्ण
 
-static int bcm2835_pinconf_set(struct pinctrl_dev *pctldev,
-			unsigned int pin, unsigned long *configs,
-			unsigned int num_configs)
-{
-	struct bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक bcm2835_pinconf_set(काष्ठा pinctrl_dev *pctldev,
+			अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *configs,
+			अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
 	u32 param, arg;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
+		चयन (param) अणु
 		/* Set legacy brcm,pull */
-		case BCM2835_PINCONF_PARAM_PULL:
+		हाल BCM2835_PINCONF_PARAM_PULL:
 			bcm2835_pull_config_set(pc, pin, arg);
-			break;
+			अवरोध;
 
 		/* Set pull generic bindings */
-		case PIN_CONFIG_BIAS_DISABLE:
+		हाल PIN_CONFIG_BIAS_DISABLE:
 			bcm2835_pull_config_set(pc, pin, BCM2835_PUD_OFF);
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_BIAS_PULL_DOWN:
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
 			bcm2835_pull_config_set(pc, pin, BCM2835_PUD_DOWN);
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_BIAS_PULL_UP:
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			bcm2835_pull_config_set(pc, pin, BCM2835_PUD_UP);
-			break;
+			अवरोध;
 
 		/* Set output-high or output-low */
-		case PIN_CONFIG_OUTPUT:
+		हाल PIN_CONFIG_OUTPUT:
 			bcm2835_gpio_set_bit(pc, arg ? GPSET0 : GPCLR0, pin);
-			break;
+			अवरोध;
 
-		default:
-			return -ENOTSUPP;
+		शेष:
+			वापस -ENOTSUPP;
 
-		} /* switch param type */
-	} /* for each config */
+		पूर्ण /* चयन param type */
+	पूर्ण /* क्रम each config */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops bcm2835_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops bcm2835_pinconf_ops = अणु
 	.is_generic = true,
 	.pin_config_get = bcm2835_pinconf_get,
 	.pin_config_set = bcm2835_pinconf_set,
-};
+पूर्ण;
 
-static void bcm2711_pull_config_set(struct bcm2835_pinctrl *pc,
-				    unsigned int pin, unsigned int arg)
-{
-	u32 shifter;
+अटल व्योम bcm2711_pull_config_set(काष्ठा bcm2835_pinctrl *pc,
+				    अचिन्हित पूर्णांक pin, अचिन्हित पूर्णांक arg)
+अणु
+	u32 shअगरter;
 	u32 value;
 	u32 off;
 
 	off = PUD_2711_REG_OFFSET(pin);
-	shifter = PUD_2711_REG_SHIFT(pin);
+	shअगरter = PUD_2711_REG_SHIFT(pin);
 
 	value = bcm2835_gpio_rd(pc, GP_GPIO_PUP_PDN_CNTRL_REG0 + (off * 4));
-	value &= ~(PUD_2711_MASK << shifter);
-	value |= (arg << shifter);
+	value &= ~(PUD_2711_MASK << shअगरter);
+	value |= (arg << shअगरter);
 	bcm2835_gpio_wr(pc, GP_GPIO_PUP_PDN_CNTRL_REG0 + (off * 4), value);
-}
+पूर्ण
 
-static int bcm2711_pinconf_set(struct pinctrl_dev *pctldev,
-			       unsigned int pin, unsigned long *configs,
-			       unsigned int num_configs)
-{
-	struct bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक bcm2711_pinconf_set(काष्ठा pinctrl_dev *pctldev,
+			       अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *configs,
+			       अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा bcm2835_pinctrl *pc = pinctrl_dev_get_drvdata(pctldev);
 	u32 param, arg;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
+		चयन (param) अणु
 		/* convert legacy brcm,pull */
-		case BCM2835_PINCONF_PARAM_PULL:
-			if (arg == BCM2835_PUD_UP)
+		हाल BCM2835_PINCONF_PARAM_PULL:
+			अगर (arg == BCM2835_PUD_UP)
 				arg = BCM2711_PULL_UP;
-			else if (arg == BCM2835_PUD_DOWN)
+			अन्यथा अगर (arg == BCM2835_PUD_DOWN)
 				arg = BCM2711_PULL_DOWN;
-			else
+			अन्यथा
 				arg = BCM2711_PULL_NONE;
 
 			bcm2711_pull_config_set(pc, pin, arg);
-			break;
+			अवरोध;
 
 		/* Set pull generic bindings */
-		case PIN_CONFIG_BIAS_DISABLE:
+		हाल PIN_CONFIG_BIAS_DISABLE:
 			bcm2711_pull_config_set(pc, pin, BCM2711_PULL_NONE);
-			break;
-		case PIN_CONFIG_BIAS_PULL_DOWN:
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
 			bcm2711_pull_config_set(pc, pin, BCM2711_PULL_DOWN);
-			break;
-		case PIN_CONFIG_BIAS_PULL_UP:
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			bcm2711_pull_config_set(pc, pin, BCM2711_PULL_UP);
-			break;
+			अवरोध;
 
 		/* Set output-high or output-low */
-		case PIN_CONFIG_OUTPUT:
+		हाल PIN_CONFIG_OUTPUT:
 			bcm2835_gpio_set_bit(pc, arg ? GPSET0 : GPCLR0, pin);
-			break;
+			अवरोध;
 
-		default:
-			return -ENOTSUPP;
-		}
-	} /* for each config */
+		शेष:
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण /* क्रम each config */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops bcm2711_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops bcm2711_pinconf_ops = अणु
 	.is_generic = true,
 	.pin_config_get = bcm2835_pinconf_get,
 	.pin_config_set = bcm2711_pinconf_set,
-};
+पूर्ण;
 
-static const struct pinctrl_desc bcm2835_pinctrl_desc = {
+अटल स्थिर काष्ठा pinctrl_desc bcm2835_pinctrl_desc = अणु
 	.name = MODULE_NAME,
 	.pins = bcm2835_gpio_pins,
 	.npins = BCM2835_NUM_GPIOS,
@@ -1125,9 +1126,9 @@ static const struct pinctrl_desc bcm2835_pinctrl_desc = {
 	.pmxops = &bcm2835_pmx_ops,
 	.confops = &bcm2835_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct pinctrl_desc bcm2711_pinctrl_desc = {
+अटल स्थिर काष्ठा pinctrl_desc bcm2711_pinctrl_desc = अणु
 	.name = "pinctrl-bcm2711",
 	.pins = bcm2835_gpio_pins,
 	.npins = BCM2711_NUM_GPIOS,
@@ -1135,87 +1136,87 @@ static const struct pinctrl_desc bcm2711_pinctrl_desc = {
 	.pmxops = &bcm2835_pmx_ops,
 	.confops = &bcm2711_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct pinctrl_gpio_range bcm2835_pinctrl_gpio_range = {
+अटल स्थिर काष्ठा pinctrl_gpio_range bcm2835_pinctrl_gpio_range = अणु
 	.name = MODULE_NAME,
 	.npins = BCM2835_NUM_GPIOS,
-};
+पूर्ण;
 
-static const struct pinctrl_gpio_range bcm2711_pinctrl_gpio_range = {
+अटल स्थिर काष्ठा pinctrl_gpio_range bcm2711_pinctrl_gpio_range = अणु
 	.name = "pinctrl-bcm2711",
 	.npins = BCM2711_NUM_GPIOS,
-};
+पूर्ण;
 
-struct bcm_plat_data {
-	const struct gpio_chip *gpio_chip;
-	const struct pinctrl_desc *pctl_desc;
-	const struct pinctrl_gpio_range *gpio_range;
-};
+काष्ठा bcm_plat_data अणु
+	स्थिर काष्ठा gpio_chip *gpio_chip;
+	स्थिर काष्ठा pinctrl_desc *pctl_desc;
+	स्थिर काष्ठा pinctrl_gpio_range *gpio_range;
+पूर्ण;
 
-static const struct bcm_plat_data bcm2835_plat_data = {
+अटल स्थिर काष्ठा bcm_plat_data bcm2835_plat_data = अणु
 	.gpio_chip = &bcm2835_gpio_chip,
 	.pctl_desc = &bcm2835_pinctrl_desc,
 	.gpio_range = &bcm2835_pinctrl_gpio_range,
-};
+पूर्ण;
 
-static const struct bcm_plat_data bcm2711_plat_data = {
+अटल स्थिर काष्ठा bcm_plat_data bcm2711_plat_data = अणु
 	.gpio_chip = &bcm2711_gpio_chip,
 	.pctl_desc = &bcm2711_pinctrl_desc,
 	.gpio_range = &bcm2711_pinctrl_gpio_range,
-};
+पूर्ण;
 
-static const struct of_device_id bcm2835_pinctrl_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id bcm2835_pinctrl_match[] = अणु
+	अणु
 		.compatible = "brcm,bcm2835-gpio",
 		.data = &bcm2835_plat_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "brcm,bcm2711-gpio",
 		.data = &bcm2711_plat_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "brcm,bcm7211-gpio",
 		.data = &bcm2711_plat_data,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int bcm2835_pinctrl_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	const struct bcm_plat_data *pdata;
-	struct bcm2835_pinctrl *pc;
-	struct gpio_irq_chip *girq;
-	struct resource iomem;
-	int err, i;
-	const struct of_device_id *match;
-	int is_7211 = 0;
+अटल पूर्णांक bcm2835_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	स्थिर काष्ठा bcm_plat_data *pdata;
+	काष्ठा bcm2835_pinctrl *pc;
+	काष्ठा gpio_irq_chip *girq;
+	काष्ठा resource iomem;
+	पूर्णांक err, i;
+	स्थिर काष्ठा of_device_id *match;
+	पूर्णांक is_7211 = 0;
 
 	BUILD_BUG_ON(ARRAY_SIZE(bcm2835_gpio_pins) != BCM2711_NUM_GPIOS);
 	BUILD_BUG_ON(ARRAY_SIZE(bcm2835_gpio_groups) != BCM2711_NUM_GPIOS);
 
-	pc = devm_kzalloc(dev, sizeof(*pc), GFP_KERNEL);
-	if (!pc)
-		return -ENOMEM;
+	pc = devm_kzalloc(dev, माप(*pc), GFP_KERNEL);
+	अगर (!pc)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, pc);
+	platक्रमm_set_drvdata(pdev, pc);
 	pc->dev = dev;
 
 	err = of_address_to_resource(np, 0, &iomem);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "could not get IO memory\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	pc->base = devm_ioremap_resource(dev, &iomem);
-	if (IS_ERR(pc->base))
-		return PTR_ERR(pc->base);
+	अगर (IS_ERR(pc->base))
+		वापस PTR_ERR(pc->base);
 
 	match = of_match_node(bcm2835_pinctrl_match, pdev->dev.of_node);
-	if (!match)
-		return -EINVAL;
+	अगर (!match)
+		वापस -EINVAL;
 
 	pdata = match->data;
 	is_7211 = of_device_is_compatible(np, "brcm,bcm7211-gpio");
@@ -1224,9 +1225,9 @@ static int bcm2835_pinctrl_probe(struct platform_device *pdev)
 	pc->gpio_chip.parent = dev;
 	pc->gpio_chip.of_node = np;
 
-	for (i = 0; i < BCM2835_NUM_BANKS; i++) {
-		unsigned long events;
-		unsigned offset;
+	क्रम (i = 0; i < BCM2835_NUM_BANKS; i++) अणु
+		अचिन्हित दीर्घ events;
+		अचिन्हित offset;
 
 		/* clear event detection flags */
 		bcm2835_gpio_wr(pc, GPREN0 + i * 4, 0);
@@ -1238,95 +1239,95 @@ static int bcm2835_pinctrl_probe(struct platform_device *pdev)
 
 		/* clear all the events */
 		events = bcm2835_gpio_rd(pc, GPEDS0 + i * 4);
-		for_each_set_bit(offset, &events, 32)
+		क्रम_each_set_bit(offset, &events, 32)
 			bcm2835_gpio_wr(pc, GPEDS0 + i * 4, BIT(offset));
 
 		raw_spin_lock_init(&pc->irq_lock[i]);
-	}
+	पूर्ण
 
 	girq = &pc->gpio_chip.irq;
 	girq->chip = &bcm2835_gpio_irq_chip;
 	girq->parent_handler = bcm2835_gpio_irq_handler;
 	girq->num_parents = BCM2835_NUM_IRQS;
-	girq->parents = devm_kcalloc(dev, BCM2835_NUM_IRQS,
-				     sizeof(*girq->parents),
+	girq->parents = devm_kसुस्मृति(dev, BCM2835_NUM_IRQS,
+				     माप(*girq->parents),
 				     GFP_KERNEL);
-	if (!girq->parents)
-		return -ENOMEM;
+	अगर (!girq->parents)
+		वापस -ENOMEM;
 
-	if (is_7211) {
-		pc->wake_irq = devm_kcalloc(dev, BCM2835_NUM_IRQS,
-					    sizeof(*pc->wake_irq),
+	अगर (is_7211) अणु
+		pc->wake_irq = devm_kसुस्मृति(dev, BCM2835_NUM_IRQS,
+					    माप(*pc->wake_irq),
 					    GFP_KERNEL);
-		if (!pc->wake_irq)
-			return -ENOMEM;
-	}
+		अगर (!pc->wake_irq)
+			वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * Use the same handler for all groups: this is necessary
+	 * Use the same handler क्रम all groups: this is necessary
 	 * since we use one gpiochip to cover all lines - the
 	 * irq handler then needs to figure out which group and
 	 * bank that was firing the IRQ and look up the per-group
 	 * and bank data.
 	 */
-	for (i = 0; i < BCM2835_NUM_IRQS; i++) {
-		int len;
-		char *name;
+	क्रम (i = 0; i < BCM2835_NUM_IRQS; i++) अणु
+		पूर्णांक len;
+		अक्षर *name;
 
 		girq->parents[i] = irq_of_parse_and_map(np, i);
-		if (!is_7211)
-			continue;
+		अगर (!is_7211)
+			जारी;
 
-		/* Skip over the all banks interrupts */
+		/* Skip over the all banks पूर्णांकerrupts */
 		pc->wake_irq[i] = irq_of_parse_and_map(np, i +
 						       BCM2835_NUM_IRQS + 1);
 
-		len = strlen(dev_name(pc->dev)) + 16;
+		len = म_माप(dev_name(pc->dev)) + 16;
 		name = devm_kzalloc(pc->dev, len, GFP_KERNEL);
-		if (!name)
-			return -ENOMEM;
+		अगर (!name)
+			वापस -ENOMEM;
 
-		snprintf(name, len, "%s:bank%d", dev_name(pc->dev), i);
+		snम_लिखो(name, len, "%s:bank%d", dev_name(pc->dev), i);
 
-		/* These are optional interrupts */
+		/* These are optional पूर्णांकerrupts */
 		err = devm_request_irq(dev, pc->wake_irq[i],
 				       bcm2835_gpio_wake_irq_handler,
 				       IRQF_SHARED, name, pc);
-		if (err)
+		अगर (err)
 			dev_warn(dev, "unable to request wake IRQ %d\n",
 				 pc->wake_irq[i]);
-	}
+	पूर्ण
 
-	girq->default_type = IRQ_TYPE_NONE;
+	girq->शेष_type = IRQ_TYPE_NONE;
 	girq->handler = handle_level_irq;
 
 	err = gpiochip_add_data(&pc->gpio_chip, pc);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "could not add GPIO chip\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	pc->pctl_desc = *pdata->pctl_desc;
-	pc->pctl_dev = devm_pinctrl_register(dev, &pc->pctl_desc, pc);
-	if (IS_ERR(pc->pctl_dev)) {
-		gpiochip_remove(&pc->gpio_chip);
-		return PTR_ERR(pc->pctl_dev);
-	}
+	pc->pctl_dev = devm_pinctrl_रेजिस्टर(dev, &pc->pctl_desc, pc);
+	अगर (IS_ERR(pc->pctl_dev)) अणु
+		gpiochip_हटाओ(&pc->gpio_chip);
+		वापस PTR_ERR(pc->pctl_dev);
+	पूर्ण
 
 	pc->gpio_range = *pdata->gpio_range;
 	pc->gpio_range.base = pc->gpio_chip.base;
 	pc->gpio_range.gc = &pc->gpio_chip;
 	pinctrl_add_gpio_range(pc->pctl_dev, &pc->gpio_range);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver bcm2835_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver bcm2835_pinctrl_driver = अणु
 	.probe = bcm2835_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name = MODULE_NAME,
 		.of_match_table = bcm2835_pinctrl_match,
 		.suppress_bind_attrs = true,
-	},
-};
-builtin_platform_driver(bcm2835_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(bcm2835_pinctrl_driver);

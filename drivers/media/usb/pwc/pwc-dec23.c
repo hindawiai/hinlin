@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Linux driver for Philips webcam
-   Decompression for chipset version 2 et 3
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Linux driver क्रम Philips webcam
+   Decompression क्रम chipset version 2 et 3
    (C) 2004-2006  Luc Saillard (luc@saillard.org)
 
-   NOTE: this version of pwc is an unofficial (modified) release of pwc & pcwx
+   NOTE: this version of pwc is an unofficial (modअगरied) release of pwc & pcwx
    driver and thus may have bugs that are not present in the original version.
    Please send bug reports and support requests to <luc@saillard.org>.
    The decompression routines have been implemented by reverse-engineering the
@@ -12,113 +13,113 @@
 
 */
 
-#include "pwc-timon.h"
-#include "pwc-kiara.h"
-#include "pwc-dec23.h"
+#समावेश "pwc-timon.h"
+#समावेश "pwc-kiara.h"
+#समावेश "pwc-dec23.h"
 
-#include <linux/string.h>
-#include <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
 
 /*
  * USE_LOOKUP_TABLE_TO_CLAMP
- *   0: use a C version of this tests:  {  a<0?0:(a>255?255:a) }
- *   1: use a faster lookup table for cpu with a big cache (intel)
+ *   0: use a C version of this tests:  अणु  a<0?0:(a>255?255:a) पूर्ण
+ *   1: use a faster lookup table क्रम cpu with a big cache (पूर्णांकel)
  */
-#define USE_LOOKUP_TABLE_TO_CLAMP	1
+#घोषणा USE_LOOKUP_TABLE_TO_CLAMP	1
 /*
  * UNROLL_LOOP_FOR_COPYING_BLOCK
- *   0: use a loop for a smaller code (but little slower)
+ *   0: use a loop क्रम a smaller code (but little slower)
  *   1: when unrolling the loop, gcc produces some faster code (perhaps only
- *   valid for intel processor class). Activating this option, automatically
+ *   valid क्रम पूर्णांकel processor class). Activating this option, स्वतःmatically
  *   activate USE_LOOKUP_TABLE_TO_CLAMP
  */
-#define UNROLL_LOOP_FOR_COPY		1
-#if UNROLL_LOOP_FOR_COPY
+#घोषणा UNROLL_LOOP_FOR_COPY		1
+#अगर UNROLL_LOOP_FOR_COPY
 # undef USE_LOOKUP_TABLE_TO_CLAMP
 # define USE_LOOKUP_TABLE_TO_CLAMP 1
-#endif
+#पूर्ण_अगर
 
-static void build_subblock_pattern(struct pwc_dec23_private *pdec)
-{
-	static const unsigned int initial_values[12] = {
+अटल व्योम build_subblock_pattern(काष्ठा pwc_dec23_निजी *pdec)
+अणु
+	अटल स्थिर अचिन्हित पूर्णांक initial_values[12] = अणु
 		-0x526500, -0x221200, 0x221200, 0x526500,
 			   -0x3de200, 0x3de200,
 		-0x6db480, -0x2d5d00, 0x2d5d00, 0x6db480,
 			   -0x12c200, 0x12c200
 
-	};
-	static const unsigned int values_derivated[12] = {
+	पूर्ण;
+	अटल स्थिर अचिन्हित पूर्णांक values_derivated[12] = अणु
 		0xa4ca, 0x4424, -0x4424, -0xa4ca,
 			0x7bc4, -0x7bc4,
 		0xdb69, 0x5aba, -0x5aba, -0xdb69,
 			0x2584, -0x2584
-	};
-	unsigned int temp_values[12];
-	int i, j;
+	पूर्ण;
+	अचिन्हित पूर्णांक temp_values[12];
+	पूर्णांक i, j;
 
-	memcpy(temp_values, initial_values, sizeof(initial_values));
-	for (i = 0; i < 256; i++) {
-		for (j = 0; j < 12; j++) {
+	स_नकल(temp_values, initial_values, माप(initial_values));
+	क्रम (i = 0; i < 256; i++) अणु
+		क्रम (j = 0; j < 12; j++) अणु
 			pdec->table_subblock[i][j] = temp_values[j];
 			temp_values[j] += values_derivated[j];
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void build_bit_powermask_table(struct pwc_dec23_private *pdec)
-{
-	unsigned char *p;
-	unsigned int bit, byte, mask, val;
-	unsigned int bitpower = 1;
+अटल व्योम build_bit_घातermask_table(काष्ठा pwc_dec23_निजी *pdec)
+अणु
+	अचिन्हित अक्षर *p;
+	अचिन्हित पूर्णांक bit, byte, mask, val;
+	अचिन्हित पूर्णांक bitघातer = 1;
 
-	for (bit = 0; bit < 8; bit++) {
-		mask = bitpower - 1;
-		p = pdec->table_bitpowermask[bit];
-		for (byte = 0; byte < 256; byte++) {
+	क्रम (bit = 0; bit < 8; bit++) अणु
+		mask = bitघातer - 1;
+		p = pdec->table_bitघातermask[bit];
+		क्रम (byte = 0; byte < 256; byte++) अणु
 			val = (byte & mask);
-			if (byte & bitpower)
+			अगर (byte & bitघातer)
 				val = -val;
 			*p++ = val;
-		}
-		bitpower<<=1;
-	}
-}
+		पूर्ण
+		bitघातer<<=1;
+	पूर्ण
+पूर्ण
 
 
-static void build_table_color(const unsigned int romtable[16][8],
-			      unsigned char p0004[16][1024],
-			      unsigned char p8004[16][256])
-{
-	int compression_mode, j, k, bit, pw;
-	unsigned char *p0, *p8;
-	const unsigned int *r;
+अटल व्योम build_table_color(स्थिर अचिन्हित पूर्णांक romtable[16][8],
+			      अचिन्हित अक्षर p0004[16][1024],
+			      अचिन्हित अक्षर p8004[16][256])
+अणु
+	पूर्णांक compression_mode, j, k, bit, pw;
+	अचिन्हित अक्षर *p0, *p8;
+	स्थिर अचिन्हित पूर्णांक *r;
 
 	/* We have 16 compressions tables */
-	for (compression_mode = 0; compression_mode < 16; compression_mode++) {
+	क्रम (compression_mode = 0; compression_mode < 16; compression_mode++) अणु
 		p0 = p0004[compression_mode];
 		p8 = p8004[compression_mode];
 		r  = romtable[compression_mode];
 
-		for (j = 0; j < 8; j++, r++, p0 += 128) {
+		क्रम (j = 0; j < 8; j++, r++, p0 += 128) अणु
 
-			for (k = 0; k < 16; k++) {
-				if (k == 0)
+			क्रम (k = 0; k < 16; k++) अणु
+				अगर (k == 0)
 					bit = 1;
-				else if (k >= 1 && k < 3)
+				अन्यथा अगर (k >= 1 && k < 3)
 					bit = (r[0] >> 15) & 7;
-				else if (k >= 3 && k < 6)
+				अन्यथा अगर (k >= 3 && k < 6)
 					bit = (r[0] >> 12) & 7;
-				else if (k >= 6 && k < 10)
+				अन्यथा अगर (k >= 6 && k < 10)
 					bit = (r[0] >> 9) & 7;
-				else if (k >= 10 && k < 13)
+				अन्यथा अगर (k >= 10 && k < 13)
 					bit = (r[0] >> 6) & 7;
-				else if (k >= 13 && k < 15)
+				अन्यथा अगर (k >= 13 && k < 15)
 					bit = (r[0] >> 3) & 7;
-				else
+				अन्यथा
 					bit = (r[0]) & 7;
-				if (k == 0)
+				अगर (k == 0)
 					*p8++ = 8;
-				else
+				अन्यथा
 					*p8++ = j - bit;
 				*p8++ = bit;
 
@@ -131,51 +132,51 @@ static void build_table_color(const unsigned int romtable[16][8],
 				p0[k + 0x50] = (-2 * pw) + 0x80;
 				p0[k + 0x60] = (-3 * pw) + 0x80;
 				p0[k + 0x70] = (-4 * pw) + 0x80;
-			}	/* end of for (k=0; k<16; k++, p8++) */
-		}	/* end of for (j=0; j<8; j++ , table++) */
-	} /* end of foreach compression_mode */
-}
+			पूर्ण	/* end of क्रम (k=0; k<16; k++, p8++) */
+		पूर्ण	/* end of क्रम (j=0; j<8; j++ , table++) */
+	पूर्ण /* end of क्रमeach compression_mode */
+पूर्ण
 
 /*
  *
  */
-static void fill_table_dc00_d800(struct pwc_dec23_private *pdec)
-{
-#define SCALEBITS 15
-#define ONE_HALF  (1UL << (SCALEBITS - 1))
-	int i;
-	unsigned int offset1 = ONE_HALF;
-	unsigned int offset2 = 0x0000;
+अटल व्योम fill_table_dc00_d800(काष्ठा pwc_dec23_निजी *pdec)
+अणु
+#घोषणा SCALEBITS 15
+#घोषणा ONE_HALF  (1UL << (SCALEBITS - 1))
+	पूर्णांक i;
+	अचिन्हित पूर्णांक offset1 = ONE_HALF;
+	अचिन्हित पूर्णांक offset2 = 0x0000;
 
-	for (i=0; i<256; i++) {
+	क्रम (i=0; i<256; i++) अणु
 		pdec->table_dc00[i] = offset1 & ~(ONE_HALF);
 		pdec->table_d800[i] = offset2;
 
 		offset1 += 0x7bc4;
 		offset2 += 0x7bc4;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * To decode the stream:
- *   if look_bits(2) == 0:	# op == 2 in the lookup table
+ *   अगर look_bits(2) == 0:	# op == 2 in the lookup table
  *      skip_bits(2)
  *      end of the stream
- *   elif look_bits(3) == 7:	# op == 1 in the lookup table
+ *   elअगर look_bits(3) == 7:	# op == 1 in the lookup table
  *      skip_bits(3)
  *      yyyy = get_bits(4)
  *      xxxx = get_bits(8)
- *   else:			# op == 0 in the lookup table
+ *   अन्यथा:			# op == 0 in the lookup table
  *      skip_bits(x)
  *
  * For speedup processing, we build a lookup table and we takes the first 6 bits.
  *
- * struct {
- *   unsigned char op;	    // operation to execute
- *   unsigned char bits;    // bits use to perform operation
- *   unsigned char offset1; // offset to add to access in the table_0004 % 16
- *   unsigned char offset2; // offset to add to access in the table_0004
- * }
+ * काष्ठा अणु
+ *   अचिन्हित अक्षर op;	    // operation to execute
+ *   अचिन्हित अक्षर bits;    // bits use to perक्रमm operation
+ *   अचिन्हित अक्षर offset1; // offset to add to access in the table_0004 % 16
+ *   अचिन्हित अक्षर offset2; // offset to add to access in the table_0004
+ * पूर्ण
  *
  * How to build this table ?
  *   op == 2 when (i%4)==0
@@ -183,7 +184,7 @@ static void fill_table_dc00_d800(struct pwc_dec23_private *pdec)
  *   op == 0 otherwise
  *
  */
-static const unsigned char hash_table_ops[64*4] = {
+अटल स्थिर अचिन्हित अक्षर hash_table_ops[64*4] = अणु
 	0x02, 0x00, 0x00, 0x00,
 	0x00, 0x03, 0x01, 0x00,
 	0x00, 0x04, 0x01, 0x10,
@@ -248,110 +249,110 @@ static const unsigned char hash_table_ops[64*4] = {
 	0x00, 0x03, 0x01, 0x40,
 	0x00, 0x05, 0x03, 0x40,
 	0x01, 0x00, 0x00, 0x00
-};
+पूर्ण;
 
 /*
  *
  */
-static const unsigned int MulIdx[16][16] = {
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,},
-	{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3,},
-	{0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3,},
-	{4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4,},
-	{6, 7, 8, 9, 7, 10, 11, 8, 8, 11, 10, 7, 9, 8, 7, 6,},
-	{4, 5, 5, 4, 4, 5, 5, 4, 4, 5, 5, 4, 4, 5, 5, 4,},
-	{1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2,},
-	{0, 3, 3, 0, 1, 2, 2, 1, 2, 1, 1, 2, 3, 0, 0, 3,},
-	{0, 1, 2, 3, 3, 2, 1, 0, 3, 2, 1, 0, 0, 1, 2, 3,},
-	{1, 1, 1, 1, 3, 3, 3, 3, 0, 0, 0, 0, 2, 2, 2, 2,},
-	{7, 10, 11, 8, 9, 8, 7, 6, 6, 7, 8, 9, 8, 11, 10, 7,},
-	{4, 5, 5, 4, 5, 4, 4, 5, 5, 4, 4, 5, 4, 5, 5, 4,},
-	{7, 9, 6, 8, 10, 8, 7, 11, 11, 7, 8, 10, 8, 6, 9, 7,},
-	{1, 3, 0, 2, 2, 0, 3, 1, 2, 0, 3, 1, 1, 3, 0, 2,},
-	{1, 2, 2, 1, 3, 0, 0, 3, 0, 3, 3, 0, 2, 1, 1, 2,},
-	{10, 8, 7, 11, 8, 6, 9, 7, 7, 9, 6, 8, 11, 7, 8, 10}
-};
+अटल स्थिर अचिन्हित पूर्णांक MulIdx[16][16] = अणु
+	अणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,पूर्ण,
+	अणु0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3,पूर्ण,
+	अणु0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3,पूर्ण,
+	अणु4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4,पूर्ण,
+	अणु6, 7, 8, 9, 7, 10, 11, 8, 8, 11, 10, 7, 9, 8, 7, 6,पूर्ण,
+	अणु4, 5, 5, 4, 4, 5, 5, 4, 4, 5, 5, 4, 4, 5, 5, 4,पूर्ण,
+	अणु1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2, 1, 3, 0, 2,पूर्ण,
+	अणु0, 3, 3, 0, 1, 2, 2, 1, 2, 1, 1, 2, 3, 0, 0, 3,पूर्ण,
+	अणु0, 1, 2, 3, 3, 2, 1, 0, 3, 2, 1, 0, 0, 1, 2, 3,पूर्ण,
+	अणु1, 1, 1, 1, 3, 3, 3, 3, 0, 0, 0, 0, 2, 2, 2, 2,पूर्ण,
+	अणु7, 10, 11, 8, 9, 8, 7, 6, 6, 7, 8, 9, 8, 11, 10, 7,पूर्ण,
+	अणु4, 5, 5, 4, 5, 4, 4, 5, 5, 4, 4, 5, 4, 5, 5, 4,पूर्ण,
+	अणु7, 9, 6, 8, 10, 8, 7, 11, 11, 7, 8, 10, 8, 6, 9, 7,पूर्ण,
+	अणु1, 3, 0, 2, 2, 0, 3, 1, 2, 0, 3, 1, 1, 3, 0, 2,पूर्ण,
+	अणु1, 2, 2, 1, 3, 0, 0, 3, 0, 3, 3, 0, 2, 1, 1, 2,पूर्ण,
+	अणु10, 8, 7, 11, 8, 6, 9, 7, 7, 9, 6, 8, 11, 7, 8, 10पूर्ण
+पूर्ण;
 
-#if USE_LOOKUP_TABLE_TO_CLAMP
-#define MAX_OUTER_CROP_VALUE	(512)
-static unsigned char pwc_crop_table[256 + 2*MAX_OUTER_CROP_VALUE];
-#define CLAMP(x) (pwc_crop_table[MAX_OUTER_CROP_VALUE+(x)])
-#else
-#define CLAMP(x) ((x)>255?255:((x)<0?0:x))
-#endif
+#अगर USE_LOOKUP_TABLE_TO_CLAMP
+#घोषणा MAX_OUTER_CROP_VALUE	(512)
+अटल अचिन्हित अक्षर pwc_crop_table[256 + 2*MAX_OUTER_CROP_VALUE];
+#घोषणा CLAMP(x) (pwc_crop_table[MAX_OUTER_CROP_VALUE+(x)])
+#अन्यथा
+#घोषणा CLAMP(x) ((x)>255?255:((x)<0?0:x))
+#पूर्ण_अगर
 
 
 /* If the type or the command change, we rebuild the lookup table */
-void pwc_dec23_init(struct pwc_device *pdev, const unsigned char *cmd)
-{
-	int flags, version, shift, i;
-	struct pwc_dec23_private *pdec = &pdev->dec23;
+व्योम pwc_dec23_init(काष्ठा pwc_device *pdev, स्थिर अचिन्हित अक्षर *cmd)
+अणु
+	पूर्णांक flags, version, shअगरt, i;
+	काष्ठा pwc_dec23_निजी *pdec = &pdev->dec23;
 
 	mutex_init(&pdec->lock);
 
-	if (pdec->last_cmd_valid && pdec->last_cmd == cmd[2])
-		return;
+	अगर (pdec->last_cmd_valid && pdec->last_cmd == cmd[2])
+		वापस;
 
-	if (DEVICE_USE_CODEC3(pdev->type)) {
+	अगर (DEVICE_USE_CODEC3(pdev->type)) अणु
 		flags = cmd[2] & 0x18;
-		if (flags == 8)
+		अगर (flags == 8)
 			pdec->nbits = 7;	/* More bits, mean more bits to encode the stream, but better quality */
-		else if (flags == 0x10)
+		अन्यथा अगर (flags == 0x10)
 			pdec->nbits = 8;
-		else
+		अन्यथा
 			pdec->nbits = 6;
 
 		version = cmd[2] >> 5;
 		build_table_color(KiaraRomTable[version][0], pdec->table_0004_pass1, pdec->table_8004_pass1);
 		build_table_color(KiaraRomTable[version][1], pdec->table_0004_pass2, pdec->table_8004_pass2);
 
-	} else {
+	पूर्ण अन्यथा अणु
 
 		flags = cmd[2] & 6;
-		if (flags == 2)
+		अगर (flags == 2)
 			pdec->nbits = 7;
-		else if (flags == 4)
+		अन्यथा अगर (flags == 4)
 			pdec->nbits = 8;
-		else
+		अन्यथा
 			pdec->nbits = 6;
 
 		version = cmd[2] >> 3;
 		build_table_color(TimonRomTable[version][0], pdec->table_0004_pass1, pdec->table_8004_pass1);
 		build_table_color(TimonRomTable[version][1], pdec->table_0004_pass2, pdec->table_8004_pass2);
-	}
+	पूर्ण
 
-	/* Information can be coded on a variable number of bits but never less than 8 */
-	shift = 8 - pdec->nbits;
-	pdec->scalebits = SCALEBITS - shift;
-	pdec->nbitsmask = 0xFF >> shift;
+	/* Inक्रमmation can be coded on a variable number of bits but never less than 8 */
+	shअगरt = 8 - pdec->nbits;
+	pdec->scalebits = SCALEBITS - shअगरt;
+	pdec->nbitsmask = 0xFF >> shअगरt;
 
 	fill_table_dc00_d800(pdec);
 	build_subblock_pattern(pdec);
-	build_bit_powermask_table(pdec);
+	build_bit_घातermask_table(pdec);
 
-#if USE_LOOKUP_TABLE_TO_CLAMP
-	/* Build the static table to clamp value [0-255] */
-	for (i=0;i<MAX_OUTER_CROP_VALUE;i++)
+#अगर USE_LOOKUP_TABLE_TO_CLAMP
+	/* Build the अटल table to clamp value [0-255] */
+	क्रम (i=0;i<MAX_OUTER_CROP_VALUE;i++)
 		pwc_crop_table[i] = 0;
-	for (i=0; i<256; i++)
+	क्रम (i=0; i<256; i++)
 		pwc_crop_table[MAX_OUTER_CROP_VALUE+i] = i;
-	for (i=0; i<MAX_OUTER_CROP_VALUE; i++)
+	क्रम (i=0; i<MAX_OUTER_CROP_VALUE; i++)
 		pwc_crop_table[MAX_OUTER_CROP_VALUE+256+i] = 255;
-#endif
+#पूर्ण_अगर
 
 	pdec->last_cmd = cmd[2];
 	pdec->last_cmd_valid = 1;
-}
+पूर्ण
 
 /*
  * Copy the 4x4 image block to Y plane buffer
  */
-static void copy_image_block_Y(const int *src, unsigned char *dst, unsigned int bytes_per_line, unsigned int scalebits)
-{
-#if UNROLL_LOOP_FOR_COPY
-	const unsigned char *cm = pwc_crop_table+MAX_OUTER_CROP_VALUE;
-	const int *c = src;
-	unsigned char *d = dst;
+अटल व्योम copy_image_block_Y(स्थिर पूर्णांक *src, अचिन्हित अक्षर *dst, अचिन्हित पूर्णांक bytes_per_line, अचिन्हित पूर्णांक scalebits)
+अणु
+#अगर UNROLL_LOOP_FOR_COPY
+	स्थिर अचिन्हित अक्षर *cm = pwc_crop_table+MAX_OUTER_CROP_VALUE;
+	स्थिर पूर्णांक *c = src;
+	अचिन्हित अक्षर *d = dst;
 
 	*d++ = cm[c[0] >> scalebits];
 	*d++ = cm[c[1] >> scalebits];
@@ -375,38 +376,38 @@ static void copy_image_block_Y(const int *src, unsigned char *dst, unsigned int 
 	*d++ = cm[c[13] >> scalebits];
 	*d++ = cm[c[14] >> scalebits];
 	*d++ = cm[c[15] >> scalebits];
-#else
-	int i;
-	const int *c = src;
-	unsigned char *d = dst;
-	for (i = 0; i < 4; i++, c++)
+#अन्यथा
+	पूर्णांक i;
+	स्थिर पूर्णांक *c = src;
+	अचिन्हित अक्षर *d = dst;
+	क्रम (i = 0; i < 4; i++, c++)
 		*d++ = CLAMP((*c) >> scalebits);
 
 	d = dst + bytes_per_line;
-	for (i = 0; i < 4; i++, c++)
+	क्रम (i = 0; i < 4; i++, c++)
 		*d++ = CLAMP((*c) >> scalebits);
 
 	d = dst + bytes_per_line*2;
-	for (i = 0; i < 4; i++, c++)
+	क्रम (i = 0; i < 4; i++, c++)
 		*d++ = CLAMP((*c) >> scalebits);
 
 	d = dst + bytes_per_line*3;
-	for (i = 0; i < 4; i++, c++)
+	क्रम (i = 0; i < 4; i++, c++)
 		*d++ = CLAMP((*c) >> scalebits);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * Copy the 4x4 image block to a CrCb plane buffer
  *
  */
-static void copy_image_block_CrCb(const int *src, unsigned char *dst, unsigned int bytes_per_line, unsigned int scalebits)
-{
-#if UNROLL_LOOP_FOR_COPY
+अटल व्योम copy_image_block_CrCb(स्थिर पूर्णांक *src, अचिन्हित अक्षर *dst, अचिन्हित पूर्णांक bytes_per_line, अचिन्हित पूर्णांक scalebits)
+अणु
+#अगर UNROLL_LOOP_FOR_COPY
 	/* Unroll all loops */
-	const unsigned char *cm = pwc_crop_table+MAX_OUTER_CROP_VALUE;
-	const int *c = src;
-	unsigned char *d = dst;
+	स्थिर अचिन्हित अक्षर *cm = pwc_crop_table+MAX_OUTER_CROP_VALUE;
+	स्थिर पूर्णांक *c = src;
+	अचिन्हित अक्षर *d = dst;
 
 	*d++ = cm[c[0] >> scalebits];
 	*d++ = cm[c[4] >> scalebits];
@@ -426,86 +427,86 @@ static void copy_image_block_CrCb(const int *src, unsigned char *dst, unsigned i
 	*d++ = cm[c[10] >> scalebits];
 	*d++ = cm[c[15] >> scalebits];
 	*d++ = cm[c[11] >> scalebits];
-#else
-	int i;
-	const int *c1 = src;
-	const int *c2 = src + 4;
-	unsigned char *d = dst;
+#अन्यथा
+	पूर्णांक i;
+	स्थिर पूर्णांक *c1 = src;
+	स्थिर पूर्णांक *c2 = src + 4;
+	अचिन्हित अक्षर *d = dst;
 
-	for (i = 0; i < 4; i++, c1++, c2++) {
+	क्रम (i = 0; i < 4; i++, c1++, c2++) अणु
 		*d++ = CLAMP((*c1) >> scalebits);
 		*d++ = CLAMP((*c2) >> scalebits);
-	}
+	पूर्ण
 	c1 = src + 12;
 	d = dst + bytes_per_line;
-	for (i = 0; i < 4; i++, c1++, c2++) {
+	क्रम (i = 0; i < 4; i++, c1++, c2++) अणु
 		*d++ = CLAMP((*c1) >> scalebits);
 		*d++ = CLAMP((*c2) >> scalebits);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * To manage the stream, we keep bits in a 32 bits register.
+ * To manage the stream, we keep bits in a 32 bits रेजिस्टर.
  * fill_nbits(n): fill the reservoir with at least n bits
  * skip_bits(n): discard n bits from the reservoir
- * get_bits(n): fill the reservoir, returns the first n bits and discard the
+ * get_bits(n): fill the reservoir, वापसs the first n bits and discard the
  *              bits from the reservoir.
  * __get_nbits(n): faster version of get_bits(n), but asumes that the reservoir
- *                 contains at least n bits. bits returned is discarded.
+ *                 contains at least n bits. bits वापसed is discarded.
  */
-#define fill_nbits(pdec, nbits_wanted) do { \
-   while (pdec->nbits_in_reservoir<(nbits_wanted)) \
-    { \
+#घोषणा fill_nbits(pdec, nbits_wanted) करो अणु \
+   जबतक (pdec->nbits_in_reservoir<(nbits_wanted)) \
+    अणु \
       pdec->reservoir |= (*(pdec->stream)++) << (pdec->nbits_in_reservoir); \
       pdec->nbits_in_reservoir += 8; \
-    } \
-}  while(0);
+    पूर्ण \
+पूर्ण  जबतक(0);
 
-#define skip_nbits(pdec, nbits_to_skip) do { \
+#घोषणा skip_nbits(pdec, nbits_to_skip) करो अणु \
    pdec->reservoir >>= (nbits_to_skip); \
    pdec->nbits_in_reservoir -= (nbits_to_skip); \
-}  while(0);
+पूर्ण  जबतक(0);
 
-#define get_nbits(pdec, nbits_wanted, result) do { \
+#घोषणा get_nbits(pdec, nbits_wanted, result) करो अणु \
    fill_nbits(pdec, nbits_wanted); \
    result = (pdec->reservoir) & ((1U<<(nbits_wanted))-1); \
    skip_nbits(pdec, nbits_wanted); \
-}  while(0);
+पूर्ण  जबतक(0);
 
-#define __get_nbits(pdec, nbits_wanted, result) do { \
+#घोषणा __get_nbits(pdec, nbits_wanted, result) करो अणु \
    result = (pdec->reservoir) & ((1U<<(nbits_wanted))-1); \
    skip_nbits(pdec, nbits_wanted); \
-}  while(0);
+पूर्ण  जबतक(0);
 
-#define look_nbits(pdec, nbits_wanted) \
+#घोषणा look_nbits(pdec, nbits_wanted) \
    ((pdec->reservoir) & ((1U<<(nbits_wanted))-1))
 
 /*
  * Decode a 4x4 pixel block
  */
-static void decode_block(struct pwc_dec23_private *pdec,
-			 const unsigned char *ptable0004,
-			 const unsigned char *ptable8004)
-{
-	unsigned int primary_color;
-	unsigned int channel_v, offset1, op;
-	int i;
+अटल व्योम decode_block(काष्ठा pwc_dec23_निजी *pdec,
+			 स्थिर अचिन्हित अक्षर *ptable0004,
+			 स्थिर अचिन्हित अक्षर *ptable8004)
+अणु
+	अचिन्हित पूर्णांक primary_color;
+	अचिन्हित पूर्णांक channel_v, offset1, op;
+	पूर्णांक i;
 
 	fill_nbits(pdec, 16);
 	__get_nbits(pdec, pdec->nbits, primary_color);
 
-	if (look_nbits(pdec,2) == 0) {
+	अगर (look_nbits(pdec,2) == 0) अणु
 		skip_nbits(pdec, 2);
-		/* Very simple, the color is the same for all pixels of the square */
-		for (i = 0; i < 16; i++)
+		/* Very simple, the color is the same क्रम all pixels of the square */
+		क्रम (i = 0; i < 16; i++)
 			pdec->temp_colors[i] = pdec->table_dc00[primary_color];
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* This block is encoded with small pattern */
-	for (i = 0; i < 16; i++)
+	क्रम (i = 0; i < 16; i++)
 		pdec->temp_colors[i] = pdec->table_d800[primary_color];
 
 	__get_nbits(pdec, 3, channel_v);
@@ -515,13 +516,13 @@ static void decode_block(struct pwc_dec23_private *pdec,
 	ptable8004 += (channel_v * 32);
 
 	offset1 = 0;
-	do
-	{
-		unsigned int htable_idx, rows = 0;
-		const unsigned int *block;
+	करो
+	अणु
+		अचिन्हित पूर्णांक htable_idx, rows = 0;
+		स्थिर अचिन्हित पूर्णांक *block;
 
 		/* [  zzzz y x x ]
-		 *     xx == 00 :=> end of the block def, remove the two bits from the stream
+		 *     xx == 00 :=> end of the block def, हटाओ the two bits from the stream
 		 *    yxx == 111
 		 *    yxx == any other value
 		 *
@@ -530,17 +531,17 @@ static void decode_block(struct pwc_dec23_private *pdec,
 		htable_idx = look_nbits(pdec, 6);
 		op = hash_table_ops[htable_idx * 4];
 
-		if (op == 2) {
+		अगर (op == 2) अणु
 			skip_nbits(pdec, 2);
 
-		} else if (op == 1) {
+		पूर्ण अन्यथा अगर (op == 1) अणु
 			/* 15bits [ xxxx xxxx yyyy 111 ]
 			 * yyy => offset in the table8004
 			 * xxx => offset in the tabled004 (tree)
 			 */
-			unsigned int mask, shift;
-			unsigned int nbits, col1;
-			unsigned int yyyy;
+			अचिन्हित पूर्णांक mask, shअगरt;
+			अचिन्हित पूर्णांक nbits, col1;
+			अचिन्हित पूर्णांक yyyy;
 
 			skip_nbits(pdec, 3);
 			/* offset1 += yyyy */
@@ -553,47 +554,47 @@ static void decode_block(struct pwc_dec23_private *pdec,
 			__get_nbits(pdec, nbits+1, col1);
 
 			/* Bit mask table */
-			mask = pdec->table_bitpowermask[nbits][col1];
-			shift = ptable8004[offset1 * 2 + 1];
-			rows = ((mask << shift) + 0x80) & 0xFF;
+			mask = pdec->table_bitघातermask[nbits][col1];
+			shअगरt = ptable8004[offset1 * 2 + 1];
+			rows = ((mask << shअगरt) + 0x80) & 0xFF;
 
 			block = pdec->table_subblock[rows];
-			for (i = 0; i < 16; i++)
+			क्रम (i = 0; i < 16; i++)
 				pdec->temp_colors[i] += block[MulIdx[offset1][i]];
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* op == 0
 			 * offset1 is coded on 3 bits
 			 */
-			unsigned int shift;
+			अचिन्हित पूर्णांक shअगरt;
 
 			offset1 += hash_table_ops [htable_idx * 4 + 2];
 			offset1 &= 0x0F;
 
 			rows = ptable0004[offset1 + hash_table_ops [htable_idx * 4 + 3]];
 			block = pdec->table_subblock[rows];
-			for (i = 0; i < 16; i++)
+			क्रम (i = 0; i < 16; i++)
 				pdec->temp_colors[i] += block[MulIdx[offset1][i]];
 
-			shift = hash_table_ops[htable_idx * 4 + 1];
-			skip_nbits(pdec, shift);
-		}
+			shअगरt = hash_table_ops[htable_idx * 4 + 1];
+			skip_nbits(pdec, shअगरt);
+		पूर्ण
 
-	} while (op != 2);
+	पूर्ण जबतक (op != 2);
 
-}
+पूर्ण
 
-static void DecompressBand23(struct pwc_dec23_private *pdec,
-			     const unsigned char *rawyuv,
-			     unsigned char *planar_y,
-			     unsigned char *planar_u,
-			     unsigned char *planar_v,
-			     unsigned int   compressed_image_width,
-			     unsigned int   real_image_width)
-{
-	int compression_index, nblocks;
-	const unsigned char *ptable0004;
-	const unsigned char *ptable8004;
+अटल व्योम DecompressBand23(काष्ठा pwc_dec23_निजी *pdec,
+			     स्थिर अचिन्हित अक्षर *rawyuv,
+			     अचिन्हित अक्षर *planar_y,
+			     अचिन्हित अक्षर *planar_u,
+			     अचिन्हित अक्षर *planar_v,
+			     अचिन्हित पूर्णांक   compressed_image_width,
+			     अचिन्हित पूर्णांक   real_image_width)
+अणु
+	पूर्णांक compression_index, nblocks;
+	स्थिर अचिन्हित अक्षर *ptable0004;
+	स्थिर अचिन्हित अक्षर *ptable8004;
 
 	pdec->reservoir = 0;
 	pdec->nbits_in_reservoir = 0;
@@ -608,12 +609,12 @@ static void DecompressBand23(struct pwc_dec23_private *pdec,
 	ptable8004 = pdec->table_8004_pass1[compression_index];
 
 	/* Each block decode a square of 4x4 */
-	while (nblocks) {
+	जबतक (nblocks) अणु
 		decode_block(pdec, ptable0004, ptable8004);
 		copy_image_block_Y(pdec->temp_colors, planar_y, real_image_width, pdec->scalebits);
 		planar_y += 4;
 		nblocks--;
-	}
+	पूर्ण
 
 	/* pass 2: uncompress UV component */
 	nblocks = compressed_image_width / 8;
@@ -622,7 +623,7 @@ static void DecompressBand23(struct pwc_dec23_private *pdec,
 	ptable8004 = pdec->table_8004_pass2[compression_index];
 
 	/* Each block decode a square of 4x4 */
-	while (nblocks) {
+	जबतक (nblocks) अणु
 		decode_block(pdec, ptable0004, ptable8004);
 		copy_image_block_CrCb(pdec->temp_colors, planar_u, real_image_width/2, pdec->scalebits);
 
@@ -632,28 +633,28 @@ static void DecompressBand23(struct pwc_dec23_private *pdec,
 		planar_v += 8;
 		planar_u += 8;
 		nblocks -= 2;
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 /**
  * pwc_dec23_decompress - Uncompress a pwc23 buffer.
- * @pdev: pointer to pwc device's internal struct
+ * @pdev: poपूर्णांकer to pwc device's पूर्णांकernal काष्ठा
  * @src: raw data
  * @dst: image output
  */
-void pwc_dec23_decompress(struct pwc_device *pdev,
-			  const void *src,
-			  void *dst)
-{
-	int bandlines_left, bytes_per_block;
-	struct pwc_dec23_private *pdec = &pdev->dec23;
+व्योम pwc_dec23_decompress(काष्ठा pwc_device *pdev,
+			  स्थिर व्योम *src,
+			  व्योम *dst)
+अणु
+	पूर्णांक bandlines_left, bytes_per_block;
+	काष्ठा pwc_dec23_निजी *pdec = &pdev->dec23;
 
-	/* YUV420P image format */
-	unsigned char *pout_planar_y;
-	unsigned char *pout_planar_u;
-	unsigned char *pout_planar_v;
-	unsigned int   plane_size;
+	/* YUV420P image क्रमmat */
+	अचिन्हित अक्षर *pout_planar_y;
+	अचिन्हित अक्षर *pout_planar_u;
+	अचिन्हित अक्षर *pout_planar_v;
+	अचिन्हित पूर्णांक   plane_size;
 
 	mutex_lock(&pdec->lock);
 
@@ -665,7 +666,7 @@ void pwc_dec23_decompress(struct pwc_device *pdev,
 	pout_planar_u = dst + plane_size;
 	pout_planar_v = dst + plane_size + plane_size / 4;
 
-	while (bandlines_left--) {
+	जबतक (bandlines_left--) अणु
 		DecompressBand23(pdec, src,
 				 pout_planar_y, pout_planar_u, pout_planar_v,
 				 pdev->width, pdev->width);
@@ -673,6 +674,6 @@ void pwc_dec23_decompress(struct pwc_device *pdev,
 		pout_planar_y += bytes_per_block;
 		pout_planar_u += pdev->width;
 		pout_planar_v += pdev->width;
-	}
+	पूर्ण
 	mutex_unlock(&pdec->lock);
-}
+पूर्ण

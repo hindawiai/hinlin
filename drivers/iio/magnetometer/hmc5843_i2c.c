@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * i2c driver for hmc5843/5843/5883/5883l/5983
+ * i2c driver क्रम hmc5843/5843/5883/5883l/5983
  *
  * Split from hmc5843.c
  * Copyright (C) Josef Gajdusek <atx@atx.name>
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/triggered_buffer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/triggered_buffer.h>
 
-#include "hmc5843.h"
+#समावेश "hmc5843.h"
 
-static const struct regmap_range hmc5843_readable_ranges[] = {
+अटल स्थिर काष्ठा regmap_range hmc5843_पढ़ोable_ranges[] = अणु
 	regmap_reg_range(0, HMC5843_ID_END),
-};
+पूर्ण;
 
-static const struct regmap_access_table hmc5843_readable_table = {
-	.yes_ranges = hmc5843_readable_ranges,
-	.n_yes_ranges = ARRAY_SIZE(hmc5843_readable_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table hmc5843_पढ़ोable_table = अणु
+	.yes_ranges = hmc5843_पढ़ोable_ranges,
+	.n_yes_ranges = ARRAY_SIZE(hmc5843_पढ़ोable_ranges),
+पूर्ण;
 
-static const struct regmap_range hmc5843_writable_ranges[] = {
+अटल स्थिर काष्ठा regmap_range hmc5843_writable_ranges[] = अणु
 	regmap_reg_range(0, HMC5843_MODE_REG),
-};
+पूर्ण;
 
-static const struct regmap_access_table hmc5843_writable_table = {
+अटल स्थिर काष्ठा regmap_access_table hmc5843_writable_table = अणु
 	.yes_ranges = hmc5843_writable_ranges,
 	.n_yes_ranges = ARRAY_SIZE(hmc5843_writable_ranges),
-};
+पूर्ण;
 
-static const struct regmap_range hmc5843_volatile_ranges[] = {
+अटल स्थिर काष्ठा regmap_range hmc5843_अस्थिर_ranges[] = अणु
 	regmap_reg_range(HMC5843_DATA_OUT_MSB_REGS, HMC5843_STATUS_REG),
-};
+पूर्ण;
 
-static const struct regmap_access_table hmc5843_volatile_table = {
-	.yes_ranges = hmc5843_volatile_ranges,
-	.n_yes_ranges = ARRAY_SIZE(hmc5843_volatile_ranges),
-};
+अटल स्थिर काष्ठा regmap_access_table hmc5843_अस्थिर_table = अणु
+	.yes_ranges = hmc5843_अस्थिर_ranges,
+	.n_yes_ranges = ARRAY_SIZE(hmc5843_अस्थिर_ranges),
+पूर्ण;
 
-static const struct regmap_config hmc5843_i2c_regmap_config = {
+अटल स्थिर काष्ठा regmap_config hmc5843_i2c_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.rd_table = &hmc5843_readable_table,
+	.rd_table = &hmc5843_पढ़ोable_table,
 	.wr_table = &hmc5843_writable_table,
-	.volatile_table = &hmc5843_volatile_table,
+	.अस्थिर_table = &hmc5843_अस्थिर_table,
 
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static int hmc5843_i2c_probe(struct i2c_client *cli,
-			     const struct i2c_device_id *id)
-{
-	struct regmap *regmap = devm_regmap_init_i2c(cli,
+अटल पूर्णांक hmc5843_i2c_probe(काष्ठा i2c_client *cli,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regmap *regmap = devm_regmap_init_i2c(cli,
 			&hmc5843_i2c_regmap_config);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	return hmc5843_common_probe(&cli->dev,
+	वापस hmc5843_common_probe(&cli->dev,
 			regmap,
 			id->driver_data, id->name);
-}
+पूर्ण
 
-static int hmc5843_i2c_remove(struct i2c_client *client)
-{
-	return hmc5843_common_remove(&client->dev);
-}
+अटल पूर्णांक hmc5843_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	वापस hmc5843_common_हटाओ(&client->dev);
+पूर्ण
 
-static const struct i2c_device_id hmc5843_id[] = {
-	{ "hmc5843", HMC5843_ID },
-	{ "hmc5883", HMC5883_ID },
-	{ "hmc5883l", HMC5883L_ID },
-	{ "hmc5983", HMC5983_ID },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id hmc5843_id[] = अणु
+	अणु "hmc5843", HMC5843_ID पूर्ण,
+	अणु "hmc5883", HMC5883_ID पूर्ण,
+	अणु "hmc5883l", HMC5883L_ID पूर्ण,
+	अणु "hmc5983", HMC5983_ID पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, hmc5843_id);
 
-static const struct of_device_id hmc5843_of_match[] = {
-	{ .compatible = "honeywell,hmc5843", .data = (void *)HMC5843_ID },
-	{ .compatible = "honeywell,hmc5883", .data = (void *)HMC5883_ID },
-	{ .compatible = "honeywell,hmc5883l", .data = (void *)HMC5883L_ID },
-	{ .compatible = "honeywell,hmc5983", .data = (void *)HMC5983_ID },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id hmc5843_of_match[] = अणु
+	अणु .compatible = "honeywell,hmc5843", .data = (व्योम *)HMC5843_ID पूर्ण,
+	अणु .compatible = "honeywell,hmc5883", .data = (व्योम *)HMC5883_ID पूर्ण,
+	अणु .compatible = "honeywell,hmc5883l", .data = (व्योम *)HMC5883L_ID पूर्ण,
+	अणु .compatible = "honeywell,hmc5983", .data = (व्योम *)HMC5983_ID पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, hmc5843_of_match);
 
-static struct i2c_driver hmc5843_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver hmc5843_driver = अणु
+	.driver = अणु
 		.name	= "hmc5843",
 		.pm	= HMC5843_PM_OPS,
 		.of_match_table = hmc5843_of_match,
-	},
+	पूर्ण,
 	.id_table	= hmc5843_id,
 	.probe		= hmc5843_i2c_probe,
-	.remove		= hmc5843_i2c_remove,
-};
+	.हटाओ		= hmc5843_i2c_हटाओ,
+पूर्ण;
 module_i2c_driver(hmc5843_driver);
 
 MODULE_AUTHOR("Josef Gajdusek <atx@atx.name>");

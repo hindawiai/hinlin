@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2002  David McCullough <davidm@snapgear.com>
  * Copyright (C) 2003  Paul Mundt <lethal@linux-sh.org>
@@ -7,69 +8,69 @@
  *
  *           Copyright (C) 2000  Kazumoto Kojima
  *
- *           Modified for 7751 Solution Engine by
+ *           Modअगरied क्रम 7751 Solution Engine by
  *           Ian da Silva and Jeremy Siegel, 2001.
  */
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/timer.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <asm/machvec.h>
-#include <mach/secureedge5410.h>
-#include <asm/irq.h>
-#include <asm/io.h>
-#include <cpu/timer.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/machvec.h>
+#समावेश <mach/secureedge5410.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <cpu/समयr.h>
 
-unsigned short secureedge5410_ioport;
+अचिन्हित लघु secureedge5410_ioport;
 
 /*
  * EraseConfig handling functions
  */
-static irqreturn_t eraseconfig_interrupt(int irq, void *dev_id)
-{
-	printk("SnapGear: erase switch interrupt!\n");
+अटल irqवापस_t eraseconfig_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	prपूर्णांकk("SnapGear: erase switch interrupt!\n");
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __init eraseconfig_init(void)
-{
-	unsigned int irq = evt2irq(0x240);
+अटल पूर्णांक __init eraseconfig_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक irq = evt2irq(0x240);
 
-	printk("SnapGear: EraseConfig init\n");
+	prपूर्णांकk("SnapGear: EraseConfig init\n");
 
-	/* Setup "EraseConfig" switch on external IRQ 0 */
-	if (request_irq(irq, eraseconfig_interrupt, 0, "Erase Config", NULL))
-		printk("SnapGear: failed to register IRQ%d for Reset witch\n",
+	/* Setup "EraseConfig" चयन on बाह्यal IRQ 0 */
+	अगर (request_irq(irq, eraseconfig_पूर्णांकerrupt, 0, "Erase Config", शून्य))
+		prपूर्णांकk("SnapGear: failed to register IRQ%d for Reset witch\n",
 				irq);
-	else
-		printk("SnapGear: registered EraseConfig switch on IRQ%d\n",
+	अन्यथा
+		prपूर्णांकk("SnapGear: registered EraseConfig switch on IRQ%d\n",
 				irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(eraseconfig_init);
 
 /*
  * Initialize IRQ setting
  *
- * IRL0 = erase switch
+ * IRL0 = erase चयन
  * IRL1 = eth0
  * IRL2 = eth1
  * IRL3 = crypto
  */
-static void __init init_snapgear_IRQ(void)
-{
-	printk("Setup SnapGear IRQ/IPR ...\n");
-	/* enable individual interrupt mode for externals */
+अटल व्योम __init init_snapgear_IRQ(व्योम)
+अणु
+	prपूर्णांकk("Setup SnapGear IRQ/IPR ...\n");
+	/* enable inभागidual पूर्णांकerrupt mode क्रम बाह्यals */
 	plat_irq_setup_pins(IRQ_MODE_IRQ);
-}
+पूर्ण
 
 /*
  * The Machine Vector
  */
-static struct sh_machine_vector mv_snapgear __initmv = {
+अटल काष्ठा sh_machine_vector mv_snapgear __iniपंचांगv = अणु
 	.mv_name		= "SnapGear SecureEdge5410",
 	.mv_init_irq		= init_snapgear_IRQ,
-};
+पूर्ण;

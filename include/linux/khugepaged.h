@@ -1,97 +1,98 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_KHUGEPAGED_H
-#define _LINUX_KHUGEPAGED_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_KHUGEPAGED_H
+#घोषणा _LINUX_KHUGEPAGED_H
 
-#include <linux/sched/coredump.h> /* MMF_VM_HUGEPAGE */
-#include <linux/shmem_fs.h>
+#समावेश <linux/sched/coredump.h> /* MMF_VM_HUGEPAGE */
+#समावेश <linux/shmem_fs.h>
 
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-extern struct attribute_group khugepaged_attr_group;
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+बाह्य काष्ठा attribute_group khugepaged_attr_group;
 
-extern int khugepaged_init(void);
-extern void khugepaged_destroy(void);
-extern int start_stop_khugepaged(void);
-extern int __khugepaged_enter(struct mm_struct *mm);
-extern void __khugepaged_exit(struct mm_struct *mm);
-extern int khugepaged_enter_vma_merge(struct vm_area_struct *vma,
-				      unsigned long vm_flags);
-extern void khugepaged_min_free_kbytes_update(void);
-#ifdef CONFIG_SHMEM
-extern void collapse_pte_mapped_thp(struct mm_struct *mm, unsigned long addr);
-#else
-static inline void collapse_pte_mapped_thp(struct mm_struct *mm,
-					   unsigned long addr)
-{
-}
-#endif
+बाह्य पूर्णांक khugepaged_init(व्योम);
+बाह्य व्योम khugepaged_destroy(व्योम);
+बाह्य पूर्णांक start_stop_khugepaged(व्योम);
+बाह्य पूर्णांक __khugepaged_enter(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम __khugepaged_निकास(काष्ठा mm_काष्ठा *mm);
+बाह्य पूर्णांक khugepaged_enter_vma_merge(काष्ठा vm_area_काष्ठा *vma,
+				      अचिन्हित दीर्घ vm_flags);
+बाह्य व्योम khugepaged_min_मुक्त_kbytes_update(व्योम);
+#अगर_घोषित CONFIG_SHMEM
+बाह्य व्योम collapse_pte_mapped_thp(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr);
+#अन्यथा
+अटल अंतरभूत व्योम collapse_pte_mapped_thp(काष्ठा mm_काष्ठा *mm,
+					   अचिन्हित दीर्घ addr)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#define khugepaged_enabled()					       \
+#घोषणा khugepaged_enabled()					       \
 	(transparent_hugepage_flags &				       \
 	 ((1<<TRANSPARENT_HUGEPAGE_FLAG) |		       \
 	  (1<<TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG)))
-#define khugepaged_always()				\
+#घोषणा khugepaged_always()				\
 	(transparent_hugepage_flags &			\
 	 (1<<TRANSPARENT_HUGEPAGE_FLAG))
-#define khugepaged_req_madv()					\
+#घोषणा khugepaged_req_madv()					\
 	(transparent_hugepage_flags &				\
 	 (1<<TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG))
-#define khugepaged_defrag()					\
+#घोषणा khugepaged_defrag()					\
 	(transparent_hugepage_flags &				\
 	 (1<<TRANSPARENT_HUGEPAGE_DEFRAG_KHUGEPAGED_FLAG))
 
-static inline int khugepaged_fork(struct mm_struct *mm, struct mm_struct *oldmm)
-{
-	if (test_bit(MMF_VM_HUGEPAGE, &oldmm->flags))
-		return __khugepaged_enter(mm);
-	return 0;
-}
+अटल अंतरभूत पूर्णांक khugepaged_विभाजन(काष्ठा mm_काष्ठा *mm, काष्ठा mm_काष्ठा *oldmm)
+अणु
+	अगर (test_bit(MMF_VM_HUGEPAGE, &oldmm->flags))
+		वापस __khugepaged_enter(mm);
+	वापस 0;
+पूर्ण
 
-static inline void khugepaged_exit(struct mm_struct *mm)
-{
-	if (test_bit(MMF_VM_HUGEPAGE, &mm->flags))
-		__khugepaged_exit(mm);
-}
+अटल अंतरभूत व्योम khugepaged_निकास(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (test_bit(MMF_VM_HUGEPAGE, &mm->flags))
+		__khugepaged_निकास(mm);
+पूर्ण
 
-static inline int khugepaged_enter(struct vm_area_struct *vma,
-				   unsigned long vm_flags)
-{
-	if (!test_bit(MMF_VM_HUGEPAGE, &vma->vm_mm->flags))
-		if ((khugepaged_always() ||
+अटल अंतरभूत पूर्णांक khugepaged_enter(काष्ठा vm_area_काष्ठा *vma,
+				   अचिन्हित दीर्घ vm_flags)
+अणु
+	अगर (!test_bit(MMF_VM_HUGEPAGE, &vma->vm_mm->flags))
+		अगर ((khugepaged_always() ||
 		     (shmem_file(vma->vm_file) && shmem_huge_enabled(vma)) ||
 		     (khugepaged_req_madv() && (vm_flags & VM_HUGEPAGE))) &&
 		    !(vm_flags & VM_NOHUGEPAGE) &&
 		    !test_bit(MMF_DISABLE_THP, &vma->vm_mm->flags))
-			if (__khugepaged_enter(vma->vm_mm))
-				return -ENOMEM;
-	return 0;
-}
-#else /* CONFIG_TRANSPARENT_HUGEPAGE */
-static inline int khugepaged_fork(struct mm_struct *mm, struct mm_struct *oldmm)
-{
-	return 0;
-}
-static inline void khugepaged_exit(struct mm_struct *mm)
-{
-}
-static inline int khugepaged_enter(struct vm_area_struct *vma,
-				   unsigned long vm_flags)
-{
-	return 0;
-}
-static inline int khugepaged_enter_vma_merge(struct vm_area_struct *vma,
-					     unsigned long vm_flags)
-{
-	return 0;
-}
-static inline void collapse_pte_mapped_thp(struct mm_struct *mm,
-					   unsigned long addr)
-{
-}
+			अगर (__khugepaged_enter(vma->vm_mm))
+				वापस -ENOMEM;
+	वापस 0;
+पूर्ण
+#अन्यथा /* CONFIG_TRANSPARENT_HUGEPAGE */
+अटल अंतरभूत पूर्णांक khugepaged_विभाजन(काष्ठा mm_काष्ठा *mm, काष्ठा mm_काष्ठा *oldmm)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम khugepaged_निकास(काष्ठा mm_काष्ठा *mm)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक khugepaged_enter(काष्ठा vm_area_काष्ठा *vma,
+				   अचिन्हित दीर्घ vm_flags)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक khugepaged_enter_vma_merge(काष्ठा vm_area_काष्ठा *vma,
+					     अचिन्हित दीर्घ vm_flags)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम collapse_pte_mapped_thp(काष्ठा mm_काष्ठा *mm,
+					   अचिन्हित दीर्घ addr)
+अणु
+पूर्ण
 
-static inline void khugepaged_min_free_kbytes_update(void)
-{
-}
-#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+अटल अंतरभूत व्योम khugepaged_min_मुक्त_kbytes_update(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
 
-#endif /* _LINUX_KHUGEPAGED_H */
+#पूर्ण_अगर /* _LINUX_KHUGEPAGED_H */

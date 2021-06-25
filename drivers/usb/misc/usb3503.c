@@ -1,437 +1,438 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for SMSC USB3503 USB 2.0 hub controller driver
+ * Driver क्रम SMSC USB3503 USB 2.0 hub controller driver
  *
  * Copyright (c) 2012-2013 Dongjin Kim (tobetter@gmail.com)
  */
 
-#include <linux/clk.h>
-#include <linux/i2c.h>
-#include <linux/gpio/consumer.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/platform_data/usb3503.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_data/usb3503.h>
+#समावेश <linux/regmap.h>
 
-#define USB3503_VIDL		0x00
-#define USB3503_VIDM		0x01
-#define USB3503_PIDL		0x02
-#define USB3503_PIDM		0x03
-#define USB3503_DIDL		0x04
-#define USB3503_DIDM		0x05
+#घोषणा USB3503_VIDL		0x00
+#घोषणा USB3503_VIDM		0x01
+#घोषणा USB3503_PIDL		0x02
+#घोषणा USB3503_PIDM		0x03
+#घोषणा USB3503_DIDL		0x04
+#घोषणा USB3503_DIDM		0x05
 
-#define USB3503_CFG1		0x06
-#define USB3503_SELF_BUS_PWR	(1 << 7)
+#घोषणा USB3503_CFG1		0x06
+#घोषणा USB3503_SELF_BUS_PWR	(1 << 7)
 
-#define USB3503_CFG2		0x07
-#define USB3503_CFG3		0x08
-#define USB3503_NRD		0x09
+#घोषणा USB3503_CFG2		0x07
+#घोषणा USB3503_CFG3		0x08
+#घोषणा USB3503_NRD		0x09
 
-#define USB3503_PDS		0x0a
+#घोषणा USB3503_PDS		0x0a
 
-#define USB3503_SP_ILOCK	0xe7
-#define USB3503_SPILOCK_CONNECT	(1 << 1)
-#define USB3503_SPILOCK_CONFIG	(1 << 0)
+#घोषणा USB3503_SP_ILOCK	0xe7
+#घोषणा USB3503_SPILOCK_CONNECT	(1 << 1)
+#घोषणा USB3503_SPILOCK_CONFIG	(1 << 0)
 
-#define USB3503_CFGP		0xee
-#define USB3503_CLKSUSP		(1 << 7)
+#घोषणा USB3503_CFGP		0xee
+#घोषणा USB3503_CLKSUSP		(1 << 7)
 
-#define USB3503_RESET		0xff
+#घोषणा USB3503_RESET		0xff
 
-struct usb3503 {
-	enum usb3503_mode	mode;
-	struct regmap		*regmap;
-	struct device		*dev;
-	struct clk		*clk;
+काष्ठा usb3503 अणु
+	क्रमागत usb3503_mode	mode;
+	काष्ठा regmap		*regmap;
+	काष्ठा device		*dev;
+	काष्ठा clk		*clk;
 	u8	port_off_mask;
-	struct gpio_desc	*intn;
-	struct gpio_desc 	*reset;
-	struct gpio_desc 	*connect;
+	काष्ठा gpio_desc	*पूर्णांकn;
+	काष्ठा gpio_desc 	*reset;
+	काष्ठा gpio_desc 	*connect;
 	bool	secondary_ref_clk;
-};
+पूर्ण;
 
-static int usb3503_reset(struct usb3503 *hub, int state)
-{
-	if (!state && hub->connect)
+अटल पूर्णांक usb3503_reset(काष्ठा usb3503 *hub, पूर्णांक state)
+अणु
+	अगर (!state && hub->connect)
 		gpiod_set_value_cansleep(hub->connect, 0);
 
-	if (hub->reset)
+	अगर (hub->reset)
 		gpiod_set_value_cansleep(hub->reset, !state);
 
-	/* Wait T_HUBINIT == 4ms for hub logic to stabilize */
-	if (state)
+	/* Wait T_HUBINIT == 4ms क्रम hub logic to stabilize */
+	अगर (state)
 		usleep_range(4000, 10000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb3503_connect(struct usb3503 *hub)
-{
-	struct device *dev = hub->dev;
-	int err;
+अटल पूर्णांक usb3503_connect(काष्ठा usb3503 *hub)
+अणु
+	काष्ठा device *dev = hub->dev;
+	पूर्णांक err;
 
 	usb3503_reset(hub, 1);
 
-	if (hub->regmap) {
-		/* SP_ILOCK: set connect_n, config_n for config */
-		err = regmap_write(hub->regmap, USB3503_SP_ILOCK,
+	अगर (hub->regmap) अणु
+		/* SP_ILOCK: set connect_n, config_n क्रम config */
+		err = regmap_ग_लिखो(hub->regmap, USB3503_SP_ILOCK,
 			   (USB3503_SPILOCK_CONNECT
 				 | USB3503_SPILOCK_CONFIG));
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "SP_ILOCK failed (%d)\n", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		/* PDS : Set the ports which are disabled in self-powered mode. */
-		if (hub->port_off_mask) {
+		/* PDS : Set the ports which are disabled in self-घातered mode. */
+		अगर (hub->port_off_mask) अणु
 			err = regmap_update_bits(hub->regmap, USB3503_PDS,
 					hub->port_off_mask,
 					hub->port_off_mask);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				dev_err(dev, "PDS failed (%d)\n", err);
-				return err;
-			}
-		}
+				वापस err;
+			पूर्ण
+		पूर्ण
 
-		/* CFG1 : Set SELF_BUS_PWR, this enables self-powered operation. */
+		/* CFG1 : Set SELF_BUS_PWR, this enables self-घातered operation. */
 		err = regmap_update_bits(hub->regmap, USB3503_CFG1,
 					 USB3503_SELF_BUS_PWR,
 					 USB3503_SELF_BUS_PWR);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "CFG1 failed (%d)\n", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		/* SP_LOCK: clear connect_n, config_n for hub connect */
+		/* SP_LOCK: clear connect_n, config_n क्रम hub connect */
 		err = regmap_update_bits(hub->regmap, USB3503_SP_ILOCK,
 					 (USB3503_SPILOCK_CONNECT
 					  | USB3503_SPILOCK_CONFIG), 0);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "SP_ILOCK failed (%d)\n", err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (hub->connect)
+	अगर (hub->connect)
 		gpiod_set_value_cansleep(hub->connect, 1);
 
 	hub->mode = USB3503_MODE_HUB;
 	dev_info(dev, "switched to HUB mode\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb3503_switch_mode(struct usb3503 *hub, enum usb3503_mode mode)
-{
-	struct device *dev = hub->dev;
-	int err = 0;
+अटल पूर्णांक usb3503_चयन_mode(काष्ठा usb3503 *hub, क्रमागत usb3503_mode mode)
+अणु
+	काष्ठा device *dev = hub->dev;
+	पूर्णांक err = 0;
 
-	switch (mode) {
-	case USB3503_MODE_HUB:
+	चयन (mode) अणु
+	हाल USB3503_MODE_HUB:
 		err = usb3503_connect(hub);
-		break;
+		अवरोध;
 
-	case USB3503_MODE_STANDBY:
+	हाल USB3503_MODE_STANDBY:
 		usb3503_reset(hub, 0);
 		dev_info(dev, "switched to STANDBY mode\n");
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "unknown mode is requested\n");
 		err = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct regmap_config usb3503_regmap_config = {
+अटल स्थिर काष्ठा regmap_config usb3503_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = USB3503_RESET,
-};
+	.max_रेजिस्टर = USB3503_RESET,
+पूर्ण;
 
-static int usb3503_probe(struct usb3503 *hub)
-{
-	struct device *dev = hub->dev;
-	struct usb3503_platform_data *pdata = dev_get_platdata(dev);
-	struct device_node *np = dev->of_node;
-	int err;
+अटल पूर्णांक usb3503_probe(काष्ठा usb3503 *hub)
+अणु
+	काष्ठा device *dev = hub->dev;
+	काष्ठा usb3503_platक्रमm_data *pdata = dev_get_platdata(dev);
+	काष्ठा device_node *np = dev->of_node;
+	पूर्णांक err;
 	u32 mode = USB3503_MODE_HUB;
-	const u32 *property;
-	enum gpiod_flags flags;
-	int len;
+	स्थिर u32 *property;
+	क्रमागत gpiod_flags flags;
+	पूर्णांक len;
 
-	if (pdata) {
+	अगर (pdata) अणु
 		hub->port_off_mask	= pdata->port_off_mask;
 		hub->mode		= pdata->initial_mode;
-	} else if (np) {
+	पूर्ण अन्यथा अगर (np) अणु
 		u32 rate = 0;
 		hub->port_off_mask = 0;
 
-		if (!of_property_read_u32(np, "refclk-frequency", &rate)) {
-			switch (rate) {
-			case 38400000:
-			case 26000000:
-			case 19200000:
-			case 12000000:
+		अगर (!of_property_पढ़ो_u32(np, "refclk-frequency", &rate)) अणु
+			चयन (rate) अणु
+			हाल 38400000:
+			हाल 26000000:
+			हाल 19200000:
+			हाल 12000000:
 				hub->secondary_ref_clk = 0;
-				break;
-			case 24000000:
-			case 27000000:
-			case 25000000:
-			case 50000000:
+				अवरोध;
+			हाल 24000000:
+			हाल 27000000:
+			हाल 25000000:
+			हाल 50000000:
 				hub->secondary_ref_clk = 1;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				dev_err(dev,
 					"unsupported reference clock rate (%d)\n",
-					(int) rate);
-				return -EINVAL;
-			}
-		}
+					(पूर्णांक) rate);
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 
 		hub->clk = devm_clk_get_optional(dev, "refclk");
-		if (IS_ERR(hub->clk)) {
+		अगर (IS_ERR(hub->clk)) अणु
 			dev_err(dev, "unable to request refclk (%ld)\n",
 					PTR_ERR(hub->clk));
-			return PTR_ERR(hub->clk);
-		}
+			वापस PTR_ERR(hub->clk);
+		पूर्ण
 
-		if (rate != 0) {
+		अगर (rate != 0) अणु
 			err = clk_set_rate(hub->clk, rate);
-			if (err) {
+			अगर (err) अणु
 				dev_err(dev,
 					"unable to set reference clock rate to %d\n",
-					(int)rate);
-				return err;
-			}
-		}
+					(पूर्णांक)rate);
+				वापस err;
+			पूर्ण
+		पूर्ण
 
 		err = clk_prepare_enable(hub->clk);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "unable to enable reference clock\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		property = of_get_property(np, "disabled-ports", &len);
-		if (property && (len / sizeof(u32)) > 0) {
-			int i;
-			for (i = 0; i < len / sizeof(u32); i++) {
+		अगर (property && (len / माप(u32)) > 0) अणु
+			पूर्णांक i;
+			क्रम (i = 0; i < len / माप(u32); i++) अणु
 				u32 port = be32_to_cpu(property[i]);
-				if ((1 <= port) && (port <= 3))
+				अगर ((1 <= port) && (port <= 3))
 					hub->port_off_mask |= (1 << port);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		of_property_read_u32(np, "initial-mode", &mode);
+		of_property_पढ़ो_u32(np, "initial-mode", &mode);
 		hub->mode = mode;
-	}
+	पूर्ण
 
-	if (hub->secondary_ref_clk)
+	अगर (hub->secondary_ref_clk)
 		flags = GPIOD_OUT_LOW;
-	else
+	अन्यथा
 		flags = GPIOD_OUT_HIGH;
-	hub->intn = devm_gpiod_get_optional(dev, "intn", flags);
-	if (IS_ERR(hub->intn))
-		return PTR_ERR(hub->intn);
-	if (hub->intn)
-		gpiod_set_consumer_name(hub->intn, "usb3503 intn");
+	hub->पूर्णांकn = devm_gpiod_get_optional(dev, "intn", flags);
+	अगर (IS_ERR(hub->पूर्णांकn))
+		वापस PTR_ERR(hub->पूर्णांकn);
+	अगर (hub->पूर्णांकn)
+		gpiod_set_consumer_name(hub->पूर्णांकn, "usb3503 intn");
 
 	hub->connect = devm_gpiod_get_optional(dev, "connect", GPIOD_OUT_LOW);
-	if (IS_ERR(hub->connect))
-		return PTR_ERR(hub->connect);
-	if (hub->connect)
+	अगर (IS_ERR(hub->connect))
+		वापस PTR_ERR(hub->connect);
+	अगर (hub->connect)
 		gpiod_set_consumer_name(hub->connect, "usb3503 connect");
 
 	hub->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(hub->reset))
-		return PTR_ERR(hub->reset);
-	if (hub->reset) {
+	अगर (IS_ERR(hub->reset))
+		वापस PTR_ERR(hub->reset);
+	अगर (hub->reset) अणु
 		/* Datasheet defines a hardware reset to be at least 100us */
 		usleep_range(100, 10000);
 		gpiod_set_consumer_name(hub->reset, "usb3503 reset");
-	}
+	पूर्ण
 
-	if (hub->port_off_mask && !hub->regmap)
+	अगर (hub->port_off_mask && !hub->regmap)
 		dev_err(dev, "Ports disabled with no control interface\n");
 
-	usb3503_switch_mode(hub, hub->mode);
+	usb3503_चयन_mode(hub, hub->mode);
 
 	dev_info(dev, "%s: probed in %s mode\n", __func__,
 			(hub->mode == USB3503_MODE_HUB) ? "hub" : "standby");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb3503_i2c_probe(struct i2c_client *i2c,
-			     const struct i2c_device_id *id)
-{
-	struct usb3503 *hub;
-	int err;
+अटल पूर्णांक usb3503_i2c_probe(काष्ठा i2c_client *i2c,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा usb3503 *hub;
+	पूर्णांक err;
 
-	hub = devm_kzalloc(&i2c->dev, sizeof(struct usb3503), GFP_KERNEL);
-	if (!hub)
-		return -ENOMEM;
+	hub = devm_kzalloc(&i2c->dev, माप(काष्ठा usb3503), GFP_KERNEL);
+	अगर (!hub)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(i2c, hub);
 	hub->regmap = devm_regmap_init_i2c(i2c, &usb3503_regmap_config);
-	if (IS_ERR(hub->regmap)) {
+	अगर (IS_ERR(hub->regmap)) अणु
 		err = PTR_ERR(hub->regmap);
 		dev_err(&i2c->dev, "Failed to initialise regmap: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	hub->dev = &i2c->dev;
 
-	return usb3503_probe(hub);
-}
+	वापस usb3503_probe(hub);
+पूर्ण
 
-static int usb3503_i2c_remove(struct i2c_client *i2c)
-{
-	struct usb3503 *hub;
+अटल पूर्णांक usb3503_i2c_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	काष्ठा usb3503 *hub;
 
 	hub = i2c_get_clientdata(i2c);
 	clk_disable_unprepare(hub->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb3503_platform_probe(struct platform_device *pdev)
-{
-	struct usb3503 *hub;
+अटल पूर्णांक usb3503_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb3503 *hub;
 
-	hub = devm_kzalloc(&pdev->dev, sizeof(struct usb3503), GFP_KERNEL);
-	if (!hub)
-		return -ENOMEM;
+	hub = devm_kzalloc(&pdev->dev, माप(काष्ठा usb3503), GFP_KERNEL);
+	अगर (!hub)
+		वापस -ENOMEM;
 	hub->dev = &pdev->dev;
-	platform_set_drvdata(pdev, hub);
+	platक्रमm_set_drvdata(pdev, hub);
 
-	return usb3503_probe(hub);
-}
+	वापस usb3503_probe(hub);
+पूर्ण
 
-static int usb3503_platform_remove(struct platform_device *pdev)
-{
-	struct usb3503 *hub;
+अटल पूर्णांक usb3503_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb3503 *hub;
 
-	hub = platform_get_drvdata(pdev);
+	hub = platक्रमm_get_drvdata(pdev);
 	clk_disable_unprepare(hub->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused usb3503_suspend(struct usb3503 *hub)
-{
-	usb3503_switch_mode(hub, USB3503_MODE_STANDBY);
+अटल पूर्णांक __maybe_unused usb3503_suspend(काष्ठा usb3503 *hub)
+अणु
+	usb3503_चयन_mode(hub, USB3503_MODE_STANDBY);
 	clk_disable_unprepare(hub->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused usb3503_resume(struct usb3503 *hub)
-{
+अटल पूर्णांक __maybe_unused usb3503_resume(काष्ठा usb3503 *hub)
+अणु
 	clk_prepare_enable(hub->clk);
-	usb3503_switch_mode(hub, hub->mode);
+	usb3503_चयन_mode(hub, hub->mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused usb3503_i2c_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक __maybe_unused usb3503_i2c_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	return usb3503_suspend(i2c_get_clientdata(client));
-}
+	वापस usb3503_suspend(i2c_get_clientdata(client));
+पूर्ण
 
-static int __maybe_unused usb3503_i2c_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक __maybe_unused usb3503_i2c_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	return usb3503_resume(i2c_get_clientdata(client));
-}
+	वापस usb3503_resume(i2c_get_clientdata(client));
+पूर्ण
 
-static int __maybe_unused usb3503_platform_suspend(struct device *dev)
-{
-	return usb3503_suspend(dev_get_drvdata(dev));
-}
+अटल पूर्णांक __maybe_unused usb3503_platक्रमm_suspend(काष्ठा device *dev)
+अणु
+	वापस usb3503_suspend(dev_get_drvdata(dev));
+पूर्ण
 
-static int __maybe_unused usb3503_platform_resume(struct device *dev)
-{
-	return usb3503_resume(dev_get_drvdata(dev));
-}
+अटल पूर्णांक __maybe_unused usb3503_platक्रमm_resume(काष्ठा device *dev)
+अणु
+	वापस usb3503_resume(dev_get_drvdata(dev));
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(usb3503_i2c_pm_ops, usb3503_i2c_suspend,
+अटल SIMPLE_DEV_PM_OPS(usb3503_i2c_pm_ops, usb3503_i2c_suspend,
 		usb3503_i2c_resume);
 
-static SIMPLE_DEV_PM_OPS(usb3503_platform_pm_ops, usb3503_platform_suspend,
-		usb3503_platform_resume);
+अटल SIMPLE_DEV_PM_OPS(usb3503_platक्रमm_pm_ops, usb3503_platक्रमm_suspend,
+		usb3503_platक्रमm_resume);
 
-static const struct i2c_device_id usb3503_id[] = {
-	{ USB3503_I2C_NAME, 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id usb3503_id[] = अणु
+	अणु USB3503_I2C_NAME, 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, usb3503_id);
 
-#ifdef CONFIG_OF
-static const struct of_device_id usb3503_of_match[] = {
-	{ .compatible = "smsc,usb3503", },
-	{ .compatible = "smsc,usb3503a", },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id usb3503_of_match[] = अणु
+	अणु .compatible = "smsc,usb3503", पूर्ण,
+	अणु .compatible = "smsc,usb3503a", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, usb3503_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver usb3503_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver usb3503_i2c_driver = अणु
+	.driver = अणु
 		.name = USB3503_I2C_NAME,
 		.pm = pm_ptr(&usb3503_i2c_pm_ops),
 		.of_match_table = of_match_ptr(usb3503_of_match),
-	},
+	पूर्ण,
 	.probe		= usb3503_i2c_probe,
-	.remove		= usb3503_i2c_remove,
+	.हटाओ		= usb3503_i2c_हटाओ,
 	.id_table	= usb3503_id,
-};
+पूर्ण;
 
-static struct platform_driver usb3503_platform_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver usb3503_platक्रमm_driver = अणु
+	.driver = अणु
 		.name = USB3503_I2C_NAME,
 		.of_match_table = of_match_ptr(usb3503_of_match),
-		.pm = pm_ptr(&usb3503_platform_pm_ops),
-	},
-	.probe		= usb3503_platform_probe,
-	.remove		= usb3503_platform_remove,
-};
+		.pm = pm_ptr(&usb3503_platक्रमm_pm_ops),
+	पूर्ण,
+	.probe		= usb3503_platक्रमm_probe,
+	.हटाओ		= usb3503_platक्रमm_हटाओ,
+पूर्ण;
 
-static int __init usb3503_init(void)
-{
-	int err;
+अटल पूर्णांक __init usb3503_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = i2c_add_driver(&usb3503_i2c_driver);
-	if (err) {
+	अगर (err) अणु
 		pr_err("usb3503: Failed to register I2C driver: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = platform_driver_register(&usb3503_platform_driver);
-	if (err) {
+	err = platक्रमm_driver_रेजिस्टर(&usb3503_platक्रमm_driver);
+	अगर (err) अणु
 		pr_err("usb3503: Failed to register platform driver: %d\n",
 		       err);
 		i2c_del_driver(&usb3503_i2c_driver);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 module_init(usb3503_init);
 
-static void __exit usb3503_exit(void)
-{
-	platform_driver_unregister(&usb3503_platform_driver);
+अटल व्योम __निकास usb3503_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&usb3503_platक्रमm_driver);
 	i2c_del_driver(&usb3503_i2c_driver);
-}
-module_exit(usb3503_exit);
+पूर्ण
+module_निकास(usb3503_निकास);
 
 MODULE_AUTHOR("Dongjin Kim <tobetter@gmail.com>");
 MODULE_DESCRIPTION("USB3503 USB HUB driver");

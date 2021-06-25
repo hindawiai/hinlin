@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright (C) 2007 Felix Fietkau <nbd@openwrt.org>
- * Copyright (C) 2007 Eugene Konev <ejka@openwrt.org>
+ * Copyright (C) 2007 Felix Fietkau <nbd@खोलोwrt.org>
+ * Copyright (C) 2007 Eugene Konev <ejka@खोलोwrt.org>
  */
-#include <linux/memblock.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/pfn.h>
-#include <linux/proc_fs.h>
-#include <linux/string.h>
-#include <linux/swap.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/swap.h>
 
-#include <asm/bootinfo.h>
-#include <asm/page.h>
-#include <asm/sections.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/sections.h>
 
-#include <asm/mach-ar7/ar7.h>
+#समावेश <यंत्र/mach-ar7/ar7.h>
 
-static int __init memsize(void)
-{
+अटल पूर्णांक __init memsize(व्योम)
+अणु
 	u32 size = (64 << 20);
 	u32 *addr = (u32 *)KSEG1ADDR(AR7_SDRAM_BASE + size - 4);
 	u32 *kernel_end = (u32 *)KSEG1ADDR(CPHYSADDR((u32)&_end));
-	u32 *tmpaddr = addr;
+	u32 *पंचांगpaddr = addr;
 
-	while (tmpaddr > kernel_end) {
-		*tmpaddr = (u32)tmpaddr;
+	जबतक (पंचांगpaddr > kernel_end) अणु
+		*पंचांगpaddr = (u32)पंचांगpaddr;
 		size >>= 1;
-		tmpaddr -= size >> 2;
-	}
+		पंचांगpaddr -= size >> 2;
+	पूर्ण
 
-	do {
-		tmpaddr += size >> 2;
-		if (*tmpaddr != (u32)tmpaddr)
-			break;
+	करो अणु
+		पंचांगpaddr += size >> 2;
+		अगर (*पंचांगpaddr != (u32)पंचांगpaddr)
+			अवरोध;
 		size <<= 1;
-	} while (size < (64 << 20));
+	पूर्ण जबतक (size < (64 << 20));
 
-	writel((u32)tmpaddr, &addr);
+	ग_लिखोl((u32)पंचांगpaddr, &addr);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-void __init prom_meminit(void)
-{
-	unsigned long pages;
+व्योम __init prom_meminit(व्योम)
+अणु
+	अचिन्हित दीर्घ pages;
 
 	pages = memsize() >> PAGE_SHIFT;
 	memblock_add(PHYS_OFFSET, pages << PAGE_SHIFT);
-}
+पूर्ण

@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: BSD-3-Clause-Clear
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#define CREATE_TRACE_POINTS
-#include "trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace.h"

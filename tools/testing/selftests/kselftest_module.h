@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
-#ifndef __KSELFTEST_MODULE_H
-#define __KSELFTEST_MODULE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
+#अगर_अघोषित __KSELFTEST_MODULE_H
+#घोषणा __KSELFTEST_MODULE_H
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
 /*
- * Test framework for writing test modules to be loaded by kselftest.
- * See Documentation/dev-tools/kselftest.rst for an example test module.
+ * Test framework क्रम writing test modules to be loaded by kselftest.
+ * See Documentation/dev-tools/kselftest.rst क्रम an example test module.
  */
 
-#define KSTM_MODULE_GLOBALS()			\
-static unsigned int total_tests __initdata;	\
-static unsigned int failed_tests __initdata;	\
-static unsigned int skipped_tests __initdata
+#घोषणा KSTM_MODULE_GLOBALS()			\
+अटल अचिन्हित पूर्णांक total_tests __initdata;	\
+अटल अचिन्हित पूर्णांक failed_tests __initdata;	\
+अटल अचिन्हित पूर्णांक skipped_tests __initdata
 
-#define KSTM_CHECK_ZERO(x) do {						\
+#घोषणा KSTM_CHECK_ZERO(x) करो अणु						\
 	total_tests++;							\
-	if (x) {							\
+	अगर (x) अणु							\
 		pr_warn("TC failed at %s:%d\n", __func__, __LINE__);	\
 		failed_tests++;						\
-	}								\
-} while (0)
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-static inline int kstm_report(unsigned int total_tests, unsigned int failed_tests,
-			      unsigned int skipped_tests)
-{
-	if (failed_tests == 0) {
-		if (skipped_tests) {
+अटल अंतरभूत पूर्णांक ksपंचांग_report(अचिन्हित पूर्णांक total_tests, अचिन्हित पूर्णांक failed_tests,
+			      अचिन्हित पूर्णांक skipped_tests)
+अणु
+	अगर (failed_tests == 0) अणु
+		अगर (skipped_tests) अणु
 			pr_info("skipped %u tests\n", skipped_tests);
 			pr_info("remaining %u tests passed\n", total_tests);
-		} else
+		पूर्ण अन्यथा
 			pr_info("all %u tests passed\n", total_tests);
-	} else
+	पूर्ण अन्यथा
 		pr_warn("failed %u out of %u tests\n", failed_tests, total_tests);
 
-	return failed_tests ? -EINVAL : 0;
-}
+	वापस failed_tests ? -EINVAL : 0;
+पूर्ण
 
-#define KSTM_MODULE_LOADERS(__module)			\
-static int __init __module##_init(void)			\
-{							\
+#घोषणा KSTM_MODULE_LOADERS(__module)			\
+अटल पूर्णांक __init __module##_init(व्योम)			\
+अणु							\
 	pr_info("loaded.\n");				\
 	selftest();					\
-	return kstm_report(total_tests, failed_tests, skipped_tests);	\
-}							\
-static void __exit __module##_exit(void)		\
-{							\
+	वापस ksपंचांग_report(total_tests, failed_tests, skipped_tests);	\
+पूर्ण							\
+अटल व्योम __निकास __module##_निकास(व्योम)		\
+अणु							\
 	pr_info("unloaded.\n");				\
-}							\
+पूर्ण							\
 module_init(__module##_init);				\
-module_exit(__module##_exit)
+module_निकास(__module##_निकास)
 
-#endif	/* __KSELFTEST_MODULE_H */
+#पूर्ण_अगर	/* __KSELFTEST_MODULE_H */

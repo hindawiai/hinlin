@@ -1,791 +1,792 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Mediatek SPI NOR controller driver
 //
 // Copyright (C) 2020 Chuanhong Guo <gch981213@gmail.com>
 
-#include <linux/bits.h>
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/spi-mem.h>
-#include <linux/string.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/spi-स्मृति.स>
+#समावेश <linux/माला.स>
 
-#define DRIVER_NAME "mtk-spi-nor"
+#घोषणा DRIVER_NAME "mtk-spi-nor"
 
-#define MTK_NOR_REG_CMD			0x00
-#define MTK_NOR_CMD_WRITE		BIT(4)
-#define MTK_NOR_CMD_PROGRAM		BIT(2)
-#define MTK_NOR_CMD_READ		BIT(0)
-#define MTK_NOR_CMD_MASK		GENMASK(5, 0)
+#घोषणा MTK_NOR_REG_CMD			0x00
+#घोषणा MTK_NOR_CMD_WRITE		BIT(4)
+#घोषणा MTK_NOR_CMD_PROGRAM		BIT(2)
+#घोषणा MTK_NOR_CMD_READ		BIT(0)
+#घोषणा MTK_NOR_CMD_MASK		GENMASK(5, 0)
 
-#define MTK_NOR_REG_PRG_CNT		0x04
-#define MTK_NOR_PRG_CNT_MAX		56
-#define MTK_NOR_REG_RDATA		0x0c
+#घोषणा MTK_NOR_REG_PRG_CNT		0x04
+#घोषणा MTK_NOR_PRG_CNT_MAX		56
+#घोषणा MTK_NOR_REG_RDATA		0x0c
 
-#define MTK_NOR_REG_RADR0		0x10
-#define MTK_NOR_REG_RADR(n)		(MTK_NOR_REG_RADR0 + 4 * (n))
-#define MTK_NOR_REG_RADR3		0xc8
+#घोषणा MTK_NOR_REG_RADR0		0x10
+#घोषणा MTK_NOR_REG_RADR(n)		(MTK_NOR_REG_RADR0 + 4 * (n))
+#घोषणा MTK_NOR_REG_RADR3		0xc8
 
-#define MTK_NOR_REG_WDATA		0x1c
+#घोषणा MTK_NOR_REG_WDATA		0x1c
 
-#define MTK_NOR_REG_PRGDATA0		0x20
-#define MTK_NOR_REG_PRGDATA(n)		(MTK_NOR_REG_PRGDATA0 + 4 * (n))
-#define MTK_NOR_REG_PRGDATA_MAX		5
+#घोषणा MTK_NOR_REG_PRGDATA0		0x20
+#घोषणा MTK_NOR_REG_PRGDATA(n)		(MTK_NOR_REG_PRGDATA0 + 4 * (n))
+#घोषणा MTK_NOR_REG_PRGDATA_MAX		5
 
-#define MTK_NOR_REG_SHIFT0		0x38
-#define MTK_NOR_REG_SHIFT(n)		(MTK_NOR_REG_SHIFT0 + 4 * (n))
-#define MTK_NOR_REG_SHIFT_MAX		9
+#घोषणा MTK_NOR_REG_SHIFT0		0x38
+#घोषणा MTK_NOR_REG_SHIFT(n)		(MTK_NOR_REG_SHIFT0 + 4 * (n))
+#घोषणा MTK_NOR_REG_SHIFT_MAX		9
 
-#define MTK_NOR_REG_CFG1		0x60
-#define MTK_NOR_FAST_READ		BIT(0)
+#घोषणा MTK_NOR_REG_CFG1		0x60
+#घोषणा MTK_NOR_FAST_READ		BIT(0)
 
-#define MTK_NOR_REG_CFG2		0x64
-#define MTK_NOR_WR_CUSTOM_OP_EN		BIT(4)
-#define MTK_NOR_WR_BUF_EN		BIT(0)
+#घोषणा MTK_NOR_REG_CFG2		0x64
+#घोषणा MTK_NOR_WR_CUSTOM_OP_EN		BIT(4)
+#घोषणा MTK_NOR_WR_BUF_EN		BIT(0)
 
-#define MTK_NOR_REG_PP_DATA		0x98
+#घोषणा MTK_NOR_REG_PP_DATA		0x98
 
-#define MTK_NOR_REG_IRQ_STAT		0xa8
-#define MTK_NOR_REG_IRQ_EN		0xac
-#define MTK_NOR_IRQ_DMA			BIT(7)
-#define MTK_NOR_IRQ_MASK		GENMASK(7, 0)
+#घोषणा MTK_NOR_REG_IRQ_STAT		0xa8
+#घोषणा MTK_NOR_REG_IRQ_EN		0xac
+#घोषणा MTK_NOR_IRQ_DMA			BIT(7)
+#घोषणा MTK_NOR_IRQ_MASK		GENMASK(7, 0)
 
-#define MTK_NOR_REG_CFG3		0xb4
-#define MTK_NOR_DISABLE_WREN		BIT(7)
-#define MTK_NOR_DISABLE_SR_POLL		BIT(5)
+#घोषणा MTK_NOR_REG_CFG3		0xb4
+#घोषणा MTK_NOR_DISABLE_WREN		BIT(7)
+#घोषणा MTK_NOR_DISABLE_SR_POLL		BIT(5)
 
-#define MTK_NOR_REG_WP			0xc4
-#define MTK_NOR_ENABLE_SF_CMD		0x30
+#घोषणा MTK_NOR_REG_WP			0xc4
+#घोषणा MTK_NOR_ENABLE_SF_CMD		0x30
 
-#define MTK_NOR_REG_BUSCFG		0xcc
-#define MTK_NOR_4B_ADDR			BIT(4)
-#define MTK_NOR_QUAD_ADDR		BIT(3)
-#define MTK_NOR_QUAD_READ		BIT(2)
-#define MTK_NOR_DUAL_ADDR		BIT(1)
-#define MTK_NOR_DUAL_READ		BIT(0)
-#define MTK_NOR_BUS_MODE_MASK		GENMASK(4, 0)
+#घोषणा MTK_NOR_REG_BUSCFG		0xcc
+#घोषणा MTK_NOR_4B_ADDR			BIT(4)
+#घोषणा MTK_NOR_QUAD_ADDR		BIT(3)
+#घोषणा MTK_NOR_QUAD_READ		BIT(2)
+#घोषणा MTK_NOR_DUAL_ADDR		BIT(1)
+#घोषणा MTK_NOR_DUAL_READ		BIT(0)
+#घोषणा MTK_NOR_BUS_MODE_MASK		GENMASK(4, 0)
 
-#define MTK_NOR_REG_DMA_CTL		0x718
-#define MTK_NOR_DMA_START		BIT(0)
+#घोषणा MTK_NOR_REG_DMA_CTL		0x718
+#घोषणा MTK_NOR_DMA_START		BIT(0)
 
-#define MTK_NOR_REG_DMA_FADR		0x71c
-#define MTK_NOR_REG_DMA_DADR		0x720
-#define MTK_NOR_REG_DMA_END_DADR	0x724
-#define MTK_NOR_REG_DMA_DADR_HB		0x738
-#define MTK_NOR_REG_DMA_END_DADR_HB	0x73c
+#घोषणा MTK_NOR_REG_DMA_FADR		0x71c
+#घोषणा MTK_NOR_REG_DMA_DADR		0x720
+#घोषणा MTK_NOR_REG_DMA_END_DADR	0x724
+#घोषणा MTK_NOR_REG_DMA_DADR_HB		0x738
+#घोषणा MTK_NOR_REG_DMA_END_DADR_HB	0x73c
 
-#define MTK_NOR_PRG_MAX_SIZE		6
+#घोषणा MTK_NOR_PRG_MAX_SIZE		6
 // Reading DMA src/dst addresses have to be 16-byte aligned
-#define MTK_NOR_DMA_ALIGN		16
-#define MTK_NOR_DMA_ALIGN_MASK		(MTK_NOR_DMA_ALIGN - 1)
-// and we allocate a bounce buffer if destination address isn't aligned.
-#define MTK_NOR_BOUNCE_BUF_SIZE		PAGE_SIZE
+#घोषणा MTK_NOR_DMA_ALIGN		16
+#घोषणा MTK_NOR_DMA_ALIGN_MASK		(MTK_NOR_DMA_ALIGN - 1)
+// and we allocate a bounce buffer अगर destination address isn't aligned.
+#घोषणा MTK_NOR_BOUNCE_BUF_SIZE		PAGE_SIZE
 
-// Buffered page program can do one 128-byte transfer
-#define MTK_NOR_PP_SIZE			128
+// Buffered page program can करो one 128-byte transfer
+#घोषणा MTK_NOR_PP_SIZE			128
 
-#define CLK_TO_US(sp, clkcnt)		DIV_ROUND_UP(clkcnt, sp->spi_freq / 1000000)
+#घोषणा CLK_TO_US(sp, clkcnt)		DIV_ROUND_UP(clkcnt, sp->spi_freq / 1000000)
 
-struct mtk_nor {
-	struct spi_controller *ctlr;
-	struct device *dev;
-	void __iomem *base;
+काष्ठा mtk_nor अणु
+	काष्ठा spi_controller *ctlr;
+	काष्ठा device *dev;
+	व्योम __iomem *base;
 	u8 *buffer;
 	dma_addr_t buffer_dma;
-	struct clk *spi_clk;
-	struct clk *ctlr_clk;
-	struct clk *axi_clk;
-	unsigned int spi_freq;
+	काष्ठा clk *spi_clk;
+	काष्ठा clk *ctlr_clk;
+	काष्ठा clk *axi_clk;
+	अचिन्हित पूर्णांक spi_freq;
 	bool wbuf_en;
 	bool has_irq;
 	bool high_dma;
-	struct completion op_done;
-};
+	काष्ठा completion op_करोne;
+पूर्ण;
 
-static inline void mtk_nor_rmw(struct mtk_nor *sp, u32 reg, u32 set, u32 clr)
-{
-	u32 val = readl(sp->base + reg);
+अटल अंतरभूत व्योम mtk_nor_rmw(काष्ठा mtk_nor *sp, u32 reg, u32 set, u32 clr)
+अणु
+	u32 val = पढ़ोl(sp->base + reg);
 
 	val &= ~clr;
 	val |= set;
-	writel(val, sp->base + reg);
-}
+	ग_लिखोl(val, sp->base + reg);
+पूर्ण
 
-static inline int mtk_nor_cmd_exec(struct mtk_nor *sp, u32 cmd, ulong clk)
-{
-	ulong delay = CLK_TO_US(sp, clk);
+अटल अंतरभूत पूर्णांक mtk_nor_cmd_exec(काष्ठा mtk_nor *sp, u32 cmd, uदीर्घ clk)
+अणु
+	uदीर्घ delay = CLK_TO_US(sp, clk);
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
-	writel(cmd, sp->base + MTK_NOR_REG_CMD);
-	ret = readl_poll_timeout(sp->base + MTK_NOR_REG_CMD, reg, !(reg & cmd),
+	ग_लिखोl(cmd, sp->base + MTK_NOR_REG_CMD);
+	ret = पढ़ोl_poll_समयout(sp->base + MTK_NOR_REG_CMD, reg, !(reg & cmd),
 				 delay / 3, (delay + 1) * 200);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(sp->dev, "command %u timeout.\n", cmd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mtk_nor_set_addr(struct mtk_nor *sp, const struct spi_mem_op *op)
-{
+अटल व्योम mtk_nor_set_addr(काष्ठा mtk_nor *sp, स्थिर काष्ठा spi_mem_op *op)
+अणु
 	u32 addr = op->addr.val;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 3; i++) {
-		writeb(addr & 0xff, sp->base + MTK_NOR_REG_RADR(i));
+	क्रम (i = 0; i < 3; i++) अणु
+		ग_लिखोb(addr & 0xff, sp->base + MTK_NOR_REG_RADR(i));
 		addr >>= 8;
-	}
-	if (op->addr.nbytes == 4) {
-		writeb(addr & 0xff, sp->base + MTK_NOR_REG_RADR3);
+	पूर्ण
+	अगर (op->addr.nbytes == 4) अणु
+		ग_लिखोb(addr & 0xff, sp->base + MTK_NOR_REG_RADR3);
 		mtk_nor_rmw(sp, MTK_NOR_REG_BUSCFG, MTK_NOR_4B_ADDR, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		mtk_nor_rmw(sp, MTK_NOR_REG_BUSCFG, 0, MTK_NOR_4B_ADDR);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool need_bounce(struct mtk_nor *sp, const struct spi_mem_op *op)
-{
-	return ((uintptr_t)op->data.buf.in & MTK_NOR_DMA_ALIGN_MASK);
-}
+अटल bool need_bounce(काष्ठा mtk_nor *sp, स्थिर काष्ठा spi_mem_op *op)
+अणु
+	वापस ((uपूर्णांकptr_t)op->data.buf.in & MTK_NOR_DMA_ALIGN_MASK);
+पूर्ण
 
-static bool mtk_nor_match_read(const struct spi_mem_op *op)
-{
-	int dummy = 0;
+अटल bool mtk_nor_match_पढ़ो(स्थिर काष्ठा spi_mem_op *op)
+अणु
+	पूर्णांक dummy = 0;
 
-	if (op->dummy.buswidth)
+	अगर (op->dummy.buswidth)
 		dummy = op->dummy.nbytes * BITS_PER_BYTE / op->dummy.buswidth;
 
-	if ((op->data.buswidth == 2) || (op->data.buswidth == 4)) {
-		if (op->addr.buswidth == 1)
-			return dummy == 8;
-		else if (op->addr.buswidth == 2)
-			return dummy == 4;
-		else if (op->addr.buswidth == 4)
-			return dummy == 6;
-	} else if ((op->addr.buswidth == 1) && (op->data.buswidth == 1)) {
-		if (op->cmd.opcode == 0x03)
-			return dummy == 0;
-		else if (op->cmd.opcode == 0x0b)
-			return dummy == 8;
-	}
-	return false;
-}
+	अगर ((op->data.buswidth == 2) || (op->data.buswidth == 4)) अणु
+		अगर (op->addr.buswidth == 1)
+			वापस dummy == 8;
+		अन्यथा अगर (op->addr.buswidth == 2)
+			वापस dummy == 4;
+		अन्यथा अगर (op->addr.buswidth == 4)
+			वापस dummy == 6;
+	पूर्ण अन्यथा अगर ((op->addr.buswidth == 1) && (op->data.buswidth == 1)) अणु
+		अगर (op->cmd.opcode == 0x03)
+			वापस dummy == 0;
+		अन्यथा अगर (op->cmd.opcode == 0x0b)
+			वापस dummy == 8;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool mtk_nor_match_prg(const struct spi_mem_op *op)
-{
-	int tx_len, rx_len, prg_len, prg_left;
+अटल bool mtk_nor_match_prg(स्थिर काष्ठा spi_mem_op *op)
+अणु
+	पूर्णांक tx_len, rx_len, prg_len, prg_left;
 
 	// prg mode is spi-only.
-	if ((op->cmd.buswidth > 1) || (op->addr.buswidth > 1) ||
+	अगर ((op->cmd.buswidth > 1) || (op->addr.buswidth > 1) ||
 	    (op->dummy.buswidth > 1) || (op->data.buswidth > 1))
-		return false;
+		वापस false;
 
 	tx_len = op->cmd.nbytes + op->addr.nbytes;
 
-	if (op->data.dir == SPI_MEM_DATA_OUT) {
-		// count dummy bytes only if we need to write data after it
+	अगर (op->data.dir == SPI_MEM_DATA_OUT) अणु
+		// count dummy bytes only अगर we need to ग_लिखो data after it
 		tx_len += op->dummy.nbytes;
 
-		// leave at least one byte for data
-		if (tx_len > MTK_NOR_REG_PRGDATA_MAX)
-			return false;
+		// leave at least one byte क्रम data
+		अगर (tx_len > MTK_NOR_REG_PRGDATA_MAX)
+			वापस false;
 
-		// if there's no addr, meaning adjust_op_size is impossible,
+		// अगर there's no addr, meaning adjust_op_size is impossible,
 		// check data length as well.
-		if ((!op->addr.nbytes) &&
+		अगर ((!op->addr.nbytes) &&
 		    (tx_len + op->data.nbytes > MTK_NOR_REG_PRGDATA_MAX + 1))
-			return false;
-	} else if (op->data.dir == SPI_MEM_DATA_IN) {
-		if (tx_len > MTK_NOR_REG_PRGDATA_MAX + 1)
-			return false;
+			वापस false;
+	पूर्ण अन्यथा अगर (op->data.dir == SPI_MEM_DATA_IN) अणु
+		अगर (tx_len > MTK_NOR_REG_PRGDATA_MAX + 1)
+			वापस false;
 
 		rx_len = op->data.nbytes;
 		prg_left = MTK_NOR_PRG_CNT_MAX / 8 - tx_len - op->dummy.nbytes;
-		if (prg_left > MTK_NOR_REG_SHIFT_MAX + 1)
+		अगर (prg_left > MTK_NOR_REG_SHIFT_MAX + 1)
 			prg_left = MTK_NOR_REG_SHIFT_MAX + 1;
-		if (rx_len > prg_left) {
-			if (!op->addr.nbytes)
-				return false;
+		अगर (rx_len > prg_left) अणु
+			अगर (!op->addr.nbytes)
+				वापस false;
 			rx_len = prg_left;
-		}
+		पूर्ण
 
 		prg_len = tx_len + op->dummy.nbytes + rx_len;
-		if (prg_len > MTK_NOR_PRG_CNT_MAX / 8)
-			return false;
-	} else {
+		अगर (prg_len > MTK_NOR_PRG_CNT_MAX / 8)
+			वापस false;
+	पूर्ण अन्यथा अणु
 		prg_len = tx_len + op->dummy.nbytes;
-		if (prg_len > MTK_NOR_PRG_CNT_MAX / 8)
-			return false;
-	}
-	return true;
-}
+		अगर (prg_len > MTK_NOR_PRG_CNT_MAX / 8)
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void mtk_nor_adj_prg_size(struct spi_mem_op *op)
-{
-	int tx_len, tx_left, prg_left;
+अटल व्योम mtk_nor_adj_prg_size(काष्ठा spi_mem_op *op)
+अणु
+	पूर्णांक tx_len, tx_left, prg_left;
 
 	tx_len = op->cmd.nbytes + op->addr.nbytes;
-	if (op->data.dir == SPI_MEM_DATA_OUT) {
+	अगर (op->data.dir == SPI_MEM_DATA_OUT) अणु
 		tx_len += op->dummy.nbytes;
 		tx_left = MTK_NOR_REG_PRGDATA_MAX + 1 - tx_len;
-		if (op->data.nbytes > tx_left)
+		अगर (op->data.nbytes > tx_left)
 			op->data.nbytes = tx_left;
-	} else if (op->data.dir == SPI_MEM_DATA_IN) {
+	पूर्ण अन्यथा अगर (op->data.dir == SPI_MEM_DATA_IN) अणु
 		prg_left = MTK_NOR_PRG_CNT_MAX / 8 - tx_len - op->dummy.nbytes;
-		if (prg_left > MTK_NOR_REG_SHIFT_MAX + 1)
+		अगर (prg_left > MTK_NOR_REG_SHIFT_MAX + 1)
 			prg_left = MTK_NOR_REG_SHIFT_MAX + 1;
-		if (op->data.nbytes > prg_left)
+		अगर (op->data.nbytes > prg_left)
 			op->data.nbytes = prg_left;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int mtk_nor_adjust_op_size(struct spi_mem *mem, struct spi_mem_op *op)
-{
-	struct mtk_nor *sp = spi_controller_get_devdata(mem->spi->master);
+अटल पूर्णांक mtk_nor_adjust_op_size(काष्ठा spi_mem *mem, काष्ठा spi_mem_op *op)
+अणु
+	काष्ठा mtk_nor *sp = spi_controller_get_devdata(mem->spi->master);
 
-	if (!op->data.nbytes)
-		return 0;
+	अगर (!op->data.nbytes)
+		वापस 0;
 
-	if ((op->addr.nbytes == 3) || (op->addr.nbytes == 4)) {
-		if ((op->data.dir == SPI_MEM_DATA_IN) &&
-		    mtk_nor_match_read(op)) {
-			// limit size to prevent timeout calculation overflow
-			if (op->data.nbytes > 0x400000)
+	अगर ((op->addr.nbytes == 3) || (op->addr.nbytes == 4)) अणु
+		अगर ((op->data.dir == SPI_MEM_DATA_IN) &&
+		    mtk_nor_match_पढ़ो(op)) अणु
+			// limit size to prevent समयout calculation overflow
+			अगर (op->data.nbytes > 0x400000)
 				op->data.nbytes = 0x400000;
 
-			if ((op->addr.val & MTK_NOR_DMA_ALIGN_MASK) ||
+			अगर ((op->addr.val & MTK_NOR_DMA_ALIGN_MASK) ||
 			    (op->data.nbytes < MTK_NOR_DMA_ALIGN))
 				op->data.nbytes = 1;
-			else if (!need_bounce(sp, op))
+			अन्यथा अगर (!need_bounce(sp, op))
 				op->data.nbytes &= ~MTK_NOR_DMA_ALIGN_MASK;
-			else if (op->data.nbytes > MTK_NOR_BOUNCE_BUF_SIZE)
+			अन्यथा अगर (op->data.nbytes > MTK_NOR_BOUNCE_BUF_SIZE)
 				op->data.nbytes = MTK_NOR_BOUNCE_BUF_SIZE;
-			return 0;
-		} else if (op->data.dir == SPI_MEM_DATA_OUT) {
-			if (op->data.nbytes >= MTK_NOR_PP_SIZE)
+			वापस 0;
+		पूर्ण अन्यथा अगर (op->data.dir == SPI_MEM_DATA_OUT) अणु
+			अगर (op->data.nbytes >= MTK_NOR_PP_SIZE)
 				op->data.nbytes = MTK_NOR_PP_SIZE;
-			else
+			अन्यथा
 				op->data.nbytes = 1;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	mtk_nor_adj_prg_size(op);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool mtk_nor_supports_op(struct spi_mem *mem,
-				const struct spi_mem_op *op)
-{
-	if (!spi_mem_default_supports_op(mem, op))
-		return false;
+अटल bool mtk_nor_supports_op(काष्ठा spi_mem *mem,
+				स्थिर काष्ठा spi_mem_op *op)
+अणु
+	अगर (!spi_mem_शेष_supports_op(mem, op))
+		वापस false;
 
-	if (op->cmd.buswidth != 1)
-		return false;
+	अगर (op->cmd.buswidth != 1)
+		वापस false;
 
-	if ((op->addr.nbytes == 3) || (op->addr.nbytes == 4)) {
-		switch (op->data.dir) {
-		case SPI_MEM_DATA_IN:
-			if (mtk_nor_match_read(op))
-				return true;
-			break;
-		case SPI_MEM_DATA_OUT:
-			if ((op->addr.buswidth == 1) &&
+	अगर ((op->addr.nbytes == 3) || (op->addr.nbytes == 4)) अणु
+		चयन (op->data.dir) अणु
+		हाल SPI_MEM_DATA_IN:
+			अगर (mtk_nor_match_पढ़ो(op))
+				वापस true;
+			अवरोध;
+		हाल SPI_MEM_DATA_OUT:
+			अगर ((op->addr.buswidth == 1) &&
 			    (op->dummy.nbytes == 0) &&
 			    (op->data.buswidth == 1))
-				return true;
-			break;
-		default:
-			break;
-		}
-	}
+				वापस true;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return mtk_nor_match_prg(op);
-}
+	वापस mtk_nor_match_prg(op);
+पूर्ण
 
-static void mtk_nor_setup_bus(struct mtk_nor *sp, const struct spi_mem_op *op)
-{
+अटल व्योम mtk_nor_setup_bus(काष्ठा mtk_nor *sp, स्थिर काष्ठा spi_mem_op *op)
+अणु
 	u32 reg = 0;
 
-	if (op->addr.nbytes == 4)
+	अगर (op->addr.nbytes == 4)
 		reg |= MTK_NOR_4B_ADDR;
 
-	if (op->data.buswidth == 4) {
+	अगर (op->data.buswidth == 4) अणु
 		reg |= MTK_NOR_QUAD_READ;
-		writeb(op->cmd.opcode, sp->base + MTK_NOR_REG_PRGDATA(4));
-		if (op->addr.buswidth == 4)
+		ग_लिखोb(op->cmd.opcode, sp->base + MTK_NOR_REG_PRGDATA(4));
+		अगर (op->addr.buswidth == 4)
 			reg |= MTK_NOR_QUAD_ADDR;
-	} else if (op->data.buswidth == 2) {
+	पूर्ण अन्यथा अगर (op->data.buswidth == 2) अणु
 		reg |= MTK_NOR_DUAL_READ;
-		writeb(op->cmd.opcode, sp->base + MTK_NOR_REG_PRGDATA(3));
-		if (op->addr.buswidth == 2)
+		ग_लिखोb(op->cmd.opcode, sp->base + MTK_NOR_REG_PRGDATA(3));
+		अगर (op->addr.buswidth == 2)
 			reg |= MTK_NOR_DUAL_ADDR;
-	} else {
-		if (op->cmd.opcode == 0x0b)
+	पूर्ण अन्यथा अणु
+		अगर (op->cmd.opcode == 0x0b)
 			mtk_nor_rmw(sp, MTK_NOR_REG_CFG1, MTK_NOR_FAST_READ, 0);
-		else
+		अन्यथा
 			mtk_nor_rmw(sp, MTK_NOR_REG_CFG1, 0, MTK_NOR_FAST_READ);
-	}
+	पूर्ण
 	mtk_nor_rmw(sp, MTK_NOR_REG_BUSCFG, reg, MTK_NOR_BUS_MODE_MASK);
-}
+पूर्ण
 
-static int mtk_nor_dma_exec(struct mtk_nor *sp, u32 from, unsigned int length,
+अटल पूर्णांक mtk_nor_dma_exec(काष्ठा mtk_nor *sp, u32 from, अचिन्हित पूर्णांक length,
 			    dma_addr_t dma_addr)
-{
-	int ret = 0;
-	ulong delay;
+अणु
+	पूर्णांक ret = 0;
+	uदीर्घ delay;
 	u32 reg;
 
-	writel(from, sp->base + MTK_NOR_REG_DMA_FADR);
-	writel(dma_addr, sp->base + MTK_NOR_REG_DMA_DADR);
-	writel(dma_addr + length, sp->base + MTK_NOR_REG_DMA_END_DADR);
+	ग_लिखोl(from, sp->base + MTK_NOR_REG_DMA_FADR);
+	ग_लिखोl(dma_addr, sp->base + MTK_NOR_REG_DMA_DADR);
+	ग_लिखोl(dma_addr + length, sp->base + MTK_NOR_REG_DMA_END_DADR);
 
-	if (sp->high_dma) {
-		writel(upper_32_bits(dma_addr),
+	अगर (sp->high_dma) अणु
+		ग_लिखोl(upper_32_bits(dma_addr),
 		       sp->base + MTK_NOR_REG_DMA_DADR_HB);
-		writel(upper_32_bits(dma_addr + length),
+		ग_लिखोl(upper_32_bits(dma_addr + length),
 		       sp->base + MTK_NOR_REG_DMA_END_DADR_HB);
-	}
+	पूर्ण
 
-	if (sp->has_irq) {
-		reinit_completion(&sp->op_done);
+	अगर (sp->has_irq) अणु
+		reinit_completion(&sp->op_करोne);
 		mtk_nor_rmw(sp, MTK_NOR_REG_IRQ_EN, MTK_NOR_IRQ_DMA, 0);
-	}
+	पूर्ण
 
 	mtk_nor_rmw(sp, MTK_NOR_REG_DMA_CTL, MTK_NOR_DMA_START, 0);
 
 	delay = CLK_TO_US(sp, (length + 5) * BITS_PER_BYTE);
 
-	if (sp->has_irq) {
-		if (!wait_for_completion_timeout(&sp->op_done,
+	अगर (sp->has_irq) अणु
+		अगर (!रुको_क्रम_completion_समयout(&sp->op_करोne,
 						 (delay + 1) * 100))
 			ret = -ETIMEDOUT;
-	} else {
-		ret = readl_poll_timeout(sp->base + MTK_NOR_REG_DMA_CTL, reg,
+	पूर्ण अन्यथा अणु
+		ret = पढ़ोl_poll_समयout(sp->base + MTK_NOR_REG_DMA_CTL, reg,
 					 !(reg & MTK_NOR_DMA_START), delay / 3,
 					 (delay + 1) * 100);
-	}
+	पूर्ण
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(sp->dev, "dma read timeout.\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_nor_read_bounce(struct mtk_nor *sp, const struct spi_mem_op *op)
-{
-	unsigned int rdlen;
-	int ret;
+अटल पूर्णांक mtk_nor_पढ़ो_bounce(काष्ठा mtk_nor *sp, स्थिर काष्ठा spi_mem_op *op)
+अणु
+	अचिन्हित पूर्णांक rdlen;
+	पूर्णांक ret;
 
-	if (op->data.nbytes & MTK_NOR_DMA_ALIGN_MASK)
+	अगर (op->data.nbytes & MTK_NOR_DMA_ALIGN_MASK)
 		rdlen = (op->data.nbytes + MTK_NOR_DMA_ALIGN) & ~MTK_NOR_DMA_ALIGN_MASK;
-	else
+	अन्यथा
 		rdlen = op->data.nbytes;
 
 	ret = mtk_nor_dma_exec(sp, op->addr.val, rdlen, sp->buffer_dma);
 
-	if (!ret)
-		memcpy(op->data.buf.in, sp->buffer, op->data.nbytes);
+	अगर (!ret)
+		स_नकल(op->data.buf.in, sp->buffer, op->data.nbytes);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_nor_read_dma(struct mtk_nor *sp, const struct spi_mem_op *op)
-{
-	int ret;
+अटल पूर्णांक mtk_nor_पढ़ो_dma(काष्ठा mtk_nor *sp, स्थिर काष्ठा spi_mem_op *op)
+अणु
+	पूर्णांक ret;
 	dma_addr_t dma_addr;
 
-	if (need_bounce(sp, op))
-		return mtk_nor_read_bounce(sp, op);
+	अगर (need_bounce(sp, op))
+		वापस mtk_nor_पढ़ो_bounce(sp, op);
 
 	dma_addr = dma_map_single(sp->dev, op->data.buf.in,
 				  op->data.nbytes, DMA_FROM_DEVICE);
 
-	if (dma_mapping_error(sp->dev, dma_addr))
-		return -EINVAL;
+	अगर (dma_mapping_error(sp->dev, dma_addr))
+		वापस -EINVAL;
 
 	ret = mtk_nor_dma_exec(sp, op->addr.val, op->data.nbytes, dma_addr);
 
 	dma_unmap_single(sp->dev, dma_addr, op->data.nbytes, DMA_FROM_DEVICE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_nor_read_pio(struct mtk_nor *sp, const struct spi_mem_op *op)
-{
+अटल पूर्णांक mtk_nor_पढ़ो_pio(काष्ठा mtk_nor *sp, स्थिर काष्ठा spi_mem_op *op)
+अणु
 	u8 *buf = op->data.buf.in;
-	int ret;
+	पूर्णांक ret;
 
 	ret = mtk_nor_cmd_exec(sp, MTK_NOR_CMD_READ, 6 * BITS_PER_BYTE);
-	if (!ret)
-		buf[0] = readb(sp->base + MTK_NOR_REG_RDATA);
-	return ret;
-}
+	अगर (!ret)
+		buf[0] = पढ़ोb(sp->base + MTK_NOR_REG_RDATA);
+	वापस ret;
+पूर्ण
 
-static int mtk_nor_write_buffer_enable(struct mtk_nor *sp)
-{
-	int ret;
+अटल पूर्णांक mtk_nor_ग_लिखो_buffer_enable(काष्ठा mtk_nor *sp)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	if (sp->wbuf_en)
-		return 0;
+	अगर (sp->wbuf_en)
+		वापस 0;
 
-	val = readl(sp->base + MTK_NOR_REG_CFG2);
-	writel(val | MTK_NOR_WR_BUF_EN, sp->base + MTK_NOR_REG_CFG2);
-	ret = readl_poll_timeout(sp->base + MTK_NOR_REG_CFG2, val,
+	val = पढ़ोl(sp->base + MTK_NOR_REG_CFG2);
+	ग_लिखोl(val | MTK_NOR_WR_BUF_EN, sp->base + MTK_NOR_REG_CFG2);
+	ret = पढ़ोl_poll_समयout(sp->base + MTK_NOR_REG_CFG2, val,
 				 val & MTK_NOR_WR_BUF_EN, 0, 10000);
-	if (!ret)
+	अगर (!ret)
 		sp->wbuf_en = true;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_nor_write_buffer_disable(struct mtk_nor *sp)
-{
-	int ret;
+अटल पूर्णांक mtk_nor_ग_लिखो_buffer_disable(काष्ठा mtk_nor *sp)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	if (!sp->wbuf_en)
-		return 0;
-	val = readl(sp->base + MTK_NOR_REG_CFG2);
-	writel(val & ~MTK_NOR_WR_BUF_EN, sp->base + MTK_NOR_REG_CFG2);
-	ret = readl_poll_timeout(sp->base + MTK_NOR_REG_CFG2, val,
+	अगर (!sp->wbuf_en)
+		वापस 0;
+	val = पढ़ोl(sp->base + MTK_NOR_REG_CFG2);
+	ग_लिखोl(val & ~MTK_NOR_WR_BUF_EN, sp->base + MTK_NOR_REG_CFG2);
+	ret = पढ़ोl_poll_समयout(sp->base + MTK_NOR_REG_CFG2, val,
 				 !(val & MTK_NOR_WR_BUF_EN), 0, 10000);
-	if (!ret)
+	अगर (!ret)
 		sp->wbuf_en = false;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_nor_pp_buffered(struct mtk_nor *sp, const struct spi_mem_op *op)
-{
-	const u8 *buf = op->data.buf.out;
+अटल पूर्णांक mtk_nor_pp_buffered(काष्ठा mtk_nor *sp, स्थिर काष्ठा spi_mem_op *op)
+अणु
+	स्थिर u8 *buf = op->data.buf.out;
 	u32 val;
-	int ret, i;
+	पूर्णांक ret, i;
 
-	ret = mtk_nor_write_buffer_enable(sp);
-	if (ret < 0)
-		return ret;
+	ret = mtk_nor_ग_लिखो_buffer_enable(sp);
+	अगर (ret < 0)
+		वापस ret;
 
-	for (i = 0; i < op->data.nbytes; i += 4) {
+	क्रम (i = 0; i < op->data.nbytes; i += 4) अणु
 		val = buf[i + 3] << 24 | buf[i + 2] << 16 | buf[i + 1] << 8 |
 		      buf[i];
-		writel(val, sp->base + MTK_NOR_REG_PP_DATA);
-	}
-	return mtk_nor_cmd_exec(sp, MTK_NOR_CMD_WRITE,
+		ग_लिखोl(val, sp->base + MTK_NOR_REG_PP_DATA);
+	पूर्ण
+	वापस mtk_nor_cmd_exec(sp, MTK_NOR_CMD_WRITE,
 				(op->data.nbytes + 5) * BITS_PER_BYTE);
-}
+पूर्ण
 
-static int mtk_nor_pp_unbuffered(struct mtk_nor *sp,
-				 const struct spi_mem_op *op)
-{
-	const u8 *buf = op->data.buf.out;
-	int ret;
+अटल पूर्णांक mtk_nor_pp_unbuffered(काष्ठा mtk_nor *sp,
+				 स्थिर काष्ठा spi_mem_op *op)
+अणु
+	स्थिर u8 *buf = op->data.buf.out;
+	पूर्णांक ret;
 
-	ret = mtk_nor_write_buffer_disable(sp);
-	if (ret < 0)
-		return ret;
-	writeb(buf[0], sp->base + MTK_NOR_REG_WDATA);
-	return mtk_nor_cmd_exec(sp, MTK_NOR_CMD_WRITE, 6 * BITS_PER_BYTE);
-}
+	ret = mtk_nor_ग_लिखो_buffer_disable(sp);
+	अगर (ret < 0)
+		वापस ret;
+	ग_लिखोb(buf[0], sp->base + MTK_NOR_REG_WDATA);
+	वापस mtk_nor_cmd_exec(sp, MTK_NOR_CMD_WRITE, 6 * BITS_PER_BYTE);
+पूर्ण
 
-static int mtk_nor_spi_mem_prg(struct mtk_nor *sp, const struct spi_mem_op *op)
-{
-	int rx_len = 0;
-	int reg_offset = MTK_NOR_REG_PRGDATA_MAX;
-	int tx_len, prg_len;
-	int i, ret;
-	void __iomem *reg;
+अटल पूर्णांक mtk_nor_spi_mem_prg(काष्ठा mtk_nor *sp, स्थिर काष्ठा spi_mem_op *op)
+अणु
+	पूर्णांक rx_len = 0;
+	पूर्णांक reg_offset = MTK_NOR_REG_PRGDATA_MAX;
+	पूर्णांक tx_len, prg_len;
+	पूर्णांक i, ret;
+	व्योम __iomem *reg;
 	u8 bufbyte;
 
 	tx_len = op->cmd.nbytes + op->addr.nbytes;
 
-	// count dummy bytes only if we need to write data after it
-	if (op->data.dir == SPI_MEM_DATA_OUT)
+	// count dummy bytes only अगर we need to ग_लिखो data after it
+	अगर (op->data.dir == SPI_MEM_DATA_OUT)
 		tx_len += op->dummy.nbytes + op->data.nbytes;
-	else if (op->data.dir == SPI_MEM_DATA_IN)
+	अन्यथा अगर (op->data.dir == SPI_MEM_DATA_IN)
 		rx_len = op->data.nbytes;
 
 	prg_len = op->cmd.nbytes + op->addr.nbytes + op->dummy.nbytes +
 		  op->data.nbytes;
 
-	// an invalid op may reach here if the caller calls exec_op without
-	// adjust_op_size. return -EINVAL instead of -ENOTSUPP so that
+	// an invalid op may reach here अगर the caller calls exec_op without
+	// adjust_op_size. वापस -EINVAL instead of -ENOTSUPP so that
 	// spi-mem won't try this op again with generic spi transfers.
-	if ((tx_len > MTK_NOR_REG_PRGDATA_MAX + 1) ||
+	अगर ((tx_len > MTK_NOR_REG_PRGDATA_MAX + 1) ||
 	    (rx_len > MTK_NOR_REG_SHIFT_MAX + 1) ||
 	    (prg_len > MTK_NOR_PRG_CNT_MAX / 8))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	// fill tx data
-	for (i = op->cmd.nbytes; i > 0; i--, reg_offset--) {
+	क्रम (i = op->cmd.nbytes; i > 0; i--, reg_offset--) अणु
 		reg = sp->base + MTK_NOR_REG_PRGDATA(reg_offset);
 		bufbyte = (op->cmd.opcode >> ((i - 1) * BITS_PER_BYTE)) & 0xff;
-		writeb(bufbyte, reg);
-	}
+		ग_लिखोb(bufbyte, reg);
+	पूर्ण
 
-	for (i = op->addr.nbytes; i > 0; i--, reg_offset--) {
+	क्रम (i = op->addr.nbytes; i > 0; i--, reg_offset--) अणु
 		reg = sp->base + MTK_NOR_REG_PRGDATA(reg_offset);
 		bufbyte = (op->addr.val >> ((i - 1) * BITS_PER_BYTE)) & 0xff;
-		writeb(bufbyte, reg);
-	}
+		ग_लिखोb(bufbyte, reg);
+	पूर्ण
 
-	if (op->data.dir == SPI_MEM_DATA_OUT) {
-		for (i = 0; i < op->dummy.nbytes; i++, reg_offset--) {
+	अगर (op->data.dir == SPI_MEM_DATA_OUT) अणु
+		क्रम (i = 0; i < op->dummy.nbytes; i++, reg_offset--) अणु
 			reg = sp->base + MTK_NOR_REG_PRGDATA(reg_offset);
-			writeb(0, reg);
-		}
+			ग_लिखोb(0, reg);
+		पूर्ण
 
-		for (i = 0; i < op->data.nbytes; i++, reg_offset--) {
+		क्रम (i = 0; i < op->data.nbytes; i++, reg_offset--) अणु
 			reg = sp->base + MTK_NOR_REG_PRGDATA(reg_offset);
-			writeb(((const u8 *)(op->data.buf.out))[i], reg);
-		}
-	}
+			ग_लिखोb(((स्थिर u8 *)(op->data.buf.out))[i], reg);
+		पूर्ण
+	पूर्ण
 
-	for (; reg_offset >= 0; reg_offset--) {
+	क्रम (; reg_offset >= 0; reg_offset--) अणु
 		reg = sp->base + MTK_NOR_REG_PRGDATA(reg_offset);
-		writeb(0, reg);
-	}
+		ग_लिखोb(0, reg);
+	पूर्ण
 
 	// trigger op
-	writel(prg_len * BITS_PER_BYTE, sp->base + MTK_NOR_REG_PRG_CNT);
+	ग_लिखोl(prg_len * BITS_PER_BYTE, sp->base + MTK_NOR_REG_PRG_CNT);
 	ret = mtk_nor_cmd_exec(sp, MTK_NOR_CMD_PROGRAM,
 			       prg_len * BITS_PER_BYTE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	// fetch read data
+	// fetch पढ़ो data
 	reg_offset = 0;
-	if (op->data.dir == SPI_MEM_DATA_IN) {
-		for (i = op->data.nbytes - 1; i >= 0; i--, reg_offset++) {
+	अगर (op->data.dir == SPI_MEM_DATA_IN) अणु
+		क्रम (i = op->data.nbytes - 1; i >= 0; i--, reg_offset++) अणु
 			reg = sp->base + MTK_NOR_REG_SHIFT(reg_offset);
-			((u8 *)(op->data.buf.in))[i] = readb(reg);
-		}
-	}
+			((u8 *)(op->data.buf.in))[i] = पढ़ोb(reg);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_nor_exec_op(struct spi_mem *mem, const struct spi_mem_op *op)
-{
-	struct mtk_nor *sp = spi_controller_get_devdata(mem->spi->master);
-	int ret;
+अटल पूर्णांक mtk_nor_exec_op(काष्ठा spi_mem *mem, स्थिर काष्ठा spi_mem_op *op)
+अणु
+	काष्ठा mtk_nor *sp = spi_controller_get_devdata(mem->spi->master);
+	पूर्णांक ret;
 
-	if ((op->data.nbytes == 0) ||
+	अगर ((op->data.nbytes == 0) ||
 	    ((op->addr.nbytes != 3) && (op->addr.nbytes != 4)))
-		return mtk_nor_spi_mem_prg(sp, op);
+		वापस mtk_nor_spi_mem_prg(sp, op);
 
-	if (op->data.dir == SPI_MEM_DATA_OUT) {
+	अगर (op->data.dir == SPI_MEM_DATA_OUT) अणु
 		mtk_nor_set_addr(sp, op);
-		writeb(op->cmd.opcode, sp->base + MTK_NOR_REG_PRGDATA0);
-		if (op->data.nbytes == MTK_NOR_PP_SIZE)
-			return mtk_nor_pp_buffered(sp, op);
-		return mtk_nor_pp_unbuffered(sp, op);
-	}
+		ग_लिखोb(op->cmd.opcode, sp->base + MTK_NOR_REG_PRGDATA0);
+		अगर (op->data.nbytes == MTK_NOR_PP_SIZE)
+			वापस mtk_nor_pp_buffered(sp, op);
+		वापस mtk_nor_pp_unbuffered(sp, op);
+	पूर्ण
 
-	if ((op->data.dir == SPI_MEM_DATA_IN) && mtk_nor_match_read(op)) {
-		ret = mtk_nor_write_buffer_disable(sp);
-		if (ret < 0)
-			return ret;
+	अगर ((op->data.dir == SPI_MEM_DATA_IN) && mtk_nor_match_पढ़ो(op)) अणु
+		ret = mtk_nor_ग_लिखो_buffer_disable(sp);
+		अगर (ret < 0)
+			वापस ret;
 		mtk_nor_setup_bus(sp, op);
-		if (op->data.nbytes == 1) {
+		अगर (op->data.nbytes == 1) अणु
 			mtk_nor_set_addr(sp, op);
-			return mtk_nor_read_pio(sp, op);
-		} else {
-			return mtk_nor_read_dma(sp, op);
-		}
-	}
+			वापस mtk_nor_पढ़ो_pio(sp, op);
+		पूर्ण अन्यथा अणु
+			वापस mtk_nor_पढ़ो_dma(sp, op);
+		पूर्ण
+	पूर्ण
 
-	return mtk_nor_spi_mem_prg(sp, op);
-}
+	वापस mtk_nor_spi_mem_prg(sp, op);
+पूर्ण
 
-static int mtk_nor_setup(struct spi_device *spi)
-{
-	struct mtk_nor *sp = spi_controller_get_devdata(spi->master);
+अटल पूर्णांक mtk_nor_setup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा mtk_nor *sp = spi_controller_get_devdata(spi->master);
 
-	if (spi->max_speed_hz && (spi->max_speed_hz < sp->spi_freq)) {
+	अगर (spi->max_speed_hz && (spi->max_speed_hz < sp->spi_freq)) अणु
 		dev_err(&spi->dev, "spi clock should be %u Hz.\n",
 			sp->spi_freq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	spi->max_speed_hz = sp->spi_freq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_nor_transfer_one_message(struct spi_controller *master,
-					struct spi_message *m)
-{
-	struct mtk_nor *sp = spi_controller_get_devdata(master);
-	struct spi_transfer *t = NULL;
-	unsigned long trx_len = 0;
-	int stat = 0;
-	int reg_offset = MTK_NOR_REG_PRGDATA_MAX;
-	void __iomem *reg;
-	const u8 *txbuf;
+अटल पूर्णांक mtk_nor_transfer_one_message(काष्ठा spi_controller *master,
+					काष्ठा spi_message *m)
+अणु
+	काष्ठा mtk_nor *sp = spi_controller_get_devdata(master);
+	काष्ठा spi_transfer *t = शून्य;
+	अचिन्हित दीर्घ trx_len = 0;
+	पूर्णांक stat = 0;
+	पूर्णांक reg_offset = MTK_NOR_REG_PRGDATA_MAX;
+	व्योम __iomem *reg;
+	स्थिर u8 *txbuf;
 	u8 *rxbuf;
-	int i;
+	पूर्णांक i;
 
-	list_for_each_entry(t, &m->transfers, transfer_list) {
+	list_क्रम_each_entry(t, &m->transfers, transfer_list) अणु
 		txbuf = t->tx_buf;
-		for (i = 0; i < t->len; i++, reg_offset--) {
+		क्रम (i = 0; i < t->len; i++, reg_offset--) अणु
 			reg = sp->base + MTK_NOR_REG_PRGDATA(reg_offset);
-			if (txbuf)
-				writeb(txbuf[i], reg);
-			else
-				writeb(0, reg);
-		}
+			अगर (txbuf)
+				ग_लिखोb(txbuf[i], reg);
+			अन्यथा
+				ग_लिखोb(0, reg);
+		पूर्ण
 		trx_len += t->len;
-	}
+	पूर्ण
 
-	writel(trx_len * BITS_PER_BYTE, sp->base + MTK_NOR_REG_PRG_CNT);
+	ग_लिखोl(trx_len * BITS_PER_BYTE, sp->base + MTK_NOR_REG_PRG_CNT);
 
 	stat = mtk_nor_cmd_exec(sp, MTK_NOR_CMD_PROGRAM,
 				trx_len * BITS_PER_BYTE);
-	if (stat < 0)
-		goto msg_done;
+	अगर (stat < 0)
+		जाओ msg_करोne;
 
 	reg_offset = trx_len - 1;
-	list_for_each_entry(t, &m->transfers, transfer_list) {
+	list_क्रम_each_entry(t, &m->transfers, transfer_list) अणु
 		rxbuf = t->rx_buf;
-		for (i = 0; i < t->len; i++, reg_offset--) {
+		क्रम (i = 0; i < t->len; i++, reg_offset--) अणु
 			reg = sp->base + MTK_NOR_REG_SHIFT(reg_offset);
-			if (rxbuf)
-				rxbuf[i] = readb(reg);
-		}
-	}
+			अगर (rxbuf)
+				rxbuf[i] = पढ़ोb(reg);
+		पूर्ण
+	पूर्ण
 
 	m->actual_length = trx_len;
-msg_done:
+msg_करोne:
 	m->status = stat;
 	spi_finalize_current_message(master);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_nor_disable_clk(struct mtk_nor *sp)
-{
+अटल व्योम mtk_nor_disable_clk(काष्ठा mtk_nor *sp)
+अणु
 	clk_disable_unprepare(sp->spi_clk);
 	clk_disable_unprepare(sp->ctlr_clk);
 	clk_disable_unprepare(sp->axi_clk);
-}
+पूर्ण
 
-static int mtk_nor_enable_clk(struct mtk_nor *sp)
-{
-	int ret;
+अटल पूर्णांक mtk_nor_enable_clk(काष्ठा mtk_nor *sp)
+अणु
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(sp->spi_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(sp->ctlr_clk);
-	if (ret) {
+	अगर (ret) अणु
 		clk_disable_unprepare(sp->spi_clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(sp->axi_clk);
-	if (ret) {
+	अगर (ret) अणु
 		clk_disable_unprepare(sp->spi_clk);
 		clk_disable_unprepare(sp->ctlr_clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_nor_init(struct mtk_nor *sp)
-{
-	writel(0, sp->base + MTK_NOR_REG_IRQ_EN);
-	writel(MTK_NOR_IRQ_MASK, sp->base + MTK_NOR_REG_IRQ_STAT);
+अटल व्योम mtk_nor_init(काष्ठा mtk_nor *sp)
+अणु
+	ग_लिखोl(0, sp->base + MTK_NOR_REG_IRQ_EN);
+	ग_लिखोl(MTK_NOR_IRQ_MASK, sp->base + MTK_NOR_REG_IRQ_STAT);
 
-	writel(MTK_NOR_ENABLE_SF_CMD, sp->base + MTK_NOR_REG_WP);
+	ग_लिखोl(MTK_NOR_ENABLE_SF_CMD, sp->base + MTK_NOR_REG_WP);
 	mtk_nor_rmw(sp, MTK_NOR_REG_CFG2, MTK_NOR_WR_CUSTOM_OP_EN, 0);
 	mtk_nor_rmw(sp, MTK_NOR_REG_CFG3,
 		    MTK_NOR_DISABLE_WREN | MTK_NOR_DISABLE_SR_POLL, 0);
-}
+पूर्ण
 
-static irqreturn_t mtk_nor_irq_handler(int irq, void *data)
-{
-	struct mtk_nor *sp = data;
+अटल irqवापस_t mtk_nor_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा mtk_nor *sp = data;
 	u32 irq_status, irq_enabled;
 
-	irq_status = readl(sp->base + MTK_NOR_REG_IRQ_STAT);
-	irq_enabled = readl(sp->base + MTK_NOR_REG_IRQ_EN);
-	// write status back to clear interrupt
-	writel(irq_status, sp->base + MTK_NOR_REG_IRQ_STAT);
+	irq_status = पढ़ोl(sp->base + MTK_NOR_REG_IRQ_STAT);
+	irq_enabled = पढ़ोl(sp->base + MTK_NOR_REG_IRQ_EN);
+	// ग_लिखो status back to clear पूर्णांकerrupt
+	ग_लिखोl(irq_status, sp->base + MTK_NOR_REG_IRQ_STAT);
 
-	if (!(irq_status & irq_enabled))
-		return IRQ_NONE;
+	अगर (!(irq_status & irq_enabled))
+		वापस IRQ_NONE;
 
-	if (irq_status & MTK_NOR_IRQ_DMA) {
-		complete(&sp->op_done);
-		writel(0, sp->base + MTK_NOR_REG_IRQ_EN);
-	}
+	अगर (irq_status & MTK_NOR_IRQ_DMA) अणु
+		complete(&sp->op_करोne);
+		ग_लिखोl(0, sp->base + MTK_NOR_REG_IRQ_EN);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static size_t mtk_max_msg_size(struct spi_device *spi)
-{
-	return MTK_NOR_PRG_MAX_SIZE;
-}
+अटल माप_प्रकार mtk_max_msg_size(काष्ठा spi_device *spi)
+अणु
+	वापस MTK_NOR_PRG_MAX_SIZE;
+पूर्ण
 
-static const struct spi_controller_mem_ops mtk_nor_mem_ops = {
+अटल स्थिर काष्ठा spi_controller_mem_ops mtk_nor_mem_ops = अणु
 	.adjust_op_size = mtk_nor_adjust_op_size,
 	.supports_op = mtk_nor_supports_op,
 	.exec_op = mtk_nor_exec_op
-};
+पूर्ण;
 
-static const struct of_device_id mtk_nor_match[] = {
-	{ .compatible = "mediatek,mt8192-nor", .data = (void *)36 },
-	{ .compatible = "mediatek,mt8173-nor", .data = (void *)32 },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id mtk_nor_match[] = अणु
+	अणु .compatible = "mediatek,mt8192-nor", .data = (व्योम *)36 पूर्ण,
+	अणु .compatible = "mediatek,mt8173-nor", .data = (व्योम *)32 पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk_nor_match);
 
-static int mtk_nor_probe(struct platform_device *pdev)
-{
-	struct spi_controller *ctlr;
-	struct mtk_nor *sp;
-	void __iomem *base;
-	struct clk *spi_clk, *ctlr_clk, *axi_clk;
-	int ret, irq;
-	unsigned long dma_bits;
+अटल पूर्णांक mtk_nor_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_controller *ctlr;
+	काष्ठा mtk_nor *sp;
+	व्योम __iomem *base;
+	काष्ठा clk *spi_clk, *ctlr_clk, *axi_clk;
+	पूर्णांक ret, irq;
+	अचिन्हित दीर्घ dma_bits;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	spi_clk = devm_clk_get(&pdev->dev, "spi");
-	if (IS_ERR(spi_clk))
-		return PTR_ERR(spi_clk);
+	अगर (IS_ERR(spi_clk))
+		वापस PTR_ERR(spi_clk);
 
 	ctlr_clk = devm_clk_get(&pdev->dev, "sf");
-	if (IS_ERR(ctlr_clk))
-		return PTR_ERR(ctlr_clk);
+	अगर (IS_ERR(ctlr_clk))
+		वापस PTR_ERR(ctlr_clk);
 
 	axi_clk = devm_clk_get_optional(&pdev->dev, "axi");
-	if (IS_ERR(axi_clk))
-		return PTR_ERR(axi_clk);
+	अगर (IS_ERR(axi_clk))
+		वापस PTR_ERR(axi_clk);
 
-	dma_bits = (unsigned long)of_device_get_match_data(&pdev->dev);
-	if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(dma_bits))) {
+	dma_bits = (अचिन्हित दीर्घ)of_device_get_match_data(&pdev->dev);
+	अगर (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(dma_bits))) अणु
 		dev_err(&pdev->dev, "failed to set dma mask(%lu)\n", dma_bits);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ctlr = devm_spi_alloc_master(&pdev->dev, sizeof(*sp));
-	if (!ctlr) {
+	ctlr = devm_spi_alloc_master(&pdev->dev, माप(*sp));
+	अगर (!ctlr) अणु
 		dev_err(&pdev->dev, "failed to allocate spi controller\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ctlr->bits_per_word_mask = SPI_BPW_MASK(8);
 	ctlr->dev.of_node = pdev->dev.of_node;
@@ -795,7 +796,7 @@ static int mtk_nor_probe(struct platform_device *pdev)
 	ctlr->num_chipselect = 1;
 	ctlr->setup = mtk_nor_setup;
 	ctlr->transfer_one_message = mtk_nor_transfer_one_message;
-	ctlr->auto_runtime_pm = true;
+	ctlr->स्वतः_runसमय_pm = true;
 
 	dev_set_drvdata(&pdev->dev, ctlr);
 
@@ -812,123 +813,123 @@ static int mtk_nor_probe(struct platform_device *pdev)
 	sp->buffer = dmam_alloc_coherent(&pdev->dev,
 				MTK_NOR_BOUNCE_BUF_SIZE + MTK_NOR_DMA_ALIGN,
 				&sp->buffer_dma, GFP_KERNEL);
-	if (!sp->buffer)
-		return -ENOMEM;
+	अगर (!sp->buffer)
+		वापस -ENOMEM;
 
-	if ((uintptr_t)sp->buffer & MTK_NOR_DMA_ALIGN_MASK) {
+	अगर ((uपूर्णांकptr_t)sp->buffer & MTK_NOR_DMA_ALIGN_MASK) अणु
 		dev_err(sp->dev, "misaligned allocation of internal buffer.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = mtk_nor_enable_clk(sp);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	sp->spi_freq = clk_get_rate(sp->spi_clk);
 
 	mtk_nor_init(sp);
 
-	irq = platform_get_irq_optional(pdev, 0);
+	irq = platक्रमm_get_irq_optional(pdev, 0);
 
-	if (irq < 0) {
+	अगर (irq < 0) अणु
 		dev_warn(sp->dev, "IRQ not available.");
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = devm_request_irq(sp->dev, irq, mtk_nor_irq_handler, 0,
 				       pdev->name, sp);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(sp->dev, "failed to request IRQ.");
-		} else {
-			init_completion(&sp->op_done);
+		पूर्ण अन्यथा अणु
+			init_completion(&sp->op_करोne);
 			sp->has_irq = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	pm_runtime_set_autosuspend_delay(&pdev->dev, -1);
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_set_active(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
-	pm_runtime_get_noresume(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, -1);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_set_active(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
+	pm_runसमय_get_noresume(&pdev->dev);
 
-	ret = devm_spi_register_controller(&pdev->dev, ctlr);
-	if (ret < 0)
-		goto err_probe;
+	ret = devm_spi_रेजिस्टर_controller(&pdev->dev, ctlr);
+	अगर (ret < 0)
+		जाओ err_probe;
 
-	pm_runtime_mark_last_busy(&pdev->dev);
-	pm_runtime_put_autosuspend(&pdev->dev);
+	pm_runसमय_mark_last_busy(&pdev->dev);
+	pm_runसमय_put_स्वतःsuspend(&pdev->dev);
 
 	dev_info(&pdev->dev, "spi frequency: %d Hz\n", sp->spi_freq);
 
-	return 0;
+	वापस 0;
 
 err_probe:
-	pm_runtime_disable(&pdev->dev);
-	pm_runtime_set_suspended(&pdev->dev);
-	pm_runtime_dont_use_autosuspend(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	pm_runसमय_set_suspended(&pdev->dev);
+	pm_runसमय_करोnt_use_स्वतःsuspend(&pdev->dev);
 
 	mtk_nor_disable_clk(sp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_nor_remove(struct platform_device *pdev)
-{
-	struct spi_controller *ctlr = dev_get_drvdata(&pdev->dev);
-	struct mtk_nor *sp = spi_controller_get_devdata(ctlr);
+अटल पूर्णांक mtk_nor_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_controller *ctlr = dev_get_drvdata(&pdev->dev);
+	काष्ठा mtk_nor *sp = spi_controller_get_devdata(ctlr);
 
-	pm_runtime_disable(&pdev->dev);
-	pm_runtime_set_suspended(&pdev->dev);
-	pm_runtime_dont_use_autosuspend(&pdev->dev);
-
-	mtk_nor_disable_clk(sp);
-
-	return 0;
-}
-
-static int __maybe_unused mtk_nor_runtime_suspend(struct device *dev)
-{
-	struct spi_controller *ctlr = dev_get_drvdata(dev);
-	struct mtk_nor *sp = spi_controller_get_devdata(ctlr);
+	pm_runसमय_disable(&pdev->dev);
+	pm_runसमय_set_suspended(&pdev->dev);
+	pm_runसमय_करोnt_use_स्वतःsuspend(&pdev->dev);
 
 	mtk_nor_disable_clk(sp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused mtk_nor_runtime_resume(struct device *dev)
-{
-	struct spi_controller *ctlr = dev_get_drvdata(dev);
-	struct mtk_nor *sp = spi_controller_get_devdata(ctlr);
+अटल पूर्णांक __maybe_unused mtk_nor_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_controller *ctlr = dev_get_drvdata(dev);
+	काष्ठा mtk_nor *sp = spi_controller_get_devdata(ctlr);
 
-	return mtk_nor_enable_clk(sp);
-}
+	mtk_nor_disable_clk(sp);
 
-static int __maybe_unused mtk_nor_suspend(struct device *dev)
-{
-	return pm_runtime_force_suspend(dev);
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused mtk_nor_resume(struct device *dev)
-{
-	return pm_runtime_force_resume(dev);
-}
+अटल पूर्णांक __maybe_unused mtk_nor_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_controller *ctlr = dev_get_drvdata(dev);
+	काष्ठा mtk_nor *sp = spi_controller_get_devdata(ctlr);
 
-static const struct dev_pm_ops mtk_nor_pm_ops = {
-	SET_RUNTIME_PM_OPS(mtk_nor_runtime_suspend,
-			   mtk_nor_runtime_resume, NULL)
+	वापस mtk_nor_enable_clk(sp);
+पूर्ण
+
+अटल पूर्णांक __maybe_unused mtk_nor_suspend(काष्ठा device *dev)
+अणु
+	वापस pm_runसमय_क्रमce_suspend(dev);
+पूर्ण
+
+अटल पूर्णांक __maybe_unused mtk_nor_resume(काष्ठा device *dev)
+अणु
+	वापस pm_runसमय_क्रमce_resume(dev);
+पूर्ण
+
+अटल स्थिर काष्ठा dev_pm_ops mtk_nor_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(mtk_nor_runसमय_suspend,
+			   mtk_nor_runसमय_resume, शून्य)
 	SET_SYSTEM_SLEEP_PM_OPS(mtk_nor_suspend, mtk_nor_resume)
-};
+पूर्ण;
 
-static struct platform_driver mtk_nor_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mtk_nor_driver = अणु
+	.driver = अणु
 		.name = DRIVER_NAME,
 		.of_match_table = mtk_nor_match,
 		.pm = &mtk_nor_pm_ops,
-	},
+	पूर्ण,
 	.probe = mtk_nor_probe,
-	.remove = mtk_nor_remove,
-};
+	.हटाओ = mtk_nor_हटाओ,
+पूर्ण;
 
-module_platform_driver(mtk_nor_driver);
+module_platक्रमm_driver(mtk_nor_driver);
 
 MODULE_DESCRIPTION("Mediatek SPI NOR controller driver");
 MODULE_AUTHOR("Chuanhong Guo <gch981213@gmail.com>");

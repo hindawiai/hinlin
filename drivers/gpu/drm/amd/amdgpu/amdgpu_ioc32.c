@@ -1,19 +1,20 @@
+<शैली गुरु>
 /**
- * \file amdgpu_ioc32.c
+ * \पile amdgpu_ioc32.c
  *
- * 32-bit ioctl compatibility routines for the AMDGPU DRM.
+ * 32-bit ioctl compatibility routines क्रम the AMDGPU DRM.
  *
- * \author Paul Mackerras <paulus@samba.org>
+ * \चuthor Paul Mackerras <paulus@samba.org>
  *
  * Copyright (C) Paul Mackerras 2005
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -27,22 +28,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <linux/compat.h>
+#समावेश <linux/compat.h>
 
-#include <drm/amdgpu_drm.h>
-#include <drm/drm_ioctl.h>
+#समावेश <drm/amdgpu_drm.h>
+#समावेश <drm/drm_ioctl.h>
 
-#include "amdgpu_drv.h"
+#समावेश "amdgpu_drv.h"
 
-long amdgpu_kms_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	unsigned int nr = DRM_IOCTL_NR(cmd);
-	int ret;
+दीर्घ amdgpu_kms_compat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	अचिन्हित पूर्णांक nr = DRM_IOCTL_NR(cmd);
+	पूर्णांक ret;
 
-	if (nr < DRM_COMMAND_BASE)
-		return drm_compat_ioctl(filp, cmd, arg);
+	अगर (nr < DRM_COMMAND_BASE)
+		वापस drm_compat_ioctl(filp, cmd, arg);
 
 	ret = amdgpu_drm_ioctl(filp, cmd, arg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

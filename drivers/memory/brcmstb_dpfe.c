@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * DDR PHY Front End (DPFE) driver for Broadcom set top box SoCs
+ * DDR PHY Front End (DPFE) driver क्रम Broadcom set top box SoCs
  *
  * Copyright (c) 2017 Broadcom
  */
 
 /*
- * This driver provides access to the DPFE interface of Broadcom STB SoCs.
+ * This driver provides access to the DPFE पूर्णांकerface of Broadcom STB SoCs.
  * The firmware running on the DCPU inside the DDR PHY can provide current
- * information about the system's RAM, for instance the DRAM refresh rate.
- * This can be used as an indirect indicator for the DRAM's temperature.
+ * inक्रमmation about the प्रणाली's RAM, क्रम instance the DRAM refresh rate.
+ * This can be used as an indirect indicator क्रम the DRAM's temperature.
  * Slower refresh rate means cooler RAM, higher refresh rate means hotter
  * RAM.
  *
- * Throughout the driver, we use readl_relaxed() and writel_relaxed(), which
- * already contain the appropriate le32_to_cpu()/cpu_to_le32() calls.
+ * Throughout the driver, we use पढ़ोl_relaxed() and ग_लिखोl_relaxed(), which
+ * alपढ़ोy contain the appropriate le32_to_cpu()/cpu_to_le32() calls.
  *
  * Note regarding the loading of the firmware image: we use be32_to_cpu()
- * and le_32_to_cpu(), so we can support the following four cases:
- *     - LE kernel + LE firmware image (the most common case)
+ * and le_32_to_cpu(), so we can support the following four हालs:
+ *     - LE kernel + LE firmware image (the most common हाल)
  *     - LE kernel + BE firmware image
  *     - BE kernel + LE firmware image
  *     - BE kernel + BE firmware image
  *
  * The DPCU always runs in big endian mode. The firmware image, however, can
- * be in either format. Also, communication between host CPU and DCPU is
+ * be in either क्रमmat. Also, communication between host CPU and DCPU is
  * always in little endian.
  */
 
-#include <linux/delay.h>
-#include <linux/firmware.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define DRVNAME			"brcmstb-dpfe"
+#घोषणा DRVNAME			"brcmstb-dpfe"
 
-/* DCPU register offsets */
-#define REG_DCPU_RESET		0x0
-#define REG_TO_DCPU_MBOX	0x10
-#define REG_TO_HOST_MBOX	0x14
+/* DCPU रेजिस्टर offsets */
+#घोषणा REG_DCPU_RESET		0x0
+#घोषणा REG_TO_DCPU_MBOX	0x10
+#घोषणा REG_TO_HOST_MBOX	0x14
 
-/* Macros to process offsets returned by the DCPU */
-#define DRAM_MSG_ADDR_OFFSET	0x0
-#define DRAM_MSG_TYPE_OFFSET	0x1c
-#define DRAM_MSG_ADDR_MASK	((1UL << DRAM_MSG_TYPE_OFFSET) - 1)
-#define DRAM_MSG_TYPE_MASK	((1UL << \
+/* Macros to process offsets वापसed by the DCPU */
+#घोषणा DRAM_MSG_ADDR_OFFSET	0x0
+#घोषणा DRAM_MSG_TYPE_OFFSET	0x1c
+#घोषणा DRAM_MSG_ADDR_MASK	((1UL << DRAM_MSG_TYPE_OFFSET) - 1)
+#घोषणा DRAM_MSG_TYPE_MASK	((1UL << \
 				 (BITS_PER_LONG - DRAM_MSG_TYPE_OFFSET)) - 1)
 
 /* Message RAM */
-#define DCPU_MSG_RAM_START	0x100
-#define DCPU_MSG_RAM(x)		(DCPU_MSG_RAM_START + (x) * sizeof(u32))
+#घोषणा DCPU_MSG_RAM_START	0x100
+#घोषणा DCPU_MSG_RAM(x)		(DCPU_MSG_RAM_START + (x) * माप(u32))
 
 /* DRAM Info Offsets & Masks */
-#define DRAM_INFO_INTERVAL	0x0
-#define DRAM_INFO_MR4		0x4
-#define DRAM_INFO_ERROR		0x8
-#define DRAM_INFO_MR4_MASK	0xff
-#define DRAM_INFO_MR4_SHIFT	24	/* We need to look at byte 3 */
+#घोषणा DRAM_INFO_INTERVAL	0x0
+#घोषणा DRAM_INFO_MR4		0x4
+#घोषणा DRAM_INFO_ERROR		0x8
+#घोषणा DRAM_INFO_MR4_MASK	0xff
+#घोषणा DRAM_INFO_MR4_SHIFT	24	/* We need to look at byte 3 */
 
 /* DRAM MR4 Offsets & Masks */
-#define DRAM_MR4_REFRESH	0x0	/* Refresh rate */
-#define DRAM_MR4_SR_ABORT	0x3	/* Self Refresh Abort */
-#define DRAM_MR4_PPRE		0x4	/* Post-package repair entry/exit */
-#define DRAM_MR4_TH_OFFS	0x5	/* Thermal Offset; vendor specific */
-#define DRAM_MR4_TUF		0x7	/* Temperature Update Flag */
+#घोषणा DRAM_MR4_REFRESH	0x0	/* Refresh rate */
+#घोषणा DRAM_MR4_SR_ABORT	0x3	/* Self Refresh Abort */
+#घोषणा DRAM_MR4_PPRE		0x4	/* Post-package repair entry/निकास */
+#घोषणा DRAM_MR4_TH_OFFS	0x5	/* Thermal Offset; venकरोr specअगरic */
+#घोषणा DRAM_MR4_TUF		0x7	/* Temperature Update Flag */
 
-#define DRAM_MR4_REFRESH_MASK	0x7
-#define DRAM_MR4_SR_ABORT_MASK	0x1
-#define DRAM_MR4_PPRE_MASK	0x1
-#define DRAM_MR4_TH_OFFS_MASK	0x3
-#define DRAM_MR4_TUF_MASK	0x1
+#घोषणा DRAM_MR4_REFRESH_MASK	0x7
+#घोषणा DRAM_MR4_SR_ABORT_MASK	0x1
+#घोषणा DRAM_MR4_PPRE_MASK	0x1
+#घोषणा DRAM_MR4_TH_OFFS_MASK	0x3
+#घोषणा DRAM_MR4_TUF_MASK	0x1
 
-/* DRAM Vendor Offsets & Masks (API v2) */
-#define DRAM_VENDOR_MR5		0x0
-#define DRAM_VENDOR_MR6		0x4
-#define DRAM_VENDOR_MR7		0x8
-#define DRAM_VENDOR_MR8		0xc
-#define DRAM_VENDOR_ERROR	0x10
-#define DRAM_VENDOR_MASK	0xff
-#define DRAM_VENDOR_SHIFT	24	/* We need to look at byte 3 */
+/* DRAM Venकरोr Offsets & Masks (API v2) */
+#घोषणा DRAM_VENDOR_MR5		0x0
+#घोषणा DRAM_VENDOR_MR6		0x4
+#घोषणा DRAM_VENDOR_MR7		0x8
+#घोषणा DRAM_VENDOR_MR8		0xc
+#घोषणा DRAM_VENDOR_ERROR	0x10
+#घोषणा DRAM_VENDOR_MASK	0xff
+#घोषणा DRAM_VENDOR_SHIFT	24	/* We need to look at byte 3 */
 
-/* DRAM Information Offsets & Masks (API v3) */
-#define DRAM_DDR_INFO_MR4	0x0
-#define DRAM_DDR_INFO_MR5	0x4
-#define DRAM_DDR_INFO_MR6	0x8
-#define DRAM_DDR_INFO_MR7	0xc
-#define DRAM_DDR_INFO_MR8	0x10
-#define DRAM_DDR_INFO_ERROR	0x14
-#define DRAM_DDR_INFO_MASK	0xff
+/* DRAM Inक्रमmation Offsets & Masks (API v3) */
+#घोषणा DRAM_DDR_INFO_MR4	0x0
+#घोषणा DRAM_DDR_INFO_MR5	0x4
+#घोषणा DRAM_DDR_INFO_MR6	0x8
+#घोषणा DRAM_DDR_INFO_MR7	0xc
+#घोषणा DRAM_DDR_INFO_MR8	0x10
+#घोषणा DRAM_DDR_INFO_ERROR	0x14
+#घोषणा DRAM_DDR_INFO_MASK	0xff
 
-/* Reset register bits & masks */
-#define DCPU_RESET_SHIFT	0x0
-#define DCPU_RESET_MASK		0x1
-#define DCPU_CLK_DISABLE_SHIFT	0x2
+/* Reset रेजिस्टर bits & masks */
+#घोषणा DCPU_RESET_SHIFT	0x0
+#घोषणा DCPU_RESET_MASK		0x1
+#घोषणा DCPU_CLK_DISABLE_SHIFT	0x2
 
-/* DCPU return codes */
-#define DCPU_RET_ERROR_BIT	BIT(31)
-#define DCPU_RET_SUCCESS	0x1
-#define DCPU_RET_ERR_HEADER	(DCPU_RET_ERROR_BIT | BIT(0))
-#define DCPU_RET_ERR_INVAL	(DCPU_RET_ERROR_BIT | BIT(1))
-#define DCPU_RET_ERR_CHKSUM	(DCPU_RET_ERROR_BIT | BIT(2))
-#define DCPU_RET_ERR_COMMAND	(DCPU_RET_ERROR_BIT | BIT(3))
+/* DCPU वापस codes */
+#घोषणा DCPU_RET_ERROR_BIT	BIT(31)
+#घोषणा DCPU_RET_SUCCESS	0x1
+#घोषणा DCPU_RET_ERR_HEADER	(DCPU_RET_ERROR_BIT | BIT(0))
+#घोषणा DCPU_RET_ERR_INVAL	(DCPU_RET_ERROR_BIT | BIT(1))
+#घोषणा DCPU_RET_ERR_CHKSUM	(DCPU_RET_ERROR_BIT | BIT(2))
+#घोषणा DCPU_RET_ERR_COMMAND	(DCPU_RET_ERROR_BIT | BIT(3))
 /* This error code is not firmware defined and only used in the driver. */
-#define DCPU_RET_ERR_TIMEDOUT	(DCPU_RET_ERROR_BIT | BIT(4))
+#घोषणा DCPU_RET_ERR_TIMEDOUT	(DCPU_RET_ERROR_BIT | BIT(4))
 
 /* Firmware magic */
-#define DPFE_BE_MAGIC		0xfe1010fe
-#define DPFE_LE_MAGIC		0xfe0101fe
+#घोषणा DPFE_BE_MAGIC		0xfe1010fe
+#घोषणा DPFE_LE_MAGIC		0xfe0101fe
 
 /* Error codes */
-#define ERR_INVALID_MAGIC	-1
-#define ERR_INVALID_SIZE	-2
-#define ERR_INVALID_CHKSUM	-3
+#घोषणा ERR_INVALID_MAGIC	-1
+#घोषणा ERR_INVALID_SIZE	-2
+#घोषणा ERR_INVALID_CHKSUM	-3
 
 /* Message types */
-#define DPFE_MSG_TYPE_COMMAND	1
-#define DPFE_MSG_TYPE_RESPONSE	2
+#घोषणा DPFE_MSG_TYPE_COMMAND	1
+#घोषणा DPFE_MSG_TYPE_RESPONSE	2
 
-#define DELAY_LOOP_MAX		1000
+#घोषणा DELAY_LOOP_MAX		1000
 
-enum dpfe_msg_fields {
+क्रमागत dpfe_msg_fields अणु
 	MSG_HEADER,
 	MSG_COMMAND,
 	MSG_ARG_COUNT,
 	MSG_ARG0,
 	MSG_FIELD_MAX	= 16 /* Max number of arguments */
-};
+पूर्ण;
 
-enum dpfe_commands {
+क्रमागत dpfe_commands अणु
 	DPFE_CMD_GET_INFO,
 	DPFE_CMD_GET_REFRESH,
 	DPFE_CMD_GET_VENDOR,
 	DPFE_CMD_MAX /* Last entry */
-};
+पूर्ण;
 
 /*
  * Format of the binary firmware file:
@@ -154,242 +155,242 @@ enum dpfe_commands {
  *           DMEM
  *      last checksum ==> sum of everything
  */
-struct dpfe_firmware_header {
+काष्ठा dpfe_firmware_header अणु
 	u32 magic;
 	u32 sequence;
 	u32 version;
 	u32 imem_size;
 	u32 dmem_size;
-};
+पूर्ण;
 
 /* Things we only need during initialization. */
-struct init_data {
-	unsigned int dmem_len;
-	unsigned int imem_len;
-	unsigned int chksum;
+काष्ठा init_data अणु
+	अचिन्हित पूर्णांक dmem_len;
+	अचिन्हित पूर्णांक imem_len;
+	अचिन्हित पूर्णांक chksum;
 	bool is_big_endian;
-};
+पूर्ण;
 
 /* API version and corresponding commands */
-struct dpfe_api {
-	int version;
-	const char *fw_name;
-	const struct attribute_group **sysfs_attrs;
+काष्ठा dpfe_api अणु
+	पूर्णांक version;
+	स्थिर अक्षर *fw_name;
+	स्थिर काष्ठा attribute_group **sysfs_attrs;
 	u32 command[DPFE_CMD_MAX][MSG_FIELD_MAX];
-};
+पूर्ण;
 
-/* Things we need for as long as we are active. */
-struct brcmstb_dpfe_priv {
-	void __iomem *regs;
-	void __iomem *dmem;
-	void __iomem *imem;
-	struct device *dev;
-	const struct dpfe_api *dpfe_api;
-	struct mutex lock;
-};
+/* Things we need क्रम as दीर्घ as we are active. */
+काष्ठा brcmstb_dpfe_priv अणु
+	व्योम __iomem *regs;
+	व्योम __iomem *dmem;
+	व्योम __iomem *imem;
+	काष्ठा device *dev;
+	स्थिर काष्ठा dpfe_api *dpfe_api;
+	काष्ठा mutex lock;
+पूर्ण;
 
 /*
  * Forward declaration of our sysfs attribute functions, so we can declare the
- * attribute data structures early.
+ * attribute data काष्ठाures early.
  */
-static ssize_t show_info(struct device *, struct device_attribute *, char *);
-static ssize_t show_refresh(struct device *, struct device_attribute *, char *);
-static ssize_t store_refresh(struct device *, struct device_attribute *,
-			  const char *, size_t);
-static ssize_t show_vendor(struct device *, struct device_attribute *, char *);
-static ssize_t show_dram(struct device *, struct device_attribute *, char *);
+अटल sमाप_प्रकार show_info(काष्ठा device *, काष्ठा device_attribute *, अक्षर *);
+अटल sमाप_प्रकार show_refresh(काष्ठा device *, काष्ठा device_attribute *, अक्षर *);
+अटल sमाप_प्रकार store_refresh(काष्ठा device *, काष्ठा device_attribute *,
+			  स्थिर अक्षर *, माप_प्रकार);
+अटल sमाप_प्रकार show_venकरोr(काष्ठा device *, काष्ठा device_attribute *, अक्षर *);
+अटल sमाप_प्रकार show_dram(काष्ठा device *, काष्ठा device_attribute *, अक्षर *);
 
 /*
  * Declare our attributes early, so they can be referenced in the API data
- * structure. We need to do this, because the attributes depend on the API
+ * काष्ठाure. We need to करो this, because the attributes depend on the API
  * version.
  */
-static DEVICE_ATTR(dpfe_info, 0444, show_info, NULL);
-static DEVICE_ATTR(dpfe_refresh, 0644, show_refresh, store_refresh);
-static DEVICE_ATTR(dpfe_vendor, 0444, show_vendor, NULL);
-static DEVICE_ATTR(dpfe_dram, 0444, show_dram, NULL);
+अटल DEVICE_ATTR(dpfe_info, 0444, show_info, शून्य);
+अटल DEVICE_ATTR(dpfe_refresh, 0644, show_refresh, store_refresh);
+अटल DEVICE_ATTR(dpfe_venकरोr, 0444, show_venकरोr, शून्य);
+अटल DEVICE_ATTR(dpfe_dram, 0444, show_dram, शून्य);
 
 /* API v2 sysfs attributes */
-static struct attribute *dpfe_v2_attrs[] = {
+अटल काष्ठा attribute *dpfe_v2_attrs[] = अणु
 	&dev_attr_dpfe_info.attr,
 	&dev_attr_dpfe_refresh.attr,
-	&dev_attr_dpfe_vendor.attr,
-	NULL
-};
+	&dev_attr_dpfe_venकरोr.attr,
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(dpfe_v2);
 
 /* API v3 sysfs attributes */
-static struct attribute *dpfe_v3_attrs[] = {
+अटल काष्ठा attribute *dpfe_v3_attrs[] = अणु
 	&dev_attr_dpfe_info.attr,
 	&dev_attr_dpfe_dram.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(dpfe_v3);
 
 /*
- * Old API v2 firmware commands, as defined in the rev 0.61 specification, we
+ * Old API v2 firmware commands, as defined in the rev 0.61 specअगरication, we
  * use a version set to 1 to denote that it is not compatible with the new API
  * v2 and onwards.
  */
-static const struct dpfe_api dpfe_api_old_v2 = {
+अटल स्थिर काष्ठा dpfe_api dpfe_api_old_v2 = अणु
 	.version = 1,
 	.fw_name = "dpfe.bin",
 	.sysfs_attrs = dpfe_v2_groups,
-	.command = {
-		[DPFE_CMD_GET_INFO] = {
+	.command = अणु
+		[DPFE_CMD_GET_INFO] = अणु
 			[MSG_HEADER] = DPFE_MSG_TYPE_COMMAND,
 			[MSG_COMMAND] = 1,
 			[MSG_ARG_COUNT] = 1,
 			[MSG_ARG0] = 1,
-		},
-		[DPFE_CMD_GET_REFRESH] = {
+		पूर्ण,
+		[DPFE_CMD_GET_REFRESH] = अणु
 			[MSG_HEADER] = DPFE_MSG_TYPE_COMMAND,
 			[MSG_COMMAND] = 2,
 			[MSG_ARG_COUNT] = 1,
 			[MSG_ARG0] = 1,
-		},
-		[DPFE_CMD_GET_VENDOR] = {
+		पूर्ण,
+		[DPFE_CMD_GET_VENDOR] = अणु
 			[MSG_HEADER] = DPFE_MSG_TYPE_COMMAND,
 			[MSG_COMMAND] = 2,
 			[MSG_ARG_COUNT] = 1,
 			[MSG_ARG0] = 2,
-		},
-	}
-};
+		पूर्ण,
+	पूर्ण
+पूर्ण;
 
 /*
- * API v2 firmware commands, as defined in the rev 0.8 specification, named new
+ * API v2 firmware commands, as defined in the rev 0.8 specअगरication, named new
  * v2 here
  */
-static const struct dpfe_api dpfe_api_new_v2 = {
+अटल स्थिर काष्ठा dpfe_api dpfe_api_new_v2 = अणु
 	.version = 2,
-	.fw_name = NULL, /* We expect the firmware to have been downloaded! */
+	.fw_name = शून्य, /* We expect the firmware to have been करोwnloaded! */
 	.sysfs_attrs = dpfe_v2_groups,
-	.command = {
-		[DPFE_CMD_GET_INFO] = {
+	.command = अणु
+		[DPFE_CMD_GET_INFO] = अणु
 			[MSG_HEADER] = DPFE_MSG_TYPE_COMMAND,
 			[MSG_COMMAND] = 0x101,
-		},
-		[DPFE_CMD_GET_REFRESH] = {
+		पूर्ण,
+		[DPFE_CMD_GET_REFRESH] = अणु
 			[MSG_HEADER] = DPFE_MSG_TYPE_COMMAND,
 			[MSG_COMMAND] = 0x201,
-		},
-		[DPFE_CMD_GET_VENDOR] = {
+		पूर्ण,
+		[DPFE_CMD_GET_VENDOR] = अणु
 			[MSG_HEADER] = DPFE_MSG_TYPE_COMMAND,
 			[MSG_COMMAND] = 0x202,
-		},
-	}
-};
+		पूर्ण,
+	पूर्ण
+पूर्ण;
 
 /* API v3 firmware commands */
-static const struct dpfe_api dpfe_api_v3 = {
+अटल स्थिर काष्ठा dpfe_api dpfe_api_v3 = अणु
 	.version = 3,
-	.fw_name = NULL, /* We expect the firmware to have been downloaded! */
+	.fw_name = शून्य, /* We expect the firmware to have been करोwnloaded! */
 	.sysfs_attrs = dpfe_v3_groups,
-	.command = {
-		[DPFE_CMD_GET_INFO] = {
+	.command = अणु
+		[DPFE_CMD_GET_INFO] = अणु
 			[MSG_HEADER] = DPFE_MSG_TYPE_COMMAND,
 			[MSG_COMMAND] = 0x0101,
 			[MSG_ARG_COUNT] = 1,
 			[MSG_ARG0] = 1,
-		},
-		[DPFE_CMD_GET_REFRESH] = {
+		पूर्ण,
+		[DPFE_CMD_GET_REFRESH] = अणु
 			[MSG_HEADER] = DPFE_MSG_TYPE_COMMAND,
 			[MSG_COMMAND] = 0x0202,
 			[MSG_ARG_COUNT] = 0,
-		},
+		पूर्ण,
 		/* There's no GET_VENDOR command in API v3. */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const char *get_error_text(unsigned int i)
-{
-	static const char * const error_text[] = {
+अटल स्थिर अक्षर *get_error_text(अचिन्हित पूर्णांक i)
+अणु
+	अटल स्थिर अक्षर * स्थिर error_text[] = अणु
 		"Success", "Header code incorrect",
 		"Unknown command or argument", "Incorrect checksum",
 		"Malformed command", "Timed out", "Unknown error",
-	};
+	पूर्ण;
 
-	if (unlikely(i >= ARRAY_SIZE(error_text)))
+	अगर (unlikely(i >= ARRAY_SIZE(error_text)))
 		i = ARRAY_SIZE(error_text) - 1;
 
-	return error_text[i];
-}
+	वापस error_text[i];
+पूर्ण
 
-static bool is_dcpu_enabled(struct brcmstb_dpfe_priv *priv)
-{
+अटल bool is_dcpu_enabled(काष्ठा brcmstb_dpfe_priv *priv)
+अणु
 	u32 val;
 
 	mutex_lock(&priv->lock);
-	val = readl_relaxed(priv->regs + REG_DCPU_RESET);
+	val = पढ़ोl_relaxed(priv->regs + REG_DCPU_RESET);
 	mutex_unlock(&priv->lock);
 
-	return !(val & DCPU_RESET_MASK);
-}
+	वापस !(val & DCPU_RESET_MASK);
+पूर्ण
 
-static void __disable_dcpu(struct brcmstb_dpfe_priv *priv)
-{
+अटल व्योम __disable_dcpu(काष्ठा brcmstb_dpfe_priv *priv)
+अणु
 	u32 val;
 
-	if (!is_dcpu_enabled(priv))
-		return;
+	अगर (!is_dcpu_enabled(priv))
+		वापस;
 
 	mutex_lock(&priv->lock);
 
-	/* Put DCPU in reset if it's running. */
-	val = readl_relaxed(priv->regs + REG_DCPU_RESET);
+	/* Put DCPU in reset अगर it's running. */
+	val = पढ़ोl_relaxed(priv->regs + REG_DCPU_RESET);
 	val |= (1 << DCPU_RESET_SHIFT);
-	writel_relaxed(val, priv->regs + REG_DCPU_RESET);
+	ग_लिखोl_relaxed(val, priv->regs + REG_DCPU_RESET);
 
 	mutex_unlock(&priv->lock);
-}
+पूर्ण
 
-static void __enable_dcpu(struct brcmstb_dpfe_priv *priv)
-{
-	void __iomem *regs = priv->regs;
+अटल व्योम __enable_dcpu(काष्ठा brcmstb_dpfe_priv *priv)
+अणु
+	व्योम __iomem *regs = priv->regs;
 	u32 val;
 
 	mutex_lock(&priv->lock);
 
-	/* Clear mailbox registers. */
-	writel_relaxed(0, regs + REG_TO_DCPU_MBOX);
-	writel_relaxed(0, regs + REG_TO_HOST_MBOX);
+	/* Clear mailbox रेजिस्टरs. */
+	ग_लिखोl_relaxed(0, regs + REG_TO_DCPU_MBOX);
+	ग_लिखोl_relaxed(0, regs + REG_TO_HOST_MBOX);
 
-	/* Disable DCPU clock gating */
-	val = readl_relaxed(regs + REG_DCPU_RESET);
+	/* Disable DCPU घड़ी gating */
+	val = पढ़ोl_relaxed(regs + REG_DCPU_RESET);
 	val &= ~(1 << DCPU_CLK_DISABLE_SHIFT);
-	writel_relaxed(val, regs + REG_DCPU_RESET);
+	ग_लिखोl_relaxed(val, regs + REG_DCPU_RESET);
 
 	/* Take DCPU out of reset */
-	val = readl_relaxed(regs + REG_DCPU_RESET);
+	val = पढ़ोl_relaxed(regs + REG_DCPU_RESET);
 	val &= ~(1 << DCPU_RESET_SHIFT);
-	writel_relaxed(val, regs + REG_DCPU_RESET);
+	ग_लिखोl_relaxed(val, regs + REG_DCPU_RESET);
 
 	mutex_unlock(&priv->lock);
-}
+पूर्ण
 
-static unsigned int get_msg_chksum(const u32 msg[], unsigned int max)
-{
-	unsigned int sum = 0;
-	unsigned int i;
+अटल अचिन्हित पूर्णांक get_msg_chksum(स्थिर u32 msg[], अचिन्हित पूर्णांक max)
+अणु
+	अचिन्हित पूर्णांक sum = 0;
+	अचिन्हित पूर्णांक i;
 
 	/* Don't include the last field in the checksum. */
-	for (i = 0; i < max; i++)
+	क्रम (i = 0; i < max; i++)
 		sum += msg[i];
 
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
-static void __iomem *get_msg_ptr(struct brcmstb_dpfe_priv *priv, u32 response,
-				 char *buf, ssize_t *size)
-{
-	unsigned int msg_type;
-	unsigned int offset;
-	void __iomem *ptr = NULL;
+अटल व्योम __iomem *get_msg_ptr(काष्ठा brcmstb_dpfe_priv *priv, u32 response,
+				 अक्षर *buf, sमाप_प्रकार *size)
+अणु
+	अचिन्हित पूर्णांक msg_type;
+	अचिन्हित पूर्णांक offset;
+	व्योम __iomem *ptr = शून्य;
 
-	/* There is no need to use this function for API v3 or later. */
-	if (unlikely(priv->dpfe_api->version >= 3))
-		return NULL;
+	/* There is no need to use this function क्रम API v3 or later. */
+	अगर (unlikely(priv->dpfe_api->version >= 3))
+		वापस शून्य;
 
 	msg_type = (response >> DRAM_MSG_TYPE_OFFSET) & DRAM_MSG_TYPE_MASK;
 	offset = (response >> DRAM_MSG_ADDR_OFFSET) & DRAM_MSG_ADDR_MASK;
@@ -398,157 +399,157 @@ static void __iomem *get_msg_ptr(struct brcmstb_dpfe_priv *priv, u32 response,
 	 * msg_type == 1: the offset is relative to the message RAM
 	 * msg_type == 0: the offset is relative to the data RAM (this is the
 	 *                previous way of passing data)
-	 * msg_type is anything else: there's critical hardware problem
+	 * msg_type is anything अन्यथा: there's critical hardware problem
 	 */
-	switch (msg_type) {
-	case 1:
+	चयन (msg_type) अणु
+	हाल 1:
 		ptr = priv->regs + DCPU_MSG_RAM_START + offset;
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		ptr = priv->dmem + offset;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_emerg(priv->dev, "invalid message reply from DCPU: %#x\n",
 			response);
-		if (buf && size)
-			*size = sprintf(buf,
+		अगर (buf && size)
+			*size = प्र_लिखो(buf,
 				"FATAL: communication error with DCPU\n");
-	}
+	पूर्ण
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static void __finalize_command(struct brcmstb_dpfe_priv *priv)
-{
-	unsigned int release_mbox;
+अटल व्योम __finalize_command(काष्ठा brcmstb_dpfe_priv *priv)
+अणु
+	अचिन्हित पूर्णांक release_mbox;
 
 	/*
-	 * It depends on the API version which MBOX register we have to write to
-	 * to signal we are done.
+	 * It depends on the API version which MBOX रेजिस्टर we have to ग_लिखो to
+	 * to संकेत we are करोne.
 	 */
 	release_mbox = (priv->dpfe_api->version < 2)
 			? REG_TO_HOST_MBOX : REG_TO_DCPU_MBOX;
-	writel_relaxed(0, priv->regs + release_mbox);
-}
+	ग_लिखोl_relaxed(0, priv->regs + release_mbox);
+पूर्ण
 
-static int __send_command(struct brcmstb_dpfe_priv *priv, unsigned int cmd,
+अटल पूर्णांक __send_command(काष्ठा brcmstb_dpfe_priv *priv, अचिन्हित पूर्णांक cmd,
 			  u32 result[])
-{
-	const u32 *msg = priv->dpfe_api->command[cmd];
-	void __iomem *regs = priv->regs;
-	unsigned int i, chksum, chksum_idx;
-	int ret = 0;
+अणु
+	स्थिर u32 *msg = priv->dpfe_api->command[cmd];
+	व्योम __iomem *regs = priv->regs;
+	अचिन्हित पूर्णांक i, chksum, chksum_idx;
+	पूर्णांक ret = 0;
 	u32 resp;
 
-	if (cmd >= DPFE_CMD_MAX)
-		return -1;
+	अगर (cmd >= DPFE_CMD_MAX)
+		वापस -1;
 
 	mutex_lock(&priv->lock);
 
-	/* Wait for DCPU to become ready */
-	for (i = 0; i < DELAY_LOOP_MAX; i++) {
-		resp = readl_relaxed(regs + REG_TO_HOST_MBOX);
-		if (resp == 0)
-			break;
+	/* Wait क्रम DCPU to become पढ़ोy */
+	क्रम (i = 0; i < DELAY_LOOP_MAX; i++) अणु
+		resp = पढ़ोl_relaxed(regs + REG_TO_HOST_MBOX);
+		अगर (resp == 0)
+			अवरोध;
 		msleep(1);
-	}
-	if (resp != 0) {
+	पूर्ण
+	अगर (resp != 0) अणु
 		mutex_unlock(&priv->lock);
-		return -ffs(DCPU_RET_ERR_TIMEDOUT);
-	}
+		वापस -ffs(DCPU_RET_ERR_TIMEDOUT);
+	पूर्ण
 
 	/* Compute checksum over the message */
 	chksum_idx = msg[MSG_ARG_COUNT] + MSG_ARG_COUNT + 1;
 	chksum = get_msg_chksum(msg, chksum_idx);
 
 	/* Write command and arguments to message area */
-	for (i = 0; i < MSG_FIELD_MAX; i++) {
-		if (i == chksum_idx)
-			writel_relaxed(chksum, regs + DCPU_MSG_RAM(i));
-		else
-			writel_relaxed(msg[i], regs + DCPU_MSG_RAM(i));
-	}
+	क्रम (i = 0; i < MSG_FIELD_MAX; i++) अणु
+		अगर (i == chksum_idx)
+			ग_लिखोl_relaxed(chksum, regs + DCPU_MSG_RAM(i));
+		अन्यथा
+			ग_लिखोl_relaxed(msg[i], regs + DCPU_MSG_RAM(i));
+	पूर्ण
 
-	/* Tell DCPU there is a command waiting */
-	writel_relaxed(1, regs + REG_TO_DCPU_MBOX);
+	/* Tell DCPU there is a command रुकोing */
+	ग_लिखोl_relaxed(1, regs + REG_TO_DCPU_MBOX);
 
-	/* Wait for DCPU to process the command */
-	for (i = 0; i < DELAY_LOOP_MAX; i++) {
+	/* Wait क्रम DCPU to process the command */
+	क्रम (i = 0; i < DELAY_LOOP_MAX; i++) अणु
 		/* Read response code */
-		resp = readl_relaxed(regs + REG_TO_HOST_MBOX);
-		if (resp > 0)
-			break;
+		resp = पढ़ोl_relaxed(regs + REG_TO_HOST_MBOX);
+		अगर (resp > 0)
+			अवरोध;
 		msleep(1);
-	}
+	पूर्ण
 
-	if (i == DELAY_LOOP_MAX) {
+	अगर (i == DELAY_LOOP_MAX) अणु
 		resp = (DCPU_RET_ERR_TIMEDOUT & ~DCPU_RET_ERROR_BIT);
 		ret = -ffs(resp);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Read response data */
-		for (i = 0; i < MSG_FIELD_MAX; i++)
-			result[i] = readl_relaxed(regs + DCPU_MSG_RAM(i));
+		क्रम (i = 0; i < MSG_FIELD_MAX; i++)
+			result[i] = पढ़ोl_relaxed(regs + DCPU_MSG_RAM(i));
 		chksum_idx = result[MSG_ARG_COUNT] + MSG_ARG_COUNT + 1;
-	}
+	पूर्ण
 
-	/* Tell DCPU we are done */
+	/* Tell DCPU we are करोne */
 	__finalize_command(priv);
 
 	mutex_unlock(&priv->lock);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Verify response */
+	/* Verअगरy response */
 	chksum = get_msg_chksum(result, chksum_idx);
-	if (chksum != result[chksum_idx])
+	अगर (chksum != result[chksum_idx])
 		resp = DCPU_RET_ERR_CHKSUM;
 
-	if (resp != DCPU_RET_SUCCESS) {
+	अगर (resp != DCPU_RET_SUCCESS) अणु
 		resp &= ~DCPU_RET_ERROR_BIT;
 		ret = -ffs(resp);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Ensure that the firmware file loaded meets all the requirements. */
-static int __verify_firmware(struct init_data *init,
-			     const struct firmware *fw)
-{
-	const struct dpfe_firmware_header *header = (void *)fw->data;
-	unsigned int dmem_size, imem_size, total_size;
+अटल पूर्णांक __verअगरy_firmware(काष्ठा init_data *init,
+			     स्थिर काष्ठा firmware *fw)
+अणु
+	स्थिर काष्ठा dpfe_firmware_header *header = (व्योम *)fw->data;
+	अचिन्हित पूर्णांक dmem_size, imem_size, total_size;
 	bool is_big_endian = false;
-	const u32 *chksum_ptr;
+	स्थिर u32 *chksum_ptr;
 
-	if (header->magic == DPFE_BE_MAGIC)
+	अगर (header->magic == DPFE_BE_MAGIC)
 		is_big_endian = true;
-	else if (header->magic != DPFE_LE_MAGIC)
-		return ERR_INVALID_MAGIC;
+	अन्यथा अगर (header->magic != DPFE_LE_MAGIC)
+		वापस ERR_INVALID_MAGIC;
 
-	if (is_big_endian) {
+	अगर (is_big_endian) अणु
 		dmem_size = be32_to_cpu(header->dmem_size);
 		imem_size = be32_to_cpu(header->imem_size);
-	} else {
+	पूर्ण अन्यथा अणु
 		dmem_size = le32_to_cpu(header->dmem_size);
 		imem_size = le32_to_cpu(header->imem_size);
-	}
+	पूर्ण
 
-	/* Data and instruction sections are 32 bit words. */
-	if ((dmem_size % sizeof(u32)) != 0 || (imem_size % sizeof(u32)) != 0)
-		return ERR_INVALID_SIZE;
+	/* Data and inकाष्ठाion sections are 32 bit words. */
+	अगर ((dmem_size % माप(u32)) != 0 || (imem_size % माप(u32)) != 0)
+		वापस ERR_INVALID_SIZE;
 
 	/*
-	 * The header + the data section + the instruction section + the
+	 * The header + the data section + the inकाष्ठाion section + the
 	 * checksum must be equal to the total firmware size.
 	 */
-	total_size = dmem_size + imem_size + sizeof(*header) +
-		sizeof(*chksum_ptr);
-	if (total_size != fw->size)
-		return ERR_INVALID_SIZE;
+	total_size = dmem_size + imem_size + माप(*header) +
+		माप(*chksum_ptr);
+	अगर (total_size != fw->size)
+		वापस ERR_INVALID_SIZE;
 
 	/* The checksum comes at the very end. */
-	chksum_ptr = (void *)fw->data + sizeof(*header) + dmem_size + imem_size;
+	chksum_ptr = (व्योम *)fw->data + माप(*header) + dmem_size + imem_size;
 
 	init->is_big_endian = is_big_endian;
 	init->dmem_len = dmem_size;
@@ -556,110 +557,110 @@ static int __verify_firmware(struct init_data *init,
 	init->chksum = (is_big_endian)
 		? be32_to_cpu(*chksum_ptr) : le32_to_cpu(*chksum_ptr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Verify checksum by reading back the firmware from co-processor RAM. */
-static int __verify_fw_checksum(struct init_data *init,
-				struct brcmstb_dpfe_priv *priv,
-				const struct dpfe_firmware_header *header,
+/* Verअगरy checksum by पढ़ोing back the firmware from co-processor RAM. */
+अटल पूर्णांक __verअगरy_fw_checksum(काष्ठा init_data *init,
+				काष्ठा brcmstb_dpfe_priv *priv,
+				स्थिर काष्ठा dpfe_firmware_header *header,
 				u32 checksum)
-{
+अणु
 	u32 magic, sequence, version, sum;
 	u32 __iomem *dmem = priv->dmem;
 	u32 __iomem *imem = priv->imem;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	if (init->is_big_endian) {
+	अगर (init->is_big_endian) अणु
 		magic = be32_to_cpu(header->magic);
 		sequence = be32_to_cpu(header->sequence);
 		version = be32_to_cpu(header->version);
-	} else {
+	पूर्ण अन्यथा अणु
 		magic = le32_to_cpu(header->magic);
 		sequence = le32_to_cpu(header->sequence);
 		version = le32_to_cpu(header->version);
-	}
+	पूर्ण
 
 	sum = magic + sequence + version + init->dmem_len + init->imem_len;
 
-	for (i = 0; i < init->dmem_len / sizeof(u32); i++)
-		sum += readl_relaxed(dmem + i);
+	क्रम (i = 0; i < init->dmem_len / माप(u32); i++)
+		sum += पढ़ोl_relaxed(dmem + i);
 
-	for (i = 0; i < init->imem_len / sizeof(u32); i++)
-		sum += readl_relaxed(imem + i);
+	क्रम (i = 0; i < init->imem_len / माप(u32); i++)
+		sum += पढ़ोl_relaxed(imem + i);
 
-	return (sum == checksum) ? 0 : -1;
-}
+	वापस (sum == checksum) ? 0 : -1;
+पूर्ण
 
-static int __write_firmware(u32 __iomem *mem, const u32 *fw,
-			    unsigned int size, bool is_big_endian)
-{
-	unsigned int i;
+अटल पूर्णांक __ग_लिखो_firmware(u32 __iomem *mem, स्थिर u32 *fw,
+			    अचिन्हित पूर्णांक size, bool is_big_endian)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* Convert size to 32-bit words. */
-	size /= sizeof(u32);
+	size /= माप(u32);
 
 	/* It is recommended to clear the firmware area first. */
-	for (i = 0; i < size; i++)
-		writel_relaxed(0, mem + i);
+	क्रम (i = 0; i < size; i++)
+		ग_लिखोl_relaxed(0, mem + i);
 
 	/* Now copy it. */
-	if (is_big_endian) {
-		for (i = 0; i < size; i++)
-			writel_relaxed(be32_to_cpu(fw[i]), mem + i);
-	} else {
-		for (i = 0; i < size; i++)
-			writel_relaxed(le32_to_cpu(fw[i]), mem + i);
-	}
+	अगर (is_big_endian) अणु
+		क्रम (i = 0; i < size; i++)
+			ग_लिखोl_relaxed(be32_to_cpu(fw[i]), mem + i);
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < size; i++)
+			ग_लिखोl_relaxed(le32_to_cpu(fw[i]), mem + i);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmstb_dpfe_download_firmware(struct brcmstb_dpfe_priv *priv)
-{
-	const struct dpfe_firmware_header *header;
-	unsigned int dmem_size, imem_size;
-	struct device *dev = priv->dev;
+अटल पूर्णांक brcmstb_dpfe_करोwnload_firmware(काष्ठा brcmstb_dpfe_priv *priv)
+अणु
+	स्थिर काष्ठा dpfe_firmware_header *header;
+	अचिन्हित पूर्णांक dmem_size, imem_size;
+	काष्ठा device *dev = priv->dev;
 	bool is_big_endian = false;
-	const struct firmware *fw;
-	const u32 *dmem, *imem;
-	struct init_data init;
-	const void *fw_blob;
-	int ret;
+	स्थिर काष्ठा firmware *fw;
+	स्थिर u32 *dmem, *imem;
+	काष्ठा init_data init;
+	स्थिर व्योम *fw_blob;
+	पूर्णांक ret;
 
 	/*
-	 * Skip downloading the firmware if the DCPU is already running and
+	 * Skip करोwnloading the firmware अगर the DCPU is alपढ़ोy running and
 	 * responding to commands.
 	 */
-	if (is_dcpu_enabled(priv)) {
+	अगर (is_dcpu_enabled(priv)) अणु
 		u32 response[MSG_FIELD_MAX];
 
 		ret = __send_command(priv, DPFE_CMD_GET_INFO, response);
-		if (!ret)
-			return 0;
-	}
+		अगर (!ret)
+			वापस 0;
+	पूर्ण
 
 	/*
-	 * If the firmware filename is NULL it means the boot firmware has to
-	 * download the DCPU firmware for us. If that didn't work, we have to
-	 * bail, since downloading it ourselves wouldn't work either.
+	 * If the firmware filename is शून्य it means the boot firmware has to
+	 * करोwnload the DCPU firmware क्रम us. If that didn't work, we have to
+	 * bail, since करोwnloading it ourselves wouldn't work either.
 	 */
-	if (!priv->dpfe_api->fw_name)
-		return -ENODEV;
+	अगर (!priv->dpfe_api->fw_name)
+		वापस -ENODEV;
 
 	ret = firmware_request_nowarn(&fw, priv->dpfe_api->fw_name, dev);
 	/*
-	 * Defer the firmware download if the firmware file couldn't be found.
-	 * The root file system may not be available yet.
+	 * Defer the firmware करोwnload अगर the firmware file couldn't be found.
+	 * The root file प्रणाली may not be available yet.
 	 */
-	if (ret)
-		return (ret == -ENOENT) ? -EPROBE_DEFER : ret;
+	अगर (ret)
+		वापस (ret == -ENOENT) ? -EPROBE_DEFER : ret;
 
-	ret = __verify_firmware(&init, fw);
-	if (ret) {
+	ret = __verअगरy_firmware(&init, fw);
+	अगर (ret) अणु
 		ret = -EFAULT;
-		goto release_fw;
-	}
+		जाओ release_fw;
+	पूर्ण
 
 	__disable_dcpu(priv);
 
@@ -668,172 +669,172 @@ static int brcmstb_dpfe_download_firmware(struct brcmstb_dpfe_priv *priv)
 	imem_size = init.imem_len;
 
 	/* At the beginning of the firmware blob is a header. */
-	header = (struct dpfe_firmware_header *)fw->data;
-	/* Void pointer to the beginning of the actual firmware. */
-	fw_blob = fw->data + sizeof(*header);
+	header = (काष्ठा dpfe_firmware_header *)fw->data;
+	/* Void poपूर्णांकer to the beginning of the actual firmware. */
+	fw_blob = fw->data + माप(*header);
 	/* IMEM comes right after the header. */
 	imem = fw_blob;
 	/* DMEM follows after IMEM. */
 	dmem = fw_blob + imem_size;
 
-	ret = __write_firmware(priv->dmem, dmem, dmem_size, is_big_endian);
-	if (ret)
-		goto release_fw;
-	ret = __write_firmware(priv->imem, imem, imem_size, is_big_endian);
-	if (ret)
-		goto release_fw;
+	ret = __ग_लिखो_firmware(priv->dmem, dmem, dmem_size, is_big_endian);
+	अगर (ret)
+		जाओ release_fw;
+	ret = __ग_लिखो_firmware(priv->imem, imem, imem_size, is_big_endian);
+	अगर (ret)
+		जाओ release_fw;
 
-	ret = __verify_fw_checksum(&init, priv, header, init.chksum);
-	if (ret)
-		goto release_fw;
+	ret = __verअगरy_fw_checksum(&init, priv, header, init.chksum);
+	अगर (ret)
+		जाओ release_fw;
 
 	__enable_dcpu(priv);
 
 release_fw:
 	release_firmware(fw);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t generic_show(unsigned int command, u32 response[],
-			    struct brcmstb_dpfe_priv *priv, char *buf)
-{
-	int ret;
+अटल sमाप_प्रकार generic_show(अचिन्हित पूर्णांक command, u32 response[],
+			    काष्ठा brcmstb_dpfe_priv *priv, अक्षर *buf)
+अणु
+	पूर्णांक ret;
 
-	if (!priv)
-		return sprintf(buf, "ERROR: driver private data not set\n");
+	अगर (!priv)
+		वापस प्र_लिखो(buf, "ERROR: driver private data not set\n");
 
 	ret = __send_command(priv, command, response);
-	if (ret < 0)
-		return sprintf(buf, "ERROR: %s\n", get_error_text(-ret));
+	अगर (ret < 0)
+		वापस प्र_लिखो(buf, "ERROR: %s\n", get_error_text(-ret));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t show_info(struct device *dev, struct device_attribute *devattr,
-			 char *buf)
-{
+अटल sमाप_प्रकार show_info(काष्ठा device *dev, काष्ठा device_attribute *devattr,
+			 अक्षर *buf)
+अणु
 	u32 response[MSG_FIELD_MAX];
-	struct brcmstb_dpfe_priv *priv;
-	unsigned int info;
-	ssize_t ret;
+	काष्ठा brcmstb_dpfe_priv *priv;
+	अचिन्हित पूर्णांक info;
+	sमाप_प्रकार ret;
 
 	priv = dev_get_drvdata(dev);
 	ret = generic_show(DPFE_CMD_GET_INFO, response, priv, buf);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	info = response[MSG_ARG0];
 
-	return sprintf(buf, "%u.%u.%u.%u\n",
+	वापस प्र_लिखो(buf, "%u.%u.%u.%u\n",
 		       (info >> 24) & 0xff,
 		       (info >> 16) & 0xff,
 		       (info >> 8) & 0xff,
 		       info & 0xff);
-}
+पूर्ण
 
-static ssize_t show_refresh(struct device *dev,
-			    struct device_attribute *devattr, char *buf)
-{
+अटल sमाप_प्रकार show_refresh(काष्ठा device *dev,
+			    काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
 	u32 response[MSG_FIELD_MAX];
-	void __iomem *info;
-	struct brcmstb_dpfe_priv *priv;
-	u8 refresh, sr_abort, ppre, thermal_offs, tuf;
+	व्योम __iomem *info;
+	काष्ठा brcmstb_dpfe_priv *priv;
+	u8 refresh, sr_पात, ppre, thermal_offs, tuf;
 	u32 mr4;
-	ssize_t ret;
+	sमाप_प्रकार ret;
 
 	priv = dev_get_drvdata(dev);
 	ret = generic_show(DPFE_CMD_GET_REFRESH, response, priv, buf);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	info = get_msg_ptr(priv, response[MSG_ARG0], buf, &ret);
-	if (!info)
-		return ret;
+	अगर (!info)
+		वापस ret;
 
-	mr4 = (readl_relaxed(info + DRAM_INFO_MR4) >> DRAM_INFO_MR4_SHIFT) &
+	mr4 = (पढ़ोl_relaxed(info + DRAM_INFO_MR4) >> DRAM_INFO_MR4_SHIFT) &
 	       DRAM_INFO_MR4_MASK;
 
 	refresh = (mr4 >> DRAM_MR4_REFRESH) & DRAM_MR4_REFRESH_MASK;
-	sr_abort = (mr4 >> DRAM_MR4_SR_ABORT) & DRAM_MR4_SR_ABORT_MASK;
+	sr_पात = (mr4 >> DRAM_MR4_SR_ABORT) & DRAM_MR4_SR_ABORT_MASK;
 	ppre = (mr4 >> DRAM_MR4_PPRE) & DRAM_MR4_PPRE_MASK;
 	thermal_offs = (mr4 >> DRAM_MR4_TH_OFFS) & DRAM_MR4_TH_OFFS_MASK;
 	tuf = (mr4 >> DRAM_MR4_TUF) & DRAM_MR4_TUF_MASK;
 
-	return sprintf(buf, "%#x %#x %#x %#x %#x %#x %#x\n",
-		       readl_relaxed(info + DRAM_INFO_INTERVAL),
-		       refresh, sr_abort, ppre, thermal_offs, tuf,
-		       readl_relaxed(info + DRAM_INFO_ERROR));
-}
+	वापस प्र_लिखो(buf, "%#x %#x %#x %#x %#x %#x %#x\n",
+		       पढ़ोl_relaxed(info + DRAM_INFO_INTERVAL),
+		       refresh, sr_पात, ppre, thermal_offs, tuf,
+		       पढ़ोl_relaxed(info + DRAM_INFO_ERROR));
+पूर्ण
 
-static ssize_t store_refresh(struct device *dev, struct device_attribute *attr,
-			  const char *buf, size_t count)
-{
+अटल sमाप_प्रकार store_refresh(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	u32 response[MSG_FIELD_MAX];
-	struct brcmstb_dpfe_priv *priv;
-	void __iomem *info;
-	unsigned long val;
-	int ret;
+	काष्ठा brcmstb_dpfe_priv *priv;
+	व्योम __iomem *info;
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	if (kstrtoul(buf, 0, &val) < 0)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val) < 0)
+		वापस -EINVAL;
 
 	priv = dev_get_drvdata(dev);
 	ret = __send_command(priv, DPFE_CMD_GET_REFRESH, response);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	info = get_msg_ptr(priv, response[MSG_ARG0], NULL, NULL);
-	if (!info)
-		return -EIO;
+	info = get_msg_ptr(priv, response[MSG_ARG0], शून्य, शून्य);
+	अगर (!info)
+		वापस -EIO;
 
-	writel_relaxed(val, info + DRAM_INFO_INTERVAL);
+	ग_लिखोl_relaxed(val, info + DRAM_INFO_INTERVAL);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t show_vendor(struct device *dev, struct device_attribute *devattr,
-			   char *buf)
-{
+अटल sमाप_प्रकार show_venकरोr(काष्ठा device *dev, काष्ठा device_attribute *devattr,
+			   अक्षर *buf)
+अणु
 	u32 response[MSG_FIELD_MAX];
-	struct brcmstb_dpfe_priv *priv;
-	void __iomem *info;
-	ssize_t ret;
+	काष्ठा brcmstb_dpfe_priv *priv;
+	व्योम __iomem *info;
+	sमाप_प्रकार ret;
 	u32 mr5, mr6, mr7, mr8, err;
 
 	priv = dev_get_drvdata(dev);
 	ret = generic_show(DPFE_CMD_GET_VENDOR, response, priv, buf);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	info = get_msg_ptr(priv, response[MSG_ARG0], buf, &ret);
-	if (!info)
-		return ret;
+	अगर (!info)
+		वापस ret;
 
-	mr5 = (readl_relaxed(info + DRAM_VENDOR_MR5) >> DRAM_VENDOR_SHIFT) &
+	mr5 = (पढ़ोl_relaxed(info + DRAM_VENDOR_MR5) >> DRAM_VENDOR_SHIFT) &
 		DRAM_VENDOR_MASK;
-	mr6 = (readl_relaxed(info + DRAM_VENDOR_MR6) >> DRAM_VENDOR_SHIFT) &
+	mr6 = (पढ़ोl_relaxed(info + DRAM_VENDOR_MR6) >> DRAM_VENDOR_SHIFT) &
 		DRAM_VENDOR_MASK;
-	mr7 = (readl_relaxed(info + DRAM_VENDOR_MR7) >> DRAM_VENDOR_SHIFT) &
+	mr7 = (पढ़ोl_relaxed(info + DRAM_VENDOR_MR7) >> DRAM_VENDOR_SHIFT) &
 		DRAM_VENDOR_MASK;
-	mr8 = (readl_relaxed(info + DRAM_VENDOR_MR8) >> DRAM_VENDOR_SHIFT) &
+	mr8 = (पढ़ोl_relaxed(info + DRAM_VENDOR_MR8) >> DRAM_VENDOR_SHIFT) &
 		DRAM_VENDOR_MASK;
-	err = readl_relaxed(info + DRAM_VENDOR_ERROR) & DRAM_VENDOR_MASK;
+	err = पढ़ोl_relaxed(info + DRAM_VENDOR_ERROR) & DRAM_VENDOR_MASK;
 
-	return sprintf(buf, "%#x %#x %#x %#x %#x\n", mr5, mr6, mr7, mr8, err);
-}
+	वापस प्र_लिखो(buf, "%#x %#x %#x %#x %#x\n", mr5, mr6, mr7, mr8, err);
+पूर्ण
 
-static ssize_t show_dram(struct device *dev, struct device_attribute *devattr,
-			 char *buf)
-{
+अटल sमाप_प्रकार show_dram(काष्ठा device *dev, काष्ठा device_attribute *devattr,
+			 अक्षर *buf)
+अणु
 	u32 response[MSG_FIELD_MAX];
-	struct brcmstb_dpfe_priv *priv;
-	ssize_t ret;
+	काष्ठा brcmstb_dpfe_priv *priv;
+	sमाप_प्रकार ret;
 	u32 mr4, mr5, mr6, mr7, mr8, err;
 
 	priv = dev_get_drvdata(dev);
 	ret = generic_show(DPFE_CMD_GET_REFRESH, response, priv, buf);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mr4 = response[MSG_ARG0 + 0] & DRAM_INFO_MR4_MASK;
 	mr5 = response[MSG_ARG0 + 1] & DRAM_DDR_INFO_MASK;
@@ -842,108 +843,108 @@ static ssize_t show_dram(struct device *dev, struct device_attribute *devattr,
 	mr8 = response[MSG_ARG0 + 4] & DRAM_DDR_INFO_MASK;
 	err = response[MSG_ARG0 + 5] & DRAM_DDR_INFO_MASK;
 
-	return sprintf(buf, "%#x %#x %#x %#x %#x %#x\n", mr4, mr5, mr6, mr7,
+	वापस प्र_लिखो(buf, "%#x %#x %#x %#x %#x %#x\n", mr4, mr5, mr6, mr7,
 			mr8, err);
-}
+पूर्ण
 
-static int brcmstb_dpfe_resume(struct platform_device *pdev)
-{
-	struct brcmstb_dpfe_priv *priv = platform_get_drvdata(pdev);
+अटल पूर्णांक brcmstb_dpfe_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा brcmstb_dpfe_priv *priv = platक्रमm_get_drvdata(pdev);
 
-	return brcmstb_dpfe_download_firmware(priv);
-}
+	वापस brcmstb_dpfe_करोwnload_firmware(priv);
+पूर्ण
 
-static int brcmstb_dpfe_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct brcmstb_dpfe_priv *priv;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक brcmstb_dpfe_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा brcmstb_dpfe_priv *priv;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->dev = dev;
 
 	mutex_init(&priv->lock);
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dpfe-cpu");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "dpfe-cpu");
 	priv->regs = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->regs)) {
+	अगर (IS_ERR(priv->regs)) अणु
 		dev_err(dev, "couldn't map DCPU registers\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dpfe-dmem");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "dpfe-dmem");
 	priv->dmem = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->dmem)) {
+	अगर (IS_ERR(priv->dmem)) अणु
 		dev_err(dev, "Couldn't map DCPU data memory\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dpfe-imem");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "dpfe-imem");
 	priv->imem = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->imem)) {
+	अगर (IS_ERR(priv->imem)) अणु
 		dev_err(dev, "Couldn't map DCPU instruction memory\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	priv->dpfe_api = of_device_get_match_data(dev);
-	if (unlikely(!priv->dpfe_api)) {
+	अगर (unlikely(!priv->dpfe_api)) अणु
 		/*
 		 * It should be impossible to end up here, but to be safe we
 		 * check anyway.
 		 */
 		dev_err(dev, "Couldn't determine API\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	ret = brcmstb_dpfe_download_firmware(priv);
-	if (ret)
-		return dev_err_probe(dev, ret, "Couldn't download firmware\n");
+	ret = brcmstb_dpfe_करोwnload_firmware(priv);
+	अगर (ret)
+		वापस dev_err_probe(dev, ret, "Couldn't download firmware\n");
 
 	ret = sysfs_create_groups(&pdev->dev.kobj, priv->dpfe_api->sysfs_attrs);
-	if (!ret)
+	अगर (!ret)
 		dev_info(dev, "registered with API v%d.\n",
 			 priv->dpfe_api->version);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int brcmstb_dpfe_remove(struct platform_device *pdev)
-{
-	struct brcmstb_dpfe_priv *priv = dev_get_drvdata(&pdev->dev);
+अटल पूर्णांक brcmstb_dpfe_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा brcmstb_dpfe_priv *priv = dev_get_drvdata(&pdev->dev);
 
-	sysfs_remove_groups(&pdev->dev.kobj, priv->dpfe_api->sysfs_attrs);
+	sysfs_हटाओ_groups(&pdev->dev.kobj, priv->dpfe_api->sysfs_attrs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id brcmstb_dpfe_of_match[] = {
-	/* Use legacy API v2 for a select number of chips */
-	{ .compatible = "brcm,bcm7268-dpfe-cpu", .data = &dpfe_api_old_v2 },
-	{ .compatible = "brcm,bcm7271-dpfe-cpu", .data = &dpfe_api_old_v2 },
-	{ .compatible = "brcm,bcm7278-dpfe-cpu", .data = &dpfe_api_old_v2 },
-	{ .compatible = "brcm,bcm7211-dpfe-cpu", .data = &dpfe_api_new_v2 },
-	/* API v3 is the default going forward */
-	{ .compatible = "brcm,dpfe-cpu", .data = &dpfe_api_v3 },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id brcmstb_dpfe_of_match[] = अणु
+	/* Use legacy API v2 क्रम a select number of chips */
+	अणु .compatible = "brcm,bcm7268-dpfe-cpu", .data = &dpfe_api_old_v2 पूर्ण,
+	अणु .compatible = "brcm,bcm7271-dpfe-cpu", .data = &dpfe_api_old_v2 पूर्ण,
+	अणु .compatible = "brcm,bcm7278-dpfe-cpu", .data = &dpfe_api_old_v2 पूर्ण,
+	अणु .compatible = "brcm,bcm7211-dpfe-cpu", .data = &dpfe_api_new_v2 पूर्ण,
+	/* API v3 is the शेष going क्रमward */
+	अणु .compatible = "brcm,dpfe-cpu", .data = &dpfe_api_v3 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, brcmstb_dpfe_of_match);
 
-static struct platform_driver brcmstb_dpfe_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver brcmstb_dpfe_driver = अणु
+	.driver	= अणु
 		.name = DRVNAME,
 		.of_match_table = brcmstb_dpfe_of_match,
-	},
+	पूर्ण,
 	.probe = brcmstb_dpfe_probe,
-	.remove	= brcmstb_dpfe_remove,
+	.हटाओ	= brcmstb_dpfe_हटाओ,
 	.resume = brcmstb_dpfe_resume,
-};
+पूर्ण;
 
-module_platform_driver(brcmstb_dpfe_driver);
+module_platक्रमm_driver(brcmstb_dpfe_driver);
 
 MODULE_AUTHOR("Markus Mayer <mmayer@broadcom.com>");
 MODULE_DESCRIPTION("BRCMSTB DDR PHY Front End Driver");

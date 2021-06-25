@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* Copyright (C) 2015-2018 Broadcom */
 
 /**
  * DOC: V3D GEM BO management support
  *
- * Compared to VC4 (V3D 2.x), V3D 3.3 introduces an MMU between the
- * GPU and the bus, allowing us to use shmem objects for our storage
+ * Compared to VC4 (V3D 2.x), V3D 3.3 पूर्णांकroduces an MMU between the
+ * GPU and the bus, allowing us to use shmem objects क्रम our storage
  * instead of CMA.
  *
  * Physically contiguous objects may still be imported to V3D, but the
- * driver doesn't allocate physically contiguous objects on its own.
+ * driver करोesn't allocate physically contiguous objects on its own.
  * Display engines requiring physically contiguous allocations should
- * look into Mesa's "renderonly" support (as used by the Mesa pl111
- * driver) for an example of how to integrate with V3D.
+ * look पूर्णांकo Mesa's "renderonly" support (as used by the Mesa pl111
+ * driver) क्रम an example of how to पूर्णांकegrate with V3D.
  *
  * Long term, we should support evicting pages from the MMU when under
  * memory pressure (thus the v3d_bo_get_pages() refcounting), but
- * that's not a high priority since our systems tend to not have swap.
+ * that's not a high priority since our प्रणालीs tend to not have swap.
  */
 
-#include <linux/dma-buf.h>
-#include <linux/pfn_t.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/pfn_t.h>
 
-#include "v3d_drv.h"
-#include "uapi/drm/v3d_drm.h"
+#समावेश "v3d_drv.h"
+#समावेश "uapi/drm/v3d_drm.h"
 
 /* Called DRM core on the last userspace/kernel unreference of the
  * BO.
  */
-void v3d_free_object(struct drm_gem_object *obj)
-{
-	struct v3d_dev *v3d = to_v3d_dev(obj->dev);
-	struct v3d_bo *bo = to_v3d_bo(obj);
+व्योम v3d_मुक्त_object(काष्ठा drm_gem_object *obj)
+अणु
+	काष्ठा v3d_dev *v3d = to_v3d_dev(obj->dev);
+	काष्ठा v3d_bo *bo = to_v3d_bo(obj);
 
-	v3d_mmu_remove_ptes(bo);
+	v3d_mmu_हटाओ_ptes(bo);
 
 	mutex_lock(&v3d->bo_lock);
 	v3d->bo_stats.num_allocated--;
@@ -41,77 +42,77 @@ void v3d_free_object(struct drm_gem_object *obj)
 	mutex_unlock(&v3d->bo_lock);
 
 	spin_lock(&v3d->mm_lock);
-	drm_mm_remove_node(&bo->node);
+	drm_mm_हटाओ_node(&bo->node);
 	spin_unlock(&v3d->mm_lock);
 
 	/* GPU execution may have dirtied any pages in the BO. */
 	bo->base.pages_mark_dirty_on_put = true;
 
-	drm_gem_shmem_free_object(obj);
-}
+	drm_gem_shmem_मुक्त_object(obj);
+पूर्ण
 
-static const struct drm_gem_object_funcs v3d_gem_funcs = {
-	.free = v3d_free_object,
-	.print_info = drm_gem_shmem_print_info,
+अटल स्थिर काष्ठा drm_gem_object_funcs v3d_gem_funcs = अणु
+	.मुक्त = v3d_मुक्त_object,
+	.prपूर्णांक_info = drm_gem_shmem_prपूर्णांक_info,
 	.pin = drm_gem_shmem_pin,
 	.unpin = drm_gem_shmem_unpin,
 	.get_sg_table = drm_gem_shmem_get_sg_table,
 	.vmap = drm_gem_shmem_vmap,
 	.vunmap = drm_gem_shmem_vunmap,
 	.mmap = drm_gem_shmem_mmap,
-};
+पूर्ण;
 
-/* gem_create_object function for allocating a BO struct and doing
+/* gem_create_object function क्रम allocating a BO काष्ठा and करोing
  * early setup.
  */
-struct drm_gem_object *v3d_create_object(struct drm_device *dev, size_t size)
-{
-	struct v3d_bo *bo;
-	struct drm_gem_object *obj;
+काष्ठा drm_gem_object *v3d_create_object(काष्ठा drm_device *dev, माप_प्रकार size)
+अणु
+	काष्ठा v3d_bo *bo;
+	काष्ठा drm_gem_object *obj;
 
-	if (size == 0)
-		return NULL;
+	अगर (size == 0)
+		वापस शून्य;
 
-	bo = kzalloc(sizeof(*bo), GFP_KERNEL);
-	if (!bo)
-		return NULL;
+	bo = kzalloc(माप(*bo), GFP_KERNEL);
+	अगर (!bo)
+		वापस शून्य;
 	obj = &bo->base.base;
 
 	obj->funcs = &v3d_gem_funcs;
 	bo->base.map_wc = true;
 	INIT_LIST_HEAD(&bo->unref_head);
 
-	return &bo->base.base;
-}
+	वापस &bo->base.base;
+पूर्ण
 
-static int
-v3d_bo_create_finish(struct drm_gem_object *obj)
-{
-	struct v3d_dev *v3d = to_v3d_dev(obj->dev);
-	struct v3d_bo *bo = to_v3d_bo(obj);
-	struct sg_table *sgt;
-	int ret;
+अटल पूर्णांक
+v3d_bo_create_finish(काष्ठा drm_gem_object *obj)
+अणु
+	काष्ठा v3d_dev *v3d = to_v3d_dev(obj->dev);
+	काष्ठा v3d_bo *bo = to_v3d_bo(obj);
+	काष्ठा sg_table *sgt;
+	पूर्णांक ret;
 
-	/* So far we pin the BO in the MMU for its lifetime, so use
-	 * shmem's helper for getting a lifetime sgt.
+	/* So far we pin the BO in the MMU क्रम its lअगरeसमय, so use
+	 * shmem's helper क्रम getting a lअगरeसमय sgt.
 	 */
 	sgt = drm_gem_shmem_get_pages_sgt(&bo->base.base);
-	if (IS_ERR(sgt))
-		return PTR_ERR(sgt);
+	अगर (IS_ERR(sgt))
+		वापस PTR_ERR(sgt);
 
 	spin_lock(&v3d->mm_lock);
 	/* Allocate the object's space in the GPU's page tables.
-	 * Inserting PTEs will happen later, but the offset is for the
-	 * lifetime of the BO.
+	 * Inserting PTEs will happen later, but the offset is क्रम the
+	 * lअगरeसमय of the BO.
 	 */
 	ret = drm_mm_insert_node_generic(&v3d->mm, &bo->node,
 					 obj->size >> PAGE_SHIFT,
 					 GMP_GRANULARITY >> PAGE_SHIFT, 0, 0);
 	spin_unlock(&v3d->mm_lock);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Track stats for /debug/dri/n/bo_stats. */
+	/* Track stats क्रम /debug/dri/n/bo_stats. */
 	mutex_lock(&v3d->bo_lock);
 	v3d->bo_stats.num_allocated++;
 	v3d->bo_stats.pages_allocated += obj->size >> PAGE_SHIFT;
@@ -119,116 +120,116 @@ v3d_bo_create_finish(struct drm_gem_object *obj)
 
 	v3d_mmu_insert_ptes(bo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct v3d_bo *v3d_bo_create(struct drm_device *dev, struct drm_file *file_priv,
-			     size_t unaligned_size)
-{
-	struct drm_gem_shmem_object *shmem_obj;
-	struct v3d_bo *bo;
-	int ret;
+काष्ठा v3d_bo *v3d_bo_create(काष्ठा drm_device *dev, काष्ठा drm_file *file_priv,
+			     माप_प्रकार unaligned_size)
+अणु
+	काष्ठा drm_gem_shmem_object *shmem_obj;
+	काष्ठा v3d_bo *bo;
+	पूर्णांक ret;
 
 	shmem_obj = drm_gem_shmem_create(dev, unaligned_size);
-	if (IS_ERR(shmem_obj))
-		return ERR_CAST(shmem_obj);
+	अगर (IS_ERR(shmem_obj))
+		वापस ERR_CAST(shmem_obj);
 	bo = to_v3d_bo(&shmem_obj->base);
 
 	ret = v3d_bo_create_finish(&shmem_obj->base);
-	if (ret)
-		goto free_obj;
+	अगर (ret)
+		जाओ मुक्त_obj;
 
-	return bo;
+	वापस bo;
 
-free_obj:
-	drm_gem_shmem_free_object(&shmem_obj->base);
-	return ERR_PTR(ret);
-}
+मुक्त_obj:
+	drm_gem_shmem_मुक्त_object(&shmem_obj->base);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-struct drm_gem_object *
-v3d_prime_import_sg_table(struct drm_device *dev,
-			  struct dma_buf_attachment *attach,
-			  struct sg_table *sgt)
-{
-	struct drm_gem_object *obj;
-	int ret;
+काष्ठा drm_gem_object *
+v3d_prime_import_sg_table(काष्ठा drm_device *dev,
+			  काष्ठा dma_buf_attachment *attach,
+			  काष्ठा sg_table *sgt)
+अणु
+	काष्ठा drm_gem_object *obj;
+	पूर्णांक ret;
 
 	obj = drm_gem_shmem_prime_import_sg_table(dev, attach, sgt);
-	if (IS_ERR(obj))
-		return obj;
+	अगर (IS_ERR(obj))
+		वापस obj;
 
 	ret = v3d_bo_create_finish(obj);
-	if (ret) {
-		drm_gem_shmem_free_object(obj);
-		return ERR_PTR(ret);
-	}
+	अगर (ret) अणु
+		drm_gem_shmem_मुक्त_object(obj);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return obj;
-}
+	वापस obj;
+पूर्ण
 
-int v3d_create_bo_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *file_priv)
-{
-	struct drm_v3d_create_bo *args = data;
-	struct v3d_bo *bo = NULL;
-	int ret;
+पूर्णांक v3d_create_bo_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_v3d_create_bo *args = data;
+	काष्ठा v3d_bo *bo = शून्य;
+	पूर्णांक ret;
 
-	if (args->flags != 0) {
+	अगर (args->flags != 0) अणु
 		DRM_INFO("unknown create_bo flags: %d\n", args->flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bo = v3d_bo_create(dev, file_priv, PAGE_ALIGN(args->size));
-	if (IS_ERR(bo))
-		return PTR_ERR(bo);
+	अगर (IS_ERR(bo))
+		वापस PTR_ERR(bo);
 
 	args->offset = bo->node.start << PAGE_SHIFT;
 
 	ret = drm_gem_handle_create(file_priv, &bo->base.base, &args->handle);
 	drm_gem_object_put(&bo->base.base);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int v3d_mmap_bo_ioctl(struct drm_device *dev, void *data,
-		      struct drm_file *file_priv)
-{
-	struct drm_v3d_mmap_bo *args = data;
-	struct drm_gem_object *gem_obj;
+पूर्णांक v3d_mmap_bo_ioctl(काष्ठा drm_device *dev, व्योम *data,
+		      काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_v3d_mmap_bo *args = data;
+	काष्ठा drm_gem_object *gem_obj;
 
-	if (args->flags != 0) {
+	अगर (args->flags != 0) अणु
 		DRM_INFO("unknown mmap_bo flags: %d\n", args->flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	if (!gem_obj) {
+	अगर (!gem_obj) अणु
 		DRM_DEBUG("Failed to look up GEM BO %d\n", args->handle);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	args->offset = drm_vma_node_offset_addr(&gem_obj->vma_node);
 	drm_gem_object_put(gem_obj);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int v3d_get_bo_offset_ioctl(struct drm_device *dev, void *data,
-			    struct drm_file *file_priv)
-{
-	struct drm_v3d_get_bo_offset *args = data;
-	struct drm_gem_object *gem_obj;
-	struct v3d_bo *bo;
+पूर्णांक v3d_get_bo_offset_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			    काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_v3d_get_bo_offset *args = data;
+	काष्ठा drm_gem_object *gem_obj;
+	काष्ठा v3d_bo *bo;
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	if (!gem_obj) {
+	अगर (!gem_obj) अणु
 		DRM_DEBUG("Failed to look up GEM BO %d\n", args->handle);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 	bo = to_v3d_bo(gem_obj);
 
 	args->offset = bo->node.start << PAGE_SHIFT;
 
 	drm_gem_object_put(gem_obj);
-	return 0;
-}
+	वापस 0;
+पूर्ण

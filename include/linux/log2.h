@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* Integer base 2 logarithm calculation
  *
  * Copyright (C) 2006 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _LINUX_LOG2_H
-#define _LINUX_LOG2_H
+#अगर_अघोषित _LINUX_LOG2_H
+#घोषणा _LINUX_LOG2_H
 
-#include <linux/types.h>
-#include <linux/bitops.h>
+#समावेश <linux/types.h>
+#समावेश <linux/bitops.h>
 
 /*
- * non-constant log of base 2 calculators
- * - the arch may override these in asm/bitops.h if they can be implemented
+ * non-स्थिरant log of base 2 calculators
+ * - the arch may override these in यंत्र/bitops.h अगर they can be implemented
  *   more efficiently than using fls() and fls64()
- * - the arch is not required to handle n==0 if implementing the fallback
+ * - the arch is not required to handle n==0 अगर implementing the fallback
  */
-#ifndef CONFIG_ARCH_HAS_ILOG2_U32
-static inline __attribute__((const))
-int __ilog2_u32(u32 n)
-{
-	return fls(n) - 1;
-}
-#endif
+#अगर_अघोषित CONFIG_ARCH_HAS_ILOG2_U32
+अटल अंतरभूत __attribute__((स्थिर))
+पूर्णांक __ilog2_u32(u32 n)
+अणु
+	वापस fls(n) - 1;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef CONFIG_ARCH_HAS_ILOG2_U64
-static inline __attribute__((const))
-int __ilog2_u64(u64 n)
-{
-	return fls64(n) - 1;
-}
-#endif
+#अगर_अघोषित CONFIG_ARCH_HAS_ILOG2_U64
+अटल अंतरभूत __attribute__((स्थिर))
+पूर्णांक __ilog2_u64(u64 n)
+अणु
+	वापस fls64(n) - 1;
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * is_power_of_2() - check if a value is a power of two
+ * is_घातer_of_2() - check अगर a value is a घातer of two
  * @n: the value to check
  *
- * Determine whether some value is a power of two, where zero is
- * *not* considered a power of two.
- * Return: true if @n is a power of 2, otherwise false.
+ * Determine whether some value is a घातer of two, where zero is
+ * *not* considered a घातer of two.
+ * Return: true अगर @n is a घातer of 2, otherwise false.
  */
-static inline __attribute__((const))
-bool is_power_of_2(unsigned long n)
-{
-	return (n != 0 && ((n & (n - 1)) == 0));
-}
+अटल अंतरभूत __attribute__((स्थिर))
+bool is_घातer_of_2(अचिन्हित दीर्घ n)
+अणु
+	वापस (n != 0 && ((n & (n - 1)) == 0));
+पूर्ण
 
 /**
- * __roundup_pow_of_two() - round up to nearest power of two
+ * __roundup_घात_of_two() - round up to nearest घातer of two
  * @n: value to round up
  */
-static inline __attribute__((const))
-unsigned long __roundup_pow_of_two(unsigned long n)
-{
-	return 1UL << fls_long(n - 1);
-}
+अटल अंतरभूत __attribute__((स्थिर))
+अचिन्हित दीर्घ __roundup_घात_of_two(अचिन्हित दीर्घ n)
+अणु
+	वापस 1UL << fls_दीर्घ(n - 1);
+पूर्ण
 
 /**
- * __rounddown_pow_of_two() - round down to nearest power of two
- * @n: value to round down
+ * __roundकरोwn_घात_of_two() - round करोwn to nearest घातer of two
+ * @n: value to round करोwn
  */
-static inline __attribute__((const))
-unsigned long __rounddown_pow_of_two(unsigned long n)
-{
-	return 1UL << (fls_long(n) - 1);
-}
+अटल अंतरभूत __attribute__((स्थिर))
+अचिन्हित दीर्घ __roundकरोwn_घात_of_two(अचिन्हित दीर्घ n)
+अणु
+	वापस 1UL << (fls_दीर्घ(n) - 1);
+पूर्ण
 
 /**
- * const_ilog2 - log base 2 of 32-bit or a 64-bit constant unsigned value
+ * स्थिर_ilog2 - log base 2 of 32-bit or a 64-bit स्थिरant अचिन्हित value
  * @n: parameter
  *
- * Use this where sparse expects a true constant expression, e.g. for array
+ * Use this where sparse expects a true स्थिरant expression, e.g. क्रम array
  * indices.
  */
-#define const_ilog2(n)				\
+#घोषणा स्थिर_ilog2(n)				\
 (						\
-	__builtin_constant_p(n) ? (		\
+	__builtin_स्थिरant_p(n) ? (		\
 		(n) < 2 ? 0 :			\
 		(n) & (1ULL << 63) ? 63 :	\
 		(n) & (1ULL << 62) ? 62 :	\
@@ -144,62 +145,62 @@ unsigned long __rounddown_pow_of_two(unsigned long n)
 	-1)
 
 /**
- * ilog2 - log base 2 of 32-bit or a 64-bit unsigned value
+ * ilog2 - log base 2 of 32-bit or a 64-bit अचिन्हित value
  * @n: parameter
  *
- * constant-capable log of base 2 calculation
- * - this can be used to initialise global variables from constant data, hence
- * the massive ternary operator construction
+ * स्थिरant-capable log of base 2 calculation
+ * - this can be used to initialise global variables from स्थिरant data, hence
+ * the massive ternary चालक स्थिरruction
  *
- * selects the appropriately-sized optimised version depending on sizeof(n)
+ * selects the appropriately-sized optimised version depending on माप(n)
  */
-#define ilog2(n) \
+#घोषणा ilog2(n) \
 ( \
-	__builtin_constant_p(n) ?	\
+	__builtin_स्थिरant_p(n) ?	\
 	((n) < 2 ? 0 :			\
 	 63 - __builtin_clzll(n)) :	\
-	(sizeof(n) <= 4) ?		\
+	(माप(n) <= 4) ?		\
 	__ilog2_u32(n) :		\
 	__ilog2_u64(n)			\
  )
 
 /**
- * roundup_pow_of_two - round the given value up to nearest power of two
+ * roundup_घात_of_two - round the given value up to nearest घातer of two
  * @n: parameter
  *
- * round the given value up to the nearest power of two
+ * round the given value up to the nearest घातer of two
  * - the result is undefined when n == 0
- * - this can be used to initialise global variables from constant data
+ * - this can be used to initialise global variables from स्थिरant data
  */
-#define roundup_pow_of_two(n)			\
+#घोषणा roundup_घात_of_two(n)			\
 (						\
-	__builtin_constant_p(n) ? (		\
+	__builtin_स्थिरant_p(n) ? (		\
 		((n) == 1) ? 1 :		\
 		(1UL << (ilog2((n) - 1) + 1))	\
 				   ) :		\
-	__roundup_pow_of_two(n)			\
+	__roundup_घात_of_two(n)			\
  )
 
 /**
- * rounddown_pow_of_two - round the given value down to nearest power of two
+ * roundकरोwn_घात_of_two - round the given value करोwn to nearest घातer of two
  * @n: parameter
  *
- * round the given value down to the nearest power of two
+ * round the given value करोwn to the nearest घातer of two
  * - the result is undefined when n == 0
- * - this can be used to initialise global variables from constant data
+ * - this can be used to initialise global variables from स्थिरant data
  */
-#define rounddown_pow_of_two(n)			\
+#घोषणा roundकरोwn_घात_of_two(n)			\
 (						\
-	__builtin_constant_p(n) ? (		\
+	__builtin_स्थिरant_p(n) ? (		\
 		(1UL << ilog2(n))) :		\
-	__rounddown_pow_of_two(n)		\
+	__roundकरोwn_घात_of_two(n)		\
  )
 
-static inline __attribute_const__
-int __order_base_2(unsigned long n)
-{
-	return n > 1 ? ilog2(n - 1) + 1 : 0;
-}
+अटल अंतरभूत __attribute_स्थिर__
+पूर्णांक __order_base_2(अचिन्हित दीर्घ n)
+अणु
+	वापस n > 1 ? ilog2(n - 1) + 1 : 0;
+पूर्ण
 
 /**
  * order_base_2 - calculate the (rounded up) base 2 order of the argument
@@ -214,29 +215,29 @@ int __order_base_2(unsigned long n)
  *  ob2(5) = 3
  *  ... and so on.
  */
-#define order_base_2(n)				\
+#घोषणा order_base_2(n)				\
 (						\
-	__builtin_constant_p(n) ? (		\
+	__builtin_स्थिरant_p(n) ? (		\
 		((n) == 0 || (n) == 1) ? 0 :	\
 		ilog2((n) - 1) + 1) :		\
 	__order_base_2(n)			\
 )
 
-static inline __attribute__((const))
-int __bits_per(unsigned long n)
-{
-	if (n < 2)
-		return 1;
-	if (is_power_of_2(n))
-		return order_base_2(n) + 1;
-	return order_base_2(n);
-}
+अटल अंतरभूत __attribute__((स्थिर))
+पूर्णांक __bits_per(अचिन्हित दीर्घ n)
+अणु
+	अगर (n < 2)
+		वापस 1;
+	अगर (is_घातer_of_2(n))
+		वापस order_base_2(n) + 1;
+	वापस order_base_2(n);
+पूर्ण
 
 /**
- * bits_per - calculate the number of bits required for the argument
+ * bits_per - calculate the number of bits required क्रम the argument
  * @n: parameter
  *
- * This is constant-capable and can be used for compile time
+ * This is स्थिरant-capable and can be used क्रम compile समय
  * initializations, e.g bitfields.
  *
  * The first few values calculated by this routine:
@@ -247,12 +248,12 @@ int __bits_per(unsigned long n)
  * bf(4) = 3
  * ... and so on.
  */
-#define bits_per(n)				\
+#घोषणा bits_per(n)				\
 (						\
-	__builtin_constant_p(n) ? (		\
+	__builtin_स्थिरant_p(n) ? (		\
 		((n) == 0 || (n) == 1)		\
 			? 1 : ilog2(n) + 1	\
 	) :					\
 	__bits_per(n)				\
 )
-#endif /* _LINUX_LOG2_H */
+#पूर्ण_अगर /* _LINUX_LOG2_H */

@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Altera Corporation
  * Copyright (C) 2011 Tobias Klauser <tklauser@distanz.ch>
  *
  * Based on the code posted by Kazuyasu on the Altera Forum at:
- * http://www.alteraforum.com/forum/showpost.php?p=77003&postcount=20
+ * http://www.alteraक्रमum.com/क्रमum/showpost.php?p=77003&postcount=20
  */
 
-#ifndef _ASM_NIOS2_KGDB_H
-#define _ASM_NIOS2_KGDB_H
+#अगर_अघोषित _ASM_NIOS2_KGDB_H
+#घोषणा _ASM_NIOS2_KGDB_H
 
-#define CACHE_FLUSH_IS_SAFE	1
-#define BUFMAX			2048
+#घोषणा CACHE_FLUSH_IS_SAFE	1
+#घोषणा BUFMAX			2048
 
-enum regnames {
+क्रमागत regnames अणु
 	GDB_R0 = 0,
 	GDB_AT,
 	GDB_R2,
@@ -63,18 +64,18 @@ enum regnames {
 	GDB_CONFIG,
 	GDB_MPUBASE,
 	GDB_MPUACC,
-	/* do not change the last entry or anything below! */
-	GDB_NUMREGBYTES		/* number of registers */
-};
+	/* करो not change the last entry or anything below! */
+	GDB_NUMREGBYTES		/* number of रेजिस्टरs */
+पूर्ण;
 
-#define GDB_SIZEOF_REG		sizeof(u32)
-#define DBG_MAX_REG_NUM	(49)
-#define NUMREGBYTES		(DBG_MAX_REG_NUM * sizeof(GDB_SIZEOF_REG))
+#घोषणा GDB_SIZखातापूर्ण_REG		माप(u32)
+#घोषणा DBG_MAX_REG_NUM	(49)
+#घोषणा NUMREGBYTES		(DBG_MAX_REG_NUM * माप(GDB_SIZखातापूर्ण_REG))
 
-#define BREAK_INSTR_SIZE	4
-static inline void arch_kgdb_breakpoint(void)
-{
-	__asm__ __volatile__("trap 30\n");
-}
+#घोषणा BREAK_INSTR_SIZE	4
+अटल अंतरभूत व्योम arch_kgdb_अवरोधpoपूर्णांक(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__("trap 30\n");
+पूर्ण
 
-#endif /* _ASM_NIOS2_KGDB_H */
+#पूर्ण_अगर /* _ASM_NIOS2_KGDB_H */

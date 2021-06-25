@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/init.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
 
-static __init int add_pcspkr(void)
-{
-	struct platform_device *pd;
+अटल __init पूर्णांक add_pcspkr(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pd;
 
-	pd = platform_device_register_simple("pcspkr", -1, NULL, 0);
+	pd = platक्रमm_device_रेजिस्टर_simple("pcspkr", -1, शून्य, 0);
 
-	return PTR_ERR_OR_ZERO(pd);
-}
+	वापस PTR_ERR_OR_ZERO(pd);
+पूर्ण
 device_initcall(add_pcspkr);

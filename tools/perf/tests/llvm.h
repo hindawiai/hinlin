@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PERF_TEST_LLVM_H
-#define PERF_TEST_LLVM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PERF_TEST_LLVM_H
+#घोषणा PERF_TEST_LLVM_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#अगर_घोषित __cplusplus
+बाह्य "C" अणु
+#पूर्ण_अगर
 
-#include <stddef.h> /* for size_t */
-#include <stdbool.h> /* for bool */
+#समावेश <मानकघोष.स> /* क्रम माप_प्रकार */
+#समावेश <stdbool.h> /* क्रम bool */
 
-extern const char test_llvm__bpf_base_prog[];
-extern const char test_llvm__bpf_test_kbuild_prog[];
-extern const char test_llvm__bpf_test_prologue_prog[];
-extern const char test_llvm__bpf_test_relocation[];
+बाह्य स्थिर अक्षर test_llvm__bpf_base_prog[];
+बाह्य स्थिर अक्षर test_llvm__bpf_test_kbuild_prog[];
+बाह्य स्थिर अक्षर test_llvm__bpf_test_prologue_prog[];
+बाह्य स्थिर अक्षर test_llvm__bpf_test_relocation[];
 
-enum test_llvm__testcase {
+क्रमागत test_llvm__testहाल अणु
 	LLVM_TESTCASE_BASE,
 	LLVM_TESTCASE_KBUILD,
 	LLVM_TESTCASE_BPF_PROLOGUE,
 	LLVM_TESTCASE_BPF_RELOCATION,
 	__LLVM_TESTCASE_MAX,
-};
+पूर्ण;
 
-int test_llvm__fetch_bpf_obj(void **p_obj_buf, size_t *p_obj_buf_sz,
-			     enum test_llvm__testcase index, bool force,
+पूर्णांक test_llvm__fetch_bpf_obj(व्योम **p_obj_buf, माप_प्रकार *p_obj_buf_sz,
+			     क्रमागत test_llvm__testहाल index, bool क्रमce,
 			     bool *should_load_fail);
-#ifdef __cplusplus
-}
-#endif
-#endif
+#अगर_घोषित __cplusplus
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर

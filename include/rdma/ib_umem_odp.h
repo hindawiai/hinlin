@@ -1,115 +1,116 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2014 Mellanox Technologies. All rights reserved.
  */
 
-#ifndef IB_UMEM_ODP_H
-#define IB_UMEM_ODP_H
+#अगर_अघोषित IB_UMEM_ODP_H
+#घोषणा IB_UMEM_ODP_H
 
-#include <rdma/ib_umem.h>
-#include <rdma/ib_verbs.h>
+#समावेश <rdma/ib_uस्मृति.स>
+#समावेश <rdma/ib_verbs.h>
 
-struct ib_umem_odp {
-	struct ib_umem umem;
-	struct mmu_interval_notifier notifier;
-	struct pid *tgid;
+काष्ठा ib_umem_odp अणु
+	काष्ठा ib_umem umem;
+	काष्ठा mmu_पूर्णांकerval_notअगरier notअगरier;
+	काष्ठा pid *tgid;
 
 	/* An array of the pfns included in the on-demand paging umem. */
-	unsigned long *pfn_list;
+	अचिन्हित दीर्घ *pfn_list;
 
 	/*
-	 * An array with DMA addresses mapped for pfns in pfn_list.
+	 * An array with DMA addresses mapped क्रम pfns in pfn_list.
 	 * The lower two bits designate access permissions.
 	 * See ODP_READ_ALLOWED_BIT and ODP_WRITE_ALLOWED_BIT.
 	 */
 	dma_addr_t		*dma_list;
 	/*
 	 * The umem_mutex protects the page_list and dma_list fields of an ODP
-	 * umem, allowing only a single thread to map/unmap pages. The mutex
-	 * also protects access to the mmu notifier counters.
+	 * umem, allowing only a single thपढ़ो to map/unmap pages. The mutex
+	 * also protects access to the mmu notअगरier counters.
 	 */
-	struct mutex		umem_mutex;
-	void			*private; /* for the HW driver to use. */
+	काष्ठा mutex		umem_mutex;
+	व्योम			*निजी; /* क्रम the HW driver to use. */
 
-	int npages;
+	पूर्णांक npages;
 
 	/*
 	 * An implicit odp umem cannot be DMA mapped, has 0 length, and serves
-	 * only as an anchor for the driver to hold onto the per_mm. FIXME:
-	 * This should be removed and drivers should work with the per_mm
+	 * only as an anchor क्रम the driver to hold onto the per_mm. FIXME:
+	 * This should be हटाओd and drivers should work with the per_mm
 	 * directly.
 	 */
 	bool is_implicit_odp;
 
-	unsigned int		page_shift;
-};
+	अचिन्हित पूर्णांक		page_shअगरt;
+पूर्ण;
 
-static inline struct ib_umem_odp *to_ib_umem_odp(struct ib_umem *umem)
-{
-	return container_of(umem, struct ib_umem_odp, umem);
-}
+अटल अंतरभूत काष्ठा ib_umem_odp *to_ib_umem_odp(काष्ठा ib_umem *umem)
+अणु
+	वापस container_of(umem, काष्ठा ib_umem_odp, umem);
+पूर्ण
 
 /* Returns the first page of an ODP umem. */
-static inline unsigned long ib_umem_start(struct ib_umem_odp *umem_odp)
-{
-	return umem_odp->notifier.interval_tree.start;
-}
+अटल अंतरभूत अचिन्हित दीर्घ ib_umem_start(काष्ठा ib_umem_odp *umem_odp)
+अणु
+	वापस umem_odp->notअगरier.पूर्णांकerval_tree.start;
+पूर्ण
 
 /* Returns the address of the page after the last one of an ODP umem. */
-static inline unsigned long ib_umem_end(struct ib_umem_odp *umem_odp)
-{
-	return umem_odp->notifier.interval_tree.last + 1;
-}
+अटल अंतरभूत अचिन्हित दीर्घ ib_umem_end(काष्ठा ib_umem_odp *umem_odp)
+अणु
+	वापस umem_odp->notअगरier.पूर्णांकerval_tree.last + 1;
+पूर्ण
 
-static inline size_t ib_umem_odp_num_pages(struct ib_umem_odp *umem_odp)
-{
-	return (ib_umem_end(umem_odp) - ib_umem_start(umem_odp)) >>
-	       umem_odp->page_shift;
-}
+अटल अंतरभूत माप_प्रकार ib_umem_odp_num_pages(काष्ठा ib_umem_odp *umem_odp)
+अणु
+	वापस (ib_umem_end(umem_odp) - ib_umem_start(umem_odp)) >>
+	       umem_odp->page_shअगरt;
+पूर्ण
 
 /*
- * The lower 2 bits of the DMA address signal the R/W permissions for
+ * The lower 2 bits of the DMA address संकेत the R/W permissions क्रम
  * the entry. To upgrade the permissions, provide the appropriate
- * bitmask to the map_dma_pages function.
+ * biपंचांगask to the map_dma_pages function.
  *
  * Be aware that upgrading a mapped address might result in change of
- * the DMA address for the page.
+ * the DMA address क्रम the page.
  */
-#define ODP_READ_ALLOWED_BIT  (1<<0ULL)
-#define ODP_WRITE_ALLOWED_BIT (1<<1ULL)
+#घोषणा ODP_READ_ALLOWED_BIT  (1<<0ULL)
+#घोषणा ODP_WRITE_ALLOWED_BIT (1<<1ULL)
 
-#define ODP_DMA_ADDR_MASK (~(ODP_READ_ALLOWED_BIT | ODP_WRITE_ALLOWED_BIT))
+#घोषणा ODP_DMA_ADDR_MASK (~(ODP_READ_ALLOWED_BIT | ODP_WRITE_ALLOWED_BIT))
 
-#ifdef CONFIG_INFINIBAND_ON_DEMAND_PAGING
+#अगर_घोषित CONFIG_INFINIBAND_ON_DEMAND_PAGING
 
-struct ib_umem_odp *
-ib_umem_odp_get(struct ib_device *device, unsigned long addr, size_t size,
-		int access, const struct mmu_interval_notifier_ops *ops);
-struct ib_umem_odp *ib_umem_odp_alloc_implicit(struct ib_device *device,
-					       int access);
-struct ib_umem_odp *
-ib_umem_odp_alloc_child(struct ib_umem_odp *root_umem, unsigned long addr,
-			size_t size,
-			const struct mmu_interval_notifier_ops *ops);
-void ib_umem_odp_release(struct ib_umem_odp *umem_odp);
+काष्ठा ib_umem_odp *
+ib_umem_odp_get(काष्ठा ib_device *device, अचिन्हित दीर्घ addr, माप_प्रकार size,
+		पूर्णांक access, स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops *ops);
+काष्ठा ib_umem_odp *ib_umem_odp_alloc_implicit(काष्ठा ib_device *device,
+					       पूर्णांक access);
+काष्ठा ib_umem_odp *
+ib_umem_odp_alloc_child(काष्ठा ib_umem_odp *root_umem, अचिन्हित दीर्घ addr,
+			माप_प्रकार size,
+			स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops *ops);
+व्योम ib_umem_odp_release(काष्ठा ib_umem_odp *umem_odp);
 
-int ib_umem_odp_map_dma_and_lock(struct ib_umem_odp *umem_odp, u64 start_offset,
+पूर्णांक ib_umem_odp_map_dma_and_lock(काष्ठा ib_umem_odp *umem_odp, u64 start_offset,
 				 u64 bcnt, u64 access_mask, bool fault);
 
-void ib_umem_odp_unmap_dma_pages(struct ib_umem_odp *umem_odp, u64 start_offset,
+व्योम ib_umem_odp_unmap_dma_pages(काष्ठा ib_umem_odp *umem_odp, u64 start_offset,
 				 u64 bound);
 
-#else /* CONFIG_INFINIBAND_ON_DEMAND_PAGING */
+#अन्यथा /* CONFIG_INFINIBAND_ON_DEMAND_PAGING */
 
-static inline struct ib_umem_odp *
-ib_umem_odp_get(struct ib_device *device, unsigned long addr, size_t size,
-		int access, const struct mmu_interval_notifier_ops *ops)
-{
-	return ERR_PTR(-EINVAL);
-}
+अटल अंतरभूत काष्ठा ib_umem_odp *
+ib_umem_odp_get(काष्ठा ib_device *device, अचिन्हित दीर्घ addr, माप_प्रकार size,
+		पूर्णांक access, स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops *ops)
+अणु
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static inline void ib_umem_odp_release(struct ib_umem_odp *umem_odp) {}
+अटल अंतरभूत व्योम ib_umem_odp_release(काष्ठा ib_umem_odp *umem_odp) अणुपूर्ण
 
-#endif /* CONFIG_INFINIBAND_ON_DEMAND_PAGING */
+#पूर्ण_अगर /* CONFIG_INFINIBAND_ON_DEMAND_PAGING */
 
-#endif /* IB_UMEM_ODP_H */
+#पूर्ण_अगर /* IB_UMEM_ODP_H */

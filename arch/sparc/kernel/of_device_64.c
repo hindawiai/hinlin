@@ -1,337 +1,338 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/dma-mapping.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/mod_devicetable.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/irq.h>
-#include <linux/of_device.h>
-#include <linux/of_platform.h>
-#include <asm/spitfire.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <यंत्र/spitfire.h>
 
-#include "of_device_common.h"
+#समावेश "of_device_common.h"
 
-void __iomem *of_ioremap(struct resource *res, unsigned long offset, unsigned long size, char *name)
-{
-	unsigned long ret = res->start + offset;
-	struct resource *r;
+व्योम __iomem *of_ioremap(काष्ठा resource *res, अचिन्हित दीर्घ offset, अचिन्हित दीर्घ size, अक्षर *name)
+अणु
+	अचिन्हित दीर्घ ret = res->start + offset;
+	काष्ठा resource *r;
 
-	if (res->flags & IORESOURCE_MEM)
+	अगर (res->flags & IORESOURCE_MEM)
 		r = request_mem_region(ret, size, name);
-	else
+	अन्यथा
 		r = request_region(ret, size, name);
-	if (!r)
+	अगर (!r)
 		ret = 0;
 
-	return (void __iomem *) ret;
-}
+	वापस (व्योम __iomem *) ret;
+पूर्ण
 EXPORT_SYMBOL(of_ioremap);
 
-void of_iounmap(struct resource *res, void __iomem *base, unsigned long size)
-{
-	if (res->flags & IORESOURCE_MEM)
-		release_mem_region((unsigned long) base, size);
-	else
-		release_region((unsigned long) base, size);
-}
+व्योम of_iounmap(काष्ठा resource *res, व्योम __iomem *base, अचिन्हित दीर्घ size)
+अणु
+	अगर (res->flags & IORESOURCE_MEM)
+		release_mem_region((अचिन्हित दीर्घ) base, size);
+	अन्यथा
+		release_region((अचिन्हित दीर्घ) base, size);
+पूर्ण
 EXPORT_SYMBOL(of_iounmap);
 
 /*
- * PCI bus specific translator
+ * PCI bus specअगरic translator
  */
 
-static int of_bus_pci_match(struct device_node *np)
-{
-	if (of_node_name_eq(np, "pci")) {
-		const char *model = of_get_property(np, "model", NULL);
+अटल पूर्णांक of_bus_pci_match(काष्ठा device_node *np)
+अणु
+	अगर (of_node_name_eq(np, "pci")) अणु
+		स्थिर अक्षर *model = of_get_property(np, "model", शून्य);
 
-		if (model && !strcmp(model, "SUNW,simba"))
-			return 0;
+		अगर (model && !म_भेद(model, "SUNW,simba"))
+			वापस 0;
 
-		/* Do not do PCI specific frobbing if the
+		/* Do not करो PCI specअगरic frobbing अगर the
 		 * PCI bridge lacks a ranges property.  We
 		 * want to pass it through up to the next
 		 * parent as-is, not with the PCI translate
 		 * method which chops off the top address cell.
 		 */
-		if (!of_find_property(np, "ranges", NULL))
-			return 0;
+		अगर (!of_find_property(np, "ranges", शून्य))
+			वापस 0;
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int of_bus_simba_match(struct device_node *np)
-{
-	const char *model = of_get_property(np, "model", NULL);
+अटल पूर्णांक of_bus_simba_match(काष्ठा device_node *np)
+अणु
+	स्थिर अक्षर *model = of_get_property(np, "model", शून्य);
 
-	if (model && !strcmp(model, "SUNW,simba"))
-		return 1;
+	अगर (model && !म_भेद(model, "SUNW,simba"))
+		वापस 1;
 
 	/* Treat PCI busses lacking ranges property just like
 	 * simba.
 	 */
-	if (of_node_name_eq(np, "pci")) {
-		if (!of_find_property(np, "ranges", NULL))
-			return 1;
-	}
+	अगर (of_node_name_eq(np, "pci")) अणु
+		अगर (!of_find_property(np, "ranges", शून्य))
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int of_bus_simba_map(u32 *addr, const u32 *range,
-			    int na, int ns, int pna)
-{
-	return 0;
-}
+अटल पूर्णांक of_bus_simba_map(u32 *addr, स्थिर u32 *range,
+			    पूर्णांक na, पूर्णांक ns, पूर्णांक pna)
+अणु
+	वापस 0;
+पूर्ण
 
-static void of_bus_pci_count_cells(struct device_node *np,
-				   int *addrc, int *sizec)
-{
-	if (addrc)
+अटल व्योम of_bus_pci_count_cells(काष्ठा device_node *np,
+				   पूर्णांक *addrc, पूर्णांक *sizec)
+अणु
+	अगर (addrc)
 		*addrc = 3;
-	if (sizec)
+	अगर (sizec)
 		*sizec = 2;
-}
+पूर्ण
 
-static int of_bus_pci_map(u32 *addr, const u32 *range,
-			  int na, int ns, int pna)
-{
+अटल पूर्णांक of_bus_pci_map(u32 *addr, स्थिर u32 *range,
+			  पूर्णांक na, पूर्णांक ns, पूर्णांक pna)
+अणु
 	u32 result[OF_MAX_ADDR_CELLS];
-	int i;
+	पूर्णांक i;
 
 	/* Check address type match */
-	if (!((addr[0] ^ range[0]) & 0x03000000))
-		goto type_match;
+	अगर (!((addr[0] ^ range[0]) & 0x03000000))
+		जाओ type_match;
 
-	/* Special exception, we can map a 64-bit address into
+	/* Special exception, we can map a 64-bit address पूर्णांकo
 	 * a 32-bit range.
 	 */
-	if ((addr[0] & 0x03000000) == 0x03000000 &&
+	अगर ((addr[0] & 0x03000000) == 0x03000000 &&
 	    (range[0] & 0x03000000) == 0x02000000)
-		goto type_match;
+		जाओ type_match;
 
-	return -EINVAL;
+	वापस -EINVAL;
 
 type_match:
-	if (of_out_of_range(addr + 1, range + 1, range + na + pna,
+	अगर (of_out_of_range(addr + 1, range + 1, range + na + pna,
 			    na - 1, ns))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Start with the parent range base.  */
-	memcpy(result, range + na, pna * 4);
+	स_नकल(result, range + na, pna * 4);
 
 	/* Add in the child address offset, skipping high cell.  */
-	for (i = 0; i < na - 1; i++)
+	क्रम (i = 0; i < na - 1; i++)
 		result[pna - 1 - i] +=
 			(addr[na - 1 - i] -
 			 range[na - 1 - i]);
 
-	memcpy(addr, result, pna * 4);
+	स_नकल(addr, result, pna * 4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long of_bus_pci_get_flags(const u32 *addr, unsigned long flags)
-{
+अटल अचिन्हित दीर्घ of_bus_pci_get_flags(स्थिर u32 *addr, अचिन्हित दीर्घ flags)
+अणु
 	u32 w = addr[0];
 
 	/* For PCI, we override whatever child busses may have used.  */
 	flags = 0;
-	switch((w >> 24) & 0x03) {
-	case 0x01:
+	चयन((w >> 24) & 0x03) अणु
+	हाल 0x01:
 		flags |= IORESOURCE_IO;
-		break;
+		अवरोध;
 
-	case 0x02: /* 32 bits */
-	case 0x03: /* 64 bits */
+	हाल 0x02: /* 32 bits */
+	हाल 0x03: /* 64 bits */
 		flags |= IORESOURCE_MEM;
-		break;
-	}
-	if (w & 0x40000000)
+		अवरोध;
+	पूर्ण
+	अगर (w & 0x40000000)
 		flags |= IORESOURCE_PREFETCH;
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 /*
- * FHC/Central bus specific translator.
+ * FHC/Central bus specअगरic translator.
  *
  * This is just needed to hard-code the address and size cell
  * counts.  'fhc' and 'central' nodes lack the #address-cells and
- * #size-cells properties, and if you walk to the root on such
+ * #size-cells properties, and अगर you walk to the root on such
  * Enterprise boxes all you'll get is a #size-cells of 2 which is
  * not what we want to use.
  */
-static int of_bus_fhc_match(struct device_node *np)
-{
-	return of_node_name_eq(np, "fhc") ||
+अटल पूर्णांक of_bus_fhc_match(काष्ठा device_node *np)
+अणु
+	वापस of_node_name_eq(np, "fhc") ||
 		of_node_name_eq(np, "central");
-}
+पूर्ण
 
-#define of_bus_fhc_count_cells of_bus_sbus_count_cells
+#घोषणा of_bus_fhc_count_cells of_bus_sbus_count_cells
 
 /*
- * Array of bus specific translators
+ * Array of bus specअगरic translators
  */
 
-static struct of_bus of_busses[] = {
+अटल काष्ठा of_bus of_busses[] = अणु
 	/* PCI */
-	{
+	अणु
 		.name = "pci",
 		.addr_prop_name = "assigned-addresses",
 		.match = of_bus_pci_match,
 		.count_cells = of_bus_pci_count_cells,
 		.map = of_bus_pci_map,
 		.get_flags = of_bus_pci_get_flags,
-	},
+	पूर्ण,
 	/* SIMBA */
-	{
+	अणु
 		.name = "simba",
 		.addr_prop_name = "assigned-addresses",
 		.match = of_bus_simba_match,
 		.count_cells = of_bus_pci_count_cells,
 		.map = of_bus_simba_map,
 		.get_flags = of_bus_pci_get_flags,
-	},
+	पूर्ण,
 	/* SBUS */
-	{
+	अणु
 		.name = "sbus",
 		.addr_prop_name = "reg",
 		.match = of_bus_sbus_match,
 		.count_cells = of_bus_sbus_count_cells,
-		.map = of_bus_default_map,
-		.get_flags = of_bus_default_get_flags,
-	},
+		.map = of_bus_शेष_map,
+		.get_flags = of_bus_शेष_get_flags,
+	पूर्ण,
 	/* FHC */
-	{
+	अणु
 		.name = "fhc",
 		.addr_prop_name = "reg",
 		.match = of_bus_fhc_match,
 		.count_cells = of_bus_fhc_count_cells,
-		.map = of_bus_default_map,
-		.get_flags = of_bus_default_get_flags,
-	},
+		.map = of_bus_शेष_map,
+		.get_flags = of_bus_शेष_get_flags,
+	पूर्ण,
 	/* Default */
-	{
+	अणु
 		.name = "default",
 		.addr_prop_name = "reg",
-		.match = NULL,
-		.count_cells = of_bus_default_count_cells,
-		.map = of_bus_default_map,
-		.get_flags = of_bus_default_get_flags,
-	},
-};
+		.match = शून्य,
+		.count_cells = of_bus_शेष_count_cells,
+		.map = of_bus_शेष_map,
+		.get_flags = of_bus_शेष_get_flags,
+	पूर्ण,
+पूर्ण;
 
-static struct of_bus *of_match_bus(struct device_node *np)
-{
-	int i;
+अटल काष्ठा of_bus *of_match_bus(काष्ठा device_node *np)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(of_busses); i ++)
-		if (!of_busses[i].match || of_busses[i].match(np))
-			return &of_busses[i];
+	क्रम (i = 0; i < ARRAY_SIZE(of_busses); i ++)
+		अगर (!of_busses[i].match || of_busses[i].match(np))
+			वापस &of_busses[i];
 	BUG();
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int __init build_one_resource(struct device_node *parent,
-				     struct of_bus *bus,
-				     struct of_bus *pbus,
+अटल पूर्णांक __init build_one_resource(काष्ठा device_node *parent,
+				     काष्ठा of_bus *bus,
+				     काष्ठा of_bus *pbus,
 				     u32 *addr,
-				     int na, int ns, int pna)
-{
-	const u32 *ranges;
-	int rone, rlen;
+				     पूर्णांक na, पूर्णांक ns, पूर्णांक pna)
+अणु
+	स्थिर u32 *ranges;
+	पूर्णांक rone, rlen;
 
 	ranges = of_get_property(parent, "ranges", &rlen);
-	if (ranges == NULL || rlen == 0) {
+	अगर (ranges == शून्य || rlen == 0) अणु
 		u32 result[OF_MAX_ADDR_CELLS];
-		int i;
+		पूर्णांक i;
 
-		memset(result, 0, pna * 4);
-		for (i = 0; i < na; i++)
+		स_रखो(result, 0, pna * 4);
+		क्रम (i = 0; i < na; i++)
 			result[pna - 1 - i] =
 				addr[na - 1 - i];
 
-		memcpy(addr, result, pna * 4);
-		return 0;
-	}
+		स_नकल(addr, result, pna * 4);
+		वापस 0;
+	पूर्ण
 
 	/* Now walk through the ranges */
 	rlen /= 4;
 	rone = na + pna + ns;
-	for (; rlen >= rone; rlen -= rone, ranges += rone) {
-		if (!bus->map(addr, ranges, na, ns, pna))
-			return 0;
-	}
+	क्रम (; rlen >= rone; rlen -= rone, ranges += rone) अणु
+		अगर (!bus->map(addr, ranges, na, ns, pna))
+			वापस 0;
+	पूर्ण
 
 	/* When we miss an I/O space match on PCI, just pass it up
 	 * to the next PCI bridge and/or controller.
 	 */
-	if (!strcmp(bus->name, "pci") &&
+	अगर (!म_भेद(bus->name, "pci") &&
 	    (addr[0] & 0x03000000) == 0x01000000)
-		return 0;
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int __init use_1to1_mapping(struct device_node *pp)
-{
+अटल पूर्णांक __init use_1to1_mapping(काष्ठा device_node *pp)
+अणु
 	/* If we have a ranges property in the parent, use it.  */
-	if (of_find_property(pp, "ranges", NULL) != NULL)
-		return 0;
+	अगर (of_find_property(pp, "ranges", शून्य) != शून्य)
+		वापस 0;
 
 	/* If the parent is the dma node of an ISA bus, pass
 	 * the translation up to the root.
 	 *
-	 * Some SBUS devices use intermediate nodes to express
+	 * Some SBUS devices use पूर्णांकermediate nodes to express
 	 * hierarchy within the device itself.  These aren't
-	 * real bus nodes, and don't have a 'ranges' property.
+	 * real bus nodes, and करोn't have a 'ranges' property.
 	 * But, we should still pass the translation work up
 	 * to the SBUS itself.
 	 */
-	if (of_node_name_eq(pp, "dma") ||
+	अगर (of_node_name_eq(pp, "dma") ||
 	    of_node_name_eq(pp, "espdma") ||
 	    of_node_name_eq(pp, "ledma") ||
 	    of_node_name_eq(pp, "lebuffer"))
-		return 0;
+		वापस 0;
 
-	/* Similarly for all PCI bridges, if we get this far
+	/* Similarly क्रम all PCI bridges, अगर we get this far
 	 * it lacks a ranges property, and this will include
-	 * cases like Simba.
+	 * हालs like Simba.
 	 */
-	if (of_node_name_eq(pp, "pci"))
-		return 0;
+	अगर (of_node_name_eq(pp, "pci"))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int of_resource_verbose;
+अटल पूर्णांक of_resource_verbose;
 
-static void __init build_device_resources(struct platform_device *op,
-					  struct device *parent)
-{
-	struct platform_device *p_op;
-	struct of_bus *bus;
-	int na, ns;
-	int index, num_reg;
-	const void *preg;
+अटल व्योम __init build_device_resources(काष्ठा platक्रमm_device *op,
+					  काष्ठा device *parent)
+अणु
+	काष्ठा platक्रमm_device *p_op;
+	काष्ठा of_bus *bus;
+	पूर्णांक na, ns;
+	पूर्णांक index, num_reg;
+	स्थिर व्योम *preg;
 
-	if (!parent)
-		return;
+	अगर (!parent)
+		वापस;
 
-	p_op = to_platform_device(parent);
+	p_op = to_platक्रमm_device(parent);
 	bus = of_match_bus(p_op->dev.of_node);
 	bus->count_cells(op->dev.of_node, &na, &ns);
 
 	preg = of_get_property(op->dev.of_node, bus->addr_prop_name, &num_reg);
-	if (!preg || num_reg == 0)
-		return;
+	अगर (!preg || num_reg == 0)
+		वापस;
 
 	/* Convert to num-cells.  */
 	num_reg /= 4;
@@ -340,309 +341,309 @@ static void __init build_device_resources(struct platform_device *op,
 	num_reg /= na + ns;
 
 	/* Prevent overrunning the op->resources[] array.  */
-	if (num_reg > PROMREG_MAX) {
-		printk(KERN_WARNING "%pOF: Too many regs (%d), "
+	अगर (num_reg > PROMREG_MAX) अणु
+		prपूर्णांकk(KERN_WARNING "%pOF: Too many regs (%d), "
 		       "limiting to %d.\n",
 		       op->dev.of_node, num_reg, PROMREG_MAX);
 		num_reg = PROMREG_MAX;
-	}
+	पूर्ण
 
 	op->resource = op->archdata.resource;
 	op->num_resources = num_reg;
-	for (index = 0; index < num_reg; index++) {
-		struct resource *r = &op->resource[index];
+	क्रम (index = 0; index < num_reg; index++) अणु
+		काष्ठा resource *r = &op->resource[index];
 		u32 addr[OF_MAX_ADDR_CELLS];
-		const u32 *reg = (preg + (index * ((na + ns) * 4)));
-		struct device_node *dp = op->dev.of_node;
-		struct device_node *pp = p_op->dev.of_node;
-		struct of_bus *pbus, *dbus;
+		स्थिर u32 *reg = (preg + (index * ((na + ns) * 4)));
+		काष्ठा device_node *dp = op->dev.of_node;
+		काष्ठा device_node *pp = p_op->dev.of_node;
+		काष्ठा of_bus *pbus, *dbus;
 		u64 size, result = OF_BAD_ADDR;
-		unsigned long flags;
-		int dna, dns;
-		int pna, pns;
+		अचिन्हित दीर्घ flags;
+		पूर्णांक dna, dns;
+		पूर्णांक pna, pns;
 
-		size = of_read_addr(reg + na, ns);
-		memcpy(addr, reg, na * 4);
+		size = of_पढ़ो_addr(reg + na, ns);
+		स_नकल(addr, reg, na * 4);
 
 		flags = bus->get_flags(addr, 0);
 
-		if (use_1to1_mapping(pp)) {
-			result = of_read_addr(addr, na);
-			goto build_res;
-		}
+		अगर (use_1to1_mapping(pp)) अणु
+			result = of_पढ़ो_addr(addr, na);
+			जाओ build_res;
+		पूर्ण
 
 		dna = na;
 		dns = ns;
 		dbus = bus;
 
-		while (1) {
+		जबतक (1) अणु
 			dp = pp;
 			pp = dp->parent;
-			if (!pp) {
-				result = of_read_addr(addr, dna);
-				break;
-			}
+			अगर (!pp) अणु
+				result = of_पढ़ो_addr(addr, dna);
+				अवरोध;
+			पूर्ण
 
 			pbus = of_match_bus(pp);
 			pbus->count_cells(dp, &pna, &pns);
 
-			if (build_one_resource(dp, dbus, pbus, addr,
+			अगर (build_one_resource(dp, dbus, pbus, addr,
 					       dna, dns, pna))
-				break;
+				अवरोध;
 
 			flags = pbus->get_flags(addr, flags);
 
 			dna = pna;
 			dns = pns;
 			dbus = pbus;
-		}
+		पूर्ण
 
 	build_res:
-		memset(r, 0, sizeof(*r));
+		स_रखो(r, 0, माप(*r));
 
-		if (of_resource_verbose)
-			printk("%pOF reg[%d] -> %llx\n",
+		अगर (of_resource_verbose)
+			prपूर्णांकk("%pOF reg[%d] -> %llx\n",
 			       op->dev.of_node, index,
 			       result);
 
-		if (result != OF_BAD_ADDR) {
-			if (tlb_type == hypervisor)
+		अगर (result != OF_BAD_ADDR) अणु
+			अगर (tlb_type == hypervisor)
 				result &= 0x0fffffffffffffffUL;
 
 			r->start = result;
 			r->end = result + size - 1;
 			r->flags = flags;
-		}
+		पूर्ण
 		r->name = op->dev.of_node->full_name;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct device_node * __init
-apply_interrupt_map(struct device_node *dp, struct device_node *pp,
-		    const u32 *imap, int imlen, const u32 *imask,
-		    unsigned int *irq_p)
-{
-	struct device_node *cp;
-	unsigned int irq = *irq_p;
-	struct of_bus *bus;
+अटल काष्ठा device_node * __init
+apply_पूर्णांकerrupt_map(काष्ठा device_node *dp, काष्ठा device_node *pp,
+		    स्थिर u32 *imap, पूर्णांक imlen, स्थिर u32 *imask,
+		    अचिन्हित पूर्णांक *irq_p)
+अणु
+	काष्ठा device_node *cp;
+	अचिन्हित पूर्णांक irq = *irq_p;
+	काष्ठा of_bus *bus;
 	phandle handle;
-	const u32 *reg;
-	int na, num_reg, i;
+	स्थिर u32 *reg;
+	पूर्णांक na, num_reg, i;
 
 	bus = of_match_bus(pp);
-	bus->count_cells(dp, &na, NULL);
+	bus->count_cells(dp, &na, शून्य);
 
 	reg = of_get_property(dp, "reg", &num_reg);
-	if (!reg || !num_reg)
-		return NULL;
+	अगर (!reg || !num_reg)
+		वापस शून्य;
 
 	imlen /= ((na + 3) * 4);
 	handle = 0;
-	for (i = 0; i < imlen; i++) {
-		int j;
+	क्रम (i = 0; i < imlen; i++) अणु
+		पूर्णांक j;
 
-		for (j = 0; j < na; j++) {
-			if ((reg[j] & imask[j]) != imap[j])
-				goto next;
-		}
-		if (imap[na] == irq) {
+		क्रम (j = 0; j < na; j++) अणु
+			अगर ((reg[j] & imask[j]) != imap[j])
+				जाओ next;
+		पूर्ण
+		अगर (imap[na] == irq) अणु
 			handle = imap[na + 1];
 			irq = imap[na + 2];
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 	next:
 		imap += (na + 3);
-	}
-	if (i == imlen) {
+	पूर्ण
+	अगर (i == imlen) अणु
 		/* Psycho and Sabre PCI controllers can have 'interrupt-map'
-		 * properties that do not include the on-board device
-		 * interrupts.  Instead, the device's 'interrupts' property
-		 * is already a fully specified INO value.
+		 * properties that करो not include the on-board device
+		 * पूर्णांकerrupts.  Instead, the device's 'interrupts' property
+		 * is alपढ़ोy a fully specअगरied INO value.
 		 *
-		 * Handle this by deciding that, if we didn't get a
+		 * Handle this by deciding that, अगर we didn't get a
 		 * match in the parent's 'interrupt-map', and the
 		 * parent is an IRQ translator, then use the parent as
 		 * our IRQ controller.
 		 */
-		if (pp->irq_trans)
-			return pp;
+		अगर (pp->irq_trans)
+			वापस pp;
 
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	*irq_p = irq;
 	cp = of_find_node_by_phandle(handle);
 
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
-static unsigned int __init pci_irq_swizzle(struct device_node *dp,
-					   struct device_node *pp,
-					   unsigned int irq)
-{
-	const struct linux_prom_pci_registers *regs;
-	unsigned int bus, devfn, slot, ret;
+अटल अचिन्हित पूर्णांक __init pci_irq_swizzle(काष्ठा device_node *dp,
+					   काष्ठा device_node *pp,
+					   अचिन्हित पूर्णांक irq)
+अणु
+	स्थिर काष्ठा linux_prom_pci_रेजिस्टरs *regs;
+	अचिन्हित पूर्णांक bus, devfn, slot, ret;
 
-	if (irq < 1 || irq > 4)
-		return irq;
+	अगर (irq < 1 || irq > 4)
+		वापस irq;
 
-	regs = of_get_property(dp, "reg", NULL);
-	if (!regs)
-		return irq;
+	regs = of_get_property(dp, "reg", शून्य);
+	अगर (!regs)
+		वापस irq;
 
 	bus = (regs->phys_hi >> 16) & 0xff;
 	devfn = (regs->phys_hi >> 8) & 0xff;
 	slot = (devfn >> 3) & 0x1f;
 
-	if (pp->irq_trans) {
+	अगर (pp->irq_trans) अणु
 		/* Derived from Table 8-3, U2P User's Manual.  This branch
 		 * is handling a PCI controller that lacks a proper set of
-		 * interrupt-map and interrupt-map-mask properties.  The
+		 * पूर्णांकerrupt-map and पूर्णांकerrupt-map-mask properties.  The
 		 * Ultra-E450 is one example.
 		 *
 		 * The bit layout is BSSLL, where:
 		 * B: 0 on bus A, 1 on bus B
 		 * D: 2-bit slot number, derived from PCI device number as
-		 *    (dev - 1) for bus A, or (dev - 2) for bus B
+		 *    (dev - 1) क्रम bus A, or (dev - 2) क्रम bus B
 		 * L: 2-bit line number
 		 */
-		if (bus & 0x80) {
+		अगर (bus & 0x80) अणु
 			/* PBM-A */
 			bus  = 0x00;
 			slot = (slot - 1) << 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* PBM-B */
 			bus  = 0x10;
 			slot = (slot - 2) << 2;
-		}
+		पूर्ण
 		irq -= 1;
 
 		ret = (bus | slot | irq);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Going through a PCI-PCI bridge that lacks a set of
-		 * interrupt-map and interrupt-map-mask properties.
+		 * पूर्णांकerrupt-map and पूर्णांकerrupt-map-mask properties.
 		 */
 		ret = ((irq - 1 + (slot & 3)) & 3) + 1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int of_irq_verbose;
+अटल पूर्णांक of_irq_verbose;
 
-static unsigned int __init build_one_device_irq(struct platform_device *op,
-						struct device *parent,
-						unsigned int irq)
-{
-	struct device_node *dp = op->dev.of_node;
-	struct device_node *pp, *ip;
-	unsigned int orig_irq = irq;
-	int nid;
+अटल अचिन्हित पूर्णांक __init build_one_device_irq(काष्ठा platक्रमm_device *op,
+						काष्ठा device *parent,
+						अचिन्हित पूर्णांक irq)
+अणु
+	काष्ठा device_node *dp = op->dev.of_node;
+	काष्ठा device_node *pp, *ip;
+	अचिन्हित पूर्णांक orig_irq = irq;
+	पूर्णांक nid;
 
-	if (irq == 0xffffffff)
-		return irq;
+	अगर (irq == 0xffffffff)
+		वापस irq;
 
-	if (dp->irq_trans) {
+	अगर (dp->irq_trans) अणु
 		irq = dp->irq_trans->irq_build(dp, irq,
 					       dp->irq_trans->data);
 
-		if (of_irq_verbose)
-			printk("%pOF: direct translate %x --> %x\n",
+		अगर (of_irq_verbose)
+			prपूर्णांकk("%pOF: direct translate %x --> %x\n",
 			       dp, orig_irq, irq);
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Something more complicated.  Walk up to the root, applying
-	 * interrupt-map or bus specific translations, until we hit
+	 * पूर्णांकerrupt-map or bus specअगरic translations, until we hit
 	 * an IRQ translator.
 	 *
 	 * If we hit a bus type or situation we cannot handle, we
 	 * stop and assume that the original IRQ number was in a
-	 * format which has special meaning to it's immediate parent.
+	 * क्रमmat which has special meaning to it's immediate parent.
 	 */
 	pp = dp->parent;
-	ip = NULL;
-	while (pp) {
-		const void *imap, *imsk;
-		int imlen;
+	ip = शून्य;
+	जबतक (pp) अणु
+		स्थिर व्योम *imap, *imsk;
+		पूर्णांक imlen;
 
 		imap = of_get_property(pp, "interrupt-map", &imlen);
-		imsk = of_get_property(pp, "interrupt-map-mask", NULL);
-		if (imap && imsk) {
-			struct device_node *iret;
-			int this_orig_irq = irq;
+		imsk = of_get_property(pp, "interrupt-map-mask", शून्य);
+		अगर (imap && imsk) अणु
+			काष्ठा device_node *iret;
+			पूर्णांक this_orig_irq = irq;
 
-			iret = apply_interrupt_map(dp, pp,
+			iret = apply_पूर्णांकerrupt_map(dp, pp,
 						   imap, imlen, imsk,
 						   &irq);
 
-			if (of_irq_verbose)
-				printk("%pOF: Apply [%pOF:%x] imap --> [%pOF:%x]\n",
+			अगर (of_irq_verbose)
+				prपूर्णांकk("%pOF: Apply [%pOF:%x] imap --> [%pOF:%x]\n",
 				       op->dev.of_node,
 				       pp, this_orig_irq, iret, irq);
 
-			if (!iret)
-				break;
+			अगर (!iret)
+				अवरोध;
 
-			if (iret->irq_trans) {
+			अगर (iret->irq_trans) अणु
 				ip = iret;
-				break;
-			}
-		} else {
-			if (of_node_name_eq(pp, "pci")) {
-				unsigned int this_orig_irq = irq;
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (of_node_name_eq(pp, "pci")) अणु
+				अचिन्हित पूर्णांक this_orig_irq = irq;
 
 				irq = pci_irq_swizzle(dp, pp, irq);
-				if (of_irq_verbose)
-					printk("%pOF: PCI swizzle [%pOF] "
+				अगर (of_irq_verbose)
+					prपूर्णांकk("%pOF: PCI swizzle [%pOF] "
 					       "%x --> %x\n",
 					       op->dev.of_node,
 					       pp, this_orig_irq,
 					       irq);
 
-			}
+			पूर्ण
 
-			if (pp->irq_trans) {
+			अगर (pp->irq_trans) अणु
 				ip = pp;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		dp = pp;
 		pp = pp->parent;
-	}
-	if (!ip)
-		return orig_irq;
+	पूर्ण
+	अगर (!ip)
+		वापस orig_irq;
 
 	irq = ip->irq_trans->irq_build(op->dev.of_node, irq,
 				       ip->irq_trans->data);
-	if (of_irq_verbose)
-		printk("%pOF: Apply IRQ trans [%pOF] %x --> %x\n",
+	अगर (of_irq_verbose)
+		prपूर्णांकk("%pOF: Apply IRQ trans [%pOF] %x --> %x\n",
 		      op->dev.of_node, ip, orig_irq, irq);
 
 out:
 	nid = of_node_to_nid(dp);
-	if (nid != -1) {
+	अगर (nid != -1) अणु
 		cpumask_t numa_mask;
 
 		cpumask_copy(&numa_mask, cpumask_of_node(nid));
 		irq_set_affinity(irq, &numa_mask);
-	}
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static struct platform_device * __init scan_one_device(struct device_node *dp,
-						 struct device *parent)
-{
-	struct platform_device *op = kzalloc(sizeof(*op), GFP_KERNEL);
-	const unsigned int *irq;
-	struct dev_archdata *sd;
-	int len, i;
+अटल काष्ठा platक्रमm_device * __init scan_one_device(काष्ठा device_node *dp,
+						 काष्ठा device *parent)
+अणु
+	काष्ठा platक्रमm_device *op = kzalloc(माप(*op), GFP_KERNEL);
+	स्थिर अचिन्हित पूर्णांक *irq;
+	काष्ठा dev_archdata *sd;
+	पूर्णांक len, i;
 
-	if (!op)
-		return NULL;
+	अगर (!op)
+		वापस शून्य;
 
 	sd = &op->dev.archdata;
 	sd->op = op;
@@ -650,79 +651,79 @@ static struct platform_device * __init scan_one_device(struct device_node *dp,
 	op->dev.of_node = dp;
 
 	irq = of_get_property(dp, "interrupts", &len);
-	if (irq) {
+	अगर (irq) अणु
 		op->archdata.num_irqs = len / 4;
 
 		/* Prevent overrunning the op->irqs[] array.  */
-		if (op->archdata.num_irqs > PROMINTR_MAX) {
-			printk(KERN_WARNING "%pOF: Too many irqs (%d), "
+		अगर (op->archdata.num_irqs > PROMINTR_MAX) अणु
+			prपूर्णांकk(KERN_WARNING "%pOF: Too many irqs (%d), "
 			       "limiting to %d.\n",
 			       dp, op->archdata.num_irqs, PROMINTR_MAX);
 			op->archdata.num_irqs = PROMINTR_MAX;
-		}
-		memcpy(op->archdata.irqs, irq, op->archdata.num_irqs * 4);
-	} else {
+		पूर्ण
+		स_नकल(op->archdata.irqs, irq, op->archdata.num_irqs * 4);
+	पूर्ण अन्यथा अणु
 		op->archdata.num_irqs = 0;
-	}
+	पूर्ण
 
 	build_device_resources(op, parent);
-	for (i = 0; i < op->archdata.num_irqs; i++)
+	क्रम (i = 0; i < op->archdata.num_irqs; i++)
 		op->archdata.irqs[i] = build_one_device_irq(op, parent, op->archdata.irqs[i]);
 
 	op->dev.parent = parent;
-	op->dev.bus = &platform_bus_type;
-	if (!parent)
+	op->dev.bus = &platक्रमm_bus_type;
+	अगर (!parent)
 		dev_set_name(&op->dev, "root");
-	else
+	अन्यथा
 		dev_set_name(&op->dev, "%08x", dp->phandle);
 	op->dev.coherent_dma_mask = DMA_BIT_MASK(32);
 	op->dev.dma_mask = &op->dev.coherent_dma_mask;
 
-	if (of_device_register(op)) {
-		printk("%pOF: Could not register of device.\n", dp);
-		kfree(op);
-		op = NULL;
-	}
+	अगर (of_device_रेजिस्टर(op)) अणु
+		prपूर्णांकk("%pOF: Could not register of device.\n", dp);
+		kमुक्त(op);
+		op = शून्य;
+	पूर्ण
 
-	return op;
-}
+	वापस op;
+पूर्ण
 
-static void __init scan_tree(struct device_node *dp, struct device *parent)
-{
-	while (dp) {
-		struct platform_device *op = scan_one_device(dp, parent);
+अटल व्योम __init scan_tree(काष्ठा device_node *dp, काष्ठा device *parent)
+अणु
+	जबतक (dp) अणु
+		काष्ठा platक्रमm_device *op = scan_one_device(dp, parent);
 
-		if (op)
+		अगर (op)
 			scan_tree(dp->child, &op->dev);
 
 		dp = dp->sibling;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init scan_of_devices(void)
-{
-	struct device_node *root = of_find_node_by_path("/");
-	struct platform_device *parent;
+अटल पूर्णांक __init scan_of_devices(व्योम)
+अणु
+	काष्ठा device_node *root = of_find_node_by_path("/");
+	काष्ठा platक्रमm_device *parent;
 
-	parent = scan_one_device(root, NULL);
-	if (!parent)
-		return 0;
+	parent = scan_one_device(root, शून्य);
+	अगर (!parent)
+		वापस 0;
 
 	scan_tree(root->child, &parent->dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 postcore_initcall(scan_of_devices);
 
-static int __init of_debug(char *str)
-{
-	int val = 0;
+अटल पूर्णांक __init of_debug(अक्षर *str)
+अणु
+	पूर्णांक val = 0;
 
 	get_option(&str, &val);
-	if (val & 1)
+	अगर (val & 1)
 		of_resource_verbose = 1;
-	if (val & 2)
+	अगर (val & 2)
 		of_irq_verbose = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("of_debug=", of_debug);

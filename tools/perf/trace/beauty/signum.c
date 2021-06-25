@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: LGPL-2.1
-#include <signal.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
+#समावेश <संकेत.स>
 
-static size_t syscall_arg__scnprintf_signum(char *bf, size_t size, struct syscall_arg *arg)
-{
+अटल माप_प्रकार syscall_arg__scnम_लिखो_signum(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
+अणु
 	bool show_prefix = arg->show_string_prefix;
-	const char *prefix = "SIG";
-	int sig = arg->val;
+	स्थिर अक्षर *prefix = "SIG";
+	पूर्णांक sig = arg->val;
 
-	switch (sig) {
-#define	P_SIGNUM(n) case SIG##n: return scnprintf(bf, size, "%s%s", show_prefix ? prefix : "", #n)
+	चयन (sig) अणु
+#घोषणा	P_SIGNUM(n) हाल SIG##n: वापस scnम_लिखो(bf, size, "%s%s", show_prefix ? prefix : "", #n)
 	P_SIGNUM(HUP);
 	P_SIGNUM(INT);
 	P_SIGNUM(QUIT);
@@ -39,19 +40,19 @@ static size_t syscall_arg__scnprintf_signum(char *bf, size_t size, struct syscal
 	P_SIGNUM(IO);
 	P_SIGNUM(PWR);
 	P_SIGNUM(SYS);
-#ifdef SIGEMT
+#अगर_घोषित SIGEMT
 	P_SIGNUM(EMT);
-#endif
-#ifdef SIGSTKFLT
+#पूर्ण_अगर
+#अगर_घोषित SIGSTKFLT
 	P_SIGNUM(STKFLT);
-#endif
-#ifdef SIGSWI
+#पूर्ण_अगर
+#अगर_घोषित SIGSWI
 	P_SIGNUM(SWI);
-#endif
-	default: break;
-	}
+#पूर्ण_अगर
+	शेष: अवरोध;
+	पूर्ण
 
-	return scnprintf(bf, size, "%#x", sig);
-}
+	वापस scnम_लिखो(bf, size, "%#x", sig);
+पूर्ण
 
-#define SCA_SIGNUM syscall_arg__scnprintf_signum
+#घोषणा SCA_SIGNUM syscall_arg__scnम_लिखो_signum

@@ -1,19 +1,20 @@
-#ifdef CONFIG_PREEMPTIRQ_TRACEPOINTS
+<शैली गुरु>
+#अगर_घोषित CONFIG_PREEMPTIRQ_TRACEPOINTS
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM preemptirq
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM preemptirq
 
-#if !defined(_TRACE_PREEMPTIRQ_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_PREEMPTIRQ_H
+#अगर !defined(_TRACE_PREEMPTIRQ_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_PREEMPTIRQ_H
 
-#include <linux/ktime.h>
-#include <linux/tracepoint.h>
-#include <linux/string.h>
-#include <asm/sections.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/sections.h>
 
-DECLARE_EVENT_CLASS(preemptirq_template,
+DECLARE_EVENT_CLASS(preemptirq_ढाँचा,
 
-	TP_PROTO(unsigned long ip, unsigned long parent_ip),
+	TP_PROTO(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip),
 
 	TP_ARGS(ip, parent_ip),
 
@@ -23,56 +24,56 @@ DECLARE_EVENT_CLASS(preemptirq_template,
 	),
 
 	TP_fast_assign(
-		__entry->caller_offs = (s32)(ip - (unsigned long)_stext);
-		__entry->parent_offs = (s32)(parent_ip - (unsigned long)_stext);
+		__entry->caller_offs = (s32)(ip - (अचिन्हित दीर्घ)_stext);
+		__entry->parent_offs = (s32)(parent_ip - (अचिन्हित दीर्घ)_stext);
 	),
 
-	TP_printk("caller=%pS parent=%pS",
-		  (void *)((unsigned long)(_stext) + __entry->caller_offs),
-		  (void *)((unsigned long)(_stext) + __entry->parent_offs))
+	TP_prपूर्णांकk("caller=%pS parent=%pS",
+		  (व्योम *)((अचिन्हित दीर्घ)(_stext) + __entry->caller_offs),
+		  (व्योम *)((अचिन्हित दीर्घ)(_stext) + __entry->parent_offs))
 );
 
-#ifdef CONFIG_TRACE_IRQFLAGS
-DEFINE_EVENT(preemptirq_template, irq_disable,
-	     TP_PROTO(unsigned long ip, unsigned long parent_ip),
+#अगर_घोषित CONFIG_TRACE_IRQFLAGS
+DEFINE_EVENT(preemptirq_ढाँचा, irq_disable,
+	     TP_PROTO(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip),
 	     TP_ARGS(ip, parent_ip));
 
-DEFINE_EVENT(preemptirq_template, irq_enable,
-	     TP_PROTO(unsigned long ip, unsigned long parent_ip),
+DEFINE_EVENT(preemptirq_ढाँचा, irq_enable,
+	     TP_PROTO(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip),
 	     TP_ARGS(ip, parent_ip));
-#else
-#define trace_irq_enable(...)
-#define trace_irq_disable(...)
-#define trace_irq_enable_rcuidle(...)
-#define trace_irq_disable_rcuidle(...)
-#endif
+#अन्यथा
+#घोषणा trace_irq_enable(...)
+#घोषणा trace_irq_disable(...)
+#घोषणा trace_irq_enable_rcuidle(...)
+#घोषणा trace_irq_disable_rcuidle(...)
+#पूर्ण_अगर
 
-#ifdef CONFIG_TRACE_PREEMPT_TOGGLE
-DEFINE_EVENT(preemptirq_template, preempt_disable,
-	     TP_PROTO(unsigned long ip, unsigned long parent_ip),
+#अगर_घोषित CONFIG_TRACE_PREEMPT_TOGGLE
+DEFINE_EVENT(preemptirq_ढाँचा, preempt_disable,
+	     TP_PROTO(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip),
 	     TP_ARGS(ip, parent_ip));
 
-DEFINE_EVENT(preemptirq_template, preempt_enable,
-	     TP_PROTO(unsigned long ip, unsigned long parent_ip),
+DEFINE_EVENT(preemptirq_ढाँचा, preempt_enable,
+	     TP_PROTO(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip),
 	     TP_ARGS(ip, parent_ip));
-#else
-#define trace_preempt_enable(...)
-#define trace_preempt_disable(...)
-#define trace_preempt_enable_rcuidle(...)
-#define trace_preempt_disable_rcuidle(...)
-#endif
+#अन्यथा
+#घोषणा trace_preempt_enable(...)
+#घोषणा trace_preempt_disable(...)
+#घोषणा trace_preempt_enable_rcuidle(...)
+#घोषणा trace_preempt_disable_rcuidle(...)
+#पूर्ण_अगर
 
-#endif /* _TRACE_PREEMPTIRQ_H */
+#पूर्ण_अगर /* _TRACE_PREEMPTIRQ_H */
 
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>
 
-#else /* !CONFIG_PREEMPTIRQ_TRACEPOINTS */
-#define trace_irq_enable(...)
-#define trace_irq_disable(...)
-#define trace_irq_enable_rcuidle(...)
-#define trace_irq_disable_rcuidle(...)
-#define trace_preempt_enable(...)
-#define trace_preempt_disable(...)
-#define trace_preempt_enable_rcuidle(...)
-#define trace_preempt_disable_rcuidle(...)
-#endif
+#अन्यथा /* !CONFIG_PREEMPTIRQ_TRACEPOINTS */
+#घोषणा trace_irq_enable(...)
+#घोषणा trace_irq_disable(...)
+#घोषणा trace_irq_enable_rcuidle(...)
+#घोषणा trace_irq_disable_rcuidle(...)
+#घोषणा trace_preempt_enable(...)
+#घोषणा trace_preempt_disable(...)
+#घोषणा trace_preempt_enable_rcuidle(...)
+#घोषणा trace_preempt_disable_rcuidle(...)
+#पूर्ण_अगर

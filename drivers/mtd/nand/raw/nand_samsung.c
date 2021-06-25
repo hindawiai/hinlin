@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Free Electrons
  * Copyright (C) 2017 NextThing Co
  *
- * Author: Boris Brezillon <boris.brezillon@free-electrons.com>
+ * Author: Boris Brezillon <boris.brezillon@मुक्त-electrons.com>
  */
 
-#include "internals.h"
+#समावेश "internals.h"
 
-static void samsung_nand_decode_id(struct nand_chip *chip)
-{
-	struct nand_device *base = &chip->base;
-	struct nand_ecc_props requirements = {};
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct nand_memory_organization *memorg;
+अटल व्योम samsung_nand_decode_id(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा nand_device *base = &chip->base;
+	काष्ठा nand_ecc_props requirements = अणुपूर्ण;
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा nand_memory_organization *memorg;
 
 	memorg = nanddev_get_memorg(&chip->base);
 
 	/* New Samsung (6 byte ID): Samsung K9GAG08U0F (p.44) */
-	if (chip->id.len == 6 && !nand_is_slc(chip) &&
-	    chip->id.data[5] != 0x00) {
+	अगर (chip->id.len == 6 && !nand_is_slc(chip) &&
+	    chip->id.data[5] != 0x00) अणु
 		u8 extid = chip->id.data[3];
 
 		/* Get pagesize */
 		memorg->pagesize = 2048 << (extid & 0x03);
-		mtd->writesize = memorg->pagesize;
+		mtd->ग_लिखोsize = memorg->pagesize;
 
 		extid >>= 2;
 
 		/* Get oobsize */
-		switch (((extid >> 2) & 0x4) | (extid & 0x3)) {
-		case 1:
+		चयन (((extid >> 2) & 0x4) | (extid & 0x3)) अणु
+		हाल 1:
 			memorg->oobsize = 128;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			memorg->oobsize = 218;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			memorg->oobsize = 400;
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			memorg->oobsize = 436;
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			memorg->oobsize = 512;
-			break;
-		case 6:
+			अवरोध;
+		हाल 6:
 			memorg->oobsize = 640;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
-			 * We should never reach this case, but if that
+			 * We should never reach this हाल, but अगर that
 			 * happens, this probably means Samsung decided to use
-			 * a different extended ID format, and we should find
+			 * a dअगरferent extended ID क्रमmat, and we should find
 			 * a way to support it.
 			 */
 			WARN(1, "Invalid OOB size value");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mtd->oobsize = memorg->oobsize;
 
@@ -72,68 +73,68 @@ static void samsung_nand_decode_id(struct nand_chip *chip)
 
 		/* Extract ECC requirements from 5th id byte*/
 		extid = (chip->id.data[4] >> 4) & 0x07;
-		if (extid < 5) {
+		अगर (extid < 5) अणु
 			requirements.step_size = 512;
 			requirements.strength = 1 << extid;
-		} else {
+		पूर्ण अन्यथा अणु
 			requirements.step_size = 1024;
-			switch (extid) {
-			case 5:
+			चयन (extid) अणु
+			हाल 5:
 				requirements.strength = 24;
-				break;
-			case 6:
+				अवरोध;
+			हाल 6:
 				requirements.strength = 40;
-				break;
-			case 7:
+				अवरोध;
+			हाल 7:
 				requirements.strength = 60;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				WARN(1, "Could not decode ECC info");
 				requirements.step_size = 0;
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		nand_decode_ext_id(chip);
 
-		if (nand_is_slc(chip)) {
-			switch (chip->id.data[1]) {
+		अगर (nand_is_slc(chip)) अणु
+			चयन (chip->id.data[1]) अणु
 			/* K9F4G08U0D-S[I|C]B0(T00) */
-			case 0xDC:
+			हाल 0xDC:
 				requirements.step_size = 512;
 				requirements.strength = 1;
-				break;
+				अवरोध;
 
-			/* K9F1G08U0E 21nm chips do not support subpage write */
-			case 0xF1:
-				if (chip->id.len > 4 &&
+			/* K9F1G08U0E 21nm chips करो not support subpage ग_लिखो */
+			हाल 0xF1:
+				अगर (chip->id.len > 4 &&
 				    (chip->id.data[4] & GENMASK(1, 0)) == 0x1)
-					chip->options |= NAND_NO_SUBPAGE_WRITE;
-				break;
-			default:
-				break;
-			}
-		}
-	}
+					chip->options |= न_अंकD_NO_SUBPAGE_WRITE;
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	nanddev_set_ecc_requirements(base, &requirements);
-}
+पूर्ण
 
-static int samsung_nand_init(struct nand_chip *chip)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+अटल पूर्णांक samsung_nand_init(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	if (mtd->writesize > 512)
-		chip->options |= NAND_SAMSUNG_LP_OPTIONS;
+	अगर (mtd->ग_लिखोsize > 512)
+		chip->options |= न_अंकD_SAMSUNG_LP_OPTIONS;
 
-	if (!nand_is_slc(chip))
-		chip->options |= NAND_BBM_LASTPAGE;
-	else
-		chip->options |= NAND_BBM_FIRSTPAGE | NAND_BBM_SECONDPAGE;
+	अगर (!nand_is_slc(chip))
+		chip->options |= न_अंकD_BBM_LASTPAGE;
+	अन्यथा
+		chip->options |= न_अंकD_BBM_FIRSTPAGE | न_अंकD_BBM_SECONDPAGE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct nand_manufacturer_ops samsung_nand_manuf_ops = {
+स्थिर काष्ठा nand_manufacturer_ops samsung_nand_manuf_ops = अणु
 	.detect = samsung_nand_decode_id,
 	.init = samsung_nand_init,
-};
+पूर्ण;

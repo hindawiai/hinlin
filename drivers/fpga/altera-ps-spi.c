@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Altera Passive Serial SPI Driver
  *
@@ -8,325 +9,325 @@
  *
  * Manage Altera FPGA firmware that is loaded over SPI using the passive
  * serial configuration method.
- * Firmware must be in binary "rbf" format.
+ * Firmware must be in binary "rbf" क्रमmat.
  * Works on Arria 10, Cyclone V and Stratix V. Should work on Cyclone series.
  * May work on other Altera FPGAs.
  */
 
-#include <linux/bitrev.h>
-#include <linux/delay.h>
-#include <linux/fpga/fpga-mgr.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/of_gpio.h>
-#include <linux/of_device.h>
-#include <linux/spi/spi.h>
-#include <linux/sizes.h>
+#समावेश <linux/bitrev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fpga/fpga-mgr.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/of_device.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/sizes.h>
 
-enum altera_ps_devtype {
+क्रमागत altera_ps_devtype अणु
 	CYCLONE5,
 	ARRIA10,
-};
+पूर्ण;
 
-struct altera_ps_data {
-	enum altera_ps_devtype devtype;
-	int status_wait_min_us;
-	int status_wait_max_us;
-	int t_cfg_us;
-	int t_st2ck_us;
-};
+काष्ठा altera_ps_data अणु
+	क्रमागत altera_ps_devtype devtype;
+	पूर्णांक status_रुको_min_us;
+	पूर्णांक status_रुको_max_us;
+	पूर्णांक t_cfg_us;
+	पूर्णांक t_st2ck_us;
+पूर्ण;
 
-struct altera_ps_conf {
-	struct gpio_desc *config;
-	struct gpio_desc *confd;
-	struct gpio_desc *status;
-	struct spi_device *spi;
-	const struct altera_ps_data *data;
+काष्ठा altera_ps_conf अणु
+	काष्ठा gpio_desc *config;
+	काष्ठा gpio_desc *confd;
+	काष्ठा gpio_desc *status;
+	काष्ठा spi_device *spi;
+	स्थिर काष्ठा altera_ps_data *data;
 	u32 info_flags;
-	char mgr_name[64];
-};
+	अक्षर mgr_name[64];
+पूर्ण;
 
 /*          |   Arria 10  |   Cyclone5  |   Stratix5  |
  * t_CF2ST0 |     [; 600] |     [; 600] |     [; 600] |ns
- * t_CFG    |        [2;] |        [2;] |        [2;] |µs
- * t_STATUS | [268; 3000] | [268; 1506] | [268; 1506] |µs
- * t_CF2ST1 |    [; 3000] |    [; 1506] |    [; 1506] |µs
- * t_CF2CK  |     [3010;] |     [1506;] |     [1506;] |µs
- * t_ST2CK  |       [10;] |        [2;] |        [2;] |µs
- * t_CD2UM  |  [175; 830] |  [175; 437] |  [175; 437] |µs
+ * t_CFG    |        [2;] |        [2;] |        [2;] |तगs
+ * t_STATUS | [268; 3000] | [268; 1506] | [268; 1506] |तगs
+ * t_CF2ST1 |    [; 3000] |    [; 1506] |    [; 1506] |तगs
+ * t_CF2CK  |     [3010;] |     [1506;] |     [1506;] |तगs
+ * t_ST2CK  |       [10;] |        [2;] |        [2;] |तगs
+ * t_CD2UM  |  [175; 830] |  [175; 437] |  [175; 437] |तगs
  */
-static struct altera_ps_data c5_data = {
-	/* these values for Cyclone5 are compatible with Stratix5 */
+अटल काष्ठा altera_ps_data c5_data = अणु
+	/* these values क्रम Cyclone5 are compatible with Stratix5 */
 	.devtype = CYCLONE5,
-	.status_wait_min_us = 268,
-	.status_wait_max_us = 1506,
+	.status_रुको_min_us = 268,
+	.status_रुको_max_us = 1506,
 	.t_cfg_us = 2,
 	.t_st2ck_us = 2,
-};
+पूर्ण;
 
-static struct altera_ps_data a10_data = {
+अटल काष्ठा altera_ps_data a10_data = अणु
 	.devtype = ARRIA10,
-	.status_wait_min_us = 268,  /* min(t_STATUS) */
-	.status_wait_max_us = 3000, /* max(t_CF2ST1) */
-	.t_cfg_us = 2,    /* max { min(t_CFG), max(tCF2ST0) } */
+	.status_रुको_min_us = 268,  /* min(t_STATUS) */
+	.status_रुको_max_us = 3000, /* max(t_CF2ST1) */
+	.t_cfg_us = 2,    /* max अणु min(t_CFG), max(tCF2ST0) पूर्ण */
 	.t_st2ck_us = 10, /* min(t_ST2CK) */
-};
+पूर्ण;
 
-/* Array index is enum altera_ps_devtype */
-static const struct altera_ps_data *altera_ps_data_map[] = {
+/* Array index is क्रमागत altera_ps_devtype */
+अटल स्थिर काष्ठा altera_ps_data *altera_ps_data_map[] = अणु
 	&c5_data,
 	&a10_data,
-};
+पूर्ण;
 
-static const struct of_device_id of_ef_match[] = {
-	{ .compatible = "altr,fpga-passive-serial", .data = &c5_data },
-	{ .compatible = "altr,fpga-arria10-passive-serial", .data = &a10_data },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id of_ef_match[] = अणु
+	अणु .compatible = "altr,fpga-passive-serial", .data = &c5_data पूर्ण,
+	अणु .compatible = "altr,fpga-arria10-passive-serial", .data = &a10_data पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_ef_match);
 
-static enum fpga_mgr_states altera_ps_state(struct fpga_manager *mgr)
-{
-	struct altera_ps_conf *conf = mgr->priv;
+अटल क्रमागत fpga_mgr_states altera_ps_state(काष्ठा fpga_manager *mgr)
+अणु
+	काष्ठा altera_ps_conf *conf = mgr->priv;
 
-	if (gpiod_get_value_cansleep(conf->status))
-		return FPGA_MGR_STATE_RESET;
+	अगर (gpiod_get_value_cansleep(conf->status))
+		वापस FPGA_MGR_STATE_RESET;
 
-	return FPGA_MGR_STATE_UNKNOWN;
-}
+	वापस FPGA_MGR_STATE_UNKNOWN;
+पूर्ण
 
-static inline void altera_ps_delay(int delay_us)
-{
-	if (delay_us > 10)
+अटल अंतरभूत व्योम altera_ps_delay(पूर्णांक delay_us)
+अणु
+	अगर (delay_us > 10)
 		usleep_range(delay_us, delay_us + 5);
-	else
+	अन्यथा
 		udelay(delay_us);
-}
+पूर्ण
 
-static int altera_ps_write_init(struct fpga_manager *mgr,
-				struct fpga_image_info *info,
-				const char *buf, size_t count)
-{
-	struct altera_ps_conf *conf = mgr->priv;
-	int min, max, waits;
-	int i;
+अटल पूर्णांक altera_ps_ग_लिखो_init(काष्ठा fpga_manager *mgr,
+				काष्ठा fpga_image_info *info,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा altera_ps_conf *conf = mgr->priv;
+	पूर्णांक min, max, रुकोs;
+	पूर्णांक i;
 
 	conf->info_flags = info->flags;
 
-	if (info->flags & FPGA_MGR_PARTIAL_RECONFIG) {
+	अगर (info->flags & FPGA_MGR_PARTIAL_RECONFIG) अणु
 		dev_err(&mgr->dev, "Partial reconfiguration not supported.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	gpiod_set_value_cansleep(conf->config, 1);
 
-	/* wait min reset pulse time */
+	/* रुको min reset pulse समय */
 	altera_ps_delay(conf->data->t_cfg_us);
 
-	if (!gpiod_get_value_cansleep(conf->status)) {
+	अगर (!gpiod_get_value_cansleep(conf->status)) अणु
 		dev_err(&mgr->dev, "Status pin failed to show a reset\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	gpiod_set_value_cansleep(conf->config, 0);
 
-	min = conf->data->status_wait_min_us;
-	max = conf->data->status_wait_max_us;
-	waits = max / min;
-	if (max % min)
-		waits++;
+	min = conf->data->status_रुको_min_us;
+	max = conf->data->status_रुको_max_us;
+	रुकोs = max / min;
+	अगर (max % min)
+		रुकोs++;
 
-	/* wait for max { max(t_STATUS), max(t_CF2ST1) } */
-	for (i = 0; i < waits; i++) {
+	/* रुको क्रम max अणु max(t_STATUS), max(t_CF2ST1) पूर्ण */
+	क्रम (i = 0; i < रुकोs; i++) अणु
 		usleep_range(min, min + 10);
-		if (!gpiod_get_value_cansleep(conf->status)) {
-			/* wait for min(t_ST2CK)*/
+		अगर (!gpiod_get_value_cansleep(conf->status)) अणु
+			/* रुको क्रम min(t_ST2CK)*/
 			altera_ps_delay(conf->data->t_st2ck_us);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	dev_err(&mgr->dev, "Status pin not ready.\n");
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static void rev_buf(char *buf, size_t len)
-{
+अटल व्योम rev_buf(अक्षर *buf, माप_प्रकार len)
+अणु
 	u32 *fw32 = (u32 *)buf;
-	size_t extra_bytes = (len & 0x03);
-	const u32 *fw_end = (u32 *)(buf + len - extra_bytes);
+	माप_प्रकार extra_bytes = (len & 0x03);
+	स्थिर u32 *fw_end = (u32 *)(buf + len - extra_bytes);
 
 	/* set buffer to lsb first */
-	while (fw32 < fw_end) {
+	जबतक (fw32 < fw_end) अणु
 		*fw32 = bitrev8x4(*fw32);
 		fw32++;
-	}
+	पूर्ण
 
-	if (extra_bytes) {
-		buf = (char *)fw_end;
-		while (extra_bytes) {
+	अगर (extra_bytes) अणु
+		buf = (अक्षर *)fw_end;
+		जबतक (extra_bytes) अणु
 			*buf = bitrev8(*buf);
 			buf++;
 			extra_bytes--;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int altera_ps_write(struct fpga_manager *mgr, const char *buf,
-			   size_t count)
-{
-	struct altera_ps_conf *conf = mgr->priv;
-	const char *fw_data = buf;
-	const char *fw_data_end = fw_data + count;
+अटल पूर्णांक altera_ps_ग_लिखो(काष्ठा fpga_manager *mgr, स्थिर अक्षर *buf,
+			   माप_प्रकार count)
+अणु
+	काष्ठा altera_ps_conf *conf = mgr->priv;
+	स्थिर अक्षर *fw_data = buf;
+	स्थिर अक्षर *fw_data_end = fw_data + count;
 
-	while (fw_data < fw_data_end) {
-		int ret;
-		size_t stride = min_t(size_t, fw_data_end - fw_data, SZ_4K);
+	जबतक (fw_data < fw_data_end) अणु
+		पूर्णांक ret;
+		माप_प्रकार stride = min_t(माप_प्रकार, fw_data_end - fw_data, SZ_4K);
 
-		if (!(conf->info_flags & FPGA_MGR_BITSTREAM_LSB_FIRST))
-			rev_buf((char *)fw_data, stride);
+		अगर (!(conf->info_flags & FPGA_MGR_BITSTREAM_LSB_FIRST))
+			rev_buf((अक्षर *)fw_data, stride);
 
-		ret = spi_write(conf->spi, fw_data, stride);
-		if (ret) {
+		ret = spi_ग_लिखो(conf->spi, fw_data, stride);
+		अगर (ret) अणु
 			dev_err(&mgr->dev, "spi error in firmware write: %d\n",
 				ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		fw_data += stride;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int altera_ps_write_complete(struct fpga_manager *mgr,
-				    struct fpga_image_info *info)
-{
-	struct altera_ps_conf *conf = mgr->priv;
-	static const char dummy[] = {0};
-	int ret;
+अटल पूर्णांक altera_ps_ग_लिखो_complete(काष्ठा fpga_manager *mgr,
+				    काष्ठा fpga_image_info *info)
+अणु
+	काष्ठा altera_ps_conf *conf = mgr->priv;
+	अटल स्थिर अक्षर dummy[] = अणु0पूर्ण;
+	पूर्णांक ret;
 
-	if (gpiod_get_value_cansleep(conf->status)) {
+	अगर (gpiod_get_value_cansleep(conf->status)) अणु
 		dev_err(&mgr->dev, "Error during configuration.\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (conf->confd) {
-		if (!gpiod_get_raw_value_cansleep(conf->confd)) {
+	अगर (conf->confd) अणु
+		अगर (!gpiod_get_raw_value_cansleep(conf->confd)) अणु
 			dev_err(&mgr->dev, "CONF_DONE is inactive!\n");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * After CONF_DONE goes high, send two additional falling edges on DCLK
 	 * to begin initialization and enter user mode
 	 */
-	ret = spi_write(conf->spi, dummy, 1);
-	if (ret) {
+	ret = spi_ग_लिखो(conf->spi, dummy, 1);
+	अगर (ret) अणु
 		dev_err(&mgr->dev, "spi error during end sequence: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct fpga_manager_ops altera_ps_ops = {
+अटल स्थिर काष्ठा fpga_manager_ops altera_ps_ops = अणु
 	.state = altera_ps_state,
-	.write_init = altera_ps_write_init,
-	.write = altera_ps_write,
-	.write_complete = altera_ps_write_complete,
-};
+	.ग_लिखो_init = altera_ps_ग_लिखो_init,
+	.ग_लिखो = altera_ps_ग_लिखो,
+	.ग_लिखो_complete = altera_ps_ग_लिखो_complete,
+पूर्ण;
 
-static const struct altera_ps_data *id_to_data(const struct spi_device_id *id)
-{
-	kernel_ulong_t devtype = id->driver_data;
-	const struct altera_ps_data *data;
+अटल स्थिर काष्ठा altera_ps_data *id_to_data(स्थिर काष्ठा spi_device_id *id)
+अणु
+	kernel_uदीर्घ_t devtype = id->driver_data;
+	स्थिर काष्ठा altera_ps_data *data;
 
 	/* someone added a altera_ps_devtype without adding to the map array */
-	if (devtype >= ARRAY_SIZE(altera_ps_data_map))
-		return NULL;
+	अगर (devtype >= ARRAY_SIZE(altera_ps_data_map))
+		वापस शून्य;
 
 	data = altera_ps_data_map[devtype];
-	if (!data || data->devtype != devtype)
-		return NULL;
+	अगर (!data || data->devtype != devtype)
+		वापस शून्य;
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static int altera_ps_probe(struct spi_device *spi)
-{
-	struct altera_ps_conf *conf;
-	const struct of_device_id *of_id;
-	struct fpga_manager *mgr;
+अटल पूर्णांक altera_ps_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा altera_ps_conf *conf;
+	स्थिर काष्ठा of_device_id *of_id;
+	काष्ठा fpga_manager *mgr;
 
-	conf = devm_kzalloc(&spi->dev, sizeof(*conf), GFP_KERNEL);
-	if (!conf)
-		return -ENOMEM;
+	conf = devm_kzalloc(&spi->dev, माप(*conf), GFP_KERNEL);
+	अगर (!conf)
+		वापस -ENOMEM;
 
-	if (spi->dev.of_node) {
+	अगर (spi->dev.of_node) अणु
 		of_id = of_match_device(of_ef_match, &spi->dev);
-		if (!of_id)
-			return -ENODEV;
+		अगर (!of_id)
+			वापस -ENODEV;
 		conf->data = of_id->data;
-	} else {
+	पूर्ण अन्यथा अणु
 		conf->data = id_to_data(spi_get_device_id(spi));
-		if (!conf->data)
-			return -ENODEV;
-	}
+		अगर (!conf->data)
+			वापस -ENODEV;
+	पूर्ण
 
 	conf->spi = spi;
 	conf->config = devm_gpiod_get(&spi->dev, "nconfig", GPIOD_OUT_LOW);
-	if (IS_ERR(conf->config)) {
+	अगर (IS_ERR(conf->config)) अणु
 		dev_err(&spi->dev, "Failed to get config gpio: %ld\n",
 			PTR_ERR(conf->config));
-		return PTR_ERR(conf->config);
-	}
+		वापस PTR_ERR(conf->config);
+	पूर्ण
 
 	conf->status = devm_gpiod_get(&spi->dev, "nstat", GPIOD_IN);
-	if (IS_ERR(conf->status)) {
+	अगर (IS_ERR(conf->status)) अणु
 		dev_err(&spi->dev, "Failed to get status gpio: %ld\n",
 			PTR_ERR(conf->status));
-		return PTR_ERR(conf->status);
-	}
+		वापस PTR_ERR(conf->status);
+	पूर्ण
 
 	conf->confd = devm_gpiod_get_optional(&spi->dev, "confd", GPIOD_IN);
-	if (IS_ERR(conf->confd)) {
+	अगर (IS_ERR(conf->confd)) अणु
 		dev_err(&spi->dev, "Failed to get confd gpio: %ld\n",
 			PTR_ERR(conf->confd));
-		return PTR_ERR(conf->confd);
-	} else if (!conf->confd) {
+		वापस PTR_ERR(conf->confd);
+	पूर्ण अन्यथा अगर (!conf->confd) अणु
 		dev_warn(&spi->dev, "Not using confd gpio");
-	}
+	पूर्ण
 
 	/* Register manager with unique name */
-	snprintf(conf->mgr_name, sizeof(conf->mgr_name), "%s %s",
+	snम_लिखो(conf->mgr_name, माप(conf->mgr_name), "%s %s",
 		 dev_driver_string(&spi->dev), dev_name(&spi->dev));
 
 	mgr = devm_fpga_mgr_create(&spi->dev, conf->mgr_name,
 				   &altera_ps_ops, conf);
-	if (!mgr)
-		return -ENOMEM;
+	अगर (!mgr)
+		वापस -ENOMEM;
 
-	return devm_fpga_mgr_register(&spi->dev, mgr);
-}
+	वापस devm_fpga_mgr_रेजिस्टर(&spi->dev, mgr);
+पूर्ण
 
-static const struct spi_device_id altera_ps_spi_ids[] = {
-	{ "cyclone-ps-spi", CYCLONE5 },
-	{ "fpga-passive-serial", CYCLONE5 },
-	{ "fpga-arria10-passive-serial", ARRIA10 },
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id altera_ps_spi_ids[] = अणु
+	अणु "cyclone-ps-spi", CYCLONE5 पूर्ण,
+	अणु "fpga-passive-serial", CYCLONE5 पूर्ण,
+	अणु "fpga-arria10-passive-serial", ARRIA10 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, altera_ps_spi_ids);
 
-static struct spi_driver altera_ps_driver = {
-	.driver = {
+अटल काष्ठा spi_driver altera_ps_driver = अणु
+	.driver = अणु
 		.name = "altera-ps-spi",
 		.owner = THIS_MODULE,
 		.of_match_table = of_match_ptr(of_ef_match),
-	},
+	पूर्ण,
 	.id_table = altera_ps_spi_ids,
 	.probe = altera_ps_probe,
-};
+पूर्ण;
 
 module_spi_driver(altera_ps_driver)
 

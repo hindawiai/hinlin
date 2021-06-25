@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * RZ/A1 Core CPG Clocks
  *
@@ -6,96 +7,96 @@
  * Copyright (C) 2014 Wolfram Sang, Sang Engineering <wsa@sang-engineering.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clk/renesas.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clk/renesas.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/slab.h>
 
-struct rz_cpg {
-	struct clk_onecell_data data;
-	void __iomem *reg;
-};
+काष्ठा rz_cpg अणु
+	काष्ठा clk_onecell_data data;
+	व्योम __iomem *reg;
+पूर्ण;
 
-#define CPG_FRQCR	0x10
-#define CPG_FRQCR2	0x14
+#घोषणा CPG_FRQCR	0x10
+#घोषणा CPG_FRQCR2	0x14
 
-#define PPR0		0xFCFE3200
-#define PIBC0		0xFCFE7000
+#घोषणा PPR0		0xFCFE3200
+#घोषणा PIBC0		0xFCFE7000
 
-#define MD_CLK(x)	((x >> 2) & 1)	/* P0_2 */
+#घोषणा MD_CLK(x)	((x >> 2) & 1)	/* P0_2 */
 
 /* -----------------------------------------------------------------------------
  * Initialization
  */
 
-static u16 __init rz_cpg_read_mode_pins(void)
-{
-	void __iomem *ppr0, *pibc0;
+अटल u16 __init rz_cpg_पढ़ो_mode_pins(व्योम)
+अणु
+	व्योम __iomem *ppr0, *pibc0;
 	u16 modes;
 
 	ppr0 = ioremap(PPR0, 2);
 	pibc0 = ioremap(PIBC0, 2);
 	BUG_ON(!ppr0 || !pibc0);
-	iowrite16(4, pibc0);	/* enable input buffer */
-	modes = ioread16(ppr0);
+	ioग_लिखो16(4, pibc0);	/* enable input buffer */
+	modes = ioपढ़ो16(ppr0);
 	iounmap(ppr0);
 	iounmap(pibc0);
 
-	return modes;
-}
+	वापस modes;
+पूर्ण
 
-static struct clk * __init
-rz_cpg_register_clock(struct device_node *np, struct rz_cpg *cpg, const char *name)
-{
+अटल काष्ठा clk * __init
+rz_cpg_रेजिस्टर_घड़ी(काष्ठा device_node *np, काष्ठा rz_cpg *cpg, स्थिर अक्षर *name)
+अणु
 	u32 val;
-	unsigned mult;
-	static const unsigned frqcr_tab[4] = { 3, 2, 0, 1 };
+	अचिन्हित mult;
+	अटल स्थिर अचिन्हित frqcr_tab[4] = अणु 3, 2, 0, 1 पूर्ण;
 
-	if (strcmp(name, "pll") == 0) {
-		unsigned int cpg_mode = MD_CLK(rz_cpg_read_mode_pins());
-		const char *parent_name = of_clk_get_parent_name(np, cpg_mode);
+	अगर (म_भेद(name, "pll") == 0) अणु
+		अचिन्हित पूर्णांक cpg_mode = MD_CLK(rz_cpg_पढ़ो_mode_pins());
+		स्थिर अक्षर *parent_name = of_clk_get_parent_name(np, cpg_mode);
 
 		mult = cpg_mode ? (32 / 4) : 30;
 
-		return clk_register_fixed_factor(NULL, name, parent_name, 0, mult, 1);
-	}
+		वापस clk_रेजिस्टर_fixed_factor(शून्य, name, parent_name, 0, mult, 1);
+	पूर्ण
 
-	/* If mapping regs failed, skip non-pll clocks. System will boot anyhow */
-	if (!cpg->reg)
-		return ERR_PTR(-ENXIO);
+	/* If mapping regs failed, skip non-pll घड़ीs. System will boot anyhow */
+	अगर (!cpg->reg)
+		वापस ERR_PTR(-ENXIO);
 
-	/* FIXME:"i" and "g" are variable clocks with non-integer dividers (e.g. 2/3)
-	 * and the constraint that always g <= i. To get the rz platform started,
+	/* FIXME:"i" and "g" are variable घड़ीs with non-पूर्णांकeger भागiders (e.g. 2/3)
+	 * and the स्थिरraपूर्णांक that always g <= i. To get the rz platक्रमm started,
 	 * let them run at fixed current speed and implement the details later.
 	 */
-	if (strcmp(name, "i") == 0)
-		val = (readl(cpg->reg + CPG_FRQCR) >> 8) & 3;
-	else if (strcmp(name, "g") == 0)
-		val = readl(cpg->reg + CPG_FRQCR2) & 3;
-	else
-		return ERR_PTR(-EINVAL);
+	अगर (म_भेद(name, "i") == 0)
+		val = (पढ़ोl(cpg->reg + CPG_FRQCR) >> 8) & 3;
+	अन्यथा अगर (म_भेद(name, "g") == 0)
+		val = पढ़ोl(cpg->reg + CPG_FRQCR2) & 3;
+	अन्यथा
+		वापस ERR_PTR(-EINVAL);
 
 	mult = frqcr_tab[val];
-	return clk_register_fixed_factor(NULL, name, "pll", 0, mult, 3);
-}
+	वापस clk_रेजिस्टर_fixed_factor(शून्य, name, "pll", 0, mult, 3);
+पूर्ण
 
-static void __init rz_cpg_clocks_init(struct device_node *np)
-{
-	struct rz_cpg *cpg;
-	struct clk **clks;
-	unsigned i;
-	int num_clks;
+अटल व्योम __init rz_cpg_घड़ीs_init(काष्ठा device_node *np)
+अणु
+	काष्ठा rz_cpg *cpg;
+	काष्ठा clk **clks;
+	अचिन्हित i;
+	पूर्णांक num_clks;
 
 	num_clks = of_property_count_strings(np, "clock-output-names");
-	if (WARN(num_clks <= 0, "can't count CPG clocks\n"))
-		return;
+	अगर (WARN(num_clks <= 0, "can't count CPG clocks\n"))
+		वापस;
 
-	cpg = kzalloc(sizeof(*cpg), GFP_KERNEL);
-	clks = kcalloc(num_clks, sizeof(*clks), GFP_KERNEL);
+	cpg = kzalloc(माप(*cpg), GFP_KERNEL);
+	clks = kसुस्मृति(num_clks, माप(*clks), GFP_KERNEL);
 	BUG_ON(!cpg || !clks);
 
 	cpg->data.clks = clks;
@@ -103,22 +104,22 @@ static void __init rz_cpg_clocks_init(struct device_node *np)
 
 	cpg->reg = of_iomap(np, 0);
 
-	for (i = 0; i < num_clks; ++i) {
-		const char *name;
-		struct clk *clk;
+	क्रम (i = 0; i < num_clks; ++i) अणु
+		स्थिर अक्षर *name;
+		काष्ठा clk *clk;
 
-		of_property_read_string_index(np, "clock-output-names", i, &name);
+		of_property_पढ़ो_string_index(np, "clock-output-names", i, &name);
 
-		clk = rz_cpg_register_clock(np, cpg, name);
-		if (IS_ERR(clk))
+		clk = rz_cpg_रेजिस्टर_घड़ी(np, cpg, name);
+		अगर (IS_ERR(clk))
 			pr_err("%s: failed to register %pOFn %s clock (%ld)\n",
 			       __func__, np, name, PTR_ERR(clk));
-		else
+		अन्यथा
 			cpg->data.clks[i] = clk;
-	}
+	पूर्ण
 
 	of_clk_add_provider(np, of_clk_src_onecell_get, &cpg->data);
 
-	cpg_mstp_add_clk_domain(np);
-}
-CLK_OF_DECLARE(rz_cpg_clks, "renesas,rz-cpg-clocks", rz_cpg_clocks_init);
+	cpg_mstp_add_clk_करोमुख्य(np);
+पूर्ण
+CLK_OF_DECLARE(rz_cpg_clks, "renesas,rz-cpg-clocks", rz_cpg_घड़ीs_init);

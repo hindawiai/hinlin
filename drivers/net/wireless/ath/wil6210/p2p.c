@@ -1,379 +1,380 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2014-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  */
 
-#include "wil6210.h"
-#include "wmi.h"
+#समावेश "wil6210.h"
+#समावेश "wmi.h"
 
-#define P2P_WILDCARD_SSID "DIRECT-"
-#define P2P_DMG_SOCIAL_CHANNEL 2
-#define P2P_SEARCH_DURATION_MS 500
-#define P2P_DEFAULT_BI 100
+#घोषणा P2P_WILDCARD_SSID "DIRECT-"
+#घोषणा P2P_DMG_SOCIAL_CHANNEL 2
+#घोषणा P2P_SEARCH_DURATION_MS 500
+#घोषणा P2P_DEFAULT_BI 100
 
-static int wil_p2p_start_listen(struct wil6210_vif *vif)
-{
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	struct wil_p2p_info *p2p = &vif->p2p;
+अटल पूर्णांक wil_p2p_start_listen(काष्ठा wil6210_vअगर *vअगर)
+अणु
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	काष्ठा wil_p2p_info *p2p = &vअगर->p2p;
 	u8 channel = p2p->listen_chan.hw_value;
-	int rc;
+	पूर्णांक rc;
 
-	lockdep_assert_held(&wil->mutex);
+	lockdep_निश्चित_held(&wil->mutex);
 
-	rc = wmi_p2p_cfg(vif, channel, P2P_DEFAULT_BI);
-	if (rc) {
+	rc = wmi_p2p_cfg(vअगर, channel, P2P_DEFAULT_BI);
+	अगर (rc) अणु
 		wil_err(wil, "wmi_p2p_cfg failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rc = wmi_set_ssid(vif, strlen(P2P_WILDCARD_SSID), P2P_WILDCARD_SSID);
-	if (rc) {
+	rc = wmi_set_ssid(vअगर, म_माप(P2P_WILDCARD_SSID), P2P_WILDCARD_SSID);
+	अगर (rc) अणु
 		wil_err(wil, "wmi_set_ssid failed\n");
-		goto out_stop;
-	}
+		जाओ out_stop;
+	पूर्ण
 
-	rc = wmi_start_listen(vif);
-	if (rc) {
+	rc = wmi_start_listen(vअगर);
+	अगर (rc) अणु
 		wil_err(wil, "wmi_start_listen failed\n");
-		goto out_stop;
-	}
+		जाओ out_stop;
+	पूर्ण
 
 	INIT_WORK(&p2p->discovery_expired_work, wil_p2p_listen_expired);
-	mod_timer(&p2p->discovery_timer,
-		  jiffies + msecs_to_jiffies(p2p->listen_duration));
+	mod_समयr(&p2p->discovery_समयr,
+		  jअगरfies + msecs_to_jअगरfies(p2p->listen_duration));
 out_stop:
-	if (rc)
-		wmi_stop_discovery(vif);
+	अगर (rc)
+		wmi_stop_discovery(vअगर);
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-bool wil_p2p_is_social_scan(struct cfg80211_scan_request *request)
-{
-	return (request->n_channels == 1) &&
+bool wil_p2p_is_social_scan(काष्ठा cfg80211_scan_request *request)
+अणु
+	वापस (request->n_channels == 1) &&
 	       (request->channels[0]->hw_value == P2P_DMG_SOCIAL_CHANNEL);
-}
+पूर्ण
 
-int wil_p2p_search(struct wil6210_vif *vif,
-		   struct cfg80211_scan_request *request)
-{
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	int rc;
-	struct wil_p2p_info *p2p = &vif->p2p;
+पूर्णांक wil_p2p_search(काष्ठा wil6210_vअगर *vअगर,
+		   काष्ठा cfg80211_scan_request *request)
+अणु
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	पूर्णांक rc;
+	काष्ठा wil_p2p_info *p2p = &vअगर->p2p;
 
 	wil_dbg_misc(wil, "p2p_search: channel %d\n", P2P_DMG_SOCIAL_CHANNEL);
 
-	lockdep_assert_held(&wil->mutex);
+	lockdep_निश्चित_held(&wil->mutex);
 
-	if (p2p->discovery_started) {
+	अगर (p2p->discovery_started) अणु
 		wil_err(wil, "search failed. discovery already ongoing\n");
 		rc = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rc = wmi_p2p_cfg(vif, P2P_DMG_SOCIAL_CHANNEL, P2P_DEFAULT_BI);
-	if (rc) {
+	rc = wmi_p2p_cfg(vअगर, P2P_DMG_SOCIAL_CHANNEL, P2P_DEFAULT_BI);
+	अगर (rc) अणु
 		wil_err(wil, "wmi_p2p_cfg failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rc = wmi_set_ssid(vif, strlen(P2P_WILDCARD_SSID), P2P_WILDCARD_SSID);
-	if (rc) {
+	rc = wmi_set_ssid(vअगर, म_माप(P2P_WILDCARD_SSID), P2P_WILDCARD_SSID);
+	अगर (rc) अणु
 		wil_err(wil, "wmi_set_ssid failed\n");
-		goto out_stop;
-	}
+		जाओ out_stop;
+	पूर्ण
 
 	/* Set application IE to probe request and probe response */
-	rc = wmi_set_ie(vif, WMI_FRAME_PROBE_REQ,
+	rc = wmi_set_ie(vअगर, WMI_FRAME_PROBE_REQ,
 			request->ie_len, request->ie);
-	if (rc) {
+	अगर (rc) अणु
 		wil_err(wil, "wmi_set_ie(WMI_FRAME_PROBE_REQ) failed\n");
-		goto out_stop;
-	}
+		जाओ out_stop;
+	पूर्ण
 
-	/* supplicant doesn't provide Probe Response IEs. As a workaround -
+	/* supplicant करोesn't provide Probe Response IEs. As a workaround -
 	 * re-use Probe Request IEs
 	 */
-	rc = wmi_set_ie(vif, WMI_FRAME_PROBE_RESP,
+	rc = wmi_set_ie(vअगर, WMI_FRAME_PROBE_RESP,
 			request->ie_len, request->ie);
-	if (rc) {
+	अगर (rc) अणु
 		wil_err(wil, "wmi_set_ie(WMI_FRAME_PROBE_RESP) failed\n");
-		goto out_stop;
-	}
+		जाओ out_stop;
+	पूर्ण
 
-	rc = wmi_start_search(vif);
-	if (rc) {
+	rc = wmi_start_search(vअगर);
+	अगर (rc) अणु
 		wil_err(wil, "wmi_start_search failed\n");
-		goto out_stop;
-	}
+		जाओ out_stop;
+	पूर्ण
 
 	p2p->discovery_started = 1;
 	INIT_WORK(&p2p->discovery_expired_work, wil_p2p_search_expired);
-	mod_timer(&p2p->discovery_timer,
-		  jiffies + msecs_to_jiffies(P2P_SEARCH_DURATION_MS));
+	mod_समयr(&p2p->discovery_समयr,
+		  jअगरfies + msecs_to_jअगरfies(P2P_SEARCH_DURATION_MS));
 
 out_stop:
-	if (rc)
-		wmi_stop_discovery(vif);
+	अगर (rc)
+		wmi_stop_discovery(vअगर);
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int wil_p2p_listen(struct wil6210_priv *wil, struct wireless_dev *wdev,
-		   unsigned int duration, struct ieee80211_channel *chan,
+पूर्णांक wil_p2p_listen(काष्ठा wil6210_priv *wil, काष्ठा wireless_dev *wdev,
+		   अचिन्हित पूर्णांक duration, काष्ठा ieee80211_channel *chan,
 		   u64 *cookie)
-{
-	struct wil6210_vif *vif = wdev_to_vif(wil, wdev);
-	struct wil_p2p_info *p2p = &vif->p2p;
-	int rc;
+अणु
+	काष्ठा wil6210_vअगर *vअगर = wdev_to_vअगर(wil, wdev);
+	काष्ठा wil_p2p_info *p2p = &vअगर->p2p;
+	पूर्णांक rc;
 
-	if (!chan)
-		return -EINVAL;
+	अगर (!chan)
+		वापस -EINVAL;
 
 	wil_dbg_misc(wil, "p2p_listen: duration %d\n", duration);
 
 	mutex_lock(&wil->mutex);
 
-	if (p2p->discovery_started) {
+	अगर (p2p->discovery_started) अणु
 		wil_err(wil, "discovery already ongoing\n");
 		rc = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memcpy(&p2p->listen_chan, chan, sizeof(*chan));
+	स_नकल(&p2p->listen_chan, chan, माप(*chan));
 	*cookie = ++p2p->cookie;
 	p2p->listen_duration = duration;
 
-	mutex_lock(&wil->vif_mutex);
-	if (vif->scan_request) {
+	mutex_lock(&wil->vअगर_mutex);
+	अगर (vअगर->scan_request) अणु
 		wil_dbg_misc(wil, "Delaying p2p listen until scan done\n");
 		p2p->pending_listen_wdev = wdev;
 		p2p->discovery_started = 1;
 		rc = 0;
-		mutex_unlock(&wil->vif_mutex);
-		goto out;
-	}
-	mutex_unlock(&wil->vif_mutex);
+		mutex_unlock(&wil->vअगर_mutex);
+		जाओ out;
+	पूर्ण
+	mutex_unlock(&wil->vअगर_mutex);
 
-	rc = wil_p2p_start_listen(vif);
-	if (rc)
-		goto out;
+	rc = wil_p2p_start_listen(vअगर);
+	अगर (rc)
+		जाओ out;
 
 	p2p->discovery_started = 1;
-	if (vif->mid == 0)
+	अगर (vअगर->mid == 0)
 		wil->radio_wdev = wdev;
 
-	cfg80211_ready_on_channel(wdev, *cookie, chan, duration,
+	cfg80211_पढ़ोy_on_channel(wdev, *cookie, chan, duration,
 				  GFP_KERNEL);
 
 out:
 	mutex_unlock(&wil->mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-u8 wil_p2p_stop_discovery(struct wil6210_vif *vif)
-{
-	struct wil_p2p_info *p2p = &vif->p2p;
+u8 wil_p2p_stop_discovery(काष्ठा wil6210_vअगर *vअगर)
+अणु
+	काष्ठा wil_p2p_info *p2p = &vअगर->p2p;
 	u8 started = p2p->discovery_started;
 
-	if (p2p->discovery_started) {
-		if (p2p->pending_listen_wdev) {
+	अगर (p2p->discovery_started) अणु
+		अगर (p2p->pending_listen_wdev) अणु
 			/* discovery not really started, only pending */
-			p2p->pending_listen_wdev = NULL;
-		} else {
-			del_timer_sync(&p2p->discovery_timer);
-			wmi_stop_discovery(vif);
-		}
+			p2p->pending_listen_wdev = शून्य;
+		पूर्ण अन्यथा अणु
+			del_समयr_sync(&p2p->discovery_समयr);
+			wmi_stop_discovery(vअगर);
+		पूर्ण
 		p2p->discovery_started = 0;
-	}
+	पूर्ण
 
-	return started;
-}
+	वापस started;
+पूर्ण
 
-int wil_p2p_cancel_listen(struct wil6210_vif *vif, u64 cookie)
-{
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	struct wil_p2p_info *p2p = &vif->p2p;
+पूर्णांक wil_p2p_cancel_listen(काष्ठा wil6210_vअगर *vअगर, u64 cookie)
+अणु
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	काष्ठा wil_p2p_info *p2p = &vअगर->p2p;
 	u8 started;
 
 	mutex_lock(&wil->mutex);
 
-	if (cookie != p2p->cookie) {
+	अगर (cookie != p2p->cookie) अणु
 		wil_info(wil, "Cookie mismatch: 0x%016llx vs. 0x%016llx\n",
 			 p2p->cookie, cookie);
 		mutex_unlock(&wil->mutex);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	started = wil_p2p_stop_discovery(vif);
+	started = wil_p2p_stop_discovery(vअगर);
 
 	mutex_unlock(&wil->mutex);
 
-	if (!started) {
+	अगर (!started) अणु
 		wil_err(wil, "listen not started\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	mutex_lock(&wil->vif_mutex);
-	cfg80211_remain_on_channel_expired(vif_to_radio_wdev(wil, vif),
+	mutex_lock(&wil->vअगर_mutex);
+	cfg80211_reमुख्य_on_channel_expired(vअगर_to_radio_wdev(wil, vअगर),
 					   p2p->cookie,
 					   &p2p->listen_chan,
 					   GFP_KERNEL);
-	if (vif->mid == 0)
-		wil->radio_wdev = wil->main_ndev->ieee80211_ptr;
-	mutex_unlock(&wil->vif_mutex);
-	return 0;
-}
+	अगर (vअगर->mid == 0)
+		wil->radio_wdev = wil->मुख्य_ndev->ieee80211_ptr;
+	mutex_unlock(&wil->vअगर_mutex);
+	वापस 0;
+पूर्ण
 
-void wil_p2p_listen_expired(struct work_struct *work)
-{
-	struct wil_p2p_info *p2p = container_of(work,
-			struct wil_p2p_info, discovery_expired_work);
-	struct wil6210_vif *vif = container_of(p2p,
-			struct wil6210_vif, p2p);
-	struct wil6210_priv *wil = vif_to_wil(vif);
+व्योम wil_p2p_listen_expired(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wil_p2p_info *p2p = container_of(work,
+			काष्ठा wil_p2p_info, discovery_expired_work);
+	काष्ठा wil6210_vअगर *vअगर = container_of(p2p,
+			काष्ठा wil6210_vअगर, p2p);
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
 	u8 started;
 
 	wil_dbg_misc(wil, "p2p_listen_expired\n");
 
 	mutex_lock(&wil->mutex);
-	started = wil_p2p_stop_discovery(vif);
+	started = wil_p2p_stop_discovery(vअगर);
 	mutex_unlock(&wil->mutex);
 
-	if (!started)
-		return;
+	अगर (!started)
+		वापस;
 
-	mutex_lock(&wil->vif_mutex);
-	cfg80211_remain_on_channel_expired(vif_to_radio_wdev(wil, vif),
+	mutex_lock(&wil->vअगर_mutex);
+	cfg80211_reमुख्य_on_channel_expired(vअगर_to_radio_wdev(wil, vअगर),
 					   p2p->cookie,
 					   &p2p->listen_chan,
 					   GFP_KERNEL);
-	if (vif->mid == 0)
-		wil->radio_wdev = wil->main_ndev->ieee80211_ptr;
-	mutex_unlock(&wil->vif_mutex);
-}
+	अगर (vअगर->mid == 0)
+		wil->radio_wdev = wil->मुख्य_ndev->ieee80211_ptr;
+	mutex_unlock(&wil->vअगर_mutex);
+पूर्ण
 
-void wil_p2p_search_expired(struct work_struct *work)
-{
-	struct wil_p2p_info *p2p = container_of(work,
-			struct wil_p2p_info, discovery_expired_work);
-	struct wil6210_vif *vif = container_of(p2p,
-			struct wil6210_vif, p2p);
-	struct wil6210_priv *wil = vif_to_wil(vif);
+व्योम wil_p2p_search_expired(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wil_p2p_info *p2p = container_of(work,
+			काष्ठा wil_p2p_info, discovery_expired_work);
+	काष्ठा wil6210_vअगर *vअगर = container_of(p2p,
+			काष्ठा wil6210_vअगर, p2p);
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
 	u8 started;
 
 	wil_dbg_misc(wil, "p2p_search_expired\n");
 
 	mutex_lock(&wil->mutex);
-	started = wil_p2p_stop_discovery(vif);
+	started = wil_p2p_stop_discovery(vअगर);
 	mutex_unlock(&wil->mutex);
 
-	if (started) {
-		struct cfg80211_scan_info info = {
-			.aborted = false,
-		};
+	अगर (started) अणु
+		काष्ठा cfg80211_scan_info info = अणु
+			.पातed = false,
+		पूर्ण;
 
-		mutex_lock(&wil->vif_mutex);
-		if (vif->scan_request) {
-			cfg80211_scan_done(vif->scan_request, &info);
-			vif->scan_request = NULL;
-			if (vif->mid == 0)
+		mutex_lock(&wil->vअगर_mutex);
+		अगर (vअगर->scan_request) अणु
+			cfg80211_scan_करोne(vअगर->scan_request, &info);
+			vअगर->scan_request = शून्य;
+			अगर (vअगर->mid == 0)
 				wil->radio_wdev =
-					wil->main_ndev->ieee80211_ptr;
-		}
-		mutex_unlock(&wil->vif_mutex);
-	}
-}
+					wil->मुख्य_ndev->ieee80211_ptr;
+		पूर्ण
+		mutex_unlock(&wil->vअगर_mutex);
+	पूर्ण
+पूर्ण
 
-void wil_p2p_delayed_listen_work(struct work_struct *work)
-{
-	struct wil_p2p_info *p2p = container_of(work,
-			struct wil_p2p_info, delayed_listen_work);
-	struct wil6210_vif *vif = container_of(p2p,
-			struct wil6210_vif, p2p);
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	int rc;
+व्योम wil_p2p_delayed_listen_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wil_p2p_info *p2p = container_of(work,
+			काष्ठा wil_p2p_info, delayed_listen_work);
+	काष्ठा wil6210_vअगर *vअगर = container_of(p2p,
+			काष्ठा wil6210_vअगर, p2p);
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	पूर्णांक rc;
 
 	mutex_lock(&wil->mutex);
 
 	wil_dbg_misc(wil, "Checking delayed p2p listen\n");
-	if (!p2p->discovery_started || !p2p->pending_listen_wdev)
-		goto out;
+	अगर (!p2p->discovery_started || !p2p->pending_listen_wdev)
+		जाओ out;
 
-	mutex_lock(&wil->vif_mutex);
-	if (vif->scan_request) {
-		/* another scan started, wait again... */
-		mutex_unlock(&wil->vif_mutex);
-		goto out;
-	}
-	mutex_unlock(&wil->vif_mutex);
+	mutex_lock(&wil->vअगर_mutex);
+	अगर (vअगर->scan_request) अणु
+		/* another scan started, रुको again... */
+		mutex_unlock(&wil->vअगर_mutex);
+		जाओ out;
+	पूर्ण
+	mutex_unlock(&wil->vअगर_mutex);
 
-	rc = wil_p2p_start_listen(vif);
+	rc = wil_p2p_start_listen(vअगर);
 
-	mutex_lock(&wil->vif_mutex);
-	if (rc) {
-		cfg80211_remain_on_channel_expired(p2p->pending_listen_wdev,
+	mutex_lock(&wil->vअगर_mutex);
+	अगर (rc) अणु
+		cfg80211_reमुख्य_on_channel_expired(p2p->pending_listen_wdev,
 						   p2p->cookie,
 						   &p2p->listen_chan,
 						   GFP_KERNEL);
-		if (vif->mid == 0)
-			wil->radio_wdev = wil->main_ndev->ieee80211_ptr;
-	} else {
-		cfg80211_ready_on_channel(p2p->pending_listen_wdev, p2p->cookie,
+		अगर (vअगर->mid == 0)
+			wil->radio_wdev = wil->मुख्य_ndev->ieee80211_ptr;
+	पूर्ण अन्यथा अणु
+		cfg80211_पढ़ोy_on_channel(p2p->pending_listen_wdev, p2p->cookie,
 					  &p2p->listen_chan,
 					  p2p->listen_duration, GFP_KERNEL);
-		if (vif->mid == 0)
+		अगर (vअगर->mid == 0)
 			wil->radio_wdev = p2p->pending_listen_wdev;
-	}
-	p2p->pending_listen_wdev = NULL;
-	mutex_unlock(&wil->vif_mutex);
+	पूर्ण
+	p2p->pending_listen_wdev = शून्य;
+	mutex_unlock(&wil->vअगर_mutex);
 
 out:
 	mutex_unlock(&wil->mutex);
-}
+पूर्ण
 
-void wil_p2p_stop_radio_operations(struct wil6210_priv *wil)
-{
-	struct wil6210_vif *vif = ndev_to_vif(wil->main_ndev);
-	struct wil_p2p_info *p2p = &vif->p2p;
-	struct cfg80211_scan_info info = {
-		.aborted = true,
-	};
+व्योम wil_p2p_stop_radio_operations(काष्ठा wil6210_priv *wil)
+अणु
+	काष्ठा wil6210_vअगर *vअगर = ndev_to_vअगर(wil->मुख्य_ndev);
+	काष्ठा wil_p2p_info *p2p = &vअगर->p2p;
+	काष्ठा cfg80211_scan_info info = अणु
+		.पातed = true,
+	पूर्ण;
 
-	lockdep_assert_held(&wil->mutex);
-	lockdep_assert_held(&wil->vif_mutex);
+	lockdep_निश्चित_held(&wil->mutex);
+	lockdep_निश्चित_held(&wil->vअगर_mutex);
 
-	if (wil->radio_wdev != wil->p2p_wdev)
-		goto out;
+	अगर (wil->radio_wdev != wil->p2p_wdev)
+		जाओ out;
 
-	if (!p2p->discovery_started) {
+	अगर (!p2p->discovery_started) अणु
 		/* Regular scan on the p2p device */
-		if (vif->scan_request &&
-		    vif->scan_request->wdev == wil->p2p_wdev)
-			wil_abort_scan(vif, true);
-		goto out;
-	}
+		अगर (vअगर->scan_request &&
+		    vअगर->scan_request->wdev == wil->p2p_wdev)
+			wil_पात_scan(vअगर, true);
+		जाओ out;
+	पूर्ण
 
 	/* Search or listen on p2p device */
-	mutex_unlock(&wil->vif_mutex);
-	wil_p2p_stop_discovery(vif);
-	mutex_lock(&wil->vif_mutex);
+	mutex_unlock(&wil->vअगर_mutex);
+	wil_p2p_stop_discovery(vअगर);
+	mutex_lock(&wil->vअगर_mutex);
 
-	if (vif->scan_request) {
+	अगर (vअगर->scan_request) अणु
 		/* search */
-		cfg80211_scan_done(vif->scan_request, &info);
-		vif->scan_request = NULL;
-	} else {
+		cfg80211_scan_करोne(vअगर->scan_request, &info);
+		vअगर->scan_request = शून्य;
+	पूर्ण अन्यथा अणु
 		/* listen */
-		cfg80211_remain_on_channel_expired(wil->radio_wdev,
+		cfg80211_reमुख्य_on_channel_expired(wil->radio_wdev,
 						   p2p->cookie,
 						   &p2p->listen_chan,
 						   GFP_KERNEL);
-	}
+	पूर्ण
 
 out:
-	wil->radio_wdev = wil->main_ndev->ieee80211_ptr;
-}
+	wil->radio_wdev = wil->मुख्य_ndev->ieee80211_ptr;
+पूर्ण

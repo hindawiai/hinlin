@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright IBM Corp. 2018
  */
 
-#define KMSG_COMPONENT "qeth"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "qeth"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/ethtool.h>
-#include "qeth_core.h"
+#समावेश <linux/ethtool.h>
+#समावेश "qeth_core.h"
 
 
-#define QETH_TXQ_STAT(_name, _stat) { \
+#घोषणा QETH_TXQ_STAT(_name, _stat) अणु \
 	.name = _name, \
-	.offset = offsetof(struct qeth_out_q_stats, _stat) \
-}
+	.offset = दुरत्व(काष्ठा qeth_out_q_stats, _stat) \
+पूर्ण
 
-#define QETH_CARD_STAT(_name, _stat) { \
+#घोषणा QETH_CARD_STAT(_name, _stat) अणु \
 	.name = _name, \
-	.offset = offsetof(struct qeth_card_stats, _stat) \
-}
+	.offset = दुरत्व(काष्ठा qeth_card_stats, _stat) \
+पूर्ण
 
-struct qeth_stats {
-	char name[ETH_GSTRING_LEN];
-	unsigned int offset;
-};
+काष्ठा qeth_stats अणु
+	अक्षर name[ETH_GSTRING_LEN];
+	अचिन्हित पूर्णांक offset;
+पूर्ण;
 
-static const struct qeth_stats txq_stats[] = {
+अटल स्थिर काष्ठा qeth_stats txq_stats[] = अणु
 	QETH_TXQ_STAT("IO buffers", bufs),
 	QETH_TXQ_STAT("IO buffer elements", buf_elements),
 	QETH_TXQ_STAT("packed IO buffers", bufs_pack),
@@ -37,15 +38,15 @@ static const struct qeth_stats txq_stats[] = {
 	QETH_TXQ_STAT("linearized skbs", skbs_linearized),
 	QETH_TXQ_STAT("linearized+error skbs", skbs_linearized_fail),
 	QETH_TXQ_STAT("TSO bytes", tso_bytes),
-	QETH_TXQ_STAT("Packing mode switches", packing_mode_switch),
+	QETH_TXQ_STAT("Packing mode switches", packing_mode_चयन),
 	QETH_TXQ_STAT("Queue stopped", stopped),
-	QETH_TXQ_STAT("Doorbell", doorbell),
+	QETH_TXQ_STAT("Doorbell", करोorbell),
 	QETH_TXQ_STAT("IRQ for frames", coal_frames),
 	QETH_TXQ_STAT("Completion yield", completion_yield),
-	QETH_TXQ_STAT("Completion timer", completion_timer),
-};
+	QETH_TXQ_STAT("Completion timer", completion_समयr),
+पूर्ण;
 
-static const struct qeth_stats card_stats[] = {
+अटल स्थिर काष्ठा qeth_stats card_stats[] = अणु
 	QETH_CARD_STAT("rx0 IO buffers", rx_bufs),
 	QETH_CARD_STAT("rx0 HW csum skbs", rx_skb_csum),
 	QETH_CARD_STAT("rx0 SG skbs", rx_sg_skbs),
@@ -54,98 +55,98 @@ static const struct qeth_stats card_stats[] = {
 	QETH_CARD_STAT("rx0 dropped, no memory", rx_dropped_nomem),
 	QETH_CARD_STAT("rx0 dropped, bad format", rx_dropped_notsupp),
 	QETH_CARD_STAT("rx0 dropped, runt", rx_dropped_runt),
-};
+पूर्ण;
 
-#define TXQ_STATS_LEN	ARRAY_SIZE(txq_stats)
-#define CARD_STATS_LEN	ARRAY_SIZE(card_stats)
+#घोषणा TXQ_STATS_LEN	ARRAY_SIZE(txq_stats)
+#घोषणा CARD_STATS_LEN	ARRAY_SIZE(card_stats)
 
-static void qeth_add_stat_data(u64 **dst, void *src,
-			       const struct qeth_stats stats[],
-			       unsigned int size)
-{
-	unsigned int i;
-	char *stat;
+अटल व्योम qeth_add_stat_data(u64 **dst, व्योम *src,
+			       स्थिर काष्ठा qeth_stats stats[],
+			       अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक i;
+	अक्षर *stat;
 
-	for (i = 0; i < size; i++) {
-		stat = (char *)src + stats[i].offset;
+	क्रम (i = 0; i < size; i++) अणु
+		stat = (अक्षर *)src + stats[i].offset;
 		**dst = *(u64 *)stat;
 		(*dst)++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qeth_add_stat_strings(u8 **data, const char *prefix,
-				  const struct qeth_stats stats[],
-				  unsigned int size)
-{
-	unsigned int i;
+अटल व्योम qeth_add_stat_strings(u8 **data, स्थिर अक्षर *prefix,
+				  स्थिर काष्ठा qeth_stats stats[],
+				  अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < size; i++) {
-		snprintf(*data, ETH_GSTRING_LEN, "%s%s", prefix, stats[i].name);
+	क्रम (i = 0; i < size; i++) अणु
+		snम_लिखो(*data, ETH_GSTRING_LEN, "%s%s", prefix, stats[i].name);
 		*data += ETH_GSTRING_LEN;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int qeth_get_sset_count(struct net_device *dev, int stringset)
-{
-	struct qeth_card *card = dev->ml_priv;
+अटल पूर्णांक qeth_get_sset_count(काष्ठा net_device *dev, पूर्णांक stringset)
+अणु
+	काष्ठा qeth_card *card = dev->ml_priv;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		return CARD_STATS_LEN +
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		वापस CARD_STATS_LEN +
 		       card->qdio.no_out_queues * TXQ_STATS_LEN;
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void qeth_get_ethtool_stats(struct net_device *dev,
-				   struct ethtool_stats *stats, u64 *data)
-{
-	struct qeth_card *card = dev->ml_priv;
-	unsigned int i;
+अटल व्योम qeth_get_ethtool_stats(काष्ठा net_device *dev,
+				   काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा qeth_card *card = dev->ml_priv;
+	अचिन्हित पूर्णांक i;
 
 	qeth_add_stat_data(&data, &card->stats, card_stats, CARD_STATS_LEN);
-	for (i = 0; i < card->qdio.no_out_queues; i++)
+	क्रम (i = 0; i < card->qdio.no_out_queues; i++)
 		qeth_add_stat_data(&data, &card->qdio.out_qs[i]->stats,
 				   txq_stats, TXQ_STATS_LEN);
-}
+पूर्ण
 
-static void __qeth_set_coalesce(struct net_device *dev,
-				struct qeth_qdio_out_q *queue,
-				struct ethtool_coalesce *coal)
-{
+अटल व्योम __qeth_set_coalesce(काष्ठा net_device *dev,
+				काष्ठा qeth_qdio_out_q *queue,
+				काष्ठा ethtool_coalesce *coal)
+अणु
 	WRITE_ONCE(queue->coalesce_usecs, coal->tx_coalesce_usecs);
 	WRITE_ONCE(queue->max_coalesced_frames, coal->tx_max_coalesced_frames);
 
-	if (coal->tx_coalesce_usecs &&
-	    netif_running(dev) &&
+	अगर (coal->tx_coalesce_usecs &&
+	    netअगर_running(dev) &&
 	    !qeth_out_queue_is_empty(queue))
-		qeth_tx_arm_timer(queue, coal->tx_coalesce_usecs);
-}
+		qeth_tx_arm_समयr(queue, coal->tx_coalesce_usecs);
+पूर्ण
 
-static int qeth_set_coalesce(struct net_device *dev,
-			     struct ethtool_coalesce *coal)
-{
-	struct qeth_card *card = dev->ml_priv;
-	struct qeth_qdio_out_q *queue;
-	unsigned int i;
+अटल पूर्णांक qeth_set_coalesce(काष्ठा net_device *dev,
+			     काष्ठा ethtool_coalesce *coal)
+अणु
+	काष्ठा qeth_card *card = dev->ml_priv;
+	काष्ठा qeth_qdio_out_q *queue;
+	अचिन्हित पूर्णांक i;
 
-	if (!IS_IQD(card))
-		return -EOPNOTSUPP;
+	अगर (!IS_IQD(card))
+		वापस -EOPNOTSUPP;
 
-	if (!coal->tx_coalesce_usecs && !coal->tx_max_coalesced_frames)
-		return -EINVAL;
+	अगर (!coal->tx_coalesce_usecs && !coal->tx_max_coalesced_frames)
+		वापस -EINVAL;
 
-	qeth_for_each_output_queue(card, queue, i)
+	qeth_क्रम_each_output_queue(card, queue, i)
 		__qeth_set_coalesce(dev, queue, coal);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qeth_get_ringparam(struct net_device *dev,
-			       struct ethtool_ringparam *param)
-{
-	struct qeth_card *card = dev->ml_priv;
+अटल व्योम qeth_get_ringparam(काष्ठा net_device *dev,
+			       काष्ठा ethtool_ringparam *param)
+अणु
+	काष्ठा qeth_card *card = dev->ml_priv;
 
 	param->rx_max_pending = QDIO_MAX_BUFFERS_PER_Q;
 	param->rx_mini_max_pending = 0;
@@ -156,47 +157,47 @@ static void qeth_get_ringparam(struct net_device *dev,
 	param->rx_mini_pending = 0;
 	param->rx_jumbo_pending = 0;
 	param->tx_pending = QDIO_MAX_BUFFERS_PER_Q;
-}
+पूर्ण
 
-static void qeth_get_strings(struct net_device *dev, u32 stringset, u8 *data)
-{
-	struct qeth_card *card = dev->ml_priv;
-	char prefix[ETH_GSTRING_LEN] = "";
-	unsigned int i;
+अटल व्योम qeth_get_strings(काष्ठा net_device *dev, u32 stringset, u8 *data)
+अणु
+	काष्ठा qeth_card *card = dev->ml_priv;
+	अक्षर prefix[ETH_GSTRING_LEN] = "";
+	अचिन्हित पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
 		qeth_add_stat_strings(&data, prefix, card_stats,
 				      CARD_STATS_LEN);
-		for (i = 0; i < card->qdio.no_out_queues; i++) {
-			snprintf(prefix, ETH_GSTRING_LEN, "tx%u ", i);
+		क्रम (i = 0; i < card->qdio.no_out_queues; i++) अणु
+			snम_लिखो(prefix, ETH_GSTRING_LEN, "tx%u ", i);
 			qeth_add_stat_strings(&data, prefix, txq_stats,
 					      TXQ_STATS_LEN);
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void qeth_get_drvinfo(struct net_device *dev,
-			     struct ethtool_drvinfo *info)
-{
-	struct qeth_card *card = dev->ml_priv;
+अटल व्योम qeth_get_drvinfo(काष्ठा net_device *dev,
+			     काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा qeth_card *card = dev->ml_priv;
 
 	strlcpy(info->driver, IS_LAYER2(card) ? "qeth_l2" : "qeth_l3",
-		sizeof(info->driver));
+		माप(info->driver));
 	strlcpy(info->fw_version, card->info.mcl_level,
-		sizeof(info->fw_version));
-	snprintf(info->bus_info, sizeof(info->bus_info), "%s/%s/%s",
+		माप(info->fw_version));
+	snम_लिखो(info->bus_info, माप(info->bus_info), "%s/%s/%s",
 		 CARD_RDEV_ID(card), CARD_WDEV_ID(card), CARD_DDEV_ID(card));
-}
+पूर्ण
 
-static void qeth_get_channels(struct net_device *dev,
-			      struct ethtool_channels *channels)
-{
-	struct qeth_card *card = dev->ml_priv;
+अटल व्योम qeth_get_channels(काष्ठा net_device *dev,
+			      काष्ठा ethtool_channels *channels)
+अणु
+	काष्ठा qeth_card *card = dev->ml_priv;
 
 	channels->max_rx = dev->num_rx_queues;
 	channels->max_tx = card->qdio.no_out_queues;
@@ -206,127 +207,127 @@ static void qeth_get_channels(struct net_device *dev,
 	channels->tx_count = dev->real_num_tx_queues;
 	channels->other_count = 0;
 	channels->combined_count = 0;
-}
+पूर्ण
 
-static int qeth_set_channels(struct net_device *dev,
-			     struct ethtool_channels *channels)
-{
-	struct qeth_priv *priv = netdev_priv(dev);
-	struct qeth_card *card = dev->ml_priv;
-	int rc;
+अटल पूर्णांक qeth_set_channels(काष्ठा net_device *dev,
+			     काष्ठा ethtool_channels *channels)
+अणु
+	काष्ठा qeth_priv *priv = netdev_priv(dev);
+	काष्ठा qeth_card *card = dev->ml_priv;
+	पूर्णांक rc;
 
-	if (channels->rx_count == 0 || channels->tx_count == 0)
-		return -EINVAL;
-	if (channels->tx_count > card->qdio.no_out_queues)
-		return -EINVAL;
+	अगर (channels->rx_count == 0 || channels->tx_count == 0)
+		वापस -EINVAL;
+	अगर (channels->tx_count > card->qdio.no_out_queues)
+		वापस -EINVAL;
 
 	/* Prio-queueing needs all TX queues: */
-	if (qeth_uses_tx_prio_queueing(card))
-		return -EPERM;
+	अगर (qeth_uses_tx_prio_queueing(card))
+		वापस -EPERM;
 
-	if (IS_IQD(card)) {
-		if (channels->tx_count < QETH_IQD_MIN_TXQ)
-			return -EINVAL;
+	अगर (IS_IQD(card)) अणु
+		अगर (channels->tx_count < QETH_IQD_MIN_TXQ)
+			वापस -EINVAL;
 
-		/* Reject downgrade while running. It could push displaced
-		 * ucast flows onto txq0, which is reserved for mcast.
+		/* Reject करोwngrade जबतक running. It could push displaced
+		 * ucast flows onto txq0, which is reserved क्रम mcast.
 		 */
-		if (netif_running(dev) &&
+		अगर (netअगर_running(dev) &&
 		    channels->tx_count < dev->real_num_tx_queues)
-			return -EPERM;
-	}
+			वापस -EPERM;
+	पूर्ण
 
 	rc = qeth_set_real_num_tx_queues(card, channels->tx_count);
-	if (!rc)
+	अगर (!rc)
 		priv->tx_wanted_queues = channels->tx_count;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qeth_get_ts_info(struct net_device *dev,
-			    struct ethtool_ts_info *info)
-{
-	struct qeth_card *card = dev->ml_priv;
+अटल पूर्णांक qeth_get_ts_info(काष्ठा net_device *dev,
+			    काष्ठा ethtool_ts_info *info)
+अणु
+	काष्ठा qeth_card *card = dev->ml_priv;
 
-	if (!IS_IQD(card))
-		return -EOPNOTSUPP;
+	अगर (!IS_IQD(card))
+		वापस -EOPNOTSUPP;
 
-	return ethtool_op_get_ts_info(dev, info);
-}
+	वापस ethtool_op_get_ts_info(dev, info);
+पूर्ण
 
-static int qeth_get_tunable(struct net_device *dev,
-			    const struct ethtool_tunable *tuna, void *data)
-{
-	struct qeth_priv *priv = netdev_priv(dev);
+अटल पूर्णांक qeth_get_tunable(काष्ठा net_device *dev,
+			    स्थिर काष्ठा ethtool_tunable *tuna, व्योम *data)
+अणु
+	काष्ठा qeth_priv *priv = netdev_priv(dev);
 
-	switch (tuna->id) {
-	case ETHTOOL_RX_COPYBREAK:
-		*(u32 *)data = priv->rx_copybreak;
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_RX_COPYBREAK:
+		*(u32 *)data = priv->rx_copyअवरोध;
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int qeth_set_tunable(struct net_device *dev,
-			    const struct ethtool_tunable *tuna,
-			    const void *data)
-{
-	struct qeth_priv *priv = netdev_priv(dev);
+अटल पूर्णांक qeth_set_tunable(काष्ठा net_device *dev,
+			    स्थिर काष्ठा ethtool_tunable *tuna,
+			    स्थिर व्योम *data)
+अणु
+	काष्ठा qeth_priv *priv = netdev_priv(dev);
 
-	switch (tuna->id) {
-	case ETHTOOL_RX_COPYBREAK:
-		WRITE_ONCE(priv->rx_copybreak, *(u32 *)data);
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_RX_COPYBREAK:
+		WRITE_ONCE(priv->rx_copyअवरोध, *(u32 *)data);
+		वापस 0;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int qeth_get_per_queue_coalesce(struct net_device *dev, u32 __queue,
-				       struct ethtool_coalesce *coal)
-{
-	struct qeth_card *card = dev->ml_priv;
-	struct qeth_qdio_out_q *queue;
+अटल पूर्णांक qeth_get_per_queue_coalesce(काष्ठा net_device *dev, u32 __queue,
+				       काष्ठा ethtool_coalesce *coal)
+अणु
+	काष्ठा qeth_card *card = dev->ml_priv;
+	काष्ठा qeth_qdio_out_q *queue;
 
-	if (!IS_IQD(card))
-		return -EOPNOTSUPP;
+	अगर (!IS_IQD(card))
+		वापस -EOPNOTSUPP;
 
-	if (__queue >= card->qdio.no_out_queues)
-		return -EINVAL;
+	अगर (__queue >= card->qdio.no_out_queues)
+		वापस -EINVAL;
 
 	queue = card->qdio.out_qs[__queue];
 
 	coal->tx_coalesce_usecs = queue->coalesce_usecs;
 	coal->tx_max_coalesced_frames = queue->max_coalesced_frames;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qeth_set_per_queue_coalesce(struct net_device *dev, u32 queue,
-				       struct ethtool_coalesce *coal)
-{
-	struct qeth_card *card = dev->ml_priv;
+अटल पूर्णांक qeth_set_per_queue_coalesce(काष्ठा net_device *dev, u32 queue,
+				       काष्ठा ethtool_coalesce *coal)
+अणु
+	काष्ठा qeth_card *card = dev->ml_priv;
 
-	if (!IS_IQD(card))
-		return -EOPNOTSUPP;
+	अगर (!IS_IQD(card))
+		वापस -EOPNOTSUPP;
 
-	if (queue >= card->qdio.no_out_queues)
-		return -EINVAL;
+	अगर (queue >= card->qdio.no_out_queues)
+		वापस -EINVAL;
 
-	if (!coal->tx_coalesce_usecs && !coal->tx_max_coalesced_frames)
-		return -EINVAL;
+	अगर (!coal->tx_coalesce_usecs && !coal->tx_max_coalesced_frames)
+		वापस -EINVAL;
 
 	__qeth_set_coalesce(dev, card->qdio.out_qs[queue], coal);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Helper function to fill 'advertising' and 'supported' which are the same. */
 /* Autoneg and full-duplex are supported and advertised unconditionally.     */
-/* Always advertise and support all speeds up to specified, and only one     */
-/* specified port type.							     */
-static void qeth_set_ethtool_link_modes(struct ethtool_link_ksettings *cmd,
-					enum qeth_link_mode link_mode)
-{
+/* Always advertise and support all speeds up to specअगरied, and only one     */
+/* specअगरied port type.							     */
+अटल व्योम qeth_set_ethtool_link_modes(काष्ठा ethtool_link_ksettings *cmd,
+					क्रमागत qeth_link_mode link_mode)
+अणु
 	ethtool_link_ksettings_zero_link_mode(cmd, supported);
 	ethtool_link_ksettings_zero_link_mode(cmd, advertising);
 	ethtool_link_ksettings_zero_link_mode(cmd, lp_advertising);
@@ -334,19 +335,19 @@ static void qeth_set_ethtool_link_modes(struct ethtool_link_ksettings *cmd,
 	ethtool_link_ksettings_add_link_mode(cmd, supported, Autoneg);
 	ethtool_link_ksettings_add_link_mode(cmd, advertising, Autoneg);
 
-	switch (cmd->base.port) {
-	case PORT_TP:
+	चयन (cmd->base.port) अणु
+	हाल PORT_TP:
 		ethtool_link_ksettings_add_link_mode(cmd, supported, TP);
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, TP);
 
-		switch (cmd->base.speed) {
-		case SPEED_10000:
+		चयन (cmd->base.speed) अणु
+		हाल SPEED_10000:
 			ethtool_link_ksettings_add_link_mode(cmd, supported,
 							     10000baseT_Full);
 			ethtool_link_ksettings_add_link_mode(cmd, advertising,
 							     10000baseT_Full);
 			fallthrough;
-		case SPEED_1000:
+		हाल SPEED_1000:
 			ethtool_link_ksettings_add_link_mode(cmd, supported,
 							     1000baseT_Full);
 			ethtool_link_ksettings_add_link_mode(cmd, advertising,
@@ -356,7 +357,7 @@ static void qeth_set_ethtool_link_modes(struct ethtool_link_ksettings *cmd,
 			ethtool_link_ksettings_add_link_mode(cmd, advertising,
 							     1000baseT_Half);
 			fallthrough;
-		case SPEED_100:
+		हाल SPEED_100:
 			ethtool_link_ksettings_add_link_mode(cmd, supported,
 							     100baseT_Full);
 			ethtool_link_ksettings_add_link_mode(cmd, advertising,
@@ -366,7 +367,7 @@ static void qeth_set_ethtool_link_modes(struct ethtool_link_ksettings *cmd,
 			ethtool_link_ksettings_add_link_mode(cmd, advertising,
 							     100baseT_Half);
 			fallthrough;
-		case SPEED_10:
+		हाल SPEED_10:
 			ethtool_link_ksettings_add_link_mode(cmd, supported,
 							     10baseT_Full);
 			ethtool_link_ksettings_add_link_mode(cmd, advertising,
@@ -375,83 +376,83 @@ static void qeth_set_ethtool_link_modes(struct ethtool_link_ksettings *cmd,
 							     10baseT_Half);
 			ethtool_link_ksettings_add_link_mode(cmd, advertising,
 							     10baseT_Half);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		break;
-	case PORT_FIBRE:
+		अवरोध;
+	हाल PORT_FIBRE:
 		ethtool_link_ksettings_add_link_mode(cmd, supported, FIBRE);
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, FIBRE);
 
-		switch (cmd->base.speed) {
-		case SPEED_25000:
+		चयन (cmd->base.speed) अणु
+		हाल SPEED_25000:
 			ethtool_link_ksettings_add_link_mode(cmd, supported,
 							     25000baseSR_Full);
 			ethtool_link_ksettings_add_link_mode(cmd, advertising,
 							     25000baseSR_Full);
-			break;
-		case SPEED_10000:
-			if (link_mode == QETH_LINK_MODE_FIBRE_LONG) {
+			अवरोध;
+		हाल SPEED_10000:
+			अगर (link_mode == QETH_LINK_MODE_FIBRE_LONG) अणु
 				ethtool_link_ksettings_add_link_mode(cmd, supported,
 								     10000baseLR_Full);
 				ethtool_link_ksettings_add_link_mode(cmd, advertising,
 								     10000baseLR_Full);
-			} else if (link_mode == QETH_LINK_MODE_FIBRE_SHORT) {
+			पूर्ण अन्यथा अगर (link_mode == QETH_LINK_MODE_FIBRE_SHORT) अणु
 				ethtool_link_ksettings_add_link_mode(cmd, supported,
 								     10000baseSR_Full);
 				ethtool_link_ksettings_add_link_mode(cmd, advertising,
 								     10000baseSR_Full);
-			}
-			break;
-		case SPEED_1000:
+			पूर्ण
+			अवरोध;
+		हाल SPEED_1000:
 			ethtool_link_ksettings_add_link_mode(cmd, supported,
 							     1000baseX_Full);
 			ethtool_link_ksettings_add_link_mode(cmd, advertising,
 							     1000baseX_Full);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int qeth_get_link_ksettings(struct net_device *netdev,
-				   struct ethtool_link_ksettings *cmd)
-{
-	struct qeth_card *card = netdev->ml_priv;
-	struct qeth_link_info link_info;
+अटल पूर्णांक qeth_get_link_ksettings(काष्ठा net_device *netdev,
+				   काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा qeth_card *card = netdev->ml_priv;
+	काष्ठा qeth_link_info link_info;
 
 	cmd->base.speed = card->info.link_info.speed;
 	cmd->base.duplex = card->info.link_info.duplex;
 	cmd->base.port = card->info.link_info.port;
-	cmd->base.autoneg = AUTONEG_ENABLE;
+	cmd->base.स्वतःneg = AUTONEG_ENABLE;
 	cmd->base.phy_address = 0;
 	cmd->base.mdio_support = 0;
 	cmd->base.eth_tp_mdix = ETH_TP_MDI_INVALID;
 	cmd->base.eth_tp_mdix_ctrl = ETH_TP_MDI_INVALID;
 
-	/* Check if we can obtain more accurate information.	 */
-	if (!qeth_query_card_info(card, &link_info)) {
-		if (link_info.speed != SPEED_UNKNOWN)
+	/* Check अगर we can obtain more accurate inक्रमmation.	 */
+	अगर (!qeth_query_card_info(card, &link_info)) अणु
+		अगर (link_info.speed != SPEED_UNKNOWN)
 			cmd->base.speed = link_info.speed;
-		if (link_info.duplex != DUPLEX_UNKNOWN)
+		अगर (link_info.duplex != DUPLEX_UNKNOWN)
 			cmd->base.duplex = link_info.duplex;
-		if (link_info.port != PORT_OTHER)
+		अगर (link_info.port != PORT_OTHER)
 			cmd->base.port = link_info.port;
-	}
+	पूर्ण
 
 	qeth_set_ethtool_link_modes(cmd, card->info.link_info.link_mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct ethtool_ops qeth_ethtool_ops = {
+स्थिर काष्ठा ethtool_ops qeth_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_TX_USECS |
 				     ETHTOOL_COALESCE_TX_MAX_FRAMES,
 	.get_link = ethtool_op_get_link,
@@ -469,11 +470,11 @@ const struct ethtool_ops qeth_ethtool_ops = {
 	.get_per_queue_coalesce = qeth_get_per_queue_coalesce,
 	.set_per_queue_coalesce = qeth_set_per_queue_coalesce,
 	.get_link_ksettings = qeth_get_link_ksettings,
-};
+पूर्ण;
 
-const struct ethtool_ops qeth_osn_ethtool_ops = {
+स्थिर काष्ठा ethtool_ops qeth_osn_ethtool_ops = अणु
 	.get_strings = qeth_get_strings,
 	.get_ethtool_stats = qeth_get_ethtool_stats,
 	.get_sset_count = qeth_get_sset_count,
 	.get_drvinfo = qeth_get_drvinfo,
-};
+पूर्ण;

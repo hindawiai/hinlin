@@ -1,165 +1,166 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <termios.h>
-#include <sys/stat.h>
-#include "chan_user.h"
-#include <os.h>
-#include <um_malloc.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <माला.स>
+#समावेश <termios.h>
+#समावेश <sys/स्थिति.स>
+#समावेश "chan_user.h"
+#समावेश <os.h>
+#समावेश <um_दो_स्मृति.h>
 
-struct pty_chan {
-	void (*announce)(char *dev_name, int dev);
-	int dev;
-	int raw;
-	struct termios tt;
-	char dev_name[sizeof("/dev/pts/0123456\0")];
-};
+काष्ठा pty_chan अणु
+	व्योम (*announce)(अक्षर *dev_name, पूर्णांक dev);
+	पूर्णांक dev;
+	पूर्णांक raw;
+	काष्ठा termios tt;
+	अक्षर dev_name[माप("/dev/pts/0123456\0")];
+पूर्ण;
 
-static void *pty_chan_init(char *str, int device, const struct chan_opts *opts)
-{
-	struct pty_chan *data;
+अटल व्योम *pty_chan_init(अक्षर *str, पूर्णांक device, स्थिर काष्ठा chan_opts *opts)
+अणु
+	काष्ठा pty_chan *data;
 
-	data = uml_kmalloc(sizeof(*data), UM_GFP_KERNEL);
-	if (data == NULL)
-		return NULL;
+	data = uml_kदो_स्मृति(माप(*data), UM_GFP_KERNEL);
+	अगर (data == शून्य)
+		वापस शून्य;
 
-	*data = ((struct pty_chan) { .announce  	= opts->announce,
+	*data = ((काष्ठा pty_chan) अणु .announce  	= opts->announce,
 				     .dev  		= device,
-				     .raw  		= opts->raw });
-	return data;
-}
+				     .raw  		= opts->raw पूर्ण);
+	वापस data;
+पूर्ण
 
-static int pts_open(int input, int output, int primary, void *d,
-		    char **dev_out)
-{
-	struct pty_chan *data = d;
-	char *dev;
-	int fd, err;
+अटल पूर्णांक pts_खोलो(पूर्णांक input, पूर्णांक output, पूर्णांक primary, व्योम *d,
+		    अक्षर **dev_out)
+अणु
+	काष्ठा pty_chan *data = d;
+	अक्षर *dev;
+	पूर्णांक fd, err;
 
 	fd = get_pty();
-	if (fd < 0) {
-		err = -errno;
-		printk(UM_KERN_ERR "open_pts : Failed to open pts\n");
-		return err;
-	}
+	अगर (fd < 0) अणु
+		err = -त्रुटि_सं;
+		prपूर्णांकk(UM_KERN_ERR "open_pts : Failed to open pts\n");
+		वापस err;
+	पूर्ण
 
-	if (data->raw) {
+	अगर (data->raw) अणु
 		CATCH_EINTR(err = tcgetattr(fd, &data->tt));
-		if (err)
-			goto out_close;
+		अगर (err)
+			जाओ out_बंद;
 
 		err = raw(fd);
-		if (err)
-			goto out_close;
-	}
+		अगर (err)
+			जाओ out_बंद;
+	पूर्ण
 
 	dev = ptsname(fd);
-	sprintf(data->dev_name, "%s", dev);
+	प्र_लिखो(data->dev_name, "%s", dev);
 	*dev_out = data->dev_name;
 
-	if (data->announce)
+	अगर (data->announce)
 		(*data->announce)(dev, data->dev);
 
-	return fd;
+	वापस fd;
 
-out_close:
-	close(fd);
-	return err;
-}
+out_बंद:
+	बंद(fd);
+	वापस err;
+पूर्ण
 
-static int getmaster(char *line)
-{
-	struct stat buf;
-	char *pty, *bank, *cp;
-	int master, err;
+अटल पूर्णांक geपंचांगaster(अक्षर *line)
+अणु
+	काष्ठा stat buf;
+	अक्षर *pty, *bank, *cp;
+	पूर्णांक master, err;
 
-	pty = &line[strlen("/dev/ptyp")];
-	for (bank = "pqrs"; *bank; bank++) {
-		line[strlen("/dev/pty")] = *bank;
+	pty = &line[म_माप("/dev/ptyp")];
+	क्रम (bank = "pqrs"; *bank; bank++) अणु
+		line[म_माप("/dev/pty")] = *bank;
 		*pty = '0';
 		/* Did we hit the end ? */
-		if ((stat(line, &buf) < 0) && (errno == ENOENT))
-			break;
+		अगर ((stat(line, &buf) < 0) && (त्रुटि_सं == ENOENT))
+			अवरोध;
 
-		for (cp = "0123456789abcdef"; *cp; cp++) {
+		क्रम (cp = "0123456789abcdef"; *cp; cp++) अणु
 			*pty = *cp;
-			master = open(line, O_RDWR);
-			if (master >= 0) {
-				char *tp = &line[strlen("/dev/")];
+			master = खोलो(line, O_RDWR);
+			अगर (master >= 0) अणु
+				अक्षर *tp = &line[म_माप("/dev/")];
 
-				/* verify slave side is usable */
+				/* verअगरy slave side is usable */
 				*tp = 't';
 				err = access(line, R_OK | W_OK);
 				*tp = 'p';
-				if (!err)
-					return master;
-				close(master);
-			}
-		}
-	}
+				अगर (!err)
+					वापस master;
+				बंद(master);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	printk(UM_KERN_ERR "getmaster - no usable host pty devices\n");
-	return -ENOENT;
-}
+	prपूर्णांकk(UM_KERN_ERR "getmaster - no usable host pty devices\n");
+	वापस -ENOENT;
+पूर्ण
 
-static int pty_open(int input, int output, int primary, void *d,
-		    char **dev_out)
-{
-	struct pty_chan *data = d;
-	int fd, err;
-	char dev[sizeof("/dev/ptyxx\0")] = "/dev/ptyxx";
+अटल पूर्णांक pty_खोलो(पूर्णांक input, पूर्णांक output, पूर्णांक primary, व्योम *d,
+		    अक्षर **dev_out)
+अणु
+	काष्ठा pty_chan *data = d;
+	पूर्णांक fd, err;
+	अक्षर dev[माप("/dev/ptyxx\0")] = "/dev/ptyxx";
 
-	fd = getmaster(dev);
-	if (fd < 0)
-		return fd;
+	fd = geपंचांगaster(dev);
+	अगर (fd < 0)
+		वापस fd;
 
-	if (data->raw) {
+	अगर (data->raw) अणु
 		err = raw(fd);
-		if (err) {
-			close(fd);
-			return err;
-		}
-	}
+		अगर (err) अणु
+			बंद(fd);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (data->announce)
+	अगर (data->announce)
 		(*data->announce)(dev, data->dev);
 
-	sprintf(data->dev_name, "%s", dev);
+	प्र_लिखो(data->dev_name, "%s", dev);
 	*dev_out = data->dev_name;
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-const struct chan_ops pty_ops = {
+स्थिर काष्ठा chan_ops pty_ops = अणु
 	.type		= "pty",
 	.init		= pty_chan_init,
-	.open		= pty_open,
-	.close		= generic_close,
-	.read		= generic_read,
-	.write		= generic_write,
-	.console_write	= generic_console_write,
-	.window_size	= generic_window_size,
-	.free		= generic_free,
+	.खोलो		= pty_खोलो,
+	.बंद		= generic_बंद,
+	.पढ़ो		= generic_पढ़ो,
+	.ग_लिखो		= generic_ग_लिखो,
+	.console_ग_लिखो	= generic_console_ग_लिखो,
+	.winकरोw_size	= generic_winकरोw_size,
+	.मुक्त		= generic_मुक्त,
 	.winch		= 0,
-};
+पूर्ण;
 
-const struct chan_ops pts_ops = {
+स्थिर काष्ठा chan_ops pts_ops = अणु
 	.type		= "pts",
 	.init		= pty_chan_init,
-	.open		= pts_open,
-	.close		= generic_close,
-	.read		= generic_read,
-	.write		= generic_write,
-	.console_write	= generic_console_write,
-	.window_size	= generic_window_size,
-	.free		= generic_free,
+	.खोलो		= pts_खोलो,
+	.बंद		= generic_बंद,
+	.पढ़ो		= generic_पढ़ो,
+	.ग_लिखो		= generic_ग_लिखो,
+	.console_ग_लिखो	= generic_console_ग_लिखो,
+	.winकरोw_size	= generic_winकरोw_size,
+	.मुक्त		= generic_मुक्त,
 	.winch		= 0,
-};
+पूर्ण;

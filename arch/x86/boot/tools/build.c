@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *  Copyright (C) 1997 Martin Mares
@@ -6,71 +7,71 @@
  */
 
 /*
- * This file builds a disk-image from three different files:
+ * This file builds a disk-image from three dअगरferent files:
  *
- * - setup: 8086 machine code, sets up system parm
- * - system: 80386 code for actual system
+ * - setup: 8086 machine code, sets up प्रणाली parm
+ * - प्रणाली: 80386 code क्रम actual प्रणाली
  * - zoffset.h: header with ZO_* defines
  *
- * It does some checking that all files are of the correct type, and writes
- * the result to the specified destination, removing headers and padding to
- * the right amount. It also writes some system data to stdout.
+ * It करोes some checking that all files are of the correct type, and ग_लिखोs
+ * the result to the specअगरied destination, removing headers and padding to
+ * the right amount. It also ग_लिखोs some प्रणाली data to मानक_निकास.
  */
 
 /*
- * Changes by tytso to allow root device specification
+ * Changes by tytso to allow root device specअगरication
  * High loaded stuff by Hans Lermen & Werner Almesberger, Feb. 1996
  * Cross compiling fixes by Gertjan van Wingerde, July 1996
  * Rewritten by Martin Mares, April 1997
  * Substantially overhauled by H. Peter Anvin, April 2007
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <tools/le_byteshift.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <मानकतर्क.स>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <unistd.h>
+#समावेश <fcntl.h>
+#समावेश <sys/mman.h>
+#समावेश <tools/le_byteshअगरt.h>
 
-typedef unsigned char  u8;
-typedef unsigned short u16;
-typedef unsigned int   u32;
+प्रकार अचिन्हित अक्षर  u8;
+प्रकार अचिन्हित लघु u16;
+प्रकार अचिन्हित पूर्णांक   u32;
 
-#define DEFAULT_MAJOR_ROOT 0
-#define DEFAULT_MINOR_ROOT 0
-#define DEFAULT_ROOT_DEV (DEFAULT_MAJOR_ROOT << 8 | DEFAULT_MINOR_ROOT)
+#घोषणा DEFAULT_MAJOR_ROOT 0
+#घोषणा DEFAULT_MINOR_ROOT 0
+#घोषणा DEFAULT_ROOT_DEV (DEFAULT_MAJOR_ROOT << 8 | DEFAULT_MINOR_ROOT)
 
 /* Minimal number of setup sectors */
-#define SETUP_SECT_MIN 5
-#define SETUP_SECT_MAX 64
+#घोषणा SETUP_SECT_MIN 5
+#घोषणा SETUP_SECT_MAX 64
 
 /* This must be large enough to hold the entire setup */
 u8 buf[SETUP_SECT_MAX*512];
 
-#define PECOFF_RELOC_RESERVE 0x20
+#घोषणा PECOFF_RELOC_RESERVE 0x20
 
-#ifdef CONFIG_EFI_MIXED
-#define PECOFF_COMPAT_RESERVE 0x20
-#else
-#define PECOFF_COMPAT_RESERVE 0x0
-#endif
+#अगर_घोषित CONFIG_EFI_MIXED
+#घोषणा PECOFF_COMPAT_RESERVE 0x20
+#अन्यथा
+#घोषणा PECOFF_COMPAT_RESERVE 0x0
+#पूर्ण_अगर
 
-static unsigned long efi32_stub_entry;
-static unsigned long efi64_stub_entry;
-static unsigned long efi_pe_entry;
-static unsigned long efi32_pe_entry;
-static unsigned long kernel_info;
-static unsigned long startup_64;
-static unsigned long _ehead;
-static unsigned long _end;
+अटल अचिन्हित दीर्घ efi32_stub_entry;
+अटल अचिन्हित दीर्घ efi64_stub_entry;
+अटल अचिन्हित दीर्घ efi_pe_entry;
+अटल अचिन्हित दीर्घ efi32_pe_entry;
+अटल अचिन्हित दीर्घ kernel_info;
+अटल अचिन्हित दीर्घ startup_64;
+अटल अचिन्हित दीर्घ _ehead;
+अटल अचिन्हित दीर्घ _end;
 
 /*----------------------------------------------------------------------*/
 
-static const u32 crctab32[] = {
+अटल स्थिर u32 crctab32[] = अणु
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419,
 	0x706af48f, 0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4,
 	0xe0d5e91e, 0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07,
@@ -123,54 +124,54 @@ static const u32 crctab32[] = {
 	0xcdd70693, 0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8,
 	0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b,
 	0x2d02ef8d
-};
+पूर्ण;
 
-static u32 partial_crc32_one(u8 c, u32 crc)
-{
-	return crctab32[(crc ^ c) & 0xff] ^ (crc >> 8);
-}
+अटल u32 partial_crc32_one(u8 c, u32 crc)
+अणु
+	वापस crctab32[(crc ^ c) & 0xff] ^ (crc >> 8);
+पूर्ण
 
-static u32 partial_crc32(const u8 *s, int len, u32 crc)
-{
-	while (len--)
+अटल u32 partial_crc32(स्थिर u8 *s, पूर्णांक len, u32 crc)
+अणु
+	जबतक (len--)
 		crc = partial_crc32_one(*s++, crc);
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
-static void die(const char * str, ...)
-{
-	va_list args;
-	va_start(args, str);
-	vfprintf(stderr, str, args);
-	va_end(args);
-	fputc('\n', stderr);
-	exit(1);
-}
+अटल व्योम die(स्थिर अक्षर * str, ...)
+अणु
+	बहु_सूची args;
+	बहु_शुरू(args, str);
+	भख_लिखो(मानक_त्रुटि, str, args);
+	बहु_पूर्ण(args);
+	ख_अक्षर_दो('\n', मानक_त्रुटि);
+	निकास(1);
+पूर्ण
 
-static void usage(void)
-{
+अटल व्योम usage(व्योम)
+अणु
 	die("Usage: build setup system zoffset.h image");
-}
+पूर्ण
 
-#ifdef CONFIG_EFI_STUB
+#अगर_घोषित CONFIG_EFI_STUB
 
-static void update_pecoff_section_header_fields(char *section_name, u32 vma, u32 size, u32 datasz, u32 offset)
-{
-	unsigned int pe_header;
-	unsigned short num_sections;
+अटल व्योम update_pecoff_section_header_fields(अक्षर *section_name, u32 vma, u32 size, u32 datasz, u32 offset)
+अणु
+	अचिन्हित पूर्णांक pe_header;
+	अचिन्हित लघु num_sections;
 	u8 *section;
 
 	pe_header = get_unaligned_le32(&buf[0x3c]);
 	num_sections = get_unaligned_le16(&buf[pe_header + 6]);
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	section = &buf[pe_header + 0xa8];
-#else
+#अन्यथा
 	section = &buf[pe_header + 0xb8];
-#endif
+#पूर्ण_अगर
 
-	while (num_sections > 0) {
-		if (strncmp((char*)section, section_name, 8) == 0) {
+	जबतक (num_sections > 0) अणु
+		अगर (म_भेदन((अक्षर*)section, section_name, 8) == 0) अणु
 			/* section header size field */
 			put_unaligned_le32(size, section + 0x8);
 
@@ -183,42 +184,42 @@ static void update_pecoff_section_header_fields(char *section_name, u32 vma, u32
 			/* section header 'file offset' field */
 			put_unaligned_le32(offset, section + 0x14);
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		section += 0x28;
 		num_sections--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void update_pecoff_section_header(char *section_name, u32 offset, u32 size)
-{
+अटल व्योम update_pecoff_section_header(अक्षर *section_name, u32 offset, u32 size)
+अणु
 	update_pecoff_section_header_fields(section_name, offset, size, size, offset);
-}
+पूर्ण
 
-static void update_pecoff_setup_and_reloc(unsigned int size)
-{
+अटल व्योम update_pecoff_setup_and_reloc(अचिन्हित पूर्णांक size)
+अणु
 	u32 setup_offset = 0x200;
 	u32 reloc_offset = size - PECOFF_RELOC_RESERVE - PECOFF_COMPAT_RESERVE;
-#ifdef CONFIG_EFI_MIXED
+#अगर_घोषित CONFIG_EFI_MIXED
 	u32 compat_offset = reloc_offset + PECOFF_RELOC_RESERVE;
-#endif
+#पूर्ण_अगर
 	u32 setup_size = reloc_offset - setup_offset;
 
 	update_pecoff_section_header(".setup", setup_offset, setup_size);
 	update_pecoff_section_header(".reloc", reloc_offset, PECOFF_RELOC_RESERVE);
 
 	/*
-	 * Modify .reloc section contents with a single entry. The
+	 * Modअगरy .reloc section contents with a single entry. The
 	 * relocation is applied to offset 10 of the relocation section.
 	 */
 	put_unaligned_le32(reloc_offset + 10, &buf[reloc_offset]);
 	put_unaligned_le32(10, &buf[reloc_offset + 4]);
 
-#ifdef CONFIG_EFI_MIXED
+#अगर_घोषित CONFIG_EFI_MIXED
 	update_pecoff_section_header(".compat", compat_offset, PECOFF_COMPAT_RESERVE);
 
 	/*
-	 * Put the IA-32 machine type (0x14c) and the associated entry point
+	 * Put the IA-32 machine type (0x14c) and the associated entry poपूर्णांक
 	 * address in the .compat section, so loaders can figure out which other
 	 * execution modes this image supports.
 	 */
@@ -226,15 +227,15 @@ static void update_pecoff_setup_and_reloc(unsigned int size)
 	buf[compat_offset + 1] = 0x8;
 	put_unaligned_le16(0x14c, &buf[compat_offset + 2]);
 	put_unaligned_le32(efi32_pe_entry + size, &buf[compat_offset + 4]);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void update_pecoff_text(unsigned int text_start, unsigned int file_sz,
-			       unsigned int init_sz)
-{
-	unsigned int pe_header;
-	unsigned int text_sz = file_sz - text_start;
-	unsigned int bss_sz = init_sz - file_sz;
+अटल व्योम update_pecoff_text(अचिन्हित पूर्णांक text_start, अचिन्हित पूर्णांक file_sz,
+			       अचिन्हित पूर्णांक init_sz)
+अणु
+	अचिन्हित पूर्णांक pe_header;
+	अचिन्हित पूर्णांक text_sz = file_sz - text_start;
+	अचिन्हित पूर्णांक bss_sz = init_sz - file_sz;
 
 	pe_header = get_unaligned_le32(&buf[0x3c]);
 
@@ -243,7 +244,7 @@ static void update_pecoff_text(unsigned int text_start, unsigned int file_sz,
 	 * misaligned with respect to the kernel_alignment field in the setup
 	 * header.
 	 *
-	 * In order to avoid relocating the kernel to correct the misalignment,
+	 * In order to aव्योम relocating the kernel to correct the misalignment,
 	 * add slack to allow the buffer to be aligned within the declared size
 	 * of the image.
 	 */
@@ -260,98 +261,98 @@ static void update_pecoff_text(unsigned int text_start, unsigned int file_sz,
 	put_unaligned_le32(init_sz, &buf[pe_header + 0x50]);
 
 	/*
-	 * Address of entry point for PE/COFF executable
+	 * Address of entry poपूर्णांक क्रम PE/COFF executable
 	 */
 	put_unaligned_le32(text_start + efi_pe_entry, &buf[pe_header + 0x28]);
 
 	update_pecoff_section_header_fields(".text", text_start, text_sz + bss_sz,
 					    text_sz, text_start);
-}
+पूर्ण
 
-static int reserve_pecoff_reloc_section(int c)
-{
-	/* Reserve 0x20 bytes for .reloc section */
-	memset(buf+c, 0, PECOFF_RELOC_RESERVE);
-	return PECOFF_RELOC_RESERVE;
-}
+अटल पूर्णांक reserve_pecoff_reloc_section(पूर्णांक c)
+अणु
+	/* Reserve 0x20 bytes क्रम .reloc section */
+	स_रखो(buf+c, 0, PECOFF_RELOC_RESERVE);
+	वापस PECOFF_RELOC_RESERVE;
+पूर्ण
 
-static void efi_stub_defaults(void)
-{
-	/* Defaults for old kernel */
-#ifdef CONFIG_X86_32
+अटल व्योम efi_stub_शेषs(व्योम)
+अणु
+	/* Defaults क्रम old kernel */
+#अगर_घोषित CONFIG_X86_32
 	efi_pe_entry = 0x10;
-#else
+#अन्यथा
 	efi_pe_entry = 0x210;
 	startup_64 = 0x200;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void efi_stub_entry_update(void)
-{
-	unsigned long addr = efi32_stub_entry;
+अटल व्योम efi_stub_entry_update(व्योम)
+अणु
+	अचिन्हित दीर्घ addr = efi32_stub_entry;
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 	/* Yes, this is really how we defined it :( */
 	addr = efi64_stub_entry - 0x200;
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_EFI_MIXED
-	if (efi32_stub_entry != addr)
+#अगर_घोषित CONFIG_EFI_MIXED
+	अगर (efi32_stub_entry != addr)
 		die("32-bit and 64-bit EFI entry points do not match\n");
-#endif
+#पूर्ण_अगर
 	put_unaligned_le32(addr, &buf[0x264]);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void update_pecoff_setup_and_reloc(unsigned int size) {}
-static inline void update_pecoff_text(unsigned int text_start,
-				      unsigned int file_sz,
-				      unsigned int init_sz) {}
-static inline void efi_stub_defaults(void) {}
-static inline void efi_stub_entry_update(void) {}
+अटल अंतरभूत व्योम update_pecoff_setup_and_reloc(अचिन्हित पूर्णांक size) अणुपूर्ण
+अटल अंतरभूत व्योम update_pecoff_text(अचिन्हित पूर्णांक text_start,
+				      अचिन्हित पूर्णांक file_sz,
+				      अचिन्हित पूर्णांक init_sz) अणुपूर्ण
+अटल अंतरभूत व्योम efi_stub_शेषs(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम efi_stub_entry_update(व्योम) अणुपूर्ण
 
-static inline int reserve_pecoff_reloc_section(int c)
-{
-	return 0;
-}
-#endif /* CONFIG_EFI_STUB */
+अटल अंतरभूत पूर्णांक reserve_pecoff_reloc_section(पूर्णांक c)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_EFI_STUB */
 
-static int reserve_pecoff_compat_section(int c)
-{
-	/* Reserve 0x20 bytes for .compat section */
-	memset(buf+c, 0, PECOFF_COMPAT_RESERVE);
-	return PECOFF_COMPAT_RESERVE;
-}
+अटल पूर्णांक reserve_pecoff_compat_section(पूर्णांक c)
+अणु
+	/* Reserve 0x20 bytes क्रम .compat section */
+	स_रखो(buf+c, 0, PECOFF_COMPAT_RESERVE);
+	वापस PECOFF_COMPAT_RESERVE;
+पूर्ण
 
 /*
- * Parse zoffset.h and find the entry points. We could just #include zoffset.h
- * but that would mean tools/build would have to be rebuilt every time. It's
- * not as if parsing it is hard...
+ * Parse zoffset.h and find the entry poपूर्णांकs. We could just #समावेश zoffset.h
+ * but that would mean tools/build would have to be rebuilt every समय. It's
+ * not as अगर parsing it is hard...
  */
-#define PARSE_ZOFS(p, sym) do { \
-	if (!strncmp(p, "#define ZO_" #sym " ", 11+sizeof(#sym)))	\
-		sym = strtoul(p + 11 + sizeof(#sym), NULL, 16);		\
-} while (0)
+#घोषणा PARSE_ZOFS(p, sym) करो अणु \
+	अगर (!म_भेदन(p, "#define ZO_" #sym " ", 11+माप(#sym)))	\
+		sym = म_से_अदीर्घ(p + 11 + माप(#sym), शून्य, 16);		\
+पूर्ण जबतक (0)
 
-static void parse_zoffset(char *fname)
-{
-	FILE *file;
-	char *p;
-	int c;
+अटल व्योम parse_zoffset(अक्षर *fname)
+अणु
+	खाता *file;
+	अक्षर *p;
+	पूर्णांक c;
 
-	file = fopen(fname, "r");
-	if (!file)
+	file = ख_खोलो(fname, "r");
+	अगर (!file)
 		die("Unable to open `%s': %m", fname);
-	c = fread(buf, 1, sizeof(buf) - 1, file);
-	if (ferror(file))
+	c = ख_पढ़ो(buf, 1, माप(buf) - 1, file);
+	अगर (ख_त्रुटि(file))
 		die("read-error on `zoffset.h'");
-	fclose(file);
+	ख_बंद(file);
 	buf[c] = 0;
 
-	p = (char *)buf;
+	p = (अक्षर *)buf;
 
-	while (p && *p) {
+	जबतक (p && *p) अणु
 		PARSE_ZOFS(p, efi32_stub_entry);
 		PARSE_ZOFS(p, efi64_stub_entry);
 		PARSE_ZOFS(p, efi_pe_entry);
@@ -361,91 +362,91 @@ static void parse_zoffset(char *fname)
 		PARSE_ZOFS(p, _ehead);
 		PARSE_ZOFS(p, _end);
 
-		p = strchr(p, '\n');
-		while (p && (*p == '\r' || *p == '\n'))
+		p = म_अक्षर(p, '\n');
+		जबतक (p && (*p == '\r' || *p == '\n'))
 			p++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int main(int argc, char ** argv)
-{
-	unsigned int i, sz, setup_sectors, init_sz;
-	int c;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर ** argv)
+अणु
+	अचिन्हित पूर्णांक i, sz, setup_sectors, init_sz;
+	पूर्णांक c;
 	u32 sys_size;
-	struct stat sb;
-	FILE *file, *dest;
-	int fd;
-	void *kernel;
+	काष्ठा stat sb;
+	खाता *file, *dest;
+	पूर्णांक fd;
+	व्योम *kernel;
 	u32 crc = 0xffffffffUL;
 
-	efi_stub_defaults();
+	efi_stub_शेषs();
 
-	if (argc != 5)
+	अगर (argc != 5)
 		usage();
 	parse_zoffset(argv[3]);
 
-	dest = fopen(argv[4], "w");
-	if (!dest)
+	dest = ख_खोलो(argv[4], "w");
+	अगर (!dest)
 		die("Unable to write `%s': %m", argv[4]);
 
 	/* Copy the setup code */
-	file = fopen(argv[1], "r");
-	if (!file)
+	file = ख_खोलो(argv[1], "r");
+	अगर (!file)
 		die("Unable to open `%s': %m", argv[1]);
-	c = fread(buf, 1, sizeof(buf), file);
-	if (ferror(file))
+	c = ख_पढ़ो(buf, 1, माप(buf), file);
+	अगर (ख_त्रुटि(file))
 		die("read-error on `setup'");
-	if (c < 1024)
+	अगर (c < 1024)
 		die("The setup must be at least 1024 bytes");
-	if (get_unaligned_le16(&buf[510]) != 0xAA55)
+	अगर (get_unaligned_le16(&buf[510]) != 0xAA55)
 		die("Boot block hasn't got boot flag (0xAA55)");
-	fclose(file);
+	ख_बंद(file);
 
 	c += reserve_pecoff_compat_section(c);
 	c += reserve_pecoff_reloc_section(c);
 
 	/* Pad unused space with zeros */
 	setup_sectors = (c + 511) / 512;
-	if (setup_sectors < SETUP_SECT_MIN)
+	अगर (setup_sectors < SETUP_SECT_MIN)
 		setup_sectors = SETUP_SECT_MIN;
 	i = setup_sectors*512;
-	memset(buf+c, 0, i-c);
+	स_रखो(buf+c, 0, i-c);
 
 	update_pecoff_setup_and_reloc(i);
 
-	/* Set the default root device */
+	/* Set the शेष root device */
 	put_unaligned_le16(DEFAULT_ROOT_DEV, &buf[508]);
 
 	/* Open and stat the kernel file */
-	fd = open(argv[2], O_RDONLY);
-	if (fd < 0)
+	fd = खोलो(argv[2], O_RDONLY);
+	अगर (fd < 0)
 		die("Unable to open `%s': %m", argv[2]);
-	if (fstat(fd, &sb))
+	अगर (ख_स्थिति(fd, &sb))
 		die("Unable to stat `%s': %m", argv[2]);
 	sz = sb.st_size;
-	kernel = mmap(NULL, sz, PROT_READ, MAP_SHARED, fd, 0);
-	if (kernel == MAP_FAILED)
+	kernel = mmap(शून्य, sz, PROT_READ, MAP_SHARED, fd, 0);
+	अगर (kernel == MAP_FAILED)
 		die("Unable to mmap '%s': %m", argv[2]);
-	/* Number of 16-byte paragraphs, including space for a 4-byte CRC */
+	/* Number of 16-byte paragraphs, including space क्रम a 4-byte CRC */
 	sys_size = (sz + 15 + 4) / 16;
-#ifdef CONFIG_EFI_STUB
+#अगर_घोषित CONFIG_EFI_STUB
 	/*
 	 * COFF requires minimum 32-byte alignment of sections, and
 	 * adding a signature is problematic without that alignment.
 	 */
 	sys_size = (sys_size + 1) & ~1;
-#endif
+#पूर्ण_अगर
 
 	/* Patch the setup code with the appropriate size parameters */
 	buf[0x1f1] = setup_sectors-1;
 	put_unaligned_le32(sys_size, &buf[0x1f4]);
 
 	init_sz = get_unaligned_le32(&buf[0x260]);
-#ifdef CONFIG_EFI_STUB
+#अगर_घोषित CONFIG_EFI_STUB
 	/*
 	 * The decompression buffer will start at ImageBase. When relocating
 	 * the compressed kernel to its end, we must ensure that the head
-	 * section does not get overwritten.  The head section occupies
+	 * section करोes not get overwritten.  The head section occupies
 	 * [i, i + _ehead), and the destination is [init_sz - _end, init_sz).
 	 *
 	 * At present these should never overlap, because 'i' is at most 32k
@@ -453,14 +454,14 @@ int main(int argc, char ** argv)
 	 * calculation of INIT_SIZE in boot/header.S ensures that
 	 * 'init_sz - _end' is at least 64k.
 	 *
-	 * For future-proofing, increase init_sz if necessary.
+	 * For future-proofing, increase init_sz अगर necessary.
 	 */
 
-	if (init_sz - _end < i + _ehead) {
+	अगर (init_sz - _end < i + _ehead) अणु
 		init_sz = (i + _ehead + _end + 4095) & ~4095;
 		put_unaligned_le32(init_sz, &buf[0x260]);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	update_pecoff_text(setup_sectors * 512, i + (sys_size * 16), init_sz);
 
 	efi_stub_entry_update();
@@ -469,32 +470,32 @@ int main(int argc, char ** argv)
 	put_unaligned_le32(kernel_info, &buf[0x268]);
 
 	crc = partial_crc32(buf, i, crc);
-	if (fwrite(buf, 1, i, dest) != i)
+	अगर (ख_डालो(buf, 1, i, dest) != i)
 		die("Writing setup failed");
 
 	/* Copy the kernel code */
 	crc = partial_crc32(kernel, sz, crc);
-	if (fwrite(kernel, 1, sz, dest) != sz)
+	अगर (ख_डालो(kernel, 1, sz, dest) != sz)
 		die("Writing kernel failed");
 
-	/* Add padding leaving 4 bytes for the checksum */
-	while (sz++ < (sys_size*16) - 4) {
+	/* Add padding leaving 4 bytes क्रम the checksum */
+	जबतक (sz++ < (sys_size*16) - 4) अणु
 		crc = partial_crc32_one('\0', crc);
-		if (fwrite("\0", 1, 1, dest) != 1)
+		अगर (ख_डालो("\0", 1, 1, dest) != 1)
 			die("Writing padding failed");
-	}
+	पूर्ण
 
 	/* Write the CRC */
 	put_unaligned_le32(crc, buf);
-	if (fwrite(buf, 1, 4, dest) != 4)
+	अगर (ख_डालो(buf, 1, 4, dest) != 4)
 		die("Writing CRC failed");
 
-	/* Catch any delayed write failures */
-	if (fclose(dest))
+	/* Catch any delayed ग_लिखो failures */
+	अगर (ख_बंद(dest))
 		die("Writing image failed");
 
-	close(fd);
+	बंद(fd);
 
 	/* Everything is OK */
-	return 0;
-}
+	वापस 0;
+पूर्ण

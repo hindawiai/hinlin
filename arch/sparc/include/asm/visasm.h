@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC64_VISASM_H
-#define _SPARC64_VISASM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC64_VISASM_H
+#घोषणा _SPARC64_VISASM_H
 
-/* visasm.h:  FPU saving macros for VIS routines
+/* visयंत्र.h:  FPU saving macros क्रम VIS routines
  *
  * Copyright (C) 1998 Jakub Jelinek (jj@ultra.linux.cz)
  */
 
-#include <asm/pstate.h>
-#include <asm/ptrace.h>
+#समावेश <यंत्र/pstate.h>
+#समावेश <यंत्र/ptrace.h>
 
 /* Clobbers %o5, %g1, %g2, %g3, %g7, %icc, %xcc */
 
-#define VISEntry					\
+#घोषणा VISEntry					\
 	rd		%fprs, %o5;			\
 	andcc		%o5, (FPRS_FEF|FPRS_DU), %g0;	\
 	be,pt		%icc, 297f;			\
@@ -22,19 +23,19 @@
 	 or		%g7, %lo(297f), %g7;		\
 297:	wr		%g0, FPRS_FEF, %fprs;		\
 
-#define VISExit						\
+#घोषणा VISExit						\
 	wr		%g0, 0, %fprs;
 
 /* Clobbers %o5, %g1, %g2, %g3, %g7, %icc, %xcc.
  * Must preserve %o5 between VISEntryHalf and VISExitHalf */
 
-#define VISEntryHalf					\
+#घोषणा VISEntryHalf					\
 	VISEntry
 
-#define VISExitHalf					\
+#घोषणा VISExitHalf					\
 	VISExit
 
-#define VISEntryHalfFast(fail_label)			\
+#घोषणा VISEntryHalfFast(fail_label)			\
 	rd		%fprs, %o5;			\
 	andcc		%o5, FPRS_FEF, %g0;		\
 	be,pt		%icc, 297f;			\
@@ -42,12 +43,12 @@
 	ba,a,pt		%xcc, fail_label;		\
 297:	wr		%o5, FPRS_FEF, %fprs;
 
-#define VISExitHalfFast					\
+#घोषणा VISExitHalfFast					\
 	wr		%o5, 0, %fprs;
 
-#ifndef __ASSEMBLY__
-static inline void save_and_clear_fpu(void) {
-	__asm__ __volatile__ (
+#अगर_अघोषित __ASSEMBLY__
+अटल अंतरभूत व्योम save_and_clear_fpu(व्योम) अणु
+	__यंत्र__ __अस्थिर__ (
 "		rd %%fprs, %%o5\n"
 "		andcc %%o5, %0, %%g0\n"
 "		be,pt %%icc, 299f\n"
@@ -59,9 +60,9 @@ static inline void save_and_clear_fpu(void) {
 "	299:\n"
 "		" : : "i" (FPRS_FEF|FPRS_DU) :
 		"o5", "g1", "g2", "g3", "g7", "cc");
-}
+पूर्ण
 
-int vis_emul(struct pt_regs *, unsigned int);
-#endif
+पूर्णांक vis_emul(काष्ठा pt_regs *, अचिन्हित पूर्णांक);
+#पूर्ण_अगर
 
-#endif /* _SPARC64_ASI_H */
+#पूर्ण_अगर /* _SPARC64_ASI_H */

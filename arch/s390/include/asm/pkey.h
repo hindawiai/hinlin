@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Kernelspace interface to the pkey device driver
+ * Kernelspace पूर्णांकerface to the pkey device driver
  *
  * Copyright IBM Corp. 2016,2019
  *
@@ -8,21 +9,21 @@
  *
  */
 
-#ifndef _KAPI_PKEY_H
-#define _KAPI_PKEY_H
+#अगर_अघोषित _KAPI_PKEY_H
+#घोषणा _KAPI_PKEY_H
 
-#include <linux/ioctl.h>
-#include <linux/types.h>
-#include <uapi/asm/pkey.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/types.h>
+#समावेश <uapi/यंत्र/pkey.h>
 
 /*
- * In-kernel API: Transform an key blob (of any type) into a protected key.
- * @param key pointer to a buffer containing the key blob
+ * In-kernel API: Transक्रमm an key blob (of any type) पूर्णांकo a रक्षित key.
+ * @param key poपूर्णांकer to a buffer containing the key blob
  * @param keylen size of the key blob in bytes
- * @param protkey pointer to buffer receiving the protected key
- * @return 0 on success, negative errno value on failure
+ * @param protkey poपूर्णांकer to buffer receiving the रक्षित key
+ * @वापस 0 on success, negative त्रुटि_सं value on failure
  */
-int pkey_keyblob2pkey(const u8 *key, u32 keylen,
-		      struct pkey_protkey *protkey);
+पूर्णांक pkey_keyblob2pkey(स्थिर u8 *key, u32 keylen,
+		      काष्ठा pkey_protkey *protkey);
 
-#endif /* _KAPI_PKEY_H */
+#पूर्ण_अगर /* _KAPI_PKEY_H */

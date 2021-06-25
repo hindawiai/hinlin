@@ -1,384 +1,385 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * ip_vs_proto.c: transport protocol load balancing support for IPVS
+ * ip_vs_proto.c: transport protocol load balancing support क्रम IPVS
  *
- * Authors:     Wensong Zhang <wensong@linuxvirtualserver.org>
+ * Authors:     Wensong Zhang <wensong@linuxभवserver.org>
  *              Julian Anastasov <ja@ssi.bg>
  *
  * Changes:
  */
 
-#define KMSG_COMPONENT "IPVS"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "IPVS"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/gfp.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <net/protocol.h>
-#include <net/tcp.h>
-#include <net/udp.h>
-#include <linux/stat.h>
-#include <linux/proc_fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <net/protocol.h>
+#समावेश <net/tcp.h>
+#समावेश <net/udp.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/proc_fs.h>
 
-#include <net/ip_vs.h>
+#समावेश <net/ip_vs.h>
 
 
 /*
- * IPVS protocols can only be registered/unregistered when the ipvs
+ * IPVS protocols can only be रेजिस्टरed/unरेजिस्टरed when the ipvs
  * module is loaded/unloaded, so no lock is needed in accessing the
  * ipvs protocol table.
  */
 
-#define IP_VS_PROTO_TAB_SIZE		32	/* must be power of 2 */
-#define IP_VS_PROTO_HASH(proto)		((proto) & (IP_VS_PROTO_TAB_SIZE-1))
+#घोषणा IP_VS_PROTO_TAB_SIZE		32	/* must be घातer of 2 */
+#घोषणा IP_VS_PROTO_HASH(proto)		((proto) & (IP_VS_PROTO_TAB_SIZE-1))
 
-static struct ip_vs_protocol *ip_vs_proto_table[IP_VS_PROTO_TAB_SIZE];
+अटल काष्ठा ip_vs_protocol *ip_vs_proto_table[IP_VS_PROTO_TAB_SIZE];
 
-/* States for conn templates: NONE or words separated with ",", max 15 chars */
-static const char *ip_vs_ctpl_state_name_table[IP_VS_CTPL_S_LAST] = {
+/* States क्रम conn ढाँचाs: NONE or words separated with ",", max 15 अक्षरs */
+अटल स्थिर अक्षर *ip_vs_ctpl_state_name_table[IP_VS_CTPL_S_LAST] = अणु
 	[IP_VS_CTPL_S_NONE]			= "NONE",
 	[IP_VS_CTPL_S_ASSURED]			= "ASSURED",
-};
+पूर्ण;
 
 /*
- *	register an ipvs protocol
+ *	रेजिस्टर an ipvs protocol
  */
-static int __used __init register_ip_vs_protocol(struct ip_vs_protocol *pp)
-{
-	unsigned int hash = IP_VS_PROTO_HASH(pp->protocol);
+अटल पूर्णांक __used __init रेजिस्टर_ip_vs_protocol(काष्ठा ip_vs_protocol *pp)
+अणु
+	अचिन्हित पूर्णांक hash = IP_VS_PROTO_HASH(pp->protocol);
 
 	pp->next = ip_vs_proto_table[hash];
 	ip_vs_proto_table[hash] = pp;
 
-	if (pp->init != NULL)
+	अगर (pp->init != शून्य)
 		pp->init(pp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	register an ipvs protocols netns related data
+ *	रेजिस्टर an ipvs protocols netns related data
  */
-static int
-register_ip_vs_proto_netns(struct netns_ipvs *ipvs, struct ip_vs_protocol *pp)
-{
-	unsigned int hash = IP_VS_PROTO_HASH(pp->protocol);
-	struct ip_vs_proto_data *pd =
-			kzalloc(sizeof(struct ip_vs_proto_data), GFP_KERNEL);
+अटल पूर्णांक
+रेजिस्टर_ip_vs_proto_netns(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_protocol *pp)
+अणु
+	अचिन्हित पूर्णांक hash = IP_VS_PROTO_HASH(pp->protocol);
+	काष्ठा ip_vs_proto_data *pd =
+			kzalloc(माप(काष्ठा ip_vs_proto_data), GFP_KERNEL);
 
-	if (!pd)
-		return -ENOMEM;
+	अगर (!pd)
+		वापस -ENOMEM;
 
 	pd->pp = pp;	/* For speed issues */
 	pd->next = ipvs->proto_data_table[hash];
 	ipvs->proto_data_table[hash] = pd;
 	atomic_set(&pd->appcnt, 0);	/* Init app counter */
 
-	if (pp->init_netns != NULL) {
-		int ret = pp->init_netns(ipvs, pd);
-		if (ret) {
-			/* unlink an free proto data */
+	अगर (pp->init_netns != शून्य) अणु
+		पूर्णांक ret = pp->init_netns(ipvs, pd);
+		अगर (ret) अणु
+			/* unlink an मुक्त proto data */
 			ipvs->proto_data_table[hash] = pd->next;
-			kfree(pd);
-			return ret;
-		}
-	}
+			kमुक्त(pd);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	unregister an ipvs protocol
+ *	unरेजिस्टर an ipvs protocol
  */
-static int unregister_ip_vs_protocol(struct ip_vs_protocol *pp)
-{
-	struct ip_vs_protocol **pp_p;
-	unsigned int hash = IP_VS_PROTO_HASH(pp->protocol);
+अटल पूर्णांक unरेजिस्टर_ip_vs_protocol(काष्ठा ip_vs_protocol *pp)
+अणु
+	काष्ठा ip_vs_protocol **pp_p;
+	अचिन्हित पूर्णांक hash = IP_VS_PROTO_HASH(pp->protocol);
 
 	pp_p = &ip_vs_proto_table[hash];
-	for (; *pp_p; pp_p = &(*pp_p)->next) {
-		if (*pp_p == pp) {
+	क्रम (; *pp_p; pp_p = &(*pp_p)->next) अणु
+		अगर (*pp_p == pp) अणु
 			*pp_p = pp->next;
-			if (pp->exit != NULL)
-				pp->exit(pp);
-			return 0;
-		}
-	}
+			अगर (pp->निकास != शून्य)
+				pp->निकास(pp);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -ESRCH;
-}
+	वापस -ESRCH;
+पूर्ण
 
 /*
- *	unregister an ipvs protocols netns data
+ *	unरेजिस्टर an ipvs protocols netns data
  */
-static int
-unregister_ip_vs_proto_netns(struct netns_ipvs *ipvs, struct ip_vs_proto_data *pd)
-{
-	struct ip_vs_proto_data **pd_p;
-	unsigned int hash = IP_VS_PROTO_HASH(pd->pp->protocol);
+अटल पूर्णांक
+unरेजिस्टर_ip_vs_proto_netns(काष्ठा netns_ipvs *ipvs, काष्ठा ip_vs_proto_data *pd)
+अणु
+	काष्ठा ip_vs_proto_data **pd_p;
+	अचिन्हित पूर्णांक hash = IP_VS_PROTO_HASH(pd->pp->protocol);
 
 	pd_p = &ipvs->proto_data_table[hash];
-	for (; *pd_p; pd_p = &(*pd_p)->next) {
-		if (*pd_p == pd) {
+	क्रम (; *pd_p; pd_p = &(*pd_p)->next) अणु
+		अगर (*pd_p == pd) अणु
 			*pd_p = pd->next;
-			if (pd->pp->exit_netns != NULL)
-				pd->pp->exit_netns(ipvs, pd);
-			kfree(pd);
-			return 0;
-		}
-	}
+			अगर (pd->pp->निकास_netns != शून्य)
+				pd->pp->निकास_netns(ipvs, pd);
+			kमुक्त(pd);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -ESRCH;
-}
+	वापस -ESRCH;
+पूर्ण
 
 /*
  *	get ip_vs_protocol object by its proto.
  */
-struct ip_vs_protocol * ip_vs_proto_get(unsigned short proto)
-{
-	struct ip_vs_protocol *pp;
-	unsigned int hash = IP_VS_PROTO_HASH(proto);
+काष्ठा ip_vs_protocol * ip_vs_proto_get(अचिन्हित लघु proto)
+अणु
+	काष्ठा ip_vs_protocol *pp;
+	अचिन्हित पूर्णांक hash = IP_VS_PROTO_HASH(proto);
 
-	for (pp = ip_vs_proto_table[hash]; pp; pp = pp->next) {
-		if (pp->protocol == proto)
-			return pp;
-	}
+	क्रम (pp = ip_vs_proto_table[hash]; pp; pp = pp->next) अणु
+		अगर (pp->protocol == proto)
+			वापस pp;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(ip_vs_proto_get);
 
 /*
  *	get ip_vs_protocol object data by netns and proto
  */
-struct ip_vs_proto_data *
-ip_vs_proto_data_get(struct netns_ipvs *ipvs, unsigned short proto)
-{
-	struct ip_vs_proto_data *pd;
-	unsigned int hash = IP_VS_PROTO_HASH(proto);
+काष्ठा ip_vs_proto_data *
+ip_vs_proto_data_get(काष्ठा netns_ipvs *ipvs, अचिन्हित लघु proto)
+अणु
+	काष्ठा ip_vs_proto_data *pd;
+	अचिन्हित पूर्णांक hash = IP_VS_PROTO_HASH(proto);
 
-	for (pd = ipvs->proto_data_table[hash]; pd; pd = pd->next) {
-		if (pd->pp->protocol == proto)
-			return pd;
-	}
+	क्रम (pd = ipvs->proto_data_table[hash]; pd; pd = pd->next) अणु
+		अगर (pd->pp->protocol == proto)
+			वापस pd;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(ip_vs_proto_data_get);
 
 /*
- *	Propagate event for state change to all protocols
+ *	Propagate event क्रम state change to all protocols
  */
-void ip_vs_protocol_timeout_change(struct netns_ipvs *ipvs, int flags)
-{
-	struct ip_vs_proto_data *pd;
-	int i;
+व्योम ip_vs_protocol_समयout_change(काष्ठा netns_ipvs *ipvs, पूर्णांक flags)
+अणु
+	काष्ठा ip_vs_proto_data *pd;
+	पूर्णांक i;
 
-	for (i = 0; i < IP_VS_PROTO_TAB_SIZE; i++) {
-		for (pd = ipvs->proto_data_table[i]; pd; pd = pd->next) {
-			if (pd->pp->timeout_change)
-				pd->pp->timeout_change(pd, flags);
-		}
-	}
-}
-
-
-int *
-ip_vs_create_timeout_table(int *table, int size)
-{
-	return kmemdup(table, size, GFP_KERNEL);
-}
+	क्रम (i = 0; i < IP_VS_PROTO_TAB_SIZE; i++) अणु
+		क्रम (pd = ipvs->proto_data_table[i]; pd; pd = pd->next) अणु
+			अगर (pd->pp->समयout_change)
+				pd->pp->समयout_change(pd, flags);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-const char *ip_vs_state_name(const struct ip_vs_conn *cp)
-{
-	unsigned int state = cp->state;
-	struct ip_vs_protocol *pp;
+पूर्णांक *
+ip_vs_create_समयout_table(पूर्णांक *table, पूर्णांक size)
+अणु
+	वापस kmemdup(table, size, GFP_KERNEL);
+पूर्ण
 
-	if (cp->flags & IP_VS_CONN_F_TEMPLATE) {
 
-		if (state >= IP_VS_CTPL_S_LAST)
-			return "ERR!";
-		return ip_vs_ctpl_state_name_table[state] ? : "?";
-	}
+स्थिर अक्षर *ip_vs_state_name(स्थिर काष्ठा ip_vs_conn *cp)
+अणु
+	अचिन्हित पूर्णांक state = cp->state;
+	काष्ठा ip_vs_protocol *pp;
+
+	अगर (cp->flags & IP_VS_CONN_F_TEMPLATE) अणु
+
+		अगर (state >= IP_VS_CTPL_S_LAST)
+			वापस "ERR!";
+		वापस ip_vs_ctpl_state_name_table[state] ? : "?";
+	पूर्ण
 	pp = ip_vs_proto_get(cp->protocol);
-	if (pp == NULL || pp->state_name == NULL)
-		return (cp->protocol == IPPROTO_IP) ? "NONE" : "ERR!";
-	return pp->state_name(state);
-}
+	अगर (pp == शून्य || pp->state_name == शून्य)
+		वापस (cp->protocol == IPPROTO_IP) ? "NONE" : "ERR!";
+	वापस pp->state_name(state);
+पूर्ण
 
 
-static void
-ip_vs_tcpudp_debug_packet_v4(struct ip_vs_protocol *pp,
-			     const struct sk_buff *skb,
-			     int offset,
-			     const char *msg)
-{
-	char buf[128];
-	struct iphdr _iph, *ih;
+अटल व्योम
+ip_vs_tcpudp_debug_packet_v4(काष्ठा ip_vs_protocol *pp,
+			     स्थिर काष्ठा sk_buff *skb,
+			     पूर्णांक offset,
+			     स्थिर अक्षर *msg)
+अणु
+	अक्षर buf[128];
+	काष्ठा iphdr _iph, *ih;
 
-	ih = skb_header_pointer(skb, offset, sizeof(_iph), &_iph);
-	if (ih == NULL)
-		sprintf(buf, "TRUNCATED");
-	else if (ih->frag_off & htons(IP_OFFSET))
-		sprintf(buf, "%pI4->%pI4 frag", &ih->saddr, &ih->daddr);
-	else {
+	ih = skb_header_poपूर्णांकer(skb, offset, माप(_iph), &_iph);
+	अगर (ih == शून्य)
+		प्र_लिखो(buf, "TRUNCATED");
+	अन्यथा अगर (ih->frag_off & htons(IP_OFFSET))
+		प्र_लिखो(buf, "%pI4->%pI4 frag", &ih->saddr, &ih->daddr);
+	अन्यथा अणु
 		__be16 _ports[2], *pptr;
 
-		pptr = skb_header_pointer(skb, offset + ih->ihl*4,
-					  sizeof(_ports), _ports);
-		if (pptr == NULL)
-			sprintf(buf, "TRUNCATED %pI4->%pI4",
+		pptr = skb_header_poपूर्णांकer(skb, offset + ih->ihl*4,
+					  माप(_ports), _ports);
+		अगर (pptr == शून्य)
+			प्र_लिखो(buf, "TRUNCATED %pI4->%pI4",
 				&ih->saddr, &ih->daddr);
-		else
-			sprintf(buf, "%pI4:%u->%pI4:%u",
+		अन्यथा
+			प्र_लिखो(buf, "%pI4:%u->%pI4:%u",
 				&ih->saddr, ntohs(pptr[0]),
 				&ih->daddr, ntohs(pptr[1]));
-	}
+	पूर्ण
 
 	pr_debug("%s: %s %s\n", msg, pp->name, buf);
-}
+पूर्ण
 
-#ifdef CONFIG_IP_VS_IPV6
-static void
-ip_vs_tcpudp_debug_packet_v6(struct ip_vs_protocol *pp,
-			     const struct sk_buff *skb,
-			     int offset,
-			     const char *msg)
-{
-	char buf[192];
-	struct ipv6hdr _iph, *ih;
+#अगर_घोषित CONFIG_IP_VS_IPV6
+अटल व्योम
+ip_vs_tcpudp_debug_packet_v6(काष्ठा ip_vs_protocol *pp,
+			     स्थिर काष्ठा sk_buff *skb,
+			     पूर्णांक offset,
+			     स्थिर अक्षर *msg)
+अणु
+	अक्षर buf[192];
+	काष्ठा ipv6hdr _iph, *ih;
 
-	ih = skb_header_pointer(skb, offset, sizeof(_iph), &_iph);
-	if (ih == NULL)
-		sprintf(buf, "TRUNCATED");
-	else if (ih->nexthdr == IPPROTO_FRAGMENT)
-		sprintf(buf, "%pI6c->%pI6c frag", &ih->saddr, &ih->daddr);
-	else {
+	ih = skb_header_poपूर्णांकer(skb, offset, माप(_iph), &_iph);
+	अगर (ih == शून्य)
+		प्र_लिखो(buf, "TRUNCATED");
+	अन्यथा अगर (ih->nexthdr == IPPROTO_FRAGMENT)
+		प्र_लिखो(buf, "%pI6c->%pI6c frag", &ih->saddr, &ih->daddr);
+	अन्यथा अणु
 		__be16 _ports[2], *pptr;
 
-		pptr = skb_header_pointer(skb, offset + sizeof(struct ipv6hdr),
-					  sizeof(_ports), _ports);
-		if (pptr == NULL)
-			sprintf(buf, "TRUNCATED %pI6c->%pI6c",
+		pptr = skb_header_poपूर्णांकer(skb, offset + माप(काष्ठा ipv6hdr),
+					  माप(_ports), _ports);
+		अगर (pptr == शून्य)
+			प्र_लिखो(buf, "TRUNCATED %pI6c->%pI6c",
 				&ih->saddr, &ih->daddr);
-		else
-			sprintf(buf, "%pI6c:%u->%pI6c:%u",
+		अन्यथा
+			प्र_लिखो(buf, "%pI6c:%u->%pI6c:%u",
 				&ih->saddr, ntohs(pptr[0]),
 				&ih->daddr, ntohs(pptr[1]));
-	}
+	पूर्ण
 
 	pr_debug("%s: %s %s\n", msg, pp->name, buf);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 
-void
-ip_vs_tcpudp_debug_packet(int af, struct ip_vs_protocol *pp,
-			  const struct sk_buff *skb,
-			  int offset,
-			  const char *msg)
-{
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6)
+व्योम
+ip_vs_tcpudp_debug_packet(पूर्णांक af, काष्ठा ip_vs_protocol *pp,
+			  स्थिर काष्ठा sk_buff *skb,
+			  पूर्णांक offset,
+			  स्थिर अक्षर *msg)
+अणु
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6)
 		ip_vs_tcpudp_debug_packet_v6(pp, skb, offset, msg);
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 		ip_vs_tcpudp_debug_packet_v4(pp, skb, offset, msg);
-}
+पूर्ण
 
 /*
  * per network name-space init
  */
-int __net_init ip_vs_protocol_net_init(struct netns_ipvs *ipvs)
-{
-	int i, ret;
-	static struct ip_vs_protocol *protos[] = {
-#ifdef CONFIG_IP_VS_PROTO_TCP
+पूर्णांक __net_init ip_vs_protocol_net_init(काष्ठा netns_ipvs *ipvs)
+अणु
+	पूर्णांक i, ret;
+	अटल काष्ठा ip_vs_protocol *protos[] = अणु
+#अगर_घोषित CONFIG_IP_VS_PROTO_TCP
         &ip_vs_protocol_tcp,
-#endif
-#ifdef CONFIG_IP_VS_PROTO_UDP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IP_VS_PROTO_UDP
 	&ip_vs_protocol_udp,
-#endif
-#ifdef CONFIG_IP_VS_PROTO_SCTP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IP_VS_PROTO_SCTP
 	&ip_vs_protocol_sctp,
-#endif
-#ifdef CONFIG_IP_VS_PROTO_AH
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IP_VS_PROTO_AH
 	&ip_vs_protocol_ah,
-#endif
-#ifdef CONFIG_IP_VS_PROTO_ESP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IP_VS_PROTO_ESP
 	&ip_vs_protocol_esp,
-#endif
-	};
+#पूर्ण_अगर
+	पूर्ण;
 
-	for (i = 0; i < ARRAY_SIZE(protos); i++) {
-		ret = register_ip_vs_proto_netns(ipvs, protos[i]);
-		if (ret < 0)
-			goto cleanup;
-	}
-	return 0;
+	क्रम (i = 0; i < ARRAY_SIZE(protos); i++) अणु
+		ret = रेजिस्टर_ip_vs_proto_netns(ipvs, protos[i]);
+		अगर (ret < 0)
+			जाओ cleanup;
+	पूर्ण
+	वापस 0;
 
 cleanup:
 	ip_vs_protocol_net_cleanup(ipvs);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void __net_exit ip_vs_protocol_net_cleanup(struct netns_ipvs *ipvs)
-{
-	struct ip_vs_proto_data *pd;
-	int i;
+व्योम __net_निकास ip_vs_protocol_net_cleanup(काष्ठा netns_ipvs *ipvs)
+अणु
+	काष्ठा ip_vs_proto_data *pd;
+	पूर्णांक i;
 
-	/* unregister all the ipvs proto data for this netns */
-	for (i = 0; i < IP_VS_PROTO_TAB_SIZE; i++) {
-		while ((pd = ipvs->proto_data_table[i]) != NULL)
-			unregister_ip_vs_proto_netns(ipvs, pd);
-	}
-}
+	/* unरेजिस्टर all the ipvs proto data क्रम this netns */
+	क्रम (i = 0; i < IP_VS_PROTO_TAB_SIZE; i++) अणु
+		जबतक ((pd = ipvs->proto_data_table[i]) != शून्य)
+			unरेजिस्टर_ip_vs_proto_netns(ipvs, pd);
+	पूर्ण
+पूर्ण
 
-int __init ip_vs_protocol_init(void)
-{
-	char protocols[64];
-#define REGISTER_PROTOCOL(p)			\
-	do {					\
-		register_ip_vs_protocol(p);	\
-		strcat(protocols, ", ");	\
-		strcat(protocols, (p)->name);	\
-	} while (0)
+पूर्णांक __init ip_vs_protocol_init(व्योम)
+अणु
+	अक्षर protocols[64];
+#घोषणा REGISTER_PROTOCOL(p)			\
+	करो अणु					\
+		रेजिस्टर_ip_vs_protocol(p);	\
+		म_जोड़ो(protocols, ", ");	\
+		म_जोड़ो(protocols, (p)->name);	\
+	पूर्ण जबतक (0)
 
 	protocols[0] = '\0';
 	protocols[2] = '\0';
-#ifdef CONFIG_IP_VS_PROTO_TCP
+#अगर_घोषित CONFIG_IP_VS_PROTO_TCP
 	REGISTER_PROTOCOL(&ip_vs_protocol_tcp);
-#endif
-#ifdef CONFIG_IP_VS_PROTO_UDP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IP_VS_PROTO_UDP
 	REGISTER_PROTOCOL(&ip_vs_protocol_udp);
-#endif
-#ifdef CONFIG_IP_VS_PROTO_SCTP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IP_VS_PROTO_SCTP
 	REGISTER_PROTOCOL(&ip_vs_protocol_sctp);
-#endif
-#ifdef CONFIG_IP_VS_PROTO_AH
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IP_VS_PROTO_AH
 	REGISTER_PROTOCOL(&ip_vs_protocol_ah);
-#endif
-#ifdef CONFIG_IP_VS_PROTO_ESP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IP_VS_PROTO_ESP
 	REGISTER_PROTOCOL(&ip_vs_protocol_esp);
-#endif
+#पूर्ण_अगर
 	pr_info("Registered protocols (%s)\n", &protocols[2]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-void ip_vs_protocol_cleanup(void)
-{
-	struct ip_vs_protocol *pp;
-	int i;
+व्योम ip_vs_protocol_cleanup(व्योम)
+अणु
+	काष्ठा ip_vs_protocol *pp;
+	पूर्णांक i;
 
-	/* unregister all the ipvs protocols */
-	for (i = 0; i < IP_VS_PROTO_TAB_SIZE; i++) {
-		while ((pp = ip_vs_proto_table[i]) != NULL)
-			unregister_ip_vs_protocol(pp);
-	}
-}
+	/* unरेजिस्टर all the ipvs protocols */
+	क्रम (i = 0; i < IP_VS_PROTO_TAB_SIZE; i++) अणु
+		जबतक ((pp = ip_vs_proto_table[i]) != शून्य)
+			unरेजिस्टर_ip_vs_protocol(pp);
+	पूर्ण
+पूर्ण

@@ -1,218 +1,219 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef TARGET_CORE_FABRIC_H
-#define TARGET_CORE_FABRIC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित TARGET_CORE_FABRIC_H
+#घोषणा TARGET_CORE_FABRIC_H
 
-#include <linux/configfs.h>
-#include <linux/types.h>
-#include <target/target_core_base.h>
+#समावेश <linux/configfs.h>
+#समावेश <linux/types.h>
+#समावेश <target/target_core_base.h>
 
-struct target_core_fabric_ops {
-	struct module *module;
+काष्ठा target_core_fabric_ops अणु
+	काष्ठा module *module;
 	/*
-	 * XXX: Special case for iscsi/iSCSI...
-	 * If non-null, fabric_alias is used for matching target/$fabric
-	 * ConfigFS paths. If null, fabric_name is used for this (see below).
+	 * XXX: Special हाल क्रम iscsi/iSCSI...
+	 * If non-null, fabric_alias is used क्रम matching target/$fabric
+	 * ConfigFS paths. If null, fabric_name is used क्रम this (see below).
 	 */
-	const char *fabric_alias;
+	स्थिर अक्षर *fabric_alias;
 	/*
-	 * fabric_name is used for matching target/$fabric ConfigFS paths
-	 * without a fabric_alias (see above). It's also used for the ALUA state
+	 * fabric_name is used क्रम matching target/$fabric ConfigFS paths
+	 * without a fabric_alias (see above). It's also used क्रम the ALUA state
 	 * path and is stored on disk with PR state.
 	 */
-	const char *fabric_name;
-	size_t node_acl_size;
+	स्थिर अक्षर *fabric_name;
+	माप_प्रकार node_acl_size;
 	/*
 	 * Limits number of scatterlist entries per SCF_SCSI_DATA_CDB payload.
-	 * Setting this value tells target-core to enforce this limit, and
+	 * Setting this value tells target-core to enक्रमce this limit, and
 	 * report as INQUIRY EVPD=b0 MAXIMUM TRANSFER LENGTH.
 	 *
 	 * target-core will currently reset se_cmd->data_length to this
-	 * maximum size, and set UNDERFLOW residual count if length exceeds
+	 * maximum size, and set UNDERFLOW residual count अगर length exceeds
 	 * this limit.
 	 *
 	 * XXX: Not all initiator hosts honor this block-limit EVPD
 	 * XXX: Currently assumes single PAGE_SIZE per scatterlist entry
 	 */
 	u32 max_data_sg_nents;
-	char *(*tpg_get_wwn)(struct se_portal_group *);
-	u16 (*tpg_get_tag)(struct se_portal_group *);
-	u32 (*tpg_get_default_depth)(struct se_portal_group *);
-	int (*tpg_check_demo_mode)(struct se_portal_group *);
-	int (*tpg_check_demo_mode_cache)(struct se_portal_group *);
-	int (*tpg_check_demo_mode_write_protect)(struct se_portal_group *);
-	int (*tpg_check_prod_mode_write_protect)(struct se_portal_group *);
+	अक्षर *(*tpg_get_wwn)(काष्ठा se_portal_group *);
+	u16 (*tpg_get_tag)(काष्ठा se_portal_group *);
+	u32 (*tpg_get_शेष_depth)(काष्ठा se_portal_group *);
+	पूर्णांक (*tpg_check_demo_mode)(काष्ठा se_portal_group *);
+	पूर्णांक (*tpg_check_demo_mode_cache)(काष्ठा se_portal_group *);
+	पूर्णांक (*tpg_check_demo_mode_ग_लिखो_protect)(काष्ठा se_portal_group *);
+	पूर्णांक (*tpg_check_prod_mode_ग_लिखो_protect)(काष्ठा se_portal_group *);
 	/*
 	 * Optionally used by fabrics to allow demo-mode login, but not
-	 * expose any TPG LUNs, and return 'not connected' in standard
+	 * expose any TPG LUNs, and वापस 'not connected' in standard
 	 * inquiry response
 	 */
-	int (*tpg_check_demo_mode_login_only)(struct se_portal_group *);
+	पूर्णांक (*tpg_check_demo_mode_login_only)(काष्ठा se_portal_group *);
 	/*
 	 * Optionally used as a configfs tunable to determine when
-	 * target-core should signal the PROTECT=1 feature bit for
-	 * backends that don't support T10-PI, so that either fabric
-	 * HW offload or target-core emulation performs the associated
+	 * target-core should संकेत the PROTECT=1 feature bit क्रम
+	 * backends that करोn't support T10-PI, so that either fabric
+	 * HW offload or target-core emulation perक्रमms the associated
 	 * WRITE_STRIP and READ_INSERT operations.
 	 */
-	int (*tpg_check_prot_fabric_only)(struct se_portal_group *);
-	u32 (*tpg_get_inst_index)(struct se_portal_group *);
+	पूर्णांक (*tpg_check_prot_fabric_only)(काष्ठा se_portal_group *);
+	u32 (*tpg_get_inst_index)(काष्ठा se_portal_group *);
 	/*
-	 * Optional to release struct se_cmd and fabric dependent allocated
+	 * Optional to release काष्ठा se_cmd and fabric dependent allocated
 	 * I/O descriptor after command execution has finished.
 	 *
-	 * Returning 1 will signal a descriptor has been released.
-	 * Returning 0 will signal a descriptor has not been released.
+	 * Returning 1 will संकेत a descriptor has been released.
+	 * Returning 0 will संकेत a descriptor has not been released.
 	 */
-	int (*check_stop_free)(struct se_cmd *);
-	void (*release_cmd)(struct se_cmd *);
-	void (*close_session)(struct se_session *);
-	u32 (*sess_get_index)(struct se_session *);
+	पूर्णांक (*check_stop_मुक्त)(काष्ठा se_cmd *);
+	व्योम (*release_cmd)(काष्ठा se_cmd *);
+	व्योम (*बंद_session)(काष्ठा se_session *);
+	u32 (*sess_get_index)(काष्ठा se_session *);
 	/*
-	 * Used only for SCSI fabrics that contain multi-value TransportIDs
-	 * (like iSCSI).  All other SCSI fabrics should set this to NULL.
+	 * Used only क्रम SCSI fabrics that contain multi-value TransportIDs
+	 * (like iSCSI).  All other SCSI fabrics should set this to शून्य.
 	 */
-	u32 (*sess_get_initiator_sid)(struct se_session *,
-				      unsigned char *, u32);
-	int (*write_pending)(struct se_cmd *);
-	void (*set_default_node_attributes)(struct se_node_acl *);
-	int (*get_cmd_state)(struct se_cmd *);
-	int (*queue_data_in)(struct se_cmd *);
-	int (*queue_status)(struct se_cmd *);
-	void (*queue_tm_rsp)(struct se_cmd *);
-	void (*aborted_task)(struct se_cmd *);
+	u32 (*sess_get_initiator_sid)(काष्ठा se_session *,
+				      अचिन्हित अक्षर *, u32);
+	पूर्णांक (*ग_लिखो_pending)(काष्ठा se_cmd *);
+	व्योम (*set_शेष_node_attributes)(काष्ठा se_node_acl *);
+	पूर्णांक (*get_cmd_state)(काष्ठा se_cmd *);
+	पूर्णांक (*queue_data_in)(काष्ठा se_cmd *);
+	पूर्णांक (*queue_status)(काष्ठा se_cmd *);
+	व्योम (*queue_पंचांग_rsp)(काष्ठा se_cmd *);
+	व्योम (*पातed_task)(काष्ठा se_cmd *);
 	/*
-	 * fabric module calls for target_core_fabric_configfs.c
+	 * fabric module calls क्रम target_core_fabric_configfs.c
 	 */
-	struct se_wwn *(*fabric_make_wwn)(struct target_fabric_configfs *,
-				struct config_group *, const char *);
-	void (*fabric_drop_wwn)(struct se_wwn *);
-	void (*add_wwn_groups)(struct se_wwn *);
-	struct se_portal_group *(*fabric_make_tpg)(struct se_wwn *,
-						   const char *);
-	void (*fabric_drop_tpg)(struct se_portal_group *);
-	int (*fabric_post_link)(struct se_portal_group *,
-				struct se_lun *);
-	void (*fabric_pre_unlink)(struct se_portal_group *,
-				struct se_lun *);
-	struct se_tpg_np *(*fabric_make_np)(struct se_portal_group *,
-				struct config_group *, const char *);
-	void (*fabric_drop_np)(struct se_tpg_np *);
-	int (*fabric_init_nodeacl)(struct se_node_acl *, const char *);
+	काष्ठा se_wwn *(*fabric_make_wwn)(काष्ठा target_fabric_configfs *,
+				काष्ठा config_group *, स्थिर अक्षर *);
+	व्योम (*fabric_drop_wwn)(काष्ठा se_wwn *);
+	व्योम (*add_wwn_groups)(काष्ठा se_wwn *);
+	काष्ठा se_portal_group *(*fabric_make_tpg)(काष्ठा se_wwn *,
+						   स्थिर अक्षर *);
+	व्योम (*fabric_drop_tpg)(काष्ठा se_portal_group *);
+	पूर्णांक (*fabric_post_link)(काष्ठा se_portal_group *,
+				काष्ठा se_lun *);
+	व्योम (*fabric_pre_unlink)(काष्ठा se_portal_group *,
+				काष्ठा se_lun *);
+	काष्ठा se_tpg_np *(*fabric_make_np)(काष्ठा se_portal_group *,
+				काष्ठा config_group *, स्थिर अक्षर *);
+	व्योम (*fabric_drop_np)(काष्ठा se_tpg_np *);
+	पूर्णांक (*fabric_init_nodeacl)(काष्ठा se_node_acl *, स्थिर अक्षर *);
 
-	struct configfs_attribute **tfc_discovery_attrs;
-	struct configfs_attribute **tfc_wwn_attrs;
-	struct configfs_attribute **tfc_tpg_base_attrs;
-	struct configfs_attribute **tfc_tpg_np_base_attrs;
-	struct configfs_attribute **tfc_tpg_attrib_attrs;
-	struct configfs_attribute **tfc_tpg_auth_attrs;
-	struct configfs_attribute **tfc_tpg_param_attrs;
-	struct configfs_attribute **tfc_tpg_nacl_base_attrs;
-	struct configfs_attribute **tfc_tpg_nacl_attrib_attrs;
-	struct configfs_attribute **tfc_tpg_nacl_auth_attrs;
-	struct configfs_attribute **tfc_tpg_nacl_param_attrs;
+	काष्ठा configfs_attribute **tfc_discovery_attrs;
+	काष्ठा configfs_attribute **tfc_wwn_attrs;
+	काष्ठा configfs_attribute **tfc_tpg_base_attrs;
+	काष्ठा configfs_attribute **tfc_tpg_np_base_attrs;
+	काष्ठा configfs_attribute **tfc_tpg_attrib_attrs;
+	काष्ठा configfs_attribute **tfc_tpg_auth_attrs;
+	काष्ठा configfs_attribute **tfc_tpg_param_attrs;
+	काष्ठा configfs_attribute **tfc_tpg_nacl_base_attrs;
+	काष्ठा configfs_attribute **tfc_tpg_nacl_attrib_attrs;
+	काष्ठा configfs_attribute **tfc_tpg_nacl_auth_attrs;
+	काष्ठा configfs_attribute **tfc_tpg_nacl_param_attrs;
 
 	/*
-	 * Set this member variable to true if the SCSI transport protocol
+	 * Set this member variable to true अगर the SCSI transport protocol
 	 * (e.g. iSCSI) requires that the Data-Out buffer is transferred in
-	 * its entirety before a command is aborted.
+	 * its entirety beक्रमe a command is पातed.
 	 */
-	bool write_pending_must_be_called;
-};
+	bool ग_लिखो_pending_must_be_called;
+पूर्ण;
 
-int target_register_template(const struct target_core_fabric_ops *fo);
-void target_unregister_template(const struct target_core_fabric_ops *fo);
+पूर्णांक target_रेजिस्टर_ढाँचा(स्थिर काष्ठा target_core_fabric_ops *fo);
+व्योम target_unरेजिस्टर_ढाँचा(स्थिर काष्ठा target_core_fabric_ops *fo);
 
-int target_depend_item(struct config_item *item);
-void target_undepend_item(struct config_item *item);
+पूर्णांक target_depend_item(काष्ठा config_item *item);
+व्योम target_undepend_item(काष्ठा config_item *item);
 
-struct se_session *target_setup_session(struct se_portal_group *,
-		unsigned int, unsigned int, enum target_prot_op prot_op,
-		const char *, void *,
-		int (*callback)(struct se_portal_group *,
-				struct se_session *, void *));
-void target_remove_session(struct se_session *);
+काष्ठा se_session *target_setup_session(काष्ठा se_portal_group *,
+		अचिन्हित पूर्णांक, अचिन्हित पूर्णांक, क्रमागत target_prot_op prot_op,
+		स्थिर अक्षर *, व्योम *,
+		पूर्णांक (*callback)(काष्ठा se_portal_group *,
+				काष्ठा se_session *, व्योम *));
+व्योम target_हटाओ_session(काष्ठा se_session *);
 
-int transport_init_session(struct se_session *se_sess);
-struct se_session *transport_alloc_session(enum target_prot_op);
-int transport_alloc_session_tags(struct se_session *, unsigned int,
-		unsigned int);
-void	__transport_register_session(struct se_portal_group *,
-		struct se_node_acl *, struct se_session *, void *);
-void	transport_register_session(struct se_portal_group *,
-		struct se_node_acl *, struct se_session *, void *);
-ssize_t	target_show_dynamic_sessions(struct se_portal_group *, char *);
-void	transport_free_session(struct se_session *);
-void	target_spc2_release(struct se_node_acl *nacl);
-void	target_put_nacl(struct se_node_acl *);
-void	transport_deregister_session_configfs(struct se_session *);
-void	transport_deregister_session(struct se_session *);
+पूर्णांक transport_init_session(काष्ठा se_session *se_sess);
+काष्ठा se_session *transport_alloc_session(क्रमागत target_prot_op);
+पूर्णांक transport_alloc_session_tags(काष्ठा se_session *, अचिन्हित पूर्णांक,
+		अचिन्हित पूर्णांक);
+व्योम	__transport_रेजिस्टर_session(काष्ठा se_portal_group *,
+		काष्ठा se_node_acl *, काष्ठा se_session *, व्योम *);
+व्योम	transport_रेजिस्टर_session(काष्ठा se_portal_group *,
+		काष्ठा se_node_acl *, काष्ठा se_session *, व्योम *);
+sमाप_प्रकार	target_show_dynamic_sessions(काष्ठा se_portal_group *, अक्षर *);
+व्योम	transport_मुक्त_session(काष्ठा se_session *);
+व्योम	target_spc2_release(काष्ठा se_node_acl *nacl);
+व्योम	target_put_nacl(काष्ठा se_node_acl *);
+व्योम	transport_deरेजिस्टर_session_configfs(काष्ठा se_session *);
+व्योम	transport_deरेजिस्टर_session(काष्ठा se_session *);
 
 
-void	__target_init_cmd(struct se_cmd *,
-		const struct target_core_fabric_ops *,
-		struct se_session *, u32, int, int, unsigned char *, u64);
-int	target_init_cmd(struct se_cmd *se_cmd, struct se_session *se_sess,
-		unsigned char *sense, u64 unpacked_lun, u32 data_length,
-		int task_attr, int data_dir, int flags);
-int	target_submit_prep(struct se_cmd *se_cmd, unsigned char *cdb,
-		struct scatterlist *sgl, u32 sgl_count,
-		struct scatterlist *sgl_bidi, u32 sgl_bidi_count,
-		struct scatterlist *sgl_prot, u32 sgl_prot_count, gfp_t gfp);
-void	target_submit(struct se_cmd *se_cmd);
-sense_reason_t transport_lookup_cmd_lun(struct se_cmd *);
-sense_reason_t target_cmd_init_cdb(struct se_cmd *se_cmd, unsigned char *cdb,
+व्योम	__target_init_cmd(काष्ठा se_cmd *,
+		स्थिर काष्ठा target_core_fabric_ops *,
+		काष्ठा se_session *, u32, पूर्णांक, पूर्णांक, अचिन्हित अक्षर *, u64);
+पूर्णांक	target_init_cmd(काष्ठा se_cmd *se_cmd, काष्ठा se_session *se_sess,
+		अचिन्हित अक्षर *sense, u64 unpacked_lun, u32 data_length,
+		पूर्णांक task_attr, पूर्णांक data_dir, पूर्णांक flags);
+पूर्णांक	target_submit_prep(काष्ठा se_cmd *se_cmd, अचिन्हित अक्षर *cdb,
+		काष्ठा scatterlist *sgl, u32 sgl_count,
+		काष्ठा scatterlist *sgl_bidi, u32 sgl_bidi_count,
+		काष्ठा scatterlist *sgl_prot, u32 sgl_prot_count, gfp_t gfp);
+व्योम	target_submit(काष्ठा se_cmd *se_cmd);
+sense_reason_t transport_lookup_cmd_lun(काष्ठा se_cmd *);
+sense_reason_t target_cmd_init_cdb(काष्ठा se_cmd *se_cmd, अचिन्हित अक्षर *cdb,
 				   gfp_t gfp);
-sense_reason_t target_cmd_parse_cdb(struct se_cmd *);
-void	target_submit_cmd(struct se_cmd *, struct se_session *, unsigned char *,
-		unsigned char *, u64, u32, int, int, int);
-void	target_queue_submission(struct se_cmd *se_cmd);
+sense_reason_t target_cmd_parse_cdb(काष्ठा se_cmd *);
+व्योम	target_submit_cmd(काष्ठा se_cmd *, काष्ठा se_session *, अचिन्हित अक्षर *,
+		अचिन्हित अक्षर *, u64, u32, पूर्णांक, पूर्णांक, पूर्णांक);
+व्योम	target_queue_submission(काष्ठा se_cmd *se_cmd);
 
-int	target_submit_tmr(struct se_cmd *se_cmd, struct se_session *se_sess,
-		unsigned char *sense, u64 unpacked_lun,
-		void *fabric_tmr_ptr, unsigned char tm_type,
-		gfp_t, u64, int);
-int	transport_handle_cdb_direct(struct se_cmd *);
-sense_reason_t	transport_generic_new_cmd(struct se_cmd *);
+पूर्णांक	target_submit_पंचांगr(काष्ठा se_cmd *se_cmd, काष्ठा se_session *se_sess,
+		अचिन्हित अक्षर *sense, u64 unpacked_lun,
+		व्योम *fabric_पंचांगr_ptr, अचिन्हित अक्षर पंचांग_type,
+		gfp_t, u64, पूर्णांक);
+पूर्णांक	transport_handle_cdb_direct(काष्ठा se_cmd *);
+sense_reason_t	transport_generic_new_cmd(काष्ठा se_cmd *);
 
-void	target_put_cmd_and_wait(struct se_cmd *cmd);
-void	target_execute_cmd(struct se_cmd *cmd);
+व्योम	target_put_cmd_and_रुको(काष्ठा se_cmd *cmd);
+व्योम	target_execute_cmd(काष्ठा se_cmd *cmd);
 
-int	transport_generic_free_cmd(struct se_cmd *, int);
+पूर्णांक	transport_generic_मुक्त_cmd(काष्ठा se_cmd *, पूर्णांक);
 
-bool	transport_wait_for_tasks(struct se_cmd *);
-int	transport_send_check_condition_and_sense(struct se_cmd *,
-		sense_reason_t, int);
-int	target_send_busy(struct se_cmd *cmd);
-int	target_get_sess_cmd(struct se_cmd *, bool);
-int	target_put_sess_cmd(struct se_cmd *);
-void	target_stop_session(struct se_session *se_sess);
-void	target_wait_for_sess_cmds(struct se_session *);
-void	target_show_cmd(const char *pfx, struct se_cmd *cmd);
+bool	transport_रुको_क्रम_tasks(काष्ठा se_cmd *);
+पूर्णांक	transport_send_check_condition_and_sense(काष्ठा se_cmd *,
+		sense_reason_t, पूर्णांक);
+पूर्णांक	target_send_busy(काष्ठा se_cmd *cmd);
+पूर्णांक	target_get_sess_cmd(काष्ठा se_cmd *, bool);
+पूर्णांक	target_put_sess_cmd(काष्ठा se_cmd *);
+व्योम	target_stop_session(काष्ठा se_session *se_sess);
+व्योम	target_रुको_क्रम_sess_cmds(काष्ठा se_session *);
+व्योम	target_show_cmd(स्थिर अक्षर *pfx, काष्ठा se_cmd *cmd);
 
-int	core_alua_check_nonop_delay(struct se_cmd *);
+पूर्णांक	core_alua_check_nonop_delay(काष्ठा se_cmd *);
 
-int	core_tmr_alloc_req(struct se_cmd *, void *, u8, gfp_t);
-void	core_tmr_release_req(struct se_tmr_req *);
-int	transport_generic_handle_tmr(struct se_cmd *);
-void	transport_generic_request_failure(struct se_cmd *, sense_reason_t);
-int	transport_lookup_tmr_lun(struct se_cmd *);
-void	core_allocate_nexus_loss_ua(struct se_node_acl *acl);
+पूर्णांक	core_पंचांगr_alloc_req(काष्ठा se_cmd *, व्योम *, u8, gfp_t);
+व्योम	core_पंचांगr_release_req(काष्ठा se_पंचांगr_req *);
+पूर्णांक	transport_generic_handle_पंचांगr(काष्ठा se_cmd *);
+व्योम	transport_generic_request_failure(काष्ठा se_cmd *, sense_reason_t);
+पूर्णांक	transport_lookup_पंचांगr_lun(काष्ठा se_cmd *);
+व्योम	core_allocate_nexus_loss_ua(काष्ठा se_node_acl *acl);
 
-struct se_node_acl *core_tpg_get_initiator_node_acl(struct se_portal_group *tpg,
-		unsigned char *);
-bool	target_tpg_has_node_acl(struct se_portal_group *tpg,
-		const char *);
-struct se_node_acl *core_tpg_check_initiator_node_acl(struct se_portal_group *,
-		unsigned char *);
-int	core_tpg_set_initiator_node_queue_depth(struct se_node_acl *, u32);
-int	core_tpg_set_initiator_node_tag(struct se_portal_group *,
-		struct se_node_acl *, const char *);
-int	core_tpg_register(struct se_wwn *, struct se_portal_group *, int);
-int	core_tpg_deregister(struct se_portal_group *);
+काष्ठा se_node_acl *core_tpg_get_initiator_node_acl(काष्ठा se_portal_group *tpg,
+		अचिन्हित अक्षर *);
+bool	target_tpg_has_node_acl(काष्ठा se_portal_group *tpg,
+		स्थिर अक्षर *);
+काष्ठा se_node_acl *core_tpg_check_initiator_node_acl(काष्ठा se_portal_group *,
+		अचिन्हित अक्षर *);
+पूर्णांक	core_tpg_set_initiator_node_queue_depth(काष्ठा se_node_acl *, u32);
+पूर्णांक	core_tpg_set_initiator_node_tag(काष्ठा se_portal_group *,
+		काष्ठा se_node_acl *, स्थिर अक्षर *);
+पूर्णांक	core_tpg_रेजिस्टर(काष्ठा se_wwn *, काष्ठा se_portal_group *, पूर्णांक);
+पूर्णांक	core_tpg_deरेजिस्टर(काष्ठा se_portal_group *);
 
-int	target_alloc_sgl(struct scatterlist **sgl, unsigned int *nents,
+पूर्णांक	target_alloc_sgl(काष्ठा scatterlist **sgl, अचिन्हित पूर्णांक *nents,
 		u32 length, bool zero_page, bool chainable);
-void	target_free_sgl(struct scatterlist *sgl, int nents);
+व्योम	target_मुक्त_sgl(काष्ठा scatterlist *sgl, पूर्णांक nents);
 
 /*
  * The LIO target core uses DMA_TO_DEVICE to mean that data is going
@@ -223,21 +224,21 @@ void	target_free_sgl(struct scatterlist *sgl, int nents);
  * out of memory so it can send it to the initiator, which means we
  * need to use DMA_TO_DEVICE when we map the data.
  */
-static inline enum dma_data_direction
-target_reverse_dma_direction(struct se_cmd *se_cmd)
-{
-	if (se_cmd->se_cmd_flags & SCF_BIDI)
-		return DMA_BIDIRECTIONAL;
+अटल अंतरभूत क्रमागत dma_data_direction
+target_reverse_dma_direction(काष्ठा se_cmd *se_cmd)
+अणु
+	अगर (se_cmd->se_cmd_flags & SCF_BIDI)
+		वापस DMA_BIसूचीECTIONAL;
 
-	switch (se_cmd->data_direction) {
-	case DMA_TO_DEVICE:
-		return DMA_FROM_DEVICE;
-	case DMA_FROM_DEVICE:
-		return DMA_TO_DEVICE;
-	case DMA_NONE:
-	default:
-		return DMA_NONE;
-	}
-}
+	चयन (se_cmd->data_direction) अणु
+	हाल DMA_TO_DEVICE:
+		वापस DMA_FROM_DEVICE;
+	हाल DMA_FROM_DEVICE:
+		वापस DMA_TO_DEVICE;
+	हाल DMA_NONE:
+	शेष:
+		वापस DMA_NONE;
+	पूर्ण
+पूर्ण
 
-#endif /* TARGET_CORE_FABRICH */
+#पूर्ण_अगर /* TARGET_CORE_FABRICH */

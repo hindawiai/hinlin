@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Joe Lawrence <joe.lawrence@redhat.com>
  */
 
 /*
- * livepatch-shadow-fix2.c - Shadow variables, livepatch demo
+ * livepatch-shaकरोw-fix2.c - Shaकरोw variables, livepatch demo
  *
  * Purpose
  * -------
  *
- * Adds functionality to livepatch-shadow-mod's in-flight data
- * structures through a shadow variable.  The livepatch patches a
- * routine that periodically inspects data structures, incrementing a
- * per-data-structure counter, creating the counter if needed.
+ * Adds functionality to livepatch-shaकरोw-mod's in-flight data
+ * काष्ठाures through a shaकरोw variable.  The livepatch patches a
+ * routine that periodically inspects data काष्ठाures, incrementing a
+ * per-data-काष्ठाure counter, creating the counter अगर needed.
  *
  *
  * Usage
  * -----
  *
- * This module is not intended to be standalone.  See the "Usage"
- * section of livepatch-shadow-mod.c.
+ * This module is not पूर्णांकended to be standalone.  See the "Usage"
+ * section of livepatch-shaकरोw-mod.c.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/livepatch.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/livepatch.h>
+#समावेश <linux/slab.h>
 
-/* Shadow variable enums */
-#define SV_LEAK		1
-#define SV_COUNTER	2
+/* Shaकरोw variable क्रमागतs */
+#घोषणा SV_LEAK		1
+#घोषणा SV_COUNTER	2
 
-struct dummy {
-	struct list_head list;
-	unsigned long jiffies_expire;
-};
+काष्ठा dummy अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ jअगरfies_expire;
+पूर्ण;
 
-static bool livepatch_fix2_dummy_check(struct dummy *d, unsigned long jiffies)
-{
-	int *shadow_count;
+अटल bool livepatch_fix2_dummy_check(काष्ठा dummy *d, अचिन्हित दीर्घ jअगरfies)
+अणु
+	पूर्णांक *shaकरोw_count;
 
 	/*
-	 * Patch: handle in-flight dummy structures, if they do not
-	 * already have a SV_COUNTER shadow variable, then attach a
+	 * Patch: handle in-flight dummy काष्ठाures, अगर they करो not
+	 * alपढ़ोy have a SV_COUNTER shaकरोw variable, then attach a
 	 * new one.
 	 */
-	shadow_count = klp_shadow_get_or_alloc(d, SV_COUNTER,
-				sizeof(*shadow_count), GFP_NOWAIT,
-				NULL, NULL);
-	if (shadow_count)
-		*shadow_count += 1;
+	shaकरोw_count = klp_shaकरोw_get_or_alloc(d, SV_COUNTER,
+				माप(*shaकरोw_count), GFP_NOWAIT,
+				शून्य, शून्य);
+	अगर (shaकरोw_count)
+		*shaकरोw_count += 1;
 
-	return time_after(jiffies, d->jiffies_expire);
-}
+	वापस समय_after(jअगरfies, d->jअगरfies_expire);
+पूर्ण
 
-static void livepatch_fix2_dummy_leak_dtor(void *obj, void *shadow_data)
-{
-	void *d = obj;
-	int **shadow_leak = shadow_data;
+अटल व्योम livepatch_fix2_dummy_leak_dtor(व्योम *obj, व्योम *shaकरोw_data)
+अणु
+	व्योम *d = obj;
+	पूर्णांक **shaकरोw_leak = shaकरोw_data;
 
-	kfree(*shadow_leak);
+	kमुक्त(*shaकरोw_leak);
 	pr_info("%s: dummy @ %p, prevented leak @ %p\n",
-			 __func__, d, *shadow_leak);
-}
+			 __func__, d, *shaकरोw_leak);
+पूर्ण
 
-static void livepatch_fix2_dummy_free(struct dummy *d)
-{
-	int **shadow_leak;
-	int *shadow_count;
+अटल व्योम livepatch_fix2_dummy_मुक्त(काष्ठा dummy *d)
+अणु
+	पूर्णांक **shaकरोw_leak;
+	पूर्णांक *shaकरोw_count;
 
 	/* Patch: copy the memory leak patch from the fix1 module. */
-	shadow_leak = klp_shadow_get(d, SV_LEAK);
-	if (shadow_leak)
-		klp_shadow_free(d, SV_LEAK, livepatch_fix2_dummy_leak_dtor);
-	else
+	shaकरोw_leak = klp_shaकरोw_get(d, SV_LEAK);
+	अगर (shaकरोw_leak)
+		klp_shaकरोw_मुक्त(d, SV_LEAK, livepatch_fix2_dummy_leak_dtor);
+	अन्यथा
 		pr_info("%s: dummy @ %p leaked!\n", __func__, d);
 
 	/*
-	 * Patch: fetch the SV_COUNTER shadow variable and display
-	 * the final count.  Detach the shadow variable.
+	 * Patch: fetch the SV_COUNTER shaकरोw variable and display
+	 * the final count.  Detach the shaकरोw variable.
 	 */
-	shadow_count = klp_shadow_get(d, SV_COUNTER);
-	if (shadow_count) {
+	shaकरोw_count = klp_shaकरोw_get(d, SV_COUNTER);
+	अगर (shaकरोw_count) अणु
 		pr_info("%s: dummy @ %p, check counter = %d\n",
-			__func__, d, *shadow_count);
-		klp_shadow_free(d, SV_COUNTER, NULL);
-	}
+			__func__, d, *shaकरोw_count);
+		klp_shaकरोw_मुक्त(d, SV_COUNTER, शून्य);
+	पूर्ण
 
-	kfree(d);
-}
+	kमुक्त(d);
+पूर्ण
 
-static struct klp_func funcs[] = {
-	{
+अटल काष्ठा klp_func funcs[] = अणु
+	अणु
 		.old_name = "dummy_check",
 		.new_func = livepatch_fix2_dummy_check,
-	},
-	{
+	पूर्ण,
+	अणु
 		.old_name = "dummy_free",
-		.new_func = livepatch_fix2_dummy_free,
-	}, { }
-};
+		.new_func = livepatch_fix2_dummy_मुक्त,
+	पूर्ण, अणु पूर्ण
+पूर्ण;
 
-static struct klp_object objs[] = {
-	{
+अटल काष्ठा klp_object objs[] = अणु
+	अणु
 		.name = "livepatch_shadow_mod",
 		.funcs = funcs,
-	}, { }
-};
+	पूर्ण, अणु पूर्ण
+पूर्ण;
 
-static struct klp_patch patch = {
+अटल काष्ठा klp_patch patch = अणु
 	.mod = THIS_MODULE,
 	.objs = objs,
-};
+पूर्ण;
 
-static int livepatch_shadow_fix2_init(void)
-{
-	return klp_enable_patch(&patch);
-}
+अटल पूर्णांक livepatch_shaकरोw_fix2_init(व्योम)
+अणु
+	वापस klp_enable_patch(&patch);
+पूर्ण
 
-static void livepatch_shadow_fix2_exit(void)
-{
-	/* Cleanup any existing SV_COUNTER shadow variables */
-	klp_shadow_free_all(SV_COUNTER, NULL);
-}
+अटल व्योम livepatch_shaकरोw_fix2_निकास(व्योम)
+अणु
+	/* Cleanup any existing SV_COUNTER shaकरोw variables */
+	klp_shaकरोw_मुक्त_all(SV_COUNTER, शून्य);
+पूर्ण
 
-module_init(livepatch_shadow_fix2_init);
-module_exit(livepatch_shadow_fix2_exit);
+module_init(livepatch_shaकरोw_fix2_init);
+module_निकास(livepatch_shaकरोw_fix2_निकास);
 MODULE_LICENSE("GPL");
 MODULE_INFO(livepatch, "Y");

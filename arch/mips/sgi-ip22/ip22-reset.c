@@ -1,203 +1,204 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1997, 1998, 2001, 03, 05, 06 by Ralf Baechle
  */
-#include <linux/linkage.h>
-#include <linux/init.h>
-#include <linux/rtc/ds1286.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/sched/signal.h>
-#include <linux/notifier.h>
-#include <linux/pm.h>
-#include <linux/timer.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/init.h>
+#समावेश <linux/rtc/ds1286.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/समयr.h>
 
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/reboot.h>
-#include <asm/sgialib.h>
-#include <asm/sgi/ioc.h>
-#include <asm/sgi/hpc3.h>
-#include <asm/sgi/mc.h>
-#include <asm/sgi/ip22.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/reboot.h>
+#समावेश <यंत्र/sgialib.h>
+#समावेश <यंत्र/sgi/ioc.h>
+#समावेश <यंत्र/sgi/hpc3.h>
+#समावेश <यंत्र/sgi/mc.h>
+#समावेश <यंत्र/sgi/ip22.h>
 
 /*
- * Just powerdown if init hasn't done after POWERDOWN_TIMEOUT seconds.
+ * Just घातerकरोwn अगर init hasn't करोne after POWERDOWN_TIMEOUT seconds.
  * I'm not sure if this feature is a good idea, for now it's here just to
- * make the power button make behave just like under IRIX.
+ * make the घातer button make behave just like under IRIX.
  */
-#define POWERDOWN_TIMEOUT	120
+#घोषणा POWERDOWN_TIMEOUT	120
 
 /*
  * Blink frequency during reboot grace period and when panicked.
  */
-#define POWERDOWN_FREQ		(HZ / 4)
-#define PANIC_FREQ		(HZ / 8)
+#घोषणा POWERDOWN_FREQ		(HZ / 4)
+#घोषणा PANIC_FREQ		(HZ / 8)
 
-static struct timer_list power_timer, blink_timer, debounce_timer;
-static unsigned long blink_timer_timeout;
+अटल काष्ठा समयr_list घातer_समयr, blink_समयr, debounce_समयr;
+अटल अचिन्हित दीर्घ blink_समयr_समयout;
 
-#define MACHINE_PANICED		1
-#define MACHINE_SHUTTING_DOWN	2
+#घोषणा MACHINE_PANICED		1
+#घोषणा MACHINE_SHUTTING_DOWN	2
 
-static int machine_state;
+अटल पूर्णांक machine_state;
 
-static void __noreturn sgi_machine_power_off(void)
-{
-	unsigned int tmp;
+अटल व्योम __noवापस sgi_machine_घातer_off(व्योम)
+अणु
+	अचिन्हित पूर्णांक पंचांगp;
 
 	local_irq_disable();
 
-	/* Disable watchdog */
-	tmp = hpc3c0->rtcregs[RTC_CMD] & 0xff;
-	hpc3c0->rtcregs[RTC_CMD] = tmp | RTC_WAM;
+	/* Disable watchकरोg */
+	पंचांगp = hpc3c0->rtcregs[RTC_CMD] & 0xff;
+	hpc3c0->rtcregs[RTC_CMD] = पंचांगp | RTC_WAM;
 	hpc3c0->rtcregs[RTC_WSEC] = 0;
 	hpc3c0->rtcregs[RTC_WHSEC] = 0;
 
-	while (1) {
+	जबतक (1) अणु
 		sgioc->panel = ~SGIOC_PANEL_POWERON;
 		/* Good bye cruel world ...  */
 
 		/* If we're still running, we probably got sent an alarm
-		   interrupt.  Read the flag to clear it.  */
-		tmp = hpc3c0->rtcregs[RTC_HOURS_ALARM];
-	}
-}
+		   पूर्णांकerrupt.  Read the flag to clear it.  */
+		पंचांगp = hpc3c0->rtcregs[RTC_HOURS_ALARM];
+	पूर्ण
+पूर्ण
 
-static void __noreturn sgi_machine_restart(char *command)
-{
-	if (machine_state & MACHINE_SHUTTING_DOWN)
-		sgi_machine_power_off();
+अटल व्योम __noवापस sgi_machine_restart(अक्षर *command)
+अणु
+	अगर (machine_state & MACHINE_SHUTTING_DOWN)
+		sgi_machine_घातer_off();
 	sgimc->cpuctrl0 |= SGIMC_CCTRL0_SYSINIT;
-	while (1);
-}
+	जबतक (1);
+पूर्ण
 
-static void __noreturn sgi_machine_halt(void)
-{
-	if (machine_state & MACHINE_SHUTTING_DOWN)
-		sgi_machine_power_off();
+अटल व्योम __noवापस sgi_machine_halt(व्योम)
+अणु
+	अगर (machine_state & MACHINE_SHUTTING_DOWN)
+		sgi_machine_घातer_off();
 	ArcEnterInteractiveMode();
-}
+पूर्ण
 
-static void power_timeout(struct timer_list *unused)
-{
-	sgi_machine_power_off();
-}
+अटल व्योम घातer_समयout(काष्ठा समयr_list *unused)
+अणु
+	sgi_machine_घातer_off();
+पूर्ण
 
-static void blink_timeout(struct timer_list *unused)
-{
-	/* XXX fix this for fullhouse  */
+अटल व्योम blink_समयout(काष्ठा समयr_list *unused)
+अणु
+	/* XXX fix this क्रम fullhouse  */
 	sgi_ioc_reset ^= (SGIOC_RESET_LC0OFF|SGIOC_RESET_LC1OFF);
 	sgioc->reset = sgi_ioc_reset;
 
-	mod_timer(&blink_timer, jiffies + blink_timer_timeout);
-}
+	mod_समयr(&blink_समयr, jअगरfies + blink_समयr_समयout);
+पूर्ण
 
-static void debounce(struct timer_list *unused)
-{
-	del_timer(&debounce_timer);
-	if (sgint->istat1 & SGINT_ISTAT1_PWR) {
+अटल व्योम debounce(काष्ठा समयr_list *unused)
+अणु
+	del_समयr(&debounce_समयr);
+	अगर (sgपूर्णांक->istat1 & SGINT_ISTAT1_PWR) अणु
 		/* Interrupt still being sent. */
-		debounce_timer.expires = jiffies + (HZ / 20); /* 0.05s	*/
-		add_timer(&debounce_timer);
+		debounce_समयr.expires = jअगरfies + (HZ / 20); /* 0.05s	*/
+		add_समयr(&debounce_समयr);
 
 		sgioc->panel = SGIOC_PANEL_POWERON | SGIOC_PANEL_POWERINTR |
 			       SGIOC_PANEL_VOLDNINTR | SGIOC_PANEL_VOLDNHOLD |
 			       SGIOC_PANEL_VOLUPINTR | SGIOC_PANEL_VOLUPHOLD;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (machine_state & MACHINE_PANICED)
+	अगर (machine_state & MACHINE_PANICED)
 		sgimc->cpuctrl0 |= SGIMC_CCTRL0_SYSINIT;
 
 	enable_irq(SGI_PANEL_IRQ);
-}
+पूर्ण
 
-static inline void power_button(void)
-{
-	if (machine_state & MACHINE_PANICED)
-		return;
+अटल अंतरभूत व्योम घातer_button(व्योम)
+अणु
+	अगर (machine_state & MACHINE_PANICED)
+		वापस;
 
-	if ((machine_state & MACHINE_SHUTTING_DOWN) ||
-			kill_cad_pid(SIGINT, 1)) {
+	अगर ((machine_state & MACHINE_SHUTTING_DOWN) ||
+			समाप्त_cad_pid(संक_विघ्न, 1)) अणु
 		/* No init process or button pressed twice.  */
-		sgi_machine_power_off();
-	}
+		sgi_machine_घातer_off();
+	पूर्ण
 
 	machine_state |= MACHINE_SHUTTING_DOWN;
-	blink_timer_timeout = POWERDOWN_FREQ;
-	blink_timeout(&blink_timer);
+	blink_समयr_समयout = POWERDOWN_FREQ;
+	blink_समयout(&blink_समयr);
 
-	timer_setup(&power_timer, power_timeout, 0);
-	power_timer.expires = jiffies + POWERDOWN_TIMEOUT * HZ;
-	add_timer(&power_timer);
-}
+	समयr_setup(&घातer_समयr, घातer_समयout, 0);
+	घातer_समयr.expires = jअगरfies + POWERDOWN_TIMEOUT * HZ;
+	add_समयr(&घातer_समयr);
+पूर्ण
 
-static irqreturn_t panel_int(int irq, void *dev_id)
-{
-	unsigned int buttons;
+अटल irqवापस_t panel_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित पूर्णांक buttons;
 
 	buttons = sgioc->panel;
 	sgioc->panel = SGIOC_PANEL_POWERON | SGIOC_PANEL_POWERINTR;
 
-	if (sgint->istat1 & SGINT_ISTAT1_PWR) {
-		/* Wait until interrupt goes away */
+	अगर (sgपूर्णांक->istat1 & SGINT_ISTAT1_PWR) अणु
+		/* Wait until पूर्णांकerrupt goes away */
 		disable_irq_nosync(SGI_PANEL_IRQ);
-		timer_setup(&debounce_timer, debounce, 0);
-		debounce_timer.expires = jiffies + 5;
-		add_timer(&debounce_timer);
-	}
+		समयr_setup(&debounce_समयr, debounce, 0);
+		debounce_समयr.expires = jअगरfies + 5;
+		add_समयr(&debounce_समयr);
+	पूर्ण
 
 	/* Power button was pressed
 	 * ioc.ps page 22: "The Panel Register is called Power Control by Full
 	 * House. Only lowest 2 bits are used. Guiness uses upper four bits
-	 * for volume control". This is not true, all bits are pulled high
+	 * क्रम volume control". This is not true, all bits are pulled high
 	 * on fullhouse */
-	if (!(buttons & SGIOC_PANEL_POWERINTR))
-		power_button();
+	अगर (!(buttons & SGIOC_PANEL_POWERINTR))
+		घातer_button();
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int panic_event(struct notifier_block *this, unsigned long event,
-		      void *ptr)
-{
-	if (machine_state & MACHINE_PANICED)
-		return NOTIFY_DONE;
+अटल पूर्णांक panic_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
+		      व्योम *ptr)
+अणु
+	अगर (machine_state & MACHINE_PANICED)
+		वापस NOTIFY_DONE;
 	machine_state |= MACHINE_PANICED;
 
-	blink_timer_timeout = PANIC_FREQ;
-	blink_timeout(&blink_timer);
+	blink_समयr_समयout = PANIC_FREQ;
+	blink_समयout(&blink_समयr);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block panic_block = {
-	.notifier_call	= panic_event,
-};
+अटल काष्ठा notअगरier_block panic_block = अणु
+	.notअगरier_call	= panic_event,
+पूर्ण;
 
-static int __init reboot_setup(void)
-{
-	int res;
+अटल पूर्णांक __init reboot_setup(व्योम)
+अणु
+	पूर्णांक res;
 
 	_machine_restart = sgi_machine_restart;
 	_machine_halt = sgi_machine_halt;
-	pm_power_off = sgi_machine_power_off;
+	pm_घातer_off = sgi_machine_घातer_off;
 
-	res = request_irq(SGI_PANEL_IRQ, panel_int, 0, "Front Panel", NULL);
-	if (res) {
-		printk(KERN_ERR "Allocation of front panel IRQ failed\n");
-		return res;
-	}
+	res = request_irq(SGI_PANEL_IRQ, panel_पूर्णांक, 0, "Front Panel", शून्य);
+	अगर (res) अणु
+		prपूर्णांकk(KERN_ERR "Allocation of front panel IRQ failed\n");
+		वापस res;
+	पूर्ण
 
-	timer_setup(&blink_timer, blink_timeout, 0);
-	atomic_notifier_chain_register(&panic_notifier_list, &panic_block);
+	समयr_setup(&blink_समयr, blink_समयout, 0);
+	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list, &panic_block);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(reboot_setup);

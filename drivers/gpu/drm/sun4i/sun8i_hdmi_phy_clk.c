@@ -1,165 +1,166 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2018 Jernej Skrabec <jernej.skrabec@siol.net>
  */
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-#include "sun8i_dw_hdmi.h"
+#समावेश "sun8i_dw_hdmi.h"
 
-struct sun8i_phy_clk {
-	struct clk_hw		hw;
-	struct sun8i_hdmi_phy	*phy;
-};
+काष्ठा sun8i_phy_clk अणु
+	काष्ठा clk_hw		hw;
+	काष्ठा sun8i_hdmi_phy	*phy;
+पूर्ण;
 
-static inline struct sun8i_phy_clk *hw_to_phy_clk(struct clk_hw *hw)
-{
-	return container_of(hw, struct sun8i_phy_clk, hw);
-}
+अटल अंतरभूत काष्ठा sun8i_phy_clk *hw_to_phy_clk(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा sun8i_phy_clk, hw);
+पूर्ण
 
-static int sun8i_phy_clk_determine_rate(struct clk_hw *hw,
-					struct clk_rate_request *req)
-{
-	unsigned long rate = req->rate;
-	unsigned long best_rate = 0;
-	struct clk_hw *best_parent = NULL;
-	struct clk_hw *parent;
-	int best_div = 1;
-	int i, p;
+अटल पूर्णांक sun8i_phy_clk_determine_rate(काष्ठा clk_hw *hw,
+					काष्ठा clk_rate_request *req)
+अणु
+	अचिन्हित दीर्घ rate = req->rate;
+	अचिन्हित दीर्घ best_rate = 0;
+	काष्ठा clk_hw *best_parent = शून्य;
+	काष्ठा clk_hw *parent;
+	पूर्णांक best_भाग = 1;
+	पूर्णांक i, p;
 
-	for (p = 0; p < clk_hw_get_num_parents(hw); p++) {
+	क्रम (p = 0; p < clk_hw_get_num_parents(hw); p++) अणु
 		parent = clk_hw_get_parent_by_index(hw, p);
-		if (!parent)
-			continue;
+		अगर (!parent)
+			जारी;
 
-		for (i = 1; i <= 16; i++) {
-			unsigned long ideal = rate * i;
-			unsigned long rounded;
+		क्रम (i = 1; i <= 16; i++) अणु
+			अचिन्हित दीर्घ ideal = rate * i;
+			अचिन्हित दीर्घ rounded;
 
 			rounded = clk_hw_round_rate(parent, ideal);
 
-			if (rounded == ideal) {
+			अगर (rounded == ideal) अणु
 				best_rate = rounded;
-				best_div = i;
+				best_भाग = i;
 				best_parent = parent;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (!best_rate ||
-			    abs(rate - rounded / i) <
-			    abs(rate - best_rate / best_div)) {
+			अगर (!best_rate ||
+			    असल(rate - rounded / i) <
+			    असल(rate - best_rate / best_भाग)) अणु
 				best_rate = rounded;
-				best_div = i;
+				best_भाग = i;
 				best_parent = parent;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (best_rate / best_div == rate)
-			break;
-	}
+		अगर (best_rate / best_भाग == rate)
+			अवरोध;
+	पूर्ण
 
-	req->rate = best_rate / best_div;
+	req->rate = best_rate / best_भाग;
 	req->best_parent_rate = best_rate;
 	req->best_parent_hw = best_parent;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long sun8i_phy_clk_recalc_rate(struct clk_hw *hw,
-					       unsigned long parent_rate)
-{
-	struct sun8i_phy_clk *priv = hw_to_phy_clk(hw);
+अटल अचिन्हित दीर्घ sun8i_phy_clk_recalc_rate(काष्ठा clk_hw *hw,
+					       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा sun8i_phy_clk *priv = hw_to_phy_clk(hw);
 	u32 reg;
 
-	regmap_read(priv->phy->regs, SUN8I_HDMI_PHY_PLL_CFG2_REG, &reg);
+	regmap_पढ़ो(priv->phy->regs, SUN8I_HDMI_PHY_PLL_CFG2_REG, &reg);
 	reg = ((reg >> SUN8I_HDMI_PHY_PLL_CFG2_PREDIV_SHIFT) &
 		SUN8I_HDMI_PHY_PLL_CFG2_PREDIV_MSK) + 1;
 
-	return parent_rate / reg;
-}
+	वापस parent_rate / reg;
+पूर्ण
 
-static int sun8i_phy_clk_set_rate(struct clk_hw *hw, unsigned long rate,
-				  unsigned long parent_rate)
-{
-	struct sun8i_phy_clk *priv = hw_to_phy_clk(hw);
-	unsigned long best_rate = 0;
+अटल पूर्णांक sun8i_phy_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा sun8i_phy_clk *priv = hw_to_phy_clk(hw);
+	अचिन्हित दीर्घ best_rate = 0;
 	u8 best_m = 0, m;
 
-	for (m = 1; m <= 16; m++) {
-		unsigned long tmp_rate = parent_rate / m;
+	क्रम (m = 1; m <= 16; m++) अणु
+		अचिन्हित दीर्घ पंचांगp_rate = parent_rate / m;
 
-		if (tmp_rate > rate)
-			continue;
+		अगर (पंचांगp_rate > rate)
+			जारी;
 
-		if (!best_rate ||
-		    (rate - tmp_rate) < (rate - best_rate)) {
-			best_rate = tmp_rate;
+		अगर (!best_rate ||
+		    (rate - पंचांगp_rate) < (rate - best_rate)) अणु
+			best_rate = पंचांगp_rate;
 			best_m = m;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	regmap_update_bits(priv->phy->regs, SUN8I_HDMI_PHY_PLL_CFG2_REG,
 			   SUN8I_HDMI_PHY_PLL_CFG2_PREDIV_MSK,
 			   SUN8I_HDMI_PHY_PLL_CFG2_PREDIV(best_m));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 sun8i_phy_clk_get_parent(struct clk_hw *hw)
-{
-	struct sun8i_phy_clk *priv = hw_to_phy_clk(hw);
+अटल u8 sun8i_phy_clk_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा sun8i_phy_clk *priv = hw_to_phy_clk(hw);
 	u32 reg;
 
-	regmap_read(priv->phy->regs, SUN8I_HDMI_PHY_PLL_CFG1_REG, &reg);
+	regmap_पढ़ो(priv->phy->regs, SUN8I_HDMI_PHY_PLL_CFG1_REG, &reg);
 	reg = (reg & SUN8I_HDMI_PHY_PLL_CFG1_CKIN_SEL_MSK) >>
 	      SUN8I_HDMI_PHY_PLL_CFG1_CKIN_SEL_SHIFT;
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-static int sun8i_phy_clk_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct sun8i_phy_clk *priv = hw_to_phy_clk(hw);
+अटल पूर्णांक sun8i_phy_clk_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा sun8i_phy_clk *priv = hw_to_phy_clk(hw);
 
-	if (index > 1)
-		return -EINVAL;
+	अगर (index > 1)
+		वापस -EINVAL;
 
 	regmap_update_bits(priv->phy->regs, SUN8I_HDMI_PHY_PLL_CFG1_REG,
 			   SUN8I_HDMI_PHY_PLL_CFG1_CKIN_SEL_MSK,
 			   index << SUN8I_HDMI_PHY_PLL_CFG1_CKIN_SEL_SHIFT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops sun8i_phy_clk_ops = {
+अटल स्थिर काष्ठा clk_ops sun8i_phy_clk_ops = अणु
 	.determine_rate	= sun8i_phy_clk_determine_rate,
 	.recalc_rate	= sun8i_phy_clk_recalc_rate,
 	.set_rate	= sun8i_phy_clk_set_rate,
 
 	.get_parent	= sun8i_phy_clk_get_parent,
 	.set_parent	= sun8i_phy_clk_set_parent,
-};
+पूर्ण;
 
-int sun8i_phy_clk_create(struct sun8i_hdmi_phy *phy, struct device *dev,
+पूर्णांक sun8i_phy_clk_create(काष्ठा sun8i_hdmi_phy *phy, काष्ठा device *dev,
 			 bool second_parent)
-{
-	struct clk_init_data init;
-	struct sun8i_phy_clk *priv;
-	const char *parents[2];
+अणु
+	काष्ठा clk_init_data init;
+	काष्ठा sun8i_phy_clk *priv;
+	स्थिर अक्षर *parents[2];
 
 	parents[0] = __clk_get_name(phy->clk_pll0);
-	if (!parents[0])
-		return -ENODEV;
+	अगर (!parents[0])
+		वापस -ENODEV;
 
-	if (second_parent) {
+	अगर (second_parent) अणु
 		parents[1] = __clk_get_name(phy->clk_pll1);
-		if (!parents[1])
-			return -ENODEV;
-	}
+		अगर (!parents[1])
+			वापस -ENODEV;
+	पूर्ण
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	init.name = "hdmi-phy-clk";
 	init.ops = &sun8i_phy_clk_ops;
@@ -170,9 +171,9 @@ int sun8i_phy_clk_create(struct sun8i_hdmi_phy *phy, struct device *dev,
 	priv->phy = phy;
 	priv->hw.init = &init;
 
-	phy->clk_phy = devm_clk_register(dev, &priv->hw);
-	if (IS_ERR(phy->clk_phy))
-		return PTR_ERR(phy->clk_phy);
+	phy->clk_phy = devm_clk_रेजिस्टर(dev, &priv->hw);
+	अगर (IS_ERR(phy->clk_phy))
+		वापस PTR_ERR(phy->clk_phy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

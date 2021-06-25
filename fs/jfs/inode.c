@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2004
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
-#include <linux/fs.h>
-#include <linux/mpage.h>
-#include <linux/buffer_head.h>
-#include <linux/pagemap.h>
-#include <linux/quotaops.h>
-#include <linux/uio.h>
-#include <linux/writeback.h>
-#include "jfs_incore.h"
-#include "jfs_inode.h"
-#include "jfs_filsys.h"
-#include "jfs_imap.h"
-#include "jfs_extent.h"
-#include "jfs_unicode.h"
-#include "jfs_debug.h"
-#include "jfs_dmap.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/mpage.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश "jfs_incore.h"
+#समावेश "jfs_inode.h"
+#समावेश "jfs_filsys.h"
+#समावेश "jfs_imap.h"
+#समावेश "jfs_extent.h"
+#समावेश "jfs_unicode.h"
+#समावेश "jfs_debug.h"
+#समावेश "jfs_dmap.h"
 
 
-struct inode *jfs_iget(struct super_block *sb, unsigned long ino)
-{
-	struct inode *inode;
-	int ret;
+काष्ठा inode *jfs_iget(काष्ठा super_block *sb, अचिन्हित दीर्घ ino)
+अणु
+	काष्ठा inode *inode;
+	पूर्णांक ret;
 
 	inode = iget_locked(sb, ino);
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
-	if (!(inode->i_state & I_NEW))
-		return inode;
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
+	अगर (!(inode->i_state & I_NEW))
+		वापस inode;
 
 	ret = diRead(inode);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		iget_failed(inode);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	if (S_ISREG(inode->i_mode)) {
+	अगर (S_ISREG(inode->i_mode)) अणु
 		inode->i_op = &jfs_file_inode_operations;
 		inode->i_fop = &jfs_file_operations;
 		inode->i_mapping->a_ops = &jfs_aops;
-	} else if (S_ISDIR(inode->i_mode)) {
+	पूर्ण अन्यथा अगर (S_ISसूची(inode->i_mode)) अणु
 		inode->i_op = &jfs_dir_inode_operations;
 		inode->i_fop = &jfs_dir_operations;
-	} else if (S_ISLNK(inode->i_mode)) {
-		if (inode->i_size >= IDATASIZE) {
+	पूर्ण अन्यथा अगर (S_ISLNK(inode->i_mode)) अणु
+		अगर (inode->i_size >= IDATASIZE) अणु
 			inode->i_op = &page_symlink_inode_operations;
 			inode_nohighmem(inode);
 			inode->i_mapping->a_ops = &jfs_aops;
-		} else {
+		पूर्ण अन्यथा अणु
 			inode->i_op = &jfs_fast_symlink_inode_operations;
-			inode->i_link = JFS_IP(inode)->i_inline;
+			inode->i_link = JFS_IP(inode)->i_अंतरभूत;
 			/*
-			 * The inline data should be null-terminated, but
-			 * don't let on-disk corruption crash the kernel
+			 * The अंतरभूत data should be null-terminated, but
+			 * करोn't let on-disk corruption crash the kernel
 			 */
 			inode->i_link[inode->i_size] = '\0';
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		inode->i_op = &jfs_file_inode_operations;
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
-	}
+	पूर्ण
 	unlock_new_inode(inode);
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
 /*
- * Workhorse of both fsync & write_inode
+ * Workhorse of both fsync & ग_लिखो_inode
  */
-int jfs_commit_inode(struct inode *inode, int wait)
-{
-	int rc = 0;
+पूर्णांक jfs_commit_inode(काष्ठा inode *inode, पूर्णांक रुको)
+अणु
+	पूर्णांक rc = 0;
 	tid_t tid;
-	static int noisy = 5;
+	अटल पूर्णांक noisy = 5;
 
 	jfs_info("In jfs_commit_inode, inode = 0x%p", inode);
 
 	/*
-	 * Don't commit if inode has been committed since last being
-	 * marked dirty, or if it has been deleted.
+	 * Don't commit अगर inode has been committed since last being
+	 * marked dirty, or अगर it has been deleted.
 	 */
-	if (inode->i_nlink == 0 || !test_cflag(COMMIT_Dirty, inode))
-		return 0;
+	अगर (inode->i_nlink == 0 || !test_cflag(COMMIT_Dirty, inode))
+		वापस 0;
 
-	if (isReadOnly(inode)) {
-		/* kernel allows writes to devices on read-only
+	अगर (isReadOnly(inode)) अणु
+		/* kernel allows ग_लिखोs to devices on पढ़ो-only
 		 * partitions and may think inode is dirty
 		 */
-		if (!special_file(inode->i_mode) && noisy) {
+		अगर (!special_file(inode->i_mode) && noisy) अणु
 			jfs_err("jfs_commit_inode(0x%p) called on read-only volume",
 				inode);
 			jfs_err("Is remount racy?");
 			noisy--;
-		}
-		return 0;
-	}
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	tid = txBegin(inode->i_sb, COMMIT_INODE);
 	mutex_lock(&JFS_IP(inode)->commit_mutex);
@@ -104,319 +105,319 @@ int jfs_commit_inode(struct inode *inode, int wait)
 	/*
 	 * Retest inode state after taking commit_mutex
 	 */
-	if (inode->i_nlink && test_cflag(COMMIT_Dirty, inode))
-		rc = txCommit(tid, 1, &inode, wait ? COMMIT_SYNC : 0);
+	अगर (inode->i_nlink && test_cflag(COMMIT_Dirty, inode))
+		rc = txCommit(tid, 1, &inode, रुको ? COMMIT_SYNC : 0);
 
 	txEnd(tid);
 	mutex_unlock(&JFS_IP(inode)->commit_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int jfs_write_inode(struct inode *inode, struct writeback_control *wbc)
-{
-	int wait = wbc->sync_mode == WB_SYNC_ALL;
+पूर्णांक jfs_ग_लिखो_inode(काष्ठा inode *inode, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	पूर्णांक रुको = wbc->sync_mode == WB_SYNC_ALL;
 
-	if (inode->i_nlink == 0)
-		return 0;
+	अगर (inode->i_nlink == 0)
+		वापस 0;
 	/*
-	 * If COMMIT_DIRTY is not set, the inode isn't really dirty.
+	 * If COMMIT_सूचीTY is not set, the inode isn't really dirty.
 	 * It has been committed since the last change, but was still
 	 * on the dirty inode list.
 	 */
-	if (!test_cflag(COMMIT_Dirty, inode)) {
+	अगर (!test_cflag(COMMIT_Dirty, inode)) अणु
 		/* Make sure committed changes hit the disk */
-		jfs_flush_journal(JFS_SBI(inode->i_sb)->log, wait);
-		return 0;
-	}
+		jfs_flush_journal(JFS_SBI(inode->i_sb)->log, रुको);
+		वापस 0;
+	पूर्ण
 
-	if (jfs_commit_inode(inode, wait)) {
+	अगर (jfs_commit_inode(inode, रुको)) अणु
 		jfs_err("jfs_write_inode: jfs_commit_inode failed!");
-		return -EIO;
-	} else
-		return 0;
-}
+		वापस -EIO;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
-void jfs_evict_inode(struct inode *inode)
-{
-	struct jfs_inode_info *ji = JFS_IP(inode);
+व्योम jfs_evict_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा jfs_inode_info *ji = JFS_IP(inode);
 
 	jfs_info("In jfs_evict_inode, inode = 0x%p", inode);
 
-	if (!inode->i_nlink && !is_bad_inode(inode)) {
+	अगर (!inode->i_nlink && !is_bad_inode(inode)) अणु
 		dquot_initialize(inode);
 
-		if (JFS_IP(inode)->fileset == FILESYSTEM_I) {
+		अगर (JFS_IP(inode)->fileset == खाताSYSTEM_I) अणु
 			truncate_inode_pages_final(&inode->i_data);
 
-			if (test_cflag(COMMIT_Freewmap, inode))
-				jfs_free_zero_link(inode);
+			अगर (test_cflag(COMMIT_Freewmap, inode))
+				jfs_मुक्त_zero_link(inode);
 
 			diFree(inode);
 
 			/*
 			 * Free the inode from the quota allocation.
 			 */
-			dquot_free_inode(inode);
-		}
-	} else {
+			dquot_मुक्त_inode(inode);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		truncate_inode_pages_final(&inode->i_data);
-	}
+	पूर्ण
 	clear_inode(inode);
 	dquot_drop(inode);
 
 	BUG_ON(!list_empty(&ji->anon_inode_list));
 
 	spin_lock_irq(&ji->ag_lock);
-	if (ji->active_ag != -1) {
-		struct bmap *bmap = JFS_SBI(inode->i_sb)->bmap;
+	अगर (ji->active_ag != -1) अणु
+		काष्ठा bmap *bmap = JFS_SBI(inode->i_sb)->bmap;
 		atomic_dec(&bmap->db_active[ji->active_ag]);
 		ji->active_ag = -1;
-	}
+	पूर्ण
 	spin_unlock_irq(&ji->ag_lock);
-}
+पूर्ण
 
-void jfs_dirty_inode(struct inode *inode, int flags)
-{
-	static int noisy = 5;
+व्योम jfs_dirty_inode(काष्ठा inode *inode, पूर्णांक flags)
+अणु
+	अटल पूर्णांक noisy = 5;
 
-	if (isReadOnly(inode)) {
-		if (!special_file(inode->i_mode) && noisy) {
-			/* kernel allows writes to devices on read-only
+	अगर (isReadOnly(inode)) अणु
+		अगर (!special_file(inode->i_mode) && noisy) अणु
+			/* kernel allows ग_लिखोs to devices on पढ़ो-only
 			 * partitions and may try to mark inode dirty
 			 */
 			jfs_err("jfs_dirty_inode called on read-only volume");
 			jfs_err("Is remount racy?");
 			noisy--;
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	set_cflag(COMMIT_Dirty, inode);
-}
+पूर्ण
 
-int jfs_get_block(struct inode *ip, sector_t lblock,
-		  struct buffer_head *bh_result, int create)
-{
+पूर्णांक jfs_get_block(काष्ठा inode *ip, sector_t lblock,
+		  काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
 	s64 lblock64 = lblock;
-	int rc = 0;
+	पूर्णांक rc = 0;
 	xad_t xad;
 	s64 xaddr;
-	int xflag;
+	पूर्णांक xflag;
 	s32 xlen = bh_result->b_size >> ip->i_blkbits;
 
 	/*
 	 * Take appropriate lock on inode
 	 */
-	if (create)
+	अगर (create)
 		IWRITE_LOCK(ip, RDWRLOCK_NORMAL);
-	else
+	अन्यथा
 		IREAD_LOCK(ip, RDWRLOCK_NORMAL);
 
-	if (((lblock64 << ip->i_sb->s_blocksize_bits) < ip->i_size) &&
+	अगर (((lblock64 << ip->i_sb->s_blocksize_bits) < ip->i_size) &&
 	    (!xtLookup(ip, lblock64, xlen, &xflag, &xaddr, &xlen, 0)) &&
-	    xaddr) {
-		if (xflag & XAD_NOTRECORDED) {
-			if (!create)
+	    xaddr) अणु
+		अगर (xflag & XAD_NOTRECORDED) अणु
+			अगर (!create)
 				/*
-				 * Allocated but not recorded, read treats
+				 * Allocated but not recorded, पढ़ो treats
 				 * this as a hole
 				 */
-				goto unlock;
-#ifdef _JFS_4K
+				जाओ unlock;
+#अगर_घोषित _JFS_4K
 			XADoffset(&xad, lblock64);
 			XADlength(&xad, xlen);
 			XADaddress(&xad, xaddr);
-#else				/* _JFS_4K */
+#अन्यथा				/* _JFS_4K */
 			/*
-			 * As long as block size = 4K, this isn't a problem.
+			 * As दीर्घ as block size = 4K, this isn't a problem.
 			 * We should mark the whole page not ABNR, but how
 			 * will we know to mark the other blocks BH_New?
 			 */
 			BUG();
-#endif				/* _JFS_4K */
+#पूर्ण_अगर				/* _JFS_4K */
 			rc = extRecord(ip, &xad);
-			if (rc)
-				goto unlock;
+			अगर (rc)
+				जाओ unlock;
 			set_buffer_new(bh_result);
-		}
+		पूर्ण
 
 		map_bh(bh_result, ip->i_sb, xaddr);
 		bh_result->b_size = xlen << ip->i_blkbits;
-		goto unlock;
-	}
-	if (!create)
-		goto unlock;
+		जाओ unlock;
+	पूर्ण
+	अगर (!create)
+		जाओ unlock;
 
 	/*
 	 * Allocate a new block
 	 */
-#ifdef _JFS_4K
-	if ((rc = extHint(ip, lblock64 << ip->i_sb->s_blocksize_bits, &xad)))
-		goto unlock;
+#अगर_घोषित _JFS_4K
+	अगर ((rc = extHपूर्णांक(ip, lblock64 << ip->i_sb->s_blocksize_bits, &xad)))
+		जाओ unlock;
 	rc = extAlloc(ip, xlen, lblock64, &xad, false);
-	if (rc)
-		goto unlock;
+	अगर (rc)
+		जाओ unlock;
 
 	set_buffer_new(bh_result);
 	map_bh(bh_result, ip->i_sb, addressXAD(&xad));
 	bh_result->b_size = lengthXAD(&xad) << ip->i_blkbits;
 
-#else				/* _JFS_4K */
+#अन्यथा				/* _JFS_4K */
 	/*
-	 * We need to do whatever it takes to keep all but the last buffers
-	 * in 4K pages - see jfs_write.c
+	 * We need to करो whatever it takes to keep all but the last buffers
+	 * in 4K pages - see jfs_ग_लिखो.c
 	 */
 	BUG();
-#endif				/* _JFS_4K */
+#पूर्ण_अगर				/* _JFS_4K */
 
       unlock:
 	/*
 	 * Release lock on inode
 	 */
-	if (create)
+	अगर (create)
 		IWRITE_UNLOCK(ip);
-	else
+	अन्यथा
 		IREAD_UNLOCK(ip);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int jfs_writepage(struct page *page, struct writeback_control *wbc)
-{
-	return block_write_full_page(page, jfs_get_block, wbc);
-}
+अटल पूर्णांक jfs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस block_ग_लिखो_full_page(page, jfs_get_block, wbc);
+पूर्ण
 
-static int jfs_writepages(struct address_space *mapping,
-			struct writeback_control *wbc)
-{
-	return mpage_writepages(mapping, wbc, jfs_get_block);
-}
+अटल पूर्णांक jfs_ग_लिखोpages(काष्ठा address_space *mapping,
+			काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस mpage_ग_लिखोpages(mapping, wbc, jfs_get_block);
+पूर्ण
 
-static int jfs_readpage(struct file *file, struct page *page)
-{
-	return mpage_readpage(page, jfs_get_block);
-}
+अटल पूर्णांक jfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	वापस mpage_पढ़ोpage(page, jfs_get_block);
+पूर्ण
 
-static void jfs_readahead(struct readahead_control *rac)
-{
-	mpage_readahead(rac, jfs_get_block);
-}
+अटल व्योम jfs_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
+अणु
+	mpage_पढ़ोahead(rac, jfs_get_block);
+पूर्ण
 
-static void jfs_write_failed(struct address_space *mapping, loff_t to)
-{
-	struct inode *inode = mapping->host;
+अटल व्योम jfs_ग_लिखो_failed(काष्ठा address_space *mapping, loff_t to)
+अणु
+	काष्ठा inode *inode = mapping->host;
 
-	if (to > inode->i_size) {
+	अगर (to > inode->i_size) अणु
 		truncate_pagecache(inode, inode->i_size);
 		jfs_truncate(inode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int jfs_write_begin(struct file *file, struct address_space *mapping,
-				loff_t pos, unsigned len, unsigned flags,
-				struct page **pagep, void **fsdata)
-{
-	int ret;
+अटल पूर्णांक jfs_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
+				loff_t pos, अचिन्हित len, अचिन्हित flags,
+				काष्ठा page **pagep, व्योम **fsdata)
+अणु
+	पूर्णांक ret;
 
-	ret = nobh_write_begin(mapping, pos, len, flags, pagep, fsdata,
+	ret = nobh_ग_लिखो_begin(mapping, pos, len, flags, pagep, fsdata,
 				jfs_get_block);
-	if (unlikely(ret))
-		jfs_write_failed(mapping, pos + len);
+	अगर (unlikely(ret))
+		jfs_ग_लिखो_failed(mapping, pos + len);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static sector_t jfs_bmap(struct address_space *mapping, sector_t block)
-{
-	return generic_block_bmap(mapping, block, jfs_get_block);
-}
+अटल sector_t jfs_bmap(काष्ठा address_space *mapping, sector_t block)
+अणु
+	वापस generic_block_bmap(mapping, block, jfs_get_block);
+पूर्ण
 
-static ssize_t jfs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
-{
-	struct file *file = iocb->ki_filp;
-	struct address_space *mapping = file->f_mapping;
-	struct inode *inode = file->f_mapping->host;
-	size_t count = iov_iter_count(iter);
-	ssize_t ret;
+अटल sमाप_प्रकार jfs_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा address_space *mapping = file->f_mapping;
+	काष्ठा inode *inode = file->f_mapping->host;
+	माप_प्रकार count = iov_iter_count(iter);
+	sमाप_प्रकार ret;
 
 	ret = blockdev_direct_IO(iocb, inode, iter, jfs_get_block);
 
 	/*
-	 * In case of error extending write may have instantiated a few
+	 * In हाल of error extending ग_लिखो may have instantiated a few
 	 * blocks outside i_size. Trim these off again.
 	 */
-	if (unlikely(iov_iter_rw(iter) == WRITE && ret < 0)) {
-		loff_t isize = i_size_read(inode);
+	अगर (unlikely(iov_iter_rw(iter) == WRITE && ret < 0)) अणु
+		loff_t isize = i_size_पढ़ो(inode);
 		loff_t end = iocb->ki_pos + count;
 
-		if (end > isize)
-			jfs_write_failed(mapping, end);
-	}
+		अगर (end > isize)
+			jfs_ग_लिखो_failed(mapping, end);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct address_space_operations jfs_aops = {
-	.readpage	= jfs_readpage,
-	.readahead	= jfs_readahead,
-	.writepage	= jfs_writepage,
-	.writepages	= jfs_writepages,
-	.write_begin	= jfs_write_begin,
-	.write_end	= nobh_write_end,
+स्थिर काष्ठा address_space_operations jfs_aops = अणु
+	.पढ़ोpage	= jfs_पढ़ोpage,
+	.पढ़ोahead	= jfs_पढ़ोahead,
+	.ग_लिखोpage	= jfs_ग_लिखोpage,
+	.ग_लिखोpages	= jfs_ग_लिखोpages,
+	.ग_लिखो_begin	= jfs_ग_लिखो_begin,
+	.ग_लिखो_end	= nobh_ग_लिखो_end,
 	.bmap		= jfs_bmap,
 	.direct_IO	= jfs_direct_IO,
-};
+पूर्ण;
 
 /*
- * Guts of jfs_truncate.  Called with locks already held.  Can be called
- * with directory for truncating directory index table.
+ * Guts of jfs_truncate.  Called with locks alपढ़ोy held.  Can be called
+ * with directory क्रम truncating directory index table.
  */
-void jfs_truncate_nolock(struct inode *ip, loff_t length)
-{
+व्योम jfs_truncate_nolock(काष्ठा inode *ip, loff_t length)
+अणु
 	loff_t newsize;
 	tid_t tid;
 
 	ASSERT(length >= 0);
 
-	if (test_cflag(COMMIT_Nolink, ip)) {
+	अगर (test_cflag(COMMIT_Nolink, ip)) अणु
 		xtTruncate(0, ip, length, COMMIT_WMAP);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	do {
+	करो अणु
 		tid = txBegin(ip->i_sb, 0);
 
 		/*
-		 * The commit_mutex cannot be taken before txBegin.
+		 * The commit_mutex cannot be taken beक्रमe txBegin.
 		 * txBegin may block and there is a chance the inode
 		 * could be marked dirty and need to be committed
-		 * before txBegin unblocks
+		 * beक्रमe txBegin unblocks
 		 */
 		mutex_lock(&JFS_IP(ip)->commit_mutex);
 
 		newsize = xtTruncate(tid, ip, length,
 				     COMMIT_TRUNCATE | COMMIT_PWMAP);
-		if (newsize < 0) {
+		अगर (newsize < 0) अणु
 			txEnd(tid);
 			mutex_unlock(&JFS_IP(ip)->commit_mutex);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ip->i_mtime = ip->i_ctime = current_time(ip);
+		ip->i_mसमय = ip->i_स_समय = current_समय(ip);
 		mark_inode_dirty(ip);
 
 		txCommit(tid, 1, &ip, 0);
 		txEnd(tid);
 		mutex_unlock(&JFS_IP(ip)->commit_mutex);
-	} while (newsize > length);	/* Truncate isn't always atomic */
-}
+	पूर्ण जबतक (newsize > length);	/* Truncate isn't always atomic */
+पूर्ण
 
-void jfs_truncate(struct inode *ip)
-{
-	jfs_info("jfs_truncate: size = 0x%lx", (ulong) ip->i_size);
+व्योम jfs_truncate(काष्ठा inode *ip)
+अणु
+	jfs_info("jfs_truncate: size = 0x%lx", (uदीर्घ) ip->i_size);
 
 	nobh_truncate_page(ip->i_mapping, ip->i_size, jfs_get_block);
 
 	IWRITE_LOCK(ip, RDWRLOCK_NORMAL);
 	jfs_truncate_nolock(ip, ip->i_size);
 	IWRITE_UNLOCK(ip);
-}
+पूर्ण

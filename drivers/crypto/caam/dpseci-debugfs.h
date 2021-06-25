@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause) */
 /* Copyright 2019 NXP */
 
-#ifndef DPSECI_DEBUGFS_H
-#define DPSECI_DEBUGFS_H
+#अगर_अघोषित DPSECI_DEBUGFS_H
+#घोषणा DPSECI_DEBUGFS_H
 
-#include <linux/dcache.h>
-#include "caamalg_qi2.h"
+#समावेश <linux/dcache.h>
+#समावेश "caamalg_qi2.h"
 
-#ifdef CONFIG_DEBUG_FS
-void dpaa2_dpseci_debugfs_init(struct dpaa2_caam_priv *priv);
-void dpaa2_dpseci_debugfs_exit(struct dpaa2_caam_priv *priv);
-#else
-static inline void dpaa2_dpseci_debugfs_init(struct dpaa2_caam_priv *priv) {}
-static inline void dpaa2_dpseci_debugfs_exit(struct dpaa2_caam_priv *priv) {}
-#endif /* CONFIG_DEBUG_FS */
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम dpaa2_dpseci_debugfs_init(काष्ठा dpaa2_caam_priv *priv);
+व्योम dpaa2_dpseci_debugfs_निकास(काष्ठा dpaa2_caam_priv *priv);
+#अन्यथा
+अटल अंतरभूत व्योम dpaa2_dpseci_debugfs_init(काष्ठा dpaa2_caam_priv *priv) अणुपूर्ण
+अटल अंतरभूत व्योम dpaa2_dpseci_debugfs_निकास(काष्ठा dpaa2_caam_priv *priv) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-#endif /* DPSECI_DEBUGFS_H */
+#पूर्ण_अगर /* DPSECI_DEBUGFS_H */

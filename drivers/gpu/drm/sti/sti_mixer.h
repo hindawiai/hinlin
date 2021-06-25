@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) STMicroelectronics SA 2014
  * Authors: Benjamin Gaignard <benjamin.gaignard@st.com>
  *          Fabien Dessenne <fabien.dessenne@st.com>
- *          for STMicroelectronics.
+ *          क्रम STMicroelectronics.
  */
 
-#ifndef _STI_MIXER_H_
-#define _STI_MIXER_H_
+#अगर_अघोषित _STI_MIXER_H_
+#घोषणा _STI_MIXER_H_
 
-#include <drm/drm_crtc.h>
+#समावेश <drm/drm_crtc.h>
 
-#include <drm/drm_debugfs.h>
-#include <drm/drm_file.h>
+#समावेश <drm/drm_debugfs.h>
+#समावेश <drm/drm_file.h>
 
-#include "sti_plane.h"
+#समावेश "sti_plane.h"
 
-struct device;
+काष्ठा device;
 
-#define to_sti_mixer(x) container_of(x, struct sti_mixer, drm_crtc)
+#घोषणा to_sti_mixer(x) container_of(x, काष्ठा sti_mixer, drm_crtc)
 
-enum sti_mixer_status {
+क्रमागत sti_mixer_status अणु
 	STI_MIXER_READY,
 	STI_MIXER_DISABLING,
 	STI_MIXER_DISABLED,
-};
+पूर्ण;
 
 /**
- * STI Mixer subdevice structure
+ * STI Mixer subdevice काष्ठाure
  *
  * @dev: driver device
- * @regs: mixer registers
+ * @regs: mixer रेजिस्टरs
  * @id: id of the mixer
  * @drm_crtc: crtc object link to the mixer
  * @status: to know the status of the mixer
  */
-struct sti_mixer {
-	struct device *dev;
-	void __iomem *regs;
-	int id;
-	struct drm_crtc drm_crtc;
-	enum sti_mixer_status status;
-};
+काष्ठा sti_mixer अणु
+	काष्ठा device *dev;
+	व्योम __iomem *regs;
+	पूर्णांक id;
+	काष्ठा drm_crtc drm_crtc;
+	क्रमागत sti_mixer_status status;
+पूर्ण;
 
-const char *sti_mixer_to_str(struct sti_mixer *mixer);
+स्थिर अक्षर *sti_mixer_to_str(काष्ठा sti_mixer *mixer);
 
-struct sti_mixer *sti_mixer_create(struct device *dev,
-				   struct drm_device *drm_dev,
-				   int id,
-				   void __iomem *baseaddr);
+काष्ठा sti_mixer *sti_mixer_create(काष्ठा device *dev,
+				   काष्ठा drm_device *drm_dev,
+				   पूर्णांक id,
+				   व्योम __iomem *baseaddr);
 
-int sti_mixer_set_plane_status(struct sti_mixer *mixer,
-			       struct sti_plane *plane, bool status);
-int sti_mixer_set_plane_depth(struct sti_mixer *mixer, struct sti_plane *plane);
-int sti_mixer_active_video_area(struct sti_mixer *mixer,
-				struct drm_display_mode *mode);
+पूर्णांक sti_mixer_set_plane_status(काष्ठा sti_mixer *mixer,
+			       काष्ठा sti_plane *plane, bool status);
+पूर्णांक sti_mixer_set_plane_depth(काष्ठा sti_mixer *mixer, काष्ठा sti_plane *plane);
+पूर्णांक sti_mixer_active_video_area(काष्ठा sti_mixer *mixer,
+				काष्ठा drm_display_mode *mode);
 
-void sti_mixer_set_background_status(struct sti_mixer *mixer, bool enable);
+व्योम sti_mixer_set_background_status(काष्ठा sti_mixer *mixer, bool enable);
 
-void sti_mixer_debugfs_init(struct sti_mixer *mixer, struct drm_minor *minor);
+व्योम sti_mixer_debugfs_init(काष्ठा sti_mixer *mixer, काष्ठा drm_minor *minor);
 
 /* depth in Cross-bar control = z order */
-#define GAM_MIXER_NB_DEPTH_LEVEL 6
+#घोषणा GAM_MIXER_NB_DEPTH_LEVEL 6
 
-#define STI_MIXER_MAIN 0
-#define STI_MIXER_AUX  1
+#घोषणा STI_MIXER_MAIN 0
+#घोषणा STI_MIXER_AUX  1
 
-#endif
+#पूर्ण_अगर

@@ -1,622 +1,623 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Powermac setup and early boot code plus other random bits.
+ *  Powermac setup and early boot code plus other अक्रमom bits.
  *
  *  PowerPC version
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  *
- *  Adapted for Power Macintosh by Paul Mackerras
+ *  Adapted क्रम Power Macपूर्णांकosh by Paul Mackerras
  *    Copyright (C) 1996 Paul Mackerras (paulus@samba.org)
  *
  *  Derived from "arch/alpha/kernel/setup.c"
  *    Copyright (C) 1995 Linus Torvalds
  *
- *  Maintained by Benjamin Herrenschmidt (benh@kernel.crashing.org)
+ *  Maपूर्णांकained by Benjamin Herrenschmidt (benh@kernel.crashing.org)
  */
 
 /*
  * bootup setup stuff..
  */
 
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/stddef.h>
-#include <linux/unistd.h>
-#include <linux/ptrace.h>
-#include <linux/export.h>
-#include <linux/user.h>
-#include <linux/tty.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/ioport.h>
-#include <linux/major.h>
-#include <linux/initrd.h>
-#include <linux/vt_kern.h>
-#include <linux/console.h>
-#include <linux/pci.h>
-#include <linux/adb.h>
-#include <linux/cuda.h>
-#include <linux/pmu.h>
-#include <linux/irq.h>
-#include <linux/seq_file.h>
-#include <linux/root_dev.h>
-#include <linux/bitops.h>
-#include <linux/suspend.h>
-#include <linux/of_device.h>
-#include <linux/of_platform.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/unistd.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/export.h>
+#समावेश <linux/user.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/major.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/vt_kern.h>
+#समावेश <linux/console.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/adb.h>
+#समावेश <linux/cuda.h>
+#समावेश <linux/pmu.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/root_dev.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/reg.h>
-#include <asm/sections.h>
-#include <asm/prom.h>
-#include <asm/io.h>
-#include <asm/pci-bridge.h>
-#include <asm/ohare.h>
-#include <asm/mediabay.h>
-#include <asm/machdep.h>
-#include <asm/dma.h>
-#include <asm/cputable.h>
-#include <asm/btext.h>
-#include <asm/pmac_feature.h>
-#include <asm/time.h>
-#include <asm/mmu_context.h>
-#include <asm/iommu.h>
-#include <asm/smu.h>
-#include <asm/pmc.h>
-#include <asm/udbg.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/ohare.h>
+#समावेश <यंत्र/mediabay.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/btext.h>
+#समावेश <यंत्र/pmac_feature.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/smu.h>
+#समावेश <यंत्र/pmc.h>
+#समावेश <यंत्र/udbg.h>
 
-#include "pmac.h"
+#समावेश "pmac.h"
 
-#undef SHOW_GATWICK_IRQS
+#अघोषित SHOW_GATWICK_IRQS
 
-int ppc_override_l2cr = 0;
-int ppc_override_l2cr_value;
-int has_l2cache = 0;
+पूर्णांक ppc_override_l2cr = 0;
+पूर्णांक ppc_override_l2cr_value;
+पूर्णांक has_l2cache = 0;
 
-int pmac_newworld;
+पूर्णांक pmac_newworld;
 
-static int current_root_goodness = -1;
+अटल पूर्णांक current_root_goodness = -1;
 
-extern struct machdep_calls pmac_md;
+बाह्य काष्ठा machdep_calls pmac_md;
 
-#define DEFAULT_ROOT_DEVICE Root_SDA1	/* sda1 - slightly silly choice */
+#घोषणा DEFAULT_ROOT_DEVICE Root_SDA1	/* sda1 - slightly silly choice */
 
-#ifdef CONFIG_PPC64
-int sccdbg;
-#endif
+#अगर_घोषित CONFIG_PPC64
+पूर्णांक sccdbg;
+#पूर्ण_अगर
 
 sys_ctrler_t sys_ctrler = SYS_CTRLER_UNKNOWN;
 EXPORT_SYMBOL(sys_ctrler);
 
-static void pmac_show_cpuinfo(struct seq_file *m)
-{
-	struct device_node *np;
-	const char *pp;
-	int plen;
-	int mbmodel;
-	unsigned int mbflags;
-	char* mbname;
+अटल व्योम pmac_show_cpuinfo(काष्ठा seq_file *m)
+अणु
+	काष्ठा device_node *np;
+	स्थिर अक्षर *pp;
+	पूर्णांक plen;
+	पूर्णांक mbmodel;
+	अचिन्हित पूर्णांक mbflags;
+	अक्षर* mbname;
 
-	mbmodel = pmac_call_feature(PMAC_FTR_GET_MB_INFO, NULL,
+	mbmodel = pmac_call_feature(PMAC_FTR_GET_MB_INFO, शून्य,
 				    PMAC_MB_INFO_MODEL, 0);
-	mbflags = pmac_call_feature(PMAC_FTR_GET_MB_INFO, NULL,
+	mbflags = pmac_call_feature(PMAC_FTR_GET_MB_INFO, शून्य,
 				    PMAC_MB_INFO_FLAGS, 0);
-	if (pmac_call_feature(PMAC_FTR_GET_MB_INFO, NULL, PMAC_MB_INFO_NAME,
-			      (long) &mbname) != 0)
+	अगर (pmac_call_feature(PMAC_FTR_GET_MB_INFO, शून्य, PMAC_MB_INFO_NAME,
+			      (दीर्घ) &mbname) != 0)
 		mbname = "Unknown";
 
 	/* find motherboard type */
-	seq_printf(m, "machine\t\t: ");
+	seq_म_लिखो(m, "machine\t\t: ");
 	np = of_find_node_by_path("/");
-	if (np != NULL) {
-		pp = of_get_property(np, "model", NULL);
-		if (pp != NULL)
-			seq_printf(m, "%s\n", pp);
-		else
-			seq_printf(m, "PowerMac\n");
+	अगर (np != शून्य) अणु
+		pp = of_get_property(np, "model", शून्य);
+		अगर (pp != शून्य)
+			seq_म_लिखो(m, "%s\n", pp);
+		अन्यथा
+			seq_म_लिखो(m, "PowerMac\n");
 		pp = of_get_property(np, "compatible", &plen);
-		if (pp != NULL) {
-			seq_printf(m, "motherboard\t:");
-			while (plen > 0) {
-				int l = strlen(pp) + 1;
-				seq_printf(m, " %s", pp);
+		अगर (pp != शून्य) अणु
+			seq_म_लिखो(m, "motherboard\t:");
+			जबतक (plen > 0) अणु
+				पूर्णांक l = म_माप(pp) + 1;
+				seq_म_लिखो(m, " %s", pp);
 				plen -= l;
 				pp += l;
-			}
-			seq_printf(m, "\n");
-		}
+			पूर्ण
+			seq_म_लिखो(m, "\n");
+		पूर्ण
 		of_node_put(np);
-	} else
-		seq_printf(m, "PowerMac\n");
+	पूर्ण अन्यथा
+		seq_म_लिखो(m, "PowerMac\n");
 
-	/* print parsed model */
-	seq_printf(m, "detected as\t: %d (%s)\n", mbmodel, mbname);
-	seq_printf(m, "pmac flags\t: %08x\n", mbflags);
+	/* prपूर्णांक parsed model */
+	seq_म_लिखो(m, "detected as\t: %d (%s)\n", mbmodel, mbname);
+	seq_म_लिखो(m, "pmac flags\t: %08x\n", mbflags);
 
 	/* find l2 cache info */
-	np = of_find_node_by_name(NULL, "l2-cache");
-	if (np == NULL)
-		np = of_find_node_by_type(NULL, "cache");
-	if (np != NULL) {
-		const unsigned int *ic =
-			of_get_property(np, "i-cache-size", NULL);
-		const unsigned int *dc =
-			of_get_property(np, "d-cache-size", NULL);
-		seq_printf(m, "L2 cache\t:");
+	np = of_find_node_by_name(शून्य, "l2-cache");
+	अगर (np == शून्य)
+		np = of_find_node_by_type(शून्य, "cache");
+	अगर (np != शून्य) अणु
+		स्थिर अचिन्हित पूर्णांक *ic =
+			of_get_property(np, "i-cache-size", शून्य);
+		स्थिर अचिन्हित पूर्णांक *dc =
+			of_get_property(np, "d-cache-size", शून्य);
+		seq_म_लिखो(m, "L2 cache\t:");
 		has_l2cache = 1;
-		if (of_get_property(np, "cache-unified", NULL) && dc) {
-			seq_printf(m, " %dK unified", *dc / 1024);
-		} else {
-			if (ic)
-				seq_printf(m, " %dK instruction", *ic / 1024);
-			if (dc)
-				seq_printf(m, "%s %dK data",
+		अगर (of_get_property(np, "cache-unified", शून्य) && dc) अणु
+			seq_म_लिखो(m, " %dK unified", *dc / 1024);
+		पूर्ण अन्यथा अणु
+			अगर (ic)
+				seq_म_लिखो(m, " %dK instruction", *ic / 1024);
+			अगर (dc)
+				seq_म_लिखो(m, "%s %dK data",
 					   (ic? " +": ""), *dc / 1024);
-		}
-		pp = of_get_property(np, "ram-type", NULL);
-		if (pp)
-			seq_printf(m, " %s", pp);
-		seq_printf(m, "\n");
+		पूर्ण
+		pp = of_get_property(np, "ram-type", शून्य);
+		अगर (pp)
+			seq_म_लिखो(m, " %s", pp);
+		seq_म_लिखो(m, "\n");
 		of_node_put(np);
-	}
+	पूर्ण
 
 	/* Indicate newworld/oldworld */
-	seq_printf(m, "pmac-generation\t: %s\n",
+	seq_म_लिखो(m, "pmac-generation\t: %s\n",
 		   pmac_newworld ? "NewWorld" : "OldWorld");
-}
+पूर्ण
 
-#ifndef CONFIG_ADB_CUDA
-int find_via_cuda(void)
-{
-	struct device_node *dn = of_find_node_by_name(NULL, "via-cuda");
+#अगर_अघोषित CONFIG_ADB_CUDA
+पूर्णांक find_via_cuda(व्योम)
+अणु
+	काष्ठा device_node *dn = of_find_node_by_name(शून्य, "via-cuda");
 
-	if (!dn)
-		return 0;
+	अगर (!dn)
+		वापस 0;
 	of_node_put(dn);
-	printk("WARNING ! Your machine is CUDA-based but your kernel\n");
-	printk("          wasn't compiled with CONFIG_ADB_CUDA option !\n");
-	return 0;
-}
-#endif
+	prपूर्णांकk("WARNING ! Your machine is CUDA-based but your kernel\n");
+	prपूर्णांकk("          wasn't compiled with CONFIG_ADB_CUDA option !\n");
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef CONFIG_ADB_PMU
-int find_via_pmu(void)
-{
-	struct device_node *dn = of_find_node_by_name(NULL, "via-pmu");
+#अगर_अघोषित CONFIG_ADB_PMU
+पूर्णांक find_via_pmu(व्योम)
+अणु
+	काष्ठा device_node *dn = of_find_node_by_name(शून्य, "via-pmu");
 
-	if (!dn)
-		return 0;
+	अगर (!dn)
+		वापस 0;
 	of_node_put(dn);
-	printk("WARNING ! Your machine is PMU-based but your kernel\n");
-	printk("          wasn't compiled with CONFIG_ADB_PMU option !\n");
-	return 0;
-}
-#endif
+	prपूर्णांकk("WARNING ! Your machine is PMU-based but your kernel\n");
+	prपूर्णांकk("          wasn't compiled with CONFIG_ADB_PMU option !\n");
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef CONFIG_PMAC_SMU
-int smu_init(void)
-{
-	/* should check and warn if SMU is present */
-	return 0;
-}
-#endif
+#अगर_अघोषित CONFIG_PMAC_SMU
+पूर्णांक smu_init(व्योम)
+अणु
+	/* should check and warn अगर SMU is present */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC32
-static volatile u32 *sysctrl_regs;
+#अगर_घोषित CONFIG_PPC32
+अटल अस्थिर u32 *sysctrl_regs;
 
-static void __init ohare_init(void)
-{
-	struct device_node *dn;
+अटल व्योम __init ohare_init(व्योम)
+अणु
+	काष्ठा device_node *dn;
 
-	/* this area has the CPU identification register
-	   and some registers used by smp boards */
-	sysctrl_regs = (volatile u32 *) ioremap(0xf8000000, 0x1000);
+	/* this area has the CPU identअगरication रेजिस्टर
+	   and some रेजिस्टरs used by smp boards */
+	sysctrl_regs = (अस्थिर u32 *) ioremap(0xf8000000, 0x1000);
 
 	/*
 	 * Turn on the L2 cache.
-	 * We assume that we have a PSX memory controller iff
+	 * We assume that we have a PSX memory controller अगरf
 	 * we have an ohare I/O controller.
 	 */
-	dn = of_find_node_by_name(NULL, "ohare");
-	if (dn) {
+	dn = of_find_node_by_name(शून्य, "ohare");
+	अगर (dn) अणु
 		of_node_put(dn);
-		if (((sysctrl_regs[2] >> 24) & 0xf) >= 3) {
-			if (sysctrl_regs[4] & 0x10)
+		अगर (((sysctrl_regs[2] >> 24) & 0xf) >= 3) अणु
+			अगर (sysctrl_regs[4] & 0x10)
 				sysctrl_regs[4] |= 0x04000020;
-			else
+			अन्यथा
 				sysctrl_regs[4] |= 0x04000000;
-			if(has_l2cache)
-				printk(KERN_INFO "Level 2 cache enabled\n");
-		}
-	}
-}
+			अगर(has_l2cache)
+				prपूर्णांकk(KERN_INFO "Level 2 cache enabled\n");
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __init l2cr_init(void)
-{
+अटल व्योम __init l2cr_init(व्योम)
+अणु
 	/* Checks "l2cr-value" property in the registry */
-	if (cpu_has_feature(CPU_FTR_L2CR)) {
-		struct device_node *np;
+	अगर (cpu_has_feature(CPU_FTR_L2CR)) अणु
+		काष्ठा device_node *np;
 
-		for_each_of_cpu_node(np) {
-			const unsigned int *l2cr =
-				of_get_property(np, "l2cr-value", NULL);
-			if (l2cr) {
+		क्रम_each_of_cpu_node(np) अणु
+			स्थिर अचिन्हित पूर्णांक *l2cr =
+				of_get_property(np, "l2cr-value", शून्य);
+			अगर (l2cr) अणु
 				ppc_override_l2cr = 1;
 				ppc_override_l2cr_value = *l2cr;
 				_set_L2CR(0);
 				_set_L2CR(ppc_override_l2cr_value);
-			}
+			पूर्ण
 			of_node_put(np);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ppc_override_l2cr)
-		printk(KERN_INFO "L2CR overridden (0x%x), "
+	अगर (ppc_override_l2cr)
+		prपूर्णांकk(KERN_INFO "L2CR overridden (0x%x), "
 		       "backside cache is %s\n",
 		       ppc_override_l2cr_value,
 		       (ppc_override_l2cr_value & 0x80000000)
 				? "enabled" : "disabled");
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void __init pmac_setup_arch(void)
-{
-	struct device_node *cpu, *ic;
-	const int *fp;
-	unsigned long pvr;
+अटल व्योम __init pmac_setup_arch(व्योम)
+अणु
+	काष्ठा device_node *cpu, *ic;
+	स्थिर पूर्णांक *fp;
+	अचिन्हित दीर्घ pvr;
 
 	pvr = PVR_VER(mfspr(SPRN_PVR));
 
-	/* Set loops_per_jiffy to a half-way reasonable value,
-	   for use until calibrate_delay gets called. */
-	loops_per_jiffy = 50000000 / HZ;
+	/* Set loops_per_jअगरfy to a half-way reasonable value,
+	   क्रम use until calibrate_delay माला_लो called. */
+	loops_per_jअगरfy = 50000000 / HZ;
 
-	for_each_of_cpu_node(cpu) {
-		fp = of_get_property(cpu, "clock-frequency", NULL);
-		if (fp != NULL) {
-			if (pvr >= 0x30 && pvr < 0x80)
+	क्रम_each_of_cpu_node(cpu) अणु
+		fp = of_get_property(cpu, "clock-frequency", शून्य);
+		अगर (fp != शून्य) अणु
+			अगर (pvr >= 0x30 && pvr < 0x80)
 				/* PPC970 etc. */
-				loops_per_jiffy = *fp / (3 * HZ);
-			else if (pvr == 4 || pvr >= 8)
+				loops_per_jअगरfy = *fp / (3 * HZ);
+			अन्यथा अगर (pvr == 4 || pvr >= 8)
 				/* 604, G3, G4 etc. */
-				loops_per_jiffy = *fp / HZ;
-			else
+				loops_per_jअगरfy = *fp / HZ;
+			अन्यथा
 				/* 603, etc. */
-				loops_per_jiffy = *fp / (2 * HZ);
+				loops_per_jअगरfy = *fp / (2 * HZ);
 			of_node_put(cpu);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* See if newworld or oldworld */
-	ic = of_find_node_with_property(NULL, "interrupt-controller");
-	if (ic) {
+	/* See अगर newworld or oldworld */
+	ic = of_find_node_with_property(शून्य, "interrupt-controller");
+	अगर (ic) अणु
 		pmac_newworld = 1;
 		of_node_put(ic);
-	}
+	पूर्ण
 
-#ifdef CONFIG_PPC32
+#अगर_घोषित CONFIG_PPC32
 	ohare_init();
 	l2cr_init();
-#endif /* CONFIG_PPC32 */
+#पूर्ण_अगर /* CONFIG_PPC32 */
 
 	find_via_cuda();
 	find_via_pmu();
 	smu_init();
 
-#if IS_ENABLED(CONFIG_NVRAM)
+#अगर IS_ENABLED(CONFIG_NVRAM)
 	pmac_nvram_init();
-#endif
-#ifdef CONFIG_PPC32
-#ifdef CONFIG_BLK_DEV_INITRD
-	if (initrd_start)
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PPC32
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+	अगर (initrd_start)
 		ROOT_DEV = Root_RAM0;
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 		ROOT_DEV = DEFAULT_ROOT_DEVICE;
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ADB
-	if (strstr(boot_command_line, "adb_sync")) {
-		extern int __adb_probe_sync;
+#अगर_घोषित CONFIG_ADB
+	अगर (म_माला(boot_command_line, "adb_sync")) अणु
+		बाह्य पूर्णांक __adb_probe_sync;
 		__adb_probe_sync = 1;
-	}
-#endif /* CONFIG_ADB */
-}
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_ADB */
+पूर्ण
 
-#ifdef CONFIG_SCSI
-void note_scsi_host(struct device_node *node, void *host)
-{
-}
+#अगर_घोषित CONFIG_SCSI
+व्योम note_scsi_host(काष्ठा device_node *node, व्योम *host)
+अणु
+पूर्ण
 EXPORT_SYMBOL(note_scsi_host);
-#endif
+#पूर्ण_अगर
 
-static int initializing = 1;
+अटल पूर्णांक initializing = 1;
 
-static int pmac_late_init(void)
-{
+अटल पूर्णांक pmac_late_init(व्योम)
+अणु
 	initializing = 0;
-	return 0;
-}
-machine_late_initcall(powermac, pmac_late_init);
+	वापस 0;
+पूर्ण
+machine_late_initcall(घातermac, pmac_late_init);
 
-void note_bootable_part(dev_t dev, int part, int goodness);
+व्योम note_bootable_part(dev_t dev, पूर्णांक part, पूर्णांक goodness);
 /*
- * This is __ref because we check for "initializing" before
+ * This is __ref because we check क्रम "initializing" beक्रमe
  * touching any of the __init sensitive things and "initializing"
- * will be false after __init time. This can't be __init because it
+ * will be false after __init समय. This can't be __init because it
  * can be called whenever a disk is first accessed.
  */
-void __ref note_bootable_part(dev_t dev, int part, int goodness)
-{
-	char *p;
+व्योम __ref note_bootable_part(dev_t dev, पूर्णांक part, पूर्णांक goodness)
+अणु
+	अक्षर *p;
 
-	if (!initializing)
-		return;
-	if ((goodness <= current_root_goodness) &&
+	अगर (!initializing)
+		वापस;
+	अगर ((goodness <= current_root_goodness) &&
 	    ROOT_DEV != DEFAULT_ROOT_DEVICE)
-		return;
-	p = strstr(boot_command_line, "root=");
-	if (p != NULL && (p == boot_command_line || p[-1] == ' '))
-		return;
+		वापस;
+	p = म_माला(boot_command_line, "root=");
+	अगर (p != शून्य && (p == boot_command_line || p[-1] == ' '))
+		वापस;
 
 	ROOT_DEV = dev + part;
 	current_root_goodness = goodness;
-}
+पूर्ण
 
-#ifdef CONFIG_ADB_CUDA
-static void __noreturn cuda_restart(void)
-{
-	struct adb_request req;
+#अगर_घोषित CONFIG_ADB_CUDA
+अटल व्योम __noवापस cuda_restart(व्योम)
+अणु
+	काष्ठा adb_request req;
 
-	cuda_request(&req, NULL, 2, CUDA_PACKET, CUDA_RESET_SYSTEM);
-	for (;;)
+	cuda_request(&req, शून्य, 2, CUDA_PACKET, CUDA_RESET_SYSTEM);
+	क्रम (;;)
 		cuda_poll();
-}
+पूर्ण
 
-static void __noreturn cuda_shutdown(void)
-{
-	struct adb_request req;
+अटल व्योम __noवापस cuda_shutकरोwn(व्योम)
+अणु
+	काष्ठा adb_request req;
 
-	cuda_request(&req, NULL, 2, CUDA_PACKET, CUDA_POWERDOWN);
-	for (;;)
+	cuda_request(&req, शून्य, 2, CUDA_PACKET, CUDA_POWERDOWN);
+	क्रम (;;)
 		cuda_poll();
-}
+पूर्ण
 
-#else
-#define cuda_restart()
-#define cuda_shutdown()
-#endif
+#अन्यथा
+#घोषणा cuda_restart()
+#घोषणा cuda_shutकरोwn()
+#पूर्ण_अगर
 
-#ifndef CONFIG_ADB_PMU
-#define pmu_restart()
-#define pmu_shutdown()
-#endif
+#अगर_अघोषित CONFIG_ADB_PMU
+#घोषणा pmu_restart()
+#घोषणा pmu_shutकरोwn()
+#पूर्ण_अगर
 
-#ifndef CONFIG_PMAC_SMU
-#define smu_restart()
-#define smu_shutdown()
-#endif
+#अगर_अघोषित CONFIG_PMAC_SMU
+#घोषणा smu_restart()
+#घोषणा smu_shutकरोwn()
+#पूर्ण_अगर
 
-static void __noreturn pmac_restart(char *cmd)
-{
-	switch (sys_ctrler) {
-	case SYS_CTRLER_CUDA:
+अटल व्योम __noवापस pmac_restart(अक्षर *cmd)
+अणु
+	चयन (sys_ctrler) अणु
+	हाल SYS_CTRLER_CUDA:
 		cuda_restart();
-		break;
-	case SYS_CTRLER_PMU:
+		अवरोध;
+	हाल SYS_CTRLER_PMU:
 		pmu_restart();
-		break;
-	case SYS_CTRLER_SMU:
+		अवरोध;
+	हाल SYS_CTRLER_SMU:
 		smu_restart();
-		break;
-	default: ;
-	}
-	while (1) ;
-}
+		अवरोध;
+	शेष: ;
+	पूर्ण
+	जबतक (1) ;
+पूर्ण
 
-static void __noreturn pmac_power_off(void)
-{
-	switch (sys_ctrler) {
-	case SYS_CTRLER_CUDA:
-		cuda_shutdown();
-		break;
-	case SYS_CTRLER_PMU:
-		pmu_shutdown();
-		break;
-	case SYS_CTRLER_SMU:
-		smu_shutdown();
-		break;
-	default: ;
-	}
-	while (1) ;
-}
+अटल व्योम __noवापस pmac_घातer_off(व्योम)
+अणु
+	चयन (sys_ctrler) अणु
+	हाल SYS_CTRLER_CUDA:
+		cuda_shutकरोwn();
+		अवरोध;
+	हाल SYS_CTRLER_PMU:
+		pmu_shutकरोwn();
+		अवरोध;
+	हाल SYS_CTRLER_SMU:
+		smu_shutकरोwn();
+		अवरोध;
+	शेष: ;
+	पूर्ण
+	जबतक (1) ;
+पूर्ण
 
-static void __noreturn
-pmac_halt(void)
-{
-	pmac_power_off();
-}
+अटल व्योम __noवापस
+pmac_halt(व्योम)
+अणु
+	pmac_घातer_off();
+पूर्ण
 
 /* 
  * Early initialization.
  */
-static void __init pmac_init(void)
-{
-	/* Enable early btext debug if requested */
-	if (strstr(boot_command_line, "btextdbg")) {
+अटल व्योम __init pmac_init(व्योम)
+अणु
+	/* Enable early btext debug अगर requested */
+	अगर (म_माला(boot_command_line, "btextdbg")) अणु
 		udbg_adb_init_early();
-		register_early_udbg_console();
-	}
+		रेजिस्टर_early_udbg_console();
+	पूर्ण
 
 	/* Probe motherboard chipset */
 	pmac_feature_init();
 
 	/* Initialize debug stuff */
-	udbg_scc_init(!!strstr(boot_command_line, "sccdbg"));
-	udbg_adb_init(!!strstr(boot_command_line, "btextdbg"));
+	udbg_scc_init(!!म_माला(boot_command_line, "sccdbg"));
+	udbg_adb_init(!!म_माला(boot_command_line, "btextdbg"));
 
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 	iommu_init_early_dart(&pmac_pci_controller_ops);
-#endif
+#पूर्ण_अगर
 
-	/* SMP Init has to be done early as we need to patch up
-	 * cpu_possible_mask before interrupt stacks are allocated
+	/* SMP Init has to be करोne early as we need to patch up
+	 * cpu_possible_mask beक्रमe पूर्णांकerrupt stacks are allocated
 	 * or kaboom...
 	 */
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	pmac_setup_smp();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static int __init pmac_declare_of_platform_devices(void)
-{
-	struct device_node *np;
+अटल पूर्णांक __init pmac_declare_of_platक्रमm_devices(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	np = of_find_node_by_name(NULL, "valkyrie");
-	if (np) {
-		of_platform_device_create(np, "valkyrie", NULL);
+	np = of_find_node_by_name(शून्य, "valkyrie");
+	अगर (np) अणु
+		of_platक्रमm_device_create(np, "valkyrie", शून्य);
 		of_node_put(np);
-	}
-	np = of_find_node_by_name(NULL, "platinum");
-	if (np) {
-		of_platform_device_create(np, "platinum", NULL);
+	पूर्ण
+	np = of_find_node_by_name(शून्य, "platinum");
+	अगर (np) अणु
+		of_platक्रमm_device_create(np, "platinum", शून्य);
 		of_node_put(np);
-	}
-        np = of_find_node_by_type(NULL, "smu");
-        if (np) {
-		of_platform_device_create(np, "smu", NULL);
+	पूर्ण
+        np = of_find_node_by_type(शून्य, "smu");
+        अगर (np) अणु
+		of_platक्रमm_device_create(np, "smu", शून्य);
 		of_node_put(np);
-	}
-	np = of_find_node_by_type(NULL, "fcu");
-	if (np == NULL) {
+	पूर्ण
+	np = of_find_node_by_type(शून्य, "fcu");
+	अगर (np == शून्य) अणु
 		/* Some machines have strangely broken device-tree */
 		np = of_find_node_by_path("/u3@0,f8000000/i2c@f8001000/fan@15e");
-	}
-	if (np) {
-		of_platform_device_create(np, "temperature", NULL);
+	पूर्ण
+	अगर (np) अणु
+		of_platक्रमm_device_create(np, "temperature", शून्य);
 		of_node_put(np);
-	}
+	पूर्ण
 
-	return 0;
-}
-machine_device_initcall(powermac, pmac_declare_of_platform_devices);
+	वापस 0;
+पूर्ण
+machine_device_initcall(घातermac, pmac_declare_of_platक्रमm_devices);
 
-#ifdef CONFIG_SERIAL_PMACZILOG_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_PMACZILOG_CONSOLE
 /*
  * This is called very early, as part of console_init() (typically just after
- * time_init()). This function is respondible for trying to find a good
- * default console on serial ports. It tries to match the open firmware
- * default output with one of the available serial console drivers.
+ * समय_init()). This function is respondible क्रम trying to find a good
+ * शेष console on serial ports. It tries to match the खोलो firmware
+ * शेष output with one of the available serial console drivers.
  */
-static int __init check_pmac_serial_console(void)
-{
-	struct device_node *prom_stdout = NULL;
-	int offset = 0;
-	const char *name;
-#ifdef CONFIG_SERIAL_PMACZILOG_TTYS
-	char *devname = "ttyS";
-#else
-	char *devname = "ttyPZ";
-#endif
+अटल पूर्णांक __init check_pmac_serial_console(व्योम)
+अणु
+	काष्ठा device_node *prom_मानक_निकास = शून्य;
+	पूर्णांक offset = 0;
+	स्थिर अक्षर *name;
+#अगर_घोषित CONFIG_SERIAL_PMACZILOG_TTYS
+	अक्षर *devname = "ttyS";
+#अन्यथा
+	अक्षर *devname = "ttyPZ";
+#पूर्ण_अगर
 
 	pr_debug(" -> check_pmac_serial_console()\n");
 
-	/* The user has requested a console so this is already set up. */
-	if (strstr(boot_command_line, "console=")) {
+	/* The user has requested a console so this is alपढ़ोy set up. */
+	अगर (म_माला(boot_command_line, "console=")) अणु
 		pr_debug(" console was specified !\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!of_chosen) {
+	अगर (!of_chosen) अणु
 		pr_debug(" of_chosen is NULL !\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* We are getting a weird phandle from OF ... */
 	/* ... So use the full path instead */
-	name = of_get_property(of_chosen, "linux,stdout-path", NULL);
-	if (name == NULL) {
+	name = of_get_property(of_chosen, "linux,stdout-path", शून्य);
+	अगर (name == शून्य) अणु
 		pr_debug(" no linux,stdout-path !\n");
-		return -ENODEV;
-	}
-	prom_stdout = of_find_node_by_path(name);
-	if (!prom_stdout) {
+		वापस -ENODEV;
+	पूर्ण
+	prom_मानक_निकास = of_find_node_by_path(name);
+	अगर (!prom_मानक_निकास) अणु
 		pr_debug(" can't find stdout package %s !\n", name);
-		return -ENODEV;
-	}
-	pr_debug("stdout is %pOF\n", prom_stdout);
+		वापस -ENODEV;
+	पूर्ण
+	pr_debug("stdout is %pOF\n", prom_मानक_निकास);
 
-	if (of_node_name_eq(prom_stdout, "ch-a"))
+	अगर (of_node_name_eq(prom_मानक_निकास, "ch-a"))
 		offset = 0;
-	else if (of_node_name_eq(prom_stdout, "ch-b"))
+	अन्यथा अगर (of_node_name_eq(prom_मानक_निकास, "ch-b"))
 		offset = 1;
-	else
-		goto not_found;
-	of_node_put(prom_stdout);
+	अन्यथा
+		जाओ not_found;
+	of_node_put(prom_मानक_निकास);
 
 	pr_debug("Found serial console at %s%d\n", devname, offset);
 
-	return add_preferred_console(devname, offset, NULL);
+	वापस add_preferred_console(devname, offset, शून्य);
 
  not_found:
 	pr_debug("No preferred console found !\n");
-	of_node_put(prom_stdout);
-	return -ENODEV;
-}
+	of_node_put(prom_मानक_निकास);
+	वापस -ENODEV;
+पूर्ण
 console_initcall(check_pmac_serial_console);
 
-#endif /* CONFIG_SERIAL_PMACZILOG_CONSOLE */
+#पूर्ण_अगर /* CONFIG_SERIAL_PMACZILOG_CONSOLE */
 
 /*
  * Called very early, MMU is off, device-tree isn't unflattened
  */
-static int __init pmac_probe(void)
-{
-	if (!of_machine_is_compatible("Power Macintosh") &&
+अटल पूर्णांक __init pmac_probe(व्योम)
+अणु
+	अगर (!of_machine_is_compatible("Power Macintosh") &&
 	    !of_machine_is_compatible("MacRISC"))
-		return 0;
+		वापस 0;
 
-#ifdef CONFIG_PPC32
-	/* isa_io_base gets set in pmac_pci_init */
+#अगर_घोषित CONFIG_PPC32
+	/* isa_io_base माला_लो set in pmac_pci_init */
 	DMA_MODE_READ = 1;
 	DMA_MODE_WRITE = 2;
-#endif /* CONFIG_PPC32 */
+#पूर्ण_अगर /* CONFIG_PPC32 */
 
-	pm_power_off = pmac_power_off;
+	pm_घातer_off = pmac_घातer_off;
 
 	pmac_init();
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-define_machine(powermac) {
+define_machine(घातermac) अणु
 	.name			= "PowerMac",
 	.probe			= pmac_probe,
 	.setup_arch		= pmac_setup_arch,
 	.discover_phbs		= pmac_pci_init,
 	.show_cpuinfo		= pmac_show_cpuinfo,
 	.init_IRQ		= pmac_pic_init,
-	.get_irq		= NULL,	/* changed later */
+	.get_irq		= शून्य,	/* changed later */
 	.pci_irq_fixup		= pmac_pci_irq_fixup,
 	.restart		= pmac_restart,
 	.halt			= pmac_halt,
-	.time_init		= pmac_time_init,
-	.get_boot_time		= pmac_get_boot_time,
-	.set_rtc_time		= pmac_set_rtc_time,
-	.get_rtc_time		= pmac_get_rtc_time,
+	.समय_init		= pmac_समय_init,
+	.get_boot_समय		= pmac_get_boot_समय,
+	.set_rtc_समय		= pmac_set_rtc_समय,
+	.get_rtc_समय		= pmac_get_rtc_समय,
 	.calibrate_decr		= pmac_calibrate_decr,
-	.feature_call		= pmac_do_feature_call,
+	.feature_call		= pmac_करो_feature_call,
 	.progress		= udbg_progress,
-#ifdef CONFIG_PPC64
-	.power_save		= power4_idle,
-	.enable_pmcs		= power4_enable_pmcs,
-#endif /* CONFIG_PPC64 */
-#ifdef CONFIG_PPC32
+#अगर_घोषित CONFIG_PPC64
+	.घातer_save		= घातer4_idle,
+	.enable_pmcs		= घातer4_enable_pmcs,
+#पूर्ण_अगर /* CONFIG_PPC64 */
+#अगर_घोषित CONFIG_PPC32
 	.pcibios_after_init	= pmac_pcibios_after_init,
 	.phys_mem_access_prot	= pci_phys_mem_access_prot,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

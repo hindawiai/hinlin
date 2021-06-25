@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  linux/include/linux/serial_8250.h
  *
  *  Copyright (C) 2004 Russell King
  */
-#ifndef _LINUX_SERIAL_8250_H
-#define _LINUX_SERIAL_8250_H
+#अगर_अघोषित _LINUX_SERIAL_8250_H
+#घोषणा _LINUX_SERIAL_8250_H
 
-#include <linux/serial_core.h>
-#include <linux/serial_reg.h>
-#include <linux/platform_device.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <linux/platक्रमm_device.h>
 
 /*
- * This is the platform device platform_data structure
+ * This is the platक्रमm device platक्रमm_data काष्ठाure
  */
-struct plat_serial8250_port {
-	unsigned long	iobase;		/* io base address */
-	void __iomem	*membase;	/* ioremap cookie or NULL */
-	resource_size_t	mapbase;	/* resource base */
-	unsigned int	irq;		/* interrupt number */
-	unsigned long	irqflags;	/* request_irq flags */
-	unsigned int	uartclk;	/* UART clock rate */
-	void            *private_data;
-	unsigned char	regshift;	/* register shift */
-	unsigned char	iotype;		/* UPIO_* */
-	unsigned char	hub6;
-	unsigned char	has_sysrq;	/* supports magic SysRq */
+काष्ठा plat_serial8250_port अणु
+	अचिन्हित दीर्घ	iobase;		/* io base address */
+	व्योम __iomem	*membase;	/* ioremap cookie or शून्य */
+	resource_माप_प्रकार	mapbase;	/* resource base */
+	अचिन्हित पूर्णांक	irq;		/* पूर्णांकerrupt number */
+	अचिन्हित दीर्घ	irqflags;	/* request_irq flags */
+	अचिन्हित पूर्णांक	uartclk;	/* UART घड़ी rate */
+	व्योम            *निजी_data;
+	अचिन्हित अक्षर	regshअगरt;	/* रेजिस्टर shअगरt */
+	अचिन्हित अक्षर	iotype;		/* UPIO_* */
+	अचिन्हित अक्षर	hub6;
+	अचिन्हित अक्षर	has_sysrq;	/* supports magic SysRq */
 	upf_t		flags;		/* UPF_* flags */
-	unsigned int	type;		/* If UPF_FIXED_TYPE */
-	unsigned int	(*serial_in)(struct uart_port *, int);
-	void		(*serial_out)(struct uart_port *, int, int);
-	void		(*set_termios)(struct uart_port *,
-			               struct ktermios *new,
-			               struct ktermios *old);
-	void		(*set_ldisc)(struct uart_port *,
-				     struct ktermios *);
-	unsigned int	(*get_mctrl)(struct uart_port *);
-	int		(*handle_irq)(struct uart_port *);
-	void		(*pm)(struct uart_port *, unsigned int state,
-			      unsigned old);
-	void		(*handle_break)(struct uart_port *);
-};
+	अचिन्हित पूर्णांक	type;		/* If UPF_FIXED_TYPE */
+	अचिन्हित पूर्णांक	(*serial_in)(काष्ठा uart_port *, पूर्णांक);
+	व्योम		(*serial_out)(काष्ठा uart_port *, पूर्णांक, पूर्णांक);
+	व्योम		(*set_termios)(काष्ठा uart_port *,
+			               काष्ठा ktermios *new,
+			               काष्ठा ktermios *old);
+	व्योम		(*set_ldisc)(काष्ठा uart_port *,
+				     काष्ठा ktermios *);
+	अचिन्हित पूर्णांक	(*get_mctrl)(काष्ठा uart_port *);
+	पूर्णांक		(*handle_irq)(काष्ठा uart_port *);
+	व्योम		(*pm)(काष्ठा uart_port *, अचिन्हित पूर्णांक state,
+			      अचिन्हित old);
+	व्योम		(*handle_अवरोध)(काष्ठा uart_port *);
+पूर्ण;
 
 /*
- * Allocate 8250 platform device IDs.  Nothing is implied by
- * the numbering here, except for the legacy entry being -1.
+ * Allocate 8250 platक्रमm device IDs.  Nothing is implied by
+ * the numbering here, except क्रम the legacy entry being -1.
  */
-enum {
+क्रमागत अणु
 	PLAT8250_DEV_LEGACY = -1,
 	PLAT8250_DEV_PLATFORM,
 	PLAT8250_DEV_PLATFORM1,
@@ -58,138 +59,138 @@ enum {
 	PLAT8250_DEV_HUB6,
 	PLAT8250_DEV_AU1X00,
 	PLAT8250_DEV_SM501,
-};
+पूर्ण;
 
-struct uart_8250_dma;
-struct uart_8250_port;
+काष्ठा uart_8250_dma;
+काष्ठा uart_8250_port;
 
 /**
  * 8250 core driver operations
  *
  * @setup_irq()		Setup irq handling. The universal 8250 driver links this
  *			port to the irq chain. Other drivers may @request_irq().
- * @release_irq()	Undo irq handling. The universal 8250 driver unlinks
+ * @release_irq()	Unकरो irq handling. The universal 8250 driver unlinks
  *			the port from the irq chain.
  */
-struct uart_8250_ops {
-	int		(*setup_irq)(struct uart_8250_port *);
-	void		(*release_irq)(struct uart_8250_port *);
-};
+काष्ठा uart_8250_ops अणु
+	पूर्णांक		(*setup_irq)(काष्ठा uart_8250_port *);
+	व्योम		(*release_irq)(काष्ठा uart_8250_port *);
+पूर्ण;
 
-struct uart_8250_em485 {
-	struct hrtimer		start_tx_timer; /* "rs485 start tx" timer */
-	struct hrtimer		stop_tx_timer;  /* "rs485 stop tx" timer */
-	struct hrtimer		*active_timer;  /* pointer to active timer */
-	struct uart_8250_port	*port;          /* for hrtimer callbacks */
-	unsigned int		tx_stopped:1;	/* tx is currently stopped */
-};
+काष्ठा uart_8250_em485 अणु
+	काष्ठा hrसमयr		start_tx_समयr; /* "rs485 start tx" समयr */
+	काष्ठा hrसमयr		stop_tx_समयr;  /* "rs485 stop tx" समयr */
+	काष्ठा hrसमयr		*active_समयr;  /* poपूर्णांकer to active समयr */
+	काष्ठा uart_8250_port	*port;          /* क्रम hrसमयr callbacks */
+	अचिन्हित पूर्णांक		tx_stopped:1;	/* tx is currently stopped */
+पूर्ण;
 
 /*
- * This should be used by drivers which want to register
- * their own 8250 ports without registering their own
- * platform device.  Using these will make your driver
+ * This should be used by drivers which want to रेजिस्टर
+ * their own 8250 ports without रेजिस्टरing their own
+ * platक्रमm device.  Using these will make your driver
  * dependent on the 8250 driver.
  */
 
-struct uart_8250_port {
-	struct uart_port	port;
-	struct timer_list	timer;		/* "no irq" timer */
-	struct list_head	list;		/* ports on this IRQ */
+काष्ठा uart_8250_port अणु
+	काष्ठा uart_port	port;
+	काष्ठा समयr_list	समयr;		/* "no irq" समयr */
+	काष्ठा list_head	list;		/* ports on this IRQ */
 	u32			capabilities;	/* port capabilities */
-	unsigned short		bugs;		/* port bugs */
-	bool			fifo_bug;	/* min RX trigger if enabled */
-	unsigned int		tx_loadsz;	/* transmit fifo load size */
-	unsigned char		acr;
-	unsigned char		fcr;
-	unsigned char		ier;
-	unsigned char		lcr;
-	unsigned char		mcr;
-	unsigned char		mcr_mask;	/* mask of user bits */
-	unsigned char		mcr_force;	/* mask of forced bits */
-	unsigned char		cur_iotype;	/* Running I/O type */
-	unsigned int		rpm_tx_active;
-	unsigned char		canary;		/* non-zero during system sleep
-						 *   if no_console_suspend
+	अचिन्हित लघु		bugs;		/* port bugs */
+	bool			fअगरo_bug;	/* min RX trigger अगर enabled */
+	अचिन्हित पूर्णांक		tx_loadsz;	/* transmit fअगरo load size */
+	अचिन्हित अक्षर		acr;
+	अचिन्हित अक्षर		fcr;
+	अचिन्हित अक्षर		ier;
+	अचिन्हित अक्षर		lcr;
+	अचिन्हित अक्षर		mcr;
+	अचिन्हित अक्षर		mcr_mask;	/* mask of user bits */
+	अचिन्हित अक्षर		mcr_क्रमce;	/* mask of क्रमced bits */
+	अचिन्हित अक्षर		cur_iotype;	/* Running I/O type */
+	अचिन्हित पूर्णांक		rpm_tx_active;
+	अचिन्हित अक्षर		canary;		/* non-zero during प्रणाली sleep
+						 *   अगर no_console_suspend
 						 */
-	unsigned char		probe;
-	struct mctrl_gpios	*gpios;
-#define UART_PROBE_RSA	(1 << 0)
+	अचिन्हित अक्षर		probe;
+	काष्ठा mctrl_gpios	*gpios;
+#घोषणा UART_PROBE_RSA	(1 << 0)
 
 	/*
-	 * Some bits in registers are cleared on a read, so they must
-	 * be saved whenever the register is read but the bits will not
+	 * Some bits in रेजिस्टरs are cleared on a पढ़ो, so they must
+	 * be saved whenever the रेजिस्टर is पढ़ो but the bits will not
 	 * be immediately processed.
 	 */
-#define LSR_SAVE_FLAGS UART_LSR_BRK_ERROR_BITS
-	unsigned char		lsr_saved_flags;
-#define MSR_SAVE_FLAGS UART_MSR_ANY_DELTA
-	unsigned char		msr_saved_flags;
+#घोषणा LSR_SAVE_FLAGS UART_LSR_BRK_ERROR_BITS
+	अचिन्हित अक्षर		lsr_saved_flags;
+#घोषणा MSR_SAVE_FLAGS UART_MSR_ANY_DELTA
+	अचिन्हित अक्षर		msr_saved_flags;
 
-	struct uart_8250_dma	*dma;
-	const struct uart_8250_ops *ops;
+	काष्ठा uart_8250_dma	*dma;
+	स्थिर काष्ठा uart_8250_ops *ops;
 
-	/* 8250 specific callbacks */
-	int			(*dl_read)(struct uart_8250_port *);
-	void			(*dl_write)(struct uart_8250_port *, int);
+	/* 8250 specअगरic callbacks */
+	पूर्णांक			(*dl_पढ़ो)(काष्ठा uart_8250_port *);
+	व्योम			(*dl_ग_लिखो)(काष्ठा uart_8250_port *, पूर्णांक);
 
-	struct uart_8250_em485 *em485;
-	void			(*rs485_start_tx)(struct uart_8250_port *);
-	void			(*rs485_stop_tx)(struct uart_8250_port *);
+	काष्ठा uart_8250_em485 *em485;
+	व्योम			(*rs485_start_tx)(काष्ठा uart_8250_port *);
+	व्योम			(*rs485_stop_tx)(काष्ठा uart_8250_port *);
 
 	/* Serial port overrun backoff */
-	struct delayed_work overrun_backoff;
-	u32 overrun_backoff_time_ms;
-};
+	काष्ठा delayed_work overrun_backoff;
+	u32 overrun_backoff_समय_ms;
+पूर्ण;
 
-static inline struct uart_8250_port *up_to_u8250p(struct uart_port *up)
-{
-	return container_of(up, struct uart_8250_port, port);
-}
+अटल अंतरभूत काष्ठा uart_8250_port *up_to_u8250p(काष्ठा uart_port *up)
+अणु
+	वापस container_of(up, काष्ठा uart_8250_port, port);
+पूर्ण
 
-int serial8250_register_8250_port(struct uart_8250_port *);
-void serial8250_unregister_port(int line);
-void serial8250_suspend_port(int line);
-void serial8250_resume_port(int line);
+पूर्णांक serial8250_रेजिस्टर_8250_port(काष्ठा uart_8250_port *);
+व्योम serial8250_unरेजिस्टर_port(पूर्णांक line);
+व्योम serial8250_suspend_port(पूर्णांक line);
+व्योम serial8250_resume_port(पूर्णांक line);
 
-extern int early_serial_setup(struct uart_port *port);
+बाह्य पूर्णांक early_serial_setup(काष्ठा uart_port *port);
 
-extern int early_serial8250_setup(struct earlycon_device *device,
-					 const char *options);
-extern void serial8250_update_uartclk(struct uart_port *port,
-				      unsigned int uartclk);
-extern void serial8250_do_set_termios(struct uart_port *port,
-		struct ktermios *termios, struct ktermios *old);
-extern void serial8250_do_set_ldisc(struct uart_port *port,
-				    struct ktermios *termios);
-extern unsigned int serial8250_do_get_mctrl(struct uart_port *port);
-extern int serial8250_do_startup(struct uart_port *port);
-extern void serial8250_do_shutdown(struct uart_port *port);
-extern void serial8250_do_pm(struct uart_port *port, unsigned int state,
-			     unsigned int oldstate);
-extern void serial8250_do_set_mctrl(struct uart_port *port, unsigned int mctrl);
-extern void serial8250_do_set_divisor(struct uart_port *port, unsigned int baud,
-				      unsigned int quot,
-				      unsigned int quot_frac);
-extern int fsl8250_handle_irq(struct uart_port *port);
-int serial8250_handle_irq(struct uart_port *port, unsigned int iir);
-unsigned char serial8250_rx_chars(struct uart_8250_port *up, unsigned char lsr);
-void serial8250_read_char(struct uart_8250_port *up, unsigned char lsr);
-void serial8250_tx_chars(struct uart_8250_port *up);
-unsigned int serial8250_modem_status(struct uart_8250_port *up);
-void serial8250_init_port(struct uart_8250_port *up);
-void serial8250_set_defaults(struct uart_8250_port *up);
-void serial8250_console_write(struct uart_8250_port *up, const char *s,
-			      unsigned int count);
-int serial8250_console_setup(struct uart_port *port, char *options, bool probe);
-int serial8250_console_exit(struct uart_port *port);
+बाह्य पूर्णांक early_serial8250_setup(काष्ठा earlycon_device *device,
+					 स्थिर अक्षर *options);
+बाह्य व्योम serial8250_update_uartclk(काष्ठा uart_port *port,
+				      अचिन्हित पूर्णांक uartclk);
+बाह्य व्योम serial8250_करो_set_termios(काष्ठा uart_port *port,
+		काष्ठा ktermios *termios, काष्ठा ktermios *old);
+बाह्य व्योम serial8250_करो_set_ldisc(काष्ठा uart_port *port,
+				    काष्ठा ktermios *termios);
+बाह्य अचिन्हित पूर्णांक serial8250_करो_get_mctrl(काष्ठा uart_port *port);
+बाह्य पूर्णांक serial8250_करो_startup(काष्ठा uart_port *port);
+बाह्य व्योम serial8250_करो_shutकरोwn(काष्ठा uart_port *port);
+बाह्य व्योम serial8250_करो_pm(काष्ठा uart_port *port, अचिन्हित पूर्णांक state,
+			     अचिन्हित पूर्णांक oldstate);
+बाह्य व्योम serial8250_करो_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl);
+बाह्य व्योम serial8250_करो_set_भागisor(काष्ठा uart_port *port, अचिन्हित पूर्णांक baud,
+				      अचिन्हित पूर्णांक quot,
+				      अचिन्हित पूर्णांक quot_frac);
+बाह्य पूर्णांक fsl8250_handle_irq(काष्ठा uart_port *port);
+पूर्णांक serial8250_handle_irq(काष्ठा uart_port *port, अचिन्हित पूर्णांक iir);
+अचिन्हित अक्षर serial8250_rx_अक्षरs(काष्ठा uart_8250_port *up, अचिन्हित अक्षर lsr);
+व्योम serial8250_पढ़ो_अक्षर(काष्ठा uart_8250_port *up, अचिन्हित अक्षर lsr);
+व्योम serial8250_tx_अक्षरs(काष्ठा uart_8250_port *up);
+अचिन्हित पूर्णांक serial8250_modem_status(काष्ठा uart_8250_port *up);
+व्योम serial8250_init_port(काष्ठा uart_8250_port *up);
+व्योम serial8250_set_शेषs(काष्ठा uart_8250_port *up);
+व्योम serial8250_console_ग_लिखो(काष्ठा uart_8250_port *up, स्थिर अक्षर *s,
+			      अचिन्हित पूर्णांक count);
+पूर्णांक serial8250_console_setup(काष्ठा uart_port *port, अक्षर *options, bool probe);
+पूर्णांक serial8250_console_निकास(काष्ठा uart_port *port);
 
-extern void serial8250_set_isa_configurator(void (*v)
-					(int port, struct uart_port *up,
+बाह्य व्योम serial8250_set_isa_configurator(व्योम (*v)
+					(पूर्णांक port, काष्ठा uart_port *up,
 						u32 *capabilities));
 
-#ifdef CONFIG_SERIAL_8250_RT288X
-unsigned int au_serial_in(struct uart_port *p, int offset);
-void au_serial_out(struct uart_port *p, int offset, int value);
-#endif
+#अगर_घोषित CONFIG_SERIAL_8250_RT288X
+अचिन्हित पूर्णांक au_serial_in(काष्ठा uart_port *p, पूर्णांक offset);
+व्योम au_serial_out(काष्ठा uart_port *p, पूर्णांक offset, पूर्णांक value);
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (c) 2016  Cavium Inc. (support@cavium.com).
  *
  */
 
 /*
- * Module to support operations on bitmap of cores. Coremask can be used to
- * select a specific core, a group of cores, or all available cores, for
- * initialization and differentiation of roles within a single shared binary
+ * Module to support operations on biपंचांगap of cores. Coremask can be used to
+ * select a specअगरic core, a group of cores, or all available cores, क्रम
+ * initialization and dअगरferentiation of roles within a single shared binary
  * executable image.
  *
  * The core numbers used in this file are the same value as what is found in
- * the COP0_EBASE register and the rdhwr 0 instruction.
+ * the COP0_EBASE रेजिस्टर and the rdhwr 0 inकाष्ठाion.
  *
  * For the CN78XX and other multi-node environments the core numbers are not
- * contiguous.  The core numbers for the CN78XX are as follows:
+ * contiguous.  The core numbers क्रम the CN78XX are as follows:
  *
  * Node 0:	Cores 0 - 47
  * Node 1:	Cores 128 - 175
@@ -26,64 +27,64 @@
  *
  */
 
-#ifndef __CVMX_COREMASK_H__
-#define __CVMX_COREMASK_H__
+#अगर_अघोषित __CVMX_COREMASK_H__
+#घोषणा __CVMX_COREMASK_H__
 
-#define CVMX_MIPS_MAX_CORES 1024
+#घोषणा CVMX_MIPS_MAX_CORES 1024
 /* bits per holder */
-#define CVMX_COREMASK_ELTSZ 64
+#घोषणा CVMX_COREMASK_ELTSZ 64
 
 /* cvmx_coremask_t's size in u64 */
-#define CVMX_COREMASK_BMPSZ (CVMX_MIPS_MAX_CORES / CVMX_COREMASK_ELTSZ)
+#घोषणा CVMX_COREMASK_BMPSZ (CVMX_MIPS_MAX_CORES / CVMX_COREMASK_ELTSZ)
 
 
 /* cvmx_coremask_t */
-struct cvmx_coremask {
-	u64 coremask_bitmap[CVMX_COREMASK_BMPSZ];
-};
+काष्ठा cvmx_coremask अणु
+	u64 coremask_biपंचांगap[CVMX_COREMASK_BMPSZ];
+पूर्ण;
 
 /*
  * Is ``core'' set in the coremask?
  */
-static inline bool cvmx_coremask_is_core_set(const struct cvmx_coremask *pcm,
-					    int core)
-{
-	int n, i;
+अटल अंतरभूत bool cvmx_coremask_is_core_set(स्थिर काष्ठा cvmx_coremask *pcm,
+					    पूर्णांक core)
+अणु
+	पूर्णांक n, i;
 
 	n = core % CVMX_COREMASK_ELTSZ;
 	i = core / CVMX_COREMASK_ELTSZ;
 
-	return (pcm->coremask_bitmap[i] & ((u64)1 << n)) != 0;
-}
+	वापस (pcm->coremask_biपंचांगap[i] & ((u64)1 << n)) != 0;
+पूर्ण
 
 /*
  * Make a copy of a coremask
  */
-static inline void cvmx_coremask_copy(struct cvmx_coremask *dest,
-				      const struct cvmx_coremask *src)
-{
-	memcpy(dest, src, sizeof(*dest));
-}
+अटल अंतरभूत व्योम cvmx_coremask_copy(काष्ठा cvmx_coremask *dest,
+				      स्थिर काष्ठा cvmx_coremask *src)
+अणु
+	स_नकल(dest, src, माप(*dest));
+पूर्ण
 
 /*
  * Set the lower 64-bit of the coremask.
  */
-static inline void cvmx_coremask_set64(struct cvmx_coremask *pcm,
-				       uint64_t coremask_64)
-{
-	pcm->coremask_bitmap[0] = coremask_64;
-}
+अटल अंतरभूत व्योम cvmx_coremask_set64(काष्ठा cvmx_coremask *pcm,
+				       uपूर्णांक64_t coremask_64)
+अणु
+	pcm->coremask_biपंचांगap[0] = coremask_64;
+पूर्ण
 
 /*
  * Clear ``core'' from the coremask.
  */
-static inline void cvmx_coremask_clear_core(struct cvmx_coremask *pcm, int core)
-{
-	int n, i;
+अटल अंतरभूत व्योम cvmx_coremask_clear_core(काष्ठा cvmx_coremask *pcm, पूर्णांक core)
+अणु
+	पूर्णांक n, i;
 
 	n = core % CVMX_COREMASK_ELTSZ;
 	i = core / CVMX_COREMASK_ELTSZ;
-	pcm->coremask_bitmap[i] &= ~(1ull << n);
-}
+	pcm->coremask_biपंचांगap[i] &= ~(1ull << n);
+पूर्ण
 
-#endif /* __CVMX_COREMASK_H__ */
+#पूर्ण_अगर /* __CVMX_COREMASK_H__ */

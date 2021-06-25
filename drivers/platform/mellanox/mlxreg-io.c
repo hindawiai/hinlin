@@ -1,198 +1,199 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Mellanox register access driver
+ * Mellanox रेजिस्टर access driver
  *
  * Copyright (C) 2018 Mellanox Technologies
  * Copyright (C) 2018 Vadim Pasternak <vadimp@mellanox.com>
  */
 
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_data/mlxreg.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_data/mlxreg.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
 /* Attribute parameters. */
-#define MLXREG_IO_ATT_SIZE	10
-#define MLXREG_IO_ATT_NUM	48
+#घोषणा MLXREG_IO_ATT_SIZE	10
+#घोषणा MLXREG_IO_ATT_NUM	48
 
 /**
- * struct mlxreg_io_priv_data - driver's private data:
+ * काष्ठा mlxreg_io_priv_data - driver's निजी data:
  *
- * @pdev: platform device;
- * @pdata: platform data;
+ * @pdev: platक्रमm device;
+ * @pdata: platक्रमm data;
  * @hwmon: hwmon device;
  * @mlxreg_io_attr: sysfs attributes array;
  * @mlxreg_io_dev_attr: sysfs sensor device attribute array;
  * @group: sysfs attribute group;
- * @groups: list of sysfs attribute group for hwmon registration;
- * @regsize: size of a register value;
+ * @groups: list of sysfs attribute group क्रम hwmon registration;
+ * @regsize: size of a रेजिस्टर value;
  */
-struct mlxreg_io_priv_data {
-	struct platform_device *pdev;
-	struct mlxreg_core_platform_data *pdata;
-	struct device *hwmon;
-	struct attribute *mlxreg_io_attr[MLXREG_IO_ATT_NUM + 1];
-	struct sensor_device_attribute mlxreg_io_dev_attr[MLXREG_IO_ATT_NUM];
-	struct attribute_group group;
-	const struct attribute_group *groups[2];
-	int regsize;
-};
+काष्ठा mlxreg_io_priv_data अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा mlxreg_core_platक्रमm_data *pdata;
+	काष्ठा device *hwmon;
+	काष्ठा attribute *mlxreg_io_attr[MLXREG_IO_ATT_NUM + 1];
+	काष्ठा sensor_device_attribute mlxreg_io_dev_attr[MLXREG_IO_ATT_NUM];
+	काष्ठा attribute_group group;
+	स्थिर काष्ठा attribute_group *groups[2];
+	पूर्णांक regsize;
+पूर्ण;
 
-static int
-mlxreg_io_get_reg(void *regmap, struct mlxreg_core_data *data, u32 in_val,
-		  bool rw_flag, int regsize, u32 *regval)
-{
-	int i, val, ret;
+अटल पूर्णांक
+mlxreg_io_get_reg(व्योम *regmap, काष्ठा mlxreg_core_data *data, u32 in_val,
+		  bool rw_flag, पूर्णांक regsize, u32 *regval)
+अणु
+	पूर्णांक i, val, ret;
 
-	ret = regmap_read(regmap, data->reg, regval);
-	if (ret)
-		goto access_error;
+	ret = regmap_पढ़ो(regmap, data->reg, regval);
+	अगर (ret)
+		जाओ access_error;
 
 	/*
-	 * There are four kinds of attributes: single bit, full register's
-	 * bits, bit sequence, bits in few registers For the first kind field
+	 * There are four kinds of attributes: single bit, full रेजिस्टर's
+	 * bits, bit sequence, bits in few रेजिस्टरs For the first kind field
 	 * mask indicates which bits are not related and field bit is set zero.
 	 * For the second kind field mask is set to zero and field bit is set
-	 * with all bits one. No special handling for such kind of attributes -
+	 * with all bits one. No special handling क्रम such kind of attributes -
 	 * pass value as is. For the third kind, the field mask indicates which
 	 * bits are related and the field bit is set to the first bit number
 	 * (from 1 to 32) is the bit sequence. For the fourth kind - the number
-	 * of registers which should be read for getting an attribute are
-	 * specified through 'data->regnum' field.
+	 * of रेजिस्टरs which should be पढ़ो क्रम getting an attribute are
+	 * specअगरied through 'data->regnum' field.
 	 */
-	if (!data->bit) {
+	अगर (!data->bit) अणु
 		/* Single bit. */
-		if (rw_flag) {
+		अगर (rw_flag) अणु
 			/* For show: expose effective bit value as 0 or 1. */
 			*regval = !!(*regval & ~data->mask);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* For store: set effective bit value. */
 			*regval &= data->mask;
-			if (in_val)
+			अगर (in_val)
 				*regval |= ~data->mask;
-		}
-	} else if (data->mask) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (data->mask) अणु
 		/* Bit sequence. */
-		if (rw_flag) {
-			/* For show: mask and shift right. */
+		अगर (rw_flag) अणु
+			/* For show: mask and shअगरt right. */
 			*regval = ror32(*regval & data->mask, (data->bit - 1));
-		} else {
-			/* For store: shift to the position and mask. */
+		पूर्ण अन्यथा अणु
+			/* For store: shअगरt to the position and mask. */
 			in_val = rol32(in_val, data->bit - 1) & data->mask;
 			/* Clear relevant bits and set them to new value. */
 			*regval = (*regval & ~data->mask) | in_val;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * Some attributes could occupied few registers in case regmap
+		 * Some attributes could occupied few रेजिस्टरs in हाल regmap
 		 * bit size is 8 or 16. Compose such attributes from 'regnum'
-		 * registers. Such attributes contain read-only data.
+		 * रेजिस्टरs. Such attributes contain पढ़ो-only data.
 		 */
-		for (i = 1; i < data->regnum; i++) {
-			ret = regmap_read(regmap, data->reg + i, &val);
-			if (ret)
-				goto access_error;
+		क्रम (i = 1; i < data->regnum; i++) अणु
+			ret = regmap_पढ़ो(regmap, data->reg + i, &val);
+			अगर (ret)
+				जाओ access_error;
 
 			*regval |= rol32(val, regsize * i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 access_error:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-mlxreg_io_attr_show(struct device *dev, struct device_attribute *attr,
-		    char *buf)
-{
-	struct mlxreg_io_priv_data *priv = dev_get_drvdata(dev);
-	int index = to_sensor_dev_attr(attr)->index;
-	struct mlxreg_core_data *data = priv->pdata->data + index;
+अटल sमाप_प्रकार
+mlxreg_io_attr_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		    अक्षर *buf)
+अणु
+	काष्ठा mlxreg_io_priv_data *priv = dev_get_drvdata(dev);
+	पूर्णांक index = to_sensor_dev_attr(attr)->index;
+	काष्ठा mlxreg_core_data *data = priv->pdata->data + index;
 	u32 regval = 0;
-	int ret;
+	पूर्णांक ret;
 
 	ret = mlxreg_io_get_reg(priv->pdata->regmap, data, 0, true,
 				priv->regsize, &regval);
-	if (ret)
-		goto access_error;
+	अगर (ret)
+		जाओ access_error;
 
-	return sprintf(buf, "%u\n", regval);
+	वापस प्र_लिखो(buf, "%u\n", regval);
 
 access_error:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-mlxreg_io_attr_store(struct device *dev, struct device_attribute *attr,
-		     const char *buf, size_t len)
-{
-	struct mlxreg_io_priv_data *priv = dev_get_drvdata(dev);
-	int index = to_sensor_dev_attr(attr)->index;
-	struct mlxreg_core_data *data = priv->pdata->data + index;
+अटल sमाप_प्रकार
+mlxreg_io_attr_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		     स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा mlxreg_io_priv_data *priv = dev_get_drvdata(dev);
+	पूर्णांक index = to_sensor_dev_attr(attr)->index;
+	काष्ठा mlxreg_core_data *data = priv->pdata->data + index;
 	u32 input_val, regval;
-	int ret;
+	पूर्णांक ret;
 
-	if (len > MLXREG_IO_ATT_SIZE)
-		return -EINVAL;
+	अगर (len > MLXREG_IO_ATT_SIZE)
+		वापस -EINVAL;
 
 	/* Convert buffer to input value. */
 	ret = kstrtou32(buf, len, &input_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = mlxreg_io_get_reg(priv->pdata->regmap, data, input_val, false,
 				priv->regsize, &regval);
-	if (ret)
-		goto access_error;
+	अगर (ret)
+		जाओ access_error;
 
-	ret = regmap_write(priv->pdata->regmap, data->reg, regval);
-	if (ret)
-		goto access_error;
+	ret = regmap_ग_लिखो(priv->pdata->regmap, data->reg, regval);
+	अगर (ret)
+		जाओ access_error;
 
-	return len;
+	वापस len;
 
 access_error:
 	dev_err(&priv->pdev->dev, "Bus access error\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct device_attribute mlxreg_io_devattr_rw = {
+अटल काष्ठा device_attribute mlxreg_io_devattr_rw = अणु
 	.show	= mlxreg_io_attr_show,
 	.store	= mlxreg_io_attr_store,
-};
+पूर्ण;
 
-static int mlxreg_io_attr_init(struct mlxreg_io_priv_data *priv)
-{
-	int i;
+अटल पूर्णांक mlxreg_io_attr_init(काष्ठा mlxreg_io_priv_data *priv)
+अणु
+	पूर्णांक i;
 
-	priv->group.attrs = devm_kcalloc(&priv->pdev->dev,
+	priv->group.attrs = devm_kसुस्मृति(&priv->pdev->dev,
 					 priv->pdata->counter,
-					 sizeof(struct attribute *),
+					 माप(काष्ठा attribute *),
 					 GFP_KERNEL);
-	if (!priv->group.attrs)
-		return -ENOMEM;
+	अगर (!priv->group.attrs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < priv->pdata->counter; i++) {
+	क्रम (i = 0; i < priv->pdata->counter; i++) अणु
 		priv->mlxreg_io_attr[i] =
 				&priv->mlxreg_io_dev_attr[i].dev_attr.attr;
-		memcpy(&priv->mlxreg_io_dev_attr[i].dev_attr,
-		       &mlxreg_io_devattr_rw, sizeof(struct device_attribute));
+		स_नकल(&priv->mlxreg_io_dev_attr[i].dev_attr,
+		       &mlxreg_io_devattr_rw, माप(काष्ठा device_attribute));
 
 		/* Set attribute name as a label. */
 		priv->mlxreg_io_attr[i]->name =
-				devm_kasprintf(&priv->pdev->dev, GFP_KERNEL,
+				devm_kaप्र_लिखो(&priv->pdev->dev, GFP_KERNEL,
 					       priv->pdata->data[i].label);
 
-		if (!priv->mlxreg_io_attr[i]->name) {
+		अगर (!priv->mlxreg_io_attr[i]->name) अणु
 			dev_err(&priv->pdev->dev, "Memory allocation failed for sysfs attribute %d.\n",
 				i + 1);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		priv->mlxreg_io_dev_attr[i].dev_attr.attr.mode =
 						priv->pdata->data[i].mode;
@@ -200,65 +201,65 @@ static int mlxreg_io_attr_init(struct mlxreg_io_priv_data *priv)
 					priv->mlxreg_io_attr[i]->name;
 		priv->mlxreg_io_dev_attr[i].index = i;
 		sysfs_attr_init(&priv->mlxreg_io_dev_attr[i].dev_attr.attr);
-	}
+	पूर्ण
 
 	priv->group.attrs = priv->mlxreg_io_attr;
 	priv->groups[0] = &priv->group;
-	priv->groups[1] = NULL;
+	priv->groups[1] = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxreg_io_probe(struct platform_device *pdev)
-{
-	struct mlxreg_io_priv_data *priv;
-	int err;
+अटल पूर्णांक mlxreg_io_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mlxreg_io_priv_data *priv;
+	पूर्णांक err;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->pdata = dev_get_platdata(&pdev->dev);
-	if (!priv->pdata) {
+	अगर (!priv->pdata) अणु
 		dev_err(&pdev->dev, "Failed to get platform data.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	priv->pdev = pdev;
 	priv->regsize = regmap_get_val_bytes(priv->pdata->regmap);
-	if (priv->regsize < 0)
-		return priv->regsize;
+	अगर (priv->regsize < 0)
+		वापस priv->regsize;
 
 	err = mlxreg_io_attr_init(priv);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&priv->pdev->dev, "Failed to allocate attributes: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	priv->hwmon = devm_hwmon_device_register_with_groups(&pdev->dev,
+	priv->hwmon = devm_hwmon_device_रेजिस्टर_with_groups(&pdev->dev,
 							     "mlxreg_io",
 							      priv,
 							      priv->groups);
-	if (IS_ERR(priv->hwmon)) {
+	अगर (IS_ERR(priv->hwmon)) अणु
 		dev_err(&pdev->dev, "Failed to register hwmon device %ld\n",
 			PTR_ERR(priv->hwmon));
-		return PTR_ERR(priv->hwmon);
-	}
+		वापस PTR_ERR(priv->hwmon);
+	पूर्ण
 
 	dev_set_drvdata(&pdev->dev, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mlxreg_io_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mlxreg_io_driver = अणु
+	.driver = अणु
 	    .name = "mlxreg-io",
-	},
+	पूर्ण,
 	.probe = mlxreg_io_probe,
-};
+पूर्ण;
 
-module_platform_driver(mlxreg_io_driver);
+module_platक्रमm_driver(mlxreg_io_driver);
 
 MODULE_AUTHOR("Vadim Pasternak <vadimp@mellanox.com>");
 MODULE_DESCRIPTION("Mellanox regmap I/O access driver");

@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * addi_apci_16xx.c
- * Copyright (C) 2004,2005  ADDI-DATA GmbH for the source code of this module.
+ * Copyright (C) 2004,2005  ADDI-DATA GmbH क्रम the source code of this module.
  * Project manager: S. Weber
  *
  *	ADDI-DATA GmbH
@@ -13,99 +14,99 @@
  *	info@addi-data.com
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include "../comedi_pci.h"
+#समावेश "../comedi_pci.h"
 
 /*
  * Register I/O map
  */
-#define APCI16XX_IN_REG(x)		(((x) * 4) + 0x08)
-#define APCI16XX_OUT_REG(x)		(((x) * 4) + 0x14)
-#define APCI16XX_DIR_REG(x)		(((x) * 4) + 0x20)
+#घोषणा APCI16XX_IN_REG(x)		(((x) * 4) + 0x08)
+#घोषणा APCI16XX_OUT_REG(x)		(((x) * 4) + 0x14)
+#घोषणा APCI16XX_सूची_REG(x)		(((x) * 4) + 0x20)
 
-enum apci16xx_boardid {
+क्रमागत apci16xx_boardid अणु
 	BOARD_APCI1648,
 	BOARD_APCI1696,
-};
+पूर्ण;
 
-struct apci16xx_boardinfo {
-	const char *name;
-	int n_chan;
-};
+काष्ठा apci16xx_boardinfo अणु
+	स्थिर अक्षर *name;
+	पूर्णांक n_chan;
+पूर्ण;
 
-static const struct apci16xx_boardinfo apci16xx_boardtypes[] = {
-	[BOARD_APCI1648] = {
+अटल स्थिर काष्ठा apci16xx_boardinfo apci16xx_boardtypes[] = अणु
+	[BOARD_APCI1648] = अणु
 		.name		= "apci1648",
 		.n_chan		= 48,		/* 2 subdevices */
-	},
-	[BOARD_APCI1696] = {
+	पूर्ण,
+	[BOARD_APCI1696] = अणु
 		.name		= "apci1696",
 		.n_chan		= 96,		/* 3 subdevices */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int apci16xx_insn_config(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_insn *insn,
-				unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int mask;
-	int ret;
+अटल पूर्णांक apci16xx_insn_config(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_insn *insn,
+				अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक mask;
+	पूर्णांक ret;
 
-	if (chan < 8)
+	अगर (chan < 8)
 		mask = 0x000000ff;
-	else if (chan < 16)
+	अन्यथा अगर (chan < 16)
 		mask = 0x0000ff00;
-	else if (chan < 24)
+	अन्यथा अगर (chan < 24)
 		mask = 0x00ff0000;
-	else
+	अन्यथा
 		mask = 0xff000000;
 
 	ret = comedi_dio_insn_config(dev, s, insn, data, mask);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	outl(s->io_bits, dev->iobase + APCI16XX_DIR_REG(s->index));
+	outl(s->io_bits, dev->iobase + APCI16XX_सूची_REG(s->index));
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int apci16xx_dio_insn_bits(struct comedi_device *dev,
-				  struct comedi_subdevice *s,
-				  struct comedi_insn *insn,
-				  unsigned int *data)
-{
-	if (comedi_dio_update_state(s, data))
+अटल पूर्णांक apci16xx_dio_insn_bits(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s,
+				  काष्ठा comedi_insn *insn,
+				  अचिन्हित पूर्णांक *data)
+अणु
+	अगर (comedi_dio_update_state(s, data))
 		outl(s->state, dev->iobase + APCI16XX_OUT_REG(s->index));
 
 	data[1] = inl(dev->iobase + APCI16XX_IN_REG(s->index));
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int apci16xx_auto_attach(struct comedi_device *dev,
-				unsigned long context)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	const struct apci16xx_boardinfo *board = NULL;
-	struct comedi_subdevice *s;
-	unsigned int n_subdevs;
-	unsigned int last;
-	int i;
-	int ret;
+अटल पूर्णांक apci16xx_स्वतः_attach(काष्ठा comedi_device *dev,
+				अचिन्हित दीर्घ context)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	स्थिर काष्ठा apci16xx_boardinfo *board = शून्य;
+	काष्ठा comedi_subdevice *s;
+	अचिन्हित पूर्णांक n_subdevs;
+	अचिन्हित पूर्णांक last;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	if (context < ARRAY_SIZE(apci16xx_boardtypes))
+	अगर (context < ARRAY_SIZE(apci16xx_boardtypes))
 		board = &apci16xx_boardtypes[context];
-	if (!board)
-		return -ENODEV;
+	अगर (!board)
+		वापस -ENODEV;
 	dev->board_ptr = board;
 	dev->board_name = board->name;
 
 	ret = comedi_pci_enable(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dev->iobase = pci_resource_start(pcidev, 0);
 
@@ -115,19 +116,19 @@ static int apci16xx_auto_attach(struct comedi_device *dev,
 	 * up to 32 channels.
 	 */
 	n_subdevs = board->n_chan / 32;
-	if ((n_subdevs * 32) < board->n_chan) {
+	अगर ((n_subdevs * 32) < board->n_chan) अणु
 		last = board->n_chan - (n_subdevs * 32);
 		n_subdevs++;
-	} else {
+	पूर्ण अन्यथा अणु
 		last = 0;
-	}
+	पूर्ण
 
 	ret = comedi_alloc_subdevices(dev, n_subdevs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Initialize the TTL digital i/o subdevices */
-	for (i = 0; i < n_subdevs; i++) {
+	क्रम (i = 0; i < n_subdevs; i++) अणु
 		s = &dev->subdevices[i];
 		s->type		= COMEDI_SUBD_DIO;
 		s->subdev_flags	= SDF_WRITABLE | SDF_READABLE;
@@ -137,40 +138,40 @@ static int apci16xx_auto_attach(struct comedi_device *dev,
 		s->insn_config	= apci16xx_insn_config;
 		s->insn_bits	= apci16xx_dio_insn_bits;
 
-		/* Default all channels to inputs */
+		/* Default all channels to inमाला_दो */
 		s->io_bits	= 0;
-		outl(s->io_bits, dev->iobase + APCI16XX_DIR_REG(i));
-	}
+		outl(s->io_bits, dev->iobase + APCI16XX_सूची_REG(i));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct comedi_driver apci16xx_driver = {
+अटल काष्ठा comedi_driver apci16xx_driver = अणु
 	.driver_name	= "addi_apci_16xx",
 	.module		= THIS_MODULE,
-	.auto_attach	= apci16xx_auto_attach,
+	.स्वतः_attach	= apci16xx_स्वतः_attach,
 	.detach		= comedi_pci_detach,
-};
+पूर्ण;
 
-static int apci16xx_pci_probe(struct pci_dev *dev,
-			      const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &apci16xx_driver, id->driver_data);
-}
+अटल पूर्णांक apci16xx_pci_probe(काष्ठा pci_dev *dev,
+			      स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &apci16xx_driver, id->driver_data);
+पूर्ण
 
-static const struct pci_device_id apci16xx_pci_table[] = {
-	{ PCI_VDEVICE(ADDIDATA, 0x1009), BOARD_APCI1648 },
-	{ PCI_VDEVICE(ADDIDATA, 0x100a), BOARD_APCI1696 },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id apci16xx_pci_table[] = अणु
+	अणु PCI_VDEVICE(ADDIDATA, 0x1009), BOARD_APCI1648 पूर्ण,
+	अणु PCI_VDEVICE(ADDIDATA, 0x100a), BOARD_APCI1696 पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, apci16xx_pci_table);
 
-static struct pci_driver apci16xx_pci_driver = {
+अटल काष्ठा pci_driver apci16xx_pci_driver = अणु
 	.name		= "addi_apci_16xx",
 	.id_table	= apci16xx_pci_table,
 	.probe		= apci16xx_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(apci16xx_driver, apci16xx_pci_driver);
 
 MODULE_DESCRIPTION("ADDI-DATA APCI-1648/1696, TTL I/O boards");

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * ADAV80X Audio Codec driver supporting ADAV801, ADAV803
  *
@@ -7,185 +8,185 @@
  * Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/tlv.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/tlv.h>
 
-#include "adav80x.h"
+#समावेश "adav80x.h"
 
-#define ADAV80X_PLAYBACK_CTRL	0x04
-#define ADAV80X_AUX_IN_CTRL	0x05
-#define ADAV80X_REC_CTRL	0x06
-#define ADAV80X_AUX_OUT_CTRL	0x07
-#define ADAV80X_DPATH_CTRL1	0x62
-#define ADAV80X_DPATH_CTRL2	0x63
-#define ADAV80X_DAC_CTRL1	0x64
-#define ADAV80X_DAC_CTRL2	0x65
-#define ADAV80X_DAC_CTRL3	0x66
-#define ADAV80X_DAC_L_VOL	0x68
-#define ADAV80X_DAC_R_VOL	0x69
-#define ADAV80X_PGA_L_VOL	0x6c
-#define ADAV80X_PGA_R_VOL	0x6d
-#define ADAV80X_ADC_CTRL1	0x6e
-#define ADAV80X_ADC_CTRL2	0x6f
-#define ADAV80X_ADC_L_VOL	0x70
-#define ADAV80X_ADC_R_VOL	0x71
-#define ADAV80X_PLL_CTRL1	0x74
-#define ADAV80X_PLL_CTRL2	0x75
-#define ADAV80X_ICLK_CTRL1	0x76
-#define ADAV80X_ICLK_CTRL2	0x77
-#define ADAV80X_PLL_CLK_SRC	0x78
-#define ADAV80X_PLL_OUTE	0x7a
+#घोषणा ADAV80X_PLAYBACK_CTRL	0x04
+#घोषणा ADAV80X_AUX_IN_CTRL	0x05
+#घोषणा ADAV80X_REC_CTRL	0x06
+#घोषणा ADAV80X_AUX_OUT_CTRL	0x07
+#घोषणा ADAV80X_DPATH_CTRL1	0x62
+#घोषणा ADAV80X_DPATH_CTRL2	0x63
+#घोषणा ADAV80X_DAC_CTRL1	0x64
+#घोषणा ADAV80X_DAC_CTRL2	0x65
+#घोषणा ADAV80X_DAC_CTRL3	0x66
+#घोषणा ADAV80X_DAC_L_VOL	0x68
+#घोषणा ADAV80X_DAC_R_VOL	0x69
+#घोषणा ADAV80X_PGA_L_VOL	0x6c
+#घोषणा ADAV80X_PGA_R_VOL	0x6d
+#घोषणा ADAV80X_ADC_CTRL1	0x6e
+#घोषणा ADAV80X_ADC_CTRL2	0x6f
+#घोषणा ADAV80X_ADC_L_VOL	0x70
+#घोषणा ADAV80X_ADC_R_VOL	0x71
+#घोषणा ADAV80X_PLL_CTRL1	0x74
+#घोषणा ADAV80X_PLL_CTRL2	0x75
+#घोषणा ADAV80X_ICLK_CTRL1	0x76
+#घोषणा ADAV80X_ICLK_CTRL2	0x77
+#घोषणा ADAV80X_PLL_CLK_SRC	0x78
+#घोषणा ADAV80X_PLL_OUTE	0x7a
 
-#define ADAV80X_PLL_CLK_SRC_PLL_XIN(pll)	0x00
-#define ADAV80X_PLL_CLK_SRC_PLL_MCLKI(pll)	(0x40 << (pll))
-#define ADAV80X_PLL_CLK_SRC_PLL_MASK(pll)	(0x40 << (pll))
+#घोषणा ADAV80X_PLL_CLK_SRC_PLL_XIN(pll)	0x00
+#घोषणा ADAV80X_PLL_CLK_SRC_PLL_MCLKI(pll)	(0x40 << (pll))
+#घोषणा ADAV80X_PLL_CLK_SRC_PLL_MASK(pll)	(0x40 << (pll))
 
-#define ADAV80X_ICLK_CTRL1_DAC_SRC(src)		((src) << 5)
-#define ADAV80X_ICLK_CTRL1_ADC_SRC(src)		((src) << 2)
-#define ADAV80X_ICLK_CTRL1_ICLK2_SRC(src)	(src)
-#define ADAV80X_ICLK_CTRL2_ICLK1_SRC(src)	((src) << 3)
+#घोषणा ADAV80X_ICLK_CTRL1_DAC_SRC(src)		((src) << 5)
+#घोषणा ADAV80X_ICLK_CTRL1_ADC_SRC(src)		((src) << 2)
+#घोषणा ADAV80X_ICLK_CTRL1_ICLK2_SRC(src)	(src)
+#घोषणा ADAV80X_ICLK_CTRL2_ICLK1_SRC(src)	((src) << 3)
 
-#define ADAV80X_PLL_CTRL1_PLLDIV		0x10
-#define ADAV80X_PLL_CTRL1_PLLPD(pll)		(0x04 << (pll))
-#define ADAV80X_PLL_CTRL1_XTLPD			0x02
+#घोषणा ADAV80X_PLL_CTRL1_PLLDIV		0x10
+#घोषणा ADAV80X_PLL_CTRL1_PLLPD(pll)		(0x04 << (pll))
+#घोषणा ADAV80X_PLL_CTRL1_XTLPD			0x02
 
-#define ADAV80X_PLL_CTRL2_FIELD(pll, x)		((x) << ((pll) * 4))
+#घोषणा ADAV80X_PLL_CTRL2_FIELD(pll, x)		((x) << ((pll) * 4))
 
-#define ADAV80X_PLL_CTRL2_FS_48(pll)	ADAV80X_PLL_CTRL2_FIELD((pll), 0x00)
-#define ADAV80X_PLL_CTRL2_FS_32(pll)	ADAV80X_PLL_CTRL2_FIELD((pll), 0x08)
-#define ADAV80X_PLL_CTRL2_FS_44(pll)	ADAV80X_PLL_CTRL2_FIELD((pll), 0x0c)
+#घोषणा ADAV80X_PLL_CTRL2_FS_48(pll)	ADAV80X_PLL_CTRL2_FIELD((pll), 0x00)
+#घोषणा ADAV80X_PLL_CTRL2_FS_32(pll)	ADAV80X_PLL_CTRL2_FIELD((pll), 0x08)
+#घोषणा ADAV80X_PLL_CTRL2_FS_44(pll)	ADAV80X_PLL_CTRL2_FIELD((pll), 0x0c)
 
-#define ADAV80X_PLL_CTRL2_SEL(pll)	ADAV80X_PLL_CTRL2_FIELD((pll), 0x02)
-#define ADAV80X_PLL_CTRL2_DOUB(pll)	ADAV80X_PLL_CTRL2_FIELD((pll), 0x01)
-#define ADAV80X_PLL_CTRL2_PLL_MASK(pll) ADAV80X_PLL_CTRL2_FIELD((pll), 0x0f)
+#घोषणा ADAV80X_PLL_CTRL2_SEL(pll)	ADAV80X_PLL_CTRL2_FIELD((pll), 0x02)
+#घोषणा ADAV80X_PLL_CTRL2_DOUB(pll)	ADAV80X_PLL_CTRL2_FIELD((pll), 0x01)
+#घोषणा ADAV80X_PLL_CTRL2_PLL_MASK(pll) ADAV80X_PLL_CTRL2_FIELD((pll), 0x0f)
 
-#define ADAV80X_ADC_CTRL1_MODULATOR_MASK	0x80
-#define ADAV80X_ADC_CTRL1_MODULATOR_128FS	0x00
-#define ADAV80X_ADC_CTRL1_MODULATOR_64FS	0x80
+#घोषणा ADAV80X_ADC_CTRL1_MODULATOR_MASK	0x80
+#घोषणा ADAV80X_ADC_CTRL1_MODULATOR_128FS	0x00
+#घोषणा ADAV80X_ADC_CTRL1_MODULATOR_64FS	0x80
 
-#define ADAV80X_DAC_CTRL1_PD			0x80
+#घोषणा ADAV80X_DAC_CTRL1_PD			0x80
 
-#define ADAV80X_DAC_CTRL2_DIV1			0x00
-#define ADAV80X_DAC_CTRL2_DIV1_5		0x10
-#define ADAV80X_DAC_CTRL2_DIV2			0x20
-#define ADAV80X_DAC_CTRL2_DIV3			0x30
-#define ADAV80X_DAC_CTRL2_DIV_MASK		0x30
+#घोषणा ADAV80X_DAC_CTRL2_DIV1			0x00
+#घोषणा ADAV80X_DAC_CTRL2_DIV1_5		0x10
+#घोषणा ADAV80X_DAC_CTRL2_DIV2			0x20
+#घोषणा ADAV80X_DAC_CTRL2_DIV3			0x30
+#घोषणा ADAV80X_DAC_CTRL2_DIV_MASK		0x30
 
-#define ADAV80X_DAC_CTRL2_INTERPOL_256FS	0x00
-#define ADAV80X_DAC_CTRL2_INTERPOL_128FS	0x40
-#define ADAV80X_DAC_CTRL2_INTERPOL_64FS		0x80
-#define ADAV80X_DAC_CTRL2_INTERPOL_MASK		0xc0
+#घोषणा ADAV80X_DAC_CTRL2_INTERPOL_256FS	0x00
+#घोषणा ADAV80X_DAC_CTRL2_INTERPOL_128FS	0x40
+#घोषणा ADAV80X_DAC_CTRL2_INTERPOL_64FS		0x80
+#घोषणा ADAV80X_DAC_CTRL2_INTERPOL_MASK		0xc0
 
-#define ADAV80X_DAC_CTRL2_DEEMPH_NONE		0x00
-#define ADAV80X_DAC_CTRL2_DEEMPH_44		0x01
-#define ADAV80X_DAC_CTRL2_DEEMPH_32		0x02
-#define ADAV80X_DAC_CTRL2_DEEMPH_48		0x03
-#define ADAV80X_DAC_CTRL2_DEEMPH_MASK		0x01
+#घोषणा ADAV80X_DAC_CTRL2_DEEMPH_NONE		0x00
+#घोषणा ADAV80X_DAC_CTRL2_DEEMPH_44		0x01
+#घोषणा ADAV80X_DAC_CTRL2_DEEMPH_32		0x02
+#घोषणा ADAV80X_DAC_CTRL2_DEEMPH_48		0x03
+#घोषणा ADAV80X_DAC_CTRL2_DEEMPH_MASK		0x01
 
-#define ADAV80X_CAPTURE_MODE_MASTER		0x20
-#define ADAV80X_CAPTURE_WORD_LEN24		0x00
-#define ADAV80X_CAPTURE_WORD_LEN20		0x04
-#define ADAV80X_CAPTRUE_WORD_LEN18		0x08
-#define ADAV80X_CAPTURE_WORD_LEN16		0x0c
-#define ADAV80X_CAPTURE_WORD_LEN_MASK		0x0c
+#घोषणा ADAV80X_CAPTURE_MODE_MASTER		0x20
+#घोषणा ADAV80X_CAPTURE_WORD_LEN24		0x00
+#घोषणा ADAV80X_CAPTURE_WORD_LEN20		0x04
+#घोषणा ADAV80X_CAPTRUE_WORD_LEN18		0x08
+#घोषणा ADAV80X_CAPTURE_WORD_LEN16		0x0c
+#घोषणा ADAV80X_CAPTURE_WORD_LEN_MASK		0x0c
 
-#define ADAV80X_CAPTURE_MODE_LEFT_J		0x00
-#define ADAV80X_CAPTURE_MODE_I2S		0x01
-#define ADAV80X_CAPTURE_MODE_RIGHT_J		0x03
-#define ADAV80X_CAPTURE_MODE_MASK		0x03
+#घोषणा ADAV80X_CAPTURE_MODE_LEFT_J		0x00
+#घोषणा ADAV80X_CAPTURE_MODE_I2S		0x01
+#घोषणा ADAV80X_CAPTURE_MODE_RIGHT_J		0x03
+#घोषणा ADAV80X_CAPTURE_MODE_MASK		0x03
 
-#define ADAV80X_PLAYBACK_MODE_MASTER		0x10
-#define ADAV80X_PLAYBACK_MODE_LEFT_J		0x00
-#define ADAV80X_PLAYBACK_MODE_I2S		0x01
-#define ADAV80X_PLAYBACK_MODE_RIGHT_J_24	0x04
-#define ADAV80X_PLAYBACK_MODE_RIGHT_J_20	0x05
-#define ADAV80X_PLAYBACK_MODE_RIGHT_J_18	0x06
-#define ADAV80X_PLAYBACK_MODE_RIGHT_J_16	0x07
-#define ADAV80X_PLAYBACK_MODE_MASK		0x07
+#घोषणा ADAV80X_PLAYBACK_MODE_MASTER		0x10
+#घोषणा ADAV80X_PLAYBACK_MODE_LEFT_J		0x00
+#घोषणा ADAV80X_PLAYBACK_MODE_I2S		0x01
+#घोषणा ADAV80X_PLAYBACK_MODE_RIGHT_J_24	0x04
+#घोषणा ADAV80X_PLAYBACK_MODE_RIGHT_J_20	0x05
+#घोषणा ADAV80X_PLAYBACK_MODE_RIGHT_J_18	0x06
+#घोषणा ADAV80X_PLAYBACK_MODE_RIGHT_J_16	0x07
+#घोषणा ADAV80X_PLAYBACK_MODE_MASK		0x07
 
-#define ADAV80X_PLL_OUTE_SYSCLKPD(x)		BIT(2 - (x))
+#घोषणा ADAV80X_PLL_OUTE_SYSCLKPD(x)		BIT(2 - (x))
 
-static const struct reg_default adav80x_reg_defaults[] = {
-	{ ADAV80X_PLAYBACK_CTRL,	0x01 },
-	{ ADAV80X_AUX_IN_CTRL,		0x01 },
-	{ ADAV80X_REC_CTRL,		0x02 },
-	{ ADAV80X_AUX_OUT_CTRL,		0x01 },
-	{ ADAV80X_DPATH_CTRL1,		0xc0 },
-	{ ADAV80X_DPATH_CTRL2,		0x11 },
-	{ ADAV80X_DAC_CTRL1,		0x00 },
-	{ ADAV80X_DAC_CTRL2,		0x00 },
-	{ ADAV80X_DAC_CTRL3,		0x00 },
-	{ ADAV80X_DAC_L_VOL,		0xff },
-	{ ADAV80X_DAC_R_VOL,		0xff },
-	{ ADAV80X_PGA_L_VOL,		0x00 },
-	{ ADAV80X_PGA_R_VOL,		0x00 },
-	{ ADAV80X_ADC_CTRL1,		0x00 },
-	{ ADAV80X_ADC_CTRL2,		0x00 },
-	{ ADAV80X_ADC_L_VOL,		0xff },
-	{ ADAV80X_ADC_R_VOL,		0xff },
-	{ ADAV80X_PLL_CTRL1,		0x00 },
-	{ ADAV80X_PLL_CTRL2,		0x00 },
-	{ ADAV80X_ICLK_CTRL1,		0x00 },
-	{ ADAV80X_ICLK_CTRL2,		0x00 },
-	{ ADAV80X_PLL_CLK_SRC,		0x00 },
-	{ ADAV80X_PLL_OUTE,		0x00 },
-};
+अटल स्थिर काष्ठा reg_शेष adav80x_reg_शेषs[] = अणु
+	अणु ADAV80X_PLAYBACK_CTRL,	0x01 पूर्ण,
+	अणु ADAV80X_AUX_IN_CTRL,		0x01 पूर्ण,
+	अणु ADAV80X_REC_CTRL,		0x02 पूर्ण,
+	अणु ADAV80X_AUX_OUT_CTRL,		0x01 पूर्ण,
+	अणु ADAV80X_DPATH_CTRL1,		0xc0 पूर्ण,
+	अणु ADAV80X_DPATH_CTRL2,		0x11 पूर्ण,
+	अणु ADAV80X_DAC_CTRL1,		0x00 पूर्ण,
+	अणु ADAV80X_DAC_CTRL2,		0x00 पूर्ण,
+	अणु ADAV80X_DAC_CTRL3,		0x00 पूर्ण,
+	अणु ADAV80X_DAC_L_VOL,		0xff पूर्ण,
+	अणु ADAV80X_DAC_R_VOL,		0xff पूर्ण,
+	अणु ADAV80X_PGA_L_VOL,		0x00 पूर्ण,
+	अणु ADAV80X_PGA_R_VOL,		0x00 पूर्ण,
+	अणु ADAV80X_ADC_CTRL1,		0x00 पूर्ण,
+	अणु ADAV80X_ADC_CTRL2,		0x00 पूर्ण,
+	अणु ADAV80X_ADC_L_VOL,		0xff पूर्ण,
+	अणु ADAV80X_ADC_R_VOL,		0xff पूर्ण,
+	अणु ADAV80X_PLL_CTRL1,		0x00 पूर्ण,
+	अणु ADAV80X_PLL_CTRL2,		0x00 पूर्ण,
+	अणु ADAV80X_ICLK_CTRL1,		0x00 पूर्ण,
+	अणु ADAV80X_ICLK_CTRL2,		0x00 पूर्ण,
+	अणु ADAV80X_PLL_CLK_SRC,		0x00 पूर्ण,
+	अणु ADAV80X_PLL_OUTE,		0x00 पूर्ण,
+पूर्ण;
 
-struct adav80x {
-	struct regmap *regmap;
+काष्ठा adav80x अणु
+	काष्ठा regmap *regmap;
 
-	enum adav80x_clk_src clk_src;
-	unsigned int sysclk;
-	enum adav80x_pll_src pll_src;
+	क्रमागत adav80x_clk_src clk_src;
+	अचिन्हित पूर्णांक sysclk;
+	क्रमागत adav80x_pll_src pll_src;
 
-	unsigned int dai_fmt[2];
-	unsigned int rate;
+	अचिन्हित पूर्णांक dai_fmt[2];
+	अचिन्हित पूर्णांक rate;
 	bool deemph;
 	bool sysclk_pd[3];
-};
+पूर्ण;
 
-static const char *adav80x_mux_text[] = {
+अटल स्थिर अक्षर *adav80x_mux_text[] = अणु
 	"ADC",
 	"Playback",
 	"Aux Playback",
-};
+पूर्ण;
 
-static const unsigned int adav80x_mux_values[] = {
+अटल स्थिर अचिन्हित पूर्णांक adav80x_mux_values[] = अणु
 	0, 2, 3,
-};
+पूर्ण;
 
-#define ADAV80X_MUX_ENUM_DECL(name, reg, shift) \
-	SOC_VALUE_ENUM_DOUBLE_DECL(name, reg, shift, 7, \
+#घोषणा ADAV80X_MUX_ENUM_DECL(name, reg, shअगरt) \
+	SOC_VALUE_ENUM_DOUBLE_DECL(name, reg, shअगरt, 7, \
 		ARRAY_SIZE(adav80x_mux_text), adav80x_mux_text, \
 		adav80x_mux_values)
 
-static ADAV80X_MUX_ENUM_DECL(adav80x_aux_capture_enum, ADAV80X_DPATH_CTRL1, 0);
-static ADAV80X_MUX_ENUM_DECL(adav80x_capture_enum, ADAV80X_DPATH_CTRL1, 3);
-static ADAV80X_MUX_ENUM_DECL(adav80x_dac_enum, ADAV80X_DPATH_CTRL2, 3);
+अटल ADAV80X_MUX_ENUM_DECL(adav80x_aux_capture_क्रमागत, ADAV80X_DPATH_CTRL1, 0);
+अटल ADAV80X_MUX_ENUM_DECL(adav80x_capture_क्रमागत, ADAV80X_DPATH_CTRL1, 3);
+अटल ADAV80X_MUX_ENUM_DECL(adav80x_dac_क्रमागत, ADAV80X_DPATH_CTRL2, 3);
 
-static const struct snd_kcontrol_new adav80x_aux_capture_mux_ctrl =
-	SOC_DAPM_ENUM("Route", adav80x_aux_capture_enum);
-static const struct snd_kcontrol_new adav80x_capture_mux_ctrl =
-	SOC_DAPM_ENUM("Route", adav80x_capture_enum);
-static const struct snd_kcontrol_new adav80x_dac_mux_ctrl =
-	SOC_DAPM_ENUM("Route", adav80x_dac_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new adav80x_aux_capture_mux_ctrl =
+	SOC_DAPM_ENUM("Route", adav80x_aux_capture_क्रमागत);
+अटल स्थिर काष्ठा snd_kcontrol_new adav80x_capture_mux_ctrl =
+	SOC_DAPM_ENUM("Route", adav80x_capture_क्रमागत);
+अटल स्थिर काष्ठा snd_kcontrol_new adav80x_dac_mux_ctrl =
+	SOC_DAPM_ENUM("Route", adav80x_dac_क्रमागत);
 
-#define ADAV80X_MUX(name, ctrl) \
+#घोषणा ADAV80X_MUX(name, ctrl) \
 	SND_SOC_DAPM_MUX(name, SND_SOC_NOPM, 0, 0, ctrl)
 
-static const struct snd_soc_dapm_widget adav80x_dapm_widgets[] = {
-	SND_SOC_DAPM_DAC("DAC", NULL, ADAV80X_DAC_CTRL1, 7, 1),
-	SND_SOC_DAPM_ADC("ADC", NULL, ADAV80X_ADC_CTRL1, 5, 1),
+अटल स्थिर काष्ठा snd_soc_dapm_widget adav80x_dapm_widमाला_लो[] = अणु
+	SND_SOC_DAPM_DAC("DAC", शून्य, ADAV80X_DAC_CTRL1, 7, 1),
+	SND_SOC_DAPM_ADC("ADC", शून्य, ADAV80X_ADC_CTRL1, 5, 1),
 
-	SND_SOC_DAPM_PGA("Right PGA", ADAV80X_ADC_CTRL1, 0, 1, NULL, 0),
-	SND_SOC_DAPM_PGA("Left PGA", ADAV80X_ADC_CTRL1, 1, 1, NULL, 0),
+	SND_SOC_DAPM_PGA("Right PGA", ADAV80X_ADC_CTRL1, 0, 1, शून्य, 0),
+	SND_SOC_DAPM_PGA("Left PGA", ADAV80X_ADC_CTRL1, 1, 1, शून्य, 0),
 
 	SND_SOC_DAPM_AIF_OUT("AIFOUT", "HiFi Capture", 0, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_AIF_IN("AIFIN", "HiFi Playback", 0, SND_SOC_NOPM, 0, 0),
@@ -202,144 +203,144 @@ static const struct snd_soc_dapm_widget adav80x_dapm_widgets[] = {
 	SND_SOC_DAPM_OUTPUT("VOUTR"),
 	SND_SOC_DAPM_OUTPUT("VOUTL"),
 
-	SND_SOC_DAPM_SUPPLY("SYSCLK", SND_SOC_NOPM, 0, 0, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("PLL1", ADAV80X_PLL_CTRL1, 2, 1, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("PLL2", ADAV80X_PLL_CTRL1, 3, 1, NULL, 0),
-	SND_SOC_DAPM_SUPPLY("OSC", ADAV80X_PLL_CTRL1, 1, 1, NULL, 0),
-};
+	SND_SOC_DAPM_SUPPLY("SYSCLK", SND_SOC_NOPM, 0, 0, शून्य, 0),
+	SND_SOC_DAPM_SUPPLY("PLL1", ADAV80X_PLL_CTRL1, 2, 1, शून्य, 0),
+	SND_SOC_DAPM_SUPPLY("PLL2", ADAV80X_PLL_CTRL1, 3, 1, शून्य, 0),
+	SND_SOC_DAPM_SUPPLY("OSC", ADAV80X_PLL_CTRL1, 1, 1, शून्य, 0),
+पूर्ण;
 
-static int adav80x_dapm_sysclk_check(struct snd_soc_dapm_widget *source,
-			 struct snd_soc_dapm_widget *sink)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(source->dapm);
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	const char *clk;
+अटल पूर्णांक adav80x_dapm_sysclk_check(काष्ठा snd_soc_dapm_widget *source,
+			 काष्ठा snd_soc_dapm_widget *sink)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(source->dapm);
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	स्थिर अक्षर *clk;
 
-	switch (adav80x->clk_src) {
-	case ADAV80X_CLK_PLL1:
+	चयन (adav80x->clk_src) अणु
+	हाल ADAV80X_CLK_PLL1:
 		clk = "PLL1";
-		break;
-	case ADAV80X_CLK_PLL2:
+		अवरोध;
+	हाल ADAV80X_CLK_PLL2:
 		clk = "PLL2";
-		break;
-	case ADAV80X_CLK_XTAL:
+		अवरोध;
+	हाल ADAV80X_CLK_XTAL:
 		clk = "OSC";
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	return strcmp(source->name, clk) == 0;
-}
+	वापस म_भेद(source->name, clk) == 0;
+पूर्ण
 
-static int adav80x_dapm_pll_check(struct snd_soc_dapm_widget *source,
-			 struct snd_soc_dapm_widget *sink)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(source->dapm);
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक adav80x_dapm_pll_check(काष्ठा snd_soc_dapm_widget *source,
+			 काष्ठा snd_soc_dapm_widget *sink)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(source->dapm);
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
 
-	return adav80x->pll_src == ADAV80X_PLL_SRC_XTAL;
-}
+	वापस adav80x->pll_src == ADAV80X_PLL_SRC_XTAL;
+पूर्ण
 
 
-static const struct snd_soc_dapm_route adav80x_dapm_routes[] = {
-	{ "DAC Select", "ADC", "ADC" },
-	{ "DAC Select", "Playback", "AIFIN" },
-	{ "DAC Select", "Aux Playback", "AIFAUXIN" },
-	{ "DAC", NULL,  "DAC Select" },
+अटल स्थिर काष्ठा snd_soc_dapm_route adav80x_dapm_routes[] = अणु
+	अणु "DAC Select", "ADC", "ADC" पूर्ण,
+	अणु "DAC Select", "Playback", "AIFIN" पूर्ण,
+	अणु "DAC Select", "Aux Playback", "AIFAUXIN" पूर्ण,
+	अणु "DAC", शून्य,  "DAC Select" पूर्ण,
 
-	{ "Capture Select", "ADC", "ADC" },
-	{ "Capture Select", "Playback", "AIFIN" },
-	{ "Capture Select", "Aux Playback", "AIFAUXIN" },
-	{ "AIFOUT", NULL,  "Capture Select" },
+	अणु "Capture Select", "ADC", "ADC" पूर्ण,
+	अणु "Capture Select", "Playback", "AIFIN" पूर्ण,
+	अणु "Capture Select", "Aux Playback", "AIFAUXIN" पूर्ण,
+	अणु "AIFOUT", शून्य,  "Capture Select" पूर्ण,
 
-	{ "Aux Capture Select", "ADC", "ADC" },
-	{ "Aux Capture Select", "Playback", "AIFIN" },
-	{ "Aux Capture Select", "Aux Playback", "AIFAUXIN" },
-	{ "AIFAUXOUT", NULL,  "Aux Capture Select" },
+	अणु "Aux Capture Select", "ADC", "ADC" पूर्ण,
+	अणु "Aux Capture Select", "Playback", "AIFIN" पूर्ण,
+	अणु "Aux Capture Select", "Aux Playback", "AIFAUXIN" पूर्ण,
+	अणु "AIFAUXOUT", शून्य,  "Aux Capture Select" पूर्ण,
 
-	{ "VOUTR",  NULL, "DAC" },
-	{ "VOUTL",  NULL, "DAC" },
+	अणु "VOUTR",  शून्य, "DAC" पूर्ण,
+	अणु "VOUTL",  शून्य, "DAC" पूर्ण,
 
-	{ "Left PGA", NULL, "VINL" },
-	{ "Right PGA", NULL, "VINR" },
-	{ "ADC", NULL, "Left PGA" },
-	{ "ADC", NULL, "Right PGA" },
+	अणु "Left PGA", शून्य, "VINL" पूर्ण,
+	अणु "Right PGA", शून्य, "VINR" पूर्ण,
+	अणु "ADC", शून्य, "Left PGA" पूर्ण,
+	अणु "ADC", शून्य, "Right PGA" पूर्ण,
 
-	{ "SYSCLK", NULL, "PLL1", adav80x_dapm_sysclk_check },
-	{ "SYSCLK", NULL, "PLL2", adav80x_dapm_sysclk_check },
-	{ "SYSCLK", NULL, "OSC", adav80x_dapm_sysclk_check },
-	{ "PLL1", NULL, "OSC", adav80x_dapm_pll_check },
-	{ "PLL2", NULL, "OSC", adav80x_dapm_pll_check },
+	अणु "SYSCLK", शून्य, "PLL1", adav80x_dapm_sysclk_check पूर्ण,
+	अणु "SYSCLK", शून्य, "PLL2", adav80x_dapm_sysclk_check पूर्ण,
+	अणु "SYSCLK", शून्य, "OSC", adav80x_dapm_sysclk_check पूर्ण,
+	अणु "PLL1", शून्य, "OSC", adav80x_dapm_pll_check पूर्ण,
+	अणु "PLL2", शून्य, "OSC", adav80x_dapm_pll_check पूर्ण,
 
-	{ "ADC", NULL, "SYSCLK" },
-	{ "DAC", NULL, "SYSCLK" },
-	{ "AIFOUT", NULL, "SYSCLK" },
-	{ "AIFAUXOUT", NULL, "SYSCLK" },
-	{ "AIFIN", NULL, "SYSCLK" },
-	{ "AIFAUXIN", NULL, "SYSCLK" },
-};
+	अणु "ADC", शून्य, "SYSCLK" पूर्ण,
+	अणु "DAC", शून्य, "SYSCLK" पूर्ण,
+	अणु "AIFOUT", शून्य, "SYSCLK" पूर्ण,
+	अणु "AIFAUXOUT", शून्य, "SYSCLK" पूर्ण,
+	अणु "AIFIN", शून्य, "SYSCLK" पूर्ण,
+	अणु "AIFAUXIN", शून्य, "SYSCLK" पूर्ण,
+पूर्ण;
 
-static int adav80x_set_deemph(struct snd_soc_component *component)
-{
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	unsigned int val;
+अटल पूर्णांक adav80x_set_deemph(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक val;
 
-	if (adav80x->deemph) {
-		switch (adav80x->rate) {
-		case 32000:
+	अगर (adav80x->deemph) अणु
+		चयन (adav80x->rate) अणु
+		हाल 32000:
 			val = ADAV80X_DAC_CTRL2_DEEMPH_32;
-			break;
-		case 44100:
+			अवरोध;
+		हाल 44100:
 			val = ADAV80X_DAC_CTRL2_DEEMPH_44;
-			break;
-		case 48000:
-		case 64000:
-		case 88200:
-		case 96000:
+			अवरोध;
+		हाल 48000:
+		हाल 64000:
+		हाल 88200:
+		हाल 96000:
 			val = ADAV80X_DAC_CTRL2_DEEMPH_48;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			val = ADAV80X_DAC_CTRL2_DEEMPH_NONE;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		val = ADAV80X_DAC_CTRL2_DEEMPH_NONE;
-	}
+	पूर्ण
 
-	return regmap_update_bits(adav80x->regmap, ADAV80X_DAC_CTRL2,
+	वापस regmap_update_bits(adav80x->regmap, ADAV80X_DAC_CTRL2,
 		ADAV80X_DAC_CTRL2_DEEMPH_MASK, val);
-}
+पूर्ण
 
-static int adav80x_put_deemph(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	unsigned int deemph = ucontrol->value.integer.value[0];
+अटल पूर्णांक adav80x_put_deemph(काष्ठा snd_kcontrol *kcontrol,
+		काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक deemph = ucontrol->value.पूर्णांकeger.value[0];
 
-	if (deemph > 1)
-		return -EINVAL;
+	अगर (deemph > 1)
+		वापस -EINVAL;
 
 	adav80x->deemph = deemph;
 
-	return adav80x_set_deemph(component);
-}
+	वापस adav80x_set_deemph(component);
+पूर्ण
 
-static int adav80x_get_deemph(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक adav80x_get_deemph(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
 
-	ucontrol->value.integer.value[0] = adav80x->deemph;
-	return 0;
-};
+	ucontrol->value.पूर्णांकeger.value[0] = adav80x->deemph;
+	वापस 0;
+पूर्ण;
 
-static const DECLARE_TLV_DB_SCALE(adav80x_inpga_tlv, 0, 50, 0);
-static const DECLARE_TLV_DB_MINMAX(adav80x_digital_tlv, -9563, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(adav80x_inpga_tlv, 0, 50, 0);
+अटल स्थिर DECLARE_TLV_DB_MINMAX(adav80x_digital_tlv, -9563, 0);
 
-static const struct snd_kcontrol_new adav80x_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new adav80x_controls[] = अणु
 	SOC_DOUBLE_R_TLV("Master Playback Volume", ADAV80X_DAC_L_VOL,
 		ADAV80X_DAC_R_VOL, 0, 0xff, 0, adav80x_digital_tlv),
 	SOC_DOUBLE_R_TLV("Master Capture Volume", ADAV80X_ADC_L_VOL,
@@ -355,211 +356,211 @@ static const struct snd_kcontrol_new adav80x_controls[] = {
 
 	SOC_SINGLE_BOOL_EXT("Playback De-emphasis Switch", 0,
 			adav80x_get_deemph, adav80x_put_deemph),
-};
+पूर्ण;
 
-static unsigned int adav80x_port_ctrl_regs[2][2] = {
-	{ ADAV80X_REC_CTRL, ADAV80X_PLAYBACK_CTRL, },
-	{ ADAV80X_AUX_OUT_CTRL, ADAV80X_AUX_IN_CTRL },
-};
+अटल अचिन्हित पूर्णांक adav80x_port_ctrl_regs[2][2] = अणु
+	अणु ADAV80X_REC_CTRL, ADAV80X_PLAYBACK_CTRL, पूर्ण,
+	अणु ADAV80X_AUX_OUT_CTRL, ADAV80X_AUX_IN_CTRL पूर्ण,
+पूर्ण;
 
-static int adav80x_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct snd_soc_component *component = dai->component;
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	unsigned int capture = 0x00;
-	unsigned int playback = 0x00;
+अटल पूर्णांक adav80x_set_dai_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक capture = 0x00;
+	अचिन्हित पूर्णांक playback = 0x00;
 
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
 		capture |= ADAV80X_CAPTURE_MODE_MASTER;
 		playback |= ADAV80X_PLAYBACK_MODE_MASTER;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		capture |= ADAV80X_CAPTURE_MODE_I2S;
 		playback |= ADAV80X_PLAYBACK_MODE_I2S;
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		capture |= ADAV80X_CAPTURE_MODE_LEFT_J;
 		playback |= ADAV80X_PLAYBACK_MODE_LEFT_J;
-		break;
-	case SND_SOC_DAIFMT_RIGHT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_RIGHT_J:
 		capture |= ADAV80X_CAPTURE_MODE_RIGHT_J;
 		playback |= ADAV80X_PLAYBACK_MODE_RIGHT_J_24;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(adav80x->regmap, adav80x_port_ctrl_regs[dai->id][0],
 		ADAV80X_CAPTURE_MODE_MASK | ADAV80X_CAPTURE_MODE_MASTER,
 		capture);
-	regmap_write(adav80x->regmap, adav80x_port_ctrl_regs[dai->id][1],
+	regmap_ग_लिखो(adav80x->regmap, adav80x_port_ctrl_regs[dai->id][1],
 		playback);
 
 	adav80x->dai_fmt[dai->id] = fmt & SND_SOC_DAIFMT_FORMAT_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adav80x_set_adc_clock(struct snd_soc_component *component,
-		unsigned int sample_rate)
-{
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	unsigned int val;
+अटल पूर्णांक adav80x_set_adc_घड़ी(काष्ठा snd_soc_component *component,
+		अचिन्हित पूर्णांक sample_rate)
+अणु
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक val;
 
-	if (sample_rate <= 48000)
+	अगर (sample_rate <= 48000)
 		val = ADAV80X_ADC_CTRL1_MODULATOR_128FS;
-	else
+	अन्यथा
 		val = ADAV80X_ADC_CTRL1_MODULATOR_64FS;
 
 	regmap_update_bits(adav80x->regmap, ADAV80X_ADC_CTRL1,
 		ADAV80X_ADC_CTRL1_MODULATOR_MASK, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adav80x_set_dac_clock(struct snd_soc_component *component,
-		unsigned int sample_rate)
-{
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	unsigned int val;
+अटल पूर्णांक adav80x_set_dac_घड़ी(काष्ठा snd_soc_component *component,
+		अचिन्हित पूर्णांक sample_rate)
+अणु
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक val;
 
-	if (sample_rate <= 48000)
+	अगर (sample_rate <= 48000)
 		val = ADAV80X_DAC_CTRL2_DIV1 | ADAV80X_DAC_CTRL2_INTERPOL_256FS;
-	else
+	अन्यथा
 		val = ADAV80X_DAC_CTRL2_DIV2 | ADAV80X_DAC_CTRL2_INTERPOL_128FS;
 
 	regmap_update_bits(adav80x->regmap, ADAV80X_DAC_CTRL2,
 		ADAV80X_DAC_CTRL2_DIV_MASK | ADAV80X_DAC_CTRL2_INTERPOL_MASK,
 		val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adav80x_set_capture_pcm_format(struct snd_soc_component *component,
-		struct snd_soc_dai *dai, struct snd_pcm_hw_params *params)
-{
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	unsigned int val;
+अटल पूर्णांक adav80x_set_capture_pcm_क्रमmat(काष्ठा snd_soc_component *component,
+		काष्ठा snd_soc_dai *dai, काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक val;
 
-	switch (params_width(params)) {
-	case 16:
+	चयन (params_width(params)) अणु
+	हाल 16:
 		val = ADAV80X_CAPTURE_WORD_LEN16;
-		break;
-	case 18:
+		अवरोध;
+	हाल 18:
 		val = ADAV80X_CAPTRUE_WORD_LEN18;
-		break;
-	case 20:
+		अवरोध;
+	हाल 20:
 		val = ADAV80X_CAPTURE_WORD_LEN20;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		val = ADAV80X_CAPTURE_WORD_LEN24;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(adav80x->regmap, adav80x_port_ctrl_regs[dai->id][0],
 		ADAV80X_CAPTURE_WORD_LEN_MASK, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adav80x_set_playback_pcm_format(struct snd_soc_component *component,
-		struct snd_soc_dai *dai, struct snd_pcm_hw_params *params)
-{
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	unsigned int val;
+अटल पूर्णांक adav80x_set_playback_pcm_क्रमmat(काष्ठा snd_soc_component *component,
+		काष्ठा snd_soc_dai *dai, काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक val;
 
-	if (adav80x->dai_fmt[dai->id] != SND_SOC_DAIFMT_RIGHT_J)
-		return 0;
+	अगर (adav80x->dai_fmt[dai->id] != SND_SOC_DAIFMT_RIGHT_J)
+		वापस 0;
 
-	switch (params_width(params)) {
-	case 16:
+	चयन (params_width(params)) अणु
+	हाल 16:
 		val = ADAV80X_PLAYBACK_MODE_RIGHT_J_16;
-		break;
-	case 18:
+		अवरोध;
+	हाल 18:
 		val = ADAV80X_PLAYBACK_MODE_RIGHT_J_18;
-		break;
-	case 20:
+		अवरोध;
+	हाल 20:
 		val = ADAV80X_PLAYBACK_MODE_RIGHT_J_20;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		val = ADAV80X_PLAYBACK_MODE_RIGHT_J_24;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(adav80x->regmap, adav80x_port_ctrl_regs[dai->id][1],
 		ADAV80X_PLAYBACK_MODE_MASK, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adav80x_hw_params(struct snd_pcm_substream *substream,
-		struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	unsigned int rate = params_rate(params);
+अटल पूर्णांक adav80x_hw_params(काष्ठा snd_pcm_substream *substream,
+		काष्ठा snd_pcm_hw_params *params, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक rate = params_rate(params);
 
-	if (rate * 256 != adav80x->sysclk)
-		return -EINVAL;
+	अगर (rate * 256 != adav80x->sysclk)
+		वापस -EINVAL;
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		adav80x_set_playback_pcm_format(component, dai, params);
-		adav80x_set_dac_clock(component, rate);
-	} else {
-		adav80x_set_capture_pcm_format(component, dai, params);
-		adav80x_set_adc_clock(component, rate);
-	}
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		adav80x_set_playback_pcm_क्रमmat(component, dai, params);
+		adav80x_set_dac_घड़ी(component, rate);
+	पूर्ण अन्यथा अणु
+		adav80x_set_capture_pcm_क्रमmat(component, dai, params);
+		adav80x_set_adc_घड़ी(component, rate);
+	पूर्ण
 	adav80x->rate = rate;
 	adav80x_set_deemph(component);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adav80x_set_sysclk(struct snd_soc_component *component,
-			      int clk_id, int source,
-			      unsigned int freq, int dir)
-{
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+अटल पूर्णांक adav80x_set_sysclk(काष्ठा snd_soc_component *component,
+			      पूर्णांक clk_id, पूर्णांक source,
+			      अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
 
-	if (dir == SND_SOC_CLOCK_IN) {
-		switch (clk_id) {
-		case ADAV80X_CLK_XIN:
-		case ADAV80X_CLK_XTAL:
-		case ADAV80X_CLK_MCLKI:
-		case ADAV80X_CLK_PLL1:
-		case ADAV80X_CLK_PLL2:
-			break;
-		default:
-			return -EINVAL;
-		}
+	अगर (dir == SND_SOC_CLOCK_IN) अणु
+		चयन (clk_id) अणु
+		हाल ADAV80X_CLK_XIN:
+		हाल ADAV80X_CLK_XTAL:
+		हाल ADAV80X_CLK_MCLKI:
+		हाल ADAV80X_CLK_PLL1:
+		हाल ADAV80X_CLK_PLL2:
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
 		adav80x->sysclk = freq;
 
-		if (adav80x->clk_src != clk_id) {
-			unsigned int iclk_ctrl1, iclk_ctrl2;
+		अगर (adav80x->clk_src != clk_id) अणु
+			अचिन्हित पूर्णांक iclk_ctrl1, iclk_ctrl2;
 
 			adav80x->clk_src = clk_id;
-			if (clk_id == ADAV80X_CLK_XTAL)
+			अगर (clk_id == ADAV80X_CLK_XTAL)
 				clk_id = ADAV80X_CLK_XIN;
 
 			iclk_ctrl1 = ADAV80X_ICLK_CTRL1_DAC_SRC(clk_id) |
@@ -567,121 +568,121 @@ static int adav80x_set_sysclk(struct snd_soc_component *component,
 					ADAV80X_ICLK_CTRL1_ICLK2_SRC(clk_id);
 			iclk_ctrl2 = ADAV80X_ICLK_CTRL2_ICLK1_SRC(clk_id);
 
-			regmap_write(adav80x->regmap, ADAV80X_ICLK_CTRL1,
+			regmap_ग_लिखो(adav80x->regmap, ADAV80X_ICLK_CTRL1,
 				iclk_ctrl1);
-			regmap_write(adav80x->regmap, ADAV80X_ICLK_CTRL2,
+			regmap_ग_लिखो(adav80x->regmap, ADAV80X_ICLK_CTRL2,
 				iclk_ctrl2);
 
 			snd_soc_dapm_sync(dapm);
-		}
-	} else {
-		unsigned int mask;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक mask;
 
-		switch (clk_id) {
-		case ADAV80X_CLK_SYSCLK1:
-		case ADAV80X_CLK_SYSCLK2:
-		case ADAV80X_CLK_SYSCLK3:
-			break;
-		default:
-			return -EINVAL;
-		}
+		चयन (clk_id) अणु
+		हाल ADAV80X_CLK_SYSCLK1:
+		हाल ADAV80X_CLK_SYSCLK2:
+		हाल ADAV80X_CLK_SYSCLK3:
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
 		clk_id -= ADAV80X_CLK_SYSCLK1;
 		mask = ADAV80X_PLL_OUTE_SYSCLKPD(clk_id);
 
-		if (freq == 0) {
+		अगर (freq == 0) अणु
 			regmap_update_bits(adav80x->regmap, ADAV80X_PLL_OUTE,
 				mask, mask);
 			adav80x->sysclk_pd[clk_id] = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			regmap_update_bits(adav80x->regmap, ADAV80X_PLL_OUTE,
 				mask, 0);
 			adav80x->sysclk_pd[clk_id] = false;
-		}
+		पूर्ण
 
 		snd_soc_dapm_mutex_lock(dapm);
 
-		if (adav80x->sysclk_pd[0])
+		अगर (adav80x->sysclk_pd[0])
 			snd_soc_dapm_disable_pin_unlocked(dapm, "PLL1");
-		else
-			snd_soc_dapm_force_enable_pin_unlocked(dapm, "PLL1");
+		अन्यथा
+			snd_soc_dapm_क्रमce_enable_pin_unlocked(dapm, "PLL1");
 
-		if (adav80x->sysclk_pd[1] || adav80x->sysclk_pd[2])
+		अगर (adav80x->sysclk_pd[1] || adav80x->sysclk_pd[2])
 			snd_soc_dapm_disable_pin_unlocked(dapm, "PLL2");
-		else
-			snd_soc_dapm_force_enable_pin_unlocked(dapm, "PLL2");
+		अन्यथा
+			snd_soc_dapm_क्रमce_enable_pin_unlocked(dapm, "PLL2");
 
 		snd_soc_dapm_sync_unlocked(dapm);
 
 		snd_soc_dapm_mutex_unlock(dapm);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adav80x_set_pll(struct snd_soc_component *component, int pll_id,
-		int source, unsigned int freq_in, unsigned int freq_out)
-{
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	unsigned int pll_ctrl1 = 0;
-	unsigned int pll_ctrl2 = 0;
-	unsigned int pll_src;
+अटल पूर्णांक adav80x_set_pll(काष्ठा snd_soc_component *component, पूर्णांक pll_id,
+		पूर्णांक source, अचिन्हित पूर्णांक freq_in, अचिन्हित पूर्णांक freq_out)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक pll_ctrl1 = 0;
+	अचिन्हित पूर्णांक pll_ctrl2 = 0;
+	अचिन्हित पूर्णांक pll_src;
 
-	switch (source) {
-	case ADAV80X_PLL_SRC_XTAL:
-	case ADAV80X_PLL_SRC_XIN:
-	case ADAV80X_PLL_SRC_MCLKI:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (source) अणु
+	हाल ADAV80X_PLL_SRC_XTAL:
+	हाल ADAV80X_PLL_SRC_XIN:
+	हाल ADAV80X_PLL_SRC_MCLKI:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!freq_out)
-		return 0;
+	अगर (!freq_out)
+		वापस 0;
 
-	switch (freq_in) {
-	case 27000000:
-		break;
-	case 54000000:
-		if (source == ADAV80X_PLL_SRC_XIN) {
+	चयन (freq_in) अणु
+	हाल 27000000:
+		अवरोध;
+	हाल 54000000:
+		अगर (source == ADAV80X_PLL_SRC_XIN) अणु
 			pll_ctrl1 |= ADAV80X_PLL_CTRL1_PLLDIV;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (freq_out > 12288000) {
+	अगर (freq_out > 12288000) अणु
 		pll_ctrl2 |= ADAV80X_PLL_CTRL2_DOUB(pll_id);
 		freq_out /= 2;
-	}
+	पूर्ण
 
 	/* freq_out = sample_rate * 256 */
-	switch (freq_out) {
-	case 8192000:
+	चयन (freq_out) अणु
+	हाल 8192000:
 		pll_ctrl2 |= ADAV80X_PLL_CTRL2_FS_32(pll_id);
-		break;
-	case 11289600:
+		अवरोध;
+	हाल 11289600:
 		pll_ctrl2 |= ADAV80X_PLL_CTRL2_FS_44(pll_id);
-		break;
-	case 12288000:
+		अवरोध;
+	हाल 12288000:
 		pll_ctrl2 |= ADAV80X_PLL_CTRL2_FS_48(pll_id);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(adav80x->regmap, ADAV80X_PLL_CTRL1,
 			ADAV80X_PLL_CTRL1_PLLDIV, pll_ctrl1);
 	regmap_update_bits(adav80x->regmap, ADAV80X_PLL_CTRL2,
 			ADAV80X_PLL_CTRL2_PLL_MASK(pll_id), pll_ctrl2);
 
-	if (source != adav80x->pll_src) {
-		if (source == ADAV80X_PLL_SRC_MCLKI)
+	अगर (source != adav80x->pll_src) अणु
+		अगर (source == ADAV80X_PLL_SRC_MCLKI)
 			pll_src = ADAV80X_PLL_CLK_SRC_PLL_MCLKI(pll_id);
-		else
+		अन्यथा
 			pll_src = ADAV80X_PLL_CLK_SRC_PLL_XIN(pll_id);
 
 		regmap_update_bits(adav80x->regmap, ADAV80X_PLL_CLK_SRC,
@@ -690,143 +691,143 @@ static int adav80x_set_pll(struct snd_soc_component *component, int pll_id,
 		adav80x->pll_src = source;
 
 		snd_soc_dapm_sync(dapm);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adav80x_set_bias_level(struct snd_soc_component *component,
-		enum snd_soc_bias_level level)
-{
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
-	unsigned int mask = ADAV80X_DAC_CTRL1_PD;
+अटल पूर्णांक adav80x_set_bias_level(काष्ठा snd_soc_component *component,
+		क्रमागत snd_soc_bias_level level)
+अणु
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक mask = ADAV80X_DAC_CTRL1_PD;
 
-	switch (level) {
-	case SND_SOC_BIAS_ON:
-		break;
-	case SND_SOC_BIAS_PREPARE:
-		break;
-	case SND_SOC_BIAS_STANDBY:
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
+		अवरोध;
+	हाल SND_SOC_BIAS_PREPARE:
+		अवरोध;
+	हाल SND_SOC_BIAS_STANDBY:
 		regmap_update_bits(adav80x->regmap, ADAV80X_DAC_CTRL1, mask,
 			0x00);
-		break;
-	case SND_SOC_BIAS_OFF:
+		अवरोध;
+	हाल SND_SOC_BIAS_OFF:
 		regmap_update_bits(adav80x->regmap, ADAV80X_DAC_CTRL1, mask,
 			mask);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Enforce the same sample rate on all audio interfaces */
-static int adav80x_dai_startup(struct snd_pcm_substream *substream,
-	struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
+/* Enक्रमce the same sample rate on all audio पूर्णांकerfaces */
+अटल पूर्णांक adav80x_dai_startup(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
 
-	if (!snd_soc_component_active(component) || !adav80x->rate)
-		return 0;
+	अगर (!snd_soc_component_active(component) || !adav80x->rate)
+		वापस 0;
 
-	return snd_pcm_hw_constraint_single(substream->runtime,
+	वापस snd_pcm_hw_स्थिरraपूर्णांक_single(substream->runसमय,
 			SNDRV_PCM_HW_PARAM_RATE, adav80x->rate);
-}
+पूर्ण
 
-static void adav80x_dai_shutdown(struct snd_pcm_substream *substream,
-		struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
+अटल व्योम adav80x_dai_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+		काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
 
-	if (!snd_soc_component_active(component))
+	अगर (!snd_soc_component_active(component))
 		adav80x->rate = 0;
-}
+पूर्ण
 
-static const struct snd_soc_dai_ops adav80x_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops adav80x_dai_ops = अणु
 	.set_fmt = adav80x_set_dai_fmt,
 	.hw_params = adav80x_hw_params,
 	.startup = adav80x_dai_startup,
-	.shutdown = adav80x_dai_shutdown,
-};
+	.shutकरोwn = adav80x_dai_shutकरोwn,
+पूर्ण;
 
-#define ADAV80X_PLAYBACK_RATES (SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 | \
+#घोषणा ADAV80X_PLAYBACK_RATES (SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 | \
 	SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_64000 | SNDRV_PCM_RATE_88200 | \
 	SNDRV_PCM_RATE_96000)
 
-#define ADAV80X_CAPTURE_RATES (SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_96000)
+#घोषणा ADAV80X_CAPTURE_RATES (SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_96000)
 
-#define ADAV80X_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S18_3LE | \
+#घोषणा ADAV80X_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S18_3LE | \
 	SNDRV_PCM_FMTBIT_S20_3LE | SNDRV_PCM_FMTBIT_S24_LE)
 
-static struct snd_soc_dai_driver adav80x_dais[] = {
-	{
+अटल काष्ठा snd_soc_dai_driver adav80x_dais[] = अणु
+	अणु
 		.name = "adav80x-hifi",
 		.id = 0,
-		.playback = {
+		.playback = अणु
 			.stream_name = "HiFi Playback",
 			.channels_min = 2,
 			.channels_max = 2,
 			.rates = ADAV80X_PLAYBACK_RATES,
-			.formats = ADAV80X_FORMATS,
-	},
-		.capture = {
+			.क्रमmats = ADAV80X_FORMATS,
+	पूर्ण,
+		.capture = अणु
 			.stream_name = "HiFi Capture",
 			.channels_min = 2,
 			.channels_max = 2,
 			.rates = ADAV80X_CAPTURE_RATES,
-			.formats = ADAV80X_FORMATS,
-		},
+			.क्रमmats = ADAV80X_FORMATS,
+		पूर्ण,
 		.ops = &adav80x_dai_ops,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "adav80x-aux",
 		.id = 1,
-		.playback = {
+		.playback = अणु
 			.stream_name = "Aux Playback",
 			.channels_min = 2,
 			.channels_max = 2,
 			.rates = ADAV80X_PLAYBACK_RATES,
-			.formats = ADAV80X_FORMATS,
-		},
-		.capture = {
+			.क्रमmats = ADAV80X_FORMATS,
+		पूर्ण,
+		.capture = अणु
 			.stream_name = "Aux Capture",
 			.channels_min = 2,
 			.channels_max = 2,
 			.rates = ADAV80X_CAPTURE_RATES,
-			.formats = ADAV80X_FORMATS,
-		},
+			.क्रमmats = ADAV80X_FORMATS,
+		पूर्ण,
 		.ops = &adav80x_dai_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int adav80x_probe(struct snd_soc_component *component)
-{
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक adav80x_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
 
-	/* Force PLLs on for SYSCLK output */
-	snd_soc_dapm_force_enable_pin(dapm, "PLL1");
-	snd_soc_dapm_force_enable_pin(dapm, "PLL2");
+	/* Force PLLs on क्रम SYSCLK output */
+	snd_soc_dapm_क्रमce_enable_pin(dapm, "PLL1");
+	snd_soc_dapm_क्रमce_enable_pin(dapm, "PLL2");
 
-	/* Power down S/PDIF receiver, since it is currently not supported */
-	regmap_write(adav80x->regmap, ADAV80X_PLL_OUTE, 0x20);
+	/* Power करोwn S/PDIF receiver, since it is currently not supported */
+	regmap_ग_लिखो(adav80x->regmap, ADAV80X_PLL_OUTE, 0x20);
 	/* Disable DAC zero flag */
-	regmap_write(adav80x->regmap, ADAV80X_DAC_CTRL3, 0x6);
+	regmap_ग_लिखो(adav80x->regmap, ADAV80X_DAC_CTRL3, 0x6);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adav80x_resume(struct snd_soc_component *component)
-{
-	struct adav80x *adav80x = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक adav80x_resume(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा adav80x *adav80x = snd_soc_component_get_drvdata(component);
 
 	regcache_sync(adav80x->regmap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver adav80x_component_driver = {
+अटल स्थिर काष्ठा snd_soc_component_driver adav80x_component_driver = अणु
 	.probe			= adav80x_probe,
 	.resume			= adav80x_resume,
 	.set_bias_level		= adav80x_set_bias_level,
@@ -834,47 +835,47 @@ static const struct snd_soc_component_driver adav80x_component_driver = {
 	.set_sysclk		= adav80x_set_sysclk,
 	.controls		= adav80x_controls,
 	.num_controls		= ARRAY_SIZE(adav80x_controls),
-	.dapm_widgets		= adav80x_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(adav80x_dapm_widgets),
+	.dapm_widमाला_लो		= adav80x_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(adav80x_dapm_widमाला_लो),
 	.dapm_routes		= adav80x_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(adav80x_dapm_routes),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-int adav80x_bus_probe(struct device *dev, struct regmap *regmap)
-{
-	struct adav80x *adav80x;
+पूर्णांक adav80x_bus_probe(काष्ठा device *dev, काष्ठा regmap *regmap)
+अणु
+	काष्ठा adav80x *adav80x;
 
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	adav80x = devm_kzalloc(dev, sizeof(*adav80x), GFP_KERNEL);
-	if (!adav80x)
-		return -ENOMEM;
+	adav80x = devm_kzalloc(dev, माप(*adav80x), GFP_KERNEL);
+	अगर (!adav80x)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(dev, adav80x);
 	adav80x->regmap = regmap;
 
-	return devm_snd_soc_register_component(dev, &adav80x_component_driver,
+	वापस devm_snd_soc_रेजिस्टर_component(dev, &adav80x_component_driver,
 		adav80x_dais, ARRAY_SIZE(adav80x_dais));
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(adav80x_bus_probe);
 
-const struct regmap_config adav80x_regmap_config = {
+स्थिर काष्ठा regmap_config adav80x_regmap_config = अणु
 	.val_bits = 8,
 	.pad_bits = 1,
 	.reg_bits = 7,
 
-	.max_register = ADAV80X_PLL_OUTE,
+	.max_रेजिस्टर = ADAV80X_PLL_OUTE,
 
 	.cache_type = REGCACHE_RBTREE,
-	.reg_defaults = adav80x_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(adav80x_reg_defaults),
-};
+	.reg_शेषs = adav80x_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(adav80x_reg_शेषs),
+पूर्ण;
 EXPORT_SYMBOL_GPL(adav80x_regmap_config);
 
 MODULE_DESCRIPTION("ASoC ADAV80x driver");

@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,321 +26,321 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-#ifndef __AMDGPU_OBJECT_H__
-#define __AMDGPU_OBJECT_H__
+#अगर_अघोषित __AMDGPU_OBJECT_H__
+#घोषणा __AMDGPU_OBJECT_H__
 
-#include <drm/amdgpu_drm.h>
-#include "amdgpu.h"
-#ifdef CONFIG_MMU_NOTIFIER
-#include <linux/mmu_notifier.h>
-#endif
+#समावेश <drm/amdgpu_drm.h>
+#समावेश "amdgpu.h"
+#अगर_घोषित CONFIG_MMU_NOTIFIER
+#समावेश <linux/mmu_notअगरier.h>
+#पूर्ण_अगर
 
-#define AMDGPU_BO_INVALID_OFFSET	LONG_MAX
-#define AMDGPU_BO_MAX_PLACEMENTS	3
+#घोषणा AMDGPU_BO_INVALID_OFFSET	दीर्घ_उच्च
+#घोषणा AMDGPU_BO_MAX_PLACEMENTS	3
 
-#define to_amdgpu_bo_user(abo) container_of((abo), struct amdgpu_bo_user, bo)
+#घोषणा to_amdgpu_bo_user(abo) container_of((abo), काष्ठा amdgpu_bo_user, bo)
 
-struct amdgpu_bo_param {
-	unsigned long			size;
-	int				byte_align;
+काष्ठा amdgpu_bo_param अणु
+	अचिन्हित दीर्घ			size;
+	पूर्णांक				byte_align;
 	u32				bo_ptr_size;
-	u32				domain;
-	u32				preferred_domain;
+	u32				करोमुख्य;
+	u32				preferred_करोमुख्य;
 	u64				flags;
-	enum ttm_bo_type		type;
-	bool				no_wait_gpu;
-	struct dma_resv	*resv;
-};
+	क्रमागत tपंचांग_bo_type		type;
+	bool				no_रुको_gpu;
+	काष्ठा dma_resv	*resv;
+पूर्ण;
 
-/* bo virtual addresses in a vm */
-struct amdgpu_bo_va_mapping {
-	struct amdgpu_bo_va		*bo_va;
-	struct list_head		list;
-	struct rb_node			rb;
-	uint64_t			start;
-	uint64_t			last;
-	uint64_t			__subtree_last;
-	uint64_t			offset;
-	uint64_t			flags;
-};
+/* bo भव addresses in a vm */
+काष्ठा amdgpu_bo_va_mapping अणु
+	काष्ठा amdgpu_bo_va		*bo_va;
+	काष्ठा list_head		list;
+	काष्ठा rb_node			rb;
+	uपूर्णांक64_t			start;
+	uपूर्णांक64_t			last;
+	uपूर्णांक64_t			__subtree_last;
+	uपूर्णांक64_t			offset;
+	uपूर्णांक64_t			flags;
+पूर्ण;
 
 /* User space allocated BO in a VM */
-struct amdgpu_bo_va {
-	struct amdgpu_vm_bo_base	base;
+काष्ठा amdgpu_bo_va अणु
+	काष्ठा amdgpu_vm_bo_base	base;
 
-	/* protected by bo being reserved */
-	unsigned			ref_count;
+	/* रक्षित by bo being reserved */
+	अचिन्हित			ref_count;
 
-	/* all other members protected by the VM PD being reserved */
-	struct dma_fence	        *last_pt_update;
+	/* all other members रक्षित by the VM PD being reserved */
+	काष्ठा dma_fence	        *last_pt_update;
 
-	/* mappings for this bo_va */
-	struct list_head		invalids;
-	struct list_head		valids;
+	/* mappings क्रम this bo_va */
+	काष्ठा list_head		invalids;
+	काष्ठा list_head		valids;
 
 	/* If the mappings are cleared or filled */
 	bool				cleared;
 
 	bool				is_xgmi;
-};
+पूर्ण;
 
-struct amdgpu_bo {
+काष्ठा amdgpu_bo अणु
 	/* Protected by tbo.reserved */
-	u32				preferred_domains;
-	u32				allowed_domains;
-	struct ttm_place		placements[AMDGPU_BO_MAX_PLACEMENTS];
-	struct ttm_placement		placement;
-	struct ttm_buffer_object	tbo;
-	struct ttm_bo_kmap_obj		kmap;
+	u32				preferred_करोमुख्यs;
+	u32				allowed_करोमुख्यs;
+	काष्ठा tपंचांग_place		placements[AMDGPU_BO_MAX_PLACEMENTS];
+	काष्ठा tपंचांग_placement		placement;
+	काष्ठा tपंचांग_buffer_object	tbo;
+	काष्ठा tपंचांग_bo_kmap_obj		kmap;
 	u64				flags;
-	unsigned			prime_shared_count;
-	/* per VM structure for page tables and with virtual addresses */
-	struct amdgpu_vm_bo_base	*vm_bo;
+	अचिन्हित			prime_shared_count;
+	/* per VM काष्ठाure क्रम page tables and with भव addresses */
+	काष्ठा amdgpu_vm_bo_base	*vm_bo;
 	/* Constant after initialization */
-	struct amdgpu_bo		*parent;
-	struct amdgpu_bo		*shadow;
+	काष्ठा amdgpu_bo		*parent;
+	काष्ठा amdgpu_bo		*shaकरोw;
 
 
 
-#ifdef CONFIG_MMU_NOTIFIER
-	struct mmu_interval_notifier	notifier;
-#endif
+#अगर_घोषित CONFIG_MMU_NOTIFIER
+	काष्ठा mmu_पूर्णांकerval_notअगरier	notअगरier;
+#पूर्ण_अगर
 
-	struct list_head		shadow_list;
+	काष्ठा list_head		shaकरोw_list;
 
-	struct kgd_mem                  *kfd_bo;
-};
+	काष्ठा kgd_mem                  *kfd_bo;
+पूर्ण;
 
-struct amdgpu_bo_user {
-	struct amdgpu_bo		bo;
+काष्ठा amdgpu_bo_user अणु
+	काष्ठा amdgpu_bo		bo;
 	u64				tiling_flags;
 	u64				metadata_flags;
-	void				*metadata;
+	व्योम				*metadata;
 	u32				metadata_size;
 
-};
+पूर्ण;
 
-static inline struct amdgpu_bo *ttm_to_amdgpu_bo(struct ttm_buffer_object *tbo)
-{
-	return container_of(tbo, struct amdgpu_bo, tbo);
-}
+अटल अंतरभूत काष्ठा amdgpu_bo *tपंचांग_to_amdgpu_bo(काष्ठा tपंचांग_buffer_object *tbo)
+अणु
+	वापस container_of(tbo, काष्ठा amdgpu_bo, tbo);
+पूर्ण
 
 /**
- * amdgpu_mem_type_to_domain - return domain corresponding to mem_type
- * @mem_type:	ttm memory type
+ * amdgpu_mem_type_to_करोमुख्य - वापस करोमुख्य corresponding to mem_type
+ * @mem_type:	tपंचांग memory type
  *
- * Returns corresponding domain of the ttm mem_type
+ * Returns corresponding करोमुख्य of the tपंचांग mem_type
  */
-static inline unsigned amdgpu_mem_type_to_domain(u32 mem_type)
-{
-	switch (mem_type) {
-	case TTM_PL_VRAM:
-		return AMDGPU_GEM_DOMAIN_VRAM;
-	case TTM_PL_TT:
-		return AMDGPU_GEM_DOMAIN_GTT;
-	case TTM_PL_SYSTEM:
-		return AMDGPU_GEM_DOMAIN_CPU;
-	case AMDGPU_PL_GDS:
-		return AMDGPU_GEM_DOMAIN_GDS;
-	case AMDGPU_PL_GWS:
-		return AMDGPU_GEM_DOMAIN_GWS;
-	case AMDGPU_PL_OA:
-		return AMDGPU_GEM_DOMAIN_OA;
-	default:
-		break;
-	}
-	return 0;
-}
+अटल अंतरभूत अचिन्हित amdgpu_mem_type_to_करोमुख्य(u32 mem_type)
+अणु
+	चयन (mem_type) अणु
+	हाल TTM_PL_VRAM:
+		वापस AMDGPU_GEM_DOMAIN_VRAM;
+	हाल TTM_PL_TT:
+		वापस AMDGPU_GEM_DOMAIN_GTT;
+	हाल TTM_PL_SYSTEM:
+		वापस AMDGPU_GEM_DOMAIN_CPU;
+	हाल AMDGPU_PL_GDS:
+		वापस AMDGPU_GEM_DOMAIN_GDS;
+	हाल AMDGPU_PL_GWS:
+		वापस AMDGPU_GEM_DOMAIN_GWS;
+	हाल AMDGPU_PL_OA:
+		वापस AMDGPU_GEM_DOMAIN_OA;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * amdgpu_bo_reserve - reserve bo
- * @bo:		bo structure
- * @no_intr:	don't return -ERESTARTSYS on pending signal
+ * @bo:		bo काष्ठाure
+ * @no_पूर्णांकr:	करोn't वापस -ERESTARTSYS on pending संकेत
  *
  * Returns:
- * -ERESTARTSYS: A wait for the buffer to become unreserved was interrupted by
- * a signal. Release all buffer reservations and return to user-space.
+ * -ERESTARTSYS: A रुको क्रम the buffer to become unreserved was पूर्णांकerrupted by
+ * a संकेत. Release all buffer reservations and वापस to user-space.
  */
-static inline int amdgpu_bo_reserve(struct amdgpu_bo *bo, bool no_intr)
-{
-	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
-	int r;
+अटल अंतरभूत पूर्णांक amdgpu_bo_reserve(काष्ठा amdgpu_bo *bo, bool no_पूर्णांकr)
+अणु
+	काष्ठा amdgpu_device *adev = amdgpu_tपंचांग_adev(bo->tbo.bdev);
+	पूर्णांक r;
 
-	r = ttm_bo_reserve(&bo->tbo, !no_intr, false, NULL);
-	if (unlikely(r != 0)) {
-		if (r != -ERESTARTSYS)
+	r = tपंचांग_bo_reserve(&bo->tbo, !no_पूर्णांकr, false, शून्य);
+	अगर (unlikely(r != 0)) अणु
+		अगर (r != -ERESTARTSYS)
 			dev_err(adev->dev, "%p reserve failed\n", bo);
-		return r;
-	}
-	return 0;
-}
+		वापस r;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline void amdgpu_bo_unreserve(struct amdgpu_bo *bo)
-{
-	ttm_bo_unreserve(&bo->tbo);
-}
+अटल अंतरभूत व्योम amdgpu_bo_unreserve(काष्ठा amdgpu_bo *bo)
+अणु
+	tपंचांग_bo_unreserve(&bo->tbo);
+पूर्ण
 
-static inline unsigned long amdgpu_bo_size(struct amdgpu_bo *bo)
-{
-	return bo->tbo.base.size;
-}
+अटल अंतरभूत अचिन्हित दीर्घ amdgpu_bo_size(काष्ठा amdgpu_bo *bo)
+अणु
+	वापस bo->tbo.base.size;
+पूर्ण
 
-static inline unsigned amdgpu_bo_ngpu_pages(struct amdgpu_bo *bo)
-{
-	return bo->tbo.base.size / AMDGPU_GPU_PAGE_SIZE;
-}
+अटल अंतरभूत अचिन्हित amdgpu_bo_ngpu_pages(काष्ठा amdgpu_bo *bo)
+अणु
+	वापस bo->tbo.base.size / AMDGPU_GPU_PAGE_SIZE;
+पूर्ण
 
-static inline unsigned amdgpu_bo_gpu_page_alignment(struct amdgpu_bo *bo)
-{
-	return (bo->tbo.mem.page_alignment << PAGE_SHIFT) / AMDGPU_GPU_PAGE_SIZE;
-}
+अटल अंतरभूत अचिन्हित amdgpu_bo_gpu_page_alignment(काष्ठा amdgpu_bo *bo)
+अणु
+	वापस (bo->tbo.mem.page_alignment << PAGE_SHIFT) / AMDGPU_GPU_PAGE_SIZE;
+पूर्ण
 
 /**
- * amdgpu_bo_mmap_offset - return mmap offset of bo
- * @bo:	amdgpu object for which we query the offset
+ * amdgpu_bo_mmap_offset - वापस mmap offset of bo
+ * @bo:	amdgpu object क्रम which we query the offset
  *
  * Returns mmap offset of the object.
  */
-static inline u64 amdgpu_bo_mmap_offset(struct amdgpu_bo *bo)
-{
-	return drm_vma_node_offset_addr(&bo->tbo.base.vma_node);
-}
+अटल अंतरभूत u64 amdgpu_bo_mmap_offset(काष्ठा amdgpu_bo *bo)
+अणु
+	वापस drm_vma_node_offset_addr(&bo->tbo.base.vma_node);
+पूर्ण
 
 /**
- * amdgpu_bo_in_cpu_visible_vram - check if BO is (partly) in visible VRAM
+ * amdgpu_bo_in_cpu_visible_vram - check अगर BO is (partly) in visible VRAM
  */
-static inline bool amdgpu_bo_in_cpu_visible_vram(struct amdgpu_bo *bo)
-{
-	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
-	unsigned fpfn = adev->gmc.visible_vram_size >> PAGE_SHIFT;
-	struct drm_mm_node *node = bo->tbo.mem.mm_node;
-	unsigned long pages_left;
+अटल अंतरभूत bool amdgpu_bo_in_cpu_visible_vram(काष्ठा amdgpu_bo *bo)
+अणु
+	काष्ठा amdgpu_device *adev = amdgpu_tपंचांग_adev(bo->tbo.bdev);
+	अचिन्हित fpfn = adev->gmc.visible_vram_size >> PAGE_SHIFT;
+	काष्ठा drm_mm_node *node = bo->tbo.mem.mm_node;
+	अचिन्हित दीर्घ pages_left;
 
-	if (bo->tbo.mem.mem_type != TTM_PL_VRAM)
-		return false;
+	अगर (bo->tbo.mem.mem_type != TTM_PL_VRAM)
+		वापस false;
 
-	for (pages_left = bo->tbo.mem.num_pages; pages_left;
+	क्रम (pages_left = bo->tbo.mem.num_pages; pages_left;
 	     pages_left -= node->size, node++)
-		if (node->start < fpfn)
-			return true;
+		अगर (node->start < fpfn)
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * amdgpu_bo_explicit_sync - return whether the bo is explicitly synced
+ * amdgpu_bo_explicit_sync - वापस whether the bo is explicitly synced
  */
-static inline bool amdgpu_bo_explicit_sync(struct amdgpu_bo *bo)
-{
-	return bo->flags & AMDGPU_GEM_CREATE_EXPLICIT_SYNC;
-}
+अटल अंतरभूत bool amdgpu_bo_explicit_sync(काष्ठा amdgpu_bo *bo)
+अणु
+	वापस bo->flags & AMDGPU_GEM_CREATE_EXPLICIT_SYNC;
+पूर्ण
 
 /**
- * amdgpu_bo_encrypted - test if the BO is encrypted
- * @bo: pointer to a buffer object
+ * amdgpu_bo_encrypted - test अगर the BO is encrypted
+ * @bo: poपूर्णांकer to a buffer object
  *
- * Return true if the buffer object is encrypted, false otherwise.
+ * Return true अगर the buffer object is encrypted, false otherwise.
  */
-static inline bool amdgpu_bo_encrypted(struct amdgpu_bo *bo)
-{
-	return bo->flags & AMDGPU_GEM_CREATE_ENCRYPTED;
-}
+अटल अंतरभूत bool amdgpu_bo_encrypted(काष्ठा amdgpu_bo *bo)
+अणु
+	वापस bo->flags & AMDGPU_GEM_CREATE_ENCRYPTED;
+पूर्ण
 
-bool amdgpu_bo_is_amdgpu_bo(struct ttm_buffer_object *bo);
-void amdgpu_bo_placement_from_domain(struct amdgpu_bo *abo, u32 domain);
+bool amdgpu_bo_is_amdgpu_bo(काष्ठा tपंचांग_buffer_object *bo);
+व्योम amdgpu_bo_placement_from_करोमुख्य(काष्ठा amdgpu_bo *abo, u32 करोमुख्य);
 
-int amdgpu_bo_create(struct amdgpu_device *adev,
-		     struct amdgpu_bo_param *bp,
-		     struct amdgpu_bo **bo_ptr);
-int amdgpu_bo_create_reserved(struct amdgpu_device *adev,
-			      unsigned long size, int align,
-			      u32 domain, struct amdgpu_bo **bo_ptr,
-			      u64 *gpu_addr, void **cpu_addr);
-int amdgpu_bo_create_kernel(struct amdgpu_device *adev,
-			    unsigned long size, int align,
-			    u32 domain, struct amdgpu_bo **bo_ptr,
-			    u64 *gpu_addr, void **cpu_addr);
-int amdgpu_bo_create_kernel_at(struct amdgpu_device *adev,
-			       uint64_t offset, uint64_t size, uint32_t domain,
-			       struct amdgpu_bo **bo_ptr, void **cpu_addr);
-int amdgpu_bo_create_user(struct amdgpu_device *adev,
-			  struct amdgpu_bo_param *bp,
-			  struct amdgpu_bo_user **ubo_ptr);
-void amdgpu_bo_free_kernel(struct amdgpu_bo **bo, u64 *gpu_addr,
-			   void **cpu_addr);
-int amdgpu_bo_kmap(struct amdgpu_bo *bo, void **ptr);
-void *amdgpu_bo_kptr(struct amdgpu_bo *bo);
-void amdgpu_bo_kunmap(struct amdgpu_bo *bo);
-struct amdgpu_bo *amdgpu_bo_ref(struct amdgpu_bo *bo);
-void amdgpu_bo_unref(struct amdgpu_bo **bo);
-int amdgpu_bo_pin(struct amdgpu_bo *bo, u32 domain);
-int amdgpu_bo_pin_restricted(struct amdgpu_bo *bo, u32 domain,
+पूर्णांक amdgpu_bo_create(काष्ठा amdgpu_device *adev,
+		     काष्ठा amdgpu_bo_param *bp,
+		     काष्ठा amdgpu_bo **bo_ptr);
+पूर्णांक amdgpu_bo_create_reserved(काष्ठा amdgpu_device *adev,
+			      अचिन्हित दीर्घ size, पूर्णांक align,
+			      u32 करोमुख्य, काष्ठा amdgpu_bo **bo_ptr,
+			      u64 *gpu_addr, व्योम **cpu_addr);
+पूर्णांक amdgpu_bo_create_kernel(काष्ठा amdgpu_device *adev,
+			    अचिन्हित दीर्घ size, पूर्णांक align,
+			    u32 करोमुख्य, काष्ठा amdgpu_bo **bo_ptr,
+			    u64 *gpu_addr, व्योम **cpu_addr);
+पूर्णांक amdgpu_bo_create_kernel_at(काष्ठा amdgpu_device *adev,
+			       uपूर्णांक64_t offset, uपूर्णांक64_t size, uपूर्णांक32_t करोमुख्य,
+			       काष्ठा amdgpu_bo **bo_ptr, व्योम **cpu_addr);
+पूर्णांक amdgpu_bo_create_user(काष्ठा amdgpu_device *adev,
+			  काष्ठा amdgpu_bo_param *bp,
+			  काष्ठा amdgpu_bo_user **ubo_ptr);
+व्योम amdgpu_bo_मुक्त_kernel(काष्ठा amdgpu_bo **bo, u64 *gpu_addr,
+			   व्योम **cpu_addr);
+पूर्णांक amdgpu_bo_kmap(काष्ठा amdgpu_bo *bo, व्योम **ptr);
+व्योम *amdgpu_bo_kptr(काष्ठा amdgpu_bo *bo);
+व्योम amdgpu_bo_kunmap(काष्ठा amdgpu_bo *bo);
+काष्ठा amdgpu_bo *amdgpu_bo_ref(काष्ठा amdgpu_bo *bo);
+व्योम amdgpu_bo_unref(काष्ठा amdgpu_bo **bo);
+पूर्णांक amdgpu_bo_pin(काष्ठा amdgpu_bo *bo, u32 करोमुख्य);
+पूर्णांक amdgpu_bo_pin_restricted(काष्ठा amdgpu_bo *bo, u32 करोमुख्य,
 			     u64 min_offset, u64 max_offset);
-void amdgpu_bo_unpin(struct amdgpu_bo *bo);
-int amdgpu_bo_evict_vram(struct amdgpu_device *adev);
-int amdgpu_bo_init(struct amdgpu_device *adev);
-void amdgpu_bo_fini(struct amdgpu_device *adev);
-int amdgpu_bo_set_tiling_flags(struct amdgpu_bo *bo, u64 tiling_flags);
-void amdgpu_bo_get_tiling_flags(struct amdgpu_bo *bo, u64 *tiling_flags);
-int amdgpu_bo_set_metadata (struct amdgpu_bo *bo, void *metadata,
-			    uint32_t metadata_size, uint64_t flags);
-int amdgpu_bo_get_metadata(struct amdgpu_bo *bo, void *buffer,
-			   size_t buffer_size, uint32_t *metadata_size,
-			   uint64_t *flags);
-void amdgpu_bo_move_notify(struct ttm_buffer_object *bo,
+व्योम amdgpu_bo_unpin(काष्ठा amdgpu_bo *bo);
+पूर्णांक amdgpu_bo_evict_vram(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_bo_init(काष्ठा amdgpu_device *adev);
+व्योम amdgpu_bo_fini(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_bo_set_tiling_flags(काष्ठा amdgpu_bo *bo, u64 tiling_flags);
+व्योम amdgpu_bo_get_tiling_flags(काष्ठा amdgpu_bo *bo, u64 *tiling_flags);
+पूर्णांक amdgpu_bo_set_metadata (काष्ठा amdgpu_bo *bo, व्योम *metadata,
+			    uपूर्णांक32_t metadata_size, uपूर्णांक64_t flags);
+पूर्णांक amdgpu_bo_get_metadata(काष्ठा amdgpu_bo *bo, व्योम *buffer,
+			   माप_प्रकार buffer_size, uपूर्णांक32_t *metadata_size,
+			   uपूर्णांक64_t *flags);
+व्योम amdgpu_bo_move_notअगरy(काष्ठा tपंचांग_buffer_object *bo,
 			   bool evict,
-			   struct ttm_resource *new_mem);
-void amdgpu_bo_release_notify(struct ttm_buffer_object *bo);
-vm_fault_t amdgpu_bo_fault_reserve_notify(struct ttm_buffer_object *bo);
-void amdgpu_bo_fence(struct amdgpu_bo *bo, struct dma_fence *fence,
+			   काष्ठा tपंचांग_resource *new_mem);
+व्योम amdgpu_bo_release_notअगरy(काष्ठा tपंचांग_buffer_object *bo);
+vm_fault_t amdgpu_bo_fault_reserve_notअगरy(काष्ठा tपंचांग_buffer_object *bo);
+व्योम amdgpu_bo_fence(काष्ठा amdgpu_bo *bo, काष्ठा dma_fence *fence,
 		     bool shared);
-int amdgpu_bo_sync_wait_resv(struct amdgpu_device *adev, struct dma_resv *resv,
-			     enum amdgpu_sync_mode sync_mode, void *owner,
-			     bool intr);
-int amdgpu_bo_sync_wait(struct amdgpu_bo *bo, void *owner, bool intr);
-u64 amdgpu_bo_gpu_offset(struct amdgpu_bo *bo);
-u64 amdgpu_bo_gpu_offset_no_check(struct amdgpu_bo *bo);
-int amdgpu_bo_validate(struct amdgpu_bo *bo);
-int amdgpu_bo_restore_shadow(struct amdgpu_bo *shadow,
-			     struct dma_fence **fence);
-uint32_t amdgpu_bo_get_preferred_pin_domain(struct amdgpu_device *adev,
-					    uint32_t domain);
+पूर्णांक amdgpu_bo_sync_रुको_resv(काष्ठा amdgpu_device *adev, काष्ठा dma_resv *resv,
+			     क्रमागत amdgpu_sync_mode sync_mode, व्योम *owner,
+			     bool पूर्णांकr);
+पूर्णांक amdgpu_bo_sync_रुको(काष्ठा amdgpu_bo *bo, व्योम *owner, bool पूर्णांकr);
+u64 amdgpu_bo_gpu_offset(काष्ठा amdgpu_bo *bo);
+u64 amdgpu_bo_gpu_offset_no_check(काष्ठा amdgpu_bo *bo);
+पूर्णांक amdgpu_bo_validate(काष्ठा amdgpu_bo *bo);
+पूर्णांक amdgpu_bo_restore_shaकरोw(काष्ठा amdgpu_bo *shaकरोw,
+			     काष्ठा dma_fence **fence);
+uपूर्णांक32_t amdgpu_bo_get_preferred_pin_करोमुख्य(काष्ठा amdgpu_device *adev,
+					    uपूर्णांक32_t करोमुख्य);
 
 /*
  * sub allocation
  */
 
-static inline uint64_t amdgpu_sa_bo_gpu_addr(struct amdgpu_sa_bo *sa_bo)
-{
-	return sa_bo->manager->gpu_addr + sa_bo->soffset;
-}
+अटल अंतरभूत uपूर्णांक64_t amdgpu_sa_bo_gpu_addr(काष्ठा amdgpu_sa_bo *sa_bo)
+अणु
+	वापस sa_bo->manager->gpu_addr + sa_bo->soffset;
+पूर्ण
 
-static inline void * amdgpu_sa_bo_cpu_addr(struct amdgpu_sa_bo *sa_bo)
-{
-	return sa_bo->manager->cpu_ptr + sa_bo->soffset;
-}
+अटल अंतरभूत व्योम * amdgpu_sa_bo_cpu_addr(काष्ठा amdgpu_sa_bo *sa_bo)
+अणु
+	वापस sa_bo->manager->cpu_ptr + sa_bo->soffset;
+पूर्ण
 
-int amdgpu_sa_bo_manager_init(struct amdgpu_device *adev,
-				     struct amdgpu_sa_manager *sa_manager,
-				     unsigned size, u32 align, u32 domain);
-void amdgpu_sa_bo_manager_fini(struct amdgpu_device *adev,
-				      struct amdgpu_sa_manager *sa_manager);
-int amdgpu_sa_bo_manager_start(struct amdgpu_device *adev,
-				      struct amdgpu_sa_manager *sa_manager);
-int amdgpu_sa_bo_new(struct amdgpu_sa_manager *sa_manager,
-		     struct amdgpu_sa_bo **sa_bo,
-		     unsigned size, unsigned align);
-void amdgpu_sa_bo_free(struct amdgpu_device *adev,
-			      struct amdgpu_sa_bo **sa_bo,
-			      struct dma_fence *fence);
-#if defined(CONFIG_DEBUG_FS)
-void amdgpu_sa_bo_dump_debug_info(struct amdgpu_sa_manager *sa_manager,
-					 struct seq_file *m);
-u64 amdgpu_bo_print_info(int id, struct amdgpu_bo *bo, struct seq_file *m);
-#endif
-void amdgpu_debugfs_sa_init(struct amdgpu_device *adev);
+पूर्णांक amdgpu_sa_bo_manager_init(काष्ठा amdgpu_device *adev,
+				     काष्ठा amdgpu_sa_manager *sa_manager,
+				     अचिन्हित size, u32 align, u32 करोमुख्य);
+व्योम amdgpu_sa_bo_manager_fini(काष्ठा amdgpu_device *adev,
+				      काष्ठा amdgpu_sa_manager *sa_manager);
+पूर्णांक amdgpu_sa_bo_manager_start(काष्ठा amdgpu_device *adev,
+				      काष्ठा amdgpu_sa_manager *sa_manager);
+पूर्णांक amdgpu_sa_bo_new(काष्ठा amdgpu_sa_manager *sa_manager,
+		     काष्ठा amdgpu_sa_bo **sa_bo,
+		     अचिन्हित size, अचिन्हित align);
+व्योम amdgpu_sa_bo_मुक्त(काष्ठा amdgpu_device *adev,
+			      काष्ठा amdgpu_sa_bo **sa_bo,
+			      काष्ठा dma_fence *fence);
+#अगर defined(CONFIG_DEBUG_FS)
+व्योम amdgpu_sa_bo_dump_debug_info(काष्ठा amdgpu_sa_manager *sa_manager,
+					 काष्ठा seq_file *m);
+u64 amdgpu_bo_prपूर्णांक_info(पूर्णांक id, काष्ठा amdgpu_bo *bo, काष्ठा seq_file *m);
+#पूर्ण_अगर
+व्योम amdgpu_debugfs_sa_init(काष्ठा amdgpu_device *adev);
 
 bool amdgpu_bo_support_uswc(u64 bo_flags);
 
 
-#endif
+#पूर्ण_अगर

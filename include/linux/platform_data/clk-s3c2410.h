@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2020 Krzysztof Kozlowski <krzk@kernel.org>
  */
 
-#ifndef __LINUX_PLATFORM_DATA_CLK_S3C2410_H_
-#define __LINUX_PLATFORM_DATA_CLK_S3C2410_H_
+#अगर_अघोषित __LINUX_PLATFORM_DATA_CLK_S3C2410_H_
+#घोषणा __LINUX_PLATFORM_DATA_CLK_S3C2410_H_
 
 /**
- * struct s3c2410_clk_platform_data - platform data for S3C2410 clock driver
+ * काष्ठा s3c2410_clk_platक्रमm_data - platक्रमm data क्रम S3C2410 घड़ी driver
  *
- * @modify_misccr: Function to modify the MISCCR and return the new value
+ * @modअगरy_misccr: Function to modअगरy the MISCCR and वापस the new value
  */
-struct s3c2410_clk_platform_data {
-	unsigned int (*modify_misccr)(unsigned int clr, unsigned int chg);
-};
+काष्ठा s3c2410_clk_platक्रमm_data अणु
+	अचिन्हित पूर्णांक (*modअगरy_misccr)(अचिन्हित पूर्णांक clr, अचिन्हित पूर्णांक chg);
+पूर्ण;
 
-#endif /* __LINUX_PLATFORM_DATA_CLK_S3C2410_H_ */
+#पूर्ण_अगर /* __LINUX_PLATFORM_DATA_CLK_S3C2410_H_ */
 

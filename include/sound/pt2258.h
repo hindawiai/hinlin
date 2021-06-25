@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *   ALSA Driver for the PT2258 volume controller.
+ *   ALSA Driver क्रम the PT2258 volume controller.
  *
  *	Copyright (c) 2006  Jochen Voss <voss@seehuhn.de>
  */      
 
-#ifndef __SOUND_PT2258_H
-#define __SOUND_PT2258_H
+#अगर_अघोषित __SOUND_PT2258_H
+#घोषणा __SOUND_PT2258_H
 
-struct snd_pt2258 {
-	struct snd_card *card;
-	struct snd_i2c_bus *i2c_bus;
-	struct snd_i2c_device *i2c_dev;
+काष्ठा snd_pt2258 अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_i2c_bus *i2c_bus;
+	काष्ठा snd_i2c_device *i2c_dev;
 
-	unsigned char volume[6];
-	int mute;
-};
+	अचिन्हित अक्षर volume[6];
+	पूर्णांक mute;
+पूर्ण;
 
-extern int snd_pt2258_reset(struct snd_pt2258 *pt);
-extern int snd_pt2258_build_controls(struct snd_pt2258 *pt);
+बाह्य पूर्णांक snd_pt2258_reset(काष्ठा snd_pt2258 *pt);
+बाह्य पूर्णांक snd_pt2258_build_controls(काष्ठा snd_pt2258 *pt);
 
-#endif /* __SOUND_PT2258_H */
+#पूर्ण_अगर /* __SOUND_PT2258_H */

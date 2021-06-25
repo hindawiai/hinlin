@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _EDAC_MCE_AMD_H
-#define _EDAC_MCE_AMD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _EDAC_MCE_AMD_H
+#घोषणा _EDAC_MCE_AMD_H
 
-#include <linux/notifier.h>
+#समावेश <linux/notअगरier.h>
 
-#include <asm/mce.h>
+#समावेश <यंत्र/mce.h>
 
-#define EC(x)				((x) & 0xffff)
+#घोषणा EC(x)				((x) & 0xffff)
 
-#define LOW_SYNDROME(x)			(((x) >> 15) & 0xff)
-#define HIGH_SYNDROME(x)		(((x) >> 24) & 0xff)
+#घोषणा LOW_SYNDROME(x)			(((x) >> 15) & 0xff)
+#घोषणा HIGH_SYNDROME(x)		(((x) >> 24) & 0xff)
 
-#define TLB_ERROR(x)			(((x) & 0xFFF0) == 0x0010)
-#define MEM_ERROR(x)			(((x) & 0xFF00) == 0x0100)
-#define BUS_ERROR(x)			(((x) & 0xF800) == 0x0800)
-#define INT_ERROR(x)			(((x) & 0xF4FF) == 0x0400)
+#घोषणा TLB_ERROR(x)			(((x) & 0xFFF0) == 0x0010)
+#घोषणा MEM_ERROR(x)			(((x) & 0xFF00) == 0x0100)
+#घोषणा BUS_ERROR(x)			(((x) & 0xF800) == 0x0800)
+#घोषणा INT_ERROR(x)			(((x) & 0xF4FF) == 0x0400)
 
-#define TT(x)				(((x) >> 2) & 0x3)
-#define TT_MSG(x)			tt_msgs[TT(x)]
-#define II(x)				(((x) >> 2) & 0x3)
-#define II_MSG(x)			ii_msgs[II(x)]
-#define LL(x)				((x) & 0x3)
-#define LL_MSG(x)			ll_msgs[LL(x)]
-#define TO(x)				(((x) >> 8) & 0x1)
-#define TO_MSG(x)			to_msgs[TO(x)]
-#define PP(x)				(((x) >> 9) & 0x3)
-#define PP_MSG(x)			pp_msgs[PP(x)]
-#define UU(x)				(((x) >> 8) & 0x3)
-#define UU_MSG(x)			uu_msgs[UU(x)]
+#घोषणा TT(x)				(((x) >> 2) & 0x3)
+#घोषणा TT_MSG(x)			tt_msgs[TT(x)]
+#घोषणा II(x)				(((x) >> 2) & 0x3)
+#घोषणा II_MSG(x)			ii_msgs[II(x)]
+#घोषणा LL(x)				((x) & 0x3)
+#घोषणा LL_MSG(x)			ll_msgs[LL(x)]
+#घोषणा TO(x)				(((x) >> 8) & 0x1)
+#घोषणा TO_MSG(x)			to_msgs[TO(x)]
+#घोषणा PP(x)				(((x) >> 9) & 0x3)
+#घोषणा PP_MSG(x)			pp_msgs[PP(x)]
+#घोषणा UU(x)				(((x) >> 8) & 0x3)
+#घोषणा UU_MSG(x)			uu_msgs[UU(x)]
 
-#define R4(x)				(((x) >> 4) & 0xf)
-#define R4_MSG(x)			((R4(x) < 9) ?  rrrr_msgs[R4(x)] : "Wrong R4!")
+#घोषणा R4(x)				(((x) >> 4) & 0xf)
+#घोषणा R4_MSG(x)			((R4(x) < 9) ?  rrrr_msgs[R4(x)] : "Wrong R4!")
 
-extern const char * const pp_msgs[];
+बाह्य स्थिर अक्षर * स्थिर pp_msgs[];
 
-enum tt_ids {
+क्रमागत tt_ids अणु
 	TT_INSTR = 0,
 	TT_DATA,
 	TT_GEN,
 	TT_RESV,
-};
+पूर्ण;
 
-enum ll_ids {
+क्रमागत ll_ids अणु
 	LL_RESV = 0,
 	LL_L1,
 	LL_L2,
 	LL_LG,
-};
+पूर्ण;
 
-enum ii_ids {
+क्रमागत ii_ids अणु
 	II_MEM = 0,
 	II_RESV,
 	II_IO,
 	II_GEN,
-};
+पूर्ण;
 
-enum rrrr_ids {
+क्रमागत rrrr_ids अणु
 	R4_GEN	= 0,
 	R4_RD,
 	R4_WR,
@@ -65,18 +66,18 @@ enum rrrr_ids {
 	R4_PREF,
 	R4_EVICT,
 	R4_SNOOP,
-};
+पूर्ण;
 
 /*
  * per-family decoder ops
  */
-struct amd_decoder_ops {
+काष्ठा amd_decoder_ops अणु
 	bool (*mc0_mce)(u16, u8);
 	bool (*mc1_mce)(u16, u8);
 	bool (*mc2_mce)(u16, u8);
-};
+पूर्ण;
 
-void amd_register_ecc_decoder(void (*f)(int, struct mce *));
-void amd_unregister_ecc_decoder(void (*f)(int, struct mce *));
+व्योम amd_रेजिस्टर_ecc_decoder(व्योम (*f)(पूर्णांक, काष्ठा mce *));
+व्योम amd_unरेजिस्टर_ecc_decoder(व्योम (*f)(पूर्णांक, काष्ठा mce *));
 
-#endif /* _EDAC_MCE_AMD_H */
+#पूर्ण_अगर /* _EDAC_MCE_AMD_H */

@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Lakefield PCH pinctrl/GPIO driver
  *
  * Copyright (C) 2020, Intel Corporation
- * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define LKF_PAD_OWN	0x020
-#define LKF_PADCFGLOCK	0x070
-#define LKF_HOSTSW_OWN	0x090
-#define LKF_GPI_IS	0x100
-#define LKF_GPI_IE	0x110
+#घोषणा LKF_PAD_OWN	0x020
+#घोषणा LKF_PADCFGLOCK	0x070
+#घोषणा LKF_HOSTSW_OWN	0x090
+#घोषणा LKF_GPI_IS	0x100
+#घोषणा LKF_GPI_IE	0x110
 
-#define LKF_GPP(r, s, e, g)				\
-	{						\
+#घोषणा LKF_GPP(r, s, e, g)				\
+	अणु						\
 		.reg_num = (r),				\
 		.base = (s),				\
 		.size = ((e) - (s) + 1),		\
 		.gpio_base = (g),			\
-	}
+	पूर्ण
 
-#define LKF_COMMUNITY(b, s, e, g)			\
-	{						\
+#घोषणा LKF_COMMUNITY(b, s, e, g)			\
+	अणु						\
 		.barno = (b),				\
-		.padown_offset = LKF_PAD_OWN,		\
+		.paकरोwn_offset = LKF_PAD_OWN,		\
 		.padcfglock_offset = LKF_PADCFGLOCK,	\
 		.hostown_offset = LKF_HOSTSW_OWN,	\
 		.is_offset = LKF_GPI_IS,		\
@@ -40,10 +41,10 @@
 		.npins = ((e) - (s) + 1),		\
 		.gpps = (g),				\
 		.ngpps = ARRAY_SIZE(g),			\
-	}
+	पूर्ण
 
 /* Lakefield */
-static const struct pinctrl_pin_desc lkf_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc lkf_pins[] = अणु
 	/* EAST */
 	PINCTRL_PIN(0, "MDSI_A_TE0"),
 	PINCTRL_PIN(1, "MDSI_A_TE1"),
@@ -315,60 +316,60 @@ static const struct pinctrl_pin_desc lkf_pins[] = {
 	PINCTRL_PIN(264, "ISH_GP_17"),
 	PINCTRL_PIN(265, "ISH_GP_18"),
 	PINCTRL_PIN(266, "ISH_GP_19"),
-};
+पूर्ण;
 
-static const struct intel_padgroup lkf_community0_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup lkf_community0_gpps[] = अणु
 	LKF_GPP(0, 0, 31, 0),		/* EAST_0 */
 	LKF_GPP(1, 32, 59, 32),		/* EAST_1 */
-};
+पूर्ण;
 
-static const struct intel_padgroup lkf_community1_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup lkf_community1_gpps[] = अणु
 	LKF_GPP(0, 60, 91, 64),		/* NORTHWEST_0 */
 	LKF_GPP(1, 92, 123, 96),	/* NORTHWEST_1 */
 	LKF_GPP(2, 124, 148, 128),	/* NORTHWEST_2 */
-};
+पूर्ण;
 
-static const struct intel_padgroup lkf_community2_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup lkf_community2_gpps[] = अणु
 	LKF_GPP(0, 149, 180, 160),	/* WEST_0 */
 	LKF_GPP(1, 181, 212, 192),	/* WEST_1 */
 	LKF_GPP(2, 213, 237, 224),	/* WEST_2 */
-};
+पूर्ण;
 
-static const struct intel_padgroup lkf_community3_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup lkf_community3_gpps[] = अणु
 	LKF_GPP(0, 238, 266, 256),	/* SOUTHEAST */
-};
+पूर्ण;
 
-static const struct intel_community lkf_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community lkf_communities[] = अणु
 	LKF_COMMUNITY(0, 0, 59, lkf_community0_gpps),		/* EAST */
 	LKF_COMMUNITY(1, 60, 148, lkf_community1_gpps),		/* NORTHWEST */
 	LKF_COMMUNITY(2, 149, 237, lkf_community2_gpps),	/* WEST */
 	LKF_COMMUNITY(3, 238, 266, lkf_community3_gpps),	/* SOUTHEAST */
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data lkf_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data lkf_soc_data = अणु
 	.pins = lkf_pins,
 	.npins = ARRAY_SIZE(lkf_pins),
 	.communities = lkf_communities,
 	.ncommunities = ARRAY_SIZE(lkf_communities),
-};
+पूर्ण;
 
-static const struct acpi_device_id lkf_pinctrl_acpi_match[] = {
-	{ "INT34C4", (kernel_ulong_t)&lkf_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id lkf_pinctrl_acpi_match[] = अणु
+	अणु "INT34C4", (kernel_uदीर्घ_t)&lkf_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, lkf_pinctrl_acpi_match);
 
-static INTEL_PINCTRL_PM_OPS(lkf_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(lkf_pinctrl_pm_ops);
 
-static struct platform_driver lkf_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_hid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver lkf_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_hid,
+	.driver = अणु
 		.name = "lakefield-pinctrl",
 		.acpi_match_table = lkf_pinctrl_acpi_match,
 		.pm = &lkf_pinctrl_pm_ops,
-	},
-};
-module_platform_driver(lkf_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(lkf_pinctrl_driver);
 
 MODULE_AUTHOR("Andy Shevchenko <andriy.shevchenko@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Lakefield PCH pinctrl/GPIO driver");

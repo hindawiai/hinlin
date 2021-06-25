@@ -1,299 +1,300 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * The USB Monitor, inspired by Dave Harding's USBMon.
  *
- * mon_main.c: Main file, module initiation and exit, registrations, etc.
+ * mon_मुख्य.c: Main file, module initiation and निकास, registrations, etc.
  *
  * Copyright (C) 2005 Pete Zaitcev (zaitcev@redhat.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/usb.h>
-#include <linux/usb/hcd.h>
-#include <linux/slab.h>
-#include <linux/notifier.h>
-#include <linux/mutex.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/mutex.h>
 
-#include "usb_mon.h"
+#समावेश "usb_mon.h"
 
 
-static void mon_stop(struct mon_bus *mbus);
-static void mon_dissolve(struct mon_bus *mbus, struct usb_bus *ubus);
-static void mon_bus_drop(struct kref *r);
-static void mon_bus_init(struct usb_bus *ubus);
+अटल व्योम mon_stop(काष्ठा mon_bus *mbus);
+अटल व्योम mon_dissolve(काष्ठा mon_bus *mbus, काष्ठा usb_bus *ubus);
+अटल व्योम mon_bus_drop(काष्ठा kref *r);
+अटल व्योम mon_bus_init(काष्ठा usb_bus *ubus);
 
 DEFINE_MUTEX(mon_lock);
 
-struct mon_bus mon_bus0;		/* Pseudo bus meaning "all buses" */
-static LIST_HEAD(mon_buses);		/* All buses we know: struct mon_bus */
+काष्ठा mon_bus mon_bus0;		/* Pseuकरो bus meaning "all buses" */
+अटल LIST_HEAD(mon_buses);		/* All buses we know: काष्ठा mon_bus */
 
 /*
- * Link a reader into the bus.
+ * Link a पढ़ोer पूर्णांकo the bus.
  *
  * This must be called with mon_lock taken because of mbus->ref.
  */
-void mon_reader_add(struct mon_bus *mbus, struct mon_reader *r)
-{
-	unsigned long flags;
-	struct list_head *p;
+व्योम mon_पढ़ोer_add(काष्ठा mon_bus *mbus, काष्ठा mon_पढ़ोer *r)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head *p;
 
 	spin_lock_irqsave(&mbus->lock, flags);
-	if (mbus->nreaders == 0) {
-		if (mbus == &mon_bus0) {
-			list_for_each (p, &mon_buses) {
-				struct mon_bus *m1;
-				m1 = list_entry(p, struct mon_bus, bus_link);
+	अगर (mbus->nपढ़ोers == 0) अणु
+		अगर (mbus == &mon_bus0) अणु
+			list_क्रम_each (p, &mon_buses) अणु
+				काष्ठा mon_bus *m1;
+				m1 = list_entry(p, काष्ठा mon_bus, bus_link);
 				m1->u_bus->monitored = 1;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			mbus->u_bus->monitored = 1;
-		}
-	}
-	mbus->nreaders++;
+		पूर्ण
+	पूर्ण
+	mbus->nपढ़ोers++;
 	list_add_tail(&r->r_link, &mbus->r_list);
 	spin_unlock_irqrestore(&mbus->lock, flags);
 
 	kref_get(&mbus->ref);
-}
+पूर्ण
 
 /*
- * Unlink reader from the bus.
+ * Unlink पढ़ोer from the bus.
  *
  * This is called with mon_lock taken, so we can decrement mbus->ref.
  */
-void mon_reader_del(struct mon_bus *mbus, struct mon_reader *r)
-{
-	unsigned long flags;
+व्योम mon_पढ़ोer_del(काष्ठा mon_bus *mbus, काष्ठा mon_पढ़ोer *r)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mbus->lock, flags);
 	list_del(&r->r_link);
-	--mbus->nreaders;
-	if (mbus->nreaders == 0)
+	--mbus->nपढ़ोers;
+	अगर (mbus->nपढ़ोers == 0)
 		mon_stop(mbus);
 	spin_unlock_irqrestore(&mbus->lock, flags);
 
 	kref_put(&mbus->ref, mon_bus_drop);
-}
+पूर्ण
 
 /*
  */
-static void mon_bus_submit(struct mon_bus *mbus, struct urb *urb)
-{
-	unsigned long flags;
-	struct list_head *pos;
-	struct mon_reader *r;
+अटल व्योम mon_bus_submit(काष्ठा mon_bus *mbus, काष्ठा urb *urb)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head *pos;
+	काष्ठा mon_पढ़ोer *r;
 
 	spin_lock_irqsave(&mbus->lock, flags);
 	mbus->cnt_events++;
-	list_for_each (pos, &mbus->r_list) {
-		r = list_entry(pos, struct mon_reader, r_link);
+	list_क्रम_each (pos, &mbus->r_list) अणु
+		r = list_entry(pos, काष्ठा mon_पढ़ोer, r_link);
 		r->rnf_submit(r->r_data, urb);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&mbus->lock, flags);
-}
+पूर्ण
 
-static void mon_submit(struct usb_bus *ubus, struct urb *urb)
-{
-	struct mon_bus *mbus;
+अटल व्योम mon_submit(काष्ठा usb_bus *ubus, काष्ठा urb *urb)
+अणु
+	काष्ठा mon_bus *mbus;
 
 	mbus = ubus->mon_bus;
-	if (mbus != NULL)
+	अगर (mbus != शून्य)
 		mon_bus_submit(mbus, urb);
 	mon_bus_submit(&mon_bus0, urb);
-}
+पूर्ण
 
 /*
  */
-static void mon_bus_submit_error(struct mon_bus *mbus, struct urb *urb, int error)
-{
-	unsigned long flags;
-	struct list_head *pos;
-	struct mon_reader *r;
+अटल व्योम mon_bus_submit_error(काष्ठा mon_bus *mbus, काष्ठा urb *urb, पूर्णांक error)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head *pos;
+	काष्ठा mon_पढ़ोer *r;
 
 	spin_lock_irqsave(&mbus->lock, flags);
 	mbus->cnt_events++;
-	list_for_each (pos, &mbus->r_list) {
-		r = list_entry(pos, struct mon_reader, r_link);
+	list_क्रम_each (pos, &mbus->r_list) अणु
+		r = list_entry(pos, काष्ठा mon_पढ़ोer, r_link);
 		r->rnf_error(r->r_data, urb, error);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&mbus->lock, flags);
-}
+पूर्ण
 
-static void mon_submit_error(struct usb_bus *ubus, struct urb *urb, int error)
-{
-	struct mon_bus *mbus;
+अटल व्योम mon_submit_error(काष्ठा usb_bus *ubus, काष्ठा urb *urb, पूर्णांक error)
+अणु
+	काष्ठा mon_bus *mbus;
 
 	mbus = ubus->mon_bus;
-	if (mbus != NULL)
+	अगर (mbus != शून्य)
 		mon_bus_submit_error(mbus, urb, error);
 	mon_bus_submit_error(&mon_bus0, urb, error);
-}
+पूर्ण
 
 /*
  */
-static void mon_bus_complete(struct mon_bus *mbus, struct urb *urb, int status)
-{
-	unsigned long flags;
-	struct list_head *pos;
-	struct mon_reader *r;
+अटल व्योम mon_bus_complete(काष्ठा mon_bus *mbus, काष्ठा urb *urb, पूर्णांक status)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head *pos;
+	काष्ठा mon_पढ़ोer *r;
 
 	spin_lock_irqsave(&mbus->lock, flags);
 	mbus->cnt_events++;
-	list_for_each (pos, &mbus->r_list) {
-		r = list_entry(pos, struct mon_reader, r_link);
+	list_क्रम_each (pos, &mbus->r_list) अणु
+		r = list_entry(pos, काष्ठा mon_पढ़ोer, r_link);
 		r->rnf_complete(r->r_data, urb, status);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&mbus->lock, flags);
-}
+पूर्ण
 
-static void mon_complete(struct usb_bus *ubus, struct urb *urb, int status)
-{
-	struct mon_bus *mbus;
+अटल व्योम mon_complete(काष्ठा usb_bus *ubus, काष्ठा urb *urb, पूर्णांक status)
+अणु
+	काष्ठा mon_bus *mbus;
 
 	mbus = ubus->mon_bus;
-	if (mbus != NULL)
+	अगर (mbus != शून्य)
 		mon_bus_complete(mbus, urb, status);
 	mon_bus_complete(&mon_bus0, urb, status);
-}
+पूर्ण
 
-/* int (*unlink_urb) (struct urb *urb, int status); */
+/* पूर्णांक (*unlink_urb) (काष्ठा urb *urb, पूर्णांक status); */
 
 /*
  * Stop monitoring.
  */
-static void mon_stop(struct mon_bus *mbus)
-{
-	struct usb_bus *ubus;
-	struct list_head *p;
+अटल व्योम mon_stop(काष्ठा mon_bus *mbus)
+अणु
+	काष्ठा usb_bus *ubus;
+	काष्ठा list_head *p;
 
-	if (mbus == &mon_bus0) {
-		list_for_each (p, &mon_buses) {
-			mbus = list_entry(p, struct mon_bus, bus_link);
+	अगर (mbus == &mon_bus0) अणु
+		list_क्रम_each (p, &mon_buses) अणु
+			mbus = list_entry(p, काष्ठा mon_bus, bus_link);
 			/*
-			 * We do not change nreaders here, so rely on mon_lock.
+			 * We करो not change nपढ़ोers here, so rely on mon_lock.
 			 */
-			if (mbus->nreaders == 0 && (ubus = mbus->u_bus) != NULL)
+			अगर (mbus->nपढ़ोers == 0 && (ubus = mbus->u_bus) != शून्य)
 				ubus->monitored = 0;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * A stop can be called for a dissolved mon_bus in case of
-		 * a reader staying across an rmmod foo_hcd, so test ->u_bus.
+		 * A stop can be called क्रम a dissolved mon_bus in हाल of
+		 * a पढ़ोer staying across an rmmod foo_hcd, so test ->u_bus.
 		 */
-		if (mon_bus0.nreaders == 0 && (ubus = mbus->u_bus) != NULL) {
+		अगर (mon_bus0.nपढ़ोers == 0 && (ubus = mbus->u_bus) != शून्य) अणु
 			ubus->monitored = 0;
 			mb();
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Add a USB bus (usually by a modprobe foo-hcd)
  *
- * This does not return an error code because the core cannot care less
- * if monitoring is not established.
+ * This करोes not वापस an error code because the core cannot care less
+ * अगर monitoring is not established.
  */
-static void mon_bus_add(struct usb_bus *ubus)
-{
+अटल व्योम mon_bus_add(काष्ठा usb_bus *ubus)
+अणु
 	mon_bus_init(ubus);
 	mutex_lock(&mon_lock);
-	if (mon_bus0.nreaders != 0)
+	अगर (mon_bus0.nपढ़ोers != 0)
 		ubus->monitored = 1;
 	mutex_unlock(&mon_lock);
-}
+पूर्ण
 
 /*
- * Remove a USB bus (either from rmmod foo-hcd or from a hot-remove event).
+ * Remove a USB bus (either from rmmod foo-hcd or from a hot-हटाओ event).
  */
-static void mon_bus_remove(struct usb_bus *ubus)
-{
-	struct mon_bus *mbus = ubus->mon_bus;
+अटल व्योम mon_bus_हटाओ(काष्ठा usb_bus *ubus)
+अणु
+	काष्ठा mon_bus *mbus = ubus->mon_bus;
 
 	mutex_lock(&mon_lock);
 	list_del(&mbus->bus_link);
-	if (mbus->text_inited)
+	अगर (mbus->text_inited)
 		mon_text_del(mbus);
-	if (mbus->bin_inited)
+	अगर (mbus->bin_inited)
 		mon_bin_del(mbus);
 
 	mon_dissolve(mbus, ubus);
 	kref_put(&mbus->ref, mon_bus_drop);
 	mutex_unlock(&mon_lock);
-}
+पूर्ण
 
-static int mon_notify(struct notifier_block *self, unsigned long action,
-		      void *dev)
-{
-	switch (action) {
-	case USB_BUS_ADD:
+अटल पूर्णांक mon_notअगरy(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ action,
+		      व्योम *dev)
+अणु
+	चयन (action) अणु
+	हाल USB_BUS_ADD:
 		mon_bus_add(dev);
-		break;
-	case USB_BUS_REMOVE:
-		mon_bus_remove(dev);
-	}
-	return NOTIFY_OK;
-}
+		अवरोध;
+	हाल USB_BUS_REMOVE:
+		mon_bus_हटाओ(dev);
+	पूर्ण
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block mon_nb = {
-	.notifier_call = 	mon_notify,
-};
+अटल काष्ठा notअगरier_block mon_nb = अणु
+	.notअगरier_call = 	mon_notअगरy,
+पूर्ण;
 
 /*
  * Ops
  */
-static const struct usb_mon_operations mon_ops_0 = {
+अटल स्थिर काष्ठा usb_mon_operations mon_ops_0 = अणु
 	.urb_submit =	mon_submit,
 	.urb_submit_error = mon_submit_error,
 	.urb_complete =	mon_complete,
-};
+पूर्ण;
 
 /*
  * Tear usb_bus and mon_bus apart.
  */
-static void mon_dissolve(struct mon_bus *mbus, struct usb_bus *ubus)
-{
+अटल व्योम mon_dissolve(काष्ठा mon_bus *mbus, काष्ठा usb_bus *ubus)
+अणु
 
-	if (ubus->monitored) {
+	अगर (ubus->monitored) अणु
 		ubus->monitored = 0;
 		mb();
-	}
+	पूर्ण
 
-	ubus->mon_bus = NULL;
-	mbus->u_bus = NULL;
+	ubus->mon_bus = शून्य;
+	mbus->u_bus = शून्य;
 	mb();
 
 	/* We want synchronize_irq() here, but that needs an argument. */
-}
+पूर्ण
 
 /*
  */
-static void mon_bus_drop(struct kref *r)
-{
-	struct mon_bus *mbus = container_of(r, struct mon_bus, ref);
-	kfree(mbus);
-}
+अटल व्योम mon_bus_drop(काष्ठा kref *r)
+अणु
+	काष्ठा mon_bus *mbus = container_of(r, काष्ठा mon_bus, ref);
+	kमुक्त(mbus);
+पूर्ण
 
 /*
- * Initialize a bus for us:
+ * Initialize a bus क्रम us:
  *  - allocate mon_bus
- *  - refcount USB bus struct
+ *  - refcount USB bus काष्ठा
  *  - link
  */
-static void mon_bus_init(struct usb_bus *ubus)
-{
-	struct mon_bus *mbus;
+अटल व्योम mon_bus_init(काष्ठा usb_bus *ubus)
+अणु
+	काष्ठा mon_bus *mbus;
 
-	mbus = kzalloc(sizeof(struct mon_bus), GFP_KERNEL);
-	if (mbus == NULL)
-		goto err_alloc;
+	mbus = kzalloc(माप(काष्ठा mon_bus), GFP_KERNEL);
+	अगर (mbus == शून्य)
+		जाओ err_alloc;
 	kref_init(&mbus->ref);
 	spin_lock_init(&mbus->lock);
 	INIT_LIST_HEAD(&mbus->r_list);
 
 	/*
-	 * We don't need to take a reference to ubus, because we receive
-	 * a notification if the bus is about to be removed.
+	 * We करोn't need to take a reference to ubus, because we receive
+	 * a notअगरication अगर the bus is about to be हटाओd.
 	 */
 	mbus->u_bus = ubus;
 	ubus->mon_bus = mbus;
@@ -304,132 +305,132 @@ static void mon_bus_init(struct usb_bus *ubus)
 	mutex_lock(&mon_lock);
 	list_add_tail(&mbus->bus_link, &mon_buses);
 	mutex_unlock(&mon_lock);
-	return;
+	वापस;
 
 err_alloc:
-	return;
-}
+	वापस;
+पूर्ण
 
-static void mon_bus0_init(void)
-{
-	struct mon_bus *mbus = &mon_bus0;
+अटल व्योम mon_bus0_init(व्योम)
+अणु
+	काष्ठा mon_bus *mbus = &mon_bus0;
 
 	kref_init(&mbus->ref);
 	spin_lock_init(&mbus->lock);
 	INIT_LIST_HEAD(&mbus->r_list);
 
-	mbus->text_inited = mon_text_add(mbus, NULL);
-	mbus->bin_inited = mon_bin_add(mbus, NULL);
-}
+	mbus->text_inited = mon_text_add(mbus, शून्य);
+	mbus->bin_inited = mon_bin_add(mbus, शून्य);
+पूर्ण
 
 /*
  * Search a USB bus by number. Notice that USB bus numbers start from one,
- * which we may later use to identify "all" with zero.
+ * which we may later use to identअगरy "all" with zero.
  *
  * This function must be called with mon_lock held.
  *
  * This is obviously inefficient and may be revised in the future.
  */
-struct mon_bus *mon_bus_lookup(unsigned int num)
-{
-	struct list_head *p;
-	struct mon_bus *mbus;
+काष्ठा mon_bus *mon_bus_lookup(अचिन्हित पूर्णांक num)
+अणु
+	काष्ठा list_head *p;
+	काष्ठा mon_bus *mbus;
 
-	if (num == 0) {
-		return &mon_bus0;
-	}
-	list_for_each (p, &mon_buses) {
-		mbus = list_entry(p, struct mon_bus, bus_link);
-		if (mbus->u_bus->busnum == num) {
-			return mbus;
-		}
-	}
-	return NULL;
-}
+	अगर (num == 0) अणु
+		वापस &mon_bus0;
+	पूर्ण
+	list_क्रम_each (p, &mon_buses) अणु
+		mbus = list_entry(p, काष्ठा mon_bus, bus_link);
+		अगर (mbus->u_bus->busnum == num) अणु
+			वापस mbus;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int __init mon_init(void)
-{
-	struct usb_bus *ubus;
-	int rc, id;
+अटल पूर्णांक __init mon_init(व्योम)
+अणु
+	काष्ठा usb_bus *ubus;
+	पूर्णांक rc, id;
 
-	if ((rc = mon_text_init()) != 0)
-		goto err_text;
-	if ((rc = mon_bin_init()) != 0)
-		goto err_bin;
+	अगर ((rc = mon_text_init()) != 0)
+		जाओ err_text;
+	अगर ((rc = mon_bin_init()) != 0)
+		जाओ err_bin;
 
 	mon_bus0_init();
 
-	if (usb_mon_register(&mon_ops_0) != 0) {
-		printk(KERN_NOTICE TAG ": unable to register with the core\n");
+	अगर (usb_mon_रेजिस्टर(&mon_ops_0) != 0) अणु
+		prपूर्णांकk(KERN_NOTICE TAG ": unable to register with the core\n");
 		rc = -ENODEV;
-		goto err_reg;
-	}
+		जाओ err_reg;
+	पूर्ण
 	// MOD_INC_USE_COUNT(which_module?);
 
 	mutex_lock(&usb_bus_idr_lock);
-	idr_for_each_entry(&usb_bus_idr, ubus, id)
+	idr_क्रम_each_entry(&usb_bus_idr, ubus, id)
 		mon_bus_init(ubus);
-	usb_register_notify(&mon_nb);
+	usb_रेजिस्टर_notअगरy(&mon_nb);
 	mutex_unlock(&usb_bus_idr_lock);
-	return 0;
+	वापस 0;
 
 err_reg:
-	mon_bin_exit();
+	mon_bin_निकास();
 err_bin:
-	mon_text_exit();
+	mon_text_निकास();
 err_text:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit mon_exit(void)
-{
-	struct mon_bus *mbus;
-	struct list_head *p;
+अटल व्योम __निकास mon_निकास(व्योम)
+अणु
+	काष्ठा mon_bus *mbus;
+	काष्ठा list_head *p;
 
-	usb_unregister_notify(&mon_nb);
-	usb_mon_deregister();
+	usb_unरेजिस्टर_notअगरy(&mon_nb);
+	usb_mon_deरेजिस्टर();
 
 	mutex_lock(&mon_lock);
 
-	while (!list_empty(&mon_buses)) {
+	जबतक (!list_empty(&mon_buses)) अणु
 		p = mon_buses.next;
-		mbus = list_entry(p, struct mon_bus, bus_link);
+		mbus = list_entry(p, काष्ठा mon_bus, bus_link);
 		list_del(p);
 
-		if (mbus->text_inited)
+		अगर (mbus->text_inited)
 			mon_text_del(mbus);
-		if (mbus->bin_inited)
+		अगर (mbus->bin_inited)
 			mon_bin_del(mbus);
 
 		/*
-		 * This never happens, because the open/close paths in
-		 * file level maintain module use counters and so rmmod fails
-		 * before reaching here. However, better be safe...
+		 * This never happens, because the खोलो/बंद paths in
+		 * file level मुख्यtain module use counters and so rmmod fails
+		 * beक्रमe reaching here. However, better be safe...
 		 */
-		if (mbus->nreaders) {
-			printk(KERN_ERR TAG
+		अगर (mbus->nपढ़ोers) अणु
+			prपूर्णांकk(KERN_ERR TAG
 			    ": Outstanding opens (%d) on usb%d, leaking...\n",
-			    mbus->nreaders, mbus->u_bus->busnum);
+			    mbus->nपढ़ोers, mbus->u_bus->busnum);
 			kref_get(&mbus->ref); /* Force leak */
-		}
+		पूर्ण
 
 		mon_dissolve(mbus, mbus->u_bus);
 		kref_put(&mbus->ref, mon_bus_drop);
-	}
+	पूर्ण
 
 	mbus = &mon_bus0;
-	if (mbus->text_inited)
+	अगर (mbus->text_inited)
 		mon_text_del(mbus);
-	if (mbus->bin_inited)
+	अगर (mbus->bin_inited)
 		mon_bin_del(mbus);
 
 	mutex_unlock(&mon_lock);
 
-	mon_text_exit();
-	mon_bin_exit();
-}
+	mon_text_निकास();
+	mon_bin_निकास();
+पूर्ण
 
 module_init(mon_init);
-module_exit(mon_exit);
+module_निकास(mon_निकास);
 
 MODULE_LICENSE("GPL");

@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_RTNH_H
-#define __NET_RTNH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_RTNH_H
+#घोषणा __NET_RTNH_H
 
-#include <linux/rtnetlink.h>
-#include <net/netlink.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <net/netlink.h>
 
-static inline int rtnh_ok(const struct rtnexthop *rtnh, int remaining)
-{
-	return remaining >= (int)sizeof(*rtnh) &&
-	       rtnh->rtnh_len >= sizeof(*rtnh) &&
-	       rtnh->rtnh_len <= remaining;
-}
+अटल अंतरभूत पूर्णांक rtnh_ok(स्थिर काष्ठा rtnexthop *rtnh, पूर्णांक reमुख्यing)
+अणु
+	वापस reमुख्यing >= (पूर्णांक)माप(*rtnh) &&
+	       rtnh->rtnh_len >= माप(*rtnh) &&
+	       rtnh->rtnh_len <= reमुख्यing;
+पूर्ण
 
-static inline struct rtnexthop *rtnh_next(const struct rtnexthop *rtnh,
-                                         int *remaining)
-{
-	int totlen = NLA_ALIGN(rtnh->rtnh_len);
+अटल अंतरभूत काष्ठा rtnexthop *rtnh_next(स्थिर काष्ठा rtnexthop *rtnh,
+                                         पूर्णांक *reमुख्यing)
+अणु
+	पूर्णांक totlen = NLA_ALIGN(rtnh->rtnh_len);
 
-	*remaining -= totlen;
-	return (struct rtnexthop *) ((char *) rtnh + totlen);
-}
+	*reमुख्यing -= totlen;
+	वापस (काष्ठा rtnexthop *) ((अक्षर *) rtnh + totlen);
+पूर्ण
 
-static inline struct nlattr *rtnh_attrs(const struct rtnexthop *rtnh)
-{
-	return (struct nlattr *) ((char *) rtnh + NLA_ALIGN(sizeof(*rtnh)));
-}
+अटल अंतरभूत काष्ठा nlattr *rtnh_attrs(स्थिर काष्ठा rtnexthop *rtnh)
+अणु
+	वापस (काष्ठा nlattr *) ((अक्षर *) rtnh + NLA_ALIGN(माप(*rtnh)));
+पूर्ण
 
-static inline int rtnh_attrlen(const struct rtnexthop *rtnh)
-{
-	return rtnh->rtnh_len - NLA_ALIGN(sizeof(*rtnh));
-}
+अटल अंतरभूत पूर्णांक rtnh_attrlen(स्थिर काष्ठा rtnexthop *rtnh)
+अणु
+	वापस rtnh->rtnh_len - NLA_ALIGN(माप(*rtnh));
+पूर्ण
 
-#endif
+#पूर्ण_अगर

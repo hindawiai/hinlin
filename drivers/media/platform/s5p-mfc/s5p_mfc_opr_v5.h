@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * drivers/media/platform/samsung/mfc5/s5p_mfc_opr_v5.h
+ * drivers/media/platक्रमm/samsung/mfc5/s5p_mfc_opr_v5.h
  *
- * Header file for Samsung MFC (Multi Function Codec - FIMV) driver
+ * Header file क्रम Samsung MFC (Multi Function Codec - FIMV) driver
  * Contains declarations of hw related functions.
  *
  * Kamil Debski, Copyright (C) 2011 Samsung Electronics
  * http://www.samsung.com/
  */
 
-#ifndef S5P_MFC_OPR_V5_H_
-#define S5P_MFC_OPR_V5_H_
+#अगर_अघोषित S5P_MFC_OPR_V5_H_
+#घोषणा S5P_MFC_OPR_V5_H_
 
-#include "s5p_mfc_common.h"
-#include "s5p_mfc_opr.h"
+#समावेश "s5p_mfc_common.h"
+#समावेश "s5p_mfc_opr.h"
 
-enum MFC_SHM_OFS {
+क्रमागत MFC_SHM_OFS अणु
 	EXTENEDED_DECODE_STATUS	= 0x00,	/* D */
 	SET_FRAME_TAG		= 0x04, /* D */
 	GET_FRAME_TAG_TOP	= 0x08, /* D */
@@ -45,18 +46,18 @@ enum MFC_SHM_OFS {
 				ASPECT_RATIO_VUI_ENABLE in EXT_ENC_CONTROL */
 	EXTENDED_SAR		= 0x78, /* E, H.264, depned on
 				ASPECT_RATIO_VUI_ENABLE in EXT_ENC_CONTROL */
-	DISP_PIC_PROFILE	= 0x7C, /* D */
+	DISP_PIC_PROखाता	= 0x7C, /* D */
 	FLUSH_CMD_TYPE		= 0x80, /* C */
 	FLUSH_CMD_INBUF1	= 0x84, /* C */
 	FLUSH_CMD_INBUF2	= 0x88, /* C */
 	FLUSH_CMD_OUTBUF	= 0x8C, /* E */
-	NEW_RC_BIT_RATE		= 0x90, /* E, format as RC_BIT_RATE(0xC5A8)
+	NEW_RC_BIT_RATE		= 0x90, /* E, क्रमmat as RC_BIT_RATE(0xC5A8)
 			depend on RC_BIT_RATE_CHANGE in ENC_PARAM_CHANGE */
-	NEW_RC_FRAME_RATE	= 0x94, /* E, format as RC_FRAME_RATE(0xD0D0)
+	NEW_RC_FRAME_RATE	= 0x94, /* E, क्रमmat as RC_FRAME_RATE(0xD0D0)
 			depend on RC_FRAME_RATE_CHANGE in ENC_PARAM_CHANGE */
-	NEW_I_PERIOD		= 0x98, /* E, format as I_FRM_CTRL(0xC504)
+	NEW_I_PERIOD		= 0x98, /* E, क्रमmat as I_FRM_CTRL(0xC504)
 			depend on I_PERIOD_CHANGE in ENC_PARAM_CHANGE */
-	H264_I_PERIOD		= 0x9C, /* E, H.264, open GOP */
+	H264_I_PERIOD		= 0x9C, /* E, H.264, खोलो GOP */
 	RC_CONTROL_CONFIG	= 0xA0, /* E */
 	BATCH_INPUT_ADDR	= 0xA4, /* E */
 	BATCH_OUTPUT_ADDR	= 0xA8, /* E */
@@ -76,7 +77,7 @@ enum MFC_SHM_OFS {
 	FRAME_PACK_SEI_ENABLE	= 0x168, /* C */
 	FRAME_PACK_SEI_AVAIL	= 0x16c, /* D */
 	FRAME_PACK_SEI_INFO	= 0x17c, /* E */
-};
+पूर्ण;
 
-struct s5p_mfc_hw_ops *s5p_mfc_init_hw_ops_v5(void);
-#endif /* S5P_MFC_OPR_H_ */
+काष्ठा s5p_mfc_hw_ops *s5p_mfc_init_hw_ops_v5(व्योम);
+#पूर्ण_अगर /* S5P_MFC_OPR_H_ */

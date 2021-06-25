@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * locks.h
  *
- * Function prototypes for Userspace file locking support
+ * Function prototypes क्रम Userspace file locking support
  *
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#ifndef OCFS2_LOCKS_H
-#define OCFS2_LOCKS_H
+#अगर_अघोषित OCFS2_LOCKS_H
+#घोषणा OCFS2_LOCKS_H
 
-int ocfs2_flock(struct file *file, int cmd, struct file_lock *fl);
-int ocfs2_lock(struct file *file, int cmd, struct file_lock *fl);
+पूर्णांक ocfs2_flock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl);
+पूर्णांक ocfs2_lock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl);
 
-#endif /* OCFS2_LOCKS_H */
+#पूर्ण_अगर /* OCFS2_LOCKS_H */

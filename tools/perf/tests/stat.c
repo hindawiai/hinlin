@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
-#include "event.h"
-#include "tests.h"
-#include "stat.h"
-#include "counts.h"
-#include "debug.h"
-#include "util/synthetic-events.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
+#समावेश "event.h"
+#समावेश "tests.h"
+#समावेश "stat.h"
+#समावेश "counts.h"
+#समावेश "debug.h"
+#समावेश "util/synthetic-events.h"
 
-static bool has_term(struct perf_record_stat_config *config,
+अटल bool has_term(काष्ठा perf_record_stat_config *config,
 		     u64 tag, u64 val)
-{
-	unsigned i;
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < config->nr; i++) {
-		if ((config->data[i].tag == tag) &&
+	क्रम (i = 0; i < config->nr; i++) अणु
+		अगर ((config->data[i].tag == tag) &&
 		    (config->data[i].val == val))
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int process_stat_config_event(struct perf_tool *tool __maybe_unused,
-				     union perf_event *event,
-				     struct perf_sample *sample __maybe_unused,
-				     struct machine *machine __maybe_unused)
-{
-	struct perf_record_stat_config *config = &event->stat_config;
-	struct perf_stat_config stat_config;
+अटल पूर्णांक process_stat_config_event(काष्ठा perf_tool *tool __maybe_unused,
+				     जोड़ perf_event *event,
+				     काष्ठा perf_sample *sample __maybe_unused,
+				     काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा perf_record_stat_config *config = &event->stat_config;
+	काष्ठा perf_stat_config stat_config;
 
-#define HAS(term, val) \
+#घोषणा HAS(term, val) \
 	has_term(config, PERF_STAT_CONFIG_TERM__##term, val)
 
 	TEST_ASSERT_VAL("wrong nr",        config->nr == PERF_STAT_CONFIG_TERM__MAX);
@@ -37,77 +38,77 @@ static int process_stat_config_event(struct perf_tool *tool __maybe_unused,
 	TEST_ASSERT_VAL("wrong scale",     HAS(SCALE, 1));
 	TEST_ASSERT_VAL("wrong interval",  HAS(INTERVAL, 1));
 
-#undef HAS
+#अघोषित HAS
 
-	perf_event__read_stat_config(&stat_config, config);
+	perf_event__पढ़ो_stat_config(&stat_config, config);
 
 	TEST_ASSERT_VAL("wrong aggr_mode", stat_config.aggr_mode == AGGR_CORE);
 	TEST_ASSERT_VAL("wrong scale",     stat_config.scale == 1);
-	TEST_ASSERT_VAL("wrong interval",  stat_config.interval == 1);
-	return 0;
-}
+	TEST_ASSERT_VAL("wrong interval",  stat_config.पूर्णांकerval == 1);
+	वापस 0;
+पूर्ण
 
-int test__synthesize_stat_config(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	struct perf_stat_config stat_config = {
+पूर्णांक test__synthesize_stat_config(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	काष्ठा perf_stat_config stat_config = अणु
 		.aggr_mode	= AGGR_CORE,
 		.scale		= 1,
-		.interval	= 1,
-	};
+		.पूर्णांकerval	= 1,
+	पूर्ण;
 
 	TEST_ASSERT_VAL("failed to synthesize stat_config",
-		!perf_event__synthesize_stat_config(NULL, &stat_config, process_stat_config_event, NULL));
+		!perf_event__synthesize_stat_config(शून्य, &stat_config, process_stat_config_event, शून्य));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_stat_event(struct perf_tool *tool __maybe_unused,
-			      union perf_event *event,
-			      struct perf_sample *sample __maybe_unused,
-			      struct machine *machine __maybe_unused)
-{
-	struct perf_record_stat *st = &event->stat;
+अटल पूर्णांक process_stat_event(काष्ठा perf_tool *tool __maybe_unused,
+			      जोड़ perf_event *event,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा perf_record_stat *st = &event->stat;
 
 	TEST_ASSERT_VAL("wrong cpu",    st->cpu    == 1);
-	TEST_ASSERT_VAL("wrong thread", st->thread == 2);
+	TEST_ASSERT_VAL("wrong thread", st->thपढ़ो == 2);
 	TEST_ASSERT_VAL("wrong id",     st->id     == 3);
 	TEST_ASSERT_VAL("wrong val",    st->val    == 100);
 	TEST_ASSERT_VAL("wrong run",    st->ena    == 200);
 	TEST_ASSERT_VAL("wrong ena",    st->run    == 300);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int test__synthesize_stat(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	struct perf_counts_values count;
+पूर्णांक test__synthesize_stat(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	काष्ठा perf_counts_values count;
 
 	count.val = 100;
 	count.ena = 200;
 	count.run = 300;
 
 	TEST_ASSERT_VAL("failed to synthesize stat_config",
-		!perf_event__synthesize_stat(NULL, 1, 2, 3, &count, process_stat_event, NULL));
+		!perf_event__synthesize_stat(शून्य, 1, 2, 3, &count, process_stat_event, शून्य));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_stat_round_event(struct perf_tool *tool __maybe_unused,
-				    union perf_event *event,
-				    struct perf_sample *sample __maybe_unused,
-				    struct machine *machine __maybe_unused)
-{
-	struct perf_record_stat_round *stat_round = &event->stat_round;
+अटल पूर्णांक process_stat_round_event(काष्ठा perf_tool *tool __maybe_unused,
+				    जोड़ perf_event *event,
+				    काष्ठा perf_sample *sample __maybe_unused,
+				    काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा perf_record_stat_round *stat_round = &event->stat_round;
 
-	TEST_ASSERT_VAL("wrong time", stat_round->time == 0xdeadbeef);
+	TEST_ASSERT_VAL("wrong time", stat_round->समय == 0xdeadbeef);
 	TEST_ASSERT_VAL("wrong type", stat_round->type == PERF_STAT_ROUND_TYPE__INTERVAL);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int test__synthesize_stat_round(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
+पूर्णांक test__synthesize_stat_round(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
 	TEST_ASSERT_VAL("failed to synthesize stat_config",
-		!perf_event__synthesize_stat_round(NULL, 0xdeadbeef, PERF_STAT_ROUND_TYPE__INTERVAL,
-						   process_stat_round_event, NULL));
+		!perf_event__synthesize_stat_round(शून्य, 0xdeadbeef, PERF_STAT_ROUND_TYPE__INTERVAL,
+						   process_stat_round_event, शून्य));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

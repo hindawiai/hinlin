@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* -*- linux-c -*-
  * Cypress USB Thermometer driver 
  * 
@@ -10,345 +11,345 @@
  */
 
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/usb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
 
-#define DRIVER_AUTHOR "Erik Rigtorp"
-#define DRIVER_DESC "Cypress USB Thermometer driver"
+#घोषणा DRIVER_AUTHOR "Erik Rigtorp"
+#घोषणा DRIVER_DESC "Cypress USB Thermometer driver"
 
-#define USB_SKEL_VENDOR_ID	0x04b4
-#define USB_SKEL_PRODUCT_ID	0x0002
+#घोषणा USB_SKEL_VENDOR_ID	0x04b4
+#घोषणा USB_SKEL_PRODUCT_ID	0x0002
 
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(USB_SKEL_VENDOR_ID, USB_SKEL_PRODUCT_ID) },
-	{ }
-};
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(USB_SKEL_VENDOR_ID, USB_SKEL_PRODUCT_ID) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE (usb, id_table);
 
-/* Structure to hold all of our device specific stuff */
-struct usb_cytherm {
-	struct usb_device    *udev;	 /* save off the usb device pointer */
-	struct usb_interface *interface; /* the interface for this device */
-	int brightness;
-};
+/* Structure to hold all of our device specअगरic stuff */
+काष्ठा usb_cytherm अणु
+	काष्ठा usb_device    *udev;	 /* save off the usb device poपूर्णांकer */
+	काष्ठा usb_पूर्णांकerface *पूर्णांकerface; /* the पूर्णांकerface क्रम this device */
+	पूर्णांक brightness;
+पूर्ण;
 
 
-/* Vendor requests */
-/* They all operate on one byte at a time */
-#define PING       0x00
-#define READ_ROM   0x01 /* Reads form ROM, value = address */
-#define READ_RAM   0x02 /* Reads form RAM, value = address */
-#define WRITE_RAM  0x03 /* Write to RAM, value = address, index = data */
-#define READ_PORT  0x04 /* Reads from port, value = address */
-#define WRITE_PORT 0x05 /* Write to port, value = address, index = data */ 
+/* Venकरोr requests */
+/* They all operate on one byte at a समय */
+#घोषणा PING       0x00
+#घोषणा READ_ROM   0x01 /* Reads क्रमm ROM, value = address */
+#घोषणा READ_RAM   0x02 /* Reads क्रमm RAM, value = address */
+#घोषणा WRITE_RAM  0x03 /* Write to RAM, value = address, index = data */
+#घोषणा READ_PORT  0x04 /* Reads from port, value = address */
+#घोषणा WRITE_PORT 0x05 /* Write to port, value = address, index = data */ 
 
 
-/* Send a vendor command to device */
-static int vendor_command(struct usb_device *dev, unsigned char request, 
-			  unsigned char value, unsigned char index,
-			  void *buf, int size)
-{
-	return usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
+/* Send a venकरोr command to device */
+अटल पूर्णांक venकरोr_command(काष्ठा usb_device *dev, अचिन्हित अक्षर request, 
+			  अचिन्हित अक्षर value, अचिन्हित अक्षर index,
+			  व्योम *buf, पूर्णांक size)
+अणु
+	वापस usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
 			       request, 
-			       USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+			       USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_OTHER,
 			       value, 
 			       index, buf, size,
 			       USB_CTRL_GET_TIMEOUT);
-}
+पूर्ण
 
 
 
-#define BRIGHTNESS 0x2c     /* RAM location for brightness value */
-#define BRIGHTNESS_SEM 0x2b /* RAM location for brightness semaphore */
+#घोषणा BRIGHTNESS 0x2c     /* RAM location क्रम brightness value */
+#घोषणा BRIGHTNESS_SEM 0x2b /* RAM location क्रम brightness semaphore */
 
-static ssize_t brightness_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct usb_interface *intf = to_usb_interface(dev);    
-	struct usb_cytherm *cytherm = usb_get_intfdata(intf);     
+अटल sमाप_प्रकार brightness_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);    
+	काष्ठा usb_cytherm *cytherm = usb_get_पूर्णांकfdata(पूर्णांकf);     
 
-	return sprintf(buf, "%i", cytherm->brightness);
-}
+	वापस प्र_लिखो(buf, "%i", cytherm->brightness);
+पूर्ण
 
-static ssize_t brightness_store(struct device *dev, struct device_attribute *attr, const char *buf,
-			      size_t count)
-{
-	struct usb_interface *intf = to_usb_interface(dev);
-	struct usb_cytherm *cytherm = usb_get_intfdata(intf);
+अटल sमाप_प्रकार brightness_store(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+			      माप_प्रकार count)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+	काष्ठा usb_cytherm *cytherm = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	unsigned char *buffer;
-	int retval;
+	अचिन्हित अक्षर *buffer;
+	पूर्णांक retval;
    
-	buffer = kmalloc(8, GFP_KERNEL);
-	if (!buffer)
-		return 0;
+	buffer = kदो_स्मृति(8, GFP_KERNEL);
+	अगर (!buffer)
+		वापस 0;
 
-	cytherm->brightness = simple_strtoul(buf, NULL, 10);
+	cytherm->brightness = simple_म_से_अदीर्घ(buf, शून्य, 10);
    
-	if (cytherm->brightness > 0xFF)
+	अगर (cytherm->brightness > 0xFF)
 		cytherm->brightness = 0xFF;
-	else if (cytherm->brightness < 0)
+	अन्यथा अगर (cytherm->brightness < 0)
 		cytherm->brightness = 0;
    
 	/* Set brightness */
-	retval = vendor_command(cytherm->udev, WRITE_RAM, BRIGHTNESS, 
+	retval = venकरोr_command(cytherm->udev, WRITE_RAM, BRIGHTNESS, 
 				cytherm->brightness, buffer, 8);
-	if (retval)
+	अगर (retval)
 		dev_dbg(&cytherm->udev->dev, "retval = %d\n", retval);
-	/* Inform µC that we have changed the brightness setting */
-	retval = vendor_command(cytherm->udev, WRITE_RAM, BRIGHTNESS_SEM,
+	/* Inक्रमm तगC that we have changed the brightness setting */
+	retval = venकरोr_command(cytherm->udev, WRITE_RAM, BRIGHTNESS_SEM,
 				0x01, buffer, 8);
-	if (retval)
+	अगर (retval)
 		dev_dbg(&cytherm->udev->dev, "retval = %d\n", retval);
    
-	kfree(buffer);
+	kमुक्त(buffer);
    
-	return count;
-}
-static DEVICE_ATTR_RW(brightness);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(brightness);
 
 
-#define TEMP 0x33 /* RAM location for temperature */
-#define SIGN 0x34 /* RAM location for temperature sign */
+#घोषणा TEMP 0x33 /* RAM location क्रम temperature */
+#घोषणा SIGN 0x34 /* RAM location क्रम temperature sign */
 
-static ssize_t temp_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार temp_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 
-	struct usb_interface *intf = to_usb_interface(dev);
-	struct usb_cytherm *cytherm = usb_get_intfdata(intf);
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+	काष्ठा usb_cytherm *cytherm = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	int retval;
-	unsigned char *buffer;
+	पूर्णांक retval;
+	अचिन्हित अक्षर *buffer;
 
-	int temp, sign;
+	पूर्णांक temp, sign;
    
-	buffer = kmalloc(8, GFP_KERNEL);
-	if (!buffer)
-		return 0;
+	buffer = kदो_स्मृति(8, GFP_KERNEL);
+	अगर (!buffer)
+		वापस 0;
 
-	/* read temperature */
-	retval = vendor_command(cytherm->udev, READ_RAM, TEMP, 0, buffer, 8);
-	if (retval)
+	/* पढ़ो temperature */
+	retval = venकरोr_command(cytherm->udev, READ_RAM, TEMP, 0, buffer, 8);
+	अगर (retval)
 		dev_dbg(&cytherm->udev->dev, "retval = %d\n", retval);
 	temp = buffer[1];
    
-	/* read sign */
-	retval = vendor_command(cytherm->udev, READ_RAM, SIGN, 0, buffer, 8);
-	if (retval)
+	/* पढ़ो sign */
+	retval = venकरोr_command(cytherm->udev, READ_RAM, SIGN, 0, buffer, 8);
+	अगर (retval)
 		dev_dbg(&cytherm->udev->dev, "retval = %d\n", retval);
 	sign = buffer[1];
 
-	kfree(buffer);
+	kमुक्त(buffer);
    
-	return sprintf(buf, "%c%i.%i", sign ? '-' : '+', temp >> 1,
+	वापस प्र_लिखो(buf, "%c%i.%i", sign ? '-' : '+', temp >> 1,
 		       5*(temp - ((temp >> 1) << 1)));
-}
-static DEVICE_ATTR_RO(temp);
+पूर्ण
+अटल DEVICE_ATTR_RO(temp);
 
 
-#define BUTTON 0x7a
+#घोषणा BUTTON 0x7a
 
-static ssize_t button_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार button_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 
-	struct usb_interface *intf = to_usb_interface(dev);
-	struct usb_cytherm *cytherm = usb_get_intfdata(intf);
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+	काष्ठा usb_cytherm *cytherm = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	int retval;
-	unsigned char *buffer;
+	पूर्णांक retval;
+	अचिन्हित अक्षर *buffer;
 
-	buffer = kmalloc(8, GFP_KERNEL);
-	if (!buffer)
-		return 0;
+	buffer = kदो_स्मृति(8, GFP_KERNEL);
+	अगर (!buffer)
+		वापस 0;
 
 	/* check button */
-	retval = vendor_command(cytherm->udev, READ_RAM, BUTTON, 0, buffer, 8);
-	if (retval)
+	retval = venकरोr_command(cytherm->udev, READ_RAM, BUTTON, 0, buffer, 8);
+	अगर (retval)
 		dev_dbg(&cytherm->udev->dev, "retval = %d\n", retval);
    
 	retval = buffer[1];
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	if (retval)
-		return sprintf(buf, "1");
-	else
-		return sprintf(buf, "0");
-}
-static DEVICE_ATTR_RO(button);
+	अगर (retval)
+		वापस प्र_लिखो(buf, "1");
+	अन्यथा
+		वापस प्र_लिखो(buf, "0");
+पूर्ण
+अटल DEVICE_ATTR_RO(button);
 
 
-static ssize_t port0_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct usb_interface *intf = to_usb_interface(dev);
-	struct usb_cytherm *cytherm = usb_get_intfdata(intf);
+अटल sमाप_प्रकार port0_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+	काष्ठा usb_cytherm *cytherm = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	int retval;
-	unsigned char *buffer;
+	पूर्णांक retval;
+	अचिन्हित अक्षर *buffer;
 
-	buffer = kmalloc(8, GFP_KERNEL);
-	if (!buffer)
-		return 0;
+	buffer = kदो_स्मृति(8, GFP_KERNEL);
+	अगर (!buffer)
+		वापस 0;
 
-	retval = vendor_command(cytherm->udev, READ_PORT, 0, 0, buffer, 8);
-	if (retval)
+	retval = venकरोr_command(cytherm->udev, READ_PORT, 0, 0, buffer, 8);
+	अगर (retval)
 		dev_dbg(&cytherm->udev->dev, "retval = %d\n", retval);
 
 	retval = buffer[1];
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return sprintf(buf, "%d", retval);
-}
+	वापस प्र_लिखो(buf, "%d", retval);
+पूर्ण
 
 
-static ssize_t port0_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct usb_interface *intf = to_usb_interface(dev);
-	struct usb_cytherm *cytherm = usb_get_intfdata(intf);
+अटल sमाप_प्रकार port0_store(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+	काष्ठा usb_cytherm *cytherm = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	unsigned char *buffer;
-	int retval;
-	int tmp;
+	अचिन्हित अक्षर *buffer;
+	पूर्णांक retval;
+	पूर्णांक पंचांगp;
    
-	buffer = kmalloc(8, GFP_KERNEL);
-	if (!buffer)
-		return 0;
+	buffer = kदो_स्मृति(8, GFP_KERNEL);
+	अगर (!buffer)
+		वापस 0;
 
-	tmp = simple_strtoul(buf, NULL, 10);
+	पंचांगp = simple_म_से_अदीर्घ(buf, शून्य, 10);
    
-	if (tmp > 0xFF)
-		tmp = 0xFF;
-	else if (tmp < 0)
-		tmp = 0;
+	अगर (पंचांगp > 0xFF)
+		पंचांगp = 0xFF;
+	अन्यथा अगर (पंचांगp < 0)
+		पंचांगp = 0;
    
-	retval = vendor_command(cytherm->udev, WRITE_PORT, 0,
-				tmp, buffer, 8);
-	if (retval)
+	retval = venकरोr_command(cytherm->udev, WRITE_PORT, 0,
+				पंचांगp, buffer, 8);
+	अगर (retval)
 		dev_dbg(&cytherm->udev->dev, "retval = %d\n", retval);
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return count;
-}
-static DEVICE_ATTR_RW(port0);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(port0);
 
-static ssize_t port1_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct usb_interface *intf = to_usb_interface(dev);
-	struct usb_cytherm *cytherm = usb_get_intfdata(intf);
+अटल sमाप_प्रकार port1_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+	काष्ठा usb_cytherm *cytherm = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	int retval;
-	unsigned char *buffer;
+	पूर्णांक retval;
+	अचिन्हित अक्षर *buffer;
 
-	buffer = kmalloc(8, GFP_KERNEL);
-	if (!buffer)
-		return 0;
+	buffer = kदो_स्मृति(8, GFP_KERNEL);
+	अगर (!buffer)
+		वापस 0;
 
-	retval = vendor_command(cytherm->udev, READ_PORT, 1, 0, buffer, 8);
-	if (retval)
+	retval = venकरोr_command(cytherm->udev, READ_PORT, 1, 0, buffer, 8);
+	अगर (retval)
 		dev_dbg(&cytherm->udev->dev, "retval = %d\n", retval);
    
 	retval = buffer[1];
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return sprintf(buf, "%d", retval);
-}
+	वापस प्र_लिखो(buf, "%d", retval);
+पूर्ण
 
 
-static ssize_t port1_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct usb_interface *intf = to_usb_interface(dev);
-	struct usb_cytherm *cytherm = usb_get_intfdata(intf);
+अटल sमाप_प्रकार port1_store(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+	काष्ठा usb_cytherm *cytherm = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	unsigned char *buffer;
-	int retval;
-	int tmp;
+	अचिन्हित अक्षर *buffer;
+	पूर्णांक retval;
+	पूर्णांक पंचांगp;
    
-	buffer = kmalloc(8, GFP_KERNEL);
-	if (!buffer)
-		return 0;
+	buffer = kदो_स्मृति(8, GFP_KERNEL);
+	अगर (!buffer)
+		वापस 0;
 
-	tmp = simple_strtoul(buf, NULL, 10);
+	पंचांगp = simple_म_से_अदीर्घ(buf, शून्य, 10);
    
-	if (tmp > 0xFF)
-		tmp = 0xFF;
-	else if (tmp < 0)
-		tmp = 0;
+	अगर (पंचांगp > 0xFF)
+		पंचांगp = 0xFF;
+	अन्यथा अगर (पंचांगp < 0)
+		पंचांगp = 0;
    
-	retval = vendor_command(cytherm->udev, WRITE_PORT, 1,
-				tmp, buffer, 8);
-	if (retval)
+	retval = venकरोr_command(cytherm->udev, WRITE_PORT, 1,
+				पंचांगp, buffer, 8);
+	अगर (retval)
 		dev_dbg(&cytherm->udev->dev, "retval = %d\n", retval);
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return count;
-}
-static DEVICE_ATTR_RW(port1);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(port1);
 
-static struct attribute *cytherm_attrs[] = {
+अटल काष्ठा attribute *cytherm_attrs[] = अणु
 	&dev_attr_brightness.attr,
 	&dev_attr_temp.attr,
 	&dev_attr_button.attr,
 	&dev_attr_port0.attr,
 	&dev_attr_port1.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(cytherm);
 
-static int cytherm_probe(struct usb_interface *interface, 
-			 const struct usb_device_id *id)
-{
-	struct usb_device *udev = interface_to_usbdev(interface);
-	struct usb_cytherm *dev = NULL;
-	int retval = -ENOMEM;
+अटल पूर्णांक cytherm_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface, 
+			 स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	काष्ठा usb_cytherm *dev = शून्य;
+	पूर्णांक retval = -ENOMEM;
 
-	dev = kzalloc (sizeof(struct usb_cytherm), GFP_KERNEL);
-	if (!dev)
-		goto error_mem;
+	dev = kzalloc (माप(काष्ठा usb_cytherm), GFP_KERNEL);
+	अगर (!dev)
+		जाओ error_mem;
 
 	dev->udev = usb_get_dev(udev);
 
-	usb_set_intfdata (interface, dev);
+	usb_set_पूर्णांकfdata (पूर्णांकerface, dev);
 
 	dev->brightness = 0xFF;
 
-	dev_info (&interface->dev,
+	dev_info (&पूर्णांकerface->dev,
 		  "Cypress thermometer device now attached\n");
-	return 0;
+	वापस 0;
 
 error_mem:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void cytherm_disconnect(struct usb_interface *interface)
-{
-	struct usb_cytherm *dev;
+अटल व्योम cytherm_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा usb_cytherm *dev;
 
-	dev = usb_get_intfdata (interface);
+	dev = usb_get_पूर्णांकfdata (पूर्णांकerface);
 
-	/* first remove the files, then NULL the pointer */
-	usb_set_intfdata (interface, NULL);
+	/* first हटाओ the files, then शून्य the poपूर्णांकer */
+	usb_set_पूर्णांकfdata (पूर्णांकerface, शून्य);
 
 	usb_put_dev(dev->udev);
 
-	kfree(dev);
+	kमुक्त(dev);
 
-	dev_info(&interface->dev, "Cypress thermometer now disconnected\n");
-}
+	dev_info(&पूर्णांकerface->dev, "Cypress thermometer now disconnected\n");
+पूर्ण
 
-/* usb specific object needed to register this driver with the usb subsystem */
-static struct usb_driver cytherm_driver = {
+/* usb specअगरic object needed to रेजिस्टर this driver with the usb subप्रणाली */
+अटल काष्ठा usb_driver cytherm_driver = अणु
 	.name =		"cytherm",
 	.probe =	cytherm_probe,
 	.disconnect =	cytherm_disconnect,
 	.id_table =	id_table,
 	.dev_groups =	cytherm_groups,
-};
+पूर्ण;
 
 module_usb_driver(cytherm_driver);
 

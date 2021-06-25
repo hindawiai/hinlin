@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* request_key authorisation token key type
  *
  * Copyright (C) 2005 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _KEYS_REQUEST_KEY_AUTH_TYPE_H
-#define _KEYS_REQUEST_KEY_AUTH_TYPE_H
+#अगर_अघोषित _KEYS_REQUEST_KEY_AUTH_TYPE_H
+#घोषणा _KEYS_REQUEST_KEY_AUTH_TYPE_H
 
-#include <linux/key.h>
+#समावेश <linux/key.h>
 
 /*
- * Authorisation record for request_key().
+ * Authorisation record क्रम request_key().
  */
-struct request_key_auth {
-	struct rcu_head		rcu;
-	struct key		*target_key;
-	struct key		*dest_keyring;
-	const struct cred	*cred;
-	void			*callout_info;
-	size_t			callout_len;
+काष्ठा request_key_auth अणु
+	काष्ठा rcu_head		rcu;
+	काष्ठा key		*target_key;
+	काष्ठा key		*dest_keyring;
+	स्थिर काष्ठा cred	*cred;
+	व्योम			*callout_info;
+	माप_प्रकार			callout_len;
 	pid_t			pid;
-	char			op[8];
-} __randomize_layout;
+	अक्षर			op[8];
+पूर्ण __अक्रमomize_layout;
 
-static inline struct request_key_auth *get_request_key_auth(const struct key *key)
-{
-	return key->payload.data[0];
-}
+अटल अंतरभूत काष्ठा request_key_auth *get_request_key_auth(स्थिर काष्ठा key *key)
+अणु
+	वापस key->payload.data[0];
+पूर्ण
 
 
-#endif /* _KEYS_REQUEST_KEY_AUTH_TYPE_H */
+#पूर्ण_अगर /* _KEYS_REQUEST_KEY_AUTH_TYPE_H */

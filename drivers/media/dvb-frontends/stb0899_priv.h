@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	STB0899 Multistandard Frontend driver
 	Copyright (C) Manu Abraham (abraham.manu@gmail.com)
@@ -7,63 +8,63 @@
 
 */
 
-#ifndef __STB0899_PRIV_H
-#define __STB0899_PRIV_H
+#अगर_अघोषित __STB0899_PRIV_H
+#घोषणा __STB0899_PRIV_H
 
-#include <media/dvb_frontend.h>
-#include "stb0899_drv.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "stb0899_drv.h"
 
-#define FE_ERROR				0
-#define FE_NOTICE				1
-#define FE_INFO					2
-#define FE_DEBUG				3
-#define FE_DEBUGREG				4
+#घोषणा FE_ERROR				0
+#घोषणा FE_NOTICE				1
+#घोषणा FE_INFO					2
+#घोषणा FE_DEBUG				3
+#घोषणा FE_DEBUGREG				4
 
-#define dprintk(x, y, z, format, arg...) do {						\
-	if (z) {									\
-		if	((*x > FE_ERROR) && (*x > y))					\
-			printk(KERN_ERR "%s: " format "\n", __func__ , ##arg);		\
-		else if	((*x > FE_NOTICE) && (*x > y))					\
-			printk(KERN_NOTICE "%s: " format "\n", __func__ , ##arg);	\
-		else if ((*x > FE_INFO) && (*x > y))					\
-			printk(KERN_INFO "%s: " format "\n", __func__ , ##arg);		\
-		else if ((*x > FE_DEBUG) && (*x > y))					\
-			printk(KERN_DEBUG "%s: " format "\n", __func__ , ##arg);	\
-	} else {									\
-		if (*x > y)								\
-			printk(format, ##arg);						\
-	}										\
-} while(0)
+#घोषणा dprपूर्णांकk(x, y, z, क्रमmat, arg...) करो अणु						\
+	अगर (z) अणु									\
+		अगर	((*x > FE_ERROR) && (*x > y))					\
+			prपूर्णांकk(KERN_ERR "%s: " क्रमmat "\n", __func__ , ##arg);		\
+		अन्यथा अगर	((*x > FE_NOTICE) && (*x > y))					\
+			prपूर्णांकk(KERN_NOTICE "%s: " क्रमmat "\n", __func__ , ##arg);	\
+		अन्यथा अगर ((*x > FE_INFO) && (*x > y))					\
+			prपूर्णांकk(KERN_INFO "%s: " क्रमmat "\n", __func__ , ##arg);		\
+		अन्यथा अगर ((*x > FE_DEBUG) && (*x > y))					\
+			prपूर्णांकk(KERN_DEBUG "%s: " क्रमmat "\n", __func__ , ##arg);	\
+	पूर्ण अन्यथा अणु									\
+		अगर (*x > y)								\
+			prपूर्णांकk(क्रमmat, ##arg);						\
+	पूर्ण										\
+पूर्ण जबतक(0)
 
-#define INRANGE(val, x, y)			(((x <= val) && (val <= y)) ||		\
+#घोषणा INRANGE(val, x, y)			(((x <= val) && (val <= y)) ||		\
 						 ((y <= val) && (val <= x)) ? 1 : 0)
 
-#define BYTE0					0
-#define BYTE1					8
-#define BYTE2					16
-#define BYTE3					24
+#घोषणा BYTE0					0
+#घोषणा BYTE1					8
+#घोषणा BYTE2					16
+#घोषणा BYTE3					24
 
-#define GETBYTE(x, y)				(((x) >> (y)) & 0xff)
-#define MAKEWORD32(a, b, c, d)			(((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
-#define MAKEWORD16(a, b)			(((a) << 8) | (b))
+#घोषणा GETBYTE(x, y)				(((x) >> (y)) & 0xff)
+#घोषणा MAKEWORD32(a, b, c, d)			(((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
+#घोषणा MAKEWORD16(a, b)			(((a) << 8) | (b))
 
-#define LSB(x)					((x & 0xff))
-#define MSB(y)					((y >> 8) & 0xff)
-
-
-#define STB0899_GETFIELD(bitf, val)		((val >> STB0899_OFFST_##bitf) & ((1 << STB0899_WIDTH_##bitf) - 1))
+#घोषणा LSB(x)					((x & 0xff))
+#घोषणा MSB(y)					((y >> 8) & 0xff)
 
 
-#define STB0899_SETFIELD(mask, val, width, offset)      (mask & (~(((1 << width) - 1) <<	\
+#घोषणा STB0899_GETFIELD(bitf, val)		((val >> STB0899_OFFST_##bitf) & ((1 << STB0899_WIDTH_##bitf) - 1))
+
+
+#घोषणा STB0899_SETFIELD(mask, val, width, offset)      (mask & (~(((1 << width) - 1) <<	\
 							 offset))) | ((val &			\
 							 ((1 << width) - 1)) << offset)
 
-#define STB0899_SETFIELD_VAL(bitf, mask, val)	(mask = (mask & (~(((1 << STB0899_WIDTH_##bitf) - 1) <<\
+#घोषणा STB0899_SETFIELD_VAL(bitf, mask, val)	(mask = (mask & (~(((1 << STB0899_WIDTH_##bitf) - 1) <<\
 							 STB0899_OFFST_##bitf))) | \
 							 (val << STB0899_OFFST_##bitf))
 
 
-enum stb0899_status {
+क्रमागत stb0899_status अणु
 	NOAGC1	= 0,
 	AGC1OK,
 	NOTIMING,
@@ -82,9 +83,9 @@ enum stb0899_status {
 	DVBS2_DEMOD_NOLOCK,
 	DVBS2_FEC_LOCK,
 	DVBS2_FEC_NOLOCK
-};
+पूर्ण;
 
-enum stb0899_modcod {
+क्रमागत stb0899_modcod अणु
 	STB0899_DUMMY_PLF,
 	STB0899_QPSK_14,
 	STB0899_QPSK_13,
@@ -114,51 +115,51 @@ enum stb0899_modcod {
 	STB0899_32APSK_56,
 	STB0899_32APSK_89,
 	STB0899_32APSK_910
-};
+पूर्ण;
 
-enum stb0899_frame {
+क्रमागत stb0899_frame अणु
 	STB0899_LONG_FRAME,
 	STB0899_SHORT_FRAME
-};
+पूर्ण;
 
-enum stb0899_alpha {
+क्रमागत stb0899_alpha अणु
 	RRC_20,
 	RRC_25,
 	RRC_35
-};
+पूर्ण;
 
-struct stb0899_tab {
+काष्ठा stb0899_tab अणु
 	s32 real;
-	s32 read;
-};
+	s32 पढ़ो;
+पूर्ण;
 
-enum stb0899_fec {
+क्रमागत stb0899_fec अणु
 	STB0899_FEC_1_2			= 13,
 	STB0899_FEC_2_3			= 18,
 	STB0899_FEC_3_4			= 21,
 	STB0899_FEC_5_6			= 24,
 	STB0899_FEC_6_7			= 25,
 	STB0899_FEC_7_8			= 26
-};
+पूर्ण;
 
-struct stb0899_params {
+काष्ठा stb0899_params अणु
 	u32	freq;					/* Frequency	*/
 	u32	srate;					/* Symbol rate	*/
-	enum fe_code_rate fecrate;
-};
+	क्रमागत fe_code_rate fecrate;
+पूर्ण;
 
-struct stb0899_internal {
+काष्ठा stb0899_पूर्णांकernal अणु
 	u32			master_clk;
-	u32			freq;			/* Demod internal Frequency		*/
-	u32			srate;			/* Demod internal Symbol rate		*/
-	enum stb0899_fec	fecrate;		/* Demod internal FEC rate		*/
-	s32			srch_range;		/* Demod internal Search Range		*/
+	u32			freq;			/* Demod पूर्णांकernal Frequency		*/
+	u32			srate;			/* Demod पूर्णांकernal Symbol rate		*/
+	क्रमागत stb0899_fec	fecrate;		/* Demod पूर्णांकernal FEC rate		*/
+	s32			srch_range;		/* Demod पूर्णांकernal Search Range		*/
 	s32			sub_range;		/* Demod current sub range (Hz)		*/
 	s32			tuner_step;		/* Tuner step (Hz)			*/
 	s32			tuner_offst;		/* Relative offset to carrier (Hz)	*/
 	u32			tuner_bw;		/* Current bandwidth of the tuner (Hz)	*/
 
-	s32			mclk;			/* Masterclock Divider factor (binary)	*/
+	s32			mclk;			/* Masterघड़ी Divider factor (binary)	*/
 	s32			rolloff;		/* Current RollOff of the filter (x100)	*/
 
 	s16			derot_freq;		/* Current derotator frequency (Hz)	*/
@@ -166,15 +167,15 @@ struct stb0899_internal {
 
 	s16			direction;		/* Current derotator search direction	*/
 	s16			derot_step;		/* Derotator step (binary value)	*/
-	s16			t_derot;		/* Derotator time constant (ms)		*/
-	s16			t_data;			/* Data recovery time constant (ms)	*/
+	s16			t_derot;		/* Derotator समय स्थिरant (ms)		*/
+	s16			t_data;			/* Data recovery समय स्थिरant (ms)	*/
 	s16			sub_dir;		/* Direction of the next sub range	*/
 
-	s16			t_agc1;			/* Agc1 time constant (ms)		*/
-	s16			t_agc2;			/* Agc2 time constant (ms)		*/
+	s16			t_agc1;			/* Agc1 समय स्थिरant (ms)		*/
+	s16			t_agc2;			/* Agc2 समय स्थिरant (ms)		*/
 
-	u32			lock;			/* Demod internal lock state		*/
-	enum stb0899_status	status;			/* Demod internal status		*/
+	u32			lock;			/* Demod पूर्णांकernal lock state		*/
+	क्रमागत stb0899_status	status;			/* Demod पूर्णांकernal status		*/
 
 	/* DVB-S2 */
 	s32			agc_gain;		/* RF AGC Gain				*/
@@ -184,68 +185,68 @@ struct stb0899_internal {
 
 	s16			step_size;		/* Carrier frequency search step size	*/
 
-	enum stb0899_alpha	rrc_alpha;
-	enum stb0899_inversion	inversion;
-	enum stb0899_modcod	modcod;
+	क्रमागत stb0899_alpha	rrc_alpha;
+	क्रमागत stb0899_inversion	inversion;
+	क्रमागत stb0899_modcod	modcod;
 	u8			pilots;			/* Pilots found				*/
 
-	enum stb0899_frame	frame_length;
+	क्रमागत stb0899_frame	frame_length;
 	u8			v_status;		/* VSTATUS				*/
 	u8			err_ctrl;		/* ERRCTRLn				*/
-};
+पूर्ण;
 
-struct stb0899_state {
-	struct i2c_adapter		*i2c;
-	struct stb0899_config		*config;
-	struct dvb_frontend		frontend;
+काष्ठा stb0899_state अणु
+	काष्ठा i2c_adapter		*i2c;
+	काष्ठा stb0899_config		*config;
+	काष्ठा dvb_frontend		frontend;
 
 	u32				*verbose;	/* Cached module verbosity level	*/
 
-	struct stb0899_internal		internal;	/* Device internal parameters		*/
+	काष्ठा stb0899_पूर्णांकernal		पूर्णांकernal;	/* Device पूर्णांकernal parameters		*/
 
 	/*	cached params from API	*/
-	enum fe_delivery_system		delsys;
-	struct stb0899_params		params;
+	क्रमागत fe_delivery_प्रणाली		delsys;
+	काष्ठा stb0899_params		params;
 
 	u32				rx_freq;	/* DiSEqC 2.0 receiver freq		*/
-	struct mutex			search_lock;
-};
+	काष्ठा mutex			search_lock;
+पूर्ण;
 /* stb0899.c		*/
-extern int stb0899_read_reg(struct stb0899_state *state,
-			    unsigned int reg);
+बाह्य पूर्णांक stb0899_पढ़ो_reg(काष्ठा stb0899_state *state,
+			    अचिन्हित पूर्णांक reg);
 
-extern u32 _stb0899_read_s2reg(struct stb0899_state *state,
+बाह्य u32 _stb0899_पढ़ो_s2reg(काष्ठा stb0899_state *state,
 			       u32 stb0899_i2cdev,
 			       u32 stb0899_base_addr,
 			       u16 stb0899_reg_offset);
 
-extern int stb0899_read_regs(struct stb0899_state *state,
-			     unsigned int reg, u8 *buf,
+बाह्य पूर्णांक stb0899_पढ़ो_regs(काष्ठा stb0899_state *state,
+			     अचिन्हित पूर्णांक reg, u8 *buf,
 			     u32 count);
 
-extern int stb0899_write_regs(struct stb0899_state *state,
-			      unsigned int reg, u8 *data,
+बाह्य पूर्णांक stb0899_ग_लिखो_regs(काष्ठा stb0899_state *state,
+			      अचिन्हित पूर्णांक reg, u8 *data,
 			      u32 count);
 
-extern int stb0899_write_reg(struct stb0899_state *state,
-			     unsigned int reg,
+बाह्य पूर्णांक stb0899_ग_लिखो_reg(काष्ठा stb0899_state *state,
+			     अचिन्हित पूर्णांक reg,
 			     u8 data);
 
-extern int stb0899_write_s2reg(struct stb0899_state *state,
+बाह्य पूर्णांक stb0899_ग_लिखो_s2reg(काष्ठा stb0899_state *state,
 			       u32 stb0899_i2cdev,
 			       u32 stb0899_base_addr,
 			       u16 stb0899_reg_offset,
 			       u32 stb0899_data);
 
-extern int stb0899_i2c_gate_ctrl(struct dvb_frontend *fe, int enable);
+बाह्य पूर्णांक stb0899_i2c_gate_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक enable);
 
 
-#define STB0899_READ_S2REG(DEVICE, REG)		(_stb0899_read_s2reg(state, DEVICE, STB0899_BASE_##REG, STB0899_OFF0_##REG))
-//#define STB0899_WRITE_S2REG(DEVICE, REG, DATA)	(_stb0899_write_s2reg(state, DEVICE, STB0899_BASE_##REG, STB0899_OFF0_##REG, DATA))
+#घोषणा STB0899_READ_S2REG(DEVICE, REG)		(_stb0899_पढ़ो_s2reg(state, DEVICE, STB0899_BASE_##REG, STB0899_OFF0_##REG))
+//#घोषणा STB0899_WRITE_S2REG(DEVICE, REG, DATA)	(_stb0899_ग_लिखो_s2reg(state, DEVICE, STB0899_BASE_##REG, STB0899_OFF0_##REG, DATA))
 
 /* stb0899_algo.c	*/
-extern enum stb0899_status stb0899_dvbs_algo(struct stb0899_state *state);
-extern enum stb0899_status stb0899_dvbs2_algo(struct stb0899_state *state);
-extern long stb0899_carr_width(struct stb0899_state *state);
+बाह्य क्रमागत stb0899_status stb0899_dvbs_algo(काष्ठा stb0899_state *state);
+बाह्य क्रमागत stb0899_status stb0899_dvbs2_algo(काष्ठा stb0899_state *state);
+बाह्य दीर्घ stb0899_carr_width(काष्ठा stb0899_state *state);
 
-#endif //__STB0899_PRIV_H
+#पूर्ण_अगर //__STB0899_PRIV_H

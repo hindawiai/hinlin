@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * sja1000.c -  Philips SJA1000 network device driver
  *
@@ -7,31 +8,31 @@
  * Copyright (c) 2002-2007 Volkswagen Group Electronic Research
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. Neither the name of Volkswagen nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *    may be used to enकरोrse or promote products derived from this software
+ *    without specअगरic prior written permission.
  *
  * Alternatively, provided that this notice is retained in full, this
  * software may be distributed under the terms of the GNU General
- * Public License ("GPL") version 2, in which case the provisions of the
+ * Public License ("GPL") version 2, in which हाल the provisions of the
  * GPL apply INSTEAD OF those given above.
  *
- * The provided data structures and external interfaces from this code
+ * The provided data काष्ठाures and बाह्यal पूर्णांकerfaces from this code
  * are not restricted to be used by modules with a GPL compatible license.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -42,35 +43,35 @@
  *
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/interrupt.h>
-#include <linux/ptrace.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/if_ether.h>
-#include <linux/skbuff.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/delay.h>
 
-#include <linux/can/dev.h>
-#include <linux/can/error.h>
-#include <linux/can/led.h>
+#समावेश <linux/can/dev.h>
+#समावेश <linux/can/error.h>
+#समावेश <linux/can/led.h>
 
-#include "sja1000.h"
+#समावेश "sja1000.h"
 
-#define DRV_NAME "sja1000"
+#घोषणा DRV_NAME "sja1000"
 
 MODULE_AUTHOR("Oliver Hartkopp <oliver.hartkopp@volkswagen.de>");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION(DRV_NAME "CAN netdevice driver");
 
-static const struct can_bittiming_const sja1000_bittiming_const = {
+अटल स्थिर काष्ठा can_bittiming_स्थिर sja1000_bittiming_स्थिर = अणु
 	.name = DRV_NAME,
 	.tseg1_min = 1,
 	.tseg1_max = 16,
@@ -80,197 +81,197 @@ static const struct can_bittiming_const sja1000_bittiming_const = {
 	.brp_min = 1,
 	.brp_max = 64,
 	.brp_inc = 1,
-};
+पूर्ण;
 
-static void sja1000_write_cmdreg(struct sja1000_priv *priv, u8 val)
-{
-	unsigned long flags;
+अटल व्योम sja1000_ग_लिखो_cmdreg(काष्ठा sja1000_priv *priv, u8 val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * The command register needs some locking and time to settle
-	 * the write_reg() operation - especially on SMP systems.
+	 * The command रेजिस्टर needs some locking and समय to settle
+	 * the ग_लिखो_reg() operation - especially on SMP प्रणालीs.
 	 */
 	spin_lock_irqsave(&priv->cmdreg_lock, flags);
-	priv->write_reg(priv, SJA1000_CMR, val);
-	priv->read_reg(priv, SJA1000_SR);
+	priv->ग_लिखो_reg(priv, SJA1000_CMR, val);
+	priv->पढ़ो_reg(priv, SJA1000_SR);
 	spin_unlock_irqrestore(&priv->cmdreg_lock, flags);
-}
+पूर्ण
 
-static int sja1000_is_absent(struct sja1000_priv *priv)
-{
-	return (priv->read_reg(priv, SJA1000_MOD) == 0xFF);
-}
+अटल पूर्णांक sja1000_is_असलent(काष्ठा sja1000_priv *priv)
+अणु
+	वापस (priv->पढ़ो_reg(priv, SJA1000_MOD) == 0xFF);
+पूर्ण
 
-static int sja1000_probe_chip(struct net_device *dev)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
+अटल पूर्णांक sja1000_probe_chip(काष्ठा net_device *dev)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
 
-	if (priv->reg_base && sja1000_is_absent(priv)) {
+	अगर (priv->reg_base && sja1000_is_असलent(priv)) अणु
 		netdev_err(dev, "probing failed\n");
-		return 0;
-	}
-	return -1;
-}
+		वापस 0;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static void set_reset_mode(struct net_device *dev)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
-	unsigned char status = priv->read_reg(priv, SJA1000_MOD);
-	int i;
+अटल व्योम set_reset_mode(काष्ठा net_device *dev)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
+	अचिन्हित अक्षर status = priv->पढ़ो_reg(priv, SJA1000_MOD);
+	पूर्णांक i;
 
-	/* disable interrupts */
-	priv->write_reg(priv, SJA1000_IER, IRQ_OFF);
+	/* disable पूर्णांकerrupts */
+	priv->ग_लिखो_reg(priv, SJA1000_IER, IRQ_OFF);
 
-	for (i = 0; i < 100; i++) {
+	क्रम (i = 0; i < 100; i++) अणु
 		/* check reset bit */
-		if (status & MOD_RM) {
+		अगर (status & MOD_RM) अणु
 			priv->can.state = CAN_STATE_STOPPED;
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/* reset chip */
-		priv->write_reg(priv, SJA1000_MOD, MOD_RM);
+		priv->ग_लिखो_reg(priv, SJA1000_MOD, MOD_RM);
 		udelay(10);
-		status = priv->read_reg(priv, SJA1000_MOD);
-	}
+		status = priv->पढ़ो_reg(priv, SJA1000_MOD);
+	पूर्ण
 
 	netdev_err(dev, "setting SJA1000 into reset mode failed!\n");
-}
+पूर्ण
 
-static void set_normal_mode(struct net_device *dev)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
-	unsigned char status = priv->read_reg(priv, SJA1000_MOD);
+अटल व्योम set_normal_mode(काष्ठा net_device *dev)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
+	अचिन्हित अक्षर status = priv->पढ़ो_reg(priv, SJA1000_MOD);
 	u8 mod_reg_val = 0x00;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 100; i++) {
+	क्रम (i = 0; i < 100; i++) अणु
 		/* check reset bit */
-		if ((status & MOD_RM) == 0) {
+		अगर ((status & MOD_RM) == 0) अणु
 			priv->can.state = CAN_STATE_ERROR_ACTIVE;
-			/* enable interrupts */
-			if (priv->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING)
-				priv->write_reg(priv, SJA1000_IER, IRQ_ALL);
-			else
-				priv->write_reg(priv, SJA1000_IER,
+			/* enable पूर्णांकerrupts */
+			अगर (priv->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING)
+				priv->ग_लिखो_reg(priv, SJA1000_IER, IRQ_ALL);
+			अन्यथा
+				priv->ग_लिखो_reg(priv, SJA1000_IER,
 						IRQ_ALL & ~IRQ_BEI);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/* set chip to normal mode */
-		if (priv->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
+		अगर (priv->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
 			mod_reg_val |= MOD_LOM;
-		if (priv->can.ctrlmode & CAN_CTRLMODE_PRESUME_ACK)
+		अगर (priv->can.ctrlmode & CAN_CTRLMODE_PRESUME_ACK)
 			mod_reg_val |= MOD_STM;
-		priv->write_reg(priv, SJA1000_MOD, mod_reg_val);
+		priv->ग_लिखो_reg(priv, SJA1000_MOD, mod_reg_val);
 
 		udelay(10);
 
-		status = priv->read_reg(priv, SJA1000_MOD);
-	}
+		status = priv->पढ़ो_reg(priv, SJA1000_MOD);
+	पूर्ण
 
 	netdev_err(dev, "setting SJA1000 into normal mode failed!\n");
-}
+पूर्ण
 
 /*
  * initialize SJA1000 chip:
  *   - reset chip
  *   - set output mode
  *   - set baudrate
- *   - enable interrupts
+ *   - enable पूर्णांकerrupts
  *   - start operating mode
  */
-static void chipset_init(struct net_device *dev)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
+अटल व्योम chipset_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
 
-	/* set clock divider and output control register */
-	priv->write_reg(priv, SJA1000_CDR, priv->cdr | CDR_PELICAN);
+	/* set घड़ी भागider and output control रेजिस्टर */
+	priv->ग_लिखो_reg(priv, SJA1000_CDR, priv->cdr | CDR_PELICAN);
 
 	/* set acceptance filter (accept all) */
-	priv->write_reg(priv, SJA1000_ACCC0, 0x00);
-	priv->write_reg(priv, SJA1000_ACCC1, 0x00);
-	priv->write_reg(priv, SJA1000_ACCC2, 0x00);
-	priv->write_reg(priv, SJA1000_ACCC3, 0x00);
+	priv->ग_लिखो_reg(priv, SJA1000_ACCC0, 0x00);
+	priv->ग_लिखो_reg(priv, SJA1000_ACCC1, 0x00);
+	priv->ग_लिखो_reg(priv, SJA1000_ACCC2, 0x00);
+	priv->ग_लिखो_reg(priv, SJA1000_ACCC3, 0x00);
 
-	priv->write_reg(priv, SJA1000_ACCM0, 0xFF);
-	priv->write_reg(priv, SJA1000_ACCM1, 0xFF);
-	priv->write_reg(priv, SJA1000_ACCM2, 0xFF);
-	priv->write_reg(priv, SJA1000_ACCM3, 0xFF);
+	priv->ग_लिखो_reg(priv, SJA1000_ACCM0, 0xFF);
+	priv->ग_लिखो_reg(priv, SJA1000_ACCM1, 0xFF);
+	priv->ग_लिखो_reg(priv, SJA1000_ACCM2, 0xFF);
+	priv->ग_लिखो_reg(priv, SJA1000_ACCM3, 0xFF);
 
-	priv->write_reg(priv, SJA1000_OCR, priv->ocr | OCR_MODE_NORMAL);
-}
+	priv->ग_लिखो_reg(priv, SJA1000_OCR, priv->ocr | OCR_MODE_NORMAL);
+पूर्ण
 
-static void sja1000_start(struct net_device *dev)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
+अटल व्योम sja1000_start(काष्ठा net_device *dev)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
 
 	/* leave reset mode */
-	if (priv->can.state != CAN_STATE_STOPPED)
+	अगर (priv->can.state != CAN_STATE_STOPPED)
 		set_reset_mode(dev);
 
-	/* Initialize chip if uninitialized at this stage */
-	if (!(priv->read_reg(priv, SJA1000_CDR) & CDR_PELICAN))
+	/* Initialize chip अगर uninitialized at this stage */
+	अगर (!(priv->पढ़ो_reg(priv, SJA1000_CDR) & CDR_PELICAN))
 		chipset_init(dev);
 
 	/* Clear error counters and error code capture */
-	priv->write_reg(priv, SJA1000_TXERR, 0x0);
-	priv->write_reg(priv, SJA1000_RXERR, 0x0);
-	priv->read_reg(priv, SJA1000_ECC);
+	priv->ग_लिखो_reg(priv, SJA1000_TXERR, 0x0);
+	priv->ग_लिखो_reg(priv, SJA1000_RXERR, 0x0);
+	priv->पढ़ो_reg(priv, SJA1000_ECC);
 
-	/* clear interrupt flags */
-	priv->read_reg(priv, SJA1000_IR);
+	/* clear पूर्णांकerrupt flags */
+	priv->पढ़ो_reg(priv, SJA1000_IR);
 
 	/* leave reset mode */
 	set_normal_mode(dev);
-}
+पूर्ण
 
-static int sja1000_set_mode(struct net_device *dev, enum can_mode mode)
-{
-	switch (mode) {
-	case CAN_MODE_START:
+अटल पूर्णांक sja1000_set_mode(काष्ठा net_device *dev, क्रमागत can_mode mode)
+अणु
+	चयन (mode) अणु
+	हाल CAN_MODE_START:
 		sja1000_start(dev);
-		if (netif_queue_stopped(dev))
-			netif_wake_queue(dev);
-		break;
+		अगर (netअगर_queue_stopped(dev))
+			netअगर_wake_queue(dev);
+		अवरोध;
 
-	default:
-		return -EOPNOTSUPP;
-	}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1000_set_bittiming(struct net_device *dev)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
-	struct can_bittiming *bt = &priv->can.bittiming;
+अटल पूर्णांक sja1000_set_bittiming(काष्ठा net_device *dev)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
+	काष्ठा can_bittiming *bt = &priv->can.bittiming;
 	u8 btr0, btr1;
 
 	btr0 = ((bt->brp - 1) & 0x3f) | (((bt->sjw - 1) & 0x3) << 6);
 	btr1 = ((bt->prop_seg + bt->phase_seg1 - 1) & 0xf) |
 		(((bt->phase_seg2 - 1) & 0x7) << 4);
-	if (priv->can.ctrlmode & CAN_CTRLMODE_3_SAMPLES)
+	अगर (priv->can.ctrlmode & CAN_CTRLMODE_3_SAMPLES)
 		btr1 |= 0x80;
 
 	netdev_info(dev, "setting BTR0=0x%02x BTR1=0x%02x\n", btr0, btr1);
 
-	priv->write_reg(priv, SJA1000_BTR0, btr0);
-	priv->write_reg(priv, SJA1000_BTR1, btr1);
+	priv->ग_लिखो_reg(priv, SJA1000_BTR0, btr0);
+	priv->ग_लिखो_reg(priv, SJA1000_BTR1, btr1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1000_get_berr_counter(const struct net_device *dev,
-				    struct can_berr_counter *bec)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
+अटल पूर्णांक sja1000_get_berr_counter(स्थिर काष्ठा net_device *dev,
+				    काष्ठा can_berr_counter *bec)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
 
-	bec->txerr = priv->read_reg(priv, SJA1000_TXERR);
-	bec->rxerr = priv->read_reg(priv, SJA1000_RXERR);
+	bec->txerr = priv->पढ़ो_reg(priv, SJA1000_TXERR);
+	bec->rxerr = priv->पढ़ो_reg(priv, SJA1000_RXERR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * transmit a CAN message
@@ -278,359 +279,359 @@ static int sja1000_get_berr_counter(const struct net_device *dev,
  * xx xx xx xx	 ff	 ll   00 11 22 33 44 55 66 77
  * [  can-id ] [flags] [len] [can data (up to 8 bytes]
  */
-static netdev_tx_t sja1000_start_xmit(struct sk_buff *skb,
-					    struct net_device *dev)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
-	struct can_frame *cf = (struct can_frame *)skb->data;
-	uint8_t fi;
+अटल netdev_tx_t sja1000_start_xmit(काष्ठा sk_buff *skb,
+					    काष्ठा net_device *dev)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
+	काष्ठा can_frame *cf = (काष्ठा can_frame *)skb->data;
+	uपूर्णांक8_t fi;
 	canid_t id;
-	uint8_t dreg;
+	uपूर्णांक8_t dreg;
 	u8 cmd_reg_val = 0x00;
-	int i;
+	पूर्णांक i;
 
-	if (can_dropped_invalid_skb(dev, skb))
-		return NETDEV_TX_OK;
+	अगर (can_dropped_invalid_skb(dev, skb))
+		वापस NETDEV_TX_OK;
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
 	fi = can_get_cc_dlc(cf, priv->can.ctrlmode);
 	id = cf->can_id;
 
-	if (id & CAN_RTR_FLAG)
+	अगर (id & CAN_RTR_FLAG)
 		fi |= SJA1000_FI_RTR;
 
-	if (id & CAN_EFF_FLAG) {
+	अगर (id & CAN_EFF_FLAG) अणु
 		fi |= SJA1000_FI_FF;
 		dreg = SJA1000_EFF_BUF;
-		priv->write_reg(priv, SJA1000_FI, fi);
-		priv->write_reg(priv, SJA1000_ID1, (id & 0x1fe00000) >> 21);
-		priv->write_reg(priv, SJA1000_ID2, (id & 0x001fe000) >> 13);
-		priv->write_reg(priv, SJA1000_ID3, (id & 0x00001fe0) >> 5);
-		priv->write_reg(priv, SJA1000_ID4, (id & 0x0000001f) << 3);
-	} else {
+		priv->ग_लिखो_reg(priv, SJA1000_FI, fi);
+		priv->ग_लिखो_reg(priv, SJA1000_ID1, (id & 0x1fe00000) >> 21);
+		priv->ग_लिखो_reg(priv, SJA1000_ID2, (id & 0x001fe000) >> 13);
+		priv->ग_लिखो_reg(priv, SJA1000_ID3, (id & 0x00001fe0) >> 5);
+		priv->ग_लिखो_reg(priv, SJA1000_ID4, (id & 0x0000001f) << 3);
+	पूर्ण अन्यथा अणु
 		dreg = SJA1000_SFF_BUF;
-		priv->write_reg(priv, SJA1000_FI, fi);
-		priv->write_reg(priv, SJA1000_ID1, (id & 0x000007f8) >> 3);
-		priv->write_reg(priv, SJA1000_ID2, (id & 0x00000007) << 5);
-	}
+		priv->ग_लिखो_reg(priv, SJA1000_FI, fi);
+		priv->ग_लिखो_reg(priv, SJA1000_ID1, (id & 0x000007f8) >> 3);
+		priv->ग_लिखो_reg(priv, SJA1000_ID2, (id & 0x00000007) << 5);
+	पूर्ण
 
-	for (i = 0; i < cf->len; i++)
-		priv->write_reg(priv, dreg++, cf->data[i]);
+	क्रम (i = 0; i < cf->len; i++)
+		priv->ग_लिखो_reg(priv, dreg++, cf->data[i]);
 
 	can_put_echo_skb(skb, dev, 0, 0);
 
-	if (priv->can.ctrlmode & CAN_CTRLMODE_ONE_SHOT)
+	अगर (priv->can.ctrlmode & CAN_CTRLMODE_ONE_SHOT)
 		cmd_reg_val |= CMD_AT;
 
-	if (priv->can.ctrlmode & CAN_CTRLMODE_LOOPBACK)
+	अगर (priv->can.ctrlmode & CAN_CTRLMODE_LOOPBACK)
 		cmd_reg_val |= CMD_SRR;
-	else
+	अन्यथा
 		cmd_reg_val |= CMD_TR;
 
-	sja1000_write_cmdreg(priv, cmd_reg_val);
+	sja1000_ग_लिखो_cmdreg(priv, cmd_reg_val);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void sja1000_rx(struct net_device *dev)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
-	struct net_device_stats *stats = &dev->stats;
-	struct can_frame *cf;
-	struct sk_buff *skb;
-	uint8_t fi;
-	uint8_t dreg;
+अटल व्योम sja1000_rx(काष्ठा net_device *dev)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
+	काष्ठा net_device_stats *stats = &dev->stats;
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
+	uपूर्णांक8_t fi;
+	uपूर्णांक8_t dreg;
 	canid_t id;
-	int i;
+	पूर्णांक i;
 
 	/* create zero'ed CAN frame buffer */
 	skb = alloc_can_skb(dev, &cf);
-	if (skb == NULL)
-		return;
+	अगर (skb == शून्य)
+		वापस;
 
-	fi = priv->read_reg(priv, SJA1000_FI);
+	fi = priv->पढ़ो_reg(priv, SJA1000_FI);
 
-	if (fi & SJA1000_FI_FF) {
-		/* extended frame format (EFF) */
+	अगर (fi & SJA1000_FI_FF) अणु
+		/* extended frame क्रमmat (EFF) */
 		dreg = SJA1000_EFF_BUF;
-		id = (priv->read_reg(priv, SJA1000_ID1) << 21)
-		    | (priv->read_reg(priv, SJA1000_ID2) << 13)
-		    | (priv->read_reg(priv, SJA1000_ID3) << 5)
-		    | (priv->read_reg(priv, SJA1000_ID4) >> 3);
+		id = (priv->पढ़ो_reg(priv, SJA1000_ID1) << 21)
+		    | (priv->पढ़ो_reg(priv, SJA1000_ID2) << 13)
+		    | (priv->पढ़ो_reg(priv, SJA1000_ID3) << 5)
+		    | (priv->पढ़ो_reg(priv, SJA1000_ID4) >> 3);
 		id |= CAN_EFF_FLAG;
-	} else {
-		/* standard frame format (SFF) */
+	पूर्ण अन्यथा अणु
+		/* standard frame क्रमmat (SFF) */
 		dreg = SJA1000_SFF_BUF;
-		id = (priv->read_reg(priv, SJA1000_ID1) << 3)
-		    | (priv->read_reg(priv, SJA1000_ID2) >> 5);
-	}
+		id = (priv->पढ़ो_reg(priv, SJA1000_ID1) << 3)
+		    | (priv->पढ़ो_reg(priv, SJA1000_ID2) >> 5);
+	पूर्ण
 
 	can_frame_set_cc_len(cf, fi & 0x0F, priv->can.ctrlmode);
-	if (fi & SJA1000_FI_RTR) {
+	अगर (fi & SJA1000_FI_RTR) अणु
 		id |= CAN_RTR_FLAG;
-	} else {
-		for (i = 0; i < cf->len; i++)
-			cf->data[i] = priv->read_reg(priv, dreg++);
-	}
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < cf->len; i++)
+			cf->data[i] = priv->पढ़ो_reg(priv, dreg++);
+	पूर्ण
 
 	cf->can_id = id;
 
 	/* release receive buffer */
-	sja1000_write_cmdreg(priv, CMD_RRB);
+	sja1000_ग_लिखो_cmdreg(priv, CMD_RRB);
 
 	stats->rx_packets++;
 	stats->rx_bytes += cf->len;
-	netif_rx(skb);
+	netअगर_rx(skb);
 
 	can_led_event(dev, CAN_LED_EVENT_RX);
-}
+पूर्ण
 
-static int sja1000_err(struct net_device *dev, uint8_t isrc, uint8_t status)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
-	struct net_device_stats *stats = &dev->stats;
-	struct can_frame *cf;
-	struct sk_buff *skb;
-	enum can_state state = priv->can.state;
-	enum can_state rx_state, tx_state;
-	unsigned int rxerr, txerr;
-	uint8_t ecc, alc;
+अटल पूर्णांक sja1000_err(काष्ठा net_device *dev, uपूर्णांक8_t isrc, uपूर्णांक8_t status)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
+	काष्ठा net_device_stats *stats = &dev->stats;
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
+	क्रमागत can_state state = priv->can.state;
+	क्रमागत can_state rx_state, tx_state;
+	अचिन्हित पूर्णांक rxerr, txerr;
+	uपूर्णांक8_t ecc, alc;
 
 	skb = alloc_can_err_skb(dev, &cf);
-	if (skb == NULL)
-		return -ENOMEM;
+	अगर (skb == शून्य)
+		वापस -ENOMEM;
 
-	txerr = priv->read_reg(priv, SJA1000_TXERR);
-	rxerr = priv->read_reg(priv, SJA1000_RXERR);
+	txerr = priv->पढ़ो_reg(priv, SJA1000_TXERR);
+	rxerr = priv->पढ़ो_reg(priv, SJA1000_RXERR);
 
 	cf->data[6] = txerr;
 	cf->data[7] = rxerr;
 
-	if (isrc & IRQ_DOI) {
-		/* data overrun interrupt */
+	अगर (isrc & IRQ_DOI) अणु
+		/* data overrun पूर्णांकerrupt */
 		netdev_dbg(dev, "data overrun interrupt\n");
 		cf->can_id |= CAN_ERR_CRTL;
 		cf->data[1] = CAN_ERR_CRTL_RX_OVERFLOW;
 		stats->rx_over_errors++;
 		stats->rx_errors++;
-		sja1000_write_cmdreg(priv, CMD_CDO);	/* clear bit */
-	}
+		sja1000_ग_लिखो_cmdreg(priv, CMD_CDO);	/* clear bit */
+	पूर्ण
 
-	if (isrc & IRQ_EI) {
-		/* error warning interrupt */
+	अगर (isrc & IRQ_EI) अणु
+		/* error warning पूर्णांकerrupt */
 		netdev_dbg(dev, "error warning interrupt\n");
 
-		if (status & SR_BS)
+		अगर (status & SR_BS)
 			state = CAN_STATE_BUS_OFF;
-		else if (status & SR_ES)
+		अन्यथा अगर (status & SR_ES)
 			state = CAN_STATE_ERROR_WARNING;
-		else
+		अन्यथा
 			state = CAN_STATE_ERROR_ACTIVE;
-	}
-	if (isrc & IRQ_BEI) {
-		/* bus error interrupt */
+	पूर्ण
+	अगर (isrc & IRQ_BEI) अणु
+		/* bus error पूर्णांकerrupt */
 		priv->can.can_stats.bus_error++;
 		stats->rx_errors++;
 
-		ecc = priv->read_reg(priv, SJA1000_ECC);
+		ecc = priv->पढ़ो_reg(priv, SJA1000_ECC);
 
 		cf->can_id |= CAN_ERR_PROT | CAN_ERR_BUSERROR;
 
 		/* set error type */
-		switch (ecc & ECC_MASK) {
-		case ECC_BIT:
+		चयन (ecc & ECC_MASK) अणु
+		हाल ECC_BIT:
 			cf->data[2] |= CAN_ERR_PROT_BIT;
-			break;
-		case ECC_FORM:
+			अवरोध;
+		हाल ECC_FORM:
 			cf->data[2] |= CAN_ERR_PROT_FORM;
-			break;
-		case ECC_STUFF:
+			अवरोध;
+		हाल ECC_STUFF:
 			cf->data[2] |= CAN_ERR_PROT_STUFF;
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		/* set error location */
 		cf->data[3] = ecc & ECC_SEG;
 
 		/* Error occurred during transmission? */
-		if ((ecc & ECC_DIR) == 0)
+		अगर ((ecc & ECC_सूची) == 0)
 			cf->data[2] |= CAN_ERR_PROT_TX;
-	}
-	if (isrc & IRQ_EPI) {
-		/* error passive interrupt */
+	पूर्ण
+	अगर (isrc & IRQ_EPI) अणु
+		/* error passive पूर्णांकerrupt */
 		netdev_dbg(dev, "error passive interrupt\n");
 
-		if (state == CAN_STATE_ERROR_PASSIVE)
+		अगर (state == CAN_STATE_ERROR_PASSIVE)
 			state = CAN_STATE_ERROR_WARNING;
-		else
+		अन्यथा
 			state = CAN_STATE_ERROR_PASSIVE;
-	}
-	if (isrc & IRQ_ALI) {
-		/* arbitration lost interrupt */
+	पूर्ण
+	अगर (isrc & IRQ_ALI) अणु
+		/* arbitration lost पूर्णांकerrupt */
 		netdev_dbg(dev, "arbitration lost interrupt\n");
-		alc = priv->read_reg(priv, SJA1000_ALC);
+		alc = priv->पढ़ो_reg(priv, SJA1000_ALC);
 		priv->can.can_stats.arbitration_lost++;
 		cf->can_id |= CAN_ERR_LOSTARB;
 		cf->data[0] = alc & 0x1f;
-	}
+	पूर्ण
 
-	if (state != priv->can.state) {
+	अगर (state != priv->can.state) अणु
 		tx_state = txerr >= rxerr ? state : 0;
 		rx_state = txerr <= rxerr ? state : 0;
 
 		can_change_state(dev, cf, tx_state, rx_state);
 
-		if(state == CAN_STATE_BUS_OFF)
+		अगर(state == CAN_STATE_BUS_OFF)
 			can_bus_off(dev);
-	}
+	पूर्ण
 
 	stats->rx_packets++;
 	stats->rx_bytes += cf->len;
-	netif_rx(skb);
+	netअगर_rx(skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-irqreturn_t sja1000_interrupt(int irq, void *dev_id)
-{
-	struct net_device *dev = (struct net_device *)dev_id;
-	struct sja1000_priv *priv = netdev_priv(dev);
-	struct net_device_stats *stats = &dev->stats;
-	uint8_t isrc, status;
-	int n = 0;
+irqवापस_t sja1000_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = (काष्ठा net_device *)dev_id;
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
+	काष्ठा net_device_stats *stats = &dev->stats;
+	uपूर्णांक8_t isrc, status;
+	पूर्णांक n = 0;
 
-	if (priv->pre_irq)
+	अगर (priv->pre_irq)
 		priv->pre_irq(priv);
 
-	/* Shared interrupts and IRQ off? */
-	if (priv->read_reg(priv, SJA1000_IER) == IRQ_OFF)
-		goto out;
+	/* Shared पूर्णांकerrupts and IRQ off? */
+	अगर (priv->पढ़ो_reg(priv, SJA1000_IER) == IRQ_OFF)
+		जाओ out;
 
-	while ((isrc = priv->read_reg(priv, SJA1000_IR)) &&
-	       (n < SJA1000_MAX_IRQ)) {
+	जबतक ((isrc = priv->पढ़ो_reg(priv, SJA1000_IR)) &&
+	       (n < SJA1000_MAX_IRQ)) अणु
 
-		status = priv->read_reg(priv, SJA1000_SR);
-		/* check for absent controller due to hw unplug */
-		if (status == 0xFF && sja1000_is_absent(priv))
-			goto out;
+		status = priv->पढ़ो_reg(priv, SJA1000_SR);
+		/* check क्रम असलent controller due to hw unplug */
+		अगर (status == 0xFF && sja1000_is_असलent(priv))
+			जाओ out;
 
-		if (isrc & IRQ_WUI)
+		अगर (isrc & IRQ_WUI)
 			netdev_warn(dev, "wakeup interrupt\n");
 
-		if (isrc & IRQ_TI) {
+		अगर (isrc & IRQ_TI) अणु
 			/* transmission buffer released */
-			if (priv->can.ctrlmode & CAN_CTRLMODE_ONE_SHOT &&
-			    !(status & SR_TCS)) {
+			अगर (priv->can.ctrlmode & CAN_CTRLMODE_ONE_SHOT &&
+			    !(status & SR_TCS)) अणु
 				stats->tx_errors++;
-				can_free_echo_skb(dev, 0, NULL);
-			} else {
+				can_मुक्त_echo_skb(dev, 0, शून्य);
+			पूर्ण अन्यथा अणु
 				/* transmission complete */
 				stats->tx_bytes +=
-					priv->read_reg(priv, SJA1000_FI) & 0xf;
+					priv->पढ़ो_reg(priv, SJA1000_FI) & 0xf;
 				stats->tx_packets++;
-				can_get_echo_skb(dev, 0, NULL);
-			}
-			netif_wake_queue(dev);
+				can_get_echo_skb(dev, 0, शून्य);
+			पूर्ण
+			netअगर_wake_queue(dev);
 			can_led_event(dev, CAN_LED_EVENT_TX);
-		}
-		if (isrc & IRQ_RI) {
-			/* receive interrupt */
-			while (status & SR_RBS) {
+		पूर्ण
+		अगर (isrc & IRQ_RI) अणु
+			/* receive पूर्णांकerrupt */
+			जबतक (status & SR_RBS) अणु
 				sja1000_rx(dev);
-				status = priv->read_reg(priv, SJA1000_SR);
-				/* check for absent controller */
-				if (status == 0xFF && sja1000_is_absent(priv))
-					goto out;
-			}
-		}
-		if (isrc & (IRQ_DOI | IRQ_EI | IRQ_BEI | IRQ_EPI | IRQ_ALI)) {
-			/* error interrupt */
-			if (sja1000_err(dev, isrc, status))
-				break;
-		}
+				status = priv->पढ़ो_reg(priv, SJA1000_SR);
+				/* check क्रम असलent controller */
+				अगर (status == 0xFF && sja1000_is_असलent(priv))
+					जाओ out;
+			पूर्ण
+		पूर्ण
+		अगर (isrc & (IRQ_DOI | IRQ_EI | IRQ_BEI | IRQ_EPI | IRQ_ALI)) अणु
+			/* error पूर्णांकerrupt */
+			अगर (sja1000_err(dev, isrc, status))
+				अवरोध;
+		पूर्ण
 		n++;
-	}
+	पूर्ण
 out:
-	if (priv->post_irq)
+	अगर (priv->post_irq)
 		priv->post_irq(priv);
 
-	if (n >= SJA1000_MAX_IRQ)
+	अगर (n >= SJA1000_MAX_IRQ)
 		netdev_dbg(dev, "%d messages handled in ISR", n);
 
-	return (n) ? IRQ_HANDLED : IRQ_NONE;
-}
-EXPORT_SYMBOL_GPL(sja1000_interrupt);
+	वापस (n) ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
+EXPORT_SYMBOL_GPL(sja1000_पूर्णांकerrupt);
 
-static int sja1000_open(struct net_device *dev)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
-	int err;
+अटल पूर्णांक sja1000_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
+	पूर्णांक err;
 
-	/* set chip into reset mode */
+	/* set chip पूर्णांकo reset mode */
 	set_reset_mode(dev);
 
-	/* common open */
-	err = open_candev(dev);
-	if (err)
-		return err;
+	/* common खोलो */
+	err = खोलो_candev(dev);
+	अगर (err)
+		वापस err;
 
-	/* register interrupt handler, if not done by the device driver */
-	if (!(priv->flags & SJA1000_CUSTOM_IRQ_HANDLER)) {
-		err = request_irq(dev->irq, sja1000_interrupt, priv->irq_flags,
-				  dev->name, (void *)dev);
-		if (err) {
-			close_candev(dev);
-			return -EAGAIN;
-		}
-	}
+	/* रेजिस्टर पूर्णांकerrupt handler, अगर not करोne by the device driver */
+	अगर (!(priv->flags & SJA1000_CUSTOM_IRQ_HANDLER)) अणु
+		err = request_irq(dev->irq, sja1000_पूर्णांकerrupt, priv->irq_flags,
+				  dev->name, (व्योम *)dev);
+		अगर (err) अणु
+			बंद_candev(dev);
+			वापस -EAGAIN;
+		पूर्ण
+	पूर्ण
 
 	/* init and start chi */
 	sja1000_start(dev);
 
 	can_led_event(dev, CAN_LED_EVENT_OPEN);
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1000_close(struct net_device *dev)
-{
-	struct sja1000_priv *priv = netdev_priv(dev);
+अटल पूर्णांक sja1000_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा sja1000_priv *priv = netdev_priv(dev);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	set_reset_mode(dev);
 
-	if (!(priv->flags & SJA1000_CUSTOM_IRQ_HANDLER))
-		free_irq(dev->irq, (void *)dev);
+	अगर (!(priv->flags & SJA1000_CUSTOM_IRQ_HANDLER))
+		मुक्त_irq(dev->irq, (व्योम *)dev);
 
-	close_candev(dev);
+	बंद_candev(dev);
 
 	can_led_event(dev, CAN_LED_EVENT_STOP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct net_device *alloc_sja1000dev(int sizeof_priv)
-{
-	struct net_device *dev;
-	struct sja1000_priv *priv;
+काष्ठा net_device *alloc_sja1000dev(पूर्णांक माप_priv)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा sja1000_priv *priv;
 
-	dev = alloc_candev(sizeof(struct sja1000_priv) + sizeof_priv,
+	dev = alloc_candev(माप(काष्ठा sja1000_priv) + माप_priv,
 		SJA1000_ECHO_SKB_MAX);
-	if (!dev)
-		return NULL;
+	अगर (!dev)
+		वापस शून्य;
 
 	priv = netdev_priv(dev);
 
 	priv->dev = dev;
-	priv->can.bittiming_const = &sja1000_bittiming_const;
-	priv->can.do_set_bittiming = sja1000_set_bittiming;
-	priv->can.do_set_mode = sja1000_set_mode;
-	priv->can.do_get_berr_counter = sja1000_get_berr_counter;
+	priv->can.bittiming_स्थिर = &sja1000_bittiming_स्थिर;
+	priv->can.करो_set_bittiming = sja1000_set_bittiming;
+	priv->can.करो_set_mode = sja1000_set_mode;
+	priv->can.करो_get_berr_counter = sja1000_get_berr_counter;
 	priv->can.ctrlmode_supported = CAN_CTRLMODE_LOOPBACK |
 				       CAN_CTRLMODE_LISTENONLY |
 				       CAN_CTRLMODE_3_SAMPLES |
@@ -641,32 +642,32 @@ struct net_device *alloc_sja1000dev(int sizeof_priv)
 
 	spin_lock_init(&priv->cmdreg_lock);
 
-	if (sizeof_priv)
-		priv->priv = (void *)priv + sizeof(struct sja1000_priv);
+	अगर (माप_priv)
+		priv->priv = (व्योम *)priv + माप(काष्ठा sja1000_priv);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 EXPORT_SYMBOL_GPL(alloc_sja1000dev);
 
-void free_sja1000dev(struct net_device *dev)
-{
-	free_candev(dev);
-}
-EXPORT_SYMBOL_GPL(free_sja1000dev);
+व्योम मुक्त_sja1000dev(काष्ठा net_device *dev)
+अणु
+	मुक्त_candev(dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(मुक्त_sja1000dev);
 
-static const struct net_device_ops sja1000_netdev_ops = {
-	.ndo_open	= sja1000_open,
-	.ndo_stop	= sja1000_close,
-	.ndo_start_xmit	= sja1000_start_xmit,
-	.ndo_change_mtu	= can_change_mtu,
-};
+अटल स्थिर काष्ठा net_device_ops sja1000_netdev_ops = अणु
+	.nकरो_खोलो	= sja1000_खोलो,
+	.nकरो_stop	= sja1000_बंद,
+	.nकरो_start_xmit	= sja1000_start_xmit,
+	.nकरो_change_mtu	= can_change_mtu,
+पूर्ण;
 
-int register_sja1000dev(struct net_device *dev)
-{
-	int ret;
+पूर्णांक रेजिस्टर_sja1000dev(काष्ठा net_device *dev)
+अणु
+	पूर्णांक ret;
 
-	if (!sja1000_probe_chip(dev))
-		return -ENODEV;
+	अगर (!sja1000_probe_chip(dev))
+		वापस -ENODEV;
 
 	dev->flags |= IFF_ECHO;	/* we support local echo */
 	dev->netdev_ops = &sja1000_netdev_ops;
@@ -674,34 +675,34 @@ int register_sja1000dev(struct net_device *dev)
 	set_reset_mode(dev);
 	chipset_init(dev);
 
-	ret =  register_candev(dev);
+	ret =  रेजिस्टर_candev(dev);
 
-	if (!ret)
+	अगर (!ret)
 		devm_can_led_init(dev);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(register_sja1000dev);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_sja1000dev);
 
-void unregister_sja1000dev(struct net_device *dev)
-{
+व्योम unरेजिस्टर_sja1000dev(काष्ठा net_device *dev)
+अणु
 	set_reset_mode(dev);
-	unregister_candev(dev);
-}
-EXPORT_SYMBOL_GPL(unregister_sja1000dev);
+	unरेजिस्टर_candev(dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_sja1000dev);
 
-static __init int sja1000_init(void)
-{
-	printk(KERN_INFO "%s CAN netdevice driver\n", DRV_NAME);
+अटल __init पूर्णांक sja1000_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "%s CAN netdevice driver\n", DRV_NAME);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(sja1000_init);
 
-static __exit void sja1000_exit(void)
-{
-	printk(KERN_INFO "%s: driver removed\n", DRV_NAME);
-}
+अटल __निकास व्योम sja1000_निकास(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "%s: driver removed\n", DRV_NAME);
+पूर्ण
 
-module_exit(sja1000_exit);
+module_निकास(sja1000_निकास);

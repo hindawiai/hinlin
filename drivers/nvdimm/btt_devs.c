@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
-#include <linux/blkdev.h>
-#include <linux/device.h>
-#include <linux/genhd.h>
-#include <linux/sizes.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include "nd-core.h"
-#include "btt.h"
-#include "nd.h"
+#समावेश <linux/blkdev.h>
+#समावेश <linux/device.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश "nd-core.h"
+#समावेश "btt.h"
+#समावेश "nd.h"
 
-static void nd_btt_release(struct device *dev)
-{
-	struct nd_region *nd_region = to_nd_region(dev->parent);
-	struct nd_btt *nd_btt = to_nd_btt(dev);
+अटल व्योम nd_btt_release(काष्ठा device *dev)
+अणु
+	काष्ठा nd_region *nd_region = to_nd_region(dev->parent);
+	काष्ठा nd_btt *nd_btt = to_nd_btt(dev);
 
 	dev_dbg(dev, "trace\n");
 	nd_detach_ndns(&nd_btt->dev, &nd_btt->ndns);
-	ida_simple_remove(&nd_region->btt_ida, nd_btt->id);
-	kfree(nd_btt->uuid);
-	kfree(nd_btt);
-}
+	ida_simple_हटाओ(&nd_region->btt_ida, nd_btt->id);
+	kमुक्त(nd_btt->uuid);
+	kमुक्त(nd_btt);
+पूर्ण
 
-struct nd_btt *to_nd_btt(struct device *dev)
-{
-	struct nd_btt *nd_btt = container_of(dev, struct nd_btt, dev);
+काष्ठा nd_btt *to_nd_btt(काष्ठा device *dev)
+अणु
+	काष्ठा nd_btt *nd_btt = container_of(dev, काष्ठा nd_btt, dev);
 
 	WARN_ON(!is_nd_btt(dev));
-	return nd_btt;
-}
+	वापस nd_btt;
+पूर्ण
 EXPORT_SYMBOL(to_nd_btt);
 
-static const unsigned long btt_lbasize_supported[] = { 512, 520, 528,
-	4096, 4104, 4160, 4224, 0 };
+अटल स्थिर अचिन्हित दीर्घ btt_lbasize_supported[] = अणु 512, 520, 528,
+	4096, 4104, 4160, 4224, 0 पूर्ण;
 
-static ssize_t sector_size_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nd_btt *nd_btt = to_nd_btt(dev);
+अटल sमाप_प्रकार sector_size_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nd_btt *nd_btt = to_nd_btt(dev);
 
-	return nd_size_select_show(nd_btt->lbasize, btt_lbasize_supported, buf);
-}
+	वापस nd_size_select_show(nd_btt->lbasize, btt_lbasize_supported, buf);
+पूर्ण
 
-static ssize_t sector_size_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct nd_btt *nd_btt = to_nd_btt(dev);
-	ssize_t rc;
+अटल sमाप_प्रकार sector_size_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा nd_btt *nd_btt = to_nd_btt(dev);
+	sमाप_प्रकार rc;
 
 	nd_device_lock(dev);
 	nvdimm_bus_lock(dev);
@@ -60,25 +61,25 @@ static ssize_t sector_size_store(struct device *dev,
 	nvdimm_bus_unlock(dev);
 	nd_device_unlock(dev);
 
-	return rc ? rc : len;
-}
-static DEVICE_ATTR_RW(sector_size);
+	वापस rc ? rc : len;
+पूर्ण
+अटल DEVICE_ATTR_RW(sector_size);
 
-static ssize_t uuid_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nd_btt *nd_btt = to_nd_btt(dev);
+अटल sमाप_प्रकार uuid_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nd_btt *nd_btt = to_nd_btt(dev);
 
-	if (nd_btt->uuid)
-		return sprintf(buf, "%pUb\n", nd_btt->uuid);
-	return sprintf(buf, "\n");
-}
+	अगर (nd_btt->uuid)
+		वापस प्र_लिखो(buf, "%pUb\n", nd_btt->uuid);
+	वापस प्र_लिखो(buf, "\n");
+पूर्ण
 
-static ssize_t uuid_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct nd_btt *nd_btt = to_nd_btt(dev);
-	ssize_t rc;
+अटल sमाप_प्रकार uuid_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा nd_btt *nd_btt = to_nd_btt(dev);
+	sमाप_प्रकार rc;
 
 	nd_device_lock(dev);
 	rc = nd_uuid_store(dev, &nd_btt->uuid, buf, len);
@@ -86,28 +87,28 @@ static ssize_t uuid_store(struct device *dev,
 			buf[len - 1] == '\n' ? "" : "\n");
 	nd_device_unlock(dev);
 
-	return rc ? rc : len;
-}
-static DEVICE_ATTR_RW(uuid);
+	वापस rc ? rc : len;
+पूर्ण
+अटल DEVICE_ATTR_RW(uuid);
 
-static ssize_t namespace_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nd_btt *nd_btt = to_nd_btt(dev);
-	ssize_t rc;
+अटल sमाप_प्रकार namespace_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nd_btt *nd_btt = to_nd_btt(dev);
+	sमाप_प्रकार rc;
 
 	nvdimm_bus_lock(dev);
-	rc = sprintf(buf, "%s\n", nd_btt->ndns
+	rc = प्र_लिखो(buf, "%s\n", nd_btt->ndns
 			? dev_name(&nd_btt->ndns->dev) : "");
 	nvdimm_bus_unlock(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t namespace_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct nd_btt *nd_btt = to_nd_btt(dev);
-	ssize_t rc;
+अटल sमाप_प्रकार namespace_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा nd_btt *nd_btt = to_nd_btt(dev);
+	sमाप_प्रकार rc;
 
 	nd_device_lock(dev);
 	nvdimm_bus_lock(dev);
@@ -117,251 +118,251 @@ static ssize_t namespace_store(struct device *dev,
 	nvdimm_bus_unlock(dev);
 	nd_device_unlock(dev);
 
-	return rc;
-}
-static DEVICE_ATTR_RW(namespace);
+	वापस rc;
+पूर्ण
+अटल DEVICE_ATTR_RW(namespace);
 
-static ssize_t size_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nd_btt *nd_btt = to_nd_btt(dev);
-	ssize_t rc;
+अटल sमाप_प्रकार size_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nd_btt *nd_btt = to_nd_btt(dev);
+	sमाप_प्रकार rc;
 
 	nd_device_lock(dev);
-	if (dev->driver)
-		rc = sprintf(buf, "%llu\n", nd_btt->size);
-	else {
-		/* no size to convey if the btt instance is disabled */
+	अगर (dev->driver)
+		rc = प्र_लिखो(buf, "%llu\n", nd_btt->size);
+	अन्यथा अणु
+		/* no size to convey अगर the btt instance is disabled */
 		rc = -ENXIO;
-	}
+	पूर्ण
 	nd_device_unlock(dev);
 
-	return rc;
-}
-static DEVICE_ATTR_RO(size);
+	वापस rc;
+पूर्ण
+अटल DEVICE_ATTR_RO(size);
 
-static ssize_t log_zero_flags_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "Y\n");
-}
-static DEVICE_ATTR_RO(log_zero_flags);
+अटल sमाप_प्रकार log_zero_flags_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "Y\n");
+पूर्ण
+अटल DEVICE_ATTR_RO(log_zero_flags);
 
-static struct attribute *nd_btt_attributes[] = {
+अटल काष्ठा attribute *nd_btt_attributes[] = अणु
 	&dev_attr_sector_size.attr,
 	&dev_attr_namespace.attr,
 	&dev_attr_uuid.attr,
 	&dev_attr_size.attr,
 	&dev_attr_log_zero_flags.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group nd_btt_attribute_group = {
+अटल काष्ठा attribute_group nd_btt_attribute_group = अणु
 	.attrs = nd_btt_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *nd_btt_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *nd_btt_attribute_groups[] = अणु
 	&nd_btt_attribute_group,
 	&nd_device_attribute_group,
 	&nd_numa_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct device_type nd_btt_device_type = {
+अटल स्थिर काष्ठा device_type nd_btt_device_type = अणु
 	.name = "nd_btt",
 	.release = nd_btt_release,
 	.groups = nd_btt_attribute_groups,
-};
+पूर्ण;
 
-bool is_nd_btt(struct device *dev)
-{
-	return dev->type == &nd_btt_device_type;
-}
+bool is_nd_btt(काष्ठा device *dev)
+अणु
+	वापस dev->type == &nd_btt_device_type;
+पूर्ण
 EXPORT_SYMBOL(is_nd_btt);
 
-static struct device *__nd_btt_create(struct nd_region *nd_region,
-		unsigned long lbasize, u8 *uuid,
-		struct nd_namespace_common *ndns)
-{
-	struct nd_btt *nd_btt;
-	struct device *dev;
+अटल काष्ठा device *__nd_btt_create(काष्ठा nd_region *nd_region,
+		अचिन्हित दीर्घ lbasize, u8 *uuid,
+		काष्ठा nd_namespace_common *ndns)
+अणु
+	काष्ठा nd_btt *nd_btt;
+	काष्ठा device *dev;
 
-	nd_btt = kzalloc(sizeof(*nd_btt), GFP_KERNEL);
-	if (!nd_btt)
-		return NULL;
+	nd_btt = kzalloc(माप(*nd_btt), GFP_KERNEL);
+	अगर (!nd_btt)
+		वापस शून्य;
 
 	nd_btt->id = ida_simple_get(&nd_region->btt_ida, 0, 0, GFP_KERNEL);
-	if (nd_btt->id < 0)
-		goto out_nd_btt;
+	अगर (nd_btt->id < 0)
+		जाओ out_nd_btt;
 
 	nd_btt->lbasize = lbasize;
-	if (uuid) {
+	अगर (uuid) अणु
 		uuid = kmemdup(uuid, 16, GFP_KERNEL);
-		if (!uuid)
-			goto out_put_id;
-	}
+		अगर (!uuid)
+			जाओ out_put_id;
+	पूर्ण
 	nd_btt->uuid = uuid;
 	dev = &nd_btt->dev;
 	dev_set_name(dev, "btt%d.%d", nd_region->id, nd_btt->id);
 	dev->parent = &nd_region->dev;
 	dev->type = &nd_btt_device_type;
 	device_initialize(&nd_btt->dev);
-	if (ndns && !__nd_attach_ndns(&nd_btt->dev, ndns, &nd_btt->ndns)) {
+	अगर (ndns && !__nd_attach_ndns(&nd_btt->dev, ndns, &nd_btt->ndns)) अणु
 		dev_dbg(&ndns->dev, "failed, already claimed by %s\n",
 				dev_name(ndns->claim));
 		put_device(dev);
-		return NULL;
-	}
-	return dev;
+		वापस शून्य;
+	पूर्ण
+	वापस dev;
 
 out_put_id:
-	ida_simple_remove(&nd_region->btt_ida, nd_btt->id);
+	ida_simple_हटाओ(&nd_region->btt_ida, nd_btt->id);
 
 out_nd_btt:
-	kfree(nd_btt);
-	return NULL;
-}
+	kमुक्त(nd_btt);
+	वापस शून्य;
+पूर्ण
 
-struct device *nd_btt_create(struct nd_region *nd_region)
-{
-	struct device *dev = __nd_btt_create(nd_region, 0, NULL, NULL);
+काष्ठा device *nd_btt_create(काष्ठा nd_region *nd_region)
+अणु
+	काष्ठा device *dev = __nd_btt_create(nd_region, 0, शून्य, शून्य);
 
-	__nd_device_register(dev);
-	return dev;
-}
+	__nd_device_रेजिस्टर(dev);
+	वापस dev;
+पूर्ण
 
 /**
- * nd_btt_arena_is_valid - check if the metadata layout is valid
+ * nd_btt_arena_is_valid - check अगर the metadata layout is valid
  * @nd_btt:	device with BTT geometry and backing device info
- * @super:	pointer to the arena's info block being tested
+ * @super:	poपूर्णांकer to the arena's info block being tested
  *
  * Check consistency of the btt info block with itself by validating
- * the checksum, and with the parent namespace by verifying the
+ * the checksum, and with the parent namespace by verअगरying the
  * parent_uuid contained in the info block with the one supplied in.
  *
  * Returns:
- * false for an invalid info block, true for a valid one
+ * false क्रम an invalid info block, true क्रम a valid one
  */
-bool nd_btt_arena_is_valid(struct nd_btt *nd_btt, struct btt_sb *super)
-{
-	const u8 *parent_uuid = nd_dev_to_uuid(&nd_btt->ndns->dev);
+bool nd_btt_arena_is_valid(काष्ठा nd_btt *nd_btt, काष्ठा btt_sb *super)
+अणु
+	स्थिर u8 *parent_uuid = nd_dev_to_uuid(&nd_btt->ndns->dev);
 	u64 checksum;
 
-	if (memcmp(super->signature, BTT_SIG, BTT_SIG_LEN) != 0)
-		return false;
+	अगर (स_भेद(super->signature, BTT_SIG, BTT_SIG_LEN) != 0)
+		वापस false;
 
-	if (!guid_is_null((guid_t *)&super->parent_uuid))
-		if (memcmp(super->parent_uuid, parent_uuid, 16) != 0)
-			return false;
+	अगर (!guid_is_null((guid_t *)&super->parent_uuid))
+		अगर (स_भेद(super->parent_uuid, parent_uuid, 16) != 0)
+			वापस false;
 
 	checksum = le64_to_cpu(super->checksum);
 	super->checksum = 0;
-	if (checksum != nd_sb_checksum((struct nd_gen_sb *) super))
-		return false;
+	अगर (checksum != nd_sb_checksum((काष्ठा nd_gen_sb *) super))
+		वापस false;
 	super->checksum = cpu_to_le64(checksum);
 
-	/* TODO: figure out action for this */
-	if ((le32_to_cpu(super->flags) & IB_FLAG_ERROR_MASK) != 0)
+	/* TODO: figure out action क्रम this */
+	अगर ((le32_to_cpu(super->flags) & IB_FLAG_ERROR_MASK) != 0)
 		dev_info(&nd_btt->dev, "Found arena with an error flag\n");
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(nd_btt_arena_is_valid);
 
-int nd_btt_version(struct nd_btt *nd_btt, struct nd_namespace_common *ndns,
-		struct btt_sb *btt_sb)
-{
-	if (ndns->claim_class == NVDIMM_CCLASS_BTT2) {
-		/* Probe/setup for BTT v2.0 */
+पूर्णांक nd_btt_version(काष्ठा nd_btt *nd_btt, काष्ठा nd_namespace_common *ndns,
+		काष्ठा btt_sb *btt_sb)
+अणु
+	अगर (ndns->claim_class == NVDIMM_CCLASS_BTT2) अणु
+		/* Probe/setup क्रम BTT v2.0 */
 		nd_btt->initial_offset = 0;
 		nd_btt->version_major = 2;
 		nd_btt->version_minor = 0;
-		if (nvdimm_read_bytes(ndns, 0, btt_sb, sizeof(*btt_sb), 0))
-			return -ENXIO;
-		if (!nd_btt_arena_is_valid(nd_btt, btt_sb))
-			return -ENODEV;
-		if ((le16_to_cpu(btt_sb->version_major) != 2) ||
+		अगर (nvdimm_पढ़ो_bytes(ndns, 0, btt_sb, माप(*btt_sb), 0))
+			वापस -ENXIO;
+		अगर (!nd_btt_arena_is_valid(nd_btt, btt_sb))
+			वापस -ENODEV;
+		अगर ((le16_to_cpu(btt_sb->version_major) != 2) ||
 				(le16_to_cpu(btt_sb->version_minor) != 0))
-			return -ENODEV;
-	} else {
+			वापस -ENODEV;
+	पूर्ण अन्यथा अणु
 		/*
-		 * Probe/setup for BTT v1.1 (NVDIMM_CCLASS_NONE or
+		 * Probe/setup क्रम BTT v1.1 (NVDIMM_CCLASS_NONE or
 		 * NVDIMM_CCLASS_BTT)
 		 */
 		nd_btt->initial_offset = SZ_4K;
 		nd_btt->version_major = 1;
 		nd_btt->version_minor = 1;
-		if (nvdimm_read_bytes(ndns, SZ_4K, btt_sb, sizeof(*btt_sb), 0))
-			return -ENXIO;
-		if (!nd_btt_arena_is_valid(nd_btt, btt_sb))
-			return -ENODEV;
-		if ((le16_to_cpu(btt_sb->version_major) != 1) ||
+		अगर (nvdimm_पढ़ो_bytes(ndns, SZ_4K, btt_sb, माप(*btt_sb), 0))
+			वापस -ENXIO;
+		अगर (!nd_btt_arena_is_valid(nd_btt, btt_sb))
+			वापस -ENODEV;
+		अगर ((le16_to_cpu(btt_sb->version_major) != 1) ||
 				(le16_to_cpu(btt_sb->version_minor) != 1))
-			return -ENODEV;
-	}
-	return 0;
-}
+			वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(nd_btt_version);
 
-static int __nd_btt_probe(struct nd_btt *nd_btt,
-		struct nd_namespace_common *ndns, struct btt_sb *btt_sb)
-{
-	int rc;
+अटल पूर्णांक __nd_btt_probe(काष्ठा nd_btt *nd_btt,
+		काष्ठा nd_namespace_common *ndns, काष्ठा btt_sb *btt_sb)
+अणु
+	पूर्णांक rc;
 
-	if (!btt_sb || !ndns || !nd_btt)
-		return -ENODEV;
+	अगर (!btt_sb || !ndns || !nd_btt)
+		वापस -ENODEV;
 
-	if (nvdimm_namespace_capacity(ndns) < SZ_16M)
-		return -ENXIO;
+	अगर (nvdimm_namespace_capacity(ndns) < SZ_16M)
+		वापस -ENXIO;
 
 	rc = nd_btt_version(nd_btt, ndns, btt_sb);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	nd_btt->lbasize = le32_to_cpu(btt_sb->external_lbasize);
+	nd_btt->lbasize = le32_to_cpu(btt_sb->बाह्यal_lbasize);
 	nd_btt->uuid = kmemdup(btt_sb->uuid, 16, GFP_KERNEL);
-	if (!nd_btt->uuid)
-		return -ENOMEM;
+	अगर (!nd_btt->uuid)
+		वापस -ENOMEM;
 
-	__nd_device_register(&nd_btt->dev);
+	__nd_device_रेजिस्टर(&nd_btt->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int nd_btt_probe(struct device *dev, struct nd_namespace_common *ndns)
-{
-	int rc;
-	struct device *btt_dev;
-	struct btt_sb *btt_sb;
-	struct nd_region *nd_region = to_nd_region(ndns->dev.parent);
+पूर्णांक nd_btt_probe(काष्ठा device *dev, काष्ठा nd_namespace_common *ndns)
+अणु
+	पूर्णांक rc;
+	काष्ठा device *btt_dev;
+	काष्ठा btt_sb *btt_sb;
+	काष्ठा nd_region *nd_region = to_nd_region(ndns->dev.parent);
 
-	if (ndns->force_raw)
-		return -ENODEV;
+	अगर (ndns->क्रमce_raw)
+		वापस -ENODEV;
 
-	switch (ndns->claim_class) {
-	case NVDIMM_CCLASS_NONE:
-	case NVDIMM_CCLASS_BTT:
-	case NVDIMM_CCLASS_BTT2:
-		break;
-	default:
-		return -ENODEV;
-	}
+	चयन (ndns->claim_class) अणु
+	हाल NVDIMM_CCLASS_NONE:
+	हाल NVDIMM_CCLASS_BTT:
+	हाल NVDIMM_CCLASS_BTT2:
+		अवरोध;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
 	nvdimm_bus_lock(&ndns->dev);
-	btt_dev = __nd_btt_create(nd_region, 0, NULL, ndns);
+	btt_dev = __nd_btt_create(nd_region, 0, शून्य, ndns);
 	nvdimm_bus_unlock(&ndns->dev);
-	if (!btt_dev)
-		return -ENOMEM;
-	btt_sb = devm_kzalloc(dev, sizeof(*btt_sb), GFP_KERNEL);
+	अगर (!btt_dev)
+		वापस -ENOMEM;
+	btt_sb = devm_kzalloc(dev, माप(*btt_sb), GFP_KERNEL);
 	rc = __nd_btt_probe(to_nd_btt(btt_dev), ndns, btt_sb);
 	dev_dbg(dev, "btt: %s\n", rc == 0 ? dev_name(btt_dev) : "<none>");
-	if (rc < 0) {
-		struct nd_btt *nd_btt = to_nd_btt(btt_dev);
+	अगर (rc < 0) अणु
+		काष्ठा nd_btt *nd_btt = to_nd_btt(btt_dev);
 
 		nd_detach_ndns(btt_dev, &nd_btt->ndns);
 		put_device(btt_dev);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL(nd_btt_probe);

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,80 +24,80 @@
  *
  */
 
-#include "dm_services.h"
-#include "include/gpio_types.h"
-#include "../hw_factory.h"
+#समावेश "dm_services.h"
+#समावेश "include/gpio_types.h"
+#समावेश "../hw_factory.h"
 
-#include "../hw_gpio.h"
-#include "../hw_ddc.h"
-#include "../hw_hpd.h"
-#include "../hw_generic.h"
+#समावेश "../hw_gpio.h"
+#समावेश "../hw_ddc.h"
+#समावेश "../hw_hpd.h"
+#समावेश "../hw_generic.h"
 
-#include "hw_factory_dce120.h"
+#समावेश "hw_factory_dce120.h"
 
-#include "dce/dce_12_0_offset.h"
-#include "dce/dce_12_0_sh_mask.h"
-#include "soc15_hw_ip.h"
-#include "vega10_ip_offset.h"
+#समावेश "dce/dce_12_0_offset.h"
+#समावेश "dce/dce_12_0_sh_mask.h"
+#समावेश "soc15_hw_ip.h"
+#समावेश "vega10_ip_offset.h"
 
-#define block HPD
-#define reg_num 0
+#घोषणा block HPD
+#घोषणा reg_num 0
 
 /* set field name */
-#define SF_HPD(reg_name, field_name, post_fix)\
+#घोषणा SF_HPD(reg_name, field_name, post_fix)\
 	.field_name = HPD0_ ## reg_name ## __ ## field_name ## post_fix
 
 /* set field name */
-#define SF_HPD(reg_name, field_name, post_fix)\
+#घोषणा SF_HPD(reg_name, field_name, post_fix)\
 	.field_name = HPD0_ ## reg_name ## __ ## field_name ## post_fix
 
-#define BASE_INNER(seg) \
+#घोषणा BASE_INNER(seg) \
 	DCE_BASE__INST0_SEG ## seg
 
-/* compile time expand base address. */
-#define BASE(seg) \
+/* compile समय expand base address. */
+#घोषणा BASE(seg) \
 	BASE_INNER(seg)
 
-#define REG(reg_name)\
+#घोषणा REG(reg_name)\
 		BASE(mm ## reg_name ## _BASE_IDX) + mm ## reg_name
 
-#define REGI(reg_name, block, id)\
+#घोषणा REGI(reg_name, block, id)\
 	BASE(mm ## block ## id ## _ ## reg_name ## _BASE_IDX) + \
 				mm ## block ## id ## _ ## reg_name
 
 
-#include "reg_helper.h"
-#include "../hpd_regs.h"
+#समावेश "reg_helper.h"
+#समावेश "../hpd_regs.h"
 
-#define hpd_regs(id) \
-{\
+#घोषणा hpd_regs(id) \
+अणु\
 	HPD_REG_LIST(id)\
-}
+पूर्ण
 
-static const struct hpd_registers hpd_regs[] = {
+अटल स्थिर काष्ठा hpd_रेजिस्टरs hpd_regs[] = अणु
 	hpd_regs(0),
 	hpd_regs(1),
 	hpd_regs(2),
 	hpd_regs(3),
 	hpd_regs(4),
 	hpd_regs(5)
-};
+पूर्ण;
 
-static const struct hpd_sh_mask hpd_shift = {
+अटल स्थिर काष्ठा hpd_sh_mask hpd_shअगरt = अणु
 		HPD_MASK_SH_LIST(__SHIFT)
-};
+पूर्ण;
 
-static const struct hpd_sh_mask hpd_mask = {
+अटल स्थिर काष्ठा hpd_sh_mask hpd_mask = अणु
 		HPD_MASK_SH_LIST(_MASK)
-};
+पूर्ण;
 
-#include "../ddc_regs.h"
+#समावेश "../ddc_regs.h"
 
  /* set field name */
-#define SF_DDC(reg_name, field_name, post_fix)\
+#घोषणा SF_DDC(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-static const struct ddc_registers ddc_data_regs[] = {
+अटल स्थिर काष्ठा ddc_रेजिस्टरs ddc_data_regs[] = अणु
 	ddc_data_regs(1),
 	ddc_data_regs(2),
 	ddc_data_regs(3),
@@ -105,9 +106,9 @@ static const struct ddc_registers ddc_data_regs[] = {
 	ddc_data_regs(6),
 	ddc_vga_data_regs,
 	ddc_i2c_data_regs
-};
+पूर्ण;
 
-static const struct ddc_registers ddc_clk_regs[] = {
+अटल स्थिर काष्ठा ddc_रेजिस्टरs ddc_clk_regs[] = अणु
 	ddc_clk_regs(1),
 	ddc_clk_regs(2),
 	ddc_clk_regs(3),
@@ -116,74 +117,74 @@ static const struct ddc_registers ddc_clk_regs[] = {
 	ddc_clk_regs(6),
 	ddc_vga_clk_regs,
 	ddc_i2c_clk_regs
-};
+पूर्ण;
 
-static const struct ddc_sh_mask ddc_shift = {
+अटल स्थिर काष्ठा ddc_sh_mask ddc_shअगरt = अणु
 		DDC_MASK_SH_LIST(__SHIFT)
-};
+पूर्ण;
 
-static const struct ddc_sh_mask ddc_mask = {
+अटल स्थिर काष्ठा ddc_sh_mask ddc_mask = अणु
 		DDC_MASK_SH_LIST(_MASK)
-};
+पूर्ण;
 
-static void define_ddc_registers(
-		struct hw_gpio_pin *pin,
-		uint32_t en)
-{
-	struct hw_ddc *ddc = HW_DDC_FROM_BASE(pin);
+अटल व्योम define_ddc_रेजिस्टरs(
+		काष्ठा hw_gpio_pin *pin,
+		uपूर्णांक32_t en)
+अणु
+	काष्ठा hw_ddc *ddc = HW_DDC_FROM_BASE(pin);
 
-	switch (pin->id) {
-	case GPIO_ID_DDC_DATA:
+	चयन (pin->id) अणु
+	हाल GPIO_ID_DDC_DATA:
 		ddc->regs = &ddc_data_regs[en];
 		ddc->base.regs = &ddc_data_regs[en].gpio;
-		break;
-	case GPIO_ID_DDC_CLOCK:
+		अवरोध;
+	हाल GPIO_ID_DDC_CLOCK:
 		ddc->regs = &ddc_clk_regs[en];
 		ddc->base.regs = &ddc_clk_regs[en].gpio;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ASSERT_CRITICAL(false);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ddc->shifts = &ddc_shift;
+	ddc->shअगरts = &ddc_shअगरt;
 	ddc->masks = &ddc_mask;
 
-}
+पूर्ण
 
-static void define_hpd_registers(struct hw_gpio_pin *pin, uint32_t en)
-{
-	struct hw_hpd *hpd = HW_HPD_FROM_BASE(pin);
+अटल व्योम define_hpd_रेजिस्टरs(काष्ठा hw_gpio_pin *pin, uपूर्णांक32_t en)
+अणु
+	काष्ठा hw_hpd *hpd = HW_HPD_FROM_BASE(pin);
 
 	hpd->regs = &hpd_regs[en];
-	hpd->shifts = &hpd_shift;
+	hpd->shअगरts = &hpd_shअगरt;
 	hpd->masks = &hpd_mask;
 	hpd->base.regs = &hpd_regs[en].gpio;
-}
+पूर्ण
 
 
 /* function table */
-static const struct hw_factory_funcs funcs = {
+अटल स्थिर काष्ठा hw_factory_funcs funcs = अणु
 	.init_ddc_data = dal_hw_ddc_init,
-	.init_generic = NULL,
+	.init_generic = शून्य,
 	.init_hpd = dal_hw_hpd_init,
 	.get_ddc_pin = dal_hw_ddc_get_pin,
 	.get_hpd_pin = dal_hw_hpd_get_pin,
-	.get_generic_pin = NULL,
-	.define_hpd_registers = define_hpd_registers,
-	.define_ddc_registers = define_ddc_registers
-};
+	.get_generic_pin = शून्य,
+	.define_hpd_रेजिस्टरs = define_hpd_रेजिस्टरs,
+	.define_ddc_रेजिस्टरs = define_ddc_रेजिस्टरs
+पूर्ण;
 /*
  * dal_hw_factory_dce120_init
  *
  * @brief
- * Initialize HW factory function pointers and pin info
+ * Initialize HW factory function poपूर्णांकers and pin info
  *
  * @param
- * struct hw_factory *factory - [out] struct of function pointers
+ * काष्ठा hw_factory *factory - [out] काष्ठा of function poपूर्णांकers
  */
-void dal_hw_factory_dce120_init(struct hw_factory *factory)
-{
+व्योम dal_hw_factory_dce120_init(काष्ठा hw_factory *factory)
+अणु
 	/*TODO check ASIC CAPs*/
 	factory->number_of_pins[GPIO_ID_DDC_DATA] = 8;
 	factory->number_of_pins[GPIO_ID_DDC_CLOCK] = 8;
@@ -195,4 +196,4 @@ void dal_hw_factory_dce120_init(struct hw_factory *factory)
 	factory->number_of_pins[GPIO_ID_GSL] = 4;
 
 	factory->funcs = &funcs;
-}
+पूर्ण

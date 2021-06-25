@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * SharpSL NAND support
+ * SharpSL न_अंकD support
  *
  * Copyright (C) 2008 Dmitry Baryshkov
  */
 
-#ifndef _MTD_SHARPSL_H
-#define _MTD_SHARPSL_H
+#अगर_अघोषित _MTD_SHARPSL_H
+#घोषणा _MTD_SHARPSL_H
 
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/partitions.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/partitions.h>
 
-struct sharpsl_nand_platform_data {
-	struct nand_bbt_descr	*badblock_pattern;
-	const struct mtd_ooblayout_ops *ecc_layout;
-	struct mtd_partition	*partitions;
-	unsigned int		nr_partitions;
-	const char *const	*part_parsers;
-};
+काष्ठा sharpsl_nand_platक्रमm_data अणु
+	काष्ठा nand_bbt_descr	*badblock_pattern;
+	स्थिर काष्ठा mtd_ooblayout_ops *ecc_layout;
+	काष्ठा mtd_partition	*partitions;
+	अचिन्हित पूर्णांक		nr_partitions;
+	स्थिर अक्षर *स्थिर	*part_parsers;
+पूर्ण;
 
-#endif /* _MTD_SHARPSL_H */
+#पूर्ण_अगर /* _MTD_SHARPSL_H */

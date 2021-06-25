@@ -1,6 +1,7 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2014 Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
- * Copyright (C) 2017 Stafford Horne <shorne@gmail.com>
+ * Copyright (C) 2017 Stafक्रमd Horne <shorne@gmail.com>
  *
  * Based on arm64 and arc implementations
  * Copyright (C) 2013 ARM Ltd.
@@ -11,34 +12,34 @@
  * kind, whether express or implied.
  */
 
-#include <linux/smp.h>
-#include <linux/cpu.h>
-#include <linux/sched.h>
-#include <linux/sched/mm.h>
-#include <linux/irq.h>
-#include <linux/of.h>
-#include <asm/cpuinfo.h>
-#include <asm/mmu_context.h>
-#include <asm/tlbflush.h>
-#include <asm/cacheflush.h>
-#include <asm/time.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/of.h>
+#समावेश <यंत्र/cpuinfo.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/समय.स>
 
-static void (*smp_cross_call)(const struct cpumask *, unsigned int);
+अटल व्योम (*smp_cross_call)(स्थिर काष्ठा cpumask *, अचिन्हित पूर्णांक);
 
-unsigned long secondary_release = -1;
-struct thread_info *secondary_thread_info;
+अचिन्हित दीर्घ secondary_release = -1;
+काष्ठा thपढ़ो_info *secondary_thपढ़ो_info;
 
-enum ipi_msg_type {
+क्रमागत ipi_msg_type अणु
 	IPI_WAKEUP,
 	IPI_RESCHEDULE,
 	IPI_CALL_FUNC,
 	IPI_CALL_FUNC_SINGLE,
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(boot_lock);
+अटल DEFINE_SPINLOCK(boot_lock);
 
-static void boot_secondary(unsigned int cpu, struct task_struct *idle)
-{
+अटल व्योम boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
 	/*
 	 * set synchronisation state between this boot processor
 	 * and the secondary one
@@ -50,80 +51,80 @@ static void boot_secondary(unsigned int cpu, struct task_struct *idle)
 
 	/*
 	 * now the secondary core is starting up let it run its
-	 * calibrations, then wait for it to finish
+	 * calibrations, then रुको क्रम it to finish
 	 */
 	spin_unlock(&boot_lock);
-}
+पूर्ण
 
-void __init smp_prepare_boot_cpu(void)
-{
-}
+व्योम __init smp_prepare_boot_cpu(व्योम)
+अणु
+पूर्ण
 
-void __init smp_init_cpus(void)
-{
-	struct device_node *cpu;
+व्योम __init smp_init_cpus(व्योम)
+अणु
+	काष्ठा device_node *cpu;
 	u32 cpu_id;
 
-	for_each_of_cpu_node(cpu) {
-		if (of_property_read_u32(cpu, "reg", &cpu_id)) {
+	क्रम_each_of_cpu_node(cpu) अणु
+		अगर (of_property_पढ़ो_u32(cpu, "reg", &cpu_id)) अणु
 			pr_warn("%s missing reg property", cpu->full_name);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (cpu_id < NR_CPUS)
+		अगर (cpu_id < NR_CPUS)
 			set_cpu_possible(cpu_id, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init smp_prepare_cpus(unsigned int max_cpus)
-{
-	unsigned int cpu;
+व्योम __init smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	अचिन्हित पूर्णांक cpu;
 
 	/*
 	 * Initialise the present map, which describes the set of CPUs
-	 * actually populated at the present time.
+	 * actually populated at the present समय.
 	 */
-	for_each_possible_cpu(cpu) {
-		if (cpu < max_cpus)
+	क्रम_each_possible_cpu(cpu) अणु
+		अगर (cpu < max_cpus)
 			set_cpu_present(cpu, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init smp_cpus_done(unsigned int max_cpus)
-{
-}
+व्योम __init smp_cpus_करोne(अचिन्हित पूर्णांक max_cpus)
+अणु
+पूर्ण
 
-static DECLARE_COMPLETION(cpu_running);
+अटल DECLARE_COMPLETION(cpu_running);
 
-int __cpu_up(unsigned int cpu, struct task_struct *idle)
-{
-	if (smp_cross_call == NULL) {
+पूर्णांक __cpu_up(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	अगर (smp_cross_call == शून्य) अणु
 		pr_warn("CPU%u: failed to start, IPI controller missing",
 			cpu);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	secondary_thread_info = task_thread_info(idle);
+	secondary_thपढ़ो_info = task_thपढ़ो_info(idle);
 	current_pgd[cpu] = init_mm.pgd;
 
 	boot_secondary(cpu, idle);
-	if (!wait_for_completion_timeout(&cpu_running,
-					msecs_to_jiffies(1000))) {
+	अगर (!रुको_क्रम_completion_समयout(&cpu_running,
+					msecs_to_jअगरfies(1000))) अणु
 		pr_crit("CPU%u: failed to start\n", cpu);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	synchronise_count_master(cpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-asmlinkage __init void secondary_start_kernel(void)
-{
-	struct mm_struct *mm = &init_mm;
-	unsigned int cpu = smp_processor_id();
+यंत्रlinkage __init व्योम secondary_start_kernel(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm = &init_mm;
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 	/*
-	 * All kernel threads share the same mm context; grab a
-	 * reference and switch to it.
+	 * All kernel thपढ़ोs share the same mm context; grab a
+	 * reference and चयन to it.
 	 */
 	mmgrab(mm);
 	current->active_mm = mm;
@@ -132,12 +133,12 @@ asmlinkage __init void secondary_start_kernel(void)
 	pr_info("CPU%u: Booted secondary processor\n", cpu);
 
 	setup_cpuinfo();
-	openrisc_clockevent_init();
+	खोलोrisc_घड़ीevent_init();
 
-	notify_cpu_starting(cpu);
+	notअगरy_cpu_starting(cpu);
 
 	/*
-	 * OK, now it's safe to let the boot CPU continue
+	 * OK, now it's safe to let the boot CPU जारी
 	 */
 	complete(&cpu_running);
 
@@ -148,193 +149,193 @@ asmlinkage __init void secondary_start_kernel(void)
 
 	preempt_disable();
 	/*
-	 * OK, it's off to the idle thread for us
+	 * OK, it's off to the idle thपढ़ो क्रम us
 	 */
 	cpu_startup_entry(CPUHP_AP_ONLINE_IDLE);
-}
+पूर्ण
 
-void handle_IPI(unsigned int ipi_msg)
-{
-	unsigned int cpu = smp_processor_id();
+व्योम handle_IPI(अचिन्हित पूर्णांक ipi_msg)
+अणु
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
-	switch (ipi_msg) {
-	case IPI_WAKEUP:
-		break;
+	चयन (ipi_msg) अणु
+	हाल IPI_WAKEUP:
+		अवरोध;
 
-	case IPI_RESCHEDULE:
+	हाल IPI_RESCHEDULE:
 		scheduler_ipi();
-		break;
+		अवरोध;
 
-	case IPI_CALL_FUNC:
-		generic_smp_call_function_interrupt();
-		break;
+	हाल IPI_CALL_FUNC:
+		generic_smp_call_function_पूर्णांकerrupt();
+		अवरोध;
 
-	case IPI_CALL_FUNC_SINGLE:
-		generic_smp_call_function_single_interrupt();
-		break;
+	हाल IPI_CALL_FUNC_SINGLE:
+		generic_smp_call_function_single_पूर्णांकerrupt();
+		अवरोध;
 
-	default:
+	शेष:
 		WARN(1, "CPU%u: Unknown IPI message 0x%x\n", cpu, ipi_msg);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void smp_send_reschedule(int cpu)
-{
+व्योम smp_send_reschedule(पूर्णांक cpu)
+अणु
 	smp_cross_call(cpumask_of(cpu), IPI_RESCHEDULE);
-}
+पूर्ण
 
-static void stop_this_cpu(void *dummy)
-{
+अटल व्योम stop_this_cpu(व्योम *dummy)
+अणु
 	/* Remove this CPU */
 	set_cpu_online(smp_processor_id(), false);
 
 	local_irq_disable();
 	/* CPU Doze */
-	if (mfspr(SPR_UPR) & SPR_UPR_PMP)
+	अगर (mfspr(SPR_UPR) & SPR_UPR_PMP)
 		mtspr(SPR_PMR, mfspr(SPR_PMR) | SPR_PMR_DME);
 	/* If that didn't work, infinite loop */
-	while (1)
+	जबतक (1)
 		;
-}
+पूर्ण
 
-void smp_send_stop(void)
-{
-	smp_call_function(stop_this_cpu, NULL, 0);
-}
+व्योम smp_send_stop(व्योम)
+अणु
+	smp_call_function(stop_this_cpu, शून्य, 0);
+पूर्ण
 
 /* not supported, yet */
-int setup_profiling_timer(unsigned int multiplier)
-{
-	return -EINVAL;
-}
+पूर्णांक setup_profiling_समयr(अचिन्हित पूर्णांक multiplier)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-void __init set_smp_cross_call(void (*fn)(const struct cpumask *, unsigned int))
-{
+व्योम __init set_smp_cross_call(व्योम (*fn)(स्थिर काष्ठा cpumask *, अचिन्हित पूर्णांक))
+अणु
 	smp_cross_call = fn;
-}
+पूर्ण
 
-void arch_send_call_function_single_ipi(int cpu)
-{
+व्योम arch_send_call_function_single_ipi(पूर्णांक cpu)
+अणु
 	smp_cross_call(cpumask_of(cpu), IPI_CALL_FUNC_SINGLE);
-}
+पूर्ण
 
-void arch_send_call_function_ipi_mask(const struct cpumask *mask)
-{
+व्योम arch_send_call_function_ipi_mask(स्थिर काष्ठा cpumask *mask)
+अणु
 	smp_cross_call(mask, IPI_CALL_FUNC);
-}
+पूर्ण
 
-/* TLB flush operations - Performed on each CPU*/
-static inline void ipi_flush_tlb_all(void *ignored)
-{
+/* TLB flush operations - Perक्रमmed on each CPU*/
+अटल अंतरभूत व्योम ipi_flush_tlb_all(व्योम *ignored)
+अणु
 	local_flush_tlb_all();
-}
+पूर्ण
 
-static inline void ipi_flush_tlb_mm(void *info)
-{
-	struct mm_struct *mm = (struct mm_struct *)info;
+अटल अंतरभूत व्योम ipi_flush_tlb_mm(व्योम *info)
+अणु
+	काष्ठा mm_काष्ठा *mm = (काष्ठा mm_काष्ठा *)info;
 
 	local_flush_tlb_mm(mm);
-}
+पूर्ण
 
-static void smp_flush_tlb_mm(struct cpumask *cmask, struct mm_struct *mm)
-{
-	unsigned int cpuid;
+अटल व्योम smp_flush_tlb_mm(काष्ठा cpumask *cmask, काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित पूर्णांक cpuid;
 
-	if (cpumask_empty(cmask))
-		return;
+	अगर (cpumask_empty(cmask))
+		वापस;
 
 	cpuid = get_cpu();
 
-	if (cpumask_any_but(cmask, cpuid) >= nr_cpu_ids) {
+	अगर (cpumask_any_but(cmask, cpuid) >= nr_cpu_ids) अणु
 		/* local cpu is the only cpu present in cpumask */
 		local_flush_tlb_mm(mm);
-	} else {
+	पूर्ण अन्यथा अणु
 		on_each_cpu_mask(cmask, ipi_flush_tlb_mm, mm, 1);
-	}
+	पूर्ण
 	put_cpu();
-}
+पूर्ण
 
-struct flush_tlb_data {
-	unsigned long addr1;
-	unsigned long addr2;
-};
+काष्ठा flush_tlb_data अणु
+	अचिन्हित दीर्घ addr1;
+	अचिन्हित दीर्घ addr2;
+पूर्ण;
 
-static inline void ipi_flush_tlb_page(void *info)
-{
-	struct flush_tlb_data *fd = (struct flush_tlb_data *)info;
+अटल अंतरभूत व्योम ipi_flush_tlb_page(व्योम *info)
+अणु
+	काष्ठा flush_tlb_data *fd = (काष्ठा flush_tlb_data *)info;
 
-	local_flush_tlb_page(NULL, fd->addr1);
-}
+	local_flush_tlb_page(शून्य, fd->addr1);
+पूर्ण
 
-static inline void ipi_flush_tlb_range(void *info)
-{
-	struct flush_tlb_data *fd = (struct flush_tlb_data *)info;
+अटल अंतरभूत व्योम ipi_flush_tlb_range(व्योम *info)
+अणु
+	काष्ठा flush_tlb_data *fd = (काष्ठा flush_tlb_data *)info;
 
-	local_flush_tlb_range(NULL, fd->addr1, fd->addr2);
-}
+	local_flush_tlb_range(शून्य, fd->addr1, fd->addr2);
+पूर्ण
 
-static void smp_flush_tlb_range(struct cpumask *cmask, unsigned long start,
-				unsigned long end)
-{
-	unsigned int cpuid;
+अटल व्योम smp_flush_tlb_range(काष्ठा cpumask *cmask, अचिन्हित दीर्घ start,
+				अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित पूर्णांक cpuid;
 
-	if (cpumask_empty(cmask))
-		return;
+	अगर (cpumask_empty(cmask))
+		वापस;
 
 	cpuid = get_cpu();
 
-	if (cpumask_any_but(cmask, cpuid) >= nr_cpu_ids) {
+	अगर (cpumask_any_but(cmask, cpuid) >= nr_cpu_ids) अणु
 		/* local cpu is the only cpu present in cpumask */
-		if ((end - start) <= PAGE_SIZE)
-			local_flush_tlb_page(NULL, start);
-		else
-			local_flush_tlb_range(NULL, start, end);
-	} else {
-		struct flush_tlb_data fd;
+		अगर ((end - start) <= PAGE_SIZE)
+			local_flush_tlb_page(शून्य, start);
+		अन्यथा
+			local_flush_tlb_range(शून्य, start, end);
+	पूर्ण अन्यथा अणु
+		काष्ठा flush_tlb_data fd;
 
 		fd.addr1 = start;
 		fd.addr2 = end;
 
-		if ((end - start) <= PAGE_SIZE)
+		अगर ((end - start) <= PAGE_SIZE)
 			on_each_cpu_mask(cmask, ipi_flush_tlb_page, &fd, 1);
-		else
+		अन्यथा
 			on_each_cpu_mask(cmask, ipi_flush_tlb_range, &fd, 1);
-	}
+	पूर्ण
 	put_cpu();
-}
+पूर्ण
 
-void flush_tlb_all(void)
-{
-	on_each_cpu(ipi_flush_tlb_all, NULL, 1);
-}
+व्योम flush_tlb_all(व्योम)
+अणु
+	on_each_cpu(ipi_flush_tlb_all, शून्य, 1);
+पूर्ण
 
-void flush_tlb_mm(struct mm_struct *mm)
-{
+व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
 	smp_flush_tlb_mm(mm_cpumask(mm), mm);
-}
+पूर्ण
 
-void flush_tlb_page(struct vm_area_struct *vma, unsigned long uaddr)
-{
+व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ uaddr)
+अणु
 	smp_flush_tlb_range(mm_cpumask(vma->vm_mm), uaddr, uaddr + PAGE_SIZE);
-}
+पूर्ण
 
-void flush_tlb_range(struct vm_area_struct *vma,
-		     unsigned long start, unsigned long end)
-{
+व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
+		     अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	smp_flush_tlb_range(mm_cpumask(vma->vm_mm), start, end);
-}
+पूर्ण
 
-/* Instruction cache invalidate - performed on each cpu */
-static void ipi_icache_page_inv(void *arg)
-{
-	struct page *page = arg;
+/* Inकाष्ठाion cache invalidate - perक्रमmed on each cpu */
+अटल व्योम ipi_icache_page_inv(व्योम *arg)
+अणु
+	काष्ठा page *page = arg;
 
 	local_icache_page_inv(page);
-}
+पूर्ण
 
-void smp_icache_page_inv(struct page *page)
-{
+व्योम smp_icache_page_inv(काष्ठा page *page)
+अणु
 	on_each_cpu(ipi_icache_page_inv, page, 1);
-}
+पूर्ण
 EXPORT_SYMBOL(smp_icache_page_inv);

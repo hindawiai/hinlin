@@ -1,148 +1,149 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright 1998-2008 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
 
  */
-#ifndef __CHIP_H__
-#define __CHIP_H__
+#अगर_अघोषित __CHIP_H__
+#घोषणा __CHIP_H__
 
-#include "global.h"
+#समावेश "global.h"
 
 /***************************************/
-/* Definition Graphic Chip Information */
+/* Definition Graphic Chip Inक्रमmation */
 /***************************************/
 
-#define     PCI_VIA_VENDOR_ID       0x1106
+#घोषणा     PCI_VIA_VENDOR_ID       0x1106
 
 /* Define VIA Graphic Chip Name */
-#define     UNICHROME_CLE266        1
-#define     UNICHROME_CLE266_DID    0x3122
-#define     CLE266_REVISION_AX      0x0A
-#define     CLE266_REVISION_CX      0x0C
+#घोषणा     UNICHROME_CLE266        1
+#घोषणा     UNICHROME_CLE266_DID    0x3122
+#घोषणा     CLE266_REVISION_AX      0x0A
+#घोषणा     CLE266_REVISION_CX      0x0C
 
-#define     UNICHROME_K400          2
-#define     UNICHROME_K400_DID      0x7205
+#घोषणा     UNICHROME_K400          2
+#घोषणा     UNICHROME_K400_DID      0x7205
 
-#define     UNICHROME_K800          3
-#define     UNICHROME_K800_DID      0x3108
+#घोषणा     UNICHROME_K800          3
+#घोषणा     UNICHROME_K800_DID      0x3108
 
-#define     UNICHROME_PM800         4
-#define     UNICHROME_PM800_DID     0x3118
+#घोषणा     UNICHROME_PM800         4
+#घोषणा     UNICHROME_PM800_DID     0x3118
 
-#define     UNICHROME_CN700         5
-#define     UNICHROME_CN700_DID     0x3344
+#घोषणा     UNICHROME_CN700         5
+#घोषणा     UNICHROME_CN700_DID     0x3344
 
-#define     UNICHROME_CX700         6
-#define     UNICHROME_CX700_DID     0x3157
-#define     CX700_REVISION_700      0x0
-#define     CX700_REVISION_700M     0x1
-#define     CX700_REVISION_700M2    0x2
+#घोषणा     UNICHROME_CX700         6
+#घोषणा     UNICHROME_CX700_DID     0x3157
+#घोषणा     CX700_REVISION_700      0x0
+#घोषणा     CX700_REVISION_700M     0x1
+#घोषणा     CX700_REVISION_700M2    0x2
 
-#define     UNICHROME_CN750         7
-#define     UNICHROME_CN750_DID     0x3225
+#घोषणा     UNICHROME_CN750         7
+#घोषणा     UNICHROME_CN750_DID     0x3225
 
-#define     UNICHROME_K8M890        8
-#define     UNICHROME_K8M890_DID    0x3230
+#घोषणा     UNICHROME_K8M890        8
+#घोषणा     UNICHROME_K8M890_DID    0x3230
 
-#define     UNICHROME_P4M890        9
-#define     UNICHROME_P4M890_DID    0x3343
+#घोषणा     UNICHROME_P4M890        9
+#घोषणा     UNICHROME_P4M890_DID    0x3343
 
-#define     UNICHROME_P4M900        10
-#define     UNICHROME_P4M900_DID    0x3371
+#घोषणा     UNICHROME_P4M900        10
+#घोषणा     UNICHROME_P4M900_DID    0x3371
 
-#define     UNICHROME_VX800         11
-#define     UNICHROME_VX800_DID     0x1122
+#घोषणा     UNICHROME_VX800         11
+#घोषणा     UNICHROME_VX800_DID     0x1122
 
-#define     UNICHROME_VX855         12
-#define     UNICHROME_VX855_DID     0x5122
+#घोषणा     UNICHROME_VX855         12
+#घोषणा     UNICHROME_VX855_DID     0x5122
 
-#define     UNICHROME_VX900         13
-#define     UNICHROME_VX900_DID     0x7122
-
-/**************************************************/
-/* Definition TMDS Trasmitter Information         */
-/**************************************************/
-
-/* Definition TMDS Trasmitter Index */
-#define     NON_TMDS_TRANSMITTER    0x00
-#define     VT1632_TMDS             0x01
-#define     INTEGRATED_TMDS         0x42
-
-/* Definition TMDS Trasmitter I2C Slave Address */
-#define     VT1632_TMDS_I2C_ADDR    0x10
+#घोषणा     UNICHROME_VX900         13
+#घोषणा     UNICHROME_VX900_DID     0x7122
 
 /**************************************************/
-/* Definition LVDS Trasmitter Information         */
+/* Definition TMDS Trयंत्रitter Inक्रमmation         */
 /**************************************************/
 
-/* Definition LVDS Trasmitter Index */
-#define     NON_LVDS_TRANSMITTER    0x00
-#define     VT1631_LVDS             0x01
-#define     VT1636_LVDS             0x0E
-#define     INTEGRATED_LVDS         0x41
+/* Definition TMDS Trयंत्रitter Index */
+#घोषणा     NON_TMDS_TRANSMITTER    0x00
+#घोषणा     VT1632_TMDS             0x01
+#घोषणा     INTEGRATED_TMDS         0x42
+
+/* Definition TMDS Trयंत्रitter I2C Slave Address */
+#घोषणा     VT1632_TMDS_I2C_ADDR    0x10
+
+/**************************************************/
+/* Definition LVDS Trयंत्रitter Inक्रमmation         */
+/**************************************************/
+
+/* Definition LVDS Trयंत्रitter Index */
+#घोषणा     NON_LVDS_TRANSMITTER    0x00
+#घोषणा     VT1631_LVDS             0x01
+#घोषणा     VT1636_LVDS             0x0E
+#घोषणा     INTEGRATED_LVDS         0x41
 
 /* Definition Digital Transmitter Mode */
-#define     TX_DATA_12_BITS         0x01
-#define     TX_DATA_24_BITS         0x02
-#define     TX_DATA_DDR_MODE        0x04
-#define     TX_DATA_SDR_MODE        0x08
+#घोषणा     TX_DATA_12_BITS         0x01
+#घोषणा     TX_DATA_24_BITS         0x02
+#घोषणा     TX_DATA_DDR_MODE        0x04
+#घोषणा     TX_DATA_SDR_MODE        0x08
 
-/* Definition LVDS Trasmitter I2C Slave Address */
-#define     VT1631_LVDS_I2C_ADDR    0x70
-#define     VT3271_LVDS_I2C_ADDR    0x80
-#define     VT1636_LVDS_I2C_ADDR    0x80
+/* Definition LVDS Trयंत्रitter I2C Slave Address */
+#घोषणा     VT1631_LVDS_I2C_ADDR    0x70
+#घोषणा     VT3271_LVDS_I2C_ADDR    0x80
+#घोषणा     VT1636_LVDS_I2C_ADDR    0x80
 
-struct tmds_chip_information {
-	int tmds_chip_name;
-	int tmds_chip_slave_addr;
-	int output_interface;
-	int i2c_port;
-};
+काष्ठा पंचांगds_chip_inक्रमmation अणु
+	पूर्णांक पंचांगds_chip_name;
+	पूर्णांक पंचांगds_chip_slave_addr;
+	पूर्णांक output_पूर्णांकerface;
+	पूर्णांक i2c_port;
+पूर्ण;
 
-struct lvds_chip_information {
-	int lvds_chip_name;
-	int lvds_chip_slave_addr;
-	int output_interface;
-	int i2c_port;
-};
+काष्ठा lvds_chip_inक्रमmation अणु
+	पूर्णांक lvds_chip_name;
+	पूर्णांक lvds_chip_slave_addr;
+	पूर्णांक output_पूर्णांकerface;
+	पूर्णांक i2c_port;
+पूर्ण;
 
 /* The type of 2D engine */
-enum via_2d_engine {
+क्रमागत via_2d_engine अणु
 	VIA_2D_ENG_H2,
 	VIA_2D_ENG_H5,
 	VIA_2D_ENG_M1,
-};
+पूर्ण;
 
-struct chip_information {
-	int gfx_chip_name;
-	int gfx_chip_revision;
-	enum via_2d_engine twod_engine;
-	struct tmds_chip_information tmds_chip_info;
-	struct lvds_chip_information lvds_chip_info;
-	struct lvds_chip_information lvds_chip_info2;
-};
+काष्ठा chip_inक्रमmation अणु
+	पूर्णांक gfx_chip_name;
+	पूर्णांक gfx_chip_revision;
+	क्रमागत via_2d_engine twod_engine;
+	काष्ठा पंचांगds_chip_inक्रमmation पंचांगds_chip_info;
+	काष्ठा lvds_chip_inक्रमmation lvds_chip_info;
+	काष्ठा lvds_chip_inक्रमmation lvds_chip_info2;
+पूर्ण;
 
-struct tmds_setting_information {
-	int iga_path;
-	int h_active;
-	int v_active;
-	int max_pixel_clock;
-};
+काष्ठा पंचांगds_setting_inक्रमmation अणु
+	पूर्णांक iga_path;
+	पूर्णांक h_active;
+	पूर्णांक v_active;
+	पूर्णांक max_pixel_घड़ी;
+पूर्ण;
 
-struct lvds_setting_information {
-	int iga_path;
-	int lcd_panel_hres;
-	int lcd_panel_vres;
-	int display_method;
-	int device_lcd_dualedge;
-	int LCDDithering;
-	int lcd_mode;
-	u32 vclk;		/*panel mode clock value */
-};
+काष्ठा lvds_setting_inक्रमmation अणु
+	पूर्णांक iga_path;
+	पूर्णांक lcd_panel_hres;
+	पूर्णांक lcd_panel_vres;
+	पूर्णांक display_method;
+	पूर्णांक device_lcd_dualedge;
+	पूर्णांक LCDDithering;
+	पूर्णांक lcd_mode;
+	u32 vclk;		/*panel mode घड़ी value */
+पूर्ण;
 
-struct GFX_DPA_SETTING {
-	int ClkRangeIndex;
+काष्ठा GFX_DPA_SETTING अणु
+	पूर्णांक ClkRangeIndex;
 	u8 DVP0;		/* CR96[3:0] */
 	u8 DVP0DataDri_S1;	/* SR2A[5]   */
 	u8 DVP0DataDri_S;	/* SR1B[1]   */
@@ -153,10 +154,10 @@ struct GFX_DPA_SETTING {
 	u8 DFPHigh;		/* CR97[3:0] */
 	u8 DFPLow;		/* CR99[3:0] */
 
-};
+पूर्ण;
 
-struct VT1636_DPA_SETTING {
+काष्ठा VT1636_DPA_SETTING अणु
 	u8 CLK_SEL_ST1;
 	u8 CLK_SEL_ST2;
-};
-#endif /* __CHIP_H__ */
+पूर्ण;
+#पूर्ण_अगर /* __CHIP_H__ */

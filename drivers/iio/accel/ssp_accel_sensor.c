@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2014, Samsung Electronics Co. Ltd. All Rights Reserved.
  */
 
-#include <linux/iio/common/ssp_sensors.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/kfifo_buf.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include "../common/ssp_sensors/ssp_iio_sensor.h"
+#समावेश <linux/iio/common/ssp_sensors.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/kfअगरo_buf.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश "../common/ssp_sensors/ssp_iio_sensor.h"
 
-#define SSP_CHANNEL_COUNT 3
+#घोषणा SSP_CHANNEL_COUNT 3
 
-#define SSP_ACCEL_NAME "ssp-accelerometer"
-static const char ssp_accel_device_name[] = SSP_ACCEL_NAME;
+#घोषणा SSP_ACCEL_NAME "ssp-accelerometer"
+अटल स्थिर अक्षर ssp_accel_device_name[] = SSP_ACCEL_NAME;
 
-enum ssp_accel_3d_channel {
+क्रमागत ssp_accel_3d_channel अणु
 	SSP_CHANNEL_SCAN_INDEX_X,
 	SSP_CHANNEL_SCAN_INDEX_Y,
 	SSP_CHANNEL_SCAN_INDEX_Z,
 	SSP_CHANNEL_SCAN_INDEX_TIME,
-};
+पूर्ण;
 
-static int ssp_accel_read_raw(struct iio_dev *indio_dev,
-			      struct iio_chan_spec const *chan,  int *val,
-			      int *val2, long mask)
-{
+अटल पूर्णांक ssp_accel_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			      काष्ठा iio_chan_spec स्थिर *chan,  पूर्णांक *val,
+			      पूर्णांक *val2, दीर्घ mask)
+अणु
 	u32 t;
-	struct ssp_data *data = dev_get_drvdata(indio_dev->dev.parent->parent);
+	काष्ठा ssp_data *data = dev_get_drvdata(indio_dev->dev.parent->parent);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SAMP_FREQ:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		t = ssp_get_sensor_delay(data, SSP_ACCELEROMETER_SENSOR);
 		ssp_convert_to_freq(t, val, val2);
-		return IIO_VAL_INT_PLUS_MICRO;
-	default:
-		break;
-	}
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int ssp_accel_write_raw(struct iio_dev *indio_dev,
-			       struct iio_chan_spec const *chan, int val,
-			       int val2, long mask)
-{
-	int ret;
-	struct ssp_data *data = dev_get_drvdata(indio_dev->dev.parent->parent);
+अटल पूर्णांक ssp_accel_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			       काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val,
+			       पूर्णांक val2, दीर्घ mask)
+अणु
+	पूर्णांक ret;
+	काष्ठा ssp_data *data = dev_get_drvdata(indio_dev->dev.parent->parent);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SAMP_FREQ:
-		ret = ssp_convert_to_time(val, val2);
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		ret = ssp_convert_to_समय(val, val2);
 		ret = ssp_change_delay(data, SSP_ACCELEROMETER_SENSOR, ret);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_err(&indio_dev->dev, "accel sensor enable fail\n");
 
-		return ret;
-	default:
-		break;
-	}
+		वापस ret;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct iio_info ssp_accel_iio_info = {
-	.read_raw = &ssp_accel_read_raw,
-	.write_raw = &ssp_accel_write_raw,
-};
+अटल स्थिर काष्ठा iio_info ssp_accel_iio_info = अणु
+	.पढ़ो_raw = &ssp_accel_पढ़ो_raw,
+	.ग_लिखो_raw = &ssp_accel_ग_लिखो_raw,
+पूर्ण;
 
-static const unsigned long ssp_accel_scan_mask[] = { 0x7, 0, };
+अटल स्थिर अचिन्हित दीर्घ ssp_accel_scan_mask[] = अणु 0x7, 0, पूर्ण;
 
-static const struct iio_chan_spec ssp_acc_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec ssp_acc_channels[] = अणु
 	SSP_CHANNEL_AG(IIO_ACCEL, IIO_MOD_X, SSP_CHANNEL_SCAN_INDEX_X),
 	SSP_CHANNEL_AG(IIO_ACCEL, IIO_MOD_Y, SSP_CHANNEL_SCAN_INDEX_Y),
 	SSP_CHANNEL_AG(IIO_ACCEL, IIO_MOD_Z, SSP_CHANNEL_SCAN_INDEX_Z),
 	SSP_CHAN_TIMESTAMP(SSP_CHANNEL_SCAN_INDEX_TIME),
-};
+पूर्ण;
 
-static int ssp_process_accel_data(struct iio_dev *indio_dev, void *buf,
-				  int64_t timestamp)
-{
-	return ssp_common_process_data(indio_dev, buf, SSP_ACCELEROMETER_SIZE,
-				       timestamp);
-}
+अटल पूर्णांक ssp_process_accel_data(काष्ठा iio_dev *indio_dev, व्योम *buf,
+				  पूर्णांक64_t बारtamp)
+अणु
+	वापस ssp_common_process_data(indio_dev, buf, SSP_ACCELEROMETER_SIZE,
+				       बारtamp);
+पूर्ण
 
-static const struct iio_buffer_setup_ops ssp_accel_buffer_ops = {
+अटल स्थिर काष्ठा iio_buffer_setup_ops ssp_accel_buffer_ops = अणु
 	.postenable = &ssp_common_buffer_postenable,
 	.postdisable = &ssp_common_buffer_postdisable,
-};
+पूर्ण;
 
-static int ssp_accel_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct iio_dev *indio_dev;
-	struct ssp_sensor_data *spd;
+अटल पूर्णांक ssp_accel_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा ssp_sensor_data *spd;
 
-	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*spd));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&pdev->dev, माप(*spd));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	spd = iio_priv(indio_dev);
 
@@ -112,32 +113,32 @@ static int ssp_accel_probe(struct platform_device *pdev)
 	indio_dev->num_channels = ARRAY_SIZE(ssp_acc_channels);
 	indio_dev->available_scan_masks = ssp_accel_scan_mask;
 
-	ret = devm_iio_kfifo_buffer_setup(&pdev->dev, indio_dev,
+	ret = devm_iio_kfअगरo_buffer_setup(&pdev->dev, indio_dev,
 					  INDIO_BUFFER_SOFTWARE,
 					  &ssp_accel_buffer_ops);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, indio_dev);
+	platक्रमm_set_drvdata(pdev, indio_dev);
 
-	ret = devm_iio_device_register(&pdev->dev, indio_dev);
-	if (ret < 0)
-		return ret;
+	ret = devm_iio_device_रेजिस्टर(&pdev->dev, indio_dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* ssp registering should be done after all iio setup */
-	ssp_register_consumer(indio_dev, SSP_ACCELEROMETER_SENSOR);
+	/* ssp रेजिस्टरing should be करोne after all iio setup */
+	ssp_रेजिस्टर_consumer(indio_dev, SSP_ACCELEROMETER_SENSOR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver ssp_accel_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ssp_accel_driver = अणु
+	.driver = अणु
 		.name = SSP_ACCEL_NAME,
-	},
+	पूर्ण,
 	.probe = ssp_accel_probe,
-};
+पूर्ण;
 
-module_platform_driver(ssp_accel_driver);
+module_platक्रमm_driver(ssp_accel_driver);
 
 MODULE_AUTHOR("Karol Wrona <k.wrona@samsung.com>");
 MODULE_DESCRIPTION("Samsung sensorhub accelerometers driver");

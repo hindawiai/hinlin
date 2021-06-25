@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright 2019~2020 NXP
  */
 
-#include <dt-bindings/pinctrl/pads-imx8dxl.h>
-#include <linux/err.h>
-#include <linux/firmware/imx/sci.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <dt-bindings/pinctrl/pads-imx8dxl.h>
+#समावेश <linux/err.h>
+#समावेश <linux/firmware/imx/sci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-imx.h"
+#समावेश "pinctrl-imx.h"
 
-static const struct pinctrl_pin_desc imx8dxl_pinctrl_pads[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc imx8dxl_pinctrl_pads[] = अणु
 	IMX_PINCTRL_PIN(IMX8DXL_PCIE_CTRL0_PERST_B),
 	IMX_PINCTRL_PIN(IMX8DXL_PCIE_CTRL0_CLKREQ_B),
 	IMX_PINCTRL_PIN(IMX8DXL_PCIE_CTRL0_WAKE_B),
@@ -40,10 +41,10 @@ static const struct pinctrl_pin_desc imx8dxl_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(IMX8DXL_COMP_CTL_GPIO_1V8_3V3_SD1FIX0),
 	IMX_PINCTRL_PIN(IMX8DXL_USDHC1_RESET_B),
 	IMX_PINCTRL_PIN(IMX8DXL_USDHC1_VSELECT),
-	IMX_PINCTRL_PIN(IMX8DXL_CTL_NAND_RE_P_N),
+	IMX_PINCTRL_PIN(IMX8DXL_CTL_न_अंकD_RE_P_N),
 	IMX_PINCTRL_PIN(IMX8DXL_USDHC1_WP),
 	IMX_PINCTRL_PIN(IMX8DXL_USDHC1_CD_B),
-	IMX_PINCTRL_PIN(IMX8DXL_CTL_NAND_DQS_P_N),
+	IMX_PINCTRL_PIN(IMX8DXL_CTL_न_अंकD_DQS_P_N),
 	IMX_PINCTRL_PIN(IMX8DXL_COMP_CTL_GPIO_1V8_3V3_VSELSEP),
 	IMX_PINCTRL_PIN(IMX8DXL_ENET0_RGMII_TXC),
 	IMX_PINCTRL_PIN(IMX8DXL_ENET0_RGMII_TX_CTL),
@@ -152,48 +153,48 @@ static const struct pinctrl_pin_desc imx8dxl_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(IMX8DXL_QSPI0B_DATA2),
 	IMX_PINCTRL_PIN(IMX8DXL_QSPI0B_SS0_B),
 	IMX_PINCTRL_PIN(IMX8DXL_COMP_CTL_GPIO_1V8_3V3_QSPI0B)
-};
+पूर्ण;
 
 
-static struct imx_pinctrl_soc_info imx8dxl_pinctrl_info = {
+अटल काष्ठा imx_pinctrl_soc_info imx8dxl_pinctrl_info = अणु
 	.pins = imx8dxl_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx8dxl_pinctrl_pads),
 	.flags = IMX_USE_SCU,
 	.imx_pinconf_get = imx_pinconf_get_scu,
 	.imx_pinconf_set = imx_pinconf_set_scu,
 	.imx_pinctrl_parse_pin = imx_pinctrl_parse_pin_scu,
-};
+पूर्ण;
 
-static const struct of_device_id imx8dxl_pinctrl_of_match[] = {
-	{ .compatible = "fsl,imx8dxl-iomuxc", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx8dxl_pinctrl_of_match[] = अणु
+	अणु .compatible = "fsl,imx8dxl-iomuxc", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, imx8dxl_pinctrl_of_match);
 
-static int imx8dxl_pinctrl_probe(struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक imx8dxl_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 
 	ret = imx_pinctrl_sc_ipc_init(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return imx_pinctrl_probe(pdev, &imx8dxl_pinctrl_info);
-}
+	वापस imx_pinctrl_probe(pdev, &imx8dxl_pinctrl_info);
+पूर्ण
 
-static struct platform_driver imx8dxl_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx8dxl_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "fsl,imx8dxl-iomuxc",
 		.of_match_table = imx8dxl_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = imx8dxl_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init imx8dxl_pinctrl_init(void)
-{
-	return platform_driver_register(&imx8dxl_pinctrl_driver);
-}
+अटल पूर्णांक __init imx8dxl_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&imx8dxl_pinctrl_driver);
+पूर्ण
 arch_initcall(imx8dxl_pinctrl_init);
 
 MODULE_AUTHOR("Anson Huang <Anson.Huang@nxp.com>");

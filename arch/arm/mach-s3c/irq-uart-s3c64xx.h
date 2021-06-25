@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2010 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
  *
- * Header file for Samsung SoC UART IRQ demux for S3C64XX and later
+ * Header file क्रम Samsung SoC UART IRQ demux क्रम S3C64XX and later
  */
 
-struct s3c_uart_irq {
-	void __iomem	*regs;
-	unsigned int	 base_irq;
-	unsigned int	 parent_irq;
-};
+काष्ठा s3c_uart_irq अणु
+	व्योम __iomem	*regs;
+	अचिन्हित पूर्णांक	 base_irq;
+	अचिन्हित पूर्णांक	 parent_irq;
+पूर्ण;
 
-extern void s3c_init_uart_irqs(struct s3c_uart_irq *irq, unsigned int nr_irqs);
+बाह्य व्योम s3c_init_uart_irqs(काष्ठा s3c_uart_irq *irq, अचिन्हित पूर्णांक nr_irqs);
 

@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NV50_FIFO_CHAN_H__
-#define __NV50_FIFO_CHAN_H__
-#define nv50_fifo_chan(p) container_of((p), struct nv50_fifo_chan, base)
-#include "chan.h"
-#include "nv50.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NV50_FIFO_CHAN_H__
+#घोषणा __NV50_FIFO_CHAN_H__
+#घोषणा nv50_fअगरo_chan(p) container_of((p), काष्ठा nv50_fअगरo_chan, base)
+#समावेश "chan.h"
+#समावेश "nv50.h"
 
-struct nv50_fifo_chan {
-	struct nv50_fifo *fifo;
-	struct nvkm_fifo_chan base;
+काष्ठा nv50_fअगरo_chan अणु
+	काष्ठा nv50_fअगरo *fअगरo;
+	काष्ठा nvkm_fअगरo_chan base;
 
-	struct nvkm_gpuobj *ramfc;
-	struct nvkm_gpuobj *cache;
-	struct nvkm_gpuobj *eng;
-	struct nvkm_gpuobj *pgd;
-	struct nvkm_ramht *ramht;
+	काष्ठा nvkm_gpuobj *ramfc;
+	काष्ठा nvkm_gpuobj *cache;
+	काष्ठा nvkm_gpuobj *eng;
+	काष्ठा nvkm_gpuobj *pgd;
+	काष्ठा nvkm_ramht *ramht;
 
-#define NV50_FIFO_ENGN_SW   0
-#define NV50_FIFO_ENGN_GR   1
-#define NV50_FIFO_ENGN_MPEG 2
-#define NV50_FIFO_ENGN_DMA  3
+#घोषणा NV50_FIFO_ENGN_SW   0
+#घोषणा NV50_FIFO_ENGN_GR   1
+#घोषणा NV50_FIFO_ENGN_MPEG 2
+#घोषणा NV50_FIFO_ENGN_DMA  3
 
-#define G84_FIFO_ENGN_SW     0
-#define G84_FIFO_ENGN_GR     1
-#define G84_FIFO_ENGN_MPEG   2
-#define G84_FIFO_ENGN_MSPPP  2
-#define G84_FIFO_ENGN_ME     3
-#define G84_FIFO_ENGN_CE0    3
-#define G84_FIFO_ENGN_VP     4
-#define G84_FIFO_ENGN_MSPDEC 4
-#define G84_FIFO_ENGN_CIPHER 5
-#define G84_FIFO_ENGN_SEC    5
-#define G84_FIFO_ENGN_VIC    5
-#define G84_FIFO_ENGN_BSP    6
-#define G84_FIFO_ENGN_MSVLD  6
-#define G84_FIFO_ENGN_DMA    7
-	struct nvkm_gpuobj *engn[NVKM_FIFO_ENGN_NR];
-};
+#घोषणा G84_FIFO_ENGN_SW     0
+#घोषणा G84_FIFO_ENGN_GR     1
+#घोषणा G84_FIFO_ENGN_MPEG   2
+#घोषणा G84_FIFO_ENGN_MSPPP  2
+#घोषणा G84_FIFO_ENGN_ME     3
+#घोषणा G84_FIFO_ENGN_CE0    3
+#घोषणा G84_FIFO_ENGN_VP     4
+#घोषणा G84_FIFO_ENGN_MSPDEC 4
+#घोषणा G84_FIFO_ENGN_CIPHER 5
+#घोषणा G84_FIFO_ENGN_SEC    5
+#घोषणा G84_FIFO_ENGN_VIC    5
+#घोषणा G84_FIFO_ENGN_BSP    6
+#घोषणा G84_FIFO_ENGN_MSVLD  6
+#घोषणा G84_FIFO_ENGN_DMA    7
+	काष्ठा nvkm_gpuobj *engn[NVKM_FIFO_ENGN_NR];
+पूर्ण;
 
-int nv50_fifo_chan_ctor(struct nv50_fifo *, u64 vmm, u64 push,
-			const struct nvkm_oclass *, struct nv50_fifo_chan *);
-void *nv50_fifo_chan_dtor(struct nvkm_fifo_chan *);
-void nv50_fifo_chan_fini(struct nvkm_fifo_chan *);
-struct nvkm_gpuobj **nv50_fifo_chan_engine(struct nv50_fifo_chan *, struct nvkm_engine *);
-void nv50_fifo_chan_engine_dtor(struct nvkm_fifo_chan *, struct nvkm_engine *);
-void nv50_fifo_chan_object_dtor(struct nvkm_fifo_chan *, int);
+पूर्णांक nv50_fअगरo_chan_ctor(काष्ठा nv50_fअगरo *, u64 vmm, u64 push,
+			स्थिर काष्ठा nvkm_oclass *, काष्ठा nv50_fअगरo_chan *);
+व्योम *nv50_fअगरo_chan_dtor(काष्ठा nvkm_fअगरo_chan *);
+व्योम nv50_fअगरo_chan_fini(काष्ठा nvkm_fअगरo_chan *);
+काष्ठा nvkm_gpuobj **nv50_fअगरo_chan_engine(काष्ठा nv50_fअगरo_chan *, काष्ठा nvkm_engine *);
+व्योम nv50_fअगरo_chan_engine_dtor(काष्ठा nvkm_fअगरo_chan *, काष्ठा nvkm_engine *);
+व्योम nv50_fअगरo_chan_object_dtor(काष्ठा nvkm_fअगरo_chan *, पूर्णांक);
 
-int g84_fifo_chan_ctor(struct nv50_fifo *, u64 vmm, u64 push,
-		       const struct nvkm_oclass *, struct nv50_fifo_chan *);
+पूर्णांक g84_fअगरo_chan_ctor(काष्ठा nv50_fअगरo *, u64 vmm, u64 push,
+		       स्थिर काष्ठा nvkm_oclass *, काष्ठा nv50_fअगरo_chan *);
 
-extern const struct nvkm_fifo_chan_oclass nv50_fifo_dma_oclass;
-extern const struct nvkm_fifo_chan_oclass nv50_fifo_gpfifo_oclass;
-extern const struct nvkm_fifo_chan_oclass g84_fifo_dma_oclass;
-extern const struct nvkm_fifo_chan_oclass g84_fifo_gpfifo_oclass;
-#endif
+बाह्य स्थिर काष्ठा nvkm_fअगरo_chan_oclass nv50_fअगरo_dma_oclass;
+बाह्य स्थिर काष्ठा nvkm_fअगरo_chan_oclass nv50_fअगरo_gpfअगरo_oclass;
+बाह्य स्थिर काष्ठा nvkm_fअगरo_chan_oclass g84_fअगरo_dma_oclass;
+बाह्य स्थिर काष्ठा nvkm_fअगरo_chan_oclass g84_fअगरo_gpfअगरo_oclass;
+#पूर्ण_अगर

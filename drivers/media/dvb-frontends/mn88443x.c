@@ -1,212 +1,213 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Socionext MN88443x series demodulator driver for ISDB-S/ISDB-T.
+// Socionext MN88443x series demodulator driver क्रम ISDB-S/ISDB-T.
 //
 // Copyright (c) 2018 Socionext Inc.
 
-#include <linux/bitfield.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/of_device.h>
-#include <linux/regmap.h>
-#include <media/dvb_math.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <media/dvb_गणित.स>
 
-#include "mn88443x.h"
+#समावेश "mn88443x.h"
 
-/* ISDB-S registers */
-#define ATSIDU_S                                    0x2f
-#define ATSIDL_S                                    0x30
-#define TSSET_S                                     0x31
-#define AGCREAD_S                                   0x5a
-#define CPMON1_S                                    0x5e
-#define   CPMON1_S_FSYNC                              BIT(5)
-#define   CPMON1_S_ERRMON                             BIT(4)
-#define   CPMON1_S_SIGOFF                             BIT(3)
-#define   CPMON1_S_W2LOCK                             BIT(2)
-#define   CPMON1_S_W1LOCK                             BIT(1)
-#define   CPMON1_S_DW1LOCK                            BIT(0)
-#define TRMON_S                                     0x60
-#define BERCNFLG_S                                  0x68
-#define   BERCNFLG_S_BERVRDY                          BIT(5)
-#define   BERCNFLG_S_BERVCHK                          BIT(4)
-#define   BERCNFLG_S_BERDRDY                          BIT(3)
-#define   BERCNFLG_S_BERDCHK                          BIT(2)
-#define CNRDXU_S                                    0x69
-#define CNRDXL_S                                    0x6a
-#define CNRDYU_S                                    0x6b
-#define CNRDYL_S                                    0x6c
-#define BERVRDU_S                                   0x71
-#define BERVRDL_S                                   0x72
-#define DOSET1_S                                    0x73
+/* ISDB-S रेजिस्टरs */
+#घोषणा ATSIDU_S                                    0x2f
+#घोषणा ATSIDL_S                                    0x30
+#घोषणा TSSET_S                                     0x31
+#घोषणा AGCREAD_S                                   0x5a
+#घोषणा CPMON1_S                                    0x5e
+#घोषणा   CPMON1_S_FSYNC                              BIT(5)
+#घोषणा   CPMON1_S_ERRMON                             BIT(4)
+#घोषणा   CPMON1_S_SIGOFF                             BIT(3)
+#घोषणा   CPMON1_S_W2LOCK                             BIT(2)
+#घोषणा   CPMON1_S_W1LOCK                             BIT(1)
+#घोषणा   CPMON1_S_DW1LOCK                            BIT(0)
+#घोषणा TRMON_S                                     0x60
+#घोषणा BERCNFLG_S                                  0x68
+#घोषणा   BERCNFLG_S_BERVRDY                          BIT(5)
+#घोषणा   BERCNFLG_S_BERVCHK                          BIT(4)
+#घोषणा   BERCNFLG_S_BERDRDY                          BIT(3)
+#घोषणा   BERCNFLG_S_BERDCHK                          BIT(2)
+#घोषणा CNRDXU_S                                    0x69
+#घोषणा CNRDXL_S                                    0x6a
+#घोषणा CNRDYU_S                                    0x6b
+#घोषणा CNRDYL_S                                    0x6c
+#घोषणा BERVRDU_S                                   0x71
+#घोषणा BERVRDL_S                                   0x72
+#घोषणा DOSET1_S                                    0x73
 
 /* Primary ISDB-T */
-#define PLLASET1                                    0x00
-#define PLLASET2                                    0x01
-#define PLLBSET1                                    0x02
-#define PLLBSET2                                    0x03
-#define PLLSET                                      0x04
-#define OUTCSET                                     0x08
-#define   OUTCSET_CHDRV_8MA                           0xff
-#define   OUTCSET_CHDRV_4MA                           0x00
-#define PLDWSET                                     0x09
-#define   PLDWSET_NORMAL                             0x00
-#define   PLDWSET_PULLDOWN                           0xff
-#define HIZSET1                                     0x0a
-#define HIZSET2                                     0x0b
+#घोषणा PLLASET1                                    0x00
+#घोषणा PLLASET2                                    0x01
+#घोषणा PLLBSET1                                    0x02
+#घोषणा PLLBSET2                                    0x03
+#घोषणा PLLSET                                      0x04
+#घोषणा OUTCSET                                     0x08
+#घोषणा   OUTCSET_CHDRV_8MA                           0xff
+#घोषणा   OUTCSET_CHDRV_4MA                           0x00
+#घोषणा PLDWSET                                     0x09
+#घोषणा   PLDWSET_NORMAL                             0x00
+#घोषणा   PLDWSET_PULLDOWN                           0xff
+#घोषणा HIZSET1                                     0x0a
+#घोषणा HIZSET2                                     0x0b
 
-/* Secondary ISDB-T (for MN884434 only) */
-#define RCVSET                                      0x00
-#define TSSET1_M                                    0x01
-#define TSSET2_M                                    0x02
-#define TSSET3_M                                    0x03
-#define INTACSET                                    0x08
-#define HIZSET3                                     0x0b
+/* Secondary ISDB-T (क्रम MN884434 only) */
+#घोषणा RCVSET                                      0x00
+#घोषणा TSSET1_M                                    0x01
+#घोषणा TSSET2_M                                    0x02
+#घोषणा TSSET3_M                                    0x03
+#घोषणा INTACSET                                    0x08
+#घोषणा HIZSET3                                     0x0b
 
-/* ISDB-T registers */
-#define TSSET1                                      0x05
-#define   TSSET1_TSASEL_MASK                          GENMASK(4, 3)
-#define   TSSET1_TSASEL_ISDBT                         (0x0 << 3)
-#define   TSSET1_TSASEL_ISDBS                         (0x1 << 3)
-#define   TSSET1_TSASEL_NONE                          (0x2 << 3)
-#define   TSSET1_TSBSEL_MASK                          GENMASK(2, 1)
-#define   TSSET1_TSBSEL_ISDBS                         (0x0 << 1)
-#define   TSSET1_TSBSEL_ISDBT                         (0x1 << 1)
-#define   TSSET1_TSBSEL_NONE                          (0x2 << 1)
-#define TSSET2                                      0x06
-#define TSSET3                                      0x07
-#define   TSSET3_INTASEL_MASK                         GENMASK(7, 6)
-#define   TSSET3_INTASEL_T                            (0x0 << 6)
-#define   TSSET3_INTASEL_S                            (0x1 << 6)
-#define   TSSET3_INTASEL_NONE                         (0x2 << 6)
-#define   TSSET3_INTBSEL_MASK                         GENMASK(5, 4)
-#define   TSSET3_INTBSEL_S                            (0x0 << 4)
-#define   TSSET3_INTBSEL_T                            (0x1 << 4)
-#define   TSSET3_INTBSEL_NONE                         (0x2 << 4)
-#define OUTSET2                                     0x0d
-#define PWDSET                                      0x0f
-#define   PWDSET_OFDMPD_MASK                          GENMASK(3, 2)
-#define   PWDSET_OFDMPD_DOWN                          BIT(3)
-#define   PWDSET_PSKPD_MASK                           GENMASK(1, 0)
-#define   PWDSET_PSKPD_DOWN                           BIT(1)
-#define CLKSET1_T                                   0x11
-#define MDSET_T                                     0x13
-#define   MDSET_T_MDAUTO_MASK                         GENMASK(7, 4)
-#define   MDSET_T_MDAUTO_AUTO                         (0xf << 4)
-#define   MDSET_T_MDAUTO_MANUAL                       (0x0 << 4)
-#define   MDSET_T_FFTS_MASK                           GENMASK(3, 2)
-#define   MDSET_T_FFTS_MODE1                          (0x0 << 2)
-#define   MDSET_T_FFTS_MODE2                          (0x1 << 2)
-#define   MDSET_T_FFTS_MODE3                          (0x2 << 2)
-#define   MDSET_T_GI_MASK                             GENMASK(1, 0)
-#define   MDSET_T_GI_1_32                             (0x0 << 0)
-#define   MDSET_T_GI_1_16                             (0x1 << 0)
-#define   MDSET_T_GI_1_8                              (0x2 << 0)
-#define   MDSET_T_GI_1_4                              (0x3 << 0)
-#define MDASET_T                                    0x14
-#define ADCSET1_T                                   0x20
-#define   ADCSET1_T_REFSEL_MASK                       GENMASK(1, 0)
-#define   ADCSET1_T_REFSEL_2V                         (0x3 << 0)
-#define   ADCSET1_T_REFSEL_1_5V                       (0x2 << 0)
-#define   ADCSET1_T_REFSEL_1V                         (0x1 << 0)
-#define NCOFREQU_T                                  0x24
-#define NCOFREQM_T                                  0x25
-#define NCOFREQL_T                                  0x26
-#define FADU_T                                      0x27
-#define FADM_T                                      0x28
-#define FADL_T                                      0x29
-#define AGCSET2_T                                   0x2c
-#define   AGCSET2_T_IFPOLINV_INC                      BIT(0)
-#define   AGCSET2_T_RFPOLINV_INC                      BIT(1)
-#define AGCV3_T                                     0x3e
-#define MDRD_T                                      0xa2
-#define   MDRD_T_SEGID_MASK                           GENMASK(5, 4)
-#define   MDRD_T_SEGID_13                             (0x0 << 4)
-#define   MDRD_T_SEGID_1                              (0x1 << 4)
-#define   MDRD_T_SEGID_3                              (0x2 << 4)
-#define   MDRD_T_FFTS_MASK                            GENMASK(3, 2)
-#define   MDRD_T_FFTS_MODE1                           (0x0 << 2)
-#define   MDRD_T_FFTS_MODE2                           (0x1 << 2)
-#define   MDRD_T_FFTS_MODE3                           (0x2 << 2)
-#define   MDRD_T_GI_MASK                              GENMASK(1, 0)
-#define   MDRD_T_GI_1_32                              (0x0 << 0)
-#define   MDRD_T_GI_1_16                              (0x1 << 0)
-#define   MDRD_T_GI_1_8                               (0x2 << 0)
-#define   MDRD_T_GI_1_4                               (0x3 << 0)
-#define SSEQRD_T                                    0xa3
-#define   SSEQRD_T_SSEQSTRD_MASK                      GENMASK(3, 0)
-#define   SSEQRD_T_SSEQSTRD_RESET                     (0x0 << 0)
-#define   SSEQRD_T_SSEQSTRD_TUNING                    (0x1 << 0)
-#define   SSEQRD_T_SSEQSTRD_AGC                       (0x2 << 0)
-#define   SSEQRD_T_SSEQSTRD_SEARCH                    (0x3 << 0)
-#define   SSEQRD_T_SSEQSTRD_CLOCK_SYNC                (0x4 << 0)
-#define   SSEQRD_T_SSEQSTRD_FREQ_SYNC                 (0x8 << 0)
-#define   SSEQRD_T_SSEQSTRD_FRAME_SYNC                (0x9 << 0)
-#define   SSEQRD_T_SSEQSTRD_SYNC                      (0xa << 0)
-#define   SSEQRD_T_SSEQSTRD_LOCK                      (0xb << 0)
-#define AGCRDU_T                                    0xa8
-#define AGCRDL_T                                    0xa9
-#define CNRDU_T                                     0xbe
-#define CNRDL_T                                     0xbf
-#define BERFLG_T                                    0xc0
-#define   BERFLG_T_BERDRDY                            BIT(7)
-#define   BERFLG_T_BERDCHK                            BIT(6)
-#define   BERFLG_T_BERVRDYA                           BIT(5)
-#define   BERFLG_T_BERVCHKA                           BIT(4)
-#define   BERFLG_T_BERVRDYB                           BIT(3)
-#define   BERFLG_T_BERVCHKB                           BIT(2)
-#define   BERFLG_T_BERVRDYC                           BIT(1)
-#define   BERFLG_T_BERVCHKC                           BIT(0)
-#define BERRDU_T                                    0xc1
-#define BERRDM_T                                    0xc2
-#define BERRDL_T                                    0xc3
-#define BERLENRDU_T                                 0xc4
-#define BERLENRDL_T                                 0xc5
-#define ERRFLG_T                                    0xc6
-#define   ERRFLG_T_BERDOVF                            BIT(7)
-#define   ERRFLG_T_BERVOVFA                           BIT(6)
-#define   ERRFLG_T_BERVOVFB                           BIT(5)
-#define   ERRFLG_T_BERVOVFC                           BIT(4)
-#define   ERRFLG_T_NERRFA                             BIT(3)
-#define   ERRFLG_T_NERRFB                             BIT(2)
-#define   ERRFLG_T_NERRFC                             BIT(1)
-#define   ERRFLG_T_NERRF                              BIT(0)
-#define DOSET1_T                                    0xcf
+/* ISDB-T रेजिस्टरs */
+#घोषणा TSSET1                                      0x05
+#घोषणा   TSSET1_TSASEL_MASK                          GENMASK(4, 3)
+#घोषणा   TSSET1_TSASEL_ISDBT                         (0x0 << 3)
+#घोषणा   TSSET1_TSASEL_ISDBS                         (0x1 << 3)
+#घोषणा   TSSET1_TSASEL_NONE                          (0x2 << 3)
+#घोषणा   TSSET1_TSBSEL_MASK                          GENMASK(2, 1)
+#घोषणा   TSSET1_TSBSEL_ISDBS                         (0x0 << 1)
+#घोषणा   TSSET1_TSBSEL_ISDBT                         (0x1 << 1)
+#घोषणा   TSSET1_TSBSEL_NONE                          (0x2 << 1)
+#घोषणा TSSET2                                      0x06
+#घोषणा TSSET3                                      0x07
+#घोषणा   TSSET3_INTASEL_MASK                         GENMASK(7, 6)
+#घोषणा   TSSET3_INTASEL_T                            (0x0 << 6)
+#घोषणा   TSSET3_INTASEL_S                            (0x1 << 6)
+#घोषणा   TSSET3_INTASEL_NONE                         (0x2 << 6)
+#घोषणा   TSSET3_INTBSEL_MASK                         GENMASK(5, 4)
+#घोषणा   TSSET3_INTBSEL_S                            (0x0 << 4)
+#घोषणा   TSSET3_INTBSEL_T                            (0x1 << 4)
+#घोषणा   TSSET3_INTBSEL_NONE                         (0x2 << 4)
+#घोषणा OUTSET2                                     0x0d
+#घोषणा PWDSET                                      0x0f
+#घोषणा   PWDSET_OFDMPD_MASK                          GENMASK(3, 2)
+#घोषणा   PWDSET_OFDMPD_DOWN                          BIT(3)
+#घोषणा   PWDSET_PSKPD_MASK                           GENMASK(1, 0)
+#घोषणा   PWDSET_PSKPD_DOWN                           BIT(1)
+#घोषणा CLKSET1_T                                   0x11
+#घोषणा MDSET_T                                     0x13
+#घोषणा   MDSET_T_MDAUTO_MASK                         GENMASK(7, 4)
+#घोषणा   MDSET_T_MDAUTO_AUTO                         (0xf << 4)
+#घोषणा   MDSET_T_MDAUTO_MANUAL                       (0x0 << 4)
+#घोषणा   MDSET_T_FFTS_MASK                           GENMASK(3, 2)
+#घोषणा   MDSET_T_FFTS_MODE1                          (0x0 << 2)
+#घोषणा   MDSET_T_FFTS_MODE2                          (0x1 << 2)
+#घोषणा   MDSET_T_FFTS_MODE3                          (0x2 << 2)
+#घोषणा   MDSET_T_GI_MASK                             GENMASK(1, 0)
+#घोषणा   MDSET_T_GI_1_32                             (0x0 << 0)
+#घोषणा   MDSET_T_GI_1_16                             (0x1 << 0)
+#घोषणा   MDSET_T_GI_1_8                              (0x2 << 0)
+#घोषणा   MDSET_T_GI_1_4                              (0x3 << 0)
+#घोषणा MDASET_T                                    0x14
+#घोषणा ADCSET1_T                                   0x20
+#घोषणा   ADCSET1_T_REFSEL_MASK                       GENMASK(1, 0)
+#घोषणा   ADCSET1_T_REFSEL_2V                         (0x3 << 0)
+#घोषणा   ADCSET1_T_REFSEL_1_5V                       (0x2 << 0)
+#घोषणा   ADCSET1_T_REFSEL_1V                         (0x1 << 0)
+#घोषणा NCOFREQU_T                                  0x24
+#घोषणा NCOFREQM_T                                  0x25
+#घोषणा NCOFREQL_T                                  0x26
+#घोषणा FADU_T                                      0x27
+#घोषणा FADM_T                                      0x28
+#घोषणा FADL_T                                      0x29
+#घोषणा AGCSET2_T                                   0x2c
+#घोषणा   AGCSET2_T_IFPOLINV_INC                      BIT(0)
+#घोषणा   AGCSET2_T_RFPOLINV_INC                      BIT(1)
+#घोषणा AGCV3_T                                     0x3e
+#घोषणा MDRD_T                                      0xa2
+#घोषणा   MDRD_T_SEGID_MASK                           GENMASK(5, 4)
+#घोषणा   MDRD_T_SEGID_13                             (0x0 << 4)
+#घोषणा   MDRD_T_SEGID_1                              (0x1 << 4)
+#घोषणा   MDRD_T_SEGID_3                              (0x2 << 4)
+#घोषणा   MDRD_T_FFTS_MASK                            GENMASK(3, 2)
+#घोषणा   MDRD_T_FFTS_MODE1                           (0x0 << 2)
+#घोषणा   MDRD_T_FFTS_MODE2                           (0x1 << 2)
+#घोषणा   MDRD_T_FFTS_MODE3                           (0x2 << 2)
+#घोषणा   MDRD_T_GI_MASK                              GENMASK(1, 0)
+#घोषणा   MDRD_T_GI_1_32                              (0x0 << 0)
+#घोषणा   MDRD_T_GI_1_16                              (0x1 << 0)
+#घोषणा   MDRD_T_GI_1_8                               (0x2 << 0)
+#घोषणा   MDRD_T_GI_1_4                               (0x3 << 0)
+#घोषणा SSEQRD_T                                    0xa3
+#घोषणा   SSEQRD_T_SSEQSTRD_MASK                      GENMASK(3, 0)
+#घोषणा   SSEQRD_T_SSEQSTRD_RESET                     (0x0 << 0)
+#घोषणा   SSEQRD_T_SSEQSTRD_TUNING                    (0x1 << 0)
+#घोषणा   SSEQRD_T_SSEQSTRD_AGC                       (0x2 << 0)
+#घोषणा   SSEQRD_T_SSEQSTRD_SEARCH                    (0x3 << 0)
+#घोषणा   SSEQRD_T_SSEQSTRD_CLOCK_SYNC                (0x4 << 0)
+#घोषणा   SSEQRD_T_SSEQSTRD_FREQ_SYNC                 (0x8 << 0)
+#घोषणा   SSEQRD_T_SSEQSTRD_FRAME_SYNC                (0x9 << 0)
+#घोषणा   SSEQRD_T_SSEQSTRD_SYNC                      (0xa << 0)
+#घोषणा   SSEQRD_T_SSEQSTRD_LOCK                      (0xb << 0)
+#घोषणा AGCRDU_T                                    0xa8
+#घोषणा AGCRDL_T                                    0xa9
+#घोषणा CNRDU_T                                     0xbe
+#घोषणा CNRDL_T                                     0xbf
+#घोषणा BERFLG_T                                    0xc0
+#घोषणा   BERFLG_T_BERDRDY                            BIT(7)
+#घोषणा   BERFLG_T_BERDCHK                            BIT(6)
+#घोषणा   BERFLG_T_BERVRDYA                           BIT(5)
+#घोषणा   BERFLG_T_BERVCHKA                           BIT(4)
+#घोषणा   BERFLG_T_BERVRDYB                           BIT(3)
+#घोषणा   BERFLG_T_BERVCHKB                           BIT(2)
+#घोषणा   BERFLG_T_BERVRDYC                           BIT(1)
+#घोषणा   BERFLG_T_BERVCHKC                           BIT(0)
+#घोषणा BERRDU_T                                    0xc1
+#घोषणा BERRDM_T                                    0xc2
+#घोषणा BERRDL_T                                    0xc3
+#घोषणा BERLENRDU_T                                 0xc4
+#घोषणा BERLENRDL_T                                 0xc5
+#घोषणा ERRFLG_T                                    0xc6
+#घोषणा   ERRFLG_T_BERDOVF                            BIT(7)
+#घोषणा   ERRFLG_T_BERVOVFA                           BIT(6)
+#घोषणा   ERRFLG_T_BERVOVFB                           BIT(5)
+#घोषणा   ERRFLG_T_BERVOVFC                           BIT(4)
+#घोषणा   ERRFLG_T_NERRFA                             BIT(3)
+#घोषणा   ERRFLG_T_NERRFB                             BIT(2)
+#घोषणा   ERRFLG_T_NERRFC                             BIT(1)
+#घोषणा   ERRFLG_T_NERRF                              BIT(0)
+#घोषणा DOSET1_T                                    0xcf
 
-#define CLK_LOW            4000000
-#define CLK_DIRECT         20200000
-#define CLK_MAX            25410000
+#घोषणा CLK_LOW            4000000
+#घोषणा CLK_सूचीECT         20200000
+#घोषणा CLK_MAX            25410000
 
-#define S_T_FREQ           8126984 /* 512 / 63 MHz */
+#घोषणा S_T_FREQ           8126984 /* 512 / 63 MHz */
 
-struct mn88443x_spec {
+काष्ठा mn88443x_spec अणु
 	bool primary;
-};
+पूर्ण;
 
-struct mn88443x_priv {
-	const struct mn88443x_spec *spec;
+काष्ठा mn88443x_priv अणु
+	स्थिर काष्ठा mn88443x_spec *spec;
 
-	struct dvb_frontend fe;
-	struct clk *mclk;
-	struct gpio_desc *reset_gpio;
+	काष्ठा dvb_frontend fe;
+	काष्ठा clk *mclk;
+	काष्ठा gpio_desc *reset_gpio;
 	u32 clk_freq;
-	u32 if_freq;
+	u32 अगर_freq;
 
 	/* Common */
 	bool use_clkbuf;
 
 	/* ISDB-S */
-	struct i2c_client *client_s;
-	struct regmap *regmap_s;
+	काष्ठा i2c_client *client_s;
+	काष्ठा regmap *regmap_s;
 
 	/* ISDB-T */
-	struct i2c_client *client_t;
-	struct regmap *regmap_t;
-};
+	काष्ठा i2c_client *client_t;
+	काष्ठा regmap *regmap_t;
+पूर्ण;
 
-static void mn88443x_cmn_power_on(struct mn88443x_priv *chip)
-{
-	struct regmap *r_t = chip->regmap_t;
+अटल व्योम mn88443x_cmn_घातer_on(काष्ठा mn88443x_priv *chip)
+अणु
+	काष्ठा regmap *r_t = chip->regmap_t;
 
 	clk_prepare_enable(chip->mclk);
 
@@ -214,219 +215,219 @@ static void mn88443x_cmn_power_on(struct mn88443x_priv *chip)
 	usleep_range(100, 1000);
 	gpiod_set_value_cansleep(chip->reset_gpio, 0);
 
-	if (chip->spec->primary) {
-		regmap_write(r_t, OUTCSET, OUTCSET_CHDRV_8MA);
-		regmap_write(r_t, PLDWSET, PLDWSET_NORMAL);
-		regmap_write(r_t, HIZSET1, 0x80);
-		regmap_write(r_t, HIZSET2, 0xe0);
-	} else {
-		regmap_write(r_t, HIZSET3, 0x8f);
-	}
-}
+	अगर (chip->spec->primary) अणु
+		regmap_ग_लिखो(r_t, OUTCSET, OUTCSET_CHDRV_8MA);
+		regmap_ग_लिखो(r_t, PLDWSET, PLDWSET_NORMAL);
+		regmap_ग_लिखो(r_t, HIZSET1, 0x80);
+		regmap_ग_लिखो(r_t, HIZSET2, 0xe0);
+	पूर्ण अन्यथा अणु
+		regmap_ग_लिखो(r_t, HIZSET3, 0x8f);
+	पूर्ण
+पूर्ण
 
-static void mn88443x_cmn_power_off(struct mn88443x_priv *chip)
-{
+अटल व्योम mn88443x_cmn_घातer_off(काष्ठा mn88443x_priv *chip)
+अणु
 	gpiod_set_value_cansleep(chip->reset_gpio, 1);
 
 	clk_disable_unprepare(chip->mclk);
-}
+पूर्ण
 
-static void mn88443x_s_sleep(struct mn88443x_priv *chip)
-{
-	struct regmap *r_t = chip->regmap_t;
+अटल व्योम mn88443x_s_sleep(काष्ठा mn88443x_priv *chip)
+अणु
+	काष्ठा regmap *r_t = chip->regmap_t;
 
 	regmap_update_bits(r_t, PWDSET, PWDSET_PSKPD_MASK,
 			   PWDSET_PSKPD_DOWN);
-}
+पूर्ण
 
-static void mn88443x_s_wake(struct mn88443x_priv *chip)
-{
-	struct regmap *r_t = chip->regmap_t;
+अटल व्योम mn88443x_s_wake(काष्ठा mn88443x_priv *chip)
+अणु
+	काष्ठा regmap *r_t = chip->regmap_t;
 
 	regmap_update_bits(r_t, PWDSET, PWDSET_PSKPD_MASK, 0);
-}
+पूर्ण
 
-static void mn88443x_s_tune(struct mn88443x_priv *chip,
-			    struct dtv_frontend_properties *c)
-{
-	struct regmap *r_s = chip->regmap_s;
+अटल व्योम mn88443x_s_tune(काष्ठा mn88443x_priv *chip,
+			    काष्ठा dtv_frontend_properties *c)
+अणु
+	काष्ठा regmap *r_s = chip->regmap_s;
 
-	regmap_write(r_s, ATSIDU_S, c->stream_id >> 8);
-	regmap_write(r_s, ATSIDL_S, c->stream_id);
-	regmap_write(r_s, TSSET_S, 0);
-}
+	regmap_ग_लिखो(r_s, ATSIDU_S, c->stream_id >> 8);
+	regmap_ग_लिखो(r_s, ATSIDL_S, c->stream_id);
+	regmap_ग_लिखो(r_s, TSSET_S, 0);
+पूर्ण
 
-static int mn88443x_s_read_status(struct mn88443x_priv *chip,
-				  struct dtv_frontend_properties *c,
-				  enum fe_status *status)
-{
-	struct regmap *r_s = chip->regmap_s;
-	u32 cpmon, tmpu, tmpl, flg;
-	u64 tmp;
+अटल पूर्णांक mn88443x_s_पढ़ो_status(काष्ठा mn88443x_priv *chip,
+				  काष्ठा dtv_frontend_properties *c,
+				  क्रमागत fe_status *status)
+अणु
+	काष्ठा regmap *r_s = chip->regmap_s;
+	u32 cpmon, पंचांगpu, पंचांगpl, flg;
+	u64 पंचांगp;
 
 	/* Sync detection */
-	regmap_read(r_s, CPMON1_S, &cpmon);
+	regmap_पढ़ो(r_s, CPMON1_S, &cpmon);
 
 	*status = 0;
-	if (cpmon & CPMON1_S_FSYNC)
+	अगर (cpmon & CPMON1_S_FSYNC)
 		*status |= FE_HAS_VITERBI | FE_HAS_SYNC | FE_HAS_LOCK;
-	if (cpmon & CPMON1_S_W2LOCK)
+	अगर (cpmon & CPMON1_S_W2LOCK)
 		*status |= FE_HAS_SIGNAL | FE_HAS_CARRIER;
 
 	/* Signal strength */
 	c->strength.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	if (*status & FE_HAS_SIGNAL) {
+	अगर (*status & FE_HAS_SIGNAL) अणु
 		u32 agc;
 
-		regmap_read(r_s, AGCREAD_S, &tmpu);
-		agc = tmpu << 8;
+		regmap_पढ़ो(r_s, AGCREAD_S, &पंचांगpu);
+		agc = पंचांगpu << 8;
 
 		c->strength.len = 1;
 		c->strength.stat[0].scale = FE_SCALE_RELATIVE;
 		c->strength.stat[0].uvalue = agc;
-	}
+	पूर्ण
 
 	/* C/N rate */
 	c->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	if (*status & FE_HAS_VITERBI) {
+	अगर (*status & FE_HAS_VITERBI) अणु
 		u32 cnr = 0, x, y, d;
 		u64 d_3 = 0;
 
-		regmap_read(r_s, CNRDXU_S, &tmpu);
-		regmap_read(r_s, CNRDXL_S, &tmpl);
-		x = (tmpu << 8) | tmpl;
-		regmap_read(r_s, CNRDYU_S, &tmpu);
-		regmap_read(r_s, CNRDYL_S, &tmpl);
-		y = (tmpu << 8) | tmpl;
+		regmap_पढ़ो(r_s, CNRDXU_S, &पंचांगpu);
+		regmap_पढ़ो(r_s, CNRDXL_S, &पंचांगpl);
+		x = (पंचांगpu << 8) | पंचांगpl;
+		regmap_पढ़ो(r_s, CNRDYU_S, &पंचांगpu);
+		regmap_पढ़ो(r_s, CNRDYL_S, &पंचांगpl);
+		y = (पंचांगpu << 8) | पंचांगpl;
 
 		/* CNR[dB]: 10 * log10(D) - 30.74 / D^3 - 3 */
 		/*   D = x^2 / (2^15 * y - x^2) */
 		d = (y << 15) - x * x;
-		if (d > 0) {
+		अगर (d > 0) अणु
 			/* (2^4 * D)^3 = 2^12 * D^3 */
 			/* 3.074 * 2^(12 + 24) = 211243671486 */
-			d_3 = div_u64(16 * x * x, d);
+			d_3 = भाग_u64(16 * x * x, d);
 			d_3 = d_3 * d_3 * d_3;
-			if (d_3)
-				d_3 = div_u64(211243671486ULL, d_3);
-		}
+			अगर (d_3)
+				d_3 = भाग_u64(211243671486ULL, d_3);
+		पूर्ण
 
-		if (d_3) {
+		अगर (d_3) अणु
 			/* 0.3 * 2^24 = 5033164 */
-			tmp = (s64)2 * intlog10(x) - intlog10(abs(d)) - d_3
+			पंचांगp = (s64)2 * पूर्णांकlog10(x) - पूर्णांकlog10(असल(d)) - d_3
 				- 5033164;
-			cnr = div_u64(tmp * 10000, 1 << 24);
-		}
+			cnr = भाग_u64(पंचांगp * 10000, 1 << 24);
+		पूर्ण
 
-		if (cnr) {
+		अगर (cnr) अणु
 			c->cnr.len = 1;
 			c->cnr.stat[0].scale = FE_SCALE_DECIBEL;
 			c->cnr.stat[0].uvalue = cnr;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* BER */
 	c->post_bit_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 	c->post_bit_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	regmap_read(r_s, BERCNFLG_S, &flg);
+	regmap_पढ़ो(r_s, BERCNFLG_S, &flg);
 
-	if ((*status & FE_HAS_VITERBI) && (flg & BERCNFLG_S_BERVRDY)) {
+	अगर ((*status & FE_HAS_VITERBI) && (flg & BERCNFLG_S_BERVRDY)) अणु
 		u32 bit_err, bit_cnt;
 
-		regmap_read(r_s, BERVRDU_S, &tmpu);
-		regmap_read(r_s, BERVRDL_S, &tmpl);
-		bit_err = (tmpu << 8) | tmpl;
+		regmap_पढ़ो(r_s, BERVRDU_S, &पंचांगpu);
+		regmap_पढ़ो(r_s, BERVRDL_S, &पंचांगpl);
+		bit_err = (पंचांगpu << 8) | पंचांगpl;
 		bit_cnt = (1 << 13) * 204;
 
-		if (bit_cnt) {
+		अगर (bit_cnt) अणु
 			c->post_bit_error.len = 1;
 			c->post_bit_error.stat[0].scale = FE_SCALE_COUNTER;
 			c->post_bit_error.stat[0].uvalue = bit_err;
 			c->post_bit_count.len = 1;
 			c->post_bit_count.stat[0].scale = FE_SCALE_COUNTER;
 			c->post_bit_count.stat[0].uvalue = bit_cnt;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mn88443x_t_sleep(struct mn88443x_priv *chip)
-{
-	struct regmap *r_t = chip->regmap_t;
+अटल व्योम mn88443x_t_sleep(काष्ठा mn88443x_priv *chip)
+अणु
+	काष्ठा regmap *r_t = chip->regmap_t;
 
 	regmap_update_bits(r_t, PWDSET, PWDSET_OFDMPD_MASK,
 			   PWDSET_OFDMPD_DOWN);
-}
+पूर्ण
 
-static void mn88443x_t_wake(struct mn88443x_priv *chip)
-{
-	struct regmap *r_t = chip->regmap_t;
+अटल व्योम mn88443x_t_wake(काष्ठा mn88443x_priv *chip)
+अणु
+	काष्ठा regmap *r_t = chip->regmap_t;
 
 	regmap_update_bits(r_t, PWDSET, PWDSET_OFDMPD_MASK, 0);
-}
+पूर्ण
 
-static bool mn88443x_t_is_valid_clk(u32 adckt, u32 if_freq)
-{
-	if (if_freq == DIRECT_IF_57MHZ) {
-		if (adckt >= CLK_DIRECT && adckt <= 21000000)
-			return true;
-		if (adckt >= 25300000 && adckt <= CLK_MAX)
-			return true;
-	} else if (if_freq == DIRECT_IF_44MHZ) {
-		if (adckt >= 25000000 && adckt <= CLK_MAX)
-			return true;
-	} else if (if_freq >= LOW_IF_4MHZ && if_freq < DIRECT_IF_44MHZ) {
-		if (adckt >= CLK_DIRECT && adckt <= CLK_MAX)
-			return true;
-	}
+अटल bool mn88443x_t_is_valid_clk(u32 adckt, u32 अगर_freq)
+अणु
+	अगर (अगर_freq == सूचीECT_IF_57MHZ) अणु
+		अगर (adckt >= CLK_सूचीECT && adckt <= 21000000)
+			वापस true;
+		अगर (adckt >= 25300000 && adckt <= CLK_MAX)
+			वापस true;
+	पूर्ण अन्यथा अगर (अगर_freq == सूचीECT_IF_44MHZ) अणु
+		अगर (adckt >= 25000000 && adckt <= CLK_MAX)
+			वापस true;
+	पूर्ण अन्यथा अगर (अगर_freq >= LOW_IF_4MHZ && अगर_freq < सूचीECT_IF_44MHZ) अणु
+		अगर (adckt >= CLK_सूचीECT && adckt <= CLK_MAX)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int mn88443x_t_set_freq(struct mn88443x_priv *chip)
-{
-	struct device *dev = &chip->client_s->dev;
-	struct regmap *r_t = chip->regmap_t;
+अटल पूर्णांक mn88443x_t_set_freq(काष्ठा mn88443x_priv *chip)
+अणु
+	काष्ठा device *dev = &chip->client_s->dev;
+	काष्ठा regmap *r_t = chip->regmap_t;
 	s64 adckt, nco, ad_t;
 	u32 m, v;
 
 	/* Clock buffer (but not supported) or XTAL */
-	if (chip->clk_freq >= CLK_LOW && chip->clk_freq < CLK_DIRECT) {
+	अगर (chip->clk_freq >= CLK_LOW && chip->clk_freq < CLK_सूचीECT) अणु
 		chip->use_clkbuf = true;
-		regmap_write(r_t, CLKSET1_T, 0x07);
+		regmap_ग_लिखो(r_t, CLKSET1_T, 0x07);
 
 		adckt = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		chip->use_clkbuf = false;
-		regmap_write(r_t, CLKSET1_T, 0x00);
+		regmap_ग_लिखो(r_t, CLKSET1_T, 0x00);
 
 		adckt = chip->clk_freq;
-	}
-	if (!mn88443x_t_is_valid_clk(adckt, chip->if_freq)) {
+	पूर्ण
+	अगर (!mn88443x_t_is_valid_clk(adckt, chip->अगर_freq)) अणु
 		dev_err(dev, "Invalid clock, CLK:%d, ADCKT:%lld, IF:%d\n",
-			chip->clk_freq, adckt, chip->if_freq);
-		return -EINVAL;
-	}
+			chip->clk_freq, adckt, chip->अगर_freq);
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Direct IF or Low IF */
-	if (chip->if_freq == DIRECT_IF_57MHZ ||
-	    chip->if_freq == DIRECT_IF_44MHZ)
-		nco = adckt * 2 - chip->if_freq;
-	else
-		nco = -((s64)chip->if_freq);
-	nco = div_s64(nco << 24, adckt);
-	ad_t = div_s64(adckt << 22, S_T_FREQ);
+	अगर (chip->अगर_freq == सूचीECT_IF_57MHZ ||
+	    chip->अगर_freq == सूचीECT_IF_44MHZ)
+		nco = adckt * 2 - chip->अगर_freq;
+	अन्यथा
+		nco = -((s64)chip->अगर_freq);
+	nco = भाग_s64(nco << 24, adckt);
+	ad_t = भाग_s64(adckt << 22, S_T_FREQ);
 
-	regmap_write(r_t, NCOFREQU_T, nco >> 16);
-	regmap_write(r_t, NCOFREQM_T, nco >> 8);
-	regmap_write(r_t, NCOFREQL_T, nco);
-	regmap_write(r_t, FADU_T, ad_t >> 16);
-	regmap_write(r_t, FADM_T, ad_t >> 8);
-	regmap_write(r_t, FADL_T, ad_t);
+	regmap_ग_लिखो(r_t, NCOFREQU_T, nco >> 16);
+	regmap_ग_लिखो(r_t, NCOFREQM_T, nco >> 8);
+	regmap_ग_लिखो(r_t, NCOFREQL_T, nco);
+	regmap_ग_लिखो(r_t, FADU_T, ad_t >> 16);
+	regmap_ग_लिखो(r_t, FADM_T, ad_t >> 8);
+	regmap_ग_लिखो(r_t, FADL_T, ad_t);
 
 	/* Level of IF */
 	m = ADCSET1_T_REFSEL_MASK;
@@ -438,210 +439,210 @@ static int mn88443x_t_set_freq(struct mn88443x_priv *chip)
 	regmap_update_bits(r_t, AGCSET2_T, v, v);
 
 	/* Lower output level of AGC */
-	regmap_write(r_t, AGCV3_T, 0x00);
+	regmap_ग_लिखो(r_t, AGCV3_T, 0x00);
 
-	regmap_write(r_t, MDSET_T, 0xfa);
+	regmap_ग_लिखो(r_t, MDSET_T, 0xfa);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mn88443x_t_tune(struct mn88443x_priv *chip,
-			    struct dtv_frontend_properties *c)
-{
-	struct regmap *r_t = chip->regmap_t;
+अटल व्योम mn88443x_t_tune(काष्ठा mn88443x_priv *chip,
+			    काष्ठा dtv_frontend_properties *c)
+अणु
+	काष्ठा regmap *r_t = chip->regmap_t;
 	u32 m, v;
 
 	m = MDSET_T_MDAUTO_MASK | MDSET_T_FFTS_MASK | MDSET_T_GI_MASK;
 	v = MDSET_T_MDAUTO_AUTO | MDSET_T_FFTS_MODE3 | MDSET_T_GI_1_8;
 	regmap_update_bits(r_t, MDSET_T, m, v);
 
-	regmap_write(r_t, MDASET_T, 0);
-}
+	regmap_ग_लिखो(r_t, MDASET_T, 0);
+पूर्ण
 
-static int mn88443x_t_read_status(struct mn88443x_priv *chip,
-				  struct dtv_frontend_properties *c,
-				  enum fe_status *status)
-{
-	struct regmap *r_t = chip->regmap_t;
-	u32 seqrd, st, flg, tmpu, tmpm, tmpl;
-	u64 tmp;
+अटल पूर्णांक mn88443x_t_पढ़ो_status(काष्ठा mn88443x_priv *chip,
+				  काष्ठा dtv_frontend_properties *c,
+				  क्रमागत fe_status *status)
+अणु
+	काष्ठा regmap *r_t = chip->regmap_t;
+	u32 seqrd, st, flg, पंचांगpu, पंचांगpm, पंचांगpl;
+	u64 पंचांगp;
 
 	/* Sync detection */
-	regmap_read(r_t, SSEQRD_T, &seqrd);
+	regmap_पढ़ो(r_t, SSEQRD_T, &seqrd);
 	st = seqrd & SSEQRD_T_SSEQSTRD_MASK;
 
 	*status = 0;
-	if (st >= SSEQRD_T_SSEQSTRD_SYNC)
+	अगर (st >= SSEQRD_T_SSEQSTRD_SYNC)
 		*status |= FE_HAS_VITERBI | FE_HAS_SYNC | FE_HAS_LOCK;
-	if (st >= SSEQRD_T_SSEQSTRD_FRAME_SYNC)
+	अगर (st >= SSEQRD_T_SSEQSTRD_FRAME_SYNC)
 		*status |= FE_HAS_SIGNAL | FE_HAS_CARRIER;
 
 	/* Signal strength */
 	c->strength.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	if (*status & FE_HAS_SIGNAL) {
+	अगर (*status & FE_HAS_SIGNAL) अणु
 		u32 agc;
 
-		regmap_read(r_t, AGCRDU_T, &tmpu);
-		regmap_read(r_t, AGCRDL_T, &tmpl);
-		agc = (tmpu << 8) | tmpl;
+		regmap_पढ़ो(r_t, AGCRDU_T, &पंचांगpu);
+		regmap_पढ़ो(r_t, AGCRDL_T, &पंचांगpl);
+		agc = (पंचांगpu << 8) | पंचांगpl;
 
 		c->strength.len = 1;
 		c->strength.stat[0].scale = FE_SCALE_RELATIVE;
 		c->strength.stat[0].uvalue = agc;
-	}
+	पूर्ण
 
 	/* C/N rate */
 	c->cnr.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	if (*status & FE_HAS_VITERBI) {
+	अगर (*status & FE_HAS_VITERBI) अणु
 		u32 cnr;
 
-		regmap_read(r_t, CNRDU_T, &tmpu);
-		regmap_read(r_t, CNRDL_T, &tmpl);
+		regmap_पढ़ो(r_t, CNRDU_T, &पंचांगpu);
+		regmap_पढ़ो(r_t, CNRDL_T, &पंचांगpl);
 
-		if (tmpu || tmpl) {
+		अगर (पंचांगpu || पंचांगpl) अणु
 			/* CNR[dB]: 10 * (log10(65536 / value) + 0.2) */
-			/* intlog10(65536) = 80807124, 0.2 * 2^24 = 3355443 */
-			tmp = (u64)80807124 - intlog10((tmpu << 8) | tmpl)
+			/* पूर्णांकlog10(65536) = 80807124, 0.2 * 2^24 = 3355443 */
+			पंचांगp = (u64)80807124 - पूर्णांकlog10((पंचांगpu << 8) | पंचांगpl)
 				+ 3355443;
-			cnr = div_u64(tmp * 10000, 1 << 24);
-		} else {
+			cnr = भाग_u64(पंचांगp * 10000, 1 << 24);
+		पूर्ण अन्यथा अणु
 			cnr = 0;
-		}
+		पूर्ण
 
 		c->cnr.len = 1;
 		c->cnr.stat[0].scale = FE_SCALE_DECIBEL;
 		c->cnr.stat[0].uvalue = cnr;
-	}
+	पूर्ण
 
 	/* BER */
 	c->post_bit_error.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 	c->post_bit_count.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
 
-	regmap_read(r_t, BERFLG_T, &flg);
+	regmap_पढ़ो(r_t, BERFLG_T, &flg);
 
-	if ((*status & FE_HAS_VITERBI) && (flg & BERFLG_T_BERVRDYA)) {
+	अगर ((*status & FE_HAS_VITERBI) && (flg & BERFLG_T_BERVRDYA)) अणु
 		u32 bit_err, bit_cnt;
 
-		regmap_read(r_t, BERRDU_T, &tmpu);
-		regmap_read(r_t, BERRDM_T, &tmpm);
-		regmap_read(r_t, BERRDL_T, &tmpl);
-		bit_err = (tmpu << 16) | (tmpm << 8) | tmpl;
+		regmap_पढ़ो(r_t, BERRDU_T, &पंचांगpu);
+		regmap_पढ़ो(r_t, BERRDM_T, &पंचांगpm);
+		regmap_पढ़ो(r_t, BERRDL_T, &पंचांगpl);
+		bit_err = (पंचांगpu << 16) | (पंचांगpm << 8) | पंचांगpl;
 
-		regmap_read(r_t, BERLENRDU_T, &tmpu);
-		regmap_read(r_t, BERLENRDL_T, &tmpl);
-		bit_cnt = ((tmpu << 8) | tmpl) * 203 * 8;
+		regmap_पढ़ो(r_t, BERLENRDU_T, &पंचांगpu);
+		regmap_पढ़ो(r_t, BERLENRDL_T, &पंचांगpl);
+		bit_cnt = ((पंचांगpu << 8) | पंचांगpl) * 203 * 8;
 
-		if (bit_cnt) {
+		अगर (bit_cnt) अणु
 			c->post_bit_error.len = 1;
 			c->post_bit_error.stat[0].scale = FE_SCALE_COUNTER;
 			c->post_bit_error.stat[0].uvalue = bit_err;
 			c->post_bit_count.len = 1;
 			c->post_bit_count.stat[0].scale = FE_SCALE_COUNTER;
 			c->post_bit_count.stat[0].uvalue = bit_cnt;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mn88443x_sleep(struct dvb_frontend *fe)
-{
-	struct mn88443x_priv *chip = fe->demodulator_priv;
+अटल पूर्णांक mn88443x_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mn88443x_priv *chip = fe->demodulator_priv;
 
 	mn88443x_s_sleep(chip);
 	mn88443x_t_sleep(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mn88443x_set_frontend(struct dvb_frontend *fe)
-{
-	struct mn88443x_priv *chip = fe->demodulator_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	struct regmap *r_s = chip->regmap_s;
-	struct regmap *r_t = chip->regmap_t;
-	u8 tssel = 0, intsel = 0;
+अटल पूर्णांक mn88443x_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा mn88443x_priv *chip = fe->demodulator_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	काष्ठा regmap *r_s = chip->regmap_s;
+	काष्ठा regmap *r_t = chip->regmap_t;
+	u8 tssel = 0, पूर्णांकsel = 0;
 
-	if (c->delivery_system == SYS_ISDBS) {
+	अगर (c->delivery_प्रणाली == SYS_ISDBS) अणु
 		mn88443x_s_wake(chip);
 		mn88443x_t_sleep(chip);
 
 		tssel = TSSET1_TSASEL_ISDBS;
-		intsel = TSSET3_INTASEL_S;
-	} else if (c->delivery_system == SYS_ISDBT) {
+		पूर्णांकsel = TSSET3_INTASEL_S;
+	पूर्ण अन्यथा अगर (c->delivery_प्रणाली == SYS_ISDBT) अणु
 		mn88443x_s_sleep(chip);
 		mn88443x_t_wake(chip);
 
 		mn88443x_t_set_freq(chip);
 
 		tssel = TSSET1_TSASEL_ISDBT;
-		intsel = TSSET3_INTASEL_T;
-	}
+		पूर्णांकsel = TSSET3_INTASEL_T;
+	पूर्ण
 
 	regmap_update_bits(r_t, TSSET1,
 			   TSSET1_TSASEL_MASK | TSSET1_TSBSEL_MASK,
 			   tssel | TSSET1_TSBSEL_NONE);
-	regmap_write(r_t, TSSET2, 0);
+	regmap_ग_लिखो(r_t, TSSET2, 0);
 	regmap_update_bits(r_t, TSSET3,
 			   TSSET3_INTASEL_MASK | TSSET3_INTBSEL_MASK,
-			   intsel | TSSET3_INTBSEL_NONE);
+			   पूर्णांकsel | TSSET3_INTBSEL_NONE);
 
-	regmap_write(r_t, DOSET1_T, 0x95);
-	regmap_write(r_s, DOSET1_S, 0x80);
+	regmap_ग_लिखो(r_t, DOSET1_T, 0x95);
+	regmap_ग_लिखो(r_s, DOSET1_S, 0x80);
 
-	if (c->delivery_system == SYS_ISDBS)
+	अगर (c->delivery_प्रणाली == SYS_ISDBS)
 		mn88443x_s_tune(chip, c);
-	else if (c->delivery_system == SYS_ISDBT)
+	अन्यथा अगर (c->delivery_प्रणाली == SYS_ISDBT)
 		mn88443x_t_tune(chip, c);
 
-	if (fe->ops.tuner_ops.set_params) {
-		if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.tuner_ops.set_params) अणु
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 1);
 		fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl)
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mn88443x_get_tune_settings(struct dvb_frontend *fe,
-				      struct dvb_frontend_tune_settings *s)
-{
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक mn88443x_get_tune_settings(काष्ठा dvb_frontend *fe,
+				      काष्ठा dvb_frontend_tune_settings *s)
+अणु
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 
 	s->min_delay_ms = 850;
 
-	if (c->delivery_system == SYS_ISDBS) {
-		s->max_drift = 30000 * 2 + 1;
+	अगर (c->delivery_प्रणाली == SYS_ISDBS) अणु
+		s->max_drअगरt = 30000 * 2 + 1;
 		s->step_size = 30000;
-	} else if (c->delivery_system == SYS_ISDBT) {
-		s->max_drift = 142857 * 2 + 1;
+	पूर्ण अन्यथा अगर (c->delivery_प्रणाली == SYS_ISDBT) अणु
+		s->max_drअगरt = 142857 * 2 + 1;
 		s->step_size = 142857 * 2;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mn88443x_read_status(struct dvb_frontend *fe, enum fe_status *status)
-{
-	struct mn88443x_priv *chip = fe->demodulator_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक mn88443x_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
+अणु
+	काष्ठा mn88443x_priv *chip = fe->demodulator_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 
-	if (c->delivery_system == SYS_ISDBS)
-		return mn88443x_s_read_status(chip, c, status);
+	अगर (c->delivery_प्रणाली == SYS_ISDBS)
+		वापस mn88443x_s_पढ़ो_status(chip, c, status);
 
-	if (c->delivery_system == SYS_ISDBT)
-		return mn88443x_t_read_status(chip, c, status);
+	अगर (c->delivery_प्रणाली == SYS_ISDBT)
+		वापस mn88443x_t_पढ़ो_status(chip, c, status);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct dvb_frontend_ops mn88443x_ops = {
-	.delsys = { SYS_ISDBS, SYS_ISDBT },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops mn88443x_ops = अणु
+	.delsys = अणु SYS_ISDBS, SYS_ISDBT पूर्ण,
+	.info = अणु
 		.name = "Socionext MN88443x",
 		.frequency_min_hz =  470 * MHz,
 		.frequency_max_hz = 2071 * MHz,
@@ -650,150 +651,150 @@ static const struct dvb_frontend_ops mn88443x_ops = {
 		.caps = FE_CAN_INVERSION_AUTO | FE_CAN_FEC_AUTO |
 			FE_CAN_QAM_AUTO | FE_CAN_TRANSMISSION_MODE_AUTO |
 			FE_CAN_GUARD_INTERVAL_AUTO | FE_CAN_HIERARCHY_AUTO,
-	},
+	पूर्ण,
 
 	.sleep                   = mn88443x_sleep,
 	.set_frontend            = mn88443x_set_frontend,
 	.get_tune_settings       = mn88443x_get_tune_settings,
-	.read_status             = mn88443x_read_status,
-};
+	.पढ़ो_status             = mn88443x_पढ़ो_status,
+पूर्ण;
 
-static const struct regmap_config regmap_config = {
+अटल स्थिर काष्ठा regmap_config regmap_config = अणु
 	.reg_bits   = 8,
 	.val_bits   = 8,
 	.cache_type = REGCACHE_NONE,
-};
+पूर्ण;
 
-static int mn88443x_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
-{
-	struct mn88443x_config *conf = client->dev.platform_data;
-	struct mn88443x_priv *chip;
-	struct device *dev = &client->dev;
-	int ret;
+अटल पूर्णांक mn88443x_probe(काष्ठा i2c_client *client,
+			  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा mn88443x_config *conf = client->dev.platक्रमm_data;
+	काष्ठा mn88443x_priv *chip;
+	काष्ठा device *dev = &client->dev;
+	पूर्णांक ret;
 
-	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(dev, माप(*chip), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
-	if (dev->of_node)
+	अगर (dev->of_node)
 		chip->spec = of_device_get_match_data(dev);
-	else
-		chip->spec = (struct mn88443x_spec *)id->driver_data;
-	if (!chip->spec)
-		return -EINVAL;
+	अन्यथा
+		chip->spec = (काष्ठा mn88443x_spec *)id->driver_data;
+	अगर (!chip->spec)
+		वापस -EINVAL;
 
 	chip->mclk = devm_clk_get(dev, "mclk");
-	if (IS_ERR(chip->mclk) && !conf) {
+	अगर (IS_ERR(chip->mclk) && !conf) अणु
 		dev_err(dev, "Failed to request mclk: %ld\n",
 			PTR_ERR(chip->mclk));
-		return PTR_ERR(chip->mclk);
-	}
+		वापस PTR_ERR(chip->mclk);
+	पूर्ण
 
-	ret = of_property_read_u32(dev->of_node, "if-frequency",
-				   &chip->if_freq);
-	if (ret && !conf) {
+	ret = of_property_पढ़ो_u32(dev->of_node, "if-frequency",
+				   &chip->अगर_freq);
+	अगर (ret && !conf) अणु
 		dev_err(dev, "Failed to load IF frequency: %d.\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	chip->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						   GPIOD_OUT_HIGH);
-	if (IS_ERR(chip->reset_gpio)) {
+	अगर (IS_ERR(chip->reset_gpio)) अणु
 		dev_err(dev, "Failed to request reset_gpio: %ld\n",
 			PTR_ERR(chip->reset_gpio));
-		return PTR_ERR(chip->reset_gpio);
-	}
+		वापस PTR_ERR(chip->reset_gpio);
+	पूर्ण
 
-	if (conf) {
+	अगर (conf) अणु
 		chip->mclk = conf->mclk;
-		chip->if_freq = conf->if_freq;
+		chip->अगर_freq = conf->अगर_freq;
 		chip->reset_gpio = conf->reset_gpio;
 
 		*conf->fe = &chip->fe;
-	}
+	पूर्ण
 
 	chip->client_s = client;
 	chip->regmap_s = devm_regmap_init_i2c(chip->client_s, &regmap_config);
-	if (IS_ERR(chip->regmap_s))
-		return PTR_ERR(chip->regmap_s);
+	अगर (IS_ERR(chip->regmap_s))
+		वापस PTR_ERR(chip->regmap_s);
 
 	/*
-	 * Chip has two I2C addresses for each satellite/terrestrial system.
-	 * ISDB-T uses address ISDB-S + 4, so we register a dummy client.
+	 * Chip has two I2C addresses क्रम each satellite/terrestrial प्रणाली.
+	 * ISDB-T uses address ISDB-S + 4, so we रेजिस्टर a dummy client.
 	 */
 	chip->client_t = i2c_new_dummy_device(client->adapter, client->addr + 4);
-	if (IS_ERR(chip->client_t))
-		return PTR_ERR(chip->client_t);
+	अगर (IS_ERR(chip->client_t))
+		वापस PTR_ERR(chip->client_t);
 
 	chip->regmap_t = devm_regmap_init_i2c(chip->client_t, &regmap_config);
-	if (IS_ERR(chip->regmap_t)) {
+	अगर (IS_ERR(chip->regmap_t)) अणु
 		ret = PTR_ERR(chip->regmap_t);
-		goto err_i2c_t;
-	}
+		जाओ err_i2c_t;
+	पूर्ण
 
 	chip->clk_freq = clk_get_rate(chip->mclk);
 
-	memcpy(&chip->fe.ops, &mn88443x_ops, sizeof(mn88443x_ops));
+	स_नकल(&chip->fe.ops, &mn88443x_ops, माप(mn88443x_ops));
 	chip->fe.demodulator_priv = chip;
 	i2c_set_clientdata(client, chip);
 
-	mn88443x_cmn_power_on(chip);
+	mn88443x_cmn_घातer_on(chip);
 	mn88443x_s_sleep(chip);
 	mn88443x_t_sleep(chip);
 
-	return 0;
+	वापस 0;
 
 err_i2c_t:
-	i2c_unregister_device(chip->client_t);
+	i2c_unरेजिस्टर_device(chip->client_t);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mn88443x_remove(struct i2c_client *client)
-{
-	struct mn88443x_priv *chip = i2c_get_clientdata(client);
+अटल पूर्णांक mn88443x_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा mn88443x_priv *chip = i2c_get_clientdata(client);
 
-	mn88443x_cmn_power_off(chip);
+	mn88443x_cmn_घातer_off(chip);
 
-	i2c_unregister_device(chip->client_t);
+	i2c_unरेजिस्टर_device(chip->client_t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mn88443x_spec mn88443x_spec_pri = {
+अटल स्थिर काष्ठा mn88443x_spec mn88443x_spec_pri = अणु
 	.primary = true,
-};
+पूर्ण;
 
-static const struct mn88443x_spec mn88443x_spec_sec = {
+अटल स्थिर काष्ठा mn88443x_spec mn88443x_spec_sec = अणु
 	.primary = false,
-};
+पूर्ण;
 
-static const struct of_device_id mn88443x_of_match[] = {
-	{ .compatible = "socionext,mn884433",   .data = &mn88443x_spec_pri, },
-	{ .compatible = "socionext,mn884434-0", .data = &mn88443x_spec_pri, },
-	{ .compatible = "socionext,mn884434-1", .data = &mn88443x_spec_sec, },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id mn88443x_of_match[] = अणु
+	अणु .compatible = "socionext,mn884433",   .data = &mn88443x_spec_pri, पूर्ण,
+	अणु .compatible = "socionext,mn884434-0", .data = &mn88443x_spec_pri, पूर्ण,
+	अणु .compatible = "socionext,mn884434-1", .data = &mn88443x_spec_sec, पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mn88443x_of_match);
 
-static const struct i2c_device_id mn88443x_i2c_id[] = {
-	{ "mn884433",   (kernel_ulong_t)&mn88443x_spec_pri },
-	{ "mn884434-0", (kernel_ulong_t)&mn88443x_spec_pri },
-	{ "mn884434-1", (kernel_ulong_t)&mn88443x_spec_sec },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id mn88443x_i2c_id[] = अणु
+	अणु "mn884433",   (kernel_uदीर्घ_t)&mn88443x_spec_pri पूर्ण,
+	अणु "mn884434-0", (kernel_uदीर्घ_t)&mn88443x_spec_pri पूर्ण,
+	अणु "mn884434-1", (kernel_uदीर्घ_t)&mn88443x_spec_sec पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, mn88443x_i2c_id);
 
-static struct i2c_driver mn88443x_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver mn88443x_driver = अणु
+	.driver = अणु
 		.name = "mn88443x",
 		.of_match_table = of_match_ptr(mn88443x_of_match),
-	},
+	पूर्ण,
 	.probe    = mn88443x_probe,
-	.remove   = mn88443x_remove,
+	.हटाओ   = mn88443x_हटाओ,
 	.id_table = mn88443x_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(mn88443x_driver);
 

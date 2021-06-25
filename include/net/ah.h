@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NET_AH_H
-#define _NET_AH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NET_AH_H
+#घोषणा _NET_AH_H
 
-#include <linux/skbuff.h>
+#समावेश <linux/skbuff.h>
 
-struct crypto_ahash;
+काष्ठा crypto_ahash;
 
-struct ah_data {
-	int			icv_full_len;
-	int			icv_trunc_len;
+काष्ठा ah_data अणु
+	पूर्णांक			icv_full_len;
+	पूर्णांक			icv_trunc_len;
 
-	struct crypto_ahash	*ahash;
-};
+	काष्ठा crypto_ahash	*ahash;
+पूर्ण;
 
-struct ip_auth_hdr;
+काष्ठा ip_auth_hdr;
 
-static inline struct ip_auth_hdr *ip_auth_hdr(const struct sk_buff *skb)
-{
-	return (struct ip_auth_hdr *)skb_transport_header(skb);
-}
+अटल अंतरभूत काष्ठा ip_auth_hdr *ip_auth_hdr(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा ip_auth_hdr *)skb_transport_header(skb);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

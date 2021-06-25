@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
 /* ****************** SDIO CARD Interface Functions **************************/
 
-#include <linux/types.h>
-#include <linux/netdevice.h>
-#include <linux/pci.h>
-#include <linux/pci_ids.h>
-#include <linux/sched.h>
-#include <linux/completion.h>
-#include <linux/interrupt.h>
-#include <linux/scatterlist.h>
-#include <linux/mmc/sdio.h>
-#include <linux/mmc/core.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/host.h>
-#include <linux/pm_runtime.h>
-#include <linux/suspend.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/acpi.h>
-#include <net/cfg80211.h>
+#समावेश <linux/types.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/mmc/sdपन.स>
+#समावेश <linux/mmc/core.h>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/suspend.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/acpi.h>
+#समावेश <net/cfg80211.h>
 
-#include <defs.h>
-#include <brcm_hw_ids.h>
-#include <brcmu_utils.h>
-#include <brcmu_wifi.h>
-#include <chipcommon.h>
-#include <soc.h>
-#include "chip.h"
-#include "bus.h"
-#include "debug.h"
-#include "sdio.h"
-#include "core.h"
-#include "common.h"
+#समावेश <defs.h>
+#समावेश <brcm_hw_ids.h>
+#समावेश <brcmu_utils.h>
+#समावेश <brcmu_wअगरi.h>
+#समावेश <chipcommon.h>
+#समावेश <soc.h>
+#समावेश "chip.h"
+#समावेश "bus.h"
+#समावेश "debug.h"
+#समावेश "sdio.h"
+#समावेश "core.h"
+#समावेश "common.h"
 
-#define SDIOH_API_ACCESS_RETRY_LIMIT	2
+#घोषणा SDIOH_API_ACCESS_RETRY_LIMIT	2
 
-#define DMA_ALIGN_MASK	0x03
+#घोषणा DMA_ALIGN_MASK	0x03
 
-#define SDIO_FUNC1_BLOCKSIZE		64
-#define SDIO_FUNC2_BLOCKSIZE		512
-#define SDIO_4373_FUNC2_BLOCKSIZE	256
-#define SDIO_435X_FUNC2_BLOCKSIZE	256
-#define SDIO_4329_FUNC2_BLOCKSIZE	128
-/* Maximum milliseconds to wait for F2 to come up */
-#define SDIO_WAIT_F2RDY	3000
+#घोषणा SDIO_FUNC1_BLOCKSIZE		64
+#घोषणा SDIO_FUNC2_BLOCKSIZE		512
+#घोषणा SDIO_4373_FUNC2_BLOCKSIZE	256
+#घोषणा SDIO_435X_FUNC2_BLOCKSIZE	256
+#घोषणा SDIO_4329_FUNC2_BLOCKSIZE	128
+/* Maximum milliseconds to रुको क्रम F2 to come up */
+#घोषणा SDIO_WAIT_F2RDY	3000
 
-#define BRCMF_DEFAULT_RXGLOM_SIZE	32  /* max rx frames in glom chain */
+#घोषणा BRCMF_DEFAULT_RXGLOM_SIZE	32  /* max rx frames in glom chain */
 
-struct brcmf_sdiod_freezer {
-	atomic_t freezing;
-	atomic_t thread_count;
+काष्ठा brcmf_sdiod_मुक्तzer अणु
+	atomic_t मुक्तzing;
+	atomic_t thपढ़ो_count;
 	u32 frozen_count;
-	wait_queue_head_t thread_freeze;
-	struct completion resumed;
-};
+	रुको_queue_head_t thपढ़ो_मुक्तze;
+	काष्ठा completion resumed;
+पूर्ण;
 
-static irqreturn_t brcmf_sdiod_oob_irqhandler(int irq, void *dev_id)
-{
-	struct brcmf_bus *bus_if = dev_get_drvdata(dev_id);
-	struct brcmf_sdio_dev *sdiodev = bus_if->bus_priv.sdio;
+अटल irqवापस_t brcmf_sdiod_oob_irqhandler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा brcmf_bus *bus_अगर = dev_get_drvdata(dev_id);
+	काष्ठा brcmf_sdio_dev *sdiodev = bus_अगर->bus_priv.sdio;
 
 	brcmf_dbg(INTR, "OOB intr triggered\n");
 
-	/* out-of-band interrupt is level-triggered which won't
+	/* out-of-band पूर्णांकerrupt is level-triggered which won't
 	 * be cleared until dpc
 	 */
-	if (sdiodev->irq_en) {
+	अगर (sdiodev->irq_en) अणु
 		disable_irq_nosync(irq);
 		sdiodev->irq_en = false;
-	}
+	पूर्ण
 
 	brcmf_sdio_isr(sdiodev->bus, true);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void brcmf_sdiod_ib_irqhandler(struct sdio_func *func)
-{
-	struct brcmf_bus *bus_if = dev_get_drvdata(&func->dev);
-	struct brcmf_sdio_dev *sdiodev = bus_if->bus_priv.sdio;
+अटल व्योम brcmf_sdiod_ib_irqhandler(काष्ठा sdio_func *func)
+अणु
+	काष्ठा brcmf_bus *bus_अगर = dev_get_drvdata(&func->dev);
+	काष्ठा brcmf_sdio_dev *sdiodev = bus_अगर->bus_priv.sdio;
 
 	brcmf_dbg(INTR, "IB intr triggered\n");
 
 	brcmf_sdio_isr(sdiodev->bus, false);
-}
+पूर्ण
 
-/* dummy handler for SDIO function 2 interrupt */
-static void brcmf_sdiod_dummy_irqhandler(struct sdio_func *func)
-{
-}
+/* dummy handler क्रम SDIO function 2 पूर्णांकerrupt */
+अटल व्योम brcmf_sdiod_dummy_irqhandler(काष्ठा sdio_func *func)
+अणु
+पूर्ण
 
-int brcmf_sdiod_intr_register(struct brcmf_sdio_dev *sdiodev)
-{
-	struct brcmfmac_sdio_pd *pdata;
-	int ret = 0;
+पूर्णांक brcmf_sdiod_पूर्णांकr_रेजिस्टर(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	काष्ठा brcmfmac_sdio_pd *pdata;
+	पूर्णांक ret = 0;
 	u8 data;
 	u32 addr, gpiocontrol;
 
 	pdata = &sdiodev->settings->bus.sdio;
-	if (pdata->oob_irq_supported) {
+	अगर (pdata->oob_irq_supported) अणु
 		brcmf_dbg(SDIO, "Enter, register OOB IRQ %d\n",
 			  pdata->oob_irq_nr);
 		spin_lock_init(&sdiodev->irq_en_lock);
@@ -111,33 +112,33 @@ int brcmf_sdiod_intr_register(struct brcmf_sdio_dev *sdiodev)
 		ret = request_irq(pdata->oob_irq_nr, brcmf_sdiod_oob_irqhandler,
 				  pdata->oob_irq_flags, "brcmf_oob_intr",
 				  &sdiodev->func1->dev);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			brcmf_err("request_irq failed %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		sdiodev->oob_irq_requested = true;
 
 		ret = enable_irq_wake(pdata->oob_irq_nr);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			brcmf_err("enable_irq_wake failed %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		disable_irq_wake(pdata->oob_irq_nr);
 
 		sdio_claim_host(sdiodev->func1);
 
-		if (sdiodev->bus_if->chip == BRCM_CC_43362_CHIP_ID) {
+		अगर (sdiodev->bus_अगर->chip == BRCM_CC_43362_CHIP_ID) अणु
 			/* assign GPIO to SDIO core */
 			addr = CORE_CC_REG(SI_ENUM_BASE, gpiocontrol);
-			gpiocontrol = brcmf_sdiod_readl(sdiodev, addr, &ret);
+			gpiocontrol = brcmf_sdiod_पढ़ोl(sdiodev, addr, &ret);
 			gpiocontrol |= 0x2;
-			brcmf_sdiod_writel(sdiodev, addr, gpiocontrol, &ret);
+			brcmf_sdiod_ग_लिखोl(sdiodev, addr, gpiocontrol, &ret);
 
-			brcmf_sdiod_writeb(sdiodev, SBSDIO_GPIO_SELECT,
+			brcmf_sdiod_ग_लिखोb(sdiodev, SBSDIO_GPIO_SELECT,
 					   0xf, &ret);
-			brcmf_sdiod_writeb(sdiodev, SBSDIO_GPIO_OUT, 0, &ret);
-			brcmf_sdiod_writeb(sdiodev, SBSDIO_GPIO_EN, 0x2, &ret);
-		}
+			brcmf_sdiod_ग_लिखोb(sdiodev, SBSDIO_GPIO_OUT, 0, &ret);
+			brcmf_sdiod_ग_लिखोb(sdiodev, SBSDIO_GPIO_EN, 0x2, &ret);
+		पूर्ण
 
 		/* must configure SDIO_CCCR_IENx to enable irq */
 		data = brcmf_sdiod_func0_rb(sdiodev, SDIO_CCCR_IENx, &ret);
@@ -145,297 +146,297 @@ int brcmf_sdiod_intr_register(struct brcmf_sdio_dev *sdiodev)
 			SDIO_CCCR_IEN_FUNC0;
 		brcmf_sdiod_func0_wb(sdiodev, SDIO_CCCR_IENx, data, &ret);
 
-		/* redirect, configure and enable io for interrupt signal */
+		/* redirect, configure and enable io क्रम पूर्णांकerrupt संकेत */
 		data = SDIO_CCCR_BRCM_SEPINT_MASK | SDIO_CCCR_BRCM_SEPINT_OE;
-		if (pdata->oob_irq_flags & IRQF_TRIGGER_HIGH)
+		अगर (pdata->oob_irq_flags & IRQF_TRIGGER_HIGH)
 			data |= SDIO_CCCR_BRCM_SEPINT_ACT_HI;
 		brcmf_sdiod_func0_wb(sdiodev, SDIO_CCCR_BRCM_SEPINT,
 				     data, &ret);
 		sdio_release_host(sdiodev->func1);
-	} else {
+	पूर्ण अन्यथा अणु
 		brcmf_dbg(SDIO, "Entering\n");
 		sdio_claim_host(sdiodev->func1);
 		sdio_claim_irq(sdiodev->func1, brcmf_sdiod_ib_irqhandler);
 		sdio_claim_irq(sdiodev->func2, brcmf_sdiod_dummy_irqhandler);
 		sdio_release_host(sdiodev->func1);
 		sdiodev->sd_irq_requested = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void brcmf_sdiod_intr_unregister(struct brcmf_sdio_dev *sdiodev)
-{
+व्योम brcmf_sdiod_पूर्णांकr_unरेजिस्टर(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
 
 	brcmf_dbg(SDIO, "Entering oob=%d sd=%d\n",
 		  sdiodev->oob_irq_requested,
 		  sdiodev->sd_irq_requested);
 
-	if (sdiodev->oob_irq_requested) {
-		struct brcmfmac_sdio_pd *pdata;
+	अगर (sdiodev->oob_irq_requested) अणु
+		काष्ठा brcmfmac_sdio_pd *pdata;
 
 		pdata = &sdiodev->settings->bus.sdio;
 		sdio_claim_host(sdiodev->func1);
-		brcmf_sdiod_func0_wb(sdiodev, SDIO_CCCR_BRCM_SEPINT, 0, NULL);
-		brcmf_sdiod_func0_wb(sdiodev, SDIO_CCCR_IENx, 0, NULL);
+		brcmf_sdiod_func0_wb(sdiodev, SDIO_CCCR_BRCM_SEPINT, 0, शून्य);
+		brcmf_sdiod_func0_wb(sdiodev, SDIO_CCCR_IENx, 0, शून्य);
 		sdio_release_host(sdiodev->func1);
 
 		sdiodev->oob_irq_requested = false;
-		free_irq(pdata->oob_irq_nr, &sdiodev->func1->dev);
+		मुक्त_irq(pdata->oob_irq_nr, &sdiodev->func1->dev);
 		sdiodev->irq_en = false;
 		sdiodev->oob_irq_requested = false;
-	}
+	पूर्ण
 
-	if (sdiodev->sd_irq_requested) {
+	अगर (sdiodev->sd_irq_requested) अणु
 		sdio_claim_host(sdiodev->func1);
 		sdio_release_irq(sdiodev->func2);
 		sdio_release_irq(sdiodev->func1);
 		sdio_release_host(sdiodev->func1);
 		sdiodev->sd_irq_requested = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void brcmf_sdiod_change_state(struct brcmf_sdio_dev *sdiodev,
-			      enum brcmf_sdiod_state state)
-{
-	if (sdiodev->state == BRCMF_SDIOD_NOMEDIUM ||
+व्योम brcmf_sdiod_change_state(काष्ठा brcmf_sdio_dev *sdiodev,
+			      क्रमागत brcmf_sdiod_state state)
+अणु
+	अगर (sdiodev->state == BRCMF_SDIOD_NOMEDIUM ||
 	    state == sdiodev->state)
-		return;
+		वापस;
 
 	brcmf_dbg(TRACE, "%d -> %d\n", sdiodev->state, state);
-	switch (sdiodev->state) {
-	case BRCMF_SDIOD_DATA:
-		/* any other state means bus interface is down */
-		brcmf_bus_change_state(sdiodev->bus_if, BRCMF_BUS_DOWN);
-		break;
-	case BRCMF_SDIOD_DOWN:
-		/* transition from DOWN to DATA means bus interface is up */
-		if (state == BRCMF_SDIOD_DATA)
-			brcmf_bus_change_state(sdiodev->bus_if, BRCMF_BUS_UP);
-		break;
-	default:
-		break;
-	}
+	चयन (sdiodev->state) अणु
+	हाल BRCMF_SDIOD_DATA:
+		/* any other state means bus पूर्णांकerface is करोwn */
+		brcmf_bus_change_state(sdiodev->bus_अगर, BRCMF_BUS_DOWN);
+		अवरोध;
+	हाल BRCMF_SDIOD_DOWN:
+		/* transition from DOWN to DATA means bus पूर्णांकerface is up */
+		अगर (state == BRCMF_SDIOD_DATA)
+			brcmf_bus_change_state(sdiodev->bus_अगर, BRCMF_BUS_UP);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	sdiodev->state = state;
-}
+पूर्ण
 
-static int brcmf_sdiod_set_backplane_window(struct brcmf_sdio_dev *sdiodev,
+अटल पूर्णांक brcmf_sdiod_set_backplane_winकरोw(काष्ठा brcmf_sdio_dev *sdiodev,
 					    u32 addr)
-{
+अणु
 	u32 v, bar0 = addr & SBSDIO_SBWINDOW_MASK;
-	int err = 0, i;
+	पूर्णांक err = 0, i;
 
-	if (bar0 == sdiodev->sbwad)
-		return 0;
+	अगर (bar0 == sdiodev->sbwad)
+		वापस 0;
 
 	v = bar0 >> 8;
 
-	for (i = 0 ; i < 3 && !err ; i++, v >>= 8)
-		brcmf_sdiod_writeb(sdiodev, SBSDIO_FUNC1_SBADDRLOW + i,
+	क्रम (i = 0 ; i < 3 && !err ; i++, v >>= 8)
+		brcmf_sdiod_ग_लिखोb(sdiodev, SBSDIO_FUNC1_SBADDRLOW + i,
 				   v & 0xff, &err);
 
-	if (!err)
+	अगर (!err)
 		sdiodev->sbwad = bar0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-u32 brcmf_sdiod_readl(struct brcmf_sdio_dev *sdiodev, u32 addr, int *ret)
-{
+u32 brcmf_sdiod_पढ़ोl(काष्ठा brcmf_sdio_dev *sdiodev, u32 addr, पूर्णांक *ret)
+अणु
 	u32 data = 0;
-	int retval;
+	पूर्णांक retval;
 
-	retval = brcmf_sdiod_set_backplane_window(sdiodev, addr);
-	if (retval)
-		goto out;
-
-	addr &= SBSDIO_SB_OFT_ADDR_MASK;
-	addr |= SBSDIO_SB_ACCESS_2_4B_FLAG;
-
-	data = sdio_readl(sdiodev->func1, addr, &retval);
-
-out:
-	if (ret)
-		*ret = retval;
-
-	return data;
-}
-
-void brcmf_sdiod_writel(struct brcmf_sdio_dev *sdiodev, u32 addr,
-			u32 data, int *ret)
-{
-	int retval;
-
-	retval = brcmf_sdiod_set_backplane_window(sdiodev, addr);
-	if (retval)
-		goto out;
+	retval = brcmf_sdiod_set_backplane_winकरोw(sdiodev, addr);
+	अगर (retval)
+		जाओ out;
 
 	addr &= SBSDIO_SB_OFT_ADDR_MASK;
 	addr |= SBSDIO_SB_ACCESS_2_4B_FLAG;
 
-	sdio_writel(sdiodev->func1, data, addr, &retval);
+	data = sdio_पढ़ोl(sdiodev->func1, addr, &retval);
 
 out:
-	if (ret)
+	अगर (ret)
 		*ret = retval;
-}
 
-static int brcmf_sdiod_skbuff_read(struct brcmf_sdio_dev *sdiodev,
-				   struct sdio_func *func, u32 addr,
-				   struct sk_buff *skb)
-{
-	unsigned int req_sz;
-	int err;
+	वापस data;
+पूर्ण
 
-	/* Single skb use the standard mmc interface */
+व्योम brcmf_sdiod_ग_लिखोl(काष्ठा brcmf_sdio_dev *sdiodev, u32 addr,
+			u32 data, पूर्णांक *ret)
+अणु
+	पूर्णांक retval;
+
+	retval = brcmf_sdiod_set_backplane_winकरोw(sdiodev, addr);
+	अगर (retval)
+		जाओ out;
+
+	addr &= SBSDIO_SB_OFT_ADDR_MASK;
+	addr |= SBSDIO_SB_ACCESS_2_4B_FLAG;
+
+	sdio_ग_लिखोl(sdiodev->func1, data, addr, &retval);
+
+out:
+	अगर (ret)
+		*ret = retval;
+पूर्ण
+
+अटल पूर्णांक brcmf_sdiod_skbuff_पढ़ो(काष्ठा brcmf_sdio_dev *sdiodev,
+				   काष्ठा sdio_func *func, u32 addr,
+				   काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक req_sz;
+	पूर्णांक err;
+
+	/* Single skb use the standard mmc पूर्णांकerface */
 	req_sz = skb->len + 3;
-	req_sz &= (uint)~3;
+	req_sz &= (uपूर्णांक)~3;
 
-	switch (func->num) {
-	case 1:
-		err = sdio_memcpy_fromio(func, ((u8 *)(skb->data)), addr,
+	चयन (func->num) अणु
+	हाल 1:
+		err = sdio_स_नकल_fromio(func, ((u8 *)(skb->data)), addr,
 					 req_sz);
-		break;
-	case 2:
-		err = sdio_readsb(func, ((u8 *)(skb->data)), addr, req_sz);
-		break;
-	default:
+		अवरोध;
+	हाल 2:
+		err = sdio_पढ़ोsb(func, ((u8 *)(skb->data)), addr, req_sz);
+		अवरोध;
+	शेष:
 		/* bail out as things are really fishy here */
 		WARN(1, "invalid sdio function number: %d\n", func->num);
 		err = -ENOMEDIUM;
-	}
+	पूर्ण
 
-	if (err == -ENOMEDIUM)
+	अगर (err == -ENOMEDIUM)
 		brcmf_sdiod_change_state(sdiodev, BRCMF_SDIOD_NOMEDIUM);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int brcmf_sdiod_skbuff_write(struct brcmf_sdio_dev *sdiodev,
-				    struct sdio_func *func, u32 addr,
-				    struct sk_buff *skb)
-{
-	unsigned int req_sz;
-	int err;
+अटल पूर्णांक brcmf_sdiod_skbuff_ग_लिखो(काष्ठा brcmf_sdio_dev *sdiodev,
+				    काष्ठा sdio_func *func, u32 addr,
+				    काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक req_sz;
+	पूर्णांक err;
 
-	/* Single skb use the standard mmc interface */
+	/* Single skb use the standard mmc पूर्णांकerface */
 	req_sz = skb->len + 3;
-	req_sz &= (uint)~3;
+	req_sz &= (uपूर्णांक)~3;
 
-	err = sdio_memcpy_toio(func, addr, ((u8 *)(skb->data)), req_sz);
+	err = sdio_स_नकल_toio(func, addr, ((u8 *)(skb->data)), req_sz);
 
-	if (err == -ENOMEDIUM)
+	अगर (err == -ENOMEDIUM)
 		brcmf_sdiod_change_state(sdiodev, BRCMF_SDIOD_NOMEDIUM);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_submit_one(struct mmc_data *md, struct mmc_request *mr,
-			  struct mmc_command *mc, int sg_cnt, int req_sz,
-			  int func_blk_sz, u32 *addr,
-			  struct brcmf_sdio_dev *sdiodev,
-			  struct sdio_func *func, int write)
-{
-	int ret;
+अटल पूर्णांक mmc_submit_one(काष्ठा mmc_data *md, काष्ठा mmc_request *mr,
+			  काष्ठा mmc_command *mc, पूर्णांक sg_cnt, पूर्णांक req_sz,
+			  पूर्णांक func_blk_sz, u32 *addr,
+			  काष्ठा brcmf_sdio_dev *sdiodev,
+			  काष्ठा sdio_func *func, पूर्णांक ग_लिखो)
+अणु
+	पूर्णांक ret;
 
 	md->sg_len = sg_cnt;
 	md->blocks = req_sz / func_blk_sz;
 	mc->arg |= (*addr & 0x1FFFF) << 9;	/* address */
 	mc->arg |= md->blocks & 0x1FF;	/* block count */
-	/* incrementing addr for function 1 */
-	if (func->num == 1)
+	/* incrementing addr क्रम function 1 */
+	अगर (func->num == 1)
 		*addr += req_sz;
 
-	mmc_set_data_timeout(md, func->card);
-	mmc_wait_for_req(func->card->host, mr);
+	mmc_set_data_समयout(md, func->card);
+	mmc_रुको_क्रम_req(func->card->host, mr);
 
 	ret = mc->error ? mc->error : md->error;
-	if (ret == -ENOMEDIUM) {
+	अगर (ret == -ENOMEDIUM) अणु
 		brcmf_sdiod_change_state(sdiodev, BRCMF_SDIOD_NOMEDIUM);
-	} else if (ret != 0) {
+	पूर्ण अन्यथा अगर (ret != 0) अणु
 		brcmf_err("CMD53 sg block %s failed %d\n",
-			  write ? "write" : "read", ret);
+			  ग_लिखो ? "write" : "read", ret);
 		ret = -EIO;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * brcmf_sdiod_sglist_rw - SDIO interface function for block data access
+ * brcmf_sdiod_sglist_rw - SDIO पूर्णांकerface function क्रम block data access
  * @sdiodev: brcmfmac sdio device
  * @func: SDIO function
- * @write: direction flag
- * @addr: dongle memory address as source/destination
- * @pktlist: skb buffer head pointer
+ * @ग_लिखो: direction flag
+ * @addr: करोngle memory address as source/destination
+ * @pktlist: skb buffer head poपूर्णांकer
  *
- * This function takes the respbonsibility as the interface function to MMC
- * stack for block data access. It assumes that the skb passed down by the
- * caller has already been padded and aligned.
+ * This function takes the respbonsibility as the पूर्णांकerface function to MMC
+ * stack क्रम block data access. It assumes that the skb passed करोwn by the
+ * caller has alपढ़ोy been padded and aligned.
  */
-static int brcmf_sdiod_sglist_rw(struct brcmf_sdio_dev *sdiodev,
-				 struct sdio_func *func,
-				 bool write, u32 addr,
-				 struct sk_buff_head *pktlist)
-{
-	unsigned int req_sz, func_blk_sz, sg_cnt, sg_data_sz, pkt_offset;
-	unsigned int max_req_sz, src_offset, dst_offset;
-	unsigned char *pkt_data, *orig_data, *dst_data;
-	struct sk_buff_head local_list, *target_list;
-	struct sk_buff *pkt_next = NULL, *src;
-	unsigned short max_seg_cnt;
-	struct mmc_request mmc_req;
-	struct mmc_command mmc_cmd;
-	struct mmc_data mmc_dat;
-	struct scatterlist *sgl;
-	int ret = 0;
+अटल पूर्णांक brcmf_sdiod_sglist_rw(काष्ठा brcmf_sdio_dev *sdiodev,
+				 काष्ठा sdio_func *func,
+				 bool ग_लिखो, u32 addr,
+				 काष्ठा sk_buff_head *pktlist)
+अणु
+	अचिन्हित पूर्णांक req_sz, func_blk_sz, sg_cnt, sg_data_sz, pkt_offset;
+	अचिन्हित पूर्णांक max_req_sz, src_offset, dst_offset;
+	अचिन्हित अक्षर *pkt_data, *orig_data, *dst_data;
+	काष्ठा sk_buff_head local_list, *target_list;
+	काष्ठा sk_buff *pkt_next = शून्य, *src;
+	अचिन्हित लघु max_seg_cnt;
+	काष्ठा mmc_request mmc_req;
+	काष्ठा mmc_command mmc_cmd;
+	काष्ठा mmc_data mmc_dat;
+	काष्ठा scatterlist *sgl;
+	पूर्णांक ret = 0;
 
-	if (!pktlist->qlen)
-		return -EINVAL;
+	अगर (!pktlist->qlen)
+		वापस -EINVAL;
 
 	target_list = pktlist;
-	/* for host with broken sg support, prepare a page aligned list */
+	/* क्रम host with broken sg support, prepare a page aligned list */
 	__skb_queue_head_init(&local_list);
-	if (!write && sdiodev->settings->bus.sdio.broken_sg_support) {
+	अगर (!ग_लिखो && sdiodev->settings->bus.sdio.broken_sg_support) अणु
 		req_sz = 0;
 		skb_queue_walk(pktlist, pkt_next)
 			req_sz += pkt_next->len;
 		req_sz = ALIGN(req_sz, func->cur_blksize);
-		while (req_sz > PAGE_SIZE) {
+		जबतक (req_sz > PAGE_SIZE) अणु
 			pkt_next = brcmu_pkt_buf_get_skb(PAGE_SIZE);
-			if (pkt_next == NULL) {
+			अगर (pkt_next == शून्य) अणु
 				ret = -ENOMEM;
-				goto exit;
-			}
+				जाओ निकास;
+			पूर्ण
 			__skb_queue_tail(&local_list, pkt_next);
 			req_sz -= PAGE_SIZE;
-		}
+		पूर्ण
 		pkt_next = brcmu_pkt_buf_get_skb(req_sz);
-		if (pkt_next == NULL) {
+		अगर (pkt_next == शून्य) अणु
 			ret = -ENOMEM;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 		__skb_queue_tail(&local_list, pkt_next);
 		target_list = &local_list;
-	}
+	पूर्ण
 
 	func_blk_sz = func->cur_blksize;
 	max_req_sz = sdiodev->max_request_size;
-	max_seg_cnt = min_t(unsigned short, sdiodev->max_segment_count,
+	max_seg_cnt = min_t(अचिन्हित लघु, sdiodev->max_segment_count,
 			    target_list->qlen);
 
-	memset(&mmc_req, 0, sizeof(struct mmc_request));
-	memset(&mmc_cmd, 0, sizeof(struct mmc_command));
-	memset(&mmc_dat, 0, sizeof(struct mmc_data));
+	स_रखो(&mmc_req, 0, माप(काष्ठा mmc_request));
+	स_रखो(&mmc_cmd, 0, माप(काष्ठा mmc_command));
+	स_रखो(&mmc_dat, 0, माप(काष्ठा mmc_data));
 
 	mmc_dat.sg = sdiodev->sgtable.sgl;
 	mmc_dat.blksz = func_blk_sz;
-	mmc_dat.flags = write ? MMC_DATA_WRITE : MMC_DATA_READ;
+	mmc_dat.flags = ग_लिखो ? MMC_DATA_WRITE : MMC_DATA_READ;
 	mmc_cmd.opcode = SD_IO_RW_EXTENDED;
-	mmc_cmd.arg = write ? 1<<31 : 0;	/* write flag  */
+	mmc_cmd.arg = ग_लिखो ? 1<<31 : 0;	/* ग_लिखो flag  */
 	mmc_cmd.arg |= (func->num & 0x7) << 28;	/* SDIO func num */
 	mmc_cmd.arg |= 1 << 27;			/* block mode */
-	/* for function 1 the addr will be incremented */
+	/* क्रम function 1 the addr will be incremented */
 	mmc_cmd.arg |= (func->num == 1) ? 1 << 26 : 0;
 	mmc_cmd.flags = MMC_RSP_SPI_R5 | MMC_RSP_R5 | MMC_CMD_ADTC;
 	mmc_req.cmd = &mmc_cmd;
@@ -444,14 +445,14 @@ static int brcmf_sdiod_sglist_rw(struct brcmf_sdio_dev *sdiodev,
 	req_sz = 0;
 	sg_cnt = 0;
 	sgl = sdiodev->sgtable.sgl;
-	skb_queue_walk(target_list, pkt_next) {
+	skb_queue_walk(target_list, pkt_next) अणु
 		pkt_offset = 0;
-		while (pkt_offset < pkt_next->len) {
+		जबतक (pkt_offset < pkt_next->len) अणु
 			pkt_data = pkt_next->data + pkt_offset;
 			sg_data_sz = pkt_next->len - pkt_offset;
-			if (sg_data_sz > sdiodev->max_segment_size)
+			अगर (sg_data_sz > sdiodev->max_segment_size)
 				sg_data_sz = sdiodev->max_segment_size;
-			if (sg_data_sz > max_req_sz - req_sz)
+			अगर (sg_data_sz > max_req_sz - req_sz)
 				sg_data_sz = max_req_sz - req_sz;
 
 			sg_set_buf(sgl, pkt_data, sg_data_sz);
@@ -460,240 +461,240 @@ static int brcmf_sdiod_sglist_rw(struct brcmf_sdio_dev *sdiodev,
 			sgl = sg_next(sgl);
 			req_sz += sg_data_sz;
 			pkt_offset += sg_data_sz;
-			if (req_sz >= max_req_sz || sg_cnt >= max_seg_cnt) {
+			अगर (req_sz >= max_req_sz || sg_cnt >= max_seg_cnt) अणु
 				ret = mmc_submit_one(&mmc_dat, &mmc_req, &mmc_cmd,
 						     sg_cnt, req_sz, func_blk_sz,
-						     &addr, sdiodev, func, write);
-				if (ret)
-					goto exit_queue_walk;
+						     &addr, sdiodev, func, ग_लिखो);
+				अगर (ret)
+					जाओ निकास_queue_walk;
 				req_sz = 0;
 				sg_cnt = 0;
 				sgl = sdiodev->sgtable.sgl;
-			}
-		}
-	}
-	if (sg_cnt)
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (sg_cnt)
 		ret = mmc_submit_one(&mmc_dat, &mmc_req, &mmc_cmd,
 				     sg_cnt, req_sz, func_blk_sz,
-				     &addr, sdiodev, func, write);
-exit_queue_walk:
-	if (!write && sdiodev->settings->bus.sdio.broken_sg_support) {
+				     &addr, sdiodev, func, ग_लिखो);
+निकास_queue_walk:
+	अगर (!ग_लिखो && sdiodev->settings->bus.sdio.broken_sg_support) अणु
 		src = __skb_peek(&local_list);
 		src_offset = 0;
-		skb_queue_walk(pktlist, pkt_next) {
+		skb_queue_walk(pktlist, pkt_next) अणु
 			dst_offset = 0;
 
 			/* This is safe because we must have enough SKB data
 			 * in the local list to cover everything in pktlist.
 			 */
-			while (1) {
+			जबतक (1) अणु
 				req_sz = pkt_next->len - dst_offset;
-				if (req_sz > src->len - src_offset)
+				अगर (req_sz > src->len - src_offset)
 					req_sz = src->len - src_offset;
 
 				orig_data = src->data + src_offset;
 				dst_data = pkt_next->data + dst_offset;
-				memcpy(dst_data, orig_data, req_sz);
+				स_नकल(dst_data, orig_data, req_sz);
 
 				src_offset += req_sz;
-				if (src_offset == src->len) {
+				अगर (src_offset == src->len) अणु
 					src_offset = 0;
 					src = skb_peek_next(src, &local_list);
-				}
+				पूर्ण
 				dst_offset += req_sz;
-				if (dst_offset == pkt_next->len)
-					break;
-			}
-		}
-	}
+				अगर (dst_offset == pkt_next->len)
+					अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-exit:
+निकास:
 	sg_init_table(sdiodev->sgtable.sgl, sdiodev->sgtable.orig_nents);
-	while ((pkt_next = __skb_dequeue(&local_list)) != NULL)
-		brcmu_pkt_buf_free_skb(pkt_next);
+	जबतक ((pkt_next = __skb_dequeue(&local_list)) != शून्य)
+		brcmu_pkt_buf_मुक्त_skb(pkt_next);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int brcmf_sdiod_recv_buf(struct brcmf_sdio_dev *sdiodev, u8 *buf, uint nbytes)
-{
-	struct sk_buff *mypkt;
-	int err;
+पूर्णांक brcmf_sdiod_recv_buf(काष्ठा brcmf_sdio_dev *sdiodev, u8 *buf, uपूर्णांक nbytes)
+अणु
+	काष्ठा sk_buff *mypkt;
+	पूर्णांक err;
 
 	mypkt = brcmu_pkt_buf_get_skb(nbytes);
-	if (!mypkt) {
+	अगर (!mypkt) अणु
 		brcmf_err("brcmu_pkt_buf_get_skb failed: len %d\n",
 			  nbytes);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	err = brcmf_sdiod_recv_pkt(sdiodev, mypkt);
-	if (!err)
-		memcpy(buf, mypkt->data, nbytes);
+	अगर (!err)
+		स_नकल(buf, mypkt->data, nbytes);
 
-	brcmu_pkt_buf_free_skb(mypkt);
-	return err;
-}
+	brcmu_pkt_buf_मुक्त_skb(mypkt);
+	वापस err;
+पूर्ण
 
-int brcmf_sdiod_recv_pkt(struct brcmf_sdio_dev *sdiodev, struct sk_buff *pkt)
-{
+पूर्णांक brcmf_sdiod_recv_pkt(काष्ठा brcmf_sdio_dev *sdiodev, काष्ठा sk_buff *pkt)
+अणु
 	u32 addr = sdiodev->cc_core->base;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	brcmf_dbg(SDIO, "addr = 0x%x, size = %d\n", addr, pkt->len);
 
-	err = brcmf_sdiod_set_backplane_window(sdiodev, addr);
-	if (err)
-		goto done;
+	err = brcmf_sdiod_set_backplane_winकरोw(sdiodev, addr);
+	अगर (err)
+		जाओ करोne;
 
 	addr &= SBSDIO_SB_OFT_ADDR_MASK;
 	addr |= SBSDIO_SB_ACCESS_2_4B_FLAG;
 
-	err = brcmf_sdiod_skbuff_read(sdiodev, sdiodev->func2, addr, pkt);
+	err = brcmf_sdiod_skbuff_पढ़ो(sdiodev, sdiodev->func2, addr, pkt);
 
-done:
-	return err;
-}
+करोne:
+	वापस err;
+पूर्ण
 
-int brcmf_sdiod_recv_chain(struct brcmf_sdio_dev *sdiodev,
-			   struct sk_buff_head *pktq, uint totlen)
-{
-	struct sk_buff *glom_skb = NULL;
-	struct sk_buff *skb;
+पूर्णांक brcmf_sdiod_recv_chain(काष्ठा brcmf_sdio_dev *sdiodev,
+			   काष्ठा sk_buff_head *pktq, uपूर्णांक totlen)
+अणु
+	काष्ठा sk_buff *glom_skb = शून्य;
+	काष्ठा sk_buff *skb;
 	u32 addr = sdiodev->cc_core->base;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	brcmf_dbg(SDIO, "addr = 0x%x, size = %d\n",
 		  addr, pktq->qlen);
 
-	err = brcmf_sdiod_set_backplane_window(sdiodev, addr);
-	if (err)
-		goto done;
+	err = brcmf_sdiod_set_backplane_winकरोw(sdiodev, addr);
+	अगर (err)
+		जाओ करोne;
 
 	addr &= SBSDIO_SB_OFT_ADDR_MASK;
 	addr |= SBSDIO_SB_ACCESS_2_4B_FLAG;
 
-	if (pktq->qlen == 1)
-		err = brcmf_sdiod_skbuff_read(sdiodev, sdiodev->func2, addr,
+	अगर (pktq->qlen == 1)
+		err = brcmf_sdiod_skbuff_पढ़ो(sdiodev, sdiodev->func2, addr,
 					      __skb_peek(pktq));
-	else if (!sdiodev->sg_support) {
+	अन्यथा अगर (!sdiodev->sg_support) अणु
 		glom_skb = brcmu_pkt_buf_get_skb(totlen);
-		if (!glom_skb)
-			return -ENOMEM;
-		err = brcmf_sdiod_skbuff_read(sdiodev, sdiodev->func2, addr,
+		अगर (!glom_skb)
+			वापस -ENOMEM;
+		err = brcmf_sdiod_skbuff_पढ़ो(sdiodev, sdiodev->func2, addr,
 					      glom_skb);
-		if (err)
-			goto done;
+		अगर (err)
+			जाओ करोne;
 
-		skb_queue_walk(pktq, skb) {
-			memcpy(skb->data, glom_skb->data, skb->len);
+		skb_queue_walk(pktq, skb) अणु
+			स_नकल(skb->data, glom_skb->data, skb->len);
 			skb_pull(glom_skb, skb->len);
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		err = brcmf_sdiod_sglist_rw(sdiodev, sdiodev->func2, false,
 					    addr, pktq);
 
-done:
-	brcmu_pkt_buf_free_skb(glom_skb);
-	return err;
-}
+करोne:
+	brcmu_pkt_buf_मुक्त_skb(glom_skb);
+	वापस err;
+पूर्ण
 
-int brcmf_sdiod_send_buf(struct brcmf_sdio_dev *sdiodev, u8 *buf, uint nbytes)
-{
-	struct sk_buff *mypkt;
+पूर्णांक brcmf_sdiod_send_buf(काष्ठा brcmf_sdio_dev *sdiodev, u8 *buf, uपूर्णांक nbytes)
+अणु
+	काष्ठा sk_buff *mypkt;
 	u32 addr = sdiodev->cc_core->base;
-	int err;
+	पूर्णांक err;
 
 	mypkt = brcmu_pkt_buf_get_skb(nbytes);
 
-	if (!mypkt) {
+	अगर (!mypkt) अणु
 		brcmf_err("brcmu_pkt_buf_get_skb failed: len %d\n",
 			  nbytes);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	memcpy(mypkt->data, buf, nbytes);
+	स_नकल(mypkt->data, buf, nbytes);
 
-	err = brcmf_sdiod_set_backplane_window(sdiodev, addr);
-	if (err)
-		goto out;
+	err = brcmf_sdiod_set_backplane_winकरोw(sdiodev, addr);
+	अगर (err)
+		जाओ out;
 
 	addr &= SBSDIO_SB_OFT_ADDR_MASK;
 	addr |= SBSDIO_SB_ACCESS_2_4B_FLAG;
 
-	err = brcmf_sdiod_skbuff_write(sdiodev, sdiodev->func2, addr, mypkt);
+	err = brcmf_sdiod_skbuff_ग_लिखो(sdiodev, sdiodev->func2, addr, mypkt);
 out:
-	brcmu_pkt_buf_free_skb(mypkt);
+	brcmu_pkt_buf_मुक्त_skb(mypkt);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int brcmf_sdiod_send_pkt(struct brcmf_sdio_dev *sdiodev,
-			 struct sk_buff_head *pktq)
-{
-	struct sk_buff *skb;
+पूर्णांक brcmf_sdiod_send_pkt(काष्ठा brcmf_sdio_dev *sdiodev,
+			 काष्ठा sk_buff_head *pktq)
+अणु
+	काष्ठा sk_buff *skb;
 	u32 addr = sdiodev->cc_core->base;
-	int err;
+	पूर्णांक err;
 
 	brcmf_dbg(SDIO, "addr = 0x%x, size = %d\n", addr, pktq->qlen);
 
-	err = brcmf_sdiod_set_backplane_window(sdiodev, addr);
-	if (err)
-		return err;
+	err = brcmf_sdiod_set_backplane_winकरोw(sdiodev, addr);
+	अगर (err)
+		वापस err;
 
 	addr &= SBSDIO_SB_OFT_ADDR_MASK;
 	addr |= SBSDIO_SB_ACCESS_2_4B_FLAG;
 
-	if (pktq->qlen == 1 || !sdiodev->sg_support) {
-		skb_queue_walk(pktq, skb) {
-			err = brcmf_sdiod_skbuff_write(sdiodev, sdiodev->func2,
+	अगर (pktq->qlen == 1 || !sdiodev->sg_support) अणु
+		skb_queue_walk(pktq, skb) अणु
+			err = brcmf_sdiod_skbuff_ग_लिखो(sdiodev, sdiodev->func2,
 						       addr, skb);
-			if (err)
-				break;
-		}
-	} else {
+			अगर (err)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = brcmf_sdiod_sglist_rw(sdiodev, sdiodev->func2, true,
 					    addr, pktq);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int
-brcmf_sdiod_ramrw(struct brcmf_sdio_dev *sdiodev, bool write, u32 address,
-		  u8 *data, uint size)
-{
-	int err = 0;
-	struct sk_buff *pkt;
+पूर्णांक
+brcmf_sdiod_ramrw(काष्ठा brcmf_sdio_dev *sdiodev, bool ग_लिखो, u32 address,
+		  u8 *data, uपूर्णांक size)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा sk_buff *pkt;
 	u32 sdaddr;
-	uint dsize;
+	uपूर्णांक dsize;
 
-	dsize = min_t(uint, SBSDIO_SB_OFT_ADDR_LIMIT, size);
+	dsize = min_t(uपूर्णांक, SBSDIO_SB_OFT_ADDR_LIMIT, size);
 	pkt = dev_alloc_skb(dsize);
-	if (!pkt) {
+	अगर (!pkt) अणु
 		brcmf_err("dev_alloc_skb failed: len %d\n", dsize);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	pkt->priority = 0;
 
 	/* Determine initial transfer parameters */
 	sdaddr = address & SBSDIO_SB_OFT_ADDR_MASK;
-	if ((sdaddr + size) & SBSDIO_SBWINDOW_MASK)
+	अगर ((sdaddr + size) & SBSDIO_SBWINDOW_MASK)
 		dsize = (SBSDIO_SB_OFT_ADDR_LIMIT - sdaddr);
-	else
+	अन्यथा
 		dsize = size;
 
 	sdio_claim_host(sdiodev->func1);
 
 	/* Do the transfer(s) */
-	while (size) {
-		/* Set the backplane window to include the start address */
-		err = brcmf_sdiod_set_backplane_window(sdiodev, address);
-		if (err)
-			break;
+	जबतक (size) अणु
+		/* Set the backplane winकरोw to include the start address */
+		err = brcmf_sdiod_set_backplane_winकरोw(sdiodev, address);
+		अगर (err)
+			अवरोध;
 
 		brcmf_dbg(SDIO, "%s %d bytes at offset 0x%08x in window 0x%08x\n",
-			  write ? "write" : "read", dsize,
+			  ग_लिखो ? "write" : "read", dsize,
 			  sdaddr, address & SBSDIO_SBWINDOW_MASK);
 
 		sdaddr &= SBSDIO_SB_OFT_ADDR_MASK;
@@ -701,73 +702,73 @@ brcmf_sdiod_ramrw(struct brcmf_sdio_dev *sdiodev, bool write, u32 address,
 
 		skb_put(pkt, dsize);
 
-		if (write) {
-			memcpy(pkt->data, data, dsize);
-			err = brcmf_sdiod_skbuff_write(sdiodev, sdiodev->func1,
+		अगर (ग_लिखो) अणु
+			स_नकल(pkt->data, data, dsize);
+			err = brcmf_sdiod_skbuff_ग_लिखो(sdiodev, sdiodev->func1,
 						       sdaddr, pkt);
-		} else {
-			err = brcmf_sdiod_skbuff_read(sdiodev, sdiodev->func1,
+		पूर्ण अन्यथा अणु
+			err = brcmf_sdiod_skbuff_पढ़ो(sdiodev, sdiodev->func1,
 						      sdaddr, pkt);
-		}
+		पूर्ण
 
-		if (err) {
+		अगर (err) अणु
 			brcmf_err("membytes transfer failed\n");
-			break;
-		}
-		if (!write)
-			memcpy(data, pkt->data, dsize);
+			अवरोध;
+		पूर्ण
+		अगर (!ग_लिखो)
+			स_नकल(data, pkt->data, dsize);
 		skb_trim(pkt, 0);
 
-		/* Adjust for next transfer (if any) */
+		/* Adjust क्रम next transfer (अगर any) */
 		size -= dsize;
-		if (size) {
+		अगर (size) अणु
 			data += dsize;
 			address += dsize;
 			sdaddr = 0;
-			dsize = min_t(uint, SBSDIO_SB_OFT_ADDR_LIMIT, size);
-		}
-	}
+			dsize = min_t(uपूर्णांक, SBSDIO_SB_OFT_ADDR_LIMIT, size);
+		पूर्ण
+	पूर्ण
 
-	dev_kfree_skb(pkt);
+	dev_kमुक्त_skb(pkt);
 
 	sdio_release_host(sdiodev->func1);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int brcmf_sdiod_abort(struct brcmf_sdio_dev *sdiodev, struct sdio_func *func)
-{
+पूर्णांक brcmf_sdiod_पात(काष्ठा brcmf_sdio_dev *sdiodev, काष्ठा sdio_func *func)
+अणु
 	brcmf_dbg(SDIO, "Enter\n");
 
-	/* Issue abort cmd52 command through F0 */
-	brcmf_sdiod_func0_wb(sdiodev, SDIO_CCCR_ABORT, func->num, NULL);
+	/* Issue पात cmd52 command through F0 */
+	brcmf_sdiod_func0_wb(sdiodev, SDIO_CCCR_ABORT, func->num, शून्य);
 
 	brcmf_dbg(SDIO, "Exit\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void brcmf_sdiod_sgtable_alloc(struct brcmf_sdio_dev *sdiodev)
-{
-	struct sdio_func *func;
-	struct mmc_host *host;
-	uint max_blocks;
-	uint nents;
-	int err;
+व्योम brcmf_sdiod_sgtable_alloc(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	काष्ठा sdio_func *func;
+	काष्ठा mmc_host *host;
+	uपूर्णांक max_blocks;
+	uपूर्णांक nents;
+	पूर्णांक err;
 
 	func = sdiodev->func2;
 	host = func->card->host;
 	sdiodev->sg_support = host->max_segs > 1;
-	max_blocks = min_t(uint, host->max_blk_count, 511u);
-	sdiodev->max_request_size = min_t(uint, host->max_req_size,
+	max_blocks = min_t(uपूर्णांक, host->max_blk_count, 511u);
+	sdiodev->max_request_size = min_t(uपूर्णांक, host->max_req_size,
 					  max_blocks * func->cur_blksize);
-	sdiodev->max_segment_count = min_t(uint, host->max_segs,
+	sdiodev->max_segment_count = min_t(uपूर्णांक, host->max_segs,
 					   SG_MAX_SINGLE_ALLOC);
 	sdiodev->max_segment_size = host->max_seg_size;
 
-	if (!sdiodev->sg_support)
-		return;
+	अगर (!sdiodev->sg_support)
+		वापस;
 
-	nents = max_t(uint, BRCMF_DEFAULT_RXGLOM_SIZE,
+	nents = max_t(uपूर्णांक, BRCMF_DEFAULT_RXGLOM_SIZE,
 		      sdiodev->settings->bus.sdio.txglomsz);
 	nents += (nents >> 4) + 1;
 
@@ -775,104 +776,104 @@ void brcmf_sdiod_sgtable_alloc(struct brcmf_sdio_dev *sdiodev)
 
 	brcmf_dbg(TRACE, "nents=%d\n", nents);
 	err = sg_alloc_table(&sdiodev->sgtable, nents, GFP_KERNEL);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		brcmf_err("allocation failed: disable scatter-gather");
 		sdiodev->sg_support = false;
-	}
+	पूर्ण
 
 	sdiodev->txglomsz = sdiodev->settings->bus.sdio.txglomsz;
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int brcmf_sdiod_freezer_attach(struct brcmf_sdio_dev *sdiodev)
-{
-	sdiodev->freezer = kzalloc(sizeof(*sdiodev->freezer), GFP_KERNEL);
-	if (!sdiodev->freezer)
-		return -ENOMEM;
-	atomic_set(&sdiodev->freezer->thread_count, 0);
-	atomic_set(&sdiodev->freezer->freezing, 0);
-	init_waitqueue_head(&sdiodev->freezer->thread_freeze);
-	init_completion(&sdiodev->freezer->resumed);
-	return 0;
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक brcmf_sdiod_मुक्तzer_attach(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	sdiodev->मुक्तzer = kzalloc(माप(*sdiodev->मुक्तzer), GFP_KERNEL);
+	अगर (!sdiodev->मुक्तzer)
+		वापस -ENOMEM;
+	atomic_set(&sdiodev->मुक्तzer->thपढ़ो_count, 0);
+	atomic_set(&sdiodev->मुक्तzer->मुक्तzing, 0);
+	init_रुकोqueue_head(&sdiodev->मुक्तzer->thपढ़ो_मुक्तze);
+	init_completion(&sdiodev->मुक्तzer->resumed);
+	वापस 0;
+पूर्ण
 
-static void brcmf_sdiod_freezer_detach(struct brcmf_sdio_dev *sdiodev)
-{
-	if (sdiodev->freezer) {
-		WARN_ON(atomic_read(&sdiodev->freezer->freezing));
-		kfree(sdiodev->freezer);
-	}
-}
+अटल व्योम brcmf_sdiod_मुक्तzer_detach(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	अगर (sdiodev->मुक्तzer) अणु
+		WARN_ON(atomic_पढ़ो(&sdiodev->मुक्तzer->मुक्तzing));
+		kमुक्त(sdiodev->मुक्तzer);
+	पूर्ण
+पूर्ण
 
-static int brcmf_sdiod_freezer_on(struct brcmf_sdio_dev *sdiodev)
-{
-	atomic_t *expect = &sdiodev->freezer->thread_count;
-	int res = 0;
+अटल पूर्णांक brcmf_sdiod_मुक्तzer_on(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	atomic_t *expect = &sdiodev->मुक्तzer->thपढ़ो_count;
+	पूर्णांक res = 0;
 
-	sdiodev->freezer->frozen_count = 0;
-	reinit_completion(&sdiodev->freezer->resumed);
-	atomic_set(&sdiodev->freezer->freezing, 1);
+	sdiodev->मुक्तzer->frozen_count = 0;
+	reinit_completion(&sdiodev->मुक्तzer->resumed);
+	atomic_set(&sdiodev->मुक्तzer->मुक्तzing, 1);
 	brcmf_sdio_trigger_dpc(sdiodev->bus);
-	wait_event(sdiodev->freezer->thread_freeze,
-		   atomic_read(expect) == sdiodev->freezer->frozen_count);
+	रुको_event(sdiodev->मुक्तzer->thपढ़ो_मुक्तze,
+		   atomic_पढ़ो(expect) == sdiodev->मुक्तzer->frozen_count);
 	sdio_claim_host(sdiodev->func1);
 	res = brcmf_sdio_sleep(sdiodev->bus, true);
 	sdio_release_host(sdiodev->func1);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void brcmf_sdiod_freezer_off(struct brcmf_sdio_dev *sdiodev)
-{
+अटल व्योम brcmf_sdiod_मुक्तzer_off(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
 	sdio_claim_host(sdiodev->func1);
 	brcmf_sdio_sleep(sdiodev->bus, false);
 	sdio_release_host(sdiodev->func1);
-	atomic_set(&sdiodev->freezer->freezing, 0);
-	complete_all(&sdiodev->freezer->resumed);
-}
+	atomic_set(&sdiodev->मुक्तzer->मुक्तzing, 0);
+	complete_all(&sdiodev->मुक्तzer->resumed);
+पूर्ण
 
-bool brcmf_sdiod_freezing(struct brcmf_sdio_dev *sdiodev)
-{
-	return atomic_read(&sdiodev->freezer->freezing);
-}
+bool brcmf_sdiod_मुक्तzing(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	वापस atomic_पढ़ो(&sdiodev->मुक्तzer->मुक्तzing);
+पूर्ण
 
-void brcmf_sdiod_try_freeze(struct brcmf_sdio_dev *sdiodev)
-{
-	if (!brcmf_sdiod_freezing(sdiodev))
-		return;
-	sdiodev->freezer->frozen_count++;
-	wake_up(&sdiodev->freezer->thread_freeze);
-	wait_for_completion(&sdiodev->freezer->resumed);
-}
+व्योम brcmf_sdiod_try_मुक्तze(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	अगर (!brcmf_sdiod_मुक्तzing(sdiodev))
+		वापस;
+	sdiodev->मुक्तzer->frozen_count++;
+	wake_up(&sdiodev->मुक्तzer->thपढ़ो_मुक्तze);
+	रुको_क्रम_completion(&sdiodev->मुक्तzer->resumed);
+पूर्ण
 
-void brcmf_sdiod_freezer_count(struct brcmf_sdio_dev *sdiodev)
-{
-	atomic_inc(&sdiodev->freezer->thread_count);
-}
+व्योम brcmf_sdiod_मुक्तzer_count(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	atomic_inc(&sdiodev->मुक्तzer->thपढ़ो_count);
+पूर्ण
 
-void brcmf_sdiod_freezer_uncount(struct brcmf_sdio_dev *sdiodev)
-{
-	atomic_dec(&sdiodev->freezer->thread_count);
-}
-#else
-static int brcmf_sdiod_freezer_attach(struct brcmf_sdio_dev *sdiodev)
-{
-	return 0;
-}
+व्योम brcmf_sdiod_मुक्तzer_uncount(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	atomic_dec(&sdiodev->मुक्तzer->thपढ़ो_count);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक brcmf_sdiod_मुक्तzer_attach(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	वापस 0;
+पूर्ण
 
-static void brcmf_sdiod_freezer_detach(struct brcmf_sdio_dev *sdiodev)
-{
-}
-#endif /* CONFIG_PM_SLEEP */
+अटल व्योम brcmf_sdiod_मुक्तzer_detach(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-int brcmf_sdiod_remove(struct brcmf_sdio_dev *sdiodev)
-{
+पूर्णांक brcmf_sdiod_हटाओ(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
 	sdiodev->state = BRCMF_SDIOD_DOWN;
-	if (sdiodev->bus) {
-		brcmf_sdio_remove(sdiodev->bus);
-		sdiodev->bus = NULL;
-	}
+	अगर (sdiodev->bus) अणु
+		brcmf_sdio_हटाओ(sdiodev->bus);
+		sdiodev->bus = शून्य;
+	पूर्ण
 
-	brcmf_sdiod_freezer_detach(sdiodev);
+	brcmf_sdiod_मुक्तzer_detach(sdiodev);
 
 	/* Disable Function 2 */
 	sdio_claim_host(sdiodev->func2);
@@ -884,93 +885,93 @@ int brcmf_sdiod_remove(struct brcmf_sdio_dev *sdiodev)
 	sdio_disable_func(sdiodev->func1);
 	sdio_release_host(sdiodev->func1);
 
-	sg_free_table(&sdiodev->sgtable);
+	sg_मुक्त_table(&sdiodev->sgtable);
 	sdiodev->sbwad = 0;
 
-	pm_runtime_allow(sdiodev->func1->card->host->parent);
-	return 0;
-}
+	pm_runसमय_allow(sdiodev->func1->card->host->parent);
+	वापस 0;
+पूर्ण
 
-static void brcmf_sdiod_host_fixup(struct mmc_host *host)
-{
-	/* runtime-pm powers off the device */
-	pm_runtime_forbid(host->parent);
-	/* avoid removal detection upon resume */
+अटल व्योम brcmf_sdiod_host_fixup(काष्ठा mmc_host *host)
+अणु
+	/* runसमय-pm घातers off the device */
+	pm_runसमय_क्रमbid(host->parent);
+	/* aव्योम removal detection upon resume */
 	host->caps |= MMC_CAP_NONREMOVABLE;
-}
+पूर्ण
 
-int brcmf_sdiod_probe(struct brcmf_sdio_dev *sdiodev)
-{
-	int ret = 0;
-	unsigned int f2_blksz = SDIO_FUNC2_BLOCKSIZE;
+पूर्णांक brcmf_sdiod_probe(काष्ठा brcmf_sdio_dev *sdiodev)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक f2_blksz = SDIO_FUNC2_BLOCKSIZE;
 
 	sdio_claim_host(sdiodev->func1);
 
 	ret = sdio_set_block_size(sdiodev->func1, SDIO_FUNC1_BLOCKSIZE);
-	if (ret) {
+	अगर (ret) अणु
 		brcmf_err("Failed to set F1 blocksize\n");
 		sdio_release_host(sdiodev->func1);
-		goto out;
-	}
-	switch (sdiodev->func2->device) {
-	case SDIO_DEVICE_ID_BROADCOM_CYPRESS_4373:
+		जाओ out;
+	पूर्ण
+	चयन (sdiodev->func2->device) अणु
+	हाल SDIO_DEVICE_ID_BROADCOM_CYPRESS_4373:
 		f2_blksz = SDIO_4373_FUNC2_BLOCKSIZE;
-		break;
-	case SDIO_DEVICE_ID_BROADCOM_4359:
-	case SDIO_DEVICE_ID_BROADCOM_4354:
-	case SDIO_DEVICE_ID_BROADCOM_4356:
+		अवरोध;
+	हाल SDIO_DEVICE_ID_BROADCOM_4359:
+	हाल SDIO_DEVICE_ID_BROADCOM_4354:
+	हाल SDIO_DEVICE_ID_BROADCOM_4356:
 		f2_blksz = SDIO_435X_FUNC2_BLOCKSIZE;
-		break;
-	case SDIO_DEVICE_ID_BROADCOM_4329:
+		अवरोध;
+	हाल SDIO_DEVICE_ID_BROADCOM_4329:
 		f2_blksz = SDIO_4329_FUNC2_BLOCKSIZE;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	ret = sdio_set_block_size(sdiodev->func2, f2_blksz);
-	if (ret) {
+	अगर (ret) अणु
 		brcmf_err("Failed to set F2 blocksize\n");
 		sdio_release_host(sdiodev->func1);
-		goto out;
-	} else {
+		जाओ out;
+	पूर्ण अन्यथा अणु
 		brcmf_dbg(SDIO, "set F2 blocksize to %d\n", f2_blksz);
-	}
+	पूर्ण
 
-	/* increase F2 timeout */
-	sdiodev->func2->enable_timeout = SDIO_WAIT_F2RDY;
+	/* increase F2 समयout */
+	sdiodev->func2->enable_समयout = SDIO_WAIT_F2RDY;
 
 	/* Enable Function 1 */
 	ret = sdio_enable_func(sdiodev->func1);
 	sdio_release_host(sdiodev->func1);
-	if (ret) {
+	अगर (ret) अणु
 		brcmf_err("Failed to enable F1: err=%d\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = brcmf_sdiod_freezer_attach(sdiodev);
-	if (ret)
-		goto out;
+	ret = brcmf_sdiod_मुक्तzer_attach(sdiodev);
+	अगर (ret)
+		जाओ out;
 
 	/* try to attach to the target device */
 	sdiodev->bus = brcmf_sdio_probe(sdiodev);
-	if (!sdiodev->bus) {
+	अगर (!sdiodev->bus) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	brcmf_sdiod_host_fixup(sdiodev->func2->card->host);
 out:
-	if (ret)
-		brcmf_sdiod_remove(sdiodev);
+	अगर (ret)
+		brcmf_sdiod_हटाओ(sdiodev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define BRCMF_SDIO_DEVICE(dev_id)	\
-	{SDIO_DEVICE(SDIO_VENDOR_ID_BROADCOM, dev_id)}
+#घोषणा BRCMF_SDIO_DEVICE(dev_id)	\
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_BROADCOM, dev_id)पूर्ण
 
 /* devices we support, null terminated */
-static const struct sdio_device_id brcmf_sdmmc_ids[] = {
+अटल स्थिर काष्ठा sdio_device_id brcmf_sdmmc_ids[] = अणु
 	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_43143),
 	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_43241),
 	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_4329),
@@ -991,241 +992,241 @@ static const struct sdio_device_id brcmf_sdmmc_ids[] = {
 	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_CYPRESS_4373),
 	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_CYPRESS_43012),
 	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_CYPRESS_89359),
-	{ /* end: all zeroes */ }
-};
+	अणु /* end: all zeroes */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(sdio, brcmf_sdmmc_ids);
 
 
-static void brcmf_sdiod_acpi_set_power_manageable(struct device *dev,
-						  int val)
-{
-#if IS_ENABLED(CONFIG_ACPI)
-	struct acpi_device *adev;
+अटल व्योम brcmf_sdiod_acpi_set_घातer_manageable(काष्ठा device *dev,
+						  पूर्णांक val)
+अणु
+#अगर IS_ENABLED(CONFIG_ACPI)
+	काष्ठा acpi_device *adev;
 
 	adev = ACPI_COMPANION(dev);
-	if (adev)
-		adev->flags.power_manageable = 0;
-#endif
-}
+	अगर (adev)
+		adev->flags.घातer_manageable = 0;
+#पूर्ण_अगर
+पूर्ण
 
-static int brcmf_ops_sdio_probe(struct sdio_func *func,
-				const struct sdio_device_id *id)
-{
-	int err;
-	struct brcmf_sdio_dev *sdiodev;
-	struct brcmf_bus *bus_if;
-	struct device *dev;
+अटल पूर्णांक brcmf_ops_sdio_probe(काष्ठा sdio_func *func,
+				स्थिर काष्ठा sdio_device_id *id)
+अणु
+	पूर्णांक err;
+	काष्ठा brcmf_sdio_dev *sdiodev;
+	काष्ठा brcmf_bus *bus_अगर;
+	काष्ठा device *dev;
 
 	brcmf_dbg(SDIO, "Enter\n");
 	brcmf_dbg(SDIO, "Class=%x\n", func->class);
-	brcmf_dbg(SDIO, "sdio vendor ID: 0x%04x\n", func->vendor);
+	brcmf_dbg(SDIO, "sdio vendor ID: 0x%04x\n", func->venकरोr);
 	brcmf_dbg(SDIO, "sdio device ID: 0x%04x\n", func->device);
 	brcmf_dbg(SDIO, "Function#: %d\n", func->num);
 
 	dev = &func->dev;
 
-	/* Set MMC_QUIRK_LENIENT_FN0 for this card */
+	/* Set MMC_QUIRK_LENIENT_FN0 क्रम this card */
 	func->card->quirks |= MMC_QUIRK_LENIENT_FN0;
 
-	/* prohibit ACPI power management for this device */
-	brcmf_sdiod_acpi_set_power_manageable(dev, 0);
+	/* prohibit ACPI घातer management क्रम this device */
+	brcmf_sdiod_acpi_set_घातer_manageable(dev, 0);
 
-	/* Consume func num 1 but dont do anything with it. */
-	if (func->num == 1)
-		return 0;
+	/* Consume func num 1 but करोnt करो anything with it. */
+	अगर (func->num == 1)
+		वापस 0;
 
 	/* Ignore anything but func 2 */
-	if (func->num != 2)
-		return -ENODEV;
+	अगर (func->num != 2)
+		वापस -ENODEV;
 
-	bus_if = kzalloc(sizeof(struct brcmf_bus), GFP_KERNEL);
-	if (!bus_if)
-		return -ENOMEM;
-	sdiodev = kzalloc(sizeof(struct brcmf_sdio_dev), GFP_KERNEL);
-	if (!sdiodev) {
-		kfree(bus_if);
-		return -ENOMEM;
-	}
+	bus_अगर = kzalloc(माप(काष्ठा brcmf_bus), GFP_KERNEL);
+	अगर (!bus_अगर)
+		वापस -ENOMEM;
+	sdiodev = kzalloc(माप(काष्ठा brcmf_sdio_dev), GFP_KERNEL);
+	अगर (!sdiodev) अणु
+		kमुक्त(bus_अगर);
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* store refs to functions used. mmc_card does
-	 * not hold the F0 function pointer.
+	/* store refs to functions used. mmc_card करोes
+	 * not hold the F0 function poपूर्णांकer.
 	 */
 	sdiodev->func1 = func->card->sdio_func[0];
 	sdiodev->func2 = func;
 
-	sdiodev->bus_if = bus_if;
-	bus_if->bus_priv.sdio = sdiodev;
-	bus_if->proto_type = BRCMF_PROTO_BCDC;
-	dev_set_drvdata(&func->dev, bus_if);
-	dev_set_drvdata(&sdiodev->func1->dev, bus_if);
+	sdiodev->bus_अगर = bus_अगर;
+	bus_अगर->bus_priv.sdio = sdiodev;
+	bus_अगर->proto_type = BRCMF_PROTO_BCDC;
+	dev_set_drvdata(&func->dev, bus_अगर);
+	dev_set_drvdata(&sdiodev->func1->dev, bus_अगर);
 	sdiodev->dev = &sdiodev->func1->dev;
 
 	brcmf_sdiod_change_state(sdiodev, BRCMF_SDIOD_DOWN);
 
 	brcmf_dbg(SDIO, "F2 found, calling brcmf_sdiod_probe...\n");
 	err = brcmf_sdiod_probe(sdiodev);
-	if (err) {
+	अगर (err) अणु
 		brcmf_err("F2 error, probe failed %d...\n", err);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	brcmf_dbg(SDIO, "F2 init completed...\n");
-	return 0;
+	वापस 0;
 
 fail:
-	dev_set_drvdata(&func->dev, NULL);
-	dev_set_drvdata(&sdiodev->func1->dev, NULL);
-	kfree(sdiodev);
-	kfree(bus_if);
-	return err;
-}
+	dev_set_drvdata(&func->dev, शून्य);
+	dev_set_drvdata(&sdiodev->func1->dev, शून्य);
+	kमुक्त(sdiodev);
+	kमुक्त(bus_अगर);
+	वापस err;
+पूर्ण
 
-static void brcmf_ops_sdio_remove(struct sdio_func *func)
-{
-	struct brcmf_bus *bus_if;
-	struct brcmf_sdio_dev *sdiodev;
+अटल व्योम brcmf_ops_sdio_हटाओ(काष्ठा sdio_func *func)
+अणु
+	काष्ठा brcmf_bus *bus_अगर;
+	काष्ठा brcmf_sdio_dev *sdiodev;
 
 	brcmf_dbg(SDIO, "Enter\n");
-	brcmf_dbg(SDIO, "sdio vendor ID: 0x%04x\n", func->vendor);
+	brcmf_dbg(SDIO, "sdio vendor ID: 0x%04x\n", func->venकरोr);
 	brcmf_dbg(SDIO, "sdio device ID: 0x%04x\n", func->device);
 	brcmf_dbg(SDIO, "Function: %d\n", func->num);
 
-	bus_if = dev_get_drvdata(&func->dev);
-	if (bus_if) {
-		sdiodev = bus_if->bus_priv.sdio;
+	bus_अगर = dev_get_drvdata(&func->dev);
+	अगर (bus_अगर) अणु
+		sdiodev = bus_अगर->bus_priv.sdio;
 
-		/* start by unregistering irqs */
-		brcmf_sdiod_intr_unregister(sdiodev);
+		/* start by unरेजिस्टरing irqs */
+		brcmf_sdiod_पूर्णांकr_unरेजिस्टर(sdiodev);
 
-		if (func->num != 1)
-			return;
+		अगर (func->num != 1)
+			वापस;
 
-		/* only proceed with rest of cleanup if func 1 */
-		brcmf_sdiod_remove(sdiodev);
+		/* only proceed with rest of cleanup अगर func 1 */
+		brcmf_sdiod_हटाओ(sdiodev);
 
-		dev_set_drvdata(&sdiodev->func1->dev, NULL);
-		dev_set_drvdata(&sdiodev->func2->dev, NULL);
+		dev_set_drvdata(&sdiodev->func1->dev, शून्य);
+		dev_set_drvdata(&sdiodev->func2->dev, शून्य);
 
-		kfree(bus_if);
-		kfree(sdiodev);
-	}
+		kमुक्त(bus_अगर);
+		kमुक्त(sdiodev);
+	पूर्ण
 
 	brcmf_dbg(SDIO, "Exit\n");
-}
+पूर्ण
 
-void brcmf_sdio_wowl_config(struct device *dev, bool enabled)
-{
-	struct brcmf_bus *bus_if = dev_get_drvdata(dev);
-	struct brcmf_sdio_dev *sdiodev = bus_if->bus_priv.sdio;
+व्योम brcmf_sdio_wowl_config(काष्ठा device *dev, bool enabled)
+अणु
+	काष्ठा brcmf_bus *bus_अगर = dev_get_drvdata(dev);
+	काष्ठा brcmf_sdio_dev *sdiodev = bus_अगर->bus_priv.sdio;
 
 	brcmf_dbg(SDIO, "Configuring WOWL, enabled=%d\n", enabled);
 	sdiodev->wowl_enabled = enabled;
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int brcmf_ops_sdio_suspend(struct device *dev)
-{
-	struct sdio_func *func;
-	struct brcmf_bus *bus_if;
-	struct brcmf_sdio_dev *sdiodev;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक brcmf_ops_sdio_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sdio_func *func;
+	काष्ठा brcmf_bus *bus_अगर;
+	काष्ठा brcmf_sdio_dev *sdiodev;
 	mmc_pm_flag_t pm_caps, sdio_flags;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	func = container_of(dev, struct sdio_func, dev);
+	func = container_of(dev, काष्ठा sdio_func, dev);
 	brcmf_dbg(SDIO, "Enter: F%d\n", func->num);
-	if (func->num != 1)
-		return 0;
+	अगर (func->num != 1)
+		वापस 0;
 
 
-	bus_if = dev_get_drvdata(dev);
-	sdiodev = bus_if->bus_priv.sdio;
+	bus_अगर = dev_get_drvdata(dev);
+	sdiodev = bus_अगर->bus_priv.sdio;
 
 	pm_caps = sdio_get_host_pm_caps(func);
 
-	if (pm_caps & MMC_PM_KEEP_POWER) {
-		/* preserve card power during suspend */
-		brcmf_sdiod_freezer_on(sdiodev);
-		brcmf_sdio_wd_timer(sdiodev->bus, 0);
+	अगर (pm_caps & MMC_PM_KEEP_POWER) अणु
+		/* preserve card घातer during suspend */
+		brcmf_sdiod_मुक्तzer_on(sdiodev);
+		brcmf_sdio_wd_समयr(sdiodev->bus, 0);
 
 		sdio_flags = MMC_PM_KEEP_POWER;
-		if (sdiodev->wowl_enabled) {
-			if (sdiodev->settings->bus.sdio.oob_irq_supported)
+		अगर (sdiodev->wowl_enabled) अणु
+			अगर (sdiodev->settings->bus.sdio.oob_irq_supported)
 				enable_irq_wake(sdiodev->settings->bus.sdio.oob_irq_nr);
-			else
+			अन्यथा
 				sdio_flags |= MMC_PM_WAKE_SDIO_IRQ;
-		}
+		पूर्ण
 
-		if (sdio_set_host_pm_flags(sdiodev->func1, sdio_flags))
+		अगर (sdio_set_host_pm_flags(sdiodev->func1, sdio_flags))
 			brcmf_err("Failed to set pm_flags %x\n", sdio_flags);
 
-	} else {
-		/* power will be cut so remove device, probe again in resume */
-		brcmf_sdiod_intr_unregister(sdiodev);
-		ret = brcmf_sdiod_remove(sdiodev);
-		if (ret)
+	पूर्ण अन्यथा अणु
+		/* घातer will be cut so हटाओ device, probe again in resume */
+		brcmf_sdiod_पूर्णांकr_unरेजिस्टर(sdiodev);
+		ret = brcmf_sdiod_हटाओ(sdiodev);
+		अगर (ret)
 			brcmf_err("Failed to remove device on suspend\n");
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int brcmf_ops_sdio_resume(struct device *dev)
-{
-	struct brcmf_bus *bus_if = dev_get_drvdata(dev);
-	struct brcmf_sdio_dev *sdiodev = bus_if->bus_priv.sdio;
-	struct sdio_func *func = container_of(dev, struct sdio_func, dev);
+अटल पूर्णांक brcmf_ops_sdio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा brcmf_bus *bus_अगर = dev_get_drvdata(dev);
+	काष्ठा brcmf_sdio_dev *sdiodev = bus_अगर->bus_priv.sdio;
+	काष्ठा sdio_func *func = container_of(dev, काष्ठा sdio_func, dev);
 	mmc_pm_flag_t pm_caps = sdio_get_host_pm_caps(func);
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	brcmf_dbg(SDIO, "Enter: F%d\n", func->num);
-	if (func->num != 2)
-		return 0;
+	अगर (func->num != 2)
+		वापस 0;
 
-	if (!(pm_caps & MMC_PM_KEEP_POWER)) {
-		/* bus was powered off and device removed, probe again */
+	अगर (!(pm_caps & MMC_PM_KEEP_POWER)) अणु
+		/* bus was घातered off and device हटाओd, probe again */
 		ret = brcmf_sdiod_probe(sdiodev);
-		if (ret)
+		अगर (ret)
 			brcmf_err("Failed to probe device on resume\n");
-	} else {
-		if (sdiodev->wowl_enabled &&
+	पूर्ण अन्यथा अणु
+		अगर (sdiodev->wowl_enabled &&
 		    sdiodev->settings->bus.sdio.oob_irq_supported)
 			disable_irq_wake(sdiodev->settings->bus.sdio.oob_irq_nr);
 
-		brcmf_sdiod_freezer_off(sdiodev);
-	}
+		brcmf_sdiod_मुक्तzer_off(sdiodev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dev_pm_ops brcmf_sdio_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops brcmf_sdio_pm_ops = अणु
 	.suspend	= brcmf_ops_sdio_suspend,
 	.resume		= brcmf_ops_sdio_resume,
-};
-#endif	/* CONFIG_PM_SLEEP */
+पूर्ण;
+#पूर्ण_अगर	/* CONFIG_PM_SLEEP */
 
-static struct sdio_driver brcmf_sdmmc_driver = {
+अटल काष्ठा sdio_driver brcmf_sdmmc_driver = अणु
 	.probe = brcmf_ops_sdio_probe,
-	.remove = brcmf_ops_sdio_remove,
+	.हटाओ = brcmf_ops_sdio_हटाओ,
 	.name = KBUILD_MODNAME,
 	.id_table = brcmf_sdmmc_ids,
-	.drv = {
+	.drv = अणु
 		.owner = THIS_MODULE,
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 		.pm = &brcmf_sdio_pm_ops,
-#endif	/* CONFIG_PM_SLEEP */
+#पूर्ण_अगर	/* CONFIG_PM_SLEEP */
 		.coredump = brcmf_dev_coredump,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int brcmf_sdio_register(void)
-{
-	return sdio_register_driver(&brcmf_sdmmc_driver);
-}
+पूर्णांक brcmf_sdio_रेजिस्टर(व्योम)
+अणु
+	वापस sdio_रेजिस्टर_driver(&brcmf_sdmmc_driver);
+पूर्ण
 
-void brcmf_sdio_exit(void)
-{
+व्योम brcmf_sdio_निकास(व्योम)
+अणु
 	brcmf_dbg(SDIO, "Enter\n");
 
-	sdio_unregister_driver(&brcmf_sdmmc_driver);
-}
+	sdio_unरेजिस्टर_driver(&brcmf_sdmmc_driver);
+पूर्ण
 

@@ -1,94 +1,95 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_PAGE_H
-#define __ASM_CSKY_PAGE_H
+#अगर_अघोषित __ASM_CSKY_PAGE_H
+#घोषणा __ASM_CSKY_PAGE_H
 
-#include <asm/setup.h>
-#include <asm/cache.h>
-#include <linux/const.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/cache.h>
+#समावेश <linux/स्थिर.h>
 
 /*
  * PAGE_SHIFT determines the page size: 4KB
  */
-#define PAGE_SHIFT	12
-#define PAGE_SIZE	(_AC(1, UL) << PAGE_SHIFT)
-#define PAGE_MASK	(~(PAGE_SIZE - 1))
-#define THREAD_SIZE	(PAGE_SIZE * 2)
-#define THREAD_MASK	(~(THREAD_SIZE - 1))
-#define THREAD_SHIFT	(PAGE_SHIFT + 1)
+#घोषणा PAGE_SHIFT	12
+#घोषणा PAGE_SIZE	(_AC(1, UL) << PAGE_SHIFT)
+#घोषणा PAGE_MASK	(~(PAGE_SIZE - 1))
+#घोषणा THREAD_SIZE	(PAGE_SIZE * 2)
+#घोषणा THREAD_MASK	(~(THREAD_SIZE - 1))
+#घोषणा THREAD_SHIFT	(PAGE_SHIFT + 1)
 
 
 /*
  * For C-SKY "User-space:Kernel-space" is "2GB:2GB" fixed by hardware and there
- * are two segment registers (MSA0 + MSA1) to mapping 512MB + 512MB physical
+ * are two segment रेजिस्टरs (MSA0 + MSA1) to mapping 512MB + 512MB physical
  * address region. We use them mapping kernel 1GB direct-map address area and
- * for more than 1GB of memory we use highmem.
+ * क्रम more than 1GB of memory we use highmem.
  */
-#define PAGE_OFFSET	CONFIG_PAGE_OFFSET
-#define SSEG_SIZE	0x20000000
-#define LOWMEM_LIMIT	(SSEG_SIZE * 2)
+#घोषणा PAGE_OFFSET	CONFIG_PAGE_OFFSET
+#घोषणा SSEG_SIZE	0x20000000
+#घोषणा LOWMEM_LIMIT	(SSEG_SIZE * 2)
 
-#define PHYS_OFFSET_OFFSET (CONFIG_DRAM_BASE & (SSEG_SIZE - 1))
+#घोषणा PHYS_OFFSET_OFFSET (CONFIG_DRAM_BASE & (SSEG_SIZE - 1))
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/pfn.h>
+#समावेश <linux/pfn.h>
 
-#define virt_to_pfn(kaddr)      (__pa(kaddr) >> PAGE_SHIFT)
-#define pfn_to_virt(pfn)        __va((pfn) << PAGE_SHIFT)
+#घोषणा virt_to_pfn(kaddr)      (__pa(kaddr) >> PAGE_SHIFT)
+#घोषणा pfn_to_virt(pfn)        __va((pfn) << PAGE_SHIFT)
 
-#define virt_addr_valid(kaddr)  ((void *)(kaddr) >= (void *)PAGE_OFFSET && \
-			(void *)(kaddr) < high_memory)
-#define pfn_valid(pfn)		((pfn) >= ARCH_PFN_OFFSET && ((pfn) - ARCH_PFN_OFFSET) < max_mapnr)
+#घोषणा virt_addr_valid(kaddr)  ((व्योम *)(kaddr) >= (व्योम *)PAGE_OFFSET && \
+			(व्योम *)(kaddr) < high_memory)
+#घोषणा pfn_valid(pfn)		((pfn) >= ARCH_PFN_OFFSET && ((pfn) - ARCH_PFN_OFFSET) < max_mapnr)
 
-extern void *memset(void *dest, int c, size_t l);
-extern void *memcpy(void *to, const void *from, size_t l);
+बाह्य व्योम *स_रखो(व्योम *dest, पूर्णांक c, माप_प्रकार l);
+बाह्य व्योम *स_नकल(व्योम *to, स्थिर व्योम *from, माप_प्रकार l);
 
-#define clear_page(page)	memset((page), 0, PAGE_SIZE)
-#define copy_page(to, from)	memcpy((to), (from), PAGE_SIZE)
+#घोषणा clear_page(page)	स_रखो((page), 0, PAGE_SIZE)
+#घोषणा copy_page(to, from)	स_नकल((to), (from), PAGE_SIZE)
 
-#define page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
-#define phys_to_page(paddr)	(pfn_to_page(PFN_DOWN(paddr)))
+#घोषणा page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
+#घोषणा phys_to_page(paddr)	(pfn_to_page(PFN_DOWN(paddr)))
 
-struct page;
+काष्ठा page;
 
-#include <abi/page.h>
+#समावेश <abi/page.h>
 
-struct vm_area_struct;
+काष्ठा vm_area_काष्ठा;
 
-typedef struct { unsigned long pte_low; } pte_t;
-#define pte_val(x)	((x).pte_low)
+प्रकार काष्ठा अणु अचिन्हित दीर्घ pte_low; पूर्ण pte_t;
+#घोषणा pte_val(x)	((x).pte_low)
 
-typedef struct { unsigned long pgd; } pgd_t;
-typedef struct { unsigned long pgprot; } pgprot_t;
-typedef struct page *pgtable_t;
+प्रकार काष्ठा अणु अचिन्हित दीर्घ pgd; पूर्ण pgd_t;
+प्रकार काष्ठा अणु अचिन्हित दीर्घ pgprot; पूर्ण pgprot_t;
+प्रकार काष्ठा page *pgtable_t;
 
-#define pgd_val(x)	((x).pgd)
-#define pgprot_val(x)	((x).pgprot)
+#घोषणा pgd_val(x)	((x).pgd)
+#घोषणा pgprot_val(x)	((x).pgprot)
 
-#define ptep_buddy(x)	((pte_t *)((unsigned long)(x) ^ sizeof(pte_t)))
+#घोषणा ptep_buddy(x)	((pte_t *)((अचिन्हित दीर्घ)(x) ^ माप(pte_t)))
 
-#define __pte(x)	((pte_t) { (x) })
-#define __pgd(x)	((pgd_t) { (x) })
-#define __pgprot(x)	((pgprot_t) { (x) })
+#घोषणा __pte(x)	((pte_t) अणु (x) पूर्ण)
+#घोषणा __pgd(x)	((pgd_t) अणु (x) पूर्ण)
+#घोषणा __pgprot(x)	((pgprot_t) अणु (x) पूर्ण)
 
-extern unsigned long va_pa_offset;
+बाह्य अचिन्हित दीर्घ va_pa_offset;
 
-#define ARCH_PFN_OFFSET	PFN_DOWN(va_pa_offset + PHYS_OFFSET_OFFSET)
+#घोषणा ARCH_PFN_OFFSET	PFN_DOWN(va_pa_offset + PHYS_OFFSET_OFFSET)
 
-#define __pa(x)		 ((unsigned long)(x) - PAGE_OFFSET + va_pa_offset)
-#define __va(x) ((void *)((unsigned long)(x) + PAGE_OFFSET - va_pa_offset))
+#घोषणा __pa(x)		 ((अचिन्हित दीर्घ)(x) - PAGE_OFFSET + va_pa_offset)
+#घोषणा __va(x) ((व्योम *)((अचिन्हित दीर्घ)(x) + PAGE_OFFSET - va_pa_offset))
 
-#define __pa_symbol(x)	__pa(RELOC_HIDE((unsigned long)(x), 0))
+#घोषणा __pa_symbol(x)	__pa(RELOC_HIDE((अचिन्हित दीर्घ)(x), 0))
 
-#define MAP_NR(x)	PFN_DOWN((unsigned long)(x) - PAGE_OFFSET - \
+#घोषणा MAP_NR(x)	PFN_DOWN((अचिन्हित दीर्घ)(x) - PAGE_OFFSET - \
 				 PHYS_OFFSET_OFFSET)
-#define virt_to_page(x)	(mem_map + MAP_NR(x))
+#घोषणा virt_to_page(x)	(mem_map + MAP_NR(x))
 
-#define pfn_to_kaddr(x)	__va(PFN_PHYS(x))
+#घोषणा pfn_to_kaddr(x)	__va(PFN_PHYS(x))
 
-#include <asm-generic/memory_model.h>
-#include <asm-generic/getorder.h>
+#समावेश <यंत्र-generic/memory_model.h>
+#समावेश <यंत्र-generic/getorder.h>
 
-#endif /* !__ASSEMBLY__ */
-#endif /* __ASM_CSKY_PAGE_H */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* __ASM_CSKY_PAGE_H */

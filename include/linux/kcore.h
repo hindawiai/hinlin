@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * /proc/kcore definitions
  */
-#ifndef _LINUX_KCORE_H
-#define _LINUX_KCORE_H
+#अगर_अघोषित _LINUX_KCORE_H
+#घोषणा _LINUX_KCORE_H
 
-enum kcore_type {
+क्रमागत kcore_type अणु
 	KCORE_TEXT,
 	KCORE_VMALLOC,
 	KCORE_RAM,
@@ -13,38 +14,38 @@ enum kcore_type {
 	KCORE_USER,
 	KCORE_OTHER,
 	KCORE_REMAP,
-};
+पूर्ण;
 
-struct kcore_list {
-	struct list_head list;
-	unsigned long addr;
-	unsigned long vaddr;
-	size_t size;
-	int type;
-};
+काष्ठा kcore_list अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ vaddr;
+	माप_प्रकार size;
+	पूर्णांक type;
+पूर्ण;
 
-struct vmcore {
-	struct list_head list;
-	unsigned long long paddr;
-	unsigned long long size;
+काष्ठा vmcore अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ दीर्घ paddr;
+	अचिन्हित दीर्घ दीर्घ size;
 	loff_t offset;
-};
+पूर्ण;
 
-struct vmcoredd_node {
-	struct list_head list;	/* List of dumps */
-	void *buf;		/* Buffer containing device's dump */
-	unsigned int size;	/* Size of the buffer */
-};
+काष्ठा vmcoredd_node अणु
+	काष्ठा list_head list;	/* List of dumps */
+	व्योम *buf;		/* Buffer containing device's dump */
+	अचिन्हित पूर्णांक size;	/* Size of the buffer */
+पूर्ण;
 
-#ifdef CONFIG_PROC_KCORE
-void __init kclist_add(struct kcore_list *, void *, size_t, int type);
+#अगर_घोषित CONFIG_PROC_KCORE
+व्योम __init kclist_add(काष्ठा kcore_list *, व्योम *, माप_प्रकार, पूर्णांक type);
 
-extern int __init register_mem_pfn_is_ram(int (*fn)(unsigned long pfn));
-#else
-static inline
-void kclist_add(struct kcore_list *new, void *addr, size_t size, int type)
-{
-}
-#endif
+बाह्य पूर्णांक __init रेजिस्टर_mem_pfn_is_ram(पूर्णांक (*fn)(अचिन्हित दीर्घ pfn));
+#अन्यथा
+अटल अंतरभूत
+व्योम kclist_add(काष्ठा kcore_list *new, व्योम *addr, माप_प्रकार size, पूर्णांक type)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_KCORE_H */
+#पूर्ण_अगर /* _LINUX_KCORE_H */

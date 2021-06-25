@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_PCI_H
-#define __ASM_PCI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_PCI_H
+#घोषणा __ASM_PCI_H
 
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/dma-mapping.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#define PCIBIOS_MIN_IO		0x1000
-#define PCIBIOS_MIN_MEM		0
+#घोषणा PCIBIOS_MIN_IO		0x1000
+#घोषणा PCIBIOS_MIN_MEM		0
 
 /*
- * Set to 1 if the kernel should re-assign all PCI bus numbers
+ * Set to 1 अगर the kernel should re-assign all PCI bus numbers
  */
-#define pcibios_assign_all_busses() \
+#घोषणा pcibios_assign_all_busses() \
 	(pci_has_flag(PCI_REASSIGN_ALL_BUS))
 
-#define arch_can_pci_mmap_wc() 1
-#define ARCH_GENERIC_PCI_MMAP_RESOURCE	1
+#घोषणा arch_can_pci_mmap_wc() 1
+#घोषणा ARCH_GENERIC_PCI_MMAP_RESOURCE	1
 
-extern int isa_dma_bridge_buggy;
+बाह्य पूर्णांक isa_dma_bridge_buggy;
 
-#ifdef CONFIG_PCI
-static inline int pci_get_legacy_ide_irq(struct pci_dev *dev, int channel)
-{
+#अगर_घोषित CONFIG_PCI
+अटल अंतरभूत पूर्णांक pci_get_legacy_ide_irq(काष्ठा pci_dev *dev, पूर्णांक channel)
+अणु
 	/* no legacy IRQ on arm64 */
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static inline int pci_proc_domain(struct pci_bus *bus)
-{
-	return 1;
-}
-#endif  /* CONFIG_PCI */
+अटल अंतरभूत पूर्णांक pci_proc_करोमुख्य(काष्ठा pci_bus *bus)
+अणु
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर  /* CONFIG_PCI */
 
-#endif  /* __ASM_PCI_H */
+#पूर्ण_अगर  /* __ASM_PCI_H */

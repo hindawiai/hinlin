@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __X86_MCE_INTERNAL_H__
-#define __X86_MCE_INTERNAL_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __X86_MCE_INTERNAL_H__
+#घोषणा __X86_MCE_INTERNAL_H__
 
-#undef pr_fmt
-#define pr_fmt(fmt) "mce: " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) "mce: " fmt
 
-#include <linux/device.h>
-#include <asm/mce.h>
+#समावेश <linux/device.h>
+#समावेश <यंत्र/mce.h>
 
-/* Pointer to the installed machine check handler for this CPU setup. */
-extern void (*machine_check_vector)(struct pt_regs *);
+/* Poपूर्णांकer to the installed machine check handler क्रम this CPU setup. */
+बाह्य व्योम (*machine_check_vector)(काष्ठा pt_regs *);
 
-enum severity_level {
+क्रमागत severity_level अणु
 	MCE_NO_SEVERITY,
 	MCE_DEFERRED_SEVERITY,
 	MCE_UCNA_SEVERITY = MCE_DEFERRED_SEVERITY,
@@ -21,106 +22,106 @@ enum severity_level {
 	MCE_UC_SEVERITY,
 	MCE_AR_SEVERITY,
 	MCE_PANIC_SEVERITY,
-};
+पूर्ण;
 
-extern struct blocking_notifier_head x86_mce_decoder_chain;
+बाह्य काष्ठा blocking_notअगरier_head x86_mce_decoder_chain;
 
-#define INITIAL_CHECK_INTERVAL	5 * 60 /* 5 minutes */
+#घोषणा INITIAL_CHECK_INTERVAL	5 * 60 /* 5 minutes */
 
-struct mce_evt_llist {
-	struct llist_node llnode;
-	struct mce mce;
-};
+काष्ठा mce_evt_llist अणु
+	काष्ठा llist_node llnode;
+	काष्ठा mce mce;
+पूर्ण;
 
-void mce_gen_pool_process(struct work_struct *__unused);
-bool mce_gen_pool_empty(void);
-int mce_gen_pool_add(struct mce *mce);
-int mce_gen_pool_init(void);
-struct llist_node *mce_gen_pool_prepare_records(void);
+व्योम mce_gen_pool_process(काष्ठा work_काष्ठा *__unused);
+bool mce_gen_pool_empty(व्योम);
+पूर्णांक mce_gen_pool_add(काष्ठा mce *mce);
+पूर्णांक mce_gen_pool_init(व्योम);
+काष्ठा llist_node *mce_gen_pool_prepare_records(व्योम);
 
-extern int (*mce_severity)(struct mce *a, struct pt_regs *regs,
-			   int tolerant, char **msg, bool is_excp);
-struct dentry *mce_get_debugfs_dir(void);
+बाह्य पूर्णांक (*mce_severity)(काष्ठा mce *a, काष्ठा pt_regs *regs,
+			   पूर्णांक tolerant, अक्षर **msg, bool is_excp);
+काष्ठा dentry *mce_get_debugfs_dir(व्योम);
 
-extern mce_banks_t mce_banks_ce_disabled;
+बाह्य mce_banks_t mce_banks_ce_disabled;
 
-#ifdef CONFIG_X86_MCE_INTEL
-unsigned long cmci_intel_adjust_timer(unsigned long interval);
-bool mce_intel_cmci_poll(void);
-void mce_intel_hcpu_update(unsigned long cpu);
-void cmci_disable_bank(int bank);
-void intel_init_cmci(void);
-void intel_init_lmce(void);
-void intel_clear_lmce(void);
-bool intel_filter_mce(struct mce *m);
-#else
-# define cmci_intel_adjust_timer mce_adjust_timer_default
-static inline bool mce_intel_cmci_poll(void) { return false; }
-static inline void mce_intel_hcpu_update(unsigned long cpu) { }
-static inline void cmci_disable_bank(int bank) { }
-static inline void intel_init_cmci(void) { }
-static inline void intel_init_lmce(void) { }
-static inline void intel_clear_lmce(void) { }
-static inline bool intel_filter_mce(struct mce *m) { return false; };
-#endif
+#अगर_घोषित CONFIG_X86_MCE_INTEL
+अचिन्हित दीर्घ cmci_पूर्णांकel_adjust_समयr(अचिन्हित दीर्घ पूर्णांकerval);
+bool mce_पूर्णांकel_cmci_poll(व्योम);
+व्योम mce_पूर्णांकel_hcpu_update(अचिन्हित दीर्घ cpu);
+व्योम cmci_disable_bank(पूर्णांक bank);
+व्योम पूर्णांकel_init_cmci(व्योम);
+व्योम पूर्णांकel_init_lmce(व्योम);
+व्योम पूर्णांकel_clear_lmce(व्योम);
+bool पूर्णांकel_filter_mce(काष्ठा mce *m);
+#अन्यथा
+# define cmci_पूर्णांकel_adjust_समयr mce_adjust_समयr_शेष
+अटल अंतरभूत bool mce_पूर्णांकel_cmci_poll(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम mce_पूर्णांकel_hcpu_update(अचिन्हित दीर्घ cpu) अणु पूर्ण
+अटल अंतरभूत व्योम cmci_disable_bank(पूर्णांक bank) अणु पूर्ण
+अटल अंतरभूत व्योम पूर्णांकel_init_cmci(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम पूर्णांकel_init_lmce(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम पूर्णांकel_clear_lmce(व्योम) अणु पूर्ण
+अटल अंतरभूत bool पूर्णांकel_filter_mce(काष्ठा mce *m) अणु वापस false; पूर्ण;
+#पूर्ण_अगर
 
-void mce_timer_kick(unsigned long interval);
+व्योम mce_समयr_kick(अचिन्हित दीर्घ पूर्णांकerval);
 
-#ifdef CONFIG_ACPI_APEI
-int apei_write_mce(struct mce *m);
-ssize_t apei_read_mce(struct mce *m, u64 *record_id);
-int apei_check_mce(void);
-int apei_clear_mce(u64 record_id);
-#else
-static inline int apei_write_mce(struct mce *m)
-{
-	return -EINVAL;
-}
-static inline ssize_t apei_read_mce(struct mce *m, u64 *record_id)
-{
-	return 0;
-}
-static inline int apei_check_mce(void)
-{
-	return 0;
-}
-static inline int apei_clear_mce(u64 record_id)
-{
-	return -EINVAL;
-}
-#endif
+#अगर_घोषित CONFIG_ACPI_APEI
+पूर्णांक apei_ग_लिखो_mce(काष्ठा mce *m);
+sमाप_प्रकार apei_पढ़ो_mce(काष्ठा mce *m, u64 *record_id);
+पूर्णांक apei_check_mce(व्योम);
+पूर्णांक apei_clear_mce(u64 record_id);
+#अन्यथा
+अटल अंतरभूत पूर्णांक apei_ग_लिखो_mce(काष्ठा mce *m)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत sमाप_प्रकार apei_पढ़ो_mce(काष्ठा mce *m, u64 *record_id)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक apei_check_mce(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक apei_clear_mce(u64 record_id)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * We consider records to be equivalent if bank+status+addr+misc all match.
- * This is only used when the system is going down because of a fatal error
- * to avoid cluttering the console log with essentially repeated information.
+ * We consider records to be equivalent अगर bank+status+addr+misc all match.
+ * This is only used when the प्रणाली is going करोwn because of a fatal error
+ * to aव्योम cluttering the console log with essentially repeated inक्रमmation.
  * In normal processing all errors seen are logged.
  */
-static inline bool mce_cmp(struct mce *m1, struct mce *m2)
-{
-	return m1->bank != m2->bank ||
+अटल अंतरभूत bool mce_cmp(काष्ठा mce *m1, काष्ठा mce *m2)
+अणु
+	वापस m1->bank != m2->bank ||
 		m1->status != m2->status ||
 		m1->addr != m2->addr ||
 		m1->misc != m2->misc;
-}
+पूर्ण
 
-extern struct device_attribute dev_attr_trigger;
+बाह्य काष्ठा device_attribute dev_attr_trigger;
 
-#ifdef CONFIG_X86_MCELOG_LEGACY
-void mce_work_trigger(void);
-void mce_register_injector_chain(struct notifier_block *nb);
-void mce_unregister_injector_chain(struct notifier_block *nb);
-#else
-static inline void mce_work_trigger(void)	{ }
-static inline void mce_register_injector_chain(struct notifier_block *nb)	{ }
-static inline void mce_unregister_injector_chain(struct notifier_block *nb)	{ }
-#endif
+#अगर_घोषित CONFIG_X86_MCELOG_LEGACY
+व्योम mce_work_trigger(व्योम);
+व्योम mce_रेजिस्टर_injector_chain(काष्ठा notअगरier_block *nb);
+व्योम mce_unरेजिस्टर_injector_chain(काष्ठा notअगरier_block *nb);
+#अन्यथा
+अटल अंतरभूत व्योम mce_work_trigger(व्योम)	अणु पूर्ण
+अटल अंतरभूत व्योम mce_रेजिस्टर_injector_chain(काष्ठा notअगरier_block *nb)	अणु पूर्ण
+अटल अंतरभूत व्योम mce_unरेजिस्टर_injector_chain(काष्ठा notअगरier_block *nb)	अणु पूर्ण
+#पूर्ण_अगर
 
-struct mca_config {
-	bool dont_log_ce;
+काष्ठा mca_config अणु
+	bool करोnt_log_ce;
 	bool cmci_disabled;
 	bool ignore_ce;
-	bool print_all;
+	bool prपूर्णांक_all;
 
 	__u64 lmce_disabled		: 1,
 	      disabled			: 1,
@@ -130,33 +131,33 @@ struct mca_config {
 	      __reserved		: 59;
 
 	s8 bootlog;
-	int tolerant;
-	int monarch_timeout;
-	int panic_timeout;
+	पूर्णांक tolerant;
+	पूर्णांक monarch_समयout;
+	पूर्णांक panic_समयout;
 	u32 rip_msr;
-};
+पूर्ण;
 
-extern struct mca_config mca_cfg;
-DECLARE_PER_CPU_READ_MOSTLY(unsigned int, mce_num_banks);
+बाह्य काष्ठा mca_config mca_cfg;
+DECLARE_PER_CPU_READ_MOSTLY(अचिन्हित पूर्णांक, mce_num_banks);
 
-struct mce_vendor_flags {
+काष्ठा mce_venकरोr_flags अणु
 	/*
 	 * Indicates that overflow conditions are not fatal, when set.
 	 */
 	__u64 overflow_recov	: 1,
 
 	/*
-	 * (AMD) SUCCOR stands for S/W UnCorrectable error COntainment and
-	 * Recovery. It indicates support for data poisoning in HW and deferred
-	 * error interrupts.
+	 * (AMD) SUCCOR stands क्रम S/W UnCorrectable error COntainment and
+	 * Recovery. It indicates support क्रम data poisoning in HW and deferred
+	 * error पूर्णांकerrupts.
 	 */
 	succor			: 1,
 
 	/*
-	 * (AMD) SMCA: This bit indicates support for Scalable MCA which expands
-	 * the register space for each MCA bank and also increases number of
-	 * banks. Also, to accommodate the new banks and registers, the MCA
-	 * register space is moved to a new MSR range.
+	 * (AMD) SMCA: This bit indicates support क्रम Scalable MCA which expands
+	 * the रेजिस्टर space क्रम each MCA bank and also increases number of
+	 * banks. Also, to accommodate the new banks and रेजिस्टरs, the MCA
+	 * रेजिस्टर space is moved to a new MSR range.
 	 */
 	smca			: 1,
 
@@ -164,36 +165,36 @@ struct mce_vendor_flags {
 	amd_threshold		: 1,
 
 	__reserved_0		: 60;
-};
+पूर्ण;
 
-extern struct mce_vendor_flags mce_flags;
+बाह्य काष्ठा mce_venकरोr_flags mce_flags;
 
-struct mca_msr_regs {
-	u32 (*ctl)	(int bank);
-	u32 (*status)	(int bank);
-	u32 (*addr)	(int bank);
-	u32 (*misc)	(int bank);
-};
+काष्ठा mca_msr_regs अणु
+	u32 (*ctl)	(पूर्णांक bank);
+	u32 (*status)	(पूर्णांक bank);
+	u32 (*addr)	(पूर्णांक bank);
+	u32 (*misc)	(पूर्णांक bank);
+पूर्ण;
 
-extern struct mca_msr_regs msr_ops;
+बाह्य काष्ठा mca_msr_regs msr_ops;
 
 /* Decide whether to add MCE record to MCE event pool or filter it out. */
-extern bool filter_mce(struct mce *m);
+बाह्य bool filter_mce(काष्ठा mce *m);
 
-#ifdef CONFIG_X86_MCE_AMD
-extern bool amd_filter_mce(struct mce *m);
-#else
-static inline bool amd_filter_mce(struct mce *m)			{ return false; };
-#endif
+#अगर_घोषित CONFIG_X86_MCE_AMD
+बाह्य bool amd_filter_mce(काष्ठा mce *m);
+#अन्यथा
+अटल अंतरभूत bool amd_filter_mce(काष्ठा mce *m)			अणु वापस false; पूर्ण;
+#पूर्ण_अगर
 
-__visible bool ex_handler_rdmsr_fault(const struct exception_table_entry *fixup,
-				      struct pt_regs *regs, int trapnr,
-				      unsigned long error_code,
-				      unsigned long fault_addr);
+__visible bool ex_handler_rdmsr_fault(स्थिर काष्ठा exception_table_entry *fixup,
+				      काष्ठा pt_regs *regs, पूर्णांक trapnr,
+				      अचिन्हित दीर्घ error_code,
+				      अचिन्हित दीर्घ fault_addr);
 
-__visible bool ex_handler_wrmsr_fault(const struct exception_table_entry *fixup,
-				      struct pt_regs *regs, int trapnr,
-				      unsigned long error_code,
-				      unsigned long fault_addr);
+__visible bool ex_handler_wrmsr_fault(स्थिर काष्ठा exception_table_entry *fixup,
+				      काष्ठा pt_regs *regs, पूर्णांक trapnr,
+				      अचिन्हित दीर्घ error_code,
+				      अचिन्हित दीर्घ fault_addr);
 
-#endif /* __X86_MCE_INTERNAL_H__ */
+#पूर्ण_अगर /* __X86_MCE_INTERNAL_H__ */

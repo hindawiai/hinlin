@@ -1,311 +1,312 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_TIMEKEEPING_H
-#define _LINUX_TIMEKEEPING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_TIMEKEEPING_H
+#घोषणा _LINUX_TIMEKEEPING_H
 
-#include <linux/errno.h>
-#include <linux/clocksource_ids.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/घड़ीsource_ids.h>
 
-/* Included from linux/ktime.h */
+/* Included from linux/kसमय.स */
 
-void timekeeping_init(void);
-extern int timekeeping_suspended;
+व्योम समयkeeping_init(व्योम);
+बाह्य पूर्णांक समयkeeping_suspended;
 
-/* Architecture timer tick functions: */
-extern void legacy_timer_tick(unsigned long ticks);
+/* Architecture समयr tick functions: */
+बाह्य व्योम legacy_समयr_tick(अचिन्हित दीर्घ ticks);
 
 /*
- * Get and set timeofday
+ * Get and set समयofday
  */
-extern int do_settimeofday64(const struct timespec64 *ts);
-extern int do_sys_settimeofday64(const struct timespec64 *tv,
-				 const struct timezone *tz);
+बाह्य पूर्णांक करो_समय_रखोofday64(स्थिर काष्ठा बारpec64 *ts);
+बाह्य पूर्णांक करो_sys_समय_रखोofday64(स्थिर काष्ठा बारpec64 *tv,
+				 स्थिर काष्ठा समयzone *tz);
 
 /*
- * ktime_get() family: read the current time in a multitude of ways,
+ * kसमय_get() family: पढ़ो the current समय in a multitude of ways,
  *
- * The default time reference is CLOCK_MONOTONIC, starting at
- * boot time but not counting the time spent in suspend.
+ * The शेष समय reference is CLOCK_MONOTONIC, starting at
+ * boot समय but not counting the समय spent in suspend.
  * For other references, use the functions with "real", "clocktai",
  * "boottime" and "raw" suffixes.
  *
- * To get the time in a different format, use the ones wit
+ * To get the समय in a dअगरferent क्रमmat, use the ones wit
  * "ns", "ts64" and "seconds" suffix.
  *
- * See Documentation/core-api/timekeeping.rst for more details.
+ * See Documentation/core-api/समयkeeping.rst क्रम more details.
  */
 
 
 /*
- * timespec64 based interfaces
+ * बारpec64 based पूर्णांकerfaces
  */
-extern void ktime_get_raw_ts64(struct timespec64 *ts);
-extern void ktime_get_ts64(struct timespec64 *ts);
-extern void ktime_get_real_ts64(struct timespec64 *tv);
-extern void ktime_get_coarse_ts64(struct timespec64 *ts);
-extern void ktime_get_coarse_real_ts64(struct timespec64 *ts);
+बाह्य व्योम kसमय_get_raw_ts64(काष्ठा बारpec64 *ts);
+बाह्य व्योम kसमय_get_ts64(काष्ठा बारpec64 *ts);
+बाह्य व्योम kसमय_get_real_ts64(काष्ठा बारpec64 *tv);
+बाह्य व्योम kसमय_get_coarse_ts64(काष्ठा बारpec64 *ts);
+बाह्य व्योम kसमय_get_coarse_real_ts64(काष्ठा बारpec64 *ts);
 
-void getboottime64(struct timespec64 *ts);
+व्योम getbootसमय64(काष्ठा बारpec64 *ts);
 
 /*
- * time64_t base interfaces
+ * समय64_t base पूर्णांकerfaces
  */
-extern time64_t ktime_get_seconds(void);
-extern time64_t __ktime_get_real_seconds(void);
-extern time64_t ktime_get_real_seconds(void);
+बाह्य समय64_t kसमय_get_seconds(व्योम);
+बाह्य समय64_t __kसमय_get_real_seconds(व्योम);
+बाह्य समय64_t kसमय_get_real_seconds(व्योम);
 
 /*
- * ktime_t based interfaces
+ * kसमय_प्रकार based पूर्णांकerfaces
  */
 
-enum tk_offsets {
+क्रमागत tk_offsets अणु
 	TK_OFFS_REAL,
 	TK_OFFS_BOOT,
 	TK_OFFS_TAI,
 	TK_OFFS_MAX,
-};
+पूर्ण;
 
-extern ktime_t ktime_get(void);
-extern ktime_t ktime_get_with_offset(enum tk_offsets offs);
-extern ktime_t ktime_get_coarse_with_offset(enum tk_offsets offs);
-extern ktime_t ktime_mono_to_any(ktime_t tmono, enum tk_offsets offs);
-extern ktime_t ktime_get_raw(void);
-extern u32 ktime_get_resolution_ns(void);
+बाह्य kसमय_प्रकार kसमय_get(व्योम);
+बाह्य kसमय_प्रकार kसमय_get_with_offset(क्रमागत tk_offsets offs);
+बाह्य kसमय_प्रकार kसमय_get_coarse_with_offset(क्रमागत tk_offsets offs);
+बाह्य kसमय_प्रकार kसमय_mono_to_any(kसमय_प्रकार पंचांगono, क्रमागत tk_offsets offs);
+बाह्य kसमय_प्रकार kसमय_get_raw(व्योम);
+बाह्य u32 kसमय_get_resolution_ns(व्योम);
 
 /**
- * ktime_get_real - get the real (wall-) time in ktime_t format
+ * kसमय_get_real - get the real (wall-) समय in kसमय_प्रकार क्रमmat
  */
-static inline ktime_t ktime_get_real(void)
-{
-	return ktime_get_with_offset(TK_OFFS_REAL);
-}
+अटल अंतरभूत kसमय_प्रकार kसमय_get_real(व्योम)
+अणु
+	वापस kसमय_get_with_offset(TK_OFFS_REAL);
+पूर्ण
 
-static inline ktime_t ktime_get_coarse_real(void)
-{
-	return ktime_get_coarse_with_offset(TK_OFFS_REAL);
-}
+अटल अंतरभूत kसमय_प्रकार kसमय_get_coarse_real(व्योम)
+अणु
+	वापस kसमय_get_coarse_with_offset(TK_OFFS_REAL);
+पूर्ण
 
 /**
- * ktime_get_boottime - Returns monotonic time since boot in ktime_t format
+ * kसमय_get_bootसमय - Returns monotonic समय since boot in kसमय_प्रकार क्रमmat
  *
- * This is similar to CLOCK_MONTONIC/ktime_get, but also includes the
- * time spent in suspend.
+ * This is similar to CLOCK_MONTONIC/kसमय_get, but also includes the
+ * समय spent in suspend.
  */
-static inline ktime_t ktime_get_boottime(void)
-{
-	return ktime_get_with_offset(TK_OFFS_BOOT);
-}
+अटल अंतरभूत kसमय_प्रकार kसमय_get_bootसमय(व्योम)
+अणु
+	वापस kसमय_get_with_offset(TK_OFFS_BOOT);
+पूर्ण
 
-static inline ktime_t ktime_get_coarse_boottime(void)
-{
-	return ktime_get_coarse_with_offset(TK_OFFS_BOOT);
-}
+अटल अंतरभूत kसमय_प्रकार kसमय_get_coarse_bootसमय(व्योम)
+अणु
+	वापस kसमय_get_coarse_with_offset(TK_OFFS_BOOT);
+पूर्ण
 
 /**
- * ktime_get_clocktai - Returns the TAI time of day in ktime_t format
+ * kसमय_get_घड़ीtai - Returns the TAI समय of day in kसमय_प्रकार क्रमmat
  */
-static inline ktime_t ktime_get_clocktai(void)
-{
-	return ktime_get_with_offset(TK_OFFS_TAI);
-}
+अटल अंतरभूत kसमय_प्रकार kसमय_get_घड़ीtai(व्योम)
+अणु
+	वापस kसमय_get_with_offset(TK_OFFS_TAI);
+पूर्ण
 
-static inline ktime_t ktime_get_coarse_clocktai(void)
-{
-	return ktime_get_coarse_with_offset(TK_OFFS_TAI);
-}
+अटल अंतरभूत kसमय_प्रकार kसमय_get_coarse_घड़ीtai(व्योम)
+अणु
+	वापस kसमय_get_coarse_with_offset(TK_OFFS_TAI);
+पूर्ण
 
-static inline ktime_t ktime_get_coarse(void)
-{
-	struct timespec64 ts;
+अटल अंतरभूत kसमय_प्रकार kसमय_get_coarse(व्योम)
+अणु
+	काष्ठा बारpec64 ts;
 
-	ktime_get_coarse_ts64(&ts);
-	return timespec64_to_ktime(ts);
-}
+	kसमय_get_coarse_ts64(&ts);
+	वापस बारpec64_to_kसमय(ts);
+पूर्ण
 
-static inline u64 ktime_get_coarse_ns(void)
-{
-	return ktime_to_ns(ktime_get_coarse());
-}
+अटल अंतरभूत u64 kसमय_get_coarse_ns(व्योम)
+अणु
+	वापस kसमय_प्रकारo_ns(kसमय_get_coarse());
+पूर्ण
 
-static inline u64 ktime_get_coarse_real_ns(void)
-{
-	return ktime_to_ns(ktime_get_coarse_real());
-}
+अटल अंतरभूत u64 kसमय_get_coarse_real_ns(व्योम)
+अणु
+	वापस kसमय_प्रकारo_ns(kसमय_get_coarse_real());
+पूर्ण
 
-static inline u64 ktime_get_coarse_boottime_ns(void)
-{
-	return ktime_to_ns(ktime_get_coarse_boottime());
-}
+अटल अंतरभूत u64 kसमय_get_coarse_bootसमय_ns(व्योम)
+अणु
+	वापस kसमय_प्रकारo_ns(kसमय_get_coarse_bootसमय());
+पूर्ण
 
-static inline u64 ktime_get_coarse_clocktai_ns(void)
-{
-	return ktime_to_ns(ktime_get_coarse_clocktai());
-}
+अटल अंतरभूत u64 kसमय_get_coarse_घड़ीtai_ns(व्योम)
+अणु
+	वापस kसमय_प्रकारo_ns(kसमय_get_coarse_घड़ीtai());
+पूर्ण
 
 /**
- * ktime_mono_to_real - Convert monotonic time to clock realtime
+ * kसमय_mono_to_real - Convert monotonic समय to घड़ी realसमय
  */
-static inline ktime_t ktime_mono_to_real(ktime_t mono)
-{
-	return ktime_mono_to_any(mono, TK_OFFS_REAL);
-}
+अटल अंतरभूत kसमय_प्रकार kसमय_mono_to_real(kसमय_प्रकार mono)
+अणु
+	वापस kसमय_mono_to_any(mono, TK_OFFS_REAL);
+पूर्ण
 
-static inline u64 ktime_get_ns(void)
-{
-	return ktime_to_ns(ktime_get());
-}
+अटल अंतरभूत u64 kसमय_get_ns(व्योम)
+अणु
+	वापस kसमय_प्रकारo_ns(kसमय_get());
+पूर्ण
 
-static inline u64 ktime_get_real_ns(void)
-{
-	return ktime_to_ns(ktime_get_real());
-}
+अटल अंतरभूत u64 kसमय_get_real_ns(व्योम)
+अणु
+	वापस kसमय_प्रकारo_ns(kसमय_get_real());
+पूर्ण
 
-static inline u64 ktime_get_boottime_ns(void)
-{
-	return ktime_to_ns(ktime_get_boottime());
-}
+अटल अंतरभूत u64 kसमय_get_bootसमय_ns(व्योम)
+अणु
+	वापस kसमय_प्रकारo_ns(kसमय_get_bootसमय());
+पूर्ण
 
-static inline u64 ktime_get_clocktai_ns(void)
-{
-	return ktime_to_ns(ktime_get_clocktai());
-}
+अटल अंतरभूत u64 kसमय_get_घड़ीtai_ns(व्योम)
+अणु
+	वापस kसमय_प्रकारo_ns(kसमय_get_घड़ीtai());
+पूर्ण
 
-static inline u64 ktime_get_raw_ns(void)
-{
-	return ktime_to_ns(ktime_get_raw());
-}
+अटल अंतरभूत u64 kसमय_get_raw_ns(व्योम)
+अणु
+	वापस kसमय_प्रकारo_ns(kसमय_get_raw());
+पूर्ण
 
-extern u64 ktime_get_mono_fast_ns(void);
-extern u64 ktime_get_raw_fast_ns(void);
-extern u64 ktime_get_boot_fast_ns(void);
-extern u64 ktime_get_real_fast_ns(void);
+बाह्य u64 kसमय_get_mono_fast_ns(व्योम);
+बाह्य u64 kसमय_get_raw_fast_ns(व्योम);
+बाह्य u64 kसमय_get_boot_fast_ns(व्योम);
+बाह्य u64 kसमय_get_real_fast_ns(व्योम);
 
 /*
- * timespec64/time64_t interfaces utilizing the ktime based ones
- * for API completeness, these could be implemented more efficiently
- * if needed.
+ * बारpec64/समय64_t पूर्णांकerfaces utilizing the kसमय based ones
+ * क्रम API completeness, these could be implemented more efficiently
+ * अगर needed.
  */
-static inline void ktime_get_boottime_ts64(struct timespec64 *ts)
-{
-	*ts = ktime_to_timespec64(ktime_get_boottime());
-}
+अटल अंतरभूत व्योम kसमय_get_bootसमय_प्रकारs64(काष्ठा बारpec64 *ts)
+अणु
+	*ts = kसमय_प्रकारo_बारpec64(kसमय_get_bootसमय());
+पूर्ण
 
-static inline void ktime_get_coarse_boottime_ts64(struct timespec64 *ts)
-{
-	*ts = ktime_to_timespec64(ktime_get_coarse_boottime());
-}
+अटल अंतरभूत व्योम kसमय_get_coarse_bootसमय_प्रकारs64(काष्ठा बारpec64 *ts)
+अणु
+	*ts = kसमय_प्रकारo_बारpec64(kसमय_get_coarse_bootसमय());
+पूर्ण
 
-static inline time64_t ktime_get_boottime_seconds(void)
-{
-	return ktime_divns(ktime_get_coarse_boottime(), NSEC_PER_SEC);
-}
+अटल अंतरभूत समय64_t kसमय_get_bootसमय_seconds(व्योम)
+अणु
+	वापस kसमय_भागns(kसमय_get_coarse_bootसमय(), NSEC_PER_SEC);
+पूर्ण
 
-static inline void ktime_get_clocktai_ts64(struct timespec64 *ts)
-{
-	*ts = ktime_to_timespec64(ktime_get_clocktai());
-}
+अटल अंतरभूत व्योम kसमय_get_घड़ीtai_ts64(काष्ठा बारpec64 *ts)
+अणु
+	*ts = kसमय_प्रकारo_बारpec64(kसमय_get_घड़ीtai());
+पूर्ण
 
-static inline void ktime_get_coarse_clocktai_ts64(struct timespec64 *ts)
-{
-	*ts = ktime_to_timespec64(ktime_get_coarse_clocktai());
-}
+अटल अंतरभूत व्योम kसमय_get_coarse_घड़ीtai_ts64(काष्ठा बारpec64 *ts)
+अणु
+	*ts = kसमय_प्रकारo_बारpec64(kसमय_get_coarse_घड़ीtai());
+पूर्ण
 
-static inline time64_t ktime_get_clocktai_seconds(void)
-{
-	return ktime_divns(ktime_get_coarse_clocktai(), NSEC_PER_SEC);
-}
+अटल अंतरभूत समय64_t kसमय_get_घड़ीtai_seconds(व्योम)
+अणु
+	वापस kसमय_भागns(kसमय_get_coarse_घड़ीtai(), NSEC_PER_SEC);
+पूर्ण
 
 /*
- * RTC specific
+ * RTC specअगरic
  */
-extern bool timekeeping_rtc_skipsuspend(void);
-extern bool timekeeping_rtc_skipresume(void);
+बाह्य bool समयkeeping_rtc_skipsuspend(व्योम);
+बाह्य bool समयkeeping_rtc_skipresume(व्योम);
 
-extern void timekeeping_inject_sleeptime64(const struct timespec64 *delta);
+बाह्य व्योम समयkeeping_inject_sleepसमय64(स्थिर काष्ठा बारpec64 *delta);
 
 /*
- * struct ktime_timestanps - Simultaneous mono/boot/real timestamps
- * @mono:	Monotonic timestamp
- * @boot:	Boottime timestamp
- * @real:	Realtime timestamp
+ * काष्ठा kसमय_प्रकारimestanps - Simultaneous mono/boot/real बारtamps
+ * @mono:	Monotonic बारtamp
+ * @boot:	Bootसमय बारtamp
+ * @real:	Realसमय बारtamp
  */
-struct ktime_timestamps {
+काष्ठा kसमय_प्रकारimestamps अणु
 	u64		mono;
 	u64		boot;
 	u64		real;
-};
+पूर्ण;
 
 /**
- * struct system_time_snapshot - simultaneous raw/real time capture with
+ * काष्ठा प्रणाली_समय_snapshot - simultaneous raw/real समय capture with
  *				 counter value
- * @cycles:	Clocksource counter value to produce the system times
- * @real:	Realtime system time
- * @raw:	Monotonic raw system time
- * @clock_was_set_seq:	The sequence number of clock was set events
- * @cs_was_changed_seq:	The sequence number of clocksource change events
+ * @cycles:	Clocksource counter value to produce the प्रणाली बार
+ * @real:	Realसमय प्रणाली समय
+ * @raw:	Monotonic raw प्रणाली समय
+ * @घड़ी_was_set_seq:	The sequence number of घड़ी was set events
+ * @cs_was_changed_seq:	The sequence number of घड़ीsource change events
  */
-struct system_time_snapshot {
+काष्ठा प्रणाली_समय_snapshot अणु
 	u64			cycles;
-	ktime_t			real;
-	ktime_t			raw;
-	enum clocksource_ids	cs_id;
-	unsigned int		clock_was_set_seq;
+	kसमय_प्रकार			real;
+	kसमय_प्रकार			raw;
+	क्रमागत घड़ीsource_ids	cs_id;
+	अचिन्हित पूर्णांक		घड़ी_was_set_seq;
 	u8			cs_was_changed_seq;
-};
+पूर्ण;
 
 /**
- * struct system_device_crosststamp - system/device cross-timestamp
+ * काष्ठा प्रणाली_device_crosststamp - प्रणाली/device cross-बारtamp
  *				      (synchronized capture)
- * @device:		Device time
- * @sys_realtime:	Realtime simultaneous with device time
- * @sys_monoraw:	Monotonic raw simultaneous with device time
+ * @device:		Device समय
+ * @sys_realसमय:	Realसमय simultaneous with device समय
+ * @sys_monoraw:	Monotonic raw simultaneous with device समय
  */
-struct system_device_crosststamp {
-	ktime_t device;
-	ktime_t sys_realtime;
-	ktime_t sys_monoraw;
-};
+काष्ठा प्रणाली_device_crosststamp अणु
+	kसमय_प्रकार device;
+	kसमय_प्रकार sys_realसमय;
+	kसमय_प्रकार sys_monoraw;
+पूर्ण;
 
 /**
- * struct system_counterval_t - system counter value with the pointer to the
- *				corresponding clocksource
+ * काष्ठा प्रणाली_counterval_t - प्रणाली counter value with the poपूर्णांकer to the
+ *				corresponding घड़ीsource
  * @cycles:	System counter value
- * @cs:		Clocksource corresponding to system counter value. Used by
- *		timekeeping code to verify comparibility of two cycle values
+ * @cs:		Clocksource corresponding to प्रणाली counter value. Used by
+ *		समयkeeping code to verअगरy comparibility of two cycle values
  */
-struct system_counterval_t {
+काष्ठा प्रणाली_counterval_t अणु
 	u64			cycles;
-	struct clocksource	*cs;
-};
+	काष्ठा घड़ीsource	*cs;
+पूर्ण;
 
 /*
- * Get cross timestamp between system clock and device clock
+ * Get cross बारtamp between प्रणाली घड़ी and device घड़ी
  */
-extern int get_device_system_crosststamp(
-			int (*get_time_fn)(ktime_t *device_time,
-				struct system_counterval_t *system_counterval,
-				void *ctx),
-			void *ctx,
-			struct system_time_snapshot *history,
-			struct system_device_crosststamp *xtstamp);
+बाह्य पूर्णांक get_device_प्रणाली_crosststamp(
+			पूर्णांक (*get_समय_fn)(kसमय_प्रकार *device_समय,
+				काष्ठा प्रणाली_counterval_t *प्रणाली_counterval,
+				व्योम *ctx),
+			व्योम *ctx,
+			काष्ठा प्रणाली_समय_snapshot *history,
+			काष्ठा प्रणाली_device_crosststamp *xtstamp);
 
 /*
- * Simultaneously snapshot realtime and monotonic raw clocks
+ * Simultaneously snapshot realसमय and monotonic raw घड़ीs
  */
-extern void ktime_get_snapshot(struct system_time_snapshot *systime_snapshot);
+बाह्य व्योम kसमय_get_snapshot(काष्ठा प्रणाली_समय_snapshot *sysसमय_snapshot);
 
-/* NMI safe mono/boot/realtime timestamps */
-extern void ktime_get_fast_timestamps(struct ktime_timestamps *snap);
+/* NMI safe mono/boot/realसमय बारtamps */
+बाह्य व्योम kसमय_get_fast_बारtamps(काष्ठा kसमय_प्रकारimestamps *snap);
 
 /*
- * Persistent clock related interfaces
+ * Persistent घड़ी related पूर्णांकerfaces
  */
-extern int persistent_clock_is_local;
+बाह्य पूर्णांक persistent_घड़ी_is_local;
 
-extern void read_persistent_clock64(struct timespec64 *ts);
-void read_persistent_wall_and_boot_offset(struct timespec64 *wall_clock,
-					  struct timespec64 *boot_offset);
-#ifdef CONFIG_GENERIC_CMOS_UPDATE
-extern int update_persistent_clock64(struct timespec64 now);
-#endif
+बाह्य व्योम पढ़ो_persistent_घड़ी64(काष्ठा बारpec64 *ts);
+व्योम पढ़ो_persistent_wall_and_boot_offset(काष्ठा बारpec64 *wall_घड़ी,
+					  काष्ठा बारpec64 *boot_offset);
+#अगर_घोषित CONFIG_GENERIC_CMOS_UPDATE
+बाह्य पूर्णांक update_persistent_घड़ी64(काष्ठा बारpec64 now);
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

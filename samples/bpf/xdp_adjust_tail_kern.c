@@ -1,101 +1,102 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  * Copyright (c) 2018 Facebook
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  *
  * This program shows how to use bpf_xdp_adjust_tail() by
  * generating ICMPv4 "packet to big" (unreachable/ df bit set frag needed
- * to be more preice in case of v4)" where receiving packets bigger then
+ * to be more preice in हाल of v4)" where receiving packets bigger then
  * 600 bytes.
  */
-#define KBUILD_MODNAME "foo"
-#include <uapi/linux/bpf.h>
-#include <linux/in.h>
-#include <linux/if_ether.h>
-#include <linux/if_packet.h>
-#include <linux/if_vlan.h>
-#include <linux/ip.h>
-#include <linux/icmp.h>
-#include <bpf/bpf_helpers.h>
+#घोषणा KBUILD_MODNAME "foo"
+#समावेश <uapi/linux/bpf.h>
+#समावेश <linux/in.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_packet.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/icmp.h>
+#समावेश <bpf/bpf_helpers.h>
 
-#define DEFAULT_TTL 64
-#define MAX_PCKT_SIZE 600
-#define ICMP_TOOBIG_SIZE 98
-#define ICMP_TOOBIG_PAYLOAD_SIZE 92
+#घोषणा DEFAULT_TTL 64
+#घोषणा MAX_PCKT_SIZE 600
+#घोषणा ICMP_TOOBIG_SIZE 98
+#घोषणा ICMP_TOOBIG_PAYLOAD_SIZE 92
 
-/* volatile to prevent compiler optimizations */
-static volatile __u32 max_pcktsz = MAX_PCKT_SIZE;
+/* अस्थिर to prevent compiler optimizations */
+अटल अस्थिर __u32 max_pcktsz = MAX_PCKT_SIZE;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
 	__type(key, __u32);
 	__type(value, __u64);
-	__uint(max_entries, 1);
-} icmpcnt SEC(".maps");
+	__uपूर्णांक(max_entries, 1);
+पूर्ण icmpcnt SEC(".maps");
 
-static __always_inline void count_icmp(void)
-{
+अटल __always_अंतरभूत व्योम count_icmp(व्योम)
+अणु
 	u64 key = 0;
 	u64 *icmp_count;
 
 	icmp_count = bpf_map_lookup_elem(&icmpcnt, &key);
-	if (icmp_count)
+	अगर (icmp_count)
 		*icmp_count += 1;
-}
+पूर्ण
 
-static __always_inline void swap_mac(void *data, struct ethhdr *orig_eth)
-{
-	struct ethhdr *eth;
+अटल __always_अंतरभूत व्योम swap_mac(व्योम *data, काष्ठा ethhdr *orig_eth)
+अणु
+	काष्ठा ethhdr *eth;
 
 	eth = data;
-	memcpy(eth->h_source, orig_eth->h_dest, ETH_ALEN);
-	memcpy(eth->h_dest, orig_eth->h_source, ETH_ALEN);
+	स_नकल(eth->h_source, orig_eth->h_dest, ETH_ALEN);
+	स_नकल(eth->h_dest, orig_eth->h_source, ETH_ALEN);
 	eth->h_proto = orig_eth->h_proto;
-}
+पूर्ण
 
-static __always_inline __u16 csum_fold_helper(__u32 csum)
-{
-	return ~((csum & 0xffff) + (csum >> 16));
-}
+अटल __always_अंतरभूत __u16 csum_fold_helper(__u32 csum)
+अणु
+	वापस ~((csum & 0xffff) + (csum >> 16));
+पूर्ण
 
-static __always_inline void ipv4_csum(void *data_start, int data_size,
+अटल __always_अंतरभूत व्योम ipv4_csum(व्योम *data_start, पूर्णांक data_size,
 				      __u32 *csum)
-{
-	*csum = bpf_csum_diff(0, 0, data_start, data_size, *csum);
+अणु
+	*csum = bpf_csum_dअगरf(0, 0, data_start, data_size, *csum);
 	*csum = csum_fold_helper(*csum);
-}
+पूर्ण
 
-static __always_inline int send_icmp4_too_big(struct xdp_md *xdp)
-{
-	int headroom = (int)sizeof(struct iphdr) + (int)sizeof(struct icmphdr);
+अटल __always_अंतरभूत पूर्णांक send_icmp4_too_big(काष्ठा xdp_md *xdp)
+अणु
+	पूर्णांक headroom = (पूर्णांक)माप(काष्ठा iphdr) + (पूर्णांक)माप(काष्ठा icmphdr);
 
-	if (bpf_xdp_adjust_head(xdp, 0 - headroom))
-		return XDP_DROP;
-	void *data = (void *)(long)xdp->data;
-	void *data_end = (void *)(long)xdp->data_end;
+	अगर (bpf_xdp_adjust_head(xdp, 0 - headroom))
+		वापस XDP_DROP;
+	व्योम *data = (व्योम *)(दीर्घ)xdp->data;
+	व्योम *data_end = (व्योम *)(दीर्घ)xdp->data_end;
 
-	if (data + (ICMP_TOOBIG_SIZE + headroom) > data_end)
-		return XDP_DROP;
+	अगर (data + (ICMP_TOOBIG_SIZE + headroom) > data_end)
+		वापस XDP_DROP;
 
-	struct iphdr *iph, *orig_iph;
-	struct icmphdr *icmp_hdr;
-	struct ethhdr *orig_eth;
+	काष्ठा iphdr *iph, *orig_iph;
+	काष्ठा icmphdr *icmp_hdr;
+	काष्ठा ethhdr *orig_eth;
 	__u32 csum = 0;
 	__u64 off = 0;
 
 	orig_eth = data + headroom;
 	swap_mac(data, orig_eth);
-	off += sizeof(struct ethhdr);
+	off += माप(काष्ठा ethhdr);
 	iph = data + off;
-	off += sizeof(struct iphdr);
+	off += माप(काष्ठा iphdr);
 	icmp_hdr = data + off;
-	off += sizeof(struct icmphdr);
+	off += माप(काष्ठा icmphdr);
 	orig_iph = data + off;
 	icmp_hdr->type = ICMP_DEST_UNREACH;
 	icmp_hdr->code = ICMP_FRAG_NEEDED;
-	icmp_hdr->un.frag.mtu = htons(max_pcktsz - sizeof(struct ethhdr));
+	icmp_hdr->un.frag.mtu = htons(max_pcktsz - माप(काष्ठा ethhdr));
 	icmp_hdr->checksum = 0;
 	ipv4_csum(icmp_hdr, ICMP_TOOBIG_PAYLOAD_SIZE, &csum);
 	icmp_hdr->checksum = csum;
@@ -107,49 +108,49 @@ static __always_inline int send_icmp4_too_big(struct xdp_md *xdp)
 	iph->protocol = IPPROTO_ICMP;
 	iph->tos = 0;
 	iph->tot_len = htons(
-		ICMP_TOOBIG_SIZE + headroom - sizeof(struct ethhdr));
+		ICMP_TOOBIG_SIZE + headroom - माप(काष्ठा ethhdr));
 	iph->check = 0;
 	csum = 0;
-	ipv4_csum(iph, sizeof(struct iphdr), &csum);
+	ipv4_csum(iph, माप(काष्ठा iphdr), &csum);
 	iph->check = csum;
 	count_icmp();
-	return XDP_TX;
-}
+	वापस XDP_TX;
+पूर्ण
 
 
-static __always_inline int handle_ipv4(struct xdp_md *xdp)
-{
-	void *data_end = (void *)(long)xdp->data_end;
-	void *data = (void *)(long)xdp->data;
-	int pckt_size = data_end - data;
-	int offset;
+अटल __always_अंतरभूत पूर्णांक handle_ipv4(काष्ठा xdp_md *xdp)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)xdp->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)xdp->data;
+	पूर्णांक pckt_size = data_end - data;
+	पूर्णांक offset;
 
-	if (pckt_size > max(max_pcktsz, ICMP_TOOBIG_SIZE)) {
+	अगर (pckt_size > max(max_pcktsz, ICMP_TOOBIG_SIZE)) अणु
 		offset = pckt_size - ICMP_TOOBIG_SIZE;
-		if (bpf_xdp_adjust_tail(xdp, 0 - offset))
-			return XDP_PASS;
-		return send_icmp4_too_big(xdp);
-	}
-	return XDP_PASS;
-}
+		अगर (bpf_xdp_adjust_tail(xdp, 0 - offset))
+			वापस XDP_PASS;
+		वापस send_icmp4_too_big(xdp);
+	पूर्ण
+	वापस XDP_PASS;
+पूर्ण
 
 SEC("xdp_icmp")
-int _xdp_icmp(struct xdp_md *xdp)
-{
-	void *data_end = (void *)(long)xdp->data_end;
-	void *data = (void *)(long)xdp->data;
-	struct ethhdr *eth = data;
+पूर्णांक _xdp_icmp(काष्ठा xdp_md *xdp)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)xdp->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)xdp->data;
+	काष्ठा ethhdr *eth = data;
 	__u16 h_proto;
 
-	if (eth + 1 > data_end)
-		return XDP_DROP;
+	अगर (eth + 1 > data_end)
+		वापस XDP_DROP;
 
 	h_proto = eth->h_proto;
 
-	if (h_proto == htons(ETH_P_IP))
-		return handle_ipv4(xdp);
-	else
-		return XDP_PASS;
-}
+	अगर (h_proto == htons(ETH_P_IP))
+		वापस handle_ipv4(xdp);
+	अन्यथा
+		वापस XDP_PASS;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

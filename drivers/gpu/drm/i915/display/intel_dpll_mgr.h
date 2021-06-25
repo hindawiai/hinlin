@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2012-2016 Intel Corporation
+ * Copyright तऊ 2012-2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,35 +23,35 @@
  *
  */
 
-#ifndef _INTEL_DPLL_MGR_H_
-#define _INTEL_DPLL_MGR_H_
+#अगर_अघोषित _INTEL_DPLL_MGR_H_
+#घोषणा _INTEL_DPLL_MGR_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include "intel_display.h"
-#include "intel_wakeref.h"
+#समावेश "intel_display.h"
+#समावेश "intel_wakeref.h"
 
 /*FIXME: Move this to a more appropriate place. */
-#define abs_diff(a, b) ({			\
+#घोषणा असल_dअगरf(a, b) (अणु			\
 	typeof(a) __a = (a);			\
 	typeof(b) __b = (b);			\
-	(void) (&__a == &__b);			\
-	__a > __b ? (__a - __b) : (__b - __a); })
+	(व्योम) (&__a == &__b);			\
+	__a > __b ? (__a - __b) : (__b - __a); पूर्ण)
 
-struct drm_device;
-struct drm_i915_private;
-struct intel_atomic_state;
-struct intel_crtc;
-struct intel_crtc_state;
-struct intel_encoder;
-struct intel_shared_dpll;
+काष्ठा drm_device;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_atomic_state;
+काष्ठा पूर्णांकel_crtc;
+काष्ठा पूर्णांकel_crtc_state;
+काष्ठा पूर्णांकel_encoder;
+काष्ठा पूर्णांकel_shared_dpll;
 
 /**
- * enum intel_dpll_id - possible DPLL ids
+ * क्रमागत पूर्णांकel_dpll_id - possible DPLL ids
  *
- * Enumeration of possible IDs for a DPLL. Real shared dpll ids must be >= 0.
+ * Enumeration of possible IDs क्रम a DPLL. Real shared dpll ids must be >= 0.
  */
-enum intel_dpll_id {
+क्रमागत पूर्णांकel_dpll_id अणु
 	/**
 	 * @DPLL_ID_PRIVATE: non-shared dpll in use
 	 */
@@ -171,18 +172,18 @@ enum intel_dpll_id {
 	 * @DPLL_ID_DG1_DPLL3: DG1 combo PHY DPLL3
 	 */
 	DPLL_ID_DG1_DPLL3 = 3,
-};
+पूर्ण;
 
-#define I915_NUM_PLLS 9
+#घोषणा I915_NUM_PLLS 9
 
-enum icl_port_dpll_id {
+क्रमागत icl_port_dpll_id अणु
 	ICL_PORT_DPLL_DEFAULT,
 	ICL_PORT_DPLL_MG_PHY,
 
 	ICL_PORT_DPLL_COUNT,
-};
+पूर्ण;
 
-struct intel_dpll_hw_state {
+काष्ठा पूर्णांकel_dpll_hw_state अणु
 	/* i9xx, pch plls */
 	u32 dpll;
 	u32 dpll_md;
@@ -195,13 +196,13 @@ struct intel_dpll_hw_state {
 
 	/* skl */
 	/*
-	 * DPLL_CTRL1 has 6 bits for each each this DPLL. We store those in
-	 * lower part of ctrl1 and they get shifted into position when writing
-	 * the register.  This allows us to easily compare the state to share
+	 * DPLL_CTRL1 has 6 bits क्रम each each this DPLL. We store those in
+	 * lower part of ctrl1 and they get shअगरted पूर्णांकo position when writing
+	 * the रेजिस्टर.  This allows us to easily compare the state to share
 	 * the DPLL.
 	 */
 	u32 ctrl1;
-	/* HDMI only, 0 when used for DP */
+	/* HDMI only, 0 when used क्रम DP */
 	u32 cfgcr1, cfgcr2;
 
 	/* cnl */
@@ -212,14 +213,14 @@ struct intel_dpll_hw_state {
 	u32 ebb0, ebb4, pll0, pll1, pll2, pll3, pll6, pll8, pll9, pll10, pcsdw12;
 
 	/*
-	 * ICL uses the following, already defined:
+	 * ICL uses the following, alपढ़ोy defined:
 	 * u32 cfgcr0, cfgcr1;
 	 */
 	u32 mg_refclkin_ctl;
 	u32 mg_clktop2_coreclkctl1;
 	u32 mg_clktop2_hsclkctl;
-	u32 mg_pll_div0;
-	u32 mg_pll_div1;
+	u32 mg_pll_भाग0;
+	u32 mg_pll_भाग1;
 	u32 mg_pll_lf;
 	u32 mg_pll_frac_lock;
 	u32 mg_pll_ssc;
@@ -227,128 +228,128 @@ struct intel_dpll_hw_state {
 	u32 mg_pll_tdc_coldst_bias;
 	u32 mg_pll_bias_mask;
 	u32 mg_pll_tdc_coldst_bias_mask;
-};
+पूर्ण;
 
 /**
- * struct intel_shared_dpll_state - hold the DPLL atomic state
+ * काष्ठा पूर्णांकel_shared_dpll_state - hold the DPLL atomic state
  *
- * This structure holds an atomic state for the DPLL, that can represent
- * either its current state (in struct &intel_shared_dpll) or a desired
+ * This काष्ठाure holds an atomic state क्रम the DPLL, that can represent
+ * either its current state (in काष्ठा &पूर्णांकel_shared_dpll) or a desired
  * future state which would be applied by an atomic mode set (stored in
- * a struct &intel_atomic_state).
+ * a काष्ठा &पूर्णांकel_atomic_state).
  *
- * See also intel_reserve_shared_dplls() and intel_release_shared_dplls().
+ * See also पूर्णांकel_reserve_shared_dplls() and पूर्णांकel_release_shared_dplls().
  */
-struct intel_shared_dpll_state {
+काष्ठा पूर्णांकel_shared_dpll_state अणु
 	/**
 	 * @pipe_mask: mask of pipes using this DPLL, active or not
 	 */
 	u8 pipe_mask;
 
 	/**
-	 * @hw_state: hardware configuration for the DPLL stored in
-	 * struct &intel_dpll_hw_state.
+	 * @hw_state: hardware configuration क्रम the DPLL stored in
+	 * काष्ठा &पूर्णांकel_dpll_hw_state.
 	 */
-	struct intel_dpll_hw_state hw_state;
-};
+	काष्ठा पूर्णांकel_dpll_hw_state hw_state;
+पूर्ण;
 
 /**
- * struct intel_shared_dpll_funcs - platform specific hooks for managing DPLLs
+ * काष्ठा पूर्णांकel_shared_dpll_funcs - platक्रमm specअगरic hooks क्रम managing DPLLs
  */
-struct intel_shared_dpll_funcs {
+काष्ठा पूर्णांकel_shared_dpll_funcs अणु
 	/**
 	 * @prepare:
 	 *
-	 * Optional hook to perform operations prior to enabling the PLL.
-	 * Called from intel_prepare_shared_dpll() function unless the PLL
-	 * is already enabled.
+	 * Optional hook to perक्रमm operations prior to enabling the PLL.
+	 * Called from पूर्णांकel_prepare_shared_dpll() function unless the PLL
+	 * is alपढ़ोy enabled.
 	 */
-	void (*prepare)(struct drm_i915_private *dev_priv,
-			struct intel_shared_dpll *pll);
+	व्योम (*prepare)(काष्ठा drm_i915_निजी *dev_priv,
+			काष्ठा पूर्णांकel_shared_dpll *pll);
 
 	/**
 	 * @enable:
 	 *
-	 * Hook for enabling the pll, called from intel_enable_shared_dpll()
-	 * if the pll is not already enabled.
+	 * Hook क्रम enabling the pll, called from पूर्णांकel_enable_shared_dpll()
+	 * अगर the pll is not alपढ़ोy enabled.
 	 */
-	void (*enable)(struct drm_i915_private *dev_priv,
-		       struct intel_shared_dpll *pll);
+	व्योम (*enable)(काष्ठा drm_i915_निजी *dev_priv,
+		       काष्ठा पूर्णांकel_shared_dpll *pll);
 
 	/**
 	 * @disable:
 	 *
-	 * Hook for disabling the pll, called from intel_disable_shared_dpll()
+	 * Hook क्रम disabling the pll, called from पूर्णांकel_disable_shared_dpll()
 	 * only when it is safe to disable the pll, i.e., there are no more
-	 * tracked users for it.
+	 * tracked users क्रम it.
 	 */
-	void (*disable)(struct drm_i915_private *dev_priv,
-			struct intel_shared_dpll *pll);
+	व्योम (*disable)(काष्ठा drm_i915_निजी *dev_priv,
+			काष्ठा पूर्णांकel_shared_dpll *pll);
 
 	/**
 	 * @get_hw_state:
 	 *
-	 * Hook for reading the values currently programmed to the DPLL
-	 * registers. This is used for initial hw state readout and state
-	 * verification after a mode set.
+	 * Hook क्रम पढ़ोing the values currently programmed to the DPLL
+	 * रेजिस्टरs. This is used क्रम initial hw state पढ़ोout and state
+	 * verअगरication after a mode set.
 	 */
-	bool (*get_hw_state)(struct drm_i915_private *dev_priv,
-			     struct intel_shared_dpll *pll,
-			     struct intel_dpll_hw_state *hw_state);
+	bool (*get_hw_state)(काष्ठा drm_i915_निजी *dev_priv,
+			     काष्ठा पूर्णांकel_shared_dpll *pll,
+			     काष्ठा पूर्णांकel_dpll_hw_state *hw_state);
 
 	/**
 	 * @get_freq:
 	 *
-	 * Hook for calculating the pll's output frequency based on its
+	 * Hook क्रम calculating the pll's output frequency based on its
 	 * passed in state.
 	 */
-	int (*get_freq)(struct drm_i915_private *i915,
-			const struct intel_shared_dpll *pll,
-			const struct intel_dpll_hw_state *pll_state);
-};
+	पूर्णांक (*get_freq)(काष्ठा drm_i915_निजी *i915,
+			स्थिर काष्ठा पूर्णांकel_shared_dpll *pll,
+			स्थिर काष्ठा पूर्णांकel_dpll_hw_state *pll_state);
+पूर्ण;
 
 /**
- * struct dpll_info - display PLL platform specific info
+ * काष्ठा dpll_info - display PLL platक्रमm specअगरic info
  */
-struct dpll_info {
+काष्ठा dpll_info अणु
 	/**
-	 * @name: DPLL name; used for logging
+	 * @name: DPLL name; used क्रम logging
 	 */
-	const char *name;
+	स्थिर अक्षर *name;
 
 	/**
-	 * @funcs: platform specific hooks
+	 * @funcs: platक्रमm specअगरic hooks
 	 */
-	const struct intel_shared_dpll_funcs *funcs;
+	स्थिर काष्ठा पूर्णांकel_shared_dpll_funcs *funcs;
 
 	/**
-	 * @id: unique indentifier for this DPLL; should match the index in the
+	 * @id: unique indentअगरier क्रम this DPLL; should match the index in the
 	 * dev_priv->shared_dplls array
 	 */
-	enum intel_dpll_id id;
+	क्रमागत पूर्णांकel_dpll_id id;
 
-#define INTEL_DPLL_ALWAYS_ON	(1 << 0)
+#घोषणा INTEL_DPLL_ALWAYS_ON	(1 << 0)
 	/**
 	 * @flags:
 	 *
 	 * INTEL_DPLL_ALWAYS_ON
-	 *     Inform the state checker that the DPLL is kept enabled even if
+	 *     Inक्रमm the state checker that the DPLL is kept enabled even अगर
 	 *     not in use by any CRTC.
 	 */
 	u32 flags;
-};
+पूर्ण;
 
 /**
- * struct intel_shared_dpll - display PLL with tracked state and users
+ * काष्ठा पूर्णांकel_shared_dpll - display PLL with tracked state and users
  */
-struct intel_shared_dpll {
+काष्ठा पूर्णांकel_shared_dpll अणु
 	/**
 	 * @state:
 	 *
-	 * Store the state for the pll, including its hw state
+	 * Store the state क्रम the pll, including its hw state
 	 * and CRTCs using it.
 	 */
-	struct intel_shared_dpll_state state;
+	काष्ठा पूर्णांकel_shared_dpll_state state;
 
 	/**
 	 * @active_mask: mask of active pipes (i.e. DPMS on) using this DPLL
@@ -361,62 +362,62 @@ struct intel_shared_dpll {
 	bool on;
 
 	/**
-	 * @info: platform specific info
+	 * @info: platक्रमm specअगरic info
 	 */
-	const struct dpll_info *info;
+	स्थिर काष्ठा dpll_info *info;
 
 	/**
-	 * @wakeref: In some platforms a device-level runtime pm reference may
-	 * need to be grabbed to disable DC states while this DPLL is enabled
+	 * @wakeref: In some platक्रमms a device-level runसमय pm reference may
+	 * need to be grabbed to disable DC states जबतक this DPLL is enabled
 	 */
-	intel_wakeref_t wakeref;
-};
+	पूर्णांकel_wakeref_t wakeref;
+पूर्ण;
 
-#define SKL_DPLL0 0
-#define SKL_DPLL1 1
-#define SKL_DPLL2 2
-#define SKL_DPLL3 3
+#घोषणा SKL_DPLL0 0
+#घोषणा SKL_DPLL1 1
+#घोषणा SKL_DPLL2 2
+#घोषणा SKL_DPLL3 3
 
 /* shared dpll functions */
-struct intel_shared_dpll *
-intel_get_shared_dpll_by_id(struct drm_i915_private *dev_priv,
-			    enum intel_dpll_id id);
-enum intel_dpll_id
-intel_get_shared_dpll_id(struct drm_i915_private *dev_priv,
-			 struct intel_shared_dpll *pll);
-void assert_shared_dpll(struct drm_i915_private *dev_priv,
-			struct intel_shared_dpll *pll,
+काष्ठा पूर्णांकel_shared_dpll *
+पूर्णांकel_get_shared_dpll_by_id(काष्ठा drm_i915_निजी *dev_priv,
+			    क्रमागत पूर्णांकel_dpll_id id);
+क्रमागत पूर्णांकel_dpll_id
+पूर्णांकel_get_shared_dpll_id(काष्ठा drm_i915_निजी *dev_priv,
+			 काष्ठा पूर्णांकel_shared_dpll *pll);
+व्योम निश्चित_shared_dpll(काष्ठा drm_i915_निजी *dev_priv,
+			काष्ठा पूर्णांकel_shared_dpll *pll,
 			bool state);
-#define assert_shared_dpll_enabled(d, p) assert_shared_dpll(d, p, true)
-#define assert_shared_dpll_disabled(d, p) assert_shared_dpll(d, p, false)
-bool intel_reserve_shared_dplls(struct intel_atomic_state *state,
-				struct intel_crtc *crtc,
-				struct intel_encoder *encoder);
-void intel_release_shared_dplls(struct intel_atomic_state *state,
-				struct intel_crtc *crtc);
-void icl_set_active_port_dpll(struct intel_crtc_state *crtc_state,
-			      enum icl_port_dpll_id port_dpll_id);
-void intel_update_active_dpll(struct intel_atomic_state *state,
-			      struct intel_crtc *crtc,
-			      struct intel_encoder *encoder);
-int intel_dpll_get_freq(struct drm_i915_private *i915,
-			const struct intel_shared_dpll *pll,
-			const struct intel_dpll_hw_state *pll_state);
-bool intel_dpll_get_hw_state(struct drm_i915_private *i915,
-			     struct intel_shared_dpll *pll,
-			     struct intel_dpll_hw_state *hw_state);
-void intel_prepare_shared_dpll(const struct intel_crtc_state *crtc_state);
-void intel_enable_shared_dpll(const struct intel_crtc_state *crtc_state);
-void intel_disable_shared_dpll(const struct intel_crtc_state *crtc_state);
-void intel_shared_dpll_swap_state(struct intel_atomic_state *state);
-void intel_shared_dpll_init(struct drm_device *dev);
-void intel_dpll_update_ref_clks(struct drm_i915_private *dev_priv);
-void intel_dpll_readout_hw_state(struct drm_i915_private *dev_priv);
-void intel_dpll_sanitize_state(struct drm_i915_private *dev_priv);
+#घोषणा निश्चित_shared_dpll_enabled(d, p) निश्चित_shared_dpll(d, p, true)
+#घोषणा निश्चित_shared_dpll_disabled(d, p) निश्चित_shared_dpll(d, p, false)
+bool पूर्णांकel_reserve_shared_dplls(काष्ठा पूर्णांकel_atomic_state *state,
+				काष्ठा पूर्णांकel_crtc *crtc,
+				काष्ठा पूर्णांकel_encoder *encoder);
+व्योम पूर्णांकel_release_shared_dplls(काष्ठा पूर्णांकel_atomic_state *state,
+				काष्ठा पूर्णांकel_crtc *crtc);
+व्योम icl_set_active_port_dpll(काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			      क्रमागत icl_port_dpll_id port_dpll_id);
+व्योम पूर्णांकel_update_active_dpll(काष्ठा पूर्णांकel_atomic_state *state,
+			      काष्ठा पूर्णांकel_crtc *crtc,
+			      काष्ठा पूर्णांकel_encoder *encoder);
+पूर्णांक पूर्णांकel_dpll_get_freq(काष्ठा drm_i915_निजी *i915,
+			स्थिर काष्ठा पूर्णांकel_shared_dpll *pll,
+			स्थिर काष्ठा पूर्णांकel_dpll_hw_state *pll_state);
+bool पूर्णांकel_dpll_get_hw_state(काष्ठा drm_i915_निजी *i915,
+			     काष्ठा पूर्णांकel_shared_dpll *pll,
+			     काष्ठा पूर्णांकel_dpll_hw_state *hw_state);
+व्योम पूर्णांकel_prepare_shared_dpll(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_enable_shared_dpll(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_disable_shared_dpll(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_shared_dpll_swap_state(काष्ठा पूर्णांकel_atomic_state *state);
+व्योम पूर्णांकel_shared_dpll_init(काष्ठा drm_device *dev);
+व्योम पूर्णांकel_dpll_update_ref_clks(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_dpll_पढ़ोout_hw_state(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_dpll_sanitize_state(काष्ठा drm_i915_निजी *dev_priv);
 
-void intel_dpll_dump_hw_state(struct drm_i915_private *dev_priv,
-			      const struct intel_dpll_hw_state *hw_state);
-enum intel_dpll_id icl_tc_port_to_pll_id(enum tc_port tc_port);
-bool intel_dpll_is_combophy(enum intel_dpll_id id);
+व्योम पूर्णांकel_dpll_dump_hw_state(काष्ठा drm_i915_निजी *dev_priv,
+			      स्थिर काष्ठा पूर्णांकel_dpll_hw_state *hw_state);
+क्रमागत पूर्णांकel_dpll_id icl_tc_port_to_pll_id(क्रमागत tc_port tc_port);
+bool पूर्णांकel_dpll_is_combophy(क्रमागत पूर्णांकel_dpll_id id);
 
-#endif /* _INTEL_DPLL_MGR_H_ */
+#पूर्ण_अगर /* _INTEL_DPLL_MGR_H_ */

@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 Qualcomm Atheros, Inc
  *
  * Based on net/sched/sch_fq_codel.c
  */
-#ifndef __NET_SCHED_FQ_H
-#define __NET_SCHED_FQ_H
+#अगर_अघोषित __NET_SCHED_FQ_H
+#घोषणा __NET_SCHED_FQ_H
 
-struct fq_tin;
+काष्ठा fq_tin;
 
 /**
- * struct fq_flow - per traffic flow queue
+ * काष्ठा fq_flow - per traffic flow queue
  *
  * @tin: owner of this flow. Used to manage collisions, i.e. when a packet
- *	hashes to an index which points to a flow that is already owned by a
- *	different tin the packet is destined to. In such case the implementer
+ *	hashes to an index which poपूर्णांकs to a flow that is alपढ़ोy owned by a
+ *	dअगरferent tin the packet is destined to. In such हाल the implementer
  *	must provide a fallback flow
- * @flowchain: can be linked to fq_tin's new_flows or old_flows. Used for DRR++
+ * @flowchain: can be linked to fq_tin's new_flows or old_flows. Used क्रम DRR++
  *	(deficit round robin) based round robin queuing similar to the one
  *	found in net/sched/sch_fq_codel.c
  * @queue: sk_buff queue to hold packets
  * @backlog: number of bytes pending in the queue. The number of packets can be
  *	found in @queue.qlen
- * @deficit: used for DRR++
+ * @deficit: used क्रम DRR++
  */
-struct fq_flow {
-	struct fq_tin *tin;
-	struct list_head flowchain;
-	struct sk_buff_head queue;
+काष्ठा fq_flow अणु
+	काष्ठा fq_tin *tin;
+	काष्ठा list_head flowchain;
+	काष्ठा sk_buff_head queue;
 	u32 backlog;
-	int deficit;
-};
+	पूर्णांक deficit;
+पूर्ण;
 
 /**
- * struct fq_tin - a logical container of fq_flows
+ * काष्ठा fq_tin - a logical container of fq_flows
  *
- * Used to group fq_flows into a logical aggregate. DRR++ scheme is used to
- * pull interleaved packets out of the associated flows.
+ * Used to group fq_flows पूर्णांकo a logical aggregate. DRR++ scheme is used to
+ * pull पूर्णांकerleaved packets out of the associated flows.
  *
  * @new_flows: linked list of fq_flow
  * @old_flows: linked list of fq_flow
  */
-struct fq_tin {
-	struct list_head new_flows;
-	struct list_head old_flows;
-	struct list_head tin_list;
-	struct fq_flow default_flow;
+काष्ठा fq_tin अणु
+	काष्ठा list_head new_flows;
+	काष्ठा list_head old_flows;
+	काष्ठा list_head tin_list;
+	काष्ठा fq_flow शेष_flow;
 	u32 backlog_bytes;
 	u32 backlog_packets;
 	u32 overlimit;
@@ -53,19 +54,19 @@ struct fq_tin {
 	u32 flows;
 	u32 tx_bytes;
 	u32 tx_packets;
-};
+पूर्ण;
 
 /**
- * struct fq - main container for fair queuing purposes
+ * काष्ठा fq - मुख्य container क्रम fair queuing purposes
  *
  * @limit: max number of packets that can be queued across all flows
  * @backlog: number of packets queued across all flows
  */
-struct fq {
-	struct fq_flow *flows;
-	unsigned long *flows_bitmap;
+काष्ठा fq अणु
+	काष्ठा fq_flow *flows;
+	अचिन्हित दीर्घ *flows_biपंचांगap;
 
-	struct list_head tin_backlog;
+	काष्ठा list_head tin_backlog;
 	spinlock_t lock;
 	u32 flows_cnt;
 	u32 limit;
@@ -76,27 +77,27 @@ struct fq {
 	u32 overlimit;
 	u32 overmemory;
 	u32 collisions;
-};
+पूर्ण;
 
-typedef struct sk_buff *fq_tin_dequeue_t(struct fq *,
-					 struct fq_tin *,
-					 struct fq_flow *flow);
+प्रकार काष्ठा sk_buff *fq_tin_dequeue_t(काष्ठा fq *,
+					 काष्ठा fq_tin *,
+					 काष्ठा fq_flow *flow);
 
-typedef void fq_skb_free_t(struct fq *,
-			   struct fq_tin *,
-			   struct fq_flow *,
-			   struct sk_buff *);
+प्रकार व्योम fq_skb_मुक्त_t(काष्ठा fq *,
+			   काष्ठा fq_tin *,
+			   काष्ठा fq_flow *,
+			   काष्ठा sk_buff *);
 
 /* Return %true to filter (drop) the frame. */
-typedef bool fq_skb_filter_t(struct fq *,
-			     struct fq_tin *,
-			     struct fq_flow *,
-			     struct sk_buff *,
-			     void *);
+प्रकार bool fq_skb_filter_t(काष्ठा fq *,
+			     काष्ठा fq_tin *,
+			     काष्ठा fq_flow *,
+			     काष्ठा sk_buff *,
+			     व्योम *);
 
-typedef struct fq_flow *fq_flow_get_default_t(struct fq *,
-					      struct fq_tin *,
-					      int idx,
-					      struct sk_buff *);
+प्रकार काष्ठा fq_flow *fq_flow_get_शेष_t(काष्ठा fq *,
+					      काष्ठा fq_tin *,
+					      पूर्णांक idx,
+					      काष्ठा sk_buff *);
 
-#endif
+#पूर्ण_अगर

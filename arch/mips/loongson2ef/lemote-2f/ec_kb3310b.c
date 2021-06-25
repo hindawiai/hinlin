@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Basic KB3310B Embedded Controller support for the YeeLoong 2F netbook
+ * Basic KB3310B Embedded Controller support क्रम the YeeLoong 2F netbook
  *
  *  Copyright (C) 2008 Lemote Inc.
  *  Author: liujl <liujl@lemote.com>, 2008-04-20
  */
 
-#include <linux/io.h>
-#include <linux/export.h>
-#include <linux/spinlock.h>
-#include <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/export.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/delay.h>
 
-#include "ec_kb3310b.h"
+#समावेश "ec_kb3310b.h"
 
-static DEFINE_SPINLOCK(index_access_lock);
-static DEFINE_SPINLOCK(port_access_lock);
+अटल DEFINE_SPINLOCK(index_access_lock);
+अटल DEFINE_SPINLOCK(port_access_lock);
 
-unsigned char ec_read(unsigned short addr)
-{
-	unsigned char value;
-	unsigned long flags;
+अचिन्हित अक्षर ec_पढ़ो(अचिन्हित लघु addr)
+अणु
+	अचिन्हित अक्षर value;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&index_access_lock, flags);
 	outb((addr & 0xff00) >> 8, EC_IO_PORT_HIGH);
@@ -27,99 +28,99 @@ unsigned char ec_read(unsigned short addr)
 	value = inb(EC_IO_PORT_DATA);
 	spin_unlock_irqrestore(&index_access_lock, flags);
 
-	return value;
-}
-EXPORT_SYMBOL_GPL(ec_read);
+	वापस value;
+पूर्ण
+EXPORT_SYMBOL_GPL(ec_पढ़ो);
 
-void ec_write(unsigned short addr, unsigned char val)
-{
-	unsigned long flags;
+व्योम ec_ग_लिखो(अचिन्हित लघु addr, अचिन्हित अक्षर val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&index_access_lock, flags);
 	outb((addr & 0xff00) >> 8, EC_IO_PORT_HIGH);
 	outb((addr & 0x00ff), EC_IO_PORT_LOW);
 	outb(val, EC_IO_PORT_DATA);
-	/*  flush the write action */
+	/*  flush the ग_लिखो action */
 	inb(EC_IO_PORT_DATA);
 	spin_unlock_irqrestore(&index_access_lock, flags);
-}
-EXPORT_SYMBOL_GPL(ec_write);
+पूर्ण
+EXPORT_SYMBOL_GPL(ec_ग_लिखो);
 
 /*
- * This function is used for EC command writes and corresponding status queries.
+ * This function is used क्रम EC command ग_लिखोs and corresponding status queries.
  */
-int ec_query_seq(unsigned char cmd)
-{
-	int timeout;
-	unsigned char status;
-	unsigned long flags;
-	int ret = 0;
+पूर्णांक ec_query_seq(अचिन्हित अक्षर cmd)
+अणु
+	पूर्णांक समयout;
+	अचिन्हित अक्षर status;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(&port_access_lock, flags);
 
-	/* make chip goto reset mode */
+	/* make chip जाओ reset mode */
 	udelay(EC_REG_DELAY);
 	outb(cmd, EC_CMD_PORT);
 	udelay(EC_REG_DELAY);
 
-	/* check if the command is received by ec */
-	timeout = EC_CMD_TIMEOUT;
+	/* check अगर the command is received by ec */
+	समयout = EC_CMD_TIMEOUT;
 	status = inb(EC_STS_PORT);
-	while (timeout-- && (status & (1 << 1))) {
+	जबतक (समयout-- && (status & (1 << 1))) अणु
 		status = inb(EC_STS_PORT);
 		udelay(EC_REG_DELAY);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&port_access_lock, flags);
 
-	if (timeout <= 0) {
-		printk(KERN_ERR "%s: deadable error : timeout...\n", __func__);
+	अगर (समयout <= 0) अणु
+		prपूर्णांकk(KERN_ERR "%s: deadable error : timeout...\n", __func__);
 		ret = -EINVAL;
-	} else
-		printk(KERN_INFO
+	पूर्ण अन्यथा
+		prपूर्णांकk(KERN_INFO
 			   "(%x/%d)ec issued command %d status : 0x%x\n",
-			   timeout, EC_CMD_TIMEOUT - timeout, cmd, status);
+			   समयout, EC_CMD_TIMEOUT - समयout, cmd, status);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ec_query_seq);
 
 /*
  * Send query command to EC to get the proper event number
  */
-int ec_query_event_num(void)
-{
-	return ec_query_seq(CMD_GET_EVENT_NUM);
-}
+पूर्णांक ec_query_event_num(व्योम)
+अणु
+	वापस ec_query_seq(CMD_GET_EVENT_NUM);
+पूर्ण
 EXPORT_SYMBOL(ec_query_event_num);
 
 /*
  * Get event number from EC
  *
  * NOTE: This routine must follow the query_event_num function in the
- * interrupt.
+ * पूर्णांकerrupt.
  */
-int ec_get_event_num(void)
-{
-	int timeout = 100;
-	unsigned char value;
-	unsigned char status;
+पूर्णांक ec_get_event_num(व्योम)
+अणु
+	पूर्णांक समयout = 100;
+	अचिन्हित अक्षर value;
+	अचिन्हित अक्षर status;
 
 	udelay(EC_REG_DELAY);
 	status = inb(EC_STS_PORT);
 	udelay(EC_REG_DELAY);
-	while (timeout-- && !(status & (1 << 0))) {
+	जबतक (समयout-- && !(status & (1 << 0))) अणु
 		status = inb(EC_STS_PORT);
 		udelay(EC_REG_DELAY);
-	}
-	if (timeout <= 0) {
+	पूर्ण
+	अगर (समयout <= 0) अणु
 		pr_info("%s: get event number timeout.\n", __func__);
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	value = inb(EC_DAT_PORT);
 	udelay(EC_REG_DELAY);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 EXPORT_SYMBOL(ec_get_event_num);

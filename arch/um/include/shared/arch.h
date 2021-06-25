@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#ifndef __ARCH_H__
-#define __ARCH_H__
+#अगर_अघोषित __ARCH_H__
+#घोषणा __ARCH_H__
 
-#include <sysdep/ptrace.h>
+#समावेश <sysdep/ptrace.h>
 
-extern void arch_check_bugs(void);
-extern int arch_fixup(unsigned long address, struct uml_pt_regs *regs);
-extern void arch_examine_signal(int sig, struct uml_pt_regs *regs);
+बाह्य व्योम arch_check_bugs(व्योम);
+बाह्य पूर्णांक arch_fixup(अचिन्हित दीर्घ address, काष्ठा uml_pt_regs *regs);
+बाह्य व्योम arch_examine_संकेत(पूर्णांक sig, काष्ठा uml_pt_regs *regs);
 
-#endif
+#पूर्ण_अगर

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Cryptographic API.
  *
@@ -11,7 +12,7 @@
  *  Kyle McMartin <kyle@debian.org>
  *  Adam J. Richter <adam@yggdrasil.com> (conversion to 2.5 API).
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -22,48 +23,48 @@
  *
  * LICENSE TERMS
  *
- * The free distribution and use of this software in both source and binary
- * form is allowed (with or without changes) provided that:
+ * The मुक्त distribution and use of this software in both source and binary
+ * क्रमm is allowed (with or without changes) provided that:
  *
  *   1. distributions of this source code include the above copyright
  *      notice, this list of conditions and the following disclaimer;
  *
- *   2. distributions in binary form include the above copyright
+ *   2. distributions in binary क्रमm include the above copyright
  *      notice, this list of conditions and the following disclaimer
- *      in the documentation and/or other associated materials;
+ *      in the करोcumentation and/or other associated materials;
  *
- *   3. the copyright holder's name is not used to endorse products
- *      built using this software without specific written permission.
+ *   3. the copyright holder's name is not used to enकरोrse products
+ *      built using this software without specअगरic written permission.
  *
  * ALTERNATIVELY, provided that this notice is retained in full, this product
  * may be distributed under the terms of the GNU General Public License (GPL),
- * in which case the provisions of the GPL apply INSTEAD OF those given above.
+ * in which हाल the provisions of the GPL apply INSTEAD OF those given above.
  *
  * DISCLAIMER
  *
  * This software is provided 'as is' with no explicit or implied warranties
  * in respect of its properties, including, but not limited to, correctness
- * and/or fitness for purpose.
+ * and/or fitness क्रम purpose.
  * ---------------------------------------------------------------------------
  */
 
-#include <crypto/aes.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/crypto.h>
-#include <asm/byteorder.h>
-#include <asm/unaligned.h>
+#समावेश <crypto/aes.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/crypto.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/unaligned.h>
 
-static inline u8 byte(const u32 x, const unsigned n)
-{
-	return x >> (n << 3);
-}
+अटल अंतरभूत u8 byte(स्थिर u32 x, स्थिर अचिन्हित n)
+अणु
+	वापस x >> (n << 3);
+पूर्ण
 
-/* cacheline-aligned to facilitate prefetching into cache */
-__visible const u32 crypto_ft_tab[4][256] ____cacheline_aligned = {
-	{
+/* cacheline-aligned to facilitate prefetching पूर्णांकo cache */
+__visible स्थिर u32 crypto_ft_tab[4][256] ____cacheline_aligned = अणु
+	अणु
 		0xa56363c6, 0x847c7cf8, 0x997777ee, 0x8d7b7bf6,
 		0x0df2f2ff, 0xbd6b6bd6, 0xb16f6fde, 0x54c5c591,
 		0x50303060, 0x03010102, 0xa96767ce, 0x7d2b2b56,
@@ -128,7 +129,7 @@ __visible const u32 crypto_ft_tab[4][256] ____cacheline_aligned = {
 		0xdabfbf65, 0x31e6e6d7, 0xc6424284, 0xb86868d0,
 		0xc3414182, 0xb0999929, 0x772d2d5a, 0x110f0f1e,
 		0xcbb0b07b, 0xfc5454a8, 0xd6bbbb6d, 0x3a16162c,
-	}, {
+	पूर्ण, अणु
 		0x6363c6a5, 0x7c7cf884, 0x7777ee99, 0x7b7bf68d,
 		0xf2f2ff0d, 0x6b6bd6bd, 0x6f6fdeb1, 0xc5c59154,
 		0x30306050, 0x01010203, 0x6767cea9, 0x2b2b567d,
@@ -193,7 +194,7 @@ __visible const u32 crypto_ft_tab[4][256] ____cacheline_aligned = {
 		0xbfbf65da, 0xe6e6d731, 0x424284c6, 0x6868d0b8,
 		0x414182c3, 0x999929b0, 0x2d2d5a77, 0x0f0f1e11,
 		0xb0b07bcb, 0x5454a8fc, 0xbbbb6dd6, 0x16162c3a,
-	}, {
+	पूर्ण, अणु
 		0x63c6a563, 0x7cf8847c, 0x77ee9977, 0x7bf68d7b,
 		0xf2ff0df2, 0x6bd6bd6b, 0x6fdeb16f, 0xc59154c5,
 		0x30605030, 0x01020301, 0x67cea967, 0x2b567d2b,
@@ -258,7 +259,7 @@ __visible const u32 crypto_ft_tab[4][256] ____cacheline_aligned = {
 		0xbf65dabf, 0xe6d731e6, 0x4284c642, 0x68d0b868,
 		0x4182c341, 0x9929b099, 0x2d5a772d, 0x0f1e110f,
 		0xb07bcbb0, 0x54a8fc54, 0xbb6dd6bb, 0x162c3a16,
-	}, {
+	पूर्ण, अणु
 		0xc6a56363, 0xf8847c7c, 0xee997777, 0xf68d7b7b,
 		0xff0df2f2, 0xd6bd6b6b, 0xdeb16f6f, 0x9154c5c5,
 		0x60503030, 0x02030101, 0xcea96767, 0x567d2b2b,
@@ -323,11 +324,11 @@ __visible const u32 crypto_ft_tab[4][256] ____cacheline_aligned = {
 		0x65dabfbf, 0xd731e6e6, 0x84c64242, 0xd0b86868,
 		0x82c34141, 0x29b09999, 0x5a772d2d, 0x1e110f0f,
 		0x7bcbb0b0, 0xa8fc5454, 0x6dd6bbbb, 0x2c3a1616,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const u32 crypto_fl_tab[4][256] ____cacheline_aligned = {
-	{
+अटल स्थिर u32 crypto_fl_tab[4][256] ____cacheline_aligned = अणु
+	अणु
 		0x00000063, 0x0000007c, 0x00000077, 0x0000007b,
 		0x000000f2, 0x0000006b, 0x0000006f, 0x000000c5,
 		0x00000030, 0x00000001, 0x00000067, 0x0000002b,
@@ -392,7 +393,7 @@ static const u32 crypto_fl_tab[4][256] ____cacheline_aligned = {
 		0x000000bf, 0x000000e6, 0x00000042, 0x00000068,
 		0x00000041, 0x00000099, 0x0000002d, 0x0000000f,
 		0x000000b0, 0x00000054, 0x000000bb, 0x00000016,
-	}, {
+	पूर्ण, अणु
 		0x00006300, 0x00007c00, 0x00007700, 0x00007b00,
 		0x0000f200, 0x00006b00, 0x00006f00, 0x0000c500,
 		0x00003000, 0x00000100, 0x00006700, 0x00002b00,
@@ -457,7 +458,7 @@ static const u32 crypto_fl_tab[4][256] ____cacheline_aligned = {
 		0x0000bf00, 0x0000e600, 0x00004200, 0x00006800,
 		0x00004100, 0x00009900, 0x00002d00, 0x00000f00,
 		0x0000b000, 0x00005400, 0x0000bb00, 0x00001600,
-	}, {
+	पूर्ण, अणु
 		0x00630000, 0x007c0000, 0x00770000, 0x007b0000,
 		0x00f20000, 0x006b0000, 0x006f0000, 0x00c50000,
 		0x00300000, 0x00010000, 0x00670000, 0x002b0000,
@@ -522,7 +523,7 @@ static const u32 crypto_fl_tab[4][256] ____cacheline_aligned = {
 		0x00bf0000, 0x00e60000, 0x00420000, 0x00680000,
 		0x00410000, 0x00990000, 0x002d0000, 0x000f0000,
 		0x00b00000, 0x00540000, 0x00bb0000, 0x00160000,
-	}, {
+	पूर्ण, अणु
 		0x63000000, 0x7c000000, 0x77000000, 0x7b000000,
 		0xf2000000, 0x6b000000, 0x6f000000, 0xc5000000,
 		0x30000000, 0x01000000, 0x67000000, 0x2b000000,
@@ -587,11 +588,11 @@ static const u32 crypto_fl_tab[4][256] ____cacheline_aligned = {
 		0xbf000000, 0xe6000000, 0x42000000, 0x68000000,
 		0x41000000, 0x99000000, 0x2d000000, 0x0f000000,
 		0xb0000000, 0x54000000, 0xbb000000, 0x16000000,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-__visible const u32 crypto_it_tab[4][256] ____cacheline_aligned = {
-	{
+__visible स्थिर u32 crypto_it_tab[4][256] ____cacheline_aligned = अणु
+	अणु
 		0x50a7f451, 0x5365417e, 0xc3a4171a, 0x965e273a,
 		0xcb6bab3b, 0xf1459d1f, 0xab58faac, 0x9303e34b,
 		0x55fa3020, 0xf66d76ad, 0x9176cc88, 0x254c02f5,
@@ -656,7 +657,7 @@ __visible const u32 crypto_it_tab[4][256] ____cacheline_aligned = {
 		0x72c31d16, 0x0c25e2bc, 0x8b493c28, 0x41950dff,
 		0x7101a839, 0xdeb30c08, 0x9ce4b4d8, 0x90c15664,
 		0x6184cb7b, 0x70b632d5, 0x745c6c48, 0x4257b8d0,
-	}, {
+	पूर्ण, अणु
 		0xa7f45150, 0x65417e53, 0xa4171ac3, 0x5e273a96,
 		0x6bab3bcb, 0x459d1ff1, 0x58faacab, 0x03e34b93,
 		0xfa302055, 0x6d76adf6, 0x76cc8891, 0x4c02f525,
@@ -721,7 +722,7 @@ __visible const u32 crypto_it_tab[4][256] ____cacheline_aligned = {
 		0xc31d1672, 0x25e2bc0c, 0x493c288b, 0x950dff41,
 		0x01a83971, 0xb30c08de, 0xe4b4d89c, 0xc1566490,
 		0x84cb7b61, 0xb632d570, 0x5c6c4874, 0x57b8d042,
-	}, {
+	पूर्ण, अणु
 		0xf45150a7, 0x417e5365, 0x171ac3a4, 0x273a965e,
 		0xab3bcb6b, 0x9d1ff145, 0xfaacab58, 0xe34b9303,
 		0x302055fa, 0x76adf66d, 0xcc889176, 0x02f5254c,
@@ -786,7 +787,7 @@ __visible const u32 crypto_it_tab[4][256] ____cacheline_aligned = {
 		0x1d1672c3, 0xe2bc0c25, 0x3c288b49, 0x0dff4195,
 		0xa8397101, 0x0c08deb3, 0xb4d89ce4, 0x566490c1,
 		0xcb7b6184, 0x32d570b6, 0x6c48745c, 0xb8d04257,
-	}, {
+	पूर्ण, अणु
 		0x5150a7f4, 0x7e536541, 0x1ac3a417, 0x3a965e27,
 		0x3bcb6bab, 0x1ff1459d, 0xacab58fa, 0x4b9303e3,
 		0x2055fa30, 0xadf66d76, 0x889176cc, 0xf5254c02,
@@ -851,11 +852,11 @@ __visible const u32 crypto_it_tab[4][256] ____cacheline_aligned = {
 		0x1672c31d, 0xbc0c25e2, 0x288b493c, 0xff41950d,
 		0x397101a8, 0x08deb30c, 0xd89ce4b4, 0x6490c156,
 		0x7b6184cb, 0xd570b632, 0x48745c6c, 0xd04257b8,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const u32 crypto_il_tab[4][256] ____cacheline_aligned = {
-	{
+अटल स्थिर u32 crypto_il_tab[4][256] ____cacheline_aligned = अणु
+	अणु
 		0x00000052, 0x00000009, 0x0000006a, 0x000000d5,
 		0x00000030, 0x00000036, 0x000000a5, 0x00000038,
 		0x000000bf, 0x00000040, 0x000000a3, 0x0000009e,
@@ -920,7 +921,7 @@ static const u32 crypto_il_tab[4][256] ____cacheline_aligned = {
 		0x000000ba, 0x00000077, 0x000000d6, 0x00000026,
 		0x000000e1, 0x00000069, 0x00000014, 0x00000063,
 		0x00000055, 0x00000021, 0x0000000c, 0x0000007d,
-	}, {
+	पूर्ण, अणु
 		0x00005200, 0x00000900, 0x00006a00, 0x0000d500,
 		0x00003000, 0x00003600, 0x0000a500, 0x00003800,
 		0x0000bf00, 0x00004000, 0x0000a300, 0x00009e00,
@@ -985,7 +986,7 @@ static const u32 crypto_il_tab[4][256] ____cacheline_aligned = {
 		0x0000ba00, 0x00007700, 0x0000d600, 0x00002600,
 		0x0000e100, 0x00006900, 0x00001400, 0x00006300,
 		0x00005500, 0x00002100, 0x00000c00, 0x00007d00,
-	}, {
+	पूर्ण, अणु
 		0x00520000, 0x00090000, 0x006a0000, 0x00d50000,
 		0x00300000, 0x00360000, 0x00a50000, 0x00380000,
 		0x00bf0000, 0x00400000, 0x00a30000, 0x009e0000,
@@ -1050,7 +1051,7 @@ static const u32 crypto_il_tab[4][256] ____cacheline_aligned = {
 		0x00ba0000, 0x00770000, 0x00d60000, 0x00260000,
 		0x00e10000, 0x00690000, 0x00140000, 0x00630000,
 		0x00550000, 0x00210000, 0x000c0000, 0x007d0000,
-	}, {
+	पूर्ण, अणु
 		0x52000000, 0x09000000, 0x6a000000, 0xd5000000,
 		0x30000000, 0x36000000, 0xa5000000, 0x38000000,
 		0xbf000000, 0x40000000, 0xa3000000, 0x9e000000,
@@ -1115,8 +1116,8 @@ static const u32 crypto_il_tab[4][256] ____cacheline_aligned = {
 		0xba000000, 0x77000000, 0xd6000000, 0x26000000,
 		0xe1000000, 0x69000000, 0x14000000, 0x63000000,
 		0x55000000, 0x21000000, 0x0c000000, 0x7d000000,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 EXPORT_SYMBOL_GPL(crypto_ft_tab);
 EXPORT_SYMBOL_GPL(crypto_it_tab);
@@ -1128,72 +1129,72 @@ EXPORT_SYMBOL_GPL(crypto_it_tab);
  * @key_len:	The size of the key.
  *
  * This function uses aes_expand_key() to expand the key.  &crypto_aes_ctx
- * _must_ be the private data embedded in @tfm which is retrieved with
+ * _must_ be the निजी data embedded in @tfm which is retrieved with
  * crypto_tfm_ctx().
  *
- * Return: 0 on success; -EINVAL on failure (only happens for bad key lengths)
+ * Return: 0 on success; -EINVAL on failure (only happens क्रम bad key lengths)
  */
-int crypto_aes_set_key(struct crypto_tfm *tfm, const u8 *in_key,
-		unsigned int key_len)
-{
-	struct crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
+पूर्णांक crypto_aes_set_key(काष्ठा crypto_tfm *tfm, स्थिर u8 *in_key,
+		अचिन्हित पूर्णांक key_len)
+अणु
+	काष्ठा crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	return aes_expandkey(ctx, in_key, key_len);
-}
+	वापस aes_expandkey(ctx, in_key, key_len);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_aes_set_key);
 
 /* encrypt a block of text */
 
-#define f_rn(bo, bi, n, k)	do {				\
+#घोषणा f_rn(bo, bi, n, k)	करो अणु				\
 	bo[n] = crypto_ft_tab[0][byte(bi[n], 0)] ^			\
 		crypto_ft_tab[1][byte(bi[(n + 1) & 3], 1)] ^		\
 		crypto_ft_tab[2][byte(bi[(n + 2) & 3], 2)] ^		\
 		crypto_ft_tab[3][byte(bi[(n + 3) & 3], 3)] ^ *(k + n);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define f_nround(bo, bi, k)	do {\
+#घोषणा f_nround(bo, bi, k)	करो अणु\
 	f_rn(bo, bi, 0, k);	\
 	f_rn(bo, bi, 1, k);	\
 	f_rn(bo, bi, 2, k);	\
 	f_rn(bo, bi, 3, k);	\
 	k += 4;			\
-} while (0)
+पूर्ण जबतक (0)
 
-#define f_rl(bo, bi, n, k)	do {				\
+#घोषणा f_rl(bo, bi, n, k)	करो अणु				\
 	bo[n] = crypto_fl_tab[0][byte(bi[n], 0)] ^			\
 		crypto_fl_tab[1][byte(bi[(n + 1) & 3], 1)] ^		\
 		crypto_fl_tab[2][byte(bi[(n + 2) & 3], 2)] ^		\
 		crypto_fl_tab[3][byte(bi[(n + 3) & 3], 3)] ^ *(k + n);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define f_lround(bo, bi, k)	do {\
+#घोषणा f_lround(bo, bi, k)	करो अणु\
 	f_rl(bo, bi, 0, k);	\
 	f_rl(bo, bi, 1, k);	\
 	f_rl(bo, bi, 2, k);	\
 	f_rl(bo, bi, 3, k);	\
-} while (0)
+पूर्ण जबतक (0)
 
-static void crypto_aes_encrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
-{
-	const struct crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम crypto_aes_encrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *in)
+अणु
+	स्थिर काष्ठा crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
 	u32 b0[4], b1[4];
-	const u32 *kp = ctx->key_enc + 4;
-	const int key_len = ctx->key_length;
+	स्थिर u32 *kp = ctx->key_enc + 4;
+	स्थिर पूर्णांक key_len = ctx->key_length;
 
 	b0[0] = ctx->key_enc[0] ^ get_unaligned_le32(in);
 	b0[1] = ctx->key_enc[1] ^ get_unaligned_le32(in + 4);
 	b0[2] = ctx->key_enc[2] ^ get_unaligned_le32(in + 8);
 	b0[3] = ctx->key_enc[3] ^ get_unaligned_le32(in + 12);
 
-	if (key_len > 24) {
+	अगर (key_len > 24) अणु
 		f_nround(b1, b0, kp);
 		f_nround(b0, b1, kp);
-	}
+	पूर्ण
 
-	if (key_len > 16) {
+	अगर (key_len > 16) अणु
 		f_nround(b1, b0, kp);
 		f_nround(b0, b1, kp);
-	}
+	पूर्ण
 
 	f_nround(b1, b0, kp);
 	f_nround(b0, b1, kp);
@@ -1210,60 +1211,60 @@ static void crypto_aes_encrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
 	put_unaligned_le32(b0[1], out + 4);
 	put_unaligned_le32(b0[2], out + 8);
 	put_unaligned_le32(b0[3], out + 12);
-}
+पूर्ण
 
 /* decrypt a block of text */
 
-#define i_rn(bo, bi, n, k)	do {				\
+#घोषणा i_rn(bo, bi, n, k)	करो अणु				\
 	bo[n] = crypto_it_tab[0][byte(bi[n], 0)] ^			\
 		crypto_it_tab[1][byte(bi[(n + 3) & 3], 1)] ^		\
 		crypto_it_tab[2][byte(bi[(n + 2) & 3], 2)] ^		\
 		crypto_it_tab[3][byte(bi[(n + 1) & 3], 3)] ^ *(k + n);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define i_nround(bo, bi, k)	do {\
+#घोषणा i_nround(bo, bi, k)	करो अणु\
 	i_rn(bo, bi, 0, k);	\
 	i_rn(bo, bi, 1, k);	\
 	i_rn(bo, bi, 2, k);	\
 	i_rn(bo, bi, 3, k);	\
 	k += 4;			\
-} while (0)
+पूर्ण जबतक (0)
 
-#define i_rl(bo, bi, n, k)	do {			\
+#घोषणा i_rl(bo, bi, n, k)	करो अणु			\
 	bo[n] = crypto_il_tab[0][byte(bi[n], 0)] ^		\
 	crypto_il_tab[1][byte(bi[(n + 3) & 3], 1)] ^		\
 	crypto_il_tab[2][byte(bi[(n + 2) & 3], 2)] ^		\
 	crypto_il_tab[3][byte(bi[(n + 1) & 3], 3)] ^ *(k + n);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define i_lround(bo, bi, k)	do {\
+#घोषणा i_lround(bo, bi, k)	करो अणु\
 	i_rl(bo, bi, 0, k);	\
 	i_rl(bo, bi, 1, k);	\
 	i_rl(bo, bi, 2, k);	\
 	i_rl(bo, bi, 3, k);	\
-} while (0)
+पूर्ण जबतक (0)
 
-static void crypto_aes_decrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
-{
-	const struct crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम crypto_aes_decrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *in)
+अणु
+	स्थिर काष्ठा crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
 	u32 b0[4], b1[4];
-	const int key_len = ctx->key_length;
-	const u32 *kp = ctx->key_dec + 4;
+	स्थिर पूर्णांक key_len = ctx->key_length;
+	स्थिर u32 *kp = ctx->key_dec + 4;
 
 	b0[0] = ctx->key_dec[0] ^ get_unaligned_le32(in);
 	b0[1] = ctx->key_dec[1] ^ get_unaligned_le32(in + 4);
 	b0[2] = ctx->key_dec[2] ^ get_unaligned_le32(in + 8);
 	b0[3] = ctx->key_dec[3] ^ get_unaligned_le32(in + 12);
 
-	if (key_len > 24) {
+	अगर (key_len > 24) अणु
 		i_nround(b1, b0, kp);
 		i_nround(b0, b1, kp);
-	}
+	पूर्ण
 
-	if (key_len > 16) {
+	अगर (key_len > 16) अणु
 		i_nround(b1, b0, kp);
 		i_nround(b0, b1, kp);
-	}
+	पूर्ण
 
 	i_nround(b1, b0, kp);
 	i_nround(b0, b1, kp);
@@ -1280,39 +1281,39 @@ static void crypto_aes_decrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
 	put_unaligned_le32(b0[1], out + 4);
 	put_unaligned_le32(b0[2], out + 8);
 	put_unaligned_le32(b0[3], out + 12);
-}
+पूर्ण
 
-static struct crypto_alg aes_alg = {
+अटल काष्ठा crypto_alg aes_alg = अणु
 	.cra_name		=	"aes",
 	.cra_driver_name	=	"aes-generic",
 	.cra_priority		=	100,
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	AES_BLOCK_SIZE,
-	.cra_ctxsize		=	sizeof(struct crypto_aes_ctx),
+	.cra_ctxsize		=	माप(काष्ठा crypto_aes_ctx),
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	{
-		.cipher = {
+	.cra_u			=	अणु
+		.cipher = अणु
 			.cia_min_keysize	=	AES_MIN_KEY_SIZE,
 			.cia_max_keysize	=	AES_MAX_KEY_SIZE,
 			.cia_setkey		=	crypto_aes_set_key,
 			.cia_encrypt		=	crypto_aes_encrypt,
 			.cia_decrypt		=	crypto_aes_decrypt
-		}
-	}
-};
+		पूर्ण
+	पूर्ण
+पूर्ण;
 
-static int __init aes_init(void)
-{
-	return crypto_register_alg(&aes_alg);
-}
+अटल पूर्णांक __init aes_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_alg(&aes_alg);
+पूर्ण
 
-static void __exit aes_fini(void)
-{
-	crypto_unregister_alg(&aes_alg);
-}
+अटल व्योम __निकास aes_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_alg(&aes_alg);
+पूर्ण
 
 subsys_initcall(aes_init);
-module_exit(aes_fini);
+module_निकास(aes_fini);
 
 MODULE_DESCRIPTION("Rijndael (AES) Cipher Algorithm");
 MODULE_LICENSE("Dual BSD/GPL");

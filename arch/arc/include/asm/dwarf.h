@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2016-17 Synopsys, Inc. (www.synopsys.com)
  */
 
-#ifndef _ASM_ARC_DWARF_H
-#define _ASM_ARC_DWARF_H
+#अगर_अघोषित _ASM_ARC_DWARF_H
+#घोषणा _ASM_ARC_DWARF_H
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
-#ifdef ARC_DW2_UNWIND_AS_CFI
+#अगर_घोषित ARC_DW2_UNWIND_AS_CFI
 
-#define CFI_STARTPROC	.cfi_startproc
-#define CFI_ENDPROC	.cfi_endproc
-#define CFI_DEF_CFA	.cfi_def_cfa
-#define CFI_REGISTER	.cfi_register
-#define CFI_REL_OFFSET	.cfi_rel_offset
-#define CFI_UNDEFINED	.cfi_undefined
+#घोषणा CFI_STARTPROC	.cfi_startproc
+#घोषणा CFI_ENDPROC	.cfi_endproc
+#घोषणा CFI_DEF_CFA	.cfi_def_cfa
+#घोषणा CFI_REGISTER	.cfi_रेजिस्टर
+#घोषणा CFI_REL_OFFSET	.cfi_rel_offset
+#घोषणा CFI_UNDEFINED	.cfi_undefined
 
-#else
+#अन्यथा
 
-#define CFI_IGNORE	#
+#घोषणा CFI_IGNORE	#
 
-#define CFI_STARTPROC	CFI_IGNORE
-#define CFI_ENDPROC	CFI_IGNORE
-#define CFI_DEF_CFA	CFI_IGNORE
-#define CFI_REGISTER	CFI_IGNORE
-#define CFI_REL_OFFSET	CFI_IGNORE
-#define CFI_UNDEFINED	CFI_IGNORE
+#घोषणा CFI_STARTPROC	CFI_IGNORE
+#घोषणा CFI_ENDPROC	CFI_IGNORE
+#घोषणा CFI_DEF_CFA	CFI_IGNORE
+#घोषणा CFI_REGISTER	CFI_IGNORE
+#घोषणा CFI_REL_OFFSET	CFI_IGNORE
+#घोषणा CFI_UNDEFINED	CFI_IGNORE
 
-#endif	/* !ARC_DW2_UNWIND_AS_CFI */
+#पूर्ण_अगर	/* !ARC_DW2_UNWIND_AS_CFI */
 
-#endif	/* __ASSEMBLY__ */
+#पूर्ण_अगर	/* __ASSEMBLY__ */
 
-#endif	/* _ASM_ARC_DWARF_H */
+#पूर्ण_अगर	/* _ASM_ARC_DWARF_H */

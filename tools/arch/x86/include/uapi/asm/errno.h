@@ -1,1 +1,2 @@
-#include <asm-generic/errno.h>
+<शैली गुरु>
+#समावेश <यंत्र-generic/त्रुटिसं.स>

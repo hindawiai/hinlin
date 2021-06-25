@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,67 +22,67 @@
  *
  * Authors: Ben Skeggs
  */
-#include "conn.h"
-#include "outp.h"
-#include "priv.h"
+#समावेश "conn.h"
+#समावेश "outp.h"
+#समावेश "priv.h"
 
-#include <subdev/gpio.h>
+#समावेश <subdev/gpपन.स>
 
-#include <nvif/event.h>
+#समावेश <nvअगर/event.h>
 
-static int
-nvkm_conn_hpd(struct nvkm_notify *notify)
-{
-	struct nvkm_conn *conn = container_of(notify, typeof(*conn), hpd);
-	struct nvkm_disp *disp = conn->disp;
-	struct nvkm_gpio *gpio = disp->engine.subdev.device->gpio;
-	const struct nvkm_gpio_ntfy_rep *line = notify->data;
-	struct nvif_notify_conn_rep_v0 rep;
-	int index = conn->index;
+अटल पूर्णांक
+nvkm_conn_hpd(काष्ठा nvkm_notअगरy *notअगरy)
+अणु
+	काष्ठा nvkm_conn *conn = container_of(notअगरy, typeof(*conn), hpd);
+	काष्ठा nvkm_disp *disp = conn->disp;
+	काष्ठा nvkm_gpio *gpio = disp->engine.subdev.device->gpio;
+	स्थिर काष्ठा nvkm_gpio_ntfy_rep *line = notअगरy->data;
+	काष्ठा nvअगर_notअगरy_conn_rep_v0 rep;
+	पूर्णांक index = conn->index;
 
 	CONN_DBG(conn, "HPD: %d", line->mask);
 
-	if (!nvkm_gpio_get(gpio, 0, DCB_GPIO_UNUSED, conn->hpd.index))
+	अगर (!nvkm_gpio_get(gpio, 0, DCB_GPIO_UNUSED, conn->hpd.index))
 		rep.mask = NVIF_NOTIFY_CONN_V0_UNPLUG;
-	else
+	अन्यथा
 		rep.mask = NVIF_NOTIFY_CONN_V0_PLUG;
 	rep.version = 0;
 
-	nvkm_event_send(&disp->hpd, rep.mask, index, &rep, sizeof(rep));
-	return NVKM_NOTIFY_KEEP;
-}
+	nvkm_event_send(&disp->hpd, rep.mask, index, &rep, माप(rep));
+	वापस NVKM_NOTIFY_KEEP;
+पूर्ण
 
-void
-nvkm_conn_fini(struct nvkm_conn *conn)
-{
-	nvkm_notify_put(&conn->hpd);
-}
+व्योम
+nvkm_conn_fini(काष्ठा nvkm_conn *conn)
+अणु
+	nvkm_notअगरy_put(&conn->hpd);
+पूर्ण
 
-void
-nvkm_conn_init(struct nvkm_conn *conn)
-{
-	nvkm_notify_get(&conn->hpd);
-}
+व्योम
+nvkm_conn_init(काष्ठा nvkm_conn *conn)
+अणु
+	nvkm_notअगरy_get(&conn->hpd);
+पूर्ण
 
-void
-nvkm_conn_del(struct nvkm_conn **pconn)
-{
-	struct nvkm_conn *conn = *pconn;
-	if (conn) {
-		nvkm_notify_fini(&conn->hpd);
-		kfree(*pconn);
-		*pconn = NULL;
-	}
-}
+व्योम
+nvkm_conn_del(काष्ठा nvkm_conn **pconn)
+अणु
+	काष्ठा nvkm_conn *conn = *pconn;
+	अगर (conn) अणु
+		nvkm_notअगरy_fini(&conn->hpd);
+		kमुक्त(*pconn);
+		*pconn = शून्य;
+	पूर्ण
+पूर्ण
 
-static void
-nvkm_conn_ctor(struct nvkm_disp *disp, int index, struct nvbios_connE *info,
-	       struct nvkm_conn *conn)
-{
-	static const u8 hpd[] = { 0x07, 0x08, 0x51, 0x52, 0x5e, 0x5f, 0x60 };
-	struct nvkm_gpio *gpio = disp->engine.subdev.device->gpio;
-	struct dcb_gpio_func func;
-	int ret;
+अटल व्योम
+nvkm_conn_ctor(काष्ठा nvkm_disp *disp, पूर्णांक index, काष्ठा nvbios_connE *info,
+	       काष्ठा nvkm_conn *conn)
+अणु
+	अटल स्थिर u8 hpd[] = अणु 0x07, 0x08, 0x51, 0x52, 0x5e, 0x5f, 0x60 पूर्ण;
+	काष्ठा nvkm_gpio *gpio = disp->engine.subdev.device->gpio;
+	काष्ठा dcb_gpio_func func;
+	पूर्णांक ret;
 
 	conn->disp = disp;
 	conn->index = index;
@@ -91,42 +92,42 @@ nvkm_conn_ctor(struct nvkm_disp *disp, int index, struct nvbios_connE *info,
 		 info->type, info->location, info->hpd, info->dp,
 		 info->di, info->sr, info->lcdid);
 
-	if ((info->hpd = ffs(info->hpd))) {
-		if (--info->hpd >= ARRAY_SIZE(hpd)) {
+	अगर ((info->hpd = ffs(info->hpd))) अणु
+		अगर (--info->hpd >= ARRAY_SIZE(hpd)) अणु
 			CONN_ERR(conn, "hpd %02x unknown", info->hpd);
-			return;
-		}
+			वापस;
+		पूर्ण
 		info->hpd = hpd[info->hpd];
 
 		ret = nvkm_gpio_find(gpio, 0, info->hpd, DCB_GPIO_UNUSED, &func);
-		if (ret) {
+		अगर (ret) अणु
 			CONN_ERR(conn, "func %02x lookup failed, %d",
 				 info->hpd, ret);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		ret = nvkm_notify_init(NULL, &gpio->event, nvkm_conn_hpd,
-				       true, &(struct nvkm_gpio_ntfy_req) {
+		ret = nvkm_notअगरy_init(शून्य, &gpio->event, nvkm_conn_hpd,
+				       true, &(काष्ठा nvkm_gpio_ntfy_req) अणु
 					.mask = NVKM_GPIO_TOGGLED,
 					.line = func.line,
-				       },
-				       sizeof(struct nvkm_gpio_ntfy_req),
-				       sizeof(struct nvkm_gpio_ntfy_rep),
+				       पूर्ण,
+				       माप(काष्ठा nvkm_gpio_ntfy_req),
+				       माप(काष्ठा nvkm_gpio_ntfy_rep),
 				       &conn->hpd);
-		if (ret) {
+		अगर (ret) अणु
 			CONN_ERR(conn, "func %02x failed, %d", info->hpd, ret);
-		} else {
+		पूर्ण अन्यथा अणु
 			CONN_DBG(conn, "func %02x (HPD)", info->hpd);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int
-nvkm_conn_new(struct nvkm_disp *disp, int index, struct nvbios_connE *info,
-	      struct nvkm_conn **pconn)
-{
-	if (!(*pconn = kzalloc(sizeof(**pconn), GFP_KERNEL)))
-		return -ENOMEM;
+पूर्णांक
+nvkm_conn_new(काष्ठा nvkm_disp *disp, पूर्णांक index, काष्ठा nvbios_connE *info,
+	      काष्ठा nvkm_conn **pconn)
+अणु
+	अगर (!(*pconn = kzalloc(माप(**pconn), GFP_KERNEL)))
+		वापस -ENOMEM;
 	nvkm_conn_ctor(disp, index, info, *pconn);
-	return 0;
-}
+	वापस 0;
+पूर्ण

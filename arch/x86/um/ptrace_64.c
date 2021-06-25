@@ -1,26 +1,27 @@
+<शैली गुरु>
 /*
  * Copyright 2003 PathScale, Inc.
- * Copyright (C) 2003 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2003 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  *
  * Licensed under the GPL
  */
 
-#include <linux/mm.h>
-#include <linux/sched.h>
-#include <linux/errno.h>
-#define __FRAME_OFFSETS
-#include <asm/ptrace.h>
-#include <linux/uaccess.h>
-#include <asm/ptrace-abi.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/त्रुटिसं.स>
+#घोषणा __FRAME_OFFSETS
+#समावेश <यंत्र/ptrace.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/ptrace-abi.h>
 
 /*
  * determines which flags the user has access to.
  * 1 = access 0 = no access
  */
-#define FLAG_MASK 0x44dd5UL
+#घोषणा FLAG_MASK 0x44dd5UL
 
-static const int reg_offsets[] =
-{
+अटल स्थिर पूर्णांक reg_offsets[] =
+अणु
 	[R8 >> 3] = HOST_R8,
 	[R9 >> 3] = HOST_R9,
 	[R10 >> 3] = HOST_R10,
@@ -48,219 +49,219 @@ static const int reg_offsets[] =
 	[GS >> 3] = HOST_GS,
 	[EFLAGS >> 3] = HOST_EFLAGS,
 	[ORIG_RAX >> 3] = HOST_ORIG_AX,
-};
+पूर्ण;
 
-int putreg(struct task_struct *child, int regno, unsigned long value)
-{
-	switch (regno) {
-	case R8:
-	case R9:
-	case R10:
-	case R11:
-	case R12:
-	case R13:
-	case R14:
-	case R15:
-	case RIP:
-	case RSP:
-	case RAX:
-	case RBX:
-	case RCX:
-	case RDX:
-	case RSI:
-	case RDI:
-	case RBP:
-		break;
+पूर्णांक putreg(काष्ठा task_काष्ठा *child, पूर्णांक regno, अचिन्हित दीर्घ value)
+अणु
+	चयन (regno) अणु
+	हाल R8:
+	हाल R9:
+	हाल R10:
+	हाल R11:
+	हाल R12:
+	हाल R13:
+	हाल R14:
+	हाल R15:
+	हाल RIP:
+	हाल RSP:
+	हाल RAX:
+	हाल RBX:
+	हाल RCX:
+	हाल RDX:
+	हाल RSI:
+	हाल RDI:
+	हाल RBP:
+		अवरोध;
 
-	case ORIG_RAX:
+	हाल ORIG_RAX:
 		/* Update the syscall number. */
-		UPT_SYSCALL_NR(&child->thread.regs.regs) = value;
-		break;
+		UPT_SYSCALL_NR(&child->thपढ़ो.regs.regs) = value;
+		अवरोध;
 
-	case FS:
-	case GS:
-	case DS:
-	case ES:
-	case SS:
-	case CS:
-		if (value && (value & 3) != 3)
-			return -EIO;
+	हाल FS:
+	हाल GS:
+	हाल DS:
+	हाल ES:
+	हाल SS:
+	हाल CS:
+		अगर (value && (value & 3) != 3)
+			वापस -EIO;
 		value &= 0xffff;
-		break;
+		अवरोध;
 
-	case FS_BASE:
-	case GS_BASE:
-		if (!((value >> 48) == 0 || (value >> 48) == 0xffff))
-			return -EIO;
-		break;
+	हाल FS_BASE:
+	हाल GS_BASE:
+		अगर (!((value >> 48) == 0 || (value >> 48) == 0xffff))
+			वापस -EIO;
+		अवरोध;
 
-	case EFLAGS:
+	हाल EFLAGS:
 		value &= FLAG_MASK;
-		child->thread.regs.regs.gp[HOST_EFLAGS] |= value;
-		return 0;
+		child->thपढ़ो.regs.regs.gp[HOST_EFLAGS] |= value;
+		वापस 0;
 
-	default:
+	शेष:
 		panic("Bad register in putreg(): %d\n", regno);
-	}
+	पूर्ण
 
-	child->thread.regs.regs.gp[reg_offsets[regno >> 3]] = value;
-	return 0;
-}
+	child->thपढ़ो.regs.regs.gp[reg_offsets[regno >> 3]] = value;
+	वापस 0;
+पूर्ण
 
-int poke_user(struct task_struct *child, long addr, long data)
-{
-	if ((addr & 3) || addr < 0)
-		return -EIO;
+पूर्णांक poke_user(काष्ठा task_काष्ठा *child, दीर्घ addr, दीर्घ data)
+अणु
+	अगर ((addr & 3) || addr < 0)
+		वापस -EIO;
 
-	if (addr < MAX_REG_OFFSET)
-		return putreg(child, addr, data);
-	else if ((addr >= offsetof(struct user, u_debugreg[0])) &&
-		(addr <= offsetof(struct user, u_debugreg[7]))) {
-		addr -= offsetof(struct user, u_debugreg[0]);
+	अगर (addr < MAX_REG_OFFSET)
+		वापस putreg(child, addr, data);
+	अन्यथा अगर ((addr >= दुरत्व(काष्ठा user, u_debugreg[0])) &&
+		(addr <= दुरत्व(काष्ठा user, u_debugreg[7]))) अणु
+		addr -= दुरत्व(काष्ठा user, u_debugreg[0]);
 		addr = addr >> 3;
-		if ((addr == 4) || (addr == 5))
-			return -EIO;
-		child->thread.arch.debugregs[addr] = data;
-		return 0;
-	}
-	return -EIO;
-}
+		अगर ((addr == 4) || (addr == 5))
+			वापस -EIO;
+		child->thपढ़ो.arch.debugregs[addr] = data;
+		वापस 0;
+	पूर्ण
+	वापस -EIO;
+पूर्ण
 
-unsigned long getreg(struct task_struct *child, int regno)
-{
-	unsigned long mask = ~0UL;
+अचिन्हित दीर्घ getreg(काष्ठा task_काष्ठा *child, पूर्णांक regno)
+अणु
+	अचिन्हित दीर्घ mask = ~0UL;
 
-	switch (regno) {
-	case R8:
-	case R9:
-	case R10:
-	case R11:
-	case R12:
-	case R13:
-	case R14:
-	case R15:
-	case RIP:
-	case RSP:
-	case RAX:
-	case RBX:
-	case RCX:
-	case RDX:
-	case RSI:
-	case RDI:
-	case RBP:
-	case ORIG_RAX:
-	case EFLAGS:
-	case FS_BASE:
-	case GS_BASE:
-		break;
-	case FS:
-	case GS:
-	case DS:
-	case ES:
-	case SS:
-	case CS:
+	चयन (regno) अणु
+	हाल R8:
+	हाल R9:
+	हाल R10:
+	हाल R11:
+	हाल R12:
+	हाल R13:
+	हाल R14:
+	हाल R15:
+	हाल RIP:
+	हाल RSP:
+	हाल RAX:
+	हाल RBX:
+	हाल RCX:
+	हाल RDX:
+	हाल RSI:
+	हाल RDI:
+	हाल RBP:
+	हाल ORIG_RAX:
+	हाल EFLAGS:
+	हाल FS_BASE:
+	हाल GS_BASE:
+		अवरोध;
+	हाल FS:
+	हाल GS:
+	हाल DS:
+	हाल ES:
+	हाल SS:
+	हाल CS:
 		mask = 0xffff;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		panic("Bad register in getreg: %d\n", regno);
-	}
-	return mask & child->thread.regs.regs.gp[reg_offsets[regno >> 3]];
-}
+	पूर्ण
+	वापस mask & child->thपढ़ो.regs.regs.gp[reg_offsets[regno >> 3]];
+पूर्ण
 
-int peek_user(struct task_struct *child, long addr, long data)
-{
-	/* read the word at location addr in the USER area. */
-	unsigned long tmp;
+पूर्णांक peek_user(काष्ठा task_काष्ठा *child, दीर्घ addr, दीर्घ data)
+अणु
+	/* पढ़ो the word at location addr in the USER area. */
+	अचिन्हित दीर्घ पंचांगp;
 
-	if ((addr & 3) || addr < 0)
-		return -EIO;
+	अगर ((addr & 3) || addr < 0)
+		वापस -EIO;
 
-	tmp = 0;  /* Default return condition */
-	if (addr < MAX_REG_OFFSET)
-		tmp = getreg(child, addr);
-	else if ((addr >= offsetof(struct user, u_debugreg[0])) &&
-		(addr <= offsetof(struct user, u_debugreg[7]))) {
-		addr -= offsetof(struct user, u_debugreg[0]);
+	पंचांगp = 0;  /* Default वापस condition */
+	अगर (addr < MAX_REG_OFFSET)
+		पंचांगp = getreg(child, addr);
+	अन्यथा अगर ((addr >= दुरत्व(काष्ठा user, u_debugreg[0])) &&
+		(addr <= दुरत्व(काष्ठा user, u_debugreg[7]))) अणु
+		addr -= दुरत्व(काष्ठा user, u_debugreg[0]);
 		addr = addr >> 2;
-		tmp = child->thread.arch.debugregs[addr];
-	}
-	return put_user(tmp, (unsigned long *) data);
-}
+		पंचांगp = child->thपढ़ो.arch.debugregs[addr];
+	पूर्ण
+	वापस put_user(पंचांगp, (अचिन्हित दीर्घ *) data);
+पूर्ण
 
 /* XXX Mostly copied from sys-i386 */
-int is_syscall(unsigned long addr)
-{
-	unsigned short instr;
-	int n;
+पूर्णांक is_syscall(अचिन्हित दीर्घ addr)
+अणु
+	अचिन्हित लघु instr;
+	पूर्णांक n;
 
-	n = copy_from_user(&instr, (void __user *) addr, sizeof(instr));
-	if (n) {
+	n = copy_from_user(&instr, (व्योम __user *) addr, माप(instr));
+	अगर (n) अणु
 		/*
 		 * access_process_vm() grants access to vsyscall and stub,
-		 * while copy_from_user doesn't. Maybe access_process_vm is
-		 * slow, but that doesn't matter, since it will be called only
-		 * in case of singlestepping, if copy_from_user failed.
+		 * जबतक copy_from_user करोesn't. Maybe access_process_vm is
+		 * slow, but that करोesn't matter, since it will be called only
+		 * in हाल of singlestepping, अगर copy_from_user failed.
 		 */
-		n = access_process_vm(current, addr, &instr, sizeof(instr),
+		n = access_process_vm(current, addr, &instr, माप(instr),
 				FOLL_FORCE);
-		if (n != sizeof(instr)) {
-			printk("is_syscall : failed to read instruction from "
+		अगर (n != माप(instr)) अणु
+			prपूर्णांकk("is_syscall : failed to read instruction from "
 			       "0x%lx\n", addr);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 	/* sysenter */
-	return instr == 0x050f;
-}
+	वापस instr == 0x050f;
+पूर्ण
 
-static int get_fpregs(struct user_i387_struct __user *buf, struct task_struct *child)
-{
-	int err, n, cpu = ((struct thread_info *) child->stack)->cpu;
-	struct user_i387_struct fpregs;
+अटल पूर्णांक get_fpregs(काष्ठा user_i387_काष्ठा __user *buf, काष्ठा task_काष्ठा *child)
+अणु
+	पूर्णांक err, n, cpu = ((काष्ठा thपढ़ो_info *) child->stack)->cpu;
+	काष्ठा user_i387_काष्ठा fpregs;
 
-	err = save_i387_registers(userspace_pid[cpu],
-				  (unsigned long *) &fpregs);
-	if (err)
-		return err;
+	err = save_i387_रेजिस्टरs(userspace_pid[cpu],
+				  (अचिन्हित दीर्घ *) &fpregs);
+	अगर (err)
+		वापस err;
 
-	n = copy_to_user(buf, &fpregs, sizeof(fpregs));
-	if (n > 0)
-		return -EFAULT;
+	n = copy_to_user(buf, &fpregs, माप(fpregs));
+	अगर (n > 0)
+		वापस -EFAULT;
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static int set_fpregs(struct user_i387_struct __user *buf, struct task_struct *child)
-{
-	int n, cpu = ((struct thread_info *) child->stack)->cpu;
-	struct user_i387_struct fpregs;
+अटल पूर्णांक set_fpregs(काष्ठा user_i387_काष्ठा __user *buf, काष्ठा task_काष्ठा *child)
+अणु
+	पूर्णांक n, cpu = ((काष्ठा thपढ़ो_info *) child->stack)->cpu;
+	काष्ठा user_i387_काष्ठा fpregs;
 
-	n = copy_from_user(&fpregs, buf, sizeof(fpregs));
-	if (n > 0)
-		return -EFAULT;
+	n = copy_from_user(&fpregs, buf, माप(fpregs));
+	अगर (n > 0)
+		वापस -EFAULT;
 
-	return restore_i387_registers(userspace_pid[cpu],
-				      (unsigned long *) &fpregs);
-}
+	वापस restore_i387_रेजिस्टरs(userspace_pid[cpu],
+				      (अचिन्हित दीर्घ *) &fpregs);
+पूर्ण
 
-long subarch_ptrace(struct task_struct *child, long request,
-		    unsigned long addr, unsigned long data)
-{
-	int ret = -EIO;
-	void __user *datap = (void __user *) data;
+दीर्घ subarch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
+		    अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
+अणु
+	पूर्णांक ret = -EIO;
+	व्योम __user *datap = (व्योम __user *) data;
 
-	switch (request) {
-	case PTRACE_GETFPREGS: /* Get the child FPU state. */
+	चयन (request) अणु
+	हाल PTRACE_GETFPREGS: /* Get the child FPU state. */
 		ret = get_fpregs(datap, child);
-		break;
-	case PTRACE_SETFPREGS: /* Set the child FPU state. */
+		अवरोध;
+	हाल PTRACE_SETFPREGS: /* Set the child FPU state. */
 		ret = set_fpregs(datap, child);
-		break;
-	case PTRACE_ARCH_PRCTL:
+		अवरोध;
+	हाल PTRACE_ARCH_PRCTL:
 		/* XXX Calls ptrace on the host - needs some SMP thinking */
-		ret = arch_prctl(child, data, (void __user *) addr);
-		break;
-	}
+		ret = arch_prctl(child, data, (व्योम __user *) addr);
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

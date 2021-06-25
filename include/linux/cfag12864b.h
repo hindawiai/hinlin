@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *    Filename: cfag12864b.h
  *     Version: 0.1.0
@@ -8,15 +9,15 @@
  *        Date: 2006-10-12
  */
 
-#ifndef _CFAG12864B_H_
-#define _CFAG12864B_H_
+#अगर_अघोषित _CFAG12864B_H_
+#घोषणा _CFAG12864B_H_
 
-#define CFAG12864B_WIDTH	(128)
-#define CFAG12864B_HEIGHT	(64)
-#define CFAG12864B_CONTROLLERS	(2)
-#define CFAG12864B_PAGES	(8)
-#define CFAG12864B_ADDRESSES	(64)
-#define CFAG12864B_SIZE		((CFAG12864B_CONTROLLERS) * \
+#घोषणा CFAG12864B_WIDTH	(128)
+#घोषणा CFAG12864B_HEIGHT	(64)
+#घोषणा CFAG12864B_CONTROLLERS	(2)
+#घोषणा CFAG12864B_PAGES	(8)
+#घोषणा CFAG12864B_ADDRESSES	(64)
+#घोषणा CFAG12864B_SIZE		((CFAG12864B_CONTROLLERS) * \
 				(CFAG12864B_PAGES) * \
 				(CFAG12864B_ADDRESSES))
 
@@ -25,44 +26,44 @@
  *
  * Its size is CFAG12864B_SIZE.
  */
-extern unsigned char * cfag12864b_buffer;
+बाह्य अचिन्हित अक्षर * cfag12864b_buffer;
 
 /*
  * Get the refresh rate of the LCD
  *
  * Returns the refresh rate (hertz).
  */
-extern unsigned int cfag12864b_getrate(void);
+बाह्य अचिन्हित पूर्णांक cfag12864b_getrate(व्योम);
 
 /*
  * Enable refreshing
  *
- * Returns 0 if successful (anyone was using it),
- * or != 0 if failed (someone is using it).
+ * Returns 0 अगर successful (anyone was using it),
+ * or != 0 अगर failed (someone is using it).
  */
-extern unsigned char cfag12864b_enable(void);
+बाह्य अचिन्हित अक्षर cfag12864b_enable(व्योम);
 
 /*
  * Disable refreshing
  *
  * You should call this only when you finish using the LCD.
  */
-extern void cfag12864b_disable(void);
+बाह्य व्योम cfag12864b_disable(व्योम);
 
 /*
  * Is enabled refreshing? (is anyone using the module?)
  *
- * Returns 0 if refreshing is not enabled (anyone is using it),
- * or != 0 if refreshing is enabled (someone is using it).
+ * Returns 0 अगर refreshing is not enabled (anyone is using it),
+ * or != 0 अगर refreshing is enabled (someone is using it).
  *
- * Useful for buffer read-only modules.
+ * Useful क्रम buffer पढ़ो-only modules.
  */
-extern unsigned char cfag12864b_isenabled(void);
+बाह्य अचिन्हित अक्षर cfag12864b_isenabled(व्योम);
 
 /*
  * Is the module inited?
  */
-extern unsigned char cfag12864b_isinited(void);
+बाह्य अचिन्हित अक्षर cfag12864b_isinited(व्योम);
 
-#endif /* _CFAG12864B_H_ */
+#पूर्ण_अगर /* _CFAG12864B_H_ */
 

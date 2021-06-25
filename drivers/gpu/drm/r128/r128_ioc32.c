@@ -1,21 +1,22 @@
+<शैली गुरु>
 /*
- * \file r128_ioc32.c
+ * \पile r128_ioc32.c
  *
- * 32-bit ioctl compatibility routines for the R128 DRM.
+ * 32-bit ioctl compatibility routines क्रम the R128 DRM.
  *
- * \author Dave Airlie <airlied@linux.ie> with code from patches by Egbert Eich
+ * \चuthor Dave Airlie <airlied@linux.ie> with code from patches by Egbert Eich
  *
  * Copyright (C) Paul Mackerras 2005
  * Copyright (C) Egbert Eich 2003,2004
  * Copyright (C) Dave Airlie 2005
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -30,44 +31,44 @@
  * IN THE SOFTWARE.
  */
 
-#include <linux/compat.h>
+#समावेश <linux/compat.h>
 
-#include <drm/r128_drm.h>
+#समावेश <drm/r128_drm.h>
 
-#include "r128_drv.h"
+#समावेश "r128_drv.h"
 
-typedef struct drm_r128_init32 {
-	int func;
-	unsigned int sarea_priv_offset;
-	int is_pci;
-	int cce_mode;
-	int cce_secure;
-	int ring_size;
-	int usec_timeout;
+प्रकार काष्ठा drm_r128_init32 अणु
+	पूर्णांक func;
+	अचिन्हित पूर्णांक sarea_priv_offset;
+	पूर्णांक is_pci;
+	पूर्णांक cce_mode;
+	पूर्णांक cce_secure;
+	पूर्णांक ring_size;
+	पूर्णांक usec_समयout;
 
-	unsigned int fb_bpp;
-	unsigned int front_offset, front_pitch;
-	unsigned int back_offset, back_pitch;
-	unsigned int depth_bpp;
-	unsigned int depth_offset, depth_pitch;
-	unsigned int span_offset;
+	अचिन्हित पूर्णांक fb_bpp;
+	अचिन्हित पूर्णांक front_offset, front_pitch;
+	अचिन्हित पूर्णांक back_offset, back_pitch;
+	अचिन्हित पूर्णांक depth_bpp;
+	अचिन्हित पूर्णांक depth_offset, depth_pitch;
+	अचिन्हित पूर्णांक span_offset;
 
-	unsigned int fb_offset;
-	unsigned int mmio_offset;
-	unsigned int ring_offset;
-	unsigned int ring_rptr_offset;
-	unsigned int buffers_offset;
-	unsigned int agp_textures_offset;
-} drm_r128_init32_t;
+	अचिन्हित पूर्णांक fb_offset;
+	अचिन्हित पूर्णांक mmio_offset;
+	अचिन्हित पूर्णांक ring_offset;
+	अचिन्हित पूर्णांक ring_rptr_offset;
+	अचिन्हित पूर्णांक buffers_offset;
+	अचिन्हित पूर्णांक agp_textures_offset;
+पूर्ण drm_r128_init32_t;
 
-static int compat_r128_init(struct file *file, unsigned int cmd,
-			    unsigned long arg)
-{
+अटल पूर्णांक compat_r128_init(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			    अचिन्हित दीर्घ arg)
+अणु
 	drm_r128_init32_t init32;
 	drm_r128_init_t init;
 
-	if (copy_from_user(&init32, (void __user *)arg, sizeof(init32)))
-		return -EFAULT;
+	अगर (copy_from_user(&init32, (व्योम __user *)arg, माप(init32)))
+		वापस -EFAULT;
 
 	init.func = init32.func;
 	init.sarea_priv_offset = init32.sarea_priv_offset;
@@ -75,7 +76,7 @@ static int compat_r128_init(struct file *file, unsigned int cmd,
 	init.cce_mode = init32.cce_mode;
 	init.cce_secure = init32.cce_secure;
 	init.ring_size = init32.ring_size;
-	init.usec_timeout = init32.usec_timeout;
+	init.usec_समयout = init32.usec_समयout;
 	init.fb_bpp = init32.fb_bpp;
 	init.front_offset = init32.front_offset;
 	init.front_pitch = init32.front_pitch;
@@ -92,27 +93,27 @@ static int compat_r128_init(struct file *file, unsigned int cmd,
 	init.buffers_offset = init32.buffers_offset;
 	init.agp_textures_offset = init32.agp_textures_offset;
 
-	return drm_ioctl_kernel(file, r128_cce_init, &init,
+	वापस drm_ioctl_kernel(file, r128_cce_init, &init,
 			DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY);
-}
+पूर्ण
 
-typedef struct drm_r128_depth32 {
-	int func;
-	int n;
+प्रकार काष्ठा drm_r128_depth32 अणु
+	पूर्णांक func;
+	पूर्णांक n;
 	u32 x;
 	u32 y;
 	u32 buffer;
 	u32 mask;
-} drm_r128_depth32_t;
+पूर्ण drm_r128_depth32_t;
 
-static int compat_r128_depth(struct file *file, unsigned int cmd,
-			     unsigned long arg)
-{
+अटल पूर्णांक compat_r128_depth(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			     अचिन्हित दीर्घ arg)
+अणु
 	drm_r128_depth32_t depth32;
 	drm_r128_depth_t depth;
 
-	if (copy_from_user(&depth32, (void __user *)arg, sizeof(depth32)))
-		return -EFAULT;
+	अगर (copy_from_user(&depth32, (व्योम __user *)arg, माप(depth32)))
+		वापस -EFAULT;
 
 	depth.func = depth32.func;
 	depth.n = depth32.n;
@@ -121,79 +122,79 @@ static int compat_r128_depth(struct file *file, unsigned int cmd,
 	depth.buffer = compat_ptr(depth32.buffer);
 	depth.mask = compat_ptr(depth32.mask);
 
-	return drm_ioctl_kernel(file, r128_cce_depth, &depth, DRM_AUTH);
-}
+	वापस drm_ioctl_kernel(file, r128_cce_depth, &depth, DRM_AUTH);
+पूर्ण
 
-typedef struct drm_r128_stipple32 {
+प्रकार काष्ठा drm_r128_stipple32 अणु
 	u32 mask;
-} drm_r128_stipple32_t;
+पूर्ण drm_r128_stipple32_t;
 
-static int compat_r128_stipple(struct file *file, unsigned int cmd,
-			       unsigned long arg)
-{
+अटल पूर्णांक compat_r128_stipple(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			       अचिन्हित दीर्घ arg)
+अणु
 	drm_r128_stipple32_t stipple32;
 	drm_r128_stipple_t stipple;
 
-	if (copy_from_user(&stipple32, (void __user *)arg, sizeof(stipple32)))
-		return -EFAULT;
+	अगर (copy_from_user(&stipple32, (व्योम __user *)arg, माप(stipple32)))
+		वापस -EFAULT;
 
 	stipple.mask = compat_ptr(stipple32.mask);
 
-	return drm_ioctl_kernel(file, r128_cce_stipple, &stipple, DRM_AUTH);
-}
+	वापस drm_ioctl_kernel(file, r128_cce_stipple, &stipple, DRM_AUTH);
+पूर्ण
 
-typedef struct drm_r128_getparam32 {
-	int param;
+प्रकार काष्ठा drm_r128_getparam32 अणु
+	पूर्णांक param;
 	u32 value;
-} drm_r128_getparam32_t;
+पूर्ण drm_r128_getparam32_t;
 
-static int compat_r128_getparam(struct file *file, unsigned int cmd,
-				unsigned long arg)
-{
+अटल पूर्णांक compat_r128_getparam(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+				अचिन्हित दीर्घ arg)
+अणु
 	drm_r128_getparam32_t getparam32;
 	drm_r128_getparam_t getparam;
 
-	if (copy_from_user(&getparam32, (void __user *)arg, sizeof(getparam32)))
-		return -EFAULT;
+	अगर (copy_from_user(&getparam32, (व्योम __user *)arg, माप(getparam32)))
+		वापस -EFAULT;
 
 	getparam.param = getparam32.param;
 	getparam.value = compat_ptr(getparam32.value);
 
-	return drm_ioctl_kernel(file, r128_getparam, &getparam, DRM_AUTH);
-}
+	वापस drm_ioctl_kernel(file, r128_getparam, &getparam, DRM_AUTH);
+पूर्ण
 
-drm_ioctl_compat_t *r128_compat_ioctls[] = {
+drm_ioctl_compat_t *r128_compat_ioctls[] = अणु
 	[DRM_R128_INIT] = compat_r128_init,
 	[DRM_R128_DEPTH] = compat_r128_depth,
 	[DRM_R128_STIPPLE] = compat_r128_stipple,
 	[DRM_R128_GETPARAM] = compat_r128_getparam,
-};
+पूर्ण;
 
 /**
  * r128_compat_ioctl - Called whenever a 32-bit process running under
- *                     a 64-bit kernel performs an ioctl on /dev/dri/card<n>.
+ *                     a 64-bit kernel perक्रमms an ioctl on /dev/dri/card<n>.
  *
- * @filp: file pointer.
+ * @filp: file poपूर्णांकer.
  * @cmd: command.
  * @arg: user argument.
- * return: zero on success or negative number on failure.
+ * वापस: zero on success or negative number on failure.
  */
-long r128_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	unsigned int nr = DRM_IOCTL_NR(cmd);
-	drm_ioctl_compat_t *fn = NULL;
-	int ret;
+दीर्घ r128_compat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	अचिन्हित पूर्णांक nr = DRM_IOCTL_NR(cmd);
+	drm_ioctl_compat_t *fn = शून्य;
+	पूर्णांक ret;
 
-	if (nr < DRM_COMMAND_BASE)
-		return drm_compat_ioctl(filp, cmd, arg);
+	अगर (nr < DRM_COMMAND_BASE)
+		वापस drm_compat_ioctl(filp, cmd, arg);
 
-	if (nr < DRM_COMMAND_BASE + ARRAY_SIZE(r128_compat_ioctls))
+	अगर (nr < DRM_COMMAND_BASE + ARRAY_SIZE(r128_compat_ioctls))
 		fn = r128_compat_ioctls[nr - DRM_COMMAND_BASE];
 
-	if (fn != NULL)
+	अगर (fn != शून्य)
 		ret = (*fn) (filp, cmd, arg);
-	else
+	अन्यथा
 		ret = drm_ioctl(filp, cmd, arg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,121 +1,122 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2013 Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/clk/at91_pmc.h>
-#include <linux/of.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk/at91_pmc.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
 
-#include "pmc.h"
+#समावेश "pmc.h"
 
-#define SMD_DIV_SHIFT		8
-#define SMD_MAX_DIV		0xf
+#घोषणा SMD_DIV_SHIFT		8
+#घोषणा SMD_MAX_DIV		0xf
 
-struct at91sam9x5_clk_smd {
-	struct clk_hw hw;
-	struct regmap *regmap;
-};
+काष्ठा at91sam9x5_clk_smd अणु
+	काष्ठा clk_hw hw;
+	काष्ठा regmap *regmap;
+पूर्ण;
 
-#define to_at91sam9x5_clk_smd(hw) \
-	container_of(hw, struct at91sam9x5_clk_smd, hw)
+#घोषणा to_at91sam9x5_clk_smd(hw) \
+	container_of(hw, काष्ठा at91sam9x5_clk_smd, hw)
 
-static unsigned long at91sam9x5_clk_smd_recalc_rate(struct clk_hw *hw,
-						    unsigned long parent_rate)
-{
-	struct at91sam9x5_clk_smd *smd = to_at91sam9x5_clk_smd(hw);
-	unsigned int smdr;
-	u8 smddiv;
+अटल अचिन्हित दीर्घ at91sam9x5_clk_smd_recalc_rate(काष्ठा clk_hw *hw,
+						    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा at91sam9x5_clk_smd *smd = to_at91sam9x5_clk_smd(hw);
+	अचिन्हित पूर्णांक smdr;
+	u8 smdभाग;
 
-	regmap_read(smd->regmap, AT91_PMC_SMD, &smdr);
-	smddiv = (smdr & AT91_PMC_SMD_DIV) >> SMD_DIV_SHIFT;
+	regmap_पढ़ो(smd->regmap, AT91_PMC_SMD, &smdr);
+	smdभाग = (smdr & AT91_PMC_SMD_DIV) >> SMD_DIV_SHIFT;
 
-	return parent_rate / (smddiv + 1);
-}
+	वापस parent_rate / (smdभाग + 1);
+पूर्ण
 
-static long at91sam9x5_clk_smd_round_rate(struct clk_hw *hw, unsigned long rate,
-					  unsigned long *parent_rate)
-{
-	unsigned long div;
-	unsigned long bestrate;
-	unsigned long tmp;
+अटल दीर्घ at91sam9x5_clk_smd_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+					  अचिन्हित दीर्घ *parent_rate)
+अणु
+	अचिन्हित दीर्घ भाग;
+	अचिन्हित दीर्घ bestrate;
+	अचिन्हित दीर्घ पंचांगp;
 
-	if (rate >= *parent_rate)
-		return *parent_rate;
+	अगर (rate >= *parent_rate)
+		वापस *parent_rate;
 
-	div = *parent_rate / rate;
-	if (div > SMD_MAX_DIV)
-		return *parent_rate / (SMD_MAX_DIV + 1);
+	भाग = *parent_rate / rate;
+	अगर (भाग > SMD_MAX_DIV)
+		वापस *parent_rate / (SMD_MAX_DIV + 1);
 
-	bestrate = *parent_rate / div;
-	tmp = *parent_rate / (div + 1);
-	if (bestrate - rate > rate - tmp)
-		bestrate = tmp;
+	bestrate = *parent_rate / भाग;
+	पंचांगp = *parent_rate / (भाग + 1);
+	अगर (bestrate - rate > rate - पंचांगp)
+		bestrate = पंचांगp;
 
-	return bestrate;
-}
+	वापस bestrate;
+पूर्ण
 
-static int at91sam9x5_clk_smd_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct at91sam9x5_clk_smd *smd = to_at91sam9x5_clk_smd(hw);
+अटल पूर्णांक at91sam9x5_clk_smd_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा at91sam9x5_clk_smd *smd = to_at91sam9x5_clk_smd(hw);
 
-	if (index > 1)
-		return -EINVAL;
+	अगर (index > 1)
+		वापस -EINVAL;
 
 	regmap_update_bits(smd->regmap, AT91_PMC_SMD, AT91_PMC_SMDS,
 			   index ? AT91_PMC_SMDS : 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 at91sam9x5_clk_smd_get_parent(struct clk_hw *hw)
-{
-	struct at91sam9x5_clk_smd *smd = to_at91sam9x5_clk_smd(hw);
-	unsigned int smdr;
+अटल u8 at91sam9x5_clk_smd_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा at91sam9x5_clk_smd *smd = to_at91sam9x5_clk_smd(hw);
+	अचिन्हित पूर्णांक smdr;
 
-	regmap_read(smd->regmap, AT91_PMC_SMD, &smdr);
+	regmap_पढ़ो(smd->regmap, AT91_PMC_SMD, &smdr);
 
-	return smdr & AT91_PMC_SMDS;
-}
+	वापस smdr & AT91_PMC_SMDS;
+पूर्ण
 
-static int at91sam9x5_clk_smd_set_rate(struct clk_hw *hw, unsigned long rate,
-				       unsigned long parent_rate)
-{
-	struct at91sam9x5_clk_smd *smd = to_at91sam9x5_clk_smd(hw);
-	unsigned long div = parent_rate / rate;
+अटल पूर्णांक at91sam9x5_clk_smd_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा at91sam9x5_clk_smd *smd = to_at91sam9x5_clk_smd(hw);
+	अचिन्हित दीर्घ भाग = parent_rate / rate;
 
-	if (parent_rate % rate || div < 1 || div > (SMD_MAX_DIV + 1))
-		return -EINVAL;
+	अगर (parent_rate % rate || भाग < 1 || भाग > (SMD_MAX_DIV + 1))
+		वापस -EINVAL;
 
 	regmap_update_bits(smd->regmap, AT91_PMC_SMD, AT91_PMC_SMD_DIV,
-			   (div - 1) << SMD_DIV_SHIFT);
+			   (भाग - 1) << SMD_DIV_SHIFT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops at91sam9x5_smd_ops = {
+अटल स्थिर काष्ठा clk_ops at91sam9x5_smd_ops = अणु
 	.recalc_rate = at91sam9x5_clk_smd_recalc_rate,
 	.round_rate = at91sam9x5_clk_smd_round_rate,
 	.get_parent = at91sam9x5_clk_smd_get_parent,
 	.set_parent = at91sam9x5_clk_smd_set_parent,
 	.set_rate = at91sam9x5_clk_smd_set_rate,
-};
+पूर्ण;
 
-struct clk_hw * __init
-at91sam9x5_clk_register_smd(struct regmap *regmap, const char *name,
-			    const char **parent_names, u8 num_parents)
-{
-	struct at91sam9x5_clk_smd *smd;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+काष्ठा clk_hw * __init
+at91sam9x5_clk_रेजिस्टर_smd(काष्ठा regmap *regmap, स्थिर अक्षर *name,
+			    स्थिर अक्षर **parent_names, u8 num_parents)
+अणु
+	काष्ठा at91sam9x5_clk_smd *smd;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	smd = kzalloc(sizeof(*smd), GFP_KERNEL);
-	if (!smd)
-		return ERR_PTR(-ENOMEM);
+	smd = kzalloc(माप(*smd), GFP_KERNEL);
+	अगर (!smd)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &at91sam9x5_smd_ops;
@@ -127,11 +128,11 @@ at91sam9x5_clk_register_smd(struct regmap *regmap, const char *name,
 	smd->regmap = regmap;
 
 	hw = &smd->hw;
-	ret = clk_hw_register(NULL, &smd->hw);
-	if (ret) {
-		kfree(smd);
+	ret = clk_hw_रेजिस्टर(शून्य, &smd->hw);
+	अगर (ret) अणु
+		kमुक्त(smd);
 		hw = ERR_PTR(ret);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण

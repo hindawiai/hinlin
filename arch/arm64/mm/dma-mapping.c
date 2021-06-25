@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012 ARM Ltd.
  * Author: Catalin Marinas <catalin.marinas@arm.com>
  */
 
-#include <linux/gfp.h>
-#include <linux/cache.h>
-#include <linux/dma-map-ops.h>
-#include <linux/dma-iommu.h>
-#include <xen/xen.h>
-#include <xen/swiotlb-xen.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/dma-iommu.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/swiotlb-xen.h>
 
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/cacheflush.h>
 
-void arch_sync_dma_for_device(phys_addr_t paddr, size_t size,
-		enum dma_data_direction dir)
-{
+व्योम arch_sync_dma_क्रम_device(phys_addr_t paddr, माप_प्रकार size,
+		क्रमागत dma_data_direction dir)
+अणु
 	__dma_map_area(phys_to_virt(paddr), size, dir);
-}
+पूर्ण
 
-void arch_sync_dma_for_cpu(phys_addr_t paddr, size_t size,
-		enum dma_data_direction dir)
-{
+व्योम arch_sync_dma_क्रम_cpu(phys_addr_t paddr, माप_प्रकार size,
+		क्रमागत dma_data_direction dir)
+अणु
 	__dma_unmap_area(phys_to_virt(paddr), size, dir);
-}
+पूर्ण
 
-void arch_dma_prep_coherent(struct page *page, size_t size)
-{
+व्योम arch_dma_prep_coherent(काष्ठा page *page, माप_प्रकार size)
+अणु
 	__dma_flush_area(page_address(page), size);
-}
+पूर्ण
 
-#ifdef CONFIG_IOMMU_DMA
-void arch_teardown_dma_ops(struct device *dev)
-{
-	dev->dma_ops = NULL;
-}
-#endif
+#अगर_घोषित CONFIG_IOMMU_DMA
+व्योम arch_tearकरोwn_dma_ops(काष्ठा device *dev)
+अणु
+	dev->dma_ops = शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-void arch_setup_dma_ops(struct device *dev, u64 dma_base, u64 size,
-			const struct iommu_ops *iommu, bool coherent)
-{
-	int cls = cache_line_size_of_cpu();
+व्योम arch_setup_dma_ops(काष्ठा device *dev, u64 dma_base, u64 size,
+			स्थिर काष्ठा iommu_ops *iommu, bool coherent)
+अणु
+	पूर्णांक cls = cache_line_size_of_cpu();
 
 	WARN_TAINT(!coherent && cls > ARCH_DMA_MINALIGN,
 		   TAINT_CPU_OUT_OF_SPEC,
@@ -49,11 +50,11 @@ void arch_setup_dma_ops(struct device *dev, u64 dma_base, u64 size,
 		   ARCH_DMA_MINALIGN, cls);
 
 	dev->dma_coherent = coherent;
-	if (iommu)
+	अगर (iommu)
 		iommu_setup_dma_ops(dev, dma_base, size);
 
-#ifdef CONFIG_XEN
-	if (xen_swiotlb_detect())
+#अगर_घोषित CONFIG_XEN
+	अगर (xen_swiotlb_detect())
 		dev->dma_ops = &xen_swiotlb_dma_ops;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण

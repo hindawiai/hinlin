@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Power supply driver for the goldfish emulator
+ * Power supply driver क्रम the goldfish emulator
  *
  * Copyright (C) 2008 Google, Inc.
  * Copyright (C) 2012 Intel, Inc.
@@ -8,32 +9,32 @@
  * Author: Mike Lockwood <lockwood@android.com>
  */
 
-#include <linux/module.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/acpi.h>
 
-struct goldfish_battery_data {
-	void __iomem *reg_base;
-	int irq;
+काष्ठा goldfish_battery_data अणु
+	व्योम __iomem *reg_base;
+	पूर्णांक irq;
 	spinlock_t lock;
 
-	struct power_supply *battery;
-	struct power_supply *ac;
-};
+	काष्ठा घातer_supply *battery;
+	काष्ठा घातer_supply *ac;
+पूर्ण;
 
-#define GOLDFISH_BATTERY_READ(data, addr) \
-	(readl(data->reg_base + addr))
-#define GOLDFISH_BATTERY_WRITE(data, addr, x) \
-	(writel(x, data->reg_base + addr))
+#घोषणा GOLDFISH_BATTERY_READ(data, addr) \
+	(पढ़ोl(data->reg_base + addr))
+#घोषणा GOLDFISH_BATTERY_WRITE(data, addr, x) \
+	(ग_लिखोl(x, data->reg_base + addr))
 
-enum {
-	/* status register */
+क्रमागत अणु
+	/* status रेजिस्टर */
 	BATTERY_INT_STATUS	= 0x00,
 	/* set this to enable IRQ */
 	BATTERY_INT_ENABLE	= 0x04,
@@ -56,88 +57,88 @@ enum {
 	BATTERY_STATUS_CHANGED	= 1U << 0,
 	AC_STATUS_CHANGED	= 1U << 1,
 	BATTERY_INT_MASK	= BATTERY_STATUS_CHANGED | AC_STATUS_CHANGED,
-};
+पूर्ण;
 
 
-static int goldfish_ac_get_property(struct power_supply *psy,
-			enum power_supply_property psp,
-			union power_supply_propval *val)
-{
-	struct goldfish_battery_data *data = power_supply_get_drvdata(psy);
-	int ret = 0;
+अटल पूर्णांक goldfish_ac_get_property(काष्ठा घातer_supply *psy,
+			क्रमागत घातer_supply_property psp,
+			जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा goldfish_battery_data *data = घातer_supply_get_drvdata(psy);
+	पूर्णांक ret = 0;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_AC_ONLINE);
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_VOLTAGE_MAX);
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_MAX:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_CURRENT_MAX);
-		break;
-	default:
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_AC_ONLINE);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_VOLTAGE_MAX);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_MAX:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_CURRENT_MAX);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int goldfish_battery_get_property(struct power_supply *psy,
-				 enum power_supply_property psp,
-				 union power_supply_propval *val)
-{
-	struct goldfish_battery_data *data = power_supply_get_drvdata(psy);
-	int ret = 0;
+अटल पूर्णांक goldfish_battery_get_property(काष्ठा घातer_supply *psy,
+				 क्रमागत घातer_supply_property psp,
+				 जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा goldfish_battery_data *data = घातer_supply_get_drvdata(psy);
+	पूर्णांक ret = 0;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_STATUS);
-		break;
-	case POWER_SUPPLY_PROP_HEALTH:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_HEALTH);
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_PRESENT);
-		break;
-	case POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
-		break;
-	case POWER_SUPPLY_PROP_CAPACITY:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_CAPACITY);
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_VOLTAGE);
-		break;
-	case POWER_SUPPLY_PROP_TEMP:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_TEMP);
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_COUNTER:
-		val->intval = GOLDFISH_BATTERY_READ(data,
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_STATUS);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_HEALTH:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_HEALTH);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_PRESENT);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->पूर्णांकval = POWER_SUPPLY_TECHNOLOGY_LION;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CAPACITY:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_CAPACITY);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_VOLTAGE);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TEMP:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_TEMP);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_COUNTER:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data,
 						    BATTERY_CHARGE_COUNTER);
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_CURRENT_NOW);
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_AVG:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_CURRENT_AVG);
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_FULL:
-		val->intval = GOLDFISH_BATTERY_READ(data,
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_CURRENT_NOW);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_AVG:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_CURRENT_AVG);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_FULL:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data,
 						    BATTERY_CHARGE_FULL_UAH);
-		break;
-	case POWER_SUPPLY_PROP_CYCLE_COUNT:
-		val->intval = GOLDFISH_BATTERY_READ(data, BATTERY_CYCLE_COUNT);
-		break;
-	default:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CYCLE_COUNT:
+		val->पूर्णांकval = GOLDFISH_BATTERY_READ(data, BATTERY_CYCLE_COUNT);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum power_supply_property goldfish_battery_props[] = {
+अटल क्रमागत घातer_supply_property goldfish_battery_props[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
@@ -150,140 +151,140 @@ static enum power_supply_property goldfish_battery_props[] = {
 	POWER_SUPPLY_PROP_CURRENT_AVG,
 	POWER_SUPPLY_PROP_CHARGE_FULL,
 	POWER_SUPPLY_PROP_CYCLE_COUNT,
-};
+पूर्ण;
 
-static enum power_supply_property goldfish_ac_props[] = {
+अटल क्रमागत घातer_supply_property goldfish_ac_props[] = अणु
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_MAX,
 	POWER_SUPPLY_PROP_CURRENT_MAX,
-};
+पूर्ण;
 
-static irqreturn_t goldfish_battery_interrupt(int irq, void *dev_id)
-{
-	unsigned long irq_flags;
-	struct goldfish_battery_data *data = dev_id;
-	uint32_t status;
+अटल irqवापस_t goldfish_battery_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित दीर्घ irq_flags;
+	काष्ठा goldfish_battery_data *data = dev_id;
+	uपूर्णांक32_t status;
 
 	spin_lock_irqsave(&data->lock, irq_flags);
 
-	/* read status flags, which will clear the interrupt */
+	/* पढ़ो status flags, which will clear the पूर्णांकerrupt */
 	status = GOLDFISH_BATTERY_READ(data, BATTERY_INT_STATUS);
 	status &= BATTERY_INT_MASK;
 
-	if (status & BATTERY_STATUS_CHANGED)
-		power_supply_changed(data->battery);
-	if (status & AC_STATUS_CHANGED)
-		power_supply_changed(data->ac);
+	अगर (status & BATTERY_STATUS_CHANGED)
+		घातer_supply_changed(data->battery);
+	अगर (status & AC_STATUS_CHANGED)
+		घातer_supply_changed(data->ac);
 
 	spin_unlock_irqrestore(&data->lock, irq_flags);
-	return status ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस status ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static const struct power_supply_desc battery_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc battery_desc = अणु
 	.properties	= goldfish_battery_props,
 	.num_properties	= ARRAY_SIZE(goldfish_battery_props),
 	.get_property	= goldfish_battery_get_property,
 	.name		= "battery",
 	.type		= POWER_SUPPLY_TYPE_BATTERY,
-};
+पूर्ण;
 
-static const struct power_supply_desc ac_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc ac_desc = अणु
 	.properties	= goldfish_ac_props,
 	.num_properties	= ARRAY_SIZE(goldfish_ac_props),
 	.get_property	= goldfish_ac_get_property,
 	.name		= "ac",
 	.type		= POWER_SUPPLY_TYPE_MAINS,
-};
+पूर्ण;
 
-static int goldfish_battery_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct resource *r;
-	struct goldfish_battery_data *data;
-	struct power_supply_config psy_cfg = {};
+अटल पूर्णांक goldfish_battery_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा resource *r;
+	काष्ठा goldfish_battery_data *data;
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
-	if (data == NULL)
-		return -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
+	अगर (data == शून्य)
+		वापस -ENOMEM;
 
 	spin_lock_init(&data->lock);
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (r == NULL) {
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (r == शून्य) अणु
 		dev_err(&pdev->dev, "platform_get_resource failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	data->reg_base = devm_ioremap(&pdev->dev, r->start, resource_size(r));
-	if (data->reg_base == NULL) {
+	अगर (data->reg_base == शून्य) अणु
 		dev_err(&pdev->dev, "unable to remap MMIO\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	data->irq = platform_get_irq(pdev, 0);
-	if (data->irq < 0) {
+	data->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (data->irq < 0) अणु
 		dev_err(&pdev->dev, "platform_get_irq failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, data->irq,
-			       goldfish_battery_interrupt,
+			       goldfish_battery_पूर्णांकerrupt,
 			       IRQF_SHARED, pdev->name, data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	psy_cfg.drv_data = data;
 
-	data->ac = power_supply_register(&pdev->dev, &ac_desc, &psy_cfg);
-	if (IS_ERR(data->ac))
-		return PTR_ERR(data->ac);
+	data->ac = घातer_supply_रेजिस्टर(&pdev->dev, &ac_desc, &psy_cfg);
+	अगर (IS_ERR(data->ac))
+		वापस PTR_ERR(data->ac);
 
-	data->battery = power_supply_register(&pdev->dev, &battery_desc,
+	data->battery = घातer_supply_रेजिस्टर(&pdev->dev, &battery_desc,
 						&psy_cfg);
-	if (IS_ERR(data->battery)) {
-		power_supply_unregister(data->ac);
-		return PTR_ERR(data->battery);
-	}
+	अगर (IS_ERR(data->battery)) अणु
+		घातer_supply_unरेजिस्टर(data->ac);
+		वापस PTR_ERR(data->battery);
+	पूर्ण
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
 	GOLDFISH_BATTERY_WRITE(data, BATTERY_INT_ENABLE, BATTERY_INT_MASK);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int goldfish_battery_remove(struct platform_device *pdev)
-{
-	struct goldfish_battery_data *data = platform_get_drvdata(pdev);
+अटल पूर्णांक goldfish_battery_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा goldfish_battery_data *data = platक्रमm_get_drvdata(pdev);
 
-	power_supply_unregister(data->battery);
-	power_supply_unregister(data->ac);
-	return 0;
-}
+	घातer_supply_unरेजिस्टर(data->battery);
+	घातer_supply_unरेजिस्टर(data->ac);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id goldfish_battery_of_match[] = {
-	{ .compatible = "google,goldfish-battery", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id goldfish_battery_of_match[] = अणु
+	अणु .compatible = "google,goldfish-battery", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, goldfish_battery_of_match);
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id goldfish_battery_acpi_match[] = {
-	{ "GFSH0001", 0 },
-	{ },
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id goldfish_battery_acpi_match[] = अणु
+	अणु "GFSH0001", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, goldfish_battery_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver goldfish_battery_device = {
+अटल काष्ठा platक्रमm_driver goldfish_battery_device = अणु
 	.probe		= goldfish_battery_probe,
-	.remove		= goldfish_battery_remove,
-	.driver = {
+	.हटाओ		= goldfish_battery_हटाओ,
+	.driver = अणु
 		.name = "goldfish-battery",
 		.of_match_table = goldfish_battery_of_match,
 		.acpi_match_table = ACPI_PTR(goldfish_battery_acpi_match),
-	}
-};
-module_platform_driver(goldfish_battery_device);
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(goldfish_battery_device);
 
 MODULE_AUTHOR("Mike Lockwood lockwood@android.com");
 MODULE_LICENSE("GPL");

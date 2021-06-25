@@ -1,241 +1,242 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2019 Chelsio Communications, Inc. All rights reserved. */
 
-#include "cxgb4.h"
+#समावेश "cxgb4.h"
 
-static int cxgb4_mps_ref_dec_by_mac(struct adapter *adap,
-				    const u8 *addr, const u8 *mask)
-{
-	u8 bitmask[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-	struct mps_entries_ref *mps_entry, *tmp;
-	int ret = -EINVAL;
+अटल पूर्णांक cxgb4_mps_ref_dec_by_mac(काष्ठा adapter *adap,
+				    स्थिर u8 *addr, स्थिर u8 *mask)
+अणु
+	u8 biपंचांगask[] = अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण;
+	काष्ठा mps_entries_ref *mps_entry, *पंचांगp;
+	पूर्णांक ret = -EINVAL;
 
 	spin_lock_bh(&adap->mps_ref_lock);
-	list_for_each_entry_safe(mps_entry, tmp, &adap->mps_ref, list) {
-		if (ether_addr_equal(mps_entry->addr, addr) &&
-		    ether_addr_equal(mps_entry->mask, mask ? mask : bitmask)) {
-			if (!refcount_dec_and_test(&mps_entry->refcnt)) {
+	list_क्रम_each_entry_safe(mps_entry, पंचांगp, &adap->mps_ref, list) अणु
+		अगर (ether_addr_equal(mps_entry->addr, addr) &&
+		    ether_addr_equal(mps_entry->mask, mask ? mask : biपंचांगask)) अणु
+			अगर (!refcount_dec_and_test(&mps_entry->refcnt)) अणु
 				spin_unlock_bh(&adap->mps_ref_lock);
-				return -EBUSY;
-			}
+				वापस -EBUSY;
+			पूर्ण
 			list_del(&mps_entry->list);
-			kfree(mps_entry);
+			kमुक्त(mps_entry);
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&adap->mps_ref_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxgb4_mps_ref_dec(struct adapter *adap, u16 idx)
-{
-	struct mps_entries_ref *mps_entry, *tmp;
-	int ret = -EINVAL;
+अटल पूर्णांक cxgb4_mps_ref_dec(काष्ठा adapter *adap, u16 idx)
+अणु
+	काष्ठा mps_entries_ref *mps_entry, *पंचांगp;
+	पूर्णांक ret = -EINVAL;
 
 	spin_lock(&adap->mps_ref_lock);
-	list_for_each_entry_safe(mps_entry, tmp, &adap->mps_ref, list) {
-		if (mps_entry->idx == idx) {
-			if (!refcount_dec_and_test(&mps_entry->refcnt)) {
+	list_क्रम_each_entry_safe(mps_entry, पंचांगp, &adap->mps_ref, list) अणु
+		अगर (mps_entry->idx == idx) अणु
+			अगर (!refcount_dec_and_test(&mps_entry->refcnt)) अणु
 				spin_unlock(&adap->mps_ref_lock);
-				return -EBUSY;
-			}
+				वापस -EBUSY;
+			पूर्ण
 			list_del(&mps_entry->list);
-			kfree(mps_entry);
+			kमुक्त(mps_entry);
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&adap->mps_ref_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxgb4_mps_ref_inc(struct adapter *adap, const u8 *mac_addr,
-			     u16 idx, const u8 *mask)
-{
-	u8 bitmask[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-	struct mps_entries_ref *mps_entry;
-	int ret = 0;
+अटल पूर्णांक cxgb4_mps_ref_inc(काष्ठा adapter *adap, स्थिर u8 *mac_addr,
+			     u16 idx, स्थिर u8 *mask)
+अणु
+	u8 biपंचांगask[] = अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण;
+	काष्ठा mps_entries_ref *mps_entry;
+	पूर्णांक ret = 0;
 
 	spin_lock_bh(&adap->mps_ref_lock);
-	list_for_each_entry(mps_entry, &adap->mps_ref, list) {
-		if (mps_entry->idx == idx) {
+	list_क्रम_each_entry(mps_entry, &adap->mps_ref, list) अणु
+		अगर (mps_entry->idx == idx) अणु
 			refcount_inc(&mps_entry->refcnt);
-			goto unlock;
-		}
-	}
-	mps_entry = kzalloc(sizeof(*mps_entry), GFP_ATOMIC);
-	if (!mps_entry) {
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
+	mps_entry = kzalloc(माप(*mps_entry), GFP_ATOMIC);
+	अगर (!mps_entry) अणु
 		ret = -ENOMEM;
-		goto unlock;
-	}
-	ether_addr_copy(mps_entry->mask, mask ? mask : bitmask);
+		जाओ unlock;
+	पूर्ण
+	ether_addr_copy(mps_entry->mask, mask ? mask : biपंचांगask);
 	ether_addr_copy(mps_entry->addr, mac_addr);
 	mps_entry->idx = idx;
 	refcount_set(&mps_entry->refcnt, 1);
 	list_add_tail(&mps_entry->list, &adap->mps_ref);
 unlock:
 	spin_unlock_bh(&adap->mps_ref_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxgb4_free_mac_filt(struct adapter *adap, unsigned int viid,
-			unsigned int naddr, const u8 **addr, bool sleep_ok)
-{
-	int ret, i;
+पूर्णांक cxgb4_मुक्त_mac_filt(काष्ठा adapter *adap, अचिन्हित पूर्णांक viid,
+			अचिन्हित पूर्णांक naddr, स्थिर u8 **addr, bool sleep_ok)
+अणु
+	पूर्णांक ret, i;
 
-	for (i = 0; i < naddr; i++) {
-		if (!cxgb4_mps_ref_dec_by_mac(adap, addr[i], NULL)) {
-			ret = t4_free_mac_filt(adap, adap->mbox, viid,
+	क्रम (i = 0; i < naddr; i++) अणु
+		अगर (!cxgb4_mps_ref_dec_by_mac(adap, addr[i], शून्य)) अणु
+			ret = t4_मुक्त_mac_filt(adap, adap->mbox, viid,
 					       1, &addr[i], sleep_ok);
-			if (ret < 0)
-				return ret;
-		}
-	}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* return number of filters freed */
-	return naddr;
-}
+	/* वापस number of filters मुक्तd */
+	वापस naddr;
+पूर्ण
 
-int cxgb4_alloc_mac_filt(struct adapter *adap, unsigned int viid,
-			 bool free, unsigned int naddr, const u8 **addr,
+पूर्णांक cxgb4_alloc_mac_filt(काष्ठा adapter *adap, अचिन्हित पूर्णांक viid,
+			 bool मुक्त, अचिन्हित पूर्णांक naddr, स्थिर u8 **addr,
 			 u16 *idx, u64 *hash, bool sleep_ok)
-{
-	int ret, i;
+अणु
+	पूर्णांक ret, i;
 
-	ret = t4_alloc_mac_filt(adap, adap->mbox, viid, free,
+	ret = t4_alloc_mac_filt(adap, adap->mbox, viid, मुक्त,
 				naddr, addr, idx, hash, sleep_ok);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	for (i = 0; i < naddr; i++) {
-		if (idx[i] != 0xffff) {
-			if (cxgb4_mps_ref_inc(adap, addr[i], idx[i], NULL)) {
+	क्रम (i = 0; i < naddr; i++) अणु
+		अगर (idx[i] != 0xffff) अणु
+			अगर (cxgb4_mps_ref_inc(adap, addr[i], idx[i], शून्य)) अणु
 				ret = -ENOMEM;
-				goto error;
-			}
-		}
-	}
+				जाओ error;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	goto out;
+	जाओ out;
 error:
-	cxgb4_free_mac_filt(adap, viid, naddr, addr, sleep_ok);
+	cxgb4_मुक्त_mac_filt(adap, viid, naddr, addr, sleep_ok);
 
 out:
 	/* Returns a negative error number or the number of filters allocated */
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxgb4_update_mac_filt(struct port_info *pi, unsigned int viid,
-			  int *tcam_idx, const u8 *addr,
+पूर्णांक cxgb4_update_mac_filt(काष्ठा port_info *pi, अचिन्हित पूर्णांक viid,
+			  पूर्णांक *tcam_idx, स्थिर u8 *addr,
 			  bool persistent, u8 *smt_idx)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	ret = cxgb4_change_mac(pi, viid, tcam_idx,
 			       addr, persistent, smt_idx);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	cxgb4_mps_ref_inc(pi->adapter, addr, *tcam_idx, NULL);
-	return ret;
-}
+	cxgb4_mps_ref_inc(pi->adapter, addr, *tcam_idx, शून्य);
+	वापस ret;
+पूर्ण
 
-int cxgb4_free_raw_mac_filt(struct adapter *adap,
-			    unsigned int viid,
-			    const u8 *addr,
-			    const u8 *mask,
-			    unsigned int idx,
+पूर्णांक cxgb4_मुक्त_raw_mac_filt(काष्ठा adapter *adap,
+			    अचिन्हित पूर्णांक viid,
+			    स्थिर u8 *addr,
+			    स्थिर u8 *mask,
+			    अचिन्हित पूर्णांक idx,
 			    u8 lookup_type,
 			    u8 port_id,
 			    bool sleep_ok)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 
-	if (!cxgb4_mps_ref_dec(adap, idx))
-		ret = t4_free_raw_mac_filt(adap, viid, addr,
+	अगर (!cxgb4_mps_ref_dec(adap, idx))
+		ret = t4_मुक्त_raw_mac_filt(adap, viid, addr,
 					   mask, idx, lookup_type,
 					   port_id, sleep_ok);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxgb4_alloc_raw_mac_filt(struct adapter *adap,
-			     unsigned int viid,
-			     const u8 *addr,
-			     const u8 *mask,
-			     unsigned int idx,
+पूर्णांक cxgb4_alloc_raw_mac_filt(काष्ठा adapter *adap,
+			     अचिन्हित पूर्णांक viid,
+			     स्थिर u8 *addr,
+			     स्थिर u8 *mask,
+			     अचिन्हित पूर्णांक idx,
 			     u8 lookup_type,
 			     u8 port_id,
 			     bool sleep_ok)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	ret = t4_alloc_raw_mac_filt(adap, viid, addr,
 				    mask, idx, lookup_type,
 				    port_id, sleep_ok);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (cxgb4_mps_ref_inc(adap, addr, ret, mask)) {
+	अगर (cxgb4_mps_ref_inc(adap, addr, ret, mask)) अणु
 		ret = -ENOMEM;
-		t4_free_raw_mac_filt(adap, viid, addr,
+		t4_मुक्त_raw_mac_filt(adap, viid, addr,
 				     mask, idx, lookup_type,
 				     port_id, sleep_ok);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxgb4_free_encap_mac_filt(struct adapter *adap, unsigned int viid,
-			      int idx, bool sleep_ok)
-{
-	int ret = 0;
+पूर्णांक cxgb4_मुक्त_encap_mac_filt(काष्ठा adapter *adap, अचिन्हित पूर्णांक viid,
+			      पूर्णांक idx, bool sleep_ok)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!cxgb4_mps_ref_dec(adap, idx))
-		ret = t4_free_encap_mac_filt(adap, viid, idx, sleep_ok);
+	अगर (!cxgb4_mps_ref_dec(adap, idx))
+		ret = t4_मुक्त_encap_mac_filt(adap, viid, idx, sleep_ok);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxgb4_alloc_encap_mac_filt(struct adapter *adap, unsigned int viid,
-			       const u8 *addr, const u8 *mask,
-			       unsigned int vni, unsigned int vni_mask,
+पूर्णांक cxgb4_alloc_encap_mac_filt(काष्ठा adapter *adap, अचिन्हित पूर्णांक viid,
+			       स्थिर u8 *addr, स्थिर u8 *mask,
+			       अचिन्हित पूर्णांक vni, अचिन्हित पूर्णांक vni_mask,
 			       u8 dip_hit, u8 lookup_type, bool sleep_ok)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	ret = t4_alloc_encap_mac_filt(adap, viid, addr, mask, vni, vni_mask,
 				      dip_hit, lookup_type, sleep_ok);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (cxgb4_mps_ref_inc(adap, addr, ret, mask)) {
+	अगर (cxgb4_mps_ref_inc(adap, addr, ret, mask)) अणु
 		ret = -ENOMEM;
-		t4_free_encap_mac_filt(adap, viid, ret, sleep_ok);
-	}
-	return ret;
-}
+		t4_मुक्त_encap_mac_filt(adap, viid, ret, sleep_ok);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int cxgb4_init_mps_ref_entries(struct adapter *adap)
-{
+पूर्णांक cxgb4_init_mps_ref_entries(काष्ठा adapter *adap)
+अणु
 	spin_lock_init(&adap->mps_ref_lock);
 	INIT_LIST_HEAD(&adap->mps_ref);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void cxgb4_free_mps_ref_entries(struct adapter *adap)
-{
-	struct mps_entries_ref *mps_entry, *tmp;
+व्योम cxgb4_मुक्त_mps_ref_entries(काष्ठा adapter *adap)
+अणु
+	काष्ठा mps_entries_ref *mps_entry, *पंचांगp;
 
-	if (list_empty(&adap->mps_ref))
-		return;
+	अगर (list_empty(&adap->mps_ref))
+		वापस;
 
 	spin_lock(&adap->mps_ref_lock);
-	list_for_each_entry_safe(mps_entry, tmp, &adap->mps_ref, list) {
+	list_क्रम_each_entry_safe(mps_entry, पंचांगp, &adap->mps_ref, list) अणु
 		list_del(&mps_entry->list);
-		kfree(mps_entry);
-	}
+		kमुक्त(mps_entry);
+	पूर्ण
 	spin_unlock(&adap->mps_ref_lock);
-}
+पूर्ण

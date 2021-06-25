@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Device driver for the SYMBIOS/LSILOGIC 53C8XX and 53C1010 family 
+ * Device driver क्रम the SYMBIOS/LSILOGIC 53C8XX and 53C1010 family 
  * of PCI-SCSI IO processors.
  *
- * Copyright (C) 1999-2001  Gerard Roudier <groudier@free.fr>
+ * Copyright (C) 1999-2001  Gerard Roudier <groudier@मुक्त.fr>
  *
  * This driver is derived from the Linux sym53c8xx driver.
  * Copyright (C) 1998-2000  Gerard Roudier
@@ -11,247 +12,247 @@
  * The sym53c8xx driver is derived from the ncr53c8xx driver that had been 
  * a port of the FreeBSD ncr driver to Linux-1.2.13.
  *
- * The original ncr driver has been written for 386bsd and FreeBSD by
+ * The original ncr driver has been written क्रम 386bsd and FreeBSD by
  *         Wolfgang Stanglmeier        <wolf@cologne.de>
  *         Stefan Esser                <se@mi.Uni-Koeln.de>
  * Copyright (C) 1994  Wolfgang Stanglmeier
  *
  * Other major contributions:
  *
- * NVRAM detection and reading.
- * Copyright (C) 1997 Richard Waltham <dormouse@farsrobt.demon.co.uk>
+ * NVRAM detection and पढ़ोing.
+ * Copyright (C) 1997 Riअक्षरd Waltham <करोrmouse@farsrobt.demon.co.uk>
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef SYM_GLUE_H
-#define SYM_GLUE_H
+#अगर_अघोषित SYM_GLUE_H
+#घोषणा SYM_GLUE_H
 
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/pci.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/types.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/types.h>
 
-#include <asm/io.h>
-#ifdef __sparc__
-#  include <asm/irq.h>
-#endif
+#समावेश <यंत्र/पन.स>
+#अगर_घोषित __sparc__
+#  include <यंत्र/irq.h>
+#पूर्ण_अगर
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_transport_spi.h>
-#include <scsi/scsi_host.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_transport_spi.h>
+#समावेश <scsi/scsi_host.h>
 
-#include "sym53c8xx.h"
-#include "sym_defs.h"
-#include "sym_misc.h"
-
-/*
- * Configuration addendum for Linux.
- */
-#define	SYM_CONF_TIMER_INTERVAL		((HZ+1)/2)
-
-#undef SYM_OPT_HANDLE_DEVICE_QUEUEING
-#define SYM_OPT_LIMIT_COMMAND_REORDERING
+#समावेश "sym53c8xx.h"
+#समावेश "sym_defs.h"
+#समावेश "sym_misc.h"
 
 /*
- *  Print a message with severity.
+ * Configuration addendum क्रम Linux.
  */
-#define printf_emerg(args...)	printk(KERN_EMERG args)
-#define	printf_alert(args...)	printk(KERN_ALERT args)
-#define	printf_crit(args...)	printk(KERN_CRIT args)
-#define	printf_err(args...)	printk(KERN_ERR	args)
-#define	printf_warning(args...)	printk(KERN_WARNING args)
-#define	printf_notice(args...)	printk(KERN_NOTICE args)
-#define	printf_info(args...)	printk(KERN_INFO args)
-#define	printf_debug(args...)	printk(KERN_DEBUG args)
-#define	printf(args...)		printk(args)
+#घोषणा	SYM_CONF_TIMER_INTERVAL		((HZ+1)/2)
+
+#अघोषित SYM_OPT_HANDLE_DEVICE_QUEUEING
+#घोषणा SYM_OPT_LIMIT_COMMAND_REORDERING
+
+/*
+ *  Prपूर्णांक a message with severity.
+ */
+#घोषणा म_लिखो_emerg(args...)	prपूर्णांकk(KERN_EMERG args)
+#घोषणा	म_लिखो_alert(args...)	prपूर्णांकk(KERN_ALERT args)
+#घोषणा	म_लिखो_crit(args...)	prपूर्णांकk(KERN_CRIT args)
+#घोषणा	म_लिखो_err(args...)	prपूर्णांकk(KERN_ERR	args)
+#घोषणा	म_लिखो_warning(args...)	prपूर्णांकk(KERN_WARNING args)
+#घोषणा	म_लिखो_notice(args...)	prपूर्णांकk(KERN_NOTICE args)
+#घोषणा	म_लिखो_info(args...)	prपूर्णांकk(KERN_INFO args)
+#घोषणा	म_लिखो_debug(args...)	prपूर्णांकk(KERN_DEBUG args)
+#घोषणा	म_लिखो(args...)		prपूर्णांकk(args)
 
 /*
  *  A 'read barrier' flushes any data that have been prefetched 
  *  by the processor due to out of order execution. Such a barrier 
  *  must notably be inserted prior to looking at data that have 
- *  been DMAed, assuming that program does memory READs in proper 
+ *  been DMAed, assuming that program करोes memory READs in proper 
  *  order and that the device ensured proper ordering of WRITEs.
  *
  *  A 'write barrier' prevents any previous WRITEs to pass further 
- *  WRITEs. Such barriers must be inserted each time another agent 
+ *  WRITEs. Such barriers must be inserted each समय another agent 
  *  relies on ordering of WRITEs.
  *
- *  Note that, due to posting of PCI memory writes, we also must 
- *  insert dummy PCI read transactions when some ordering involving 
- *  both directions over the PCI does matter. PCI transactions are 
+ *  Note that, due to posting of PCI memory ग_लिखोs, we also must 
+ *  insert dummy PCI पढ़ो transactions when some ordering involving 
+ *  both directions over the PCI करोes matter. PCI transactions are 
  *  fully ordered in each direction.
  */
 
-#define MEMORY_READ_BARRIER()	rmb()
-#define MEMORY_WRITE_BARRIER()	wmb()
+#घोषणा MEMORY_READ_BARRIER()	rmb()
+#घोषणा MEMORY_WRITE_BARRIER()	wmb()
 
 /*
- *  IO functions definition for big/little endian CPU support.
+ *  IO functions definition क्रम big/little endian CPU support.
  *  For now, PCI chips are only supported in little endian addressing mode, 
  */
 
-#ifdef	__BIG_ENDIAN
+#अगर_घोषित	__BIG_ENDIAN
 
-#define	readw_l2b	readw
-#define	readl_l2b	readl
-#define	writew_b2l	writew
-#define	writel_b2l	writel
+#घोषणा	पढ़ोw_l2b	पढ़ोw
+#घोषणा	पढ़ोl_l2b	पढ़ोl
+#घोषणा	ग_लिखोw_b2l	ग_लिखोw
+#घोषणा	ग_लिखोl_b2l	ग_लिखोl
 
-#else	/* little endian */
+#अन्यथा	/* little endian */
 
-#define	readw_raw	readw
-#define	readl_raw	readl
-#define	writew_raw	writew
-#define	writel_raw	writel
+#घोषणा	पढ़ोw_raw	पढ़ोw
+#घोषणा	पढ़ोl_raw	पढ़ोl
+#घोषणा	ग_लिखोw_raw	ग_लिखोw
+#घोषणा	ग_लिखोl_raw	ग_लिखोl
 
-#endif /* endian */
+#पूर्ण_अगर /* endian */
 
-#ifdef	SYM_CONF_CHIP_BIG_ENDIAN
-#error	"Chips in BIG ENDIAN addressing mode are not (yet) supported"
-#endif
+#अगर_घोषित	SYM_CONF_CHIP_BIG_ENDIAN
+#त्रुटि	"Chips in BIG ENDIAN addressing mode are not (yet) supported"
+#पूर्ण_अगर
 
 /*
  *  If the CPU and the chip use same endian-ness addressing,
- *  no byte reordering is needed for script patching.
- *  Macro cpu_to_scr() is to be used for script patching.
- *  Macro scr_to_cpu() is to be used for getting a DWORD 
+ *  no byte reordering is needed क्रम script patching.
+ *  Macro cpu_to_scr() is to be used क्रम script patching.
+ *  Macro scr_to_cpu() is to be used क्रम getting a DWORD 
  *  from the script.
  */
 
-#define cpu_to_scr(dw)	cpu_to_le32(dw)
-#define scr_to_cpu(dw)	le32_to_cpu(dw)
+#घोषणा cpu_to_scr(dw)	cpu_to_le32(dw)
+#घोषणा scr_to_cpu(dw)	le32_to_cpu(dw)
 
 /*
- *  These ones are used as return code from 
+ *  These ones are used as वापस code from 
  *  error recovery handlers under Linux.
  */
-#define SCSI_SUCCESS	SUCCESS
-#define SCSI_FAILED	FAILED
+#घोषणा SCSI_SUCCESS	SUCCESS
+#घोषणा SCSI_FAILED	FAILED
 
 /*
- *  System specific target data structure.
- *  None for now, under Linux.
+ *  System specअगरic target data काष्ठाure.
+ *  None क्रम now, under Linux.
  */
-/* #define SYM_HAVE_STCB */
+/* #घोषणा SYM_HAVE_STCB */
 
 /*
- *  System specific lun data structure.
+ *  System specअगरic lun data काष्ठाure.
  */
-#define SYM_HAVE_SLCB
-struct sym_slcb {
-	u_short	reqtags;	/* Number of tags requested by user */
-	u_short scdev_depth;	/* Queue depth set in select_queue_depth() */
-};
+#घोषणा SYM_HAVE_SLCB
+काष्ठा sym_slcb अणु
+	u_लघु	reqtags;	/* Number of tags requested by user */
+	u_लघु scdev_depth;	/* Queue depth set in select_queue_depth() */
+पूर्ण;
 
 /*
- *  System specific command data structure.
+ *  System specअगरic command data काष्ठाure.
  *  Not needed under Linux.
  */
-/* struct sym_sccb */
+/* काष्ठा sym_sccb */
 
 /*
- *  System specific host data structure.
+ *  System specअगरic host data काष्ठाure.
  */
-struct sym_shcb {
+काष्ठा sym_shcb अणु
 	/*
-	 *  Chip and controller identification.
+	 *  Chip and controller identअगरication.
 	 */
-	int		unit;
-	char		inst_name[16];
-	char		chip_name[8];
+	पूर्णांक		unit;
+	अक्षर		inst_name[16];
+	अक्षर		chip_name[8];
 
-	struct Scsi_Host *host;
+	काष्ठा Scsi_Host *host;
 
-	void __iomem *	ioaddr;		/* MMIO kernel io address	*/
-	void __iomem *	ramaddr;	/* RAM  kernel io address	*/
+	व्योम __iomem *	ioaddr;		/* MMIO kernel io address	*/
+	व्योम __iomem *	ramaddr;	/* RAM  kernel io address	*/
 
-	struct timer_list timer;	/* Timer handler link header	*/
-	u_long		lasttime;
-	u_long		settle_time;	/* Resetting the SCSI BUS	*/
-	u_char		settle_time_valid;
-};
+	काष्ठा समयr_list समयr;	/* Timer handler link header	*/
+	u_दीर्घ		lastसमय;
+	u_दीर्घ		settle_समय;	/* Resetting the SCSI BUS	*/
+	u_अक्षर		settle_समय_valid;
+पूर्ण;
 
 /*
  *  Return the name of the controller.
  */
-#define sym_name(np) (np)->s.inst_name
+#घोषणा sym_name(np) (np)->s.inst_name
 
-struct sym_nvram;
-
-/*
- * The IO macros require a struct called 's' and are abused in sym_nvram.c
- */
-struct sym_device {
-	struct pci_dev *pdev;
-	unsigned long mmio_base;
-	unsigned long ram_base;
-	struct {
-		void __iomem *ioaddr;
-		void __iomem *ramaddr;
-	} s;
-	struct sym_chip chip;
-	struct sym_nvram *nvram;
-	u_char host_id;
-};
+काष्ठा sym_nvram;
 
 /*
- *  Driver host data structure.
+ * The IO macros require a काष्ठा called 's' and are abused in sym_nvram.c
  */
-struct sym_data {
-	struct sym_hcb *ncb;
-	struct completion *io_reset;		/* PCI error handling */
-	struct pci_dev *pdev;
-};
+काष्ठा sym_device अणु
+	काष्ठा pci_dev *pdev;
+	अचिन्हित दीर्घ mmio_base;
+	अचिन्हित दीर्घ ram_base;
+	काष्ठा अणु
+		व्योम __iomem *ioaddr;
+		व्योम __iomem *ramaddr;
+	पूर्ण s;
+	काष्ठा sym_chip chip;
+	काष्ठा sym_nvram *nvram;
+	u_अक्षर host_id;
+पूर्ण;
 
-static inline struct sym_hcb * sym_get_hcb(struct Scsi_Host *host)
-{
-	return ((struct sym_data *)host->hostdata)->ncb;
-}
+/*
+ *  Driver host data काष्ठाure.
+ */
+काष्ठा sym_data अणु
+	काष्ठा sym_hcb *ncb;
+	काष्ठा completion *io_reset;		/* PCI error handling */
+	काष्ठा pci_dev *pdev;
+पूर्ण;
 
-#include "sym_fw.h"
-#include "sym_hipd.h"
+अटल अंतरभूत काष्ठा sym_hcb * sym_get_hcb(काष्ठा Scsi_Host *host)
+अणु
+	वापस ((काष्ठा sym_data *)host->hostdata)->ncb;
+पूर्ण
+
+#समावेश "sym_fw.h"
+#समावेश "sym_hipd.h"
 
 /*
  *  Set the status field of a CAM CCB.
  */
-static inline void
-sym_set_cam_status(struct scsi_cmnd *cmd, int status)
-{
+अटल अंतरभूत व्योम
+sym_set_cam_status(काष्ठा scsi_cmnd *cmd, पूर्णांक status)
+अणु
 	cmd->result &= ~(0xff  << 16);
 	cmd->result |= (status << 16);
-}
+पूर्ण
 
 /*
  *  Get the status field of a CAM CCB.
  */
-static inline int
-sym_get_cam_status(struct scsi_cmnd *cmd)
-{
-	return host_byte(cmd->result);
-}
+अटल अंतरभूत पूर्णांक
+sym_get_cam_status(काष्ठा scsi_cmnd *cmd)
+अणु
+	वापस host_byte(cmd->result);
+पूर्ण
 
 /*
- *  Build CAM result for a successful IO and for a failed IO.
+ *  Build CAM result क्रम a successful IO and क्रम a failed IO.
  */
-static inline void sym_set_cam_result_ok(struct sym_ccb *cp, struct scsi_cmnd *cmd, int resid)
-{
+अटल अंतरभूत व्योम sym_set_cam_result_ok(काष्ठा sym_ccb *cp, काष्ठा scsi_cmnd *cmd, पूर्णांक resid)
+अणु
 	scsi_set_resid(cmd, resid);
 	cmd->result = (DID_OK << 16) | (cp->ssss_status & 0x7f);
-}
-void sym_set_cam_result_error(struct sym_hcb *np, struct sym_ccb *cp, int resid);
+पूर्ण
+व्योम sym_set_cam_result_error(काष्ठा sym_hcb *np, काष्ठा sym_ccb *cp, पूर्णांक resid);
 
-void sym_xpt_done(struct sym_hcb *np, struct scsi_cmnd *ccb);
-#define sym_print_addr(cmd, arg...) dev_info(&cmd->device->sdev_gendev , ## arg)
-void sym_xpt_async_bus_reset(struct sym_hcb *np);
-int  sym_setup_data_and_start (struct sym_hcb *np, struct scsi_cmnd *csio, struct sym_ccb *cp);
-void sym_log_bus_error(struct Scsi_Host *);
-void sym_dump_registers(struct Scsi_Host *);
+व्योम sym_xpt_करोne(काष्ठा sym_hcb *np, काष्ठा scsi_cmnd *ccb);
+#घोषणा sym_prपूर्णांक_addr(cmd, arg...) dev_info(&cmd->device->sdev_gendev , ## arg)
+व्योम sym_xpt_async_bus_reset(काष्ठा sym_hcb *np);
+पूर्णांक  sym_setup_data_and_start (काष्ठा sym_hcb *np, काष्ठा scsi_cmnd *csio, काष्ठा sym_ccb *cp);
+व्योम sym_log_bus_error(काष्ठा Scsi_Host *);
+व्योम sym_dump_रेजिस्टरs(काष्ठा Scsi_Host *);
 
-#endif /* SYM_GLUE_H */
+#पूर्ण_अगर /* SYM_GLUE_H */

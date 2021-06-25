@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Nuvoton NPCM7xx I2C Controller driver
  *
  * Copyright (C) 2020 Nuvoton Technologies tali.perry@nuvoton.com
  */
-#include <linux/bitfield.h>
-#include <linux/clk.h>
-#include <linux/debugfs.h>
-#include <linux/errno.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/iopoll.h>
-#include <linux/irq.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-enum i2c_mode {
+क्रमागत i2c_mode अणु
 	I2C_MASTER,
 	I2C_SLAVE,
-};
+पूर्ण;
 
 /*
  * External I2C Interface driver xfer indication values, which indicate status
  * of the bus.
  */
-enum i2c_state_ind {
+क्रमागत i2c_state_ind अणु
 	I2C_NO_STATUS_IND = 0,
 	I2C_SLAVE_RCV_IND,
 	I2C_SLAVE_XMIT_IND,
@@ -42,38 +43,38 @@ enum i2c_state_ind {
 	I2C_WAKE_UP_IND,
 	I2C_BLOCK_BYTES_ERR_IND,
 	I2C_SLAVE_RCV_MISSING_DATA_IND,
-};
+पूर्ण;
 
 /*
  * Operation type values (used to define the operation currently running)
- * module is interrupt driven, on each interrupt the current operation is
- * checked to see if the module is currently reading or writing.
+ * module is पूर्णांकerrupt driven, on each पूर्णांकerrupt the current operation is
+ * checked to see अगर the module is currently पढ़ोing or writing.
  */
-enum i2c_oper {
+क्रमागत i2c_oper अणु
 	I2C_NO_OPER = 0,
 	I2C_WRITE_OPER,
 	I2C_READ_OPER,
-};
+पूर्ण;
 
-/* I2C Bank (module had 2 banks of registers) */
-enum i2c_bank {
+/* I2C Bank (module had 2 banks of रेजिस्टरs) */
+क्रमागत i2c_bank अणु
 	I2C_BANK_0 = 0,
 	I2C_BANK_1,
-};
+पूर्ण;
 
-/* Internal I2C states values (for the I2C module state machine). */
-enum i2c_state {
+/* Internal I2C states values (क्रम the I2C module state machine). */
+क्रमागत i2c_state अणु
 	I2C_DISABLE = 0,
 	I2C_IDLE,
 	I2C_MASTER_START,
 	I2C_SLAVE_MATCH,
 	I2C_OPER_STARTED,
 	I2C_STOP_PENDING,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
 /* Module supports setting multiple own slave addresses */
-enum i2c_addr {
+क्रमागत i2c_addr अणु
 	I2C_SLAVE_ADDR1 = 0,
 	I2C_SLAVE_ADDR2,
 	I2C_SLAVE_ADDR3,
@@ -86,205 +87,205 @@ enum i2c_addr {
 	I2C_SLAVE_ADDR10,
 	I2C_GC_ADDR,
 	I2C_ARP_ADDR,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-/* init register and default value required to enable module */
-#define NPCM_I2CSEGCTL			0xE4
-#define NPCM_I2CSEGCTL_INIT_VAL		0x0333F000
+/* init रेजिस्टर and शेष value required to enable module */
+#घोषणा NPCM_I2CSEGCTL			0xE4
+#घोषणा NPCM_I2CSEGCTL_INIT_VAL		0x0333F000
 
 /* Common regs */
-#define NPCM_I2CSDA			0x00
-#define NPCM_I2CST			0x02
-#define NPCM_I2CCST			0x04
-#define NPCM_I2CCTL1			0x06
-#define NPCM_I2CADDR1			0x08
-#define NPCM_I2CCTL2			0x0A
-#define NPCM_I2CADDR2			0x0C
-#define NPCM_I2CCTL3			0x0E
-#define NPCM_I2CCST2			0x18
-#define NPCM_I2CCST3			0x19
-#define I2C_VER				0x1F
+#घोषणा NPCM_I2CSDA			0x00
+#घोषणा NPCM_I2CST			0x02
+#घोषणा NPCM_I2CCST			0x04
+#घोषणा NPCM_I2CCTL1			0x06
+#घोषणा NPCM_I2CADDR1			0x08
+#घोषणा NPCM_I2CCTL2			0x0A
+#घोषणा NPCM_I2CADDR2			0x0C
+#घोषणा NPCM_I2CCTL3			0x0E
+#घोषणा NPCM_I2CCST2			0x18
+#घोषणा NPCM_I2CCST3			0x19
+#घोषणा I2C_VER				0x1F
 
 /*BANK0 regs*/
-#define NPCM_I2CADDR3			0x10
-#define NPCM_I2CADDR7			0x11
-#define NPCM_I2CADDR4			0x12
-#define NPCM_I2CADDR8			0x13
-#define NPCM_I2CADDR5			0x14
-#define NPCM_I2CADDR9			0x15
-#define NPCM_I2CADDR6			0x16
-#define NPCM_I2CADDR10			0x17
+#घोषणा NPCM_I2CADDR3			0x10
+#घोषणा NPCM_I2CADDR7			0x11
+#घोषणा NPCM_I2CADDR4			0x12
+#घोषणा NPCM_I2CADDR8			0x13
+#घोषणा NPCM_I2CADDR5			0x14
+#घोषणा NPCM_I2CADDR9			0x15
+#घोषणा NPCM_I2CADDR6			0x16
+#घोषणा NPCM_I2CADDR10			0x17
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
 /*
  * npcm_i2caddr array:
  * The module supports having multiple own slave addresses.
  * Since the addr regs are sprinkled all over the address space,
- * use this array to get the address or each register.
+ * use this array to get the address or each रेजिस्टर.
  */
-#define I2C_NUM_OWN_ADDR 10
-static const int npcm_i2caddr[I2C_NUM_OWN_ADDR] = {
+#घोषणा I2C_NUM_OWN_ADDR 10
+अटल स्थिर पूर्णांक npcm_i2caddr[I2C_NUM_OWN_ADDR] = अणु
 	NPCM_I2CADDR1, NPCM_I2CADDR2, NPCM_I2CADDR3, NPCM_I2CADDR4,
 	NPCM_I2CADDR5, NPCM_I2CADDR6, NPCM_I2CADDR7, NPCM_I2CADDR8,
 	NPCM_I2CADDR9, NPCM_I2CADDR10,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#define NPCM_I2CCTL4			0x1A
-#define NPCM_I2CCTL5			0x1B
-#define NPCM_I2CSCLLT			0x1C /* SCL Low Time */
-#define NPCM_I2CFIF_CTL			0x1D /* FIFO Control */
-#define NPCM_I2CSCLHT			0x1E /* SCL High Time */
+#घोषणा NPCM_I2CCTL4			0x1A
+#घोषणा NPCM_I2CCTL5			0x1B
+#घोषणा NPCM_I2CSCLLT			0x1C /* SCL Low Time */
+#घोषणा NPCM_I2CFIF_CTL			0x1D /* FIFO Control */
+#घोषणा NPCM_I2CSCLHT			0x1E /* SCL High Time */
 
 /* BANK 1 regs */
-#define NPCM_I2CFIF_CTS			0x10 /* Both FIFOs Control and Status */
-#define NPCM_I2CTXF_CTL			0x12 /* Tx-FIFO Control */
-#define NPCM_I2CT_OUT			0x14 /* Bus T.O. */
-#define NPCM_I2CPEC			0x16 /* PEC Data */
-#define NPCM_I2CTXF_STS			0x1A /* Tx-FIFO Status */
-#define NPCM_I2CRXF_STS			0x1C /* Rx-FIFO Status */
-#define NPCM_I2CRXF_CTL			0x1E /* Rx-FIFO Control */
+#घोषणा NPCM_I2CFIF_CTS			0x10 /* Both FIFOs Control and Status */
+#घोषणा NPCM_I2CTXF_CTL			0x12 /* Tx-FIFO Control */
+#घोषणा NPCM_I2CT_OUT			0x14 /* Bus T.O. */
+#घोषणा NPCM_I2CPEC			0x16 /* PEC Data */
+#घोषणा NPCM_I2CTXF_STS			0x1A /* Tx-FIFO Status */
+#घोषणा NPCM_I2CRXF_STS			0x1C /* Rx-FIFO Status */
+#घोषणा NPCM_I2CRXF_CTL			0x1E /* Rx-FIFO Control */
 
 /* NPCM_I2CST reg fields */
-#define NPCM_I2CST_XMIT			BIT(0)
-#define NPCM_I2CST_MASTER		BIT(1)
-#define NPCM_I2CST_NMATCH		BIT(2)
-#define NPCM_I2CST_STASTR		BIT(3)
-#define NPCM_I2CST_NEGACK		BIT(4)
-#define NPCM_I2CST_BER			BIT(5)
-#define NPCM_I2CST_SDAST		BIT(6)
-#define NPCM_I2CST_SLVSTP		BIT(7)
+#घोषणा NPCM_I2CST_XMIT			BIT(0)
+#घोषणा NPCM_I2CST_MASTER		BIT(1)
+#घोषणा NPCM_I2CST_NMATCH		BIT(2)
+#घोषणा NPCM_I2CST_STASTR		BIT(3)
+#घोषणा NPCM_I2CST_NEGACK		BIT(4)
+#घोषणा NPCM_I2CST_BER			BIT(5)
+#घोषणा NPCM_I2CST_SDAST		BIT(6)
+#घोषणा NPCM_I2CST_SLVSTP		BIT(7)
 
 /* NPCM_I2CCST reg fields */
-#define NPCM_I2CCST_BUSY		BIT(0)
-#define NPCM_I2CCST_BB			BIT(1)
-#define NPCM_I2CCST_MATCH		BIT(2)
-#define NPCM_I2CCST_GCMATCH		BIT(3)
-#define NPCM_I2CCST_TSDA		BIT(4)
-#define NPCM_I2CCST_TGSCL		BIT(5)
-#define NPCM_I2CCST_MATCHAF		BIT(6)
-#define NPCM_I2CCST_ARPMATCH		BIT(7)
+#घोषणा NPCM_I2CCST_BUSY		BIT(0)
+#घोषणा NPCM_I2CCST_BB			BIT(1)
+#घोषणा NPCM_I2CCST_MATCH		BIT(2)
+#घोषणा NPCM_I2CCST_GCMATCH		BIT(3)
+#घोषणा NPCM_I2CCST_TSDA		BIT(4)
+#घोषणा NPCM_I2CCST_TGSCL		BIT(5)
+#घोषणा NPCM_I2CCST_MATCHAF		BIT(6)
+#घोषणा NPCM_I2CCST_ARPMATCH		BIT(7)
 
 /* NPCM_I2CCTL1 reg fields */
-#define NPCM_I2CCTL1_START		BIT(0)
-#define NPCM_I2CCTL1_STOP		BIT(1)
-#define NPCM_I2CCTL1_INTEN		BIT(2)
-#define NPCM_I2CCTL1_EOBINTE		BIT(3)
-#define NPCM_I2CCTL1_ACK		BIT(4)
-#define NPCM_I2CCTL1_GCMEN		BIT(5)
-#define NPCM_I2CCTL1_NMINTE		BIT(6)
-#define NPCM_I2CCTL1_STASTRE		BIT(7)
+#घोषणा NPCM_I2CCTL1_START		BIT(0)
+#घोषणा NPCM_I2CCTL1_STOP		BIT(1)
+#घोषणा NPCM_I2CCTL1_INTEN		BIT(2)
+#घोषणा NPCM_I2CCTL1_EOBINTE		BIT(3)
+#घोषणा NPCM_I2CCTL1_ACK		BIT(4)
+#घोषणा NPCM_I2CCTL1_GCMEN		BIT(5)
+#घोषणा NPCM_I2CCTL1_NMINTE		BIT(6)
+#घोषणा NPCM_I2CCTL1_STASTRE		BIT(7)
 
 /* RW1S fields (inside a RW reg): */
-#define NPCM_I2CCTL1_RWS   \
+#घोषणा NPCM_I2CCTL1_RWS   \
 	(NPCM_I2CCTL1_START | NPCM_I2CCTL1_STOP | NPCM_I2CCTL1_ACK)
 
 /* npcm_i2caddr reg fields */
-#define NPCM_I2CADDR_A			GENMASK(6, 0)
-#define NPCM_I2CADDR_SAEN		BIT(7)
+#घोषणा NPCM_I2CADDR_A			GENMASK(6, 0)
+#घोषणा NPCM_I2CADDR_SAEN		BIT(7)
 
 /* NPCM_I2CCTL2 reg fields */
-#define I2CCTL2_ENABLE			BIT(0)
-#define I2CCTL2_SCLFRQ6_0		GENMASK(7, 1)
+#घोषणा I2CCTL2_ENABLE			BIT(0)
+#घोषणा I2CCTL2_SCLFRQ6_0		GENMASK(7, 1)
 
 /* NPCM_I2CCTL3 reg fields */
-#define I2CCTL3_SCLFRQ8_7		GENMASK(1, 0)
-#define I2CCTL3_ARPMEN			BIT(2)
-#define I2CCTL3_IDL_START		BIT(3)
-#define I2CCTL3_400K_MODE		BIT(4)
-#define I2CCTL3_BNK_SEL			BIT(5)
-#define I2CCTL3_SDA_LVL			BIT(6)
-#define I2CCTL3_SCL_LVL			BIT(7)
+#घोषणा I2CCTL3_SCLFRQ8_7		GENMASK(1, 0)
+#घोषणा I2CCTL3_ARPMEN			BIT(2)
+#घोषणा I2CCTL3_IDL_START		BIT(3)
+#घोषणा I2CCTL3_400K_MODE		BIT(4)
+#घोषणा I2CCTL3_BNK_SEL			BIT(5)
+#घोषणा I2CCTL3_SDA_LVL			BIT(6)
+#घोषणा I2CCTL3_SCL_LVL			BIT(7)
 
 /* NPCM_I2CCST2 reg fields */
-#define NPCM_I2CCST2_MATCHA1F		BIT(0)
-#define NPCM_I2CCST2_MATCHA2F		BIT(1)
-#define NPCM_I2CCST2_MATCHA3F		BIT(2)
-#define NPCM_I2CCST2_MATCHA4F		BIT(3)
-#define NPCM_I2CCST2_MATCHA5F		BIT(4)
-#define NPCM_I2CCST2_MATCHA6F		BIT(5)
-#define NPCM_I2CCST2_MATCHA7F		BIT(5)
-#define NPCM_I2CCST2_INTSTS		BIT(7)
+#घोषणा NPCM_I2CCST2_MATCHA1F		BIT(0)
+#घोषणा NPCM_I2CCST2_MATCHA2F		BIT(1)
+#घोषणा NPCM_I2CCST2_MATCHA3F		BIT(2)
+#घोषणा NPCM_I2CCST2_MATCHA4F		BIT(3)
+#घोषणा NPCM_I2CCST2_MATCHA5F		BIT(4)
+#घोषणा NPCM_I2CCST2_MATCHA6F		BIT(5)
+#घोषणा NPCM_I2CCST2_MATCHA7F		BIT(5)
+#घोषणा NPCM_I2CCST2_INTSTS		BIT(7)
 
 /* NPCM_I2CCST3 reg fields */
-#define NPCM_I2CCST3_MATCHA8F		BIT(0)
-#define NPCM_I2CCST3_MATCHA9F		BIT(1)
-#define NPCM_I2CCST3_MATCHA10F		BIT(2)
-#define NPCM_I2CCST3_EO_BUSY		BIT(7)
+#घोषणा NPCM_I2CCST3_MATCHA8F		BIT(0)
+#घोषणा NPCM_I2CCST3_MATCHA9F		BIT(1)
+#घोषणा NPCM_I2CCST3_MATCHA10F		BIT(2)
+#घोषणा NPCM_I2CCST3_EO_BUSY		BIT(7)
 
 /* NPCM_I2CCTL4 reg fields */
-#define I2CCTL4_HLDT			GENMASK(5, 0)
-#define I2CCTL4_LVL_WE			BIT(7)
+#घोषणा I2CCTL4_HLDT			GENMASK(5, 0)
+#घोषणा I2CCTL4_LVL_WE			BIT(7)
 
 /* NPCM_I2CCTL5 reg fields */
-#define I2CCTL5_DBNCT			GENMASK(3, 0)
+#घोषणा I2CCTL5_DBNCT			GENMASK(3, 0)
 
 /* NPCM_I2CFIF_CTS reg fields */
-#define NPCM_I2CFIF_CTS_RXF_TXE		BIT(1)
-#define NPCM_I2CFIF_CTS_RFTE_IE		BIT(3)
-#define NPCM_I2CFIF_CTS_CLR_FIFO	BIT(6)
-#define NPCM_I2CFIF_CTS_SLVRSTR		BIT(7)
+#घोषणा NPCM_I2CFIF_CTS_RXF_TXE		BIT(1)
+#घोषणा NPCM_I2CFIF_CTS_RFTE_IE		BIT(3)
+#घोषणा NPCM_I2CFIF_CTS_CLR_FIFO	BIT(6)
+#घोषणा NPCM_I2CFIF_CTS_SLVRSTR		BIT(7)
 
 /* NPCM_I2CTXF_CTL reg fields */
-#define NPCM_I2CTXF_CTL_TX_THR		GENMASK(4, 0)
-#define NPCM_I2CTXF_CTL_THR_TXIE	BIT(6)
+#घोषणा NPCM_I2CTXF_CTL_TX_THR		GENMASK(4, 0)
+#घोषणा NPCM_I2CTXF_CTL_THR_TXIE	BIT(6)
 
 /* NPCM_I2CT_OUT reg fields */
-#define NPCM_I2CT_OUT_TO_CKDIV		GENMASK(5, 0)
-#define NPCM_I2CT_OUT_T_OUTIE		BIT(6)
-#define NPCM_I2CT_OUT_T_OUTST		BIT(7)
+#घोषणा NPCM_I2CT_OUT_TO_CKDIV		GENMASK(5, 0)
+#घोषणा NPCM_I2CT_OUT_T_OUTIE		BIT(6)
+#घोषणा NPCM_I2CT_OUT_T_OUTST		BIT(7)
 
 /* NPCM_I2CTXF_STS reg fields */
-#define NPCM_I2CTXF_STS_TX_BYTES	GENMASK(4, 0)
-#define NPCM_I2CTXF_STS_TX_THST		BIT(6)
+#घोषणा NPCM_I2CTXF_STS_TX_BYTES	GENMASK(4, 0)
+#घोषणा NPCM_I2CTXF_STS_TX_THST		BIT(6)
 
 /* NPCM_I2CRXF_STS reg fields */
-#define NPCM_I2CRXF_STS_RX_BYTES	GENMASK(4, 0)
-#define NPCM_I2CRXF_STS_RX_THST		BIT(6)
+#घोषणा NPCM_I2CRXF_STS_RX_BYTES	GENMASK(4, 0)
+#घोषणा NPCM_I2CRXF_STS_RX_THST		BIT(6)
 
 /* NPCM_I2CFIF_CTL reg fields */
-#define NPCM_I2CFIF_CTL_FIFO_EN		BIT(4)
+#घोषणा NPCM_I2CFIF_CTL_FIFO_EN		BIT(4)
 
 /* NPCM_I2CRXF_CTL reg fields */
-#define NPCM_I2CRXF_CTL_RX_THR		GENMASK(4, 0)
-#define NPCM_I2CRXF_CTL_LAST_PEC	BIT(5)
-#define NPCM_I2CRXF_CTL_THR_RXIE	BIT(6)
+#घोषणा NPCM_I2CRXF_CTL_RX_THR		GENMASK(4, 0)
+#घोषणा NPCM_I2CRXF_CTL_LAST_PEC	BIT(5)
+#घोषणा NPCM_I2CRXF_CTL_THR_RXIE	BIT(6)
 
-#define I2C_HW_FIFO_SIZE		16
+#घोषणा I2C_HW_FIFO_SIZE		16
 
 /* I2C_VER reg fields */
-#define I2C_VER_VERSION			GENMASK(6, 0)
-#define I2C_VER_FIFO_EN			BIT(7)
+#घोषणा I2C_VER_VERSION			GENMASK(6, 0)
+#घोषणा I2C_VER_FIFO_EN			BIT(7)
 
-/* stall/stuck timeout in us */
-#define DEFAULT_STALL_COUNT		25
+/* stall/stuck समयout in us */
+#घोषणा DEFAULT_STALL_COUNT		25
 
 /* SCLFRQ field position */
-#define SCLFRQ_0_TO_6			GENMASK(6, 0)
-#define SCLFRQ_7_TO_8			GENMASK(8, 7)
+#घोषणा SCLFRQ_0_TO_6			GENMASK(6, 0)
+#घोषणा SCLFRQ_7_TO_8			GENMASK(8, 7)
 
 /* supported clk settings. values in Hz. */
-#define I2C_FREQ_MIN_HZ			10000
-#define I2C_FREQ_MAX_HZ			I2C_MAX_FAST_MODE_PLUS_FREQ
+#घोषणा I2C_FREQ_MIN_HZ			10000
+#घोषणा I2C_FREQ_MAX_HZ			I2C_MAX_FAST_MODE_PLUS_FREQ
 
 /* Status of one I2C module */
-struct npcm_i2c {
-	struct i2c_adapter adap;
-	struct device *dev;
-	unsigned char __iomem *reg;
+काष्ठा npcm_i2c अणु
+	काष्ठा i2c_adapter adap;
+	काष्ठा device *dev;
+	अचिन्हित अक्षर __iomem *reg;
 	spinlock_t lock;   /* IRQ synchronization */
-	struct completion cmd_complete;
-	int cmd_err;
-	struct i2c_msg *msgs;
-	int msgs_num;
-	int num;
+	काष्ठा completion cmd_complete;
+	पूर्णांक cmd_err;
+	काष्ठा i2c_msg *msgs;
+	पूर्णांक msgs_num;
+	पूर्णांक num;
 	u32 apb_clk;
-	struct i2c_bus_recovery_info rinfo;
-	enum i2c_state state;
-	enum i2c_oper operation;
-	enum i2c_mode master_or_slave;
-	enum i2c_state_ind stop_ind;
+	काष्ठा i2c_bus_recovery_info rinfo;
+	क्रमागत i2c_state state;
+	क्रमागत i2c_oper operation;
+	क्रमागत i2c_mode master_or_slave;
+	क्रमागत i2c_state_ind stop_ind;
 	u8 dest_addr;
 	u8 *rd_buf;
 	u16 rd_size;
@@ -292,609 +293,609 @@ struct npcm_i2c {
 	u8 *wr_buf;
 	u16 wr_size;
 	u16 wr_ind;
-	bool fifo_use;
+	bool fअगरo_use;
 	u16 PEC_mask; /* PEC bit mask per slave address */
 	bool PEC_use;
-	bool read_block_use;
-	unsigned long int_time_stamp;
-	unsigned long bus_freq; /* in Hz */
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
+	bool पढ़ो_block_use;
+	अचिन्हित दीर्घ पूर्णांक_समय_stamp;
+	अचिन्हित दीर्घ bus_freq; /* in Hz */
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
 	u8 own_slave_addr;
-	struct i2c_client *slave;
-	int slv_rd_size;
-	int slv_rd_ind;
-	int slv_wr_size;
-	int slv_wr_ind;
+	काष्ठा i2c_client *slave;
+	पूर्णांक slv_rd_size;
+	पूर्णांक slv_rd_ind;
+	पूर्णांक slv_wr_size;
+	पूर्णांक slv_wr_ind;
 	u8 slv_rd_buf[I2C_HW_FIFO_SIZE];
 	u8 slv_wr_buf[I2C_HW_FIFO_SIZE];
-#endif
-	struct dentry *debugfs; /* debugfs device directory */
+#पूर्ण_अगर
+	काष्ठा dentry *debugfs; /* debugfs device directory */
 	u64 ber_cnt;
 	u64 rec_succ_cnt;
 	u64 rec_fail_cnt;
 	u64 nack_cnt;
-	u64 timeout_cnt;
-};
+	u64 समयout_cnt;
+पूर्ण;
 
-static inline void npcm_i2c_select_bank(struct npcm_i2c *bus,
-					enum i2c_bank bank)
-{
-	u8 i2cctl3 = ioread8(bus->reg + NPCM_I2CCTL3);
+अटल अंतरभूत व्योम npcm_i2c_select_bank(काष्ठा npcm_i2c *bus,
+					क्रमागत i2c_bank bank)
+अणु
+	u8 i2cctl3 = ioपढ़ो8(bus->reg + NPCM_I2CCTL3);
 
-	if (bank == I2C_BANK_0)
+	अगर (bank == I2C_BANK_0)
 		i2cctl3 = i2cctl3 & ~I2CCTL3_BNK_SEL;
-	else
+	अन्यथा
 		i2cctl3 = i2cctl3 | I2CCTL3_BNK_SEL;
-	iowrite8(i2cctl3, bus->reg + NPCM_I2CCTL3);
-}
+	ioग_लिखो8(i2cctl3, bus->reg + NPCM_I2CCTL3);
+पूर्ण
 
-static void npcm_i2c_init_params(struct npcm_i2c *bus)
-{
+अटल व्योम npcm_i2c_init_params(काष्ठा npcm_i2c *bus)
+अणु
 	bus->stop_ind = I2C_NO_STATUS_IND;
 	bus->rd_size = 0;
 	bus->wr_size = 0;
 	bus->rd_ind = 0;
 	bus->wr_ind = 0;
-	bus->read_block_use = false;
-	bus->int_time_stamp = 0;
+	bus->पढ़ो_block_use = false;
+	bus->पूर्णांक_समय_stamp = 0;
 	bus->PEC_use = false;
 	bus->PEC_mask = 0;
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-	if (bus->slave)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+	अगर (bus->slave)
 		bus->master_or_slave = I2C_SLAVE;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void npcm_i2c_wr_byte(struct npcm_i2c *bus, u8 data)
-{
-	iowrite8(data, bus->reg + NPCM_I2CSDA);
-}
+अटल अंतरभूत व्योम npcm_i2c_wr_byte(काष्ठा npcm_i2c *bus, u8 data)
+अणु
+	ioग_लिखो8(data, bus->reg + NPCM_I2CSDA);
+पूर्ण
 
-static inline u8 npcm_i2c_rd_byte(struct npcm_i2c *bus)
-{
-	return ioread8(bus->reg + NPCM_I2CSDA);
-}
+अटल अंतरभूत u8 npcm_i2c_rd_byte(काष्ठा npcm_i2c *bus)
+अणु
+	वापस ioपढ़ो8(bus->reg + NPCM_I2CSDA);
+पूर्ण
 
-static int npcm_i2c_get_SCL(struct i2c_adapter *_adap)
-{
-	struct npcm_i2c *bus = container_of(_adap, struct npcm_i2c, adap);
+अटल पूर्णांक npcm_i2c_get_SCL(काष्ठा i2c_adapter *_adap)
+अणु
+	काष्ठा npcm_i2c *bus = container_of(_adap, काष्ठा npcm_i2c, adap);
 
-	return !!(I2CCTL3_SCL_LVL & ioread32(bus->reg + NPCM_I2CCTL3));
-}
+	वापस !!(I2CCTL3_SCL_LVL & ioपढ़ो32(bus->reg + NPCM_I2CCTL3));
+पूर्ण
 
-static int npcm_i2c_get_SDA(struct i2c_adapter *_adap)
-{
-	struct npcm_i2c *bus = container_of(_adap, struct npcm_i2c, adap);
+अटल पूर्णांक npcm_i2c_get_SDA(काष्ठा i2c_adapter *_adap)
+अणु
+	काष्ठा npcm_i2c *bus = container_of(_adap, काष्ठा npcm_i2c, adap);
 
-	return !!(I2CCTL3_SDA_LVL & ioread32(bus->reg + NPCM_I2CCTL3));
-}
+	वापस !!(I2CCTL3_SDA_LVL & ioपढ़ो32(bus->reg + NPCM_I2CCTL3));
+पूर्ण
 
-static inline u16 npcm_i2c_get_index(struct npcm_i2c *bus)
-{
-	if (bus->operation == I2C_READ_OPER)
-		return bus->rd_ind;
-	if (bus->operation == I2C_WRITE_OPER)
-		return bus->wr_ind;
-	return 0;
-}
+अटल अंतरभूत u16 npcm_i2c_get_index(काष्ठा npcm_i2c *bus)
+अणु
+	अगर (bus->operation == I2C_READ_OPER)
+		वापस bus->rd_ind;
+	अगर (bus->operation == I2C_WRITE_OPER)
+		वापस bus->wr_ind;
+	वापस 0;
+पूर्ण
 
 /* quick protocol (just address) */
-static inline bool npcm_i2c_is_quick(struct npcm_i2c *bus)
-{
-	return bus->wr_size == 0 && bus->rd_size == 0;
-}
+अटल अंतरभूत bool npcm_i2c_is_quick(काष्ठा npcm_i2c *bus)
+अणु
+	वापस bus->wr_size == 0 && bus->rd_size == 0;
+पूर्ण
 
-static void npcm_i2c_disable(struct npcm_i2c *bus)
-{
+अटल व्योम npcm_i2c_disable(काष्ठा npcm_i2c *bus)
+अणु
 	u8 i2cctl2;
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-	int i;
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+	पूर्णांक i;
 
-	/* select bank 0 for I2C addresses */
+	/* select bank 0 क्रम I2C addresses */
 	npcm_i2c_select_bank(bus, I2C_BANK_0);
 
 	/* Slave addresses removal */
-	for (i = I2C_SLAVE_ADDR1; i < I2C_NUM_OWN_ADDR; i++)
-		iowrite8(0, bus->reg + npcm_i2caddr[i]);
+	क्रम (i = I2C_SLAVE_ADDR1; i < I2C_NUM_OWN_ADDR; i++)
+		ioग_लिखो8(0, bus->reg + npcm_i2caddr[i]);
 
 	npcm_i2c_select_bank(bus, I2C_BANK_1);
-#endif
+#पूर्ण_अगर
 	/* Disable module */
-	i2cctl2 = ioread8(bus->reg + NPCM_I2CCTL2);
+	i2cctl2 = ioपढ़ो8(bus->reg + NPCM_I2CCTL2);
 	i2cctl2 = i2cctl2 & ~I2CCTL2_ENABLE;
-	iowrite8(i2cctl2, bus->reg + NPCM_I2CCTL2);
+	ioग_लिखो8(i2cctl2, bus->reg + NPCM_I2CCTL2);
 
 	bus->state = I2C_DISABLE;
-}
+पूर्ण
 
-static void npcm_i2c_enable(struct npcm_i2c *bus)
-{
-	u8 i2cctl2 = ioread8(bus->reg + NPCM_I2CCTL2);
+अटल व्योम npcm_i2c_enable(काष्ठा npcm_i2c *bus)
+अणु
+	u8 i2cctl2 = ioपढ़ो8(bus->reg + NPCM_I2CCTL2);
 
 	i2cctl2 = i2cctl2 | I2CCTL2_ENABLE;
-	iowrite8(i2cctl2, bus->reg + NPCM_I2CCTL2);
+	ioग_लिखो8(i2cctl2, bus->reg + NPCM_I2CCTL2);
 	bus->state = I2C_IDLE;
-}
+पूर्ण
 
-/* enable\disable end of busy (EOB) interrupts */
-static inline void npcm_i2c_eob_int(struct npcm_i2c *bus, bool enable)
-{
+/* enable\disable end of busy (EOB) पूर्णांकerrupts */
+अटल अंतरभूत व्योम npcm_i2c_eob_पूर्णांक(काष्ठा npcm_i2c *bus, bool enable)
+अणु
 	u8 val;
 
 	/* Clear EO_BUSY pending bit: */
-	val = ioread8(bus->reg + NPCM_I2CCST3);
+	val = ioपढ़ो8(bus->reg + NPCM_I2CCST3);
 	val = val | NPCM_I2CCST3_EO_BUSY;
-	iowrite8(val, bus->reg + NPCM_I2CCST3);
+	ioग_लिखो8(val, bus->reg + NPCM_I2CCST3);
 
-	val = ioread8(bus->reg + NPCM_I2CCTL1);
+	val = ioपढ़ो8(bus->reg + NPCM_I2CCTL1);
 	val &= ~NPCM_I2CCTL1_RWS;
-	if (enable)
+	अगर (enable)
 		val |= NPCM_I2CCTL1_EOBINTE;
-	else
+	अन्यथा
 		val &= ~NPCM_I2CCTL1_EOBINTE;
-	iowrite8(val, bus->reg + NPCM_I2CCTL1);
-}
+	ioग_लिखो8(val, bus->reg + NPCM_I2CCTL1);
+पूर्ण
 
-static inline bool npcm_i2c_tx_fifo_empty(struct npcm_i2c *bus)
-{
-	u8 tx_fifo_sts;
+अटल अंतरभूत bool npcm_i2c_tx_fअगरo_empty(काष्ठा npcm_i2c *bus)
+अणु
+	u8 tx_fअगरo_sts;
 
-	tx_fifo_sts = ioread8(bus->reg + NPCM_I2CTXF_STS);
-	/* check if TX FIFO is not empty */
-	if ((tx_fifo_sts & NPCM_I2CTXF_STS_TX_BYTES) == 0)
-		return false;
+	tx_fअगरo_sts = ioपढ़ो8(bus->reg + NPCM_I2CTXF_STS);
+	/* check अगर TX FIFO is not empty */
+	अगर ((tx_fअगरo_sts & NPCM_I2CTXF_STS_TX_BYTES) == 0)
+		वापस false;
 
-	/* check if TX FIFO status bit is set: */
-	return !!FIELD_GET(NPCM_I2CTXF_STS_TX_THST, tx_fifo_sts);
-}
+	/* check अगर TX FIFO status bit is set: */
+	वापस !!FIELD_GET(NPCM_I2CTXF_STS_TX_THST, tx_fअगरo_sts);
+पूर्ण
 
-static inline bool npcm_i2c_rx_fifo_full(struct npcm_i2c *bus)
-{
-	u8 rx_fifo_sts;
+अटल अंतरभूत bool npcm_i2c_rx_fअगरo_full(काष्ठा npcm_i2c *bus)
+अणु
+	u8 rx_fअगरo_sts;
 
-	rx_fifo_sts = ioread8(bus->reg + NPCM_I2CRXF_STS);
-	/* check if RX FIFO is not empty: */
-	if ((rx_fifo_sts & NPCM_I2CRXF_STS_RX_BYTES) == 0)
-		return false;
+	rx_fअगरo_sts = ioपढ़ो8(bus->reg + NPCM_I2CRXF_STS);
+	/* check अगर RX FIFO is not empty: */
+	अगर ((rx_fअगरo_sts & NPCM_I2CRXF_STS_RX_BYTES) == 0)
+		वापस false;
 
-	/* check if rx fifo full status is set: */
-	return !!FIELD_GET(NPCM_I2CRXF_STS_RX_THST, rx_fifo_sts);
-}
+	/* check अगर rx fअगरo full status is set: */
+	वापस !!FIELD_GET(NPCM_I2CRXF_STS_RX_THST, rx_fअगरo_sts);
+पूर्ण
 
-static inline void npcm_i2c_clear_fifo_int(struct npcm_i2c *bus)
-{
+अटल अंतरभूत व्योम npcm_i2c_clear_fअगरo_पूर्णांक(काष्ठा npcm_i2c *bus)
+अणु
 	u8 val;
 
-	val = ioread8(bus->reg + NPCM_I2CFIF_CTS);
+	val = ioपढ़ो8(bus->reg + NPCM_I2CFIF_CTS);
 	val = (val & NPCM_I2CFIF_CTS_SLVRSTR) | NPCM_I2CFIF_CTS_RXF_TXE;
-	iowrite8(val, bus->reg + NPCM_I2CFIF_CTS);
-}
+	ioग_लिखो8(val, bus->reg + NPCM_I2CFIF_CTS);
+पूर्ण
 
-static inline void npcm_i2c_clear_tx_fifo(struct npcm_i2c *bus)
-{
+अटल अंतरभूत व्योम npcm_i2c_clear_tx_fअगरo(काष्ठा npcm_i2c *bus)
+अणु
 	u8 val;
 
-	val = ioread8(bus->reg + NPCM_I2CTXF_STS);
+	val = ioपढ़ो8(bus->reg + NPCM_I2CTXF_STS);
 	val = val | NPCM_I2CTXF_STS_TX_THST;
-	iowrite8(val, bus->reg + NPCM_I2CTXF_STS);
-}
+	ioग_लिखो8(val, bus->reg + NPCM_I2CTXF_STS);
+पूर्ण
 
-static inline void npcm_i2c_clear_rx_fifo(struct npcm_i2c *bus)
-{
+अटल अंतरभूत व्योम npcm_i2c_clear_rx_fअगरo(काष्ठा npcm_i2c *bus)
+अणु
 	u8 val;
 
-	val = ioread8(bus->reg + NPCM_I2CRXF_STS);
+	val = ioपढ़ो8(bus->reg + NPCM_I2CRXF_STS);
 	val = val | NPCM_I2CRXF_STS_RX_THST;
-	iowrite8(val, bus->reg + NPCM_I2CRXF_STS);
-}
+	ioग_लिखो8(val, bus->reg + NPCM_I2CRXF_STS);
+पूर्ण
 
-static void npcm_i2c_int_enable(struct npcm_i2c *bus, bool enable)
-{
+अटल व्योम npcm_i2c_पूर्णांक_enable(काष्ठा npcm_i2c *bus, bool enable)
+अणु
 	u8 val;
 
-	val = ioread8(bus->reg + NPCM_I2CCTL1);
+	val = ioपढ़ो8(bus->reg + NPCM_I2CCTL1);
 	val &= ~NPCM_I2CCTL1_RWS;
-	if (enable)
+	अगर (enable)
 		val |= NPCM_I2CCTL1_INTEN;
-	else
+	अन्यथा
 		val &= ~NPCM_I2CCTL1_INTEN;
-	iowrite8(val, bus->reg + NPCM_I2CCTL1);
-}
+	ioग_लिखो8(val, bus->reg + NPCM_I2CCTL1);
+पूर्ण
 
-static inline void npcm_i2c_master_start(struct npcm_i2c *bus)
-{
+अटल अंतरभूत व्योम npcm_i2c_master_start(काष्ठा npcm_i2c *bus)
+अणु
 	u8 val;
 
-	val = ioread8(bus->reg + NPCM_I2CCTL1);
+	val = ioपढ़ो8(bus->reg + NPCM_I2CCTL1);
 	val &= ~(NPCM_I2CCTL1_STOP | NPCM_I2CCTL1_ACK);
 	val |= NPCM_I2CCTL1_START;
-	iowrite8(val, bus->reg + NPCM_I2CCTL1);
-}
+	ioग_लिखो8(val, bus->reg + NPCM_I2CCTL1);
+पूर्ण
 
-static inline void npcm_i2c_master_stop(struct npcm_i2c *bus)
-{
+अटल अंतरभूत व्योम npcm_i2c_master_stop(काष्ठा npcm_i2c *bus)
+अणु
 	u8 val;
 
 	/*
 	 * override HW issue: I2C may fail to supply stop condition in Master
 	 * Write operation.
-	 * Need to delay at least 5 us from the last int, before issueing a stop
+	 * Need to delay at least 5 us from the last पूर्णांक, beक्रमe issueing a stop
 	 */
-	udelay(10); /* function called from interrupt, can't sleep */
-	val = ioread8(bus->reg + NPCM_I2CCTL1);
+	udelay(10); /* function called from पूर्णांकerrupt, can't sleep */
+	val = ioपढ़ो8(bus->reg + NPCM_I2CCTL1);
 	val &= ~(NPCM_I2CCTL1_START | NPCM_I2CCTL1_ACK);
 	val |= NPCM_I2CCTL1_STOP;
-	iowrite8(val, bus->reg + NPCM_I2CCTL1);
+	ioग_लिखो8(val, bus->reg + NPCM_I2CCTL1);
 
-	if (!bus->fifo_use)
-		return;
+	अगर (!bus->fअगरo_use)
+		वापस;
 
 	npcm_i2c_select_bank(bus, I2C_BANK_1);
 
-	if (bus->operation == I2C_READ_OPER)
-		npcm_i2c_clear_rx_fifo(bus);
-	else
-		npcm_i2c_clear_tx_fifo(bus);
-	npcm_i2c_clear_fifo_int(bus);
-	iowrite8(0, bus->reg + NPCM_I2CTXF_CTL);
-}
+	अगर (bus->operation == I2C_READ_OPER)
+		npcm_i2c_clear_rx_fअगरo(bus);
+	अन्यथा
+		npcm_i2c_clear_tx_fअगरo(bus);
+	npcm_i2c_clear_fअगरo_पूर्णांक(bus);
+	ioग_लिखो8(0, bus->reg + NPCM_I2CTXF_CTL);
+पूर्ण
 
-static inline void npcm_i2c_stall_after_start(struct npcm_i2c *bus, bool stall)
-{
+अटल अंतरभूत व्योम npcm_i2c_stall_after_start(काष्ठा npcm_i2c *bus, bool stall)
+अणु
 	u8 val;
 
-	val = ioread8(bus->reg + NPCM_I2CCTL1);
+	val = ioपढ़ो8(bus->reg + NPCM_I2CCTL1);
 	val &= ~NPCM_I2CCTL1_RWS;
-	if (stall)
+	अगर (stall)
 		val |= NPCM_I2CCTL1_STASTRE;
-	else
+	अन्यथा
 		val &= ~NPCM_I2CCTL1_STASTRE;
-	iowrite8(val, bus->reg + NPCM_I2CCTL1);
-}
+	ioग_लिखो8(val, bus->reg + NPCM_I2CCTL1);
+पूर्ण
 
-static inline void npcm_i2c_nack(struct npcm_i2c *bus)
-{
+अटल अंतरभूत व्योम npcm_i2c_nack(काष्ठा npcm_i2c *bus)
+अणु
 	u8 val;
 
-	val = ioread8(bus->reg + NPCM_I2CCTL1);
+	val = ioपढ़ो8(bus->reg + NPCM_I2CCTL1);
 	val &= ~(NPCM_I2CCTL1_STOP | NPCM_I2CCTL1_START);
 	val |= NPCM_I2CCTL1_ACK;
-	iowrite8(val, bus->reg + NPCM_I2CCTL1);
-}
+	ioग_लिखो8(val, bus->reg + NPCM_I2CCTL1);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-static void npcm_i2c_slave_int_enable(struct npcm_i2c *bus, bool enable)
-{
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+अटल व्योम npcm_i2c_slave_पूर्णांक_enable(काष्ठा npcm_i2c *bus, bool enable)
+अणु
 	u8 i2cctl1;
 
-	/* enable interrupt on slave match: */
-	i2cctl1 = ioread8(bus->reg + NPCM_I2CCTL1);
+	/* enable पूर्णांकerrupt on slave match: */
+	i2cctl1 = ioपढ़ो8(bus->reg + NPCM_I2CCTL1);
 	i2cctl1 &= ~NPCM_I2CCTL1_RWS;
-	if (enable)
+	अगर (enable)
 		i2cctl1 |= NPCM_I2CCTL1_NMINTE;
-	else
+	अन्यथा
 		i2cctl1 &= ~NPCM_I2CCTL1_NMINTE;
-	iowrite8(i2cctl1, bus->reg + NPCM_I2CCTL1);
-}
+	ioग_लिखो8(i2cctl1, bus->reg + NPCM_I2CCTL1);
+पूर्ण
 
-static int npcm_i2c_slave_enable(struct npcm_i2c *bus, enum i2c_addr addr_type,
+अटल पूर्णांक npcm_i2c_slave_enable(काष्ठा npcm_i2c *bus, क्रमागत i2c_addr addr_type,
 				 u8 addr, bool enable)
-{
+अणु
 	u8 i2cctl1;
 	u8 i2cctl3;
 	u8 sa_reg;
 
 	sa_reg = (addr & 0x7F) | FIELD_PREP(NPCM_I2CADDR_SAEN, enable);
-	if (addr_type == I2C_GC_ADDR) {
-		i2cctl1 = ioread8(bus->reg + NPCM_I2CCTL1);
-		if (enable)
+	अगर (addr_type == I2C_GC_ADDR) अणु
+		i2cctl1 = ioपढ़ो8(bus->reg + NPCM_I2CCTL1);
+		अगर (enable)
 			i2cctl1 |= NPCM_I2CCTL1_GCMEN;
-		else
+		अन्यथा
 			i2cctl1 &= ~NPCM_I2CCTL1_GCMEN;
-		iowrite8(i2cctl1, bus->reg + NPCM_I2CCTL1);
-		return 0;
-	}
-	if (addr_type == I2C_ARP_ADDR) {
-		i2cctl3 = ioread8(bus->reg + NPCM_I2CCTL3);
-		if (enable)
+		ioग_लिखो8(i2cctl1, bus->reg + NPCM_I2CCTL1);
+		वापस 0;
+	पूर्ण
+	अगर (addr_type == I2C_ARP_ADDR) अणु
+		i2cctl3 = ioपढ़ो8(bus->reg + NPCM_I2CCTL3);
+		अगर (enable)
 			i2cctl3 |= I2CCTL3_ARPMEN;
-		else
+		अन्यथा
 			i2cctl3 &= ~I2CCTL3_ARPMEN;
-		iowrite8(i2cctl3, bus->reg + NPCM_I2CCTL3);
-		return 0;
-	}
-	if (addr_type >= I2C_ARP_ADDR)
-		return -EFAULT;
-	/* select bank 0 for address 3 to 10 */
-	if (addr_type > I2C_SLAVE_ADDR2)
+		ioग_लिखो8(i2cctl3, bus->reg + NPCM_I2CCTL3);
+		वापस 0;
+	पूर्ण
+	अगर (addr_type >= I2C_ARP_ADDR)
+		वापस -EFAULT;
+	/* select bank 0 क्रम address 3 to 10 */
+	अगर (addr_type > I2C_SLAVE_ADDR2)
 		npcm_i2c_select_bank(bus, I2C_BANK_0);
 	/* Set and enable the address */
-	iowrite8(sa_reg, bus->reg + npcm_i2caddr[addr_type]);
-	npcm_i2c_slave_int_enable(bus, enable);
-	if (addr_type > I2C_SLAVE_ADDR2)
+	ioग_लिखो8(sa_reg, bus->reg + npcm_i2caddr[addr_type]);
+	npcm_i2c_slave_पूर्णांक_enable(bus, enable);
+	अगर (addr_type > I2C_SLAVE_ADDR2)
 		npcm_i2c_select_bank(bus, I2C_BANK_1);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static void npcm_i2c_reset(struct npcm_i2c *bus)
-{
+अटल व्योम npcm_i2c_reset(काष्ठा npcm_i2c *bus)
+अणु
 	/*
 	 * Save I2CCTL1 relevant bits. It is being cleared when the module
 	 *  is disabled.
 	 */
 	u8 i2cctl1;
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
 	u8 addr;
-#endif
+#पूर्ण_अगर
 
-	i2cctl1 = ioread8(bus->reg + NPCM_I2CCTL1);
+	i2cctl1 = ioपढ़ो8(bus->reg + NPCM_I2CCTL1);
 
 	npcm_i2c_disable(bus);
 	npcm_i2c_enable(bus);
 
 	/* Restore NPCM_I2CCTL1 Status */
 	i2cctl1 &= ~NPCM_I2CCTL1_RWS;
-	iowrite8(i2cctl1, bus->reg + NPCM_I2CCTL1);
+	ioग_लिखो8(i2cctl1, bus->reg + NPCM_I2CCTL1);
 
 	/* Clear BB (BUS BUSY) bit */
-	iowrite8(NPCM_I2CCST_BB, bus->reg + NPCM_I2CCST);
-	iowrite8(0xFF, bus->reg + NPCM_I2CST);
+	ioग_लिखो8(NPCM_I2CCST_BB, bus->reg + NPCM_I2CCST);
+	ioग_लिखो8(0xFF, bus->reg + NPCM_I2CST);
 
 	/* Clear EOB bit */
-	iowrite8(NPCM_I2CCST3_EO_BUSY, bus->reg + NPCM_I2CCST3);
+	ioग_लिखो8(NPCM_I2CCST3_EO_BUSY, bus->reg + NPCM_I2CCST3);
 
-	/* Clear all fifo bits: */
-	iowrite8(NPCM_I2CFIF_CTS_CLR_FIFO, bus->reg + NPCM_I2CFIF_CTS);
+	/* Clear all fअगरo bits: */
+	ioग_लिखो8(NPCM_I2CFIF_CTS_CLR_FIFO, bus->reg + NPCM_I2CFIF_CTS);
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-	if (bus->slave) {
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+	अगर (bus->slave) अणु
 		addr = bus->slave->addr;
 		npcm_i2c_slave_enable(bus, I2C_SLAVE_ADDR1, addr, true);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	bus->state = I2C_IDLE;
-}
+पूर्ण
 
-static inline bool npcm_i2c_is_master(struct npcm_i2c *bus)
-{
-	return !!FIELD_GET(NPCM_I2CST_MASTER, ioread8(bus->reg + NPCM_I2CST));
-}
+अटल अंतरभूत bool npcm_i2c_is_master(काष्ठा npcm_i2c *bus)
+अणु
+	वापस !!FIELD_GET(NPCM_I2CST_MASTER, ioपढ़ो8(bus->reg + NPCM_I2CST));
+पूर्ण
 
-static void npcm_i2c_callback(struct npcm_i2c *bus,
-			      enum i2c_state_ind op_status, u16 info)
-{
-	struct i2c_msg *msgs;
-	int msgs_num;
+अटल व्योम npcm_i2c_callback(काष्ठा npcm_i2c *bus,
+			      क्रमागत i2c_state_ind op_status, u16 info)
+अणु
+	काष्ठा i2c_msg *msgs;
+	पूर्णांक msgs_num;
 
 	msgs = bus->msgs;
 	msgs_num = bus->msgs_num;
 	/*
-	 * check that transaction was not timed-out, and msgs still
+	 * check that transaction was not समयd-out, and msgs still
 	 * holds a valid value.
 	 */
-	if (!msgs)
-		return;
+	अगर (!msgs)
+		वापस;
 
-	if (completion_done(&bus->cmd_complete))
-		return;
+	अगर (completion_करोne(&bus->cmd_complete))
+		वापस;
 
-	switch (op_status) {
-	case I2C_MASTER_DONE_IND:
+	चयन (op_status) अणु
+	हाल I2C_MASTER_DONE_IND:
 		bus->cmd_err = bus->msgs_num;
 		fallthrough;
-	case I2C_BLOCK_BYTES_ERR_IND:
+	हाल I2C_BLOCK_BYTES_ERR_IND:
 		/* Master tx finished and all transmit bytes were sent */
-		if (bus->msgs) {
-			if (msgs[0].flags & I2C_M_RD)
+		अगर (bus->msgs) अणु
+			अगर (msgs[0].flags & I2C_M_RD)
 				msgs[0].len = info;
-			else if (msgs_num == 2 &&
+			अन्यथा अगर (msgs_num == 2 &&
 				 msgs[1].flags & I2C_M_RD)
 				msgs[1].len = info;
-		}
-		if (completion_done(&bus->cmd_complete) == false)
+		पूर्ण
+		अगर (completion_करोne(&bus->cmd_complete) == false)
 			complete(&bus->cmd_complete);
-	break;
+	अवरोध;
 
-	case I2C_NACK_IND:
-		/* MASTER transmit got a NACK before tx all bytes */
+	हाल I2C_NACK_IND:
+		/* MASTER transmit got a NACK beक्रमe tx all bytes */
 		bus->cmd_err = -ENXIO;
-		if (bus->master_or_slave == I2C_MASTER)
+		अगर (bus->master_or_slave == I2C_MASTER)
 			complete(&bus->cmd_complete);
 
-		break;
-	case I2C_BUS_ERR_IND:
+		अवरोध;
+	हाल I2C_BUS_ERR_IND:
 		/* Bus error */
 		bus->cmd_err = -EAGAIN;
-		if (bus->master_or_slave == I2C_MASTER)
+		अगर (bus->master_or_slave == I2C_MASTER)
 			complete(&bus->cmd_complete);
 
-		break;
-	case I2C_WAKE_UP_IND:
+		अवरोध;
+	हाल I2C_WAKE_UP_IND:
 		/* I2C wake up */
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	bus->operation = I2C_NO_OPER;
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-	if (bus->slave)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+	अगर (bus->slave)
 		bus->master_or_slave = I2C_SLAVE;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static u8 npcm_i2c_fifo_usage(struct npcm_i2c *bus)
-{
-	if (bus->operation == I2C_WRITE_OPER)
-		return FIELD_GET(NPCM_I2CTXF_STS_TX_BYTES,
-				 ioread8(bus->reg + NPCM_I2CTXF_STS));
-	if (bus->operation == I2C_READ_OPER)
-		return FIELD_GET(NPCM_I2CRXF_STS_RX_BYTES,
-				 ioread8(bus->reg + NPCM_I2CRXF_STS));
-	return 0;
-}
+अटल u8 npcm_i2c_fअगरo_usage(काष्ठा npcm_i2c *bus)
+अणु
+	अगर (bus->operation == I2C_WRITE_OPER)
+		वापस FIELD_GET(NPCM_I2CTXF_STS_TX_BYTES,
+				 ioपढ़ो8(bus->reg + NPCM_I2CTXF_STS));
+	अगर (bus->operation == I2C_READ_OPER)
+		वापस FIELD_GET(NPCM_I2CRXF_STS_RX_BYTES,
+				 ioपढ़ो8(bus->reg + NPCM_I2CRXF_STS));
+	वापस 0;
+पूर्ण
 
-static void npcm_i2c_write_to_fifo_master(struct npcm_i2c *bus, u16 max_bytes)
-{
-	u8 size_free_fifo;
+अटल व्योम npcm_i2c_ग_लिखो_to_fअगरo_master(काष्ठा npcm_i2c *bus, u16 max_bytes)
+अणु
+	u8 size_मुक्त_fअगरo;
 
 	/*
-	 * Fill the FIFO, while the FIFO is not full and there are more bytes
-	 * to write
+	 * Fill the FIFO, जबतक the FIFO is not full and there are more bytes
+	 * to ग_लिखो
 	 */
-	size_free_fifo = I2C_HW_FIFO_SIZE - npcm_i2c_fifo_usage(bus);
-	while (max_bytes-- && size_free_fifo) {
-		if (bus->wr_ind < bus->wr_size)
+	size_मुक्त_fअगरo = I2C_HW_FIFO_SIZE - npcm_i2c_fअगरo_usage(bus);
+	जबतक (max_bytes-- && size_मुक्त_fअगरo) अणु
+		अगर (bus->wr_ind < bus->wr_size)
 			npcm_i2c_wr_byte(bus, bus->wr_buf[bus->wr_ind++]);
-		else
+		अन्यथा
 			npcm_i2c_wr_byte(bus, 0xFF);
-		size_free_fifo = I2C_HW_FIFO_SIZE - npcm_i2c_fifo_usage(bus);
-	}
-}
+		size_मुक्त_fअगरo = I2C_HW_FIFO_SIZE - npcm_i2c_fअगरo_usage(bus);
+	पूर्ण
+पूर्ण
 
 /*
- * npcm_i2c_set_fifo:
- * configure the FIFO before using it. If nread is -1 RX FIFO will not be
- * configured. same for nwrite
+ * npcm_i2c_set_fअगरo:
+ * configure the FIFO beक्रमe using it. If nपढ़ो is -1 RX FIFO will not be
+ * configured. same क्रम nग_लिखो
  */
-static void npcm_i2c_set_fifo(struct npcm_i2c *bus, int nread, int nwrite)
-{
+अटल व्योम npcm_i2c_set_fअगरo(काष्ठा npcm_i2c *bus, पूर्णांक nपढ़ो, पूर्णांक nग_लिखो)
+अणु
 	u8 rxf_ctl = 0;
 
-	if (!bus->fifo_use)
-		return;
+	अगर (!bus->fअगरo_use)
+		वापस;
 	npcm_i2c_select_bank(bus, I2C_BANK_1);
-	npcm_i2c_clear_tx_fifo(bus);
-	npcm_i2c_clear_rx_fifo(bus);
+	npcm_i2c_clear_tx_fअगरo(bus);
+	npcm_i2c_clear_rx_fअगरo(bus);
 
 	/* configure RX FIFO */
-	if (nread > 0) {
-		rxf_ctl = min_t(int, nread, I2C_HW_FIFO_SIZE);
+	अगर (nपढ़ो > 0) अणु
+		rxf_ctl = min_t(पूर्णांक, nपढ़ो, I2C_HW_FIFO_SIZE);
 
-		/* set LAST bit. if LAST is set next FIFO packet is nacked */
-		if (nread <= I2C_HW_FIFO_SIZE)
+		/* set LAST bit. अगर LAST is set next FIFO packet is nacked */
+		अगर (nपढ़ो <= I2C_HW_FIFO_SIZE)
 			rxf_ctl |= NPCM_I2CRXF_CTL_LAST_PEC;
 
 		/*
-		 * if we are about to read the first byte in blk rd mode,
-		 * don't NACK it. If slave returns zero size HW can't NACK
-		 * it immidiattly, it will read extra byte and then NACK.
+		 * अगर we are about to पढ़ो the first byte in blk rd mode,
+		 * करोn't NACK it. If slave returns zero size HW can't NACK
+		 * it immidiattly, it will पढ़ो extra byte and then NACK.
 		 */
-		if (bus->rd_ind == 0 && bus->read_block_use) {
-			/* set fifo to read one byte, no last: */
+		अगर (bus->rd_ind == 0 && bus->पढ़ो_block_use) अणु
+			/* set fअगरo to पढ़ो one byte, no last: */
 			rxf_ctl = 1;
-		}
+		पूर्ण
 
-		/* set fifo size: */
-		iowrite8(rxf_ctl, bus->reg + NPCM_I2CRXF_CTL);
-	}
+		/* set fअगरo size: */
+		ioग_लिखो8(rxf_ctl, bus->reg + NPCM_I2CRXF_CTL);
+	पूर्ण
 
 	/* configure TX FIFO */
-	if (nwrite > 0) {
-		if (nwrite > I2C_HW_FIFO_SIZE)
+	अगर (nग_लिखो > 0) अणु
+		अगर (nग_लिखो > I2C_HW_FIFO_SIZE)
 			/* data to send is more then FIFO size. */
-			iowrite8(I2C_HW_FIFO_SIZE, bus->reg + NPCM_I2CTXF_CTL);
-		else
-			iowrite8(nwrite, bus->reg + NPCM_I2CTXF_CTL);
+			ioग_लिखो8(I2C_HW_FIFO_SIZE, bus->reg + NPCM_I2CTXF_CTL);
+		अन्यथा
+			ioग_लिखो8(nग_लिखो, bus->reg + NPCM_I2CTXF_CTL);
 
-		npcm_i2c_clear_tx_fifo(bus);
-	}
-}
+		npcm_i2c_clear_tx_fअगरo(bus);
+	पूर्ण
+पूर्ण
 
-static void npcm_i2c_read_fifo(struct npcm_i2c *bus, u8 bytes_in_fifo)
-{
+अटल व्योम npcm_i2c_पढ़ो_fअगरo(काष्ठा npcm_i2c *bus, u8 bytes_in_fअगरo)
+अणु
 	u8 data;
 
-	while (bytes_in_fifo--) {
+	जबतक (bytes_in_fअगरo--) अणु
 		data = npcm_i2c_rd_byte(bus);
-		if (bus->rd_ind < bus->rd_size)
+		अगर (bus->rd_ind < bus->rd_size)
 			bus->rd_buf[bus->rd_ind++] = data;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void npcm_i2c_clear_master_status(struct npcm_i2c *bus)
-{
+अटल अंतरभूत व्योम npcm_i2c_clear_master_status(काष्ठा npcm_i2c *bus)
+अणु
 	u8 val;
 
 	/* Clear NEGACK, STASTR and BER bits */
 	val = NPCM_I2CST_BER | NPCM_I2CST_NEGACK | NPCM_I2CST_STASTR;
-	iowrite8(val, bus->reg + NPCM_I2CST);
-}
+	ioग_लिखो8(val, bus->reg + NPCM_I2CST);
+पूर्ण
 
-static void npcm_i2c_master_abort(struct npcm_i2c *bus)
-{
+अटल व्योम npcm_i2c_master_पात(काष्ठा npcm_i2c *bus)
+अणु
 	/* Only current master is allowed to issue a stop condition */
-	if (!npcm_i2c_is_master(bus))
-		return;
+	अगर (!npcm_i2c_is_master(bus))
+		वापस;
 
-	npcm_i2c_eob_int(bus, true);
+	npcm_i2c_eob_पूर्णांक(bus, true);
 	npcm_i2c_master_stop(bus);
 	npcm_i2c_clear_master_status(bus);
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-static u8 npcm_i2c_get_slave_addr(struct npcm_i2c *bus, enum i2c_addr addr_type)
-{
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+अटल u8 npcm_i2c_get_slave_addr(काष्ठा npcm_i2c *bus, क्रमागत i2c_addr addr_type)
+अणु
 	u8 slave_add;
 
-	/* select bank 0 for address 3 to 10 */
-	if (addr_type > I2C_SLAVE_ADDR2)
+	/* select bank 0 क्रम address 3 to 10 */
+	अगर (addr_type > I2C_SLAVE_ADDR2)
 		npcm_i2c_select_bank(bus, I2C_BANK_0);
 
-	slave_add = ioread8(bus->reg + npcm_i2caddr[(int)addr_type]);
+	slave_add = ioपढ़ो8(bus->reg + npcm_i2caddr[(पूर्णांक)addr_type]);
 
-	if (addr_type > I2C_SLAVE_ADDR2)
+	अगर (addr_type > I2C_SLAVE_ADDR2)
 		npcm_i2c_select_bank(bus, I2C_BANK_1);
 
-	return slave_add;
-}
+	वापस slave_add;
+पूर्ण
 
-static int npcm_i2c_remove_slave_addr(struct npcm_i2c *bus, u8 slave_add)
-{
-	int i;
+अटल पूर्णांक npcm_i2c_हटाओ_slave_addr(काष्ठा npcm_i2c *bus, u8 slave_add)
+अणु
+	पूर्णांक i;
 
 	/* Set the enable bit */
 	slave_add |= 0x80;
 	npcm_i2c_select_bank(bus, I2C_BANK_0);
-	for (i = I2C_SLAVE_ADDR1; i < I2C_NUM_OWN_ADDR; i++) {
-		if (ioread8(bus->reg + npcm_i2caddr[i]) == slave_add)
-			iowrite8(0, bus->reg + npcm_i2caddr[i]);
-	}
+	क्रम (i = I2C_SLAVE_ADDR1; i < I2C_NUM_OWN_ADDR; i++) अणु
+		अगर (ioपढ़ो8(bus->reg + npcm_i2caddr[i]) == slave_add)
+			ioग_लिखो8(0, bus->reg + npcm_i2caddr[i]);
+	पूर्ण
 	npcm_i2c_select_bank(bus, I2C_BANK_1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void npcm_i2c_write_fifo_slave(struct npcm_i2c *bus, u16 max_bytes)
-{
+अटल व्योम npcm_i2c_ग_लिखो_fअगरo_slave(काष्ठा npcm_i2c *bus, u16 max_bytes)
+अणु
 	/*
-	 * Fill the FIFO, while the FIFO is not full and there are more bytes
-	 * to write
+	 * Fill the FIFO, जबतक the FIFO is not full and there are more bytes
+	 * to ग_लिखो
 	 */
-	npcm_i2c_clear_fifo_int(bus);
-	npcm_i2c_clear_tx_fifo(bus);
-	iowrite8(0, bus->reg + NPCM_I2CTXF_CTL);
-	while (max_bytes-- && I2C_HW_FIFO_SIZE != npcm_i2c_fifo_usage(bus)) {
-		if (bus->slv_wr_size <= 0)
-			break;
+	npcm_i2c_clear_fअगरo_पूर्णांक(bus);
+	npcm_i2c_clear_tx_fअगरo(bus);
+	ioग_लिखो8(0, bus->reg + NPCM_I2CTXF_CTL);
+	जबतक (max_bytes-- && I2C_HW_FIFO_SIZE != npcm_i2c_fअगरo_usage(bus)) अणु
+		अगर (bus->slv_wr_size <= 0)
+			अवरोध;
 		bus->slv_wr_ind = bus->slv_wr_ind % I2C_HW_FIFO_SIZE;
 		npcm_i2c_wr_byte(bus, bus->slv_wr_buf[bus->slv_wr_ind]);
 		bus->slv_wr_ind++;
 		bus->slv_wr_ind = bus->slv_wr_ind % I2C_HW_FIFO_SIZE;
 		bus->slv_wr_size--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void npcm_i2c_read_fifo_slave(struct npcm_i2c *bus, u8 bytes_in_fifo)
-{
+अटल व्योम npcm_i2c_पढ़ो_fअगरo_slave(काष्ठा npcm_i2c *bus, u8 bytes_in_fअगरo)
+अणु
 	u8 data;
 
-	if (!bus->slave)
-		return;
+	अगर (!bus->slave)
+		वापस;
 
-	while (bytes_in_fifo--) {
+	जबतक (bytes_in_fअगरo--) अणु
 		data = npcm_i2c_rd_byte(bus);
 
 		bus->slv_rd_ind = bus->slv_rd_ind % I2C_HW_FIFO_SIZE;
@@ -902,275 +903,275 @@ static void npcm_i2c_read_fifo_slave(struct npcm_i2c *bus, u8 bytes_in_fifo)
 		bus->slv_rd_ind++;
 
 		/* 1st byte is length in block protocol: */
-		if (bus->slv_rd_ind == 1 && bus->read_block_use)
+		अगर (bus->slv_rd_ind == 1 && bus->पढ़ो_block_use)
 			bus->slv_rd_size = data + bus->PEC_use + 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int npcm_i2c_slave_get_wr_buf(struct npcm_i2c *bus)
-{
-	int i;
+अटल पूर्णांक npcm_i2c_slave_get_wr_buf(काष्ठा npcm_i2c *bus)
+अणु
+	पूर्णांक i;
 	u8 value;
-	int ind;
-	int ret = bus->slv_wr_ind;
+	पूर्णांक ind;
+	पूर्णांक ret = bus->slv_wr_ind;
 
 	/* fill a cyclic buffer */
-	for (i = 0; i < I2C_HW_FIFO_SIZE; i++) {
-		if (bus->slv_wr_size >= I2C_HW_FIFO_SIZE)
-			break;
+	क्रम (i = 0; i < I2C_HW_FIFO_SIZE; i++) अणु
+		अगर (bus->slv_wr_size >= I2C_HW_FIFO_SIZE)
+			अवरोध;
 		i2c_slave_event(bus->slave, I2C_SLAVE_READ_REQUESTED, &value);
 		ind = (bus->slv_wr_ind + bus->slv_wr_size) % I2C_HW_FIFO_SIZE;
 		bus->slv_wr_buf[ind] = value;
 		bus->slv_wr_size++;
 		i2c_slave_event(bus->slave, I2C_SLAVE_READ_PROCESSED, &value);
-	}
-	return I2C_HW_FIFO_SIZE - ret;
-}
+	पूर्ण
+	वापस I2C_HW_FIFO_SIZE - ret;
+पूर्ण
 
-static void npcm_i2c_slave_send_rd_buf(struct npcm_i2c *bus)
-{
-	int i;
+अटल व्योम npcm_i2c_slave_send_rd_buf(काष्ठा npcm_i2c *bus)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < bus->slv_rd_ind; i++)
+	क्रम (i = 0; i < bus->slv_rd_ind; i++)
 		i2c_slave_event(bus->slave, I2C_SLAVE_WRITE_RECEIVED,
 				&bus->slv_rd_buf[i]);
 	/*
 	 * once we send bytes up, need to reset the counter of the wr buf
-	 * got data from master (new offset in device), ignore wr fifo:
+	 * got data from master (new offset in device), ignore wr fअगरo:
 	 */
-	if (bus->slv_rd_ind) {
+	अगर (bus->slv_rd_ind) अणु
 		bus->slv_wr_size = 0;
 		bus->slv_wr_ind = 0;
-	}
+	पूर्ण
 
 	bus->slv_rd_ind = 0;
-	bus->slv_rd_size = bus->adap.quirks->max_read_len;
+	bus->slv_rd_size = bus->adap.quirks->max_पढ़ो_len;
 
-	npcm_i2c_clear_fifo_int(bus);
-	npcm_i2c_clear_rx_fifo(bus);
-}
+	npcm_i2c_clear_fअगरo_पूर्णांक(bus);
+	npcm_i2c_clear_rx_fअगरo(bus);
+पूर्ण
 
-static void npcm_i2c_slave_receive(struct npcm_i2c *bus, u16 nread,
-				   u8 *read_data)
-{
+अटल व्योम npcm_i2c_slave_receive(काष्ठा npcm_i2c *bus, u16 nपढ़ो,
+				   u8 *पढ़ो_data)
+अणु
 	bus->state = I2C_OPER_STARTED;
 	bus->operation = I2C_READ_OPER;
-	bus->slv_rd_size = nread;
+	bus->slv_rd_size = nपढ़ो;
 	bus->slv_rd_ind = 0;
 
-	iowrite8(0, bus->reg + NPCM_I2CTXF_CTL);
-	iowrite8(I2C_HW_FIFO_SIZE, bus->reg + NPCM_I2CRXF_CTL);
-	npcm_i2c_clear_tx_fifo(bus);
-	npcm_i2c_clear_rx_fifo(bus);
-}
+	ioग_लिखो8(0, bus->reg + NPCM_I2CTXF_CTL);
+	ioग_लिखो8(I2C_HW_FIFO_SIZE, bus->reg + NPCM_I2CRXF_CTL);
+	npcm_i2c_clear_tx_fअगरo(bus);
+	npcm_i2c_clear_rx_fअगरo(bus);
+पूर्ण
 
-static void npcm_i2c_slave_xmit(struct npcm_i2c *bus, u16 nwrite,
-				u8 *write_data)
-{
-	if (nwrite == 0)
-		return;
+अटल व्योम npcm_i2c_slave_xmit(काष्ठा npcm_i2c *bus, u16 nग_लिखो,
+				u8 *ग_लिखो_data)
+अणु
+	अगर (nग_लिखो == 0)
+		वापस;
 
 	bus->state = I2C_OPER_STARTED;
 	bus->operation = I2C_WRITE_OPER;
 
 	/* get the next buffer */
 	npcm_i2c_slave_get_wr_buf(bus);
-	npcm_i2c_write_fifo_slave(bus, nwrite);
-}
+	npcm_i2c_ग_लिखो_fअगरo_slave(bus, nग_लिखो);
+पूर्ण
 
 /*
  * npcm_i2c_slave_wr_buf_sync:
  * currently slave IF only supports single byte operations.
- * in order to utilyze the npcm HW FIFO, the driver will ask for 16 bytes
- * at a time, pack them in buffer, and then transmit them all together
+ * in order to utilyze the npcm HW FIFO, the driver will ask क्रम 16 bytes
+ * at a समय, pack them in buffer, and then transmit them all together
  * to the FIFO and onward to the bus.
- * NACK on read will be once reached to bus->adap->quirks->max_read_len.
- * sending a NACK wherever the backend requests for it is not supported.
- * the next two functions allow reading to local buffer before writing it all
+ * NACK on पढ़ो will be once reached to bus->adap->quirks->max_पढ़ो_len.
+ * sending a NACK wherever the backend requests क्रम it is not supported.
+ * the next two functions allow पढ़ोing to local buffer beक्रमe writing it all
  * to the HW FIFO.
  */
-static void npcm_i2c_slave_wr_buf_sync(struct npcm_i2c *bus)
-{
-	int left_in_fifo;
+अटल व्योम npcm_i2c_slave_wr_buf_sync(काष्ठा npcm_i2c *bus)
+अणु
+	पूर्णांक left_in_fअगरo;
 
-	left_in_fifo = FIELD_GET(NPCM_I2CTXF_STS_TX_BYTES,
-				 ioread8(bus->reg + NPCM_I2CTXF_STS));
+	left_in_fअगरo = FIELD_GET(NPCM_I2CTXF_STS_TX_BYTES,
+				 ioपढ़ो8(bus->reg + NPCM_I2CTXF_STS));
 
-	/* fifo already full: */
-	if (left_in_fifo >= I2C_HW_FIFO_SIZE ||
+	/* fअगरo alपढ़ोy full: */
+	अगर (left_in_fअगरo >= I2C_HW_FIFO_SIZE ||
 	    bus->slv_wr_size >= I2C_HW_FIFO_SIZE)
-		return;
+		वापस;
 
-	/* update the wr fifo index back to the untransmitted bytes: */
-	bus->slv_wr_ind = bus->slv_wr_ind - left_in_fifo;
-	bus->slv_wr_size = bus->slv_wr_size + left_in_fifo;
+	/* update the wr fअगरo index back to the untransmitted bytes: */
+	bus->slv_wr_ind = bus->slv_wr_ind - left_in_fअगरo;
+	bus->slv_wr_size = bus->slv_wr_size + left_in_fअगरo;
 
-	if (bus->slv_wr_ind < 0)
+	अगर (bus->slv_wr_ind < 0)
 		bus->slv_wr_ind += I2C_HW_FIFO_SIZE;
-}
+पूर्ण
 
-static void npcm_i2c_slave_rd_wr(struct npcm_i2c *bus)
-{
-	if (NPCM_I2CST_XMIT & ioread8(bus->reg + NPCM_I2CST)) {
+अटल व्योम npcm_i2c_slave_rd_wr(काष्ठा npcm_i2c *bus)
+अणु
+	अगर (NPCM_I2CST_XMIT & ioपढ़ो8(bus->reg + NPCM_I2CST)) अणु
 		/*
 		 * Slave got an address match with direction bit 1 so it should
 		 * transmit data. Write till the master will NACK
 		 */
 		bus->operation = I2C_WRITE_OPER;
-		npcm_i2c_slave_xmit(bus, bus->adap.quirks->max_write_len,
+		npcm_i2c_slave_xmit(bus, bus->adap.quirks->max_ग_लिखो_len,
 				    bus->slv_wr_buf);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Slave got an address match with direction bit 0 so it should
 		 * receive data.
-		 * this module does not support saying no to bytes.
+		 * this module करोes not support saying no to bytes.
 		 * it will always ACK.
 		 */
 		bus->operation = I2C_READ_OPER;
-		npcm_i2c_read_fifo_slave(bus, npcm_i2c_fifo_usage(bus));
+		npcm_i2c_पढ़ो_fअगरo_slave(bus, npcm_i2c_fअगरo_usage(bus));
 		bus->stop_ind = I2C_SLAVE_RCV_IND;
 		npcm_i2c_slave_send_rd_buf(bus);
-		npcm_i2c_slave_receive(bus, bus->adap.quirks->max_read_len,
+		npcm_i2c_slave_receive(bus, bus->adap.quirks->max_पढ़ो_len,
 				       bus->slv_rd_buf);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t npcm_i2c_int_slave_handler(struct npcm_i2c *bus)
-{
+अटल irqवापस_t npcm_i2c_पूर्णांक_slave_handler(काष्ठा npcm_i2c *bus)
+अणु
 	u8 val;
-	irqreturn_t ret = IRQ_NONE;
-	u8 i2cst = ioread8(bus->reg + NPCM_I2CST);
+	irqवापस_t ret = IRQ_NONE;
+	u8 i2cst = ioपढ़ो8(bus->reg + NPCM_I2CST);
 
 	/* Slave: A NACK has occurred */
-	if (NPCM_I2CST_NEGACK & i2cst) {
+	अगर (NPCM_I2CST_NEGACK & i2cst) अणु
 		bus->stop_ind = I2C_NACK_IND;
 		npcm_i2c_slave_wr_buf_sync(bus);
-		if (bus->fifo_use)
+		अगर (bus->fअगरo_use)
 			/* clear the FIFO */
-			iowrite8(NPCM_I2CFIF_CTS_CLR_FIFO,
+			ioग_लिखो8(NPCM_I2CFIF_CTS_CLR_FIFO,
 				 bus->reg + NPCM_I2CFIF_CTS);
 
-		/* In slave write, NACK is OK, otherwise it is a problem */
+		/* In slave ग_लिखो, NACK is OK, otherwise it is a problem */
 		bus->stop_ind = I2C_NO_STATUS_IND;
 		bus->operation = I2C_NO_OPER;
 		bus->own_slave_addr = 0xFF;
 
 		/*
-		 * Slave has to wait for STOP to decide this is the end
-		 * of the transaction. tx is not yet considered as done
+		 * Slave has to रुको क्रम STOP to decide this is the end
+		 * of the transaction. tx is not yet considered as करोne
 		 */
-		iowrite8(NPCM_I2CST_NEGACK, bus->reg + NPCM_I2CST);
+		ioग_लिखो8(NPCM_I2CST_NEGACK, bus->reg + NPCM_I2CST);
 
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	/* Slave mode: a Bus Error (BER) has been identified */
-	if (NPCM_I2CST_BER & i2cst) {
+	/* Slave mode: a Bus Error (BER) has been identअगरied */
+	अगर (NPCM_I2CST_BER & i2cst) अणु
 		/*
 		 * Check whether bus arbitration or Start or Stop during data
 		 * xfer bus arbitration problem should not result in recovery
 		 */
 		bus->stop_ind = I2C_BUS_ERR_IND;
 
-		/* wait for bus busy before clear fifo */
-		iowrite8(NPCM_I2CFIF_CTS_CLR_FIFO, bus->reg + NPCM_I2CFIF_CTS);
+		/* रुको क्रम bus busy beक्रमe clear fअगरo */
+		ioग_लिखो8(NPCM_I2CFIF_CTS_CLR_FIFO, bus->reg + NPCM_I2CFIF_CTS);
 
 		bus->state = I2C_IDLE;
 
 		/*
-		 * in BER case we might get 2 interrupts: one for slave one for
-		 * master ( for a channel which is master\slave switching)
+		 * in BER हाल we might get 2 पूर्णांकerrupts: one क्रम slave one क्रम
+		 * master ( क्रम a channel which is master\slave चयनing)
 		 */
-		if (completion_done(&bus->cmd_complete) == false) {
+		अगर (completion_करोne(&bus->cmd_complete) == false) अणु
 			bus->cmd_err = -EIO;
 			complete(&bus->cmd_complete);
-		}
+		पूर्ण
 		bus->own_slave_addr = 0xFF;
-		iowrite8(NPCM_I2CST_BER, bus->reg + NPCM_I2CST);
+		ioग_लिखो8(NPCM_I2CST_BER, bus->reg + NPCM_I2CST);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	/* A Slave Stop Condition has been identified */
-	if (NPCM_I2CST_SLVSTP & i2cst) {
-		u8 bytes_in_fifo = npcm_i2c_fifo_usage(bus);
+	/* A Slave Stop Condition has been identअगरied */
+	अगर (NPCM_I2CST_SLVSTP & i2cst) अणु
+		u8 bytes_in_fअगरo = npcm_i2c_fअगरo_usage(bus);
 
 		bus->stop_ind = I2C_SLAVE_DONE_IND;
 
-		if (bus->operation == I2C_READ_OPER)
-			npcm_i2c_read_fifo_slave(bus, bytes_in_fifo);
+		अगर (bus->operation == I2C_READ_OPER)
+			npcm_i2c_पढ़ो_fअगरo_slave(bus, bytes_in_fअगरo);
 
-		/* if the buffer is empty nothing will be sent */
+		/* अगर the buffer is empty nothing will be sent */
 		npcm_i2c_slave_send_rd_buf(bus);
 
-		/* Slave done transmitting or receiving */
+		/* Slave करोne transmitting or receiving */
 		bus->stop_ind = I2C_NO_STATUS_IND;
 
 		/*
-		 * Note, just because we got here, it doesn't mean we through
+		 * Note, just because we got here, it करोesn't mean we through
 		 * away the wr buffer.
 		 * we keep it until the next received offset.
 		 */
 		bus->operation = I2C_NO_OPER;
 		bus->own_slave_addr = 0xFF;
 		i2c_slave_event(bus->slave, I2C_SLAVE_STOP, 0);
-		iowrite8(NPCM_I2CST_SLVSTP, bus->reg + NPCM_I2CST);
-		if (bus->fifo_use) {
-			npcm_i2c_clear_fifo_int(bus);
-			npcm_i2c_clear_rx_fifo(bus);
-			npcm_i2c_clear_tx_fifo(bus);
+		ioग_लिखो8(NPCM_I2CST_SLVSTP, bus->reg + NPCM_I2CST);
+		अगर (bus->fअगरo_use) अणु
+			npcm_i2c_clear_fअगरo_पूर्णांक(bus);
+			npcm_i2c_clear_rx_fअगरo(bus);
+			npcm_i2c_clear_tx_fअगरo(bus);
 
-			iowrite8(NPCM_I2CFIF_CTS_CLR_FIFO,
+			ioग_लिखो8(NPCM_I2CFIF_CTS_CLR_FIFO,
 				 bus->reg + NPCM_I2CFIF_CTS);
-		}
+		पूर्ण
 		bus->state = I2C_IDLE;
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
 	/* restart condition occurred and Rx-FIFO was not empty */
-	if (bus->fifo_use && FIELD_GET(NPCM_I2CFIF_CTS_SLVRSTR,
-				       ioread8(bus->reg + NPCM_I2CFIF_CTS))) {
+	अगर (bus->fअगरo_use && FIELD_GET(NPCM_I2CFIF_CTS_SLVRSTR,
+				       ioपढ़ो8(bus->reg + NPCM_I2CFIF_CTS))) अणु
 		bus->stop_ind = I2C_SLAVE_RESTART_IND;
 		bus->master_or_slave = I2C_SLAVE;
-		if (bus->operation == I2C_READ_OPER)
-			npcm_i2c_read_fifo_slave(bus, npcm_i2c_fifo_usage(bus));
+		अगर (bus->operation == I2C_READ_OPER)
+			npcm_i2c_पढ़ो_fअगरo_slave(bus, npcm_i2c_fअगरo_usage(bus));
 		bus->operation = I2C_WRITE_OPER;
-		iowrite8(0, bus->reg + NPCM_I2CRXF_CTL);
+		ioग_लिखो8(0, bus->reg + NPCM_I2CRXF_CTL);
 		val = NPCM_I2CFIF_CTS_CLR_FIFO | NPCM_I2CFIF_CTS_SLVRSTR |
 		      NPCM_I2CFIF_CTS_RXF_TXE;
-		iowrite8(val, bus->reg + NPCM_I2CFIF_CTS);
+		ioग_लिखो8(val, bus->reg + NPCM_I2CFIF_CTS);
 		npcm_i2c_slave_rd_wr(bus);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	/* A Slave Address Match has been identified */
-	if (NPCM_I2CST_NMATCH & i2cst) {
+	/* A Slave Address Match has been identअगरied */
+	अगर (NPCM_I2CST_NMATCH & i2cst) अणु
 		u8 info = 0;
 
-		/* Address match automatically implies slave mode */
+		/* Address match स्वतःmatically implies slave mode */
 		bus->master_or_slave = I2C_SLAVE;
-		npcm_i2c_clear_fifo_int(bus);
-		npcm_i2c_clear_rx_fifo(bus);
-		npcm_i2c_clear_tx_fifo(bus);
-		iowrite8(0, bus->reg + NPCM_I2CTXF_CTL);
-		iowrite8(I2C_HW_FIFO_SIZE, bus->reg + NPCM_I2CRXF_CTL);
-		if (NPCM_I2CST_XMIT & i2cst) {
+		npcm_i2c_clear_fअगरo_पूर्णांक(bus);
+		npcm_i2c_clear_rx_fअगरo(bus);
+		npcm_i2c_clear_tx_fअगरo(bus);
+		ioग_लिखो8(0, bus->reg + NPCM_I2CTXF_CTL);
+		ioग_लिखो8(I2C_HW_FIFO_SIZE, bus->reg + NPCM_I2CRXF_CTL);
+		अगर (NPCM_I2CST_XMIT & i2cst) अणु
 			bus->operation = I2C_WRITE_OPER;
-		} else {
+		पूर्ण अन्यथा अणु
 			i2c_slave_event(bus->slave, I2C_SLAVE_WRITE_REQUESTED,
 					&info);
 			bus->operation = I2C_READ_OPER;
-		}
-		if (bus->own_slave_addr == 0xFF) {
+		पूर्ण
+		अगर (bus->own_slave_addr == 0xFF) अणु
 			/* Check which type of address match */
-			val = ioread8(bus->reg + NPCM_I2CCST);
-			if (NPCM_I2CCST_MATCH & val) {
+			val = ioपढ़ो8(bus->reg + NPCM_I2CCST);
+			अगर (NPCM_I2CCST_MATCH & val) अणु
 				u16 addr;
-				enum i2c_addr eaddr;
+				क्रमागत i2c_addr eaddr;
 				u8 i2ccst2;
 				u8 i2ccst3;
 
-				i2ccst3 = ioread8(bus->reg + NPCM_I2CCST3);
-				i2ccst2 = ioread8(bus->reg + NPCM_I2CCST2);
+				i2ccst3 = ioपढ़ो8(bus->reg + NPCM_I2CCST3);
+				i2ccst2 = ioपढ़ो8(bus->reg + NPCM_I2CCST2);
 
 				/*
 				 * the i2c module can response to 10 own SA.
@@ -1180,72 +1181,72 @@ static irqreturn_t npcm_i2c_int_slave_handler(struct npcm_i2c *bus)
 				addr = ((i2ccst3 & 0x07) << 7) |
 					(i2ccst2 & 0x7F);
 				info = ffs(addr);
-				eaddr = (enum i2c_addr)info;
+				eaddr = (क्रमागत i2c_addr)info;
 				addr = npcm_i2c_get_slave_addr(bus, eaddr);
 				addr &= 0x7F;
 				bus->own_slave_addr = addr;
-				if (bus->PEC_mask & BIT(info))
+				अगर (bus->PEC_mask & BIT(info))
 					bus->PEC_use = true;
-				else
+				अन्यथा
 					bus->PEC_use = false;
-			} else {
-				if (NPCM_I2CCST_GCMATCH & val)
+			पूर्ण अन्यथा अणु
+				अगर (NPCM_I2CCST_GCMATCH & val)
 					bus->own_slave_addr = 0;
-				if (NPCM_I2CCST_ARPMATCH & val)
+				अगर (NPCM_I2CCST_ARPMATCH & val)
 					bus->own_slave_addr = 0x61;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/*
 			 *  Slave match can happen in two options:
-			 *  1. Start, SA, read (slave read without further ado)
-			 *  2. Start, SA, read, data, restart, SA, read,  ...
-			 *     (slave read in fragmented mode)
-			 *  3. Start, SA, write, data, restart, SA, read, ..
-			 *     (regular write-read mode)
+			 *  1. Start, SA, पढ़ो (slave पढ़ो without further aकरो)
+			 *  2. Start, SA, पढ़ो, data, restart, SA, पढ़ो,  ...
+			 *     (slave पढ़ो in fragmented mode)
+			 *  3. Start, SA, ग_लिखो, data, restart, SA, पढ़ो, ..
+			 *     (regular ग_लिखो-पढ़ो mode)
 			 */
-			if ((bus->state == I2C_OPER_STARTED &&
+			अगर ((bus->state == I2C_OPER_STARTED &&
 			     bus->operation == I2C_READ_OPER &&
 			     bus->stop_ind == I2C_SLAVE_XMIT_IND) ||
-			     bus->stop_ind == I2C_SLAVE_RCV_IND) {
+			     bus->stop_ind == I2C_SLAVE_RCV_IND) अणु
 				/* slave tx after slave rx w/o STOP */
 				bus->stop_ind = I2C_SLAVE_RESTART_IND;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (NPCM_I2CST_XMIT & i2cst)
+		अगर (NPCM_I2CST_XMIT & i2cst)
 			bus->stop_ind = I2C_SLAVE_XMIT_IND;
-		else
+		अन्यथा
 			bus->stop_ind = I2C_SLAVE_RCV_IND;
 		bus->state = I2C_SLAVE_MATCH;
 		npcm_i2c_slave_rd_wr(bus);
-		iowrite8(NPCM_I2CST_NMATCH, bus->reg + NPCM_I2CST);
+		ioग_लिखो8(NPCM_I2CST_NMATCH, bus->reg + NPCM_I2CST);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
 	/* Slave SDA status is set - tx or rx */
-	if ((NPCM_I2CST_SDAST & i2cst) ||
-	    (bus->fifo_use &&
-	    (npcm_i2c_tx_fifo_empty(bus) || npcm_i2c_rx_fifo_full(bus)))) {
+	अगर ((NPCM_I2CST_SDAST & i2cst) ||
+	    (bus->fअगरo_use &&
+	    (npcm_i2c_tx_fअगरo_empty(bus) || npcm_i2c_rx_fअगरo_full(bus)))) अणु
 		npcm_i2c_slave_rd_wr(bus);
-		iowrite8(NPCM_I2CST_SDAST, bus->reg + NPCM_I2CST);
+		ioग_लिखो8(NPCM_I2CST_SDAST, bus->reg + NPCM_I2CST);
 		ret = IRQ_HANDLED;
-	} /* SDAST */
+	पूर्ण /* SDAST */
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int npcm_i2c_reg_slave(struct i2c_client *client)
-{
-	unsigned long lock_flags;
-	struct npcm_i2c *bus = i2c_get_adapdata(client->adapter);
+अटल पूर्णांक npcm_i2c_reg_slave(काष्ठा i2c_client *client)
+अणु
+	अचिन्हित दीर्घ lock_flags;
+	काष्ठा npcm_i2c *bus = i2c_get_adapdata(client->adapter);
 
 	bus->slave = client;
 
-	if (!bus->slave)
-		return -EINVAL;
+	अगर (!bus->slave)
+		वापस -EINVAL;
 
-	if (client->flags & I2C_CLIENT_TEN)
-		return -EAFNOSUPPORT;
+	अगर (client->flags & I2C_CLIENT_TEN)
+		वापस -EAFNOSUPPORT;
 
 	spin_lock_irqsave(&bus->lock, lock_flags);
 
@@ -1254,217 +1255,217 @@ static int npcm_i2c_reg_slave(struct i2c_client *client)
 	bus->slv_wr_size = 0;
 	bus->slv_rd_ind = 0;
 	bus->slv_wr_ind = 0;
-	if (client->flags & I2C_CLIENT_PEC)
+	अगर (client->flags & I2C_CLIENT_PEC)
 		bus->PEC_use = true;
 
 	dev_info(bus->dev, "i2c%d register slave SA=0x%x, PEC=%d\n", bus->num,
 		 client->addr, bus->PEC_use);
 
 	npcm_i2c_slave_enable(bus, I2C_SLAVE_ADDR1, client->addr, true);
-	npcm_i2c_clear_fifo_int(bus);
-	npcm_i2c_clear_rx_fifo(bus);
-	npcm_i2c_clear_tx_fifo(bus);
-	npcm_i2c_slave_int_enable(bus, true);
+	npcm_i2c_clear_fअगरo_पूर्णांक(bus);
+	npcm_i2c_clear_rx_fअगरo(bus);
+	npcm_i2c_clear_tx_fअगरo(bus);
+	npcm_i2c_slave_पूर्णांक_enable(bus, true);
 
 	spin_unlock_irqrestore(&bus->lock, lock_flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npcm_i2c_unreg_slave(struct i2c_client *client)
-{
-	struct npcm_i2c *bus = client->adapter->algo_data;
-	unsigned long lock_flags;
+अटल पूर्णांक npcm_i2c_unreg_slave(काष्ठा i2c_client *client)
+अणु
+	काष्ठा npcm_i2c *bus = client->adapter->algo_data;
+	अचिन्हित दीर्घ lock_flags;
 
 	spin_lock_irqsave(&bus->lock, lock_flags);
-	if (!bus->slave) {
+	अगर (!bus->slave) अणु
 		spin_unlock_irqrestore(&bus->lock, lock_flags);
-		return -EINVAL;
-	}
-	npcm_i2c_slave_int_enable(bus, false);
-	npcm_i2c_remove_slave_addr(bus, client->addr);
-	bus->slave = NULL;
+		वापस -EINVAL;
+	पूर्ण
+	npcm_i2c_slave_पूर्णांक_enable(bus, false);
+	npcm_i2c_हटाओ_slave_addr(bus, client->addr);
+	bus->slave = शून्य;
 	spin_unlock_irqrestore(&bus->lock, lock_flags);
-	return 0;
-}
-#endif /* CONFIG_I2C_SLAVE */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_I2C_SLAVE */
 
-static void npcm_i2c_master_fifo_read(struct npcm_i2c *bus)
-{
-	int rcount;
-	int fifo_bytes;
-	enum i2c_state_ind ind = I2C_MASTER_DONE_IND;
+अटल व्योम npcm_i2c_master_fअगरo_पढ़ो(काष्ठा npcm_i2c *bus)
+अणु
+	पूर्णांक rcount;
+	पूर्णांक fअगरo_bytes;
+	क्रमागत i2c_state_ind ind = I2C_MASTER_DONE_IND;
 
-	fifo_bytes = npcm_i2c_fifo_usage(bus);
+	fअगरo_bytes = npcm_i2c_fअगरo_usage(bus);
 	rcount = bus->rd_size - bus->rd_ind;
 
 	/*
 	 * In order not to change the RX_TRH during transaction (we found that
-	 * this might be problematic if it takes too much time to read the FIFO)
-	 * we read the data in the following way. If the number of bytes to
-	 * read == FIFO Size + C (where C < FIFO Size)then first read C bytes
-	 * and in the next int we read rest of the data.
+	 * this might be problematic अगर it takes too much समय to पढ़ो the FIFO)
+	 * we पढ़ो the data in the following way. If the number of bytes to
+	 * पढ़ो == FIFO Size + C (where C < FIFO Size)then first पढ़ो C bytes
+	 * and in the next पूर्णांक we पढ़ो rest of the data.
 	 */
-	if (rcount < (2 * I2C_HW_FIFO_SIZE) && rcount > I2C_HW_FIFO_SIZE)
-		fifo_bytes = rcount - I2C_HW_FIFO_SIZE;
+	अगर (rcount < (2 * I2C_HW_FIFO_SIZE) && rcount > I2C_HW_FIFO_SIZE)
+		fअगरo_bytes = rcount - I2C_HW_FIFO_SIZE;
 
-	if (rcount <= fifo_bytes) {
-		/* last bytes are about to be read - end of tx */
+	अगर (rcount <= fअगरo_bytes) अणु
+		/* last bytes are about to be पढ़ो - end of tx */
 		bus->state = I2C_STOP_PENDING;
 		bus->stop_ind = ind;
-		npcm_i2c_eob_int(bus, true);
-		/* Stop should be set before reading last byte. */
+		npcm_i2c_eob_पूर्णांक(bus, true);
+		/* Stop should be set beक्रमe पढ़ोing last byte. */
 		npcm_i2c_master_stop(bus);
-		npcm_i2c_read_fifo(bus, fifo_bytes);
-	} else {
-		npcm_i2c_read_fifo(bus, fifo_bytes);
+		npcm_i2c_पढ़ो_fअगरo(bus, fअगरo_bytes);
+	पूर्ण अन्यथा अणु
+		npcm_i2c_पढ़ो_fअगरo(bus, fअगरo_bytes);
 		rcount = bus->rd_size - bus->rd_ind;
-		npcm_i2c_set_fifo(bus, rcount, -1);
-	}
-}
+		npcm_i2c_set_fअगरo(bus, rcount, -1);
+	पूर्ण
+पूर्ण
 
-static void npcm_i2c_irq_master_handler_write(struct npcm_i2c *bus)
-{
+अटल व्योम npcm_i2c_irq_master_handler_ग_लिखो(काष्ठा npcm_i2c *bus)
+अणु
 	u16 wcount;
 
-	if (bus->fifo_use)
-		npcm_i2c_clear_tx_fifo(bus); /* clear the TX fifo status bit */
+	अगर (bus->fअगरo_use)
+		npcm_i2c_clear_tx_fअगरo(bus); /* clear the TX fअगरo status bit */
 
-	/* Master write operation - last byte handling */
-	if (bus->wr_ind == bus->wr_size) {
-		if (bus->fifo_use && npcm_i2c_fifo_usage(bus) > 0)
+	/* Master ग_लिखो operation - last byte handling */
+	अगर (bus->wr_ind == bus->wr_size) अणु
+		अगर (bus->fअगरo_use && npcm_i2c_fअगरo_usage(bus) > 0)
 			/*
 			 * No more bytes to send (to add to the FIFO),
 			 * however the FIFO is not empty yet. It is
 			 * still in the middle of tx. Currently there's nothing
-			 * to do except for waiting to the end of the tx
-			 * We will get an int when the FIFO will get empty.
+			 * to करो except क्रम रुकोing to the end of the tx
+			 * We will get an पूर्णांक when the FIFO will get empty.
 			 */
-			return;
+			वापस;
 
-		if (bus->rd_size == 0) {
+		अगर (bus->rd_size == 0) अणु
 			/* all bytes have been written, in wr only operation */
-			npcm_i2c_eob_int(bus, true);
+			npcm_i2c_eob_पूर्णांक(bus, true);
 			bus->state = I2C_STOP_PENDING;
 			bus->stop_ind = I2C_MASTER_DONE_IND;
 			npcm_i2c_master_stop(bus);
 			/* Clear SDA Status bit (by writing dummy byte) */
 			npcm_i2c_wr_byte(bus, 0xFF);
 
-		} else {
-			/* last write-byte written on previous int - restart */
-			npcm_i2c_set_fifo(bus, bus->rd_size, -1);
-			/* Generate repeated start upon next write to SDA */
+		पूर्ण अन्यथा अणु
+			/* last ग_लिखो-byte written on previous पूर्णांक - restart */
+			npcm_i2c_set_fअगरo(bus, bus->rd_size, -1);
+			/* Generate repeated start upon next ग_लिखो to SDA */
 			npcm_i2c_master_start(bus);
 
 			/*
 			 * Receiving one byte only - stall after successful
 			 * completion of send address byte. If we NACK here, and
-			 * slave doesn't ACK the address, we might
-			 * unintentionally NACK the next multi-byte read.
+			 * slave करोesn't ACK the address, we might
+			 * unपूर्णांकentionally NACK the next multi-byte पढ़ो.
 			 */
-			if (bus->rd_size == 1)
+			अगर (bus->rd_size == 1)
 				npcm_i2c_stall_after_start(bus, true);
 
-			/* Next int will occur on read */
+			/* Next पूर्णांक will occur on पढ़ो */
 			bus->operation = I2C_READ_OPER;
-			/* send the slave address in read direction */
+			/* send the slave address in पढ़ो direction */
 			npcm_i2c_wr_byte(bus, bus->dest_addr | 0x1);
-		}
-	} else {
-		/* write next byte not last byte and not slave address */
-		if (!bus->fifo_use || bus->wr_size == 1) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* ग_लिखो next byte not last byte and not slave address */
+		अगर (!bus->fअगरo_use || bus->wr_size == 1) अणु
 			npcm_i2c_wr_byte(bus, bus->wr_buf[bus->wr_ind++]);
-		} else {
+		पूर्ण अन्यथा अणु
 			wcount = bus->wr_size - bus->wr_ind;
-			npcm_i2c_set_fifo(bus, -1, wcount);
-			if (wcount)
-				npcm_i2c_write_to_fifo_master(bus, wcount);
-		}
-	}
-}
+			npcm_i2c_set_fअगरo(bus, -1, wcount);
+			अगर (wcount)
+				npcm_i2c_ग_लिखो_to_fअगरo_master(bus, wcount);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void npcm_i2c_irq_master_handler_read(struct npcm_i2c *bus)
-{
+अटल व्योम npcm_i2c_irq_master_handler_पढ़ो(काष्ठा npcm_i2c *bus)
+अणु
 	u16 block_extra_bytes_size;
 	u8 data;
 
 	/* added bytes to the packet: */
-	block_extra_bytes_size = bus->read_block_use + bus->PEC_use;
+	block_extra_bytes_size = bus->पढ़ो_block_use + bus->PEC_use;
 
 	/*
-	 * Perform master read, distinguishing between last byte and the rest of
-	 * the bytes. The last byte should be read when the clock is stopped
+	 * Perक्रमm master पढ़ो, distinguishing between last byte and the rest of
+	 * the bytes. The last byte should be पढ़ो when the घड़ी is stopped
 	 */
-	if (bus->rd_ind == 0) { /* first byte handling: */
-		if (bus->read_block_use) {
+	अगर (bus->rd_ind == 0) अणु /* first byte handling: */
+		अगर (bus->पढ़ो_block_use) अणु
 			/* first byte in block protocol is the size: */
 			data = npcm_i2c_rd_byte(bus);
 			data = clamp_val(data, 1, I2C_SMBUS_BLOCK_MAX);
 			bus->rd_size = data + block_extra_bytes_size;
 			bus->rd_buf[bus->rd_ind++] = data;
 
-			/* clear RX FIFO interrupt status: */
-			if (bus->fifo_use) {
-				data = ioread8(bus->reg + NPCM_I2CFIF_CTS);
+			/* clear RX FIFO पूर्णांकerrupt status: */
+			अगर (bus->fअगरo_use) अणु
+				data = ioपढ़ो8(bus->reg + NPCM_I2CFIF_CTS);
 				data = data | NPCM_I2CFIF_CTS_RXF_TXE;
-				iowrite8(data, bus->reg + NPCM_I2CFIF_CTS);
-			}
+				ioग_लिखो8(data, bus->reg + NPCM_I2CFIF_CTS);
+			पूर्ण
 
-			npcm_i2c_set_fifo(bus, bus->rd_size - 1, -1);
+			npcm_i2c_set_fअगरo(bus, bus->rd_size - 1, -1);
 			npcm_i2c_stall_after_start(bus, false);
-		} else {
-			npcm_i2c_clear_tx_fifo(bus);
-			npcm_i2c_master_fifo_read(bus);
-		}
-	} else {
-		if (bus->rd_size == block_extra_bytes_size &&
-		    bus->read_block_use) {
+		पूर्ण अन्यथा अणु
+			npcm_i2c_clear_tx_fअगरo(bus);
+			npcm_i2c_master_fअगरo_पढ़ो(bus);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (bus->rd_size == block_extra_bytes_size &&
+		    bus->पढ़ो_block_use) अणु
 			bus->state = I2C_STOP_PENDING;
 			bus->stop_ind = I2C_BLOCK_BYTES_ERR_IND;
 			bus->cmd_err = -EIO;
-			npcm_i2c_eob_int(bus, true);
+			npcm_i2c_eob_पूर्णांक(bus, true);
 			npcm_i2c_master_stop(bus);
-			npcm_i2c_read_fifo(bus, npcm_i2c_fifo_usage(bus));
-		} else {
-			npcm_i2c_master_fifo_read(bus);
-		}
-	}
-}
+			npcm_i2c_पढ़ो_fअगरo(bus, npcm_i2c_fअगरo_usage(bus));
+		पूर्ण अन्यथा अणु
+			npcm_i2c_master_fअगरo_पढ़ो(bus);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void npcm_i2c_irq_handle_nmatch(struct npcm_i2c *bus)
-{
-	iowrite8(NPCM_I2CST_NMATCH, bus->reg + NPCM_I2CST);
+अटल व्योम npcm_i2c_irq_handle_nmatch(काष्ठा npcm_i2c *bus)
+अणु
+	ioग_लिखो8(NPCM_I2CST_NMATCH, bus->reg + NPCM_I2CST);
 	npcm_i2c_nack(bus);
 	bus->stop_ind = I2C_BUS_ERR_IND;
 	npcm_i2c_callback(bus, bus->stop_ind, npcm_i2c_get_index(bus));
-}
+पूर्ण
 
 /* A NACK has occurred */
-static void npcm_i2c_irq_handle_nack(struct npcm_i2c *bus)
-{
+अटल व्योम npcm_i2c_irq_handle_nack(काष्ठा npcm_i2c *bus)
+अणु
 	u8 val;
 
-	if (bus->nack_cnt < ULLONG_MAX)
+	अगर (bus->nack_cnt < ULदीर्घ_उच्च)
 		bus->nack_cnt++;
 
-	if (bus->fifo_use) {
+	अगर (bus->fअगरo_use) अणु
 		/*
-		 * if there are still untransmitted bytes in TX FIFO
+		 * अगर there are still untransmitted bytes in TX FIFO
 		 * reduce them from wr_ind
 		 */
-		if (bus->operation == I2C_WRITE_OPER)
-			bus->wr_ind -= npcm_i2c_fifo_usage(bus);
+		अगर (bus->operation == I2C_WRITE_OPER)
+			bus->wr_ind -= npcm_i2c_fअगरo_usage(bus);
 
 		/* clear the FIFO */
-		iowrite8(NPCM_I2CFIF_CTS_CLR_FIFO, bus->reg + NPCM_I2CFIF_CTS);
-	}
+		ioग_लिखो8(NPCM_I2CFIF_CTS_CLR_FIFO, bus->reg + NPCM_I2CFIF_CTS);
+	पूर्ण
 
-	/* In master write operation, got unexpected NACK */
+	/* In master ग_लिखो operation, got unexpected NACK */
 	bus->stop_ind = I2C_NACK_IND;
 	/* Only current master is allowed to issue Stop Condition */
-	if (npcm_i2c_is_master(bus)) {
+	अगर (npcm_i2c_is_master(bus)) अणु
 		/* stopping in the middle */
-		npcm_i2c_eob_int(bus, false);
+		npcm_i2c_eob_पूर्णांक(bus, false);
 		npcm_i2c_master_stop(bus);
 
 		/*
@@ -1472,311 +1473,311 @@ static void npcm_i2c_irq_handle_nack(struct npcm_i2c *bus)
 		 * NEGACK bit. Then a Stop condition is sent.
 		 */
 		npcm_i2c_clear_master_status(bus);
-		readx_poll_timeout_atomic(ioread8, bus->reg + NPCM_I2CCST, val,
+		पढ़ोx_poll_समयout_atomic(ioपढ़ो8, bus->reg + NPCM_I2CCST, val,
 					  !(val & NPCM_I2CCST_BUSY), 10, 200);
-	}
+	पूर्ण
 	bus->state = I2C_IDLE;
 
 	/*
 	 * In Master mode, NACK should be cleared only after STOP.
-	 * In such case, the bus is released from stall only after the
+	 * In such हाल, the bus is released from stall only after the
 	 * software clears NACK bit. Then a Stop condition is sent.
 	 */
 	npcm_i2c_callback(bus, bus->stop_ind, bus->wr_ind);
-}
+पूर्ण
 
-	/* Master mode: a Bus Error has been identified */
-static void npcm_i2c_irq_handle_ber(struct npcm_i2c *bus)
-{
-	if (bus->ber_cnt < ULLONG_MAX)
+	/* Master mode: a Bus Error has been identअगरied */
+अटल व्योम npcm_i2c_irq_handle_ber(काष्ठा npcm_i2c *bus)
+अणु
+	अगर (bus->ber_cnt < ULदीर्घ_उच्च)
 		bus->ber_cnt++;
 	bus->stop_ind = I2C_BUS_ERR_IND;
-	if (npcm_i2c_is_master(bus)) {
-		npcm_i2c_master_abort(bus);
-	} else {
+	अगर (npcm_i2c_is_master(bus)) अणु
+		npcm_i2c_master_पात(bus);
+	पूर्ण अन्यथा अणु
 		npcm_i2c_clear_master_status(bus);
 
 		/* Clear BB (BUS BUSY) bit */
-		iowrite8(NPCM_I2CCST_BB, bus->reg + NPCM_I2CCST);
+		ioग_लिखो8(NPCM_I2CCST_BB, bus->reg + NPCM_I2CCST);
 
 		bus->cmd_err = -EAGAIN;
 		npcm_i2c_callback(bus, bus->stop_ind, npcm_i2c_get_index(bus));
-	}
+	पूर्ण
 	bus->state = I2C_IDLE;
-}
+पूर्ण
 
 	/* EOB: a master End Of Busy (meaning STOP completed) */
-static void npcm_i2c_irq_handle_eob(struct npcm_i2c *bus)
-{
-	npcm_i2c_eob_int(bus, false);
+अटल व्योम npcm_i2c_irq_handle_eob(काष्ठा npcm_i2c *bus)
+अणु
+	npcm_i2c_eob_पूर्णांक(bus, false);
 	bus->state = I2C_IDLE;
 	npcm_i2c_callback(bus, bus->stop_ind, bus->rd_ind);
-}
+पूर्ण
 
 /* Address sent and requested stall occurred (Master mode) */
-static void npcm_i2c_irq_handle_stall_after_start(struct npcm_i2c *bus)
-{
-	if (npcm_i2c_is_quick(bus)) {
+अटल व्योम npcm_i2c_irq_handle_stall_after_start(काष्ठा npcm_i2c *bus)
+अणु
+	अगर (npcm_i2c_is_quick(bus)) अणु
 		bus->state = I2C_STOP_PENDING;
 		bus->stop_ind = I2C_MASTER_DONE_IND;
-		npcm_i2c_eob_int(bus, true);
+		npcm_i2c_eob_पूर्णांक(bus, true);
 		npcm_i2c_master_stop(bus);
-	} else if ((bus->rd_size == 1) && !bus->read_block_use) {
+	पूर्ण अन्यथा अगर ((bus->rd_size == 1) && !bus->पढ़ो_block_use) अणु
 		/*
 		 * Receiving one byte only - set NACK after ensuring
 		 * slave ACKed the address byte.
 		 */
 		npcm_i2c_nack(bus);
-	}
+	पूर्ण
 
 	/* Reset stall-after-address-byte */
 	npcm_i2c_stall_after_start(bus, false);
 
 	/* Clear stall only after setting STOP */
-	iowrite8(NPCM_I2CST_STASTR, bus->reg + NPCM_I2CST);
-}
+	ioग_लिखो8(NPCM_I2CST_STASTR, bus->reg + NPCM_I2CST);
+पूर्ण
 
 /* SDA status is set - TX or RX, master */
-static void npcm_i2c_irq_handle_sda(struct npcm_i2c *bus, u8 i2cst)
-{
-	u8 fif_cts;
+अटल व्योम npcm_i2c_irq_handle_sda(काष्ठा npcm_i2c *bus, u8 i2cst)
+अणु
+	u8 fअगर_cts;
 
-	if (!npcm_i2c_is_master(bus))
-		return;
+	अगर (!npcm_i2c_is_master(bus))
+		वापस;
 
-	if (bus->state == I2C_IDLE) {
+	अगर (bus->state == I2C_IDLE) अणु
 		bus->stop_ind = I2C_WAKE_UP_IND;
 
-		if (npcm_i2c_is_quick(bus) || bus->read_block_use)
+		अगर (npcm_i2c_is_quick(bus) || bus->पढ़ो_block_use)
 			/*
 			 * Need to stall after successful
 			 * completion of sending address byte
 			 */
 			npcm_i2c_stall_after_start(bus, true);
-		else
+		अन्यथा
 			npcm_i2c_stall_after_start(bus, false);
 
 		/*
 		 * Receiving one byte only - stall after successful completion
-		 * of sending address byte If we NACK here, and slave doesn't
-		 * ACK the address, we might unintentionally NACK the next
-		 * multi-byte read
+		 * of sending address byte If we NACK here, and slave करोesn't
+		 * ACK the address, we might unपूर्णांकentionally NACK the next
+		 * multi-byte पढ़ो
 		 */
-		if (bus->wr_size == 0 && bus->rd_size == 1)
+		अगर (bus->wr_size == 0 && bus->rd_size == 1)
 			npcm_i2c_stall_after_start(bus, true);
 
 		/* Initiate I2C master tx */
 
-		/* select bank 1 for FIFO regs */
+		/* select bank 1 क्रम FIFO regs */
 		npcm_i2c_select_bank(bus, I2C_BANK_1);
 
-		fif_cts = ioread8(bus->reg + NPCM_I2CFIF_CTS);
-		fif_cts = fif_cts & ~NPCM_I2CFIF_CTS_SLVRSTR;
+		fअगर_cts = ioपढ़ो8(bus->reg + NPCM_I2CFIF_CTS);
+		fअगर_cts = fअगर_cts & ~NPCM_I2CFIF_CTS_SLVRSTR;
 
 		/* clear FIFO and relevant status bits. */
-		fif_cts = fif_cts | NPCM_I2CFIF_CTS_CLR_FIFO;
-		iowrite8(fif_cts, bus->reg + NPCM_I2CFIF_CTS);
+		fअगर_cts = fअगर_cts | NPCM_I2CFIF_CTS_CLR_FIFO;
+		ioग_लिखो8(fअगर_cts, bus->reg + NPCM_I2CFIF_CTS);
 
 		/* re-enable */
-		fif_cts = fif_cts | NPCM_I2CFIF_CTS_RXF_TXE;
-		iowrite8(fif_cts, bus->reg + NPCM_I2CFIF_CTS);
+		fअगर_cts = fअगर_cts | NPCM_I2CFIF_CTS_RXF_TXE;
+		ioग_लिखो8(fअगर_cts, bus->reg + NPCM_I2CFIF_CTS);
 
 		/*
 		 * Configure the FIFO threshold:
-		 * according to the needed # of bytes to read.
-		 * Note: due to HW limitation can't config the rx fifo before it
+		 * according to the needed # of bytes to पढ़ो.
+		 * Note: due to HW limitation can't config the rx fअगरo beक्रमe it
 		 * got and ACK on the restart. LAST bit will not be reset unless
 		 * RX completed. It will stay set on the next tx.
 		 */
-		if (bus->wr_size)
-			npcm_i2c_set_fifo(bus, -1, bus->wr_size);
-		else
-			npcm_i2c_set_fifo(bus, bus->rd_size, -1);
+		अगर (bus->wr_size)
+			npcm_i2c_set_fअगरo(bus, -1, bus->wr_size);
+		अन्यथा
+			npcm_i2c_set_fअगरo(bus, bus->rd_size, -1);
 
 		bus->state = I2C_OPER_STARTED;
 
-		if (npcm_i2c_is_quick(bus) || bus->wr_size)
+		अगर (npcm_i2c_is_quick(bus) || bus->wr_size)
 			npcm_i2c_wr_byte(bus, bus->dest_addr);
-		else
+		अन्यथा
 			npcm_i2c_wr_byte(bus, bus->dest_addr | BIT(0));
-	/* SDA interrupt, after start\restart */
-	} else {
-		if (NPCM_I2CST_XMIT & i2cst) {
+	/* SDA पूर्णांकerrupt, after start\लestart */
+	पूर्ण अन्यथा अणु
+		अगर (NPCM_I2CST_XMIT & i2cst) अणु
 			bus->operation = I2C_WRITE_OPER;
-			npcm_i2c_irq_master_handler_write(bus);
-		} else {
+			npcm_i2c_irq_master_handler_ग_लिखो(bus);
+		पूर्ण अन्यथा अणु
 			bus->operation = I2C_READ_OPER;
-			npcm_i2c_irq_master_handler_read(bus);
-		}
-	}
-}
+			npcm_i2c_irq_master_handler_पढ़ो(bus);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int npcm_i2c_int_master_handler(struct npcm_i2c *bus)
-{
+अटल पूर्णांक npcm_i2c_पूर्णांक_master_handler(काष्ठा npcm_i2c *bus)
+अणु
 	u8 i2cst;
-	int ret = -EIO;
+	पूर्णांक ret = -EIO;
 
-	i2cst = ioread8(bus->reg + NPCM_I2CST);
+	i2cst = ioपढ़ो8(bus->reg + NPCM_I2CST);
 
-	if (FIELD_GET(NPCM_I2CST_NMATCH, i2cst)) {
+	अगर (FIELD_GET(NPCM_I2CST_NMATCH, i2cst)) अणु
 		npcm_i2c_irq_handle_nmatch(bus);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/* A NACK has occurred */
-	if (FIELD_GET(NPCM_I2CST_NEGACK, i2cst)) {
+	अगर (FIELD_GET(NPCM_I2CST_NEGACK, i2cst)) अणु
 		npcm_i2c_irq_handle_nack(bus);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Master mode: a Bus Error has been identified */
-	if (FIELD_GET(NPCM_I2CST_BER, i2cst)) {
+	/* Master mode: a Bus Error has been identअगरied */
+	अगर (FIELD_GET(NPCM_I2CST_BER, i2cst)) अणु
 		npcm_i2c_irq_handle_ber(bus);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* EOB: a master End Of Busy (meaning STOP completed) */
-	if ((FIELD_GET(NPCM_I2CCTL1_EOBINTE,
-		       ioread8(bus->reg + NPCM_I2CCTL1)) == 1) &&
+	अगर ((FIELD_GET(NPCM_I2CCTL1_EOBINTE,
+		       ioपढ़ो8(bus->reg + NPCM_I2CCTL1)) == 1) &&
 	    (FIELD_GET(NPCM_I2CCST3_EO_BUSY,
-		       ioread8(bus->reg + NPCM_I2CCST3)))) {
+		       ioपढ़ो8(bus->reg + NPCM_I2CCST3)))) अणु
 		npcm_i2c_irq_handle_eob(bus);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Address sent and requested stall occurred (Master mode) */
-	if (FIELD_GET(NPCM_I2CST_STASTR, i2cst)) {
+	अगर (FIELD_GET(NPCM_I2CST_STASTR, i2cst)) अणु
 		npcm_i2c_irq_handle_stall_after_start(bus);
 		ret = 0;
-	}
+	पूर्ण
 
 	/* SDA status is set - TX or RX, master */
-	if (FIELD_GET(NPCM_I2CST_SDAST, i2cst) ||
-	    (bus->fifo_use &&
-	    (npcm_i2c_tx_fifo_empty(bus) || npcm_i2c_rx_fifo_full(bus)))) {
+	अगर (FIELD_GET(NPCM_I2CST_SDAST, i2cst) ||
+	    (bus->fअगरo_use &&
+	    (npcm_i2c_tx_fअगरo_empty(bus) || npcm_i2c_rx_fअगरo_full(bus)))) अणु
 		npcm_i2c_irq_handle_sda(bus, i2cst);
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* recovery using TGCLK functionality of the module */
-static int npcm_i2c_recovery_tgclk(struct i2c_adapter *_adap)
-{
+अटल पूर्णांक npcm_i2c_recovery_tgclk(काष्ठा i2c_adapter *_adap)
+अणु
 	u8               val;
-	u8               fif_cts;
-	bool             done = false;
-	int              status = -ENOTRECOVERABLE;
-	struct npcm_i2c *bus = container_of(_adap, struct npcm_i2c, adap);
-	/* Allow 3 bytes (27 toggles) to be read from the slave: */
-	int              iter = 27;
+	u8               fअगर_cts;
+	bool             करोne = false;
+	पूर्णांक              status = -ENOTRECOVERABLE;
+	काष्ठा npcm_i2c *bus = container_of(_adap, काष्ठा npcm_i2c, adap);
+	/* Allow 3 bytes (27 toggles) to be पढ़ो from the slave: */
+	पूर्णांक              iter = 27;
 
-	if ((npcm_i2c_get_SDA(_adap) == 1) && (npcm_i2c_get_SCL(_adap) == 1)) {
+	अगर ((npcm_i2c_get_SDA(_adap) == 1) && (npcm_i2c_get_SCL(_adap) == 1)) अणु
 		dev_dbg(bus->dev, "bus%d recovery skipped, bus not stuck",
 			bus->num);
 		npcm_i2c_reset(bus);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	npcm_i2c_int_enable(bus, false);
+	npcm_i2c_पूर्णांक_enable(bus, false);
 	npcm_i2c_disable(bus);
 	npcm_i2c_enable(bus);
-	iowrite8(NPCM_I2CCST_BB, bus->reg + NPCM_I2CCST);
-	npcm_i2c_clear_tx_fifo(bus);
-	npcm_i2c_clear_rx_fifo(bus);
-	iowrite8(0, bus->reg + NPCM_I2CRXF_CTL);
-	iowrite8(0, bus->reg + NPCM_I2CTXF_CTL);
+	ioग_लिखो8(NPCM_I2CCST_BB, bus->reg + NPCM_I2CCST);
+	npcm_i2c_clear_tx_fअगरo(bus);
+	npcm_i2c_clear_rx_fअगरo(bus);
+	ioग_लिखो8(0, bus->reg + NPCM_I2CRXF_CTL);
+	ioग_लिखो8(0, bus->reg + NPCM_I2CTXF_CTL);
 	npcm_i2c_stall_after_start(bus, false);
 
-	/* select bank 1 for FIFO regs */
+	/* select bank 1 क्रम FIFO regs */
 	npcm_i2c_select_bank(bus, I2C_BANK_1);
 
 	/* clear FIFO and relevant status bits. */
-	fif_cts = ioread8(bus->reg + NPCM_I2CFIF_CTS);
-	fif_cts &= ~NPCM_I2CFIF_CTS_SLVRSTR;
-	fif_cts |= NPCM_I2CFIF_CTS_CLR_FIFO;
-	iowrite8(fif_cts, bus->reg + NPCM_I2CFIF_CTS);
-	npcm_i2c_set_fifo(bus, -1, 0);
+	fअगर_cts = ioपढ़ो8(bus->reg + NPCM_I2CFIF_CTS);
+	fअगर_cts &= ~NPCM_I2CFIF_CTS_SLVRSTR;
+	fअगर_cts |= NPCM_I2CFIF_CTS_CLR_FIFO;
+	ioग_लिखो8(fअगर_cts, bus->reg + NPCM_I2CFIF_CTS);
+	npcm_i2c_set_fअगरo(bus, -1, 0);
 
 	/* Repeat the following sequence until SDA is released */
-	do {
+	करो अणु
 		/* Issue a single SCL toggle */
-		iowrite8(NPCM_I2CCST_TGSCL, bus->reg + NPCM_I2CCST);
+		ioग_लिखो8(NPCM_I2CCST_TGSCL, bus->reg + NPCM_I2CCST);
 		usleep_range(20, 30);
 		/* If SDA line is inactive (high), stop */
-		if (npcm_i2c_get_SDA(_adap)) {
-			done = true;
+		अगर (npcm_i2c_get_SDA(_adap)) अणु
+			करोne = true;
 			status = 0;
-		}
-	} while (!done && iter--);
+		पूर्ण
+	पूर्ण जबतक (!करोne && iter--);
 
 	/* If SDA line is released: send start-addr-stop, to re-sync. */
-	if (npcm_i2c_get_SDA(_adap)) {
-		/* Send an address byte in write direction: */
+	अगर (npcm_i2c_get_SDA(_adap)) अणु
+		/* Send an address byte in ग_लिखो direction: */
 		npcm_i2c_wr_byte(bus, bus->dest_addr);
 		npcm_i2c_master_start(bus);
 		/* Wait until START condition is sent */
-		status = readx_poll_timeout(npcm_i2c_get_SCL, _adap, val, !val,
+		status = पढ़ोx_poll_समयout(npcm_i2c_get_SCL, _adap, val, !val,
 					    20, 200);
 		/* If START condition was sent */
-		if (npcm_i2c_is_master(bus) > 0) {
+		अगर (npcm_i2c_is_master(bus) > 0) अणु
 			usleep_range(20, 30);
 			npcm_i2c_master_stop(bus);
 			usleep_range(200, 500);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	npcm_i2c_reset(bus);
-	npcm_i2c_int_enable(bus, true);
+	npcm_i2c_पूर्णांक_enable(bus, true);
 
-	if ((npcm_i2c_get_SDA(_adap) == 1) && (npcm_i2c_get_SCL(_adap) == 1))
+	अगर ((npcm_i2c_get_SDA(_adap) == 1) && (npcm_i2c_get_SCL(_adap) == 1))
 		status = 0;
-	else
+	अन्यथा
 		status = -ENOTRECOVERABLE;
-	if (status) {
-		if (bus->rec_fail_cnt < ULLONG_MAX)
+	अगर (status) अणु
+		अगर (bus->rec_fail_cnt < ULदीर्घ_उच्च)
 			bus->rec_fail_cnt++;
-	} else {
-		if (bus->rec_succ_cnt < ULLONG_MAX)
+	पूर्ण अन्यथा अणु
+		अगर (bus->rec_succ_cnt < ULदीर्घ_उच्च)
 			bus->rec_succ_cnt++;
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /* recovery using bit banging functionality of the module */
-static void npcm_i2c_recovery_init(struct i2c_adapter *_adap)
-{
-	struct npcm_i2c *bus = container_of(_adap, struct npcm_i2c, adap);
-	struct i2c_bus_recovery_info *rinfo = &bus->rinfo;
+अटल व्योम npcm_i2c_recovery_init(काष्ठा i2c_adapter *_adap)
+अणु
+	काष्ठा npcm_i2c *bus = container_of(_adap, काष्ठा npcm_i2c, adap);
+	काष्ठा i2c_bus_recovery_info *rinfo = &bus->rinfo;
 
 	rinfo->recover_bus = npcm_i2c_recovery_tgclk;
 
 	/*
-	 * npcm i2c HW allows direct reading of SCL and SDA.
-	 * However, it does not support setting SCL and SDA directly.
+	 * npcm i2c HW allows direct पढ़ोing of SCL and SDA.
+	 * However, it करोes not support setting SCL and SDA directly.
 	 * The recovery function can togle SCL when SDA is low (but not set)
-	 * Getter functions used internally, and can be used externaly.
+	 * Getter functions used पूर्णांकernally, and can be used बाह्यaly.
 	 */
 	rinfo->get_scl = npcm_i2c_get_SCL;
 	rinfo->get_sda = npcm_i2c_get_SDA;
 	_adap->bus_recovery_info = rinfo;
-}
+पूर्ण
 
 /* SCLFRQ min/max field values */
-#define SCLFRQ_MIN  10
-#define SCLFRQ_MAX  511
-#define clk_coef(freq, mul)	DIV_ROUND_UP((freq) * (mul), 1000000)
+#घोषणा SCLFRQ_MIN  10
+#घोषणा SCLFRQ_MAX  511
+#घोषणा clk_coef(freq, mul)	DIV_ROUND_UP((freq) * (mul), 1000000)
 
 /*
  * npcm_i2c_init_clk: init HW timing parameters.
  * NPCM7XX i2c module timing parameters are depenent on module core clk (APB)
  * and bus frequency.
  * 100kHz bus requires tSCL = 4 * SCLFRQ * tCLK. LT and HT are simetric.
- * 400kHz bus requires assymetric HT and LT. A different equation is recomended
- * by the HW designer, given core clock range (equations in comments below).
+ * 400kHz bus requires assymetric HT and LT. A dअगरferent equation is recomended
+ * by the HW designer, given core घड़ी range (equations in comments below).
  *
  */
-static int npcm_i2c_init_clk(struct npcm_i2c *bus, u32 bus_freq_hz)
-{
+अटल पूर्णांक npcm_i2c_init_clk(काष्ठा npcm_i2c *bus, u32 bus_freq_hz)
+अणु
 	u32  k1 = 0;
 	u32  k2 = 0;
 	u8   dbnct = 0;
@@ -1791,477 +1792,477 @@ static int npcm_i2c_init_clk(struct npcm_i2c *bus, u32 bus_freq_hz)
 	bus->bus_freq = bus_freq_hz;
 
 	/* 100KHz and below: */
-	if (bus_freq_hz <= I2C_MAX_STANDARD_MODE_FREQ) {
+	अगर (bus_freq_hz <= I2C_MAX_STANDARD_MODE_FREQ) अणु
 		sclfrq = src_clk_khz / (bus_freq_khz * 4);
 
-		if (sclfrq < SCLFRQ_MIN || sclfrq > SCLFRQ_MAX)
-			return -EDOM;
+		अगर (sclfrq < SCLFRQ_MIN || sclfrq > SCLFRQ_MAX)
+			वापस -गलत_तर्क;
 
-		if (src_clk_khz >= 40000)
+		अगर (src_clk_khz >= 40000)
 			hldt = 17;
-		else if (src_clk_khz >= 12500)
+		अन्यथा अगर (src_clk_khz >= 12500)
 			hldt = 15;
-		else
+		अन्यथा
 			hldt = 7;
-	}
+	पूर्ण
 
 	/* 400KHz: */
-	else if (bus_freq_hz <= I2C_MAX_FAST_MODE_FREQ) {
+	अन्यथा अगर (bus_freq_hz <= I2C_MAX_FAST_MODE_FREQ) अणु
 		sclfrq = 0;
 		fast_mode = I2CCTL3_400K_MODE;
 
-		if (src_clk_khz < 7500)
-			/* 400KHZ cannot be supported for core clock < 7.5MHz */
-			return -EDOM;
+		अगर (src_clk_khz < 7500)
+			/* 400KHZ cannot be supported क्रम core घड़ी < 7.5MHz */
+			वापस -गलत_तर्क;
 
-		else if (src_clk_khz >= 50000) {
+		अन्यथा अगर (src_clk_khz >= 50000) अणु
 			k1 = 80;
 			k2 = 48;
 			hldt = 12;
 			dbnct = 7;
-		}
+		पूर्ण
 
 		/* Master or Slave with frequency > 25MHz */
-		else if (src_clk_khz > 25000) {
+		अन्यथा अगर (src_clk_khz > 25000) अणु
 			hldt = clk_coef(src_clk_khz, 300) + 7;
 			k1 = clk_coef(src_clk_khz, 1600);
 			k2 = clk_coef(src_clk_khz, 900);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* 1MHz: */
-	else if (bus_freq_hz <= I2C_MAX_FAST_MODE_PLUS_FREQ) {
+	अन्यथा अगर (bus_freq_hz <= I2C_MAX_FAST_MODE_PLUS_FREQ) अणु
 		sclfrq = 0;
 		fast_mode = I2CCTL3_400K_MODE;
 
-		/* 1MHZ cannot be supported for core clock < 24 MHz */
-		if (src_clk_khz < 24000)
-			return -EDOM;
+		/* 1MHZ cannot be supported क्रम core घड़ी < 24 MHz */
+		अगर (src_clk_khz < 24000)
+			वापस -गलत_तर्क;
 
 		k1 = clk_coef(src_clk_khz, 620);
 		k2 = clk_coef(src_clk_khz, 380);
 
 		/* Core clk > 40 MHz */
-		if (src_clk_khz > 40000) {
+		अगर (src_clk_khz > 40000) अणु
 			/*
 			 * Set HLDT:
-			 * SDA hold time:  (HLDT-7) * T(CLK) >= 120
+			 * SDA hold समय:  (HLDT-7) * T(CLK) >= 120
 			 * HLDT = 120/T(CLK) + 7 = 120 * FREQ(CLK) + 7
 			 */
 			hldt = clk_coef(src_clk_khz, 120) + 7;
-		} else {
+		पूर्ण अन्यथा अणु
 			hldt = 7;
 			dbnct = 2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Frequency larger than 1 MHz is not supported */
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	if (bus_freq_hz >= I2C_MAX_FAST_MODE_FREQ) {
+	अगर (bus_freq_hz >= I2C_MAX_FAST_MODE_FREQ) अणु
 		k1 = round_up(k1, 2);
 		k2 = round_up(k2 + 1, 2);
-		if (k1 < SCLFRQ_MIN || k1 > SCLFRQ_MAX ||
+		अगर (k1 < SCLFRQ_MIN || k1 > SCLFRQ_MAX ||
 		    k2 < SCLFRQ_MIN || k2 > SCLFRQ_MAX)
-			return -EDOM;
-	}
+			वापस -गलत_तर्क;
+	पूर्ण
 
-	/* write sclfrq value. bits [6:0] are in I2CCTL2 reg */
-	iowrite8(FIELD_PREP(I2CCTL2_SCLFRQ6_0, sclfrq & 0x7F),
+	/* ग_लिखो sclfrq value. bits [6:0] are in I2CCTL2 reg */
+	ioग_लिखो8(FIELD_PREP(I2CCTL2_SCLFRQ6_0, sclfrq & 0x7F),
 		 bus->reg + NPCM_I2CCTL2);
 
 	/* bits [8:7] are in I2CCTL3 reg */
-	iowrite8(fast_mode | FIELD_PREP(I2CCTL3_SCLFRQ8_7, (sclfrq >> 7) & 0x3),
+	ioग_लिखो8(fast_mode | FIELD_PREP(I2CCTL3_SCLFRQ8_7, (sclfrq >> 7) & 0x3),
 		 bus->reg + NPCM_I2CCTL3);
 
 	/* Select Bank 0 to access NPCM_I2CCTL4/NPCM_I2CCTL5 */
 	npcm_i2c_select_bank(bus, I2C_BANK_0);
 
-	if (bus_freq_hz >= I2C_MAX_FAST_MODE_FREQ) {
+	अगर (bus_freq_hz >= I2C_MAX_FAST_MODE_FREQ) अणु
 		/*
 		 * Set SCL Low/High Time:
 		 * k1 = 2 * SCLLT7-0 -> Low Time  = k1 / 2
 		 * k2 = 2 * SCLLT7-0 -> High Time = k2 / 2
 		 */
-		iowrite8(k1 / 2, bus->reg + NPCM_I2CSCLLT);
-		iowrite8(k2 / 2, bus->reg + NPCM_I2CSCLHT);
+		ioग_लिखो8(k1 / 2, bus->reg + NPCM_I2CSCLLT);
+		ioग_लिखो8(k2 / 2, bus->reg + NPCM_I2CSCLHT);
 
-		iowrite8(dbnct, bus->reg + NPCM_I2CCTL5);
-	}
+		ioग_लिखो8(dbnct, bus->reg + NPCM_I2CCTL5);
+	पूर्ण
 
-	iowrite8(hldt, bus->reg + NPCM_I2CCTL4);
+	ioग_लिखो8(hldt, bus->reg + NPCM_I2CCTL4);
 
-	/* Return to Bank 1, and stay there by default: */
+	/* Return to Bank 1, and stay there by शेष: */
 	npcm_i2c_select_bank(bus, I2C_BANK_1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npcm_i2c_init_module(struct npcm_i2c *bus, enum i2c_mode mode,
+अटल पूर्णांक npcm_i2c_init_module(काष्ठा npcm_i2c *bus, क्रमागत i2c_mode mode,
 				u32 bus_freq_hz)
-{
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
-	/* Check whether module already enabled or frequency is out of bounds */
-	if ((bus->state != I2C_DISABLE && bus->state != I2C_IDLE) ||
+	/* Check whether module alपढ़ोy enabled or frequency is out of bounds */
+	अगर ((bus->state != I2C_DISABLE && bus->state != I2C_IDLE) ||
 	    bus_freq_hz < I2C_FREQ_MIN_HZ || bus_freq_hz > I2C_FREQ_MAX_HZ)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	npcm_i2c_disable(bus);
 
 	/* Configure FIFO mode : */
-	if (FIELD_GET(I2C_VER_FIFO_EN, ioread8(bus->reg + I2C_VER))) {
-		bus->fifo_use = true;
+	अगर (FIELD_GET(I2C_VER_FIFO_EN, ioपढ़ो8(bus->reg + I2C_VER))) अणु
+		bus->fअगरo_use = true;
 		npcm_i2c_select_bank(bus, I2C_BANK_0);
-		val = ioread8(bus->reg + NPCM_I2CFIF_CTL);
+		val = ioपढ़ो8(bus->reg + NPCM_I2CFIF_CTL);
 		val |= NPCM_I2CFIF_CTL_FIFO_EN;
-		iowrite8(val, bus->reg + NPCM_I2CFIF_CTL);
+		ioग_लिखो8(val, bus->reg + NPCM_I2CFIF_CTL);
 		npcm_i2c_select_bank(bus, I2C_BANK_1);
-	} else {
-		bus->fifo_use = false;
-	}
+	पूर्ण अन्यथा अणु
+		bus->fअगरo_use = false;
+	पूर्ण
 
-	/* Configure I2C module clock frequency */
+	/* Configure I2C module घड़ी frequency */
 	ret = npcm_i2c_init_clk(bus, bus_freq_hz);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(bus->dev, "npcm_i2c_init_clk failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Enable module (before configuring CTL1) */
+	/* Enable module (beक्रमe configuring CTL1) */
 	npcm_i2c_enable(bus);
 	bus->state = I2C_IDLE;
-	val = ioread8(bus->reg + NPCM_I2CCTL1);
+	val = ioपढ़ो8(bus->reg + NPCM_I2CCTL1);
 	val = (val | NPCM_I2CCTL1_NMINTE) & ~NPCM_I2CCTL1_RWS;
-	iowrite8(val, bus->reg + NPCM_I2CCTL1);
+	ioग_लिखो8(val, bus->reg + NPCM_I2CCTL1);
 
-	npcm_i2c_int_enable(bus, true);
+	npcm_i2c_पूर्णांक_enable(bus, true);
 
 	npcm_i2c_reset(bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __npcm_i2c_init(struct npcm_i2c *bus, struct platform_device *pdev)
-{
+अटल पूर्णांक __npcm_i2c_init(काष्ठा npcm_i2c *bus, काष्ठा platक्रमm_device *pdev)
+अणु
 	u32 clk_freq_hz;
-	int ret;
+	पूर्णांक ret;
 
-	/* Initialize the internal data structures */
+	/* Initialize the पूर्णांकernal data काष्ठाures */
 	bus->state = I2C_DISABLE;
 	bus->master_or_slave = I2C_SLAVE;
-	bus->int_time_stamp = 0;
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-	bus->slave = NULL;
-#endif
+	bus->पूर्णांक_समय_stamp = 0;
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+	bus->slave = शून्य;
+#पूर्ण_अगर
 
-	ret = device_property_read_u32(&pdev->dev, "clock-frequency",
+	ret = device_property_पढ़ो_u32(&pdev->dev, "clock-frequency",
 				       &clk_freq_hz);
-	if (ret) {
+	अगर (ret) अणु
 		dev_info(&pdev->dev, "Could not read clock-frequency property");
 		clk_freq_hz = I2C_MAX_STANDARD_MODE_FREQ;
-	}
+	पूर्ण
 
 	ret = npcm_i2c_init_module(bus, I2C_MASTER, clk_freq_hz);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "npcm_i2c_init_module failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t npcm_i2c_bus_irq(int irq, void *dev_id)
-{
-	struct npcm_i2c *bus = dev_id;
+अटल irqवापस_t npcm_i2c_bus_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा npcm_i2c *bus = dev_id;
 
-	if (npcm_i2c_is_master(bus))
+	अगर (npcm_i2c_is_master(bus))
 		bus->master_or_slave = I2C_MASTER;
 
-	if (bus->master_or_slave == I2C_MASTER) {
-		bus->int_time_stamp = jiffies;
-		if (!npcm_i2c_int_master_handler(bus))
-			return IRQ_HANDLED;
-	}
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-	if (bus->slave) {
+	अगर (bus->master_or_slave == I2C_MASTER) अणु
+		bus->पूर्णांक_समय_stamp = jअगरfies;
+		अगर (!npcm_i2c_पूर्णांक_master_handler(bus))
+			वापस IRQ_HANDLED;
+	पूर्ण
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+	अगर (bus->slave) अणु
 		bus->master_or_slave = I2C_SLAVE;
-		return npcm_i2c_int_slave_handler(bus);
-	}
-#endif
-	return IRQ_NONE;
-}
+		वापस npcm_i2c_पूर्णांक_slave_handler(bus);
+	पूर्ण
+#पूर्ण_अगर
+	वापस IRQ_NONE;
+पूर्ण
 
-static bool npcm_i2c_master_start_xmit(struct npcm_i2c *bus,
-				       u8 slave_addr, u16 nwrite, u16 nread,
-				       u8 *write_data, u8 *read_data,
-				       bool use_PEC, bool use_read_block)
-{
-	if (bus->state != I2C_IDLE) {
+अटल bool npcm_i2c_master_start_xmit(काष्ठा npcm_i2c *bus,
+				       u8 slave_addr, u16 nग_लिखो, u16 nपढ़ो,
+				       u8 *ग_लिखो_data, u8 *पढ़ो_data,
+				       bool use_PEC, bool use_पढ़ो_block)
+अणु
+	अगर (bus->state != I2C_IDLE) अणु
 		bus->cmd_err = -EBUSY;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	bus->dest_addr = slave_addr << 1;
-	bus->wr_buf = write_data;
-	bus->wr_size = nwrite;
+	bus->wr_buf = ग_लिखो_data;
+	bus->wr_size = nग_लिखो;
 	bus->wr_ind = 0;
-	bus->rd_buf = read_data;
-	bus->rd_size = nread;
+	bus->rd_buf = पढ़ो_data;
+	bus->rd_size = nपढ़ो;
 	bus->rd_ind = 0;
 	bus->PEC_use = 0;
 
-	/* for tx PEC is appended to buffer from i2c IF. PEC flag is ignored */
-	if (nread)
+	/* क्रम tx PEC is appended to buffer from i2c IF. PEC flag is ignored */
+	अगर (nपढ़ो)
 		bus->PEC_use = use_PEC;
 
-	bus->read_block_use = use_read_block;
-	if (nread && !nwrite)
+	bus->पढ़ो_block_use = use_पढ़ो_block;
+	अगर (nपढ़ो && !nग_लिखो)
 		bus->operation = I2C_READ_OPER;
-	else
+	अन्यथा
 		bus->operation = I2C_WRITE_OPER;
-	if (bus->fifo_use) {
-		u8 i2cfif_cts;
+	अगर (bus->fअगरo_use) अणु
+		u8 i2cfअगर_cts;
 
 		npcm_i2c_select_bank(bus, I2C_BANK_1);
 		/* clear FIFO and relevant status bits. */
-		i2cfif_cts = ioread8(bus->reg + NPCM_I2CFIF_CTS);
-		i2cfif_cts &= ~NPCM_I2CFIF_CTS_SLVRSTR;
-		i2cfif_cts |= NPCM_I2CFIF_CTS_CLR_FIFO;
-		iowrite8(i2cfif_cts, bus->reg + NPCM_I2CFIF_CTS);
-	}
+		i2cfअगर_cts = ioपढ़ो8(bus->reg + NPCM_I2CFIF_CTS);
+		i2cfअगर_cts &= ~NPCM_I2CFIF_CTS_SLVRSTR;
+		i2cfअगर_cts |= NPCM_I2CFIF_CTS_CLR_FIFO;
+		ioग_लिखो8(i2cfअगर_cts, bus->reg + NPCM_I2CFIF_CTS);
+	पूर्ण
 
 	bus->state = I2C_IDLE;
 	npcm_i2c_stall_after_start(bus, true);
 	npcm_i2c_master_start(bus);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int npcm_i2c_master_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs,
-				int num)
-{
-	struct npcm_i2c *bus = container_of(adap, struct npcm_i2c, adap);
-	struct i2c_msg *msg0, *msg1;
-	unsigned long time_left, flags;
-	u16 nwrite, nread;
-	u8 *write_data, *read_data;
+अटल पूर्णांक npcm_i2c_master_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs,
+				पूर्णांक num)
+अणु
+	काष्ठा npcm_i2c *bus = container_of(adap, काष्ठा npcm_i2c, adap);
+	काष्ठा i2c_msg *msg0, *msg1;
+	अचिन्हित दीर्घ समय_left, flags;
+	u16 nग_लिखो, nपढ़ो;
+	u8 *ग_लिखो_data, *पढ़ो_data;
 	u8 slave_addr;
-	int timeout;
-	int ret = 0;
-	bool read_block = false;
-	bool read_PEC = false;
+	पूर्णांक समयout;
+	पूर्णांक ret = 0;
+	bool पढ़ो_block = false;
+	bool पढ़ो_PEC = false;
 	u8 bus_busy;
-	unsigned long timeout_usec;
+	अचिन्हित दीर्घ समयout_usec;
 
-	if (bus->state == I2C_DISABLE) {
+	अगर (bus->state == I2C_DISABLE) अणु
 		dev_err(bus->dev, "I2C%d module is disabled", bus->num);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	msg0 = &msgs[0];
 	slave_addr = msg0->addr;
-	if (msg0->flags & I2C_M_RD) { /* read */
-		nwrite = 0;
-		write_data = NULL;
-		read_data = msg0->buf;
-		if (msg0->flags & I2C_M_RECV_LEN) {
-			nread = 1;
-			read_block = true;
-			if (msg0->flags & I2C_CLIENT_PEC)
-				read_PEC = true;
-		} else {
-			nread = msg0->len;
-		}
-	} else { /* write */
-		nwrite = msg0->len;
-		write_data = msg0->buf;
-		nread = 0;
-		read_data = NULL;
-		if (num == 2) {
+	अगर (msg0->flags & I2C_M_RD) अणु /* पढ़ो */
+		nग_लिखो = 0;
+		ग_लिखो_data = शून्य;
+		पढ़ो_data = msg0->buf;
+		अगर (msg0->flags & I2C_M_RECV_LEN) अणु
+			nपढ़ो = 1;
+			पढ़ो_block = true;
+			अगर (msg0->flags & I2C_CLIENT_PEC)
+				पढ़ो_PEC = true;
+		पूर्ण अन्यथा अणु
+			nपढ़ो = msg0->len;
+		पूर्ण
+	पूर्ण अन्यथा अणु /* ग_लिखो */
+		nग_लिखो = msg0->len;
+		ग_लिखो_data = msg0->buf;
+		nपढ़ो = 0;
+		पढ़ो_data = शून्य;
+		अगर (num == 2) अणु
 			msg1 = &msgs[1];
-			read_data = msg1->buf;
-			if (msg1->flags & I2C_M_RECV_LEN) {
-				nread = 1;
-				read_block = true;
-				if (msg1->flags & I2C_CLIENT_PEC)
-					read_PEC = true;
-			} else {
-				nread = msg1->len;
-				read_block = false;
-			}
-		}
-	}
+			पढ़ो_data = msg1->buf;
+			अगर (msg1->flags & I2C_M_RECV_LEN) अणु
+				nपढ़ो = 1;
+				पढ़ो_block = true;
+				अगर (msg1->flags & I2C_CLIENT_PEC)
+					पढ़ो_PEC = true;
+			पूर्ण अन्यथा अणु
+				nपढ़ो = msg1->len;
+				पढ़ो_block = false;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Adaptive TimeOut: estimated time in usec + 100% margin:
-	 * 2: double the timeout for clock stretching case
+	 * Adaptive TimeOut: estimated समय in usec + 100% margin:
+	 * 2: द्विगुन the समयout क्रम घड़ी stretching हाल
 	 * 9: bits per transaction (including the ack/nack)
 	 */
-	timeout_usec = (2 * 9 * USEC_PER_SEC / bus->bus_freq) * (2 + nread + nwrite);
-	timeout = max(msecs_to_jiffies(35), usecs_to_jiffies(timeout_usec));
-	if (nwrite >= 32 * 1024 || nread >= 32 * 1024) {
+	समयout_usec = (2 * 9 * USEC_PER_SEC / bus->bus_freq) * (2 + nपढ़ो + nग_लिखो);
+	समयout = max(msecs_to_jअगरfies(35), usecs_to_jअगरfies(समयout_usec));
+	अगर (nग_लिखो >= 32 * 1024 || nपढ़ो >= 32 * 1024) अणु
 		dev_err(bus->dev, "i2c%d buffer too big\n", bus->num);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	time_left = jiffies + msecs_to_jiffies(DEFAULT_STALL_COUNT) + 1;
-	do {
+	समय_left = jअगरfies + msecs_to_jअगरfies(DEFAULT_STALL_COUNT) + 1;
+	करो अणु
 		/*
 		 * we must clear slave address immediately when the bus is not
-		 * busy, so we spinlock it, but we don't keep the lock for the
-		 * entire while since it is too long.
+		 * busy, so we spinlock it, but we करोn't keep the lock क्रम the
+		 * entire जबतक since it is too दीर्घ.
 		 */
 		spin_lock_irqsave(&bus->lock, flags);
-		bus_busy = ioread8(bus->reg + NPCM_I2CCST) & NPCM_I2CCST_BB;
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-		if (!bus_busy && bus->slave)
-			iowrite8((bus->slave->addr & 0x7F),
+		bus_busy = ioपढ़ो8(bus->reg + NPCM_I2CCST) & NPCM_I2CCST_BB;
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+		अगर (!bus_busy && bus->slave)
+			ioग_लिखो8((bus->slave->addr & 0x7F),
 				 bus->reg + NPCM_I2CADDR1);
-#endif
+#पूर्ण_अगर
 		spin_unlock_irqrestore(&bus->lock, flags);
 
-	} while (time_is_after_jiffies(time_left) && bus_busy);
+	पूर्ण जबतक (समय_is_after_jअगरfies(समय_left) && bus_busy);
 
-	if (bus_busy) {
-		iowrite8(NPCM_I2CCST_BB, bus->reg + NPCM_I2CCST);
+	अगर (bus_busy) अणु
+		ioग_लिखो8(NPCM_I2CCST_BB, bus->reg + NPCM_I2CCST);
 		npcm_i2c_reset(bus);
 		i2c_recover_bus(adap);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	npcm_i2c_init_params(bus);
 	bus->dest_addr = slave_addr;
 	bus->msgs = msgs;
 	bus->msgs_num = num;
 	bus->cmd_err = 0;
-	bus->read_block_use = read_block;
+	bus->पढ़ो_block_use = पढ़ो_block;
 
 	reinit_completion(&bus->cmd_complete);
-	if (!npcm_i2c_master_start_xmit(bus, slave_addr, nwrite, nread,
-					write_data, read_data, read_PEC,
-					read_block))
+	अगर (!npcm_i2c_master_start_xmit(bus, slave_addr, nग_लिखो, nपढ़ो,
+					ग_लिखो_data, पढ़ो_data, पढ़ो_PEC,
+					पढ़ो_block))
 		ret = -EBUSY;
 
-	if (ret != -EBUSY) {
-		time_left = wait_for_completion_timeout(&bus->cmd_complete,
-							timeout);
+	अगर (ret != -EBUSY) अणु
+		समय_left = रुको_क्रम_completion_समयout(&bus->cmd_complete,
+							समयout);
 
-		if (time_left == 0) {
-			if (bus->timeout_cnt < ULLONG_MAX)
-				bus->timeout_cnt++;
-			if (bus->master_or_slave == I2C_MASTER) {
+		अगर (समय_left == 0) अणु
+			अगर (bus->समयout_cnt < ULदीर्घ_उच्च)
+				bus->समयout_cnt++;
+			अगर (bus->master_or_slave == I2C_MASTER) अणु
 				i2c_recover_bus(adap);
 				bus->cmd_err = -EIO;
 				bus->state = I2C_IDLE;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	ret = bus->cmd_err;
 
-	/* if there was BER, check if need to recover the bus: */
-	if (bus->cmd_err == -EAGAIN)
+	/* अगर there was BER, check अगर need to recover the bus: */
+	अगर (bus->cmd_err == -EAGAIN)
 		ret = i2c_recover_bus(adap);
 
 	/*
-	 * After any type of error, check if LAST bit is still set,
+	 * After any type of error, check अगर LAST bit is still set,
 	 * due to a HW issue.
 	 * It cannot be cleared without resetting the module.
 	 */
-	if (bus->cmd_err &&
-	    (NPCM_I2CRXF_CTL_LAST_PEC & ioread8(bus->reg + NPCM_I2CRXF_CTL)))
+	अगर (bus->cmd_err &&
+	    (NPCM_I2CRXF_CTL_LAST_PEC & ioपढ़ो8(bus->reg + NPCM_I2CRXF_CTL)))
 		npcm_i2c_reset(bus);
 
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
-	/* reenable slave if it was enabled */
-	if (bus->slave)
-		iowrite8((bus->slave->addr & 0x7F) | NPCM_I2CADDR_SAEN,
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
+	/* reenable slave अगर it was enabled */
+	अगर (bus->slave)
+		ioग_लिखो8((bus->slave->addr & 0x7F) | NPCM_I2CADDR_SAEN,
 			 bus->reg + NPCM_I2CADDR1);
-#endif
-	return bus->cmd_err;
-}
+#पूर्ण_अगर
+	वापस bus->cmd_err;
+पूर्ण
 
-static u32 npcm_i2c_functionality(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C |
+अटल u32 npcm_i2c_functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C |
 	       I2C_FUNC_SMBUS_EMUL |
 	       I2C_FUNC_SMBUS_BLOCK_DATA |
 	       I2C_FUNC_SMBUS_PEC |
 	       I2C_FUNC_SLAVE;
-}
+पूर्ण
 
-static const struct i2c_adapter_quirks npcm_i2c_quirks = {
-	.max_read_len = 32768,
-	.max_write_len = 32768,
+अटल स्थिर काष्ठा i2c_adapter_quirks npcm_i2c_quirks = अणु
+	.max_पढ़ो_len = 32768,
+	.max_ग_लिखो_len = 32768,
 	.flags = I2C_AQ_COMB_WRITE_THEN_READ,
-};
+पूर्ण;
 
-static const struct i2c_algorithm npcm_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm npcm_i2c_algo = अणु
 	.master_xfer = npcm_i2c_master_xfer,
 	.functionality = npcm_i2c_functionality,
-#if IS_ENABLED(CONFIG_I2C_SLAVE)
+#अगर IS_ENABLED(CONFIG_I2C_SLAVE)
 	.reg_slave	= npcm_i2c_reg_slave,
 	.unreg_slave	= npcm_i2c_unreg_slave,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /* i2c debugfs directory: used to keep health monitor of i2c devices */
-static struct dentry *npcm_i2c_debugfs_dir;
+अटल काष्ठा dentry *npcm_i2c_debugfs_dir;
 
-static void npcm_i2c_init_debugfs(struct platform_device *pdev,
-				  struct npcm_i2c *bus)
-{
-	struct dentry *d;
+अटल व्योम npcm_i2c_init_debugfs(काष्ठा platक्रमm_device *pdev,
+				  काष्ठा npcm_i2c *bus)
+अणु
+	काष्ठा dentry *d;
 
-	if (!npcm_i2c_debugfs_dir)
-		return;
+	अगर (!npcm_i2c_debugfs_dir)
+		वापस;
 	d = debugfs_create_dir(dev_name(&pdev->dev), npcm_i2c_debugfs_dir);
-	if (IS_ERR_OR_NULL(d))
-		return;
+	अगर (IS_ERR_OR_शून्य(d))
+		वापस;
 	debugfs_create_u64("ber_cnt", 0444, d, &bus->ber_cnt);
 	debugfs_create_u64("nack_cnt", 0444, d, &bus->nack_cnt);
 	debugfs_create_u64("rec_succ_cnt", 0444, d, &bus->rec_succ_cnt);
 	debugfs_create_u64("rec_fail_cnt", 0444, d, &bus->rec_fail_cnt);
-	debugfs_create_u64("timeout_cnt", 0444, d, &bus->timeout_cnt);
+	debugfs_create_u64("timeout_cnt", 0444, d, &bus->समयout_cnt);
 
 	bus->debugfs = d;
-}
+पूर्ण
 
-static int npcm_i2c_probe_bus(struct platform_device *pdev)
-{
-	struct npcm_i2c *bus;
-	struct i2c_adapter *adap;
-	struct clk *i2c_clk;
-	static struct regmap *gcr_regmap;
-	static struct regmap *clk_regmap;
-	int irq;
-	int ret;
+अटल पूर्णांक npcm_i2c_probe_bus(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा npcm_i2c *bus;
+	काष्ठा i2c_adapter *adap;
+	काष्ठा clk *i2c_clk;
+	अटल काष्ठा regmap *gcr_regmap;
+	अटल काष्ठा regmap *clk_regmap;
+	पूर्णांक irq;
+	पूर्णांक ret;
 
-	bus = devm_kzalloc(&pdev->dev, sizeof(*bus), GFP_KERNEL);
-	if (!bus)
-		return -ENOMEM;
+	bus = devm_kzalloc(&pdev->dev, माप(*bus), GFP_KERNEL);
+	अगर (!bus)
+		वापस -ENOMEM;
 
 	bus->dev = &pdev->dev;
 
 	bus->num = of_alias_get_id(pdev->dev.of_node, "i2c");
 	/* core clk must be acquired to calculate module timing settings */
-	i2c_clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(i2c_clk))
-		return PTR_ERR(i2c_clk);
+	i2c_clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(i2c_clk))
+		वापस PTR_ERR(i2c_clk);
 	bus->apb_clk = clk_get_rate(i2c_clk);
 
 	gcr_regmap = syscon_regmap_lookup_by_compatible("nuvoton,npcm750-gcr");
-	if (IS_ERR(gcr_regmap))
-		return PTR_ERR(gcr_regmap);
-	regmap_write(gcr_regmap, NPCM_I2CSEGCTL, NPCM_I2CSEGCTL_INIT_VAL);
+	अगर (IS_ERR(gcr_regmap))
+		वापस PTR_ERR(gcr_regmap);
+	regmap_ग_लिखो(gcr_regmap, NPCM_I2CSEGCTL, NPCM_I2CSEGCTL_INIT_VAL);
 
 	clk_regmap = syscon_regmap_lookup_by_compatible("nuvoton,npcm750-clk");
-	if (IS_ERR(clk_regmap))
-		return PTR_ERR(clk_regmap);
+	अगर (IS_ERR(clk_regmap))
+		वापस PTR_ERR(clk_regmap);
 
-	bus->reg = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(bus->reg))
-		return PTR_ERR(bus->reg);
+	bus->reg = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(bus->reg))
+		वापस PTR_ERR(bus->reg);
 
 	spin_lock_init(&bus->lock);
 	init_completion(&bus->cmd_complete);
@@ -2269,7 +2270,7 @@ static int npcm_i2c_probe_bus(struct platform_device *pdev)
 	adap = &bus->adap;
 	adap->owner = THIS_MODULE;
 	adap->retries = 3;
-	adap->timeout = HZ;
+	adap->समयout = HZ;
 	adap->algo = &npcm_i2c_algo;
 	adap->quirks = &npcm_i2c_quirks;
 	adap->algo_data = bus;
@@ -2277,76 +2278,76 @@ static int npcm_i2c_probe_bus(struct platform_device *pdev)
 	adap->dev.of_node = pdev->dev.of_node;
 	adap->nr = pdev->id;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	ret = devm_request_irq(bus->dev, irq, npcm_i2c_bus_irq, 0,
 			       dev_name(bus->dev), bus);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = __npcm_i2c_init(bus, pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	npcm_i2c_recovery_init(adap);
 
 	i2c_set_adapdata(adap, bus);
 
-	snprintf(bus->adap.name, sizeof(bus->adap.name), "npcm_i2c_%d",
+	snम_लिखो(bus->adap.name, माप(bus->adap.name), "npcm_i2c_%d",
 		 bus->num);
 	ret = i2c_add_numbered_adapter(&bus->adap);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, bus);
+	platक्रमm_set_drvdata(pdev, bus);
 	npcm_i2c_init_debugfs(pdev, bus);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npcm_i2c_remove_bus(struct platform_device *pdev)
-{
-	unsigned long lock_flags;
-	struct npcm_i2c *bus = platform_get_drvdata(pdev);
+अटल पूर्णांक npcm_i2c_हटाओ_bus(काष्ठा platक्रमm_device *pdev)
+अणु
+	अचिन्हित दीर्घ lock_flags;
+	काष्ठा npcm_i2c *bus = platक्रमm_get_drvdata(pdev);
 
-	debugfs_remove_recursive(bus->debugfs);
+	debugfs_हटाओ_recursive(bus->debugfs);
 	spin_lock_irqsave(&bus->lock, lock_flags);
 	npcm_i2c_disable(bus);
 	spin_unlock_irqrestore(&bus->lock, lock_flags);
 	i2c_del_adapter(&bus->adap);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id npcm_i2c_bus_of_table[] = {
-	{ .compatible = "nuvoton,npcm750-i2c", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id npcm_i2c_bus_of_table[] = अणु
+	अणु .compatible = "nuvoton,npcm750-i2c", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, npcm_i2c_bus_of_table);
 
-static struct platform_driver npcm_i2c_bus_driver = {
+अटल काष्ठा platक्रमm_driver npcm_i2c_bus_driver = अणु
 	.probe = npcm_i2c_probe_bus,
-	.remove = npcm_i2c_remove_bus,
-	.driver = {
+	.हटाओ = npcm_i2c_हटाओ_bus,
+	.driver = अणु
 		.name = "nuvoton-i2c",
 		.of_match_table = npcm_i2c_bus_of_table,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init npcm_i2c_init(void)
-{
-	npcm_i2c_debugfs_dir = debugfs_create_dir("npcm_i2c", NULL);
-	platform_driver_register(&npcm_i2c_bus_driver);
-	return 0;
-}
+अटल पूर्णांक __init npcm_i2c_init(व्योम)
+अणु
+	npcm_i2c_debugfs_dir = debugfs_create_dir("npcm_i2c", शून्य);
+	platक्रमm_driver_रेजिस्टर(&npcm_i2c_bus_driver);
+	वापस 0;
+पूर्ण
 module_init(npcm_i2c_init);
 
-static void __exit npcm_i2c_exit(void)
-{
-	platform_driver_unregister(&npcm_i2c_bus_driver);
-	debugfs_remove_recursive(npcm_i2c_debugfs_dir);
-}
-module_exit(npcm_i2c_exit);
+अटल व्योम __निकास npcm_i2c_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&npcm_i2c_bus_driver);
+	debugfs_हटाओ_recursive(npcm_i2c_debugfs_dir);
+पूर्ण
+module_निकास(npcm_i2c_निकास);
 
 MODULE_AUTHOR("Avi Fishman <avi.fishman@gmail.com>");
 MODULE_AUTHOR("Tali Perry <tali.perry@nuvoton.com>");

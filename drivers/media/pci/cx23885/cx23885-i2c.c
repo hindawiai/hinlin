@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for the Conexant CX23885 PCIe bridge
+ *  Driver क्रम the Conexant CX23885 PCIe bridge
  *
  *  Copyright (c) 2006 Steven Toth <stoth@linuxtv.org>
  */
 
-#include "cx23885.h"
+#समावेश "cx23885.h"
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <asm/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/पन.स>
 
-#include <media/v4l2-common.h>
+#समावेश <media/v4l2-common.h>
 
-static unsigned int i2c_debug;
-module_param(i2c_debug, int, 0644);
+अटल अचिन्हित पूर्णांक i2c_debug;
+module_param(i2c_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(i2c_debug, "enable debug messages [i2c]");
 
-static unsigned int i2c_scan;
-module_param(i2c_scan, int, 0444);
+अटल अचिन्हित पूर्णांक i2c_scan;
+module_param(i2c_scan, पूर्णांक, 0444);
 MODULE_PARM_DESC(i2c_scan, "scan i2c bus at insmod time");
 
-#define dprintk(level, fmt, arg...)\
-	do { if (i2c_debug >= level)\
-		printk(KERN_DEBUG pr_fmt("%s: i2c:" fmt), \
+#घोषणा dprपूर्णांकk(level, fmt, arg...)\
+	करो अणु अगर (i2c_debug >= level)\
+		prपूर्णांकk(KERN_DEBUG pr_fmt("%s: i2c:" fmt), \
 			__func__, ##arg); \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define I2C_WAIT_DELAY 32
-#define I2C_WAIT_RETRY 64
+#घोषणा I2C_WAIT_DELAY 32
+#घोषणा I2C_WAIT_RETRY 64
 
-#define I2C_EXTEND  (1 << 3)
-#define I2C_NOSTOP  (1 << 4)
+#घोषणा I2C_EXTEND  (1 << 3)
+#घोषणा I2C_NOSTOP  (1 << 4)
 
-static inline int i2c_slave_did_ack(struct i2c_adapter *i2c_adap)
-{
-	struct cx23885_i2c *bus = i2c_adap->algo_data;
-	struct cx23885_dev *dev = bus->dev;
-	return cx_read(bus->reg_stat) & 0x01;
-}
+अटल अंतरभूत पूर्णांक i2c_slave_did_ack(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	काष्ठा cx23885_i2c *bus = i2c_adap->algo_data;
+	काष्ठा cx23885_dev *dev = bus->dev;
+	वापस cx_पढ़ो(bus->reg_stat) & 0x01;
+पूर्ण
 
-static inline int i2c_is_busy(struct i2c_adapter *i2c_adap)
-{
-	struct cx23885_i2c *bus = i2c_adap->algo_data;
-	struct cx23885_dev *dev = bus->dev;
-	return cx_read(bus->reg_stat) & 0x02 ? 1 : 0;
-}
+अटल अंतरभूत पूर्णांक i2c_is_busy(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	काष्ठा cx23885_i2c *bus = i2c_adap->algo_data;
+	काष्ठा cx23885_dev *dev = bus->dev;
+	वापस cx_पढ़ो(bus->reg_stat) & 0x02 ? 1 : 0;
+पूर्ण
 
-static int i2c_wait_done(struct i2c_adapter *i2c_adap)
-{
-	int count;
+अटल पूर्णांक i2c_रुको_करोne(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	पूर्णांक count;
 
-	for (count = 0; count < I2C_WAIT_RETRY; count++) {
-		if (!i2c_is_busy(i2c_adap))
-			break;
+	क्रम (count = 0; count < I2C_WAIT_RETRY; count++) अणु
+		अगर (!i2c_is_busy(i2c_adap))
+			अवरोध;
 		udelay(I2C_WAIT_DELAY);
-	}
+	पूर्ण
 
-	if (I2C_WAIT_RETRY == count)
-		return 0;
+	अगर (I2C_WAIT_RETRY == count)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int i2c_sendbytes(struct i2c_adapter *i2c_adap,
-			 const struct i2c_msg *msg, int joined_rlen)
-{
-	struct cx23885_i2c *bus = i2c_adap->algo_data;
-	struct cx23885_dev *dev = bus->dev;
+अटल पूर्णांक i2c_sendbytes(काष्ठा i2c_adapter *i2c_adap,
+			 स्थिर काष्ठा i2c_msg *msg, पूर्णांक joined_rlen)
+अणु
+	काष्ठा cx23885_i2c *bus = i2c_adap->algo_data;
+	काष्ठा cx23885_dev *dev = bus->dev;
 	u32 wdata, addr, ctrl;
-	int retval, cnt;
+	पूर्णांक retval, cnt;
 
-	if (joined_rlen)
-		dprintk(1, "%s(msg->wlen=%d, nextmsg->rlen=%d)\n", __func__,
+	अगर (joined_rlen)
+		dprपूर्णांकk(1, "%s(msg->wlen=%d, nextmsg->rlen=%d)\n", __func__,
 			msg->len, joined_rlen);
-	else
-		dprintk(1, "%s(msg->len=%d)\n", __func__, msg->len);
+	अन्यथा
+		dprपूर्णांकk(1, "%s(msg->len=%d)\n", __func__, msg->len);
 
 	/* Deal with i2c probe functions with zero payload */
-	if (msg->len == 0) {
-		cx_write(bus->reg_addr, msg->addr << 25);
-		cx_write(bus->reg_ctrl, bus->i2c_period | (1 << 2));
-		if (!i2c_wait_done(i2c_adap))
-			return -EIO;
-		if (!i2c_slave_did_ack(i2c_adap))
-			return -ENXIO;
+	अगर (msg->len == 0) अणु
+		cx_ग_लिखो(bus->reg_addr, msg->addr << 25);
+		cx_ग_लिखो(bus->reg_ctrl, bus->i2c_period | (1 << 2));
+		अगर (!i2c_रुको_करोne(i2c_adap))
+			वापस -EIO;
+		अगर (!i2c_slave_did_ack(i2c_adap))
+			वापस -ENXIO;
 
-		dprintk(1, "%s() returns 0\n", __func__);
-		return 0;
-	}
+		dprपूर्णांकk(1, "%s() returns 0\n", __func__);
+		वापस 0;
+	पूर्ण
 
 
 	/* dev, reg + first byte */
@@ -97,173 +98,173 @@ static int i2c_sendbytes(struct i2c_adapter *i2c_adap,
 	wdata = msg->buf[0];
 	ctrl = bus->i2c_period | (1 << 12) | (1 << 2);
 
-	if (msg->len > 1)
+	अगर (msg->len > 1)
 		ctrl |= I2C_NOSTOP | I2C_EXTEND;
-	else if (joined_rlen)
+	अन्यथा अगर (joined_rlen)
 		ctrl |= I2C_NOSTOP;
 
-	cx_write(bus->reg_addr, addr);
-	cx_write(bus->reg_wdata, wdata);
-	cx_write(bus->reg_ctrl, ctrl);
+	cx_ग_लिखो(bus->reg_addr, addr);
+	cx_ग_लिखो(bus->reg_wdata, wdata);
+	cx_ग_लिखो(bus->reg_ctrl, ctrl);
 
-	if (!i2c_wait_done(i2c_adap))
-		goto eio;
-	if (i2c_debug) {
-		printk(KERN_DEBUG " <W %02x %02x", msg->addr << 1, msg->buf[0]);
-		if (!(ctrl & I2C_NOSTOP))
+	अगर (!i2c_रुको_करोne(i2c_adap))
+		जाओ eio;
+	अगर (i2c_debug) अणु
+		prपूर्णांकk(KERN_DEBUG " <W %02x %02x", msg->addr << 1, msg->buf[0]);
+		अगर (!(ctrl & I2C_NOSTOP))
 			pr_cont(" >\n");
-	}
+	पूर्ण
 
-	for (cnt = 1; cnt < msg->len; cnt++) {
+	क्रम (cnt = 1; cnt < msg->len; cnt++) अणु
 		/* following bytes */
 		wdata = msg->buf[cnt];
 		ctrl = bus->i2c_period | (1 << 12) | (1 << 2);
 
-		if (cnt < msg->len - 1)
+		अगर (cnt < msg->len - 1)
 			ctrl |= I2C_NOSTOP | I2C_EXTEND;
-		else if (joined_rlen)
+		अन्यथा अगर (joined_rlen)
 			ctrl |= I2C_NOSTOP;
 
-		cx_write(bus->reg_addr, addr);
-		cx_write(bus->reg_wdata, wdata);
-		cx_write(bus->reg_ctrl, ctrl);
+		cx_ग_लिखो(bus->reg_addr, addr);
+		cx_ग_लिखो(bus->reg_wdata, wdata);
+		cx_ग_लिखो(bus->reg_ctrl, ctrl);
 
-		if (!i2c_wait_done(i2c_adap))
-			goto eio;
-		if (i2c_debug) {
+		अगर (!i2c_रुको_करोne(i2c_adap))
+			जाओ eio;
+		अगर (i2c_debug) अणु
 			pr_cont(" %02x", msg->buf[cnt]);
-			if (!(ctrl & I2C_NOSTOP))
+			अगर (!(ctrl & I2C_NOSTOP))
 				pr_cont(" >\n");
-		}
-	}
-	return msg->len;
+		पूर्ण
+	पूर्ण
+	वापस msg->len;
 
  eio:
 	retval = -EIO;
-	if (i2c_debug)
+	अगर (i2c_debug)
 		pr_err(" ERR: %d\n", retval);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int i2c_readbytes(struct i2c_adapter *i2c_adap,
-			 const struct i2c_msg *msg, int joined)
-{
-	struct cx23885_i2c *bus = i2c_adap->algo_data;
-	struct cx23885_dev *dev = bus->dev;
+अटल पूर्णांक i2c_पढ़ोbytes(काष्ठा i2c_adapter *i2c_adap,
+			 स्थिर काष्ठा i2c_msg *msg, पूर्णांक joined)
+अणु
+	काष्ठा cx23885_i2c *bus = i2c_adap->algo_data;
+	काष्ठा cx23885_dev *dev = bus->dev;
 	u32 ctrl, cnt;
-	int retval;
+	पूर्णांक retval;
 
 
-	if (i2c_debug && !joined)
-		dprintk(1, "%s(msg->len=%d)\n", __func__, msg->len);
+	अगर (i2c_debug && !joined)
+		dprपूर्णांकk(1, "%s(msg->len=%d)\n", __func__, msg->len);
 
 	/* Deal with i2c probe functions with zero payload */
-	if (msg->len == 0) {
-		cx_write(bus->reg_addr, msg->addr << 25);
-		cx_write(bus->reg_ctrl, bus->i2c_period | (1 << 2) | 1);
-		if (!i2c_wait_done(i2c_adap))
-			return -EIO;
-		if (!i2c_slave_did_ack(i2c_adap))
-			return -ENXIO;
+	अगर (msg->len == 0) अणु
+		cx_ग_लिखो(bus->reg_addr, msg->addr << 25);
+		cx_ग_लिखो(bus->reg_ctrl, bus->i2c_period | (1 << 2) | 1);
+		अगर (!i2c_रुको_करोne(i2c_adap))
+			वापस -EIO;
+		अगर (!i2c_slave_did_ack(i2c_adap))
+			वापस -ENXIO;
 
 
-		dprintk(1, "%s() returns 0\n", __func__);
-		return 0;
-	}
+		dprपूर्णांकk(1, "%s() returns 0\n", __func__);
+		वापस 0;
+	पूर्ण
 
-	if (i2c_debug) {
-		if (joined)
-			dprintk(1, " R");
-		else
-			dprintk(1, " <R %02x", (msg->addr << 1) + 1);
-	}
+	अगर (i2c_debug) अणु
+		अगर (joined)
+			dprपूर्णांकk(1, " R");
+		अन्यथा
+			dprपूर्णांकk(1, " <R %02x", (msg->addr << 1) + 1);
+	पूर्ण
 
-	for (cnt = 0; cnt < msg->len; cnt++) {
+	क्रम (cnt = 0; cnt < msg->len; cnt++) अणु
 
 		ctrl = bus->i2c_period | (1 << 12) | (1 << 2) | 1;
 
-		if (cnt < msg->len - 1)
+		अगर (cnt < msg->len - 1)
 			ctrl |= I2C_NOSTOP | I2C_EXTEND;
 
-		cx_write(bus->reg_addr, msg->addr << 25);
-		cx_write(bus->reg_ctrl, ctrl);
+		cx_ग_लिखो(bus->reg_addr, msg->addr << 25);
+		cx_ग_लिखो(bus->reg_ctrl, ctrl);
 
-		if (!i2c_wait_done(i2c_adap))
-			goto eio;
-		msg->buf[cnt] = cx_read(bus->reg_rdata) & 0xff;
-		if (i2c_debug) {
-			dprintk(1, " %02x", msg->buf[cnt]);
-			if (!(ctrl & I2C_NOSTOP))
-				dprintk(1, " >\n");
-		}
-	}
-	return msg->len;
+		अगर (!i2c_रुको_करोne(i2c_adap))
+			जाओ eio;
+		msg->buf[cnt] = cx_पढ़ो(bus->reg_rdata) & 0xff;
+		अगर (i2c_debug) अणु
+			dprपूर्णांकk(1, " %02x", msg->buf[cnt]);
+			अगर (!(ctrl & I2C_NOSTOP))
+				dprपूर्णांकk(1, " >\n");
+		पूर्ण
+	पूर्ण
+	वापस msg->len;
 
  eio:
 	retval = -EIO;
-	if (i2c_debug)
+	अगर (i2c_debug)
 		pr_err(" ERR: %d\n", retval);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int i2c_xfer(struct i2c_adapter *i2c_adap,
-		    struct i2c_msg *msgs, int num)
-{
-	int i, retval = 0;
+अटल पूर्णांक i2c_xfer(काष्ठा i2c_adapter *i2c_adap,
+		    काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	पूर्णांक i, retval = 0;
 
-	dprintk(1, "%s(num = %d)\n", __func__, num);
+	dprपूर्णांकk(1, "%s(num = %d)\n", __func__, num);
 
-	for (i = 0 ; i < num; i++) {
-		dprintk(1, "%s(num = %d) addr = 0x%02x  len = 0x%x\n",
+	क्रम (i = 0 ; i < num; i++) अणु
+		dprपूर्णांकk(1, "%s(num = %d) addr = 0x%02x  len = 0x%x\n",
 			__func__, num, msgs[i].addr, msgs[i].len);
-		if (msgs[i].flags & I2C_M_RD) {
-			/* read */
-			retval = i2c_readbytes(i2c_adap, &msgs[i], 0);
-		} else if (i + 1 < num && (msgs[i + 1].flags & I2C_M_RD) &&
-			   msgs[i].addr == msgs[i + 1].addr) {
-			/* write then read from same address */
+		अगर (msgs[i].flags & I2C_M_RD) अणु
+			/* पढ़ो */
+			retval = i2c_पढ़ोbytes(i2c_adap, &msgs[i], 0);
+		पूर्ण अन्यथा अगर (i + 1 < num && (msgs[i + 1].flags & I2C_M_RD) &&
+			   msgs[i].addr == msgs[i + 1].addr) अणु
+			/* ग_लिखो then पढ़ो from same address */
 			retval = i2c_sendbytes(i2c_adap, &msgs[i],
 					       msgs[i + 1].len);
-			if (retval < 0)
-				goto err;
+			अगर (retval < 0)
+				जाओ err;
 			i++;
-			retval = i2c_readbytes(i2c_adap, &msgs[i], 1);
-		} else {
-			/* write */
+			retval = i2c_पढ़ोbytes(i2c_adap, &msgs[i], 1);
+		पूर्ण अन्यथा अणु
+			/* ग_लिखो */
 			retval = i2c_sendbytes(i2c_adap, &msgs[i], 0);
-		}
-		if (retval < 0)
-			goto err;
-	}
-	return num;
+		पूर्ण
+		अगर (retval < 0)
+			जाओ err;
+	पूर्ण
+	वापस num;
 
  err:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static u32 cx23885_functionality(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_SMBUS_EMUL | I2C_FUNC_I2C;
-}
+अटल u32 cx23885_functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_SMBUS_EMUL | I2C_FUNC_I2C;
+पूर्ण
 
-static const struct i2c_algorithm cx23885_i2c_algo_template = {
+अटल स्थिर काष्ठा i2c_algorithm cx23885_i2c_algo_ढाँचा = अणु
 	.master_xfer	= i2c_xfer,
 	.functionality	= cx23885_functionality,
-};
+पूर्ण;
 
 /* ----------------------------------------------------------------------- */
 
-static const struct i2c_adapter cx23885_i2c_adap_template = {
+अटल स्थिर काष्ठा i2c_adapter cx23885_i2c_adap_ढाँचा = अणु
 	.name              = "cx23885",
 	.owner             = THIS_MODULE,
-	.algo              = &cx23885_i2c_algo_template,
-};
+	.algo              = &cx23885_i2c_algo_ढाँचा,
+पूर्ण;
 
-static const struct i2c_client cx23885_i2c_client_template = {
+अटल स्थिर काष्ठा i2c_client cx23885_i2c_client_ढाँचा = अणु
 	.name	= "cx23885 internal",
-};
+पूर्ण;
 
-static char *i2c_devs[128] = {
+अटल अक्षर *i2c_devs[128] = अणु
 	[0x10 >> 1] = "tda10048",
 	[0x12 >> 1] = "dib7000pc",
 	[0x1c >> 1] = "lgdt3303",
@@ -278,36 +279,36 @@ static char *i2c_devs[128] = {
 	[0xc0 >> 1] = "tuner/mt2131/tda8275",
 	[0xc2 >> 1] = "tuner/mt2131/tda8275/xc5000/xc3028",
 	[0xc8 >> 1] = "tuner/xc3028L",
-};
+पूर्ण;
 
-static void do_i2c_scan(char *name, struct i2c_client *c)
-{
-	unsigned char buf;
-	int i, rc;
+अटल व्योम करो_i2c_scan(अक्षर *name, काष्ठा i2c_client *c)
+अणु
+	अचिन्हित अक्षर buf;
+	पूर्णांक i, rc;
 
-	for (i = 0; i < 128; i++) {
+	क्रम (i = 0; i < 128; i++) अणु
 		c->addr = i;
 		rc = i2c_master_recv(c, &buf, 0);
-		if (rc < 0)
-			continue;
+		अगर (rc < 0)
+			जारी;
 		pr_info("%s: i2c scan: found device @ 0x%04x  [%s]\n",
 		       name, i, i2c_devs[i] ? i2c_devs[i] : "???");
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* init + register i2c adapter */
-int cx23885_i2c_register(struct cx23885_i2c *bus)
-{
-	struct cx23885_dev *dev = bus->dev;
+/* init + रेजिस्टर i2c adapter */
+पूर्णांक cx23885_i2c_रेजिस्टर(काष्ठा cx23885_i2c *bus)
+अणु
+	काष्ठा cx23885_dev *dev = bus->dev;
 
-	dprintk(1, "%s(bus = %d)\n", __func__, bus->nr);
+	dprपूर्णांकk(1, "%s(bus = %d)\n", __func__, bus->nr);
 
-	bus->i2c_adap = cx23885_i2c_adap_template;
-	bus->i2c_client = cx23885_i2c_client_template;
+	bus->i2c_adap = cx23885_i2c_adap_ढाँचा;
+	bus->i2c_client = cx23885_i2c_client_ढाँचा;
 	bus->i2c_adap.dev.parent = &dev->pci->dev;
 
 	strscpy(bus->i2c_adap.name, bus->dev->name,
-		sizeof(bus->i2c_adap.name));
+		माप(bus->i2c_adap.name));
 
 	bus->i2c_adap.algo_data = bus;
 	i2c_set_adapdata(&bus->i2c_adap, &dev->v4l2_dev);
@@ -315,54 +316,54 @@ int cx23885_i2c_register(struct cx23885_i2c *bus)
 
 	bus->i2c_client.adapter = &bus->i2c_adap;
 
-	if (0 == bus->i2c_rc) {
-		dprintk(1, "%s: i2c bus %d registered\n", dev->name, bus->nr);
-		if (i2c_scan) {
+	अगर (0 == bus->i2c_rc) अणु
+		dprपूर्णांकk(1, "%s: i2c bus %d registered\n", dev->name, bus->nr);
+		अगर (i2c_scan) अणु
 			pr_info("%s: scan bus %d:\n",
 					dev->name, bus->nr);
-			do_i2c_scan(dev->name, &bus->i2c_client);
-		}
-	} else
+			करो_i2c_scan(dev->name, &bus->i2c_client);
+		पूर्ण
+	पूर्ण अन्यथा
 		pr_warn("%s: i2c bus %d register FAILED\n",
 			dev->name, bus->nr);
 
-	/* Instantiate the IR receiver device, if present */
-	if (0 == bus->i2c_rc) {
-		struct i2c_board_info info;
-		static const unsigned short addr_list[] = {
+	/* Instantiate the IR receiver device, अगर present */
+	अगर (0 == bus->i2c_rc) अणु
+		काष्ठा i2c_board_info info;
+		अटल स्थिर अचिन्हित लघु addr_list[] = अणु
 			0x6b, I2C_CLIENT_END
-		};
+		पूर्ण;
 
-		memset(&info, 0, sizeof(struct i2c_board_info));
+		स_रखो(&info, 0, माप(काष्ठा i2c_board_info));
 		strscpy(info.type, "ir_video", I2C_NAME_SIZE);
-		/* Use quick read command for probe, some IR chips don't
-		 * support writes */
+		/* Use quick पढ़ो command क्रम probe, some IR chips करोn't
+		 * support ग_लिखोs */
 		i2c_new_scanned_device(&bus->i2c_adap, &info, addr_list,
-				       i2c_probe_func_quick_read);
-	}
+				       i2c_probe_func_quick_पढ़ो);
+	पूर्ण
 
-	return bus->i2c_rc;
-}
+	वापस bus->i2c_rc;
+पूर्ण
 
-int cx23885_i2c_unregister(struct cx23885_i2c *bus)
-{
+पूर्णांक cx23885_i2c_unरेजिस्टर(काष्ठा cx23885_i2c *bus)
+अणु
 	i2c_del_adapter(&bus->i2c_adap);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void cx23885_av_clk(struct cx23885_dev *dev, int enable)
-{
-	/* write 0 to bus 2 addr 0x144 via i2x_xfer() */
-	char buffer[3];
-	struct i2c_msg msg;
-	dprintk(1, "%s(enabled = %d)\n", __func__, enable);
+व्योम cx23885_av_clk(काष्ठा cx23885_dev *dev, पूर्णांक enable)
+अणु
+	/* ग_लिखो 0 to bus 2 addr 0x144 via i2x_xfer() */
+	अक्षर buffer[3];
+	काष्ठा i2c_msg msg;
+	dprपूर्णांकk(1, "%s(enabled = %d)\n", __func__, enable);
 
 	/* Register 0x144 */
 	buffer[0] = 0x01;
 	buffer[1] = 0x44;
-	if (enable == 1)
+	अगर (enable == 1)
 		buffer[2] = 0x05;
-	else
+	अन्यथा
 		buffer[2] = 0x00;
 
 	msg.addr = 0x44;
@@ -371,4 +372,4 @@ void cx23885_av_clk(struct cx23885_dev *dev, int enable)
 	msg.buf = buffer;
 
 	i2c_xfer(&dev->i2c_bus[2].i2c_adap, &msg, 1);
-}
+पूर्ण

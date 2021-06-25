@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,107 +16,107 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <linux/errno.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/skbuff.h>
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include <linux/workqueue.h>
-#include <scsi/fc/fc_fip.h>
-#include <scsi/fc/fc_els.h>
-#include <scsi/fc/fc_fcoe.h>
-#include <scsi/fc_frame.h>
-#include <scsi/libfc.h>
-#include "fnic_io.h"
-#include "fnic.h"
-#include "fnic_fip.h"
-#include "cq_enet_desc.h"
-#include "cq_exch_desc.h"
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/workqueue.h>
+#समावेश <scsi/fc/fc_fip.h>
+#समावेश <scsi/fc/fc_els.h>
+#समावेश <scsi/fc/fc_fcoe.h>
+#समावेश <scsi/fc_frame.h>
+#समावेश <scsi/libfc.h>
+#समावेश "fnic_io.h"
+#समावेश "fnic.h"
+#समावेश "fnic_fip.h"
+#समावेश "cq_enet_desc.h"
+#समावेश "cq_exch_desc.h"
 
-static u8 fcoe_all_fcfs[ETH_ALEN] = FIP_ALL_FCF_MACS;
-struct workqueue_struct *fnic_fip_queue;
-struct workqueue_struct *fnic_event_queue;
+अटल u8 fcoe_all_fcfs[ETH_ALEN] = FIP_ALL_FCF_MACS;
+काष्ठा workqueue_काष्ठा *fnic_fip_queue;
+काष्ठा workqueue_काष्ठा *fnic_event_queue;
 
-static void fnic_set_eth_mode(struct fnic *);
-static void fnic_fcoe_send_vlan_req(struct fnic *fnic);
-static void fnic_fcoe_start_fcf_disc(struct fnic *fnic);
-static void fnic_fcoe_process_vlan_resp(struct fnic *fnic, struct sk_buff *);
-static int fnic_fcoe_vlan_check(struct fnic *fnic, u16 flag);
-static int fnic_fcoe_handle_fip_frame(struct fnic *fnic, struct sk_buff *skb);
+अटल व्योम fnic_set_eth_mode(काष्ठा fnic *);
+अटल व्योम fnic_fcoe_send_vlan_req(काष्ठा fnic *fnic);
+अटल व्योम fnic_fcoe_start_fcf_disc(काष्ठा fnic *fnic);
+अटल व्योम fnic_fcoe_process_vlan_resp(काष्ठा fnic *fnic, काष्ठा sk_buff *);
+अटल पूर्णांक fnic_fcoe_vlan_check(काष्ठा fnic *fnic, u16 flag);
+अटल पूर्णांक fnic_fcoe_handle_fip_frame(काष्ठा fnic *fnic, काष्ठा sk_buff *skb);
 
-void fnic_handle_link(struct work_struct *work)
-{
-	struct fnic *fnic = container_of(work, struct fnic, link_work);
-	unsigned long flags;
-	int old_link_status;
-	u32 old_link_down_cnt;
+व्योम fnic_handle_link(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fnic *fnic = container_of(work, काष्ठा fnic, link_work);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक old_link_status;
+	u32 old_link_करोwn_cnt;
 	u64 old_port_speed, new_port_speed;
 
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
 
-	fnic->link_events = 1;      /* less work to just set everytime*/
+	fnic->link_events = 1;      /* less work to just set everyसमय*/
 
-	if (fnic->stop_rx_link_events) {
+	अगर (fnic->stop_rx_link_events) अणु
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	old_link_down_cnt = fnic->link_down_cnt;
+	old_link_करोwn_cnt = fnic->link_करोwn_cnt;
 	old_link_status = fnic->link_status;
-	old_port_speed = atomic64_read(
+	old_port_speed = atomic64_पढ़ो(
 			&fnic->fnic_stats.misc_stats.current_port_speed);
 
 	fnic->link_status = vnic_dev_link_status(fnic->vdev);
-	fnic->link_down_cnt = vnic_dev_link_down_cnt(fnic->vdev);
+	fnic->link_करोwn_cnt = vnic_dev_link_करोwn_cnt(fnic->vdev);
 
 	new_port_speed = vnic_dev_port_speed(fnic->vdev);
 	atomic64_set(&fnic->fnic_stats.misc_stats.current_port_speed,
 			new_port_speed);
-	if (old_port_speed != new_port_speed)
+	अगर (old_port_speed != new_port_speed)
 		FNIC_MAIN_DBG(KERN_INFO, fnic->lport->host,
 				"Current vnic speed set to :  %llu\n",
 				new_port_speed);
 
-	switch (vnic_dev_port_speed(fnic->vdev)) {
-	case DCEM_PORTSPEED_10G:
+	चयन (vnic_dev_port_speed(fnic->vdev)) अणु
+	हाल DCEM_PORTSPEED_10G:
 		fc_host_speed(fnic->lport->host)   = FC_PORTSPEED_10GBIT;
 		fnic->lport->link_supported_speeds = FC_PORTSPEED_10GBIT;
-		break;
-	case DCEM_PORTSPEED_20G:
+		अवरोध;
+	हाल DCEM_PORTSPEED_20G:
 		fc_host_speed(fnic->lport->host)   = FC_PORTSPEED_20GBIT;
 		fnic->lport->link_supported_speeds = FC_PORTSPEED_20GBIT;
-		break;
-	case DCEM_PORTSPEED_25G:
+		अवरोध;
+	हाल DCEM_PORTSPEED_25G:
 		fc_host_speed(fnic->lport->host)   = FC_PORTSPEED_25GBIT;
 		fnic->lport->link_supported_speeds = FC_PORTSPEED_25GBIT;
-		break;
-	case DCEM_PORTSPEED_40G:
-	case DCEM_PORTSPEED_4x10G:
+		अवरोध;
+	हाल DCEM_PORTSPEED_40G:
+	हाल DCEM_PORTSPEED_4x10G:
 		fc_host_speed(fnic->lport->host)   = FC_PORTSPEED_40GBIT;
 		fnic->lport->link_supported_speeds = FC_PORTSPEED_40GBIT;
-		break;
-	case DCEM_PORTSPEED_100G:
+		अवरोध;
+	हाल DCEM_PORTSPEED_100G:
 		fc_host_speed(fnic->lport->host)   = FC_PORTSPEED_100GBIT;
 		fnic->lport->link_supported_speeds = FC_PORTSPEED_100GBIT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fc_host_speed(fnic->lport->host)   = FC_PORTSPEED_UNKNOWN;
 		fnic->lport->link_supported_speeds = FC_PORTSPEED_UNKNOWN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (old_link_status == fnic->link_status) {
-		if (!fnic->link_status) {
+	अगर (old_link_status == fnic->link_status) अणु
+		अगर (!fnic->link_status) अणु
 			/* DOWN -> DOWN */
 			spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 			fnic_fc_trace_set_data(fnic->lport->host->host_no,
 				FNIC_FC_LE, "Link Status: DOWN->DOWN",
-				strlen("Link Status: DOWN->DOWN"));
-		} else {
-			if (old_link_down_cnt != fnic->link_down_cnt) {
+				म_माप("Link Status: DOWN->DOWN"));
+		पूर्ण अन्यथा अणु
+			अगर (old_link_करोwn_cnt != fnic->link_करोwn_cnt) अणु
 				/* UP -> DOWN -> UP */
 				fnic->lport->host_stats.link_failure_count++;
 				spin_unlock_irqrestore(&fnic->fnic_lock, flags);
@@ -123,52 +124,52 @@ void fnic_handle_link(struct work_struct *work)
 					fnic->lport->host->host_no,
 					FNIC_FC_LE,
 					"Link Status:UP_DOWN_UP",
-					strlen("Link_Status:UP_DOWN_UP")
+					म_माप("Link_Status:UP_DOWN_UP")
 					);
 				FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 					     "link down\n");
-				fcoe_ctlr_link_down(&fnic->ctlr);
-				if (fnic->config.flags & VFCF_FIP_CAPABLE) {
+				fcoe_ctlr_link_करोwn(&fnic->ctlr);
+				अगर (fnic->config.flags & VFCF_FIP_CAPABLE) अणु
 					/* start FCoE VLAN discovery */
 					fnic_fc_trace_set_data(
 						fnic->lport->host->host_no,
 						FNIC_FC_LE,
 						"Link Status: UP_DOWN_UP_VLAN",
-						strlen(
+						म_माप(
 						"Link Status: UP_DOWN_UP_VLAN")
 						);
 					fnic_fcoe_send_vlan_req(fnic);
-					return;
-				}
+					वापस;
+				पूर्ण
 				FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 					     "link up\n");
 				fcoe_ctlr_link_up(&fnic->ctlr);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* UP -> UP */
 				spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 				fnic_fc_trace_set_data(
 					fnic->lport->host->host_no, FNIC_FC_LE,
 					"Link Status: UP_UP",
-					strlen("Link Status: UP_UP"));
-			}
-		}
-	} else if (fnic->link_status) {
+					म_माप("Link Status: UP_UP"));
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (fnic->link_status) अणु
 		/* DOWN -> UP */
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		if (fnic->config.flags & VFCF_FIP_CAPABLE) {
+		अगर (fnic->config.flags & VFCF_FIP_CAPABLE) अणु
 			/* start FCoE VLAN discovery */
 				fnic_fc_trace_set_data(
 				fnic->lport->host->host_no,
 				FNIC_FC_LE, "Link Status: DOWN_UP_VLAN",
-				strlen("Link Status: DOWN_UP_VLAN"));
+				म_माप("Link Status: DOWN_UP_VLAN"));
 			fnic_fcoe_send_vlan_req(fnic);
-			return;
-		}
+			वापस;
+		पूर्ण
 		FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host, "link up\n");
 		fnic_fc_trace_set_data(fnic->lport->host->host_no, FNIC_FC_LE,
-			"Link Status: DOWN_UP", strlen("Link Status: DOWN_UP"));
+			"Link Status: DOWN_UP", म_माप("Link Status: DOWN_UP"));
 		fcoe_ctlr_link_up(&fnic->ctlr);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* UP -> DOWN */
 		fnic->lport->host_stats.link_failure_count++;
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
@@ -176,268 +177,268 @@ void fnic_handle_link(struct work_struct *work)
 		fnic_fc_trace_set_data(
 			fnic->lport->host->host_no, FNIC_FC_LE,
 			"Link Status: UP_DOWN",
-			strlen("Link Status: UP_DOWN"));
-		if (fnic->config.flags & VFCF_FIP_CAPABLE) {
+			म_माप("Link Status: UP_DOWN"));
+		अगर (fnic->config.flags & VFCF_FIP_CAPABLE) अणु
 			FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 				"deleting fip-timer during link-down\n");
-			del_timer_sync(&fnic->fip_timer);
-		}
-		fcoe_ctlr_link_down(&fnic->ctlr);
-	}
+			del_समयr_sync(&fnic->fip_समयr);
+		पूर्ण
+		fcoe_ctlr_link_करोwn(&fnic->ctlr);
+	पूर्ण
 
-}
+पूर्ण
 
 /*
  * This function passes incoming fabric frames to libFC
  */
-void fnic_handle_frame(struct work_struct *work)
-{
-	struct fnic *fnic = container_of(work, struct fnic, frame_work);
-	struct fc_lport *lp = fnic->lport;
-	unsigned long flags;
-	struct sk_buff *skb;
-	struct fc_frame *fp;
+व्योम fnic_handle_frame(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fnic *fnic = container_of(work, काष्ठा fnic, frame_work);
+	काष्ठा fc_lport *lp = fnic->lport;
+	अचिन्हित दीर्घ flags;
+	काष्ठा sk_buff *skb;
+	काष्ठा fc_frame *fp;
 
-	while ((skb = skb_dequeue(&fnic->frame_queue))) {
+	जबतक ((skb = skb_dequeue(&fnic->frame_queue))) अणु
 
 		spin_lock_irqsave(&fnic->fnic_lock, flags);
-		if (fnic->stop_rx_link_events) {
+		अगर (fnic->stop_rx_link_events) अणु
 			spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-			dev_kfree_skb(skb);
-			return;
-		}
-		fp = (struct fc_frame *)skb;
+			dev_kमुक्त_skb(skb);
+			वापस;
+		पूर्ण
+		fp = (काष्ठा fc_frame *)skb;
 
 		/*
-		 * If we're in a transitional state, just re-queue and return.
+		 * If we're in a transitional state, just re-queue and वापस.
 		 * The queue will be serviced when we get to a stable state.
 		 */
-		if (fnic->state != FNIC_IN_FC_MODE &&
-		    fnic->state != FNIC_IN_ETH_MODE) {
+		अगर (fnic->state != FNIC_IN_FC_MODE &&
+		    fnic->state != FNIC_IN_ETH_MODE) अणु
 			skb_queue_head(&fnic->frame_queue, skb);
 			spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-			return;
-		}
+			वापस;
+		पूर्ण
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
 		fc_exch_recv(lp, fp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void fnic_fcoe_evlist_free(struct fnic *fnic)
-{
-	struct fnic_event *fevt = NULL;
-	struct fnic_event *next = NULL;
-	unsigned long flags;
+व्योम fnic_fcoe_evlist_मुक्त(काष्ठा fnic *fnic)
+अणु
+	काष्ठा fnic_event *fevt = शून्य;
+	काष्ठा fnic_event *next = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
-	if (list_empty(&fnic->evlist)) {
+	अगर (list_empty(&fnic->evlist)) अणु
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	list_for_each_entry_safe(fevt, next, &fnic->evlist, list) {
+	list_क्रम_each_entry_safe(fevt, next, &fnic->evlist, list) अणु
 		list_del(&fevt->list);
-		kfree(fevt);
-	}
+		kमुक्त(fevt);
+	पूर्ण
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-}
+पूर्ण
 
-void fnic_handle_event(struct work_struct *work)
-{
-	struct fnic *fnic = container_of(work, struct fnic, event_work);
-	struct fnic_event *fevt = NULL;
-	struct fnic_event *next = NULL;
-	unsigned long flags;
+व्योम fnic_handle_event(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fnic *fnic = container_of(work, काष्ठा fnic, event_work);
+	काष्ठा fnic_event *fevt = शून्य;
+	काष्ठा fnic_event *next = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
-	if (list_empty(&fnic->evlist)) {
+	अगर (list_empty(&fnic->evlist)) अणु
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	list_for_each_entry_safe(fevt, next, &fnic->evlist, list) {
-		if (fnic->stop_rx_link_events) {
+	list_क्रम_each_entry_safe(fevt, next, &fnic->evlist, list) अणु
+		अगर (fnic->stop_rx_link_events) अणु
 			list_del(&fevt->list);
-			kfree(fevt);
+			kमुक्त(fevt);
 			spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-			return;
-		}
+			वापस;
+		पूर्ण
 		/*
-		 * If we're in a transitional state, just re-queue and return.
+		 * If we're in a transitional state, just re-queue and वापस.
 		 * The queue will be serviced when we get to a stable state.
 		 */
-		if (fnic->state != FNIC_IN_FC_MODE &&
-		    fnic->state != FNIC_IN_ETH_MODE) {
+		अगर (fnic->state != FNIC_IN_FC_MODE &&
+		    fnic->state != FNIC_IN_ETH_MODE) अणु
 			spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		list_del(&fevt->list);
-		switch (fevt->event) {
-		case FNIC_EVT_START_VLAN_DISC:
+		चयन (fevt->event) अणु
+		हाल FNIC_EVT_START_VLAN_DISC:
 			spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 			fnic_fcoe_send_vlan_req(fnic);
 			spin_lock_irqsave(&fnic->fnic_lock, flags);
-			break;
-		case FNIC_EVT_START_FCF_DISC:
+			अवरोध;
+		हाल FNIC_EVT_START_FCF_DISC:
 			FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 				  "Start FCF Discovery\n");
 			fnic_fcoe_start_fcf_disc(fnic);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 				  "Unknown event 0x%x\n", fevt->event);
-			break;
-		}
-		kfree(fevt);
-	}
+			अवरोध;
+		पूर्ण
+		kमुक्त(fevt);
+	पूर्ण
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-}
+पूर्ण
 
 /**
- * is_fnic_fip_flogi_reject() - Check if the Received FIP FLOGI frame is rejected
+ * is_fnic_fip_flogi_reject() - Check अगर the Received FIP FLOGI frame is rejected
  * @fip: The FCoE controller that received the frame
  * @skb: The received FIP frame
  *
- * Returns non-zero if the frame is rejected with unsupported cmd with
+ * Returns non-zero अगर the frame is rejected with unsupported cmd with
  * insufficient resource els explanation.
  */
-static inline int is_fnic_fip_flogi_reject(struct fcoe_ctlr *fip,
-					 struct sk_buff *skb)
-{
-	struct fc_lport *lport = fip->lp;
-	struct fip_header *fiph;
-	struct fc_frame_header *fh = NULL;
-	struct fip_desc *desc;
-	struct fip_encaps *els;
+अटल अंतरभूत पूर्णांक is_fnic_fip_flogi_reject(काष्ठा fcoe_ctlr *fip,
+					 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा fc_lport *lport = fip->lp;
+	काष्ठा fip_header *fiph;
+	काष्ठा fc_frame_header *fh = शून्य;
+	काष्ठा fip_desc *desc;
+	काष्ठा fip_encaps *els;
 	u16 op;
 	u8 els_op;
 	u8 sub;
 
-	size_t rlen;
-	size_t dlen = 0;
+	माप_प्रकार rlen;
+	माप_प्रकार dlen = 0;
 
-	if (skb_linearize(skb))
-		return 0;
+	अगर (skb_linearize(skb))
+		वापस 0;
 
-	if (skb->len < sizeof(*fiph))
-		return 0;
+	अगर (skb->len < माप(*fiph))
+		वापस 0;
 
-	fiph = (struct fip_header *)skb->data;
+	fiph = (काष्ठा fip_header *)skb->data;
 	op = ntohs(fiph->fip_op);
 	sub = fiph->fip_subcode;
 
-	if (op != FIP_OP_LS)
-		return 0;
+	अगर (op != FIP_OP_LS)
+		वापस 0;
 
-	if (sub != FIP_SC_REP)
-		return 0;
+	अगर (sub != FIP_SC_REP)
+		वापस 0;
 
 	rlen = ntohs(fiph->fip_dl_len) * 4;
-	if (rlen + sizeof(*fiph) > skb->len)
-		return 0;
+	अगर (rlen + माप(*fiph) > skb->len)
+		वापस 0;
 
-	desc = (struct fip_desc *)(fiph + 1);
+	desc = (काष्ठा fip_desc *)(fiph + 1);
 	dlen = desc->fip_dlen * FIP_BPW;
 
-	if (desc->fip_dtype == FIP_DT_FLOGI) {
+	अगर (desc->fip_dtype == FIP_DT_FLOGI) अणु
 
-		if (dlen < sizeof(*els) + sizeof(*fh) + 1)
-			return 0;
+		अगर (dlen < माप(*els) + माप(*fh) + 1)
+			वापस 0;
 
-		els = (struct fip_encaps *)desc;
-		fh = (struct fc_frame_header *)(els + 1);
+		els = (काष्ठा fip_encaps *)desc;
+		fh = (काष्ठा fc_frame_header *)(els + 1);
 
-		if (!fh)
-			return 0;
+		अगर (!fh)
+			वापस 0;
 
 		/*
 		 * ELS command code, reason and explanation should be = Reject,
 		 * unsupported command and insufficient resource
 		 */
 		els_op = *(u8 *)(fh + 1);
-		if (els_op == ELS_LS_RJT) {
-			shost_printk(KERN_INFO, lport->host,
+		अगर (els_op == ELS_LS_RJT) अणु
+			shost_prपूर्णांकk(KERN_INFO, lport->host,
 				  "Flogi Request Rejected by Switch\n");
-			return 1;
-		}
-		shost_printk(KERN_INFO, lport->host,
+			वापस 1;
+		पूर्ण
+		shost_prपूर्णांकk(KERN_INFO, lport->host,
 				"Flogi Request Accepted by Switch\n");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void fnic_fcoe_send_vlan_req(struct fnic *fnic)
-{
-	struct fcoe_ctlr *fip = &fnic->ctlr;
-	struct fnic_stats *fnic_stats = &fnic->fnic_stats;
-	struct sk_buff *skb;
-	char *eth_fr;
-	struct fip_vlan *vlan;
+अटल व्योम fnic_fcoe_send_vlan_req(काष्ठा fnic *fnic)
+अणु
+	काष्ठा fcoe_ctlr *fip = &fnic->ctlr;
+	काष्ठा fnic_stats *fnic_stats = &fnic->fnic_stats;
+	काष्ठा sk_buff *skb;
+	अक्षर *eth_fr;
+	काष्ठा fip_vlan *vlan;
 	u64 vlan_tov;
 
 	fnic_fcoe_reset_vlans(fnic);
 	fnic->set_vlan(fnic, 0);
 
-	if (printk_ratelimit())
+	अगर (prपूर्णांकk_ratelimit())
 		FNIC_FCS_DBG(KERN_INFO, fnic->lport->host,
 			  "Sending VLAN request...\n");
 
-	skb = dev_alloc_skb(sizeof(struct fip_vlan));
-	if (!skb)
-		return;
+	skb = dev_alloc_skb(माप(काष्ठा fip_vlan));
+	अगर (!skb)
+		वापस;
 
-	eth_fr = (char *)skb->data;
-	vlan = (struct fip_vlan *)eth_fr;
+	eth_fr = (अक्षर *)skb->data;
+	vlan = (काष्ठा fip_vlan *)eth_fr;
 
-	memset(vlan, 0, sizeof(*vlan));
-	memcpy(vlan->eth.h_source, fip->ctl_src_addr, ETH_ALEN);
-	memcpy(vlan->eth.h_dest, fcoe_all_fcfs, ETH_ALEN);
+	स_रखो(vlan, 0, माप(*vlan));
+	स_नकल(vlan->eth.h_source, fip->ctl_src_addr, ETH_ALEN);
+	स_नकल(vlan->eth.h_dest, fcoe_all_fcfs, ETH_ALEN);
 	vlan->eth.h_proto = htons(ETH_P_FIP);
 
 	vlan->fip.fip_ver = FIP_VER_ENCAPS(FIP_VER);
 	vlan->fip.fip_op = htons(FIP_OP_VLAN);
 	vlan->fip.fip_subcode = FIP_SC_VL_REQ;
-	vlan->fip.fip_dl_len = htons(sizeof(vlan->desc) / FIP_BPW);
+	vlan->fip.fip_dl_len = htons(माप(vlan->desc) / FIP_BPW);
 
 	vlan->desc.mac.fd_desc.fip_dtype = FIP_DT_MAC;
-	vlan->desc.mac.fd_desc.fip_dlen = sizeof(vlan->desc.mac) / FIP_BPW;
-	memcpy(&vlan->desc.mac.fd_mac, fip->ctl_src_addr, ETH_ALEN);
+	vlan->desc.mac.fd_desc.fip_dlen = माप(vlan->desc.mac) / FIP_BPW;
+	स_नकल(&vlan->desc.mac.fd_mac, fip->ctl_src_addr, ETH_ALEN);
 
 	vlan->desc.wwnn.fd_desc.fip_dtype = FIP_DT_NAME;
-	vlan->desc.wwnn.fd_desc.fip_dlen = sizeof(vlan->desc.wwnn) / FIP_BPW;
+	vlan->desc.wwnn.fd_desc.fip_dlen = माप(vlan->desc.wwnn) / FIP_BPW;
 	put_unaligned_be64(fip->lp->wwnn, &vlan->desc.wwnn.fd_wwn);
 	atomic64_inc(&fnic_stats->vlan_stats.vlan_disc_reqs);
 
-	skb_put(skb, sizeof(*vlan));
+	skb_put(skb, माप(*vlan));
 	skb->protocol = htons(ETH_P_FIP);
 	skb_reset_mac_header(skb);
 	skb_reset_network_header(skb);
 	fip->send(fip, skb);
 
-	/* set a timer so that we can retry if there no response */
-	vlan_tov = jiffies + msecs_to_jiffies(FCOE_CTLR_FIPVLAN_TOV);
-	mod_timer(&fnic->fip_timer, round_jiffies(vlan_tov));
-}
+	/* set a समयr so that we can retry अगर there no response */
+	vlan_tov = jअगरfies + msecs_to_jअगरfies(FCOE_CTLR_FIPVLAN_TOV);
+	mod_समयr(&fnic->fip_समयr, round_jअगरfies(vlan_tov));
+पूर्ण
 
-static void fnic_fcoe_process_vlan_resp(struct fnic *fnic, struct sk_buff *skb)
-{
-	struct fcoe_ctlr *fip = &fnic->ctlr;
-	struct fip_header *fiph;
-	struct fip_desc *desc;
-	struct fnic_stats *fnic_stats = &fnic->fnic_stats;
+अटल व्योम fnic_fcoe_process_vlan_resp(काष्ठा fnic *fnic, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा fcoe_ctlr *fip = &fnic->ctlr;
+	काष्ठा fip_header *fiph;
+	काष्ठा fip_desc *desc;
+	काष्ठा fnic_stats *fnic_stats = &fnic->fnic_stats;
 	u16 vid;
-	size_t rlen;
-	size_t dlen;
-	struct fcoe_vlan *vlan;
-	u64 sol_time;
-	unsigned long flags;
+	माप_प्रकार rlen;
+	माप_प्रकार dlen;
+	काष्ठा fcoe_vlan *vlan;
+	u64 sol_समय;
+	अचिन्हित दीर्घ flags;
 
 	FNIC_FCS_DBG(KERN_INFO, fnic->lport->host,
 		  "Received VLAN response...\n");
 
-	fiph = (struct fip_header *) skb->data;
+	fiph = (काष्ठा fip_header *) skb->data;
 
 	FNIC_FCS_DBG(KERN_INFO, fnic->lport->host,
 		  "Received VLAN response... OP 0x%x SUB_OP 0x%x\n",
@@ -446,41 +447,41 @@ static void fnic_fcoe_process_vlan_resp(struct fnic *fnic, struct sk_buff *skb)
 	rlen = ntohs(fiph->fip_dl_len) * 4;
 	fnic_fcoe_reset_vlans(fnic);
 	spin_lock_irqsave(&fnic->vlans_lock, flags);
-	desc = (struct fip_desc *)(fiph + 1);
-	while (rlen > 0) {
+	desc = (काष्ठा fip_desc *)(fiph + 1);
+	जबतक (rlen > 0) अणु
 		dlen = desc->fip_dlen * FIP_BPW;
-		switch (desc->fip_dtype) {
-		case FIP_DT_VLAN:
-			vid = ntohs(((struct fip_vlan_desc *)desc)->fd_vlan);
-			shost_printk(KERN_INFO, fnic->lport->host,
+		चयन (desc->fip_dtype) अणु
+		हाल FIP_DT_VLAN:
+			vid = ntohs(((काष्ठा fip_vlan_desc *)desc)->fd_vlan);
+			shost_prपूर्णांकk(KERN_INFO, fnic->lport->host,
 				  "process_vlan_resp: FIP VLAN %d\n", vid);
-			vlan = kzalloc(sizeof(*vlan), GFP_ATOMIC);
-			if (!vlan) {
-				/* retry from timer */
+			vlan = kzalloc(माप(*vlan), GFP_ATOMIC);
+			अगर (!vlan) अणु
+				/* retry from समयr */
 				spin_unlock_irqrestore(&fnic->vlans_lock,
 							flags);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			vlan->vid = vid & 0x0fff;
 			vlan->state = FIP_VLAN_AVAIL;
 			list_add_tail(&vlan->list, &fnic->vlans);
-			break;
-		}
-		desc = (struct fip_desc *)((char *)desc + dlen);
+			अवरोध;
+		पूर्ण
+		desc = (काष्ठा fip_desc *)((अक्षर *)desc + dlen);
 		rlen -= dlen;
-	}
+	पूर्ण
 
 	/* any VLAN descriptors present ? */
-	if (list_empty(&fnic->vlans)) {
-		/* retry from timer */
+	अगर (list_empty(&fnic->vlans)) अणु
+		/* retry from समयr */
 		atomic64_inc(&fnic_stats->vlan_stats.resp_withno_vlanID);
 		FNIC_FCS_DBG(KERN_INFO, fnic->lport->host,
 			  "No VLAN descriptors in FIP VLAN response\n");
 		spin_unlock_irqrestore(&fnic->vlans_lock, flags);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	vlan = list_first_entry(&fnic->vlans, struct fcoe_vlan, list);
+	vlan = list_first_entry(&fnic->vlans, काष्ठा fcoe_vlan, list);
 	fnic->set_vlan(fnic, vlan->vid);
 	vlan->state = FIP_VLAN_SENT; /* sent now */
 	vlan->sol_count++;
@@ -489,20 +490,20 @@ static void fnic_fcoe_process_vlan_resp(struct fnic *fnic, struct sk_buff *skb)
 	/* start the solicitation */
 	fcoe_ctlr_link_up(fip);
 
-	sol_time = jiffies + msecs_to_jiffies(FCOE_CTLR_START_DELAY);
-	mod_timer(&fnic->fip_timer, round_jiffies(sol_time));
+	sol_समय = jअगरfies + msecs_to_jअगरfies(FCOE_CTLR_START_DELAY);
+	mod_समयr(&fnic->fip_समयr, round_jअगरfies(sol_समय));
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-static void fnic_fcoe_start_fcf_disc(struct fnic *fnic)
-{
-	unsigned long flags;
-	struct fcoe_vlan *vlan;
-	u64 sol_time;
+अटल व्योम fnic_fcoe_start_fcf_disc(काष्ठा fnic *fnic)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा fcoe_vlan *vlan;
+	u64 sol_समय;
 
 	spin_lock_irqsave(&fnic->vlans_lock, flags);
-	vlan = list_first_entry(&fnic->vlans, struct fcoe_vlan, list);
+	vlan = list_first_entry(&fnic->vlans, काष्ठा fcoe_vlan, list);
 	fnic->set_vlan(fnic, vlan->vid);
 	vlan->state = FIP_VLAN_SENT; /* sent now */
 	vlan->sol_count = 1;
@@ -511,44 +512,44 @@ static void fnic_fcoe_start_fcf_disc(struct fnic *fnic)
 	/* start the solicitation */
 	fcoe_ctlr_link_up(&fnic->ctlr);
 
-	sol_time = jiffies + msecs_to_jiffies(FCOE_CTLR_START_DELAY);
-	mod_timer(&fnic->fip_timer, round_jiffies(sol_time));
-}
+	sol_समय = jअगरfies + msecs_to_jअगरfies(FCOE_CTLR_START_DELAY);
+	mod_समयr(&fnic->fip_समयr, round_jअगरfies(sol_समय));
+पूर्ण
 
-static int fnic_fcoe_vlan_check(struct fnic *fnic, u16 flag)
-{
-	unsigned long flags;
-	struct fcoe_vlan *fvlan;
+अटल पूर्णांक fnic_fcoe_vlan_check(काष्ठा fnic *fnic, u16 flag)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा fcoe_vlan *fvlan;
 
 	spin_lock_irqsave(&fnic->vlans_lock, flags);
-	if (list_empty(&fnic->vlans)) {
+	अगर (list_empty(&fnic->vlans)) अणु
 		spin_unlock_irqrestore(&fnic->vlans_lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	fvlan = list_first_entry(&fnic->vlans, struct fcoe_vlan, list);
-	if (fvlan->state == FIP_VLAN_USED) {
+	fvlan = list_first_entry(&fnic->vlans, काष्ठा fcoe_vlan, list);
+	अगर (fvlan->state == FIP_VLAN_USED) अणु
 		spin_unlock_irqrestore(&fnic->vlans_lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (fvlan->state == FIP_VLAN_SENT) {
+	अगर (fvlan->state == FIP_VLAN_SENT) अणु
 		fvlan->state = FIP_VLAN_USED;
 		spin_unlock_irqrestore(&fnic->vlans_lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock_irqrestore(&fnic->vlans_lock, flags);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void fnic_event_enq(struct fnic *fnic, enum fnic_evt ev)
-{
-	struct fnic_event *fevt;
-	unsigned long flags;
+अटल व्योम fnic_event_enq(काष्ठा fnic *fnic, क्रमागत fnic_evt ev)
+अणु
+	काष्ठा fnic_event *fevt;
+	अचिन्हित दीर्घ flags;
 
-	fevt = kmalloc(sizeof(*fevt), GFP_ATOMIC);
-	if (!fevt)
-		return;
+	fevt = kदो_स्मृति(माप(*fevt), GFP_ATOMIC);
+	अगर (!fevt)
+		वापस;
 
 	fevt->fnic = fnic;
 	fevt->event = ev;
@@ -558,221 +559,221 @@ static void fnic_event_enq(struct fnic *fnic, enum fnic_evt ev)
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
 	schedule_work(&fnic->event_work);
-}
+पूर्ण
 
-static int fnic_fcoe_handle_fip_frame(struct fnic *fnic, struct sk_buff *skb)
-{
-	struct fip_header *fiph;
-	int ret = 1;
+अटल पूर्णांक fnic_fcoe_handle_fip_frame(काष्ठा fnic *fnic, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा fip_header *fiph;
+	पूर्णांक ret = 1;
 	u16 op;
 	u8 sub;
 
-	if (!skb || !(skb->data))
-		return -1;
+	अगर (!skb || !(skb->data))
+		वापस -1;
 
-	if (skb_linearize(skb))
-		goto drop;
+	अगर (skb_linearize(skb))
+		जाओ drop;
 
-	fiph = (struct fip_header *)skb->data;
+	fiph = (काष्ठा fip_header *)skb->data;
 	op = ntohs(fiph->fip_op);
 	sub = fiph->fip_subcode;
 
-	if (FIP_VER_DECAPS(fiph->fip_ver) != FIP_VER)
-		goto drop;
+	अगर (FIP_VER_DECAPS(fiph->fip_ver) != FIP_VER)
+		जाओ drop;
 
-	if (ntohs(fiph->fip_dl_len) * FIP_BPW + sizeof(*fiph) > skb->len)
-		goto drop;
+	अगर (ntohs(fiph->fip_dl_len) * FIP_BPW + माप(*fiph) > skb->len)
+		जाओ drop;
 
-	if (op == FIP_OP_DISC && sub == FIP_SC_ADV) {
-		if (fnic_fcoe_vlan_check(fnic, ntohs(fiph->fip_flags)))
-			goto drop;
+	अगर (op == FIP_OP_DISC && sub == FIP_SC_ADV) अणु
+		अगर (fnic_fcoe_vlan_check(fnic, ntohs(fiph->fip_flags)))
+			जाओ drop;
 		/* pass it on to fcoe */
 		ret = 1;
-	} else if (op == FIP_OP_VLAN && sub == FIP_SC_VL_NOTE) {
+	पूर्ण अन्यथा अगर (op == FIP_OP_VLAN && sub == FIP_SC_VL_NOTE) अणु
 		/* set the vlan as used */
 		fnic_fcoe_process_vlan_resp(fnic, skb);
 		ret = 0;
-	} else if (op == FIP_OP_CTRL && sub == FIP_SC_CLR_VLINK) {
+	पूर्ण अन्यथा अगर (op == FIP_OP_CTRL && sub == FIP_SC_CLR_VLINK) अणु
 		/* received CVL request, restart vlan disc */
 		fnic_event_enq(fnic, FNIC_EVT_START_VLAN_DISC);
 		/* pass it on to fcoe */
 		ret = 1;
-	}
+	पूर्ण
 drop:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void fnic_handle_fip_frame(struct work_struct *work)
-{
-	struct fnic *fnic = container_of(work, struct fnic, fip_frame_work);
-	struct fnic_stats *fnic_stats = &fnic->fnic_stats;
-	unsigned long flags;
-	struct sk_buff *skb;
-	struct ethhdr *eh;
+व्योम fnic_handle_fip_frame(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fnic *fnic = container_of(work, काष्ठा fnic, fip_frame_work);
+	काष्ठा fnic_stats *fnic_stats = &fnic->fnic_stats;
+	अचिन्हित दीर्घ flags;
+	काष्ठा sk_buff *skb;
+	काष्ठा ethhdr *eh;
 
-	while ((skb = skb_dequeue(&fnic->fip_frame_queue))) {
+	जबतक ((skb = skb_dequeue(&fnic->fip_frame_queue))) अणु
 		spin_lock_irqsave(&fnic->fnic_lock, flags);
-		if (fnic->stop_rx_link_events) {
+		अगर (fnic->stop_rx_link_events) अणु
 			spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-			dev_kfree_skb(skb);
-			return;
-		}
+			dev_kमुक्त_skb(skb);
+			वापस;
+		पूर्ण
 		/*
-		 * If we're in a transitional state, just re-queue and return.
+		 * If we're in a transitional state, just re-queue and वापस.
 		 * The queue will be serviced when we get to a stable state.
 		 */
-		if (fnic->state != FNIC_IN_FC_MODE &&
-		    fnic->state != FNIC_IN_ETH_MODE) {
+		अगर (fnic->state != FNIC_IN_FC_MODE &&
+		    fnic->state != FNIC_IN_ETH_MODE) अणु
 			skb_queue_head(&fnic->fip_frame_queue, skb);
 			spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-			return;
-		}
+			वापस;
+		पूर्ण
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		eh = (struct ethhdr *)skb->data;
-		if (eh->h_proto == htons(ETH_P_FIP)) {
-			skb_pull(skb, sizeof(*eh));
-			if (fnic_fcoe_handle_fip_frame(fnic, skb) <= 0) {
-				dev_kfree_skb(skb);
-				continue;
-			}
+		eh = (काष्ठा ethhdr *)skb->data;
+		अगर (eh->h_proto == htons(ETH_P_FIP)) अणु
+			skb_pull(skb, माप(*eh));
+			अगर (fnic_fcoe_handle_fip_frame(fnic, skb) <= 0) अणु
+				dev_kमुक्त_skb(skb);
+				जारी;
+			पूर्ण
 			/*
 			 * If there's FLOGI rejects - clear all
 			 * fcf's & restart from scratch
 			 */
-			if (is_fnic_fip_flogi_reject(&fnic->ctlr, skb)) {
+			अगर (is_fnic_fip_flogi_reject(&fnic->ctlr, skb)) अणु
 				atomic64_inc(
 					&fnic_stats->vlan_stats.flogi_rejects);
-				shost_printk(KERN_INFO, fnic->lport->host,
+				shost_prपूर्णांकk(KERN_INFO, fnic->lport->host,
 					  "Trigger a Link down - VLAN Disc\n");
-				fcoe_ctlr_link_down(&fnic->ctlr);
+				fcoe_ctlr_link_करोwn(&fnic->ctlr);
 				/* start FCoE VLAN discovery */
 				fnic_fcoe_send_vlan_req(fnic);
-				dev_kfree_skb(skb);
-				continue;
-			}
+				dev_kमुक्त_skb(skb);
+				जारी;
+			पूर्ण
 			fcoe_ctlr_recv(&fnic->ctlr, skb);
-			continue;
-		}
-	}
-}
+			जारी;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * fnic_import_rq_eth_pkt() - handle received FCoE or FIP frame.
  * @fnic:	fnic instance.
  * @skb:	Ethernet Frame.
  */
-static inline int fnic_import_rq_eth_pkt(struct fnic *fnic, struct sk_buff *skb)
-{
-	struct fc_frame *fp;
-	struct ethhdr *eh;
-	struct fcoe_hdr *fcoe_hdr;
-	struct fcoe_crc_eof *ft;
+अटल अंतरभूत पूर्णांक fnic_import_rq_eth_pkt(काष्ठा fnic *fnic, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा fc_frame *fp;
+	काष्ठा ethhdr *eh;
+	काष्ठा fcoe_hdr *fcoe_hdr;
+	काष्ठा fcoe_crc_eof *ft;
 
 	/*
-	 * Undo VLAN encapsulation if present.
+	 * Unकरो VLAN encapsulation अगर present.
 	 */
-	eh = (struct ethhdr *)skb->data;
-	if (eh->h_proto == htons(ETH_P_8021Q)) {
-		memmove((u8 *)eh + VLAN_HLEN, eh, ETH_ALEN * 2);
+	eh = (काष्ठा ethhdr *)skb->data;
+	अगर (eh->h_proto == htons(ETH_P_8021Q)) अणु
+		स_हटाओ((u8 *)eh + VLAN_HLEN, eh, ETH_ALEN * 2);
 		eh = skb_pull(skb, VLAN_HLEN);
 		skb_reset_mac_header(skb);
-	}
-	if (eh->h_proto == htons(ETH_P_FIP)) {
-		if (!(fnic->config.flags & VFCF_FIP_CAPABLE)) {
-			printk(KERN_ERR "Dropped FIP frame, as firmware "
+	पूर्ण
+	अगर (eh->h_proto == htons(ETH_P_FIP)) अणु
+		अगर (!(fnic->config.flags & VFCF_FIP_CAPABLE)) अणु
+			prपूर्णांकk(KERN_ERR "Dropped FIP frame, as firmware "
 					"uses non-FIP mode, Enable FIP "
 					"using UCSM\n");
-			goto drop;
-		}
-		if ((fnic_fc_trace_set_data(fnic->lport->host->host_no,
-			FNIC_FC_RECV|0x80, (char *)skb->data, skb->len)) != 0) {
-			printk(KERN_ERR "fnic ctlr frame trace error!!!");
-		}
+			जाओ drop;
+		पूर्ण
+		अगर ((fnic_fc_trace_set_data(fnic->lport->host->host_no,
+			FNIC_FC_RECV|0x80, (अक्षर *)skb->data, skb->len)) != 0) अणु
+			prपूर्णांकk(KERN_ERR "fnic ctlr frame trace error!!!");
+		पूर्ण
 		skb_queue_tail(&fnic->fip_frame_queue, skb);
 		queue_work(fnic_fip_queue, &fnic->fip_frame_work);
-		return 1;		/* let caller know packet was used */
-	}
-	if (eh->h_proto != htons(ETH_P_FCOE))
-		goto drop;
-	skb_set_network_header(skb, sizeof(*eh));
-	skb_pull(skb, sizeof(*eh));
+		वापस 1;		/* let caller know packet was used */
+	पूर्ण
+	अगर (eh->h_proto != htons(ETH_P_FCOE))
+		जाओ drop;
+	skb_set_network_header(skb, माप(*eh));
+	skb_pull(skb, माप(*eh));
 
-	fcoe_hdr = (struct fcoe_hdr *)skb->data;
-	if (FC_FCOE_DECAPS_VER(fcoe_hdr) != FC_FCOE_VER)
-		goto drop;
+	fcoe_hdr = (काष्ठा fcoe_hdr *)skb->data;
+	अगर (FC_FCOE_DECAPS_VER(fcoe_hdr) != FC_FCOE_VER)
+		जाओ drop;
 
-	fp = (struct fc_frame *)skb;
+	fp = (काष्ठा fc_frame *)skb;
 	fc_frame_init(fp);
 	fr_sof(fp) = fcoe_hdr->fcoe_sof;
-	skb_pull(skb, sizeof(struct fcoe_hdr));
+	skb_pull(skb, माप(काष्ठा fcoe_hdr));
 	skb_reset_transport_header(skb);
 
-	ft = (struct fcoe_crc_eof *)(skb->data + skb->len - sizeof(*ft));
+	ft = (काष्ठा fcoe_crc_eof *)(skb->data + skb->len - माप(*ft));
 	fr_eof(fp) = ft->fcoe_eof;
-	skb_trim(skb, skb->len - sizeof(*ft));
-	return 0;
+	skb_trim(skb, skb->len - माप(*ft));
+	वापस 0;
 drop:
-	dev_kfree_skb_irq(skb);
-	return -1;
-}
+	dev_kमुक्त_skb_irq(skb);
+	वापस -1;
+पूर्ण
 
 /**
  * fnic_update_mac_locked() - set data MAC address and filters.
  * @fnic:	fnic instance.
- * @new:	newly-assigned FCoE MAC address.
+ * @new:	newly-asचिन्हित FCoE MAC address.
  *
  * Called with the fnic lock held.
  */
-void fnic_update_mac_locked(struct fnic *fnic, u8 *new)
-{
+व्योम fnic_update_mac_locked(काष्ठा fnic *fnic, u8 *new)
+अणु
 	u8 *ctl = fnic->ctlr.ctl_src_addr;
 	u8 *data = fnic->data_src_addr;
 
-	if (is_zero_ether_addr(new))
+	अगर (is_zero_ether_addr(new))
 		new = ctl;
-	if (ether_addr_equal(data, new))
-		return;
+	अगर (ether_addr_equal(data, new))
+		वापस;
 	FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host, "update_mac %pM\n", new);
-	if (!is_zero_ether_addr(data) && !ether_addr_equal(data, ctl))
+	अगर (!is_zero_ether_addr(data) && !ether_addr_equal(data, ctl))
 		vnic_dev_del_addr(fnic->vdev, data);
-	memcpy(data, new, ETH_ALEN);
-	if (!ether_addr_equal(new, ctl))
+	स_नकल(data, new, ETH_ALEN);
+	अगर (!ether_addr_equal(new, ctl))
 		vnic_dev_add_addr(fnic->vdev, new);
-}
+पूर्ण
 
 /**
  * fnic_update_mac() - set data MAC address and filters.
  * @lport:	local port.
- * @new:	newly-assigned FCoE MAC address.
+ * @new:	newly-asचिन्हित FCoE MAC address.
  */
-void fnic_update_mac(struct fc_lport *lport, u8 *new)
-{
-	struct fnic *fnic = lport_priv(lport);
+व्योम fnic_update_mac(काष्ठा fc_lport *lport, u8 *new)
+अणु
+	काष्ठा fnic *fnic = lport_priv(lport);
 
 	spin_lock_irq(&fnic->fnic_lock);
 	fnic_update_mac_locked(fnic, new);
 	spin_unlock_irq(&fnic->fnic_lock);
-}
+पूर्ण
 
 /**
  * fnic_set_port_id() - set the port_ID after successful FLOGI.
  * @lport:	local port.
- * @port_id:	assigned FC_ID.
- * @fp:		received frame containing the FLOGI accept or NULL.
+ * @port_id:	asचिन्हित FC_ID.
+ * @fp:		received frame containing the FLOGI accept or शून्य.
  *
- * This is called from libfc when a new FC_ID has been assigned.
+ * This is called from libfc when a new FC_ID has been asचिन्हित.
  * This causes us to reset the firmware to FC_MODE and setup the new MAC
  * address and FC_ID.
  *
  * It is also called with FC_ID 0 when we're logged off.
  *
- * If the FC_ID is due to point-to-point, fp may be NULL.
+ * If the FC_ID is due to poपूर्णांक-to-poपूर्णांक, fp may be शून्य.
  */
-void fnic_set_port_id(struct fc_lport *lport, u32 port_id, struct fc_frame *fp)
-{
-	struct fnic *fnic = lport_priv(lport);
+व्योम fnic_set_port_id(काष्ठा fc_lport *lport, u32 port_id, काष्ठा fc_frame *fp)
+अणु
+	काष्ठा fnic *fnic = lport_priv(lport);
 	u8 *mac;
-	int ret;
+	पूर्णांक ret;
 
 	FNIC_FCS_DBG(KERN_DEBUG, lport->host, "set port_id %x fp %p\n",
 		     port_id, fp);
@@ -781,33 +782,33 @@ void fnic_set_port_id(struct fc_lport *lport, u32 port_id, struct fc_frame *fp)
 	 * If we're clearing the FC_ID, change to use the ctl_src_addr.
 	 * Set ethernet mode to send FLOGI.
 	 */
-	if (!port_id) {
+	अगर (!port_id) अणु
 		fnic_update_mac(lport, fnic->ctlr.ctl_src_addr);
 		fnic_set_eth_mode(fnic);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (fp) {
+	अगर (fp) अणु
 		mac = fr_cb(fp)->granted_mac;
-		if (is_zero_ether_addr(mac)) {
-			/* non-FIP - FLOGI already accepted - ignore return */
+		अगर (is_zero_ether_addr(mac)) अणु
+			/* non-FIP - FLOGI alपढ़ोy accepted - ignore वापस */
 			fcoe_ctlr_recv_flogi(&fnic->ctlr, lport, fp);
-		}
+		पूर्ण
 		fnic_update_mac(lport, mac);
-	}
+	पूर्ण
 
 	/* Change state to reflect transition to FC mode */
 	spin_lock_irq(&fnic->fnic_lock);
-	if (fnic->state == FNIC_IN_ETH_MODE || fnic->state == FNIC_IN_FC_MODE)
+	अगर (fnic->state == FNIC_IN_ETH_MODE || fnic->state == FNIC_IN_FC_MODE)
 		fnic->state = FNIC_IN_ETH_TRANS_FC_MODE;
-	else {
+	अन्यथा अणु
 		FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 			     "Unexpected fnic state %s while"
 			     " processing flogi resp\n",
 			     fnic_state_to_str(fnic->state));
 		spin_unlock_irq(&fnic->fnic_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_unlock_irq(&fnic->fnic_lock);
 
 	/*
@@ -816,23 +817,23 @@ void fnic_set_port_id(struct fc_lport *lport, u32 port_id, struct fc_frame *fp)
 	 */
 	ret = fnic_flogi_reg_handler(fnic, port_id);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		spin_lock_irq(&fnic->fnic_lock);
-		if (fnic->state == FNIC_IN_ETH_TRANS_FC_MODE)
+		अगर (fnic->state == FNIC_IN_ETH_TRANS_FC_MODE)
 			fnic->state = FNIC_IN_ETH_MODE;
 		spin_unlock_irq(&fnic->fnic_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fnic_rq_cmpl_frame_recv(struct vnic_rq *rq, struct cq_desc
-				    *cq_desc, struct vnic_rq_buf *buf,
-				    int skipped __attribute__((unused)),
-				    void *opaque)
-{
-	struct fnic *fnic = vnic_dev_priv(rq->vdev);
-	struct sk_buff *skb;
-	struct fc_frame *fp;
-	struct fnic_stats *fnic_stats = &fnic->fnic_stats;
+अटल व्योम fnic_rq_cmpl_frame_recv(काष्ठा vnic_rq *rq, काष्ठा cq_desc
+				    *cq_desc, काष्ठा vnic_rq_buf *buf,
+				    पूर्णांक skipped __attribute__((unused)),
+				    व्योम *opaque)
+अणु
+	काष्ठा fnic *fnic = vnic_dev_priv(rq->vdev);
+	काष्ठा sk_buff *skb;
+	काष्ठा fc_frame *fp;
+	काष्ठा fnic_stats *fnic_stats = &fnic->fnic_stats;
 	u8 type, color, eop, sop, ingress_port, vlan_stripped;
 	u8 fcoe = 0, fcoe_sof, fcoe_eof;
 	u8 fcoe_fc_crc_ok = 1, fcoe_enc_error = 0;
@@ -841,24 +842,24 @@ static void fnic_rq_cmpl_frame_recv(struct vnic_rq *rq, struct cq_desc
 	u8 fcs_ok = 1, packet_error = 0;
 	u16 q_number, completed_index, bytes_written = 0, vlan, checksum;
 	u32 rss_hash;
-	u16 exchange_id, tmpl;
+	u16 exchange_id, पंचांगpl;
 	u8 sof = 0;
 	u8 eof = 0;
 	u32 fcp_bytes_written = 0;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	dma_unmap_single(&fnic->pdev->dev, buf->dma_addr, buf->len,
 			 DMA_FROM_DEVICE);
 	skb = buf->os_buf;
-	fp = (struct fc_frame *)skb;
-	buf->os_buf = NULL;
+	fp = (काष्ठा fc_frame *)skb;
+	buf->os_buf = शून्य;
 
 	cq_desc_dec(cq_desc, &type, &color, &q_number, &completed_index);
-	if (type == CQ_DESC_TYPE_RQ_FCP) {
-		cq_fcp_rq_desc_dec((struct cq_fcp_rq_desc *)cq_desc,
+	अगर (type == CQ_DESC_TYPE_RQ_FCP) अणु
+		cq_fcp_rq_desc_dec((काष्ठा cq_fcp_rq_desc *)cq_desc,
 				   &type, &color, &q_number, &completed_index,
 				   &eop, &sop, &fcoe_fc_crc_ok, &exchange_id,
-				   &tmpl, &fcp_bytes_written, &sof, &eof,
+				   &पंचांगpl, &fcp_bytes_written, &sof, &eof,
 				   &ingress_port, &packet_error,
 				   &fcoe_enc_error, &fcs_ok, &vlan_stripped,
 				   &vlan);
@@ -866,8 +867,8 @@ static void fnic_rq_cmpl_frame_recv(struct vnic_rq *rq, struct cq_desc
 		fr_sof(fp) = sof;
 		fr_eof(fp) = eof;
 
-	} else if (type == CQ_DESC_TYPE_RQ_ENET) {
-		cq_enet_rq_desc_dec((struct cq_enet_rq_desc *)cq_desc,
+	पूर्ण अन्यथा अगर (type == CQ_DESC_TYPE_RQ_ENET) अणु
+		cq_enet_rq_desc_dec((काष्ठा cq_enet_rq_desc *)cq_desc,
 				    &type, &color, &q_number, &completed_index,
 				    &ingress_port, &fcoe, &eop, &sop,
 				    &rss_type, &csum_not_calc, &rss_hash,
@@ -879,23 +880,23 @@ static void fnic_rq_cmpl_frame_recv(struct vnic_rq *rq, struct cq_desc
 				    &ipv4_csum_ok, &ipv6, &ipv4,
 				    &ipv4_fragment, &fcs_ok);
 		skb_trim(skb, bytes_written);
-		if (!fcs_ok) {
+		अगर (!fcs_ok) अणु
 			atomic64_inc(&fnic_stats->misc_stats.frame_errors);
 			FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 				     "fcs error.  dropping packet.\n");
-			goto drop;
-		}
-		if (fnic_import_rq_eth_pkt(fnic, skb))
-			return;
+			जाओ drop;
+		पूर्ण
+		अगर (fnic_import_rq_eth_pkt(fnic, skb))
+			वापस;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* wrong CQ type*/
-		shost_printk(KERN_ERR, fnic->lport->host,
+		shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 			     "fnic rq_cmpl wrong cq type x%x\n", type);
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 
-	if (!fcs_ok || packet_error || !fcoe_fc_crc_ok || fcoe_enc_error) {
+	अगर (!fcs_ok || packet_error || !fcoe_fc_crc_ok || fcoe_enc_error) अणु
 		atomic64_inc(&fnic_stats->misc_stats.frame_errors);
 		FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 			     "fnic rq_cmpl fcoe x%x fcsok x%x"
@@ -903,243 +904,243 @@ static void fnic_rq_cmpl_frame_recv(struct vnic_rq *rq, struct cq_desc
 			     " x%x\n",
 			     fcoe, fcs_ok, packet_error,
 			     fcoe_fc_crc_ok, fcoe_enc_error);
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
-	if (fnic->stop_rx_link_events) {
+	अगर (fnic->stop_rx_link_events) अणु
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 	fr_dev(fp) = fnic->lport;
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-	if ((fnic_fc_trace_set_data(fnic->lport->host->host_no, FNIC_FC_RECV,
-					(char *)skb->data, skb->len)) != 0) {
-		printk(KERN_ERR "fnic ctlr frame trace error!!!");
-	}
+	अगर ((fnic_fc_trace_set_data(fnic->lport->host->host_no, FNIC_FC_RECV,
+					(अक्षर *)skb->data, skb->len)) != 0) अणु
+		prपूर्णांकk(KERN_ERR "fnic ctlr frame trace error!!!");
+	पूर्ण
 
 	skb_queue_tail(&fnic->frame_queue, skb);
 	queue_work(fnic_event_queue, &fnic->frame_work);
 
-	return;
+	वापस;
 drop:
-	dev_kfree_skb_irq(skb);
-}
+	dev_kमुक्त_skb_irq(skb);
+पूर्ण
 
-static int fnic_rq_cmpl_handler_cont(struct vnic_dev *vdev,
-				     struct cq_desc *cq_desc, u8 type,
+अटल पूर्णांक fnic_rq_cmpl_handler_cont(काष्ठा vnic_dev *vdev,
+				     काष्ठा cq_desc *cq_desc, u8 type,
 				     u16 q_number, u16 completed_index,
-				     void *opaque)
-{
-	struct fnic *fnic = vnic_dev_priv(vdev);
+				     व्योम *opaque)
+अणु
+	काष्ठा fnic *fnic = vnic_dev_priv(vdev);
 
 	vnic_rq_service(&fnic->rq[q_number], cq_desc, completed_index,
 			VNIC_RQ_RETURN_DESC, fnic_rq_cmpl_frame_recv,
-			NULL);
-	return 0;
-}
+			शून्य);
+	वापस 0;
+पूर्ण
 
-int fnic_rq_cmpl_handler(struct fnic *fnic, int rq_work_to_do)
-{
-	unsigned int tot_rq_work_done = 0, cur_work_done;
-	unsigned int i;
-	int err;
+पूर्णांक fnic_rq_cmpl_handler(काष्ठा fnic *fnic, पूर्णांक rq_work_to_करो)
+अणु
+	अचिन्हित पूर्णांक tot_rq_work_करोne = 0, cur_work_करोne;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = 0; i < fnic->rq_count; i++) {
-		cur_work_done = vnic_cq_service(&fnic->cq[i], rq_work_to_do,
+	क्रम (i = 0; i < fnic->rq_count; i++) अणु
+		cur_work_करोne = vnic_cq_service(&fnic->cq[i], rq_work_to_करो,
 						fnic_rq_cmpl_handler_cont,
-						NULL);
-		if (cur_work_done) {
+						शून्य);
+		अगर (cur_work_करोne) अणु
 			err = vnic_rq_fill(&fnic->rq[i], fnic_alloc_rq_frame);
-			if (err)
-				shost_printk(KERN_ERR, fnic->lport->host,
+			अगर (err)
+				shost_prपूर्णांकk(KERN_ERR, fnic->lport->host,
 					     "fnic_alloc_rq_frame can't alloc"
 					     " frame\n");
-		}
-		tot_rq_work_done += cur_work_done;
-	}
+		पूर्ण
+		tot_rq_work_करोne += cur_work_करोne;
+	पूर्ण
 
-	return tot_rq_work_done;
-}
+	वापस tot_rq_work_करोne;
+पूर्ण
 
 /*
- * This function is called once at init time to allocate and fill RQ
- * buffers. Subsequently, it is called in the interrupt context after RQ
+ * This function is called once at init समय to allocate and fill RQ
+ * buffers. Subsequently, it is called in the पूर्णांकerrupt context after RQ
  * buffer processing to replenish the buffers in the RQ
  */
-int fnic_alloc_rq_frame(struct vnic_rq *rq)
-{
-	struct fnic *fnic = vnic_dev_priv(rq->vdev);
-	struct sk_buff *skb;
+पूर्णांक fnic_alloc_rq_frame(काष्ठा vnic_rq *rq)
+अणु
+	काष्ठा fnic *fnic = vnic_dev_priv(rq->vdev);
+	काष्ठा sk_buff *skb;
 	u16 len;
 	dma_addr_t pa;
-	int r;
+	पूर्णांक r;
 
 	len = FC_FRAME_HEADROOM + FC_MAX_FRAME + FC_FRAME_TAILROOM;
 	skb = dev_alloc_skb(len);
-	if (!skb) {
+	अगर (!skb) अणु
 		FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 			     "Unable to allocate RQ sk_buff\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	skb_reset_mac_header(skb);
 	skb_reset_transport_header(skb);
 	skb_reset_network_header(skb);
 	skb_put(skb, len);
 	pa = dma_map_single(&fnic->pdev->dev, skb->data, len, DMA_FROM_DEVICE);
-	if (dma_mapping_error(&fnic->pdev->dev, pa)) {
+	अगर (dma_mapping_error(&fnic->pdev->dev, pa)) अणु
 		r = -ENOMEM;
-		printk(KERN_ERR "PCI mapping failed with error %d\n", r);
-		goto free_skb;
-	}
+		prपूर्णांकk(KERN_ERR "PCI mapping failed with error %d\n", r);
+		जाओ मुक्त_skb;
+	पूर्ण
 
 	fnic_queue_rq_desc(rq, skb, pa, len);
-	return 0;
+	वापस 0;
 
-free_skb:
-	kfree_skb(skb);
-	return r;
-}
+मुक्त_skb:
+	kमुक्त_skb(skb);
+	वापस r;
+पूर्ण
 
-void fnic_free_rq_buf(struct vnic_rq *rq, struct vnic_rq_buf *buf)
-{
-	struct fc_frame *fp = buf->os_buf;
-	struct fnic *fnic = vnic_dev_priv(rq->vdev);
+व्योम fnic_मुक्त_rq_buf(काष्ठा vnic_rq *rq, काष्ठा vnic_rq_buf *buf)
+अणु
+	काष्ठा fc_frame *fp = buf->os_buf;
+	काष्ठा fnic *fnic = vnic_dev_priv(rq->vdev);
 
 	dma_unmap_single(&fnic->pdev->dev, buf->dma_addr, buf->len,
 			 DMA_FROM_DEVICE);
 
-	dev_kfree_skb(fp_skb(fp));
-	buf->os_buf = NULL;
-}
+	dev_kमुक्त_skb(fp_skb(fp));
+	buf->os_buf = शून्य;
+पूर्ण
 
 /**
  * fnic_eth_send() - Send Ethernet frame.
  * @fip:	fcoe_ctlr instance.
  * @skb:	Ethernet Frame, FIP, without VLAN encapsulation.
  */
-void fnic_eth_send(struct fcoe_ctlr *fip, struct sk_buff *skb)
-{
-	struct fnic *fnic = fnic_from_ctlr(fip);
-	struct vnic_wq *wq = &fnic->wq[0];
+व्योम fnic_eth_send(काष्ठा fcoe_ctlr *fip, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा fnic *fnic = fnic_from_ctlr(fip);
+	काष्ठा vnic_wq *wq = &fnic->wq[0];
 	dma_addr_t pa;
-	struct ethhdr *eth_hdr;
-	struct vlan_ethhdr *vlan_hdr;
-	unsigned long flags;
+	काष्ठा ethhdr *eth_hdr;
+	काष्ठा vlan_ethhdr *vlan_hdr;
+	अचिन्हित दीर्घ flags;
 
-	if (!fnic->vlan_hw_insert) {
-		eth_hdr = (struct ethhdr *)skb_mac_header(skb);
-		vlan_hdr = skb_push(skb, sizeof(*vlan_hdr) - sizeof(*eth_hdr));
-		memcpy(vlan_hdr, eth_hdr, 2 * ETH_ALEN);
+	अगर (!fnic->vlan_hw_insert) अणु
+		eth_hdr = (काष्ठा ethhdr *)skb_mac_header(skb);
+		vlan_hdr = skb_push(skb, माप(*vlan_hdr) - माप(*eth_hdr));
+		स_नकल(vlan_hdr, eth_hdr, 2 * ETH_ALEN);
 		vlan_hdr->h_vlan_proto = htons(ETH_P_8021Q);
 		vlan_hdr->h_vlan_encapsulated_proto = eth_hdr->h_proto;
 		vlan_hdr->h_vlan_TCI = htons(fnic->vlan_id);
-		if ((fnic_fc_trace_set_data(fnic->lport->host->host_no,
-			FNIC_FC_SEND|0x80, (char *)eth_hdr, skb->len)) != 0) {
-			printk(KERN_ERR "fnic ctlr frame trace error!!!");
-		}
-	} else {
-		if ((fnic_fc_trace_set_data(fnic->lport->host->host_no,
-			FNIC_FC_SEND|0x80, (char *)skb->data, skb->len)) != 0) {
-			printk(KERN_ERR "fnic ctlr frame trace error!!!");
-		}
-	}
+		अगर ((fnic_fc_trace_set_data(fnic->lport->host->host_no,
+			FNIC_FC_SEND|0x80, (अक्षर *)eth_hdr, skb->len)) != 0) अणु
+			prपूर्णांकk(KERN_ERR "fnic ctlr frame trace error!!!");
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर ((fnic_fc_trace_set_data(fnic->lport->host->host_no,
+			FNIC_FC_SEND|0x80, (अक्षर *)skb->data, skb->len)) != 0) अणु
+			prपूर्णांकk(KERN_ERR "fnic ctlr frame trace error!!!");
+		पूर्ण
+	पूर्ण
 
 	pa = dma_map_single(&fnic->pdev->dev, skb->data, skb->len,
 			DMA_TO_DEVICE);
-	if (dma_mapping_error(&fnic->pdev->dev, pa)) {
-		printk(KERN_ERR "DMA mapping failed\n");
-		goto free_skb;
-	}
+	अगर (dma_mapping_error(&fnic->pdev->dev, pa)) अणु
+		prपूर्णांकk(KERN_ERR "DMA mapping failed\n");
+		जाओ मुक्त_skb;
+	पूर्ण
 
 	spin_lock_irqsave(&fnic->wq_lock[0], flags);
-	if (!vnic_wq_desc_avail(wq))
-		goto irq_restore;
+	अगर (!vnic_wq_desc_avail(wq))
+		जाओ irq_restore;
 
 	fnic_queue_wq_eth_desc(wq, skb, pa, skb->len,
 			       0 /* hw inserts cos value */,
 			       fnic->vlan_id, 1);
 	spin_unlock_irqrestore(&fnic->wq_lock[0], flags);
-	return;
+	वापस;
 
 irq_restore:
 	spin_unlock_irqrestore(&fnic->wq_lock[0], flags);
 	dma_unmap_single(&fnic->pdev->dev, pa, skb->len, DMA_TO_DEVICE);
-free_skb:
-	kfree_skb(skb);
-}
+मुक्त_skb:
+	kमुक्त_skb(skb);
+पूर्ण
 
 /*
  * Send FC frame.
  */
-static int fnic_send_frame(struct fnic *fnic, struct fc_frame *fp)
-{
-	struct vnic_wq *wq = &fnic->wq[0];
-	struct sk_buff *skb;
+अटल पूर्णांक fnic_send_frame(काष्ठा fnic *fnic, काष्ठा fc_frame *fp)
+अणु
+	काष्ठा vnic_wq *wq = &fnic->wq[0];
+	काष्ठा sk_buff *skb;
 	dma_addr_t pa;
-	struct ethhdr *eth_hdr;
-	struct vlan_ethhdr *vlan_hdr;
-	struct fcoe_hdr *fcoe_hdr;
-	struct fc_frame_header *fh;
+	काष्ठा ethhdr *eth_hdr;
+	काष्ठा vlan_ethhdr *vlan_hdr;
+	काष्ठा fcoe_hdr *fcoe_hdr;
+	काष्ठा fc_frame_header *fh;
 	u32 tot_len, eth_hdr_len;
-	int ret = 0;
-	unsigned long flags;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
 
 	fh = fc_frame_header_get(fp);
 	skb = fp_skb(fp);
 
-	if (unlikely(fh->fh_r_ctl == FC_RCTL_ELS_REQ) &&
+	अगर (unlikely(fh->fh_r_ctl == FC_RCTL_ELS_REQ) &&
 	    fcoe_ctlr_els_send(&fnic->ctlr, fnic->lport, skb))
-		return 0;
+		वापस 0;
 
-	if (!fnic->vlan_hw_insert) {
-		eth_hdr_len = sizeof(*vlan_hdr) + sizeof(*fcoe_hdr);
+	अगर (!fnic->vlan_hw_insert) अणु
+		eth_hdr_len = माप(*vlan_hdr) + माप(*fcoe_hdr);
 		vlan_hdr = skb_push(skb, eth_hdr_len);
-		eth_hdr = (struct ethhdr *)vlan_hdr;
+		eth_hdr = (काष्ठा ethhdr *)vlan_hdr;
 		vlan_hdr->h_vlan_proto = htons(ETH_P_8021Q);
 		vlan_hdr->h_vlan_encapsulated_proto = htons(ETH_P_FCOE);
 		vlan_hdr->h_vlan_TCI = htons(fnic->vlan_id);
-		fcoe_hdr = (struct fcoe_hdr *)(vlan_hdr + 1);
-	} else {
-		eth_hdr_len = sizeof(*eth_hdr) + sizeof(*fcoe_hdr);
+		fcoe_hdr = (काष्ठा fcoe_hdr *)(vlan_hdr + 1);
+	पूर्ण अन्यथा अणु
+		eth_hdr_len = माप(*eth_hdr) + माप(*fcoe_hdr);
 		eth_hdr = skb_push(skb, eth_hdr_len);
 		eth_hdr->h_proto = htons(ETH_P_FCOE);
-		fcoe_hdr = (struct fcoe_hdr *)(eth_hdr + 1);
-	}
+		fcoe_hdr = (काष्ठा fcoe_hdr *)(eth_hdr + 1);
+	पूर्ण
 
-	if (fnic->ctlr.map_dest)
+	अगर (fnic->ctlr.map_dest)
 		fc_fcoe_set_mac(eth_hdr->h_dest, fh->fh_d_id);
-	else
-		memcpy(eth_hdr->h_dest, fnic->ctlr.dest_addr, ETH_ALEN);
-	memcpy(eth_hdr->h_source, fnic->data_src_addr, ETH_ALEN);
+	अन्यथा
+		स_नकल(eth_hdr->h_dest, fnic->ctlr.dest_addr, ETH_ALEN);
+	स_नकल(eth_hdr->h_source, fnic->data_src_addr, ETH_ALEN);
 
 	tot_len = skb->len;
 	BUG_ON(tot_len % 4);
 
-	memset(fcoe_hdr, 0, sizeof(*fcoe_hdr));
+	स_रखो(fcoe_hdr, 0, माप(*fcoe_hdr));
 	fcoe_hdr->fcoe_sof = fr_sof(fp);
-	if (FC_FCOE_VER)
+	अगर (FC_FCOE_VER)
 		FC_FCOE_ENCAPS_VER(fcoe_hdr, FC_FCOE_VER);
 
 	pa = dma_map_single(&fnic->pdev->dev, eth_hdr, tot_len, DMA_TO_DEVICE);
-	if (dma_mapping_error(&fnic->pdev->dev, pa)) {
+	अगर (dma_mapping_error(&fnic->pdev->dev, pa)) अणु
 		ret = -ENOMEM;
-		printk(KERN_ERR "DMA map failed with error %d\n", ret);
-		goto free_skb_on_err;
-	}
+		prपूर्णांकk(KERN_ERR "DMA map failed with error %d\n", ret);
+		जाओ मुक्त_skb_on_err;
+	पूर्ण
 
-	if ((fnic_fc_trace_set_data(fnic->lport->host->host_no, FNIC_FC_SEND,
-				(char *)eth_hdr, tot_len)) != 0) {
-		printk(KERN_ERR "fnic ctlr frame trace error!!!");
-	}
+	अगर ((fnic_fc_trace_set_data(fnic->lport->host->host_no, FNIC_FC_SEND,
+				(अक्षर *)eth_hdr, tot_len)) != 0) अणु
+		prपूर्णांकk(KERN_ERR "fnic ctlr frame trace error!!!");
+	पूर्ण
 
 	spin_lock_irqsave(&fnic->wq_lock[0], flags);
 
-	if (!vnic_wq_desc_avail(wq)) {
+	अगर (!vnic_wq_desc_avail(wq)) अणु
 		dma_unmap_single(&fnic->pdev->dev, pa, tot_len, DMA_TO_DEVICE);
 		ret = -1;
-		goto irq_restore;
-	}
+		जाओ irq_restore;
+	पूर्ण
 
 	fnic_queue_wq_desc(wq, skb, pa, tot_len, fr_eof(fp),
 			   0 /* hw inserts cos value */,
@@ -1148,241 +1149,241 @@ static int fnic_send_frame(struct fnic *fnic, struct fc_frame *fp)
 irq_restore:
 	spin_unlock_irqrestore(&fnic->wq_lock[0], flags);
 
-free_skb_on_err:
-	if (ret)
-		dev_kfree_skb_any(fp_skb(fp));
+मुक्त_skb_on_err:
+	अगर (ret)
+		dev_kमुक्त_skb_any(fp_skb(fp));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * fnic_send
  * Routine to send a raw frame
  */
-int fnic_send(struct fc_lport *lp, struct fc_frame *fp)
-{
-	struct fnic *fnic = lport_priv(lp);
-	unsigned long flags;
+पूर्णांक fnic_send(काष्ठा fc_lport *lp, काष्ठा fc_frame *fp)
+अणु
+	काष्ठा fnic *fnic = lport_priv(lp);
+	अचिन्हित दीर्घ flags;
 
-	if (fnic->in_remove) {
-		dev_kfree_skb(fp_skb(fp));
-		return -1;
-	}
+	अगर (fnic->in_हटाओ) अणु
+		dev_kमुक्त_skb(fp_skb(fp));
+		वापस -1;
+	पूर्ण
 
 	/*
-	 * Queue frame if in a transitional state.
-	 * This occurs while registering the Port_ID / MAC address after FLOGI.
+	 * Queue frame अगर in a transitional state.
+	 * This occurs जबतक रेजिस्टरing the Port_ID / MAC address after FLOGI.
 	 */
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
-	if (fnic->state != FNIC_IN_FC_MODE && fnic->state != FNIC_IN_ETH_MODE) {
+	अगर (fnic->state != FNIC_IN_FC_MODE && fnic->state != FNIC_IN_ETH_MODE) अणु
 		skb_queue_tail(&fnic->tx_queue, fp_skb(fp));
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
-	return fnic_send_frame(fnic, fp);
-}
+	वापस fnic_send_frame(fnic, fp);
+पूर्ण
 
 /**
  * fnic_flush_tx() - send queued frames.
  * @fnic: fnic device
  *
- * Send frames that were waiting to go out in FC or Ethernet mode.
+ * Send frames that were रुकोing to go out in FC or Ethernet mode.
  * Whenever changing modes we purge queued frames, so these frames should
- * be queued for the stable mode that we're in, either FC or Ethernet.
+ * be queued क्रम the stable mode that we're in, either FC or Ethernet.
  *
  * Called without fnic_lock held.
  */
-void fnic_flush_tx(struct fnic *fnic)
-{
-	struct sk_buff *skb;
-	struct fc_frame *fp;
+व्योम fnic_flush_tx(काष्ठा fnic *fnic)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा fc_frame *fp;
 
-	while ((skb = skb_dequeue(&fnic->tx_queue))) {
-		fp = (struct fc_frame *)skb;
+	जबतक ((skb = skb_dequeue(&fnic->tx_queue))) अणु
+		fp = (काष्ठा fc_frame *)skb;
 		fnic_send_frame(fnic, fp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * fnic_set_eth_mode() - put fnic into ethernet mode.
+ * fnic_set_eth_mode() - put fnic पूर्णांकo ethernet mode.
  * @fnic: fnic device
  *
  * Called without fnic lock held.
  */
-static void fnic_set_eth_mode(struct fnic *fnic)
-{
-	unsigned long flags;
-	enum fnic_state old_state;
-	int ret;
+अटल व्योम fnic_set_eth_mode(काष्ठा fnic *fnic)
+अणु
+	अचिन्हित दीर्घ flags;
+	क्रमागत fnic_state old_state;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
 again:
 	old_state = fnic->state;
-	switch (old_state) {
-	case FNIC_IN_FC_MODE:
-	case FNIC_IN_ETH_TRANS_FC_MODE:
-	default:
+	चयन (old_state) अणु
+	हाल FNIC_IN_FC_MODE:
+	हाल FNIC_IN_ETH_TRANS_FC_MODE:
+	शेष:
 		fnic->state = FNIC_IN_FC_TRANS_ETH_MODE;
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
 		ret = fnic_fw_reset_handler(fnic);
 
 		spin_lock_irqsave(&fnic->fnic_lock, flags);
-		if (fnic->state != FNIC_IN_FC_TRANS_ETH_MODE)
-			goto again;
-		if (ret)
+		अगर (fnic->state != FNIC_IN_FC_TRANS_ETH_MODE)
+			जाओ again;
+		अगर (ret)
 			fnic->state = old_state;
-		break;
+		अवरोध;
 
-	case FNIC_IN_FC_TRANS_ETH_MODE:
-	case FNIC_IN_ETH_MODE:
-		break;
-	}
+	हाल FNIC_IN_FC_TRANS_ETH_MODE:
+	हाल FNIC_IN_ETH_MODE:
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-}
+पूर्ण
 
-static void fnic_wq_complete_frame_send(struct vnic_wq *wq,
-					struct cq_desc *cq_desc,
-					struct vnic_wq_buf *buf, void *opaque)
-{
-	struct sk_buff *skb = buf->os_buf;
-	struct fc_frame *fp = (struct fc_frame *)skb;
-	struct fnic *fnic = vnic_dev_priv(wq->vdev);
+अटल व्योम fnic_wq_complete_frame_send(काष्ठा vnic_wq *wq,
+					काष्ठा cq_desc *cq_desc,
+					काष्ठा vnic_wq_buf *buf, व्योम *opaque)
+अणु
+	काष्ठा sk_buff *skb = buf->os_buf;
+	काष्ठा fc_frame *fp = (काष्ठा fc_frame *)skb;
+	काष्ठा fnic *fnic = vnic_dev_priv(wq->vdev);
 
 	dma_unmap_single(&fnic->pdev->dev, buf->dma_addr, buf->len,
 			 DMA_TO_DEVICE);
-	dev_kfree_skb_irq(fp_skb(fp));
-	buf->os_buf = NULL;
-}
+	dev_kमुक्त_skb_irq(fp_skb(fp));
+	buf->os_buf = शून्य;
+पूर्ण
 
-static int fnic_wq_cmpl_handler_cont(struct vnic_dev *vdev,
-				     struct cq_desc *cq_desc, u8 type,
+अटल पूर्णांक fnic_wq_cmpl_handler_cont(काष्ठा vnic_dev *vdev,
+				     काष्ठा cq_desc *cq_desc, u8 type,
 				     u16 q_number, u16 completed_index,
-				     void *opaque)
-{
-	struct fnic *fnic = vnic_dev_priv(vdev);
-	unsigned long flags;
+				     व्योम *opaque)
+अणु
+	काष्ठा fnic *fnic = vnic_dev_priv(vdev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&fnic->wq_lock[q_number], flags);
 	vnic_wq_service(&fnic->wq[q_number], cq_desc, completed_index,
-			fnic_wq_complete_frame_send, NULL);
+			fnic_wq_complete_frame_send, शून्य);
 	spin_unlock_irqrestore(&fnic->wq_lock[q_number], flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int fnic_wq_cmpl_handler(struct fnic *fnic, int work_to_do)
-{
-	unsigned int wq_work_done = 0;
-	unsigned int i;
+पूर्णांक fnic_wq_cmpl_handler(काष्ठा fnic *fnic, पूर्णांक work_to_करो)
+अणु
+	अचिन्हित पूर्णांक wq_work_करोne = 0;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < fnic->raw_wq_count; i++) {
-		wq_work_done  += vnic_cq_service(&fnic->cq[fnic->rq_count+i],
-						 work_to_do,
+	क्रम (i = 0; i < fnic->raw_wq_count; i++) अणु
+		wq_work_करोne  += vnic_cq_service(&fnic->cq[fnic->rq_count+i],
+						 work_to_करो,
 						 fnic_wq_cmpl_handler_cont,
-						 NULL);
-	}
+						 शून्य);
+	पूर्ण
 
-	return wq_work_done;
-}
+	वापस wq_work_करोne;
+पूर्ण
 
 
-void fnic_free_wq_buf(struct vnic_wq *wq, struct vnic_wq_buf *buf)
-{
-	struct fc_frame *fp = buf->os_buf;
-	struct fnic *fnic = vnic_dev_priv(wq->vdev);
+व्योम fnic_मुक्त_wq_buf(काष्ठा vnic_wq *wq, काष्ठा vnic_wq_buf *buf)
+अणु
+	काष्ठा fc_frame *fp = buf->os_buf;
+	काष्ठा fnic *fnic = vnic_dev_priv(wq->vdev);
 
 	dma_unmap_single(&fnic->pdev->dev, buf->dma_addr, buf->len,
 			 DMA_TO_DEVICE);
 
-	dev_kfree_skb(fp_skb(fp));
-	buf->os_buf = NULL;
-}
+	dev_kमुक्त_skb(fp_skb(fp));
+	buf->os_buf = शून्य;
+पूर्ण
 
-void fnic_fcoe_reset_vlans(struct fnic *fnic)
-{
-	unsigned long flags;
-	struct fcoe_vlan *vlan;
-	struct fcoe_vlan *next;
+व्योम fnic_fcoe_reset_vlans(काष्ठा fnic *fnic)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा fcoe_vlan *vlan;
+	काष्ठा fcoe_vlan *next;
 
 	/*
-	 * indicate a link down to fcoe so that all fcf's are free'd
-	 * might not be required since we did this before sending vlan
+	 * indicate a link करोwn to fcoe so that all fcf's are free'd
+	 * might not be required since we did this beक्रमe sending vlan
 	 * discovery request
 	 */
 	spin_lock_irqsave(&fnic->vlans_lock, flags);
-	if (!list_empty(&fnic->vlans)) {
-		list_for_each_entry_safe(vlan, next, &fnic->vlans, list) {
+	अगर (!list_empty(&fnic->vlans)) अणु
+		list_क्रम_each_entry_safe(vlan, next, &fnic->vlans, list) अणु
 			list_del(&vlan->list);
-			kfree(vlan);
-		}
-	}
+			kमुक्त(vlan);
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&fnic->vlans_lock, flags);
-}
+पूर्ण
 
-void fnic_handle_fip_timer(struct fnic *fnic)
-{
-	unsigned long flags;
-	struct fcoe_vlan *vlan;
-	struct fnic_stats *fnic_stats = &fnic->fnic_stats;
-	u64 sol_time;
+व्योम fnic_handle_fip_समयr(काष्ठा fnic *fnic)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा fcoe_vlan *vlan;
+	काष्ठा fnic_stats *fnic_stats = &fnic->fnic_stats;
+	u64 sol_समय;
 
 	spin_lock_irqsave(&fnic->fnic_lock, flags);
-	if (fnic->stop_rx_link_events) {
+	अगर (fnic->stop_rx_link_events) अणु
 		spin_unlock_irqrestore(&fnic->fnic_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_unlock_irqrestore(&fnic->fnic_lock, flags);
 
-	if (fnic->ctlr.mode == FIP_MODE_NON_FIP)
-		return;
+	अगर (fnic->ctlr.mode == FIP_MODE_NON_FIP)
+		वापस;
 
 	spin_lock_irqsave(&fnic->vlans_lock, flags);
-	if (list_empty(&fnic->vlans)) {
+	अगर (list_empty(&fnic->vlans)) अणु
 		spin_unlock_irqrestore(&fnic->vlans_lock, flags);
 		/* no vlans available, try again */
-		if (unlikely(fnic_log_level & FNIC_FCS_LOGGING))
-			if (printk_ratelimit())
-				shost_printk(KERN_DEBUG, fnic->lport->host,
+		अगर (unlikely(fnic_log_level & FNIC_FCS_LOGGING))
+			अगर (prपूर्णांकk_ratelimit())
+				shost_prपूर्णांकk(KERN_DEBUG, fnic->lport->host,
 						"Start VLAN Discovery\n");
 		fnic_event_enq(fnic, FNIC_EVT_START_VLAN_DISC);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	vlan = list_first_entry(&fnic->vlans, struct fcoe_vlan, list);
+	vlan = list_first_entry(&fnic->vlans, काष्ठा fcoe_vlan, list);
 	FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 		  "fip_timer: vlan %d state %d sol_count %d\n",
 		  vlan->vid, vlan->state, vlan->sol_count);
-	switch (vlan->state) {
-	case FIP_VLAN_USED:
+	चयन (vlan->state) अणु
+	हाल FIP_VLAN_USED:
 		FNIC_FCS_DBG(KERN_DEBUG, fnic->lport->host,
 			  "FIP VLAN is selected for FC transaction\n");
 		spin_unlock_irqrestore(&fnic->vlans_lock, flags);
-		break;
-	case FIP_VLAN_FAILED:
+		अवरोध;
+	हाल FIP_VLAN_FAILED:
 		spin_unlock_irqrestore(&fnic->vlans_lock, flags);
-		/* if all vlans are in failed state, restart vlan disc */
-		if (unlikely(fnic_log_level & FNIC_FCS_LOGGING))
-			if (printk_ratelimit())
-				shost_printk(KERN_DEBUG, fnic->lport->host,
+		/* अगर all vlans are in failed state, restart vlan disc */
+		अगर (unlikely(fnic_log_level & FNIC_FCS_LOGGING))
+			अगर (prपूर्णांकk_ratelimit())
+				shost_prपूर्णांकk(KERN_DEBUG, fnic->lport->host,
 					  "Start VLAN Discovery\n");
 		fnic_event_enq(fnic, FNIC_EVT_START_VLAN_DISC);
-		break;
-	case FIP_VLAN_SENT:
-		if (vlan->sol_count >= FCOE_CTLR_MAX_SOL) {
+		अवरोध;
+	हाल FIP_VLAN_SENT:
+		अगर (vlan->sol_count >= FCOE_CTLR_MAX_SOL) अणु
 			/*
-			 * no response on this vlan, remove  from the list.
+			 * no response on this vlan, हटाओ  from the list.
 			 * Try the next vlan
 			 */
 			FNIC_FCS_DBG(KERN_INFO, fnic->lport->host,
 				  "Dequeue this VLAN ID %d from list\n",
 				  vlan->vid);
 			list_del(&vlan->list);
-			kfree(vlan);
-			vlan = NULL;
-			if (list_empty(&fnic->vlans)) {
+			kमुक्त(vlan);
+			vlan = शून्य;
+			अगर (list_empty(&fnic->vlans)) अणु
 				/* we exhausted all vlans, restart vlan disc */
 				spin_unlock_irqrestore(&fnic->vlans_lock,
 							flags);
@@ -1390,20 +1391,20 @@ void fnic_handle_fip_timer(struct fnic *fnic)
 					  "fip_timer: vlan list empty, "
 					  "trigger vlan disc\n");
 				fnic_event_enq(fnic, FNIC_EVT_START_VLAN_DISC);
-				return;
-			}
+				वापस;
+			पूर्ण
 			/* check the next vlan */
-			vlan = list_first_entry(&fnic->vlans, struct fcoe_vlan,
+			vlan = list_first_entry(&fnic->vlans, काष्ठा fcoe_vlan,
 							list);
 			fnic->set_vlan(fnic, vlan->vid);
 			vlan->state = FIP_VLAN_SENT; /* sent now */
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&fnic->vlans_lock, flags);
 		atomic64_inc(&fnic_stats->vlan_stats.sol_expiry_count);
 		vlan->sol_count++;
-		sol_time = jiffies + msecs_to_jiffies
+		sol_समय = jअगरfies + msecs_to_jअगरfies
 					(FCOE_CTLR_START_DELAY);
-		mod_timer(&fnic->fip_timer, round_jiffies(sol_time));
-		break;
-	}
-}
+		mod_समयr(&fnic->fip_समयr, round_jअगरfies(sol_समय));
+		अवरोध;
+	पूर्ण
+पूर्ण

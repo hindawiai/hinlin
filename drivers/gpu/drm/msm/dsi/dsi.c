@@ -1,268 +1,269 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  */
 
-#include "dsi.h"
+#समावेश "dsi.h"
 
-struct drm_encoder *msm_dsi_get_encoder(struct msm_dsi *msm_dsi)
-{
-	if (!msm_dsi || !msm_dsi_device_connected(msm_dsi))
-		return NULL;
+काष्ठा drm_encoder *msm_dsi_get_encoder(काष्ठा msm_dsi *msm_dsi)
+अणु
+	अगर (!msm_dsi || !msm_dsi_device_connected(msm_dsi))
+		वापस शून्य;
 
-	return msm_dsi->encoder;
-}
+	वापस msm_dsi->encoder;
+पूर्ण
 
-static int dsi_get_phy(struct msm_dsi *msm_dsi)
-{
-	struct platform_device *pdev = msm_dsi->pdev;
-	struct platform_device *phy_pdev;
-	struct device_node *phy_node;
+अटल पूर्णांक dsi_get_phy(काष्ठा msm_dsi *msm_dsi)
+अणु
+	काष्ठा platक्रमm_device *pdev = msm_dsi->pdev;
+	काष्ठा platक्रमm_device *phy_pdev;
+	काष्ठा device_node *phy_node;
 
 	phy_node = of_parse_phandle(pdev->dev.of_node, "phys", 0);
-	if (!phy_node) {
+	अगर (!phy_node) अणु
 		DRM_DEV_ERROR(&pdev->dev, "cannot find phy device\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	phy_pdev = of_find_device_by_node(phy_node);
-	if (phy_pdev)
-		msm_dsi->phy = platform_get_drvdata(phy_pdev);
+	अगर (phy_pdev)
+		msm_dsi->phy = platक्रमm_get_drvdata(phy_pdev);
 
 	of_node_put(phy_node);
 
-	if (!phy_pdev || !msm_dsi->phy) {
+	अगर (!phy_pdev || !msm_dsi->phy) अणु
 		DRM_DEV_ERROR(&pdev->dev, "%s: phy driver is not ready\n", __func__);
-		return -EPROBE_DEFER;
-	}
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
 	msm_dsi->phy_dev = get_device(&phy_pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_destroy(struct msm_dsi *msm_dsi)
-{
-	if (!msm_dsi)
-		return;
+अटल व्योम dsi_destroy(काष्ठा msm_dsi *msm_dsi)
+अणु
+	अगर (!msm_dsi)
+		वापस;
 
-	msm_dsi_manager_unregister(msm_dsi);
+	msm_dsi_manager_unरेजिस्टर(msm_dsi);
 
-	if (msm_dsi->phy_dev) {
+	अगर (msm_dsi->phy_dev) अणु
 		put_device(msm_dsi->phy_dev);
-		msm_dsi->phy = NULL;
-		msm_dsi->phy_dev = NULL;
-	}
+		msm_dsi->phy = शून्य;
+		msm_dsi->phy_dev = शून्य;
+	पूर्ण
 
-	if (msm_dsi->host) {
+	अगर (msm_dsi->host) अणु
 		msm_dsi_host_destroy(msm_dsi->host);
-		msm_dsi->host = NULL;
-	}
+		msm_dsi->host = शून्य;
+	पूर्ण
 
-	platform_set_drvdata(msm_dsi->pdev, NULL);
-}
+	platक्रमm_set_drvdata(msm_dsi->pdev, शून्य);
+पूर्ण
 
-static struct msm_dsi *dsi_init(struct platform_device *pdev)
-{
-	struct msm_dsi *msm_dsi;
-	int ret;
+अटल काष्ठा msm_dsi *dsi_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा msm_dsi *msm_dsi;
+	पूर्णांक ret;
 
-	if (!pdev)
-		return ERR_PTR(-ENXIO);
+	अगर (!pdev)
+		वापस ERR_PTR(-ENXIO);
 
-	msm_dsi = devm_kzalloc(&pdev->dev, sizeof(*msm_dsi), GFP_KERNEL);
-	if (!msm_dsi)
-		return ERR_PTR(-ENOMEM);
+	msm_dsi = devm_kzalloc(&pdev->dev, माप(*msm_dsi), GFP_KERNEL);
+	अगर (!msm_dsi)
+		वापस ERR_PTR(-ENOMEM);
 	DBG("dsi probed=%p", msm_dsi);
 
 	msm_dsi->id = -1;
 	msm_dsi->pdev = pdev;
-	platform_set_drvdata(pdev, msm_dsi);
+	platक्रमm_set_drvdata(pdev, msm_dsi);
 
 	/* Init dsi host */
 	ret = msm_dsi_host_init(msm_dsi);
-	if (ret)
-		goto destroy_dsi;
+	अगर (ret)
+		जाओ destroy_dsi;
 
 	/* GET dsi PHY */
 	ret = dsi_get_phy(msm_dsi);
-	if (ret)
-		goto destroy_dsi;
+	अगर (ret)
+		जाओ destroy_dsi;
 
 	/* Register to dsi manager */
-	ret = msm_dsi_manager_register(msm_dsi);
-	if (ret)
-		goto destroy_dsi;
+	ret = msm_dsi_manager_रेजिस्टर(msm_dsi);
+	अगर (ret)
+		जाओ destroy_dsi;
 
-	return msm_dsi;
+	वापस msm_dsi;
 
 destroy_dsi:
 	dsi_destroy(msm_dsi);
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static int dsi_bind(struct device *dev, struct device *master, void *data)
-{
-	struct drm_device *drm = dev_get_drvdata(master);
-	struct msm_drm_private *priv = drm->dev_private;
-	struct platform_device *pdev = to_platform_device(dev);
-	struct msm_dsi *msm_dsi;
+अटल पूर्णांक dsi_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(master);
+	काष्ठा msm_drm_निजी *priv = drm->dev_निजी;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा msm_dsi *msm_dsi;
 
 	DBG("");
 	msm_dsi = dsi_init(pdev);
-	if (IS_ERR(msm_dsi)) {
-		/* Don't fail the bind if the dsi port is not connected */
-		if (PTR_ERR(msm_dsi) == -ENODEV)
-			return 0;
-		else
-			return PTR_ERR(msm_dsi);
-	}
+	अगर (IS_ERR(msm_dsi)) अणु
+		/* Don't fail the bind अगर the dsi port is not connected */
+		अगर (PTR_ERR(msm_dsi) == -ENODEV)
+			वापस 0;
+		अन्यथा
+			वापस PTR_ERR(msm_dsi);
+	पूर्ण
 
 	priv->dsi[msm_dsi->id] = msm_dsi;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_unbind(struct device *dev, struct device *master,
-		void *data)
-{
-	struct drm_device *drm = dev_get_drvdata(master);
-	struct msm_drm_private *priv = drm->dev_private;
-	struct msm_dsi *msm_dsi = dev_get_drvdata(dev);
-	int id = msm_dsi->id;
+अटल व्योम dsi_unbind(काष्ठा device *dev, काष्ठा device *master,
+		व्योम *data)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(master);
+	काष्ठा msm_drm_निजी *priv = drm->dev_निजी;
+	काष्ठा msm_dsi *msm_dsi = dev_get_drvdata(dev);
+	पूर्णांक id = msm_dsi->id;
 
-	if (priv->dsi[id]) {
+	अगर (priv->dsi[id]) अणु
 		dsi_destroy(msm_dsi);
-		priv->dsi[id] = NULL;
-	}
-}
+		priv->dsi[id] = शून्य;
+	पूर्ण
+पूर्ण
 
-static const struct component_ops dsi_ops = {
+अटल स्थिर काष्ठा component_ops dsi_ops = अणु
 	.bind   = dsi_bind,
 	.unbind = dsi_unbind,
-};
+पूर्ण;
 
-static int dsi_dev_probe(struct platform_device *pdev)
-{
-	return component_add(&pdev->dev, &dsi_ops);
-}
+अटल पूर्णांक dsi_dev_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस component_add(&pdev->dev, &dsi_ops);
+पूर्ण
 
-static int dsi_dev_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक dsi_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	DBG("");
 	component_del(&pdev->dev, &dsi_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id dt_match[] = {
-	{ .compatible = "qcom,mdss-dsi-ctrl" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id dt_match[] = अणु
+	अणु .compatible = "qcom,mdss-dsi-ctrl" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct dev_pm_ops dsi_pm_ops = {
-	SET_RUNTIME_PM_OPS(msm_dsi_runtime_suspend, msm_dsi_runtime_resume, NULL)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops dsi_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(msm_dsi_runसमय_suspend, msm_dsi_runसमय_resume, शून्य)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+पूर्ण;
 
-static struct platform_driver dsi_driver = {
+अटल काष्ठा platक्रमm_driver dsi_driver = अणु
 	.probe = dsi_dev_probe,
-	.remove = dsi_dev_remove,
-	.driver = {
+	.हटाओ = dsi_dev_हटाओ,
+	.driver = अणु
 		.name = "msm_dsi",
 		.of_match_table = dt_match,
 		.pm = &dsi_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-void __init msm_dsi_register(void)
-{
+व्योम __init msm_dsi_रेजिस्टर(व्योम)
+अणु
 	DBG("");
-	msm_dsi_phy_driver_register();
-	platform_driver_register(&dsi_driver);
-}
+	msm_dsi_phy_driver_रेजिस्टर();
+	platक्रमm_driver_रेजिस्टर(&dsi_driver);
+पूर्ण
 
-void __exit msm_dsi_unregister(void)
-{
+व्योम __निकास msm_dsi_unरेजिस्टर(व्योम)
+अणु
 	DBG("");
-	msm_dsi_phy_driver_unregister();
-	platform_driver_unregister(&dsi_driver);
-}
+	msm_dsi_phy_driver_unरेजिस्टर();
+	platक्रमm_driver_unरेजिस्टर(&dsi_driver);
+पूर्ण
 
-int msm_dsi_modeset_init(struct msm_dsi *msm_dsi, struct drm_device *dev,
-			 struct drm_encoder *encoder)
-{
-	struct msm_drm_private *priv;
-	struct drm_bridge *ext_bridge;
-	int ret;
+पूर्णांक msm_dsi_modeset_init(काष्ठा msm_dsi *msm_dsi, काष्ठा drm_device *dev,
+			 काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा msm_drm_निजी *priv;
+	काष्ठा drm_bridge *ext_bridge;
+	पूर्णांक ret;
 
-	if (WARN_ON(!encoder) || WARN_ON(!msm_dsi) || WARN_ON(!dev))
-		return -EINVAL;
+	अगर (WARN_ON(!encoder) || WARN_ON(!msm_dsi) || WARN_ON(!dev))
+		वापस -EINVAL;
 
-	priv = dev->dev_private;
+	priv = dev->dev_निजी;
 	msm_dsi->dev = dev;
 
 	ret = msm_dsi_host_modeset_init(msm_dsi->host, dev);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(dev->dev, "failed to modeset init host: %d\n", ret);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (!msm_dsi_manager_validate_current_config(msm_dsi->id))
-		goto fail;
+	अगर (!msm_dsi_manager_validate_current_config(msm_dsi->id))
+		जाओ fail;
 
 	msm_dsi->encoder = encoder;
 
 	msm_dsi->bridge = msm_dsi_manager_bridge_init(msm_dsi->id);
-	if (IS_ERR(msm_dsi->bridge)) {
+	अगर (IS_ERR(msm_dsi->bridge)) अणु
 		ret = PTR_ERR(msm_dsi->bridge);
 		DRM_DEV_ERROR(dev->dev, "failed to create dsi bridge: %d\n", ret);
-		msm_dsi->bridge = NULL;
-		goto fail;
-	}
+		msm_dsi->bridge = शून्य;
+		जाओ fail;
+	पूर्ण
 
 	/*
-	 * check if the dsi encoder output is connected to a panel or an
-	 * external bridge. We create a connector only if we're connected to a
-	 * drm_panel device. When we're connected to an external bridge, we
+	 * check अगर the dsi encoder output is connected to a panel or an
+	 * बाह्यal bridge. We create a connector only अगर we're connected to a
+	 * drm_panel device. When we're connected to an बाह्यal bridge, we
 	 * assume that the drm_bridge driver will create the connector itself.
 	 */
 	ext_bridge = msm_dsi_host_get_bridge(msm_dsi->host);
 
-	if (ext_bridge)
+	अगर (ext_bridge)
 		msm_dsi->connector =
 			msm_dsi_manager_ext_bridge_init(msm_dsi->id);
-	else
+	अन्यथा
 		msm_dsi->connector =
 			msm_dsi_manager_connector_init(msm_dsi->id);
 
-	if (IS_ERR(msm_dsi->connector)) {
+	अगर (IS_ERR(msm_dsi->connector)) अणु
 		ret = PTR_ERR(msm_dsi->connector);
 		DRM_DEV_ERROR(dev->dev,
 			"failed to create dsi connector: %d\n", ret);
-		msm_dsi->connector = NULL;
-		goto fail;
-	}
+		msm_dsi->connector = शून्य;
+		जाओ fail;
+	पूर्ण
 
 	msm_dsi_manager_setup_encoder(msm_dsi->id);
 
 	priv->bridges[priv->num_bridges++]       = msm_dsi->bridge;
 	priv->connectors[priv->num_connectors++] = msm_dsi->connector;
 
-	return 0;
+	वापस 0;
 fail:
 	/* bridge/connector are normally destroyed by drm: */
-	if (msm_dsi->bridge) {
+	अगर (msm_dsi->bridge) अणु
 		msm_dsi_manager_bridge_destroy(msm_dsi->bridge);
-		msm_dsi->bridge = NULL;
-	}
+		msm_dsi->bridge = शून्य;
+	पूर्ण
 
-	/* don't destroy connector if we didn't make it */
-	if (msm_dsi->connector && !msm_dsi->external_bridge)
+	/* करोn't destroy connector if we didn't make it */
+	अगर (msm_dsi->connector && !msm_dsi->बाह्यal_bridge)
 		msm_dsi->connector->funcs->destroy(msm_dsi->connector);
 
-	msm_dsi->connector = NULL;
+	msm_dsi->connector = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 

@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PERF_UTIL_PERF_HOOKS_H
-#define PERF_UTIL_PERF_HOOKS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PERF_UTIL_PERF_HOOKS_H
+#घोषणा PERF_UTIL_PERF_HOOKS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#अगर_घोषित __cplusplus
+बाह्य "C" अणु
+#पूर्ण_अगर
 
-typedef void (*perf_hook_func_t)(void *ctx);
-struct perf_hook_desc {
-	const char * const hook_name;
-	perf_hook_func_t * const p_hook_func;
-	void *hook_ctx;
-};
+प्रकार व्योम (*perf_hook_func_t)(व्योम *ctx);
+काष्ठा perf_hook_desc अणु
+	स्थिर अक्षर * स्थिर hook_name;
+	perf_hook_func_t * स्थिर p_hook_func;
+	व्योम *hook_ctx;
+पूर्ण;
 
-extern void perf_hooks__invoke(const struct perf_hook_desc *);
-extern void perf_hooks__recover(void);
+बाह्य व्योम perf_hooks__invoke(स्थिर काष्ठा perf_hook_desc *);
+बाह्य व्योम perf_hooks__recover(व्योम);
 
-#define PERF_HOOK(name)					\
-extern struct perf_hook_desc __perf_hook_desc_##name;	\
-static inline void perf_hooks__invoke_##name(void)	\
-{ 							\
+#घोषणा PERF_HOOK(name)					\
+बाह्य काष्ठा perf_hook_desc __perf_hook_desc_##name;	\
+अटल अंतरभूत व्योम perf_hooks__invoke_##name(व्योम)	\
+अणु 							\
 	perf_hooks__invoke(&__perf_hook_desc_##name);	\
-}
+पूर्ण
 
-#include "perf-hooks-list.h"
-#undef PERF_HOOK
+#समावेश "perf-hooks-list.h"
+#अघोषित PERF_HOOK
 
-extern int
-perf_hooks__set_hook(const char *hook_name,
+बाह्य पूर्णांक
+perf_hooks__set_hook(स्थिर अक्षर *hook_name,
 		     perf_hook_func_t hook_func,
-		     void *hook_ctx);
+		     व्योम *hook_ctx);
 
-extern perf_hook_func_t
-perf_hooks__get_hook(const char *hook_name);
+बाह्य perf_hook_func_t
+perf_hooks__get_hook(स्थिर अक्षर *hook_name);
 
-#ifdef __cplusplus
-}
-#endif
-#endif
+#अगर_घोषित __cplusplus
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर

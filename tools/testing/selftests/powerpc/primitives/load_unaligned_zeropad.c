@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Userspace test harness for load_unaligned_zeropad. Creates two
+ * Userspace test harness क्रम load_unaligned_zeropad. Creates two
  * pages and uses mprotect to prevent access to the second page and
  * a SEGV handler that walks the exception tables and runs the fixup
  * routine.
  *
  * The results are compared against a normal load that is that is
- * performed while access to the second page is enabled via mprotect.
+ * perक्रमmed जबतक access to the second page is enabled via mprotect.
  *
- * Copyright (C) 2014 Anton Blanchard <anton@au.ibm.com>, IBM
+ * Copyright (C) 2014 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/mman.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <संकेत.स>
+#समावेश <unistd.h>
+#समावेश <sys/mman.h>
 
-#define FIXUP_SECTION ".ex_fixup"
+#घोषणा FIXUP_SECTION ".ex_fixup"
 
-static inline unsigned long __fls(unsigned long x);
+अटल अंतरभूत अचिन्हित दीर्घ __fls(अचिन्हित दीर्घ x);
 
-#include "word-at-a-time.h"
+#समावेश "word-at-a-time.h"
 
-#include "utils.h"
+#समावेश "utils.h"
 
-static inline unsigned long __fls(unsigned long x)
-{
-	int lz;
+अटल अंतरभूत अचिन्हित दीर्घ __fls(अचिन्हित दीर्घ x)
+अणु
+	पूर्णांक lz;
 
-	asm (PPC_CNTLZL "%0,%1" : "=r" (lz) : "r" (x));
-	return sizeof(unsigned long) - 1 - lz;
-}
+	यंत्र (PPC_CNTLZL "%0,%1" : "=r" (lz) : "r" (x));
+	वापस माप(अचिन्हित दीर्घ) - 1 - lz;
+पूर्ण
 
-static int page_size;
-static char *mem_region;
+अटल पूर्णांक page_size;
+अटल अक्षर *mem_region;
 
-static int protect_region(void)
-{
-	if (mprotect(mem_region + page_size, page_size, PROT_NONE)) {
-		perror("mprotect");
-		return 1;
-	}
+अटल पूर्णांक protect_region(व्योम)
+अणु
+	अगर (mprotect(mem_region + page_size, page_size, PROT_NONE)) अणु
+		लिखो_त्रुटि("mprotect");
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int unprotect_region(void)
-{
-	if (mprotect(mem_region + page_size, page_size, PROT_READ|PROT_WRITE)) {
-		perror("mprotect");
-		return 1;
-	}
+अटल पूर्णांक unprotect_region(व्योम)
+अणु
+	अगर (mprotect(mem_region + page_size, page_size, PROT_READ|PROT_WRITE)) अणु
+		लिखो_त्रुटि("mprotect");
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-extern char __start___ex_table[];
-extern char __stop___ex_table[];
+बाह्य अक्षर __start___ex_table[];
+बाह्य अक्षर __stop___ex_table[];
 
-struct extbl_entry {
-	int insn;
-	int fixup;
-};
+काष्ठा extbl_entry अणु
+	पूर्णांक insn;
+	पूर्णांक fixup;
+पूर्ण;
 
-static void segv_handler(int signr, siginfo_t *info, void *ptr)
-{
+अटल व्योम segv_handler(पूर्णांक signr, siginfo_t *info, व्योम *ptr)
+अणु
 	ucontext_t *uc = (ucontext_t *)ptr;
-	unsigned long addr = (unsigned long)info->si_addr;
-	unsigned long *ip = &UCONTEXT_NIA(uc);
-	struct extbl_entry *entry = (struct extbl_entry *)__start___ex_table;
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)info->si_addr;
+	अचिन्हित दीर्घ *ip = &UCONTEXT_NIA(uc);
+	काष्ठा extbl_entry *entry = (काष्ठा extbl_entry *)__start___ex_table;
 
-	while (entry < (struct extbl_entry *)__stop___ex_table) {
-		unsigned long insn, fixup;
+	जबतक (entry < (काष्ठा extbl_entry *)__stop___ex_table) अणु
+		अचिन्हित दीर्घ insn, fixup;
 
-		insn  = (unsigned long)&entry->insn + entry->insn;
-		fixup = (unsigned long)&entry->fixup + entry->fixup;
+		insn  = (अचिन्हित दीर्घ)&entry->insn + entry->insn;
+		fixup = (अचिन्हित दीर्घ)&entry->fixup + entry->fixup;
 
-		if (insn == *ip) {
+		अगर (insn == *ip) अणु
 			*ip = fixup;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	printf("No exception table match for NIA %lx ADDR %lx\n", *ip, addr);
-	abort();
-}
+	म_लिखो("No exception table match for NIA %lx ADDR %lx\n", *ip, addr);
+	पात();
+पूर्ण
 
-static void setup_segv_handler(void)
-{
-	struct sigaction action;
+अटल व्योम setup_segv_handler(व्योम)
+अणु
+	काष्ठा sigaction action;
 
-	memset(&action, 0, sizeof(action));
+	स_रखो(&action, 0, माप(action));
 	action.sa_sigaction = segv_handler;
 	action.sa_flags = SA_SIGINFO;
-	sigaction(SIGSEGV, &action, NULL);
-}
+	sigaction(संक_अंश, &action, शून्य);
+पूर्ण
 
-static int do_one_test(char *p, int page_offset)
-{
-	unsigned long should;
-	unsigned long got;
+अटल पूर्णांक करो_one_test(अक्षर *p, पूर्णांक page_offset)
+अणु
+	अचिन्हित दीर्घ should;
+	अचिन्हित दीर्घ got;
 
 	FAIL_IF(unprotect_region());
-	should = *(unsigned long *)p;
+	should = *(अचिन्हित दीर्घ *)p;
 	FAIL_IF(protect_region());
 
 	got = load_unaligned_zeropad(p);
 
-	if (should != got) {
-		printf("offset %u load_unaligned_zeropad returned 0x%lx, should be 0x%lx\n", page_offset, got, should);
-		return 1;
-	}
+	अगर (should != got) अणु
+		म_लिखो("offset %u load_unaligned_zeropad returned 0x%lx, should be 0x%lx\n", page_offset, got, should);
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int test_body(void)
-{
-	unsigned long i;
+अटल पूर्णांक test_body(व्योम)
+अणु
+	अचिन्हित दीर्घ i;
 
 	page_size = getpagesize();
-	mem_region = mmap(NULL, page_size * 2, PROT_READ|PROT_WRITE,
+	mem_region = mmap(शून्य, page_size * 2, PROT_READ|PROT_WRITE,
 		MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 
 	FAIL_IF(mem_region == MAP_FAILED);
 
-	for (i = 0; i < page_size; i++)
+	क्रम (i = 0; i < page_size; i++)
 		mem_region[i] = i;
 
-	memset(mem_region+page_size, 0, page_size);
+	स_रखो(mem_region+page_size, 0, page_size);
 
 	setup_segv_handler();
 
-	for (i = 0; i < page_size; i++)
-		FAIL_IF(do_one_test(mem_region+i, i));
+	क्रम (i = 0; i < page_size; i++)
+		FAIL_IF(करो_one_test(mem_region+i, i));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(test_body, "load_unaligned_zeropad");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(test_body, "load_unaligned_zeropad");
+पूर्ण

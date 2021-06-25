@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  linux/drivers/mmc/core/mmc_ops.h
  *
  *  Copyright 2006-2007 Pierre Ossman
  */
 
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/types.h>
-#include <linux/scatterlist.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/types.h>
+#समावेश <linux/scatterlist.h>
 
-#include <linux/mmc/host.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/mmc.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/mmc.h>
 
-#include "core.h"
-#include "card.h"
-#include "host.h"
-#include "mmc_ops.h"
+#समावेश "core.h"
+#समावेश "card.h"
+#समावेश "host.h"
+#समावेश "mmc_ops.h"
 
-#define MMC_BKOPS_TIMEOUT_MS		(120 * 1000) /* 120s */
-#define MMC_CACHE_FLUSH_TIMEOUT_MS	(30 * 1000) /* 30s */
-#define MMC_SANITIZE_TIMEOUT_MS		(240 * 1000) /* 240s */
+#घोषणा MMC_BKOPS_TIMEOUT_MS		(120 * 1000) /* 120s */
+#घोषणा MMC_CACHE_FLUSH_TIMEOUT_MS	(30 * 1000) /* 30s */
+#घोषणा MMC_SANITIZE_TIMEOUT_MS		(240 * 1000) /* 240s */
 
-static const u8 tuning_blk_pattern_4bit[] = {
+अटल स्थिर u8 tuning_blk_pattern_4bit[] = अणु
 	0xff, 0x0f, 0xff, 0x00, 0xff, 0xcc, 0xc3, 0xcc,
 	0xc3, 0x3c, 0xcc, 0xff, 0xfe, 0xff, 0xfe, 0xef,
 	0xff, 0xdf, 0xff, 0xdd, 0xff, 0xfb, 0xff, 0xfb,
@@ -32,9 +33,9 @@ static const u8 tuning_blk_pattern_4bit[] = {
 	0xcc, 0x33, 0xcc, 0xcf, 0xff, 0xef, 0xff, 0xee,
 	0xff, 0xfd, 0xff, 0xfd, 0xdf, 0xff, 0xbf, 0xff,
 	0xbb, 0xff, 0xf7, 0xff, 0xf7, 0x7f, 0x7b, 0xde,
-};
+पूर्ण;
 
-static const u8 tuning_blk_pattern_8bit[] = {
+अटल स्थिर u8 tuning_blk_pattern_8bit[] = अणु
 	0xff, 0xff, 0x00, 0xff, 0xff, 0xff, 0x00, 0x00,
 	0xff, 0xff, 0xcc, 0xcc, 0xcc, 0x33, 0xcc, 0xcc,
 	0xcc, 0x33, 0x33, 0xcc, 0xcc, 0xcc, 0xff, 0xff,
@@ -51,209 +52,209 @@ static const u8 tuning_blk_pattern_8bit[] = {
 	0xdd, 0xff, 0xff, 0xff, 0xbb, 0xff, 0xff, 0xff,
 	0xbb, 0xbb, 0xff, 0xff, 0xff, 0x77, 0xff, 0xff,
 	0xff, 0x77, 0x77, 0xff, 0x77, 0xbb, 0xdd, 0xee,
-};
+पूर्ण;
 
-int __mmc_send_status(struct mmc_card *card, u32 *status, unsigned int retries)
-{
-	int err;
-	struct mmc_command cmd = {};
+पूर्णांक __mmc_send_status(काष्ठा mmc_card *card, u32 *status, अचिन्हित पूर्णांक retries)
+अणु
+	पूर्णांक err;
+	काष्ठा mmc_command cmd = अणुपूर्ण;
 
 	cmd.opcode = MMC_SEND_STATUS;
-	if (!mmc_host_is_spi(card->host))
+	अगर (!mmc_host_is_spi(card->host))
 		cmd.arg = card->rca << 16;
 	cmd.flags = MMC_RSP_SPI_R2 | MMC_RSP_R1 | MMC_CMD_AC;
 
-	err = mmc_wait_for_cmd(card->host, &cmd, retries);
-	if (err)
-		return err;
+	err = mmc_रुको_क्रम_cmd(card->host, &cmd, retries);
+	अगर (err)
+		वापस err;
 
-	/* NOTE: callers are required to understand the difference
-	 * between "native" and SPI format status words!
+	/* NOTE: callers are required to understand the dअगरference
+	 * between "native" and SPI क्रमmat status words!
 	 */
-	if (status)
+	अगर (status)
 		*status = cmd.resp[0];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(__mmc_send_status);
 
-int mmc_send_status(struct mmc_card *card, u32 *status)
-{
-	return __mmc_send_status(card, status, MMC_CMD_RETRIES);
-}
+पूर्णांक mmc_send_status(काष्ठा mmc_card *card, u32 *status)
+अणु
+	वापस __mmc_send_status(card, status, MMC_CMD_RETRIES);
+पूर्ण
 EXPORT_SYMBOL_GPL(mmc_send_status);
 
-static int _mmc_select_card(struct mmc_host *host, struct mmc_card *card)
-{
-	struct mmc_command cmd = {};
+अटल पूर्णांक _mmc_select_card(काष्ठा mmc_host *host, काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
 
 	cmd.opcode = MMC_SELECT_CARD;
 
-	if (card) {
+	अगर (card) अणु
 		cmd.arg = card->rca << 16;
 		cmd.flags = MMC_RSP_R1 | MMC_CMD_AC;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd.arg = 0;
 		cmd.flags = MMC_RSP_NONE | MMC_CMD_AC;
-	}
+	पूर्ण
 
-	return mmc_wait_for_cmd(host, &cmd, MMC_CMD_RETRIES);
-}
+	वापस mmc_रुको_क्रम_cmd(host, &cmd, MMC_CMD_RETRIES);
+पूर्ण
 
-int mmc_select_card(struct mmc_card *card)
-{
+पूर्णांक mmc_select_card(काष्ठा mmc_card *card)
+अणु
 
-	return _mmc_select_card(card->host, card);
-}
+	वापस _mmc_select_card(card->host, card);
+पूर्ण
 
-int mmc_deselect_cards(struct mmc_host *host)
-{
-	return _mmc_select_card(host, NULL);
-}
+पूर्णांक mmc_deselect_cards(काष्ठा mmc_host *host)
+अणु
+	वापस _mmc_select_card(host, शून्य);
+पूर्ण
 
 /*
- * Write the value specified in the device tree or board code into the optional
- * 16 bit Driver Stage Register. This can be used to tune raise/fall times and
- * drive strength of the DAT and CMD outputs. The actual meaning of a given
+ * Write the value specअगरied in the device tree or board code पूर्णांकo the optional
+ * 16 bit Driver Stage Register. This can be used to tune उठाओ/fall बार and
+ * drive strength of the DAT and CMD outमाला_दो. The actual meaning of a given
  * value is hardware dependant.
- * The presence of the DSR register can be determined from the CSD register,
+ * The presence of the DSR रेजिस्टर can be determined from the CSD रेजिस्टर,
  * bit 76.
  */
-int mmc_set_dsr(struct mmc_host *host)
-{
-	struct mmc_command cmd = {};
+पूर्णांक mmc_set_dsr(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
 
 	cmd.opcode = MMC_SET_DSR;
 
 	cmd.arg = (host->dsr << 16) | 0xffff;
 	cmd.flags = MMC_RSP_NONE | MMC_CMD_AC;
 
-	return mmc_wait_for_cmd(host, &cmd, MMC_CMD_RETRIES);
-}
+	वापस mmc_रुको_क्रम_cmd(host, &cmd, MMC_CMD_RETRIES);
+पूर्ण
 
-int mmc_go_idle(struct mmc_host *host)
-{
-	int err;
-	struct mmc_command cmd = {};
+पूर्णांक mmc_go_idle(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err;
+	काष्ठा mmc_command cmd = अणुपूर्ण;
 
 	/*
 	 * Non-SPI hosts need to prevent chipselect going active during
-	 * GO_IDLE; that would put chips into SPI mode.  Remind them of
-	 * that in case of hardware that won't pull up DAT3/nCS otherwise.
+	 * GO_IDLE; that would put chips पूर्णांकo SPI mode.  Remind them of
+	 * that in हाल of hardware that won't pull up DAT3/nCS otherwise.
 	 *
 	 * SPI hosts ignore ios.chip_select; it's managed according to
 	 * rules that must accommodate non-MMC slaves which this layer
 	 * won't even know about.
 	 */
-	if (!mmc_host_is_spi(host)) {
+	अगर (!mmc_host_is_spi(host)) अणु
 		mmc_set_chip_select(host, MMC_CS_HIGH);
 		mmc_delay(1);
-	}
+	पूर्ण
 
 	cmd.opcode = MMC_GO_IDLE_STATE;
 	cmd.arg = 0;
 	cmd.flags = MMC_RSP_SPI_R1 | MMC_RSP_NONE | MMC_CMD_BC;
 
-	err = mmc_wait_for_cmd(host, &cmd, 0);
+	err = mmc_रुको_क्रम_cmd(host, &cmd, 0);
 
 	mmc_delay(1);
 
-	if (!mmc_host_is_spi(host)) {
+	अगर (!mmc_host_is_spi(host)) अणु
 		mmc_set_chip_select(host, MMC_CS_DONTCARE);
 		mmc_delay(1);
-	}
+	पूर्ण
 
 	host->use_spi_crc = 0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mmc_send_op_cond(struct mmc_host *host, u32 ocr, u32 *rocr)
-{
-	struct mmc_command cmd = {};
-	int i, err = 0;
+पूर्णांक mmc_send_op_cond(काष्ठा mmc_host *host, u32 ocr, u32 *rocr)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	पूर्णांक i, err = 0;
 
 	cmd.opcode = MMC_SEND_OP_COND;
 	cmd.arg = mmc_host_is_spi(host) ? 0 : ocr;
 	cmd.flags = MMC_RSP_SPI_R1 | MMC_RSP_R3 | MMC_CMD_BCR;
 
-	for (i = 100; i; i--) {
-		err = mmc_wait_for_cmd(host, &cmd, 0);
-		if (err)
-			break;
+	क्रम (i = 100; i; i--) अणु
+		err = mmc_रुको_क्रम_cmd(host, &cmd, 0);
+		अगर (err)
+			अवरोध;
 
-		/* wait until reset completes */
-		if (mmc_host_is_spi(host)) {
-			if (!(cmd.resp[0] & R1_SPI_IDLE))
-				break;
-		} else {
-			if (cmd.resp[0] & MMC_CARD_BUSY)
-				break;
-		}
+		/* रुको until reset completes */
+		अगर (mmc_host_is_spi(host)) अणु
+			अगर (!(cmd.resp[0] & R1_SPI_IDLE))
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर (cmd.resp[0] & MMC_CARD_BUSY)
+				अवरोध;
+		पूर्ण
 
 		err = -ETIMEDOUT;
 
 		mmc_delay(10);
 
 		/*
-		 * According to eMMC specification v5.1 section 6.4.3, we
+		 * According to eMMC specअगरication v5.1 section 6.4.3, we
 		 * should issue CMD1 repeatedly in the idle state until
-		 * the eMMC is ready. Otherwise some eMMC devices seem to enter
+		 * the eMMC is पढ़ोy. Otherwise some eMMC devices seem to enter
 		 * the inactive mode after mmc_init_card() issued CMD0 when
 		 * the eMMC device is busy.
 		 */
-		if (!ocr && !mmc_host_is_spi(host))
+		अगर (!ocr && !mmc_host_is_spi(host))
 			cmd.arg = cmd.resp[0] | BIT(30);
-	}
+	पूर्ण
 
-	if (rocr && !mmc_host_is_spi(host))
+	अगर (rocr && !mmc_host_is_spi(host))
 		*rocr = cmd.resp[0];
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mmc_set_relative_addr(struct mmc_card *card)
-{
-	struct mmc_command cmd = {};
+पूर्णांक mmc_set_relative_addr(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
 
 	cmd.opcode = MMC_SET_RELATIVE_ADDR;
 	cmd.arg = card->rca << 16;
 	cmd.flags = MMC_RSP_R1 | MMC_CMD_AC;
 
-	return mmc_wait_for_cmd(card->host, &cmd, MMC_CMD_RETRIES);
-}
+	वापस mmc_रुको_क्रम_cmd(card->host, &cmd, MMC_CMD_RETRIES);
+पूर्ण
 
-static int
-mmc_send_cxd_native(struct mmc_host *host, u32 arg, u32 *cxd, int opcode)
-{
-	int err;
-	struct mmc_command cmd = {};
+अटल पूर्णांक
+mmc_send_cxd_native(काष्ठा mmc_host *host, u32 arg, u32 *cxd, पूर्णांक opcode)
+अणु
+	पूर्णांक err;
+	काष्ठा mmc_command cmd = अणुपूर्ण;
 
 	cmd.opcode = opcode;
 	cmd.arg = arg;
 	cmd.flags = MMC_RSP_R2 | MMC_CMD_AC;
 
-	err = mmc_wait_for_cmd(host, &cmd, MMC_CMD_RETRIES);
-	if (err)
-		return err;
+	err = mmc_रुको_क्रम_cmd(host, &cmd, MMC_CMD_RETRIES);
+	अगर (err)
+		वापस err;
 
-	memcpy(cxd, cmd.resp, sizeof(u32) * 4);
+	स_नकल(cxd, cmd.resp, माप(u32) * 4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * NOTE: void *buf, caller for the buf is required to use DMA-capable
+ * NOTE: व्योम *buf, caller क्रम the buf is required to use DMA-capable
  * buffer or on-stack buffer (with some overhead in callee).
  */
-static int
-mmc_send_cxd_data(struct mmc_card *card, struct mmc_host *host,
-		u32 opcode, void *buf, unsigned len)
-{
-	struct mmc_request mrq = {};
-	struct mmc_command cmd = {};
-	struct mmc_data data = {};
-	struct scatterlist sg;
+अटल पूर्णांक
+mmc_send_cxd_data(काष्ठा mmc_card *card, काष्ठा mmc_host *host,
+		u32 opcode, व्योम *buf, अचिन्हित len)
+अणु
+	काष्ठा mmc_request mrq = अणुपूर्ण;
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	काष्ठा mmc_data data = अणुपूर्ण;
+	काष्ठा scatterlist sg;
 
 	mrq.cmd = &cmd;
 	mrq.data = &data;
@@ -262,7 +263,7 @@ mmc_send_cxd_data(struct mmc_card *card, struct mmc_host *host,
 	cmd.arg = 0;
 
 	/* NOTE HACK:  the MMC_RSP_SPI_R1 is always correct here, but we
-	 * rely on callers to never use this with "native" calls for reading
+	 * rely on callers to never use this with "native" calls क्रम पढ़ोing
 	 * CSD or CID.  Native versions of those commands use the R2 type,
 	 * not R1 plus a data block.
 	 */
@@ -276,293 +277,293 @@ mmc_send_cxd_data(struct mmc_card *card, struct mmc_host *host,
 
 	sg_init_one(&sg, buf, len);
 
-	if (opcode == MMC_SEND_CSD || opcode == MMC_SEND_CID) {
+	अगर (opcode == MMC_SEND_CSD || opcode == MMC_SEND_CID) अणु
 		/*
-		 * The spec states that CSR and CID accesses have a timeout
-		 * of 64 clock cycles.
+		 * The spec states that CSR and CID accesses have a समयout
+		 * of 64 घड़ी cycles.
 		 */
-		data.timeout_ns = 0;
-		data.timeout_clks = 64;
-	} else
-		mmc_set_data_timeout(&data, card);
+		data.समयout_ns = 0;
+		data.समयout_clks = 64;
+	पूर्ण अन्यथा
+		mmc_set_data_समयout(&data, card);
 
-	mmc_wait_for_req(host, &mrq);
+	mmc_रुको_क्रम_req(host, &mrq);
 
-	if (cmd.error)
-		return cmd.error;
-	if (data.error)
-		return data.error;
+	अगर (cmd.error)
+		वापस cmd.error;
+	अगर (data.error)
+		वापस data.error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mmc_spi_send_cxd(struct mmc_host *host, u32 *cxd, u32 opcode)
-{
-	int ret, i;
-	__be32 *cxd_tmp;
+अटल पूर्णांक mmc_spi_send_cxd(काष्ठा mmc_host *host, u32 *cxd, u32 opcode)
+अणु
+	पूर्णांक ret, i;
+	__be32 *cxd_पंचांगp;
 
-	cxd_tmp = kzalloc(16, GFP_KERNEL);
-	if (!cxd_tmp)
-		return -ENOMEM;
+	cxd_पंचांगp = kzalloc(16, GFP_KERNEL);
+	अगर (!cxd_पंचांगp)
+		वापस -ENOMEM;
 
-	ret = mmc_send_cxd_data(NULL, host, opcode, cxd_tmp, 16);
-	if (ret)
-		goto err;
+	ret = mmc_send_cxd_data(शून्य, host, opcode, cxd_पंचांगp, 16);
+	अगर (ret)
+		जाओ err;
 
-	for (i = 0; i < 4; i++)
-		cxd[i] = be32_to_cpu(cxd_tmp[i]);
+	क्रम (i = 0; i < 4; i++)
+		cxd[i] = be32_to_cpu(cxd_पंचांगp[i]);
 
 err:
-	kfree(cxd_tmp);
-	return ret;
-}
+	kमुक्त(cxd_पंचांगp);
+	वापस ret;
+पूर्ण
 
-int mmc_send_csd(struct mmc_card *card, u32 *csd)
-{
-	if (mmc_host_is_spi(card->host))
-		return mmc_spi_send_cxd(card->host, csd, MMC_SEND_CSD);
+पूर्णांक mmc_send_csd(काष्ठा mmc_card *card, u32 *csd)
+अणु
+	अगर (mmc_host_is_spi(card->host))
+		वापस mmc_spi_send_cxd(card->host, csd, MMC_SEND_CSD);
 
-	return mmc_send_cxd_native(card->host, card->rca << 16,	csd,
+	वापस mmc_send_cxd_native(card->host, card->rca << 16,	csd,
 				MMC_SEND_CSD);
-}
+पूर्ण
 
-int mmc_send_cid(struct mmc_host *host, u32 *cid)
-{
-	if (mmc_host_is_spi(host))
-		return mmc_spi_send_cxd(host, cid, MMC_SEND_CID);
+पूर्णांक mmc_send_cid(काष्ठा mmc_host *host, u32 *cid)
+अणु
+	अगर (mmc_host_is_spi(host))
+		वापस mmc_spi_send_cxd(host, cid, MMC_SEND_CID);
 
-	return mmc_send_cxd_native(host, 0, cid, MMC_ALL_SEND_CID);
-}
+	वापस mmc_send_cxd_native(host, 0, cid, MMC_ALL_SEND_CID);
+पूर्ण
 
-int mmc_get_ext_csd(struct mmc_card *card, u8 **new_ext_csd)
-{
-	int err;
+पूर्णांक mmc_get_ext_csd(काष्ठा mmc_card *card, u8 **new_ext_csd)
+अणु
+	पूर्णांक err;
 	u8 *ext_csd;
 
-	if (!card || !new_ext_csd)
-		return -EINVAL;
+	अगर (!card || !new_ext_csd)
+		वापस -EINVAL;
 
-	if (!mmc_can_ext_csd(card))
-		return -EOPNOTSUPP;
+	अगर (!mmc_can_ext_csd(card))
+		वापस -EOPNOTSUPP;
 
 	/*
-	 * As the ext_csd is so large and mostly unused, we don't store the
+	 * As the ext_csd is so large and mostly unused, we करोn't store the
 	 * raw block in mmc_card.
 	 */
 	ext_csd = kzalloc(512, GFP_KERNEL);
-	if (!ext_csd)
-		return -ENOMEM;
+	अगर (!ext_csd)
+		वापस -ENOMEM;
 
 	err = mmc_send_cxd_data(card, card->host, MMC_SEND_EXT_CSD, ext_csd,
 				512);
-	if (err)
-		kfree(ext_csd);
-	else
+	अगर (err)
+		kमुक्त(ext_csd);
+	अन्यथा
 		*new_ext_csd = ext_csd;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mmc_get_ext_csd);
 
-int mmc_spi_read_ocr(struct mmc_host *host, int highcap, u32 *ocrp)
-{
-	struct mmc_command cmd = {};
-	int err;
+पूर्णांक mmc_spi_पढ़ो_ocr(काष्ठा mmc_host *host, पूर्णांक highcap, u32 *ocrp)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	पूर्णांक err;
 
 	cmd.opcode = MMC_SPI_READ_OCR;
 	cmd.arg = highcap ? (1 << 30) : 0;
 	cmd.flags = MMC_RSP_SPI_R3;
 
-	err = mmc_wait_for_cmd(host, &cmd, 0);
+	err = mmc_रुको_क्रम_cmd(host, &cmd, 0);
 
 	*ocrp = cmd.resp[1];
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mmc_spi_set_crc(struct mmc_host *host, int use_crc)
-{
-	struct mmc_command cmd = {};
-	int err;
+पूर्णांक mmc_spi_set_crc(काष्ठा mmc_host *host, पूर्णांक use_crc)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	पूर्णांक err;
 
 	cmd.opcode = MMC_SPI_CRC_ON_OFF;
 	cmd.flags = MMC_RSP_SPI_R1;
 	cmd.arg = use_crc;
 
-	err = mmc_wait_for_cmd(host, &cmd, 0);
-	if (!err)
+	err = mmc_रुको_क्रम_cmd(host, &cmd, 0);
+	अगर (!err)
 		host->use_spi_crc = use_crc;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_switch_status_error(struct mmc_host *host, u32 status)
-{
-	if (mmc_host_is_spi(host)) {
-		if (status & R1_SPI_ILLEGAL_COMMAND)
-			return -EBADMSG;
-	} else {
-		if (R1_STATUS(status))
+अटल पूर्णांक mmc_चयन_status_error(काष्ठा mmc_host *host, u32 status)
+अणु
+	अगर (mmc_host_is_spi(host)) अणु
+		अगर (status & R1_SPI_ILLEGAL_COMMAND)
+			वापस -EBADMSG;
+	पूर्ण अन्यथा अणु
+		अगर (R1_STATUS(status))
 			pr_warn("%s: unexpected status %#x after switch\n",
 				mmc_hostname(host), status);
-		if (status & R1_SWITCH_ERROR)
-			return -EBADMSG;
-	}
-	return 0;
-}
+		अगर (status & R1_SWITCH_ERROR)
+			वापस -EBADMSG;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Caller must hold re-tuning */
-int mmc_switch_status(struct mmc_card *card, bool crc_err_fatal)
-{
+पूर्णांक mmc_चयन_status(काष्ठा mmc_card *card, bool crc_err_fatal)
+अणु
 	u32 status;
-	int err;
+	पूर्णांक err;
 
 	err = mmc_send_status(card, &status);
-	if (!crc_err_fatal && err == -EILSEQ)
-		return 0;
-	if (err)
-		return err;
+	अगर (!crc_err_fatal && err == -EILSEQ)
+		वापस 0;
+	अगर (err)
+		वापस err;
 
-	return mmc_switch_status_error(card->host, status);
-}
+	वापस mmc_चयन_status_error(card->host, status);
+पूर्ण
 
-static int mmc_busy_status(struct mmc_card *card, bool retry_crc_err,
-			   enum mmc_busy_cmd busy_cmd, bool *busy)
-{
-	struct mmc_host *host = card->host;
+अटल पूर्णांक mmc_busy_status(काष्ठा mmc_card *card, bool retry_crc_err,
+			   क्रमागत mmc_busy_cmd busy_cmd, bool *busy)
+अणु
+	काष्ठा mmc_host *host = card->host;
 	u32 status = 0;
-	int err;
+	पूर्णांक err;
 
-	if (host->ops->card_busy) {
+	अगर (host->ops->card_busy) अणु
 		*busy = host->ops->card_busy(host);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	err = mmc_send_status(card, &status);
-	if (retry_crc_err && err == -EILSEQ) {
+	अगर (retry_crc_err && err == -EILSEQ) अणु
 		*busy = true;
-		return 0;
-	}
-	if (err)
-		return err;
+		वापस 0;
+	पूर्ण
+	अगर (err)
+		वापस err;
 
-	switch (busy_cmd) {
-	case MMC_BUSY_CMD6:
-		err = mmc_switch_status_error(card->host, status);
-		break;
-	case MMC_BUSY_ERASE:
+	चयन (busy_cmd) अणु
+	हाल MMC_BUSY_CMD6:
+		err = mmc_चयन_status_error(card->host, status);
+		अवरोध;
+	हाल MMC_BUSY_ERASE:
 		err = R1_STATUS(status) ? -EIO : 0;
-		break;
-	case MMC_BUSY_HPI:
-		break;
-	default:
+		अवरोध;
+	हाल MMC_BUSY_HPI:
+		अवरोध;
+	शेष:
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	*busy = !mmc_ready_for_data(status);
-	return 0;
-}
+	*busy = !mmc_पढ़ोy_क्रम_data(status);
+	वापस 0;
+पूर्ण
 
-static int __mmc_poll_for_busy(struct mmc_card *card, unsigned int timeout_ms,
+अटल पूर्णांक __mmc_poll_क्रम_busy(काष्ठा mmc_card *card, अचिन्हित पूर्णांक समयout_ms,
 			       bool send_status, bool retry_crc_err,
-			       enum mmc_busy_cmd busy_cmd)
-{
-	struct mmc_host *host = card->host;
-	int err;
-	unsigned long timeout;
-	unsigned int udelay = 32, udelay_max = 32768;
+			       क्रमागत mmc_busy_cmd busy_cmd)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	पूर्णांक err;
+	अचिन्हित दीर्घ समयout;
+	अचिन्हित पूर्णांक udelay = 32, udelay_max = 32768;
 	bool expired = false;
 	bool busy = false;
 
 	/*
-	 * In cases when not allowed to poll by using CMD13 or because we aren't
-	 * capable of polling by using ->card_busy(), then rely on waiting the
-	 * stated timeout to be sufficient.
+	 * In हालs when not allowed to poll by using CMD13 or because we aren't
+	 * capable of polling by using ->card_busy(), then rely on रुकोing the
+	 * stated समयout to be sufficient.
 	 */
-	if (!send_status && !host->ops->card_busy) {
-		mmc_delay(timeout_ms);
-		return 0;
-	}
+	अगर (!send_status && !host->ops->card_busy) अणु
+		mmc_delay(समयout_ms);
+		वापस 0;
+	पूर्ण
 
-	timeout = jiffies + msecs_to_jiffies(timeout_ms) + 1;
-	do {
+	समयout = jअगरfies + msecs_to_jअगरfies(समयout_ms) + 1;
+	करो अणु
 		/*
-		 * Due to the possibility of being preempted while polling,
-		 * check the expiration time first.
+		 * Due to the possibility of being preempted जबतक polling,
+		 * check the expiration समय first.
 		 */
-		expired = time_after(jiffies, timeout);
+		expired = समय_after(jअगरfies, समयout);
 
 		err = mmc_busy_status(card, retry_crc_err, busy_cmd, &busy);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		/* Timeout if the device still remains busy. */
-		if (expired && busy) {
+		/* Timeout अगर the device still reमुख्यs busy. */
+		अगर (expired && busy) अणु
 			pr_err("%s: Card stuck being busy! %s\n",
 				mmc_hostname(host), __func__);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 
-		/* Throttle the polling rate to avoid hogging the CPU. */
-		if (busy) {
+		/* Throttle the polling rate to aव्योम hogging the CPU. */
+		अगर (busy) अणु
 			usleep_range(udelay, udelay * 2);
-			if (udelay < udelay_max)
+			अगर (udelay < udelay_max)
 				udelay *= 2;
-		}
-	} while (busy);
+		पूर्ण
+	पूर्ण जबतक (busy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mmc_poll_for_busy(struct mmc_card *card, unsigned int timeout_ms,
-		      enum mmc_busy_cmd busy_cmd)
-{
-	return __mmc_poll_for_busy(card, timeout_ms, true, false, busy_cmd);
-}
+पूर्णांक mmc_poll_क्रम_busy(काष्ठा mmc_card *card, अचिन्हित पूर्णांक समयout_ms,
+		      क्रमागत mmc_busy_cmd busy_cmd)
+अणु
+	वापस __mmc_poll_क्रम_busy(card, समयout_ms, true, false, busy_cmd);
+पूर्ण
 
 /**
- *	__mmc_switch - modify EXT_CSD register
+ *	__mmc_चयन - modअगरy EXT_CSD रेजिस्टर
  *	@card: the MMC card associated with the data transfer
  *	@set: cmd set values
- *	@index: EXT_CSD register index
- *	@value: value to program into EXT_CSD register
- *	@timeout_ms: timeout (ms) for operation performed by register write,
- *                   timeout of zero implies maximum possible timeout
+ *	@index: EXT_CSD रेजिस्टर index
+ *	@value: value to program पूर्णांकo EXT_CSD रेजिस्टर
+ *	@समयout_ms: समयout (ms) क्रम operation perक्रमmed by रेजिस्टर ग_लिखो,
+ *                   समयout of zero implies maximum possible समयout
  *	@timing: new timing to change to
- *	@send_status: send status cmd to poll for busy
- *	@retry_crc_err: retry when CRC errors when polling with CMD13 for busy
+ *	@send_status: send status cmd to poll क्रम busy
+ *	@retry_crc_err: retry when CRC errors when polling with CMD13 क्रम busy
  *	@retries: number of retries
  *
- *	Modifies the EXT_CSD register for selected card.
+ *	Modअगरies the EXT_CSD रेजिस्टर क्रम selected card.
  */
-int __mmc_switch(struct mmc_card *card, u8 set, u8 index, u8 value,
-		unsigned int timeout_ms, unsigned char timing,
-		bool send_status, bool retry_crc_err, unsigned int retries)
-{
-	struct mmc_host *host = card->host;
-	int err;
-	struct mmc_command cmd = {};
+पूर्णांक __mmc_चयन(काष्ठा mmc_card *card, u8 set, u8 index, u8 value,
+		अचिन्हित पूर्णांक समयout_ms, अचिन्हित अक्षर timing,
+		bool send_status, bool retry_crc_err, अचिन्हित पूर्णांक retries)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	पूर्णांक err;
+	काष्ठा mmc_command cmd = अणुपूर्ण;
 	bool use_r1b_resp = true;
-	unsigned char old_timing = host->ios.timing;
+	अचिन्हित अक्षर old_timing = host->ios.timing;
 
 	mmc_retune_hold(host);
 
-	if (!timeout_ms) {
+	अगर (!समयout_ms) अणु
 		pr_warn("%s: unspecified timeout for CMD6 - use generic\n",
 			mmc_hostname(host));
-		timeout_ms = card->ext_csd.generic_cmd6_time;
-	}
+		समयout_ms = card->ext_csd.generic_cmd6_समय;
+	पूर्ण
 
 	/*
-	 * If the max_busy_timeout of the host is specified, make sure it's
-	 * enough to fit the used timeout_ms. In case it's not, let's instruct
-	 * the host to avoid HW busy detection, by converting to a R1 response
+	 * If the max_busy_समयout of the host is specअगरied, make sure it's
+	 * enough to fit the used समयout_ms. In हाल it's not, let's inकाष्ठा
+	 * the host to aव्योम HW busy detection, by converting to a R1 response
 	 * instead of a R1B. Note, some hosts requires R1B, which also means
-	 * they are on their own when it comes to deal with the busy timeout.
+	 * they are on their own when it comes to deal with the busy समयout.
 	 */
-	if (!(host->caps & MMC_CAP_NEED_RSP_BUSY) && host->max_busy_timeout &&
-	    (timeout_ms > host->max_busy_timeout))
+	अगर (!(host->caps & MMC_CAP_NEED_RSP_BUSY) && host->max_busy_समयout &&
+	    (समयout_ms > host->max_busy_समयout))
 		use_r1b_resp = false;
 
 	cmd.opcode = MMC_SWITCH;
@@ -571,75 +572,75 @@ int __mmc_switch(struct mmc_card *card, u8 set, u8 index, u8 value,
 		  (value << 8) |
 		  set;
 	cmd.flags = MMC_CMD_AC;
-	if (use_r1b_resp) {
+	अगर (use_r1b_resp) अणु
 		cmd.flags |= MMC_RSP_SPI_R1B | MMC_RSP_R1B;
-		cmd.busy_timeout = timeout_ms;
-	} else {
+		cmd.busy_समयout = समयout_ms;
+	पूर्ण अन्यथा अणु
 		cmd.flags |= MMC_RSP_SPI_R1 | MMC_RSP_R1;
-	}
+	पूर्ण
 
-	err = mmc_wait_for_cmd(host, &cmd, retries);
-	if (err)
-		goto out;
+	err = mmc_रुको_क्रम_cmd(host, &cmd, retries);
+	अगर (err)
+		जाओ out;
 
-	/*If SPI or used HW busy detection above, then we don't need to poll. */
-	if (((host->caps & MMC_CAP_WAIT_WHILE_BUSY) && use_r1b_resp) ||
+	/*If SPI or used HW busy detection above, then we करोn't need to poll. */
+	अगर (((host->caps & MMC_CAP_WAIT_WHILE_BUSY) && use_r1b_resp) ||
 		mmc_host_is_spi(host))
-		goto out_tim;
+		जाओ out_tim;
 
 	/* Let's try to poll to find out when the command is completed. */
-	err = __mmc_poll_for_busy(card, timeout_ms, send_status, retry_crc_err,
+	err = __mmc_poll_क्रम_busy(card, समयout_ms, send_status, retry_crc_err,
 				  MMC_BUSY_CMD6);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 out_tim:
-	/* Switch to new timing before check switch status. */
-	if (timing)
+	/* Switch to new timing beक्रमe check चयन status. */
+	अगर (timing)
 		mmc_set_timing(host, timing);
 
-	if (send_status) {
-		err = mmc_switch_status(card, true);
-		if (err && timing)
+	अगर (send_status) अणु
+		err = mmc_चयन_status(card, true);
+		अगर (err && timing)
 			mmc_set_timing(host, old_timing);
-	}
+	पूर्ण
 out:
 	mmc_retune_release(host);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mmc_switch(struct mmc_card *card, u8 set, u8 index, u8 value,
-		unsigned int timeout_ms)
-{
-	return __mmc_switch(card, set, index, value, timeout_ms, 0,
+पूर्णांक mmc_चयन(काष्ठा mmc_card *card, u8 set, u8 index, u8 value,
+		अचिन्हित पूर्णांक समयout_ms)
+अणु
+	वापस __mmc_चयन(card, set, index, value, समयout_ms, 0,
 			    true, false, MMC_CMD_RETRIES);
-}
-EXPORT_SYMBOL_GPL(mmc_switch);
+पूर्ण
+EXPORT_SYMBOL_GPL(mmc_चयन);
 
-int mmc_send_tuning(struct mmc_host *host, u32 opcode, int *cmd_error)
-{
-	struct mmc_request mrq = {};
-	struct mmc_command cmd = {};
-	struct mmc_data data = {};
-	struct scatterlist sg;
-	struct mmc_ios *ios = &host->ios;
-	const u8 *tuning_block_pattern;
-	int size, err = 0;
+पूर्णांक mmc_send_tuning(काष्ठा mmc_host *host, u32 opcode, पूर्णांक *cmd_error)
+अणु
+	काष्ठा mmc_request mrq = अणुपूर्ण;
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	काष्ठा mmc_data data = अणुपूर्ण;
+	काष्ठा scatterlist sg;
+	काष्ठा mmc_ios *ios = &host->ios;
+	स्थिर u8 *tuning_block_pattern;
+	पूर्णांक size, err = 0;
 	u8 *data_buf;
 
-	if (ios->bus_width == MMC_BUS_WIDTH_8) {
+	अगर (ios->bus_width == MMC_BUS_WIDTH_8) अणु
 		tuning_block_pattern = tuning_blk_pattern_8bit;
-		size = sizeof(tuning_blk_pattern_8bit);
-	} else if (ios->bus_width == MMC_BUS_WIDTH_4) {
+		size = माप(tuning_blk_pattern_8bit);
+	पूर्ण अन्यथा अगर (ios->bus_width == MMC_BUS_WIDTH_4) अणु
 		tuning_block_pattern = tuning_blk_pattern_4bit;
-		size = sizeof(tuning_blk_pattern_4bit);
-	} else
-		return -EINVAL;
+		size = माप(tuning_blk_pattern_4bit);
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
 	data_buf = kzalloc(size, GFP_KERNEL);
-	if (!data_buf)
-		return -ENOMEM;
+	अगर (!data_buf)
+		वापस -ENOMEM;
 
 	mrq.cmd = &cmd;
 	mrq.data = &data;
@@ -653,98 +654,98 @@ int mmc_send_tuning(struct mmc_host *host, u32 opcode, int *cmd_error)
 
 	/*
 	 * According to the tuning specs, Tuning process
-	 * is normally shorter 40 executions of CMD19,
-	 * and timeout value should be shorter than 150 ms
+	 * is normally लघुer 40 executions of CMD19,
+	 * and समयout value should be लघुer than 150 ms
 	 */
-	data.timeout_ns = 150 * NSEC_PER_MSEC;
+	data.समयout_ns = 150 * NSEC_PER_MSEC;
 
 	data.sg = &sg;
 	data.sg_len = 1;
 	sg_init_one(&sg, data_buf, size);
 
-	mmc_wait_for_req(host, &mrq);
+	mmc_रुको_क्रम_req(host, &mrq);
 
-	if (cmd_error)
+	अगर (cmd_error)
 		*cmd_error = cmd.error;
 
-	if (cmd.error) {
+	अगर (cmd.error) अणु
 		err = cmd.error;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (data.error) {
+	अगर (data.error) अणु
 		err = data.error;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (memcmp(data_buf, tuning_block_pattern, size))
+	अगर (स_भेद(data_buf, tuning_block_pattern, size))
 		err = -EIO;
 
 out:
-	kfree(data_buf);
-	return err;
-}
+	kमुक्त(data_buf);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mmc_send_tuning);
 
-int mmc_abort_tuning(struct mmc_host *host, u32 opcode)
-{
-	struct mmc_command cmd = {};
+पूर्णांक mmc_पात_tuning(काष्ठा mmc_host *host, u32 opcode)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
 
 	/*
-	 * eMMC specification specifies that CMD12 can be used to stop a tuning
-	 * command, but SD specification does not, so do nothing unless it is
+	 * eMMC specअगरication specअगरies that CMD12 can be used to stop a tuning
+	 * command, but SD specअगरication करोes not, so करो nothing unless it is
 	 * eMMC.
 	 */
-	if (opcode != MMC_SEND_TUNING_BLOCK_HS200)
-		return 0;
+	अगर (opcode != MMC_SEND_TUNING_BLOCK_HS200)
+		वापस 0;
 
 	cmd.opcode = MMC_STOP_TRANSMISSION;
 	cmd.flags = MMC_RSP_SPI_R1 | MMC_RSP_R1 | MMC_CMD_AC;
 
 	/*
-	 * For drivers that override R1 to R1b, set an arbitrary timeout based
-	 * on the tuning timeout i.e. 150ms.
+	 * For drivers that override R1 to R1b, set an arbitrary समयout based
+	 * on the tuning समयout i.e. 150ms.
 	 */
-	cmd.busy_timeout = 150;
+	cmd.busy_समयout = 150;
 
-	return mmc_wait_for_cmd(host, &cmd, 0);
-}
-EXPORT_SYMBOL_GPL(mmc_abort_tuning);
+	वापस mmc_रुको_क्रम_cmd(host, &cmd, 0);
+पूर्ण
+EXPORT_SYMBOL_GPL(mmc_पात_tuning);
 
-static int
-mmc_send_bus_test(struct mmc_card *card, struct mmc_host *host, u8 opcode,
+अटल पूर्णांक
+mmc_send_bus_test(काष्ठा mmc_card *card, काष्ठा mmc_host *host, u8 opcode,
 		  u8 len)
-{
-	struct mmc_request mrq = {};
-	struct mmc_command cmd = {};
-	struct mmc_data data = {};
-	struct scatterlist sg;
+अणु
+	काष्ठा mmc_request mrq = अणुपूर्ण;
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	काष्ठा mmc_data data = अणुपूर्ण;
+	काष्ठा scatterlist sg;
 	u8 *data_buf;
 	u8 *test_buf;
-	int i, err;
-	static u8 testdata_8bit[8] = { 0x55, 0xaa, 0, 0, 0, 0, 0, 0 };
-	static u8 testdata_4bit[4] = { 0x5a, 0, 0, 0 };
+	पूर्णांक i, err;
+	अटल u8 testdata_8bit[8] = अणु 0x55, 0xaa, 0, 0, 0, 0, 0, 0 पूर्ण;
+	अटल u8 testdata_4bit[4] = अणु 0x5a, 0, 0, 0 पूर्ण;
 
 	/* dma onto stack is unsafe/nonportable, but callers to this
 	 * routine normally provide temporary on-stack buffers ...
 	 */
-	data_buf = kmalloc(len, GFP_KERNEL);
-	if (!data_buf)
-		return -ENOMEM;
+	data_buf = kदो_स्मृति(len, GFP_KERNEL);
+	अगर (!data_buf)
+		वापस -ENOMEM;
 
-	if (len == 8)
+	अगर (len == 8)
 		test_buf = testdata_8bit;
-	else if (len == 4)
+	अन्यथा अगर (len == 4)
 		test_buf = testdata_4bit;
-	else {
+	अन्यथा अणु
 		pr_err("%s: Invalid bus_width %d\n",
 		       mmc_hostname(host), len);
-		kfree(data_buf);
-		return -EINVAL;
-	}
+		kमुक्त(data_buf);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (opcode == MMC_BUS_TEST_W)
-		memcpy(data_buf, test_buf, len);
+	अगर (opcode == MMC_BUS_TEST_W)
+		स_नकल(data_buf, test_buf, len);
 
 	mrq.cmd = &cmd;
 	mrq.data = &data;
@@ -752,7 +753,7 @@ mmc_send_bus_test(struct mmc_card *card, struct mmc_host *host, u8 opcode,
 	cmd.arg = 0;
 
 	/* NOTE HACK:  the MMC_RSP_SPI_R1 is always correct here, but we
-	 * rely on callers to never use this with "native" calls for reading
+	 * rely on callers to never use this with "native" calls क्रम पढ़ोing
 	 * CSD or CID.  Native versions of those commands use the R2 type,
 	 * not R1 plus a data block.
 	 */
@@ -760,288 +761,288 @@ mmc_send_bus_test(struct mmc_card *card, struct mmc_host *host, u8 opcode,
 
 	data.blksz = len;
 	data.blocks = 1;
-	if (opcode == MMC_BUS_TEST_R)
+	अगर (opcode == MMC_BUS_TEST_R)
 		data.flags = MMC_DATA_READ;
-	else
+	अन्यथा
 		data.flags = MMC_DATA_WRITE;
 
 	data.sg = &sg;
 	data.sg_len = 1;
-	mmc_set_data_timeout(&data, card);
+	mmc_set_data_समयout(&data, card);
 	sg_init_one(&sg, data_buf, len);
-	mmc_wait_for_req(host, &mrq);
+	mmc_रुको_क्रम_req(host, &mrq);
 	err = 0;
-	if (opcode == MMC_BUS_TEST_R) {
-		for (i = 0; i < len / 4; i++)
-			if ((test_buf[i] ^ data_buf[i]) != 0xff) {
+	अगर (opcode == MMC_BUS_TEST_R) अणु
+		क्रम (i = 0; i < len / 4; i++)
+			अगर ((test_buf[i] ^ data_buf[i]) != 0xff) अणु
 				err = -EIO;
-				break;
-			}
-	}
-	kfree(data_buf);
+				अवरोध;
+			पूर्ण
+	पूर्ण
+	kमुक्त(data_buf);
 
-	if (cmd.error)
-		return cmd.error;
-	if (data.error)
-		return data.error;
+	अगर (cmd.error)
+		वापस cmd.error;
+	अगर (data.error)
+		वापस data.error;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mmc_bus_test(struct mmc_card *card, u8 bus_width)
-{
-	int width;
+पूर्णांक mmc_bus_test(काष्ठा mmc_card *card, u8 bus_width)
+अणु
+	पूर्णांक width;
 
-	if (bus_width == MMC_BUS_WIDTH_8)
+	अगर (bus_width == MMC_BUS_WIDTH_8)
 		width = 8;
-	else if (bus_width == MMC_BUS_WIDTH_4)
+	अन्यथा अगर (bus_width == MMC_BUS_WIDTH_4)
 		width = 4;
-	else if (bus_width == MMC_BUS_WIDTH_1)
-		return 0; /* no need for test */
-	else
-		return -EINVAL;
+	अन्यथा अगर (bus_width == MMC_BUS_WIDTH_1)
+		वापस 0; /* no need क्रम test */
+	अन्यथा
+		वापस -EINVAL;
 
 	/*
-	 * Ignore errors from BUS_TEST_W.  BUS_TEST_R will fail if there
+	 * Ignore errors from BUS_TEST_W.  BUS_TEST_R will fail अगर there
 	 * is a problem.  This improves chances that the test will work.
 	 */
 	mmc_send_bus_test(card, card->host, MMC_BUS_TEST_W, width);
-	return mmc_send_bus_test(card, card->host, MMC_BUS_TEST_R, width);
-}
+	वापस mmc_send_bus_test(card, card->host, MMC_BUS_TEST_R, width);
+पूर्ण
 
-static int mmc_send_hpi_cmd(struct mmc_card *card)
-{
-	unsigned int busy_timeout_ms = card->ext_csd.out_of_int_time;
-	struct mmc_host *host = card->host;
+अटल पूर्णांक mmc_send_hpi_cmd(काष्ठा mmc_card *card)
+अणु
+	अचिन्हित पूर्णांक busy_समयout_ms = card->ext_csd.out_of_पूर्णांक_समय;
+	काष्ठा mmc_host *host = card->host;
 	bool use_r1b_resp = true;
-	struct mmc_command cmd = {};
-	int err;
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	पूर्णांक err;
 
 	cmd.opcode = card->ext_csd.hpi_cmd;
 	cmd.arg = card->rca << 16 | 1;
 
 	/*
-	 * Make sure the host's max_busy_timeout fit the needed timeout for HPI.
-	 * In case it doesn't, let's instruct the host to avoid HW busy
+	 * Make sure the host's max_busy_समयout fit the needed समयout क्रम HPI.
+	 * In हाल it करोesn't, let's inकाष्ठा the host to aव्योम HW busy
 	 * detection, by using a R1 response instead of R1B.
 	 */
-	if (host->max_busy_timeout && busy_timeout_ms > host->max_busy_timeout)
+	अगर (host->max_busy_समयout && busy_समयout_ms > host->max_busy_समयout)
 		use_r1b_resp = false;
 
-	if (cmd.opcode == MMC_STOP_TRANSMISSION && use_r1b_resp) {
+	अगर (cmd.opcode == MMC_STOP_TRANSMISSION && use_r1b_resp) अणु
 		cmd.flags = MMC_RSP_R1B | MMC_CMD_AC;
-		cmd.busy_timeout = busy_timeout_ms;
-	} else {
+		cmd.busy_समयout = busy_समयout_ms;
+	पूर्ण अन्यथा अणु
 		cmd.flags = MMC_RSP_R1 | MMC_CMD_AC;
 		use_r1b_resp = false;
-	}
+	पूर्ण
 
-	err = mmc_wait_for_cmd(host, &cmd, 0);
-	if (err) {
+	err = mmc_रुको_क्रम_cmd(host, &cmd, 0);
+	अगर (err) अणु
 		pr_warn("%s: HPI error %d. Command response %#x\n",
 			mmc_hostname(host), err, cmd.resp[0]);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* No need to poll when using HW busy detection. */
-	if (host->caps & MMC_CAP_WAIT_WHILE_BUSY && use_r1b_resp)
-		return 0;
+	अगर (host->caps & MMC_CAP_WAIT_WHILE_BUSY && use_r1b_resp)
+		वापस 0;
 
 	/* Let's poll to find out when the HPI request completes. */
-	return mmc_poll_for_busy(card, busy_timeout_ms, MMC_BUSY_HPI);
-}
+	वापस mmc_poll_क्रम_busy(card, busy_समयout_ms, MMC_BUSY_HPI);
+पूर्ण
 
 /**
- *	mmc_interrupt_hpi - Issue for High priority Interrupt
+ *	mmc_पूर्णांकerrupt_hpi - Issue क्रम High priority Interrupt
  *	@card: the MMC card associated with the HPI transfer
  *
- *	Issued High Priority Interrupt, and check for card status
+ *	Issued High Priority Interrupt, and check क्रम card status
  *	until out-of prg-state.
  */
-static int mmc_interrupt_hpi(struct mmc_card *card)
-{
-	int err;
+अटल पूर्णांक mmc_पूर्णांकerrupt_hpi(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक err;
 	u32 status;
 
-	if (!card->ext_csd.hpi_en) {
+	अगर (!card->ext_csd.hpi_en) अणु
 		pr_info("%s: HPI enable bit unset\n", mmc_hostname(card->host));
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	err = mmc_send_status(card, &status);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: Get card status fail\n", mmc_hostname(card->host));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (R1_CURRENT_STATE(status)) {
-	case R1_STATE_IDLE:
-	case R1_STATE_READY:
-	case R1_STATE_STBY:
-	case R1_STATE_TRAN:
+	चयन (R1_CURRENT_STATE(status)) अणु
+	हाल R1_STATE_IDLE:
+	हाल R1_STATE_READY:
+	हाल R1_STATE_STBY:
+	हाल R1_STATE_TRAN:
 		/*
 		 * In idle and transfer states, HPI is not needed and the caller
-		 * can issue the next intended command immediately
+		 * can issue the next पूर्णांकended command immediately
 		 */
-		goto out;
-	case R1_STATE_PRG:
-		break;
-	default:
+		जाओ out;
+	हाल R1_STATE_PRG:
+		अवरोध;
+	शेष:
 		/* In all other states, it's illegal to issue HPI */
 		pr_debug("%s: HPI cannot be sent. Card state=%d\n",
 			mmc_hostname(card->host), R1_CURRENT_STATE(status));
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = mmc_send_hpi_cmd(card);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mmc_can_ext_csd(struct mmc_card *card)
-{
-	return (card && card->csd.mmca_vsn > CSD_SPEC_VER_3);
-}
+पूर्णांक mmc_can_ext_csd(काष्ठा mmc_card *card)
+अणु
+	वापस (card && card->csd.mmca_vsn > CSD_SPEC_VER_3);
+पूर्ण
 
-static int mmc_read_bkops_status(struct mmc_card *card)
-{
-	int err;
+अटल पूर्णांक mmc_पढ़ो_bkops_status(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक err;
 	u8 *ext_csd;
 
 	err = mmc_get_ext_csd(card, &ext_csd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	card->ext_csd.raw_bkops_status = ext_csd[EXT_CSD_BKOPS_STATUS];
 	card->ext_csd.raw_exception_status = ext_csd[EXT_CSD_EXP_EVENTS_STATUS];
-	kfree(ext_csd);
-	return 0;
-}
+	kमुक्त(ext_csd);
+	वापस 0;
+पूर्ण
 
 /**
- *	mmc_run_bkops - Run BKOPS for supported cards
- *	@card: MMC card to run BKOPS for
+ *	mmc_run_bkops - Run BKOPS क्रम supported cards
+ *	@card: MMC card to run BKOPS क्रम
  *
- *	Run background operations synchronously for cards having manual BKOPS
- *	enabled and in case it reports urgent BKOPS level.
+ *	Run background operations synchronously क्रम cards having manual BKOPS
+ *	enabled and in हाल it reports urgent BKOPS level.
 */
-void mmc_run_bkops(struct mmc_card *card)
-{
-	int err;
+व्योम mmc_run_bkops(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक err;
 
-	if (!card->ext_csd.man_bkops_en)
-		return;
+	अगर (!card->ext_csd.man_bkops_en)
+		वापस;
 
-	err = mmc_read_bkops_status(card);
-	if (err) {
+	err = mmc_पढ़ो_bkops_status(card);
+	अगर (err) अणु
 		pr_err("%s: Failed to read bkops status: %d\n",
 		       mmc_hostname(card->host), err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!card->ext_csd.raw_bkops_status ||
+	अगर (!card->ext_csd.raw_bkops_status ||
 	    card->ext_csd.raw_bkops_status < EXT_CSD_BKOPS_LEVEL_2)
-		return;
+		वापस;
 
 	mmc_retune_hold(card->host);
 
 	/*
 	 * For urgent BKOPS status, LEVEL_2 and higher, let's execute
-	 * synchronously. Future wise, we may consider to start BKOPS, for less
+	 * synchronously. Future wise, we may consider to start BKOPS, क्रम less
 	 * urgent levels by using an asynchronous background task, when idle.
 	 */
-	err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 			 EXT_CSD_BKOPS_START, 1, MMC_BKOPS_TIMEOUT_MS);
-	if (err)
+	अगर (err)
 		pr_warn("%s: Error %d starting bkops\n",
 			mmc_hostname(card->host), err);
 
 	mmc_retune_release(card->host);
-}
+पूर्ण
 EXPORT_SYMBOL(mmc_run_bkops);
 
 /*
- * Flush the cache to the non-volatile storage.
+ * Flush the cache to the non-अस्थिर storage.
  */
-int mmc_flush_cache(struct mmc_card *card)
-{
-	int err = 0;
+पूर्णांक mmc_flush_cache(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक err = 0;
 
-	if (mmc_cache_enabled(card->host)) {
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+	अगर (mmc_cache_enabled(card->host)) अणु
+		err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 				 EXT_CSD_FLUSH_CACHE, 1,
 				 MMC_CACHE_FLUSH_TIMEOUT_MS);
-		if (err)
+		अगर (err)
 			pr_err("%s: cache flush error %d\n",
 					mmc_hostname(card->host), err);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(mmc_flush_cache);
 
-static int mmc_cmdq_switch(struct mmc_card *card, bool enable)
-{
+अटल पूर्णांक mmc_cmdq_चयन(काष्ठा mmc_card *card, bool enable)
+अणु
 	u8 val = enable ? EXT_CSD_CMDQ_MODE_ENABLED : 0;
-	int err;
+	पूर्णांक err;
 
-	if (!card->ext_csd.cmdq_support)
-		return -EOPNOTSUPP;
+	अगर (!card->ext_csd.cmdq_support)
+		वापस -EOPNOTSUPP;
 
-	err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_CMDQ_MODE_EN,
-			 val, card->ext_csd.generic_cmd6_time);
-	if (!err)
+	err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_CMDQ_MODE_EN,
+			 val, card->ext_csd.generic_cmd6_समय);
+	अगर (!err)
 		card->ext_csd.cmdq_en = enable;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mmc_cmdq_enable(struct mmc_card *card)
-{
-	return mmc_cmdq_switch(card, true);
-}
+पूर्णांक mmc_cmdq_enable(काष्ठा mmc_card *card)
+अणु
+	वापस mmc_cmdq_चयन(card, true);
+पूर्ण
 EXPORT_SYMBOL_GPL(mmc_cmdq_enable);
 
-int mmc_cmdq_disable(struct mmc_card *card)
-{
-	return mmc_cmdq_switch(card, false);
-}
+पूर्णांक mmc_cmdq_disable(काष्ठा mmc_card *card)
+अणु
+	वापस mmc_cmdq_चयन(card, false);
+पूर्ण
 EXPORT_SYMBOL_GPL(mmc_cmdq_disable);
 
-int mmc_sanitize(struct mmc_card *card, unsigned int timeout_ms)
-{
-	struct mmc_host *host = card->host;
-	int err;
+पूर्णांक mmc_sanitize(काष्ठा mmc_card *card, अचिन्हित पूर्णांक समयout_ms)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	पूर्णांक err;
 
-	if (!mmc_can_sanitize(card)) {
+	अगर (!mmc_can_sanitize(card)) अणु
 		pr_warn("%s: Sanitize not supported\n", mmc_hostname(host));
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!timeout_ms)
-		timeout_ms = MMC_SANITIZE_TIMEOUT_MS;
+	अगर (!समयout_ms)
+		समयout_ms = MMC_SANITIZE_TIMEOUT_MS;
 
 	pr_debug("%s: Sanitize in progress...\n", mmc_hostname(host));
 
 	mmc_retune_hold(host);
 
-	err = __mmc_switch(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_SANITIZE_START,
-			   1, timeout_ms, 0, true, false, 0);
-	if (err)
+	err = __mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_SANITIZE_START,
+			   1, समयout_ms, 0, true, false, 0);
+	अगर (err)
 		pr_err("%s: Sanitize failed err=%d\n", mmc_hostname(host), err);
 
 	/*
-	 * If the sanitize operation timed out, the card is probably still busy
-	 * in the R1_STATE_PRG. Rather than continue to wait, let's try to abort
-	 * it with a HPI command to get back into R1_STATE_TRAN.
+	 * If the sanitize operation समयd out, the card is probably still busy
+	 * in the R1_STATE_PRG. Rather than जारी to रुको, let's try to पात
+	 * it with a HPI command to get back पूर्णांकo R1_STATE_TRAN.
 	 */
-	if (err == -ETIMEDOUT && !mmc_interrupt_hpi(card))
+	अगर (err == -ETIMEDOUT && !mmc_पूर्णांकerrupt_hpi(card))
 		pr_warn("%s: Sanitize aborted\n", mmc_hostname(host));
 
 	mmc_retune_release(host);
 
 	pr_debug("%s: Sanitize completed\n", mmc_hostname(host));
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mmc_sanitize);

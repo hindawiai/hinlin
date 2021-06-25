@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,149 +32,149 @@
  *
  */
 
-#include <linux/mlx5/device.h>
+#समावेश <linux/mlx5/device.h>
 
-#include "accel/ipsec.h"
-#include "mlx5_core.h"
-#include "fpga/ipsec.h"
-#include "accel/ipsec_offload.h"
+#समावेश "accel/ipsec.h"
+#समावेश "mlx5_core.h"
+#समावेश "fpga/ipsec.h"
+#समावेश "accel/ipsec_offload.h"
 
-void mlx5_accel_ipsec_init(struct mlx5_core_dev *mdev)
-{
-	const struct mlx5_accel_ipsec_ops *ipsec_ops;
-	int err = 0;
+व्योम mlx5_accel_ipsec_init(काष्ठा mlx5_core_dev *mdev)
+अणु
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops;
+	पूर्णांक err = 0;
 
 	ipsec_ops = (mlx5_ipsec_offload_ops(mdev)) ?
 		     mlx5_ipsec_offload_ops(mdev) :
 		     mlx5_fpga_ipsec_ops(mdev);
 
-	if (!ipsec_ops || !ipsec_ops->init) {
+	अगर (!ipsec_ops || !ipsec_ops->init) अणु
 		mlx5_core_dbg(mdev, "IPsec ops is not supported\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	err = ipsec_ops->init(mdev);
-	if (err) {
+	अगर (err) अणु
 		mlx5_core_warn_once(mdev, "Failed to start IPsec device, err = %d\n", err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mdev->ipsec_ops = ipsec_ops;
-}
+पूर्ण
 
-void mlx5_accel_ipsec_cleanup(struct mlx5_core_dev *mdev)
-{
-	const struct mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
+व्योम mlx5_accel_ipsec_cleanup(काष्ठा mlx5_core_dev *mdev)
+अणु
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
 
-	if (!ipsec_ops || !ipsec_ops->cleanup)
-		return;
+	अगर (!ipsec_ops || !ipsec_ops->cleanup)
+		वापस;
 
 	ipsec_ops->cleanup(mdev);
-}
+पूर्ण
 
-u32 mlx5_accel_ipsec_device_caps(struct mlx5_core_dev *mdev)
-{
-	const struct mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
+u32 mlx5_accel_ipsec_device_caps(काष्ठा mlx5_core_dev *mdev)
+अणु
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
 
-	if (!ipsec_ops || !ipsec_ops->device_caps)
-		return 0;
+	अगर (!ipsec_ops || !ipsec_ops->device_caps)
+		वापस 0;
 
-	return ipsec_ops->device_caps(mdev);
-}
+	वापस ipsec_ops->device_caps(mdev);
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_accel_ipsec_device_caps);
 
-unsigned int mlx5_accel_ipsec_counters_count(struct mlx5_core_dev *mdev)
-{
-	const struct mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
+अचिन्हित पूर्णांक mlx5_accel_ipsec_counters_count(काष्ठा mlx5_core_dev *mdev)
+अणु
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
 
-	if (!ipsec_ops || !ipsec_ops->counters_count)
-		return -EOPNOTSUPP;
+	अगर (!ipsec_ops || !ipsec_ops->counters_count)
+		वापस -EOPNOTSUPP;
 
-	return ipsec_ops->counters_count(mdev);
-}
+	वापस ipsec_ops->counters_count(mdev);
+पूर्ण
 
-int mlx5_accel_ipsec_counters_read(struct mlx5_core_dev *mdev, u64 *counters,
-				   unsigned int count)
-{
-	const struct mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
+पूर्णांक mlx5_accel_ipsec_counters_पढ़ो(काष्ठा mlx5_core_dev *mdev, u64 *counters,
+				   अचिन्हित पूर्णांक count)
+अणु
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
 
-	if (!ipsec_ops || !ipsec_ops->counters_read)
-		return -EOPNOTSUPP;
+	अगर (!ipsec_ops || !ipsec_ops->counters_पढ़ो)
+		वापस -EOPNOTSUPP;
 
-	return ipsec_ops->counters_read(mdev, counters, count);
-}
+	वापस ipsec_ops->counters_पढ़ो(mdev, counters, count);
+पूर्ण
 
-void *mlx5_accel_esp_create_hw_context(struct mlx5_core_dev *mdev,
-				       struct mlx5_accel_esp_xfrm *xfrm,
+व्योम *mlx5_accel_esp_create_hw_context(काष्ठा mlx5_core_dev *mdev,
+				       काष्ठा mlx5_accel_esp_xfrm *xfrm,
 				       u32 *sa_handle)
-{
-	const struct mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
-	__be32 saddr[4] = {}, daddr[4] = {};
+अणु
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
+	__be32 saddr[4] = अणुपूर्ण, daddr[4] = अणुपूर्ण;
 
-	if (!ipsec_ops || !ipsec_ops->create_hw_context)
-		return  ERR_PTR(-EOPNOTSUPP);
+	अगर (!ipsec_ops || !ipsec_ops->create_hw_context)
+		वापस  ERR_PTR(-EOPNOTSUPP);
 
-	if (!xfrm->attrs.is_ipv6) {
+	अगर (!xfrm->attrs.is_ipv6) अणु
 		saddr[3] = xfrm->attrs.saddr.a4;
 		daddr[3] = xfrm->attrs.daddr.a4;
-	} else {
-		memcpy(saddr, xfrm->attrs.saddr.a6, sizeof(saddr));
-		memcpy(daddr, xfrm->attrs.daddr.a6, sizeof(daddr));
-	}
+	पूर्ण अन्यथा अणु
+		स_नकल(saddr, xfrm->attrs.saddr.a6, माप(saddr));
+		स_नकल(daddr, xfrm->attrs.daddr.a6, माप(daddr));
+	पूर्ण
 
-	return ipsec_ops->create_hw_context(mdev, xfrm, saddr, daddr, xfrm->attrs.spi,
+	वापस ipsec_ops->create_hw_context(mdev, xfrm, saddr, daddr, xfrm->attrs.spi,
 					    xfrm->attrs.is_ipv6, sa_handle);
-}
+पूर्ण
 
-void mlx5_accel_esp_free_hw_context(struct mlx5_core_dev *mdev, void *context)
-{
-	const struct mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
+व्योम mlx5_accel_esp_मुक्त_hw_context(काष्ठा mlx5_core_dev *mdev, व्योम *context)
+अणु
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
 
-	if (!ipsec_ops || !ipsec_ops->free_hw_context)
-		return;
+	अगर (!ipsec_ops || !ipsec_ops->मुक्त_hw_context)
+		वापस;
 
-	ipsec_ops->free_hw_context(context);
-}
+	ipsec_ops->मुक्त_hw_context(context);
+पूर्ण
 
-struct mlx5_accel_esp_xfrm *
-mlx5_accel_esp_create_xfrm(struct mlx5_core_dev *mdev,
-			   const struct mlx5_accel_esp_xfrm_attrs *attrs,
+काष्ठा mlx5_accel_esp_xfrm *
+mlx5_accel_esp_create_xfrm(काष्ठा mlx5_core_dev *mdev,
+			   स्थिर काष्ठा mlx5_accel_esp_xfrm_attrs *attrs,
 			   u32 flags)
-{
-	const struct mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
-	struct mlx5_accel_esp_xfrm *xfrm;
+अणु
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops = mdev->ipsec_ops;
+	काष्ठा mlx5_accel_esp_xfrm *xfrm;
 
-	if (!ipsec_ops || !ipsec_ops->esp_create_xfrm)
-		return ERR_PTR(-EOPNOTSUPP);
+	अगर (!ipsec_ops || !ipsec_ops->esp_create_xfrm)
+		वापस ERR_PTR(-EOPNOTSUPP);
 
 	xfrm = ipsec_ops->esp_create_xfrm(mdev, attrs, flags);
-	if (IS_ERR(xfrm))
-		return xfrm;
+	अगर (IS_ERR(xfrm))
+		वापस xfrm;
 
 	xfrm->mdev = mdev;
-	return xfrm;
-}
+	वापस xfrm;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_accel_esp_create_xfrm);
 
-void mlx5_accel_esp_destroy_xfrm(struct mlx5_accel_esp_xfrm *xfrm)
-{
-	const struct mlx5_accel_ipsec_ops *ipsec_ops = xfrm->mdev->ipsec_ops;
+व्योम mlx5_accel_esp_destroy_xfrm(काष्ठा mlx5_accel_esp_xfrm *xfrm)
+अणु
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops = xfrm->mdev->ipsec_ops;
 
-	if (!ipsec_ops || !ipsec_ops->esp_destroy_xfrm)
-		return;
+	अगर (!ipsec_ops || !ipsec_ops->esp_destroy_xfrm)
+		वापस;
 
 	ipsec_ops->esp_destroy_xfrm(xfrm);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_accel_esp_destroy_xfrm);
 
-int mlx5_accel_esp_modify_xfrm(struct mlx5_accel_esp_xfrm *xfrm,
-			       const struct mlx5_accel_esp_xfrm_attrs *attrs)
-{
-	const struct mlx5_accel_ipsec_ops *ipsec_ops = xfrm->mdev->ipsec_ops;
+पूर्णांक mlx5_accel_esp_modअगरy_xfrm(काष्ठा mlx5_accel_esp_xfrm *xfrm,
+			       स्थिर काष्ठा mlx5_accel_esp_xfrm_attrs *attrs)
+अणु
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops = xfrm->mdev->ipsec_ops;
 
-	if (!ipsec_ops || !ipsec_ops->esp_modify_xfrm)
-		return -EOPNOTSUPP;
+	अगर (!ipsec_ops || !ipsec_ops->esp_modअगरy_xfrm)
+		वापस -EOPNOTSUPP;
 
-	return ipsec_ops->esp_modify_xfrm(xfrm, attrs);
-}
-EXPORT_SYMBOL_GPL(mlx5_accel_esp_modify_xfrm);
+	वापस ipsec_ops->esp_modअगरy_xfrm(xfrm, attrs);
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_accel_esp_modअगरy_xfrm);

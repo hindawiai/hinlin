@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * arch/arm/mach-mvebu/dove.c
+ * arch/arm/mach-mvebu/करोve.c
  *
  * Marvell Dove 88AP510 System On Chip FDT Board
  *
@@ -8,32 +9,32 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/init.h>
-#include <linux/mbus.h>
-#include <linux/of.h>
-#include <linux/soc/dove/pmu.h>
-#include <asm/hardware/cache-tauros2.h>
-#include <asm/mach/arch.h>
-#include "common.h"
+#समावेश <linux/init.h>
+#समावेश <linux/mbus.h>
+#समावेश <linux/of.h>
+#समावेश <linux/soc/करोve/pmu.h>
+#समावेश <यंत्र/hardware/cache-tauros2.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश "common.h"
 
-static void __init dove_init(void)
-{
+अटल व्योम __init करोve_init(व्योम)
+अणु
 	pr_info("Dove 88AP510 SoC\n");
 
-#ifdef CONFIG_CACHE_TAUROS2
+#अगर_घोषित CONFIG_CACHE_TAUROS2
 	tauros2_init(0);
-#endif
+#पूर्ण_अगर
 	BUG_ON(mvebu_mbus_dt_init(false));
-	dove_init_pmu();
-}
+	करोve_init_pmu();
+पूर्ण
 
-static const char * const dove_dt_compat[] __initconst = {
+अटल स्थिर अक्षर * स्थिर करोve_dt_compat[] __initस्थिर = अणु
 	"marvell,dove",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 DT_MACHINE_START(DOVE_DT, "Marvell Dove")
-	.init_machine	= dove_init,
+	.init_machine	= करोve_init,
 	.restart	= mvebu_restart,
-	.dt_compat	= dove_dt_compat,
+	.dt_compat	= करोve_dt_compat,
 MACHINE_END

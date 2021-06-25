@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * OMAP SmartReflex Voltage Control
  *
@@ -14,354 +15,354 @@
  * Lesly A M <x0080970@ti.com>
  */
 
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/interrupt.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/debugfs.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/pm_runtime.h>
-#include <linux/power/smartreflex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/घातer/smartreflex.h>
 
-#define DRIVER_NAME	"smartreflex"
-#define SMARTREFLEX_NAME_LEN	32
-#define NVALUE_NAME_LEN		40
-#define SR_DISABLE_TIMEOUT	200
+#घोषणा DRIVER_NAME	"smartreflex"
+#घोषणा SMARTREFLEX_NAME_LEN	32
+#घोषणा NVALUE_NAME_LEN		40
+#घोषणा SR_DISABLE_TIMEOUT	200
 
 /* sr_list contains all the instances of smartreflex module */
-static LIST_HEAD(sr_list);
+अटल LIST_HEAD(sr_list);
 
-static struct omap_sr_class_data *sr_class;
-static struct dentry		*sr_dbg_dir;
+अटल काष्ठा omap_sr_class_data *sr_class;
+अटल काष्ठा dentry		*sr_dbg_dir;
 
-static inline void sr_write_reg(struct omap_sr *sr, unsigned offset, u32 value)
-{
-	__raw_writel(value, (sr->base + offset));
-}
+अटल अंतरभूत व्योम sr_ग_लिखो_reg(काष्ठा omap_sr *sr, अचिन्हित offset, u32 value)
+अणु
+	__raw_ग_लिखोl(value, (sr->base + offset));
+पूर्ण
 
-static inline void sr_modify_reg(struct omap_sr *sr, unsigned offset, u32 mask,
+अटल अंतरभूत व्योम sr_modअगरy_reg(काष्ठा omap_sr *sr, अचिन्हित offset, u32 mask,
 					u32 value)
-{
+अणु
 	u32 reg_val;
 
 	/*
-	 * Smartreflex error config register is special as it contains
-	 * certain status bits which if written a 1 into means a clear
-	 * of those bits. So in order to make sure no accidental write of
-	 * 1 happens to those status bits, do a clear of them in the read
-	 * value. This mean this API doesn't rewrite values in these bits
-	 * if they are currently set, but does allow the caller to write
+	 * Smartreflex error config रेजिस्टर is special as it contains
+	 * certain status bits which अगर written a 1 पूर्णांकo means a clear
+	 * of those bits. So in order to make sure no accidental ग_लिखो of
+	 * 1 happens to those status bits, करो a clear of them in the पढ़ो
+	 * value. This mean this API करोesn't reग_लिखो values in these bits
+	 * अगर they are currently set, but करोes allow the caller to ग_लिखो
 	 * those bits.
 	 */
-	if (sr->ip_type == SR_TYPE_V1 && offset == ERRCONFIG_V1)
+	अगर (sr->ip_type == SR_TYPE_V1 && offset == ERRCONFIG_V1)
 		mask |= ERRCONFIG_STATUS_V1_MASK;
-	else if (sr->ip_type == SR_TYPE_V2 && offset == ERRCONFIG_V2)
+	अन्यथा अगर (sr->ip_type == SR_TYPE_V2 && offset == ERRCONFIG_V2)
 		mask |= ERRCONFIG_VPBOUNDINTST_V2;
 
-	reg_val = __raw_readl(sr->base + offset);
+	reg_val = __raw_पढ़ोl(sr->base + offset);
 	reg_val &= ~mask;
 
 	value &= mask;
 
 	reg_val |= value;
 
-	__raw_writel(reg_val, (sr->base + offset));
-}
+	__raw_ग_लिखोl(reg_val, (sr->base + offset));
+पूर्ण
 
-static inline u32 sr_read_reg(struct omap_sr *sr, unsigned offset)
-{
-	return __raw_readl(sr->base + offset);
-}
+अटल अंतरभूत u32 sr_पढ़ो_reg(काष्ठा omap_sr *sr, अचिन्हित offset)
+अणु
+	वापस __raw_पढ़ोl(sr->base + offset);
+पूर्ण
 
-static struct omap_sr *_sr_lookup(struct voltagedomain *voltdm)
-{
-	struct omap_sr *sr_info;
+अटल काष्ठा omap_sr *_sr_lookup(काष्ठा voltageकरोमुख्य *voltdm)
+अणु
+	काष्ठा omap_sr *sr_info;
 
-	if (!voltdm) {
+	अगर (!voltdm) अणु
 		pr_err("%s: Null voltage domain passed!\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	list_for_each_entry(sr_info, &sr_list, node) {
-		if (voltdm == sr_info->voltdm)
-			return sr_info;
-	}
+	list_क्रम_each_entry(sr_info, &sr_list, node) अणु
+		अगर (voltdm == sr_info->voltdm)
+			वापस sr_info;
+	पूर्ण
 
-	return ERR_PTR(-ENODATA);
-}
+	वापस ERR_PTR(-ENODATA);
+पूर्ण
 
-static irqreturn_t sr_interrupt(int irq, void *data)
-{
-	struct omap_sr *sr_info = data;
+अटल irqवापस_t sr_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा omap_sr *sr_info = data;
 	u32 status = 0;
 
-	switch (sr_info->ip_type) {
-	case SR_TYPE_V1:
+	चयन (sr_info->ip_type) अणु
+	हाल SR_TYPE_V1:
 		/* Read the status bits */
-		status = sr_read_reg(sr_info, ERRCONFIG_V1);
+		status = sr_पढ़ो_reg(sr_info, ERRCONFIG_V1);
 
 		/* Clear them by writing back */
-		sr_write_reg(sr_info, ERRCONFIG_V1, status);
-		break;
-	case SR_TYPE_V2:
+		sr_ग_लिखो_reg(sr_info, ERRCONFIG_V1, status);
+		अवरोध;
+	हाल SR_TYPE_V2:
 		/* Read the status bits */
-		status = sr_read_reg(sr_info, IRQSTATUS);
+		status = sr_पढ़ो_reg(sr_info, IRQSTATUS);
 
 		/* Clear them by writing back */
-		sr_write_reg(sr_info, IRQSTATUS, status);
-		break;
-	default:
+		sr_ग_लिखो_reg(sr_info, IRQSTATUS, status);
+		अवरोध;
+	शेष:
 		dev_err(&sr_info->pdev->dev, "UNKNOWN IP type %d\n",
 			sr_info->ip_type);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (sr_class->notify)
-		sr_class->notify(sr_info, status);
+	अगर (sr_class->notअगरy)
+		sr_class->notअगरy(sr_info, status);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void sr_set_clk_length(struct omap_sr *sr)
-{
-	struct clk *fck;
+अटल व्योम sr_set_clk_length(काष्ठा omap_sr *sr)
+अणु
+	काष्ठा clk *fck;
 	u32 fclk_speed;
 
-	/* Try interconnect target module fck first if it already exists */
+	/* Try पूर्णांकerconnect target module fck first अगर it alपढ़ोy exists */
 	fck = clk_get(sr->pdev->dev.parent, "fck");
-	if (IS_ERR(fck)) {
+	अगर (IS_ERR(fck)) अणु
 		fck = clk_get(&sr->pdev->dev, "fck");
-		if (IS_ERR(fck)) {
+		अगर (IS_ERR(fck)) अणु
 			dev_err(&sr->pdev->dev,
 				"%s: unable to get fck for device %s\n",
 				__func__, dev_name(&sr->pdev->dev));
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	fclk_speed = clk_get_rate(fck);
 	clk_put(fck);
 
-	switch (fclk_speed) {
-	case 12000000:
+	चयन (fclk_speed) अणु
+	हाल 12000000:
 		sr->clk_length = SRCLKLENGTH_12MHZ_SYSCLK;
-		break;
-	case 13000000:
+		अवरोध;
+	हाल 13000000:
 		sr->clk_length = SRCLKLENGTH_13MHZ_SYSCLK;
-		break;
-	case 19200000:
+		अवरोध;
+	हाल 19200000:
 		sr->clk_length = SRCLKLENGTH_19MHZ_SYSCLK;
-		break;
-	case 26000000:
+		अवरोध;
+	हाल 26000000:
 		sr->clk_length = SRCLKLENGTH_26MHZ_SYSCLK;
-		break;
-	case 38400000:
+		अवरोध;
+	हाल 38400000:
 		sr->clk_length = SRCLKLENGTH_38MHZ_SYSCLK;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&sr->pdev->dev, "%s: Invalid fclk rate: %d\n",
 			__func__, fclk_speed);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void sr_start_vddautocomp(struct omap_sr *sr)
-{
-	if (!sr_class || !(sr_class->enable) || !(sr_class->configure)) {
+अटल व्योम sr_start_vddस्वतःcomp(काष्ठा omap_sr *sr)
+अणु
+	अगर (!sr_class || !(sr_class->enable) || !(sr_class->configure)) अणु
 		dev_warn(&sr->pdev->dev,
 			 "%s: smartreflex class driver not registered\n",
 			 __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sr_class->enable(sr))
-		sr->autocomp_active = true;
-}
+	अगर (!sr_class->enable(sr))
+		sr->स्वतःcomp_active = true;
+पूर्ण
 
-static void sr_stop_vddautocomp(struct omap_sr *sr)
-{
-	if (!sr_class || !(sr_class->disable)) {
+अटल व्योम sr_stop_vddस्वतःcomp(काष्ठा omap_sr *sr)
+अणु
+	अगर (!sr_class || !(sr_class->disable)) अणु
 		dev_warn(&sr->pdev->dev,
 			 "%s: smartreflex class driver not registered\n",
 			 __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sr->autocomp_active) {
+	अगर (sr->स्वतःcomp_active) अणु
 		sr_class->disable(sr, 1);
-		sr->autocomp_active = false;
-	}
-}
+		sr->स्वतःcomp_active = false;
+	पूर्ण
+पूर्ण
 
 /*
- * This function handles the initializations which have to be done
+ * This function handles the initializations which have to be करोne
  * only when both sr device and class driver regiter has
  * completed. This will be attempted to be called from both sr class
- * driver register and sr device intializtion API's. Only one call
+ * driver रेजिस्टर and sr device पूर्णांकializtion API's. Only one call
  * will ultimately succeed.
  *
- * Currently this function registers interrupt handler for a particular SR
- * if smartreflex class driver is already registered and has
- * requested for interrupts and the SR interrupt line in present.
+ * Currently this function रेजिस्टरs पूर्णांकerrupt handler क्रम a particular SR
+ * अगर smartreflex class driver is alपढ़ोy रेजिस्टरed and has
+ * requested क्रम पूर्णांकerrupts and the SR पूर्णांकerrupt line in present.
  */
-static int sr_late_init(struct omap_sr *sr_info)
-{
-	struct omap_sr_data *pdata = sr_info->pdev->dev.platform_data;
-	int ret = 0;
+अटल पूर्णांक sr_late_init(काष्ठा omap_sr *sr_info)
+अणु
+	काष्ठा omap_sr_data *pdata = sr_info->pdev->dev.platक्रमm_data;
+	पूर्णांक ret = 0;
 
-	if (sr_class->notify && sr_class->notify_flags && sr_info->irq) {
+	अगर (sr_class->notअगरy && sr_class->notअगरy_flags && sr_info->irq) अणु
 		ret = devm_request_irq(&sr_info->pdev->dev, sr_info->irq,
-				       sr_interrupt, 0, sr_info->name, sr_info);
-		if (ret)
-			goto error;
+				       sr_पूर्णांकerrupt, 0, sr_info->name, sr_info);
+		अगर (ret)
+			जाओ error;
 		disable_irq(sr_info->irq);
-	}
+	पूर्ण
 
-	if (pdata && pdata->enable_on_init)
-		sr_start_vddautocomp(sr_info);
+	अगर (pdata && pdata->enable_on_init)
+		sr_start_vddस्वतःcomp(sr_info);
 
-	return ret;
+	वापस ret;
 
 error:
 	list_del(&sr_info->node);
 	dev_err(&sr_info->pdev->dev, "%s: ERROR in registering interrupt handler. Smartreflex will not function as desired\n",
 		__func__);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sr_v1_disable(struct omap_sr *sr)
-{
-	int timeout = 0;
-	int errconf_val = ERRCONFIG_MCUACCUMINTST | ERRCONFIG_MCUVALIDINTST |
+अटल व्योम sr_v1_disable(काष्ठा omap_sr *sr)
+अणु
+	पूर्णांक समयout = 0;
+	पूर्णांक errconf_val = ERRCONFIG_MCUACCUMINTST | ERRCONFIG_MCUVALIDINTST |
 			ERRCONFIG_MCUBOUNDINTST;
 
-	/* Enable MCUDisableAcknowledge interrupt */
-	sr_modify_reg(sr, ERRCONFIG_V1,
+	/* Enable MCUDisableAcknowledge पूर्णांकerrupt */
+	sr_modअगरy_reg(sr, ERRCONFIG_V1,
 			ERRCONFIG_MCUDISACKINTEN, ERRCONFIG_MCUDISACKINTEN);
 
 	/* SRCONFIG - disable SR */
-	sr_modify_reg(sr, SRCONFIG, SRCONFIG_SRENABLE, 0x0);
+	sr_modअगरy_reg(sr, SRCONFIG, SRCONFIG_SRENABLE, 0x0);
 
-	/* Disable all other SR interrupts and clear the status as needed */
-	if (sr_read_reg(sr, ERRCONFIG_V1) & ERRCONFIG_VPBOUNDINTST_V1)
+	/* Disable all other SR पूर्णांकerrupts and clear the status as needed */
+	अगर (sr_पढ़ो_reg(sr, ERRCONFIG_V1) & ERRCONFIG_VPBOUNDINTST_V1)
 		errconf_val |= ERRCONFIG_VPBOUNDINTST_V1;
-	sr_modify_reg(sr, ERRCONFIG_V1,
+	sr_modअगरy_reg(sr, ERRCONFIG_V1,
 			(ERRCONFIG_MCUACCUMINTEN | ERRCONFIG_MCUVALIDINTEN |
 			ERRCONFIG_MCUBOUNDINTEN | ERRCONFIG_VPBOUNDINTEN_V1),
 			errconf_val);
 
 	/*
-	 * Wait for SR to be disabled.
-	 * wait until ERRCONFIG.MCUDISACKINTST = 1. Typical latency is 1us.
+	 * Wait क्रम SR to be disabled.
+	 * रुको until ERRCONFIG.MCUDISACKINTST = 1. Typical latency is 1us.
 	 */
-	sr_test_cond_timeout((sr_read_reg(sr, ERRCONFIG_V1) &
+	sr_test_cond_समयout((sr_पढ़ो_reg(sr, ERRCONFIG_V1) &
 			     ERRCONFIG_MCUDISACKINTST), SR_DISABLE_TIMEOUT,
-			     timeout);
+			     समयout);
 
-	if (timeout >= SR_DISABLE_TIMEOUT)
+	अगर (समयout >= SR_DISABLE_TIMEOUT)
 		dev_warn(&sr->pdev->dev, "%s: Smartreflex disable timedout\n",
 			 __func__);
 
-	/* Disable MCUDisableAcknowledge interrupt & clear pending interrupt */
-	sr_modify_reg(sr, ERRCONFIG_V1, ERRCONFIG_MCUDISACKINTEN,
+	/* Disable MCUDisableAcknowledge पूर्णांकerrupt & clear pending पूर्णांकerrupt */
+	sr_modअगरy_reg(sr, ERRCONFIG_V1, ERRCONFIG_MCUDISACKINTEN,
 			ERRCONFIG_MCUDISACKINTST);
-}
+पूर्ण
 
-static void sr_v2_disable(struct omap_sr *sr)
-{
-	int timeout = 0;
+अटल व्योम sr_v2_disable(काष्ठा omap_sr *sr)
+अणु
+	पूर्णांक समयout = 0;
 
-	/* Enable MCUDisableAcknowledge interrupt */
-	sr_write_reg(sr, IRQENABLE_SET, IRQENABLE_MCUDISABLEACKINT);
+	/* Enable MCUDisableAcknowledge पूर्णांकerrupt */
+	sr_ग_लिखो_reg(sr, IRQENABLE_SET, IRQENABLE_MCUDISABLEACKINT);
 
 	/* SRCONFIG - disable SR */
-	sr_modify_reg(sr, SRCONFIG, SRCONFIG_SRENABLE, 0x0);
+	sr_modअगरy_reg(sr, SRCONFIG, SRCONFIG_SRENABLE, 0x0);
 
 	/*
-	 * Disable all other SR interrupts and clear the status
-	 * write to status register ONLY on need basis - only if status
+	 * Disable all other SR पूर्णांकerrupts and clear the status
+	 * ग_लिखो to status रेजिस्टर ONLY on need basis - only अगर status
 	 * is set.
 	 */
-	if (sr_read_reg(sr, ERRCONFIG_V2) & ERRCONFIG_VPBOUNDINTST_V2)
-		sr_modify_reg(sr, ERRCONFIG_V2, ERRCONFIG_VPBOUNDINTEN_V2,
+	अगर (sr_पढ़ो_reg(sr, ERRCONFIG_V2) & ERRCONFIG_VPBOUNDINTST_V2)
+		sr_modअगरy_reg(sr, ERRCONFIG_V2, ERRCONFIG_VPBOUNDINTEN_V2,
 			ERRCONFIG_VPBOUNDINTST_V2);
-	else
-		sr_modify_reg(sr, ERRCONFIG_V2, ERRCONFIG_VPBOUNDINTEN_V2,
+	अन्यथा
+		sr_modअगरy_reg(sr, ERRCONFIG_V2, ERRCONFIG_VPBOUNDINTEN_V2,
 				0x0);
-	sr_write_reg(sr, IRQENABLE_CLR, (IRQENABLE_MCUACCUMINT |
+	sr_ग_लिखो_reg(sr, IRQENABLE_CLR, (IRQENABLE_MCUACCUMINT |
 			IRQENABLE_MCUVALIDINT |
 			IRQENABLE_MCUBOUNDSINT));
-	sr_write_reg(sr, IRQSTATUS, (IRQSTATUS_MCUACCUMINT |
+	sr_ग_लिखो_reg(sr, IRQSTATUS, (IRQSTATUS_MCUACCUMINT |
 			IRQSTATUS_MCVALIDINT |
 			IRQSTATUS_MCBOUNDSINT));
 
 	/*
-	 * Wait for SR to be disabled.
-	 * wait until IRQSTATUS.MCUDISACKINTST = 1. Typical latency is 1us.
+	 * Wait क्रम SR to be disabled.
+	 * रुको until IRQSTATUS.MCUDISACKINTST = 1. Typical latency is 1us.
 	 */
-	sr_test_cond_timeout((sr_read_reg(sr, IRQSTATUS) &
+	sr_test_cond_समयout((sr_पढ़ो_reg(sr, IRQSTATUS) &
 			     IRQSTATUS_MCUDISABLEACKINT), SR_DISABLE_TIMEOUT,
-			     timeout);
+			     समयout);
 
-	if (timeout >= SR_DISABLE_TIMEOUT)
+	अगर (समयout >= SR_DISABLE_TIMEOUT)
 		dev_warn(&sr->pdev->dev, "%s: Smartreflex disable timedout\n",
 			 __func__);
 
-	/* Disable MCUDisableAcknowledge interrupt & clear pending interrupt */
-	sr_write_reg(sr, IRQENABLE_CLR, IRQENABLE_MCUDISABLEACKINT);
-	sr_write_reg(sr, IRQSTATUS, IRQSTATUS_MCUDISABLEACKINT);
-}
+	/* Disable MCUDisableAcknowledge पूर्णांकerrupt & clear pending पूर्णांकerrupt */
+	sr_ग_लिखो_reg(sr, IRQENABLE_CLR, IRQENABLE_MCUDISABLEACKINT);
+	sr_ग_लिखो_reg(sr, IRQSTATUS, IRQSTATUS_MCUDISABLEACKINT);
+पूर्ण
 
-static struct omap_sr_nvalue_table *sr_retrieve_nvalue_row(
-				struct omap_sr *sr, u32 efuse_offs)
-{
-	int i;
+अटल काष्ठा omap_sr_nvalue_table *sr_retrieve_nvalue_row(
+				काष्ठा omap_sr *sr, u32 efuse_offs)
+अणु
+	पूर्णांक i;
 
-	if (!sr->nvalue_table) {
+	अगर (!sr->nvalue_table) अणु
 		dev_warn(&sr->pdev->dev, "%s: Missing ntarget value table\n",
 			 __func__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	for (i = 0; i < sr->nvalue_count; i++) {
-		if (sr->nvalue_table[i].efuse_offs == efuse_offs)
-			return &sr->nvalue_table[i];
-	}
+	क्रम (i = 0; i < sr->nvalue_count; i++) अणु
+		अगर (sr->nvalue_table[i].efuse_offs == efuse_offs)
+			वापस &sr->nvalue_table[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* Public Functions */
 
 /**
- * sr_configure_errgen() - Configures the SmartReflex to perform AVS using the
+ * sr_configure_errgen() - Configures the SmartReflex to perक्रमm AVS using the
  *			 error generator module.
  * @sr:			SR module to be configured.
  *
  * This API is to be called from the smartreflex class driver to
  * configure the error generator module inside the smartreflex module.
- * SR settings if using the ERROR module inside Smartreflex.
- * SR CLASS 3 by default uses only the ERROR module where as
+ * SR settings अगर using the ERROR module inside Smartreflex.
+ * SR CLASS 3 by शेष uses only the ERROR module where as
  * SR CLASS 2 can choose between ERROR module and MINMAXAVG
- * module. Returns 0 on success and error value in case of failure.
+ * module. Returns 0 on success and error value in हाल of failure.
  */
-int sr_configure_errgen(struct omap_sr *sr)
-{
+पूर्णांक sr_configure_errgen(काष्ठा omap_sr *sr)
+अणु
 	u32 sr_config, sr_errconfig, errconfig_offs;
-	u32 vpboundint_en, vpboundint_st;
+	u32 vpboundपूर्णांक_en, vpboundपूर्णांक_st;
 	u32 senp_en = 0, senn_en = 0;
-	u8 senp_shift, senn_shift;
+	u8 senp_shअगरt, senn_shअगरt;
 
-	if (!sr) {
+	अगर (!sr) अणु
 		pr_warn("%s: NULL omap_sr from %pS\n",
-			__func__, (void *)_RET_IP_);
-		return -EINVAL;
-	}
+			__func__, (व्योम *)_RET_IP_);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!sr->clk_length)
+	अगर (!sr->clk_length)
 		sr_set_clk_length(sr);
 
 	senp_en = sr->senp_mod;
@@ -370,43 +371,43 @@ int sr_configure_errgen(struct omap_sr *sr)
 	sr_config = (sr->clk_length << SRCONFIG_SRCLKLENGTH_SHIFT) |
 		SRCONFIG_SENENABLE | SRCONFIG_ERRGEN_EN;
 
-	switch (sr->ip_type) {
-	case SR_TYPE_V1:
+	चयन (sr->ip_type) अणु
+	हाल SR_TYPE_V1:
 		sr_config |= SRCONFIG_DELAYCTRL;
-		senn_shift = SRCONFIG_SENNENABLE_V1_SHIFT;
-		senp_shift = SRCONFIG_SENPENABLE_V1_SHIFT;
+		senn_shअगरt = SRCONFIG_SENNENABLE_V1_SHIFT;
+		senp_shअगरt = SRCONFIG_SENPENABLE_V1_SHIFT;
 		errconfig_offs = ERRCONFIG_V1;
-		vpboundint_en = ERRCONFIG_VPBOUNDINTEN_V1;
-		vpboundint_st = ERRCONFIG_VPBOUNDINTST_V1;
-		break;
-	case SR_TYPE_V2:
-		senn_shift = SRCONFIG_SENNENABLE_V2_SHIFT;
-		senp_shift = SRCONFIG_SENPENABLE_V2_SHIFT;
+		vpboundपूर्णांक_en = ERRCONFIG_VPBOUNDINTEN_V1;
+		vpboundपूर्णांक_st = ERRCONFIG_VPBOUNDINTST_V1;
+		अवरोध;
+	हाल SR_TYPE_V2:
+		senn_shअगरt = SRCONFIG_SENNENABLE_V2_SHIFT;
+		senp_shअगरt = SRCONFIG_SENPENABLE_V2_SHIFT;
 		errconfig_offs = ERRCONFIG_V2;
-		vpboundint_en = ERRCONFIG_VPBOUNDINTEN_V2;
-		vpboundint_st = ERRCONFIG_VPBOUNDINTST_V2;
-		break;
-	default:
+		vpboundपूर्णांक_en = ERRCONFIG_VPBOUNDINTEN_V2;
+		vpboundपूर्णांक_st = ERRCONFIG_VPBOUNDINTST_V2;
+		अवरोध;
+	शेष:
 		dev_err(&sr->pdev->dev, "%s: Trying to Configure smartreflex module without specifying the ip\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	sr_config |= ((senn_en << senn_shift) | (senp_en << senp_shift));
-	sr_write_reg(sr, SRCONFIG, sr_config);
+	sr_config |= ((senn_en << senn_shअगरt) | (senp_en << senp_shअगरt));
+	sr_ग_लिखो_reg(sr, SRCONFIG, sr_config);
 	sr_errconfig = (sr->err_weight << ERRCONFIG_ERRWEIGHT_SHIFT) |
 		(sr->err_maxlimit << ERRCONFIG_ERRMAXLIMIT_SHIFT) |
 		(sr->err_minlimit <<  ERRCONFIG_ERRMINLIMIT_SHIFT);
-	sr_modify_reg(sr, errconfig_offs, (SR_ERRWEIGHT_MASK |
+	sr_modअगरy_reg(sr, errconfig_offs, (SR_ERRWEIGHT_MASK |
 		SR_ERRMAXLIMIT_MASK | SR_ERRMINLIMIT_MASK),
 		sr_errconfig);
 
-	/* Enabling the interrupts if the ERROR module is used */
-	sr_modify_reg(sr, errconfig_offs, (vpboundint_en | vpboundint_st),
-		      vpboundint_en);
+	/* Enabling the पूर्णांकerrupts अगर the ERROR module is used */
+	sr_modअगरy_reg(sr, errconfig_offs, (vpboundपूर्णांक_en | vpboundपूर्णांक_st),
+		      vpboundपूर्णांक_en);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sr_disable_errgen() - Disables SmartReflex AVS module's errgen component
@@ -415,75 +416,75 @@ int sr_configure_errgen(struct omap_sr *sr)
  * This API is to be called from the smartreflex class driver to
  * disable the error generator module inside the smartreflex module.
  *
- * Returns 0 on success and error value in case of failure.
+ * Returns 0 on success and error value in हाल of failure.
  */
-int sr_disable_errgen(struct omap_sr *sr)
-{
+पूर्णांक sr_disable_errgen(काष्ठा omap_sr *sr)
+अणु
 	u32 errconfig_offs;
-	u32 vpboundint_en, vpboundint_st;
+	u32 vpboundपूर्णांक_en, vpboundपूर्णांक_st;
 
-	if (!sr) {
+	अगर (!sr) अणु
 		pr_warn("%s: NULL omap_sr from %pS\n",
-			__func__, (void *)_RET_IP_);
-		return -EINVAL;
-	}
+			__func__, (व्योम *)_RET_IP_);
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (sr->ip_type) {
-	case SR_TYPE_V1:
+	चयन (sr->ip_type) अणु
+	हाल SR_TYPE_V1:
 		errconfig_offs = ERRCONFIG_V1;
-		vpboundint_en = ERRCONFIG_VPBOUNDINTEN_V1;
-		vpboundint_st = ERRCONFIG_VPBOUNDINTST_V1;
-		break;
-	case SR_TYPE_V2:
+		vpboundपूर्णांक_en = ERRCONFIG_VPBOUNDINTEN_V1;
+		vpboundपूर्णांक_st = ERRCONFIG_VPBOUNDINTST_V1;
+		अवरोध;
+	हाल SR_TYPE_V2:
 		errconfig_offs = ERRCONFIG_V2;
-		vpboundint_en = ERRCONFIG_VPBOUNDINTEN_V2;
-		vpboundint_st = ERRCONFIG_VPBOUNDINTST_V2;
-		break;
-	default:
+		vpboundपूर्णांक_en = ERRCONFIG_VPBOUNDINTEN_V2;
+		vpboundपूर्णांक_st = ERRCONFIG_VPBOUNDINTST_V2;
+		अवरोध;
+	शेष:
 		dev_err(&sr->pdev->dev, "%s: Trying to Configure smartreflex module without specifying the ip\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Disable the Sensor and errorgen */
-	sr_modify_reg(sr, SRCONFIG, SRCONFIG_SENENABLE | SRCONFIG_ERRGEN_EN, 0);
+	sr_modअगरy_reg(sr, SRCONFIG, SRCONFIG_SENENABLE | SRCONFIG_ERRGEN_EN, 0);
 
 	/*
-	 * Disable the interrupts of ERROR module
-	 * NOTE: modify is a read, modify,write - an implicit OCP barrier
+	 * Disable the पूर्णांकerrupts of ERROR module
+	 * NOTE: modअगरy is a पढ़ो, modअगरy,ग_लिखो - an implicit OCP barrier
 	 * which is required is present here - sequencing is critical
-	 * at this point (after errgen is disabled, vpboundint disable)
+	 * at this poपूर्णांक (after errgen is disabled, vpboundपूर्णांक disable)
 	 */
-	sr_modify_reg(sr, errconfig_offs, vpboundint_en | vpboundint_st, 0);
+	sr_modअगरy_reg(sr, errconfig_offs, vpboundपूर्णांक_en | vpboundपूर्णांक_st, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sr_configure_minmax() - Configures the SmartReflex to perform AVS using the
+ * sr_configure_minmax() - Configures the SmartReflex to perक्रमm AVS using the
  *			 minmaxavg module.
  * @sr:			SR module to be configured.
  *
  * This API is to be called from the smartreflex class driver to
  * configure the minmaxavg module inside the smartreflex module.
- * SR settings if using the ERROR module inside Smartreflex.
- * SR CLASS 3 by default uses only the ERROR module where as
+ * SR settings अगर using the ERROR module inside Smartreflex.
+ * SR CLASS 3 by शेष uses only the ERROR module where as
  * SR CLASS 2 can choose between ERROR module and MINMAXAVG
- * module. Returns 0 on success and error value in case of failure.
+ * module. Returns 0 on success and error value in हाल of failure.
  */
-int sr_configure_minmax(struct omap_sr *sr)
-{
+पूर्णांक sr_configure_minmax(काष्ठा omap_sr *sr)
+अणु
 	u32 sr_config, sr_avgwt;
 	u32 senp_en = 0, senn_en = 0;
-	u8 senp_shift, senn_shift;
+	u8 senp_shअगरt, senn_shअगरt;
 
-	if (!sr) {
+	अगर (!sr) अणु
 		pr_warn("%s: NULL omap_sr from %pS\n",
-			__func__, (void *)_RET_IP_);
-		return -EINVAL;
-	}
+			__func__, (व्योम *)_RET_IP_);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!sr->clk_length)
+	अगर (!sr->clk_length)
 		sr_set_clk_length(sr);
 
 	senp_en = sr->senp_mod;
@@ -493,370 +494,370 @@ int sr_configure_minmax(struct omap_sr *sr)
 		SRCONFIG_SENENABLE |
 		(sr->accum_data << SRCONFIG_ACCUMDATA_SHIFT);
 
-	switch (sr->ip_type) {
-	case SR_TYPE_V1:
+	चयन (sr->ip_type) अणु
+	हाल SR_TYPE_V1:
 		sr_config |= SRCONFIG_DELAYCTRL;
-		senn_shift = SRCONFIG_SENNENABLE_V1_SHIFT;
-		senp_shift = SRCONFIG_SENPENABLE_V1_SHIFT;
-		break;
-	case SR_TYPE_V2:
-		senn_shift = SRCONFIG_SENNENABLE_V2_SHIFT;
-		senp_shift = SRCONFIG_SENPENABLE_V2_SHIFT;
-		break;
-	default:
+		senn_shअगरt = SRCONFIG_SENNENABLE_V1_SHIFT;
+		senp_shअगरt = SRCONFIG_SENPENABLE_V1_SHIFT;
+		अवरोध;
+	हाल SR_TYPE_V2:
+		senn_shअगरt = SRCONFIG_SENNENABLE_V2_SHIFT;
+		senp_shअगरt = SRCONFIG_SENPENABLE_V2_SHIFT;
+		अवरोध;
+	शेष:
 		dev_err(&sr->pdev->dev, "%s: Trying to Configure smartreflex module without specifying the ip\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	sr_config |= ((senn_en << senn_shift) | (senp_en << senp_shift));
-	sr_write_reg(sr, SRCONFIG, sr_config);
+	sr_config |= ((senn_en << senn_shअगरt) | (senp_en << senp_shअगरt));
+	sr_ग_लिखो_reg(sr, SRCONFIG, sr_config);
 	sr_avgwt = (sr->senp_avgweight << AVGWEIGHT_SENPAVGWEIGHT_SHIFT) |
 		(sr->senn_avgweight << AVGWEIGHT_SENNAVGWEIGHT_SHIFT);
-	sr_write_reg(sr, AVGWEIGHT, sr_avgwt);
+	sr_ग_लिखो_reg(sr, AVGWEIGHT, sr_avgwt);
 
 	/*
-	 * Enabling the interrupts if MINMAXAVG module is used.
-	 * TODO: check if all the interrupts are mandatory
+	 * Enabling the पूर्णांकerrupts अगर MINMAXAVG module is used.
+	 * TODO: check अगर all the पूर्णांकerrupts are mandatory
 	 */
-	switch (sr->ip_type) {
-	case SR_TYPE_V1:
-		sr_modify_reg(sr, ERRCONFIG_V1,
+	चयन (sr->ip_type) अणु
+	हाल SR_TYPE_V1:
+		sr_modअगरy_reg(sr, ERRCONFIG_V1,
 			(ERRCONFIG_MCUACCUMINTEN | ERRCONFIG_MCUVALIDINTEN |
 			ERRCONFIG_MCUBOUNDINTEN),
 			(ERRCONFIG_MCUACCUMINTEN | ERRCONFIG_MCUACCUMINTST |
 			 ERRCONFIG_MCUVALIDINTEN | ERRCONFIG_MCUVALIDINTST |
 			 ERRCONFIG_MCUBOUNDINTEN | ERRCONFIG_MCUBOUNDINTST));
-		break;
-	case SR_TYPE_V2:
-		sr_write_reg(sr, IRQSTATUS,
+		अवरोध;
+	हाल SR_TYPE_V2:
+		sr_ग_लिखो_reg(sr, IRQSTATUS,
 			IRQSTATUS_MCUACCUMINT | IRQSTATUS_MCVALIDINT |
 			IRQSTATUS_MCBOUNDSINT | IRQSTATUS_MCUDISABLEACKINT);
-		sr_write_reg(sr, IRQENABLE_SET,
+		sr_ग_लिखो_reg(sr, IRQENABLE_SET,
 			IRQENABLE_MCUACCUMINT | IRQENABLE_MCUVALIDINT |
 			IRQENABLE_MCUBOUNDSINT | IRQENABLE_MCUDISABLEACKINT);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&sr->pdev->dev, "%s: Trying to Configure smartreflex module without specifying the ip\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sr_enable() - Enables the smartreflex module.
- * @sr:		pointer to which the SR module to be configured belongs to.
- * @volt:	The voltage at which the Voltage domain associated with
+ * @sr:		poपूर्णांकer to which the SR module to be configured beदीर्घs to.
+ * @volt:	The voltage at which the Voltage करोमुख्य associated with
  *		the smartreflex module is operating at.
  *		This is required only to program the correct Ntarget value.
  *
  * This API is to be called from the smartreflex class driver to
  * enable a smartreflex module. Returns 0 on success. Returns error
- * value if the voltage passed is wrong or if ntarget value is wrong.
+ * value अगर the voltage passed is wrong or अगर ntarget value is wrong.
  */
-int sr_enable(struct omap_sr *sr, unsigned long volt)
-{
-	struct omap_volt_data *volt_data;
-	struct omap_sr_nvalue_table *nvalue_row;
-	int ret;
+पूर्णांक sr_enable(काष्ठा omap_sr *sr, अचिन्हित दीर्घ volt)
+अणु
+	काष्ठा omap_volt_data *volt_data;
+	काष्ठा omap_sr_nvalue_table *nvalue_row;
+	पूर्णांक ret;
 
-	if (!sr) {
+	अगर (!sr) अणु
 		pr_warn("%s: NULL omap_sr from %pS\n",
-			__func__, (void *)_RET_IP_);
-		return -EINVAL;
-	}
+			__func__, (व्योम *)_RET_IP_);
+		वापस -EINVAL;
+	पूर्ण
 
 	volt_data = omap_voltage_get_voltdata(sr->voltdm, volt);
 
-	if (IS_ERR(volt_data)) {
+	अगर (IS_ERR(volt_data)) अणु
 		dev_warn(&sr->pdev->dev, "%s: Unable to get voltage table for nominal voltage %ld\n",
 			 __func__, volt);
-		return PTR_ERR(volt_data);
-	}
+		वापस PTR_ERR(volt_data);
+	पूर्ण
 
 	nvalue_row = sr_retrieve_nvalue_row(sr, volt_data->sr_efuse_offs);
 
-	if (!nvalue_row) {
+	अगर (!nvalue_row) अणु
 		dev_warn(&sr->pdev->dev, "%s: failure getting SR data for this voltage %ld\n",
 			 __func__, volt);
-		return -ENODATA;
-	}
+		वापस -ENODATA;
+	पूर्ण
 
 	/* errminlimit is opp dependent and hence linked to voltage */
 	sr->err_minlimit = nvalue_row->errminlimit;
 
-	pm_runtime_get_sync(&sr->pdev->dev);
+	pm_runसमय_get_sync(&sr->pdev->dev);
 
-	/* Check if SR is already enabled. If yes do nothing */
-	if (sr_read_reg(sr, SRCONFIG) & SRCONFIG_SRENABLE)
-		return 0;
+	/* Check अगर SR is alपढ़ोy enabled. If yes करो nothing */
+	अगर (sr_पढ़ो_reg(sr, SRCONFIG) & SRCONFIG_SRENABLE)
+		वापस 0;
 
 	/* Configure SR */
 	ret = sr_class->configure(sr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	sr_write_reg(sr, NVALUERECIPROCAL, nvalue_row->nvalue);
+	sr_ग_लिखो_reg(sr, NVALUERECIPROCAL, nvalue_row->nvalue);
 
 	/* SRCONFIG - enable SR */
-	sr_modify_reg(sr, SRCONFIG, SRCONFIG_SRENABLE, SRCONFIG_SRENABLE);
-	return 0;
-}
+	sr_modअगरy_reg(sr, SRCONFIG, SRCONFIG_SRENABLE, SRCONFIG_SRENABLE);
+	वापस 0;
+पूर्ण
 
 /**
  * sr_disable() - Disables the smartreflex module.
- * @sr:		pointer to which the SR module to be configured belongs to.
+ * @sr:		poपूर्णांकer to which the SR module to be configured beदीर्घs to.
  *
  * This API is to be called from the smartreflex class driver to
  * disable a smartreflex module.
  */
-void sr_disable(struct omap_sr *sr)
-{
-	if (!sr) {
+व्योम sr_disable(काष्ठा omap_sr *sr)
+अणु
+	अगर (!sr) अणु
 		pr_warn("%s: NULL omap_sr from %pS\n",
-			__func__, (void *)_RET_IP_);
-		return;
-	}
+			__func__, (व्योम *)_RET_IP_);
+		वापस;
+	पूर्ण
 
-	/* Check if SR clocks are already disabled. If yes do nothing */
-	if (pm_runtime_suspended(&sr->pdev->dev))
-		return;
+	/* Check अगर SR घड़ीs are alपढ़ोy disabled. If yes करो nothing */
+	अगर (pm_runसमय_suspended(&sr->pdev->dev))
+		वापस;
 
 	/*
-	 * Disable SR if only it is indeed enabled. Else just
-	 * disable the clocks.
+	 * Disable SR अगर only it is indeed enabled. Else just
+	 * disable the घड़ीs.
 	 */
-	if (sr_read_reg(sr, SRCONFIG) & SRCONFIG_SRENABLE) {
-		switch (sr->ip_type) {
-		case SR_TYPE_V1:
+	अगर (sr_पढ़ो_reg(sr, SRCONFIG) & SRCONFIG_SRENABLE) अणु
+		चयन (sr->ip_type) अणु
+		हाल SR_TYPE_V1:
 			sr_v1_disable(sr);
-			break;
-		case SR_TYPE_V2:
+			अवरोध;
+		हाल SR_TYPE_V2:
 			sr_v2_disable(sr);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(&sr->pdev->dev, "UNKNOWN IP type %d\n",
 				sr->ip_type);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	pm_runtime_put_sync_suspend(&sr->pdev->dev);
-}
+	pm_runसमय_put_sync_suspend(&sr->pdev->dev);
+पूर्ण
 
 /**
- * sr_register_class() - API to register a smartreflex class parameters.
- * @class_data:	The structure containing various sr class specific data.
+ * sr_रेजिस्टर_class() - API to रेजिस्टर a smartreflex class parameters.
+ * @class_data:	The काष्ठाure containing various sr class specअगरic data.
  *
- * This API is to be called by the smartreflex class driver to register itself
- * with the smartreflex driver during init. Returns 0 on success else the
+ * This API is to be called by the smartreflex class driver to रेजिस्टर itself
+ * with the smartreflex driver during init. Returns 0 on success अन्यथा the
  * error value.
  */
-int sr_register_class(struct omap_sr_class_data *class_data)
-{
-	struct omap_sr *sr_info;
+पूर्णांक sr_रेजिस्टर_class(काष्ठा omap_sr_class_data *class_data)
+अणु
+	काष्ठा omap_sr *sr_info;
 
-	if (!class_data) {
+	अगर (!class_data) अणु
 		pr_warn("%s:, Smartreflex class data passed is NULL\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sr_class) {
+	अगर (sr_class) अणु
 		pr_warn("%s: Smartreflex class driver already registered\n",
 			__func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	sr_class = class_data;
 
 	/*
-	 * Call into late init to do initializations that require
+	 * Call पूर्णांकo late init to करो initializations that require
 	 * both sr driver and sr class driver to be initiallized.
 	 */
-	list_for_each_entry(sr_info, &sr_list, node)
+	list_क्रम_each_entry(sr_info, &sr_list, node)
 		sr_late_init(sr_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * omap_sr_enable() -  API to enable SR clocks and to call into the
- *			registered smartreflex class enable API.
- * @voltdm:	VDD pointer to which the SR module to be configured belongs to.
+ * omap_sr_enable() -  API to enable SR घड़ीs and to call पूर्णांकo the
+ *			रेजिस्टरed smartreflex class enable API.
+ * @voltdm:	VDD poपूर्णांकer to which the SR module to be configured beदीर्घs to.
  *
  * This API is to be called from the kernel in order to enable
- * a particular smartreflex module. This API will do the initial
+ * a particular smartreflex module. This API will करो the initial
  * configurations to turn on the smartreflex module and in turn call
- * into the registered smartreflex class enable API.
+ * पूर्णांकo the रेजिस्टरed smartreflex class enable API.
  */
-void omap_sr_enable(struct voltagedomain *voltdm)
-{
-	struct omap_sr *sr = _sr_lookup(voltdm);
+व्योम omap_sr_enable(काष्ठा voltageकरोमुख्य *voltdm)
+अणु
+	काष्ठा omap_sr *sr = _sr_lookup(voltdm);
 
-	if (IS_ERR(sr)) {
+	अगर (IS_ERR(sr)) अणु
 		pr_warn("%s: omap_sr struct for voltdm not found\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sr->autocomp_active)
-		return;
+	अगर (!sr->स्वतःcomp_active)
+		वापस;
 
-	if (!sr_class || !(sr_class->enable) || !(sr_class->configure)) {
+	अगर (!sr_class || !(sr_class->enable) || !(sr_class->configure)) अणु
 		dev_warn(&sr->pdev->dev, "%s: smartreflex class driver not registered\n",
 			 __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sr_class->enable(sr);
-}
+पूर्ण
 
 /**
  * omap_sr_disable() - API to disable SR without resetting the voltage
  *			processor voltage
- * @voltdm:	VDD pointer to which the SR module to be configured belongs to.
+ * @voltdm:	VDD poपूर्णांकer to which the SR module to be configured beदीर्घs to.
  *
  * This API is to be called from the kernel in order to disable
  * a particular smartreflex module. This API will in turn call
- * into the registered smartreflex class disable API. This API will tell
+ * पूर्णांकo the रेजिस्टरed smartreflex class disable API. This API will tell
  * the smartreflex class disable not to reset the VP voltage after
  * disabling smartreflex.
  */
-void omap_sr_disable(struct voltagedomain *voltdm)
-{
-	struct omap_sr *sr = _sr_lookup(voltdm);
+व्योम omap_sr_disable(काष्ठा voltageकरोमुख्य *voltdm)
+अणु
+	काष्ठा omap_sr *sr = _sr_lookup(voltdm);
 
-	if (IS_ERR(sr)) {
+	अगर (IS_ERR(sr)) अणु
 		pr_warn("%s: omap_sr struct for voltdm not found\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sr->autocomp_active)
-		return;
+	अगर (!sr->स्वतःcomp_active)
+		वापस;
 
-	if (!sr_class || !(sr_class->disable)) {
+	अगर (!sr_class || !(sr_class->disable)) अणु
 		dev_warn(&sr->pdev->dev, "%s: smartreflex class driver not registered\n",
 			 __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sr_class->disable(sr, 0);
-}
+पूर्ण
 
 /**
  * omap_sr_disable_reset_volt() - API to disable SR and reset the
  *				voltage processor voltage
- * @voltdm:	VDD pointer to which the SR module to be configured belongs to.
+ * @voltdm:	VDD poपूर्णांकer to which the SR module to be configured beदीर्घs to.
  *
  * This API is to be called from the kernel in order to disable
  * a particular smartreflex module. This API will in turn call
- * into the registered smartreflex class disable API. This API will tell
+ * पूर्णांकo the रेजिस्टरed smartreflex class disable API. This API will tell
  * the smartreflex class disable to reset the VP voltage after
  * disabling smartreflex.
  */
-void omap_sr_disable_reset_volt(struct voltagedomain *voltdm)
-{
-	struct omap_sr *sr = _sr_lookup(voltdm);
+व्योम omap_sr_disable_reset_volt(काष्ठा voltageकरोमुख्य *voltdm)
+अणु
+	काष्ठा omap_sr *sr = _sr_lookup(voltdm);
 
-	if (IS_ERR(sr)) {
+	अगर (IS_ERR(sr)) अणु
 		pr_warn("%s: omap_sr struct for voltdm not found\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sr->autocomp_active)
-		return;
+	अगर (!sr->स्वतःcomp_active)
+		वापस;
 
-	if (!sr_class || !(sr_class->disable)) {
+	अगर (!sr_class || !(sr_class->disable)) अणु
 		dev_warn(&sr->pdev->dev, "%s: smartreflex class driver not registered\n",
 			 __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sr_class->disable(sr, 1);
-}
+पूर्ण
 
 /* PM Debug FS entries to enable and disable smartreflex. */
-static int omap_sr_autocomp_show(void *data, u64 *val)
-{
-	struct omap_sr *sr_info = data;
+अटल पूर्णांक omap_sr_स्वतःcomp_show(व्योम *data, u64 *val)
+अणु
+	काष्ठा omap_sr *sr_info = data;
 
-	if (!sr_info) {
+	अगर (!sr_info) अणु
 		pr_warn("%s: omap_sr struct not found\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	*val = sr_info->autocomp_active;
+	*val = sr_info->स्वतःcomp_active;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_sr_autocomp_store(void *data, u64 val)
-{
-	struct omap_sr *sr_info = data;
+अटल पूर्णांक omap_sr_स्वतःcomp_store(व्योम *data, u64 val)
+अणु
+	काष्ठा omap_sr *sr_info = data;
 
-	if (!sr_info) {
+	अगर (!sr_info) अणु
 		pr_warn("%s: omap_sr struct not found\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Sanity check */
-	if (val > 1) {
+	अगर (val > 1) अणु
 		pr_warn("%s: Invalid argument %lld\n", __func__, val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* control enable/disable only if there is a delta in value */
-	if (sr_info->autocomp_active != val) {
-		if (!val)
-			sr_stop_vddautocomp(sr_info);
-		else
-			sr_start_vddautocomp(sr_info);
-	}
+	/* control enable/disable only अगर there is a delta in value */
+	अगर (sr_info->स्वतःcomp_active != val) अणु
+		अगर (!val)
+			sr_stop_vddस्वतःcomp(sr_info);
+		अन्यथा
+			sr_start_vddस्वतःcomp(sr_info);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-DEFINE_SIMPLE_ATTRIBUTE(pm_sr_fops, omap_sr_autocomp_show,
-			omap_sr_autocomp_store, "%llu\n");
+DEFINE_SIMPLE_ATTRIBUTE(pm_sr_fops, omap_sr_स्वतःcomp_show,
+			omap_sr_स्वतःcomp_store, "%llu\n");
 
-static int omap_sr_probe(struct platform_device *pdev)
-{
-	struct omap_sr *sr_info;
-	struct omap_sr_data *pdata = pdev->dev.platform_data;
-	struct resource *mem, *irq;
-	struct dentry *nvalue_dir;
-	int i, ret = 0;
+अटल पूर्णांक omap_sr_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_sr *sr_info;
+	काष्ठा omap_sr_data *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा resource *mem, *irq;
+	काष्ठा dentry *nvalue_dir;
+	पूर्णांक i, ret = 0;
 
-	sr_info = devm_kzalloc(&pdev->dev, sizeof(struct omap_sr), GFP_KERNEL);
-	if (!sr_info)
-		return -ENOMEM;
+	sr_info = devm_kzalloc(&pdev->dev, माप(काष्ठा omap_sr), GFP_KERNEL);
+	अगर (!sr_info)
+		वापस -ENOMEM;
 
 	sr_info->name = devm_kzalloc(&pdev->dev,
 				     SMARTREFLEX_NAME_LEN, GFP_KERNEL);
-	if (!sr_info->name)
-		return -ENOMEM;
+	अगर (!sr_info->name)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, sr_info);
+	platक्रमm_set_drvdata(pdev, sr_info);
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "%s: platform data missing\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	sr_info->base = devm_ioremap_resource(&pdev->dev, mem);
-	if (IS_ERR(sr_info->base)) {
+	अगर (IS_ERR(sr_info->base)) अणु
 		dev_err(&pdev->dev, "%s: ioremap fail\n", __func__);
-		return PTR_ERR(sr_info->base);
-	}
+		वापस PTR_ERR(sr_info->base);
+	पूर्ण
 
-	irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
 
-	pm_runtime_enable(&pdev->dev);
-	pm_runtime_irq_safe(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
+	pm_runसमय_irq_safe(&pdev->dev);
 
-	snprintf(sr_info->name, SMARTREFLEX_NAME_LEN, "%s", pdata->name);
+	snम_लिखो(sr_info->name, SMARTREFLEX_NAME_LEN, "%s", pdata->name);
 
 	sr_info->pdev = pdev;
 	sr_info->srid = pdev->id;
@@ -870,37 +871,37 @@ static int omap_sr_probe(struct platform_device *pdev)
 	sr_info->accum_data = pdata->accum_data;
 	sr_info->senn_avgweight = pdata->senn_avgweight;
 	sr_info->senp_avgweight = pdata->senp_avgweight;
-	sr_info->autocomp_active = false;
+	sr_info->स्वतःcomp_active = false;
 	sr_info->ip_type = pdata->ip_type;
 
-	if (irq)
+	अगर (irq)
 		sr_info->irq = irq->start;
 
 	sr_set_clk_length(sr_info);
 
 	list_add(&sr_info->node, &sr_list);
 
-	ret = pm_runtime_get_sync(&pdev->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(&pdev->dev);
-		goto err_list_del;
-	}
+	ret = pm_runसमय_get_sync(&pdev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(&pdev->dev);
+		जाओ err_list_del;
+	पूर्ण
 
 	/*
-	 * Call into late init to do initializations that require
+	 * Call पूर्णांकo late init to करो initializations that require
 	 * both sr driver and sr class driver to be initiallized.
 	 */
-	if (sr_class) {
+	अगर (sr_class) अणु
 		ret = sr_late_init(sr_info);
-		if (ret) {
+		अगर (ret) अणु
 			pr_warn("%s: Error in SR late init\n", __func__);
-			goto err_list_del;
-		}
-	}
+			जाओ err_list_del;
+		पूर्ण
+	पूर्ण
 
 	dev_info(&pdev->dev, "%s: SmartReflex driver initialized\n", __func__);
-	if (!sr_dbg_dir)
-		sr_dbg_dir = debugfs_create_dir("smartreflex", NULL);
+	अगर (!sr_dbg_dir)
+		sr_dbg_dir = debugfs_create_dir("smartreflex", शून्य);
 
 	sr_info->dbg_dir = debugfs_create_dir(sr_info->name, sr_dbg_dir);
 
@@ -913,131 +914,131 @@ static int omap_sr_probe(struct platform_device *pdev)
 
 	nvalue_dir = debugfs_create_dir("nvalue", sr_info->dbg_dir);
 
-	if (sr_info->nvalue_count == 0 || !sr_info->nvalue_table) {
+	अगर (sr_info->nvalue_count == 0 || !sr_info->nvalue_table) अणु
 		dev_warn(&pdev->dev, "%s: %s: No Voltage table for the corresponding vdd. Cannot create debugfs entries for n-values\n",
 			 __func__, sr_info->name);
 
 		ret = -ENODATA;
-		goto err_debugfs;
-	}
+		जाओ err_debugfs;
+	पूर्ण
 
-	for (i = 0; i < sr_info->nvalue_count; i++) {
-		char name[NVALUE_NAME_LEN + 1];
+	क्रम (i = 0; i < sr_info->nvalue_count; i++) अणु
+		अक्षर name[NVALUE_NAME_LEN + 1];
 
-		snprintf(name, sizeof(name), "volt_%lu",
+		snम_लिखो(name, माप(name), "volt_%lu",
 				sr_info->nvalue_table[i].volt_nominal);
 		debugfs_create_x32(name, S_IRUGO | S_IWUSR, nvalue_dir,
 				   &(sr_info->nvalue_table[i].nvalue));
-		snprintf(name, sizeof(name), "errminlimit_%lu",
+		snम_लिखो(name, माप(name), "errminlimit_%lu",
 			 sr_info->nvalue_table[i].volt_nominal);
 		debugfs_create_x32(name, S_IRUGO | S_IWUSR, nvalue_dir,
 				   &(sr_info->nvalue_table[i].errminlimit));
 
-	}
+	पूर्ण
 
-	pm_runtime_put_sync(&pdev->dev);
+	pm_runसमय_put_sync(&pdev->dev);
 
-	return ret;
+	वापस ret;
 
 err_debugfs:
-	debugfs_remove_recursive(sr_info->dbg_dir);
+	debugfs_हटाओ_recursive(sr_info->dbg_dir);
 err_list_del:
 	list_del(&sr_info->node);
 
-	pm_runtime_put_sync(&pdev->dev);
+	pm_runसमय_put_sync(&pdev->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int omap_sr_remove(struct platform_device *pdev)
-{
-	struct omap_sr_data *pdata = pdev->dev.platform_data;
-	struct omap_sr *sr_info;
+अटल पूर्णांक omap_sr_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_sr_data *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा omap_sr *sr_info;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "%s: platform data missing\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sr_info = _sr_lookup(pdata->voltdm);
-	if (IS_ERR(sr_info)) {
+	अगर (IS_ERR(sr_info)) अणु
 		dev_warn(&pdev->dev, "%s: omap_sr struct not found\n",
 			__func__);
-		return PTR_ERR(sr_info);
-	}
+		वापस PTR_ERR(sr_info);
+	पूर्ण
 
-	if (sr_info->autocomp_active)
-		sr_stop_vddautocomp(sr_info);
-	debugfs_remove_recursive(sr_info->dbg_dir);
+	अगर (sr_info->स्वतःcomp_active)
+		sr_stop_vddस्वतःcomp(sr_info);
+	debugfs_हटाओ_recursive(sr_info->dbg_dir);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 	list_del(&sr_info->node);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void omap_sr_shutdown(struct platform_device *pdev)
-{
-	struct omap_sr_data *pdata = pdev->dev.platform_data;
-	struct omap_sr *sr_info;
+अटल व्योम omap_sr_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_sr_data *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा omap_sr *sr_info;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "%s: platform data missing\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sr_info = _sr_lookup(pdata->voltdm);
-	if (IS_ERR(sr_info)) {
+	अगर (IS_ERR(sr_info)) अणु
 		dev_warn(&pdev->dev, "%s: omap_sr struct not found\n",
 			__func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sr_info->autocomp_active)
-		sr_stop_vddautocomp(sr_info);
+	अगर (sr_info->स्वतःcomp_active)
+		sr_stop_vddस्वतःcomp(sr_info);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static const struct of_device_id omap_sr_match[] = {
-	{ .compatible = "ti,omap3-smartreflex-core", },
-	{ .compatible = "ti,omap3-smartreflex-mpu-iva", },
-	{ .compatible = "ti,omap4-smartreflex-core", },
-	{ .compatible = "ti,omap4-smartreflex-mpu", },
-	{ .compatible = "ti,omap4-smartreflex-iva", },
-	{  },
-};
+अटल स्थिर काष्ठा of_device_id omap_sr_match[] = अणु
+	अणु .compatible = "ti,omap3-smartreflex-core", पूर्ण,
+	अणु .compatible = "ti,omap3-smartreflex-mpu-iva", पूर्ण,
+	अणु .compatible = "ti,omap4-smartreflex-core", पूर्ण,
+	अणु .compatible = "ti,omap4-smartreflex-mpu", पूर्ण,
+	अणु .compatible = "ti,omap4-smartreflex-iva", पूर्ण,
+	अणु  पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, omap_sr_match);
 
-static struct platform_driver smartreflex_driver = {
+अटल काष्ठा platक्रमm_driver smartreflex_driver = अणु
 	.probe		= omap_sr_probe,
-	.remove         = omap_sr_remove,
-	.shutdown	= omap_sr_shutdown,
-	.driver		= {
+	.हटाओ         = omap_sr_हटाओ,
+	.shutकरोwn	= omap_sr_shutकरोwn,
+	.driver		= अणु
 		.name	= DRIVER_NAME,
 		.of_match_table	= omap_sr_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init sr_init(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init sr_init(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	ret = platform_driver_register(&smartreflex_driver);
-	if (ret) {
+	ret = platक्रमm_driver_रेजिस्टर(&smartreflex_driver);
+	अगर (ret) अणु
 		pr_err("%s: platform driver register failed for SR\n",
 		       __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 late_initcall(sr_init);
 
-static void __exit sr_exit(void)
-{
-	platform_driver_unregister(&smartreflex_driver);
-}
-module_exit(sr_exit);
+अटल व्योम __निकास sr_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&smartreflex_driver);
+पूर्ण
+module_निकास(sr_निकास);
 
 MODULE_DESCRIPTION("OMAP Smartreflex Driver");
 MODULE_LICENSE("GPL");

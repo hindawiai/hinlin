@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
  * Copyright (c) 2014, Sony Mobile Communications Inc.
  */
 
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/log2.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/regmap.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/input.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/regmap.h>
 
-#define PON_REV2			0x01
+#घोषणा PON_REV2			0x01
 
-#define PON_RT_STS			0x10
-#define  PON_KPDPWR_N_SET		BIT(0)
-#define  PON_RESIN_N_SET		BIT(1)
+#घोषणा PON_RT_STS			0x10
+#घोषणा  PON_KPDPWR_N_SET		BIT(0)
+#घोषणा  PON_RESIN_N_SET		BIT(1)
 
-#define PON_PS_HOLD_RST_CTL		0x5a
-#define PON_PS_HOLD_RST_CTL2		0x5b
-#define  PON_PS_HOLD_ENABLE		BIT(7)
-#define  PON_PS_HOLD_TYPE_MASK		0x0f
-#define  PON_PS_HOLD_TYPE_SHUTDOWN	4
-#define  PON_PS_HOLD_TYPE_HARD_RESET	7
+#घोषणा PON_PS_HOLD_RST_CTL		0x5a
+#घोषणा PON_PS_HOLD_RST_CTL2		0x5b
+#घोषणा  PON_PS_HOLD_ENABLE		BIT(7)
+#घोषणा  PON_PS_HOLD_TYPE_MASK		0x0f
+#घोषणा  PON_PS_HOLD_TYPE_SHUTDOWN	4
+#घोषणा  PON_PS_HOLD_TYPE_HARD_RESET	7
 
-#define PON_PULL_CTL			0x70
-#define  PON_KPDPWR_PULL_UP		BIT(1)
-#define  PON_RESIN_PULL_UP		BIT(0)
+#घोषणा PON_PULL_CTL			0x70
+#घोषणा  PON_KPDPWR_PULL_UP		BIT(1)
+#घोषणा  PON_RESIN_PULL_UP		BIT(0)
 
-#define PON_DBC_CTL			0x71
-#define  PON_DBC_DELAY_MASK		0x7
+#घोषणा PON_DBC_CTL			0x71
+#घोषणा  PON_DBC_DELAY_MASK		0x7
 
-struct pm8941_data {
-	unsigned int pull_up_bit;
-	unsigned int status_bit;
-};
+काष्ठा pm8941_data अणु
+	अचिन्हित पूर्णांक pull_up_bit;
+	अचिन्हित पूर्णांक status_bit;
+पूर्ण;
 
-struct pm8941_pwrkey {
-	struct device *dev;
-	int irq;
+काष्ठा pm8941_pwrkey अणु
+	काष्ठा device *dev;
+	पूर्णांक irq;
 	u32 baseaddr;
-	struct regmap *regmap;
-	struct input_dev *input;
+	काष्ठा regmap *regmap;
+	काष्ठा input_dev *input;
 
-	unsigned int revision;
-	struct notifier_block reboot_notifier;
+	अचिन्हित पूर्णांक revision;
+	काष्ठा notअगरier_block reboot_notअगरier;
 
 	u32 code;
-	const struct pm8941_data *data;
-};
+	स्थिर काष्ठा pm8941_data *data;
+पूर्ण;
 
-static int pm8941_reboot_notify(struct notifier_block *nb,
-				unsigned long code, void *unused)
-{
-	struct pm8941_pwrkey *pwrkey = container_of(nb, struct pm8941_pwrkey,
-						    reboot_notifier);
-	unsigned int enable_reg;
-	unsigned int reset_type;
-	int error;
+अटल पूर्णांक pm8941_reboot_notअगरy(काष्ठा notअगरier_block *nb,
+				अचिन्हित दीर्घ code, व्योम *unused)
+अणु
+	काष्ठा pm8941_pwrkey *pwrkey = container_of(nb, काष्ठा pm8941_pwrkey,
+						    reboot_notअगरier);
+	अचिन्हित पूर्णांक enable_reg;
+	अचिन्हित पूर्णांक reset_type;
+	पूर्णांक error;
 
-	/* PMICs with revision 0 have the enable bit in same register as ctrl */
-	if (pwrkey->revision == 0)
+	/* PMICs with revision 0 have the enable bit in same रेजिस्टर as ctrl */
+	अगर (pwrkey->revision == 0)
 		enable_reg = PON_PS_HOLD_RST_CTL;
-	else
+	अन्यथा
 		enable_reg = PON_PS_HOLD_RST_CTL2;
 
 	error = regmap_update_bits(pwrkey->regmap,
 				   pwrkey->baseaddr + enable_reg,
 				   PON_PS_HOLD_ENABLE,
 				   0);
-	if (error)
+	अगर (error)
 		dev_err(pwrkey->dev,
 			"unable to clear ps hold reset enable: %d\n",
 			error);
 
 	/*
 	 * Updates of PON_PS_HOLD_ENABLE requires 3 sleep cycles between
-	 * writes.
+	 * ग_लिखोs.
 	 */
 	usleep_range(100, 1000);
 
-	switch (code) {
-	case SYS_HALT:
-	case SYS_POWER_OFF:
+	चयन (code) अणु
+	हाल SYS_HALT:
+	हाल SYS_POWER_OFF:
 		reset_type = PON_PS_HOLD_TYPE_SHUTDOWN;
-		break;
-	case SYS_RESTART:
-	default:
+		अवरोध;
+	हाल SYS_RESTART:
+	शेष:
 		reset_type = PON_PS_HOLD_TYPE_HARD_RESET;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	error = regmap_update_bits(pwrkey->regmap,
 				   pwrkey->baseaddr + PON_PS_HOLD_RST_CTL,
 				   PON_PS_HOLD_TYPE_MASK,
 				   reset_type);
-	if (error)
+	अगर (error)
 		dev_err(pwrkey->dev, "unable to set ps hold reset type: %d\n",
 			error);
 
@@ -109,125 +110,125 @@ static int pm8941_reboot_notify(struct notifier_block *nb,
 				   pwrkey->baseaddr + enable_reg,
 				   PON_PS_HOLD_ENABLE,
 				   PON_PS_HOLD_ENABLE);
-	if (error)
+	अगर (error)
 		dev_err(pwrkey->dev, "unable to re-set enable: %d\n", error);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static irqreturn_t pm8941_pwrkey_irq(int irq, void *_data)
-{
-	struct pm8941_pwrkey *pwrkey = _data;
-	unsigned int sts;
-	int error;
+अटल irqवापस_t pm8941_pwrkey_irq(पूर्णांक irq, व्योम *_data)
+अणु
+	काष्ठा pm8941_pwrkey *pwrkey = _data;
+	अचिन्हित पूर्णांक sts;
+	पूर्णांक error;
 
-	error = regmap_read(pwrkey->regmap,
+	error = regmap_पढ़ो(pwrkey->regmap,
 			    pwrkey->baseaddr + PON_RT_STS, &sts);
-	if (error)
-		return IRQ_HANDLED;
+	अगर (error)
+		वापस IRQ_HANDLED;
 
 	input_report_key(pwrkey->input, pwrkey->code,
 			 sts & pwrkey->data->status_bit);
 	input_sync(pwrkey->input);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __maybe_unused pm8941_pwrkey_suspend(struct device *dev)
-{
-	struct pm8941_pwrkey *pwrkey = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused pm8941_pwrkey_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pm8941_pwrkey *pwrkey = dev_get_drvdata(dev);
 
-	if (device_may_wakeup(dev))
+	अगर (device_may_wakeup(dev))
 		enable_irq_wake(pwrkey->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused pm8941_pwrkey_resume(struct device *dev)
-{
-	struct pm8941_pwrkey *pwrkey = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused pm8941_pwrkey_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pm8941_pwrkey *pwrkey = dev_get_drvdata(dev);
 
-	if (device_may_wakeup(dev))
+	अगर (device_may_wakeup(dev))
 		disable_irq_wake(pwrkey->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(pm8941_pwr_key_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(pm8941_pwr_key_pm_ops,
 			 pm8941_pwrkey_suspend, pm8941_pwrkey_resume);
 
-static int pm8941_pwrkey_probe(struct platform_device *pdev)
-{
-	struct pm8941_pwrkey *pwrkey;
+अटल पूर्णांक pm8941_pwrkey_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pm8941_pwrkey *pwrkey;
 	bool pull_up;
-	struct device *parent;
+	काष्ठा device *parent;
 	u32 req_delay;
-	int error;
+	पूर्णांक error;
 
-	if (of_property_read_u32(pdev->dev.of_node, "debounce", &req_delay))
+	अगर (of_property_पढ़ो_u32(pdev->dev.of_node, "debounce", &req_delay))
 		req_delay = 15625;
 
-	if (req_delay > 2000000 || req_delay == 0) {
+	अगर (req_delay > 2000000 || req_delay == 0) अणु
 		dev_err(&pdev->dev, "invalid debounce time: %u\n", req_delay);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pull_up = of_property_read_bool(pdev->dev.of_node, "bias-pull-up");
+	pull_up = of_property_पढ़ो_bool(pdev->dev.of_node, "bias-pull-up");
 
-	pwrkey = devm_kzalloc(&pdev->dev, sizeof(*pwrkey), GFP_KERNEL);
-	if (!pwrkey)
-		return -ENOMEM;
+	pwrkey = devm_kzalloc(&pdev->dev, माप(*pwrkey), GFP_KERNEL);
+	अगर (!pwrkey)
+		वापस -ENOMEM;
 
 	pwrkey->dev = &pdev->dev;
 	pwrkey->data = of_device_get_match_data(&pdev->dev);
 
 	parent = pdev->dev.parent;
-	pwrkey->regmap = dev_get_regmap(parent, NULL);
-	if (!pwrkey->regmap) {
+	pwrkey->regmap = dev_get_regmap(parent, शून्य);
+	अगर (!pwrkey->regmap) अणु
 		/*
-		 * We failed to get regmap for parent. Let's see if we are
-		 * a child of pon node and read regmap and reg from its
+		 * We failed to get regmap क्रम parent. Let's see अगर we are
+		 * a child of pon node and पढ़ो regmap and reg from its
 		 * parent.
 		 */
-		pwrkey->regmap = dev_get_regmap(parent->parent, NULL);
-		if (!pwrkey->regmap) {
+		pwrkey->regmap = dev_get_regmap(parent->parent, शून्य);
+		अगर (!pwrkey->regmap) अणु
 			dev_err(&pdev->dev, "failed to locate regmap\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		error = of_property_read_u32(parent->of_node,
+		error = of_property_पढ़ो_u32(parent->of_node,
 					     "reg", &pwrkey->baseaddr);
-	} else {
-		error = of_property_read_u32(pdev->dev.of_node, "reg",
+	पूर्ण अन्यथा अणु
+		error = of_property_पढ़ो_u32(pdev->dev.of_node, "reg",
 					     &pwrkey->baseaddr);
-	}
-	if (error)
-		return error;
+	पूर्ण
+	अगर (error)
+		वापस error;
 
-	pwrkey->irq = platform_get_irq(pdev, 0);
-	if (pwrkey->irq < 0)
-		return pwrkey->irq;
+	pwrkey->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (pwrkey->irq < 0)
+		वापस pwrkey->irq;
 
-	error = regmap_read(pwrkey->regmap, pwrkey->baseaddr + PON_REV2,
+	error = regmap_पढ़ो(pwrkey->regmap, pwrkey->baseaddr + PON_REV2,
 			    &pwrkey->revision);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev, "failed to set debounce: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = of_property_read_u32(pdev->dev.of_node, "linux,code",
+	error = of_property_पढ़ो_u32(pdev->dev.of_node, "linux,code",
 				     &pwrkey->code);
-	if (error) {
+	अगर (error) अणु
 		dev_dbg(&pdev->dev,
 			"no linux,code assuming power (%d)\n", error);
 		pwrkey->code = KEY_POWER;
-	}
+	पूर्ण
 
 	pwrkey->input = devm_input_allocate_device(&pdev->dev);
-	if (!pwrkey->input) {
+	अगर (!pwrkey->input) अणु
 		dev_dbg(&pdev->dev, "unable to allocate input device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	input_set_capability(pwrkey->input, EV_KEY, pwrkey->code);
 
@@ -241,86 +242,86 @@ static int pm8941_pwrkey_probe(struct platform_device *pdev)
 				   pwrkey->baseaddr + PON_DBC_CTL,
 				   PON_DBC_DELAY_MASK,
 				   req_delay);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev, "failed to set debounce: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = regmap_update_bits(pwrkey->regmap,
 				   pwrkey->baseaddr + PON_PULL_CTL,
 				   pwrkey->data->pull_up_bit,
 				   pull_up ? pwrkey->data->pull_up_bit : 0);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev, "failed to set pull: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = devm_request_threaded_irq(&pdev->dev, pwrkey->irq,
-					  NULL, pm8941_pwrkey_irq,
+	error = devm_request_thपढ़ोed_irq(&pdev->dev, pwrkey->irq,
+					  शून्य, pm8941_pwrkey_irq,
 					  IRQF_ONESHOT,
 					  "pm8941_pwrkey", pwrkey);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev, "failed requesting IRQ: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(pwrkey->input);
-	if (error) {
+	error = input_रेजिस्टर_device(pwrkey->input);
+	अगर (error) अणु
 		dev_err(&pdev->dev, "failed to register input device: %d\n",
 			error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	pwrkey->reboot_notifier.notifier_call = pm8941_reboot_notify,
-	error = register_reboot_notifier(&pwrkey->reboot_notifier);
-	if (error) {
+	pwrkey->reboot_notअगरier.notअगरier_call = pm8941_reboot_notअगरy,
+	error = रेजिस्टर_reboot_notअगरier(&pwrkey->reboot_notअगरier);
+	अगर (error) अणु
 		dev_err(&pdev->dev, "failed to register reboot notifier: %d\n",
 			error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	platform_set_drvdata(pdev, pwrkey);
+	platक्रमm_set_drvdata(pdev, pwrkey);
 	device_init_wakeup(&pdev->dev, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pm8941_pwrkey_remove(struct platform_device *pdev)
-{
-	struct pm8941_pwrkey *pwrkey = platform_get_drvdata(pdev);
+अटल पूर्णांक pm8941_pwrkey_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pm8941_pwrkey *pwrkey = platक्रमm_get_drvdata(pdev);
 
-	unregister_reboot_notifier(&pwrkey->reboot_notifier);
+	unरेजिस्टर_reboot_notअगरier(&pwrkey->reboot_notअगरier);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pm8941_data pwrkey_data = {
+अटल स्थिर काष्ठा pm8941_data pwrkey_data = अणु
 	.pull_up_bit = PON_KPDPWR_PULL_UP,
 	.status_bit = PON_KPDPWR_N_SET,
-};
+पूर्ण;
 
-static const struct pm8941_data resin_data = {
+अटल स्थिर काष्ठा pm8941_data resin_data = अणु
 	.pull_up_bit = PON_RESIN_PULL_UP,
 	.status_bit = PON_RESIN_N_SET,
-};
+पूर्ण;
 
-static const struct of_device_id pm8941_pwr_key_id_table[] = {
-	{ .compatible = "qcom,pm8941-pwrkey", .data = &pwrkey_data },
-	{ .compatible = "qcom,pm8941-resin", .data = &resin_data },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id pm8941_pwr_key_id_table[] = अणु
+	अणु .compatible = "qcom,pm8941-pwrkey", .data = &pwrkey_data पूर्ण,
+	अणु .compatible = "qcom,pm8941-resin", .data = &resin_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pm8941_pwr_key_id_table);
 
-static struct platform_driver pm8941_pwrkey_driver = {
+अटल काष्ठा platक्रमm_driver pm8941_pwrkey_driver = अणु
 	.probe = pm8941_pwrkey_probe,
-	.remove = pm8941_pwrkey_remove,
-	.driver = {
+	.हटाओ = pm8941_pwrkey_हटाओ,
+	.driver = अणु
 		.name = "pm8941-pwrkey",
 		.pm = &pm8941_pwr_key_pm_ops,
 		.of_match_table = of_match_ptr(pm8941_pwr_key_id_table),
-	},
-};
-module_platform_driver(pm8941_pwrkey_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(pm8941_pwrkey_driver);
 
 MODULE_DESCRIPTION("PM8941 Power Key driver");
 MODULE_LICENSE("GPL v2");

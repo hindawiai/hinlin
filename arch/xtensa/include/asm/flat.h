@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_XTENSA_FLAT_H
-#define __ASM_XTENSA_FLAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_XTENSA_FLAT_H
+#घोषणा __ASM_XTENSA_FLAT_H
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-static inline int flat_get_addr_from_rp(u32 __user *rp, u32 relval, u32 flags,
+अटल अंतरभूत पूर्णांक flat_get_addr_from_rp(u32 __user *rp, u32 relval, u32 flags,
 					u32 *addr)
-{
-	*addr = get_unaligned((__force u32 *)rp);
-	return 0;
-}
-static inline int flat_put_addr_at_rp(u32 __user *rp, u32 addr, u32 rel)
-{
-	put_unaligned(addr, (__force u32 *)rp);
-	return 0;
-}
+अणु
+	*addr = get_unaligned((__क्रमce u32 *)rp);
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक flat_put_addr_at_rp(u32 __user *rp, u32 addr, u32 rel)
+अणु
+	put_unaligned(addr, (__क्रमce u32 *)rp);
+	वापस 0;
+पूर्ण
 
-#endif /* __ASM_XTENSA_FLAT_H */
+#पूर्ण_अगर /* __ASM_XTENSA_FLAT_H */

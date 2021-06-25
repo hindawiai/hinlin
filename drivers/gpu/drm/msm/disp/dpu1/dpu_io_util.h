@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2012, 2017-2018, The Linux Foundation. All rights reserved.
  */
 
-#ifndef __DPU_IO_UTIL_H__
-#define __DPU_IO_UTIL_H__
+#अगर_अघोषित __DPU_IO_UTIL_H__
+#घोषणा __DPU_IO_UTIL_H__
 
-#include <linux/platform_device.h>
-#include <linux/types.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/types.h>
 
-#define DEV_DBG(fmt, args...)   pr_debug(fmt, ##args)
-#define DEV_INFO(fmt, args...)  pr_info(fmt, ##args)
-#define DEV_WARN(fmt, args...)  pr_warn(fmt, ##args)
-#define DEV_ERR(fmt, args...)   pr_err(fmt, ##args)
+#घोषणा DEV_DBG(fmt, args...)   pr_debug(fmt, ##args)
+#घोषणा DEV_INFO(fmt, args...)  pr_info(fmt, ##args)
+#घोषणा DEV_WARN(fmt, args...)  pr_warn(fmt, ##args)
+#घोषणा DEV_ERR(fmt, args...)   pr_err(fmt, ##args)
 
-enum dss_clk_type {
+क्रमागत dss_clk_type अणु
 	DSS_CLK_AHB, /* no set rate. rate controlled through rpm */
 	DSS_CLK_PCLK,
-};
+पूर्ण;
 
-struct dss_clk {
-	struct clk *clk; /* clk handle */
-	char clk_name[32];
-	enum dss_clk_type type;
-	unsigned long rate;
-	unsigned long max_rate;
-};
+काष्ठा dss_clk अणु
+	काष्ठा clk *clk; /* clk handle */
+	अक्षर clk_name[32];
+	क्रमागत dss_clk_type type;
+	अचिन्हित दीर्घ rate;
+	अचिन्हित दीर्घ max_rate;
+पूर्ण;
 
-struct dss_module_power {
-	unsigned int num_clk;
-	struct dss_clk *clk_config;
-};
+काष्ठा dss_module_घातer अणु
+	अचिन्हित पूर्णांक num_clk;
+	काष्ठा dss_clk *clk_config;
+पूर्ण;
 
-int msm_dss_get_clk(struct device *dev, struct dss_clk *clk_arry, int num_clk);
-void msm_dss_put_clk(struct dss_clk *clk_arry, int num_clk);
-int msm_dss_clk_set_rate(struct dss_clk *clk_arry, int num_clk);
-int msm_dss_enable_clk(struct dss_clk *clk_arry, int num_clk, int enable);
-int msm_dss_parse_clock(struct platform_device *pdev,
-		struct dss_module_power *mp);
-#endif /* __DPU_IO_UTIL_H__ */
+पूर्णांक msm_dss_get_clk(काष्ठा device *dev, काष्ठा dss_clk *clk_arry, पूर्णांक num_clk);
+व्योम msm_dss_put_clk(काष्ठा dss_clk *clk_arry, पूर्णांक num_clk);
+पूर्णांक msm_dss_clk_set_rate(काष्ठा dss_clk *clk_arry, पूर्णांक num_clk);
+पूर्णांक msm_dss_enable_clk(काष्ठा dss_clk *clk_arry, पूर्णांक num_clk, पूर्णांक enable);
+पूर्णांक msm_dss_parse_घड़ी(काष्ठा platक्रमm_device *pdev,
+		काष्ठा dss_module_घातer *mp);
+#पूर्ण_अगर /* __DPU_IO_UTIL_H__ */

@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2016, Linaro Limited
  */
 
-#define pr_fmt(fmt) "%s: " fmt, __func__
+#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
 
-#include <linux/cdev.h>
-#include <linux/cred.h>
-#include <linux/fs.h>
-#include <linux/idr.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/tee_drv.h>
-#include <linux/uaccess.h>
-#include <crypto/hash.h>
-#include <crypto/sha1.h>
-#include "tee_private.h"
+#समावेश <linux/cdev.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tee_drv.h>
+#समावेश <linux/uaccess.h>
+#समावेश <crypto/hash.h>
+#समावेश <crypto/sha1.h>
+#समावेश "tee_private.h"
 
-#define TEE_NUM_DEVICES	32
+#घोषणा TEE_NUM_DEVICES	32
 
-#define TEE_IOCTL_PARAM_SIZE(x) (sizeof(struct tee_param) * (x))
+#घोषणा TEE_IOCTL_PARAM_SIZE(x) (माप(काष्ठा tee_param) * (x))
 
-#define TEE_UUID_NS_NAME_SIZE	128
+#घोषणा TEE_UUID_NS_NAME_SIZE	128
 
 /*
- * TEE Client UUID name space identifier (UUIDv4)
+ * TEE Client UUID name space identअगरier (UUIDv4)
  *
- * Value here is random UUID that is allocated as name space identifier for
- * forming Client UUID's for TEE environment using UUIDv5 scheme.
+ * Value here is अक्रमom UUID that is allocated as name space identअगरier क्रम
+ * क्रमming Client UUID's क्रम TEE environment using UUIDv5 scheme.
  */
-static const uuid_t tee_client_uuid_ns = UUID_INIT(0x58ac9ca0, 0x2086, 0x4683,
+अटल स्थिर uuid_t tee_client_uuid_ns = UUID_INIT(0x58ac9ca0, 0x2086, 0x4683,
 						   0xa1, 0xb8, 0xec, 0x4b,
 						   0xc0, 0x8e, 0x01, 0xb6);
 
@@ -37,180 +38,180 @@ static const uuid_t tee_client_uuid_ns = UUID_INIT(0x58ac9ca0, 0x2086, 0x4683,
  * Unprivileged devices in the lower half range and privileged devices in
  * the upper half range.
  */
-static DECLARE_BITMAP(dev_mask, TEE_NUM_DEVICES);
-static DEFINE_SPINLOCK(driver_lock);
+अटल DECLARE_BITMAP(dev_mask, TEE_NUM_DEVICES);
+अटल DEFINE_SPINLOCK(driver_lock);
 
-static struct class *tee_class;
-static dev_t tee_devt;
+अटल काष्ठा class *tee_class;
+अटल dev_t tee_devt;
 
-static struct tee_context *teedev_open(struct tee_device *teedev)
-{
-	int rc;
-	struct tee_context *ctx;
+अटल काष्ठा tee_context *teedev_खोलो(काष्ठा tee_device *teedev)
+अणु
+	पूर्णांक rc;
+	काष्ठा tee_context *ctx;
 
-	if (!tee_device_get(teedev))
-		return ERR_PTR(-EINVAL);
+	अगर (!tee_device_get(teedev))
+		वापस ERR_PTR(-EINVAL);
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx) {
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx) अणु
 		rc = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	kref_init(&ctx->refcount);
 	ctx->teedev = teedev;
-	rc = teedev->desc->ops->open(ctx);
-	if (rc)
-		goto err;
+	rc = teedev->desc->ops->खोलो(ctx);
+	अगर (rc)
+		जाओ err;
 
-	return ctx;
+	वापस ctx;
 err:
-	kfree(ctx);
+	kमुक्त(ctx);
 	tee_device_put(teedev);
-	return ERR_PTR(rc);
+	वापस ERR_PTR(rc);
 
-}
+पूर्ण
 
-void teedev_ctx_get(struct tee_context *ctx)
-{
-	if (ctx->releasing)
-		return;
+व्योम teedev_ctx_get(काष्ठा tee_context *ctx)
+अणु
+	अगर (ctx->releasing)
+		वापस;
 
 	kref_get(&ctx->refcount);
-}
+पूर्ण
 
-static void teedev_ctx_release(struct kref *ref)
-{
-	struct tee_context *ctx = container_of(ref, struct tee_context,
+अटल व्योम teedev_ctx_release(काष्ठा kref *ref)
+अणु
+	काष्ठा tee_context *ctx = container_of(ref, काष्ठा tee_context,
 					       refcount);
 	ctx->releasing = true;
 	ctx->teedev->desc->ops->release(ctx);
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण
 
-void teedev_ctx_put(struct tee_context *ctx)
-{
-	if (ctx->releasing)
-		return;
+व्योम teedev_ctx_put(काष्ठा tee_context *ctx)
+अणु
+	अगर (ctx->releasing)
+		वापस;
 
 	kref_put(&ctx->refcount, teedev_ctx_release);
-}
+पूर्ण
 
-static void teedev_close_context(struct tee_context *ctx)
-{
+अटल व्योम teedev_बंद_context(काष्ठा tee_context *ctx)
+अणु
 	tee_device_put(ctx->teedev);
 	teedev_ctx_put(ctx);
-}
+पूर्ण
 
-static int tee_open(struct inode *inode, struct file *filp)
-{
-	struct tee_context *ctx;
+अटल पूर्णांक tee_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा tee_context *ctx;
 
-	ctx = teedev_open(container_of(inode->i_cdev, struct tee_device, cdev));
-	if (IS_ERR(ctx))
-		return PTR_ERR(ctx);
+	ctx = teedev_खोलो(container_of(inode->i_cdev, काष्ठा tee_device, cdev));
+	अगर (IS_ERR(ctx))
+		वापस PTR_ERR(ctx);
 
 	/*
-	 * Default user-space behaviour is to wait for tee-supplicant
-	 * if not present for any requests in this context.
+	 * Default user-space behaviour is to रुको क्रम tee-supplicant
+	 * अगर not present क्रम any requests in this context.
 	 */
-	ctx->supp_nowait = false;
-	filp->private_data = ctx;
-	return 0;
-}
+	ctx->supp_noरुको = false;
+	filp->निजी_data = ctx;
+	वापस 0;
+पूर्ण
 
-static int tee_release(struct inode *inode, struct file *filp)
-{
-	teedev_close_context(filp->private_data);
-	return 0;
-}
+अटल पूर्णांक tee_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	teedev_बंद_context(filp->निजी_data);
+	वापस 0;
+पूर्ण
 
 /**
  * uuid_v5() - Calculate UUIDv5
  * @uuid: Resulting UUID
- * @ns: Name space ID for UUIDv5 function
- * @name: Name for UUIDv5 function
+ * @ns: Name space ID क्रम UUIDv5 function
+ * @name: Name क्रम UUIDv5 function
  * @size: Size of name
  *
- * UUIDv5 is specific in RFC 4122.
+ * UUIDv5 is specअगरic in RFC 4122.
  *
- * This implements section (for SHA-1):
- * 4.3.  Algorithm for Creating a Name-Based UUID
+ * This implements section (क्रम SHA-1):
+ * 4.3.  Algorithm क्रम Creating a Name-Based UUID
  */
-static int uuid_v5(uuid_t *uuid, const uuid_t *ns, const void *name,
-		   size_t size)
-{
-	unsigned char hash[SHA1_DIGEST_SIZE];
-	struct crypto_shash *shash = NULL;
-	struct shash_desc *desc = NULL;
-	int rc;
+अटल पूर्णांक uuid_v5(uuid_t *uuid, स्थिर uuid_t *ns, स्थिर व्योम *name,
+		   माप_प्रकार size)
+अणु
+	अचिन्हित अक्षर hash[SHA1_DIGEST_SIZE];
+	काष्ठा crypto_shash *shash = शून्य;
+	काष्ठा shash_desc *desc = शून्य;
+	पूर्णांक rc;
 
 	shash = crypto_alloc_shash("sha1", 0, 0);
-	if (IS_ERR(shash)) {
+	अगर (IS_ERR(shash)) अणु
 		rc = PTR_ERR(shash);
 		pr_err("shash(sha1) allocation failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	desc = kzalloc(sizeof(*desc) + crypto_shash_descsize(shash),
+	desc = kzalloc(माप(*desc) + crypto_shash_descsize(shash),
 		       GFP_KERNEL);
-	if (!desc) {
+	अगर (!desc) अणु
 		rc = -ENOMEM;
-		goto out_free_shash;
-	}
+		जाओ out_मुक्त_shash;
+	पूर्ण
 
 	desc->tfm = shash;
 
 	rc = crypto_shash_init(desc);
-	if (rc < 0)
-		goto out_free_desc;
+	अगर (rc < 0)
+		जाओ out_मुक्त_desc;
 
-	rc = crypto_shash_update(desc, (const u8 *)ns, sizeof(*ns));
-	if (rc < 0)
-		goto out_free_desc;
+	rc = crypto_shash_update(desc, (स्थिर u8 *)ns, माप(*ns));
+	अगर (rc < 0)
+		जाओ out_मुक्त_desc;
 
-	rc = crypto_shash_update(desc, (const u8 *)name, size);
-	if (rc < 0)
-		goto out_free_desc;
+	rc = crypto_shash_update(desc, (स्थिर u8 *)name, size);
+	अगर (rc < 0)
+		जाओ out_मुक्त_desc;
 
 	rc = crypto_shash_final(desc, hash);
-	if (rc < 0)
-		goto out_free_desc;
+	अगर (rc < 0)
+		जाओ out_मुक्त_desc;
 
-	memcpy(uuid->b, hash, UUID_SIZE);
+	स_नकल(uuid->b, hash, UUID_SIZE);
 
-	/* Tag for version 5 */
+	/* Tag क्रम version 5 */
 	uuid->b[6] = (hash[6] & 0x0F) | 0x50;
 	uuid->b[8] = (hash[8] & 0x3F) | 0x80;
 
-out_free_desc:
-	kfree(desc);
+out_मुक्त_desc:
+	kमुक्त(desc);
 
-out_free_shash:
-	crypto_free_shash(shash);
-	return rc;
-}
+out_मुक्त_shash:
+	crypto_मुक्त_shash(shash);
+	वापस rc;
+पूर्ण
 
-int tee_session_calc_client_uuid(uuid_t *uuid, u32 connection_method,
-				 const u8 connection_data[TEE_IOCTL_UUID_LEN])
-{
+पूर्णांक tee_session_calc_client_uuid(uuid_t *uuid, u32 connection_method,
+				 स्थिर u8 connection_data[TEE_IOCTL_UUID_LEN])
+अणु
 	gid_t ns_grp = (gid_t)-1;
 	kgid_t grp = INVALID_GID;
-	char *name = NULL;
-	int name_len;
-	int rc;
+	अक्षर *name = शून्य;
+	पूर्णांक name_len;
+	पूर्णांक rc;
 
-	if (connection_method == TEE_IOCTL_LOGIN_PUBLIC ||
-	    connection_method == TEE_IOCTL_LOGIN_REE_KERNEL) {
+	अगर (connection_method == TEE_IOCTL_LOGIN_PUBLIC ||
+	    connection_method == TEE_IOCTL_LOGIN_REE_KERNEL) अणु
 		/* Nil UUID to be passed to TEE environment */
 		uuid_copy(uuid, &uuid_null);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * In Linux environment client UUID is based on UUIDv5.
 	 *
-	 * Determine client UUID with following semantics for 'name':
+	 * Determine client UUID with following semantics क्रम 'name':
 	 *
 	 * For TEEC_LOGIN_USER:
 	 * uid=<uid>
@@ -221,699 +222,699 @@ int tee_session_calc_client_uuid(uuid_t *uuid, u32 connection_method,
 	 */
 
 	name = kzalloc(TEE_UUID_NS_NAME_SIZE, GFP_KERNEL);
-	if (!name)
-		return -ENOMEM;
+	अगर (!name)
+		वापस -ENOMEM;
 
-	switch (connection_method) {
-	case TEE_IOCTL_LOGIN_USER:
-		name_len = snprintf(name, TEE_UUID_NS_NAME_SIZE, "uid=%x",
+	चयन (connection_method) अणु
+	हाल TEE_IOCTL_LOGIN_USER:
+		name_len = snम_लिखो(name, TEE_UUID_NS_NAME_SIZE, "uid=%x",
 				    current_euid().val);
-		if (name_len >= TEE_UUID_NS_NAME_SIZE) {
+		अगर (name_len >= TEE_UUID_NS_NAME_SIZE) अणु
 			rc = -E2BIG;
-			goto out_free_name;
-		}
-		break;
+			जाओ out_मुक्त_name;
+		पूर्ण
+		अवरोध;
 
-	case TEE_IOCTL_LOGIN_GROUP:
-		memcpy(&ns_grp, connection_data, sizeof(gid_t));
+	हाल TEE_IOCTL_LOGIN_GROUP:
+		स_नकल(&ns_grp, connection_data, माप(gid_t));
 		grp = make_kgid(current_user_ns(), ns_grp);
-		if (!gid_valid(grp) || !in_egroup_p(grp)) {
+		अगर (!gid_valid(grp) || !in_egroup_p(grp)) अणु
 			rc = -EPERM;
-			goto out_free_name;
-		}
+			जाओ out_मुक्त_name;
+		पूर्ण
 
-		name_len = snprintf(name, TEE_UUID_NS_NAME_SIZE, "gid=%x",
+		name_len = snम_लिखो(name, TEE_UUID_NS_NAME_SIZE, "gid=%x",
 				    grp.val);
-		if (name_len >= TEE_UUID_NS_NAME_SIZE) {
+		अगर (name_len >= TEE_UUID_NS_NAME_SIZE) अणु
 			rc = -E2BIG;
-			goto out_free_name;
-		}
-		break;
+			जाओ out_मुक्त_name;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		rc = -EINVAL;
-		goto out_free_name;
-	}
+		जाओ out_मुक्त_name;
+	पूर्ण
 
 	rc = uuid_v5(uuid, &tee_client_uuid_ns, name, name_len);
-out_free_name:
-	kfree(name);
+out_मुक्त_name:
+	kमुक्त(name);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_session_calc_client_uuid);
 
-static int tee_ioctl_version(struct tee_context *ctx,
-			     struct tee_ioctl_version_data __user *uvers)
-{
-	struct tee_ioctl_version_data vers;
+अटल पूर्णांक tee_ioctl_version(काष्ठा tee_context *ctx,
+			     काष्ठा tee_ioctl_version_data __user *uvers)
+अणु
+	काष्ठा tee_ioctl_version_data vers;
 
 	ctx->teedev->desc->ops->get_version(ctx->teedev, &vers);
 
-	if (ctx->teedev->desc->flags & TEE_DESC_PRIVILEGED)
+	अगर (ctx->teedev->desc->flags & TEE_DESC_PRIVILEGED)
 		vers.gen_caps |= TEE_GEN_CAP_PRIVILEGED;
 
-	if (copy_to_user(uvers, &vers, sizeof(vers)))
-		return -EFAULT;
+	अगर (copy_to_user(uvers, &vers, माप(vers)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tee_ioctl_shm_alloc(struct tee_context *ctx,
-			       struct tee_ioctl_shm_alloc_data __user *udata)
-{
-	long ret;
-	struct tee_ioctl_shm_alloc_data data;
-	struct tee_shm *shm;
+अटल पूर्णांक tee_ioctl_shm_alloc(काष्ठा tee_context *ctx,
+			       काष्ठा tee_ioctl_shm_alloc_data __user *udata)
+अणु
+	दीर्घ ret;
+	काष्ठा tee_ioctl_shm_alloc_data data;
+	काष्ठा tee_shm *shm;
 
-	if (copy_from_user(&data, udata, sizeof(data)))
-		return -EFAULT;
+	अगर (copy_from_user(&data, udata, माप(data)))
+		वापस -EFAULT;
 
 	/* Currently no input flags are supported */
-	if (data.flags)
-		return -EINVAL;
+	अगर (data.flags)
+		वापस -EINVAL;
 
 	shm = tee_shm_alloc(ctx, data.size, TEE_SHM_MAPPED | TEE_SHM_DMA_BUF);
-	if (IS_ERR(shm))
-		return PTR_ERR(shm);
+	अगर (IS_ERR(shm))
+		वापस PTR_ERR(shm);
 
 	data.id = shm->id;
 	data.flags = shm->flags;
 	data.size = shm->size;
 
-	if (copy_to_user(udata, &data, sizeof(data)))
+	अगर (copy_to_user(udata, &data, माप(data)))
 		ret = -EFAULT;
-	else
+	अन्यथा
 		ret = tee_shm_get_fd(shm);
 
 	/*
-	 * When user space closes the file descriptor the shared memory
-	 * should be freed or if tee_shm_get_fd() failed then it will
-	 * be freed immediately.
+	 * When user space बंदs the file descriptor the shared memory
+	 * should be मुक्तd or अगर tee_shm_get_fd() failed then it will
+	 * be मुक्तd immediately.
 	 */
 	tee_shm_put(shm);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-tee_ioctl_shm_register(struct tee_context *ctx,
-		       struct tee_ioctl_shm_register_data __user *udata)
-{
-	long ret;
-	struct tee_ioctl_shm_register_data data;
-	struct tee_shm *shm;
+अटल पूर्णांक
+tee_ioctl_shm_रेजिस्टर(काष्ठा tee_context *ctx,
+		       काष्ठा tee_ioctl_shm_रेजिस्टर_data __user *udata)
+अणु
+	दीर्घ ret;
+	काष्ठा tee_ioctl_shm_रेजिस्टर_data data;
+	काष्ठा tee_shm *shm;
 
-	if (copy_from_user(&data, udata, sizeof(data)))
-		return -EFAULT;
+	अगर (copy_from_user(&data, udata, माप(data)))
+		वापस -EFAULT;
 
 	/* Currently no input flags are supported */
-	if (data.flags)
-		return -EINVAL;
+	अगर (data.flags)
+		वापस -EINVAL;
 
-	shm = tee_shm_register(ctx, data.addr, data.length,
+	shm = tee_shm_रेजिस्टर(ctx, data.addr, data.length,
 			       TEE_SHM_DMA_BUF | TEE_SHM_USER_MAPPED);
-	if (IS_ERR(shm))
-		return PTR_ERR(shm);
+	अगर (IS_ERR(shm))
+		वापस PTR_ERR(shm);
 
 	data.id = shm->id;
 	data.flags = shm->flags;
 	data.length = shm->size;
 
-	if (copy_to_user(udata, &data, sizeof(data)))
+	अगर (copy_to_user(udata, &data, माप(data)))
 		ret = -EFAULT;
-	else
+	अन्यथा
 		ret = tee_shm_get_fd(shm);
 	/*
-	 * When user space closes the file descriptor the shared memory
-	 * should be freed or if tee_shm_get_fd() failed then it will
-	 * be freed immediately.
+	 * When user space बंदs the file descriptor the shared memory
+	 * should be मुक्तd or अगर tee_shm_get_fd() failed then it will
+	 * be मुक्तd immediately.
 	 */
 	tee_shm_put(shm);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int params_from_user(struct tee_context *ctx, struct tee_param *params,
-			    size_t num_params,
-			    struct tee_ioctl_param __user *uparams)
-{
-	size_t n;
+अटल पूर्णांक params_from_user(काष्ठा tee_context *ctx, काष्ठा tee_param *params,
+			    माप_प्रकार num_params,
+			    काष्ठा tee_ioctl_param __user *uparams)
+अणु
+	माप_प्रकार n;
 
-	for (n = 0; n < num_params; n++) {
-		struct tee_shm *shm;
-		struct tee_ioctl_param ip;
+	क्रम (n = 0; n < num_params; n++) अणु
+		काष्ठा tee_shm *shm;
+		काष्ठा tee_ioctl_param ip;
 
-		if (copy_from_user(&ip, uparams + n, sizeof(ip)))
-			return -EFAULT;
+		अगर (copy_from_user(&ip, uparams + n, माप(ip)))
+			वापस -EFAULT;
 
 		/* All unused attribute bits has to be zero */
-		if (ip.attr & ~TEE_IOCTL_PARAM_ATTR_MASK)
-			return -EINVAL;
+		अगर (ip.attr & ~TEE_IOCTL_PARAM_ATTR_MASK)
+			वापस -EINVAL;
 
 		params[n].attr = ip.attr;
-		switch (ip.attr & TEE_IOCTL_PARAM_ATTR_TYPE_MASK) {
-		case TEE_IOCTL_PARAM_ATTR_TYPE_NONE:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT:
-			break;
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT:
+		चयन (ip.attr & TEE_IOCTL_PARAM_ATTR_TYPE_MASK) अणु
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_NONE:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT:
+			अवरोध;
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT:
 			params[n].u.value.a = ip.a;
 			params[n].u.value.b = ip.b;
 			params[n].u.value.c = ip.c;
-			break;
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT:
+			अवरोध;
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT:
 			/*
-			 * If a NULL pointer is passed to a TA in the TEE,
-			 * the ip.c IOCTL parameters is set to TEE_MEMREF_NULL
-			 * indicating a NULL memory reference.
+			 * If a शून्य poपूर्णांकer is passed to a TA in the TEE,
+			 * the ip.c IOCTL parameters is set to TEE_MEMREF_शून्य
+			 * indicating a शून्य memory reference.
 			 */
-			if (ip.c != TEE_MEMREF_NULL) {
+			अगर (ip.c != TEE_MEMREF_शून्य) अणु
 				/*
-				 * If we fail to get a pointer to a shared
+				 * If we fail to get a poपूर्णांकer to a shared
 				 * memory object (and increase the ref count)
-				 * from an identifier we return an error. All
-				 * pointers that has been added in params have
+				 * from an identअगरier we वापस an error. All
+				 * poपूर्णांकers that has been added in params have
 				 * an increased ref count. It's the callers
-				 * responibility to do tee_shm_put() on all
-				 * resolved pointers.
+				 * responibility to करो tee_shm_put() on all
+				 * resolved poपूर्णांकers.
 				 */
 				shm = tee_shm_get_from_id(ctx, ip.c);
-				if (IS_ERR(shm))
-					return PTR_ERR(shm);
+				अगर (IS_ERR(shm))
+					वापस PTR_ERR(shm);
 
 				/*
-				 * Ensure offset + size does not overflow
-				 * offset and does not overflow the size of
+				 * Ensure offset + size करोes not overflow
+				 * offset and करोes not overflow the size of
 				 * the referred shared memory object.
 				 */
-				if ((ip.a + ip.b) < ip.a ||
-				    (ip.a + ip.b) > shm->size) {
+				अगर ((ip.a + ip.b) < ip.a ||
+				    (ip.a + ip.b) > shm->size) अणु
 					tee_shm_put(shm);
-					return -EINVAL;
-				}
-			} else if (ctx->cap_memref_null) {
-				/* Pass NULL pointer to OP-TEE */
-				shm = NULL;
-			} else {
-				return -EINVAL;
-			}
+					वापस -EINVAL;
+				पूर्ण
+			पूर्ण अन्यथा अगर (ctx->cap_memref_null) अणु
+				/* Pass शून्य poपूर्णांकer to OP-TEE */
+				shm = शून्य;
+			पूर्ण अन्यथा अणु
+				वापस -EINVAL;
+			पूर्ण
 
 			params[n].u.memref.shm_offs = ip.a;
 			params[n].u.memref.size = ip.b;
 			params[n].u.memref.shm = shm;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/* Unknown attribute */
-			return -EINVAL;
-		}
-	}
-	return 0;
-}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int params_to_user(struct tee_ioctl_param __user *uparams,
-			  size_t num_params, struct tee_param *params)
-{
-	size_t n;
+अटल पूर्णांक params_to_user(काष्ठा tee_ioctl_param __user *uparams,
+			  माप_प्रकार num_params, काष्ठा tee_param *params)
+अणु
+	माप_प्रकार n;
 
-	for (n = 0; n < num_params; n++) {
-		struct tee_ioctl_param __user *up = uparams + n;
-		struct tee_param *p = params + n;
+	क्रम (n = 0; n < num_params; n++) अणु
+		काष्ठा tee_ioctl_param __user *up = uparams + n;
+		काष्ठा tee_param *p = params + n;
 
-		switch (p->attr) {
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT:
-			if (put_user(p->u.value.a, &up->a) ||
+		चयन (p->attr) अणु
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT:
+			अगर (put_user(p->u.value.a, &up->a) ||
 			    put_user(p->u.value.b, &up->b) ||
 			    put_user(p->u.value.c, &up->c))
-				return -EFAULT;
-			break;
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT:
-			if (put_user((u64)p->u.memref.size, &up->b))
-				return -EFAULT;
-		default:
-			break;
-		}
-	}
-	return 0;
-}
+				वापस -EFAULT;
+			अवरोध;
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT:
+			अगर (put_user((u64)p->u.memref.size, &up->b))
+				वापस -EFAULT;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int tee_ioctl_open_session(struct tee_context *ctx,
-				  struct tee_ioctl_buf_data __user *ubuf)
-{
-	int rc;
-	size_t n;
-	struct tee_ioctl_buf_data buf;
-	struct tee_ioctl_open_session_arg __user *uarg;
-	struct tee_ioctl_open_session_arg arg;
-	struct tee_ioctl_param __user *uparams = NULL;
-	struct tee_param *params = NULL;
+अटल पूर्णांक tee_ioctl_खोलो_session(काष्ठा tee_context *ctx,
+				  काष्ठा tee_ioctl_buf_data __user *ubuf)
+अणु
+	पूर्णांक rc;
+	माप_प्रकार n;
+	काष्ठा tee_ioctl_buf_data buf;
+	काष्ठा tee_ioctl_खोलो_session_arg __user *uarg;
+	काष्ठा tee_ioctl_खोलो_session_arg arg;
+	काष्ठा tee_ioctl_param __user *uparams = शून्य;
+	काष्ठा tee_param *params = शून्य;
 	bool have_session = false;
 
-	if (!ctx->teedev->desc->ops->open_session)
-		return -EINVAL;
+	अगर (!ctx->teedev->desc->ops->खोलो_session)
+		वापस -EINVAL;
 
-	if (copy_from_user(&buf, ubuf, sizeof(buf)))
-		return -EFAULT;
+	अगर (copy_from_user(&buf, ubuf, माप(buf)))
+		वापस -EFAULT;
 
-	if (buf.buf_len > TEE_MAX_ARG_SIZE ||
-	    buf.buf_len < sizeof(struct tee_ioctl_open_session_arg))
-		return -EINVAL;
+	अगर (buf.buf_len > TEE_MAX_ARG_SIZE ||
+	    buf.buf_len < माप(काष्ठा tee_ioctl_खोलो_session_arg))
+		वापस -EINVAL;
 
 	uarg = u64_to_user_ptr(buf.buf_ptr);
-	if (copy_from_user(&arg, uarg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_from_user(&arg, uarg, माप(arg)))
+		वापस -EFAULT;
 
-	if (sizeof(arg) + TEE_IOCTL_PARAM_SIZE(arg.num_params) != buf.buf_len)
-		return -EINVAL;
+	अगर (माप(arg) + TEE_IOCTL_PARAM_SIZE(arg.num_params) != buf.buf_len)
+		वापस -EINVAL;
 
-	if (arg.num_params) {
-		params = kcalloc(arg.num_params, sizeof(struct tee_param),
+	अगर (arg.num_params) अणु
+		params = kसुस्मृति(arg.num_params, माप(काष्ठा tee_param),
 				 GFP_KERNEL);
-		if (!params)
-			return -ENOMEM;
+		अगर (!params)
+			वापस -ENOMEM;
 		uparams = uarg->params;
 		rc = params_from_user(ctx, params, arg.num_params, uparams);
-		if (rc)
-			goto out;
-	}
+		अगर (rc)
+			जाओ out;
+	पूर्ण
 
-	if (arg.clnt_login >= TEE_IOCTL_LOGIN_REE_KERNEL_MIN &&
-	    arg.clnt_login <= TEE_IOCTL_LOGIN_REE_KERNEL_MAX) {
+	अगर (arg.clnt_login >= TEE_IOCTL_LOGIN_REE_KERNEL_MIN &&
+	    arg.clnt_login <= TEE_IOCTL_LOGIN_REE_KERNEL_MAX) अणु
 		pr_debug("login method not allowed for user-space client\n");
 		rc = -EPERM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rc = ctx->teedev->desc->ops->open_session(ctx, &arg, params);
-	if (rc)
-		goto out;
+	rc = ctx->teedev->desc->ops->खोलो_session(ctx, &arg, params);
+	अगर (rc)
+		जाओ out;
 	have_session = true;
 
-	if (put_user(arg.session, &uarg->session) ||
+	अगर (put_user(arg.session, &uarg->session) ||
 	    put_user(arg.ret, &uarg->ret) ||
-	    put_user(arg.ret_origin, &uarg->ret_origin)) {
+	    put_user(arg.ret_origin, &uarg->ret_origin)) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	rc = params_to_user(uparams, arg.num_params, params);
 out:
 	/*
-	 * If we've succeeded to open the session but failed to communicate
-	 * it back to user space, close the session again to avoid leakage.
+	 * If we've succeeded to खोलो the session but failed to communicate
+	 * it back to user space, बंद the session again to aव्योम leakage.
 	 */
-	if (rc && have_session && ctx->teedev->desc->ops->close_session)
-		ctx->teedev->desc->ops->close_session(ctx, arg.session);
+	अगर (rc && have_session && ctx->teedev->desc->ops->बंद_session)
+		ctx->teedev->desc->ops->बंद_session(ctx, arg.session);
 
-	if (params) {
-		/* Decrease ref count for all valid shared memory pointers */
-		for (n = 0; n < arg.num_params; n++)
-			if (tee_param_is_memref(params + n) &&
+	अगर (params) अणु
+		/* Decrease ref count क्रम all valid shared memory poपूर्णांकers */
+		क्रम (n = 0; n < arg.num_params; n++)
+			अगर (tee_param_is_memref(params + n) &&
 			    params[n].u.memref.shm)
 				tee_shm_put(params[n].u.memref.shm);
-		kfree(params);
-	}
+		kमुक्त(params);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int tee_ioctl_invoke(struct tee_context *ctx,
-			    struct tee_ioctl_buf_data __user *ubuf)
-{
-	int rc;
-	size_t n;
-	struct tee_ioctl_buf_data buf;
-	struct tee_ioctl_invoke_arg __user *uarg;
-	struct tee_ioctl_invoke_arg arg;
-	struct tee_ioctl_param __user *uparams = NULL;
-	struct tee_param *params = NULL;
+अटल पूर्णांक tee_ioctl_invoke(काष्ठा tee_context *ctx,
+			    काष्ठा tee_ioctl_buf_data __user *ubuf)
+अणु
+	पूर्णांक rc;
+	माप_प्रकार n;
+	काष्ठा tee_ioctl_buf_data buf;
+	काष्ठा tee_ioctl_invoke_arg __user *uarg;
+	काष्ठा tee_ioctl_invoke_arg arg;
+	काष्ठा tee_ioctl_param __user *uparams = शून्य;
+	काष्ठा tee_param *params = शून्य;
 
-	if (!ctx->teedev->desc->ops->invoke_func)
-		return -EINVAL;
+	अगर (!ctx->teedev->desc->ops->invoke_func)
+		वापस -EINVAL;
 
-	if (copy_from_user(&buf, ubuf, sizeof(buf)))
-		return -EFAULT;
+	अगर (copy_from_user(&buf, ubuf, माप(buf)))
+		वापस -EFAULT;
 
-	if (buf.buf_len > TEE_MAX_ARG_SIZE ||
-	    buf.buf_len < sizeof(struct tee_ioctl_invoke_arg))
-		return -EINVAL;
+	अगर (buf.buf_len > TEE_MAX_ARG_SIZE ||
+	    buf.buf_len < माप(काष्ठा tee_ioctl_invoke_arg))
+		वापस -EINVAL;
 
 	uarg = u64_to_user_ptr(buf.buf_ptr);
-	if (copy_from_user(&arg, uarg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_from_user(&arg, uarg, माप(arg)))
+		वापस -EFAULT;
 
-	if (sizeof(arg) + TEE_IOCTL_PARAM_SIZE(arg.num_params) != buf.buf_len)
-		return -EINVAL;
+	अगर (माप(arg) + TEE_IOCTL_PARAM_SIZE(arg.num_params) != buf.buf_len)
+		वापस -EINVAL;
 
-	if (arg.num_params) {
-		params = kcalloc(arg.num_params, sizeof(struct tee_param),
+	अगर (arg.num_params) अणु
+		params = kसुस्मृति(arg.num_params, माप(काष्ठा tee_param),
 				 GFP_KERNEL);
-		if (!params)
-			return -ENOMEM;
+		अगर (!params)
+			वापस -ENOMEM;
 		uparams = uarg->params;
 		rc = params_from_user(ctx, params, arg.num_params, uparams);
-		if (rc)
-			goto out;
-	}
+		अगर (rc)
+			जाओ out;
+	पूर्ण
 
 	rc = ctx->teedev->desc->ops->invoke_func(ctx, &arg, params);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	if (put_user(arg.ret, &uarg->ret) ||
-	    put_user(arg.ret_origin, &uarg->ret_origin)) {
+	अगर (put_user(arg.ret, &uarg->ret) ||
+	    put_user(arg.ret_origin, &uarg->ret_origin)) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	rc = params_to_user(uparams, arg.num_params, params);
 out:
-	if (params) {
-		/* Decrease ref count for all valid shared memory pointers */
-		for (n = 0; n < arg.num_params; n++)
-			if (tee_param_is_memref(params + n) &&
+	अगर (params) अणु
+		/* Decrease ref count क्रम all valid shared memory poपूर्णांकers */
+		क्रम (n = 0; n < arg.num_params; n++)
+			अगर (tee_param_is_memref(params + n) &&
 			    params[n].u.memref.shm)
 				tee_shm_put(params[n].u.memref.shm);
-		kfree(params);
-	}
-	return rc;
-}
+		kमुक्त(params);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int tee_ioctl_cancel(struct tee_context *ctx,
-			    struct tee_ioctl_cancel_arg __user *uarg)
-{
-	struct tee_ioctl_cancel_arg arg;
+अटल पूर्णांक tee_ioctl_cancel(काष्ठा tee_context *ctx,
+			    काष्ठा tee_ioctl_cancel_arg __user *uarg)
+अणु
+	काष्ठा tee_ioctl_cancel_arg arg;
 
-	if (!ctx->teedev->desc->ops->cancel_req)
-		return -EINVAL;
+	अगर (!ctx->teedev->desc->ops->cancel_req)
+		वापस -EINVAL;
 
-	if (copy_from_user(&arg, uarg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_from_user(&arg, uarg, माप(arg)))
+		वापस -EFAULT;
 
-	return ctx->teedev->desc->ops->cancel_req(ctx, arg.cancel_id,
+	वापस ctx->teedev->desc->ops->cancel_req(ctx, arg.cancel_id,
 						  arg.session);
-}
+पूर्ण
 
-static int
-tee_ioctl_close_session(struct tee_context *ctx,
-			struct tee_ioctl_close_session_arg __user *uarg)
-{
-	struct tee_ioctl_close_session_arg arg;
+अटल पूर्णांक
+tee_ioctl_बंद_session(काष्ठा tee_context *ctx,
+			काष्ठा tee_ioctl_बंद_session_arg __user *uarg)
+अणु
+	काष्ठा tee_ioctl_बंद_session_arg arg;
 
-	if (!ctx->teedev->desc->ops->close_session)
-		return -EINVAL;
+	अगर (!ctx->teedev->desc->ops->बंद_session)
+		वापस -EINVAL;
 
-	if (copy_from_user(&arg, uarg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_from_user(&arg, uarg, माप(arg)))
+		वापस -EFAULT;
 
-	return ctx->teedev->desc->ops->close_session(ctx, arg.session);
-}
+	वापस ctx->teedev->desc->ops->बंद_session(ctx, arg.session);
+पूर्ण
 
-static int params_to_supp(struct tee_context *ctx,
-			  struct tee_ioctl_param __user *uparams,
-			  size_t num_params, struct tee_param *params)
-{
-	size_t n;
+अटल पूर्णांक params_to_supp(काष्ठा tee_context *ctx,
+			  काष्ठा tee_ioctl_param __user *uparams,
+			  माप_प्रकार num_params, काष्ठा tee_param *params)
+अणु
+	माप_प्रकार n;
 
-	for (n = 0; n < num_params; n++) {
-		struct tee_ioctl_param ip;
-		struct tee_param *p = params + n;
+	क्रम (n = 0; n < num_params; n++) अणु
+		काष्ठा tee_ioctl_param ip;
+		काष्ठा tee_param *p = params + n;
 
 		ip.attr = p->attr;
-		switch (p->attr & TEE_IOCTL_PARAM_ATTR_TYPE_MASK) {
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT:
+		चयन (p->attr & TEE_IOCTL_PARAM_ATTR_TYPE_MASK) अणु
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT:
 			ip.a = p->u.value.a;
 			ip.b = p->u.value.b;
 			ip.c = p->u.value.c;
-			break;
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT:
+			अवरोध;
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT:
 			ip.b = p->u.memref.size;
-			if (!p->u.memref.shm) {
+			अगर (!p->u.memref.shm) अणु
 				ip.a = 0;
 				ip.c = (u64)-1; /* invalid shm id */
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			ip.a = p->u.memref.shm_offs;
 			ip.c = p->u.memref.shm->id;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ip.a = 0;
 			ip.b = 0;
 			ip.c = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (copy_to_user(uparams + n, &ip, sizeof(ip)))
-			return -EFAULT;
-	}
+		अगर (copy_to_user(uparams + n, &ip, माप(ip)))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tee_ioctl_supp_recv(struct tee_context *ctx,
-			       struct tee_ioctl_buf_data __user *ubuf)
-{
-	int rc;
-	struct tee_ioctl_buf_data buf;
-	struct tee_iocl_supp_recv_arg __user *uarg;
-	struct tee_param *params;
+अटल पूर्णांक tee_ioctl_supp_recv(काष्ठा tee_context *ctx,
+			       काष्ठा tee_ioctl_buf_data __user *ubuf)
+अणु
+	पूर्णांक rc;
+	काष्ठा tee_ioctl_buf_data buf;
+	काष्ठा tee_iocl_supp_recv_arg __user *uarg;
+	काष्ठा tee_param *params;
 	u32 num_params;
 	u32 func;
 
-	if (!ctx->teedev->desc->ops->supp_recv)
-		return -EINVAL;
+	अगर (!ctx->teedev->desc->ops->supp_recv)
+		वापस -EINVAL;
 
-	if (copy_from_user(&buf, ubuf, sizeof(buf)))
-		return -EFAULT;
+	अगर (copy_from_user(&buf, ubuf, माप(buf)))
+		वापस -EFAULT;
 
-	if (buf.buf_len > TEE_MAX_ARG_SIZE ||
-	    buf.buf_len < sizeof(struct tee_iocl_supp_recv_arg))
-		return -EINVAL;
+	अगर (buf.buf_len > TEE_MAX_ARG_SIZE ||
+	    buf.buf_len < माप(काष्ठा tee_iocl_supp_recv_arg))
+		वापस -EINVAL;
 
 	uarg = u64_to_user_ptr(buf.buf_ptr);
-	if (get_user(num_params, &uarg->num_params))
-		return -EFAULT;
+	अगर (get_user(num_params, &uarg->num_params))
+		वापस -EFAULT;
 
-	if (sizeof(*uarg) + TEE_IOCTL_PARAM_SIZE(num_params) != buf.buf_len)
-		return -EINVAL;
+	अगर (माप(*uarg) + TEE_IOCTL_PARAM_SIZE(num_params) != buf.buf_len)
+		वापस -EINVAL;
 
-	params = kcalloc(num_params, sizeof(struct tee_param), GFP_KERNEL);
-	if (!params)
-		return -ENOMEM;
+	params = kसुस्मृति(num_params, माप(काष्ठा tee_param), GFP_KERNEL);
+	अगर (!params)
+		वापस -ENOMEM;
 
 	rc = params_from_user(ctx, params, num_params, uarg->params);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	rc = ctx->teedev->desc->ops->supp_recv(ctx, &func, &num_params, params);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	if (put_user(func, &uarg->func) ||
-	    put_user(num_params, &uarg->num_params)) {
+	अगर (put_user(func, &uarg->func) ||
+	    put_user(num_params, &uarg->num_params)) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rc = params_to_supp(ctx, uarg->params, num_params, params);
 out:
-	kfree(params);
-	return rc;
-}
+	kमुक्त(params);
+	वापस rc;
+पूर्ण
 
-static int params_from_supp(struct tee_param *params, size_t num_params,
-			    struct tee_ioctl_param __user *uparams)
-{
-	size_t n;
+अटल पूर्णांक params_from_supp(काष्ठा tee_param *params, माप_प्रकार num_params,
+			    काष्ठा tee_ioctl_param __user *uparams)
+अणु
+	माप_प्रकार n;
 
-	for (n = 0; n < num_params; n++) {
-		struct tee_param *p = params + n;
-		struct tee_ioctl_param ip;
+	क्रम (n = 0; n < num_params; n++) अणु
+		काष्ठा tee_param *p = params + n;
+		काष्ठा tee_ioctl_param ip;
 
-		if (copy_from_user(&ip, uparams + n, sizeof(ip)))
-			return -EFAULT;
+		अगर (copy_from_user(&ip, uparams + n, माप(ip)))
+			वापस -EFAULT;
 
 		/* All unused attribute bits has to be zero */
-		if (ip.attr & ~TEE_IOCTL_PARAM_ATTR_MASK)
-			return -EINVAL;
+		अगर (ip.attr & ~TEE_IOCTL_PARAM_ATTR_MASK)
+			वापस -EINVAL;
 
 		p->attr = ip.attr;
-		switch (ip.attr & TEE_IOCTL_PARAM_ATTR_TYPE_MASK) {
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT:
+		चयन (ip.attr & TEE_IOCTL_PARAM_ATTR_TYPE_MASK) अणु
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT:
 			/* Only out and in/out values can be updated */
 			p->u.value.a = ip.a;
 			p->u.value.b = ip.b;
 			p->u.value.c = ip.c;
-			break;
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT:
-		case TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT:
+			अवरोध;
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT:
+		हाल TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT:
 			/*
 			 * Only the size of the memref can be updated.
-			 * Since we don't have access to the original
+			 * Since we करोn't have access to the original
 			 * parameters here, only store the supplied size.
-			 * The driver will copy the updated size into the
+			 * The driver will copy the updated size पूर्णांकo the
 			 * original parameters.
 			 */
-			p->u.memref.shm = NULL;
+			p->u.memref.shm = शून्य;
 			p->u.memref.shm_offs = 0;
 			p->u.memref.size = ip.b;
-			break;
-		default:
-			memset(&p->u, 0, sizeof(p->u));
-			break;
-		}
-	}
-	return 0;
-}
+			अवरोध;
+		शेष:
+			स_रखो(&p->u, 0, माप(p->u));
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int tee_ioctl_supp_send(struct tee_context *ctx,
-			       struct tee_ioctl_buf_data __user *ubuf)
-{
-	long rc;
-	struct tee_ioctl_buf_data buf;
-	struct tee_iocl_supp_send_arg __user *uarg;
-	struct tee_param *params;
+अटल पूर्णांक tee_ioctl_supp_send(काष्ठा tee_context *ctx,
+			       काष्ठा tee_ioctl_buf_data __user *ubuf)
+अणु
+	दीर्घ rc;
+	काष्ठा tee_ioctl_buf_data buf;
+	काष्ठा tee_iocl_supp_send_arg __user *uarg;
+	काष्ठा tee_param *params;
 	u32 num_params;
 	u32 ret;
 
-	/* Not valid for this driver */
-	if (!ctx->teedev->desc->ops->supp_send)
-		return -EINVAL;
+	/* Not valid क्रम this driver */
+	अगर (!ctx->teedev->desc->ops->supp_send)
+		वापस -EINVAL;
 
-	if (copy_from_user(&buf, ubuf, sizeof(buf)))
-		return -EFAULT;
+	अगर (copy_from_user(&buf, ubuf, माप(buf)))
+		वापस -EFAULT;
 
-	if (buf.buf_len > TEE_MAX_ARG_SIZE ||
-	    buf.buf_len < sizeof(struct tee_iocl_supp_send_arg))
-		return -EINVAL;
+	अगर (buf.buf_len > TEE_MAX_ARG_SIZE ||
+	    buf.buf_len < माप(काष्ठा tee_iocl_supp_send_arg))
+		वापस -EINVAL;
 
 	uarg = u64_to_user_ptr(buf.buf_ptr);
-	if (get_user(ret, &uarg->ret) ||
+	अगर (get_user(ret, &uarg->ret) ||
 	    get_user(num_params, &uarg->num_params))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	if (sizeof(*uarg) + TEE_IOCTL_PARAM_SIZE(num_params) > buf.buf_len)
-		return -EINVAL;
+	अगर (माप(*uarg) + TEE_IOCTL_PARAM_SIZE(num_params) > buf.buf_len)
+		वापस -EINVAL;
 
-	params = kcalloc(num_params, sizeof(struct tee_param), GFP_KERNEL);
-	if (!params)
-		return -ENOMEM;
+	params = kसुस्मृति(num_params, माप(काष्ठा tee_param), GFP_KERNEL);
+	अगर (!params)
+		वापस -ENOMEM;
 
 	rc = params_from_supp(params, num_params, uarg->params);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	rc = ctx->teedev->desc->ops->supp_send(ctx, ret, num_params, params);
 out:
-	kfree(params);
-	return rc;
-}
+	kमुक्त(params);
+	वापस rc;
+पूर्ण
 
-static long tee_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	struct tee_context *ctx = filp->private_data;
-	void __user *uarg = (void __user *)arg;
+अटल दीर्घ tee_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा tee_context *ctx = filp->निजी_data;
+	व्योम __user *uarg = (व्योम __user *)arg;
 
-	switch (cmd) {
-	case TEE_IOC_VERSION:
-		return tee_ioctl_version(ctx, uarg);
-	case TEE_IOC_SHM_ALLOC:
-		return tee_ioctl_shm_alloc(ctx, uarg);
-	case TEE_IOC_SHM_REGISTER:
-		return tee_ioctl_shm_register(ctx, uarg);
-	case TEE_IOC_OPEN_SESSION:
-		return tee_ioctl_open_session(ctx, uarg);
-	case TEE_IOC_INVOKE:
-		return tee_ioctl_invoke(ctx, uarg);
-	case TEE_IOC_CANCEL:
-		return tee_ioctl_cancel(ctx, uarg);
-	case TEE_IOC_CLOSE_SESSION:
-		return tee_ioctl_close_session(ctx, uarg);
-	case TEE_IOC_SUPPL_RECV:
-		return tee_ioctl_supp_recv(ctx, uarg);
-	case TEE_IOC_SUPPL_SEND:
-		return tee_ioctl_supp_send(ctx, uarg);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (cmd) अणु
+	हाल TEE_IOC_VERSION:
+		वापस tee_ioctl_version(ctx, uarg);
+	हाल TEE_IOC_SHM_ALLOC:
+		वापस tee_ioctl_shm_alloc(ctx, uarg);
+	हाल TEE_IOC_SHM_REGISTER:
+		वापस tee_ioctl_shm_रेजिस्टर(ctx, uarg);
+	हाल TEE_IOC_OPEN_SESSION:
+		वापस tee_ioctl_खोलो_session(ctx, uarg);
+	हाल TEE_IOC_INVOKE:
+		वापस tee_ioctl_invoke(ctx, uarg);
+	हाल TEE_IOC_CANCEL:
+		वापस tee_ioctl_cancel(ctx, uarg);
+	हाल TEE_IOC_CLOSE_SESSION:
+		वापस tee_ioctl_बंद_session(ctx, uarg);
+	हाल TEE_IOC_SUPPL_RECV:
+		वापस tee_ioctl_supp_recv(ctx, uarg);
+	हाल TEE_IOC_SUPPL_SEND:
+		वापस tee_ioctl_supp_send(ctx, uarg);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct file_operations tee_fops = {
+अटल स्थिर काष्ठा file_operations tee_fops = अणु
 	.owner = THIS_MODULE,
-	.open = tee_open,
+	.खोलो = tee_खोलो,
 	.release = tee_release,
 	.unlocked_ioctl = tee_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
-};
+पूर्ण;
 
-static void tee_release_device(struct device *dev)
-{
-	struct tee_device *teedev = container_of(dev, struct tee_device, dev);
+अटल व्योम tee_release_device(काष्ठा device *dev)
+अणु
+	काष्ठा tee_device *teedev = container_of(dev, काष्ठा tee_device, dev);
 
 	spin_lock(&driver_lock);
 	clear_bit(teedev->id, dev_mask);
 	spin_unlock(&driver_lock);
 	mutex_destroy(&teedev->mutex);
 	idr_destroy(&teedev->idr);
-	kfree(teedev);
-}
+	kमुक्त(teedev);
+पूर्ण
 
 /**
- * tee_device_alloc() - Allocate a new struct tee_device instance
- * @teedesc:	Descriptor for this driver
- * @dev:	Parent device for this device
- * @pool:	Shared memory pool, NULL if not used
- * @driver_data: Private driver data for this device
+ * tee_device_alloc() - Allocate a new काष्ठा tee_device instance
+ * @teedesc:	Descriptor क्रम this driver
+ * @dev:	Parent device क्रम this device
+ * @pool:	Shared memory pool, शून्य अगर not used
+ * @driver_data: Private driver data क्रम this device
  *
- * Allocates a new struct tee_device instance. The device is
- * removed by tee_device_unregister().
+ * Allocates a new काष्ठा tee_device instance. The device is
+ * हटाओd by tee_device_unरेजिस्टर().
  *
- * @returns a pointer to a 'struct tee_device' or an ERR_PTR on failure
+ * @वापसs a poपूर्णांकer to a 'struct tee_device' or an ERR_PTR on failure
  */
-struct tee_device *tee_device_alloc(const struct tee_desc *teedesc,
-				    struct device *dev,
-				    struct tee_shm_pool *pool,
-				    void *driver_data)
-{
-	struct tee_device *teedev;
-	void *ret;
-	int rc, max_id;
-	int offs = 0;
+काष्ठा tee_device *tee_device_alloc(स्थिर काष्ठा tee_desc *teedesc,
+				    काष्ठा device *dev,
+				    काष्ठा tee_shm_pool *pool,
+				    व्योम *driver_data)
+अणु
+	काष्ठा tee_device *teedev;
+	व्योम *ret;
+	पूर्णांक rc, max_id;
+	पूर्णांक offs = 0;
 
-	if (!teedesc || !teedesc->name || !teedesc->ops ||
-	    !teedesc->ops->get_version || !teedesc->ops->open ||
+	अगर (!teedesc || !teedesc->name || !teedesc->ops ||
+	    !teedesc->ops->get_version || !teedesc->ops->खोलो ||
 	    !teedesc->ops->release || !pool)
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	teedev = kzalloc(sizeof(*teedev), GFP_KERNEL);
-	if (!teedev) {
+	teedev = kzalloc(माप(*teedev), GFP_KERNEL);
+	अगर (!teedev) अणु
 		ret = ERR_PTR(-ENOMEM);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	max_id = TEE_NUM_DEVICES / 2;
 
-	if (teedesc->flags & TEE_DESC_PRIVILEGED) {
+	अगर (teedesc->flags & TEE_DESC_PRIVILEGED) अणु
 		offs = TEE_NUM_DEVICES / 2;
 		max_id = TEE_NUM_DEVICES;
-	}
+	पूर्ण
 
 	spin_lock(&driver_lock);
 	teedev->id = find_next_zero_bit(dev_mask, max_id, offs);
-	if (teedev->id < max_id)
+	अगर (teedev->id < max_id)
 		set_bit(teedev->id, dev_mask);
 	spin_unlock(&driver_lock);
 
-	if (teedev->id >= max_id) {
+	अगर (teedev->id >= max_id) अणु
 		ret = ERR_PTR(-ENOMEM);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	snprintf(teedev->name, sizeof(teedev->name), "tee%s%d",
+	snम_लिखो(teedev->name, माप(teedev->name), "tee%s%d",
 		 teedesc->flags & TEE_DESC_PRIVILEGED ? "priv" : "",
 		 teedev->id - offs);
 
@@ -924,10 +925,10 @@ struct tee_device *tee_device_alloc(const struct tee_desc *teedesc,
 	teedev->dev.devt = MKDEV(MAJOR(tee_devt), teedev->id);
 
 	rc = dev_set_name(&teedev->dev, "%s", teedev->name);
-	if (rc) {
+	अगर (rc) अणु
 		ret = ERR_PTR(rc);
-		goto err_devt;
-	}
+		जाओ err_devt;
+	पूर्ण
 
 	cdev_init(&teedev->cdev, &tee_fops);
 	teedev->cdev.owner = teedesc->owner;
@@ -935,7 +936,7 @@ struct tee_device *tee_device_alloc(const struct tee_desc *teedesc,
 	dev_set_drvdata(&teedev->dev, driver_data);
 	device_initialize(&teedev->dev);
 
-	/* 1 as tee_device_unregister() does one final tee_device_put() */
+	/* 1 as tee_device_unरेजिस्टर() करोes one final tee_device_put() */
 	teedev->num_users = 1;
 	init_completion(&teedev->c_no_users);
 	mutex_init(&teedev->mutex);
@@ -944,325 +945,325 @@ struct tee_device *tee_device_alloc(const struct tee_desc *teedesc,
 	teedev->desc = teedesc;
 	teedev->pool = pool;
 
-	return teedev;
+	वापस teedev;
 err_devt:
-	unregister_chrdev_region(teedev->dev.devt, 1);
+	unरेजिस्टर_chrdev_region(teedev->dev.devt, 1);
 err:
 	pr_err("could not register %s driver\n",
 	       teedesc->flags & TEE_DESC_PRIVILEGED ? "privileged" : "client");
-	if (teedev && teedev->id < TEE_NUM_DEVICES) {
+	अगर (teedev && teedev->id < TEE_NUM_DEVICES) अणु
 		spin_lock(&driver_lock);
 		clear_bit(teedev->id, dev_mask);
 		spin_unlock(&driver_lock);
-	}
-	kfree(teedev);
-	return ret;
-}
+	पूर्ण
+	kमुक्त(teedev);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_device_alloc);
 
-static ssize_t implementation_id_show(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	struct tee_device *teedev = container_of(dev, struct tee_device, dev);
-	struct tee_ioctl_version_data vers;
+अटल sमाप_प्रकार implementation_id_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा tee_device *teedev = container_of(dev, काष्ठा tee_device, dev);
+	काष्ठा tee_ioctl_version_data vers;
 
 	teedev->desc->ops->get_version(teedev, &vers);
-	return scnprintf(buf, PAGE_SIZE, "%d\n", vers.impl_id);
-}
-static DEVICE_ATTR_RO(implementation_id);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", vers.impl_id);
+पूर्ण
+अटल DEVICE_ATTR_RO(implementation_id);
 
-static struct attribute *tee_dev_attrs[] = {
+अटल काष्ठा attribute *tee_dev_attrs[] = अणु
 	&dev_attr_implementation_id.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 ATTRIBUTE_GROUPS(tee_dev);
 
 /**
- * tee_device_register() - Registers a TEE device
- * @teedev:	Device to register
+ * tee_device_रेजिस्टर() - Registers a TEE device
+ * @teedev:	Device to रेजिस्टर
  *
- * tee_device_unregister() need to be called to remove the @teedev if
+ * tee_device_unरेजिस्टर() need to be called to हटाओ the @teedev अगर
  * this function fails.
  *
- * @returns < 0 on failure
+ * @वापसs < 0 on failure
  */
-int tee_device_register(struct tee_device *teedev)
-{
-	int rc;
+पूर्णांक tee_device_रेजिस्टर(काष्ठा tee_device *teedev)
+अणु
+	पूर्णांक rc;
 
-	if (teedev->flags & TEE_DEVICE_FLAG_REGISTERED) {
+	अगर (teedev->flags & TEE_DEVICE_FLAG_REGISTERED) अणु
 		dev_err(&teedev->dev, "attempt to register twice\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	teedev->dev.groups = tee_dev_groups;
 
 	rc = cdev_device_add(&teedev->cdev, &teedev->dev);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&teedev->dev,
 			"unable to cdev_device_add() %s, major %d, minor %d, err=%d\n",
 			teedev->name, MAJOR(teedev->dev.devt),
 			MINOR(teedev->dev.devt), rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	teedev->flags |= TEE_DEVICE_FLAG_REGISTERED;
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tee_device_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tee_device_रेजिस्टर);
 
-void tee_device_put(struct tee_device *teedev)
-{
+व्योम tee_device_put(काष्ठा tee_device *teedev)
+अणु
 	mutex_lock(&teedev->mutex);
 	/* Shouldn't put in this state */
-	if (!WARN_ON(!teedev->desc)) {
+	अगर (!WARN_ON(!teedev->desc)) अणु
 		teedev->num_users--;
-		if (!teedev->num_users) {
-			teedev->desc = NULL;
+		अगर (!teedev->num_users) अणु
+			teedev->desc = शून्य;
 			complete(&teedev->c_no_users);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&teedev->mutex);
-}
+पूर्ण
 
-bool tee_device_get(struct tee_device *teedev)
-{
+bool tee_device_get(काष्ठा tee_device *teedev)
+अणु
 	mutex_lock(&teedev->mutex);
-	if (!teedev->desc) {
+	अगर (!teedev->desc) अणु
 		mutex_unlock(&teedev->mutex);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	teedev->num_users++;
 	mutex_unlock(&teedev->mutex);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * tee_device_unregister() - Removes a TEE device
- * @teedev:	Device to unregister
+ * tee_device_unरेजिस्टर() - Removes a TEE device
+ * @teedev:	Device to unरेजिस्टर
  *
- * This function should be called to remove the @teedev even if
- * tee_device_register() hasn't been called yet. Does nothing if
- * @teedev is NULL.
+ * This function should be called to हटाओ the @teedev even अगर
+ * tee_device_रेजिस्टर() hasn't been called yet. Does nothing अगर
+ * @teedev is शून्य.
  */
-void tee_device_unregister(struct tee_device *teedev)
-{
-	if (!teedev)
-		return;
+व्योम tee_device_unरेजिस्टर(काष्ठा tee_device *teedev)
+अणु
+	अगर (!teedev)
+		वापस;
 
-	if (teedev->flags & TEE_DEVICE_FLAG_REGISTERED)
+	अगर (teedev->flags & TEE_DEVICE_FLAG_REGISTERED)
 		cdev_device_del(&teedev->cdev, &teedev->dev);
 
 	tee_device_put(teedev);
-	wait_for_completion(&teedev->c_no_users);
+	रुको_क्रम_completion(&teedev->c_no_users);
 
 	/*
-	 * No need to take a mutex any longer now since teedev->desc was
-	 * set to NULL before teedev->c_no_users was completed.
+	 * No need to take a mutex any दीर्घer now since teedev->desc was
+	 * set to शून्य beक्रमe teedev->c_no_users was completed.
 	 */
 
-	teedev->pool = NULL;
+	teedev->pool = शून्य;
 
 	put_device(&teedev->dev);
-}
-EXPORT_SYMBOL_GPL(tee_device_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(tee_device_unरेजिस्टर);
 
 /**
- * tee_get_drvdata() - Return driver_data pointer
- * @teedev:	Device containing the driver_data pointer
- * @returns the driver_data pointer supplied to tee_register().
+ * tee_get_drvdata() - Return driver_data poपूर्णांकer
+ * @teedev:	Device containing the driver_data poपूर्णांकer
+ * @वापसs the driver_data poपूर्णांकer supplied to tee_रेजिस्टर().
  */
-void *tee_get_drvdata(struct tee_device *teedev)
-{
-	return dev_get_drvdata(&teedev->dev);
-}
+व्योम *tee_get_drvdata(काष्ठा tee_device *teedev)
+अणु
+	वापस dev_get_drvdata(&teedev->dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_get_drvdata);
 
-struct match_dev_data {
-	struct tee_ioctl_version_data *vers;
-	const void *data;
-	int (*match)(struct tee_ioctl_version_data *, const void *);
-};
+काष्ठा match_dev_data अणु
+	काष्ठा tee_ioctl_version_data *vers;
+	स्थिर व्योम *data;
+	पूर्णांक (*match)(काष्ठा tee_ioctl_version_data *, स्थिर व्योम *);
+पूर्ण;
 
-static int match_dev(struct device *dev, const void *data)
-{
-	const struct match_dev_data *match_data = data;
-	struct tee_device *teedev = container_of(dev, struct tee_device, dev);
+अटल पूर्णांक match_dev(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा match_dev_data *match_data = data;
+	काष्ठा tee_device *teedev = container_of(dev, काष्ठा tee_device, dev);
 
 	teedev->desc->ops->get_version(teedev, match_data->vers);
-	return match_data->match(match_data->vers, match_data->data);
-}
+	वापस match_data->match(match_data->vers, match_data->data);
+पूर्ण
 
-struct tee_context *
-tee_client_open_context(struct tee_context *start,
-			int (*match)(struct tee_ioctl_version_data *,
-				     const void *),
-			const void *data, struct tee_ioctl_version_data *vers)
-{
-	struct device *dev = NULL;
-	struct device *put_dev = NULL;
-	struct tee_context *ctx = NULL;
-	struct tee_ioctl_version_data v;
-	struct match_dev_data match_data = { vers ? vers : &v, data, match };
+काष्ठा tee_context *
+tee_client_खोलो_context(काष्ठा tee_context *start,
+			पूर्णांक (*match)(काष्ठा tee_ioctl_version_data *,
+				     स्थिर व्योम *),
+			स्थिर व्योम *data, काष्ठा tee_ioctl_version_data *vers)
+अणु
+	काष्ठा device *dev = शून्य;
+	काष्ठा device *put_dev = शून्य;
+	काष्ठा tee_context *ctx = शून्य;
+	काष्ठा tee_ioctl_version_data v;
+	काष्ठा match_dev_data match_data = अणु vers ? vers : &v, data, match पूर्ण;
 
-	if (start)
+	अगर (start)
 		dev = &start->teedev->dev;
 
-	do {
+	करो अणु
 		dev = class_find_device(tee_class, dev, &match_data, match_dev);
-		if (!dev) {
+		अगर (!dev) अणु
 			ctx = ERR_PTR(-ENOENT);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		put_device(put_dev);
 		put_dev = dev;
 
-		ctx = teedev_open(container_of(dev, struct tee_device, dev));
-	} while (IS_ERR(ctx) && PTR_ERR(ctx) != -ENOMEM);
+		ctx = teedev_खोलो(container_of(dev, काष्ठा tee_device, dev));
+	पूर्ण जबतक (IS_ERR(ctx) && PTR_ERR(ctx) != -ENOMEM);
 
 	put_device(put_dev);
 	/*
-	 * Default behaviour for in kernel client is to not wait for
-	 * tee-supplicant if not present for any requests in this context.
-	 * Also this flag could be configured again before call to
-	 * tee_client_open_session() if any in kernel client requires
-	 * different behaviour.
+	 * Default behaviour क्रम in kernel client is to not रुको क्रम
+	 * tee-supplicant अगर not present क्रम any requests in this context.
+	 * Also this flag could be configured again beक्रमe call to
+	 * tee_client_खोलो_session() अगर any in kernel client requires
+	 * dअगरferent behaviour.
 	 */
-	if (!IS_ERR(ctx))
-		ctx->supp_nowait = true;
+	अगर (!IS_ERR(ctx))
+		ctx->supp_noरुको = true;
 
-	return ctx;
-}
-EXPORT_SYMBOL_GPL(tee_client_open_context);
+	वापस ctx;
+पूर्ण
+EXPORT_SYMBOL_GPL(tee_client_खोलो_context);
 
-void tee_client_close_context(struct tee_context *ctx)
-{
-	teedev_close_context(ctx);
-}
-EXPORT_SYMBOL_GPL(tee_client_close_context);
+व्योम tee_client_बंद_context(काष्ठा tee_context *ctx)
+अणु
+	teedev_बंद_context(ctx);
+पूर्ण
+EXPORT_SYMBOL_GPL(tee_client_बंद_context);
 
-void tee_client_get_version(struct tee_context *ctx,
-			    struct tee_ioctl_version_data *vers)
-{
+व्योम tee_client_get_version(काष्ठा tee_context *ctx,
+			    काष्ठा tee_ioctl_version_data *vers)
+अणु
 	ctx->teedev->desc->ops->get_version(ctx->teedev, vers);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_client_get_version);
 
-int tee_client_open_session(struct tee_context *ctx,
-			    struct tee_ioctl_open_session_arg *arg,
-			    struct tee_param *param)
-{
-	if (!ctx->teedev->desc->ops->open_session)
-		return -EINVAL;
-	return ctx->teedev->desc->ops->open_session(ctx, arg, param);
-}
-EXPORT_SYMBOL_GPL(tee_client_open_session);
+पूर्णांक tee_client_खोलो_session(काष्ठा tee_context *ctx,
+			    काष्ठा tee_ioctl_खोलो_session_arg *arg,
+			    काष्ठा tee_param *param)
+अणु
+	अगर (!ctx->teedev->desc->ops->खोलो_session)
+		वापस -EINVAL;
+	वापस ctx->teedev->desc->ops->खोलो_session(ctx, arg, param);
+पूर्ण
+EXPORT_SYMBOL_GPL(tee_client_खोलो_session);
 
-int tee_client_close_session(struct tee_context *ctx, u32 session)
-{
-	if (!ctx->teedev->desc->ops->close_session)
-		return -EINVAL;
-	return ctx->teedev->desc->ops->close_session(ctx, session);
-}
-EXPORT_SYMBOL_GPL(tee_client_close_session);
+पूर्णांक tee_client_बंद_session(काष्ठा tee_context *ctx, u32 session)
+अणु
+	अगर (!ctx->teedev->desc->ops->बंद_session)
+		वापस -EINVAL;
+	वापस ctx->teedev->desc->ops->बंद_session(ctx, session);
+पूर्ण
+EXPORT_SYMBOL_GPL(tee_client_बंद_session);
 
-int tee_client_invoke_func(struct tee_context *ctx,
-			   struct tee_ioctl_invoke_arg *arg,
-			   struct tee_param *param)
-{
-	if (!ctx->teedev->desc->ops->invoke_func)
-		return -EINVAL;
-	return ctx->teedev->desc->ops->invoke_func(ctx, arg, param);
-}
+पूर्णांक tee_client_invoke_func(काष्ठा tee_context *ctx,
+			   काष्ठा tee_ioctl_invoke_arg *arg,
+			   काष्ठा tee_param *param)
+अणु
+	अगर (!ctx->teedev->desc->ops->invoke_func)
+		वापस -EINVAL;
+	वापस ctx->teedev->desc->ops->invoke_func(ctx, arg, param);
+पूर्ण
 EXPORT_SYMBOL_GPL(tee_client_invoke_func);
 
-int tee_client_cancel_req(struct tee_context *ctx,
-			  struct tee_ioctl_cancel_arg *arg)
-{
-	if (!ctx->teedev->desc->ops->cancel_req)
-		return -EINVAL;
-	return ctx->teedev->desc->ops->cancel_req(ctx, arg->cancel_id,
+पूर्णांक tee_client_cancel_req(काष्ठा tee_context *ctx,
+			  काष्ठा tee_ioctl_cancel_arg *arg)
+अणु
+	अगर (!ctx->teedev->desc->ops->cancel_req)
+		वापस -EINVAL;
+	वापस ctx->teedev->desc->ops->cancel_req(ctx, arg->cancel_id,
 						  arg->session);
-}
+पूर्ण
 
-static int tee_client_device_match(struct device *dev,
-				   struct device_driver *drv)
-{
-	const struct tee_client_device_id *id_table;
-	struct tee_client_device *tee_device;
+अटल पूर्णांक tee_client_device_match(काष्ठा device *dev,
+				   काष्ठा device_driver *drv)
+अणु
+	स्थिर काष्ठा tee_client_device_id *id_table;
+	काष्ठा tee_client_device *tee_device;
 
 	id_table = to_tee_client_driver(drv)->id_table;
 	tee_device = to_tee_client_device(dev);
 
-	while (!uuid_is_null(&id_table->uuid)) {
-		if (uuid_equal(&tee_device->id.uuid, &id_table->uuid))
-			return 1;
+	जबतक (!uuid_is_null(&id_table->uuid)) अणु
+		अगर (uuid_equal(&tee_device->id.uuid, &id_table->uuid))
+			वापस 1;
 		id_table++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tee_client_device_uevent(struct device *dev,
-				    struct kobj_uevent_env *env)
-{
+अटल पूर्णांक tee_client_device_uevent(काष्ठा device *dev,
+				    काष्ठा kobj_uevent_env *env)
+अणु
 	uuid_t *dev_id = &to_tee_client_device(dev)->id.uuid;
 
-	return add_uevent_var(env, "MODALIAS=tee:%pUb", dev_id);
-}
+	वापस add_uevent_var(env, "MODALIAS=tee:%pUb", dev_id);
+पूर्ण
 
-struct bus_type tee_bus_type = {
+काष्ठा bus_type tee_bus_type = अणु
 	.name		= "tee",
 	.match		= tee_client_device_match,
 	.uevent		= tee_client_device_uevent,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(tee_bus_type);
 
-static int __init tee_init(void)
-{
-	int rc;
+अटल पूर्णांक __init tee_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	tee_class = class_create(THIS_MODULE, "tee");
-	if (IS_ERR(tee_class)) {
+	अगर (IS_ERR(tee_class)) अणु
 		pr_err("couldn't create class\n");
-		return PTR_ERR(tee_class);
-	}
+		वापस PTR_ERR(tee_class);
+	पूर्ण
 
 	rc = alloc_chrdev_region(&tee_devt, 0, TEE_NUM_DEVICES, "tee");
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("failed to allocate char dev region\n");
-		goto out_unreg_class;
-	}
+		जाओ out_unreg_class;
+	पूर्ण
 
-	rc = bus_register(&tee_bus_type);
-	if (rc) {
+	rc = bus_रेजिस्टर(&tee_bus_type);
+	अगर (rc) अणु
 		pr_err("failed to register tee bus\n");
-		goto out_unreg_chrdev;
-	}
+		जाओ out_unreg_chrdev;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_unreg_chrdev:
-	unregister_chrdev_region(tee_devt, TEE_NUM_DEVICES);
+	unरेजिस्टर_chrdev_region(tee_devt, TEE_NUM_DEVICES);
 out_unreg_class:
 	class_destroy(tee_class);
-	tee_class = NULL;
+	tee_class = शून्य;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit tee_exit(void)
-{
-	bus_unregister(&tee_bus_type);
-	unregister_chrdev_region(tee_devt, TEE_NUM_DEVICES);
+अटल व्योम __निकास tee_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&tee_bus_type);
+	unरेजिस्टर_chrdev_region(tee_devt, TEE_NUM_DEVICES);
 	class_destroy(tee_class);
-	tee_class = NULL;
-}
+	tee_class = शून्य;
+पूर्ण
 
 subsys_initcall(tee_init);
-module_exit(tee_exit);
+module_निकास(tee_निकास);
 
 MODULE_AUTHOR("Linaro");
 MODULE_DESCRIPTION("TEE Driver");

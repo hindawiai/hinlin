@@ -1,394 +1,395 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * builtin-buildid-cache.c
  *
  * Builtin buildid-cache command: Manages build-id cache
  *
  * Copyright (C) 2010, Red Hat Inc.
- * Copyright (C) 2010, Arnaldo Carvalho de Melo <acme@redhat.com>
+ * Copyright (C) 2010, Arnalकरो Carvalho de Melo <acme@redhat.com>
  */
-#include <sys/types.h>
-#include <sys/time.h>
-#include <time.h>
-#include <dirent.h>
-#include <errno.h>
-#include <unistd.h>
-#include "builtin.h"
-#include "namespaces.h"
-#include "util/debug.h"
-#include "util/header.h"
-#include <subcmd/pager.h>
-#include <subcmd/parse-options.h>
-#include "util/strlist.h"
-#include "util/build-id.h"
-#include "util/session.h"
-#include "util/dso.h"
-#include "util/symbol.h"
-#include "util/time-utils.h"
-#include "util/util.h"
-#include "util/probe-file.h"
-#include "util/config.h"
-#include <linux/string.h>
-#include <linux/err.h>
+#समावेश <sys/types.h>
+#समावेश <sys/समय.स>
+#समावेश <समय.स>
+#समावेश <dirent.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश "builtin.h"
+#समावेश "namespaces.h"
+#समावेश "util/debug.h"
+#समावेश "util/header.h"
+#समावेश <subcmd/pager.h>
+#समावेश <subcmd/parse-options.h>
+#समावेश "util/strlist.h"
+#समावेश "util/build-id.h"
+#समावेश "util/session.h"
+#समावेश "util/dso.h"
+#समावेश "util/symbol.h"
+#समावेश "util/time-utils.h"
+#समावेश "util/util.h"
+#समावेश "util/probe-file.h"
+#समावेश "util/config.h"
+#समावेश <linux/माला.स>
+#समावेश <linux/err.h>
 
-static int build_id_cache__kcore_buildid(const char *proc_dir, char *sbuildid)
-{
-	char root_dir[PATH_MAX];
-	char *p;
+अटल पूर्णांक build_id_cache__kcore_buildid(स्थिर अक्षर *proc_dir, अक्षर *sbuildid)
+अणु
+	अक्षर root_dir[PATH_MAX];
+	अक्षर *p;
 
-	strlcpy(root_dir, proc_dir, sizeof(root_dir));
+	strlcpy(root_dir, proc_dir, माप(root_dir));
 
-	p = strrchr(root_dir, '/');
-	if (!p)
-		return -1;
+	p = म_खोजप(root_dir, '/');
+	अगर (!p)
+		वापस -1;
 	*p = '\0';
-	return sysfs__sprintf_build_id(root_dir, sbuildid);
-}
+	वापस sysfs__प्र_लिखो_build_id(root_dir, sbuildid);
+पूर्ण
 
-static int build_id_cache__kcore_dir(char *dir, size_t sz)
-{
-	return fetch_current_timestamp(dir, sz);
-}
+अटल पूर्णांक build_id_cache__kcore_dir(अक्षर *dir, माप_प्रकार sz)
+अणु
+	वापस fetch_current_बारtamp(dir, sz);
+पूर्ण
 
-static bool same_kallsyms_reloc(const char *from_dir, char *to_dir)
-{
-	char from[PATH_MAX];
-	char to[PATH_MAX];
-	const char *name;
+अटल bool same_kallsyms_reloc(स्थिर अक्षर *from_dir, अक्षर *to_dir)
+अणु
+	अक्षर from[PATH_MAX];
+	अक्षर to[PATH_MAX];
+	स्थिर अक्षर *name;
 	u64 addr1 = 0, addr2 = 0;
-	int i, err = -1;
+	पूर्णांक i, err = -1;
 
-	scnprintf(from, sizeof(from), "%s/kallsyms", from_dir);
-	scnprintf(to, sizeof(to), "%s/kallsyms", to_dir);
+	scnम_लिखो(from, माप(from), "%s/kallsyms", from_dir);
+	scnम_लिखो(to, माप(to), "%s/kallsyms", to_dir);
 
-	for (i = 0; (name = ref_reloc_sym_names[i]) != NULL; i++) {
+	क्रम (i = 0; (name = ref_reloc_sym_names[i]) != शून्य; i++) अणु
 		err = kallsyms__get_function_start(from, name, &addr1);
-		if (!err)
-			break;
-	}
+		अगर (!err)
+			अवरोध;
+	पूर्ण
 
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
-	if (kallsyms__get_function_start(to, name, &addr2))
-		return false;
+	अगर (kallsyms__get_function_start(to, name, &addr2))
+		वापस false;
 
-	return addr1 == addr2;
-}
+	वापस addr1 == addr2;
+पूर्ण
 
-static int build_id_cache__kcore_existing(const char *from_dir, char *to_dir,
-					  size_t to_dir_sz)
-{
-	char from[PATH_MAX];
-	char to[PATH_MAX];
-	char to_subdir[PATH_MAX];
-	struct dirent *dent;
-	int ret = -1;
-	DIR *d;
+अटल पूर्णांक build_id_cache__kcore_existing(स्थिर अक्षर *from_dir, अक्षर *to_dir,
+					  माप_प्रकार to_dir_sz)
+अणु
+	अक्षर from[PATH_MAX];
+	अक्षर to[PATH_MAX];
+	अक्षर to_subdir[PATH_MAX];
+	काष्ठा dirent *dent;
+	पूर्णांक ret = -1;
+	सूची *d;
 
-	d = opendir(to_dir);
-	if (!d)
-		return -1;
+	d = सूची_खोलो(to_dir);
+	अगर (!d)
+		वापस -1;
 
-	scnprintf(from, sizeof(from), "%s/modules", from_dir);
+	scnम_लिखो(from, माप(from), "%s/modules", from_dir);
 
-	while (1) {
-		dent = readdir(d);
-		if (!dent)
-			break;
-		if (dent->d_type != DT_DIR)
-			continue;
-		scnprintf(to, sizeof(to), "%s/%s/modules", to_dir,
+	जबतक (1) अणु
+		dent = सूची_पढ़ो(d);
+		अगर (!dent)
+			अवरोध;
+		अगर (dent->d_type != DT_सूची)
+			जारी;
+		scnम_लिखो(to, माप(to), "%s/%s/modules", to_dir,
 			  dent->d_name);
-		scnprintf(to_subdir, sizeof(to_subdir), "%s/%s",
+		scnम_लिखो(to_subdir, माप(to_subdir), "%s/%s",
 			  to_dir, dent->d_name);
-		if (!compare_proc_modules(from, to) &&
-		    same_kallsyms_reloc(from_dir, to_subdir)) {
+		अगर (!compare_proc_modules(from, to) &&
+		    same_kallsyms_reloc(from_dir, to_subdir)) अणु
 			strlcpy(to_dir, to_subdir, to_dir_sz);
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	closedir(d);
+	बंद_सूची(d);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int build_id_cache__add_kcore(const char *filename, bool force)
-{
-	char dir[32], sbuildid[SBUILD_ID_SIZE];
-	char from_dir[PATH_MAX], to_dir[PATH_MAX];
-	char *p;
+अटल पूर्णांक build_id_cache__add_kcore(स्थिर अक्षर *filename, bool क्रमce)
+अणु
+	अक्षर dir[32], sbuildid[SBUILD_ID_SIZE];
+	अक्षर from_dir[PATH_MAX], to_dir[PATH_MAX];
+	अक्षर *p;
 
-	strlcpy(from_dir, filename, sizeof(from_dir));
+	strlcpy(from_dir, filename, माप(from_dir));
 
-	p = strrchr(from_dir, '/');
-	if (!p || strcmp(p + 1, "kcore"))
-		return -1;
+	p = म_खोजप(from_dir, '/');
+	अगर (!p || म_भेद(p + 1, "kcore"))
+		वापस -1;
 	*p = '\0';
 
-	if (build_id_cache__kcore_buildid(from_dir, sbuildid) < 0)
-		return -1;
+	अगर (build_id_cache__kcore_buildid(from_dir, sbuildid) < 0)
+		वापस -1;
 
-	scnprintf(to_dir, sizeof(to_dir), "%s/%s/%s",
+	scnम_लिखो(to_dir, माप(to_dir), "%s/%s/%s",
 		  buildid_dir, DSO__NAME_KCORE, sbuildid);
 
-	if (!force &&
-	    !build_id_cache__kcore_existing(from_dir, to_dir, sizeof(to_dir))) {
+	अगर (!क्रमce &&
+	    !build_id_cache__kcore_existing(from_dir, to_dir, माप(to_dir))) अणु
 		pr_debug("same kcore found in %s\n", to_dir);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (build_id_cache__kcore_dir(dir, sizeof(dir)))
-		return -1;
+	अगर (build_id_cache__kcore_dir(dir, माप(dir)))
+		वापस -1;
 
-	scnprintf(to_dir, sizeof(to_dir), "%s/%s/%s/%s",
+	scnम_लिखो(to_dir, माप(to_dir), "%s/%s/%s/%s",
 		  buildid_dir, DSO__NAME_KCORE, sbuildid, dir);
 
-	if (mkdir_p(to_dir, 0755))
-		return -1;
+	अगर (सूची_गढ़ो_p(to_dir, 0755))
+		वापस -1;
 
-	if (kcore_copy(from_dir, to_dir)) {
+	अगर (kcore_copy(from_dir, to_dir)) अणु
 		/* Remove YYYYmmddHHMMSShh directory */
-		if (!rmdir(to_dir)) {
-			p = strrchr(to_dir, '/');
-			if (p)
+		अगर (!सूची_हटाओ(to_dir)) अणु
+			p = म_खोजप(to_dir, '/');
+			अगर (p)
 				*p = '\0';
-			/* Try to remove buildid directory */
-			if (!rmdir(to_dir)) {
-				p = strrchr(to_dir, '/');
-				if (p)
+			/* Try to हटाओ buildid directory */
+			अगर (!सूची_हटाओ(to_dir)) अणु
+				p = म_खोजप(to_dir, '/');
+				अगर (p)
 					*p = '\0';
-				/* Try to remove [kernel.kcore] directory */
-				rmdir(to_dir);
-			}
-		}
-		return -1;
-	}
+				/* Try to हटाओ [kernel.kcore] directory */
+				सूची_हटाओ(to_dir);
+			पूर्ण
+		पूर्ण
+		वापस -1;
+	पूर्ण
 
 	pr_debug("kcore added to build-id cache directory %s\n", to_dir);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int build_id_cache__add_file(const char *filename, struct nsinfo *nsi)
-{
-	char sbuild_id[SBUILD_ID_SIZE];
-	struct build_id bid;
-	int err;
-	struct nscookie nsc;
+अटल पूर्णांक build_id_cache__add_file(स्थिर अक्षर *filename, काष्ठा nsinfo *nsi)
+अणु
+	अक्षर sbuild_id[SBUILD_ID_SIZE];
+	काष्ठा build_id bid;
+	पूर्णांक err;
+	काष्ठा nscookie nsc;
 
 	nsinfo__mountns_enter(nsi, &nsc);
-	err = filename__read_build_id(filename, &bid);
-	nsinfo__mountns_exit(&nsc);
-	if (err < 0) {
+	err = filename__पढ़ो_build_id(filename, &bid);
+	nsinfo__mountns_निकास(&nsc);
+	अगर (err < 0) अणु
 		pr_debug("Couldn't read a build-id in %s\n", filename);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	build_id__sprintf(&bid, sbuild_id);
+	build_id__प्र_लिखो(&bid, sbuild_id);
 	err = build_id_cache__add_s(sbuild_id, filename, nsi,
 				    false, false);
 	pr_debug("Adding %s %s: %s\n", sbuild_id, filename,
 		 err ? "FAIL" : "Ok");
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int build_id_cache__remove_file(const char *filename, struct nsinfo *nsi)
-{
-	char sbuild_id[SBUILD_ID_SIZE];
-	struct build_id bid;
-	struct nscookie nsc;
+अटल पूर्णांक build_id_cache__हटाओ_file(स्थिर अक्षर *filename, काष्ठा nsinfo *nsi)
+अणु
+	अक्षर sbuild_id[SBUILD_ID_SIZE];
+	काष्ठा build_id bid;
+	काष्ठा nscookie nsc;
 
-	int err;
+	पूर्णांक err;
 
 	nsinfo__mountns_enter(nsi, &nsc);
-	err = filename__read_build_id(filename, &bid);
-	nsinfo__mountns_exit(&nsc);
-	if (err < 0) {
+	err = filename__पढ़ो_build_id(filename, &bid);
+	nsinfo__mountns_निकास(&nsc);
+	अगर (err < 0) अणु
 		pr_debug("Couldn't read a build-id in %s\n", filename);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	build_id__sprintf(&bid, sbuild_id);
-	err = build_id_cache__remove_s(sbuild_id);
+	build_id__प्र_लिखो(&bid, sbuild_id);
+	err = build_id_cache__हटाओ_s(sbuild_id);
 	pr_debug("Removing %s %s: %s\n", sbuild_id, filename,
 		 err ? "FAIL" : "Ok");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int build_id_cache__purge_path(const char *pathname, struct nsinfo *nsi)
-{
-	struct strlist *list;
-	struct str_node *pos;
-	int err;
+अटल पूर्णांक build_id_cache__purge_path(स्थिर अक्षर *pathname, काष्ठा nsinfo *nsi)
+अणु
+	काष्ठा strlist *list;
+	काष्ठा str_node *pos;
+	पूर्णांक err;
 
 	err = build_id_cache__list_build_ids(pathname, nsi, &list);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	strlist__for_each_entry(pos, list) {
-		err = build_id_cache__remove_s(pos->s);
+	strlist__क्रम_each_entry(pos, list) अणु
+		err = build_id_cache__हटाओ_s(pos->s);
 		pr_debug("Removing %s %s: %s\n", pos->s, pathname,
 			 err ? "FAIL" : "Ok");
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 	strlist__delete(list);
 
 out:
 	pr_debug("Purging %s: %s\n", pathname, err ? "FAIL" : "Ok");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int build_id_cache__purge_all(void)
-{
-	struct strlist *list;
-	struct str_node *pos;
-	int err = 0;
-	char *buf;
+अटल पूर्णांक build_id_cache__purge_all(व्योम)
+अणु
+	काष्ठा strlist *list;
+	काष्ठा str_node *pos;
+	पूर्णांक err = 0;
+	अक्षर *buf;
 
 	list = build_id_cache__list_all(false);
-	if (!list) {
-		pr_debug("Failed to get buildids: -%d\n", errno);
-		return -EINVAL;
-	}
+	अगर (!list) अणु
+		pr_debug("Failed to get buildids: -%d\n", त्रुटि_सं);
+		वापस -EINVAL;
+	पूर्ण
 
-	strlist__for_each_entry(pos, list) {
+	strlist__क्रम_each_entry(pos, list) अणु
 		buf = build_id_cache__origname(pos->s);
-		err = build_id_cache__remove_s(pos->s);
+		err = build_id_cache__हटाओ_s(pos->s);
 		pr_debug("Removing %s (%s): %s\n", buf, pos->s,
 			 err ? "FAIL" : "Ok");
-		free(buf);
-		if (err)
-			break;
-	}
+		मुक्त(buf);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 	strlist__delete(list);
 
 	pr_debug("Purged all: %s\n", err ? "FAIL" : "Ok");
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool dso__missing_buildid_cache(struct dso *dso, int parm __maybe_unused)
-{
-	char filename[PATH_MAX];
-	struct build_id bid;
+अटल bool dso__missing_buildid_cache(काष्ठा dso *dso, पूर्णांक parm __maybe_unused)
+अणु
+	अक्षर filename[PATH_MAX];
+	काष्ठा build_id bid;
 
-	if (dso__build_id_filename(dso, filename, sizeof(filename), false) &&
-	    filename__read_build_id(filename, &bid) == -1) {
-		if (errno == ENOENT)
-			return false;
+	अगर (dso__build_id_filename(dso, filename, माप(filename), false) &&
+	    filename__पढ़ो_build_id(filename, &bid) == -1) अणु
+		अगर (त्रुटि_सं == ENOENT)
+			वापस false;
 
 		pr_warning("Problems with %s file, consider removing it from the cache\n",
 			   filename);
-	} else if (memcmp(dso->bid.data, bid.data, bid.size)) {
+	पूर्ण अन्यथा अगर (स_भेद(dso->bid.data, bid.data, bid.size)) अणु
 		pr_warning("Problems with %s file, consider removing it from the cache\n",
 			   filename);
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int build_id_cache__fprintf_missing(struct perf_session *session, FILE *fp)
-{
-	perf_session__fprintf_dsos_buildid(session, fp, dso__missing_buildid_cache, 0);
-	return 0;
-}
+अटल पूर्णांक build_id_cache__ख_लिखो_missing(काष्ठा perf_session *session, खाता *fp)
+अणु
+	perf_session__ख_लिखो_dsos_buildid(session, fp, dso__missing_buildid_cache, 0);
+	वापस 0;
+पूर्ण
 
-static int build_id_cache__update_file(const char *filename, struct nsinfo *nsi)
-{
-	char sbuild_id[SBUILD_ID_SIZE];
-	struct build_id bid;
-	struct nscookie nsc;
+अटल पूर्णांक build_id_cache__update_file(स्थिर अक्षर *filename, काष्ठा nsinfo *nsi)
+अणु
+	अक्षर sbuild_id[SBUILD_ID_SIZE];
+	काष्ठा build_id bid;
+	काष्ठा nscookie nsc;
 
-	int err;
+	पूर्णांक err;
 
 	nsinfo__mountns_enter(nsi, &nsc);
-	err = filename__read_build_id(filename, &bid);
-	nsinfo__mountns_exit(&nsc);
-	if (err < 0) {
+	err = filename__पढ़ो_build_id(filename, &bid);
+	nsinfo__mountns_निकास(&nsc);
+	अगर (err < 0) अणु
 		pr_debug("Couldn't read a build-id in %s\n", filename);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	err = 0;
 
-	build_id__sprintf(&bid, sbuild_id);
-	if (build_id_cache__cached(sbuild_id))
-		err = build_id_cache__remove_s(sbuild_id);
+	build_id__प्र_लिखो(&bid, sbuild_id);
+	अगर (build_id_cache__cached(sbuild_id))
+		err = build_id_cache__हटाओ_s(sbuild_id);
 
-	if (!err)
+	अगर (!err)
 		err = build_id_cache__add_s(sbuild_id, filename, nsi, false,
 					    false);
 
 	pr_debug("Updating %s %s: %s\n", sbuild_id, filename,
 		 err ? "FAIL" : "Ok");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int build_id_cache__show_all(void)
-{
-	struct strlist *bidlist;
-	struct str_node *nd;
-	char *buf;
+अटल पूर्णांक build_id_cache__show_all(व्योम)
+अणु
+	काष्ठा strlist *bidlist;
+	काष्ठा str_node *nd;
+	अक्षर *buf;
 
 	bidlist = build_id_cache__list_all(true);
-	if (!bidlist) {
-		pr_debug("Failed to get buildids: -%d\n", errno);
-		return -1;
-	}
-	strlist__for_each_entry(nd, bidlist) {
+	अगर (!bidlist) अणु
+		pr_debug("Failed to get buildids: -%d\n", त्रुटि_सं);
+		वापस -1;
+	पूर्ण
+	strlist__क्रम_each_entry(nd, bidlist) अणु
 		buf = build_id_cache__origname(nd->s);
-		fprintf(stdout, "%s %s\n", nd->s, buf);
-		free(buf);
-	}
+		ख_लिखो(मानक_निकास, "%s %s\n", nd->s, buf);
+		मुक्त(buf);
+	पूर्ण
 	strlist__delete(bidlist);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_buildid_cache_config(const char *var, const char *value, void *cb)
-{
-	const char **debuginfod = cb;
+अटल पूर्णांक perf_buildid_cache_config(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *cb)
+अणु
+	स्थिर अक्षर **debuginfod = cb;
 
-	if (!strcmp(var, "buildid-cache.debuginfod"))
+	अगर (!म_भेद(var, "buildid-cache.debuginfod"))
 		*debuginfod = strdup(value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cmd_buildid_cache(int argc, const char **argv)
-{
-	struct strlist *list;
-	struct str_node *pos;
-	int ret, ns_id = -1;
-	bool force = false;
+पूर्णांक cmd_buildid_cache(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा strlist *list;
+	काष्ठा str_node *pos;
+	पूर्णांक ret, ns_id = -1;
+	bool क्रमce = false;
 	bool list_files = false;
 	bool opts_flag = false;
 	bool purge_all = false;
-	char const *add_name_list_str = NULL,
-		   *remove_name_list_str = NULL,
-		   *purge_name_list_str = NULL,
-		   *missing_filename = NULL,
-		   *update_name_list_str = NULL,
-		   *kcore_filename = NULL,
-		   *debuginfod = NULL;
-	char sbuf[STRERR_BUFSIZE];
+	अक्षर स्थिर *add_name_list_str = शून्य,
+		   *हटाओ_name_list_str = शून्य,
+		   *purge_name_list_str = शून्य,
+		   *missing_filename = शून्य,
+		   *update_name_list_str = शून्य,
+		   *kcore_filename = शून्य,
+		   *debuginfod = शून्य;
+	अक्षर sbuf[STRERR_बफ_मानE];
 
-	struct perf_data data = {
+	काष्ठा perf_data data = अणु
 		.mode  = PERF_DATA_MODE_READ,
-	};
-	struct perf_session *session = NULL;
-	struct nsinfo *nsi = NULL;
+	पूर्ण;
+	काष्ठा perf_session *session = शून्य;
+	काष्ठा nsinfo *nsi = शून्य;
 
-	const struct option buildid_cache_options[] = {
+	स्थिर काष्ठा option buildid_cache_options[] = अणु
 	OPT_STRING('a', "add", &add_name_list_str,
 		   "file list", "file(s) to add"),
 	OPT_STRING('k', "kcore", &kcore_filename,
 		   "file", "kcore file to add"),
-	OPT_STRING('r', "remove", &remove_name_list_str, "file list",
+	OPT_STRING('r', "remove", &हटाओ_name_list_str, "file list",
 		    "file(s) to remove"),
 	OPT_STRING('p', "purge", &purge_name_list_str, "file list",
 		    "file(s) to remove (remove old caches too)"),
@@ -396,7 +397,7 @@ int cmd_buildid_cache(int argc, const char **argv)
 	OPT_BOOLEAN('l', "list", &list_files, "list all cached files"),
 	OPT_STRING('M', "missing", &missing_filename, "file",
 		   "to find missing build ids in the cache"),
-	OPT_BOOLEAN('f', "force", &force, "don't complain, do it"),
+	OPT_BOOLEAN('f', "force", &force, "don't complain, करो it"),
 	OPT_STRING('u', "update", &update_name_list_str, "file list",
 		    "file(s) to update"),
 	OPT_STRING(0, "debuginfod", &debuginfod, "debuginfod url",
@@ -404,148 +405,148 @@ int cmd_buildid_cache(int argc, const char **argv)
 	OPT_INCR('v', "verbose", &verbose, "be more verbose"),
 	OPT_INTEGER(0, "target-ns", &ns_id, "target pid for namespace context"),
 	OPT_END()
-	};
-	const char * const buildid_cache_usage[] = {
+	पूर्ण;
+	स्थिर अक्षर * स्थिर buildid_cache_usage[] = अणु
 		"perf buildid-cache [<options>]",
-		NULL
-	};
+		शून्य
+	पूर्ण;
 
 	ret = perf_config(perf_buildid_cache_config, &debuginfod);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	argc = parse_options(argc, argv, buildid_cache_options,
 			     buildid_cache_usage, 0);
 
 	opts_flag = add_name_list_str || kcore_filename ||
-		remove_name_list_str || purge_name_list_str ||
+		हटाओ_name_list_str || purge_name_list_str ||
 		missing_filename || update_name_list_str ||
 		purge_all;
 
-	if (argc || !(list_files || opts_flag))
+	अगर (argc || !(list_files || opts_flag))
 		usage_with_options(buildid_cache_usage, buildid_cache_options);
 
-	if (debuginfod) {
+	अगर (debuginfod) अणु
 		pr_debug("DEBUGINFOD_URLS=%s\n", debuginfod);
 		setenv("DEBUGINFOD_URLS", debuginfod, 1);
-	}
+	पूर्ण
 
 	/* -l is exclusive. It can not be used with other options. */
-	if (list_files && opts_flag) {
+	अगर (list_files && opts_flag) अणु
 		usage_with_options_msg(buildid_cache_usage,
 			buildid_cache_options, "-l is exclusive.\n");
-	}
+	पूर्ण
 
-	if (ns_id > 0)
+	अगर (ns_id > 0)
 		nsi = nsinfo__new(ns_id);
 
-	if (missing_filename) {
+	अगर (missing_filename) अणु
 		data.path  = missing_filename;
-		data.force = force;
+		data.क्रमce = क्रमce;
 
-		session = perf_session__new(&data, false, NULL);
-		if (IS_ERR(session))
-			return PTR_ERR(session);
-	}
+		session = perf_session__new(&data, false, शून्य);
+		अगर (IS_ERR(session))
+			वापस PTR_ERR(session);
+	पूर्ण
 
-	if (symbol__init(session ? &session->header.env : NULL) < 0)
-		goto out;
+	अगर (symbol__init(session ? &session->header.env : शून्य) < 0)
+		जाओ out;
 
 	setup_pager();
 
-	if (list_files) {
+	अगर (list_files) अणु
 		ret = build_id_cache__show_all();
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (add_name_list_str) {
-		list = strlist__new(add_name_list_str, NULL);
-		if (list) {
-			strlist__for_each_entry(pos, list)
-				if (build_id_cache__add_file(pos->s, nsi)) {
-					if (errno == EEXIST) {
+	अगर (add_name_list_str) अणु
+		list = strlist__new(add_name_list_str, शून्य);
+		अगर (list) अणु
+			strlist__क्रम_each_entry(pos, list)
+				अगर (build_id_cache__add_file(pos->s, nsi)) अणु
+					अगर (त्रुटि_सं == EEXIST) अणु
 						pr_debug("%s already in the cache\n",
 							 pos->s);
-						continue;
-					}
+						जारी;
+					पूर्ण
 					pr_warning("Couldn't add %s: %s\n",
-						   pos->s, str_error_r(errno, sbuf, sizeof(sbuf)));
-				}
+						   pos->s, str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+				पूर्ण
 
 			strlist__delete(list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (remove_name_list_str) {
-		list = strlist__new(remove_name_list_str, NULL);
-		if (list) {
-			strlist__for_each_entry(pos, list)
-				if (build_id_cache__remove_file(pos->s, nsi)) {
-					if (errno == ENOENT) {
+	अगर (हटाओ_name_list_str) अणु
+		list = strlist__new(हटाओ_name_list_str, शून्य);
+		अगर (list) अणु
+			strlist__क्रम_each_entry(pos, list)
+				अगर (build_id_cache__हटाओ_file(pos->s, nsi)) अणु
+					अगर (त्रुटि_सं == ENOENT) अणु
 						pr_debug("%s wasn't in the cache\n",
 							 pos->s);
-						continue;
-					}
+						जारी;
+					पूर्ण
 					pr_warning("Couldn't remove %s: %s\n",
-						   pos->s, str_error_r(errno, sbuf, sizeof(sbuf)));
-				}
+						   pos->s, str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+				पूर्ण
 
 			strlist__delete(list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (purge_name_list_str) {
-		list = strlist__new(purge_name_list_str, NULL);
-		if (list) {
-			strlist__for_each_entry(pos, list)
-				if (build_id_cache__purge_path(pos->s, nsi)) {
-					if (errno == ENOENT) {
+	अगर (purge_name_list_str) अणु
+		list = strlist__new(purge_name_list_str, शून्य);
+		अगर (list) अणु
+			strlist__क्रम_each_entry(pos, list)
+				अगर (build_id_cache__purge_path(pos->s, nsi)) अणु
+					अगर (त्रुटि_सं == ENOENT) अणु
 						pr_debug("%s wasn't in the cache\n",
 							 pos->s);
-						continue;
-					}
+						जारी;
+					पूर्ण
 					pr_warning("Couldn't remove %s: %s\n",
-						   pos->s, str_error_r(errno, sbuf, sizeof(sbuf)));
-				}
+						   pos->s, str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+				पूर्ण
 
 			strlist__delete(list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (purge_all) {
-		if (build_id_cache__purge_all()) {
+	अगर (purge_all) अणु
+		अगर (build_id_cache__purge_all()) अणु
 			pr_warning("Couldn't remove some caches. Error: %s.\n",
-				str_error_r(errno, sbuf, sizeof(sbuf)));
-		}
-	}
+				str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		पूर्ण
+	पूर्ण
 
-	if (missing_filename)
-		ret = build_id_cache__fprintf_missing(session, stdout);
+	अगर (missing_filename)
+		ret = build_id_cache__ख_लिखो_missing(session, मानक_निकास);
 
-	if (update_name_list_str) {
-		list = strlist__new(update_name_list_str, NULL);
-		if (list) {
-			strlist__for_each_entry(pos, list)
-				if (build_id_cache__update_file(pos->s, nsi)) {
-					if (errno == ENOENT) {
+	अगर (update_name_list_str) अणु
+		list = strlist__new(update_name_list_str, शून्य);
+		अगर (list) अणु
+			strlist__क्रम_each_entry(pos, list)
+				अगर (build_id_cache__update_file(pos->s, nsi)) अणु
+					अगर (त्रुटि_सं == ENOENT) अणु
 						pr_debug("%s wasn't in the cache\n",
 							 pos->s);
-						continue;
-					}
+						जारी;
+					पूर्ण
 					pr_warning("Couldn't update %s: %s\n",
-						   pos->s, str_error_r(errno, sbuf, sizeof(sbuf)));
-				}
+						   pos->s, str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+				पूर्ण
 
 			strlist__delete(list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (kcore_filename && build_id_cache__add_kcore(kcore_filename, force))
+	अगर (kcore_filename && build_id_cache__add_kcore(kcore_filename, क्रमce))
 		pr_warning("Couldn't add %s\n", kcore_filename);
 
 out:
 	perf_session__delete(session);
 	nsinfo__zput(nsi);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

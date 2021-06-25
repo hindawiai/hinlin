@@ -1,109 +1,110 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Copyright (C) 2015 Karol Kosik <karo9@interia.eu>
+ * Copyright (C) 2015 Karol Kosik <karo9@पूर्णांकeria.eu>
  * Copyright (C) 2015-2016 Samsung Electronics
  *               Igor Kotrasinski <i.kotrasinsk@samsung.com>
  *               Krzysztof Opasiak <k.opasiak@samsung.com>
  */
 
-#include <linux/device.h>
-#include <linux/list.h>
-#include <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
 
-#include "vudc.h"
+#समावेश "vudc.h"
 
-static unsigned int vudc_number = 1;
+अटल अचिन्हित पूर्णांक vudc_number = 1;
 
-module_param_named(num, vudc_number, uint, S_IRUGO);
+module_param_named(num, vudc_number, uपूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(num, "number of emulated controllers");
 
-static struct platform_driver vudc_driver = {
+अटल काष्ठा platक्रमm_driver vudc_driver = अणु
 	.probe		= vudc_probe,
-	.remove		= vudc_remove,
-	.driver		= {
+	.हटाओ		= vudc_हटाओ,
+	.driver		= अणु
 		.name	= GADGET_NAME,
 		.dev_groups = vudc_groups,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct list_head vudc_devices = LIST_HEAD_INIT(vudc_devices);
+अटल काष्ठा list_head vudc_devices = LIST_HEAD_INIT(vudc_devices);
 
-static int __init init(void)
-{
-	int retval = -ENOMEM;
-	int i;
-	struct vudc_device *udc_dev = NULL, *udc_dev2 = NULL;
+अटल पूर्णांक __init init(व्योम)
+अणु
+	पूर्णांक retval = -ENOMEM;
+	पूर्णांक i;
+	काष्ठा vudc_device *udc_dev = शून्य, *udc_dev2 = शून्य;
 
-	if (usb_disabled())
-		return -ENODEV;
+	अगर (usb_disabled())
+		वापस -ENODEV;
 
-	if (vudc_number < 1) {
+	अगर (vudc_number < 1) अणु
 		pr_err("Number of emulated UDC must be no less than 1");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	retval = platform_driver_register(&vudc_driver);
-	if (retval < 0)
-		goto out;
+	retval = platक्रमm_driver_रेजिस्टर(&vudc_driver);
+	अगर (retval < 0)
+		जाओ out;
 
-	for (i = 0; i < vudc_number; i++) {
+	क्रम (i = 0; i < vudc_number; i++) अणु
 		udc_dev = alloc_vudc_device(i);
-		if (!udc_dev) {
+		अगर (!udc_dev) अणु
 			retval = -ENOMEM;
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
-		retval = platform_device_add(udc_dev->pdev);
-		if (retval < 0) {
+		retval = platक्रमm_device_add(udc_dev->pdev);
+		अगर (retval < 0) अणु
 			put_vudc_device(udc_dev);
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
 		list_add_tail(&udc_dev->dev_entry, &vudc_devices);
-		if (!platform_get_drvdata(udc_dev->pdev)) {
+		अगर (!platक्रमm_get_drvdata(udc_dev->pdev)) अणु
 			/*
 			 * The udc was added successfully but its probe
-			 * function failed for some reason.
+			 * function failed क्रम some reason.
 			 */
 			retval = -EINVAL;
-			goto cleanup;
-		}
-	}
-	goto out;
+			जाओ cleanup;
+		पूर्ण
+	पूर्ण
+	जाओ out;
 
 cleanup:
-	list_for_each_entry_safe(udc_dev, udc_dev2, &vudc_devices, dev_entry) {
+	list_क्रम_each_entry_safe(udc_dev, udc_dev2, &vudc_devices, dev_entry) अणु
 		list_del(&udc_dev->dev_entry);
 		/*
-		 * Just do platform_device_del() here, put_vudc_device()
-		 * calls the platform_device_put()
+		 * Just करो platक्रमm_device_del() here, put_vudc_device()
+		 * calls the platक्रमm_device_put()
 		 */
-		platform_device_del(udc_dev->pdev);
+		platक्रमm_device_del(udc_dev->pdev);
 		put_vudc_device(udc_dev);
-	}
+	पूर्ण
 
-	platform_driver_unregister(&vudc_driver);
+	platक्रमm_driver_unरेजिस्टर(&vudc_driver);
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 module_init(init);
 
-static void __exit cleanup(void)
-{
-	struct vudc_device *udc_dev = NULL, *udc_dev2 = NULL;
+अटल व्योम __निकास cleanup(व्योम)
+अणु
+	काष्ठा vudc_device *udc_dev = शून्य, *udc_dev2 = शून्य;
 
-	list_for_each_entry_safe(udc_dev, udc_dev2, &vudc_devices, dev_entry) {
+	list_क्रम_each_entry_safe(udc_dev, udc_dev2, &vudc_devices, dev_entry) अणु
 		list_del(&udc_dev->dev_entry);
 		/*
-		 * Just do platform_device_del() here, put_vudc_device()
-		 * calls the platform_device_put()
+		 * Just करो platक्रमm_device_del() here, put_vudc_device()
+		 * calls the platक्रमm_device_put()
 		 */
-		platform_device_del(udc_dev->pdev);
+		platक्रमm_device_del(udc_dev->pdev);
 		put_vudc_device(udc_dev);
-	}
-	platform_driver_unregister(&vudc_driver);
-}
-module_exit(cleanup);
+	पूर्ण
+	platक्रमm_driver_unरेजिस्टर(&vudc_driver);
+पूर्ण
+module_निकास(cleanup);
 
 MODULE_DESCRIPTION("USB over IP Device Controller");
 MODULE_AUTHOR("Krzysztof Opasiak, Karol Kosik, Igor Kotrasinski");

@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_IA64_STATFS_H
-#define _ASM_IA64_STATFS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_IA64_STATFS_H
+#घोषणा _ASM_IA64_STATFS_H
 
 /*
- * Based on <asm-i386/statfs.h>.
+ * Based on <यंत्र-i386/statfs.h>.
  *
- * Modified 1998, 1999, 2003
+ * Modअगरied 1998, 1999, 2003
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  */
 
@@ -14,8 +15,8 @@
  * add padding at the end to bring it to a multiple of 8 bytes, but
  * the IA64 ABI will.
  */
-#define ARCH_PACK_COMPAT_STATFS64 __attribute__((packed,aligned(4)))
+#घोषणा ARCH_PACK_COMPAT_STATFS64 __attribute__((packed,aligned(4)))
 
-#include <asm-generic/statfs.h>
+#समावेश <यंत्र-generic/statfs.h>
 
-#endif /* _ASM_IA64_STATFS_H */
+#पूर्ण_अगर /* _ASM_IA64_STATFS_H */

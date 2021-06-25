@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_ATOMIC_IRQ_H
-#define __ASM_SH_ATOMIC_IRQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_ATOMIC_IRQ_H
+#घोषणा __ASM_SH_ATOMIC_IRQ_H
 
-#include <linux/irqflags.h>
+#समावेश <linux/irqflags.h>
 
 /*
- * To get proper branch prediction for the main line, we must branch
- * forward to code at the end of this object's .text section, then
+ * To get proper branch prediction क्रम the मुख्य line, we must branch
+ * क्रमward to code at the end of this object's .text section, then
  * branch back to restart the operation.
  */
 
-#define ATOMIC_OP(op, c_op)						\
-static inline void atomic_##op(int i, atomic_t *v)			\
-{									\
-	unsigned long flags;						\
+#घोषणा ATOMIC_OP(op, c_op)						\
+अटल अंतरभूत व्योम atomic_##op(पूर्णांक i, atomic_t *v)			\
+अणु									\
+	अचिन्हित दीर्घ flags;						\
 									\
 	raw_local_irq_save(flags);					\
 	v->counter c_op i;						\
 	raw_local_irq_restore(flags);					\
-}
+पूर्ण
 
-#define ATOMIC_OP_RETURN(op, c_op)					\
-static inline int atomic_##op##_return(int i, atomic_t *v)		\
-{									\
-	unsigned long temp, flags;					\
+#घोषणा ATOMIC_OP_RETURN(op, c_op)					\
+अटल अंतरभूत पूर्णांक atomic_##op##_वापस(पूर्णांक i, atomic_t *v)		\
+अणु									\
+	अचिन्हित दीर्घ temp, flags;					\
 									\
 	raw_local_irq_save(flags);					\
 	temp = v->counter;						\
@@ -31,23 +32,23 @@ static inline int atomic_##op##_return(int i, atomic_t *v)		\
 	v->counter = temp;						\
 	raw_local_irq_restore(flags);					\
 									\
-	return temp;							\
-}
+	वापस temp;							\
+पूर्ण
 
-#define ATOMIC_FETCH_OP(op, c_op)					\
-static inline int atomic_fetch_##op(int i, atomic_t *v)			\
-{									\
-	unsigned long temp, flags;					\
+#घोषणा ATOMIC_FETCH_OP(op, c_op)					\
+अटल अंतरभूत पूर्णांक atomic_fetch_##op(पूर्णांक i, atomic_t *v)			\
+अणु									\
+	अचिन्हित दीर्घ temp, flags;					\
 									\
 	raw_local_irq_save(flags);					\
 	temp = v->counter;						\
 	v->counter c_op i;						\
 	raw_local_irq_restore(flags);					\
 									\
-	return temp;							\
-}
+	वापस temp;							\
+पूर्ण
 
-#define ATOMIC_OPS(op, c_op)						\
+#घोषणा ATOMIC_OPS(op, c_op)						\
 	ATOMIC_OP(op, c_op)						\
 	ATOMIC_OP_RETURN(op, c_op)					\
 	ATOMIC_FETCH_OP(op, c_op)
@@ -55,8 +56,8 @@ static inline int atomic_fetch_##op(int i, atomic_t *v)			\
 ATOMIC_OPS(add, +=)
 ATOMIC_OPS(sub, -=)
 
-#undef ATOMIC_OPS
-#define ATOMIC_OPS(op, c_op)						\
+#अघोषित ATOMIC_OPS
+#घोषणा ATOMIC_OPS(op, c_op)						\
 	ATOMIC_OP(op, c_op)						\
 	ATOMIC_FETCH_OP(op, c_op)
 
@@ -64,9 +65,9 @@ ATOMIC_OPS(and, &=)
 ATOMIC_OPS(or, |=)
 ATOMIC_OPS(xor, ^=)
 
-#undef ATOMIC_OPS
-#undef ATOMIC_FETCH_OP
-#undef ATOMIC_OP_RETURN
-#undef ATOMIC_OP
+#अघोषित ATOMIC_OPS
+#अघोषित ATOMIC_FETCH_OP
+#अघोषित ATOMIC_OP_RETURN
+#अघोषित ATOMIC_OP
 
-#endif /* __ASM_SH_ATOMIC_IRQ_H */
+#पूर्ण_अगर /* __ASM_SH_ATOMIC_IRQ_H */

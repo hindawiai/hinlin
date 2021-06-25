@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel IOMMU trace support
  *
  * Copyright (C) 2019 Intel Corporation
  *
- * Author: Lu Baolu <baolu.lu@linux.intel.com>
+ * Author: Lu Baolu <baolu.lu@linux.पूर्णांकel.com>
  */
 
-#include <linux/string.h>
-#include <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/intel_iommu.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/पूर्णांकel_iommu.h>

@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (C) 2012-2019 ARM Limited (or its affiliates). */
 
-#include <crypto/internal/aead.h>
-#include <crypto/authenc.h>
-#include <crypto/scatterwalk.h>
-#include <linux/dmapool.h>
-#include <linux/dma-mapping.h>
+#समावेश <crypto/पूर्णांकernal/aead.h>
+#समावेश <crypto/authenc.h>
+#समावेश <crypto/scatterwalk.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/dma-mapping.h>
 
-#include "cc_buffer_mgr.h"
-#include "cc_lli_defs.h"
-#include "cc_cipher.h"
-#include "cc_hash.h"
-#include "cc_aead.h"
+#समावेश "cc_buffer_mgr.h"
+#समावेश "cc_lli_defs.h"
+#समावेश "cc_cipher.h"
+#समावेश "cc_hash.h"
+#समावेश "cc_aead.h"
 
-union buffer_array_entry {
-	struct scatterlist *sgl;
+जोड़ buffer_array_entry अणु
+	काष्ठा scatterlist *sgl;
 	dma_addr_t buffer_dma;
-};
+पूर्ण;
 
-struct buffer_array {
-	unsigned int num_of_buffers;
-	union buffer_array_entry entry[MAX_NUM_OF_BUFFERS_IN_MLLI];
-	unsigned int offset[MAX_NUM_OF_BUFFERS_IN_MLLI];
-	int nents[MAX_NUM_OF_BUFFERS_IN_MLLI];
-	int total_data_len[MAX_NUM_OF_BUFFERS_IN_MLLI];
+काष्ठा buffer_array अणु
+	अचिन्हित पूर्णांक num_of_buffers;
+	जोड़ buffer_array_entry entry[MAX_NUM_OF_BUFFERS_IN_MLLI];
+	अचिन्हित पूर्णांक offset[MAX_NUM_OF_BUFFERS_IN_MLLI];
+	पूर्णांक nents[MAX_NUM_OF_BUFFERS_IN_MLLI];
+	पूर्णांक total_data_len[MAX_NUM_OF_BUFFERS_IN_MLLI];
 	bool is_last[MAX_NUM_OF_BUFFERS_IN_MLLI];
 	u32 *mlli_nents[MAX_NUM_OF_BUFFERS_IN_MLLI];
-};
+पूर्ण;
 
-static inline char *cc_dma_buf_type(enum cc_req_dma_buf_type type)
-{
-	switch (type) {
-	case CC_DMA_BUF_NULL:
-		return "BUF_NULL";
-	case CC_DMA_BUF_DLLI:
-		return "BUF_DLLI";
-	case CC_DMA_BUF_MLLI:
-		return "BUF_MLLI";
-	default:
-		return "BUF_INVALID";
-	}
-}
+अटल अंतरभूत अक्षर *cc_dma_buf_type(क्रमागत cc_req_dma_buf_type type)
+अणु
+	चयन (type) अणु
+	हाल CC_DMA_BUF_शून्य:
+		वापस "BUF_NULL";
+	हाल CC_DMA_BUF_DLLI:
+		वापस "BUF_DLLI";
+	हाल CC_DMA_BUF_MLLI:
+		वापस "BUF_MLLI";
+	शेष:
+		वापस "BUF_INVALID";
+	पूर्ण
+पूर्ण
 
 /**
  * cc_copy_mac() - Copy MAC to temporary location
@@ -49,15 +50,15 @@ static inline char *cc_dma_buf_type(enum cc_req_dma_buf_type type)
  * @req: aead request object
  * @dir: [IN] copy from/to sgl
  */
-static void cc_copy_mac(struct device *dev, struct aead_request *req,
-			enum cc_sg_cpy_direct dir)
-{
-	struct aead_req_ctx *areq_ctx = aead_request_ctx(req);
+अटल व्योम cc_copy_mac(काष्ठा device *dev, काष्ठा aead_request *req,
+			क्रमागत cc_sg_cpy_direct dir)
+अणु
+	काष्ठा aead_req_ctx *areq_ctx = aead_request_ctx(req);
 	u32 skip = req->assoclen + req->cryptlen;
 
 	cc_copy_sg_portion(dev, areq_ctx->backup_mac, req->src,
 			   (skip - areq_ctx->req_authsize), skip, dir);
-}
+पूर्ण
 
 /**
  * cc_get_sgl_nents() - Get scatterlist number of entries.
@@ -70,26 +71,26 @@ static void cc_copy_mac(struct device *dev, struct aead_request *req,
  * Return:
  * Number of entries in the scatterlist
  */
-static unsigned int cc_get_sgl_nents(struct device *dev,
-				     struct scatterlist *sg_list,
-				     unsigned int nbytes, u32 *lbytes)
-{
-	unsigned int nents = 0;
+अटल अचिन्हित पूर्णांक cc_get_sgl_nents(काष्ठा device *dev,
+				     काष्ठा scatterlist *sg_list,
+				     अचिन्हित पूर्णांक nbytes, u32 *lbytes)
+अणु
+	अचिन्हित पूर्णांक nents = 0;
 
 	*lbytes = 0;
 
-	while (nbytes && sg_list) {
+	जबतक (nbytes && sg_list) अणु
 		nents++;
 		/* get the number of bytes in the last entry */
 		*lbytes = nbytes;
 		nbytes -= (sg_list->length > nbytes) ?
 				nbytes : sg_list->length;
 		sg_list = sg_next(sg_list);
-	}
+	पूर्ण
 
 	dev_dbg(dev, "nents %d last bytes %d\n", nents, *lbytes);
-	return nents;
-}
+	वापस nents;
+पूर्ण
 
 /**
  * cc_copy_sg_portion() - Copy scatter list data,
@@ -98,38 +99,38 @@ static unsigned int cc_get_sgl_nents(struct device *dev,
  * @dev: Device object
  * @dest: Buffer to copy to/from
  * @sg: SG list
- * @to_skip: Number of bytes to skip before copying
+ * @to_skip: Number of bytes to skip beक्रमe copying
  * @end: Offset of last byte to copy
  * @direct: Transfer direction (true == from SG list to buffer, false == from
  *          buffer to SG list)
  */
-void cc_copy_sg_portion(struct device *dev, u8 *dest, struct scatterlist *sg,
-			u32 to_skip, u32 end, enum cc_sg_cpy_direct direct)
-{
+व्योम cc_copy_sg_portion(काष्ठा device *dev, u8 *dest, काष्ठा scatterlist *sg,
+			u32 to_skip, u32 end, क्रमागत cc_sg_cpy_direct direct)
+अणु
 	u32 nents;
 
-	nents = sg_nents_for_len(sg, end);
+	nents = sg_nents_क्रम_len(sg, end);
 	sg_copy_buffer(sg, nents, dest, (end - to_skip + 1), to_skip,
 		       (direct == CC_SG_TO_BUF));
-}
+पूर्ण
 
-static int cc_render_buff_to_mlli(struct device *dev, dma_addr_t buff_dma,
+अटल पूर्णांक cc_render_buff_to_mlli(काष्ठा device *dev, dma_addr_t buff_dma,
 				  u32 buff_size, u32 *curr_nents,
 				  u32 **mlli_entry_pp)
-{
+अणु
 	u32 *mlli_entry_p = *mlli_entry_pp;
 	u32 new_nents;
 
-	/* Verify there is no memory overflow*/
+	/* Verअगरy there is no memory overflow*/
 	new_nents = (*curr_nents + buff_size / CC_MAX_MLLI_ENTRY_SIZE + 1);
-	if (new_nents > MAX_NUM_OF_TOTAL_MLLI_ENTRIES) {
+	अगर (new_nents > MAX_NUM_OF_TOTAL_MLLI_ENTRIES) अणु
 		dev_err(dev, "Too many mlli entries. current %d max %d\n",
 			new_nents, MAX_NUM_OF_TOTAL_MLLI_ENTRIES);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/*handle buffer longer than 64 kbytes */
-	while (buff_size > CC_MAX_MLLI_ENTRY_SIZE) {
+	/*handle buffer दीर्घer than 64 kbytes */
+	जबतक (buff_size > CC_MAX_MLLI_ENTRY_SIZE) अणु
 		cc_lli_set_addr(mlli_entry_p, buff_dma);
 		cc_lli_set_size(mlli_entry_p, CC_MAX_MLLI_ENTRY_SIZE);
 		dev_dbg(dev, "entry[%d]: single_buff=0x%08X size=%08X\n",
@@ -139,7 +140,7 @@ static int cc_render_buff_to_mlli(struct device *dev, dma_addr_t buff_dma,
 		buff_size -= CC_MAX_MLLI_ENTRY_SIZE;
 		mlli_entry_p = mlli_entry_p + 2;
 		(*curr_nents)++;
-	}
+	पूर्ण
 	/*Last entry */
 	cc_lli_set_addr(mlli_entry_p, buff_dma);
 	cc_lli_set_size(mlli_entry_p, buff_size);
@@ -149,19 +150,19 @@ static int cc_render_buff_to_mlli(struct device *dev, dma_addr_t buff_dma,
 	mlli_entry_p = mlli_entry_p + 2;
 	*mlli_entry_pp = mlli_entry_p;
 	(*curr_nents)++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cc_render_sg_to_mlli(struct device *dev, struct scatterlist *sgl,
+अटल पूर्णांक cc_render_sg_to_mlli(काष्ठा device *dev, काष्ठा scatterlist *sgl,
 				u32 sgl_data_len, u32 sgl_offset,
 				u32 *curr_nents, u32 **mlli_entry_pp)
-{
-	struct scatterlist *curr_sgl = sgl;
+अणु
+	काष्ठा scatterlist *curr_sgl = sgl;
 	u32 *mlli_entry_p = *mlli_entry_pp;
 	s32 rc = 0;
 
-	for ( ; (curr_sgl && sgl_data_len);
-	      curr_sgl = sg_next(curr_sgl)) {
+	क्रम ( ; (curr_sgl && sgl_data_len);
+	      curr_sgl = sg_next(curr_sgl)) अणु
 		u32 entry_data_len =
 			(sgl_data_len > sg_dma_len(curr_sgl) - sgl_offset) ?
 				sg_dma_len(curr_sgl) - sgl_offset :
@@ -170,74 +171,74 @@ static int cc_render_sg_to_mlli(struct device *dev, struct scatterlist *sgl,
 		rc = cc_render_buff_to_mlli(dev, sg_dma_address(curr_sgl) +
 					    sgl_offset, entry_data_len,
 					    curr_nents, &mlli_entry_p);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		sgl_offset = 0;
-	}
+	पूर्ण
 	*mlli_entry_pp = mlli_entry_p;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cc_generate_mlli(struct device *dev, struct buffer_array *sg_data,
-			    struct mlli_params *mlli_params, gfp_t flags)
-{
+अटल पूर्णांक cc_generate_mlli(काष्ठा device *dev, काष्ठा buffer_array *sg_data,
+			    काष्ठा mlli_params *mlli_params, gfp_t flags)
+अणु
 	u32 *mlli_p;
 	u32 total_nents = 0, prev_total_nents = 0;
-	int rc = 0, i;
+	पूर्णांक rc = 0, i;
 
 	dev_dbg(dev, "NUM of SG's = %d\n", sg_data->num_of_buffers);
 
-	/* Allocate memory from the pointed pool */
+	/* Allocate memory from the poपूर्णांकed pool */
 	mlli_params->mlli_virt_addr =
 		dma_pool_alloc(mlli_params->curr_pool, flags,
 			       &mlli_params->mlli_dma_addr);
-	if (!mlli_params->mlli_virt_addr) {
+	अगर (!mlli_params->mlli_virt_addr) अणु
 		dev_err(dev, "dma_pool_alloc() failed\n");
 		rc = -ENOMEM;
-		goto build_mlli_exit;
-	}
-	/* Point to start of MLLI */
+		जाओ build_mlli_निकास;
+	पूर्ण
+	/* Poपूर्णांक to start of MLLI */
 	mlli_p = mlli_params->mlli_virt_addr;
 	/* go over all SG's and link it to one MLLI table */
-	for (i = 0; i < sg_data->num_of_buffers; i++) {
-		union buffer_array_entry *entry = &sg_data->entry[i];
+	क्रम (i = 0; i < sg_data->num_of_buffers; i++) अणु
+		जोड़ buffer_array_entry *entry = &sg_data->entry[i];
 		u32 tot_len = sg_data->total_data_len[i];
 		u32 offset = sg_data->offset[i];
 
 		rc = cc_render_sg_to_mlli(dev, entry->sgl, tot_len, offset,
 					  &total_nents, &mlli_p);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		/* set last bit in the current table */
-		if (sg_data->mlli_nents[i]) {
-			/*Calculate the current MLLI table length for the
+		अगर (sg_data->mlli_nents[i]) अणु
+			/*Calculate the current MLLI table length क्रम the
 			 *length field in the descriptor
 			 */
 			*sg_data->mlli_nents[i] +=
 				(total_nents - prev_total_nents);
 			prev_total_nents = total_nents;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Set MLLI size for the bypass operation */
+	/* Set MLLI size क्रम the bypass operation */
 	mlli_params->mlli_len = (total_nents * LLI_ENTRY_BYTE_SIZE);
 
 	dev_dbg(dev, "MLLI params: virt_addr=%pK dma_addr=%pad mlli_len=0x%X\n",
 		mlli_params->mlli_virt_addr, &mlli_params->mlli_dma_addr,
 		mlli_params->mlli_len);
 
-build_mlli_exit:
-	return rc;
-}
+build_mlli_निकास:
+	वापस rc;
+पूर्ण
 
-static void cc_add_sg_entry(struct device *dev, struct buffer_array *sgl_data,
-			    unsigned int nents, struct scatterlist *sgl,
-			    unsigned int data_len, unsigned int data_offset,
+अटल व्योम cc_add_sg_entry(काष्ठा device *dev, काष्ठा buffer_array *sgl_data,
+			    अचिन्हित पूर्णांक nents, काष्ठा scatterlist *sgl,
+			    अचिन्हित पूर्णांक data_len, अचिन्हित पूर्णांक data_offset,
 			    bool is_last_table, u32 *mlli_nents)
-{
-	unsigned int index = sgl_data->num_of_buffers;
+अणु
+	अचिन्हित पूर्णांक index = sgl_data->num_of_buffers;
 
 	dev_dbg(dev, "index=%u nents=%u sgl=%pK data_len=0x%08X is_last=%d\n",
 		index, nents, sgl, data_len, is_last_table);
@@ -247,75 +248,75 @@ static void cc_add_sg_entry(struct device *dev, struct buffer_array *sgl_data,
 	sgl_data->total_data_len[index] = data_len;
 	sgl_data->is_last[index] = is_last_table;
 	sgl_data->mlli_nents[index] = mlli_nents;
-	if (sgl_data->mlli_nents[index])
+	अगर (sgl_data->mlli_nents[index])
 		*sgl_data->mlli_nents[index] = 0;
 	sgl_data->num_of_buffers++;
-}
+पूर्ण
 
-static int cc_map_sg(struct device *dev, struct scatterlist *sg,
-		     unsigned int nbytes, int direction, u32 *nents,
+अटल पूर्णांक cc_map_sg(काष्ठा device *dev, काष्ठा scatterlist *sg,
+		     अचिन्हित पूर्णांक nbytes, पूर्णांक direction, u32 *nents,
 		     u32 max_sg_nents, u32 *lbytes, u32 *mapped_nents)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 
 	*nents = cc_get_sgl_nents(dev, sg, nbytes, lbytes);
-	if (*nents > max_sg_nents) {
+	अगर (*nents > max_sg_nents) अणु
 		*nents = 0;
 		dev_err(dev, "Too many fragments. current %d max %d\n",
 			*nents, max_sg_nents);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = dma_map_sg(dev, sg, *nents, direction);
-	if (dma_mapping_error(dev, ret)) {
+	अगर (dma_mapping_error(dev, ret)) अणु
 		*nents = 0;
 		dev_err(dev, "dma_map_sg() sg buffer failed %d\n", ret);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	*mapped_nents = ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-cc_set_aead_conf_buf(struct device *dev, struct aead_req_ctx *areq_ctx,
-		     u8 *config_data, struct buffer_array *sg_data,
-		     unsigned int assoclen)
-{
+अटल पूर्णांक
+cc_set_aead_conf_buf(काष्ठा device *dev, काष्ठा aead_req_ctx *areq_ctx,
+		     u8 *config_data, काष्ठा buffer_array *sg_data,
+		     अचिन्हित पूर्णांक assoclen)
+अणु
 	dev_dbg(dev, " handle additional data config set to DLLI\n");
-	/* create sg for the current buffer */
+	/* create sg क्रम the current buffer */
 	sg_init_one(&areq_ctx->ccm_adata_sg, config_data,
 		    AES_BLOCK_SIZE + areq_ctx->ccm_hdr_size);
-	if (dma_map_sg(dev, &areq_ctx->ccm_adata_sg, 1, DMA_TO_DEVICE) != 1) {
+	अगर (dma_map_sg(dev, &areq_ctx->ccm_adata_sg, 1, DMA_TO_DEVICE) != 1) अणु
 		dev_err(dev, "dma_map_sg() config buffer failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	dev_dbg(dev, "Mapped curr_buff: dma_address=%pad page=%p addr=%pK offset=%u length=%u\n",
 		&sg_dma_address(&areq_ctx->ccm_adata_sg),
 		sg_page(&areq_ctx->ccm_adata_sg),
 		sg_virt(&areq_ctx->ccm_adata_sg),
 		areq_ctx->ccm_adata_sg.offset, areq_ctx->ccm_adata_sg.length);
-	/* prepare for case of MLLI */
-	if (assoclen > 0) {
+	/* prepare क्रम हाल of MLLI */
+	अगर (assoclen > 0) अणु
 		cc_add_sg_entry(dev, sg_data, 1, &areq_ctx->ccm_adata_sg,
 				(AES_BLOCK_SIZE + areq_ctx->ccm_hdr_size),
-				0, false, NULL);
-	}
-	return 0;
-}
+				0, false, शून्य);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int cc_set_hash_buf(struct device *dev, struct ahash_req_ctx *areq_ctx,
+अटल पूर्णांक cc_set_hash_buf(काष्ठा device *dev, काष्ठा ahash_req_ctx *areq_ctx,
 			   u8 *curr_buff, u32 curr_buff_cnt,
-			   struct buffer_array *sg_data)
-{
+			   काष्ठा buffer_array *sg_data)
+अणु
 	dev_dbg(dev, " handle curr buff %x set to   DLLI\n", curr_buff_cnt);
-	/* create sg for the current buffer */
+	/* create sg क्रम the current buffer */
 	sg_init_one(areq_ctx->buff_sg, curr_buff, curr_buff_cnt);
-	if (dma_map_sg(dev, areq_ctx->buff_sg, 1, DMA_TO_DEVICE) != 1) {
+	अगर (dma_map_sg(dev, areq_ctx->buff_sg, 1, DMA_TO_DEVICE) != 1) अणु
 		dev_err(dev, "dma_map_sg() src buffer failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	dev_dbg(dev, "Mapped curr_buff: dma_address=%pad page=%p addr=%pK offset=%u length=%u\n",
 		&sg_dma_address(areq_ctx->buff_sg), sg_page(areq_ctx->buff_sg),
 		sg_virt(areq_ctx->buff_sg), areq_ctx->buff_sg->offset,
@@ -323,310 +324,310 @@ static int cc_set_hash_buf(struct device *dev, struct ahash_req_ctx *areq_ctx,
 	areq_ctx->data_dma_buf_type = CC_DMA_BUF_DLLI;
 	areq_ctx->curr_sg = areq_ctx->buff_sg;
 	areq_ctx->in_nents = 0;
-	/* prepare for case of MLLI */
+	/* prepare क्रम हाल of MLLI */
 	cc_add_sg_entry(dev, sg_data, 1, areq_ctx->buff_sg, curr_buff_cnt, 0,
-			false, NULL);
-	return 0;
-}
+			false, शून्य);
+	वापस 0;
+पूर्ण
 
-void cc_unmap_cipher_request(struct device *dev, void *ctx,
-				unsigned int ivsize, struct scatterlist *src,
-				struct scatterlist *dst)
-{
-	struct cipher_req_ctx *req_ctx = (struct cipher_req_ctx *)ctx;
+व्योम cc_unmap_cipher_request(काष्ठा device *dev, व्योम *ctx,
+				अचिन्हित पूर्णांक ivsize, काष्ठा scatterlist *src,
+				काष्ठा scatterlist *dst)
+अणु
+	काष्ठा cipher_req_ctx *req_ctx = (काष्ठा cipher_req_ctx *)ctx;
 
-	if (req_ctx->gen_ctx.iv_dma_addr) {
+	अगर (req_ctx->gen_ctx.iv_dma_addr) अणु
 		dev_dbg(dev, "Unmapped iv: iv_dma_addr=%pad iv_size=%u\n",
 			&req_ctx->gen_ctx.iv_dma_addr, ivsize);
 		dma_unmap_single(dev, req_ctx->gen_ctx.iv_dma_addr,
-				 ivsize, DMA_BIDIRECTIONAL);
-	}
+				 ivsize, DMA_BIसूचीECTIONAL);
+	पूर्ण
 	/* Release pool */
-	if (req_ctx->dma_buf_type == CC_DMA_BUF_MLLI &&
-	    req_ctx->mlli_params.mlli_virt_addr) {
-		dma_pool_free(req_ctx->mlli_params.curr_pool,
+	अगर (req_ctx->dma_buf_type == CC_DMA_BUF_MLLI &&
+	    req_ctx->mlli_params.mlli_virt_addr) अणु
+		dma_pool_मुक्त(req_ctx->mlli_params.curr_pool,
 			      req_ctx->mlli_params.mlli_virt_addr,
 			      req_ctx->mlli_params.mlli_dma_addr);
-	}
+	पूर्ण
 
-	dma_unmap_sg(dev, src, req_ctx->in_nents, DMA_BIDIRECTIONAL);
+	dma_unmap_sg(dev, src, req_ctx->in_nents, DMA_BIसूचीECTIONAL);
 	dev_dbg(dev, "Unmapped req->src=%pK\n", sg_virt(src));
 
-	if (src != dst) {
-		dma_unmap_sg(dev, dst, req_ctx->out_nents, DMA_BIDIRECTIONAL);
+	अगर (src != dst) अणु
+		dma_unmap_sg(dev, dst, req_ctx->out_nents, DMA_BIसूचीECTIONAL);
 		dev_dbg(dev, "Unmapped req->dst=%pK\n", sg_virt(dst));
-	}
-}
+	पूर्ण
+पूर्ण
 
-int cc_map_cipher_request(struct cc_drvdata *drvdata, void *ctx,
-			  unsigned int ivsize, unsigned int nbytes,
-			  void *info, struct scatterlist *src,
-			  struct scatterlist *dst, gfp_t flags)
-{
-	struct cipher_req_ctx *req_ctx = (struct cipher_req_ctx *)ctx;
-	struct mlli_params *mlli_params = &req_ctx->mlli_params;
-	struct device *dev = drvdata_to_dev(drvdata);
-	struct buffer_array sg_data;
+पूर्णांक cc_map_cipher_request(काष्ठा cc_drvdata *drvdata, व्योम *ctx,
+			  अचिन्हित पूर्णांक ivsize, अचिन्हित पूर्णांक nbytes,
+			  व्योम *info, काष्ठा scatterlist *src,
+			  काष्ठा scatterlist *dst, gfp_t flags)
+अणु
+	काष्ठा cipher_req_ctx *req_ctx = (काष्ठा cipher_req_ctx *)ctx;
+	काष्ठा mlli_params *mlli_params = &req_ctx->mlli_params;
+	काष्ठा device *dev = drvdata_to_dev(drvdata);
+	काष्ठा buffer_array sg_data;
 	u32 dummy = 0;
-	int rc = 0;
+	पूर्णांक rc = 0;
 	u32 mapped_nents = 0;
 
 	req_ctx->dma_buf_type = CC_DMA_BUF_DLLI;
-	mlli_params->curr_pool = NULL;
+	mlli_params->curr_pool = शून्य;
 	sg_data.num_of_buffers = 0;
 
 	/* Map IV buffer */
-	if (ivsize) {
+	अगर (ivsize) अणु
 		dump_byte_array("iv", info, ivsize);
 		req_ctx->gen_ctx.iv_dma_addr =
-			dma_map_single(dev, info, ivsize, DMA_BIDIRECTIONAL);
-		if (dma_mapping_error(dev, req_ctx->gen_ctx.iv_dma_addr)) {
+			dma_map_single(dev, info, ivsize, DMA_BIसूचीECTIONAL);
+		अगर (dma_mapping_error(dev, req_ctx->gen_ctx.iv_dma_addr)) अणु
 			dev_err(dev, "Mapping iv %u B at va=%pK for DMA failed\n",
 				ivsize, info);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		dev_dbg(dev, "Mapped iv %u B at va=%pK to dma=%pad\n",
 			ivsize, info, &req_ctx->gen_ctx.iv_dma_addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		req_ctx->gen_ctx.iv_dma_addr = 0;
-	}
+	पूर्ण
 
 	/* Map the src SGL */
-	rc = cc_map_sg(dev, src, nbytes, DMA_BIDIRECTIONAL, &req_ctx->in_nents,
+	rc = cc_map_sg(dev, src, nbytes, DMA_BIसूचीECTIONAL, &req_ctx->in_nents,
 		       LLI_MAX_NUM_OF_DATA_ENTRIES, &dummy, &mapped_nents);
-	if (rc)
-		goto cipher_exit;
-	if (mapped_nents > 1)
+	अगर (rc)
+		जाओ cipher_निकास;
+	अगर (mapped_nents > 1)
 		req_ctx->dma_buf_type = CC_DMA_BUF_MLLI;
 
-	if (src == dst) {
+	अगर (src == dst) अणु
 		/* Handle inplace operation */
-		if (req_ctx->dma_buf_type == CC_DMA_BUF_MLLI) {
+		अगर (req_ctx->dma_buf_type == CC_DMA_BUF_MLLI) अणु
 			req_ctx->out_nents = 0;
 			cc_add_sg_entry(dev, &sg_data, req_ctx->in_nents, src,
 					nbytes, 0, true,
 					&req_ctx->in_mlli_nents);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Map the dst sg */
-		rc = cc_map_sg(dev, dst, nbytes, DMA_BIDIRECTIONAL,
+		rc = cc_map_sg(dev, dst, nbytes, DMA_BIसूचीECTIONAL,
 			       &req_ctx->out_nents, LLI_MAX_NUM_OF_DATA_ENTRIES,
 			       &dummy, &mapped_nents);
-		if (rc)
-			goto cipher_exit;
-		if (mapped_nents > 1)
+		अगर (rc)
+			जाओ cipher_निकास;
+		अगर (mapped_nents > 1)
 			req_ctx->dma_buf_type = CC_DMA_BUF_MLLI;
 
-		if (req_ctx->dma_buf_type == CC_DMA_BUF_MLLI) {
+		अगर (req_ctx->dma_buf_type == CC_DMA_BUF_MLLI) अणु
 			cc_add_sg_entry(dev, &sg_data, req_ctx->in_nents, src,
 					nbytes, 0, true,
 					&req_ctx->in_mlli_nents);
 			cc_add_sg_entry(dev, &sg_data, req_ctx->out_nents, dst,
 					nbytes, 0, true,
 					&req_ctx->out_mlli_nents);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (req_ctx->dma_buf_type == CC_DMA_BUF_MLLI) {
+	अगर (req_ctx->dma_buf_type == CC_DMA_BUF_MLLI) अणु
 		mlli_params->curr_pool = drvdata->mlli_buffs_pool;
 		rc = cc_generate_mlli(dev, &sg_data, mlli_params, flags);
-		if (rc)
-			goto cipher_exit;
-	}
+		अगर (rc)
+			जाओ cipher_निकास;
+	पूर्ण
 
 	dev_dbg(dev, "areq_ctx->dma_buf_type = %s\n",
 		cc_dma_buf_type(req_ctx->dma_buf_type));
 
-	return 0;
+	वापस 0;
 
-cipher_exit:
+cipher_निकास:
 	cc_unmap_cipher_request(dev, req_ctx, ivsize, src, dst);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void cc_unmap_aead_request(struct device *dev, struct aead_request *req)
-{
-	struct aead_req_ctx *areq_ctx = aead_request_ctx(req);
-	unsigned int hw_iv_size = areq_ctx->hw_iv_size;
-	struct cc_drvdata *drvdata = dev_get_drvdata(dev);
+व्योम cc_unmap_aead_request(काष्ठा device *dev, काष्ठा aead_request *req)
+अणु
+	काष्ठा aead_req_ctx *areq_ctx = aead_request_ctx(req);
+	अचिन्हित पूर्णांक hw_iv_size = areq_ctx->hw_iv_size;
+	काष्ठा cc_drvdata *drvdata = dev_get_drvdata(dev);
 
-	if (areq_ctx->mac_buf_dma_addr) {
+	अगर (areq_ctx->mac_buf_dma_addr) अणु
 		dma_unmap_single(dev, areq_ctx->mac_buf_dma_addr,
-				 MAX_MAC_SIZE, DMA_BIDIRECTIONAL);
-	}
+				 MAX_MAC_SIZE, DMA_BIसूचीECTIONAL);
+	पूर्ण
 
-	if (areq_ctx->cipher_mode == DRV_CIPHER_GCTR) {
-		if (areq_ctx->hkey_dma_addr) {
+	अगर (areq_ctx->cipher_mode == DRV_CIPHER_GCTR) अणु
+		अगर (areq_ctx->hkey_dma_addr) अणु
 			dma_unmap_single(dev, areq_ctx->hkey_dma_addr,
-					 AES_BLOCK_SIZE, DMA_BIDIRECTIONAL);
-		}
+					 AES_BLOCK_SIZE, DMA_BIसूचीECTIONAL);
+		पूर्ण
 
-		if (areq_ctx->gcm_block_len_dma_addr) {
+		अगर (areq_ctx->gcm_block_len_dma_addr) अणु
 			dma_unmap_single(dev, areq_ctx->gcm_block_len_dma_addr,
 					 AES_BLOCK_SIZE, DMA_TO_DEVICE);
-		}
+		पूर्ण
 
-		if (areq_ctx->gcm_iv_inc1_dma_addr) {
+		अगर (areq_ctx->gcm_iv_inc1_dma_addr) अणु
 			dma_unmap_single(dev, areq_ctx->gcm_iv_inc1_dma_addr,
 					 AES_BLOCK_SIZE, DMA_TO_DEVICE);
-		}
+		पूर्ण
 
-		if (areq_ctx->gcm_iv_inc2_dma_addr) {
+		अगर (areq_ctx->gcm_iv_inc2_dma_addr) अणु
 			dma_unmap_single(dev, areq_ctx->gcm_iv_inc2_dma_addr,
 					 AES_BLOCK_SIZE, DMA_TO_DEVICE);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (areq_ctx->ccm_hdr_size != ccm_header_size_null) {
-		if (areq_ctx->ccm_iv0_dma_addr) {
+	अगर (areq_ctx->ccm_hdr_size != ccm_header_size_null) अणु
+		अगर (areq_ctx->ccm_iv0_dma_addr) अणु
 			dma_unmap_single(dev, areq_ctx->ccm_iv0_dma_addr,
 					 AES_BLOCK_SIZE, DMA_TO_DEVICE);
-		}
+		पूर्ण
 
 		dma_unmap_sg(dev, &areq_ctx->ccm_adata_sg, 1, DMA_TO_DEVICE);
-	}
-	if (areq_ctx->gen_ctx.iv_dma_addr) {
+	पूर्ण
+	अगर (areq_ctx->gen_ctx.iv_dma_addr) अणु
 		dma_unmap_single(dev, areq_ctx->gen_ctx.iv_dma_addr,
-				 hw_iv_size, DMA_BIDIRECTIONAL);
-		kfree_sensitive(areq_ctx->gen_ctx.iv);
-	}
+				 hw_iv_size, DMA_BIसूचीECTIONAL);
+		kमुक्त_sensitive(areq_ctx->gen_ctx.iv);
+	पूर्ण
 
 	/* Release pool */
-	if ((areq_ctx->assoc_buff_type == CC_DMA_BUF_MLLI ||
+	अगर ((areq_ctx->assoc_buff_type == CC_DMA_BUF_MLLI ||
 	     areq_ctx->data_buff_type == CC_DMA_BUF_MLLI) &&
-	    (areq_ctx->mlli_params.mlli_virt_addr)) {
+	    (areq_ctx->mlli_params.mlli_virt_addr)) अणु
 		dev_dbg(dev, "free MLLI buffer: dma=%pad virt=%pK\n",
 			&areq_ctx->mlli_params.mlli_dma_addr,
 			areq_ctx->mlli_params.mlli_virt_addr);
-		dma_pool_free(areq_ctx->mlli_params.curr_pool,
+		dma_pool_मुक्त(areq_ctx->mlli_params.curr_pool,
 			      areq_ctx->mlli_params.mlli_virt_addr,
 			      areq_ctx->mlli_params.mlli_dma_addr);
-	}
+	पूर्ण
 
 	dev_dbg(dev, "Unmapping src sgl: req->src=%pK areq_ctx->src.nents=%u areq_ctx->assoc.nents=%u assoclen:%u cryptlen=%u\n",
 		sg_virt(req->src), areq_ctx->src.nents, areq_ctx->assoc.nents,
 		areq_ctx->assoclen, req->cryptlen);
 
 	dma_unmap_sg(dev, req->src, areq_ctx->src.mapped_nents,
-		     DMA_BIDIRECTIONAL);
-	if (req->src != req->dst) {
+		     DMA_BIसूचीECTIONAL);
+	अगर (req->src != req->dst) अणु
 		dev_dbg(dev, "Unmapping dst sgl: req->dst=%pK\n",
 			sg_virt(req->dst));
 		dma_unmap_sg(dev, req->dst, areq_ctx->dst.mapped_nents,
-			     DMA_BIDIRECTIONAL);
-	}
-	if (drvdata->coherent &&
-	    areq_ctx->gen_ctx.op_type == DRV_CRYPTO_DIRECTION_DECRYPT &&
-	    req->src == req->dst) {
+			     DMA_BIसूचीECTIONAL);
+	पूर्ण
+	अगर (drvdata->coherent &&
+	    areq_ctx->gen_ctx.op_type == DRV_CRYPTO_सूचीECTION_DECRYPT &&
+	    req->src == req->dst) अणु
 		/* copy back mac from temporary location to deal with possible
 		 * data memory overriding that caused by cache coherence
 		 * problem.
 		 */
 		cc_copy_mac(dev, req, CC_SG_FROM_BUF);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool cc_is_icv_frag(unsigned int sgl_nents, unsigned int authsize,
+अटल bool cc_is_icv_frag(अचिन्हित पूर्णांक sgl_nents, अचिन्हित पूर्णांक authsize,
 			   u32 last_entry_data_size)
-{
-	return ((sgl_nents > 1) && (last_entry_data_size < authsize));
-}
+अणु
+	वापस ((sgl_nents > 1) && (last_entry_data_size < authsize));
+पूर्ण
 
-static int cc_aead_chain_iv(struct cc_drvdata *drvdata,
-			    struct aead_request *req,
-			    struct buffer_array *sg_data,
-			    bool is_last, bool do_chain)
-{
-	struct aead_req_ctx *areq_ctx = aead_request_ctx(req);
-	unsigned int hw_iv_size = areq_ctx->hw_iv_size;
-	struct device *dev = drvdata_to_dev(drvdata);
+अटल पूर्णांक cc_aead_chain_iv(काष्ठा cc_drvdata *drvdata,
+			    काष्ठा aead_request *req,
+			    काष्ठा buffer_array *sg_data,
+			    bool is_last, bool करो_chain)
+अणु
+	काष्ठा aead_req_ctx *areq_ctx = aead_request_ctx(req);
+	अचिन्हित पूर्णांक hw_iv_size = areq_ctx->hw_iv_size;
+	काष्ठा device *dev = drvdata_to_dev(drvdata);
 	gfp_t flags = cc_gfp_flags(&req->base);
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	if (!req->iv) {
+	अगर (!req->iv) अणु
 		areq_ctx->gen_ctx.iv_dma_addr = 0;
-		areq_ctx->gen_ctx.iv = NULL;
-		goto chain_iv_exit;
-	}
+		areq_ctx->gen_ctx.iv = शून्य;
+		जाओ chain_iv_निकास;
+	पूर्ण
 
 	areq_ctx->gen_ctx.iv = kmemdup(req->iv, hw_iv_size, flags);
-	if (!areq_ctx->gen_ctx.iv)
-		return -ENOMEM;
+	अगर (!areq_ctx->gen_ctx.iv)
+		वापस -ENOMEM;
 
 	areq_ctx->gen_ctx.iv_dma_addr =
 		dma_map_single(dev, areq_ctx->gen_ctx.iv, hw_iv_size,
-			       DMA_BIDIRECTIONAL);
-	if (dma_mapping_error(dev, areq_ctx->gen_ctx.iv_dma_addr)) {
+			       DMA_BIसूचीECTIONAL);
+	अगर (dma_mapping_error(dev, areq_ctx->gen_ctx.iv_dma_addr)) अणु
 		dev_err(dev, "Mapping iv %u B at va=%pK for DMA failed\n",
 			hw_iv_size, req->iv);
-		kfree_sensitive(areq_ctx->gen_ctx.iv);
-		areq_ctx->gen_ctx.iv = NULL;
+		kमुक्त_sensitive(areq_ctx->gen_ctx.iv);
+		areq_ctx->gen_ctx.iv = शून्य;
 		rc = -ENOMEM;
-		goto chain_iv_exit;
-	}
+		जाओ chain_iv_निकास;
+	पूर्ण
 
 	dev_dbg(dev, "Mapped iv %u B at va=%pK to dma=%pad\n",
 		hw_iv_size, req->iv, &areq_ctx->gen_ctx.iv_dma_addr);
 
-chain_iv_exit:
-	return rc;
-}
+chain_iv_निकास:
+	वापस rc;
+पूर्ण
 
-static int cc_aead_chain_assoc(struct cc_drvdata *drvdata,
-			       struct aead_request *req,
-			       struct buffer_array *sg_data,
-			       bool is_last, bool do_chain)
-{
-	struct aead_req_ctx *areq_ctx = aead_request_ctx(req);
-	int rc = 0;
-	int mapped_nents = 0;
-	struct device *dev = drvdata_to_dev(drvdata);
+अटल पूर्णांक cc_aead_chain_assoc(काष्ठा cc_drvdata *drvdata,
+			       काष्ठा aead_request *req,
+			       काष्ठा buffer_array *sg_data,
+			       bool is_last, bool करो_chain)
+अणु
+	काष्ठा aead_req_ctx *areq_ctx = aead_request_ctx(req);
+	पूर्णांक rc = 0;
+	पूर्णांक mapped_nents = 0;
+	काष्ठा device *dev = drvdata_to_dev(drvdata);
 
-	if (!sg_data) {
+	अगर (!sg_data) अणु
 		rc = -EINVAL;
-		goto chain_assoc_exit;
-	}
+		जाओ chain_assoc_निकास;
+	पूर्ण
 
-	if (areq_ctx->assoclen == 0) {
-		areq_ctx->assoc_buff_type = CC_DMA_BUF_NULL;
+	अगर (areq_ctx->assoclen == 0) अणु
+		areq_ctx->assoc_buff_type = CC_DMA_BUF_शून्य;
 		areq_ctx->assoc.nents = 0;
 		areq_ctx->assoc.mlli_nents = 0;
 		dev_dbg(dev, "Chain assoc of length 0: buff_type=%s nents=%u\n",
 			cc_dma_buf_type(areq_ctx->assoc_buff_type),
 			areq_ctx->assoc.nents);
-		goto chain_assoc_exit;
-	}
+		जाओ chain_assoc_निकास;
+	पूर्ण
 
-	mapped_nents = sg_nents_for_len(req->src, areq_ctx->assoclen);
-	if (mapped_nents < 0)
-		return mapped_nents;
+	mapped_nents = sg_nents_क्रम_len(req->src, areq_ctx->assoclen);
+	अगर (mapped_nents < 0)
+		वापस mapped_nents;
 
-	if (mapped_nents > LLI_MAX_NUM_OF_ASSOC_DATA_ENTRIES) {
+	अगर (mapped_nents > LLI_MAX_NUM_OF_ASSOC_DATA_ENTRIES) अणु
 		dev_err(dev, "Too many fragments. current %d max %d\n",
 			mapped_nents, LLI_MAX_NUM_OF_ASSOC_DATA_ENTRIES);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	areq_ctx->assoc.nents = mapped_nents;
 
-	/* in CCM case we have additional entry for
+	/* in CCM हाल we have additional entry क्रम
 	 * ccm header configurations
 	 */
-	if (areq_ctx->ccm_hdr_size != ccm_header_size_null) {
-		if ((mapped_nents + 1) > LLI_MAX_NUM_OF_ASSOC_DATA_ENTRIES) {
+	अगर (areq_ctx->ccm_hdr_size != ccm_header_size_null) अणु
+		अगर ((mapped_nents + 1) > LLI_MAX_NUM_OF_ASSOC_DATA_ENTRIES) अणु
 			dev_err(dev, "CCM case.Too many fragments. Current %d max %d\n",
 				(areq_ctx->assoc.nents + 1),
 				LLI_MAX_NUM_OF_ASSOC_DATA_ENTRIES);
 			rc = -ENOMEM;
-			goto chain_assoc_exit;
-		}
-	}
+			जाओ chain_assoc_निकास;
+		पूर्ण
+	पूर्ण
 
-	if (mapped_nents == 1 && areq_ctx->ccm_hdr_size == ccm_header_size_null)
+	अगर (mapped_nents == 1 && areq_ctx->ccm_hdr_size == ccm_header_size_null)
 		areq_ctx->assoc_buff_type = CC_DMA_BUF_DLLI;
-	else
+	अन्यथा
 		areq_ctx->assoc_buff_type = CC_DMA_BUF_MLLI;
 
-	if (do_chain || areq_ctx->assoc_buff_type == CC_DMA_BUF_MLLI) {
+	अगर (करो_chain || areq_ctx->assoc_buff_type == CC_DMA_BUF_MLLI) अणु
 		dev_dbg(dev, "Chain assoc: buff_type=%s nents=%u\n",
 			cc_dma_buf_type(areq_ctx->assoc_buff_type),
 			areq_ctx->assoc.nents);
@@ -634,48 +635,48 @@ static int cc_aead_chain_assoc(struct cc_drvdata *drvdata,
 				areq_ctx->assoclen, 0, is_last,
 				&areq_ctx->assoc.mlli_nents);
 		areq_ctx->assoc_buff_type = CC_DMA_BUF_MLLI;
-	}
+	पूर्ण
 
-chain_assoc_exit:
-	return rc;
-}
+chain_assoc_निकास:
+	वापस rc;
+पूर्ण
 
-static void cc_prepare_aead_data_dlli(struct aead_request *req,
+अटल व्योम cc_prepare_aead_data_dlli(काष्ठा aead_request *req,
 				      u32 *src_last_bytes, u32 *dst_last_bytes)
-{
-	struct aead_req_ctx *areq_ctx = aead_request_ctx(req);
-	enum drv_crypto_direction direct = areq_ctx->gen_ctx.op_type;
-	unsigned int authsize = areq_ctx->req_authsize;
-	struct scatterlist *sg;
-	ssize_t offset;
+अणु
+	काष्ठा aead_req_ctx *areq_ctx = aead_request_ctx(req);
+	क्रमागत drv_crypto_direction direct = areq_ctx->gen_ctx.op_type;
+	अचिन्हित पूर्णांक authsize = areq_ctx->req_authsize;
+	काष्ठा scatterlist *sg;
+	sमाप_प्रकार offset;
 
 	areq_ctx->is_icv_fragmented = false;
 
-	if ((req->src == req->dst) || direct == DRV_CRYPTO_DIRECTION_DECRYPT) {
+	अगर ((req->src == req->dst) || direct == DRV_CRYPTO_सूचीECTION_DECRYPT) अणु
 		sg = areq_ctx->src_sgl;
 		offset = *src_last_bytes - authsize;
-	} else {
+	पूर्ण अन्यथा अणु
 		sg = areq_ctx->dst_sgl;
 		offset = *dst_last_bytes - authsize;
-	}
+	पूर्ण
 
 	areq_ctx->icv_dma_addr = sg_dma_address(sg) + offset;
 	areq_ctx->icv_virt_addr = sg_virt(sg) + offset;
-}
+पूर्ण
 
-static void cc_prepare_aead_data_mlli(struct cc_drvdata *drvdata,
-				      struct aead_request *req,
-				      struct buffer_array *sg_data,
+अटल व्योम cc_prepare_aead_data_mlli(काष्ठा cc_drvdata *drvdata,
+				      काष्ठा aead_request *req,
+				      काष्ठा buffer_array *sg_data,
 				      u32 *src_last_bytes, u32 *dst_last_bytes,
 				      bool is_last_table)
-{
-	struct aead_req_ctx *areq_ctx = aead_request_ctx(req);
-	enum drv_crypto_direction direct = areq_ctx->gen_ctx.op_type;
-	unsigned int authsize = areq_ctx->req_authsize;
-	struct device *dev = drvdata_to_dev(drvdata);
-	struct scatterlist *sg;
+अणु
+	काष्ठा aead_req_ctx *areq_ctx = aead_request_ctx(req);
+	क्रमागत drv_crypto_direction direct = areq_ctx->gen_ctx.op_type;
+	अचिन्हित पूर्णांक authsize = areq_ctx->req_authsize;
+	काष्ठा device *dev = drvdata_to_dev(drvdata);
+	काष्ठा scatterlist *sg;
 
-	if (req->src == req->dst) {
+	अगर (req->src == req->dst) अणु
 		/*INPLACE*/
 		cc_add_sg_entry(dev, sg_data, areq_ctx->src.nents,
 				areq_ctx->src_sgl, areq_ctx->cryptlen,
@@ -686,36 +687,36 @@ static void cc_prepare_aead_data_mlli(struct cc_drvdata *drvdata,
 			cc_is_icv_frag(areq_ctx->src.nents, authsize,
 				       *src_last_bytes);
 
-		if (areq_ctx->is_icv_fragmented) {
+		अगर (areq_ctx->is_icv_fragmented) अणु
 			/* Backup happens only when ICV is fragmented, ICV
-			 * verification is made by CPU compare in order to
-			 * simplify MAC verification upon request completion
+			 * verअगरication is made by CPU compare in order to
+			 * simplअगरy MAC verअगरication upon request completion
 			 */
-			if (direct == DRV_CRYPTO_DIRECTION_DECRYPT) {
-				/* In coherent platforms (e.g. ACP)
-				 * already copying ICV for any
+			अगर (direct == DRV_CRYPTO_सूचीECTION_DECRYPT) अणु
+				/* In coherent platक्रमms (e.g. ACP)
+				 * alपढ़ोy copying ICV क्रम any
 				 * INPLACE-DECRYPT operation, hence
 				 * we must neglect this code.
 				 */
-				if (!drvdata->coherent)
+				अगर (!drvdata->coherent)
 					cc_copy_mac(dev, req, CC_SG_TO_BUF);
 
 				areq_ctx->icv_virt_addr = areq_ctx->backup_mac;
-			} else {
+			पूर्ण अन्यथा अणु
 				areq_ctx->icv_virt_addr = areq_ctx->mac_buf;
 				areq_ctx->icv_dma_addr =
 					areq_ctx->mac_buf_dma_addr;
-			}
-		} else { /* Contig. ICV */
+			पूर्ण
+		पूर्ण अन्यथा अणु /* Contig. ICV */
 			sg = &areq_ctx->src_sgl[areq_ctx->src.nents - 1];
-			/*Should hanlde if the sg is not contig.*/
+			/*Should hanlde अगर the sg is not contig.*/
 			areq_ctx->icv_dma_addr = sg_dma_address(sg) +
 				(*src_last_bytes - authsize);
 			areq_ctx->icv_virt_addr = sg_virt(sg) +
 				(*src_last_bytes - authsize);
-		}
+		पूर्ण
 
-	} else if (direct == DRV_CRYPTO_DIRECTION_DECRYPT) {
+	पूर्ण अन्यथा अगर (direct == DRV_CRYPTO_सूचीECTION_DECRYPT) अणु
 		/*NON-INPLACE and DECRYPT*/
 		cc_add_sg_entry(dev, sg_data, areq_ctx->src.nents,
 				areq_ctx->src_sgl, areq_ctx->cryptlen,
@@ -731,23 +732,23 @@ static void cc_prepare_aead_data_mlli(struct cc_drvdata *drvdata,
 				       *src_last_bytes);
 		/* Backup happens only when ICV is fragmented, ICV
 
-		 * verification is made by CPU compare in order to simplify
-		 * MAC verification upon request completion
+		 * verअगरication is made by CPU compare in order to simplअगरy
+		 * MAC verअगरication upon request completion
 		 */
-		if (areq_ctx->is_icv_fragmented) {
+		अगर (areq_ctx->is_icv_fragmented) अणु
 			cc_copy_mac(dev, req, CC_SG_TO_BUF);
 			areq_ctx->icv_virt_addr = areq_ctx->backup_mac;
 
-		} else { /* Contig. ICV */
+		पूर्ण अन्यथा अणु /* Contig. ICV */
 			sg = &areq_ctx->src_sgl[areq_ctx->src.nents - 1];
-			/*Should hanlde if the sg is not contig.*/
+			/*Should hanlde अगर the sg is not contig.*/
 			areq_ctx->icv_dma_addr = sg_dma_address(sg) +
 				(*src_last_bytes - authsize);
 			areq_ctx->icv_virt_addr = sg_virt(sg) +
 				(*src_last_bytes - authsize);
-		}
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/*NON-INPLACE and ENCRYPT*/
 		cc_add_sg_entry(dev, sg_data, areq_ctx->dst.nents,
 				areq_ctx->dst_sgl, areq_ctx->cryptlen,
@@ -762,152 +763,152 @@ static void cc_prepare_aead_data_mlli(struct cc_drvdata *drvdata,
 			cc_is_icv_frag(areq_ctx->dst.nents, authsize,
 				       *dst_last_bytes);
 
-		if (!areq_ctx->is_icv_fragmented) {
+		अगर (!areq_ctx->is_icv_fragmented) अणु
 			sg = &areq_ctx->dst_sgl[areq_ctx->dst.nents - 1];
 			/* Contig. ICV */
 			areq_ctx->icv_dma_addr = sg_dma_address(sg) +
 				(*dst_last_bytes - authsize);
 			areq_ctx->icv_virt_addr = sg_virt(sg) +
 				(*dst_last_bytes - authsize);
-		} else {
+		पूर्ण अन्यथा अणु
 			areq_ctx->icv_dma_addr = areq_ctx->mac_buf_dma_addr;
 			areq_ctx->icv_virt_addr = areq_ctx->mac_buf;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int cc_aead_chain_data(struct cc_drvdata *drvdata,
-			      struct aead_request *req,
-			      struct buffer_array *sg_data,
-			      bool is_last_table, bool do_chain)
-{
-	struct aead_req_ctx *areq_ctx = aead_request_ctx(req);
-	struct device *dev = drvdata_to_dev(drvdata);
-	enum drv_crypto_direction direct = areq_ctx->gen_ctx.op_type;
-	unsigned int authsize = areq_ctx->req_authsize;
-	unsigned int src_last_bytes = 0, dst_last_bytes = 0;
-	int rc = 0;
+अटल पूर्णांक cc_aead_chain_data(काष्ठा cc_drvdata *drvdata,
+			      काष्ठा aead_request *req,
+			      काष्ठा buffer_array *sg_data,
+			      bool is_last_table, bool करो_chain)
+अणु
+	काष्ठा aead_req_ctx *areq_ctx = aead_request_ctx(req);
+	काष्ठा device *dev = drvdata_to_dev(drvdata);
+	क्रमागत drv_crypto_direction direct = areq_ctx->gen_ctx.op_type;
+	अचिन्हित पूर्णांक authsize = areq_ctx->req_authsize;
+	अचिन्हित पूर्णांक src_last_bytes = 0, dst_last_bytes = 0;
+	पूर्णांक rc = 0;
 	u32 src_mapped_nents = 0, dst_mapped_nents = 0;
 	u32 offset = 0;
 	/* non-inplace mode */
-	unsigned int size_for_map = req->assoclen + req->cryptlen;
+	अचिन्हित पूर्णांक size_क्रम_map = req->assoclen + req->cryptlen;
 	u32 sg_index = 0;
-	u32 size_to_skip = req->assoclen;
-	struct scatterlist *sgl;
+	u32 माप_प्रकारo_skip = req->assoclen;
+	काष्ठा scatterlist *sgl;
 
-	offset = size_to_skip;
+	offset = माप_प्रकारo_skip;
 
-	if (!sg_data)
-		return -EINVAL;
+	अगर (!sg_data)
+		वापस -EINVAL;
 
 	areq_ctx->src_sgl = req->src;
 	areq_ctx->dst_sgl = req->dst;
 
-	size_for_map += (direct == DRV_CRYPTO_DIRECTION_ENCRYPT) ?
+	size_क्रम_map += (direct == DRV_CRYPTO_सूचीECTION_ENCRYPT) ?
 			authsize : 0;
-	src_mapped_nents = cc_get_sgl_nents(dev, req->src, size_for_map,
+	src_mapped_nents = cc_get_sgl_nents(dev, req->src, size_क्रम_map,
 					    &src_last_bytes);
 	sg_index = areq_ctx->src_sgl->length;
 	//check where the data starts
-	while (src_mapped_nents && (sg_index <= size_to_skip)) {
+	जबतक (src_mapped_nents && (sg_index <= माप_प्रकारo_skip)) अणु
 		src_mapped_nents--;
 		offset -= areq_ctx->src_sgl->length;
 		sgl = sg_next(areq_ctx->src_sgl);
-		if (!sgl)
-			break;
+		अगर (!sgl)
+			अवरोध;
 		areq_ctx->src_sgl = sgl;
 		sg_index += areq_ctx->src_sgl->length;
-	}
-	if (src_mapped_nents > LLI_MAX_NUM_OF_DATA_ENTRIES) {
+	पूर्ण
+	अगर (src_mapped_nents > LLI_MAX_NUM_OF_DATA_ENTRIES) अणु
 		dev_err(dev, "Too many fragments. current %d max %d\n",
 			src_mapped_nents, LLI_MAX_NUM_OF_DATA_ENTRIES);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	areq_ctx->src.nents = src_mapped_nents;
 
 	areq_ctx->src_offset = offset;
 
-	if (req->src != req->dst) {
-		size_for_map = req->assoclen + req->cryptlen;
+	अगर (req->src != req->dst) अणु
+		size_क्रम_map = req->assoclen + req->cryptlen;
 
-		if (direct == DRV_CRYPTO_DIRECTION_ENCRYPT)
-			size_for_map += authsize;
-		else
-			size_for_map -= authsize;
+		अगर (direct == DRV_CRYPTO_सूचीECTION_ENCRYPT)
+			size_क्रम_map += authsize;
+		अन्यथा
+			size_क्रम_map -= authsize;
 
-		rc = cc_map_sg(dev, req->dst, size_for_map, DMA_BIDIRECTIONAL,
+		rc = cc_map_sg(dev, req->dst, size_क्रम_map, DMA_BIसूचीECTIONAL,
 			       &areq_ctx->dst.mapped_nents,
 			       LLI_MAX_NUM_OF_DATA_ENTRIES, &dst_last_bytes,
 			       &dst_mapped_nents);
-		if (rc)
-			goto chain_data_exit;
-	}
+		अगर (rc)
+			जाओ chain_data_निकास;
+	पूर्ण
 
-	dst_mapped_nents = cc_get_sgl_nents(dev, req->dst, size_for_map,
+	dst_mapped_nents = cc_get_sgl_nents(dev, req->dst, size_क्रम_map,
 					    &dst_last_bytes);
 	sg_index = areq_ctx->dst_sgl->length;
-	offset = size_to_skip;
+	offset = माप_प्रकारo_skip;
 
 	//check where the data starts
-	while (dst_mapped_nents && sg_index <= size_to_skip) {
+	जबतक (dst_mapped_nents && sg_index <= माप_प्रकारo_skip) अणु
 		dst_mapped_nents--;
 		offset -= areq_ctx->dst_sgl->length;
 		sgl = sg_next(areq_ctx->dst_sgl);
-		if (!sgl)
-			break;
+		अगर (!sgl)
+			अवरोध;
 		areq_ctx->dst_sgl = sgl;
 		sg_index += areq_ctx->dst_sgl->length;
-	}
-	if (dst_mapped_nents > LLI_MAX_NUM_OF_DATA_ENTRIES) {
+	पूर्ण
+	अगर (dst_mapped_nents > LLI_MAX_NUM_OF_DATA_ENTRIES) अणु
 		dev_err(dev, "Too many fragments. current %d max %d\n",
 			dst_mapped_nents, LLI_MAX_NUM_OF_DATA_ENTRIES);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	areq_ctx->dst.nents = dst_mapped_nents;
 	areq_ctx->dst_offset = offset;
-	if (src_mapped_nents > 1 ||
+	अगर (src_mapped_nents > 1 ||
 	    dst_mapped_nents  > 1 ||
-	    do_chain) {
+	    करो_chain) अणु
 		areq_ctx->data_buff_type = CC_DMA_BUF_MLLI;
 		cc_prepare_aead_data_mlli(drvdata, req, sg_data,
 					  &src_last_bytes, &dst_last_bytes,
 					  is_last_table);
-	} else {
+	पूर्ण अन्यथा अणु
 		areq_ctx->data_buff_type = CC_DMA_BUF_DLLI;
 		cc_prepare_aead_data_dlli(req, &src_last_bytes,
 					  &dst_last_bytes);
-	}
+	पूर्ण
 
-chain_data_exit:
-	return rc;
-}
+chain_data_निकास:
+	वापस rc;
+पूर्ण
 
-static void cc_update_aead_mlli_nents(struct cc_drvdata *drvdata,
-				      struct aead_request *req)
-{
-	struct aead_req_ctx *areq_ctx = aead_request_ctx(req);
+अटल व्योम cc_update_aead_mlli_nents(काष्ठा cc_drvdata *drvdata,
+				      काष्ठा aead_request *req)
+अणु
+	काष्ठा aead_req_ctx *areq_ctx = aead_request_ctx(req);
 	u32 curr_mlli_size = 0;
 
-	if (areq_ctx->assoc_buff_type == CC_DMA_BUF_MLLI) {
+	अगर (areq_ctx->assoc_buff_type == CC_DMA_BUF_MLLI) अणु
 		areq_ctx->assoc.sram_addr = drvdata->mlli_sram_addr;
 		curr_mlli_size = areq_ctx->assoc.mlli_nents *
 						LLI_ENTRY_BYTE_SIZE;
-	}
+	पूर्ण
 
-	if (areq_ctx->data_buff_type == CC_DMA_BUF_MLLI) {
-		/*Inplace case dst nents equal to src nents*/
-		if (req->src == req->dst) {
+	अगर (areq_ctx->data_buff_type == CC_DMA_BUF_MLLI) अणु
+		/*Inplace हाल dst nents equal to src nents*/
+		अगर (req->src == req->dst) अणु
 			areq_ctx->dst.mlli_nents = areq_ctx->src.mlli_nents;
 			areq_ctx->src.sram_addr = drvdata->mlli_sram_addr +
 								curr_mlli_size;
 			areq_ctx->dst.sram_addr = areq_ctx->src.sram_addr;
-			if (!areq_ctx->is_single_pass)
+			अगर (!areq_ctx->is_single_pass)
 				areq_ctx->assoc.mlli_nents +=
 					areq_ctx->src.mlli_nents;
-		} else {
-			if (areq_ctx->gen_ctx.op_type ==
-					DRV_CRYPTO_DIRECTION_DECRYPT) {
+		पूर्ण अन्यथा अणु
+			अगर (areq_ctx->gen_ctx.op_type ==
+					DRV_CRYPTO_सूचीECTION_DECRYPT) अणु
 				areq_ctx->src.sram_addr =
 						drvdata->mlli_sram_addr +
 								curr_mlli_size;
@@ -915,10 +916,10 @@ static void cc_update_aead_mlli_nents(struct cc_drvdata *drvdata,
 						areq_ctx->src.sram_addr +
 						areq_ctx->src.mlli_nents *
 						LLI_ENTRY_BYTE_SIZE;
-				if (!areq_ctx->is_single_pass)
+				अगर (!areq_ctx->is_single_pass)
 					areq_ctx->assoc.mlli_nents +=
 						areq_ctx->src.mlli_nents;
-			} else {
+			पूर्ण अन्यथा अणु
 				areq_ctx->dst.sram_addr =
 						drvdata->mlli_sram_addr +
 								curr_mlli_size;
@@ -926,324 +927,324 @@ static void cc_update_aead_mlli_nents(struct cc_drvdata *drvdata,
 						areq_ctx->dst.sram_addr +
 						areq_ctx->dst.mlli_nents *
 						LLI_ENTRY_BYTE_SIZE;
-				if (!areq_ctx->is_single_pass)
+				अगर (!areq_ctx->is_single_pass)
 					areq_ctx->assoc.mlli_nents +=
 						areq_ctx->dst.mlli_nents;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int cc_map_aead_request(struct cc_drvdata *drvdata, struct aead_request *req)
-{
-	struct aead_req_ctx *areq_ctx = aead_request_ctx(req);
-	struct mlli_params *mlli_params = &areq_ctx->mlli_params;
-	struct device *dev = drvdata_to_dev(drvdata);
-	struct buffer_array sg_data;
-	unsigned int authsize = areq_ctx->req_authsize;
-	int rc = 0;
+पूर्णांक cc_map_aead_request(काष्ठा cc_drvdata *drvdata, काष्ठा aead_request *req)
+अणु
+	काष्ठा aead_req_ctx *areq_ctx = aead_request_ctx(req);
+	काष्ठा mlli_params *mlli_params = &areq_ctx->mlli_params;
+	काष्ठा device *dev = drvdata_to_dev(drvdata);
+	काष्ठा buffer_array sg_data;
+	अचिन्हित पूर्णांक authsize = areq_ctx->req_authsize;
+	पूर्णांक rc = 0;
 	dma_addr_t dma_addr;
 	u32 mapped_nents = 0;
-	u32 dummy = 0; /*used for the assoc data fragments */
-	u32 size_to_map;
+	u32 dummy = 0; /*used क्रम the assoc data fragments */
+	u32 माप_प्रकारo_map;
 	gfp_t flags = cc_gfp_flags(&req->base);
 
-	mlli_params->curr_pool = NULL;
+	mlli_params->curr_pool = शून्य;
 	sg_data.num_of_buffers = 0;
 
 	/* copy mac to a temporary location to deal with possible
 	 * data memory overriding that caused by cache coherence problem.
 	 */
-	if (drvdata->coherent &&
-	    areq_ctx->gen_ctx.op_type == DRV_CRYPTO_DIRECTION_DECRYPT &&
+	अगर (drvdata->coherent &&
+	    areq_ctx->gen_ctx.op_type == DRV_CRYPTO_सूचीECTION_DECRYPT &&
 	    req->src == req->dst)
 		cc_copy_mac(dev, req, CC_SG_TO_BUF);
 
-	/* cacluate the size for cipher remove ICV in decrypt*/
+	/* cacluate the size क्रम cipher हटाओ ICV in decrypt*/
 	areq_ctx->cryptlen = (areq_ctx->gen_ctx.op_type ==
-				 DRV_CRYPTO_DIRECTION_ENCRYPT) ?
+				 DRV_CRYPTO_सूचीECTION_ENCRYPT) ?
 				req->cryptlen :
 				(req->cryptlen - authsize);
 
 	dma_addr = dma_map_single(dev, areq_ctx->mac_buf, MAX_MAC_SIZE,
-				  DMA_BIDIRECTIONAL);
-	if (dma_mapping_error(dev, dma_addr)) {
+				  DMA_BIसूचीECTIONAL);
+	अगर (dma_mapping_error(dev, dma_addr)) अणु
 		dev_err(dev, "Mapping mac_buf %u B at va=%pK for DMA failed\n",
 			MAX_MAC_SIZE, areq_ctx->mac_buf);
 		rc = -ENOMEM;
-		goto aead_map_failure;
-	}
+		जाओ aead_map_failure;
+	पूर्ण
 	areq_ctx->mac_buf_dma_addr = dma_addr;
 
-	if (areq_ctx->ccm_hdr_size != ccm_header_size_null) {
-		void *addr = areq_ctx->ccm_config + CCM_CTR_COUNT_0_OFFSET;
+	अगर (areq_ctx->ccm_hdr_size != ccm_header_size_null) अणु
+		व्योम *addr = areq_ctx->ccm_config + CCM_CTR_COUNT_0_OFFSET;
 
 		dma_addr = dma_map_single(dev, addr, AES_BLOCK_SIZE,
 					  DMA_TO_DEVICE);
 
-		if (dma_mapping_error(dev, dma_addr)) {
+		अगर (dma_mapping_error(dev, dma_addr)) अणु
 			dev_err(dev, "Mapping mac_buf %u B at va=%pK for DMA failed\n",
 				AES_BLOCK_SIZE, addr);
 			areq_ctx->ccm_iv0_dma_addr = 0;
 			rc = -ENOMEM;
-			goto aead_map_failure;
-		}
+			जाओ aead_map_failure;
+		पूर्ण
 		areq_ctx->ccm_iv0_dma_addr = dma_addr;
 
 		rc = cc_set_aead_conf_buf(dev, areq_ctx, areq_ctx->ccm_config,
 					  &sg_data, areq_ctx->assoclen);
-		if (rc)
-			goto aead_map_failure;
-	}
+		अगर (rc)
+			जाओ aead_map_failure;
+	पूर्ण
 
-	if (areq_ctx->cipher_mode == DRV_CIPHER_GCTR) {
+	अगर (areq_ctx->cipher_mode == DRV_CIPHER_GCTR) अणु
 		dma_addr = dma_map_single(dev, areq_ctx->hkey, AES_BLOCK_SIZE,
-					  DMA_BIDIRECTIONAL);
-		if (dma_mapping_error(dev, dma_addr)) {
+					  DMA_BIसूचीECTIONAL);
+		अगर (dma_mapping_error(dev, dma_addr)) अणु
 			dev_err(dev, "Mapping hkey %u B at va=%pK for DMA failed\n",
 				AES_BLOCK_SIZE, areq_ctx->hkey);
 			rc = -ENOMEM;
-			goto aead_map_failure;
-		}
+			जाओ aead_map_failure;
+		पूर्ण
 		areq_ctx->hkey_dma_addr = dma_addr;
 
 		dma_addr = dma_map_single(dev, &areq_ctx->gcm_len_block,
 					  AES_BLOCK_SIZE, DMA_TO_DEVICE);
-		if (dma_mapping_error(dev, dma_addr)) {
+		अगर (dma_mapping_error(dev, dma_addr)) अणु
 			dev_err(dev, "Mapping gcm_len_block %u B at va=%pK for DMA failed\n",
 				AES_BLOCK_SIZE, &areq_ctx->gcm_len_block);
 			rc = -ENOMEM;
-			goto aead_map_failure;
-		}
+			जाओ aead_map_failure;
+		पूर्ण
 		areq_ctx->gcm_block_len_dma_addr = dma_addr;
 
 		dma_addr = dma_map_single(dev, areq_ctx->gcm_iv_inc1,
 					  AES_BLOCK_SIZE, DMA_TO_DEVICE);
 
-		if (dma_mapping_error(dev, dma_addr)) {
+		अगर (dma_mapping_error(dev, dma_addr)) अणु
 			dev_err(dev, "Mapping gcm_iv_inc1 %u B at va=%pK for DMA failed\n",
 				AES_BLOCK_SIZE, (areq_ctx->gcm_iv_inc1));
 			areq_ctx->gcm_iv_inc1_dma_addr = 0;
 			rc = -ENOMEM;
-			goto aead_map_failure;
-		}
+			जाओ aead_map_failure;
+		पूर्ण
 		areq_ctx->gcm_iv_inc1_dma_addr = dma_addr;
 
 		dma_addr = dma_map_single(dev, areq_ctx->gcm_iv_inc2,
 					  AES_BLOCK_SIZE, DMA_TO_DEVICE);
 
-		if (dma_mapping_error(dev, dma_addr)) {
+		अगर (dma_mapping_error(dev, dma_addr)) अणु
 			dev_err(dev, "Mapping gcm_iv_inc2 %u B at va=%pK for DMA failed\n",
 				AES_BLOCK_SIZE, (areq_ctx->gcm_iv_inc2));
 			areq_ctx->gcm_iv_inc2_dma_addr = 0;
 			rc = -ENOMEM;
-			goto aead_map_failure;
-		}
+			जाओ aead_map_failure;
+		पूर्ण
 		areq_ctx->gcm_iv_inc2_dma_addr = dma_addr;
-	}
+	पूर्ण
 
-	size_to_map = req->cryptlen + req->assoclen;
-	/* If we do in-place encryption, we also need the auth tag */
-	if ((areq_ctx->gen_ctx.op_type == DRV_CRYPTO_DIRECTION_ENCRYPT) &&
-	   (req->src == req->dst)) {
-		size_to_map += authsize;
-	}
+	माप_प्रकारo_map = req->cryptlen + req->assoclen;
+	/* If we करो in-place encryption, we also need the auth tag */
+	अगर ((areq_ctx->gen_ctx.op_type == DRV_CRYPTO_सूचीECTION_ENCRYPT) &&
+	   (req->src == req->dst)) अणु
+		माप_प्रकारo_map += authsize;
+	पूर्ण
 
-	rc = cc_map_sg(dev, req->src, size_to_map, DMA_BIDIRECTIONAL,
+	rc = cc_map_sg(dev, req->src, माप_प्रकारo_map, DMA_BIसूचीECTIONAL,
 		       &areq_ctx->src.mapped_nents,
 		       (LLI_MAX_NUM_OF_ASSOC_DATA_ENTRIES +
 			LLI_MAX_NUM_OF_DATA_ENTRIES),
 		       &dummy, &mapped_nents);
-	if (rc)
-		goto aead_map_failure;
+	अगर (rc)
+		जाओ aead_map_failure;
 
-	if (areq_ctx->is_single_pass) {
+	अगर (areq_ctx->is_single_pass) अणु
 		/*
-		 * Create MLLI table for:
+		 * Create MLLI table क्रम:
 		 *   (1) Assoc. data
 		 *   (2) Src/Dst SGLs
 		 *   Note: IV is contg. buffer (not an SGL)
 		 */
 		rc = cc_aead_chain_assoc(drvdata, req, &sg_data, true, false);
-		if (rc)
-			goto aead_map_failure;
+		अगर (rc)
+			जाओ aead_map_failure;
 		rc = cc_aead_chain_iv(drvdata, req, &sg_data, true, false);
-		if (rc)
-			goto aead_map_failure;
+		अगर (rc)
+			जाओ aead_map_failure;
 		rc = cc_aead_chain_data(drvdata, req, &sg_data, true, false);
-		if (rc)
-			goto aead_map_failure;
-	} else { /* DOUBLE-PASS flow */
+		अगर (rc)
+			जाओ aead_map_failure;
+	पूर्ण अन्यथा अणु /* DOUBLE-PASS flow */
 		/*
 		 * Prepare MLLI table(s) in this order:
 		 *
 		 * If ENCRYPT/DECRYPT (inplace):
-		 *   (1) MLLI table for assoc
+		 *   (1) MLLI table क्रम assoc
 		 *   (2) IV entry (chained right after end of assoc)
-		 *   (3) MLLI for src/dst (inplace operation)
+		 *   (3) MLLI क्रम src/dst (inplace operation)
 		 *
 		 * If ENCRYPT (non-inplace)
-		 *   (1) MLLI table for assoc
+		 *   (1) MLLI table क्रम assoc
 		 *   (2) IV entry (chained right after end of assoc)
-		 *   (3) MLLI for dst
-		 *   (4) MLLI for src
+		 *   (3) MLLI क्रम dst
+		 *   (4) MLLI क्रम src
 		 *
 		 * If DECRYPT (non-inplace)
-		 *   (1) MLLI table for assoc
+		 *   (1) MLLI table क्रम assoc
 		 *   (2) IV entry (chained right after end of assoc)
-		 *   (3) MLLI for src
-		 *   (4) MLLI for dst
+		 *   (3) MLLI क्रम src
+		 *   (4) MLLI क्रम dst
 		 */
 		rc = cc_aead_chain_assoc(drvdata, req, &sg_data, false, true);
-		if (rc)
-			goto aead_map_failure;
+		अगर (rc)
+			जाओ aead_map_failure;
 		rc = cc_aead_chain_iv(drvdata, req, &sg_data, false, true);
-		if (rc)
-			goto aead_map_failure;
+		अगर (rc)
+			जाओ aead_map_failure;
 		rc = cc_aead_chain_data(drvdata, req, &sg_data, true, true);
-		if (rc)
-			goto aead_map_failure;
-	}
+		अगर (rc)
+			जाओ aead_map_failure;
+	पूर्ण
 
 	/* Mlli support -start building the MLLI according to the above
 	 * results
 	 */
-	if (areq_ctx->assoc_buff_type == CC_DMA_BUF_MLLI ||
-	    areq_ctx->data_buff_type == CC_DMA_BUF_MLLI) {
+	अगर (areq_ctx->assoc_buff_type == CC_DMA_BUF_MLLI ||
+	    areq_ctx->data_buff_type == CC_DMA_BUF_MLLI) अणु
 		mlli_params->curr_pool = drvdata->mlli_buffs_pool;
 		rc = cc_generate_mlli(dev, &sg_data, mlli_params, flags);
-		if (rc)
-			goto aead_map_failure;
+		अगर (rc)
+			जाओ aead_map_failure;
 
 		cc_update_aead_mlli_nents(drvdata, req);
 		dev_dbg(dev, "assoc params mn %d\n",
 			areq_ctx->assoc.mlli_nents);
 		dev_dbg(dev, "src params mn %d\n", areq_ctx->src.mlli_nents);
 		dev_dbg(dev, "dst params mn %d\n", areq_ctx->dst.mlli_nents);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 aead_map_failure:
 	cc_unmap_aead_request(dev, req);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int cc_map_hash_request_final(struct cc_drvdata *drvdata, void *ctx,
-			      struct scatterlist *src, unsigned int nbytes,
-			      bool do_update, gfp_t flags)
-{
-	struct ahash_req_ctx *areq_ctx = (struct ahash_req_ctx *)ctx;
-	struct device *dev = drvdata_to_dev(drvdata);
+पूर्णांक cc_map_hash_request_final(काष्ठा cc_drvdata *drvdata, व्योम *ctx,
+			      काष्ठा scatterlist *src, अचिन्हित पूर्णांक nbytes,
+			      bool करो_update, gfp_t flags)
+अणु
+	काष्ठा ahash_req_ctx *areq_ctx = (काष्ठा ahash_req_ctx *)ctx;
+	काष्ठा device *dev = drvdata_to_dev(drvdata);
 	u8 *curr_buff = cc_hash_buf(areq_ctx);
 	u32 *curr_buff_cnt = cc_hash_buf_cnt(areq_ctx);
-	struct mlli_params *mlli_params = &areq_ctx->mlli_params;
-	struct buffer_array sg_data;
-	int rc = 0;
+	काष्ठा mlli_params *mlli_params = &areq_ctx->mlli_params;
+	काष्ठा buffer_array sg_data;
+	पूर्णांक rc = 0;
 	u32 dummy = 0;
 	u32 mapped_nents = 0;
 
 	dev_dbg(dev, "final params : curr_buff=%pK curr_buff_cnt=0x%X nbytes = 0x%X src=%pK curr_index=%u\n",
 		curr_buff, *curr_buff_cnt, nbytes, src, areq_ctx->buff_index);
 	/* Init the type of the dma buffer */
-	areq_ctx->data_dma_buf_type = CC_DMA_BUF_NULL;
-	mlli_params->curr_pool = NULL;
+	areq_ctx->data_dma_buf_type = CC_DMA_BUF_शून्य;
+	mlli_params->curr_pool = शून्य;
 	sg_data.num_of_buffers = 0;
 	areq_ctx->in_nents = 0;
 
-	if (nbytes == 0 && *curr_buff_cnt == 0) {
-		/* nothing to do */
-		return 0;
-	}
+	अगर (nbytes == 0 && *curr_buff_cnt == 0) अणु
+		/* nothing to करो */
+		वापस 0;
+	पूर्ण
 
 	/* map the previous buffer */
-	if (*curr_buff_cnt) {
+	अगर (*curr_buff_cnt) अणु
 		rc = cc_set_hash_buf(dev, areq_ctx, curr_buff, *curr_buff_cnt,
 				     &sg_data);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (src && nbytes > 0 && do_update) {
+	अगर (src && nbytes > 0 && करो_update) अणु
 		rc = cc_map_sg(dev, src, nbytes, DMA_TO_DEVICE,
 			       &areq_ctx->in_nents, LLI_MAX_NUM_OF_DATA_ENTRIES,
 			       &dummy, &mapped_nents);
-		if (rc)
-			goto unmap_curr_buff;
-		if (src && mapped_nents == 1 &&
-		    areq_ctx->data_dma_buf_type == CC_DMA_BUF_NULL) {
-			memcpy(areq_ctx->buff_sg, src,
-			       sizeof(struct scatterlist));
+		अगर (rc)
+			जाओ unmap_curr_buff;
+		अगर (src && mapped_nents == 1 &&
+		    areq_ctx->data_dma_buf_type == CC_DMA_BUF_शून्य) अणु
+			स_नकल(areq_ctx->buff_sg, src,
+			       माप(काष्ठा scatterlist));
 			areq_ctx->buff_sg->length = nbytes;
 			areq_ctx->curr_sg = areq_ctx->buff_sg;
 			areq_ctx->data_dma_buf_type = CC_DMA_BUF_DLLI;
-		} else {
+		पूर्ण अन्यथा अणु
 			areq_ctx->data_dma_buf_type = CC_DMA_BUF_MLLI;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*build mlli */
-	if (areq_ctx->data_dma_buf_type == CC_DMA_BUF_MLLI) {
+	अगर (areq_ctx->data_dma_buf_type == CC_DMA_BUF_MLLI) अणु
 		mlli_params->curr_pool = drvdata->mlli_buffs_pool;
 		/* add the src data to the sg_data */
 		cc_add_sg_entry(dev, &sg_data, areq_ctx->in_nents, src, nbytes,
 				0, true, &areq_ctx->mlli_nents);
 		rc = cc_generate_mlli(dev, &sg_data, mlli_params, flags);
-		if (rc)
-			goto fail_unmap_din;
-	}
-	/* change the buffer index for the unmap function */
+		अगर (rc)
+			जाओ fail_unmap_din;
+	पूर्ण
+	/* change the buffer index क्रम the unmap function */
 	areq_ctx->buff_index = (areq_ctx->buff_index ^ 1);
 	dev_dbg(dev, "areq_ctx->data_dma_buf_type = %s\n",
 		cc_dma_buf_type(areq_ctx->data_dma_buf_type));
-	return 0;
+	वापस 0;
 
 fail_unmap_din:
 	dma_unmap_sg(dev, src, areq_ctx->in_nents, DMA_TO_DEVICE);
 
 unmap_curr_buff:
-	if (*curr_buff_cnt)
+	अगर (*curr_buff_cnt)
 		dma_unmap_sg(dev, areq_ctx->buff_sg, 1, DMA_TO_DEVICE);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int cc_map_hash_request_update(struct cc_drvdata *drvdata, void *ctx,
-			       struct scatterlist *src, unsigned int nbytes,
-			       unsigned int block_size, gfp_t flags)
-{
-	struct ahash_req_ctx *areq_ctx = (struct ahash_req_ctx *)ctx;
-	struct device *dev = drvdata_to_dev(drvdata);
+पूर्णांक cc_map_hash_request_update(काष्ठा cc_drvdata *drvdata, व्योम *ctx,
+			       काष्ठा scatterlist *src, अचिन्हित पूर्णांक nbytes,
+			       अचिन्हित पूर्णांक block_size, gfp_t flags)
+अणु
+	काष्ठा ahash_req_ctx *areq_ctx = (काष्ठा ahash_req_ctx *)ctx;
+	काष्ठा device *dev = drvdata_to_dev(drvdata);
 	u8 *curr_buff = cc_hash_buf(areq_ctx);
 	u32 *curr_buff_cnt = cc_hash_buf_cnt(areq_ctx);
 	u8 *next_buff = cc_next_buf(areq_ctx);
 	u32 *next_buff_cnt = cc_next_buf_cnt(areq_ctx);
-	struct mlli_params *mlli_params = &areq_ctx->mlli_params;
-	unsigned int update_data_len;
+	काष्ठा mlli_params *mlli_params = &areq_ctx->mlli_params;
+	अचिन्हित पूर्णांक update_data_len;
 	u32 total_in_len = nbytes + *curr_buff_cnt;
-	struct buffer_array sg_data;
-	unsigned int swap_index = 0;
-	int rc = 0;
+	काष्ठा buffer_array sg_data;
+	अचिन्हित पूर्णांक swap_index = 0;
+	पूर्णांक rc = 0;
 	u32 dummy = 0;
 	u32 mapped_nents = 0;
 
 	dev_dbg(dev, " update params : curr_buff=%pK curr_buff_cnt=0x%X nbytes=0x%X src=%pK curr_index=%u\n",
 		curr_buff, *curr_buff_cnt, nbytes, src, areq_ctx->buff_index);
 	/* Init the type of the dma buffer */
-	areq_ctx->data_dma_buf_type = CC_DMA_BUF_NULL;
-	mlli_params->curr_pool = NULL;
-	areq_ctx->curr_sg = NULL;
+	areq_ctx->data_dma_buf_type = CC_DMA_BUF_शून्य;
+	mlli_params->curr_pool = शून्य;
+	areq_ctx->curr_sg = शून्य;
 	sg_data.num_of_buffers = 0;
 	areq_ctx->in_nents = 0;
 
-	if (total_in_len < block_size) {
+	अगर (total_in_len < block_size) अणु
 		dev_dbg(dev, " less than one block: curr_buff=%pK *curr_buff_cnt=0x%X copy_to=%pK\n",
 			curr_buff, *curr_buff_cnt, &curr_buff[*curr_buff_cnt]);
-		areq_ctx->in_nents = sg_nents_for_len(src, nbytes);
+		areq_ctx->in_nents = sg_nents_क्रम_len(src, nbytes);
 		sg_copy_to_buffer(src, areq_ctx->in_nents,
 				  &curr_buff[*curr_buff_cnt], nbytes);
 		*curr_buff_cnt += nbytes;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* Calculate the residue size*/
 	*next_buff_cnt = total_in_len & (block_size - 1);
@@ -1254,115 +1255,115 @@ int cc_map_hash_request_update(struct cc_drvdata *drvdata, void *ctx,
 		*next_buff_cnt, update_data_len);
 
 	/* Copy the new residue to next buffer */
-	if (*next_buff_cnt) {
+	अगर (*next_buff_cnt) अणु
 		dev_dbg(dev, " handle residue: next buff %pK skip data %u residue %u\n",
 			next_buff, (update_data_len - *curr_buff_cnt),
 			*next_buff_cnt);
 		cc_copy_sg_portion(dev, next_buff, src,
 				   (update_data_len - *curr_buff_cnt),
 				   nbytes, CC_SG_TO_BUF);
-		/* change the buffer index for next operation */
+		/* change the buffer index क्रम next operation */
 		swap_index = 1;
-	}
+	पूर्ण
 
-	if (*curr_buff_cnt) {
+	अगर (*curr_buff_cnt) अणु
 		rc = cc_set_hash_buf(dev, areq_ctx, curr_buff, *curr_buff_cnt,
 				     &sg_data);
-		if (rc)
-			return rc;
-		/* change the buffer index for next operation */
+		अगर (rc)
+			वापस rc;
+		/* change the buffer index क्रम next operation */
 		swap_index = 1;
-	}
+	पूर्ण
 
-	if (update_data_len > *curr_buff_cnt) {
+	अगर (update_data_len > *curr_buff_cnt) अणु
 		rc = cc_map_sg(dev, src, (update_data_len - *curr_buff_cnt),
 			       DMA_TO_DEVICE, &areq_ctx->in_nents,
 			       LLI_MAX_NUM_OF_DATA_ENTRIES, &dummy,
 			       &mapped_nents);
-		if (rc)
-			goto unmap_curr_buff;
-		if (mapped_nents == 1 &&
-		    areq_ctx->data_dma_buf_type == CC_DMA_BUF_NULL) {
+		अगर (rc)
+			जाओ unmap_curr_buff;
+		अगर (mapped_nents == 1 &&
+		    areq_ctx->data_dma_buf_type == CC_DMA_BUF_शून्य) अणु
 			/* only one entry in the SG and no previous data */
-			memcpy(areq_ctx->buff_sg, src,
-			       sizeof(struct scatterlist));
+			स_नकल(areq_ctx->buff_sg, src,
+			       माप(काष्ठा scatterlist));
 			areq_ctx->buff_sg->length = update_data_len;
 			areq_ctx->data_dma_buf_type = CC_DMA_BUF_DLLI;
 			areq_ctx->curr_sg = areq_ctx->buff_sg;
-		} else {
+		पूर्ण अन्यथा अणु
 			areq_ctx->data_dma_buf_type = CC_DMA_BUF_MLLI;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (areq_ctx->data_dma_buf_type == CC_DMA_BUF_MLLI) {
+	अगर (areq_ctx->data_dma_buf_type == CC_DMA_BUF_MLLI) अणु
 		mlli_params->curr_pool = drvdata->mlli_buffs_pool;
 		/* add the src data to the sg_data */
 		cc_add_sg_entry(dev, &sg_data, areq_ctx->in_nents, src,
 				(update_data_len - *curr_buff_cnt), 0, true,
 				&areq_ctx->mlli_nents);
 		rc = cc_generate_mlli(dev, &sg_data, mlli_params, flags);
-		if (rc)
-			goto fail_unmap_din;
-	}
+		अगर (rc)
+			जाओ fail_unmap_din;
+	पूर्ण
 	areq_ctx->buff_index = (areq_ctx->buff_index ^ swap_index);
 
-	return 0;
+	वापस 0;
 
 fail_unmap_din:
 	dma_unmap_sg(dev, src, areq_ctx->in_nents, DMA_TO_DEVICE);
 
 unmap_curr_buff:
-	if (*curr_buff_cnt)
+	अगर (*curr_buff_cnt)
 		dma_unmap_sg(dev, areq_ctx->buff_sg, 1, DMA_TO_DEVICE);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void cc_unmap_hash_request(struct device *dev, void *ctx,
-			   struct scatterlist *src, bool do_revert)
-{
-	struct ahash_req_ctx *areq_ctx = (struct ahash_req_ctx *)ctx;
+व्योम cc_unmap_hash_request(काष्ठा device *dev, व्योम *ctx,
+			   काष्ठा scatterlist *src, bool करो_revert)
+अणु
+	काष्ठा ahash_req_ctx *areq_ctx = (काष्ठा ahash_req_ctx *)ctx;
 	u32 *prev_len = cc_next_buf_cnt(areq_ctx);
 
-	/*In case a pool was set, a table was
+	/*In हाल a pool was set, a table was
 	 *allocated and should be released
 	 */
-	if (areq_ctx->mlli_params.curr_pool) {
+	अगर (areq_ctx->mlli_params.curr_pool) अणु
 		dev_dbg(dev, "free MLLI buffer: dma=%pad virt=%pK\n",
 			&areq_ctx->mlli_params.mlli_dma_addr,
 			areq_ctx->mlli_params.mlli_virt_addr);
-		dma_pool_free(areq_ctx->mlli_params.curr_pool,
+		dma_pool_मुक्त(areq_ctx->mlli_params.curr_pool,
 			      areq_ctx->mlli_params.mlli_virt_addr,
 			      areq_ctx->mlli_params.mlli_dma_addr);
-	}
+	पूर्ण
 
-	if (src && areq_ctx->in_nents) {
+	अगर (src && areq_ctx->in_nents) अणु
 		dev_dbg(dev, "Unmapped sg src: virt=%pK dma=%pad len=0x%X\n",
 			sg_virt(src), &sg_dma_address(src), sg_dma_len(src));
 		dma_unmap_sg(dev, src,
 			     areq_ctx->in_nents, DMA_TO_DEVICE);
-	}
+	पूर्ण
 
-	if (*prev_len) {
+	अगर (*prev_len) अणु
 		dev_dbg(dev, "Unmapped buffer: areq_ctx->buff_sg=%pK dma=%pad len 0x%X\n",
 			sg_virt(areq_ctx->buff_sg),
 			&sg_dma_address(areq_ctx->buff_sg),
 			sg_dma_len(areq_ctx->buff_sg));
 		dma_unmap_sg(dev, areq_ctx->buff_sg, 1, DMA_TO_DEVICE);
-		if (!do_revert) {
-			/* clean the previous data length for update
+		अगर (!करो_revert) अणु
+			/* clean the previous data length क्रम update
 			 * operation
 			 */
 			*prev_len = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			areq_ctx->buff_index ^= 1;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int cc_buffer_mgr_init(struct cc_drvdata *drvdata)
-{
-	struct device *dev = drvdata_to_dev(drvdata);
+पूर्णांक cc_buffer_mgr_init(काष्ठा cc_drvdata *drvdata)
+अणु
+	काष्ठा device *dev = drvdata_to_dev(drvdata);
 
 	drvdata->mlli_buffs_pool =
 		dma_pool_create("dx_single_mlli_tables", dev,
@@ -1370,14 +1371,14 @@ int cc_buffer_mgr_init(struct cc_drvdata *drvdata)
 				LLI_ENTRY_BYTE_SIZE,
 				MLLI_TABLE_MIN_ALIGNMENT, 0);
 
-	if (!drvdata->mlli_buffs_pool)
-		return -ENOMEM;
+	अगर (!drvdata->mlli_buffs_pool)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cc_buffer_mgr_fini(struct cc_drvdata *drvdata)
-{
+पूर्णांक cc_buffer_mgr_fini(काष्ठा cc_drvdata *drvdata)
+अणु
 	dma_pool_destroy(drvdata->mlli_buffs_pool);
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,111 +1,112 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Xilinx ASoC audio formatter support
+// Xilinx ASoC audio क्रमmatter support
 //
 // Copyright (C) 2018 Xilinx, Inc.
 //
 // Author: Maruthi Srinivas Bayyavarapu <maruthis@xilinx.com>
 
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/sizes.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/sizes.h>
 
-#include <sound/asoundef.h>
-#include <sound/soc.h>
-#include <sound/pcm_params.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/pcm_params.h>
 
-#define DRV_NAME "xlnx_formatter_pcm"
+#घोषणा DRV_NAME "xlnx_formatter_pcm"
 
-#define XLNX_S2MM_OFFSET	0
-#define XLNX_MM2S_OFFSET	0x100
+#घोषणा XLNX_S2MM_OFFSET	0
+#घोषणा XLNX_MM2S_OFFSET	0x100
 
-#define XLNX_AUD_CORE_CONFIG	0x4
-#define XLNX_AUD_CTRL		0x10
-#define XLNX_AUD_STS		0x14
+#घोषणा XLNX_AUD_CORE_CONFIG	0x4
+#घोषणा XLNX_AUD_CTRL		0x10
+#घोषणा XLNX_AUD_STS		0x14
 
-#define AUD_CTRL_RESET_MASK	BIT(1)
-#define AUD_CFG_MM2S_MASK	BIT(15)
-#define AUD_CFG_S2MM_MASK	BIT(31)
+#घोषणा AUD_CTRL_RESET_MASK	BIT(1)
+#घोषणा AUD_CFG_MM2S_MASK	BIT(15)
+#घोषणा AUD_CFG_S2MM_MASK	BIT(31)
 
-#define XLNX_AUD_FS_MULTIPLIER	0x18
-#define XLNX_AUD_PERIOD_CONFIG	0x1C
-#define XLNX_AUD_BUFF_ADDR_LSB	0x20
-#define XLNX_AUD_BUFF_ADDR_MSB	0x24
-#define XLNX_AUD_XFER_COUNT	0x28
-#define XLNX_AUD_CH_STS_START	0x2C
-#define XLNX_BYTES_PER_CH	0x44
+#घोषणा XLNX_AUD_FS_MULTIPLIER	0x18
+#घोषणा XLNX_AUD_PERIOD_CONFIG	0x1C
+#घोषणा XLNX_AUD_BUFF_ADDR_LSB	0x20
+#घोषणा XLNX_AUD_BUFF_ADDR_MSB	0x24
+#घोषणा XLNX_AUD_XFER_COUNT	0x28
+#घोषणा XLNX_AUD_CH_STS_START	0x2C
+#घोषणा XLNX_BYTES_PER_CH	0x44
 
-#define AUD_STS_IOC_IRQ_MASK	BIT(31)
-#define AUD_STS_CH_STS_MASK	BIT(29)
-#define AUD_CTRL_IOC_IRQ_MASK	BIT(13)
-#define AUD_CTRL_TOUT_IRQ_MASK	BIT(14)
-#define AUD_CTRL_DMA_EN_MASK	BIT(0)
+#घोषणा AUD_STS_IOC_IRQ_MASK	BIT(31)
+#घोषणा AUD_STS_CH_STS_MASK	BIT(29)
+#घोषणा AUD_CTRL_IOC_IRQ_MASK	BIT(13)
+#घोषणा AUD_CTRL_TOUT_IRQ_MASK	BIT(14)
+#घोषणा AUD_CTRL_DMA_EN_MASK	BIT(0)
 
-#define CFG_MM2S_CH_MASK	GENMASK(11, 8)
-#define CFG_MM2S_CH_SHIFT	8
-#define CFG_MM2S_XFER_MASK	GENMASK(14, 13)
-#define CFG_MM2S_XFER_SHIFT	13
-#define CFG_MM2S_PKG_MASK	BIT(12)
+#घोषणा CFG_MM2S_CH_MASK	GENMASK(11, 8)
+#घोषणा CFG_MM2S_CH_SHIFT	8
+#घोषणा CFG_MM2S_XFER_MASK	GENMASK(14, 13)
+#घोषणा CFG_MM2S_XFER_SHIFT	13
+#घोषणा CFG_MM2S_PKG_MASK	BIT(12)
 
-#define CFG_S2MM_CH_MASK	GENMASK(27, 24)
-#define CFG_S2MM_CH_SHIFT	24
-#define CFG_S2MM_XFER_MASK	GENMASK(30, 29)
-#define CFG_S2MM_XFER_SHIFT	29
-#define CFG_S2MM_PKG_MASK	BIT(28)
+#घोषणा CFG_S2MM_CH_MASK	GENMASK(27, 24)
+#घोषणा CFG_S2MM_CH_SHIFT	24
+#घोषणा CFG_S2MM_XFER_MASK	GENMASK(30, 29)
+#घोषणा CFG_S2MM_XFER_SHIFT	29
+#घोषणा CFG_S2MM_PKG_MASK	BIT(28)
 
-#define AUD_CTRL_DATA_WIDTH_SHIFT	16
-#define AUD_CTRL_ACTIVE_CH_SHIFT	19
-#define PERIOD_CFG_PERIODS_SHIFT	16
+#घोषणा AUD_CTRL_DATA_WIDTH_SHIFT	16
+#घोषणा AUD_CTRL_ACTIVE_CH_SHIFT	19
+#घोषणा PERIOD_CFG_PERIODS_SHIFT	16
 
-#define PERIODS_MIN		2
-#define PERIODS_MAX		6
-#define PERIOD_BYTES_MIN	192
-#define PERIOD_BYTES_MAX	(50 * 1024)
-#define XLNX_PARAM_UNKNOWN	0
+#घोषणा PERIODS_MIN		2
+#घोषणा PERIODS_MAX		6
+#घोषणा PERIOD_BYTES_MIN	192
+#घोषणा PERIOD_BYTES_MAX	(50 * 1024)
+#घोषणा XLNX_PARAM_UNKNOWN	0
 
-enum bit_depth {
+क्रमागत bit_depth अणु
 	BIT_DEPTH_8,
 	BIT_DEPTH_16,
 	BIT_DEPTH_20,
 	BIT_DEPTH_24,
 	BIT_DEPTH_32,
-};
+पूर्ण;
 
-struct xlnx_pcm_drv_data {
-	void __iomem *mmio;
+काष्ठा xlnx_pcm_drv_data अणु
+	व्योम __iomem *mmio;
 	bool s2mm_presence;
 	bool mm2s_presence;
-	int s2mm_irq;
-	int mm2s_irq;
-	struct snd_pcm_substream *play_stream;
-	struct snd_pcm_substream *capture_stream;
-	struct clk *axi_clk;
-};
+	पूर्णांक s2mm_irq;
+	पूर्णांक mm2s_irq;
+	काष्ठा snd_pcm_substream *play_stream;
+	काष्ठा snd_pcm_substream *capture_stream;
+	काष्ठा clk *axi_clk;
+पूर्ण;
 
 /*
- * struct xlnx_pcm_stream_param - stream configuration
+ * काष्ठा xlnx_pcm_stream_param - stream configuration
  * @mmio: base address offset
- * @interleaved: audio channels arrangement in buffer
- * @xfer_mode: data formatting mode during transfer
+ * @पूर्णांकerleaved: audio channels arrangement in buffer
+ * @xfer_mode: data क्रमmatting mode during transfer
  * @ch_limit: Maximum channels supported
  * @buffer_size: stream ring buffer size
  */
-struct xlnx_pcm_stream_param {
-	void __iomem *mmio;
-	bool interleaved;
+काष्ठा xlnx_pcm_stream_param अणु
+	व्योम __iomem *mmio;
+	bool पूर्णांकerleaved;
 	u32 xfer_mode;
 	u32 ch_limit;
 	u64 buffer_size;
-};
+पूर्ण;
 
-static const struct snd_pcm_hardware xlnx_pcm_hardware = {
+अटल स्थिर काष्ठा snd_pcm_hardware xlnx_pcm_hardware = अणु
 	.info = SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_BATCH | SNDRV_PCM_INFO_PAUSE |
 		SNDRV_PCM_INFO_RESUME,
-	.formats = SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE |
+	.क्रमmats = SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE |
 		   SNDRV_PCM_FMTBIT_S24_LE,
 	.channels_min = 2,
 	.channels_max = 2,
@@ -117,336 +118,336 @@ static const struct snd_pcm_hardware xlnx_pcm_hardware = {
 	.period_bytes_max = PERIOD_BYTES_MAX,
 	.periods_min = PERIODS_MIN,
 	.periods_max = PERIODS_MAX,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	AES_TO_AES,
 	AES_TO_PCM,
 	PCM_TO_PCM,
 	PCM_TO_AES
-};
+पूर्ण;
 
-static void xlnx_parse_aes_params(u32 chsts_reg1_val, u32 chsts_reg2_val,
-				  struct device *dev)
-{
+अटल व्योम xlnx_parse_aes_params(u32 chsts_reg1_val, u32 chsts_reg2_val,
+				  काष्ठा device *dev)
+अणु
 	u32 padded, srate, bit_depth, status[2];
 
-	if (chsts_reg1_val & IEC958_AES0_PROFESSIONAL) {
+	अगर (chsts_reg1_val & IEC958_AES0_PROFESSIONAL) अणु
 		status[0] = chsts_reg1_val & 0xff;
 		status[1] = (chsts_reg1_val >> 16) & 0xff;
 
-		switch (status[0] & IEC958_AES0_PRO_FS) {
-		case IEC958_AES0_PRO_FS_44100:
+		चयन (status[0] & IEC958_AES0_PRO_FS) अणु
+		हाल IEC958_AES0_PRO_FS_44100:
 			srate = 44100;
-			break;
-		case IEC958_AES0_PRO_FS_48000:
+			अवरोध;
+		हाल IEC958_AES0_PRO_FS_48000:
 			srate = 48000;
-			break;
-		case IEC958_AES0_PRO_FS_32000:
+			अवरोध;
+		हाल IEC958_AES0_PRO_FS_32000:
 			srate = 32000;
-			break;
-		case IEC958_AES0_PRO_FS_NOTID:
-		default:
+			अवरोध;
+		हाल IEC958_AES0_PRO_FS_NOTID:
+		शेष:
 			srate = XLNX_PARAM_UNKNOWN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (status[1] & IEC958_AES2_PRO_SBITS) {
-		case IEC958_AES2_PRO_WORDLEN_NOTID:
-		case IEC958_AES2_PRO_SBITS_20:
+		चयन (status[1] & IEC958_AES2_PRO_SBITS) अणु
+		हाल IEC958_AES2_PRO_WORDLEN_NOTID:
+		हाल IEC958_AES2_PRO_SBITS_20:
 			padded = 0;
-			break;
-		case IEC958_AES2_PRO_SBITS_24:
+			अवरोध;
+		हाल IEC958_AES2_PRO_SBITS_24:
 			padded = 4;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			bit_depth = XLNX_PARAM_UNKNOWN;
-			goto log_params;
-		}
+			जाओ log_params;
+		पूर्ण
 
-		switch (status[1] & IEC958_AES2_PRO_WORDLEN) {
-		case IEC958_AES2_PRO_WORDLEN_20_16:
+		चयन (status[1] & IEC958_AES2_PRO_WORDLEN) अणु
+		हाल IEC958_AES2_PRO_WORDLEN_20_16:
 			bit_depth = 16 + padded;
-			break;
-		case IEC958_AES2_PRO_WORDLEN_22_18:
+			अवरोध;
+		हाल IEC958_AES2_PRO_WORDLEN_22_18:
 			bit_depth = 18 + padded;
-			break;
-		case IEC958_AES2_PRO_WORDLEN_23_19:
+			अवरोध;
+		हाल IEC958_AES2_PRO_WORDLEN_23_19:
 			bit_depth = 19 + padded;
-			break;
-		case IEC958_AES2_PRO_WORDLEN_24_20:
+			अवरोध;
+		हाल IEC958_AES2_PRO_WORDLEN_24_20:
 			bit_depth = 20 + padded;
-			break;
-		case IEC958_AES2_PRO_WORDLEN_NOTID:
-		default:
+			अवरोध;
+		हाल IEC958_AES2_PRO_WORDLEN_NOTID:
+		शेष:
 			bit_depth = XLNX_PARAM_UNKNOWN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		status[0] = (chsts_reg1_val >> 24) & 0xff;
 		status[1] = chsts_reg2_val & 0xff;
 
-		switch (status[0] & IEC958_AES3_CON_FS) {
-		case IEC958_AES3_CON_FS_44100:
+		चयन (status[0] & IEC958_AES3_CON_FS) अणु
+		हाल IEC958_AES3_CON_FS_44100:
 			srate = 44100;
-			break;
-		case IEC958_AES3_CON_FS_48000:
+			अवरोध;
+		हाल IEC958_AES3_CON_FS_48000:
 			srate = 48000;
-			break;
-		case IEC958_AES3_CON_FS_32000:
+			अवरोध;
+		हाल IEC958_AES3_CON_FS_32000:
 			srate = 32000;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			srate = XLNX_PARAM_UNKNOWN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (status[1] & IEC958_AES4_CON_MAX_WORDLEN_24)
+		अगर (status[1] & IEC958_AES4_CON_MAX_WORDLEN_24)
 			padded = 4;
-		else
+		अन्यथा
 			padded = 0;
 
-		switch (status[1] & IEC958_AES4_CON_WORDLEN) {
-		case IEC958_AES4_CON_WORDLEN_20_16:
+		चयन (status[1] & IEC958_AES4_CON_WORDLEN) अणु
+		हाल IEC958_AES4_CON_WORDLEN_20_16:
 			bit_depth = 16 + padded;
-			break;
-		case IEC958_AES4_CON_WORDLEN_22_18:
+			अवरोध;
+		हाल IEC958_AES4_CON_WORDLEN_22_18:
 			bit_depth = 18 + padded;
-			break;
-		case IEC958_AES4_CON_WORDLEN_23_19:
+			अवरोध;
+		हाल IEC958_AES4_CON_WORDLEN_23_19:
 			bit_depth = 19 + padded;
-			break;
-		case IEC958_AES4_CON_WORDLEN_24_20:
+			अवरोध;
+		हाल IEC958_AES4_CON_WORDLEN_24_20:
 			bit_depth = 20 + padded;
-			break;
-		case IEC958_AES4_CON_WORDLEN_21_17:
+			अवरोध;
+		हाल IEC958_AES4_CON_WORDLEN_21_17:
 			bit_depth = 17 + padded;
-			break;
-		case IEC958_AES4_CON_WORDLEN_NOTID:
-		default:
+			अवरोध;
+		हाल IEC958_AES4_CON_WORDLEN_NOTID:
+		शेष:
 			bit_depth = XLNX_PARAM_UNKNOWN;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 log_params:
-	if (srate != XLNX_PARAM_UNKNOWN)
+	अगर (srate != XLNX_PARAM_UNKNOWN)
 		dev_info(dev, "sample rate = %d\n", srate);
-	else
+	अन्यथा
 		dev_info(dev, "sample rate = unknown\n");
 
-	if (bit_depth != XLNX_PARAM_UNKNOWN)
+	अगर (bit_depth != XLNX_PARAM_UNKNOWN)
 		dev_info(dev, "bit_depth = %d\n", bit_depth);
-	else
+	अन्यथा
 		dev_info(dev, "bit_depth = unknown\n");
-}
+पूर्ण
 
-static int xlnx_formatter_pcm_reset(void __iomem *mmio_base)
-{
+अटल पूर्णांक xlnx_क्रमmatter_pcm_reset(व्योम __iomem *mmio_base)
+अणु
 	u32 val, retries = 0;
 
-	val = readl(mmio_base + XLNX_AUD_CTRL);
+	val = पढ़ोl(mmio_base + XLNX_AUD_CTRL);
 	val |= AUD_CTRL_RESET_MASK;
-	writel(val, mmio_base + XLNX_AUD_CTRL);
+	ग_लिखोl(val, mmio_base + XLNX_AUD_CTRL);
 
-	val = readl(mmio_base + XLNX_AUD_CTRL);
-	/* Poll for maximum timeout of approximately 100ms (1 * 100)*/
-	while ((val & AUD_CTRL_RESET_MASK) && (retries < 100)) {
+	val = पढ़ोl(mmio_base + XLNX_AUD_CTRL);
+	/* Poll क्रम maximum समयout of approximately 100ms (1 * 100)*/
+	जबतक ((val & AUD_CTRL_RESET_MASK) && (retries < 100)) अणु
 		mdelay(1);
 		retries++;
-		val = readl(mmio_base + XLNX_AUD_CTRL);
-	}
-	if (val & AUD_CTRL_RESET_MASK)
-		return -ENODEV;
+		val = पढ़ोl(mmio_base + XLNX_AUD_CTRL);
+	पूर्ण
+	अगर (val & AUD_CTRL_RESET_MASK)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xlnx_formatter_disable_irqs(void __iomem *mmio_base, int stream)
-{
+अटल व्योम xlnx_क्रमmatter_disable_irqs(व्योम __iomem *mmio_base, पूर्णांक stream)
+अणु
 	u32 val;
 
-	val = readl(mmio_base + XLNX_AUD_CTRL);
+	val = पढ़ोl(mmio_base + XLNX_AUD_CTRL);
 	val &= ~AUD_CTRL_IOC_IRQ_MASK;
-	if (stream == SNDRV_PCM_STREAM_CAPTURE)
+	अगर (stream == SNDRV_PCM_STREAM_CAPTURE)
 		val &= ~AUD_CTRL_TOUT_IRQ_MASK;
 
-	writel(val, mmio_base + XLNX_AUD_CTRL);
-}
+	ग_लिखोl(val, mmio_base + XLNX_AUD_CTRL);
+पूर्ण
 
-static irqreturn_t xlnx_mm2s_irq_handler(int irq, void *arg)
-{
+अटल irqवापस_t xlnx_mm2s_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
 	u32 val;
-	void __iomem *reg;
-	struct device *dev = arg;
-	struct xlnx_pcm_drv_data *adata = dev_get_drvdata(dev);
+	व्योम __iomem *reg;
+	काष्ठा device *dev = arg;
+	काष्ठा xlnx_pcm_drv_data *adata = dev_get_drvdata(dev);
 
 	reg = adata->mmio + XLNX_MM2S_OFFSET + XLNX_AUD_STS;
-	val = readl(reg);
-	if (val & AUD_STS_IOC_IRQ_MASK) {
-		writel(val & AUD_STS_IOC_IRQ_MASK, reg);
-		if (adata->play_stream)
+	val = पढ़ोl(reg);
+	अगर (val & AUD_STS_IOC_IRQ_MASK) अणु
+		ग_लिखोl(val & AUD_STS_IOC_IRQ_MASK, reg);
+		अगर (adata->play_stream)
 			snd_pcm_period_elapsed(adata->play_stream);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static irqreturn_t xlnx_s2mm_irq_handler(int irq, void *arg)
-{
+अटल irqवापस_t xlnx_s2mm_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
 	u32 val;
-	void __iomem *reg;
-	struct device *dev = arg;
-	struct xlnx_pcm_drv_data *adata = dev_get_drvdata(dev);
+	व्योम __iomem *reg;
+	काष्ठा device *dev = arg;
+	काष्ठा xlnx_pcm_drv_data *adata = dev_get_drvdata(dev);
 
 	reg = adata->mmio + XLNX_S2MM_OFFSET + XLNX_AUD_STS;
-	val = readl(reg);
-	if (val & AUD_STS_IOC_IRQ_MASK) {
-		writel(val & AUD_STS_IOC_IRQ_MASK, reg);
-		if (adata->capture_stream)
+	val = पढ़ोl(reg);
+	अगर (val & AUD_STS_IOC_IRQ_MASK) अणु
+		ग_लिखोl(val & AUD_STS_IOC_IRQ_MASK, reg);
+		अगर (adata->capture_stream)
 			snd_pcm_period_elapsed(adata->capture_stream);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static int xlnx_formatter_pcm_open(struct snd_soc_component *component,
-				   struct snd_pcm_substream *substream)
-{
-	int err;
-	u32 val, data_format_mode;
-	u32 ch_count_mask, ch_count_shift, data_xfer_mode, data_xfer_shift;
-	struct xlnx_pcm_stream_param *stream_data;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct xlnx_pcm_drv_data *adata = dev_get_drvdata(component->dev);
+अटल पूर्णांक xlnx_क्रमmatter_pcm_खोलो(काष्ठा snd_soc_component *component,
+				   काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक err;
+	u32 val, data_क्रमmat_mode;
+	u32 ch_count_mask, ch_count_shअगरt, data_xfer_mode, data_xfer_shअगरt;
+	काष्ठा xlnx_pcm_stream_param *stream_data;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा xlnx_pcm_drv_data *adata = dev_get_drvdata(component->dev);
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
 	    !adata->mm2s_presence)
-		return -ENODEV;
-	else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE &&
+		वापस -ENODEV;
+	अन्यथा अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE &&
 		 !adata->s2mm_presence)
-		return -ENODEV;
+		वापस -ENODEV;
 
-	stream_data = kzalloc(sizeof(*stream_data), GFP_KERNEL);
-	if (!stream_data)
-		return -ENOMEM;
+	stream_data = kzalloc(माप(*stream_data), GFP_KERNEL);
+	अगर (!stream_data)
+		वापस -ENOMEM;
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 		ch_count_mask = CFG_MM2S_CH_MASK;
-		ch_count_shift = CFG_MM2S_CH_SHIFT;
+		ch_count_shअगरt = CFG_MM2S_CH_SHIFT;
 		data_xfer_mode = CFG_MM2S_XFER_MASK;
-		data_xfer_shift = CFG_MM2S_XFER_SHIFT;
-		data_format_mode = CFG_MM2S_PKG_MASK;
+		data_xfer_shअगरt = CFG_MM2S_XFER_SHIFT;
+		data_क्रमmat_mode = CFG_MM2S_PKG_MASK;
 		stream_data->mmio = adata->mmio + XLNX_MM2S_OFFSET;
 		adata->play_stream = substream;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		ch_count_mask = CFG_S2MM_CH_MASK;
-		ch_count_shift = CFG_S2MM_CH_SHIFT;
+		ch_count_shअगरt = CFG_S2MM_CH_SHIFT;
 		data_xfer_mode = CFG_S2MM_XFER_MASK;
-		data_xfer_shift = CFG_S2MM_XFER_SHIFT;
-		data_format_mode = CFG_S2MM_PKG_MASK;
+		data_xfer_shअगरt = CFG_S2MM_XFER_SHIFT;
+		data_क्रमmat_mode = CFG_S2MM_PKG_MASK;
 		stream_data->mmio = adata->mmio + XLNX_S2MM_OFFSET;
 		adata->capture_stream = substream;
-	}
+	पूर्ण
 
-	val = readl(adata->mmio + XLNX_AUD_CORE_CONFIG);
+	val = पढ़ोl(adata->mmio + XLNX_AUD_CORE_CONFIG);
 
-	if (!(val & data_format_mode))
-		stream_data->interleaved = true;
+	अगर (!(val & data_क्रमmat_mode))
+		stream_data->पूर्णांकerleaved = true;
 
-	stream_data->xfer_mode = (val & data_xfer_mode) >> data_xfer_shift;
-	stream_data->ch_limit = (val & ch_count_mask) >> ch_count_shift;
+	stream_data->xfer_mode = (val & data_xfer_mode) >> data_xfer_shअगरt;
+	stream_data->ch_limit = (val & ch_count_mask) >> ch_count_shअगरt;
 	dev_info(component->dev,
 		 "stream %d : format = %d mode = %d ch_limit = %d\n",
-		 substream->stream, stream_data->interleaved,
+		 substream->stream, stream_data->पूर्णांकerleaved,
 		 stream_data->xfer_mode, stream_data->ch_limit);
 
-	snd_soc_set_runtime_hwparams(substream, &xlnx_pcm_hardware);
-	runtime->private_data = stream_data;
+	snd_soc_set_runसमय_hwparams(substream, &xlnx_pcm_hardware);
+	runसमय->निजी_data = stream_data;
 
-	/* Resize the period size divisible by 64 */
-	err = snd_pcm_hw_constraint_step(runtime, 0,
+	/* Resize the period size भागisible by 64 */
+	err = snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0,
 					 SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 64);
-	if (err) {
+	अगर (err) अणु
 		dev_err(component->dev,
 			"unable to set constraint on period bytes\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* enable DMA IOC irq */
-	val = readl(stream_data->mmio + XLNX_AUD_CTRL);
+	val = पढ़ोl(stream_data->mmio + XLNX_AUD_CTRL);
 	val |= AUD_CTRL_IOC_IRQ_MASK;
-	writel(val, stream_data->mmio + XLNX_AUD_CTRL);
+	ग_लिखोl(val, stream_data->mmio + XLNX_AUD_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xlnx_formatter_pcm_close(struct snd_soc_component *component,
-				    struct snd_pcm_substream *substream)
-{
-	int ret;
-	struct xlnx_pcm_stream_param *stream_data =
-			substream->runtime->private_data;
+अटल पूर्णांक xlnx_क्रमmatter_pcm_बंद(काष्ठा snd_soc_component *component,
+				    काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक ret;
+	काष्ठा xlnx_pcm_stream_param *stream_data =
+			substream->runसमय->निजी_data;
 
-	ret = xlnx_formatter_pcm_reset(stream_data->mmio);
-	if (ret) {
+	ret = xlnx_क्रमmatter_pcm_reset(stream_data->mmio);
+	अगर (ret) अणु
 		dev_err(component->dev, "audio formatter reset failed\n");
-		goto err_reset;
-	}
-	xlnx_formatter_disable_irqs(stream_data->mmio, substream->stream);
+		जाओ err_reset;
+	पूर्ण
+	xlnx_क्रमmatter_disable_irqs(stream_data->mmio, substream->stream);
 
 err_reset:
-	kfree(stream_data);
-	return 0;
-}
+	kमुक्त(stream_data);
+	वापस 0;
+पूर्ण
 
-static snd_pcm_uframes_t
-xlnx_formatter_pcm_pointer(struct snd_soc_component *component,
-			   struct snd_pcm_substream *substream)
-{
+अटल snd_pcm_uframes_t
+xlnx_क्रमmatter_pcm_poपूर्णांकer(काष्ठा snd_soc_component *component,
+			   काष्ठा snd_pcm_substream *substream)
+अणु
 	u32 pos;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct xlnx_pcm_stream_param *stream_data = runtime->private_data;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा xlnx_pcm_stream_param *stream_data = runसमय->निजी_data;
 
-	pos = readl(stream_data->mmio + XLNX_AUD_XFER_COUNT);
+	pos = पढ़ोl(stream_data->mmio + XLNX_AUD_XFER_COUNT);
 
-	if (pos >= stream_data->buffer_size)
+	अगर (pos >= stream_data->buffer_size)
 		pos = 0;
 
-	return bytes_to_frames(runtime, pos);
-}
+	वापस bytes_to_frames(runसमय, pos);
+पूर्ण
 
-static int xlnx_formatter_pcm_hw_params(struct snd_soc_component *component,
-					struct snd_pcm_substream *substream,
-					struct snd_pcm_hw_params *params)
-{
+अटल पूर्णांक xlnx_क्रमmatter_pcm_hw_params(काष्ठा snd_soc_component *component,
+					काष्ठा snd_pcm_substream *substream,
+					काष्ठा snd_pcm_hw_params *params)
+अणु
 	u32 low, high, active_ch, val, bytes_per_ch, bits_per_sample;
 	u32 aes_reg1_val, aes_reg2_val;
 	u64 size;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct xlnx_pcm_stream_param *stream_data = runtime->private_data;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा xlnx_pcm_stream_param *stream_data = runसमय->निजी_data;
 
 	active_ch = params_channels(params);
-	if (active_ch > stream_data->ch_limit)
-		return -EINVAL;
+	अगर (active_ch > stream_data->ch_limit)
+		वापस -EINVAL;
 
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE &&
-	    stream_data->xfer_mode == AES_TO_PCM) {
-		val = readl(stream_data->mmio + XLNX_AUD_STS);
-		if (val & AUD_STS_CH_STS_MASK) {
-			aes_reg1_val = readl(stream_data->mmio +
+	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE &&
+	    stream_data->xfer_mode == AES_TO_PCM) अणु
+		val = पढ़ोl(stream_data->mmio + XLNX_AUD_STS);
+		अगर (val & AUD_STS_CH_STS_MASK) अणु
+			aes_reg1_val = पढ़ोl(stream_data->mmio +
 					     XLNX_AUD_CH_STS_START);
-			aes_reg2_val = readl(stream_data->mmio +
+			aes_reg2_val = पढ़ोl(stream_data->mmio +
 					     XLNX_AUD_CH_STS_START + 0x4);
 
 			xlnx_parse_aes_params(aes_reg1_val, aes_reg2_val,
 					      component->dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	size = params_buffer_bytes(params);
 
@@ -454,227 +455,227 @@ static int xlnx_formatter_pcm_hw_params(struct snd_soc_component *component,
 
 	low = lower_32_bits(substream->dma_buffer.addr);
 	high = upper_32_bits(substream->dma_buffer.addr);
-	writel(low, stream_data->mmio + XLNX_AUD_BUFF_ADDR_LSB);
-	writel(high, stream_data->mmio + XLNX_AUD_BUFF_ADDR_MSB);
+	ग_लिखोl(low, stream_data->mmio + XLNX_AUD_BUFF_ADDR_LSB);
+	ग_लिखोl(high, stream_data->mmio + XLNX_AUD_BUFF_ADDR_MSB);
 
-	val = readl(stream_data->mmio + XLNX_AUD_CTRL);
+	val = पढ़ोl(stream_data->mmio + XLNX_AUD_CTRL);
 	bits_per_sample = params_width(params);
-	switch (bits_per_sample) {
-	case 8:
+	चयन (bits_per_sample) अणु
+	हाल 8:
 		val |= (BIT_DEPTH_8 << AUD_CTRL_DATA_WIDTH_SHIFT);
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		val |= (BIT_DEPTH_16 << AUD_CTRL_DATA_WIDTH_SHIFT);
-		break;
-	case 20:
+		अवरोध;
+	हाल 20:
 		val |= (BIT_DEPTH_20 << AUD_CTRL_DATA_WIDTH_SHIFT);
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		val |= (BIT_DEPTH_24 << AUD_CTRL_DATA_WIDTH_SHIFT);
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		val |= (BIT_DEPTH_32 << AUD_CTRL_DATA_WIDTH_SHIFT);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	val |= active_ch << AUD_CTRL_ACTIVE_CH_SHIFT;
-	writel(val, stream_data->mmio + XLNX_AUD_CTRL);
+	ग_लिखोl(val, stream_data->mmio + XLNX_AUD_CTRL);
 
 	val = (params_periods(params) << PERIOD_CFG_PERIODS_SHIFT)
 		| params_period_bytes(params);
-	writel(val, stream_data->mmio + XLNX_AUD_PERIOD_CONFIG);
+	ग_लिखोl(val, stream_data->mmio + XLNX_AUD_PERIOD_CONFIG);
 	bytes_per_ch = DIV_ROUND_UP(params_period_bytes(params), active_ch);
-	writel(bytes_per_ch, stream_data->mmio + XLNX_BYTES_PER_CH);
+	ग_लिखोl(bytes_per_ch, stream_data->mmio + XLNX_BYTES_PER_CH);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xlnx_formatter_pcm_trigger(struct snd_soc_component *component,
-				      struct snd_pcm_substream *substream,
-				      int cmd)
-{
+अटल पूर्णांक xlnx_क्रमmatter_pcm_trigger(काष्ठा snd_soc_component *component,
+				      काष्ठा snd_pcm_substream *substream,
+				      पूर्णांक cmd)
+अणु
 	u32 val;
-	struct xlnx_pcm_stream_param *stream_data =
-			substream->runtime->private_data;
+	काष्ठा xlnx_pcm_stream_param *stream_data =
+			substream->runसमय->निजी_data;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-	case SNDRV_PCM_TRIGGER_RESUME:
-		val = readl(stream_data->mmio + XLNX_AUD_CTRL);
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+		val = पढ़ोl(stream_data->mmio + XLNX_AUD_CTRL);
 		val |= AUD_CTRL_DMA_EN_MASK;
-		writel(val, stream_data->mmio + XLNX_AUD_CTRL);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-		val = readl(stream_data->mmio + XLNX_AUD_CTRL);
+		ग_लिखोl(val, stream_data->mmio + XLNX_AUD_CTRL);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+		val = पढ़ोl(stream_data->mmio + XLNX_AUD_CTRL);
 		val &= ~AUD_CTRL_DMA_EN_MASK;
-		writel(val, stream_data->mmio + XLNX_AUD_CTRL);
-		break;
-	}
+		ग_लिखोl(val, stream_data->mmio + XLNX_AUD_CTRL);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xlnx_formatter_pcm_new(struct snd_soc_component *component,
-				  struct snd_soc_pcm_runtime *rtd)
-{
+अटल पूर्णांक xlnx_क्रमmatter_pcm_new(काष्ठा snd_soc_component *component,
+				  काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
 	snd_pcm_set_managed_buffer_all(rtd->pcm,
 			SNDRV_DMA_TYPE_DEV, component->dev,
 			xlnx_pcm_hardware.buffer_bytes_max,
 			xlnx_pcm_hardware.buffer_bytes_max);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver xlnx_asoc_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver xlnx_asoc_component = अणु
 	.name		= DRV_NAME,
-	.open		= xlnx_formatter_pcm_open,
-	.close		= xlnx_formatter_pcm_close,
-	.hw_params	= xlnx_formatter_pcm_hw_params,
-	.trigger	= xlnx_formatter_pcm_trigger,
-	.pointer	= xlnx_formatter_pcm_pointer,
-	.pcm_construct	= xlnx_formatter_pcm_new,
-};
+	.खोलो		= xlnx_क्रमmatter_pcm_खोलो,
+	.बंद		= xlnx_क्रमmatter_pcm_बंद,
+	.hw_params	= xlnx_क्रमmatter_pcm_hw_params,
+	.trigger	= xlnx_क्रमmatter_pcm_trigger,
+	.poपूर्णांकer	= xlnx_क्रमmatter_pcm_poपूर्णांकer,
+	.pcm_स्थिरruct	= xlnx_क्रमmatter_pcm_new,
+पूर्ण;
 
-static int xlnx_formatter_pcm_probe(struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक xlnx_क्रमmatter_pcm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 	u32 val;
-	struct xlnx_pcm_drv_data *aud_drv_data;
-	struct device *dev = &pdev->dev;
+	काष्ठा xlnx_pcm_drv_data *aud_drv_data;
+	काष्ठा device *dev = &pdev->dev;
 
-	aud_drv_data = devm_kzalloc(dev, sizeof(*aud_drv_data), GFP_KERNEL);
-	if (!aud_drv_data)
-		return -ENOMEM;
+	aud_drv_data = devm_kzalloc(dev, माप(*aud_drv_data), GFP_KERNEL);
+	अगर (!aud_drv_data)
+		वापस -ENOMEM;
 
 	aud_drv_data->axi_clk = devm_clk_get(dev, "s_axi_lite_aclk");
-	if (IS_ERR(aud_drv_data->axi_clk)) {
+	अगर (IS_ERR(aud_drv_data->axi_clk)) अणु
 		ret = PTR_ERR(aud_drv_data->axi_clk);
 		dev_err(dev, "failed to get s_axi_lite_aclk(%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = clk_prepare_enable(aud_drv_data->axi_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev,
 			"failed to enable s_axi_lite_aclk(%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	aud_drv_data->mmio = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(aud_drv_data->mmio)) {
+	aud_drv_data->mmio = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(aud_drv_data->mmio)) अणु
 		dev_err(dev, "audio formatter ioremap failed\n");
 		ret = PTR_ERR(aud_drv_data->mmio);
-		goto clk_err;
-	}
+		जाओ clk_err;
+	पूर्ण
 
-	val = readl(aud_drv_data->mmio + XLNX_AUD_CORE_CONFIG);
-	if (val & AUD_CFG_MM2S_MASK) {
+	val = पढ़ोl(aud_drv_data->mmio + XLNX_AUD_CORE_CONFIG);
+	अगर (val & AUD_CFG_MM2S_MASK) अणु
 		aud_drv_data->mm2s_presence = true;
-		ret = xlnx_formatter_pcm_reset(aud_drv_data->mmio +
+		ret = xlnx_क्रमmatter_pcm_reset(aud_drv_data->mmio +
 					       XLNX_MM2S_OFFSET);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "audio formatter reset failed\n");
-			goto clk_err;
-		}
-		xlnx_formatter_disable_irqs(aud_drv_data->mmio +
+			जाओ clk_err;
+		पूर्ण
+		xlnx_क्रमmatter_disable_irqs(aud_drv_data->mmio +
 					    XLNX_MM2S_OFFSET,
 					    SNDRV_PCM_STREAM_PLAYBACK);
 
-		aud_drv_data->mm2s_irq = platform_get_irq_byname(pdev,
+		aud_drv_data->mm2s_irq = platक्रमm_get_irq_byname(pdev,
 								 "irq_mm2s");
-		if (aud_drv_data->mm2s_irq < 0) {
+		अगर (aud_drv_data->mm2s_irq < 0) अणु
 			ret = aud_drv_data->mm2s_irq;
-			goto clk_err;
-		}
+			जाओ clk_err;
+		पूर्ण
 		ret = devm_request_irq(dev, aud_drv_data->mm2s_irq,
 				       xlnx_mm2s_irq_handler, 0,
 				       "xlnx_formatter_pcm_mm2s_irq", dev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "xlnx audio mm2s irq request failed\n");
-			goto clk_err;
-		}
-	}
-	if (val & AUD_CFG_S2MM_MASK) {
+			जाओ clk_err;
+		पूर्ण
+	पूर्ण
+	अगर (val & AUD_CFG_S2MM_MASK) अणु
 		aud_drv_data->s2mm_presence = true;
-		ret = xlnx_formatter_pcm_reset(aud_drv_data->mmio +
+		ret = xlnx_क्रमmatter_pcm_reset(aud_drv_data->mmio +
 					       XLNX_S2MM_OFFSET);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "audio formatter reset failed\n");
-			goto clk_err;
-		}
-		xlnx_formatter_disable_irqs(aud_drv_data->mmio +
+			जाओ clk_err;
+		पूर्ण
+		xlnx_क्रमmatter_disable_irqs(aud_drv_data->mmio +
 					    XLNX_S2MM_OFFSET,
 					    SNDRV_PCM_STREAM_CAPTURE);
 
-		aud_drv_data->s2mm_irq = platform_get_irq_byname(pdev,
+		aud_drv_data->s2mm_irq = platक्रमm_get_irq_byname(pdev,
 								 "irq_s2mm");
-		if (aud_drv_data->s2mm_irq < 0) {
+		अगर (aud_drv_data->s2mm_irq < 0) अणु
 			ret = aud_drv_data->s2mm_irq;
-			goto clk_err;
-		}
+			जाओ clk_err;
+		पूर्ण
 		ret = devm_request_irq(dev, aud_drv_data->s2mm_irq,
 				       xlnx_s2mm_irq_handler, 0,
 				       "xlnx_formatter_pcm_s2mm_irq",
 				       dev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "xlnx audio s2mm irq request failed\n");
-			goto clk_err;
-		}
-	}
+			जाओ clk_err;
+		पूर्ण
+	पूर्ण
 
 	dev_set_drvdata(dev, aud_drv_data);
 
-	ret = devm_snd_soc_register_component(dev, &xlnx_asoc_component,
-					      NULL, 0);
-	if (ret) {
+	ret = devm_snd_soc_रेजिस्टर_component(dev, &xlnx_asoc_component,
+					      शून्य, 0);
+	अगर (ret) अणु
 		dev_err(dev, "pcm platform device register failed\n");
-		goto clk_err;
-	}
+		जाओ clk_err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 clk_err:
 	clk_disable_unprepare(aud_drv_data->axi_clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xlnx_formatter_pcm_remove(struct platform_device *pdev)
-{
-	int ret = 0;
-	struct xlnx_pcm_drv_data *adata = dev_get_drvdata(&pdev->dev);
+अटल पूर्णांक xlnx_क्रमmatter_pcm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा xlnx_pcm_drv_data *adata = dev_get_drvdata(&pdev->dev);
 
-	if (adata->s2mm_presence)
-		ret = xlnx_formatter_pcm_reset(adata->mmio + XLNX_S2MM_OFFSET);
+	अगर (adata->s2mm_presence)
+		ret = xlnx_क्रमmatter_pcm_reset(adata->mmio + XLNX_S2MM_OFFSET);
 
-	/* Try MM2S reset, even if S2MM  reset fails */
-	if (adata->mm2s_presence)
-		ret = xlnx_formatter_pcm_reset(adata->mmio + XLNX_MM2S_OFFSET);
+	/* Try MM2S reset, even अगर S2MM  reset fails */
+	अगर (adata->mm2s_presence)
+		ret = xlnx_क्रमmatter_pcm_reset(adata->mmio + XLNX_MM2S_OFFSET);
 
-	if (ret)
+	अगर (ret)
 		dev_err(&pdev->dev, "audio formatter reset failed\n");
 
 	clk_disable_unprepare(adata->axi_clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id xlnx_formatter_pcm_of_match[] = {
-	{ .compatible = "xlnx,audio-formatter-1.0"},
-	{},
-};
-MODULE_DEVICE_TABLE(of, xlnx_formatter_pcm_of_match);
+अटल स्थिर काष्ठा of_device_id xlnx_क्रमmatter_pcm_of_match[] = अणु
+	अणु .compatible = "xlnx,audio-formatter-1.0"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, xlnx_क्रमmatter_pcm_of_match);
 
-static struct platform_driver xlnx_formatter_pcm_driver = {
-	.probe	= xlnx_formatter_pcm_probe,
-	.remove	= xlnx_formatter_pcm_remove,
-	.driver	= {
+अटल काष्ठा platक्रमm_driver xlnx_क्रमmatter_pcm_driver = अणु
+	.probe	= xlnx_क्रमmatter_pcm_probe,
+	.हटाओ	= xlnx_क्रमmatter_pcm_हटाओ,
+	.driver	= अणु
 		.name	= DRV_NAME,
-		.of_match_table	= xlnx_formatter_pcm_of_match,
-	},
-};
+		.of_match_table	= xlnx_क्रमmatter_pcm_of_match,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(xlnx_formatter_pcm_driver);
+module_platक्रमm_driver(xlnx_क्रमmatter_pcm_driver);
 MODULE_AUTHOR("Maruthi Srinivas Bayyavarapu <maruthis@xilinx.com>");
 MODULE_LICENSE("GPL v2");

@@ -1,168 +1,169 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __GK104_FIFO_H__
-#define __GK104_FIFO_H__
-#define gk104_fifo(p) container_of((p), struct gk104_fifo, base)
-#include "priv.h"
-struct nvkm_fifo_cgrp;
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __GK104_FIFO_H__
+#घोषणा __GK104_FIFO_H__
+#घोषणा gk104_fअगरo(p) container_of((p), काष्ठा gk104_fअगरo, base)
+#समावेश "priv.h"
+काष्ठा nvkm_fअगरo_cgrp;
 
-#include <core/enum.h>
-#include <subdev/mmu.h>
+#समावेश <core/क्रमागत.h>
+#समावेश <subdev/mmu.h>
 
-struct gk104_fifo_chan;
-struct gk104_fifo {
-	const struct gk104_fifo_func *func;
-	struct nvkm_fifo base;
+काष्ठा gk104_fअगरo_chan;
+काष्ठा gk104_fअगरo अणु
+	स्थिर काष्ठा gk104_fअगरo_func *func;
+	काष्ठा nvkm_fअगरo base;
 
-	struct {
-		struct work_struct work;
+	काष्ठा अणु
+		काष्ठा work_काष्ठा work;
 		u32 engm;
 		u32 runm;
-	} recover;
+	पूर्ण recover;
 
-	int pbdma_nr;
+	पूर्णांक pbdma_nr;
 
-	struct {
-		struct nvkm_engine *engine;
-		int runl;
-		int pbid;
-	} engine[16];
-	int engine_nr;
+	काष्ठा अणु
+		काष्ठा nvkm_engine *engine;
+		पूर्णांक runl;
+		पूर्णांक pbid;
+	पूर्ण engine[16];
+	पूर्णांक engine_nr;
 
-	struct {
-		struct nvkm_memory *mem[2];
-		int next;
-		wait_queue_head_t wait;
-		struct list_head cgrp;
-		struct list_head chan;
+	काष्ठा अणु
+		काष्ठा nvkm_memory *mem[2];
+		पूर्णांक next;
+		रुको_queue_head_t रुको;
+		काष्ठा list_head cgrp;
+		काष्ठा list_head chan;
 		u32 engm;
 		u32 engm_sw;
-	} runlist[16];
-	int runlist_nr;
+	पूर्ण runlist[16];
+	पूर्णांक runlist_nr;
 
-	struct {
-		struct nvkm_memory *mem;
-		struct nvkm_vma *bar;
-	} user;
-};
+	काष्ठा अणु
+		काष्ठा nvkm_memory *mem;
+		काष्ठा nvkm_vma *bar;
+	पूर्ण user;
+पूर्ण;
 
-struct gk104_fifo_func {
-	struct {
-		void (*fault)(struct nvkm_fifo *, int unit);
-	} intr;
+काष्ठा gk104_fअगरo_func अणु
+	काष्ठा अणु
+		व्योम (*fault)(काष्ठा nvkm_fअगरo *, पूर्णांक unit);
+	पूर्ण पूर्णांकr;
 
-	const struct gk104_fifo_pbdma_func {
-		int (*nr)(struct gk104_fifo *);
-		void (*init)(struct gk104_fifo *);
-		void (*init_timeout)(struct gk104_fifo *);
-	} *pbdma;
+	स्थिर काष्ठा gk104_fअगरo_pbdma_func अणु
+		पूर्णांक (*nr)(काष्ठा gk104_fअगरo *);
+		व्योम (*init)(काष्ठा gk104_fअगरo *);
+		व्योम (*init_समयout)(काष्ठा gk104_fअगरo *);
+	पूर्ण *pbdma;
 
-	struct {
-		const struct nvkm_enum *access;
-		const struct nvkm_enum *engine;
-		const struct nvkm_enum *reason;
-		const struct nvkm_enum *hubclient;
-		const struct nvkm_enum *gpcclient;
-	} fault;
+	काष्ठा अणु
+		स्थिर काष्ठा nvkm_क्रमागत *access;
+		स्थिर काष्ठा nvkm_क्रमागत *engine;
+		स्थिर काष्ठा nvkm_क्रमागत *reason;
+		स्थिर काष्ठा nvkm_क्रमागत *hubclient;
+		स्थिर काष्ठा nvkm_क्रमागत *gpcclient;
+	पूर्ण fault;
 
-	const struct gk104_fifo_runlist_func {
+	स्थिर काष्ठा gk104_fअगरo_runlist_func अणु
 		u8 size;
-		void (*cgrp)(struct nvkm_fifo_cgrp *,
-			     struct nvkm_memory *, u32 offset);
-		void (*chan)(struct gk104_fifo_chan *,
-			     struct nvkm_memory *, u32 offset);
-		void (*commit)(struct gk104_fifo *, int runl,
-			       struct nvkm_memory *, int entries);
-	} *runlist;
+		व्योम (*cgrp)(काष्ठा nvkm_fअगरo_cgrp *,
+			     काष्ठा nvkm_memory *, u32 offset);
+		व्योम (*chan)(काष्ठा gk104_fअगरo_chan *,
+			     काष्ठा nvkm_memory *, u32 offset);
+		व्योम (*commit)(काष्ठा gk104_fअगरo *, पूर्णांक runl,
+			       काष्ठा nvkm_memory *, पूर्णांक entries);
+	पूर्ण *runlist;
 
-	struct gk104_fifo_user_user {
-		struct nvkm_sclass user;
-		int (*ctor)(const struct nvkm_oclass *, void *, u32,
-			    struct nvkm_object **);
-	} user;
+	काष्ठा gk104_fअगरo_user_user अणु
+		काष्ठा nvkm_sclass user;
+		पूर्णांक (*ctor)(स्थिर काष्ठा nvkm_oclass *, व्योम *, u32,
+			    काष्ठा nvkm_object **);
+	पूर्ण user;
 
-	struct gk104_fifo_chan_user {
-		struct nvkm_sclass user;
-		int (*ctor)(struct gk104_fifo *, const struct nvkm_oclass *,
-			    void *, u32, struct nvkm_object **);
-	} chan;
-	bool cgrp_force;
-};
+	काष्ठा gk104_fअगरo_chan_user अणु
+		काष्ठा nvkm_sclass user;
+		पूर्णांक (*ctor)(काष्ठा gk104_fअगरo *, स्थिर काष्ठा nvkm_oclass *,
+			    व्योम *, u32, काष्ठा nvkm_object **);
+	पूर्ण chan;
+	bool cgrp_क्रमce;
+पूर्ण;
 
-struct gk104_fifo_engine_status {
+काष्ठा gk104_fअगरo_engine_status अणु
 	bool busy;
 	bool faulted;
 	bool chsw;
 	bool save;
 	bool load;
-	struct {
+	काष्ठा अणु
 		bool tsg;
 		u32 id;
-	} prev, next, *chan;
-};
+	पूर्ण prev, next, *chan;
+पूर्ण;
 
-int gk104_fifo_new_(const struct gk104_fifo_func *, struct nvkm_device *, enum nvkm_subdev_type,
-		    int index, int nr, struct nvkm_fifo **);
-void gk104_fifo_runlist_insert(struct gk104_fifo *, struct gk104_fifo_chan *);
-void gk104_fifo_runlist_remove(struct gk104_fifo *, struct gk104_fifo_chan *);
-void gk104_fifo_runlist_update(struct gk104_fifo *, int runl);
-void gk104_fifo_engine_status(struct gk104_fifo *fifo, int engn,
-			      struct gk104_fifo_engine_status *status);
-void gk104_fifo_intr_bind(struct gk104_fifo *fifo);
-void gk104_fifo_intr_chsw(struct gk104_fifo *fifo);
-void gk104_fifo_intr_dropped_fault(struct gk104_fifo *fifo);
-void gk104_fifo_intr_pbdma_0(struct gk104_fifo *fifo, int unit);
-void gk104_fifo_intr_pbdma_1(struct gk104_fifo *fifo, int unit);
-void gk104_fifo_intr_runlist(struct gk104_fifo *fifo);
-void gk104_fifo_intr_engine(struct gk104_fifo *fifo);
-void *gk104_fifo_dtor(struct nvkm_fifo *base);
-int gk104_fifo_oneinit(struct nvkm_fifo *base);
-int gk104_fifo_info(struct nvkm_fifo *base, u64 mthd, u64 *data);
-void gk104_fifo_init(struct nvkm_fifo *base);
-void gk104_fifo_fini(struct nvkm_fifo *base);
-int gk104_fifo_class_new(struct nvkm_fifo *base, const struct nvkm_oclass *oclass,
-			 void *argv, u32 argc, struct nvkm_object **pobject);
-int gk104_fifo_class_get(struct nvkm_fifo *base, int index,
-			 struct nvkm_oclass *oclass);
-void gk104_fifo_uevent_fini(struct nvkm_fifo *fifo);
-void gk104_fifo_uevent_init(struct nvkm_fifo *fifo);
+पूर्णांक gk104_fअगरo_new_(स्थिर काष्ठा gk104_fअगरo_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type,
+		    पूर्णांक index, पूर्णांक nr, काष्ठा nvkm_fअगरo **);
+व्योम gk104_fअगरo_runlist_insert(काष्ठा gk104_fअगरo *, काष्ठा gk104_fअगरo_chan *);
+व्योम gk104_fअगरo_runlist_हटाओ(काष्ठा gk104_fअगरo *, काष्ठा gk104_fअगरo_chan *);
+व्योम gk104_fअगरo_runlist_update(काष्ठा gk104_fअगरo *, पूर्णांक runl);
+व्योम gk104_fअगरo_engine_status(काष्ठा gk104_fअगरo *fअगरo, पूर्णांक engn,
+			      काष्ठा gk104_fअगरo_engine_status *status);
+व्योम gk104_fअगरo_पूर्णांकr_bind(काष्ठा gk104_fअगरo *fअगरo);
+व्योम gk104_fअगरo_पूर्णांकr_chsw(काष्ठा gk104_fअगरo *fअगरo);
+व्योम gk104_fअगरo_पूर्णांकr_dropped_fault(काष्ठा gk104_fअगरo *fअगरo);
+व्योम gk104_fअगरo_पूर्णांकr_pbdma_0(काष्ठा gk104_fअगरo *fअगरo, पूर्णांक unit);
+व्योम gk104_fअगरo_पूर्णांकr_pbdma_1(काष्ठा gk104_fअगरo *fअगरo, पूर्णांक unit);
+व्योम gk104_fअगरo_पूर्णांकr_runlist(काष्ठा gk104_fअगरo *fअगरo);
+व्योम gk104_fअगरo_पूर्णांकr_engine(काष्ठा gk104_fअगरo *fअगरo);
+व्योम *gk104_fअगरo_dtor(काष्ठा nvkm_fअगरo *base);
+पूर्णांक gk104_fअगरo_oneinit(काष्ठा nvkm_fअगरo *base);
+पूर्णांक gk104_fअगरo_info(काष्ठा nvkm_fअगरo *base, u64 mthd, u64 *data);
+व्योम gk104_fअगरo_init(काष्ठा nvkm_fअगरo *base);
+व्योम gk104_fअगरo_fini(काष्ठा nvkm_fअगरo *base);
+पूर्णांक gk104_fअगरo_class_new(काष्ठा nvkm_fअगरo *base, स्थिर काष्ठा nvkm_oclass *oclass,
+			 व्योम *argv, u32 argc, काष्ठा nvkm_object **pobject);
+पूर्णांक gk104_fअगरo_class_get(काष्ठा nvkm_fअगरo *base, पूर्णांक index,
+			 काष्ठा nvkm_oclass *oclass);
+व्योम gk104_fअगरo_uevent_fini(काष्ठा nvkm_fअगरo *fअगरo);
+व्योम gk104_fअगरo_uevent_init(काष्ठा nvkm_fअगरo *fअगरo);
 
-extern const struct gk104_fifo_pbdma_func gk104_fifo_pbdma;
-int gk104_fifo_pbdma_nr(struct gk104_fifo *);
-void gk104_fifo_pbdma_init(struct gk104_fifo *);
-extern const struct nvkm_enum gk104_fifo_fault_access[];
-extern const struct nvkm_enum gk104_fifo_fault_engine[];
-extern const struct nvkm_enum gk104_fifo_fault_reason[];
-extern const struct nvkm_enum gk104_fifo_fault_hubclient[];
-extern const struct nvkm_enum gk104_fifo_fault_gpcclient[];
-extern const struct gk104_fifo_runlist_func gk104_fifo_runlist;
-void gk104_fifo_runlist_chan(struct gk104_fifo_chan *,
-			     struct nvkm_memory *, u32);
-void gk104_fifo_runlist_commit(struct gk104_fifo *, int runl,
-			       struct nvkm_memory *, int);
+बाह्य स्थिर काष्ठा gk104_fअगरo_pbdma_func gk104_fअगरo_pbdma;
+पूर्णांक gk104_fअगरo_pbdma_nr(काष्ठा gk104_fअगरo *);
+व्योम gk104_fअगरo_pbdma_init(काष्ठा gk104_fअगरo *);
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gk104_fअगरo_fault_access[];
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gk104_fअगरo_fault_engine[];
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gk104_fअगरo_fault_reason[];
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gk104_fअगरo_fault_hubclient[];
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gk104_fअगरo_fault_gpcclient[];
+बाह्य स्थिर काष्ठा gk104_fअगरo_runlist_func gk104_fअगरo_runlist;
+व्योम gk104_fअगरo_runlist_chan(काष्ठा gk104_fअगरo_chan *,
+			     काष्ठा nvkm_memory *, u32);
+व्योम gk104_fअगरo_runlist_commit(काष्ठा gk104_fअगरo *, पूर्णांक runl,
+			       काष्ठा nvkm_memory *, पूर्णांक);
 
-extern const struct gk104_fifo_runlist_func gk110_fifo_runlist;
-void gk110_fifo_runlist_cgrp(struct nvkm_fifo_cgrp *,
-			     struct nvkm_memory *, u32);
+बाह्य स्थिर काष्ठा gk104_fअगरo_runlist_func gk110_fअगरo_runlist;
+व्योम gk110_fअगरo_runlist_cgrp(काष्ठा nvkm_fअगरo_cgrp *,
+			     काष्ठा nvkm_memory *, u32);
 
-extern const struct gk104_fifo_pbdma_func gk208_fifo_pbdma;
-void gk208_fifo_pbdma_init_timeout(struct gk104_fifo *);
+बाह्य स्थिर काष्ठा gk104_fअगरo_pbdma_func gk208_fअगरo_pbdma;
+व्योम gk208_fअगरo_pbdma_init_समयout(काष्ठा gk104_fअगरo *);
 
-void gm107_fifo_intr_fault(struct nvkm_fifo *, int);
-extern const struct nvkm_enum gm107_fifo_fault_engine[];
-extern const struct gk104_fifo_runlist_func gm107_fifo_runlist;
+व्योम gm107_fअगरo_पूर्णांकr_fault(काष्ठा nvkm_fअगरo *, पूर्णांक);
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gm107_fअगरo_fault_engine[];
+बाह्य स्थिर काष्ठा gk104_fअगरo_runlist_func gm107_fअगरo_runlist;
 
-extern const struct gk104_fifo_pbdma_func gm200_fifo_pbdma;
-int gm200_fifo_pbdma_nr(struct gk104_fifo *);
+बाह्य स्थिर काष्ठा gk104_fअगरo_pbdma_func gm200_fअगरo_pbdma;
+पूर्णांक gm200_fअगरo_pbdma_nr(काष्ठा gk104_fअगरo *);
 
-void gp100_fifo_intr_fault(struct nvkm_fifo *, int);
-extern const struct nvkm_enum gp100_fifo_fault_engine[];
+व्योम gp100_fअगरo_पूर्णांकr_fault(काष्ठा nvkm_fअगरo *, पूर्णांक);
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gp100_fअगरo_fault_engine[];
 
-extern const struct nvkm_enum gv100_fifo_fault_access[];
-extern const struct nvkm_enum gv100_fifo_fault_reason[];
-extern const struct nvkm_enum gv100_fifo_fault_hubclient[];
-extern const struct nvkm_enum gv100_fifo_fault_gpcclient[];
-void gv100_fifo_runlist_cgrp(struct nvkm_fifo_cgrp *,
-			     struct nvkm_memory *, u32);
-void gv100_fifo_runlist_chan(struct gk104_fifo_chan *,
-			     struct nvkm_memory *, u32);
-#endif
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gv100_fअगरo_fault_access[];
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gv100_fअगरo_fault_reason[];
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gv100_fअगरo_fault_hubclient[];
+बाह्य स्थिर काष्ठा nvkm_क्रमागत gv100_fअगरo_fault_gpcclient[];
+व्योम gv100_fअगरo_runlist_cgrp(काष्ठा nvkm_fअगरo_cgrp *,
+			     काष्ठा nvkm_memory *, u32);
+व्योम gv100_fअगरo_runlist_chan(काष्ठा gk104_fअगरo_chan *,
+			     काष्ठा nvkm_memory *, u32);
+#पूर्ण_अगर

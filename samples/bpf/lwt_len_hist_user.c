@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/unistd.h>
-#include <linux/bpf.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/unistd.h>
+#समावेश <linux/bpf.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
-#include <arpa/inet.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <arpa/inet.h>
 
-#include <bpf/bpf.h>
-#include "bpf_util.h"
+#समावेश <bpf/bpf.h>
+#समावेश "bpf_util.h"
 
-#define MAX_INDEX 64
-#define MAX_STARS 38
+#घोषणा MAX_INDEX 64
+#घोषणा MAX_STARS 38
 
-static void stars(char *str, long val, long max, int width)
-{
-	int i;
+अटल व्योम stars(अक्षर *str, दीर्घ val, दीर्घ max, पूर्णांक width)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < (width * val / max) - 1 && i < width - 1; i++)
+	क्रम (i = 0; i < (width * val / max) - 1 && i < width - 1; i++)
 		str[i] = '*';
-	if (val > max)
+	अगर (val > max)
 		str[i - 1] = '+';
 	str[i] = '\0';
-}
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	unsigned int nr_cpus = bpf_num_possible_cpus();
-	const char *map_filename = "/sys/fs/bpf/tc/globals/lwt_len_hist_map";
-	uint64_t values[nr_cpus], sum, max_value = 0, data[MAX_INDEX] = {};
-	uint64_t key = 0, next_key, max_key = 0;
-	char starstr[MAX_STARS];
-	int i, map_fd;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	अचिन्हित पूर्णांक nr_cpus = bpf_num_possible_cpus();
+	स्थिर अक्षर *map_filename = "/sys/fs/bpf/tc/globals/lwt_len_hist_map";
+	uपूर्णांक64_t values[nr_cpus], sum, max_value = 0, data[MAX_INDEX] = अणुपूर्ण;
+	uपूर्णांक64_t key = 0, next_key, max_key = 0;
+	अक्षर starstr[MAX_STARS];
+	पूर्णांक i, map_fd;
 
 	map_fd = bpf_obj_get(map_filename);
-	if (map_fd < 0) {
-		fprintf(stderr, "bpf_obj_get(%s): %s(%d)\n",
-			map_filename, strerror(errno), errno);
-		return -1;
-	}
+	अगर (map_fd < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "bpf_obj_get(%s): %s(%d)\n",
+			map_filename, म_त्रुटि(त्रुटि_सं), त्रुटि_सं);
+		वापस -1;
+	पूर्ण
 
-	while (bpf_map_get_next_key(map_fd, &key, &next_key) == 0) {
-		if (next_key >= MAX_INDEX) {
-			fprintf(stderr, "Key %lu out of bounds\n", next_key);
-			continue;
-		}
+	जबतक (bpf_map_get_next_key(map_fd, &key, &next_key) == 0) अणु
+		अगर (next_key >= MAX_INDEX) अणु
+			ख_लिखो(मानक_त्रुटि, "Key %lu out of bounds\n", next_key);
+			जारी;
+		पूर्ण
 
 		bpf_map_lookup_elem(map_fd, &next_key, values);
 
 		sum = 0;
-		for (i = 0; i < nr_cpus; i++)
+		क्रम (i = 0; i < nr_cpus; i++)
 			sum += values[i];
 
 		data[next_key] = sum;
-		if (sum && next_key > max_key)
+		अगर (sum && next_key > max_key)
 			max_key = next_key;
 
-		if (sum > max_value)
+		अगर (sum > max_value)
 			max_value = sum;
 
 		key = next_key;
-	}
+	पूर्ण
 
-	for (i = 1; i <= max_key + 1; i++) {
+	क्रम (i = 1; i <= max_key + 1; i++) अणु
 		stars(starstr, data[i - 1], max_value, MAX_STARS);
-		printf("%8ld -> %-8ld : %-8ld |%-*s|\n",
+		म_लिखो("%8ld -> %-8ld : %-8ld |%-*s|\n",
 		       (1l << i) >> 1, (1l << i) - 1, data[i - 1],
 		       MAX_STARS, starstr);
-	}
+	पूर्ण
 
-	close(map_fd);
+	बंद(map_fd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,170 +1,171 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2017 Samsung Electronics Co., Ltd.
  */
 
-#ifndef _EXYNOS_DRM_IPP_H_
-#define _EXYNOS_DRM_IPP_H_
+#अगर_अघोषित _EXYNOS_DRM_IPP_H_
+#घोषणा _EXYNOS_DRM_IPP_H_
 
-struct exynos_drm_ipp;
-struct exynos_drm_ipp_task;
+काष्ठा exynos_drm_ipp;
+काष्ठा exynos_drm_ipp_task;
 
 /**
- * struct exynos_drm_ipp_funcs - exynos_drm_ipp control functions
+ * काष्ठा exynos_drm_ipp_funcs - exynos_drm_ipp control functions
  */
-struct exynos_drm_ipp_funcs {
+काष्ठा exynos_drm_ipp_funcs अणु
 	/**
 	 * @commit:
 	 *
-	 * This is the main entry point to start framebuffer processing
-	 * in the hardware. The exynos_drm_ipp_task has been already validated.
-	 * This function must not wait until the device finishes processing.
+	 * This is the मुख्य entry poपूर्णांक to start framebuffer processing
+	 * in the hardware. The exynos_drm_ipp_task has been alपढ़ोy validated.
+	 * This function must not रुको until the device finishes processing.
 	 * When the driver finishes processing, it has to call
-	 * exynos_exynos_drm_ipp_task_done() function.
+	 * exynos_exynos_drm_ipp_task_करोne() function.
 	 *
 	 * RETURNS:
 	 *
-	 * 0 on success or negative error codes in case of failure.
+	 * 0 on success or negative error codes in हाल of failure.
 	 */
-	int (*commit)(struct exynos_drm_ipp *ipp,
-		      struct exynos_drm_ipp_task *task);
+	पूर्णांक (*commit)(काष्ठा exynos_drm_ipp *ipp,
+		      काष्ठा exynos_drm_ipp_task *task);
 
 	/**
-	 * @abort:
+	 * @पात:
 	 *
-	 * Informs the driver that it has to abort the currently running
+	 * Inक्रमms the driver that it has to पात the currently running
 	 * task as soon as possible (i.e. as soon as it can stop the device
-	 * safely), even if the task would not have been finished by then.
-	 * After the driver performs the necessary steps, it has to call
-	 * exynos_drm_ipp_task_done() (as if the task ended normally).
-	 * This function does not have to (and will usually not) wait
+	 * safely), even अगर the task would not have been finished by then.
+	 * After the driver perक्रमms the necessary steps, it has to call
+	 * exynos_drm_ipp_task_करोne() (as अगर the task ended normally).
+	 * This function करोes not have to (and will usually not) रुको
 	 * until the device enters a state when it can be stopped.
 	 */
-	void (*abort)(struct exynos_drm_ipp *ipp,
-		      struct exynos_drm_ipp_task *task);
-};
+	व्योम (*पात)(काष्ठा exynos_drm_ipp *ipp,
+		      काष्ठा exynos_drm_ipp_task *task);
+पूर्ण;
 
 /**
- * struct exynos_drm_ipp - central picture processor module structure
+ * काष्ठा exynos_drm_ipp - central picture processor module काष्ठाure
  */
-struct exynos_drm_ipp {
-	struct drm_device *drm_dev;
-	struct device *dev;
-	struct list_head head;
-	unsigned int id;
+काष्ठा exynos_drm_ipp अणु
+	काष्ठा drm_device *drm_dev;
+	काष्ठा device *dev;
+	काष्ठा list_head head;
+	अचिन्हित पूर्णांक id;
 
-	const char *name;
-	const struct exynos_drm_ipp_funcs *funcs;
-	unsigned int capabilities;
-	const struct exynos_drm_ipp_formats *formats;
-	unsigned int num_formats;
+	स्थिर अक्षर *name;
+	स्थिर काष्ठा exynos_drm_ipp_funcs *funcs;
+	अचिन्हित पूर्णांक capabilities;
+	स्थिर काष्ठा exynos_drm_ipp_क्रमmats *क्रमmats;
+	अचिन्हित पूर्णांक num_क्रमmats;
 	atomic_t sequence;
 
 	spinlock_t lock;
-	struct exynos_drm_ipp_task *task;
-	struct list_head todo_list;
-	wait_queue_head_t done_wq;
-};
+	काष्ठा exynos_drm_ipp_task *task;
+	काष्ठा list_head toकरो_list;
+	रुको_queue_head_t करोne_wq;
+पूर्ण;
 
-struct exynos_drm_ipp_buffer {
-	struct drm_exynos_ipp_task_buffer buf;
-	struct drm_exynos_ipp_task_rect rect;
+काष्ठा exynos_drm_ipp_buffer अणु
+	काष्ठा drm_exynos_ipp_task_buffer buf;
+	काष्ठा drm_exynos_ipp_task_rect rect;
 
-	struct exynos_drm_gem *exynos_gem[MAX_FB_BUFFER];
-	const struct drm_format_info *format;
+	काष्ठा exynos_drm_gem *exynos_gem[MAX_FB_BUFFER];
+	स्थिर काष्ठा drm_क्रमmat_info *क्रमmat;
 	dma_addr_t dma_addr[MAX_FB_BUFFER];
-};
+पूर्ण;
 
 /**
- * struct exynos_drm_ipp_task - a structure describing transformation that
- * has to be performed by the picture processor hardware module
+ * काष्ठा exynos_drm_ipp_task - a काष्ठाure describing transक्रमmation that
+ * has to be perक्रमmed by the picture processor hardware module
  */
-struct exynos_drm_ipp_task {
-	struct device *dev;
-	struct exynos_drm_ipp *ipp;
-	struct list_head head;
+काष्ठा exynos_drm_ipp_task अणु
+	काष्ठा device *dev;
+	काष्ठा exynos_drm_ipp *ipp;
+	काष्ठा list_head head;
 
-	struct exynos_drm_ipp_buffer src;
-	struct exynos_drm_ipp_buffer dst;
+	काष्ठा exynos_drm_ipp_buffer src;
+	काष्ठा exynos_drm_ipp_buffer dst;
 
-	struct drm_exynos_ipp_task_transform transform;
-	struct drm_exynos_ipp_task_alpha alpha;
+	काष्ठा drm_exynos_ipp_task_transक्रमm transक्रमm;
+	काष्ठा drm_exynos_ipp_task_alpha alpha;
 
-	struct work_struct cleanup_work;
-	unsigned int flags;
-	int ret;
+	काष्ठा work_काष्ठा cleanup_work;
+	अचिन्हित पूर्णांक flags;
+	पूर्णांक ret;
 
-	struct drm_pending_exynos_ipp_event *event;
-};
+	काष्ठा drm_pending_exynos_ipp_event *event;
+पूर्ण;
 
-#define DRM_EXYNOS_IPP_TASK_DONE	(1 << 0)
-#define DRM_EXYNOS_IPP_TASK_ASYNC	(1 << 1)
+#घोषणा DRM_EXYNOS_IPP_TASK_DONE	(1 << 0)
+#घोषणा DRM_EXYNOS_IPP_TASK_ASYNC	(1 << 1)
 
-struct exynos_drm_ipp_formats {
-	uint32_t fourcc;
-	uint32_t type;
-	uint64_t modifier;
-	const struct drm_exynos_ipp_limit *limits;
-	unsigned int num_limits;
-};
+काष्ठा exynos_drm_ipp_क्रमmats अणु
+	uपूर्णांक32_t fourcc;
+	uपूर्णांक32_t type;
+	uपूर्णांक64_t modअगरier;
+	स्थिर काष्ठा drm_exynos_ipp_limit *limits;
+	अचिन्हित पूर्णांक num_limits;
+पूर्ण;
 
-/* helper macros to set exynos_drm_ipp_formats structure and limits*/
-#define IPP_SRCDST_MFORMAT(f, m, l) \
-	.fourcc = DRM_FORMAT_##f, .modifier = m, .limits = l, \
+/* helper macros to set exynos_drm_ipp_क्रमmats काष्ठाure and limits*/
+#घोषणा IPP_SRCDST_MFORMAT(f, m, l) \
+	.fourcc = DRM_FORMAT_##f, .modअगरier = m, .limits = l, \
 	.num_limits = ARRAY_SIZE(l), \
 	.type = (DRM_EXYNOS_IPP_FORMAT_SOURCE | \
 		 DRM_EXYNOS_IPP_FORMAT_DESTINATION)
 
-#define IPP_SRCDST_FORMAT(f, l) IPP_SRCDST_MFORMAT(f, 0, l)
+#घोषणा IPP_SRCDST_FORMAT(f, l) IPP_SRCDST_MFORMAT(f, 0, l)
 
-#define IPP_SIZE_LIMIT(l, val...)	\
+#घोषणा IPP_SIZE_LIMIT(l, val...)	\
 	.type = (DRM_EXYNOS_IPP_LIMIT_TYPE_SIZE | \
 		 DRM_EXYNOS_IPP_LIMIT_SIZE_##l), val
 
-#define IPP_SCALE_LIMIT(val...)		\
+#घोषणा IPP_SCALE_LIMIT(val...)		\
 	.type = (DRM_EXYNOS_IPP_LIMIT_TYPE_SCALE), val
 
-int exynos_drm_ipp_register(struct device *dev, struct exynos_drm_ipp *ipp,
-		const struct exynos_drm_ipp_funcs *funcs, unsigned int caps,
-		const struct exynos_drm_ipp_formats *formats,
-		unsigned int num_formats, const char *name);
-void exynos_drm_ipp_unregister(struct device *dev,
-			       struct exynos_drm_ipp *ipp);
+पूर्णांक exynos_drm_ipp_रेजिस्टर(काष्ठा device *dev, काष्ठा exynos_drm_ipp *ipp,
+		स्थिर काष्ठा exynos_drm_ipp_funcs *funcs, अचिन्हित पूर्णांक caps,
+		स्थिर काष्ठा exynos_drm_ipp_क्रमmats *क्रमmats,
+		अचिन्हित पूर्णांक num_क्रमmats, स्थिर अक्षर *name);
+व्योम exynos_drm_ipp_unरेजिस्टर(काष्ठा device *dev,
+			       काष्ठा exynos_drm_ipp *ipp);
 
-void exynos_drm_ipp_task_done(struct exynos_drm_ipp_task *task, int ret);
+व्योम exynos_drm_ipp_task_करोne(काष्ठा exynos_drm_ipp_task *task, पूर्णांक ret);
 
-#ifdef CONFIG_DRM_EXYNOS_IPP
-int exynos_drm_ipp_get_res_ioctl(struct drm_device *dev, void *data,
-				 struct drm_file *file_priv);
-int exynos_drm_ipp_get_caps_ioctl(struct drm_device *dev, void *data,
-				  struct drm_file *file_priv);
-int exynos_drm_ipp_get_limits_ioctl(struct drm_device *dev, void *data,
-				    struct drm_file *file_priv);
-int exynos_drm_ipp_commit_ioctl(struct drm_device *dev,
-				void *data, struct drm_file *file_priv);
-#else
-static inline int exynos_drm_ipp_get_res_ioctl(struct drm_device *dev,
-	 void *data, struct drm_file *file_priv)
-{
-	struct drm_exynos_ioctl_ipp_get_res *resp = data;
+#अगर_घोषित CONFIG_DRM_EXYNOS_IPP
+पूर्णांक exynos_drm_ipp_get_res_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				 काष्ठा drm_file *file_priv);
+पूर्णांक exynos_drm_ipp_get_caps_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				  काष्ठा drm_file *file_priv);
+पूर्णांक exynos_drm_ipp_get_limits_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				    काष्ठा drm_file *file_priv);
+पूर्णांक exynos_drm_ipp_commit_ioctl(काष्ठा drm_device *dev,
+				व्योम *data, काष्ठा drm_file *file_priv);
+#अन्यथा
+अटल अंतरभूत पूर्णांक exynos_drm_ipp_get_res_ioctl(काष्ठा drm_device *dev,
+	 व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_exynos_ioctl_ipp_get_res *resp = data;
 
 	resp->count_ipps = 0;
-	return 0;
-}
-static inline int exynos_drm_ipp_get_caps_ioctl(struct drm_device *dev,
-	 void *data, struct drm_file *file_priv)
-{
-	return -ENODEV;
-}
-static inline int exynos_drm_ipp_get_limits_ioctl(struct drm_device *dev,
-	 void *data, struct drm_file *file_priv)
-{
-	return -ENODEV;
-}
-static inline int exynos_drm_ipp_commit_ioctl(struct drm_device *dev,
-	 void *data, struct drm_file *file_priv)
-{
-	return -ENODEV;
-}
-#endif
-#endif
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक exynos_drm_ipp_get_caps_ioctl(काष्ठा drm_device *dev,
+	 व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल अंतरभूत पूर्णांक exynos_drm_ipp_get_limits_ioctl(काष्ठा drm_device *dev,
+	 व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल अंतरभूत पूर्णांक exynos_drm_ipp_commit_ioctl(काष्ठा drm_device *dev,
+	 व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर

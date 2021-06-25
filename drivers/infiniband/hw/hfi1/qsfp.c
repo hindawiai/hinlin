@@ -1,41 +1,42 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2015, 2016 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
+ *  - Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,194 +46,194 @@
  *
  */
 
-#include <linux/delay.h>
-#include <linux/pci.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "hfi.h"
+#समावेश "hfi.h"
 
-/* for the given bus number, return the CSR for reading an i2c line */
-static inline u32 i2c_in_csr(u32 bus_num)
-{
-	return bus_num ? ASIC_QSFP2_IN : ASIC_QSFP1_IN;
-}
+/* क्रम the given bus number, वापस the CSR क्रम पढ़ोing an i2c line */
+अटल अंतरभूत u32 i2c_in_csr(u32 bus_num)
+अणु
+	वापस bus_num ? ASIC_QSFP2_IN : ASIC_QSFP1_IN;
+पूर्ण
 
-/* for the given bus number, return the CSR for writing an i2c line */
-static inline u32 i2c_oe_csr(u32 bus_num)
-{
-	return bus_num ? ASIC_QSFP2_OE : ASIC_QSFP1_OE;
-}
+/* क्रम the given bus number, वापस the CSR क्रम writing an i2c line */
+अटल अंतरभूत u32 i2c_oe_csr(u32 bus_num)
+अणु
+	वापस bus_num ? ASIC_QSFP2_OE : ASIC_QSFP1_OE;
+पूर्ण
 
-static void hfi1_setsda(void *data, int state)
-{
-	struct hfi1_i2c_bus *bus = (struct hfi1_i2c_bus *)data;
-	struct hfi1_devdata *dd = bus->controlling_dd;
+अटल व्योम hfi1_setsda(व्योम *data, पूर्णांक state)
+अणु
+	काष्ठा hfi1_i2c_bus *bus = (काष्ठा hfi1_i2c_bus *)data;
+	काष्ठा hfi1_devdata *dd = bus->controlling_dd;
 	u64 reg;
 	u32 target_oe;
 
 	target_oe = i2c_oe_csr(bus->num);
-	reg = read_csr(dd, target_oe);
+	reg = पढ़ो_csr(dd, target_oe);
 	/*
 	 * The OE bit value is inverted and connected to the pin.  When
 	 * OE is 0 the pin is left to be pulled up, when the OE is 1
-	 * the pin is driven low.  This matches the "open drain" or "open
+	 * the pin is driven low.  This matches the "open drain" or "खोलो
 	 * collector" convention.
 	 */
-	if (state)
+	अगर (state)
 		reg &= ~QSFP_HFI0_I2CDAT;
-	else
+	अन्यथा
 		reg |= QSFP_HFI0_I2CDAT;
-	write_csr(dd, target_oe, reg);
-	/* do a read to force the write into the chip */
-	(void)read_csr(dd, target_oe);
-}
+	ग_लिखो_csr(dd, target_oe, reg);
+	/* करो a पढ़ो to क्रमce the ग_लिखो पूर्णांकo the chip */
+	(व्योम)पढ़ो_csr(dd, target_oe);
+पूर्ण
 
-static void hfi1_setscl(void *data, int state)
-{
-	struct hfi1_i2c_bus *bus = (struct hfi1_i2c_bus *)data;
-	struct hfi1_devdata *dd = bus->controlling_dd;
+अटल व्योम hfi1_setscl(व्योम *data, पूर्णांक state)
+अणु
+	काष्ठा hfi1_i2c_bus *bus = (काष्ठा hfi1_i2c_bus *)data;
+	काष्ठा hfi1_devdata *dd = bus->controlling_dd;
 	u64 reg;
 	u32 target_oe;
 
 	target_oe = i2c_oe_csr(bus->num);
-	reg = read_csr(dd, target_oe);
+	reg = पढ़ो_csr(dd, target_oe);
 	/*
 	 * The OE bit value is inverted and connected to the pin.  When
 	 * OE is 0 the pin is left to be pulled up, when the OE is 1
-	 * the pin is driven low.  This matches the "open drain" or "open
+	 * the pin is driven low.  This matches the "open drain" or "खोलो
 	 * collector" convention.
 	 */
-	if (state)
+	अगर (state)
 		reg &= ~QSFP_HFI0_I2CCLK;
-	else
+	अन्यथा
 		reg |= QSFP_HFI0_I2CCLK;
-	write_csr(dd, target_oe, reg);
-	/* do a read to force the write into the chip */
-	(void)read_csr(dd, target_oe);
-}
+	ग_लिखो_csr(dd, target_oe, reg);
+	/* करो a पढ़ो to क्रमce the ग_लिखो पूर्णांकo the chip */
+	(व्योम)पढ़ो_csr(dd, target_oe);
+पूर्ण
 
-static int hfi1_getsda(void *data)
-{
-	struct hfi1_i2c_bus *bus = (struct hfi1_i2c_bus *)data;
+अटल पूर्णांक hfi1_माला_लोda(व्योम *data)
+अणु
+	काष्ठा hfi1_i2c_bus *bus = (काष्ठा hfi1_i2c_bus *)data;
 	u64 reg;
 	u32 target_in;
 
-	hfi1_setsda(data, 1);	/* clear OE so we do not pull line down */
+	hfi1_setsda(data, 1);	/* clear OE so we करो not pull line करोwn */
 	udelay(2);		/* 1us pull up + 250ns hold */
 
 	target_in = i2c_in_csr(bus->num);
-	reg = read_csr(bus->controlling_dd, target_in);
-	return !!(reg & QSFP_HFI0_I2CDAT);
-}
+	reg = पढ़ो_csr(bus->controlling_dd, target_in);
+	वापस !!(reg & QSFP_HFI0_I2CDAT);
+पूर्ण
 
-static int hfi1_getscl(void *data)
-{
-	struct hfi1_i2c_bus *bus = (struct hfi1_i2c_bus *)data;
+अटल पूर्णांक hfi1_माला_लोcl(व्योम *data)
+अणु
+	काष्ठा hfi1_i2c_bus *bus = (काष्ठा hfi1_i2c_bus *)data;
 	u64 reg;
 	u32 target_in;
 
-	hfi1_setscl(data, 1);	/* clear OE so we do not pull line down */
+	hfi1_setscl(data, 1);	/* clear OE so we करो not pull line करोwn */
 	udelay(2);		/* 1us pull up + 250ns hold */
 
 	target_in = i2c_in_csr(bus->num);
-	reg = read_csr(bus->controlling_dd, target_in);
-	return !!(reg & QSFP_HFI0_I2CCLK);
-}
+	reg = पढ़ो_csr(bus->controlling_dd, target_in);
+	वापस !!(reg & QSFP_HFI0_I2CCLK);
+पूर्ण
 
 /*
  * Allocate and initialize the given i2c bus number.
- * Returns NULL on failure.
+ * Returns शून्य on failure.
  */
-static struct hfi1_i2c_bus *init_i2c_bus(struct hfi1_devdata *dd,
-					 struct hfi1_asic_data *ad, int num)
-{
-	struct hfi1_i2c_bus *bus;
-	int ret;
+अटल काष्ठा hfi1_i2c_bus *init_i2c_bus(काष्ठा hfi1_devdata *dd,
+					 काष्ठा hfi1_asic_data *ad, पूर्णांक num)
+अणु
+	काष्ठा hfi1_i2c_bus *bus;
+	पूर्णांक ret;
 
-	bus = kzalloc(sizeof(*bus), GFP_KERNEL);
-	if (!bus)
-		return NULL;
+	bus = kzalloc(माप(*bus), GFP_KERNEL);
+	अगर (!bus)
+		वापस शून्य;
 
 	bus->controlling_dd = dd;
 	bus->num = num;	/* our bus number */
 
 	bus->algo.setsda = hfi1_setsda;
 	bus->algo.setscl = hfi1_setscl;
-	bus->algo.getsda = hfi1_getsda;
-	bus->algo.getscl = hfi1_getscl;
+	bus->algo.माला_लोda = hfi1_माला_लोda;
+	bus->algo.माला_लोcl = hfi1_माला_लोcl;
 	bus->algo.udelay = 5;
-	bus->algo.timeout = usecs_to_jiffies(100000);
+	bus->algo.समयout = usecs_to_jअगरfies(100000);
 	bus->algo.data = bus;
 
 	bus->adapter.owner = THIS_MODULE;
 	bus->adapter.algo_data = &bus->algo;
 	bus->adapter.dev.parent = &dd->pcidev->dev;
-	snprintf(bus->adapter.name, sizeof(bus->adapter.name),
+	snम_लिखो(bus->adapter.name, माप(bus->adapter.name),
 		 "hfi1_i2c%d", num);
 
 	ret = i2c_bit_add_bus(&bus->adapter);
-	if (ret) {
+	अगर (ret) अणु
 		dd_dev_info(dd, "%s: unable to add i2c bus %d, err %d\n",
 			    __func__, num, ret);
-		kfree(bus);
-		return NULL;
-	}
+		kमुक्त(bus);
+		वापस शून्य;
+	पूर्ण
 
-	return bus;
-}
+	वापस bus;
+पूर्ण
 
 /*
  * Initialize i2c buses.
- * Return 0 on success, -errno on error.
+ * Return 0 on success, -त्रुटि_सं on error.
  */
-int set_up_i2c(struct hfi1_devdata *dd, struct hfi1_asic_data *ad)
-{
+पूर्णांक set_up_i2c(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_asic_data *ad)
+अणु
 	ad->i2c_bus0 = init_i2c_bus(dd, ad, 0);
 	ad->i2c_bus1 = init_i2c_bus(dd, ad, 1);
-	if (!ad->i2c_bus0 || !ad->i2c_bus1)
-		return -ENOMEM;
-	return 0;
-};
+	अगर (!ad->i2c_bus0 || !ad->i2c_bus1)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण;
 
-static void clean_i2c_bus(struct hfi1_i2c_bus *bus)
-{
-	if (bus) {
+अटल व्योम clean_i2c_bus(काष्ठा hfi1_i2c_bus *bus)
+अणु
+	अगर (bus) अणु
 		i2c_del_adapter(&bus->adapter);
-		kfree(bus);
-	}
-}
+		kमुक्त(bus);
+	पूर्ण
+पूर्ण
 
-void clean_up_i2c(struct hfi1_devdata *dd, struct hfi1_asic_data *ad)
-{
-	if (!ad)
-		return;
+व्योम clean_up_i2c(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_asic_data *ad)
+अणु
+	अगर (!ad)
+		वापस;
 	clean_i2c_bus(ad->i2c_bus0);
-	ad->i2c_bus0 = NULL;
+	ad->i2c_bus0 = शून्य;
 	clean_i2c_bus(ad->i2c_bus1);
-	ad->i2c_bus1 = NULL;
-}
+	ad->i2c_bus1 = शून्य;
+पूर्ण
 
-static int i2c_bus_write(struct hfi1_devdata *dd, struct hfi1_i2c_bus *i2c,
-			 u8 slave_addr, int offset, int offset_size,
+अटल पूर्णांक i2c_bus_ग_लिखो(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_i2c_bus *i2c,
+			 u8 slave_addr, पूर्णांक offset, पूर्णांक offset_size,
 			 u8 *data, u16 len)
-{
-	int ret;
-	int num_msgs;
+अणु
+	पूर्णांक ret;
+	पूर्णांक num_msgs;
 	u8 offset_bytes[2];
-	struct i2c_msg msgs[2];
+	काष्ठा i2c_msg msgs[2];
 
-	switch (offset_size) {
-	case 0:
+	चयन (offset_size) अणु
+	हाल 0:
 		num_msgs = 1;
 		msgs[0].addr = slave_addr;
 		msgs[0].flags = 0;
 		msgs[0].len = len;
 		msgs[0].buf = data;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		offset_bytes[1] = (offset >> 8) & 0xff;
 		fallthrough;
-	case 1:
+	हाल 1:
 		num_msgs = 2;
 		offset_bytes[0] = offset & 0xff;
 
@@ -245,42 +246,42 @@ static int i2c_bus_write(struct hfi1_devdata *dd, struct hfi1_i2c_bus *i2c,
 		msgs[1].flags = I2C_M_NOSTART;
 		msgs[1].len = len;
 		msgs[1].buf = data;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	i2c->controlling_dd = dd;
 	ret = i2c_transfer(&i2c->adapter, msgs, num_msgs);
-	if (ret != num_msgs) {
+	अगर (ret != num_msgs) अणु
 		dd_dev_err(dd, "%s: bus %d, i2c slave 0x%x, offset 0x%x, len 0x%x; write failed, ret %d\n",
 			   __func__, i2c->num, slave_addr, offset, len, ret);
-		return ret < 0 ? ret : -EIO;
-	}
-	return 0;
-}
+		वापस ret < 0 ? ret : -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int i2c_bus_read(struct hfi1_devdata *dd, struct hfi1_i2c_bus *bus,
-			u8 slave_addr, int offset, int offset_size,
+अटल पूर्णांक i2c_bus_पढ़ो(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_i2c_bus *bus,
+			u8 slave_addr, पूर्णांक offset, पूर्णांक offset_size,
 			u8 *data, u16 len)
-{
-	int ret;
-	int num_msgs;
+अणु
+	पूर्णांक ret;
+	पूर्णांक num_msgs;
 	u8 offset_bytes[2];
-	struct i2c_msg msgs[2];
+	काष्ठा i2c_msg msgs[2];
 
-	switch (offset_size) {
-	case 0:
+	चयन (offset_size) अणु
+	हाल 0:
 		num_msgs = 1;
 		msgs[0].addr = slave_addr;
 		msgs[0].flags = I2C_M_RD;
 		msgs[0].len = len;
 		msgs[0].buf = data;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		offset_bytes[1] = (offset >> 8) & 0xff;
 		fallthrough;
-	case 1:
+	हाल 1:
 		num_msgs = 2;
 		offset_bytes[0] = offset & 0xff;
 
@@ -293,98 +294,98 @@ static int i2c_bus_read(struct hfi1_devdata *dd, struct hfi1_i2c_bus *bus,
 		msgs[1].flags = I2C_M_RD;
 		msgs[1].len = len;
 		msgs[1].buf = data;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	bus->controlling_dd = dd;
 	ret = i2c_transfer(&bus->adapter, msgs, num_msgs);
-	if (ret != num_msgs) {
+	अगर (ret != num_msgs) अणु
 		dd_dev_err(dd, "%s: bus %d, i2c slave 0x%x, offset 0x%x, len 0x%x; read failed, ret %d\n",
 			   __func__, bus->num, slave_addr, offset, len, ret);
-		return ret < 0 ? ret : -EIO;
-	}
-	return 0;
-}
+		वापस ret < 0 ? ret : -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Raw i2c write.  No set-up or lock checking.
+ * Raw i2c ग_लिखो.  No set-up or lock checking.
  *
- * Return 0 on success, -errno on error.
+ * Return 0 on success, -त्रुटि_सं on error.
  */
-static int __i2c_write(struct hfi1_pportdata *ppd, u32 target, int i2c_addr,
-		       int offset, void *bp, int len)
-{
-	struct hfi1_devdata *dd = ppd->dd;
-	struct hfi1_i2c_bus *bus;
+अटल पूर्णांक __i2c_ग_लिखो(काष्ठा hfi1_pportdata *ppd, u32 target, पूर्णांक i2c_addr,
+		       पूर्णांक offset, व्योम *bp, पूर्णांक len)
+अणु
+	काष्ठा hfi1_devdata *dd = ppd->dd;
+	काष्ठा hfi1_i2c_bus *bus;
 	u8 slave_addr;
-	int offset_size;
+	पूर्णांक offset_size;
 
 	bus = target ? dd->asic_data->i2c_bus1 : dd->asic_data->i2c_bus0;
 	slave_addr = (i2c_addr & 0xff) >> 1; /* convert to 7-bit addr */
 	offset_size = (i2c_addr >> 8) & 0x3;
-	return i2c_bus_write(dd, bus, slave_addr, offset, offset_size, bp, len);
-}
+	वापस i2c_bus_ग_लिखो(dd, bus, slave_addr, offset, offset_size, bp, len);
+पूर्ण
 
 /*
  * Caller must hold the i2c chain resource.
  *
- * Return number of bytes written, or -errno.
+ * Return number of bytes written, or -त्रुटि_सं.
  */
-int i2c_write(struct hfi1_pportdata *ppd, u32 target, int i2c_addr, int offset,
-	      void *bp, int len)
-{
-	int ret;
+पूर्णांक i2c_ग_लिखो(काष्ठा hfi1_pportdata *ppd, u32 target, पूर्णांक i2c_addr, पूर्णांक offset,
+	      व्योम *bp, पूर्णांक len)
+अणु
+	पूर्णांक ret;
 
-	if (!check_chip_resource(ppd->dd, i2c_target(target), __func__))
-		return -EACCES;
+	अगर (!check_chip_resource(ppd->dd, i2c_target(target), __func__))
+		वापस -EACCES;
 
-	ret = __i2c_write(ppd, target, i2c_addr, offset, bp, len);
-	if (ret)
-		return ret;
+	ret = __i2c_ग_लिखो(ppd, target, i2c_addr, offset, bp, len);
+	अगर (ret)
+		वापस ret;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
- * Raw i2c read.  No set-up or lock checking.
+ * Raw i2c पढ़ो.  No set-up or lock checking.
  *
- * Return 0 on success, -errno on error.
+ * Return 0 on success, -त्रुटि_सं on error.
  */
-static int __i2c_read(struct hfi1_pportdata *ppd, u32 target, int i2c_addr,
-		      int offset, void *bp, int len)
-{
-	struct hfi1_devdata *dd = ppd->dd;
-	struct hfi1_i2c_bus *bus;
+अटल पूर्णांक __i2c_पढ़ो(काष्ठा hfi1_pportdata *ppd, u32 target, पूर्णांक i2c_addr,
+		      पूर्णांक offset, व्योम *bp, पूर्णांक len)
+अणु
+	काष्ठा hfi1_devdata *dd = ppd->dd;
+	काष्ठा hfi1_i2c_bus *bus;
 	u8 slave_addr;
-	int offset_size;
+	पूर्णांक offset_size;
 
 	bus = target ? dd->asic_data->i2c_bus1 : dd->asic_data->i2c_bus0;
 	slave_addr = (i2c_addr & 0xff) >> 1; /* convert to 7-bit addr */
 	offset_size = (i2c_addr >> 8) & 0x3;
-	return i2c_bus_read(dd, bus, slave_addr, offset, offset_size, bp, len);
-}
+	वापस i2c_bus_पढ़ो(dd, bus, slave_addr, offset, offset_size, bp, len);
+पूर्ण
 
 /*
  * Caller must hold the i2c chain resource.
  *
- * Return number of bytes read, or -errno.
+ * Return number of bytes पढ़ो, or -त्रुटि_सं.
  */
-int i2c_read(struct hfi1_pportdata *ppd, u32 target, int i2c_addr, int offset,
-	     void *bp, int len)
-{
-	int ret;
+पूर्णांक i2c_पढ़ो(काष्ठा hfi1_pportdata *ppd, u32 target, पूर्णांक i2c_addr, पूर्णांक offset,
+	     व्योम *bp, पूर्णांक len)
+अणु
+	पूर्णांक ret;
 
-	if (!check_chip_resource(ppd->dd, i2c_target(target), __func__))
-		return -EACCES;
+	अगर (!check_chip_resource(ppd->dd, i2c_target(target), __func__))
+		वापस -EACCES;
 
-	ret = __i2c_read(ppd, target, i2c_addr, offset, bp, len);
-	if (ret)
-		return ret;
+	ret = __i2c_पढ़ो(ppd, target, i2c_addr, offset, bp, len);
+	अगर (ret)
+		वापस ret;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
  * Write page n, offset m of QSFP memory as defined by SFF 8636
@@ -392,302 +393,302 @@ int i2c_read(struct hfi1_pportdata *ppd, u32 target, int i2c_addr, int offset,
  *
  * Caller must hold the i2c chain resource.
  *
- * Return number of bytes written or -errno.
+ * Return number of bytes written or -त्रुटि_सं.
  */
-int qsfp_write(struct hfi1_pportdata *ppd, u32 target, int addr, void *bp,
-	       int len)
-{
-	int count = 0;
-	int offset;
-	int nwrite;
-	int ret = 0;
+पूर्णांक qsfp_ग_लिखो(काष्ठा hfi1_pportdata *ppd, u32 target, पूर्णांक addr, व्योम *bp,
+	       पूर्णांक len)
+अणु
+	पूर्णांक count = 0;
+	पूर्णांक offset;
+	पूर्णांक nग_लिखो;
+	पूर्णांक ret = 0;
 	u8 page;
 
-	if (!check_chip_resource(ppd->dd, i2c_target(target), __func__))
-		return -EACCES;
+	अगर (!check_chip_resource(ppd->dd, i2c_target(target), __func__))
+		वापस -EACCES;
 
-	while (count < len) {
+	जबतक (count < len) अणु
 		/*
 		 * Set the qsfp page based on a zero-based address
 		 * and a page size of QSFP_PAGESIZE bytes.
 		 */
 		page = (u8)(addr / QSFP_PAGESIZE);
 
-		ret = __i2c_write(ppd, target, QSFP_DEV | QSFP_OFFSET_SIZE,
+		ret = __i2c_ग_लिखो(ppd, target, QSFP_DEV | QSFP_OFFSET_SIZE,
 				  QSFP_PAGE_SELECT_BYTE_OFFS, &page, 1);
-		/* QSFPs require a 5-10msec delay after write operations */
+		/* QSFPs require a 5-10msec delay after ग_लिखो operations */
 		mdelay(5);
-		if (ret) {
+		अगर (ret) अणु
 			hfi1_dev_porterr(ppd->dd, ppd->port,
 					 "QSFP chain %d can't write QSFP_PAGE_SELECT_BYTE: %d\n",
 					 target, ret);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		offset = addr % QSFP_PAGESIZE;
-		nwrite = len - count;
-		/* truncate write to boundary if crossing boundary */
-		if (((addr % QSFP_RW_BOUNDARY) + nwrite) > QSFP_RW_BOUNDARY)
-			nwrite = QSFP_RW_BOUNDARY - (addr % QSFP_RW_BOUNDARY);
+		nग_लिखो = len - count;
+		/* truncate ग_लिखो to boundary अगर crossing boundary */
+		अगर (((addr % QSFP_RW_BOUNDARY) + nग_लिखो) > QSFP_RW_BOUNDARY)
+			nग_लिखो = QSFP_RW_BOUNDARY - (addr % QSFP_RW_BOUNDARY);
 
-		ret = __i2c_write(ppd, target, QSFP_DEV | QSFP_OFFSET_SIZE,
-				  offset, bp + count, nwrite);
-		/* QSFPs require a 5-10msec delay after write operations */
+		ret = __i2c_ग_लिखो(ppd, target, QSFP_DEV | QSFP_OFFSET_SIZE,
+				  offset, bp + count, nग_लिखो);
+		/* QSFPs require a 5-10msec delay after ग_लिखो operations */
 		mdelay(5);
-		if (ret)	/* stop on error */
-			break;
+		अगर (ret)	/* stop on error */
+			अवरोध;
 
-		count += nwrite;
-		addr += nwrite;
-	}
+		count += nग_लिखो;
+		addr += nग_लिखो;
+	पूर्ण
 
-	if (ret < 0)
-		return ret;
-	return count;
-}
+	अगर (ret < 0)
+		वापस ret;
+	वापस count;
+पूर्ण
 
 /*
- * Perform a stand-alone single QSFP write.  Acquire the resource, do the
- * write, then release the resource.
+ * Perक्रमm a stand-alone single QSFP ग_लिखो.  Acquire the resource, करो the
+ * ग_लिखो, then release the resource.
  */
-int one_qsfp_write(struct hfi1_pportdata *ppd, u32 target, int addr, void *bp,
-		   int len)
-{
-	struct hfi1_devdata *dd = ppd->dd;
+पूर्णांक one_qsfp_ग_लिखो(काष्ठा hfi1_pportdata *ppd, u32 target, पूर्णांक addr, व्योम *bp,
+		   पूर्णांक len)
+अणु
+	काष्ठा hfi1_devdata *dd = ppd->dd;
 	u32 resource = qsfp_resource(dd);
-	int ret;
+	पूर्णांक ret;
 
 	ret = acquire_chip_resource(dd, resource, QSFP_WAIT);
-	if (ret)
-		return ret;
-	ret = qsfp_write(ppd, target, addr, bp, len);
+	अगर (ret)
+		वापस ret;
+	ret = qsfp_ग_लिखो(ppd, target, addr, bp, len);
 	release_chip_resource(dd, resource);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Access page n, offset m of QSFP memory as defined by SFF 8636
- * by reading @addr = ((256 * n) + m)
+ * by पढ़ोing @addr = ((256 * n) + m)
  *
  * Caller must hold the i2c chain resource.
  *
- * Return the number of bytes read or -errno.
+ * Return the number of bytes पढ़ो or -त्रुटि_सं.
  */
-int qsfp_read(struct hfi1_pportdata *ppd, u32 target, int addr, void *bp,
-	      int len)
-{
-	int count = 0;
-	int offset;
-	int nread;
-	int ret = 0;
+पूर्णांक qsfp_पढ़ो(काष्ठा hfi1_pportdata *ppd, u32 target, पूर्णांक addr, व्योम *bp,
+	      पूर्णांक len)
+अणु
+	पूर्णांक count = 0;
+	पूर्णांक offset;
+	पूर्णांक nपढ़ो;
+	पूर्णांक ret = 0;
 	u8 page;
 
-	if (!check_chip_resource(ppd->dd, i2c_target(target), __func__))
-		return -EACCES;
+	अगर (!check_chip_resource(ppd->dd, i2c_target(target), __func__))
+		वापस -EACCES;
 
-	while (count < len) {
+	जबतक (count < len) अणु
 		/*
 		 * Set the qsfp page based on a zero-based address
 		 * and a page size of QSFP_PAGESIZE bytes.
 		 */
 		page = (u8)(addr / QSFP_PAGESIZE);
-		ret = __i2c_write(ppd, target, QSFP_DEV | QSFP_OFFSET_SIZE,
+		ret = __i2c_ग_लिखो(ppd, target, QSFP_DEV | QSFP_OFFSET_SIZE,
 				  QSFP_PAGE_SELECT_BYTE_OFFS, &page, 1);
-		/* QSFPs require a 5-10msec delay after write operations */
+		/* QSFPs require a 5-10msec delay after ग_लिखो operations */
 		mdelay(5);
-		if (ret) {
+		अगर (ret) अणु
 			hfi1_dev_porterr(ppd->dd, ppd->port,
 					 "QSFP chain %d can't write QSFP_PAGE_SELECT_BYTE: %d\n",
 					 target, ret);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		offset = addr % QSFP_PAGESIZE;
-		nread = len - count;
-		/* truncate read to boundary if crossing boundary */
-		if (((addr % QSFP_RW_BOUNDARY) + nread) > QSFP_RW_BOUNDARY)
-			nread = QSFP_RW_BOUNDARY - (addr % QSFP_RW_BOUNDARY);
+		nपढ़ो = len - count;
+		/* truncate पढ़ो to boundary अगर crossing boundary */
+		अगर (((addr % QSFP_RW_BOUNDARY) + nपढ़ो) > QSFP_RW_BOUNDARY)
+			nपढ़ो = QSFP_RW_BOUNDARY - (addr % QSFP_RW_BOUNDARY);
 
-		ret = __i2c_read(ppd, target, QSFP_DEV | QSFP_OFFSET_SIZE,
-				 offset, bp + count, nread);
-		if (ret)	/* stop on error */
-			break;
+		ret = __i2c_पढ़ो(ppd, target, QSFP_DEV | QSFP_OFFSET_SIZE,
+				 offset, bp + count, nपढ़ो);
+		अगर (ret)	/* stop on error */
+			अवरोध;
 
-		count += nread;
-		addr += nread;
-	}
+		count += nपढ़ो;
+		addr += nपढ़ो;
+	पूर्ण
 
-	if (ret < 0)
-		return ret;
-	return count;
-}
+	अगर (ret < 0)
+		वापस ret;
+	वापस count;
+पूर्ण
 
 /*
- * Perform a stand-alone single QSFP read.  Acquire the resource, do the
- * read, then release the resource.
+ * Perक्रमm a stand-alone single QSFP पढ़ो.  Acquire the resource, करो the
+ * पढ़ो, then release the resource.
  */
-int one_qsfp_read(struct hfi1_pportdata *ppd, u32 target, int addr, void *bp,
-		  int len)
-{
-	struct hfi1_devdata *dd = ppd->dd;
+पूर्णांक one_qsfp_पढ़ो(काष्ठा hfi1_pportdata *ppd, u32 target, पूर्णांक addr, व्योम *bp,
+		  पूर्णांक len)
+अणु
+	काष्ठा hfi1_devdata *dd = ppd->dd;
 	u32 resource = qsfp_resource(dd);
-	int ret;
+	पूर्णांक ret;
 
 	ret = acquire_chip_resource(dd, resource, QSFP_WAIT);
-	if (ret)
-		return ret;
-	ret = qsfp_read(ppd, target, addr, bp, len);
+	अगर (ret)
+		वापस ret;
+	ret = qsfp_पढ़ो(ppd, target, addr, bp, len);
 	release_chip_resource(dd, resource);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This function caches the QSFP memory range in 128 byte chunks.
  * As an example, the next byte after address 255 is byte 128 from
- * upper page 01H (if existing) rather than byte 0 from lower page 00H.
+ * upper page 01H (अगर existing) rather than byte 0 from lower page 00H.
  * Access page n, offset m of QSFP memory as defined by SFF 8636
- * in the cache by reading byte ((128 * n) + m)
- * The calls to qsfp_{read,write} in this function correctly handle the
- * address map difference between this mapping and the mapping implemented
+ * in the cache by पढ़ोing byte ((128 * n) + m)
+ * The calls to qsfp_अणुपढ़ो,ग_लिखोपूर्ण in this function correctly handle the
+ * address map dअगरference between this mapping and the mapping implemented
  * by those functions
  *
  * The caller must be holding the QSFP i2c chain resource.
  */
-int refresh_qsfp_cache(struct hfi1_pportdata *ppd, struct qsfp_data *cp)
-{
+पूर्णांक refresh_qsfp_cache(काष्ठा hfi1_pportdata *ppd, काष्ठा qsfp_data *cp)
+अणु
 	u32 target = ppd->dd->hfi1_id;
-	int ret;
-	unsigned long flags;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 	u8 *cache = &cp->cache[0];
 
-	/* ensure sane contents on invalid reads, for cable swaps */
-	memset(cache, 0, (QSFP_MAX_NUM_PAGES * 128));
+	/* ensure sane contents on invalid पढ़ोs, क्रम cable swaps */
+	स_रखो(cache, 0, (QSFP_MAX_NUM_PAGES * 128));
 	spin_lock_irqsave(&ppd->qsfp_info.qsfp_lock, flags);
 	ppd->qsfp_info.cache_valid = 0;
 	spin_unlock_irqrestore(&ppd->qsfp_info.qsfp_lock, flags);
 
-	if (!qsfp_mod_present(ppd)) {
+	अगर (!qsfp_mod_present(ppd)) अणु
 		ret = -ENODEV;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	ret = qsfp_read(ppd, target, 0, cache, QSFP_PAGESIZE);
-	if (ret != QSFP_PAGESIZE) {
+	ret = qsfp_पढ़ो(ppd, target, 0, cache, QSFP_PAGESIZE);
+	अगर (ret != QSFP_PAGESIZE) अणु
 		dd_dev_info(ppd->dd,
 			    "%s: Page 0 read failed, expected %d, got %d\n",
 			    __func__, QSFP_PAGESIZE, ret);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	/* Is paging enabled? */
-	if (!(cache[2] & 4)) {
+	अगर (!(cache[2] & 4)) अणु
 		/* Paging enabled, page 03 required */
-		if ((cache[195] & 0xC0) == 0xC0) {
+		अगर ((cache[195] & 0xC0) == 0xC0) अणु
 			/* all */
-			ret = qsfp_read(ppd, target, 384, cache + 256, 128);
-			if (ret <= 0 || ret != 128) {
+			ret = qsfp_पढ़ो(ppd, target, 384, cache + 256, 128);
+			अगर (ret <= 0 || ret != 128) अणु
 				dd_dev_info(ppd->dd, "%s failed\n", __func__);
-				goto bail;
-			}
-			ret = qsfp_read(ppd, target, 640, cache + 384, 128);
-			if (ret <= 0 || ret != 128) {
+				जाओ bail;
+			पूर्ण
+			ret = qsfp_पढ़ो(ppd, target, 640, cache + 384, 128);
+			अगर (ret <= 0 || ret != 128) अणु
 				dd_dev_info(ppd->dd, "%s failed\n", __func__);
-				goto bail;
-			}
-			ret = qsfp_read(ppd, target, 896, cache + 512, 128);
-			if (ret <= 0 || ret != 128) {
+				जाओ bail;
+			पूर्ण
+			ret = qsfp_पढ़ो(ppd, target, 896, cache + 512, 128);
+			अगर (ret <= 0 || ret != 128) अणु
 				dd_dev_info(ppd->dd, "%s failed\n", __func__);
-				goto bail;
-			}
-		} else if ((cache[195] & 0x80) == 0x80) {
+				जाओ bail;
+			पूर्ण
+		पूर्ण अन्यथा अगर ((cache[195] & 0x80) == 0x80) अणु
 			/* only page 2 and 3 */
-			ret = qsfp_read(ppd, target, 640, cache + 384, 128);
-			if (ret <= 0 || ret != 128) {
+			ret = qsfp_पढ़ो(ppd, target, 640, cache + 384, 128);
+			अगर (ret <= 0 || ret != 128) अणु
 				dd_dev_info(ppd->dd, "%s failed\n", __func__);
-				goto bail;
-			}
-			ret = qsfp_read(ppd, target, 896, cache + 512, 128);
-			if (ret <= 0 || ret != 128) {
+				जाओ bail;
+			पूर्ण
+			ret = qsfp_पढ़ो(ppd, target, 896, cache + 512, 128);
+			अगर (ret <= 0 || ret != 128) अणु
 				dd_dev_info(ppd->dd, "%s failed\n", __func__);
-				goto bail;
-			}
-		} else if ((cache[195] & 0x40) == 0x40) {
+				जाओ bail;
+			पूर्ण
+		पूर्ण अन्यथा अगर ((cache[195] & 0x40) == 0x40) अणु
 			/* only page 1 and 3 */
-			ret = qsfp_read(ppd, target, 384, cache + 256, 128);
-			if (ret <= 0 || ret != 128) {
+			ret = qsfp_पढ़ो(ppd, target, 384, cache + 256, 128);
+			अगर (ret <= 0 || ret != 128) अणु
 				dd_dev_info(ppd->dd, "%s failed\n", __func__);
-				goto bail;
-			}
-			ret = qsfp_read(ppd, target, 896, cache + 512, 128);
-			if (ret <= 0 || ret != 128) {
+				जाओ bail;
+			पूर्ण
+			ret = qsfp_पढ़ो(ppd, target, 896, cache + 512, 128);
+			अगर (ret <= 0 || ret != 128) अणु
 				dd_dev_info(ppd->dd, "%s failed\n", __func__);
-				goto bail;
-			}
-		} else {
+				जाओ bail;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* only page 3 */
-			ret = qsfp_read(ppd, target, 896, cache + 512, 128);
-			if (ret <= 0 || ret != 128) {
+			ret = qsfp_पढ़ो(ppd, target, 896, cache + 512, 128);
+			अगर (ret <= 0 || ret != 128) अणु
 				dd_dev_info(ppd->dd, "%s failed\n", __func__);
-				goto bail;
-			}
-		}
-	}
+				जाओ bail;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&ppd->qsfp_info.qsfp_lock, flags);
 	ppd->qsfp_info.cache_valid = 1;
 	ppd->qsfp_info.cache_refresh_required = 0;
 	spin_unlock_irqrestore(&ppd->qsfp_info.qsfp_lock, flags);
 
-	return 0;
+	वापस 0;
 
 bail:
-	memset(cache, 0, (QSFP_MAX_NUM_PAGES * 128));
-	return ret;
-}
+	स_रखो(cache, 0, (QSFP_MAX_NUM_PAGES * 128));
+	वापस ret;
+पूर्ण
 
-const char * const hfi1_qsfp_devtech[16] = {
+स्थिर अक्षर * स्थिर hfi1_qsfp_devtech[16] = अणु
 	"850nm VCSEL", "1310nm VCSEL", "1550nm VCSEL", "1310nm FP",
 	"1310nm DFB", "1550nm DFB", "1310nm EML", "1550nm EML",
 	"Cu Misc", "1490nm DFB", "Cu NoEq", "Cu Eq",
 	"Undef", "Cu Active BothEq", "Cu FarEq", "Cu NearEq"
-};
+पूर्ण;
 
-#define QSFP_DUMP_CHUNK 16 /* Holds longest string */
-#define QSFP_DEFAULT_HDR_CNT 224
+#घोषणा QSFP_DUMP_CHUNK 16 /* Holds दीर्घest string */
+#घोषणा QSFP_DEFAULT_HDR_CNT 224
 
-#define QSFP_PWR(pbyte) (((pbyte) >> 6) & 3)
-#define QSFP_HIGH_PWR(pbyte) ((pbyte) & 3)
+#घोषणा QSFP_PWR(pbyte) (((pbyte) >> 6) & 3)
+#घोषणा QSFP_HIGH_PWR(pbyte) ((pbyte) & 3)
 /* For use with QSFP_HIGH_PWR macro */
-#define QSFP_HIGH_PWR_UNUSED	0 /* Bits [1:0] = 00 implies low power module */
+#घोषणा QSFP_HIGH_PWR_UNUSED	0 /* Bits [1:0] = 00 implies low घातer module */
 
 /*
- * Takes power class byte [Page 00 Byte 129] in SFF 8636
- * Returns power class as integer (1 through 7, per SFF 8636 rev 2.4)
+ * Takes घातer class byte [Page 00 Byte 129] in SFF 8636
+ * Returns घातer class as पूर्णांकeger (1 through 7, per SFF 8636 rev 2.4)
  */
-int get_qsfp_power_class(u8 power_byte)
-{
-	if (QSFP_HIGH_PWR(power_byte) == QSFP_HIGH_PWR_UNUSED)
-		/* power classes count from 1, their bit encodings from 0 */
-		return (QSFP_PWR(power_byte) + 1);
+पूर्णांक get_qsfp_घातer_class(u8 घातer_byte)
+अणु
+	अगर (QSFP_HIGH_PWR(घातer_byte) == QSFP_HIGH_PWR_UNUSED)
+		/* घातer classes count from 1, their bit encodings from 0 */
+		वापस (QSFP_PWR(घातer_byte) + 1);
 	/*
-	 * 00 in the high power classes stands for unused, bringing
+	 * 00 in the high घातer classes stands क्रम unused, bringing
 	 * balance to the off-by-1 offset above, we add 4 here to
-	 * account for the difference between the low and high power
+	 * account क्रम the dअगरference between the low and high घातer
 	 * groups
 	 */
-	return (QSFP_HIGH_PWR(power_byte) + 4);
-}
+	वापस (QSFP_HIGH_PWR(घातer_byte) + 4);
+पूर्ण
 
-int qsfp_mod_present(struct hfi1_pportdata *ppd)
-{
-	struct hfi1_devdata *dd = ppd->dd;
+पूर्णांक qsfp_mod_present(काष्ठा hfi1_pportdata *ppd)
+अणु
+	काष्ठा hfi1_devdata *dd = ppd->dd;
 	u64 reg;
 
-	reg = read_csr(dd, dd->hfi1_id ? ASIC_QSFP2_IN : ASIC_QSFP1_IN);
-	return !(reg & QSFP_HFI0_MODPRST_N);
-}
+	reg = पढ़ो_csr(dd, dd->hfi1_id ? ASIC_QSFP2_IN : ASIC_QSFP1_IN);
+	वापस !(reg & QSFP_HFI0_MODPRST_N);
+पूर्ण
 
 /*
  * This function maps QSFP memory addresses in 128 byte chunks in the following
@@ -699,85 +700,85 @@ int qsfp_mod_present(struct hfi1_pportdata *ppd)
  * For addr 384-511, upper page 02h
  * For addr 512-639, upper page 03h
  *
- * For addresses beyond this range, it returns the invalid range of data buffer
+ * For addresses beyond this range, it वापसs the invalid range of data buffer
  * set to 0.
- * For upper pages that are optional, if they are not valid, returns the
+ * For upper pages that are optional, अगर they are not valid, वापसs the
  * particular range of bytes in the data buffer set to 0.
  */
-int get_cable_info(struct hfi1_devdata *dd, u32 port_num, u32 addr, u32 len,
+पूर्णांक get_cable_info(काष्ठा hfi1_devdata *dd, u32 port_num, u32 addr, u32 len,
 		   u8 *data)
-{
-	struct hfi1_pportdata *ppd;
+अणु
+	काष्ठा hfi1_pportdata *ppd;
 	u32 excess_len = len;
-	int ret = 0, offset = 0;
+	पूर्णांक ret = 0, offset = 0;
 
-	if (port_num > dd->num_pports || port_num < 1) {
+	अगर (port_num > dd->num_pports || port_num < 1) अणु
 		dd_dev_info(dd, "%s: Invalid port number %d\n",
 			    __func__, port_num);
 		ret = -EINVAL;
-		goto set_zeroes;
-	}
+		जाओ set_zeroes;
+	पूर्ण
 
 	ppd = dd->pport + (port_num - 1);
-	if (!qsfp_mod_present(ppd)) {
+	अगर (!qsfp_mod_present(ppd)) अणु
 		ret = -ENODEV;
-		goto set_zeroes;
-	}
+		जाओ set_zeroes;
+	पूर्ण
 
-	if (!ppd->qsfp_info.cache_valid) {
+	अगर (!ppd->qsfp_info.cache_valid) अणु
 		ret = -EINVAL;
-		goto set_zeroes;
-	}
+		जाओ set_zeroes;
+	पूर्ण
 
-	if (addr >= (QSFP_MAX_NUM_PAGES * 128)) {
-		ret = -ERANGE;
-		goto set_zeroes;
-	}
+	अगर (addr >= (QSFP_MAX_NUM_PAGES * 128)) अणु
+		ret = -दुस्फल;
+		जाओ set_zeroes;
+	पूर्ण
 
-	if ((addr + len) > (QSFP_MAX_NUM_PAGES * 128)) {
+	अगर ((addr + len) > (QSFP_MAX_NUM_PAGES * 128)) अणु
 		excess_len = (addr + len) - (QSFP_MAX_NUM_PAGES * 128);
-		memcpy(data, &ppd->qsfp_info.cache[addr], (len - excess_len));
+		स_नकल(data, &ppd->qsfp_info.cache[addr], (len - excess_len));
 		data += (len - excess_len);
-		goto set_zeroes;
-	}
+		जाओ set_zeroes;
+	पूर्ण
 
-	memcpy(data, &ppd->qsfp_info.cache[addr], len);
+	स_नकल(data, &ppd->qsfp_info.cache[addr], len);
 
-	if (addr <= QSFP_MONITOR_VAL_END &&
-	    (addr + len) >= QSFP_MONITOR_VAL_START) {
+	अगर (addr <= QSFP_MONITOR_VAL_END &&
+	    (addr + len) >= QSFP_MONITOR_VAL_START) अणु
 		/* Overlap with the dynamic channel monitor range */
-		if (addr < QSFP_MONITOR_VAL_START) {
-			if (addr + len <= QSFP_MONITOR_VAL_END)
+		अगर (addr < QSFP_MONITOR_VAL_START) अणु
+			अगर (addr + len <= QSFP_MONITOR_VAL_END)
 				len = addr + len - QSFP_MONITOR_VAL_START;
-			else
+			अन्यथा
 				len = QSFP_MONITOR_RANGE;
 			offset = QSFP_MONITOR_VAL_START - addr;
 			addr = QSFP_MONITOR_VAL_START;
-		} else if (addr == QSFP_MONITOR_VAL_START) {
+		पूर्ण अन्यथा अगर (addr == QSFP_MONITOR_VAL_START) अणु
 			offset = 0;
-			if (addr + len > QSFP_MONITOR_VAL_END)
+			अगर (addr + len > QSFP_MONITOR_VAL_END)
 				len = QSFP_MONITOR_RANGE;
-		} else {
+		पूर्ण अन्यथा अणु
 			offset = 0;
-			if (addr + len > QSFP_MONITOR_VAL_END)
+			अगर (addr + len > QSFP_MONITOR_VAL_END)
 				len = QSFP_MONITOR_VAL_END - addr + 1;
-		}
+		पूर्ण
 		/* Refresh the values of the dynamic monitors from the cable */
-		ret = one_qsfp_read(ppd, dd->hfi1_id, addr, data + offset, len);
-		if (ret != len) {
+		ret = one_qsfp_पढ़ो(ppd, dd->hfi1_id, addr, data + offset, len);
+		अगर (ret != len) अणु
 			ret = -EAGAIN;
-			goto set_zeroes;
-		}
-	}
+			जाओ set_zeroes;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 set_zeroes:
-	memset(data, 0, excess_len);
-	return ret;
-}
+	स_रखो(data, 0, excess_len);
+	वापस ret;
+पूर्ण
 
-static const char *pwr_codes[8] = {"N/AW",
+अटल स्थिर अक्षर *pwr_codes[8] = अणु"N/AW",
 				  "1.5W",
 				  "2.0W",
 				  "2.5W",
@@ -785,74 +786,74 @@ static const char *pwr_codes[8] = {"N/AW",
 				  "4.0W",
 				  "4.5W",
 				  "5.0W"
-				 };
+				 पूर्ण;
 
-int qsfp_dump(struct hfi1_pportdata *ppd, char *buf, int len)
-{
+पूर्णांक qsfp_dump(काष्ठा hfi1_pportdata *ppd, अक्षर *buf, पूर्णांक len)
+अणु
 	u8 *cache = &ppd->qsfp_info.cache[0];
 	u8 bin_buff[QSFP_DUMP_CHUNK];
-	char lenstr[6];
-	int sofar;
-	int bidx = 0;
+	अक्षर lenstr[6];
+	पूर्णांक sofar;
+	पूर्णांक bidx = 0;
 	u8 *atten = &cache[QSFP_ATTEN_OFFS];
-	u8 *vendor_oui = &cache[QSFP_VOUI_OFFS];
-	u8 power_byte = 0;
+	u8 *venकरोr_oui = &cache[QSFP_VOUI_OFFS];
+	u8 घातer_byte = 0;
 
 	sofar = 0;
 	lenstr[0] = ' ';
 	lenstr[1] = '\0';
 
-	if (ppd->qsfp_info.cache_valid) {
-		if (QSFP_IS_CU(cache[QSFP_MOD_TECH_OFFS]))
-			snprintf(lenstr, sizeof(lenstr), "%dM ",
+	अगर (ppd->qsfp_info.cache_valid) अणु
+		अगर (QSFP_IS_CU(cache[QSFP_MOD_TECH_OFFS]))
+			snम_लिखो(lenstr, माप(lenstr), "%dM ",
 				 cache[QSFP_MOD_LEN_OFFS]);
 
-		power_byte = cache[QSFP_MOD_PWR_OFFS];
-		sofar += scnprintf(buf + sofar, len - sofar, "PWR:%.3sW\n",
-				pwr_codes[get_qsfp_power_class(power_byte)]);
+		घातer_byte = cache[QSFP_MOD_PWR_OFFS];
+		sofar += scnम_लिखो(buf + sofar, len - sofar, "PWR:%.3sW\n",
+				pwr_codes[get_qsfp_घातer_class(घातer_byte)]);
 
-		sofar += scnprintf(buf + sofar, len - sofar, "TECH:%s%s\n",
+		sofar += scnम_लिखो(buf + sofar, len - sofar, "TECH:%s%s\n",
 				lenstr,
 			hfi1_qsfp_devtech[(cache[QSFP_MOD_TECH_OFFS]) >> 4]);
 
-		sofar += scnprintf(buf + sofar, len - sofar, "Vendor:%.*s\n",
+		sofar += scnम_लिखो(buf + sofar, len - sofar, "Vendor:%.*s\n",
 				   QSFP_VEND_LEN, &cache[QSFP_VEND_OFFS]);
 
-		sofar += scnprintf(buf + sofar, len - sofar, "OUI:%06X\n",
-				   QSFP_OUI(vendor_oui));
+		sofar += scnम_लिखो(buf + sofar, len - sofar, "OUI:%06X\n",
+				   QSFP_OUI(venकरोr_oui));
 
-		sofar += scnprintf(buf + sofar, len - sofar, "Part#:%.*s\n",
+		sofar += scnम_लिखो(buf + sofar, len - sofar, "Part#:%.*s\n",
 				   QSFP_PN_LEN, &cache[QSFP_PN_OFFS]);
 
-		sofar += scnprintf(buf + sofar, len - sofar, "Rev:%.*s\n",
+		sofar += scnम_लिखो(buf + sofar, len - sofar, "Rev:%.*s\n",
 				   QSFP_REV_LEN, &cache[QSFP_REV_OFFS]);
 
-		if (QSFP_IS_CU(cache[QSFP_MOD_TECH_OFFS]))
-			sofar += scnprintf(buf + sofar, len - sofar,
+		अगर (QSFP_IS_CU(cache[QSFP_MOD_TECH_OFFS]))
+			sofar += scnम_लिखो(buf + sofar, len - sofar,
 				"Atten:%d, %d\n",
 				QSFP_ATTEN_SDR(atten),
 				QSFP_ATTEN_DDR(atten));
 
-		sofar += scnprintf(buf + sofar, len - sofar, "Serial:%.*s\n",
+		sofar += scnम_लिखो(buf + sofar, len - sofar, "Serial:%.*s\n",
 				   QSFP_SN_LEN, &cache[QSFP_SN_OFFS]);
 
-		sofar += scnprintf(buf + sofar, len - sofar, "Date:%.*s\n",
+		sofar += scnम_लिखो(buf + sofar, len - sofar, "Date:%.*s\n",
 				   QSFP_DATE_LEN, &cache[QSFP_DATE_OFFS]);
 
-		sofar += scnprintf(buf + sofar, len - sofar, "Lot:%.*s\n",
+		sofar += scnम_लिखो(buf + sofar, len - sofar, "Lot:%.*s\n",
 				   QSFP_LOT_LEN, &cache[QSFP_LOT_OFFS]);
 
-		while (bidx < QSFP_DEFAULT_HDR_CNT) {
-			int iidx;
+		जबतक (bidx < QSFP_DEFAULT_HDR_CNT) अणु
+			पूर्णांक iidx;
 
-			memcpy(bin_buff, &cache[bidx], QSFP_DUMP_CHUNK);
-			for (iidx = 0; iidx < QSFP_DUMP_CHUNK; ++iidx) {
-				sofar += scnprintf(buf + sofar, len - sofar,
+			स_नकल(bin_buff, &cache[bidx], QSFP_DUMP_CHUNK);
+			क्रम (iidx = 0; iidx < QSFP_DUMP_CHUNK; ++iidx) अणु
+				sofar += scnम_लिखो(buf + sofar, len - sofar,
 					" %02X", bin_buff[iidx]);
-			}
-			sofar += scnprintf(buf + sofar, len - sofar, "\n");
+			पूर्ण
+			sofar += scnम_लिखो(buf + sofar, len - sofar, "\n");
 			bidx += QSFP_DUMP_CHUNK;
-		}
-	}
-	return sofar;
-}
+		पूर्ण
+	पूर्ण
+	वापस sofar;
+पूर्ण

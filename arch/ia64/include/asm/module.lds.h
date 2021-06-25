@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-SECTIONS {
-	/* Group unwind sections into a single section: */
-	.IA_64.unwind_info : { *(.IA_64.unwind_info*) }
-	.IA_64.unwind : { *(.IA_64.unwind*) }
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+SECTIONS अणु
+	/* Group unwind sections पूर्णांकo a single section: */
+	.IA_64.unwind_info : अणु *(.IA_64.unwind_info*) पूर्ण
+	.IA_64.unwind : अणु *(.IA_64.unwind*) पूर्ण
 	/*
 	 * Create place-holder sections to hold the PLTs, GOT, and
 	 * official procedure-descriptors (.opd).
 	 */
-	.core.plt : { BYTE(0) }
-	.init.plt : { BYTE(0) }
-	.got : { BYTE(0) }
-	.opd : { BYTE(0) }
-}
+	.core.plt : अणु BYTE(0) पूर्ण
+	.init.plt : अणु BYTE(0) पूर्ण
+	.got : अणु BYTE(0) पूर्ण
+	.opd : अणु BYTE(0) पूर्ण
+पूर्ण

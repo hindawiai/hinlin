@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * ZyDAS ZD1301 driver (demodulator)
  *
  * Copyright (C) 2015 Antti Palosaari <crope@iki.fi>
  */
 
-#ifndef ZD1301_DEMOD_H
-#define ZD1301_DEMOD_H
+#अगर_अघोषित ZD1301_DEMOD_H
+#घोषणा ZD1301_DEMOD_H
 
-#include <linux/platform_device.h>
-#include <linux/dvb/frontend.h>
-#include <media/dvb_frontend.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <media/dvb_frontend.h>
 
 /**
- * struct zd1301_demod_platform_data - Platform data for the zd1301_demod driver
- * @reg_priv: First argument of reg_read and reg_write callbacks.
- * @reg_read: Register read callback.
- * @reg_write: Register write callback.
+ * काष्ठा zd1301_demod_platक्रमm_data - Platक्रमm data क्रम the zd1301_demod driver
+ * @reg_priv: First argument of reg_पढ़ो and reg_ग_लिखो callbacks.
+ * @reg_पढ़ो: Register पढ़ो callback.
+ * @reg_ग_लिखो: Register ग_लिखो callback.
  */
-struct zd1301_demod_platform_data {
-	void *reg_priv;
-	int (*reg_read)(void *, u16, u8 *);
-	int (*reg_write)(void *, u16, u8);
-};
+काष्ठा zd1301_demod_platक्रमm_data अणु
+	व्योम *reg_priv;
+	पूर्णांक (*reg_पढ़ो)(व्योम *, u16, u8 *);
+	पूर्णांक (*reg_ग_लिखो)(व्योम *, u16, u8);
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_ZD1301_DEMOD)
+#अगर IS_REACHABLE(CONFIG_DVB_ZD1301_DEMOD)
 /**
- * zd1301_demod_get_dvb_frontend() - Get pointer to DVB frontend
- * @pdev: Pointer to platform device
+ * zd1301_demod_get_dvb_frontend() - Get poपूर्णांकer to DVB frontend
+ * @pdev: Poपूर्णांकer to platक्रमm device
  *
- * Return: Pointer to DVB frontend which given platform device owns.
+ * Return: Poपूर्णांकer to DVB frontend which given platक्रमm device owns.
  */
-struct dvb_frontend *zd1301_demod_get_dvb_frontend(struct platform_device *pdev);
+काष्ठा dvb_frontend *zd1301_demod_get_dvb_frontend(काष्ठा platक्रमm_device *pdev);
 
 /**
- * zd1301_demod_get_i2c_adapter() - Get pointer to I2C adapter
- * @pdev: Pointer to platform device
+ * zd1301_demod_get_i2c_adapter() - Get poपूर्णांकer to I2C adapter
+ * @pdev: Poपूर्णांकer to platक्रमm device
  *
- * Return: Pointer to I2C adapter which given platform device owns.
+ * Return: Poपूर्णांकer to I2C adapter which given platक्रमm device owns.
  */
-struct i2c_adapter *zd1301_demod_get_i2c_adapter(struct platform_device *pdev);
+काष्ठा i2c_adapter *zd1301_demod_get_i2c_adapter(काष्ठा platक्रमm_device *pdev);
 
-#else
+#अन्यथा
 
-static inline struct dvb_frontend *zd1301_demod_get_dvb_frontend(struct platform_device *dev)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+अटल अंतरभूत काष्ठा dvb_frontend *zd1301_demod_get_dvb_frontend(काष्ठा platक्रमm_device *dev)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
 
-	return NULL;
-}
-static inline struct i2c_adapter *zd1301_demod_get_i2c_adapter(struct platform_device *dev)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत काष्ठा i2c_adapter *zd1301_demod_get_i2c_adapter(काष्ठा platक्रमm_device *dev)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* ZD1301_DEMOD_H */
+#पूर्ण_अगर /* ZD1301_DEMOD_H */

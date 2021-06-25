@@ -1,239 +1,240 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_SCHED_TOPOLOGY_H
-#define _LINUX_SCHED_TOPOLOGY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_SCHED_TOPOLOGY_H
+#घोषणा _LINUX_SCHED_TOPOLOGY_H
 
-#include <linux/topology.h>
+#समावेश <linux/topology.h>
 
-#include <linux/sched/idle.h>
+#समावेश <linux/sched/idle.h>
 
 /*
- * sched-domains (multiprocessor balancing) declarations:
+ * sched-करोमुख्यs (multiprocessor balancing) declarations:
  */
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
 /* Generate SD flag indexes */
-#define SD_FLAG(name, mflags) __##name,
-enum {
-	#include <linux/sched/sd_flags.h>
+#घोषणा SD_FLAG(name, mflags) __##name,
+क्रमागत अणु
+	#समावेश <linux/sched/sd_flags.h>
 	__SD_FLAG_CNT,
-};
-#undef SD_FLAG
+पूर्ण;
+#अघोषित SD_FLAG
 /* Generate SD flag bits */
-#define SD_FLAG(name, mflags) name = 1 << __##name,
-enum {
-	#include <linux/sched/sd_flags.h>
-};
-#undef SD_FLAG
+#घोषणा SD_FLAG(name, mflags) name = 1 << __##name,
+क्रमागत अणु
+	#समावेश <linux/sched/sd_flags.h>
+पूर्ण;
+#अघोषित SD_FLAG
 
-#ifdef CONFIG_SCHED_DEBUG
+#अगर_घोषित CONFIG_SCHED_DEBUG
 
-struct sd_flag_debug {
-	unsigned int meta_flags;
-	char *name;
-};
-extern const struct sd_flag_debug sd_flag_debug[];
+काष्ठा sd_flag_debug अणु
+	अचिन्हित पूर्णांक meta_flags;
+	अक्षर *name;
+पूर्ण;
+बाह्य स्थिर काष्ठा sd_flag_debug sd_flag_debug[];
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_SCHED_SMT
-static inline int cpu_smt_flags(void)
-{
-	return SD_SHARE_CPUCAPACITY | SD_SHARE_PKG_RESOURCES;
-}
-#endif
+#अगर_घोषित CONFIG_SCHED_SMT
+अटल अंतरभूत पूर्णांक cpu_smt_flags(व्योम)
+अणु
+	वापस SD_SHARE_CPUCAPACITY | SD_SHARE_PKG_RESOURCES;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_SCHED_MC
-static inline int cpu_core_flags(void)
-{
-	return SD_SHARE_PKG_RESOURCES;
-}
-#endif
+#अगर_घोषित CONFIG_SCHED_MC
+अटल अंतरभूत पूर्णांक cpu_core_flags(व्योम)
+अणु
+	वापस SD_SHARE_PKG_RESOURCES;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_NUMA
-static inline int cpu_numa_flags(void)
-{
-	return SD_NUMA;
-}
-#endif
+#अगर_घोषित CONFIG_NUMA
+अटल अंतरभूत पूर्णांक cpu_numa_flags(व्योम)
+अणु
+	वापस SD_NUMA;
+पूर्ण
+#पूर्ण_अगर
 
-extern int arch_asym_cpu_priority(int cpu);
+बाह्य पूर्णांक arch_asym_cpu_priority(पूर्णांक cpu);
 
-struct sched_domain_attr {
-	int relax_domain_level;
-};
+काष्ठा sched_करोमुख्य_attr अणु
+	पूर्णांक relax_करोमुख्य_level;
+पूर्ण;
 
-#define SD_ATTR_INIT	(struct sched_domain_attr) {	\
-	.relax_domain_level = -1,			\
-}
+#घोषणा SD_ATTR_INIT	(काष्ठा sched_करोमुख्य_attr) अणु	\
+	.relax_करोमुख्य_level = -1,			\
+पूर्ण
 
-extern int sched_domain_level_max;
+बाह्य पूर्णांक sched_करोमुख्य_level_max;
 
-struct sched_group;
+काष्ठा sched_group;
 
-struct sched_domain_shared {
+काष्ठा sched_करोमुख्य_shared अणु
 	atomic_t	ref;
 	atomic_t	nr_busy_cpus;
-	int		has_idle_cores;
-};
+	पूर्णांक		has_idle_cores;
+पूर्ण;
 
-struct sched_domain {
+काष्ठा sched_करोमुख्य अणु
 	/* These fields must be setup */
-	struct sched_domain __rcu *parent;	/* top domain must be null terminated */
-	struct sched_domain __rcu *child;	/* bottom domain must be null terminated */
-	struct sched_group *groups;	/* the balancing groups of the domain */
-	unsigned long min_interval;	/* Minimum balance interval ms */
-	unsigned long max_interval;	/* Maximum balance interval ms */
-	unsigned int busy_factor;	/* less balancing by factor if busy */
-	unsigned int imbalance_pct;	/* No balance until over watermark */
-	unsigned int cache_nice_tries;	/* Leave cache hot tasks for # tries */
+	काष्ठा sched_करोमुख्य __rcu *parent;	/* top करोमुख्य must be null terminated */
+	काष्ठा sched_करोमुख्य __rcu *child;	/* bottom करोमुख्य must be null terminated */
+	काष्ठा sched_group *groups;	/* the balancing groups of the करोमुख्य */
+	अचिन्हित दीर्घ min_पूर्णांकerval;	/* Minimum balance पूर्णांकerval ms */
+	अचिन्हित दीर्घ max_पूर्णांकerval;	/* Maximum balance पूर्णांकerval ms */
+	अचिन्हित पूर्णांक busy_factor;	/* less balancing by factor अगर busy */
+	अचिन्हित पूर्णांक imbalance_pct;	/* No balance until over watermark */
+	अचिन्हित पूर्णांक cache_nice_tries;	/* Leave cache hot tasks क्रम # tries */
 
-	int nohz_idle;			/* NOHZ IDLE status */
-	int flags;			/* See SD_* */
-	int level;
+	पूर्णांक nohz_idle;			/* NOHZ IDLE status */
+	पूर्णांक flags;			/* See SD_* */
+	पूर्णांक level;
 
-	/* Runtime fields. */
-	unsigned long last_balance;	/* init to jiffies. units in jiffies */
-	unsigned int balance_interval;	/* initialise to 1. units in ms. */
-	unsigned int nr_balance_failed; /* initialise to 0 */
+	/* Runसमय fields. */
+	अचिन्हित दीर्घ last_balance;	/* init to jअगरfies. units in jअगरfies */
+	अचिन्हित पूर्णांक balance_पूर्णांकerval;	/* initialise to 1. units in ms. */
+	अचिन्हित पूर्णांक nr_balance_failed; /* initialise to 0 */
 
 	/* idle_balance() stats */
 	u64 max_newidle_lb_cost;
-	unsigned long next_decay_max_lb_cost;
+	अचिन्हित दीर्घ next_decay_max_lb_cost;
 
 	u64 avg_scan_cost;		/* select_idle_sibling */
 
-#ifdef CONFIG_SCHEDSTATS
+#अगर_घोषित CONFIG_SCHEDSTATS
 	/* load_balance() stats */
-	unsigned int lb_count[CPU_MAX_IDLE_TYPES];
-	unsigned int lb_failed[CPU_MAX_IDLE_TYPES];
-	unsigned int lb_balanced[CPU_MAX_IDLE_TYPES];
-	unsigned int lb_imbalance[CPU_MAX_IDLE_TYPES];
-	unsigned int lb_gained[CPU_MAX_IDLE_TYPES];
-	unsigned int lb_hot_gained[CPU_MAX_IDLE_TYPES];
-	unsigned int lb_nobusyg[CPU_MAX_IDLE_TYPES];
-	unsigned int lb_nobusyq[CPU_MAX_IDLE_TYPES];
+	अचिन्हित पूर्णांक lb_count[CPU_MAX_IDLE_TYPES];
+	अचिन्हित पूर्णांक lb_failed[CPU_MAX_IDLE_TYPES];
+	अचिन्हित पूर्णांक lb_balanced[CPU_MAX_IDLE_TYPES];
+	अचिन्हित पूर्णांक lb_imbalance[CPU_MAX_IDLE_TYPES];
+	अचिन्हित पूर्णांक lb_gained[CPU_MAX_IDLE_TYPES];
+	अचिन्हित पूर्णांक lb_hot_gained[CPU_MAX_IDLE_TYPES];
+	अचिन्हित पूर्णांक lb_nobusyg[CPU_MAX_IDLE_TYPES];
+	अचिन्हित पूर्णांक lb_nobusyq[CPU_MAX_IDLE_TYPES];
 
 	/* Active load balancing */
-	unsigned int alb_count;
-	unsigned int alb_failed;
-	unsigned int alb_pushed;
+	अचिन्हित पूर्णांक alb_count;
+	अचिन्हित पूर्णांक alb_failed;
+	अचिन्हित पूर्णांक alb_pushed;
 
 	/* SD_BALANCE_EXEC stats */
-	unsigned int sbe_count;
-	unsigned int sbe_balanced;
-	unsigned int sbe_pushed;
+	अचिन्हित पूर्णांक sbe_count;
+	अचिन्हित पूर्णांक sbe_balanced;
+	अचिन्हित पूर्णांक sbe_pushed;
 
 	/* SD_BALANCE_FORK stats */
-	unsigned int sbf_count;
-	unsigned int sbf_balanced;
-	unsigned int sbf_pushed;
+	अचिन्हित पूर्णांक sbf_count;
+	अचिन्हित पूर्णांक sbf_balanced;
+	अचिन्हित पूर्णांक sbf_pushed;
 
 	/* try_to_wake_up() stats */
-	unsigned int ttwu_wake_remote;
-	unsigned int ttwu_move_affine;
-	unsigned int ttwu_move_balance;
-#endif
-#ifdef CONFIG_SCHED_DEBUG
-	char *name;
-#endif
-	union {
-		void *private;		/* used during construction */
-		struct rcu_head rcu;	/* used during destruction */
-	};
-	struct sched_domain_shared *shared;
+	अचिन्हित पूर्णांक ttwu_wake_remote;
+	अचिन्हित पूर्णांक ttwu_move_affine;
+	अचिन्हित पूर्णांक ttwu_move_balance;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SCHED_DEBUG
+	अक्षर *name;
+#पूर्ण_अगर
+	जोड़ अणु
+		व्योम *निजी;		/* used during स्थिरruction */
+		काष्ठा rcu_head rcu;	/* used during deकाष्ठाion */
+	पूर्ण;
+	काष्ठा sched_करोमुख्य_shared *shared;
 
-	unsigned int span_weight;
+	अचिन्हित पूर्णांक span_weight;
 	/*
-	 * Span of all CPUs in this domain.
+	 * Span of all CPUs in this करोमुख्य.
 	 *
 	 * NOTE: this field is variable length. (Allocated dynamically
-	 * by attaching extra space to the end of the structure,
+	 * by attaching extra space to the end of the काष्ठाure,
 	 * depending on how many CPUs the kernel has booted up with)
 	 */
-	unsigned long span[];
-};
+	अचिन्हित दीर्घ span[];
+पूर्ण;
 
-static inline struct cpumask *sched_domain_span(struct sched_domain *sd)
-{
-	return to_cpumask(sd->span);
-}
+अटल अंतरभूत काष्ठा cpumask *sched_करोमुख्य_span(काष्ठा sched_करोमुख्य *sd)
+अणु
+	वापस to_cpumask(sd->span);
+पूर्ण
 
-extern void partition_sched_domains_locked(int ndoms_new,
-					   cpumask_var_t doms_new[],
-					   struct sched_domain_attr *dattr_new);
+बाह्य व्योम partition_sched_करोमुख्यs_locked(पूर्णांक nकरोms_new,
+					   cpumask_var_t करोms_new[],
+					   काष्ठा sched_करोमुख्य_attr *dattr_new);
 
-extern void partition_sched_domains(int ndoms_new, cpumask_var_t doms_new[],
-				    struct sched_domain_attr *dattr_new);
+बाह्य व्योम partition_sched_करोमुख्यs(पूर्णांक nकरोms_new, cpumask_var_t करोms_new[],
+				    काष्ठा sched_करोमुख्य_attr *dattr_new);
 
-/* Allocate an array of sched domains, for partition_sched_domains(). */
-cpumask_var_t *alloc_sched_domains(unsigned int ndoms);
-void free_sched_domains(cpumask_var_t doms[], unsigned int ndoms);
+/* Allocate an array of sched करोमुख्यs, क्रम partition_sched_करोमुख्यs(). */
+cpumask_var_t *alloc_sched_करोमुख्यs(अचिन्हित पूर्णांक nकरोms);
+व्योम मुक्त_sched_करोमुख्यs(cpumask_var_t करोms[], अचिन्हित पूर्णांक nकरोms);
 
-bool cpus_share_cache(int this_cpu, int that_cpu);
+bool cpus_share_cache(पूर्णांक this_cpu, पूर्णांक that_cpu);
 
-typedef const struct cpumask *(*sched_domain_mask_f)(int cpu);
-typedef int (*sched_domain_flags_f)(void);
+प्रकार स्थिर काष्ठा cpumask *(*sched_करोमुख्य_mask_f)(पूर्णांक cpu);
+प्रकार पूर्णांक (*sched_करोमुख्य_flags_f)(व्योम);
 
-#define SDTL_OVERLAP	0x01
+#घोषणा SDTL_OVERLAP	0x01
 
-struct sd_data {
-	struct sched_domain *__percpu *sd;
-	struct sched_domain_shared *__percpu *sds;
-	struct sched_group *__percpu *sg;
-	struct sched_group_capacity *__percpu *sgc;
-};
+काष्ठा sd_data अणु
+	काष्ठा sched_करोमुख्य *__percpu *sd;
+	काष्ठा sched_करोमुख्य_shared *__percpu *sds;
+	काष्ठा sched_group *__percpu *sg;
+	काष्ठा sched_group_capacity *__percpu *sgc;
+पूर्ण;
 
-struct sched_domain_topology_level {
-	sched_domain_mask_f mask;
-	sched_domain_flags_f sd_flags;
-	int		    flags;
-	int		    numa_level;
-	struct sd_data      data;
-#ifdef CONFIG_SCHED_DEBUG
-	char                *name;
-#endif
-};
+काष्ठा sched_करोमुख्य_topology_level अणु
+	sched_करोमुख्य_mask_f mask;
+	sched_करोमुख्य_flags_f sd_flags;
+	पूर्णांक		    flags;
+	पूर्णांक		    numa_level;
+	काष्ठा sd_data      data;
+#अगर_घोषित CONFIG_SCHED_DEBUG
+	अक्षर                *name;
+#पूर्ण_अगर
+पूर्ण;
 
-extern void set_sched_topology(struct sched_domain_topology_level *tl);
+बाह्य व्योम set_sched_topology(काष्ठा sched_करोमुख्य_topology_level *tl);
 
-#ifdef CONFIG_SCHED_DEBUG
+#अगर_घोषित CONFIG_SCHED_DEBUG
 # define SD_INIT_NAME(type)		.name = #type
-#else
+#अन्यथा
 # define SD_INIT_NAME(type)
-#endif
+#पूर्ण_अगर
 
-#else /* CONFIG_SMP */
+#अन्यथा /* CONFIG_SMP */
 
-struct sched_domain_attr;
+काष्ठा sched_करोमुख्य_attr;
 
-static inline void
-partition_sched_domains_locked(int ndoms_new, cpumask_var_t doms_new[],
-			       struct sched_domain_attr *dattr_new)
-{
-}
+अटल अंतरभूत व्योम
+partition_sched_करोमुख्यs_locked(पूर्णांक nकरोms_new, cpumask_var_t करोms_new[],
+			       काष्ठा sched_करोमुख्य_attr *dattr_new)
+अणु
+पूर्ण
 
-static inline void
-partition_sched_domains(int ndoms_new, cpumask_var_t doms_new[],
-			struct sched_domain_attr *dattr_new)
-{
-}
+अटल अंतरभूत व्योम
+partition_sched_करोमुख्यs(पूर्णांक nकरोms_new, cpumask_var_t करोms_new[],
+			काष्ठा sched_करोमुख्य_attr *dattr_new)
+अणु
+पूर्ण
 
-static inline bool cpus_share_cache(int this_cpu, int that_cpu)
-{
-	return true;
-}
+अटल अंतरभूत bool cpus_share_cache(पूर्णांक this_cpu, पूर्णांक that_cpu)
+अणु
+	वापस true;
+पूर्ण
 
-#endif	/* !CONFIG_SMP */
+#पूर्ण_अगर	/* !CONFIG_SMP */
 
-#if defined(CONFIG_ENERGY_MODEL) && defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
-extern void rebuild_sched_domains_energy(void);
-#else
-static inline void rebuild_sched_domains_energy(void)
-{
-}
-#endif
+#अगर defined(CONFIG_ENERGY_MODEL) && defined(CONFIG_CPU_FREQ_GOV_SCHEDUTIL)
+बाह्य व्योम rebuild_sched_करोमुख्यs_energy(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम rebuild_sched_करोमुख्यs_energy(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef arch_scale_cpu_capacity
+#अगर_अघोषित arch_scale_cpu_capacity
 /**
  * arch_scale_cpu_capacity - get the capacity scale factor of a given CPU.
  * @cpu: the CPU in question.
@@ -244,31 +245,31 @@ static inline void rebuild_sched_domains_energy(void)
  *      ----------------------------- * SCHED_CAPACITY_SCALE
  *      max(max_perf(c) : c \in CPUs)
  */
-static __always_inline
-unsigned long arch_scale_cpu_capacity(int cpu)
-{
-	return SCHED_CAPACITY_SCALE;
-}
-#endif
+अटल __always_अंतरभूत
+अचिन्हित दीर्घ arch_scale_cpu_capacity(पूर्णांक cpu)
+अणु
+	वापस SCHED_CAPACITY_SCALE;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef arch_scale_thermal_pressure
-static __always_inline
-unsigned long arch_scale_thermal_pressure(int cpu)
-{
-	return 0;
-}
-#endif
+#अगर_अघोषित arch_scale_thermal_pressure
+अटल __always_अंतरभूत
+अचिन्हित दीर्घ arch_scale_thermal_pressure(पूर्णांक cpu)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef arch_set_thermal_pressure
-static __always_inline
-void arch_set_thermal_pressure(const struct cpumask *cpus,
-			       unsigned long th_pressure)
-{ }
-#endif
+#अगर_अघोषित arch_set_thermal_pressure
+अटल __always_अंतरभूत
+व्योम arch_set_thermal_pressure(स्थिर काष्ठा cpumask *cpus,
+			       अचिन्हित दीर्घ th_pressure)
+अणु पूर्ण
+#पूर्ण_अगर
 
-static inline int task_node(const struct task_struct *p)
-{
-	return cpu_to_node(task_cpu(p));
-}
+अटल अंतरभूत पूर्णांक task_node(स्थिर काष्ठा task_काष्ठा *p)
+अणु
+	वापस cpu_to_node(task_cpu(p));
+पूर्ण
 
-#endif /* _LINUX_SCHED_TOPOLOGY_H */
+#पूर्ण_अगर /* _LINUX_SCHED_TOPOLOGY_H */

@@ -1,162 +1,163 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Joshua Henderson <joshua.henderson@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
-#include <asm/mach-pic32/pic32.h>
-#include <asm/fw/fw.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/mach-pic32/pic32.h>
+#समावेश <यंत्र/fw/fw.h>
+#समावेश <यंत्र/setup.h>
 
-#include "pic32mzda.h"
-#include "early_pin.h"
+#समावेश "pic32mzda.h"
+#समावेश "early_pin.h"
 
 /* Default early console parameters */
-#define EARLY_CONSOLE_PORT	1
-#define EARLY_CONSOLE_BAUDRATE	115200
+#घोषणा EARLY_CONSOLE_PORT	1
+#घोषणा EARLY_CONSOLE_BAUDRATE	115200
 
-#define UART_ENABLE		BIT(15)
-#define UART_ENABLE_RX		BIT(12)
-#define UART_ENABLE_TX		BIT(10)
-#define UART_TX_FULL		BIT(9)
+#घोषणा UART_ENABLE		BIT(15)
+#घोषणा UART_ENABLE_RX		BIT(12)
+#घोषणा UART_ENABLE_TX		BIT(10)
+#घोषणा UART_TX_FULL		BIT(9)
 
 /* UART1(x == 0) - UART6(x == 5) */
-#define UART_BASE(x)	((x) * 0x0200)
-#define U_MODE(x)	UART_BASE(x)
-#define U_STA(x)	(UART_BASE(x) + 0x10)
-#define U_TXR(x)	(UART_BASE(x) + 0x20)
-#define U_BRG(x)	(UART_BASE(x) + 0x40)
+#घोषणा UART_BASE(x)	((x) * 0x0200)
+#घोषणा U_MODE(x)	UART_BASE(x)
+#घोषणा U_STA(x)	(UART_BASE(x) + 0x10)
+#घोषणा U_TXR(x)	(UART_BASE(x) + 0x20)
+#घोषणा U_BRG(x)	(UART_BASE(x) + 0x40)
 
-static void __iomem *uart_base;
-static char console_port = -1;
+अटल व्योम __iomem *uart_base;
+अटल अक्षर console_port = -1;
 
-static int __init configure_uart_pins(int port)
-{
-	switch (port) {
-	case 1:
+अटल पूर्णांक __init configure_uart_pins(पूर्णांक port)
+अणु
+	चयन (port) अणु
+	हाल 1:
 		pic32_pps_input(IN_FUNC_U2RX, IN_RPB0);
 		pic32_pps_output(OUT_FUNC_U2TX, OUT_RPG9);
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		pic32_pps_input(IN_FUNC_U6RX, IN_RPD0);
 		pic32_pps_output(OUT_FUNC_U6TX, OUT_RPB8);
-		break;
-	default:
-		return -1;
-	}
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init configure_uart(char port, int baud)
-{
+अटल व्योम __init configure_uart(अक्षर port, पूर्णांक baud)
+अणु
 	u32 pbclk;
 
 	pbclk = pic32_get_pbclk(2);
 
-	__raw_writel(0, uart_base + U_MODE(port));
-	__raw_writel(((pbclk / baud) / 16) - 1, uart_base + U_BRG(port));
-	__raw_writel(UART_ENABLE, uart_base + U_MODE(port));
-	__raw_writel(UART_ENABLE_TX | UART_ENABLE_RX,
+	__raw_ग_लिखोl(0, uart_base + U_MODE(port));
+	__raw_ग_लिखोl(((pbclk / baud) / 16) - 1, uart_base + U_BRG(port));
+	__raw_ग_लिखोl(UART_ENABLE, uart_base + U_MODE(port));
+	__raw_ग_लिखोl(UART_ENABLE_TX | UART_ENABLE_RX,
 		     uart_base + PIC32_SET(U_STA(port)));
-}
+पूर्ण
 
-static void __init setup_early_console(char port, int baud)
-{
-	if (configure_uart_pins(port))
-		return;
+अटल व्योम __init setup_early_console(अक्षर port, पूर्णांक baud)
+अणु
+	अगर (configure_uart_pins(port))
+		वापस;
 
 	console_port = port;
 	configure_uart(console_port, baud);
-}
+पूर्ण
 
-static char * __init pic32_getcmdline(void)
-{
+अटल अक्षर * __init pic32_अ_लोmdline(व्योम)
+अणु
 	/*
-	 * arch_mem_init() has not been called yet, so we don't have a real
-	 * command line setup if using CONFIG_CMDLINE_BOOL.
+	 * arch_mem_init() has not been called yet, so we करोn't have a real
+	 * command line setup अगर using CONFIG_CMDLINE_BOOL.
 	 */
-#ifdef CONFIG_CMDLINE_OVERRIDE
-	return CONFIG_CMDLINE;
-#else
-	return fw_getcmdline();
-#endif
-}
+#अगर_घोषित CONFIG_CMDLINE_OVERRIDE
+	वापस CONFIG_CMDLINE;
+#अन्यथा
+	वापस fw_अ_लोmdline();
+#पूर्ण_अगर
+पूर्ण
 
-static int __init get_port_from_cmdline(char *arch_cmdline)
-{
-	char *s;
-	int port = -1;
+अटल पूर्णांक __init get_port_from_cmdline(अक्षर *arch_cmdline)
+अणु
+	अक्षर *s;
+	पूर्णांक port = -1;
 
-	if (!arch_cmdline || *arch_cmdline == '\0')
-		goto _out;
+	अगर (!arch_cmdline || *arch_cmdline == '\0')
+		जाओ _out;
 
-	s = strstr(arch_cmdline, "earlyprintk=");
-	if (s) {
-		s = strstr(s, "ttyS");
-		if (s)
+	s = म_माला(arch_cmdline, "earlyprintk=");
+	अगर (s) अणु
+		s = म_माला(s, "ttyS");
+		अगर (s)
 			s += 4;
-		else
-			goto _out;
+		अन्यथा
+			जाओ _out;
 
 		port = (*s) - '0';
-	}
+	पूर्ण
 
 _out:
-	return port;
-}
+	वापस port;
+पूर्ण
 
-static int __init get_baud_from_cmdline(char *arch_cmdline)
-{
-	char *s;
-	int baud = -1;
+अटल पूर्णांक __init get_baud_from_cmdline(अक्षर *arch_cmdline)
+अणु
+	अक्षर *s;
+	पूर्णांक baud = -1;
 
-	if (!arch_cmdline || *arch_cmdline == '\0')
-		goto _out;
+	अगर (!arch_cmdline || *arch_cmdline == '\0')
+		जाओ _out;
 
-	s = strstr(arch_cmdline, "earlyprintk=");
-	if (s) {
-		s = strstr(s, "ttyS");
-		if (s)
+	s = म_माला(arch_cmdline, "earlyprintk=");
+	अगर (s) अणु
+		s = म_माला(s, "ttyS");
+		अगर (s)
 			s += 6;
-		else
-			goto _out;
+		अन्यथा
+			जाओ _out;
 
 		baud = 0;
-		while (*s >= '0' && *s <= '9')
+		जबतक (*s >= '0' && *s <= '9')
 			baud = baud * 10 + *s++ - '0';
-	}
+	पूर्ण
 
 _out:
-	return baud;
-}
+	वापस baud;
+पूर्ण
 
-void __init fw_init_early_console(char port)
-{
-	char *arch_cmdline = pic32_getcmdline();
-	int baud = -1;
+व्योम __init fw_init_early_console(अक्षर port)
+अणु
+	अक्षर *arch_cmdline = pic32_अ_लोmdline();
+	पूर्णांक baud = -1;
 
 	uart_base = ioremap(PIC32_BASE_UART, 0xc00);
 
 	baud = get_baud_from_cmdline(arch_cmdline);
-	if (port == -1)
+	अगर (port == -1)
 		port = get_port_from_cmdline(arch_cmdline);
 
-	if (port == -1)
+	अगर (port == -1)
 		port = EARLY_CONSOLE_PORT;
 
-	if (baud == -1)
+	अगर (baud == -1)
 		baud = EARLY_CONSOLE_BAUDRATE;
 
 	setup_early_console(port, baud);
-}
+पूर्ण
 
-void prom_putchar(char c)
-{
-	if (console_port >= 0) {
-		while (__raw_readl(
+व्योम prom_अक्षर_दो(अक्षर c)
+अणु
+	अगर (console_port >= 0) अणु
+		जबतक (__raw_पढ़ोl(
 				uart_base + U_STA(console_port)) & UART_TX_FULL)
 			;
 
-		__raw_writel(c, uart_base + U_TXR(console_port));
-	}
-}
+		__raw_ग_लिखोl(c, uart_base + U_TXR(console_port));
+	पूर्ण
+पूर्ण

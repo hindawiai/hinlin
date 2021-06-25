@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <dwarf.h>
-#include <elfutils/libdw.h>
-#include <elfutils/version.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <dwarf.h>
+#समावेश <elfutils/libdw.h>
+#समावेश <elfutils/version.h>
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	Dwarf *dbg = dwarf_begin(0, DWARF_C_READ);
 
-	return (long)dbg;
-}
+	वापस (दीर्घ)dbg;
+पूर्ण

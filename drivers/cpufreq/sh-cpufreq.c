@@ -1,65 +1,66 @@
+<शैली गुरु>
 /*
- * cpufreq driver for the SuperH processors.
+ * cpufreq driver क्रम the SuperH processors.
  *
  * Copyright (C) 2002 - 2012 Paul Mundt
  * Copyright (C) 2002 M. R. Brown
  *
  * Clock framework bits from arch/avr32/mach-at32ap/cpufreq.c
  *
- *   Copyright (C) 2004-2007 Atmel Corporation
+ *   Copyright (C) 2004-2007 Aपंचांगel Corporation
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#define pr_fmt(fmt) "cpufreq: " fmt
+#घोषणा pr_fmt(fmt) "cpufreq: " fmt
 
-#include <linux/types.h>
-#include <linux/cpufreq.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/cpumask.h>
-#include <linux/cpu.h>
-#include <linux/smp.h>
-#include <linux/sched.h>	/* set_cpus_allowed() */
-#include <linux/clk.h>
-#include <linux/percpu.h>
-#include <linux/sh_clk.h>
+#समावेश <linux/types.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/sched.h>	/* set_cpus_allowed() */
+#समावेश <linux/clk.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/sh_clk.h>
 
-static DEFINE_PER_CPU(struct clk, sh_cpuclk);
+अटल DEFINE_PER_CPU(काष्ठा clk, sh_cpuclk);
 
-struct cpufreq_target {
-	struct cpufreq_policy	*policy;
-	unsigned int		freq;
-};
+काष्ठा cpufreq_target अणु
+	काष्ठा cpufreq_policy	*policy;
+	अचिन्हित पूर्णांक		freq;
+पूर्ण;
 
-static unsigned int sh_cpufreq_get(unsigned int cpu)
-{
-	return (clk_get_rate(&per_cpu(sh_cpuclk, cpu)) + 500) / 1000;
-}
+अटल अचिन्हित पूर्णांक sh_cpufreq_get(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस (clk_get_rate(&per_cpu(sh_cpuclk, cpu)) + 500) / 1000;
+पूर्ण
 
-static long __sh_cpufreq_target(void *arg)
-{
-	struct cpufreq_target *target = arg;
-	struct cpufreq_policy *policy = target->policy;
-	int cpu = policy->cpu;
-	struct clk *cpuclk = &per_cpu(sh_cpuclk, cpu);
-	struct cpufreq_freqs freqs;
-	struct device *dev;
-	long freq;
+अटल दीर्घ __sh_cpufreq_target(व्योम *arg)
+अणु
+	काष्ठा cpufreq_target *target = arg;
+	काष्ठा cpufreq_policy *policy = target->policy;
+	पूर्णांक cpu = policy->cpu;
+	काष्ठा clk *cpuclk = &per_cpu(sh_cpuclk, cpu);
+	काष्ठा cpufreq_freqs freqs;
+	काष्ठा device *dev;
+	दीर्घ freq;
 
-	if (smp_processor_id() != cpu)
-		return -ENODEV;
+	अगर (smp_processor_id() != cpu)
+		वापस -ENODEV;
 
 	dev = get_cpu_device(cpu);
 
 	/* Convert target_freq from kHz to Hz */
 	freq = clk_round_rate(cpuclk, target->freq * 1000);
 
-	if (freq < (policy->min * 1000) || freq > (policy->max * 1000))
-		return -EINVAL;
+	अगर (freq < (policy->min * 1000) || freq > (policy->max * 1000))
+		वापस -EINVAL;
 
 	dev_dbg(dev, "requested frequency %u Hz\n", target->freq * 1000);
 
@@ -72,58 +73,58 @@ static long __sh_cpufreq_target(void *arg)
 	cpufreq_freq_transition_end(target->policy, &freqs, 0);
 
 	dev_dbg(dev, "set frequency %lu Hz\n", freq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Here we notify other drivers of the proposed change and the final change.
+ * Here we notअगरy other drivers of the proposed change and the final change.
  */
-static int sh_cpufreq_target(struct cpufreq_policy *policy,
-			     unsigned int target_freq,
-			     unsigned int relation)
-{
-	struct cpufreq_target data = { .policy = policy, .freq = target_freq };
+अटल पूर्णांक sh_cpufreq_target(काष्ठा cpufreq_policy *policy,
+			     अचिन्हित पूर्णांक target_freq,
+			     अचिन्हित पूर्णांक relation)
+अणु
+	काष्ठा cpufreq_target data = अणु .policy = policy, .freq = target_freq पूर्ण;
 
-	return work_on_cpu(policy->cpu, __sh_cpufreq_target, &data);
-}
+	वापस work_on_cpu(policy->cpu, __sh_cpufreq_target, &data);
+पूर्ण
 
-static int sh_cpufreq_verify(struct cpufreq_policy_data *policy)
-{
-	struct clk *cpuclk = &per_cpu(sh_cpuclk, policy->cpu);
-	struct cpufreq_frequency_table *freq_table;
+अटल पूर्णांक sh_cpufreq_verअगरy(काष्ठा cpufreq_policy_data *policy)
+अणु
+	काष्ठा clk *cpuclk = &per_cpu(sh_cpuclk, policy->cpu);
+	काष्ठा cpufreq_frequency_table *freq_table;
 
-	freq_table = cpuclk->nr_freqs ? cpuclk->freq_table : NULL;
-	if (freq_table)
-		return cpufreq_frequency_table_verify(policy, freq_table);
+	freq_table = cpuclk->nr_freqs ? cpuclk->freq_table : शून्य;
+	अगर (freq_table)
+		वापस cpufreq_frequency_table_verअगरy(policy, freq_table);
 
-	cpufreq_verify_within_cpu_limits(policy);
+	cpufreq_verअगरy_within_cpu_limits(policy);
 
 	policy->min = (clk_round_rate(cpuclk, 1) + 500) / 1000;
 	policy->max = (clk_round_rate(cpuclk, ~0UL) + 500) / 1000;
 
-	cpufreq_verify_within_cpu_limits(policy);
-	return 0;
-}
+	cpufreq_verअगरy_within_cpu_limits(policy);
+	वापस 0;
+पूर्ण
 
-static int sh_cpufreq_cpu_init(struct cpufreq_policy *policy)
-{
-	unsigned int cpu = policy->cpu;
-	struct clk *cpuclk = &per_cpu(sh_cpuclk, cpu);
-	struct cpufreq_frequency_table *freq_table;
-	struct device *dev;
+अटल पूर्णांक sh_cpufreq_cpu_init(काष्ठा cpufreq_policy *policy)
+अणु
+	अचिन्हित पूर्णांक cpu = policy->cpu;
+	काष्ठा clk *cpuclk = &per_cpu(sh_cpuclk, cpu);
+	काष्ठा cpufreq_frequency_table *freq_table;
+	काष्ठा device *dev;
 
 	dev = get_cpu_device(cpu);
 
 	cpuclk = clk_get(dev, "cpu_clk");
-	if (IS_ERR(cpuclk)) {
+	अगर (IS_ERR(cpuclk)) अणु
 		dev_err(dev, "couldn't get CPU clk\n");
-		return PTR_ERR(cpuclk);
-	}
+		वापस PTR_ERR(cpuclk);
+	पूर्ण
 
-	freq_table = cpuclk->nr_freqs ? cpuclk->freq_table : NULL;
-	if (freq_table) {
+	freq_table = cpuclk->nr_freqs ? cpuclk->freq_table : शून्य;
+	अगर (freq_table) अणु
 		policy->freq_table = freq_table;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_notice(dev, "no frequency table found, falling back "
 			   "to rate rounding.\n");
 
@@ -131,56 +132,56 @@ static int sh_cpufreq_cpu_init(struct cpufreq_policy *policy)
 			(clk_round_rate(cpuclk, 1) + 500) / 1000;
 		policy->max = policy->cpuinfo.max_freq =
 			(clk_round_rate(cpuclk, ~0UL) + 500) / 1000;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_cpufreq_cpu_exit(struct cpufreq_policy *policy)
-{
-	unsigned int cpu = policy->cpu;
-	struct clk *cpuclk = &per_cpu(sh_cpuclk, cpu);
+अटल पूर्णांक sh_cpufreq_cpu_निकास(काष्ठा cpufreq_policy *policy)
+अणु
+	अचिन्हित पूर्णांक cpu = policy->cpu;
+	काष्ठा clk *cpuclk = &per_cpu(sh_cpuclk, cpu);
 
 	clk_put(cpuclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sh_cpufreq_cpu_ready(struct cpufreq_policy *policy)
-{
-	struct device *dev = get_cpu_device(policy->cpu);
+अटल व्योम sh_cpufreq_cpu_पढ़ोy(काष्ठा cpufreq_policy *policy)
+अणु
+	काष्ठा device *dev = get_cpu_device(policy->cpu);
 
 	dev_info(dev, "CPU Frequencies - Minimum %u.%03u MHz, "
 	       "Maximum %u.%03u MHz.\n",
 	       policy->min / 1000, policy->min % 1000,
 	       policy->max / 1000, policy->max % 1000);
-}
+पूर्ण
 
-static struct cpufreq_driver sh_cpufreq_driver = {
+अटल काष्ठा cpufreq_driver sh_cpufreq_driver = अणु
 	.name		= "sh",
 	.flags		= CPUFREQ_NO_AUTO_DYNAMIC_SWITCHING,
 	.get		= sh_cpufreq_get,
 	.target		= sh_cpufreq_target,
-	.verify		= sh_cpufreq_verify,
+	.verअगरy		= sh_cpufreq_verअगरy,
 	.init		= sh_cpufreq_cpu_init,
-	.exit		= sh_cpufreq_cpu_exit,
-	.ready		= sh_cpufreq_cpu_ready,
+	.निकास		= sh_cpufreq_cpu_निकास,
+	.पढ़ोy		= sh_cpufreq_cpu_पढ़ोy,
 	.attr		= cpufreq_generic_attr,
-};
+पूर्ण;
 
-static int __init sh_cpufreq_module_init(void)
-{
+अटल पूर्णांक __init sh_cpufreq_module_init(व्योम)
+अणु
 	pr_notice("SuperH CPU frequency driver.\n");
-	return cpufreq_register_driver(&sh_cpufreq_driver);
-}
+	वापस cpufreq_रेजिस्टर_driver(&sh_cpufreq_driver);
+पूर्ण
 
-static void __exit sh_cpufreq_module_exit(void)
-{
-	cpufreq_unregister_driver(&sh_cpufreq_driver);
-}
+अटल व्योम __निकास sh_cpufreq_module_निकास(व्योम)
+अणु
+	cpufreq_unरेजिस्टर_driver(&sh_cpufreq_driver);
+पूर्ण
 
 module_init(sh_cpufreq_module_init);
-module_exit(sh_cpufreq_module_exit);
+module_निकास(sh_cpufreq_module_निकास);
 
 MODULE_AUTHOR("Paul Mundt <lethal@linux-sh.org>");
 MODULE_DESCRIPTION("cpufreq driver for SuperH");

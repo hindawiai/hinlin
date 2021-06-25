@@ -1,115 +1,116 @@
+<शैली गुरु>
 
 /*
  * Copyright (C) 2006		Red Hat
  *
- *  May be copied or modified under the terms of the GNU General Public License
+ *  May be copied or modअगरied under the terms of the GNU General Public License
  */
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/ide.h>
-#include <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/init.h>
 
-#define DRV_NAME "jmicron"
+#घोषणा DRV_NAME "jmicron"
 
-typedef enum {
+प्रकार क्रमागत अणु
 	PORT_PATA0 = 0,
 	PORT_PATA1 = 1,
 	PORT_SATA = 2,
-} port_type;
+पूर्ण port_type;
 
 /**
  *	jmicron_cable_detect	-	cable detection
- *	@hwif: IDE port
+ *	@hwअगर: IDE port
  *
  *	Returns the cable type.
  */
 
-static u8 jmicron_cable_detect(ide_hwif_t *hwif)
-{
-	struct pci_dev *pdev = to_pci_dev(hwif->dev);
+अटल u8 jmicron_cable_detect(ide_hwअगर_t *hwअगर)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(hwअगर->dev);
 
 	u32 control;
 	u32 control5;
 
-	int port = hwif->channel;
+	पूर्णांक port = hwअगर->channel;
 	port_type port_map[2];
 
-	pci_read_config_dword(pdev, 0x40, &control);
+	pci_पढ़ो_config_dword(pdev, 0x40, &control);
 
 	/* There are two basic mappings. One has the two SATA ports merged
 	   as master/slave and the secondary as PATA, the other has only the
 	   SATA port mapped */
-	if (control & (1 << 23)) {
+	अगर (control & (1 << 23)) अणु
 		port_map[0] = PORT_SATA;
 		port_map[1] = PORT_PATA0;
-	} else {
+	पूर्ण अन्यथा अणु
 		port_map[0] = PORT_SATA;
 		port_map[1] = PORT_SATA;
-	}
+	पूर्ण
 
 	/* The 365/366 may have this bit set to map the second PATA port
-	   as the internal primary channel */
-	pci_read_config_dword(pdev, 0x80, &control5);
-	if (control5 & (1<<24))
+	   as the पूर्णांकernal primary channel */
+	pci_पढ़ो_config_dword(pdev, 0x80, &control5);
+	अगर (control5 & (1<<24))
 		port_map[0] = PORT_PATA1;
 
 	/* The two ports may then be logically swapped by the firmware */
-	if (control & (1 << 22))
+	अगर (control & (1 << 22))
 		port = port ^ 1;
 
 	/*
 	 *	Now we know which physical port we are talking about we can
-	 *	actually do our cable checking etc. Thankfully we don't need
-	 *	to do the plumbing for other cases.
+	 *	actually करो our cable checking etc. Thankfully we करोn't need
+	 *	to करो the plumbing क्रम other हालs.
 	 */
-	switch (port_map[port]) {
-	case PORT_PATA0:
-		if (control & (1 << 3))	/* 40/80 pin primary */
-			return ATA_CBL_PATA40;
-		return ATA_CBL_PATA80;
-	case PORT_PATA1:
-		if (control5 & (1 << 19))	/* 40/80 pin secondary */
-			return ATA_CBL_PATA40;
-		return ATA_CBL_PATA80;
-	case PORT_SATA:
-		break;
-	}
-	/* Avoid bogus "control reaches end of non-void function" */
-	return ATA_CBL_PATA80;
-}
+	चयन (port_map[port]) अणु
+	हाल PORT_PATA0:
+		अगर (control & (1 << 3))	/* 40/80 pin primary */
+			वापस ATA_CBL_PATA40;
+		वापस ATA_CBL_PATA80;
+	हाल PORT_PATA1:
+		अगर (control5 & (1 << 19))	/* 40/80 pin secondary */
+			वापस ATA_CBL_PATA40;
+		वापस ATA_CBL_PATA80;
+	हाल PORT_SATA:
+		अवरोध;
+	पूर्ण
+	/* Aव्योम bogus "control reaches end of non-void function" */
+	वापस ATA_CBL_PATA80;
+पूर्ण
 
-static void jmicron_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-}
+अटल व्योम jmicron_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+पूर्ण
 
 /**
- *	jmicron_set_dma_mode	-	set host controller for DMA mode
- *	@hwif: port
+ *	jmicron_set_dma_mode	-	set host controller क्रम DMA mode
+ *	@hwअगर: port
  *	@drive: drive
  *
- *	As the JMicron snoops for timings we don't need to do anything here.
+ *	As the JMicron snoops क्रम timings we करोn't need to करो anything here.
  */
 
-static void jmicron_set_dma_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-}
+अटल व्योम jmicron_set_dma_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+पूर्ण
 
-static const struct ide_port_ops jmicron_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops jmicron_port_ops = अणु
 	.set_pio_mode		= jmicron_set_pio_mode,
 	.set_dma_mode		= jmicron_set_dma_mode,
 	.cable_detect		= jmicron_cable_detect,
-};
+पूर्ण;
 
-static const struct ide_port_info jmicron_chipset = {
+अटल स्थिर काष्ठा ide_port_info jmicron_chipset = अणु
 	.name		= DRV_NAME,
-	.enablebits	= { { 0x40, 0x01, 0x01 }, { 0x40, 0x10, 0x10 } },
+	.enablebits	= अणु अणु 0x40, 0x01, 0x01 पूर्ण, अणु 0x40, 0x10, 0x10 पूर्ण पूर्ण,
 	.port_ops	= &jmicron_port_ops,
 	.pio_mask	= ATA_PIO5,
 	.mwdma_mask	= ATA_MWDMA2,
 	.udma_mask	= ATA_UDMA6,
-};
+पूर्ण;
 
 /**
  *	jmicron_init_one	-	pci layer discovery entry
@@ -117,59 +118,59 @@ static const struct ide_port_info jmicron_chipset = {
  *	@id: ident table entry
  *
  *	Called by the PCI code when it finds a Jmicron controller.
- *	We then use the IDE PCI generic helper to do most of the work.
+ *	We then use the IDE PCI generic helper to करो most of the work.
  */
 
-static int jmicron_init_one(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	return ide_pci_init_one(dev, &jmicron_chipset, NULL);
-}
+अटल पूर्णांक jmicron_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस ide_pci_init_one(dev, &jmicron_chipset, शून्य);
+पूर्ण
 
-/* All JMB PATA controllers have and will continue to have the same
- * interface.  Matching vendor and device class is enough for all
- * current and future controllers if the controller is programmed
+/* All JMB PATA controllers have and will जारी to have the same
+ * पूर्णांकerface.  Matching venकरोr and device class is enough क्रम all
+ * current and future controllers अगर the controller is programmed
  * properly.
  *
  * If libata is configured, jmicron PCI quirk programs the controller
- * into the correct mode.  If libata isn't configured, match known
- * device IDs too to maintain backward compatibility.
+ * पूर्णांकo the correct mode.  If libata isn't configured, match known
+ * device IDs too to मुख्यtain backward compatibility.
  */
-static struct pci_device_id jmicron_pci_tbl[] = {
-#if !defined(CONFIG_ATA) && !defined(CONFIG_ATA_MODULE)
-	{ PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB361) },
-	{ PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB363) },
-	{ PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB365) },
-	{ PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB366) },
-	{ PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB368) },
-#endif
-	{ PCI_VENDOR_ID_JMICRON, PCI_ANY_ID, PCI_ANY_ID, PCI_ANY_ID,
-	  PCI_CLASS_STORAGE_IDE << 8, 0xffff00, 0 },
-	{ 0, },
-};
+अटल काष्ठा pci_device_id jmicron_pci_tbl[] = अणु
+#अगर !defined(CONFIG_ATA) && !defined(CONFIG_ATA_MODULE)
+	अणु PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB361) पूर्ण,
+	अणु PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB363) पूर्ण,
+	अणु PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB365) पूर्ण,
+	अणु PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB366) पूर्ण,
+	अणु PCI_VDEVICE(JMICRON, PCI_DEVICE_ID_JMICRON_JMB368) पूर्ण,
+#पूर्ण_अगर
+	अणु PCI_VENDOR_ID_JMICRON, PCI_ANY_ID, PCI_ANY_ID, PCI_ANY_ID,
+	  PCI_CLASS_STORAGE_IDE << 8, 0xffff00, 0 पूर्ण,
+	अणु 0, पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, jmicron_pci_tbl);
 
-static struct pci_driver jmicron_pci_driver = {
+अटल काष्ठा pci_driver jmicron_pci_driver = अणु
 	.name		= "JMicron IDE",
 	.id_table	= jmicron_pci_tbl,
 	.probe		= jmicron_init_one,
-	.remove		= ide_pci_remove,
+	.हटाओ		= ide_pci_हटाओ,
 	.suspend	= ide_pci_suspend,
 	.resume		= ide_pci_resume,
-};
+पूर्ण;
 
-static int __init jmicron_ide_init(void)
-{
-	return ide_pci_register_driver(&jmicron_pci_driver);
-}
+अटल पूर्णांक __init jmicron_ide_init(व्योम)
+अणु
+	वापस ide_pci_रेजिस्टर_driver(&jmicron_pci_driver);
+पूर्ण
 
-static void __exit jmicron_ide_exit(void)
-{
-	pci_unregister_driver(&jmicron_pci_driver);
-}
+अटल व्योम __निकास jmicron_ide_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&jmicron_pci_driver);
+पूर्ण
 
 module_init(jmicron_ide_init);
-module_exit(jmicron_ide_exit);
+module_निकास(jmicron_ide_निकास);
 
 MODULE_AUTHOR("Alan Cox");
 MODULE_DESCRIPTION("PCI driver module for the JMicron in legacy modes");

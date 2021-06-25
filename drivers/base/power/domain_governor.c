@@ -1,405 +1,406 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * drivers/base/power/domain_governor.c - Governors for device PM domains.
+ * drivers/base/घातer/करोमुख्य_governor.c - Governors क्रम device PM करोमुख्यs.
  *
  * Copyright (C) 2011 Rafael J. Wysocki <rjw@sisk.pl>, Renesas Electronics Corp.
  */
-#include <linux/kernel.h>
-#include <linux/pm_domain.h>
-#include <linux/pm_qos.h>
-#include <linux/hrtimer.h>
-#include <linux/cpuidle.h>
-#include <linux/cpumask.h>
-#include <linux/ktime.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/pm_qos.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/kसमय.स>
 
-static int dev_update_qos_constraint(struct device *dev, void *data)
-{
-	s64 *constraint_ns_p = data;
-	s64 constraint_ns;
+अटल पूर्णांक dev_update_qos_स्थिरraपूर्णांक(काष्ठा device *dev, व्योम *data)
+अणु
+	s64 *स्थिरraपूर्णांक_ns_p = data;
+	s64 स्थिरraपूर्णांक_ns;
 
-	if (dev->power.subsys_data && dev->power.subsys_data->domain_data) {
+	अगर (dev->घातer.subsys_data && dev->घातer.subsys_data->करोमुख्य_data) अणु
 		/*
-		 * Only take suspend-time QoS constraints of devices into
-		 * account, because constraints updated after the device has
-		 * been suspended are not guaranteed to be taken into account
-		 * anyway.  In order for them to take effect, the device has to
+		 * Only take suspend-समय QoS स्थिरraपूर्णांकs of devices पूर्णांकo
+		 * account, because स्थिरraपूर्णांकs updated after the device has
+		 * been suspended are not guaranteed to be taken पूर्णांकo account
+		 * anyway.  In order क्रम them to take effect, the device has to
 		 * be resumed and suspended again.
 		 */
-		constraint_ns = dev_gpd_data(dev)->td.effective_constraint_ns;
-	} else {
+		स्थिरraपूर्णांक_ns = dev_gpd_data(dev)->td.effective_स्थिरraपूर्णांक_ns;
+	पूर्ण अन्यथा अणु
 		/*
-		 * The child is not in a domain and there's no info on its
+		 * The child is not in a करोमुख्य and there's no info on its
 		 * suspend/resume latencies, so assume them to be negligible and
-		 * take its current PM QoS constraint (that's the only thing
-		 * known at this point anyway).
+		 * take its current PM QoS स्थिरraपूर्णांक (that's the only thing
+		 * known at this poपूर्णांक anyway).
 		 */
-		constraint_ns = dev_pm_qos_read_value(dev, DEV_PM_QOS_RESUME_LATENCY);
-		constraint_ns *= NSEC_PER_USEC;
-	}
+		स्थिरraपूर्णांक_ns = dev_pm_qos_पढ़ो_value(dev, DEV_PM_QOS_RESUME_LATENCY);
+		स्थिरraपूर्णांक_ns *= NSEC_PER_USEC;
+	पूर्ण
 
-	if (constraint_ns < *constraint_ns_p)
-		*constraint_ns_p = constraint_ns;
+	अगर (स्थिरraपूर्णांक_ns < *स्थिरraपूर्णांक_ns_p)
+		*स्थिरraपूर्णांक_ns_p = स्थिरraपूर्णांक_ns;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * default_suspend_ok - Default PM domain governor routine to suspend devices.
+ * शेष_suspend_ok - Default PM करोमुख्य governor routine to suspend devices.
  * @dev: Device to check.
  */
-static bool default_suspend_ok(struct device *dev)
-{
-	struct gpd_timing_data *td = &dev_gpd_data(dev)->td;
-	unsigned long flags;
-	s64 constraint_ns;
+अटल bool शेष_suspend_ok(काष्ठा device *dev)
+अणु
+	काष्ठा gpd_timing_data *td = &dev_gpd_data(dev)->td;
+	अचिन्हित दीर्घ flags;
+	s64 स्थिरraपूर्णांक_ns;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
-	spin_lock_irqsave(&dev->power.lock, flags);
+	spin_lock_irqsave(&dev->घातer.lock, flags);
 
-	if (!td->constraint_changed) {
+	अगर (!td->स्थिरraपूर्णांक_changed) अणु
 		bool ret = td->cached_suspend_ok;
 
-		spin_unlock_irqrestore(&dev->power.lock, flags);
-		return ret;
-	}
-	td->constraint_changed = false;
+		spin_unlock_irqrestore(&dev->घातer.lock, flags);
+		वापस ret;
+	पूर्ण
+	td->स्थिरraपूर्णांक_changed = false;
 	td->cached_suspend_ok = false;
-	td->effective_constraint_ns = 0;
-	constraint_ns = __dev_pm_qos_resume_latency(dev);
+	td->effective_स्थिरraपूर्णांक_ns = 0;
+	स्थिरraपूर्णांक_ns = __dev_pm_qos_resume_latency(dev);
 
-	spin_unlock_irqrestore(&dev->power.lock, flags);
+	spin_unlock_irqrestore(&dev->घातer.lock, flags);
 
-	if (constraint_ns == 0)
-		return false;
+	अगर (स्थिरraपूर्णांक_ns == 0)
+		वापस false;
 
-	constraint_ns *= NSEC_PER_USEC;
+	स्थिरraपूर्णांक_ns *= NSEC_PER_USEC;
 	/*
 	 * We can walk the children without any additional locking, because
-	 * they all have been suspended at this point and their
-	 * effective_constraint_ns fields won't be modified in parallel with us.
+	 * they all have been suspended at this poपूर्णांक and their
+	 * effective_स्थिरraपूर्णांक_ns fields won't be modअगरied in parallel with us.
 	 */
-	if (!dev->power.ignore_children)
-		device_for_each_child(dev, &constraint_ns,
-				      dev_update_qos_constraint);
+	अगर (!dev->घातer.ignore_children)
+		device_क्रम_each_child(dev, &स्थिरraपूर्णांक_ns,
+				      dev_update_qos_स्थिरraपूर्णांक);
 
-	if (constraint_ns == PM_QOS_RESUME_LATENCY_NO_CONSTRAINT_NS) {
+	अगर (स्थिरraपूर्णांक_ns == PM_QOS_RESUME_LATENCY_NO_CONSTRAINT_NS) अणु
 		/* "No restriction", so the device is allowed to suspend. */
-		td->effective_constraint_ns = PM_QOS_RESUME_LATENCY_NO_CONSTRAINT_NS;
+		td->effective_स्थिरraपूर्णांक_ns = PM_QOS_RESUME_LATENCY_NO_CONSTRAINT_NS;
 		td->cached_suspend_ok = true;
-	} else if (constraint_ns == 0) {
+	पूर्ण अन्यथा अगर (स्थिरraपूर्णांक_ns == 0) अणु
 		/*
-		 * This triggers if one of the children that don't belong to a
-		 * domain has a zero PM QoS constraint and it's better not to
-		 * suspend then.  effective_constraint_ns is zero already and
+		 * This triggers अगर one of the children that करोn't beदीर्घ to a
+		 * करोमुख्य has a zero PM QoS स्थिरraपूर्णांक and it's better not to
+		 * suspend then.  effective_स्थिरraपूर्णांक_ns is zero alपढ़ोy and
 		 * cached_suspend_ok is false, so bail out.
 		 */
-		return false;
-	} else {
-		constraint_ns -= td->suspend_latency_ns +
+		वापस false;
+	पूर्ण अन्यथा अणु
+		स्थिरraपूर्णांक_ns -= td->suspend_latency_ns +
 				td->resume_latency_ns;
 		/*
-		 * effective_constraint_ns is zero already and cached_suspend_ok
-		 * is false, so if the computed value is not positive, return
+		 * effective_स्थिरraपूर्णांक_ns is zero alपढ़ोy and cached_suspend_ok
+		 * is false, so अगर the computed value is not positive, वापस
 		 * right away.
 		 */
-		if (constraint_ns <= 0)
-			return false;
+		अगर (स्थिरraपूर्णांक_ns <= 0)
+			वापस false;
 
-		td->effective_constraint_ns = constraint_ns;
+		td->effective_स्थिरraपूर्णांक_ns = स्थिरraपूर्णांक_ns;
 		td->cached_suspend_ok = true;
-	}
+	पूर्ण
 
 	/*
-	 * The children have been suspended already, so we don't need to take
-	 * their suspend latencies into account here.
+	 * The children have been suspended alपढ़ोy, so we करोn't need to take
+	 * their suspend latencies पूर्णांकo account here.
 	 */
-	return td->cached_suspend_ok;
-}
+	वापस td->cached_suspend_ok;
+पूर्ण
 
-static void update_domain_next_wakeup(struct generic_pm_domain *genpd, ktime_t now)
-{
-	ktime_t domain_wakeup = KTIME_MAX;
-	ktime_t next_wakeup;
-	struct pm_domain_data *pdd;
-	struct gpd_link *link;
+अटल व्योम update_करोमुख्य_next_wakeup(काष्ठा generic_pm_करोमुख्य *genpd, kसमय_प्रकार now)
+अणु
+	kसमय_प्रकार करोमुख्य_wakeup = KTIME_MAX;
+	kसमय_प्रकार next_wakeup;
+	काष्ठा pm_करोमुख्य_data *pdd;
+	काष्ठा gpd_link *link;
 
-	if (!(genpd->flags & GENPD_FLAG_MIN_RESIDENCY))
-		return;
+	अगर (!(genpd->flags & GENPD_FLAG_MIN_RESIDENCY))
+		वापस;
 
 	/*
-	 * Devices that have a predictable wakeup pattern, may specify
+	 * Devices that have a predictable wakeup pattern, may specअगरy
 	 * their next wakeup. Let's find the next wakeup from all the
-	 * devices attached to this domain and from all the sub-domains.
+	 * devices attached to this करोमुख्य and from all the sub-करोमुख्यs.
 	 * It is possible that component's a next wakeup may have become
-	 * stale when we read that here. We will ignore to ensure the domain
+	 * stale when we पढ़ो that here. We will ignore to ensure the करोमुख्य
 	 * is able to enter its optimal idle state.
 	 */
-	list_for_each_entry(pdd, &genpd->dev_list, list_node) {
+	list_क्रम_each_entry(pdd, &genpd->dev_list, list_node) अणु
 		next_wakeup = to_gpd_data(pdd)->next_wakeup;
-		if (next_wakeup != KTIME_MAX && !ktime_before(next_wakeup, now))
-			if (ktime_before(next_wakeup, domain_wakeup))
-				domain_wakeup = next_wakeup;
-	}
+		अगर (next_wakeup != KTIME_MAX && !kसमय_beक्रमe(next_wakeup, now))
+			अगर (kसमय_beक्रमe(next_wakeup, करोमुख्य_wakeup))
+				करोमुख्य_wakeup = next_wakeup;
+	पूर्ण
 
-	list_for_each_entry(link, &genpd->parent_links, parent_node) {
+	list_क्रम_each_entry(link, &genpd->parent_links, parent_node) अणु
 		next_wakeup = link->child->next_wakeup;
-		if (next_wakeup != KTIME_MAX && !ktime_before(next_wakeup, now))
-			if (ktime_before(next_wakeup, domain_wakeup))
-				domain_wakeup = next_wakeup;
-	}
+		अगर (next_wakeup != KTIME_MAX && !kसमय_beक्रमe(next_wakeup, now))
+			अगर (kसमय_beक्रमe(next_wakeup, करोमुख्य_wakeup))
+				करोमुख्य_wakeup = next_wakeup;
+	पूर्ण
 
-	genpd->next_wakeup = domain_wakeup;
-}
+	genpd->next_wakeup = करोमुख्य_wakeup;
+पूर्ण
 
-static bool next_wakeup_allows_state(struct generic_pm_domain *genpd,
-				     unsigned int state, ktime_t now)
-{
-	ktime_t domain_wakeup = genpd->next_wakeup;
-	s64 idle_time_ns, min_sleep_ns;
+अटल bool next_wakeup_allows_state(काष्ठा generic_pm_करोमुख्य *genpd,
+				     अचिन्हित पूर्णांक state, kसमय_प्रकार now)
+अणु
+	kसमय_प्रकार करोमुख्य_wakeup = genpd->next_wakeup;
+	s64 idle_समय_ns, min_sleep_ns;
 
-	min_sleep_ns = genpd->states[state].power_off_latency_ns +
+	min_sleep_ns = genpd->states[state].घातer_off_latency_ns +
 		       genpd->states[state].residency_ns;
 
-	idle_time_ns = ktime_to_ns(ktime_sub(domain_wakeup, now));
+	idle_समय_ns = kसमय_प्रकारo_ns(kसमय_sub(करोमुख्य_wakeup, now));
 
-	return idle_time_ns >= min_sleep_ns;
-}
+	वापस idle_समय_ns >= min_sleep_ns;
+पूर्ण
 
-static bool __default_power_down_ok(struct dev_pm_domain *pd,
-				     unsigned int state)
-{
-	struct generic_pm_domain *genpd = pd_to_genpd(pd);
-	struct gpd_link *link;
-	struct pm_domain_data *pdd;
-	s64 min_off_time_ns;
-	s64 off_on_time_ns;
+अटल bool __शेष_घातer_करोwn_ok(काष्ठा dev_pm_करोमुख्य *pd,
+				     अचिन्हित पूर्णांक state)
+अणु
+	काष्ठा generic_pm_करोमुख्य *genpd = pd_to_genpd(pd);
+	काष्ठा gpd_link *link;
+	काष्ठा pm_करोमुख्य_data *pdd;
+	s64 min_off_समय_ns;
+	s64 off_on_समय_ns;
 
-	off_on_time_ns = genpd->states[state].power_off_latency_ns +
-		genpd->states[state].power_on_latency_ns;
+	off_on_समय_ns = genpd->states[state].घातer_off_latency_ns +
+		genpd->states[state].घातer_on_latency_ns;
 
-	min_off_time_ns = -1;
+	min_off_समय_ns = -1;
 	/*
-	 * Check if subdomains can be off for enough time.
+	 * Check अगर subकरोमुख्यs can be off क्रम enough समय.
 	 *
-	 * All subdomains have been powered off already at this point.
+	 * All subकरोमुख्यs have been घातered off alपढ़ोy at this poपूर्णांक.
 	 */
-	list_for_each_entry(link, &genpd->parent_links, parent_node) {
-		struct generic_pm_domain *sd = link->child;
-		s64 sd_max_off_ns = sd->max_off_time_ns;
+	list_क्रम_each_entry(link, &genpd->parent_links, parent_node) अणु
+		काष्ठा generic_pm_करोमुख्य *sd = link->child;
+		s64 sd_max_off_ns = sd->max_off_समय_ns;
 
-		if (sd_max_off_ns < 0)
-			continue;
+		अगर (sd_max_off_ns < 0)
+			जारी;
 
 		/*
-		 * Check if the subdomain is allowed to be off long enough for
-		 * the current domain to turn off and on (that's how much time
-		 * it will have to wait worst case).
+		 * Check अगर the subकरोमुख्य is allowed to be off दीर्घ enough क्रम
+		 * the current करोमुख्य to turn off and on (that's how much समय
+		 * it will have to रुको worst हाल).
 		 */
-		if (sd_max_off_ns <= off_on_time_ns)
-			return false;
+		अगर (sd_max_off_ns <= off_on_समय_ns)
+			वापस false;
 
-		if (min_off_time_ns > sd_max_off_ns || min_off_time_ns < 0)
-			min_off_time_ns = sd_max_off_ns;
-	}
+		अगर (min_off_समय_ns > sd_max_off_ns || min_off_समय_ns < 0)
+			min_off_समय_ns = sd_max_off_ns;
+	पूर्ण
 
 	/*
-	 * Check if the devices in the domain can be off enough time.
+	 * Check अगर the devices in the करोमुख्य can be off enough समय.
 	 */
-	list_for_each_entry(pdd, &genpd->dev_list, list_node) {
-		struct gpd_timing_data *td;
-		s64 constraint_ns;
+	list_क्रम_each_entry(pdd, &genpd->dev_list, list_node) अणु
+		काष्ठा gpd_timing_data *td;
+		s64 स्थिरraपूर्णांक_ns;
 
 		/*
-		 * Check if the device is allowed to be off long enough for the
-		 * domain to turn off and on (that's how much time it will
-		 * have to wait worst case).
+		 * Check अगर the device is allowed to be off दीर्घ enough क्रम the
+		 * करोमुख्य to turn off and on (that's how much समय it will
+		 * have to रुको worst हाल).
 		 */
 		td = &to_gpd_data(pdd)->td;
-		constraint_ns = td->effective_constraint_ns;
+		स्थिरraपूर्णांक_ns = td->effective_स्थिरraपूर्णांक_ns;
 		/*
 		 * Zero means "no suspend at all" and this runs only when all
-		 * devices in the domain are suspended, so it must be positive.
+		 * devices in the करोमुख्य are suspended, so it must be positive.
 		 */
-		if (constraint_ns == PM_QOS_RESUME_LATENCY_NO_CONSTRAINT_NS)
-			continue;
+		अगर (स्थिरraपूर्णांक_ns == PM_QOS_RESUME_LATENCY_NO_CONSTRAINT_NS)
+			जारी;
 
-		if (constraint_ns <= off_on_time_ns)
-			return false;
+		अगर (स्थिरraपूर्णांक_ns <= off_on_समय_ns)
+			वापस false;
 
-		if (min_off_time_ns > constraint_ns || min_off_time_ns < 0)
-			min_off_time_ns = constraint_ns;
-	}
+		अगर (min_off_समय_ns > स्थिरraपूर्णांक_ns || min_off_समय_ns < 0)
+			min_off_समय_ns = स्थिरraपूर्णांक_ns;
+	पूर्ण
 
 	/*
-	 * If the computed minimum device off time is negative, there are no
-	 * latency constraints, so the domain can spend arbitrary time in the
+	 * If the computed minimum device off समय is negative, there are no
+	 * latency स्थिरraपूर्णांकs, so the करोमुख्य can spend arbitrary समय in the
 	 * "off" state.
 	 */
-	if (min_off_time_ns < 0)
-		return true;
+	अगर (min_off_समय_ns < 0)
+		वापस true;
 
 	/*
-	 * The difference between the computed minimum subdomain or device off
-	 * time and the time needed to turn the domain on is the maximum
-	 * theoretical time this domain can spend in the "off" state.
+	 * The dअगरference between the computed minimum subकरोमुख्य or device off
+	 * समय and the समय needed to turn the करोमुख्य on is the maximum
+	 * theoretical समय this करोमुख्य can spend in the "off" state.
 	 */
-	genpd->max_off_time_ns = min_off_time_ns -
-		genpd->states[state].power_on_latency_ns;
-	return true;
-}
+	genpd->max_off_समय_ns = min_off_समय_ns -
+		genpd->states[state].घातer_on_latency_ns;
+	वापस true;
+पूर्ण
 
 /**
- * _default_power_down_ok - Default generic PM domain power off governor routine.
- * @pd: PM domain to check.
+ * _शेष_घातer_करोwn_ok - Default generic PM करोमुख्य घातer off governor routine.
+ * @pd: PM करोमुख्य to check.
  *
- * This routine must be executed under the PM domain's lock.
+ * This routine must be executed under the PM करोमुख्य's lock.
  */
-static bool _default_power_down_ok(struct dev_pm_domain *pd, ktime_t now)
-{
-	struct generic_pm_domain *genpd = pd_to_genpd(pd);
-	int state_idx = genpd->state_count - 1;
-	struct gpd_link *link;
+अटल bool _शेष_घातer_करोwn_ok(काष्ठा dev_pm_करोमुख्य *pd, kसमय_प्रकार now)
+अणु
+	काष्ठा generic_pm_करोमुख्य *genpd = pd_to_genpd(pd);
+	पूर्णांक state_idx = genpd->state_count - 1;
+	काष्ठा gpd_link *link;
 
 	/*
 	 * Find the next wakeup from devices that can determine their own wakeup
-	 * to find when the domain would wakeup and do it for every device down
-	 * the hierarchy. It is not worth while to sleep if the state's residency
+	 * to find when the करोमुख्य would wakeup and करो it क्रम every device करोwn
+	 * the hierarchy. It is not worth जबतक to sleep अगर the state's residency
 	 * cannot be met.
 	 */
-	update_domain_next_wakeup(genpd, now);
-	if ((genpd->flags & GENPD_FLAG_MIN_RESIDENCY) && (genpd->next_wakeup != KTIME_MAX)) {
-		/* Let's find out the deepest domain idle state, the devices prefer */
-		while (state_idx >= 0) {
-			if (next_wakeup_allows_state(genpd, state_idx, now)) {
-				genpd->max_off_time_changed = true;
-				break;
-			}
+	update_करोमुख्य_next_wakeup(genpd, now);
+	अगर ((genpd->flags & GENPD_FLAG_MIN_RESIDENCY) && (genpd->next_wakeup != KTIME_MAX)) अणु
+		/* Let's find out the deepest करोमुख्य idle state, the devices prefer */
+		जबतक (state_idx >= 0) अणु
+			अगर (next_wakeup_allows_state(genpd, state_idx, now)) अणु
+				genpd->max_off_समय_changed = true;
+				अवरोध;
+			पूर्ण
 			state_idx--;
-		}
+		पूर्ण
 
-		if (state_idx < 0) {
+		अगर (state_idx < 0) अणु
 			state_idx = 0;
-			genpd->cached_power_down_ok = false;
-			goto done;
-		}
-	}
+			genpd->cached_घातer_करोwn_ok = false;
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-	if (!genpd->max_off_time_changed) {
-		genpd->state_idx = genpd->cached_power_down_state_idx;
-		return genpd->cached_power_down_ok;
-	}
+	अगर (!genpd->max_off_समय_changed) अणु
+		genpd->state_idx = genpd->cached_घातer_करोwn_state_idx;
+		वापस genpd->cached_घातer_करोwn_ok;
+	पूर्ण
 
 	/*
-	 * We have to invalidate the cached results for the parents, so
-	 * use the observation that default_power_down_ok() is not
-	 * going to be called for any parent until this instance
-	 * returns.
+	 * We have to invalidate the cached results क्रम the parents, so
+	 * use the observation that शेष_घातer_करोwn_ok() is not
+	 * going to be called क्रम any parent until this instance
+	 * वापसs.
 	 */
-	list_for_each_entry(link, &genpd->child_links, child_node)
-		link->parent->max_off_time_changed = true;
+	list_क्रम_each_entry(link, &genpd->child_links, child_node)
+		link->parent->max_off_समय_changed = true;
 
-	genpd->max_off_time_ns = -1;
-	genpd->max_off_time_changed = false;
-	genpd->cached_power_down_ok = true;
+	genpd->max_off_समय_ns = -1;
+	genpd->max_off_समय_changed = false;
+	genpd->cached_घातer_करोwn_ok = true;
 
 	/*
-	 * Find a state to power down to, starting from the state
+	 * Find a state to घातer करोwn to, starting from the state
 	 * determined by the next wakeup.
 	 */
-	while (!__default_power_down_ok(pd, state_idx)) {
-		if (state_idx == 0) {
-			genpd->cached_power_down_ok = false;
-			break;
-		}
+	जबतक (!__शेष_घातer_करोwn_ok(pd, state_idx)) अणु
+		अगर (state_idx == 0) अणु
+			genpd->cached_घातer_करोwn_ok = false;
+			अवरोध;
+		पूर्ण
 		state_idx--;
-	}
+	पूर्ण
 
-done:
+करोne:
 	genpd->state_idx = state_idx;
-	genpd->cached_power_down_state_idx = genpd->state_idx;
-	return genpd->cached_power_down_ok;
-}
+	genpd->cached_घातer_करोwn_state_idx = genpd->state_idx;
+	वापस genpd->cached_घातer_करोwn_ok;
+पूर्ण
 
-static bool default_power_down_ok(struct dev_pm_domain *pd)
-{
-	return _default_power_down_ok(pd, ktime_get());
-}
+अटल bool शेष_घातer_करोwn_ok(काष्ठा dev_pm_करोमुख्य *pd)
+अणु
+	वापस _शेष_घातer_करोwn_ok(pd, kसमय_get());
+पूर्ण
 
-static bool always_on_power_down_ok(struct dev_pm_domain *domain)
-{
-	return false;
-}
+अटल bool always_on_घातer_करोwn_ok(काष्ठा dev_pm_करोमुख्य *करोमुख्य)
+अणु
+	वापस false;
+पूर्ण
 
-#ifdef CONFIG_CPU_IDLE
-static bool cpu_power_down_ok(struct dev_pm_domain *pd)
-{
-	struct generic_pm_domain *genpd = pd_to_genpd(pd);
-	struct cpuidle_device *dev;
-	ktime_t domain_wakeup, next_hrtimer;
-	ktime_t now = ktime_get();
+#अगर_घोषित CONFIG_CPU_IDLE
+अटल bool cpu_घातer_करोwn_ok(काष्ठा dev_pm_करोमुख्य *pd)
+अणु
+	काष्ठा generic_pm_करोमुख्य *genpd = pd_to_genpd(pd);
+	काष्ठा cpuidle_device *dev;
+	kसमय_प्रकार करोमुख्य_wakeup, next_hrसमयr;
+	kसमय_प्रकार now = kसमय_get();
 	s64 idle_duration_ns;
-	int cpu, i;
+	पूर्णांक cpu, i;
 
-	/* Validate dev PM QoS constraints. */
-	if (!_default_power_down_ok(pd, now))
-		return false;
+	/* Validate dev PM QoS स्थिरraपूर्णांकs. */
+	अगर (!_शेष_घातer_करोwn_ok(pd, now))
+		वापस false;
 
-	if (!(genpd->flags & GENPD_FLAG_CPU_DOMAIN))
-		return true;
+	अगर (!(genpd->flags & GENPD_FLAG_CPU_DOMAIN))
+		वापस true;
 
 	/*
-	 * Find the next wakeup for any of the online CPUs within the PM domain
-	 * and its subdomains. Note, we only need the genpd->cpus, as it already
-	 * contains a mask of all CPUs from subdomains.
+	 * Find the next wakeup क्रम any of the online CPUs within the PM करोमुख्य
+	 * and its subकरोमुख्यs. Note, we only need the genpd->cpus, as it alपढ़ोy
+	 * contains a mask of all CPUs from subकरोमुख्यs.
 	 */
-	domain_wakeup = ktime_set(KTIME_SEC_MAX, 0);
-	for_each_cpu_and(cpu, genpd->cpus, cpu_online_mask) {
+	करोमुख्य_wakeup = kसमय_set(KTIME_SEC_MAX, 0);
+	क्रम_each_cpu_and(cpu, genpd->cpus, cpu_online_mask) अणु
 		dev = per_cpu(cpuidle_devices, cpu);
-		if (dev) {
-			next_hrtimer = READ_ONCE(dev->next_hrtimer);
-			if (ktime_before(next_hrtimer, domain_wakeup))
-				domain_wakeup = next_hrtimer;
-		}
-	}
+		अगर (dev) अणु
+			next_hrसमयr = READ_ONCE(dev->next_hrसमयr);
+			अगर (kसमय_beक्रमe(next_hrसमयr, करोमुख्य_wakeup))
+				करोमुख्य_wakeup = next_hrसमयr;
+		पूर्ण
+	पूर्ण
 
 	/* The minimum idle duration is from now - until the next wakeup. */
-	idle_duration_ns = ktime_to_ns(ktime_sub(domain_wakeup, now));
-	if (idle_duration_ns <= 0)
-		return false;
+	idle_duration_ns = kसमय_प्रकारo_ns(kसमय_sub(करोमुख्य_wakeup, now));
+	अगर (idle_duration_ns <= 0)
+		वापस false;
 
 	/*
 	 * Find the deepest idle state that has its residency value satisfied
-	 * and by also taking into account the power off latency for the state.
-	 * Start at the state picked by the dev PM QoS constraint validation.
+	 * and by also taking पूर्णांकo account the घातer off latency क्रम the state.
+	 * Start at the state picked by the dev PM QoS स्थिरraपूर्णांक validation.
 	 */
 	i = genpd->state_idx;
-	do {
-		if (idle_duration_ns >= (genpd->states[i].residency_ns +
-		    genpd->states[i].power_off_latency_ns)) {
+	करो अणु
+		अगर (idle_duration_ns >= (genpd->states[i].residency_ns +
+		    genpd->states[i].घातer_off_latency_ns)) अणु
 			genpd->state_idx = i;
-			return true;
-		}
-	} while (--i >= 0);
+			वापस true;
+		पूर्ण
+	पूर्ण जबतक (--i >= 0);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-struct dev_power_governor pm_domain_cpu_gov = {
-	.suspend_ok = default_suspend_ok,
-	.power_down_ok = cpu_power_down_ok,
-};
-#endif
+काष्ठा dev_घातer_governor pm_करोमुख्य_cpu_gov = अणु
+	.suspend_ok = शेष_suspend_ok,
+	.घातer_करोwn_ok = cpu_घातer_करोwn_ok,
+पूर्ण;
+#पूर्ण_अगर
 
-struct dev_power_governor simple_qos_governor = {
-	.suspend_ok = default_suspend_ok,
-	.power_down_ok = default_power_down_ok,
-};
+काष्ठा dev_घातer_governor simple_qos_governor = अणु
+	.suspend_ok = शेष_suspend_ok,
+	.घातer_करोwn_ok = शेष_घातer_करोwn_ok,
+पूर्ण;
 
 /**
  * pm_genpd_gov_always_on - A governor implementing an always-on policy
  */
-struct dev_power_governor pm_domain_always_on_gov = {
-	.power_down_ok = always_on_power_down_ok,
-	.suspend_ok = default_suspend_ok,
-};
+काष्ठा dev_घातer_governor pm_करोमुख्य_always_on_gov = अणु
+	.घातer_करोwn_ok = always_on_घातer_करोwn_ok,
+	.suspend_ok = शेष_suspend_ok,
+पूर्ण;

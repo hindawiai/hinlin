@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_PERSONALITY_H
-#define _UAPI_LINUX_PERSONALITY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_PERSONALITY_H
+#घोषणा _UAPI_LINUX_PERSONALITY_H
 
 
 /*
- * Flags for bug emulation.
+ * Flags क्रम bug emulation.
  *
  * These occupy the top three bytes.
  */
-enum {
+क्रमागत अणु
 	UNAME26	=               0x0020000,
-	ADDR_NO_RANDOMIZE = 	0x0040000,	/* disable randomization of VA space */
-	FDPIC_FUNCPTRS =	0x0080000,	/* userspace function ptrs point to descriptors
-						 * (signal handling)
+	ADDR_NO_RANDOMIZE = 	0x0040000,	/* disable अक्रमomization of VA space */
+	FDPIC_FUNCPTRS =	0x0080000,	/* userspace function ptrs poपूर्णांक to descriptors
+						 * (संकेत handling)
 						 */
 	MMAP_PAGE_ZERO =	0x0100000,
 	ADDR_COMPAT_LAYOUT =	0x0200000,
@@ -22,13 +23,13 @@ enum {
 	WHOLE_SECONDS =		0x2000000,
 	STICKY_TIMEOUTS	=	0x4000000,
 	ADDR_LIMIT_3GB = 	0x8000000,
-};
+पूर्ण;
 
 /*
  * Security-relevant compatibility flags that must be
  * cleared upon setuid or setgid exec:
  */
-#define PER_CLEAR_ON_SETID (READ_IMPLIES_EXEC  | \
+#घोषणा PER_CLEAR_ON_SETID (READ_IMPLIES_EXEC  | \
 			    ADDR_NO_RANDOMIZE  | \
 			    ADDR_COMPAT_LAYOUT | \
 			    MMAP_PAGE_ZERO)
@@ -36,10 +37,10 @@ enum {
 /*
  * Personality types.
  *
- * These go in the low byte.  Avoid using the top bit, it will
- * conflict with error returns.
+ * These go in the low byte.  Aव्योम using the top bit, it will
+ * conflict with error वापसs.
  */
-enum {
+क्रमागत अणु
 	PER_LINUX =		0x0000,
 	PER_LINUX_32BIT =	0x0000 | ADDR_LIMIT_32BIT,
 	PER_LINUX_FDPIC =	0x0000 | FDPIC_FUNCPTRS,
@@ -64,7 +65,7 @@ enum {
 	PER_OSF4 =		0x000f,			 /* OSF/1 v4 */
 	PER_HPUX =		0x0010,
 	PER_MASK =		0x00ff,
-};
+पूर्ण;
 
 
-#endif /* _UAPI_LINUX_PERSONALITY_H */
+#पूर्ण_अगर /* _UAPI_LINUX_PERSONALITY_H */

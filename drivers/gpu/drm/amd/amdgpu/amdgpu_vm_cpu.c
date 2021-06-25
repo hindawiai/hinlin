@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,19 +21,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "amdgpu_vm.h"
-#include "amdgpu_object.h"
-#include "amdgpu_trace.h"
+#समावेश "amdgpu_vm.h"
+#समावेश "amdgpu_object.h"
+#समावेश "amdgpu_trace.h"
 
 /**
  * amdgpu_vm_cpu_map_table - make sure new PDs/PTs are kmapped
  *
  * @table: newly allocated or validated PD/PT
  */
-static int amdgpu_vm_cpu_map_table(struct amdgpu_bo *table)
-{
-	return amdgpu_bo_kmap(table, NULL);
-}
+अटल पूर्णांक amdgpu_vm_cpu_map_table(काष्ठा amdgpu_bo *table)
+अणु
+	वापस amdgpu_bo_kmap(table, शून्य);
+पूर्ण
 
 /**
  * amdgpu_vm_cpu_prepare - prepare page table update with the CPU
@@ -42,17 +43,17 @@ static int amdgpu_vm_cpu_map_table(struct amdgpu_bo *table)
  * @sync_mode: synchronization mode
  *
  * Returns:
- * Negativ errno, 0 for success.
+ * Negativ त्रुटि_सं, 0 क्रम success.
  */
-static int amdgpu_vm_cpu_prepare(struct amdgpu_vm_update_params *p,
-				 struct dma_resv *resv,
-				 enum amdgpu_sync_mode sync_mode)
-{
-	if (!resv)
-		return 0;
+अटल पूर्णांक amdgpu_vm_cpu_prepare(काष्ठा amdgpu_vm_update_params *p,
+				 काष्ठा dma_resv *resv,
+				 क्रमागत amdgpu_sync_mode sync_mode)
+अणु
+	अगर (!resv)
+		वापस 0;
 
-	return amdgpu_bo_sync_wait_resv(p->adev, resv, sync_mode, p->vm, true);
-}
+	वापस amdgpu_bo_sync_रुको_resv(p->adev, resv, sync_mode, p->vm, true);
+पूर्ण
 
 /**
  * amdgpu_vm_cpu_update - helper to update page tables via CPU
@@ -60,42 +61,42 @@ static int amdgpu_vm_cpu_prepare(struct amdgpu_vm_update_params *p,
  * @p: see amdgpu_vm_update_params definition
  * @bo: PD/PT to update
  * @pe: byte offset of the PDE/PTE, relative to start of PDB/PTB
- * @addr: dst addr to write into pe
+ * @addr: dst addr to ग_लिखो पूर्णांकo pe
  * @count: number of page entries to update
  * @incr: increase next addr by incr bytes
  * @flags: hw access flags
  *
  * Write count number of PT/PD entries directly.
  */
-static int amdgpu_vm_cpu_update(struct amdgpu_vm_update_params *p,
-				struct amdgpu_bo *bo, uint64_t pe,
-				uint64_t addr, unsigned count, uint32_t incr,
-				uint64_t flags)
-{
-	unsigned int i;
-	uint64_t value;
-	int r;
+अटल पूर्णांक amdgpu_vm_cpu_update(काष्ठा amdgpu_vm_update_params *p,
+				काष्ठा amdgpu_bo *bo, uपूर्णांक64_t pe,
+				uपूर्णांक64_t addr, अचिन्हित count, uपूर्णांक32_t incr,
+				uपूर्णांक64_t flags)
+अणु
+	अचिन्हित पूर्णांक i;
+	uपूर्णांक64_t value;
+	पूर्णांक r;
 
-	if (bo->tbo.moving) {
-		r = dma_fence_wait(bo->tbo.moving, true);
-		if (r)
-			return r;
-	}
+	अगर (bo->tbo.moving) अणु
+		r = dma_fence_रुको(bo->tbo.moving, true);
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	pe += (unsigned long)amdgpu_bo_kptr(bo);
+	pe += (अचिन्हित दीर्घ)amdgpu_bo_kptr(bo);
 
 	trace_amdgpu_vm_set_ptes(pe, addr, count, incr, flags, p->immediate);
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		value = p->pages_addr ?
 			amdgpu_vm_map_gart(p->pages_addr, addr) :
 			addr;
-		amdgpu_gmc_set_pte_pde(p->adev, (void *)(uintptr_t)pe,
+		amdgpu_gmc_set_pte_pde(p->adev, (व्योम *)(uपूर्णांकptr_t)pe,
 				       i, value, flags);
 		addr += incr;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * amdgpu_vm_cpu_commit - commit page table update to the HW
@@ -105,18 +106,18 @@ static int amdgpu_vm_cpu_update(struct amdgpu_vm_update_params *p,
  *
  * Make sure that the hardware sees the page table updates.
  */
-static int amdgpu_vm_cpu_commit(struct amdgpu_vm_update_params *p,
-				struct dma_fence **fence)
-{
+अटल पूर्णांक amdgpu_vm_cpu_commit(काष्ठा amdgpu_vm_update_params *p,
+				काष्ठा dma_fence **fence)
+अणु
 	/* Flush HDP */
 	mb();
-	amdgpu_asic_flush_hdp(p->adev, NULL);
-	return 0;
-}
+	amdgpu_asic_flush_hdp(p->adev, शून्य);
+	वापस 0;
+पूर्ण
 
-const struct amdgpu_vm_update_funcs amdgpu_vm_cpu_funcs = {
+स्थिर काष्ठा amdgpu_vm_update_funcs amdgpu_vm_cpu_funcs = अणु
 	.map_table = amdgpu_vm_cpu_map_table,
 	.prepare = amdgpu_vm_cpu_prepare,
 	.update = amdgpu_vm_cpu_update,
 	.commit = amdgpu_vm_cpu_commit
-};
+पूर्ण;

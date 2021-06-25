@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2016 NextThing Co
  * Copyright (C) 2016-2019 Bootlin
@@ -6,102 +7,102 @@
  * Author: Maxime Ripard <maxime.ripard@bootlin.com>
  */
 
-#include <linux/device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-mc.h>
-#include <media/videobuf2-v4l2.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-mc.h>
+#समावेश <media/videobuf2-v4l2.h>
 
-#include "sun4i_csi.h"
+#समावेश "sun4i_csi.h"
 
-#define CSI_DEFAULT_WIDTH	640
-#define CSI_DEFAULT_HEIGHT	480
+#घोषणा CSI_DEFAULT_WIDTH	640
+#घोषणा CSI_DEFAULT_HEIGHT	480
 
-static const struct sun4i_csi_format sun4i_csi_formats[] = {
-	/* YUV422 inputs */
-	{
+अटल स्थिर काष्ठा sun4i_csi_क्रमmat sun4i_csi_क्रमmats[] = अणु
+	/* YUV422 inमाला_दो */
+	अणु
 		.mbus		= MEDIA_BUS_FMT_YUYV8_2X8,
 		.fourcc		= V4L2_PIX_FMT_YUV420M,
 		.input		= CSI_INPUT_YUV,
 		.output		= CSI_OUTPUT_YUV_420_PLANAR,
 		.num_planes	= 3,
-		.bpp		= { 8, 8, 8 },
+		.bpp		= अणु 8, 8, 8 पूर्ण,
 		.hsub		= 2,
 		.vsub		= 2,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-const struct sun4i_csi_format *sun4i_csi_find_format(const u32 *fourcc,
-						     const u32 *mbus)
-{
-	unsigned int i;
+स्थिर काष्ठा sun4i_csi_क्रमmat *sun4i_csi_find_क्रमmat(स्थिर u32 *fourcc,
+						     स्थिर u32 *mbus)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(sun4i_csi_formats); i++) {
-		if (fourcc && *fourcc != sun4i_csi_formats[i].fourcc)
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(sun4i_csi_क्रमmats); i++) अणु
+		अगर (fourcc && *fourcc != sun4i_csi_क्रमmats[i].fourcc)
+			जारी;
 
-		if (mbus && *mbus != sun4i_csi_formats[i].mbus)
-			continue;
+		अगर (mbus && *mbus != sun4i_csi_क्रमmats[i].mbus)
+			जारी;
 
-		return &sun4i_csi_formats[i];
-	}
+		वापस &sun4i_csi_क्रमmats[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int sun4i_csi_querycap(struct file *file, void *priv,
-			      struct v4l2_capability *cap)
-{
-	struct sun4i_csi *csi = video_drvdata(file);
+अटल पूर्णांक sun4i_csi_querycap(काष्ठा file *file, व्योम *priv,
+			      काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा sun4i_csi *csi = video_drvdata(file);
 
-	strscpy(cap->driver, KBUILD_MODNAME, sizeof(cap->driver));
-	strscpy(cap->card, "sun4i-csi", sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info), "platform:%s",
+	strscpy(cap->driver, KBUILD_MODNAME, माप(cap->driver));
+	strscpy(cap->card, "sun4i-csi", माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info), "platform:%s",
 		 dev_name(csi->dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_csi_enum_input(struct file *file, void *priv,
-				struct v4l2_input *inp)
-{
-	if (inp->index != 0)
-		return -EINVAL;
+अटल पूर्णांक sun4i_csi_क्रमागत_input(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_input *inp)
+अणु
+	अगर (inp->index != 0)
+		वापस -EINVAL;
 
 	inp->type = V4L2_INPUT_TYPE_CAMERA;
-	strscpy(inp->name, "Camera", sizeof(inp->name));
+	strscpy(inp->name, "Camera", माप(inp->name));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_csi_g_input(struct file *file, void *fh,
-			     unsigned int *i)
-{
+अटल पूर्णांक sun4i_csi_g_input(काष्ठा file *file, व्योम *fh,
+			     अचिन्हित पूर्णांक *i)
+अणु
 	*i = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_csi_s_input(struct file *file, void *fh,
-			     unsigned int i)
-{
-	if (i != 0)
-		return -EINVAL;
+अटल पूर्णांक sun4i_csi_s_input(काष्ठा file *file, व्योम *fh,
+			     अचिन्हित पूर्णांक i)
+अणु
+	अगर (i != 0)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void _sun4i_csi_try_fmt(struct sun4i_csi *csi,
-			       struct v4l2_pix_format_mplane *pix)
-{
-	const struct sun4i_csi_format *_fmt;
-	unsigned int height, width;
-	unsigned int i;
+अटल व्योम _sun4i_csi_try_fmt(काष्ठा sun4i_csi *csi,
+			       काष्ठा v4l2_pix_क्रमmat_mplane *pix)
+अणु
+	स्थिर काष्ठा sun4i_csi_क्रमmat *_fmt;
+	अचिन्हित पूर्णांक height, width;
+	अचिन्हित पूर्णांक i;
 
-	_fmt = sun4i_csi_find_format(&pix->pixelformat, NULL);
-	if (!_fmt)
-		_fmt = &sun4i_csi_formats[0];
+	_fmt = sun4i_csi_find_क्रमmat(&pix->pixelक्रमmat, शून्य);
+	अगर (!_fmt)
+		_fmt = &sun4i_csi_क्रमmats[0];
 
 	pix->field = V4L2_FIELD_NONE;
 	pix->colorspace = V4L2_COLORSPACE_SRGB;
@@ -111,7 +112,7 @@ static void _sun4i_csi_try_fmt(struct sun4i_csi *csi,
 							  pix->ycbcr_enc);
 
 	pix->num_planes = _fmt->num_planes;
-	pix->pixelformat = _fmt->fourcc;
+	pix->pixelक्रमmat = _fmt->fourcc;
 
 	/* Align the width and height on the subsampling */
 	width = ALIGN(pix->width, _fmt->hsub);
@@ -121,68 +122,68 @@ static void _sun4i_csi_try_fmt(struct sun4i_csi *csi,
 	pix->width = clamp(width, _fmt->hsub, CSI_MAX_WIDTH);
 	pix->height = clamp(height, _fmt->vsub, CSI_MAX_HEIGHT);
 
-	for (i = 0; i < _fmt->num_planes; i++) {
-		unsigned int hsub = i > 0 ? _fmt->hsub : 1;
-		unsigned int vsub = i > 0 ? _fmt->vsub : 1;
-		unsigned int bpl;
+	क्रम (i = 0; i < _fmt->num_planes; i++) अणु
+		अचिन्हित पूर्णांक hsub = i > 0 ? _fmt->hsub : 1;
+		अचिन्हित पूर्णांक vsub = i > 0 ? _fmt->vsub : 1;
+		अचिन्हित पूर्णांक bpl;
 
 		bpl = pix->width / hsub * _fmt->bpp[i] / 8;
 		pix->plane_fmt[i].bytesperline = bpl;
 		pix->plane_fmt[i].sizeimage = bpl * pix->height / vsub;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sun4i_csi_try_fmt_vid_cap(struct file *file, void *priv,
-				     struct v4l2_format *f)
-{
-	struct sun4i_csi *csi = video_drvdata(file);
+अटल पूर्णांक sun4i_csi_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				     काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा sun4i_csi *csi = video_drvdata(file);
 
 	_sun4i_csi_try_fmt(csi, &f->fmt.pix_mp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_csi_s_fmt_vid_cap(struct file *file, void *priv,
-				   struct v4l2_format *f)
-{
-	struct sun4i_csi *csi = video_drvdata(file);
+अटल पूर्णांक sun4i_csi_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा sun4i_csi *csi = video_drvdata(file);
 
 	_sun4i_csi_try_fmt(csi, &f->fmt.pix_mp);
 	csi->fmt = f->fmt.pix_mp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_csi_g_fmt_vid_cap(struct file *file, void *priv,
-				   struct v4l2_format *f)
-{
-	struct sun4i_csi *csi = video_drvdata(file);
+अटल पूर्णांक sun4i_csi_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा sun4i_csi *csi = video_drvdata(file);
 
 	f->fmt.pix_mp = csi->fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_csi_enum_fmt_vid_cap(struct file *file, void *priv,
-				      struct v4l2_fmtdesc *f)
-{
-	if (f->index >= ARRAY_SIZE(sun4i_csi_formats))
-		return -EINVAL;
+अटल पूर्णांक sun4i_csi_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				      काष्ठा v4l2_fmtdesc *f)
+अणु
+	अगर (f->index >= ARRAY_SIZE(sun4i_csi_क्रमmats))
+		वापस -EINVAL;
 
-	f->pixelformat = sun4i_csi_formats[f->index].fourcc;
+	f->pixelक्रमmat = sun4i_csi_क्रमmats[f->index].fourcc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ioctl_ops sun4i_csi_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops sun4i_csi_ioctl_ops = अणु
 	.vidioc_querycap		= sun4i_csi_querycap,
 
-	.vidioc_enum_fmt_vid_cap	= sun4i_csi_enum_fmt_vid_cap,
+	.vidioc_क्रमागत_fmt_vid_cap	= sun4i_csi_क्रमागत_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap_mplane	= sun4i_csi_g_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap_mplane	= sun4i_csi_s_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap_mplane	= sun4i_csi_try_fmt_vid_cap,
 
-	.vidioc_enum_input		= sun4i_csi_enum_input,
+	.vidioc_क्रमागत_input		= sun4i_csi_क्रमागत_input,
 	.vidioc_g_input			= sun4i_csi_g_input,
 	.vidioc_s_input			= sun4i_csi_s_input,
 
@@ -195,69 +196,69 @@ static const struct v4l2_ioctl_ops sun4i_csi_ioctl_ops = {
 	.vidioc_prepare_buf		= vb2_ioctl_prepare_buf,
 	.vidioc_streamon		= vb2_ioctl_streamon,
 	.vidioc_streamoff		= vb2_ioctl_streamoff,
-};
+पूर्ण;
 
-static int sun4i_csi_open(struct file *file)
-{
-	struct sun4i_csi *csi = video_drvdata(file);
-	int ret;
+अटल पूर्णांक sun4i_csi_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा sun4i_csi *csi = video_drvdata(file);
+	पूर्णांक ret;
 
-	ret = mutex_lock_interruptible(&csi->lock);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&csi->lock);
+	अगर (ret)
+		वापस ret;
 
-	ret = pm_runtime_get_sync(csi->dev);
-	if (ret < 0)
-		goto err_pm_put;
+	ret = pm_runसमय_get_sync(csi->dev);
+	अगर (ret < 0)
+		जाओ err_pm_put;
 
 	ret = v4l2_pipeline_pm_get(&csi->vdev.entity);
-	if (ret)
-		goto err_pm_put;
+	अगर (ret)
+		जाओ err_pm_put;
 
-	ret = v4l2_fh_open(file);
-	if (ret)
-		goto err_pipeline_pm_put;
+	ret = v4l2_fh_खोलो(file);
+	अगर (ret)
+		जाओ err_pipeline_pm_put;
 
 	mutex_unlock(&csi->lock);
 
-	return 0;
+	वापस 0;
 
 err_pipeline_pm_put:
 	v4l2_pipeline_pm_put(&csi->vdev.entity);
 
 err_pm_put:
-	pm_runtime_put(csi->dev);
+	pm_runसमय_put(csi->dev);
 	mutex_unlock(&csi->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sun4i_csi_release(struct file *file)
-{
-	struct sun4i_csi *csi = video_drvdata(file);
+अटल पूर्णांक sun4i_csi_release(काष्ठा file *file)
+अणु
+	काष्ठा sun4i_csi *csi = video_drvdata(file);
 
 	mutex_lock(&csi->lock);
 
-	_vb2_fop_release(file, NULL);
+	_vb2_fop_release(file, शून्य);
 
 	v4l2_pipeline_pm_put(&csi->vdev.entity);
-	pm_runtime_put(csi->dev);
+	pm_runसमय_put(csi->dev);
 
 	mutex_unlock(&csi->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_file_operations sun4i_csi_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations sun4i_csi_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= sun4i_csi_open,
+	.खोलो		= sun4i_csi_खोलो,
 	.release	= sun4i_csi_release,
 	.unlocked_ioctl	= video_ioctl2,
 	.poll		= vb2_fop_poll,
 	.mmap		= vb2_fop_mmap,
-};
+पूर्ण;
 
-static const struct v4l2_mbus_framefmt sun4i_csi_pad_fmt_default = {
+अटल स्थिर काष्ठा v4l2_mbus_framefmt sun4i_csi_pad_fmt_शेष = अणु
 	.width = CSI_DEFAULT_WIDTH,
 	.height = CSI_DEFAULT_HEIGHT,
 	.code = MEDIA_BUS_FMT_YUYV8_2X8,
@@ -266,115 +267,115 @@ static const struct v4l2_mbus_framefmt sun4i_csi_pad_fmt_default = {
 	.ycbcr_enc = V4L2_YCBCR_ENC_DEFAULT,
 	.quantization = V4L2_QUANTIZATION_DEFAULT,
 	.xfer_func = V4L2_XFER_FUNC_DEFAULT,
-};
+पूर्ण;
 
-static int sun4i_csi_subdev_init_cfg(struct v4l2_subdev *subdev,
-				     struct v4l2_subdev_pad_config *cfg)
-{
-	struct v4l2_mbus_framefmt *fmt;
+अटल पूर्णांक sun4i_csi_subdev_init_cfg(काष्ठा v4l2_subdev *subdev,
+				     काष्ठा v4l2_subdev_pad_config *cfg)
+अणु
+	काष्ठा v4l2_mbus_framefmt *fmt;
 
-	fmt = v4l2_subdev_get_try_format(subdev, cfg, CSI_SUBDEV_SINK);
-	*fmt = sun4i_csi_pad_fmt_default;
+	fmt = v4l2_subdev_get_try_क्रमmat(subdev, cfg, CSI_SUBDEV_SINK);
+	*fmt = sun4i_csi_pad_fmt_शेष;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_csi_subdev_get_fmt(struct v4l2_subdev *subdev,
-				    struct v4l2_subdev_pad_config *cfg,
-				    struct v4l2_subdev_format *fmt)
-{
-	struct sun4i_csi *csi = container_of(subdev, struct sun4i_csi, subdev);
-	struct v4l2_mbus_framefmt *subdev_fmt;
+अटल पूर्णांक sun4i_csi_subdev_get_fmt(काष्ठा v4l2_subdev *subdev,
+				    काष्ठा v4l2_subdev_pad_config *cfg,
+				    काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा sun4i_csi *csi = container_of(subdev, काष्ठा sun4i_csi, subdev);
+	काष्ठा v4l2_mbus_framefmt *subdev_fmt;
 
-	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY)
-		subdev_fmt = v4l2_subdev_get_try_format(subdev, cfg, fmt->pad);
-	else
+	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY)
+		subdev_fmt = v4l2_subdev_get_try_क्रमmat(subdev, cfg, fmt->pad);
+	अन्यथा
 		subdev_fmt = &csi->subdev_fmt;
 
-	fmt->format = *subdev_fmt;
+	fmt->क्रमmat = *subdev_fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_csi_subdev_set_fmt(struct v4l2_subdev *subdev,
-				    struct v4l2_subdev_pad_config *cfg,
-				    struct v4l2_subdev_format *fmt)
-{
-	struct sun4i_csi *csi = container_of(subdev, struct sun4i_csi, subdev);
-	struct v4l2_mbus_framefmt *subdev_fmt;
+अटल पूर्णांक sun4i_csi_subdev_set_fmt(काष्ठा v4l2_subdev *subdev,
+				    काष्ठा v4l2_subdev_pad_config *cfg,
+				    काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा sun4i_csi *csi = container_of(subdev, काष्ठा sun4i_csi, subdev);
+	काष्ठा v4l2_mbus_framefmt *subdev_fmt;
 
-	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY)
-		subdev_fmt = v4l2_subdev_get_try_format(subdev, cfg, fmt->pad);
-	else
+	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY)
+		subdev_fmt = v4l2_subdev_get_try_क्रमmat(subdev, cfg, fmt->pad);
+	अन्यथा
 		subdev_fmt = &csi->subdev_fmt;
 
-	/* We can only set the format on the sink pad */
-	if (fmt->pad == CSI_SUBDEV_SINK) {
+	/* We can only set the क्रमmat on the sink pad */
+	अगर (fmt->pad == CSI_SUBDEV_SINK) अणु
 		/* It's the sink, only allow changing the frame size */
-		subdev_fmt->width = fmt->format.width;
-		subdev_fmt->height = fmt->format.height;
-		subdev_fmt->code = fmt->format.code;
-	}
+		subdev_fmt->width = fmt->क्रमmat.width;
+		subdev_fmt->height = fmt->क्रमmat.height;
+		subdev_fmt->code = fmt->क्रमmat.code;
+	पूर्ण
 
-	fmt->format = *subdev_fmt;
+	fmt->क्रमmat = *subdev_fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-sun4i_csi_subdev_enum_mbus_code(struct v4l2_subdev *subdev,
-				struct v4l2_subdev_pad_config *cfg,
-				struct v4l2_subdev_mbus_code_enum *mbus)
-{
-	if (mbus->index >= ARRAY_SIZE(sun4i_csi_formats))
-		return -EINVAL;
+अटल पूर्णांक
+sun4i_csi_subdev_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
+				काष्ठा v4l2_subdev_pad_config *cfg,
+				काष्ठा v4l2_subdev_mbus_code_क्रमागत *mbus)
+अणु
+	अगर (mbus->index >= ARRAY_SIZE(sun4i_csi_क्रमmats))
+		वापस -EINVAL;
 
-	mbus->code = sun4i_csi_formats[mbus->index].mbus;
+	mbus->code = sun4i_csi_क्रमmats[mbus->index].mbus;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_pad_ops sun4i_csi_subdev_pad_ops = {
-	.link_validate	= v4l2_subdev_link_validate_default,
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops sun4i_csi_subdev_pad_ops = अणु
+	.link_validate	= v4l2_subdev_link_validate_शेष,
 	.init_cfg	= sun4i_csi_subdev_init_cfg,
 	.get_fmt	= sun4i_csi_subdev_get_fmt,
 	.set_fmt	= sun4i_csi_subdev_set_fmt,
-	.enum_mbus_code	= sun4i_csi_subdev_enum_mbus_code,
-};
+	.क्रमागत_mbus_code	= sun4i_csi_subdev_क्रमागत_mbus_code,
+पूर्ण;
 
-const struct v4l2_subdev_ops sun4i_csi_subdev_ops = {
+स्थिर काष्ठा v4l2_subdev_ops sun4i_csi_subdev_ops = अणु
 	.pad = &sun4i_csi_subdev_pad_ops,
-};
+पूर्ण;
 
-int sun4i_csi_v4l2_register(struct sun4i_csi *csi)
-{
-	struct video_device *vdev = &csi->vdev;
-	int ret;
+पूर्णांक sun4i_csi_v4l2_रेजिस्टर(काष्ठा sun4i_csi *csi)
+अणु
+	काष्ठा video_device *vdev = &csi->vdev;
+	पूर्णांक ret;
 
 	vdev->device_caps = V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_STREAMING;
 	vdev->v4l2_dev = &csi->v4l;
 	vdev->queue = &csi->queue;
-	strscpy(vdev->name, KBUILD_MODNAME, sizeof(vdev->name));
+	strscpy(vdev->name, KBUILD_MODNAME, माप(vdev->name));
 	vdev->release = video_device_release_empty;
 	vdev->lock = &csi->lock;
 
-	/* Set a default format */
-	csi->fmt.pixelformat = sun4i_csi_formats[0].fourcc;
+	/* Set a शेष क्रमmat */
+	csi->fmt.pixelक्रमmat = sun4i_csi_क्रमmats[0].fourcc;
 	csi->fmt.width = CSI_DEFAULT_WIDTH;
 	csi->fmt.height = CSI_DEFAULT_HEIGHT;
 	_sun4i_csi_try_fmt(csi, &csi->fmt);
-	csi->subdev_fmt = sun4i_csi_pad_fmt_default;
+	csi->subdev_fmt = sun4i_csi_pad_fmt_शेष;
 
 	vdev->fops = &sun4i_csi_fops;
 	vdev->ioctl_ops = &sun4i_csi_ioctl_ops;
 	video_set_drvdata(vdev, csi);
 
-	ret = video_register_device(&csi->vdev, VFL_TYPE_VIDEO, -1);
-	if (ret)
-		return ret;
+	ret = video_रेजिस्टर_device(&csi->vdev, VFL_TYPE_VIDEO, -1);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(csi->dev, "Device registered as %s\n",
 		 video_device_node_name(vdev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2015 Intel Corporation
+ * Copyright तऊ 2015 Intel Corporation
  */
 
-#ifndef INTEL_MOCS_H
-#define INTEL_MOCS_H
+#अगर_अघोषित INTEL_MOCS_H
+#घोषणा INTEL_MOCS_H
 
 /**
  * DOC: Memory Objects Control State (MOCS)
@@ -17,24 +18,24 @@
  *
  * The one wrinkle in this is that only PART of the MOCS tables are included
  * in context (The GFX_MOCS_0 - GFX_MOCS_64 and the LNCFCMOCS0 - LNCFCMOCS32
- * registers). The rest are not (the settings for the other rings).
+ * रेजिस्टरs). The rest are not (the settings क्रम the other rings).
  *
- * This table needs to be set at system start-up because the way the table
- * interacts with the contexts and the GmmLib interface.
+ * This table needs to be set at प्रणाली start-up because the way the table
+ * पूर्णांकeracts with the contexts and the GmmLib पूर्णांकerface.
  *
  *
  * Implementation:
  *
- * The tables (one per supported platform) are defined in intel_mocs.c
+ * The tables (one per supported platक्रमm) are defined in पूर्णांकel_mocs.c
  * and are programmed in the first batch after the context is loaded
  * (with the hardware workarounds). This will then let the usual
  * context handling keep the MOCS in step.
  */
 
-struct intel_engine_cs;
-struct intel_gt;
+काष्ठा पूर्णांकel_engine_cs;
+काष्ठा पूर्णांकel_gt;
 
-void intel_mocs_init(struct intel_gt *gt);
-void intel_mocs_init_engine(struct intel_engine_cs *engine);
+व्योम पूर्णांकel_mocs_init(काष्ठा पूर्णांकel_gt *gt);
+व्योम पूर्णांकel_mocs_init_engine(काष्ठा पूर्णांकel_engine_cs *engine);
 
-#endif
+#पूर्ण_अगर

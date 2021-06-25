@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
-   HIDP implementation for Linux Bluetooth stack (BlueZ).
-   Copyright (C) 2003-2004 Marcel Holtmann <marcel@holtmann.org>
+   HIDP implementation क्रम Linux Bluetooth stack (BlueZ).
+   Copyright (C) 2003-2004 Marcel Holपंचांगann <marcel@holपंचांगann.org>
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -10,7 +11,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -20,244 +21,244 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-#include <linux/export.h>
-#include <linux/file.h>
+#समावेश <linux/export.h>
+#समावेश <linux/file.h>
 
-#include "hidp.h"
+#समावेश "hidp.h"
 
-static struct bt_sock_list hidp_sk_list = {
+अटल काष्ठा bt_sock_list hidp_sk_list = अणु
 	.lock = __RW_LOCK_UNLOCKED(hidp_sk_list.lock)
-};
+पूर्ण;
 
-static int hidp_sock_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
+अटल पूर्णांक hidp_sock_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
 	BT_DBG("sock %p sk %p", sock, sk);
 
-	if (!sk)
-		return 0;
+	अगर (!sk)
+		वापस 0;
 
 	bt_sock_unlink(&hidp_sk_list, sk);
 
 	sock_orphan(sk);
 	sock_put(sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_hidp_sock_ioctl(struct socket *sock, unsigned int cmd, void __user *argp)
-{
-	struct hidp_connadd_req ca;
-	struct hidp_conndel_req cd;
-	struct hidp_connlist_req cl;
-	struct hidp_conninfo ci;
-	struct socket *csock;
-	struct socket *isock;
-	int err;
+अटल पूर्णांक करो_hidp_sock_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, व्योम __user *argp)
+अणु
+	काष्ठा hidp_connadd_req ca;
+	काष्ठा hidp_conndel_req cd;
+	काष्ठा hidp_connlist_req cl;
+	काष्ठा hidp_conninfo ci;
+	काष्ठा socket *csock;
+	काष्ठा socket *isock;
+	पूर्णांक err;
 
 	BT_DBG("cmd %x arg %p", cmd, argp);
 
-	switch (cmd) {
-	case HIDPCONNADD:
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+	चयन (cmd) अणु
+	हाल HIDPCONNADD:
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
 
-		if (copy_from_user(&ca, argp, sizeof(ca)))
-			return -EFAULT;
+		अगर (copy_from_user(&ca, argp, माप(ca)))
+			वापस -EFAULT;
 
 		csock = sockfd_lookup(ca.ctrl_sock, &err);
-		if (!csock)
-			return err;
+		अगर (!csock)
+			वापस err;
 
-		isock = sockfd_lookup(ca.intr_sock, &err);
-		if (!isock) {
+		isock = sockfd_lookup(ca.पूर्णांकr_sock, &err);
+		अगर (!isock) अणु
 			sockfd_put(csock);
-			return err;
-		}
-		ca.name[sizeof(ca.name)-1] = 0;
+			वापस err;
+		पूर्ण
+		ca.name[माप(ca.name)-1] = 0;
 
 		err = hidp_connection_add(&ca, csock, isock);
-		if (!err && copy_to_user(argp, &ca, sizeof(ca)))
+		अगर (!err && copy_to_user(argp, &ca, माप(ca)))
 			err = -EFAULT;
 
 		sockfd_put(csock);
 		sockfd_put(isock);
 
-		return err;
+		वापस err;
 
-	case HIDPCONNDEL:
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+	हाल HIDPCONNDEL:
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
 
-		if (copy_from_user(&cd, argp, sizeof(cd)))
-			return -EFAULT;
+		अगर (copy_from_user(&cd, argp, माप(cd)))
+			वापस -EFAULT;
 
-		return hidp_connection_del(&cd);
+		वापस hidp_connection_del(&cd);
 
-	case HIDPGETCONNLIST:
-		if (copy_from_user(&cl, argp, sizeof(cl)))
-			return -EFAULT;
+	हाल HIDPGETCONNLIST:
+		अगर (copy_from_user(&cl, argp, माप(cl)))
+			वापस -EFAULT;
 
-		if (cl.cnum <= 0)
-			return -EINVAL;
+		अगर (cl.cnum <= 0)
+			वापस -EINVAL;
 
 		err = hidp_get_connlist(&cl);
-		if (!err && copy_to_user(argp, &cl, sizeof(cl)))
-			return -EFAULT;
+		अगर (!err && copy_to_user(argp, &cl, माप(cl)))
+			वापस -EFAULT;
 
-		return err;
+		वापस err;
 
-	case HIDPGETCONNINFO:
-		if (copy_from_user(&ci, argp, sizeof(ci)))
-			return -EFAULT;
+	हाल HIDPGETCONNINFO:
+		अगर (copy_from_user(&ci, argp, माप(ci)))
+			वापस -EFAULT;
 
 		err = hidp_get_conninfo(&ci);
-		if (!err && copy_to_user(argp, &ci, sizeof(ci)))
-			return -EFAULT;
+		अगर (!err && copy_to_user(argp, &ci, माप(ci)))
+			वापस -EFAULT;
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int hidp_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
-{
-	return do_hidp_sock_ioctl(sock, cmd, (void __user *)arg);
-}
+अटल पूर्णांक hidp_sock_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस करो_hidp_sock_ioctl(sock, cmd, (व्योम __user *)arg);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-struct compat_hidp_connadd_req {
-	int   ctrl_sock;	/* Connected control socket */
-	int   intr_sock;	/* Connected interrupt socket */
+#अगर_घोषित CONFIG_COMPAT
+काष्ठा compat_hidp_connadd_req अणु
+	पूर्णांक   ctrl_sock;	/* Connected control socket */
+	पूर्णांक   पूर्णांकr_sock;	/* Connected पूर्णांकerrupt socket */
 	__u16 parser;
 	__u16 rd_size;
 	compat_uptr_t rd_data;
 	__u8  country;
 	__u8  subclass;
-	__u16 vendor;
+	__u16 venकरोr;
 	__u16 product;
 	__u16 version;
 	__u32 flags;
 	__u32 idle_to;
-	char  name[128];
-};
+	अक्षर  name[128];
+पूर्ण;
 
-static int hidp_sock_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
-{
-	void __user *argp = compat_ptr(arg);
-	int err;
+अटल पूर्णांक hidp_sock_compat_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = compat_ptr(arg);
+	पूर्णांक err;
 
-	if (cmd == HIDPGETCONNLIST) {
-		struct hidp_connlist_req cl;
+	अगर (cmd == HIDPGETCONNLIST) अणु
+		काष्ठा hidp_connlist_req cl;
 		u32 __user *p = argp;
 		u32 uci;
 
-		if (get_user(cl.cnum, p) || get_user(uci, p + 1))
-			return -EFAULT;
+		अगर (get_user(cl.cnum, p) || get_user(uci, p + 1))
+			वापस -EFAULT;
 
 		cl.ci = compat_ptr(uci);
 
-		if (cl.cnum <= 0)
-			return -EINVAL;
+		अगर (cl.cnum <= 0)
+			वापस -EINVAL;
 
 		err = hidp_get_connlist(&cl);
 
-		if (!err && put_user(cl.cnum, p))
+		अगर (!err && put_user(cl.cnum, p))
 			err = -EFAULT;
 
-		return err;
-	} else if (cmd == HIDPCONNADD) {
-		struct compat_hidp_connadd_req ca32;
-		struct hidp_connadd_req ca;
-		struct socket *csock;
-		struct socket *isock;
+		वापस err;
+	पूर्ण अन्यथा अगर (cmd == HIDPCONNADD) अणु
+		काष्ठा compat_hidp_connadd_req ca32;
+		काष्ठा hidp_connadd_req ca;
+		काष्ठा socket *csock;
+		काष्ठा socket *isock;
 
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
 
-		if (copy_from_user(&ca32, (void __user *) arg, sizeof(ca32)))
-			return -EFAULT;
+		अगर (copy_from_user(&ca32, (व्योम __user *) arg, माप(ca32)))
+			वापस -EFAULT;
 
 		ca.ctrl_sock = ca32.ctrl_sock;
-		ca.intr_sock = ca32.intr_sock;
+		ca.पूर्णांकr_sock = ca32.पूर्णांकr_sock;
 		ca.parser = ca32.parser;
 		ca.rd_size = ca32.rd_size;
 		ca.rd_data = compat_ptr(ca32.rd_data);
 		ca.country = ca32.country;
 		ca.subclass = ca32.subclass;
-		ca.vendor = ca32.vendor;
+		ca.venकरोr = ca32.venकरोr;
 		ca.product = ca32.product;
 		ca.version = ca32.version;
 		ca.flags = ca32.flags;
 		ca.idle_to = ca32.idle_to;
-		ca32.name[sizeof(ca32.name) - 1] = '\0';
-		memcpy(ca.name, ca32.name, 128);
+		ca32.name[माप(ca32.name) - 1] = '\0';
+		स_नकल(ca.name, ca32.name, 128);
 
 		csock = sockfd_lookup(ca.ctrl_sock, &err);
-		if (!csock)
-			return err;
+		अगर (!csock)
+			वापस err;
 
-		isock = sockfd_lookup(ca.intr_sock, &err);
-		if (!isock) {
+		isock = sockfd_lookup(ca.पूर्णांकr_sock, &err);
+		अगर (!isock) अणु
 			sockfd_put(csock);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		err = hidp_connection_add(&ca, csock, isock);
-		if (!err && copy_to_user(argp, &ca32, sizeof(ca32)))
+		अगर (!err && copy_to_user(argp, &ca32, माप(ca32)))
 			err = -EFAULT;
 
 		sockfd_put(csock);
 		sockfd_put(isock);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return hidp_sock_ioctl(sock, cmd, arg);
-}
-#endif
+	वापस hidp_sock_ioctl(sock, cmd, arg);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct proto_ops hidp_sock_ops = {
+अटल स्थिर काष्ठा proto_ops hidp_sock_ops = अणु
 	.family		= PF_BLUETOOTH,
 	.owner		= THIS_MODULE,
 	.release	= hidp_sock_release,
 	.ioctl		= hidp_sock_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= hidp_sock_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.bind		= sock_no_bind,
 	.getname	= sock_no_getname,
 	.sendmsg	= sock_no_sendmsg,
 	.recvmsg	= sock_no_recvmsg,
 	.listen		= sock_no_listen,
-	.shutdown	= sock_no_shutdown,
+	.shutकरोwn	= sock_no_shutकरोwn,
 	.connect	= sock_no_connect,
 	.socketpair	= sock_no_socketpair,
 	.accept		= sock_no_accept,
 	.mmap		= sock_no_mmap
-};
+पूर्ण;
 
-static struct proto hidp_proto = {
+अटल काष्ठा proto hidp_proto = अणु
 	.name		= "HIDP",
 	.owner		= THIS_MODULE,
-	.obj_size	= sizeof(struct bt_sock)
-};
+	.obj_size	= माप(काष्ठा bt_sock)
+पूर्ण;
 
-static int hidp_sock_create(struct net *net, struct socket *sock, int protocol,
-			    int kern)
-{
-	struct sock *sk;
+अटल पूर्णांक hidp_sock_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
+			    पूर्णांक kern)
+अणु
+	काष्ठा sock *sk;
 
 	BT_DBG("sock %p", sock);
 
-	if (sock->type != SOCK_RAW)
-		return -ESOCKTNOSUPPORT;
+	अगर (sock->type != SOCK_RAW)
+		वापस -ESOCKTNOSUPPORT;
 
 	sk = sk_alloc(net, PF_BLUETOOTH, GFP_ATOMIC, &hidp_proto, kern);
-	if (!sk)
-		return -ENOMEM;
+	अगर (!sk)
+		वापस -ENOMEM;
 
 	sock_init_data(sock, sk);
 
@@ -272,48 +273,48 @@ static int hidp_sock_create(struct net *net, struct socket *sock, int protocol,
 
 	bt_sock_link(&hidp_sk_list, sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_proto_family hidp_sock_family_ops = {
+अटल स्थिर काष्ठा net_proto_family hidp_sock_family_ops = अणु
 	.family	= PF_BLUETOOTH,
 	.owner	= THIS_MODULE,
 	.create	= hidp_sock_create
-};
+पूर्ण;
 
-int __init hidp_init_sockets(void)
-{
-	int err;
+पूर्णांक __init hidp_init_sockets(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = proto_register(&hidp_proto, 0);
-	if (err < 0)
-		return err;
+	err = proto_रेजिस्टर(&hidp_proto, 0);
+	अगर (err < 0)
+		वापस err;
 
-	err = bt_sock_register(BTPROTO_HIDP, &hidp_sock_family_ops);
-	if (err < 0) {
+	err = bt_sock_रेजिस्टर(BTPROTO_HIDP, &hidp_sock_family_ops);
+	अगर (err < 0) अणु
 		BT_ERR("Can't register HIDP socket");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	err = bt_procfs_init(&init_net, "hidp", &hidp_sk_list, NULL);
-	if (err < 0) {
+	err = bt_procfs_init(&init_net, "hidp", &hidp_sk_list, शून्य);
+	अगर (err < 0) अणु
 		BT_ERR("Failed to create HIDP proc file");
-		bt_sock_unregister(BTPROTO_HIDP);
-		goto error;
-	}
+		bt_sock_unरेजिस्टर(BTPROTO_HIDP);
+		जाओ error;
+	पूर्ण
 
 	BT_INFO("HIDP socket layer initialized");
 
-	return 0;
+	वापस 0;
 
 error:
-	proto_unregister(&hidp_proto);
-	return err;
-}
+	proto_unरेजिस्टर(&hidp_proto);
+	वापस err;
+पूर्ण
 
-void __exit hidp_cleanup_sockets(void)
-{
+व्योम __निकास hidp_cleanup_sockets(व्योम)
+अणु
 	bt_procfs_cleanup(&init_net, "hidp");
-	bt_sock_unregister(BTPROTO_HIDP);
-	proto_unregister(&hidp_proto);
-}
+	bt_sock_unरेजिस्टर(BTPROTO_HIDP);
+	proto_unरेजिस्टर(&hidp_proto);
+पूर्ण

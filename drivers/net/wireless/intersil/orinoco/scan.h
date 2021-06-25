@@ -1,21 +1,22 @@
-/* Helpers for managing scan queues
+<शैली गुरु>
+/* Helpers क्रम managing scan queues
  *
- * See copyright notice in main.c
+ * See copyright notice in मुख्य.c
  */
-#ifndef _ORINOCO_SCAN_H_
-#define _ORINOCO_SCAN_H_
+#अगर_अघोषित _ORINOCO_SCAN_H_
+#घोषणा _ORINOCO_SCAN_H_
 
 /* Forward declarations */
-struct orinoco_private;
-struct agere_ext_scan_info;
+काष्ठा orinoco_निजी;
+काष्ठा agere_ext_scan_info;
 
 /* Add scan results */
-void orinoco_add_extscan_result(struct orinoco_private *priv,
-				struct agere_ext_scan_info *atom,
-				size_t len);
-void orinoco_add_hostscan_results(struct orinoco_private *dev,
-				  unsigned char *buf,
-				  size_t len);
-void orinoco_scan_done(struct orinoco_private *priv, bool abort);
+व्योम orinoco_add_extscan_result(काष्ठा orinoco_निजी *priv,
+				काष्ठा agere_ext_scan_info *atom,
+				माप_प्रकार len);
+व्योम orinoco_add_hostscan_results(काष्ठा orinoco_निजी *dev,
+				  अचिन्हित अक्षर *buf,
+				  माप_प्रकार len);
+व्योम orinoco_scan_करोne(काष्ठा orinoco_निजी *priv, bool पात);
 
-#endif /* _ORINOCO_SCAN_H_ */
+#पूर्ण_अगर /* _ORINOCO_SCAN_H_ */

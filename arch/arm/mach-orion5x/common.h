@@ -1,88 +1,89 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ARCH_ORION5X_COMMON_H
-#define __ARCH_ORION5X_COMMON_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ARCH_ORION5X_COMMON_H
+#घोषणा __ARCH_ORION5X_COMMON_H
 
-#include <linux/reboot.h>
+#समावेश <linux/reboot.h>
 
-struct dsa_chip_data;
-struct mv643xx_eth_platform_data;
-struct mv_sata_platform_data;
+काष्ठा dsa_chip_data;
+काष्ठा mv643xx_eth_platक्रमm_data;
+काष्ठा mv_sata_platक्रमm_data;
 
-#define ORION_MBUS_PCIE_MEM_TARGET    0x04
-#define ORION_MBUS_PCIE_MEM_ATTR      0x59
-#define ORION_MBUS_PCIE_IO_TARGET     0x04
-#define ORION_MBUS_PCIE_IO_ATTR       0x51
-#define ORION_MBUS_PCIE_WA_TARGET     0x04
-#define ORION_MBUS_PCIE_WA_ATTR       0x79
-#define ORION_MBUS_PCI_MEM_TARGET     0x03
-#define ORION_MBUS_PCI_MEM_ATTR       0x59
-#define ORION_MBUS_PCI_IO_TARGET      0x03
-#define ORION_MBUS_PCI_IO_ATTR        0x51
-#define ORION_MBUS_DEVBUS_BOOT_TARGET 0x01
-#define ORION_MBUS_DEVBUS_BOOT_ATTR   0x0f
-#define ORION_MBUS_DEVBUS_TARGET(cs)  0x01
-#define ORION_MBUS_DEVBUS_ATTR(cs)    (~(1 << cs))
-#define ORION_MBUS_SRAM_TARGET        0x09
-#define ORION_MBUS_SRAM_ATTR          0x00
+#घोषणा ORION_MBUS_PCIE_MEM_TARGET    0x04
+#घोषणा ORION_MBUS_PCIE_MEM_ATTR      0x59
+#घोषणा ORION_MBUS_PCIE_IO_TARGET     0x04
+#घोषणा ORION_MBUS_PCIE_IO_ATTR       0x51
+#घोषणा ORION_MBUS_PCIE_WA_TARGET     0x04
+#घोषणा ORION_MBUS_PCIE_WA_ATTR       0x79
+#घोषणा ORION_MBUS_PCI_MEM_TARGET     0x03
+#घोषणा ORION_MBUS_PCI_MEM_ATTR       0x59
+#घोषणा ORION_MBUS_PCI_IO_TARGET      0x03
+#घोषणा ORION_MBUS_PCI_IO_ATTR        0x51
+#घोषणा ORION_MBUS_DEVBUS_BOOT_TARGET 0x01
+#घोषणा ORION_MBUS_DEVBUS_BOOT_ATTR   0x0f
+#घोषणा ORION_MBUS_DEVBUS_TARGET(cs)  0x01
+#घोषणा ORION_MBUS_DEVBUS_ATTR(cs)    (~(1 << cs))
+#घोषणा ORION_MBUS_SRAM_TARGET        0x09
+#घोषणा ORION_MBUS_SRAM_ATTR          0x00
 
 /*
  * Basic Orion init functions used early by machine-setup.
  */
-void orion5x_map_io(void);
-void orion5x_init_early(void);
-void orion5x_init_irq(void);
-void orion5x_init(void);
-void orion5x_id(u32 *dev, u32 *rev, char **dev_name);
-void clk_init(void);
-extern int orion5x_tclk;
-extern void orion5x_timer_init(void);
+व्योम orion5x_map_io(व्योम);
+व्योम orion5x_init_early(व्योम);
+व्योम orion5x_init_irq(व्योम);
+व्योम orion5x_init(व्योम);
+व्योम orion5x_id(u32 *dev, u32 *rev, अक्षर **dev_name);
+व्योम clk_init(व्योम);
+बाह्य पूर्णांक orion5x_tclk;
+बाह्य व्योम orion5x_समयr_init(व्योम);
 
-void orion5x_setup_wins(void);
+व्योम orion5x_setup_wins(व्योम);
 
-void orion5x_ehci0_init(void);
-void orion5x_ehci1_init(void);
-void orion5x_eth_init(struct mv643xx_eth_platform_data *eth_data);
-void orion5x_eth_switch_init(struct dsa_chip_data *d);
-void orion5x_i2c_init(void);
-void orion5x_sata_init(struct mv_sata_platform_data *sata_data);
-void orion5x_spi_init(void);
-void orion5x_uart0_init(void);
-void orion5x_uart1_init(void);
-void orion5x_xor_init(void);
-void orion5x_restart(enum reboot_mode, const char *);
+व्योम orion5x_ehci0_init(व्योम);
+व्योम orion5x_ehci1_init(व्योम);
+व्योम orion5x_eth_init(काष्ठा mv643xx_eth_platक्रमm_data *eth_data);
+व्योम orion5x_eth_चयन_init(काष्ठा dsa_chip_data *d);
+व्योम orion5x_i2c_init(व्योम);
+व्योम orion5x_sata_init(काष्ठा mv_sata_platक्रमm_data *sata_data);
+व्योम orion5x_spi_init(व्योम);
+व्योम orion5x_uart0_init(व्योम);
+व्योम orion5x_uart1_init(व्योम);
+व्योम orion5x_xor_init(व्योम);
+व्योम orion5x_restart(क्रमागत reboot_mode, स्थिर अक्षर *);
 
 /*
  * PCIe/PCI functions.
  */
-struct pci_bus;
-struct pci_host_bridge;
-struct pci_sys_data;
-struct pci_dev;
+काष्ठा pci_bus;
+काष्ठा pci_host_bridge;
+काष्ठा pci_sys_data;
+काष्ठा pci_dev;
 
-void orion5x_pcie_id(u32 *dev, u32 *rev);
-void orion5x_pci_disable(void);
-void orion5x_pci_set_cardbus_mode(void);
-int orion5x_pci_sys_setup(int nr, struct pci_sys_data *sys);
-int orion5x_pci_sys_scan_bus(int nr, struct pci_host_bridge *bridge);
-int orion5x_pci_map_irq(const struct pci_dev *dev, u8 slot, u8 pin);
+व्योम orion5x_pcie_id(u32 *dev, u32 *rev);
+व्योम orion5x_pci_disable(व्योम);
+व्योम orion5x_pci_set_cardbus_mode(व्योम);
+पूर्णांक orion5x_pci_sys_setup(पूर्णांक nr, काष्ठा pci_sys_data *sys);
+पूर्णांक orion5x_pci_sys_scan_bus(पूर्णांक nr, काष्ठा pci_host_bridge *bridge);
+पूर्णांक orion5x_pci_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin);
 
-struct tag;
-extern void __init tag_fixup_mem32(struct tag *, char **);
+काष्ठा tag;
+बाह्य व्योम __init tag_fixup_mem32(काष्ठा tag *, अक्षर **);
 
-#ifdef CONFIG_MACH_MSS2_DT
-extern void mss2_init(void);
-#else
-static inline void mss2_init(void) {}
-#endif
+#अगर_घोषित CONFIG_MACH_MSS2_DT
+बाह्य व्योम mss2_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम mss2_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /*****************************************************************************
- * Helpers to access Orion registers
+ * Helpers to access Orion रेजिस्टरs
  ****************************************************************************/
 /*
- * These are not preempt-safe.  Locks, if needed, must be taken
+ * These are not preempt-safe.  Locks, अगर needed, must be taken
  * care of by the caller.
  */
-#define orion5x_setbits(r, mask)	writel(readl(r) | (mask), (r))
-#define orion5x_clrbits(r, mask)	writel(readl(r) & ~(mask), (r))
+#घोषणा orion5x_setbits(r, mask)	ग_लिखोl(पढ़ोl(r) | (mask), (r))
+#घोषणा orion5x_clrbits(r, mask)	ग_लिखोl(पढ़ोl(r) & ~(mask), (r))
 
-#endif
+#पूर्ण_अगर

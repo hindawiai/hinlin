@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,63 +22,63 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
-#include "head.h"
+#समावेश "priv.h"
+#समावेश "head.h"
 
-static const struct nvkm_disp_oclass *
-nv04_disp_root(struct nvkm_disp *disp)
-{
-	return &nv04_disp_root_oclass;
-}
+अटल स्थिर काष्ठा nvkm_disp_oclass *
+nv04_disp_root(काष्ठा nvkm_disp *disp)
+अणु
+	वापस &nv04_disp_root_oclass;
+पूर्ण
 
-static void
-nv04_disp_intr(struct nvkm_disp *disp)
-{
-	struct nvkm_subdev *subdev = &disp->engine.subdev;
-	struct nvkm_device *device = subdev->device;
+अटल व्योम
+nv04_disp_पूर्णांकr(काष्ठा nvkm_disp *disp)
+अणु
+	काष्ठा nvkm_subdev *subdev = &disp->engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 crtc0 = nvkm_rd32(device, 0x600100);
 	u32 crtc1 = nvkm_rd32(device, 0x602100);
 	u32 pvideo;
 
-	if (crtc0 & 0x00000001) {
+	अगर (crtc0 & 0x00000001) अणु
 		nvkm_disp_vblank(disp, 0);
 		nvkm_wr32(device, 0x600100, 0x00000001);
-	}
+	पूर्ण
 
-	if (crtc1 & 0x00000001) {
+	अगर (crtc1 & 0x00000001) अणु
 		nvkm_disp_vblank(disp, 1);
 		nvkm_wr32(device, 0x602100, 0x00000001);
-	}
+	पूर्ण
 
-	if (device->chipset >= 0x10 && device->chipset <= 0x40) {
+	अगर (device->chipset >= 0x10 && device->chipset <= 0x40) अणु
 		pvideo = nvkm_rd32(device, 0x8100);
-		if (pvideo & ~0x11)
+		अगर (pvideo & ~0x11)
 			nvkm_info(subdev, "PVIDEO intr: %08x\n", pvideo);
 		nvkm_wr32(device, 0x8100, pvideo);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct nvkm_disp_func
-nv04_disp = {
-	.intr = nv04_disp_intr,
+अटल स्थिर काष्ठा nvkm_disp_func
+nv04_disp = अणु
+	.पूर्णांकr = nv04_disp_पूर्णांकr,
 	.root = nv04_disp_root,
-};
+पूर्ण;
 
-int
-nv04_disp_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_disp **pdisp)
-{
-	int ret, i;
+पूर्णांक
+nv04_disp_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_disp **pdisp)
+अणु
+	पूर्णांक ret, i;
 
 	ret = nvkm_disp_new_(&nv04_disp, device, type, inst, pdisp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		ret = nv04_head_new(*pdisp, i);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

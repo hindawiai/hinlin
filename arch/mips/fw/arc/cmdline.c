@@ -1,29 +1,30 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * cmdline.c: Kernel command line creation using ARCS argc/argv.
  *
  * Copyright (C) 1996 David S. Miller (davem@davemloft.net)
  */
-#include <linux/bug.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
 
-#include <asm/sgialib.h>
-#include <asm/bootinfo.h>
+#समावेश <यंत्र/sgialib.h>
+#समावेश <यंत्र/bootinfo.h>
 
-#undef DEBUG_CMDLINE
+#अघोषित DEBUG_CMDLINE
 
 /*
- * A 32-bit ARC PROM pass arguments and environment as 32-bit pointer.
+ * A 32-bit ARC PROM pass arguments and environment as 32-bit poपूर्णांकer.
  * These macro take care of sign extension.
  */
-#define prom_argv(index) ((char *) (long)argv[(index)])
+#घोषणा prom_argv(index) ((अक्षर *) (दीर्घ)argv[(index)])
 
-static char *ignored[] = {
+अटल अक्षर *ignored[] = अणु
 	"ConsoleIn=",
 	"ConsoleOut=",
 	"SystemPartition=",
@@ -31,49 +32,49 @@ static char *ignored[] = {
 	"OSLoadPartition=",
 	"OSLoadFilename=",
 	"OSLoadOptions="
-};
+पूर्ण;
 
-static char *used_arc[][2] = {
-	{ "OSLoadPartition=", "root=" },
-	{ "OSLoadOptions=", "" }
-};
+अटल अक्षर *used_arc[][2] = अणु
+	अणु "OSLoadPartition=", "root=" पूर्ण,
+	अणु "OSLoadOptions=", "" पूर्ण
+पूर्ण;
 
-static char __init *move_firmware_args(int argc, LONG *argv, char *cp)
-{
-	char *s;
-	int actr, i;
+अटल अक्षर __init *move_firmware_args(पूर्णांक argc, LONG *argv, अक्षर *cp)
+अणु
+	अक्षर *s;
+	पूर्णांक actr, i;
 
 	actr = 1; /* Always ignore argv[0] */
 
-	while (actr < argc) {
-		for(i = 0; i < ARRAY_SIZE(used_arc); i++) {
-			int len = strlen(used_arc[i][0]);
+	जबतक (actr < argc) अणु
+		क्रम(i = 0; i < ARRAY_SIZE(used_arc); i++) अणु
+			पूर्णांक len = म_माप(used_arc[i][0]);
 
-			if (!strncmp(prom_argv(actr), used_arc[i][0], len)) {
+			अगर (!म_भेदन(prom_argv(actr), used_arc[i][0], len)) अणु
 			/* Ok, we want it. First append the replacement... */
-				strcat(cp, used_arc[i][1]);
-				cp += strlen(used_arc[i][1]);
+				म_जोड़ो(cp, used_arc[i][1]);
+				cp += म_माप(used_arc[i][1]);
 				/* ... and now the argument */
-				s = strchr(prom_argv(actr), '=');
-				if (s) {
+				s = म_अक्षर(prom_argv(actr), '=');
+				अगर (s) अणु
 					s++;
-					strcpy(cp, s);
-					cp += strlen(s);
-				}
+					म_नकल(cp, s);
+					cp += म_माप(s);
+				पूर्ण
 				*cp++ = ' ';
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		actr++;
-	}
+	पूर्ण
 
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
-void __init prom_init_cmdline(int argc, LONG *argv)
-{
-	char *cp;
-	int actr, i;
+व्योम __init prom_init_cmdline(पूर्णांक argc, LONG *argv)
+अणु
+	अक्षर *cp;
+	पूर्णांक actr, i;
 
 	actr = 1; /* Always ignore argv[0] */
 
@@ -84,27 +85,27 @@ void __init prom_init_cmdline(int argc, LONG *argv)
 	 */
 	cp = move_firmware_args(argc, argv, cp);
 
-	while (actr < argc) {
-		for (i = 0; i < ARRAY_SIZE(ignored); i++) {
-			int len = strlen(ignored[i]);
+	जबतक (actr < argc) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(ignored); i++) अणु
+			पूर्णांक len = म_माप(ignored[i]);
 
-			if (!strncmp(prom_argv(actr), ignored[i], len))
-				goto pic_cont;
-		}
+			अगर (!म_भेदन(prom_argv(actr), ignored[i], len))
+				जाओ pic_cont;
+		पूर्ण
 		/* Ok, we want it. */
-		strcpy(cp, prom_argv(actr));
-		cp += strlen(prom_argv(actr));
+		म_नकल(cp, prom_argv(actr));
+		cp += म_माप(prom_argv(actr));
 		*cp++ = ' ';
 
 	pic_cont:
 		actr++;
-	}
+	पूर्ण
 
-	if (cp != arcs_cmdline)		/* get rid of trailing space */
+	अगर (cp != arcs_cmdline)		/* get rid of trailing space */
 		--cp;
 	*cp = '\0';
 
-#ifdef DEBUG_CMDLINE
-	printk(KERN_DEBUG "prom cmdline: %s\n", arcs_cmdline);
-#endif
-}
+#अगर_घोषित DEBUG_CMDLINE
+	prपूर्णांकk(KERN_DEBUG "prom cmdline: %s\n", arcs_cmdline);
+#पूर्ण_अगर
+पूर्ण

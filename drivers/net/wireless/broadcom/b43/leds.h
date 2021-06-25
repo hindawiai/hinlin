@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef B43_LEDS_H_
-#define B43_LEDS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित B43_LEDS_H_
+#घोषणा B43_LEDS_H_
 
-struct b43_wl;
-struct b43_wldev;
+काष्ठा b43_wl;
+काष्ठा b43_wldev;
 
-#ifdef CONFIG_B43_LEDS
+#अगर_घोषित CONFIG_B43_LEDS
 
-#include <linux/types.h>
-#include <linux/leds.h>
-#include <linux/workqueue.h>
+#समावेश <linux/types.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/workqueue.h>
 
 
-#define B43_LED_MAX_NAME_LEN	31
+#घोषणा B43_LED_MAX_NAME_LEN	31
 
-struct b43_led {
-	struct b43_wl *wl;
+काष्ठा b43_led अणु
+	काष्ठा b43_wl *wl;
 	/* The LED class device */
-	struct led_classdev led_dev;
+	काष्ठा led_classdev led_dev;
 	/* The index number of the LED. */
 	u8 index;
-	/* If activelow is true, the LED is ON if the
-	 * bit is switched off. */
+	/* If activelow is true, the LED is ON अगर the
+	 * bit is चयनed off. */
 	bool activelow;
-	/* The unique name string for this LED device. */
-	char name[B43_LED_MAX_NAME_LEN + 1];
+	/* The unique name string क्रम this LED device. */
+	अक्षर name[B43_LED_MAX_NAME_LEN + 1];
 	/* The current status of the LED. This is updated locklessly. */
 	atomic_t state;
 	/* The active state in hardware. */
 	bool hw_state;
-};
+पूर्ण;
 
-struct b43_leds {
-	struct b43_led led_tx;
-	struct b43_led led_rx;
-	struct b43_led led_radio;
-	struct b43_led led_assoc;
+काष्ठा b43_leds अणु
+	काष्ठा b43_led led_tx;
+	काष्ठा b43_led led_rx;
+	काष्ठा b43_led led_radio;
+	काष्ठा b43_led led_assoc;
 
 	bool stop;
-	struct work_struct work;
-};
+	काष्ठा work_काष्ठा work;
+पूर्ण;
 
-#define B43_MAX_NR_LEDS			4
+#घोषणा B43_MAX_NR_LEDS			4
 
-#define B43_LED_BEHAVIOUR		0x7F
-#define B43_LED_ACTIVELOW		0x80
+#घोषणा B43_LED_BEHAVIOUR		0x7F
+#घोषणा B43_LED_ACTIVELOW		0x80
 /* LED behaviour values */
-enum b43_led_behaviour {
+क्रमागत b43_led_behaviour अणु
 	B43_LED_OFF,
 	B43_LED_ON,
 	B43_LED_ACTIVITY,
@@ -59,37 +60,37 @@ enum b43_led_behaviour {
 	B43_LED_WEIRD,		//FIXME
 	B43_LED_ASSOC,
 	B43_LED_INACTIVE,
-};
+पूर्ण;
 
-void b43_leds_register(struct b43_wldev *dev);
-void b43_leds_unregister(struct b43_wl *wl);
-void b43_leds_init(struct b43_wldev *dev);
-void b43_leds_exit(struct b43_wldev *dev);
-void b43_leds_stop(struct b43_wldev *dev);
+व्योम b43_leds_रेजिस्टर(काष्ठा b43_wldev *dev);
+व्योम b43_leds_unरेजिस्टर(काष्ठा b43_wl *wl);
+व्योम b43_leds_init(काष्ठा b43_wldev *dev);
+व्योम b43_leds_निकास(काष्ठा b43_wldev *dev);
+व्योम b43_leds_stop(काष्ठा b43_wldev *dev);
 
 
-#else /* CONFIG_B43_LEDS */
+#अन्यथा /* CONFIG_B43_LEDS */
 /* LED support disabled */
 
-struct b43_leds {
+काष्ठा b43_leds अणु
 	/* empty */
-};
+पूर्ण;
 
-static inline void b43_leds_register(struct b43_wldev *dev)
-{
-}
-static inline void b43_leds_unregister(struct b43_wl *wl)
-{
-}
-static inline void b43_leds_init(struct b43_wldev *dev)
-{
-}
-static inline void b43_leds_exit(struct b43_wldev *dev)
-{
-}
-static inline void b43_leds_stop(struct b43_wldev *dev)
-{
-}
-#endif /* CONFIG_B43_LEDS */
+अटल अंतरभूत व्योम b43_leds_रेजिस्टर(काष्ठा b43_wldev *dev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम b43_leds_unरेजिस्टर(काष्ठा b43_wl *wl)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम b43_leds_init(काष्ठा b43_wldev *dev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम b43_leds_निकास(काष्ठा b43_wldev *dev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम b43_leds_stop(काष्ठा b43_wldev *dev)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_B43_LEDS */
 
-#endif /* B43_LEDS_H_ */
+#पूर्ण_अगर /* B43_LEDS_H_ */

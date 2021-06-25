@@ -1,263 +1,264 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * 842 Software Decompression
  *
- * Copyright (C) 2015 Dan Streetman, IBM Corp
+ * Copyright (C) 2015 Dan Streeपंचांगan, IBM Corp
  *
- * See 842.h for details of the 842 compressed format.
+ * See 842.h क्रम details of the 842 compressed क्रमmat.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#define MODULE_NAME "842_decompress"
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा MODULE_NAME "842_decompress"
 
-#include "842.h"
-#include "842_debugfs.h"
+#समावेश "842.h"
+#समावेश "842_debugfs.h"
 
-/* rolling fifo sizes */
-#define I2_FIFO_SIZE	(2 * (1 << I2_BITS))
-#define I4_FIFO_SIZE	(4 * (1 << I4_BITS))
-#define I8_FIFO_SIZE	(8 * (1 << I8_BITS))
+/* rolling fअगरo sizes */
+#घोषणा I2_FIFO_SIZE	(2 * (1 << I2_BITS))
+#घोषणा I4_FIFO_SIZE	(4 * (1 << I4_BITS))
+#घोषणा I8_FIFO_SIZE	(8 * (1 << I8_BITS))
 
-static u8 decomp_ops[OPS_MAX][4] = {
-	{ D8, N0, N0, N0 },
-	{ D4, D2, I2, N0 },
-	{ D4, I2, D2, N0 },
-	{ D4, I2, I2, N0 },
-	{ D4, I4, N0, N0 },
-	{ D2, I2, D4, N0 },
-	{ D2, I2, D2, I2 },
-	{ D2, I2, I2, D2 },
-	{ D2, I2, I2, I2 },
-	{ D2, I2, I4, N0 },
-	{ I2, D2, D4, N0 },
-	{ I2, D4, I2, N0 },
-	{ I2, D2, I2, D2 },
-	{ I2, D2, I2, I2 },
-	{ I2, D2, I4, N0 },
-	{ I2, I2, D4, N0 },
-	{ I2, I2, D2, I2 },
-	{ I2, I2, I2, D2 },
-	{ I2, I2, I2, I2 },
-	{ I2, I2, I4, N0 },
-	{ I4, D4, N0, N0 },
-	{ I4, D2, I2, N0 },
-	{ I4, I2, D2, N0 },
-	{ I4, I2, I2, N0 },
-	{ I4, I4, N0, N0 },
-	{ I8, N0, N0, N0 }
-};
+अटल u8 decomp_ops[OPS_MAX][4] = अणु
+	अणु D8, N0, N0, N0 पूर्ण,
+	अणु D4, D2, I2, N0 पूर्ण,
+	अणु D4, I2, D2, N0 पूर्ण,
+	अणु D4, I2, I2, N0 पूर्ण,
+	अणु D4, I4, N0, N0 पूर्ण,
+	अणु D2, I2, D4, N0 पूर्ण,
+	अणु D2, I2, D2, I2 पूर्ण,
+	अणु D2, I2, I2, D2 पूर्ण,
+	अणु D2, I2, I2, I2 पूर्ण,
+	अणु D2, I2, I4, N0 पूर्ण,
+	अणु I2, D2, D4, N0 पूर्ण,
+	अणु I2, D4, I2, N0 पूर्ण,
+	अणु I2, D2, I2, D2 पूर्ण,
+	अणु I2, D2, I2, I2 पूर्ण,
+	अणु I2, D2, I4, N0 पूर्ण,
+	अणु I2, I2, D4, N0 पूर्ण,
+	अणु I2, I2, D2, I2 पूर्ण,
+	अणु I2, I2, I2, D2 पूर्ण,
+	अणु I2, I2, I2, I2 पूर्ण,
+	अणु I2, I2, I4, N0 पूर्ण,
+	अणु I4, D4, N0, N0 पूर्ण,
+	अणु I4, D2, I2, N0 पूर्ण,
+	अणु I4, I2, D2, N0 पूर्ण,
+	अणु I4, I2, I2, N0 पूर्ण,
+	अणु I4, I4, N0, N0 पूर्ण,
+	अणु I8, N0, N0, N0 पूर्ण
+पूर्ण;
 
-struct sw842_param {
+काष्ठा sw842_param अणु
 	u8 *in;
 	u8 bit;
 	u64 ilen;
 	u8 *out;
 	u8 *ostart;
 	u64 olen;
-};
+पूर्ण;
 
-#define beN_to_cpu(d, s)					\
+#घोषणा beN_to_cpu(d, s)					\
 	((s) == 2 ? be16_to_cpu(get_unaligned((__be16 *)d)) :	\
 	 (s) == 4 ? be32_to_cpu(get_unaligned((__be32 *)d)) :	\
 	 (s) == 8 ? be64_to_cpu(get_unaligned((__be64 *)d)) :	\
 	 0)
 
-static int next_bits(struct sw842_param *p, u64 *d, u8 n);
+अटल पूर्णांक next_bits(काष्ठा sw842_param *p, u64 *d, u8 n);
 
-static int __split_next_bits(struct sw842_param *p, u64 *d, u8 n, u8 s)
-{
-	u64 tmp = 0;
-	int ret;
+अटल पूर्णांक __split_next_bits(काष्ठा sw842_param *p, u64 *d, u8 n, u8 s)
+अणु
+	u64 पंचांगp = 0;
+	पूर्णांक ret;
 
-	if (n <= s) {
+	अगर (n <= s) अणु
 		pr_debug("split_next_bits invalid n %u s %u\n", n, s);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = next_bits(p, &tmp, n - s);
-	if (ret)
-		return ret;
+	ret = next_bits(p, &पंचांगp, n - s);
+	अगर (ret)
+		वापस ret;
 	ret = next_bits(p, d, s);
-	if (ret)
-		return ret;
-	*d |= tmp << s;
-	return 0;
-}
+	अगर (ret)
+		वापस ret;
+	*d |= पंचांगp << s;
+	वापस 0;
+पूर्ण
 
-static int next_bits(struct sw842_param *p, u64 *d, u8 n)
-{
+अटल पूर्णांक next_bits(काष्ठा sw842_param *p, u64 *d, u8 n)
+अणु
 	u8 *in = p->in, b = p->bit, bits = b + n;
 
-	if (n > 64) {
+	अगर (n > 64) अणु
 		pr_debug("next_bits invalid n %u\n", n);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* split this up if reading > 8 bytes, or if we're at the end of
-	 * the input buffer and would read past the end
+	/* split this up अगर पढ़ोing > 8 bytes, or अगर we're at the end of
+	 * the input buffer and would पढ़ो past the end
 	 */
-	if (bits > 64)
-		return __split_next_bits(p, d, n, 32);
-	else if (p->ilen < 8 && bits > 32 && bits <= 56)
-		return __split_next_bits(p, d, n, 16);
-	else if (p->ilen < 4 && bits > 16 && bits <= 24)
-		return __split_next_bits(p, d, n, 8);
+	अगर (bits > 64)
+		वापस __split_next_bits(p, d, n, 32);
+	अन्यथा अगर (p->ilen < 8 && bits > 32 && bits <= 56)
+		वापस __split_next_bits(p, d, n, 16);
+	अन्यथा अगर (p->ilen < 4 && bits > 16 && bits <= 24)
+		वापस __split_next_bits(p, d, n, 8);
 
-	if (DIV_ROUND_UP(bits, 8) > p->ilen)
-		return -EOVERFLOW;
+	अगर (DIV_ROUND_UP(bits, 8) > p->ilen)
+		वापस -EOVERFLOW;
 
-	if (bits <= 8)
+	अगर (bits <= 8)
 		*d = *in >> (8 - bits);
-	else if (bits <= 16)
+	अन्यथा अगर (bits <= 16)
 		*d = be16_to_cpu(get_unaligned((__be16 *)in)) >> (16 - bits);
-	else if (bits <= 32)
+	अन्यथा अगर (bits <= 32)
 		*d = be32_to_cpu(get_unaligned((__be32 *)in)) >> (32 - bits);
-	else
+	अन्यथा
 		*d = be64_to_cpu(get_unaligned((__be64 *)in)) >> (64 - bits);
 
 	*d &= GENMASK_ULL(n - 1, 0);
 
 	p->bit += n;
 
-	if (p->bit > 7) {
+	अगर (p->bit > 7) अणु
 		p->in += p->bit / 8;
 		p->ilen -= p->bit / 8;
 		p->bit %= 8;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_data(struct sw842_param *p, u8 n)
-{
+अटल पूर्णांक करो_data(काष्ठा sw842_param *p, u8 n)
+अणु
 	u64 v;
-	int ret;
+	पूर्णांक ret;
 
-	if (n > p->olen)
-		return -ENOSPC;
+	अगर (n > p->olen)
+		वापस -ENOSPC;
 
 	ret = next_bits(p, &v, n * 8);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (n) {
-	case 2:
+	चयन (n) अणु
+	हाल 2:
 		put_unaligned(cpu_to_be16((u16)v), (__be16 *)p->out);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		put_unaligned(cpu_to_be32((u32)v), (__be32 *)p->out);
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		put_unaligned(cpu_to_be64((u64)v), (__be64 *)p->out);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	p->out += n;
 	p->olen -= n;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __do_index(struct sw842_param *p, u8 size, u8 bits, u64 fsize)
-{
-	u64 index, offset, total = round_down(p->out - p->ostart, 8);
-	int ret;
+अटल पूर्णांक __करो_index(काष्ठा sw842_param *p, u8 size, u8 bits, u64 fsize)
+अणु
+	u64 index, offset, total = round_करोwn(p->out - p->ostart, 8);
+	पूर्णांक ret;
 
 	ret = next_bits(p, &index, bits);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	offset = index * size;
 
 	/* a ring buffer of fsize is used; correct the offset */
-	if (total > fsize) {
-		/* this is where the current fifo is */
-		u64 section = round_down(total, fsize);
-		/* the current pos in the fifo */
+	अगर (total > fsize) अणु
+		/* this is where the current fअगरo is */
+		u64 section = round_करोwn(total, fsize);
+		/* the current pos in the fअगरo */
 		u64 pos = total - section;
 
-		/* if the offset is past/at the pos, we need to
-		 * go back to the last fifo section
+		/* अगर the offset is past/at the pos, we need to
+		 * go back to the last fअगरo section
 		 */
-		if (offset >= pos)
+		अगर (offset >= pos)
 			section -= fsize;
 
 		offset += section;
-	}
+	पूर्ण
 
-	if (offset + size > total) {
+	अगर (offset + size > total) अणु
 		pr_debug("index%x %lx points past end %lx\n", size,
-			 (unsigned long)offset, (unsigned long)total);
-		return -EINVAL;
-	}
+			 (अचिन्हित दीर्घ)offset, (अचिन्हित दीर्घ)total);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (size != 2 && size != 4 && size != 8)
+	अगर (size != 2 && size != 4 && size != 8)
 		WARN(1, "__do_index invalid size %x\n", size);
-	else
+	अन्यथा
 		pr_debug("index%x to %lx off %lx adjoff %lx tot %lx data %lx\n",
-			 size, (unsigned long)index,
-			 (unsigned long)(index * size), (unsigned long)offset,
-			 (unsigned long)total,
-			 (unsigned long)beN_to_cpu(&p->ostart[offset], size));
+			 size, (अचिन्हित दीर्घ)index,
+			 (अचिन्हित दीर्घ)(index * size), (अचिन्हित दीर्घ)offset,
+			 (अचिन्हित दीर्घ)total,
+			 (अचिन्हित दीर्घ)beN_to_cpu(&p->ostart[offset], size));
 
-	memcpy(p->out, &p->ostart[offset], size);
+	स_नकल(p->out, &p->ostart[offset], size);
 	p->out += size;
 	p->olen -= size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_index(struct sw842_param *p, u8 n)
-{
-	switch (n) {
-	case 2:
-		return __do_index(p, 2, I2_BITS, I2_FIFO_SIZE);
-	case 4:
-		return __do_index(p, 4, I4_BITS, I4_FIFO_SIZE);
-	case 8:
-		return __do_index(p, 8, I8_BITS, I8_FIFO_SIZE);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक करो_index(काष्ठा sw842_param *p, u8 n)
+अणु
+	चयन (n) अणु
+	हाल 2:
+		वापस __करो_index(p, 2, I2_BITS, I2_FIFO_SIZE);
+	हाल 4:
+		वापस __करो_index(p, 4, I4_BITS, I4_FIFO_SIZE);
+	हाल 8:
+		वापस __करो_index(p, 8, I8_BITS, I8_FIFO_SIZE);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int do_op(struct sw842_param *p, u8 o)
-{
-	int i, ret = 0;
+अटल पूर्णांक करो_op(काष्ठा sw842_param *p, u8 o)
+अणु
+	पूर्णांक i, ret = 0;
 
-	if (o >= OPS_MAX)
-		return -EINVAL;
+	अगर (o >= OPS_MAX)
+		वापस -EINVAL;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		u8 op = decomp_ops[o][i];
 
 		pr_debug("op is %x\n", op);
 
-		switch (op & OP_ACTION) {
-		case OP_ACTION_DATA:
-			ret = do_data(p, op & OP_AMOUNT);
-			break;
-		case OP_ACTION_INDEX:
-			ret = do_index(p, op & OP_AMOUNT);
-			break;
-		case OP_ACTION_NOOP:
-			break;
-		default:
+		चयन (op & OP_ACTION) अणु
+		हाल OP_ACTION_DATA:
+			ret = करो_data(p, op & OP_AMOUNT);
+			अवरोध;
+		हाल OP_ACTION_INDEX:
+			ret = करो_index(p, op & OP_AMOUNT);
+			अवरोध;
+		हाल OP_ACTION_NOOP:
+			अवरोध;
+		शेष:
 			pr_err("Internal error, invalid op %x\n", op);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (sw842_template_counts)
-		atomic_inc(&template_count[o]);
+	अगर (sw842_ढाँचा_counts)
+		atomic_inc(&ढाँचा_count[o]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sw842_decompress
@@ -266,20 +267,20 @@ static int do_op(struct sw842_param *p, u8 o)
  * to the output buffer @out, using no more than @olen bytes.
  *
  * The compressed buffer must be only a single 842-compressed buffer,
- * with the standard format described in the comments in 842.h
- * Processing will stop when the 842 "END" template is detected,
+ * with the standard क्रमmat described in the comments in 842.h
+ * Processing will stop when the 842 "END" ढाँचा is detected,
  * not the end of the buffer.
  *
  * Returns: 0 on success, error on failure.  The @olen parameter
  * will contain the number of output bytes written on success, or
  * 0 on error.
  */
-int sw842_decompress(const u8 *in, unsigned int ilen,
-		     u8 *out, unsigned int *olen)
-{
-	struct sw842_param p;
-	int ret;
-	u64 op, rep, tmp, bytes, total;
+पूर्णांक sw842_decompress(स्थिर u8 *in, अचिन्हित पूर्णांक ilen,
+		     u8 *out, अचिन्हित पूर्णांक *olen)
+अणु
+	काष्ठा sw842_param p;
+	पूर्णांक ret;
+	u64 op, rep, पंचांगp, bytes, total;
 	u64 crc;
 
 	p.in = (u8 *)in;
@@ -293,124 +294,124 @@ int sw842_decompress(const u8 *in, unsigned int ilen,
 
 	*olen = 0;
 
-	do {
+	करो अणु
 		ret = next_bits(&p, &op, OP_BITS);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		pr_debug("template is %lx\n", (unsigned long)op);
+		pr_debug("template is %lx\n", (अचिन्हित दीर्घ)op);
 
-		switch (op) {
-		case OP_REPEAT:
+		चयन (op) अणु
+		हाल OP_REPEAT:
 			ret = next_bits(&p, &rep, REPEAT_BITS);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			if (p.out == out) /* no previous bytes */
-				return -EINVAL;
+			अगर (p.out == out) /* no previous bytes */
+				वापस -EINVAL;
 
 			/* copy rep + 1 */
 			rep++;
 
-			if (rep * 8 > p.olen)
-				return -ENOSPC;
+			अगर (rep * 8 > p.olen)
+				वापस -ENOSPC;
 
-			while (rep-- > 0) {
-				memcpy(p.out, p.out - 8, 8);
+			जबतक (rep-- > 0) अणु
+				स_नकल(p.out, p.out - 8, 8);
 				p.out += 8;
 				p.olen -= 8;
-			}
+			पूर्ण
 
-			if (sw842_template_counts)
-				atomic_inc(&template_repeat_count);
+			अगर (sw842_ढाँचा_counts)
+				atomic_inc(&ढाँचा_repeat_count);
 
-			break;
-		case OP_ZEROS:
-			if (8 > p.olen)
-				return -ENOSPC;
+			अवरोध;
+		हाल OP_ZEROS:
+			अगर (8 > p.olen)
+				वापस -ENOSPC;
 
-			memset(p.out, 0, 8);
+			स_रखो(p.out, 0, 8);
 			p.out += 8;
 			p.olen -= 8;
 
-			if (sw842_template_counts)
-				atomic_inc(&template_zeros_count);
+			अगर (sw842_ढाँचा_counts)
+				atomic_inc(&ढाँचा_zeros_count);
 
-			break;
-		case OP_SHORT_DATA:
+			अवरोध;
+		हाल OP_SHORT_DATA:
 			ret = next_bits(&p, &bytes, SHORT_DATA_BITS);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			if (!bytes || bytes > SHORT_DATA_BITS_MAX)
-				return -EINVAL;
+			अगर (!bytes || bytes > SHORT_DATA_BITS_MAX)
+				वापस -EINVAL;
 
-			while (bytes-- > 0) {
-				ret = next_bits(&p, &tmp, 8);
-				if (ret)
-					return ret;
-				*p.out = (u8)tmp;
+			जबतक (bytes-- > 0) अणु
+				ret = next_bits(&p, &पंचांगp, 8);
+				अगर (ret)
+					वापस ret;
+				*p.out = (u8)पंचांगp;
 				p.out++;
 				p.olen--;
-			}
+			पूर्ण
 
-			if (sw842_template_counts)
-				atomic_inc(&template_short_data_count);
+			अगर (sw842_ढाँचा_counts)
+				atomic_inc(&ढाँचा_लघु_data_count);
 
-			break;
-		case OP_END:
-			if (sw842_template_counts)
-				atomic_inc(&template_end_count);
+			अवरोध;
+		हाल OP_END:
+			अगर (sw842_ढाँचा_counts)
+				atomic_inc(&ढाँचा_end_count);
 
-			break;
-		default: /* use template */
-			ret = do_op(&p, op);
-			if (ret)
-				return ret;
-			break;
-		}
-	} while (op != OP_END);
+			अवरोध;
+		शेष: /* use ढाँचा */
+			ret = करो_op(&p, op);
+			अगर (ret)
+				वापस ret;
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (op != OP_END);
 
 	/*
 	 * crc(0:31) is saved in compressed data starting with the
-	 * next bit after End of stream template.
+	 * next bit after End of stream ढाँचा.
 	 */
 	ret = next_bits(&p, &crc, CRC_BITS);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Validate CRC saved in compressed data.
 	 */
-	if (crc != (u64)crc32_be(0, out, total - p.olen)) {
+	अगर (crc != (u64)crc32_be(0, out, total - p.olen)) अणु
 		pr_debug("CRC mismatch for decompression\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (unlikely((total - p.olen) > UINT_MAX))
-		return -ENOSPC;
+	अगर (unlikely((total - p.olen) > अच_पूर्णांक_उच्च))
+		वापस -ENOSPC;
 
 	*olen = total - p.olen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sw842_decompress);
 
-static int __init sw842_init(void)
-{
-	if (sw842_template_counts)
+अटल पूर्णांक __init sw842_init(व्योम)
+अणु
+	अगर (sw842_ढाँचा_counts)
 		sw842_debugfs_create();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 module_init(sw842_init);
 
-static void __exit sw842_exit(void)
-{
-	if (sw842_template_counts)
-		sw842_debugfs_remove();
-}
-module_exit(sw842_exit);
+अटल व्योम __निकास sw842_निकास(व्योम)
+अणु
+	अगर (sw842_ढाँचा_counts)
+		sw842_debugfs_हटाओ();
+पूर्ण
+module_निकास(sw842_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Software 842 Decompressor");

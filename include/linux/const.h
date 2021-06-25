@@ -1,14 +1,15 @@
-#ifndef _LINUX_CONST_H
-#define _LINUX_CONST_H
+<शैली गुरु>
+#अगर_अघोषित _LINUX_CONST_H
+#घोषणा _LINUX_CONST_H
 
-#include <vdso/const.h>
+#समावेश <vdso/स्थिर.h>
 
 /*
- * This returns a constant expression while determining if an argument is
- * a constant expression, most importantly without evaluating the argument.
+ * This वापसs a स्थिरant expression जबतक determining अगर an argument is
+ * a स्थिरant expression, most importantly without evaluating the argument.
  * Glory to Martin Uecker <Martin.Uecker@med.uni-goettingen.de>
  */
-#define __is_constexpr(x) \
-	(sizeof(int) == sizeof(*(8 ? ((void *)((long)(x) * 0l)) : (int *)8)))
+#घोषणा __is_स्थिरexpr(x) \
+	(माप(पूर्णांक) == माप(*(8 ? ((व्योम *)((दीर्घ)(x) * 0l)) : (पूर्णांक *)8)))
 
-#endif /* _LINUX_CONST_H */
+#पूर्ण_अगर /* _LINUX_CONST_H */

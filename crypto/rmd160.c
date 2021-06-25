@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
@@ -6,48 +7,48 @@
  *
  * Based on the reference implementation by Antoon Bosselaers, ESAT-COSIC
  *
- * Copyright (c) 2008 Adrian-Ken Rueegsegger <ken@codelabs.ch>
+ * Copyright (c) 2008 Adrian-Ken Rueegsegger <ken@codeद_असल.ch>
  */
-#include <crypto/internal/hash.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <asm/byteorder.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/byteorder.h>
 
-#include "ripemd.h"
+#समावेश "ripemd.h"
 
-struct rmd160_ctx {
+काष्ठा rmd160_ctx अणु
 	u64 byte_count;
 	u32 state[5];
 	__le32 buffer[16];
-};
+पूर्ण;
 
-#define K1  RMD_K1
-#define K2  RMD_K2
-#define K3  RMD_K3
-#define K4  RMD_K4
-#define K5  RMD_K5
-#define KK1 RMD_K6
-#define KK2 RMD_K7
-#define KK3 RMD_K8
-#define KK4 RMD_K9
-#define KK5 RMD_K1
+#घोषणा K1  RMD_K1
+#घोषणा K2  RMD_K2
+#घोषणा K3  RMD_K3
+#घोषणा K4  RMD_K4
+#घोषणा K5  RMD_K5
+#घोषणा KK1 RMD_K6
+#घोषणा KK2 RMD_K7
+#घोषणा KK3 RMD_K8
+#घोषणा KK4 RMD_K9
+#घोषणा KK5 RMD_K1
 
-#define F1(x, y, z) (x ^ y ^ z)		/* XOR */
-#define F2(x, y, z) (z ^ (x & (y ^ z)))	/* x ? y : z */
-#define F3(x, y, z) ((x | ~y) ^ z)
-#define F4(x, y, z) (y ^ (z & (x ^ y)))	/* z ? x : y */
-#define F5(x, y, z) (x ^ (y | ~z))
+#घोषणा F1(x, y, z) (x ^ y ^ z)		/* XOR */
+#घोषणा F2(x, y, z) (z ^ (x & (y ^ z)))	/* x ? y : z */
+#घोषणा F3(x, y, z) ((x | ~y) ^ z)
+#घोषणा F4(x, y, z) (y ^ (z & (x ^ y)))	/* z ? x : y */
+#घोषणा F5(x, y, z) (x ^ (y | ~z))
 
-#define ROUND(a, b, c, d, e, f, k, x, s)  { \
+#घोषणा ROUND(a, b, c, d, e, f, k, x, s)  अणु \
 	(a) += f((b), (c), (d)) + le32_to_cpup(&(x)) + (k); \
 	(a) = rol32((a), (s)) + (e); \
 	(c) = rol32((c), 10); \
-}
+पूर्ण
 
-static void rmd160_transform(u32 *state, const __le32 *in)
-{
+अटल व्योम rmd160_transक्रमm(u32 *state, स्थिर __le32 *in)
+अणु
 	u32 aa, bb, cc, dd, ee, aaa, bbb, ccc, ddd, eee;
 
 	/* Initialize left lane */
@@ -245,17 +246,17 @@ static void rmd160_transform(u32 *state, const __le32 *in)
 	ROUND(bbb, ccc, ddd, eee, aaa, F1, KK5, in[11], 11);
 
 	/* combine results */
-	ddd += cc + state[1];		/* final result for state[0] */
+	ddd += cc + state[1];		/* final result क्रम state[0] */
 	state[1] = state[2] + dd + eee;
 	state[2] = state[3] + ee + aaa;
 	state[3] = state[4] + aa + bbb;
 	state[4] = state[0] + bb + ccc;
 	state[0] = ddd;
-}
+पूर्ण
 
-static int rmd160_init(struct shash_desc *desc)
-{
-	struct rmd160_ctx *rctx = shash_desc_ctx(desc);
+अटल पूर्णांक rmd160_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा rmd160_ctx *rctx = shash_desc_ctx(desc);
 
 	rctx->byte_count = 0;
 
@@ -265,54 +266,54 @@ static int rmd160_init(struct shash_desc *desc)
 	rctx->state[3] = RMD_H3;
 	rctx->state[4] = RMD_H4;
 
-	memset(rctx->buffer, 0, sizeof(rctx->buffer));
+	स_रखो(rctx->buffer, 0, माप(rctx->buffer));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmd160_update(struct shash_desc *desc, const u8 *data,
-			 unsigned int len)
-{
-	struct rmd160_ctx *rctx = shash_desc_ctx(desc);
-	const u32 avail = sizeof(rctx->buffer) - (rctx->byte_count & 0x3f);
+अटल पूर्णांक rmd160_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			 अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा rmd160_ctx *rctx = shash_desc_ctx(desc);
+	स्थिर u32 avail = माप(rctx->buffer) - (rctx->byte_count & 0x3f);
 
 	rctx->byte_count += len;
 
-	/* Enough space in buffer? If so copy and we're done */
-	if (avail > len) {
-		memcpy((char *)rctx->buffer + (sizeof(rctx->buffer) - avail),
+	/* Enough space in buffer? If so copy and we're करोne */
+	अगर (avail > len) अणु
+		स_नकल((अक्षर *)rctx->buffer + (माप(rctx->buffer) - avail),
 		       data, len);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memcpy((char *)rctx->buffer + (sizeof(rctx->buffer) - avail),
+	स_नकल((अक्षर *)rctx->buffer + (माप(rctx->buffer) - avail),
 	       data, avail);
 
-	rmd160_transform(rctx->state, rctx->buffer);
+	rmd160_transक्रमm(rctx->state, rctx->buffer);
 	data += avail;
 	len -= avail;
 
-	while (len >= sizeof(rctx->buffer)) {
-		memcpy(rctx->buffer, data, sizeof(rctx->buffer));
-		rmd160_transform(rctx->state, rctx->buffer);
-		data += sizeof(rctx->buffer);
-		len -= sizeof(rctx->buffer);
-	}
+	जबतक (len >= माप(rctx->buffer)) अणु
+		स_नकल(rctx->buffer, data, माप(rctx->buffer));
+		rmd160_transक्रमm(rctx->state, rctx->buffer);
+		data += माप(rctx->buffer);
+		len -= माप(rctx->buffer);
+	पूर्ण
 
-	memcpy(rctx->buffer, data, len);
+	स_नकल(rctx->buffer, data, len);
 
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Add padding and return the message digest. */
-static int rmd160_final(struct shash_desc *desc, u8 *out)
-{
-	struct rmd160_ctx *rctx = shash_desc_ctx(desc);
+/* Add padding and वापस the message digest. */
+अटल पूर्णांक rmd160_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा rmd160_ctx *rctx = shash_desc_ctx(desc);
 	u32 i, index, padlen;
 	__le64 bits;
 	__le32 *dst = (__le32 *)out;
-	static const u8 padding[64] = { 0x80, };
+	अटल स्थिर u8 padding[64] = अणु 0x80, पूर्ण;
 
 	bits = cpu_to_le64(rctx->byte_count << 3);
 
@@ -322,44 +323,44 @@ static int rmd160_final(struct shash_desc *desc, u8 *out)
 	rmd160_update(desc, padding, padlen);
 
 	/* Append length */
-	rmd160_update(desc, (const u8 *)&bits, sizeof(bits));
+	rmd160_update(desc, (स्थिर u8 *)&bits, माप(bits));
 
 	/* Store state in digest */
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		dst[i] = cpu_to_le32p(&rctx->state[i]);
 
 	/* Wipe context */
-	memset(rctx, 0, sizeof(*rctx));
+	स_रखो(rctx, 0, माप(*rctx));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct shash_alg alg = {
+अटल काष्ठा shash_alg alg = अणु
 	.digestsize	=	RMD160_DIGEST_SIZE,
 	.init		=	rmd160_init,
 	.update		=	rmd160_update,
 	.final		=	rmd160_final,
-	.descsize	=	sizeof(struct rmd160_ctx),
-	.base		=	{
+	.descsize	=	माप(काष्ठा rmd160_ctx),
+	.base		=	अणु
 		.cra_name	 =	"rmd160",
 		.cra_driver_name =	"rmd160-generic",
 		.cra_blocksize	 =	RMD160_BLOCK_SIZE,
 		.cra_module	 =	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init rmd160_mod_init(void)
-{
-	return crypto_register_shash(&alg);
-}
+अटल पूर्णांक __init rmd160_mod_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_shash(&alg);
+पूर्ण
 
-static void __exit rmd160_mod_fini(void)
-{
-	crypto_unregister_shash(&alg);
-}
+अटल व्योम __निकास rmd160_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&alg);
+पूर्ण
 
 subsys_initcall(rmd160_mod_init);
-module_exit(rmd160_mod_fini);
+module_निकास(rmd160_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Adrian-Ken Rueegsegger <ken@codelabs.ch>");

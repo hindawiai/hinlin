@@ -1,314 +1,315 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Arch specific cpu topology information
+ * Arch specअगरic cpu topology inक्रमmation
  *
  * Copyright (C) 2016, ARM Ltd.
  * Written by: Juri Lelli, ARM Ltd.
  */
 
-#include <linux/acpi.h>
-#include <linux/cpu.h>
-#include <linux/cpufreq.h>
-#include <linux/device.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/sched/topology.h>
-#include <linux/cpuset.h>
-#include <linux/cpumask.h>
-#include <linux/init.h>
-#include <linux/percpu.h>
-#include <linux/sched.h>
-#include <linux/smp.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sched/topology.h>
+#समावेश <linux/cpuset.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/init.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/smp.h>
 
-static DEFINE_PER_CPU(struct scale_freq_data *, sft_data);
-static struct cpumask scale_freq_counters_mask;
-static bool scale_freq_invariant;
+अटल DEFINE_PER_CPU(काष्ठा scale_freq_data *, sft_data);
+अटल काष्ठा cpumask scale_freq_counters_mask;
+अटल bool scale_freq_invariant;
 
-static bool supports_scale_freq_counters(const struct cpumask *cpus)
-{
-	return cpumask_subset(cpus, &scale_freq_counters_mask);
-}
+अटल bool supports_scale_freq_counters(स्थिर काष्ठा cpumask *cpus)
+अणु
+	वापस cpumask_subset(cpus, &scale_freq_counters_mask);
+पूर्ण
 
-bool topology_scale_freq_invariant(void)
-{
-	return cpufreq_supports_freq_invariance() ||
+bool topology_scale_freq_invariant(व्योम)
+अणु
+	वापस cpufreq_supports_freq_invariance() ||
 	       supports_scale_freq_counters(cpu_online_mask);
-}
+पूर्ण
 
-static void update_scale_freq_invariant(bool status)
-{
-	if (scale_freq_invariant == status)
-		return;
+अटल व्योम update_scale_freq_invariant(bool status)
+अणु
+	अगर (scale_freq_invariant == status)
+		वापस;
 
 	/*
 	 * Task scheduler behavior depends on frequency invariance support,
 	 * either cpufreq or counter driven. If the support status changes as
 	 * a result of counter initialisation and use, retrigger the build of
-	 * scheduling domains to ensure the information is propagated properly.
+	 * scheduling करोमुख्यs to ensure the inक्रमmation is propagated properly.
 	 */
-	if (topology_scale_freq_invariant() == status) {
+	अगर (topology_scale_freq_invariant() == status) अणु
 		scale_freq_invariant = status;
-		rebuild_sched_domains_energy();
-	}
-}
+		rebuild_sched_करोमुख्यs_energy();
+	पूर्ण
+पूर्ण
 
-void topology_set_scale_freq_source(struct scale_freq_data *data,
-				    const struct cpumask *cpus)
-{
-	struct scale_freq_data *sfd;
-	int cpu;
+व्योम topology_set_scale_freq_source(काष्ठा scale_freq_data *data,
+				    स्थिर काष्ठा cpumask *cpus)
+अणु
+	काष्ठा scale_freq_data *sfd;
+	पूर्णांक cpu;
 
 	/*
-	 * Avoid calling rebuild_sched_domains() unnecessarily if FIE is
+	 * Aव्योम calling rebuild_sched_करोमुख्यs() unnecessarily अगर FIE is
 	 * supported by cpufreq.
 	 */
-	if (cpumask_empty(&scale_freq_counters_mask))
+	अगर (cpumask_empty(&scale_freq_counters_mask))
 		scale_freq_invariant = topology_scale_freq_invariant();
 
-	for_each_cpu(cpu, cpus) {
+	क्रम_each_cpu(cpu, cpus) अणु
 		sfd = per_cpu(sft_data, cpu);
 
 		/* Use ARCH provided counters whenever possible */
-		if (!sfd || sfd->source != SCALE_FREQ_SOURCE_ARCH) {
+		अगर (!sfd || sfd->source != SCALE_FREQ_SOURCE_ARCH) अणु
 			per_cpu(sft_data, cpu) = data;
 			cpumask_set_cpu(cpu, &scale_freq_counters_mask);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	update_scale_freq_invariant(true);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(topology_set_scale_freq_source);
 
-void topology_clear_scale_freq_source(enum scale_freq_source source,
-				      const struct cpumask *cpus)
-{
-	struct scale_freq_data *sfd;
-	int cpu;
+व्योम topology_clear_scale_freq_source(क्रमागत scale_freq_source source,
+				      स्थिर काष्ठा cpumask *cpus)
+अणु
+	काष्ठा scale_freq_data *sfd;
+	पूर्णांक cpu;
 
-	for_each_cpu(cpu, cpus) {
+	क्रम_each_cpu(cpu, cpus) अणु
 		sfd = per_cpu(sft_data, cpu);
 
-		if (sfd && sfd->source == source) {
-			per_cpu(sft_data, cpu) = NULL;
+		अगर (sfd && sfd->source == source) अणु
+			per_cpu(sft_data, cpu) = शून्य;
 			cpumask_clear_cpu(cpu, &scale_freq_counters_mask);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	update_scale_freq_invariant(false);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(topology_clear_scale_freq_source);
 
-void topology_scale_freq_tick(void)
-{
-	struct scale_freq_data *sfd = *this_cpu_ptr(&sft_data);
+व्योम topology_scale_freq_tick(व्योम)
+अणु
+	काष्ठा scale_freq_data *sfd = *this_cpu_ptr(&sft_data);
 
-	if (sfd)
+	अगर (sfd)
 		sfd->set_freq_scale();
-}
+पूर्ण
 
-DEFINE_PER_CPU(unsigned long, arch_freq_scale) = SCHED_CAPACITY_SCALE;
+DEFINE_PER_CPU(अचिन्हित दीर्घ, arch_freq_scale) = SCHED_CAPACITY_SCALE;
 EXPORT_PER_CPU_SYMBOL_GPL(arch_freq_scale);
 
-void topology_set_freq_scale(const struct cpumask *cpus, unsigned long cur_freq,
-			     unsigned long max_freq)
-{
-	unsigned long scale;
-	int i;
+व्योम topology_set_freq_scale(स्थिर काष्ठा cpumask *cpus, अचिन्हित दीर्घ cur_freq,
+			     अचिन्हित दीर्घ max_freq)
+अणु
+	अचिन्हित दीर्घ scale;
+	पूर्णांक i;
 
-	if (WARN_ON_ONCE(!cur_freq || !max_freq))
-		return;
+	अगर (WARN_ON_ONCE(!cur_freq || !max_freq))
+		वापस;
 
 	/*
-	 * If the use of counters for FIE is enabled, just return as we don't
-	 * want to update the scale factor with information from CPUFREQ.
+	 * If the use of counters क्रम FIE is enabled, just वापस as we करोn't
+	 * want to update the scale factor with inक्रमmation from CPUFREQ.
 	 * Instead the scale factor will be updated from arch_scale_freq_tick.
 	 */
-	if (supports_scale_freq_counters(cpus))
-		return;
+	अगर (supports_scale_freq_counters(cpus))
+		वापस;
 
 	scale = (cur_freq << SCHED_CAPACITY_SHIFT) / max_freq;
 
-	for_each_cpu(i, cpus)
+	क्रम_each_cpu(i, cpus)
 		per_cpu(arch_freq_scale, i) = scale;
-}
+पूर्ण
 
-DEFINE_PER_CPU(unsigned long, cpu_scale) = SCHED_CAPACITY_SCALE;
+DEFINE_PER_CPU(अचिन्हित दीर्घ, cpu_scale) = SCHED_CAPACITY_SCALE;
 
-void topology_set_cpu_scale(unsigned int cpu, unsigned long capacity)
-{
+व्योम topology_set_cpu_scale(अचिन्हित पूर्णांक cpu, अचिन्हित दीर्घ capacity)
+अणु
 	per_cpu(cpu_scale, cpu) = capacity;
-}
+पूर्ण
 
-DEFINE_PER_CPU(unsigned long, thermal_pressure);
+DEFINE_PER_CPU(अचिन्हित दीर्घ, thermal_pressure);
 
-void topology_set_thermal_pressure(const struct cpumask *cpus,
-			       unsigned long th_pressure)
-{
-	int cpu;
+व्योम topology_set_thermal_pressure(स्थिर काष्ठा cpumask *cpus,
+			       अचिन्हित दीर्घ th_pressure)
+अणु
+	पूर्णांक cpu;
 
-	for_each_cpu(cpu, cpus)
+	क्रम_each_cpu(cpu, cpus)
 		WRITE_ONCE(per_cpu(thermal_pressure, cpu), th_pressure);
-}
+पूर्ण
 
-static ssize_t cpu_capacity_show(struct device *dev,
-				 struct device_attribute *attr,
-				 char *buf)
-{
-	struct cpu *cpu = container_of(dev, struct cpu, dev);
+अटल sमाप_प्रकार cpu_capacity_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 अक्षर *buf)
+अणु
+	काष्ठा cpu *cpu = container_of(dev, काष्ठा cpu, dev);
 
-	return sysfs_emit(buf, "%lu\n", topology_get_cpu_scale(cpu->dev.id));
-}
+	वापस sysfs_emit(buf, "%lu\n", topology_get_cpu_scale(cpu->dev.id));
+पूर्ण
 
-static void update_topology_flags_workfn(struct work_struct *work);
-static DECLARE_WORK(update_topology_flags_work, update_topology_flags_workfn);
+अटल व्योम update_topology_flags_workfn(काष्ठा work_काष्ठा *work);
+अटल DECLARE_WORK(update_topology_flags_work, update_topology_flags_workfn);
 
-static DEVICE_ATTR_RO(cpu_capacity);
+अटल DEVICE_ATTR_RO(cpu_capacity);
 
-static int register_cpu_capacity_sysctl(void)
-{
-	int i;
-	struct device *cpu;
+अटल पूर्णांक रेजिस्टर_cpu_capacity_sysctl(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा device *cpu;
 
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		cpu = get_cpu_device(i);
-		if (!cpu) {
+		अगर (!cpu) अणु
 			pr_err("%s: too early to get CPU%d device!\n",
 			       __func__, i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		device_create_file(cpu, &dev_attr_cpu_capacity);
-	}
+	पूर्ण
 
-	return 0;
-}
-subsys_initcall(register_cpu_capacity_sysctl);
+	वापस 0;
+पूर्ण
+subsys_initcall(रेजिस्टर_cpu_capacity_sysctl);
 
-static int update_topology;
+अटल पूर्णांक update_topology;
 
-int topology_update_cpu_topology(void)
-{
-	return update_topology;
-}
+पूर्णांक topology_update_cpu_topology(व्योम)
+अणु
+	वापस update_topology;
+पूर्ण
 
 /*
- * Updating the sched_domains can't be done directly from cpufreq callbacks
- * due to locking, so queue the work for later.
+ * Updating the sched_करोमुख्यs can't be करोne directly from cpufreq callbacks
+ * due to locking, so queue the work क्रम later.
  */
-static void update_topology_flags_workfn(struct work_struct *work)
-{
+अटल व्योम update_topology_flags_workfn(काष्ठा work_काष्ठा *work)
+अणु
 	update_topology = 1;
-	rebuild_sched_domains();
+	rebuild_sched_करोमुख्यs();
 	pr_debug("sched_domain hierarchy rebuilt, flags updated\n");
 	update_topology = 0;
-}
+पूर्ण
 
-static DEFINE_PER_CPU(u32, freq_factor) = 1;
-static u32 *raw_capacity;
+अटल DEFINE_PER_CPU(u32, freq_factor) = 1;
+अटल u32 *raw_capacity;
 
-static int free_raw_capacity(void)
-{
-	kfree(raw_capacity);
-	raw_capacity = NULL;
+अटल पूर्णांक मुक्त_raw_capacity(व्योम)
+अणु
+	kमुक्त(raw_capacity);
+	raw_capacity = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void topology_normalize_cpu_scale(void)
-{
+व्योम topology_normalize_cpu_scale(व्योम)
+अणु
 	u64 capacity;
 	u64 capacity_scale;
-	int cpu;
+	पूर्णांक cpu;
 
-	if (!raw_capacity)
-		return;
+	अगर (!raw_capacity)
+		वापस;
 
 	capacity_scale = 1;
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		capacity = raw_capacity[cpu] * per_cpu(freq_factor, cpu);
 		capacity_scale = max(capacity, capacity_scale);
-	}
+	पूर्ण
 
 	pr_debug("cpu_capacity: capacity_scale=%llu\n", capacity_scale);
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		capacity = raw_capacity[cpu] * per_cpu(freq_factor, cpu);
-		capacity = div64_u64(capacity << SCHED_CAPACITY_SHIFT,
+		capacity = भाग64_u64(capacity << SCHED_CAPACITY_SHIFT,
 			capacity_scale);
 		topology_set_cpu_scale(cpu, capacity);
 		pr_debug("cpu_capacity: CPU%d cpu_capacity=%lu\n",
 			cpu, topology_get_cpu_scale(cpu));
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool __init topology_parse_cpu_capacity(struct device_node *cpu_node, int cpu)
-{
-	struct clk *cpu_clk;
-	static bool cap_parsing_failed;
-	int ret;
+bool __init topology_parse_cpu_capacity(काष्ठा device_node *cpu_node, पूर्णांक cpu)
+अणु
+	काष्ठा clk *cpu_clk;
+	अटल bool cap_parsing_failed;
+	पूर्णांक ret;
 	u32 cpu_capacity;
 
-	if (cap_parsing_failed)
-		return false;
+	अगर (cap_parsing_failed)
+		वापस false;
 
-	ret = of_property_read_u32(cpu_node, "capacity-dmips-mhz",
+	ret = of_property_पढ़ो_u32(cpu_node, "capacity-dmips-mhz",
 				   &cpu_capacity);
-	if (!ret) {
-		if (!raw_capacity) {
-			raw_capacity = kcalloc(num_possible_cpus(),
-					       sizeof(*raw_capacity),
+	अगर (!ret) अणु
+		अगर (!raw_capacity) अणु
+			raw_capacity = kसुस्मृति(num_possible_cpus(),
+					       माप(*raw_capacity),
 					       GFP_KERNEL);
-			if (!raw_capacity) {
+			अगर (!raw_capacity) अणु
 				cap_parsing_failed = true;
-				return false;
-			}
-		}
+				वापस false;
+			पूर्ण
+		पूर्ण
 		raw_capacity[cpu] = cpu_capacity;
 		pr_debug("cpu_capacity: %pOF cpu_capacity=%u (raw)\n",
 			cpu_node, raw_capacity[cpu]);
 
 		/*
-		 * Update freq_factor for calculating early boot cpu capacities.
+		 * Update freq_factor क्रम calculating early boot cpu capacities.
 		 * For non-clk CPU DVFS mechanism, there's no way to get the
 		 * frequency value now, assuming they are running at the same
 		 * frequency (by keeping the initial freq_factor value).
 		 */
 		cpu_clk = of_clk_get(cpu_node, 0);
-		if (!PTR_ERR_OR_ZERO(cpu_clk)) {
+		अगर (!PTR_ERR_OR_ZERO(cpu_clk)) अणु
 			per_cpu(freq_factor, cpu) =
 				clk_get_rate(cpu_clk) / 1000;
 			clk_put(cpu_clk);
-		}
-	} else {
-		if (raw_capacity) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (raw_capacity) अणु
 			pr_err("cpu_capacity: missing %pOF raw capacity\n",
 				cpu_node);
 			pr_err("cpu_capacity: partial information: fallback to 1024 for all CPUs\n");
-		}
+		पूर्ण
 		cap_parsing_failed = true;
-		free_raw_capacity();
-	}
+		मुक्त_raw_capacity();
+	पूर्ण
 
-	return !ret;
-}
+	वापस !ret;
+पूर्ण
 
-#ifdef CONFIG_CPU_FREQ
-static cpumask_var_t cpus_to_visit;
-static void parsing_done_workfn(struct work_struct *work);
-static DECLARE_WORK(parsing_done_work, parsing_done_workfn);
+#अगर_घोषित CONFIG_CPU_FREQ
+अटल cpumask_var_t cpus_to_visit;
+अटल व्योम parsing_करोne_workfn(काष्ठा work_काष्ठा *work);
+अटल DECLARE_WORK(parsing_करोne_work, parsing_करोne_workfn);
 
-static int
-init_cpu_capacity_callback(struct notifier_block *nb,
-			   unsigned long val,
-			   void *data)
-{
-	struct cpufreq_policy *policy = data;
-	int cpu;
+अटल पूर्णांक
+init_cpu_capacity_callback(काष्ठा notअगरier_block *nb,
+			   अचिन्हित दीर्घ val,
+			   व्योम *data)
+अणु
+	काष्ठा cpufreq_policy *policy = data;
+	पूर्णांक cpu;
 
-	if (!raw_capacity)
-		return 0;
+	अगर (!raw_capacity)
+		वापस 0;
 
-	if (val != CPUFREQ_CREATE_POLICY)
-		return 0;
+	अगर (val != CPUFREQ_CREATE_POLICY)
+		वापस 0;
 
 	pr_debug("cpu_capacity: init cpu capacity for CPUs [%*pbl] (to_visit=%*pbl)\n",
 		 cpumask_pr_args(policy->related_cpus),
@@ -316,231 +317,231 @@ init_cpu_capacity_callback(struct notifier_block *nb,
 
 	cpumask_andnot(cpus_to_visit, cpus_to_visit, policy->related_cpus);
 
-	for_each_cpu(cpu, policy->related_cpus)
+	क्रम_each_cpu(cpu, policy->related_cpus)
 		per_cpu(freq_factor, cpu) = policy->cpuinfo.max_freq / 1000;
 
-	if (cpumask_empty(cpus_to_visit)) {
+	अगर (cpumask_empty(cpus_to_visit)) अणु
 		topology_normalize_cpu_scale();
 		schedule_work(&update_topology_flags_work);
-		free_raw_capacity();
+		मुक्त_raw_capacity();
 		pr_debug("cpu_capacity: parsing done\n");
-		schedule_work(&parsing_done_work);
-	}
+		schedule_work(&parsing_करोne_work);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct notifier_block init_cpu_capacity_notifier = {
-	.notifier_call = init_cpu_capacity_callback,
-};
+अटल काष्ठा notअगरier_block init_cpu_capacity_notअगरier = अणु
+	.notअगरier_call = init_cpu_capacity_callback,
+पूर्ण;
 
-static int __init register_cpufreq_notifier(void)
-{
-	int ret;
+अटल पूर्णांक __init रेजिस्टर_cpufreq_notअगरier(व्योम)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * on ACPI-based systems we need to use the default cpu capacity
+	 * on ACPI-based प्रणालीs we need to use the शेष cpu capacity
 	 * until we have the necessary code to parse the cpu capacity, so
-	 * skip registering cpufreq notifier.
+	 * skip रेजिस्टरing cpufreq notअगरier.
 	 */
-	if (!acpi_disabled || !raw_capacity)
-		return -EINVAL;
+	अगर (!acpi_disabled || !raw_capacity)
+		वापस -EINVAL;
 
-	if (!alloc_cpumask_var(&cpus_to_visit, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!alloc_cpumask_var(&cpus_to_visit, GFP_KERNEL))
+		वापस -ENOMEM;
 
 	cpumask_copy(cpus_to_visit, cpu_possible_mask);
 
-	ret = cpufreq_register_notifier(&init_cpu_capacity_notifier,
+	ret = cpufreq_रेजिस्टर_notअगरier(&init_cpu_capacity_notअगरier,
 					CPUFREQ_POLICY_NOTIFIER);
 
-	if (ret)
-		free_cpumask_var(cpus_to_visit);
+	अगर (ret)
+		मुक्त_cpumask_var(cpus_to_visit);
 
-	return ret;
-}
-core_initcall(register_cpufreq_notifier);
+	वापस ret;
+पूर्ण
+core_initcall(रेजिस्टर_cpufreq_notअगरier);
 
-static void parsing_done_workfn(struct work_struct *work)
-{
-	cpufreq_unregister_notifier(&init_cpu_capacity_notifier,
+अटल व्योम parsing_करोne_workfn(काष्ठा work_काष्ठा *work)
+अणु
+	cpufreq_unरेजिस्टर_notअगरier(&init_cpu_capacity_notअगरier,
 					 CPUFREQ_POLICY_NOTIFIER);
-	free_cpumask_var(cpus_to_visit);
-}
+	मुक्त_cpumask_var(cpus_to_visit);
+पूर्ण
 
-#else
-core_initcall(free_raw_capacity);
-#endif
+#अन्यथा
+core_initcall(मुक्त_raw_capacity);
+#पूर्ण_अगर
 
-#if defined(CONFIG_ARM64) || defined(CONFIG_RISCV)
+#अगर defined(CONFIG_ARM64) || defined(CONFIG_RISCV)
 /*
- * This function returns the logic cpu number of the node.
- * There are basically three kinds of return values:
+ * This function वापसs the logic cpu number of the node.
+ * There are basically three kinds of वापस values:
  * (1) logic cpu number which is > 0.
  * (2) -ENODEV when the device tree(DT) node is valid and found in the DT but
  * there is no possible logical CPU in the kernel to match. This happens
  * when CONFIG_NR_CPUS is configure to be smaller than the number of
- * CPU nodes in DT. We need to just ignore this case.
- * (3) -1 if the node does not exist in the device tree
+ * CPU nodes in DT. We need to just ignore this हाल.
+ * (3) -1 अगर the node करोes not exist in the device tree
  */
-static int __init get_cpu_for_node(struct device_node *node)
-{
-	struct device_node *cpu_node;
-	int cpu;
+अटल पूर्णांक __init get_cpu_क्रम_node(काष्ठा device_node *node)
+अणु
+	काष्ठा device_node *cpu_node;
+	पूर्णांक cpu;
 
 	cpu_node = of_parse_phandle(node, "cpu", 0);
-	if (!cpu_node)
-		return -1;
+	अगर (!cpu_node)
+		वापस -1;
 
 	cpu = of_cpu_node_to_id(cpu_node);
-	if (cpu >= 0)
+	अगर (cpu >= 0)
 		topology_parse_cpu_capacity(cpu_node, cpu);
-	else
+	अन्यथा
 		pr_info("CPU node for %pOF exist but the possible cpu range is :%*pbl\n",
 			cpu_node, cpumask_pr_args(cpu_possible_mask));
 
 	of_node_put(cpu_node);
-	return cpu;
-}
+	वापस cpu;
+पूर्ण
 
-static int __init parse_core(struct device_node *core, int package_id,
-			     int core_id)
-{
-	char name[20];
+अटल पूर्णांक __init parse_core(काष्ठा device_node *core, पूर्णांक package_id,
+			     पूर्णांक core_id)
+अणु
+	अक्षर name[20];
 	bool leaf = true;
-	int i = 0;
-	int cpu;
-	struct device_node *t;
+	पूर्णांक i = 0;
+	पूर्णांक cpu;
+	काष्ठा device_node *t;
 
-	do {
-		snprintf(name, sizeof(name), "thread%d", i);
+	करो अणु
+		snम_लिखो(name, माप(name), "thread%d", i);
 		t = of_get_child_by_name(core, name);
-		if (t) {
+		अगर (t) अणु
 			leaf = false;
-			cpu = get_cpu_for_node(t);
-			if (cpu >= 0) {
+			cpu = get_cpu_क्रम_node(t);
+			अगर (cpu >= 0) अणु
 				cpu_topology[cpu].package_id = package_id;
 				cpu_topology[cpu].core_id = core_id;
-				cpu_topology[cpu].thread_id = i;
-			} else if (cpu != -ENODEV) {
+				cpu_topology[cpu].thपढ़ो_id = i;
+			पूर्ण अन्यथा अगर (cpu != -ENODEV) अणु
 				pr_err("%pOF: Can't get CPU for thread\n", t);
 				of_node_put(t);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			of_node_put(t);
-		}
+		पूर्ण
 		i++;
-	} while (t);
+	पूर्ण जबतक (t);
 
-	cpu = get_cpu_for_node(core);
-	if (cpu >= 0) {
-		if (!leaf) {
+	cpu = get_cpu_क्रम_node(core);
+	अगर (cpu >= 0) अणु
+		अगर (!leaf) अणु
 			pr_err("%pOF: Core has both threads and CPU\n",
 			       core);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		cpu_topology[cpu].package_id = package_id;
 		cpu_topology[cpu].core_id = core_id;
-	} else if (leaf && cpu != -ENODEV) {
+	पूर्ण अन्यथा अगर (leaf && cpu != -ENODEV) अणु
 		pr_err("%pOF: Can't get CPU for leaf core\n", core);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init parse_cluster(struct device_node *cluster, int depth)
-{
-	char name[20];
+अटल पूर्णांक __init parse_cluster(काष्ठा device_node *cluster, पूर्णांक depth)
+अणु
+	अक्षर name[20];
 	bool leaf = true;
 	bool has_cores = false;
-	struct device_node *c;
-	static int package_id __initdata;
-	int core_id = 0;
-	int i, ret;
+	काष्ठा device_node *c;
+	अटल पूर्णांक package_id __initdata;
+	पूर्णांक core_id = 0;
+	पूर्णांक i, ret;
 
 	/*
-	 * First check for child clusters; we currently ignore any
-	 * information about the nesting of clusters and present the
+	 * First check क्रम child clusters; we currently ignore any
+	 * inक्रमmation about the nesting of clusters and present the
 	 * scheduler with a flat list of them.
 	 */
 	i = 0;
-	do {
-		snprintf(name, sizeof(name), "cluster%d", i);
+	करो अणु
+		snम_लिखो(name, माप(name), "cluster%d", i);
 		c = of_get_child_by_name(cluster, name);
-		if (c) {
+		अगर (c) अणु
 			leaf = false;
 			ret = parse_cluster(c, depth + 1);
 			of_node_put(c);
-			if (ret != 0)
-				return ret;
-		}
+			अगर (ret != 0)
+				वापस ret;
+		पूर्ण
 		i++;
-	} while (c);
+	पूर्ण जबतक (c);
 
-	/* Now check for cores */
+	/* Now check क्रम cores */
 	i = 0;
-	do {
-		snprintf(name, sizeof(name), "core%d", i);
+	करो अणु
+		snम_लिखो(name, माप(name), "core%d", i);
 		c = of_get_child_by_name(cluster, name);
-		if (c) {
+		अगर (c) अणु
 			has_cores = true;
 
-			if (depth == 0) {
+			अगर (depth == 0) अणु
 				pr_err("%pOF: cpu-map children should be clusters\n",
 				       c);
 				of_node_put(c);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (leaf) {
+			अगर (leaf) अणु
 				ret = parse_core(c, package_id, core_id++);
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_err("%pOF: Non-leaf cluster with core %s\n",
 				       cluster, name);
 				ret = -EINVAL;
-			}
+			पूर्ण
 
 			of_node_put(c);
-			if (ret != 0)
-				return ret;
-		}
+			अगर (ret != 0)
+				वापस ret;
+		पूर्ण
 		i++;
-	} while (c);
+	पूर्ण जबतक (c);
 
-	if (leaf && !has_cores)
+	अगर (leaf && !has_cores)
 		pr_warn("%pOF: empty cluster\n", cluster);
 
-	if (leaf)
+	अगर (leaf)
 		package_id++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init parse_dt_topology(void)
-{
-	struct device_node *cn, *map;
-	int ret = 0;
-	int cpu;
+अटल पूर्णांक __init parse_dt_topology(व्योम)
+अणु
+	काष्ठा device_node *cn, *map;
+	पूर्णांक ret = 0;
+	पूर्णांक cpu;
 
 	cn = of_find_node_by_path("/cpus");
-	if (!cn) {
+	अगर (!cn) अणु
 		pr_err("No CPU information found in DT\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * When topology is provided cpu-map is essentially a root
 	 * cluster with restricted subnodes.
 	 */
 	map = of_get_child_by_name(cn, "cpu-map");
-	if (!map)
-		goto out;
+	अगर (!map)
+		जाओ out;
 
 	ret = parse_cluster(map, 0);
-	if (ret != 0)
-		goto out_map;
+	अगर (ret != 0)
+		जाओ out_map;
 
 	topology_normalize_cpu_scale();
 
@@ -548,129 +549,129 @@ static int __init parse_dt_topology(void)
 	 * Check that all cores are in the topology; the SMP code will
 	 * only mark cores described in the DT as possible.
 	 */
-	for_each_possible_cpu(cpu)
-		if (cpu_topology[cpu].package_id == -1)
+	क्रम_each_possible_cpu(cpu)
+		अगर (cpu_topology[cpu].package_id == -1)
 			ret = -EINVAL;
 
 out_map:
 	of_node_put(map);
 out:
 	of_node_put(cn);
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * cpu topology table
  */
-struct cpu_topology cpu_topology[NR_CPUS];
+काष्ठा cpu_topology cpu_topology[NR_CPUS];
 EXPORT_SYMBOL_GPL(cpu_topology);
 
-const struct cpumask *cpu_coregroup_mask(int cpu)
-{
-	const cpumask_t *core_mask = cpumask_of_node(cpu_to_node(cpu));
+स्थिर काष्ठा cpumask *cpu_coregroup_mask(पूर्णांक cpu)
+अणु
+	स्थिर cpumask_t *core_mask = cpumask_of_node(cpu_to_node(cpu));
 
 	/* Find the smaller of NUMA, core or LLC siblings */
-	if (cpumask_subset(&cpu_topology[cpu].core_sibling, core_mask)) {
+	अगर (cpumask_subset(&cpu_topology[cpu].core_sibling, core_mask)) अणु
 		/* not numa in package, lets use the package siblings */
 		core_mask = &cpu_topology[cpu].core_sibling;
-	}
-	if (cpu_topology[cpu].llc_id != -1) {
-		if (cpumask_subset(&cpu_topology[cpu].llc_sibling, core_mask))
+	पूर्ण
+	अगर (cpu_topology[cpu].llc_id != -1) अणु
+		अगर (cpumask_subset(&cpu_topology[cpu].llc_sibling, core_mask))
 			core_mask = &cpu_topology[cpu].llc_sibling;
-	}
+	पूर्ण
 
-	return core_mask;
-}
+	वापस core_mask;
+पूर्ण
 
-void update_siblings_masks(unsigned int cpuid)
-{
-	struct cpu_topology *cpu_topo, *cpuid_topo = &cpu_topology[cpuid];
-	int cpu;
+व्योम update_siblings_masks(अचिन्हित पूर्णांक cpuid)
+अणु
+	काष्ठा cpu_topology *cpu_topo, *cpuid_topo = &cpu_topology[cpuid];
+	पूर्णांक cpu;
 
-	/* update core and thread sibling masks */
-	for_each_online_cpu(cpu) {
+	/* update core and thपढ़ो sibling masks */
+	क्रम_each_online_cpu(cpu) अणु
 		cpu_topo = &cpu_topology[cpu];
 
-		if (cpuid_topo->llc_id == cpu_topo->llc_id) {
+		अगर (cpuid_topo->llc_id == cpu_topo->llc_id) अणु
 			cpumask_set_cpu(cpu, &cpuid_topo->llc_sibling);
 			cpumask_set_cpu(cpuid, &cpu_topo->llc_sibling);
-		}
+		पूर्ण
 
-		if (cpuid_topo->package_id != cpu_topo->package_id)
-			continue;
+		अगर (cpuid_topo->package_id != cpu_topo->package_id)
+			जारी;
 
 		cpumask_set_cpu(cpuid, &cpu_topo->core_sibling);
 		cpumask_set_cpu(cpu, &cpuid_topo->core_sibling);
 
-		if (cpuid_topo->core_id != cpu_topo->core_id)
-			continue;
+		अगर (cpuid_topo->core_id != cpu_topo->core_id)
+			जारी;
 
-		cpumask_set_cpu(cpuid, &cpu_topo->thread_sibling);
-		cpumask_set_cpu(cpu, &cpuid_topo->thread_sibling);
-	}
-}
+		cpumask_set_cpu(cpuid, &cpu_topo->thपढ़ो_sibling);
+		cpumask_set_cpu(cpu, &cpuid_topo->thपढ़ो_sibling);
+	पूर्ण
+पूर्ण
 
-static void clear_cpu_topology(int cpu)
-{
-	struct cpu_topology *cpu_topo = &cpu_topology[cpu];
+अटल व्योम clear_cpu_topology(पूर्णांक cpu)
+अणु
+	काष्ठा cpu_topology *cpu_topo = &cpu_topology[cpu];
 
 	cpumask_clear(&cpu_topo->llc_sibling);
 	cpumask_set_cpu(cpu, &cpu_topo->llc_sibling);
 
 	cpumask_clear(&cpu_topo->core_sibling);
 	cpumask_set_cpu(cpu, &cpu_topo->core_sibling);
-	cpumask_clear(&cpu_topo->thread_sibling);
-	cpumask_set_cpu(cpu, &cpu_topo->thread_sibling);
-}
+	cpumask_clear(&cpu_topo->thपढ़ो_sibling);
+	cpumask_set_cpu(cpu, &cpu_topo->thपढ़ो_sibling);
+पूर्ण
 
-void __init reset_cpu_topology(void)
-{
-	unsigned int cpu;
+व्योम __init reset_cpu_topology(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
-		struct cpu_topology *cpu_topo = &cpu_topology[cpu];
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा cpu_topology *cpu_topo = &cpu_topology[cpu];
 
-		cpu_topo->thread_id = -1;
+		cpu_topo->thपढ़ो_id = -1;
 		cpu_topo->core_id = -1;
 		cpu_topo->package_id = -1;
 		cpu_topo->llc_id = -1;
 
 		clear_cpu_topology(cpu);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void remove_cpu_topology(unsigned int cpu)
-{
-	int sibling;
+व्योम हटाओ_cpu_topology(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक sibling;
 
-	for_each_cpu(sibling, topology_core_cpumask(cpu))
+	क्रम_each_cpu(sibling, topology_core_cpumask(cpu))
 		cpumask_clear_cpu(cpu, topology_core_cpumask(sibling));
-	for_each_cpu(sibling, topology_sibling_cpumask(cpu))
+	क्रम_each_cpu(sibling, topology_sibling_cpumask(cpu))
 		cpumask_clear_cpu(cpu, topology_sibling_cpumask(sibling));
-	for_each_cpu(sibling, topology_llc_cpumask(cpu))
+	क्रम_each_cpu(sibling, topology_llc_cpumask(cpu))
 		cpumask_clear_cpu(cpu, topology_llc_cpumask(sibling));
 
 	clear_cpu_topology(cpu);
-}
+पूर्ण
 
-__weak int __init parse_acpi_topology(void)
-{
-	return 0;
-}
+__weak पूर्णांक __init parse_acpi_topology(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-#if defined(CONFIG_ARM64) || defined(CONFIG_RISCV)
-void __init init_cpu_topology(void)
-{
+#अगर defined(CONFIG_ARM64) || defined(CONFIG_RISCV)
+व्योम __init init_cpu_topology(व्योम)
+अणु
 	reset_cpu_topology();
 
 	/*
-	 * Discard anything that was parsed if we hit an error so we
-	 * don't use partial information.
+	 * Discard anything that was parsed अगर we hit an error so we
+	 * करोn't use partial inक्रमmation.
 	 */
-	if (parse_acpi_topology())
+	अगर (parse_acpi_topology())
 		reset_cpu_topology();
-	else if (of_have_populated_dt() && parse_dt_topology())
+	अन्यथा अगर (of_have_populated_dt() && parse_dt_topology())
 		reset_cpu_topology();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

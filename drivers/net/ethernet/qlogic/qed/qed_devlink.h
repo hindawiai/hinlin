@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* Marvell/Qlogic FastLinQ NIC driver
  *
  * Copyright (C) 2020 Marvell International Ltd.
  */
-#ifndef _QED_DEVLINK_H
-#define _QED_DEVLINK_H
+#अगर_अघोषित _QED_DEVLINK_H
+#घोषणा _QED_DEVLINK_H
 
-#include <linux/qed/qed_if.h>
-#include <net/devlink.h>
+#समावेश <linux/qed/qed_अगर.h>
+#समावेश <net/devlink.h>
 
-struct devlink *qed_devlink_register(struct qed_dev *cdev);
-void qed_devlink_unregister(struct devlink *devlink);
+काष्ठा devlink *qed_devlink_रेजिस्टर(काष्ठा qed_dev *cdev);
+व्योम qed_devlink_unरेजिस्टर(काष्ठा devlink *devlink);
 
-void qed_fw_reporters_create(struct devlink *devlink);
-void qed_fw_reporters_destroy(struct devlink *devlink);
+व्योम qed_fw_reporters_create(काष्ठा devlink *devlink);
+व्योम qed_fw_reporters_destroy(काष्ठा devlink *devlink);
 
-int qed_report_fatal_error(struct devlink *dl, enum qed_hw_err_type err_type);
+पूर्णांक qed_report_fatal_error(काष्ठा devlink *dl, क्रमागत qed_hw_err_type err_type);
 
-#endif
+#पूर्ण_अगर

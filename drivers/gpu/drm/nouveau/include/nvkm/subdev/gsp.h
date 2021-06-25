@@ -1,13 +1,14 @@
-#ifndef __NVKM_GSP_H__
-#define __NVKM_GSP_H__
-#define nvkm_gsp(p) container_of((p), struct nvkm_gsp, subdev)
-#include <core/subdev.h>
-#include <core/falcon.h>
+<शैली गुरु>
+#अगर_अघोषित __NVKM_GSP_H__
+#घोषणा __NVKM_GSP_H__
+#घोषणा nvkm_gsp(p) container_of((p), काष्ठा nvkm_gsp, subdev)
+#समावेश <core/subdev.h>
+#समावेश <core/falcon.h>
 
-struct nvkm_gsp {
-	struct nvkm_subdev subdev;
-	struct nvkm_falcon falcon;
-};
+काष्ठा nvkm_gsp अणु
+	काष्ठा nvkm_subdev subdev;
+	काष्ठा nvkm_falcon falcon;
+पूर्ण;
 
-int gv100_gsp_new(struct nvkm_device *, enum nvkm_subdev_type, int, struct nvkm_gsp **);
-#endif
+पूर्णांक gv100_gsp_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक, काष्ठा nvkm_gsp **);
+#पूर्ण_अगर

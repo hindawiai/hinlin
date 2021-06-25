@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2011 Instituto Nokia de Tecnologia
  * Copyright (C) 2014 Marvell International Ltd.
  *
  * Authors:
- *    Lauro Ramos Venancio <lauro.venancio@openbossa.org>
- *    Aloisio Almeida Jr <aloisio.almeida@openbossa.org>
+ *    Lauro Ramos Venancio <lauro.venancio@खोलोbossa.org>
+ *    Aloisio Almeida Jr <aloisio.almeida@खोलोbossa.org>
  */
 
-#ifndef __NET_NFC_H
-#define __NET_NFC_H
+#अगर_अघोषित __NET_NFC_H
+#घोषणा __NET_NFC_H
 
-#include <linux/nfc.h>
-#include <linux/device.h>
-#include <linux/skbuff.h>
+#समावेश <linux/nfc.h>
+#समावेश <linux/device.h>
+#समावेश <linux/skbuff.h>
 
-#define nfc_dbg(dev, fmt, ...) dev_dbg((dev), "NFC: " fmt, ##__VA_ARGS__)
-#define nfc_info(dev, fmt, ...) dev_info((dev), "NFC: " fmt, ##__VA_ARGS__)
-#define nfc_err(dev, fmt, ...) dev_err((dev), "NFC: " fmt, ##__VA_ARGS__)
+#घोषणा nfc_dbg(dev, fmt, ...) dev_dbg((dev), "NFC: " fmt, ##__VA_ARGS__)
+#घोषणा nfc_info(dev, fmt, ...) dev_info((dev), "NFC: " fmt, ##__VA_ARGS__)
+#घोषणा nfc_err(dev, fmt, ...) dev_err((dev), "NFC: " fmt, ##__VA_ARGS__)
 
-struct nfc_phy_ops {
-	int (*write)(void *dev_id, struct sk_buff *skb);
-	int (*enable)(void *dev_id);
-	void (*disable)(void *dev_id);
-};
+काष्ठा nfc_phy_ops अणु
+	पूर्णांक (*ग_लिखो)(व्योम *dev_id, काष्ठा sk_buff *skb);
+	पूर्णांक (*enable)(व्योम *dev_id);
+	व्योम (*disable)(व्योम *dev_id);
+पूर्ण;
 
-struct nfc_dev;
+काष्ठा nfc_dev;
 
 /**
  * data_exchange_cb_t - Definition of nfc_data_exchange callback
@@ -35,59 +36,59 @@ struct nfc_dev;
  * @err: If an error has occurred during data exchange, it is the
  *	error number. Zero means no error.
  *
- * When a rx or tx package is lost or corrupted or the target gets out
+ * When a rx or tx package is lost or corrupted or the target माला_लो out
  * of the operating field, err is -EIO.
  */
-typedef void (*data_exchange_cb_t)(void *context, struct sk_buff *skb,
-								int err);
+प्रकार व्योम (*data_exchange_cb_t)(व्योम *context, काष्ठा sk_buff *skb,
+								पूर्णांक err);
 
-typedef void (*se_io_cb_t)(void *context, u8 *apdu, size_t apdu_len, int err);
+प्रकार व्योम (*se_io_cb_t)(व्योम *context, u8 *apdu, माप_प्रकार apdu_len, पूर्णांक err);
 
-struct nfc_target;
+काष्ठा nfc_target;
 
-struct nfc_ops {
-	int (*dev_up)(struct nfc_dev *dev);
-	int (*dev_down)(struct nfc_dev *dev);
-	int (*start_poll)(struct nfc_dev *dev,
-			  u32 im_protocols, u32 tm_protocols);
-	void (*stop_poll)(struct nfc_dev *dev);
-	int (*dep_link_up)(struct nfc_dev *dev, struct nfc_target *target,
-			   u8 comm_mode, u8 *gb, size_t gb_len);
-	int (*dep_link_down)(struct nfc_dev *dev);
-	int (*activate_target)(struct nfc_dev *dev, struct nfc_target *target,
+काष्ठा nfc_ops अणु
+	पूर्णांक (*dev_up)(काष्ठा nfc_dev *dev);
+	पूर्णांक (*dev_करोwn)(काष्ठा nfc_dev *dev);
+	पूर्णांक (*start_poll)(काष्ठा nfc_dev *dev,
+			  u32 im_protocols, u32 पंचांग_protocols);
+	व्योम (*stop_poll)(काष्ठा nfc_dev *dev);
+	पूर्णांक (*dep_link_up)(काष्ठा nfc_dev *dev, काष्ठा nfc_target *target,
+			   u8 comm_mode, u8 *gb, माप_प्रकार gb_len);
+	पूर्णांक (*dep_link_करोwn)(काष्ठा nfc_dev *dev);
+	पूर्णांक (*activate_target)(काष्ठा nfc_dev *dev, काष्ठा nfc_target *target,
 			       u32 protocol);
-	void (*deactivate_target)(struct nfc_dev *dev,
-				  struct nfc_target *target, u8 mode);
-	int (*im_transceive)(struct nfc_dev *dev, struct nfc_target *target,
-			     struct sk_buff *skb, data_exchange_cb_t cb,
-			     void *cb_context);
-	int (*tm_send)(struct nfc_dev *dev, struct sk_buff *skb);
-	int (*check_presence)(struct nfc_dev *dev, struct nfc_target *target);
-	int (*fw_download)(struct nfc_dev *dev, const char *firmware_name);
+	व्योम (*deactivate_target)(काष्ठा nfc_dev *dev,
+				  काष्ठा nfc_target *target, u8 mode);
+	पूर्णांक (*im_transceive)(काष्ठा nfc_dev *dev, काष्ठा nfc_target *target,
+			     काष्ठा sk_buff *skb, data_exchange_cb_t cb,
+			     व्योम *cb_context);
+	पूर्णांक (*पंचांग_send)(काष्ठा nfc_dev *dev, काष्ठा sk_buff *skb);
+	पूर्णांक (*check_presence)(काष्ठा nfc_dev *dev, काष्ठा nfc_target *target);
+	पूर्णांक (*fw_करोwnload)(काष्ठा nfc_dev *dev, स्थिर अक्षर *firmware_name);
 
 	/* Secure Element API */
-	int (*discover_se)(struct nfc_dev *dev);
-	int (*enable_se)(struct nfc_dev *dev, u32 se_idx);
-	int (*disable_se)(struct nfc_dev *dev, u32 se_idx);
-	int (*se_io) (struct nfc_dev *dev, u32 se_idx,
-		      u8 *apdu, size_t apdu_length,
-		      se_io_cb_t cb, void *cb_context);
-};
+	पूर्णांक (*discover_se)(काष्ठा nfc_dev *dev);
+	पूर्णांक (*enable_se)(काष्ठा nfc_dev *dev, u32 se_idx);
+	पूर्णांक (*disable_se)(काष्ठा nfc_dev *dev, u32 se_idx);
+	पूर्णांक (*se_io) (काष्ठा nfc_dev *dev, u32 se_idx,
+		      u8 *apdu, माप_प्रकार apdu_length,
+		      se_io_cb_t cb, व्योम *cb_context);
+पूर्ण;
 
-#define NFC_TARGET_IDX_ANY -1
-#define NFC_MAX_GT_LEN 48
-#define NFC_ATR_RES_GT_OFFSET 15
-#define NFC_ATR_REQ_GT_OFFSET 14
+#घोषणा NFC_TARGET_IDX_ANY -1
+#घोषणा NFC_MAX_GT_LEN 48
+#घोषणा NFC_ATR_RES_GT_OFFSET 15
+#घोषणा NFC_ATR_REQ_GT_OFFSET 14
 
 /**
- * struct nfc_target - NFC target descriptiom
+ * काष्ठा nfc_target - NFC target descriptiom
  *
- * @sens_res: 2 bytes describing the target SENS_RES response, if the target
- *	is a type A one. The %sens_res most significant byte must be byte 2
- *	as described by the NFC Forum digital specification (i.e. the platform
- *	configuration one) while %sens_res least significant byte is byte 1.
+ * @sens_res: 2 bytes describing the target SENS_RES response, अगर the target
+ *	is a type A one. The %sens_res most signअगरicant byte must be byte 2
+ *	as described by the NFC Forum digital specअगरication (i.e. the platक्रमm
+ *	configuration one) जबतक %sens_res least signअगरicant byte is byte 1.
  */
-struct nfc_target {
+काष्ठा nfc_target अणु
 	u32 idx;
 	u32 supported_protocols;
 	u16 sens_res;
@@ -100,15 +101,15 @@ struct nfc_target {
 	u8 sensb_res[NFC_SENSB_RES_MAXSIZE];
 	u8 sensf_res_len;
 	u8 sensf_res[NFC_SENSF_RES_MAXSIZE];
-	u8 hci_reader_gate;
+	u8 hci_पढ़ोer_gate;
 	u8 logical_idx;
 	u8 is_iso15693;
 	u8 iso15693_dsfid;
 	u8 iso15693_uid[NFC_ISO15693_UID_MAXSIZE];
-};
+पूर्ण;
 
 /**
- * nfc_se - A structure for NFC accessible secure elements.
+ * nfc_se - A काष्ठाure क्रम NFC accessible secure elements.
  *
  * @idx: The secure element index. User space will enable or
  *       disable a secure element by its index.
@@ -117,105 +118,105 @@ struct nfc_target {
  * @state: The secure element state, either enabled or disabled.
  *
  */
-struct nfc_se {
-	struct list_head list;
+काष्ठा nfc_se अणु
+	काष्ठा list_head list;
 	u32 idx;
 	u16 type;
 	u16 state;
-};
+पूर्ण;
 
 /**
- * nfc_evt_transaction - A struct for NFC secure element event transaction.
+ * nfc_evt_transaction - A काष्ठा क्रम NFC secure element event transaction.
  *
- * @aid: The application identifier triggering the event
+ * @aid: The application identअगरier triggering the event
  *
- * @aid_len: The application identifier length [5:16]
+ * @aid_len: The application identअगरier length [5:16]
  *
  * @params: The application parameters transmitted during the transaction
  *
  * @params_len: The applications parameters length [0:255]
  *
  */
-#define NFC_MIN_AID_LENGTH	5
-#define	NFC_MAX_AID_LENGTH	16
-#define NFC_MAX_PARAMS_LENGTH	255
+#घोषणा NFC_MIN_AID_LENGTH	5
+#घोषणा	NFC_MAX_AID_LENGTH	16
+#घोषणा NFC_MAX_PARAMS_LENGTH	255
 
-#define NFC_EVT_TRANSACTION_AID_TAG	0x81
-#define NFC_EVT_TRANSACTION_PARAMS_TAG	0x82
-struct nfc_evt_transaction {
+#घोषणा NFC_EVT_TRANSACTION_AID_TAG	0x81
+#घोषणा NFC_EVT_TRANSACTION_PARAMS_TAG	0x82
+काष्ठा nfc_evt_transaction अणु
 	u32 aid_len;
 	u8 aid[NFC_MAX_AID_LENGTH];
 	u8 params_len;
 	u8 params[];
-} __packed;
+पूर्ण __packed;
 
-struct nfc_genl_data {
+काष्ठा nfc_genl_data अणु
 	u32 poll_req_portid;
-	struct mutex genl_data_mutex;
-};
+	काष्ठा mutex genl_data_mutex;
+पूर्ण;
 
-struct nfc_vendor_cmd {
-	__u32 vendor_id;
+काष्ठा nfc_venकरोr_cmd अणु
+	__u32 venकरोr_id;
 	__u32 subcmd;
-	int (*doit)(struct nfc_dev *dev, void *data, size_t data_len);
-};
+	पूर्णांक (*करोit)(काष्ठा nfc_dev *dev, व्योम *data, माप_प्रकार data_len);
+पूर्ण;
 
-struct nfc_dev {
-	int idx;
+काष्ठा nfc_dev अणु
+	पूर्णांक idx;
 	u32 target_next_idx;
-	struct nfc_target *targets;
-	int n_targets;
-	int targets_generation;
-	struct device dev;
+	काष्ठा nfc_target *tarमाला_लो;
+	पूर्णांक n_tarमाला_लो;
+	पूर्णांक tarमाला_लो_generation;
+	काष्ठा device dev;
 	bool dev_up;
-	bool fw_download_in_progress;
+	bool fw_करोwnload_in_progress;
 	u8 rf_mode;
 	bool polling;
-	struct nfc_target *active_target;
+	काष्ठा nfc_target *active_target;
 	bool dep_link_up;
-	struct nfc_genl_data genl_data;
+	काष्ठा nfc_genl_data genl_data;
 	u32 supported_protocols;
 
-	struct list_head secure_elements;
+	काष्ठा list_head secure_elements;
 
-	int tx_headroom;
-	int tx_tailroom;
+	पूर्णांक tx_headroom;
+	पूर्णांक tx_tailroom;
 
-	struct timer_list check_pres_timer;
-	struct work_struct check_pres_work;
+	काष्ठा समयr_list check_pres_समयr;
+	काष्ठा work_काष्ठा check_pres_work;
 
-	bool shutting_down;
+	bool shutting_करोwn;
 
-	struct rfkill *rfkill;
+	काष्ठा rfसमाप्त *rfसमाप्त;
 
-	struct nfc_vendor_cmd *vendor_cmds;
-	int n_vendor_cmds;
+	काष्ठा nfc_venकरोr_cmd *venकरोr_cmds;
+	पूर्णांक n_venकरोr_cmds;
 
-	struct nfc_ops *ops;
-	struct genl_info *cur_cmd_info;
-};
-#define to_nfc_dev(_dev) container_of(_dev, struct nfc_dev, dev)
+	काष्ठा nfc_ops *ops;
+	काष्ठा genl_info *cur_cmd_info;
+पूर्ण;
+#घोषणा to_nfc_dev(_dev) container_of(_dev, काष्ठा nfc_dev, dev)
 
-extern struct class nfc_class;
+बाह्य काष्ठा class nfc_class;
 
-struct nfc_dev *nfc_allocate_device(struct nfc_ops *ops,
+काष्ठा nfc_dev *nfc_allocate_device(काष्ठा nfc_ops *ops,
 				    u32 supported_protocols,
-				    int tx_headroom,
-				    int tx_tailroom);
+				    पूर्णांक tx_headroom,
+				    पूर्णांक tx_tailroom);
 
 /**
- * nfc_free_device - free nfc device
+ * nfc_मुक्त_device - मुक्त nfc device
  *
- * @dev: The nfc device to free
+ * @dev: The nfc device to मुक्त
  */
-static inline void nfc_free_device(struct nfc_dev *dev)
-{
+अटल अंतरभूत व्योम nfc_मुक्त_device(काष्ठा nfc_dev *dev)
+अणु
 	put_device(&dev->dev);
-}
+पूर्ण
 
-int nfc_register_device(struct nfc_dev *dev);
+पूर्णांक nfc_रेजिस्टर_device(काष्ठा nfc_dev *dev);
 
-void nfc_unregister_device(struct nfc_dev *dev);
+व्योम nfc_unरेजिस्टर_device(काष्ठा nfc_dev *dev);
 
 /**
  * nfc_set_parent_dev - set the parent device
@@ -223,130 +224,130 @@ void nfc_unregister_device(struct nfc_dev *dev);
  * @nfc_dev: The nfc device whose parent is being set
  * @dev: The parent device
  */
-static inline void nfc_set_parent_dev(struct nfc_dev *nfc_dev,
-				      struct device *dev)
-{
+अटल अंतरभूत व्योम nfc_set_parent_dev(काष्ठा nfc_dev *nfc_dev,
+				      काष्ठा device *dev)
+अणु
 	nfc_dev->dev.parent = dev;
-}
+पूर्ण
 
 /**
- * nfc_set_drvdata - set driver specifc data
+ * nfc_set_drvdata - set driver specअगरc data
  *
  * @dev: The nfc device
- * @data: Pointer to driver specifc data
+ * @data: Poपूर्णांकer to driver specअगरc data
  */
-static inline void nfc_set_drvdata(struct nfc_dev *dev, void *data)
-{
+अटल अंतरभूत व्योम nfc_set_drvdata(काष्ठा nfc_dev *dev, व्योम *data)
+अणु
 	dev_set_drvdata(&dev->dev, data);
-}
+पूर्ण
 
 /**
- * nfc_get_drvdata - get driver specifc data
+ * nfc_get_drvdata - get driver specअगरc data
  *
  * @dev: The nfc device
  */
-static inline void *nfc_get_drvdata(struct nfc_dev *dev)
-{
-	return dev_get_drvdata(&dev->dev);
-}
+अटल अंतरभूत व्योम *nfc_get_drvdata(काष्ठा nfc_dev *dev)
+अणु
+	वापस dev_get_drvdata(&dev->dev);
+पूर्ण
 
 /**
  * nfc_device_name - get the nfc device name
  *
- * @dev: The nfc device whose name to return
+ * @dev: The nfc device whose name to वापस
  */
-static inline const char *nfc_device_name(struct nfc_dev *dev)
-{
-	return dev_name(&dev->dev);
-}
+अटल अंतरभूत स्थिर अक्षर *nfc_device_name(काष्ठा nfc_dev *dev)
+अणु
+	वापस dev_name(&dev->dev);
+पूर्ण
 
-struct sk_buff *nfc_alloc_send_skb(struct nfc_dev *dev, struct sock *sk,
-				   unsigned int flags, unsigned int size,
-				   unsigned int *err);
-struct sk_buff *nfc_alloc_recv_skb(unsigned int size, gfp_t gfp);
+काष्ठा sk_buff *nfc_alloc_send_skb(काष्ठा nfc_dev *dev, काष्ठा sock *sk,
+				   अचिन्हित पूर्णांक flags, अचिन्हित पूर्णांक size,
+				   अचिन्हित पूर्णांक *err);
+काष्ठा sk_buff *nfc_alloc_recv_skb(अचिन्हित पूर्णांक size, gfp_t gfp);
 
-int nfc_set_remote_general_bytes(struct nfc_dev *dev,
+पूर्णांक nfc_set_remote_general_bytes(काष्ठा nfc_dev *dev,
 				 u8 *gt, u8 gt_len);
-u8 *nfc_get_local_general_bytes(struct nfc_dev *dev, size_t *gb_len);
+u8 *nfc_get_local_general_bytes(काष्ठा nfc_dev *dev, माप_प्रकार *gb_len);
 
-int nfc_fw_download_done(struct nfc_dev *dev, const char *firmware_name,
+पूर्णांक nfc_fw_करोwnload_करोne(काष्ठा nfc_dev *dev, स्थिर अक्षर *firmware_name,
 			 u32 result);
 
-int nfc_targets_found(struct nfc_dev *dev,
-		      struct nfc_target *targets, int ntargets);
-int nfc_target_lost(struct nfc_dev *dev, u32 target_idx);
+पूर्णांक nfc_tarमाला_लो_found(काष्ठा nfc_dev *dev,
+		      काष्ठा nfc_target *tarमाला_लो, पूर्णांक ntarमाला_लो);
+पूर्णांक nfc_target_lost(काष्ठा nfc_dev *dev, u32 target_idx);
 
-int nfc_dep_link_is_up(struct nfc_dev *dev, u32 target_idx,
+पूर्णांक nfc_dep_link_is_up(काष्ठा nfc_dev *dev, u32 target_idx,
 		       u8 comm_mode, u8 rf_mode);
 
-int nfc_tm_activated(struct nfc_dev *dev, u32 protocol, u8 comm_mode,
-		     u8 *gb, size_t gb_len);
-int nfc_tm_deactivated(struct nfc_dev *dev);
-int nfc_tm_data_received(struct nfc_dev *dev, struct sk_buff *skb);
+पूर्णांक nfc_पंचांग_activated(काष्ठा nfc_dev *dev, u32 protocol, u8 comm_mode,
+		     u8 *gb, माप_प्रकार gb_len);
+पूर्णांक nfc_पंचांग_deactivated(काष्ठा nfc_dev *dev);
+पूर्णांक nfc_पंचांग_data_received(काष्ठा nfc_dev *dev, काष्ठा sk_buff *skb);
 
-void nfc_driver_failure(struct nfc_dev *dev, int err);
+व्योम nfc_driver_failure(काष्ठा nfc_dev *dev, पूर्णांक err);
 
-int nfc_se_transaction(struct nfc_dev *dev, u8 se_idx,
-		       struct nfc_evt_transaction *evt_transaction);
-int nfc_se_connectivity(struct nfc_dev *dev, u8 se_idx);
-int nfc_add_se(struct nfc_dev *dev, u32 se_idx, u16 type);
-int nfc_remove_se(struct nfc_dev *dev, u32 se_idx);
-struct nfc_se *nfc_find_se(struct nfc_dev *dev, u32 se_idx);
+पूर्णांक nfc_se_transaction(काष्ठा nfc_dev *dev, u8 se_idx,
+		       काष्ठा nfc_evt_transaction *evt_transaction);
+पूर्णांक nfc_se_connectivity(काष्ठा nfc_dev *dev, u8 se_idx);
+पूर्णांक nfc_add_se(काष्ठा nfc_dev *dev, u32 se_idx, u16 type);
+पूर्णांक nfc_हटाओ_se(काष्ठा nfc_dev *dev, u32 se_idx);
+काष्ठा nfc_se *nfc_find_se(काष्ठा nfc_dev *dev, u32 se_idx);
 
-void nfc_send_to_raw_sock(struct nfc_dev *dev, struct sk_buff *skb,
+व्योम nfc_send_to_raw_sock(काष्ठा nfc_dev *dev, काष्ठा sk_buff *skb,
 			  u8 payload_type, u8 direction);
 
-static inline int nfc_set_vendor_cmds(struct nfc_dev *dev,
-				      struct nfc_vendor_cmd *cmds,
-				      int n_cmds)
-{
-	if (dev->vendor_cmds || dev->n_vendor_cmds)
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक nfc_set_venकरोr_cmds(काष्ठा nfc_dev *dev,
+				      काष्ठा nfc_venकरोr_cmd *cmds,
+				      पूर्णांक n_cmds)
+अणु
+	अगर (dev->venकरोr_cmds || dev->n_venकरोr_cmds)
+		वापस -EINVAL;
 
-	dev->vendor_cmds = cmds;
-	dev->n_vendor_cmds = n_cmds;
+	dev->venकरोr_cmds = cmds;
+	dev->n_venकरोr_cmds = n_cmds;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct sk_buff *__nfc_alloc_vendor_cmd_reply_skb(struct nfc_dev *dev,
-						 enum nfc_attrs attr,
+काष्ठा sk_buff *__nfc_alloc_venकरोr_cmd_reply_skb(काष्ठा nfc_dev *dev,
+						 क्रमागत nfc_attrs attr,
 						 u32 oui, u32 subcmd,
-						 int approxlen);
-int nfc_vendor_cmd_reply(struct sk_buff *skb);
+						 पूर्णांक approxlen);
+पूर्णांक nfc_venकरोr_cmd_reply(काष्ठा sk_buff *skb);
 
 /**
- * nfc_vendor_cmd_alloc_reply_skb - allocate vendor command reply
+ * nfc_venकरोr_cmd_alloc_reply_skb - allocate venकरोr command reply
  * @dev: nfc device
- * @oui: vendor oui
+ * @oui: venकरोr oui
  * @approxlen: an upper bound of the length of the data that will
- *      be put into the skb
+ *      be put पूर्णांकo the skb
  *
- * This function allocates and pre-fills an skb for a reply to
- * a vendor command. Since it is intended for a reply, calling
- * it outside of a vendor command's doit() operation is invalid.
+ * This function allocates and pre-fills an skb क्रम a reply to
+ * a venकरोr command. Since it is पूर्णांकended क्रम a reply, calling
+ * it outside of a venकरोr command's करोit() operation is invalid.
  *
- * The returned skb is pre-filled with some identifying data in
- * a way that any data that is put into the skb (with skb_put(),
+ * The वापसed skb is pre-filled with some identअगरying data in
+ * a way that any data that is put पूर्णांकo the skb (with skb_put(),
  * nla_put() or similar) will end up being within the
- * %NFC_ATTR_VENDOR_DATA attribute, so all that needs to be done
- * with the skb is adding data for the corresponding userspace tool
- * which can then read that data out of the vendor data attribute.
- * You must not modify the skb in any other way.
+ * %NFC_ATTR_VENDOR_DATA attribute, so all that needs to be करोne
+ * with the skb is adding data क्रम the corresponding userspace tool
+ * which can then पढ़ो that data out of the venकरोr data attribute.
+ * You must not modअगरy the skb in any other way.
  *
- * When done, call nfc_vendor_cmd_reply() with the skb and return
- * its error code as the result of the doit() operation.
+ * When करोne, call nfc_venकरोr_cmd_reply() with the skb and वापस
+ * its error code as the result of the करोit() operation.
  *
- * Return: An allocated and pre-filled skb. %NULL if any errors happen.
+ * Return: An allocated and pre-filled skb. %शून्य अगर any errors happen.
  */
-static inline struct sk_buff *
-nfc_vendor_cmd_alloc_reply_skb(struct nfc_dev *dev,
-				u32 oui, u32 subcmd, int approxlen)
-{
-	return __nfc_alloc_vendor_cmd_reply_skb(dev,
+अटल अंतरभूत काष्ठा sk_buff *
+nfc_venकरोr_cmd_alloc_reply_skb(काष्ठा nfc_dev *dev,
+				u32 oui, u32 subcmd, पूर्णांक approxlen)
+अणु
+	वापस __nfc_alloc_venकरोr_cmd_reply_skb(dev,
 						NFC_ATTR_VENDOR_DATA,
 						oui,
 						subcmd, approxlen);
-}
+पूर्ण
 
-#endif /* __NET_NFC_H */
+#पूर्ण_अगर /* __NET_NFC_H */

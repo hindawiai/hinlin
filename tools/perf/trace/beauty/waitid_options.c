@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: LGPL-2.1
-#include <sys/types.h>
-#include <sys/wait.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
 
-static size_t syscall_arg__scnprintf_waitid_options(char *bf, size_t size,
-						    struct syscall_arg *arg)
-{
+अटल माप_प्रकार syscall_arg__scnम_लिखो_रुकोid_options(अक्षर *bf, माप_प्रकार size,
+						    काष्ठा syscall_arg *arg)
+अणु
 	bool show_prefix = arg->show_string_prefix;
-	const char *prefix = "W";
-	int printed = 0, options = arg->val;
+	स्थिर अक्षर *prefix = "W";
+	पूर्णांक prपूर्णांकed = 0, options = arg->val;
 
-#define	P_OPTION(n) \
-	if (options & W##n) { \
-		printed += scnprintf(bf + printed, size - printed, "%s%s%s", printed ? "|" : "", show_prefix ? prefix : "",  #n); \
+#घोषणा	P_OPTION(n) \
+	अगर (options & W##n) अणु \
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%s%s", prपूर्णांकed ? "|" : "", show_prefix ? prefix : "",  #n); \
 		options &= ~W##n; \
-	}
+	पूर्ण
 
 	P_OPTION(NOHANG);
 	P_OPTION(UNTRACED);
 	P_OPTION(CONTINUED);
-#undef P_OPTION
+#अघोषित P_OPTION
 
-	if (options)
-		printed += scnprintf(bf + printed, size - printed, "%s%#x", printed ? "|" : "", options);
+	अगर (options)
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%#x", prपूर्णांकed ? "|" : "", options);
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-#define SCA_WAITID_OPTIONS syscall_arg__scnprintf_waitid_options
+#घोषणा SCA_WAITID_OPTIONS syscall_arg__scnम_लिखो_रुकोid_options

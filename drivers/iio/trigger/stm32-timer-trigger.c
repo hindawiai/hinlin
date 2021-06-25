@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics 2016
  *
@@ -6,262 +7,262 @@
  *
  */
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/timer/stm32-timer-trigger.h>
-#include <linux/iio/trigger.h>
-#include <linux/mfd/stm32-timers.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of_device.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/समयr/sपंचांग32-समयr-trigger.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/mfd/sपंचांग32-समयrs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of_device.h>
 
-#define MAX_TRIGGERS 7
-#define MAX_VALIDS 5
+#घोषणा MAX_TRIGGERS 7
+#घोषणा MAX_VALIDS 5
 
-/* List the triggers created by each timer */
-static const void *triggers_table[][MAX_TRIGGERS] = {
-	{ TIM1_TRGO, TIM1_TRGO2, TIM1_CH1, TIM1_CH2, TIM1_CH3, TIM1_CH4,},
-	{ TIM2_TRGO, TIM2_CH1, TIM2_CH2, TIM2_CH3, TIM2_CH4,},
-	{ TIM3_TRGO, TIM3_CH1, TIM3_CH2, TIM3_CH3, TIM3_CH4,},
-	{ TIM4_TRGO, TIM4_CH1, TIM4_CH2, TIM4_CH3, TIM4_CH4,},
-	{ TIM5_TRGO, TIM5_CH1, TIM5_CH2, TIM5_CH3, TIM5_CH4,},
-	{ TIM6_TRGO,},
-	{ TIM7_TRGO,},
-	{ TIM8_TRGO, TIM8_TRGO2, TIM8_CH1, TIM8_CH2, TIM8_CH3, TIM8_CH4,},
-	{ TIM9_TRGO, TIM9_CH1, TIM9_CH2,},
-	{ TIM10_OC1,},
-	{ TIM11_OC1,},
-	{ TIM12_TRGO, TIM12_CH1, TIM12_CH2,},
-	{ TIM13_OC1,},
-	{ TIM14_OC1,},
-	{ TIM15_TRGO,},
-	{ TIM16_OC1,},
-	{ TIM17_OC1,},
-};
+/* List the triggers created by each समयr */
+अटल स्थिर व्योम *triggers_table[][MAX_TRIGGERS] = अणु
+	अणु TIM1_TRGO, TIM1_TRGO2, TIM1_CH1, TIM1_CH2, TIM1_CH3, TIM1_CH4,पूर्ण,
+	अणु TIM2_TRGO, TIM2_CH1, TIM2_CH2, TIM2_CH3, TIM2_CH4,पूर्ण,
+	अणु TIM3_TRGO, TIM3_CH1, TIM3_CH2, TIM3_CH3, TIM3_CH4,पूर्ण,
+	अणु TIM4_TRGO, TIM4_CH1, TIM4_CH2, TIM4_CH3, TIM4_CH4,पूर्ण,
+	अणु TIM5_TRGO, TIM5_CH1, TIM5_CH2, TIM5_CH3, TIM5_CH4,पूर्ण,
+	अणु TIM6_TRGO,पूर्ण,
+	अणु TIM7_TRGO,पूर्ण,
+	अणु TIM8_TRGO, TIM8_TRGO2, TIM8_CH1, TIM8_CH2, TIM8_CH3, TIM8_CH4,पूर्ण,
+	अणु TIM9_TRGO, TIM9_CH1, TIM9_CH2,पूर्ण,
+	अणु TIM10_OC1,पूर्ण,
+	अणु TIM11_OC1,पूर्ण,
+	अणु TIM12_TRGO, TIM12_CH1, TIM12_CH2,पूर्ण,
+	अणु TIM13_OC1,पूर्ण,
+	अणु TIM14_OC1,पूर्ण,
+	अणु TIM15_TRGO,पूर्ण,
+	अणु TIM16_OC1,पूर्ण,
+	अणु TIM17_OC1,पूर्ण,
+पूर्ण;
 
-/* List the triggers accepted by each timer */
-static const void *valids_table[][MAX_VALIDS] = {
-	{ TIM5_TRGO, TIM2_TRGO, TIM3_TRGO, TIM4_TRGO,},
-	{ TIM1_TRGO, TIM8_TRGO, TIM3_TRGO, TIM4_TRGO,},
-	{ TIM1_TRGO, TIM2_TRGO, TIM5_TRGO, TIM4_TRGO,},
-	{ TIM1_TRGO, TIM2_TRGO, TIM3_TRGO, TIM8_TRGO,},
-	{ TIM2_TRGO, TIM3_TRGO, TIM4_TRGO, TIM8_TRGO,},
-	{ }, /* timer 6 */
-	{ }, /* timer 7 */
-	{ TIM1_TRGO, TIM2_TRGO, TIM4_TRGO, TIM5_TRGO,},
-	{ TIM2_TRGO, TIM3_TRGO, TIM10_OC1, TIM11_OC1,},
-	{ }, /* timer 10 */
-	{ }, /* timer 11 */
-	{ TIM4_TRGO, TIM5_TRGO, TIM13_OC1, TIM14_OC1,},
-};
+/* List the triggers accepted by each समयr */
+अटल स्थिर व्योम *valids_table[][MAX_VALIDS] = अणु
+	अणु TIM5_TRGO, TIM2_TRGO, TIM3_TRGO, TIM4_TRGO,पूर्ण,
+	अणु TIM1_TRGO, TIM8_TRGO, TIM3_TRGO, TIM4_TRGO,पूर्ण,
+	अणु TIM1_TRGO, TIM2_TRGO, TIM5_TRGO, TIM4_TRGO,पूर्ण,
+	अणु TIM1_TRGO, TIM2_TRGO, TIM3_TRGO, TIM8_TRGO,पूर्ण,
+	अणु TIM2_TRGO, TIM3_TRGO, TIM4_TRGO, TIM8_TRGO,पूर्ण,
+	अणु पूर्ण, /* समयr 6 */
+	अणु पूर्ण, /* समयr 7 */
+	अणु TIM1_TRGO, TIM2_TRGO, TIM4_TRGO, TIM5_TRGO,पूर्ण,
+	अणु TIM2_TRGO, TIM3_TRGO, TIM10_OC1, TIM11_OC1,पूर्ण,
+	अणु पूर्ण, /* समयr 10 */
+	अणु पूर्ण, /* समयr 11 */
+	अणु TIM4_TRGO, TIM5_TRGO, TIM13_OC1, TIM14_OC1,पूर्ण,
+पूर्ण;
 
-static const void *stm32h7_valids_table[][MAX_VALIDS] = {
-	{ TIM15_TRGO, TIM2_TRGO, TIM3_TRGO, TIM4_TRGO,},
-	{ TIM1_TRGO, TIM8_TRGO, TIM3_TRGO, TIM4_TRGO,},
-	{ TIM1_TRGO, TIM2_TRGO, TIM15_TRGO, TIM4_TRGO,},
-	{ TIM1_TRGO, TIM2_TRGO, TIM3_TRGO, TIM8_TRGO,},
-	{ TIM1_TRGO, TIM8_TRGO, TIM3_TRGO, TIM4_TRGO,},
-	{ }, /* timer 6 */
-	{ }, /* timer 7 */
-	{ TIM1_TRGO, TIM2_TRGO, TIM4_TRGO, TIM5_TRGO,},
-	{ }, /* timer 9 */
-	{ }, /* timer 10 */
-	{ }, /* timer 11 */
-	{ TIM4_TRGO, TIM5_TRGO, TIM13_OC1, TIM14_OC1,},
-	{ }, /* timer 13 */
-	{ }, /* timer 14 */
-	{ TIM1_TRGO, TIM3_TRGO, TIM16_OC1, TIM17_OC1,},
-	{ }, /* timer 16 */
-	{ }, /* timer 17 */
-};
+अटल स्थिर व्योम *sपंचांग32h7_valids_table[][MAX_VALIDS] = अणु
+	अणु TIM15_TRGO, TIM2_TRGO, TIM3_TRGO, TIM4_TRGO,पूर्ण,
+	अणु TIM1_TRGO, TIM8_TRGO, TIM3_TRGO, TIM4_TRGO,पूर्ण,
+	अणु TIM1_TRGO, TIM2_TRGO, TIM15_TRGO, TIM4_TRGO,पूर्ण,
+	अणु TIM1_TRGO, TIM2_TRGO, TIM3_TRGO, TIM8_TRGO,पूर्ण,
+	अणु TIM1_TRGO, TIM8_TRGO, TIM3_TRGO, TIM4_TRGO,पूर्ण,
+	अणु पूर्ण, /* समयr 6 */
+	अणु पूर्ण, /* समयr 7 */
+	अणु TIM1_TRGO, TIM2_TRGO, TIM4_TRGO, TIM5_TRGO,पूर्ण,
+	अणु पूर्ण, /* समयr 9 */
+	अणु पूर्ण, /* समयr 10 */
+	अणु पूर्ण, /* समयr 11 */
+	अणु TIM4_TRGO, TIM5_TRGO, TIM13_OC1, TIM14_OC1,पूर्ण,
+	अणु पूर्ण, /* समयr 13 */
+	अणु पूर्ण, /* समयr 14 */
+	अणु TIM1_TRGO, TIM3_TRGO, TIM16_OC1, TIM17_OC1,पूर्ण,
+	अणु पूर्ण, /* समयr 16 */
+	अणु पूर्ण, /* समयr 17 */
+पूर्ण;
 
-struct stm32_timer_trigger_regs {
+काष्ठा sपंचांग32_समयr_trigger_regs अणु
 	u32 cr1;
 	u32 cr2;
 	u32 psc;
 	u32 arr;
 	u32 cnt;
 	u32 smcr;
-};
+पूर्ण;
 
-struct stm32_timer_trigger {
-	struct device *dev;
-	struct regmap *regmap;
-	struct clk *clk;
+काष्ठा sपंचांग32_समयr_trigger अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	काष्ठा clk *clk;
 	bool enabled;
 	u32 max_arr;
-	const void *triggers;
-	const void *valids;
+	स्थिर व्योम *triggers;
+	स्थिर व्योम *valids;
 	bool has_trgo2;
-	struct mutex lock; /* concurrent sysfs configuration */
-	struct list_head tr_list;
-	struct stm32_timer_trigger_regs bak;
-};
+	काष्ठा mutex lock; /* concurrent sysfs configuration */
+	काष्ठा list_head tr_list;
+	काष्ठा sपंचांग32_समयr_trigger_regs bak;
+पूर्ण;
 
-struct stm32_timer_trigger_cfg {
-	const void *(*valids_table)[MAX_VALIDS];
-	const unsigned int num_valids_table;
-};
+काष्ठा sपंचांग32_समयr_trigger_cfg अणु
+	स्थिर व्योम *(*valids_table)[MAX_VALIDS];
+	स्थिर अचिन्हित पूर्णांक num_valids_table;
+पूर्ण;
 
-static bool stm32_timer_is_trgo2_name(const char *name)
-{
-	return !!strstr(name, "trgo2");
-}
+अटल bool sपंचांग32_समयr_is_trgo2_name(स्थिर अक्षर *name)
+अणु
+	वापस !!म_माला(name, "trgo2");
+पूर्ण
 
-static bool stm32_timer_is_trgo_name(const char *name)
-{
-	return (!!strstr(name, "trgo") && !strstr(name, "trgo2"));
-}
+अटल bool sपंचांग32_समयr_is_trgo_name(स्थिर अक्षर *name)
+अणु
+	वापस (!!म_माला(name, "trgo") && !म_माला(name, "trgo2"));
+पूर्ण
 
-static int stm32_timer_start(struct stm32_timer_trigger *priv,
-			     struct iio_trigger *trig,
-			     unsigned int frequency)
-{
-	unsigned long long prd, div;
-	int prescaler = 0;
+अटल पूर्णांक sपंचांग32_समयr_start(काष्ठा sपंचांग32_समयr_trigger *priv,
+			     काष्ठा iio_trigger *trig,
+			     अचिन्हित पूर्णांक frequency)
+अणु
+	अचिन्हित दीर्घ दीर्घ prd, भाग;
+	पूर्णांक prescaler = 0;
 	u32 ccer;
 
-	/* Period and prescaler values depends of clock rate */
-	div = (unsigned long long)clk_get_rate(priv->clk);
+	/* Period and prescaler values depends of घड़ी rate */
+	भाग = (अचिन्हित दीर्घ दीर्घ)clk_get_rate(priv->clk);
 
-	do_div(div, frequency);
+	करो_भाग(भाग, frequency);
 
-	prd = div;
+	prd = भाग;
 
 	/*
 	 * Increase prescaler value until we get a result that fit
-	 * with auto reload register maximum value.
+	 * with स्वतः reload रेजिस्टर maximum value.
 	 */
-	while (div > priv->max_arr) {
+	जबतक (भाग > priv->max_arr) अणु
 		prescaler++;
-		div = prd;
-		do_div(div, (prescaler + 1));
-	}
-	prd = div;
+		भाग = prd;
+		करो_भाग(भाग, (prescaler + 1));
+	पूर्ण
+	prd = भाग;
 
-	if (prescaler > MAX_TIM_PSC) {
+	अगर (prescaler > MAX_TIM_PSC) अणु
 		dev_err(priv->dev, "prescaler exceeds the maximum value\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check if nobody else use the timer */
-	regmap_read(priv->regmap, TIM_CCER, &ccer);
-	if (ccer & TIM_CCER_CCXE)
-		return -EBUSY;
+	/* Check अगर nobody अन्यथा use the समयr */
+	regmap_पढ़ो(priv->regmap, TIM_CCER, &ccer);
+	अगर (ccer & TIM_CCER_CCXE)
+		वापस -EBUSY;
 
 	mutex_lock(&priv->lock);
-	if (!priv->enabled) {
+	अगर (!priv->enabled) अणु
 		priv->enabled = true;
 		clk_enable(priv->clk);
-	}
+	पूर्ण
 
-	regmap_write(priv->regmap, TIM_PSC, prescaler);
-	regmap_write(priv->regmap, TIM_ARR, prd - 1);
+	regmap_ग_लिखो(priv->regmap, TIM_PSC, prescaler);
+	regmap_ग_लिखो(priv->regmap, TIM_ARR, prd - 1);
 	regmap_update_bits(priv->regmap, TIM_CR1, TIM_CR1_ARPE, TIM_CR1_ARPE);
 
 	/* Force master mode to update mode */
-	if (stm32_timer_is_trgo2_name(trig->name))
+	अगर (sपंचांग32_समयr_is_trgo2_name(trig->name))
 		regmap_update_bits(priv->regmap, TIM_CR2, TIM_CR2_MMS2,
 				   0x2 << TIM_CR2_MMS2_SHIFT);
-	else
+	अन्यथा
 		regmap_update_bits(priv->regmap, TIM_CR2, TIM_CR2_MMS,
 				   0x2 << TIM_CR2_MMS_SHIFT);
 
-	/* Make sure that registers are updated */
+	/* Make sure that रेजिस्टरs are updated */
 	regmap_update_bits(priv->regmap, TIM_EGR, TIM_EGR_UG, TIM_EGR_UG);
 
 	/* Enable controller */
 	regmap_update_bits(priv->regmap, TIM_CR1, TIM_CR1_CEN, TIM_CR1_CEN);
 	mutex_unlock(&priv->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stm32_timer_stop(struct stm32_timer_trigger *priv,
-			     struct iio_trigger *trig)
-{
+अटल व्योम sपंचांग32_समयr_stop(काष्ठा sपंचांग32_समयr_trigger *priv,
+			     काष्ठा iio_trigger *trig)
+अणु
 	u32 ccer;
 
-	regmap_read(priv->regmap, TIM_CCER, &ccer);
-	if (ccer & TIM_CCER_CCXE)
-		return;
+	regmap_पढ़ो(priv->regmap, TIM_CCER, &ccer);
+	अगर (ccer & TIM_CCER_CCXE)
+		वापस;
 
 	mutex_lock(&priv->lock);
-	/* Stop timer */
+	/* Stop समयr */
 	regmap_update_bits(priv->regmap, TIM_CR1, TIM_CR1_ARPE, 0);
 	regmap_update_bits(priv->regmap, TIM_CR1, TIM_CR1_CEN, 0);
-	regmap_write(priv->regmap, TIM_PSC, 0);
-	regmap_write(priv->regmap, TIM_ARR, 0);
+	regmap_ग_लिखो(priv->regmap, TIM_PSC, 0);
+	regmap_ग_लिखो(priv->regmap, TIM_ARR, 0);
 
 	/* Force disable master mode */
-	if (stm32_timer_is_trgo2_name(trig->name))
+	अगर (sपंचांग32_समयr_is_trgo2_name(trig->name))
 		regmap_update_bits(priv->regmap, TIM_CR2, TIM_CR2_MMS2, 0);
-	else
+	अन्यथा
 		regmap_update_bits(priv->regmap, TIM_CR2, TIM_CR2_MMS, 0);
 
-	/* Make sure that registers are updated */
+	/* Make sure that रेजिस्टरs are updated */
 	regmap_update_bits(priv->regmap, TIM_EGR, TIM_EGR_UG, TIM_EGR_UG);
 
-	if (priv->enabled) {
+	अगर (priv->enabled) अणु
 		priv->enabled = false;
 		clk_disable(priv->clk);
-	}
+	पूर्ण
 	mutex_unlock(&priv->lock);
-}
+पूर्ण
 
-static ssize_t stm32_tt_store_frequency(struct device *dev,
-					struct device_attribute *attr,
-					const char *buf, size_t len)
-{
-	struct iio_trigger *trig = to_iio_trigger(dev);
-	struct stm32_timer_trigger *priv = iio_trigger_get_drvdata(trig);
-	unsigned int freq;
-	int ret;
+अटल sमाप_प्रकार sपंचांग32_tt_store_frequency(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा iio_trigger *trig = to_iio_trigger(dev);
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_trigger_get_drvdata(trig);
+	अचिन्हित पूर्णांक freq;
+	पूर्णांक ret;
 
-	ret = kstrtouint(buf, 10, &freq);
-	if (ret)
-		return ret;
+	ret = kstrtouपूर्णांक(buf, 10, &freq);
+	अगर (ret)
+		वापस ret;
 
-	if (freq == 0) {
-		stm32_timer_stop(priv, trig);
-	} else {
-		ret = stm32_timer_start(priv, trig, freq);
-		if (ret)
-			return ret;
-	}
+	अगर (freq == 0) अणु
+		sपंचांग32_समयr_stop(priv, trig);
+	पूर्ण अन्यथा अणु
+		ret = sपंचांग32_समयr_start(priv, trig, freq);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t stm32_tt_read_frequency(struct device *dev,
-				       struct device_attribute *attr, char *buf)
-{
-	struct iio_trigger *trig = to_iio_trigger(dev);
-	struct stm32_timer_trigger *priv = iio_trigger_get_drvdata(trig);
+अटल sमाप_प्रकार sपंचांग32_tt_पढ़ो_frequency(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा iio_trigger *trig = to_iio_trigger(dev);
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_trigger_get_drvdata(trig);
 	u32 psc, arr, cr1;
-	unsigned long long freq = 0;
+	अचिन्हित दीर्घ दीर्घ freq = 0;
 
-	regmap_read(priv->regmap, TIM_CR1, &cr1);
-	regmap_read(priv->regmap, TIM_PSC, &psc);
-	regmap_read(priv->regmap, TIM_ARR, &arr);
+	regmap_पढ़ो(priv->regmap, TIM_CR1, &cr1);
+	regmap_पढ़ो(priv->regmap, TIM_PSC, &psc);
+	regmap_पढ़ो(priv->regmap, TIM_ARR, &arr);
 
-	if (cr1 & TIM_CR1_CEN) {
-		freq = (unsigned long long)clk_get_rate(priv->clk);
-		do_div(freq, psc + 1);
-		do_div(freq, arr + 1);
-	}
+	अगर (cr1 & TIM_CR1_CEN) अणु
+		freq = (अचिन्हित दीर्घ दीर्घ)clk_get_rate(priv->clk);
+		करो_भाग(freq, psc + 1);
+		करो_भाग(freq, arr + 1);
+	पूर्ण
 
-	return sprintf(buf, "%d\n", (unsigned int)freq);
-}
+	वापस प्र_लिखो(buf, "%d\n", (अचिन्हित पूर्णांक)freq);
+पूर्ण
 
-static IIO_DEV_ATTR_SAMP_FREQ(0660,
-			      stm32_tt_read_frequency,
-			      stm32_tt_store_frequency);
+अटल IIO_DEV_ATTR_SAMP_FREQ(0660,
+			      sपंचांग32_tt_पढ़ो_frequency,
+			      sपंचांग32_tt_store_frequency);
 
-#define MASTER_MODE_MAX		7
-#define MASTER_MODE2_MAX	15
+#घोषणा MASTER_MODE_MAX		7
+#घोषणा MASTER_MODE2_MAX	15
 
-static char *master_mode_table[] = {
+अटल अक्षर *master_mode_table[] = अणु
 	"reset",
 	"enable",
 	"update",
@@ -279,516 +280,516 @@ static char *master_mode_table[] = {
 	"compare_pulse_OC4REF_r_or_OC6REF_f",
 	"compare_pulse_OC5REF_r_or_OC6REF_r",
 	"compare_pulse_OC5REF_r_or_OC6REF_f",
-};
+पूर्ण;
 
-static ssize_t stm32_tt_show_master_mode(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct stm32_timer_trigger *priv = dev_get_drvdata(dev);
-	struct iio_trigger *trig = to_iio_trigger(dev);
+अटल sमाप_प्रकार sपंचांग32_tt_show_master_mode(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = dev_get_drvdata(dev);
+	काष्ठा iio_trigger *trig = to_iio_trigger(dev);
 	u32 cr2;
 
-	regmap_read(priv->regmap, TIM_CR2, &cr2);
+	regmap_पढ़ो(priv->regmap, TIM_CR2, &cr2);
 
-	if (stm32_timer_is_trgo2_name(trig->name))
+	अगर (sपंचांग32_समयr_is_trgo2_name(trig->name))
 		cr2 = (cr2 & TIM_CR2_MMS2) >> TIM_CR2_MMS2_SHIFT;
-	else
+	अन्यथा
 		cr2 = (cr2 & TIM_CR2_MMS) >> TIM_CR2_MMS_SHIFT;
 
-	return snprintf(buf, PAGE_SIZE, "%s\n", master_mode_table[cr2]);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", master_mode_table[cr2]);
+पूर्ण
 
-static ssize_t stm32_tt_store_master_mode(struct device *dev,
-					  struct device_attribute *attr,
-					  const char *buf, size_t len)
-{
-	struct stm32_timer_trigger *priv = dev_get_drvdata(dev);
-	struct iio_trigger *trig = to_iio_trigger(dev);
-	u32 mask, shift, master_mode_max;
-	int i;
+अटल sमाप_प्रकार sपंचांग32_tt_store_master_mode(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = dev_get_drvdata(dev);
+	काष्ठा iio_trigger *trig = to_iio_trigger(dev);
+	u32 mask, shअगरt, master_mode_max;
+	पूर्णांक i;
 
-	if (stm32_timer_is_trgo2_name(trig->name)) {
+	अगर (sपंचांग32_समयr_is_trgo2_name(trig->name)) अणु
 		mask = TIM_CR2_MMS2;
-		shift = TIM_CR2_MMS2_SHIFT;
+		shअगरt = TIM_CR2_MMS2_SHIFT;
 		master_mode_max = MASTER_MODE2_MAX;
-	} else {
+	पूर्ण अन्यथा अणु
 		mask = TIM_CR2_MMS;
-		shift = TIM_CR2_MMS_SHIFT;
+		shअगरt = TIM_CR2_MMS_SHIFT;
 		master_mode_max = MASTER_MODE_MAX;
-	}
+	पूर्ण
 
-	for (i = 0; i <= master_mode_max; i++) {
-		if (!strncmp(master_mode_table[i], buf,
-			     strlen(master_mode_table[i]))) {
+	क्रम (i = 0; i <= master_mode_max; i++) अणु
+		अगर (!म_भेदन(master_mode_table[i], buf,
+			     म_माप(master_mode_table[i]))) अणु
 			mutex_lock(&priv->lock);
-			if (!priv->enabled) {
+			अगर (!priv->enabled) अणु
 				/* Clock should be enabled first */
 				priv->enabled = true;
 				clk_enable(priv->clk);
-			}
+			पूर्ण
 			regmap_update_bits(priv->regmap, TIM_CR2, mask,
-					   i << shift);
+					   i << shअगरt);
 			mutex_unlock(&priv->lock);
-			return len;
-		}
-	}
+			वापस len;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t stm32_tt_show_master_mode_avail(struct device *dev,
-					       struct device_attribute *attr,
-					       char *buf)
-{
-	struct iio_trigger *trig = to_iio_trigger(dev);
-	unsigned int i, master_mode_max;
-	size_t len = 0;
+अटल sमाप_प्रकार sपंचांग32_tt_show_master_mode_avail(काष्ठा device *dev,
+					       काष्ठा device_attribute *attr,
+					       अक्षर *buf)
+अणु
+	काष्ठा iio_trigger *trig = to_iio_trigger(dev);
+	अचिन्हित पूर्णांक i, master_mode_max;
+	माप_प्रकार len = 0;
 
-	if (stm32_timer_is_trgo2_name(trig->name))
+	अगर (sपंचांग32_समयr_is_trgo2_name(trig->name))
 		master_mode_max = MASTER_MODE2_MAX;
-	else
+	अन्यथा
 		master_mode_max = MASTER_MODE_MAX;
 
-	for (i = 0; i <= master_mode_max; i++)
-		len += scnprintf(buf + len, PAGE_SIZE - len,
+	क्रम (i = 0; i <= master_mode_max; i++)
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len,
 			"%s ", master_mode_table[i]);
 
 	/* replace trailing space by newline */
 	buf[len - 1] = '\n';
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static IIO_DEVICE_ATTR(master_mode_available, 0444,
-		       stm32_tt_show_master_mode_avail, NULL, 0);
+अटल IIO_DEVICE_ATTR(master_mode_available, 0444,
+		       sपंचांग32_tt_show_master_mode_avail, शून्य, 0);
 
-static IIO_DEVICE_ATTR(master_mode, 0660,
-		       stm32_tt_show_master_mode,
-		       stm32_tt_store_master_mode,
+अटल IIO_DEVICE_ATTR(master_mode, 0660,
+		       sपंचांग32_tt_show_master_mode,
+		       sपंचांग32_tt_store_master_mode,
 		       0);
 
-static struct attribute *stm32_trigger_attrs[] = {
+अटल काष्ठा attribute *sपंचांग32_trigger_attrs[] = अणु
 	&iio_dev_attr_sampling_frequency.dev_attr.attr,
 	&iio_dev_attr_master_mode.dev_attr.attr,
 	&iio_dev_attr_master_mode_available.dev_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group stm32_trigger_attr_group = {
-	.attrs = stm32_trigger_attrs,
-};
+अटल स्थिर काष्ठा attribute_group sपंचांग32_trigger_attr_group = अणु
+	.attrs = sपंचांग32_trigger_attrs,
+पूर्ण;
 
-static const struct attribute_group *stm32_trigger_attr_groups[] = {
-	&stm32_trigger_attr_group,
-	NULL,
-};
+अटल स्थिर काष्ठा attribute_group *sपंचांग32_trigger_attr_groups[] = अणु
+	&sपंचांग32_trigger_attr_group,
+	शून्य,
+पूर्ण;
 
-static const struct iio_trigger_ops timer_trigger_ops = {
-};
+अटल स्थिर काष्ठा iio_trigger_ops समयr_trigger_ops = अणु
+पूर्ण;
 
-static void stm32_unregister_iio_triggers(struct stm32_timer_trigger *priv)
-{
-	struct iio_trigger *tr;
+अटल व्योम sपंचांग32_unरेजिस्टर_iio_triggers(काष्ठा sपंचांग32_समयr_trigger *priv)
+अणु
+	काष्ठा iio_trigger *tr;
 
-	list_for_each_entry(tr, &priv->tr_list, alloc_list)
-		iio_trigger_unregister(tr);
-}
+	list_क्रम_each_entry(tr, &priv->tr_list, alloc_list)
+		iio_trigger_unरेजिस्टर(tr);
+पूर्ण
 
-static int stm32_register_iio_triggers(struct stm32_timer_trigger *priv)
-{
-	int ret;
-	const char * const *cur = priv->triggers;
+अटल पूर्णांक sपंचांग32_रेजिस्टर_iio_triggers(काष्ठा sपंचांग32_समयr_trigger *priv)
+अणु
+	पूर्णांक ret;
+	स्थिर अक्षर * स्थिर *cur = priv->triggers;
 
 	INIT_LIST_HEAD(&priv->tr_list);
 
-	while (cur && *cur) {
-		struct iio_trigger *trig;
-		bool cur_is_trgo = stm32_timer_is_trgo_name(*cur);
-		bool cur_is_trgo2 = stm32_timer_is_trgo2_name(*cur);
+	जबतक (cur && *cur) अणु
+		काष्ठा iio_trigger *trig;
+		bool cur_is_trgo = sपंचांग32_समयr_is_trgo_name(*cur);
+		bool cur_is_trgo2 = sपंचांग32_समयr_is_trgo2_name(*cur);
 
-		if (cur_is_trgo2 && !priv->has_trgo2) {
+		अगर (cur_is_trgo2 && !priv->has_trgo2) अणु
 			cur++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		trig = devm_iio_trigger_alloc(priv->dev, "%s", *cur);
-		if  (!trig)
-			return -ENOMEM;
+		अगर  (!trig)
+			वापस -ENOMEM;
 
 		trig->dev.parent = priv->dev->parent;
-		trig->ops = &timer_trigger_ops;
+		trig->ops = &समयr_trigger_ops;
 
 		/*
 		 * sampling frequency and master mode attributes
 		 * should only be available on trgo/trgo2 triggers
 		 */
-		if (cur_is_trgo || cur_is_trgo2)
-			trig->dev.groups = stm32_trigger_attr_groups;
+		अगर (cur_is_trgo || cur_is_trgo2)
+			trig->dev.groups = sपंचांग32_trigger_attr_groups;
 
 		iio_trigger_set_drvdata(trig, priv);
 
-		ret = iio_trigger_register(trig);
-		if (ret) {
-			stm32_unregister_iio_triggers(priv);
-			return ret;
-		}
+		ret = iio_trigger_रेजिस्टर(trig);
+		अगर (ret) अणु
+			sपंचांग32_unरेजिस्टर_iio_triggers(priv);
+			वापस ret;
+		पूर्ण
 
 		list_add_tail(&trig->alloc_list, &priv->tr_list);
 		cur++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_counter_read_raw(struct iio_dev *indio_dev,
-				  struct iio_chan_spec const *chan,
-				  int *val, int *val2, long mask)
-{
-	struct stm32_timer_trigger *priv = iio_priv(indio_dev);
+अटल पूर्णांक sपंचांग32_counter_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+				  काष्ठा iio_chan_spec स्थिर *chan,
+				  पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_priv(indio_dev);
 	u32 dat;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		regmap_read(priv->regmap, TIM_CNT, &dat);
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		regmap_पढ़ो(priv->regmap, TIM_CNT, &dat);
 		*val = dat;
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 
-	case IIO_CHAN_INFO_ENABLE:
-		regmap_read(priv->regmap, TIM_CR1, &dat);
+	हाल IIO_CHAN_INFO_ENABLE:
+		regmap_पढ़ो(priv->regmap, TIM_CR1, &dat);
 		*val = (dat & TIM_CR1_CEN) ? 1 : 0;
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 
-	case IIO_CHAN_INFO_SCALE:
-		regmap_read(priv->regmap, TIM_SMCR, &dat);
+	हाल IIO_CHAN_INFO_SCALE:
+		regmap_पढ़ो(priv->regmap, TIM_SMCR, &dat);
 		dat &= TIM_SMCR_SMS;
 
 		*val = 1;
 		*val2 = 0;
 
-		/* in quadrature case scale = 0.25 */
-		if (dat == 3)
+		/* in quadrature हाल scale = 0.25 */
+		अगर (dat == 3)
 			*val2 = 2;
 
-		return IIO_VAL_FRACTIONAL_LOG2;
-	}
+		वापस IIO_VAL_FRACTIONAL_LOG2;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int stm32_counter_write_raw(struct iio_dev *indio_dev,
-				   struct iio_chan_spec const *chan,
-				   int val, int val2, long mask)
-{
-	struct stm32_timer_trigger *priv = iio_priv(indio_dev);
+अटल पूर्णांक sपंचांग32_counter_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+				   काष्ठा iio_chan_spec स्थिर *chan,
+				   पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		return regmap_write(priv->regmap, TIM_CNT, val);
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		वापस regmap_ग_लिखो(priv->regmap, TIM_CNT, val);
 
-	case IIO_CHAN_INFO_SCALE:
+	हाल IIO_CHAN_INFO_SCALE:
 		/* fixed scale */
-		return -EINVAL;
+		वापस -EINVAL;
 
-	case IIO_CHAN_INFO_ENABLE:
+	हाल IIO_CHAN_INFO_ENABLE:
 		mutex_lock(&priv->lock);
-		if (val) {
-			if (!priv->enabled) {
+		अगर (val) अणु
+			अगर (!priv->enabled) अणु
 				priv->enabled = true;
 				clk_enable(priv->clk);
-			}
+			पूर्ण
 			regmap_update_bits(priv->regmap, TIM_CR1, TIM_CR1_CEN,
 					   TIM_CR1_CEN);
-		} else {
+		पूर्ण अन्यथा अणु
 			regmap_update_bits(priv->regmap, TIM_CR1, TIM_CR1_CEN,
 					   0);
-			if (priv->enabled) {
+			अगर (priv->enabled) अणु
 				priv->enabled = false;
 				clk_disable(priv->clk);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		mutex_unlock(&priv->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int stm32_counter_validate_trigger(struct iio_dev *indio_dev,
-					  struct iio_trigger *trig)
-{
-	struct stm32_timer_trigger *priv = iio_priv(indio_dev);
-	const char * const *cur = priv->valids;
-	unsigned int i = 0;
+अटल पूर्णांक sपंचांग32_counter_validate_trigger(काष्ठा iio_dev *indio_dev,
+					  काष्ठा iio_trigger *trig)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_priv(indio_dev);
+	स्थिर अक्षर * स्थिर *cur = priv->valids;
+	अचिन्हित पूर्णांक i = 0;
 
-	if (!is_stm32_timer_trigger(trig))
-		return -EINVAL;
+	अगर (!is_sपंचांग32_समयr_trigger(trig))
+		वापस -EINVAL;
 
-	while (cur && *cur) {
-		if (!strncmp(trig->name, *cur, strlen(trig->name))) {
+	जबतक (cur && *cur) अणु
+		अगर (!म_भेदन(trig->name, *cur, म_माप(trig->name))) अणु
 			regmap_update_bits(priv->regmap,
 					   TIM_SMCR, TIM_SMCR_TS,
 					   i << TIM_SMCR_TS_SHIFT);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		cur++;
 		i++;
-	}
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct iio_info stm32_trigger_info = {
-	.validate_trigger = stm32_counter_validate_trigger,
-	.read_raw = stm32_counter_read_raw,
-	.write_raw = stm32_counter_write_raw
-};
+अटल स्थिर काष्ठा iio_info sपंचांग32_trigger_info = अणु
+	.validate_trigger = sपंचांग32_counter_validate_trigger,
+	.पढ़ो_raw = sपंचांग32_counter_पढ़ो_raw,
+	.ग_लिखो_raw = sपंचांग32_counter_ग_लिखो_raw
+पूर्ण;
 
-static const char *const stm32_trigger_modes[] = {
+अटल स्थिर अक्षर *स्थिर sपंचांग32_trigger_modes[] = अणु
 	"trigger",
-};
+पूर्ण;
 
-static int stm32_set_trigger_mode(struct iio_dev *indio_dev,
-				  const struct iio_chan_spec *chan,
-				  unsigned int mode)
-{
-	struct stm32_timer_trigger *priv = iio_priv(indio_dev);
+अटल पूर्णांक sपंचांग32_set_trigger_mode(काष्ठा iio_dev *indio_dev,
+				  स्थिर काष्ठा iio_chan_spec *chan,
+				  अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_priv(indio_dev);
 
 	regmap_update_bits(priv->regmap, TIM_SMCR, TIM_SMCR_SMS, TIM_SMCR_SMS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_get_trigger_mode(struct iio_dev *indio_dev,
-				  const struct iio_chan_spec *chan)
-{
-	struct stm32_timer_trigger *priv = iio_priv(indio_dev);
+अटल पूर्णांक sपंचांग32_get_trigger_mode(काष्ठा iio_dev *indio_dev,
+				  स्थिर काष्ठा iio_chan_spec *chan)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_priv(indio_dev);
 	u32 smcr;
 
-	regmap_read(priv->regmap, TIM_SMCR, &smcr);
+	regmap_पढ़ो(priv->regmap, TIM_SMCR, &smcr);
 
-	return (smcr & TIM_SMCR_SMS) == TIM_SMCR_SMS ? 0 : -EINVAL;
-}
+	वापस (smcr & TIM_SMCR_SMS) == TIM_SMCR_SMS ? 0 : -EINVAL;
+पूर्ण
 
-static const struct iio_enum stm32_trigger_mode_enum = {
-	.items = stm32_trigger_modes,
-	.num_items = ARRAY_SIZE(stm32_trigger_modes),
-	.set = stm32_set_trigger_mode,
-	.get = stm32_get_trigger_mode
-};
+अटल स्थिर काष्ठा iio_क्रमागत sपंचांग32_trigger_mode_क्रमागत = अणु
+	.items = sपंचांग32_trigger_modes,
+	.num_items = ARRAY_SIZE(sपंचांग32_trigger_modes),
+	.set = sपंचांग32_set_trigger_mode,
+	.get = sपंचांग32_get_trigger_mode
+पूर्ण;
 
-static const char *const stm32_enable_modes[] = {
+अटल स्थिर अक्षर *स्थिर sपंचांग32_enable_modes[] = अणु
 	"always",
 	"gated",
 	"triggered",
-};
+पूर्ण;
 
-static int stm32_enable_mode2sms(int mode)
-{
-	switch (mode) {
-	case 0:
-		return 0;
-	case 1:
-		return 5;
-	case 2:
-		return 6;
-	}
+अटल पूर्णांक sपंचांग32_enable_mode2sms(पूर्णांक mode)
+अणु
+	चयन (mode) अणु
+	हाल 0:
+		वापस 0;
+	हाल 1:
+		वापस 5;
+	हाल 2:
+		वापस 6;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int stm32_set_enable_mode(struct iio_dev *indio_dev,
-				 const struct iio_chan_spec *chan,
-				 unsigned int mode)
-{
-	struct stm32_timer_trigger *priv = iio_priv(indio_dev);
-	int sms = stm32_enable_mode2sms(mode);
+अटल पूर्णांक sपंचांग32_set_enable_mode(काष्ठा iio_dev *indio_dev,
+				 स्थिर काष्ठा iio_chan_spec *chan,
+				 अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_priv(indio_dev);
+	पूर्णांक sms = sपंचांग32_enable_mode2sms(mode);
 
-	if (sms < 0)
-		return sms;
+	अगर (sms < 0)
+		वापस sms;
 	/*
-	 * Triggered mode sets CEN bit automatically by hardware. So, first
-	 * enable counter clock, so it can use it. Keeps it in sync with CEN.
+	 * Triggered mode sets CEN bit स्वतःmatically by hardware. So, first
+	 * enable counter घड़ी, so it can use it. Keeps it in sync with CEN.
 	 */
 	mutex_lock(&priv->lock);
-	if (sms == 6 && !priv->enabled) {
+	अगर (sms == 6 && !priv->enabled) अणु
 		clk_enable(priv->clk);
 		priv->enabled = true;
-	}
+	पूर्ण
 	mutex_unlock(&priv->lock);
 
 	regmap_update_bits(priv->regmap, TIM_SMCR, TIM_SMCR_SMS, sms);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_sms2enable_mode(int mode)
-{
-	switch (mode) {
-	case 0:
-		return 0;
-	case 5:
-		return 1;
-	case 6:
-		return 2;
-	}
+अटल पूर्णांक sपंचांग32_sms2enable_mode(पूर्णांक mode)
+अणु
+	चयन (mode) अणु
+	हाल 0:
+		वापस 0;
+	हाल 5:
+		वापस 1;
+	हाल 6:
+		वापस 2;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int stm32_get_enable_mode(struct iio_dev *indio_dev,
-				 const struct iio_chan_spec *chan)
-{
-	struct stm32_timer_trigger *priv = iio_priv(indio_dev);
+अटल पूर्णांक sपंचांग32_get_enable_mode(काष्ठा iio_dev *indio_dev,
+				 स्थिर काष्ठा iio_chan_spec *chan)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_priv(indio_dev);
 	u32 smcr;
 
-	regmap_read(priv->regmap, TIM_SMCR, &smcr);
+	regmap_पढ़ो(priv->regmap, TIM_SMCR, &smcr);
 	smcr &= TIM_SMCR_SMS;
 
-	return stm32_sms2enable_mode(smcr);
-}
+	वापस sपंचांग32_sms2enable_mode(smcr);
+पूर्ण
 
-static const struct iio_enum stm32_enable_mode_enum = {
-	.items = stm32_enable_modes,
-	.num_items = ARRAY_SIZE(stm32_enable_modes),
-	.set = stm32_set_enable_mode,
-	.get = stm32_get_enable_mode
-};
+अटल स्थिर काष्ठा iio_क्रमागत sपंचांग32_enable_mode_क्रमागत = अणु
+	.items = sपंचांग32_enable_modes,
+	.num_items = ARRAY_SIZE(sपंचांग32_enable_modes),
+	.set = sपंचांग32_set_enable_mode,
+	.get = sपंचांग32_get_enable_mode
+पूर्ण;
 
-static ssize_t stm32_count_get_preset(struct iio_dev *indio_dev,
-				      uintptr_t private,
-				      const struct iio_chan_spec *chan,
-				      char *buf)
-{
-	struct stm32_timer_trigger *priv = iio_priv(indio_dev);
+अटल sमाप_प्रकार sपंचांग32_count_get_preset(काष्ठा iio_dev *indio_dev,
+				      uपूर्णांकptr_t निजी,
+				      स्थिर काष्ठा iio_chan_spec *chan,
+				      अक्षर *buf)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_priv(indio_dev);
 	u32 arr;
 
-	regmap_read(priv->regmap, TIM_ARR, &arr);
+	regmap_पढ़ो(priv->regmap, TIM_ARR, &arr);
 
-	return snprintf(buf, PAGE_SIZE, "%u\n", arr);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", arr);
+पूर्ण
 
-static ssize_t stm32_count_set_preset(struct iio_dev *indio_dev,
-				      uintptr_t private,
-				      const struct iio_chan_spec *chan,
-				      const char *buf, size_t len)
-{
-	struct stm32_timer_trigger *priv = iio_priv(indio_dev);
-	unsigned int preset;
-	int ret;
+अटल sमाप_प्रकार sपंचांग32_count_set_preset(काष्ठा iio_dev *indio_dev,
+				      uपूर्णांकptr_t निजी,
+				      स्थिर काष्ठा iio_chan_spec *chan,
+				      स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = iio_priv(indio_dev);
+	अचिन्हित पूर्णांक preset;
+	पूर्णांक ret;
 
-	ret = kstrtouint(buf, 0, &preset);
-	if (ret)
-		return ret;
+	ret = kstrtouपूर्णांक(buf, 0, &preset);
+	अगर (ret)
+		वापस ret;
 
-	/* TIMx_ARR register shouldn't be buffered (ARPE=0) */
+	/* TIMx_ARR रेजिस्टर shouldn't be buffered (ARPE=0) */
 	regmap_update_bits(priv->regmap, TIM_CR1, TIM_CR1_ARPE, 0);
-	regmap_write(priv->regmap, TIM_ARR, preset);
+	regmap_ग_लिखो(priv->regmap, TIM_ARR, preset);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static const struct iio_chan_spec_ext_info stm32_trigger_count_info[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec_ext_info sपंचांग32_trigger_count_info[] = अणु
+	अणु
 		.name = "preset",
 		.shared = IIO_SEPARATE,
-		.read = stm32_count_get_preset,
-		.write = stm32_count_set_preset
-	},
-	IIO_ENUM("enable_mode", IIO_SEPARATE, &stm32_enable_mode_enum),
-	IIO_ENUM_AVAILABLE("enable_mode", &stm32_enable_mode_enum),
-	IIO_ENUM("trigger_mode", IIO_SEPARATE, &stm32_trigger_mode_enum),
-	IIO_ENUM_AVAILABLE("trigger_mode", &stm32_trigger_mode_enum),
-	{}
-};
+		.पढ़ो = sपंचांग32_count_get_preset,
+		.ग_लिखो = sपंचांग32_count_set_preset
+	पूर्ण,
+	IIO_ENUM("enable_mode", IIO_SEPARATE, &sपंचांग32_enable_mode_क्रमागत),
+	IIO_ENUM_AVAILABLE("enable_mode", &sपंचांग32_enable_mode_क्रमागत),
+	IIO_ENUM("trigger_mode", IIO_SEPARATE, &sपंचांग32_trigger_mode_क्रमागत),
+	IIO_ENUM_AVAILABLE("trigger_mode", &sपंचांग32_trigger_mode_क्रमागत),
+	अणुपूर्ण
+पूर्ण;
 
-static const struct iio_chan_spec stm32_trigger_channel = {
+अटल स्थिर काष्ठा iio_chan_spec sपंचांग32_trigger_channel = अणु
 	.type = IIO_COUNT,
 	.channel = 0,
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 			      BIT(IIO_CHAN_INFO_ENABLE) |
 			      BIT(IIO_CHAN_INFO_SCALE),
-	.ext_info = stm32_trigger_count_info,
+	.ext_info = sपंचांग32_trigger_count_info,
 	.indexed = 1
-};
+पूर्ण;
 
-static struct stm32_timer_trigger *stm32_setup_counter_device(struct device *dev)
-{
-	struct iio_dev *indio_dev;
-	int ret;
+अटल काष्ठा sपंचांग32_समयr_trigger *sपंचांग32_setup_counter_device(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक ret;
 
 	indio_dev = devm_iio_device_alloc(dev,
-					  sizeof(struct stm32_timer_trigger));
-	if (!indio_dev)
-		return NULL;
+					  माप(काष्ठा sपंचांग32_समयr_trigger));
+	अगर (!indio_dev)
+		वापस शून्य;
 
 	indio_dev->name = dev_name(dev);
-	indio_dev->info = &stm32_trigger_info;
+	indio_dev->info = &sपंचांग32_trigger_info;
 	indio_dev->modes = INDIO_HARDWARE_TRIGGERED;
 	indio_dev->num_channels = 1;
-	indio_dev->channels = &stm32_trigger_channel;
+	indio_dev->channels = &sपंचांग32_trigger_channel;
 
-	ret = devm_iio_device_register(dev, indio_dev);
-	if (ret)
-		return NULL;
+	ret = devm_iio_device_रेजिस्टर(dev, indio_dev);
+	अगर (ret)
+		वापस शून्य;
 
-	return iio_priv(indio_dev);
-}
+	वापस iio_priv(indio_dev);
+पूर्ण
 
 /**
- * is_stm32_timer_trigger
+ * is_sपंचांग32_समयr_trigger
  * @trig: trigger to be checked
  *
- * return true if the trigger is a valid stm32 iio timer trigger
- * either return false
+ * वापस true अगर the trigger is a valid sपंचांग32 iio समयr trigger
+ * either वापस false
  */
-bool is_stm32_timer_trigger(struct iio_trigger *trig)
-{
-	return (trig->ops == &timer_trigger_ops);
-}
-EXPORT_SYMBOL(is_stm32_timer_trigger);
+bool is_sपंचांग32_समयr_trigger(काष्ठा iio_trigger *trig)
+अणु
+	वापस (trig->ops == &समयr_trigger_ops);
+पूर्ण
+EXPORT_SYMBOL(is_sपंचांग32_समयr_trigger);
 
-static void stm32_timer_detect_trgo2(struct stm32_timer_trigger *priv)
-{
+अटल व्योम sपंचांग32_समयr_detect_trgo2(काष्ठा sपंचांग32_समयr_trigger *priv)
+अणु
 	u32 val;
 
 	/*
-	 * Master mode selection 2 bits can only be written and read back when
-	 * timer supports it.
+	 * Master mode selection 2 bits can only be written and पढ़ो back when
+	 * समयr supports it.
 	 */
 	regmap_update_bits(priv->regmap, TIM_CR2, TIM_CR2_MMS2, TIM_CR2_MMS2);
-	regmap_read(priv->regmap, TIM_CR2, &val);
+	regmap_पढ़ो(priv->regmap, TIM_CR2, &val);
 	regmap_update_bits(priv->regmap, TIM_CR2, TIM_CR2_MMS2, 0);
 	priv->has_trgo2 = !!val;
-}
+पूर्ण
 
-static int stm32_timer_trigger_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct stm32_timer_trigger *priv;
-	struct stm32_timers *ddata = dev_get_drvdata(pdev->dev.parent);
-	const struct stm32_timer_trigger_cfg *cfg;
-	unsigned int index;
-	int ret;
+अटल पूर्णांक sपंचांग32_समयr_trigger_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा sपंचांग32_समयr_trigger *priv;
+	काष्ठा sपंचांग32_समयrs *ddata = dev_get_drvdata(pdev->dev.parent);
+	स्थिर काष्ठा sपंचांग32_समयr_trigger_cfg *cfg;
+	अचिन्हित पूर्णांक index;
+	पूर्णांक ret;
 
-	if (of_property_read_u32(dev->of_node, "reg", &index))
-		return -EINVAL;
+	अगर (of_property_पढ़ो_u32(dev->of_node, "reg", &index))
+		वापस -EINVAL;
 
-	cfg = (const struct stm32_timer_trigger_cfg *)
+	cfg = (स्थिर काष्ठा sपंचांग32_समयr_trigger_cfg *)
 		of_match_device(dev->driver->of_match_table, dev)->data;
 
-	if (index >= ARRAY_SIZE(triggers_table) ||
+	अगर (index >= ARRAY_SIZE(triggers_table) ||
 	    index >= cfg->num_valids_table)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Create an IIO device only if we have triggers to be validated */
-	if (*cfg->valids_table[index])
-		priv = stm32_setup_counter_device(dev);
-	else
-		priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	/* Create an IIO device only अगर we have triggers to be validated */
+	अगर (*cfg->valids_table[index])
+		priv = sपंचांग32_setup_counter_device(dev);
+	अन्यथा
+		priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
 
-	if (!priv)
-		return -ENOMEM;
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->dev = dev;
 	priv->regmap = ddata->regmap;
@@ -796,121 +797,121 @@ static int stm32_timer_trigger_probe(struct platform_device *pdev)
 	priv->max_arr = ddata->max_arr;
 	priv->triggers = triggers_table[index];
 	priv->valids = cfg->valids_table[index];
-	stm32_timer_detect_trgo2(priv);
+	sपंचांग32_समयr_detect_trgo2(priv);
 	mutex_init(&priv->lock);
 
-	ret = stm32_register_iio_triggers(priv);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_रेजिस्टर_iio_triggers(priv);
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_timer_trigger_remove(struct platform_device *pdev)
-{
-	struct stm32_timer_trigger *priv = platform_get_drvdata(pdev);
+अटल पूर्णांक sपंचांग32_समयr_trigger_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = platक्रमm_get_drvdata(pdev);
 	u32 val;
 
-	/* Unregister triggers before everything can be safely turned off */
-	stm32_unregister_iio_triggers(priv);
+	/* Unरेजिस्टर triggers beक्रमe everything can be safely turned off */
+	sपंचांग32_unरेजिस्टर_iio_triggers(priv);
 
-	/* Check if nobody else use the timer, then disable it */
-	regmap_read(priv->regmap, TIM_CCER, &val);
-	if (!(val & TIM_CCER_CCXE))
+	/* Check अगर nobody अन्यथा use the समयr, then disable it */
+	regmap_पढ़ो(priv->regmap, TIM_CCER, &val);
+	अगर (!(val & TIM_CCER_CCXE))
 		regmap_update_bits(priv->regmap, TIM_CR1, TIM_CR1_CEN, 0);
 
-	if (priv->enabled)
+	अगर (priv->enabled)
 		clk_disable(priv->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stm32_timer_trigger_suspend(struct device *dev)
-{
-	struct stm32_timer_trigger *priv = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused sपंचांग32_समयr_trigger_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = dev_get_drvdata(dev);
 
-	/* Only take care of enabled timer: don't disturb other MFD child */
-	if (priv->enabled) {
-		/* Backup registers that may get lost in low power mode */
-		regmap_read(priv->regmap, TIM_CR1, &priv->bak.cr1);
-		regmap_read(priv->regmap, TIM_CR2, &priv->bak.cr2);
-		regmap_read(priv->regmap, TIM_PSC, &priv->bak.psc);
-		regmap_read(priv->regmap, TIM_ARR, &priv->bak.arr);
-		regmap_read(priv->regmap, TIM_CNT, &priv->bak.cnt);
-		regmap_read(priv->regmap, TIM_SMCR, &priv->bak.smcr);
+	/* Only take care of enabled समयr: करोn't disturb other MFD child */
+	अगर (priv->enabled) अणु
+		/* Backup रेजिस्टरs that may get lost in low घातer mode */
+		regmap_पढ़ो(priv->regmap, TIM_CR1, &priv->bak.cr1);
+		regmap_पढ़ो(priv->regmap, TIM_CR2, &priv->bak.cr2);
+		regmap_पढ़ो(priv->regmap, TIM_PSC, &priv->bak.psc);
+		regmap_पढ़ो(priv->regmap, TIM_ARR, &priv->bak.arr);
+		regmap_पढ़ो(priv->regmap, TIM_CNT, &priv->bak.cnt);
+		regmap_पढ़ो(priv->regmap, TIM_SMCR, &priv->bak.smcr);
 
-		/* Disable the timer */
+		/* Disable the समयr */
 		regmap_update_bits(priv->regmap, TIM_CR1, TIM_CR1_CEN, 0);
 		clk_disable(priv->clk);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stm32_timer_trigger_resume(struct device *dev)
-{
-	struct stm32_timer_trigger *priv = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused sपंचांग32_समयr_trigger_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांग32_समयr_trigger *priv = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (priv->enabled) {
+	अगर (priv->enabled) अणु
 		ret = clk_enable(priv->clk);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/* restore master/slave modes */
-		regmap_write(priv->regmap, TIM_SMCR, priv->bak.smcr);
-		regmap_write(priv->regmap, TIM_CR2, priv->bak.cr2);
+		regmap_ग_लिखो(priv->regmap, TIM_SMCR, priv->bak.smcr);
+		regmap_ग_लिखो(priv->regmap, TIM_CR2, priv->bak.cr2);
 
 		/* restore sampling_frequency (trgo / trgo2 triggers) */
-		regmap_write(priv->regmap, TIM_PSC, priv->bak.psc);
-		regmap_write(priv->regmap, TIM_ARR, priv->bak.arr);
-		regmap_write(priv->regmap, TIM_CNT, priv->bak.cnt);
+		regmap_ग_लिखो(priv->regmap, TIM_PSC, priv->bak.psc);
+		regmap_ग_लिखो(priv->regmap, TIM_ARR, priv->bak.arr);
+		regmap_ग_लिखो(priv->regmap, TIM_CNT, priv->bak.cnt);
 
-		/* Also re-enables the timer */
-		regmap_write(priv->regmap, TIM_CR1, priv->bak.cr1);
-	}
+		/* Also re-enables the समयr */
+		regmap_ग_लिखो(priv->regmap, TIM_CR1, priv->bak.cr1);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(stm32_timer_trigger_pm_ops,
-			 stm32_timer_trigger_suspend,
-			 stm32_timer_trigger_resume);
+अटल SIMPLE_DEV_PM_OPS(sपंचांग32_समयr_trigger_pm_ops,
+			 sपंचांग32_समयr_trigger_suspend,
+			 sपंचांग32_समयr_trigger_resume);
 
-static const struct stm32_timer_trigger_cfg stm32_timer_trg_cfg = {
+अटल स्थिर काष्ठा sपंचांग32_समयr_trigger_cfg sपंचांग32_समयr_trg_cfg = अणु
 	.valids_table = valids_table,
 	.num_valids_table = ARRAY_SIZE(valids_table),
-};
+पूर्ण;
 
-static const struct stm32_timer_trigger_cfg stm32h7_timer_trg_cfg = {
-	.valids_table = stm32h7_valids_table,
-	.num_valids_table = ARRAY_SIZE(stm32h7_valids_table),
-};
+अटल स्थिर काष्ठा sपंचांग32_समयr_trigger_cfg sपंचांग32h7_समयr_trg_cfg = अणु
+	.valids_table = sपंचांग32h7_valids_table,
+	.num_valids_table = ARRAY_SIZE(sपंचांग32h7_valids_table),
+पूर्ण;
 
-static const struct of_device_id stm32_trig_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sपंचांग32_trig_of_match[] = अणु
+	अणु
 		.compatible = "st,stm32-timer-trigger",
-		.data = (void *)&stm32_timer_trg_cfg,
-	}, {
+		.data = (व्योम *)&sपंचांग32_समयr_trg_cfg,
+	पूर्ण, अणु
 		.compatible = "st,stm32h7-timer-trigger",
-		.data = (void *)&stm32h7_timer_trg_cfg,
-	},
-	{ /* end node */ },
-};
-MODULE_DEVICE_TABLE(of, stm32_trig_of_match);
+		.data = (व्योम *)&sपंचांग32h7_समयr_trg_cfg,
+	पूर्ण,
+	अणु /* end node */ पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, sपंचांग32_trig_of_match);
 
-static struct platform_driver stm32_timer_trigger_driver = {
-	.probe = stm32_timer_trigger_probe,
-	.remove = stm32_timer_trigger_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver sपंचांग32_समयr_trigger_driver = अणु
+	.probe = sपंचांग32_समयr_trigger_probe,
+	.हटाओ = sपंचांग32_समयr_trigger_हटाओ,
+	.driver = अणु
 		.name = "stm32-timer-trigger",
-		.of_match_table = stm32_trig_of_match,
-		.pm = &stm32_timer_trigger_pm_ops,
-	},
-};
-module_platform_driver(stm32_timer_trigger_driver);
+		.of_match_table = sपंचांग32_trig_of_match,
+		.pm = &sपंचांग32_समयr_trigger_pm_ops,
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(sपंचांग32_समयr_trigger_driver);
 
 MODULE_ALIAS("platform: stm32-timer-trigger");
 MODULE_DESCRIPTION("STMicroelectronics STM32 Timer Trigger driver");

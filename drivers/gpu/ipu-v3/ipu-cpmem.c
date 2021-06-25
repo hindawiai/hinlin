@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2012 Mentor Graphics Inc.
  * Copyright 2005-2012 Freescale Semiconductor, Inc. All Rights Reserved.
  */
-#include <linux/types.h>
-#include <linux/bitrev.h>
-#include <linux/io.h>
-#include <linux/sizes.h>
-#include <drm/drm_fourcc.h>
-#include "ipu-prv.h"
+#समावेश <linux/types.h>
+#समावेश <linux/bitrev.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/sizes.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश "ipu-prv.h"
 
-struct ipu_cpmem_word {
+काष्ठा ipu_cpmem_word अणु
 	u32 data[5];
 	u32 res[3];
-};
+पूर्ण;
 
-struct ipu_ch_param {
-	struct ipu_cpmem_word word[2];
-};
+काष्ठा ipu_ch_param अणु
+	काष्ठा ipu_cpmem_word word[2];
+पूर्ण;
 
-struct ipu_cpmem {
-	struct ipu_ch_param __iomem *base;
+काष्ठा ipu_cpmem अणु
+	काष्ठा ipu_ch_param __iomem *base;
 	u32 module;
 	spinlock_t lock;
-	int use_count;
-	struct ipu_soc *ipu;
-};
+	पूर्णांक use_count;
+	काष्ठा ipu_soc *ipu;
+पूर्ण;
 
-#define IPU_CPMEM_WORD(word, ofs, size) ((((word) * 160 + (ofs)) << 8) | (size))
+#घोषणा IPU_CPMEM_WORD(word, ofs, size) ((((word) * 160 + (ofs)) << 8) | (size))
 
-#define IPU_FIELD_UBO		IPU_CPMEM_WORD(0, 46, 22)
-#define IPU_FIELD_VBO		IPU_CPMEM_WORD(0, 68, 22)
-#define IPU_FIELD_IOX		IPU_CPMEM_WORD(0, 90, 4)
-#define IPU_FIELD_RDRW		IPU_CPMEM_WORD(0, 94, 1)
-#define IPU_FIELD_SO		IPU_CPMEM_WORD(0, 113, 1)
-#define IPU_FIELD_SLY		IPU_CPMEM_WORD(1, 102, 14)
-#define IPU_FIELD_SLUV		IPU_CPMEM_WORD(1, 128, 14)
+#घोषणा IPU_FIELD_UBO		IPU_CPMEM_WORD(0, 46, 22)
+#घोषणा IPU_FIELD_VBO		IPU_CPMEM_WORD(0, 68, 22)
+#घोषणा IPU_FIELD_IOX		IPU_CPMEM_WORD(0, 90, 4)
+#घोषणा IPU_FIELD_RDRW		IPU_CPMEM_WORD(0, 94, 1)
+#घोषणा IPU_FIELD_SO		IPU_CPMEM_WORD(0, 113, 1)
+#घोषणा IPU_FIELD_SLY		IPU_CPMEM_WORD(1, 102, 14)
+#घोषणा IPU_FIELD_SLUV		IPU_CPMEM_WORD(1, 128, 14)
 
-#define IPU_FIELD_XV		IPU_CPMEM_WORD(0, 0, 10)
-#define IPU_FIELD_YV		IPU_CPMEM_WORD(0, 10, 9)
-#define IPU_FIELD_XB		IPU_CPMEM_WORD(0, 19, 13)
-#define IPU_FIELD_YB		IPU_CPMEM_WORD(0, 32, 12)
-#define IPU_FIELD_NSB_B		IPU_CPMEM_WORD(0, 44, 1)
-#define IPU_FIELD_CF		IPU_CPMEM_WORD(0, 45, 1)
-#define IPU_FIELD_SX		IPU_CPMEM_WORD(0, 46, 12)
-#define IPU_FIELD_SY		IPU_CPMEM_WORD(0, 58, 11)
-#define IPU_FIELD_NS		IPU_CPMEM_WORD(0, 69, 10)
-#define IPU_FIELD_SDX		IPU_CPMEM_WORD(0, 79, 7)
-#define IPU_FIELD_SM		IPU_CPMEM_WORD(0, 86, 10)
-#define IPU_FIELD_SCC		IPU_CPMEM_WORD(0, 96, 1)
-#define IPU_FIELD_SCE		IPU_CPMEM_WORD(0, 97, 1)
-#define IPU_FIELD_SDY		IPU_CPMEM_WORD(0, 98, 7)
-#define IPU_FIELD_SDRX		IPU_CPMEM_WORD(0, 105, 1)
-#define IPU_FIELD_SDRY		IPU_CPMEM_WORD(0, 106, 1)
-#define IPU_FIELD_BPP		IPU_CPMEM_WORD(0, 107, 3)
-#define IPU_FIELD_DEC_SEL	IPU_CPMEM_WORD(0, 110, 2)
-#define IPU_FIELD_DIM		IPU_CPMEM_WORD(0, 112, 1)
-#define IPU_FIELD_BNDM		IPU_CPMEM_WORD(0, 114, 3)
-#define IPU_FIELD_BM		IPU_CPMEM_WORD(0, 117, 2)
-#define IPU_FIELD_ROT		IPU_CPMEM_WORD(0, 119, 1)
-#define IPU_FIELD_ROT_HF_VF	IPU_CPMEM_WORD(0, 119, 3)
-#define IPU_FIELD_HF		IPU_CPMEM_WORD(0, 120, 1)
-#define IPU_FIELD_VF		IPU_CPMEM_WORD(0, 121, 1)
-#define IPU_FIELD_THE		IPU_CPMEM_WORD(0, 122, 1)
-#define IPU_FIELD_CAP		IPU_CPMEM_WORD(0, 123, 1)
-#define IPU_FIELD_CAE		IPU_CPMEM_WORD(0, 124, 1)
-#define IPU_FIELD_FW		IPU_CPMEM_WORD(0, 125, 13)
-#define IPU_FIELD_FH		IPU_CPMEM_WORD(0, 138, 12)
-#define IPU_FIELD_EBA0		IPU_CPMEM_WORD(1, 0, 29)
-#define IPU_FIELD_EBA1		IPU_CPMEM_WORD(1, 29, 29)
-#define IPU_FIELD_ILO		IPU_CPMEM_WORD(1, 58, 20)
-#define IPU_FIELD_NPB		IPU_CPMEM_WORD(1, 78, 7)
-#define IPU_FIELD_PFS		IPU_CPMEM_WORD(1, 85, 4)
-#define IPU_FIELD_ALU		IPU_CPMEM_WORD(1, 89, 1)
-#define IPU_FIELD_ALBM		IPU_CPMEM_WORD(1, 90, 3)
-#define IPU_FIELD_ID		IPU_CPMEM_WORD(1, 93, 2)
-#define IPU_FIELD_TH		IPU_CPMEM_WORD(1, 95, 7)
-#define IPU_FIELD_SL		IPU_CPMEM_WORD(1, 102, 14)
-#define IPU_FIELD_WID0		IPU_CPMEM_WORD(1, 116, 3)
-#define IPU_FIELD_WID1		IPU_CPMEM_WORD(1, 119, 3)
-#define IPU_FIELD_WID2		IPU_CPMEM_WORD(1, 122, 3)
-#define IPU_FIELD_WID3		IPU_CPMEM_WORD(1, 125, 3)
-#define IPU_FIELD_OFS0		IPU_CPMEM_WORD(1, 128, 5)
-#define IPU_FIELD_OFS1		IPU_CPMEM_WORD(1, 133, 5)
-#define IPU_FIELD_OFS2		IPU_CPMEM_WORD(1, 138, 5)
-#define IPU_FIELD_OFS3		IPU_CPMEM_WORD(1, 143, 5)
-#define IPU_FIELD_SXYS		IPU_CPMEM_WORD(1, 148, 1)
-#define IPU_FIELD_CRE		IPU_CPMEM_WORD(1, 149, 1)
-#define IPU_FIELD_DEC_SEL2	IPU_CPMEM_WORD(1, 150, 1)
+#घोषणा IPU_FIELD_XV		IPU_CPMEM_WORD(0, 0, 10)
+#घोषणा IPU_FIELD_YV		IPU_CPMEM_WORD(0, 10, 9)
+#घोषणा IPU_FIELD_XB		IPU_CPMEM_WORD(0, 19, 13)
+#घोषणा IPU_FIELD_YB		IPU_CPMEM_WORD(0, 32, 12)
+#घोषणा IPU_FIELD_NSB_B		IPU_CPMEM_WORD(0, 44, 1)
+#घोषणा IPU_FIELD_CF		IPU_CPMEM_WORD(0, 45, 1)
+#घोषणा IPU_FIELD_SX		IPU_CPMEM_WORD(0, 46, 12)
+#घोषणा IPU_FIELD_SY		IPU_CPMEM_WORD(0, 58, 11)
+#घोषणा IPU_FIELD_NS		IPU_CPMEM_WORD(0, 69, 10)
+#घोषणा IPU_FIELD_SDX		IPU_CPMEM_WORD(0, 79, 7)
+#घोषणा IPU_FIELD_SM		IPU_CPMEM_WORD(0, 86, 10)
+#घोषणा IPU_FIELD_SCC		IPU_CPMEM_WORD(0, 96, 1)
+#घोषणा IPU_FIELD_SCE		IPU_CPMEM_WORD(0, 97, 1)
+#घोषणा IPU_FIELD_SDY		IPU_CPMEM_WORD(0, 98, 7)
+#घोषणा IPU_FIELD_SDRX		IPU_CPMEM_WORD(0, 105, 1)
+#घोषणा IPU_FIELD_SDRY		IPU_CPMEM_WORD(0, 106, 1)
+#घोषणा IPU_FIELD_BPP		IPU_CPMEM_WORD(0, 107, 3)
+#घोषणा IPU_FIELD_DEC_SEL	IPU_CPMEM_WORD(0, 110, 2)
+#घोषणा IPU_FIELD_DIM		IPU_CPMEM_WORD(0, 112, 1)
+#घोषणा IPU_FIELD_BNDM		IPU_CPMEM_WORD(0, 114, 3)
+#घोषणा IPU_FIELD_BM		IPU_CPMEM_WORD(0, 117, 2)
+#घोषणा IPU_FIELD_ROT		IPU_CPMEM_WORD(0, 119, 1)
+#घोषणा IPU_FIELD_ROT_HF_VF	IPU_CPMEM_WORD(0, 119, 3)
+#घोषणा IPU_FIELD_HF		IPU_CPMEM_WORD(0, 120, 1)
+#घोषणा IPU_FIELD_VF		IPU_CPMEM_WORD(0, 121, 1)
+#घोषणा IPU_FIELD_THE		IPU_CPMEM_WORD(0, 122, 1)
+#घोषणा IPU_FIELD_CAP		IPU_CPMEM_WORD(0, 123, 1)
+#घोषणा IPU_FIELD_CAE		IPU_CPMEM_WORD(0, 124, 1)
+#घोषणा IPU_FIELD_FW		IPU_CPMEM_WORD(0, 125, 13)
+#घोषणा IPU_FIELD_FH		IPU_CPMEM_WORD(0, 138, 12)
+#घोषणा IPU_FIELD_EBA0		IPU_CPMEM_WORD(1, 0, 29)
+#घोषणा IPU_FIELD_EBA1		IPU_CPMEM_WORD(1, 29, 29)
+#घोषणा IPU_FIELD_ILO		IPU_CPMEM_WORD(1, 58, 20)
+#घोषणा IPU_FIELD_NPB		IPU_CPMEM_WORD(1, 78, 7)
+#घोषणा IPU_FIELD_PFS		IPU_CPMEM_WORD(1, 85, 4)
+#घोषणा IPU_FIELD_ALU		IPU_CPMEM_WORD(1, 89, 1)
+#घोषणा IPU_FIELD_ALBM		IPU_CPMEM_WORD(1, 90, 3)
+#घोषणा IPU_FIELD_ID		IPU_CPMEM_WORD(1, 93, 2)
+#घोषणा IPU_FIELD_TH		IPU_CPMEM_WORD(1, 95, 7)
+#घोषणा IPU_FIELD_SL		IPU_CPMEM_WORD(1, 102, 14)
+#घोषणा IPU_FIELD_WID0		IPU_CPMEM_WORD(1, 116, 3)
+#घोषणा IPU_FIELD_WID1		IPU_CPMEM_WORD(1, 119, 3)
+#घोषणा IPU_FIELD_WID2		IPU_CPMEM_WORD(1, 122, 3)
+#घोषणा IPU_FIELD_WID3		IPU_CPMEM_WORD(1, 125, 3)
+#घोषणा IPU_FIELD_OFS0		IPU_CPMEM_WORD(1, 128, 5)
+#घोषणा IPU_FIELD_OFS1		IPU_CPMEM_WORD(1, 133, 5)
+#घोषणा IPU_FIELD_OFS2		IPU_CPMEM_WORD(1, 138, 5)
+#घोषणा IPU_FIELD_OFS3		IPU_CPMEM_WORD(1, 143, 5)
+#घोषणा IPU_FIELD_SXYS		IPU_CPMEM_WORD(1, 148, 1)
+#घोषणा IPU_FIELD_CRE		IPU_CPMEM_WORD(1, 149, 1)
+#घोषणा IPU_FIELD_DEC_SEL2	IPU_CPMEM_WORD(1, 150, 1)
 
-static inline struct ipu_ch_param __iomem *
-ipu_get_cpmem(struct ipuv3_channel *ch)
-{
-	struct ipu_cpmem *cpmem = ch->ipu->cpmem_priv;
+अटल अंतरभूत काष्ठा ipu_ch_param __iomem *
+ipu_get_cpmem(काष्ठा ipuv3_channel *ch)
+अणु
+	काष्ठा ipu_cpmem *cpmem = ch->ipu->cpmem_priv;
 
-	return cpmem->base + ch->num;
-}
+	वापस cpmem->base + ch->num;
+पूर्ण
 
-static void ipu_ch_param_write_field(struct ipuv3_channel *ch, u32 wbs, u32 v)
-{
-	struct ipu_ch_param __iomem *base = ipu_get_cpmem(ch);
+अटल व्योम ipu_ch_param_ग_लिखो_field(काष्ठा ipuv3_channel *ch, u32 wbs, u32 v)
+अणु
+	काष्ठा ipu_ch_param __iomem *base = ipu_get_cpmem(ch);
 	u32 bit = (wbs >> 8) % 160;
 	u32 size = wbs & 0xff;
 	u32 word = (wbs >> 8) / 160;
@@ -110,22 +111,22 @@ static void ipu_ch_param_write_field(struct ipuv3_channel *ch, u32 wbs, u32 v)
 
 	pr_debug("%s %d %d %d\n", __func__, word, bit , size);
 
-	val = readl(&base->word[word].data[i]);
+	val = पढ़ोl(&base->word[word].data[i]);
 	val &= ~(mask << ofs);
 	val |= v << ofs;
-	writel(val, &base->word[word].data[i]);
+	ग_लिखोl(val, &base->word[word].data[i]);
 
-	if ((bit + size - 1) / 32 > i) {
-		val = readl(&base->word[word].data[i + 1]);
+	अगर ((bit + size - 1) / 32 > i) अणु
+		val = पढ़ोl(&base->word[word].data[i + 1]);
 		val &= ~(mask >> (ofs ? (32 - ofs) : 0));
 		val |= v >> (ofs ? (32 - ofs) : 0);
-		writel(val, &base->word[word].data[i + 1]);
-	}
-}
+		ग_लिखोl(val, &base->word[word].data[i + 1]);
+	पूर्ण
+पूर्ण
 
-static u32 ipu_ch_param_read_field(struct ipuv3_channel *ch, u32 wbs)
-{
-	struct ipu_ch_param __iomem *base = ipu_get_cpmem(ch);
+अटल u32 ipu_ch_param_पढ़ो_field(काष्ठा ipuv3_channel *ch, u32 wbs)
+अणु
+	काष्ठा ipu_ch_param __iomem *base = ipu_get_cpmem(ch);
 	u32 bit = (wbs >> 8) % 160;
 	u32 size = wbs & 0xff;
 	u32 word = (wbs >> 8) / 160;
@@ -136,636 +137,636 @@ static u32 ipu_ch_param_read_field(struct ipuv3_channel *ch, u32 wbs)
 
 	pr_debug("%s %d %d %d\n", __func__, word, bit , size);
 
-	val = (readl(&base->word[word].data[i]) >> ofs) & mask;
+	val = (पढ़ोl(&base->word[word].data[i]) >> ofs) & mask;
 
-	if ((bit + size - 1) / 32 > i) {
-		u32 tmp;
+	अगर ((bit + size - 1) / 32 > i) अणु
+		u32 पंचांगp;
 
-		tmp = readl(&base->word[word].data[i + 1]);
-		tmp &= mask >> (ofs ? (32 - ofs) : 0);
-		val |= tmp << (ofs ? (32 - ofs) : 0);
-	}
+		पंचांगp = पढ़ोl(&base->word[word].data[i + 1]);
+		पंचांगp &= mask >> (ofs ? (32 - ofs) : 0);
+		val |= पंचांगp << (ofs ? (32 - ofs) : 0);
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /*
- * The V4L2 spec defines packed RGB formats in memory byte order, which from
- * point of view of the IPU corresponds to little-endian words with the first
- * component in the least significant bits.
- * The DRM pixel formats and IPU internal representation are ordered the other
- * way around, with the first named component ordered at the most significant
- * bits. Further, V4L2 formats are not well defined:
- *     https://linuxtv.org/downloads/v4l-dvb-apis/packed-rgb.html
- * We choose the interpretation which matches GStreamer behavior.
+ * The V4L2 spec defines packed RGB क्रमmats in memory byte order, which from
+ * poपूर्णांक of view of the IPU corresponds to little-endian words with the first
+ * component in the least signअगरicant bits.
+ * The DRM pixel क्रमmats and IPU पूर्णांकernal representation are ordered the other
+ * way around, with the first named component ordered at the most signअगरicant
+ * bits. Further, V4L2 क्रमmats are not well defined:
+ *     https://linuxtv.org/करोwnloads/v4l-dvb-apis/packed-rgb.hपंचांगl
+ * We choose the पूर्णांकerpretation which matches GStreamer behavior.
  */
-static int v4l2_pix_fmt_to_drm_fourcc(u32 pixelformat)
-{
-	switch (pixelformat) {
-	case V4L2_PIX_FMT_RGB565:
+अटल पूर्णांक v4l2_pix_fmt_to_drm_fourcc(u32 pixelक्रमmat)
+अणु
+	चयन (pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_RGB565:
 		/*
-		 * Here we choose the 'corrected' interpretation of RGBP, a
+		 * Here we choose the 'corrected' पूर्णांकerpretation of RGBP, a
 		 * little-endian 16-bit word with the red component at the most
-		 * significant bits:
+		 * signअगरicant bits:
 		 * g[2:0]b[4:0] r[4:0]g[5:3] <=> [16:0] R:G:B
 		 */
-		return DRM_FORMAT_RGB565;
-	case V4L2_PIX_FMT_BGR24:
+		वापस DRM_FORMAT_RGB565;
+	हाल V4L2_PIX_FMT_BGR24:
 		/* B G R <=> [24:0] R:G:B */
-		return DRM_FORMAT_RGB888;
-	case V4L2_PIX_FMT_RGB24:
+		वापस DRM_FORMAT_RGB888;
+	हाल V4L2_PIX_FMT_RGB24:
 		/* R G B <=> [24:0] B:G:R */
-		return DRM_FORMAT_BGR888;
-	case V4L2_PIX_FMT_BGR32:
+		वापस DRM_FORMAT_BGR888;
+	हाल V4L2_PIX_FMT_BGR32:
 		/* B G R A <=> [32:0] A:B:G:R */
-		return DRM_FORMAT_XRGB8888;
-	case V4L2_PIX_FMT_RGB32:
+		वापस DRM_FORMAT_XRGB8888;
+	हाल V4L2_PIX_FMT_RGB32:
 		/* R G B A <=> [32:0] A:B:G:R */
-		return DRM_FORMAT_XBGR8888;
-	case V4L2_PIX_FMT_ABGR32:
+		वापस DRM_FORMAT_XBGR8888;
+	हाल V4L2_PIX_FMT_ABGR32:
 		/* B G R A <=> [32:0] A:R:G:B */
-		return DRM_FORMAT_ARGB8888;
-	case V4L2_PIX_FMT_XBGR32:
+		वापस DRM_FORMAT_ARGB8888;
+	हाल V4L2_PIX_FMT_XBGR32:
 		/* B G R X <=> [32:0] X:R:G:B */
-		return DRM_FORMAT_XRGB8888;
-	case V4L2_PIX_FMT_BGRA32:
+		वापस DRM_FORMAT_XRGB8888;
+	हाल V4L2_PIX_FMT_BGRA32:
 		/* A B G R <=> [32:0] R:G:B:A */
-		return DRM_FORMAT_RGBA8888;
-	case V4L2_PIX_FMT_BGRX32:
+		वापस DRM_FORMAT_RGBA8888;
+	हाल V4L2_PIX_FMT_BGRX32:
 		/* X B G R <=> [32:0] R:G:B:X */
-		return DRM_FORMAT_RGBX8888;
-	case V4L2_PIX_FMT_RGBA32:
+		वापस DRM_FORMAT_RGBX8888;
+	हाल V4L2_PIX_FMT_RGBA32:
 		/* R G B A <=> [32:0] A:B:G:R */
-		return DRM_FORMAT_ABGR8888;
-	case V4L2_PIX_FMT_RGBX32:
+		वापस DRM_FORMAT_ABGR8888;
+	हाल V4L2_PIX_FMT_RGBX32:
 		/* R G B X <=> [32:0] X:B:G:R */
-		return DRM_FORMAT_XBGR8888;
-	case V4L2_PIX_FMT_ARGB32:
+		वापस DRM_FORMAT_XBGR8888;
+	हाल V4L2_PIX_FMT_ARGB32:
 		/* A R G B <=> [32:0] B:G:R:A */
-		return DRM_FORMAT_BGRA8888;
-	case V4L2_PIX_FMT_XRGB32:
+		वापस DRM_FORMAT_BGRA8888;
+	हाल V4L2_PIX_FMT_XRGB32:
 		/* X R G B <=> [32:0] B:G:R:X */
-		return DRM_FORMAT_BGRX8888;
-	case V4L2_PIX_FMT_UYVY:
-		return DRM_FORMAT_UYVY;
-	case V4L2_PIX_FMT_YUYV:
-		return DRM_FORMAT_YUYV;
-	case V4L2_PIX_FMT_YUV420:
-		return DRM_FORMAT_YUV420;
-	case V4L2_PIX_FMT_YUV422P:
-		return DRM_FORMAT_YUV422;
-	case V4L2_PIX_FMT_YVU420:
-		return DRM_FORMAT_YVU420;
-	case V4L2_PIX_FMT_NV12:
-		return DRM_FORMAT_NV12;
-	case V4L2_PIX_FMT_NV16:
-		return DRM_FORMAT_NV16;
-	}
+		वापस DRM_FORMAT_BGRX8888;
+	हाल V4L2_PIX_FMT_UYVY:
+		वापस DRM_FORMAT_UYVY;
+	हाल V4L2_PIX_FMT_YUYV:
+		वापस DRM_FORMAT_YUYV;
+	हाल V4L2_PIX_FMT_YUV420:
+		वापस DRM_FORMAT_YUV420;
+	हाल V4L2_PIX_FMT_YUV422P:
+		वापस DRM_FORMAT_YUV422;
+	हाल V4L2_PIX_FMT_YVU420:
+		वापस DRM_FORMAT_YVU420;
+	हाल V4L2_PIX_FMT_NV12:
+		वापस DRM_FORMAT_NV12;
+	हाल V4L2_PIX_FMT_NV16:
+		वापस DRM_FORMAT_NV16;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-void ipu_cpmem_zero(struct ipuv3_channel *ch)
-{
-	struct ipu_ch_param __iomem *p = ipu_get_cpmem(ch);
-	void __iomem *base = p;
-	int i;
+व्योम ipu_cpmem_zero(काष्ठा ipuv3_channel *ch)
+अणु
+	काष्ठा ipu_ch_param __iomem *p = ipu_get_cpmem(ch);
+	व्योम __iomem *base = p;
+	पूर्णांक i;
 
-	for (i = 0; i < sizeof(*p) / sizeof(u32); i++)
-		writel(0, base + i * sizeof(u32));
-}
+	क्रम (i = 0; i < माप(*p) / माप(u32); i++)
+		ग_लिखोl(0, base + i * माप(u32));
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_zero);
 
-void ipu_cpmem_set_resolution(struct ipuv3_channel *ch, int xres, int yres)
-{
-	ipu_ch_param_write_field(ch, IPU_FIELD_FW, xres - 1);
-	ipu_ch_param_write_field(ch, IPU_FIELD_FH, yres - 1);
-}
+व्योम ipu_cpmem_set_resolution(काष्ठा ipuv3_channel *ch, पूर्णांक xres, पूर्णांक yres)
+अणु
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_FW, xres - 1);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_FH, yres - 1);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_resolution);
 
-void ipu_cpmem_skip_odd_chroma_rows(struct ipuv3_channel *ch)
-{
-	ipu_ch_param_write_field(ch, IPU_FIELD_RDRW, 1);
-}
+व्योम ipu_cpmem_skip_odd_chroma_rows(काष्ठा ipuv3_channel *ch)
+अणु
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_RDRW, 1);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_skip_odd_chroma_rows);
 
-void ipu_cpmem_set_stride(struct ipuv3_channel *ch, int stride)
-{
-	ipu_ch_param_write_field(ch, IPU_FIELD_SLY, stride - 1);
-}
+व्योम ipu_cpmem_set_stride(काष्ठा ipuv3_channel *ch, पूर्णांक stride)
+अणु
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_SLY, stride - 1);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_stride);
 
-void ipu_cpmem_set_high_priority(struct ipuv3_channel *ch)
-{
-	struct ipu_soc *ipu = ch->ipu;
+व्योम ipu_cpmem_set_high_priority(काष्ठा ipuv3_channel *ch)
+अणु
+	काष्ठा ipu_soc *ipu = ch->ipu;
 	u32 val;
 
-	if (ipu->ipu_type == IPUV3EX)
-		ipu_ch_param_write_field(ch, IPU_FIELD_ID, 1);
+	अगर (ipu->ipu_type == IPUV3EX)
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_ID, 1);
 
-	val = ipu_idmac_read(ipu, IDMAC_CHA_PRI(ch->num));
+	val = ipu_idmac_पढ़ो(ipu, IDMAC_CHA_PRI(ch->num));
 	val |= 1 << (ch->num % 32);
-	ipu_idmac_write(ipu, val, IDMAC_CHA_PRI(ch->num));
-};
+	ipu_idmac_ग_लिखो(ipu, val, IDMAC_CHA_PRI(ch->num));
+पूर्ण;
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_high_priority);
 
-void ipu_cpmem_set_buffer(struct ipuv3_channel *ch, int bufnum, dma_addr_t buf)
-{
+व्योम ipu_cpmem_set_buffer(काष्ठा ipuv3_channel *ch, पूर्णांक bufnum, dma_addr_t buf)
+अणु
 	WARN_ON_ONCE(buf & 0x7);
 
-	if (bufnum)
-		ipu_ch_param_write_field(ch, IPU_FIELD_EBA1, buf >> 3);
-	else
-		ipu_ch_param_write_field(ch, IPU_FIELD_EBA0, buf >> 3);
-}
+	अगर (bufnum)
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_EBA1, buf >> 3);
+	अन्यथा
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_EBA0, buf >> 3);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_buffer);
 
-void ipu_cpmem_set_uv_offset(struct ipuv3_channel *ch, u32 u_off, u32 v_off)
-{
+व्योम ipu_cpmem_set_uv_offset(काष्ठा ipuv3_channel *ch, u32 u_off, u32 v_off)
+अणु
 	WARN_ON_ONCE((u_off & 0x7) || (v_off & 0x7));
 
-	ipu_ch_param_write_field(ch, IPU_FIELD_UBO, u_off / 8);
-	ipu_ch_param_write_field(ch, IPU_FIELD_VBO, v_off / 8);
-}
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_UBO, u_off / 8);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_VBO, v_off / 8);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_uv_offset);
 
-void ipu_cpmem_interlaced_scan(struct ipuv3_channel *ch, int stride,
-			       u32 pixelformat)
-{
+व्योम ipu_cpmem_पूर्णांकerlaced_scan(काष्ठा ipuv3_channel *ch, पूर्णांक stride,
+			       u32 pixelक्रमmat)
+अणु
 	u32 ilo, sly, sluv;
 
-	if (stride < 0) {
+	अगर (stride < 0) अणु
 		stride = -stride;
 		ilo = 0x100000 - (stride / 8);
-	} else {
+	पूर्ण अन्यथा अणु
 		ilo = stride / 8;
-	}
+	पूर्ण
 
 	sly = (stride * 2) - 1;
 
-	switch (pixelformat) {
-	case V4L2_PIX_FMT_YUV420:
-	case V4L2_PIX_FMT_YVU420:
+	चयन (pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_YUV420:
+	हाल V4L2_PIX_FMT_YVU420:
 		sluv = stride / 2 - 1;
-		break;
-	case V4L2_PIX_FMT_NV12:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV12:
 		sluv = stride - 1;
-		break;
-	case V4L2_PIX_FMT_YUV422P:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YUV422P:
 		sluv = stride - 1;
-		break;
-	case V4L2_PIX_FMT_NV16:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV16:
 		sluv = stride * 2 - 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		sluv = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	ipu_ch_param_write_field(ch, IPU_FIELD_SO, 1);
-	ipu_ch_param_write_field(ch, IPU_FIELD_ILO, ilo);
-	ipu_ch_param_write_field(ch, IPU_FIELD_SLY, sly);
-	if (sluv)
-		ipu_ch_param_write_field(ch, IPU_FIELD_SLUV, sluv);
-};
-EXPORT_SYMBOL_GPL(ipu_cpmem_interlaced_scan);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_SO, 1);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_ILO, ilo);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_SLY, sly);
+	अगर (sluv)
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_SLUV, sluv);
+पूर्ण;
+EXPORT_SYMBOL_GPL(ipu_cpmem_पूर्णांकerlaced_scan);
 
-void ipu_cpmem_set_axi_id(struct ipuv3_channel *ch, u32 id)
-{
+व्योम ipu_cpmem_set_axi_id(काष्ठा ipuv3_channel *ch, u32 id)
+अणु
 	id &= 0x3;
-	ipu_ch_param_write_field(ch, IPU_FIELD_ID, id);
-}
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_ID, id);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_axi_id);
 
-int ipu_cpmem_get_burstsize(struct ipuv3_channel *ch)
-{
-	return ipu_ch_param_read_field(ch, IPU_FIELD_NPB) + 1;
-}
+पूर्णांक ipu_cpmem_get_burstsize(काष्ठा ipuv3_channel *ch)
+अणु
+	वापस ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_NPB) + 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_get_burstsize);
 
-void ipu_cpmem_set_burstsize(struct ipuv3_channel *ch, int burstsize)
-{
-	ipu_ch_param_write_field(ch, IPU_FIELD_NPB, burstsize - 1);
-};
+व्योम ipu_cpmem_set_burstsize(काष्ठा ipuv3_channel *ch, पूर्णांक burstsize)
+अणु
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, burstsize - 1);
+पूर्ण;
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_burstsize);
 
-void ipu_cpmem_set_block_mode(struct ipuv3_channel *ch)
-{
-	ipu_ch_param_write_field(ch, IPU_FIELD_BM, 1);
-}
+व्योम ipu_cpmem_set_block_mode(काष्ठा ipuv3_channel *ch)
+अणु
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_BM, 1);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_block_mode);
 
-void ipu_cpmem_set_rotation(struct ipuv3_channel *ch,
-			    enum ipu_rotate_mode rot)
-{
+व्योम ipu_cpmem_set_rotation(काष्ठा ipuv3_channel *ch,
+			    क्रमागत ipu_rotate_mode rot)
+अणु
 	u32 temp_rot = bitrev8(rot) >> 5;
 
-	ipu_ch_param_write_field(ch, IPU_FIELD_ROT_HF_VF, temp_rot);
-}
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_ROT_HF_VF, temp_rot);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_rotation);
 
-int ipu_cpmem_set_format_rgb(struct ipuv3_channel *ch,
-			     const struct ipu_rgb *rgb)
-{
-	int bpp = 0, npb = 0, ro, go, bo, to;
+पूर्णांक ipu_cpmem_set_क्रमmat_rgb(काष्ठा ipuv3_channel *ch,
+			     स्थिर काष्ठा ipu_rgb *rgb)
+अणु
+	पूर्णांक bpp = 0, npb = 0, ro, go, bo, to;
 
 	ro = rgb->bits_per_pixel - rgb->red.length - rgb->red.offset;
 	go = rgb->bits_per_pixel - rgb->green.length - rgb->green.offset;
 	bo = rgb->bits_per_pixel - rgb->blue.length - rgb->blue.offset;
 	to = rgb->bits_per_pixel - rgb->transp.length - rgb->transp.offset;
 
-	ipu_ch_param_write_field(ch, IPU_FIELD_WID0, rgb->red.length - 1);
-	ipu_ch_param_write_field(ch, IPU_FIELD_OFS0, ro);
-	ipu_ch_param_write_field(ch, IPU_FIELD_WID1, rgb->green.length - 1);
-	ipu_ch_param_write_field(ch, IPU_FIELD_OFS1, go);
-	ipu_ch_param_write_field(ch, IPU_FIELD_WID2, rgb->blue.length - 1);
-	ipu_ch_param_write_field(ch, IPU_FIELD_OFS2, bo);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_WID0, rgb->red.length - 1);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_OFS0, ro);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_WID1, rgb->green.length - 1);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_OFS1, go);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_WID2, rgb->blue.length - 1);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_OFS2, bo);
 
-	if (rgb->transp.length) {
-		ipu_ch_param_write_field(ch, IPU_FIELD_WID3,
+	अगर (rgb->transp.length) अणु
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_WID3,
 				rgb->transp.length - 1);
-		ipu_ch_param_write_field(ch, IPU_FIELD_OFS3, to);
-	} else {
-		ipu_ch_param_write_field(ch, IPU_FIELD_WID3, 7);
-		ipu_ch_param_write_field(ch, IPU_FIELD_OFS3,
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_OFS3, to);
+	पूर्ण अन्यथा अणु
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_WID3, 7);
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_OFS3,
 				rgb->bits_per_pixel);
-	}
+	पूर्ण
 
-	switch (rgb->bits_per_pixel) {
-	case 32:
+	चयन (rgb->bits_per_pixel) अणु
+	हाल 32:
 		bpp = 0;
 		npb = 15;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		bpp = 1;
 		npb = 19;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		bpp = 3;
 		npb = 31;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		bpp = 5;
 		npb = 63;
-		break;
-	default:
-		return -EINVAL;
-	}
-	ipu_ch_param_write_field(ch, IPU_FIELD_BPP, bpp);
-	ipu_ch_param_write_field(ch, IPU_FIELD_NPB, npb);
-	ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 7); /* rgb mode */
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_BPP, bpp);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, npb);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 7); /* rgb mode */
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ipu_cpmem_set_format_rgb);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ipu_cpmem_set_क्रमmat_rgb);
 
-int ipu_cpmem_set_format_passthrough(struct ipuv3_channel *ch, int width)
-{
-	int bpp = 0, npb = 0;
+पूर्णांक ipu_cpmem_set_क्रमmat_passthrough(काष्ठा ipuv3_channel *ch, पूर्णांक width)
+अणु
+	पूर्णांक bpp = 0, npb = 0;
 
-	switch (width) {
-	case 32:
+	चयन (width) अणु
+	हाल 32:
 		bpp = 0;
 		npb = 15;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		bpp = 1;
 		npb = 19;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		bpp = 3;
 		npb = 31;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		bpp = 5;
 		npb = 63;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	ipu_ch_param_write_field(ch, IPU_FIELD_BPP, bpp);
-	ipu_ch_param_write_field(ch, IPU_FIELD_NPB, npb);
-	ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 6); /* raw mode */
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_BPP, bpp);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, npb);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 6); /* raw mode */
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ipu_cpmem_set_format_passthrough);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ipu_cpmem_set_क्रमmat_passthrough);
 
-void ipu_cpmem_set_yuv_interleaved(struct ipuv3_channel *ch, u32 pixel_format)
-{
-	switch (pixel_format) {
-	case V4L2_PIX_FMT_UYVY:
-		ipu_ch_param_write_field(ch, IPU_FIELD_BPP, 3); /* bits/pixel */
-		ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 0xA);/* pix fmt */
-		ipu_ch_param_write_field(ch, IPU_FIELD_NPB, 31);/* burst size */
-		break;
-	case V4L2_PIX_FMT_YUYV:
-		ipu_ch_param_write_field(ch, IPU_FIELD_BPP, 3); /* bits/pixel */
-		ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 0x8);/* pix fmt */
-		ipu_ch_param_write_field(ch, IPU_FIELD_NPB, 31);/* burst size */
-		break;
-	}
-}
-EXPORT_SYMBOL_GPL(ipu_cpmem_set_yuv_interleaved);
+व्योम ipu_cpmem_set_yuv_पूर्णांकerleaved(काष्ठा ipuv3_channel *ch, u32 pixel_क्रमmat)
+अणु
+	चयन (pixel_क्रमmat) अणु
+	हाल V4L2_PIX_FMT_UYVY:
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_BPP, 3); /* bits/pixel */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 0xA);/* pix fmt */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, 31);/* burst size */
+		अवरोध;
+	हाल V4L2_PIX_FMT_YUYV:
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_BPP, 3); /* bits/pixel */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 0x8);/* pix fmt */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, 31);/* burst size */
+		अवरोध;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(ipu_cpmem_set_yuv_पूर्णांकerleaved);
 
-void ipu_cpmem_set_yuv_planar_full(struct ipuv3_channel *ch,
-				   unsigned int uv_stride,
-				   unsigned int u_offset, unsigned int v_offset)
-{
+व्योम ipu_cpmem_set_yuv_planar_full(काष्ठा ipuv3_channel *ch,
+				   अचिन्हित पूर्णांक uv_stride,
+				   अचिन्हित पूर्णांक u_offset, अचिन्हित पूर्णांक v_offset)
+अणु
 	WARN_ON_ONCE((u_offset & 0x7) || (v_offset & 0x7));
 
-	ipu_ch_param_write_field(ch, IPU_FIELD_SLUV, uv_stride - 1);
-	ipu_ch_param_write_field(ch, IPU_FIELD_UBO, u_offset / 8);
-	ipu_ch_param_write_field(ch, IPU_FIELD_VBO, v_offset / 8);
-}
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_SLUV, uv_stride - 1);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_UBO, u_offset / 8);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_VBO, v_offset / 8);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_yuv_planar_full);
 
-static const struct ipu_rgb def_xrgb_32 = {
-	.red	= { .offset = 16, .length = 8, },
-	.green	= { .offset =  8, .length = 8, },
-	.blue	= { .offset =  0, .length = 8, },
-	.transp = { .offset = 24, .length = 8, },
+अटल स्थिर काष्ठा ipu_rgb def_xrgb_32 = अणु
+	.red	= अणु .offset = 16, .length = 8, पूर्ण,
+	.green	= अणु .offset =  8, .length = 8, पूर्ण,
+	.blue	= अणु .offset =  0, .length = 8, पूर्ण,
+	.transp = अणु .offset = 24, .length = 8, पूर्ण,
 	.bits_per_pixel = 32,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_xbgr_32 = {
-	.red	= { .offset =  0, .length = 8, },
-	.green	= { .offset =  8, .length = 8, },
-	.blue	= { .offset = 16, .length = 8, },
-	.transp = { .offset = 24, .length = 8, },
+अटल स्थिर काष्ठा ipu_rgb def_xbgr_32 = अणु
+	.red	= अणु .offset =  0, .length = 8, पूर्ण,
+	.green	= अणु .offset =  8, .length = 8, पूर्ण,
+	.blue	= अणु .offset = 16, .length = 8, पूर्ण,
+	.transp = अणु .offset = 24, .length = 8, पूर्ण,
 	.bits_per_pixel = 32,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_rgbx_32 = {
-	.red	= { .offset = 24, .length = 8, },
-	.green	= { .offset = 16, .length = 8, },
-	.blue	= { .offset =  8, .length = 8, },
-	.transp = { .offset =  0, .length = 8, },
+अटल स्थिर काष्ठा ipu_rgb def_rgbx_32 = अणु
+	.red	= अणु .offset = 24, .length = 8, पूर्ण,
+	.green	= अणु .offset = 16, .length = 8, पूर्ण,
+	.blue	= अणु .offset =  8, .length = 8, पूर्ण,
+	.transp = अणु .offset =  0, .length = 8, पूर्ण,
 	.bits_per_pixel = 32,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_bgrx_32 = {
-	.red	= { .offset =  8, .length = 8, },
-	.green	= { .offset = 16, .length = 8, },
-	.blue	= { .offset = 24, .length = 8, },
-	.transp = { .offset =  0, .length = 8, },
+अटल स्थिर काष्ठा ipu_rgb def_bgrx_32 = अणु
+	.red	= अणु .offset =  8, .length = 8, पूर्ण,
+	.green	= अणु .offset = 16, .length = 8, पूर्ण,
+	.blue	= अणु .offset = 24, .length = 8, पूर्ण,
+	.transp = अणु .offset =  0, .length = 8, पूर्ण,
 	.bits_per_pixel = 32,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_rgb_24 = {
-	.red	= { .offset = 16, .length = 8, },
-	.green	= { .offset =  8, .length = 8, },
-	.blue	= { .offset =  0, .length = 8, },
-	.transp = { .offset =  0, .length = 0, },
+अटल स्थिर काष्ठा ipu_rgb def_rgb_24 = अणु
+	.red	= अणु .offset = 16, .length = 8, पूर्ण,
+	.green	= अणु .offset =  8, .length = 8, पूर्ण,
+	.blue	= अणु .offset =  0, .length = 8, पूर्ण,
+	.transp = अणु .offset =  0, .length = 0, पूर्ण,
 	.bits_per_pixel = 24,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_bgr_24 = {
-	.red	= { .offset =  0, .length = 8, },
-	.green	= { .offset =  8, .length = 8, },
-	.blue	= { .offset = 16, .length = 8, },
-	.transp = { .offset =  0, .length = 0, },
+अटल स्थिर काष्ठा ipu_rgb def_bgr_24 = अणु
+	.red	= अणु .offset =  0, .length = 8, पूर्ण,
+	.green	= अणु .offset =  8, .length = 8, पूर्ण,
+	.blue	= अणु .offset = 16, .length = 8, पूर्ण,
+	.transp = अणु .offset =  0, .length = 0, पूर्ण,
 	.bits_per_pixel = 24,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_rgb_16 = {
-	.red	= { .offset = 11, .length = 5, },
-	.green	= { .offset =  5, .length = 6, },
-	.blue	= { .offset =  0, .length = 5, },
-	.transp = { .offset =  0, .length = 0, },
+अटल स्थिर काष्ठा ipu_rgb def_rgb_16 = अणु
+	.red	= अणु .offset = 11, .length = 5, पूर्ण,
+	.green	= अणु .offset =  5, .length = 6, पूर्ण,
+	.blue	= अणु .offset =  0, .length = 5, पूर्ण,
+	.transp = अणु .offset =  0, .length = 0, पूर्ण,
 	.bits_per_pixel = 16,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_bgr_16 = {
-	.red	= { .offset =  0, .length = 5, },
-	.green	= { .offset =  5, .length = 6, },
-	.blue	= { .offset = 11, .length = 5, },
-	.transp = { .offset =  0, .length = 0, },
+अटल स्थिर काष्ठा ipu_rgb def_bgr_16 = अणु
+	.red	= अणु .offset =  0, .length = 5, पूर्ण,
+	.green	= अणु .offset =  5, .length = 6, पूर्ण,
+	.blue	= अणु .offset = 11, .length = 5, पूर्ण,
+	.transp = अणु .offset =  0, .length = 0, पूर्ण,
 	.bits_per_pixel = 16,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_argb_16 = {
-	.red	= { .offset = 10, .length = 5, },
-	.green	= { .offset =  5, .length = 5, },
-	.blue	= { .offset =  0, .length = 5, },
-	.transp = { .offset = 15, .length = 1, },
+अटल स्थिर काष्ठा ipu_rgb def_argb_16 = अणु
+	.red	= अणु .offset = 10, .length = 5, पूर्ण,
+	.green	= अणु .offset =  5, .length = 5, पूर्ण,
+	.blue	= अणु .offset =  0, .length = 5, पूर्ण,
+	.transp = अणु .offset = 15, .length = 1, पूर्ण,
 	.bits_per_pixel = 16,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_argb_16_4444 = {
-	.red	= { .offset =  8, .length = 4, },
-	.green	= { .offset =  4, .length = 4, },
-	.blue	= { .offset =  0, .length = 4, },
-	.transp = { .offset = 12, .length = 4, },
+अटल स्थिर काष्ठा ipu_rgb def_argb_16_4444 = अणु
+	.red	= अणु .offset =  8, .length = 4, पूर्ण,
+	.green	= अणु .offset =  4, .length = 4, पूर्ण,
+	.blue	= अणु .offset =  0, .length = 4, पूर्ण,
+	.transp = अणु .offset = 12, .length = 4, पूर्ण,
 	.bits_per_pixel = 16,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_abgr_16 = {
-	.red	= { .offset =  0, .length = 5, },
-	.green	= { .offset =  5, .length = 5, },
-	.blue	= { .offset = 10, .length = 5, },
-	.transp = { .offset = 15, .length = 1, },
+अटल स्थिर काष्ठा ipu_rgb def_abgr_16 = अणु
+	.red	= अणु .offset =  0, .length = 5, पूर्ण,
+	.green	= अणु .offset =  5, .length = 5, पूर्ण,
+	.blue	= अणु .offset = 10, .length = 5, पूर्ण,
+	.transp = अणु .offset = 15, .length = 1, पूर्ण,
 	.bits_per_pixel = 16,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_rgba_16 = {
-	.red	= { .offset = 11, .length = 5, },
-	.green	= { .offset =  6, .length = 5, },
-	.blue	= { .offset =  1, .length = 5, },
-	.transp = { .offset =  0, .length = 1, },
+अटल स्थिर काष्ठा ipu_rgb def_rgba_16 = अणु
+	.red	= अणु .offset = 11, .length = 5, पूर्ण,
+	.green	= अणु .offset =  6, .length = 5, पूर्ण,
+	.blue	= अणु .offset =  1, .length = 5, पूर्ण,
+	.transp = अणु .offset =  0, .length = 1, पूर्ण,
 	.bits_per_pixel = 16,
-};
+पूर्ण;
 
-static const struct ipu_rgb def_bgra_16 = {
-	.red	= { .offset =  1, .length = 5, },
-	.green	= { .offset =  6, .length = 5, },
-	.blue	= { .offset = 11, .length = 5, },
-	.transp = { .offset =  0, .length = 1, },
+अटल स्थिर काष्ठा ipu_rgb def_bgra_16 = अणु
+	.red	= अणु .offset =  1, .length = 5, पूर्ण,
+	.green	= अणु .offset =  6, .length = 5, पूर्ण,
+	.blue	= अणु .offset = 11, .length = 5, पूर्ण,
+	.transp = अणु .offset =  0, .length = 1, पूर्ण,
 	.bits_per_pixel = 16,
-};
+पूर्ण;
 
-#define Y_OFFSET(pix, x, y)	((x) + pix->width * (y))
-#define U_OFFSET(pix, x, y)	((pix->width * pix->height) +		\
+#घोषणा Y_OFFSET(pix, x, y)	((x) + pix->width * (y))
+#घोषणा U_OFFSET(pix, x, y)	((pix->width * pix->height) +		\
 				 (pix->width * ((y) / 2) / 2) + (x) / 2)
-#define V_OFFSET(pix, x, y)	((pix->width * pix->height) +		\
+#घोषणा V_OFFSET(pix, x, y)	((pix->width * pix->height) +		\
 				 (pix->width * pix->height / 4) +	\
 				 (pix->width * ((y) / 2) / 2) + (x) / 2)
-#define U2_OFFSET(pix, x, y)	((pix->width * pix->height) +		\
+#घोषणा U2_OFFSET(pix, x, y)	((pix->width * pix->height) +		\
 				 (pix->width * (y) / 2) + (x) / 2)
-#define V2_OFFSET(pix, x, y)	((pix->width * pix->height) +		\
+#घोषणा V2_OFFSET(pix, x, y)	((pix->width * pix->height) +		\
 				 (pix->width * pix->height / 2) +	\
 				 (pix->width * (y) / 2) + (x) / 2)
-#define UV_OFFSET(pix, x, y)	((pix->width * pix->height) +	\
+#घोषणा UV_OFFSET(pix, x, y)	((pix->width * pix->height) +	\
 				 (pix->width * ((y) / 2)) + (x))
-#define UV2_OFFSET(pix, x, y)	((pix->width * pix->height) +	\
+#घोषणा UV2_OFFSET(pix, x, y)	((pix->width * pix->height) +	\
 				 (pix->width * y) + (x))
 
-#define NUM_ALPHA_CHANNELS	7
+#घोषणा NUM_ALPHA_CHANNELS	7
 
 /* See Table 37-12. Alpha channels mapping. */
-static int ipu_channel_albm(int ch_num)
-{
-	switch (ch_num) {
-	case IPUV3_CHANNEL_G_MEM_IC_PRP_VF:	return 0;
-	case IPUV3_CHANNEL_G_MEM_IC_PP:		return 1;
-	case IPUV3_CHANNEL_MEM_FG_SYNC:		return 2;
-	case IPUV3_CHANNEL_MEM_FG_ASYNC:	return 3;
-	case IPUV3_CHANNEL_MEM_BG_SYNC:		return 4;
-	case IPUV3_CHANNEL_MEM_BG_ASYNC:	return 5;
-	case IPUV3_CHANNEL_MEM_VDI_PLANE1_COMB: return 6;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक ipu_channel_albm(पूर्णांक ch_num)
+अणु
+	चयन (ch_num) अणु
+	हाल IPUV3_CHANNEL_G_MEM_IC_PRP_VF:	वापस 0;
+	हाल IPUV3_CHANNEL_G_MEM_IC_PP:		वापस 1;
+	हाल IPUV3_CHANNEL_MEM_FG_SYNC:		वापस 2;
+	हाल IPUV3_CHANNEL_MEM_FG_ASYNC:	वापस 3;
+	हाल IPUV3_CHANNEL_MEM_BG_SYNC:		वापस 4;
+	हाल IPUV3_CHANNEL_MEM_BG_ASYNC:	वापस 5;
+	हाल IPUV3_CHANNEL_MEM_VDI_PLANE1_COMB: वापस 6;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void ipu_cpmem_set_separate_alpha(struct ipuv3_channel *ch)
-{
-	struct ipu_soc *ipu = ch->ipu;
-	int albm;
+अटल व्योम ipu_cpmem_set_separate_alpha(काष्ठा ipuv3_channel *ch)
+अणु
+	काष्ठा ipu_soc *ipu = ch->ipu;
+	पूर्णांक albm;
 	u32 val;
 
 	albm = ipu_channel_albm(ch->num);
-	if (albm < 0)
-		return;
+	अगर (albm < 0)
+		वापस;
 
-	ipu_ch_param_write_field(ch, IPU_FIELD_ALU, 1);
-	ipu_ch_param_write_field(ch, IPU_FIELD_ALBM, albm);
-	ipu_ch_param_write_field(ch, IPU_FIELD_CRE, 1);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_ALU, 1);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_ALBM, albm);
+	ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_CRE, 1);
 
-	val = ipu_idmac_read(ipu, IDMAC_SEP_ALPHA);
+	val = ipu_idmac_पढ़ो(ipu, IDMAC_SEP_ALPHA);
 	val |= BIT(ch->num);
-	ipu_idmac_write(ipu, val, IDMAC_SEP_ALPHA);
-}
+	ipu_idmac_ग_लिखो(ipu, val, IDMAC_SEP_ALPHA);
+पूर्ण
 
-int ipu_cpmem_set_fmt(struct ipuv3_channel *ch, u32 drm_fourcc)
-{
-	switch (drm_fourcc) {
-	case DRM_FORMAT_YUV420:
-	case DRM_FORMAT_YVU420:
-		/* pix format */
-		ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 2);
+पूर्णांक ipu_cpmem_set_fmt(काष्ठा ipuv3_channel *ch, u32 drm_fourcc)
+अणु
+	चयन (drm_fourcc) अणु
+	हाल DRM_FORMAT_YUV420:
+	हाल DRM_FORMAT_YVU420:
+		/* pix क्रमmat */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 2);
 		/* burst size */
-		ipu_ch_param_write_field(ch, IPU_FIELD_NPB, 31);
-		break;
-	case DRM_FORMAT_YUV422:
-	case DRM_FORMAT_YVU422:
-		/* pix format */
-		ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 1);
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, 31);
+		अवरोध;
+	हाल DRM_FORMAT_YUV422:
+	हाल DRM_FORMAT_YVU422:
+		/* pix क्रमmat */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 1);
 		/* burst size */
-		ipu_ch_param_write_field(ch, IPU_FIELD_NPB, 31);
-		break;
-	case DRM_FORMAT_YUV444:
-	case DRM_FORMAT_YVU444:
-		/* pix format */
-		ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 0);
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, 31);
+		अवरोध;
+	हाल DRM_FORMAT_YUV444:
+	हाल DRM_FORMAT_YVU444:
+		/* pix क्रमmat */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 0);
 		/* burst size */
-		ipu_ch_param_write_field(ch, IPU_FIELD_NPB, 31);
-		break;
-	case DRM_FORMAT_NV12:
-		/* pix format */
-		ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 4);
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, 31);
+		अवरोध;
+	हाल DRM_FORMAT_NV12:
+		/* pix क्रमmat */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 4);
 		/* burst size */
-		ipu_ch_param_write_field(ch, IPU_FIELD_NPB, 31);
-		break;
-	case DRM_FORMAT_NV16:
-		/* pix format */
-		ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 3);
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, 31);
+		अवरोध;
+	हाल DRM_FORMAT_NV16:
+		/* pix क्रमmat */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 3);
 		/* burst size */
-		ipu_ch_param_write_field(ch, IPU_FIELD_NPB, 31);
-		break;
-	case DRM_FORMAT_UYVY:
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, 31);
+		अवरोध;
+	हाल DRM_FORMAT_UYVY:
 		/* bits/pixel */
-		ipu_ch_param_write_field(ch, IPU_FIELD_BPP, 3);
-		/* pix format */
-		ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 0xA);
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_BPP, 3);
+		/* pix क्रमmat */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 0xA);
 		/* burst size */
-		ipu_ch_param_write_field(ch, IPU_FIELD_NPB, 31);
-		break;
-	case DRM_FORMAT_YUYV:
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, 31);
+		अवरोध;
+	हाल DRM_FORMAT_YUYV:
 		/* bits/pixel */
-		ipu_ch_param_write_field(ch, IPU_FIELD_BPP, 3);
-		/* pix format */
-		ipu_ch_param_write_field(ch, IPU_FIELD_PFS, 0x8);
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_BPP, 3);
+		/* pix क्रमmat */
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_PFS, 0x8);
 		/* burst size */
-		ipu_ch_param_write_field(ch, IPU_FIELD_NPB, 31);
-		break;
-	case DRM_FORMAT_ABGR8888:
-	case DRM_FORMAT_XBGR8888:
-		ipu_cpmem_set_format_rgb(ch, &def_xbgr_32);
-		break;
-	case DRM_FORMAT_ARGB8888:
-	case DRM_FORMAT_XRGB8888:
-		ipu_cpmem_set_format_rgb(ch, &def_xrgb_32);
-		break;
-	case DRM_FORMAT_RGBA8888:
-	case DRM_FORMAT_RGBX8888:
-	case DRM_FORMAT_RGBX8888_A8:
-		ipu_cpmem_set_format_rgb(ch, &def_rgbx_32);
-		break;
-	case DRM_FORMAT_BGRA8888:
-	case DRM_FORMAT_BGRX8888:
-	case DRM_FORMAT_BGRX8888_A8:
-		ipu_cpmem_set_format_rgb(ch, &def_bgrx_32);
-		break;
-	case DRM_FORMAT_BGR888:
-	case DRM_FORMAT_BGR888_A8:
-		ipu_cpmem_set_format_rgb(ch, &def_bgr_24);
-		break;
-	case DRM_FORMAT_RGB888:
-	case DRM_FORMAT_RGB888_A8:
-		ipu_cpmem_set_format_rgb(ch, &def_rgb_24);
-		break;
-	case DRM_FORMAT_RGB565:
-	case DRM_FORMAT_RGB565_A8:
-		ipu_cpmem_set_format_rgb(ch, &def_rgb_16);
-		break;
-	case DRM_FORMAT_BGR565:
-	case DRM_FORMAT_BGR565_A8:
-		ipu_cpmem_set_format_rgb(ch, &def_bgr_16);
-		break;
-	case DRM_FORMAT_ARGB1555:
-		ipu_cpmem_set_format_rgb(ch, &def_argb_16);
-		break;
-	case DRM_FORMAT_ABGR1555:
-		ipu_cpmem_set_format_rgb(ch, &def_abgr_16);
-		break;
-	case DRM_FORMAT_RGBA5551:
-		ipu_cpmem_set_format_rgb(ch, &def_rgba_16);
-		break;
-	case DRM_FORMAT_BGRA5551:
-		ipu_cpmem_set_format_rgb(ch, &def_bgra_16);
-		break;
-	case DRM_FORMAT_ARGB4444:
-		ipu_cpmem_set_format_rgb(ch, &def_argb_16_4444);
-		break;
-	default:
-		return -EINVAL;
-	}
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_NPB, 31);
+		अवरोध;
+	हाल DRM_FORMAT_ABGR8888:
+	हाल DRM_FORMAT_XBGR8888:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_xbgr_32);
+		अवरोध;
+	हाल DRM_FORMAT_ARGB8888:
+	हाल DRM_FORMAT_XRGB8888:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_xrgb_32);
+		अवरोध;
+	हाल DRM_FORMAT_RGBA8888:
+	हाल DRM_FORMAT_RGBX8888:
+	हाल DRM_FORMAT_RGBX8888_A8:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_rgbx_32);
+		अवरोध;
+	हाल DRM_FORMAT_BGRA8888:
+	हाल DRM_FORMAT_BGRX8888:
+	हाल DRM_FORMAT_BGRX8888_A8:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_bgrx_32);
+		अवरोध;
+	हाल DRM_FORMAT_BGR888:
+	हाल DRM_FORMAT_BGR888_A8:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_bgr_24);
+		अवरोध;
+	हाल DRM_FORMAT_RGB888:
+	हाल DRM_FORMAT_RGB888_A8:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_rgb_24);
+		अवरोध;
+	हाल DRM_FORMAT_RGB565:
+	हाल DRM_FORMAT_RGB565_A8:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_rgb_16);
+		अवरोध;
+	हाल DRM_FORMAT_BGR565:
+	हाल DRM_FORMAT_BGR565_A8:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_bgr_16);
+		अवरोध;
+	हाल DRM_FORMAT_ARGB1555:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_argb_16);
+		अवरोध;
+	हाल DRM_FORMAT_ABGR1555:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_abgr_16);
+		अवरोध;
+	हाल DRM_FORMAT_RGBA5551:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_rgba_16);
+		अवरोध;
+	हाल DRM_FORMAT_BGRA5551:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_bgra_16);
+		अवरोध;
+	हाल DRM_FORMAT_ARGB4444:
+		ipu_cpmem_set_क्रमmat_rgb(ch, &def_argb_16_4444);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (drm_fourcc) {
-	case DRM_FORMAT_RGB565_A8:
-	case DRM_FORMAT_BGR565_A8:
-	case DRM_FORMAT_RGB888_A8:
-	case DRM_FORMAT_BGR888_A8:
-	case DRM_FORMAT_RGBX8888_A8:
-	case DRM_FORMAT_BGRX8888_A8:
-		ipu_ch_param_write_field(ch, IPU_FIELD_WID3, 7);
+	चयन (drm_fourcc) अणु
+	हाल DRM_FORMAT_RGB565_A8:
+	हाल DRM_FORMAT_BGR565_A8:
+	हाल DRM_FORMAT_RGB888_A8:
+	हाल DRM_FORMAT_BGR888_A8:
+	हाल DRM_FORMAT_RGBX8888_A8:
+	हाल DRM_FORMAT_BGRX8888_A8:
+		ipu_ch_param_ग_लिखो_field(ch, IPU_FIELD_WID3, 7);
 		ipu_cpmem_set_separate_alpha(ch);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_fmt);
 
-int ipu_cpmem_set_image(struct ipuv3_channel *ch, struct ipu_image *image)
-{
-	struct v4l2_pix_format *pix = &image->pix;
-	int offset, u_offset, v_offset;
-	int ret = 0;
+पूर्णांक ipu_cpmem_set_image(काष्ठा ipuv3_channel *ch, काष्ठा ipu_image *image)
+अणु
+	काष्ठा v4l2_pix_क्रमmat *pix = &image->pix;
+	पूर्णांक offset, u_offset, v_offset;
+	पूर्णांक ret = 0;
 
 	pr_debug("%s: resolution: %dx%d stride: %d\n",
 		 __func__, pix->width, pix->height,
@@ -774,10 +775,10 @@ int ipu_cpmem_set_image(struct ipuv3_channel *ch, struct ipu_image *image)
 	ipu_cpmem_set_resolution(ch, image->rect.width, image->rect.height);
 	ipu_cpmem_set_stride(ch, pix->bytesperline);
 
-	ipu_cpmem_set_fmt(ch, v4l2_pix_fmt_to_drm_fourcc(pix->pixelformat));
+	ipu_cpmem_set_fmt(ch, v4l2_pix_fmt_to_drm_fourcc(pix->pixelक्रमmat));
 
-	switch (pix->pixelformat) {
-	case V4L2_PIX_FMT_YUV420:
+	चयन (pix->pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_YUV420:
 		offset = Y_OFFSET(pix, image->rect.left, image->rect.top);
 		u_offset = image->u_offset ?
 			image->u_offset : U_OFFSET(pix, image->rect.left,
@@ -788,8 +789,8 @@ int ipu_cpmem_set_image(struct ipuv3_channel *ch, struct ipu_image *image)
 
 		ipu_cpmem_set_yuv_planar_full(ch, pix->bytesperline / 2,
 					      u_offset, v_offset);
-		break;
-	case V4L2_PIX_FMT_YVU420:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YVU420:
 		offset = Y_OFFSET(pix, image->rect.left, image->rect.top);
 		u_offset = image->u_offset ?
 			image->u_offset : V_OFFSET(pix, image->rect.left,
@@ -800,8 +801,8 @@ int ipu_cpmem_set_image(struct ipuv3_channel *ch, struct ipu_image *image)
 
 		ipu_cpmem_set_yuv_planar_full(ch, pix->bytesperline / 2,
 					      u_offset, v_offset);
-		break;
-	case V4L2_PIX_FMT_YUV422P:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YUV422P:
 		offset = Y_OFFSET(pix, image->rect.left, image->rect.top);
 		u_offset = image->u_offset ?
 			image->u_offset : U2_OFFSET(pix, image->rect.left,
@@ -812,8 +813,8 @@ int ipu_cpmem_set_image(struct ipuv3_channel *ch, struct ipu_image *image)
 
 		ipu_cpmem_set_yuv_planar_full(ch, pix->bytesperline / 2,
 					      u_offset, v_offset);
-		break;
-	case V4L2_PIX_FMT_NV12:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV12:
 		offset = Y_OFFSET(pix, image->rect.left, image->rect.top);
 		u_offset = image->u_offset ?
 			image->u_offset : UV_OFFSET(pix, image->rect.left,
@@ -822,8 +823,8 @@ int ipu_cpmem_set_image(struct ipuv3_channel *ch, struct ipu_image *image)
 
 		ipu_cpmem_set_yuv_planar_full(ch, pix->bytesperline,
 					      u_offset, v_offset);
-		break;
-	case V4L2_PIX_FMT_NV16:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV16:
 		offset = Y_OFFSET(pix, image->rect.left, image->rect.top);
 		u_offset = image->u_offset ?
 			image->u_offset : UV2_OFFSET(pix, image->rect.left,
@@ -832,145 +833,145 @@ int ipu_cpmem_set_image(struct ipuv3_channel *ch, struct ipu_image *image)
 
 		ipu_cpmem_set_yuv_planar_full(ch, pix->bytesperline,
 					      u_offset, v_offset);
-		break;
-	case V4L2_PIX_FMT_UYVY:
-	case V4L2_PIX_FMT_YUYV:
-	case V4L2_PIX_FMT_RGB565:
+		अवरोध;
+	हाल V4L2_PIX_FMT_UYVY:
+	हाल V4L2_PIX_FMT_YUYV:
+	हाल V4L2_PIX_FMT_RGB565:
 		offset = image->rect.left * 2 +
 			image->rect.top * pix->bytesperline;
-		break;
-	case V4L2_PIX_FMT_RGB32:
-	case V4L2_PIX_FMT_BGR32:
-	case V4L2_PIX_FMT_ABGR32:
-	case V4L2_PIX_FMT_XBGR32:
-	case V4L2_PIX_FMT_BGRA32:
-	case V4L2_PIX_FMT_BGRX32:
-	case V4L2_PIX_FMT_RGBA32:
-	case V4L2_PIX_FMT_RGBX32:
-	case V4L2_PIX_FMT_ARGB32:
-	case V4L2_PIX_FMT_XRGB32:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB32:
+	हाल V4L2_PIX_FMT_BGR32:
+	हाल V4L2_PIX_FMT_ABGR32:
+	हाल V4L2_PIX_FMT_XBGR32:
+	हाल V4L2_PIX_FMT_BGRA32:
+	हाल V4L2_PIX_FMT_BGRX32:
+	हाल V4L2_PIX_FMT_RGBA32:
+	हाल V4L2_PIX_FMT_RGBX32:
+	हाल V4L2_PIX_FMT_ARGB32:
+	हाल V4L2_PIX_FMT_XRGB32:
 		offset = image->rect.left * 4 +
 			image->rect.top * pix->bytesperline;
-		break;
-	case V4L2_PIX_FMT_RGB24:
-	case V4L2_PIX_FMT_BGR24:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB24:
+	हाल V4L2_PIX_FMT_BGR24:
 		offset = image->rect.left * 3 +
 			image->rect.top * pix->bytesperline;
-		break;
-	case V4L2_PIX_FMT_SBGGR8:
-	case V4L2_PIX_FMT_SGBRG8:
-	case V4L2_PIX_FMT_SGRBG8:
-	case V4L2_PIX_FMT_SRGGB8:
-	case V4L2_PIX_FMT_GREY:
+		अवरोध;
+	हाल V4L2_PIX_FMT_SBGGR8:
+	हाल V4L2_PIX_FMT_SGBRG8:
+	हाल V4L2_PIX_FMT_SGRBG8:
+	हाल V4L2_PIX_FMT_SRGGB8:
+	हाल V4L2_PIX_FMT_GREY:
 		offset = image->rect.left + image->rect.top * pix->bytesperline;
-		break;
-	case V4L2_PIX_FMT_SBGGR16:
-	case V4L2_PIX_FMT_SGBRG16:
-	case V4L2_PIX_FMT_SGRBG16:
-	case V4L2_PIX_FMT_SRGGB16:
-	case V4L2_PIX_FMT_Y16:
+		अवरोध;
+	हाल V4L2_PIX_FMT_SBGGR16:
+	हाल V4L2_PIX_FMT_SGBRG16:
+	हाल V4L2_PIX_FMT_SGRBG16:
+	हाल V4L2_PIX_FMT_SRGGB16:
+	हाल V4L2_PIX_FMT_Y16:
 		offset = image->rect.left * 2 +
 			 image->rect.top * pix->bytesperline;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* This should not happen */
 		WARN_ON(1);
 		offset = 0;
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	ipu_cpmem_set_buffer(ch, 0, image->phys0 + offset);
 	ipu_cpmem_set_buffer(ch, 1, image->phys1 + offset);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_set_image);
 
-void ipu_cpmem_dump(struct ipuv3_channel *ch)
-{
-	struct ipu_ch_param __iomem *p = ipu_get_cpmem(ch);
-	struct ipu_soc *ipu = ch->ipu;
-	int chno = ch->num;
+व्योम ipu_cpmem_dump(काष्ठा ipuv3_channel *ch)
+अणु
+	काष्ठा ipu_ch_param __iomem *p = ipu_get_cpmem(ch);
+	काष्ठा ipu_soc *ipu = ch->ipu;
+	पूर्णांक chno = ch->num;
 
 	dev_dbg(ipu->dev, "ch %d word 0 - %08X %08X %08X %08X %08X\n", chno,
-		readl(&p->word[0].data[0]),
-		readl(&p->word[0].data[1]),
-		readl(&p->word[0].data[2]),
-		readl(&p->word[0].data[3]),
-		readl(&p->word[0].data[4]));
+		पढ़ोl(&p->word[0].data[0]),
+		पढ़ोl(&p->word[0].data[1]),
+		पढ़ोl(&p->word[0].data[2]),
+		पढ़ोl(&p->word[0].data[3]),
+		पढ़ोl(&p->word[0].data[4]));
 	dev_dbg(ipu->dev, "ch %d word 1 - %08X %08X %08X %08X %08X\n", chno,
-		readl(&p->word[1].data[0]),
-		readl(&p->word[1].data[1]),
-		readl(&p->word[1].data[2]),
-		readl(&p->word[1].data[3]),
-		readl(&p->word[1].data[4]));
+		पढ़ोl(&p->word[1].data[0]),
+		पढ़ोl(&p->word[1].data[1]),
+		पढ़ोl(&p->word[1].data[2]),
+		पढ़ोl(&p->word[1].data[3]),
+		पढ़ोl(&p->word[1].data[4]));
 	dev_dbg(ipu->dev, "PFS 0x%x, ",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_PFS));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_PFS));
 	dev_dbg(ipu->dev, "BPP 0x%x, ",
-		ipu_ch_param_read_field(ch, IPU_FIELD_BPP));
+		ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_BPP));
 	dev_dbg(ipu->dev, "NPB 0x%x\n",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_NPB));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_NPB));
 
 	dev_dbg(ipu->dev, "FW %d, ",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_FW));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_FW));
 	dev_dbg(ipu->dev, "FH %d, ",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_FH));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_FH));
 	dev_dbg(ipu->dev, "EBA0 0x%x\n",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_EBA0) << 3);
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_EBA0) << 3);
 	dev_dbg(ipu->dev, "EBA1 0x%x\n",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_EBA1) << 3);
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_EBA1) << 3);
 	dev_dbg(ipu->dev, "Stride %d\n",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_SL));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_SL));
 	dev_dbg(ipu->dev, "scan_order %d\n",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_SO));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_SO));
 	dev_dbg(ipu->dev, "uv_stride %d\n",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_SLUV));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_SLUV));
 	dev_dbg(ipu->dev, "u_offset 0x%x\n",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_UBO) << 3);
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_UBO) << 3);
 	dev_dbg(ipu->dev, "v_offset 0x%x\n",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_VBO) << 3);
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_VBO) << 3);
 
 	dev_dbg(ipu->dev, "Width0 %d+1, ",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_WID0));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_WID0));
 	dev_dbg(ipu->dev, "Width1 %d+1, ",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_WID1));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_WID1));
 	dev_dbg(ipu->dev, "Width2 %d+1, ",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_WID2));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_WID2));
 	dev_dbg(ipu->dev, "Width3 %d+1, ",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_WID3));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_WID3));
 	dev_dbg(ipu->dev, "Offset0 %d, ",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_OFS0));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_OFS0));
 	dev_dbg(ipu->dev, "Offset1 %d, ",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_OFS1));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_OFS1));
 	dev_dbg(ipu->dev, "Offset2 %d, ",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_OFS2));
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_OFS2));
 	dev_dbg(ipu->dev, "Offset3 %d\n",
-		 ipu_ch_param_read_field(ch, IPU_FIELD_OFS3));
-}
+		 ipu_ch_param_पढ़ो_field(ch, IPU_FIELD_OFS3));
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_cpmem_dump);
 
-int ipu_cpmem_init(struct ipu_soc *ipu, struct device *dev, unsigned long base)
-{
-	struct ipu_cpmem *cpmem;
+पूर्णांक ipu_cpmem_init(काष्ठा ipu_soc *ipu, काष्ठा device *dev, अचिन्हित दीर्घ base)
+अणु
+	काष्ठा ipu_cpmem *cpmem;
 
-	cpmem = devm_kzalloc(dev, sizeof(*cpmem), GFP_KERNEL);
-	if (!cpmem)
-		return -ENOMEM;
+	cpmem = devm_kzalloc(dev, माप(*cpmem), GFP_KERNEL);
+	अगर (!cpmem)
+		वापस -ENOMEM;
 
 	ipu->cpmem_priv = cpmem;
 
 	spin_lock_init(&cpmem->lock);
 	cpmem->base = devm_ioremap(dev, base, SZ_128K);
-	if (!cpmem->base)
-		return -ENOMEM;
+	अगर (!cpmem->base)
+		वापस -ENOMEM;
 
 	dev_dbg(dev, "CPMEM base: 0x%08lx remapped to %p\n",
 		base, cpmem->base);
 	cpmem->ipu = ipu;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ipu_cpmem_exit(struct ipu_soc *ipu)
-{
-}
+व्योम ipu_cpmem_निकास(काष्ठा ipu_soc *ipu)
+अणु
+पूर्ण

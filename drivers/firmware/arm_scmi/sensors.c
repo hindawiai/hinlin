@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * System Control and Management Interface (SCMI) Sensor Protocol
  *
  * Copyright (C) 2018-2021 ARM Ltd.
  */
 
-#define pr_fmt(fmt) "SCMI Notifications SENSOR - " fmt
+#घोषणा pr_fmt(fmt) "SCMI Notifications SENSOR - " fmt
 
-#include <linux/bitfield.h>
-#include <linux/module.h>
-#include <linux/scmi_protocol.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/module.h>
+#समावेश <linux/scmi_protocol.h>
 
-#include "common.h"
-#include "notify.h"
+#समावेश "common.h"
+#समावेश "notify.h"
 
-#define SCMI_MAX_NUM_SENSOR_AXIS	63
-#define	SCMIv2_SENSOR_PROTOCOL		0x10000
+#घोषणा SCMI_MAX_NUM_SENSOR_AXIS	63
+#घोषणा	SCMIv2_SENSOR_PROTOCOL		0x10000
 
-enum scmi_sensor_protocol_cmd {
+क्रमागत scmi_sensor_protocol_cmd अणु
 	SENSOR_DESCRIPTION_GET = 0x3,
 	SENSOR_TRIP_POINT_NOTIFY = 0x4,
 	SENSOR_TRIP_POINT_CONFIG = 0x5,
@@ -27,353 +28,353 @@ enum scmi_sensor_protocol_cmd {
 	SENSOR_CONFIG_GET = 0x9,
 	SENSOR_CONFIG_SET = 0xA,
 	SENSOR_CONTINUOUS_UPDATE_NOTIFY = 0xB,
-};
+पूर्ण;
 
-struct scmi_msg_resp_sensor_attributes {
+काष्ठा scmi_msg_resp_sensor_attributes अणु
 	__le16 num_sensors;
 	u8 max_requests;
 	u8 reserved;
 	__le32 reg_addr_low;
 	__le32 reg_addr_high;
 	__le32 reg_size;
-};
+पूर्ण;
 
 /* v3 attributes_low macros */
-#define SUPPORTS_UPDATE_NOTIFY(x)	FIELD_GET(BIT(30), (x))
-#define SENSOR_TSTAMP_EXP(x)		FIELD_GET(GENMASK(14, 10), (x))
-#define SUPPORTS_TIMESTAMP(x)		FIELD_GET(BIT(9), (x))
-#define SUPPORTS_EXTEND_ATTRS(x)	FIELD_GET(BIT(8), (x))
+#घोषणा SUPPORTS_UPDATE_NOTIFY(x)	FIELD_GET(BIT(30), (x))
+#घोषणा SENSOR_TSTAMP_EXP(x)		FIELD_GET(GENMASK(14, 10), (x))
+#घोषणा SUPPORTS_TIMESTAMP(x)		FIELD_GET(BIT(9), (x))
+#घोषणा SUPPORTS_EXTEND_ATTRS(x)	FIELD_GET(BIT(8), (x))
 
 /* v2 attributes_high macros */
-#define SENSOR_UPDATE_BASE(x)		FIELD_GET(GENMASK(31, 27), (x))
-#define SENSOR_UPDATE_SCALE(x)		FIELD_GET(GENMASK(26, 22), (x))
+#घोषणा SENSOR_UPDATE_BASE(x)		FIELD_GET(GENMASK(31, 27), (x))
+#घोषणा SENSOR_UPDATE_SCALE(x)		FIELD_GET(GENMASK(26, 22), (x))
 
 /* v3 attributes_high macros */
-#define SENSOR_AXIS_NUMBER(x)		FIELD_GET(GENMASK(21, 16), (x))
-#define SUPPORTS_AXIS(x)		FIELD_GET(BIT(8), (x))
+#घोषणा SENSOR_AXIS_NUMBER(x)		FIELD_GET(GENMASK(21, 16), (x))
+#घोषणा SUPPORTS_AXIS(x)		FIELD_GET(BIT(8), (x))
 
 /* v3 resolution macros */
-#define SENSOR_RES(x)			FIELD_GET(GENMASK(26, 0), (x))
-#define SENSOR_RES_EXP(x)		FIELD_GET(GENMASK(31, 27), (x))
+#घोषणा SENSOR_RES(x)			FIELD_GET(GENMASK(26, 0), (x))
+#घोषणा SENSOR_RES_EXP(x)		FIELD_GET(GENMASK(31, 27), (x))
 
-struct scmi_msg_resp_attrs {
+काष्ठा scmi_msg_resp_attrs अणु
 	__le32 min_range_low;
 	__le32 min_range_high;
 	__le32 max_range_low;
 	__le32 max_range_high;
-};
+पूर्ण;
 
-struct scmi_msg_resp_sensor_description {
-	__le16 num_returned;
-	__le16 num_remaining;
-	struct scmi_sensor_descriptor {
+काष्ठा scmi_msg_resp_sensor_description अणु
+	__le16 num_वापसed;
+	__le16 num_reमुख्यing;
+	काष्ठा scmi_sensor_descriptor अणु
 		__le32 id;
 		__le32 attributes_low;
 /* Common attributes_low macros */
-#define SUPPORTS_ASYNC_READ(x)		FIELD_GET(BIT(31), (x))
-#define NUM_TRIP_POINTS(x)		FIELD_GET(GENMASK(7, 0), (x))
+#घोषणा SUPPORTS_ASYNC_READ(x)		FIELD_GET(BIT(31), (x))
+#घोषणा NUM_TRIP_POINTS(x)		FIELD_GET(GENMASK(7, 0), (x))
 		__le32 attributes_high;
 /* Common attributes_high macros */
-#define SENSOR_SCALE(x)			FIELD_GET(GENMASK(15, 11), (x))
-#define SENSOR_SCALE_SIGN		BIT(4)
-#define SENSOR_SCALE_EXTEND		GENMASK(31, 5)
-#define SENSOR_TYPE(x)			FIELD_GET(GENMASK(7, 0), (x))
+#घोषणा SENSOR_SCALE(x)			FIELD_GET(GENMASK(15, 11), (x))
+#घोषणा SENSOR_SCALE_SIGN		BIT(4)
+#घोषणा SENSOR_SCALE_EXTEND		GENMASK(31, 5)
+#घोषणा SENSOR_TYPE(x)			FIELD_GET(GENMASK(7, 0), (x))
 		u8 name[SCMI_MAX_STR_SIZE];
-		/* only for version > 2.0 */
-		__le32 power;
+		/* only क्रम version > 2.0 */
+		__le32 घातer;
 		__le32 resolution;
-		struct scmi_msg_resp_attrs scalar_attrs;
-	} desc[];
-};
+		काष्ठा scmi_msg_resp_attrs scalar_attrs;
+	पूर्ण desc[];
+पूर्ण;
 
 /* Base scmi_sensor_descriptor size excluding extended attrs after name */
-#define SCMI_MSG_RESP_SENS_DESCR_BASE_SZ	28
+#घोषणा SCMI_MSG_RESP_SENS_DESCR_BASE_SZ	28
 
 /* Sign extend to a full s32 */
-#define	S32_EXT(v)							\
-	({								\
-		int __v = (v);						\
+#घोषणा	S32_EXT(v)							\
+	(अणु								\
+		पूर्णांक __v = (v);						\
 									\
-		if (__v & SENSOR_SCALE_SIGN)				\
+		अगर (__v & SENSOR_SCALE_SIGN)				\
 			__v |= SENSOR_SCALE_EXTEND;			\
 		__v;							\
-	})
+	पूर्ण)
 
-struct scmi_msg_sensor_axis_description_get {
+काष्ठा scmi_msg_sensor_axis_description_get अणु
 	__le32 id;
 	__le32 axis_desc_index;
-};
+पूर्ण;
 
-struct scmi_msg_resp_sensor_axis_description {
+काष्ठा scmi_msg_resp_sensor_axis_description अणु
 	__le32 num_axis_flags;
-#define NUM_AXIS_RETURNED(x)		FIELD_GET(GENMASK(5, 0), (x))
-#define NUM_AXIS_REMAINING(x)		FIELD_GET(GENMASK(31, 26), (x))
-	struct scmi_axis_descriptor {
+#घोषणा NUM_AXIS_RETURNED(x)		FIELD_GET(GENMASK(5, 0), (x))
+#घोषणा NUM_AXIS_REMAINING(x)		FIELD_GET(GENMASK(31, 26), (x))
+	काष्ठा scmi_axis_descriptor अणु
 		__le32 id;
 		__le32 attributes_low;
 		__le32 attributes_high;
 		u8 name[SCMI_MAX_STR_SIZE];
 		__le32 resolution;
-		struct scmi_msg_resp_attrs attrs;
-	} desc[];
-};
+		काष्ठा scmi_msg_resp_attrs attrs;
+	पूर्ण desc[];
+पूर्ण;
 
 /* Base scmi_axis_descriptor size excluding extended attrs after name */
-#define SCMI_MSG_RESP_AXIS_DESCR_BASE_SZ	28
+#घोषणा SCMI_MSG_RESP_AXIS_DESCR_BASE_SZ	28
 
-struct scmi_msg_sensor_list_update_intervals {
+काष्ठा scmi_msg_sensor_list_update_पूर्णांकervals अणु
 	__le32 id;
 	__le32 index;
-};
+पूर्ण;
 
-struct scmi_msg_resp_sensor_list_update_intervals {
-	__le32 num_intervals_flags;
-#define NUM_INTERVALS_RETURNED(x)	FIELD_GET(GENMASK(11, 0), (x))
-#define SEGMENTED_INTVL_FORMAT(x)	FIELD_GET(BIT(12), (x))
-#define NUM_INTERVALS_REMAINING(x)	FIELD_GET(GENMASK(31, 16), (x))
-	__le32 intervals[];
-};
+काष्ठा scmi_msg_resp_sensor_list_update_पूर्णांकervals अणु
+	__le32 num_पूर्णांकervals_flags;
+#घोषणा NUM_INTERVALS_RETURNED(x)	FIELD_GET(GENMASK(11, 0), (x))
+#घोषणा SEGMENTED_INTVL_FORMAT(x)	FIELD_GET(BIT(12), (x))
+#घोषणा NUM_INTERVALS_REMAINING(x)	FIELD_GET(GENMASK(31, 16), (x))
+	__le32 पूर्णांकervals[];
+पूर्ण;
 
-struct scmi_msg_sensor_request_notify {
+काष्ठा scmi_msg_sensor_request_notअगरy अणु
 	__le32 id;
 	__le32 event_control;
-#define SENSOR_NOTIFY_ALL	BIT(0)
-};
+#घोषणा SENSOR_NOTIFY_ALL	BIT(0)
+पूर्ण;
 
-struct scmi_msg_set_sensor_trip_point {
+काष्ठा scmi_msg_set_sensor_trip_poपूर्णांक अणु
 	__le32 id;
 	__le32 event_control;
-#define SENSOR_TP_EVENT_MASK	(0x3)
-#define SENSOR_TP_DISABLED	0x0
-#define SENSOR_TP_POSITIVE	0x1
-#define SENSOR_TP_NEGATIVE	0x2
-#define SENSOR_TP_BOTH		0x3
-#define SENSOR_TP_ID(x)		(((x) & 0xff) << 4)
+#घोषणा SENSOR_TP_EVENT_MASK	(0x3)
+#घोषणा SENSOR_TP_DISABLED	0x0
+#घोषणा SENSOR_TP_POSITIVE	0x1
+#घोषणा SENSOR_TP_NEGATIVE	0x2
+#घोषणा SENSOR_TP_BOTH		0x3
+#घोषणा SENSOR_TP_ID(x)		(((x) & 0xff) << 4)
 	__le32 value_low;
 	__le32 value_high;
-};
+पूर्ण;
 
-struct scmi_msg_sensor_config_set {
+काष्ठा scmi_msg_sensor_config_set अणु
 	__le32 id;
 	__le32 sensor_config;
-};
+पूर्ण;
 
-struct scmi_msg_sensor_reading_get {
+काष्ठा scmi_msg_sensor_पढ़ोing_get अणु
 	__le32 id;
 	__le32 flags;
-#define SENSOR_READ_ASYNC	BIT(0)
-};
+#घोषणा SENSOR_READ_ASYNC	BIT(0)
+पूर्ण;
 
-struct scmi_resp_sensor_reading_complete {
+काष्ठा scmi_resp_sensor_पढ़ोing_complete अणु
 	__le32 id;
-	__le64 readings;
-};
+	__le64 पढ़ोings;
+पूर्ण;
 
-struct scmi_sensor_reading_resp {
+काष्ठा scmi_sensor_पढ़ोing_resp अणु
 	__le32 sensor_value_low;
 	__le32 sensor_value_high;
-	__le32 timestamp_low;
-	__le32 timestamp_high;
-};
+	__le32 बारtamp_low;
+	__le32 बारtamp_high;
+पूर्ण;
 
-struct scmi_resp_sensor_reading_complete_v3 {
+काष्ठा scmi_resp_sensor_पढ़ोing_complete_v3 अणु
 	__le32 id;
-	struct scmi_sensor_reading_resp readings[];
-};
+	काष्ठा scmi_sensor_पढ़ोing_resp पढ़ोings[];
+पूर्ण;
 
-struct scmi_sensor_trip_notify_payld {
+काष्ठा scmi_sensor_trip_notअगरy_payld अणु
 	__le32 agent_id;
 	__le32 sensor_id;
-	__le32 trip_point_desc;
-};
+	__le32 trip_poपूर्णांक_desc;
+पूर्ण;
 
-struct scmi_sensor_update_notify_payld {
+काष्ठा scmi_sensor_update_notअगरy_payld अणु
 	__le32 agent_id;
 	__le32 sensor_id;
-	struct scmi_sensor_reading_resp readings[];
-};
+	काष्ठा scmi_sensor_पढ़ोing_resp पढ़ोings[];
+पूर्ण;
 
-struct sensors_info {
+काष्ठा sensors_info अणु
 	u32 version;
-	int num_sensors;
-	int max_requests;
+	पूर्णांक num_sensors;
+	पूर्णांक max_requests;
 	u64 reg_addr;
 	u32 reg_size;
-	struct scmi_sensor_info *sensors;
-};
+	काष्ठा scmi_sensor_info *sensors;
+पूर्ण;
 
-static int scmi_sensor_attributes_get(const struct scmi_protocol_handle *ph,
-				      struct sensors_info *si)
-{
-	int ret;
-	struct scmi_xfer *t;
-	struct scmi_msg_resp_sensor_attributes *attr;
+अटल पूर्णांक scmi_sensor_attributes_get(स्थिर काष्ठा scmi_protocol_handle *ph,
+				      काष्ठा sensors_info *si)
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_xfer *t;
+	काष्ठा scmi_msg_resp_sensor_attributes *attr;
 
 	ret = ph->xops->xfer_get_init(ph, PROTOCOL_ATTRIBUTES,
-				      0, sizeof(*attr), &t);
-	if (ret)
-		return ret;
+				      0, माप(*attr), &t);
+	अगर (ret)
+		वापस ret;
 
 	attr = t->rx.buf;
 
-	ret = ph->xops->do_xfer(ph, t);
-	if (!ret) {
+	ret = ph->xops->करो_xfer(ph, t);
+	अगर (!ret) अणु
 		si->num_sensors = le16_to_cpu(attr->num_sensors);
 		si->max_requests = attr->max_requests;
 		si->reg_addr = le32_to_cpu(attr->reg_addr_low) |
 				(u64)le32_to_cpu(attr->reg_addr_high) << 32;
 		si->reg_size = le32_to_cpu(attr->reg_size);
-	}
+	पूर्ण
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void scmi_parse_range_attrs(struct scmi_range_attrs *out,
-					  struct scmi_msg_resp_attrs *in)
-{
-	out->min_range = get_unaligned_le64((void *)&in->min_range_low);
-	out->max_range = get_unaligned_le64((void *)&in->max_range_low);
-}
+अटल अंतरभूत व्योम scmi_parse_range_attrs(काष्ठा scmi_range_attrs *out,
+					  काष्ठा scmi_msg_resp_attrs *in)
+अणु
+	out->min_range = get_unaligned_le64((व्योम *)&in->min_range_low);
+	out->max_range = get_unaligned_le64((व्योम *)&in->max_range_low);
+पूर्ण
 
-static int scmi_sensor_update_intervals(const struct scmi_protocol_handle *ph,
-					struct scmi_sensor_info *s)
-{
-	int ret, cnt;
+अटल पूर्णांक scmi_sensor_update_पूर्णांकervals(स्थिर काष्ठा scmi_protocol_handle *ph,
+					काष्ठा scmi_sensor_info *s)
+अणु
+	पूर्णांक ret, cnt;
 	u32 desc_index = 0;
-	u16 num_returned, num_remaining;
-	struct scmi_xfer *ti;
-	struct scmi_msg_resp_sensor_list_update_intervals *buf;
-	struct scmi_msg_sensor_list_update_intervals *msg;
+	u16 num_वापसed, num_reमुख्यing;
+	काष्ठा scmi_xfer *ti;
+	काष्ठा scmi_msg_resp_sensor_list_update_पूर्णांकervals *buf;
+	काष्ठा scmi_msg_sensor_list_update_पूर्णांकervals *msg;
 
 	ret = ph->xops->xfer_get_init(ph, SENSOR_LIST_UPDATE_INTERVALS,
-				      sizeof(*msg), 0, &ti);
-	if (ret)
-		return ret;
+				      माप(*msg), 0, &ti);
+	अगर (ret)
+		वापस ret;
 
 	buf = ti->rx.buf;
-	do {
+	करो अणु
 		u32 flags;
 
 		msg = ti->tx.buf;
-		/* Set the number of sensors to be skipped/already read */
+		/* Set the number of sensors to be skipped/alपढ़ोy पढ़ो */
 		msg->id = cpu_to_le32(s->id);
 		msg->index = cpu_to_le32(desc_index);
 
-		ret = ph->xops->do_xfer(ph, ti);
-		if (ret)
-			break;
+		ret = ph->xops->करो_xfer(ph, ti);
+		अगर (ret)
+			अवरोध;
 
-		flags = le32_to_cpu(buf->num_intervals_flags);
-		num_returned = NUM_INTERVALS_RETURNED(flags);
-		num_remaining = NUM_INTERVALS_REMAINING(flags);
+		flags = le32_to_cpu(buf->num_पूर्णांकervals_flags);
+		num_वापसed = NUM_INTERVALS_RETURNED(flags);
+		num_reमुख्यing = NUM_INTERVALS_REMAINING(flags);
 
 		/*
-		 * Max intervals is not declared previously anywhere so we
-		 * assume it's returned+remaining.
+		 * Max पूर्णांकervals is not declared previously anywhere so we
+		 * assume it's वापसed+reमुख्यing.
 		 */
-		if (!s->intervals.count) {
-			s->intervals.segmented = SEGMENTED_INTVL_FORMAT(flags);
-			s->intervals.count = num_returned + num_remaining;
-			/* segmented intervals are reported in one triplet */
-			if (s->intervals.segmented &&
-			    (num_remaining || num_returned != 3)) {
+		अगर (!s->पूर्णांकervals.count) अणु
+			s->पूर्णांकervals.segmented = SEGMENTED_INTVL_FORMAT(flags);
+			s->पूर्णांकervals.count = num_वापसed + num_reमुख्यing;
+			/* segmented पूर्णांकervals are reported in one triplet */
+			अगर (s->पूर्णांकervals.segmented &&
+			    (num_reमुख्यing || num_वापसed != 3)) अणु
 				dev_err(ph->dev,
 					"Sensor ID:%d advertises an invalid segmented interval (%d)\n",
-					s->id, s->intervals.count);
-				s->intervals.segmented = false;
-				s->intervals.count = 0;
+					s->id, s->पूर्णांकervals.count);
+				s->पूर्णांकervals.segmented = false;
+				s->पूर्णांकervals.count = 0;
 				ret = -EINVAL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			/* Direct allocation when exceeding pre-allocated */
-			if (s->intervals.count >= SCMI_MAX_PREALLOC_POOL) {
-				s->intervals.desc =
-					devm_kcalloc(ph->dev,
-						     s->intervals.count,
-						     sizeof(*s->intervals.desc),
+			अगर (s->पूर्णांकervals.count >= SCMI_MAX_PREALLOC_POOL) अणु
+				s->पूर्णांकervals.desc =
+					devm_kसुस्मृति(ph->dev,
+						     s->पूर्णांकervals.count,
+						     माप(*s->पूर्णांकervals.desc),
 						     GFP_KERNEL);
-				if (!s->intervals.desc) {
-					s->intervals.segmented = false;
-					s->intervals.count = 0;
+				अगर (!s->पूर्णांकervals.desc) अणु
+					s->पूर्णांकervals.segmented = false;
+					s->पूर्णांकervals.count = 0;
 					ret = -ENOMEM;
-					break;
-				}
-			}
-		} else if (desc_index + num_returned > s->intervals.count) {
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अगर (desc_index + num_वापसed > s->पूर्णांकervals.count) अणु
 			dev_err(ph->dev,
 				"No. of update intervals can't exceed %d\n",
-				s->intervals.count);
+				s->पूर्णांकervals.count);
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		for (cnt = 0; cnt < num_returned; cnt++)
-			s->intervals.desc[desc_index + cnt] =
-					le32_to_cpu(buf->intervals[cnt]);
+		क्रम (cnt = 0; cnt < num_वापसed; cnt++)
+			s->पूर्णांकervals.desc[desc_index + cnt] =
+					le32_to_cpu(buf->पूर्णांकervals[cnt]);
 
-		desc_index += num_returned;
+		desc_index += num_वापसed;
 
 		ph->xops->reset_rx_to_maxsz(ph, ti);
 		/*
-		 * check for both returned and remaining to avoid infinite
+		 * check क्रम both वापसed and reमुख्यing to aव्योम infinite
 		 * loop due to buggy firmware
 		 */
-	} while (num_returned && num_remaining);
+	पूर्ण जबतक (num_वापसed && num_reमुख्यing);
 
 	ph->xops->xfer_put(ph, ti);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_sensor_axis_description(const struct scmi_protocol_handle *ph,
-					struct scmi_sensor_info *s)
-{
-	int ret, cnt;
+अटल पूर्णांक scmi_sensor_axis_description(स्थिर काष्ठा scmi_protocol_handle *ph,
+					काष्ठा scmi_sensor_info *s)
+अणु
+	पूर्णांक ret, cnt;
 	u32 desc_index = 0;
-	u16 num_returned, num_remaining;
-	struct scmi_xfer *te;
-	struct scmi_msg_resp_sensor_axis_description *buf;
-	struct scmi_msg_sensor_axis_description_get *msg;
+	u16 num_वापसed, num_reमुख्यing;
+	काष्ठा scmi_xfer *te;
+	काष्ठा scmi_msg_resp_sensor_axis_description *buf;
+	काष्ठा scmi_msg_sensor_axis_description_get *msg;
 
-	s->axis = devm_kcalloc(ph->dev, s->num_axis,
-			       sizeof(*s->axis), GFP_KERNEL);
-	if (!s->axis)
-		return -ENOMEM;
+	s->axis = devm_kसुस्मृति(ph->dev, s->num_axis,
+			       माप(*s->axis), GFP_KERNEL);
+	अगर (!s->axis)
+		वापस -ENOMEM;
 
 	ret = ph->xops->xfer_get_init(ph, SENSOR_AXIS_DESCRIPTION_GET,
-				      sizeof(*msg), 0, &te);
-	if (ret)
-		return ret;
+				      माप(*msg), 0, &te);
+	अगर (ret)
+		वापस ret;
 
 	buf = te->rx.buf;
-	do {
+	करो अणु
 		u32 flags;
-		struct scmi_axis_descriptor *adesc;
+		काष्ठा scmi_axis_descriptor *adesc;
 
 		msg = te->tx.buf;
-		/* Set the number of sensors to be skipped/already read */
+		/* Set the number of sensors to be skipped/alपढ़ोy पढ़ो */
 		msg->id = cpu_to_le32(s->id);
 		msg->axis_desc_index = cpu_to_le32(desc_index);
 
-		ret = ph->xops->do_xfer(ph, te);
-		if (ret)
-			break;
+		ret = ph->xops->करो_xfer(ph, te);
+		अगर (ret)
+			अवरोध;
 
 		flags = le32_to_cpu(buf->num_axis_flags);
-		num_returned = NUM_AXIS_RETURNED(flags);
-		num_remaining = NUM_AXIS_REMAINING(flags);
+		num_वापसed = NUM_AXIS_RETURNED(flags);
+		num_reमुख्यing = NUM_AXIS_REMAINING(flags);
 
-		if (desc_index + num_returned > s->num_axis) {
+		अगर (desc_index + num_वापसed > s->num_axis) अणु
 			dev_err(ph->dev, "No. of axis can't exceed %d\n",
 				s->num_axis);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		adesc = &buf->desc[0];
-		for (cnt = 0; cnt < num_returned; cnt++) {
+		क्रम (cnt = 0; cnt < num_वापसed; cnt++) अणु
 			u32 attrh, attrl;
-			struct scmi_sensor_axis_info *a;
-			size_t dsize = SCMI_MSG_RESP_AXIS_DESCR_BASE_SZ;
+			काष्ठा scmi_sensor_axis_info *a;
+			माप_प्रकार dsize = SCMI_MSG_RESP_AXIS_DESCR_BASE_SZ;
 
 			attrl = le32_to_cpu(adesc->attributes_low);
 
@@ -387,76 +388,76 @@ static int scmi_sensor_axis_description(const struct scmi_protocol_handle *ph,
 			a->type = SENSOR_TYPE(attrh);
 			strlcpy(a->name, adesc->name, SCMI_MAX_STR_SIZE);
 
-			if (a->extended_attrs) {
-				unsigned int ares =
+			अगर (a->extended_attrs) अणु
+				अचिन्हित पूर्णांक ares =
 					le32_to_cpu(adesc->resolution);
 
 				a->resolution = SENSOR_RES(ares);
 				a->exponent =
 					S32_EXT(SENSOR_RES_EXP(ares));
-				dsize += sizeof(adesc->resolution);
+				dsize += माप(adesc->resolution);
 
 				scmi_parse_range_attrs(&a->attrs,
 						       &adesc->attrs);
-				dsize += sizeof(adesc->attrs);
-			}
+				dsize += माप(adesc->attrs);
+			पूर्ण
 
 			adesc = (typeof(adesc))((u8 *)adesc + dsize);
-		}
+		पूर्ण
 
-		desc_index += num_returned;
+		desc_index += num_वापसed;
 
 		ph->xops->reset_rx_to_maxsz(ph, te);
 		/*
-		 * check for both returned and remaining to avoid infinite
+		 * check क्रम both वापसed and reमुख्यing to aव्योम infinite
 		 * loop due to buggy firmware
 		 */
-	} while (num_returned && num_remaining);
+	पूर्ण जबतक (num_वापसed && num_reमुख्यing);
 
 	ph->xops->xfer_put(ph, te);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_sensor_description_get(const struct scmi_protocol_handle *ph,
-				       struct sensors_info *si)
-{
-	int ret, cnt;
+अटल पूर्णांक scmi_sensor_description_get(स्थिर काष्ठा scmi_protocol_handle *ph,
+				       काष्ठा sensors_info *si)
+अणु
+	पूर्णांक ret, cnt;
 	u32 desc_index = 0;
-	u16 num_returned, num_remaining;
-	struct scmi_xfer *t;
-	struct scmi_msg_resp_sensor_description *buf;
+	u16 num_वापसed, num_reमुख्यing;
+	काष्ठा scmi_xfer *t;
+	काष्ठा scmi_msg_resp_sensor_description *buf;
 
 	ret = ph->xops->xfer_get_init(ph, SENSOR_DESCRIPTION_GET,
-				      sizeof(__le32), 0, &t);
-	if (ret)
-		return ret;
+				      माप(__le32), 0, &t);
+	अगर (ret)
+		वापस ret;
 
 	buf = t->rx.buf;
 
-	do {
-		struct scmi_sensor_descriptor *sdesc;
+	करो अणु
+		काष्ठा scmi_sensor_descriptor *sdesc;
 
-		/* Set the number of sensors to be skipped/already read */
+		/* Set the number of sensors to be skipped/alपढ़ोy पढ़ो */
 		put_unaligned_le32(desc_index, t->tx.buf);
 
-		ret = ph->xops->do_xfer(ph, t);
-		if (ret)
-			break;
+		ret = ph->xops->करो_xfer(ph, t);
+		अगर (ret)
+			अवरोध;
 
-		num_returned = le16_to_cpu(buf->num_returned);
-		num_remaining = le16_to_cpu(buf->num_remaining);
+		num_वापसed = le16_to_cpu(buf->num_वापसed);
+		num_reमुख्यing = le16_to_cpu(buf->num_reमुख्यing);
 
-		if (desc_index + num_returned > si->num_sensors) {
+		अगर (desc_index + num_वापसed > si->num_sensors) अणु
 			dev_err(ph->dev, "No. of sensors can't exceed %d",
 				si->num_sensors);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		sdesc = &buf->desc[0];
-		for (cnt = 0; cnt < num_returned; cnt++) {
+		क्रम (cnt = 0; cnt < num_वापसed; cnt++) अणु
 			u32 attrh, attrl;
-			struct scmi_sensor_info *s;
-			size_t dsize = SCMI_MSG_RESP_SENS_DESCR_BASE_SZ;
+			काष्ठा scmi_sensor_info *s;
+			माप_प्रकार dsize = SCMI_MSG_RESP_SENS_DESCR_BASE_SZ;
 
 			s = &si->sensors[desc_index + cnt];
 			s->id = le32_to_cpu(sdesc->id);
@@ -464,15 +465,15 @@ static int scmi_sensor_description_get(const struct scmi_protocol_handle *ph,
 			attrl = le32_to_cpu(sdesc->attributes_low);
 			/* common bitfields parsing */
 			s->async = SUPPORTS_ASYNC_READ(attrl);
-			s->num_trip_points = NUM_TRIP_POINTS(attrl);
+			s->num_trip_poपूर्णांकs = NUM_TRIP_POINTS(attrl);
 			/**
-			 * only SCMIv3.0 specific bitfield below.
+			 * only SCMIv3.0 specअगरic bitfield below.
 			 * Such bitfields are assumed to be zeroed on non
 			 * relevant fw versions...assuming fw not buggy !
 			 */
 			s->update = SUPPORTS_UPDATE_NOTIFY(attrl);
-			s->timestamped = SUPPORTS_TIMESTAMP(attrl);
-			if (s->timestamped)
+			s->बारtamped = SUPPORTS_TIMESTAMP(attrl);
+			अगर (s->बारtamped)
 				s->tstamp_scale =
 					S32_EXT(SENSOR_TSTAMP_EXP(attrl));
 			s->extended_scalar_attrs =
@@ -483,135 +484,135 @@ static int scmi_sensor_description_get(const struct scmi_protocol_handle *ph,
 			s->scale = S32_EXT(SENSOR_SCALE(attrh));
 			s->type = SENSOR_TYPE(attrh);
 			/* Use pre-allocated pool wherever possible */
-			s->intervals.desc = s->intervals.prealloc_pool;
-			if (si->version == SCMIv2_SENSOR_PROTOCOL) {
-				s->intervals.segmented = false;
-				s->intervals.count = 1;
+			s->पूर्णांकervals.desc = s->पूर्णांकervals.pपुनः_स्मृति_pool;
+			अगर (si->version == SCMIv2_SENSOR_PROTOCOL) अणु
+				s->पूर्णांकervals.segmented = false;
+				s->पूर्णांकervals.count = 1;
 				/*
-				 * Convert SCMIv2.0 update interval format to
+				 * Convert SCMIv2.0 update पूर्णांकerval क्रमmat to
 				 * SCMIv3.0 to be used as the common exposed
 				 * descriptor, accessible via common macros.
 				 */
-				s->intervals.desc[0] =
+				s->पूर्णांकervals.desc[0] =
 					(SENSOR_UPDATE_BASE(attrh) << 5) |
 					 SENSOR_UPDATE_SCALE(attrh);
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
-				 * From SCMIv3.0 update intervals are retrieved
+				 * From SCMIv3.0 update पूर्णांकervals are retrieved
 				 * via a dedicated (optional) command.
 				 * Since the command is optional, on error carry
-				 * on without any update interval.
+				 * on without any update पूर्णांकerval.
 				 */
-				if (scmi_sensor_update_intervals(ph, s))
+				अगर (scmi_sensor_update_पूर्णांकervals(ph, s))
 					dev_dbg(ph->dev,
 						"Update Intervals not available for sensor ID:%d\n",
 						s->id);
-			}
+			पूर्ण
 			/**
-			 * only > SCMIv2.0 specific bitfield below.
+			 * only > SCMIv2.0 specअगरic bitfield below.
 			 * Such bitfields are assumed to be zeroed on non
 			 * relevant fw versions...assuming fw not buggy !
 			 */
-			s->num_axis = min_t(unsigned int,
+			s->num_axis = min_t(अचिन्हित पूर्णांक,
 					    SUPPORTS_AXIS(attrh) ?
 					    SENSOR_AXIS_NUMBER(attrh) : 0,
 					    SCMI_MAX_NUM_SENSOR_AXIS);
 			strlcpy(s->name, sdesc->name, SCMI_MAX_STR_SIZE);
 
-			if (s->extended_scalar_attrs) {
-				s->sensor_power = le32_to_cpu(sdesc->power);
-				dsize += sizeof(sdesc->power);
-				/* Only for sensors reporting scalar values */
-				if (s->num_axis == 0) {
-					unsigned int sres =
+			अगर (s->extended_scalar_attrs) अणु
+				s->sensor_घातer = le32_to_cpu(sdesc->घातer);
+				dsize += माप(sdesc->घातer);
+				/* Only क्रम sensors reporting scalar values */
+				अगर (s->num_axis == 0) अणु
+					अचिन्हित पूर्णांक sres =
 						le32_to_cpu(sdesc->resolution);
 
 					s->resolution = SENSOR_RES(sres);
 					s->exponent =
 						S32_EXT(SENSOR_RES_EXP(sres));
-					dsize += sizeof(sdesc->resolution);
+					dsize += माप(sdesc->resolution);
 
 					scmi_parse_range_attrs(&s->scalar_attrs,
 							       &sdesc->scalar_attrs);
-					dsize += sizeof(sdesc->scalar_attrs);
-				}
-			}
-			if (s->num_axis > 0) {
+					dsize += माप(sdesc->scalar_attrs);
+				पूर्ण
+			पूर्ण
+			अगर (s->num_axis > 0) अणु
 				ret = scmi_sensor_axis_description(ph, s);
-				if (ret)
-					goto out;
-			}
+				अगर (ret)
+					जाओ out;
+			पूर्ण
 
 			sdesc = (typeof(sdesc))((u8 *)sdesc + dsize);
-		}
+		पूर्ण
 
-		desc_index += num_returned;
+		desc_index += num_वापसed;
 
 		ph->xops->reset_rx_to_maxsz(ph, t);
 		/*
-		 * check for both returned and remaining to avoid infinite
+		 * check क्रम both वापसed and reमुख्यing to aव्योम infinite
 		 * loop due to buggy firmware
 		 */
-	} while (num_returned && num_remaining);
+	पूर्ण जबतक (num_वापसed && num_reमुख्यing);
 
 out:
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int
-scmi_sensor_request_notify(const struct scmi_protocol_handle *ph, u32 sensor_id,
+अटल अंतरभूत पूर्णांक
+scmi_sensor_request_notअगरy(स्थिर काष्ठा scmi_protocol_handle *ph, u32 sensor_id,
 			   u8 message_id, bool enable)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u32 evt_cntl = enable ? SENSOR_NOTIFY_ALL : 0;
-	struct scmi_xfer *t;
-	struct scmi_msg_sensor_request_notify *cfg;
+	काष्ठा scmi_xfer *t;
+	काष्ठा scmi_msg_sensor_request_notअगरy *cfg;
 
-	ret = ph->xops->xfer_get_init(ph, message_id, sizeof(*cfg), 0, &t);
-	if (ret)
-		return ret;
+	ret = ph->xops->xfer_get_init(ph, message_id, माप(*cfg), 0, &t);
+	अगर (ret)
+		वापस ret;
 
 	cfg = t->tx.buf;
 	cfg->id = cpu_to_le32(sensor_id);
 	cfg->event_control = cpu_to_le32(evt_cntl);
 
-	ret = ph->xops->do_xfer(ph, t);
+	ret = ph->xops->करो_xfer(ph, t);
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_sensor_trip_point_notify(const struct scmi_protocol_handle *ph,
+अटल पूर्णांक scmi_sensor_trip_poपूर्णांक_notअगरy(स्थिर काष्ठा scmi_protocol_handle *ph,
 					 u32 sensor_id, bool enable)
-{
-	return scmi_sensor_request_notify(ph, sensor_id,
+अणु
+	वापस scmi_sensor_request_notअगरy(ph, sensor_id,
 					  SENSOR_TRIP_POINT_NOTIFY,
 					  enable);
-}
+पूर्ण
 
-static int
-scmi_sensor_continuous_update_notify(const struct scmi_protocol_handle *ph,
+अटल पूर्णांक
+scmi_sensor_continuous_update_notअगरy(स्थिर काष्ठा scmi_protocol_handle *ph,
 				     u32 sensor_id, bool enable)
-{
-	return scmi_sensor_request_notify(ph, sensor_id,
+अणु
+	वापस scmi_sensor_request_notअगरy(ph, sensor_id,
 					  SENSOR_CONTINUOUS_UPDATE_NOTIFY,
 					  enable);
-}
+पूर्ण
 
-static int
-scmi_sensor_trip_point_config(const struct scmi_protocol_handle *ph,
+अटल पूर्णांक
+scmi_sensor_trip_poपूर्णांक_config(स्थिर काष्ठा scmi_protocol_handle *ph,
 			      u32 sensor_id, u8 trip_id, u64 trip_value)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u32 evt_cntl = SENSOR_TP_BOTH;
-	struct scmi_xfer *t;
-	struct scmi_msg_set_sensor_trip_point *trip;
+	काष्ठा scmi_xfer *t;
+	काष्ठा scmi_msg_set_sensor_trip_poपूर्णांक *trip;
 
 	ret = ph->xops->xfer_get_init(ph, SENSOR_TRIP_POINT_CONFIG,
-				      sizeof(*trip), 0, &t);
-	if (ret)
-		return ret;
+				      माप(*trip), 0, &t);
+	अगर (ret)
+		वापस ret;
 
 	trip = t->tx.buf;
 	trip->id = cpu_to_le32(sensor_id);
@@ -619,382 +620,382 @@ scmi_sensor_trip_point_config(const struct scmi_protocol_handle *ph,
 	trip->value_low = cpu_to_le32(trip_value & 0xffffffff);
 	trip->value_high = cpu_to_le32(trip_value >> 32);
 
-	ret = ph->xops->do_xfer(ph, t);
+	ret = ph->xops->करो_xfer(ph, t);
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_sensor_config_get(const struct scmi_protocol_handle *ph,
+अटल पूर्णांक scmi_sensor_config_get(स्थिर काष्ठा scmi_protocol_handle *ph,
 				  u32 sensor_id, u32 *sensor_config)
-{
-	int ret;
-	struct scmi_xfer *t;
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_xfer *t;
 
 	ret = ph->xops->xfer_get_init(ph, SENSOR_CONFIG_GET,
-				      sizeof(__le32), sizeof(__le32), &t);
-	if (ret)
-		return ret;
+				      माप(__le32), माप(__le32), &t);
+	अगर (ret)
+		वापस ret;
 
 	put_unaligned_le32(cpu_to_le32(sensor_id), t->tx.buf);
-	ret = ph->xops->do_xfer(ph, t);
-	if (!ret) {
-		struct sensors_info *si = ph->get_priv(ph);
-		struct scmi_sensor_info *s = si->sensors + sensor_id;
+	ret = ph->xops->करो_xfer(ph, t);
+	अगर (!ret) अणु
+		काष्ठा sensors_info *si = ph->get_priv(ph);
+		काष्ठा scmi_sensor_info *s = si->sensors + sensor_id;
 
 		*sensor_config = get_unaligned_le64(t->rx.buf);
 		s->sensor_config = *sensor_config;
-	}
+	पूर्ण
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_sensor_config_set(const struct scmi_protocol_handle *ph,
+अटल पूर्णांक scmi_sensor_config_set(स्थिर काष्ठा scmi_protocol_handle *ph,
 				  u32 sensor_id, u32 sensor_config)
-{
-	int ret;
-	struct scmi_xfer *t;
-	struct scmi_msg_sensor_config_set *msg;
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_xfer *t;
+	काष्ठा scmi_msg_sensor_config_set *msg;
 
 	ret = ph->xops->xfer_get_init(ph, SENSOR_CONFIG_SET,
-				      sizeof(*msg), 0, &t);
-	if (ret)
-		return ret;
+				      माप(*msg), 0, &t);
+	अगर (ret)
+		वापस ret;
 
 	msg = t->tx.buf;
 	msg->id = cpu_to_le32(sensor_id);
 	msg->sensor_config = cpu_to_le32(sensor_config);
 
-	ret = ph->xops->do_xfer(ph, t);
-	if (!ret) {
-		struct sensors_info *si = ph->get_priv(ph);
-		struct scmi_sensor_info *s = si->sensors + sensor_id;
+	ret = ph->xops->करो_xfer(ph, t);
+	अगर (!ret) अणु
+		काष्ठा sensors_info *si = ph->get_priv(ph);
+		काष्ठा scmi_sensor_info *s = si->sensors + sensor_id;
 
 		s->sensor_config = sensor_config;
-	}
+	पूर्ण
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * scmi_sensor_reading_get  - Read scalar sensor value
+ * scmi_sensor_पढ़ोing_get  - Read scalar sensor value
  * @ph: Protocol handle
  * @sensor_id: Sensor ID
- * @value: The 64bit value sensor reading
+ * @value: The 64bit value sensor पढ़ोing
  *
- * This function returns a single 64 bit reading value representing the sensor
- * value; if the platform SCMI Protocol implementation and the sensor support
- * multiple axis and timestamped-reads, this just returns the first axis while
- * dropping the timestamp value.
- * Use instead the @scmi_sensor_reading_get_timestamped to retrieve the array of
- * timestamped multi-axis values.
+ * This function वापसs a single 64 bit पढ़ोing value representing the sensor
+ * value; अगर the platक्रमm SCMI Protocol implementation and the sensor support
+ * multiple axis and बारtamped-पढ़ोs, this just वापसs the first axis जबतक
+ * dropping the बारtamp value.
+ * Use instead the @scmi_sensor_पढ़ोing_get_बारtamped to retrieve the array of
+ * बारtamped multi-axis values.
  *
  * Return: 0 on Success
  */
-static int scmi_sensor_reading_get(const struct scmi_protocol_handle *ph,
+अटल पूर्णांक scmi_sensor_पढ़ोing_get(स्थिर काष्ठा scmi_protocol_handle *ph,
 				   u32 sensor_id, u64 *value)
-{
-	int ret;
-	struct scmi_xfer *t;
-	struct scmi_msg_sensor_reading_get *sensor;
-	struct sensors_info *si = ph->get_priv(ph);
-	struct scmi_sensor_info *s = si->sensors + sensor_id;
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_xfer *t;
+	काष्ठा scmi_msg_sensor_पढ़ोing_get *sensor;
+	काष्ठा sensors_info *si = ph->get_priv(ph);
+	काष्ठा scmi_sensor_info *s = si->sensors + sensor_id;
 
 	ret = ph->xops->xfer_get_init(ph, SENSOR_READING_GET,
-				      sizeof(*sensor), 0, &t);
-	if (ret)
-		return ret;
+				      माप(*sensor), 0, &t);
+	अगर (ret)
+		वापस ret;
 
 	sensor = t->tx.buf;
 	sensor->id = cpu_to_le32(sensor_id);
-	if (s->async) {
+	अगर (s->async) अणु
 		sensor->flags = cpu_to_le32(SENSOR_READ_ASYNC);
-		ret = ph->xops->do_xfer_with_response(ph, t);
-		if (!ret) {
-			struct scmi_resp_sensor_reading_complete *resp;
+		ret = ph->xops->करो_xfer_with_response(ph, t);
+		अगर (!ret) अणु
+			काष्ठा scmi_resp_sensor_पढ़ोing_complete *resp;
 
 			resp = t->rx.buf;
-			if (le32_to_cpu(resp->id) == sensor_id)
-				*value = get_unaligned_le64(&resp->readings);
-			else
+			अगर (le32_to_cpu(resp->id) == sensor_id)
+				*value = get_unaligned_le64(&resp->पढ़ोings);
+			अन्यथा
 				ret = -EPROTO;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		sensor->flags = cpu_to_le32(0);
-		ret = ph->xops->do_xfer(ph, t);
-		if (!ret)
+		ret = ph->xops->करो_xfer(ph, t);
+		अगर (!ret)
 			*value = get_unaligned_le64(t->rx.buf);
-	}
+	पूर्ण
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void
-scmi_parse_sensor_readings(struct scmi_sensor_reading *out,
-			   const struct scmi_sensor_reading_resp *in)
-{
-	out->value = get_unaligned_le64((void *)&in->sensor_value_low);
-	out->timestamp = get_unaligned_le64((void *)&in->timestamp_low);
-}
+अटल अंतरभूत व्योम
+scmi_parse_sensor_पढ़ोings(काष्ठा scmi_sensor_पढ़ोing *out,
+			   स्थिर काष्ठा scmi_sensor_पढ़ोing_resp *in)
+अणु
+	out->value = get_unaligned_le64((व्योम *)&in->sensor_value_low);
+	out->बारtamp = get_unaligned_le64((व्योम *)&in->बारtamp_low);
+पूर्ण
 
 /**
- * scmi_sensor_reading_get_timestamped  - Read multiple-axis timestamped values
+ * scmi_sensor_पढ़ोing_get_बारtamped  - Read multiple-axis बारtamped values
  * @ph: Protocol handle
  * @sensor_id: Sensor ID
- * @count: The length of the provided @readings array
- * @readings: An array of elements each representing a timestamped per-axis
- *	      reading of type @struct scmi_sensor_reading.
- *	      Returned readings are ordered as the @axis descriptors array
- *	      included in @struct scmi_sensor_info and the max number of
- *	      returned elements is min(@count, @num_axis); ideally the provided
+ * @count: The length of the provided @पढ़ोings array
+ * @पढ़ोings: An array of elements each representing a बारtamped per-axis
+ *	      पढ़ोing of type @काष्ठा scmi_sensor_पढ़ोing.
+ *	      Returned पढ़ोings are ordered as the @axis descriptors array
+ *	      included in @काष्ठा scmi_sensor_info and the max number of
+ *	      वापसed elements is min(@count, @num_axis); ideally the provided
  *	      array should be of length @count equal to @num_axis.
  *
  * Return: 0 on Success
  */
-static int
-scmi_sensor_reading_get_timestamped(const struct scmi_protocol_handle *ph,
+अटल पूर्णांक
+scmi_sensor_पढ़ोing_get_बारtamped(स्थिर काष्ठा scmi_protocol_handle *ph,
 				    u32 sensor_id, u8 count,
-				    struct scmi_sensor_reading *readings)
-{
-	int ret;
-	struct scmi_xfer *t;
-	struct scmi_msg_sensor_reading_get *sensor;
-	struct sensors_info *si = ph->get_priv(ph);
-	struct scmi_sensor_info *s = si->sensors + sensor_id;
+				    काष्ठा scmi_sensor_पढ़ोing *पढ़ोings)
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_xfer *t;
+	काष्ठा scmi_msg_sensor_पढ़ोing_get *sensor;
+	काष्ठा sensors_info *si = ph->get_priv(ph);
+	काष्ठा scmi_sensor_info *s = si->sensors + sensor_id;
 
-	if (!count || !readings ||
+	अगर (!count || !पढ़ोings ||
 	    (!s->num_axis && count > 1) || (s->num_axis && count > s->num_axis))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ret = ph->xops->xfer_get_init(ph, SENSOR_READING_GET,
-				      sizeof(*sensor), 0, &t);
-	if (ret)
-		return ret;
+				      माप(*sensor), 0, &t);
+	अगर (ret)
+		वापस ret;
 
 	sensor = t->tx.buf;
 	sensor->id = cpu_to_le32(sensor_id);
-	if (s->async) {
+	अगर (s->async) अणु
 		sensor->flags = cpu_to_le32(SENSOR_READ_ASYNC);
-		ret = ph->xops->do_xfer_with_response(ph, t);
-		if (!ret) {
-			int i;
-			struct scmi_resp_sensor_reading_complete_v3 *resp;
+		ret = ph->xops->करो_xfer_with_response(ph, t);
+		अगर (!ret) अणु
+			पूर्णांक i;
+			काष्ठा scmi_resp_sensor_पढ़ोing_complete_v3 *resp;
 
 			resp = t->rx.buf;
 			/* Retrieve only the number of requested axis anyway */
-			if (le32_to_cpu(resp->id) == sensor_id)
-				for (i = 0; i < count; i++)
-					scmi_parse_sensor_readings(&readings[i],
-								   &resp->readings[i]);
-			else
+			अगर (le32_to_cpu(resp->id) == sensor_id)
+				क्रम (i = 0; i < count; i++)
+					scmi_parse_sensor_पढ़ोings(&पढ़ोings[i],
+								   &resp->पढ़ोings[i]);
+			अन्यथा
 				ret = -EPROTO;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		sensor->flags = cpu_to_le32(0);
-		ret = ph->xops->do_xfer(ph, t);
-		if (!ret) {
-			int i;
-			struct scmi_sensor_reading_resp *resp_readings;
+		ret = ph->xops->करो_xfer(ph, t);
+		अगर (!ret) अणु
+			पूर्णांक i;
+			काष्ठा scmi_sensor_पढ़ोing_resp *resp_पढ़ोings;
 
-			resp_readings = t->rx.buf;
-			for (i = 0; i < count; i++)
-				scmi_parse_sensor_readings(&readings[i],
-							   &resp_readings[i]);
-		}
-	}
+			resp_पढ़ोings = t->rx.buf;
+			क्रम (i = 0; i < count; i++)
+				scmi_parse_sensor_पढ़ोings(&पढ़ोings[i],
+							   &resp_पढ़ोings[i]);
+		पूर्ण
+	पूर्ण
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct scmi_sensor_info *
-scmi_sensor_info_get(const struct scmi_protocol_handle *ph, u32 sensor_id)
-{
-	struct sensors_info *si = ph->get_priv(ph);
+अटल स्थिर काष्ठा scmi_sensor_info *
+scmi_sensor_info_get(स्थिर काष्ठा scmi_protocol_handle *ph, u32 sensor_id)
+अणु
+	काष्ठा sensors_info *si = ph->get_priv(ph);
 
-	return si->sensors + sensor_id;
-}
+	वापस si->sensors + sensor_id;
+पूर्ण
 
-static int scmi_sensor_count_get(const struct scmi_protocol_handle *ph)
-{
-	struct sensors_info *si = ph->get_priv(ph);
+अटल पूर्णांक scmi_sensor_count_get(स्थिर काष्ठा scmi_protocol_handle *ph)
+अणु
+	काष्ठा sensors_info *si = ph->get_priv(ph);
 
-	return si->num_sensors;
-}
+	वापस si->num_sensors;
+पूर्ण
 
-static const struct scmi_sensor_proto_ops sensor_proto_ops = {
+अटल स्थिर काष्ठा scmi_sensor_proto_ops sensor_proto_ops = अणु
 	.count_get = scmi_sensor_count_get,
 	.info_get = scmi_sensor_info_get,
-	.trip_point_config = scmi_sensor_trip_point_config,
-	.reading_get = scmi_sensor_reading_get,
-	.reading_get_timestamped = scmi_sensor_reading_get_timestamped,
+	.trip_poपूर्णांक_config = scmi_sensor_trip_poपूर्णांक_config,
+	.पढ़ोing_get = scmi_sensor_पढ़ोing_get,
+	.पढ़ोing_get_बारtamped = scmi_sensor_पढ़ोing_get_बारtamped,
 	.config_get = scmi_sensor_config_get,
 	.config_set = scmi_sensor_config_set,
-};
+पूर्ण;
 
-static int scmi_sensor_set_notify_enabled(const struct scmi_protocol_handle *ph,
+अटल पूर्णांक scmi_sensor_set_notअगरy_enabled(स्थिर काष्ठा scmi_protocol_handle *ph,
 					  u8 evt_id, u32 src_id, bool enable)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	switch (evt_id) {
-	case SCMI_EVENT_SENSOR_TRIP_POINT_EVENT:
-		ret = scmi_sensor_trip_point_notify(ph, src_id, enable);
-		break;
-	case SCMI_EVENT_SENSOR_UPDATE:
-		ret = scmi_sensor_continuous_update_notify(ph, src_id, enable);
-		break;
-	default:
+	चयन (evt_id) अणु
+	हाल SCMI_EVENT_SENSOR_TRIP_POINT_EVENT:
+		ret = scmi_sensor_trip_poपूर्णांक_notअगरy(ph, src_id, enable);
+		अवरोध;
+	हाल SCMI_EVENT_SENSOR_UPDATE:
+		ret = scmi_sensor_continuous_update_notअगरy(ph, src_id, enable);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		pr_debug("FAIL_ENABLED - evt[%X] dom[%d] - ret:%d\n",
 			 evt_id, src_id, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void *
-scmi_sensor_fill_custom_report(const struct scmi_protocol_handle *ph,
-			       u8 evt_id, ktime_t timestamp,
-			       const void *payld, size_t payld_sz,
-			       void *report, u32 *src_id)
-{
-	void *rep = NULL;
+अटल व्योम *
+scmi_sensor_fill_custom_report(स्थिर काष्ठा scmi_protocol_handle *ph,
+			       u8 evt_id, kसमय_प्रकार बारtamp,
+			       स्थिर व्योम *payld, माप_प्रकार payld_sz,
+			       व्योम *report, u32 *src_id)
+अणु
+	व्योम *rep = शून्य;
 
-	switch (evt_id) {
-	case SCMI_EVENT_SENSOR_TRIP_POINT_EVENT:
-	{
-		const struct scmi_sensor_trip_notify_payld *p = payld;
-		struct scmi_sensor_trip_point_report *r = report;
+	चयन (evt_id) अणु
+	हाल SCMI_EVENT_SENSOR_TRIP_POINT_EVENT:
+	अणु
+		स्थिर काष्ठा scmi_sensor_trip_notअगरy_payld *p = payld;
+		काष्ठा scmi_sensor_trip_poपूर्णांक_report *r = report;
 
-		if (sizeof(*p) != payld_sz)
-			break;
+		अगर (माप(*p) != payld_sz)
+			अवरोध;
 
-		r->timestamp = timestamp;
+		r->बारtamp = बारtamp;
 		r->agent_id = le32_to_cpu(p->agent_id);
 		r->sensor_id = le32_to_cpu(p->sensor_id);
-		r->trip_point_desc = le32_to_cpu(p->trip_point_desc);
+		r->trip_poपूर्णांक_desc = le32_to_cpu(p->trip_poपूर्णांक_desc);
 		*src_id = r->sensor_id;
 		rep = r;
-		break;
-	}
-	case SCMI_EVENT_SENSOR_UPDATE:
-	{
-		int i;
-		struct scmi_sensor_info *s;
-		const struct scmi_sensor_update_notify_payld *p = payld;
-		struct scmi_sensor_update_report *r = report;
-		struct sensors_info *sinfo = ph->get_priv(ph);
+		अवरोध;
+	पूर्ण
+	हाल SCMI_EVENT_SENSOR_UPDATE:
+	अणु
+		पूर्णांक i;
+		काष्ठा scmi_sensor_info *s;
+		स्थिर काष्ठा scmi_sensor_update_notअगरy_payld *p = payld;
+		काष्ठा scmi_sensor_update_report *r = report;
+		काष्ठा sensors_info *sinfo = ph->get_priv(ph);
 
-		/* payld_sz is variable for this event */
+		/* payld_sz is variable क्रम this event */
 		r->sensor_id = le32_to_cpu(p->sensor_id);
-		if (r->sensor_id >= sinfo->num_sensors)
-			break;
-		r->timestamp = timestamp;
+		अगर (r->sensor_id >= sinfo->num_sensors)
+			अवरोध;
+		r->बारtamp = बारtamp;
 		r->agent_id = le32_to_cpu(p->agent_id);
 		s = &sinfo->sensors[r->sensor_id];
 		/*
-		 * The generated report r (@struct scmi_sensor_update_report)
+		 * The generated report r (@काष्ठा scmi_sensor_update_report)
 		 * was pre-allocated to contain up to SCMI_MAX_NUM_SENSOR_AXIS
-		 * readings: here it is filled with the effective @num_axis
-		 * readings defined for this sensor or 1 for scalar sensors.
+		 * पढ़ोings: here it is filled with the effective @num_axis
+		 * पढ़ोings defined क्रम this sensor or 1 क्रम scalar sensors.
 		 */
-		r->readings_count = s->num_axis ?: 1;
-		for (i = 0; i < r->readings_count; i++)
-			scmi_parse_sensor_readings(&r->readings[i],
-						   &p->readings[i]);
+		r->पढ़ोings_count = s->num_axis ?: 1;
+		क्रम (i = 0; i < r->पढ़ोings_count; i++)
+			scmi_parse_sensor_पढ़ोings(&r->पढ़ोings[i],
+						   &p->पढ़ोings[i]);
 		*src_id = r->sensor_id;
 		rep = r;
-		break;
-	}
-	default:
-		break;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return rep;
-}
+	वापस rep;
+पूर्ण
 
-static int scmi_sensor_get_num_sources(const struct scmi_protocol_handle *ph)
-{
-	struct sensors_info *si = ph->get_priv(ph);
+अटल पूर्णांक scmi_sensor_get_num_sources(स्थिर काष्ठा scmi_protocol_handle *ph)
+अणु
+	काष्ठा sensors_info *si = ph->get_priv(ph);
 
-	return si->num_sensors;
-}
+	वापस si->num_sensors;
+पूर्ण
 
-static const struct scmi_event sensor_events[] = {
-	{
+अटल स्थिर काष्ठा scmi_event sensor_events[] = अणु
+	अणु
 		.id = SCMI_EVENT_SENSOR_TRIP_POINT_EVENT,
-		.max_payld_sz = sizeof(struct scmi_sensor_trip_notify_payld),
-		.max_report_sz = sizeof(struct scmi_sensor_trip_point_report),
-	},
-	{
+		.max_payld_sz = माप(काष्ठा scmi_sensor_trip_notअगरy_payld),
+		.max_report_sz = माप(काष्ठा scmi_sensor_trip_poपूर्णांक_report),
+	पूर्ण,
+	अणु
 		.id = SCMI_EVENT_SENSOR_UPDATE,
 		.max_payld_sz =
-			sizeof(struct scmi_sensor_update_notify_payld) +
+			माप(काष्ठा scmi_sensor_update_notअगरy_payld) +
 			 SCMI_MAX_NUM_SENSOR_AXIS *
-			 sizeof(struct scmi_sensor_reading_resp),
-		.max_report_sz = sizeof(struct scmi_sensor_update_report) +
+			 माप(काष्ठा scmi_sensor_पढ़ोing_resp),
+		.max_report_sz = माप(काष्ठा scmi_sensor_update_report) +
 				  SCMI_MAX_NUM_SENSOR_AXIS *
-				  sizeof(struct scmi_sensor_reading),
-	},
-};
+				  माप(काष्ठा scmi_sensor_पढ़ोing),
+	पूर्ण,
+पूर्ण;
 
-static const struct scmi_event_ops sensor_event_ops = {
+अटल स्थिर काष्ठा scmi_event_ops sensor_event_ops = अणु
 	.get_num_sources = scmi_sensor_get_num_sources,
-	.set_notify_enabled = scmi_sensor_set_notify_enabled,
+	.set_notअगरy_enabled = scmi_sensor_set_notअगरy_enabled,
 	.fill_custom_report = scmi_sensor_fill_custom_report,
-};
+पूर्ण;
 
-static const struct scmi_protocol_events sensor_protocol_events = {
+अटल स्थिर काष्ठा scmi_protocol_events sensor_protocol_events = अणु
 	.queue_sz = SCMI_PROTO_QUEUE_SZ,
 	.ops = &sensor_event_ops,
 	.evts = sensor_events,
 	.num_events = ARRAY_SIZE(sensor_events),
-};
+पूर्ण;
 
-static int scmi_sensors_protocol_init(const struct scmi_protocol_handle *ph)
-{
+अटल पूर्णांक scmi_sensors_protocol_init(स्थिर काष्ठा scmi_protocol_handle *ph)
+अणु
 	u32 version;
-	int ret;
-	struct sensors_info *sinfo;
+	पूर्णांक ret;
+	काष्ठा sensors_info *sinfo;
 
 	ph->xops->version_get(ph, &version);
 
 	dev_dbg(ph->dev, "Sensor Version %d.%d\n",
 		PROTOCOL_REV_MAJOR(version), PROTOCOL_REV_MINOR(version));
 
-	sinfo = devm_kzalloc(ph->dev, sizeof(*sinfo), GFP_KERNEL);
-	if (!sinfo)
-		return -ENOMEM;
+	sinfo = devm_kzalloc(ph->dev, माप(*sinfo), GFP_KERNEL);
+	अगर (!sinfo)
+		वापस -ENOMEM;
 	sinfo->version = version;
 
 	ret = scmi_sensor_attributes_get(ph, sinfo);
-	if (ret)
-		return ret;
-	sinfo->sensors = devm_kcalloc(ph->dev, sinfo->num_sensors,
-				      sizeof(*sinfo->sensors), GFP_KERNEL);
-	if (!sinfo->sensors)
-		return -ENOMEM;
+	अगर (ret)
+		वापस ret;
+	sinfo->sensors = devm_kसुस्मृति(ph->dev, sinfo->num_sensors,
+				      माप(*sinfo->sensors), GFP_KERNEL);
+	अगर (!sinfo->sensors)
+		वापस -ENOMEM;
 
 	ret = scmi_sensor_description_get(ph, sinfo);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ph->set_priv(ph, sinfo);
-}
+	वापस ph->set_priv(ph, sinfo);
+पूर्ण
 
-static const struct scmi_protocol scmi_sensors = {
+अटल स्थिर काष्ठा scmi_protocol scmi_sensors = अणु
 	.id = SCMI_PROTOCOL_SENSOR,
 	.owner = THIS_MODULE,
 	.instance_init = &scmi_sensors_protocol_init,
 	.ops = &sensor_proto_ops,
 	.events = &sensor_protocol_events,
-};
+पूर्ण;
 
 DEFINE_SCMI_PROTOCOL_REGISTER_UNREGISTER(sensors, scmi_sensors)

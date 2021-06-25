@@ -1,66 +1,67 @@
+<शैली गुरु>
 /*
- * Platform specific functions
+ * Platक्रमm specअगरic functions
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file "COPYING" in the main directory of
- * this archive for more details.
+ * Public License.  See the file "COPYING" in the मुख्य directory of
+ * this archive क्रम more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#ifndef _XTENSA_PLATFORM_H
-#define _XTENSA_PLATFORM_H
+#अगर_अघोषित _XTENSA_PLATFORM_H
+#घोषणा _XTENSA_PLATFORM_H
 
-#include <linux/types.h>
-#include <asm/bootparam.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/bootparam.h>
 
 /*
- * platform_init is called before the mmu is initialized to give the
- * platform a early hook-up. bp_tag_t is a list of configuration tags
+ * platक्रमm_init is called beक्रमe the mmu is initialized to give the
+ * platक्रमm a early hook-up. bp_tag_t is a list of configuration tags
  * passed from the boot-loader.
  */
-extern void platform_init(bp_tag_t*);
+बाह्य व्योम platक्रमm_init(bp_tag_t*);
 
 /*
- * platform_setup is called from setup_arch with a pointer to the command-line
+ * platक्रमm_setup is called from setup_arch with a poपूर्णांकer to the command-line
  * string.
  */
-extern void platform_setup (char **);
+बाह्य व्योम platक्रमm_setup (अक्षर **);
 
 /*
- * platform_restart is called to restart the system.
+ * platक्रमm_restart is called to restart the प्रणाली.
  */
-extern void platform_restart (void);
+बाह्य व्योम platक्रमm_restart (व्योम);
 
 /*
- * platform_halt is called to stop the system and halt.
+ * platक्रमm_halt is called to stop the प्रणाली and halt.
  */
-extern void platform_halt (void);
+बाह्य व्योम platक्रमm_halt (व्योम);
 
 /*
- * platform_power_off is called to stop the system and power it off.
+ * platक्रमm_घातer_off is called to stop the प्रणाली and घातer it off.
  */
-extern void platform_power_off (void);
+बाह्य व्योम platक्रमm_घातer_off (व्योम);
 
 /*
- * platform_idle is called from the idle function.
+ * platक्रमm_idle is called from the idle function.
  */
-extern void platform_idle (void);
+बाह्य व्योम platक्रमm_idle (व्योम);
 
 /*
- * platform_heartbeat is called every HZ
+ * platक्रमm_heartbeat is called every HZ
  */
-extern void platform_heartbeat (void);
+बाह्य व्योम platक्रमm_heartbeat (व्योम);
 
 /*
- * platform_calibrate_ccount calibrates cpu clock freq (CONFIG_XTENSA_CALIBRATE)
+ * platक्रमm_calibrate_ccount calibrates cpu घड़ी freq (CONFIG_XTENSA_CALIBRATE)
  */
-extern void platform_calibrate_ccount (void);
+बाह्य व्योम platक्रमm_calibrate_ccount (व्योम);
 
 /*
  * Flush and reset the mmu, simulate a processor reset, and
  * jump to the reset vector.
  */
-void cpu_reset(void) __attribute__((noreturn));
+व्योम cpu_reset(व्योम) __attribute__((noवापस));
 
-#endif	/* _XTENSA_PLATFORM_H */
+#पूर्ण_अगर	/* _XTENSA_PLATFORM_H */

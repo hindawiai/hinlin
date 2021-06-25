@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * amd8131_edac.h, EDAC defs for AMD8131 hypertransport chip
+ * amd8131_edac.h, EDAC defs क्रम AMD8131 hypertransport chip
  *
  * Copyright (c) 2008 Wind River Systems, Inc.
  *
@@ -9,39 +10,39 @@
  * 		Hu Yongqi <yongqi.hu@windriver.com>
  */
 
-#ifndef _AMD8131_EDAC_H_
-#define _AMD8131_EDAC_H_
+#अगर_अघोषित _AMD8131_EDAC_H_
+#घोषणा _AMD8131_EDAC_H_
 
-#define DEVFN_PCIX_BRIDGE_NORTH_A	8
-#define DEVFN_PCIX_BRIDGE_NORTH_B	16
-#define DEVFN_PCIX_BRIDGE_SOUTH_A	24
-#define DEVFN_PCIX_BRIDGE_SOUTH_B	32
+#घोषणा DEVFN_PCIX_BRIDGE_NORTH_A	8
+#घोषणा DEVFN_PCIX_BRIDGE_NORTH_B	16
+#घोषणा DEVFN_PCIX_BRIDGE_SOUTH_A	24
+#घोषणा DEVFN_PCIX_BRIDGE_SOUTH_B	32
 
 /************************************************************
  *	PCI-X Bridge Status and Command Register, DevA:0x04
  ************************************************************/
-#define REG_STS_CMD	0x04
-enum sts_cmd_bits {
+#घोषणा REG_STS_CMD	0x04
+क्रमागत sts_cmd_bits अणु
 	STS_CMD_SSE	= BIT(30),
 	STS_CMD_SERREN	= BIT(8)
-};
+पूर्ण;
 
 /************************************************************
  *	PCI-X Bridge Interrupt and Bridge Control Register,
  ************************************************************/
-#define REG_INT_CTLR	0x3c
-enum int_ctlr_bits {
+#घोषणा REG_INT_CTLR	0x3c
+क्रमागत पूर्णांक_ctlr_bits अणु
 	INT_CTLR_DTSE	= BIT(27),
 	INT_CTLR_DTS	= BIT(26),
 	INT_CTLR_SERR	= BIT(17),
 	INT_CTLR_PERR	= BIT(16)
-};
+पूर्ण;
 
 /************************************************************
  *	PCI-X Bridge Memory Base-Limit Register, DevA:0x1C
  ************************************************************/
-#define REG_MEM_LIM	0x1c
-enum mem_limit_bits {
+#घोषणा REG_MEM_LIM	0x1c
+क्रमागत mem_limit_bits अणु
 	MEM_LIMIT_DPE 	= BIT(31),
 	MEM_LIMIT_RSE 	= BIT(30),
 	MEM_LIMIT_RMA 	= BIT(29),
@@ -50,40 +51,40 @@ enum mem_limit_bits {
 	MEM_LIMIT_MDPE	= BIT(24),
 	MEM_LIMIT_MASK	= MEM_LIMIT_DPE|MEM_LIMIT_RSE|MEM_LIMIT_RMA|
 				MEM_LIMIT_RTA|MEM_LIMIT_STA|MEM_LIMIT_MDPE
-};
+पूर्ण;
 
 /************************************************************
  *	Link Configuration And Control Register, side A
  ************************************************************/
-#define REG_LNK_CTRL_A	0xc4
+#घोषणा REG_LNK_CTRL_A	0xc4
 
 /************************************************************
  *	Link Configuration And Control Register, side B
  ************************************************************/
-#define REG_LNK_CTRL_B  0xc8
+#घोषणा REG_LNK_CTRL_B  0xc8
 
-enum lnk_ctrl_bits {
+क्रमागत lnk_ctrl_bits अणु
 	LNK_CTRL_CRCERR_A	= BIT(9),
 	LNK_CTRL_CRCERR_B	= BIT(8),
 	LNK_CTRL_CRCFEN		= BIT(1)
-};
+पूर्ण;
 
-enum pcix_bridge_inst {
+क्रमागत pcix_bridge_inst अणु
 	NORTH_A = 0,
 	NORTH_B = 1,
 	SOUTH_A = 2,
 	SOUTH_B = 3,
 	NO_BRIDGE = 4
-};
+पूर्ण;
 
-struct amd8131_dev_info {
-	int devfn;
-	enum pcix_bridge_inst inst;
-	struct pci_dev *dev;
-	int edac_idx;	/* pci device index */
-	char *ctl_name;
-	struct edac_pci_ctl_info *edac_dev;
-};
+काष्ठा amd8131_dev_info अणु
+	पूर्णांक devfn;
+	क्रमागत pcix_bridge_inst inst;
+	काष्ठा pci_dev *dev;
+	पूर्णांक edac_idx;	/* pci device index */
+	अक्षर *ctl_name;
+	काष्ठा edac_pci_ctl_info *edac_dev;
+पूर्ण;
 
 /*
  * AMD8131 chipset has two pairs of PCIX Bridge and related IOAPIC
@@ -92,16 +93,16 @@ struct amd8131_dev_info {
  *
  * These PCIX Bridges share the same PCI Device ID and are all of
  * Function Zero, they could be discrimated by their pci_dev->devfn.
- * They share the same set of init/check/exit methods, and their
- * private structures are collected in the devices[] array.
+ * They share the same set of init/check/निकास methods, and their
+ * निजी काष्ठाures are collected in the devices[] array.
  */
-struct amd8131_info {
-	u16 err_dev;	/* PCI Device ID for AMD8131 APIC*/
-	struct amd8131_dev_info *devices;
-	void (*init)(struct amd8131_dev_info *dev_info);
-	void (*exit)(struct amd8131_dev_info *dev_info);
-	void (*check)(struct edac_pci_ctl_info *edac_dev);
-};
+काष्ठा amd8131_info अणु
+	u16 err_dev;	/* PCI Device ID क्रम AMD8131 APIC*/
+	काष्ठा amd8131_dev_info *devices;
+	व्योम (*init)(काष्ठा amd8131_dev_info *dev_info);
+	व्योम (*निकास)(काष्ठा amd8131_dev_info *dev_info);
+	व्योम (*check)(काष्ठा edac_pci_ctl_info *edac_dev);
+पूर्ण;
 
-#endif /* _AMD8131_EDAC_H_ */
+#पूर्ण_अगर /* _AMD8131_EDAC_H_ */
 

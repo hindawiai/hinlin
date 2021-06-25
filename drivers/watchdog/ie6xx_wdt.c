@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *      Intel Atom E6xx Watchdog driver
+ *      Intel Atom E6xx Watchकरोg driver
  *
  *      Copyright (C) 2011 Alexander Stein
  *                <alexander.stein@systec-electronic.com>
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/watchdog.h>
-#include <linux/seq_file.h>
-#include <linux/debugfs.h>
-#include <linux/uaccess.h>
-#include <linux/spinlock.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/spinlock.h>
 
-#define DRIVER_NAME "ie6xx_wdt"
+#घोषणा DRIVER_NAME "ie6xx_wdt"
 
-#define PV1	0x00
-#define PV2	0x04
+#घोषणा PV1	0x00
+#घोषणा PV2	0x04
 
-#define RR0	0x0c
-#define RR1	0x0d
-#define WDT_RELOAD	0x01
-#define WDT_TOUT	0x02
+#घोषणा RR0	0x0c
+#घोषणा RR1	0x0d
+#घोषणा WDT_RELOAD	0x01
+#घोषणा WDT_TOUT	0x02
 
-#define WDTCR	0x10
-#define WDT_PRE_SEL	0x04
-#define WDT_RESET_SEL	0x08
-#define WDT_RESET_EN	0x10
-#define WDT_TOUT_EN	0x20
+#घोषणा WDTCR	0x10
+#घोषणा WDT_PRE_SEL	0x04
+#घोषणा WDT_RESET_SEL	0x08
+#घोषणा WDT_RESET_EN	0x10
+#घोषणा WDT_TOUT_EN	0x20
 
-#define DCR	0x14
+#घोषणा DCR	0x14
 
-#define WDTLR	0x18
-#define WDT_LOCK	0x01
-#define WDT_ENABLE	0x02
-#define WDT_TOUT_CNF	0x03
+#घोषणा WDTLR	0x18
+#घोषणा WDT_LOCK	0x01
+#घोषणा WDT_ENABLE	0x02
+#घोषणा WDT_TOUT_CNF	0x03
 
-#define MIN_TIME	1
-#define MAX_TIME	(10 * 60) /* 10 minutes */
-#define DEFAULT_TIME	60
+#घोषणा MIN_TIME	1
+#घोषणा MAX_TIME	(10 * 60) /* 10 minutes */
+#घोषणा DEFAULT_TIME	60
 
-static unsigned int timeout = DEFAULT_TIME;
-module_param(timeout, uint, 0);
-MODULE_PARM_DESC(timeout,
+अटल अचिन्हित पूर्णांक समयout = DEFAULT_TIME;
+module_param(समयout, uपूर्णांक, 0);
+MODULE_PARM_DESC(समयout,
 		"Default Watchdog timer setting ("
 		__MODULE_STRING(DEFAULT_TIME) "s)."
 		"The range is from 1 to 600");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 	"Watchdog cannot be stopped once started (default="
 		__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static u8 resetmode = 0x10;
-module_param(resetmode, byte, 0);
-MODULE_PARM_DESC(resetmode,
+अटल u8 reseपंचांगode = 0x10;
+module_param(reseपंचांगode, byte, 0);
+MODULE_PARM_DESC(reseपंचांगode,
 	"Resetmode bits: 0x08 warm reset (cold reset otherwise), "
 	"0x10 reset enable, 0x20 disable toggle GPIO[4] (default=0x10)");
 
-static struct {
-	unsigned short sch_wdtba;
+अटल काष्ठा अणु
+	अचिन्हित लघु sch_wdtba;
 	spinlock_t unlock_sequence;
-#ifdef CONFIG_DEBUG_FS
-	struct dentry *debugfs;
-#endif
-} ie6xx_wdt_data;
+#अगर_घोषित CONFIG_DEBUG_FS
+	काष्ठा dentry *debugfs;
+#पूर्ण_अगर
+पूर्ण ie6xx_wdt_data;
 
 /*
- * This is needed to write to preload and reload registers
- * struct ie6xx_wdt_data.unlock_sequence must be used
- * to prevent sequence interrupts
+ * This is needed to ग_लिखो to preload and reload रेजिस्टरs
+ * काष्ठा ie6xx_wdt_data.unlock_sequence must be used
+ * to prevent sequence पूर्णांकerrupts
  */
-static void ie6xx_wdt_unlock_registers(void)
-{
+अटल व्योम ie6xx_wdt_unlock_रेजिस्टरs(व्योम)
+अणु
 	outb(0x80, ie6xx_wdt_data.sch_wdtba + RR0);
 	outb(0x86, ie6xx_wdt_data.sch_wdtba + RR0);
-}
+पूर्ण
 
-static int ie6xx_wdt_ping(struct watchdog_device *wdd)
-{
+अटल पूर्णांक ie6xx_wdt_ping(काष्ठा watchकरोg_device *wdd)
+अणु
 	spin_lock(&ie6xx_wdt_data.unlock_sequence);
-	ie6xx_wdt_unlock_registers();
+	ie6xx_wdt_unlock_रेजिस्टरs();
 	outb(WDT_RELOAD, ie6xx_wdt_data.sch_wdtba + RR1);
 	spin_unlock(&ie6xx_wdt_data.unlock_sequence);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ie6xx_wdt_set_timeout(struct watchdog_device *wdd, unsigned int t)
-{
+अटल पूर्णांक ie6xx_wdt_set_समयout(काष्ठा watchकरोg_device *wdd, अचिन्हित पूर्णांक t)
+अणु
 	u32 preload;
-	u64 clock;
+	u64 घड़ी;
 	u8 wdtcr;
 
-	/* Watchdog clock is PCI Clock (33MHz) */
-	clock = 33000000;
-	/* and the preload value is loaded into [34:15] of the down counter */
-	preload = (t * clock) >> 15;
+	/* Watchकरोg घड़ी is PCI Clock (33MHz) */
+	घड़ी = 33000000;
+	/* and the preload value is loaded पूर्णांकo [34:15] of the करोwn counter */
+	preload = (t * घड़ी) >> 15;
 	/*
 	 * Manual states preload must be one less.
 	 * Does not wrap as t is at least 1
@@ -110,206 +111,206 @@ static int ie6xx_wdt_set_timeout(struct watchdog_device *wdd, unsigned int t)
 
 	spin_lock(&ie6xx_wdt_data.unlock_sequence);
 
-	/* Set ResetMode & Enable prescaler for range 10ms to 10 min */
-	wdtcr = resetmode & 0x38;
+	/* Set ResetMode & Enable prescaler क्रम range 10ms to 10 min */
+	wdtcr = reseपंचांगode & 0x38;
 	outb(wdtcr, ie6xx_wdt_data.sch_wdtba + WDTCR);
 
-	ie6xx_wdt_unlock_registers();
+	ie6xx_wdt_unlock_रेजिस्टरs();
 	outl(0, ie6xx_wdt_data.sch_wdtba + PV1);
 
-	ie6xx_wdt_unlock_registers();
+	ie6xx_wdt_unlock_रेजिस्टरs();
 	outl(preload, ie6xx_wdt_data.sch_wdtba + PV2);
 
-	ie6xx_wdt_unlock_registers();
+	ie6xx_wdt_unlock_रेजिस्टरs();
 	outb(WDT_RELOAD | WDT_TOUT, ie6xx_wdt_data.sch_wdtba + RR1);
 
 	spin_unlock(&ie6xx_wdt_data.unlock_sequence);
 
-	wdd->timeout = t;
-	return 0;
-}
+	wdd->समयout = t;
+	वापस 0;
+पूर्ण
 
-static int ie6xx_wdt_start(struct watchdog_device *wdd)
-{
-	ie6xx_wdt_set_timeout(wdd, wdd->timeout);
+अटल पूर्णांक ie6xx_wdt_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	ie6xx_wdt_set_समयout(wdd, wdd->समयout);
 
-	/* Enable the watchdog timer */
+	/* Enable the watchकरोg समयr */
 	spin_lock(&ie6xx_wdt_data.unlock_sequence);
 	outb(WDT_ENABLE, ie6xx_wdt_data.sch_wdtba + WDTLR);
 	spin_unlock(&ie6xx_wdt_data.unlock_sequence);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ie6xx_wdt_stop(struct watchdog_device *wdd)
-{
-	if (inb(ie6xx_wdt_data.sch_wdtba + WDTLR) & WDT_LOCK)
-		return -1;
+अटल पूर्णांक ie6xx_wdt_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	अगर (inb(ie6xx_wdt_data.sch_wdtba + WDTLR) & WDT_LOCK)
+		वापस -1;
 
-	/* Disable the watchdog timer */
+	/* Disable the watchकरोg समयr */
 	spin_lock(&ie6xx_wdt_data.unlock_sequence);
 	outb(0, ie6xx_wdt_data.sch_wdtba + WDTLR);
 	spin_unlock(&ie6xx_wdt_data.unlock_sequence);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info ie6xx_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info ie6xx_wdt_info = अणु
 	.identity =	"Intel Atom E6xx Watchdog",
 	.options =	WDIOF_SETTIMEOUT |
 			WDIOF_MAGICCLOSE |
 			WDIOF_KEEPALIVEPING,
-};
+पूर्ण;
 
-static const struct watchdog_ops ie6xx_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops ie6xx_wdt_ops = अणु
 	.owner =	THIS_MODULE,
 	.start =	ie6xx_wdt_start,
 	.stop =		ie6xx_wdt_stop,
 	.ping =		ie6xx_wdt_ping,
-	.set_timeout =	ie6xx_wdt_set_timeout,
-};
+	.set_समयout =	ie6xx_wdt_set_समयout,
+पूर्ण;
 
-static struct watchdog_device ie6xx_wdt_dev = {
+अटल काष्ठा watchकरोg_device ie6xx_wdt_dev = अणु
 	.info =		&ie6xx_wdt_info,
 	.ops =		&ie6xx_wdt_ops,
-	.min_timeout =	MIN_TIME,
-	.max_timeout =	MAX_TIME,
-};
+	.min_समयout =	MIN_TIME,
+	.max_समयout =	MAX_TIME,
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-static int ie6xx_wdt_show(struct seq_file *s, void *unused)
-{
-	seq_printf(s, "PV1   = 0x%08x\n",
+अटल पूर्णांक ie6xx_wdt_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	seq_म_लिखो(s, "PV1   = 0x%08x\n",
 		inl(ie6xx_wdt_data.sch_wdtba + PV1));
-	seq_printf(s, "PV2   = 0x%08x\n",
+	seq_म_लिखो(s, "PV2   = 0x%08x\n",
 		inl(ie6xx_wdt_data.sch_wdtba + PV2));
-	seq_printf(s, "RR    = 0x%08x\n",
+	seq_म_लिखो(s, "RR    = 0x%08x\n",
 		inw(ie6xx_wdt_data.sch_wdtba + RR0));
-	seq_printf(s, "WDTCR = 0x%08x\n",
+	seq_म_लिखो(s, "WDTCR = 0x%08x\n",
 		inw(ie6xx_wdt_data.sch_wdtba + WDTCR));
-	seq_printf(s, "DCR   = 0x%08x\n",
+	seq_म_लिखो(s, "DCR   = 0x%08x\n",
 		inl(ie6xx_wdt_data.sch_wdtba + DCR));
-	seq_printf(s, "WDTLR = 0x%08x\n",
+	seq_म_लिखो(s, "WDTLR = 0x%08x\n",
 		inw(ie6xx_wdt_data.sch_wdtba + WDTLR));
 
-	seq_printf(s, "\n");
-	return 0;
-}
+	seq_म_लिखो(s, "\n");
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(ie6xx_wdt);
 
-static void ie6xx_wdt_debugfs_init(void)
-{
+अटल व्योम ie6xx_wdt_debugfs_init(व्योम)
+अणु
 	/* /sys/kernel/debug/ie6xx_wdt */
 	ie6xx_wdt_data.debugfs = debugfs_create_file("ie6xx_wdt",
-		S_IFREG | S_IRUGO, NULL, NULL, &ie6xx_wdt_fops);
-}
+		S_IFREG | S_IRUGO, शून्य, शून्य, &ie6xx_wdt_fops);
+पूर्ण
 
-static void ie6xx_wdt_debugfs_exit(void)
-{
-	debugfs_remove(ie6xx_wdt_data.debugfs);
-}
+अटल व्योम ie6xx_wdt_debugfs_निकास(व्योम)
+अणु
+	debugfs_हटाओ(ie6xx_wdt_data.debugfs);
+पूर्ण
 
-#else
-static void ie6xx_wdt_debugfs_init(void)
-{
-}
+#अन्यथा
+अटल व्योम ie6xx_wdt_debugfs_init(व्योम)
+अणु
+पूर्ण
 
-static void ie6xx_wdt_debugfs_exit(void)
-{
-}
-#endif
+अटल व्योम ie6xx_wdt_debugfs_निकास(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int ie6xx_wdt_probe(struct platform_device *pdev)
-{
-	struct resource *res;
+अटल पूर्णांक ie6xx_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
 	u8 wdtlr;
-	int ret;
+	पूर्णांक ret;
 
-	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
-	if (!request_region(res->start, resource_size(res), pdev->name)) {
+	अगर (!request_region(res->start, resource_size(res), pdev->name)) अणु
 		dev_err(&pdev->dev, "Watchdog region 0x%llx already in use!\n",
 			(u64)res->start);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	ie6xx_wdt_data.sch_wdtba = res->start;
 	dev_dbg(&pdev->dev, "WDT = 0x%X\n", ie6xx_wdt_data.sch_wdtba);
 
-	ie6xx_wdt_dev.timeout = timeout;
-	watchdog_set_nowayout(&ie6xx_wdt_dev, nowayout);
+	ie6xx_wdt_dev.समयout = समयout;
+	watchकरोg_set_nowayout(&ie6xx_wdt_dev, nowayout);
 	ie6xx_wdt_dev.parent = &pdev->dev;
 
 	spin_lock_init(&ie6xx_wdt_data.unlock_sequence);
 
 	wdtlr = inb(ie6xx_wdt_data.sch_wdtba + WDTLR);
-	if (wdtlr & WDT_LOCK)
+	अगर (wdtlr & WDT_LOCK)
 		dev_warn(&pdev->dev,
 			"Watchdog Timer is Locked (Reg=0x%x)\n", wdtlr);
 
 	ie6xx_wdt_debugfs_init();
 
-	ret = watchdog_register_device(&ie6xx_wdt_dev);
-	if (ret)
-		goto misc_register_error;
+	ret = watchकरोg_रेजिस्टर_device(&ie6xx_wdt_dev);
+	अगर (ret)
+		जाओ misc_रेजिस्टर_error;
 
-	return 0;
+	वापस 0;
 
-misc_register_error:
-	ie6xx_wdt_debugfs_exit();
+misc_रेजिस्टर_error:
+	ie6xx_wdt_debugfs_निकास();
 	release_region(res->start, resource_size(res));
 	ie6xx_wdt_data.sch_wdtba = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ie6xx_wdt_remove(struct platform_device *pdev)
-{
-	struct resource *res;
+अटल पूर्णांक ie6xx_wdt_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
 
-	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	ie6xx_wdt_stop(NULL);
-	watchdog_unregister_device(&ie6xx_wdt_dev);
-	ie6xx_wdt_debugfs_exit();
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
+	ie6xx_wdt_stop(शून्य);
+	watchकरोg_unरेजिस्टर_device(&ie6xx_wdt_dev);
+	ie6xx_wdt_debugfs_निकास();
 	release_region(res->start, resource_size(res));
 	ie6xx_wdt_data.sch_wdtba = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver ie6xx_wdt_driver = {
+अटल काष्ठा platक्रमm_driver ie6xx_wdt_driver = अणु
 	.probe		= ie6xx_wdt_probe,
-	.remove		= ie6xx_wdt_remove,
-	.driver		= {
+	.हटाओ		= ie6xx_wdt_हटाओ,
+	.driver		= अणु
 		.name	= DRIVER_NAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init ie6xx_wdt_init(void)
-{
-	/* Check boot parameters to verify that their initial values */
+अटल पूर्णांक __init ie6xx_wdt_init(व्योम)
+अणु
+	/* Check boot parameters to verअगरy that their initial values */
 	/* are in range. */
-	if ((timeout < MIN_TIME) ||
-	    (timeout > MAX_TIME)) {
+	अगर ((समयout < MIN_TIME) ||
+	    (समयout > MAX_TIME)) अणु
 		pr_err("Watchdog timer: value of timeout %d (dec) "
 		  "is out of range from %d to %d (dec)\n",
-		  timeout, MIN_TIME, MAX_TIME);
-		return -EINVAL;
-	}
+		  समयout, MIN_TIME, MAX_TIME);
+		वापस -EINVAL;
+	पूर्ण
 
-	return platform_driver_register(&ie6xx_wdt_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&ie6xx_wdt_driver);
+पूर्ण
 
-static void __exit ie6xx_wdt_exit(void)
-{
-	platform_driver_unregister(&ie6xx_wdt_driver);
-}
+अटल व्योम __निकास ie6xx_wdt_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&ie6xx_wdt_driver);
+पूर्ण
 
 late_initcall(ie6xx_wdt_init);
-module_exit(ie6xx_wdt_exit);
+module_निकास(ie6xx_wdt_निकास);
 
 MODULE_AUTHOR("Alexander Stein <alexander.stein@systec-electronic.com>");
 MODULE_DESCRIPTION("Intel Atom E6xx Watchdog Device Driver");

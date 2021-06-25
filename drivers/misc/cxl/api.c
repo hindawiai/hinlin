@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2014 IBM Corp.
  */
 
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/file.h>
-#include <misc/cxl.h>
-#include <linux/module.h>
-#include <linux/mount.h>
-#include <linux/pseudo_fs.h>
-#include <linux/sched/mm.h>
-#include <linux/mmu_context.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/file.h>
+#समावेश <misc/cxl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/pseuकरो_fs.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/mmu_context.h>
 
-#include "cxl.h"
+#समावेश "cxl.h"
 
 /*
- * Since we want to track memory mappings to be able to force-unmap
- * when the AFU is no longer reachable, we need an inode. For devices
- * opened through the cxl user API, this is not a problem, but a
+ * Since we want to track memory mappings to be able to क्रमce-unmap
+ * when the AFU is no दीर्घer reachable, we need an inode. For devices
+ * खोलोed through the cxl user API, this is not a problem, but a
  * userland process can also get a cxl fd through the cxl_get_fd()
  * API, which is used by the cxlflash driver.
  *
- * Therefore we implement our own simple pseudo-filesystem and inode
- * allocator. We don't use the anonymous inode, as we need the
+ * Thereक्रमe we implement our own simple pseuकरो-fileप्रणाली and inode
+ * allocator. We करोn't use the anonymous inode, as we need the
  * meta-data associated with it (address_space) and it is shared by
  * other drivers/processes, so it could lead to cxl unmapping VMAs
- * from random processes.
+ * from अक्रमom processes.
  */
 
-#define CXL_PSEUDO_FS_MAGIC	0x1697697f
+#घोषणा CXL_PSEUDO_FS_MAGIC	0x1697697f
 
-static int cxl_fs_cnt;
-static struct vfsmount *cxl_vfs_mount;
+अटल पूर्णांक cxl_fs_cnt;
+अटल काष्ठा vfsmount *cxl_vfs_mount;
 
-static int cxl_fs_init_fs_context(struct fs_context *fc)
-{
-	return init_pseudo(fc, CXL_PSEUDO_FS_MAGIC) ? 0 : -ENOMEM;
-}
+अटल पूर्णांक cxl_fs_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	वापस init_pseuकरो(fc, CXL_PSEUDO_FS_MAGIC) ? 0 : -ENOMEM;
+पूर्ण
 
-static struct file_system_type cxl_fs_type = {
+अटल काष्ठा file_प्रणाली_type cxl_fs_type = अणु
 	.name		= "cxl",
 	.owner		= THIS_MODULE,
 	.init_fs_context = cxl_fs_init_fs_context,
-	.kill_sb	= kill_anon_super,
-};
+	.समाप्त_sb	= समाप्त_anon_super,
+पूर्ण;
 
 
-void cxl_release_mapping(struct cxl_context *ctx)
-{
-	if (ctx->kernelapi && ctx->mapping)
+व्योम cxl_release_mapping(काष्ठा cxl_context *ctx)
+अणु
+	अगर (ctx->kernelapi && ctx->mapping)
 		simple_release_fs(&cxl_vfs_mount, &cxl_fs_cnt);
-}
+पूर्ण
 
-static struct file *cxl_getfile(const char *name,
-				const struct file_operations *fops,
-				void *priv, int flags)
-{
-	struct file *file;
-	struct inode *inode;
-	int rc;
+अटल काष्ठा file *cxl_getfile(स्थिर अक्षर *name,
+				स्थिर काष्ठा file_operations *fops,
+				व्योम *priv, पूर्णांक flags)
+अणु
+	काष्ठा file *file;
+	काष्ठा inode *inode;
+	पूर्णांक rc;
 
 	/* strongly inspired by anon_inode_getfile() */
 
-	if (fops->owner && !try_module_get(fops->owner))
-		return ERR_PTR(-ENOENT);
+	अगर (fops->owner && !try_module_get(fops->owner))
+		वापस ERR_PTR(-ENOENT);
 
 	rc = simple_pin_fs(&cxl_fs_type, &cxl_vfs_mount, &cxl_fs_cnt);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		pr_err("Cannot mount cxl pseudo filesystem: %d\n", rc);
 		file = ERR_PTR(rc);
-		goto err_module;
-	}
+		जाओ err_module;
+	पूर्ण
 
 	inode = alloc_anon_inode(cxl_vfs_mount->mnt_sb);
-	if (IS_ERR(inode)) {
+	अगर (IS_ERR(inode)) अणु
 		file = ERR_CAST(inode);
-		goto err_fs;
-	}
+		जाओ err_fs;
+	पूर्ण
 
-	file = alloc_file_pseudo(inode, cxl_vfs_mount, name,
+	file = alloc_file_pseuकरो(inode, cxl_vfs_mount, name,
 				 flags & (O_ACCMODE | O_NONBLOCK), fops);
-	if (IS_ERR(file))
-		goto err_inode;
+	अगर (IS_ERR(file))
+		जाओ err_inode;
 
-	file->private_data = priv;
+	file->निजी_data = priv;
 
-	return file;
+	वापस file;
 
 err_inode:
 	iput(inode);
@@ -94,214 +95,214 @@ err_fs:
 	simple_release_fs(&cxl_vfs_mount, &cxl_fs_cnt);
 err_module:
 	module_put(fops->owner);
-	return file;
-}
+	वापस file;
+पूर्ण
 
-struct cxl_context *cxl_dev_context_init(struct pci_dev *dev)
-{
-	struct cxl_afu *afu;
-	struct cxl_context  *ctx;
-	int rc;
+काष्ठा cxl_context *cxl_dev_context_init(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा cxl_afu *afu;
+	काष्ठा cxl_context  *ctx;
+	पूर्णांक rc;
 
 	afu = cxl_pci_to_afu(dev);
-	if (IS_ERR(afu))
-		return ERR_CAST(afu);
+	अगर (IS_ERR(afu))
+		वापस ERR_CAST(afu);
 
 	ctx = cxl_context_alloc();
-	if (!ctx)
-		return ERR_PTR(-ENOMEM);
+	अगर (!ctx)
+		वापस ERR_PTR(-ENOMEM);
 
 	ctx->kernelapi = true;
 
 	/* Make it a slave context.  We can promote it later? */
 	rc = cxl_context_init(ctx, afu, false);
-	if (rc)
-		goto err_ctx;
+	अगर (rc)
+		जाओ err_ctx;
 
-	return ctx;
+	वापस ctx;
 
 err_ctx:
-	kfree(ctx);
-	return ERR_PTR(rc);
-}
+	kमुक्त(ctx);
+	वापस ERR_PTR(rc);
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_dev_context_init);
 
-struct cxl_context *cxl_get_context(struct pci_dev *dev)
-{
-	return dev->dev.archdata.cxl_ctx;
-}
+काष्ठा cxl_context *cxl_get_context(काष्ठा pci_dev *dev)
+अणु
+	वापस dev->dev.archdata.cxl_ctx;
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_get_context);
 
-int cxl_release_context(struct cxl_context *ctx)
-{
-	if (ctx->status >= STARTED)
-		return -EBUSY;
+पूर्णांक cxl_release_context(काष्ठा cxl_context *ctx)
+अणु
+	अगर (ctx->status >= STARTED)
+		वापस -EBUSY;
 
-	cxl_context_free(ctx);
+	cxl_context_मुक्त(ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_release_context);
 
-static irq_hw_number_t cxl_find_afu_irq(struct cxl_context *ctx, int num)
-{
+अटल irq_hw_number_t cxl_find_afu_irq(काष्ठा cxl_context *ctx, पूर्णांक num)
+अणु
 	__u16 range;
-	int r;
+	पूर्णांक r;
 
-	for (r = 0; r < CXL_IRQ_RANGES; r++) {
+	क्रम (r = 0; r < CXL_IRQ_RANGES; r++) अणु
 		range = ctx->irqs.range[r];
-		if (num < range) {
-			return ctx->irqs.offset[r] + num;
-		}
+		अगर (num < range) अणु
+			वापस ctx->irqs.offset[r] + num;
+		पूर्ण
 		num -= range;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-int cxl_set_priv(struct cxl_context *ctx, void *priv)
-{
-	if (!ctx)
-		return -EINVAL;
+पूर्णांक cxl_set_priv(काष्ठा cxl_context *ctx, व्योम *priv)
+अणु
+	अगर (!ctx)
+		वापस -EINVAL;
 
 	ctx->priv = priv;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_set_priv);
 
-void *cxl_get_priv(struct cxl_context *ctx)
-{
-	if (!ctx)
-		return ERR_PTR(-EINVAL);
+व्योम *cxl_get_priv(काष्ठा cxl_context *ctx)
+अणु
+	अगर (!ctx)
+		वापस ERR_PTR(-EINVAL);
 
-	return ctx->priv;
-}
+	वापस ctx->priv;
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_get_priv);
 
-int cxl_allocate_afu_irqs(struct cxl_context *ctx, int num)
-{
-	int res;
+पूर्णांक cxl_allocate_afu_irqs(काष्ठा cxl_context *ctx, पूर्णांक num)
+अणु
+	पूर्णांक res;
 	irq_hw_number_t hwirq;
 
-	if (num == 0)
+	अगर (num == 0)
 		num = ctx->afu->pp_irqs;
 	res = afu_allocate_irqs(ctx, num);
-	if (res)
-		return res;
+	अगर (res)
+		वापस res;
 
-	if (!cpu_has_feature(CPU_FTR_HVMODE)) {
-		/* In a guest, the PSL interrupt is not multiplexed. It was
+	अगर (!cpu_has_feature(CPU_FTR_HVMODE)) अणु
+		/* In a guest, the PSL पूर्णांकerrupt is not multiplexed. It was
 		 * allocated above, and we need to set its handler
 		 */
 		hwirq = cxl_find_afu_irq(ctx, 0);
-		if (hwirq)
-			cxl_map_irq(ctx->afu->adapter, hwirq, cxl_ops->psl_interrupt, ctx, "psl");
-	}
+		अगर (hwirq)
+			cxl_map_irq(ctx->afu->adapter, hwirq, cxl_ops->psl_पूर्णांकerrupt, ctx, "psl");
+	पूर्ण
 
-	if (ctx->status == STARTED) {
-		if (cxl_ops->update_ivtes)
+	अगर (ctx->status == STARTED) अणु
+		अगर (cxl_ops->update_ivtes)
 			cxl_ops->update_ivtes(ctx);
-		else WARN(1, "BUG: cxl_allocate_afu_irqs must be called prior to starting the context on this platform\n");
-	}
+		अन्यथा WARN(1, "BUG: cxl_allocate_afu_irqs must be called prior to starting the context on this platform\n");
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_allocate_afu_irqs);
 
-void cxl_free_afu_irqs(struct cxl_context *ctx)
-{
+व्योम cxl_मुक्त_afu_irqs(काष्ठा cxl_context *ctx)
+अणु
 	irq_hw_number_t hwirq;
-	unsigned int virq;
+	अचिन्हित पूर्णांक virq;
 
-	if (!cpu_has_feature(CPU_FTR_HVMODE)) {
+	अगर (!cpu_has_feature(CPU_FTR_HVMODE)) अणु
 		hwirq = cxl_find_afu_irq(ctx, 0);
-		if (hwirq) {
-			virq = irq_find_mapping(NULL, hwirq);
-			if (virq)
+		अगर (hwirq) अणु
+			virq = irq_find_mapping(शून्य, hwirq);
+			अगर (virq)
 				cxl_unmap_irq(virq, ctx);
-		}
-	}
-	afu_irq_name_free(ctx);
+		पूर्ण
+	पूर्ण
+	afu_irq_name_मुक्त(ctx);
 	cxl_ops->release_irq_ranges(&ctx->irqs, ctx->afu->adapter);
-}
-EXPORT_SYMBOL_GPL(cxl_free_afu_irqs);
+पूर्ण
+EXPORT_SYMBOL_GPL(cxl_मुक्त_afu_irqs);
 
-int cxl_map_afu_irq(struct cxl_context *ctx, int num,
-		    irq_handler_t handler, void *cookie, char *name)
-{
+पूर्णांक cxl_map_afu_irq(काष्ठा cxl_context *ctx, पूर्णांक num,
+		    irq_handler_t handler, व्योम *cookie, अक्षर *name)
+अणु
 	irq_hw_number_t hwirq;
 
 	/*
-	 * Find interrupt we are to register.
+	 * Find पूर्णांकerrupt we are to रेजिस्टर.
 	 */
 	hwirq = cxl_find_afu_irq(ctx, num);
-	if (!hwirq)
-		return -ENOENT;
+	अगर (!hwirq)
+		वापस -ENOENT;
 
-	return cxl_map_irq(ctx->afu->adapter, hwirq, handler, cookie, name);
-}
+	वापस cxl_map_irq(ctx->afu->adapter, hwirq, handler, cookie, name);
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_map_afu_irq);
 
-void cxl_unmap_afu_irq(struct cxl_context *ctx, int num, void *cookie)
-{
+व्योम cxl_unmap_afu_irq(काष्ठा cxl_context *ctx, पूर्णांक num, व्योम *cookie)
+अणु
 	irq_hw_number_t hwirq;
-	unsigned int virq;
+	अचिन्हित पूर्णांक virq;
 
 	hwirq = cxl_find_afu_irq(ctx, num);
-	if (!hwirq)
-		return;
+	अगर (!hwirq)
+		वापस;
 
-	virq = irq_find_mapping(NULL, hwirq);
-	if (virq)
+	virq = irq_find_mapping(शून्य, hwirq);
+	अगर (virq)
 		cxl_unmap_irq(virq, cookie);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_unmap_afu_irq);
 
 /*
  * Start a context
  * Code here similar to afu_ioctl_start_work().
  */
-int cxl_start_context(struct cxl_context *ctx, u64 wed,
-		      struct task_struct *task)
-{
-	int rc = 0;
+पूर्णांक cxl_start_context(काष्ठा cxl_context *ctx, u64 wed,
+		      काष्ठा task_काष्ठा *task)
+अणु
+	पूर्णांक rc = 0;
 	bool kernel = true;
 
 	pr_devel("%s: pe: %i\n", __func__, ctx->pe);
 
 	mutex_lock(&ctx->status_mutex);
-	if (ctx->status == STARTED)
-		goto out; /* already started */
+	अगर (ctx->status == STARTED)
+		जाओ out; /* alपढ़ोy started */
 
 	/*
-	 * Increment the mapped context count for adapter. This also checks
-	 * if adapter_context_lock is taken.
+	 * Increment the mapped context count क्रम adapter. This also checks
+	 * अगर adapter_context_lock is taken.
 	 */
 	rc = cxl_adapter_context_get(ctx->afu->adapter);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	if (task) {
+	अगर (task) अणु
 		ctx->pid = get_task_pid(task, PIDTYPE_PID);
 		kernel = false;
 
 		/* acquire a reference to the task's mm */
 		ctx->mm = get_task_mm(current);
 
-		/* ensure this mm_struct can't be freed */
+		/* ensure this mm_काष्ठा can't be मुक्तd */
 		cxl_context_mm_count_get(ctx);
 
-		if (ctx->mm) {
+		अगर (ctx->mm) अणु
 			/* decrement the use count from above */
 			mmput(ctx->mm);
-			/* make TLBIs for this context global */
+			/* make TLBIs क्रम this context global */
 			mm_context_add_copro(ctx->mm);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Increment driver use count. Enables global TLBIs for hash
+	 * Increment driver use count. Enables global TLBIs क्रम hash
 	 * and callbacks to handle the segment table
 	 */
 	cxl_ctx_get();
@@ -309,223 +310,223 @@ int cxl_start_context(struct cxl_context *ctx, u64 wed,
 	/* See the comment in afu_ioctl_start_work() */
 	smp_mb();
 
-	if ((rc = cxl_ops->attach_process(ctx, kernel, wed, 0))) {
+	अगर ((rc = cxl_ops->attach_process(ctx, kernel, wed, 0))) अणु
 		put_pid(ctx->pid);
-		ctx->pid = NULL;
+		ctx->pid = शून्य;
 		cxl_adapter_context_put(ctx->afu->adapter);
 		cxl_ctx_put();
-		if (task) {
+		अगर (task) अणु
 			cxl_context_mm_count_put(ctx);
-			if (ctx->mm)
-				mm_context_remove_copro(ctx->mm);
-		}
-		goto out;
-	}
+			अगर (ctx->mm)
+				mm_context_हटाओ_copro(ctx->mm);
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
 	ctx->status = STARTED;
 out:
 	mutex_unlock(&ctx->status_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_start_context);
 
-int cxl_process_element(struct cxl_context *ctx)
-{
-	return ctx->external_pe;
-}
+पूर्णांक cxl_process_element(काष्ठा cxl_context *ctx)
+अणु
+	वापस ctx->बाह्यal_pe;
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_process_element);
 
 /* Stop a context.  Returns 0 on success, otherwise -Errno */
-int cxl_stop_context(struct cxl_context *ctx)
-{
-	return __detach_context(ctx);
-}
+पूर्णांक cxl_stop_context(काष्ठा cxl_context *ctx)
+अणु
+	वापस __detach_context(ctx);
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_stop_context);
 
-void cxl_set_master(struct cxl_context *ctx)
-{
+व्योम cxl_set_master(काष्ठा cxl_context *ctx)
+अणु
 	ctx->master = true;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_set_master);
 
 /* wrappers around afu_* file ops which are EXPORTED */
-int cxl_fd_open(struct inode *inode, struct file *file)
-{
-	return afu_open(inode, file);
-}
-EXPORT_SYMBOL_GPL(cxl_fd_open);
-int cxl_fd_release(struct inode *inode, struct file *file)
-{
-	return afu_release(inode, file);
-}
+पूर्णांक cxl_fd_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस afu_खोलो(inode, file);
+पूर्ण
+EXPORT_SYMBOL_GPL(cxl_fd_खोलो);
+पूर्णांक cxl_fd_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस afu_release(inode, file);
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_fd_release);
-long cxl_fd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	return afu_ioctl(file, cmd, arg);
-}
+दीर्घ cxl_fd_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस afu_ioctl(file, cmd, arg);
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_fd_ioctl);
-int cxl_fd_mmap(struct file *file, struct vm_area_struct *vm)
-{
-	return afu_mmap(file, vm);
-}
+पूर्णांक cxl_fd_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vm)
+अणु
+	वापस afu_mmap(file, vm);
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_fd_mmap);
-__poll_t cxl_fd_poll(struct file *file, struct poll_table_struct *poll)
-{
-	return afu_poll(file, poll);
-}
+__poll_t cxl_fd_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *poll)
+अणु
+	वापस afu_poll(file, poll);
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_fd_poll);
-ssize_t cxl_fd_read(struct file *file, char __user *buf, size_t count,
+sमाप_प्रकार cxl_fd_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
 			loff_t *off)
-{
-	return afu_read(file, buf, count, off);
-}
-EXPORT_SYMBOL_GPL(cxl_fd_read);
+अणु
+	वापस afu_पढ़ो(file, buf, count, off);
+पूर्ण
+EXPORT_SYMBOL_GPL(cxl_fd_पढ़ो);
 
-#define PATCH_FOPS(NAME) if (!fops->NAME) fops->NAME = afu_fops.NAME
+#घोषणा PATCH_FOPS(NAME) अगर (!fops->NAME) fops->NAME = afu_fops.NAME
 
-/* Get a struct file and fd for a context and attach the ops */
-struct file *cxl_get_fd(struct cxl_context *ctx, struct file_operations *fops,
-			int *fd)
-{
-	struct file *file;
-	int rc, flags, fdtmp;
-	char *name = NULL;
+/* Get a काष्ठा file and fd क्रम a context and attach the ops */
+काष्ठा file *cxl_get_fd(काष्ठा cxl_context *ctx, काष्ठा file_operations *fops,
+			पूर्णांक *fd)
+अणु
+	काष्ठा file *file;
+	पूर्णांक rc, flags, fdपंचांगp;
+	अक्षर *name = शून्य;
 
 	/* only allow one per context */
-	if (ctx->mapping)
-		return ERR_PTR(-EEXIST);
+	अगर (ctx->mapping)
+		वापस ERR_PTR(-EEXIST);
 
 	flags = O_RDWR | O_CLOEXEC;
 
 	/* This code is similar to anon_inode_getfd() */
 	rc = get_unused_fd_flags(flags);
-	if (rc < 0)
-		return ERR_PTR(rc);
-	fdtmp = rc;
+	अगर (rc < 0)
+		वापस ERR_PTR(rc);
+	fdपंचांगp = rc;
 
 	/*
 	 * Patch the file ops.  Needs to be careful that this is rentrant safe.
 	 */
-	if (fops) {
-		PATCH_FOPS(open);
+	अगर (fops) अणु
+		PATCH_FOPS(खोलो);
 		PATCH_FOPS(poll);
-		PATCH_FOPS(read);
+		PATCH_FOPS(पढ़ो);
 		PATCH_FOPS(release);
 		PATCH_FOPS(unlocked_ioctl);
 		PATCH_FOPS(compat_ioctl);
 		PATCH_FOPS(mmap);
-	} else /* use default ops */
-		fops = (struct file_operations *)&afu_fops;
+	पूर्ण अन्यथा /* use शेष ops */
+		fops = (काष्ठा file_operations *)&afu_fops;
 
-	name = kasprintf(GFP_KERNEL, "cxl:%d", ctx->pe);
+	name = kaप्र_लिखो(GFP_KERNEL, "cxl:%d", ctx->pe);
 	file = cxl_getfile(name, fops, ctx, flags);
-	kfree(name);
-	if (IS_ERR(file))
-		goto err_fd;
+	kमुक्त(name);
+	अगर (IS_ERR(file))
+		जाओ err_fd;
 
 	cxl_context_set_mapping(ctx, file->f_mapping);
-	*fd = fdtmp;
-	return file;
+	*fd = fdपंचांगp;
+	वापस file;
 
 err_fd:
-	put_unused_fd(fdtmp);
-	return NULL;
-}
+	put_unused_fd(fdपंचांगp);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_get_fd);
 
-struct cxl_context *cxl_fops_get_context(struct file *file)
-{
-	return file->private_data;
-}
+काष्ठा cxl_context *cxl_fops_get_context(काष्ठा file *file)
+अणु
+	वापस file->निजी_data;
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_fops_get_context);
 
-void cxl_set_driver_ops(struct cxl_context *ctx,
-			struct cxl_afu_driver_ops *ops)
-{
+व्योम cxl_set_driver_ops(काष्ठा cxl_context *ctx,
+			काष्ठा cxl_afu_driver_ops *ops)
+अणु
 	WARN_ON(!ops->fetch_event || !ops->event_delivered);
 	atomic_set(&ctx->afu_driver_events, 0);
 	ctx->afu_driver_ops = ops;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_set_driver_ops);
 
-void cxl_context_events_pending(struct cxl_context *ctx,
-				unsigned int new_events)
-{
+व्योम cxl_context_events_pending(काष्ठा cxl_context *ctx,
+				अचिन्हित पूर्णांक new_events)
+अणु
 	atomic_add(new_events, &ctx->afu_driver_events);
 	wake_up_all(&ctx->wq);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_context_events_pending);
 
-int cxl_start_work(struct cxl_context *ctx,
-		   struct cxl_ioctl_start_work *work)
-{
-	int rc;
+पूर्णांक cxl_start_work(काष्ठा cxl_context *ctx,
+		   काष्ठा cxl_ioctl_start_work *work)
+अणु
+	पूर्णांक rc;
 
 	/* code taken from afu_ioctl_start_work */
-	if (!(work->flags & CXL_START_WORK_NUM_IRQS))
-		work->num_interrupts = ctx->afu->pp_irqs;
-	else if ((work->num_interrupts < ctx->afu->pp_irqs) ||
-		 (work->num_interrupts > ctx->afu->irqs_max)) {
-		return -EINVAL;
-	}
+	अगर (!(work->flags & CXL_START_WORK_NUM_IRQS))
+		work->num_पूर्णांकerrupts = ctx->afu->pp_irqs;
+	अन्यथा अगर ((work->num_पूर्णांकerrupts < ctx->afu->pp_irqs) ||
+		 (work->num_पूर्णांकerrupts > ctx->afu->irqs_max)) अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	rc = afu_register_irqs(ctx, work->num_interrupts);
-	if (rc)
-		return rc;
+	rc = afu_रेजिस्टर_irqs(ctx, work->num_पूर्णांकerrupts);
+	अगर (rc)
+		वापस rc;
 
 	rc = cxl_start_context(ctx, work->work_element_descriptor, current);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		afu_release_irqs(ctx, ctx);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_start_work);
 
-void __iomem *cxl_psa_map(struct cxl_context *ctx)
-{
-	if (ctx->status != STARTED)
-		return NULL;
+व्योम __iomem *cxl_psa_map(काष्ठा cxl_context *ctx)
+अणु
+	अगर (ctx->status != STARTED)
+		वापस शून्य;
 
 	pr_devel("%s: psn_phys%llx size:%llx\n",
 		__func__, ctx->psn_phys, ctx->psn_size);
-	return ioremap(ctx->psn_phys, ctx->psn_size);
-}
+	वापस ioremap(ctx->psn_phys, ctx->psn_size);
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_psa_map);
 
-void cxl_psa_unmap(void __iomem *addr)
-{
+व्योम cxl_psa_unmap(व्योम __iomem *addr)
+अणु
 	iounmap(addr);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_psa_unmap);
 
-int cxl_afu_reset(struct cxl_context *ctx)
-{
-	struct cxl_afu *afu = ctx->afu;
-	int rc;
+पूर्णांक cxl_afu_reset(काष्ठा cxl_context *ctx)
+अणु
+	काष्ठा cxl_afu *afu = ctx->afu;
+	पूर्णांक rc;
 
 	rc = cxl_ops->afu_reset(afu);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return cxl_ops->afu_check_and_enable(afu);
-}
+	वापस cxl_ops->afu_check_and_enable(afu);
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_afu_reset);
 
-void cxl_perst_reloads_same_image(struct cxl_afu *afu,
+व्योम cxl_perst_reloads_same_image(काष्ठा cxl_afu *afu,
 				  bool perst_reloads_same_image)
-{
+अणु
 	afu->adapter->perst_same_image = perst_reloads_same_image;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(cxl_perst_reloads_same_image);
 
-ssize_t cxl_read_adapter_vpd(struct pci_dev *dev, void *buf, size_t count)
-{
-	struct cxl_afu *afu = cxl_pci_to_afu(dev);
-	if (IS_ERR(afu))
-		return -ENODEV;
+sमाप_प्रकार cxl_पढ़ो_adapter_vpd(काष्ठा pci_dev *dev, व्योम *buf, माप_प्रकार count)
+अणु
+	काष्ठा cxl_afu *afu = cxl_pci_to_afu(dev);
+	अगर (IS_ERR(afu))
+		वापस -ENODEV;
 
-	return cxl_ops->read_adapter_vpd(afu->adapter, buf, count);
-}
-EXPORT_SYMBOL_GPL(cxl_read_adapter_vpd);
+	वापस cxl_ops->पढ़ो_adapter_vpd(afu->adapter, buf, count);
+पूर्ण
+EXPORT_SYMBOL_GPL(cxl_पढ़ो_adapter_vpd);

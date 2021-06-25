@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Generic OPP Interface
  *
@@ -8,21 +9,21 @@
  *	Kevin Hilman
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/clk.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/pm_domain.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include "opp.h"
+#समावेश "opp.h"
 
 /*
- * The root of the list of all opp-tables. All opp_table structures branch off
+ * The root of the list of all opp-tables. All opp_table काष्ठाures branch off
  * from here, with each opp_table containing the list of opps it supports in
  * various states of availability.
  */
@@ -31,828 +32,828 @@ LIST_HEAD(opp_tables);
 /* OPP tables with uninitialized required OPPs */
 LIST_HEAD(lazy_opp_tables);
 
-/* Lock to allow exclusive modification to the device and opp lists */
+/* Lock to allow exclusive modअगरication to the device and opp lists */
 DEFINE_MUTEX(opp_table_lock);
 /* Flag indicating that opp_tables list is being updated at the moment */
-static bool opp_tables_busy;
+अटल bool opp_tables_busy;
 
-static bool _find_opp_dev(const struct device *dev, struct opp_table *opp_table)
-{
-	struct opp_device *opp_dev;
+अटल bool _find_opp_dev(स्थिर काष्ठा device *dev, काष्ठा opp_table *opp_table)
+अणु
+	काष्ठा opp_device *opp_dev;
 	bool found = false;
 
 	mutex_lock(&opp_table->lock);
-	list_for_each_entry(opp_dev, &opp_table->dev_list, node)
-		if (opp_dev->dev == dev) {
+	list_क्रम_each_entry(opp_dev, &opp_table->dev_list, node)
+		अगर (opp_dev->dev == dev) अणु
 			found = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 	mutex_unlock(&opp_table->lock);
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static struct opp_table *_find_opp_table_unlocked(struct device *dev)
-{
-	struct opp_table *opp_table;
+अटल काष्ठा opp_table *_find_opp_table_unlocked(काष्ठा device *dev)
+अणु
+	काष्ठा opp_table *opp_table;
 
-	list_for_each_entry(opp_table, &opp_tables, node) {
-		if (_find_opp_dev(dev, opp_table)) {
+	list_क्रम_each_entry(opp_table, &opp_tables, node) अणु
+		अगर (_find_opp_dev(dev, opp_table)) अणु
 			_get_opp_table_kref(opp_table);
-			return opp_table;
-		}
-	}
+			वापस opp_table;
+		पूर्ण
+	पूर्ण
 
-	return ERR_PTR(-ENODEV);
-}
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
 /**
- * _find_opp_table() - find opp_table struct using device pointer
- * @dev:	device pointer used to lookup OPP table
+ * _find_opp_table() - find opp_table काष्ठा using device poपूर्णांकer
+ * @dev:	device poपूर्णांकer used to lookup OPP table
  *
- * Search OPP table for one containing matching device.
+ * Search OPP table क्रम one containing matching device.
  *
- * Return: pointer to 'struct opp_table' if found, otherwise -ENODEV or
+ * Return: poपूर्णांकer to 'struct opp_table' अगर found, otherwise -ENODEV or
  * -EINVAL based on type of error.
  *
  * The callers must call dev_pm_opp_put_opp_table() after the table is used.
  */
-struct opp_table *_find_opp_table(struct device *dev)
-{
-	struct opp_table *opp_table;
+काष्ठा opp_table *_find_opp_table(काष्ठा device *dev)
+अणु
+	काष्ठा opp_table *opp_table;
 
-	if (IS_ERR_OR_NULL(dev)) {
+	अगर (IS_ERR_OR_शून्य(dev)) अणु
 		pr_err("%s: Invalid parameters\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	mutex_lock(&opp_table_lock);
 	opp_table = _find_opp_table_unlocked(dev);
 	mutex_unlock(&opp_table_lock);
 
-	return opp_table;
-}
+	वापस opp_table;
+पूर्ण
 
 /**
  * dev_pm_opp_get_voltage() - Gets the voltage corresponding to an opp
- * @opp:	opp for which voltage has to be returned for
+ * @opp:	opp क्रम which voltage has to be वापसed क्रम
  *
- * Return: voltage in micro volt corresponding to the opp, else
- * return 0
+ * Return: voltage in micro volt corresponding to the opp, अन्यथा
+ * वापस 0
  *
- * This is useful only for devices with single power supply.
+ * This is useful only क्रम devices with single घातer supply.
  */
-unsigned long dev_pm_opp_get_voltage(struct dev_pm_opp *opp)
-{
-	if (IS_ERR_OR_NULL(opp)) {
+अचिन्हित दीर्घ dev_pm_opp_get_voltage(काष्ठा dev_pm_opp *opp)
+अणु
+	अगर (IS_ERR_OR_शून्य(opp)) अणु
 		pr_err("%s: Invalid parameters\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return opp->supplies[0].u_volt;
-}
+	वापस opp->supplies[0].u_volt;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_get_voltage);
 
 /**
  * dev_pm_opp_get_freq() - Gets the frequency corresponding to an available opp
- * @opp:	opp for which frequency has to be returned for
+ * @opp:	opp क्रम which frequency has to be वापसed क्रम
  *
- * Return: frequency in hertz corresponding to the opp, else
- * return 0
+ * Return: frequency in hertz corresponding to the opp, अन्यथा
+ * वापस 0
  */
-unsigned long dev_pm_opp_get_freq(struct dev_pm_opp *opp)
-{
-	if (IS_ERR_OR_NULL(opp)) {
+अचिन्हित दीर्घ dev_pm_opp_get_freq(काष्ठा dev_pm_opp *opp)
+अणु
+	अगर (IS_ERR_OR_शून्य(opp)) अणु
 		pr_err("%s: Invalid parameters\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return opp->rate;
-}
+	वापस opp->rate;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_get_freq);
 
 /**
  * dev_pm_opp_get_level() - Gets the level corresponding to an available opp
- * @opp:	opp for which level value has to be returned for
+ * @opp:	opp क्रम which level value has to be वापसed क्रम
  *
- * Return: level read from device tree corresponding to the opp, else
- * return 0.
+ * Return: level पढ़ो from device tree corresponding to the opp, अन्यथा
+ * वापस 0.
  */
-unsigned int dev_pm_opp_get_level(struct dev_pm_opp *opp)
-{
-	if (IS_ERR_OR_NULL(opp) || !opp->available) {
+अचिन्हित पूर्णांक dev_pm_opp_get_level(काष्ठा dev_pm_opp *opp)
+अणु
+	अगर (IS_ERR_OR_शून्य(opp) || !opp->available) अणु
 		pr_err("%s: Invalid parameters\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return opp->level;
-}
+	वापस opp->level;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_get_level);
 
 /**
- * dev_pm_opp_get_required_pstate() - Gets the required performance state
+ * dev_pm_opp_get_required_pstate() - Gets the required perक्रमmance state
  *                                    corresponding to an available opp
- * @opp:	opp for which performance state has to be returned for
+ * @opp:	opp क्रम which perक्रमmance state has to be वापसed क्रम
  * @index:	index of the required opp
  *
- * Return: performance state read from device tree corresponding to the
- * required opp, else return 0.
+ * Return: perक्रमmance state पढ़ो from device tree corresponding to the
+ * required opp, अन्यथा वापस 0.
  */
-unsigned int dev_pm_opp_get_required_pstate(struct dev_pm_opp *opp,
-					    unsigned int index)
-{
-	if (IS_ERR_OR_NULL(opp) || !opp->available ||
-	    index >= opp->opp_table->required_opp_count) {
+अचिन्हित पूर्णांक dev_pm_opp_get_required_pstate(काष्ठा dev_pm_opp *opp,
+					    अचिन्हित पूर्णांक index)
+अणु
+	अगर (IS_ERR_OR_शून्य(opp) || !opp->available ||
+	    index >= opp->opp_table->required_opp_count) अणु
 		pr_err("%s: Invalid parameters\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* required-opps not fully initialized yet */
-	if (lazy_linking_pending(opp->opp_table))
-		return 0;
+	अगर (lazy_linking_pending(opp->opp_table))
+		वापस 0;
 
-	return opp->required_opps[index]->pstate;
-}
+	वापस opp->required_opps[index]->pstate;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_get_required_pstate);
 
 /**
- * dev_pm_opp_is_turbo() - Returns if opp is turbo OPP or not
- * @opp: opp for which turbo mode is being verified
+ * dev_pm_opp_is_turbo() - Returns अगर opp is turbo OPP or not
+ * @opp: opp क्रम which turbo mode is being verअगरied
  *
- * Turbo OPPs are not for normal use, and can be enabled (under certain
- * conditions) for short duration of times to finish high throughput work
- * quickly. Running on them for longer times may overheat the chip.
+ * Turbo OPPs are not क्रम normal use, and can be enabled (under certain
+ * conditions) क्रम लघु duration of बार to finish high throughput work
+ * quickly. Running on them क्रम दीर्घer बार may overheat the chip.
  *
- * Return: true if opp is turbo opp, else false.
+ * Return: true अगर opp is turbo opp, अन्यथा false.
  */
-bool dev_pm_opp_is_turbo(struct dev_pm_opp *opp)
-{
-	if (IS_ERR_OR_NULL(opp) || !opp->available) {
+bool dev_pm_opp_is_turbo(काष्ठा dev_pm_opp *opp)
+अणु
+	अगर (IS_ERR_OR_शून्य(opp) || !opp->available) अणु
 		pr_err("%s: Invalid parameters\n", __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return opp->turbo;
-}
+	वापस opp->turbo;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_is_turbo);
 
 /**
- * dev_pm_opp_get_max_clock_latency() - Get max clock latency in nanoseconds
- * @dev:	device for which we do this operation
+ * dev_pm_opp_get_max_घड़ी_latency() - Get max घड़ी latency in nanoseconds
+ * @dev:	device क्रम which we करो this operation
  *
- * Return: This function returns the max clock latency in nanoseconds.
+ * Return: This function वापसs the max घड़ी latency in nanoseconds.
  */
-unsigned long dev_pm_opp_get_max_clock_latency(struct device *dev)
-{
-	struct opp_table *opp_table;
-	unsigned long clock_latency_ns;
+अचिन्हित दीर्घ dev_pm_opp_get_max_घड़ी_latency(काष्ठा device *dev)
+अणु
+	काष्ठा opp_table *opp_table;
+	अचिन्हित दीर्घ घड़ी_latency_ns;
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return 0;
+	अगर (IS_ERR(opp_table))
+		वापस 0;
 
-	clock_latency_ns = opp_table->clock_latency_ns_max;
+	घड़ी_latency_ns = opp_table->घड़ी_latency_ns_max;
 
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return clock_latency_ns;
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_get_max_clock_latency);
+	वापस घड़ी_latency_ns;
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_get_max_घड़ी_latency);
 
 /**
  * dev_pm_opp_get_max_volt_latency() - Get max voltage latency in nanoseconds
- * @dev: device for which we do this operation
+ * @dev: device क्रम which we करो this operation
  *
- * Return: This function returns the max voltage latency in nanoseconds.
+ * Return: This function वापसs the max voltage latency in nanoseconds.
  */
-unsigned long dev_pm_opp_get_max_volt_latency(struct device *dev)
-{
-	struct opp_table *opp_table;
-	struct dev_pm_opp *opp;
-	struct regulator *reg;
-	unsigned long latency_ns = 0;
-	int ret, i, count;
-	struct {
-		unsigned long min;
-		unsigned long max;
-	} *uV;
+अचिन्हित दीर्घ dev_pm_opp_get_max_volt_latency(काष्ठा device *dev)
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा dev_pm_opp *opp;
+	काष्ठा regulator *reg;
+	अचिन्हित दीर्घ latency_ns = 0;
+	पूर्णांक ret, i, count;
+	काष्ठा अणु
+		अचिन्हित दीर्घ min;
+		अचिन्हित दीर्घ max;
+	पूर्ण *uV;
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return 0;
+	अगर (IS_ERR(opp_table))
+		वापस 0;
 
-	/* Regulator may not be required for the device */
-	if (!opp_table->regulators)
-		goto put_opp_table;
+	/* Regulator may not be required क्रम the device */
+	अगर (!opp_table->regulators)
+		जाओ put_opp_table;
 
 	count = opp_table->regulator_count;
 
-	uV = kmalloc_array(count, sizeof(*uV), GFP_KERNEL);
-	if (!uV)
-		goto put_opp_table;
+	uV = kदो_स्मृति_array(count, माप(*uV), GFP_KERNEL);
+	अगर (!uV)
+		जाओ put_opp_table;
 
 	mutex_lock(&opp_table->lock);
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		uV[i].min = ~0;
 		uV[i].max = 0;
 
-		list_for_each_entry(opp, &opp_table->opp_list, node) {
-			if (!opp->available)
-				continue;
+		list_क्रम_each_entry(opp, &opp_table->opp_list, node) अणु
+			अगर (!opp->available)
+				जारी;
 
-			if (opp->supplies[i].u_volt_min < uV[i].min)
+			अगर (opp->supplies[i].u_volt_min < uV[i].min)
 				uV[i].min = opp->supplies[i].u_volt_min;
-			if (opp->supplies[i].u_volt_max > uV[i].max)
+			अगर (opp->supplies[i].u_volt_max > uV[i].max)
 				uV[i].max = opp->supplies[i].u_volt_max;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&opp_table->lock);
 
 	/*
 	 * The caller needs to ensure that opp_table (and hence the regulator)
-	 * isn't freed, while we are executing this routine.
+	 * isn't मुक्तd, जबतक we are executing this routine.
 	 */
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		reg = opp_table->regulators[i];
-		ret = regulator_set_voltage_time(reg, uV[i].min, uV[i].max);
-		if (ret > 0)
+		ret = regulator_set_voltage_समय(reg, uV[i].min, uV[i].max);
+		अगर (ret > 0)
 			latency_ns += ret * 1000;
-	}
+	पूर्ण
 
-	kfree(uV);
+	kमुक्त(uV);
 put_opp_table:
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return latency_ns;
-}
+	वापस latency_ns;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_get_max_volt_latency);
 
 /**
  * dev_pm_opp_get_max_transition_latency() - Get max transition latency in
  *					     nanoseconds
- * @dev: device for which we do this operation
+ * @dev: device क्रम which we करो this operation
  *
- * Return: This function returns the max transition latency, in nanoseconds, to
- * switch from one OPP to other.
+ * Return: This function वापसs the max transition latency, in nanoseconds, to
+ * चयन from one OPP to other.
  */
-unsigned long dev_pm_opp_get_max_transition_latency(struct device *dev)
-{
-	return dev_pm_opp_get_max_volt_latency(dev) +
-		dev_pm_opp_get_max_clock_latency(dev);
-}
+अचिन्हित दीर्घ dev_pm_opp_get_max_transition_latency(काष्ठा device *dev)
+अणु
+	वापस dev_pm_opp_get_max_volt_latency(dev) +
+		dev_pm_opp_get_max_घड़ी_latency(dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_get_max_transition_latency);
 
 /**
  * dev_pm_opp_get_suspend_opp_freq() - Get frequency of suspend opp in Hz
- * @dev:	device for which we do this operation
+ * @dev:	device क्रम which we करो this operation
  *
- * Return: This function returns the frequency of the OPP marked as suspend_opp
- * if one is available, else returns 0;
+ * Return: This function वापसs the frequency of the OPP marked as suspend_opp
+ * अगर one is available, अन्यथा वापसs 0;
  */
-unsigned long dev_pm_opp_get_suspend_opp_freq(struct device *dev)
-{
-	struct opp_table *opp_table;
-	unsigned long freq = 0;
+अचिन्हित दीर्घ dev_pm_opp_get_suspend_opp_freq(काष्ठा device *dev)
+अणु
+	काष्ठा opp_table *opp_table;
+	अचिन्हित दीर्घ freq = 0;
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return 0;
+	अगर (IS_ERR(opp_table))
+		वापस 0;
 
-	if (opp_table->suspend_opp && opp_table->suspend_opp->available)
+	अगर (opp_table->suspend_opp && opp_table->suspend_opp->available)
 		freq = dev_pm_opp_get_freq(opp_table->suspend_opp);
 
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return freq;
-}
+	वापस freq;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_get_suspend_opp_freq);
 
-int _get_opp_count(struct opp_table *opp_table)
-{
-	struct dev_pm_opp *opp;
-	int count = 0;
+पूर्णांक _get_opp_count(काष्ठा opp_table *opp_table)
+अणु
+	काष्ठा dev_pm_opp *opp;
+	पूर्णांक count = 0;
 
 	mutex_lock(&opp_table->lock);
 
-	list_for_each_entry(opp, &opp_table->opp_list, node) {
-		if (opp->available)
+	list_क्रम_each_entry(opp, &opp_table->opp_list, node) अणु
+		अगर (opp->available)
 			count++;
-	}
+	पूर्ण
 
 	mutex_unlock(&opp_table->lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
  * dev_pm_opp_get_opp_count() - Get number of opps available in the opp table
- * @dev:	device for which we do this operation
+ * @dev:	device क्रम which we करो this operation
  *
- * Return: This function returns the number of available opps if there are any,
- * else returns 0 if none or the corresponding error value.
+ * Return: This function वापसs the number of available opps अगर there are any,
+ * अन्यथा वापसs 0 अगर none or the corresponding error value.
  */
-int dev_pm_opp_get_opp_count(struct device *dev)
-{
-	struct opp_table *opp_table;
-	int count;
+पूर्णांक dev_pm_opp_get_opp_count(काष्ठा device *dev)
+अणु
+	काष्ठा opp_table *opp_table;
+	पूर्णांक count;
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table)) {
+	अगर (IS_ERR(opp_table)) अणु
 		count = PTR_ERR(opp_table);
 		dev_dbg(dev, "%s: OPP table not found (%d)\n",
 			__func__, count);
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
 	count = _get_opp_count(opp_table);
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_get_opp_count);
 
 /**
- * dev_pm_opp_find_freq_exact() - search for an exact frequency
- * @dev:		device for which we do this operation
- * @freq:		frequency to search for
- * @available:		true/false - match for available opp
+ * dev_pm_opp_find_freq_exact() - search क्रम an exact frequency
+ * @dev:		device क्रम which we करो this operation
+ * @freq:		frequency to search क्रम
+ * @available:		true/false - match क्रम available opp
  *
- * Return: Searches for exact match in the opp table and returns pointer to the
- * matching opp if found, else returns ERR_PTR in case of error and should
- * be handled using IS_ERR. Error return values can be:
- * EINVAL:	for bad pointer
- * ERANGE:	no match found for search
- * ENODEV:	if device not found in list of registered devices
+ * Return: Searches क्रम exact match in the opp table and वापसs poपूर्णांकer to the
+ * matching opp अगर found, अन्यथा वापसs ERR_PTR in हाल of error and should
+ * be handled using IS_ERR. Error वापस values can be:
+ * EINVAL:	क्रम bad poपूर्णांकer
+ * दुस्फल:	no match found क्रम search
+ * ENODEV:	अगर device not found in list of रेजिस्टरed devices
  *
- * Note: available is a modifier for the search. if available=true, then the
- * match is for exact matching frequency and is available in the stored OPP
- * table. if false, the match is for exact frequency which is not available.
+ * Note: available is a modअगरier क्रम the search. अगर available=true, then the
+ * match is क्रम exact matching frequency and is available in the stored OPP
+ * table. अगर false, the match is क्रम exact frequency which is not available.
  *
  * This provides a mechanism to enable an opp which is not available currently
  * or the opposite as well.
  *
- * The callers are required to call dev_pm_opp_put() for the returned OPP after
+ * The callers are required to call dev_pm_opp_put() क्रम the वापसed OPP after
  * use.
  */
-struct dev_pm_opp *dev_pm_opp_find_freq_exact(struct device *dev,
-					      unsigned long freq,
+काष्ठा dev_pm_opp *dev_pm_opp_find_freq_exact(काष्ठा device *dev,
+					      अचिन्हित दीर्घ freq,
 					      bool available)
-{
-	struct opp_table *opp_table;
-	struct dev_pm_opp *temp_opp, *opp = ERR_PTR(-ERANGE);
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा dev_pm_opp *temp_opp, *opp = ERR_PTR(-दुस्फल);
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table)) {
-		int r = PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table)) अणु
+		पूर्णांक r = PTR_ERR(opp_table);
 
 		dev_err(dev, "%s: OPP table not found (%d)\n", __func__, r);
-		return ERR_PTR(r);
-	}
+		वापस ERR_PTR(r);
+	पूर्ण
 
 	mutex_lock(&opp_table->lock);
 
-	list_for_each_entry(temp_opp, &opp_table->opp_list, node) {
-		if (temp_opp->available == available &&
-				temp_opp->rate == freq) {
+	list_क्रम_each_entry(temp_opp, &opp_table->opp_list, node) अणु
+		अगर (temp_opp->available == available &&
+				temp_opp->rate == freq) अणु
 			opp = temp_opp;
 
 			/* Increment the reference count of OPP */
 			dev_pm_opp_get(opp);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&opp_table->lock);
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return opp;
-}
+	वापस opp;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_find_freq_exact);
 
 /**
- * dev_pm_opp_find_level_exact() - search for an exact level
- * @dev:		device for which we do this operation
- * @level:		level to search for
+ * dev_pm_opp_find_level_exact() - search क्रम an exact level
+ * @dev:		device क्रम which we करो this operation
+ * @level:		level to search क्रम
  *
- * Return: Searches for exact match in the opp table and returns pointer to the
- * matching opp if found, else returns ERR_PTR in case of error and should
- * be handled using IS_ERR. Error return values can be:
- * EINVAL:	for bad pointer
- * ERANGE:	no match found for search
- * ENODEV:	if device not found in list of registered devices
+ * Return: Searches क्रम exact match in the opp table and वापसs poपूर्णांकer to the
+ * matching opp अगर found, अन्यथा वापसs ERR_PTR in हाल of error and should
+ * be handled using IS_ERR. Error वापस values can be:
+ * EINVAL:	क्रम bad poपूर्णांकer
+ * दुस्फल:	no match found क्रम search
+ * ENODEV:	अगर device not found in list of रेजिस्टरed devices
  *
- * The callers are required to call dev_pm_opp_put() for the returned OPP after
+ * The callers are required to call dev_pm_opp_put() क्रम the वापसed OPP after
  * use.
  */
-struct dev_pm_opp *dev_pm_opp_find_level_exact(struct device *dev,
-					       unsigned int level)
-{
-	struct opp_table *opp_table;
-	struct dev_pm_opp *temp_opp, *opp = ERR_PTR(-ERANGE);
+काष्ठा dev_pm_opp *dev_pm_opp_find_level_exact(काष्ठा device *dev,
+					       अचिन्हित पूर्णांक level)
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा dev_pm_opp *temp_opp, *opp = ERR_PTR(-दुस्फल);
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table)) {
-		int r = PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table)) अणु
+		पूर्णांक r = PTR_ERR(opp_table);
 
 		dev_err(dev, "%s: OPP table not found (%d)\n", __func__, r);
-		return ERR_PTR(r);
-	}
+		वापस ERR_PTR(r);
+	पूर्ण
 
 	mutex_lock(&opp_table->lock);
 
-	list_for_each_entry(temp_opp, &opp_table->opp_list, node) {
-		if (temp_opp->level == level) {
+	list_क्रम_each_entry(temp_opp, &opp_table->opp_list, node) अणु
+		अगर (temp_opp->level == level) अणु
 			opp = temp_opp;
 
 			/* Increment the reference count of OPP */
 			dev_pm_opp_get(opp);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&opp_table->lock);
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return opp;
-}
+	वापस opp;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_find_level_exact);
 
 /**
- * dev_pm_opp_find_level_ceil() - search for an rounded up level
- * @dev:		device for which we do this operation
- * @level:		level to search for
+ * dev_pm_opp_find_level_उच्चमान() - search क्रम an rounded up level
+ * @dev:		device क्रम which we करो this operation
+ * @level:		level to search क्रम
  *
- * Return: Searches for rounded up match in the opp table and returns pointer
- * to the  matching opp if found, else returns ERR_PTR in case of error and
- * should be handled using IS_ERR. Error return values can be:
- * EINVAL:	for bad pointer
- * ERANGE:	no match found for search
- * ENODEV:	if device not found in list of registered devices
+ * Return: Searches क्रम rounded up match in the opp table and वापसs poपूर्णांकer
+ * to the  matching opp अगर found, अन्यथा वापसs ERR_PTR in हाल of error and
+ * should be handled using IS_ERR. Error वापस values can be:
+ * EINVAL:	क्रम bad poपूर्णांकer
+ * दुस्फल:	no match found क्रम search
+ * ENODEV:	अगर device not found in list of रेजिस्टरed devices
  *
- * The callers are required to call dev_pm_opp_put() for the returned OPP after
+ * The callers are required to call dev_pm_opp_put() क्रम the वापसed OPP after
  * use.
  */
-struct dev_pm_opp *dev_pm_opp_find_level_ceil(struct device *dev,
-					      unsigned int *level)
-{
-	struct opp_table *opp_table;
-	struct dev_pm_opp *temp_opp, *opp = ERR_PTR(-ERANGE);
+काष्ठा dev_pm_opp *dev_pm_opp_find_level_उच्चमान(काष्ठा device *dev,
+					      अचिन्हित पूर्णांक *level)
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा dev_pm_opp *temp_opp, *opp = ERR_PTR(-दुस्फल);
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table)) {
-		int r = PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table)) अणु
+		पूर्णांक r = PTR_ERR(opp_table);
 
 		dev_err(dev, "%s: OPP table not found (%d)\n", __func__, r);
-		return ERR_PTR(r);
-	}
+		वापस ERR_PTR(r);
+	पूर्ण
 
 	mutex_lock(&opp_table->lock);
 
-	list_for_each_entry(temp_opp, &opp_table->opp_list, node) {
-		if (temp_opp->available && temp_opp->level >= *level) {
+	list_क्रम_each_entry(temp_opp, &opp_table->opp_list, node) अणु
+		अगर (temp_opp->available && temp_opp->level >= *level) अणु
 			opp = temp_opp;
 			*level = opp->level;
 
 			/* Increment the reference count of OPP */
 			dev_pm_opp_get(opp);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&opp_table->lock);
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return opp;
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_find_level_ceil);
+	वापस opp;
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_find_level_उच्चमान);
 
-static noinline struct dev_pm_opp *_find_freq_ceil(struct opp_table *opp_table,
-						   unsigned long *freq)
-{
-	struct dev_pm_opp *temp_opp, *opp = ERR_PTR(-ERANGE);
+अटल noअंतरभूत काष्ठा dev_pm_opp *_find_freq_उच्चमान(काष्ठा opp_table *opp_table,
+						   अचिन्हित दीर्घ *freq)
+अणु
+	काष्ठा dev_pm_opp *temp_opp, *opp = ERR_PTR(-दुस्फल);
 
 	mutex_lock(&opp_table->lock);
 
-	list_for_each_entry(temp_opp, &opp_table->opp_list, node) {
-		if (temp_opp->available && temp_opp->rate >= *freq) {
+	list_क्रम_each_entry(temp_opp, &opp_table->opp_list, node) अणु
+		अगर (temp_opp->available && temp_opp->rate >= *freq) अणु
 			opp = temp_opp;
 			*freq = opp->rate;
 
 			/* Increment the reference count of OPP */
 			dev_pm_opp_get(opp);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&opp_table->lock);
 
-	return opp;
-}
+	वापस opp;
+पूर्ण
 
 /**
- * dev_pm_opp_find_freq_ceil() - Search for an rounded ceil freq
- * @dev:	device for which we do this operation
+ * dev_pm_opp_find_freq_उच्चमान() - Search क्रम an rounded उच्चमान freq
+ * @dev:	device क्रम which we करो this operation
  * @freq:	Start frequency
  *
- * Search for the matching ceil *available* OPP from a starting freq
- * for a device.
+ * Search क्रम the matching उच्चमान *available* OPP from a starting freq
+ * क्रम a device.
  *
- * Return: matching *opp and refreshes *freq accordingly, else returns
- * ERR_PTR in case of error and should be handled using IS_ERR. Error return
+ * Return: matching *opp and refreshes *freq accordingly, अन्यथा वापसs
+ * ERR_PTR in हाल of error and should be handled using IS_ERR. Error वापस
  * values can be:
- * EINVAL:	for bad pointer
- * ERANGE:	no match found for search
- * ENODEV:	if device not found in list of registered devices
+ * EINVAL:	क्रम bad poपूर्णांकer
+ * दुस्फल:	no match found क्रम search
+ * ENODEV:	अगर device not found in list of रेजिस्टरed devices
  *
- * The callers are required to call dev_pm_opp_put() for the returned OPP after
+ * The callers are required to call dev_pm_opp_put() क्रम the वापसed OPP after
  * use.
  */
-struct dev_pm_opp *dev_pm_opp_find_freq_ceil(struct device *dev,
-					     unsigned long *freq)
-{
-	struct opp_table *opp_table;
-	struct dev_pm_opp *opp;
+काष्ठा dev_pm_opp *dev_pm_opp_find_freq_उच्चमान(काष्ठा device *dev,
+					     अचिन्हित दीर्घ *freq)
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा dev_pm_opp *opp;
 
-	if (!dev || !freq) {
+	अगर (!dev || !freq) अणु
 		dev_err(dev, "%s: Invalid argument freq=%p\n", __func__, freq);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return ERR_CAST(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस ERR_CAST(opp_table);
 
-	opp = _find_freq_ceil(opp_table, freq);
+	opp = _find_freq_उच्चमान(opp_table, freq);
 
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return opp;
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_find_freq_ceil);
+	वापस opp;
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_find_freq_उच्चमान);
 
 /**
- * dev_pm_opp_find_freq_floor() - Search for a rounded floor freq
- * @dev:	device for which we do this operation
+ * dev_pm_opp_find_freq_न्यूनमान() - Search क्रम a rounded न्यूनमान freq
+ * @dev:	device क्रम which we करो this operation
  * @freq:	Start frequency
  *
- * Search for the matching floor *available* OPP from a starting freq
- * for a device.
+ * Search क्रम the matching न्यूनमान *available* OPP from a starting freq
+ * क्रम a device.
  *
- * Return: matching *opp and refreshes *freq accordingly, else returns
- * ERR_PTR in case of error and should be handled using IS_ERR. Error return
+ * Return: matching *opp and refreshes *freq accordingly, अन्यथा वापसs
+ * ERR_PTR in हाल of error and should be handled using IS_ERR. Error वापस
  * values can be:
- * EINVAL:	for bad pointer
- * ERANGE:	no match found for search
- * ENODEV:	if device not found in list of registered devices
+ * EINVAL:	क्रम bad poपूर्णांकer
+ * दुस्फल:	no match found क्रम search
+ * ENODEV:	अगर device not found in list of रेजिस्टरed devices
  *
- * The callers are required to call dev_pm_opp_put() for the returned OPP after
+ * The callers are required to call dev_pm_opp_put() क्रम the वापसed OPP after
  * use.
  */
-struct dev_pm_opp *dev_pm_opp_find_freq_floor(struct device *dev,
-					      unsigned long *freq)
-{
-	struct opp_table *opp_table;
-	struct dev_pm_opp *temp_opp, *opp = ERR_PTR(-ERANGE);
+काष्ठा dev_pm_opp *dev_pm_opp_find_freq_न्यूनमान(काष्ठा device *dev,
+					      अचिन्हित दीर्घ *freq)
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा dev_pm_opp *temp_opp, *opp = ERR_PTR(-दुस्फल);
 
-	if (!dev || !freq) {
+	अगर (!dev || !freq) अणु
 		dev_err(dev, "%s: Invalid argument freq=%p\n", __func__, freq);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return ERR_CAST(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस ERR_CAST(opp_table);
 
 	mutex_lock(&opp_table->lock);
 
-	list_for_each_entry(temp_opp, &opp_table->opp_list, node) {
-		if (temp_opp->available) {
-			/* go to the next node, before choosing prev */
-			if (temp_opp->rate > *freq)
-				break;
-			else
+	list_क्रम_each_entry(temp_opp, &opp_table->opp_list, node) अणु
+		अगर (temp_opp->available) अणु
+			/* go to the next node, beक्रमe choosing prev */
+			अगर (temp_opp->rate > *freq)
+				अवरोध;
+			अन्यथा
 				opp = temp_opp;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Increment the reference count of OPP */
-	if (!IS_ERR(opp))
+	अगर (!IS_ERR(opp))
 		dev_pm_opp_get(opp);
 	mutex_unlock(&opp_table->lock);
 	dev_pm_opp_put_opp_table(opp_table);
 
-	if (!IS_ERR(opp))
+	अगर (!IS_ERR(opp))
 		*freq = opp->rate;
 
-	return opp;
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_find_freq_floor);
+	वापस opp;
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_find_freq_न्यूनमान);
 
 /**
- * dev_pm_opp_find_freq_ceil_by_volt() - Find OPP with highest frequency for
+ * dev_pm_opp_find_freq_उच्चमान_by_volt() - Find OPP with highest frequency क्रम
  *					 target voltage.
- * @dev:	Device for which we do this operation.
+ * @dev:	Device क्रम which we करो this operation.
  * @u_volt:	Target voltage.
  *
- * Search for OPP with highest (ceil) frequency and has voltage <= u_volt.
+ * Search क्रम OPP with highest (उच्चमान) frequency and has voltage <= u_volt.
  *
- * Return: matching *opp, else returns ERR_PTR in case of error which should be
+ * Return: matching *opp, अन्यथा वापसs ERR_PTR in हाल of error which should be
  * handled using IS_ERR.
  *
- * Error return values can be:
+ * Error वापस values can be:
  * EINVAL:	bad parameters
  *
- * The callers are required to call dev_pm_opp_put() for the returned OPP after
+ * The callers are required to call dev_pm_opp_put() क्रम the वापसed OPP after
  * use.
  */
-struct dev_pm_opp *dev_pm_opp_find_freq_ceil_by_volt(struct device *dev,
-						     unsigned long u_volt)
-{
-	struct opp_table *opp_table;
-	struct dev_pm_opp *temp_opp, *opp = ERR_PTR(-ERANGE);
+काष्ठा dev_pm_opp *dev_pm_opp_find_freq_उच्चमान_by_volt(काष्ठा device *dev,
+						     अचिन्हित दीर्घ u_volt)
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा dev_pm_opp *temp_opp, *opp = ERR_PTR(-दुस्फल);
 
-	if (!dev || !u_volt) {
+	अगर (!dev || !u_volt) अणु
 		dev_err(dev, "%s: Invalid argument volt=%lu\n", __func__,
 			u_volt);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return ERR_CAST(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस ERR_CAST(opp_table);
 
 	mutex_lock(&opp_table->lock);
 
-	list_for_each_entry(temp_opp, &opp_table->opp_list, node) {
-		if (temp_opp->available) {
-			if (temp_opp->supplies[0].u_volt > u_volt)
-				break;
+	list_क्रम_each_entry(temp_opp, &opp_table->opp_list, node) अणु
+		अगर (temp_opp->available) अणु
+			अगर (temp_opp->supplies[0].u_volt > u_volt)
+				अवरोध;
 			opp = temp_opp;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Increment the reference count of OPP */
-	if (!IS_ERR(opp))
+	अगर (!IS_ERR(opp))
 		dev_pm_opp_get(opp);
 
 	mutex_unlock(&opp_table->lock);
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return opp;
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_find_freq_ceil_by_volt);
+	वापस opp;
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_find_freq_उच्चमान_by_volt);
 
-static int _set_opp_voltage(struct device *dev, struct regulator *reg,
-			    struct dev_pm_opp_supply *supply)
-{
-	int ret;
+अटल पूर्णांक _set_opp_voltage(काष्ठा device *dev, काष्ठा regulator *reg,
+			    काष्ठा dev_pm_opp_supply *supply)
+अणु
+	पूर्णांक ret;
 
-	/* Regulator not available for device */
-	if (IS_ERR(reg)) {
+	/* Regulator not available क्रम device */
+	अगर (IS_ERR(reg)) अणु
 		dev_dbg(dev, "%s: regulator not available: %ld\n", __func__,
 			PTR_ERR(reg));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_dbg(dev, "%s: voltages (mV): %lu %lu %lu\n", __func__,
 		supply->u_volt_min, supply->u_volt, supply->u_volt_max);
 
 	ret = regulator_set_voltage_triplet(reg, supply->u_volt_min,
 					    supply->u_volt, supply->u_volt_max);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "%s: failed to set voltage (%lu %lu %lu mV): %d\n",
 			__func__, supply->u_volt_min, supply->u_volt,
 			supply->u_volt_max, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int _generic_set_opp_clk_only(struct device *dev, struct clk *clk,
-					    unsigned long freq)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक _generic_set_opp_clk_only(काष्ठा device *dev, काष्ठा clk *clk,
+					    अचिन्हित दीर्घ freq)
+अणु
+	पूर्णांक ret;
 
-	/* We may reach here for devices which don't change frequency */
-	if (IS_ERR(clk))
-		return 0;
+	/* We may reach here क्रम devices which करोn't change frequency */
+	अगर (IS_ERR(clk))
+		वापस 0;
 
 	ret = clk_set_rate(clk, freq);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%s: failed to set clock rate: %d\n", __func__,
 			ret);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int _generic_set_opp_regulator(struct opp_table *opp_table,
-				      struct device *dev,
-				      struct dev_pm_opp *opp,
-				      unsigned long freq,
-				      int scaling_down)
-{
-	struct regulator *reg = opp_table->regulators[0];
-	struct dev_pm_opp *old_opp = opp_table->current_opp;
-	int ret;
+अटल पूर्णांक _generic_set_opp_regulator(काष्ठा opp_table *opp_table,
+				      काष्ठा device *dev,
+				      काष्ठा dev_pm_opp *opp,
+				      अचिन्हित दीर्घ freq,
+				      पूर्णांक scaling_करोwn)
+अणु
+	काष्ठा regulator *reg = opp_table->regulators[0];
+	काष्ठा dev_pm_opp *old_opp = opp_table->current_opp;
+	पूर्णांक ret;
 
 	/* This function only supports single regulator per device */
-	if (WARN_ON(opp_table->regulator_count > 1)) {
+	अगर (WARN_ON(opp_table->regulator_count > 1)) अणु
 		dev_err(dev, "multiple regulators are not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Scaling up? Scale voltage before frequency */
-	if (!scaling_down) {
+	/* Scaling up? Scale voltage beक्रमe frequency */
+	अगर (!scaling_करोwn) अणु
 		ret = _set_opp_voltage(dev, reg, opp->supplies);
-		if (ret)
-			goto restore_voltage;
-	}
+		अगर (ret)
+			जाओ restore_voltage;
+	पूर्ण
 
 	/* Change frequency */
 	ret = _generic_set_opp_clk_only(dev, opp_table->clk, freq);
-	if (ret)
-		goto restore_voltage;
+	अगर (ret)
+		जाओ restore_voltage;
 
-	/* Scaling down? Scale voltage after frequency */
-	if (scaling_down) {
+	/* Scaling करोwn? Scale voltage after frequency */
+	अगर (scaling_करोwn) अणु
 		ret = _set_opp_voltage(dev, reg, opp->supplies);
-		if (ret)
-			goto restore_freq;
-	}
+		अगर (ret)
+			जाओ restore_freq;
+	पूर्ण
 
 	/*
-	 * Enable the regulator after setting its voltages, otherwise it breaks
+	 * Enable the regulator after setting its voltages, otherwise it अवरोधs
 	 * some boot-enabled regulators.
 	 */
-	if (unlikely(!opp_table->enabled)) {
+	अगर (unlikely(!opp_table->enabled)) अणु
 		ret = regulator_enable(reg);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_warn(dev, "Failed to enable regulator: %d", ret);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 restore_freq:
-	if (_generic_set_opp_clk_only(dev, opp_table->clk, old_opp->rate))
+	अगर (_generic_set_opp_clk_only(dev, opp_table->clk, old_opp->rate))
 		dev_err(dev, "%s: failed to restore old-freq (%lu Hz)\n",
 			__func__, old_opp->rate);
 restore_voltage:
 	/* This shouldn't harm even if the voltages weren't updated earlier */
 	_set_opp_voltage(dev, reg, old_opp->supplies);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int _set_opp_bw(const struct opp_table *opp_table,
-		       struct dev_pm_opp *opp, struct device *dev)
-{
+अटल पूर्णांक _set_opp_bw(स्थिर काष्ठा opp_table *opp_table,
+		       काष्ठा dev_pm_opp *opp, काष्ठा device *dev)
+अणु
 	u32 avg, peak;
-	int i, ret;
+	पूर्णांक i, ret;
 
-	if (!opp_table->paths)
-		return 0;
+	अगर (!opp_table->paths)
+		वापस 0;
 
-	for (i = 0; i < opp_table->path_count; i++) {
-		if (!opp) {
+	क्रम (i = 0; i < opp_table->path_count; i++) अणु
+		अगर (!opp) अणु
 			avg = 0;
 			peak = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			avg = opp->bandwidth[i].avg;
 			peak = opp->bandwidth[i].peak;
-		}
+		पूर्ण
 		ret = icc_set_bw(opp_table->paths[i], avg, peak);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to %s bandwidth[%d]: %d\n",
 				opp ? "set" : "remove", i, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _set_opp_custom(const struct opp_table *opp_table,
-			   struct device *dev, struct dev_pm_opp *opp,
-			   unsigned long freq)
-{
-	struct dev_pm_set_opp_data *data = opp_table->set_opp_data;
-	struct dev_pm_opp *old_opp = opp_table->current_opp;
-	int size;
+अटल पूर्णांक _set_opp_custom(स्थिर काष्ठा opp_table *opp_table,
+			   काष्ठा device *dev, काष्ठा dev_pm_opp *opp,
+			   अचिन्हित दीर्घ freq)
+अणु
+	काष्ठा dev_pm_set_opp_data *data = opp_table->set_opp_data;
+	काष्ठा dev_pm_opp *old_opp = opp_table->current_opp;
+	पूर्णांक size;
 
 	/*
-	 * We support this only if dev_pm_opp_set_regulators() was called
+	 * We support this only अगर dev_pm_opp_set_regulators() was called
 	 * earlier.
 	 */
-	if (opp_table->sod_supplies) {
-		size = sizeof(*old_opp->supplies) * opp_table->regulator_count;
-		memcpy(data->old_opp.supplies, old_opp->supplies, size);
-		memcpy(data->new_opp.supplies, opp->supplies, size);
+	अगर (opp_table->sod_supplies) अणु
+		size = माप(*old_opp->supplies) * opp_table->regulator_count;
+		स_नकल(data->old_opp.supplies, old_opp->supplies, size);
+		स_नकल(data->new_opp.supplies, opp->supplies, size);
 		data->regulator_count = opp_table->regulator_count;
-	} else {
+	पूर्ण अन्यथा अणु
 		data->regulator_count = 0;
-	}
+	पूर्ण
 
 	data->regulators = opp_table->regulators;
 	data->clk = opp_table->clk;
@@ -860,282 +861,282 @@ static int _set_opp_custom(const struct opp_table *opp_table,
 	data->old_opp.rate = old_opp->rate;
 	data->new_opp.rate = freq;
 
-	return opp_table->set_opp(data);
-}
+	वापस opp_table->set_opp(data);
+पूर्ण
 
-static int _set_required_opp(struct device *dev, struct device *pd_dev,
-			     struct dev_pm_opp *opp, int i)
-{
-	unsigned int pstate = likely(opp) ? opp->required_opps[i]->pstate : 0;
-	int ret;
+अटल पूर्णांक _set_required_opp(काष्ठा device *dev, काष्ठा device *pd_dev,
+			     काष्ठा dev_pm_opp *opp, पूर्णांक i)
+अणु
+	अचिन्हित पूर्णांक pstate = likely(opp) ? opp->required_opps[i]->pstate : 0;
+	पूर्णांक ret;
 
-	if (!pd_dev)
-		return 0;
+	अगर (!pd_dev)
+		वापस 0;
 
-	ret = dev_pm_genpd_set_performance_state(pd_dev, pstate);
-	if (ret) {
+	ret = dev_pm_genpd_set_perक्रमmance_state(pd_dev, pstate);
+	अगर (ret) अणु
 		dev_err(dev, "Failed to set performance rate of %s: %d (%d)\n",
 			dev_name(pd_dev), pstate, ret);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* This is only called for PM domain for now */
-static int _set_required_opps(struct device *dev,
-			      struct opp_table *opp_table,
-			      struct dev_pm_opp *opp, bool up)
-{
-	struct opp_table **required_opp_tables = opp_table->required_opp_tables;
-	struct device **genpd_virt_devs = opp_table->genpd_virt_devs;
-	int i, ret = 0;
+/* This is only called क्रम PM करोमुख्य क्रम now */
+अटल पूर्णांक _set_required_opps(काष्ठा device *dev,
+			      काष्ठा opp_table *opp_table,
+			      काष्ठा dev_pm_opp *opp, bool up)
+अणु
+	काष्ठा opp_table **required_opp_tables = opp_table->required_opp_tables;
+	काष्ठा device **genpd_virt_devs = opp_table->genpd_virt_devs;
+	पूर्णांक i, ret = 0;
 
-	if (!required_opp_tables)
-		return 0;
+	अगर (!required_opp_tables)
+		वापस 0;
 
 	/* required-opps not fully initialized yet */
-	if (lazy_linking_pending(opp_table))
-		return -EBUSY;
+	अगर (lazy_linking_pending(opp_table))
+		वापस -EBUSY;
 
-	/* Single genpd case */
-	if (!genpd_virt_devs)
-		return _set_required_opp(dev, dev, opp, 0);
+	/* Single genpd हाल */
+	अगर (!genpd_virt_devs)
+		वापस _set_required_opp(dev, dev, opp, 0);
 
-	/* Multiple genpd case */
+	/* Multiple genpd हाल */
 
 	/*
-	 * Acquire genpd_virt_dev_lock to make sure we don't use a genpd_dev
-	 * after it is freed from another thread.
+	 * Acquire genpd_virt_dev_lock to make sure we करोn't use a genpd_dev
+	 * after it is मुक्तd from another thपढ़ो.
 	 */
 	mutex_lock(&opp_table->genpd_virt_dev_lock);
 
-	/* Scaling up? Set required OPPs in normal order, else reverse */
-	if (up) {
-		for (i = 0; i < opp_table->required_opp_count; i++) {
+	/* Scaling up? Set required OPPs in normal order, अन्यथा reverse */
+	अगर (up) अणु
+		क्रम (i = 0; i < opp_table->required_opp_count; i++) अणु
 			ret = _set_required_opp(dev, genpd_virt_devs[i], opp, i);
-			if (ret)
-				break;
-		}
-	} else {
-		for (i = opp_table->required_opp_count - 1; i >= 0; i--) {
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = opp_table->required_opp_count - 1; i >= 0; i--) अणु
 			ret = _set_required_opp(dev, genpd_virt_devs[i], opp, i);
-			if (ret)
-				break;
-		}
-	}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&opp_table->genpd_virt_dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void _find_current_opp(struct device *dev, struct opp_table *opp_table)
-{
-	struct dev_pm_opp *opp = ERR_PTR(-ENODEV);
-	unsigned long freq;
+अटल व्योम _find_current_opp(काष्ठा device *dev, काष्ठा opp_table *opp_table)
+अणु
+	काष्ठा dev_pm_opp *opp = ERR_PTR(-ENODEV);
+	अचिन्हित दीर्घ freq;
 
-	if (!IS_ERR(opp_table->clk)) {
+	अगर (!IS_ERR(opp_table->clk)) अणु
 		freq = clk_get_rate(opp_table->clk);
-		opp = _find_freq_ceil(opp_table, &freq);
-	}
+		opp = _find_freq_उच्चमान(opp_table, &freq);
+	पूर्ण
 
 	/*
 	 * Unable to find the current OPP ? Pick the first from the list since
 	 * it is in ascending order, otherwise rest of the code will need to
 	 * make special checks to validate current_opp.
 	 */
-	if (IS_ERR(opp)) {
+	अगर (IS_ERR(opp)) अणु
 		mutex_lock(&opp_table->lock);
-		opp = list_first_entry(&opp_table->opp_list, struct dev_pm_opp, node);
+		opp = list_first_entry(&opp_table->opp_list, काष्ठा dev_pm_opp, node);
 		dev_pm_opp_get(opp);
 		mutex_unlock(&opp_table->lock);
-	}
+	पूर्ण
 
 	opp_table->current_opp = opp;
-}
+पूर्ण
 
-static int _disable_opp_table(struct device *dev, struct opp_table *opp_table)
-{
-	int ret;
+अटल पूर्णांक _disable_opp_table(काष्ठा device *dev, काष्ठा opp_table *opp_table)
+अणु
+	पूर्णांक ret;
 
-	if (!opp_table->enabled)
-		return 0;
+	अगर (!opp_table->enabled)
+		वापस 0;
 
 	/*
-	 * Some drivers need to support cases where some platforms may
-	 * have OPP table for the device, while others don't and
+	 * Some drivers need to support हालs where some platक्रमms may
+	 * have OPP table क्रम the device, जबतक others करोn't and
 	 * opp_set_rate() just needs to behave like clk_set_rate().
 	 */
-	if (!_get_opp_count(opp_table))
-		return 0;
+	अगर (!_get_opp_count(opp_table))
+		वापस 0;
 
-	ret = _set_opp_bw(opp_table, NULL, dev);
-	if (ret)
-		return ret;
+	ret = _set_opp_bw(opp_table, शून्य, dev);
+	अगर (ret)
+		वापस ret;
 
-	if (opp_table->regulators)
+	अगर (opp_table->regulators)
 		regulator_disable(opp_table->regulators[0]);
 
-	ret = _set_required_opps(dev, opp_table, NULL, false);
+	ret = _set_required_opps(dev, opp_table, शून्य, false);
 
 	opp_table->enabled = false;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int _set_opp(struct device *dev, struct opp_table *opp_table,
-		    struct dev_pm_opp *opp, unsigned long freq)
-{
-	struct dev_pm_opp *old_opp;
-	int scaling_down, ret;
+अटल पूर्णांक _set_opp(काष्ठा device *dev, काष्ठा opp_table *opp_table,
+		    काष्ठा dev_pm_opp *opp, अचिन्हित दीर्घ freq)
+अणु
+	काष्ठा dev_pm_opp *old_opp;
+	पूर्णांक scaling_करोwn, ret;
 
-	if (unlikely(!opp))
-		return _disable_opp_table(dev, opp_table);
+	अगर (unlikely(!opp))
+		वापस _disable_opp_table(dev, opp_table);
 
-	/* Find the currently set OPP if we don't know already */
-	if (unlikely(!opp_table->current_opp))
+	/* Find the currently set OPP अगर we करोn't know alपढ़ोy */
+	अगर (unlikely(!opp_table->current_opp))
 		_find_current_opp(dev, opp_table);
 
 	old_opp = opp_table->current_opp;
 
-	/* Return early if nothing to do */
-	if (old_opp == opp && opp_table->current_rate == freq &&
-	    opp_table->enabled) {
+	/* Return early अगर nothing to करो */
+	अगर (old_opp == opp && opp_table->current_rate == freq &&
+	    opp_table->enabled) अणु
 		dev_dbg(dev, "%s: OPPs are same, nothing to do\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_dbg(dev, "%s: switching OPP: Freq %lu -> %lu Hz, Level %u -> %u, Bw %u -> %u\n",
 		__func__, opp_table->current_rate, freq, old_opp->level,
 		opp->level, old_opp->bandwidth ? old_opp->bandwidth[0].peak : 0,
 		opp->bandwidth ? opp->bandwidth[0].peak : 0);
 
-	scaling_down = _opp_compare_key(old_opp, opp);
-	if (scaling_down == -1)
-		scaling_down = 0;
+	scaling_करोwn = _opp_compare_key(old_opp, opp);
+	अगर (scaling_करोwn == -1)
+		scaling_करोwn = 0;
 
-	/* Scaling up? Configure required OPPs before frequency */
-	if (!scaling_down) {
+	/* Scaling up? Configure required OPPs beक्रमe frequency */
+	अगर (!scaling_करोwn) अणु
 		ret = _set_required_opps(dev, opp_table, opp, true);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to set required opps: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = _set_opp_bw(opp_table, opp, dev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to set bw: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (opp_table->set_opp) {
+	अगर (opp_table->set_opp) अणु
 		ret = _set_opp_custom(opp_table, dev, opp, freq);
-	} else if (opp_table->regulators) {
+	पूर्ण अन्यथा अगर (opp_table->regulators) अणु
 		ret = _generic_set_opp_regulator(opp_table, dev, opp, freq,
-						 scaling_down);
-	} else {
+						 scaling_करोwn);
+	पूर्ण अन्यथा अणु
 		/* Only frequency scaling */
 		ret = _generic_set_opp_clk_only(dev, opp_table->clk, freq);
-	}
+	पूर्ण
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Scaling down? Configure required OPPs after frequency */
-	if (scaling_down) {
+	/* Scaling करोwn? Configure required OPPs after frequency */
+	अगर (scaling_करोwn) अणु
 		ret = _set_opp_bw(opp_table, opp, dev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to set bw: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = _set_required_opps(dev, opp_table, opp, false);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to set required opps: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	opp_table->enabled = true;
 	dev_pm_opp_put(old_opp);
 
-	/* Make sure current_opp doesn't get freed */
+	/* Make sure current_opp करोesn't get मुक्तd */
 	dev_pm_opp_get(opp);
 	opp_table->current_opp = opp;
 	opp_table->current_rate = freq;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * dev_pm_opp_set_rate() - Configure new OPP based on frequency
- * @dev:	 device for which we do this operation
+ * @dev:	 device क्रम which we करो this operation
  * @target_freq: frequency to achieve
  *
- * This configures the power-supplies to the levels specified by the OPP
- * corresponding to the target_freq, and programs the clock to a value <=
+ * This configures the घातer-supplies to the levels specअगरied by the OPP
+ * corresponding to the target_freq, and programs the घड़ी to a value <=
  * target_freq, as rounded by clk_round_rate(). Device wanting to run at fmax
- * provided by the opp, should have already rounded to the target OPP's
+ * provided by the opp, should have alपढ़ोy rounded to the target OPP's
  * frequency.
  */
-int dev_pm_opp_set_rate(struct device *dev, unsigned long target_freq)
-{
-	struct opp_table *opp_table;
-	unsigned long freq = 0, temp_freq;
-	struct dev_pm_opp *opp = NULL;
-	int ret;
+पूर्णांक dev_pm_opp_set_rate(काष्ठा device *dev, अचिन्हित दीर्घ target_freq)
+अणु
+	काष्ठा opp_table *opp_table;
+	अचिन्हित दीर्घ freq = 0, temp_freq;
+	काष्ठा dev_pm_opp *opp = शून्य;
+	पूर्णांक ret;
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table)) {
+	अगर (IS_ERR(opp_table)) अणु
 		dev_err(dev, "%s: device's opp table doesn't exist\n", __func__);
-		return PTR_ERR(opp_table);
-	}
+		वापस PTR_ERR(opp_table);
+	पूर्ण
 
-	if (target_freq) {
+	अगर (target_freq) अणु
 		/*
-		 * For IO devices which require an OPP on some platforms/SoCs
-		 * while just needing to scale the clock on some others
-		 * we look for empty OPP tables with just a clock handle and
+		 * For IO devices which require an OPP on some platक्रमms/SoCs
+		 * जबतक just needing to scale the घड़ी on some others
+		 * we look क्रम empty OPP tables with just a घड़ी handle and
 		 * scale only the clk. This makes dev_pm_opp_set_rate()
 		 * equivalent to a clk_set_rate()
 		 */
-		if (!_get_opp_count(opp_table)) {
+		अगर (!_get_opp_count(opp_table)) अणु
 			ret = _generic_set_opp_clk_only(dev, opp_table->clk, target_freq);
-			goto put_opp_table;
-		}
+			जाओ put_opp_table;
+		पूर्ण
 
 		freq = clk_round_rate(opp_table->clk, target_freq);
-		if ((long)freq <= 0)
+		अगर ((दीर्घ)freq <= 0)
 			freq = target_freq;
 
 		/*
-		 * The clock driver may support finer resolution of the
-		 * frequencies than the OPP table, don't update the frequency we
+		 * The घड़ी driver may support finer resolution of the
+		 * frequencies than the OPP table, करोn't update the frequency we
 		 * pass to clk_set_rate() here.
 		 */
 		temp_freq = freq;
-		opp = _find_freq_ceil(opp_table, &temp_freq);
-		if (IS_ERR(opp)) {
+		opp = _find_freq_उच्चमान(opp_table, &temp_freq);
+		अगर (IS_ERR(opp)) अणु
 			ret = PTR_ERR(opp);
 			dev_err(dev, "%s: failed to find OPP for freq %lu (%d)\n",
 				__func__, freq, ret);
-			goto put_opp_table;
-		}
-	}
+			जाओ put_opp_table;
+		पूर्ण
+	पूर्ण
 
 	ret = _set_opp(dev, opp_table, opp, freq);
 
-	if (target_freq)
+	अगर (target_freq)
 		dev_pm_opp_put(opp);
 put_opp_table:
 	dev_pm_opp_put_opp_table(opp_table);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_set_rate);
 
 /**
- * dev_pm_opp_set_opp() - Configure device for OPP
- * @dev: device for which we do this operation
+ * dev_pm_opp_set_opp() - Configure device क्रम OPP
+ * @dev: device क्रम which we करो this operation
  * @opp: OPP to set to
  *
  * This configures the device based on the properties of the OPP passed to this
@@ -1143,41 +1144,41 @@ EXPORT_SYMBOL_GPL(dev_pm_opp_set_rate);
  *
  * Return: 0 on success, a negative error number otherwise.
  */
-int dev_pm_opp_set_opp(struct device *dev, struct dev_pm_opp *opp)
-{
-	struct opp_table *opp_table;
-	int ret;
+पूर्णांक dev_pm_opp_set_opp(काष्ठा device *dev, काष्ठा dev_pm_opp *opp)
+अणु
+	काष्ठा opp_table *opp_table;
+	पूर्णांक ret;
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table)) {
+	अगर (IS_ERR(opp_table)) अणु
 		dev_err(dev, "%s: device opp doesn't exist\n", __func__);
-		return PTR_ERR(opp_table);
-	}
+		वापस PTR_ERR(opp_table);
+	पूर्ण
 
 	ret = _set_opp(dev, opp_table, opp, opp ? opp->rate : 0);
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_set_opp);
 
 /* OPP-dev Helpers */
-static void _remove_opp_dev(struct opp_device *opp_dev,
-			    struct opp_table *opp_table)
-{
-	opp_debug_unregister(opp_dev, opp_table);
+अटल व्योम _हटाओ_opp_dev(काष्ठा opp_device *opp_dev,
+			    काष्ठा opp_table *opp_table)
+अणु
+	opp_debug_unरेजिस्टर(opp_dev, opp_table);
 	list_del(&opp_dev->node);
-	kfree(opp_dev);
-}
+	kमुक्त(opp_dev);
+पूर्ण
 
-struct opp_device *_add_opp_dev(const struct device *dev,
-				struct opp_table *opp_table)
-{
-	struct opp_device *opp_dev;
+काष्ठा opp_device *_add_opp_dev(स्थिर काष्ठा device *dev,
+				काष्ठा opp_table *opp_table)
+अणु
+	काष्ठा opp_device *opp_dev;
 
-	opp_dev = kzalloc(sizeof(*opp_dev), GFP_KERNEL);
-	if (!opp_dev)
-		return NULL;
+	opp_dev = kzalloc(माप(*opp_dev), GFP_KERNEL);
+	अगर (!opp_dev)
+		वापस शून्य;
 
 	/* Initialize opp-dev */
 	opp_dev->dev = dev;
@@ -1186,25 +1187,25 @@ struct opp_device *_add_opp_dev(const struct device *dev,
 	list_add(&opp_dev->node, &opp_table->dev_list);
 	mutex_unlock(&opp_table->lock);
 
-	/* Create debugfs entries for the opp_table */
-	opp_debug_register(opp_dev, opp_table);
+	/* Create debugfs entries क्रम the opp_table */
+	opp_debug_रेजिस्टर(opp_dev, opp_table);
 
-	return opp_dev;
-}
+	वापस opp_dev;
+पूर्ण
 
-static struct opp_table *_allocate_opp_table(struct device *dev, int index)
-{
-	struct opp_table *opp_table;
-	struct opp_device *opp_dev;
-	int ret;
+अटल काष्ठा opp_table *_allocate_opp_table(काष्ठा device *dev, पूर्णांक index)
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा opp_device *opp_dev;
+	पूर्णांक ret;
 
 	/*
-	 * Allocate a new OPP table. In the infrequent case where a new
+	 * Allocate a new OPP table. In the infrequent हाल where a new
 	 * device is needed to be added, we pay this penalty.
 	 */
-	opp_table = kzalloc(sizeof(*opp_table), GFP_KERNEL);
-	if (!opp_table)
-		return ERR_PTR(-ENOMEM);
+	opp_table = kzalloc(माप(*opp_table), GFP_KERNEL);
+	अगर (!opp_table)
+		वापस ERR_PTR(-ENOMEM);
 
 	mutex_init(&opp_table->lock);
 	mutex_init(&opp_table->genpd_virt_dev_lock);
@@ -1215,108 +1216,108 @@ static struct opp_table *_allocate_opp_table(struct device *dev, int index)
 	opp_table->regulator_count = -1;
 
 	opp_dev = _add_opp_dev(dev, opp_table);
-	if (!opp_dev) {
+	अगर (!opp_dev) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	_of_init_opp_table(opp_table, dev, index);
 
-	/* Find interconnect path(s) for the device */
+	/* Find पूर्णांकerconnect path(s) क्रम the device */
 	ret = dev_pm_opp_of_find_icc_paths(dev, opp_table);
-	if (ret) {
-		if (ret == -EPROBE_DEFER)
-			goto remove_opp_dev;
+	अगर (ret) अणु
+		अगर (ret == -EPROBE_DEFER)
+			जाओ हटाओ_opp_dev;
 
 		dev_warn(dev, "%s: Error finding interconnect paths: %d\n",
 			 __func__, ret);
-	}
+	पूर्ण
 
 	BLOCKING_INIT_NOTIFIER_HEAD(&opp_table->head);
 	INIT_LIST_HEAD(&opp_table->opp_list);
 	kref_init(&opp_table->kref);
 
-	return opp_table;
+	वापस opp_table;
 
-remove_opp_dev:
-	_remove_opp_dev(opp_dev, opp_table);
+हटाओ_opp_dev:
+	_हटाओ_opp_dev(opp_dev, opp_table);
 err:
-	kfree(opp_table);
-	return ERR_PTR(ret);
-}
+	kमुक्त(opp_table);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-void _get_opp_table_kref(struct opp_table *opp_table)
-{
+व्योम _get_opp_table_kref(काष्ठा opp_table *opp_table)
+अणु
 	kref_get(&opp_table->kref);
-}
+पूर्ण
 
-static struct opp_table *_update_opp_table_clk(struct device *dev,
-					       struct opp_table *opp_table,
-					       bool getclk)
-{
-	int ret;
+अटल काष्ठा opp_table *_update_opp_table_clk(काष्ठा device *dev,
+					       काष्ठा opp_table *opp_table,
+					       bool अ_लोlk)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * Return early if we don't need to get clk or we have already tried it
+	 * Return early अगर we करोn't need to get clk or we have alपढ़ोy tried it
 	 * earlier.
 	 */
-	if (!getclk || IS_ERR(opp_table) || opp_table->clk)
-		return opp_table;
+	अगर (!अ_लोlk || IS_ERR(opp_table) || opp_table->clk)
+		वापस opp_table;
 
-	/* Find clk for the device */
-	opp_table->clk = clk_get(dev, NULL);
+	/* Find clk क्रम the device */
+	opp_table->clk = clk_get(dev, शून्य);
 
 	ret = PTR_ERR_OR_ZERO(opp_table->clk);
-	if (!ret)
-		return opp_table;
+	अगर (!ret)
+		वापस opp_table;
 
-	if (ret == -ENOENT) {
+	अगर (ret == -ENOENT) अणु
 		dev_dbg(dev, "%s: Couldn't find clock: %d\n", __func__, ret);
-		return opp_table;
-	}
+		वापस opp_table;
+	पूर्ण
 
 	dev_pm_opp_put_opp_table(opp_table);
 	dev_err_probe(dev, ret, "Couldn't find clock\n");
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
 /*
- * We need to make sure that the OPP table for a device doesn't get added twice,
- * if this routine gets called in parallel with the same device pointer.
+ * We need to make sure that the OPP table क्रम a device करोesn't get added twice,
+ * अगर this routine माला_लो called in parallel with the same device poपूर्णांकer.
  *
- * The simplest way to enforce that is to perform everything (find existing
- * table and if not found, create a new one) under the opp_table_lock, so only
- * one creator gets access to the same. But that expands the critical section
+ * The simplest way to enक्रमce that is to perक्रमm everything (find existing
+ * table and अगर not found, create a new one) under the opp_table_lock, so only
+ * one creator माला_लो access to the same. But that expands the critical section
  * under the lock and may end up causing circular dependencies with frameworks
- * like debugfs, interconnect or clock framework as they may be direct or
+ * like debugfs, पूर्णांकerconnect or घड़ी framework as they may be direct or
  * indirect users of OPP core.
  *
- * And for that reason we have to go for a bit tricky implementation here, which
- * uses the opp_tables_busy flag to indicate if another creator is in the middle
- * of adding an OPP table and others should wait for it to finish.
+ * And क्रम that reason we have to go क्रम a bit tricky implementation here, which
+ * uses the opp_tables_busy flag to indicate अगर another creator is in the middle
+ * of adding an OPP table and others should रुको क्रम it to finish.
  */
-struct opp_table *_add_opp_table_indexed(struct device *dev, int index,
-					 bool getclk)
-{
-	struct opp_table *opp_table;
+काष्ठा opp_table *_add_opp_table_indexed(काष्ठा device *dev, पूर्णांक index,
+					 bool अ_लोlk)
+अणु
+	काष्ठा opp_table *opp_table;
 
 again:
 	mutex_lock(&opp_table_lock);
 
 	opp_table = _find_opp_table_unlocked(dev);
-	if (!IS_ERR(opp_table))
-		goto unlock;
+	अगर (!IS_ERR(opp_table))
+		जाओ unlock;
 
 	/*
 	 * The opp_tables list or an OPP table's dev_list is getting updated by
-	 * another user, wait for it to finish.
+	 * another user, रुको क्रम it to finish.
 	 */
-	if (unlikely(opp_tables_busy)) {
+	अगर (unlikely(opp_tables_busy)) अणु
 		mutex_unlock(&opp_table_lock);
 		cpu_relax();
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
 	opp_tables_busy = true;
 	opp_table = _managed_opp(dev, index);
@@ -1324,334 +1325,334 @@ again:
 	/* Drop the lock to reduce the size of critical section */
 	mutex_unlock(&opp_table_lock);
 
-	if (opp_table) {
-		if (!_add_opp_dev(dev, opp_table)) {
+	अगर (opp_table) अणु
+		अगर (!_add_opp_dev(dev, opp_table)) अणु
 			dev_pm_opp_put_opp_table(opp_table);
 			opp_table = ERR_PTR(-ENOMEM);
-		}
+		पूर्ण
 
 		mutex_lock(&opp_table_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		opp_table = _allocate_opp_table(dev, index);
 
 		mutex_lock(&opp_table_lock);
-		if (!IS_ERR(opp_table))
+		अगर (!IS_ERR(opp_table))
 			list_add(&opp_table->node, &opp_tables);
-	}
+	पूर्ण
 
 	opp_tables_busy = false;
 
 unlock:
 	mutex_unlock(&opp_table_lock);
 
-	return _update_opp_table_clk(dev, opp_table, getclk);
-}
+	वापस _update_opp_table_clk(dev, opp_table, अ_लोlk);
+पूर्ण
 
-static struct opp_table *_add_opp_table(struct device *dev, bool getclk)
-{
-	return _add_opp_table_indexed(dev, 0, getclk);
-}
+अटल काष्ठा opp_table *_add_opp_table(काष्ठा device *dev, bool अ_लोlk)
+अणु
+	वापस _add_opp_table_indexed(dev, 0, अ_लोlk);
+पूर्ण
 
-struct opp_table *dev_pm_opp_get_opp_table(struct device *dev)
-{
-	return _find_opp_table(dev);
-}
+काष्ठा opp_table *dev_pm_opp_get_opp_table(काष्ठा device *dev)
+अणु
+	वापस _find_opp_table(dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_get_opp_table);
 
-static void _opp_table_kref_release(struct kref *kref)
-{
-	struct opp_table *opp_table = container_of(kref, struct opp_table, kref);
-	struct opp_device *opp_dev, *temp;
-	int i;
+अटल व्योम _opp_table_kref_release(काष्ठा kref *kref)
+अणु
+	काष्ठा opp_table *opp_table = container_of(kref, काष्ठा opp_table, kref);
+	काष्ठा opp_device *opp_dev, *temp;
+	पूर्णांक i;
 
 	/* Drop the lock as soon as we can */
 	list_del(&opp_table->node);
 	mutex_unlock(&opp_table_lock);
 
-	if (opp_table->current_opp)
+	अगर (opp_table->current_opp)
 		dev_pm_opp_put(opp_table->current_opp);
 
 	_of_clear_opp_table(opp_table);
 
 	/* Release clk */
-	if (!IS_ERR(opp_table->clk))
+	अगर (!IS_ERR(opp_table->clk))
 		clk_put(opp_table->clk);
 
-	if (opp_table->paths) {
-		for (i = 0; i < opp_table->path_count; i++)
+	अगर (opp_table->paths) अणु
+		क्रम (i = 0; i < opp_table->path_count; i++)
 			icc_put(opp_table->paths[i]);
-		kfree(opp_table->paths);
-	}
+		kमुक्त(opp_table->paths);
+	पूर्ण
 
 	WARN_ON(!list_empty(&opp_table->opp_list));
 
-	list_for_each_entry_safe(opp_dev, temp, &opp_table->dev_list, node) {
+	list_क्रम_each_entry_safe(opp_dev, temp, &opp_table->dev_list, node) अणु
 		/*
-		 * The OPP table is getting removed, drop the performance state
-		 * constraints.
+		 * The OPP table is getting हटाओd, drop the perक्रमmance state
+		 * स्थिरraपूर्णांकs.
 		 */
-		if (opp_table->genpd_performance_state)
-			dev_pm_genpd_set_performance_state((struct device *)(opp_dev->dev), 0);
+		अगर (opp_table->genpd_perक्रमmance_state)
+			dev_pm_genpd_set_perक्रमmance_state((काष्ठा device *)(opp_dev->dev), 0);
 
-		_remove_opp_dev(opp_dev, opp_table);
-	}
+		_हटाओ_opp_dev(opp_dev, opp_table);
+	पूर्ण
 
 	mutex_destroy(&opp_table->genpd_virt_dev_lock);
 	mutex_destroy(&opp_table->lock);
-	kfree(opp_table);
-}
+	kमुक्त(opp_table);
+पूर्ण
 
-void dev_pm_opp_put_opp_table(struct opp_table *opp_table)
-{
+व्योम dev_pm_opp_put_opp_table(काष्ठा opp_table *opp_table)
+अणु
 	kref_put_mutex(&opp_table->kref, _opp_table_kref_release,
 		       &opp_table_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_put_opp_table);
 
-void _opp_free(struct dev_pm_opp *opp)
-{
-	kfree(opp);
-}
+व्योम _opp_मुक्त(काष्ठा dev_pm_opp *opp)
+अणु
+	kमुक्त(opp);
+पूर्ण
 
-static void _opp_kref_release(struct kref *kref)
-{
-	struct dev_pm_opp *opp = container_of(kref, struct dev_pm_opp, kref);
-	struct opp_table *opp_table = opp->opp_table;
+अटल व्योम _opp_kref_release(काष्ठा kref *kref)
+अणु
+	काष्ठा dev_pm_opp *opp = container_of(kref, काष्ठा dev_pm_opp, kref);
+	काष्ठा opp_table *opp_table = opp->opp_table;
 
 	list_del(&opp->node);
 	mutex_unlock(&opp_table->lock);
 
 	/*
-	 * Notify the changes in the availability of the operable
+	 * Notअगरy the changes in the availability of the operable
 	 * frequency/voltage list.
 	 */
-	blocking_notifier_call_chain(&opp_table->head, OPP_EVENT_REMOVE, opp);
-	_of_opp_free_required_opps(opp_table, opp);
-	opp_debug_remove_one(opp);
-	kfree(opp);
-}
+	blocking_notअगरier_call_chain(&opp_table->head, OPP_EVENT_REMOVE, opp);
+	_of_opp_मुक्त_required_opps(opp_table, opp);
+	opp_debug_हटाओ_one(opp);
+	kमुक्त(opp);
+पूर्ण
 
-void dev_pm_opp_get(struct dev_pm_opp *opp)
-{
+व्योम dev_pm_opp_get(काष्ठा dev_pm_opp *opp)
+अणु
 	kref_get(&opp->kref);
-}
+पूर्ण
 
-void dev_pm_opp_put(struct dev_pm_opp *opp)
-{
+व्योम dev_pm_opp_put(काष्ठा dev_pm_opp *opp)
+अणु
 	kref_put_mutex(&opp->kref, _opp_kref_release, &opp->opp_table->lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_put);
 
 /**
- * dev_pm_opp_remove()  - Remove an OPP from OPP table
- * @dev:	device for which we do this operation
- * @freq:	OPP to remove with matching 'freq'
+ * dev_pm_opp_हटाओ()  - Remove an OPP from OPP table
+ * @dev:	device क्रम which we करो this operation
+ * @freq:	OPP to हटाओ with matching 'freq'
  *
- * This function removes an opp from the opp table.
+ * This function हटाओs an opp from the opp table.
  */
-void dev_pm_opp_remove(struct device *dev, unsigned long freq)
-{
-	struct dev_pm_opp *opp;
-	struct opp_table *opp_table;
+व्योम dev_pm_opp_हटाओ(काष्ठा device *dev, अचिन्हित दीर्घ freq)
+अणु
+	काष्ठा dev_pm_opp *opp;
+	काष्ठा opp_table *opp_table;
 	bool found = false;
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return;
+	अगर (IS_ERR(opp_table))
+		वापस;
 
 	mutex_lock(&opp_table->lock);
 
-	list_for_each_entry(opp, &opp_table->opp_list, node) {
-		if (opp->rate == freq) {
+	list_क्रम_each_entry(opp, &opp_table->opp_list, node) अणु
+		अगर (opp->rate == freq) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&opp_table->lock);
 
-	if (found) {
+	अगर (found) अणु
 		dev_pm_opp_put(opp);
 
 		/* Drop the reference taken by dev_pm_opp_add() */
 		dev_pm_opp_put_opp_table(opp_table);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_warn(dev, "%s: Couldn't find OPP with freq: %lu\n",
 			 __func__, freq);
-	}
+	पूर्ण
 
 	/* Drop the reference taken by _find_opp_table() */
 	dev_pm_opp_put_opp_table(opp_table);
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_remove);
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_हटाओ);
 
-static struct dev_pm_opp *_opp_get_next(struct opp_table *opp_table,
+अटल काष्ठा dev_pm_opp *_opp_get_next(काष्ठा opp_table *opp_table,
 					bool dynamic)
-{
-	struct dev_pm_opp *opp = NULL, *temp;
+अणु
+	काष्ठा dev_pm_opp *opp = शून्य, *temp;
 
 	mutex_lock(&opp_table->lock);
-	list_for_each_entry(temp, &opp_table->opp_list, node) {
+	list_क्रम_each_entry(temp, &opp_table->opp_list, node) अणु
 		/*
-		 * Refcount must be dropped only once for each OPP by OPP core,
-		 * do that with help of "removed" flag.
+		 * Refcount must be dropped only once क्रम each OPP by OPP core,
+		 * करो that with help of "removed" flag.
 		 */
-		if (!temp->removed && dynamic == temp->dynamic) {
+		अगर (!temp->हटाओd && dynamic == temp->dynamic) अणु
 			opp = temp;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&opp_table->lock);
-	return opp;
-}
+	वापस opp;
+पूर्ण
 
 /*
  * Can't call dev_pm_opp_put() from under the lock as debugfs removal needs to
- * happen lock less to avoid circular dependency issues. This routine must be
+ * happen lock less to aव्योम circular dependency issues. This routine must be
  * called without the opp_table->lock held.
  */
-static void _opp_remove_all(struct opp_table *opp_table, bool dynamic)
-{
-	struct dev_pm_opp *opp;
+अटल व्योम _opp_हटाओ_all(काष्ठा opp_table *opp_table, bool dynamic)
+अणु
+	काष्ठा dev_pm_opp *opp;
 
-	while ((opp = _opp_get_next(opp_table, dynamic))) {
-		opp->removed = true;
+	जबतक ((opp = _opp_get_next(opp_table, dynamic))) अणु
+		opp->हटाओd = true;
 		dev_pm_opp_put(opp);
 
 		/* Drop the references taken by dev_pm_opp_add() */
-		if (dynamic)
+		अगर (dynamic)
 			dev_pm_opp_put_opp_table(opp_table);
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool _opp_remove_all_static(struct opp_table *opp_table)
-{
+bool _opp_हटाओ_all_अटल(काष्ठा opp_table *opp_table)
+अणु
 	mutex_lock(&opp_table->lock);
 
-	if (!opp_table->parsed_static_opps) {
+	अगर (!opp_table->parsed_अटल_opps) अणु
 		mutex_unlock(&opp_table->lock);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (--opp_table->parsed_static_opps) {
+	अगर (--opp_table->parsed_अटल_opps) अणु
 		mutex_unlock(&opp_table->lock);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	mutex_unlock(&opp_table->lock);
 
-	_opp_remove_all(opp_table, false);
-	return true;
-}
+	_opp_हटाओ_all(opp_table, false);
+	वापस true;
+पूर्ण
 
 /**
- * dev_pm_opp_remove_all_dynamic() - Remove all dynamically created OPPs
- * @dev:	device for which we do this operation
+ * dev_pm_opp_हटाओ_all_dynamic() - Remove all dynamically created OPPs
+ * @dev:	device क्रम which we करो this operation
  *
- * This function removes all dynamically created OPPs from the opp table.
+ * This function हटाओs all dynamically created OPPs from the opp table.
  */
-void dev_pm_opp_remove_all_dynamic(struct device *dev)
-{
-	struct opp_table *opp_table;
+व्योम dev_pm_opp_हटाओ_all_dynamic(काष्ठा device *dev)
+अणु
+	काष्ठा opp_table *opp_table;
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return;
+	अगर (IS_ERR(opp_table))
+		वापस;
 
-	_opp_remove_all(opp_table, true);
+	_opp_हटाओ_all(opp_table, true);
 
 	/* Drop the reference taken by _find_opp_table() */
 	dev_pm_opp_put_opp_table(opp_table);
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_remove_all_dynamic);
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_हटाओ_all_dynamic);
 
-struct dev_pm_opp *_opp_allocate(struct opp_table *table)
-{
-	struct dev_pm_opp *opp;
-	int supply_count, supply_size, icc_size;
+काष्ठा dev_pm_opp *_opp_allocate(काष्ठा opp_table *table)
+अणु
+	काष्ठा dev_pm_opp *opp;
+	पूर्णांक supply_count, supply_size, icc_size;
 
-	/* Allocate space for at least one supply */
+	/* Allocate space क्रम at least one supply */
 	supply_count = table->regulator_count > 0 ? table->regulator_count : 1;
-	supply_size = sizeof(*opp->supplies) * supply_count;
-	icc_size = sizeof(*opp->bandwidth) * table->path_count;
+	supply_size = माप(*opp->supplies) * supply_count;
+	icc_size = माप(*opp->bandwidth) * table->path_count;
 
-	/* allocate new OPP node and supplies structures */
-	opp = kzalloc(sizeof(*opp) + supply_size + icc_size, GFP_KERNEL);
+	/* allocate new OPP node and supplies काष्ठाures */
+	opp = kzalloc(माप(*opp) + supply_size + icc_size, GFP_KERNEL);
 
-	if (!opp)
-		return NULL;
+	अगर (!opp)
+		वापस शून्य;
 
-	/* Put the supplies at the end of the OPP structure as an empty array */
-	opp->supplies = (struct dev_pm_opp_supply *)(opp + 1);
-	if (icc_size)
-		opp->bandwidth = (struct dev_pm_opp_icc_bw *)(opp->supplies + supply_count);
+	/* Put the supplies at the end of the OPP काष्ठाure as an empty array */
+	opp->supplies = (काष्ठा dev_pm_opp_supply *)(opp + 1);
+	अगर (icc_size)
+		opp->bandwidth = (काष्ठा dev_pm_opp_icc_bw *)(opp->supplies + supply_count);
 	INIT_LIST_HEAD(&opp->node);
 
-	return opp;
-}
+	वापस opp;
+पूर्ण
 
-static bool _opp_supported_by_regulators(struct dev_pm_opp *opp,
-					 struct opp_table *opp_table)
-{
-	struct regulator *reg;
-	int i;
+अटल bool _opp_supported_by_regulators(काष्ठा dev_pm_opp *opp,
+					 काष्ठा opp_table *opp_table)
+अणु
+	काष्ठा regulator *reg;
+	पूर्णांक i;
 
-	if (!opp_table->regulators)
-		return true;
+	अगर (!opp_table->regulators)
+		वापस true;
 
-	for (i = 0; i < opp_table->regulator_count; i++) {
+	क्रम (i = 0; i < opp_table->regulator_count; i++) अणु
 		reg = opp_table->regulators[i];
 
-		if (!regulator_is_supported_voltage(reg,
+		अगर (!regulator_is_supported_voltage(reg,
 					opp->supplies[i].u_volt_min,
-					opp->supplies[i].u_volt_max)) {
+					opp->supplies[i].u_volt_max)) अणु
 			pr_warn("%s: OPP minuV: %lu maxuV: %lu, not supported by regulator\n",
 				__func__, opp->supplies[i].u_volt_min,
 				opp->supplies[i].u_volt_max);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int _opp_compare_key(struct dev_pm_opp *opp1, struct dev_pm_opp *opp2)
-{
-	if (opp1->rate != opp2->rate)
-		return opp1->rate < opp2->rate ? -1 : 1;
-	if (opp1->bandwidth && opp2->bandwidth &&
+पूर्णांक _opp_compare_key(काष्ठा dev_pm_opp *opp1, काष्ठा dev_pm_opp *opp2)
+अणु
+	अगर (opp1->rate != opp2->rate)
+		वापस opp1->rate < opp2->rate ? -1 : 1;
+	अगर (opp1->bandwidth && opp2->bandwidth &&
 	    opp1->bandwidth[0].peak != opp2->bandwidth[0].peak)
-		return opp1->bandwidth[0].peak < opp2->bandwidth[0].peak ? -1 : 1;
-	if (opp1->level != opp2->level)
-		return opp1->level < opp2->level ? -1 : 1;
-	return 0;
-}
+		वापस opp1->bandwidth[0].peak < opp2->bandwidth[0].peak ? -1 : 1;
+	अगर (opp1->level != opp2->level)
+		वापस opp1->level < opp2->level ? -1 : 1;
+	वापस 0;
+पूर्ण
 
-static int _opp_is_duplicate(struct device *dev, struct dev_pm_opp *new_opp,
-			     struct opp_table *opp_table,
-			     struct list_head **head)
-{
-	struct dev_pm_opp *opp;
-	int opp_cmp;
+अटल पूर्णांक _opp_is_duplicate(काष्ठा device *dev, काष्ठा dev_pm_opp *new_opp,
+			     काष्ठा opp_table *opp_table,
+			     काष्ठा list_head **head)
+अणु
+	काष्ठा dev_pm_opp *opp;
+	पूर्णांक opp_cmp;
 
 	/*
-	 * Insert new OPP in order of increasing frequency and discard if
-	 * already present.
+	 * Insert new OPP in order of increasing frequency and discard अगर
+	 * alपढ़ोy present.
 	 *
 	 * Need to use &opp_table->opp_list in the condition part of the 'for'
-	 * loop, don't replace it with head otherwise it will become an infinite
+	 * loop, करोn't replace it with head otherwise it will become an infinite
 	 * loop.
 	 */
-	list_for_each_entry(opp, &opp_table->opp_list, node) {
+	list_क्रम_each_entry(opp, &opp_table->opp_list, node) अणु
 		opp_cmp = _opp_compare_key(new_opp, opp);
-		if (opp_cmp > 0) {
+		अगर (opp_cmp > 0) अणु
 			*head = &opp->node;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (opp_cmp < 0)
-			return 0;
+		अगर (opp_cmp < 0)
+			वापस 0;
 
 		/* Duplicate OPPs */
 		dev_warn(dev, "%s: duplicate OPPs detected. Existing: freq: %lu, volt: %lu, enabled: %d. New: freq: %lu, volt: %lu, enabled: %d\n",
@@ -1659,53 +1660,53 @@ static int _opp_is_duplicate(struct device *dev, struct dev_pm_opp *new_opp,
 			 opp->available, new_opp->rate,
 			 new_opp->supplies[0].u_volt, new_opp->available);
 
-		/* Should we compare voltages for all regulators here ? */
-		return opp->available &&
+		/* Should we compare voltages क्रम all regulators here ? */
+		वापस opp->available &&
 		       new_opp->supplies[0].u_volt == opp->supplies[0].u_volt ? -EBUSY : -EEXIST;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void _required_opps_available(struct dev_pm_opp *opp, int count)
-{
-	int i;
+व्योम _required_opps_available(काष्ठा dev_pm_opp *opp, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
-		if (opp->required_opps[i]->available)
-			continue;
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (opp->required_opps[i]->available)
+			जारी;
 
 		opp->available = false;
 		pr_warn("%s: OPP not supported by required OPP %pOF (%lu)\n",
 			 __func__, opp->required_opps[i]->np, opp->rate);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
 /*
  * Returns:
- * 0: On success. And appropriate error message for duplicate OPPs.
+ * 0: On success. And appropriate error message क्रम duplicate OPPs.
  * -EBUSY: For OPP with same freq/volt and is available. The callers of
- *  _opp_add() must return 0 if they receive -EBUSY from it. This is to make
- *  sure we don't print error messages unnecessarily if different parts of
+ *  _opp_add() must वापस 0 अगर they receive -EBUSY from it. This is to make
+ *  sure we करोn't prपूर्णांक error messages unnecessarily अगर dअगरferent parts of
  *  kernel try to initialize the OPP table.
- * -EEXIST: For OPP with same freq but different volt or is unavailable. This
+ * -EEXIST: For OPP with same freq but dअगरferent volt or is unavailable. This
  *  should be considered an error by the callers of _opp_add().
  */
-int _opp_add(struct device *dev, struct dev_pm_opp *new_opp,
-	     struct opp_table *opp_table, bool rate_not_available)
-{
-	struct list_head *head;
-	int ret;
+पूर्णांक _opp_add(काष्ठा device *dev, काष्ठा dev_pm_opp *new_opp,
+	     काष्ठा opp_table *opp_table, bool rate_not_available)
+अणु
+	काष्ठा list_head *head;
+	पूर्णांक ret;
 
 	mutex_lock(&opp_table->lock);
 	head = &opp_table->opp_list;
 
 	ret = _opp_is_duplicate(dev, new_opp, opp_table, &head);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&opp_table->lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	list_add(&new_opp->node, head);
 	mutex_unlock(&opp_table->lock);
@@ -1715,53 +1716,53 @@ int _opp_add(struct device *dev, struct dev_pm_opp *new_opp,
 
 	opp_debug_create_one(new_opp, opp_table);
 
-	if (!_opp_supported_by_regulators(new_opp, opp_table)) {
+	अगर (!_opp_supported_by_regulators(new_opp, opp_table)) अणु
 		new_opp->available = false;
 		dev_warn(dev, "%s: OPP not supported by regulators (%lu)\n",
 			 __func__, new_opp->rate);
-	}
+	पूर्ण
 
 	/* required-opps not fully initialized yet */
-	if (lazy_linking_pending(opp_table))
-		return 0;
+	अगर (lazy_linking_pending(opp_table))
+		वापस 0;
 
 	_required_opps_available(new_opp, opp_table->required_opp_count);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _opp_add_v1() - Allocate a OPP based on v1 bindings.
  * @opp_table:	OPP table
- * @dev:	device for which we do this operation
- * @freq:	Frequency in Hz for this OPP
- * @u_volt:	Voltage in uVolts for this OPP
+ * @dev:	device क्रम which we करो this operation
+ * @freq:	Frequency in Hz क्रम this OPP
+ * @u_volt:	Voltage in uVolts क्रम this OPP
  * @dynamic:	Dynamically added OPPs.
  *
- * This function adds an opp definition to the opp table and returns status.
- * The opp is made available by default and it can be controlled using
- * dev_pm_opp_enable/disable functions and may be removed by dev_pm_opp_remove.
+ * This function adds an opp definition to the opp table and वापसs status.
+ * The opp is made available by शेष and it can be controlled using
+ * dev_pm_opp_enable/disable functions and may be हटाओd by dev_pm_opp_हटाओ.
  *
  * NOTE: "dynamic" parameter impacts OPPs added by the dev_pm_opp_of_add_table
- * and freed by dev_pm_opp_of_remove_table.
+ * and मुक्तd by dev_pm_opp_of_हटाओ_table.
  *
  * Return:
  * 0		On success OR
  *		Duplicate OPPs (both freq and volt are same) and opp->available
- * -EEXIST	Freq are same and volt are different OR
+ * -EEXIST	Freq are same and volt are dअगरferent OR
  *		Duplicate OPPs (both freq and volt are same) and !opp->available
  * -ENOMEM	Memory allocation failure
  */
-int _opp_add_v1(struct opp_table *opp_table, struct device *dev,
-		unsigned long freq, long u_volt, bool dynamic)
-{
-	struct dev_pm_opp *new_opp;
-	unsigned long tol;
-	int ret;
+पूर्णांक _opp_add_v1(काष्ठा opp_table *opp_table, काष्ठा device *dev,
+		अचिन्हित दीर्घ freq, दीर्घ u_volt, bool dynamic)
+अणु
+	काष्ठा dev_pm_opp *new_opp;
+	अचिन्हित दीर्घ tol;
+	पूर्णांक ret;
 
 	new_opp = _opp_allocate(opp_table);
-	if (!new_opp)
-		return -ENOMEM;
+	अगर (!new_opp)
+		वापस -ENOMEM;
 
 	/* populate the opp table */
 	new_opp->rate = freq;
@@ -1773,98 +1774,98 @@ int _opp_add_v1(struct opp_table *opp_table, struct device *dev,
 	new_opp->dynamic = dynamic;
 
 	ret = _opp_add(dev, new_opp, opp_table, false);
-	if (ret) {
-		/* Don't return error for duplicate OPPs */
-		if (ret == -EBUSY)
+	अगर (ret) अणु
+		/* Don't वापस error क्रम duplicate OPPs */
+		अगर (ret == -EBUSY)
 			ret = 0;
-		goto free_opp;
-	}
+		जाओ मुक्त_opp;
+	पूर्ण
 
 	/*
-	 * Notify the changes in the availability of the operable
+	 * Notअगरy the changes in the availability of the operable
 	 * frequency/voltage list.
 	 */
-	blocking_notifier_call_chain(&opp_table->head, OPP_EVENT_ADD, new_opp);
-	return 0;
+	blocking_notअगरier_call_chain(&opp_table->head, OPP_EVENT_ADD, new_opp);
+	वापस 0;
 
-free_opp:
-	_opp_free(new_opp);
+मुक्त_opp:
+	_opp_मुक्त(new_opp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * dev_pm_opp_set_supported_hw() - Set supported platforms
- * @dev: Device for which supported-hw has to be set.
+ * dev_pm_opp_set_supported_hw() - Set supported platक्रमms
+ * @dev: Device क्रम which supported-hw has to be set.
  * @versions: Array of hierarchy of versions to match.
  * @count: Number of elements in the array.
  *
- * This is required only for the V2 bindings, and it enables a platform to
- * specify the hierarchy of versions it supports. OPP layer will then enable
- * OPPs, which are available for those versions, based on its 'opp-supported-hw'
+ * This is required only क्रम the V2 bindings, and it enables a platक्रमm to
+ * specअगरy the hierarchy of versions it supports. OPP layer will then enable
+ * OPPs, which are available क्रम those versions, based on its 'opp-supported-hw'
  * property.
  */
-struct opp_table *dev_pm_opp_set_supported_hw(struct device *dev,
-			const u32 *versions, unsigned int count)
-{
-	struct opp_table *opp_table;
+काष्ठा opp_table *dev_pm_opp_set_supported_hw(काष्ठा device *dev,
+			स्थिर u32 *versions, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा opp_table *opp_table;
 
 	opp_table = _add_opp_table(dev, false);
-	if (IS_ERR(opp_table))
-		return opp_table;
+	अगर (IS_ERR(opp_table))
+		वापस opp_table;
 
-	/* Make sure there are no concurrent readers while updating opp_table */
+	/* Make sure there are no concurrent पढ़ोers जबतक updating opp_table */
 	WARN_ON(!list_empty(&opp_table->opp_list));
 
 	/* Another CPU that shares the OPP table has set the property ? */
-	if (opp_table->supported_hw)
-		return opp_table;
+	अगर (opp_table->supported_hw)
+		वापस opp_table;
 
-	opp_table->supported_hw = kmemdup(versions, count * sizeof(*versions),
+	opp_table->supported_hw = kmemdup(versions, count * माप(*versions),
 					GFP_KERNEL);
-	if (!opp_table->supported_hw) {
+	अगर (!opp_table->supported_hw) अणु
 		dev_pm_opp_put_opp_table(opp_table);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	opp_table->supported_hw_count = count;
 
-	return opp_table;
-}
+	वापस opp_table;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_set_supported_hw);
 
 /**
- * dev_pm_opp_put_supported_hw() - Releases resources blocked for supported hw
- * @opp_table: OPP table returned by dev_pm_opp_set_supported_hw().
+ * dev_pm_opp_put_supported_hw() - Releases resources blocked क्रम supported hw
+ * @opp_table: OPP table वापसed by dev_pm_opp_set_supported_hw().
  *
- * This is required only for the V2 bindings, and is called for a matching
- * dev_pm_opp_set_supported_hw(). Until this is called, the opp_table structure
- * will not be freed.
+ * This is required only क्रम the V2 bindings, and is called क्रम a matching
+ * dev_pm_opp_set_supported_hw(). Until this is called, the opp_table काष्ठाure
+ * will not be मुक्तd.
  */
-void dev_pm_opp_put_supported_hw(struct opp_table *opp_table)
-{
-	if (unlikely(!opp_table))
-		return;
+व्योम dev_pm_opp_put_supported_hw(काष्ठा opp_table *opp_table)
+अणु
+	अगर (unlikely(!opp_table))
+		वापस;
 
-	/* Make sure there are no concurrent readers while updating opp_table */
+	/* Make sure there are no concurrent पढ़ोers जबतक updating opp_table */
 	WARN_ON(!list_empty(&opp_table->opp_list));
 
-	kfree(opp_table->supported_hw);
-	opp_table->supported_hw = NULL;
+	kमुक्त(opp_table->supported_hw);
+	opp_table->supported_hw = शून्य;
 	opp_table->supported_hw_count = 0;
 
 	dev_pm_opp_put_opp_table(opp_table);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_put_supported_hw);
 
-static void devm_pm_opp_supported_hw_release(void *data)
-{
+अटल व्योम devm_pm_opp_supported_hw_release(व्योम *data)
+अणु
 	dev_pm_opp_put_supported_hw(data);
-}
+पूर्ण
 
 /**
- * devm_pm_opp_set_supported_hw() - Set supported platforms
- * @dev: Device for which supported-hw has to be set.
+ * devm_pm_opp_set_supported_hw() - Set supported platक्रमms
+ * @dev: Device क्रम which supported-hw has to be set.
  * @versions: Array of hierarchy of versions to match.
  * @count: Number of elements in the array.
  *
@@ -1872,543 +1873,543 @@ static void devm_pm_opp_supported_hw_release(void *data)
  *
  * Return: 0 on success and errorno otherwise.
  */
-int devm_pm_opp_set_supported_hw(struct device *dev, const u32 *versions,
-				 unsigned int count)
-{
-	struct opp_table *opp_table;
+पूर्णांक devm_pm_opp_set_supported_hw(काष्ठा device *dev, स्थिर u32 *versions,
+				 अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा opp_table *opp_table;
 
 	opp_table = dev_pm_opp_set_supported_hw(dev, versions, count);
-	if (IS_ERR(opp_table))
-		return PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस PTR_ERR(opp_table);
 
-	return devm_add_action_or_reset(dev, devm_pm_opp_supported_hw_release,
+	वापस devm_add_action_or_reset(dev, devm_pm_opp_supported_hw_release,
 					opp_table);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_pm_opp_set_supported_hw);
 
 /**
  * dev_pm_opp_set_prop_name() - Set prop-extn name
- * @dev: Device for which the prop-name has to be set.
+ * @dev: Device क्रम which the prop-name has to be set.
  * @name: name to postfix to properties.
  *
- * This is required only for the V2 bindings, and it enables a platform to
- * specify the extn to be used for certain property names. The properties to
+ * This is required only क्रम the V2 bindings, and it enables a platक्रमm to
+ * specअगरy the extn to be used क्रम certain property names. The properties to
  * which the extension will apply are opp-microvolt and opp-microamp. OPP core
- * should postfix the property name with -<name> while looking for them.
+ * should postfix the property name with -<name> जबतक looking क्रम them.
  */
-struct opp_table *dev_pm_opp_set_prop_name(struct device *dev, const char *name)
-{
-	struct opp_table *opp_table;
+काष्ठा opp_table *dev_pm_opp_set_prop_name(काष्ठा device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा opp_table *opp_table;
 
 	opp_table = _add_opp_table(dev, false);
-	if (IS_ERR(opp_table))
-		return opp_table;
+	अगर (IS_ERR(opp_table))
+		वापस opp_table;
 
-	/* Make sure there are no concurrent readers while updating opp_table */
+	/* Make sure there are no concurrent पढ़ोers जबतक updating opp_table */
 	WARN_ON(!list_empty(&opp_table->opp_list));
 
 	/* Another CPU that shares the OPP table has set the property ? */
-	if (opp_table->prop_name)
-		return opp_table;
+	अगर (opp_table->prop_name)
+		वापस opp_table;
 
 	opp_table->prop_name = kstrdup(name, GFP_KERNEL);
-	if (!opp_table->prop_name) {
+	अगर (!opp_table->prop_name) अणु
 		dev_pm_opp_put_opp_table(opp_table);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	return opp_table;
-}
+	वापस opp_table;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_set_prop_name);
 
 /**
- * dev_pm_opp_put_prop_name() - Releases resources blocked for prop-name
- * @opp_table: OPP table returned by dev_pm_opp_set_prop_name().
+ * dev_pm_opp_put_prop_name() - Releases resources blocked क्रम prop-name
+ * @opp_table: OPP table वापसed by dev_pm_opp_set_prop_name().
  *
- * This is required only for the V2 bindings, and is called for a matching
- * dev_pm_opp_set_prop_name(). Until this is called, the opp_table structure
- * will not be freed.
+ * This is required only क्रम the V2 bindings, and is called क्रम a matching
+ * dev_pm_opp_set_prop_name(). Until this is called, the opp_table काष्ठाure
+ * will not be मुक्तd.
  */
-void dev_pm_opp_put_prop_name(struct opp_table *opp_table)
-{
-	if (unlikely(!opp_table))
-		return;
+व्योम dev_pm_opp_put_prop_name(काष्ठा opp_table *opp_table)
+अणु
+	अगर (unlikely(!opp_table))
+		वापस;
 
-	/* Make sure there are no concurrent readers while updating opp_table */
+	/* Make sure there are no concurrent पढ़ोers जबतक updating opp_table */
 	WARN_ON(!list_empty(&opp_table->opp_list));
 
-	kfree(opp_table->prop_name);
-	opp_table->prop_name = NULL;
+	kमुक्त(opp_table->prop_name);
+	opp_table->prop_name = शून्य;
 
 	dev_pm_opp_put_opp_table(opp_table);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_put_prop_name);
 
 /**
- * dev_pm_opp_set_regulators() - Set regulator names for the device
- * @dev: Device for which regulator name is being set.
- * @names: Array of pointers to the names of the regulator.
+ * dev_pm_opp_set_regulators() - Set regulator names क्रम the device
+ * @dev: Device क्रम which regulator name is being set.
+ * @names: Array of poपूर्णांकers to the names of the regulator.
  * @count: Number of regulators.
  *
- * In order to support OPP switching, OPP layer needs to know the name of the
- * device's regulators, as the core would be required to switch voltages as
+ * In order to support OPP चयनing, OPP layer needs to know the name of the
+ * device's regulators, as the core would be required to चयन voltages as
  * well.
  *
- * This must be called before any OPPs are initialized for the device.
+ * This must be called beक्रमe any OPPs are initialized क्रम the device.
  */
-struct opp_table *dev_pm_opp_set_regulators(struct device *dev,
-					    const char * const names[],
-					    unsigned int count)
-{
-	struct dev_pm_opp_supply *supplies;
-	struct opp_table *opp_table;
-	struct regulator *reg;
-	int ret, i;
+काष्ठा opp_table *dev_pm_opp_set_regulators(काष्ठा device *dev,
+					    स्थिर अक्षर * स्थिर names[],
+					    अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा dev_pm_opp_supply *supplies;
+	काष्ठा opp_table *opp_table;
+	काष्ठा regulator *reg;
+	पूर्णांक ret, i;
 
 	opp_table = _add_opp_table(dev, false);
-	if (IS_ERR(opp_table))
-		return opp_table;
+	अगर (IS_ERR(opp_table))
+		वापस opp_table;
 
-	/* This should be called before OPPs are initialized */
-	if (WARN_ON(!list_empty(&opp_table->opp_list))) {
+	/* This should be called beक्रमe OPPs are initialized */
+	अगर (WARN_ON(!list_empty(&opp_table->opp_list))) अणु
 		ret = -EBUSY;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* Another CPU that shares the OPP table has set the regulators ? */
-	if (opp_table->regulators)
-		return opp_table;
+	अगर (opp_table->regulators)
+		वापस opp_table;
 
-	opp_table->regulators = kmalloc_array(count,
-					      sizeof(*opp_table->regulators),
+	opp_table->regulators = kदो_स्मृति_array(count,
+					      माप(*opp_table->regulators),
 					      GFP_KERNEL);
-	if (!opp_table->regulators) {
+	अगर (!opp_table->regulators) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		reg = regulator_get_optional(dev, names[i]);
-		if (IS_ERR(reg)) {
+		अगर (IS_ERR(reg)) अणु
 			ret = PTR_ERR(reg);
-			if (ret != -EPROBE_DEFER)
+			अगर (ret != -EPROBE_DEFER)
 				dev_err(dev, "%s: no regulator (%s) found: %d\n",
 					__func__, names[i], ret);
-			goto free_regulators;
-		}
+			जाओ मुक्त_regulators;
+		पूर्ण
 
 		opp_table->regulators[i] = reg;
-	}
+	पूर्ण
 
 	opp_table->regulator_count = count;
 
-	supplies = kmalloc_array(count * 2, sizeof(*supplies), GFP_KERNEL);
-	if (!supplies) {
+	supplies = kदो_स्मृति_array(count * 2, माप(*supplies), GFP_KERNEL);
+	अगर (!supplies) अणु
 		ret = -ENOMEM;
-		goto free_regulators;
-	}
+		जाओ मुक्त_regulators;
+	पूर्ण
 
 	mutex_lock(&opp_table->lock);
 	opp_table->sod_supplies = supplies;
-	if (opp_table->set_opp_data) {
+	अगर (opp_table->set_opp_data) अणु
 		opp_table->set_opp_data->old_opp.supplies = supplies;
 		opp_table->set_opp_data->new_opp.supplies = supplies + count;
-	}
+	पूर्ण
 	mutex_unlock(&opp_table->lock);
 
-	return opp_table;
+	वापस opp_table;
 
-free_regulators:
-	while (i != 0)
+मुक्त_regulators:
+	जबतक (i != 0)
 		regulator_put(opp_table->regulators[--i]);
 
-	kfree(opp_table->regulators);
-	opp_table->regulators = NULL;
+	kमुक्त(opp_table->regulators);
+	opp_table->regulators = शून्य;
 	opp_table->regulator_count = -1;
 err:
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_set_regulators);
 
 /**
- * dev_pm_opp_put_regulators() - Releases resources blocked for regulator
- * @opp_table: OPP table returned from dev_pm_opp_set_regulators().
+ * dev_pm_opp_put_regulators() - Releases resources blocked क्रम regulator
+ * @opp_table: OPP table वापसed from dev_pm_opp_set_regulators().
  */
-void dev_pm_opp_put_regulators(struct opp_table *opp_table)
-{
-	int i;
+व्योम dev_pm_opp_put_regulators(काष्ठा opp_table *opp_table)
+अणु
+	पूर्णांक i;
 
-	if (unlikely(!opp_table))
-		return;
+	अगर (unlikely(!opp_table))
+		वापस;
 
-	if (!opp_table->regulators)
-		goto put_opp_table;
+	अगर (!opp_table->regulators)
+		जाओ put_opp_table;
 
-	/* Make sure there are no concurrent readers while updating opp_table */
+	/* Make sure there are no concurrent पढ़ोers जबतक updating opp_table */
 	WARN_ON(!list_empty(&opp_table->opp_list));
 
-	if (opp_table->enabled) {
-		for (i = opp_table->regulator_count - 1; i >= 0; i--)
+	अगर (opp_table->enabled) अणु
+		क्रम (i = opp_table->regulator_count - 1; i >= 0; i--)
 			regulator_disable(opp_table->regulators[i]);
-	}
+	पूर्ण
 
-	for (i = opp_table->regulator_count - 1; i >= 0; i--)
+	क्रम (i = opp_table->regulator_count - 1; i >= 0; i--)
 		regulator_put(opp_table->regulators[i]);
 
 	mutex_lock(&opp_table->lock);
-	if (opp_table->set_opp_data) {
-		opp_table->set_opp_data->old_opp.supplies = NULL;
-		opp_table->set_opp_data->new_opp.supplies = NULL;
-	}
+	अगर (opp_table->set_opp_data) अणु
+		opp_table->set_opp_data->old_opp.supplies = शून्य;
+		opp_table->set_opp_data->new_opp.supplies = शून्य;
+	पूर्ण
 
-	kfree(opp_table->sod_supplies);
-	opp_table->sod_supplies = NULL;
+	kमुक्त(opp_table->sod_supplies);
+	opp_table->sod_supplies = शून्य;
 	mutex_unlock(&opp_table->lock);
 
-	kfree(opp_table->regulators);
-	opp_table->regulators = NULL;
+	kमुक्त(opp_table->regulators);
+	opp_table->regulators = शून्य;
 	opp_table->regulator_count = -1;
 
 put_opp_table:
 	dev_pm_opp_put_opp_table(opp_table);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_put_regulators);
 
-static void devm_pm_opp_regulators_release(void *data)
-{
+अटल व्योम devm_pm_opp_regulators_release(व्योम *data)
+अणु
 	dev_pm_opp_put_regulators(data);
-}
+पूर्ण
 
 /**
- * devm_pm_opp_set_regulators() - Set regulator names for the device
- * @dev: Device for which regulator name is being set.
- * @names: Array of pointers to the names of the regulator.
+ * devm_pm_opp_set_regulators() - Set regulator names क्रम the device
+ * @dev: Device क्रम which regulator name is being set.
+ * @names: Array of poपूर्णांकers to the names of the regulator.
  * @count: Number of regulators.
  *
  * This is a resource-managed variant of dev_pm_opp_set_regulators().
  *
  * Return: 0 on success and errorno otherwise.
  */
-int devm_pm_opp_set_regulators(struct device *dev,
-			       const char * const names[],
-			       unsigned int count)
-{
-	struct opp_table *opp_table;
+पूर्णांक devm_pm_opp_set_regulators(काष्ठा device *dev,
+			       स्थिर अक्षर * स्थिर names[],
+			       अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा opp_table *opp_table;
 
 	opp_table = dev_pm_opp_set_regulators(dev, names, count);
-	if (IS_ERR(opp_table))
-		return PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस PTR_ERR(opp_table);
 
-	return devm_add_action_or_reset(dev, devm_pm_opp_regulators_release,
+	वापस devm_add_action_or_reset(dev, devm_pm_opp_regulators_release,
 					opp_table);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_pm_opp_set_regulators);
 
 /**
- * dev_pm_opp_set_clkname() - Set clk name for the device
- * @dev: Device for which clk name is being set.
+ * dev_pm_opp_set_clkname() - Set clk name क्रम the device
+ * @dev: Device क्रम which clk name is being set.
  * @name: Clk name.
  *
- * In order to support OPP switching, OPP layer needs to get pointer to the
- * clock for the device. Simple cases work fine without using this routine (i.e.
- * by passing connection-id as NULL), but for a device with multiple clocks
+ * In order to support OPP चयनing, OPP layer needs to get poपूर्णांकer to the
+ * घड़ी क्रम the device. Simple हालs work fine without using this routine (i.e.
+ * by passing connection-id as शून्य), but क्रम a device with multiple घड़ीs
  * available, the OPP core needs to know the exact name of the clk to use.
  *
- * This must be called before any OPPs are initialized for the device.
+ * This must be called beक्रमe any OPPs are initialized क्रम the device.
  */
-struct opp_table *dev_pm_opp_set_clkname(struct device *dev, const char *name)
-{
-	struct opp_table *opp_table;
-	int ret;
+काष्ठा opp_table *dev_pm_opp_set_clkname(काष्ठा device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा opp_table *opp_table;
+	पूर्णांक ret;
 
 	opp_table = _add_opp_table(dev, false);
-	if (IS_ERR(opp_table))
-		return opp_table;
+	अगर (IS_ERR(opp_table))
+		वापस opp_table;
 
-	/* This should be called before OPPs are initialized */
-	if (WARN_ON(!list_empty(&opp_table->opp_list))) {
+	/* This should be called beक्रमe OPPs are initialized */
+	अगर (WARN_ON(!list_empty(&opp_table->opp_list))) अणु
 		ret = -EBUSY;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* clk shouldn't be initialized at this point */
-	if (WARN_ON(opp_table->clk)) {
+	/* clk shouldn't be initialized at this poपूर्णांक */
+	अगर (WARN_ON(opp_table->clk)) अणु
 		ret = -EBUSY;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* Find clk for the device */
+	/* Find clk क्रम the device */
 	opp_table->clk = clk_get(dev, name);
-	if (IS_ERR(opp_table->clk)) {
+	अगर (IS_ERR(opp_table->clk)) अणु
 		ret = PTR_ERR(opp_table->clk);
-		if (ret != -EPROBE_DEFER) {
+		अगर (ret != -EPROBE_DEFER) अणु
 			dev_err(dev, "%s: Couldn't find clock: %d\n", __func__,
 				ret);
-		}
-		goto err;
-	}
+		पूर्ण
+		जाओ err;
+	पूर्ण
 
-	return opp_table;
+	वापस opp_table;
 
 err:
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_set_clkname);
 
 /**
- * dev_pm_opp_put_clkname() - Releases resources blocked for clk.
- * @opp_table: OPP table returned from dev_pm_opp_set_clkname().
+ * dev_pm_opp_put_clkname() - Releases resources blocked क्रम clk.
+ * @opp_table: OPP table वापसed from dev_pm_opp_set_clkname().
  */
-void dev_pm_opp_put_clkname(struct opp_table *opp_table)
-{
-	if (unlikely(!opp_table))
-		return;
+व्योम dev_pm_opp_put_clkname(काष्ठा opp_table *opp_table)
+अणु
+	अगर (unlikely(!opp_table))
+		वापस;
 
-	/* Make sure there are no concurrent readers while updating opp_table */
+	/* Make sure there are no concurrent पढ़ोers जबतक updating opp_table */
 	WARN_ON(!list_empty(&opp_table->opp_list));
 
 	clk_put(opp_table->clk);
 	opp_table->clk = ERR_PTR(-EINVAL);
 
 	dev_pm_opp_put_opp_table(opp_table);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_put_clkname);
 
-static void devm_pm_opp_clkname_release(void *data)
-{
+अटल व्योम devm_pm_opp_clkname_release(व्योम *data)
+अणु
 	dev_pm_opp_put_clkname(data);
-}
+पूर्ण
 
 /**
- * devm_pm_opp_set_clkname() - Set clk name for the device
- * @dev: Device for which clk name is being set.
+ * devm_pm_opp_set_clkname() - Set clk name क्रम the device
+ * @dev: Device क्रम which clk name is being set.
  * @name: Clk name.
  *
  * This is a resource-managed variant of dev_pm_opp_set_clkname().
  *
  * Return: 0 on success and errorno otherwise.
  */
-int devm_pm_opp_set_clkname(struct device *dev, const char *name)
-{
-	struct opp_table *opp_table;
+पूर्णांक devm_pm_opp_set_clkname(काष्ठा device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा opp_table *opp_table;
 
 	opp_table = dev_pm_opp_set_clkname(dev, name);
-	if (IS_ERR(opp_table))
-		return PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस PTR_ERR(opp_table);
 
-	return devm_add_action_or_reset(dev, devm_pm_opp_clkname_release,
+	वापस devm_add_action_or_reset(dev, devm_pm_opp_clkname_release,
 					opp_table);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_pm_opp_set_clkname);
 
 /**
- * dev_pm_opp_register_set_opp_helper() - Register custom set OPP helper
- * @dev: Device for which the helper is getting registered.
+ * dev_pm_opp_रेजिस्टर_set_opp_helper() - Register custom set OPP helper
+ * @dev: Device क्रम which the helper is getting रेजिस्टरed.
  * @set_opp: Custom set OPP helper.
  *
- * This is useful to support complex platforms (like platforms with multiple
+ * This is useful to support complex platक्रमms (like platक्रमms with multiple
  * regulators per device), instead of the generic OPP set rate helper.
  *
- * This must be called before any OPPs are initialized for the device.
+ * This must be called beक्रमe any OPPs are initialized क्रम the device.
  */
-struct opp_table *dev_pm_opp_register_set_opp_helper(struct device *dev,
-			int (*set_opp)(struct dev_pm_set_opp_data *data))
-{
-	struct dev_pm_set_opp_data *data;
-	struct opp_table *opp_table;
+काष्ठा opp_table *dev_pm_opp_रेजिस्टर_set_opp_helper(काष्ठा device *dev,
+			पूर्णांक (*set_opp)(काष्ठा dev_pm_set_opp_data *data))
+अणु
+	काष्ठा dev_pm_set_opp_data *data;
+	काष्ठा opp_table *opp_table;
 
-	if (!set_opp)
-		return ERR_PTR(-EINVAL);
+	अगर (!set_opp)
+		वापस ERR_PTR(-EINVAL);
 
 	opp_table = _add_opp_table(dev, false);
-	if (IS_ERR(opp_table))
-		return opp_table;
+	अगर (IS_ERR(opp_table))
+		वापस opp_table;
 
-	/* This should be called before OPPs are initialized */
-	if (WARN_ON(!list_empty(&opp_table->opp_list))) {
+	/* This should be called beक्रमe OPPs are initialized */
+	अगर (WARN_ON(!list_empty(&opp_table->opp_list))) अणु
 		dev_pm_opp_put_opp_table(opp_table);
-		return ERR_PTR(-EBUSY);
-	}
+		वापस ERR_PTR(-EBUSY);
+	पूर्ण
 
 	/* Another CPU that shares the OPP table has set the helper ? */
-	if (opp_table->set_opp)
-		return opp_table;
+	अगर (opp_table->set_opp)
+		वापस opp_table;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return ERR_PTR(-ENOMEM);
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस ERR_PTR(-ENOMEM);
 
 	mutex_lock(&opp_table->lock);
 	opp_table->set_opp_data = data;
-	if (opp_table->sod_supplies) {
+	अगर (opp_table->sod_supplies) अणु
 		data->old_opp.supplies = opp_table->sod_supplies;
 		data->new_opp.supplies = opp_table->sod_supplies +
 					 opp_table->regulator_count;
-	}
+	पूर्ण
 	mutex_unlock(&opp_table->lock);
 
 	opp_table->set_opp = set_opp;
 
-	return opp_table;
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_register_set_opp_helper);
+	वापस opp_table;
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_रेजिस्टर_set_opp_helper);
 
 /**
- * dev_pm_opp_unregister_set_opp_helper() - Releases resources blocked for
+ * dev_pm_opp_unरेजिस्टर_set_opp_helper() - Releases resources blocked क्रम
  *					   set_opp helper
- * @opp_table: OPP table returned from dev_pm_opp_register_set_opp_helper().
+ * @opp_table: OPP table वापसed from dev_pm_opp_रेजिस्टर_set_opp_helper().
  *
- * Release resources blocked for platform specific set_opp helper.
+ * Release resources blocked क्रम platक्रमm specअगरic set_opp helper.
  */
-void dev_pm_opp_unregister_set_opp_helper(struct opp_table *opp_table)
-{
-	if (unlikely(!opp_table))
-		return;
+व्योम dev_pm_opp_unरेजिस्टर_set_opp_helper(काष्ठा opp_table *opp_table)
+अणु
+	अगर (unlikely(!opp_table))
+		वापस;
 
-	/* Make sure there are no concurrent readers while updating opp_table */
+	/* Make sure there are no concurrent पढ़ोers जबतक updating opp_table */
 	WARN_ON(!list_empty(&opp_table->opp_list));
 
-	opp_table->set_opp = NULL;
+	opp_table->set_opp = शून्य;
 
 	mutex_lock(&opp_table->lock);
-	kfree(opp_table->set_opp_data);
-	opp_table->set_opp_data = NULL;
+	kमुक्त(opp_table->set_opp_data);
+	opp_table->set_opp_data = शून्य;
 	mutex_unlock(&opp_table->lock);
 
 	dev_pm_opp_put_opp_table(opp_table);
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_unregister_set_opp_helper);
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_unरेजिस्टर_set_opp_helper);
 
-static void devm_pm_opp_unregister_set_opp_helper(void *data)
-{
-	dev_pm_opp_unregister_set_opp_helper(data);
-}
+अटल व्योम devm_pm_opp_unरेजिस्टर_set_opp_helper(व्योम *data)
+अणु
+	dev_pm_opp_unरेजिस्टर_set_opp_helper(data);
+पूर्ण
 
 /**
- * devm_pm_opp_register_set_opp_helper() - Register custom set OPP helper
- * @dev: Device for which the helper is getting registered.
+ * devm_pm_opp_रेजिस्टर_set_opp_helper() - Register custom set OPP helper
+ * @dev: Device क्रम which the helper is getting रेजिस्टरed.
  * @set_opp: Custom set OPP helper.
  *
- * This is a resource-managed version of dev_pm_opp_register_set_opp_helper().
+ * This is a resource-managed version of dev_pm_opp_रेजिस्टर_set_opp_helper().
  *
  * Return: 0 on success and errorno otherwise.
  */
-int devm_pm_opp_register_set_opp_helper(struct device *dev,
-					int (*set_opp)(struct dev_pm_set_opp_data *data))
-{
-	struct opp_table *opp_table;
+पूर्णांक devm_pm_opp_रेजिस्टर_set_opp_helper(काष्ठा device *dev,
+					पूर्णांक (*set_opp)(काष्ठा dev_pm_set_opp_data *data))
+अणु
+	काष्ठा opp_table *opp_table;
 
-	opp_table = dev_pm_opp_register_set_opp_helper(dev, set_opp);
-	if (IS_ERR(opp_table))
-		return PTR_ERR(opp_table);
+	opp_table = dev_pm_opp_रेजिस्टर_set_opp_helper(dev, set_opp);
+	अगर (IS_ERR(opp_table))
+		वापस PTR_ERR(opp_table);
 
-	return devm_add_action_or_reset(dev, devm_pm_opp_unregister_set_opp_helper,
+	वापस devm_add_action_or_reset(dev, devm_pm_opp_unरेजिस्टर_set_opp_helper,
 					opp_table);
-}
-EXPORT_SYMBOL_GPL(devm_pm_opp_register_set_opp_helper);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_pm_opp_रेजिस्टर_set_opp_helper);
 
-static void _opp_detach_genpd(struct opp_table *opp_table)
-{
-	int index;
+अटल व्योम _opp_detach_genpd(काष्ठा opp_table *opp_table)
+अणु
+	पूर्णांक index;
 
-	if (!opp_table->genpd_virt_devs)
-		return;
+	अगर (!opp_table->genpd_virt_devs)
+		वापस;
 
-	for (index = 0; index < opp_table->required_opp_count; index++) {
-		if (!opp_table->genpd_virt_devs[index])
-			continue;
+	क्रम (index = 0; index < opp_table->required_opp_count; index++) अणु
+		अगर (!opp_table->genpd_virt_devs[index])
+			जारी;
 
-		dev_pm_domain_detach(opp_table->genpd_virt_devs[index], false);
-		opp_table->genpd_virt_devs[index] = NULL;
-	}
+		dev_pm_करोमुख्य_detach(opp_table->genpd_virt_devs[index], false);
+		opp_table->genpd_virt_devs[index] = शून्य;
+	पूर्ण
 
-	kfree(opp_table->genpd_virt_devs);
-	opp_table->genpd_virt_devs = NULL;
-}
+	kमुक्त(opp_table->genpd_virt_devs);
+	opp_table->genpd_virt_devs = शून्य;
+पूर्ण
 
 /**
- * dev_pm_opp_attach_genpd - Attach genpd(s) for the device and save virtual device pointer
- * @dev: Consumer device for which the genpd is getting attached.
- * @names: Null terminated array of pointers containing names of genpd to attach.
- * @virt_devs: Pointer to return the array of virtual devices.
+ * dev_pm_opp_attach_genpd - Attach genpd(s) क्रम the device and save भव device poपूर्णांकer
+ * @dev: Consumer device क्रम which the genpd is getting attached.
+ * @names: Null terminated array of poपूर्णांकers containing names of genpd to attach.
+ * @virt_devs: Poपूर्णांकer to वापस the array of भव devices.
  *
- * Multiple generic power domains for a device are supported with the help of
- * virtual genpd devices, which are created for each consumer device - genpd
- * pair. These are the device structures which are attached to the power domain
- * and are required by the OPP core to set the performance state of the genpd.
- * The same API also works for the case where single genpd is available and so
- * we don't need to support that separately.
+ * Multiple generic घातer करोमुख्यs क्रम a device are supported with the help of
+ * भव genpd devices, which are created क्रम each consumer device - genpd
+ * pair. These are the device काष्ठाures which are attached to the घातer करोमुख्य
+ * and are required by the OPP core to set the perक्रमmance state of the genpd.
+ * The same API also works क्रम the हाल where single genpd is available and so
+ * we करोn't need to support that separately.
  *
  * This helper will normally be called by the consumer driver of the device
  * "dev", as only that has details of the genpd names.
  *
  * This helper needs to be called once with a list of all genpd to attach.
- * Otherwise the original device structure will be used instead by the OPP core.
+ * Otherwise the original device काष्ठाure will be used instead by the OPP core.
  *
  * The order of entries in the names array must match the order in which
  * "required-opps" are added in DT.
  */
-struct opp_table *dev_pm_opp_attach_genpd(struct device *dev,
-		const char **names, struct device ***virt_devs)
-{
-	struct opp_table *opp_table;
-	struct device *virt_dev;
-	int index = 0, ret = -EINVAL;
-	const char **name = names;
+काष्ठा opp_table *dev_pm_opp_attach_genpd(काष्ठा device *dev,
+		स्थिर अक्षर **names, काष्ठा device ***virt_devs)
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा device *virt_dev;
+	पूर्णांक index = 0, ret = -EINVAL;
+	स्थिर अक्षर **name = names;
 
 	opp_table = _add_opp_table(dev, false);
-	if (IS_ERR(opp_table))
-		return opp_table;
+	अगर (IS_ERR(opp_table))
+		वापस opp_table;
 
-	if (opp_table->genpd_virt_devs)
-		return opp_table;
+	अगर (opp_table->genpd_virt_devs)
+		वापस opp_table;
 
 	/*
-	 * If the genpd's OPP table isn't already initialized, parsing of the
-	 * required-opps fail for dev. We should retry this after genpd's OPP
+	 * If the genpd's OPP table isn't alपढ़ोy initialized, parsing of the
+	 * required-opps fail क्रम dev. We should retry this after genpd's OPP
 	 * table is added.
 	 */
-	if (!opp_table->required_opp_count) {
+	अगर (!opp_table->required_opp_count) अणु
 		ret = -EPROBE_DEFER;
-		goto put_table;
-	}
+		जाओ put_table;
+	पूर्ण
 
 	mutex_lock(&opp_table->genpd_virt_dev_lock);
 
-	opp_table->genpd_virt_devs = kcalloc(opp_table->required_opp_count,
-					     sizeof(*opp_table->genpd_virt_devs),
+	opp_table->genpd_virt_devs = kसुस्मृति(opp_table->required_opp_count,
+					     माप(*opp_table->genpd_virt_devs),
 					     GFP_KERNEL);
-	if (!opp_table->genpd_virt_devs)
-		goto unlock;
+	अगर (!opp_table->genpd_virt_devs)
+		जाओ unlock;
 
-	while (*name) {
-		if (index >= opp_table->required_opp_count) {
+	जबतक (*name) अणु
+		अगर (index >= opp_table->required_opp_count) अणु
 			dev_err(dev, "Index can't be greater than required-opp-count - 1, %s (%d : %d)\n",
 				*name, opp_table->required_opp_count, index);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		virt_dev = dev_pm_domain_attach_by_name(dev, *name);
-		if (IS_ERR(virt_dev)) {
+		virt_dev = dev_pm_करोमुख्य_attach_by_name(dev, *name);
+		अगर (IS_ERR(virt_dev)) अणु
 			ret = PTR_ERR(virt_dev);
 			dev_err(dev, "Couldn't attach to pm_domain: %d\n", ret);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		opp_table->genpd_virt_devs[index] = virt_dev;
 		index++;
 		name++;
-	}
+	पूर्ण
 
-	if (virt_devs)
+	अगर (virt_devs)
 		*virt_devs = opp_table->genpd_virt_devs;
 	mutex_unlock(&opp_table->genpd_virt_dev_lock);
 
-	return opp_table;
+	वापस opp_table;
 
 err:
 	_opp_detach_genpd(opp_table);
@@ -2418,21 +2419,21 @@ unlock:
 put_table:
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_attach_genpd);
 
 /**
  * dev_pm_opp_detach_genpd() - Detach genpd(s) from the device.
- * @opp_table: OPP table returned by dev_pm_opp_attach_genpd().
+ * @opp_table: OPP table वापसed by dev_pm_opp_attach_genpd().
  *
- * This detaches the genpd(s), resets the virtual device pointers, and puts the
+ * This detaches the genpd(s), resets the भव device poपूर्णांकers, and माला_दो the
  * OPP table.
  */
-void dev_pm_opp_detach_genpd(struct opp_table *opp_table)
-{
-	if (unlikely(!opp_table))
-		return;
+व्योम dev_pm_opp_detach_genpd(काष्ठा opp_table *opp_table)
+अणु
+	अगर (unlikely(!opp_table))
+		वापस;
 
 	/*
 	 * Acquire genpd_virt_dev_lock to make sure virt_dev isn't getting
@@ -2443,148 +2444,148 @@ void dev_pm_opp_detach_genpd(struct opp_table *opp_table)
 	mutex_unlock(&opp_table->genpd_virt_dev_lock);
 
 	dev_pm_opp_put_opp_table(opp_table);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_detach_genpd);
 
-static void devm_pm_opp_detach_genpd(void *data)
-{
+अटल व्योम devm_pm_opp_detach_genpd(व्योम *data)
+अणु
 	dev_pm_opp_detach_genpd(data);
-}
+पूर्ण
 
 /**
- * devm_pm_opp_attach_genpd - Attach genpd(s) for the device and save virtual
- *			      device pointer
- * @dev: Consumer device for which the genpd is getting attached.
- * @names: Null terminated array of pointers containing names of genpd to attach.
- * @virt_devs: Pointer to return the array of virtual devices.
+ * devm_pm_opp_attach_genpd - Attach genpd(s) क्रम the device and save भव
+ *			      device poपूर्णांकer
+ * @dev: Consumer device क्रम which the genpd is getting attached.
+ * @names: Null terminated array of poपूर्णांकers containing names of genpd to attach.
+ * @virt_devs: Poपूर्णांकer to वापस the array of भव devices.
  *
  * This is a resource-managed version of dev_pm_opp_attach_genpd().
  *
  * Return: 0 on success and errorno otherwise.
  */
-int devm_pm_opp_attach_genpd(struct device *dev, const char **names,
-			     struct device ***virt_devs)
-{
-	struct opp_table *opp_table;
+पूर्णांक devm_pm_opp_attach_genpd(काष्ठा device *dev, स्थिर अक्षर **names,
+			     काष्ठा device ***virt_devs)
+अणु
+	काष्ठा opp_table *opp_table;
 
 	opp_table = dev_pm_opp_attach_genpd(dev, names, virt_devs);
-	if (IS_ERR(opp_table))
-		return PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस PTR_ERR(opp_table);
 
-	return devm_add_action_or_reset(dev, devm_pm_opp_detach_genpd,
+	वापस devm_add_action_or_reset(dev, devm_pm_opp_detach_genpd,
 					opp_table);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_pm_opp_attach_genpd);
 
 /**
- * dev_pm_opp_xlate_required_opp() - Find required OPP for @src_table OPP.
+ * dev_pm_opp_xlate_required_opp() - Find required OPP क्रम @src_table OPP.
  * @src_table: OPP table which has @dst_table as one of its required OPP table.
  * @dst_table: Required OPP table of the @src_table.
  * @src_opp: OPP from the @src_table.
  *
- * This function returns the OPP (present in @dst_table) pointed out by the
+ * This function वापसs the OPP (present in @dst_table) poपूर्णांकed out by the
  * "required-opps" property of the @src_opp (present in @src_table).
  *
- * The callers are required to call dev_pm_opp_put() for the returned OPP after
+ * The callers are required to call dev_pm_opp_put() क्रम the वापसed OPP after
  * use.
  *
- * Return: pointer to 'struct dev_pm_opp' on success and errorno otherwise.
+ * Return: poपूर्णांकer to 'struct dev_pm_opp' on success and errorno otherwise.
  */
-struct dev_pm_opp *dev_pm_opp_xlate_required_opp(struct opp_table *src_table,
-						 struct opp_table *dst_table,
-						 struct dev_pm_opp *src_opp)
-{
-	struct dev_pm_opp *opp, *dest_opp = ERR_PTR(-ENODEV);
-	int i;
+काष्ठा dev_pm_opp *dev_pm_opp_xlate_required_opp(काष्ठा opp_table *src_table,
+						 काष्ठा opp_table *dst_table,
+						 काष्ठा dev_pm_opp *src_opp)
+अणु
+	काष्ठा dev_pm_opp *opp, *dest_opp = ERR_PTR(-ENODEV);
+	पूर्णांक i;
 
-	if (!src_table || !dst_table || !src_opp ||
+	अगर (!src_table || !dst_table || !src_opp ||
 	    !src_table->required_opp_tables)
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
 	/* required-opps not fully initialized yet */
-	if (lazy_linking_pending(src_table))
-		return ERR_PTR(-EBUSY);
+	अगर (lazy_linking_pending(src_table))
+		वापस ERR_PTR(-EBUSY);
 
-	for (i = 0; i < src_table->required_opp_count; i++) {
-		if (src_table->required_opp_tables[i] == dst_table) {
+	क्रम (i = 0; i < src_table->required_opp_count; i++) अणु
+		अगर (src_table->required_opp_tables[i] == dst_table) अणु
 			mutex_lock(&src_table->lock);
 
-			list_for_each_entry(opp, &src_table->opp_list, node) {
-				if (opp == src_opp) {
+			list_क्रम_each_entry(opp, &src_table->opp_list, node) अणु
+				अगर (opp == src_opp) अणु
 					dest_opp = opp->required_opps[i];
 					dev_pm_opp_get(dest_opp);
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
 			mutex_unlock(&src_table->lock);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (IS_ERR(dest_opp)) {
+	अगर (IS_ERR(dest_opp)) अणु
 		pr_err("%s: Couldn't find matching OPP (%p: %p)\n", __func__,
 		       src_table, dst_table);
-	}
+	पूर्ण
 
-	return dest_opp;
-}
+	वापस dest_opp;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_xlate_required_opp);
 
 /**
- * dev_pm_opp_xlate_performance_state() - Find required OPP's pstate for src_table.
+ * dev_pm_opp_xlate_perक्रमmance_state() - Find required OPP's pstate क्रम src_table.
  * @src_table: OPP table which has dst_table as one of its required OPP table.
  * @dst_table: Required OPP table of the src_table.
- * @pstate: Current performance state of the src_table.
+ * @pstate: Current perक्रमmance state of the src_table.
  *
- * This Returns pstate of the OPP (present in @dst_table) pointed out by the
+ * This Returns pstate of the OPP (present in @dst_table) poपूर्णांकed out by the
  * "required-opps" property of the OPP (present in @src_table) which has
- * performance state set to @pstate.
+ * perक्रमmance state set to @pstate.
  *
- * Return: Zero or positive performance state on success, otherwise negative
+ * Return: Zero or positive perक्रमmance state on success, otherwise negative
  * value on errors.
  */
-int dev_pm_opp_xlate_performance_state(struct opp_table *src_table,
-				       struct opp_table *dst_table,
-				       unsigned int pstate)
-{
-	struct dev_pm_opp *opp;
-	int dest_pstate = -EINVAL;
-	int i;
+पूर्णांक dev_pm_opp_xlate_perक्रमmance_state(काष्ठा opp_table *src_table,
+				       काष्ठा opp_table *dst_table,
+				       अचिन्हित पूर्णांक pstate)
+अणु
+	काष्ठा dev_pm_opp *opp;
+	पूर्णांक dest_pstate = -EINVAL;
+	पूर्णांक i;
 
 	/*
 	 * Normally the src_table will have the "required_opps" property set to
-	 * point to one of the OPPs in the dst_table, but in some cases the
-	 * genpd and its master have one to one mapping of performance states
+	 * poपूर्णांक to one of the OPPs in the dst_table, but in some हालs the
+	 * genpd and its master have one to one mapping of perक्रमmance states
 	 * and so none of them have the "required-opps" property set. Return the
-	 * pstate of the src_table as it is in such cases.
+	 * pstate of the src_table as it is in such हालs.
 	 */
-	if (!src_table || !src_table->required_opp_count)
-		return pstate;
+	अगर (!src_table || !src_table->required_opp_count)
+		वापस pstate;
 
 	/* required-opps not fully initialized yet */
-	if (lazy_linking_pending(src_table))
-		return -EBUSY;
+	अगर (lazy_linking_pending(src_table))
+		वापस -EBUSY;
 
-	for (i = 0; i < src_table->required_opp_count; i++) {
-		if (src_table->required_opp_tables[i]->np == dst_table->np)
-			break;
-	}
+	क्रम (i = 0; i < src_table->required_opp_count; i++) अणु
+		अगर (src_table->required_opp_tables[i]->np == dst_table->np)
+			अवरोध;
+	पूर्ण
 
-	if (unlikely(i == src_table->required_opp_count)) {
+	अगर (unlikely(i == src_table->required_opp_count)) अणु
 		pr_err("%s: Couldn't find matching OPP table (%p: %p)\n",
 		       __func__, src_table, dst_table);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&src_table->lock);
 
-	list_for_each_entry(opp, &src_table->opp_list, node) {
-		if (opp->pstate == pstate) {
+	list_क्रम_each_entry(opp, &src_table->opp_list, node) अणु
+		अगर (opp->pstate == pstate) अणु
 			dest_pstate = opp->required_opps[i]->pstate;
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
 	pr_err("%s: Couldn't find matching OPP (%p: %p)\n", __func__, src_table,
 	       dst_table);
@@ -2592,163 +2593,163 @@ int dev_pm_opp_xlate_performance_state(struct opp_table *src_table,
 unlock:
 	mutex_unlock(&src_table->lock);
 
-	return dest_pstate;
-}
+	वापस dest_pstate;
+पूर्ण
 
 /**
  * dev_pm_opp_add()  - Add an OPP table from a table definitions
- * @dev:	device for which we do this operation
- * @freq:	Frequency in Hz for this OPP
- * @u_volt:	Voltage in uVolts for this OPP
+ * @dev:	device क्रम which we करो this operation
+ * @freq:	Frequency in Hz क्रम this OPP
+ * @u_volt:	Voltage in uVolts क्रम this OPP
  *
- * This function adds an opp definition to the opp table and returns status.
- * The opp is made available by default and it can be controlled using
+ * This function adds an opp definition to the opp table and वापसs status.
+ * The opp is made available by शेष and it can be controlled using
  * dev_pm_opp_enable/disable functions.
  *
  * Return:
  * 0		On success OR
  *		Duplicate OPPs (both freq and volt are same) and opp->available
- * -EEXIST	Freq are same and volt are different OR
+ * -EEXIST	Freq are same and volt are dअगरferent OR
  *		Duplicate OPPs (both freq and volt are same) and !opp->available
  * -ENOMEM	Memory allocation failure
  */
-int dev_pm_opp_add(struct device *dev, unsigned long freq, unsigned long u_volt)
-{
-	struct opp_table *opp_table;
-	int ret;
+पूर्णांक dev_pm_opp_add(काष्ठा device *dev, अचिन्हित दीर्घ freq, अचिन्हित दीर्घ u_volt)
+अणु
+	काष्ठा opp_table *opp_table;
+	पूर्णांक ret;
 
 	opp_table = _add_opp_table(dev, true);
-	if (IS_ERR(opp_table))
-		return PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस PTR_ERR(opp_table);
 
-	/* Fix regulator count for dynamic OPPs */
+	/* Fix regulator count क्रम dynamic OPPs */
 	opp_table->regulator_count = 1;
 
 	ret = _opp_add_v1(opp_table, dev, freq, u_volt, true);
-	if (ret)
+	अगर (ret)
 		dev_pm_opp_put_opp_table(opp_table);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_add);
 
 /**
  * _opp_set_availability() - helper to set the availability of an opp
- * @dev:		device for which we do this operation
- * @freq:		OPP frequency to modify availability
- * @availability_req:	availability status requested for this opp
+ * @dev:		device क्रम which we करो this operation
+ * @freq:		OPP frequency to modअगरy availability
+ * @availability_req:	availability status requested क्रम this opp
  *
- * Set the availability of an OPP, opp_{enable,disable} share a common logic
+ * Set the availability of an OPP, opp_अणुenable,disableपूर्ण share a common logic
  * which is isolated here.
  *
- * Return: -EINVAL for bad pointers, -ENOMEM if no memory available for the
- * copy operation, returns 0 if no modification was done OR modification was
+ * Return: -EINVAL क्रम bad poपूर्णांकers, -ENOMEM अगर no memory available क्रम the
+ * copy operation, वापसs 0 अगर no modअगरication was करोne OR modअगरication was
  * successful.
  */
-static int _opp_set_availability(struct device *dev, unsigned long freq,
+अटल पूर्णांक _opp_set_availability(काष्ठा device *dev, अचिन्हित दीर्घ freq,
 				 bool availability_req)
-{
-	struct opp_table *opp_table;
-	struct dev_pm_opp *tmp_opp, *opp = ERR_PTR(-ENODEV);
-	int r = 0;
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा dev_pm_opp *पंचांगp_opp, *opp = ERR_PTR(-ENODEV);
+	पूर्णांक r = 0;
 
 	/* Find the opp_table */
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table)) {
+	अगर (IS_ERR(opp_table)) अणु
 		r = PTR_ERR(opp_table);
 		dev_warn(dev, "%s: Device OPP not found (%d)\n", __func__, r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	mutex_lock(&opp_table->lock);
 
 	/* Do we have the frequency? */
-	list_for_each_entry(tmp_opp, &opp_table->opp_list, node) {
-		if (tmp_opp->rate == freq) {
-			opp = tmp_opp;
-			break;
-		}
-	}
+	list_क्रम_each_entry(पंचांगp_opp, &opp_table->opp_list, node) अणु
+		अगर (पंचांगp_opp->rate == freq) अणु
+			opp = पंचांगp_opp;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (IS_ERR(opp)) {
+	अगर (IS_ERR(opp)) अणु
 		r = PTR_ERR(opp);
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	/* Is update really needed? */
-	if (opp->available == availability_req)
-		goto unlock;
+	अगर (opp->available == availability_req)
+		जाओ unlock;
 
 	opp->available = availability_req;
 
 	dev_pm_opp_get(opp);
 	mutex_unlock(&opp_table->lock);
 
-	/* Notify the change of the OPP availability */
-	if (availability_req)
-		blocking_notifier_call_chain(&opp_table->head, OPP_EVENT_ENABLE,
+	/* Notअगरy the change of the OPP availability */
+	अगर (availability_req)
+		blocking_notअगरier_call_chain(&opp_table->head, OPP_EVENT_ENABLE,
 					     opp);
-	else
-		blocking_notifier_call_chain(&opp_table->head,
+	अन्यथा
+		blocking_notअगरier_call_chain(&opp_table->head,
 					     OPP_EVENT_DISABLE, opp);
 
 	dev_pm_opp_put(opp);
-	goto put_table;
+	जाओ put_table;
 
 unlock:
 	mutex_unlock(&opp_table->lock);
 put_table:
 	dev_pm_opp_put_opp_table(opp_table);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * dev_pm_opp_adjust_voltage() - helper to change the voltage of an OPP
- * @dev:		device for which we do this operation
+ * @dev:		device क्रम which we करो this operation
  * @freq:		OPP frequency to adjust voltage of
  * @u_volt:		new OPP target voltage
  * @u_volt_min:		new OPP min voltage
  * @u_volt_max:		new OPP max voltage
  *
- * Return: -EINVAL for bad pointers, -ENOMEM if no memory available for the
- * copy operation, returns 0 if no modifcation was done OR modification was
+ * Return: -EINVAL क्रम bad poपूर्णांकers, -ENOMEM अगर no memory available क्रम the
+ * copy operation, वापसs 0 अगर no modअगरcation was करोne OR modअगरication was
  * successful.
  */
-int dev_pm_opp_adjust_voltage(struct device *dev, unsigned long freq,
-			      unsigned long u_volt, unsigned long u_volt_min,
-			      unsigned long u_volt_max)
+पूर्णांक dev_pm_opp_adjust_voltage(काष्ठा device *dev, अचिन्हित दीर्घ freq,
+			      अचिन्हित दीर्घ u_volt, अचिन्हित दीर्घ u_volt_min,
+			      अचिन्हित दीर्घ u_volt_max)
 
-{
-	struct opp_table *opp_table;
-	struct dev_pm_opp *tmp_opp, *opp = ERR_PTR(-ENODEV);
-	int r = 0;
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा dev_pm_opp *पंचांगp_opp, *opp = ERR_PTR(-ENODEV);
+	पूर्णांक r = 0;
 
 	/* Find the opp_table */
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table)) {
+	अगर (IS_ERR(opp_table)) अणु
 		r = PTR_ERR(opp_table);
 		dev_warn(dev, "%s: Device OPP not found (%d)\n", __func__, r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	mutex_lock(&opp_table->lock);
 
 	/* Do we have the frequency? */
-	list_for_each_entry(tmp_opp, &opp_table->opp_list, node) {
-		if (tmp_opp->rate == freq) {
-			opp = tmp_opp;
-			break;
-		}
-	}
+	list_क्रम_each_entry(पंचांगp_opp, &opp_table->opp_list, node) अणु
+		अगर (पंचांगp_opp->rate == freq) अणु
+			opp = पंचांगp_opp;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (IS_ERR(opp)) {
+	अगर (IS_ERR(opp)) अणु
 		r = PTR_ERR(opp);
-		goto adjust_unlock;
-	}
+		जाओ adjust_unlock;
+	पूर्ण
 
 	/* Is update really needed? */
-	if (opp->supplies->u_volt == u_volt)
-		goto adjust_unlock;
+	अगर (opp->supplies->u_volt == u_volt)
+		जाओ adjust_unlock;
 
 	opp->supplies->u_volt = u_volt;
 	opp->supplies->u_volt_min = u_volt_min;
@@ -2757,182 +2758,182 @@ int dev_pm_opp_adjust_voltage(struct device *dev, unsigned long freq,
 	dev_pm_opp_get(opp);
 	mutex_unlock(&opp_table->lock);
 
-	/* Notify the voltage change of the OPP */
-	blocking_notifier_call_chain(&opp_table->head, OPP_EVENT_ADJUST_VOLTAGE,
+	/* Notअगरy the voltage change of the OPP */
+	blocking_notअगरier_call_chain(&opp_table->head, OPP_EVENT_ADJUST_VOLTAGE,
 				     opp);
 
 	dev_pm_opp_put(opp);
-	goto adjust_put_table;
+	जाओ adjust_put_table;
 
 adjust_unlock:
 	mutex_unlock(&opp_table->lock);
 adjust_put_table:
 	dev_pm_opp_put_opp_table(opp_table);
-	return r;
-}
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_adjust_voltage);
 
 /**
- * dev_pm_opp_enable() - Enable a specific OPP
- * @dev:	device for which we do this operation
+ * dev_pm_opp_enable() - Enable a specअगरic OPP
+ * @dev:	device क्रम which we करो this operation
  * @freq:	OPP frequency to enable
  *
- * Enables a provided opp. If the operation is valid, this returns 0, else the
- * corresponding error value. It is meant to be used for users an OPP available
+ * Enables a provided opp. If the operation is valid, this वापसs 0, अन्यथा the
+ * corresponding error value. It is meant to be used क्रम users an OPP available
  * after being temporarily made unavailable with dev_pm_opp_disable.
  *
- * Return: -EINVAL for bad pointers, -ENOMEM if no memory available for the
- * copy operation, returns 0 if no modification was done OR modification was
+ * Return: -EINVAL क्रम bad poपूर्णांकers, -ENOMEM अगर no memory available क्रम the
+ * copy operation, वापसs 0 अगर no modअगरication was करोne OR modअगरication was
  * successful.
  */
-int dev_pm_opp_enable(struct device *dev, unsigned long freq)
-{
-	return _opp_set_availability(dev, freq, true);
-}
+पूर्णांक dev_pm_opp_enable(काष्ठा device *dev, अचिन्हित दीर्घ freq)
+अणु
+	वापस _opp_set_availability(dev, freq, true);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_enable);
 
 /**
- * dev_pm_opp_disable() - Disable a specific OPP
- * @dev:	device for which we do this operation
+ * dev_pm_opp_disable() - Disable a specअगरic OPP
+ * @dev:	device क्रम which we करो this operation
  * @freq:	OPP frequency to disable
  *
- * Disables a provided opp. If the operation is valid, this returns
- * 0, else the corresponding error value. It is meant to be a temporary
+ * Disables a provided opp. If the operation is valid, this वापसs
+ * 0, अन्यथा the corresponding error value. It is meant to be a temporary
  * control by users to make this OPP not available until the circumstances are
  * right to make it available again (with a call to dev_pm_opp_enable).
  *
- * Return: -EINVAL for bad pointers, -ENOMEM if no memory available for the
- * copy operation, returns 0 if no modification was done OR modification was
+ * Return: -EINVAL क्रम bad poपूर्णांकers, -ENOMEM अगर no memory available क्रम the
+ * copy operation, वापसs 0 अगर no modअगरication was करोne OR modअगरication was
  * successful.
  */
-int dev_pm_opp_disable(struct device *dev, unsigned long freq)
-{
-	return _opp_set_availability(dev, freq, false);
-}
+पूर्णांक dev_pm_opp_disable(काष्ठा device *dev, अचिन्हित दीर्घ freq)
+अणु
+	वापस _opp_set_availability(dev, freq, false);
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_disable);
 
 /**
- * dev_pm_opp_register_notifier() - Register OPP notifier for the device
- * @dev:	Device for which notifier needs to be registered
- * @nb:		Notifier block to be registered
+ * dev_pm_opp_रेजिस्टर_notअगरier() - Register OPP notअगरier क्रम the device
+ * @dev:	Device क्रम which notअगरier needs to be रेजिस्टरed
+ * @nb:		Notअगरier block to be रेजिस्टरed
  *
  * Return: 0 on success or a negative error value.
  */
-int dev_pm_opp_register_notifier(struct device *dev, struct notifier_block *nb)
-{
-	struct opp_table *opp_table;
-	int ret;
+पूर्णांक dev_pm_opp_रेजिस्टर_notअगरier(काष्ठा device *dev, काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा opp_table *opp_table;
+	पूर्णांक ret;
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस PTR_ERR(opp_table);
 
-	ret = blocking_notifier_chain_register(&opp_table->head, nb);
+	ret = blocking_notअगरier_chain_रेजिस्टर(&opp_table->head, nb);
 
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return ret;
-}
-EXPORT_SYMBOL(dev_pm_opp_register_notifier);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(dev_pm_opp_रेजिस्टर_notअगरier);
 
 /**
- * dev_pm_opp_unregister_notifier() - Unregister OPP notifier for the device
- * @dev:	Device for which notifier needs to be unregistered
- * @nb:		Notifier block to be unregistered
+ * dev_pm_opp_unरेजिस्टर_notअगरier() - Unरेजिस्टर OPP notअगरier क्रम the device
+ * @dev:	Device क्रम which notअगरier needs to be unरेजिस्टरed
+ * @nb:		Notअगरier block to be unरेजिस्टरed
  *
  * Return: 0 on success or a negative error value.
  */
-int dev_pm_opp_unregister_notifier(struct device *dev,
-				   struct notifier_block *nb)
-{
-	struct opp_table *opp_table;
-	int ret;
+पूर्णांक dev_pm_opp_unरेजिस्टर_notअगरier(काष्ठा device *dev,
+				   काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा opp_table *opp_table;
+	पूर्णांक ret;
 
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस PTR_ERR(opp_table);
 
-	ret = blocking_notifier_chain_unregister(&opp_table->head, nb);
+	ret = blocking_notअगरier_chain_unरेजिस्टर(&opp_table->head, nb);
 
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return ret;
-}
-EXPORT_SYMBOL(dev_pm_opp_unregister_notifier);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(dev_pm_opp_unरेजिस्टर_notअगरier);
 
 /**
- * dev_pm_opp_remove_table() - Free all OPPs associated with the device
- * @dev:	device pointer used to lookup OPP table.
+ * dev_pm_opp_हटाओ_table() - Free all OPPs associated with the device
+ * @dev:	device poपूर्णांकer used to lookup OPP table.
  *
- * Free both OPPs created using static entries present in DT and the
+ * Free both OPPs created using अटल entries present in DT and the
  * dynamically added entries.
  */
-void dev_pm_opp_remove_table(struct device *dev)
-{
-	struct opp_table *opp_table;
+व्योम dev_pm_opp_हटाओ_table(काष्ठा device *dev)
+अणु
+	काष्ठा opp_table *opp_table;
 
-	/* Check for existing table for 'dev' */
+	/* Check क्रम existing table क्रम 'dev' */
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table)) {
-		int error = PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table)) अणु
+		पूर्णांक error = PTR_ERR(opp_table);
 
-		if (error != -ENODEV)
+		अगर (error != -ENODEV)
 			WARN(1, "%s: opp_table: %d\n",
-			     IS_ERR_OR_NULL(dev) ?
+			     IS_ERR_OR_शून्य(dev) ?
 					"Invalid device" : dev_name(dev),
 			     error);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Drop the extra reference only if the OPP table was successfully added
+	 * Drop the extra reference only अगर the OPP table was successfully added
 	 * with dev_pm_opp_of_add_table() earlier.
 	 **/
-	if (_opp_remove_all_static(opp_table))
+	अगर (_opp_हटाओ_all_अटल(opp_table))
 		dev_pm_opp_put_opp_table(opp_table);
 
 	/* Drop reference taken by _find_opp_table() */
 	dev_pm_opp_put_opp_table(opp_table);
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_remove_table);
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_हटाओ_table);
 
 /**
  * dev_pm_opp_sync_regulators() - Sync state of voltage regulators
- * @dev:	device for which we do this operation
+ * @dev:	device क्रम which we करो this operation
  *
  * Sync voltage state of the OPP table regulators.
  *
  * Return: 0 on success or a negative error value.
  */
-int dev_pm_opp_sync_regulators(struct device *dev)
-{
-	struct opp_table *opp_table;
-	struct regulator *reg;
-	int i, ret = 0;
+पूर्णांक dev_pm_opp_sync_regulators(काष्ठा device *dev)
+अणु
+	काष्ठा opp_table *opp_table;
+	काष्ठा regulator *reg;
+	पूर्णांक i, ret = 0;
 
 	/* Device may not have OPP table */
 	opp_table = _find_opp_table(dev);
-	if (IS_ERR(opp_table))
-		return 0;
+	अगर (IS_ERR(opp_table))
+		वापस 0;
 
-	/* Regulator may not be required for the device */
-	if (unlikely(!opp_table->regulators))
-		goto put_table;
+	/* Regulator may not be required क्रम the device */
+	अगर (unlikely(!opp_table->regulators))
+		जाओ put_table;
 
-	/* Nothing to sync if voltage wasn't changed */
-	if (!opp_table->enabled)
-		goto put_table;
+	/* Nothing to sync अगर voltage wasn't changed */
+	अगर (!opp_table->enabled)
+		जाओ put_table;
 
-	for (i = 0; i < opp_table->regulator_count; i++) {
+	क्रम (i = 0; i < opp_table->regulator_count; i++) अणु
 		reg = opp_table->regulators[i];
 		ret = regulator_sync_voltage(reg);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 put_table:
 	/* Drop reference taken by _find_opp_table() */
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_sync_regulators);

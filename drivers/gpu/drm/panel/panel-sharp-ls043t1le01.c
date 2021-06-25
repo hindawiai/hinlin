@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Red Hat
  * Copyright (C) 2015 Sony Mobile Communications Inc.
@@ -7,192 +8,192 @@
  * Based on AUO panel driver by Rob Clark <robdclark@gmail.com>
  */
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <video/mipi_display.h>
+#समावेश <video/mipi_display.h>
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_device.h>
-#include <drm/drm_mipi_dsi.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_panel.h>
 
-struct sharp_nt_panel {
-	struct drm_panel base;
-	struct mipi_dsi_device *dsi;
+काष्ठा sharp_nt_panel अणु
+	काष्ठा drm_panel base;
+	काष्ठा mipi_dsi_device *dsi;
 
-	struct regulator *supply;
-	struct gpio_desc *reset_gpio;
+	काष्ठा regulator *supply;
+	काष्ठा gpio_desc *reset_gpio;
 
 	bool prepared;
 	bool enabled;
 
-	const struct drm_display_mode *mode;
-};
+	स्थिर काष्ठा drm_display_mode *mode;
+पूर्ण;
 
-static inline struct sharp_nt_panel *to_sharp_nt_panel(struct drm_panel *panel)
-{
-	return container_of(panel, struct sharp_nt_panel, base);
-}
+अटल अंतरभूत काष्ठा sharp_nt_panel *to_sharp_nt_panel(काष्ठा drm_panel *panel)
+अणु
+	वापस container_of(panel, काष्ठा sharp_nt_panel, base);
+पूर्ण
 
-static int sharp_nt_panel_init(struct sharp_nt_panel *sharp_nt)
-{
-	struct mipi_dsi_device *dsi = sharp_nt->dsi;
-	int ret;
+अटल पूर्णांक sharp_nt_panel_init(काष्ठा sharp_nt_panel *sharp_nt)
+अणु
+	काष्ठा mipi_dsi_device *dsi = sharp_nt->dsi;
+	पूर्णांक ret;
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-	ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
-	if (ret < 0)
-		return ret;
+	ret = mipi_dsi_dcs_निकास_sleep_mode(dsi);
+	अगर (ret < 0)
+		वापस ret;
 
 	msleep(120);
 
 	/* Novatek two-lane operation */
-	ret = mipi_dsi_dcs_write(dsi, 0xae, (u8[]){ 0x03 }, 1);
-	if (ret < 0)
-		return ret;
+	ret = mipi_dsi_dcs_ग_लिखो(dsi, 0xae, (u8[])अणु 0x03 पूर्ण, 1);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Set both MCU and RGB I/F to 24bpp */
-	ret = mipi_dsi_dcs_set_pixel_format(dsi, MIPI_DCS_PIXEL_FMT_24BIT |
+	ret = mipi_dsi_dcs_set_pixel_क्रमmat(dsi, MIPI_DCS_PIXEL_FMT_24BIT |
 					(MIPI_DCS_PIXEL_FMT_24BIT << 4));
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sharp_nt_panel_on(struct sharp_nt_panel *sharp_nt)
-{
-	struct mipi_dsi_device *dsi = sharp_nt->dsi;
-	int ret;
+अटल पूर्णांक sharp_nt_panel_on(काष्ठा sharp_nt_panel *sharp_nt)
+अणु
+	काष्ठा mipi_dsi_device *dsi = sharp_nt->dsi;
+	पूर्णांक ret;
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
 	ret = mipi_dsi_dcs_set_display_on(dsi);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sharp_nt_panel_off(struct sharp_nt_panel *sharp_nt)
-{
-	struct mipi_dsi_device *dsi = sharp_nt->dsi;
-	int ret;
+अटल पूर्णांक sharp_nt_panel_off(काष्ठा sharp_nt_panel *sharp_nt)
+अणु
+	काष्ठा mipi_dsi_device *dsi = sharp_nt->dsi;
+	पूर्णांक ret;
 
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
 	ret = mipi_dsi_dcs_set_display_off(dsi);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int sharp_nt_panel_disable(struct drm_panel *panel)
-{
-	struct sharp_nt_panel *sharp_nt = to_sharp_nt_panel(panel);
+अटल पूर्णांक sharp_nt_panel_disable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा sharp_nt_panel *sharp_nt = to_sharp_nt_panel(panel);
 
-	if (!sharp_nt->enabled)
-		return 0;
+	अगर (!sharp_nt->enabled)
+		वापस 0;
 
 	sharp_nt->enabled = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sharp_nt_panel_unprepare(struct drm_panel *panel)
-{
-	struct sharp_nt_panel *sharp_nt = to_sharp_nt_panel(panel);
-	int ret;
+अटल पूर्णांक sharp_nt_panel_unprepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा sharp_nt_panel *sharp_nt = to_sharp_nt_panel(panel);
+	पूर्णांक ret;
 
-	if (!sharp_nt->prepared)
-		return 0;
+	अगर (!sharp_nt->prepared)
+		वापस 0;
 
 	ret = sharp_nt_panel_off(sharp_nt);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(panel->dev, "failed to set panel off: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	regulator_disable(sharp_nt->supply);
-	if (sharp_nt->reset_gpio)
+	अगर (sharp_nt->reset_gpio)
 		gpiod_set_value(sharp_nt->reset_gpio, 0);
 
 	sharp_nt->prepared = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sharp_nt_panel_prepare(struct drm_panel *panel)
-{
-	struct sharp_nt_panel *sharp_nt = to_sharp_nt_panel(panel);
-	int ret;
+अटल पूर्णांक sharp_nt_panel_prepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा sharp_nt_panel *sharp_nt = to_sharp_nt_panel(panel);
+	पूर्णांक ret;
 
-	if (sharp_nt->prepared)
-		return 0;
+	अगर (sharp_nt->prepared)
+		वापस 0;
 
 	ret = regulator_enable(sharp_nt->supply);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	msleep(20);
 
-	if (sharp_nt->reset_gpio) {
+	अगर (sharp_nt->reset_gpio) अणु
 		gpiod_set_value(sharp_nt->reset_gpio, 1);
 		msleep(1);
 		gpiod_set_value(sharp_nt->reset_gpio, 0);
 		msleep(1);
 		gpiod_set_value(sharp_nt->reset_gpio, 1);
 		msleep(10);
-	}
+	पूर्ण
 
 	ret = sharp_nt_panel_init(sharp_nt);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(panel->dev, "failed to init panel: %d\n", ret);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
 	ret = sharp_nt_panel_on(sharp_nt);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(panel->dev, "failed to set panel on: %d\n", ret);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
 	sharp_nt->prepared = true;
 
-	return 0;
+	वापस 0;
 
-poweroff:
+घातeroff:
 	regulator_disable(sharp_nt->supply);
-	if (sharp_nt->reset_gpio)
+	अगर (sharp_nt->reset_gpio)
 		gpiod_set_value(sharp_nt->reset_gpio, 0);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sharp_nt_panel_enable(struct drm_panel *panel)
-{
-	struct sharp_nt_panel *sharp_nt = to_sharp_nt_panel(panel);
+अटल पूर्णांक sharp_nt_panel_enable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा sharp_nt_panel *sharp_nt = to_sharp_nt_panel(panel);
 
-	if (sharp_nt->enabled)
-		return 0;
+	अगर (sharp_nt->enabled)
+		वापस 0;
 
 	sharp_nt->enabled = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_display_mode default_mode = {
-	.clock = 41118,
+अटल स्थिर काष्ठा drm_display_mode शेष_mode = अणु
+	.घड़ी = 41118,
 	.hdisplay = 540,
 	.hsync_start = 540 + 48,
 	.hsync_end = 540 + 48 + 80,
@@ -201,20 +202,20 @@ static const struct drm_display_mode default_mode = {
 	.vsync_start = 960 + 3,
 	.vsync_end = 960 + 3 + 15,
 	.vtotal = 960 + 3 + 15 + 1,
-};
+पूर्ण;
 
-static int sharp_nt_panel_get_modes(struct drm_panel *panel,
-				    struct drm_connector *connector)
-{
-	struct drm_display_mode *mode;
+अटल पूर्णांक sharp_nt_panel_get_modes(काष्ठा drm_panel *panel,
+				    काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_display_mode *mode;
 
-	mode = drm_mode_duplicate(connector->dev, &default_mode);
-	if (!mode) {
+	mode = drm_mode_duplicate(connector->dev, &शेष_mode);
+	अगर (!mode) अणु
 		dev_err(panel->dev, "failed to add mode %ux%u@%u\n",
-			default_mode.hdisplay, default_mode.vdisplay,
-			drm_mode_vrefresh(&default_mode));
-		return -ENOMEM;
-	}
+			शेष_mode.hdisplay, शेष_mode.vdisplay,
+			drm_mode_vrefresh(&शेष_mode));
+		वापस -ENOMEM;
+	पूर्ण
 
 	drm_mode_set_name(mode);
 
@@ -223,122 +224,122 @@ static int sharp_nt_panel_get_modes(struct drm_panel *panel,
 	connector->display_info.width_mm = 54;
 	connector->display_info.height_mm = 95;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct drm_panel_funcs sharp_nt_panel_funcs = {
+अटल स्थिर काष्ठा drm_panel_funcs sharp_nt_panel_funcs = अणु
 	.disable = sharp_nt_panel_disable,
 	.unprepare = sharp_nt_panel_unprepare,
 	.prepare = sharp_nt_panel_prepare,
 	.enable = sharp_nt_panel_enable,
 	.get_modes = sharp_nt_panel_get_modes,
-};
+पूर्ण;
 
-static int sharp_nt_panel_add(struct sharp_nt_panel *sharp_nt)
-{
-	struct device *dev = &sharp_nt->dsi->dev;
-	int ret;
+अटल पूर्णांक sharp_nt_panel_add(काष्ठा sharp_nt_panel *sharp_nt)
+अणु
+	काष्ठा device *dev = &sharp_nt->dsi->dev;
+	पूर्णांक ret;
 
-	sharp_nt->mode = &default_mode;
+	sharp_nt->mode = &शेष_mode;
 
 	sharp_nt->supply = devm_regulator_get(dev, "avdd");
-	if (IS_ERR(sharp_nt->supply))
-		return PTR_ERR(sharp_nt->supply);
+	अगर (IS_ERR(sharp_nt->supply))
+		वापस PTR_ERR(sharp_nt->supply);
 
 	sharp_nt->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(sharp_nt->reset_gpio)) {
+	अगर (IS_ERR(sharp_nt->reset_gpio)) अणु
 		dev_err(dev, "cannot get reset-gpios %ld\n",
 			PTR_ERR(sharp_nt->reset_gpio));
-		sharp_nt->reset_gpio = NULL;
-	} else {
+		sharp_nt->reset_gpio = शून्य;
+	पूर्ण अन्यथा अणु
 		gpiod_set_value(sharp_nt->reset_gpio, 0);
-	}
+	पूर्ण
 
 	drm_panel_init(&sharp_nt->base, &sharp_nt->dsi->dev,
 		       &sharp_nt_panel_funcs, DRM_MODE_CONNECTOR_DSI);
 
 	ret = drm_panel_of_backlight(&sharp_nt->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_panel_add(&sharp_nt->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sharp_nt_panel_del(struct sharp_nt_panel *sharp_nt)
-{
-	if (sharp_nt->base.dev)
-		drm_panel_remove(&sharp_nt->base);
-}
+अटल व्योम sharp_nt_panel_del(काष्ठा sharp_nt_panel *sharp_nt)
+अणु
+	अगर (sharp_nt->base.dev)
+		drm_panel_हटाओ(&sharp_nt->base);
+पूर्ण
 
-static int sharp_nt_panel_probe(struct mipi_dsi_device *dsi)
-{
-	struct sharp_nt_panel *sharp_nt;
-	int ret;
+अटल पूर्णांक sharp_nt_panel_probe(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा sharp_nt_panel *sharp_nt;
+	पूर्णांक ret;
 
 	dsi->lanes = 2;
-	dsi->format = MIPI_DSI_FMT_RGB888;
+	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO |
 			MIPI_DSI_MODE_VIDEO_HSE |
 			MIPI_DSI_CLOCK_NON_CONTINUOUS |
 			MIPI_DSI_MODE_EOT_PACKET;
 
-	sharp_nt = devm_kzalloc(&dsi->dev, sizeof(*sharp_nt), GFP_KERNEL);
-	if (!sharp_nt)
-		return -ENOMEM;
+	sharp_nt = devm_kzalloc(&dsi->dev, माप(*sharp_nt), GFP_KERNEL);
+	अगर (!sharp_nt)
+		वापस -ENOMEM;
 
 	mipi_dsi_set_drvdata(dsi, sharp_nt);
 
 	sharp_nt->dsi = dsi;
 
 	ret = sharp_nt_panel_add(sharp_nt);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return mipi_dsi_attach(dsi);
-}
+	वापस mipi_dsi_attach(dsi);
+पूर्ण
 
-static int sharp_nt_panel_remove(struct mipi_dsi_device *dsi)
-{
-	struct sharp_nt_panel *sharp_nt = mipi_dsi_get_drvdata(dsi);
-	int ret;
+अटल पूर्णांक sharp_nt_panel_हटाओ(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा sharp_nt_panel *sharp_nt = mipi_dsi_get_drvdata(dsi);
+	पूर्णांक ret;
 
 	ret = drm_panel_disable(&sharp_nt->base);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&dsi->dev, "failed to disable panel: %d\n", ret);
 
 	ret = mipi_dsi_detach(dsi);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&dsi->dev, "failed to detach from DSI host: %d\n", ret);
 
 	sharp_nt_panel_del(sharp_nt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sharp_nt_panel_shutdown(struct mipi_dsi_device *dsi)
-{
-	struct sharp_nt_panel *sharp_nt = mipi_dsi_get_drvdata(dsi);
+अटल व्योम sharp_nt_panel_shutकरोwn(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा sharp_nt_panel *sharp_nt = mipi_dsi_get_drvdata(dsi);
 
 	drm_panel_disable(&sharp_nt->base);
-}
+पूर्ण
 
-static const struct of_device_id sharp_nt_of_match[] = {
-	{ .compatible = "sharp,ls043t1le01-qhd", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sharp_nt_of_match[] = अणु
+	अणु .compatible = "sharp,ls043t1le01-qhd", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sharp_nt_of_match);
 
-static struct mipi_dsi_driver sharp_nt_panel_driver = {
-	.driver = {
+अटल काष्ठा mipi_dsi_driver sharp_nt_panel_driver = अणु
+	.driver = अणु
 		.name = "panel-sharp-ls043t1le01-qhd",
 		.of_match_table = sharp_nt_of_match,
-	},
+	पूर्ण,
 	.probe = sharp_nt_panel_probe,
-	.remove = sharp_nt_panel_remove,
-	.shutdown = sharp_nt_panel_shutdown,
-};
+	.हटाओ = sharp_nt_panel_हटाओ,
+	.shutकरोwn = sharp_nt_panel_shutकरोwn,
+पूर्ण;
 module_mipi_dsi_driver(sharp_nt_panel_driver);
 
 MODULE_AUTHOR("Werner Johansson <werner.johansson@sonymobile.com>");

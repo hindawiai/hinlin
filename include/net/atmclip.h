@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* net/atm/atmarp.h - RFC1577 ATM ARP */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* net/aपंचांग/aपंचांगarp.h - RFC1577 ATM ARP */
  
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
  
  
-#ifndef _ATMCLIP_H
-#define _ATMCLIP_H
+#अगर_अघोषित _ATMCLIP_H
+#घोषणा _ATMCLIP_H
 
-#include <linux/netdevice.h>
-#include <linux/atm.h>
-#include <linux/atmdev.h>
-#include <linux/atmarp.h>
-#include <linux/spinlock.h>
-#include <net/neighbour.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/aपंचांग.h>
+#समावेश <linux/aपंचांगdev.h>
+#समावेश <linux/aपंचांगarp.h>
+#समावेश <linux/spinlock.h>
+#समावेश <net/neighbour.h>
 
 
-#define CLIP_VCC(vcc) ((struct clip_vcc *) ((vcc)->user_back))
+#घोषणा CLIP_VCC(vcc) ((काष्ठा clip_vcc *) ((vcc)->user_back))
 
-struct sk_buff;
+काष्ठा sk_buff;
 
-struct clip_vcc {
-	struct atm_vcc	*vcc;		/* VCC descriptor */
-	struct atmarp_entry *entry;	/* ATMARP table entry, NULL if IP addr.
+काष्ठा clip_vcc अणु
+	काष्ठा aपंचांग_vcc	*vcc;		/* VCC descriptor */
+	काष्ठा aपंचांगarp_entry *entry;	/* ATMARP table entry, शून्य अगर IP addr.
 					   isn't known yet */
-	int		xoff;		/* 1 if send buffer is full */
-	unsigned char	encap;		/* 0: NULL, 1: LLC/SNAP */
-	unsigned long	last_use;	/* last send or receive operation */
-	unsigned long	idle_timeout;	/* keep open idle for so many jiffies*/
-	void (*old_push)(struct atm_vcc *vcc,struct sk_buff *skb);
-					/* keep old push fn for chaining */
-	void (*old_pop)(struct atm_vcc *vcc,struct sk_buff *skb);
-					/* keep old pop fn for chaining */
-	struct clip_vcc	*next;		/* next VCC */
-};
+	पूर्णांक		xoff;		/* 1 अगर send buffer is full */
+	अचिन्हित अक्षर	encap;		/* 0: शून्य, 1: LLC/SNAP */
+	अचिन्हित दीर्घ	last_use;	/* last send or receive operation */
+	अचिन्हित दीर्घ	idle_समयout;	/* keep खोलो idle क्रम so many jअगरfies*/
+	व्योम (*old_push)(काष्ठा aपंचांग_vcc *vcc,काष्ठा sk_buff *skb);
+					/* keep old push fn क्रम chaining */
+	व्योम (*old_pop)(काष्ठा aपंचांग_vcc *vcc,काष्ठा sk_buff *skb);
+					/* keep old pop fn क्रम chaining */
+	काष्ठा clip_vcc	*next;		/* next VCC */
+पूर्ण;
 
 
-struct atmarp_entry {
-	struct clip_vcc	*vccs;		/* active VCCs; NULL if resolution is
+काष्ठा aपंचांगarp_entry अणु
+	काष्ठा clip_vcc	*vccs;		/* active VCCs; शून्य अगर resolution is
 					   pending */
-	unsigned long	expires;	/* entry expiration time */
-	struct neighbour *neigh;	/* neighbour back-pointer */
-};
+	अचिन्हित दीर्घ	expires;	/* entry expiration समय */
+	काष्ठा neighbour *neigh;	/* neighbour back-poपूर्णांकer */
+पूर्ण;
 
-#define PRIV(dev) ((struct clip_priv *) netdev_priv(dev))
+#घोषणा PRIV(dev) ((काष्ठा clip_priv *) netdev_priv(dev))
 
-struct clip_priv {
-	int number;			/* for convenience ... */
+काष्ठा clip_priv अणु
+	पूर्णांक number;			/* क्रम convenience ... */
 	spinlock_t xoff_lock;		/* ensures that pop is atomic (SMP) */
-	struct net_device *next;	/* next CLIP interface */
-};
+	काष्ठा net_device *next;	/* next CLIP पूर्णांकerface */
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

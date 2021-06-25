@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics uvis25 spi driver
  *
@@ -7,60 +8,60 @@
  * Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/spi/spi.h>
-#include <linux/slab.h>
-#include <linux/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/regmap.h>
 
-#include "st_uvis25.h"
+#समावेश "st_uvis25.h"
 
-#define UVIS25_SENSORS_SPI_READ		BIT(7)
-#define UVIS25_SPI_AUTO_INCREMENT	BIT(6)
+#घोषणा UVIS25_SENSORS_SPI_READ		BIT(7)
+#घोषणा UVIS25_SPI_AUTO_INCREMENT	BIT(6)
 
-static const struct regmap_config st_uvis25_spi_regmap_config = {
+अटल स्थिर काष्ठा regmap_config st_uvis25_spi_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.read_flag_mask = UVIS25_SENSORS_SPI_READ | UVIS25_SPI_AUTO_INCREMENT,
-	.write_flag_mask = UVIS25_SPI_AUTO_INCREMENT,
-};
+	.पढ़ो_flag_mask = UVIS25_SENSORS_SPI_READ | UVIS25_SPI_AUTO_INCREMENT,
+	.ग_लिखो_flag_mask = UVIS25_SPI_AUTO_INCREMENT,
+पूर्ण;
 
-static int st_uvis25_spi_probe(struct spi_device *spi)
-{
-	struct regmap *regmap;
+अटल पूर्णांक st_uvis25_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap *regmap;
 
 	regmap = devm_regmap_init_spi(spi, &st_uvis25_spi_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&spi->dev, "Failed to register spi regmap %ld\n",
 			PTR_ERR(regmap));
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return st_uvis25_probe(&spi->dev, spi->irq, regmap);
-}
+	वापस st_uvis25_probe(&spi->dev, spi->irq, regmap);
+पूर्ण
 
-static const struct of_device_id st_uvis25_spi_of_match[] = {
-	{ .compatible = "st,uvis25", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id st_uvis25_spi_of_match[] = अणु
+	अणु .compatible = "st,uvis25", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, st_uvis25_spi_of_match);
 
-static const struct spi_device_id st_uvis25_spi_id_table[] = {
-	{ ST_UVIS25_DEV_NAME },
-	{},
-};
+अटल स्थिर काष्ठा spi_device_id st_uvis25_spi_id_table[] = अणु
+	अणु ST_UVIS25_DEV_NAME पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, st_uvis25_spi_id_table);
 
-static struct spi_driver st_uvis25_driver = {
-	.driver = {
+अटल काष्ठा spi_driver st_uvis25_driver = अणु
+	.driver = अणु
 		.name = "st_uvis25_spi",
 		.pm = &st_uvis25_pm_ops,
 		.of_match_table = st_uvis25_spi_of_match,
-	},
+	पूर्ण,
 	.probe = st_uvis25_spi_probe,
 	.id_table = st_uvis25_spi_id_table,
-};
+पूर्ण;
 module_spi_driver(st_uvis25_driver);
 
 MODULE_AUTHOR("Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>");

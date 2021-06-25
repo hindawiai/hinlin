@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2020 BAIKAL ELECTRONICS, JSC
  *
@@ -6,60 +7,60 @@
  *   Serge Semin <Sergey.Semin@baikalelectronics.ru>
  *   Dmitry Dunaev <dmitry.dunaev@baikalelectronics.ru>
  *
- * Baikal-T1 CCU PLL clocks driver
+ * Baikal-T1 CCU PLL घड़ीs driver
  */
 
-#define pr_fmt(fmt) "bt1-ccu-pll: " fmt
+#घोषणा pr_fmt(fmt) "bt1-ccu-pll: " fmt
 
-#include <linux/kernel.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
-#include <linux/clk-provider.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/ioport.h>
-#include <linux/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/regmap.h>
 
-#include <dt-bindings/clock/bt1-ccu.h>
+#समावेश <dt-bindings/घड़ी/bt1-ccu.h>
 
-#include "ccu-pll.h"
+#समावेश "ccu-pll.h"
 
-#define CCU_CPU_PLL_BASE		0x000
-#define CCU_SATA_PLL_BASE		0x008
-#define CCU_DDR_PLL_BASE		0x010
-#define CCU_PCIE_PLL_BASE		0x018
-#define CCU_ETH_PLL_BASE		0x020
+#घोषणा CCU_CPU_PLL_BASE		0x000
+#घोषणा CCU_SATA_PLL_BASE		0x008
+#घोषणा CCU_DDR_PLL_BASE		0x010
+#घोषणा CCU_PCIE_PLL_BASE		0x018
+#घोषणा CCU_ETH_PLL_BASE		0x020
 
-#define CCU_PLL_INFO(_id, _name, _pname, _base, _flags)	\
-	{						\
+#घोषणा CCU_PLL_INFO(_id, _name, _pname, _base, _flags)	\
+	अणु						\
 		.id = _id,				\
 		.name = _name,				\
 		.parent_name = _pname,			\
 		.base = _base,				\
 		.flags = _flags				\
-	}
+	पूर्ण
 
-#define CCU_PLL_NUM			ARRAY_SIZE(pll_info)
+#घोषणा CCU_PLL_NUM			ARRAY_SIZE(pll_info)
 
-struct ccu_pll_info {
-	unsigned int id;
-	const char *name;
-	const char *parent_name;
-	unsigned int base;
-	unsigned long flags;
-};
+काष्ठा ccu_pll_info अणु
+	अचिन्हित पूर्णांक id;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *parent_name;
+	अचिन्हित पूर्णांक base;
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
 /*
  * Alas we have to mark all PLLs as critical. CPU and DDR PLLs are sources of
- * CPU cores and DDR controller reference clocks, due to which they obviously
+ * CPU cores and DDR controller reference घड़ीs, due to which they obviously
  * shouldn't be ever gated. SATA and PCIe PLLs are the parents of APB-bus and
- * DDR controller AXI-bus clocks. If they are gated the system will be
- * unusable. Moreover disabling SATA and Ethernet PLLs causes automatic reset
- * of the corresponding subsystems. So until we aren't ready to re-initialize
+ * DDR controller AXI-bus घड़ीs. If they are gated the प्रणाली will be
+ * unusable. Moreover disabling SATA and Ethernet PLLs causes स्वतःmatic reset
+ * of the corresponding subप्रणालीs. So until we aren't पढ़ोy to re-initialize
  * all the devices consuming those PLLs, they will be marked as critical too.
  */
-static const struct ccu_pll_info pll_info[] = {
+अटल स्थिर काष्ठा ccu_pll_info pll_info[] = अणु
 	CCU_PLL_INFO(CCU_CPU_PLL, "cpu_pll", "ref_clk", CCU_CPU_PLL_BASE,
 		     CLK_IS_CRITICAL),
 	CCU_PLL_INFO(CCU_SATA_PLL, "sata_pll", "ref_clk", CCU_SATA_PLL_BASE,
@@ -70,83 +71,83 @@ static const struct ccu_pll_info pll_info[] = {
 		     CLK_IS_CRITICAL),
 	CCU_PLL_INFO(CCU_ETH_PLL, "eth_pll", "ref_clk", CCU_ETH_PLL_BASE,
 		     CLK_IS_CRITICAL | CLK_SET_RATE_GATE)
-};
+पूर्ण;
 
-struct ccu_pll_data {
-	struct device_node *np;
-	struct regmap *sys_regs;
-	struct ccu_pll *plls[CCU_PLL_NUM];
-};
+काष्ठा ccu_pll_data अणु
+	काष्ठा device_node *np;
+	काष्ठा regmap *sys_regs;
+	काष्ठा ccu_pll *plls[CCU_PLL_NUM];
+पूर्ण;
 
-static struct ccu_pll *ccu_pll_find_desc(struct ccu_pll_data *data,
-					 unsigned int clk_id)
-{
-	struct ccu_pll *pll;
-	int idx;
+अटल काष्ठा ccu_pll *ccu_pll_find_desc(काष्ठा ccu_pll_data *data,
+					 अचिन्हित पूर्णांक clk_id)
+अणु
+	काष्ठा ccu_pll *pll;
+	पूर्णांक idx;
 
-	for (idx = 0; idx < CCU_PLL_NUM; ++idx) {
+	क्रम (idx = 0; idx < CCU_PLL_NUM; ++idx) अणु
 		pll = data->plls[idx];
-		if (pll && pll->id == clk_id)
-			return pll;
-	}
+		अगर (pll && pll->id == clk_id)
+			वापस pll;
+	पूर्ण
 
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static struct ccu_pll_data *ccu_pll_create_data(struct device_node *np)
-{
-	struct ccu_pll_data *data;
+अटल काष्ठा ccu_pll_data *ccu_pll_create_data(काष्ठा device_node *np)
+अणु
+	काष्ठा ccu_pll_data *data;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return ERR_PTR(-ENOMEM);
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस ERR_PTR(-ENOMEM);
 
 	data->np = np;
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static void ccu_pll_free_data(struct ccu_pll_data *data)
-{
-	kfree(data);
-}
+अटल व्योम ccu_pll_मुक्त_data(काष्ठा ccu_pll_data *data)
+अणु
+	kमुक्त(data);
+पूर्ण
 
-static int ccu_pll_find_sys_regs(struct ccu_pll_data *data)
-{
+अटल पूर्णांक ccu_pll_find_sys_regs(काष्ठा ccu_pll_data *data)
+अणु
 	data->sys_regs = syscon_node_to_regmap(data->np->parent);
-	if (IS_ERR(data->sys_regs)) {
+	अगर (IS_ERR(data->sys_regs)) अणु
 		pr_err("Failed to find syscon regs for '%s'\n",
 			of_node_full_name(data->np));
-		return PTR_ERR(data->sys_regs);
-	}
+		वापस PTR_ERR(data->sys_regs);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct clk_hw *ccu_pll_of_clk_hw_get(struct of_phandle_args *clkspec,
-					    void *priv)
-{
-	struct ccu_pll_data *data = priv;
-	struct ccu_pll *pll;
-	unsigned int clk_id;
+अटल काष्ठा clk_hw *ccu_pll_of_clk_hw_get(काष्ठा of_phandle_args *clkspec,
+					    व्योम *priv)
+अणु
+	काष्ठा ccu_pll_data *data = priv;
+	काष्ठा ccu_pll *pll;
+	अचिन्हित पूर्णांक clk_id;
 
 	clk_id = clkspec->args[0];
 	pll = ccu_pll_find_desc(data, clk_id);
-	if (IS_ERR(pll)) {
+	अगर (IS_ERR(pll)) अणु
 		pr_info("Invalid PLL clock ID %d specified\n", clk_id);
-		return ERR_CAST(pll);
-	}
+		वापस ERR_CAST(pll);
+	पूर्ण
 
-	return ccu_pll_get_clk_hw(pll);
-}
+	वापस ccu_pll_get_clk_hw(pll);
+पूर्ण
 
-static int ccu_pll_clk_register(struct ccu_pll_data *data)
-{
-	int idx, ret;
+अटल पूर्णांक ccu_pll_clk_रेजिस्टर(काष्ठा ccu_pll_data *data)
+अणु
+	पूर्णांक idx, ret;
 
-	for (idx = 0; idx < CCU_PLL_NUM; ++idx) {
-		const struct ccu_pll_info *info = &pll_info[idx];
-		struct ccu_pll_init_data init = {0};
+	क्रम (idx = 0; idx < CCU_PLL_NUM; ++idx) अणु
+		स्थिर काष्ठा ccu_pll_info *info = &pll_info[idx];
+		काष्ठा ccu_pll_init_data init = अणु0पूर्ण;
 
 		init.id = info->id;
 		init.name = info->name;
@@ -156,51 +157,51 @@ static int ccu_pll_clk_register(struct ccu_pll_data *data)
 		init.np = data->np;
 		init.flags = info->flags;
 
-		data->plls[idx] = ccu_pll_hw_register(&init);
-		if (IS_ERR(data->plls[idx])) {
+		data->plls[idx] = ccu_pll_hw_रेजिस्टर(&init);
+		अगर (IS_ERR(data->plls[idx])) अणु
 			ret = PTR_ERR(data->plls[idx]);
 			pr_err("Couldn't register PLL hw '%s'\n",
 				init.name);
-			goto err_hw_unregister;
-		}
-	}
+			जाओ err_hw_unरेजिस्टर;
+		पूर्ण
+	पूर्ण
 
 	ret = of_clk_add_hw_provider(data->np, ccu_pll_of_clk_hw_get, data);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Couldn't register PLL provider of '%s'\n",
 			of_node_full_name(data->np));
-		goto err_hw_unregister;
-	}
+		जाओ err_hw_unरेजिस्टर;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_hw_unregister:
-	for (--idx; idx >= 0; --idx)
-		ccu_pll_hw_unregister(data->plls[idx]);
+err_hw_unरेजिस्टर:
+	क्रम (--idx; idx >= 0; --idx)
+		ccu_pll_hw_unरेजिस्टर(data->plls[idx]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __init void ccu_pll_init(struct device_node *np)
-{
-	struct ccu_pll_data *data;
-	int ret;
+अटल __init व्योम ccu_pll_init(काष्ठा device_node *np)
+अणु
+	काष्ठा ccu_pll_data *data;
+	पूर्णांक ret;
 
 	data = ccu_pll_create_data(np);
-	if (IS_ERR(data))
-		return;
+	अगर (IS_ERR(data))
+		वापस;
 
 	ret = ccu_pll_find_sys_regs(data);
-	if (ret)
-		goto err_free_data;
+	अगर (ret)
+		जाओ err_मुक्त_data;
 
-	ret = ccu_pll_clk_register(data);
-	if (ret)
-		goto err_free_data;
+	ret = ccu_pll_clk_रेजिस्टर(data);
+	अगर (ret)
+		जाओ err_मुक्त_data;
 
-	return;
+	वापस;
 
-err_free_data:
-	ccu_pll_free_data(data);
-}
+err_मुक्त_data:
+	ccu_pll_मुक्त_data(data);
+पूर्ण
 CLK_OF_DECLARE(ccu_pll, "baikal,bt1-ccu-pll", ccu_pll_init);

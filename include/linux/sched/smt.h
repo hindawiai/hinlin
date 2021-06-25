@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_SCHED_SMT_H
-#define _LINUX_SCHED_SMT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_SCHED_SMT_H
+#घोषणा _LINUX_SCHED_SMT_H
 
-#include <linux/static_key.h>
+#समावेश <linux/अटल_key.h>
 
-#ifdef CONFIG_SCHED_SMT
-extern struct static_key_false sched_smt_present;
+#अगर_घोषित CONFIG_SCHED_SMT
+बाह्य काष्ठा अटल_key_false sched_smt_present;
 
-static __always_inline bool sched_smt_active(void)
-{
-	return static_branch_likely(&sched_smt_present);
-}
-#else
-static inline bool sched_smt_active(void) { return false; }
-#endif
+अटल __always_अंतरभूत bool sched_smt_active(व्योम)
+अणु
+	वापस अटल_branch_likely(&sched_smt_present);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool sched_smt_active(व्योम) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-void arch_smt_update(void);
+व्योम arch_smt_update(व्योम);
 
-#endif
+#पूर्ण_अगर

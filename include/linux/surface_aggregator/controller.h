@@ -1,170 +1,171 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Surface System Aggregator Module (SSAM) controller interface.
+ * Surface System Aggregator Module (SSAM) controller पूर्णांकerface.
  *
- * Main communication interface for the SSAM EC. Provides a controller
- * managing access and communication to and from the SSAM EC, as well as main
- * communication structures and definitions.
+ * Main communication पूर्णांकerface क्रम the SSAM EC. Provides a controller
+ * managing access and communication to and from the SSAM EC, as well as मुख्य
+ * communication काष्ठाures and definitions.
  *
  * Copyright (C) 2019-2020 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#ifndef _LINUX_SURFACE_AGGREGATOR_CONTROLLER_H
-#define _LINUX_SURFACE_AGGREGATOR_CONTROLLER_H
+#अगर_अघोषित _LINUX_SURFACE_AGGREGATOR_CONTROLLER_H
+#घोषणा _LINUX_SURFACE_AGGREGATOR_CONTROLLER_H
 
-#include <linux/completion.h>
-#include <linux/device.h>
-#include <linux/types.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/device.h>
+#समावेश <linux/types.h>
 
-#include <linux/surface_aggregator/serial_hub.h>
+#समावेश <linux/surface_aggregator/serial_hub.h>
 
 
 /* -- Main data types and definitions --------------------------------------- */
 
 /**
- * enum ssam_event_flags - Flags for enabling/disabling SAM events
+ * क्रमागत ssam_event_flags - Flags क्रम enabling/disabling SAM events
  * @SSAM_EVENT_SEQUENCED: The event will be sent via a sequenced data frame.
  */
-enum ssam_event_flags {
+क्रमागत ssam_event_flags अणु
 	SSAM_EVENT_SEQUENCED = BIT(0),
-};
+पूर्ण;
 
 /**
- * struct ssam_event - SAM event sent from the EC to the host.
- * @target_category: Target category of the event source. See &enum ssam_ssh_tc.
+ * काष्ठा ssam_event - SAM event sent from the EC to the host.
+ * @target_category: Target category of the event source. See &क्रमागत ssam_ssh_tc.
  * @target_id:       Target ID of the event source.
  * @command_id:      Command ID of the event.
  * @instance_id:     Instance ID of the event source.
  * @length:          Length of the event payload in bytes.
  * @data:            Event payload data.
  */
-struct ssam_event {
+काष्ठा ssam_event अणु
 	u8 target_category;
 	u8 target_id;
 	u8 command_id;
 	u8 instance_id;
 	u16 length;
 	u8 data[];
-};
+पूर्ण;
 
 /**
- * enum ssam_request_flags - Flags for SAM requests.
+ * क्रमागत ssam_request_flags - Flags क्रम SAM requests.
  *
  * @SSAM_REQUEST_HAS_RESPONSE:
- *	Specifies that the request expects a response. If not set, the request
+ *	Specअगरies that the request expects a response. If not set, the request
  *	will be directly completed after its underlying packet has been
- *	transmitted. If set, the request transport system waits for a response
+ *	transmitted. If set, the request transport प्रणाली रुकोs क्रम a response
  *	of the request.
  *
  * @SSAM_REQUEST_UNSEQUENCED:
- *	Specifies that the request should be transmitted via an unsequenced
+ *	Specअगरies that the request should be transmitted via an unsequenced
  *	packet. If set, the request must not have a response, meaning that this
  *	flag and the %SSAM_REQUEST_HAS_RESPONSE flag are mutually exclusive.
  */
-enum ssam_request_flags {
+क्रमागत ssam_request_flags अणु
 	SSAM_REQUEST_HAS_RESPONSE = BIT(0),
 	SSAM_REQUEST_UNSEQUENCED  = BIT(1),
-};
+पूर्ण;
 
 /**
- * struct ssam_request - SAM request description.
- * @target_category: Category of the request's target. See &enum ssam_ssh_tc.
+ * काष्ठा ssam_request - SAM request description.
+ * @target_category: Category of the request's target. See &क्रमागत ssam_ssh_tc.
  * @target_id:       ID of the request's target.
  * @command_id:      Command ID of the request.
  * @instance_id:     Instance ID of the request's target.
- * @flags:           Flags for the request. See &enum ssam_request_flags.
+ * @flags:           Flags क्रम the request. See &क्रमागत ssam_request_flags.
  * @length:          Length of the request payload in bytes.
  * @payload:         Request payload data.
  *
- * This struct fully describes a SAM request with payload. It is intended to
- * help set up the actual transport struct, e.g. &struct ssam_request_sync,
- * and specifically its raw message data via ssam_request_write_data().
+ * This काष्ठा fully describes a SAM request with payload. It is पूर्णांकended to
+ * help set up the actual transport काष्ठा, e.g. &काष्ठा ssam_request_sync,
+ * and specअगरically its raw message data via ssam_request_ग_लिखो_data().
  */
-struct ssam_request {
+काष्ठा ssam_request अणु
 	u8 target_category;
 	u8 target_id;
 	u8 command_id;
 	u8 instance_id;
 	u16 flags;
 	u16 length;
-	const u8 *payload;
-};
+	स्थिर u8 *payload;
+पूर्ण;
 
 /**
- * struct ssam_response - Response buffer for SAM request.
+ * काष्ठा ssam_response - Response buffer क्रम SAM request.
  * @capacity: Capacity of the buffer, in bytes.
- * @length:   Length of the actual data stored in the memory pointed to by
- *            @pointer, in bytes. Set by the transport system.
- * @pointer:  Pointer to the buffer's memory, storing the response payload data.
+ * @length:   Length of the actual data stored in the memory poपूर्णांकed to by
+ *            @poपूर्णांकer, in bytes. Set by the transport प्रणाली.
+ * @poपूर्णांकer:  Poपूर्णांकer to the buffer's memory, storing the response payload data.
  */
-struct ssam_response {
-	size_t capacity;
-	size_t length;
-	u8 *pointer;
-};
+काष्ठा ssam_response अणु
+	माप_प्रकार capacity;
+	माप_प्रकार length;
+	u8 *poपूर्णांकer;
+पूर्ण;
 
-struct ssam_controller;
+काष्ठा ssam_controller;
 
-struct ssam_controller *ssam_get_controller(void);
-struct ssam_controller *ssam_client_bind(struct device *client);
-int ssam_client_link(struct ssam_controller *ctrl, struct device *client);
+काष्ठा ssam_controller *ssam_get_controller(व्योम);
+काष्ठा ssam_controller *ssam_client_bind(काष्ठा device *client);
+पूर्णांक ssam_client_link(काष्ठा ssam_controller *ctrl, काष्ठा device *client);
 
-struct device *ssam_controller_device(struct ssam_controller *c);
+काष्ठा device *ssam_controller_device(काष्ठा ssam_controller *c);
 
-struct ssam_controller *ssam_controller_get(struct ssam_controller *c);
-void ssam_controller_put(struct ssam_controller *c);
+काष्ठा ssam_controller *ssam_controller_get(काष्ठा ssam_controller *c);
+व्योम ssam_controller_put(काष्ठा ssam_controller *c);
 
-void ssam_controller_statelock(struct ssam_controller *c);
-void ssam_controller_stateunlock(struct ssam_controller *c);
+व्योम ssam_controller_statelock(काष्ठा ssam_controller *c);
+व्योम ssam_controller_stateunlock(काष्ठा ssam_controller *c);
 
-ssize_t ssam_request_write_data(struct ssam_span *buf,
-				struct ssam_controller *ctrl,
-				const struct ssam_request *spec);
+sमाप_प्रकार ssam_request_ग_लिखो_data(काष्ठा ssam_span *buf,
+				काष्ठा ssam_controller *ctrl,
+				स्थिर काष्ठा ssam_request *spec);
 
 
-/* -- Synchronous request interface. ---------------------------------------- */
+/* -- Synchronous request पूर्णांकerface. ---------------------------------------- */
 
 /**
- * struct ssam_request_sync - Synchronous SAM request struct.
+ * काष्ठा ssam_request_sync - Synchronous SAM request काष्ठा.
  * @base:   Underlying SSH request.
- * @comp:   Completion used to signal full completion of the request. After the
- *          request has been submitted, this struct may only be modified or
- *          deallocated after the completion has been signaled.
+ * @comp:   Completion used to संकेत full completion of the request. After the
+ *          request has been submitted, this काष्ठा may only be modअगरied or
+ *          deallocated after the completion has been संकेतed.
  *          request has been submitted,
  * @resp:   Buffer to store the response.
  * @status: Status of the request, set after the base request has been
  *          completed or has failed.
  */
-struct ssam_request_sync {
-	struct ssh_request base;
-	struct completion comp;
-	struct ssam_response *resp;
-	int status;
-};
+काष्ठा ssam_request_sync अणु
+	काष्ठा ssh_request base;
+	काष्ठा completion comp;
+	काष्ठा ssam_response *resp;
+	पूर्णांक status;
+पूर्ण;
 
-int ssam_request_sync_alloc(size_t payload_len, gfp_t flags,
-			    struct ssam_request_sync **rqst,
-			    struct ssam_span *buffer);
+पूर्णांक ssam_request_sync_alloc(माप_प्रकार payload_len, gfp_t flags,
+			    काष्ठा ssam_request_sync **rqst,
+			    काष्ठा ssam_span *buffer);
 
-void ssam_request_sync_free(struct ssam_request_sync *rqst);
+व्योम ssam_request_sync_मुक्त(काष्ठा ssam_request_sync *rqst);
 
-int ssam_request_sync_init(struct ssam_request_sync *rqst,
-			   enum ssam_request_flags flags);
+पूर्णांक ssam_request_sync_init(काष्ठा ssam_request_sync *rqst,
+			   क्रमागत ssam_request_flags flags);
 
 /**
  * ssam_request_sync_set_data - Set message data of a synchronous request.
  * @rqst: The request.
- * @ptr:  Pointer to the request message data.
+ * @ptr:  Poपूर्णांकer to the request message data.
  * @len:  Length of the request message data.
  *
  * Set the request message data of a synchronous request. The provided buffer
  * needs to live until the request has been completed.
  */
-static inline void ssam_request_sync_set_data(struct ssam_request_sync *rqst,
-					      u8 *ptr, size_t len)
-{
+अटल अंतरभूत व्योम ssam_request_sync_set_data(काष्ठा ssam_request_sync *rqst,
+					      u8 *ptr, माप_प्रकार len)
+अणु
 	ssh_request_set_data(&rqst->base, ptr, len);
-}
+पूर्ण
 
 /**
  * ssam_request_sync_set_resp - Set response buffer of a synchronous request.
@@ -172,191 +173,191 @@ static inline void ssam_request_sync_set_data(struct ssam_request_sync *rqst,
  * @resp: The response buffer.
  *
  * Sets the response buffer of a synchronous request. This buffer will store
- * the response of the request after it has been completed. May be %NULL if no
+ * the response of the request after it has been completed. May be %शून्य अगर no
  * response is expected.
  */
-static inline void ssam_request_sync_set_resp(struct ssam_request_sync *rqst,
-					      struct ssam_response *resp)
-{
+अटल अंतरभूत व्योम ssam_request_sync_set_resp(काष्ठा ssam_request_sync *rqst,
+					      काष्ठा ssam_response *resp)
+अणु
 	rqst->resp = resp;
-}
+पूर्ण
 
-int ssam_request_sync_submit(struct ssam_controller *ctrl,
-			     struct ssam_request_sync *rqst);
+पूर्णांक ssam_request_sync_submit(काष्ठा ssam_controller *ctrl,
+			     काष्ठा ssam_request_sync *rqst);
 
 /**
- * ssam_request_sync_wait - Wait for completion of a synchronous request.
- * @rqst: The request to wait for.
+ * ssam_request_sync_रुको - Wait क्रम completion of a synchronous request.
+ * @rqst: The request to रुको क्रम.
  *
- * Wait for completion and release of a synchronous request. After this
+ * Wait क्रम completion and release of a synchronous request. After this
  * function terminates, the request is guaranteed to have left the transport
- * system. After successful submission of a request, this function must be
- * called before accessing the response of the request, freeing the request,
- * or freeing any of the buffers associated with the request.
+ * प्रणाली. After successful submission of a request, this function must be
+ * called beक्रमe accessing the response of the request, मुक्तing the request,
+ * or मुक्तing any of the buffers associated with the request.
  *
- * This function must not be called if the request has not been submitted yet
- * and may lead to a deadlock/infinite wait if a subsequent request submission
- * fails in that case, due to the completion never triggering.
+ * This function must not be called अगर the request has not been submitted yet
+ * and may lead to a deadlock/infinite रुको अगर a subsequent request submission
+ * fails in that हाल, due to the completion never triggering.
  *
  * Return: Returns the status of the given request, which is set on completion
  * of the packet. This value is zero on success and negative on failure.
  */
-static inline int ssam_request_sync_wait(struct ssam_request_sync *rqst)
-{
-	wait_for_completion(&rqst->comp);
-	return rqst->status;
-}
+अटल अंतरभूत पूर्णांक ssam_request_sync_रुको(काष्ठा ssam_request_sync *rqst)
+अणु
+	रुको_क्रम_completion(&rqst->comp);
+	वापस rqst->status;
+पूर्ण
 
-int ssam_request_sync(struct ssam_controller *ctrl,
-		      const struct ssam_request *spec,
-		      struct ssam_response *rsp);
+पूर्णांक ssam_request_sync(काष्ठा ssam_controller *ctrl,
+		      स्थिर काष्ठा ssam_request *spec,
+		      काष्ठा ssam_response *rsp);
 
-int ssam_request_sync_with_buffer(struct ssam_controller *ctrl,
-				  const struct ssam_request *spec,
-				  struct ssam_response *rsp,
-				  struct ssam_span *buf);
+पूर्णांक ssam_request_sync_with_buffer(काष्ठा ssam_controller *ctrl,
+				  स्थिर काष्ठा ssam_request *spec,
+				  काष्ठा ssam_response *rsp,
+				  काष्ठा ssam_span *buf);
 
 /**
  * ssam_request_sync_onstack - Execute a synchronous request on the stack.
  * @ctrl: The controller via which the request is submitted.
- * @rqst: The request specification.
+ * @rqst: The request specअगरication.
  * @rsp:  The response buffer.
  * @payload_len: The (maximum) request payload length.
  *
- * Allocates a synchronous request with specified payload length on the stack,
- * fully initializes it via the provided request specification, submits it,
- * and finally waits for its completion before returning its status. This
+ * Allocates a synchronous request with specअगरied payload length on the stack,
+ * fully initializes it via the provided request specअगरication, submits it,
+ * and finally रुकोs क्रम its completion beक्रमe वापसing its status. This
  * helper macro essentially allocates the request message buffer on the stack
  * and then calls ssam_request_sync_with_buffer().
  *
- * Note: The @payload_len parameter specifies the maximum payload length, used
- * for buffer allocation. The actual payload length may be smaller.
+ * Note: The @payload_len parameter specअगरies the maximum payload length, used
+ * क्रम buffer allocation. The actual payload length may be smaller.
  *
  * Return: Returns the status of the request or any failure during setup, i.e.
  * zero on success and a negative value on failure.
  */
-#define ssam_request_sync_onstack(ctrl, rqst, rsp, payload_len)			\
-	({									\
+#घोषणा ssam_request_sync_onstack(ctrl, rqst, rsp, payload_len)			\
+	(अणु									\
 		u8 __data[SSH_COMMAND_MESSAGE_LENGTH(payload_len)];		\
-		struct ssam_span __buf = { &__data[0], ARRAY_SIZE(__data) };	\
+		काष्ठा ssam_span __buf = अणु &__data[0], ARRAY_SIZE(__data) पूर्ण;	\
 										\
 		ssam_request_sync_with_buffer(ctrl, rqst, rsp, &__buf);		\
-	})
+	पूर्ण)
 
 /**
- * __ssam_retry - Retry request in case of I/O errors or timeouts.
- * @request: The request function to execute. Must return an integer.
+ * __ssam_retry - Retry request in हाल of I/O errors or समयouts.
+ * @request: The request function to execute. Must वापस an पूर्णांकeger.
  * @n:       Number of tries.
- * @args:    Arguments for the request function.
+ * @args:    Arguments क्रम the request function.
  *
- * Executes the given request function, i.e. calls @request. In case the
- * request returns %-EREMOTEIO (indicates I/O error) or %-ETIMEDOUT (request
- * or underlying packet timed out), @request will be re-executed again, up to
- * @n times in total.
+ * Executes the given request function, i.e. calls @request. In हाल the
+ * request वापसs %-EREMOTEIO (indicates I/O error) or %-ETIMEDOUT (request
+ * or underlying packet समयd out), @request will be re-executed again, up to
+ * @n बार in total.
  *
- * Return: Returns the return value of the last execution of @request.
+ * Return: Returns the वापस value of the last execution of @request.
  */
-#define __ssam_retry(request, n, args...)				\
-	({								\
-		int __i, __s = 0;					\
+#घोषणा __ssam_retry(request, n, args...)				\
+	(अणु								\
+		पूर्णांक __i, __s = 0;					\
 									\
-		for (__i = (n); __i > 0; __i--) {			\
+		क्रम (__i = (n); __i > 0; __i--) अणु			\
 			__s = request(args);				\
-			if (__s != -ETIMEDOUT && __s != -EREMOTEIO)	\
-				break;					\
-		}							\
+			अगर (__s != -ETIMEDOUT && __s != -EREMOTEIO)	\
+				अवरोध;					\
+		पूर्ण							\
 		__s;							\
-	})
+	पूर्ण)
 
 /**
- * ssam_retry - Retry request in case of I/O errors or timeouts up to three
- * times in total.
- * @request: The request function to execute. Must return an integer.
- * @args:    Arguments for the request function.
+ * ssam_retry - Retry request in हाल of I/O errors or समयouts up to three
+ * बार in total.
+ * @request: The request function to execute. Must वापस an पूर्णांकeger.
+ * @args:    Arguments क्रम the request function.
  *
- * Executes the given request function, i.e. calls @request. In case the
- * request returns %-EREMOTEIO (indicates I/O error) or -%ETIMEDOUT (request
- * or underlying packet timed out), @request will be re-executed again, up to
- * three times in total.
+ * Executes the given request function, i.e. calls @request. In हाल the
+ * request वापसs %-EREMOTEIO (indicates I/O error) or -%ETIMEDOUT (request
+ * or underlying packet समयd out), @request will be re-executed again, up to
+ * three बार in total.
  *
- * See __ssam_retry() for a more generic macro for this purpose.
+ * See __ssam_retry() क्रम a more generic macro क्रम this purpose.
  *
- * Return: Returns the return value of the last execution of @request.
+ * Return: Returns the वापस value of the last execution of @request.
  */
-#define ssam_retry(request, args...) \
+#घोषणा ssam_retry(request, args...) \
 	__ssam_retry(request, 3, args)
 
 /**
- * struct ssam_request_spec - Blue-print specification of SAM request.
- * @target_category: Category of the request's target. See &enum ssam_ssh_tc.
+ * काष्ठा ssam_request_spec - Blue-prपूर्णांक specअगरication of SAM request.
+ * @target_category: Category of the request's target. See &क्रमागत ssam_ssh_tc.
  * @target_id:       ID of the request's target.
  * @command_id:      Command ID of the request.
  * @instance_id:     Instance ID of the request's target.
- * @flags:           Flags for the request. See &enum ssam_request_flags.
+ * @flags:           Flags क्रम the request. See &क्रमागत ssam_request_flags.
  *
- * Blue-print specification for a SAM request. This struct describes the
- * unique static parameters of a request (i.e. type) without specifying any of
- * its instance-specific data (e.g. payload). It is intended to be used as base
- * for defining simple request functions via the
+ * Blue-prपूर्णांक specअगरication क्रम a SAM request. This काष्ठा describes the
+ * unique अटल parameters of a request (i.e. type) without specअगरying any of
+ * its instance-specअगरic data (e.g. payload). It is पूर्णांकended to be used as base
+ * क्रम defining simple request functions via the
  * ``SSAM_DEFINE_SYNC_REQUEST_x()`` family of macros.
  */
-struct ssam_request_spec {
+काष्ठा ssam_request_spec अणु
 	u8 target_category;
 	u8 target_id;
 	u8 command_id;
 	u8 instance_id;
 	u8 flags;
-};
+पूर्ण;
 
 /**
- * struct ssam_request_spec_md - Blue-print specification for multi-device SAM
+ * काष्ठा ssam_request_spec_md - Blue-prपूर्णांक specअगरication क्रम multi-device SAM
  * request.
- * @target_category: Category of the request's target. See &enum ssam_ssh_tc.
+ * @target_category: Category of the request's target. See &क्रमागत ssam_ssh_tc.
  * @command_id:      Command ID of the request.
- * @flags:           Flags for the request. See &enum ssam_request_flags.
+ * @flags:           Flags क्रम the request. See &क्रमागत ssam_request_flags.
  *
- * Blue-print specification for a multi-device SAM request, i.e. a request
+ * Blue-prपूर्णांक specअगरication क्रम a multi-device SAM request, i.e. a request
  * that is applicable to multiple device instances, described by their
- * individual target and instance IDs. This struct describes the unique static
- * parameters of a request (i.e. type) without specifying any of its
- * instance-specific data (e.g. payload) and without specifying any of its
- * device specific IDs (i.e. target and instance ID). It is intended to be
- * used as base for defining simple multi-device request functions via the
+ * inभागidual target and instance IDs. This काष्ठा describes the unique अटल
+ * parameters of a request (i.e. type) without specअगरying any of its
+ * instance-specअगरic data (e.g. payload) and without specअगरying any of its
+ * device specअगरic IDs (i.e. target and instance ID). It is पूर्णांकended to be
+ * used as base क्रम defining simple multi-device request functions via the
  * ``SSAM_DEFINE_SYNC_REQUEST_MD_x()`` and ``SSAM_DEFINE_SYNC_REQUEST_CL_x()``
  * families of macros.
  */
-struct ssam_request_spec_md {
+काष्ठा ssam_request_spec_md अणु
 	u8 target_category;
 	u8 command_id;
 	u8 flags;
-};
+पूर्ण;
 
 /**
  * SSAM_DEFINE_SYNC_REQUEST_N() - Define synchronous SAM request function
- * with neither argument nor return value.
+ * with neither argument nor वापस value.
  * @name: Name of the generated function.
- * @spec: Specification (&struct ssam_request_spec) defining the request.
+ * @spec: Specअगरication (&काष्ठा ssam_request_spec) defining the request.
  *
- * Defines a function executing the synchronous SAM request specified by
- * @spec, with the request having neither argument nor return value. The
- * generated function takes care of setting up the request struct and buffer
- * allocation, as well as execution of the request itself, returning once the
+ * Defines a function executing the synchronous SAM request specअगरied by
+ * @spec, with the request having neither argument nor वापस value. The
+ * generated function takes care of setting up the request काष्ठा and buffer
+ * allocation, as well as execution of the request itself, वापसing once the
  * request has been fully completed. The required transport buffer will be
  * allocated on the stack.
  *
- * The generated function is defined as ``static int name(struct
- * ssam_controller *ctrl)``, returning the status of the request, which is
+ * The generated function is defined as ``अटल पूर्णांक name(काष्ठा
+ * ssam_controller *ctrl)``, वापसing the status of the request, which is
  * zero on success and negative on failure. The ``ctrl`` parameter is the
  * controller via which the request is being sent.
  *
- * Refer to ssam_request_sync_onstack() for more details on the behavior of
+ * Refer to ssam_request_sync_onstack() क्रम more details on the behavior of
  * the generated function.
  */
-#define SSAM_DEFINE_SYNC_REQUEST_N(name, spec...)				\
-	static int name(struct ssam_controller *ctrl)				\
-	{									\
-		struct ssam_request_spec s = (struct ssam_request_spec)spec;	\
-		struct ssam_request rqst;					\
+#घोषणा SSAM_DEFINE_SYNC_REQUEST_N(name, spec...)				\
+	अटल पूर्णांक name(काष्ठा ssam_controller *ctrl)				\
+	अणु									\
+		काष्ठा ssam_request_spec s = (काष्ठा ssam_request_spec)spec;	\
+		काष्ठा ssam_request rqst;					\
 										\
 		rqst.target_category = s.target_category;			\
 		rqst.target_id = s.target_id;					\
@@ -364,82 +365,82 @@ struct ssam_request_spec_md {
 		rqst.instance_id = s.instance_id;				\
 		rqst.flags = s.flags;						\
 		rqst.length = 0;						\
-		rqst.payload = NULL;						\
+		rqst.payload = शून्य;						\
 										\
-		return ssam_request_sync_onstack(ctrl, &rqst, NULL, 0);		\
-	}
+		वापस ssam_request_sync_onstack(ctrl, &rqst, शून्य, 0);		\
+	पूर्ण
 
 /**
  * SSAM_DEFINE_SYNC_REQUEST_W() - Define synchronous SAM request function with
  * argument.
  * @name:  Name of the generated function.
  * @atype: Type of the request's argument.
- * @spec:  Specification (&struct ssam_request_spec) defining the request.
+ * @spec:  Specअगरication (&काष्ठा ssam_request_spec) defining the request.
  *
- * Defines a function executing the synchronous SAM request specified by
+ * Defines a function executing the synchronous SAM request specअगरied by
  * @spec, with the request taking an argument of type @atype and having no
- * return value. The generated function takes care of setting up the request
- * struct, buffer allocation, as well as execution of the request itself,
- * returning once the request has been fully completed. The required transport
+ * वापस value. The generated function takes care of setting up the request
+ * काष्ठा, buffer allocation, as well as execution of the request itself,
+ * वापसing once the request has been fully completed. The required transport
  * buffer will be allocated on the stack.
  *
- * The generated function is defined as ``static int name(struct
- * ssam_controller *ctrl, const atype *arg)``, returning the status of the
+ * The generated function is defined as ``अटल पूर्णांक name(काष्ठा
+ * ssam_controller *ctrl, स्थिर atype *arg)``, वापसing the status of the
  * request, which is zero on success and negative on failure. The ``ctrl``
  * parameter is the controller via which the request is sent. The request
- * argument is specified via the ``arg`` pointer.
+ * argument is specअगरied via the ``arg`` poपूर्णांकer.
  *
- * Refer to ssam_request_sync_onstack() for more details on the behavior of
+ * Refer to ssam_request_sync_onstack() क्रम more details on the behavior of
  * the generated function.
  */
-#define SSAM_DEFINE_SYNC_REQUEST_W(name, atype, spec...)			\
-	static int name(struct ssam_controller *ctrl, const atype *arg)		\
-	{									\
-		struct ssam_request_spec s = (struct ssam_request_spec)spec;	\
-		struct ssam_request rqst;					\
+#घोषणा SSAM_DEFINE_SYNC_REQUEST_W(name, atype, spec...)			\
+	अटल पूर्णांक name(काष्ठा ssam_controller *ctrl, स्थिर atype *arg)		\
+	अणु									\
+		काष्ठा ssam_request_spec s = (काष्ठा ssam_request_spec)spec;	\
+		काष्ठा ssam_request rqst;					\
 										\
 		rqst.target_category = s.target_category;			\
 		rqst.target_id = s.target_id;					\
 		rqst.command_id = s.command_id;					\
 		rqst.instance_id = s.instance_id;				\
 		rqst.flags = s.flags;						\
-		rqst.length = sizeof(atype);					\
+		rqst.length = माप(atype);					\
 		rqst.payload = (u8 *)arg;					\
 										\
-		return ssam_request_sync_onstack(ctrl, &rqst, NULL,		\
-						 sizeof(atype));		\
-	}
+		वापस ssam_request_sync_onstack(ctrl, &rqst, शून्य,		\
+						 माप(atype));		\
+	पूर्ण
 
 /**
  * SSAM_DEFINE_SYNC_REQUEST_R() - Define synchronous SAM request function with
- * return value.
+ * वापस value.
  * @name:  Name of the generated function.
- * @rtype: Type of the request's return value.
- * @spec:  Specification (&struct ssam_request_spec) defining the request.
+ * @rtype: Type of the request's वापस value.
+ * @spec:  Specअगरication (&काष्ठा ssam_request_spec) defining the request.
  *
- * Defines a function executing the synchronous SAM request specified by
- * @spec, with the request taking no argument but having a return value of
+ * Defines a function executing the synchronous SAM request specअगरied by
+ * @spec, with the request taking no argument but having a वापस value of
  * type @rtype. The generated function takes care of setting up the request
- * and response structs, buffer allocation, as well as execution of the
- * request itself, returning once the request has been fully completed. The
+ * and response काष्ठाs, buffer allocation, as well as execution of the
+ * request itself, वापसing once the request has been fully completed. The
  * required transport buffer will be allocated on the stack.
  *
- * The generated function is defined as ``static int name(struct
- * ssam_controller *ctrl, rtype *ret)``, returning the status of the request,
+ * The generated function is defined as ``अटल पूर्णांक name(काष्ठा
+ * ssam_controller *ctrl, rtype *ret)``, वापसing the status of the request,
  * which is zero on success and negative on failure. The ``ctrl`` parameter is
- * the controller via which the request is sent. The request's return value is
- * written to the memory pointed to by the ``ret`` parameter.
+ * the controller via which the request is sent. The request's वापस value is
+ * written to the memory poपूर्णांकed to by the ``ret`` parameter.
  *
- * Refer to ssam_request_sync_onstack() for more details on the behavior of
+ * Refer to ssam_request_sync_onstack() क्रम more details on the behavior of
  * the generated function.
  */
-#define SSAM_DEFINE_SYNC_REQUEST_R(name, rtype, spec...)			\
-	static int name(struct ssam_controller *ctrl, rtype *ret)		\
-	{									\
-		struct ssam_request_spec s = (struct ssam_request_spec)spec;	\
-		struct ssam_request rqst;					\
-		struct ssam_response rsp;					\
-		int status;							\
+#घोषणा SSAM_DEFINE_SYNC_REQUEST_R(name, rtype, spec...)			\
+	अटल पूर्णांक name(काष्ठा ssam_controller *ctrl, rtype *ret)		\
+	अणु									\
+		काष्ठा ssam_request_spec s = (काष्ठा ssam_request_spec)spec;	\
+		काष्ठा ssam_request rqst;					\
+		काष्ठा ssam_response rsp;					\
+		पूर्णांक status;							\
 										\
 		rqst.target_category = s.target_category;			\
 		rqst.target_id = s.target_id;					\
@@ -447,56 +448,56 @@ struct ssam_request_spec_md {
 		rqst.instance_id = s.instance_id;				\
 		rqst.flags = s.flags | SSAM_REQUEST_HAS_RESPONSE;		\
 		rqst.length = 0;						\
-		rqst.payload = NULL;						\
+		rqst.payload = शून्य;						\
 										\
-		rsp.capacity = sizeof(rtype);					\
+		rsp.capacity = माप(rtype);					\
 		rsp.length = 0;							\
-		rsp.pointer = (u8 *)ret;					\
+		rsp.poपूर्णांकer = (u8 *)ret;					\
 										\
 		status = ssam_request_sync_onstack(ctrl, &rqst, &rsp, 0);	\
-		if (status)							\
-			return status;						\
+		अगर (status)							\
+			वापस status;						\
 										\
-		if (rsp.length != sizeof(rtype)) {				\
-			struct device *dev = ssam_controller_device(ctrl);	\
+		अगर (rsp.length != माप(rtype)) अणु				\
+			काष्ठा device *dev = ssam_controller_device(ctrl);	\
 			dev_err(dev,						\
 				"rqst: invalid response length, expected %zu, got %zu (tc: %#04x, cid: %#04x)", \
-				sizeof(rtype), rsp.length, rqst.target_category,\
+				माप(rtype), rsp.length, rqst.target_category,\
 				rqst.command_id);				\
-			return -EIO;						\
-		}								\
+			वापस -EIO;						\
+		पूर्ण								\
 										\
-		return 0;							\
-	}
+		वापस 0;							\
+	पूर्ण
 
 /**
  * SSAM_DEFINE_SYNC_REQUEST_MD_N() - Define synchronous multi-device SAM
- * request function with neither argument nor return value.
+ * request function with neither argument nor वापस value.
  * @name: Name of the generated function.
- * @spec: Specification (&struct ssam_request_spec_md) defining the request.
+ * @spec: Specअगरication (&काष्ठा ssam_request_spec_md) defining the request.
  *
- * Defines a function executing the synchronous SAM request specified by
- * @spec, with the request having neither argument nor return value. Device
- * specifying parameters are not hard-coded, but instead must be provided to
+ * Defines a function executing the synchronous SAM request specअगरied by
+ * @spec, with the request having neither argument nor वापस value. Device
+ * specअगरying parameters are not hard-coded, but instead must be provided to
  * the function. The generated function takes care of setting up the request
- * struct, buffer allocation, as well as execution of the request itself,
- * returning once the request has been fully completed. The required transport
+ * काष्ठा, buffer allocation, as well as execution of the request itself,
+ * वापसing once the request has been fully completed. The required transport
  * buffer will be allocated on the stack.
  *
- * The generated function is defined as ``static int name(struct
- * ssam_controller *ctrl, u8 tid, u8 iid)``, returning the status of the
+ * The generated function is defined as ``अटल पूर्णांक name(काष्ठा
+ * ssam_controller *ctrl, u8 tid, u8 iid)``, वापसing the status of the
  * request, which is zero on success and negative on failure. The ``ctrl``
  * parameter is the controller via which the request is sent, ``tid`` the
- * target ID for the request, and ``iid`` the instance ID.
+ * target ID क्रम the request, and ``iid`` the instance ID.
  *
- * Refer to ssam_request_sync_onstack() for more details on the behavior of
+ * Refer to ssam_request_sync_onstack() क्रम more details on the behavior of
  * the generated function.
  */
-#define SSAM_DEFINE_SYNC_REQUEST_MD_N(name, spec...)				\
-	static int name(struct ssam_controller *ctrl, u8 tid, u8 iid)		\
-	{									\
-		struct ssam_request_spec_md s = (struct ssam_request_spec_md)spec; \
-		struct ssam_request rqst;					\
+#घोषणा SSAM_DEFINE_SYNC_REQUEST_MD_N(name, spec...)				\
+	अटल पूर्णांक name(काष्ठा ssam_controller *ctrl, u8 tid, u8 iid)		\
+	अणु									\
+		काष्ठा ssam_request_spec_md s = (काष्ठा ssam_request_spec_md)spec; \
+		काष्ठा ssam_request rqst;					\
 										\
 		rqst.target_category = s.target_category;			\
 		rqst.target_id = tid;						\
@@ -504,86 +505,86 @@ struct ssam_request_spec_md {
 		rqst.instance_id = iid;						\
 		rqst.flags = s.flags;						\
 		rqst.length = 0;						\
-		rqst.payload = NULL;						\
+		rqst.payload = शून्य;						\
 										\
-		return ssam_request_sync_onstack(ctrl, &rqst, NULL, 0);		\
-	}
+		वापस ssam_request_sync_onstack(ctrl, &rqst, शून्य, 0);		\
+	पूर्ण
 
 /**
  * SSAM_DEFINE_SYNC_REQUEST_MD_W() - Define synchronous multi-device SAM
  * request function with argument.
  * @name:  Name of the generated function.
  * @atype: Type of the request's argument.
- * @spec:  Specification (&struct ssam_request_spec_md) defining the request.
+ * @spec:  Specअगरication (&काष्ठा ssam_request_spec_md) defining the request.
  *
- * Defines a function executing the synchronous SAM request specified by
+ * Defines a function executing the synchronous SAM request specअगरied by
  * @spec, with the request taking an argument of type @atype and having no
- * return value. Device specifying parameters are not hard-coded, but instead
+ * वापस value. Device specअगरying parameters are not hard-coded, but instead
  * must be provided to the function. The generated function takes care of
- * setting up the request struct, buffer allocation, as well as execution of
- * the request itself, returning once the request has been fully completed.
+ * setting up the request काष्ठा, buffer allocation, as well as execution of
+ * the request itself, वापसing once the request has been fully completed.
  * The required transport buffer will be allocated on the stack.
  *
- * The generated function is defined as ``static int name(struct
- * ssam_controller *ctrl, u8 tid, u8 iid, const atype *arg)``, returning the
+ * The generated function is defined as ``अटल पूर्णांक name(काष्ठा
+ * ssam_controller *ctrl, u8 tid, u8 iid, स्थिर atype *arg)``, वापसing the
  * status of the request, which is zero on success and negative on failure.
  * The ``ctrl`` parameter is the controller via which the request is sent,
- * ``tid`` the target ID for the request, and ``iid`` the instance ID. The
- * request argument is specified via the ``arg`` pointer.
+ * ``tid`` the target ID क्रम the request, and ``iid`` the instance ID. The
+ * request argument is specअगरied via the ``arg`` poपूर्णांकer.
  *
- * Refer to ssam_request_sync_onstack() for more details on the behavior of
+ * Refer to ssam_request_sync_onstack() क्रम more details on the behavior of
  * the generated function.
  */
-#define SSAM_DEFINE_SYNC_REQUEST_MD_W(name, atype, spec...)			\
-	static int name(struct ssam_controller *ctrl, u8 tid, u8 iid, const atype *arg) \
-	{									\
-		struct ssam_request_spec_md s = (struct ssam_request_spec_md)spec; \
-		struct ssam_request rqst;					\
+#घोषणा SSAM_DEFINE_SYNC_REQUEST_MD_W(name, atype, spec...)			\
+	अटल पूर्णांक name(काष्ठा ssam_controller *ctrl, u8 tid, u8 iid, स्थिर atype *arg) \
+	अणु									\
+		काष्ठा ssam_request_spec_md s = (काष्ठा ssam_request_spec_md)spec; \
+		काष्ठा ssam_request rqst;					\
 										\
 		rqst.target_category = s.target_category;			\
 		rqst.target_id = tid;						\
 		rqst.command_id = s.command_id;					\
 		rqst.instance_id = iid;						\
 		rqst.flags = s.flags;						\
-		rqst.length = sizeof(atype);					\
+		rqst.length = माप(atype);					\
 		rqst.payload = (u8 *)arg;					\
 										\
-		return ssam_request_sync_onstack(ctrl, &rqst, NULL,		\
-						 sizeof(atype));		\
-	}
+		वापस ssam_request_sync_onstack(ctrl, &rqst, शून्य,		\
+						 माप(atype));		\
+	पूर्ण
 
 /**
  * SSAM_DEFINE_SYNC_REQUEST_MD_R() - Define synchronous multi-device SAM
- * request function with return value.
+ * request function with वापस value.
  * @name:  Name of the generated function.
- * @rtype: Type of the request's return value.
- * @spec:  Specification (&struct ssam_request_spec_md) defining the request.
+ * @rtype: Type of the request's वापस value.
+ * @spec:  Specअगरication (&काष्ठा ssam_request_spec_md) defining the request.
  *
- * Defines a function executing the synchronous SAM request specified by
- * @spec, with the request taking no argument but having a return value of
- * type @rtype. Device specifying parameters are not hard-coded, but instead
+ * Defines a function executing the synchronous SAM request specअगरied by
+ * @spec, with the request taking no argument but having a वापस value of
+ * type @rtype. Device specअगरying parameters are not hard-coded, but instead
  * must be provided to the function. The generated function takes care of
- * setting up the request and response structs, buffer allocation, as well as
- * execution of the request itself, returning once the request has been fully
+ * setting up the request and response काष्ठाs, buffer allocation, as well as
+ * execution of the request itself, वापसing once the request has been fully
  * completed. The required transport buffer will be allocated on the stack.
  *
- * The generated function is defined as ``static int name(struct
- * ssam_controller *ctrl, u8 tid, u8 iid, rtype *ret)``, returning the status
+ * The generated function is defined as ``अटल पूर्णांक name(काष्ठा
+ * ssam_controller *ctrl, u8 tid, u8 iid, rtype *ret)``, वापसing the status
  * of the request, which is zero on success and negative on failure. The
  * ``ctrl`` parameter is the controller via which the request is sent, ``tid``
- * the target ID for the request, and ``iid`` the instance ID. The request's
- * return value is written to the memory pointed to by the ``ret`` parameter.
+ * the target ID क्रम the request, and ``iid`` the instance ID. The request's
+ * वापस value is written to the memory poपूर्णांकed to by the ``ret`` parameter.
  *
- * Refer to ssam_request_sync_onstack() for more details on the behavior of
+ * Refer to ssam_request_sync_onstack() क्रम more details on the behavior of
  * the generated function.
  */
-#define SSAM_DEFINE_SYNC_REQUEST_MD_R(name, rtype, spec...)			\
-	static int name(struct ssam_controller *ctrl, u8 tid, u8 iid, rtype *ret) \
-	{									\
-		struct ssam_request_spec_md s = (struct ssam_request_spec_md)spec; \
-		struct ssam_request rqst;					\
-		struct ssam_response rsp;					\
-		int status;							\
+#घोषणा SSAM_DEFINE_SYNC_REQUEST_MD_R(name, rtype, spec...)			\
+	अटल पूर्णांक name(काष्ठा ssam_controller *ctrl, u8 tid, u8 iid, rtype *ret) \
+	अणु									\
+		काष्ठा ssam_request_spec_md s = (काष्ठा ssam_request_spec_md)spec; \
+		काष्ठा ssam_request rqst;					\
+		काष्ठा ssam_response rsp;					\
+		पूर्णांक status;							\
 										\
 		rqst.target_category = s.target_category;			\
 		rqst.target_id = tid;						\
@@ -591,174 +592,174 @@ struct ssam_request_spec_md {
 		rqst.instance_id = iid;						\
 		rqst.flags = s.flags | SSAM_REQUEST_HAS_RESPONSE;		\
 		rqst.length = 0;						\
-		rqst.payload = NULL;						\
+		rqst.payload = शून्य;						\
 										\
-		rsp.capacity = sizeof(rtype);					\
+		rsp.capacity = माप(rtype);					\
 		rsp.length = 0;							\
-		rsp.pointer = (u8 *)ret;					\
+		rsp.poपूर्णांकer = (u8 *)ret;					\
 										\
 		status = ssam_request_sync_onstack(ctrl, &rqst, &rsp, 0);	\
-		if (status)							\
-			return status;						\
+		अगर (status)							\
+			वापस status;						\
 										\
-		if (rsp.length != sizeof(rtype)) {				\
-			struct device *dev = ssam_controller_device(ctrl);	\
+		अगर (rsp.length != माप(rtype)) अणु				\
+			काष्ठा device *dev = ssam_controller_device(ctrl);	\
 			dev_err(dev,						\
 				"rqst: invalid response length, expected %zu, got %zu (tc: %#04x, cid: %#04x)", \
-				sizeof(rtype), rsp.length, rqst.target_category,\
+				माप(rtype), rsp.length, rqst.target_category,\
 				rqst.command_id);				\
-			return -EIO;						\
-		}								\
+			वापस -EIO;						\
+		पूर्ण								\
 										\
-		return 0;							\
-	}
+		वापस 0;							\
+	पूर्ण
 
 
-/* -- Event notifier/callbacks. --------------------------------------------- */
+/* -- Event notअगरier/callbacks. --------------------------------------------- */
 
-#define SSAM_NOTIF_STATE_SHIFT		2
-#define SSAM_NOTIF_STATE_MASK		((1 << SSAM_NOTIF_STATE_SHIFT) - 1)
+#घोषणा SSAM_NOTIF_STATE_SHIFT		2
+#घोषणा SSAM_NOTIF_STATE_MASK		((1 << SSAM_NOTIF_STATE_SHIFT) - 1)
 
 /**
- * enum ssam_notif_flags - Flags used in return values from SSAM notifier
+ * क्रमागत ssam_notअगर_flags - Flags used in वापस values from SSAM notअगरier
  * callback functions.
  *
  * @SSAM_NOTIF_HANDLED:
- *	Indicates that the notification has been handled. This flag should be
- *	set by the handler if the handler can act/has acted upon the event
- *	provided to it. This flag should not be set if the handler is not a
- *	primary handler intended for the provided event.
+ *	Indicates that the notअगरication has been handled. This flag should be
+ *	set by the handler अगर the handler can act/has acted upon the event
+ *	provided to it. This flag should not be set अगर the handler is not a
+ *	primary handler पूर्णांकended क्रम the provided event.
  *
- *	If this flag has not been set by any handler after the notifier chain
+ *	If this flag has not been set by any handler after the notअगरier chain
  *	has been traversed, a warning will be emitted, stating that the event
  *	has not been handled.
  *
  * @SSAM_NOTIF_STOP:
- *	Indicates that the notifier traversal should stop. If this flag is
- *	returned from a notifier callback, notifier chain traversal will
- *	immediately stop and any remaining notifiers will not be called. This
- *	flag is automatically set when ssam_notifier_from_errno() is called
+ *	Indicates that the notअगरier traversal should stop. If this flag is
+ *	वापसed from a notअगरier callback, notअगरier chain traversal will
+ *	immediately stop and any reमुख्यing notअगरiers will not be called. This
+ *	flag is स्वतःmatically set when ssam_notअगरier_from_त्रुटि_सं() is called
  *	with a negative error value.
  */
-enum ssam_notif_flags {
+क्रमागत ssam_notअगर_flags अणु
 	SSAM_NOTIF_HANDLED = BIT(0),
 	SSAM_NOTIF_STOP    = BIT(1),
-};
+पूर्ण;
 
-struct ssam_event_notifier;
+काष्ठा ssam_event_notअगरier;
 
-typedef u32 (*ssam_notifier_fn_t)(struct ssam_event_notifier *nf,
-				  const struct ssam_event *event);
+प्रकार u32 (*ssam_notअगरier_fn_t)(काष्ठा ssam_event_notअगरier *nf,
+				  स्थिर काष्ठा ssam_event *event);
 
 /**
- * struct ssam_notifier_block - Base notifier block for SSAM event
- * notifications.
- * @node:     The node for the list of notifiers.
- * @fn:       The callback function of this notifier. This function takes the
- *            respective notifier block and event as input and should return
- *            a notifier value, which can either be obtained from the flags
- *            provided in &enum ssam_notif_flags, converted from a standard
- *            error value via ssam_notifier_from_errno(), or a combination of
- *            both (e.g. ``ssam_notifier_from_errno(e) | SSAM_NOTIF_HANDLED``).
- * @priority: Priority value determining the order in which notifier callbacks
+ * काष्ठा ssam_notअगरier_block - Base notअगरier block क्रम SSAM event
+ * notअगरications.
+ * @node:     The node क्रम the list of notअगरiers.
+ * @fn:       The callback function of this notअगरier. This function takes the
+ *            respective notअगरier block and event as input and should वापस
+ *            a notअगरier value, which can either be obtained from the flags
+ *            provided in &क्रमागत ssam_notअगर_flags, converted from a standard
+ *            error value via ssam_notअगरier_from_त्रुटि_सं(), or a combination of
+ *            both (e.g. ``ssam_notअगरier_from_त्रुटि_सं(e) | SSAM_NOTIF_HANDLED``).
+ * @priority: Priority value determining the order in which notअगरier callbacks
  *            will be called. A higher value means higher priority, i.e. the
  *            associated callback will be executed earlier than other (lower
  *            priority) callbacks.
  */
-struct ssam_notifier_block {
-	struct list_head node;
-	ssam_notifier_fn_t fn;
-	int priority;
-};
+काष्ठा ssam_notअगरier_block अणु
+	काष्ठा list_head node;
+	ssam_notअगरier_fn_t fn;
+	पूर्णांक priority;
+पूर्ण;
 
 /**
- * ssam_notifier_from_errno() - Convert standard error value to notifier
- * return code.
- * @err: The error code to convert, must be negative (in case of failure) or
- *       zero (in case of success).
+ * ssam_notअगरier_from_त्रुटि_सं() - Convert standard error value to notअगरier
+ * वापस code.
+ * @err: The error code to convert, must be negative (in हाल of failure) or
+ *       zero (in हाल of success).
  *
- * Return: Returns the notifier return value obtained by converting the
- * specified @err value. In case @err is negative, the %SSAM_NOTIF_STOP flag
- * will be set, causing notifier call chain traversal to abort.
+ * Return: Returns the notअगरier वापस value obtained by converting the
+ * specअगरied @err value. In हाल @err is negative, the %SSAM_NOTIF_STOP flag
+ * will be set, causing notअगरier call chain traversal to पात.
  */
-static inline u32 ssam_notifier_from_errno(int err)
-{
-	if (WARN_ON(err > 0) || err == 0)
-		return 0;
-	else
-		return ((-err) << SSAM_NOTIF_STATE_SHIFT) | SSAM_NOTIF_STOP;
-}
+अटल अंतरभूत u32 ssam_notअगरier_from_त्रुटि_सं(पूर्णांक err)
+अणु
+	अगर (WARN_ON(err > 0) || err == 0)
+		वापस 0;
+	अन्यथा
+		वापस ((-err) << SSAM_NOTIF_STATE_SHIFT) | SSAM_NOTIF_STOP;
+पूर्ण
 
 /**
- * ssam_notifier_to_errno() - Convert notifier return code to standard error
+ * ssam_notअगरier_to_त्रुटि_सं() - Convert notअगरier वापस code to standard error
  * value.
- * @ret: The notifier return value to convert.
+ * @ret: The notअगरier वापस value to convert.
  *
- * Return: Returns the negative error value encoded in @ret or zero if @ret
+ * Return: Returns the negative error value encoded in @ret or zero अगर @ret
  * indicates success.
  */
-static inline int ssam_notifier_to_errno(u32 ret)
-{
-	return -(ret >> SSAM_NOTIF_STATE_SHIFT);
-}
+अटल अंतरभूत पूर्णांक ssam_notअगरier_to_त्रुटि_सं(u32 ret)
+अणु
+	वापस -(ret >> SSAM_NOTIF_STATE_SHIFT);
+पूर्ण
 
 
-/* -- Event/notification registry. ------------------------------------------ */
+/* -- Event/notअगरication registry. ------------------------------------------ */
 
 /**
- * struct ssam_event_registry - Registry specification used for enabling events.
- * @target_category: Target category for the event registry requests.
- * @target_id:       Target ID for the event registry requests.
- * @cid_enable:      Command ID for the event-enable request.
- * @cid_disable:     Command ID for the event-disable request.
+ * काष्ठा ssam_event_registry - Registry specअगरication used क्रम enabling events.
+ * @target_category: Target category क्रम the event registry requests.
+ * @target_id:       Target ID क्रम the event registry requests.
+ * @cid_enable:      Command ID क्रम the event-enable request.
+ * @cid_disable:     Command ID क्रम the event-disable request.
  *
- * This struct describes a SAM event registry via the minimal collection of
- * SAM IDs specifying the requests to use for enabling and disabling an event.
- * The individual event to be enabled/disabled itself is specified via &struct
+ * This काष्ठा describes a SAM event registry via the minimal collection of
+ * SAM IDs specअगरying the requests to use क्रम enabling and disabling an event.
+ * The inभागidual event to be enabled/disabled itself is specअगरied via &काष्ठा
  * ssam_event_id.
  */
-struct ssam_event_registry {
+काष्ठा ssam_event_registry अणु
 	u8 target_category;
 	u8 target_id;
 	u8 cid_enable;
 	u8 cid_disable;
-};
+पूर्ण;
 
 /**
- * struct ssam_event_id - Unique event ID used for enabling events.
+ * काष्ठा ssam_event_id - Unique event ID used क्रम enabling events.
  * @target_category: Target category of the event source.
  * @instance:        Instance ID of the event source.
  *
- * This struct specifies the event to be enabled/disabled via an externally
- * provided registry. It does not specify the registry to be used itself, this
- * is done via &struct ssam_event_registry.
+ * This काष्ठा specअगरies the event to be enabled/disabled via an बाह्यally
+ * provided registry. It करोes not specअगरy the registry to be used itself, this
+ * is करोne via &काष्ठा ssam_event_registry.
  */
-struct ssam_event_id {
+काष्ठा ssam_event_id अणु
 	u8 target_category;
 	u8 instance;
-};
+पूर्ण;
 
 /**
- * enum ssam_event_mask - Flags specifying how events are matched to notifiers.
+ * क्रमागत ssam_event_mask - Flags specअगरying how events are matched to notअगरiers.
  *
  * @SSAM_EVENT_MASK_NONE:
- *	Run the callback for any event with matching target category. Do not
- *	do any additional filtering.
+ *	Run the callback क्रम any event with matching target category. Do not
+ *	करो any additional filtering.
  *
  * @SSAM_EVENT_MASK_TARGET:
- *	In addition to filtering by target category, only execute the notifier
- *	callback for events with a target ID matching to the one of the
- *	registry used for enabling/disabling the event.
+ *	In addition to filtering by target category, only execute the notअगरier
+ *	callback क्रम events with a target ID matching to the one of the
+ *	registry used क्रम enabling/disabling the event.
  *
  * @SSAM_EVENT_MASK_INSTANCE:
- *	In addition to filtering by target category, only execute the notifier
- *	callback for events with an instance ID matching to the instance ID
+ *	In addition to filtering by target category, only execute the notअगरier
+ *	callback क्रम events with an instance ID matching to the instance ID
  *	used when enabling the event.
  *
  * @SSAM_EVENT_MASK_STRICT:
  *	Do all the filtering above.
  */
-enum ssam_event_mask {
+क्रमागत ssam_event_mask अणु
 	SSAM_EVENT_MASK_TARGET   = BIT(0),
 	SSAM_EVENT_MASK_INSTANCE = BIT(1),
 
@@ -766,59 +767,59 @@ enum ssam_event_mask {
 	SSAM_EVENT_MASK_STRICT =
 		  SSAM_EVENT_MASK_TARGET
 		| SSAM_EVENT_MASK_INSTANCE,
-};
+पूर्ण;
 
 /**
  * SSAM_EVENT_REGISTRY() - Define a new event registry.
- * @tc:      Target category for the event registry requests.
- * @tid:     Target ID for the event registry requests.
- * @cid_en:  Command ID for the event-enable request.
- * @cid_dis: Command ID for the event-disable request.
+ * @tc:      Target category क्रम the event registry requests.
+ * @tid:     Target ID क्रम the event registry requests.
+ * @cid_en:  Command ID क्रम the event-enable request.
+ * @cid_dis: Command ID क्रम the event-disable request.
  *
- * Return: Returns the &struct ssam_event_registry specified by the given
+ * Return: Returns the &काष्ठा ssam_event_registry specअगरied by the given
  * parameters.
  */
-#define SSAM_EVENT_REGISTRY(tc, tid, cid_en, cid_dis)	\
-	((struct ssam_event_registry) {			\
+#घोषणा SSAM_EVENT_REGISTRY(tc, tid, cid_en, cid_dis)	\
+	((काष्ठा ssam_event_registry) अणु			\
 		.target_category = (tc),		\
 		.target_id = (tid),			\
 		.cid_enable = (cid_en),			\
 		.cid_disable = (cid_dis),		\
-	})
+	पूर्ण)
 
-#define SSAM_EVENT_REGISTRY_SAM	\
+#घोषणा SSAM_EVENT_REGISTRY_SAM	\
 	SSAM_EVENT_REGISTRY(SSAM_SSH_TC_SAM, 0x01, 0x0b, 0x0c)
 
-#define SSAM_EVENT_REGISTRY_KIP	\
+#घोषणा SSAM_EVENT_REGISTRY_KIP	\
 	SSAM_EVENT_REGISTRY(SSAM_SSH_TC_KIP, 0x02, 0x27, 0x28)
 
-#define SSAM_EVENT_REGISTRY_REG \
+#घोषणा SSAM_EVENT_REGISTRY_REG \
 	SSAM_EVENT_REGISTRY(SSAM_SSH_TC_REG, 0x02, 0x01, 0x02)
 
 /**
- * struct ssam_event_notifier - Notifier block for SSAM events.
- * @base:        The base notifier block with callback function and priority.
- * @event:       The event for which this block will receive notifications.
+ * काष्ठा ssam_event_notअगरier - Notअगरier block क्रम SSAM events.
+ * @base:        The base notअगरier block with callback function and priority.
+ * @event:       The event क्रम which this block will receive notअगरications.
  * @event.reg:   Registry via which the event will be enabled/disabled.
- * @event.id:    ID specifying the event.
- * @event.mask:  Flags determining how events are matched to the notifier.
- * @event.flags: Flags used for enabling the event.
+ * @event.id:    ID specअगरying the event.
+ * @event.mask:  Flags determining how events are matched to the notअगरier.
+ * @event.flags: Flags used क्रम enabling the event.
  */
-struct ssam_event_notifier {
-	struct ssam_notifier_block base;
+काष्ठा ssam_event_notअगरier अणु
+	काष्ठा ssam_notअगरier_block base;
 
-	struct {
-		struct ssam_event_registry reg;
-		struct ssam_event_id id;
-		enum ssam_event_mask mask;
+	काष्ठा अणु
+		काष्ठा ssam_event_registry reg;
+		काष्ठा ssam_event_id id;
+		क्रमागत ssam_event_mask mask;
 		u8 flags;
-	} event;
-};
+	पूर्ण event;
+पूर्ण;
 
-int ssam_notifier_register(struct ssam_controller *ctrl,
-			   struct ssam_event_notifier *n);
+पूर्णांक ssam_notअगरier_रेजिस्टर(काष्ठा ssam_controller *ctrl,
+			   काष्ठा ssam_event_notअगरier *n);
 
-int ssam_notifier_unregister(struct ssam_controller *ctrl,
-			     struct ssam_event_notifier *n);
+पूर्णांक ssam_notअगरier_unरेजिस्टर(काष्ठा ssam_controller *ctrl,
+			     काष्ठा ssam_event_notअगरier *n);
 
-#endif /* _LINUX_SURFACE_AGGREGATOR_CONTROLLER_H */
+#पूर्ण_अगर /* _LINUX_SURFACE_AGGREGATOR_CONTROLLER_H */

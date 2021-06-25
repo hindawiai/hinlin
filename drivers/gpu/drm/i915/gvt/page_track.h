@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2017 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,38 +23,38 @@
  *
  */
 
-#ifndef _GVT_PAGE_TRACK_H_
-#define _GVT_PAGE_TRACK_H_
+#अगर_अघोषित _GVT_PAGE_TRACK_H_
+#घोषणा _GVT_PAGE_TRACK_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct intel_vgpu;
-struct intel_vgpu_page_track;
+काष्ठा पूर्णांकel_vgpu;
+काष्ठा पूर्णांकel_vgpu_page_track;
 
-typedef int (*gvt_page_track_handler_t)(
-			struct intel_vgpu_page_track *page_track,
-			u64 gpa, void *data, int bytes);
+प्रकार पूर्णांक (*gvt_page_track_handler_t)(
+			काष्ठा पूर्णांकel_vgpu_page_track *page_track,
+			u64 gpa, व्योम *data, पूर्णांक bytes);
 
-/* Track record for a write-protected guest page. */
-struct intel_vgpu_page_track {
+/* Track record क्रम a ग_लिखो-रक्षित guest page. */
+काष्ठा पूर्णांकel_vgpu_page_track अणु
 	gvt_page_track_handler_t handler;
 	bool tracked;
-	void *priv_data;
-};
+	व्योम *priv_data;
+पूर्ण;
 
-struct intel_vgpu_page_track *intel_vgpu_find_page_track(
-		struct intel_vgpu *vgpu, unsigned long gfn);
+काष्ठा पूर्णांकel_vgpu_page_track *पूर्णांकel_vgpu_find_page_track(
+		काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित दीर्घ gfn);
 
-int intel_vgpu_register_page_track(struct intel_vgpu *vgpu,
-		unsigned long gfn, gvt_page_track_handler_t handler,
-		void *priv);
-void intel_vgpu_unregister_page_track(struct intel_vgpu *vgpu,
-		unsigned long gfn);
+पूर्णांक पूर्णांकel_vgpu_रेजिस्टर_page_track(काष्ठा पूर्णांकel_vgpu *vgpu,
+		अचिन्हित दीर्घ gfn, gvt_page_track_handler_t handler,
+		व्योम *priv);
+व्योम पूर्णांकel_vgpu_unरेजिस्टर_page_track(काष्ठा पूर्णांकel_vgpu *vgpu,
+		अचिन्हित दीर्घ gfn);
 
-int intel_vgpu_enable_page_track(struct intel_vgpu *vgpu, unsigned long gfn);
-int intel_vgpu_disable_page_track(struct intel_vgpu *vgpu, unsigned long gfn);
+पूर्णांक पूर्णांकel_vgpu_enable_page_track(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित दीर्घ gfn);
+पूर्णांक पूर्णांकel_vgpu_disable_page_track(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित दीर्घ gfn);
 
-int intel_vgpu_page_track_handler(struct intel_vgpu *vgpu, u64 gpa,
-		void *data, unsigned int bytes);
+पूर्णांक पूर्णांकel_vgpu_page_track_handler(काष्ठा पूर्णांकel_vgpu *vgpu, u64 gpa,
+		व्योम *data, अचिन्हित पूर्णांक bytes);
 
-#endif
+#पूर्ण_अगर

@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  */
-#include <linux/module.h>
-#include <linux/proc_fs.h>
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/sysctl.h>
-#include <linux/string.h>
-#include <linux/socket.h>
-#include <linux/errno.h>
-#include <linux/fcntl.h>
-#include <linux/in.h>
-#include <linux/if_ether.h>	/* For the statistics structure. */
-#include <linux/slab.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/socket.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/in.h>
+#समावेश <linux/अगर_ether.h>	/* For the statistics काष्ठाure. */
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/if_arp.h>
-#include <linux/skbuff.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/skbuff.h>
 
-#include <net/ip.h>
-#include <net/arp.h>
+#समावेश <net/ip.h>
+#समावेश <net/arp.h>
 
-#include <net/ax25.h>
-#include <net/netrom.h>
+#समावेश <net/ax25.h>
+#समावेश <net/netrom.h>
 
 /*
- *	Only allow IP over NET/ROM frames through if the netrom device is up.
+ *	Only allow IP over NET/ROM frames through अगर the netrom device is up.
  */
 
-int nr_rx_ip(struct sk_buff *skb, struct net_device *dev)
-{
-	struct net_device_stats *stats = &dev->stats;
+पूर्णांक nr_rx_ip(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device_stats *stats = &dev->stats;
 
-	if (!netif_running(dev)) {
+	अगर (!netअगर_running(dev)) अणु
 		stats->rx_dropped++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	stats->rx_packets++;
 	stats->rx_bytes += skb->len;
@@ -57,25 +58,25 @@ int nr_rx_ip(struct sk_buff *skb, struct net_device *dev)
 	skb_reset_network_header(skb);
 	skb->pkt_type = PACKET_HOST;
 
-	netif_rx(skb);
+	netअगर_rx(skb);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int nr_header(struct sk_buff *skb, struct net_device *dev,
-		     unsigned short type,
-		     const void *daddr, const void *saddr, unsigned int len)
-{
-	unsigned char *buff = skb_push(skb, NR_NETWORK_LEN + NR_TRANSPORT_LEN);
+अटल पूर्णांक nr_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		     अचिन्हित लघु type,
+		     स्थिर व्योम *daddr, स्थिर व्योम *saddr, अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *buff = skb_push(skb, NR_NETWORK_LEN + NR_TRANSPORT_LEN);
 
-	memcpy(buff, (saddr != NULL) ? saddr : dev->dev_addr, dev->addr_len);
+	स_नकल(buff, (saddr != शून्य) ? saddr : dev->dev_addr, dev->addr_len);
 	buff[6] &= ~AX25_CBIT;
 	buff[6] &= ~AX25_EBIT;
 	buff[6] |= AX25_SSSID_SPARE;
 	buff    += AX25_ADDR_LEN;
 
-	if (daddr != NULL)
-		memcpy(buff, daddr, dev->addr_len);
+	अगर (daddr != शून्य)
+		स_नकल(buff, daddr, dev->addr_len);
 	buff[6] &= ~AX25_CBIT;
 	buff[6] |= AX25_EBIT;
 	buff[6] |= AX25_SSSID_SPARE;
@@ -89,83 +90,83 @@ static int nr_header(struct sk_buff *skb, struct net_device *dev,
 	*buff++ = 0;
 	*buff++ = NR_PROTOEXT;
 
-	if (daddr != NULL)
-		return 37;
+	अगर (daddr != शून्य)
+		वापस 37;
 
-	return -37;
-}
+	वापस -37;
+पूर्ण
 
-static int __must_check nr_set_mac_address(struct net_device *dev, void *addr)
-{
-	struct sockaddr *sa = addr;
-	int err;
+अटल पूर्णांक __must_check nr_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
+अणु
+	काष्ठा sockaddr *sa = addr;
+	पूर्णांक err;
 
-	if (!memcmp(dev->dev_addr, sa->sa_data, dev->addr_len))
-		return 0;
+	अगर (!स_भेद(dev->dev_addr, sa->sa_data, dev->addr_len))
+		वापस 0;
 
-	if (dev->flags & IFF_UP) {
-		err = ax25_listen_register((ax25_address *)sa->sa_data, NULL);
-		if (err)
-			return err;
+	अगर (dev->flags & IFF_UP) अणु
+		err = ax25_listen_रेजिस्टर((ax25_address *)sa->sa_data, शून्य);
+		अगर (err)
+			वापस err;
 
-		ax25_listen_release((ax25_address *)dev->dev_addr, NULL);
-	}
+		ax25_listen_release((ax25_address *)dev->dev_addr, शून्य);
+	पूर्ण
 
-	memcpy(dev->dev_addr, sa->sa_data, dev->addr_len);
+	स_नकल(dev->dev_addr, sa->sa_data, dev->addr_len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nr_open(struct net_device *dev)
-{
-	int err;
+अटल पूर्णांक nr_खोलो(काष्ठा net_device *dev)
+अणु
+	पूर्णांक err;
 
-	err = ax25_listen_register((ax25_address *)dev->dev_addr, NULL);
-	if (err)
-		return err;
+	err = ax25_listen_रेजिस्टर((ax25_address *)dev->dev_addr, शून्य);
+	अगर (err)
+		वापस err;
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nr_close(struct net_device *dev)
-{
-	ax25_listen_release((ax25_address *)dev->dev_addr, NULL);
-	netif_stop_queue(dev);
-	return 0;
-}
+अटल पूर्णांक nr_बंद(काष्ठा net_device *dev)
+अणु
+	ax25_listen_release((ax25_address *)dev->dev_addr, शून्य);
+	netअगर_stop_queue(dev);
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t nr_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct net_device_stats *stats = &dev->stats;
-	unsigned int len = skb->len;
+अटल netdev_tx_t nr_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device_stats *stats = &dev->stats;
+	अचिन्हित पूर्णांक len = skb->len;
 
-	if (!nr_route_frame(skb, NULL)) {
-		kfree_skb(skb);
+	अगर (!nr_route_frame(skb, शून्य)) अणु
+		kमुक्त_skb(skb);
 		stats->tx_errors++;
-		return NETDEV_TX_OK;
-	}
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	stats->tx_packets++;
 	stats->tx_bytes += len;
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static const struct header_ops nr_header_ops = {
+अटल स्थिर काष्ठा header_ops nr_header_ops = अणु
 	.create	= nr_header,
-};
+पूर्ण;
 
-static const struct net_device_ops nr_netdev_ops = {
-	.ndo_open		= nr_open,
-	.ndo_stop		= nr_close,
-	.ndo_start_xmit		= nr_xmit,
-	.ndo_set_mac_address    = nr_set_mac_address,
-};
+अटल स्थिर काष्ठा net_device_ops nr_netdev_ops = अणु
+	.nकरो_खोलो		= nr_खोलो,
+	.nकरो_stop		= nr_बंद,
+	.nकरो_start_xmit		= nr_xmit,
+	.nकरो_set_mac_address    = nr_set_mac_address,
+पूर्ण;
 
-void nr_setup(struct net_device *dev)
-{
+व्योम nr_setup(काष्ठा net_device *dev)
+अणु
 	dev->mtu		= NR_MAX_PACKET_SIZE;
 	dev->netdev_ops		= &nr_netdev_ops;
 	dev->header_ops		= &nr_header_ops;
@@ -175,4 +176,4 @@ void nr_setup(struct net_device *dev)
 
 	/* New-style flags. */
 	dev->flags		= IFF_NOARP;
-}
+पूर्ण

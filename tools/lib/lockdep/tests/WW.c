@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <liblockdep/rwlock.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <liblockdep/rwlock.h>
 
-void main(void)
-{
-	pthread_rwlock_t a, b;
+व्योम मुख्य(व्योम)
+अणु
+	pthपढ़ो_rwlock_t a, b;
 
-	pthread_rwlock_init(&a, NULL);
-	pthread_rwlock_init(&b, NULL);
+	pthपढ़ो_rwlock_init(&a, शून्य);
+	pthपढ़ो_rwlock_init(&b, शून्य);
 
-	pthread_rwlock_wrlock(&a);
-	pthread_rwlock_rdlock(&b);
-	pthread_rwlock_wrlock(&a);
-}
+	pthपढ़ो_rwlock_wrlock(&a);
+	pthपढ़ो_rwlock_rdlock(&b);
+	pthपढ़ो_rwlock_wrlock(&a);
+पूर्ण

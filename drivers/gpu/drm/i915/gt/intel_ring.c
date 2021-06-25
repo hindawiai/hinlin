@@ -1,232 +1,233 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#include "gem/i915_gem_lmem.h"
-#include "gem/i915_gem_object.h"
+#समावेश "gem/i915_gem_lmem.h"
+#समावेश "gem/i915_gem_object.h"
 
-#include "i915_drv.h"
-#include "i915_vma.h"
-#include "intel_engine.h"
-#include "intel_gpu_commands.h"
-#include "intel_ring.h"
-#include "intel_timeline.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_vma.h"
+#समावेश "intel_engine.h"
+#समावेश "intel_gpu_commands.h"
+#समावेश "intel_ring.h"
+#समावेश "intel_timeline.h"
 
-unsigned int intel_ring_update_space(struct intel_ring *ring)
-{
-	unsigned int space;
+अचिन्हित पूर्णांक पूर्णांकel_ring_update_space(काष्ठा पूर्णांकel_ring *ring)
+अणु
+	अचिन्हित पूर्णांक space;
 
-	space = __intel_ring_space(ring->head, ring->emit, ring->size);
+	space = __पूर्णांकel_ring_space(ring->head, ring->emit, ring->size);
 
 	ring->space = space;
-	return space;
-}
+	वापस space;
+पूर्ण
 
-void __intel_ring_pin(struct intel_ring *ring)
-{
-	GEM_BUG_ON(!atomic_read(&ring->pin_count));
+व्योम __पूर्णांकel_ring_pin(काष्ठा पूर्णांकel_ring *ring)
+अणु
+	GEM_BUG_ON(!atomic_पढ़ो(&ring->pin_count));
 	atomic_inc(&ring->pin_count);
-}
+पूर्ण
 
-int intel_ring_pin(struct intel_ring *ring, struct i915_gem_ww_ctx *ww)
-{
-	struct i915_vma *vma = ring->vma;
-	unsigned int flags;
-	void *addr;
-	int ret;
+पूर्णांक पूर्णांकel_ring_pin(काष्ठा पूर्णांकel_ring *ring, काष्ठा i915_gem_ww_ctx *ww)
+अणु
+	काष्ठा i915_vma *vma = ring->vma;
+	अचिन्हित पूर्णांक flags;
+	व्योम *addr;
+	पूर्णांक ret;
 
-	if (atomic_fetch_inc(&ring->pin_count))
-		return 0;
+	अगर (atomic_fetch_inc(&ring->pin_count))
+		वापस 0;
 
-	/* Ring wraparound at offset 0 sometimes hangs. No idea why. */
+	/* Ring wraparound at offset 0 someबार hangs. No idea why. */
 	flags = PIN_OFFSET_BIAS | i915_ggtt_pin_bias(vma);
 
-	if (i915_gem_object_is_stolen(vma->obj))
+	अगर (i915_gem_object_is_stolen(vma->obj))
 		flags |= PIN_MAPPABLE;
-	else
+	अन्यथा
 		flags |= PIN_HIGH;
 
 	ret = i915_ggtt_pin(vma, ww, 0, flags);
-	if (unlikely(ret))
-		goto err_unpin;
+	अगर (unlikely(ret))
+		जाओ err_unpin;
 
-	if (i915_vma_is_map_and_fenceable(vma))
-		addr = (void __force *)i915_vma_pin_iomap(vma);
-	else
+	अगर (i915_vma_is_map_and_fenceable(vma))
+		addr = (व्योम __क्रमce *)i915_vma_pin_iomap(vma);
+	अन्यथा
 		addr = i915_gem_object_pin_map(vma->obj,
 					       i915_coherent_map_type(vma->vm->i915));
-	if (IS_ERR(addr)) {
+	अगर (IS_ERR(addr)) अणु
 		ret = PTR_ERR(addr);
-		goto err_ring;
-	}
+		जाओ err_ring;
+	पूर्ण
 
 	i915_vma_make_unshrinkable(vma);
 
 	/* Discard any unused bytes beyond that submitted to hw. */
-	intel_ring_reset(ring, ring->emit);
+	पूर्णांकel_ring_reset(ring, ring->emit);
 
 	ring->vaddr = addr;
-	return 0;
+	वापस 0;
 
 err_ring:
 	i915_vma_unpin(vma);
 err_unpin:
 	atomic_dec(&ring->pin_count);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void intel_ring_reset(struct intel_ring *ring, u32 tail)
-{
-	tail = intel_ring_wrap(ring, tail);
+व्योम पूर्णांकel_ring_reset(काष्ठा पूर्णांकel_ring *ring, u32 tail)
+अणु
+	tail = पूर्णांकel_ring_wrap(ring, tail);
 	ring->tail = tail;
 	ring->head = tail;
 	ring->emit = tail;
-	intel_ring_update_space(ring);
-}
+	पूर्णांकel_ring_update_space(ring);
+पूर्ण
 
-void intel_ring_unpin(struct intel_ring *ring)
-{
-	struct i915_vma *vma = ring->vma;
+व्योम पूर्णांकel_ring_unpin(काष्ठा पूर्णांकel_ring *ring)
+अणु
+	काष्ठा i915_vma *vma = ring->vma;
 
-	if (!atomic_dec_and_test(&ring->pin_count))
-		return;
+	अगर (!atomic_dec_and_test(&ring->pin_count))
+		वापस;
 
-	i915_vma_unset_ggtt_write(vma);
-	if (i915_vma_is_map_and_fenceable(vma))
+	i915_vma_unset_ggtt_ग_लिखो(vma);
+	अगर (i915_vma_is_map_and_fenceable(vma))
 		i915_vma_unpin_iomap(vma);
-	else
+	अन्यथा
 		i915_gem_object_unpin_map(vma->obj);
 
 	i915_vma_make_purgeable(vma);
 	i915_vma_unpin(vma);
-}
+पूर्ण
 
-static struct i915_vma *create_ring_vma(struct i915_ggtt *ggtt, int size)
-{
-	struct i915_address_space *vm = &ggtt->vm;
-	struct drm_i915_private *i915 = vm->i915;
-	struct drm_i915_gem_object *obj;
-	struct i915_vma *vma;
+अटल काष्ठा i915_vma *create_ring_vma(काष्ठा i915_ggtt *ggtt, पूर्णांक size)
+अणु
+	काष्ठा i915_address_space *vm = &ggtt->vm;
+	काष्ठा drm_i915_निजी *i915 = vm->i915;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_vma *vma;
 
 	obj = i915_gem_object_create_lmem(i915, size, I915_BO_ALLOC_VOLATILE);
-	if (IS_ERR(obj) && i915_ggtt_has_aperture(ggtt))
+	अगर (IS_ERR(obj) && i915_ggtt_has_aperture(ggtt))
 		obj = i915_gem_object_create_stolen(i915, size);
-	if (IS_ERR(obj))
-		obj = i915_gem_object_create_internal(i915, size);
-	if (IS_ERR(obj))
-		return ERR_CAST(obj);
+	अगर (IS_ERR(obj))
+		obj = i915_gem_object_create_पूर्णांकernal(i915, size);
+	अगर (IS_ERR(obj))
+		वापस ERR_CAST(obj);
 
 	/*
-	 * Mark ring buffers as read-only from GPU side (so no stray overwrites)
-	 * if supported by the platform's GGTT.
+	 * Mark ring buffers as पढ़ो-only from GPU side (so no stray overग_लिखोs)
+	 * अगर supported by the platक्रमm's GGTT.
 	 */
-	if (vm->has_read_only)
-		i915_gem_object_set_readonly(obj);
+	अगर (vm->has_पढ़ो_only)
+		i915_gem_object_set_पढ़ोonly(obj);
 
-	vma = i915_vma_instance(obj, vm, NULL);
-	if (IS_ERR(vma))
-		goto err;
+	vma = i915_vma_instance(obj, vm, शून्य);
+	अगर (IS_ERR(vma))
+		जाओ err;
 
-	return vma;
+	वापस vma;
 
 err:
 	i915_gem_object_put(obj);
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-struct intel_ring *
-intel_engine_create_ring(struct intel_engine_cs *engine, int size)
-{
-	struct drm_i915_private *i915 = engine->i915;
-	struct intel_ring *ring;
-	struct i915_vma *vma;
+काष्ठा पूर्णांकel_ring *
+पूर्णांकel_engine_create_ring(काष्ठा पूर्णांकel_engine_cs *engine, पूर्णांक size)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
+	काष्ठा पूर्णांकel_ring *ring;
+	काष्ठा i915_vma *vma;
 
-	GEM_BUG_ON(!is_power_of_2(size));
+	GEM_BUG_ON(!is_घातer_of_2(size));
 	GEM_BUG_ON(RING_CTL_SIZE(size) & ~RING_NR_PAGES);
 
-	ring = kzalloc(sizeof(*ring), GFP_KERNEL);
-	if (!ring)
-		return ERR_PTR(-ENOMEM);
+	ring = kzalloc(माप(*ring), GFP_KERNEL);
+	अगर (!ring)
+		वापस ERR_PTR(-ENOMEM);
 
 	kref_init(&ring->ref);
 	ring->size = size;
 	ring->wrap = BITS_PER_TYPE(ring->size) - ilog2(size);
 
 	/*
-	 * Workaround an erratum on the i830 which causes a hang if
-	 * the TAIL pointer points to within the last 2 cachelines
+	 * Workaround an erratum on the i830 which causes a hang अगर
+	 * the TAIL poपूर्णांकer poपूर्णांकs to within the last 2 cachelines
 	 * of the buffer.
 	 */
 	ring->effective_size = size;
-	if (IS_I830(i915) || IS_I845G(i915))
+	अगर (IS_I830(i915) || IS_I845G(i915))
 		ring->effective_size -= 2 * CACHELINE_BYTES;
 
-	intel_ring_update_space(ring);
+	पूर्णांकel_ring_update_space(ring);
 
 	vma = create_ring_vma(engine->gt->ggtt, size);
-	if (IS_ERR(vma)) {
-		kfree(ring);
-		return ERR_CAST(vma);
-	}
+	अगर (IS_ERR(vma)) अणु
+		kमुक्त(ring);
+		वापस ERR_CAST(vma);
+	पूर्ण
 	ring->vma = vma;
 
-	return ring;
-}
+	वापस ring;
+पूर्ण
 
-void intel_ring_free(struct kref *ref)
-{
-	struct intel_ring *ring = container_of(ref, typeof(*ring), ref);
+व्योम पूर्णांकel_ring_मुक्त(काष्ठा kref *ref)
+अणु
+	काष्ठा पूर्णांकel_ring *ring = container_of(ref, typeof(*ring), ref);
 
 	i915_vma_put(ring->vma);
-	kfree(ring);
-}
+	kमुक्त(ring);
+पूर्ण
 
-static noinline int
-wait_for_space(struct intel_ring *ring,
-	       struct intel_timeline *tl,
-	       unsigned int bytes)
-{
-	struct i915_request *target;
-	long timeout;
+अटल noअंतरभूत पूर्णांक
+रुको_क्रम_space(काष्ठा पूर्णांकel_ring *ring,
+	       काष्ठा पूर्णांकel_समयline *tl,
+	       अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा i915_request *target;
+	दीर्घ समयout;
 
-	if (intel_ring_update_space(ring) >= bytes)
-		return 0;
+	अगर (पूर्णांकel_ring_update_space(ring) >= bytes)
+		वापस 0;
 
 	GEM_BUG_ON(list_empty(&tl->requests));
-	list_for_each_entry(target, &tl->requests, link) {
-		if (target->ring != ring)
-			continue;
+	list_क्रम_each_entry(target, &tl->requests, link) अणु
+		अगर (target->ring != ring)
+			जारी;
 
-		/* Would completion of this request free enough space? */
-		if (bytes <= __intel_ring_space(target->postfix,
+		/* Would completion of this request मुक्त enough space? */
+		अगर (bytes <= __पूर्णांकel_ring_space(target->postfix,
 						ring->emit, ring->size))
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	if (GEM_WARN_ON(&target->link == &tl->requests))
-		return -ENOSPC;
+	अगर (GEM_WARN_ON(&target->link == &tl->requests))
+		वापस -ENOSPC;
 
-	timeout = i915_request_wait(target,
+	समयout = i915_request_रुको(target,
 				    I915_WAIT_INTERRUPTIBLE,
 				    MAX_SCHEDULE_TIMEOUT);
-	if (timeout < 0)
-		return timeout;
+	अगर (समयout < 0)
+		वापस समयout;
 
 	i915_request_retire_upto(target);
 
-	intel_ring_update_space(ring);
+	पूर्णांकel_ring_update_space(ring);
 	GEM_BUG_ON(ring->space < bytes);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u32 *intel_ring_begin(struct i915_request *rq, unsigned int num_dwords)
-{
-	struct intel_ring *ring = rq->ring;
-	const unsigned int remain_usable = ring->effective_size - ring->emit;
-	const unsigned int bytes = num_dwords * sizeof(u32);
-	unsigned int need_wrap = 0;
-	unsigned int total_bytes;
+u32 *पूर्णांकel_ring_begin(काष्ठा i915_request *rq, अचिन्हित पूर्णांक num_dwords)
+अणु
+	काष्ठा पूर्णांकel_ring *ring = rq->ring;
+	स्थिर अचिन्हित पूर्णांक reमुख्य_usable = ring->effective_size - ring->emit;
+	स्थिर अचिन्हित पूर्णांक bytes = num_dwords * माप(u32);
+	अचिन्हित पूर्णांक need_wrap = 0;
+	अचिन्हित पूर्णांक total_bytes;
 	u32 *cs;
 
 	/* Packets must be qword aligned. */
@@ -235,95 +236,95 @@ u32 *intel_ring_begin(struct i915_request *rq, unsigned int num_dwords)
 	total_bytes = bytes + rq->reserved_space;
 	GEM_BUG_ON(total_bytes > ring->effective_size);
 
-	if (unlikely(total_bytes > remain_usable)) {
-		const int remain_actual = ring->size - ring->emit;
+	अगर (unlikely(total_bytes > reमुख्य_usable)) अणु
+		स्थिर पूर्णांक reमुख्य_actual = ring->size - ring->emit;
 
-		if (bytes > remain_usable) {
+		अगर (bytes > reमुख्य_usable) अणु
 			/*
-			 * Not enough space for the basic request. So need to
-			 * flush out the remainder and then wait for
+			 * Not enough space क्रम the basic request. So need to
+			 * flush out the reमुख्यder and then रुको क्रम
 			 * base + reserved.
 			 */
-			total_bytes += remain_actual;
-			need_wrap = remain_actual | 1;
-		} else  {
+			total_bytes += reमुख्य_actual;
+			need_wrap = reमुख्य_actual | 1;
+		पूर्ण अन्यथा  अणु
 			/*
 			 * The base request will fit but the reserved space
-			 * falls off the end. So we don't need an immediate
-			 * wrap and only need to effectively wait for the
+			 * falls off the end. So we करोn't need an immediate
+			 * wrap and only need to effectively रुको क्रम the
 			 * reserved size from the start of ringbuffer.
 			 */
-			total_bytes = rq->reserved_space + remain_actual;
-		}
-	}
+			total_bytes = rq->reserved_space + reमुख्य_actual;
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(total_bytes > ring->space)) {
-		int ret;
+	अगर (unlikely(total_bytes > ring->space)) अणु
+		पूर्णांक ret;
 
 		/*
-		 * Space is reserved in the ringbuffer for finalising the
+		 * Space is reserved in the ringbuffer क्रम finalising the
 		 * request, as that cannot be allowed to fail. During request
 		 * finalisation, reserved_space is set to 0 to stop the
 		 * overallocation and the assumption is that then we never need
-		 * to wait (which has the risk of failing with EINTR).
+		 * to रुको (which has the risk of failing with EINTR).
 		 *
 		 * See also i915_request_alloc() and i915_request_add().
 		 */
 		GEM_BUG_ON(!rq->reserved_space);
 
-		ret = wait_for_space(ring,
-				     i915_request_timeline(rq),
+		ret = रुको_क्रम_space(ring,
+				     i915_request_समयline(rq),
 				     total_bytes);
-		if (unlikely(ret))
-			return ERR_PTR(ret);
-	}
+		अगर (unlikely(ret))
+			वापस ERR_PTR(ret);
+	पूर्ण
 
-	if (unlikely(need_wrap)) {
+	अगर (unlikely(need_wrap)) अणु
 		need_wrap &= ~1;
 		GEM_BUG_ON(need_wrap > ring->space);
 		GEM_BUG_ON(ring->emit + need_wrap > ring->size);
-		GEM_BUG_ON(!IS_ALIGNED(need_wrap, sizeof(u64)));
+		GEM_BUG_ON(!IS_ALIGNED(need_wrap, माप(u64)));
 
 		/* Fill the tail with MI_NOOP */
-		memset64(ring->vaddr + ring->emit, 0, need_wrap / sizeof(u64));
+		स_रखो64(ring->vaddr + ring->emit, 0, need_wrap / माप(u64));
 		ring->space -= need_wrap;
 		ring->emit = 0;
-	}
+	पूर्ण
 
 	GEM_BUG_ON(ring->emit > ring->size - bytes);
 	GEM_BUG_ON(ring->space < bytes);
 	cs = ring->vaddr + ring->emit;
-	GEM_DEBUG_EXEC(memset32(cs, POISON_INUSE, bytes / sizeof(*cs)));
+	GEM_DEBUG_EXEC(स_रखो32(cs, POISON_INUSE, bytes / माप(*cs)));
 	ring->emit += bytes;
 	ring->space -= bytes;
 
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
 /* Align the ring tail to a cacheline boundary */
-int intel_ring_cacheline_align(struct i915_request *rq)
-{
-	int num_dwords;
-	void *cs;
+पूर्णांक पूर्णांकel_ring_cacheline_align(काष्ठा i915_request *rq)
+अणु
+	पूर्णांक num_dwords;
+	व्योम *cs;
 
-	num_dwords = (rq->ring->emit & (CACHELINE_BYTES - 1)) / sizeof(u32);
-	if (num_dwords == 0)
-		return 0;
+	num_dwords = (rq->ring->emit & (CACHELINE_BYTES - 1)) / माप(u32);
+	अगर (num_dwords == 0)
+		वापस 0;
 
 	num_dwords = CACHELINE_DWORDS - num_dwords;
 	GEM_BUG_ON(num_dwords & 1);
 
-	cs = intel_ring_begin(rq, num_dwords);
-	if (IS_ERR(cs))
-		return PTR_ERR(cs);
+	cs = पूर्णांकel_ring_begin(rq, num_dwords);
+	अगर (IS_ERR(cs))
+		वापस PTR_ERR(cs);
 
-	memset64(cs, (u64)MI_NOOP << 32 | MI_NOOP, num_dwords / 2);
-	intel_ring_advance(rq, cs + num_dwords);
+	स_रखो64(cs, (u64)MI_NOOP << 32 | MI_NOOP, num_dwords / 2);
+	पूर्णांकel_ring_advance(rq, cs + num_dwords);
 
 	GEM_BUG_ON(rq->ring->emit & (CACHELINE_BYTES - 1));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftest_ring.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftest_ring.c"
+#पूर्ण_अगर

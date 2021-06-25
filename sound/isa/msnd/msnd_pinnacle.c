@@ -1,327 +1,328 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*********************************************************************
  *
- * Linux multisound pinnacle/fiji driver for ALSA.
+ * Linux multisound pinnacle/fiji driver क्रम ALSA.
  *
  * 2002/06/30 Karsten Wiese:
- *	for now this is only used to build a pinnacle / fiji driver.
- *	the OSS parent of this code is designed to also support
+ *	क्रम now this is only used to build a pinnacle / fiji driver.
+ *	the OSS parent of this code is deचिन्हित to also support
  *	the multisound classic via the file msnd_classic.c.
- *	to make it easier for some brave heart to implemt classic
+ *	to make it easier क्रम some brave heart to implemt classic
  *	support in alsa, i left all the MSND_CLASSIC tokens in this file.
- *	but for now this untested & undone.
+ *	but क्रम now this untested & unकरोne.
  *
  * ripped from linux kernel 2.4.18 by Karsten Wiese.
  *
  * the following is a copy of the 2.4.18 OSS FREE file-heading comment:
  *
- * Turtle Beach MultiSound Sound Card Driver for Linux
+ * Turtle Beach MultiSound Sound Card Driver क्रम Linux
  * msnd_pinnacle.c / msnd_classic.c
  *
  * -- If MSND_CLASSIC is defined:
  *
- *     -> driver for Turtle Beach Classic/Monterey/Tahiti
+ *     -> driver क्रम Turtle Beach Classic/Monterey/Tahiti
  *
  * -- Else
  *
- *     -> driver for Turtle Beach Pinnacle/Fiji
+ *     -> driver क्रम Turtle Beach Pinnacle/Fiji
  *
- * 12-3-2000  Modified IO port validation  Steve Sycamore
+ * 12-3-2000  Modअगरied IO port validation  Steve Sycamore
  *
  * Copyright (C) 1998 Andrew Veliath
  *
  ********************************************************************/
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/types.h>
-#include <linux/delay.h>
-#include <linux/ioport.h>
-#include <linux/firmware.h>
-#include <linux/isa.h>
-#include <linux/isapnp.h>
-#include <linux/irq.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/isa.h>
+#समावेश <linux/isapnp.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
 
-#include <sound/core.h>
-#include <sound/initval.h>
-#include <sound/asound.h>
-#include <sound/pcm.h>
-#include <sound/mpu401.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/asound.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/mpu401.h>
 
-#ifdef MSND_CLASSIC
-# ifndef __alpha__
+#अगर_घोषित MSND_CLASSIC
+# अगरndef __alpha__
 #  define SLOWIO
-# endif
-#endif
-#include "msnd.h"
-#ifdef MSND_CLASSIC
+# endअगर
+#पूर्ण_अगर
+#समावेश "msnd.h"
+#अगर_घोषित MSND_CLASSIC
 #  include "msnd_classic.h"
 #  define LOGNAME			"msnd_classic"
 #  define DEV_NAME			"msnd-classic"
-#else
+#अन्यथा
 #  include "msnd_pinnacle.h"
 #  define LOGNAME			"snd_msnd_pinnacle"
 #  define DEV_NAME			"msnd-pinnacle"
-#endif
+#पूर्ण_अगर
 
-static void set_default_audio_parameters(struct snd_msnd *chip)
-{
-	chip->play_sample_size = snd_pcm_format_width(DEFSAMPLESIZE);
+अटल व्योम set_शेष_audio_parameters(काष्ठा snd_msnd *chip)
+अणु
+	chip->play_sample_size = snd_pcm_क्रमmat_width(DEFSAMPLESIZE);
 	chip->play_sample_rate = DEFSAMPLERATE;
 	chip->play_channels = DEFCHANNELS;
-	chip->capture_sample_size = snd_pcm_format_width(DEFSAMPLESIZE);
+	chip->capture_sample_size = snd_pcm_क्रमmat_width(DEFSAMPLESIZE);
 	chip->capture_sample_rate = DEFSAMPLERATE;
 	chip->capture_channels = DEFCHANNELS;
-}
+पूर्ण
 
-static void snd_msnd_eval_dsp_msg(struct snd_msnd *chip, u16 wMessage)
-{
-	switch (HIBYTE(wMessage)) {
-	case HIMT_PLAY_DONE: {
-		if (chip->banksPlayed < 3)
-			snd_printdd("%08X: HIMT_PLAY_DONE: %i\n",
-				(unsigned)jiffies, LOBYTE(wMessage));
+अटल व्योम snd_msnd_eval_dsp_msg(काष्ठा snd_msnd *chip, u16 wMessage)
+अणु
+	चयन (HIBYTE(wMessage)) अणु
+	हाल HIMT_PLAY_DONE: अणु
+		अगर (chip->banksPlayed < 3)
+			snd_prपूर्णांकdd("%08X: HIMT_PLAY_DONE: %i\n",
+				(अचिन्हित)jअगरfies, LOBYTE(wMessage));
 
-		if (chip->last_playbank == LOBYTE(wMessage)) {
-			snd_printdd("chip.last_playbank == LOBYTE(wMessage)\n");
-			break;
-		}
+		अगर (chip->last_playbank == LOBYTE(wMessage)) अणु
+			snd_prपूर्णांकdd("chip.last_playbank == LOBYTE(wMessage)\n");
+			अवरोध;
+		पूर्ण
 		chip->banksPlayed++;
 
-		if (test_bit(F_WRITING, &chip->flags))
+		अगर (test_bit(F_WRITING, &chip->flags))
 			snd_msnd_DAPQ(chip, 0);
 
 		chip->last_playbank = LOBYTE(wMessage);
 		chip->playDMAPos += chip->play_period_bytes;
-		if (chip->playDMAPos > chip->playLimit)
+		अगर (chip->playDMAPos > chip->playLimit)
 			chip->playDMAPos = 0;
 		snd_pcm_period_elapsed(chip->playback_substream);
 
-		break;
-	}
-	case HIMT_RECORD_DONE:
-		if (chip->last_recbank == LOBYTE(wMessage))
-			break;
+		अवरोध;
+	पूर्ण
+	हाल HIMT_RECORD_DONE:
+		अगर (chip->last_recbank == LOBYTE(wMessage))
+			अवरोध;
 		chip->last_recbank = LOBYTE(wMessage);
 		chip->captureDMAPos += chip->capturePeriodBytes;
-		if (chip->captureDMAPos > (chip->captureLimit))
+		अगर (chip->captureDMAPos > (chip->captureLimit))
 			chip->captureDMAPos = 0;
 
-		if (test_bit(F_READING, &chip->flags))
+		अगर (test_bit(F_READING, &chip->flags))
 			snd_msnd_DARQ(chip, chip->last_recbank);
 
 		snd_pcm_period_elapsed(chip->capture_substream);
-		break;
+		अवरोध;
 
-	case HIMT_DSP:
-		switch (LOBYTE(wMessage)) {
-#ifndef MSND_CLASSIC
-		case HIDSP_PLAY_UNDER:
-#endif
-		case HIDSP_INT_PLAY_UNDER:
-			snd_printd(KERN_WARNING LOGNAME ": Play underflow %i\n",
+	हाल HIMT_DSP:
+		चयन (LOBYTE(wMessage)) अणु
+#अगर_अघोषित MSND_CLASSIC
+		हाल HIDSP_PLAY_UNDER:
+#पूर्ण_अगर
+		हाल HIDSP_INT_PLAY_UNDER:
+			snd_prपूर्णांकd(KERN_WARNING LOGNAME ": Play underflow %i\n",
 				chip->banksPlayed);
-			if (chip->banksPlayed > 2)
+			अगर (chip->banksPlayed > 2)
 				clear_bit(F_WRITING, &chip->flags);
-			break;
+			अवरोध;
 
-		case HIDSP_INT_RECORD_OVER:
-			snd_printd(KERN_WARNING LOGNAME ": Record overflow\n");
+		हाल HIDSP_INT_RECORD_OVER:
+			snd_prपूर्णांकd(KERN_WARNING LOGNAME ": Record overflow\n");
 			clear_bit(F_READING, &chip->flags);
-			break;
+			अवरोध;
 
-		default:
-			snd_printd(KERN_WARNING LOGNAME
+		शेष:
+			snd_prपूर्णांकd(KERN_WARNING LOGNAME
 				   ": DSP message %d 0x%02x\n",
 				   LOBYTE(wMessage), LOBYTE(wMessage));
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case HIMT_MIDI_IN_UCHAR:
-		if (chip->msndmidi_mpu)
-			snd_msndmidi_input_read(chip->msndmidi_mpu);
-		break;
+	हाल HIMT_MIDI_IN_UCHAR:
+		अगर (chip->msndmidi_mpu)
+			snd_msndmidi_input_पढ़ो(chip->msndmidi_mpu);
+		अवरोध;
 
-	default:
-		snd_printd(KERN_WARNING LOGNAME ": HIMT message %d 0x%02x\n",
+	शेष:
+		snd_prपूर्णांकd(KERN_WARNING LOGNAME ": HIMT message %d 0x%02x\n",
 			   HIBYTE(wMessage), HIBYTE(wMessage));
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static irqreturn_t snd_msnd_interrupt(int irq, void *dev_id)
-{
-	struct snd_msnd *chip = dev_id;
-	void __iomem *pwDSPQData = chip->mappedbase + DSPQ_DATA_BUFF;
+अटल irqवापस_t snd_msnd_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा snd_msnd *chip = dev_id;
+	व्योम __iomem *pwDSPQData = chip->mappedbase + DSPQ_DATA_BUFF;
 	u16 head, tail, size;
 
 	/* Send ack to DSP */
 	/* inb(chip->io + HP_RXL); */
 
 	/* Evaluate queued DSP messages */
-	head = readw(chip->DSPQ + JQS_wHead);
-	tail = readw(chip->DSPQ + JQS_wTail);
-	size = readw(chip->DSPQ + JQS_wSize);
-	if (head > size || tail > size)
-		goto out;
-	while (head != tail) {
-		snd_msnd_eval_dsp_msg(chip, readw(pwDSPQData + 2 * head));
-		if (++head > size)
+	head = पढ़ोw(chip->DSPQ + JQS_wHead);
+	tail = पढ़ोw(chip->DSPQ + JQS_wTail);
+	size = पढ़ोw(chip->DSPQ + JQS_wSize);
+	अगर (head > size || tail > size)
+		जाओ out;
+	जबतक (head != tail) अणु
+		snd_msnd_eval_dsp_msg(chip, पढ़ोw(pwDSPQData + 2 * head));
+		अगर (++head > size)
 			head = 0;
-		writew(head, chip->DSPQ + JQS_wHead);
-	}
+		ग_लिखोw(head, chip->DSPQ + JQS_wHead);
+	पूर्ण
  out:
 	/* Send ack to DSP */
 	inb(chip->io + HP_RXL);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-static int snd_msnd_reset_dsp(long io, unsigned char *info)
-{
-	int timeout = 100;
+अटल पूर्णांक snd_msnd_reset_dsp(दीर्घ io, अचिन्हित अक्षर *info)
+अणु
+	पूर्णांक समयout = 100;
 
 	outb(HPDSPRESET_ON, io + HP_DSPR);
 	msleep(1);
-#ifndef MSND_CLASSIC
-	if (info)
+#अगर_अघोषित MSND_CLASSIC
+	अगर (info)
 		*info = inb(io + HP_INFO);
-#endif
+#पूर्ण_अगर
 	outb(HPDSPRESET_OFF, io + HP_DSPR);
 	msleep(1);
-	while (timeout-- > 0) {
-		if (inb(io + HP_CVR) == HP_CVR_DEF)
-			return 0;
+	जबतक (समयout-- > 0) अणु
+		अगर (inb(io + HP_CVR) == HP_CVR_DEF)
+			वापस 0;
 		msleep(1);
-	}
-	snd_printk(KERN_ERR LOGNAME ": Cannot reset DSP\n");
+	पूर्ण
+	snd_prपूर्णांकk(KERN_ERR LOGNAME ": Cannot reset DSP\n");
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int snd_msnd_probe(struct snd_card *card)
-{
-	struct snd_msnd *chip = card->private_data;
-	unsigned char info;
-#ifndef MSND_CLASSIC
-	char *xv, *rev = NULL;
-	char *pin = "TB Pinnacle", *fiji = "TB Fiji";
-	char *pinfiji = "TB Pinnacle/Fiji";
-#endif
+अटल पूर्णांक snd_msnd_probe(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_msnd *chip = card->निजी_data;
+	अचिन्हित अक्षर info;
+#अगर_अघोषित MSND_CLASSIC
+	अक्षर *xv, *rev = शून्य;
+	अक्षर *pin = "TB Pinnacle", *fiji = "TB Fiji";
+	अक्षर *pinfiji = "TB Pinnacle/Fiji";
+#पूर्ण_अगर
 
-	if (!request_region(chip->io, DSP_NUMIO, "probing")) {
-		snd_printk(KERN_ERR LOGNAME ": I/O port conflict\n");
-		return -ENODEV;
-	}
+	अगर (!request_region(chip->io, DSP_NUMIO, "probing")) अणु
+		snd_prपूर्णांकk(KERN_ERR LOGNAME ": I/O port conflict\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	if (snd_msnd_reset_dsp(chip->io, &info) < 0) {
+	अगर (snd_msnd_reset_dsp(chip->io, &info) < 0) अणु
 		release_region(chip->io, DSP_NUMIO);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-#ifdef MSND_CLASSIC
-	strcpy(card->shortname, "Classic/Tahiti/Monterey");
-	strcpy(card->longname, "Turtle Beach Multisound");
-	printk(KERN_INFO LOGNAME ": %s, "
+#अगर_घोषित MSND_CLASSIC
+	म_नकल(card->लघुname, "Classic/Tahiti/Monterey");
+	म_नकल(card->दीर्घname, "Turtle Beach Multisound");
+	prपूर्णांकk(KERN_INFO LOGNAME ": %s, "
 	       "I/O 0x%lx-0x%lx, IRQ %d, memory mapped to 0x%lX-0x%lX\n",
-	       card->shortname,
+	       card->लघुname,
 	       chip->io, chip->io + DSP_NUMIO - 1,
 	       chip->irq,
 	       chip->base, chip->base + 0x7fff);
-#else
-	switch (info >> 4) {
-	case 0xf:
+#अन्यथा
+	चयन (info >> 4) अणु
+	हाल 0xf:
 		xv = "<= 1.15";
-		break;
-	case 0x1:
+		अवरोध;
+	हाल 0x1:
 		xv = "1.18/1.2";
-		break;
-	case 0x2:
+		अवरोध;
+	हाल 0x2:
 		xv = "1.3";
-		break;
-	case 0x3:
+		अवरोध;
+	हाल 0x3:
 		xv = "1.4";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		xv = "unknown";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (info & 0x7) {
-	case 0x0:
+	चयन (info & 0x7) अणु
+	हाल 0x0:
 		rev = "I";
-		strcpy(card->shortname, pin);
-		break;
-	case 0x1:
+		म_नकल(card->लघुname, pin);
+		अवरोध;
+	हाल 0x1:
 		rev = "F";
-		strcpy(card->shortname, pin);
-		break;
-	case 0x2:
+		म_नकल(card->लघुname, pin);
+		अवरोध;
+	हाल 0x2:
 		rev = "G";
-		strcpy(card->shortname, pin);
-		break;
-	case 0x3:
+		म_नकल(card->लघुname, pin);
+		अवरोध;
+	हाल 0x3:
 		rev = "H";
-		strcpy(card->shortname, pin);
-		break;
-	case 0x4:
+		म_नकल(card->लघुname, pin);
+		अवरोध;
+	हाल 0x4:
 		rev = "E";
-		strcpy(card->shortname, fiji);
-		break;
-	case 0x5:
+		म_नकल(card->लघुname, fiji);
+		अवरोध;
+	हाल 0x5:
 		rev = "C";
-		strcpy(card->shortname, fiji);
-		break;
-	case 0x6:
+		म_नकल(card->लघुname, fiji);
+		अवरोध;
+	हाल 0x6:
 		rev = "D";
-		strcpy(card->shortname, fiji);
-		break;
-	case 0x7:
+		म_नकल(card->लघुname, fiji);
+		अवरोध;
+	हाल 0x7:
 		rev = "A-B (Fiji) or A-E (Pinnacle)";
-		strcpy(card->shortname, pinfiji);
-		break;
-	}
-	strcpy(card->longname, "Turtle Beach Multisound Pinnacle");
-	printk(KERN_INFO LOGNAME ": %s revision %s, Xilinx version %s, "
+		म_नकल(card->लघुname, pinfiji);
+		अवरोध;
+	पूर्ण
+	म_नकल(card->दीर्घname, "Turtle Beach Multisound Pinnacle");
+	prपूर्णांकk(KERN_INFO LOGNAME ": %s revision %s, Xilinx version %s, "
 	       "I/O 0x%lx-0x%lx, IRQ %d, memory mapped to 0x%lX-0x%lX\n",
-	       card->shortname,
+	       card->लघुname,
 	       rev, xv,
 	       chip->io, chip->io + DSP_NUMIO - 1,
 	       chip->irq,
 	       chip->base, chip->base + 0x7fff);
-#endif
+#पूर्ण_अगर
 
 	release_region(chip->io, DSP_NUMIO);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_msnd_init_sma(struct snd_msnd *chip)
-{
-	static int initted;
+अटल पूर्णांक snd_msnd_init_sma(काष्ठा snd_msnd *chip)
+अणु
+	अटल पूर्णांक initted;
 	u16 mastVolLeft, mastVolRight;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-#ifdef MSND_CLASSIC
+#अगर_घोषित MSND_CLASSIC
 	outb(chip->memid, chip->io + HP_MEMM);
-#endif
+#पूर्ण_अगर
 	outb(HPBLKSEL_0, chip->io + HP_BLKS);
 	/* Motorola 56k shared memory base */
 	chip->SMA = chip->mappedbase + SMA_STRUCT_START;
 
-	if (initted) {
-		mastVolLeft = readw(chip->SMA + SMA_wCurrMastVolLeft);
-		mastVolRight = readw(chip->SMA + SMA_wCurrMastVolRight);
-	} else
+	अगर (initted) अणु
+		mastVolLeft = पढ़ोw(chip->SMA + SMA_wCurrMastVolLeft);
+		mastVolRight = पढ़ोw(chip->SMA + SMA_wCurrMastVolRight);
+	पूर्ण अन्यथा
 		mastVolLeft = mastVolRight = 0;
-	memset_io(chip->mappedbase, 0, 0x8000);
+	स_रखो_io(chip->mappedbase, 0, 0x8000);
 
 	/* Critical section: bank 1 access */
 	spin_lock_irqsave(&chip->lock, flags);
 	outb(HPBLKSEL_1, chip->io + HP_BLKS);
-	memset_io(chip->mappedbase, 0, 0x8000);
+	स_रखो_io(chip->mappedbase, 0, 0x8000);
 	outb(HPBLKSEL_0, chip->io + HP_BLKS);
 	spin_unlock_irqrestore(&chip->lock, flags);
 
@@ -346,245 +347,245 @@ static int snd_msnd_init_sma(struct snd_msnd *chip)
 	snd_msnd_init_queue(chip->DSPQ, DSPQ_DATA_BUFF, DSPQ_BUFF_SIZE);
 
 	/* Setup some DSP values */
-#ifndef MSND_CLASSIC
-	writew(1, chip->SMA + SMA_wCurrPlayFormat);
-	writew(chip->play_sample_size, chip->SMA + SMA_wCurrPlaySampleSize);
-	writew(chip->play_channels, chip->SMA + SMA_wCurrPlayChannels);
-	writew(chip->play_sample_rate, chip->SMA + SMA_wCurrPlaySampleRate);
-#endif
-	writew(chip->play_sample_rate, chip->SMA + SMA_wCalFreqAtoD);
-	writew(mastVolLeft, chip->SMA + SMA_wCurrMastVolLeft);
-	writew(mastVolRight, chip->SMA + SMA_wCurrMastVolRight);
-#ifndef MSND_CLASSIC
-	writel(0x00010000, chip->SMA + SMA_dwCurrPlayPitch);
-	writel(0x00000001, chip->SMA + SMA_dwCurrPlayRate);
-#endif
-	writew(0x303, chip->SMA + SMA_wCurrInputTagBits);
+#अगर_अघोषित MSND_CLASSIC
+	ग_लिखोw(1, chip->SMA + SMA_wCurrPlayFormat);
+	ग_लिखोw(chip->play_sample_size, chip->SMA + SMA_wCurrPlaySampleSize);
+	ग_लिखोw(chip->play_channels, chip->SMA + SMA_wCurrPlayChannels);
+	ग_लिखोw(chip->play_sample_rate, chip->SMA + SMA_wCurrPlaySampleRate);
+#पूर्ण_अगर
+	ग_लिखोw(chip->play_sample_rate, chip->SMA + SMA_wCalFreqAtoD);
+	ग_लिखोw(mastVolLeft, chip->SMA + SMA_wCurrMastVolLeft);
+	ग_लिखोw(mastVolRight, chip->SMA + SMA_wCurrMastVolRight);
+#अगर_अघोषित MSND_CLASSIC
+	ग_लिखोl(0x00010000, chip->SMA + SMA_dwCurrPlayPitch);
+	ग_लिखोl(0x00000001, chip->SMA + SMA_dwCurrPlayRate);
+#पूर्ण_अगर
+	ग_लिखोw(0x303, chip->SMA + SMA_wCurrInputTagBits);
 
 	initted = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int upload_dsp_code(struct snd_card *card)
-{
-	struct snd_msnd *chip = card->private_data;
-	const struct firmware *init_fw = NULL, *perm_fw = NULL;
-	int err;
+अटल पूर्णांक upload_dsp_code(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_msnd *chip = card->निजी_data;
+	स्थिर काष्ठा firmware *init_fw = शून्य, *perm_fw = शून्य;
+	पूर्णांक err;
 
 	outb(HPBLKSEL_0, chip->io + HP_BLKS);
 
-	err = request_firmware(&init_fw, INITCODEFILE, card->dev);
-	if (err < 0) {
-		printk(KERN_ERR LOGNAME ": Error loading " INITCODEFILE);
-		goto cleanup1;
-	}
-	err = request_firmware(&perm_fw, PERMCODEFILE, card->dev);
-	if (err < 0) {
-		printk(KERN_ERR LOGNAME ": Error loading " PERMCODEFILE);
-		goto cleanup;
-	}
+	err = request_firmware(&init_fw, INITCODEखाता, card->dev);
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": Error loading " INITCODEखाता);
+		जाओ cleanup1;
+	पूर्ण
+	err = request_firmware(&perm_fw, PERMCODEखाता, card->dev);
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": Error loading " PERMCODEखाता);
+		जाओ cleanup;
+	पूर्ण
 
-	memcpy_toio(chip->mappedbase, perm_fw->data, perm_fw->size);
-	if (snd_msnd_upload_host(chip, init_fw->data, init_fw->size) < 0) {
-		printk(KERN_WARNING LOGNAME ": Error uploading to DSP\n");
+	स_नकल_toio(chip->mappedbase, perm_fw->data, perm_fw->size);
+	अगर (snd_msnd_upload_host(chip, init_fw->data, init_fw->size) < 0) अणु
+		prपूर्णांकk(KERN_WARNING LOGNAME ": Error uploading to DSP\n");
 		err = -ENODEV;
-		goto cleanup;
-	}
-	printk(KERN_INFO LOGNAME ": DSP firmware uploaded\n");
+		जाओ cleanup;
+	पूर्ण
+	prपूर्णांकk(KERN_INFO LOGNAME ": DSP firmware uploaded\n");
 	err = 0;
 
 cleanup:
 	release_firmware(perm_fw);
 cleanup1:
 	release_firmware(init_fw);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef MSND_CLASSIC
-static void reset_proteus(struct snd_msnd *chip)
-{
+#अगर_घोषित MSND_CLASSIC
+अटल व्योम reset_proteus(काष्ठा snd_msnd *chip)
+अणु
 	outb(HPPRORESET_ON, chip->io + HP_PROR);
 	msleep(TIME_PRO_RESET);
 	outb(HPPRORESET_OFF, chip->io + HP_PROR);
 	msleep(TIME_PRO_RESET_DONE);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int snd_msnd_initialize(struct snd_card *card)
-{
-	struct snd_msnd *chip = card->private_data;
-	int err, timeout;
+अटल पूर्णांक snd_msnd_initialize(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_msnd *chip = card->निजी_data;
+	पूर्णांक err, समयout;
 
-#ifdef MSND_CLASSIC
+#अगर_घोषित MSND_CLASSIC
 	outb(HPWAITSTATE_0, chip->io + HP_WAIT);
 	outb(HPBITMODE_16, chip->io + HP_BITM);
 
 	reset_proteus(chip);
-#endif
+#पूर्ण_अगर
 	err = snd_msnd_init_sma(chip);
-	if (err < 0) {
-		printk(KERN_WARNING LOGNAME ": Cannot initialize SMA\n");
-		return err;
-	}
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_WARNING LOGNAME ": Cannot initialize SMA\n");
+		वापस err;
+	पूर्ण
 
-	err = snd_msnd_reset_dsp(chip->io, NULL);
-	if (err < 0)
-		return err;
+	err = snd_msnd_reset_dsp(chip->io, शून्य);
+	अगर (err < 0)
+		वापस err;
 
 	err = upload_dsp_code(card);
-	if (err < 0) {
-		printk(KERN_WARNING LOGNAME ": Cannot upload DSP code\n");
-		return err;
-	}
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_WARNING LOGNAME ": Cannot upload DSP code\n");
+		वापस err;
+	पूर्ण
 
-	timeout = 200;
+	समयout = 200;
 
-	while (readw(chip->mappedbase)) {
+	जबतक (पढ़ोw(chip->mappedbase)) अणु
 		msleep(1);
-		if (!timeout--) {
-			snd_printd(KERN_ERR LOGNAME ": DSP reset timeout\n");
-			return -EIO;
-		}
-	}
+		अगर (!समयout--) अणु
+			snd_prपूर्णांकd(KERN_ERR LOGNAME ": DSP reset timeout\n");
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	snd_msndmix_setup(chip);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_msnd_dsp_full_reset(struct snd_card *card)
-{
-	struct snd_msnd *chip = card->private_data;
-	int rv;
+अटल पूर्णांक snd_msnd_dsp_full_reset(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_msnd *chip = card->निजी_data;
+	पूर्णांक rv;
 
-	if (test_bit(F_RESETTING, &chip->flags) || ++chip->nresets > 10)
-		return 0;
+	अगर (test_bit(F_RESETTING, &chip->flags) || ++chip->nresets > 10)
+		वापस 0;
 
 	set_bit(F_RESETTING, &chip->flags);
-	snd_msnd_dsp_halt(chip, NULL);	/* Unconditionally halt */
+	snd_msnd_dsp_halt(chip, शून्य);	/* Unconditionally halt */
 
 	rv = snd_msnd_initialize(card);
-	if (rv)
-		printk(KERN_WARNING LOGNAME ": DSP reset failed\n");
-	snd_msndmix_force_recsrc(chip, 0);
+	अगर (rv)
+		prपूर्णांकk(KERN_WARNING LOGNAME ": DSP reset failed\n");
+	snd_msndmix_क्रमce_recsrc(chip, 0);
 	clear_bit(F_RESETTING, &chip->flags);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int snd_msnd_dev_free(struct snd_device *device)
-{
-	snd_printdd("snd_msnd_chip_free()\n");
-	return 0;
-}
+अटल पूर्णांक snd_msnd_dev_मुक्त(काष्ठा snd_device *device)
+अणु
+	snd_prपूर्णांकdd("snd_msnd_chip_free()\n");
+	वापस 0;
+पूर्ण
 
-static int snd_msnd_send_dsp_cmd_chk(struct snd_msnd *chip, u8 cmd)
-{
-	if (snd_msnd_send_dsp_cmd(chip, cmd) == 0)
-		return 0;
+अटल पूर्णांक snd_msnd_send_dsp_cmd_chk(काष्ठा snd_msnd *chip, u8 cmd)
+अणु
+	अगर (snd_msnd_send_dsp_cmd(chip, cmd) == 0)
+		वापस 0;
 	snd_msnd_dsp_full_reset(chip->card);
-	return snd_msnd_send_dsp_cmd(chip, cmd);
-}
+	वापस snd_msnd_send_dsp_cmd(chip, cmd);
+पूर्ण
 
-static int snd_msnd_calibrate_adc(struct snd_msnd *chip, u16 srate)
-{
-	snd_printdd("snd_msnd_calibrate_adc(%i)\n", srate);
-	writew(srate, chip->SMA + SMA_wCalFreqAtoD);
-	if (chip->calibrate_signal == 0)
-		writew(readw(chip->SMA + SMA_wCurrHostStatusFlags)
+अटल पूर्णांक snd_msnd_calibrate_adc(काष्ठा snd_msnd *chip, u16 srate)
+अणु
+	snd_prपूर्णांकdd("snd_msnd_calibrate_adc(%i)\n", srate);
+	ग_लिखोw(srate, chip->SMA + SMA_wCalFreqAtoD);
+	अगर (chip->calibrate_संकेत == 0)
+		ग_लिखोw(पढ़ोw(chip->SMA + SMA_wCurrHostStatusFlags)
 		       | 0x0001, chip->SMA + SMA_wCurrHostStatusFlags);
-	else
-		writew(readw(chip->SMA + SMA_wCurrHostStatusFlags)
+	अन्यथा
+		ग_लिखोw(पढ़ोw(chip->SMA + SMA_wCurrHostStatusFlags)
 		       & ~0x0001, chip->SMA + SMA_wCurrHostStatusFlags);
-	if (snd_msnd_send_word(chip, 0, 0, HDEXAR_CAL_A_TO_D) == 0 &&
-	    snd_msnd_send_dsp_cmd_chk(chip, HDEX_AUX_REQ) == 0) {
-		schedule_timeout_interruptible(msecs_to_jiffies(333));
-		return 0;
-	}
-	printk(KERN_WARNING LOGNAME ": ADC calibration failed\n");
-	return -EIO;
-}
+	अगर (snd_msnd_send_word(chip, 0, 0, HDEXAR_CAL_A_TO_D) == 0 &&
+	    snd_msnd_send_dsp_cmd_chk(chip, HDEX_AUX_REQ) == 0) अणु
+		schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(333));
+		वापस 0;
+	पूर्ण
+	prपूर्णांकk(KERN_WARNING LOGNAME ": ADC calibration failed\n");
+	वापस -EIO;
+पूर्ण
 
 /*
- * ALSA callback function, called when attempting to open the MIDI device.
+ * ALSA callback function, called when attempting to खोलो the MIDI device.
  */
-static int snd_msnd_mpu401_open(struct snd_mpu401 *mpu)
-{
-	snd_msnd_enable_irq(mpu->private_data);
-	snd_msnd_send_dsp_cmd(mpu->private_data, HDEX_MIDI_IN_START);
-	return 0;
-}
+अटल पूर्णांक snd_msnd_mpu401_खोलो(काष्ठा snd_mpu401 *mpu)
+अणु
+	snd_msnd_enable_irq(mpu->निजी_data);
+	snd_msnd_send_dsp_cmd(mpu->निजी_data, HDEX_MIDI_IN_START);
+	वापस 0;
+पूर्ण
 
-static void snd_msnd_mpu401_close(struct snd_mpu401 *mpu)
-{
-	snd_msnd_send_dsp_cmd(mpu->private_data, HDEX_MIDI_IN_STOP);
-	snd_msnd_disable_irq(mpu->private_data);
-}
+अटल व्योम snd_msnd_mpu401_बंद(काष्ठा snd_mpu401 *mpu)
+अणु
+	snd_msnd_send_dsp_cmd(mpu->निजी_data, HDEX_MIDI_IN_STOP);
+	snd_msnd_disable_irq(mpu->निजी_data);
+पूर्ण
 
-static long mpu_io[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
-static int mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
+अटल दीर्घ mpu_io[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+अटल पूर्णांक mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
 
-static int snd_msnd_attach(struct snd_card *card)
-{
-	struct snd_msnd *chip = card->private_data;
-	int err;
-	static const struct snd_device_ops ops = {
-		.dev_free =      snd_msnd_dev_free,
-		};
+अटल पूर्णांक snd_msnd_attach(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_msnd *chip = card->निजी_data;
+	पूर्णांक err;
+	अटल स्थिर काष्ठा snd_device_ops ops = अणु
+		.dev_मुक्त =      snd_msnd_dev_मुक्त,
+		पूर्ण;
 
-	err = request_irq(chip->irq, snd_msnd_interrupt, 0, card->shortname,
+	err = request_irq(chip->irq, snd_msnd_पूर्णांकerrupt, 0, card->लघुname,
 			  chip);
-	if (err < 0) {
-		printk(KERN_ERR LOGNAME ": Couldn't grab IRQ %d\n", chip->irq);
-		return err;
-	}
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": Couldn't grab IRQ %d\n", chip->irq);
+		वापस err;
+	पूर्ण
 	card->sync_irq = chip->irq;
-	if (request_region(chip->io, DSP_NUMIO, card->shortname) == NULL) {
-		free_irq(chip->irq, chip);
-		return -EBUSY;
-	}
+	अगर (request_region(chip->io, DSP_NUMIO, card->लघुname) == शून्य) अणु
+		मुक्त_irq(chip->irq, chip);
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!request_mem_region(chip->base, BUFFSIZE, card->shortname)) {
-		printk(KERN_ERR LOGNAME
+	अगर (!request_mem_region(chip->base, BUFFSIZE, card->लघुname)) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME
 			": unable to grab memory region 0x%lx-0x%lx\n",
 			chip->base, chip->base + BUFFSIZE - 1);
 		release_region(chip->io, DSP_NUMIO);
-		free_irq(chip->irq, chip);
-		return -EBUSY;
-	}
+		मुक्त_irq(chip->irq, chip);
+		वापस -EBUSY;
+	पूर्ण
 	chip->mappedbase = ioremap(chip->base, 0x8000);
-	if (!chip->mappedbase) {
-		printk(KERN_ERR LOGNAME
+	अगर (!chip->mappedbase) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME
 			": unable to map memory region 0x%lx-0x%lx\n",
 			chip->base, chip->base + BUFFSIZE - 1);
 		err = -EIO;
-		goto err_release_region;
-	}
+		जाओ err_release_region;
+	पूर्ण
 
 	err = snd_msnd_dsp_full_reset(card);
-	if (err < 0)
-		goto err_release_region;
+	अगर (err < 0)
+		जाओ err_release_region;
 
 	/* Register device */
 	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
-	if (err < 0)
-		goto err_release_region;
+	अगर (err < 0)
+		जाओ err_release_region;
 
 	err = snd_msnd_pcm(card, 0);
-	if (err < 0) {
-		printk(KERN_ERR LOGNAME ": error creating new PCM device\n");
-		goto err_release_region;
-	}
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": error creating new PCM device\n");
+		जाओ err_release_region;
+	पूर्ण
 
 	err = snd_msndmix_new(card);
-	if (err < 0) {
-		printk(KERN_ERR LOGNAME ": error creating new Mixer device\n");
-		goto err_release_region;
-	}
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": error creating new Mixer device\n");
+		जाओ err_release_region;
+	पूर्ण
 
 
-	if (mpu_io[0] != SNDRV_AUTO_PORT) {
-		struct snd_mpu401 *mpu;
+	अगर (mpu_io[0] != SNDRV_AUTO_PORT) अणु
+		काष्ठा snd_mpu401 *mpu;
 
 		err = snd_mpu401_uart_new(card, 0, MPU401_HW_MPU401,
 					  mpu_io[0],
@@ -592,516 +593,516 @@ static int snd_msnd_attach(struct snd_card *card)
 					  MPU401_MODE_OUTPUT,
 					  mpu_irq[0],
 					  &chip->rmidi);
-		if (err < 0) {
-			printk(KERN_ERR LOGNAME
+		अगर (err < 0) अणु
+			prपूर्णांकk(KERN_ERR LOGNAME
 				": error creating new Midi device\n");
-			goto err_release_region;
-		}
-		mpu = chip->rmidi->private_data;
+			जाओ err_release_region;
+		पूर्ण
+		mpu = chip->rmidi->निजी_data;
 
-		mpu->open_input = snd_msnd_mpu401_open;
-		mpu->close_input = snd_msnd_mpu401_close;
-		mpu->private_data = chip;
-	}
+		mpu->खोलो_input = snd_msnd_mpu401_खोलो;
+		mpu->बंद_input = snd_msnd_mpu401_बंद;
+		mpu->निजी_data = chip;
+	पूर्ण
 
 	disable_irq(chip->irq);
 	snd_msnd_calibrate_adc(chip, chip->play_sample_rate);
-	snd_msndmix_force_recsrc(chip, 0);
+	snd_msndmix_क्रमce_recsrc(chip, 0);
 
-	err = snd_card_register(card);
-	if (err < 0)
-		goto err_release_region;
+	err = snd_card_रेजिस्टर(card);
+	अगर (err < 0)
+		जाओ err_release_region;
 
-	return 0;
+	वापस 0;
 
 err_release_region:
 	iounmap(chip->mappedbase);
 	release_mem_region(chip->base, BUFFSIZE);
 	release_region(chip->io, DSP_NUMIO);
-	free_irq(chip->irq, chip);
-	return err;
-}
+	मुक्त_irq(chip->irq, chip);
+	वापस err;
+पूर्ण
 
 
-static void snd_msnd_unload(struct snd_card *card)
-{
-	struct snd_msnd *chip = card->private_data;
+अटल व्योम snd_msnd_unload(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_msnd *chip = card->निजी_data;
 
 	iounmap(chip->mappedbase);
 	release_mem_region(chip->base, BUFFSIZE);
 	release_region(chip->io, DSP_NUMIO);
-	free_irq(chip->irq, chip);
-	snd_card_free(card);
-}
+	मुक्त_irq(chip->irq, chip);
+	snd_card_मुक्त(card);
+पूर्ण
 
-#ifndef MSND_CLASSIC
+#अगर_अघोषित MSND_CLASSIC
 
 /* Pinnacle/Fiji Logical Device Configuration */
 
-static int snd_msnd_write_cfg(int cfg, int reg, int value)
-{
+अटल पूर्णांक snd_msnd_ग_लिखो_cfg(पूर्णांक cfg, पूर्णांक reg, पूर्णांक value)
+अणु
 	outb(reg, cfg);
 	outb(value, cfg + 1);
-	if (value != inb(cfg + 1)) {
-		printk(KERN_ERR LOGNAME ": snd_msnd_write_cfg: I/O error\n");
-		return -EIO;
-	}
-	return 0;
-}
+	अगर (value != inb(cfg + 1)) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": snd_msnd_write_cfg: I/O error\n");
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_msnd_write_cfg_io0(int cfg, int num, u16 io)
-{
-	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
-	if (snd_msnd_write_cfg(cfg, IREG_IO0_BASEHI, HIBYTE(io)))
-		return -EIO;
-	if (snd_msnd_write_cfg(cfg, IREG_IO0_BASELO, LOBYTE(io)))
-		return -EIO;
-	return 0;
-}
+अटल पूर्णांक snd_msnd_ग_लिखो_cfg_io0(पूर्णांक cfg, पूर्णांक num, u16 io)
+अणु
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_LOGDEVICE, num))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_IO0_BASEHI, HIBYTE(io)))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_IO0_BASELO, LOBYTE(io)))
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static int snd_msnd_write_cfg_io1(int cfg, int num, u16 io)
-{
-	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
-	if (snd_msnd_write_cfg(cfg, IREG_IO1_BASEHI, HIBYTE(io)))
-		return -EIO;
-	if (snd_msnd_write_cfg(cfg, IREG_IO1_BASELO, LOBYTE(io)))
-		return -EIO;
-	return 0;
-}
+अटल पूर्णांक snd_msnd_ग_लिखो_cfg_io1(पूर्णांक cfg, पूर्णांक num, u16 io)
+अणु
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_LOGDEVICE, num))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_IO1_BASEHI, HIBYTE(io)))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_IO1_BASELO, LOBYTE(io)))
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static int snd_msnd_write_cfg_irq(int cfg, int num, u16 irq)
-{
-	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
-	if (snd_msnd_write_cfg(cfg, IREG_IRQ_NUMBER, LOBYTE(irq)))
-		return -EIO;
-	if (snd_msnd_write_cfg(cfg, IREG_IRQ_TYPE, IRQTYPE_EDGE))
-		return -EIO;
-	return 0;
-}
+अटल पूर्णांक snd_msnd_ग_लिखो_cfg_irq(पूर्णांक cfg, पूर्णांक num, u16 irq)
+अणु
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_LOGDEVICE, num))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_IRQ_NUMBER, LOBYTE(irq)))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_IRQ_TYPE, IRQTYPE_EDGE))
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static int snd_msnd_write_cfg_mem(int cfg, int num, int mem)
-{
+अटल पूर्णांक snd_msnd_ग_लिखो_cfg_mem(पूर्णांक cfg, पूर्णांक num, पूर्णांक mem)
+अणु
 	u16 wmem;
 
 	mem >>= 8;
 	wmem = (u16)(mem & 0xfff);
-	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
-	if (snd_msnd_write_cfg(cfg, IREG_MEMBASEHI, HIBYTE(wmem)))
-		return -EIO;
-	if (snd_msnd_write_cfg(cfg, IREG_MEMBASELO, LOBYTE(wmem)))
-		return -EIO;
-	if (wmem && snd_msnd_write_cfg(cfg, IREG_MEMCONTROL,
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_LOGDEVICE, num))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_MEMBASEHI, HIBYTE(wmem)))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_MEMBASELO, LOBYTE(wmem)))
+		वापस -EIO;
+	अगर (wmem && snd_msnd_ग_लिखो_cfg(cfg, IREG_MEMCONTROL,
 				       MEMTYPE_HIADDR | MEMTYPE_16BIT))
-		return -EIO;
-	return 0;
-}
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static int snd_msnd_activate_logical(int cfg, int num)
-{
-	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
-	if (snd_msnd_write_cfg(cfg, IREG_ACTIVATE, LD_ACTIVATE))
-		return -EIO;
-	return 0;
-}
+अटल पूर्णांक snd_msnd_activate_logical(पूर्णांक cfg, पूर्णांक num)
+अणु
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_LOGDEVICE, num))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_ACTIVATE, LD_ACTIVATE))
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static int snd_msnd_write_cfg_logical(int cfg, int num, u16 io0,
-				      u16 io1, u16 irq, int mem)
-{
-	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
-	if (snd_msnd_write_cfg_io0(cfg, num, io0))
-		return -EIO;
-	if (snd_msnd_write_cfg_io1(cfg, num, io1))
-		return -EIO;
-	if (snd_msnd_write_cfg_irq(cfg, num, irq))
-		return -EIO;
-	if (snd_msnd_write_cfg_mem(cfg, num, mem))
-		return -EIO;
-	if (snd_msnd_activate_logical(cfg, num))
-		return -EIO;
-	return 0;
-}
+अटल पूर्णांक snd_msnd_ग_लिखो_cfg_logical(पूर्णांक cfg, पूर्णांक num, u16 io0,
+				      u16 io1, u16 irq, पूर्णांक mem)
+अणु
+	अगर (snd_msnd_ग_लिखो_cfg(cfg, IREG_LOGDEVICE, num))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg_io0(cfg, num, io0))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg_io1(cfg, num, io1))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg_irq(cfg, num, irq))
+		वापस -EIO;
+	अगर (snd_msnd_ग_लिखो_cfg_mem(cfg, num, mem))
+		वापस -EIO;
+	अगर (snd_msnd_activate_logical(cfg, num))
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static int snd_msnd_pinnacle_cfg_reset(int cfg)
-{
-	int i;
+अटल पूर्णांक snd_msnd_pinnacle_cfg_reset(पूर्णांक cfg)
+अणु
+	पूर्णांक i;
 
-	/* Reset devices if told to */
-	printk(KERN_INFO LOGNAME ": Resetting all devices\n");
-	for (i = 0; i < 4; ++i)
-		if (snd_msnd_write_cfg_logical(cfg, i, 0, 0, 0, 0))
-			return -EIO;
+	/* Reset devices अगर told to */
+	prपूर्णांकk(KERN_INFO LOGNAME ": Resetting all devices\n");
+	क्रम (i = 0; i < 4; ++i)
+		अगर (snd_msnd_ग_लिखो_cfg_logical(cfg, i, 0, 0, 0, 0))
+			वापस -EIO;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for msnd_pinnacle soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for msnd_pinnacle soundcard.");
 
-static long io[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
-static int irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
-static long mem[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+अटल दीर्घ io[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+अटल पूर्णांक irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
+अटल दीर्घ mem[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
 
-#ifndef MSND_CLASSIC
-static long cfg[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+#अगर_अघोषित MSND_CLASSIC
+अटल दीर्घ cfg[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
 
 /* Extra Peripheral Configuration (Default: Disable) */
-static long ide_io0[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
-static long ide_io1[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
-static int ide_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
+अटल दीर्घ ide_io0[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+अटल दीर्घ ide_io1[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+अटल पूर्णांक ide_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
 
-static long joystick_io[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+अटल दीर्घ joystick_io[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
 /* If we have the digital daugherboard... */
-static int digital[SNDRV_CARDS];
+अटल पूर्णांक digital[SNDRV_CARDS];
 
 /* Extra Peripheral Configuration */
-static int reset[SNDRV_CARDS];
-#endif
+अटल पूर्णांक reset[SNDRV_CARDS];
+#पूर्ण_अगर
 
-static int write_ndelay[SNDRV_CARDS] = { [0 ... (SNDRV_CARDS-1)] = 1 };
+अटल पूर्णांक ग_लिखो_ndelay[SNDRV_CARDS] = अणु [0 ... (SNDRV_CARDS-1)] = 1 पूर्ण;
 
-static int calibrate_signal;
+अटल पूर्णांक calibrate_संकेत;
 
-#ifdef CONFIG_PNP
-static bool isapnp[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
-module_param_array(isapnp, bool, NULL, 0444);
+#अगर_घोषित CONFIG_PNP
+अटल bool isapnp[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+module_param_array(isapnp, bool, शून्य, 0444);
 MODULE_PARM_DESC(isapnp, "ISA PnP detection for specified soundcard.");
-#define has_isapnp(x) isapnp[x]
-#else
-#define has_isapnp(x) 0
-#endif
+#घोषणा has_isapnp(x) isapnp[x]
+#अन्यथा
+#घोषणा has_isapnp(x) 0
+#पूर्ण_अगर
 
 MODULE_AUTHOR("Karsten Wiese <annabellesgarden@yahoo.de>");
 MODULE_DESCRIPTION("Turtle Beach " LONGNAME " Linux Driver");
 MODULE_LICENSE("GPL");
-MODULE_FIRMWARE(INITCODEFILE);
-MODULE_FIRMWARE(PERMCODEFILE);
+MODULE_FIRMWARE(INITCODEखाता);
+MODULE_FIRMWARE(PERMCODEखाता);
 
-module_param_hw_array(io, long, ioport, NULL, 0444);
+module_param_hw_array(io, दीर्घ, ioport, शून्य, 0444);
 MODULE_PARM_DESC(io, "IO port #");
-module_param_hw_array(irq, int, irq, NULL, 0444);
-module_param_hw_array(mem, long, iomem, NULL, 0444);
-module_param_array(write_ndelay, int, NULL, 0444);
-module_param(calibrate_signal, int, 0444);
-#ifndef MSND_CLASSIC
-module_param_array(digital, int, NULL, 0444);
-module_param_hw_array(cfg, long, ioport, NULL, 0444);
-module_param_array(reset, int, NULL, 0444);
-module_param_hw_array(mpu_io, long, ioport, NULL, 0444);
-module_param_hw_array(mpu_irq, int, irq, NULL, 0444);
-module_param_hw_array(ide_io0, long, ioport, NULL, 0444);
-module_param_hw_array(ide_io1, long, ioport, NULL, 0444);
-module_param_hw_array(ide_irq, int, irq, NULL, 0444);
-module_param_hw_array(joystick_io, long, ioport, NULL, 0444);
-#endif
+module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0444);
+module_param_hw_array(mem, दीर्घ, iomem, शून्य, 0444);
+module_param_array(ग_लिखो_ndelay, पूर्णांक, शून्य, 0444);
+module_param(calibrate_संकेत, पूर्णांक, 0444);
+#अगर_अघोषित MSND_CLASSIC
+module_param_array(digital, पूर्णांक, शून्य, 0444);
+module_param_hw_array(cfg, दीर्घ, ioport, शून्य, 0444);
+module_param_array(reset, पूर्णांक, शून्य, 0444);
+module_param_hw_array(mpu_io, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(mpu_irq, पूर्णांक, irq, शून्य, 0444);
+module_param_hw_array(ide_io0, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(ide_io1, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(ide_irq, पूर्णांक, irq, शून्य, 0444);
+module_param_hw_array(joystick_io, दीर्घ, ioport, शून्य, 0444);
+#पूर्ण_अगर
 
 
-static int snd_msnd_isa_match(struct device *pdev, unsigned int i)
-{
-	if (io[i] == SNDRV_AUTO_PORT)
-		return 0;
+अटल पूर्णांक snd_msnd_isa_match(काष्ठा device *pdev, अचिन्हित पूर्णांक i)
+अणु
+	अगर (io[i] == SNDRV_AUTO_PORT)
+		वापस 0;
 
-	if (irq[i] == SNDRV_AUTO_PORT || mem[i] == SNDRV_AUTO_PORT) {
-		printk(KERN_WARNING LOGNAME ": io, irq and mem must be set\n");
-		return 0;
-	}
+	अगर (irq[i] == SNDRV_AUTO_PORT || mem[i] == SNDRV_AUTO_PORT) अणु
+		prपूर्णांकk(KERN_WARNING LOGNAME ": io, irq and mem must be set\n");
+		वापस 0;
+	पूर्ण
 
-#ifdef MSND_CLASSIC
-	if (!(io[i] == 0x290 ||
+#अगर_घोषित MSND_CLASSIC
+	अगर (!(io[i] == 0x290 ||
 	      io[i] == 0x260 ||
 	      io[i] == 0x250 ||
 	      io[i] == 0x240 ||
 	      io[i] == 0x230 ||
 	      io[i] == 0x220 ||
 	      io[i] == 0x210 ||
-	      io[i] == 0x3e0)) {
-		printk(KERN_ERR LOGNAME ": \"io\" - DSP I/O base must be set "
+	      io[i] == 0x3e0)) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": \"io\" - DSP I/O base must be set "
 			" to 0x210, 0x220, 0x230, 0x240, 0x250, 0x260, 0x290, "
 			"or 0x3E0\n");
-		return 0;
-	}
-#else
-	if (io[i] < 0x100 || io[i] > 0x3e0 || (io[i] % 0x10) != 0) {
-		printk(KERN_ERR LOGNAME
+		वापस 0;
+	पूर्ण
+#अन्यथा
+	अगर (io[i] < 0x100 || io[i] > 0x3e0 || (io[i] % 0x10) != 0) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME
 			": \"io\" - DSP I/O base must within the range 0x100 "
 			"to 0x3E0 and must be evenly divisible by 0x10\n");
-		return 0;
-	}
-#endif /* MSND_CLASSIC */
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर /* MSND_CLASSIC */
 
-	if (!(irq[i] == 5 ||
+	अगर (!(irq[i] == 5 ||
 	      irq[i] == 7 ||
 	      irq[i] == 9 ||
 	      irq[i] == 10 ||
 	      irq[i] == 11 ||
-	      irq[i] == 12)) {
-		printk(KERN_ERR LOGNAME
+	      irq[i] == 12)) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME
 			": \"irq\" - must be set to 5, 7, 9, 10, 11 or 12\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!(mem[i] == 0xb0000 ||
+	अगर (!(mem[i] == 0xb0000 ||
 	      mem[i] == 0xc8000 ||
 	      mem[i] == 0xd0000 ||
 	      mem[i] == 0xd8000 ||
 	      mem[i] == 0xe0000 ||
-	      mem[i] == 0xe8000)) {
-		printk(KERN_ERR LOGNAME ": \"mem\" - must be set to "
+	      mem[i] == 0xe8000)) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": \"mem\" - must be set to "
 		       "0xb0000, 0xc8000, 0xd0000, 0xd8000, 0xe0000 or "
 		       "0xe8000\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-#ifndef MSND_CLASSIC
-	if (cfg[i] == SNDRV_AUTO_PORT) {
-		printk(KERN_INFO LOGNAME ": Assuming PnP mode\n");
-	} else if (cfg[i] != 0x250 && cfg[i] != 0x260 && cfg[i] != 0x270) {
-		printk(KERN_INFO LOGNAME
+#अगर_अघोषित MSND_CLASSIC
+	अगर (cfg[i] == SNDRV_AUTO_PORT) अणु
+		prपूर्णांकk(KERN_INFO LOGNAME ": Assuming PnP mode\n");
+	पूर्ण अन्यथा अगर (cfg[i] != 0x250 && cfg[i] != 0x260 && cfg[i] != 0x270) अणु
+		prपूर्णांकk(KERN_INFO LOGNAME
 			": Config port must be 0x250, 0x260 or 0x270 "
 			"(or unspecified for PnP mode)\n");
-		return 0;
-	}
-#endif /* MSND_CLASSIC */
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर /* MSND_CLASSIC */
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int snd_msnd_isa_probe(struct device *pdev, unsigned int idx)
-{
-	int err;
-	struct snd_card *card;
-	struct snd_msnd *chip;
+अटल पूर्णांक snd_msnd_isa_probe(काष्ठा device *pdev, अचिन्हित पूर्णांक idx)
+अणु
+	पूर्णांक err;
+	काष्ठा snd_card *card;
+	काष्ठा snd_msnd *chip;
 
-	if (has_isapnp(idx)
-#ifndef MSND_CLASSIC
+	अगर (has_isapnp(idx)
+#अगर_अघोषित MSND_CLASSIC
 	    || cfg[idx] == SNDRV_AUTO_PORT
-#endif
-	    ) {
-		printk(KERN_INFO LOGNAME ": Assuming PnP mode\n");
-		return -ENODEV;
-	}
+#पूर्ण_अगर
+	    ) अणु
+		prपूर्णांकk(KERN_INFO LOGNAME ": Assuming PnP mode\n");
+		वापस -ENODEV;
+	पूर्ण
 
 	err = snd_card_new(pdev, index[idx], id[idx], THIS_MODULE,
-			   sizeof(struct snd_msnd), &card);
-	if (err < 0)
-		return err;
+			   माप(काष्ठा snd_msnd), &card);
+	अगर (err < 0)
+		वापस err;
 
-	chip = card->private_data;
+	chip = card->निजी_data;
 	chip->card = card;
 
-#ifdef MSND_CLASSIC
-	switch (irq[idx]) {
-	case 5:
-		chip->irqid = HPIRQ_5; break;
-	case 7:
-		chip->irqid = HPIRQ_7; break;
-	case 9:
-		chip->irqid = HPIRQ_9; break;
-	case 10:
-		chip->irqid = HPIRQ_10; break;
-	case 11:
-		chip->irqid = HPIRQ_11; break;
-	case 12:
-		chip->irqid = HPIRQ_12; break;
-	}
+#अगर_घोषित MSND_CLASSIC
+	चयन (irq[idx]) अणु
+	हाल 5:
+		chip->irqid = HPIRQ_5; अवरोध;
+	हाल 7:
+		chip->irqid = HPIRQ_7; अवरोध;
+	हाल 9:
+		chip->irqid = HPIRQ_9; अवरोध;
+	हाल 10:
+		chip->irqid = HPIRQ_10; अवरोध;
+	हाल 11:
+		chip->irqid = HPIRQ_11; अवरोध;
+	हाल 12:
+		chip->irqid = HPIRQ_12; अवरोध;
+	पूर्ण
 
-	switch (mem[idx]) {
-	case 0xb0000:
-		chip->memid = HPMEM_B000; break;
-	case 0xc8000:
-		chip->memid = HPMEM_C800; break;
-	case 0xd0000:
-		chip->memid = HPMEM_D000; break;
-	case 0xd8000:
-		chip->memid = HPMEM_D800; break;
-	case 0xe0000:
-		chip->memid = HPMEM_E000; break;
-	case 0xe8000:
-		chip->memid = HPMEM_E800; break;
-	}
-#else
-	printk(KERN_INFO LOGNAME ": Non-PnP mode: configuring at port 0x%lx\n",
+	चयन (mem[idx]) अणु
+	हाल 0xb0000:
+		chip->memid = HPMEM_B000; अवरोध;
+	हाल 0xc8000:
+		chip->memid = HPMEM_C800; अवरोध;
+	हाल 0xd0000:
+		chip->memid = HPMEM_D000; अवरोध;
+	हाल 0xd8000:
+		chip->memid = HPMEM_D800; अवरोध;
+	हाल 0xe0000:
+		chip->memid = HPMEM_E000; अवरोध;
+	हाल 0xe8000:
+		chip->memid = HPMEM_E800; अवरोध;
+	पूर्ण
+#अन्यथा
+	prपूर्णांकk(KERN_INFO LOGNAME ": Non-PnP mode: configuring at port 0x%lx\n",
 			cfg[idx]);
 
-	if (!request_region(cfg[idx], 2, "Pinnacle/Fiji Config")) {
-		printk(KERN_ERR LOGNAME ": Config port 0x%lx conflict\n",
+	अगर (!request_region(cfg[idx], 2, "Pinnacle/Fiji Config")) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": Config port 0x%lx conflict\n",
 			   cfg[idx]);
-		snd_card_free(card);
-		return -EIO;
-	}
-	if (reset[idx])
-		if (snd_msnd_pinnacle_cfg_reset(cfg[idx])) {
+		snd_card_मुक्त(card);
+		वापस -EIO;
+	पूर्ण
+	अगर (reset[idx])
+		अगर (snd_msnd_pinnacle_cfg_reset(cfg[idx])) अणु
 			err = -EIO;
-			goto cfg_error;
-		}
+			जाओ cfg_error;
+		पूर्ण
 
 	/* DSP */
-	err = snd_msnd_write_cfg_logical(cfg[idx], 0,
+	err = snd_msnd_ग_लिखो_cfg_logical(cfg[idx], 0,
 					 io[idx], 0,
 					 irq[idx], mem[idx]);
 
-	if (err)
-		goto cfg_error;
+	अगर (err)
+		जाओ cfg_error;
 
-	/* The following are Pinnacle specific */
+	/* The following are Pinnacle specअगरic */
 
 	/* MPU */
-	if (mpu_io[idx] != SNDRV_AUTO_PORT
-	    && mpu_irq[idx] != SNDRV_AUTO_IRQ) {
-		printk(KERN_INFO LOGNAME
+	अगर (mpu_io[idx] != SNDRV_AUTO_PORT
+	    && mpu_irq[idx] != SNDRV_AUTO_IRQ) अणु
+		prपूर्णांकk(KERN_INFO LOGNAME
 		       ": Configuring MPU to I/O 0x%lx IRQ %d\n",
 		       mpu_io[idx], mpu_irq[idx]);
-		err = snd_msnd_write_cfg_logical(cfg[idx], 1,
+		err = snd_msnd_ग_लिखो_cfg_logical(cfg[idx], 1,
 						 mpu_io[idx], 0,
 						 mpu_irq[idx], 0);
 
-		if (err)
-			goto cfg_error;
-	}
+		अगर (err)
+			जाओ cfg_error;
+	पूर्ण
 
 	/* IDE */
-	if (ide_io0[idx] != SNDRV_AUTO_PORT
+	अगर (ide_io0[idx] != SNDRV_AUTO_PORT
 	    && ide_io1[idx] != SNDRV_AUTO_PORT
-	    && ide_irq[idx] != SNDRV_AUTO_IRQ) {
-		printk(KERN_INFO LOGNAME
+	    && ide_irq[idx] != SNDRV_AUTO_IRQ) अणु
+		prपूर्णांकk(KERN_INFO LOGNAME
 		       ": Configuring IDE to I/O 0x%lx, 0x%lx IRQ %d\n",
 		       ide_io0[idx], ide_io1[idx], ide_irq[idx]);
-		err = snd_msnd_write_cfg_logical(cfg[idx], 2,
+		err = snd_msnd_ग_लिखो_cfg_logical(cfg[idx], 2,
 						 ide_io0[idx], ide_io1[idx],
 						 ide_irq[idx], 0);
 
-		if (err)
-			goto cfg_error;
-	}
+		अगर (err)
+			जाओ cfg_error;
+	पूर्ण
 
 	/* Joystick */
-	if (joystick_io[idx] != SNDRV_AUTO_PORT) {
-		printk(KERN_INFO LOGNAME
+	अगर (joystick_io[idx] != SNDRV_AUTO_PORT) अणु
+		prपूर्णांकk(KERN_INFO LOGNAME
 		       ": Configuring joystick to I/O 0x%lx\n",
 		       joystick_io[idx]);
-		err = snd_msnd_write_cfg_logical(cfg[idx], 3,
+		err = snd_msnd_ग_लिखो_cfg_logical(cfg[idx], 3,
 						 joystick_io[idx], 0,
 						 0, 0);
 
-		if (err)
-			goto cfg_error;
-	}
+		अगर (err)
+			जाओ cfg_error;
+	पूर्ण
 	release_region(cfg[idx], 2);
 
-#endif /* MSND_CLASSIC */
+#पूर्ण_अगर /* MSND_CLASSIC */
 
-	set_default_audio_parameters(chip);
-#ifdef MSND_CLASSIC
+	set_शेष_audio_parameters(chip);
+#अगर_घोषित MSND_CLASSIC
 	chip->type = msndClassic;
-#else
+#अन्यथा
 	chip->type = msndPinnacle;
-#endif
+#पूर्ण_अगर
 	chip->io = io[idx];
 	chip->irq = irq[idx];
 	chip->base = mem[idx];
 
-	chip->calibrate_signal = calibrate_signal ? 1 : 0;
+	chip->calibrate_संकेत = calibrate_संकेत ? 1 : 0;
 	chip->recsrc = 0;
 	chip->dspq_data_buff = DSPQ_DATA_BUFF;
 	chip->dspq_buff_size = DSPQ_BUFF_SIZE;
-	if (write_ndelay[idx])
+	अगर (ग_लिखो_ndelay[idx])
 		clear_bit(F_DISABLE_WRITE_NDELAY, &chip->flags);
-	else
+	अन्यथा
 		set_bit(F_DISABLE_WRITE_NDELAY, &chip->flags);
-#ifndef MSND_CLASSIC
-	if (digital[idx])
+#अगर_अघोषित MSND_CLASSIC
+	अगर (digital[idx])
 		set_bit(F_HAVEDIGITAL, &chip->flags);
-#endif
+#पूर्ण_अगर
 	spin_lock_init(&chip->lock);
 	err = snd_msnd_probe(card);
-	if (err < 0) {
-		printk(KERN_ERR LOGNAME ": Probe failed\n");
-		snd_card_free(card);
-		return err;
-	}
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": Probe failed\n");
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 
 	err = snd_msnd_attach(card);
-	if (err < 0) {
-		printk(KERN_ERR LOGNAME ": Attach failed\n");
-		snd_card_free(card);
-		return err;
-	}
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": Attach failed\n");
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 	dev_set_drvdata(pdev, card);
 
-	return 0;
+	वापस 0;
 
-#ifndef MSND_CLASSIC
+#अगर_अघोषित MSND_CLASSIC
 cfg_error:
 	release_region(cfg[idx], 2);
-	snd_card_free(card);
-	return err;
-#endif
-}
+	snd_card_मुक्त(card);
+	वापस err;
+#पूर्ण_अगर
+पूर्ण
 
-static void snd_msnd_isa_remove(struct device *pdev, unsigned int dev)
-{
+अटल व्योम snd_msnd_isa_हटाओ(काष्ठा device *pdev, अचिन्हित पूर्णांक dev)
+अणु
 	snd_msnd_unload(dev_get_drvdata(pdev));
-}
+पूर्ण
 
-static struct isa_driver snd_msnd_driver = {
+अटल काष्ठा isa_driver snd_msnd_driver = अणु
 	.match		= snd_msnd_isa_match,
 	.probe		= snd_msnd_isa_probe,
-	.remove		= snd_msnd_isa_remove,
+	.हटाओ		= snd_msnd_isa_हटाओ,
 	/* FIXME: suspend, resume */
-	.driver		= {
+	.driver		= अणु
 		.name	= DEV_NAME
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_PNP
-static int snd_msnd_pnp_detect(struct pnp_card_link *pcard,
-			       const struct pnp_card_device_id *pid)
-{
-	static int idx;
-	struct pnp_dev *pnp_dev;
-	struct pnp_dev *mpu_dev;
-	struct snd_card *card;
-	struct snd_msnd *chip;
-	int ret;
+#अगर_घोषित CONFIG_PNP
+अटल पूर्णांक snd_msnd_pnp_detect(काष्ठा pnp_card_link *pcard,
+			       स्थिर काष्ठा pnp_card_device_id *pid)
+अणु
+	अटल पूर्णांक idx;
+	काष्ठा pnp_dev *pnp_dev;
+	काष्ठा pnp_dev *mpu_dev;
+	काष्ठा snd_card *card;
+	काष्ठा snd_msnd *chip;
+	पूर्णांक ret;
 
-	for ( ; idx < SNDRV_CARDS; idx++) {
-		if (has_isapnp(idx))
-			break;
-	}
-	if (idx >= SNDRV_CARDS)
-		return -ENODEV;
+	क्रम ( ; idx < SNDRV_CARDS; idx++) अणु
+		अगर (has_isapnp(idx))
+			अवरोध;
+	पूर्ण
+	अगर (idx >= SNDRV_CARDS)
+		वापस -ENODEV;
 
 	/*
-	 * Check that we still have room for another sound card ...
+	 * Check that we still have room क्रम another sound card ...
 	 */
-	pnp_dev = pnp_request_card_device(pcard, pid->devs[0].id, NULL);
-	if (!pnp_dev)
-		return -ENODEV;
+	pnp_dev = pnp_request_card_device(pcard, pid->devs[0].id, शून्य);
+	अगर (!pnp_dev)
+		वापस -ENODEV;
 
-	mpu_dev = pnp_request_card_device(pcard, pid->devs[1].id, NULL);
-	if (!mpu_dev)
-		return -ENODEV;
+	mpu_dev = pnp_request_card_device(pcard, pid->devs[1].id, शून्य);
+	अगर (!mpu_dev)
+		वापस -ENODEV;
 
-	if (!pnp_is_active(pnp_dev) && pnp_activate_dev(pnp_dev) < 0) {
-		printk(KERN_INFO "msnd_pinnacle: device is inactive\n");
-		return -EBUSY;
-	}
+	अगर (!pnp_is_active(pnp_dev) && pnp_activate_dev(pnp_dev) < 0) अणु
+		prपूर्णांकk(KERN_INFO "msnd_pinnacle: device is inactive\n");
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!pnp_is_active(mpu_dev) && pnp_activate_dev(mpu_dev) < 0) {
-		printk(KERN_INFO "msnd_pinnacle: MPU device is inactive\n");
-		return -EBUSY;
-	}
+	अगर (!pnp_is_active(mpu_dev) && pnp_activate_dev(mpu_dev) < 0) अणु
+		prपूर्णांकk(KERN_INFO "msnd_pinnacle: MPU device is inactive\n");
+		वापस -EBUSY;
+	पूर्ण
 
 	/*
 	 * Create a new ALSA sound card entry, in anticipation
@@ -1109,11 +1110,11 @@ static int snd_msnd_pnp_detect(struct pnp_card_link *pcard,
 	 */
 	ret = snd_card_new(&pcard->card->dev,
 			   index[idx], id[idx], THIS_MODULE,
-			   sizeof(struct snd_msnd), &card);
-	if (ret < 0)
-		return ret;
+			   माप(काष्ठा snd_msnd), &card);
+	अगर (ret < 0)
+		वापस ret;
 
-	chip = card->private_data;
+	chip = card->निजी_data;
 	chip->card = card;
 
 	/*
@@ -1125,105 +1126,105 @@ static int snd_msnd_pnp_detect(struct pnp_card_link *pcard,
 	mpu_io[idx] = pnp_port_start(mpu_dev, 0);
 	mpu_irq[idx] = pnp_irq(mpu_dev, 0);
 
-	set_default_audio_parameters(chip);
-#ifdef MSND_CLASSIC
+	set_शेष_audio_parameters(chip);
+#अगर_घोषित MSND_CLASSIC
 	chip->type = msndClassic;
-#else
+#अन्यथा
 	chip->type = msndPinnacle;
-#endif
+#पूर्ण_अगर
 	chip->io = io[idx];
 	chip->irq = irq[idx];
 	chip->base = mem[idx];
 
-	chip->calibrate_signal = calibrate_signal ? 1 : 0;
+	chip->calibrate_संकेत = calibrate_संकेत ? 1 : 0;
 	chip->recsrc = 0;
 	chip->dspq_data_buff = DSPQ_DATA_BUFF;
 	chip->dspq_buff_size = DSPQ_BUFF_SIZE;
-	if (write_ndelay[idx])
+	अगर (ग_लिखो_ndelay[idx])
 		clear_bit(F_DISABLE_WRITE_NDELAY, &chip->flags);
-	else
+	अन्यथा
 		set_bit(F_DISABLE_WRITE_NDELAY, &chip->flags);
-#ifndef MSND_CLASSIC
-	if (digital[idx])
+#अगर_अघोषित MSND_CLASSIC
+	अगर (digital[idx])
 		set_bit(F_HAVEDIGITAL, &chip->flags);
-#endif
+#पूर्ण_अगर
 	spin_lock_init(&chip->lock);
 	ret = snd_msnd_probe(card);
-	if (ret < 0) {
-		printk(KERN_ERR LOGNAME ": Probe failed\n");
-		goto _release_card;
-	}
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": Probe failed\n");
+		जाओ _release_card;
+	पूर्ण
 
 	ret = snd_msnd_attach(card);
-	if (ret < 0) {
-		printk(KERN_ERR LOGNAME ": Attach failed\n");
-		goto _release_card;
-	}
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR LOGNAME ": Attach failed\n");
+		जाओ _release_card;
+	पूर्ण
 
 	pnp_set_card_drvdata(pcard, card);
 	++idx;
-	return 0;
+	वापस 0;
 
 _release_card:
-	snd_card_free(card);
-	return ret;
-}
+	snd_card_मुक्त(card);
+	वापस ret;
+पूर्ण
 
-static void snd_msnd_pnp_remove(struct pnp_card_link *pcard)
-{
+अटल व्योम snd_msnd_pnp_हटाओ(काष्ठा pnp_card_link *pcard)
+अणु
 	snd_msnd_unload(pnp_get_card_drvdata(pcard));
-	pnp_set_card_drvdata(pcard, NULL);
-}
+	pnp_set_card_drvdata(pcard, शून्य);
+पूर्ण
 
-static int isa_registered;
-static int pnp_registered;
+अटल पूर्णांक isa_रेजिस्टरed;
+अटल पूर्णांक pnp_रेजिस्टरed;
 
-static const struct pnp_card_device_id msnd_pnpids[] = {
+अटल स्थिर काष्ठा pnp_card_device_id msnd_pnpids[] = अणु
 	/* Pinnacle PnP */
-	{ .id = "BVJ0440", .devs = { { "TBS0000" }, { "TBS0001" } } },
-	{ .id = "" }	/* end */
-};
+	अणु .id = "BVJ0440", .devs = अणु अणु "TBS0000" पूर्ण, अणु "TBS0001" पूर्ण पूर्ण पूर्ण,
+	अणु .id = "" पूर्ण	/* end */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pnp_card, msnd_pnpids);
 
-static struct pnp_card_driver msnd_pnpc_driver = {
+अटल काष्ठा pnp_card_driver msnd_pnpc_driver = अणु
 	.flags = PNP_DRIVER_RES_DO_NOT_CHANGE,
 	.name = "msnd_pinnacle",
 	.id_table = msnd_pnpids,
 	.probe = snd_msnd_pnp_detect,
-	.remove = snd_msnd_pnp_remove,
-};
-#endif /* CONFIG_PNP */
+	.हटाओ = snd_msnd_pnp_हटाओ,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PNP */
 
-static int __init snd_msnd_init(void)
-{
-	int err;
+अटल पूर्णांक __init snd_msnd_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = isa_register_driver(&snd_msnd_driver, SNDRV_CARDS);
-#ifdef CONFIG_PNP
-	if (!err)
-		isa_registered = 1;
+	err = isa_रेजिस्टर_driver(&snd_msnd_driver, SNDRV_CARDS);
+#अगर_घोषित CONFIG_PNP
+	अगर (!err)
+		isa_रेजिस्टरed = 1;
 
-	err = pnp_register_card_driver(&msnd_pnpc_driver);
-	if (!err)
-		pnp_registered = 1;
+	err = pnp_रेजिस्टर_card_driver(&msnd_pnpc_driver);
+	अगर (!err)
+		pnp_रेजिस्टरed = 1;
 
-	if (isa_registered)
+	अगर (isa_रेजिस्टरed)
 		err = 0;
-#endif
-	return err;
-}
+#पूर्ण_अगर
+	वापस err;
+पूर्ण
 
-static void __exit snd_msnd_exit(void)
-{
-#ifdef CONFIG_PNP
-	if (pnp_registered)
-		pnp_unregister_card_driver(&msnd_pnpc_driver);
-	if (isa_registered)
-#endif
-		isa_unregister_driver(&snd_msnd_driver);
-}
+अटल व्योम __निकास snd_msnd_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_PNP
+	अगर (pnp_रेजिस्टरed)
+		pnp_unरेजिस्टर_card_driver(&msnd_pnpc_driver);
+	अगर (isa_रेजिस्टरed)
+#पूर्ण_अगर
+		isa_unरेजिस्टर_driver(&snd_msnd_driver);
+पूर्ण
 
 module_init(snd_msnd_init);
-module_exit(snd_msnd_exit);
+module_निकास(snd_msnd_निकास);
 

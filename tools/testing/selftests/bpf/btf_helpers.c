@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#include <stdio.h>
-#include <errno.h>
-#include <bpf/btf.h>
-#include <bpf/libbpf.h>
-#include "test_progs.h"
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <bpf/btf.h>
+#समावेश <bpf/libbpf.h>
+#समावेश "test_progs.h"
 
-static const char * const btf_kind_str_mapping[] = {
+अटल स्थिर अक्षर * स्थिर btf_kind_str_mapping[] = अणु
 	[BTF_KIND_UNKN]		= "UNKNOWN",
 	[BTF_KIND_INT]		= "INT",
 	[BTF_KIND_PTR]		= "PTR",
@@ -24,240 +25,240 @@ static const char * const btf_kind_str_mapping[] = {
 	[BTF_KIND_VAR]		= "VAR",
 	[BTF_KIND_DATASEC]	= "DATASEC",
 	[BTF_KIND_FLOAT]	= "FLOAT",
-};
+पूर्ण;
 
-static const char *btf_kind_str(__u16 kind)
-{
-	if (kind > BTF_KIND_DATASEC)
-		return "UNKNOWN";
-	return btf_kind_str_mapping[kind];
-}
+अटल स्थिर अक्षर *btf_kind_str(__u16 kind)
+अणु
+	अगर (kind > BTF_KIND_DATASEC)
+		वापस "UNKNOWN";
+	वापस btf_kind_str_mapping[kind];
+पूर्ण
 
-static const char *btf_int_enc_str(__u8 encoding)
-{
-	switch (encoding) {
-	case 0:
-		return "(none)";
-	case BTF_INT_SIGNED:
-		return "SIGNED";
-	case BTF_INT_CHAR:
-		return "CHAR";
-	case BTF_INT_BOOL:
-		return "BOOL";
-	default:
-		return "UNKN";
-	}
-}
+अटल स्थिर अक्षर *btf_पूर्णांक_enc_str(__u8 encoding)
+अणु
+	चयन (encoding) अणु
+	हाल 0:
+		वापस "(none)";
+	हाल BTF_INT_SIGNED:
+		वापस "SIGNED";
+	हाल BTF_INT_CHAR:
+		वापस "CHAR";
+	हाल BTF_INT_BOOL:
+		वापस "BOOL";
+	शेष:
+		वापस "UNKN";
+	पूर्ण
+पूर्ण
 
-static const char *btf_var_linkage_str(__u32 linkage)
-{
-	switch (linkage) {
-	case BTF_VAR_STATIC:
-		return "static";
-	case BTF_VAR_GLOBAL_ALLOCATED:
-		return "global-alloc";
-	default:
-		return "(unknown)";
-	}
-}
+अटल स्थिर अक्षर *btf_var_linkage_str(__u32 linkage)
+अणु
+	चयन (linkage) अणु
+	हाल BTF_VAR_STATIC:
+		वापस "static";
+	हाल BTF_VAR_GLOBAL_ALLOCATED:
+		वापस "global-alloc";
+	शेष:
+		वापस "(unknown)";
+	पूर्ण
+पूर्ण
 
-static const char *btf_func_linkage_str(const struct btf_type *t)
-{
-	switch (btf_vlen(t)) {
-	case BTF_FUNC_STATIC:
-		return "static";
-	case BTF_FUNC_GLOBAL:
-		return "global";
-	case BTF_FUNC_EXTERN:
-		return "extern";
-	default:
-		return "(unknown)";
-	}
-}
+अटल स्थिर अक्षर *btf_func_linkage_str(स्थिर काष्ठा btf_type *t)
+अणु
+	चयन (btf_vlen(t)) अणु
+	हाल BTF_FUNC_STATIC:
+		वापस "static";
+	हाल BTF_FUNC_GLOBAL:
+		वापस "global";
+	हाल BTF_FUNC_EXTERN:
+		वापस "extern";
+	शेष:
+		वापस "(unknown)";
+	पूर्ण
+पूर्ण
 
-static const char *btf_str(const struct btf *btf, __u32 off)
-{
-	if (!off)
-		return "(anon)";
-	return btf__str_by_offset(btf, off) ?: "(invalid)";
-}
+अटल स्थिर अक्षर *btf_str(स्थिर काष्ठा btf *btf, __u32 off)
+अणु
+	अगर (!off)
+		वापस "(anon)";
+	वापस btf__str_by_offset(btf, off) ?: "(invalid)";
+पूर्ण
 
-int fprintf_btf_type_raw(FILE *out, const struct btf *btf, __u32 id)
-{
-	const struct btf_type *t;
-	int kind, i;
+पूर्णांक ख_लिखो_btf_type_raw(खाता *out, स्थिर काष्ठा btf *btf, __u32 id)
+अणु
+	स्थिर काष्ठा btf_type *t;
+	पूर्णांक kind, i;
 	__u32 vlen;
 
 	t = btf__type_by_id(btf, id);
-	if (!t)
-		return -EINVAL;
+	अगर (!t)
+		वापस -EINVAL;
 
 	vlen = btf_vlen(t);
 	kind = btf_kind(t);
 
-	fprintf(out, "[%u] %s '%s'", id, btf_kind_str(kind), btf_str(btf, t->name_off));
+	ख_लिखो(out, "[%u] %s '%s'", id, btf_kind_str(kind), btf_str(btf, t->name_off));
 
-	switch (kind) {
-	case BTF_KIND_INT:
-		fprintf(out, " size=%u bits_offset=%u nr_bits=%u encoding=%s",
-			t->size, btf_int_offset(t), btf_int_bits(t),
-			btf_int_enc_str(btf_int_encoding(t)));
-		break;
-	case BTF_KIND_PTR:
-	case BTF_KIND_CONST:
-	case BTF_KIND_VOLATILE:
-	case BTF_KIND_RESTRICT:
-	case BTF_KIND_TYPEDEF:
-		fprintf(out, " type_id=%u", t->type);
-		break;
-	case BTF_KIND_ARRAY: {
-		const struct btf_array *arr = btf_array(t);
+	चयन (kind) अणु
+	हाल BTF_KIND_INT:
+		ख_लिखो(out, " size=%u bits_offset=%u nr_bits=%u encoding=%s",
+			t->size, btf_पूर्णांक_offset(t), btf_पूर्णांक_bits(t),
+			btf_पूर्णांक_enc_str(btf_पूर्णांक_encoding(t)));
+		अवरोध;
+	हाल BTF_KIND_PTR:
+	हाल BTF_KIND_CONST:
+	हाल BTF_KIND_VOLATILE:
+	हाल BTF_KIND_RESTRICT:
+	हाल BTF_KIND_TYPEDEF:
+		ख_लिखो(out, " type_id=%u", t->type);
+		अवरोध;
+	हाल BTF_KIND_ARRAY: अणु
+		स्थिर काष्ठा btf_array *arr = btf_array(t);
 
-		fprintf(out, " type_id=%u index_type_id=%u nr_elems=%u",
+		ख_लिखो(out, " type_id=%u index_type_id=%u nr_elems=%u",
 			arr->type, arr->index_type, arr->nelems);
-		break;
-	}
-	case BTF_KIND_STRUCT:
-	case BTF_KIND_UNION: {
-		const struct btf_member *m = btf_members(t);
+		अवरोध;
+	पूर्ण
+	हाल BTF_KIND_STRUCT:
+	हाल BTF_KIND_UNION: अणु
+		स्थिर काष्ठा btf_member *m = btf_members(t);
 
-		fprintf(out, " size=%u vlen=%u", t->size, vlen);
-		for (i = 0; i < vlen; i++, m++) {
+		ख_लिखो(out, " size=%u vlen=%u", t->size, vlen);
+		क्रम (i = 0; i < vlen; i++, m++) अणु
 			__u32 bit_off, bit_sz;
 
 			bit_off = btf_member_bit_offset(t, i);
 			bit_sz = btf_member_bitfield_size(t, i);
-			fprintf(out, "\n\t'%s' type_id=%u bits_offset=%u",
+			ख_लिखो(out, "\n\t'%s' type_id=%u bits_offset=%u",
 				btf_str(btf, m->name_off), m->type, bit_off);
-			if (bit_sz)
-				fprintf(out, " bitfield_size=%u", bit_sz);
-		}
-		break;
-	}
-	case BTF_KIND_ENUM: {
-		const struct btf_enum *v = btf_enum(t);
+			अगर (bit_sz)
+				ख_लिखो(out, " bitfield_size=%u", bit_sz);
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल BTF_KIND_ENUM: अणु
+		स्थिर काष्ठा btf_क्रमागत *v = btf_क्रमागत(t);
 
-		fprintf(out, " size=%u vlen=%u", t->size, vlen);
-		for (i = 0; i < vlen; i++, v++) {
-			fprintf(out, "\n\t'%s' val=%u",
+		ख_लिखो(out, " size=%u vlen=%u", t->size, vlen);
+		क्रम (i = 0; i < vlen; i++, v++) अणु
+			ख_लिखो(out, "\n\t'%s' val=%u",
 				btf_str(btf, v->name_off), v->val);
-		}
-		break;
-	}
-	case BTF_KIND_FWD:
-		fprintf(out, " fwd_kind=%s", btf_kflag(t) ? "union" : "struct");
-		break;
-	case BTF_KIND_FUNC:
-		fprintf(out, " type_id=%u linkage=%s", t->type, btf_func_linkage_str(t));
-		break;
-	case BTF_KIND_FUNC_PROTO: {
-		const struct btf_param *p = btf_params(t);
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल BTF_KIND_FWD:
+		ख_लिखो(out, " fwd_kind=%s", btf_kflag(t) ? "union" : "struct");
+		अवरोध;
+	हाल BTF_KIND_FUNC:
+		ख_लिखो(out, " type_id=%u linkage=%s", t->type, btf_func_linkage_str(t));
+		अवरोध;
+	हाल BTF_KIND_FUNC_PROTO: अणु
+		स्थिर काष्ठा btf_param *p = btf_params(t);
 
-		fprintf(out, " ret_type_id=%u vlen=%u", t->type, vlen);
-		for (i = 0; i < vlen; i++, p++) {
-			fprintf(out, "\n\t'%s' type_id=%u",
+		ख_लिखो(out, " ret_type_id=%u vlen=%u", t->type, vlen);
+		क्रम (i = 0; i < vlen; i++, p++) अणु
+			ख_लिखो(out, "\n\t'%s' type_id=%u",
 				btf_str(btf, p->name_off), p->type);
-		}
-		break;
-	}
-	case BTF_KIND_VAR:
-		fprintf(out, " type_id=%u, linkage=%s",
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल BTF_KIND_VAR:
+		ख_लिखो(out, " type_id=%u, linkage=%s",
 			t->type, btf_var_linkage_str(btf_var(t)->linkage));
-		break;
-	case BTF_KIND_DATASEC: {
-		const struct btf_var_secinfo *v = btf_var_secinfos(t);
+		अवरोध;
+	हाल BTF_KIND_DATASEC: अणु
+		स्थिर काष्ठा btf_var_secinfo *v = btf_var_secinfos(t);
 
-		fprintf(out, " size=%u vlen=%u", t->size, vlen);
-		for (i = 0; i < vlen; i++, v++) {
-			fprintf(out, "\n\ttype_id=%u offset=%u size=%u",
+		ख_लिखो(out, " size=%u vlen=%u", t->size, vlen);
+		क्रम (i = 0; i < vlen; i++, v++) अणु
+			ख_लिखो(out, "\n\ttype_id=%u offset=%u size=%u",
 				v->type, v->offset, v->size);
-		}
-		break;
-	}
-	case BTF_KIND_FLOAT:
-		fprintf(out, " size=%u", t->size);
-		break;
-	default:
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल BTF_KIND_FLOAT:
+		ख_लिखो(out, " size=%u", t->size);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Print raw BTF type dump into a local buffer and return string pointer back.
+/* Prपूर्णांक raw BTF type dump पूर्णांकo a local buffer and वापस string poपूर्णांकer back.
  * Buffer *will* be overwritten by subsequent btf_type_raw_dump() calls
  */
-const char *btf_type_raw_dump(const struct btf *btf, int type_id)
-{
-	static char buf[16 * 1024];
-	FILE *buf_file;
+स्थिर अक्षर *btf_type_raw_dump(स्थिर काष्ठा btf *btf, पूर्णांक type_id)
+अणु
+	अटल अक्षर buf[16 * 1024];
+	खाता *buf_file;
 
-	buf_file = fmemopen(buf, sizeof(buf) - 1, "w");
-	if (!buf_file) {
-		fprintf(stderr, "Failed to open memstream: %d\n", errno);
-		return NULL;
-	}
+	buf_file = fmemखोलो(buf, माप(buf) - 1, "w");
+	अगर (!buf_file) अणु
+		ख_लिखो(मानक_त्रुटि, "Failed to open memstream: %d\n", त्रुटि_सं);
+		वापस शून्य;
+	पूर्ण
 
-	fprintf_btf_type_raw(buf_file, btf, type_id);
-	fflush(buf_file);
-	fclose(buf_file);
+	ख_लिखो_btf_type_raw(buf_file, btf, type_id);
+	ख_साफ(buf_file);
+	ख_बंद(buf_file);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-int btf_validate_raw(struct btf *btf, int nr_types, const char *exp_types[])
-{
-	int i;
+पूर्णांक btf_validate_raw(काष्ठा btf *btf, पूर्णांक nr_types, स्थिर अक्षर *exp_types[])
+अणु
+	पूर्णांक i;
 	bool ok = true;
 
 	ASSERT_EQ(btf__get_nr_types(btf), nr_types, "btf_nr_types");
 
-	for (i = 1; i <= nr_types; i++) {
-		if (!ASSERT_STREQ(btf_type_raw_dump(btf, i), exp_types[i - 1], "raw_dump"))
+	क्रम (i = 1; i <= nr_types; i++) अणु
+		अगर (!ASSERT_STREQ(btf_type_raw_dump(btf, i), exp_types[i - 1], "raw_dump"))
 			ok = false;
-	}
+	पूर्ण
 
-	return ok;
-}
+	वापस ok;
+पूर्ण
 
-static void btf_dump_printf(void *ctx, const char *fmt, va_list args)
-{
-	vfprintf(ctx, fmt, args);
-}
+अटल व्योम btf_dump_म_लिखो(व्योम *ctx, स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	भख_लिखो(ctx, fmt, args);
+पूर्ण
 
-/* Print BTF-to-C dump into a local buffer and return string pointer back.
+/* Prपूर्णांक BTF-to-C dump पूर्णांकo a local buffer and वापस string poपूर्णांकer back.
  * Buffer *will* be overwritten by subsequent btf_type_raw_dump() calls
  */
-const char *btf_type_c_dump(const struct btf *btf)
-{
-	static char buf[16 * 1024];
-	FILE *buf_file;
-	struct btf_dump *d = NULL;
-	struct btf_dump_opts opts = {};
-	int err, i;
+स्थिर अक्षर *btf_type_c_dump(स्थिर काष्ठा btf *btf)
+अणु
+	अटल अक्षर buf[16 * 1024];
+	खाता *buf_file;
+	काष्ठा btf_dump *d = शून्य;
+	काष्ठा btf_dump_opts opts = अणुपूर्ण;
+	पूर्णांक err, i;
 
-	buf_file = fmemopen(buf, sizeof(buf) - 1, "w");
-	if (!buf_file) {
-		fprintf(stderr, "Failed to open memstream: %d\n", errno);
-		return NULL;
-	}
+	buf_file = fmemखोलो(buf, माप(buf) - 1, "w");
+	अगर (!buf_file) अणु
+		ख_लिखो(मानक_त्रुटि, "Failed to open memstream: %d\n", त्रुटि_सं);
+		वापस शून्य;
+	पूर्ण
 
 	opts.ctx = buf_file;
-	d = btf_dump__new(btf, NULL, &opts, btf_dump_printf);
-	if (libbpf_get_error(d)) {
-		fprintf(stderr, "Failed to create btf_dump instance: %ld\n", libbpf_get_error(d));
-		return NULL;
-	}
+	d = btf_dump__new(btf, शून्य, &opts, btf_dump_म_लिखो);
+	अगर (libbpf_get_error(d)) अणु
+		ख_लिखो(मानक_त्रुटि, "Failed to create btf_dump instance: %ld\n", libbpf_get_error(d));
+		वापस शून्य;
+	पूर्ण
 
-	for (i = 1; i <= btf__get_nr_types(btf); i++) {
+	क्रम (i = 1; i <= btf__get_nr_types(btf); i++) अणु
 		err = btf_dump__dump_type(d, i);
-		if (err) {
-			fprintf(stderr, "Failed to dump type [%d]: %d\n", i, err);
-			return NULL;
-		}
-	}
+		अगर (err) अणु
+			ख_लिखो(मानक_त्रुटि, "Failed to dump type [%d]: %d\n", i, err);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	fflush(buf_file);
-	fclose(buf_file);
-	return buf;
-}
+	ख_साफ(buf_file);
+	ख_बंद(buf_file);
+	वापस buf;
+पूर्ण

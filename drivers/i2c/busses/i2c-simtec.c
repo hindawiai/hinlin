@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2005 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
@@ -6,114 +7,114 @@
  * Simtec Generic I2C Controller
 */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
 
-#include <linux/i2c.h>
-#include <linux/i2c-algo-bit.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-algo-bit.h>
 
-struct simtec_i2c_data {
-	struct resource		*ioarea;
-	void __iomem		*reg;
-	struct i2c_adapter	 adap;
-	struct i2c_algo_bit_data bit;
-};
+काष्ठा simtec_i2c_data अणु
+	काष्ठा resource		*ioarea;
+	व्योम __iomem		*reg;
+	काष्ठा i2c_adapter	 adap;
+	काष्ठा i2c_algo_bit_data bit;
+पूर्ण;
 
-#define CMD_SET_SDA	(1<<2)
-#define CMD_SET_SCL	(1<<3)
+#घोषणा CMD_SET_SDA	(1<<2)
+#घोषणा CMD_SET_SCL	(1<<3)
 
-#define STATE_SDA	(1<<0)
-#define STATE_SCL	(1<<1)
+#घोषणा STATE_SDA	(1<<0)
+#घोषणा STATE_SCL	(1<<1)
 
 /* i2c bit-bus functions */
 
-static void simtec_i2c_setsda(void *pw, int state)
-{
-	struct simtec_i2c_data *pd = pw;
-	writeb(CMD_SET_SDA | (state ? STATE_SDA : 0), pd->reg);
-}
+अटल व्योम simtec_i2c_setsda(व्योम *pw, पूर्णांक state)
+अणु
+	काष्ठा simtec_i2c_data *pd = pw;
+	ग_लिखोb(CMD_SET_SDA | (state ? STATE_SDA : 0), pd->reg);
+पूर्ण
 
-static void simtec_i2c_setscl(void *pw, int state)
-{
-	struct simtec_i2c_data *pd = pw;
-	writeb(CMD_SET_SCL | (state ? STATE_SCL : 0), pd->reg);
-}
+अटल व्योम simtec_i2c_setscl(व्योम *pw, पूर्णांक state)
+अणु
+	काष्ठा simtec_i2c_data *pd = pw;
+	ग_लिखोb(CMD_SET_SCL | (state ? STATE_SCL : 0), pd->reg);
+पूर्ण
 
-static int simtec_i2c_getsda(void *pw)
-{
-	struct simtec_i2c_data *pd = pw;
-	return readb(pd->reg) & STATE_SDA ? 1 : 0;
-}
+अटल पूर्णांक simtec_i2c_माला_लोda(व्योम *pw)
+अणु
+	काष्ठा simtec_i2c_data *pd = pw;
+	वापस पढ़ोb(pd->reg) & STATE_SDA ? 1 : 0;
+पूर्ण
 
-static int simtec_i2c_getscl(void *pw)
-{
-	struct simtec_i2c_data *pd = pw;
-	return readb(pd->reg) & STATE_SCL ? 1 : 0;
-}
+अटल पूर्णांक simtec_i2c_माला_लोcl(व्योम *pw)
+अणु
+	काष्ठा simtec_i2c_data *pd = pw;
+	वापस पढ़ोb(pd->reg) & STATE_SCL ? 1 : 0;
+पूर्ण
 
 /* device registration */
 
-static int simtec_i2c_probe(struct platform_device *dev)
-{
-	struct simtec_i2c_data *pd;
-	struct resource *res;
-	int size;
-	int ret;
+अटल पूर्णांक simtec_i2c_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा simtec_i2c_data *pd;
+	काष्ठा resource *res;
+	पूर्णांक size;
+	पूर्णांक ret;
 
-	pd = kzalloc(sizeof(struct simtec_i2c_data), GFP_KERNEL);
-	if (pd == NULL)
-		return -ENOMEM;
+	pd = kzalloc(माप(काष्ठा simtec_i2c_data), GFP_KERNEL);
+	अगर (pd == शून्य)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(dev, pd);
+	platक्रमm_set_drvdata(dev, pd);
 
-	res = platform_get_resource(dev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य) अणु
 		dev_err(&dev->dev, "cannot find IO resource\n");
 		ret = -ENOENT;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	size = resource_size(res);
 
 	pd->ioarea = request_mem_region(res->start, size, dev->name);
-	if (pd->ioarea == NULL) {
+	अगर (pd->ioarea == शून्य) अणु
 		dev_err(&dev->dev, "cannot request IO\n");
 		ret = -ENXIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	pd->reg = ioremap(res->start, size);
-	if (pd->reg == NULL) {
+	अगर (pd->reg == शून्य) अणु
 		dev_err(&dev->dev, "cannot map IO\n");
 		ret = -ENXIO;
-		goto err_res;
-	}
+		जाओ err_res;
+	पूर्ण
 
-	/* setup the private data */
+	/* setup the निजी data */
 
 	pd->adap.owner = THIS_MODULE;
 	pd->adap.algo_data = &pd->bit;
 	pd->adap.dev.parent = &dev->dev;
 
-	strlcpy(pd->adap.name, "Simtec I2C", sizeof(pd->adap.name));
+	strlcpy(pd->adap.name, "Simtec I2C", माप(pd->adap.name));
 
 	pd->bit.data = pd;
 	pd->bit.setsda = simtec_i2c_setsda;
 	pd->bit.setscl = simtec_i2c_setscl;
-	pd->bit.getsda = simtec_i2c_getsda;
-	pd->bit.getscl = simtec_i2c_getscl;
-	pd->bit.timeout = HZ;
+	pd->bit.माला_लोda = simtec_i2c_माला_लोda;
+	pd->bit.माला_लोcl = simtec_i2c_माला_लोcl;
+	pd->bit.समयout = HZ;
 	pd->bit.udelay = 20;
 
 	ret = i2c_bit_add_bus(&pd->adap);
-	if (ret)
-		goto err_all;
+	अगर (ret)
+		जाओ err_all;
 
-	return 0;
+	वापस 0;
 
  err_all:
 	iounmap(pd->reg);
@@ -122,34 +123,34 @@ static int simtec_i2c_probe(struct platform_device *dev)
 	release_mem_region(pd->ioarea->start, size);
 
  err:
-	kfree(pd);
-	return ret;
-}
+	kमुक्त(pd);
+	वापस ret;
+पूर्ण
 
-static int simtec_i2c_remove(struct platform_device *dev)
-{
-	struct simtec_i2c_data *pd = platform_get_drvdata(dev);
+अटल पूर्णांक simtec_i2c_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा simtec_i2c_data *pd = platक्रमm_get_drvdata(dev);
 
 	i2c_del_adapter(&pd->adap);
 
 	iounmap(pd->reg);
 	release_mem_region(pd->ioarea->start, resource_size(pd->ioarea));
-	kfree(pd);
+	kमुक्त(pd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* device driver */
 
-static struct platform_driver simtec_i2c_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver simtec_i2c_driver = अणु
+	.driver		= अणु
 		.name		= "simtec-i2c",
-	},
+	पूर्ण,
 	.probe		= simtec_i2c_probe,
-	.remove		= simtec_i2c_remove,
-};
+	.हटाओ		= simtec_i2c_हटाओ,
+पूर्ण;
 
-module_platform_driver(simtec_i2c_driver);
+module_platक्रमm_driver(simtec_i2c_driver);
 
 MODULE_DESCRIPTION("Simtec Generic I2C Bus driver");
 MODULE_AUTHOR("Ben Dooks <ben@simtec.co.uk>");

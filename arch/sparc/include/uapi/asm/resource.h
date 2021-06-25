@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * resource.h: Resource definitions.
  *
  * Copyright (C) 1995,1996 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#ifndef _SPARC_RESOURCE_H
-#define _SPARC_RESOURCE_H
+#अगर_अघोषित _SPARC_RESOURCE_H
+#घोषणा _SPARC_RESOURCE_H
 
 /*
- * These two resource limit IDs have a Sparc/Linux-specific ordering,
+ * These two resource limit IDs have a Sparc/Linux-specअगरic ordering,
  * the rest comes from the generic header:
  */
-#define RLIMIT_NOFILE		6	/* max number of open files */
-#define RLIMIT_NPROC		7	/* max number of processes */
+#घोषणा RLIMIT_NOखाता		6	/* max number of खोलो files */
+#घोषणा RLIMIT_NPROC		7	/* max number of processes */
 
-#if defined(__sparc__) && defined(__arch64__)
+#अगर defined(__sparc__) && defined(__arch64__)
 /* Use generic version */
-#else
+#अन्यथा
 /*
- * SuS says limits have to be unsigned.
- * We make this unsigned, but keep the
- * old value for compatibility:
+ * SuS says limits have to be अचिन्हित.
+ * We make this अचिन्हित, but keep the
+ * old value क्रम compatibility:
  */
-#define RLIM_INFINITY		0x7fffffff
-#endif
+#घोषणा RLIM_अनन्त		0x7fffffff
+#पूर्ण_अगर
 
-#include <asm-generic/resource.h>
+#समावेश <यंत्र-generic/resource.h>
 
-#endif /* !(_SPARC_RESOURCE_H) */
+#पूर्ण_अगर /* !(_SPARC_RESOURCE_H) */

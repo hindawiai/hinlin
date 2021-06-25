@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Abilis Systems Single DVB-T Receiver
  * Copyright (C) 2008 Pierrick Hascoet <pierrick.hascoet@abilis.com>
- * Copyright (C) 2010 Devin Heitmueller <dheitmueller@kernellabs.com>
+ * Copyright (C) 2010 Devin Heiपंचांगueller <dheiपंचांगueller@kernelद_असल.com>
  */
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/kref.h>
-#include <linux/uaccess.h>
-#include <linux/usb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/usb.h>
 
-/* header file for usb device driver*/
-#include "as102_drv.h"
-#include "as10x_cmd.h"
-#include "as102_fe.h"
-#include "as102_fw.h"
-#include <media/dvbdev.h>
+/* header file क्रम usb device driver*/
+#समावेश "as102_drv.h"
+#समावेश "as10x_cmd.h"
+#समावेश "as102_fe.h"
+#समावेश "as102_fw.h"
+#समावेश <media/dvbdev.h>
 
-int dual_tuner;
-module_param_named(dual_tuner, dual_tuner, int, 0644);
+पूर्णांक dual_tuner;
+module_param_named(dual_tuner, dual_tuner, पूर्णांक, 0644);
 MODULE_PARM_DESC(dual_tuner, "Activate Dual-Tuner config (default: off)");
 
-static int fw_upload = 1;
-module_param_named(fw_upload, fw_upload, int, 0644);
+अटल पूर्णांक fw_upload = 1;
+module_param_named(fw_upload, fw_upload, पूर्णांक, 0644);
 MODULE_PARM_DESC(fw_upload, "Turn on/off default FW upload (default: on)");
 
-static int pid_filtering;
-module_param_named(pid_filtering, pid_filtering, int, 0644);
+अटल पूर्णांक pid_filtering;
+module_param_named(pid_filtering, pid_filtering, पूर्णांक, 0644);
 MODULE_PARM_DESC(pid_filtering, "Activate HW PID filtering (default: off)");
 
-static int ts_auto_disable;
-module_param_named(ts_auto_disable, ts_auto_disable, int, 0644);
-MODULE_PARM_DESC(ts_auto_disable, "Stream Auto Enable on FW (default: off)");
+अटल पूर्णांक ts_स्वतः_disable;
+module_param_named(ts_स्वतः_disable, ts_स्वतः_disable, पूर्णांक, 0644);
+MODULE_PARM_DESC(ts_स्वतः_disable, "Stream Auto Enable on FW (default: off)");
 
-int elna_enable = 1;
-module_param_named(elna_enable, elna_enable, int, 0644);
+पूर्णांक elna_enable = 1;
+module_param_named(elna_enable, elna_enable, पूर्णांक, 0644);
 MODULE_PARM_DESC(elna_enable, "Activate eLNA (default: on)");
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-static void as102_stop_stream(struct as102_dev_t *dev)
-{
-	struct as10x_bus_adapter_t *bus_adap;
+अटल व्योम as102_stop_stream(काष्ठा as102_dev_t *dev)
+अणु
+	काष्ठा as10x_bus_adapter_t *bus_adap;
 
-	if (dev != NULL)
+	अगर (dev != शून्य)
 		bus_adap = &dev->bus_adap;
-	else
-		return;
+	अन्यथा
+		वापस;
 
-	if (bus_adap->ops->stop_stream != NULL)
+	अगर (bus_adap->ops->stop_stream != शून्य)
 		bus_adap->ops->stop_stream(dev);
 
-	if (ts_auto_disable) {
-		if (mutex_lock_interruptible(&dev->bus_adap.lock))
-			return;
+	अगर (ts_स्वतः_disable) अणु
+		अगर (mutex_lock_पूर्णांकerruptible(&dev->bus_adap.lock))
+			वापस;
 
-		if (as10x_cmd_stop_streaming(bus_adap) < 0)
+		अगर (as10x_cmd_stop_streaming(bus_adap) < 0)
 			dev_dbg(&dev->bus_adap.usb_dev->dev,
 				"as10x_cmd_stop_streaming failed\n");
 
 		mutex_unlock(&dev->bus_adap.lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int as102_start_stream(struct as102_dev_t *dev)
-{
-	struct as10x_bus_adapter_t *bus_adap;
-	int ret = -EFAULT;
+अटल पूर्णांक as102_start_stream(काष्ठा as102_dev_t *dev)
+अणु
+	काष्ठा as10x_bus_adapter_t *bus_adap;
+	पूर्णांक ret = -EFAULT;
 
-	if (dev != NULL)
+	अगर (dev != शून्य)
 		bus_adap = &dev->bus_adap;
-	else
-		return ret;
+	अन्यथा
+		वापस ret;
 
-	if (bus_adap->ops->start_stream != NULL)
+	अगर (bus_adap->ops->start_stream != शून्य)
 		ret = bus_adap->ops->start_stream(dev);
 
-	if (ts_auto_disable) {
-		if (mutex_lock_interruptible(&dev->bus_adap.lock))
-			return -EFAULT;
+	अगर (ts_स्वतः_disable) अणु
+		अगर (mutex_lock_पूर्णांकerruptible(&dev->bus_adap.lock))
+			वापस -EFAULT;
 
 		ret = as10x_cmd_start_streaming(bus_adap);
 
 		mutex_unlock(&dev->bus_adap.lock);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int as10x_pid_filter(struct as102_dev_t *dev,
-			    int index, u16 pid, int onoff) {
+अटल पूर्णांक as10x_pid_filter(काष्ठा as102_dev_t *dev,
+			    पूर्णांक index, u16 pid, पूर्णांक onoff) अणु
 
-	struct as10x_bus_adapter_t *bus_adap = &dev->bus_adap;
-	int ret = -EFAULT;
+	काष्ठा as10x_bus_adapter_t *bus_adap = &dev->bus_adap;
+	पूर्णांक ret = -EFAULT;
 
-	if (mutex_lock_interruptible(&dev->bus_adap.lock)) {
+	अगर (mutex_lock_पूर्णांकerruptible(&dev->bus_adap.lock)) अणु
 		dev_dbg(&dev->bus_adap.usb_dev->dev,
 			"amutex_lock_interruptible(lock) failed !\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	switch (onoff) {
-	case 0:
-		ret = as10x_cmd_del_PID_filter(bus_adap, (uint16_t) pid);
+	चयन (onoff) अणु
+	हाल 0:
+		ret = as10x_cmd_del_PID_filter(bus_adap, (uपूर्णांक16_t) pid);
 		dev_dbg(&dev->bus_adap.usb_dev->dev,
 			"DEL_PID_FILTER([%02d] 0x%04x) ret = %d\n",
 			index, pid, ret);
-		break;
-	case 1:
-	{
-		struct as10x_ts_filter filter;
+		अवरोध;
+	हाल 1:
+	अणु
+		काष्ठा as10x_ts_filter filter;
 
 		filter.type = TS_PID_TYPE_TS;
 		filter.idx = 0xFF;
@@ -122,179 +123,179 @@ static int as10x_pid_filter(struct as102_dev_t *dev,
 		dev_dbg(&dev->bus_adap.usb_dev->dev,
 			"ADD_PID_FILTER([%02d -> %02d], 0x%04x) ret = %d\n",
 			index, filter.idx, filter.pid, ret);
-		break;
-	}
-	}
+		अवरोध;
+	पूर्ण
+	पूर्ण
 
 	mutex_unlock(&dev->bus_adap.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int as102_dvb_dmx_start_feed(struct dvb_demux_feed *dvbdmxfeed)
-{
-	int ret = 0;
-	struct dvb_demux *demux = dvbdmxfeed->demux;
-	struct as102_dev_t *as102_dev = demux->priv;
+अटल पूर्णांक as102_dvb_dmx_start_feed(काष्ठा dvb_demux_feed *dvbdmxfeed)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा dvb_demux *demux = dvbdmxfeed->demux;
+	काष्ठा as102_dev_t *as102_dev = demux->priv;
 
-	if (mutex_lock_interruptible(&as102_dev->sem))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&as102_dev->sem))
+		वापस -ERESTARTSYS;
 
-	if (pid_filtering)
+	अगर (pid_filtering)
 		as10x_pid_filter(as102_dev, dvbdmxfeed->index,
 				 dvbdmxfeed->pid, 1);
 
-	if (as102_dev->streaming++ == 0)
+	अगर (as102_dev->streaming++ == 0)
 		ret = as102_start_stream(as102_dev);
 
 	mutex_unlock(&as102_dev->sem);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int as102_dvb_dmx_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
-{
-	struct dvb_demux *demux = dvbdmxfeed->demux;
-	struct as102_dev_t *as102_dev = demux->priv;
+अटल पूर्णांक as102_dvb_dmx_stop_feed(काष्ठा dvb_demux_feed *dvbdmxfeed)
+अणु
+	काष्ठा dvb_demux *demux = dvbdmxfeed->demux;
+	काष्ठा as102_dev_t *as102_dev = demux->priv;
 
-	if (mutex_lock_interruptible(&as102_dev->sem))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&as102_dev->sem))
+		वापस -ERESTARTSYS;
 
-	if (--as102_dev->streaming == 0)
+	अगर (--as102_dev->streaming == 0)
 		as102_stop_stream(as102_dev);
 
-	if (pid_filtering)
+	अगर (pid_filtering)
 		as10x_pid_filter(as102_dev, dvbdmxfeed->index,
 				 dvbdmxfeed->pid, 0);
 
 	mutex_unlock(&as102_dev->sem);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int as102_set_tune(void *priv, struct as10x_tune_args *tune_args)
-{
-	struct as10x_bus_adapter_t *bus_adap = priv;
-	int ret;
+अटल पूर्णांक as102_set_tune(व्योम *priv, काष्ठा as10x_tune_args *tune_args)
+अणु
+	काष्ठा as10x_bus_adapter_t *bus_adap = priv;
+	पूर्णांक ret;
 
 	/* Set frontend arguments */
-	if (mutex_lock_interruptible(&bus_adap->lock))
-		return -EBUSY;
+	अगर (mutex_lock_पूर्णांकerruptible(&bus_adap->lock))
+		वापस -EBUSY;
 
 	ret =  as10x_cmd_set_tune(bus_adap, tune_args);
-	if (ret != 0)
+	अगर (ret != 0)
 		dev_dbg(&bus_adap->usb_dev->dev,
 			"as10x_cmd_set_tune failed. (err = %d)\n", ret);
 
 	mutex_unlock(&bus_adap->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int as102_get_tps(void *priv, struct as10x_tps *tps)
-{
-	struct as10x_bus_adapter_t *bus_adap = priv;
-	int ret;
+अटल पूर्णांक as102_get_tps(व्योम *priv, काष्ठा as10x_tps *tps)
+अणु
+	काष्ठा as10x_bus_adapter_t *bus_adap = priv;
+	पूर्णांक ret;
 
-	if (mutex_lock_interruptible(&bus_adap->lock))
-		return -EBUSY;
+	अगर (mutex_lock_पूर्णांकerruptible(&bus_adap->lock))
+		वापस -EBUSY;
 
 	/* send abilis command: GET_TPS */
 	ret = as10x_cmd_get_tps(bus_adap, tps);
 
 	mutex_unlock(&bus_adap->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int as102_get_status(void *priv, struct as10x_tune_status *tstate)
-{
-	struct as10x_bus_adapter_t *bus_adap = priv;
-	int ret;
+अटल पूर्णांक as102_get_status(व्योम *priv, काष्ठा as10x_tune_status *tstate)
+अणु
+	काष्ठा as10x_bus_adapter_t *bus_adap = priv;
+	पूर्णांक ret;
 
-	if (mutex_lock_interruptible(&bus_adap->lock))
-		return -EBUSY;
+	अगर (mutex_lock_पूर्णांकerruptible(&bus_adap->lock))
+		वापस -EBUSY;
 
 	/* send abilis command: GET_TUNE_STATUS */
 	ret = as10x_cmd_get_tune_status(bus_adap, tstate);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_dbg(&bus_adap->usb_dev->dev,
 			"as10x_cmd_get_tune_status failed (err = %d)\n",
 			ret);
-	}
+	पूर्ण
 
 	mutex_unlock(&bus_adap->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int as102_get_stats(void *priv, struct as10x_demod_stats *demod_stats)
-{
-	struct as10x_bus_adapter_t *bus_adap = priv;
-	int ret;
+अटल पूर्णांक as102_get_stats(व्योम *priv, काष्ठा as10x_demod_stats *demod_stats)
+अणु
+	काष्ठा as10x_bus_adapter_t *bus_adap = priv;
+	पूर्णांक ret;
 
-	if (mutex_lock_interruptible(&bus_adap->lock))
-		return -EBUSY;
+	अगर (mutex_lock_पूर्णांकerruptible(&bus_adap->lock))
+		वापस -EBUSY;
 
 	/* send abilis command: GET_TUNE_STATUS */
 	ret = as10x_cmd_get_demod_stats(bus_adap, demod_stats);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_dbg(&bus_adap->usb_dev->dev,
 			"as10x_cmd_get_demod_stats failed (probably not tuned)\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&bus_adap->usb_dev->dev,
 			"demod status: fc: 0x%08x, bad fc: 0x%08x, bytes corrected: 0x%08x , MER: 0x%04x\n",
 			demod_stats->frame_count,
 			demod_stats->bad_frame_count,
 			demod_stats->bytes_fixed_by_rs,
 			demod_stats->mer);
-	}
+	पूर्ण
 	mutex_unlock(&bus_adap->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int as102_stream_ctrl(void *priv, int acquire, uint32_t elna_cfg)
-{
-	struct as10x_bus_adapter_t *bus_adap = priv;
-	int ret;
+अटल पूर्णांक as102_stream_ctrl(व्योम *priv, पूर्णांक acquire, uपूर्णांक32_t elna_cfg)
+अणु
+	काष्ठा as10x_bus_adapter_t *bus_adap = priv;
+	पूर्णांक ret;
 
-	if (mutex_lock_interruptible(&bus_adap->lock))
-		return -EBUSY;
+	अगर (mutex_lock_पूर्णांकerruptible(&bus_adap->lock))
+		वापस -EBUSY;
 
-	if (acquire) {
-		if (elna_enable)
+	अगर (acquire) अणु
+		अगर (elna_enable)
 			as10x_cmd_set_context(bus_adap,
 					      CONTEXT_LNA, elna_cfg);
 
 		ret = as10x_cmd_turn_on(bus_adap);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = as10x_cmd_turn_off(bus_adap);
-	}
+	पूर्ण
 
 	mutex_unlock(&bus_adap->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct as102_fe_ops as102_fe_ops = {
+अटल स्थिर काष्ठा as102_fe_ops as102_fe_ops = अणु
 	.set_tune = as102_set_tune,
 	.get_tps  = as102_get_tps,
 	.get_status = as102_get_status,
 	.get_stats = as102_get_stats,
 	.stream_ctrl = as102_stream_ctrl,
-};
+पूर्ण;
 
-int as102_dvb_register(struct as102_dev_t *as102_dev)
-{
-	struct device *dev = &as102_dev->bus_adap.usb_dev->dev;
-	int ret;
+पूर्णांक as102_dvb_रेजिस्टर(काष्ठा as102_dev_t *as102_dev)
+अणु
+	काष्ठा device *dev = &as102_dev->bus_adap.usb_dev->dev;
+	पूर्णांक ret;
 
-	ret = dvb_register_adapter(&as102_dev->dvb_adap,
+	ret = dvb_रेजिस्टर_adapter(&as102_dev->dvb_adap,
 			   as102_dev->name, THIS_MODULE,
 			   dev, adapter_nr);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: dvb_register_adapter() failed: %d\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	as102_dev->dvb_dmx.priv = as102_dev;
 	as102_dev->dvb_dmx.filternum = pid_filtering ? 16 : 256;
@@ -310,38 +311,38 @@ int as102_dvb_register(struct as102_dev_t *as102_dev)
 	as102_dev->dvb_dmxdev.capabilities = 0;
 
 	ret = dvb_dmx_init(&as102_dev->dvb_dmx);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: dvb_dmx_init() failed: %d\n", __func__, ret);
-		goto edmxinit;
-	}
+		जाओ edmxinit;
+	पूर्ण
 
 	ret = dvb_dmxdev_init(&as102_dev->dvb_dmxdev, &as102_dev->dvb_adap);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: dvb_dmxdev_init() failed: %d\n",
 			__func__, ret);
-		goto edmxdinit;
-	}
+		जाओ edmxdinit;
+	पूर्ण
 
 	/* Attach the frontend */
 	as102_dev->dvb_fe = dvb_attach(as102_attach, as102_dev->name,
 				       &as102_fe_ops,
 				       &as102_dev->bus_adap,
 				       as102_dev->elna_cfg);
-	if (!as102_dev->dvb_fe) {
+	अगर (!as102_dev->dvb_fe) अणु
 		ret = -ENODEV;
 		dev_err(dev, "%s: as102_attach() failed: %d",
 		    __func__, ret);
-		goto efereg;
-	}
+		जाओ efereg;
+	पूर्ण
 
-	ret =  dvb_register_frontend(&as102_dev->dvb_adap, as102_dev->dvb_fe);
-	if (ret < 0) {
+	ret =  dvb_रेजिस्टर_frontend(&as102_dev->dvb_adap, as102_dev->dvb_fe);
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s: as102_dvb_register_frontend() failed: %d",
 		    __func__, ret);
-		goto efereg;
-	}
+		जाओ efereg;
+	पूर्ण
 
-	/* init bus mutex for token locking */
+	/* init bus mutex क्रम token locking */
 	mutex_init(&as102_dev->bus_adap.lock);
 
 	/* init start / stop stream mutex */
@@ -351,39 +352,39 @@ int as102_dvb_register(struct as102_dev_t *as102_dev)
 	 * try to load as102 firmware. If firmware upload failed, we'll be
 	 * able to upload it later.
 	 */
-	if (fw_upload)
+	अगर (fw_upload)
 		try_then_request_module(as102_fw_upload(&as102_dev->bus_adap),
 				"firmware_class");
 
 	pr_info("Registered device %s", as102_dev->name);
-	return 0;
+	वापस 0;
 
 efereg:
 	dvb_dmxdev_release(&as102_dev->dvb_dmxdev);
 edmxdinit:
 	dvb_dmx_release(&as102_dev->dvb_dmx);
 edmxinit:
-	dvb_unregister_adapter(&as102_dev->dvb_adap);
-	return ret;
-}
+	dvb_unरेजिस्टर_adapter(&as102_dev->dvb_adap);
+	वापस ret;
+पूर्ण
 
-void as102_dvb_unregister(struct as102_dev_t *as102_dev)
-{
-	/* unregister as102 frontend */
-	dvb_unregister_frontend(as102_dev->dvb_fe);
+व्योम as102_dvb_unरेजिस्टर(काष्ठा as102_dev_t *as102_dev)
+अणु
+	/* unरेजिस्टर as102 frontend */
+	dvb_unरेजिस्टर_frontend(as102_dev->dvb_fe);
 
 	/* detach frontend */
 	dvb_frontend_detach(as102_dev->dvb_fe);
 
-	/* unregister demux device */
+	/* unरेजिस्टर demux device */
 	dvb_dmxdev_release(&as102_dev->dvb_dmxdev);
 	dvb_dmx_release(&as102_dev->dvb_dmx);
 
-	/* unregister dvb adapter */
-	dvb_unregister_adapter(&as102_dev->dvb_adap);
+	/* unरेजिस्टर dvb adapter */
+	dvb_unरेजिस्टर_adapter(&as102_dev->dvb_adap);
 
 	pr_info("Unregistered device %s", as102_dev->name);
-}
+पूर्ण
 
 module_usb_driver(as102_usb_driver);
 

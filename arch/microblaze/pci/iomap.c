@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * ppc64 "iomap" interface implementation.
+ * ppc64 "iomap" पूर्णांकerface implementation.
  *
  * (C) Copyright 2004 Linus Torvalds
  */
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/mm.h>
-#include <linux/export.h>
-#include <linux/io.h>
-#include <asm/pci-bridge.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/export.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/pci-bridge.h>
 
-void pci_iounmap(struct pci_dev *dev, void __iomem *addr)
-{
-	if (isa_vaddr_is_ioport(addr))
-		return;
-	if (pcibios_vaddr_is_ioport(addr))
-		return;
+व्योम pci_iounmap(काष्ठा pci_dev *dev, व्योम __iomem *addr)
+अणु
+	अगर (isa_vaddr_is_ioport(addr))
+		वापस;
+	अगर (pcibios_vaddr_is_ioport(addr))
+		वापस;
 	iounmap(addr);
-}
+पूर्ण
 EXPORT_SYMBOL(pci_iounmap);

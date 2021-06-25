@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
@@ -6,103 +7,103 @@
  *
  * @Brief
  * This file contains the implementation of generic input mapper operations
- * for input mapper management.
+ * क्रम input mapper management.
  *
  * @Author	Liu Chun
  * @Date 	May 23 2008
  */
 
-#include "ctimap.h"
-#include <linux/slab.h>
+#समावेश "ctimap.h"
+#समावेश <linux/slab.h>
 
-int input_mapper_add(struct list_head *mappers, struct imapper *entry,
-		     int (*map_op)(void *, struct imapper *), void *data)
-{
-	struct list_head *pos, *pre, *head;
-	struct imapper *pre_ent, *pos_ent;
+पूर्णांक input_mapper_add(काष्ठा list_head *mappers, काष्ठा imapper *entry,
+		     पूर्णांक (*map_op)(व्योम *, काष्ठा imapper *), व्योम *data)
+अणु
+	काष्ठा list_head *pos, *pre, *head;
+	काष्ठा imapper *pre_ent, *pos_ent;
 
 	head = mappers;
 
-	if (list_empty(head)) {
+	अगर (list_empty(head)) अणु
 		entry->next = entry->addr;
 		map_op(data, entry);
 		list_add(&entry->list, head);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	list_for_each(pos, head) {
-		pos_ent = list_entry(pos, struct imapper, list);
-		if (pos_ent->slot > entry->slot) {
+	list_क्रम_each(pos, head) अणु
+		pos_ent = list_entry(pos, काष्ठा imapper, list);
+		अगर (pos_ent->slot > entry->slot) अणु
 			/* found a position in list */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (pos != head) {
+	अगर (pos != head) अणु
 		pre = pos->prev;
-		if (pre == head)
+		अगर (pre == head)
 			pre = head->prev;
 
 		__list_add(&entry->list, pos->prev, pos);
-	} else {
+	पूर्ण अन्यथा अणु
 		pre = head->prev;
 		pos = head->next;
 		list_add_tail(&entry->list, head);
-	}
+	पूर्ण
 
-	pre_ent = list_entry(pre, struct imapper, list);
-	pos_ent = list_entry(pos, struct imapper, list);
+	pre_ent = list_entry(pre, काष्ठा imapper, list);
+	pos_ent = list_entry(pos, काष्ठा imapper, list);
 
 	entry->next = pos_ent->addr;
 	map_op(data, entry);
 	pre_ent->next = entry->addr;
 	map_op(data, pre_ent);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int input_mapper_delete(struct list_head *mappers, struct imapper *entry,
-		     int (*map_op)(void *, struct imapper *), void *data)
-{
-	struct list_head *next, *pre, *head;
-	struct imapper *pre_ent, *next_ent;
+पूर्णांक input_mapper_delete(काष्ठा list_head *mappers, काष्ठा imapper *entry,
+		     पूर्णांक (*map_op)(व्योम *, काष्ठा imapper *), व्योम *data)
+अणु
+	काष्ठा list_head *next, *pre, *head;
+	काष्ठा imapper *pre_ent, *next_ent;
 
 	head = mappers;
 
-	if (list_empty(head))
-		return 0;
+	अगर (list_empty(head))
+		वापस 0;
 
 	pre = (entry->list.prev == head) ? head->prev : entry->list.prev;
 	next = (entry->list.next == head) ? head->next : entry->list.next;
 
-	if (pre == &entry->list) {
+	अगर (pre == &entry->list) अणु
 		/* entry is the only one node in mappers list */
 		entry->next = entry->addr = entry->user = entry->slot = 0;
 		map_op(data, entry);
 		list_del(&entry->list);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	pre_ent = list_entry(pre, struct imapper, list);
-	next_ent = list_entry(next, struct imapper, list);
+	pre_ent = list_entry(pre, काष्ठा imapper, list);
+	next_ent = list_entry(next, काष्ठा imapper, list);
 
 	pre_ent->next = next_ent->addr;
 	map_op(data, pre_ent);
 	list_del(&entry->list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void free_input_mapper_list(struct list_head *head)
-{
-	struct imapper *entry;
-	struct list_head *pos;
+व्योम मुक्त_input_mapper_list(काष्ठा list_head *head)
+अणु
+	काष्ठा imapper *entry;
+	काष्ठा list_head *pos;
 
-	while (!list_empty(head)) {
+	जबतक (!list_empty(head)) अणु
 		pos = head->next;
 		list_del(pos);
-		entry = list_entry(pos, struct imapper, list);
-		kfree(entry);
-	}
-}
+		entry = list_entry(pos, काष्ठा imapper, list);
+		kमुक्त(entry);
+	पूर्ण
+पूर्ण
 

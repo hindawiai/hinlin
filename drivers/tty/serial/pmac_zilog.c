@@ -1,125 +1,126 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for PowerMac Z85c30 based ESCC cell found in the
+ * Driver क्रम PowerMac Z85c30 based ESCC cell found in the
  * "macio" ASICs of various PowerMac models
  * 
  * Copyright (C) 2003 Ben. Herrenschmidt (benh@kernel.crashing.org)
  *
- * Derived from drivers/macintosh/macserial.c by Paul Mackerras
+ * Derived from drivers/macपूर्णांकosh/macserial.c by Paul Mackerras
  * and drivers/serial/sunzilog.c by David S. Miller
  *
  * Hrm... actually, I ripped most of sunzilog (Thanks David !) and
- * adapted special tweaks needed for us. I don't think it's worth
+ * adapted special tweaks needed क्रम us. I करोn't think it's worth
  * merging back those though. The DMA code still has to get in
- * and once done, I expect that driver to remain fairly stable in
- * the long term, unless we change the driver model again...
+ * and once करोne, I expect that driver to reमुख्य fairly stable in
+ * the दीर्घ term, unless we change the driver model again...
  *
- * 2004-08-06 Harald Welte <laforge@gnumonks.org>
- *	- Enable BREAK interrupt
- *	- Add support for sysreq
+ * 2004-08-06 Harald Welte <laक्रमge@gnumonks.org>
+ *	- Enable BREAK पूर्णांकerrupt
+ *	- Add support क्रम sysreq
  *
  * TODO:   - Add DMA support
- *         - Defer port shutdown to a few seconds after close
- *         - maybe put something right into uap->clk_divisor
+ *         - Defer port shutकरोwn to a few seconds after बंद
+ *         - maybe put something right पूर्णांकo uap->clk_भागisor
  */
 
-#undef DEBUG
-#undef DEBUG_HARD
-#undef USE_CTRL_O_SYSRQ
+#अघोषित DEBUG
+#अघोषित DEBUG_HARD
+#अघोषित USE_CTRL_O_SYSRQ
 
-#include <linux/module.h>
-#include <linux/tty.h>
+#समावेश <linux/module.h>
+#समावेश <linux/tty.h>
 
-#include <linux/tty_flip.h>
-#include <linux/major.h>
-#include <linux/string.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/console.h>
-#include <linux/adb.h>
-#include <linux/pmu.h>
-#include <linux/bitops.h>
-#include <linux/sysrq.h>
-#include <linux/mutex.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <asm/sections.h>
-#include <asm/io.h>
-#include <asm/irq.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/major.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/console.h>
+#समावेश <linux/adb.h>
+#समावेश <linux/pmu.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
 
-#ifdef CONFIG_PPC_PMAC
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <asm/pmac_feature.h>
-#include <asm/dbdma.h>
-#include <asm/macio.h>
-#else
-#include <linux/platform_device.h>
-#define of_machine_is_compatible(x) (0)
-#endif
+#अगर_घोषित CONFIG_PPC_PMAC
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/pmac_feature.h>
+#समावेश <यंत्र/dbdma.h>
+#समावेश <यंत्र/macपन.स>
+#अन्यथा
+#समावेश <linux/platक्रमm_device.h>
+#घोषणा of_machine_is_compatible(x) (0)
+#पूर्ण_अगर
 
-#include <linux/serial.h>
-#include <linux/serial_core.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
 
-#include "pmac_zilog.h"
+#समावेश "pmac_zilog.h"
 
 /* Not yet implemented */
-#undef HAS_DBDMA
+#अघोषित HAS_DBDMA
 
-static char version[] __initdata = "pmac_zilog: 0.6 (Benjamin Herrenschmidt <benh@kernel.crashing.org>)";
+अटल अक्षर version[] __initdata = "pmac_zilog: 0.6 (Benjamin Herrenschmidt <benh@kernel.crashing.org>)";
 MODULE_AUTHOR("Benjamin Herrenschmidt <benh@kernel.crashing.org>");
 MODULE_DESCRIPTION("Driver for the Mac and PowerMac serial ports.");
 MODULE_LICENSE("GPL");
 
-#ifdef CONFIG_SERIAL_PMACZILOG_TTYS
-#define PMACZILOG_MAJOR		TTY_MAJOR
-#define PMACZILOG_MINOR		64
-#define PMACZILOG_NAME		"ttyS"
-#else
-#define PMACZILOG_MAJOR		204
-#define PMACZILOG_MINOR		192
-#define PMACZILOG_NAME		"ttyPZ"
-#endif
+#अगर_घोषित CONFIG_SERIAL_PMACZILOG_TTYS
+#घोषणा PMACZILOG_MAJOR		TTY_MAJOR
+#घोषणा PMACZILOG_MINOR		64
+#घोषणा PMACZILOG_NAME		"ttyS"
+#अन्यथा
+#घोषणा PMACZILOG_MAJOR		204
+#घोषणा PMACZILOG_MINOR		192
+#घोषणा PMACZILOG_NAME		"ttyPZ"
+#पूर्ण_अगर
 
-#define pmz_debug(fmt, arg...)	pr_debug("ttyPZ%d: " fmt, uap->port.line, ## arg)
-#define pmz_error(fmt, arg...)	pr_err("ttyPZ%d: " fmt, uap->port.line, ## arg)
-#define pmz_info(fmt, arg...)	pr_info("ttyPZ%d: " fmt, uap->port.line, ## arg)
+#घोषणा pmz_debug(fmt, arg...)	pr_debug("ttyPZ%d: " fmt, uap->port.line, ## arg)
+#घोषणा pmz_error(fmt, arg...)	pr_err("ttyPZ%d: " fmt, uap->port.line, ## arg)
+#घोषणा pmz_info(fmt, arg...)	pr_info("ttyPZ%d: " fmt, uap->port.line, ## arg)
 
 /*
- * For the sake of early serial console, we can do a pre-probe
- * (optional) of the ports at rather early boot time.
+ * For the sake of early serial console, we can करो a pre-probe
+ * (optional) of the ports at rather early boot समय.
  */
-static struct uart_pmac_port	pmz_ports[MAX_ZS_PORTS];
-static int			pmz_ports_count;
+अटल काष्ठा uart_pmac_port	pmz_ports[MAX_ZS_PORTS];
+अटल पूर्णांक			pmz_ports_count;
 
-static struct uart_driver pmz_uart_reg = {
+अटल काष्ठा uart_driver pmz_uart_reg = अणु
 	.owner		=	THIS_MODULE,
 	.driver_name	=	PMACZILOG_NAME,
 	.dev_name	=	PMACZILOG_NAME,
 	.major		=	PMACZILOG_MAJOR,
 	.minor		=	PMACZILOG_MINOR,
-};
+पूर्ण;
 
 
 /* 
- * Load all registers to reprogram the port
+ * Load all रेजिस्टरs to reprogram the port
  * This function must only be called when the TX is not busy.  The UART
- * port lock must be held and local interrupts disabled.
+ * port lock must be held and local पूर्णांकerrupts disabled.
  */
-static void pmz_load_zsregs(struct uart_pmac_port *uap, u8 *regs)
-{
-	int i;
+अटल व्योम pmz_load_zsregs(काष्ठा uart_pmac_port *uap, u8 *regs)
+अणु
+	पूर्णांक i;
 
 	/* Let pending transmits finish.  */
-	for (i = 0; i < 1000; i++) {
-		unsigned char stat = read_zsreg(uap, R1);
-		if (stat & ALL_SNT)
-			break;
+	क्रम (i = 0; i < 1000; i++) अणु
+		अचिन्हित अक्षर stat = पढ़ो_zsreg(uap, R1);
+		अगर (stat & ALL_SNT)
+			अवरोध;
 		udelay(100);
-	}
+	पूर्ण
 
 	ZS_CLEARERR(uap);
 	zssync(uap);
@@ -127,316 +128,316 @@ static void pmz_load_zsregs(struct uart_pmac_port *uap, u8 *regs)
 	zssync(uap);
 	ZS_CLEARERR(uap);
 
-	/* Disable all interrupts.  */
-	write_zsreg(uap, R1,
+	/* Disable all पूर्णांकerrupts.  */
+	ग_लिखो_zsreg(uap, R1,
 		    regs[R1] & ~(RxINT_MASK | TxINT_ENAB | EXT_INT_ENAB));
 
-	/* Set parity, sync config, stop bits, and clock divisor.  */
-	write_zsreg(uap, R4, regs[R4]);
+	/* Set parity, sync config, stop bits, and घड़ी भागisor.  */
+	ग_लिखो_zsreg(uap, R4, regs[R4]);
 
 	/* Set misc. TX/RX control bits.  */
-	write_zsreg(uap, R10, regs[R10]);
+	ग_लिखो_zsreg(uap, R10, regs[R10]);
 
 	/* Set TX/RX controls sans the enable bits.  */
-	write_zsreg(uap, R3, regs[R3] & ~RxENABLE);
-	write_zsreg(uap, R5, regs[R5] & ~TxENABLE);
+	ग_लिखो_zsreg(uap, R3, regs[R3] & ~RxENABLE);
+	ग_लिखो_zsreg(uap, R5, regs[R5] & ~TxENABLE);
 
 	/* now set R7 "prime" on ESCC */
-	write_zsreg(uap, R15, regs[R15] | EN85C30);
-	write_zsreg(uap, R7, regs[R7P]);
+	ग_लिखो_zsreg(uap, R15, regs[R15] | EN85C30);
+	ग_लिखो_zsreg(uap, R7, regs[R7P]);
 
 	/* make sure we use R7 "non-prime" on ESCC */
-	write_zsreg(uap, R15, regs[R15] & ~EN85C30);
+	ग_लिखो_zsreg(uap, R15, regs[R15] & ~EN85C30);
 
 	/* Synchronous mode config.  */
-	write_zsreg(uap, R6, regs[R6]);
-	write_zsreg(uap, R7, regs[R7]);
+	ग_लिखो_zsreg(uap, R6, regs[R6]);
+	ग_लिखो_zsreg(uap, R7, regs[R7]);
 
 	/* Disable baud generator.  */
-	write_zsreg(uap, R14, regs[R14] & ~BRENAB);
+	ग_लिखो_zsreg(uap, R14, regs[R14] & ~BRENAB);
 
 	/* Clock mode control.  */
-	write_zsreg(uap, R11, regs[R11]);
+	ग_लिखो_zsreg(uap, R11, regs[R11]);
 
-	/* Lower and upper byte of baud rate generator divisor.  */
-	write_zsreg(uap, R12, regs[R12]);
-	write_zsreg(uap, R13, regs[R13]);
+	/* Lower and upper byte of baud rate generator भागisor.  */
+	ग_लिखो_zsreg(uap, R12, regs[R12]);
+	ग_लिखो_zsreg(uap, R13, regs[R13]);
 	
-	/* Now rewrite R14, with BRENAB (if set).  */
-	write_zsreg(uap, R14, regs[R14]);
+	/* Now reग_लिखो R14, with BRENAB (अगर set).  */
+	ग_लिखो_zsreg(uap, R14, regs[R14]);
 
-	/* Reset external status interrupts.  */
-	write_zsreg(uap, R0, RES_EXT_INT);
-	write_zsreg(uap, R0, RES_EXT_INT);
+	/* Reset बाह्यal status पूर्णांकerrupts.  */
+	ग_लिखो_zsreg(uap, R0, RES_EXT_INT);
+	ग_लिखो_zsreg(uap, R0, RES_EXT_INT);
 
-	/* Rewrite R3/R5, this time without enables masked.  */
-	write_zsreg(uap, R3, regs[R3]);
-	write_zsreg(uap, R5, regs[R5]);
+	/* Reग_लिखो R3/R5, this समय without enables masked.  */
+	ग_लिखो_zsreg(uap, R3, regs[R3]);
+	ग_लिखो_zsreg(uap, R5, regs[R5]);
 
-	/* Rewrite R1, this time without IRQ enabled masked.  */
-	write_zsreg(uap, R1, regs[R1]);
+	/* Reग_लिखो R1, this समय without IRQ enabled masked.  */
+	ग_लिखो_zsreg(uap, R1, regs[R1]);
 
-	/* Enable interrupts */
-	write_zsreg(uap, R9, regs[R9]);
-}
+	/* Enable पूर्णांकerrupts */
+	ग_लिखो_zsreg(uap, R9, regs[R9]);
+पूर्ण
 
 /* 
- * We do like sunzilog to avoid disrupting pending Tx
- * Reprogram the Zilog channel HW registers with the copies found in the
- * software state struct.  If the transmitter is busy, we defer this update
- * until the next TX complete interrupt.  Else, we do it right now.
+ * We करो like sunzilog to aव्योम disrupting pending Tx
+ * Reprogram the Zilog channel HW रेजिस्टरs with the copies found in the
+ * software state काष्ठा.  If the transmitter is busy, we defer this update
+ * until the next TX complete पूर्णांकerrupt.  Else, we करो it right now.
  *
- * The UART port lock must be held and local interrupts disabled.
+ * The UART port lock must be held and local पूर्णांकerrupts disabled.
  */
-static void pmz_maybe_update_regs(struct uart_pmac_port *uap)
-{
-	if (!ZS_REGS_HELD(uap)) {
-		if (ZS_TX_ACTIVE(uap)) {
+अटल व्योम pmz_maybe_update_regs(काष्ठा uart_pmac_port *uap)
+अणु
+	अगर (!ZS_REGS_HELD(uap)) अणु
+		अगर (ZS_TX_ACTIVE(uap)) अणु
 			uap->flags |= PMACZILOG_FLAG_REGS_HELD;
-		} else {
+		पूर्ण अन्यथा अणु
 			pmz_debug("pmz: maybe_update_regs: updating\n");
 			pmz_load_zsregs(uap, uap->curregs);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void pmz_interrupt_control(struct uart_pmac_port *uap, int enable)
-{
-	if (enable) {
+अटल व्योम pmz_पूर्णांकerrupt_control(काष्ठा uart_pmac_port *uap, पूर्णांक enable)
+अणु
+	अगर (enable) अणु
 		uap->curregs[1] |= INT_ALL_Rx | TxINT_ENAB;
-		if (!ZS_IS_EXTCLK(uap))
+		अगर (!ZS_IS_EXTCLK(uap))
 			uap->curregs[1] |= EXT_INT_ENAB;
-	} else {
+	पूर्ण अन्यथा अणु
 		uap->curregs[1] &= ~(EXT_INT_ENAB | TxINT_ENAB | RxINT_MASK);
-	}
-	write_zsreg(uap, R1, uap->curregs[1]);
-}
+	पूर्ण
+	ग_लिखो_zsreg(uap, R1, uap->curregs[1]);
+पूर्ण
 
-static bool pmz_receive_chars(struct uart_pmac_port *uap)
+अटल bool pmz_receive_अक्षरs(काष्ठा uart_pmac_port *uap)
 	__must_hold(&uap->port.lock)
-{
-	struct tty_port *port;
-	unsigned char ch, r1, drop, flag;
-	int loops = 0;
+अणु
+	काष्ठा tty_port *port;
+	अचिन्हित अक्षर ch, r1, drop, flag;
+	पूर्णांक loops = 0;
 
-	/* Sanity check, make sure the old bug is no longer happening */
-	if (uap->port.state == NULL) {
+	/* Sanity check, make sure the old bug is no दीर्घer happening */
+	अगर (uap->port.state == शून्य) अणु
 		WARN_ON(1);
-		(void)read_zsdata(uap);
-		return false;
-	}
+		(व्योम)पढ़ो_zsdata(uap);
+		वापस false;
+	पूर्ण
 	port = &uap->port.state->port;
 
-	while (1) {
+	जबतक (1) अणु
 		drop = 0;
 
-		r1 = read_zsreg(uap, R1);
-		ch = read_zsdata(uap);
+		r1 = पढ़ो_zsreg(uap, R1);
+		ch = पढ़ो_zsdata(uap);
 
-		if (r1 & (PAR_ERR | Rx_OVR | CRC_ERR)) {
-			write_zsreg(uap, R0, ERR_RES);
+		अगर (r1 & (PAR_ERR | Rx_OVR | CRC_ERR)) अणु
+			ग_लिखो_zsreg(uap, R0, ERR_RES);
 			zssync(uap);
-		}
+		पूर्ण
 
 		ch &= uap->parity_mask;
-		if (ch == 0 && uap->flags & PMACZILOG_FLAG_BREAK) {
+		अगर (ch == 0 && uap->flags & PMACZILOG_FLAG_BREAK) अणु
 			uap->flags &= ~PMACZILOG_FLAG_BREAK;
-		}
+		पूर्ण
 
-#if defined(CONFIG_MAGIC_SYSRQ) && defined(CONFIG_SERIAL_CORE_CONSOLE)
-#ifdef USE_CTRL_O_SYSRQ
+#अगर defined(CONFIG_MAGIC_SYSRQ) && defined(CONFIG_SERIAL_CORE_CONSOLE)
+#अगर_घोषित USE_CTRL_O_SYSRQ
 		/* Handle the SysRq ^O Hack */
-		if (ch == '\x0f') {
-			uap->port.sysrq = jiffies + HZ*5;
-			goto next_char;
-		}
-#endif /* USE_CTRL_O_SYSRQ */
-		if (uap->port.sysrq) {
-			int swallow;
+		अगर (ch == '\x0f') अणु
+			uap->port.sysrq = jअगरfies + HZ*5;
+			जाओ next_अक्षर;
+		पूर्ण
+#पूर्ण_अगर /* USE_CTRL_O_SYSRQ */
+		अगर (uap->port.sysrq) अणु
+			पूर्णांक swallow;
 			spin_unlock(&uap->port.lock);
-			swallow = uart_handle_sysrq_char(&uap->port, ch);
+			swallow = uart_handle_sysrq_अक्षर(&uap->port, ch);
 			spin_lock(&uap->port.lock);
-			if (swallow)
-				goto next_char;
-		}
-#endif /* CONFIG_MAGIC_SYSRQ && CONFIG_SERIAL_CORE_CONSOLE */
+			अगर (swallow)
+				जाओ next_अक्षर;
+		पूर्ण
+#पूर्ण_अगर /* CONFIG_MAGIC_SYSRQ && CONFIG_SERIAL_CORE_CONSOLE */
 
-		/* A real serial line, record the character and status.  */
-		if (drop)
-			goto next_char;
+		/* A real serial line, record the अक्षरacter and status.  */
+		अगर (drop)
+			जाओ next_अक्षर;
 
 		flag = TTY_NORMAL;
 		uap->port.icount.rx++;
 
-		if (r1 & (PAR_ERR | Rx_OVR | CRC_ERR | BRK_ABRT)) {
-			if (r1 & BRK_ABRT) {
+		अगर (r1 & (PAR_ERR | Rx_OVR | CRC_ERR | BRK_ABRT)) अणु
+			अगर (r1 & BRK_ABRT) अणु
 				pmz_debug("pmz: got break !\n");
 				r1 &= ~(PAR_ERR | CRC_ERR);
 				uap->port.icount.brk++;
-				if (uart_handle_break(&uap->port))
-					goto next_char;
-			}
-			else if (r1 & PAR_ERR)
+				अगर (uart_handle_अवरोध(&uap->port))
+					जाओ next_अक्षर;
+			पूर्ण
+			अन्यथा अगर (r1 & PAR_ERR)
 				uap->port.icount.parity++;
-			else if (r1 & CRC_ERR)
+			अन्यथा अगर (r1 & CRC_ERR)
 				uap->port.icount.frame++;
-			if (r1 & Rx_OVR)
+			अगर (r1 & Rx_OVR)
 				uap->port.icount.overrun++;
-			r1 &= uap->port.read_status_mask;
-			if (r1 & BRK_ABRT)
+			r1 &= uap->port.पढ़ो_status_mask;
+			अगर (r1 & BRK_ABRT)
 				flag = TTY_BREAK;
-			else if (r1 & PAR_ERR)
+			अन्यथा अगर (r1 & PAR_ERR)
 				flag = TTY_PARITY;
-			else if (r1 & CRC_ERR)
+			अन्यथा अगर (r1 & CRC_ERR)
 				flag = TTY_FRAME;
-		}
+		पूर्ण
 
-		if (uap->port.ignore_status_mask == 0xff ||
-		    (r1 & uap->port.ignore_status_mask) == 0) {
-			tty_insert_flip_char(port, ch, flag);
-		}
-		if (r1 & Rx_OVR)
-			tty_insert_flip_char(port, 0, TTY_OVERRUN);
-	next_char:
-		/* We can get stuck in an infinite loop getting char 0 when the
-		 * line is in a wrong HW state, we break that here.
+		अगर (uap->port.ignore_status_mask == 0xff ||
+		    (r1 & uap->port.ignore_status_mask) == 0) अणु
+			tty_insert_flip_अक्षर(port, ch, flag);
+		पूर्ण
+		अगर (r1 & Rx_OVR)
+			tty_insert_flip_अक्षर(port, 0, TTY_OVERRUN);
+	next_अक्षर:
+		/* We can get stuck in an infinite loop getting अक्षर 0 when the
+		 * line is in a wrong HW state, we अवरोध that here.
 		 * When that happens, I disable the receive side of the driver.
 		 * Note that what I've been experiencing is a real irq loop where
 		 * I'm getting flooded regardless of the actual port speed.
 		 * Something strange is going on with the HW
 		 */
-		if ((++loops) > 1000)
-			goto flood;
-		ch = read_zsreg(uap, R0);
-		if (!(ch & Rx_CH_AV))
-			break;
-	}
+		अगर ((++loops) > 1000)
+			जाओ flood;
+		ch = पढ़ो_zsreg(uap, R0);
+		अगर (!(ch & Rx_CH_AV))
+			अवरोध;
+	पूर्ण
 
-	return true;
+	वापस true;
  flood:
-	pmz_interrupt_control(uap, 0);
+	pmz_पूर्णांकerrupt_control(uap, 0);
 	pmz_error("pmz: rx irq flood !\n");
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void pmz_status_handle(struct uart_pmac_port *uap)
-{
-	unsigned char status;
+अटल व्योम pmz_status_handle(काष्ठा uart_pmac_port *uap)
+अणु
+	अचिन्हित अक्षर status;
 
-	status = read_zsreg(uap, R0);
-	write_zsreg(uap, R0, RES_EXT_INT);
+	status = पढ़ो_zsreg(uap, R0);
+	ग_लिखो_zsreg(uap, R0, RES_EXT_INT);
 	zssync(uap);
 
-	if (ZS_IS_OPEN(uap) && ZS_WANTS_MODEM_STATUS(uap)) {
-		if (status & SYNC_HUNT)
+	अगर (ZS_IS_OPEN(uap) && ZS_WANTS_MODEM_STATUS(uap)) अणु
+		अगर (status & SYNC_HUNT)
 			uap->port.icount.dsr++;
 
-		/* The Zilog just gives us an interrupt when DCD/CTS/etc. change.
-		 * But it does not tell us which bit has changed, we have to keep
+		/* The Zilog just gives us an पूर्णांकerrupt when DCD/CTS/etc. change.
+		 * But it करोes not tell us which bit has changed, we have to keep
 		 * track of this ourselves.
-		 * The CTS input is inverted for some reason.  -- paulus
+		 * The CTS input is inverted क्रम some reason.  -- paulus
 		 */
-		if ((status ^ uap->prev_status) & DCD)
+		अगर ((status ^ uap->prev_status) & DCD)
 			uart_handle_dcd_change(&uap->port,
 					       (status & DCD));
-		if ((status ^ uap->prev_status) & CTS)
+		अगर ((status ^ uap->prev_status) & CTS)
 			uart_handle_cts_change(&uap->port,
 					       !(status & CTS));
 
-		wake_up_interruptible(&uap->port.state->port.delta_msr_wait);
-	}
+		wake_up_पूर्णांकerruptible(&uap->port.state->port.delta_msr_रुको);
+	पूर्ण
 
-	if (status & BRK_ABRT)
+	अगर (status & BRK_ABRT)
 		uap->flags |= PMACZILOG_FLAG_BREAK;
 
 	uap->prev_status = status;
-}
+पूर्ण
 
-static void pmz_transmit_chars(struct uart_pmac_port *uap)
-{
-	struct circ_buf *xmit;
+अटल व्योम pmz_transmit_अक्षरs(काष्ठा uart_pmac_port *uap)
+अणु
+	काष्ठा circ_buf *xmit;
 
-	if (ZS_IS_CONS(uap)) {
-		unsigned char status = read_zsreg(uap, R0);
+	अगर (ZS_IS_CONS(uap)) अणु
+		अचिन्हित अक्षर status = पढ़ो_zsreg(uap, R0);
 
-		/* TX still busy?  Just wait for the next TX done interrupt.
+		/* TX still busy?  Just रुको क्रम the next TX करोne पूर्णांकerrupt.
 		 *
-		 * It can occur because of how we do serial console writes.  It would
-		 * be nice to transmit console writes just like we normally would for
-		 * a TTY line. (ie. buffered and TX interrupt driven).  That is not
-		 * easy because console writes cannot sleep.  One solution might be
-		 * to poll on enough port->xmit space becoming free.  -DaveM
+		 * It can occur because of how we करो serial console ग_लिखोs.  It would
+		 * be nice to transmit console ग_लिखोs just like we normally would क्रम
+		 * a TTY line. (ie. buffered and TX पूर्णांकerrupt driven).  That is not
+		 * easy because console ग_लिखोs cannot sleep.  One solution might be
+		 * to poll on enough port->xmit space becoming मुक्त.  -DaveM
 		 */
-		if (!(status & Tx_BUF_EMP))
-			return;
-	}
+		अगर (!(status & Tx_BUF_EMP))
+			वापस;
+	पूर्ण
 
 	uap->flags &= ~PMACZILOG_FLAG_TX_ACTIVE;
 
-	if (ZS_REGS_HELD(uap)) {
+	अगर (ZS_REGS_HELD(uap)) अणु
 		pmz_load_zsregs(uap, uap->curregs);
 		uap->flags &= ~PMACZILOG_FLAG_REGS_HELD;
-	}
+	पूर्ण
 
-	if (ZS_TX_STOPPED(uap)) {
+	अगर (ZS_TX_STOPPED(uap)) अणु
 		uap->flags &= ~PMACZILOG_FLAG_TX_STOPPED;
-		goto ack_tx_int;
-	}
+		जाओ ack_tx_पूर्णांक;
+	पूर्ण
 
-	/* Under some circumstances, we see interrupts reported for
-	 * a closed channel. The interrupt mask in R1 is clear, but
-	 * R3 still signals the interrupts and we see them when taking
-	 * an interrupt for the other channel (this could be a qemu
-	 * bug but since the ESCC doc doesn't specify precsiely whether
-	 * R3 interrup status bits are masked by R1 interrupt enable
+	/* Under some circumstances, we see पूर्णांकerrupts reported क्रम
+	 * a बंदd channel. The पूर्णांकerrupt mask in R1 is clear, but
+	 * R3 still संकेतs the पूर्णांकerrupts and we see them when taking
+	 * an पूर्णांकerrupt क्रम the other channel (this could be a qemu
+	 * bug but since the ESCC करोc करोesn't specअगरy precsiely whether
+	 * R3 पूर्णांकerrup status bits are masked by R1 पूर्णांकerrupt enable
 	 * bits, better safe than sorry). --BenH.
 	 */
-	if (!ZS_IS_OPEN(uap))
-		goto ack_tx_int;
+	अगर (!ZS_IS_OPEN(uap))
+		जाओ ack_tx_पूर्णांक;
 
-	if (uap->port.x_char) {
+	अगर (uap->port.x_अक्षर) अणु
 		uap->flags |= PMACZILOG_FLAG_TX_ACTIVE;
-		write_zsdata(uap, uap->port.x_char);
+		ग_लिखो_zsdata(uap, uap->port.x_अक्षर);
 		zssync(uap);
 		uap->port.icount.tx++;
-		uap->port.x_char = 0;
-		return;
-	}
+		uap->port.x_अक्षर = 0;
+		वापस;
+	पूर्ण
 
-	if (uap->port.state == NULL)
-		goto ack_tx_int;
+	अगर (uap->port.state == शून्य)
+		जाओ ack_tx_पूर्णांक;
 	xmit = &uap->port.state->xmit;
-	if (uart_circ_empty(xmit)) {
-		uart_write_wakeup(&uap->port);
-		goto ack_tx_int;
-	}
-	if (uart_tx_stopped(&uap->port))
-		goto ack_tx_int;
+	अगर (uart_circ_empty(xmit)) अणु
+		uart_ग_लिखो_wakeup(&uap->port);
+		जाओ ack_tx_पूर्णांक;
+	पूर्ण
+	अगर (uart_tx_stopped(&uap->port))
+		जाओ ack_tx_पूर्णांक;
 
 	uap->flags |= PMACZILOG_FLAG_TX_ACTIVE;
-	write_zsdata(uap, xmit->buf[xmit->tail]);
+	ग_लिखो_zsdata(uap, xmit->buf[xmit->tail]);
 	zssync(uap);
 
 	xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 	uap->port.icount.tx++;
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(&uap->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&uap->port);
 
-	return;
+	वापस;
 
-ack_tx_int:
-	write_zsreg(uap, R0, RES_Tx_P);
+ack_tx_पूर्णांक:
+	ग_लिखो_zsreg(uap, R0, RES_Tx_P);
 	zssync(uap);
-}
+पूर्ण
 
-/* Hrm... we register that twice, fixme later.... */
-static irqreturn_t pmz_interrupt(int irq, void *dev_id)
-{
-	struct uart_pmac_port *uap = dev_id;
-	struct uart_pmac_port *uap_a;
-	struct uart_pmac_port *uap_b;
-	int rc = IRQ_NONE;
+/* Hrm... we रेजिस्टर that twice, fixme later.... */
+अटल irqवापस_t pmz_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा uart_pmac_port *uap = dev_id;
+	काष्ठा uart_pmac_port *uap_a;
+	काष्ठा uart_pmac_port *uap_b;
+	पूर्णांक rc = IRQ_NONE;
 	bool push;
 	u8 r3;
 
@@ -444,323 +445,323 @@ static irqreturn_t pmz_interrupt(int irq, void *dev_id)
 	uap_b = uap_a->mate;
 
 	spin_lock(&uap_a->port.lock);
-	r3 = read_zsreg(uap_a, R3);
+	r3 = पढ़ो_zsreg(uap_a, R3);
 
-#ifdef DEBUG_HARD
+#अगर_घोषित DEBUG_HARD
 	pmz_debug("irq, r3: %x\n", r3);
-#endif
+#पूर्ण_अगर
 	/* Channel A */
 	push = false;
-	if (r3 & (CHAEXT | CHATxIP | CHARxIP)) {
-		if (!ZS_IS_OPEN(uap_a)) {
+	अगर (r3 & (CHAEXT | CHATxIP | CHARxIP)) अणु
+		अगर (!ZS_IS_OPEN(uap_a)) अणु
 			pmz_debug("ChanA interrupt while not open !\n");
-			goto skip_a;
-		}
-		write_zsreg(uap_a, R0, RES_H_IUS);
+			जाओ skip_a;
+		पूर्ण
+		ग_लिखो_zsreg(uap_a, R0, RES_H_IUS);
 		zssync(uap_a);		
-		if (r3 & CHAEXT)
+		अगर (r3 & CHAEXT)
 			pmz_status_handle(uap_a);
-		if (r3 & CHARxIP)
-			push = pmz_receive_chars(uap_a);
-		if (r3 & CHATxIP)
-			pmz_transmit_chars(uap_a);
+		अगर (r3 & CHARxIP)
+			push = pmz_receive_अक्षरs(uap_a);
+		अगर (r3 & CHATxIP)
+			pmz_transmit_अक्षरs(uap_a);
 		rc = IRQ_HANDLED;
-	}
+	पूर्ण
  skip_a:
 	spin_unlock(&uap_a->port.lock);
-	if (push)
+	अगर (push)
 		tty_flip_buffer_push(&uap->port.state->port);
 
-	if (!uap_b)
-		goto out;
+	अगर (!uap_b)
+		जाओ out;
 
 	spin_lock(&uap_b->port.lock);
 	push = false;
-	if (r3 & (CHBEXT | CHBTxIP | CHBRxIP)) {
-		if (!ZS_IS_OPEN(uap_b)) {
+	अगर (r3 & (CHBEXT | CHBTxIP | CHBRxIP)) अणु
+		अगर (!ZS_IS_OPEN(uap_b)) अणु
 			pmz_debug("ChanB interrupt while not open !\n");
-			goto skip_b;
-		}
-		write_zsreg(uap_b, R0, RES_H_IUS);
+			जाओ skip_b;
+		पूर्ण
+		ग_लिखो_zsreg(uap_b, R0, RES_H_IUS);
 		zssync(uap_b);
-		if (r3 & CHBEXT)
+		अगर (r3 & CHBEXT)
 			pmz_status_handle(uap_b);
-		if (r3 & CHBRxIP)
-			push = pmz_receive_chars(uap_b);
-		if (r3 & CHBTxIP)
-			pmz_transmit_chars(uap_b);
+		अगर (r3 & CHBRxIP)
+			push = pmz_receive_अक्षरs(uap_b);
+		अगर (r3 & CHBTxIP)
+			pmz_transmit_अक्षरs(uap_b);
 		rc = IRQ_HANDLED;
-	}
+	पूर्ण
  skip_b:
 	spin_unlock(&uap_b->port.lock);
-	if (push)
+	अगर (push)
 		tty_flip_buffer_push(&uap->port.state->port);
 
  out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Peek the status register, lock not held by caller
+ * Peek the status रेजिस्टर, lock not held by caller
  */
-static inline u8 pmz_peek_status(struct uart_pmac_port *uap)
-{
-	unsigned long flags;
+अटल अंतरभूत u8 pmz_peek_status(काष्ठा uart_pmac_port *uap)
+अणु
+	अचिन्हित दीर्घ flags;
 	u8 status;
 	
 	spin_lock_irqsave(&uap->port.lock, flags);
-	status = read_zsreg(uap, R0);
+	status = पढ़ो_zsreg(uap, R0);
 	spin_unlock_irqrestore(&uap->port.lock, flags);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* 
- * Check if transmitter is empty
+ * Check अगर transmitter is empty
  * The port lock is not held.
  */
-static unsigned int pmz_tx_empty(struct uart_port *port)
-{
-	unsigned char status;
+अटल अचिन्हित पूर्णांक pmz_tx_empty(काष्ठा uart_port *port)
+अणु
+	अचिन्हित अक्षर status;
 
 	status = pmz_peek_status(to_pmz(port));
-	if (status & Tx_BUF_EMP)
-		return TIOCSER_TEMT;
-	return 0;
-}
+	अगर (status & Tx_BUF_EMP)
+		वापस TIOCSER_TEMT;
+	वापस 0;
+पूर्ण
 
 /* 
  * Set Modem Control (RTS & DTR) bits
- * The port lock is held and interrupts are disabled.
- * Note: Shall we really filter out RTS on external ports or
+ * The port lock is held and पूर्णांकerrupts are disabled.
+ * Note: Shall we really filter out RTS on बाह्यal ports or
  * should that be dealt at higher level only ?
  */
-static void pmz_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
-	unsigned char set_bits, clear_bits;
+अटल व्योम pmz_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
+	अचिन्हित अक्षर set_bits, clear_bits;
 
-        /* Do nothing for irda for now... */
-	if (ZS_IS_IRDA(uap))
-		return;
+        /* Do nothing क्रम irda क्रम now... */
+	अगर (ZS_IS_IRDA(uap))
+		वापस;
 	/* We get called during boot with a port not up yet */
-	if (!(ZS_IS_OPEN(uap) || ZS_IS_CONS(uap)))
-		return;
+	अगर (!(ZS_IS_OPEN(uap) || ZS_IS_CONS(uap)))
+		वापस;
 
 	set_bits = clear_bits = 0;
 
-	if (ZS_IS_INTMODEM(uap)) {
-		if (mctrl & TIOCM_RTS)
+	अगर (ZS_IS_INTMODEM(uap)) अणु
+		अगर (mctrl & TIOCM_RTS)
 			set_bits |= RTS;
-		else
+		अन्यथा
 			clear_bits |= RTS;
-	}
-	if (mctrl & TIOCM_DTR)
+	पूर्ण
+	अगर (mctrl & TIOCM_DTR)
 		set_bits |= DTR;
-	else
+	अन्यथा
 		clear_bits |= DTR;
 
 	/* NOTE: Not subject to 'transmitter active' rule.  */ 
 	uap->curregs[R5] |= set_bits;
 	uap->curregs[R5] &= ~clear_bits;
 
-	write_zsreg(uap, R5, uap->curregs[R5]);
+	ग_लिखो_zsreg(uap, R5, uap->curregs[R5]);
 	pmz_debug("pmz_set_mctrl: set bits: %x, clear bits: %x -> %x\n",
 		  set_bits, clear_bits, uap->curregs[R5]);
 	zssync(uap);
-}
+पूर्ण
 
 /* 
  * Get Modem Control bits (only the input ones, the core will
  * or that with a cached value of the control ones)
- * The port lock is held and interrupts are disabled.
+ * The port lock is held and पूर्णांकerrupts are disabled.
  */
-static unsigned int pmz_get_mctrl(struct uart_port *port)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
-	unsigned char status;
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक pmz_get_mctrl(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
+	अचिन्हित अक्षर status;
+	अचिन्हित पूर्णांक ret;
 
-	status = read_zsreg(uap, R0);
+	status = पढ़ो_zsreg(uap, R0);
 
 	ret = 0;
-	if (status & DCD)
+	अगर (status & DCD)
 		ret |= TIOCM_CAR;
-	if (status & SYNC_HUNT)
+	अगर (status & SYNC_HUNT)
 		ret |= TIOCM_DSR;
-	if (!(status & CTS))
+	अगर (!(status & CTS))
 		ret |= TIOCM_CTS;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* 
- * Stop TX side. Dealt like sunzilog at next Tx interrupt,
- * though for DMA, we will have to do a bit more.
- * The port lock is held and interrupts are disabled.
+ * Stop TX side. Dealt like sunzilog at next Tx पूर्णांकerrupt,
+ * though क्रम DMA, we will have to करो a bit more.
+ * The port lock is held and पूर्णांकerrupts are disabled.
  */
-static void pmz_stop_tx(struct uart_port *port)
-{
+अटल व्योम pmz_stop_tx(काष्ठा uart_port *port)
+अणु
 	to_pmz(port)->flags |= PMACZILOG_FLAG_TX_STOPPED;
-}
+पूर्ण
 
 /* 
  * Kick the Tx side.
- * The port lock is held and interrupts are disabled.
+ * The port lock is held and पूर्णांकerrupts are disabled.
  */
-static void pmz_start_tx(struct uart_port *port)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
-	unsigned char status;
+अटल व्योम pmz_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
+	अचिन्हित अक्षर status;
 
 	pmz_debug("pmz: start_tx()\n");
 
 	uap->flags |= PMACZILOG_FLAG_TX_ACTIVE;
 	uap->flags &= ~PMACZILOG_FLAG_TX_STOPPED;
 
-	status = read_zsreg(uap, R0);
+	status = पढ़ो_zsreg(uap, R0);
 
-	/* TX busy?  Just wait for the TX done interrupt.  */
-	if (!(status & Tx_BUF_EMP))
-		return;
+	/* TX busy?  Just रुको क्रम the TX करोne पूर्णांकerrupt.  */
+	अगर (!(status & Tx_BUF_EMP))
+		वापस;
 
-	/* Send the first character to jump-start the TX done
+	/* Send the first अक्षरacter to jump-start the TX करोne
 	 * IRQ sending engine.
 	 */
-	if (port->x_char) {
-		write_zsdata(uap, port->x_char);
+	अगर (port->x_अक्षर) अणु
+		ग_लिखो_zsdata(uap, port->x_अक्षर);
 		zssync(uap);
 		port->icount.tx++;
-		port->x_char = 0;
-	} else {
-		struct circ_buf *xmit = &port->state->xmit;
+		port->x_अक्षर = 0;
+	पूर्ण अन्यथा अणु
+		काष्ठा circ_buf *xmit = &port->state->xmit;
 
-		if (uart_circ_empty(xmit))
-			goto out;
-		write_zsdata(uap, xmit->buf[xmit->tail]);
+		अगर (uart_circ_empty(xmit))
+			जाओ out;
+		ग_लिखो_zsdata(uap, xmit->buf[xmit->tail]);
 		zssync(uap);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
 
-		if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-			uart_write_wakeup(&uap->port);
-	}
+		अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+			uart_ग_लिखो_wakeup(&uap->port);
+	पूर्ण
  out:
 	pmz_debug("pmz: start_tx() done.\n");
-}
+पूर्ण
 
 /* 
  * Stop Rx side, basically disable emitting of
- * Rx interrupts on the port. We don't disable the rx
+ * Rx पूर्णांकerrupts on the port. We करोn't disable the rx
  * side of the chip proper though
  * The port lock is held.
  */
-static void pmz_stop_rx(struct uart_port *port)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
+अटल व्योम pmz_stop_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
 
 	pmz_debug("pmz: stop_rx()()\n");
 
-	/* Disable all RX interrupts.  */
+	/* Disable all RX पूर्णांकerrupts.  */
 	uap->curregs[R1] &= ~RxINT_MASK;
 	pmz_maybe_update_regs(uap);
 
 	pmz_debug("pmz: stop_rx() done.\n");
-}
+पूर्ण
 
 /* 
- * Enable modem status change interrupts
+ * Enable modem status change पूर्णांकerrupts
  * The port lock is held.
  */
-static void pmz_enable_ms(struct uart_port *port)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
-	unsigned char new_reg;
+अटल व्योम pmz_enable_ms(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
+	अचिन्हित अक्षर new_reg;
 
-	if (ZS_IS_IRDA(uap))
-		return;
+	अगर (ZS_IS_IRDA(uap))
+		वापस;
 	new_reg = uap->curregs[R15] | (DCDIE | SYNCIE | CTSIE);
-	if (new_reg != uap->curregs[R15]) {
+	अगर (new_reg != uap->curregs[R15]) अणु
 		uap->curregs[R15] = new_reg;
 
 		/* NOTE: Not subject to 'transmitter active' rule. */
-		write_zsreg(uap, R15, uap->curregs[R15]);
-	}
-}
+		ग_लिखो_zsreg(uap, R15, uap->curregs[R15]);
+	पूर्ण
+पूर्ण
 
 /* 
- * Control break state emission
+ * Control अवरोध state emission
  * The port lock is not held.
  */
-static void pmz_break_ctl(struct uart_port *port, int break_state)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
-	unsigned char set_bits, clear_bits, new_reg;
-	unsigned long flags;
+अटल व्योम pmz_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
+	अचिन्हित अक्षर set_bits, clear_bits, new_reg;
+	अचिन्हित दीर्घ flags;
 
 	set_bits = clear_bits = 0;
 
-	if (break_state)
+	अगर (अवरोध_state)
 		set_bits |= SND_BRK;
-	else
+	अन्यथा
 		clear_bits |= SND_BRK;
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	new_reg = (uap->curregs[R5] | set_bits) & ~clear_bits;
-	if (new_reg != uap->curregs[R5]) {
+	अगर (new_reg != uap->curregs[R5]) अणु
 		uap->curregs[R5] = new_reg;
-		write_zsreg(uap, R5, uap->curregs[R5]);
-	}
+		ग_लिखो_zsreg(uap, R5, uap->curregs[R5]);
+	पूर्ण
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-#ifdef CONFIG_PPC_PMAC
+#अगर_घोषित CONFIG_PPC_PMAC
 
 /*
- * Turn power on or off to the SCC and associated stuff
+ * Turn घातer on or off to the SCC and associated stuff
  * (port drivers, modem, IR port, etc.)
- * Returns the number of milliseconds we should wait before
+ * Returns the number of milliseconds we should रुको beक्रमe
  * trying to use the port.
  */
-static int pmz_set_scc_power(struct uart_pmac_port *uap, int state)
-{
-	int delay = 0;
-	int rc;
+अटल पूर्णांक pmz_set_scc_घातer(काष्ठा uart_pmac_port *uap, पूर्णांक state)
+अणु
+	पूर्णांक delay = 0;
+	पूर्णांक rc;
 
-	if (state) {
+	अगर (state) अणु
 		rc = pmac_call_feature(
 			PMAC_FTR_SCC_ENABLE, uap->node, uap->port_type, 1);
 		pmz_debug("port power on result: %d\n", rc);
-		if (ZS_IS_INTMODEM(uap)) {
+		अगर (ZS_IS_INTMODEM(uap)) अणु
 			rc = pmac_call_feature(
 				PMAC_FTR_MODEM_ENABLE, uap->node, 0, 1);
-			delay = 2500;	/* wait for 2.5s before using */
+			delay = 2500;	/* रुको क्रम 2.5s beक्रमe using */
 			pmz_debug("modem power result: %d\n", rc);
-		}
-	} else {
-		/* TODO: Make that depend on a timer, don't power down
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* TODO: Make that depend on a समयr, करोn't घातer करोwn
 		 * immediately
 		 */
-		if (ZS_IS_INTMODEM(uap)) {
+		अगर (ZS_IS_INTMODEM(uap)) अणु
 			rc = pmac_call_feature(
 				PMAC_FTR_MODEM_ENABLE, uap->node, 0, 0);
 			pmz_debug("port power off result: %d\n", rc);
-		}
+		पूर्ण
 		pmac_call_feature(PMAC_FTR_SCC_ENABLE, uap->node, uap->port_type, 0);
-	}
-	return delay;
-}
+	पूर्ण
+	वापस delay;
+पूर्ण
 
-#else
+#अन्यथा
 
-static int pmz_set_scc_power(struct uart_pmac_port *uap, int state)
-{
-	return 0;
-}
+अटल पूर्णांक pmz_set_scc_घातer(काष्ठा uart_pmac_port *uap, पूर्णांक state)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* !CONFIG_PPC_PMAC */
+#पूर्ण_अगर /* !CONFIG_PPC_PMAC */
 
 /*
  * FixZeroBug....Works around a bug in the SCC receiving channel.
@@ -774,401 +775,401 @@ static int pmz_set_scc_power(struct uart_pmac_port *uap, int state)
  *
  *	The SCC is initialized (hardware or software).
  *	A framing error is detected.
- *	The clocking option changes from synchronous or X1 asynchronous
- *		clocking to X16, X32, or X64 asynchronous clocking.
+ *	The घड़ीing option changes from synchronous or X1 asynchronous
+ *		घड़ीing to X16, X32, or X64 asynchronous घड़ीing.
  *	The decoding mode is changed among NRZ, NRZI, FM0, or FM1.
  *
  * This workaround attempts to recover from the lockup condition by placing
- * the SCC in synchronous loopback mode with a fast clock before programming
+ * the SCC in synchronous loopback mode with a fast घड़ी beक्रमe programming
  * any of the asynchronous modes.
  */
-static void pmz_fix_zero_bug_scc(struct uart_pmac_port *uap)
-{
-	write_zsreg(uap, 9, ZS_IS_CHANNEL_A(uap) ? CHRA : CHRB);
+अटल व्योम pmz_fix_zero_bug_scc(काष्ठा uart_pmac_port *uap)
+अणु
+	ग_लिखो_zsreg(uap, 9, ZS_IS_CHANNEL_A(uap) ? CHRA : CHRB);
 	zssync(uap);
 	udelay(10);
-	write_zsreg(uap, 9, (ZS_IS_CHANNEL_A(uap) ? CHRA : CHRB) | NV);
+	ग_लिखो_zsreg(uap, 9, (ZS_IS_CHANNEL_A(uap) ? CHRA : CHRB) | NV);
 	zssync(uap);
 
-	write_zsreg(uap, 4, X1CLK | MONSYNC);
-	write_zsreg(uap, 3, Rx8);
-	write_zsreg(uap, 5, Tx8 | RTS);
-	write_zsreg(uap, 9, NV);	/* Didn't we already do this? */
-	write_zsreg(uap, 11, RCBR | TCBR);
-	write_zsreg(uap, 12, 0);
-	write_zsreg(uap, 13, 0);
-	write_zsreg(uap, 14, (LOOPBAK | BRSRC));
-	write_zsreg(uap, 14, (LOOPBAK | BRSRC | BRENAB));
-	write_zsreg(uap, 3, Rx8 | RxENABLE);
-	write_zsreg(uap, 0, RES_EXT_INT);
-	write_zsreg(uap, 0, RES_EXT_INT);
-	write_zsreg(uap, 0, RES_EXT_INT);	/* to kill some time */
+	ग_लिखो_zsreg(uap, 4, X1CLK | MONSYNC);
+	ग_लिखो_zsreg(uap, 3, Rx8);
+	ग_लिखो_zsreg(uap, 5, Tx8 | RTS);
+	ग_लिखो_zsreg(uap, 9, NV);	/* Didn't we alपढ़ोy करो this? */
+	ग_लिखो_zsreg(uap, 11, RCBR | TCBR);
+	ग_लिखो_zsreg(uap, 12, 0);
+	ग_लिखो_zsreg(uap, 13, 0);
+	ग_लिखो_zsreg(uap, 14, (LOOPBAK | BRSRC));
+	ग_लिखो_zsreg(uap, 14, (LOOPBAK | BRSRC | BRENAB));
+	ग_लिखो_zsreg(uap, 3, Rx8 | RxENABLE);
+	ग_लिखो_zsreg(uap, 0, RES_EXT_INT);
+	ग_लिखो_zsreg(uap, 0, RES_EXT_INT);
+	ग_लिखो_zsreg(uap, 0, RES_EXT_INT);	/* to समाप्त some समय */
 
 	/* The channel should be OK now, but it is probably receiving
 	 * loopback garbage.
 	 * Switch to asynchronous mode, disable the receiver,
 	 * and discard everything in the receive buffer.
 	 */
-	write_zsreg(uap, 9, NV);
-	write_zsreg(uap, 4, X16CLK | SB_MASK);
-	write_zsreg(uap, 3, Rx8);
+	ग_लिखो_zsreg(uap, 9, NV);
+	ग_लिखो_zsreg(uap, 4, X16CLK | SB_MASK);
+	ग_लिखो_zsreg(uap, 3, Rx8);
 
-	while (read_zsreg(uap, 0) & Rx_CH_AV) {
-		(void)read_zsreg(uap, 8);
-		write_zsreg(uap, 0, RES_EXT_INT);
-		write_zsreg(uap, 0, ERR_RES);
-	}
-}
+	जबतक (पढ़ो_zsreg(uap, 0) & Rx_CH_AV) अणु
+		(व्योम)पढ़ो_zsreg(uap, 8);
+		ग_लिखो_zsreg(uap, 0, RES_EXT_INT);
+		ग_लिखो_zsreg(uap, 0, ERR_RES);
+	पूर्ण
+पूर्ण
 
 /*
- * Real startup routine, powers up the hardware and sets up
- * the SCC. Returns a delay in ms where you need to wait before
- * actually using the port, this is typically the internal modem
- * powerup delay. This routine expect the lock to be taken.
+ * Real startup routine, घातers up the hardware and sets up
+ * the SCC. Returns a delay in ms where you need to रुको beक्रमe
+ * actually using the port, this is typically the पूर्णांकernal modem
+ * घातerup delay. This routine expect the lock to be taken.
  */
-static int __pmz_startup(struct uart_pmac_port *uap)
-{
-	int pwr_delay = 0;
+अटल पूर्णांक __pmz_startup(काष्ठा uart_pmac_port *uap)
+अणु
+	पूर्णांक pwr_delay = 0;
 
-	memset(&uap->curregs, 0, sizeof(uap->curregs));
+	स_रखो(&uap->curregs, 0, माप(uap->curregs));
 
 	/* Power up the SCC & underlying hardware (modem/irda) */
-	pwr_delay = pmz_set_scc_power(uap, 1);
+	pwr_delay = pmz_set_scc_घातer(uap, 1);
 
 	/* Nice buggy HW ... */
 	pmz_fix_zero_bug_scc(uap);
 
 	/* Reset the channel */
 	uap->curregs[R9] = 0;
-	write_zsreg(uap, 9, ZS_IS_CHANNEL_A(uap) ? CHRA : CHRB);
+	ग_लिखो_zsreg(uap, 9, ZS_IS_CHANNEL_A(uap) ? CHRA : CHRB);
 	zssync(uap);
 	udelay(10);
-	write_zsreg(uap, 9, 0);
+	ग_लिखो_zsreg(uap, 9, 0);
 	zssync(uap);
 
-	/* Clear the interrupt registers */
-	write_zsreg(uap, R1, 0);
-	write_zsreg(uap, R0, ERR_RES);
-	write_zsreg(uap, R0, ERR_RES);
-	write_zsreg(uap, R0, RES_H_IUS);
-	write_zsreg(uap, R0, RES_H_IUS);
+	/* Clear the पूर्णांकerrupt रेजिस्टरs */
+	ग_लिखो_zsreg(uap, R1, 0);
+	ग_लिखो_zsreg(uap, R0, ERR_RES);
+	ग_लिखो_zsreg(uap, R0, ERR_RES);
+	ग_लिखो_zsreg(uap, R0, RES_H_IUS);
+	ग_लिखो_zsreg(uap, R0, RES_H_IUS);
 
 	/* Setup some valid baud rate */
 	uap->curregs[R4] = X16CLK | SB1;
 	uap->curregs[R3] = Rx8;
 	uap->curregs[R5] = Tx8 | RTS;
-	if (!ZS_IS_IRDA(uap))
+	अगर (!ZS_IS_IRDA(uap))
 		uap->curregs[R5] |= DTR;
 	uap->curregs[R12] = 0;
 	uap->curregs[R13] = 0;
 	uap->curregs[R14] = BRENAB;
 
-	/* Clear handshaking, enable BREAK interrupts */
+	/* Clear handshaking, enable BREAK पूर्णांकerrupts */
 	uap->curregs[R15] = BRKIE;
 
-	/* Master interrupt enable */
+	/* Master पूर्णांकerrupt enable */
 	uap->curregs[R9] |= NV | MIE;
 
 	pmz_load_zsregs(uap, uap->curregs);
 
 	/* Enable receiver and transmitter.  */
-	write_zsreg(uap, R3, uap->curregs[R3] |= RxENABLE);
-	write_zsreg(uap, R5, uap->curregs[R5] |= TxENABLE);
+	ग_लिखो_zsreg(uap, R3, uap->curregs[R3] |= RxENABLE);
+	ग_लिखो_zsreg(uap, R5, uap->curregs[R5] |= TxENABLE);
 
-	/* Remember status for DCD/CTS changes */
-	uap->prev_status = read_zsreg(uap, R0);
+	/* Remember status क्रम DCD/CTS changes */
+	uap->prev_status = पढ़ो_zsreg(uap, R0);
 
-	return pwr_delay;
-}
+	वापस pwr_delay;
+पूर्ण
 
-static void pmz_irda_reset(struct uart_pmac_port *uap)
-{
-	unsigned long flags;
+अटल व्योम pmz_irda_reset(काष्ठा uart_pmac_port *uap)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&uap->port.lock, flags);
 	uap->curregs[R5] |= DTR;
-	write_zsreg(uap, R5, uap->curregs[R5]);
+	ग_लिखो_zsreg(uap, R5, uap->curregs[R5]);
 	zssync(uap);
 	spin_unlock_irqrestore(&uap->port.lock, flags);
 	msleep(110);
 
 	spin_lock_irqsave(&uap->port.lock, flags);
 	uap->curregs[R5] &= ~DTR;
-	write_zsreg(uap, R5, uap->curregs[R5]);
+	ग_लिखो_zsreg(uap, R5, uap->curregs[R5]);
 	zssync(uap);
 	spin_unlock_irqrestore(&uap->port.lock, flags);
 	msleep(10);
-}
+पूर्ण
 
 /*
  * This is the "normal" startup routine, using the above one
- * wrapped with the lock and doing a schedule delay
+ * wrapped with the lock and करोing a schedule delay
  */
-static int pmz_startup(struct uart_port *port)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
-	unsigned long flags;
-	int pwr_delay = 0;
+अटल पूर्णांक pmz_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक pwr_delay = 0;
 
 	pmz_debug("pmz: startup()\n");
 
 	uap->flags |= PMACZILOG_FLAG_IS_OPEN;
 
-	/* A console is never powered down. Else, power up and
+	/* A console is never घातered करोwn. Else, घातer up and
 	 * initialize the chip
 	 */
-	if (!ZS_IS_CONS(uap)) {
+	अगर (!ZS_IS_CONS(uap)) अणु
 		spin_lock_irqsave(&port->lock, flags);
 		pwr_delay = __pmz_startup(uap);
 		spin_unlock_irqrestore(&port->lock, flags);
-	}	
-	sprintf(uap->irq_name, PMACZILOG_NAME"%d", uap->port.line);
-	if (request_irq(uap->port.irq, pmz_interrupt, IRQF_SHARED,
-			uap->irq_name, uap)) {
+	पूर्ण	
+	प्र_लिखो(uap->irq_name, PMACZILOG_NAME"%d", uap->port.line);
+	अगर (request_irq(uap->port.irq, pmz_पूर्णांकerrupt, IRQF_SHARED,
+			uap->irq_name, uap)) अणु
 		pmz_error("Unable to register zs interrupt handler.\n");
-		pmz_set_scc_power(uap, 0);
-		return -ENXIO;
-	}
+		pmz_set_scc_घातer(uap, 0);
+		वापस -ENXIO;
+	पूर्ण
 
 	/* Right now, we deal with delay by blocking here, I'll be
 	 * smarter later on
 	 */
-	if (pwr_delay != 0) {
+	अगर (pwr_delay != 0) अणु
 		pmz_debug("pmz: delaying %d ms\n", pwr_delay);
 		msleep(pwr_delay);
-	}
+	पूर्ण
 
-	/* IrDA reset is done now */
-	if (ZS_IS_IRDA(uap))
+	/* IrDA reset is करोne now */
+	अगर (ZS_IS_IRDA(uap))
 		pmz_irda_reset(uap);
 
-	/* Enable interrupt requests for the channel */
+	/* Enable पूर्णांकerrupt requests क्रम the channel */
 	spin_lock_irqsave(&port->lock, flags);
-	pmz_interrupt_control(uap, 1);
+	pmz_पूर्णांकerrupt_control(uap, 1);
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	pmz_debug("pmz: startup() done.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pmz_shutdown(struct uart_port *port)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
-	unsigned long flags;
+अटल व्योम pmz_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
+	अचिन्हित दीर्घ flags;
 
 	pmz_debug("pmz: shutdown()\n");
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Disable interrupt requests for the channel */
-	pmz_interrupt_control(uap, 0);
+	/* Disable पूर्णांकerrupt requests क्रम the channel */
+	pmz_पूर्णांकerrupt_control(uap, 0);
 
-	if (!ZS_IS_CONS(uap)) {
+	अगर (!ZS_IS_CONS(uap)) अणु
 		/* Disable receiver and transmitter */
 		uap->curregs[R3] &= ~RxENABLE;
 		uap->curregs[R5] &= ~TxENABLE;
 
-		/* Disable break assertion */
+		/* Disable अवरोध निश्चितion */
 		uap->curregs[R5] &= ~SND_BRK;
 		pmz_maybe_update_regs(uap);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	/* Release interrupt handler */
-	free_irq(uap->port.irq, uap);
+	/* Release पूर्णांकerrupt handler */
+	मुक्त_irq(uap->port.irq, uap);
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	uap->flags &= ~PMACZILOG_FLAG_IS_OPEN;
 
-	if (!ZS_IS_CONS(uap))
-		pmz_set_scc_power(uap, 0);	/* Shut the chip down */
+	अगर (!ZS_IS_CONS(uap))
+		pmz_set_scc_घातer(uap, 0);	/* Shut the chip करोwn */
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	pmz_debug("pmz: shutdown() done.\n");
-}
+पूर्ण
 
 /* Shared by TTY driver and serial console setup.  The port lock is held
- * and local interrupts are disabled.
+ * and local पूर्णांकerrupts are disabled.
  */
-static void pmz_convert_to_zs(struct uart_pmac_port *uap, unsigned int cflag,
-			      unsigned int iflag, unsigned long baud)
-{
-	int brg;
+अटल व्योम pmz_convert_to_zs(काष्ठा uart_pmac_port *uap, अचिन्हित पूर्णांक cflag,
+			      अचिन्हित पूर्णांक अगरlag, अचिन्हित दीर्घ baud)
+अणु
+	पूर्णांक brg;
 
-	/* Switch to external clocking for IrDA high clock rates. That
-	 * code could be re-used for Midi interfaces with different
+	/* Switch to बाह्यal घड़ीing क्रम IrDA high घड़ी rates. That
+	 * code could be re-used क्रम Midi पूर्णांकerfaces with dअगरferent
 	 * multipliers
 	 */
-	if (baud >= 115200 && ZS_IS_IRDA(uap)) {
+	अगर (baud >= 115200 && ZS_IS_IRDA(uap)) अणु
 		uap->curregs[R4] = X1CLK;
 		uap->curregs[R11] = RCTRxCP | TCTRxCP;
 		uap->curregs[R14] = 0; /* BRG off */
 		uap->curregs[R12] = 0;
 		uap->curregs[R13] = 0;
 		uap->flags |= PMACZILOG_FLAG_IS_EXTCLK;
-	} else {
-		switch (baud) {
-		case ZS_CLOCK/16:	/* 230400 */
+	पूर्ण अन्यथा अणु
+		चयन (baud) अणु
+		हाल ZS_CLOCK/16:	/* 230400 */
 			uap->curregs[R4] = X16CLK;
 			uap->curregs[R11] = 0;
 			uap->curregs[R14] = 0;
-			break;
-		case ZS_CLOCK/32:	/* 115200 */
+			अवरोध;
+		हाल ZS_CLOCK/32:	/* 115200 */
 			uap->curregs[R4] = X32CLK;
 			uap->curregs[R11] = 0;
 			uap->curregs[R14] = 0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			uap->curregs[R4] = X16CLK;
 			uap->curregs[R11] = TCBR | RCBR;
 			brg = BPS_TO_BRG(baud, ZS_CLOCK / 16);
 			uap->curregs[R12] = (brg & 255);
 			uap->curregs[R13] = ((brg >> 8) & 255);
 			uap->curregs[R14] = BRENAB;
-		}
+		पूर्ण
 		uap->flags &= ~PMACZILOG_FLAG_IS_EXTCLK;
-	}
+	पूर्ण
 
 	/* Character size, stop bits, and parity. */
 	uap->curregs[3] &= ~RxN_MASK;
 	uap->curregs[5] &= ~TxN_MASK;
 
-	switch (cflag & CSIZE) {
-	case CS5:
+	चयन (cflag & CSIZE) अणु
+	हाल CS5:
 		uap->curregs[3] |= Rx5;
 		uap->curregs[5] |= Tx5;
 		uap->parity_mask = 0x1f;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		uap->curregs[3] |= Rx6;
 		uap->curregs[5] |= Tx6;
 		uap->parity_mask = 0x3f;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		uap->curregs[3] |= Rx7;
 		uap->curregs[5] |= Tx7;
 		uap->parity_mask = 0x7f;
-		break;
-	case CS8:
-	default:
+		अवरोध;
+	हाल CS8:
+	शेष:
 		uap->curregs[3] |= Rx8;
 		uap->curregs[5] |= Tx8;
 		uap->parity_mask = 0xff;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	uap->curregs[4] &= ~(SB_MASK);
-	if (cflag & CSTOPB)
+	अगर (cflag & CSTOPB)
 		uap->curregs[4] |= SB2;
-	else
+	अन्यथा
 		uap->curregs[4] |= SB1;
-	if (cflag & PARENB)
+	अगर (cflag & PARENB)
 		uap->curregs[4] |= PAR_ENAB;
-	else
+	अन्यथा
 		uap->curregs[4] &= ~PAR_ENAB;
-	if (!(cflag & PARODD))
+	अगर (!(cflag & PARODD))
 		uap->curregs[4] |= PAR_EVEN;
-	else
+	अन्यथा
 		uap->curregs[4] &= ~PAR_EVEN;
 
-	uap->port.read_status_mask = Rx_OVR;
-	if (iflag & INPCK)
-		uap->port.read_status_mask |= CRC_ERR | PAR_ERR;
-	if (iflag & (IGNBRK | BRKINT | PARMRK))
-		uap->port.read_status_mask |= BRK_ABRT;
+	uap->port.पढ़ो_status_mask = Rx_OVR;
+	अगर (अगरlag & INPCK)
+		uap->port.पढ़ो_status_mask |= CRC_ERR | PAR_ERR;
+	अगर (अगरlag & (IGNBRK | BRKINT | PARMRK))
+		uap->port.पढ़ो_status_mask |= BRK_ABRT;
 
 	uap->port.ignore_status_mask = 0;
-	if (iflag & IGNPAR)
+	अगर (अगरlag & IGNPAR)
 		uap->port.ignore_status_mask |= CRC_ERR | PAR_ERR;
-	if (iflag & IGNBRK) {
+	अगर (अगरlag & IGNBRK) अणु
 		uap->port.ignore_status_mask |= BRK_ABRT;
-		if (iflag & IGNPAR)
+		अगर (अगरlag & IGNPAR)
 			uap->port.ignore_status_mask |= Rx_OVR;
-	}
+	पूर्ण
 
-	if ((cflag & CREAD) == 0)
+	अगर ((cflag & CREAD) == 0)
 		uap->port.ignore_status_mask = 0xff;
-}
+पूर्ण
 
 
 /*
- * Set the irda codec on the imac to the specified baud rate.
+ * Set the irda codec on the imac to the specअगरied baud rate.
  */
-static void pmz_irda_setup(struct uart_pmac_port *uap, unsigned long *baud)
-{
+अटल व्योम pmz_irda_setup(काष्ठा uart_pmac_port *uap, अचिन्हित दीर्घ *baud)
+अणु
 	u8 cmdbyte;
-	int t, version;
+	पूर्णांक t, version;
 
-	switch (*baud) {
+	चयन (*baud) अणु
 	/* SIR modes */
-	case 2400:
+	हाल 2400:
 		cmdbyte = 0x53;
-		break;
-	case 4800:
+		अवरोध;
+	हाल 4800:
 		cmdbyte = 0x52;
-		break;
-	case 9600:
+		अवरोध;
+	हाल 9600:
 		cmdbyte = 0x51;
-		break;
-	case 19200:
+		अवरोध;
+	हाल 19200:
 		cmdbyte = 0x50;
-		break;
-	case 38400:
+		अवरोध;
+	हाल 38400:
 		cmdbyte = 0x4f;
-		break;
-	case 57600:
+		अवरोध;
+	हाल 57600:
 		cmdbyte = 0x4e;
-		break;
-	case 115200:
+		अवरोध;
+	हाल 115200:
 		cmdbyte = 0x4d;
-		break;
-	/* The FIR modes aren't really supported at this point, how
-	 * do we select the speed ? via the FCR on KeyLargo ?
+		अवरोध;
+	/* The FIR modes aren't really supported at this poपूर्णांक, how
+	 * करो we select the speed ? via the FCR on KeyLargo ?
 	 */
-	case 1152000:
+	हाल 1152000:
 		cmdbyte = 0;
-		break;
-	case 4000000:
+		अवरोध;
+	हाल 4000000:
 		cmdbyte = 0;
-		break;
-	default: /* 9600 */
+		अवरोध;
+	शेष: /* 9600 */
 		cmdbyte = 0x51;
 		*baud = 9600;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Wait for transmitter to drain */
+	/* Wait क्रम transmitter to drain */
 	t = 10000;
-	while ((read_zsreg(uap, R0) & Tx_BUF_EMP) == 0
-	       || (read_zsreg(uap, R1) & ALL_SNT) == 0) {
-		if (--t <= 0) {
+	जबतक ((पढ़ो_zsreg(uap, R0) & Tx_BUF_EMP) == 0
+	       || (पढ़ो_zsreg(uap, R1) & ALL_SNT) == 0) अणु
+		अगर (--t <= 0) अणु
 			pmz_error("transmitter didn't drain\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		udelay(10);
-	}
+	पूर्ण
 
 	/* Drain the receiver too */
 	t = 100;
-	(void)read_zsdata(uap);
-	(void)read_zsdata(uap);
-	(void)read_zsdata(uap);
+	(व्योम)पढ़ो_zsdata(uap);
+	(व्योम)पढ़ो_zsdata(uap);
+	(व्योम)पढ़ो_zsdata(uap);
 	mdelay(10);
-	while (read_zsreg(uap, R0) & Rx_CH_AV) {
-		read_zsdata(uap);
+	जबतक (पढ़ो_zsreg(uap, R0) & Rx_CH_AV) अणु
+		पढ़ो_zsdata(uap);
 		mdelay(10);
-		if (--t <= 0) {
+		अगर (--t <= 0) अणु
 			pmz_error("receiver didn't drain\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	/* Switch to command mode */
 	uap->curregs[R5] |= DTR;
-	write_zsreg(uap, R5, uap->curregs[R5]);
+	ग_लिखो_zsreg(uap, R5, uap->curregs[R5]);
 	zssync(uap);
 	mdelay(1);
 
@@ -1178,190 +1179,190 @@ static void pmz_irda_setup(struct uart_pmac_port *uap, unsigned long *baud)
 	mdelay(1);
 
 	/* Write get_version command byte */
-	write_zsdata(uap, 1);
+	ग_लिखो_zsdata(uap, 1);
 	t = 5000;
-	while ((read_zsreg(uap, R0) & Rx_CH_AV) == 0) {
-		if (--t <= 0) {
+	जबतक ((पढ़ो_zsreg(uap, R0) & Rx_CH_AV) == 0) अणु
+		अगर (--t <= 0) अणु
 			pmz_error("irda_setup timed out on get_version byte\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		udelay(10);
-	}
-	version = read_zsdata(uap);
+	पूर्ण
+	version = पढ़ो_zsdata(uap);
 
-	if (version < 4) {
+	अगर (version < 4) अणु
 		pmz_info("IrDA: dongle version %d not supported\n", version);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Send speed mode */
-	write_zsdata(uap, cmdbyte);
+	ग_लिखो_zsdata(uap, cmdbyte);
 	t = 5000;
-	while ((read_zsreg(uap, R0) & Rx_CH_AV) == 0) {
-		if (--t <= 0) {
+	जबतक ((पढ़ो_zsreg(uap, R0) & Rx_CH_AV) == 0) अणु
+		अगर (--t <= 0) अणु
 			pmz_error("irda_setup timed out on speed mode byte\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		udelay(10);
-	}
-	t = read_zsdata(uap);
-	if (t != cmdbyte)
+	पूर्ण
+	t = पढ़ो_zsdata(uap);
+	अगर (t != cmdbyte)
 		pmz_error("irda_setup speed mode byte = %x (%x)\n", t, cmdbyte);
 
 	pmz_info("IrDA setup for %ld bps, dongle version: %d\n",
 		 *baud, version);
 
-	(void)read_zsdata(uap);
-	(void)read_zsdata(uap);
-	(void)read_zsdata(uap);
+	(व्योम)पढ़ो_zsdata(uap);
+	(व्योम)पढ़ो_zsdata(uap);
+	(व्योम)पढ़ो_zsdata(uap);
 
  out:
 	/* Switch back to data mode */
 	uap->curregs[R5] &= ~DTR;
-	write_zsreg(uap, R5, uap->curregs[R5]);
+	ग_लिखो_zsreg(uap, R5, uap->curregs[R5]);
 	zssync(uap);
 
-	(void)read_zsdata(uap);
-	(void)read_zsdata(uap);
-	(void)read_zsdata(uap);
-}
+	(व्योम)पढ़ो_zsdata(uap);
+	(व्योम)पढ़ो_zsdata(uap);
+	(व्योम)पढ़ो_zsdata(uap);
+पूर्ण
 
 
-static void __pmz_set_termios(struct uart_port *port, struct ktermios *termios,
-			      struct ktermios *old)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
-	unsigned long baud;
+अटल व्योम __pmz_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+			      काष्ठा ktermios *old)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
+	अचिन्हित दीर्घ baud;
 
 	pmz_debug("pmz: set_termios()\n");
 
-	memcpy(&uap->termios_cache, termios, sizeof(struct ktermios));
+	स_नकल(&uap->termios_cache, termios, माप(काष्ठा ktermios));
 
 	/* XXX Check which revs of machines actually allow 1 and 4Mb speeds
-	 * on the IR dongle. Note that the IRTTY driver currently doesn't know
+	 * on the IR करोngle. Note that the IRTTY driver currently करोesn't know
 	 * about the FIR mode and high speed modes. So these are unused. For
-	 * implementing proper support for these, we should probably add some
+	 * implementing proper support क्रम these, we should probably add some
 	 * DMA as well, at least on the Rx side, which isn't a simple thing
-	 * at this point.
+	 * at this poपूर्णांक.
 	 */
-	if (ZS_IS_IRDA(uap)) {
+	अगर (ZS_IS_IRDA(uap)) अणु
 		/* Calc baud rate */
 		baud = uart_get_baud_rate(port, termios, old, 1200, 4000000);
 		pmz_debug("pmz: switch IRDA to %ld bauds\n", baud);
 		/* Cet the irda codec to the right rate */
 		pmz_irda_setup(uap, &baud);
 		/* Set final baud rate */
-		pmz_convert_to_zs(uap, termios->c_cflag, termios->c_iflag, baud);
+		pmz_convert_to_zs(uap, termios->c_cflag, termios->c_अगरlag, baud);
 		pmz_load_zsregs(uap, uap->curregs);
 		zssync(uap);
-	} else {
+	पूर्ण अन्यथा अणु
 		baud = uart_get_baud_rate(port, termios, old, 1200, 230400);
-		pmz_convert_to_zs(uap, termios->c_cflag, termios->c_iflag, baud);
-		/* Make sure modem status interrupts are correctly configured */
-		if (UART_ENABLE_MS(&uap->port, termios->c_cflag)) {
+		pmz_convert_to_zs(uap, termios->c_cflag, termios->c_अगरlag, baud);
+		/* Make sure modem status पूर्णांकerrupts are correctly configured */
+		अगर (UART_ENABLE_MS(&uap->port, termios->c_cflag)) अणु
 			uap->curregs[R15] |= DCDIE | SYNCIE | CTSIE;
 			uap->flags |= PMACZILOG_FLAG_MODEM_STATUS;
-		} else {
+		पूर्ण अन्यथा अणु
 			uap->curregs[R15] &= ~(DCDIE | SYNCIE | CTSIE);
 			uap->flags &= ~PMACZILOG_FLAG_MODEM_STATUS;
-		}
+		पूर्ण
 
-		/* Load registers to the chip */
+		/* Load रेजिस्टरs to the chip */
 		pmz_maybe_update_regs(uap);
-	}
-	uart_update_timeout(port, termios->c_cflag, baud);
+	पूर्ण
+	uart_update_समयout(port, termios->c_cflag, baud);
 
 	pmz_debug("pmz: set_termios() done.\n");
-}
+पूर्ण
 
 /* The port lock is not held.  */
-static void pmz_set_termios(struct uart_port *port, struct ktermios *termios,
-			    struct ktermios *old)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
-	unsigned long flags;
+अटल व्योम pmz_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+			    काष्ठा ktermios *old)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);	
 
 	/* Disable IRQs on the port */
-	pmz_interrupt_control(uap, 0);
+	pmz_पूर्णांकerrupt_control(uap, 0);
 
 	/* Setup new port configuration */
 	__pmz_set_termios(port, termios, old);
 
 	/* Re-enable IRQs on the port */
-	if (ZS_IS_OPEN(uap))
-		pmz_interrupt_control(uap, 1);
+	अगर (ZS_IS_OPEN(uap))
+		pmz_पूर्णांकerrupt_control(uap, 1);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static const char *pmz_type(struct uart_port *port)
-{
-	struct uart_pmac_port *uap = to_pmz(port);
+अटल स्थिर अक्षर *pmz_type(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_pmac_port *uap = to_pmz(port);
 
-	if (ZS_IS_IRDA(uap))
-		return "Z85c30 ESCC - Infrared port";
-	else if (ZS_IS_INTMODEM(uap))
-		return "Z85c30 ESCC - Internal modem";
-	return "Z85c30 ESCC - Serial port";
-}
+	अगर (ZS_IS_IRDA(uap))
+		वापस "Z85c30 ESCC - Infrared port";
+	अन्यथा अगर (ZS_IS_INTMODEM(uap))
+		वापस "Z85c30 ESCC - Internal modem";
+	वापस "Z85c30 ESCC - Serial port";
+पूर्ण
 
-/* We do not request/release mappings of the registers here, this
- * happens at early serial probe time.
+/* We करो not request/release mappings of the रेजिस्टरs here, this
+ * happens at early serial probe समय.
  */
-static void pmz_release_port(struct uart_port *port)
-{
-}
+अटल व्योम pmz_release_port(काष्ठा uart_port *port)
+अणु
+पूर्ण
 
-static int pmz_request_port(struct uart_port *port)
-{
-	return 0;
-}
+अटल पूर्णांक pmz_request_port(काष्ठा uart_port *port)
+अणु
+	वापस 0;
+पूर्ण
 
-/* These do not need to do anything interesting either.  */
-static void pmz_config_port(struct uart_port *port, int flags)
-{
-}
+/* These करो not need to करो anything पूर्णांकeresting either.  */
+अटल व्योम pmz_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+पूर्ण
 
-/* We do not support letting the user mess with the divisor, IRQ, etc. */
-static int pmz_verify_port(struct uart_port *port, struct serial_struct *ser)
-{
-	return -EINVAL;
-}
+/* We करो not support letting the user mess with the भागisor, IRQ, etc. */
+अटल पूर्णांक pmz_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-#ifdef CONFIG_CONSOLE_POLL
+#अगर_घोषित CONFIG_CONSOLE_POLL
 
-static int pmz_poll_get_char(struct uart_port *port)
-{
-	struct uart_pmac_port *uap =
-		container_of(port, struct uart_pmac_port, port);
-	int tries = 2;
+अटल पूर्णांक pmz_poll_get_अक्षर(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_pmac_port *uap =
+		container_of(port, काष्ठा uart_pmac_port, port);
+	पूर्णांक tries = 2;
 
-	while (tries) {
-		if ((read_zsreg(uap, R0) & Rx_CH_AV) != 0)
-			return read_zsdata(uap);
-		if (tries--)
+	जबतक (tries) अणु
+		अगर ((पढ़ो_zsreg(uap, R0) & Rx_CH_AV) != 0)
+			वापस पढ़ो_zsdata(uap);
+		अगर (tries--)
 			udelay(5);
-	}
+	पूर्ण
 
-	return NO_POLL_CHAR;
-}
+	वापस NO_POLL_CHAR;
+पूर्ण
 
-static void pmz_poll_put_char(struct uart_port *port, unsigned char c)
-{
-	struct uart_pmac_port *uap =
-		container_of(port, struct uart_pmac_port, port);
+अटल व्योम pmz_poll_put_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर c)
+अणु
+	काष्ठा uart_pmac_port *uap =
+		container_of(port, काष्ठा uart_pmac_port, port);
 
-	/* Wait for the transmit buffer to empty. */
-	while ((read_zsreg(uap, R0) & Tx_BUF_EMP) == 0)
+	/* Wait क्रम the transmit buffer to empty. */
+	जबतक ((पढ़ो_zsreg(uap, R0) & Tx_BUF_EMP) == 0)
 		udelay(5);
-	write_zsdata(uap, c);
-}
+	ग_लिखो_zsdata(uap, c);
+पूर्ण
 
-#endif /* CONFIG_CONSOLE_POLL */
+#पूर्ण_अगर /* CONFIG_CONSOLE_POLL */
 
-static const struct uart_ops pmz_pops = {
+अटल स्थिर काष्ठा uart_ops pmz_pops = अणु
 	.tx_empty	=	pmz_tx_empty,
 	.set_mctrl	=	pmz_set_mctrl,
 	.get_mctrl	=	pmz_get_mctrl,
@@ -1369,44 +1370,44 @@ static const struct uart_ops pmz_pops = {
 	.start_tx	=	pmz_start_tx,
 	.stop_rx	=	pmz_stop_rx,
 	.enable_ms	=	pmz_enable_ms,
-	.break_ctl	=	pmz_break_ctl,
+	.अवरोध_ctl	=	pmz_अवरोध_ctl,
 	.startup	=	pmz_startup,
-	.shutdown	=	pmz_shutdown,
+	.shutकरोwn	=	pmz_shutकरोwn,
 	.set_termios	=	pmz_set_termios,
 	.type		=	pmz_type,
 	.release_port	=	pmz_release_port,
 	.request_port	=	pmz_request_port,
 	.config_port	=	pmz_config_port,
-	.verify_port	=	pmz_verify_port,
-#ifdef CONFIG_CONSOLE_POLL
-	.poll_get_char	=	pmz_poll_get_char,
-	.poll_put_char	=	pmz_poll_put_char,
-#endif
-};
+	.verअगरy_port	=	pmz_verअगरy_port,
+#अगर_घोषित CONFIG_CONSOLE_POLL
+	.poll_get_अक्षर	=	pmz_poll_get_अक्षर,
+	.poll_put_अक्षर	=	pmz_poll_put_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_PPC_PMAC
+#अगर_घोषित CONFIG_PPC_PMAC
 
 /*
- * Setup one port structure after probing, HW is down at this point,
- * Unlike sunzilog, we don't need to pre-init the spinlock as we don't
- * register our console before uart_add_one_port() is called
+ * Setup one port काष्ठाure after probing, HW is करोwn at this poपूर्णांक,
+ * Unlike sunzilog, we करोn't need to pre-init the spinlock as we don't
+ * रेजिस्टर our console beक्रमe uart_add_one_port() is called
  */
-static int __init pmz_init_port(struct uart_pmac_port *uap)
-{
-	struct device_node *np = uap->node;
-	const char *conn;
-	const struct slot_names_prop {
-		int	count;
-		char	name[1];
-	} *slots;
-	int len;
-	struct resource r_ports, r_rxdma, r_txdma;
+अटल पूर्णांक __init pmz_init_port(काष्ठा uart_pmac_port *uap)
+अणु
+	काष्ठा device_node *np = uap->node;
+	स्थिर अक्षर *conn;
+	स्थिर काष्ठा slot_names_prop अणु
+		पूर्णांक	count;
+		अक्षर	name[1];
+	पूर्ण *slots;
+	पूर्णांक len;
+	काष्ठा resource r_ports, r_rxdma, r_txdma;
 
 	/*
-	 * Request & map chip registers
+	 * Request & map chip रेजिस्टरs
 	 */
-	if (of_address_to_resource(np, 0, &r_ports))
-		return -ENODEV;
+	अगर (of_address_to_resource(np, 0, &r_ports))
+		वापस -ENODEV;
 	uap->port.mapbase = r_ports.start;
 	uap->port.membase = ioremap(uap->port.mapbase, 0x1000);
 
@@ -1414,142 +1415,142 @@ static int __init pmz_init_port(struct uart_pmac_port *uap)
 	uap->data_reg = uap->control_reg + 0x10;
 	
 	/*
-	 * Request & map DBDMA registers
+	 * Request & map DBDMA रेजिस्टरs
 	 */
-#ifdef HAS_DBDMA
-	if (of_address_to_resource(np, 1, &r_txdma) == 0 &&
+#अगर_घोषित HAS_DBDMA
+	अगर (of_address_to_resource(np, 1, &r_txdma) == 0 &&
 	    of_address_to_resource(np, 2, &r_rxdma) == 0)
 		uap->flags |= PMACZILOG_FLAG_HAS_DMA;
-#else
-	memset(&r_txdma, 0, sizeof(struct resource));
-	memset(&r_rxdma, 0, sizeof(struct resource));
-#endif	
-	if (ZS_HAS_DMA(uap)) {
+#अन्यथा
+	स_रखो(&r_txdma, 0, माप(काष्ठा resource));
+	स_रखो(&r_rxdma, 0, माप(काष्ठा resource));
+#पूर्ण_अगर	
+	अगर (ZS_HAS_DMA(uap)) अणु
 		uap->tx_dma_regs = ioremap(r_txdma.start, 0x100);
-		if (uap->tx_dma_regs == NULL) {	
+		अगर (uap->tx_dma_regs == शून्य) अणु	
 			uap->flags &= ~PMACZILOG_FLAG_HAS_DMA;
-			goto no_dma;
-		}
+			जाओ no_dma;
+		पूर्ण
 		uap->rx_dma_regs = ioremap(r_rxdma.start, 0x100);
-		if (uap->rx_dma_regs == NULL) {	
+		अगर (uap->rx_dma_regs == शून्य) अणु	
 			iounmap(uap->tx_dma_regs);
-			uap->tx_dma_regs = NULL;
+			uap->tx_dma_regs = शून्य;
 			uap->flags &= ~PMACZILOG_FLAG_HAS_DMA;
-			goto no_dma;
-		}
+			जाओ no_dma;
+		पूर्ण
 		uap->tx_dma_irq = irq_of_parse_and_map(np, 1);
 		uap->rx_dma_irq = irq_of_parse_and_map(np, 2);
-	}
+	पूर्ण
 no_dma:
 
 	/*
 	 * Detect port type
 	 */
-	if (of_device_is_compatible(np, "cobalt"))
+	अगर (of_device_is_compatible(np, "cobalt"))
 		uap->flags |= PMACZILOG_FLAG_IS_INTMODEM;
 	conn = of_get_property(np, "AAPL,connector", &len);
-	if (conn && (strcmp(conn, "infrared") == 0))
+	अगर (conn && (म_भेद(conn, "infrared") == 0))
 		uap->flags |= PMACZILOG_FLAG_IS_IRDA;
 	uap->port_type = PMAC_SCC_ASYNC;
 	/* 1999 Powerbook G3 has slot-names property instead */
 	slots = of_get_property(np, "slot-names", &len);
-	if (slots && slots->count > 0) {
-		if (strcmp(slots->name, "IrDA") == 0)
+	अगर (slots && slots->count > 0) अणु
+		अगर (म_भेद(slots->name, "IrDA") == 0)
 			uap->flags |= PMACZILOG_FLAG_IS_IRDA;
-		else if (strcmp(slots->name, "Modem") == 0)
+		अन्यथा अगर (म_भेद(slots->name, "Modem") == 0)
 			uap->flags |= PMACZILOG_FLAG_IS_INTMODEM;
-	}
-	if (ZS_IS_IRDA(uap))
+	पूर्ण
+	अगर (ZS_IS_IRDA(uap))
 		uap->port_type = PMAC_SCC_IRDA;
-	if (ZS_IS_INTMODEM(uap)) {
-		struct device_node* i2c_modem =
-			of_find_node_by_name(NULL, "i2c-modem");
-		if (i2c_modem) {
-			const char* mid =
-				of_get_property(i2c_modem, "modem-id", NULL);
-			if (mid) switch(*mid) {
-			case 0x04 :
-			case 0x05 :
-			case 0x07 :
-			case 0x08 :
-			case 0x0b :
-			case 0x0c :
+	अगर (ZS_IS_INTMODEM(uap)) अणु
+		काष्ठा device_node* i2c_modem =
+			of_find_node_by_name(शून्य, "i2c-modem");
+		अगर (i2c_modem) अणु
+			स्थिर अक्षर* mid =
+				of_get_property(i2c_modem, "modem-id", शून्य);
+			अगर (mid) चयन(*mid) अणु
+			हाल 0x04 :
+			हाल 0x05 :
+			हाल 0x07 :
+			हाल 0x08 :
+			हाल 0x0b :
+			हाल 0x0c :
 				uap->port_type = PMAC_SCC_I2S1;
-			}
-			printk(KERN_INFO "pmac_zilog: i2c-modem detected, id: %d\n",
+			पूर्ण
+			prपूर्णांकk(KERN_INFO "pmac_zilog: i2c-modem detected, id: %d\n",
 				mid ? (*mid) : 0);
 			of_node_put(i2c_modem);
-		} else {
-			printk(KERN_INFO "pmac_zilog: serial modem detected\n");
-		}
-	}
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_INFO "pmac_zilog: serial modem detected\n");
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Init remaining bits of "port" structure
+	 * Init reमुख्यing bits of "port" काष्ठाure
 	 */
 	uap->port.iotype = UPIO_MEM;
 	uap->port.irq = irq_of_parse_and_map(np, 0);
 	uap->port.uartclk = ZS_CLOCK;
-	uap->port.fifosize = 1;
+	uap->port.fअगरosize = 1;
 	uap->port.ops = &pmz_pops;
 	uap->port.type = PORT_PMAC_ZILOG;
 	uap->port.flags = 0;
 
 	/*
-	 * Fixup for the port on Gatwick for which the device-tree has
-	 * missing interrupts. Normally, the macio_dev would contain
-	 * fixed up interrupt info, but we use the device-tree directly
+	 * Fixup क्रम the port on Gatwick क्रम which the device-tree has
+	 * missing पूर्णांकerrupts. Normally, the macio_dev would contain
+	 * fixed up पूर्णांकerrupt info, but we use the device-tree directly
 	 * here due to early probing so we need the fixup too.
 	 */
-	if (uap->port.irq == 0 &&
+	अगर (uap->port.irq == 0 &&
 	    np->parent && np->parent->parent &&
-	    of_device_is_compatible(np->parent->parent, "gatwick")) {
+	    of_device_is_compatible(np->parent->parent, "gatwick")) अणु
 		/* IRQs on gatwick are offset by 64 */
-		uap->port.irq = irq_create_mapping(NULL, 64 + 15);
-		uap->tx_dma_irq = irq_create_mapping(NULL, 64 + 4);
-		uap->rx_dma_irq = irq_create_mapping(NULL, 64 + 5);
-	}
+		uap->port.irq = irq_create_mapping(शून्य, 64 + 15);
+		uap->tx_dma_irq = irq_create_mapping(शून्य, 64 + 4);
+		uap->rx_dma_irq = irq_create_mapping(शून्य, 64 + 5);
+	पूर्ण
 
-	/* Setup some valid baud rate information in the register
-	 * shadows so we don't write crap there before baud rate is
+	/* Setup some valid baud rate inक्रमmation in the रेजिस्टर
+	 * shaकरोws so we करोn't ग_लिखो crap there beक्रमe baud rate is
 	 * first initialized.
 	 */
 	pmz_convert_to_zs(uap, CS8, 0, 9600);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Get rid of a port on module removal
  */
-static void pmz_dispose_port(struct uart_pmac_port *uap)
-{
-	struct device_node *np;
+अटल व्योम pmz_dispose_port(काष्ठा uart_pmac_port *uap)
+अणु
+	काष्ठा device_node *np;
 
 	np = uap->node;
 	iounmap(uap->rx_dma_regs);
 	iounmap(uap->tx_dma_regs);
 	iounmap(uap->control_reg);
-	uap->node = NULL;
+	uap->node = शून्य;
 	of_node_put(np);
-	memset(uap, 0, sizeof(struct uart_pmac_port));
-}
+	स_रखो(uap, 0, माप(काष्ठा uart_pmac_port));
+पूर्ण
 
 /*
  * Called upon match with an escc node in the device-tree.
  */
-static int pmz_attach(struct macio_dev *mdev, const struct of_device_id *match)
-{
-	struct uart_pmac_port *uap;
-	int i;
+अटल पूर्णांक pmz_attach(काष्ठा macio_dev *mdev, स्थिर काष्ठा of_device_id *match)
+अणु
+	काष्ठा uart_pmac_port *uap;
+	पूर्णांक i;
 	
 	/* Iterate the pmz_ports array to find a matching entry
 	 */
-	for (i = 0; i < MAX_ZS_PORTS; i++)
-		if (pmz_ports[i].node == mdev->ofdev.dev.of_node)
-			break;
-	if (i >= MAX_ZS_PORTS)
-		return -ENODEV;
+	क्रम (i = 0; i < MAX_ZS_PORTS; i++)
+		अगर (pmz_ports[i].node == mdev->ofdev.dev.of_node)
+			अवरोध;
+	अगर (i >= MAX_ZS_PORTS)
+		वापस -ENODEV;
 
 
 	uap = &pmz_ports[i];
@@ -1560,111 +1561,111 @@ static int pmz_attach(struct macio_dev *mdev, const struct of_device_id *match)
 	/* We still activate the port even when failing to request resources
 	 * to work around bugs in ancient Apple device-trees
 	 */
-	if (macio_request_resources(uap->dev, "pmac_zilog"))
-		printk(KERN_WARNING "%pOFn: Failed to request resource"
+	अगर (macio_request_resources(uap->dev, "pmac_zilog"))
+		prपूर्णांकk(KERN_WARNING "%pOFn: Failed to request resource"
 		       ", port still active\n",
 		       uap->node);
-	else
+	अन्यथा
 		uap->flags |= PMACZILOG_FLAG_RSRC_REQUESTED;
 
-	return uart_add_one_port(&pmz_uart_reg, &uap->port);
-}
+	वापस uart_add_one_port(&pmz_uart_reg, &uap->port);
+पूर्ण
 
 /*
  * That one should not be called, macio isn't really a hotswap device,
- * we don't expect one of those serial ports to go away...
+ * we करोn't expect one of those serial ports to go away...
  */
-static int pmz_detach(struct macio_dev *mdev)
-{
-	struct uart_pmac_port	*uap = dev_get_drvdata(&mdev->ofdev.dev);
+अटल पूर्णांक pmz_detach(काष्ठा macio_dev *mdev)
+अणु
+	काष्ठा uart_pmac_port	*uap = dev_get_drvdata(&mdev->ofdev.dev);
 	
-	if (!uap)
-		return -ENODEV;
+	अगर (!uap)
+		वापस -ENODEV;
 
-	uart_remove_one_port(&pmz_uart_reg, &uap->port);
+	uart_हटाओ_one_port(&pmz_uart_reg, &uap->port);
 
-	if (uap->flags & PMACZILOG_FLAG_RSRC_REQUESTED) {
+	अगर (uap->flags & PMACZILOG_FLAG_RSRC_REQUESTED) अणु
 		macio_release_resources(uap->dev);
 		uap->flags &= ~PMACZILOG_FLAG_RSRC_REQUESTED;
-	}
-	dev_set_drvdata(&mdev->ofdev.dev, NULL);
-	uap->dev = NULL;
-	uap->port.dev = NULL;
+	पूर्ण
+	dev_set_drvdata(&mdev->ofdev.dev, शून्य);
+	uap->dev = शून्य;
+	uap->port.dev = शून्य;
 	
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int pmz_suspend(struct macio_dev *mdev, pm_message_t pm_state)
-{
-	struct uart_pmac_port *uap = dev_get_drvdata(&mdev->ofdev.dev);
+अटल पूर्णांक pmz_suspend(काष्ठा macio_dev *mdev, pm_message_t pm_state)
+अणु
+	काष्ठा uart_pmac_port *uap = dev_get_drvdata(&mdev->ofdev.dev);
 
-	if (uap == NULL) {
-		printk("HRM... pmz_suspend with NULL uap\n");
-		return 0;
-	}
+	अगर (uap == शून्य) अणु
+		prपूर्णांकk("HRM... pmz_suspend with NULL uap\n");
+		वापस 0;
+	पूर्ण
 
 	uart_suspend_port(&pmz_uart_reg, &uap->port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int pmz_resume(struct macio_dev *mdev)
-{
-	struct uart_pmac_port *uap = dev_get_drvdata(&mdev->ofdev.dev);
+अटल पूर्णांक pmz_resume(काष्ठा macio_dev *mdev)
+अणु
+	काष्ठा uart_pmac_port *uap = dev_get_drvdata(&mdev->ofdev.dev);
 
-	if (uap == NULL)
-		return 0;
+	अगर (uap == शून्य)
+		वापस 0;
 
 	uart_resume_port(&pmz_uart_reg, &uap->port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Probe all ports in the system and build the ports array, we register
- * with the serial layer later, so we get a proper struct device which
+ * Probe all ports in the प्रणाली and build the ports array, we रेजिस्टर
+ * with the serial layer later, so we get a proper काष्ठा device which
  * allows the tty to attach properly. This is later than it used to be
  * but the tty layer really wants it that way.
  */
-static int __init pmz_probe(void)
-{
-	struct device_node	*node_p, *node_a, *node_b, *np;
-	int			count = 0;
-	int			rc;
+अटल पूर्णांक __init pmz_probe(व्योम)
+अणु
+	काष्ठा device_node	*node_p, *node_a, *node_b, *np;
+	पूर्णांक			count = 0;
+	पूर्णांक			rc;
 
 	/*
-	 * Find all escc chips in the system
+	 * Find all escc chips in the प्रणाली
 	 */
-	for_each_node_by_name(node_p, "escc") {
+	क्रम_each_node_by_name(node_p, "escc") अणु
 		/*
-		 * First get channel A/B node pointers
+		 * First get channel A/B node poपूर्णांकers
 		 * 
-		 * TODO: Add routines with proper locking to do that...
+		 * TODO: Add routines with proper locking to करो that...
 		 */
-		node_a = node_b = NULL;
-		for_each_child_of_node(node_p, np) {
-			if (of_node_name_prefix(np, "ch-a"))
+		node_a = node_b = शून्य;
+		क्रम_each_child_of_node(node_p, np) अणु
+			अगर (of_node_name_prefix(np, "ch-a"))
 				node_a = of_node_get(np);
-			else if (of_node_name_prefix(np, "ch-b"))
+			अन्यथा अगर (of_node_name_prefix(np, "ch-b"))
 				node_b = of_node_get(np);
-		}
-		if (!node_a && !node_b) {
+		पूर्ण
+		अगर (!node_a && !node_b) अणु
 			of_node_put(node_a);
 			of_node_put(node_b);
-			printk(KERN_ERR "pmac_zilog: missing node %c for escc %pOF\n",
+			prपूर्णांकk(KERN_ERR "pmac_zilog: missing node %c for escc %pOF\n",
 				(!node_a) ? 'a' : 'b', node_p);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * Fill basic fields in the port structures
+		 * Fill basic fields in the port काष्ठाures
 		 */
-		if (node_b != NULL) {
+		अगर (node_b != शून्य) अणु
 			pmz_ports[count].mate		= &pmz_ports[count+1];
 			pmz_ports[count+1].mate		= &pmz_ports[count];
-		}
+		पूर्ण
 		pmz_ports[count].flags		= PMACZILOG_FLAG_IS_CHANNEL_A;
 		pmz_ports[count].node		= node_a;
 		pmz_ports[count+1].node		= node_b;
@@ -1672,49 +1673,49 @@ static int __init pmz_probe(void)
 		pmz_ports[count+1].port.line	= count+1;
 
 		/*
-		 * Setup the ports for real
+		 * Setup the ports क्रम real
 		 */
 		rc = pmz_init_port(&pmz_ports[count]);
-		if (rc == 0 && node_b != NULL)
+		अगर (rc == 0 && node_b != शून्य)
 			rc = pmz_init_port(&pmz_ports[count+1]);
-		if (rc != 0) {
+		अगर (rc != 0) अणु
 			of_node_put(node_a);
 			of_node_put(node_b);
-			memset(&pmz_ports[count], 0, sizeof(struct uart_pmac_port));
-			memset(&pmz_ports[count+1], 0, sizeof(struct uart_pmac_port));
-			continue;
-		}
+			स_रखो(&pmz_ports[count], 0, माप(काष्ठा uart_pmac_port));
+			स_रखो(&pmz_ports[count+1], 0, माप(काष्ठा uart_pmac_port));
+			जारी;
+		पूर्ण
 		count += 2;
-	}
+	पूर्ण
 	pmz_ports_count = count;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else
+#अन्यथा
 
-/* On PCI PowerMacs, pmz_probe() does an explicit search of the OpenFirmware
- * tree to obtain the device_nodes needed to start the console before the
- * macio driver. On Macs without OpenFirmware, global platform_devices take
+/* On PCI PowerMacs, pmz_probe() करोes an explicit search of the OpenFirmware
+ * tree to obtain the device_nodes needed to start the console beक्रमe the
+ * macio driver. On Macs without OpenFirmware, global platक्रमm_devices take
  * the place of those device_nodes.
  */
-extern struct platform_device scc_a_pdev, scc_b_pdev;
+बाह्य काष्ठा platक्रमm_device scc_a_pdev, scc_b_pdev;
 
-static int __init pmz_init_port(struct uart_pmac_port *uap)
-{
-	struct resource *r_ports, *r_irq;
+अटल पूर्णांक __init pmz_init_port(काष्ठा uart_pmac_port *uap)
+अणु
+	काष्ठा resource *r_ports, *r_irq;
 
-	r_ports = platform_get_resource(uap->pdev, IORESOURCE_MEM, 0);
-	r_irq = platform_get_resource(uap->pdev, IORESOURCE_IRQ, 0);
-	if (!r_ports || !r_irq)
-		return -ENODEV;
+	r_ports = platक्रमm_get_resource(uap->pdev, IORESOURCE_MEM, 0);
+	r_irq = platक्रमm_get_resource(uap->pdev, IORESOURCE_IRQ, 0);
+	अगर (!r_ports || !r_irq)
+		वापस -ENODEV;
 
 	uap->port.mapbase  = r_ports->start;
-	uap->port.membase  = (unsigned char __iomem *) r_ports->start;
+	uap->port.membase  = (अचिन्हित अक्षर __iomem *) r_ports->start;
 	uap->port.iotype   = UPIO_MEM;
 	uap->port.irq      = r_irq->start;
 	uap->port.uartclk  = ZS_CLOCK;
-	uap->port.fifosize = 1;
+	uap->port.fअगरosize = 1;
 	uap->port.ops      = &pmz_pops;
 	uap->port.type     = PORT_PMAC_ZILOG;
 	uap->port.flags    = 0;
@@ -1726,12 +1727,12 @@ static int __init pmz_init_port(struct uart_pmac_port *uap)
 
 	pmz_convert_to_zs(uap, CS8, 0, 9600);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init pmz_probe(void)
-{
-	int err;
+अटल पूर्णांक __init pmz_probe(व्योम)
+अणु
+	पूर्णांक err;
 
 	pmz_ports_count = 0;
 
@@ -1739,8 +1740,8 @@ static int __init pmz_probe(void)
 	pmz_ports[0].flags     = PMACZILOG_FLAG_IS_CHANNEL_A;
 	pmz_ports[0].pdev      = &scc_a_pdev;
 	err = pmz_init_port(&pmz_ports[0]);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	pmz_ports_count++;
 
 	pmz_ports[0].mate      = &pmz_ports[1];
@@ -1749,268 +1750,268 @@ static int __init pmz_probe(void)
 	pmz_ports[1].flags     = 0;
 	pmz_ports[1].pdev      = &scc_b_pdev;
 	err = pmz_init_port(&pmz_ports[1]);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	pmz_ports_count++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pmz_dispose_port(struct uart_pmac_port *uap)
-{
-	memset(uap, 0, sizeof(struct uart_pmac_port));
-}
+अटल व्योम pmz_dispose_port(काष्ठा uart_pmac_port *uap)
+अणु
+	स_रखो(uap, 0, माप(काष्ठा uart_pmac_port));
+पूर्ण
 
-static int __init pmz_attach(struct platform_device *pdev)
-{
-	struct uart_pmac_port *uap;
-	int i;
+अटल पूर्णांक __init pmz_attach(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_pmac_port *uap;
+	पूर्णांक i;
 
 	/* Iterate the pmz_ports array to find a matching entry */
-	for (i = 0; i < pmz_ports_count; i++)
-		if (pmz_ports[i].pdev == pdev)
-			break;
-	if (i >= pmz_ports_count)
-		return -ENODEV;
+	क्रम (i = 0; i < pmz_ports_count; i++)
+		अगर (pmz_ports[i].pdev == pdev)
+			अवरोध;
+	अगर (i >= pmz_ports_count)
+		वापस -ENODEV;
 
 	uap = &pmz_ports[i];
 	uap->port.dev = &pdev->dev;
-	platform_set_drvdata(pdev, uap);
+	platक्रमm_set_drvdata(pdev, uap);
 
-	return uart_add_one_port(&pmz_uart_reg, &uap->port);
-}
+	वापस uart_add_one_port(&pmz_uart_reg, &uap->port);
+पूर्ण
 
-static int __exit pmz_detach(struct platform_device *pdev)
-{
-	struct uart_pmac_port *uap = platform_get_drvdata(pdev);
+अटल पूर्णांक __निकास pmz_detach(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_pmac_port *uap = platक्रमm_get_drvdata(pdev);
 
-	if (!uap)
-		return -ENODEV;
+	अगर (!uap)
+		वापस -ENODEV;
 
-	uart_remove_one_port(&pmz_uart_reg, &uap->port);
+	uart_हटाओ_one_port(&pmz_uart_reg, &uap->port);
 
-	uap->port.dev = NULL;
+	uap->port.dev = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* !CONFIG_PPC_PMAC */
+#पूर्ण_अगर /* !CONFIG_PPC_PMAC */
 
-#ifdef CONFIG_SERIAL_PMACZILOG_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_PMACZILOG_CONSOLE
 
-static void pmz_console_write(struct console *con, const char *s, unsigned int count);
-static int __init pmz_console_setup(struct console *co, char *options);
+अटल व्योम pmz_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित पूर्णांक count);
+अटल पूर्णांक __init pmz_console_setup(काष्ठा console *co, अक्षर *options);
 
-static struct console pmz_console = {
+अटल काष्ठा console pmz_console = अणु
 	.name	=	PMACZILOG_NAME,
-	.write	=	pmz_console_write,
+	.ग_लिखो	=	pmz_console_ग_लिखो,
 	.device	=	uart_console_device,
 	.setup	=	pmz_console_setup,
 	.flags	=	CON_PRINTBUFFER,
 	.index	=	-1,
 	.data   =	&pmz_uart_reg,
-};
+पूर्ण;
 
-#define PMACZILOG_CONSOLE	&pmz_console
-#else /* CONFIG_SERIAL_PMACZILOG_CONSOLE */
-#define PMACZILOG_CONSOLE	(NULL)
-#endif /* CONFIG_SERIAL_PMACZILOG_CONSOLE */
+#घोषणा PMACZILOG_CONSOLE	&pmz_console
+#अन्यथा /* CONFIG_SERIAL_PMACZILOG_CONSOLE */
+#घोषणा PMACZILOG_CONSOLE	(शून्य)
+#पूर्ण_अगर /* CONFIG_SERIAL_PMACZILOG_CONSOLE */
 
 /*
  * Register the driver, console driver and ports with the serial
  * core
  */
-static int __init pmz_register(void)
-{
+अटल पूर्णांक __init pmz_रेजिस्टर(व्योम)
+अणु
 	pmz_uart_reg.nr = pmz_ports_count;
 	pmz_uart_reg.cons = PMACZILOG_CONSOLE;
 
 	/*
 	 * Register this driver with the serial core
 	 */
-	return uart_register_driver(&pmz_uart_reg);
-}
+	वापस uart_रेजिस्टर_driver(&pmz_uart_reg);
+पूर्ण
 
-#ifdef CONFIG_PPC_PMAC
+#अगर_घोषित CONFIG_PPC_PMAC
 
-static const struct of_device_id pmz_match[] =
-{
-	{
+अटल स्थिर काष्ठा of_device_id pmz_match[] =
+अणु
+	अणु
 	.name		= "ch-a",
-	},
-	{
+	पूर्ण,
+	अणु
 	.name		= "ch-b",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE (of, pmz_match);
 
-static struct macio_driver pmz_driver = {
-	.driver = {
+अटल काष्ठा macio_driver pmz_driver = अणु
+	.driver = अणु
 		.name 		= "pmac_zilog",
 		.owner		= THIS_MODULE,
 		.of_match_table	= pmz_match,
-	},
+	पूर्ण,
 	.probe		= pmz_attach,
-	.remove		= pmz_detach,
+	.हटाओ		= pmz_detach,
 	.suspend	= pmz_suspend,
 	.resume		= pmz_resume,
-};
+पूर्ण;
 
-#else
+#अन्यथा
 
-static struct platform_driver pmz_driver = {
-	.remove		= __exit_p(pmz_detach),
-	.driver		= {
+अटल काष्ठा platक्रमm_driver pmz_driver = अणु
+	.हटाओ		= __निकास_p(pmz_detach),
+	.driver		= अणु
 		.name		= "scc",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#endif /* !CONFIG_PPC_PMAC */
+#पूर्ण_अगर /* !CONFIG_PPC_PMAC */
 
-static int __init init_pmz(void)
-{
-	int rc, i;
-	printk(KERN_INFO "%s\n", version);
+अटल पूर्णांक __init init_pmz(व्योम)
+अणु
+	पूर्णांक rc, i;
+	prपूर्णांकk(KERN_INFO "%s\n", version);
 
 	/* 
-	 * First, we need to do a direct OF-based probe pass. We
-	 * do that because we want serial console up before the
+	 * First, we need to करो a direct OF-based probe pass. We
+	 * करो that because we want serial console up beक्रमe the
 	 * macio stuffs calls us back, and since that makes it
 	 * easier to pass the proper number of channels to
-	 * uart_register_driver()
+	 * uart_रेजिस्टर_driver()
 	 */
-	if (pmz_ports_count == 0)
+	अगर (pmz_ports_count == 0)
 		pmz_probe();
 
 	/*
-	 * Bail early if no port found
+	 * Bail early अगर no port found
 	 */
-	if (pmz_ports_count == 0)
-		return -ENODEV;
+	अगर (pmz_ports_count == 0)
+		वापस -ENODEV;
 
 	/*
-	 * Now we register with the serial layer
+	 * Now we रेजिस्टर with the serial layer
 	 */
-	rc = pmz_register();
-	if (rc) {
-		printk(KERN_ERR 
+	rc = pmz_रेजिस्टर();
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR 
 			"pmac_zilog: Error registering serial device, disabling pmac_zilog.\n"
 		 	"pmac_zilog: Did another serial driver already claim the minors?\n"); 
 		/* effectively "pmz_unprobe()" */
-		for (i=0; i < pmz_ports_count; i++)
+		क्रम (i=0; i < pmz_ports_count; i++)
 			pmz_dispose_port(&pmz_ports[i]);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/*
-	 * Then we register the macio driver itself
+	 * Then we रेजिस्टर the macio driver itself
 	 */
-#ifdef CONFIG_PPC_PMAC
-	return macio_register_driver(&pmz_driver);
-#else
-	return platform_driver_probe(&pmz_driver, pmz_attach);
-#endif
-}
+#अगर_घोषित CONFIG_PPC_PMAC
+	वापस macio_रेजिस्टर_driver(&pmz_driver);
+#अन्यथा
+	वापस platक्रमm_driver_probe(&pmz_driver, pmz_attach);
+#पूर्ण_अगर
+पूर्ण
 
-static void __exit exit_pmz(void)
-{
-	int i;
+अटल व्योम __निकास निकास_pmz(व्योम)
+अणु
+	पूर्णांक i;
 
-#ifdef CONFIG_PPC_PMAC
+#अगर_घोषित CONFIG_PPC_PMAC
 	/* Get rid of macio-driver (detach from macio) */
-	macio_unregister_driver(&pmz_driver);
-#else
-	platform_driver_unregister(&pmz_driver);
-#endif
+	macio_unरेजिस्टर_driver(&pmz_driver);
+#अन्यथा
+	platक्रमm_driver_unरेजिस्टर(&pmz_driver);
+#पूर्ण_अगर
 
-	for (i = 0; i < pmz_ports_count; i++) {
-		struct uart_pmac_port *uport = &pmz_ports[i];
-#ifdef CONFIG_PPC_PMAC
-		if (uport->node != NULL)
+	क्रम (i = 0; i < pmz_ports_count; i++) अणु
+		काष्ठा uart_pmac_port *uport = &pmz_ports[i];
+#अगर_घोषित CONFIG_PPC_PMAC
+		अगर (uport->node != शून्य)
 			pmz_dispose_port(uport);
-#else
-		if (uport->pdev != NULL)
+#अन्यथा
+		अगर (uport->pdev != शून्य)
 			pmz_dispose_port(uport);
-#endif
-	}
-	/* Unregister UART driver */
-	uart_unregister_driver(&pmz_uart_reg);
-}
+#पूर्ण_अगर
+	पूर्ण
+	/* Unरेजिस्टर UART driver */
+	uart_unरेजिस्टर_driver(&pmz_uart_reg);
+पूर्ण
 
-#ifdef CONFIG_SERIAL_PMACZILOG_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_PMACZILOG_CONSOLE
 
-static void pmz_console_putchar(struct uart_port *port, int ch)
-{
-	struct uart_pmac_port *uap =
-		container_of(port, struct uart_pmac_port, port);
+अटल व्योम pmz_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	काष्ठा uart_pmac_port *uap =
+		container_of(port, काष्ठा uart_pmac_port, port);
 
-	/* Wait for the transmit buffer to empty. */
-	while ((read_zsreg(uap, R0) & Tx_BUF_EMP) == 0)
+	/* Wait क्रम the transmit buffer to empty. */
+	जबतक ((पढ़ो_zsreg(uap, R0) & Tx_BUF_EMP) == 0)
 		udelay(5);
-	write_zsdata(uap, ch);
-}
+	ग_लिखो_zsdata(uap, ch);
+पूर्ण
 
 /*
- * Print a string to the serial port trying not to disturb
+ * Prपूर्णांक a string to the serial port trying not to disturb
  * any possible real use of the port...
  */
-static void pmz_console_write(struct console *con, const char *s, unsigned int count)
-{
-	struct uart_pmac_port *uap = &pmz_ports[con->index];
-	unsigned long flags;
+अटल व्योम pmz_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा uart_pmac_port *uap = &pmz_ports[con->index];
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&uap->port.lock, flags);
 
-	/* Turn of interrupts and enable the transmitter. */
-	write_zsreg(uap, R1, uap->curregs[1] & ~TxINT_ENAB);
-	write_zsreg(uap, R5, uap->curregs[5] | TxENABLE | RTS | DTR);
+	/* Turn of पूर्णांकerrupts and enable the transmitter. */
+	ग_लिखो_zsreg(uap, R1, uap->curregs[1] & ~TxINT_ENAB);
+	ग_लिखो_zsreg(uap, R5, uap->curregs[5] | TxENABLE | RTS | DTR);
 
-	uart_console_write(&uap->port, s, count, pmz_console_putchar);
+	uart_console_ग_लिखो(&uap->port, s, count, pmz_console_अक्षर_दो);
 
-	/* Restore the values in the registers. */
-	write_zsreg(uap, R1, uap->curregs[1]);
+	/* Restore the values in the रेजिस्टरs. */
+	ग_लिखो_zsreg(uap, R1, uap->curregs[1]);
 	/* Don't disable the transmitter. */
 
 	spin_unlock_irqrestore(&uap->port.lock, flags);
-}
+पूर्ण
 
 /*
  * Setup the serial console
  */
-static int __init pmz_console_setup(struct console *co, char *options)
-{
-	struct uart_pmac_port *uap;
-	struct uart_port *port;
-	int baud = 38400;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
-	unsigned long pwr_delay;
+अटल पूर्णांक __init pmz_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा uart_pmac_port *uap;
+	काष्ठा uart_port *port;
+	पूर्णांक baud = 38400;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
+	अचिन्हित दीर्घ pwr_delay;
 
 	/*
-	 * XServe's default to 57600 bps
+	 * XServe's शेष to 57600 bps
 	 */
-	if (of_machine_is_compatible("RackMac1,1")
+	अगर (of_machine_is_compatible("RackMac1,1")
 	    || of_machine_is_compatible("RackMac1,2")
 	    || of_machine_is_compatible("MacRISC4"))
 		baud = 57600;
 
 	/*
-	 * Check whether an invalid uart number has been specified, and
-	 * if so, search for the first available port that does have
+	 * Check whether an invalid uart number has been specअगरied, and
+	 * अगर so, search क्रम the first available port that करोes have
 	 * console support.
 	 */
-	if (co->index >= pmz_ports_count)
+	अगर (co->index >= pmz_ports_count)
 		co->index = 0;
 	uap = &pmz_ports[co->index];
-#ifdef CONFIG_PPC_PMAC
-	if (uap->node == NULL)
-		return -ENODEV;
-#else
-	if (uap->pdev == NULL)
-		return -ENODEV;
-#endif
+#अगर_घोषित CONFIG_PPC_PMAC
+	अगर (uap->node == शून्य)
+		वापस -ENODEV;
+#अन्यथा
+	अगर (uap->pdev == शून्य)
+		वापस -ENODEV;
+#पूर्ण_अगर
 	port = &uap->port;
 
 	/*
@@ -2019,7 +2020,7 @@ static int __init pmz_console_setup(struct console *co, char *options)
 	uap->flags |= PMACZILOG_FLAG_IS_CONS;
 
 	/*
-	 * Temporary fix for uart layer who didn't setup the spinlock yet
+	 * Temporary fix क्रम uart layer who didn't setup the spinlock yet
 	 */
 	spin_lock_init(&port->lock);
 
@@ -2027,32 +2028,32 @@ static int __init pmz_console_setup(struct console *co, char *options)
 	 * Enable the hardware
 	 */
 	pwr_delay = __pmz_startup(uap);
-	if (pwr_delay)
+	अगर (pwr_delay)
 		mdelay(pwr_delay);
 	
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static int __init pmz_console_init(void)
-{
+अटल पूर्णांक __init pmz_console_init(व्योम)
+अणु
 	/* Probe ports */
 	pmz_probe();
 
-	if (pmz_ports_count == 0)
-		return -ENODEV;
+	अगर (pmz_ports_count == 0)
+		वापस -ENODEV;
 
 	/* TODO: Autoprobe console based on OF */
 	/* pmz_console.index = i; */
-	register_console(&pmz_console);
+	रेजिस्टर_console(&pmz_console);
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 console_initcall(pmz_console_init);
-#endif /* CONFIG_SERIAL_PMACZILOG_CONSOLE */
+#पूर्ण_अगर /* CONFIG_SERIAL_PMACZILOG_CONSOLE */
 
 module_init(init_pmz);
-module_exit(exit_pmz);
+module_निकास(निकास_pmz);

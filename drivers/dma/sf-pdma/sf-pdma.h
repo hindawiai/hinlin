@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * SiFive FU540 Platform DMA driver
+ * SiFive FU540 Platक्रमm DMA driver
  * Copyright (C) 2019 SiFive
  *
  * Based partially on:
@@ -8,117 +9,117 @@
  * - drivers/dma/dw-edma/
  * - drivers/dma/pxa-dma.c
  *
- * See the following sources for further documentation:
+ * See the following sources क्रम further करोcumentation:
  * - Chapter 12 "Platform DMA Engine (PDMA)" of
  *   SiFive FU540-C000 v1.0
- *   https://static.dev.sifive.com/FU540-C000-v1.0.pdf
+ *   https://अटल.dev.sअगरive.com/FU540-C000-v1.0.pdf
  */
-#ifndef _SF_PDMA_H
-#define _SF_PDMA_H
+#अगर_अघोषित _SF_PDMA_H
+#घोषणा _SF_PDMA_H
 
-#include <linux/dmaengine.h>
-#include <linux/dma-direction.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-direction.h>
 
-#include "../dmaengine.h"
-#include "../virt-dma.h"
+#समावेश "../dmaengine.h"
+#समावेश "../virt-dma.h"
 
-#define PDMA_NR_CH					4
+#घोषणा PDMA_NR_CH					4
 
-#if (PDMA_NR_CH != 4)
-#error "Please define PDMA_NR_CH to 4"
-#endif
+#अगर (PDMA_NR_CH != 4)
+#त्रुटि "Please define PDMA_NR_CH to 4"
+#पूर्ण_अगर
 
-#define PDMA_BASE_ADDR					0x3000000
-#define PDMA_CHAN_OFFSET				0x1000
+#घोषणा PDMA_BASE_ADDR					0x3000000
+#घोषणा PDMA_CHAN_OFFSET				0x1000
 
 /* Register Offset */
-#define PDMA_CTRL					0x000
-#define PDMA_XFER_TYPE					0x004
-#define PDMA_XFER_SIZE					0x008
-#define PDMA_DST_ADDR					0x010
-#define PDMA_SRC_ADDR					0x018
-#define PDMA_ACT_TYPE					0x104 /* Read-only */
-#define PDMA_REMAINING_BYTE				0x108 /* Read-only */
-#define PDMA_CUR_DST_ADDR				0x110 /* Read-only*/
-#define PDMA_CUR_SRC_ADDR				0x118 /* Read-only*/
+#घोषणा PDMA_CTRL					0x000
+#घोषणा PDMA_XFER_TYPE					0x004
+#घोषणा PDMA_XFER_SIZE					0x008
+#घोषणा PDMA_DST_ADDR					0x010
+#घोषणा PDMA_SRC_ADDR					0x018
+#घोषणा PDMA_ACT_TYPE					0x104 /* Read-only */
+#घोषणा PDMA_REMAINING_BYTE				0x108 /* Read-only */
+#घोषणा PDMA_CUR_DST_ADDR				0x110 /* Read-only*/
+#घोषणा PDMA_CUR_SRC_ADDR				0x118 /* Read-only*/
 
 /* CTRL */
-#define PDMA_CLEAR_CTRL					0x0
-#define PDMA_CLAIM_MASK					GENMASK(0, 0)
-#define PDMA_RUN_MASK					GENMASK(1, 1)
-#define PDMA_ENABLE_DONE_INT_MASK			GENMASK(14, 14)
-#define PDMA_ENABLE_ERR_INT_MASK			GENMASK(15, 15)
-#define PDMA_DONE_STATUS_MASK				GENMASK(30, 30)
-#define PDMA_ERR_STATUS_MASK				GENMASK(31, 31)
+#घोषणा PDMA_CLEAR_CTRL					0x0
+#घोषणा PDMA_CLAIM_MASK					GENMASK(0, 0)
+#घोषणा PDMA_RUN_MASK					GENMASK(1, 1)
+#घोषणा PDMA_ENABLE_DONE_INT_MASK			GENMASK(14, 14)
+#घोषणा PDMA_ENABLE_ERR_INT_MASK			GENMASK(15, 15)
+#घोषणा PDMA_DONE_STATUS_MASK				GENMASK(30, 30)
+#घोषणा PDMA_ERR_STATUS_MASK				GENMASK(31, 31)
 
 /* Transfer Type */
-#define PDMA_FULL_SPEED					0xFF000008
+#घोषणा PDMA_FULL_SPEED					0xFF000008
 
 /* Error Recovery */
-#define MAX_RETRY					1
+#घोषणा MAX_RETRY					1
 
-#define SF_PDMA_REG_BASE(ch)	(pdma->membase + (PDMA_CHAN_OFFSET * (ch)))
+#घोषणा SF_PDMA_REG_BASE(ch)	(pdma->membase + (PDMA_CHAN_OFFSET * (ch)))
 
-struct pdma_regs {
-	/* read-write regs */
-	void __iomem *ctrl;		/* 4 bytes */
+काष्ठा pdma_regs अणु
+	/* पढ़ो-ग_लिखो regs */
+	व्योम __iomem *ctrl;		/* 4 bytes */
 
-	void __iomem *xfer_type;	/* 4 bytes */
-	void __iomem *xfer_size;	/* 8 bytes */
-	void __iomem *dst_addr;		/* 8 bytes */
-	void __iomem *src_addr;		/* 8 bytes */
+	व्योम __iomem *xfer_type;	/* 4 bytes */
+	व्योम __iomem *xfer_size;	/* 8 bytes */
+	व्योम __iomem *dst_addr;		/* 8 bytes */
+	व्योम __iomem *src_addr;		/* 8 bytes */
 
-	/* read-only */
-	void __iomem *act_type;		/* 4 bytes */
-	void __iomem *residue;		/* 8 bytes */
-	void __iomem *cur_dst_addr;	/* 8 bytes */
-	void __iomem *cur_src_addr;	/* 8 bytes */
-};
+	/* पढ़ो-only */
+	व्योम __iomem *act_type;		/* 4 bytes */
+	व्योम __iomem *residue;		/* 8 bytes */
+	व्योम __iomem *cur_dst_addr;	/* 8 bytes */
+	व्योम __iomem *cur_src_addr;	/* 8 bytes */
+पूर्ण;
 
-struct sf_pdma_desc {
+काष्ठा sf_pdma_desc अणु
 	u32				xfer_type;
 	u64				xfer_size;
 	u64				dst_addr;
 	u64				src_addr;
-	struct virt_dma_desc		vdesc;
-	struct sf_pdma_chan		*chan;
+	काष्ठा virt_dma_desc		vdesc;
+	काष्ठा sf_pdma_chan		*chan;
 	bool				in_use;
-	enum dma_transfer_direction	dirn;
-	struct dma_async_tx_descriptor *async_tx;
-};
+	क्रमागत dma_transfer_direction	dirn;
+	काष्ठा dma_async_tx_descriptor *async_tx;
+पूर्ण;
 
-enum sf_pdma_pm_state {
+क्रमागत sf_pdma_pm_state अणु
 	RUNNING = 0,
 	SUSPENDED,
-};
+पूर्ण;
 
-struct sf_pdma_chan {
-	struct virt_dma_chan		vchan;
-	enum dma_status			status;
-	enum sf_pdma_pm_state		pm_state;
+काष्ठा sf_pdma_chan अणु
+	काष्ठा virt_dma_chan		vchan;
+	क्रमागत dma_status			status;
+	क्रमागत sf_pdma_pm_state		pm_state;
 	u32				slave_id;
-	struct sf_pdma			*pdma;
-	struct sf_pdma_desc		*desc;
-	struct dma_slave_config		cfg;
+	काष्ठा sf_pdma			*pdma;
+	काष्ठा sf_pdma_desc		*desc;
+	काष्ठा dma_slave_config		cfg;
 	u32				attr;
 	dma_addr_t			dma_dev_addr;
 	u32				dma_dev_size;
-	struct tasklet_struct		done_tasklet;
-	struct tasklet_struct		err_tasklet;
-	struct pdma_regs		regs;
+	काष्ठा tasklet_काष्ठा		करोne_tasklet;
+	काष्ठा tasklet_काष्ठा		err_tasklet;
+	काष्ठा pdma_regs		regs;
 	spinlock_t			lock; /* protect chan data */
 	bool				xfer_err;
-	int				txirq;
-	int				errirq;
-	int				retries;
-};
+	पूर्णांक				txirq;
+	पूर्णांक				errirq;
+	पूर्णांक				retries;
+पूर्ण;
 
-struct sf_pdma {
-	struct dma_device       dma_dev;
-	void __iomem            *membase;
-	void __iomem            *mappedbase;
+काष्ठा sf_pdma अणु
+	काष्ठा dma_device       dma_dev;
+	व्योम __iomem            *membase;
+	व्योम __iomem            *mappedbase;
 	u32			n_chans;
-	struct sf_pdma_chan	chans[PDMA_NR_CH];
-};
+	काष्ठा sf_pdma_chan	chans[PDMA_NR_CH];
+पूर्ण;
 
-#endif /* _SF_PDMA_H */
+#पूर्ण_अगर /* _SF_PDMA_H */

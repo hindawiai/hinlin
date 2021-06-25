@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ACPI_NUMA_H
-#define __ACPI_NUMA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ACPI_NUMA_H
+#घोषणा __ACPI_NUMA_H
 
-#ifdef CONFIG_ACPI_NUMA
-#include <linux/kernel.h>
-#include <linux/numa.h>
+#अगर_घोषित CONFIG_ACPI_NUMA
+#समावेश <linux/kernel.h>
+#समावेश <linux/numa.h>
 
-/* Proximity bitmap length */
-#if MAX_NUMNODES > 256
-#define MAX_PXM_DOMAINS MAX_NUMNODES
-#else
-#define MAX_PXM_DOMAINS (256)	/* Old pxm spec is defined 8 bit */
-#endif
+/* Proximity biपंचांगap length */
+#अगर MAX_NUMNODES > 256
+#घोषणा MAX_PXM_DOMAINS MAX_NUMNODES
+#अन्यथा
+#घोषणा MAX_PXM_DOMAINS (256)	/* Old pxm spec is defined 8 bit */
+#पूर्ण_अगर
 
-extern int pxm_to_node(int);
-extern int node_to_pxm(int);
-extern int acpi_map_pxm_to_node(int);
-extern unsigned char acpi_srat_revision;
-extern void disable_srat(void);
+बाह्य पूर्णांक pxm_to_node(पूर्णांक);
+बाह्य पूर्णांक node_to_pxm(पूर्णांक);
+बाह्य पूर्णांक acpi_map_pxm_to_node(पूर्णांक);
+बाह्य अचिन्हित अक्षर acpi_srat_revision;
+बाह्य व्योम disable_srat(व्योम);
 
-extern void bad_srat(void);
-extern int srat_disabled(void);
+बाह्य व्योम bad_srat(व्योम);
+बाह्य पूर्णांक srat_disabled(व्योम);
 
-#else				/* CONFIG_ACPI_NUMA */
-static inline void disable_srat(void)
-{
-}
-static inline int pxm_to_node(int pxm)
-{
-	return 0;
-}
-static inline int node_to_pxm(int node)
-{
-	return 0;
-}
-#endif				/* CONFIG_ACPI_NUMA */
+#अन्यथा				/* CONFIG_ACPI_NUMA */
+अटल अंतरभूत व्योम disable_srat(व्योम)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक pxm_to_node(पूर्णांक pxm)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक node_to_pxm(पूर्णांक node)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर				/* CONFIG_ACPI_NUMA */
 
-#ifdef CONFIG_ACPI_HMAT
-extern void disable_hmat(void);
-#else				/* CONFIG_ACPI_HMAT */
-static inline void disable_hmat(void)
-{
-}
-#endif				/* CONFIG_ACPI_HMAT */
-#endif				/* __ACP_NUMA_H */
+#अगर_घोषित CONFIG_ACPI_HMAT
+बाह्य व्योम disable_hmat(व्योम);
+#अन्यथा				/* CONFIG_ACPI_HMAT */
+अटल अंतरभूत व्योम disable_hmat(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर				/* CONFIG_ACPI_HMAT */
+#पूर्ण_अगर				/* __ACP_NUMA_H */

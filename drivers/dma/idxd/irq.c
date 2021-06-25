@@ -1,194 +1,195 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2019 Intel Corporation. All rights rsvd. */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <linux/dmaengine.h>
-#include <uapi/linux/idxd.h>
-#include "../dmaengine.h"
-#include "idxd.h"
-#include "registers.h"
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <uapi/linux/idxd.h>
+#समावेश "../dmaengine.h"
+#समावेश "idxd.h"
+#समावेश "registers.h"
 
-enum irq_work_type {
+क्रमागत irq_work_type अणु
 	IRQ_WORK_NORMAL = 0,
 	IRQ_WORK_PROCESS_FAULT,
-};
+पूर्ण;
 
-struct idxd_fault {
-	struct work_struct work;
+काष्ठा idxd_fault अणु
+	काष्ठा work_काष्ठा work;
 	u64 addr;
-	struct idxd_device *idxd;
-};
+	काष्ठा idxd_device *idxd;
+पूर्ण;
 
-static int irq_process_work_list(struct idxd_irq_entry *irq_entry,
-				 enum irq_work_type wtype,
-				 int *processed, u64 data);
-static int irq_process_pending_llist(struct idxd_irq_entry *irq_entry,
-				     enum irq_work_type wtype,
-				     int *processed, u64 data);
+अटल पूर्णांक irq_process_work_list(काष्ठा idxd_irq_entry *irq_entry,
+				 क्रमागत irq_work_type wtype,
+				 पूर्णांक *processed, u64 data);
+अटल पूर्णांक irq_process_pending_llist(काष्ठा idxd_irq_entry *irq_entry,
+				     क्रमागत irq_work_type wtype,
+				     पूर्णांक *processed, u64 data);
 
-static void idxd_device_reinit(struct work_struct *work)
-{
-	struct idxd_device *idxd = container_of(work, struct idxd_device, work);
-	struct device *dev = &idxd->pdev->dev;
-	int rc, i;
+अटल व्योम idxd_device_reinit(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा idxd_device *idxd = container_of(work, काष्ठा idxd_device, work);
+	काष्ठा device *dev = &idxd->pdev->dev;
+	पूर्णांक rc, i;
 
 	idxd_device_reset(idxd);
 	rc = idxd_device_config(idxd);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 
 	rc = idxd_device_enable(idxd);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 
-	for (i = 0; i < idxd->max_wqs; i++) {
-		struct idxd_wq *wq = idxd->wqs[i];
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+		काष्ठा idxd_wq *wq = idxd->wqs[i];
 
-		if (wq->state == IDXD_WQ_ENABLED) {
+		अगर (wq->state == IDXD_WQ_ENABLED) अणु
 			rc = idxd_wq_enable(wq);
-			if (rc < 0) {
+			अगर (rc < 0) अणु
 				dev_warn(dev, "Unable to re-enable wq %s\n",
 					 dev_name(&wq->conf_dev));
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return;
+	वापस;
 
  out:
 	idxd_device_wqs_clear_state(idxd);
-}
+पूर्ण
 
-static void idxd_device_fault_work(struct work_struct *work)
-{
-	struct idxd_fault *fault = container_of(work, struct idxd_fault, work);
-	struct idxd_irq_entry *ie;
-	int i;
-	int processed;
-	int irqcnt = fault->idxd->num_wq_irqs + 1;
+अटल व्योम idxd_device_fault_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा idxd_fault *fault = container_of(work, काष्ठा idxd_fault, work);
+	काष्ठा idxd_irq_entry *ie;
+	पूर्णांक i;
+	पूर्णांक processed;
+	पूर्णांक irqcnt = fault->idxd->num_wq_irqs + 1;
 
-	for (i = 1; i < irqcnt; i++) {
+	क्रम (i = 1; i < irqcnt; i++) अणु
 		ie = &fault->idxd->irq_entries[i];
 		irq_process_work_list(ie, IRQ_WORK_PROCESS_FAULT,
 				      &processed, fault->addr);
-		if (processed)
-			break;
+		अगर (processed)
+			अवरोध;
 
 		irq_process_pending_llist(ie, IRQ_WORK_PROCESS_FAULT,
 					  &processed, fault->addr);
-		if (processed)
-			break;
-	}
+		अगर (processed)
+			अवरोध;
+	पूर्ण
 
-	kfree(fault);
-}
+	kमुक्त(fault);
+पूर्ण
 
-static int idxd_device_schedule_fault_process(struct idxd_device *idxd,
+अटल पूर्णांक idxd_device_schedule_fault_process(काष्ठा idxd_device *idxd,
 					      u64 fault_addr)
-{
-	struct idxd_fault *fault;
+अणु
+	काष्ठा idxd_fault *fault;
 
-	fault = kmalloc(sizeof(*fault), GFP_ATOMIC);
-	if (!fault)
-		return -ENOMEM;
+	fault = kदो_स्मृति(माप(*fault), GFP_ATOMIC);
+	अगर (!fault)
+		वापस -ENOMEM;
 
 	fault->addr = fault_addr;
 	fault->idxd = idxd;
 	INIT_WORK(&fault->work, idxd_device_fault_work);
 	queue_work(idxd->wq, &fault->work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_misc_interrupts(struct idxd_device *idxd, u32 cause)
-{
-	struct device *dev = &idxd->pdev->dev;
-	union gensts_reg gensts;
+अटल पूर्णांक process_misc_पूर्णांकerrupts(काष्ठा idxd_device *idxd, u32 cause)
+अणु
+	काष्ठा device *dev = &idxd->pdev->dev;
+	जोड़ gensts_reg gensts;
 	u32 val = 0;
-	int i;
+	पूर्णांक i;
 	bool err = false;
 
-	if (cause & IDXD_INTC_ERR) {
+	अगर (cause & IDXD_INTC_ERR) अणु
 		spin_lock_bh(&idxd->dev_lock);
-		for (i = 0; i < 4; i++)
-			idxd->sw_err.bits[i] = ioread64(idxd->reg_base +
-					IDXD_SWERR_OFFSET + i * sizeof(u64));
+		क्रम (i = 0; i < 4; i++)
+			idxd->sw_err.bits[i] = ioपढ़ो64(idxd->reg_base +
+					IDXD_SWERR_OFFSET + i * माप(u64));
 
-		iowrite64(idxd->sw_err.bits[0] & IDXD_SWERR_ACK,
+		ioग_लिखो64(idxd->sw_err.bits[0] & IDXD_SWERR_ACK,
 			  idxd->reg_base + IDXD_SWERR_OFFSET);
 
-		if (idxd->sw_err.valid && idxd->sw_err.wq_idx_valid) {
-			int id = idxd->sw_err.wq_idx;
-			struct idxd_wq *wq = idxd->wqs[id];
+		अगर (idxd->sw_err.valid && idxd->sw_err.wq_idx_valid) अणु
+			पूर्णांक id = idxd->sw_err.wq_idx;
+			काष्ठा idxd_wq *wq = idxd->wqs[id];
 
-			if (wq->type == IDXD_WQT_USER)
-				wake_up_interruptible(&wq->err_queue);
-		} else {
-			int i;
+			अगर (wq->type == IDXD_WQT_USER)
+				wake_up_पूर्णांकerruptible(&wq->err_queue);
+		पूर्ण अन्यथा अणु
+			पूर्णांक i;
 
-			for (i = 0; i < idxd->max_wqs; i++) {
-				struct idxd_wq *wq = idxd->wqs[i];
+			क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+				काष्ठा idxd_wq *wq = idxd->wqs[i];
 
-				if (wq->type == IDXD_WQT_USER)
-					wake_up_interruptible(&wq->err_queue);
-			}
-		}
+				अगर (wq->type == IDXD_WQT_USER)
+					wake_up_पूर्णांकerruptible(&wq->err_queue);
+			पूर्ण
+		पूर्ण
 
 		spin_unlock_bh(&idxd->dev_lock);
 		val |= IDXD_INTC_ERR;
 
-		for (i = 0; i < 4; i++)
+		क्रम (i = 0; i < 4; i++)
 			dev_warn(dev, "err[%d]: %#16.16llx\n",
 				 i, idxd->sw_err.bits[i]);
 		err = true;
-	}
+	पूर्ण
 
-	if (cause & IDXD_INTC_CMD) {
+	अगर (cause & IDXD_INTC_CMD) अणु
 		val |= IDXD_INTC_CMD;
-		complete(idxd->cmd_done);
-	}
+		complete(idxd->cmd_करोne);
+	पूर्ण
 
-	if (cause & IDXD_INTC_OCCUPY) {
-		/* Driver does not utilize occupancy interrupt */
+	अगर (cause & IDXD_INTC_OCCUPY) अणु
+		/* Driver करोes not utilize occupancy पूर्णांकerrupt */
 		val |= IDXD_INTC_OCCUPY;
-	}
+	पूर्ण
 
-	if (cause & IDXD_INTC_PERFMON_OVFL) {
+	अगर (cause & IDXD_INTC_PERFMON_OVFL) अणु
 		val |= IDXD_INTC_PERFMON_OVFL;
 		perfmon_counter_overflow(idxd);
-	}
+	पूर्ण
 
 	val ^= cause;
-	if (val)
+	अगर (val)
 		dev_warn_once(dev, "Unexpected interrupt cause bits set: %#x\n",
 			      val);
 
-	if (!err)
-		return 0;
+	अगर (!err)
+		वापस 0;
 
 	/*
-	 * This case should rarely happen and typically is due to software
+	 * This हाल should rarely happen and typically is due to software
 	 * programming error by the driver.
 	 */
-	if (idxd->sw_err.valid &&
+	अगर (idxd->sw_err.valid &&
 	    idxd->sw_err.desc_valid &&
 	    idxd->sw_err.fault_addr)
 		idxd_device_schedule_fault_process(idxd, idxd->sw_err.fault_addr);
 
-	gensts.bits = ioread32(idxd->reg_base + IDXD_GENSTATS_OFFSET);
-	if (gensts.state == IDXD_DEVICE_STATE_HALT) {
+	gensts.bits = ioपढ़ो32(idxd->reg_base + IDXD_GENSTATS_OFFSET);
+	अगर (gensts.state == IDXD_DEVICE_STATE_HALT) अणु
 		idxd->state = IDXD_DEV_HALTED;
-		if (gensts.reset_type == IDXD_DEVICE_RESET_SOFTWARE) {
+		अगर (gensts.reset_type == IDXD_DEVICE_RESET_SOFTWARE) अणु
 			/*
 			 * If we need a software reset, we will throw the work
-			 * on a system workqueue in order to allow interrupts
-			 * for the device command completions.
+			 * on a प्रणाली workqueue in order to allow पूर्णांकerrupts
+			 * क्रम the device command completions.
 			 */
 			INIT_WORK(&idxd->work, idxd_device_reinit);
 			queue_work(idxd->wq, &idxd->work);
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_lock_bh(&idxd->dev_lock);
 			idxd_wqs_quiesce(idxd);
 			idxd_wqs_unmap_portal(idxd);
@@ -198,191 +199,191 @@ static int process_misc_interrupts(struct idxd_device *idxd, u32 cause)
 				gensts.reset_type == IDXD_DEVICE_RESET_FLR ?
 				"FLR" : "system reset");
 			spin_unlock_bh(&idxd->dev_lock);
-			return -ENXIO;
-		}
-	}
+			वापस -ENXIO;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-irqreturn_t idxd_misc_thread(int vec, void *data)
-{
-	struct idxd_irq_entry *irq_entry = data;
-	struct idxd_device *idxd = irq_entry->idxd;
-	int rc;
+irqवापस_t idxd_misc_thपढ़ो(पूर्णांक vec, व्योम *data)
+अणु
+	काष्ठा idxd_irq_entry *irq_entry = data;
+	काष्ठा idxd_device *idxd = irq_entry->idxd;
+	पूर्णांक rc;
 	u32 cause;
 
-	cause = ioread32(idxd->reg_base + IDXD_INTCAUSE_OFFSET);
-	if (cause)
-		iowrite32(cause, idxd->reg_base + IDXD_INTCAUSE_OFFSET);
+	cause = ioपढ़ो32(idxd->reg_base + IDXD_INTCAUSE_OFFSET);
+	अगर (cause)
+		ioग_लिखो32(cause, idxd->reg_base + IDXD_INTCAUSE_OFFSET);
 
-	while (cause) {
-		rc = process_misc_interrupts(idxd, cause);
-		if (rc < 0)
-			break;
-		cause = ioread32(idxd->reg_base + IDXD_INTCAUSE_OFFSET);
-		if (cause)
-			iowrite32(cause, idxd->reg_base + IDXD_INTCAUSE_OFFSET);
-	}
+	जबतक (cause) अणु
+		rc = process_misc_पूर्णांकerrupts(idxd, cause);
+		अगर (rc < 0)
+			अवरोध;
+		cause = ioपढ़ो32(idxd->reg_base + IDXD_INTCAUSE_OFFSET);
+		अगर (cause)
+			ioग_लिखो32(cause, idxd->reg_base + IDXD_INTCAUSE_OFFSET);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static inline bool match_fault(struct idxd_desc *desc, u64 fault_addr)
-{
+अटल अंतरभूत bool match_fault(काष्ठा idxd_desc *desc, u64 fault_addr)
+अणु
 	/*
-	 * Completion address can be bad as well. Check fault address match for descriptor
+	 * Completion address can be bad as well. Check fault address match क्रम descriptor
 	 * and completion address.
 	 */
-	if ((u64)desc->hw == fault_addr || (u64)desc->completion == fault_addr) {
-		struct idxd_device *idxd = desc->wq->idxd;
-		struct device *dev = &idxd->pdev->dev;
+	अगर ((u64)desc->hw == fault_addr || (u64)desc->completion == fault_addr) अणु
+		काष्ठा idxd_device *idxd = desc->wq->idxd;
+		काष्ठा device *dev = &idxd->pdev->dev;
 
 		dev_warn(dev, "desc with fault address: %#llx\n", fault_addr);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline void complete_desc(struct idxd_desc *desc, enum idxd_complete_type reason)
-{
+अटल अंतरभूत व्योम complete_desc(काष्ठा idxd_desc *desc, क्रमागत idxd_complete_type reason)
+अणु
 	idxd_dma_complete_txd(desc, reason);
-	idxd_free_desc(desc->wq, desc);
-}
+	idxd_मुक्त_desc(desc->wq, desc);
+पूर्ण
 
-static int irq_process_pending_llist(struct idxd_irq_entry *irq_entry,
-				     enum irq_work_type wtype,
-				     int *processed, u64 data)
-{
-	struct idxd_desc *desc, *t;
-	struct llist_node *head;
-	int queued = 0;
-	unsigned long flags;
-	enum idxd_complete_type reason;
+अटल पूर्णांक irq_process_pending_llist(काष्ठा idxd_irq_entry *irq_entry,
+				     क्रमागत irq_work_type wtype,
+				     पूर्णांक *processed, u64 data)
+अणु
+	काष्ठा idxd_desc *desc, *t;
+	काष्ठा llist_node *head;
+	पूर्णांक queued = 0;
+	अचिन्हित दीर्घ flags;
+	क्रमागत idxd_complete_type reason;
 
 	*processed = 0;
 	head = llist_del_all(&irq_entry->pending_llist);
-	if (!head)
-		goto out;
+	अगर (!head)
+		जाओ out;
 
-	if (wtype == IRQ_WORK_NORMAL)
+	अगर (wtype == IRQ_WORK_NORMAL)
 		reason = IDXD_COMPLETE_NORMAL;
-	else
+	अन्यथा
 		reason = IDXD_COMPLETE_DEV_FAIL;
 
-	llist_for_each_entry_safe(desc, t, head, llnode) {
-		if (desc->completion->status) {
-			if ((desc->completion->status & DSA_COMP_STATUS_MASK) != DSA_COMP_SUCCESS)
+	llist_क्रम_each_entry_safe(desc, t, head, llnode) अणु
+		अगर (desc->completion->status) अणु
+			अगर ((desc->completion->status & DSA_COMP_STATUS_MASK) != DSA_COMP_SUCCESS)
 				match_fault(desc, data);
 			complete_desc(desc, reason);
 			(*processed)++;
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_lock_irqsave(&irq_entry->list_lock, flags);
 			list_add_tail(&desc->list,
 				      &irq_entry->work_list);
 			spin_unlock_irqrestore(&irq_entry->list_lock, flags);
 			queued++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
  out:
-	return queued;
-}
+	वापस queued;
+पूर्ण
 
-static int irq_process_work_list(struct idxd_irq_entry *irq_entry,
-				 enum irq_work_type wtype,
-				 int *processed, u64 data)
-{
-	int queued = 0;
-	unsigned long flags;
+अटल पूर्णांक irq_process_work_list(काष्ठा idxd_irq_entry *irq_entry,
+				 क्रमागत irq_work_type wtype,
+				 पूर्णांक *processed, u64 data)
+अणु
+	पूर्णांक queued = 0;
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(flist);
-	struct idxd_desc *desc, *n;
-	enum idxd_complete_type reason;
+	काष्ठा idxd_desc *desc, *n;
+	क्रमागत idxd_complete_type reason;
 
 	*processed = 0;
-	if (wtype == IRQ_WORK_NORMAL)
+	अगर (wtype == IRQ_WORK_NORMAL)
 		reason = IDXD_COMPLETE_NORMAL;
-	else
+	अन्यथा
 		reason = IDXD_COMPLETE_DEV_FAIL;
 
 	/*
 	 * This lock protects list corruption from access of list outside of the irq handler
-	 * thread.
+	 * thपढ़ो.
 	 */
 	spin_lock_irqsave(&irq_entry->list_lock, flags);
-	if (list_empty(&irq_entry->work_list)) {
+	अगर (list_empty(&irq_entry->work_list)) अणु
 		spin_unlock_irqrestore(&irq_entry->list_lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	list_for_each_entry_safe(desc, n, &irq_entry->work_list, list) {
-		if (desc->completion->status) {
+	list_क्रम_each_entry_safe(desc, n, &irq_entry->work_list, list) अणु
+		अगर (desc->completion->status) अणु
 			list_del(&desc->list);
 			(*processed)++;
 			list_add_tail(&desc->list, &flist);
-		} else {
+		पूर्ण अन्यथा अणु
 			queued++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&irq_entry->list_lock, flags);
 
-	list_for_each_entry(desc, &flist, list) {
-		if ((desc->completion->status & DSA_COMP_STATUS_MASK) != DSA_COMP_SUCCESS)
+	list_क्रम_each_entry(desc, &flist, list) अणु
+		अगर ((desc->completion->status & DSA_COMP_STATUS_MASK) != DSA_COMP_SUCCESS)
 			match_fault(desc, data);
 		complete_desc(desc, reason);
-	}
+	पूर्ण
 
-	return queued;
-}
+	वापस queued;
+पूर्ण
 
-static int idxd_desc_process(struct idxd_irq_entry *irq_entry)
-{
-	int rc, processed, total = 0;
+अटल पूर्णांक idxd_desc_process(काष्ठा idxd_irq_entry *irq_entry)
+अणु
+	पूर्णांक rc, processed, total = 0;
 
 	/*
 	 * There are two lists we are processing. The pending_llist is where
 	 * submmiter adds all the submitted descriptor after sending it to
 	 * the workqueue. It's a lockless singly linked list. The work_list
-	 * is the common linux double linked list. We are in a scenario of
+	 * is the common linux द्विगुन linked list. We are in a scenario of
 	 * multiple producers and a single consumer. The producers are all
 	 * the kernel submitters of descriptors, and the consumer is the
-	 * kernel irq handler thread for the msix vector when using threaded
-	 * irq. To work with the restrictions of llist to remain lockless,
-	 * we are doing the following steps:
+	 * kernel irq handler thपढ़ो क्रम the msix vector when using thपढ़ोed
+	 * irq. To work with the restrictions of llist to reमुख्य lockless,
+	 * we are करोing the following steps:
 	 * 1. Iterate through the work_list and process any completed
 	 *    descriptor. Delete the completed entries during iteration.
 	 * 2. llist_del_all() from the pending list.
 	 * 3. Iterate through the llist that was deleted from the pending list
 	 *    and process the completed entries.
-	 * 4. If the entry is still waiting on hardware, list_add_tail() to
+	 * 4. If the entry is still रुकोing on hardware, list_add_tail() to
 	 *    the work_list.
 	 * 5. Repeat until no more descriptors.
 	 */
-	do {
+	करो अणु
 		rc = irq_process_work_list(irq_entry, IRQ_WORK_NORMAL,
 					   &processed, 0);
 		total += processed;
-		if (rc != 0)
-			continue;
+		अगर (rc != 0)
+			जारी;
 
 		rc = irq_process_pending_llist(irq_entry, IRQ_WORK_NORMAL,
 					       &processed, 0);
 		total += processed;
-	} while (rc != 0);
+	पूर्ण जबतक (rc != 0);
 
-	return total;
-}
+	वापस total;
+पूर्ण
 
-irqreturn_t idxd_wq_thread(int irq, void *data)
-{
-	struct idxd_irq_entry *irq_entry = data;
-	int processed;
+irqवापस_t idxd_wq_thपढ़ो(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा idxd_irq_entry *irq_entry = data;
+	पूर्णांक processed;
 
 	processed = idxd_desc_process(irq_entry);
-	if (processed == 0)
-		return IRQ_NONE;
+	अगर (processed == 0)
+		वापस IRQ_NONE;
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण

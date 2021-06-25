@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifdef DEFINE_DWARF_REGSTR_TABLE
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_घोषित DEFINE_DWARF_REGSTR_TABLE
 /* This is included in perf/util/dwarf-regs.c */
 
 /*
  * Reference:
- * http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi-1.9.html
+ * http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi-1.9.hपंचांगl
  * http://refspecs.linux-foundation.org/elf/elfspec_ppc.pdf
  */
-#define REG_DWARFNUM_NAME(reg, idx)	[idx] = "%" #reg
+#घोषणा REG_DWARFNUM_NAME(reg, idx)	[idx] = "%" #reg
 
-static const char * const powerpc_regstr_tbl[] = {
+अटल स्थिर अक्षर * स्थिर घातerpc_regstr_tbl[] = अणु
 	"%gpr0", "%gpr1", "%gpr2", "%gpr3", "%gpr4",
 	"%gpr5", "%gpr6", "%gpr7", "%gpr8", "%gpr9",
 	"%gpr10", "%gpr11", "%gpr12", "%gpr13", "%gpr14",
@@ -23,6 +24,6 @@ static const char * const powerpc_regstr_tbl[] = {
 	REG_DWARFNUM_NAME(xer,   101),
 	REG_DWARFNUM_NAME(dar,   119),
 	REG_DWARFNUM_NAME(dsisr, 118),
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,20 +1,21 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
 
-#ifndef I915_USER_EXTENSIONS_H
-#define I915_USER_EXTENSIONS_H
+#अगर_अघोषित I915_USER_EXTENSIONS_H
+#घोषणा I915_USER_EXTENSIONS_H
 
-struct i915_user_extension;
+काष्ठा i915_user_extension;
 
-typedef int (*i915_user_extension_fn)(struct i915_user_extension __user *ext,
-				      void *data);
+प्रकार पूर्णांक (*i915_user_extension_fn)(काष्ठा i915_user_extension __user *ext,
+				      व्योम *data);
 
-int i915_user_extensions(struct i915_user_extension __user *ext,
-			 const i915_user_extension_fn *tbl,
-			 unsigned int count,
-			 void *data);
+पूर्णांक i915_user_extensions(काष्ठा i915_user_extension __user *ext,
+			 स्थिर i915_user_extension_fn *tbl,
+			 अचिन्हित पूर्णांक count,
+			 व्योम *data);
 
-#endif /* I915_USER_EXTENSIONS_H */
+#पूर्ण_अगर /* I915_USER_EXTENSIONS_H */

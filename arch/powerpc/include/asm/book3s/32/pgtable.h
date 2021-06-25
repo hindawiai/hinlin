@@ -1,596 +1,597 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_BOOK3S_32_PGTABLE_H
-#define _ASM_POWERPC_BOOK3S_32_PGTABLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_BOOK3S_32_PGTABLE_H
+#घोषणा _ASM_POWERPC_BOOK3S_32_PGTABLE_H
 
-#include <asm-generic/pgtable-nopmd.h>
+#समावेश <यंत्र-generic/pgtable-nopmd.h>
 
-#include <asm/book3s/32/hash.h>
+#समावेश <यंत्र/book3s/32/hash.h>
 
 /* And here we include common definitions */
 
-#define _PAGE_KERNEL_RO		0
-#define _PAGE_KERNEL_ROX	(_PAGE_EXEC)
-#define _PAGE_KERNEL_RW		(_PAGE_DIRTY | _PAGE_RW)
-#define _PAGE_KERNEL_RWX	(_PAGE_DIRTY | _PAGE_RW | _PAGE_EXEC)
+#घोषणा _PAGE_KERNEL_RO		0
+#घोषणा _PAGE_KERNEL_ROX	(_PAGE_EXEC)
+#घोषणा _PAGE_KERNEL_RW		(_PAGE_सूचीTY | _PAGE_RW)
+#घोषणा _PAGE_KERNEL_RWX	(_PAGE_सूचीTY | _PAGE_RW | _PAGE_EXEC)
 
-#define _PAGE_HPTEFLAGS _PAGE_HASHPTE
+#घोषणा _PAGE_HPTEFLAGS _PAGE_HASHPTE
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-static inline bool pte_user(pte_t pte)
-{
-	return pte_val(pte) & _PAGE_USER;
-}
-#endif /* __ASSEMBLY__ */
+अटल अंतरभूत bool pte_user(pte_t pte)
+अणु
+	वापस pte_val(pte) & _PAGE_USER;
+पूर्ण
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
 /*
- * Location of the PFN in the PTE. Most 32-bit platforms use the same
+ * Location of the PFN in the PTE. Most 32-bit platक्रमms use the same
  * as _PAGE_SHIFT here (ie, naturally aligned).
- * Platform who don't just pre-define the value so we don't override it here.
+ * Platक्रमm who करोn't just pre-define the value so we don't override it here.
  */
-#define PTE_RPN_SHIFT	(PAGE_SHIFT)
+#घोषणा PTE_RPN_SHIFT	(PAGE_SHIFT)
 
 /*
- * The mask covered by the RPN must be a ULL on 32-bit platforms with
+ * The mask covered by the RPN must be a ULL on 32-bit platक्रमms with
  * 64-bit PTEs.
  */
-#ifdef CONFIG_PTE_64BIT
-#define PTE_RPN_MASK	(~((1ULL << PTE_RPN_SHIFT) - 1))
-#define MAX_POSSIBLE_PHYSMEM_BITS 36
-#else
-#define PTE_RPN_MASK	(~((1UL << PTE_RPN_SHIFT) - 1))
-#define MAX_POSSIBLE_PHYSMEM_BITS 32
-#endif
+#अगर_घोषित CONFIG_PTE_64BIT
+#घोषणा PTE_RPN_MASK	(~((1ULL << PTE_RPN_SHIFT) - 1))
+#घोषणा MAX_POSSIBLE_PHYSMEM_BITS 36
+#अन्यथा
+#घोषणा PTE_RPN_MASK	(~((1UL << PTE_RPN_SHIFT) - 1))
+#घोषणा MAX_POSSIBLE_PHYSMEM_BITS 32
+#पूर्ण_अगर
 
 /*
  * _PAGE_CHG_MASK masks of bits that are to be preserved across
  * pgprot changes.
  */
-#define _PAGE_CHG_MASK	(PTE_RPN_MASK | _PAGE_HASHPTE | _PAGE_DIRTY | \
+#घोषणा _PAGE_CHG_MASK	(PTE_RPN_MASK | _PAGE_HASHPTE | _PAGE_सूचीTY | \
 			 _PAGE_ACCESSED | _PAGE_SPECIAL)
 
 /*
- * We define 2 sets of base prot bits, one for basic pages (ie,
- * cacheable kernel and user pages) and one for non cacheable
+ * We define 2 sets of base prot bits, one क्रम basic pages (ie,
+ * cacheable kernel and user pages) and one क्रम non cacheable
  * pages. We always set _PAGE_COHERENT when SMP is enabled or
- * the processor might need it for DMA coherency.
+ * the processor might need it क्रम DMA coherency.
  */
-#define _PAGE_BASE_NC	(_PAGE_PRESENT | _PAGE_ACCESSED)
-#define _PAGE_BASE	(_PAGE_BASE_NC | _PAGE_COHERENT)
+#घोषणा _PAGE_BASE_NC	(_PAGE_PRESENT | _PAGE_ACCESSED)
+#घोषणा _PAGE_BASE	(_PAGE_BASE_NC | _PAGE_COHERENT)
 
 /*
  * Permission masks used to generate the __P and __S table.
  *
- * Note:__pgprot is defined in arch/powerpc/include/asm/page.h
+ * Note:__pgprot is defined in arch/घातerpc/include/यंत्र/page.h
  *
- * Write permissions imply read permissions for now.
+ * Write permissions imply पढ़ो permissions क्रम now.
  */
-#define PAGE_NONE	__pgprot(_PAGE_BASE)
-#define PAGE_SHARED	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_RW)
-#define PAGE_SHARED_X	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_RW | _PAGE_EXEC)
-#define PAGE_COPY	__pgprot(_PAGE_BASE | _PAGE_USER)
-#define PAGE_COPY_X	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_EXEC)
-#define PAGE_READONLY	__pgprot(_PAGE_BASE | _PAGE_USER)
-#define PAGE_READONLY_X	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_EXEC)
+#घोषणा PAGE_NONE	__pgprot(_PAGE_BASE)
+#घोषणा PAGE_SHARED	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_RW)
+#घोषणा PAGE_SHARED_X	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_RW | _PAGE_EXEC)
+#घोषणा PAGE_COPY	__pgprot(_PAGE_BASE | _PAGE_USER)
+#घोषणा PAGE_COPY_X	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_EXEC)
+#घोषणा PAGE_READONLY	__pgprot(_PAGE_BASE | _PAGE_USER)
+#घोषणा PAGE_READONLY_X	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_EXEC)
 
-/* Permission masks used for kernel mappings */
-#define PAGE_KERNEL	__pgprot(_PAGE_BASE | _PAGE_KERNEL_RW)
-#define PAGE_KERNEL_NC	__pgprot(_PAGE_BASE_NC | _PAGE_KERNEL_RW | _PAGE_NO_CACHE)
-#define PAGE_KERNEL_NCG	__pgprot(_PAGE_BASE_NC | _PAGE_KERNEL_RW | \
+/* Permission masks used क्रम kernel mappings */
+#घोषणा PAGE_KERNEL	__pgprot(_PAGE_BASE | _PAGE_KERNEL_RW)
+#घोषणा PAGE_KERNEL_NC	__pgprot(_PAGE_BASE_NC | _PAGE_KERNEL_RW | _PAGE_NO_CACHE)
+#घोषणा PAGE_KERNEL_NCG	__pgprot(_PAGE_BASE_NC | _PAGE_KERNEL_RW | \
 				 _PAGE_NO_CACHE | _PAGE_GUARDED)
-#define PAGE_KERNEL_X	__pgprot(_PAGE_BASE | _PAGE_KERNEL_RWX)
-#define PAGE_KERNEL_RO	__pgprot(_PAGE_BASE | _PAGE_KERNEL_RO)
-#define PAGE_KERNEL_ROX	__pgprot(_PAGE_BASE | _PAGE_KERNEL_ROX)
+#घोषणा PAGE_KERNEL_X	__pgprot(_PAGE_BASE | _PAGE_KERNEL_RWX)
+#घोषणा PAGE_KERNEL_RO	__pgprot(_PAGE_BASE | _PAGE_KERNEL_RO)
+#घोषणा PAGE_KERNEL_ROX	__pgprot(_PAGE_BASE | _PAGE_KERNEL_ROX)
 
 /*
- * Protection used for kernel text. We want the debuggers to be able to
- * set breakpoints anywhere, so don't write protect the kernel text
- * on platforms where such control is possible.
+ * Protection used क्रम kernel text. We want the debuggers to be able to
+ * set अवरोधpoपूर्णांकs anywhere, so करोn't ग_लिखो protect the kernel text
+ * on platक्रमms where such control is possible.
  */
-#if defined(CONFIG_KGDB) || defined(CONFIG_XMON) || defined(CONFIG_BDI_SWITCH) ||\
+#अगर defined(CONFIG_KGDB) || defined(CONFIG_XMON) || defined(CONFIG_BDI_SWITCH) ||\
 	defined(CONFIG_KPROBES) || defined(CONFIG_DYNAMIC_FTRACE)
-#define PAGE_KERNEL_TEXT	PAGE_KERNEL_X
-#else
-#define PAGE_KERNEL_TEXT	PAGE_KERNEL_ROX
-#endif
+#घोषणा PAGE_KERNEL_TEXT	PAGE_KERNEL_X
+#अन्यथा
+#घोषणा PAGE_KERNEL_TEXT	PAGE_KERNEL_ROX
+#पूर्ण_अगर
 
-/* Make modules code happy. We don't set RO yet */
-#define PAGE_KERNEL_EXEC	PAGE_KERNEL_X
+/* Make modules code happy. We करोn't set RO yet */
+#घोषणा PAGE_KERNEL_EXEC	PAGE_KERNEL_X
 
-/* Advertise special mapping type for AGP */
-#define PAGE_AGP		(PAGE_KERNEL_NC)
-#define HAVE_PAGE_AGP
+/* Advertise special mapping type क्रम AGP */
+#घोषणा PAGE_AGP		(PAGE_KERNEL_NC)
+#घोषणा HAVE_PAGE_AGP
 
-#define PTE_INDEX_SIZE	PTE_SHIFT
-#define PMD_INDEX_SIZE	0
-#define PUD_INDEX_SIZE	0
-#define PGD_INDEX_SIZE	(32 - PGDIR_SHIFT)
+#घोषणा PTE_INDEX_SIZE	PTE_SHIFT
+#घोषणा PMD_INDEX_SIZE	0
+#घोषणा PUD_INDEX_SIZE	0
+#घोषणा PGD_INDEX_SIZE	(32 - PGसूची_SHIFT)
 
-#define PMD_CACHE_INDEX	PMD_INDEX_SIZE
-#define PUD_CACHE_INDEX	PUD_INDEX_SIZE
+#घोषणा PMD_CACHE_INDEX	PMD_INDEX_SIZE
+#घोषणा PUD_CACHE_INDEX	PUD_INDEX_SIZE
 
-#ifndef __ASSEMBLY__
-#define PTE_TABLE_SIZE	(sizeof(pte_t) << PTE_INDEX_SIZE)
-#define PMD_TABLE_SIZE	0
-#define PUD_TABLE_SIZE	0
-#define PGD_TABLE_SIZE	(sizeof(pgd_t) << PGD_INDEX_SIZE)
+#अगर_अघोषित __ASSEMBLY__
+#घोषणा PTE_TABLE_SIZE	(माप(pte_t) << PTE_INDEX_SIZE)
+#घोषणा PMD_TABLE_SIZE	0
+#घोषणा PUD_TABLE_SIZE	0
+#घोषणा PGD_TABLE_SIZE	(माप(pgd_t) << PGD_INDEX_SIZE)
 
 /* Bits to mask out from a PMD to get to the PTE page */
-#define PMD_MASKED_BITS		(PTE_TABLE_SIZE - 1)
-#endif	/* __ASSEMBLY__ */
+#घोषणा PMD_MASKED_BITS		(PTE_TABLE_SIZE - 1)
+#पूर्ण_अगर	/* __ASSEMBLY__ */
 
-#define PTRS_PER_PTE	(1 << PTE_INDEX_SIZE)
-#define PTRS_PER_PGD	(1 << PGD_INDEX_SIZE)
+#घोषणा PTRS_PER_PTE	(1 << PTE_INDEX_SIZE)
+#घोषणा PTRS_PER_PGD	(1 << PGD_INDEX_SIZE)
 
 /*
- * The normal case is that PTEs are 32-bits and we have a 1-page
- * 1024-entry pgdir pointing to 1-page 1024-entry PTE pages.  -- paulus
+ * The normal हाल is that PTEs are 32-bits and we have a 1-page
+ * 1024-entry pgdir poपूर्णांकing to 1-page 1024-entry PTE pages.  -- paulus
  *
- * For any >32-bit physical address platform, we can use the following
+ * For any >32-bit physical address platक्रमm, we can use the following
  * two level page table layout where the pgdir is 8KB and the MS 13 bits
  * are an index to the second level table.  The combined pgdir/pmd first
  * level has 2048 entries and the second level has 512 64-bit PTE entries.
  * -Matt
  */
-/* PGDIR_SHIFT determines what a top-level page table entry can map */
-#define PGDIR_SHIFT	(PAGE_SHIFT + PTE_INDEX_SIZE)
-#define PGDIR_SIZE	(1UL << PGDIR_SHIFT)
-#define PGDIR_MASK	(~(PGDIR_SIZE-1))
+/* PGसूची_SHIFT determines what a top-level page table entry can map */
+#घोषणा PGसूची_SHIFT	(PAGE_SHIFT + PTE_INDEX_SIZE)
+#घोषणा PGसूची_SIZE	(1UL << PGसूची_SHIFT)
+#घोषणा PGसूची_MASK	(~(PGसूची_SIZE-1))
 
-#define USER_PTRS_PER_PGD	(TASK_SIZE / PGDIR_SIZE)
+#घोषणा USER_PTRS_PER_PGD	(TASK_SIZE / PGसूची_SIZE)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-int map_kernel_page(unsigned long va, phys_addr_t pa, pgprot_t prot);
+पूर्णांक map_kernel_page(अचिन्हित दीर्घ va, phys_addr_t pa, pgprot_t prot);
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
 /*
  * This is the bottom of the PKMAP area with HIGHMEM or an arbitrary
- * value (for now) on others, from where we can start layout kernel
- * virtual space that goes below PKMAP and FIXMAP
+ * value (क्रम now) on others, from where we can start layout kernel
+ * भव space that goes below PKMAP and FIXMAP
  */
-#include <asm/fixmap.h>
+#समावेश <यंत्र/fixmap.h>
 
 /*
- * ioremap_bot starts at that address. Early ioremaps move down from there,
- * until mem_init() at which point this becomes the top of the vmalloc
+ * ioremap_bot starts at that address. Early ioremaps move करोwn from there,
+ * until mem_init() at which poपूर्णांक this becomes the top of the vदो_स्मृति
  * and ioremap space
  */
-#ifdef CONFIG_HIGHMEM
-#define IOREMAP_TOP	PKMAP_BASE
-#else
-#define IOREMAP_TOP	FIXADDR_START
-#endif
+#अगर_घोषित CONFIG_HIGHMEM
+#घोषणा IOREMAP_TOP	PKMAP_BASE
+#अन्यथा
+#घोषणा IOREMAP_TOP	FIXADDR_START
+#पूर्ण_अगर
 
-/* PPC32 shares vmalloc area with ioremap */
-#define IOREMAP_START	VMALLOC_START
-#define IOREMAP_END	VMALLOC_END
+/* PPC32 shares vदो_स्मृति area with ioremap */
+#घोषणा IOREMAP_START	VMALLOC_START
+#घोषणा IOREMAP_END	VMALLOC_END
 
 /*
- * Just any arbitrary offset to the start of the vmalloc VM area: the
+ * Just any arbitrary offset to the start of the vदो_स्मृति VM area: the
  * current 16MB value just means that there will be a 64MB "hole" after the
- * physical memory until the kernel virtual memory starts.  That means that
+ * physical memory until the kernel भव memory starts.  That means that
  * any out-of-bounds memory accesses will hopefully be caught.
- * The vmalloc() routines leaves a hole of 4kB between each vmalloced
- * area for the same reason. ;)
+ * The vदो_स्मृति() routines leaves a hole of 4kB between each vदो_स्मृतिed
+ * area क्रम the same reason. ;)
  *
- * We no longer map larger than phys RAM with the BATs so we don't have
- * to worry about the VMALLOC_OFFSET causing problems.  We do have to worry
- * about clashes between our early calls to ioremap() that start growing down
- * from ioremap_base being run into the VM area allocations (growing upwards
+ * We no दीर्घer map larger than phys RAM with the BATs so we करोn't have
+ * to worry about the VMALLOC_OFFSET causing problems.  We करो have to worry
+ * about clashes between our early calls to ioremap() that start growing करोwn
+ * from ioremap_base being run पूर्णांकo the VM area allocations (growing upwards
  * from VMALLOC_START).  For this reason we have ioremap_bot to check when
- * we actually run into our mappings setup in the early boot with the VM
- * system.  This really does become a problem for machines with good amounts
+ * we actually run पूर्णांकo our mappings setup in the early boot with the VM
+ * प्रणाली.  This really करोes become a problem क्रम machines with good amounts
  * of RAM.  -- Cort
  */
-#define VMALLOC_OFFSET (0x1000000) /* 16M */
+#घोषणा VMALLOC_OFFSET (0x1000000) /* 16M */
 
-#define VMALLOC_START ((((long)high_memory + VMALLOC_OFFSET) & ~(VMALLOC_OFFSET-1)))
+#घोषणा VMALLOC_START ((((दीर्घ)high_memory + VMALLOC_OFFSET) & ~(VMALLOC_OFFSET-1)))
 
-#ifdef CONFIG_KASAN_VMALLOC
-#define VMALLOC_END	ALIGN_DOWN(ioremap_bot, PAGE_SIZE << KASAN_SHADOW_SCALE_SHIFT)
-#else
-#define VMALLOC_END	ioremap_bot
-#endif
+#अगर_घोषित CONFIG_KASAN_VMALLOC
+#घोषणा VMALLOC_END	ALIGN_DOWN(ioremap_bot, PAGE_SIZE << KASAN_SHADOW_SCALE_SHIFT)
+#अन्यथा
+#घोषणा VMALLOC_END	ioremap_bot
+#पूर्ण_अगर
 
-#define MODULES_END	ALIGN_DOWN(PAGE_OFFSET, SZ_256M)
-#define MODULES_VADDR	(MODULES_END - SZ_256M)
+#घोषणा MODULES_END	ALIGN_DOWN(PAGE_OFFSET, SZ_256M)
+#घोषणा MODULES_VADDR	(MODULES_END - SZ_256M)
 
-#ifndef __ASSEMBLY__
-#include <linux/sched.h>
-#include <linux/threads.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <linux/sched.h>
+#समावेश <linux/thपढ़ोs.h>
 
 /* Bits to mask out from a PGD to get to the PUD page */
-#define PGD_MASKED_BITS		0
+#घोषणा PGD_MASKED_BITS		0
 
-#define pte_ERROR(e) \
-	pr_err("%s:%d: bad pte %llx.\n", __FILE__, __LINE__, \
-		(unsigned long long)pte_val(e))
-#define pgd_ERROR(e) \
-	pr_err("%s:%d: bad pgd %08lx.\n", __FILE__, __LINE__, pgd_val(e))
+#घोषणा pte_ERROR(e) \
+	pr_err("%s:%d: bad pte %llx.\n", __खाता__, __LINE__, \
+		(अचिन्हित दीर्घ दीर्घ)pte_val(e))
+#घोषणा pgd_ERROR(e) \
+	pr_err("%s:%d: bad pgd %08lx.\n", __खाता__, __LINE__, pgd_val(e))
 /*
  * Bits in a linux-style PTE.  These match the bits in the
- * (hardware-defined) PowerPC PTE as closely as possible.
+ * (hardware-defined) PowerPC PTE as बंदly as possible.
  */
 
-#define pte_clear(mm, addr, ptep) \
-	do { pte_update(mm, addr, ptep, ~_PAGE_HASHPTE, 0, 0); } while (0)
+#घोषणा pte_clear(mm, addr, ptep) \
+	करो अणु pte_update(mm, addr, ptep, ~_PAGE_HASHPTE, 0, 0); पूर्ण जबतक (0)
 
-#define pmd_none(pmd)		(!pmd_val(pmd))
-#define	pmd_bad(pmd)		(pmd_val(pmd) & _PMD_BAD)
-#define	pmd_present(pmd)	(pmd_val(pmd) & _PMD_PRESENT_MASK)
-static inline void pmd_clear(pmd_t *pmdp)
-{
+#घोषणा pmd_none(pmd)		(!pmd_val(pmd))
+#घोषणा	pmd_bad(pmd)		(pmd_val(pmd) & _PMD_BAD)
+#घोषणा	pmd_present(pmd)	(pmd_val(pmd) & _PMD_PRESENT_MASK)
+अटल अंतरभूत व्योम pmd_clear(pmd_t *pmdp)
+अणु
 	*pmdp = __pmd(0);
-}
+पूर्ण
 
 
 /*
- * When flushing the tlb entry for a page, we also need to flush the hash
- * table entry.  flush_hash_pages is assembler (for speed) in hashtable.S.
+ * When flushing the tlb entry क्रम a page, we also need to flush the hash
+ * table entry.  flush_hash_pages is assembler (क्रम speed) in hashtable.S.
  */
-extern int flush_hash_pages(unsigned context, unsigned long va,
-			    unsigned long pmdval, int count);
+बाह्य पूर्णांक flush_hash_pages(अचिन्हित context, अचिन्हित दीर्घ va,
+			    अचिन्हित दीर्घ pmdval, पूर्णांक count);
 
 /* Add an HPTE to the hash table */
-extern void add_hash_page(unsigned context, unsigned long va,
-			  unsigned long pmdval);
+बाह्य व्योम add_hash_page(अचिन्हित context, अचिन्हित दीर्घ va,
+			  अचिन्हित दीर्घ pmdval);
 
 /* Flush an entry from the TLB/hash table */
-static inline void flush_hash_entry(struct mm_struct *mm, pte_t *ptep, unsigned long addr)
-{
-	if (mmu_has_feature(MMU_FTR_HPTE_TABLE)) {
-		unsigned long ptephys = __pa(ptep) & PAGE_MASK;
+अटल अंतरभूत व्योम flush_hash_entry(काष्ठा mm_काष्ठा *mm, pte_t *ptep, अचिन्हित दीर्घ addr)
+अणु
+	अगर (mmu_has_feature(MMU_FTR_HPTE_TABLE)) अणु
+		अचिन्हित दीर्घ ptephys = __pa(ptep) & PAGE_MASK;
 
 		flush_hash_pages(mm->context.id, addr, ptephys, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * PTE updates. This function is called whenever an existing
- * valid PTE is updated. This does -not- include set_pte_at()
+ * valid PTE is updated. This करोes -not- include set_pte_at()
  * which nowadays only sets a new PTE.
  *
  * Depending on the type of MMU, we may need to use atomic updates
- * and the PTE may be either 32 or 64 bit wide. In the later case,
+ * and the PTE may be either 32 or 64 bit wide. In the later हाल,
  * when using atomic updates, only the low part of the PTE is
  * accessed atomically.
  */
-static inline pte_basic_t pte_update(struct mm_struct *mm, unsigned long addr, pte_t *p,
-				     unsigned long clr, unsigned long set, int huge)
-{
+अटल अंतरभूत pte_basic_t pte_update(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr, pte_t *p,
+				     अचिन्हित दीर्घ clr, अचिन्हित दीर्घ set, पूर्णांक huge)
+अणु
 	pte_basic_t old;
-	unsigned long tmp;
+	अचिन्हित दीर्घ पंचांगp;
 
-	__asm__ __volatile__(
-#ifndef CONFIG_PTE_64BIT
+	__यंत्र__ __अस्थिर__(
+#अगर_अघोषित CONFIG_PTE_64BIT
 "1:	lwarx	%0, 0, %3\n"
 "	andc	%1, %0, %4\n"
-#else
+#अन्यथा
 "1:	lwarx	%L0, 0, %3\n"
 "	lwz	%0, -4(%3)\n"
 "	andc	%1, %L0, %4\n"
-#endif
+#पूर्ण_अगर
 "	or	%1, %1, %5\n"
 "	stwcx.	%1, 0, %3\n"
 "	bne-	1b"
-	: "=&r" (old), "=&r" (tmp), "=m" (*p)
-#ifndef CONFIG_PTE_64BIT
+	: "=&r" (old), "=&r" (पंचांगp), "=m" (*p)
+#अगर_अघोषित CONFIG_PTE_64BIT
 	: "r" (p),
-#else
-	: "b" ((unsigned long)(p) + 4),
-#endif
+#अन्यथा
+	: "b" ((अचिन्हित दीर्घ)(p) + 4),
+#पूर्ण_अगर
 	  "r" (clr), "r" (set), "m" (*p)
 	: "cc" );
 
-	return old;
-}
+	वापस old;
+पूर्ण
 
 /*
  * 2.6 calls this without flushing the TLB entry; this is wrong
- * for our hash-based implementation, we fix that up here.
+ * क्रम our hash-based implementation, we fix that up here.
  */
-#define __HAVE_ARCH_PTEP_TEST_AND_CLEAR_YOUNG
-static inline int __ptep_test_and_clear_young(struct mm_struct *mm,
-					      unsigned long addr, pte_t *ptep)
-{
-	unsigned long old;
+#घोषणा __HAVE_ARCH_PTEP_TEST_AND_CLEAR_YOUNG
+अटल अंतरभूत पूर्णांक __ptep_test_and_clear_young(काष्ठा mm_काष्ठा *mm,
+					      अचिन्हित दीर्घ addr, pte_t *ptep)
+अणु
+	अचिन्हित दीर्घ old;
 	old = pte_update(mm, addr, ptep, _PAGE_ACCESSED, 0, 0);
-	if (old & _PAGE_HASHPTE)
+	अगर (old & _PAGE_HASHPTE)
 		flush_hash_entry(mm, ptep, addr);
 
-	return (old & _PAGE_ACCESSED) != 0;
-}
-#define ptep_test_and_clear_young(__vma, __addr, __ptep) \
+	वापस (old & _PAGE_ACCESSED) != 0;
+पूर्ण
+#घोषणा ptep_test_and_clear_young(__vma, __addr, __ptep) \
 	__ptep_test_and_clear_young((__vma)->vm_mm, __addr, __ptep)
 
-#define __HAVE_ARCH_PTEP_GET_AND_CLEAR
-static inline pte_t ptep_get_and_clear(struct mm_struct *mm, unsigned long addr,
+#घोषणा __HAVE_ARCH_PTEP_GET_AND_CLEAR
+अटल अंतरभूत pte_t ptep_get_and_clear(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 				       pte_t *ptep)
-{
-	return __pte(pte_update(mm, addr, ptep, ~_PAGE_HASHPTE, 0, 0));
-}
+अणु
+	वापस __pte(pte_update(mm, addr, ptep, ~_PAGE_HASHPTE, 0, 0));
+पूर्ण
 
-#define __HAVE_ARCH_PTEP_SET_WRPROTECT
-static inline void ptep_set_wrprotect(struct mm_struct *mm, unsigned long addr,
+#घोषणा __HAVE_ARCH_PTEP_SET_WRPROTECT
+अटल अंतरभूत व्योम ptep_set_wrprotect(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 				      pte_t *ptep)
-{
+अणु
 	pte_update(mm, addr, ptep, _PAGE_RW, 0, 0);
-}
+पूर्ण
 
-static inline void __ptep_set_access_flags(struct vm_area_struct *vma,
+अटल अंतरभूत व्योम __ptep_set_access_flags(काष्ठा vm_area_काष्ठा *vma,
 					   pte_t *ptep, pte_t entry,
-					   unsigned long address,
-					   int psize)
-{
-	unsigned long set = pte_val(entry) &
-		(_PAGE_DIRTY | _PAGE_ACCESSED | _PAGE_RW | _PAGE_EXEC);
+					   अचिन्हित दीर्घ address,
+					   पूर्णांक psize)
+अणु
+	अचिन्हित दीर्घ set = pte_val(entry) &
+		(_PAGE_सूचीTY | _PAGE_ACCESSED | _PAGE_RW | _PAGE_EXEC);
 
 	pte_update(vma->vm_mm, address, ptep, 0, set, 0);
 
 	flush_tlb_page(vma, address);
-}
+पूर्ण
 
-#define __HAVE_ARCH_PTE_SAME
-#define pte_same(A,B)	(((pte_val(A) ^ pte_val(B)) & ~_PAGE_HASHPTE) == 0)
+#घोषणा __HAVE_ARCH_PTE_SAME
+#घोषणा pte_same(A,B)	(((pte_val(A) ^ pte_val(B)) & ~_PAGE_HASHPTE) == 0)
 
-#define pmd_page(pmd)		\
+#घोषणा pmd_page(pmd)		\
 	pfn_to_page(pmd_val(pmd) >> PAGE_SHIFT)
 
 /*
  * Encode and decode a swap entry.
- * Note that the bits we use in a PTE for representing a swap entry
- * must not include the _PAGE_PRESENT bit or the _PAGE_HASHPTE bit (if used).
+ * Note that the bits we use in a PTE क्रम representing a swap entry
+ * must not include the _PAGE_PRESENT bit or the _PAGE_HASHPTE bit (अगर used).
  *   -- paulus
  */
-#define __swp_type(entry)		((entry).val & 0x1f)
-#define __swp_offset(entry)		((entry).val >> 5)
-#define __swp_entry(type, offset)	((swp_entry_t) { (type) | ((offset) << 5) })
-#define __pte_to_swp_entry(pte)		((swp_entry_t) { pte_val(pte) >> 3 })
-#define __swp_entry_to_pte(x)		((pte_t) { (x).val << 3 })
+#घोषणा __swp_type(entry)		((entry).val & 0x1f)
+#घोषणा __swp_offset(entry)		((entry).val >> 5)
+#घोषणा __swp_entry(type, offset)	((swp_entry_t) अणु (type) | ((offset) << 5) पूर्ण)
+#घोषणा __pte_to_swp_entry(pte)		((swp_entry_t) अणु pte_val(pte) >> 3 पूर्ण)
+#घोषणा __swp_entry_to_pte(x)		((pte_t) अणु (x).val << 3 पूर्ण)
 
 /* Generic accessors to PTE bits */
-static inline int pte_write(pte_t pte)		{ return !!(pte_val(pte) & _PAGE_RW);}
-static inline int pte_read(pte_t pte)		{ return 1; }
-static inline int pte_dirty(pte_t pte)		{ return !!(pte_val(pte) & _PAGE_DIRTY); }
-static inline int pte_young(pte_t pte)		{ return !!(pte_val(pte) & _PAGE_ACCESSED); }
-static inline int pte_special(pte_t pte)	{ return !!(pte_val(pte) & _PAGE_SPECIAL); }
-static inline int pte_none(pte_t pte)		{ return (pte_val(pte) & ~_PTE_NONE_MASK) == 0; }
-static inline bool pte_exec(pte_t pte)		{ return pte_val(pte) & _PAGE_EXEC; }
+अटल अंतरभूत पूर्णांक pte_ग_लिखो(pte_t pte)		अणु वापस !!(pte_val(pte) & _PAGE_RW);पूर्ण
+अटल अंतरभूत पूर्णांक pte_पढ़ो(pte_t pte)		अणु वापस 1; पूर्ण
+अटल अंतरभूत पूर्णांक pte_dirty(pte_t pte)		अणु वापस !!(pte_val(pte) & _PAGE_सूचीTY); पूर्ण
+अटल अंतरभूत पूर्णांक pte_young(pte_t pte)		अणु वापस !!(pte_val(pte) & _PAGE_ACCESSED); पूर्ण
+अटल अंतरभूत पूर्णांक pte_special(pte_t pte)	अणु वापस !!(pte_val(pte) & _PAGE_SPECIAL); पूर्ण
+अटल अंतरभूत पूर्णांक pte_none(pte_t pte)		अणु वापस (pte_val(pte) & ~_PTE_NONE_MASK) == 0; पूर्ण
+अटल अंतरभूत bool pte_exec(pte_t pte)		अणु वापस pte_val(pte) & _PAGE_EXEC; पूर्ण
 
-static inline int pte_present(pte_t pte)
-{
-	return pte_val(pte) & _PAGE_PRESENT;
-}
+अटल अंतरभूत पूर्णांक pte_present(pte_t pte)
+अणु
+	वापस pte_val(pte) & _PAGE_PRESENT;
+पूर्ण
 
-static inline bool pte_hw_valid(pte_t pte)
-{
-	return pte_val(pte) & _PAGE_PRESENT;
-}
+अटल अंतरभूत bool pte_hw_valid(pte_t pte)
+अणु
+	वापस pte_val(pte) & _PAGE_PRESENT;
+पूर्ण
 
-static inline bool pte_hashpte(pte_t pte)
-{
-	return !!(pte_val(pte) & _PAGE_HASHPTE);
-}
+अटल अंतरभूत bool pte_hashpte(pte_t pte)
+अणु
+	वापस !!(pte_val(pte) & _PAGE_HASHPTE);
+पूर्ण
 
-static inline bool pte_ci(pte_t pte)
-{
-	return !!(pte_val(pte) & _PAGE_NO_CACHE);
-}
+अटल अंतरभूत bool pte_ci(pte_t pte)
+अणु
+	वापस !!(pte_val(pte) & _PAGE_NO_CACHE);
+पूर्ण
 
 /*
  * We only find page table entry in the last level
- * Hence no need for other accessors
+ * Hence no need क्रम other accessors
  */
-#define pte_access_permitted pte_access_permitted
-static inline bool pte_access_permitted(pte_t pte, bool write)
-{
+#घोषणा pte_access_permitted pte_access_permitted
+अटल अंतरभूत bool pte_access_permitted(pte_t pte, bool ग_लिखो)
+अणु
 	/*
-	 * A read-only access is controlled by _PAGE_USER bit.
-	 * We have _PAGE_READ set for WRITE and EXECUTE
+	 * A पढ़ो-only access is controlled by _PAGE_USER bit.
+	 * We have _PAGE_READ set क्रम WRITE and EXECUTE
 	 */
-	if (!pte_present(pte) || !pte_user(pte) || !pte_read(pte))
-		return false;
+	अगर (!pte_present(pte) || !pte_user(pte) || !pte_पढ़ो(pte))
+		वापस false;
 
-	if (write && !pte_write(pte))
-		return false;
+	अगर (ग_लिखो && !pte_ग_लिखो(pte))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /* Conversion functions: convert a page and protection to a page entry,
  * and a page entry and page directory to the page they refer to.
  *
- * Even if PTEs can be unsigned long long, a PFN is always an unsigned
- * long for now.
+ * Even अगर PTEs can be अचिन्हित दीर्घ दीर्घ, a PFN is always an अचिन्हित
+ * दीर्घ क्रम now.
  */
-static inline pte_t pfn_pte(unsigned long pfn, pgprot_t pgprot)
-{
-	return __pte(((pte_basic_t)(pfn) << PTE_RPN_SHIFT) |
+अटल अंतरभूत pte_t pfn_pte(अचिन्हित दीर्घ pfn, pgprot_t pgprot)
+अणु
+	वापस __pte(((pte_basic_t)(pfn) << PTE_RPN_SHIFT) |
 		     pgprot_val(pgprot));
-}
+पूर्ण
 
-static inline unsigned long pte_pfn(pte_t pte)
-{
-	return pte_val(pte) >> PTE_RPN_SHIFT;
-}
+अटल अंतरभूत अचिन्हित दीर्घ pte_pfn(pte_t pte)
+अणु
+	वापस pte_val(pte) >> PTE_RPN_SHIFT;
+पूर्ण
 
-/* Generic modifiers for PTE bits */
-static inline pte_t pte_wrprotect(pte_t pte)
-{
-	return __pte(pte_val(pte) & ~_PAGE_RW);
-}
+/* Generic modअगरiers क्रम PTE bits */
+अटल अंतरभूत pte_t pte_wrprotect(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) & ~_PAGE_RW);
+पूर्ण
 
-static inline pte_t pte_exprotect(pte_t pte)
-{
-	return __pte(pte_val(pte) & ~_PAGE_EXEC);
-}
+अटल अंतरभूत pte_t pte_exprotect(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) & ~_PAGE_EXEC);
+पूर्ण
 
-static inline pte_t pte_mkclean(pte_t pte)
-{
-	return __pte(pte_val(pte) & ~_PAGE_DIRTY);
-}
+अटल अंतरभूत pte_t pte_mkclean(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) & ~_PAGE_सूचीTY);
+पूर्ण
 
-static inline pte_t pte_mkold(pte_t pte)
-{
-	return __pte(pte_val(pte) & ~_PAGE_ACCESSED);
-}
+अटल अंतरभूत pte_t pte_mkold(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) & ~_PAGE_ACCESSED);
+पूर्ण
 
-static inline pte_t pte_mkexec(pte_t pte)
-{
-	return __pte(pte_val(pte) | _PAGE_EXEC);
-}
+अटल अंतरभूत pte_t pte_mkexec(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) | _PAGE_EXEC);
+पूर्ण
 
-static inline pte_t pte_mkpte(pte_t pte)
-{
-	return pte;
-}
+अटल अंतरभूत pte_t pte_mkpte(pte_t pte)
+अणु
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkwrite(pte_t pte)
-{
-	return __pte(pte_val(pte) | _PAGE_RW);
-}
+अटल अंतरभूत pte_t pte_mkग_लिखो(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) | _PAGE_RW);
+पूर्ण
 
-static inline pte_t pte_mkdirty(pte_t pte)
-{
-	return __pte(pte_val(pte) | _PAGE_DIRTY);
-}
+अटल अंतरभूत pte_t pte_सूची_गढ़ोty(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) | _PAGE_सूचीTY);
+पूर्ण
 
-static inline pte_t pte_mkyoung(pte_t pte)
-{
-	return __pte(pte_val(pte) | _PAGE_ACCESSED);
-}
+अटल अंतरभूत pte_t pte_mkyoung(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) | _PAGE_ACCESSED);
+पूर्ण
 
-static inline pte_t pte_mkspecial(pte_t pte)
-{
-	return __pte(pte_val(pte) | _PAGE_SPECIAL);
-}
+अटल अंतरभूत pte_t pte_mkspecial(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) | _PAGE_SPECIAL);
+पूर्ण
 
-static inline pte_t pte_mkhuge(pte_t pte)
-{
-	return pte;
-}
+अटल अंतरभूत pte_t pte_mkhuge(pte_t pte)
+अणु
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkprivileged(pte_t pte)
-{
-	return __pte(pte_val(pte) & ~_PAGE_USER);
-}
+अटल अंतरभूत pte_t pte_mkprivileged(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) & ~_PAGE_USER);
+पूर्ण
 
-static inline pte_t pte_mkuser(pte_t pte)
-{
-	return __pte(pte_val(pte) | _PAGE_USER);
-}
+अटल अंतरभूत pte_t pte_mkuser(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) | _PAGE_USER);
+पूर्ण
 
-static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
-{
-	return __pte((pte_val(pte) & _PAGE_CHG_MASK) | pgprot_val(newprot));
-}
+अटल अंतरभूत pte_t pte_modअगरy(pte_t pte, pgprot_t newprot)
+अणु
+	वापस __pte((pte_val(pte) & _PAGE_CHG_MASK) | pgprot_val(newprot));
+पूर्ण
 
 
 
-/* This low level function performs the actual PTE insertion
+/* This low level function perक्रमms the actual PTE insertion
  * Setting the PTE depends on the MMU type and other factors. It's
  * an horrible mess that I'm not going to try to clean up now but
- * I'm keeping it in one place rather than spread around
+ * I'm keeping it in one place rather than spपढ़ो around
  */
-static inline void __set_pte_at(struct mm_struct *mm, unsigned long addr,
-				pte_t *ptep, pte_t pte, int percpu)
-{
-#if defined(CONFIG_SMP) && !defined(CONFIG_PTE_64BIT)
-	/* First case is 32-bit Hash MMU in SMP mode with 32-bit PTEs. We use the
-	 * helper pte_update() which does an atomic update. We need to do that
+अटल अंतरभूत व्योम __set_pte_at(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+				pte_t *ptep, pte_t pte, पूर्णांक percpu)
+अणु
+#अगर defined(CONFIG_SMP) && !defined(CONFIG_PTE_64BIT)
+	/* First हाल is 32-bit Hash MMU in SMP mode with 32-bit PTEs. We use the
+	 * helper pte_update() which करोes an atomic update. We need to करो that
 	 * because a concurrent invalidation can clear _PAGE_HASHPTE. If it's a
-	 * per-CPU PTE such as a kmap_atomic, we do a simple update preserving
-	 * the hash bits instead (ie, same as the non-SMP case)
+	 * per-CPU PTE such as a kmap_atomic, we करो a simple update preserving
+	 * the hash bits instead (ie, same as the non-SMP हाल)
 	 */
-	if (percpu)
+	अगर (percpu)
 		*ptep = __pte((pte_val(*ptep) & _PAGE_HASHPTE)
 			      | (pte_val(pte) & ~_PAGE_HASHPTE));
-	else
+	अन्यथा
 		pte_update(mm, addr, ptep, ~_PAGE_HASHPTE, pte_val(pte), 0);
 
-#elif defined(CONFIG_PTE_64BIT)
-	/* Second case is 32-bit with 64-bit PTE.  In this case, we
-	 * can just store as long as we do the two halves in the right order
+#या_अगर defined(CONFIG_PTE_64BIT)
+	/* Second हाल is 32-bit with 64-bit PTE.  In this हाल, we
+	 * can just store as दीर्घ as we करो the two halves in the right order
 	 * with a barrier in between. This is possible because we take care,
-	 * in the hash code, to pre-invalidate if the PTE was already hashed,
+	 * in the hash code, to pre-invalidate अगर the PTE was alपढ़ोy hashed,
 	 * which synchronizes us with any concurrent invalidation.
-	 * In the percpu case, we also fallback to the simple update preserving
+	 * In the percpu हाल, we also fallback to the simple update preserving
 	 * the hash bits
 	 */
-	if (percpu) {
+	अगर (percpu) अणु
 		*ptep = __pte((pte_val(*ptep) & _PAGE_HASHPTE)
 			      | (pte_val(pte) & ~_PAGE_HASHPTE));
-		return;
-	}
-	if (pte_val(*ptep) & _PAGE_HASHPTE)
+		वापस;
+	पूर्ण
+	अगर (pte_val(*ptep) & _PAGE_HASHPTE)
 		flush_hash_entry(mm, ptep, addr);
-	__asm__ __volatile__("\
-		stw%X0 %2,%0\n\
-		eieio\n\
+	__यंत्र__ __अस्थिर__("\
+		stw%X0 %2,%0\न\
+		eieio\न\
 		stw%X1 %L2,%1"
-	: "=m" (*ptep), "=m" (*((unsigned char *)ptep+4))
+	: "=m" (*ptep), "=m" (*((अचिन्हित अक्षर *)ptep+4))
 	: "r" (pte) : "memory");
 
-#else
-	/* Third case is 32-bit hash table in UP mode, we need to preserve
+#अन्यथा
+	/* Third हाल is 32-bit hash table in UP mode, we need to preserve
 	 * the _PAGE_HASHPTE bit since we may not have invalidated the previous
-	 * translation in the hash yet (done in a subsequent flush_tlb_xxx())
+	 * translation in the hash yet (करोne in a subsequent flush_tlb_xxx())
 	 * and see we need to keep track that this PTE needs invalidating
 	 */
 	*ptep = __pte((pte_val(*ptep) & _PAGE_HASHPTE)
 		      | (pte_val(pte) & ~_PAGE_HASHPTE));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * Macro to mark a page protection value as "uncacheable".
  */
 
-#define _PAGE_CACHE_CTL	(_PAGE_COHERENT | _PAGE_GUARDED | _PAGE_NO_CACHE | \
+#घोषणा _PAGE_CACHE_CTL	(_PAGE_COHERENT | _PAGE_GUARDED | _PAGE_NO_CACHE | \
 			 _PAGE_WRITETHRU)
 
-#define pgprot_noncached pgprot_noncached
-static inline pgprot_t pgprot_noncached(pgprot_t prot)
-{
-	return __pgprot((pgprot_val(prot) & ~_PAGE_CACHE_CTL) |
+#घोषणा pgprot_noncached pgprot_noncached
+अटल अंतरभूत pgprot_t pgprot_noncached(pgprot_t prot)
+अणु
+	वापस __pgprot((pgprot_val(prot) & ~_PAGE_CACHE_CTL) |
 			_PAGE_NO_CACHE | _PAGE_GUARDED);
-}
+पूर्ण
 
-#define pgprot_noncached_wc pgprot_noncached_wc
-static inline pgprot_t pgprot_noncached_wc(pgprot_t prot)
-{
-	return __pgprot((pgprot_val(prot) & ~_PAGE_CACHE_CTL) |
+#घोषणा pgprot_noncached_wc pgprot_noncached_wc
+अटल अंतरभूत pgprot_t pgprot_noncached_wc(pgprot_t prot)
+अणु
+	वापस __pgprot((pgprot_val(prot) & ~_PAGE_CACHE_CTL) |
 			_PAGE_NO_CACHE);
-}
+पूर्ण
 
-#define pgprot_cached pgprot_cached
-static inline pgprot_t pgprot_cached(pgprot_t prot)
-{
-	return __pgprot((pgprot_val(prot) & ~_PAGE_CACHE_CTL) |
+#घोषणा pgprot_cached pgprot_cached
+अटल अंतरभूत pgprot_t pgprot_cached(pgprot_t prot)
+अणु
+	वापस __pgprot((pgprot_val(prot) & ~_PAGE_CACHE_CTL) |
 			_PAGE_COHERENT);
-}
+पूर्ण
 
-#define pgprot_cached_wthru pgprot_cached_wthru
-static inline pgprot_t pgprot_cached_wthru(pgprot_t prot)
-{
-	return __pgprot((pgprot_val(prot) & ~_PAGE_CACHE_CTL) |
+#घोषणा pgprot_cached_wthru pgprot_cached_wthru
+अटल अंतरभूत pgprot_t pgprot_cached_wthru(pgprot_t prot)
+अणु
+	वापस __pgprot((pgprot_val(prot) & ~_PAGE_CACHE_CTL) |
 			_PAGE_COHERENT | _PAGE_WRITETHRU);
-}
+पूर्ण
 
-#define pgprot_cached_noncoherent pgprot_cached_noncoherent
-static inline pgprot_t pgprot_cached_noncoherent(pgprot_t prot)
-{
-	return __pgprot(pgprot_val(prot) & ~_PAGE_CACHE_CTL);
-}
+#घोषणा pgprot_cached_noncoherent pgprot_cached_noncoherent
+अटल अंतरभूत pgprot_t pgprot_cached_noncoherent(pgprot_t prot)
+अणु
+	वापस __pgprot(pgprot_val(prot) & ~_PAGE_CACHE_CTL);
+पूर्ण
 
-#define pgprot_writecombine pgprot_writecombine
-static inline pgprot_t pgprot_writecombine(pgprot_t prot)
-{
-	return pgprot_noncached_wc(prot);
-}
+#घोषणा pgprot_ग_लिखोcombine pgprot_ग_लिखोcombine
+अटल अंतरभूत pgprot_t pgprot_ग_लिखोcombine(pgprot_t prot)
+अणु
+	वापस pgprot_noncached_wc(prot);
+पूर्ण
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif /*  _ASM_POWERPC_BOOK3S_32_PGTABLE_H */
+#पूर्ण_अगर /*  _ASM_POWERPC_BOOK3S_32_PGTABLE_H */

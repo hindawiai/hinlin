@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * include/dt-bindings/media/omap3-isp.h
  *
  * Copyright (C) 2015 Sakari Ailus
  */
 
-#ifndef __DT_BINDINGS_OMAP3_ISP_H__
-#define __DT_BINDINGS_OMAP3_ISP_H__
+#अगर_अघोषित __DT_BINDINGS_OMAP3_ISP_H__
+#घोषणा __DT_BINDINGS_OMAP3_ISP_H__
 
-#define OMAP3ISP_PHY_TYPE_COMPLEX_IO	0
-#define OMAP3ISP_PHY_TYPE_CSIPHY	1
+#घोषणा OMAP3ISP_PHY_TYPE_COMPLEX_IO	0
+#घोषणा OMAP3ISP_PHY_TYPE_CSIPHY	1
 
-#endif /* __DT_BINDINGS_OMAP3_ISP_H__ */
+#पूर्ण_अगर /* __DT_BINDINGS_OMAP3_ISP_H__ */

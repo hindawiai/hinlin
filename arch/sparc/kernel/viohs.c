@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* viohs.c: LDOM Virtual I/O handshake helper layer.
  *
  * Copyright (C) 2007 David S. Miller <davem@davemloft.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/sched/clock.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/slab.h>
 
-#include <asm/ldc.h>
-#include <asm/vio.h>
+#समावेश <यंत्र/ldc.h>
+#समावेश <यंत्र/vपन.स>
 
-int vio_ldc_send(struct vio_driver_state *vio, void *data, int len)
-{
-	int err, limit = 1000;
+पूर्णांक vio_ldc_send(काष्ठा vio_driver_state *vio, व्योम *data, पूर्णांक len)
+अणु
+	पूर्णांक err, limit = 1000;
 
 	err = -EINVAL;
-	while (limit-- > 0) {
-		err = ldc_write(vio->lp, data, len);
-		if (!err || (err != -EAGAIN))
-			break;
+	जबतक (limit-- > 0) अणु
+		err = ldc_ग_लिखो(vio->lp, data, len);
+		अगर (!err || (err != -EAGAIN))
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(vio_ldc_send);
 
-static int send_ctrl(struct vio_driver_state *vio,
-		     struct vio_msg_tag *tag, int len)
-{
+अटल पूर्णांक send_ctrl(काष्ठा vio_driver_state *vio,
+		     काष्ठा vio_msg_tag *tag, पूर्णांक len)
+अणु
 	tag->sid = vio_send_sid(vio);
-	return vio_ldc_send(vio, tag, len);
-}
+	वापस vio_ldc_send(vio, tag, len);
+पूर्ण
 
-static void init_tag(struct vio_msg_tag *tag, u8 type, u8 stype, u16 stype_env)
-{
+अटल व्योम init_tag(काष्ठा vio_msg_tag *tag, u8 type, u8 stype, u16 stype_env)
+अणु
 	tag->type = type;
 	tag->stype = stype;
 	tag->stype_env = stype_env;
-}
+पूर्ण
 
-static int send_version(struct vio_driver_state *vio, u16 major, u16 minor)
-{
-	struct vio_ver_info pkt;
+अटल पूर्णांक send_version(काष्ठा vio_driver_state *vio, u16 major, u16 minor)
+अणु
+	काष्ठा vio_ver_info pkt;
 
-	vio->_local_sid = (u32) sched_clock();
+	vio->_local_sid = (u32) sched_घड़ी();
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 	init_tag(&pkt.tag, VIO_TYPE_CTRL, VIO_SUBTYPE_INFO, VIO_VER_INFO);
 	pkt.major = major;
 	pkt.minor = minor;
@@ -60,12 +61,12 @@ static int send_version(struct vio_driver_state *vio, u16 major, u16 minor)
 	viodbg(HS, "SEND VERSION INFO maj[%u] min[%u] devclass[%u]\n",
 	       major, minor, vio->dev_class);
 
-	return send_ctrl(vio, &pkt.tag, sizeof(pkt));
-}
+	वापस send_ctrl(vio, &pkt.tag, माप(pkt));
+पूर्ण
 
-static int start_handshake(struct vio_driver_state *vio)
-{
-	int err;
+अटल पूर्णांक start_handshake(काष्ठा vio_driver_state *vio)
+अणु
+	पूर्णांक err;
 
 	viodbg(HS, "START HANDSHAKE\n");
 
@@ -74,15 +75,15 @@ static int start_handshake(struct vio_driver_state *vio)
 	err = send_version(vio,
 			   vio->ver_table[0].major,
 			   vio->ver_table[0].minor);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void flush_rx_dring(struct vio_driver_state *vio)
-{
-	struct vio_dring_state *dr;
+अटल व्योम flush_rx_dring(काष्ठा vio_driver_state *vio)
+अणु
+	काष्ठा vio_dring_state *dr;
 	u64 ident;
 
 	BUG_ON(!(vio->dr_state & VIO_DR_STATE_RXREG));
@@ -91,52 +92,52 @@ static void flush_rx_dring(struct vio_driver_state *vio)
 	ident = dr->ident;
 
 	BUG_ON(!vio->desc_buf);
-	kfree(vio->desc_buf);
-	vio->desc_buf = NULL;
+	kमुक्त(vio->desc_buf);
+	vio->desc_buf = शून्य;
 
-	memset(dr, 0, sizeof(*dr));
+	स_रखो(dr, 0, माप(*dr));
 	dr->ident = ident;
-}
+पूर्ण
 
-void vio_link_state_change(struct vio_driver_state *vio, int event)
-{
-	if (event == LDC_EVENT_UP) {
+व्योम vio_link_state_change(काष्ठा vio_driver_state *vio, पूर्णांक event)
+अणु
+	अगर (event == LDC_EVENT_UP) अणु
 		vio->hs_state = VIO_HS_INVALID;
 
-		switch (vio->dev_class) {
-		case VDEV_NETWORK:
-		case VDEV_NETWORK_SWITCH:
+		चयन (vio->dev_class) अणु
+		हाल VDEV_NETWORK:
+		हाल VDEV_NETWORK_SWITCH:
 			vio->dr_state = (VIO_DR_STATE_TXREQ |
 					 VIO_DR_STATE_RXREQ);
-			break;
+			अवरोध;
 
-		case VDEV_DISK:
+		हाल VDEV_DISK:
 			vio->dr_state = VIO_DR_STATE_TXREQ;
-			break;
-		case VDEV_DISK_SERVER:
+			अवरोध;
+		हाल VDEV_DISK_SERVER:
 			vio->dr_state = VIO_DR_STATE_RXREQ;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		start_handshake(vio);
-	} else if (event == LDC_EVENT_RESET) {
+	पूर्ण अन्यथा अगर (event == LDC_EVENT_RESET) अणु
 		vio->hs_state = VIO_HS_INVALID;
 
-		if (vio->dr_state & VIO_DR_STATE_RXREG)
+		अगर (vio->dr_state & VIO_DR_STATE_RXREG)
 			flush_rx_dring(vio);
 
 		vio->dr_state = 0x00;
-		memset(&vio->ver, 0, sizeof(vio->ver));
+		स_रखो(&vio->ver, 0, माप(vio->ver));
 
 		ldc_disconnect(vio->lp);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(vio_link_state_change);
 
-static int handshake_failure(struct vio_driver_state *vio)
-{
-	struct vio_dring_state *dr;
+अटल पूर्णांक handshake_failure(काष्ठा vio_driver_state *vio)
+अणु
+	काष्ठा vio_dring_state *dr;
 
-	/* XXX Put policy here...  Perhaps start a timer to fire
+	/* XXX Put policy here...  Perhaps start a समयr to fire
 	 * XXX in 100 ms, which will bring the link up and retry
 	 * XXX the handshake.
 	 */
@@ -147,50 +148,50 @@ static int handshake_failure(struct vio_driver_state *vio)
 			   VIO_DR_STATE_RXREG);
 
 	dr = &vio->drings[VIO_DRIVER_RX_RING];
-	memset(dr, 0, sizeof(*dr));
+	स_रखो(dr, 0, माप(*dr));
 
-	kfree(vio->desc_buf);
-	vio->desc_buf = NULL;
+	kमुक्त(vio->desc_buf);
+	vio->desc_buf = शून्य;
 	vio->desc_buf_len = 0;
 
 	vio->hs_state = VIO_HS_INVALID;
 
-	return -ECONNRESET;
-}
+	वापस -ECONNRESET;
+पूर्ण
 
-static int process_unknown(struct vio_driver_state *vio, void *arg)
-{
-	struct vio_msg_tag *pkt = arg;
+अटल पूर्णांक process_unknown(काष्ठा vio_driver_state *vio, व्योम *arg)
+अणु
+	काष्ठा vio_msg_tag *pkt = arg;
 
 	viodbg(HS, "UNKNOWN CONTROL [%02x:%02x:%04x:%08x]\n",
 	       pkt->type, pkt->stype, pkt->stype_env, pkt->sid);
 
-	printk(KERN_ERR "vio: ID[%lu] Resetting connection.\n",
+	prपूर्णांकk(KERN_ERR "vio: ID[%lu] Resetting connection.\n",
 	       vio->vdev->channel_id);
 
 	ldc_disconnect(vio->lp);
 
-	return -ECONNRESET;
-}
+	वापस -ECONNRESET;
+पूर्ण
 
-static int send_dreg(struct vio_driver_state *vio)
-{
-	struct vio_dring_state *dr = &vio->drings[VIO_DRIVER_TX_RING];
-	union {
-		struct vio_dring_register pkt;
-		char all[sizeof(struct vio_dring_register) +
-			 (sizeof(struct ldc_trans_cookie) *
+अटल पूर्णांक send_dreg(काष्ठा vio_driver_state *vio)
+अणु
+	काष्ठा vio_dring_state *dr = &vio->drings[VIO_DRIVER_TX_RING];
+	जोड़ अणु
+		काष्ठा vio_dring_रेजिस्टर pkt;
+		अक्षर all[माप(काष्ठा vio_dring_रेजिस्टर) +
+			 (माप(काष्ठा ldc_trans_cookie) *
 			  VIO_MAX_RING_COOKIES)];
-	} u;
-	size_t bytes = sizeof(struct vio_dring_register) +
-		       (sizeof(struct ldc_trans_cookie) *
+	पूर्ण u;
+	माप_प्रकार bytes = माप(काष्ठा vio_dring_रेजिस्टर) +
+		       (माप(काष्ठा ldc_trans_cookie) *
 			dr->ncookies);
-	int i;
+	पूर्णांक i;
 
-	if (WARN_ON(bytes > sizeof(u)))
-		return -EINVAL;
+	अगर (WARN_ON(bytes > माप(u)))
+		वापस -EINVAL;
 
-	memset(&u, 0, bytes);
+	स_रखो(&u, 0, bytes);
 	init_tag(&u.pkt.tag, VIO_TYPE_CTRL, VIO_SUBTYPE_INFO, VIO_DRING_REG);
 	u.pkt.dring_ident = 0;
 	u.pkt.num_descr = dr->num_entries;
@@ -203,257 +204,257 @@ static int send_dreg(struct vio_driver_state *vio)
 	       u.pkt.num_descr, u.pkt.descr_size, u.pkt.options,
 	       u.pkt.num_cookies);
 
-	for (i = 0; i < dr->ncookies; i++) {
+	क्रम (i = 0; i < dr->ncookies; i++) अणु
 		u.pkt.cookies[i] = dr->cookies[i];
 
 		viodbg(HS, "DRING COOKIE(%d) [%016llx:%016llx]\n",
 		       i,
-		       (unsigned long long) u.pkt.cookies[i].cookie_addr,
-		       (unsigned long long) u.pkt.cookies[i].cookie_size);
-	}
+		       (अचिन्हित दीर्घ दीर्घ) u.pkt.cookies[i].cookie_addr,
+		       (अचिन्हित दीर्घ दीर्घ) u.pkt.cookies[i].cookie_size);
+	पूर्ण
 
-	return send_ctrl(vio, &u.pkt.tag, bytes);
-}
+	वापस send_ctrl(vio, &u.pkt.tag, bytes);
+पूर्ण
 
-static int send_rdx(struct vio_driver_state *vio)
-{
-	struct vio_rdx pkt;
+अटल पूर्णांक send_rdx(काष्ठा vio_driver_state *vio)
+अणु
+	काष्ठा vio_rdx pkt;
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 
 	init_tag(&pkt.tag, VIO_TYPE_CTRL, VIO_SUBTYPE_INFO, VIO_RDX);
 
 	viodbg(HS, "SEND RDX INFO\n");
 
-	return send_ctrl(vio, &pkt.tag, sizeof(pkt));
-}
+	वापस send_ctrl(vio, &pkt.tag, माप(pkt));
+पूर्ण
 
-static int send_attr(struct vio_driver_state *vio)
-{
-	if (!vio->ops)
-		return -EINVAL;
+अटल पूर्णांक send_attr(काष्ठा vio_driver_state *vio)
+अणु
+	अगर (!vio->ops)
+		वापस -EINVAL;
 
-	return vio->ops->send_attr(vio);
-}
+	वापस vio->ops->send_attr(vio);
+पूर्ण
 
-static struct vio_version *find_by_major(struct vio_driver_state *vio,
+अटल काष्ठा vio_version *find_by_major(काष्ठा vio_driver_state *vio,
 					 u16 major)
-{
-	struct vio_version *ret = NULL;
-	int i;
+अणु
+	काष्ठा vio_version *ret = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; i < vio->ver_table_entries; i++) {
-		struct vio_version *v = &vio->ver_table[i];
-		if (v->major <= major) {
+	क्रम (i = 0; i < vio->ver_table_entries; i++) अणु
+		काष्ठा vio_version *v = &vio->ver_table[i];
+		अगर (v->major <= major) अणु
 			ret = v;
-			break;
-		}
-	}
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int process_ver_info(struct vio_driver_state *vio,
-			    struct vio_ver_info *pkt)
-{
-	struct vio_version *vap;
-	int err;
+अटल पूर्णांक process_ver_info(काष्ठा vio_driver_state *vio,
+			    काष्ठा vio_ver_info *pkt)
+अणु
+	काष्ठा vio_version *vap;
+	पूर्णांक err;
 
 	viodbg(HS, "GOT VERSION INFO maj[%u] min[%u] devclass[%u]\n",
 	       pkt->major, pkt->minor, pkt->dev_class);
 
-	if (vio->hs_state != VIO_HS_INVALID) {
+	अगर (vio->hs_state != VIO_HS_INVALID) अणु
 		/* XXX Perhaps invoke start_handshake? XXX */
-		memset(&vio->ver, 0, sizeof(vio->ver));
+		स_रखो(&vio->ver, 0, माप(vio->ver));
 		vio->hs_state = VIO_HS_INVALID;
-	}
+	पूर्ण
 
 	vap = find_by_major(vio, pkt->major);
 
 	vio->_peer_sid = pkt->tag.sid;
 
-	if (!vap) {
+	अगर (!vap) अणु
 		pkt->tag.stype = VIO_SUBTYPE_NACK;
 		pkt->major = 0;
 		pkt->minor = 0;
 		viodbg(HS, "SEND VERSION NACK maj[0] min[0]\n");
-		err = send_ctrl(vio, &pkt->tag, sizeof(*pkt));
-	} else if (vap->major != pkt->major) {
+		err = send_ctrl(vio, &pkt->tag, माप(*pkt));
+	पूर्ण अन्यथा अगर (vap->major != pkt->major) अणु
 		pkt->tag.stype = VIO_SUBTYPE_NACK;
 		pkt->major = vap->major;
 		pkt->minor = vap->minor;
 		viodbg(HS, "SEND VERSION NACK maj[%u] min[%u]\n",
 		       pkt->major, pkt->minor);
-		err = send_ctrl(vio, &pkt->tag, sizeof(*pkt));
-	} else {
-		struct vio_version ver = {
+		err = send_ctrl(vio, &pkt->tag, माप(*pkt));
+	पूर्ण अन्यथा अणु
+		काष्ठा vio_version ver = अणु
 			.major = pkt->major,
 			.minor = pkt->minor,
-		};
-		if (ver.minor > vap->minor)
+		पूर्ण;
+		अगर (ver.minor > vap->minor)
 			ver.minor = vap->minor;
 		pkt->minor = ver.minor;
 		pkt->tag.stype = VIO_SUBTYPE_ACK;
 		pkt->dev_class = vio->dev_class;
 		viodbg(HS, "SEND VERSION ACK maj[%u] min[%u]\n",
 		       pkt->major, pkt->minor);
-		err = send_ctrl(vio, &pkt->tag, sizeof(*pkt));
-		if (err > 0) {
+		err = send_ctrl(vio, &pkt->tag, माप(*pkt));
+		अगर (err > 0) अणु
 			vio->ver = ver;
 			vio->hs_state = VIO_HS_GOTVERS;
-		}
-	}
-	if (err < 0)
-		return handshake_failure(vio);
+		पूर्ण
+	पूर्ण
+	अगर (err < 0)
+		वापस handshake_failure(vio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_ver_ack(struct vio_driver_state *vio,
-			   struct vio_ver_info *pkt)
-{
+अटल पूर्णांक process_ver_ack(काष्ठा vio_driver_state *vio,
+			   काष्ठा vio_ver_info *pkt)
+अणु
 	viodbg(HS, "GOT VERSION ACK maj[%u] min[%u] devclass[%u]\n",
 	       pkt->major, pkt->minor, pkt->dev_class);
 
-	if (vio->hs_state & VIO_HS_GOTVERS) {
-		if (vio->ver.major != pkt->major ||
-		    vio->ver.minor != pkt->minor) {
+	अगर (vio->hs_state & VIO_HS_GOTVERS) अणु
+		अगर (vio->ver.major != pkt->major ||
+		    vio->ver.minor != pkt->minor) अणु
 			pkt->tag.stype = VIO_SUBTYPE_NACK;
-			(void) send_ctrl(vio, &pkt->tag, sizeof(*pkt));
-			return handshake_failure(vio);
-		}
-	} else {
+			(व्योम) send_ctrl(vio, &pkt->tag, माप(*pkt));
+			वापस handshake_failure(vio);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		vio->ver.major = pkt->major;
 		vio->ver.minor = pkt->minor;
 		vio->hs_state = VIO_HS_GOTVERS;
-	}
+	पूर्ण
 
-	switch (vio->dev_class) {
-	case VDEV_NETWORK:
-	case VDEV_DISK:
-		if (send_attr(vio) < 0)
-			return handshake_failure(vio);
-		break;
+	चयन (vio->dev_class) अणु
+	हाल VDEV_NETWORK:
+	हाल VDEV_DISK:
+		अगर (send_attr(vio) < 0)
+			वापस handshake_failure(vio);
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_ver_nack(struct vio_driver_state *vio,
-			    struct vio_ver_info *pkt)
-{
-	struct vio_version *nver;
+अटल पूर्णांक process_ver_nack(काष्ठा vio_driver_state *vio,
+			    काष्ठा vio_ver_info *pkt)
+अणु
+	काष्ठा vio_version *nver;
 
 	viodbg(HS, "GOT VERSION NACK maj[%u] min[%u] devclass[%u]\n",
 	       pkt->major, pkt->minor, pkt->dev_class);
 
-	if (pkt->major == 0 && pkt->minor == 0)
-		return handshake_failure(vio);
+	अगर (pkt->major == 0 && pkt->minor == 0)
+		वापस handshake_failure(vio);
 	nver = find_by_major(vio, pkt->major);
-	if (!nver)
-		return handshake_failure(vio);
+	अगर (!nver)
+		वापस handshake_failure(vio);
 
-	if (send_version(vio, nver->major, nver->minor) < 0)
-		return handshake_failure(vio);
+	अगर (send_version(vio, nver->major, nver->minor) < 0)
+		वापस handshake_failure(vio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_ver(struct vio_driver_state *vio, struct vio_ver_info *pkt)
-{
-	switch (pkt->tag.stype) {
-	case VIO_SUBTYPE_INFO:
-		return process_ver_info(vio, pkt);
+अटल पूर्णांक process_ver(काष्ठा vio_driver_state *vio, काष्ठा vio_ver_info *pkt)
+अणु
+	चयन (pkt->tag.stype) अणु
+	हाल VIO_SUBTYPE_INFO:
+		वापस process_ver_info(vio, pkt);
 
-	case VIO_SUBTYPE_ACK:
-		return process_ver_ack(vio, pkt);
+	हाल VIO_SUBTYPE_ACK:
+		वापस process_ver_ack(vio, pkt);
 
-	case VIO_SUBTYPE_NACK:
-		return process_ver_nack(vio, pkt);
+	हाल VIO_SUBTYPE_NACK:
+		वापस process_ver_nack(vio, pkt);
 
-	default:
-		return handshake_failure(vio);
-	}
-}
+	शेष:
+		वापस handshake_failure(vio);
+	पूर्ण
+पूर्ण
 
-static int process_attr(struct vio_driver_state *vio, void *pkt)
-{
-	int err;
+अटल पूर्णांक process_attr(काष्ठा vio_driver_state *vio, व्योम *pkt)
+अणु
+	पूर्णांक err;
 
-	if (!(vio->hs_state & VIO_HS_GOTVERS))
-		return handshake_failure(vio);
+	अगर (!(vio->hs_state & VIO_HS_GOTVERS))
+		वापस handshake_failure(vio);
 
-	if (!vio->ops)
-		return 0;
+	अगर (!vio->ops)
+		वापस 0;
 
 	err = vio->ops->handle_attr(vio, pkt);
-	if (err < 0) {
-		return handshake_failure(vio);
-	} else {
+	अगर (err < 0) अणु
+		वापस handshake_failure(vio);
+	पूर्ण अन्यथा अणु
 		vio->hs_state |= VIO_HS_GOT_ATTR;
 
-		if ((vio->dr_state & VIO_DR_STATE_TXREQ) &&
-		    !(vio->hs_state & VIO_HS_SENT_DREG)) {
-			if (send_dreg(vio) < 0)
-				return handshake_failure(vio);
+		अगर ((vio->dr_state & VIO_DR_STATE_TXREQ) &&
+		    !(vio->hs_state & VIO_HS_SENT_DREG)) अणु
+			अगर (send_dreg(vio) < 0)
+				वापस handshake_failure(vio);
 
 			vio->hs_state |= VIO_HS_SENT_DREG;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int all_drings_registered(struct vio_driver_state *vio)
-{
-	int need_rx, need_tx;
+अटल पूर्णांक all_drings_रेजिस्टरed(काष्ठा vio_driver_state *vio)
+अणु
+	पूर्णांक need_rx, need_tx;
 
 	need_rx = (vio->dr_state & VIO_DR_STATE_RXREQ);
 	need_tx = (vio->dr_state & VIO_DR_STATE_TXREQ);
 
-	if (need_rx &&
+	अगर (need_rx &&
 	    !(vio->dr_state & VIO_DR_STATE_RXREG))
-		return 0;
+		वापस 0;
 
-	if (need_tx &&
+	अगर (need_tx &&
 	    !(vio->dr_state & VIO_DR_STATE_TXREG))
-		return 0;
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int process_dreg_info(struct vio_driver_state *vio,
-			     struct vio_dring_register *pkt)
-{
-	struct vio_dring_state *dr;
-	int i;
+अटल पूर्णांक process_dreg_info(काष्ठा vio_driver_state *vio,
+			     काष्ठा vio_dring_रेजिस्टर *pkt)
+अणु
+	काष्ठा vio_dring_state *dr;
+	पूर्णांक i;
 
 	viodbg(HS, "GOT DRING_REG INFO ident[%llx] "
 	       "ndesc[%u] dsz[%u] opt[0x%x] ncookies[%u]\n",
-	       (unsigned long long) pkt->dring_ident,
+	       (अचिन्हित दीर्घ दीर्घ) pkt->dring_ident,
 	       pkt->num_descr, pkt->descr_size, pkt->options,
 	       pkt->num_cookies);
 
-	if (!(vio->dr_state & VIO_DR_STATE_RXREQ))
-		goto send_nack;
+	अगर (!(vio->dr_state & VIO_DR_STATE_RXREQ))
+		जाओ send_nack;
 
-	if (vio->dr_state & VIO_DR_STATE_RXREG)
-		goto send_nack;
+	अगर (vio->dr_state & VIO_DR_STATE_RXREG)
+		जाओ send_nack;
 
 	/* v1.6 and higher, ACK with desired, supported mode, or NACK */
-	if (vio_version_after_eq(vio, 1, 6)) {
-		if (!(pkt->options & VIO_TX_DRING))
-			goto send_nack;
+	अगर (vio_version_after_eq(vio, 1, 6)) अणु
+		अगर (!(pkt->options & VIO_TX_DRING))
+			जाओ send_nack;
 		pkt->options = VIO_TX_DRING;
-	}
+	पूर्ण
 
 	BUG_ON(vio->desc_buf);
 
 	vio->desc_buf = kzalloc(pkt->descr_size, GFP_ATOMIC);
-	if (!vio->desc_buf)
-		goto send_nack;
+	अगर (!vio->desc_buf)
+		जाओ send_nack;
 
 	vio->desc_buf_len = pkt->descr_size;
 
@@ -462,384 +463,384 @@ static int process_dreg_info(struct vio_driver_state *vio,
 	dr->num_entries = pkt->num_descr;
 	dr->entry_size = pkt->descr_size;
 	dr->ncookies = pkt->num_cookies;
-	for (i = 0; i < dr->ncookies; i++) {
+	क्रम (i = 0; i < dr->ncookies; i++) अणु
 		dr->cookies[i] = pkt->cookies[i];
 
 		viodbg(HS, "DRING COOKIE(%d) [%016llx:%016llx]\n",
 		       i,
-		       (unsigned long long)
+		       (अचिन्हित दीर्घ दीर्घ)
 		       pkt->cookies[i].cookie_addr,
-		       (unsigned long long)
+		       (अचिन्हित दीर्घ दीर्घ)
 		       pkt->cookies[i].cookie_size);
-	}
+	पूर्ण
 
 	pkt->tag.stype = VIO_SUBTYPE_ACK;
 	pkt->dring_ident = ++dr->ident;
 
 	viodbg(HS, "SEND DRING_REG ACK ident[%llx] "
 	       "ndesc[%u] dsz[%u] opt[0x%x] ncookies[%u]\n",
-	       (unsigned long long) pkt->dring_ident,
+	       (अचिन्हित दीर्घ दीर्घ) pkt->dring_ident,
 	       pkt->num_descr, pkt->descr_size, pkt->options,
 	       pkt->num_cookies);
 
-	if (send_ctrl(vio, &pkt->tag, struct_size(pkt, cookies, dr->ncookies)) < 0)
-		goto send_nack;
+	अगर (send_ctrl(vio, &pkt->tag, काष्ठा_size(pkt, cookies, dr->ncookies)) < 0)
+		जाओ send_nack;
 
 	vio->dr_state |= VIO_DR_STATE_RXREG;
 
-	return 0;
+	वापस 0;
 
 send_nack:
 	pkt->tag.stype = VIO_SUBTYPE_NACK;
 	viodbg(HS, "SEND DRING_REG NACK\n");
-	(void) send_ctrl(vio, &pkt->tag, sizeof(*pkt));
+	(व्योम) send_ctrl(vio, &pkt->tag, माप(*pkt));
 
-	return handshake_failure(vio);
-}
+	वापस handshake_failure(vio);
+पूर्ण
 
-static int process_dreg_ack(struct vio_driver_state *vio,
-			    struct vio_dring_register *pkt)
-{
-	struct vio_dring_state *dr;
+अटल पूर्णांक process_dreg_ack(काष्ठा vio_driver_state *vio,
+			    काष्ठा vio_dring_रेजिस्टर *pkt)
+अणु
+	काष्ठा vio_dring_state *dr;
 
 	viodbg(HS, "GOT DRING_REG ACK ident[%llx] "
 	       "ndesc[%u] dsz[%u] opt[0x%x] ncookies[%u]\n",
-	       (unsigned long long) pkt->dring_ident,
+	       (अचिन्हित दीर्घ दीर्घ) pkt->dring_ident,
 	       pkt->num_descr, pkt->descr_size, pkt->options,
 	       pkt->num_cookies);
 
 	dr = &vio->drings[VIO_DRIVER_TX_RING];
 
-	if (!(vio->dr_state & VIO_DR_STATE_TXREQ))
-		return handshake_failure(vio);
+	अगर (!(vio->dr_state & VIO_DR_STATE_TXREQ))
+		वापस handshake_failure(vio);
 
 	dr->ident = pkt->dring_ident;
 	vio->dr_state |= VIO_DR_STATE_TXREG;
 
-	if (all_drings_registered(vio)) {
-		if (send_rdx(vio) < 0)
-			return handshake_failure(vio);
+	अगर (all_drings_रेजिस्टरed(vio)) अणु
+		अगर (send_rdx(vio) < 0)
+			वापस handshake_failure(vio);
 		vio->hs_state = VIO_HS_SENT_RDX;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int process_dreg_nack(struct vio_driver_state *vio,
-			     struct vio_dring_register *pkt)
-{
+अटल पूर्णांक process_dreg_nack(काष्ठा vio_driver_state *vio,
+			     काष्ठा vio_dring_रेजिस्टर *pkt)
+अणु
 	viodbg(HS, "GOT DRING_REG NACK ident[%llx] "
 	       "ndesc[%u] dsz[%u] opt[0x%x] ncookies[%u]\n",
-	       (unsigned long long) pkt->dring_ident,
+	       (अचिन्हित दीर्घ दीर्घ) pkt->dring_ident,
 	       pkt->num_descr, pkt->descr_size, pkt->options,
 	       pkt->num_cookies);
 
-	return handshake_failure(vio);
-}
+	वापस handshake_failure(vio);
+पूर्ण
 
-static int process_dreg(struct vio_driver_state *vio,
-			struct vio_dring_register *pkt)
-{
-	if (!(vio->hs_state & VIO_HS_GOTVERS))
-		return handshake_failure(vio);
+अटल पूर्णांक process_dreg(काष्ठा vio_driver_state *vio,
+			काष्ठा vio_dring_रेजिस्टर *pkt)
+अणु
+	अगर (!(vio->hs_state & VIO_HS_GOTVERS))
+		वापस handshake_failure(vio);
 
-	switch (pkt->tag.stype) {
-	case VIO_SUBTYPE_INFO:
-		return process_dreg_info(vio, pkt);
+	चयन (pkt->tag.stype) अणु
+	हाल VIO_SUBTYPE_INFO:
+		वापस process_dreg_info(vio, pkt);
 
-	case VIO_SUBTYPE_ACK:
-		return process_dreg_ack(vio, pkt);
+	हाल VIO_SUBTYPE_ACK:
+		वापस process_dreg_ack(vio, pkt);
 
-	case VIO_SUBTYPE_NACK:
-		return process_dreg_nack(vio, pkt);
+	हाल VIO_SUBTYPE_NACK:
+		वापस process_dreg_nack(vio, pkt);
 
-	default:
-		return handshake_failure(vio);
-	}
-}
+	शेष:
+		वापस handshake_failure(vio);
+	पूर्ण
+पूर्ण
 
-static int process_dunreg(struct vio_driver_state *vio,
-			  struct vio_dring_unregister *pkt)
-{
-	struct vio_dring_state *dr = &vio->drings[VIO_DRIVER_RX_RING];
+अटल पूर्णांक process_dunreg(काष्ठा vio_driver_state *vio,
+			  काष्ठा vio_dring_unरेजिस्टर *pkt)
+अणु
+	काष्ठा vio_dring_state *dr = &vio->drings[VIO_DRIVER_RX_RING];
 
 	viodbg(HS, "GOT DRING_UNREG\n");
 
-	if (pkt->dring_ident != dr->ident)
-		return 0;
+	अगर (pkt->dring_ident != dr->ident)
+		वापस 0;
 
 	vio->dr_state &= ~VIO_DR_STATE_RXREG;
 
-	memset(dr, 0, sizeof(*dr));
+	स_रखो(dr, 0, माप(*dr));
 
-	kfree(vio->desc_buf);
-	vio->desc_buf = NULL;
+	kमुक्त(vio->desc_buf);
+	vio->desc_buf = शून्य;
 	vio->desc_buf_len = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_rdx_info(struct vio_driver_state *vio, struct vio_rdx *pkt)
-{
+अटल पूर्णांक process_rdx_info(काष्ठा vio_driver_state *vio, काष्ठा vio_rdx *pkt)
+अणु
 	viodbg(HS, "GOT RDX INFO\n");
 
 	pkt->tag.stype = VIO_SUBTYPE_ACK;
 	viodbg(HS, "SEND RDX ACK\n");
-	if (send_ctrl(vio, &pkt->tag, sizeof(*pkt)) < 0)
-		return handshake_failure(vio);
+	अगर (send_ctrl(vio, &pkt->tag, माप(*pkt)) < 0)
+		वापस handshake_failure(vio);
 
 	vio->hs_state |= VIO_HS_SENT_RDX_ACK;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_rdx_ack(struct vio_driver_state *vio, struct vio_rdx *pkt)
-{
+अटल पूर्णांक process_rdx_ack(काष्ठा vio_driver_state *vio, काष्ठा vio_rdx *pkt)
+अणु
 	viodbg(HS, "GOT RDX ACK\n");
 
-	if (!(vio->hs_state & VIO_HS_SENT_RDX))
-		return handshake_failure(vio);
+	अगर (!(vio->hs_state & VIO_HS_SENT_RDX))
+		वापस handshake_failure(vio);
 
 	vio->hs_state |= VIO_HS_GOT_RDX_ACK;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_rdx_nack(struct vio_driver_state *vio, struct vio_rdx *pkt)
-{
+अटल पूर्णांक process_rdx_nack(काष्ठा vio_driver_state *vio, काष्ठा vio_rdx *pkt)
+अणु
 	viodbg(HS, "GOT RDX NACK\n");
 
-	return handshake_failure(vio);
-}
+	वापस handshake_failure(vio);
+पूर्ण
 
-static int process_rdx(struct vio_driver_state *vio, struct vio_rdx *pkt)
-{
-	if (!all_drings_registered(vio))
+अटल पूर्णांक process_rdx(काष्ठा vio_driver_state *vio, काष्ठा vio_rdx *pkt)
+अणु
+	अगर (!all_drings_रेजिस्टरed(vio))
 		handshake_failure(vio);
 
-	switch (pkt->tag.stype) {
-	case VIO_SUBTYPE_INFO:
-		return process_rdx_info(vio, pkt);
+	चयन (pkt->tag.stype) अणु
+	हाल VIO_SUBTYPE_INFO:
+		वापस process_rdx_info(vio, pkt);
 
-	case VIO_SUBTYPE_ACK:
-		return process_rdx_ack(vio, pkt);
+	हाल VIO_SUBTYPE_ACK:
+		वापस process_rdx_ack(vio, pkt);
 
-	case VIO_SUBTYPE_NACK:
-		return process_rdx_nack(vio, pkt);
+	हाल VIO_SUBTYPE_NACK:
+		वापस process_rdx_nack(vio, pkt);
 
-	default:
-		return handshake_failure(vio);
-	}
-}
+	शेष:
+		वापस handshake_failure(vio);
+	पूर्ण
+पूर्ण
 
-int vio_control_pkt_engine(struct vio_driver_state *vio, void *pkt)
-{
-	struct vio_msg_tag *tag = pkt;
+पूर्णांक vio_control_pkt_engine(काष्ठा vio_driver_state *vio, व्योम *pkt)
+अणु
+	काष्ठा vio_msg_tag *tag = pkt;
 	u8 prev_state = vio->hs_state;
-	int err;
+	पूर्णांक err;
 
-	switch (tag->stype_env) {
-	case VIO_VER_INFO:
+	चयन (tag->stype_env) अणु
+	हाल VIO_VER_INFO:
 		err = process_ver(vio, pkt);
-		break;
+		अवरोध;
 
-	case VIO_ATTR_INFO:
+	हाल VIO_ATTR_INFO:
 		err = process_attr(vio, pkt);
-		break;
+		अवरोध;
 
-	case VIO_DRING_REG:
+	हाल VIO_DRING_REG:
 		err = process_dreg(vio, pkt);
-		break;
+		अवरोध;
 
-	case VIO_DRING_UNREG:
+	हाल VIO_DRING_UNREG:
 		err = process_dunreg(vio, pkt);
-		break;
+		अवरोध;
 
-	case VIO_RDX:
+	हाल VIO_RDX:
 		err = process_rdx(vio, pkt);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = process_unknown(vio, pkt);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!err &&
+	अगर (!err &&
 	    vio->hs_state != prev_state &&
-	    (vio->hs_state & VIO_HS_COMPLETE)) {
-		if (vio->ops)
+	    (vio->hs_state & VIO_HS_COMPLETE)) अणु
+		अगर (vio->ops)
 			vio->ops->handshake_complete(vio);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(vio_control_pkt_engine);
 
-void vio_conn_reset(struct vio_driver_state *vio)
-{
-}
+व्योम vio_conn_reset(काष्ठा vio_driver_state *vio)
+अणु
+पूर्ण
 EXPORT_SYMBOL(vio_conn_reset);
 
-/* The issue is that the Solaris virtual disk server just mirrors the
- * SID values it gets from the client peer.  So we work around that
- * here in vio_{validate,send}_sid() so that the drivers don't need
+/* The issue is that the Solaris भव disk server just mirrors the
+ * SID values it माला_लो from the client peer.  So we work around that
+ * here in vio_अणुvalidate,sendपूर्ण_sid() so that the drivers करोn't need
  * to be aware of this crap.
  */
-int vio_validate_sid(struct vio_driver_state *vio, struct vio_msg_tag *tp)
-{
+पूर्णांक vio_validate_sid(काष्ठा vio_driver_state *vio, काष्ठा vio_msg_tag *tp)
+अणु
 	u32 sid;
 
 	/* Always let VERSION+INFO packets through unchecked, they
 	 * define the new SID.
 	 */
-	if (tp->type == VIO_TYPE_CTRL &&
+	अगर (tp->type == VIO_TYPE_CTRL &&
 	    tp->stype == VIO_SUBTYPE_INFO &&
 	    tp->stype_env == VIO_VER_INFO)
-		return 0;
+		वापस 0;
 
 	/* Ok, now figure out which SID to use.  */
-	switch (vio->dev_class) {
-	case VDEV_NETWORK:
-	case VDEV_NETWORK_SWITCH:
-	case VDEV_DISK_SERVER:
-	default:
+	चयन (vio->dev_class) अणु
+	हाल VDEV_NETWORK:
+	हाल VDEV_NETWORK_SWITCH:
+	हाल VDEV_DISK_SERVER:
+	शेष:
 		sid = vio->_peer_sid;
-		break;
+		अवरोध;
 
-	case VDEV_DISK:
+	हाल VDEV_DISK:
 		sid = vio->_local_sid;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (sid == tp->sid)
-		return 0;
+	अगर (sid == tp->sid)
+		वापस 0;
 	viodbg(DATA, "BAD SID tag->sid[%08x] peer_sid[%08x] local_sid[%08x]\n",
 	       tp->sid, vio->_peer_sid, vio->_local_sid);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL(vio_validate_sid);
 
-u32 vio_send_sid(struct vio_driver_state *vio)
-{
-	switch (vio->dev_class) {
-	case VDEV_NETWORK:
-	case VDEV_NETWORK_SWITCH:
-	case VDEV_DISK:
-	default:
-		return vio->_local_sid;
+u32 vio_send_sid(काष्ठा vio_driver_state *vio)
+अणु
+	चयन (vio->dev_class) अणु
+	हाल VDEV_NETWORK:
+	हाल VDEV_NETWORK_SWITCH:
+	हाल VDEV_DISK:
+	शेष:
+		वापस vio->_local_sid;
 
-	case VDEV_DISK_SERVER:
-		return vio->_peer_sid;
-	}
-}
+	हाल VDEV_DISK_SERVER:
+		वापस vio->_peer_sid;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(vio_send_sid);
 
-int vio_ldc_alloc(struct vio_driver_state *vio,
-			 struct ldc_channel_config *base_cfg,
-			 void *event_arg)
-{
-	struct ldc_channel_config cfg = *base_cfg;
-	struct ldc_channel *lp;
+पूर्णांक vio_ldc_alloc(काष्ठा vio_driver_state *vio,
+			 काष्ठा ldc_channel_config *base_cfg,
+			 व्योम *event_arg)
+अणु
+	काष्ठा ldc_channel_config cfg = *base_cfg;
+	काष्ठा ldc_channel *lp;
 
 	cfg.tx_irq = vio->vdev->tx_irq;
 	cfg.rx_irq = vio->vdev->rx_irq;
 
 	lp = ldc_alloc(vio->vdev->channel_id, &cfg, event_arg, vio->name);
-	if (IS_ERR(lp))
-		return PTR_ERR(lp);
+	अगर (IS_ERR(lp))
+		वापस PTR_ERR(lp);
 
 	vio->lp = lp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vio_ldc_alloc);
 
-void vio_ldc_free(struct vio_driver_state *vio)
-{
-	ldc_free(vio->lp);
-	vio->lp = NULL;
+व्योम vio_ldc_मुक्त(काष्ठा vio_driver_state *vio)
+अणु
+	ldc_मुक्त(vio->lp);
+	vio->lp = शून्य;
 
-	kfree(vio->desc_buf);
-	vio->desc_buf = NULL;
+	kमुक्त(vio->desc_buf);
+	vio->desc_buf = शून्य;
 	vio->desc_buf_len = 0;
-}
-EXPORT_SYMBOL(vio_ldc_free);
+पूर्ण
+EXPORT_SYMBOL(vio_ldc_मुक्त);
 
-void vio_port_up(struct vio_driver_state *vio)
-{
-	unsigned long flags;
-	int err, state;
+व्योम vio_port_up(काष्ठा vio_driver_state *vio)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err, state;
 
 	spin_lock_irqsave(&vio->lock, flags);
 
 	state = ldc_state(vio->lp);
 
 	err = 0;
-	if (state == LDC_STATE_INIT) {
+	अगर (state == LDC_STATE_INIT) अणु
 		err = ldc_bind(vio->lp);
-		if (err)
-			printk(KERN_WARNING "%s: Port %lu bind failed, "
+		अगर (err)
+			prपूर्णांकk(KERN_WARNING "%s: Port %lu bind failed, "
 			       "err=%d\n",
 			       vio->name, vio->vdev->channel_id, err);
-	}
+	पूर्ण
 
-	if (!err) {
-		if (ldc_mode(vio->lp) == LDC_MODE_RAW)
+	अगर (!err) अणु
+		अगर (ldc_mode(vio->lp) == LDC_MODE_RAW)
 			ldc_set_state(vio->lp, LDC_STATE_CONNECTED);
-		else
+		अन्यथा
 			err = ldc_connect(vio->lp);
 
-		if (err)
-			printk(KERN_WARNING "%s: Port %lu connect failed, "
+		अगर (err)
+			prपूर्णांकk(KERN_WARNING "%s: Port %lu connect failed, "
 			       "err=%d\n",
 			       vio->name, vio->vdev->channel_id, err);
-	}
-	if (err) {
-		unsigned long expires = jiffies + HZ;
+	पूर्ण
+	अगर (err) अणु
+		अचिन्हित दीर्घ expires = jअगरfies + HZ;
 
-		expires = round_jiffies(expires);
-		mod_timer(&vio->timer, expires);
-	}
+		expires = round_jअगरfies(expires);
+		mod_समयr(&vio->समयr, expires);
+	पूर्ण
 
 	spin_unlock_irqrestore(&vio->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(vio_port_up);
 
-static void vio_port_timer(struct timer_list *t)
-{
-	struct vio_driver_state *vio = from_timer(vio, t, timer);
+अटल व्योम vio_port_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा vio_driver_state *vio = from_समयr(vio, t, समयr);
 
 	vio_port_up(vio);
-}
+पूर्ण
 
-int vio_driver_init(struct vio_driver_state *vio, struct vio_dev *vdev,
-		    u8 dev_class, struct vio_version *ver_table,
-		    int ver_table_size, struct vio_driver_ops *ops,
-		    char *name)
-{
-	switch (dev_class) {
-	case VDEV_NETWORK:
-	case VDEV_NETWORK_SWITCH:
-	case VDEV_DISK:
-	case VDEV_DISK_SERVER:
-	case VDEV_CONSOLE_CON:
-		break;
+पूर्णांक vio_driver_init(काष्ठा vio_driver_state *vio, काष्ठा vio_dev *vdev,
+		    u8 dev_class, काष्ठा vio_version *ver_table,
+		    पूर्णांक ver_table_size, काष्ठा vio_driver_ops *ops,
+		    अक्षर *name)
+अणु
+	चयन (dev_class) अणु
+	हाल VDEV_NETWORK:
+	हाल VDEV_NETWORK_SWITCH:
+	हाल VDEV_DISK:
+	हाल VDEV_DISK_SERVER:
+	हाल VDEV_CONSOLE_CON:
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (dev_class == VDEV_NETWORK ||
+	अगर (dev_class == VDEV_NETWORK ||
 	    dev_class == VDEV_NETWORK_SWITCH ||
 	    dev_class == VDEV_DISK ||
-	    dev_class == VDEV_DISK_SERVER) {
-		if (!ops || !ops->send_attr || !ops->handle_attr ||
+	    dev_class == VDEV_DISK_SERVER) अणु
+		अगर (!ops || !ops->send_attr || !ops->handle_attr ||
 		    !ops->handshake_complete)
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	if (!ver_table || ver_table_size < 0)
-		return -EINVAL;
+	अगर (!ver_table || ver_table_size < 0)
+		वापस -EINVAL;
 
-	if (!name)
-		return -EINVAL;
+	अगर (!name)
+		वापस -EINVAL;
 
 	spin_lock_init(&vio->lock);
 
@@ -853,8 +854,8 @@ int vio_driver_init(struct vio_driver_state *vio, struct vio_dev *vdev,
 
 	vio->ops = ops;
 
-	timer_setup(&vio->timer, vio_port_timer, 0);
+	समयr_setup(&vio->समयr, vio_port_समयr, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vio_driver_init);

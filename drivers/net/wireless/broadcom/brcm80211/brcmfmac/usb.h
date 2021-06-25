@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2011 Broadcom Corporation
  */
-#ifndef BRCMFMAC_USB_H
-#define BRCMFMAC_USB_H
+#अगर_अघोषित BRCMFMAC_USB_H
+#घोषणा BRCMFMAC_USB_H
 
-enum brcmf_usb_state {
+क्रमागत brcmf_usb_state अणु
 	BRCMFMAC_USB_STATE_DOWN,
 	BRCMFMAC_USB_STATE_DL_FAIL,
 	BRCMFMAC_USB_STATE_DL_DONE,
 	BRCMFMAC_USB_STATE_UP,
 	BRCMFMAC_USB_STATE_SLEEP
-};
+पूर्ण;
 
-struct brcmf_stats {
+काष्ठा brcmf_stats अणु
 	u32 tx_ctlpkts;
 	u32 tx_ctlerrs;
 	u32 rx_ctlpkts;
 	u32 rx_ctlerrs;
-};
+पूर्ण;
 
-struct brcmf_usbdev {
-	struct brcmf_bus *bus;
-	struct brcmf_usbdev_info *devinfo;
-	enum brcmf_usb_state state;
-	struct brcmf_stats stats;
-	int ntxq, nrxq, rxsize;
+काष्ठा brcmf_usbdev अणु
+	काष्ठा brcmf_bus *bus;
+	काष्ठा brcmf_usbdev_info *devinfo;
+	क्रमागत brcmf_usb_state state;
+	काष्ठा brcmf_stats stats;
+	पूर्णांक ntxq, nrxq, rxsize;
 	u32 bus_mtu;
-	int devid;
-	int chiprev; /* chip revision number */
-};
+	पूर्णांक devid;
+	पूर्णांक chiprev; /* chip revision number */
+पूर्ण;
 
 /* IO Request Block (IRB) */
-struct brcmf_usbreq {
-	struct list_head list;
-	struct brcmf_usbdev_info *devinfo;
-	struct urb *urb;
-	struct sk_buff  *skb;
-};
+काष्ठा brcmf_usbreq अणु
+	काष्ठा list_head list;
+	काष्ठा brcmf_usbdev_info *devinfo;
+	काष्ठा urb *urb;
+	काष्ठा sk_buff  *skb;
+पूर्ण;
 
-#endif /* BRCMFMAC_USB_H */
+#पूर्ण_अगर /* BRCMFMAC_USB_H */

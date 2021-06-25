@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2012-2014, 2018-2020 Intel Corporation
  * Copyright (C) 2013-2014 Intel Mobile Communications GmbH
  * Copyright (C) 2015-2017 Intel Deutschland GmbH
  */
-#include <net/mac80211.h>
+#समावेश <net/mac80211.h>
 
-#include "iwl-debug.h"
-#include "iwl-io.h"
-#include "iwl-prph.h"
-#include "iwl-csr.h"
-#include "mvm.h"
-#include "fw/api/rs.h"
-#include "fw/img.h"
+#समावेश "iwl-debug.h"
+#समावेश "iwl-io.h"
+#समावेश "iwl-prph.h"
+#समावेश "iwl-csr.h"
+#समावेश "mvm.h"
+#समावेश "fw/api/rs.h"
+#समावेश "fw/img.h"
 
 /*
- * Will return 0 even if the cmd failed when RFKILL is asserted unless
+ * Will वापस 0 even अगर the cmd failed when RFKILL is निश्चितed unless
  * CMD_WANT_SKB is set in cmd->flags.
  */
-int iwl_mvm_send_cmd(struct iwl_mvm *mvm, struct iwl_host_cmd *cmd)
-{
-	int ret;
+पूर्णांक iwl_mvm_send_cmd(काष्ठा iwl_mvm *mvm, काष्ठा iwl_host_cmd *cmd)
+अणु
+	पूर्णांक ret;
 
-#if defined(CONFIG_IWLWIFI_DEBUGFS) && defined(CONFIG_PM_SLEEP)
-	if (WARN_ON(mvm->d3_test_active))
-		return -EIO;
-#endif
+#अगर defined(CONFIG_IWLWIFI_DEBUGFS) && defined(CONFIG_PM_SLEEP)
+	अगर (WARN_ON(mvm->d3_test_active))
+		वापस -EIO;
+#पूर्ण_अगर
 
 	/*
 	 * Synchronous commands from this op-mode must hold
-	 * the mutex, this ensures we don't try to send two
-	 * (or more) synchronous commands at a time.
+	 * the mutex, this ensures we करोn't try to send two
+	 * (or more) synchronous commands at a समय.
 	 */
-	if (!(cmd->flags & CMD_ASYNC))
-		lockdep_assert_held(&mvm->mutex);
+	अगर (!(cmd->flags & CMD_ASYNC))
+		lockdep_निश्चित_held(&mvm->mutex);
 
 	ret = iwl_trans_send_cmd(mvm->trans, cmd);
 
 	/*
-	 * If the caller wants the SKB, then don't hide any problems, the
-	 * caller might access the response buffer which will be NULL if
+	 * If the caller wants the SKB, then करोn't hide any problems, the
+	 * caller might access the response buffer which will be शून्य अगर
 	 * the command failed.
 	 */
-	if (cmd->flags & CMD_WANT_SKB)
-		return ret;
+	अगर (cmd->flags & CMD_WANT_SKB)
+		वापस ret;
 
 	/*
-	 * Silently ignore failures if RFKILL is asserted or
-	 * we are in suspend\resume process
+	 * Silently ignore failures अगर RFKILL is निश्चितed or
+	 * we are in suspend\लesume process
 	 */
-	if (!ret || ret == -ERFKILL || ret == -EHOSTDOWN)
-		return 0;
-	return ret;
-}
+	अगर (!ret || ret == -ERFKILL || ret == -EHOSTDOWN)
+		वापस 0;
+	वापस ret;
+पूर्ण
 
-int iwl_mvm_send_cmd_pdu(struct iwl_mvm *mvm, u32 id,
-			 u32 flags, u16 len, const void *data)
-{
-	struct iwl_host_cmd cmd = {
+पूर्णांक iwl_mvm_send_cmd_pdu(काष्ठा iwl_mvm *mvm, u32 id,
+			 u32 flags, u16 len, स्थिर व्योम *data)
+अणु
+	काष्ठा iwl_host_cmd cmd = अणु
 		.id = id,
-		.len = { len, },
-		.data = { data, },
+		.len = अणु len, पूर्ण,
+		.data = अणु data, पूर्ण,
 		.flags = flags,
-	};
+	पूर्ण;
 
-	return iwl_mvm_send_cmd(mvm, &cmd);
-}
+	वापस iwl_mvm_send_cmd(mvm, &cmd);
+पूर्ण
 
 /*
  * We assume that the caller set the status to the success value
  */
-int iwl_mvm_send_cmd_status(struct iwl_mvm *mvm, struct iwl_host_cmd *cmd,
+पूर्णांक iwl_mvm_send_cmd_status(काष्ठा iwl_mvm *mvm, काष्ठा iwl_host_cmd *cmd,
 			    u32 *status)
-{
-	struct iwl_rx_packet *pkt;
-	struct iwl_cmd_response *resp;
-	int ret, resp_len;
+अणु
+	काष्ठा iwl_rx_packet *pkt;
+	काष्ठा iwl_cmd_response *resp;
+	पूर्णांक ret, resp_len;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-#if defined(CONFIG_IWLWIFI_DEBUGFS) && defined(CONFIG_PM_SLEEP)
-	if (WARN_ON(mvm->d3_test_active))
-		return -EIO;
-#endif
+#अगर defined(CONFIG_IWLWIFI_DEBUGFS) && defined(CONFIG_PM_SLEEP)
+	अगर (WARN_ON(mvm->d3_test_active))
+		वापस -EIO;
+#पूर्ण_अगर
 
 	/*
-	 * Only synchronous commands can wait for status,
+	 * Only synchronous commands can रुको क्रम status,
 	 * we use WANT_SKB so the caller can't.
 	 */
-	if (WARN_ONCE(cmd->flags & (CMD_ASYNC | CMD_WANT_SKB),
+	अगर (WARN_ONCE(cmd->flags & (CMD_ASYNC | CMD_WANT_SKB),
 		      "cmd flags %x", cmd->flags))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	cmd->flags |= CMD_WANT_SKB;
 
 	ret = iwl_trans_send_cmd(mvm->trans, cmd);
-	if (ret == -ERFKILL) {
+	अगर (ret == -ERFKILL) अणु
 		/*
-		 * The command failed because of RFKILL, don't update
-		 * the status, leave it as success and return 0.
+		 * The command failed because of RFKILL, करोn't update
+		 * the status, leave it as success and वापस 0.
 		 */
-		return 0;
-	} else if (ret) {
-		return ret;
-	}
+		वापस 0;
+	पूर्ण अन्यथा अगर (ret) अणु
+		वापस ret;
+	पूर्ण
 
 	pkt = cmd->resp_pkt;
 
 	resp_len = iwl_rx_packet_payload_len(pkt);
-	if (WARN_ON_ONCE(resp_len != sizeof(*resp))) {
+	अगर (WARN_ON_ONCE(resp_len != माप(*resp))) अणु
 		ret = -EIO;
-		goto out_free_resp;
-	}
+		जाओ out_मुक्त_resp;
+	पूर्ण
 
-	resp = (void *)pkt->data;
+	resp = (व्योम *)pkt->data;
 	*status = le32_to_cpu(resp->status);
- out_free_resp:
-	iwl_free_resp(cmd);
-	return ret;
-}
+ out_मुक्त_resp:
+	iwl_मुक्त_resp(cmd);
+	वापस ret;
+पूर्ण
 
 /*
  * We assume that the caller set the status to the sucess value
  */
-int iwl_mvm_send_cmd_pdu_status(struct iwl_mvm *mvm, u32 id, u16 len,
-				const void *data, u32 *status)
-{
-	struct iwl_host_cmd cmd = {
+पूर्णांक iwl_mvm_send_cmd_pdu_status(काष्ठा iwl_mvm *mvm, u32 id, u16 len,
+				स्थिर व्योम *data, u32 *status)
+अणु
+	काष्ठा iwl_host_cmd cmd = अणु
 		.id = id,
-		.len = { len, },
-		.data = { data, },
-	};
+		.len = अणु len, पूर्ण,
+		.data = अणु data, पूर्ण,
+	पूर्ण;
 
-	return iwl_mvm_send_cmd_status(mvm, &cmd, status);
-}
+	वापस iwl_mvm_send_cmd_status(mvm, &cmd, status);
+पूर्ण
 
-#define IWL_DECLARE_RATE_INFO(r) \
+#घोषणा IWL_DECLARE_RATE_INFO(r) \
 	[IWL_RATE_##r##M_INDEX] = IWL_RATE_##r##M_PLCP
 
 /*
  * Translate from fw_rate_index (IWL_RATE_XXM_INDEX) to PLCP
  */
-static const u8 fw_rate_idx_to_plcp[IWL_RATE_COUNT] = {
+अटल स्थिर u8 fw_rate_idx_to_plcp[IWL_RATE_COUNT] = अणु
 	IWL_DECLARE_RATE_INFO(1),
 	IWL_DECLARE_RATE_INFO(2),
 	IWL_DECLARE_RATE_INFO(5),
@@ -154,47 +155,47 @@ static const u8 fw_rate_idx_to_plcp[IWL_RATE_COUNT] = {
 	IWL_DECLARE_RATE_INFO(36),
 	IWL_DECLARE_RATE_INFO(48),
 	IWL_DECLARE_RATE_INFO(54),
-};
+पूर्ण;
 
-int iwl_mvm_legacy_rate_to_mac80211_idx(u32 rate_n_flags,
-					enum nl80211_band band)
-{
-	int rate = rate_n_flags & RATE_LEGACY_RATE_MSK;
-	int idx;
-	int band_offset = 0;
+पूर्णांक iwl_mvm_legacy_rate_to_mac80211_idx(u32 rate_n_flags,
+					क्रमागत nl80211_band band)
+अणु
+	पूर्णांक rate = rate_n_flags & RATE_LEGACY_RATE_MSK;
+	पूर्णांक idx;
+	पूर्णांक band_offset = 0;
 
-	/* Legacy rate format, search for match in table */
-	if (band != NL80211_BAND_2GHZ)
+	/* Legacy rate क्रमmat, search क्रम match in table */
+	अगर (band != NL80211_BAND_2GHZ)
 		band_offset = IWL_FIRST_OFDM_RATE;
-	for (idx = band_offset; idx < IWL_RATE_COUNT_LEGACY; idx++)
-		if (fw_rate_idx_to_plcp[idx] == rate)
-			return idx - band_offset;
+	क्रम (idx = band_offset; idx < IWL_RATE_COUNT_LEGACY; idx++)
+		अगर (fw_rate_idx_to_plcp[idx] == rate)
+			वापस idx - band_offset;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-u8 iwl_mvm_mac80211_idx_to_hwrate(int rate_idx)
-{
-	/* Get PLCP rate for tx_cmd->rate_n_flags */
-	return fw_rate_idx_to_plcp[rate_idx];
-}
+u8 iwl_mvm_mac80211_idx_to_hwrate(पूर्णांक rate_idx)
+अणु
+	/* Get PLCP rate क्रम tx_cmd->rate_n_flags */
+	वापस fw_rate_idx_to_plcp[rate_idx];
+पूर्ण
 
-u8 iwl_mvm_mac80211_ac_to_ucode_ac(enum ieee80211_ac_numbers ac)
-{
-	static const u8 mac80211_ac_to_ucode_ac[] = {
+u8 iwl_mvm_mac80211_ac_to_ucode_ac(क्रमागत ieee80211_ac_numbers ac)
+अणु
+	अटल स्थिर u8 mac80211_ac_to_ucode_ac[] = अणु
 		AC_VO,
 		AC_VI,
 		AC_BE,
 		AC_BK
-	};
+	पूर्ण;
 
-	return mac80211_ac_to_ucode_ac[ac];
-}
+	वापस mac80211_ac_to_ucode_ac[ac];
+पूर्ण
 
-void iwl_mvm_rx_fw_error(struct iwl_mvm *mvm, struct iwl_rx_cmd_buffer *rxb)
-{
-	struct iwl_rx_packet *pkt = rxb_addr(rxb);
-	struct iwl_error_resp *err_resp = (void *)pkt->data;
+व्योम iwl_mvm_rx_fw_error(काष्ठा iwl_mvm *mvm, काष्ठा iwl_rx_cmd_buffer *rxb)
+अणु
+	काष्ठा iwl_rx_packet *pkt = rxb_addr(rxb);
+	काष्ठा iwl_error_resp *err_resp = (व्योम *)pkt->data;
 
 	IWL_ERR(mvm, "FW Error notification: type 0x%08X cmd_id 0x%02X\n",
 		le32_to_cpu(err_resp->error_type), err_resp->cmd_id);
@@ -202,195 +203,195 @@ void iwl_mvm_rx_fw_error(struct iwl_mvm *mvm, struct iwl_rx_cmd_buffer *rxb)
 		le16_to_cpu(err_resp->bad_cmd_seq_num),
 		le32_to_cpu(err_resp->error_service));
 	IWL_ERR(mvm, "FW Error notification: timestamp 0x%016llX\n",
-		le64_to_cpu(err_resp->timestamp));
-}
+		le64_to_cpu(err_resp->बारtamp));
+पूर्ण
 
 /*
  * Returns the first antenna as ANT_[ABC], as defined in iwl-config.h.
  * The parameter should also be a combination of ANT_[ABC].
  */
 u8 first_antenna(u8 mask)
-{
-	BUILD_BUG_ON(ANT_A != BIT(0)); /* using ffs is wrong if not */
-	if (WARN_ON_ONCE(!mask)) /* ffs will return 0 if mask is zeroed */
-		return BIT(0);
-	return BIT(ffs(mask) - 1);
-}
+अणु
+	BUILD_BUG_ON(ANT_A != BIT(0)); /* using ffs is wrong अगर not */
+	अगर (WARN_ON_ONCE(!mask)) /* ffs will वापस 0 अगर mask is zeroed */
+		वापस BIT(0);
+	वापस BIT(ffs(mask) - 1);
+पूर्ण
 
 /*
  * Toggles between TX antennas to send the probe request on.
- * Receives the bitmask of valid TX antennas and the *index* used
- * for the last TX, and returns the next valid *index* to use.
- * In order to set it in the tx_cmd, must do BIT(idx).
+ * Receives the biपंचांगask of valid TX antennas and the *index* used
+ * क्रम the last TX, and वापसs the next valid *index* to use.
+ * In order to set it in the tx_cmd, must करो BIT(idx).
  */
-u8 iwl_mvm_next_antenna(struct iwl_mvm *mvm, u8 valid, u8 last_idx)
-{
+u8 iwl_mvm_next_antenna(काष्ठा iwl_mvm *mvm, u8 valid, u8 last_idx)
+अणु
 	u8 ind = last_idx;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_ANT_NUM; i++) {
+	क्रम (i = 0; i < MAX_ANT_NUM; i++) अणु
 		ind = (ind + 1) % MAX_ANT_NUM;
-		if (valid & BIT(ind))
-			return ind;
-	}
+		अगर (valid & BIT(ind))
+			वापस ind;
+	पूर्ण
 
 	WARN_ONCE(1, "Failed to toggle between antennas 0x%x", valid);
-	return last_idx;
-}
+	वापस last_idx;
+पूर्ण
 
 /*
- * Note: This structure is read from the device with IO accesses,
- * and the reading already does the endian conversion. As it is
- * read with u32-sized accesses, any members with a different size
+ * Note: This काष्ठाure is पढ़ो from the device with IO accesses,
+ * and the पढ़ोing alपढ़ोy करोes the endian conversion. As it is
+ * पढ़ो with u32-sized accesses, any members with a dअगरferent size
  * need to be ordered correctly though!
  */
-struct iwl_error_event_table_v1 {
+काष्ठा iwl_error_event_table_v1 अणु
 	u32 valid;		/* (nonzero) valid, (0) log is empty */
 	u32 error_id;		/* type of error */
 	u32 pc;			/* program counter */
 	u32 blink1;		/* branch link */
 	u32 blink2;		/* branch link */
-	u32 ilink1;		/* interrupt link */
-	u32 ilink2;		/* interrupt link */
-	u32 data1;		/* error-specific data */
-	u32 data2;		/* error-specific data */
-	u32 data3;		/* error-specific data */
-	u32 bcon_time;		/* beacon timer */
-	u32 tsf_low;		/* network timestamp function timer */
-	u32 tsf_hi;		/* network timestamp function timer */
-	u32 gp1;		/* GP1 timer register */
-	u32 gp2;		/* GP2 timer register */
-	u32 gp3;		/* GP3 timer register */
+	u32 ilink1;		/* पूर्णांकerrupt link */
+	u32 ilink2;		/* पूर्णांकerrupt link */
+	u32 data1;		/* error-specअगरic data */
+	u32 data2;		/* error-specअगरic data */
+	u32 data3;		/* error-specअगरic data */
+	u32 bcon_समय;		/* beacon समयr */
+	u32 tsf_low;		/* network बारtamp function समयr */
+	u32 tsf_hi;		/* network बारtamp function समयr */
+	u32 gp1;		/* GP1 समयr रेजिस्टर */
+	u32 gp2;		/* GP2 समयr रेजिस्टर */
+	u32 gp3;		/* GP3 समयr रेजिस्टर */
 	u32 ucode_ver;		/* uCode version */
 	u32 hw_ver;		/* HW Silicon version */
 	u32 brd_ver;		/* HW board version */
 	u32 log_pc;		/* log program counter */
-	u32 frame_ptr;		/* frame pointer */
-	u32 stack_ptr;		/* stack pointer */
+	u32 frame_ptr;		/* frame poपूर्णांकer */
+	u32 stack_ptr;		/* stack poपूर्णांकer */
 	u32 hcmd;		/* last host command header */
-	u32 isr0;		/* isr status register LMPM_NIC_ISR0:
+	u32 isr0;		/* isr status रेजिस्टर LMPM_NIC_ISR0:
 				 * rxtx_flag */
-	u32 isr1;		/* isr status register LMPM_NIC_ISR1:
+	u32 isr1;		/* isr status रेजिस्टर LMPM_NIC_ISR1:
 				 * host_flag */
-	u32 isr2;		/* isr status register LMPM_NIC_ISR2:
+	u32 isr2;		/* isr status रेजिस्टर LMPM_NIC_ISR2:
 				 * enc_flag */
-	u32 isr3;		/* isr status register LMPM_NIC_ISR3:
-				 * time_flag */
-	u32 isr4;		/* isr status register LMPM_NIC_ISR4:
-				 * wico interrupt */
-	u32 isr_pref;		/* isr status register LMPM_NIC_PREF_STAT */
-	u32 wait_event;		/* wait event() caller address */
+	u32 isr3;		/* isr status रेजिस्टर LMPM_NIC_ISR3:
+				 * समय_flag */
+	u32 isr4;		/* isr status रेजिस्टर LMPM_NIC_ISR4:
+				 * wico पूर्णांकerrupt */
+	u32 isr_pref;		/* isr status रेजिस्टर LMPM_NIC_PREF_STAT */
+	u32 रुको_event;		/* रुको event() caller address */
 	u32 l2p_control;	/* L2pControlField */
 	u32 l2p_duration;	/* L2pDurationField */
 	u32 l2p_mhvalid;	/* L2pMhValidBits */
 	u32 l2p_addr_match;	/* L2pAddrMatchStat */
-	u32 lmpm_pmg_sel;	/* indicate which clocks are turned on
+	u32 lmpm_pmg_sel;	/* indicate which घड़ीs are turned on
 				 * (LMPM_PMG_SEL) */
-	u32 u_timestamp;	/* indicate when the date and time of the
+	u32 u_बारtamp;	/* indicate when the date and समय of the
 				 * compilation */
-	u32 flow_handler;	/* FH read/write pointers, RX credit */
-} __packed /* LOG_ERROR_TABLE_API_S_VER_1 */;
+	u32 flow_handler;	/* FH पढ़ो/ग_लिखो poपूर्णांकers, RX credit */
+पूर्ण __packed /* LOG_ERROR_TABLE_API_S_VER_1 */;
 
-struct iwl_error_event_table {
+काष्ठा iwl_error_event_table अणु
 	u32 valid;		/* (nonzero) valid, (0) log is empty */
 	u32 error_id;		/* type of error */
 	u32 trm_hw_status0;	/* TRM HW status */
 	u32 trm_hw_status1;	/* TRM HW status */
 	u32 blink2;		/* branch link */
-	u32 ilink1;		/* interrupt link */
-	u32 ilink2;		/* interrupt link */
-	u32 data1;		/* error-specific data */
-	u32 data2;		/* error-specific data */
-	u32 data3;		/* error-specific data */
-	u32 bcon_time;		/* beacon timer */
-	u32 tsf_low;		/* network timestamp function timer */
-	u32 tsf_hi;		/* network timestamp function timer */
-	u32 gp1;		/* GP1 timer register */
-	u32 gp2;		/* GP2 timer register */
+	u32 ilink1;		/* पूर्णांकerrupt link */
+	u32 ilink2;		/* पूर्णांकerrupt link */
+	u32 data1;		/* error-specअगरic data */
+	u32 data2;		/* error-specअगरic data */
+	u32 data3;		/* error-specअगरic data */
+	u32 bcon_समय;		/* beacon समयr */
+	u32 tsf_low;		/* network बारtamp function समयr */
+	u32 tsf_hi;		/* network बारtamp function समयr */
+	u32 gp1;		/* GP1 समयr रेजिस्टर */
+	u32 gp2;		/* GP2 समयr रेजिस्टर */
 	u32 fw_rev_type;	/* firmware revision type */
 	u32 major;		/* uCode version major */
 	u32 minor;		/* uCode version minor */
 	u32 hw_ver;		/* HW Silicon version */
 	u32 brd_ver;		/* HW board version */
 	u32 log_pc;		/* log program counter */
-	u32 frame_ptr;		/* frame pointer */
-	u32 stack_ptr;		/* stack pointer */
+	u32 frame_ptr;		/* frame poपूर्णांकer */
+	u32 stack_ptr;		/* stack poपूर्णांकer */
 	u32 hcmd;		/* last host command header */
-	u32 isr0;		/* isr status register LMPM_NIC_ISR0:
+	u32 isr0;		/* isr status रेजिस्टर LMPM_NIC_ISR0:
 				 * rxtx_flag */
-	u32 isr1;		/* isr status register LMPM_NIC_ISR1:
+	u32 isr1;		/* isr status रेजिस्टर LMPM_NIC_ISR1:
 				 * host_flag */
-	u32 isr2;		/* isr status register LMPM_NIC_ISR2:
+	u32 isr2;		/* isr status रेजिस्टर LMPM_NIC_ISR2:
 				 * enc_flag */
-	u32 isr3;		/* isr status register LMPM_NIC_ISR3:
-				 * time_flag */
-	u32 isr4;		/* isr status register LMPM_NIC_ISR4:
-				 * wico interrupt */
+	u32 isr3;		/* isr status रेजिस्टर LMPM_NIC_ISR3:
+				 * समय_flag */
+	u32 isr4;		/* isr status रेजिस्टर LMPM_NIC_ISR4:
+				 * wico पूर्णांकerrupt */
 	u32 last_cmd_id;	/* last HCMD id handled by the firmware */
-	u32 wait_event;		/* wait event() caller address */
+	u32 रुको_event;		/* रुको event() caller address */
 	u32 l2p_control;	/* L2pControlField */
 	u32 l2p_duration;	/* L2pDurationField */
 	u32 l2p_mhvalid;	/* L2pMhValidBits */
 	u32 l2p_addr_match;	/* L2pAddrMatchStat */
-	u32 lmpm_pmg_sel;	/* indicate which clocks are turned on
+	u32 lmpm_pmg_sel;	/* indicate which घड़ीs are turned on
 				 * (LMPM_PMG_SEL) */
-	u32 u_timestamp;	/* indicate when the date and time of the
+	u32 u_बारtamp;	/* indicate when the date and समय of the
 				 * compilation */
-	u32 flow_handler;	/* FH read/write pointers, RX credit */
-} __packed /* LOG_ERROR_TABLE_API_S_VER_3 */;
+	u32 flow_handler;	/* FH पढ़ो/ग_लिखो poपूर्णांकers, RX credit */
+पूर्ण __packed /* LOG_ERROR_TABLE_API_S_VER_3 */;
 
 /*
- * UMAC error struct - relevant starting from family 8000 chip.
- * Note: This structure is read from the device with IO accesses,
- * and the reading already does the endian conversion. As it is
- * read with u32-sized accesses, any members with a different size
+ * UMAC error काष्ठा - relevant starting from family 8000 chip.
+ * Note: This काष्ठाure is पढ़ो from the device with IO accesses,
+ * and the पढ़ोing alपढ़ोy करोes the endian conversion. As it is
+ * पढ़ो with u32-sized accesses, any members with a dअगरferent size
  * need to be ordered correctly though!
  */
-struct iwl_umac_error_event_table {
+काष्ठा iwl_umac_error_event_table अणु
 	u32 valid;		/* (nonzero) valid, (0) log is empty */
 	u32 error_id;		/* type of error */
 	u32 blink1;		/* branch link */
 	u32 blink2;		/* branch link */
-	u32 ilink1;		/* interrupt link */
-	u32 ilink2;		/* interrupt link */
-	u32 data1;		/* error-specific data */
-	u32 data2;		/* error-specific data */
-	u32 data3;		/* error-specific data */
+	u32 ilink1;		/* पूर्णांकerrupt link */
+	u32 ilink2;		/* पूर्णांकerrupt link */
+	u32 data1;		/* error-specअगरic data */
+	u32 data2;		/* error-specअगरic data */
+	u32 data3;		/* error-specअगरic data */
 	u32 umac_major;
 	u32 umac_minor;
-	u32 frame_pointer;	/* core register 27*/
-	u32 stack_pointer;	/* core register 28 */
+	u32 frame_poपूर्णांकer;	/* core रेजिस्टर 27*/
+	u32 stack_poपूर्णांकer;	/* core रेजिस्टर 28 */
 	u32 cmd_header;		/* latest host cmd sent to UMAC */
-	u32 nic_isr_pref;	/* ISR status register */
-} __packed;
+	u32 nic_isr_pref;	/* ISR status रेजिस्टर */
+पूर्ण __packed;
 
-#define ERROR_START_OFFSET  (1 * sizeof(u32))
-#define ERROR_ELEM_SIZE     (7 * sizeof(u32))
+#घोषणा ERROR_START_OFFSET  (1 * माप(u32))
+#घोषणा ERROR_ELEM_SIZE     (7 * माप(u32))
 
-static void iwl_mvm_dump_umac_error_log(struct iwl_mvm *mvm)
-{
-	struct iwl_trans *trans = mvm->trans;
-	struct iwl_umac_error_event_table table = {};
+अटल व्योम iwl_mvm_dump_umac_error_log(काष्ठा iwl_mvm *mvm)
+अणु
+	काष्ठा iwl_trans *trans = mvm->trans;
+	काष्ठा iwl_umac_error_event_table table = अणुपूर्ण;
 	u32 base = mvm->trans->dbg.umac_error_event_table;
 
-	if (!base &&
+	अगर (!base &&
 	    !(mvm->trans->dbg.error_event_table_tlv_status &
 	      IWL_ERROR_EVENT_TABLE_UMAC))
-		return;
+		वापस;
 
-	iwl_trans_read_mem_bytes(trans, base, &table, sizeof(table));
+	iwl_trans_पढ़ो_mem_bytes(trans, base, &table, माप(table));
 
-	if (table.valid)
+	अगर (table.valid)
 		mvm->fwrt.dump.umac_err_id = table.error_id;
 
-	if (ERROR_START_OFFSET <= table.valid * ERROR_ELEM_SIZE) {
+	अगर (ERROR_START_OFFSET <= table.valid * ERROR_ELEM_SIZE) अणु
 		IWL_ERR(trans, "Start IWL Error Log Dump:\n");
 		IWL_ERR(trans, "Status: 0x%08lX, count: %d\n",
 			mvm->status, table.valid);
-	}
+	पूर्ण
 
 	IWL_ERR(mvm, "0x%08X | %s\n", table.error_id,
-		iwl_fw_lookup_assert_desc(table.error_id));
+		iwl_fw_lookup_निश्चित_desc(table.error_id));
 	IWL_ERR(mvm, "0x%08X | umac branchlink1\n", table.blink1);
 	IWL_ERR(mvm, "0x%08X | umac branchlink2\n", table.blink2);
 	IWL_ERR(mvm, "0x%08X | umac interruptlink1\n", table.ilink1);
@@ -400,39 +401,39 @@ static void iwl_mvm_dump_umac_error_log(struct iwl_mvm *mvm)
 	IWL_ERR(mvm, "0x%08X | umac data3\n", table.data3);
 	IWL_ERR(mvm, "0x%08X | umac major\n", table.umac_major);
 	IWL_ERR(mvm, "0x%08X | umac minor\n", table.umac_minor);
-	IWL_ERR(mvm, "0x%08X | frame pointer\n", table.frame_pointer);
-	IWL_ERR(mvm, "0x%08X | stack pointer\n", table.stack_pointer);
+	IWL_ERR(mvm, "0x%08X | frame pointer\n", table.frame_poपूर्णांकer);
+	IWL_ERR(mvm, "0x%08X | stack pointer\n", table.stack_poपूर्णांकer);
 	IWL_ERR(mvm, "0x%08X | last host cmd\n", table.cmd_header);
 	IWL_ERR(mvm, "0x%08X | isr status reg\n", table.nic_isr_pref);
-}
+पूर्ण
 
-static void iwl_mvm_dump_lmac_error_log(struct iwl_mvm *mvm, u8 lmac_num)
-{
-	struct iwl_trans *trans = mvm->trans;
-	struct iwl_error_event_table table = {};
+अटल व्योम iwl_mvm_dump_lmac_error_log(काष्ठा iwl_mvm *mvm, u8 lmac_num)
+अणु
+	काष्ठा iwl_trans *trans = mvm->trans;
+	काष्ठा iwl_error_event_table table = अणुपूर्ण;
 	u32 val, base = mvm->trans->dbg.lmac_error_event_table[lmac_num];
 
-	if (mvm->fwrt.cur_fw_img == IWL_UCODE_INIT) {
-		if (!base)
+	अगर (mvm->fwrt.cur_fw_img == IWL_UCODE_INIT) अणु
+		अगर (!base)
 			base = mvm->fw->init_errlog_ptr;
-	} else {
-		if (!base)
+	पूर्ण अन्यथा अणु
+		अगर (!base)
 			base = mvm->fw->inst_errlog_ptr;
-	}
+	पूर्ण
 
-	if (base < 0x400000) {
+	अगर (base < 0x400000) अणु
 		IWL_ERR(mvm,
 			"Not valid error log pointer 0x%08X for %s uCode\n",
 			base,
 			(mvm->fwrt.cur_fw_img == IWL_UCODE_INIT)
 			? "Init" : "RT");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* check if there is a HW error */
-	val = iwl_trans_read_mem32(trans, base);
-	if (((val & ~0xf) == 0xa5a5a5a0) || ((val & ~0xf) == 0x5a5a5a50)) {
-		int err;
+	/* check अगर there is a HW error */
+	val = iwl_trans_पढ़ो_mem32(trans, base);
+	अगर (((val & ~0xf) == 0xa5a5a5a0) || ((val & ~0xf) == 0x5a5a5a50)) अणु
+		पूर्णांक err;
 
 		IWL_ERR(trans, "HW error, resetting before reading\n");
 
@@ -440,27 +441,27 @@ static void iwl_mvm_dump_lmac_error_log(struct iwl_mvm *mvm, u8 lmac_num)
 		iwl_trans_sw_reset(trans);
 
 		err = iwl_finish_nic_init(trans, trans->trans_cfg);
-		if (err)
-			return;
-	}
+		अगर (err)
+			वापस;
+	पूर्ण
 
-	iwl_trans_read_mem_bytes(trans, base, &table, sizeof(table));
+	iwl_trans_पढ़ो_mem_bytes(trans, base, &table, माप(table));
 
-	if (table.valid)
+	अगर (table.valid)
 		mvm->fwrt.dump.lmac_err_id[lmac_num] = table.error_id;
 
-	if (ERROR_START_OFFSET <= table.valid * ERROR_ELEM_SIZE) {
+	अगर (ERROR_START_OFFSET <= table.valid * ERROR_ELEM_SIZE) अणु
 		IWL_ERR(trans, "Start IWL Error Log Dump:\n");
 		IWL_ERR(trans, "Status: 0x%08lX, count: %d\n",
 			mvm->status, table.valid);
-	}
+	पूर्ण
 
 	/* Do not change this output - scripts rely on it */
 
 	IWL_ERR(mvm, "Loaded firmware version: %s\n", mvm->fw->fw_version);
 
 	IWL_ERR(mvm, "0x%08X | %-28s\n", table.error_id,
-		iwl_fw_lookup_assert_desc(table.error_id));
+		iwl_fw_lookup_निश्चित_desc(table.error_id));
 	IWL_ERR(mvm, "0x%08X | trm_hw_status0\n", table.trm_hw_status0);
 	IWL_ERR(mvm, "0x%08X | trm_hw_status1\n", table.trm_hw_status1);
 	IWL_ERR(mvm, "0x%08X | branchlink2\n", table.blink2);
@@ -469,7 +470,7 @@ static void iwl_mvm_dump_lmac_error_log(struct iwl_mvm *mvm, u8 lmac_num)
 	IWL_ERR(mvm, "0x%08X | data1\n", table.data1);
 	IWL_ERR(mvm, "0x%08X | data2\n", table.data2);
 	IWL_ERR(mvm, "0x%08X | data3\n", table.data3);
-	IWL_ERR(mvm, "0x%08X | beacon time\n", table.bcon_time);
+	IWL_ERR(mvm, "0x%08X | beacon time\n", table.bcon_समय);
 	IWL_ERR(mvm, "0x%08X | tsf low\n", table.tsf_low);
 	IWL_ERR(mvm, "0x%08X | tsf hi\n", table.tsf_hi);
 	IWL_ERR(mvm, "0x%08X | time gp1\n", table.gp1);
@@ -486,99 +487,99 @@ static void iwl_mvm_dump_lmac_error_log(struct iwl_mvm *mvm, u8 lmac_num)
 	IWL_ERR(mvm, "0x%08X | isr3\n", table.isr3);
 	IWL_ERR(mvm, "0x%08X | isr4\n", table.isr4);
 	IWL_ERR(mvm, "0x%08X | last cmd Id\n", table.last_cmd_id);
-	IWL_ERR(mvm, "0x%08X | wait_event\n", table.wait_event);
+	IWL_ERR(mvm, "0x%08X | wait_event\n", table.रुको_event);
 	IWL_ERR(mvm, "0x%08X | l2p_control\n", table.l2p_control);
 	IWL_ERR(mvm, "0x%08X | l2p_duration\n", table.l2p_duration);
 	IWL_ERR(mvm, "0x%08X | l2p_mhvalid\n", table.l2p_mhvalid);
 	IWL_ERR(mvm, "0x%08X | l2p_addr_match\n", table.l2p_addr_match);
 	IWL_ERR(mvm, "0x%08X | lmpm_pmg_sel\n", table.lmpm_pmg_sel);
-	IWL_ERR(mvm, "0x%08X | timestamp\n", table.u_timestamp);
+	IWL_ERR(mvm, "0x%08X | timestamp\n", table.u_बारtamp);
 	IWL_ERR(mvm, "0x%08X | flow_handler\n", table.flow_handler);
-}
+पूर्ण
 
-static void iwl_mvm_dump_iml_error_log(struct iwl_mvm *mvm)
-{
-	struct iwl_trans *trans = mvm->trans;
+अटल व्योम iwl_mvm_dump_iml_error_log(काष्ठा iwl_mvm *mvm)
+अणु
+	काष्ठा iwl_trans *trans = mvm->trans;
 	u32 error, data1;
 
-	if (mvm->trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_22000) {
+	अगर (mvm->trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_22000) अणु
 		error = UMAG_SB_CPU_2_STATUS;
 		data1 = UMAG_SB_CPU_1_STATUS;
-	} else if (mvm->trans->trans_cfg->device_family >=
-		   IWL_DEVICE_FAMILY_8000) {
+	पूर्ण अन्यथा अगर (mvm->trans->trans_cfg->device_family >=
+		   IWL_DEVICE_FAMILY_8000) अणु
 		error = SB_CPU_2_STATUS;
 		data1 = SB_CPU_1_STATUS;
-	} else {
-		return;
-	}
+	पूर्ण अन्यथा अणु
+		वापस;
+	पूर्ण
 
-	error = iwl_read_umac_prph(trans, UMAG_SB_CPU_2_STATUS);
+	error = iwl_पढ़ो_umac_prph(trans, UMAG_SB_CPU_2_STATUS);
 
 	IWL_ERR(trans, "IML/ROM dump:\n");
 
-	if (error & 0xFFFF0000)
+	अगर (error & 0xFFFF0000)
 		IWL_ERR(trans, "0x%04X | IML/ROM SYSASSERT\n", error >> 16);
 
 	IWL_ERR(mvm, "0x%08X | IML/ROM error/state\n", error);
 	IWL_ERR(mvm, "0x%08X | IML/ROM data1\n",
-		iwl_read_umac_prph(trans, data1));
+		iwl_पढ़ो_umac_prph(trans, data1));
 
-	if (mvm->trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_22000)
+	अगर (mvm->trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_22000)
 		IWL_ERR(mvm, "0x%08X | IML/ROM WFPM_AUTH_KEY_0\n",
-			iwl_read_umac_prph(trans, SB_MODIFY_CFG_FLAG));
-}
+			iwl_पढ़ो_umac_prph(trans, SB_MODIFY_CFG_FLAG));
+पूर्ण
 
-void iwl_mvm_dump_nic_error_log(struct iwl_mvm *mvm)
-{
-	if (!test_bit(STATUS_DEVICE_ENABLED, &mvm->trans->status)) {
+व्योम iwl_mvm_dump_nic_error_log(काष्ठा iwl_mvm *mvm)
+अणु
+	अगर (!test_bit(STATUS_DEVICE_ENABLED, &mvm->trans->status)) अणु
 		IWL_ERR(mvm,
 			"DEVICE_ENABLED bit is not set. Aborting dump.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	iwl_mvm_dump_lmac_error_log(mvm, 0);
 
-	if (mvm->trans->dbg.lmac_error_event_table[1])
+	अगर (mvm->trans->dbg.lmac_error_event_table[1])
 		iwl_mvm_dump_lmac_error_log(mvm, 1);
 
 	iwl_mvm_dump_umac_error_log(mvm);
 
 	iwl_mvm_dump_iml_error_log(mvm);
 
-	iwl_fw_error_print_fseq_regs(&mvm->fwrt);
-}
+	iwl_fw_error_prपूर्णांक_fseq_regs(&mvm->fwrt);
+पूर्ण
 
-int iwl_mvm_reconfig_scd(struct iwl_mvm *mvm, int queue, int fifo, int sta_id,
-			 int tid, int frame_limit, u16 ssn)
-{
-	struct iwl_scd_txq_cfg_cmd cmd = {
+पूर्णांक iwl_mvm_reconfig_scd(काष्ठा iwl_mvm *mvm, पूर्णांक queue, पूर्णांक fअगरo, पूर्णांक sta_id,
+			 पूर्णांक tid, पूर्णांक frame_limit, u16 ssn)
+अणु
+	काष्ठा iwl_scd_txq_cfg_cmd cmd = अणु
 		.scd_queue = queue,
 		.action = SCD_CFG_ENABLE_QUEUE,
-		.window = frame_limit,
+		.winकरोw = frame_limit,
 		.sta_id = sta_id,
 		.ssn = cpu_to_le16(ssn),
-		.tx_fifo = fifo,
+		.tx_fअगरo = fअगरo,
 		.aggregate = (queue >= IWL_MVM_DQA_MIN_DATA_QUEUE ||
 			      queue == IWL_MVM_DQA_BSS_CLIENT_QUEUE),
 		.tid = tid,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (WARN_ON(iwl_mvm_has_new_tx_api(mvm)))
-		return -EINVAL;
+	अगर (WARN_ON(iwl_mvm_has_new_tx_api(mvm)))
+		वापस -EINVAL;
 
-	if (WARN(mvm->queue_info[queue].tid_bitmap == 0,
+	अगर (WARN(mvm->queue_info[queue].tid_biपंचांगap == 0,
 		 "Trying to reconfig unallocated queue %d\n", queue))
-		return -ENXIO;
+		वापस -ENXIO;
 
 	IWL_DEBUG_TX_QUEUES(mvm, "Reconfig SCD for TXQ #%d\n", queue);
 
-	ret = iwl_mvm_send_cmd_pdu(mvm, SCD_QUEUE_CFG, 0, sizeof(cmd), &cmd);
+	ret = iwl_mvm_send_cmd_pdu(mvm, SCD_QUEUE_CFG, 0, माप(cmd), &cmd);
 	WARN_ONCE(ret, "Failed to re-configure queue %d on FIFO %d, ret=%d\n",
-		  queue, fifo, ret);
+		  queue, fअगरo, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * iwl_mvm_send_lq_cmd() - Send link quality command
@@ -586,836 +587,836 @@ int iwl_mvm_reconfig_scd(struct iwl_mvm *mvm, int queue, int fifo, int sta_id,
  * @lq: Link quality command to send.
  *
  * The link quality command is sent as the last step of station creation.
- * This is the special case in which init is set and we call a callback in
- * this case to clear the state indicating that station creation is in
+ * This is the special हाल in which init is set and we call a callback in
+ * this हाल to clear the state indicating that station creation is in
  * progress.
  */
-int iwl_mvm_send_lq_cmd(struct iwl_mvm *mvm, struct iwl_lq_cmd *lq)
-{
-	struct iwl_host_cmd cmd = {
+पूर्णांक iwl_mvm_send_lq_cmd(काष्ठा iwl_mvm *mvm, काष्ठा iwl_lq_cmd *lq)
+अणु
+	काष्ठा iwl_host_cmd cmd = अणु
 		.id = LQ_CMD,
-		.len = { sizeof(struct iwl_lq_cmd), },
+		.len = अणु माप(काष्ठा iwl_lq_cmd), पूर्ण,
 		.flags = CMD_ASYNC,
-		.data = { lq, },
-	};
+		.data = अणु lq, पूर्ण,
+	पूर्ण;
 
-	if (WARN_ON(lq->sta_id == IWL_MVM_INVALID_STA ||
+	अगर (WARN_ON(lq->sta_id == IWL_MVM_INVALID_STA ||
 		    iwl_mvm_has_tlc_offload(mvm)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return iwl_mvm_send_cmd(mvm, &cmd);
-}
+	वापस iwl_mvm_send_cmd(mvm, &cmd);
+पूर्ण
 
 /**
  * iwl_mvm_update_smps - Get a request to change the SMPS mode
  * @mvm: Driver data.
- * @vif: Pointer to the ieee80211_vif structure
- * @req_type: The part of the driver who call for a change.
+ * @vअगर: Poपूर्णांकer to the ieee80211_vअगर काष्ठाure
+ * @req_type: The part of the driver who call क्रम a change.
  * @smps_request: The request to change the SMPS mode.
  *
  * Get a requst to change the SMPS mode,
  * and change it according to all other requests in the driver.
  */
-void iwl_mvm_update_smps(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
-			 enum iwl_mvm_smps_type_request req_type,
-			 enum ieee80211_smps_mode smps_request)
-{
-	struct iwl_mvm_vif *mvmvif;
-	enum ieee80211_smps_mode smps_mode;
-	int i;
+व्योम iwl_mvm_update_smps(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर,
+			 क्रमागत iwl_mvm_smps_type_request req_type,
+			 क्रमागत ieee80211_smps_mode smps_request)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर;
+	क्रमागत ieee80211_smps_mode smps_mode;
+	पूर्णांक i;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	/* SMPS is irrelevant for NICs that don't have at least 2 RX antenna */
-	if (num_of_ant(iwl_mvm_get_valid_rx_ant(mvm)) == 1)
-		return;
+	/* SMPS is irrelevant क्रम NICs that करोn't have at least 2 RX antenna */
+	अगर (num_of_ant(iwl_mvm_get_valid_rx_ant(mvm)) == 1)
+		वापस;
 
-	if (vif->type == NL80211_IFTYPE_AP)
+	अगर (vअगर->type == NL80211_IFTYPE_AP)
 		smps_mode = IEEE80211_SMPS_OFF;
-	else
+	अन्यथा
 		smps_mode = IEEE80211_SMPS_AUTOMATIC;
 
-	mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	mvmvif->smps_requests[req_type] = smps_request;
-	for (i = 0; i < NUM_IWL_MVM_SMPS_REQ; i++) {
-		if (mvmvif->smps_requests[i] == IEEE80211_SMPS_STATIC) {
+	mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	mvmvअगर->smps_requests[req_type] = smps_request;
+	क्रम (i = 0; i < NUM_IWL_MVM_SMPS_REQ; i++) अणु
+		अगर (mvmvअगर->smps_requests[i] == IEEE80211_SMPS_STATIC) अणु
 			smps_mode = IEEE80211_SMPS_STATIC;
-			break;
-		}
-		if (mvmvif->smps_requests[i] == IEEE80211_SMPS_DYNAMIC)
+			अवरोध;
+		पूर्ण
+		अगर (mvmvअगर->smps_requests[i] == IEEE80211_SMPS_DYNAMIC)
 			smps_mode = IEEE80211_SMPS_DYNAMIC;
-	}
+	पूर्ण
 
-	ieee80211_request_smps(vif, smps_mode);
-}
+	ieee80211_request_smps(vअगर, smps_mode);
+पूर्ण
 
-int iwl_mvm_request_statistics(struct iwl_mvm *mvm, bool clear)
-{
-	struct iwl_statistics_cmd scmd = {
+पूर्णांक iwl_mvm_request_statistics(काष्ठा iwl_mvm *mvm, bool clear)
+अणु
+	काष्ठा iwl_statistics_cmd scmd = अणु
 		.flags = clear ? cpu_to_le32(IWL_STATISTICS_FLG_CLEAR) : 0,
-	};
-	struct iwl_host_cmd cmd = {
+	पूर्ण;
+	काष्ठा iwl_host_cmd cmd = अणु
 		.id = STATISTICS_CMD,
-		.len[0] = sizeof(scmd),
+		.len[0] = माप(scmd),
 		.data[0] = &scmd,
 		.flags = CMD_WANT_SKB,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
 	ret = iwl_mvm_send_cmd(mvm, &cmd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	iwl_mvm_handle_rx_statistics(mvm, cmd.resp_pkt);
-	iwl_free_resp(&cmd);
+	iwl_मुक्त_resp(&cmd);
 
-	if (clear)
+	अगर (clear)
 		iwl_mvm_accu_radio_stats(mvm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void iwl_mvm_accu_radio_stats(struct iwl_mvm *mvm)
-{
-	mvm->accu_radio_stats.rx_time += mvm->radio_stats.rx_time;
-	mvm->accu_radio_stats.tx_time += mvm->radio_stats.tx_time;
-	mvm->accu_radio_stats.on_time_rf += mvm->radio_stats.on_time_rf;
-	mvm->accu_radio_stats.on_time_scan += mvm->radio_stats.on_time_scan;
-}
+व्योम iwl_mvm_accu_radio_stats(काष्ठा iwl_mvm *mvm)
+अणु
+	mvm->accu_radio_stats.rx_समय += mvm->radio_stats.rx_समय;
+	mvm->accu_radio_stats.tx_समय += mvm->radio_stats.tx_समय;
+	mvm->accu_radio_stats.on_समय_rf += mvm->radio_stats.on_समय_rf;
+	mvm->accu_radio_stats.on_समय_scan += mvm->radio_stats.on_समय_scan;
+पूर्ण
 
-static void iwl_mvm_diversity_iter(void *_data, u8 *mac,
-				   struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+अटल व्योम iwl_mvm_भागersity_iter(व्योम *_data, u8 *mac,
+				   काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 	bool *result = _data;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < NUM_IWL_MVM_SMPS_REQ; i++) {
-		if (mvmvif->smps_requests[i] == IEEE80211_SMPS_STATIC ||
-		    mvmvif->smps_requests[i] == IEEE80211_SMPS_DYNAMIC)
+	क्रम (i = 0; i < NUM_IWL_MVM_SMPS_REQ; i++) अणु
+		अगर (mvmvअगर->smps_requests[i] == IEEE80211_SMPS_STATIC ||
+		    mvmvअगर->smps_requests[i] == IEEE80211_SMPS_DYNAMIC)
 			*result = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool iwl_mvm_rx_diversity_allowed(struct iwl_mvm *mvm)
-{
+bool iwl_mvm_rx_भागersity_allowed(काष्ठा iwl_mvm *mvm)
+अणु
 	bool result = true;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	if (num_of_ant(iwl_mvm_get_valid_rx_ant(mvm)) == 1)
-		return false;
+	अगर (num_of_ant(iwl_mvm_get_valid_rx_ant(mvm)) == 1)
+		वापस false;
 
-	if (mvm->cfg->rx_with_siso_diversity)
-		return false;
+	अगर (mvm->cfg->rx_with_siso_भागersity)
+		वापस false;
 
-	ieee80211_iterate_active_interfaces_atomic(
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(
 			mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
-			iwl_mvm_diversity_iter, &result);
+			iwl_mvm_भागersity_iter, &result);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-void iwl_mvm_send_low_latency_cmd(struct iwl_mvm *mvm,
+व्योम iwl_mvm_send_low_latency_cmd(काष्ठा iwl_mvm *mvm,
 				  bool low_latency, u16 mac_id)
-{
-	struct iwl_mac_low_latency_cmd cmd = {
+अणु
+	काष्ठा iwl_mac_low_latency_cmd cmd = अणु
 		.mac_id = cpu_to_le32(mac_id)
-	};
+	पूर्ण;
 
-	if (!fw_has_capa(&mvm->fw->ucode_capa,
+	अगर (!fw_has_capa(&mvm->fw->ucode_capa,
 			 IWL_UCODE_TLV_CAPA_DYNAMIC_QUOTA))
-		return;
+		वापस;
 
-	if (low_latency) {
-		/* currently we don't care about the direction */
+	अगर (low_latency) अणु
+		/* currently we करोn't care about the direction */
 		cmd.low_latency_rx = 1;
 		cmd.low_latency_tx = 1;
-	}
+	पूर्ण
 
-	if (iwl_mvm_send_cmd_pdu(mvm, iwl_cmd_id(LOW_LATENCY_CMD,
+	अगर (iwl_mvm_send_cmd_pdu(mvm, iwl_cmd_id(LOW_LATENCY_CMD,
 						 MAC_CONF_GROUP, 0),
-				 0, sizeof(cmd), &cmd))
+				 0, माप(cmd), &cmd))
 		IWL_ERR(mvm, "Failed to send low latency command\n");
-}
+पूर्ण
 
-int iwl_mvm_update_low_latency(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
+पूर्णांक iwl_mvm_update_low_latency(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर,
 			       bool low_latency,
-			       enum iwl_mvm_low_latency_cause cause)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	int res;
+			       क्रमागत iwl_mvm_low_latency_cause cause)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	पूर्णांक res;
 	bool prev;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	prev = iwl_mvm_vif_low_latency(mvmvif);
-	iwl_mvm_vif_set_low_latency(mvmvif, low_latency, cause);
+	prev = iwl_mvm_vअगर_low_latency(mvmvअगर);
+	iwl_mvm_vअगर_set_low_latency(mvmvअगर, low_latency, cause);
 
-	low_latency = iwl_mvm_vif_low_latency(mvmvif);
+	low_latency = iwl_mvm_vअगर_low_latency(mvmvअगर);
 
-	if (low_latency == prev)
-		return 0;
+	अगर (low_latency == prev)
+		वापस 0;
 
-	iwl_mvm_send_low_latency_cmd(mvm, low_latency, mvmvif->id);
+	iwl_mvm_send_low_latency_cmd(mvm, low_latency, mvmvअगर->id);
 
-	res = iwl_mvm_update_quotas(mvm, false, NULL);
-	if (res)
-		return res;
+	res = iwl_mvm_update_quotas(mvm, false, शून्य);
+	अगर (res)
+		वापस res;
 
-	iwl_mvm_bt_coex_vif_change(mvm);
+	iwl_mvm_bt_coex_vअगर_change(mvm);
 
-	return iwl_mvm_power_update_mac(mvm);
-}
+	वापस iwl_mvm_घातer_update_mac(mvm);
+पूर्ण
 
-struct iwl_mvm_low_latency_iter {
+काष्ठा iwl_mvm_low_latency_iter अणु
 	bool result;
 	bool result_per_band[NUM_NL80211_BANDS];
-};
+पूर्ण;
 
-static void iwl_mvm_ll_iter(void *_data, u8 *mac, struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_low_latency_iter *result = _data;
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	enum nl80211_band band;
+अटल व्योम iwl_mvm_ll_iter(व्योम *_data, u8 *mac, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_low_latency_iter *result = _data;
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	क्रमागत nl80211_band band;
 
-	if (iwl_mvm_vif_low_latency(mvmvif)) {
+	अगर (iwl_mvm_vअगर_low_latency(mvmvअगर)) अणु
 		result->result = true;
 
-		if (!mvmvif->phy_ctxt)
-			return;
+		अगर (!mvmvअगर->phy_ctxt)
+			वापस;
 
-		band = mvmvif->phy_ctxt->channel->band;
+		band = mvmvअगर->phy_ctxt->channel->band;
 		result->result_per_band[band] = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool iwl_mvm_low_latency(struct iwl_mvm *mvm)
-{
-	struct iwl_mvm_low_latency_iter data = {};
+bool iwl_mvm_low_latency(काष्ठा iwl_mvm *mvm)
+अणु
+	काष्ठा iwl_mvm_low_latency_iter data = अणुपूर्ण;
 
-	ieee80211_iterate_active_interfaces_atomic(
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(
 			mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
 			iwl_mvm_ll_iter, &data);
 
-	return data.result;
-}
+	वापस data.result;
+पूर्ण
 
-bool iwl_mvm_low_latency_band(struct iwl_mvm *mvm, enum nl80211_band band)
-{
-	struct iwl_mvm_low_latency_iter data = {};
+bool iwl_mvm_low_latency_band(काष्ठा iwl_mvm *mvm, क्रमागत nl80211_band band)
+अणु
+	काष्ठा iwl_mvm_low_latency_iter data = अणुपूर्ण;
 
-	ieee80211_iterate_active_interfaces_atomic(
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(
 			mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
 			iwl_mvm_ll_iter, &data);
 
-	return data.result_per_band[band];
-}
+	वापस data.result_per_band[band];
+पूर्ण
 
-struct iwl_bss_iter_data {
-	struct ieee80211_vif *vif;
+काष्ठा iwl_bss_iter_data अणु
+	काष्ठा ieee80211_vअगर *vअगर;
 	bool error;
-};
+पूर्ण;
 
-static void iwl_mvm_bss_iface_iterator(void *_data, u8 *mac,
-				       struct ieee80211_vif *vif)
-{
-	struct iwl_bss_iter_data *data = _data;
+अटल व्योम iwl_mvm_bss_अगरace_iterator(व्योम *_data, u8 *mac,
+				       काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_bss_iter_data *data = _data;
 
-	if (vif->type != NL80211_IFTYPE_STATION || vif->p2p)
-		return;
+	अगर (vअगर->type != NL80211_IFTYPE_STATION || vअगर->p2p)
+		वापस;
 
-	if (data->vif) {
+	अगर (data->vअगर) अणु
 		data->error = true;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	data->vif = vif;
-}
+	data->vअगर = vअगर;
+पूर्ण
 
-struct ieee80211_vif *iwl_mvm_get_bss_vif(struct iwl_mvm *mvm)
-{
-	struct iwl_bss_iter_data bss_iter_data = {};
+काष्ठा ieee80211_vअगर *iwl_mvm_get_bss_vअगर(काष्ठा iwl_mvm *mvm)
+अणु
+	काष्ठा iwl_bss_iter_data bss_iter_data = अणुपूर्ण;
 
-	ieee80211_iterate_active_interfaces_atomic(
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(
 		mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
-		iwl_mvm_bss_iface_iterator, &bss_iter_data);
+		iwl_mvm_bss_अगरace_iterator, &bss_iter_data);
 
-	if (bss_iter_data.error) {
+	अगर (bss_iter_data.error) अणु
 		IWL_ERR(mvm, "More than one managed interface active!\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return bss_iter_data.vif;
-}
+	वापस bss_iter_data.vअगर;
+पूर्ण
 
-struct iwl_bss_find_iter_data {
-	struct ieee80211_vif *vif;
+काष्ठा iwl_bss_find_iter_data अणु
+	काष्ठा ieee80211_vअगर *vअगर;
 	u32 macid;
-};
+पूर्ण;
 
-static void iwl_mvm_bss_find_iface_iterator(void *_data, u8 *mac,
-					    struct ieee80211_vif *vif)
-{
-	struct iwl_bss_find_iter_data *data = _data;
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+अटल व्योम iwl_mvm_bss_find_अगरace_iterator(व्योम *_data, u8 *mac,
+					    काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_bss_find_iter_data *data = _data;
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
-	if (mvmvif->id == data->macid)
-		data->vif = vif;
-}
+	अगर (mvmvअगर->id == data->macid)
+		data->vअगर = vअगर;
+पूर्ण
 
-struct ieee80211_vif *iwl_mvm_get_vif_by_macid(struct iwl_mvm *mvm, u32 macid)
-{
-	struct iwl_bss_find_iter_data data = {
+काष्ठा ieee80211_vअगर *iwl_mvm_get_vअगर_by_macid(काष्ठा iwl_mvm *mvm, u32 macid)
+अणु
+	काष्ठा iwl_bss_find_iter_data data = अणु
 		.macid = macid,
-	};
+	पूर्ण;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	ieee80211_iterate_active_interfaces_atomic(
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(
 		mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
-		iwl_mvm_bss_find_iface_iterator, &data);
+		iwl_mvm_bss_find_अगरace_iterator, &data);
 
-	return data.vif;
-}
+	वापस data.vअगर;
+पूर्ण
 
-struct iwl_sta_iter_data {
+काष्ठा iwl_sta_iter_data अणु
 	bool assoc;
-};
+पूर्ण;
 
-static void iwl_mvm_sta_iface_iterator(void *_data, u8 *mac,
-				       struct ieee80211_vif *vif)
-{
-	struct iwl_sta_iter_data *data = _data;
+अटल व्योम iwl_mvm_sta_अगरace_iterator(व्योम *_data, u8 *mac,
+				       काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_sta_iter_data *data = _data;
 
-	if (vif->type != NL80211_IFTYPE_STATION)
-		return;
+	अगर (vअगर->type != NL80211_IFTYPE_STATION)
+		वापस;
 
-	if (vif->bss_conf.assoc)
+	अगर (vअगर->bss_conf.assoc)
 		data->assoc = true;
-}
+पूर्ण
 
-bool iwl_mvm_is_vif_assoc(struct iwl_mvm *mvm)
-{
-	struct iwl_sta_iter_data data = {
+bool iwl_mvm_is_vअगर_assoc(काष्ठा iwl_mvm *mvm)
+अणु
+	काष्ठा iwl_sta_iter_data data = अणु
 		.assoc = false,
-	};
+	पूर्ण;
 
-	ieee80211_iterate_active_interfaces_atomic(mvm->hw,
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(mvm->hw,
 						   IEEE80211_IFACE_ITER_NORMAL,
-						   iwl_mvm_sta_iface_iterator,
+						   iwl_mvm_sta_अगरace_iterator,
 						   &data);
-	return data.assoc;
-}
+	वापस data.assoc;
+पूर्ण
 
-unsigned int iwl_mvm_get_wd_timeout(struct iwl_mvm *mvm,
-				    struct ieee80211_vif *vif,
+अचिन्हित पूर्णांक iwl_mvm_get_wd_समयout(काष्ठा iwl_mvm *mvm,
+				    काष्ठा ieee80211_vअगर *vअगर,
 				    bool tdls, bool cmd_q)
-{
-	struct iwl_fw_dbg_trigger_tlv *trigger;
-	struct iwl_fw_dbg_trigger_txq_timer *txq_timer;
-	unsigned int default_timeout = cmd_q ?
+अणु
+	काष्ठा iwl_fw_dbg_trigger_tlv *trigger;
+	काष्ठा iwl_fw_dbg_trigger_txq_समयr *txq_समयr;
+	अचिन्हित पूर्णांक शेष_समयout = cmd_q ?
 		IWL_DEF_WD_TIMEOUT :
-		mvm->trans->trans_cfg->base_params->wd_timeout;
+		mvm->trans->trans_cfg->base_params->wd_समयout;
 
-	if (!iwl_fw_dbg_trigger_enabled(mvm->fw, FW_DBG_TRIGGER_TXQ_TIMERS)) {
+	अगर (!iwl_fw_dbg_trigger_enabled(mvm->fw, FW_DBG_TRIGGER_TXQ_TIMERS)) अणु
 		/*
 		 * We can't know when the station is asleep or awake, so we
 		 * must disable the queue hang detection.
 		 */
-		if (fw_has_capa(&mvm->fw->ucode_capa,
+		अगर (fw_has_capa(&mvm->fw->ucode_capa,
 				IWL_UCODE_TLV_CAPA_STA_PM_NOTIF) &&
-		    vif && vif->type == NL80211_IFTYPE_AP)
-			return IWL_WATCHDOG_DISABLED;
-		return default_timeout;
-	}
+		    vअगर && vअगर->type == NL80211_IFTYPE_AP)
+			वापस IWL_WATCHDOG_DISABLED;
+		वापस शेष_समयout;
+	पूर्ण
 
 	trigger = iwl_fw_dbg_get_trigger(mvm->fw, FW_DBG_TRIGGER_TXQ_TIMERS);
-	txq_timer = (void *)trigger->data;
+	txq_समयr = (व्योम *)trigger->data;
 
-	if (tdls)
-		return le32_to_cpu(txq_timer->tdls);
+	अगर (tdls)
+		वापस le32_to_cpu(txq_समयr->tdls);
 
-	if (cmd_q)
-		return le32_to_cpu(txq_timer->command_queue);
+	अगर (cmd_q)
+		वापस le32_to_cpu(txq_समयr->command_queue);
 
-	if (WARN_ON(!vif))
-		return default_timeout;
+	अगर (WARN_ON(!vअगर))
+		वापस शेष_समयout;
 
-	switch (ieee80211_vif_type_p2p(vif)) {
-	case NL80211_IFTYPE_ADHOC:
-		return le32_to_cpu(txq_timer->ibss);
-	case NL80211_IFTYPE_STATION:
-		return le32_to_cpu(txq_timer->bss);
-	case NL80211_IFTYPE_AP:
-		return le32_to_cpu(txq_timer->softap);
-	case NL80211_IFTYPE_P2P_CLIENT:
-		return le32_to_cpu(txq_timer->p2p_client);
-	case NL80211_IFTYPE_P2P_GO:
-		return le32_to_cpu(txq_timer->p2p_go);
-	case NL80211_IFTYPE_P2P_DEVICE:
-		return le32_to_cpu(txq_timer->p2p_device);
-	case NL80211_IFTYPE_MONITOR:
-		return default_timeout;
-	default:
+	चयन (ieee80211_vअगर_type_p2p(vअगर)) अणु
+	हाल NL80211_IFTYPE_ADHOC:
+		वापस le32_to_cpu(txq_समयr->ibss);
+	हाल NL80211_IFTYPE_STATION:
+		वापस le32_to_cpu(txq_समयr->bss);
+	हाल NL80211_IFTYPE_AP:
+		वापस le32_to_cpu(txq_समयr->softap);
+	हाल NL80211_IFTYPE_P2P_CLIENT:
+		वापस le32_to_cpu(txq_समयr->p2p_client);
+	हाल NL80211_IFTYPE_P2P_GO:
+		वापस le32_to_cpu(txq_समयr->p2p_go);
+	हाल NL80211_IFTYPE_P2P_DEVICE:
+		वापस le32_to_cpu(txq_समयr->p2p_device);
+	हाल NL80211_IFTYPE_MONITOR:
+		वापस शेष_समयout;
+	शेष:
 		WARN_ON(1);
-		return mvm->trans->trans_cfg->base_params->wd_timeout;
-	}
-}
+		वापस mvm->trans->trans_cfg->base_params->wd_समयout;
+	पूर्ण
+पूर्ण
 
-void iwl_mvm_connection_loss(struct iwl_mvm *mvm, struct ieee80211_vif *vif,
-			     const char *errmsg)
-{
-	struct iwl_fw_dbg_trigger_tlv *trig;
-	struct iwl_fw_dbg_trigger_mlme *trig_mlme;
+व्योम iwl_mvm_connection_loss(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर,
+			     स्थिर अक्षर *errmsg)
+अणु
+	काष्ठा iwl_fw_dbg_trigger_tlv *trig;
+	काष्ठा iwl_fw_dbg_trigger_mlme *trig_mlme;
 
-	trig = iwl_fw_dbg_trigger_on(&mvm->fwrt, ieee80211_vif_to_wdev(vif),
+	trig = iwl_fw_dbg_trigger_on(&mvm->fwrt, ieee80211_vअगर_to_wdev(vअगर),
 				     FW_DBG_TRIGGER_MLME);
-	if (!trig)
-		goto out;
+	अगर (!trig)
+		जाओ out;
 
-	trig_mlme = (void *)trig->data;
+	trig_mlme = (व्योम *)trig->data;
 
-	if (trig_mlme->stop_connection_loss &&
+	अगर (trig_mlme->stop_connection_loss &&
 	    --trig_mlme->stop_connection_loss)
-		goto out;
+		जाओ out;
 
 	iwl_fw_dbg_collect_trig(&mvm->fwrt, trig, "%s", errmsg);
 
 out:
-	ieee80211_connection_loss(vif);
-}
+	ieee80211_connection_loss(vअगर);
+पूर्ण
 
-void iwl_mvm_event_frame_timeout_callback(struct iwl_mvm *mvm,
-					  struct ieee80211_vif *vif,
-					  const struct ieee80211_sta *sta,
+व्योम iwl_mvm_event_frame_समयout_callback(काष्ठा iwl_mvm *mvm,
+					  काष्ठा ieee80211_vअगर *vअगर,
+					  स्थिर काष्ठा ieee80211_sta *sta,
 					  u16 tid)
-{
-	struct iwl_fw_dbg_trigger_tlv *trig;
-	struct iwl_fw_dbg_trigger_ba *ba_trig;
+अणु
+	काष्ठा iwl_fw_dbg_trigger_tlv *trig;
+	काष्ठा iwl_fw_dbg_trigger_ba *ba_trig;
 
-	trig = iwl_fw_dbg_trigger_on(&mvm->fwrt, ieee80211_vif_to_wdev(vif),
+	trig = iwl_fw_dbg_trigger_on(&mvm->fwrt, ieee80211_vअगर_to_wdev(vअगर),
 				     FW_DBG_TRIGGER_BA);
-	if (!trig)
-		return;
+	अगर (!trig)
+		वापस;
 
-	ba_trig = (void *)trig->data;
+	ba_trig = (व्योम *)trig->data;
 
-	if (!(le16_to_cpu(ba_trig->frame_timeout) & BIT(tid)))
-		return;
+	अगर (!(le16_to_cpu(ba_trig->frame_समयout) & BIT(tid)))
+		वापस;
 
 	iwl_fw_dbg_collect_trig(&mvm->fwrt, trig,
 				"Frame from %pM timed out, tid %d",
 				sta->addr, tid);
-}
+पूर्ण
 
-u8 iwl_mvm_tcm_load_percentage(u32 airtime, u32 elapsed)
-{
-	if (!elapsed)
-		return 0;
+u8 iwl_mvm_tcm_load_percentage(u32 airसमय, u32 elapsed)
+अणु
+	अगर (!elapsed)
+		वापस 0;
 
-	return (100 * airtime / elapsed) / USEC_PER_MSEC;
-}
+	वापस (100 * airसमय / elapsed) / USEC_PER_MSEC;
+पूर्ण
 
-static enum iwl_mvm_traffic_load
-iwl_mvm_tcm_load(struct iwl_mvm *mvm, u32 airtime, unsigned long elapsed)
-{
-	u8 load = iwl_mvm_tcm_load_percentage(airtime, elapsed);
+अटल क्रमागत iwl_mvm_traffic_load
+iwl_mvm_tcm_load(काष्ठा iwl_mvm *mvm, u32 airसमय, अचिन्हित दीर्घ elapsed)
+अणु
+	u8 load = iwl_mvm_tcm_load_percentage(airसमय, elapsed);
 
-	if (load > IWL_MVM_TCM_LOAD_HIGH_THRESH)
-		return IWL_MVM_TRAFFIC_HIGH;
-	if (load > IWL_MVM_TCM_LOAD_MEDIUM_THRESH)
-		return IWL_MVM_TRAFFIC_MEDIUM;
+	अगर (load > IWL_MVM_TCM_LOAD_HIGH_THRESH)
+		वापस IWL_MVM_TRAFFIC_HIGH;
+	अगर (load > IWL_MVM_TCM_LOAD_MEDIUM_THRESH)
+		वापस IWL_MVM_TRAFFIC_MEDIUM;
 
-	return IWL_MVM_TRAFFIC_LOW;
-}
+	वापस IWL_MVM_TRAFFIC_LOW;
+पूर्ण
 
-static void iwl_mvm_tcm_iter(void *_data, u8 *mac, struct ieee80211_vif *vif)
-{
-	struct iwl_mvm *mvm = _data;
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
-	bool low_latency, prev = mvmvif->low_latency & LOW_LATENCY_TRAFFIC;
+अटल व्योम iwl_mvm_tcm_iter(व्योम *_data, u8 *mac, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm *mvm = _data;
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
+	bool low_latency, prev = mvmvअगर->low_latency & LOW_LATENCY_TRAFFIC;
 
-	if (mvmvif->id >= NUM_MAC_INDEX_DRIVER)
-		return;
+	अगर (mvmvअगर->id >= NUM_MAC_INDEX_DRIVER)
+		वापस;
 
-	low_latency = mvm->tcm.result.low_latency[mvmvif->id];
+	low_latency = mvm->tcm.result.low_latency[mvmvअगर->id];
 
-	if (!mvm->tcm.result.change[mvmvif->id] &&
-	    prev == low_latency) {
-		iwl_mvm_update_quotas(mvm, false, NULL);
-		return;
-	}
+	अगर (!mvm->tcm.result.change[mvmvअगर->id] &&
+	    prev == low_latency) अणु
+		iwl_mvm_update_quotas(mvm, false, शून्य);
+		वापस;
+	पूर्ण
 
-	if (prev != low_latency) {
+	अगर (prev != low_latency) अणु
 		/* this sends traffic load and updates quota as well */
-		iwl_mvm_update_low_latency(mvm, vif, low_latency,
+		iwl_mvm_update_low_latency(mvm, vअगर, low_latency,
 					   LOW_LATENCY_TRAFFIC);
-	} else {
-		iwl_mvm_update_quotas(mvm, false, NULL);
-	}
-}
+	पूर्ण अन्यथा अणु
+		iwl_mvm_update_quotas(mvm, false, शून्य);
+	पूर्ण
+पूर्ण
 
-static void iwl_mvm_tcm_results(struct iwl_mvm *mvm)
-{
+अटल व्योम iwl_mvm_tcm_results(काष्ठा iwl_mvm *mvm)
+अणु
 	mutex_lock(&mvm->mutex);
 
-	ieee80211_iterate_active_interfaces(
+	ieee80211_iterate_active_पूर्णांकerfaces(
 		mvm->hw, IEEE80211_IFACE_ITER_NORMAL,
 		iwl_mvm_tcm_iter, mvm);
 
-	if (fw_has_capa(&mvm->fw->ucode_capa, IWL_UCODE_TLV_CAPA_UMAC_SCAN))
+	अगर (fw_has_capa(&mvm->fw->ucode_capa, IWL_UCODE_TLV_CAPA_UMAC_SCAN))
 		iwl_mvm_config_scan(mvm);
 
 	mutex_unlock(&mvm->mutex);
-}
+पूर्ण
 
-static void iwl_mvm_tcm_uapsd_nonagg_detected_wk(struct work_struct *wk)
-{
-	struct iwl_mvm *mvm;
-	struct iwl_mvm_vif *mvmvif;
-	struct ieee80211_vif *vif;
+अटल व्योम iwl_mvm_tcm_uapsd_nonagg_detected_wk(काष्ठा work_काष्ठा *wk)
+अणु
+	काष्ठा iwl_mvm *mvm;
+	काष्ठा iwl_mvm_vअगर *mvmvअगर;
+	काष्ठा ieee80211_vअगर *vअगर;
 
-	mvmvif = container_of(wk, struct iwl_mvm_vif,
+	mvmvअगर = container_of(wk, काष्ठा iwl_mvm_vअगर,
 			      uapsd_nonagg_detected_wk.work);
-	vif = container_of((void *)mvmvif, struct ieee80211_vif, drv_priv);
-	mvm = mvmvif->mvm;
+	vअगर = container_of((व्योम *)mvmvअगर, काष्ठा ieee80211_vअगर, drv_priv);
+	mvm = mvmvअगर->mvm;
 
-	if (mvm->tcm.data[mvmvif->id].opened_rx_ba_sessions)
-		return;
+	अगर (mvm->tcm.data[mvmvअगर->id].खोलोed_rx_ba_sessions)
+		वापस;
 
 	/* remember that this AP is broken */
-	memcpy(mvm->uapsd_noagg_bssids[mvm->uapsd_noagg_bssid_write_idx].addr,
-	       vif->bss_conf.bssid, ETH_ALEN);
-	mvm->uapsd_noagg_bssid_write_idx++;
-	if (mvm->uapsd_noagg_bssid_write_idx >= IWL_MVM_UAPSD_NOAGG_LIST_LEN)
-		mvm->uapsd_noagg_bssid_write_idx = 0;
+	स_नकल(mvm->uapsd_noagg_bssids[mvm->uapsd_noagg_bssid_ग_लिखो_idx].addr,
+	       vअगर->bss_conf.bssid, ETH_ALEN);
+	mvm->uapsd_noagg_bssid_ग_लिखो_idx++;
+	अगर (mvm->uapsd_noagg_bssid_ग_लिखो_idx >= IWL_MVM_UAPSD_NOAGG_LIST_LEN)
+		mvm->uapsd_noagg_bssid_ग_लिखो_idx = 0;
 
-	iwl_mvm_connection_loss(mvm, vif,
+	iwl_mvm_connection_loss(mvm, vअगर,
 				"AP isn't using AMPDU with uAPSD enabled");
-}
+पूर्ण
 
-static void iwl_mvm_uapsd_agg_disconnect(struct iwl_mvm *mvm,
-					 struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+अटल व्योम iwl_mvm_uapsd_agg_disconnect(काष्ठा iwl_mvm *mvm,
+					 काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
-	if (vif->type != NL80211_IFTYPE_STATION)
-		return;
+	अगर (vअगर->type != NL80211_IFTYPE_STATION)
+		वापस;
 
-	if (!vif->bss_conf.assoc)
-		return;
+	अगर (!vअगर->bss_conf.assoc)
+		वापस;
 
-	if (!mvmvif->queue_params[IEEE80211_AC_VO].uapsd &&
-	    !mvmvif->queue_params[IEEE80211_AC_VI].uapsd &&
-	    !mvmvif->queue_params[IEEE80211_AC_BE].uapsd &&
-	    !mvmvif->queue_params[IEEE80211_AC_BK].uapsd)
-		return;
+	अगर (!mvmvअगर->queue_params[IEEE80211_AC_VO].uapsd &&
+	    !mvmvअगर->queue_params[IEEE80211_AC_VI].uapsd &&
+	    !mvmvअगर->queue_params[IEEE80211_AC_BE].uapsd &&
+	    !mvmvअगर->queue_params[IEEE80211_AC_BK].uapsd)
+		वापस;
 
-	if (mvm->tcm.data[mvmvif->id].uapsd_nonagg_detect.detected)
-		return;
+	अगर (mvm->tcm.data[mvmvअगर->id].uapsd_nonagg_detect.detected)
+		वापस;
 
-	mvm->tcm.data[mvmvif->id].uapsd_nonagg_detect.detected = true;
+	mvm->tcm.data[mvmvअगर->id].uapsd_nonagg_detect.detected = true;
 	IWL_INFO(mvm,
 		 "detected AP should do aggregation but isn't, likely due to U-APSD\n");
-	schedule_delayed_work(&mvmvif->uapsd_nonagg_detected_wk, 15 * HZ);
-}
+	schedule_delayed_work(&mvmvअगर->uapsd_nonagg_detected_wk, 15 * HZ);
+पूर्ण
 
-static void iwl_mvm_check_uapsd_agg_expected_tpt(struct iwl_mvm *mvm,
-						 unsigned int elapsed,
-						 int mac)
-{
+अटल व्योम iwl_mvm_check_uapsd_agg_expected_tpt(काष्ठा iwl_mvm *mvm,
+						 अचिन्हित पूर्णांक elapsed,
+						 पूर्णांक mac)
+अणु
 	u64 bytes = mvm->tcm.data[mac].uapsd_nonagg_detect.rx_bytes;
 	u64 tpt;
-	unsigned long rate;
-	struct ieee80211_vif *vif;
+	अचिन्हित दीर्घ rate;
+	काष्ठा ieee80211_vअगर *vअगर;
 
-	rate = ewma_rate_read(&mvm->tcm.data[mac].uapsd_nonagg_detect.rate);
+	rate = ewma_rate_पढ़ो(&mvm->tcm.data[mac].uapsd_nonagg_detect.rate);
 
-	if (!rate || mvm->tcm.data[mac].opened_rx_ba_sessions ||
+	अगर (!rate || mvm->tcm.data[mac].खोलोed_rx_ba_sessions ||
 	    mvm->tcm.data[mac].uapsd_nonagg_detect.detected)
-		return;
+		वापस;
 
-	if (iwl_mvm_has_new_rx_api(mvm)) {
+	अगर (iwl_mvm_has_new_rx_api(mvm)) अणु
 		tpt = 8 * bytes; /* kbps */
-		do_div(tpt, elapsed);
+		करो_भाग(tpt, elapsed);
 		rate *= 1000; /* kbps */
-		if (tpt < 22 * rate / 100)
-			return;
-	} else {
+		अगर (tpt < 22 * rate / 100)
+			वापस;
+	पूर्ण अन्यथा अणु
 		/*
 		 * the rate here is actually the threshold, in 100Kbps units,
-		 * so do the needed conversion from bytes to 100Kbps:
+		 * so करो the needed conversion from bytes to 100Kbps:
 		 * 100kb = bits / (100 * 1000),
 		 * 100kbps = 100kb / (msecs / 1000) ==
 		 *           (bits / (100 * 1000)) / (msecs / 1000) ==
 		 *           bits / (100 * msecs)
 		 */
 		tpt = (8 * bytes);
-		do_div(tpt, elapsed * 100);
-		if (tpt < rate)
-			return;
-	}
+		करो_भाग(tpt, elapsed * 100);
+		अगर (tpt < rate)
+			वापस;
+	पूर्ण
 
-	rcu_read_lock();
-	vif = rcu_dereference(mvm->vif_id_to_mac[mac]);
-	if (vif)
-		iwl_mvm_uapsd_agg_disconnect(mvm, vif);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_lock();
+	vअगर = rcu_dereference(mvm->vअगर_id_to_mac[mac]);
+	अगर (vअगर)
+		iwl_mvm_uapsd_agg_disconnect(mvm, vअगर);
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void iwl_mvm_tcm_iterator(void *_data, u8 *mac,
-				 struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+अटल व्योम iwl_mvm_tcm_iterator(व्योम *_data, u8 *mac,
+				 काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 	u32 *band = _data;
 
-	if (!mvmvif->phy_ctxt)
-		return;
+	अगर (!mvmvअगर->phy_ctxt)
+		वापस;
 
-	band[mvmvif->id] = mvmvif->phy_ctxt->channel->band;
-}
+	band[mvmvअगर->id] = mvmvअगर->phy_ctxt->channel->band;
+पूर्ण
 
-static unsigned long iwl_mvm_calc_tcm_stats(struct iwl_mvm *mvm,
-					    unsigned long ts,
+अटल अचिन्हित दीर्घ iwl_mvm_calc_tcm_stats(काष्ठा iwl_mvm *mvm,
+					    अचिन्हित दीर्घ ts,
 					    bool handle_uapsd)
-{
-	unsigned int elapsed = jiffies_to_msecs(ts - mvm->tcm.ts);
-	unsigned int uapsd_elapsed =
-		jiffies_to_msecs(ts - mvm->tcm.uapsd_nonagg_ts);
-	u32 total_airtime = 0;
-	u32 band_airtime[NUM_NL80211_BANDS] = {0};
-	u32 band[NUM_MAC_INDEX_DRIVER] = {0};
-	int ac, mac, i;
+अणु
+	अचिन्हित पूर्णांक elapsed = jअगरfies_to_msecs(ts - mvm->tcm.ts);
+	अचिन्हित पूर्णांक uapsd_elapsed =
+		jअगरfies_to_msecs(ts - mvm->tcm.uapsd_nonagg_ts);
+	u32 total_airसमय = 0;
+	u32 band_airसमय[NUM_NL80211_BANDS] = अणु0पूर्ण;
+	u32 band[NUM_MAC_INDEX_DRIVER] = अणु0पूर्ण;
+	पूर्णांक ac, mac, i;
 	bool low_latency = false;
-	enum iwl_mvm_traffic_load load, band_load;
-	bool handle_ll = time_after(ts, mvm->tcm.ll_ts + MVM_LL_PERIOD);
+	क्रमागत iwl_mvm_traffic_load load, band_load;
+	bool handle_ll = समय_after(ts, mvm->tcm.ll_ts + MVM_LL_PERIOD);
 
-	if (handle_ll)
+	अगर (handle_ll)
 		mvm->tcm.ll_ts = ts;
-	if (handle_uapsd)
+	अगर (handle_uapsd)
 		mvm->tcm.uapsd_nonagg_ts = ts;
 
 	mvm->tcm.result.elapsed = elapsed;
 
-	ieee80211_iterate_active_interfaces_atomic(mvm->hw,
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(mvm->hw,
 						   IEEE80211_IFACE_ITER_NORMAL,
 						   iwl_mvm_tcm_iterator,
 						   &band);
 
-	for (mac = 0; mac < NUM_MAC_INDEX_DRIVER; mac++) {
-		struct iwl_mvm_tcm_mac *mdata = &mvm->tcm.data[mac];
+	क्रम (mac = 0; mac < NUM_MAC_INDEX_DRIVER; mac++) अणु
+		काष्ठा iwl_mvm_tcm_mac *mdata = &mvm->tcm.data[mac];
 		u32 vo_vi_pkts = 0;
-		u32 airtime = mdata->rx.airtime + mdata->tx.airtime;
+		u32 airसमय = mdata->rx.airसमय + mdata->tx.airसमय;
 
-		total_airtime += airtime;
-		band_airtime[band[mac]] += airtime;
+		total_airसमय += airसमय;
+		band_airसमय[band[mac]] += airसमय;
 
-		load = iwl_mvm_tcm_load(mvm, airtime, elapsed);
+		load = iwl_mvm_tcm_load(mvm, airसमय, elapsed);
 		mvm->tcm.result.change[mac] = load != mvm->tcm.result.load[mac];
 		mvm->tcm.result.load[mac] = load;
-		mvm->tcm.result.airtime[mac] = airtime;
+		mvm->tcm.result.airसमय[mac] = airसमय;
 
-		for (ac = IEEE80211_AC_VO; ac <= IEEE80211_AC_VI; ac++)
+		क्रम (ac = IEEE80211_AC_VO; ac <= IEEE80211_AC_VI; ac++)
 			vo_vi_pkts += mdata->rx.pkts[ac] +
 				      mdata->tx.pkts[ac];
 
 		/* enable immediately with enough packets but defer disabling */
-		if (vo_vi_pkts > IWL_MVM_TCM_LOWLAT_ENABLE_THRESH)
+		अगर (vo_vi_pkts > IWL_MVM_TCM_LOWLAT_ENABLE_THRESH)
 			mvm->tcm.result.low_latency[mac] = true;
-		else if (handle_ll)
+		अन्यथा अगर (handle_ll)
 			mvm->tcm.result.low_latency[mac] = false;
 
-		if (handle_ll) {
+		अगर (handle_ll) अणु
 			/* clear old data */
-			memset(&mdata->rx.pkts, 0, sizeof(mdata->rx.pkts));
-			memset(&mdata->tx.pkts, 0, sizeof(mdata->tx.pkts));
-		}
+			स_रखो(&mdata->rx.pkts, 0, माप(mdata->rx.pkts));
+			स_रखो(&mdata->tx.pkts, 0, माप(mdata->tx.pkts));
+		पूर्ण
 		low_latency |= mvm->tcm.result.low_latency[mac];
 
-		if (!mvm->tcm.result.low_latency[mac] && handle_uapsd)
+		अगर (!mvm->tcm.result.low_latency[mac] && handle_uapsd)
 			iwl_mvm_check_uapsd_agg_expected_tpt(mvm, uapsd_elapsed,
 							     mac);
 		/* clear old data */
-		if (handle_uapsd)
+		अगर (handle_uapsd)
 			mdata->uapsd_nonagg_detect.rx_bytes = 0;
-		memset(&mdata->rx.airtime, 0, sizeof(mdata->rx.airtime));
-		memset(&mdata->tx.airtime, 0, sizeof(mdata->tx.airtime));
-	}
+		स_रखो(&mdata->rx.airसमय, 0, माप(mdata->rx.airसमय));
+		स_रखो(&mdata->tx.airसमय, 0, माप(mdata->tx.airसमय));
+	पूर्ण
 
-	load = iwl_mvm_tcm_load(mvm, total_airtime, elapsed);
+	load = iwl_mvm_tcm_load(mvm, total_airसमय, elapsed);
 	mvm->tcm.result.global_load = load;
 
-	for (i = 0; i < NUM_NL80211_BANDS; i++) {
-		band_load = iwl_mvm_tcm_load(mvm, band_airtime[i], elapsed);
+	क्रम (i = 0; i < NUM_NL80211_BANDS; i++) अणु
+		band_load = iwl_mvm_tcm_load(mvm, band_airसमय[i], elapsed);
 		mvm->tcm.result.band_load[i] = band_load;
-	}
+	पूर्ण
 
 	/*
-	 * If the current load isn't low we need to force re-evaluation
-	 * in the TCM period, so that we can return to low load if there
+	 * If the current load isn't low we need to क्रमce re-evaluation
+	 * in the TCM period, so that we can वापस to low load अगर there
 	 * was no traffic at all (and thus iwl_mvm_recalc_tcm didn't get
 	 * triggered by traffic).
 	 */
-	if (load != IWL_MVM_TRAFFIC_LOW)
-		return MVM_TCM_PERIOD;
+	अगर (load != IWL_MVM_TRAFFIC_LOW)
+		वापस MVM_TCM_PERIOD;
 	/*
-	 * If low-latency is active we need to force re-evaluation after
-	 * (the longer) MVM_LL_PERIOD, so that we can disable low-latency
+	 * If low-latency is active we need to क्रमce re-evaluation after
+	 * (the दीर्घer) MVM_LL_PERIOD, so that we can disable low-latency
 	 * when there's no traffic at all.
 	 */
-	if (low_latency)
-		return MVM_LL_PERIOD;
+	अगर (low_latency)
+		वापस MVM_LL_PERIOD;
 	/*
-	 * Otherwise, we don't need to run the work struct because we're
-	 * in the default "idle" state - traffic indication is low (which
-	 * also covers the "no traffic" case) and low-latency is disabled
+	 * Otherwise, we करोn't need to run the work struct because we're
+	 * in the शेष "idle" state - traffic indication is low (which
+	 * also covers the "no traffic" हाल) and low-latency is disabled
 	 * so there's no state that may need to be disabled when there's
 	 * no traffic at all.
 	 *
 	 * Note that this has no impact on the regular scheduling of the
 	 * updates triggered by traffic - those happen whenever one of the
-	 * two timeouts expire (if there's traffic at all.)
+	 * two समयouts expire (अगर there's traffic at all.)
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void iwl_mvm_recalc_tcm(struct iwl_mvm *mvm)
-{
-	unsigned long ts = jiffies;
+व्योम iwl_mvm_recalc_tcm(काष्ठा iwl_mvm *mvm)
+अणु
+	अचिन्हित दीर्घ ts = jअगरfies;
 	bool handle_uapsd =
-		time_after(ts, mvm->tcm.uapsd_nonagg_ts +
-			       msecs_to_jiffies(IWL_MVM_UAPSD_NONAGG_PERIOD));
+		समय_after(ts, mvm->tcm.uapsd_nonagg_ts +
+			       msecs_to_jअगरfies(IWL_MVM_UAPSD_NONAGG_PERIOD));
 
 	spin_lock(&mvm->tcm.lock);
-	if (mvm->tcm.paused || !time_after(ts, mvm->tcm.ts + MVM_TCM_PERIOD)) {
+	अगर (mvm->tcm.छोड़ोd || !समय_after(ts, mvm->tcm.ts + MVM_TCM_PERIOD)) अणु
 		spin_unlock(&mvm->tcm.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_unlock(&mvm->tcm.lock);
 
-	if (handle_uapsd && iwl_mvm_has_new_rx_api(mvm)) {
+	अगर (handle_uapsd && iwl_mvm_has_new_rx_api(mvm)) अणु
 		mutex_lock(&mvm->mutex);
-		if (iwl_mvm_request_statistics(mvm, true))
+		अगर (iwl_mvm_request_statistics(mvm, true))
 			handle_uapsd = false;
 		mutex_unlock(&mvm->mutex);
-	}
+	पूर्ण
 
 	spin_lock(&mvm->tcm.lock);
-	/* re-check if somebody else won the recheck race */
-	if (!mvm->tcm.paused && time_after(ts, mvm->tcm.ts + MVM_TCM_PERIOD)) {
+	/* re-check अगर somebody अन्यथा won the recheck race */
+	अगर (!mvm->tcm.छोड़ोd && समय_after(ts, mvm->tcm.ts + MVM_TCM_PERIOD)) अणु
 		/* calculate statistics */
-		unsigned long work_delay = iwl_mvm_calc_tcm_stats(mvm, ts,
+		अचिन्हित दीर्घ work_delay = iwl_mvm_calc_tcm_stats(mvm, ts,
 								  handle_uapsd);
 
-		/* the memset needs to be visible before the timestamp */
+		/* the स_रखो needs to be visible beक्रमe the बारtamp */
 		smp_mb();
 		mvm->tcm.ts = ts;
-		if (work_delay)
+		अगर (work_delay)
 			schedule_delayed_work(&mvm->tcm.work, work_delay);
-	}
+	पूर्ण
 	spin_unlock(&mvm->tcm.lock);
 
 	iwl_mvm_tcm_results(mvm);
-}
+पूर्ण
 
-void iwl_mvm_tcm_work(struct work_struct *work)
-{
-	struct delayed_work *delayed_work = to_delayed_work(work);
-	struct iwl_mvm *mvm = container_of(delayed_work, struct iwl_mvm,
+व्योम iwl_mvm_tcm_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा delayed_work *delayed_work = to_delayed_work(work);
+	काष्ठा iwl_mvm *mvm = container_of(delayed_work, काष्ठा iwl_mvm,
 					   tcm.work);
 
 	iwl_mvm_recalc_tcm(mvm);
-}
+पूर्ण
 
-void iwl_mvm_pause_tcm(struct iwl_mvm *mvm, bool with_cancel)
-{
+व्योम iwl_mvm_छोड़ो_tcm(काष्ठा iwl_mvm *mvm, bool with_cancel)
+अणु
 	spin_lock_bh(&mvm->tcm.lock);
-	mvm->tcm.paused = true;
+	mvm->tcm.छोड़ोd = true;
 	spin_unlock_bh(&mvm->tcm.lock);
-	if (with_cancel)
+	अगर (with_cancel)
 		cancel_delayed_work_sync(&mvm->tcm.work);
-}
+पूर्ण
 
-void iwl_mvm_resume_tcm(struct iwl_mvm *mvm)
-{
-	int mac;
+व्योम iwl_mvm_resume_tcm(काष्ठा iwl_mvm *mvm)
+अणु
+	पूर्णांक mac;
 	bool low_latency = false;
 
 	spin_lock_bh(&mvm->tcm.lock);
-	mvm->tcm.ts = jiffies;
-	mvm->tcm.ll_ts = jiffies;
-	for (mac = 0; mac < NUM_MAC_INDEX_DRIVER; mac++) {
-		struct iwl_mvm_tcm_mac *mdata = &mvm->tcm.data[mac];
+	mvm->tcm.ts = jअगरfies;
+	mvm->tcm.ll_ts = jअगरfies;
+	क्रम (mac = 0; mac < NUM_MAC_INDEX_DRIVER; mac++) अणु
+		काष्ठा iwl_mvm_tcm_mac *mdata = &mvm->tcm.data[mac];
 
-		memset(&mdata->rx.pkts, 0, sizeof(mdata->rx.pkts));
-		memset(&mdata->tx.pkts, 0, sizeof(mdata->tx.pkts));
-		memset(&mdata->rx.airtime, 0, sizeof(mdata->rx.airtime));
-		memset(&mdata->tx.airtime, 0, sizeof(mdata->tx.airtime));
+		स_रखो(&mdata->rx.pkts, 0, माप(mdata->rx.pkts));
+		स_रखो(&mdata->tx.pkts, 0, माप(mdata->tx.pkts));
+		स_रखो(&mdata->rx.airसमय, 0, माप(mdata->rx.airसमय));
+		स_रखो(&mdata->tx.airसमय, 0, माप(mdata->tx.airसमय));
 
-		if (mvm->tcm.result.low_latency[mac])
+		अगर (mvm->tcm.result.low_latency[mac])
 			low_latency = true;
-	}
-	/* The TCM data needs to be reset before "paused" flag changes */
+	पूर्ण
+	/* The TCM data needs to be reset beक्रमe "paused" flag changes */
 	smp_mb();
-	mvm->tcm.paused = false;
+	mvm->tcm.छोड़ोd = false;
 
 	/*
-	 * if the current load is not low or low latency is active, force
-	 * re-evaluation to cover the case of no traffic.
+	 * अगर the current load is not low or low latency is active, क्रमce
+	 * re-evaluation to cover the हाल of no traffic.
 	 */
-	if (mvm->tcm.result.global_load > IWL_MVM_TRAFFIC_LOW)
+	अगर (mvm->tcm.result.global_load > IWL_MVM_TRAFFIC_LOW)
 		schedule_delayed_work(&mvm->tcm.work, MVM_TCM_PERIOD);
-	else if (low_latency)
+	अन्यथा अगर (low_latency)
 		schedule_delayed_work(&mvm->tcm.work, MVM_LL_PERIOD);
 
 	spin_unlock_bh(&mvm->tcm.lock);
-}
+पूर्ण
 
-void iwl_mvm_tcm_add_vif(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+व्योम iwl_mvm_tcm_add_vअगर(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
-	INIT_DELAYED_WORK(&mvmvif->uapsd_nonagg_detected_wk,
+	INIT_DELAYED_WORK(&mvmvअगर->uapsd_nonagg_detected_wk,
 			  iwl_mvm_tcm_uapsd_nonagg_detected_wk);
-}
+पूर्ण
 
-void iwl_mvm_tcm_rm_vif(struct iwl_mvm *mvm, struct ieee80211_vif *vif)
-{
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+व्योम iwl_mvm_tcm_rm_vअगर(काष्ठा iwl_mvm *mvm, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा iwl_mvm_vअगर *mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 
-	cancel_delayed_work_sync(&mvmvif->uapsd_nonagg_detected_wk);
-}
+	cancel_delayed_work_sync(&mvmvअगर->uapsd_nonagg_detected_wk);
+पूर्ण
 
-u32 iwl_mvm_get_systime(struct iwl_mvm *mvm)
-{
+u32 iwl_mvm_get_sysसमय(काष्ठा iwl_mvm *mvm)
+अणु
 	u32 reg_addr = DEVICE_SYSTEM_TIME_REG;
 
-	if (mvm->trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_22000 &&
+	अगर (mvm->trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_22000 &&
 	    mvm->trans->cfg->gp2_reg_addr)
 		reg_addr = mvm->trans->cfg->gp2_reg_addr;
 
-	return iwl_read_prph(mvm->trans, reg_addr);
-}
+	वापस iwl_पढ़ो_prph(mvm->trans, reg_addr);
+पूर्ण
 
-void iwl_mvm_get_sync_time(struct iwl_mvm *mvm, u32 *gp2, u64 *boottime)
-{
+व्योम iwl_mvm_get_sync_समय(काष्ठा iwl_mvm *mvm, u32 *gp2, u64 *bootसमय)
+अणु
 	bool ps_disabled;
 
-	lockdep_assert_held(&mvm->mutex);
+	lockdep_निश्चित_held(&mvm->mutex);
 
-	/* Disable power save when reading GP2 */
+	/* Disable घातer save when पढ़ोing GP2 */
 	ps_disabled = mvm->ps_disabled;
-	if (!ps_disabled) {
+	अगर (!ps_disabled) अणु
 		mvm->ps_disabled = true;
-		iwl_mvm_power_update_device(mvm);
-	}
+		iwl_mvm_घातer_update_device(mvm);
+	पूर्ण
 
-	*gp2 = iwl_mvm_get_systime(mvm);
-	*boottime = ktime_get_boottime_ns();
+	*gp2 = iwl_mvm_get_sysसमय(mvm);
+	*bootसमय = kसमय_get_bootसमय_ns();
 
-	if (!ps_disabled) {
+	अगर (!ps_disabled) अणु
 		mvm->ps_disabled = ps_disabled;
-		iwl_mvm_power_update_device(mvm);
-	}
-}
+		iwl_mvm_घातer_update_device(mvm);
+	पूर्ण
+पूर्ण

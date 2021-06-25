@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MIPS_ASM_BITREV_H__
-#define __MIPS_ASM_BITREV_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MIPS_ASM_BITREV_H__
+#घोषणा __MIPS_ASM_BITREV_H__
 
-#include <linux/swab.h>
+#समावेश <linux/swab.h>
 
-static __always_inline __attribute_const__ u32 __arch_bitrev32(u32 x)
-{
+अटल __always_अंतरभूत __attribute_स्थिर__ u32 __arch_bitrev32(u32 x)
+अणु
 	u32 ret;
 
-	asm("bitswap	%0, %1" : "=r"(ret) : "r"(__swab32(x)));
-	return ret;
-}
+	यंत्र("bitswap	%0, %1" : "=r"(ret) : "r"(__swab32(x)));
+	वापस ret;
+पूर्ण
 
-static __always_inline __attribute_const__ u16 __arch_bitrev16(u16 x)
-{
+अटल __always_अंतरभूत __attribute_स्थिर__ u16 __arch_bitrev16(u16 x)
+अणु
 	u16 ret;
 
-	asm("bitswap	%0, %1" : "=r"(ret) : "r"(__swab16(x)));
-	return ret;
-}
+	यंत्र("bitswap	%0, %1" : "=r"(ret) : "r"(__swab16(x)));
+	वापस ret;
+पूर्ण
 
-static __always_inline __attribute_const__ u8 __arch_bitrev8(u8 x)
-{
+अटल __always_अंतरभूत __attribute_स्थिर__ u8 __arch_bitrev8(u8 x)
+अणु
 	u8 ret;
 
-	asm("bitswap	%0, %1" : "=r"(ret) : "r"(x));
-	return ret;
-}
+	यंत्र("bitswap	%0, %1" : "=r"(ret) : "r"(x));
+	वापस ret;
+पूर्ण
 
-#endif /* __MIPS_ASM_BITREV_H__ */
+#पूर्ण_अगर /* __MIPS_ASM_BITREV_H__ */

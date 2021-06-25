@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * linux/fs/hfsplus/xattr.h
  *
@@ -7,35 +8,35 @@
  * Logic of processing extended attributes
  */
 
-#ifndef _LINUX_HFSPLUS_XATTR_H
-#define _LINUX_HFSPLUS_XATTR_H
+#अगर_अघोषित _LINUX_HFSPLUS_XATTR_H
+#घोषणा _LINUX_HFSPLUS_XATTR_H
 
-#include <linux/xattr.h>
+#समावेश <linux/xattr.h>
 
-extern const struct xattr_handler hfsplus_xattr_osx_handler;
-extern const struct xattr_handler hfsplus_xattr_user_handler;
-extern const struct xattr_handler hfsplus_xattr_trusted_handler;
-extern const struct xattr_handler hfsplus_xattr_security_handler;
+बाह्य स्थिर काष्ठा xattr_handler hfsplus_xattr_osx_handler;
+बाह्य स्थिर काष्ठा xattr_handler hfsplus_xattr_user_handler;
+बाह्य स्थिर काष्ठा xattr_handler hfsplus_xattr_trusted_handler;
+बाह्य स्थिर काष्ठा xattr_handler hfsplus_xattr_security_handler;
 
-extern const struct xattr_handler *hfsplus_xattr_handlers[];
+बाह्य स्थिर काष्ठा xattr_handler *hfsplus_xattr_handlers[];
 
-int __hfsplus_setxattr(struct inode *inode, const char *name,
-			const void *value, size_t size, int flags);
+पूर्णांक __hfsplus_setxattr(काष्ठा inode *inode, स्थिर अक्षर *name,
+			स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags);
 
-int hfsplus_setxattr(struct inode *inode, const char *name,
-				   const void *value, size_t size, int flags,
-				   const char *prefix, size_t prefixlen);
+पूर्णांक hfsplus_setxattr(काष्ठा inode *inode, स्थिर अक्षर *name,
+				   स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags,
+				   स्थिर अक्षर *prefix, माप_प्रकार prefixlen);
 
-ssize_t __hfsplus_getxattr(struct inode *inode, const char *name,
-			   void *value, size_t size);
+sमाप_प्रकार __hfsplus_getxattr(काष्ठा inode *inode, स्थिर अक्षर *name,
+			   व्योम *value, माप_प्रकार size);
 
-ssize_t hfsplus_getxattr(struct inode *inode, const char *name,
-			 void *value, size_t size,
-			 const char *prefix, size_t prefixlen);
+sमाप_प्रकार hfsplus_getxattr(काष्ठा inode *inode, स्थिर अक्षर *name,
+			 व्योम *value, माप_प्रकार size,
+			 स्थिर अक्षर *prefix, माप_प्रकार prefixlen);
 
-ssize_t hfsplus_listxattr(struct dentry *dentry, char *buffer, size_t size);
+sमाप_प्रकार hfsplus_listxattr(काष्ठा dentry *dentry, अक्षर *buffer, माप_प्रकार size);
 
-int hfsplus_init_security(struct inode *inode, struct inode *dir,
-				const struct qstr *qstr);
+पूर्णांक hfsplus_init_security(काष्ठा inode *inode, काष्ठा inode *dir,
+				स्थिर काष्ठा qstr *qstr);
 
-#endif
+#पूर्ण_अगर

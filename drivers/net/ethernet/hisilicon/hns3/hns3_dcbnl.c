@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
-#include "hnae3.h"
-#include "hns3_enet.h"
+#समावेश "hnae3.h"
+#समावेश "hns3_enet.h"
 
-static int hns3_dcbnl_ieee_getets(struct net_device *ndev, struct ieee_ets *ets)
-{
-	struct hnae3_handle *h = hns3_get_handle(ndev);
+अटल पूर्णांक hns3_dcbnl_ieee_getets(काष्ठा net_device *ndev, काष्ठा ieee_ets *ets)
+अणु
+	काष्ठा hnae3_handle *h = hns3_get_handle(ndev);
 
-	if (hns3_nic_resetting(ndev))
-		return -EBUSY;
+	अगर (hns3_nic_resetting(ndev))
+		वापस -EBUSY;
 
-	if (h->kinfo.dcb_ops->ieee_getets)
-		return h->kinfo.dcb_ops->ieee_getets(h, ets);
+	अगर (h->kinfo.dcb_ops->ieee_getets)
+		वापस h->kinfo.dcb_ops->ieee_getets(h, ets);
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int hns3_dcbnl_ieee_setets(struct net_device *ndev, struct ieee_ets *ets)
-{
-	struct hnae3_handle *h = hns3_get_handle(ndev);
+अटल पूर्णांक hns3_dcbnl_ieee_setets(काष्ठा net_device *ndev, काष्ठा ieee_ets *ets)
+अणु
+	काष्ठा hnae3_handle *h = hns3_get_handle(ndev);
 
-	if (hns3_nic_resetting(ndev))
-		return -EBUSY;
+	अगर (hns3_nic_resetting(ndev))
+		वापस -EBUSY;
 
-	if (h->kinfo.dcb_ops->ieee_setets)
-		return h->kinfo.dcb_ops->ieee_setets(h, ets);
+	अगर (h->kinfo.dcb_ops->ieee_setets)
+		वापस h->kinfo.dcb_ops->ieee_setets(h, ets);
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int hns3_dcbnl_ieee_getpfc(struct net_device *ndev, struct ieee_pfc *pfc)
-{
-	struct hnae3_handle *h = hns3_get_handle(ndev);
+अटल पूर्णांक hns3_dcbnl_ieee_getpfc(काष्ठा net_device *ndev, काष्ठा ieee_pfc *pfc)
+अणु
+	काष्ठा hnae3_handle *h = hns3_get_handle(ndev);
 
-	if (hns3_nic_resetting(ndev))
-		return -EBUSY;
+	अगर (hns3_nic_resetting(ndev))
+		वापस -EBUSY;
 
-	if (h->kinfo.dcb_ops->ieee_getpfc)
-		return h->kinfo.dcb_ops->ieee_getpfc(h, pfc);
+	अगर (h->kinfo.dcb_ops->ieee_getpfc)
+		वापस h->kinfo.dcb_ops->ieee_getpfc(h, pfc);
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int hns3_dcbnl_ieee_setpfc(struct net_device *ndev, struct ieee_pfc *pfc)
-{
-	struct hnae3_handle *h = hns3_get_handle(ndev);
+अटल पूर्णांक hns3_dcbnl_ieee_setpfc(काष्ठा net_device *ndev, काष्ठा ieee_pfc *pfc)
+अणु
+	काष्ठा hnae3_handle *h = hns3_get_handle(ndev);
 
-	if (hns3_nic_resetting(ndev))
-		return -EBUSY;
+	अगर (hns3_nic_resetting(ndev))
+		वापस -EBUSY;
 
-	if (h->kinfo.dcb_ops->ieee_setpfc)
-		return h->kinfo.dcb_ops->ieee_setpfc(h, pfc);
+	अगर (h->kinfo.dcb_ops->ieee_setpfc)
+		वापस h->kinfo.dcb_ops->ieee_setpfc(h, pfc);
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
 /* DCBX configuration */
-static u8 hns3_dcbnl_getdcbx(struct net_device *ndev)
-{
-	struct hnae3_handle *h = hns3_get_handle(ndev);
+अटल u8 hns3_dcbnl_getdcbx(काष्ठा net_device *ndev)
+अणु
+	काष्ठा hnae3_handle *h = hns3_get_handle(ndev);
 
-	if (h->kinfo.dcb_ops->getdcbx)
-		return h->kinfo.dcb_ops->getdcbx(h);
+	अगर (h->kinfo.dcb_ops->getdcbx)
+		वापस h->kinfo.dcb_ops->getdcbx(h);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* return 0 if successful, otherwise fail */
-static u8 hns3_dcbnl_setdcbx(struct net_device *ndev, u8 mode)
-{
-	struct hnae3_handle *h = hns3_get_handle(ndev);
+/* वापस 0 अगर successful, otherwise fail */
+अटल u8 hns3_dcbnl_setdcbx(काष्ठा net_device *ndev, u8 mode)
+अणु
+	काष्ठा hnae3_handle *h = hns3_get_handle(ndev);
 
-	if (h->kinfo.dcb_ops->setdcbx)
-		return h->kinfo.dcb_ops->setdcbx(h, mode);
+	अगर (h->kinfo.dcb_ops->setdcbx)
+		वापस h->kinfo.dcb_ops->setdcbx(h, mode);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct dcbnl_rtnl_ops hns3_dcbnl_ops = {
+अटल स्थिर काष्ठा dcbnl_rtnl_ops hns3_dcbnl_ops = अणु
 	.ieee_getets	= hns3_dcbnl_ieee_getets,
 	.ieee_setets	= hns3_dcbnl_ieee_setets,
 	.ieee_getpfc	= hns3_dcbnl_ieee_getpfc,
 	.ieee_setpfc	= hns3_dcbnl_ieee_setpfc,
 	.getdcbx	= hns3_dcbnl_getdcbx,
 	.setdcbx	= hns3_dcbnl_setdcbx,
-};
+पूर्ण;
 
 /* hclge_dcbnl_setup - DCBNL setup
  * @handle: the corresponding vport handle
  * Set up DCBNL
  */
-void hns3_dcbnl_setup(struct hnae3_handle *handle)
-{
-	struct net_device *dev = handle->kinfo.netdev;
+व्योम hns3_dcbnl_setup(काष्ठा hnae3_handle *handle)
+अणु
+	काष्ठा net_device *dev = handle->kinfo.netdev;
 
-	if ((!handle->kinfo.dcb_ops) || (handle->flags & HNAE3_SUPPORT_VF))
-		return;
+	अगर ((!handle->kinfo.dcb_ops) || (handle->flags & HNAE3_SUPPORT_VF))
+		वापस;
 
 	dev->dcbnl_ops = &hns3_dcbnl_ops;
-}
+पूर्ण

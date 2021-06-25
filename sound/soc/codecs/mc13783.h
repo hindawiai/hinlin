@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright 2008 Juergen Beisert, kernel@pengutronix.de
  */
 
-#ifndef MC13783_MIXER_H
-#define MC13783_MIXER_H
+#अगर_अघोषित MC13783_MIXER_H
+#घोषणा MC13783_MIXER_H
 
-#define MC13783_CLK_CLIA	1
-#define MC13783_CLK_CLIB	2
+#घोषणा MC13783_CLK_CLIA	1
+#घोषणा MC13783_CLK_CLIB	2
 
-#define MC13783_ID_STEREO_DAC	1
-#define MC13783_ID_STEREO_CODEC	2
-#define MC13783_ID_SYNC		3
+#घोषणा MC13783_ID_STEREO_DAC	1
+#घोषणा MC13783_ID_STEREO_CODEC	2
+#घोषणा MC13783_ID_SYNC		3
 
-#endif /* MC13783_MIXER_H */
+#पूर्ण_अगर /* MC13783_MIXER_H */

@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2009 Wolfram Sang, Pengutronix
  *
- * Check max730x.c for further details.
+ * Check max730x.c क्रम further details.
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/mutex.h>
-#include <linux/i2c.h>
-#include <linux/spi/max7301.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/spi/max7301.h>
+#समावेश <linux/slab.h>
 
-static int max7300_i2c_write(struct device *dev, unsigned int reg,
-				unsigned int val)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक max7300_i2c_ग_लिखो(काष्ठा device *dev, अचिन्हित पूर्णांक reg,
+				अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	return i2c_smbus_write_byte_data(client, reg, val);
-}
+	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, val);
+पूर्ण
 
-static int max7300_i2c_read(struct device *dev, unsigned int reg)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक max7300_i2c_पढ़ो(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	return i2c_smbus_read_byte_data(client, reg);
-}
+	वापस i2c_smbus_पढ़ो_byte_data(client, reg);
+पूर्ण
 
-static int max7300_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct max7301 *ts;
+अटल पूर्णांक max7300_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा max7301 *ts;
 
-	if (!i2c_check_functionality(client->adapter,
+	अगर (!i2c_check_functionality(client->adapter,
 			I2C_FUNC_SMBUS_BYTE_DATA))
-		return -EIO;
+		वापस -EIO;
 
-	ts = devm_kzalloc(&client->dev, sizeof(struct max7301), GFP_KERNEL);
-	if (!ts)
-		return -ENOMEM;
+	ts = devm_kzalloc(&client->dev, माप(काष्ठा max7301), GFP_KERNEL);
+	अगर (!ts)
+		वापस -ENOMEM;
 
-	ts->read = max7300_i2c_read;
-	ts->write = max7300_i2c_write;
+	ts->पढ़ो = max7300_i2c_पढ़ो;
+	ts->ग_लिखो = max7300_i2c_ग_लिखो;
 	ts->dev = &client->dev;
 
-	return __max730x_probe(ts);
-}
+	वापस __max730x_probe(ts);
+पूर्ण
 
-static int max7300_remove(struct i2c_client *client)
-{
-	return __max730x_remove(&client->dev);
-}
+अटल पूर्णांक max7300_हटाओ(काष्ठा i2c_client *client)
+अणु
+	वापस __max730x_हटाओ(&client->dev);
+पूर्ण
 
-static const struct i2c_device_id max7300_id[] = {
-	{ "max7300", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id max7300_id[] = अणु
+	अणु "max7300", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, max7300_id);
 
-static struct i2c_driver max7300_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max7300_driver = अणु
+	.driver = अणु
 		.name = "max7300",
-	},
+	पूर्ण,
 	.probe = max7300_probe,
-	.remove = max7300_remove,
+	.हटाओ = max7300_हटाओ,
 	.id_table = max7300_id,
-};
+पूर्ण;
 
-static int __init max7300_init(void)
-{
-	return i2c_add_driver(&max7300_driver);
-}
+अटल पूर्णांक __init max7300_init(व्योम)
+अणु
+	वापस i2c_add_driver(&max7300_driver);
+पूर्ण
 subsys_initcall(max7300_init);
 
-static void __exit max7300_exit(void)
-{
+अटल व्योम __निकास max7300_निकास(व्योम)
+अणु
 	i2c_del_driver(&max7300_driver);
-}
-module_exit(max7300_exit);
+पूर्ण
+module_निकास(max7300_निकास);
 
 MODULE_AUTHOR("Wolfram Sang");
 MODULE_LICENSE("GPL v2");

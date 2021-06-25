@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,58 +23,58 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 
-#include <nvif/os.h>
-#include <nvif/class.h>
-#include <nvif/cl0002.h>
+#समावेश <nvअगर/os.h>
+#समावेश <nvअगर/class.h>
+#समावेश <nvअगर/cl0002.h>
 
-#include "nouveau_drv.h"
-#include "nouveau_dma.h"
-#include "nv10_fence.h"
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_dma.h"
+#समावेश "nv10_fence.h"
 
-#include "nv50_display.h"
+#समावेश "nv50_display.h"
 
-static int
-nv50_fence_context_new(struct nouveau_channel *chan)
-{
-	struct nv10_fence_priv *priv = chan->drm->fence;
-	struct nv10_fence_chan *fctx;
-	struct ttm_resource *reg = &priv->bo->bo.mem;
+अटल पूर्णांक
+nv50_fence_context_new(काष्ठा nouveau_channel *chan)
+अणु
+	काष्ठा nv10_fence_priv *priv = chan->drm->fence;
+	काष्ठा nv10_fence_chan *fctx;
+	काष्ठा tपंचांग_resource *reg = &priv->bo->bo.mem;
 	u32 start = reg->start * PAGE_SIZE;
 	u32 limit = start + priv->bo->bo.base.size - 1;
-	int ret;
+	पूर्णांक ret;
 
-	fctx = chan->fence = kzalloc(sizeof(*fctx), GFP_KERNEL);
-	if (!fctx)
-		return -ENOMEM;
+	fctx = chan->fence = kzalloc(माप(*fctx), GFP_KERNEL);
+	अगर (!fctx)
+		वापस -ENOMEM;
 
 	nouveau_fence_context_new(chan, &fctx->base);
 	fctx->base.emit = nv10_fence_emit;
-	fctx->base.read = nv10_fence_read;
+	fctx->base.पढ़ो = nv10_fence_पढ़ो;
 	fctx->base.sync = nv17_fence_sync;
 
-	ret = nvif_object_ctor(&chan->user, "fenceCtxDma", NvSema,
+	ret = nvअगर_object_ctor(&chan->user, "fenceCtxDma", NvSema,
 			       NV_DMA_IN_MEMORY,
-			       &(struct nv_dma_v0) {
+			       &(काष्ठा nv_dma_v0) अणु
 					.target = NV_DMA_V0_TARGET_VRAM,
 					.access = NV_DMA_V0_ACCESS_RDWR,
 					.start = start,
 					.limit = limit,
-			       }, sizeof(struct nv_dma_v0),
+			       पूर्ण, माप(काष्ठा nv_dma_v0),
 			       &fctx->sema);
-	if (ret)
+	अगर (ret)
 		nv10_fence_context_del(chan);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-nv50_fence_create(struct nouveau_drm *drm)
-{
-	struct nv10_fence_priv *priv;
-	int ret = 0;
+पूर्णांक
+nv50_fence_create(काष्ठा nouveau_drm *drm)
+अणु
+	काष्ठा nv10_fence_priv *priv;
+	पूर्णांक ret = 0;
 
-	priv = drm->fence = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = drm->fence = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->base.dtor = nv10_fence_destroy;
 	priv->base.resume = nv17_fence_resume;
@@ -83,23 +84,23 @@ nv50_fence_create(struct nouveau_drm *drm)
 
 	ret = nouveau_bo_new(&drm->client, 4096, 0x1000,
 			     NOUVEAU_GEM_DOMAIN_VRAM,
-			     0, 0x0000, NULL, NULL, &priv->bo);
-	if (!ret) {
+			     0, 0x0000, शून्य, शून्य, &priv->bo);
+	अगर (!ret) अणु
 		ret = nouveau_bo_pin(priv->bo, NOUVEAU_GEM_DOMAIN_VRAM, false);
-		if (!ret) {
+		अगर (!ret) अणु
 			ret = nouveau_bo_map(priv->bo);
-			if (ret)
+			अगर (ret)
 				nouveau_bo_unpin(priv->bo);
-		}
-		if (ret)
-			nouveau_bo_ref(NULL, &priv->bo);
-	}
+		पूर्ण
+		अगर (ret)
+			nouveau_bo_ref(शून्य, &priv->bo);
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		nv10_fence_destroy(drm);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	nouveau_bo_wr32(priv->bo, 0x000, 0x00000000);
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,107 +1,108 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* The industrial I/O core function defs.
  *
  * Copyright (c) 2008 Jonathan Cameron
  *
- * These definitions are meant for use only within the IIO core, not individual
+ * These definitions are meant क्रम use only within the IIO core, not inभागidual
  * drivers.
  */
 
-#ifndef _IIO_CORE_H_
-#define _IIO_CORE_H_
-#include <linux/kernel.h>
-#include <linux/device.h>
+#अगर_अघोषित _IIO_CORE_H_
+#घोषणा _IIO_CORE_H_
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
 
-struct iio_buffer;
-struct iio_chan_spec;
-struct iio_dev;
+काष्ठा iio_buffer;
+काष्ठा iio_chan_spec;
+काष्ठा iio_dev;
 
-extern struct device_type iio_device_type;
+बाह्य काष्ठा device_type iio_device_type;
 
-struct iio_dev_buffer_pair {
-	struct iio_dev		*indio_dev;
-	struct iio_buffer	*buffer;
-};
+काष्ठा iio_dev_buffer_pair अणु
+	काष्ठा iio_dev		*indio_dev;
+	काष्ठा iio_buffer	*buffer;
+पूर्ण;
 
-#define IIO_IOCTL_UNHANDLED	1
-struct iio_ioctl_handler {
-	struct list_head entry;
-	long (*ioctl)(struct iio_dev *indio_dev, struct file *filp,
-		      unsigned int cmd, unsigned long arg);
-};
+#घोषणा IIO_IOCTL_UNHANDLED	1
+काष्ठा iio_ioctl_handler अणु
+	काष्ठा list_head entry;
+	दीर्घ (*ioctl)(काष्ठा iio_dev *indio_dev, काष्ठा file *filp,
+		      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+पूर्ण;
 
-long iio_device_ioctl(struct iio_dev *indio_dev, struct file *filp,
-		      unsigned int cmd, unsigned long arg);
+दीर्घ iio_device_ioctl(काष्ठा iio_dev *indio_dev, काष्ठा file *filp,
+		      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
 
-void iio_device_ioctl_handler_register(struct iio_dev *indio_dev,
-				       struct iio_ioctl_handler *h);
-void iio_device_ioctl_handler_unregister(struct iio_ioctl_handler *h);
+व्योम iio_device_ioctl_handler_रेजिस्टर(काष्ठा iio_dev *indio_dev,
+				       काष्ठा iio_ioctl_handler *h);
+व्योम iio_device_ioctl_handler_unरेजिस्टर(काष्ठा iio_ioctl_handler *h);
 
-int __iio_add_chan_devattr(const char *postfix,
-			   struct iio_chan_spec const *chan,
-			   ssize_t (*func)(struct device *dev,
-					   struct device_attribute *attr,
-					   char *buf),
-			   ssize_t (*writefunc)(struct device *dev,
-						struct device_attribute *attr,
-						const char *buf,
-						size_t len),
+पूर्णांक __iio_add_chan_devattr(स्थिर अक्षर *postfix,
+			   काष्ठा iio_chan_spec स्थिर *chan,
+			   sमाप_प्रकार (*func)(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   अक्षर *buf),
+			   sमाप_प्रकार (*ग_लिखोfunc)(काष्ठा device *dev,
+						काष्ठा device_attribute *attr,
+						स्थिर अक्षर *buf,
+						माप_प्रकार len),
 			   u64 mask,
-			   enum iio_shared_by shared_by,
-			   struct device *dev,
-			   struct iio_buffer *buffer,
-			   struct list_head *attr_list);
-void iio_free_chan_devattr_list(struct list_head *attr_list);
+			   क्रमागत iio_shared_by shared_by,
+			   काष्ठा device *dev,
+			   काष्ठा iio_buffer *buffer,
+			   काष्ठा list_head *attr_list);
+व्योम iio_मुक्त_chan_devattr_list(काष्ठा list_head *attr_list);
 
-int iio_device_register_sysfs_group(struct iio_dev *indio_dev,
-				    const struct attribute_group *group);
+पूर्णांक iio_device_रेजिस्टर_sysfs_group(काष्ठा iio_dev *indio_dev,
+				    स्थिर काष्ठा attribute_group *group);
 
-ssize_t iio_format_value(char *buf, unsigned int type, int size, int *vals);
+sमाप_प्रकार iio_क्रमmat_value(अक्षर *buf, अचिन्हित पूर्णांक type, पूर्णांक size, पूर्णांक *vals);
 
-/* Event interface flags */
-#define IIO_BUSY_BIT_POS 1
+/* Event पूर्णांकerface flags */
+#घोषणा IIO_BUSY_BIT_POS 1
 
-#ifdef CONFIG_IIO_BUFFER
-struct poll_table_struct;
+#अगर_घोषित CONFIG_IIO_BUFFER
+काष्ठा poll_table_काष्ठा;
 
-__poll_t iio_buffer_poll_wrapper(struct file *filp,
-				 struct poll_table_struct *wait);
-ssize_t iio_buffer_read_wrapper(struct file *filp, char __user *buf,
-				size_t n, loff_t *f_ps);
+__poll_t iio_buffer_poll_wrapper(काष्ठा file *filp,
+				 काष्ठा poll_table_काष्ठा *रुको);
+sमाप_प्रकार iio_buffer_पढ़ो_wrapper(काष्ठा file *filp, अक्षर __user *buf,
+				माप_प्रकार n, loff_t *f_ps);
 
-int iio_buffers_alloc_sysfs_and_mask(struct iio_dev *indio_dev);
-void iio_buffers_free_sysfs_and_mask(struct iio_dev *indio_dev);
+पूर्णांक iio_buffers_alloc_sysfs_and_mask(काष्ठा iio_dev *indio_dev);
+व्योम iio_buffers_मुक्त_sysfs_and_mask(काष्ठा iio_dev *indio_dev);
 
-#define iio_buffer_poll_addr (&iio_buffer_poll_wrapper)
-#define iio_buffer_read_outer_addr (&iio_buffer_read_wrapper)
+#घोषणा iio_buffer_poll_addr (&iio_buffer_poll_wrapper)
+#घोषणा iio_buffer_पढ़ो_outer_addr (&iio_buffer_पढ़ो_wrapper)
 
-void iio_disable_all_buffers(struct iio_dev *indio_dev);
-void iio_buffer_wakeup_poll(struct iio_dev *indio_dev);
-void iio_device_detach_buffers(struct iio_dev *indio_dev);
+व्योम iio_disable_all_buffers(काष्ठा iio_dev *indio_dev);
+व्योम iio_buffer_wakeup_poll(काष्ठा iio_dev *indio_dev);
+व्योम iio_device_detach_buffers(काष्ठा iio_dev *indio_dev);
 
-#else
+#अन्यथा
 
-#define iio_buffer_poll_addr NULL
-#define iio_buffer_read_outer_addr NULL
+#घोषणा iio_buffer_poll_addr शून्य
+#घोषणा iio_buffer_पढ़ो_outer_addr शून्य
 
-static inline int iio_buffers_alloc_sysfs_and_mask(struct iio_dev *indio_dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक iio_buffers_alloc_sysfs_and_mask(काष्ठा iio_dev *indio_dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void iio_buffers_free_sysfs_and_mask(struct iio_dev *indio_dev) {}
+अटल अंतरभूत व्योम iio_buffers_मुक्त_sysfs_and_mask(काष्ठा iio_dev *indio_dev) अणुपूर्ण
 
-static inline void iio_disable_all_buffers(struct iio_dev *indio_dev) {}
-static inline void iio_buffer_wakeup_poll(struct iio_dev *indio_dev) {}
-static inline void iio_device_detach_buffers(struct iio_dev *indio_dev) {}
+अटल अंतरभूत व्योम iio_disable_all_buffers(काष्ठा iio_dev *indio_dev) अणुपूर्ण
+अटल अंतरभूत व्योम iio_buffer_wakeup_poll(काष्ठा iio_dev *indio_dev) अणुपूर्ण
+अटल अंतरभूत व्योम iio_device_detach_buffers(काष्ठा iio_dev *indio_dev) अणुपूर्ण
 
-#endif
+#पूर्ण_अगर
 
-int iio_device_register_eventset(struct iio_dev *indio_dev);
-void iio_device_unregister_eventset(struct iio_dev *indio_dev);
-void iio_device_wakeup_eventset(struct iio_dev *indio_dev);
+पूर्णांक iio_device_रेजिस्टर_eventset(काष्ठा iio_dev *indio_dev);
+व्योम iio_device_unरेजिस्टर_eventset(काष्ठा iio_dev *indio_dev);
+व्योम iio_device_wakeup_eventset(काष्ठा iio_dev *indio_dev);
 
-struct iio_event_interface;
-bool iio_event_enabled(const struct iio_event_interface *ev_int);
+काष्ठा iio_event_पूर्णांकerface;
+bool iio_event_enabled(स्थिर काष्ठा iio_event_पूर्णांकerface *ev_पूर्णांक);
 
-#endif
+#पूर्ण_अगर

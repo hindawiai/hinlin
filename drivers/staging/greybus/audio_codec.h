@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Greybus audio driver
  * Copyright 2015 Google Inc.
  * Copyright 2015 Linaro Ltd.
  */
 
-#ifndef __LINUX_GBAUDIO_CODEC_H
-#define __LINUX_GBAUDIO_CODEC_H
+#अगर_अघोषित __LINUX_GBAUDIO_CODEC_H
+#घोषणा __LINUX_GBAUDIO_CODEC_H
 
-#include <linux/greybus.h>
-#include <sound/soc.h>
-#include <sound/jack.h>
+#समावेश <linux/greybus.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/jack.h>
 
-#define NAME_SIZE	32
-#define MAX_DAIS	2	/* APB1, APB2 */
+#घोषणा NAME_SIZE	32
+#घोषणा MAX_DAIS	2	/* APB1, APB2 */
 
-enum {
+क्रमागत अणु
 	APB1_PCM = 0,
 	APB2_PCM,
 	NUM_CODEC_DAIS,
-};
+पूर्ण;
 
 /*
- * device_type should be same as defined in audio.h
+ * device_type should be same as defined in audपन.स
  * (Android media layer)
  */
-enum {
+क्रमागत अणु
 	GBAUDIO_DEVICE_NONE                     = 0x0,
 	/* reserved bits */
 	GBAUDIO_DEVICE_BIT_IN                   = 0x80000000,
@@ -37,206 +38,206 @@ enum {
 	/* input devices */
 	GBAUDIO_DEVICE_IN_BUILTIN_MIC           = GBAUDIO_DEVICE_BIT_IN | 0x4,
 	GBAUDIO_DEVICE_IN_WIRED_HEADSET         = GBAUDIO_DEVICE_BIT_IN | 0x10,
-};
+पूर्ण;
 
-#define GBCODEC_JACK_MASK		0x0000FFFF
-#define GBCODEC_JACK_BUTTON_MASK	0xFFFF0000
+#घोषणा GBCODEC_JACK_MASK		0x0000FFFF
+#घोषणा GBCODEC_JACK_BUTTON_MASK	0xFFFF0000
 
-enum gbaudio_codec_state {
+क्रमागत gbaudio_codec_state अणु
 	GBAUDIO_CODEC_SHUTDOWN = 0,
 	GBAUDIO_CODEC_STARTUP,
 	GBAUDIO_CODEC_HWPARAMS,
 	GBAUDIO_CODEC_PREPARE,
 	GBAUDIO_CODEC_START,
 	GBAUDIO_CODEC_STOP,
-};
+पूर्ण;
 
-struct gbaudio_stream_params {
-	int state;
+काष्ठा gbaudio_stream_params अणु
+	पूर्णांक state;
 	u8 sig_bits, channels;
-	u32 format, rate;
-};
+	u32 क्रमmat, rate;
+पूर्ण;
 
-struct gbaudio_codec_dai {
-	int id;
-	/* runtime params for playback/capture streams */
-	struct gbaudio_stream_params params[2];
-	struct list_head list;
-};
+काष्ठा gbaudio_codec_dai अणु
+	पूर्णांक id;
+	/* runसमय params क्रम playback/capture streams */
+	काष्ठा gbaudio_stream_params params[2];
+	काष्ठा list_head list;
+पूर्ण;
 
-struct gbaudio_codec_info {
-	struct device *dev;
-	struct snd_soc_component *component;
-	struct list_head module_list;
-	/* to maintain runtime stream params for each DAI */
-	struct list_head dai_list;
-	struct mutex lock;
-};
+काष्ठा gbaudio_codec_info अणु
+	काष्ठा device *dev;
+	काष्ठा snd_soc_component *component;
+	काष्ठा list_head module_list;
+	/* to मुख्यtain runसमय stream params क्रम each DAI */
+	काष्ठा list_head dai_list;
+	काष्ठा mutex lock;
+पूर्ण;
 
-struct gbaudio_widget {
+काष्ठा gbaudio_widget अणु
 	__u8 id;
-	const char *name;
-	struct list_head list;
-};
+	स्थिर अक्षर *name;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct gbaudio_control {
+काष्ठा gbaudio_control अणु
 	__u8 id;
-	char *name;
-	char *wname;
-	const char * const *texts;
-	int items;
-	struct list_head list;
-};
+	अक्षर *name;
+	अक्षर *wname;
+	स्थिर अक्षर * स्थिर *texts;
+	पूर्णांक items;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct gbaudio_data_connection {
-	int id;
+काष्ठा gbaudio_data_connection अणु
+	पूर्णांक id;
 	__le16 data_cport;
-	struct gb_connection *connection;
-	struct list_head list;
-	/* maintain runtime state for playback/capture stream */
-	int state[2];
-};
+	काष्ठा gb_connection *connection;
+	काष्ठा list_head list;
+	/* मुख्यtain runसमय state क्रम playback/capture stream */
+	पूर्णांक state[2];
+पूर्ण;
 
 /* stream direction */
-#define GB_PLAYBACK	BIT(0)
-#define GB_CAPTURE	BIT(1)
+#घोषणा GB_PLAYBACK	BIT(0)
+#घोषणा GB_CAPTURE	BIT(1)
 
-enum gbaudio_module_state {
+क्रमागत gbaudio_module_state अणु
 	GBAUDIO_MODULE_OFF = 0,
 	GBAUDIO_MODULE_ON,
-};
+पूर्ण;
 
-struct gbaudio_jack {
-	struct snd_soc_jack jack;
-	struct list_head list;
-};
+काष्ठा gbaudio_jack अणु
+	काष्ठा snd_soc_jack jack;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct gbaudio_module_info {
+काष्ठा gbaudio_module_info अणु
 	/* module info */
-	struct device *dev;
-	int dev_id;	/* check if it should be bundle_id/hd_cport_id */
-	int vid;
-	int pid;
-	int type;
-	int set_uevent;
-	char vstr[NAME_SIZE];
-	char pstr[NAME_SIZE];
-	struct list_head list;
+	काष्ठा device *dev;
+	पूर्णांक dev_id;	/* check अगर it should be bundle_id/hd_cport_id */
+	पूर्णांक vid;
+	पूर्णांक pid;
+	पूर्णांक type;
+	पूर्णांक set_uevent;
+	अक्षर vstr[NAME_SIZE];
+	अक्षर pstr[NAME_SIZE];
+	काष्ठा list_head list;
 	/* need to share this info to above user space */
-	int manager_id;
-	char name[NAME_SIZE];
-	unsigned int ip_devices;
-	unsigned int op_devices;
+	पूर्णांक manager_id;
+	अक्षर name[NAME_SIZE];
+	अचिन्हित पूर्णांक ip_devices;
+	अचिन्हित पूर्णांक op_devices;
 
 	/* jack related */
-	char jack_name[NAME_SIZE];
-	char button_name[NAME_SIZE];
-	int jack_type;
-	int jack_mask;
-	int button_mask;
-	int button_status;
-	struct gbaudio_jack headset;
-	struct gbaudio_jack button;
+	अक्षर jack_name[NAME_SIZE];
+	अक्षर button_name[NAME_SIZE];
+	पूर्णांक jack_type;
+	पूर्णांक jack_mask;
+	पूर्णांक button_mask;
+	पूर्णांक button_status;
+	काष्ठा gbaudio_jack headset;
+	काष्ठा gbaudio_jack button;
 
 	/* connection info */
-	struct gb_connection *mgmt_connection;
-	size_t num_data_connections;
-	struct list_head data_list;
+	काष्ठा gb_connection *mgmt_connection;
+	माप_प्रकार num_data_connections;
+	काष्ठा list_head data_list;
 
 	/* topology related */
-	int num_dais;
-	int num_controls;
-	int num_dapm_widgets;
-	int num_dapm_routes;
-	unsigned long dai_offset;
-	unsigned long widget_offset;
-	unsigned long control_offset;
-	unsigned long route_offset;
-	struct snd_kcontrol_new *controls;
-	struct snd_soc_dapm_widget *dapm_widgets;
-	struct snd_soc_dapm_route *dapm_routes;
-	struct snd_soc_dai_driver *dais;
+	पूर्णांक num_dais;
+	पूर्णांक num_controls;
+	पूर्णांक num_dapm_widमाला_लो;
+	पूर्णांक num_dapm_routes;
+	अचिन्हित दीर्घ dai_offset;
+	अचिन्हित दीर्घ widget_offset;
+	अचिन्हित दीर्घ control_offset;
+	अचिन्हित दीर्घ route_offset;
+	काष्ठा snd_kcontrol_new *controls;
+	काष्ठा snd_soc_dapm_widget *dapm_widमाला_लो;
+	काष्ठा snd_soc_dapm_route *dapm_routes;
+	काष्ठा snd_soc_dai_driver *dais;
 
-	struct list_head widget_list;
-	struct list_head ctl_list;
-	struct list_head widget_ctl_list;
-	struct list_head jack_list;
+	काष्ठा list_head widget_list;
+	काष्ठा list_head ctl_list;
+	काष्ठा list_head widget_ctl_list;
+	काष्ठा list_head jack_list;
 
-	struct gb_audio_topology *topology;
-};
+	काष्ठा gb_audio_topology *topology;
+पूर्ण;
 
-int gbaudio_tplg_parse_data(struct gbaudio_module_info *module,
-			    struct gb_audio_topology *tplg_data);
-void gbaudio_tplg_release(struct gbaudio_module_info *module);
+पूर्णांक gbaudio_tplg_parse_data(काष्ठा gbaudio_module_info *module,
+			    काष्ठा gb_audio_topology *tplg_data);
+व्योम gbaudio_tplg_release(काष्ठा gbaudio_module_info *module);
 
-int gbaudio_module_update(struct gbaudio_codec_info *codec,
-			  struct snd_soc_dapm_widget *w,
-			  struct gbaudio_module_info *module,
-			  int enable);
-int gbaudio_register_module(struct gbaudio_module_info *module);
-void gbaudio_unregister_module(struct gbaudio_module_info *module);
+पूर्णांक gbaudio_module_update(काष्ठा gbaudio_codec_info *codec,
+			  काष्ठा snd_soc_dapm_widget *w,
+			  काष्ठा gbaudio_module_info *module,
+			  पूर्णांक enable);
+पूर्णांक gbaudio_रेजिस्टर_module(काष्ठा gbaudio_module_info *module);
+व्योम gbaudio_unरेजिस्टर_module(काष्ठा gbaudio_module_info *module);
 
 /* protocol related */
-int gb_audio_gb_get_topology(struct gb_connection *connection,
-			     struct gb_audio_topology **topology);
-int gb_audio_gb_get_control(struct gb_connection *connection,
+पूर्णांक gb_audio_gb_get_topology(काष्ठा gb_connection *connection,
+			     काष्ठा gb_audio_topology **topology);
+पूर्णांक gb_audio_gb_get_control(काष्ठा gb_connection *connection,
 			    u8 control_id, u8 index,
-			    struct gb_audio_ctl_elem_value *value);
-int gb_audio_gb_set_control(struct gb_connection *connection,
+			    काष्ठा gb_audio_ctl_elem_value *value);
+पूर्णांक gb_audio_gb_set_control(काष्ठा gb_connection *connection,
 			    u8 control_id, u8 index,
-			    struct gb_audio_ctl_elem_value *value);
-int gb_audio_gb_enable_widget(struct gb_connection *connection,
+			    काष्ठा gb_audio_ctl_elem_value *value);
+पूर्णांक gb_audio_gb_enable_widget(काष्ठा gb_connection *connection,
 			      u8 widget_id);
-int gb_audio_gb_disable_widget(struct gb_connection *connection,
+पूर्णांक gb_audio_gb_disable_widget(काष्ठा gb_connection *connection,
 			       u8 widget_id);
-int gb_audio_gb_get_pcm(struct gb_connection *connection,
-			u16 data_cport, u32 *format,
+पूर्णांक gb_audio_gb_get_pcm(काष्ठा gb_connection *connection,
+			u16 data_cport, u32 *क्रमmat,
 			u32 *rate, u8 *channels,
 			u8 *sig_bits);
-int gb_audio_gb_set_pcm(struct gb_connection *connection,
-			u16 data_cport, u32 format,
+पूर्णांक gb_audio_gb_set_pcm(काष्ठा gb_connection *connection,
+			u16 data_cport, u32 क्रमmat,
 			u32 rate, u8 channels,
 			u8 sig_bits);
-int gb_audio_gb_set_tx_data_size(struct gb_connection *connection,
+पूर्णांक gb_audio_gb_set_tx_data_size(काष्ठा gb_connection *connection,
 				 u16 data_cport, u16 size);
-int gb_audio_gb_activate_tx(struct gb_connection *connection,
+पूर्णांक gb_audio_gb_activate_tx(काष्ठा gb_connection *connection,
 			    u16 data_cport);
-int gb_audio_gb_deactivate_tx(struct gb_connection *connection,
+पूर्णांक gb_audio_gb_deactivate_tx(काष्ठा gb_connection *connection,
 			      u16 data_cport);
-int gb_audio_gb_set_rx_data_size(struct gb_connection *connection,
+पूर्णांक gb_audio_gb_set_rx_data_size(काष्ठा gb_connection *connection,
 				 u16 data_cport, u16 size);
-int gb_audio_gb_activate_rx(struct gb_connection *connection,
+पूर्णांक gb_audio_gb_activate_rx(काष्ठा gb_connection *connection,
 			    u16 data_cport);
-int gb_audio_gb_deactivate_rx(struct gb_connection *connection,
+पूर्णांक gb_audio_gb_deactivate_rx(काष्ठा gb_connection *connection,
 			      u16 data_cport);
-int gb_audio_apbridgea_set_config(struct gb_connection *connection,
-				  __u16 i2s_port, __u32 format,
+पूर्णांक gb_audio_apbridgea_set_config(काष्ठा gb_connection *connection,
+				  __u16 i2s_port, __u32 क्रमmat,
 				  __u32 rate, __u32 mclk_freq);
-int gb_audio_apbridgea_register_cport(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_रेजिस्टर_cport(काष्ठा gb_connection *connection,
 				      __u16 i2s_port, __u16 cportid,
 				      __u8 direction);
-int gb_audio_apbridgea_unregister_cport(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_unरेजिस्टर_cport(काष्ठा gb_connection *connection,
 					__u16 i2s_port, __u16 cportid,
 					__u8 direction);
-int gb_audio_apbridgea_set_tx_data_size(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_set_tx_data_size(काष्ठा gb_connection *connection,
 					__u16 i2s_port, __u16 size);
-int gb_audio_apbridgea_prepare_tx(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_prepare_tx(काष्ठा gb_connection *connection,
 				  __u16 i2s_port);
-int gb_audio_apbridgea_start_tx(struct gb_connection *connection,
-				__u16 i2s_port, __u64 timestamp);
-int gb_audio_apbridgea_stop_tx(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_start_tx(काष्ठा gb_connection *connection,
+				__u16 i2s_port, __u64 बारtamp);
+पूर्णांक gb_audio_apbridgea_stop_tx(काष्ठा gb_connection *connection,
 			       __u16 i2s_port);
-int gb_audio_apbridgea_shutdown_tx(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_shutकरोwn_tx(काष्ठा gb_connection *connection,
 				   __u16 i2s_port);
-int gb_audio_apbridgea_set_rx_data_size(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_set_rx_data_size(काष्ठा gb_connection *connection,
 					__u16 i2s_port, __u16 size);
-int gb_audio_apbridgea_prepare_rx(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_prepare_rx(काष्ठा gb_connection *connection,
 				  __u16 i2s_port);
-int gb_audio_apbridgea_start_rx(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_start_rx(काष्ठा gb_connection *connection,
 				__u16 i2s_port);
-int gb_audio_apbridgea_stop_rx(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_stop_rx(काष्ठा gb_connection *connection,
 			       __u16 i2s_port);
-int gb_audio_apbridgea_shutdown_rx(struct gb_connection *connection,
+पूर्णांक gb_audio_apbridgea_shutकरोwn_rx(काष्ठा gb_connection *connection,
 				   __u16 i2s_port);
 
-#endif /* __LINUX_GBAUDIO_CODEC_H */
+#पूर्ण_अगर /* __LINUX_GBAUDIO_CODEC_H */

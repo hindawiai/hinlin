@@ -1,220 +1,221 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "fbtft.h"
-#include "internal.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "fbtft.h"
+#समावेश "internal.h"
 
-static int get_next_ulong(char **str_p, unsigned long *val, char *sep, int base)
-{
-	char *p_val;
+अटल पूर्णांक get_next_uदीर्घ(अक्षर **str_p, अचिन्हित दीर्घ *val, अक्षर *sep, पूर्णांक base)
+अणु
+	अक्षर *p_val;
 
-	if (!str_p || !(*str_p))
-		return -EINVAL;
+	अगर (!str_p || !(*str_p))
+		वापस -EINVAL;
 
 	p_val = strsep(str_p, sep);
 
-	if (!p_val)
-		return -EINVAL;
+	अगर (!p_val)
+		वापस -EINVAL;
 
-	return kstrtoul(p_val, base, val);
-}
+	वापस kम_से_अदीर्घ(p_val, base, val);
+पूर्ण
 
-int fbtft_gamma_parse_str(struct fbtft_par *par, u32 *curves,
-			  const char *str, int size)
-{
-	char *str_p, *curve_p = NULL;
-	char *tmp;
-	unsigned long val = 0;
-	int ret = 0;
-	int curve_counter, value_counter;
-	int _count;
+पूर्णांक fbtft_gamma_parse_str(काष्ठा fbtft_par *par, u32 *curves,
+			  स्थिर अक्षर *str, पूर्णांक size)
+अणु
+	अक्षर *str_p, *curve_p = शून्य;
+	अक्षर *पंचांगp;
+	अचिन्हित दीर्घ val = 0;
+	पूर्णांक ret = 0;
+	पूर्णांक curve_counter, value_counter;
+	पूर्णांक _count;
 
 	fbtft_par_dbg(DEBUG_SYSFS, par, "%s() str=\n", __func__);
 
-	if (!str || !curves)
-		return -EINVAL;
+	अगर (!str || !curves)
+		वापस -EINVAL;
 
 	fbtft_par_dbg(DEBUG_SYSFS, par, "%s\n", str);
 
-	tmp = kmemdup(str, size + 1, GFP_KERNEL);
-	if (!tmp)
-		return -ENOMEM;
+	पंचांगp = kmemdup(str, size + 1, GFP_KERNEL);
+	अगर (!पंचांगp)
+		वापस -ENOMEM;
 
 	/* replace optional separators */
-	str_p = tmp;
-	while (*str_p) {
-		if (*str_p == ',')
+	str_p = पंचांगp;
+	जबतक (*str_p) अणु
+		अगर (*str_p == ',')
 			*str_p = ' ';
-		if (*str_p == ';')
+		अगर (*str_p == ';')
 			*str_p = '\n';
 		str_p++;
-	}
+	पूर्ण
 
-	str_p = strim(tmp);
+	str_p = strim(पंचांगp);
 
 	curve_counter = 0;
-	while (str_p) {
-		if (curve_counter == par->gamma.num_curves) {
+	जबतक (str_p) अणु
+		अगर (curve_counter == par->gamma.num_curves) अणु
 			dev_err(par->info->device, "Gamma: Too many curves\n");
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		curve_p = strsep(&str_p, "\n");
 		value_counter = 0;
-		while (curve_p) {
-			if (value_counter == par->gamma.num_values) {
+		जबतक (curve_p) अणु
+			अगर (value_counter == par->gamma.num_values) अणु
 				dev_err(par->info->device,
 					"Gamma: Too many values\n");
 				ret = -EINVAL;
-				goto out;
-			}
-			ret = get_next_ulong(&curve_p, &val, " ", 16);
-			if (ret)
-				goto out;
+				जाओ out;
+			पूर्ण
+			ret = get_next_uदीर्घ(&curve_p, &val, " ", 16);
+			अगर (ret)
+				जाओ out;
 
 			_count = curve_counter * par->gamma.num_values +
 				 value_counter;
 			curves[_count] = val;
 			value_counter++;
-		}
-		if (value_counter != par->gamma.num_values) {
+		पूर्ण
+		अगर (value_counter != par->gamma.num_values) अणु
 			dev_err(par->info->device, "Gamma: Too few values\n");
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		curve_counter++;
-	}
-	if (curve_counter != par->gamma.num_curves) {
+	पूर्ण
+	अगर (curve_counter != par->gamma.num_curves) अणु
 		dev_err(par->info->device, "Gamma: Too few curves\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	kfree(tmp);
-	return ret;
-}
+	kमुक्त(पंचांगp);
+	वापस ret;
+पूर्ण
 
-static ssize_t
-sprintf_gamma(struct fbtft_par *par, u32 *curves, char *buf)
-{
-	ssize_t len = 0;
-	unsigned int i, j;
+अटल sमाप_प्रकार
+प्र_लिखो_gamma(काष्ठा fbtft_par *par, u32 *curves, अक्षर *buf)
+अणु
+	sमाप_प्रकार len = 0;
+	अचिन्हित पूर्णांक i, j;
 
 	mutex_lock(&par->gamma.lock);
-	for (i = 0; i < par->gamma.num_curves; i++) {
-		for (j = 0; j < par->gamma.num_values; j++)
-			len += scnprintf(&buf[len], PAGE_SIZE,
+	क्रम (i = 0; i < par->gamma.num_curves; i++) अणु
+		क्रम (j = 0; j < par->gamma.num_values; j++)
+			len += scnम_लिखो(&buf[len], PAGE_SIZE,
 			     "%04x ", curves[i * par->gamma.num_values + j]);
 		buf[len - 1] = '\n';
-	}
+	पूर्ण
 	mutex_unlock(&par->gamma.lock);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t store_gamma_curve(struct device *device,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	struct fb_info *fb_info = dev_get_drvdata(device);
-	struct fbtft_par *par = fb_info->par;
-	u32 tmp_curves[FBTFT_GAMMA_MAX_VALUES_TOTAL];
-	int ret;
+अटल sमाप_प्रकार store_gamma_curve(काष्ठा device *device,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा fb_info *fb_info = dev_get_drvdata(device);
+	काष्ठा fbtft_par *par = fb_info->par;
+	u32 पंचांगp_curves[FBTFT_GAMMA_MAX_VALUES_TOTAL];
+	पूर्णांक ret;
 
-	ret = fbtft_gamma_parse_str(par, tmp_curves, buf, count);
-	if (ret)
-		return ret;
+	ret = fbtft_gamma_parse_str(par, पंचांगp_curves, buf, count);
+	अगर (ret)
+		वापस ret;
 
-	ret = par->fbtftops.set_gamma(par, tmp_curves);
-	if (ret)
-		return ret;
+	ret = par->fbtftops.set_gamma(par, पंचांगp_curves);
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&par->gamma.lock);
-	memcpy(par->gamma.curves, tmp_curves,
+	स_नकल(par->gamma.curves, पंचांगp_curves,
 	       par->gamma.num_curves * par->gamma.num_values *
-	       sizeof(tmp_curves[0]));
+	       माप(पंचांगp_curves[0]));
 	mutex_unlock(&par->gamma.lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t show_gamma_curve(struct device *device,
-				struct device_attribute *attr, char *buf)
-{
-	struct fb_info *fb_info = dev_get_drvdata(device);
-	struct fbtft_par *par = fb_info->par;
+अटल sमाप_प्रकार show_gamma_curve(काष्ठा device *device,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा fb_info *fb_info = dev_get_drvdata(device);
+	काष्ठा fbtft_par *par = fb_info->par;
 
-	return sprintf_gamma(par, par->gamma.curves, buf);
-}
+	वापस प्र_लिखो_gamma(par, par->gamma.curves, buf);
+पूर्ण
 
-static struct device_attribute gamma_device_attrs[] = {
+अटल काष्ठा device_attribute gamma_device_attrs[] = अणु
 	__ATTR(gamma, 0660, show_gamma_curve, store_gamma_curve),
-};
+पूर्ण;
 
-void fbtft_expand_debug_value(unsigned long *debug)
-{
-	switch (*debug & 0x7) {
-	case 1:
+व्योम fbtft_expand_debug_value(अचिन्हित दीर्घ *debug)
+अणु
+	चयन (*debug & 0x7) अणु
+	हाल 1:
 		*debug |= DEBUG_LEVEL_1;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*debug |= DEBUG_LEVEL_2;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		*debug |= DEBUG_LEVEL_3;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		*debug |= DEBUG_LEVEL_4;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		*debug |= DEBUG_LEVEL_5;
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		*debug |= DEBUG_LEVEL_6;
-		break;
-	case 7:
+		अवरोध;
+	हाल 7:
 		*debug = 0xFFFFFFFF;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static ssize_t store_debug(struct device *device,
-			   struct device_attribute *attr,
-			   const char *buf, size_t count)
-{
-	struct fb_info *fb_info = dev_get_drvdata(device);
-	struct fbtft_par *par = fb_info->par;
-	int ret;
+अटल sमाप_प्रकार store_debug(काष्ठा device *device,
+			   काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा fb_info *fb_info = dev_get_drvdata(device);
+	काष्ठा fbtft_par *par = fb_info->par;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &par->debug);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &par->debug);
+	अगर (ret)
+		वापस ret;
 	fbtft_expand_debug_value(&par->debug);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t show_debug(struct device *device,
-			  struct device_attribute *attr, char *buf)
-{
-	struct fb_info *fb_info = dev_get_drvdata(device);
-	struct fbtft_par *par = fb_info->par;
+अटल sमाप_प्रकार show_debug(काष्ठा device *device,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा fb_info *fb_info = dev_get_drvdata(device);
+	काष्ठा fbtft_par *par = fb_info->par;
 
-	return sysfs_emit(buf, "%lu\n", par->debug);
-}
+	वापस sysfs_emit(buf, "%lu\n", par->debug);
+पूर्ण
 
-static struct device_attribute debug_device_attr =
+अटल काष्ठा device_attribute debug_device_attr =
 	__ATTR(debug, 0660, show_debug, store_debug);
 
-void fbtft_sysfs_init(struct fbtft_par *par)
-{
+व्योम fbtft_sysfs_init(काष्ठा fbtft_par *par)
+अणु
 	device_create_file(par->info->dev, &debug_device_attr);
-	if (par->gamma.curves && par->fbtftops.set_gamma)
+	अगर (par->gamma.curves && par->fbtftops.set_gamma)
 		device_create_file(par->info->dev, &gamma_device_attrs[0]);
-}
+पूर्ण
 
-void fbtft_sysfs_exit(struct fbtft_par *par)
-{
-	device_remove_file(par->info->dev, &debug_device_attr);
-	if (par->gamma.curves && par->fbtftops.set_gamma)
-		device_remove_file(par->info->dev, &gamma_device_attrs[0]);
-}
+व्योम fbtft_sysfs_निकास(काष्ठा fbtft_par *par)
+अणु
+	device_हटाओ_file(par->info->dev, &debug_device_attr);
+	अगर (par->gamma.curves && par->fbtftops.set_gamma)
+		device_हटाओ_file(par->info->dev, &gamma_device_attrs[0]);
+पूर्ण

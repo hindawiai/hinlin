@@ -1,229 +1,230 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cache Allocation Technology (CAT) test
  *
  * Copyright (C) 2018 Intel Corporation
  *
  * Authors:
- *    Sai Praneeth Prakhya <sai.praneeth.prakhya@intel.com>,
- *    Fenghua Yu <fenghua.yu@intel.com>
+ *    Sai Praneeth Prakhya <sai.praneeth.prakhya@पूर्णांकel.com>,
+ *    Fenghua Yu <fenghua.yu@पूर्णांकel.com>
  */
-#include "resctrl.h"
-#include <unistd.h>
+#समावेश "resctrl.h"
+#समावेश <unistd.h>
 
-#define RESULT_FILE_NAME1	"result_cat1"
-#define RESULT_FILE_NAME2	"result_cat2"
-#define NUM_OF_RUNS		5
-#define MAX_DIFF_PERCENT	4
-#define MAX_DIFF		1000000
+#घोषणा RESULT_खाता_NAME1	"result_cat1"
+#घोषणा RESULT_खाता_NAME2	"result_cat2"
+#घोषणा NUM_OF_RUNS		5
+#घोषणा MAX_DIFF_PERCENT	4
+#घोषणा MAX_DIFF		1000000
 
-static int count_of_bits;
-static char cbm_mask[256];
-static unsigned long long_mask;
-static unsigned long cache_size;
+अटल पूर्णांक count_of_bits;
+अटल अक्षर cbm_mask[256];
+अटल अचिन्हित दीर्घ दीर्घ_mask;
+अटल अचिन्हित दीर्घ cache_size;
 
 /*
- * Change schemata. Write schemata to specified
+ * Change schemata. Write schemata to specअगरied
  * con_mon grp, mon_grp in resctrl FS.
- * Run 5 times in order to get average values.
+ * Run 5 बार in order to get average values.
  */
-static int cat_setup(int num, ...)
-{
-	struct resctrl_val_param *p;
-	char schemata[64];
-	va_list param;
-	int ret = 0;
+अटल पूर्णांक cat_setup(पूर्णांक num, ...)
+अणु
+	काष्ठा resctrl_val_param *p;
+	अक्षर schemata[64];
+	बहु_सूची param;
+	पूर्णांक ret = 0;
 
-	va_start(param, num);
-	p = va_arg(param, struct resctrl_val_param *);
-	va_end(param);
+	बहु_शुरू(param, num);
+	p = बहु_तर्क(param, काष्ठा resctrl_val_param *);
+	बहु_पूर्ण(param);
 
-	/* Run NUM_OF_RUNS times */
-	if (p->num_of_runs >= NUM_OF_RUNS)
-		return -1;
+	/* Run NUM_OF_RUNS बार */
+	अगर (p->num_of_runs >= NUM_OF_RUNS)
+		वापस -1;
 
-	if (p->num_of_runs == 0) {
-		sprintf(schemata, "%lx", p->mask);
-		ret = write_schemata(p->ctrlgrp, schemata, p->cpu_no,
+	अगर (p->num_of_runs == 0) अणु
+		प्र_लिखो(schemata, "%lx", p->mask);
+		ret = ग_लिखो_schemata(p->ctrlgrp, schemata, p->cpu_no,
 				     p->resctrl_val);
-	}
+	पूर्ण
 	p->num_of_runs++;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int check_results(struct resctrl_val_param *param)
-{
-	char *token_array[8], temp[512];
-	unsigned long sum_llc_perf_miss = 0;
-	int runs = 0, no_of_bits = 0;
-	FILE *fp;
+अटल पूर्णांक check_results(काष्ठा resctrl_val_param *param)
+अणु
+	अक्षर *token_array[8], temp[512];
+	अचिन्हित दीर्घ sum_llc_perf_miss = 0;
+	पूर्णांक runs = 0, no_of_bits = 0;
+	खाता *fp;
 
-	ksft_print_msg("Checking for pass/fail\n");
-	fp = fopen(param->filename, "r");
-	if (!fp) {
-		perror("# Cannot open file");
+	ksft_prपूर्णांक_msg("Checking for pass/fail\n");
+	fp = ख_खोलो(param->filename, "r");
+	अगर (!fp) अणु
+		लिखो_त्रुटि("# Cannot open file");
 
-		return errno;
-	}
+		वापस त्रुटि_सं;
+	पूर्ण
 
-	while (fgets(temp, sizeof(temp), fp)) {
-		char *token = strtok(temp, ":\t");
-		int fields = 0;
+	जबतक (ख_माला_लो(temp, माप(temp), fp)) अणु
+		अक्षर *token = म_मोहर(temp, ":\t");
+		पूर्णांक fields = 0;
 
-		while (token) {
+		जबतक (token) अणु
 			token_array[fields++] = token;
-			token = strtok(NULL, ":\t");
-		}
+			token = म_मोहर(शून्य, ":\t");
+		पूर्ण
 		/*
 		 * Discard the first value which is inaccurate due to monitoring
 		 * setup transition phase.
 		 */
-		if (runs > 0)
-			sum_llc_perf_miss += strtoul(token_array[3], NULL, 0);
+		अगर (runs > 0)
+			sum_llc_perf_miss += म_से_अदीर्घ(token_array[3], शून्य, 0);
 		runs++;
-	}
+	पूर्ण
 
-	fclose(fp);
+	ख_बंद(fp);
 	no_of_bits = count_bits(param->mask);
 
-	return show_cache_info(sum_llc_perf_miss, no_of_bits, param->span / 64,
+	वापस show_cache_info(sum_llc_perf_miss, no_of_bits, param->span / 64,
 			       MAX_DIFF, MAX_DIFF_PERCENT, NUM_OF_RUNS,
 			       !is_amd, false);
-}
+पूर्ण
 
-void cat_test_cleanup(void)
-{
-	remove(RESULT_FILE_NAME1);
-	remove(RESULT_FILE_NAME2);
-}
+व्योम cat_test_cleanup(व्योम)
+अणु
+	हटाओ(RESULT_खाता_NAME1);
+	हटाओ(RESULT_खाता_NAME2);
+पूर्ण
 
-int cat_perf_miss_val(int cpu_no, int n, char *cache_type)
-{
-	unsigned long l_mask, l_mask_1;
-	int ret, pipefd[2], sibling_cpu_no;
-	char pipe_message;
+पूर्णांक cat_perf_miss_val(पूर्णांक cpu_no, पूर्णांक n, अक्षर *cache_type)
+अणु
+	अचिन्हित दीर्घ l_mask, l_mask_1;
+	पूर्णांक ret, pipefd[2], sibling_cpu_no;
+	अक्षर pipe_message;
 	pid_t bm_pid;
 
 	cache_size = 0;
 
 	ret = remount_resctrlfs(true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Get default cbm mask for L3/L2 cache */
+	/* Get शेष cbm mask क्रम L3/L2 cache */
 	ret = get_cbm_mask(cache_type, cbm_mask);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	long_mask = strtoul(cbm_mask, NULL, 16);
+	दीर्घ_mask = म_से_अदीर्घ(cbm_mask, शून्य, 16);
 
 	/* Get L3/L2 cache size */
 	ret = get_cache_size(cpu_no, cache_type, &cache_size);
-	if (ret)
-		return ret;
-	ksft_print_msg("Cache size :%lu\n", cache_size);
+	अगर (ret)
+		वापस ret;
+	ksft_prपूर्णांक_msg("Cache size :%lu\n", cache_size);
 
-	/* Get max number of bits from default-cabm mask */
-	count_of_bits = count_bits(long_mask);
+	/* Get max number of bits from शेष-cabm mask */
+	count_of_bits = count_bits(दीर्घ_mask);
 
-	if (!n)
+	अगर (!n)
 		n = count_of_bits / 2;
 
-	if (n > count_of_bits - 1) {
-		ksft_print_msg("Invalid input value for no_of_bits n!\n");
-		ksft_print_msg("Please enter value in range 1 to %d\n",
+	अगर (n > count_of_bits - 1) अणु
+		ksft_prपूर्णांक_msg("Invalid input value for no_of_bits n!\n");
+		ksft_prपूर्णांक_msg("Please enter value in range 1 to %d\n",
 			       count_of_bits - 1);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	/* Get core id from same socket for running another thread */
+	/* Get core id from same socket क्रम running another thपढ़ो */
 	sibling_cpu_no = get_core_sibling(cpu_no);
-	if (sibling_cpu_no < 0)
-		return -1;
+	अगर (sibling_cpu_no < 0)
+		वापस -1;
 
-	struct resctrl_val_param param = {
+	काष्ठा resctrl_val_param param = अणु
 		.resctrl_val	= CAT_STR,
 		.cpu_no		= cpu_no,
 		.mum_resctrlfs	= 0,
 		.setup		= cat_setup,
-	};
+	पूर्ण;
 
-	l_mask = long_mask >> n;
-	l_mask_1 = ~l_mask & long_mask;
+	l_mask = दीर्घ_mask >> n;
+	l_mask_1 = ~l_mask & दीर्घ_mask;
 
-	/* Set param values for parent thread which will be allocated bitmask
+	/* Set param values क्रम parent thपढ़ो which will be allocated biपंचांगask
 	 * with (max_bits - n) bits
 	 */
 	param.span = cache_size * (count_of_bits - n) / count_of_bits;
-	strcpy(param.ctrlgrp, "c2");
-	strcpy(param.mongrp, "m2");
-	strcpy(param.filename, RESULT_FILE_NAME2);
+	म_नकल(param.ctrlgrp, "c2");
+	म_नकल(param.mongrp, "m2");
+	म_नकल(param.filename, RESULT_खाता_NAME2);
 	param.mask = l_mask;
 	param.num_of_runs = 0;
 
-	if (pipe(pipefd)) {
-		perror("# Unable to create pipe");
-		return errno;
-	}
+	अगर (pipe(pipefd)) अणु
+		लिखो_त्रुटि("# Unable to create pipe");
+		वापस त्रुटि_सं;
+	पूर्ण
 
-	bm_pid = fork();
+	bm_pid = विभाजन();
 
-	/* Set param values for child thread which will be allocated bitmask
+	/* Set param values क्रम child thपढ़ो which will be allocated biपंचांगask
 	 * with n bits
 	 */
-	if (bm_pid == 0) {
+	अगर (bm_pid == 0) अणु
 		param.mask = l_mask_1;
-		strcpy(param.ctrlgrp, "c1");
-		strcpy(param.mongrp, "m1");
+		म_नकल(param.ctrlgrp, "c1");
+		म_नकल(param.mongrp, "m1");
 		param.span = cache_size * n / count_of_bits;
-		strcpy(param.filename, RESULT_FILE_NAME1);
+		म_नकल(param.filename, RESULT_खाता_NAME1);
 		param.num_of_runs = 0;
 		param.cpu_no = sibling_cpu_no;
-	}
+	पूर्ण
 
-	remove(param.filename);
+	हटाओ(param.filename);
 
 	ret = cat_val(&param);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = check_results(&param);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (bm_pid == 0) {
-		/* Tell parent that child is ready */
-		close(pipefd[0]);
+	अगर (bm_pid == 0) अणु
+		/* Tell parent that child is पढ़ोy */
+		बंद(pipefd[0]);
 		pipe_message = 1;
-		if (write(pipefd[1], &pipe_message, sizeof(pipe_message)) <
-		    sizeof(pipe_message)) {
-			close(pipefd[1]);
-			perror("# failed signaling parent process");
-			return errno;
-		}
+		अगर (ग_लिखो(pipefd[1], &pipe_message, माप(pipe_message)) <
+		    माप(pipe_message)) अणु
+			बंद(pipefd[1]);
+			लिखो_त्रुटि("# failed signaling parent process");
+			वापस त्रुटि_सं;
+		पूर्ण
 
-		close(pipefd[1]);
-		while (1)
+		बंद(pipefd[1]);
+		जबतक (1)
 			;
-	} else {
-		/* Parent waits for child to be ready. */
-		close(pipefd[1]);
+	पूर्ण अन्यथा अणु
+		/* Parent रुकोs क्रम child to be पढ़ोy. */
+		बंद(pipefd[1]);
 		pipe_message = 0;
-		while (pipe_message != 1) {
-			if (read(pipefd[0], &pipe_message,
-				 sizeof(pipe_message)) < sizeof(pipe_message)) {
-				perror("# failed reading from child process");
-				break;
-			}
-		}
-		close(pipefd[0]);
-		kill(bm_pid, SIGKILL);
-	}
+		जबतक (pipe_message != 1) अणु
+			अगर (पढ़ो(pipefd[0], &pipe_message,
+				 माप(pipe_message)) < माप(pipe_message)) अणु
+				लिखो_त्रुटि("# failed reading from child process");
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		बंद(pipefd[0]);
+		समाप्त(bm_pid, SIGKILL);
+	पूर्ण
 
 	cat_test_cleanup();
-	if (bm_pid)
+	अगर (bm_pid)
 		umount_resctrlfs();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

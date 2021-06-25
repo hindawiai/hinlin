@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <sys/sdt.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <sys/sdt.h>
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	DTRACE_PROBE(provider, name);
-	return 0;
-}
+	वापस 0;
+पूर्ण

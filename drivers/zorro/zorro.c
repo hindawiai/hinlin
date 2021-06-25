@@ -1,74 +1,75 @@
+<शैली गुरु>
 /*
  *    Zorro Bus Services
  *
  *    Copyright (C) 1995-2003 Geert Uytterhoeven
  *
  *    This file is subject to the terms and conditions of the GNU General Public
- *    License.  See the file COPYING in the main directory of this archive
- *    for more details.
+ *    License.  See the file COPYING in the मुख्य directory of this archive
+ *    क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/zorro.h>
-#include <linux/bitops.h>
-#include <linux/string.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/zorro.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
 
-#include <asm/byteorder.h>
-#include <asm/setup.h>
-#include <asm/amigahw.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/amigahw.h>
 
-#include "zorro.h"
+#समावेश "zorro.h"
 
 
     /*
      *  Zorro Expansion Devices
      */
 
-unsigned int zorro_num_autocon;
-struct zorro_dev_init zorro_autocon_init[ZORRO_NUM_AUTO] __initdata;
-struct zorro_dev *zorro_autocon;
+अचिन्हित पूर्णांक zorro_num_स्वतःcon;
+काष्ठा zorro_dev_init zorro_स्वतःcon_init[ZORRO_NUM_AUTO] __initdata;
+काष्ठा zorro_dev *zorro_स्वतःcon;
 
 
     /*
      *  Zorro bus
      */
 
-struct zorro_bus {
-	struct device dev;
-	struct zorro_dev devices[];
-};
+काष्ठा zorro_bus अणु
+	काष्ठा device dev;
+	काष्ठा zorro_dev devices[];
+पूर्ण;
 
 
     /*
      *  Find Zorro Devices
      */
 
-struct zorro_dev *zorro_find_device(zorro_id id, struct zorro_dev *from)
-{
-	struct zorro_dev *z;
+काष्ठा zorro_dev *zorro_find_device(zorro_id id, काष्ठा zorro_dev *from)
+अणु
+	काष्ठा zorro_dev *z;
 
-	if (!zorro_num_autocon)
-		return NULL;
+	अगर (!zorro_num_स्वतःcon)
+		वापस शून्य;
 
-	for (z = from ? from+1 : &zorro_autocon[0];
-	     z < zorro_autocon+zorro_num_autocon;
+	क्रम (z = from ? from+1 : &zorro_स्वतःcon[0];
+	     z < zorro_स्वतःcon+zorro_num_स्वतःcon;
 	     z++)
-		if (id == ZORRO_WILDCARD || id == z->id)
-			return z;
-	return NULL;
-}
+		अगर (id == ZORRO_WILDCARD || id == z->id)
+			वापस z;
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(zorro_find_device);
 
 
     /*
-     *  Bitmask indicating portions of available Zorro II RAM that are unused
-     *  by the system. Every bit represents a 64K chunk, for a maximum of 8MB
+     *  Biपंचांगask indicating portions of available Zorro II RAM that are unused
+     *  by the प्रणाली. Every bit represents a 64K chunk, क्रम a maximum of 8MB
      *  (128 chunks, physical 0x00200000-0x009fffff).
      *
      *  If you want to use (= allocate) portions of this RAM, you should clear
@@ -85,161 +86,161 @@ DECLARE_BITMAP(zorro_unused_z2ram, 128);
 EXPORT_SYMBOL(zorro_unused_z2ram);
 
 
-static void __init mark_region(unsigned long start, unsigned long end,
-			       int flag)
-{
-	if (flag)
+अटल व्योम __init mark_region(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+			       पूर्णांक flag)
+अणु
+	अगर (flag)
 		start += Z2RAM_CHUNKMASK;
-	else
+	अन्यथा
 		end += Z2RAM_CHUNKMASK;
 	start &= ~Z2RAM_CHUNKMASK;
 	end &= ~Z2RAM_CHUNKMASK;
 
-	if (end <= Z2RAM_START || start >= Z2RAM_END)
-		return;
+	अगर (end <= Z2RAM_START || start >= Z2RAM_END)
+		वापस;
 	start = start < Z2RAM_START ? 0x00000000 : start-Z2RAM_START;
 	end = end > Z2RAM_END ? Z2RAM_SIZE : end-Z2RAM_START;
-	while (start < end) {
+	जबतक (start < end) अणु
 		u32 chunk = start>>Z2RAM_CHUNKSHIFT;
 
-		if (flag)
+		अगर (flag)
 			set_bit(chunk, zorro_unused_z2ram);
-		else
+		अन्यथा
 			clear_bit(chunk, zorro_unused_z2ram);
 		start += Z2RAM_CHUNKSIZE;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static struct resource __init *zorro_find_parent_resource(
-	struct platform_device *bridge, struct zorro_dev *z)
-{
-	int i;
+अटल काष्ठा resource __init *zorro_find_parent_resource(
+	काष्ठा platक्रमm_device *bridge, काष्ठा zorro_dev *z)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < bridge->num_resources; i++) {
-		struct resource *r = &bridge->resource[i];
+	क्रम (i = 0; i < bridge->num_resources; i++) अणु
+		काष्ठा resource *r = &bridge->resource[i];
 
-		if (zorro_resource_start(z) >= r->start &&
+		अगर (zorro_resource_start(z) >= r->start &&
 		    zorro_resource_end(z) <= r->end)
-			return r;
-	}
-	return &iomem_resource;
-}
+			वापस r;
+	पूर्ण
+	वापस &iomem_resource;
+पूर्ण
 
 
 
-static int __init amiga_zorro_probe(struct platform_device *pdev)
-{
-	struct zorro_bus *bus;
-	struct zorro_dev_init *zi;
-	struct zorro_dev *z;
-	struct resource *r;
-	unsigned int i;
-	int error;
+अटल पूर्णांक __init amiga_zorro_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा zorro_bus *bus;
+	काष्ठा zorro_dev_init *zi;
+	काष्ठा zorro_dev *z;
+	काष्ठा resource *r;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक error;
 
 	/* Initialize the Zorro bus */
-	bus = kzalloc(struct_size(bus, devices, zorro_num_autocon),
+	bus = kzalloc(काष्ठा_size(bus, devices, zorro_num_स्वतःcon),
 		      GFP_KERNEL);
-	if (!bus)
-		return -ENOMEM;
+	अगर (!bus)
+		वापस -ENOMEM;
 
-	zorro_autocon = bus->devices;
+	zorro_स्वतःcon = bus->devices;
 	bus->dev.parent = &pdev->dev;
 	dev_set_name(&bus->dev, zorro_bus_type.name);
-	error = device_register(&bus->dev);
-	if (error) {
+	error = device_रेजिस्टर(&bus->dev);
+	अगर (error) अणु
 		pr_err("Zorro: Error registering zorro_bus\n");
 		put_device(&bus->dev);
-		kfree(bus);
-		return error;
-	}
-	platform_set_drvdata(pdev, bus);
+		kमुक्त(bus);
+		वापस error;
+	पूर्ण
+	platक्रमm_set_drvdata(pdev, bus);
 
 	pr_info("Zorro: Probing AutoConfig expansion devices: %u device%s\n",
-		 zorro_num_autocon, zorro_num_autocon == 1 ? "" : "s");
+		 zorro_num_स्वतःcon, zorro_num_स्वतःcon == 1 ? "" : "s");
 
-	/* First identify all devices ... */
-	for (i = 0; i < zorro_num_autocon; i++) {
-		zi = &zorro_autocon_init[i];
-		z = &zorro_autocon[i];
+	/* First identअगरy all devices ... */
+	क्रम (i = 0; i < zorro_num_स्वतःcon; i++) अणु
+		zi = &zorro_स्वतःcon_init[i];
+		z = &zorro_स्वतःcon[i];
 
 		z->rom = zi->rom;
 		z->id = (be16_to_cpu(z->rom.er_Manufacturer) << 16) |
 			(z->rom.er_Product << 8);
-		if (z->id == ZORRO_PROD_GVP_EPC_BASE) {
+		अगर (z->id == ZORRO_PROD_GVP_EPC_BASE) अणु
 			/* GVP quirk */
-			unsigned long magic = zi->boardaddr + 0x8000;
+			अचिन्हित दीर्घ magic = zi->boardaddr + 0x8000;
 
 			z->id |= *(u16 *)ZTWO_VADDR(magic) & GVP_PRODMASK;
-		}
+		पूर्ण
 		z->slotaddr = zi->slotaddr;
 		z->slotsize = zi->slotsize;
-		sprintf(z->name, "Zorro device %08x", z->id);
+		प्र_लिखो(z->name, "Zorro device %08x", z->id);
 		zorro_name_device(z);
 		z->resource.start = zi->boardaddr;
 		z->resource.end = zi->boardaddr + zi->boardsize - 1;
 		z->resource.name = z->name;
 		r = zorro_find_parent_resource(pdev, z);
 		error = request_resource(r, &z->resource);
-		if (error && !(z->rom.er_Type & ERTF_MEMLIST))
+		अगर (error && !(z->rom.er_Type & ERTF_MEMLIST))
 			dev_err(&bus->dev,
 				"Address space collision on device %s %pR\n",
 				z->name, &z->resource);
 		z->dev.parent = &bus->dev;
 		z->dev.bus = &zorro_bus_type;
 		z->dev.id = i;
-		switch (z->rom.er_Type & ERT_TYPEMASK) {
-		case ERT_ZORROIII:
+		चयन (z->rom.er_Type & ERT_TYPEMASK) अणु
+		हाल ERT_ZORROIII:
 			z->dev.coherent_dma_mask = DMA_BIT_MASK(32);
-			break;
+			अवरोध;
 
-		case ERT_ZORROII:
-		default:
+		हाल ERT_ZORROII:
+		शेष:
 			z->dev.coherent_dma_mask = DMA_BIT_MASK(24);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		z->dev.dma_mask = &z->dev.coherent_dma_mask;
-	}
+	पूर्ण
 
-	/* ... then register them */
-	for (i = 0; i < zorro_num_autocon; i++) {
-		z = &zorro_autocon[i];
-		error = device_register(&z->dev);
-		if (error) {
+	/* ... then रेजिस्टर them */
+	क्रम (i = 0; i < zorro_num_स्वतःcon; i++) अणु
+		z = &zorro_स्वतःcon[i];
+		error = device_रेजिस्टर(&z->dev);
+		अगर (error) अणु
 			dev_err(&bus->dev, "Error registering device %s\n",
 				z->name);
 			put_device(&z->dev);
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 
 	/* Mark all available Zorro II memory */
-	zorro_for_each_dev(z) {
-		if (z->rom.er_Type & ERTF_MEMLIST)
+	zorro_क्रम_each_dev(z) अणु
+		अगर (z->rom.er_Type & ERTF_MEMLIST)
 			mark_region(zorro_resource_start(z),
 				    zorro_resource_end(z)+1, 1);
-	}
+	पूर्ण
 
 	/* Unmark all used Zorro II memory */
-	for (i = 0; i < m68k_num_memory; i++)
-		if (m68k_memory[i].addr < 16*1024*1024)
+	क्रम (i = 0; i < m68k_num_memory; i++)
+		अगर (m68k_memory[i].addr < 16*1024*1024)
 			mark_region(m68k_memory[i].addr,
 				    m68k_memory[i].addr+m68k_memory[i].size,
 				    0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver amiga_zorro_driver = {
-	.driver   = {
+अटल काष्ठा platक्रमm_driver amiga_zorro_driver = अणु
+	.driver   = अणु
 		.name	= "amiga-zorro",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init amiga_zorro_init(void)
-{
-	return platform_driver_probe(&amiga_zorro_driver, amiga_zorro_probe);
-}
+अटल पूर्णांक __init amiga_zorro_init(व्योम)
+अणु
+	वापस platक्रमm_driver_probe(&amiga_zorro_driver, amiga_zorro_probe);
+पूर्ण
 
 module_init(amiga_zorro_init);
 

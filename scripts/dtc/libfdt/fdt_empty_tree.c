@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-or-later OR BSD-2-Clause)
 /*
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2012 David Gibson, IBM Corporation.
  */
-#include "libfdt_env.h"
+#समावेश "libfdt_env.h"
 
-#include <fdt.h>
-#include <libfdt.h>
+#समावेश <fdt.h>
+#समावेश <libfdt.h>
 
-#include "libfdt_internal.h"
+#समावेश "libfdt_internal.h"
 
-int fdt_create_empty_tree(void *buf, int bufsize)
-{
-	int err;
+पूर्णांक fdt_create_empty_tree(व्योम *buf, पूर्णांक bufsize)
+अणु
+	पूर्णांक err;
 
 	err = fdt_create(buf, bufsize);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = fdt_finish_reservemap(buf);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = fdt_begin_node(buf, "");
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err =  fdt_end_node(buf);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = fdt_finish(buf);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return fdt_open_into(buf, buf, bufsize);
-}
+	वापस fdt_खोलो_पूर्णांकo(buf, buf, bufsize);
+पूर्ण

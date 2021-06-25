@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Atomic operations for the Hexagon architecture
+ * Atomic operations क्रम the Hexagon architecture
  *
  * Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_ATOMIC_H
-#define _ASM_ATOMIC_H
+#अगर_अघोषित _ASM_ATOMIC_H
+#घोषणा _ASM_ATOMIC_H
 
-#include <linux/types.h>
-#include <asm/cmpxchg.h>
-#include <asm/barrier.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/cmpxchg.h>
+#समावेश <यंत्र/barrier.h>
 
-/*  Normal writes in our arch don't clear lock reservations  */
+/*  Normal ग_लिखोs in our arch करोn't clear lock reservations  */
 
-static inline void atomic_set(atomic_t *v, int new)
-{
-	asm volatile(
+अटल अंतरभूत व्योम atomic_set(atomic_t *v, पूर्णांक new)
+अणु
+	यंत्र अस्थिर(
 		"1:	r6 = memw_locked(%0);\n"
 		"	memw_locked(%0,p0) = %1;\n"
 		"	if (!P0) jump 1b;\n"
@@ -24,48 +25,48 @@ static inline void atomic_set(atomic_t *v, int new)
 		: "r" (&v->counter), "r" (new)
 		: "memory", "p0", "r6"
 	);
-}
+पूर्ण
 
-#define atomic_set_release(v, i)	atomic_set((v), (i))
+#घोषणा atomic_set_release(v, i)	atomic_set((v), (i))
 
 /**
- * atomic_read - reads a word, atomically
- * @v: pointer to atomic value
+ * atomic_पढ़ो - पढ़ोs a word, atomically
+ * @v: poपूर्णांकer to atomic value
  *
- * Assumes all word reads on our architecture are atomic.
+ * Assumes all word पढ़ोs on our architecture are atomic.
  */
-#define atomic_read(v)		READ_ONCE((v)->counter)
+#घोषणा atomic_पढ़ो(v)		READ_ONCE((v)->counter)
 
 /**
  * atomic_xchg - atomic
- * @v: pointer to memory to change
- * @new: new value (technically passed in a register -- see xchg)
+ * @v: poपूर्णांकer to memory to change
+ * @new: new value (technically passed in a रेजिस्टर -- see xchg)
  */
-#define atomic_xchg(v, new)	(xchg(&((v)->counter), (new)))
+#घोषणा atomic_xchg(v, new)	(xchg(&((v)->counter), (new)))
 
 
 /**
  * atomic_cmpxchg - atomic compare-and-exchange values
- * @v: pointer to value to change
+ * @v: poपूर्णांकer to value to change
  * @old:  desired old value to match
  * @new:  new value to put in
  *
- * Parameters are then pointer, value-in-register, value-in-register,
+ * Parameters are then poपूर्णांकer, value-in-रेजिस्टर, value-in-रेजिस्टर,
  * and the output is the old value.
  *
- * Apparently this is complicated for archs that don't support
- * the memw_locked like we do (or it's broken or whatever).
+ * Apparently this is complicated क्रम archs that करोn't support
+ * the memw_locked like we करो (or it's broken or whatever).
  *
  * Kind of the lynchpin of the rest of the generically defined routines.
- * Remember V2 had that bug with dotnew predicate set by memw_locked.
+ * Remember V2 had that bug with करोtnew predicate set by memw_locked.
  *
  * "old" is "expected" old val, __oldval is actual old value
  */
-static inline int atomic_cmpxchg(atomic_t *v, int old, int new)
-{
-	int __oldval;
+अटल अंतरभूत पूर्णांक atomic_cmpxchg(atomic_t *v, पूर्णांक old, पूर्णांक new)
+अणु
+	पूर्णांक __oldval;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"1:	%0 = memw_locked(%1);\n"
 		"	{ P0 = cmp.eq(%0,%2);\n"
 		"	  if (!P0.new) jump:nt 2f; }\n"
@@ -77,15 +78,15 @@ static inline int atomic_cmpxchg(atomic_t *v, int old, int new)
 		: "memory", "p0"
 	);
 
-	return __oldval;
-}
+	वापस __oldval;
+पूर्ण
 
-#define ATOMIC_OP(op)							\
-static inline void atomic_##op(int i, atomic_t *v)			\
-{									\
-	int output;							\
+#घोषणा ATOMIC_OP(op)							\
+अटल अंतरभूत व्योम atomic_##op(पूर्णांक i, atomic_t *v)			\
+अणु									\
+	पूर्णांक output;							\
 									\
-	__asm__ __volatile__ (						\
+	__यंत्र__ __अस्थिर__ (						\
 		"1:	%0 = memw_locked(%1);\n"			\
 		"	%0 = "#op "(%0,%2);\n"				\
 		"	memw_locked(%1,P3)=%0;\n"			\
@@ -94,14 +95,14 @@ static inline void atomic_##op(int i, atomic_t *v)			\
 		: "r" (&v->counter), "r" (i)				\
 		: "memory", "p3"					\
 	);								\
-}									\
+पूर्ण									\
 
-#define ATOMIC_OP_RETURN(op)						\
-static inline int atomic_##op##_return(int i, atomic_t *v)		\
-{									\
-	int output;							\
+#घोषणा ATOMIC_OP_RETURN(op)						\
+अटल अंतरभूत पूर्णांक atomic_##op##_वापस(पूर्णांक i, atomic_t *v)		\
+अणु									\
+	पूर्णांक output;							\
 									\
-	__asm__ __volatile__ (						\
+	__यंत्र__ __अस्थिर__ (						\
 		"1:	%0 = memw_locked(%1);\n"			\
 		"	%0 = "#op "(%0,%2);\n"				\
 		"	memw_locked(%1,P3)=%0;\n"			\
@@ -110,15 +111,15 @@ static inline int atomic_##op##_return(int i, atomic_t *v)		\
 		: "r" (&v->counter), "r" (i)				\
 		: "memory", "p3"					\
 	);								\
-	return output;							\
-}
+	वापस output;							\
+पूर्ण
 
-#define ATOMIC_FETCH_OP(op)						\
-static inline int atomic_fetch_##op(int i, atomic_t *v)			\
-{									\
-	int output, val;						\
+#घोषणा ATOMIC_FETCH_OP(op)						\
+अटल अंतरभूत पूर्णांक atomic_fetch_##op(पूर्णांक i, atomic_t *v)			\
+अणु									\
+	पूर्णांक output, val;						\
 									\
-	__asm__ __volatile__ (						\
+	__यंत्र__ __अस्थिर__ (						\
 		"1:	%0 = memw_locked(%2);\n"			\
 		"	%1 = "#op "(%0,%3);\n"				\
 		"	memw_locked(%2,P3)=%1;\n"			\
@@ -127,29 +128,29 @@ static inline int atomic_fetch_##op(int i, atomic_t *v)			\
 		: "r" (&v->counter), "r" (i)				\
 		: "memory", "p3"					\
 	);								\
-	return output;							\
-}
+	वापस output;							\
+पूर्ण
 
-#define ATOMIC_OPS(op) ATOMIC_OP(op) ATOMIC_OP_RETURN(op) ATOMIC_FETCH_OP(op)
+#घोषणा ATOMIC_OPS(op) ATOMIC_OP(op) ATOMIC_OP_RETURN(op) ATOMIC_FETCH_OP(op)
 
 ATOMIC_OPS(add)
 ATOMIC_OPS(sub)
 
-#undef ATOMIC_OPS
-#define ATOMIC_OPS(op) ATOMIC_OP(op) ATOMIC_FETCH_OP(op)
+#अघोषित ATOMIC_OPS
+#घोषणा ATOMIC_OPS(op) ATOMIC_OP(op) ATOMIC_FETCH_OP(op)
 
 ATOMIC_OPS(and)
 ATOMIC_OPS(or)
 ATOMIC_OPS(xor)
 
-#undef ATOMIC_OPS
-#undef ATOMIC_FETCH_OP
-#undef ATOMIC_OP_RETURN
-#undef ATOMIC_OP
+#अघोषित ATOMIC_OPS
+#अघोषित ATOMIC_FETCH_OP
+#अघोषित ATOMIC_OP_RETURN
+#अघोषित ATOMIC_OP
 
 /**
  * atomic_fetch_add_unless - add unless the number is a given value
- * @v: pointer to value
+ * @v: poपूर्णांकer to value
  * @a: amount to add
  * @u: unless value is equal to u
  *
@@ -157,12 +158,12 @@ ATOMIC_OPS(xor)
  *
  */
 
-static inline int atomic_fetch_add_unless(atomic_t *v, int a, int u)
-{
-	int __oldval;
-	register int tmp;
+अटल अंतरभूत पूर्णांक atomic_fetch_add_unless(atomic_t *v, पूर्णांक a, पूर्णांक u)
+अणु
+	पूर्णांक __oldval;
+	रेजिस्टर पूर्णांक पंचांगp;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"1:	%0 = memw_locked(%2);"
 		"	{"
 		"		p3 = cmp.eq(%0, %4);"
@@ -174,12 +175,12 @@ static inline int atomic_fetch_add_unless(atomic_t *v, int a, int u)
 		"		if (!p3) jump 1b;"
 		"	}"
 		"2:"
-		: "=&r" (__oldval), "=&r" (tmp)
+		: "=&r" (__oldval), "=&r" (पंचांगp)
 		: "r" (v), "r" (a), "r" (u)
 		: "memory", "p3"
 	);
-	return __oldval;
-}
-#define atomic_fetch_add_unless atomic_fetch_add_unless
+	वापस __oldval;
+पूर्ण
+#घोषणा atomic_fetch_add_unless atomic_fetch_add_unless
 
-#endif
+#पूर्ण_अगर

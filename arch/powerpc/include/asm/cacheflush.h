@@ -1,130 +1,131 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  */
-#ifndef _ASM_POWERPC_CACHEFLUSH_H
-#define _ASM_POWERPC_CACHEFLUSH_H
+#अगर_अघोषित _ASM_POWERPC_CACHEFLUSH_H
+#घोषणा _ASM_POWERPC_CACHEFLUSH_H
 
-#include <linux/mm.h>
-#include <asm/cputable.h>
-#include <asm/cpu_has_feature.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/cpu_has_feature.h>
 
 /*
- * This flag is used to indicate that the page pointed to by a pte is clean
- * and does not require cleaning before returning it to the user.
+ * This flag is used to indicate that the page poपूर्णांकed to by a pte is clean
+ * and करोes not require cleaning beक्रमe वापसing it to the user.
  */
-#define PG_dcache_clean PG_arch_1
+#घोषणा PG_dcache_clean PG_arch_1
 
-#ifdef CONFIG_PPC_BOOK3S_64
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
 /*
  * Book3s has no ptesync after setting a pte, so without this ptesync it's
- * possible for a kernel virtual mapping access to return a spurious fault
- * if it's accessed right after the pte is set. The page fault handler does
+ * possible क्रम a kernel भव mapping access to वापस a spurious fault
+ * अगर it's accessed right after the pte is set. The page fault handler करोes
  * not expect this type of fault. flush_cache_vmap is not exactly the right
  * place to put this, but it seems to work well enough.
  */
-static inline void flush_cache_vmap(unsigned long start, unsigned long end)
-{
-	asm volatile("ptesync" ::: "memory");
-}
-#define flush_cache_vmap flush_cache_vmap
-#endif /* CONFIG_PPC_BOOK3S_64 */
+अटल अंतरभूत व्योम flush_cache_vmap(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	यंत्र अस्थिर("ptesync" ::: "memory");
+पूर्ण
+#घोषणा flush_cache_vmap flush_cache_vmap
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
 
-#define ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
+#घोषणा ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
 /*
- * This is called when a page has been modified by the kernel.
- * It just marks the page as not i-cache clean.  We do the i-cache
- * flush later when the page is given to a user process, if necessary.
+ * This is called when a page has been modअगरied by the kernel.
+ * It just marks the page as not i-cache clean.  We करो the i-cache
+ * flush later when the page is given to a user process, अगर necessary.
  */
-static inline void flush_dcache_page(struct page *page)
-{
-	if (cpu_has_feature(CPU_FTR_COHERENT_ICACHE))
-		return;
-	/* avoid an atomic op if possible */
-	if (test_bit(PG_dcache_clean, &page->flags))
+अटल अंतरभूत व्योम flush_dcache_page(काष्ठा page *page)
+अणु
+	अगर (cpu_has_feature(CPU_FTR_COHERENT_ICACHE))
+		वापस;
+	/* aव्योम an atomic op अगर possible */
+	अगर (test_bit(PG_dcache_clean, &page->flags))
 		clear_bit(PG_dcache_clean, &page->flags);
-}
+पूर्ण
 
-void flush_icache_range(unsigned long start, unsigned long stop);
-#define flush_icache_range flush_icache_range
+व्योम flush_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ stop);
+#घोषणा flush_icache_range flush_icache_range
 
-void flush_icache_user_page(struct vm_area_struct *vma, struct page *page,
-		unsigned long addr, int len);
-#define flush_icache_user_page flush_icache_user_page
+व्योम flush_icache_user_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
+		अचिन्हित दीर्घ addr, पूर्णांक len);
+#घोषणा flush_icache_user_page flush_icache_user_page
 
-void flush_dcache_icache_page(struct page *page);
+व्योम flush_dcache_icache_page(काष्ठा page *page);
 
 /**
- * flush_dcache_range(): Write any modified data cache blocks out to memory and
- * invalidate them. Does not invalidate the corresponding instruction cache
+ * flush_dcache_range(): Write any modअगरied data cache blocks out to memory and
+ * invalidate them. Does not invalidate the corresponding inकाष्ठाion cache
  * blocks.
  *
  * @start: the start address
  * @stop: the stop address (exclusive)
  */
-static inline void flush_dcache_range(unsigned long start, unsigned long stop)
-{
-	unsigned long shift = l1_dcache_shift();
-	unsigned long bytes = l1_dcache_bytes();
-	void *addr = (void *)(start & ~(bytes - 1));
-	unsigned long size = stop - (unsigned long)addr + (bytes - 1);
-	unsigned long i;
+अटल अंतरभूत व्योम flush_dcache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ stop)
+अणु
+	अचिन्हित दीर्घ shअगरt = l1_dcache_shअगरt();
+	अचिन्हित दीर्घ bytes = l1_dcache_bytes();
+	व्योम *addr = (व्योम *)(start & ~(bytes - 1));
+	अचिन्हित दीर्घ size = stop - (अचिन्हित दीर्घ)addr + (bytes - 1);
+	अचिन्हित दीर्घ i;
 
-	if (IS_ENABLED(CONFIG_PPC64))
+	अगर (IS_ENABLED(CONFIG_PPC64))
 		mb();	/* sync */
 
-	for (i = 0; i < size >> shift; i++, addr += bytes)
+	क्रम (i = 0; i < size >> shअगरt; i++, addr += bytes)
 		dcbf(addr);
 	mb();	/* sync */
 
-}
+पूर्ण
 
 /*
- * Write any modified data cache blocks out to memory.
- * Does not invalidate the corresponding cache lines (especially for
- * any corresponding instruction cache).
+ * Write any modअगरied data cache blocks out to memory.
+ * Does not invalidate the corresponding cache lines (especially क्रम
+ * any corresponding inकाष्ठाion cache).
  */
-static inline void clean_dcache_range(unsigned long start, unsigned long stop)
-{
-	unsigned long shift = l1_dcache_shift();
-	unsigned long bytes = l1_dcache_bytes();
-	void *addr = (void *)(start & ~(bytes - 1));
-	unsigned long size = stop - (unsigned long)addr + (bytes - 1);
-	unsigned long i;
+अटल अंतरभूत व्योम clean_dcache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ stop)
+अणु
+	अचिन्हित दीर्घ shअगरt = l1_dcache_shअगरt();
+	अचिन्हित दीर्घ bytes = l1_dcache_bytes();
+	व्योम *addr = (व्योम *)(start & ~(bytes - 1));
+	अचिन्हित दीर्घ size = stop - (अचिन्हित दीर्घ)addr + (bytes - 1);
+	अचिन्हित दीर्घ i;
 
-	for (i = 0; i < size >> shift; i++, addr += bytes)
+	क्रम (i = 0; i < size >> shअगरt; i++, addr += bytes)
 		dcbst(addr);
 	mb();	/* sync */
-}
+पूर्ण
 
 /*
  * Like above, but invalidate the D-cache.  This is used by the 8xx
- * to invalidate the cache so the PPC core doesn't get stale data
+ * to invalidate the cache so the PPC core करोesn't get stale data
  * from the CPM (no cache snooping here :-).
  */
-static inline void invalidate_dcache_range(unsigned long start,
-					   unsigned long stop)
-{
-	unsigned long shift = l1_dcache_shift();
-	unsigned long bytes = l1_dcache_bytes();
-	void *addr = (void *)(start & ~(bytes - 1));
-	unsigned long size = stop - (unsigned long)addr + (bytes - 1);
-	unsigned long i;
+अटल अंतरभूत व्योम invalidate_dcache_range(अचिन्हित दीर्घ start,
+					   अचिन्हित दीर्घ stop)
+अणु
+	अचिन्हित दीर्घ shअगरt = l1_dcache_shअगरt();
+	अचिन्हित दीर्घ bytes = l1_dcache_bytes();
+	व्योम *addr = (व्योम *)(start & ~(bytes - 1));
+	अचिन्हित दीर्घ size = stop - (अचिन्हित दीर्घ)addr + (bytes - 1);
+	अचिन्हित दीर्घ i;
 
-	for (i = 0; i < size >> shift; i++, addr += bytes)
+	क्रम (i = 0; i < size >> shअगरt; i++, addr += bytes)
 		dcbi(addr);
 	mb();	/* sync */
-}
+पूर्ण
 
-#ifdef CONFIG_4xx
-static inline void flush_instruction_cache(void)
-{
-	iccci((void *)KERNELBASE);
+#अगर_घोषित CONFIG_4xx
+अटल अंतरभूत व्योम flush_inकाष्ठाion_cache(व्योम)
+अणु
+	iccci((व्योम *)KERNELBASE);
 	isync();
-}
-#else
-void flush_instruction_cache(void);
-#endif
+पूर्ण
+#अन्यथा
+व्योम flush_inकाष्ठाion_cache(व्योम);
+#पूर्ण_अगर
 
-#include <asm-generic/cacheflush.h>
+#समावेश <यंत्र-generic/cacheflush.h>
 
-#endif /* _ASM_POWERPC_CACHEFLUSH_H */
+#पूर्ण_अगर /* _ASM_POWERPC_CACHEFLUSH_H */

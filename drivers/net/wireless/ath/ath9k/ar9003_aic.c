@@ -1,31 +1,32 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2015 Qualcomm Atheros Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "hw.h"
-#include "hw-ops.h"
-#include "ar9003_mci.h"
-#include "ar9003_aic.h"
-#include "ar9003_phy.h"
-#include "reg_aic.h"
+#समावेश "hw.h"
+#समावेश "hw-ops.h"
+#समावेश "ar9003_mci.h"
+#समावेश "ar9003_aic.h"
+#समावेश "ar9003_phy.h"
+#समावेश "reg_aic.h"
 
-static const u8 com_att_db_table[ATH_AIC_MAX_COM_ATT_DB_TABLE] = {
+अटल स्थिर u8 com_att_db_table[ATH_AIC_MAX_COM_ATT_DB_TABLE] = अणु
 	0, 3, 9, 15, 21, 27
-};
+पूर्ण;
 
-static const u16 aic_lin_table[ATH_AIC_MAX_AIC_LIN_TABLE] = {
+अटल स्थिर u16 aic_lin_table[ATH_AIC_MAX_AIC_LIN_TABLE] = अणु
 	8191, 7300, 6506, 5799, 5168, 4606, 4105, 3659,
 	3261, 2906, 2590, 2309, 2057, 1834, 1634, 1457,
 	1298, 1157, 1031, 919,	819,  730,  651,  580,
@@ -35,79 +36,79 @@ static const u16 aic_lin_table[ATH_AIC_MAX_AIC_LIN_TABLE] = {
 	33,   29,   26,	  23,	21,   18,   16,	  15,
 	13,   12,   10,	  9,	8,    7,    7,	  6,
 	5,    5,    4,	  4,	3
-};
+पूर्ण;
 
-static bool ar9003_hw_is_aic_enabled(struct ath_hw *ah)
-{
-	struct ath9k_hw_mci *mci_hw = &ah->btcoex_hw.mci;
+अटल bool ar9003_hw_is_aic_enabled(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath9k_hw_mci *mci_hw = &ah->btcoex_hw.mci;
 
 	/*
-	 * Disable AIC for now, until we have all the
-	 * HW code and the driver-layer support ready.
+	 * Disable AIC क्रम now, until we have all the
+	 * HW code and the driver-layer support पढ़ोy.
 	 */
-	return false;
+	वापस false;
 
-	if (mci_hw->config & ATH_MCI_CONFIG_DISABLE_AIC)
-		return false;
+	अगर (mci_hw->config & ATH_MCI_CONFIG_DISABLE_AIC)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int16_t ar9003_aic_find_valid(bool *cal_sram_valid,
+अटल पूर्णांक16_t ar9003_aic_find_valid(bool *cal_sram_valid,
 				     bool dir, u8 index)
-{
-	int16_t i;
+अणु
+	पूर्णांक16_t i;
 
-	if (dir) {
-		for (i = index + 1; i < ATH_AIC_MAX_BT_CHANNEL; i++) {
-			if (cal_sram_valid[i])
-				break;
-		}
-	} else {
-		for (i = index - 1; i >= 0; i--) {
-			if (cal_sram_valid[i])
-				break;
-		}
-	}
+	अगर (dir) अणु
+		क्रम (i = index + 1; i < ATH_AIC_MAX_BT_CHANNEL; i++) अणु
+			अगर (cal_sram_valid[i])
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = index - 1; i >= 0; i--) अणु
+			अगर (cal_sram_valid[i])
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if ((i >= ATH_AIC_MAX_BT_CHANNEL) || (i < 0))
+	अगर ((i >= ATH_AIC_MAX_BT_CHANNEL) || (i < 0))
 		i = -1;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /*
  * type 0: aic_lin_table, 1: com_att_db_table
  */
-static int16_t ar9003_aic_find_index(u8 type, int16_t value)
-{
-	int16_t i = -1;
+अटल पूर्णांक16_t ar9003_aic_find_index(u8 type, पूर्णांक16_t value)
+अणु
+	पूर्णांक16_t i = -1;
 
-	if (type == 0) {
-		for (i = ATH_AIC_MAX_AIC_LIN_TABLE - 1; i >= 0; i--) {
-			if (aic_lin_table[i] >= value)
-				break;
-		}
-	} else if (type == 1) {
-		for (i = 0; i < ATH_AIC_MAX_COM_ATT_DB_TABLE; i++) {
-			if (com_att_db_table[i] > value) {
+	अगर (type == 0) अणु
+		क्रम (i = ATH_AIC_MAX_AIC_LIN_TABLE - 1; i >= 0; i--) अणु
+			अगर (aic_lin_table[i] >= value)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (type == 1) अणु
+		क्रम (i = 0; i < ATH_AIC_MAX_COM_ATT_DB_TABLE; i++) अणु
+			अगर (com_att_db_table[i] > value) अणु
 				i--;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (i >= ATH_AIC_MAX_COM_ATT_DB_TABLE)
+		अगर (i >= ATH_AIC_MAX_COM_ATT_DB_TABLE)
 			i = -1;
-	}
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static void ar9003_aic_gain_table(struct ath_hw *ah)
-{
+अटल व्योम ar9003_aic_gain_table(काष्ठा ath_hw *ah)
+अणु
 	u32 aic_atten_word[19], i;
 
-	/* Config LNA gain difference */
+	/* Config LNA gain dअगरference */
 	REG_WRITE(ah, AR_PHY_BT_COEX_4, 0x2c200a00);
 	REG_WRITE(ah, AR_PHY_BT_COEX_5, 0x5c4e4438);
 
@@ -151,31 +152,31 @@ static void ar9003_aic_gain_table(struct ath_hw *ah)
 	aic_atten_word[18] = (0x7 & 0xf) << 14 | (0x1 & 0x1f) << 9  | (0x6 & 0xf) << 5 |
 		(0x1 & 0x1f);  /* -37 dB: 4'd7, 5'd01, -36 dB: 4'd6, 5'd01 */
 
-	/* Write to Gain table with auto increment enabled. */
+	/* Write to Gain table with स्वतः increment enabled. */
 	REG_WRITE(ah, (AR_PHY_AIC_SRAM_ADDR_B0 + 0x3000),
 		  (ATH_AIC_SRAM_AUTO_INCREMENT |
 		   ATH_AIC_SRAM_GAIN_TABLE_OFFSET));
 
-	for (i = 0; i < 19; i++) {
+	क्रम (i = 0; i < 19; i++) अणु
 		REG_WRITE(ah, (AR_PHY_AIC_SRAM_DATA_B0 + 0x3000),
 			  aic_atten_word[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u8 ar9003_aic_cal_start(struct ath_hw *ah, u8 min_valid_count)
-{
-	struct ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
-	int i;
+अटल u8 ar9003_aic_cal_start(काष्ठा ath_hw *ah, u8 min_valid_count)
+अणु
+	काष्ठा ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
+	पूर्णांक i;
 
-	/* Write to Gain table with auto increment enabled. */
+	/* Write to Gain table with स्वतः increment enabled. */
 	REG_WRITE(ah, (AR_PHY_AIC_SRAM_ADDR_B0 + 0x3000),
 		  (ATH_AIC_SRAM_AUTO_INCREMENT |
 		   ATH_AIC_SRAM_CAL_OFFSET));
 
-	for (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) {
+	क्रम (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) अणु
 		REG_WRITE(ah, (AR_PHY_AIC_SRAM_DATA_B0 + 0x3000), 0);
 		aic->aic_sram[i] = 0;
-	}
+	पूर्ण
 
 	REG_WRITE(ah, AR_PHY_AIC_CTRL_0_B0,
 		  (SM(0, AR_PHY_AIC_MON_ENABLE) |
@@ -243,12 +244,12 @@ static u8 ar9003_aic_cal_start(struct ath_hw *ah, u8 min_valid_count)
 
 	ar9003_aic_gain_table(ah);
 
-	/* Need to enable AIC reference signal in BT modem. */
+	/* Need to enable AIC reference संकेत in BT modem. */
 	REG_WRITE(ah, ATH_AIC_BT_JUPITER_CTRL,
 		  (REG_READ(ah, ATH_AIC_BT_JUPITER_CTRL) |
 		   ATH_AIC_BT_AIC_ENABLE));
 
-	aic->aic_cal_start_time = REG_READ(ah, AR_TSF_L32);
+	aic->aic_cal_start_समय = REG_READ(ah, AR_TSF_L32);
 
 	/* Start calibration */
 	REG_CLR_BIT(ah, AR_PHY_AIC_CTRL_0_B1, AR_PHY_AIC_CAL_ENABLE);
@@ -258,25 +259,25 @@ static u8 ar9003_aic_cal_start(struct ath_hw *ah, u8 min_valid_count)
 	aic->aic_caled_chan = 0;
 	aic->aic_cal_state = AIC_CAL_STATE_STARTED;
 
-	return aic->aic_cal_state;
-}
+	वापस aic->aic_cal_state;
+पूर्ण
 
-static bool ar9003_aic_cal_post_process(struct ath_hw *ah)
-{
-	struct ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
+अटल bool ar9003_aic_cal_post_process(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
 	bool cal_sram_valid[ATH_AIC_MAX_BT_CHANNEL];
-	struct ath_aic_out_info aic_sram[ATH_AIC_MAX_BT_CHANNEL];
+	काष्ठा ath_aic_out_info aic_sram[ATH_AIC_MAX_BT_CHANNEL];
 	u32 dir_path_gain_idx, quad_path_gain_idx, value;
 	u32 fixed_com_att_db;
-	int8_t dir_path_sign, quad_path_sign;
-	int16_t i;
+	पूर्णांक8_t dir_path_sign, quad_path_sign;
+	पूर्णांक16_t i;
 	bool ret = true;
 
-	memset(&cal_sram_valid, 0, sizeof(cal_sram_valid));
-	memset(&aic_sram, 0, sizeof(aic_sram));
+	स_रखो(&cal_sram_valid, 0, माप(cal_sram_valid));
+	स_रखो(&aic_sram, 0, माप(aic_sram));
 
-	for (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) {
-		struct ath_aic_sram_info sram;
+	क्रम (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) अणु
+		काष्ठा ath_aic_sram_info sram;
 		value = aic->aic_sram[i];
 
 		cal_sram_valid[i] = sram.valid =
@@ -286,13 +287,13 @@ static bool ar9003_aic_cal_post_process(struct ath_hw *ah)
 		sram.vga_quad_sign =
 			MS(value, AR_PHY_AIC_SRAM_VGA_QUAD_SIGN);
 		sram.rot_dir_att_db =
-			MS(value, AR_PHY_AIC_SRAM_ROT_DIR_ATT_DB);
+			MS(value, AR_PHY_AIC_SRAM_ROT_सूची_ATT_DB);
 		sram.vga_dir_sign =
-			MS(value, AR_PHY_AIC_SRAM_VGA_DIR_SIGN);
+			MS(value, AR_PHY_AIC_SRAM_VGA_सूची_SIGN);
 		sram.com_att_6db =
 			MS(value, AR_PHY_AIC_SRAM_COM_ATT_6DB);
 
-		if (sram.valid) {
+		अगर (sram.valid) अणु
 			dir_path_gain_idx = sram.rot_dir_att_db +
 				com_att_db_table[sram.com_att_6db];
 			quad_path_gain_idx = sram.rot_quad_att_db +
@@ -305,27 +306,27 @@ static bool ar9003_aic_cal_post_process(struct ath_hw *ah)
 				aic_lin_table[dir_path_gain_idx];
 			aic_sram[i].quad_path_gain_lin = quad_path_sign *
 				aic_lin_table[quad_path_gain_idx];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) {
-		int16_t start_idx, end_idx;
+	क्रम (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) अणु
+		पूर्णांक16_t start_idx, end_idx;
 
-		if (cal_sram_valid[i])
-			continue;
+		अगर (cal_sram_valid[i])
+			जारी;
 
 		start_idx = ar9003_aic_find_valid(cal_sram_valid, 0, i);
 		end_idx = ar9003_aic_find_valid(cal_sram_valid, 1, i);
 
-		if (start_idx < 0) {
+		अगर (start_idx < 0) अणु
 			/* extrapolation */
 			start_idx = end_idx;
 			end_idx = ar9003_aic_find_valid(cal_sram_valid, 1, start_idx);
 
-			if (end_idx < 0) {
+			अगर (end_idx < 0) अणु
 				ret = false;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			aic_sram[i].dir_path_gain_lin =
 				((aic_sram[start_idx].dir_path_gain_lin -
@@ -339,16 +340,16 @@ static bool ar9003_aic_cal_post_process(struct ath_hw *ah)
 				 (start_idx - i) + ((end_idx - i) >> 1)) /
 				(end_idx - i) +
 				aic_sram[start_idx].quad_path_gain_lin;
-		}
+		पूर्ण
 
-		if (end_idx < 0) {
+		अगर (end_idx < 0) अणु
 			/* extrapolation */
 			end_idx = ar9003_aic_find_valid(cal_sram_valid, 0, start_idx);
 
-			if (end_idx < 0) {
+			अगर (end_idx < 0) अणु
 				ret = false;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			aic_sram[i].dir_path_gain_lin =
 				((aic_sram[start_idx].dir_path_gain_lin -
@@ -363,8 +364,8 @@ static bool ar9003_aic_cal_post_process(struct ath_hw *ah)
 				(start_idx - end_idx) +
 				aic_sram[start_idx].quad_path_gain_lin;
 
-		} else if (start_idx >= 0){
-			/* interpolation */
+		पूर्ण अन्यथा अगर (start_idx >= 0)अणु
+			/* पूर्णांकerpolation */
 			aic_sram[i].dir_path_gain_lin =
 				(((end_idx - i) * aic_sram[start_idx].dir_path_gain_lin) +
 				 ((i - start_idx) * aic_sram[end_idx].dir_path_gain_lin) +
@@ -375,21 +376,21 @@ static bool ar9003_aic_cal_post_process(struct ath_hw *ah)
 				 ((i - start_idx) * aic_sram[end_idx].quad_path_gain_lin) +
 				 ((end_idx - start_idx) >> 1))/
 				(end_idx - start_idx);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* From dir/quad_path_gain_lin to sram. */
 	i = ar9003_aic_find_valid(cal_sram_valid, 1, 0);
-	if (i < 0) {
+	अगर (i < 0) अणु
 		i = 0;
 		ret = false;
-	}
+	पूर्ण
 	fixed_com_att_db = com_att_db_table[MS(aic->aic_sram[i],
 					    AR_PHY_AIC_SRAM_COM_ATT_6DB)];
 
-	for (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) {
-		int16_t rot_dir_path_att_db, rot_quad_path_att_db;
-		struct ath_aic_sram_info sram;
+	क्रम (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) अणु
+		पूर्णांक16_t rot_dir_path_att_db, rot_quad_path_att_db;
+		काष्ठा ath_aic_sram_info sram;
 
 		sram.vga_dir_sign =
 			(aic_sram[i].dir_path_gain_lin >= 0) ? 1 : 0;
@@ -397,10 +398,10 @@ static bool ar9003_aic_cal_post_process(struct ath_hw *ah)
 			(aic_sram[i].quad_path_gain_lin >= 0) ? 1 : 0;
 
 		rot_dir_path_att_db =
-			ar9003_aic_find_index(0, abs(aic_sram[i].dir_path_gain_lin)) -
+			ar9003_aic_find_index(0, असल(aic_sram[i].dir_path_gain_lin)) -
 			fixed_com_att_db;
 		rot_quad_path_att_db =
-			ar9003_aic_find_index(0, abs(aic_sram[i].quad_path_gain_lin)) -
+			ar9003_aic_find_index(0, असल(aic_sram[i].quad_path_gain_lin)) -
 			fixed_com_att_db;
 
 		sram.com_att_6db =
@@ -410,15 +411,15 @@ static bool ar9003_aic_cal_post_process(struct ath_hw *ah)
 
 		sram.rot_dir_att_db =
 			min(max(rot_dir_path_att_db,
-				(int16_t)ATH_AIC_MIN_ROT_DIR_ATT_DB),
-			    ATH_AIC_MAX_ROT_DIR_ATT_DB);
+				(पूर्णांक16_t)ATH_AIC_MIN_ROT_सूची_ATT_DB),
+			    ATH_AIC_MAX_ROT_सूची_ATT_DB);
 		sram.rot_quad_att_db =
 			min(max(rot_quad_path_att_db,
-				(int16_t)ATH_AIC_MIN_ROT_QUAD_ATT_DB),
+				(पूर्णांक16_t)ATH_AIC_MIN_ROT_QUAD_ATT_DB),
 			    ATH_AIC_MAX_ROT_QUAD_ATT_DB);
 
 		aic->aic_sram[i] = (SM(sram.vga_dir_sign,
-				       AR_PHY_AIC_SRAM_VGA_DIR_SIGN) |
+				       AR_PHY_AIC_SRAM_VGA_सूची_SIGN) |
 				    SM(sram.vga_quad_sign,
 				       AR_PHY_AIC_SRAM_VGA_QUAD_SIGN) |
 				    SM(sram.com_att_6db,
@@ -426,135 +427,135 @@ static bool ar9003_aic_cal_post_process(struct ath_hw *ah)
 				    SM(sram.valid,
 				       AR_PHY_AIC_SRAM_VALID) |
 				    SM(sram.rot_dir_att_db,
-				       AR_PHY_AIC_SRAM_ROT_DIR_ATT_DB) |
+				       AR_PHY_AIC_SRAM_ROT_सूची_ATT_DB) |
 				    SM(sram.rot_quad_att_db,
 				       AR_PHY_AIC_SRAM_ROT_QUAD_ATT_DB));
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ar9003_aic_cal_done(struct ath_hw *ah)
-{
-	struct ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
+अटल व्योम ar9003_aic_cal_करोne(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
 
-	/* Disable AIC reference signal in BT modem. */
+	/* Disable AIC reference संकेत in BT modem. */
 	REG_WRITE(ah, ATH_AIC_BT_JUPITER_CTRL,
 		  (REG_READ(ah, ATH_AIC_BT_JUPITER_CTRL) &
 		   ~ATH_AIC_BT_AIC_ENABLE));
 
-	if (ar9003_aic_cal_post_process(ah))
+	अगर (ar9003_aic_cal_post_process(ah))
 		aic->aic_cal_state = AIC_CAL_STATE_DONE;
-	else
+	अन्यथा
 		aic->aic_cal_state = AIC_CAL_STATE_ERROR;
-}
+पूर्ण
 
-static u8 ar9003_aic_cal_continue(struct ath_hw *ah, bool cal_once)
-{
-	struct ath_common *common = ath9k_hw_common(ah);
-	struct ath9k_hw_mci *mci_hw = &ah->btcoex_hw.mci;
-	struct ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
-	int i, num_chan;
+अटल u8 ar9003_aic_cal_जारी(काष्ठा ath_hw *ah, bool cal_once)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	काष्ठा ath9k_hw_mci *mci_hw = &ah->btcoex_hw.mci;
+	काष्ठा ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
+	पूर्णांक i, num_chan;
 
 	num_chan = MS(mci_hw->config, ATH_MCI_CONFIG_AIC_CAL_NUM_CHAN);
 
-	if (!num_chan) {
+	अगर (!num_chan) अणु
 		aic->aic_cal_state = AIC_CAL_STATE_ERROR;
-		return aic->aic_cal_state;
-	}
+		वापस aic->aic_cal_state;
+	पूर्ण
 
-	if (cal_once) {
-		for (i = 0; i < 10000; i++) {
-			if ((REG_READ(ah, AR_PHY_AIC_CTRL_0_B1) &
+	अगर (cal_once) अणु
+		क्रम (i = 0; i < 10000; i++) अणु
+			अगर ((REG_READ(ah, AR_PHY_AIC_CTRL_0_B1) &
 			     AR_PHY_AIC_CAL_ENABLE) == 0)
-				break;
+				अवरोध;
 
 			udelay(100);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Use AR_PHY_AIC_CAL_ENABLE bit instead of AR_PHY_AIC_CAL_DONE.
-	 * Sometimes CAL_DONE bit is not asserted.
+	 * Someबार CAL_DONE bit is not निश्चितed.
 	 */
-	if ((REG_READ(ah, AR_PHY_AIC_CTRL_0_B1) &
-	     AR_PHY_AIC_CAL_ENABLE) != 0) {
+	अगर ((REG_READ(ah, AR_PHY_AIC_CTRL_0_B1) &
+	     AR_PHY_AIC_CAL_ENABLE) != 0) अणु
 		ath_dbg(common, MCI, "AIC cal is not done after 40ms");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	REG_WRITE(ah, AR_PHY_AIC_SRAM_ADDR_B1,
 		  (ATH_AIC_SRAM_CAL_OFFSET | ATH_AIC_SRAM_AUTO_INCREMENT));
 
-	for (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) {
+	क्रम (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) अणु
 		u32 value;
 
 		value = REG_READ(ah, AR_PHY_AIC_SRAM_DATA_B1);
 
-		if (value & 0x01) {
-			if (aic->aic_sram[i] == 0)
+		अगर (value & 0x01) अणु
+			अगर (aic->aic_sram[i] == 0)
 				aic->aic_caled_chan++;
 
 			aic->aic_sram[i] = value;
 
-			if (!cal_once)
-				break;
-		}
-	}
+			अगर (!cal_once)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if ((aic->aic_caled_chan >= num_chan) || cal_once) {
-		ar9003_aic_cal_done(ah);
-	} else {
+	अगर ((aic->aic_caled_chan >= num_chan) || cal_once) अणु
+		ar9003_aic_cal_करोne(ah);
+	पूर्ण अन्यथा अणु
 		/* Start calibration */
 		REG_CLR_BIT(ah, AR_PHY_AIC_CTRL_0_B1, AR_PHY_AIC_CAL_ENABLE);
 		REG_SET_BIT(ah, AR_PHY_AIC_CTRL_0_B1,
 			    AR_PHY_AIC_CAL_CH_VALID_RESET);
 		REG_SET_BIT(ah, AR_PHY_AIC_CTRL_0_B1, AR_PHY_AIC_CAL_ENABLE);
-	}
-exit:
-	return aic->aic_cal_state;
+	पूर्ण
+निकास:
+	वापस aic->aic_cal_state;
 
-}
+पूर्ण
 
-u8 ar9003_aic_calibration(struct ath_hw *ah)
-{
-	struct ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
+u8 ar9003_aic_calibration(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
 	u8 cal_ret = AIC_CAL_STATE_ERROR;
 
-	switch (aic->aic_cal_state) {
-	case AIC_CAL_STATE_IDLE:
+	चयन (aic->aic_cal_state) अणु
+	हाल AIC_CAL_STATE_IDLE:
 		cal_ret = ar9003_aic_cal_start(ah, 1);
-		break;
-	case AIC_CAL_STATE_STARTED:
-		cal_ret = ar9003_aic_cal_continue(ah, false);
-		break;
-	case AIC_CAL_STATE_DONE:
+		अवरोध;
+	हाल AIC_CAL_STATE_STARTED:
+		cal_ret = ar9003_aic_cal_जारी(ah, false);
+		अवरोध;
+	हाल AIC_CAL_STATE_DONE:
 		cal_ret = AIC_CAL_STATE_DONE;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return cal_ret;
-}
+	वापस cal_ret;
+पूर्ण
 
-u8 ar9003_aic_start_normal(struct ath_hw *ah)
-{
-	struct ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
-	int16_t i;
+u8 ar9003_aic_start_normal(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
+	पूर्णांक16_t i;
 
-	if (aic->aic_cal_state != AIC_CAL_STATE_DONE)
-		return 1;
+	अगर (aic->aic_cal_state != AIC_CAL_STATE_DONE)
+		वापस 1;
 
 	ar9003_aic_gain_table(ah);
 
 	REG_WRITE(ah, AR_PHY_AIC_SRAM_ADDR_B1, ATH_AIC_SRAM_AUTO_INCREMENT);
 
-	for (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) {
+	क्रम (i = 0; i < ATH_AIC_MAX_BT_CHANNEL; i++) अणु
 		REG_WRITE(ah, AR_PHY_AIC_SRAM_DATA_B1, aic->aic_sram[i]);
-	}
+	पूर्ण
 
-	/* FIXME: Replace these with proper register names */
+	/* FIXME: Replace these with proper रेजिस्टर names */
 	REG_WRITE(ah, 0xa6b0, 0x80);
 	REG_WRITE(ah, 0xa6b4, 0x5b2df0);
 	REG_WRITE(ah, 0xa6b8, 0x10762cc8);
@@ -567,34 +568,34 @@ u8 ar9003_aic_start_normal(struct ath_hw *ah)
 
 	aic->aic_enabled = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u8 ar9003_aic_cal_reset(struct ath_hw *ah)
-{
-	struct ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
+u8 ar9003_aic_cal_reset(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath9k_hw_aic *aic = &ah->btcoex_hw.aic;
 
 	aic->aic_cal_state = AIC_CAL_STATE_IDLE;
-	return aic->aic_cal_state;
-}
+	वापस aic->aic_cal_state;
+पूर्ण
 
-u8 ar9003_aic_calibration_single(struct ath_hw *ah)
-{
-	struct ath9k_hw_mci *mci_hw = &ah->btcoex_hw.mci;
+u8 ar9003_aic_calibration_single(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath9k_hw_mci *mci_hw = &ah->btcoex_hw.mci;
 	u8 cal_ret;
-	int num_chan;
+	पूर्णांक num_chan;
 
 	num_chan = MS(mci_hw->config, ATH_MCI_CONFIG_AIC_CAL_NUM_CHAN);
 
-	(void) ar9003_aic_cal_start(ah, num_chan);
-	cal_ret = ar9003_aic_cal_continue(ah, true);
+	(व्योम) ar9003_aic_cal_start(ah, num_chan);
+	cal_ret = ar9003_aic_cal_जारी(ah, true);
 
-	return cal_ret;
-}
+	वापस cal_ret;
+पूर्ण
 
-void ar9003_hw_attach_aic_ops(struct ath_hw *ah)
-{
-	struct ath_hw_private_ops *priv_ops = ath9k_hw_private_ops(ah);
+व्योम ar9003_hw_attach_aic_ops(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath_hw_निजी_ops *priv_ops = ath9k_hw_निजी_ops(ah);
 
 	priv_ops->is_aic_enabled = ar9003_hw_is_aic_enabled;
-}
+पूर्ण

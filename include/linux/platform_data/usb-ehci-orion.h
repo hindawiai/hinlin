@@ -1,24 +1,25 @@
+<शैली गुरु>
 /*
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef __USB_EHCI_ORION_H
-#define __USB_EHCI_ORION_H
+#अगर_अघोषित __USB_EHCI_ORION_H
+#घोषणा __USB_EHCI_ORION_H
 
-#include <linux/mbus.h>
+#समावेश <linux/mbus.h>
 
-enum orion_ehci_phy_ver {
+क्रमागत orion_ehci_phy_ver अणु
 	EHCI_PHY_ORION,
 	EHCI_PHY_DD,
 	EHCI_PHY_KW,
 	EHCI_PHY_NA,
-};
+पूर्ण;
 
-struct orion_ehci_data {
-	enum orion_ehci_phy_ver phy_version;
-};
+काष्ठा orion_ehci_data अणु
+	क्रमागत orion_ehci_phy_ver phy_version;
+पूर्ण;
 
 
-#endif
+#पूर्ण_अगर

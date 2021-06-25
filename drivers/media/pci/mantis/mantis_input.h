@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Mantis PCI bridge driver
 
@@ -6,11 +7,11 @@
 
 */
 
-#ifndef __MANTIS_INPUT_H
-#define __MANTIS_INPUT_H
+#अगर_अघोषित __MANTIS_INPUT_H
+#घोषणा __MANTIS_INPUT_H
 
-int mantis_input_init(struct mantis_pci *mantis);
-void mantis_input_exit(struct mantis_pci *mantis);
-void mantis_input_process(struct mantis_pci *mantis, int scancode);
+पूर्णांक mantis_input_init(काष्ठा mantis_pci *mantis);
+व्योम mantis_input_निकास(काष्ठा mantis_pci *mantis);
+व्योम mantis_input_process(काष्ठा mantis_pci *mantis, पूर्णांक scancode);
 
-#endif /* __MANTIS_UART_H */
+#पूर्ण_अगर /* __MANTIS_UART_H */

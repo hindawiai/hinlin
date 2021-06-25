@@ -1,340 +1,341 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ctype.h>
-#include "spk_types.h"
-#include "spk_priv.h"
-#include "speakup.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/प्रकार.स>
+#समावेश "spk_types.h"
+#समावेश "spk_priv.h"
+#समावेश "speakup.h"
 
-static struct st_var_header var_headers[] = {
-	{ "version", VERSION, VAR_PROC, NULL, NULL },
-	{ "synth_name", SYNTH, VAR_PROC, NULL, NULL },
-	{ "keymap", KEYMAP, VAR_PROC, NULL, NULL },
-	{ "silent", SILENT, VAR_PROC, NULL, NULL },
-	{ "punc_some", PUNC_SOME, VAR_PROC, NULL, NULL },
-	{ "punc_most", PUNC_MOST, VAR_PROC, NULL, NULL },
-	{ "punc_all", PUNC_ALL, VAR_PROC, NULL, NULL },
-	{ "delimiters", DELIM, VAR_PROC, NULL, NULL },
-	{ "repeats", REPEATS, VAR_PROC, NULL, NULL },
-	{ "ex_num", EXNUMBER, VAR_PROC, NULL, NULL },
-	{ "characters", CHARS, VAR_PROC, NULL, NULL },
-	{ "synth_direct", SYNTH_DIRECT, VAR_PROC, NULL, NULL },
-	{ "caps_start", CAPS_START, VAR_STRING, spk_str_caps_start, NULL },
-	{ "caps_stop", CAPS_STOP, VAR_STRING, spk_str_caps_stop, NULL },
-	{ "delay_time", DELAY, VAR_TIME, NULL, NULL },
-	{ "trigger_time", TRIGGER, VAR_TIME, NULL, NULL },
-	{ "jiffy_delta", JIFFY, VAR_TIME, NULL, NULL },
-	{ "full_time", FULL, VAR_TIME, NULL, NULL },
-	{ "flush_time", FLUSH, VAR_TIME, NULL, NULL },
-	{ "spell_delay", SPELL_DELAY, VAR_NUM, &spk_spell_delay, NULL },
-	{ "bleeps", BLEEPS, VAR_NUM, &spk_bleeps, NULL },
-	{ "attrib_bleep", ATTRIB_BLEEP, VAR_NUM, &spk_attrib_bleep, NULL },
-	{ "bleep_time", BLEEP_TIME, VAR_TIME, &spk_bleep_time, NULL },
-	{ "cursor_time", CURSOR_TIME, VAR_TIME, NULL, NULL },
-	{ "punc_level", PUNC_LEVEL, VAR_NUM, &spk_punc_level, NULL },
-	{ "reading_punc", READING_PUNC, VAR_NUM, &spk_reading_punc, NULL },
-	{ "say_control", SAY_CONTROL, VAR_NUM, &spk_say_ctrl, NULL },
-	{ "say_word_ctl", SAY_WORD_CTL, VAR_NUM, &spk_say_word_ctl, NULL },
-	{ "no_interrupt", NO_INTERRUPT, VAR_NUM, &spk_no_intr, NULL },
-	{ "key_echo", KEY_ECHO, VAR_NUM, &spk_key_echo, NULL },
-	{ "bell_pos", BELL_POS, VAR_NUM, &spk_bell_pos, NULL },
-	{ "rate", RATE, VAR_NUM, NULL, NULL },
-	{ "pitch", PITCH, VAR_NUM, NULL, NULL },
-	{ "inflection", INFLECTION, VAR_NUM, NULL, NULL },
-	{ "vol", VOL, VAR_NUM, NULL, NULL },
-	{ "tone", TONE, VAR_NUM, NULL, NULL },
-	{ "punct", PUNCT, VAR_NUM, NULL, NULL   },
-	{ "voice", VOICE, VAR_NUM, NULL, NULL },
-	{ "freq", FREQUENCY, VAR_NUM, NULL, NULL },
-	{ "lang", LANG, VAR_NUM, NULL, NULL },
-	{ "chartab", CHARTAB, VAR_PROC, NULL, NULL },
-	{ "direct", DIRECT, VAR_NUM, NULL, NULL },
-	{ "pause", PAUSE, VAR_STRING, spk_str_pause, NULL },
-};
+अटल काष्ठा st_var_header var_headers[] = अणु
+	अणु "version", VERSION, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "synth_name", SYNTH, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "keymap", KEYMAP, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "silent", SILENT, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "punc_some", PUNC_SOME, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "punc_most", PUNC_MOST, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "punc_all", PUNC_ALL, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "delimiters", DELIM, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "repeats", REPEATS, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "ex_num", EXNUMBER, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "characters", CHARS, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "synth_direct", SYNTH_सूचीECT, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "caps_start", CAPS_START, VAR_STRING, spk_str_caps_start, शून्य पूर्ण,
+	अणु "caps_stop", CAPS_STOP, VAR_STRING, spk_str_caps_stop, शून्य पूर्ण,
+	अणु "delay_time", DELAY, VAR_TIME, शून्य, शून्य पूर्ण,
+	अणु "trigger_time", TRIGGER, VAR_TIME, शून्य, शून्य पूर्ण,
+	अणु "jiffy_delta", JIFFY, VAR_TIME, शून्य, शून्य पूर्ण,
+	अणु "full_time", FULL, VAR_TIME, शून्य, शून्य पूर्ण,
+	अणु "flush_time", FLUSH, VAR_TIME, शून्य, शून्य पूर्ण,
+	अणु "spell_delay", SPELL_DELAY, VAR_NUM, &spk_spell_delay, शून्य पूर्ण,
+	अणु "bleeps", BLEEPS, VAR_NUM, &spk_bleeps, शून्य पूर्ण,
+	अणु "attrib_bleep", ATTRIB_BLEEP, VAR_NUM, &spk_attrib_bleep, शून्य पूर्ण,
+	अणु "bleep_time", BLEEP_TIME, VAR_TIME, &spk_bleep_समय, शून्य पूर्ण,
+	अणु "cursor_time", CURSOR_TIME, VAR_TIME, शून्य, शून्य पूर्ण,
+	अणु "punc_level", PUNC_LEVEL, VAR_NUM, &spk_punc_level, शून्य पूर्ण,
+	अणु "reading_punc", READING_PUNC, VAR_NUM, &spk_पढ़ोing_punc, शून्य पूर्ण,
+	अणु "say_control", SAY_CONTROL, VAR_NUM, &spk_say_ctrl, शून्य पूर्ण,
+	अणु "say_word_ctl", SAY_WORD_CTL, VAR_NUM, &spk_say_word_ctl, शून्य पूर्ण,
+	अणु "no_interrupt", NO_INTERRUPT, VAR_NUM, &spk_no_पूर्णांकr, शून्य पूर्ण,
+	अणु "key_echo", KEY_ECHO, VAR_NUM, &spk_key_echo, शून्य पूर्ण,
+	अणु "bell_pos", BELL_POS, VAR_NUM, &spk_bell_pos, शून्य पूर्ण,
+	अणु "rate", RATE, VAR_NUM, शून्य, शून्य पूर्ण,
+	अणु "pitch", PITCH, VAR_NUM, शून्य, शून्य पूर्ण,
+	अणु "inflection", INFLECTION, VAR_NUM, शून्य, शून्य पूर्ण,
+	अणु "vol", VOL, VAR_NUM, शून्य, शून्य पूर्ण,
+	अणु "tone", TONE, VAR_NUM, शून्य, शून्य पूर्ण,
+	अणु "punct", PUNCT, VAR_NUM, शून्य, शून्य   पूर्ण,
+	अणु "voice", VOICE, VAR_NUM, शून्य, शून्य पूर्ण,
+	अणु "freq", FREQUENCY, VAR_NUM, शून्य, शून्य पूर्ण,
+	अणु "lang", LANG, VAR_NUM, शून्य, शून्य पूर्ण,
+	अणु "chartab", CHARTAB, VAR_PROC, शून्य, शून्य पूर्ण,
+	अणु "direct", सूचीECT, VAR_NUM, शून्य, शून्य पूर्ण,
+	अणु "pause", PAUSE, VAR_STRING, spk_str_छोड़ो, शून्य पूर्ण,
+पूर्ण;
 
-static struct st_var_header *var_ptrs[MAXVARS] = { NULL, NULL, NULL };
+अटल काष्ठा st_var_header *var_ptrs[MAXVARS] = अणु शून्य, शून्य, शून्य पूर्ण;
 
-static struct punc_var_t punc_vars[] = {
-	{ PUNC_SOME, 1 },
-	{ PUNC_MOST, 2 },
-	{ PUNC_ALL, 3 },
-	{ DELIM, 4 },
-	{ REPEATS, 5 },
-	{ EXNUMBER, 6 },
-	{ -1, -1 },
-};
+अटल काष्ठा punc_var_t punc_vars[] = अणु
+	अणु PUNC_SOME, 1 पूर्ण,
+	अणु PUNC_MOST, 2 पूर्ण,
+	अणु PUNC_ALL, 3 पूर्ण,
+	अणु DELIM, 4 पूर्ण,
+	अणु REPEATS, 5 पूर्ण,
+	अणु EXNUMBER, 6 पूर्ण,
+	अणु -1, -1 पूर्ण,
+पूर्ण;
 
-int spk_chartab_get_value(char *keyword)
-{
-	int value = 0;
+पूर्णांक spk_अक्षरtab_get_value(अक्षर *keyword)
+अणु
+	पूर्णांक value = 0;
 
-	if (!strcmp(keyword, "ALPHA"))
+	अगर (!म_भेद(keyword, "ALPHA"))
 		value = ALPHA;
-	else if (!strcmp(keyword, "B_CTL"))
+	अन्यथा अगर (!म_भेद(keyword, "B_CTL"))
 		value = B_CTL;
-	else if (!strcmp(keyword, "WDLM"))
+	अन्यथा अगर (!म_भेद(keyword, "WDLM"))
 		value = WDLM;
-	else if (!strcmp(keyword, "A_PUNC"))
+	अन्यथा अगर (!म_भेद(keyword, "A_PUNC"))
 		value = A_PUNC;
-	else if (!strcmp(keyword, "PUNC"))
+	अन्यथा अगर (!म_भेद(keyword, "PUNC"))
 		value = PUNC;
-	else if (!strcmp(keyword, "NUM"))
+	अन्यथा अगर (!म_भेद(keyword, "NUM"))
 		value = NUM;
-	else if (!strcmp(keyword, "A_CAP"))
+	अन्यथा अगर (!म_भेद(keyword, "A_CAP"))
 		value = A_CAP;
-	else if (!strcmp(keyword, "B_CAPSYM"))
+	अन्यथा अगर (!म_भेद(keyword, "B_CAPSYM"))
 		value = B_CAPSYM;
-	else if (!strcmp(keyword, "B_SYM"))
+	अन्यथा अगर (!म_भेद(keyword, "B_SYM"))
 		value = B_SYM;
-	return value;
-}
+	वापस value;
+पूर्ण
 
-void speakup_register_var(struct var_t *var)
-{
-	static char nothing[2] = "\0";
-	int i;
-	struct st_var_header *p_header;
+व्योम speakup_रेजिस्टर_var(काष्ठा var_t *var)
+अणु
+	अटल अक्षर nothing[2] = "\0";
+	पूर्णांक i;
+	काष्ठा st_var_header *p_header;
 
 	BUG_ON(!var || var->var_id < 0 || var->var_id >= MAXVARS);
-	if (!var_ptrs[0]) {
-		for (i = 0; i < MAXVARS; i++) {
+	अगर (!var_ptrs[0]) अणु
+		क्रम (i = 0; i < MAXVARS; i++) अणु
 			p_header = &var_headers[i];
 			var_ptrs[p_header->var_id] = p_header;
-			p_header->data = NULL;
-		}
-	}
+			p_header->data = शून्य;
+		पूर्ण
+	पूर्ण
 	p_header = var_ptrs[var->var_id];
-	if (p_header->data)
-		return;
+	अगर (p_header->data)
+		वापस;
 	p_header->data = var;
-	switch (p_header->var_type) {
-	case VAR_STRING:
+	चयन (p_header->var_type) अणु
+	हाल VAR_STRING:
 		spk_set_string_var(nothing, p_header, 0);
-		break;
-	case VAR_NUM:
-	case VAR_TIME:
+		अवरोध;
+	हाल VAR_NUM:
+	हाल VAR_TIME:
 		spk_set_num_var(0, p_header, E_DEFAULT);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void speakup_unregister_var(enum var_id_t var_id)
-{
-	struct st_var_header *p_header;
+व्योम speakup_unरेजिस्टर_var(क्रमागत var_id_t var_id)
+अणु
+	काष्ठा st_var_header *p_header;
 
 	BUG_ON(var_id < 0 || var_id >= MAXVARS);
 	p_header = var_ptrs[var_id];
-	p_header->data = NULL;
-}
+	p_header->data = शून्य;
+पूर्ण
 
-struct st_var_header *spk_get_var_header(enum var_id_t var_id)
-{
-	struct st_var_header *p_header;
+काष्ठा st_var_header *spk_get_var_header(क्रमागत var_id_t var_id)
+अणु
+	काष्ठा st_var_header *p_header;
 
-	if (var_id < 0 || var_id >= MAXVARS)
-		return NULL;
+	अगर (var_id < 0 || var_id >= MAXVARS)
+		वापस शून्य;
 	p_header = var_ptrs[var_id];
-	if (!p_header->data)
-		return NULL;
-	return p_header;
-}
+	अगर (!p_header->data)
+		वापस शून्य;
+	वापस p_header;
+पूर्ण
 
-struct st_var_header *spk_var_header_by_name(const char *name)
-{
-	int i;
+काष्ठा st_var_header *spk_var_header_by_name(स्थिर अक्षर *name)
+अणु
+	पूर्णांक i;
 
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
-	for (i = 0; i < MAXVARS; i++) {
-		if (strcmp(name, var_ptrs[i]->name) == 0)
-			return var_ptrs[i];
-	}
-	return NULL;
-}
+	क्रम (i = 0; i < MAXVARS; i++) अणु
+		अगर (म_भेद(name, var_ptrs[i]->name) == 0)
+			वापस var_ptrs[i];
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct var_t *spk_get_var(enum var_id_t var_id)
-{
+काष्ठा var_t *spk_get_var(क्रमागत var_id_t var_id)
+अणु
 	BUG_ON(var_id < 0 || var_id >= MAXVARS);
 	BUG_ON(!var_ptrs[var_id]);
-	return var_ptrs[var_id]->data;
-}
+	वापस var_ptrs[var_id]->data;
+पूर्ण
 EXPORT_SYMBOL_GPL(spk_get_var);
 
-struct punc_var_t *spk_get_punc_var(enum var_id_t var_id)
-{
-	struct punc_var_t *rv = NULL;
-	struct punc_var_t *where;
+काष्ठा punc_var_t *spk_get_punc_var(क्रमागत var_id_t var_id)
+अणु
+	काष्ठा punc_var_t *rv = शून्य;
+	काष्ठा punc_var_t *where;
 
 	where = punc_vars;
-	while ((where->var_id != -1) && (!rv)) {
-		if (where->var_id == var_id)
+	जबतक ((where->var_id != -1) && (!rv)) अणु
+		अगर (where->var_id == var_id)
 			rv = where;
-		else
+		अन्यथा
 			where++;
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-/* handlers for setting vars */
-int spk_set_num_var(int input, struct st_var_header *var, int how)
-{
-	int val;
-	int *p_val = var->p_val;
-	char buf[32];
-	char *cp;
-	struct var_t *var_data = var->data;
+/* handlers क्रम setting vars */
+पूर्णांक spk_set_num_var(पूर्णांक input, काष्ठा st_var_header *var, पूर्णांक how)
+अणु
+	पूर्णांक val;
+	पूर्णांक *p_val = var->p_val;
+	अक्षर buf[32];
+	अक्षर *cp;
+	काष्ठा var_t *var_data = var->data;
 
-	if (!var_data)
-		return -ENODATA;
+	अगर (!var_data)
+		वापस -ENODATA;
 
 	val = var_data->u.n.value;
-	switch (how) {
-	case E_NEW_DEFAULT:
-		if (input < var_data->u.n.low || input > var_data->u.n.high)
-			return -ERANGE;
-		var_data->u.n.default_val = input;
-		return 0;
-	case E_DEFAULT:
-		val = var_data->u.n.default_val;
-		break;
-	case E_SET:
+	चयन (how) अणु
+	हाल E_NEW_DEFAULT:
+		अगर (input < var_data->u.n.low || input > var_data->u.n.high)
+			वापस -दुस्फल;
+		var_data->u.n.शेष_val = input;
+		वापस 0;
+	हाल E_DEFAULT:
+		val = var_data->u.n.शेष_val;
+		अवरोध;
+	हाल E_SET:
 		val = input;
-		break;
-	case E_INC:
+		अवरोध;
+	हाल E_INC:
 		val += input;
-		break;
-	case E_DEC:
+		अवरोध;
+	हाल E_DEC:
 		val -= input;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (val < var_data->u.n.low || val > var_data->u.n.high)
-		return -ERANGE;
+	अगर (val < var_data->u.n.low || val > var_data->u.n.high)
+		वापस -दुस्फल;
 
 	var_data->u.n.value = val;
-	if (var->var_type == VAR_TIME && p_val) {
-		*p_val = msecs_to_jiffies(val);
-		return 0;
-	}
-	if (p_val)
+	अगर (var->var_type == VAR_TIME && p_val) अणु
+		*p_val = msecs_to_jअगरfies(val);
+		वापस 0;
+	पूर्ण
+	अगर (p_val)
 		*p_val = val;
-	if (var->var_id == PUNC_LEVEL) {
+	अगर (var->var_id == PUNC_LEVEL) अणु
 		spk_punc_mask = spk_punc_masks[val];
-		return 0;
-	}
-	if (var_data->u.n.multiplier != 0)
+		वापस 0;
+	पूर्ण
+	अगर (var_data->u.n.multiplier != 0)
 		val *= var_data->u.n.multiplier;
 	val += var_data->u.n.offset;
-	if (var->var_id < FIRST_SYNTH_VAR || !synth)
-		return 0;
-	if (synth->synth_adjust)
-		return synth->synth_adjust(var);
+	अगर (var->var_id < FIRST_SYNTH_VAR || !synth)
+		वापस 0;
+	अगर (synth->synth_adjust)
+		वापस synth->synth_adjust(var);
 
-	if (!var_data->u.n.synth_fmt)
-		return 0;
-	if (var->var_id == PITCH)
+	अगर (!var_data->u.n.synth_fmt)
+		वापस 0;
+	अगर (var->var_id == PITCH)
 		cp = spk_pitch_buff;
-	else
+	अन्यथा
 		cp = buf;
-	if (!var_data->u.n.out_str)
-		sprintf(cp, var_data->u.n.synth_fmt, (int)val);
-	else
-		sprintf(cp, var_data->u.n.synth_fmt,
+	अगर (!var_data->u.n.out_str)
+		प्र_लिखो(cp, var_data->u.n.synth_fmt, (पूर्णांक)val);
+	अन्यथा
+		प्र_लिखो(cp, var_data->u.n.synth_fmt,
 			var_data->u.n.out_str[val]);
-	synth_printf("%s", cp);
-	return 0;
-}
+	synth_म_लिखो("%s", cp);
+	वापस 0;
+पूर्ण
 
-int spk_set_string_var(const char *page, struct st_var_header *var, int len)
-{
-	struct var_t *var_data = var->data;
+पूर्णांक spk_set_string_var(स्थिर अक्षर *page, काष्ठा st_var_header *var, पूर्णांक len)
+अणु
+	काष्ठा var_t *var_data = var->data;
 
-	if (!var_data)
-		return -ENODATA;
-	if (len > MAXVARLEN)
-		return -E2BIG;
-	if (!len) {
-		if (!var_data->u.s.default_val)
-			return 0;
-		if (!var->p_val)
-			var->p_val = var_data->u.s.default_val;
-		if (var->p_val != var_data->u.s.default_val)
-			strcpy((char *)var->p_val, var_data->u.s.default_val);
-		return -ERESTART;
-	} else if (var->p_val) {
-		strcpy((char *)var->p_val, page);
-	} else {
-		return -E2BIG;
-	}
-	return 0;
-}
+	अगर (!var_data)
+		वापस -ENODATA;
+	अगर (len > MAXVARLEN)
+		वापस -E2BIG;
+	अगर (!len) अणु
+		अगर (!var_data->u.s.शेष_val)
+			वापस 0;
+		अगर (!var->p_val)
+			var->p_val = var_data->u.s.शेष_val;
+		अगर (var->p_val != var_data->u.s.शेष_val)
+			म_नकल((अक्षर *)var->p_val, var_data->u.s.शेष_val);
+		वापस -ERESTART;
+	पूर्ण अन्यथा अगर (var->p_val) अणु
+		म_नकल((अक्षर *)var->p_val, page);
+	पूर्ण अन्यथा अणु
+		वापस -E2BIG;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * spk_set_mask_bits sets or clears the punc/delim/repeat bits,
- * if input is null uses the defaults.
- * values for how: 0 clears bits of chars supplied,
- * 1 clears allk, 2 sets bits for chars
+ * अगर input is null uses the शेषs.
+ * values क्रम how: 0 clears bits of अक्षरs supplied,
+ * 1 clears allk, 2 sets bits क्रम अक्षरs
  */
-int spk_set_mask_bits(const char *input, const int which, const int how)
-{
-	u_char *cp;
-	short mask = spk_punc_info[which].mask;
+पूर्णांक spk_set_mask_bits(स्थिर अक्षर *input, स्थिर पूर्णांक which, स्थिर पूर्णांक how)
+अणु
+	u_अक्षर *cp;
+	लघु mask = spk_punc_info[which].mask;
 
-	if (how & 1) {
-		for (cp = (u_char *)spk_punc_info[3].value; *cp; cp++)
-			spk_chartab[*cp] &= ~mask;
-	}
-	cp = (u_char *)input;
-	if (!cp) {
+	अगर (how & 1) अणु
+		क्रम (cp = (u_अक्षर *)spk_punc_info[3].value; *cp; cp++)
+			spk_अक्षरtab[*cp] &= ~mask;
+	पूर्ण
+	cp = (u_अक्षर *)input;
+	अगर (!cp) अणु
 		cp = spk_punc_info[which].value;
-	} else {
-		for (; *cp; cp++) {
-			if (*cp < SPACE)
-				break;
-			if (mask < PUNC) {
-				if (!(spk_chartab[*cp] & PUNC))
-					break;
-			} else if (spk_chartab[*cp] & B_NUM) {
-				break;
-			}
-		}
-		if (*cp)
-			return -EINVAL;
-		cp = (u_char *)input;
-	}
-	if (how & 2) {
-		for (; *cp; cp++)
-			if (*cp > SPACE)
-				spk_chartab[*cp] |= mask;
-	} else {
-		for (; *cp; cp++)
-			if (*cp > SPACE)
-				spk_chartab[*cp] &= ~mask;
-	}
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		क्रम (; *cp; cp++) अणु
+			अगर (*cp < SPACE)
+				अवरोध;
+			अगर (mask < PUNC) अणु
+				अगर (!(spk_अक्षरtab[*cp] & PUNC))
+					अवरोध;
+			पूर्ण अन्यथा अगर (spk_अक्षरtab[*cp] & B_NUM) अणु
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (*cp)
+			वापस -EINVAL;
+		cp = (u_अक्षर *)input;
+	पूर्ण
+	अगर (how & 2) अणु
+		क्रम (; *cp; cp++)
+			अगर (*cp > SPACE)
+				spk_अक्षरtab[*cp] |= mask;
+	पूर्ण अन्यथा अणु
+		क्रम (; *cp; cp++)
+			अगर (*cp > SPACE)
+				spk_अक्षरtab[*cp] &= ~mask;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-char *spk_strlwr(char *s)
-{
-	char *p;
+अक्षर *spk_strlwr(अक्षर *s)
+अणु
+	अक्षर *p;
 
-	if (!s)
-		return NULL;
+	अगर (!s)
+		वापस शून्य;
 
-	for (p = s; *p; p++)
-		*p = tolower(*p);
-	return s;
-}
+	क्रम (p = s; *p; p++)
+		*p = छोटे(*p);
+	वापस s;
+पूर्ण
 
-char *spk_s2uchar(char *start, char *dest)
-{
-	int val;
+अक्षर *spk_s2uअक्षर(अक्षर *start, अक्षर *dest)
+अणु
+	पूर्णांक val;
 
-	/* Do not replace with kstrtoul: here we need start to be updated */
-	val = simple_strtoul(skip_spaces(start), &start, 10);
-	if (*start == ',')
+	/* Do not replace with kम_से_अदीर्घ: here we need start to be updated */
+	val = simple_म_से_अदीर्घ(skip_spaces(start), &start, 10);
+	अगर (*start == ',')
 		start++;
-	*dest = (u_char)val;
-	return start;
-}
+	*dest = (u_अक्षर)val;
+	वापस start;
+पूर्ण

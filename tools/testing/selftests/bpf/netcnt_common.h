@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
-#ifndef __NETCNT_COMMON_H
-#define __NETCNT_COMMON_H
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#अगर_अघोषित __NETCNT_COMMON_H
+#घोषणा __NETCNT_COMMON_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define MAX_PERCPU_PACKETS 32
+#घोषणा MAX_PERCPU_PACKETS 32
 
-struct percpu_net_cnt {
+काष्ठा percpu_net_cnt अणु
 	__u64 packets;
 	__u64 bytes;
 
@@ -14,11 +15,11 @@ struct percpu_net_cnt {
 
 	__u64 prev_packets;
 	__u64 prev_bytes;
-};
+पूर्ण;
 
-struct net_cnt {
+काष्ठा net_cnt अणु
 	__u64 packets;
 	__u64 bytes;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

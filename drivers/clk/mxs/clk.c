@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2012 Freescale Semiconductor, Inc.
  */
 
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/jiffies.h>
-#include <linux/spinlock.h>
-#include "clk.h"
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/spinlock.h>
+#समावेश "clk.h"
 
 DEFINE_SPINLOCK(mxs_lock);
 
-int mxs_clk_wait(void __iomem *reg, u8 shift)
-{
-	unsigned long timeout = jiffies + msecs_to_jiffies(10);
+पूर्णांक mxs_clk_रुको(व्योम __iomem *reg, u8 shअगरt)
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(10);
 
-	while (readl_relaxed(reg) & (1 << shift))
-		if (time_after(jiffies, timeout))
-			return -ETIMEDOUT;
+	जबतक (पढ़ोl_relaxed(reg) & (1 << shअगरt))
+		अगर (समय_after(jअगरfies, समयout))
+			वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

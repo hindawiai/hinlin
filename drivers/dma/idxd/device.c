@@ -1,1088 +1,1089 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2019 Intel Corporation. All rights rsvd. */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <linux/dmaengine.h>
-#include <linux/irq.h>
-#include <linux/msi.h>
-#include <uapi/linux/idxd.h>
-#include "../dmaengine.h"
-#include "idxd.h"
-#include "registers.h"
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/msi.h>
+#समावेश <uapi/linux/idxd.h>
+#समावेश "../dmaengine.h"
+#समावेश "idxd.h"
+#समावेश "registers.h"
 
-static void idxd_cmd_exec(struct idxd_device *idxd, int cmd_code, u32 operand,
+अटल व्योम idxd_cmd_exec(काष्ठा idxd_device *idxd, पूर्णांक cmd_code, u32 opeअक्रम,
 			  u32 *status);
 
 /* Interrupt control bits */
-void idxd_mask_msix_vector(struct idxd_device *idxd, int vec_id)
-{
-	struct irq_data *data = irq_get_irq_data(idxd->irq_entries[vec_id].vector);
+व्योम idxd_mask_msix_vector(काष्ठा idxd_device *idxd, पूर्णांक vec_id)
+अणु
+	काष्ठा irq_data *data = irq_get_irq_data(idxd->irq_entries[vec_id].vector);
 
 	pci_msi_mask_irq(data);
-}
+पूर्ण
 
-void idxd_mask_msix_vectors(struct idxd_device *idxd)
-{
-	struct pci_dev *pdev = idxd->pdev;
-	int msixcnt = pci_msix_vec_count(pdev);
-	int i;
+व्योम idxd_mask_msix_vectors(काष्ठा idxd_device *idxd)
+अणु
+	काष्ठा pci_dev *pdev = idxd->pdev;
+	पूर्णांक msixcnt = pci_msix_vec_count(pdev);
+	पूर्णांक i;
 
-	for (i = 0; i < msixcnt; i++)
+	क्रम (i = 0; i < msixcnt; i++)
 		idxd_mask_msix_vector(idxd, i);
-}
+पूर्ण
 
-void idxd_unmask_msix_vector(struct idxd_device *idxd, int vec_id)
-{
-	struct irq_data *data = irq_get_irq_data(idxd->irq_entries[vec_id].vector);
+व्योम idxd_unmask_msix_vector(काष्ठा idxd_device *idxd, पूर्णांक vec_id)
+अणु
+	काष्ठा irq_data *data = irq_get_irq_data(idxd->irq_entries[vec_id].vector);
 
 	pci_msi_unmask_irq(data);
-}
+पूर्ण
 
-void idxd_unmask_error_interrupts(struct idxd_device *idxd)
-{
-	union genctrl_reg genctrl;
+व्योम idxd_unmask_error_पूर्णांकerrupts(काष्ठा idxd_device *idxd)
+अणु
+	जोड़ genctrl_reg genctrl;
 
-	genctrl.bits = ioread32(idxd->reg_base + IDXD_GENCTRL_OFFSET);
-	genctrl.softerr_int_en = 1;
-	genctrl.halt_int_en = 1;
-	iowrite32(genctrl.bits, idxd->reg_base + IDXD_GENCTRL_OFFSET);
-}
+	genctrl.bits = ioपढ़ो32(idxd->reg_base + IDXD_GENCTRL_OFFSET);
+	genctrl.softerr_पूर्णांक_en = 1;
+	genctrl.halt_पूर्णांक_en = 1;
+	ioग_लिखो32(genctrl.bits, idxd->reg_base + IDXD_GENCTRL_OFFSET);
+पूर्ण
 
-void idxd_mask_error_interrupts(struct idxd_device *idxd)
-{
-	union genctrl_reg genctrl;
+व्योम idxd_mask_error_पूर्णांकerrupts(काष्ठा idxd_device *idxd)
+अणु
+	जोड़ genctrl_reg genctrl;
 
-	genctrl.bits = ioread32(idxd->reg_base + IDXD_GENCTRL_OFFSET);
-	genctrl.softerr_int_en = 0;
-	genctrl.halt_int_en = 0;
-	iowrite32(genctrl.bits, idxd->reg_base + IDXD_GENCTRL_OFFSET);
-}
+	genctrl.bits = ioपढ़ो32(idxd->reg_base + IDXD_GENCTRL_OFFSET);
+	genctrl.softerr_पूर्णांक_en = 0;
+	genctrl.halt_पूर्णांक_en = 0;
+	ioग_लिखो32(genctrl.bits, idxd->reg_base + IDXD_GENCTRL_OFFSET);
+पूर्ण
 
-static void free_hw_descs(struct idxd_wq *wq)
-{
-	int i;
+अटल व्योम मुक्त_hw_descs(काष्ठा idxd_wq *wq)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < wq->num_descs; i++)
-		kfree(wq->hw_descs[i]);
+	क्रम (i = 0; i < wq->num_descs; i++)
+		kमुक्त(wq->hw_descs[i]);
 
-	kfree(wq->hw_descs);
-}
+	kमुक्त(wq->hw_descs);
+पूर्ण
 
-static int alloc_hw_descs(struct idxd_wq *wq, int num)
-{
-	struct device *dev = &wq->idxd->pdev->dev;
-	int i;
-	int node = dev_to_node(dev);
+अटल पूर्णांक alloc_hw_descs(काष्ठा idxd_wq *wq, पूर्णांक num)
+अणु
+	काष्ठा device *dev = &wq->idxd->pdev->dev;
+	पूर्णांक i;
+	पूर्णांक node = dev_to_node(dev);
 
-	wq->hw_descs = kcalloc_node(num, sizeof(struct dsa_hw_desc *),
+	wq->hw_descs = kसुस्मृति_node(num, माप(काष्ठा dsa_hw_desc *),
 				    GFP_KERNEL, node);
-	if (!wq->hw_descs)
-		return -ENOMEM;
+	अगर (!wq->hw_descs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num; i++) {
-		wq->hw_descs[i] = kzalloc_node(sizeof(*wq->hw_descs[i]),
+	क्रम (i = 0; i < num; i++) अणु
+		wq->hw_descs[i] = kzalloc_node(माप(*wq->hw_descs[i]),
 					       GFP_KERNEL, node);
-		if (!wq->hw_descs[i]) {
-			free_hw_descs(wq);
-			return -ENOMEM;
-		}
-	}
+		अगर (!wq->hw_descs[i]) अणु
+			मुक्त_hw_descs(wq);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_descs(struct idxd_wq *wq)
-{
-	int i;
+अटल व्योम मुक्त_descs(काष्ठा idxd_wq *wq)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < wq->num_descs; i++)
-		kfree(wq->descs[i]);
+	क्रम (i = 0; i < wq->num_descs; i++)
+		kमुक्त(wq->descs[i]);
 
-	kfree(wq->descs);
-}
+	kमुक्त(wq->descs);
+पूर्ण
 
-static int alloc_descs(struct idxd_wq *wq, int num)
-{
-	struct device *dev = &wq->idxd->pdev->dev;
-	int i;
-	int node = dev_to_node(dev);
+अटल पूर्णांक alloc_descs(काष्ठा idxd_wq *wq, पूर्णांक num)
+अणु
+	काष्ठा device *dev = &wq->idxd->pdev->dev;
+	पूर्णांक i;
+	पूर्णांक node = dev_to_node(dev);
 
-	wq->descs = kcalloc_node(num, sizeof(struct idxd_desc *),
+	wq->descs = kसुस्मृति_node(num, माप(काष्ठा idxd_desc *),
 				 GFP_KERNEL, node);
-	if (!wq->descs)
-		return -ENOMEM;
+	अगर (!wq->descs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num; i++) {
-		wq->descs[i] = kzalloc_node(sizeof(*wq->descs[i]),
+	क्रम (i = 0; i < num; i++) अणु
+		wq->descs[i] = kzalloc_node(माप(*wq->descs[i]),
 					    GFP_KERNEL, node);
-		if (!wq->descs[i]) {
-			free_descs(wq);
-			return -ENOMEM;
-		}
-	}
+		अगर (!wq->descs[i]) अणु
+			मुक्त_descs(wq);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* WQ control bits */
-int idxd_wq_alloc_resources(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct device *dev = &idxd->pdev->dev;
-	int rc, num_descs, i;
-	int align;
-	u64 tmp;
+पूर्णांक idxd_wq_alloc_resources(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
+	पूर्णांक rc, num_descs, i;
+	पूर्णांक align;
+	u64 पंचांगp;
 
-	if (wq->type != IDXD_WQT_KERNEL)
-		return 0;
+	अगर (wq->type != IDXD_WQT_KERNEL)
+		वापस 0;
 
 	wq->num_descs = wq->size;
 	num_descs = wq->size;
 
 	rc = alloc_hw_descs(wq, num_descs);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	align = idxd->data->align;
 	wq->compls_size = num_descs * idxd->data->compl_size + align;
 	wq->compls_raw = dma_alloc_coherent(dev, wq->compls_size,
 					    &wq->compls_addr_raw, GFP_KERNEL);
-	if (!wq->compls_raw) {
+	अगर (!wq->compls_raw) अणु
 		rc = -ENOMEM;
-		goto fail_alloc_compls;
-	}
+		जाओ fail_alloc_compls;
+	पूर्ण
 
 	/* Adjust alignment */
 	wq->compls_addr = (wq->compls_addr_raw + (align - 1)) & ~(align - 1);
-	tmp = (u64)wq->compls_raw;
-	tmp = (tmp + (align - 1)) & ~(align - 1);
-	wq->compls = (struct dsa_completion_record *)tmp;
+	पंचांगp = (u64)wq->compls_raw;
+	पंचांगp = (पंचांगp + (align - 1)) & ~(align - 1);
+	wq->compls = (काष्ठा dsa_completion_record *)पंचांगp;
 
 	rc = alloc_descs(wq, num_descs);
-	if (rc < 0)
-		goto fail_alloc_descs;
+	अगर (rc < 0)
+		जाओ fail_alloc_descs;
 
-	rc = sbitmap_queue_init_node(&wq->sbq, num_descs, -1, false, GFP_KERNEL,
+	rc = sbiपंचांगap_queue_init_node(&wq->sbq, num_descs, -1, false, GFP_KERNEL,
 				     dev_to_node(dev));
-	if (rc < 0)
-		goto fail_sbitmap_init;
+	अगर (rc < 0)
+		जाओ fail_sbiपंचांगap_init;
 
-	for (i = 0; i < num_descs; i++) {
-		struct idxd_desc *desc = wq->descs[i];
+	क्रम (i = 0; i < num_descs; i++) अणु
+		काष्ठा idxd_desc *desc = wq->descs[i];
 
 		desc->hw = wq->hw_descs[i];
-		if (idxd->data->type == IDXD_TYPE_DSA)
+		अगर (idxd->data->type == IDXD_TYPE_DSA)
 			desc->completion = &wq->compls[i];
-		else if (idxd->data->type == IDXD_TYPE_IAX)
+		अन्यथा अगर (idxd->data->type == IDXD_TYPE_IAX)
 			desc->iax_completion = &wq->iax_compls[i];
 		desc->compl_dma = wq->compls_addr + idxd->data->compl_size * i;
 		desc->id = i;
 		desc->wq = wq;
 		desc->cpu = -1;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- fail_sbitmap_init:
-	free_descs(wq);
+ fail_sbiपंचांगap_init:
+	मुक्त_descs(wq);
  fail_alloc_descs:
-	dma_free_coherent(dev, wq->compls_size, wq->compls_raw,
+	dma_मुक्त_coherent(dev, wq->compls_size, wq->compls_raw,
 			  wq->compls_addr_raw);
  fail_alloc_compls:
-	free_hw_descs(wq);
-	return rc;
-}
+	मुक्त_hw_descs(wq);
+	वापस rc;
+पूर्ण
 
-void idxd_wq_free_resources(struct idxd_wq *wq)
-{
-	struct device *dev = &wq->idxd->pdev->dev;
+व्योम idxd_wq_मुक्त_resources(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा device *dev = &wq->idxd->pdev->dev;
 
-	if (wq->type != IDXD_WQT_KERNEL)
-		return;
+	अगर (wq->type != IDXD_WQT_KERNEL)
+		वापस;
 
-	free_hw_descs(wq);
-	free_descs(wq);
-	dma_free_coherent(dev, wq->compls_size, wq->compls_raw,
+	मुक्त_hw_descs(wq);
+	मुक्त_descs(wq);
+	dma_मुक्त_coherent(dev, wq->compls_size, wq->compls_raw,
 			  wq->compls_addr_raw);
-	sbitmap_queue_free(&wq->sbq);
-}
+	sbiपंचांगap_queue_मुक्त(&wq->sbq);
+पूर्ण
 
-int idxd_wq_enable(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct device *dev = &idxd->pdev->dev;
+पूर्णांक idxd_wq_enable(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
 	u32 status;
 
-	if (wq->state == IDXD_WQ_ENABLED) {
+	अगर (wq->state == IDXD_WQ_ENABLED) अणु
 		dev_dbg(dev, "WQ %d already enabled\n", wq->id);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	idxd_cmd_exec(idxd, IDXD_CMD_ENABLE_WQ, wq->id, &status);
 
-	if (status != IDXD_CMDSTS_SUCCESS &&
-	    status != IDXD_CMDSTS_ERR_WQ_ENABLED) {
+	अगर (status != IDXD_CMDSTS_SUCCESS &&
+	    status != IDXD_CMDSTS_ERR_WQ_ENABLED) अणु
 		dev_dbg(dev, "WQ enable failed: %#x\n", status);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	wq->state = IDXD_WQ_ENABLED;
 	dev_dbg(dev, "WQ %d enabled\n", wq->id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int idxd_wq_disable(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct device *dev = &idxd->pdev->dev;
-	u32 status, operand;
+पूर्णांक idxd_wq_disable(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
+	u32 status, opeअक्रम;
 
 	dev_dbg(dev, "Disabling WQ %d\n", wq->id);
 
-	if (wq->state != IDXD_WQ_ENABLED) {
+	अगर (wq->state != IDXD_WQ_ENABLED) अणु
 		dev_dbg(dev, "WQ %d in wrong state: %d\n", wq->id, wq->state);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	operand = BIT(wq->id % 16) | ((wq->id / 16) << 16);
-	idxd_cmd_exec(idxd, IDXD_CMD_DISABLE_WQ, operand, &status);
+	opeअक्रम = BIT(wq->id % 16) | ((wq->id / 16) << 16);
+	idxd_cmd_exec(idxd, IDXD_CMD_DISABLE_WQ, opeअक्रम, &status);
 
-	if (status != IDXD_CMDSTS_SUCCESS) {
+	अगर (status != IDXD_CMDSTS_SUCCESS) अणु
 		dev_dbg(dev, "WQ disable failed: %#x\n", status);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	wq->state = IDXD_WQ_DISABLED;
 	dev_dbg(dev, "WQ %d disabled\n", wq->id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void idxd_wq_drain(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct device *dev = &idxd->pdev->dev;
-	u32 operand;
+व्योम idxd_wq_drain(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
+	u32 opeअक्रम;
 
-	if (wq->state != IDXD_WQ_ENABLED) {
+	अगर (wq->state != IDXD_WQ_ENABLED) अणु
 		dev_dbg(dev, "WQ %d in wrong state: %d\n", wq->id, wq->state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev_dbg(dev, "Draining WQ %d\n", wq->id);
-	operand = BIT(wq->id % 16) | ((wq->id / 16) << 16);
-	idxd_cmd_exec(idxd, IDXD_CMD_DRAIN_WQ, operand, NULL);
-}
+	opeअक्रम = BIT(wq->id % 16) | ((wq->id / 16) << 16);
+	idxd_cmd_exec(idxd, IDXD_CMD_DRAIN_WQ, opeअक्रम, शून्य);
+पूर्ण
 
-void idxd_wq_reset(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct device *dev = &idxd->pdev->dev;
-	u32 operand;
+व्योम idxd_wq_reset(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
+	u32 opeअक्रम;
 
-	if (wq->state != IDXD_WQ_ENABLED) {
+	अगर (wq->state != IDXD_WQ_ENABLED) अणु
 		dev_dbg(dev, "WQ %d in wrong state: %d\n", wq->id, wq->state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	operand = BIT(wq->id % 16) | ((wq->id / 16) << 16);
-	idxd_cmd_exec(idxd, IDXD_CMD_RESET_WQ, operand, NULL);
+	opeअक्रम = BIT(wq->id % 16) | ((wq->id / 16) << 16);
+	idxd_cmd_exec(idxd, IDXD_CMD_RESET_WQ, opeअक्रम, शून्य);
 	wq->state = IDXD_WQ_DISABLED;
-}
+पूर्ण
 
-int idxd_wq_map_portal(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct pci_dev *pdev = idxd->pdev;
-	struct device *dev = &pdev->dev;
-	resource_size_t start;
+पूर्णांक idxd_wq_map_portal(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा pci_dev *pdev = idxd->pdev;
+	काष्ठा device *dev = &pdev->dev;
+	resource_माप_प्रकार start;
 
 	start = pci_resource_start(pdev, IDXD_WQ_BAR);
 	start += idxd_get_wq_portal_full_offset(wq->id, IDXD_PORTAL_LIMITED);
 
 	wq->portal = devm_ioremap(dev, start, IDXD_PORTAL_SIZE);
-	if (!wq->portal)
-		return -ENOMEM;
+	अगर (!wq->portal)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void idxd_wq_unmap_portal(struct idxd_wq *wq)
-{
-	struct device *dev = &wq->idxd->pdev->dev;
+व्योम idxd_wq_unmap_portal(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा device *dev = &wq->idxd->pdev->dev;
 
 	devm_iounmap(dev, wq->portal);
-	wq->portal = NULL;
-}
+	wq->portal = शून्य;
+पूर्ण
 
-void idxd_wqs_unmap_portal(struct idxd_device *idxd)
-{
-	int i;
+व्योम idxd_wqs_unmap_portal(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < idxd->max_wqs; i++) {
-		struct idxd_wq *wq = idxd->wqs[i];
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+		काष्ठा idxd_wq *wq = idxd->wqs[i];
 
-		if (wq->portal)
+		अगर (wq->portal)
 			idxd_wq_unmap_portal(wq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int idxd_wq_set_pasid(struct idxd_wq *wq, int pasid)
-{
-	struct idxd_device *idxd = wq->idxd;
-	int rc;
-	union wqcfg wqcfg;
-	unsigned int offset;
-	unsigned long flags;
+पूर्णांक idxd_wq_set_pasid(काष्ठा idxd_wq *wq, पूर्णांक pasid)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	पूर्णांक rc;
+	जोड़ wqcfg wqcfg;
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित दीर्घ flags;
 
 	rc = idxd_wq_disable(wq);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	offset = WQCFG_OFFSET(idxd, wq->id, WQCFG_PASID_IDX);
 	spin_lock_irqsave(&idxd->dev_lock, flags);
-	wqcfg.bits[WQCFG_PASID_IDX] = ioread32(idxd->reg_base + offset);
+	wqcfg.bits[WQCFG_PASID_IDX] = ioपढ़ो32(idxd->reg_base + offset);
 	wqcfg.pasid_en = 1;
 	wqcfg.pasid = pasid;
-	iowrite32(wqcfg.bits[WQCFG_PASID_IDX], idxd->reg_base + offset);
+	ioग_लिखो32(wqcfg.bits[WQCFG_PASID_IDX], idxd->reg_base + offset);
 	spin_unlock_irqrestore(&idxd->dev_lock, flags);
 
 	rc = idxd_wq_enable(wq);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int idxd_wq_disable_pasid(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	int rc;
-	union wqcfg wqcfg;
-	unsigned int offset;
-	unsigned long flags;
+पूर्णांक idxd_wq_disable_pasid(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	पूर्णांक rc;
+	जोड़ wqcfg wqcfg;
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित दीर्घ flags;
 
 	rc = idxd_wq_disable(wq);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	offset = WQCFG_OFFSET(idxd, wq->id, WQCFG_PASID_IDX);
 	spin_lock_irqsave(&idxd->dev_lock, flags);
-	wqcfg.bits[WQCFG_PASID_IDX] = ioread32(idxd->reg_base + offset);
+	wqcfg.bits[WQCFG_PASID_IDX] = ioपढ़ो32(idxd->reg_base + offset);
 	wqcfg.pasid_en = 0;
 	wqcfg.pasid = 0;
-	iowrite32(wqcfg.bits[WQCFG_PASID_IDX], idxd->reg_base + offset);
+	ioग_लिखो32(wqcfg.bits[WQCFG_PASID_IDX], idxd->reg_base + offset);
 	spin_unlock_irqrestore(&idxd->dev_lock, flags);
 
 	rc = idxd_wq_enable(wq);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void idxd_wq_disable_cleanup(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
+व्योम idxd_wq_disable_cleanup(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
 
-	lockdep_assert_held(&idxd->dev_lock);
-	memset(wq->wqcfg, 0, idxd->wqcfg_size);
+	lockdep_निश्चित_held(&idxd->dev_lock);
+	स_रखो(wq->wqcfg, 0, idxd->wqcfg_size);
 	wq->type = IDXD_WQT_NONE;
 	wq->size = 0;
-	wq->group = NULL;
+	wq->group = शून्य;
 	wq->threshold = 0;
 	wq->priority = 0;
 	wq->ats_dis = 0;
 	clear_bit(WQ_FLAG_DEDICATED, &wq->flags);
-	memset(wq->name, 0, WQ_NAME_SIZE);
-}
+	स_रखो(wq->name, 0, WQ_NAME_SIZE);
+पूर्ण
 
-static void idxd_wq_ref_release(struct percpu_ref *ref)
-{
-	struct idxd_wq *wq = container_of(ref, struct idxd_wq, wq_active);
+अटल व्योम idxd_wq_ref_release(काष्ठा percpu_ref *ref)
+अणु
+	काष्ठा idxd_wq *wq = container_of(ref, काष्ठा idxd_wq, wq_active);
 
 	complete(&wq->wq_dead);
-}
+पूर्ण
 
-int idxd_wq_init_percpu_ref(struct idxd_wq *wq)
-{
-	int rc;
+पूर्णांक idxd_wq_init_percpu_ref(काष्ठा idxd_wq *wq)
+अणु
+	पूर्णांक rc;
 
-	memset(&wq->wq_active, 0, sizeof(wq->wq_active));
+	स_रखो(&wq->wq_active, 0, माप(wq->wq_active));
 	rc = percpu_ref_init(&wq->wq_active, idxd_wq_ref_release, 0, GFP_KERNEL);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 	reinit_completion(&wq->wq_dead);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void idxd_wq_quiesce(struct idxd_wq *wq)
-{
-	percpu_ref_kill(&wq->wq_active);
-	wait_for_completion(&wq->wq_dead);
-	percpu_ref_exit(&wq->wq_active);
-}
+व्योम idxd_wq_quiesce(काष्ठा idxd_wq *wq)
+अणु
+	percpu_ref_समाप्त(&wq->wq_active);
+	रुको_क्रम_completion(&wq->wq_dead);
+	percpu_ref_निकास(&wq->wq_active);
+पूर्ण
 
 /* Device control bits */
-static inline bool idxd_is_enabled(struct idxd_device *idxd)
-{
-	union gensts_reg gensts;
+अटल अंतरभूत bool idxd_is_enabled(काष्ठा idxd_device *idxd)
+अणु
+	जोड़ gensts_reg gensts;
 
-	gensts.bits = ioread32(idxd->reg_base + IDXD_GENSTATS_OFFSET);
+	gensts.bits = ioपढ़ो32(idxd->reg_base + IDXD_GENSTATS_OFFSET);
 
-	if (gensts.state == IDXD_DEVICE_STATE_ENABLED)
-		return true;
-	return false;
-}
+	अगर (gensts.state == IDXD_DEVICE_STATE_ENABLED)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static inline bool idxd_device_is_halted(struct idxd_device *idxd)
-{
-	union gensts_reg gensts;
+अटल अंतरभूत bool idxd_device_is_halted(काष्ठा idxd_device *idxd)
+अणु
+	जोड़ gensts_reg gensts;
 
-	gensts.bits = ioread32(idxd->reg_base + IDXD_GENSTATS_OFFSET);
+	gensts.bits = ioपढ़ो32(idxd->reg_base + IDXD_GENSTATS_OFFSET);
 
-	return (gensts.state == IDXD_DEVICE_STATE_HALT);
-}
+	वापस (gensts.state == IDXD_DEVICE_STATE_HALT);
+पूर्ण
 
 /*
- * This is function is only used for reset during probe and will
- * poll for completion. Once the device is setup with interrupts,
- * all commands will be done via interrupt completion.
+ * This is function is only used क्रम reset during probe and will
+ * poll क्रम completion. Once the device is setup with पूर्णांकerrupts,
+ * all commands will be करोne via पूर्णांकerrupt completion.
  */
-int idxd_device_init_reset(struct idxd_device *idxd)
-{
-	struct device *dev = &idxd->pdev->dev;
-	union idxd_command_reg cmd;
-	unsigned long flags;
+पूर्णांक idxd_device_init_reset(काष्ठा idxd_device *idxd)
+अणु
+	काष्ठा device *dev = &idxd->pdev->dev;
+	जोड़ idxd_command_reg cmd;
+	अचिन्हित दीर्घ flags;
 
-	if (idxd_device_is_halted(idxd)) {
+	अगर (idxd_device_is_halted(idxd)) अणु
 		dev_warn(&idxd->pdev->dev, "Device is HALTED!\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	memset(&cmd, 0, sizeof(cmd));
+	स_रखो(&cmd, 0, माप(cmd));
 	cmd.cmd = IDXD_CMD_RESET_DEVICE;
 	dev_dbg(dev, "%s: sending reset for init.\n", __func__);
 	spin_lock_irqsave(&idxd->cmd_lock, flags);
-	iowrite32(cmd.bits, idxd->reg_base + IDXD_CMD_OFFSET);
+	ioग_लिखो32(cmd.bits, idxd->reg_base + IDXD_CMD_OFFSET);
 
-	while (ioread32(idxd->reg_base + IDXD_CMDSTS_OFFSET) &
+	जबतक (ioपढ़ो32(idxd->reg_base + IDXD_CMDSTS_OFFSET) &
 	       IDXD_CMDSTS_ACTIVE)
 		cpu_relax();
 	spin_unlock_irqrestore(&idxd->cmd_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void idxd_cmd_exec(struct idxd_device *idxd, int cmd_code, u32 operand,
+अटल व्योम idxd_cmd_exec(काष्ठा idxd_device *idxd, पूर्णांक cmd_code, u32 opeअक्रम,
 			  u32 *status)
-{
-	union idxd_command_reg cmd;
-	DECLARE_COMPLETION_ONSTACK(done);
-	unsigned long flags;
+अणु
+	जोड़ idxd_command_reg cmd;
+	DECLARE_COMPLETION_ONSTACK(करोne);
+	अचिन्हित दीर्घ flags;
 
-	if (idxd_device_is_halted(idxd)) {
+	अगर (idxd_device_is_halted(idxd)) अणु
 		dev_warn(&idxd->pdev->dev, "Device is HALTED!\n");
-		if (status)
+		अगर (status)
 			*status = IDXD_CMDSTS_HW_ERR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memset(&cmd, 0, sizeof(cmd));
+	स_रखो(&cmd, 0, माप(cmd));
 	cmd.cmd = cmd_code;
-	cmd.operand = operand;
-	cmd.int_req = 1;
+	cmd.opeअक्रम = opeअक्रम;
+	cmd.पूर्णांक_req = 1;
 
 	spin_lock_irqsave(&idxd->cmd_lock, flags);
-	wait_event_lock_irq(idxd->cmd_waitq,
+	रुको_event_lock_irq(idxd->cmd_रुकोq,
 			    !test_bit(IDXD_FLAG_CMD_RUNNING, &idxd->flags),
 			    idxd->cmd_lock);
 
 	dev_dbg(&idxd->pdev->dev, "%s: sending cmd: %#x op: %#x\n",
-		__func__, cmd_code, operand);
+		__func__, cmd_code, opeअक्रम);
 
 	idxd->cmd_status = 0;
 	__set_bit(IDXD_FLAG_CMD_RUNNING, &idxd->flags);
-	idxd->cmd_done = &done;
-	iowrite32(cmd.bits, idxd->reg_base + IDXD_CMD_OFFSET);
+	idxd->cmd_करोne = &करोne;
+	ioग_लिखो32(cmd.bits, idxd->reg_base + IDXD_CMD_OFFSET);
 
 	/*
 	 * After command submitted, release lock and go to sleep until
-	 * the command completes via interrupt.
+	 * the command completes via पूर्णांकerrupt.
 	 */
 	spin_unlock_irqrestore(&idxd->cmd_lock, flags);
-	wait_for_completion(&done);
+	रुको_क्रम_completion(&करोne);
 	spin_lock_irqsave(&idxd->cmd_lock, flags);
-	if (status) {
-		*status = ioread32(idxd->reg_base + IDXD_CMDSTS_OFFSET);
+	अगर (status) अणु
+		*status = ioपढ़ो32(idxd->reg_base + IDXD_CMDSTS_OFFSET);
 		idxd->cmd_status = *status & GENMASK(7, 0);
-	}
+	पूर्ण
 
 	__clear_bit(IDXD_FLAG_CMD_RUNNING, &idxd->flags);
 	/* Wake up other pending commands */
-	wake_up(&idxd->cmd_waitq);
+	wake_up(&idxd->cmd_रुकोq);
 	spin_unlock_irqrestore(&idxd->cmd_lock, flags);
-}
+पूर्ण
 
-int idxd_device_enable(struct idxd_device *idxd)
-{
-	struct device *dev = &idxd->pdev->dev;
+पूर्णांक idxd_device_enable(काष्ठा idxd_device *idxd)
+अणु
+	काष्ठा device *dev = &idxd->pdev->dev;
 	u32 status;
 
-	if (idxd_is_enabled(idxd)) {
+	अगर (idxd_is_enabled(idxd)) अणु
 		dev_dbg(dev, "Device already enabled\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	idxd_cmd_exec(idxd, IDXD_CMD_ENABLE_DEVICE, 0, &status);
 
-	/* If the command is successful or if the device was enabled */
-	if (status != IDXD_CMDSTS_SUCCESS &&
-	    status != IDXD_CMDSTS_ERR_DEV_ENABLED) {
+	/* If the command is successful or अगर the device was enabled */
+	अगर (status != IDXD_CMDSTS_SUCCESS &&
+	    status != IDXD_CMDSTS_ERR_DEV_ENABLED) अणु
 		dev_dbg(dev, "%s: err_code: %#x\n", __func__, status);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	idxd->state = IDXD_DEV_ENABLED;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void idxd_device_wqs_clear_state(struct idxd_device *idxd)
-{
-	int i;
+व्योम idxd_device_wqs_clear_state(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i;
 
-	lockdep_assert_held(&idxd->dev_lock);
+	lockdep_निश्चित_held(&idxd->dev_lock);
 
-	for (i = 0; i < idxd->max_wqs; i++) {
-		struct idxd_wq *wq = idxd->wqs[i];
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+		काष्ठा idxd_wq *wq = idxd->wqs[i];
 
-		if (wq->state == IDXD_WQ_ENABLED) {
+		अगर (wq->state == IDXD_WQ_ENABLED) अणु
 			idxd_wq_disable_cleanup(wq);
 			wq->state = IDXD_WQ_DISABLED;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int idxd_device_disable(struct idxd_device *idxd)
-{
-	struct device *dev = &idxd->pdev->dev;
+पूर्णांक idxd_device_disable(काष्ठा idxd_device *idxd)
+अणु
+	काष्ठा device *dev = &idxd->pdev->dev;
 	u32 status;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (!idxd_is_enabled(idxd)) {
+	अगर (!idxd_is_enabled(idxd)) अणु
 		dev_dbg(dev, "Device is not enabled\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	idxd_cmd_exec(idxd, IDXD_CMD_DISABLE_DEVICE, 0, &status);
 
-	/* If the command is successful or if the device was disabled */
-	if (status != IDXD_CMDSTS_SUCCESS &&
-	    !(status & IDXD_CMDSTS_ERR_DIS_DEV_EN)) {
+	/* If the command is successful or अगर the device was disabled */
+	अगर (status != IDXD_CMDSTS_SUCCESS &&
+	    !(status & IDXD_CMDSTS_ERR_DIS_DEV_EN)) अणु
 		dev_dbg(dev, "%s: err_code: %#x\n", __func__, status);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	spin_lock_irqsave(&idxd->dev_lock, flags);
 	idxd_device_wqs_clear_state(idxd);
 	idxd->state = IDXD_DEV_CONF_READY;
 	spin_unlock_irqrestore(&idxd->dev_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void idxd_device_reset(struct idxd_device *idxd)
-{
-	unsigned long flags;
+व्योम idxd_device_reset(काष्ठा idxd_device *idxd)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	idxd_cmd_exec(idxd, IDXD_CMD_RESET_DEVICE, 0, NULL);
+	idxd_cmd_exec(idxd, IDXD_CMD_RESET_DEVICE, 0, शून्य);
 	spin_lock_irqsave(&idxd->dev_lock, flags);
 	idxd_device_wqs_clear_state(idxd);
 	idxd->state = IDXD_DEV_CONF_READY;
 	spin_unlock_irqrestore(&idxd->dev_lock, flags);
-}
+पूर्ण
 
-void idxd_device_drain_pasid(struct idxd_device *idxd, int pasid)
-{
-	struct device *dev = &idxd->pdev->dev;
-	u32 operand;
+व्योम idxd_device_drain_pasid(काष्ठा idxd_device *idxd, पूर्णांक pasid)
+अणु
+	काष्ठा device *dev = &idxd->pdev->dev;
+	u32 opeअक्रम;
 
-	operand = pasid;
-	dev_dbg(dev, "cmd: %u operand: %#x\n", IDXD_CMD_DRAIN_PASID, operand);
-	idxd_cmd_exec(idxd, IDXD_CMD_DRAIN_PASID, operand, NULL);
+	opeअक्रम = pasid;
+	dev_dbg(dev, "cmd: %u operand: %#x\n", IDXD_CMD_DRAIN_PASID, opeअक्रम);
+	idxd_cmd_exec(idxd, IDXD_CMD_DRAIN_PASID, opeअक्रम, शून्य);
 	dev_dbg(dev, "pasid %d drained\n", pasid);
-}
+पूर्ण
 
-int idxd_device_request_int_handle(struct idxd_device *idxd, int idx, int *handle,
-				   enum idxd_interrupt_type irq_type)
-{
-	struct device *dev = &idxd->pdev->dev;
-	u32 operand, status;
+पूर्णांक idxd_device_request_पूर्णांक_handle(काष्ठा idxd_device *idxd, पूर्णांक idx, पूर्णांक *handle,
+				   क्रमागत idxd_पूर्णांकerrupt_type irq_type)
+अणु
+	काष्ठा device *dev = &idxd->pdev->dev;
+	u32 opeअक्रम, status;
 
-	if (!(idxd->hw.cmd_cap & BIT(IDXD_CMD_REQUEST_INT_HANDLE)))
-		return -EOPNOTSUPP;
+	अगर (!(idxd->hw.cmd_cap & BIT(IDXD_CMD_REQUEST_INT_HANDLE)))
+		वापस -EOPNOTSUPP;
 
 	dev_dbg(dev, "get int handle, idx %d\n", idx);
 
-	operand = idx & GENMASK(15, 0);
-	if (irq_type == IDXD_IRQ_IMS)
-		operand |= CMD_INT_HANDLE_IMS;
+	opeअक्रम = idx & GENMASK(15, 0);
+	अगर (irq_type == IDXD_IRQ_IMS)
+		opeअक्रम |= CMD_INT_HANDLE_IMS;
 
-	dev_dbg(dev, "cmd: %u operand: %#x\n", IDXD_CMD_REQUEST_INT_HANDLE, operand);
+	dev_dbg(dev, "cmd: %u operand: %#x\n", IDXD_CMD_REQUEST_INT_HANDLE, opeअक्रम);
 
-	idxd_cmd_exec(idxd, IDXD_CMD_REQUEST_INT_HANDLE, operand, &status);
+	idxd_cmd_exec(idxd, IDXD_CMD_REQUEST_INT_HANDLE, opeअक्रम, &status);
 
-	if ((status & IDXD_CMDSTS_ERR_MASK) != IDXD_CMDSTS_SUCCESS) {
+	अगर ((status & IDXD_CMDSTS_ERR_MASK) != IDXD_CMDSTS_SUCCESS) अणु
 		dev_dbg(dev, "request int handle failed: %#x\n", status);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	*handle = (status >> IDXD_CMDSTS_RES_SHIFT) & GENMASK(15, 0);
 
 	dev_dbg(dev, "int handle acquired: %u\n", *handle);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int idxd_device_release_int_handle(struct idxd_device *idxd, int handle,
-				   enum idxd_interrupt_type irq_type)
-{
-	struct device *dev = &idxd->pdev->dev;
-	u32 operand, status;
-	union idxd_command_reg cmd;
-	unsigned long flags;
+पूर्णांक idxd_device_release_पूर्णांक_handle(काष्ठा idxd_device *idxd, पूर्णांक handle,
+				   क्रमागत idxd_पूर्णांकerrupt_type irq_type)
+अणु
+	काष्ठा device *dev = &idxd->pdev->dev;
+	u32 opeअक्रम, status;
+	जोड़ idxd_command_reg cmd;
+	अचिन्हित दीर्घ flags;
 
-	if (!(idxd->hw.cmd_cap & BIT(IDXD_CMD_RELEASE_INT_HANDLE)))
-		return -EOPNOTSUPP;
+	अगर (!(idxd->hw.cmd_cap & BIT(IDXD_CMD_RELEASE_INT_HANDLE)))
+		वापस -EOPNOTSUPP;
 
 	dev_dbg(dev, "release int handle, handle %d\n", handle);
 
-	memset(&cmd, 0, sizeof(cmd));
-	operand = handle & GENMASK(15, 0);
+	स_रखो(&cmd, 0, माप(cmd));
+	opeअक्रम = handle & GENMASK(15, 0);
 
-	if (irq_type == IDXD_IRQ_IMS)
-		operand |= CMD_INT_HANDLE_IMS;
+	अगर (irq_type == IDXD_IRQ_IMS)
+		opeअक्रम |= CMD_INT_HANDLE_IMS;
 
 	cmd.cmd = IDXD_CMD_RELEASE_INT_HANDLE;
-	cmd.operand = operand;
+	cmd.opeअक्रम = opeअक्रम;
 
-	dev_dbg(dev, "cmd: %u operand: %#x\n", IDXD_CMD_RELEASE_INT_HANDLE, operand);
+	dev_dbg(dev, "cmd: %u operand: %#x\n", IDXD_CMD_RELEASE_INT_HANDLE, opeअक्रम);
 
 	spin_lock_irqsave(&idxd->cmd_lock, flags);
-	iowrite32(cmd.bits, idxd->reg_base + IDXD_CMD_OFFSET);
+	ioग_लिखो32(cmd.bits, idxd->reg_base + IDXD_CMD_OFFSET);
 
-	while (ioread32(idxd->reg_base + IDXD_CMDSTS_OFFSET) & IDXD_CMDSTS_ACTIVE)
+	जबतक (ioपढ़ो32(idxd->reg_base + IDXD_CMDSTS_OFFSET) & IDXD_CMDSTS_ACTIVE)
 		cpu_relax();
-	status = ioread32(idxd->reg_base + IDXD_CMDSTS_OFFSET);
+	status = ioपढ़ो32(idxd->reg_base + IDXD_CMDSTS_OFFSET);
 	spin_unlock_irqrestore(&idxd->cmd_lock, flags);
 
-	if ((status & IDXD_CMDSTS_ERR_MASK) != IDXD_CMDSTS_SUCCESS) {
+	अगर ((status & IDXD_CMDSTS_ERR_MASK) != IDXD_CMDSTS_SUCCESS) अणु
 		dev_dbg(dev, "release int handle failed: %#x\n", status);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	dev_dbg(dev, "int handle released.\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Device configuration bits */
-void idxd_msix_perm_setup(struct idxd_device *idxd)
-{
-	union msix_perm mperm;
-	int i, msixcnt;
+व्योम idxd_msix_perm_setup(काष्ठा idxd_device *idxd)
+अणु
+	जोड़ msix_perm mperm;
+	पूर्णांक i, msixcnt;
 
 	msixcnt = pci_msix_vec_count(idxd->pdev);
-	if (msixcnt < 0)
-		return;
+	अगर (msixcnt < 0)
+		वापस;
 
 	mperm.bits = 0;
 	mperm.pasid = idxd->pasid;
 	mperm.pasid_en = device_pasid_enabled(idxd);
-	for (i = 1; i < msixcnt; i++)
-		iowrite32(mperm.bits, idxd->reg_base + idxd->msix_perm_offset + i * 8);
-}
+	क्रम (i = 1; i < msixcnt; i++)
+		ioग_लिखो32(mperm.bits, idxd->reg_base + idxd->msix_perm_offset + i * 8);
+पूर्ण
 
-void idxd_msix_perm_clear(struct idxd_device *idxd)
-{
-	union msix_perm mperm;
-	int i, msixcnt;
+व्योम idxd_msix_perm_clear(काष्ठा idxd_device *idxd)
+अणु
+	जोड़ msix_perm mperm;
+	पूर्णांक i, msixcnt;
 
 	msixcnt = pci_msix_vec_count(idxd->pdev);
-	if (msixcnt < 0)
-		return;
+	अगर (msixcnt < 0)
+		वापस;
 
 	mperm.bits = 0;
-	for (i = 1; i < msixcnt; i++)
-		iowrite32(mperm.bits, idxd->reg_base + idxd->msix_perm_offset + i * 8);
-}
+	क्रम (i = 1; i < msixcnt; i++)
+		ioग_लिखो32(mperm.bits, idxd->reg_base + idxd->msix_perm_offset + i * 8);
+पूर्ण
 
-static void idxd_group_config_write(struct idxd_group *group)
-{
-	struct idxd_device *idxd = group->idxd;
-	struct device *dev = &idxd->pdev->dev;
-	int i;
+अटल व्योम idxd_group_config_ग_लिखो(काष्ठा idxd_group *group)
+अणु
+	काष्ठा idxd_device *idxd = group->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
+	पूर्णांक i;
 	u32 grpcfg_offset;
 
 	dev_dbg(dev, "Writing group %d cfg registers\n", group->id);
 
 	/* setup GRPWQCFG */
-	for (i = 0; i < GRPWQCFG_STRIDES; i++) {
+	क्रम (i = 0; i < GRPWQCFG_STRIDES; i++) अणु
 		grpcfg_offset = GRPWQCFG_OFFSET(idxd, group->id, i);
-		iowrite64(group->grpcfg.wqs[i], idxd->reg_base + grpcfg_offset);
+		ioग_लिखो64(group->grpcfg.wqs[i], idxd->reg_base + grpcfg_offset);
 		dev_dbg(dev, "GRPCFG wq[%d:%d: %#x]: %#llx\n",
 			group->id, i, grpcfg_offset,
-			ioread64(idxd->reg_base + grpcfg_offset));
-	}
+			ioपढ़ो64(idxd->reg_base + grpcfg_offset));
+	पूर्ण
 
 	/* setup GRPENGCFG */
 	grpcfg_offset = GRPENGCFG_OFFSET(idxd, group->id);
-	iowrite64(group->grpcfg.engines, idxd->reg_base + grpcfg_offset);
+	ioग_लिखो64(group->grpcfg.engines, idxd->reg_base + grpcfg_offset);
 	dev_dbg(dev, "GRPCFG engs[%d: %#x]: %#llx\n", group->id,
-		grpcfg_offset, ioread64(idxd->reg_base + grpcfg_offset));
+		grpcfg_offset, ioपढ़ो64(idxd->reg_base + grpcfg_offset));
 
 	/* setup GRPFLAGS */
 	grpcfg_offset = GRPFLGCFG_OFFSET(idxd, group->id);
-	iowrite32(group->grpcfg.flags.bits, idxd->reg_base + grpcfg_offset);
+	ioग_लिखो32(group->grpcfg.flags.bits, idxd->reg_base + grpcfg_offset);
 	dev_dbg(dev, "GRPFLAGS flags[%d: %#x]: %#x\n",
 		group->id, grpcfg_offset,
-		ioread32(idxd->reg_base + grpcfg_offset));
-}
+		ioपढ़ो32(idxd->reg_base + grpcfg_offset));
+पूर्ण
 
-static int idxd_groups_config_write(struct idxd_device *idxd)
+अटल पूर्णांक idxd_groups_config_ग_लिखो(काष्ठा idxd_device *idxd)
 
-{
-	union gencfg_reg reg;
-	int i;
-	struct device *dev = &idxd->pdev->dev;
+अणु
+	जोड़ gencfg_reg reg;
+	पूर्णांक i;
+	काष्ठा device *dev = &idxd->pdev->dev;
 
 	/* Setup bandwidth token limit */
-	if (idxd->token_limit) {
-		reg.bits = ioread32(idxd->reg_base + IDXD_GENCFG_OFFSET);
+	अगर (idxd->token_limit) अणु
+		reg.bits = ioपढ़ो32(idxd->reg_base + IDXD_GENCFG_OFFSET);
 		reg.token_limit = idxd->token_limit;
-		iowrite32(reg.bits, idxd->reg_base + IDXD_GENCFG_OFFSET);
-	}
+		ioग_लिखो32(reg.bits, idxd->reg_base + IDXD_GENCFG_OFFSET);
+	पूर्ण
 
 	dev_dbg(dev, "GENCFG(%#x): %#x\n", IDXD_GENCFG_OFFSET,
-		ioread32(idxd->reg_base + IDXD_GENCFG_OFFSET));
+		ioपढ़ो32(idxd->reg_base + IDXD_GENCFG_OFFSET));
 
-	for (i = 0; i < idxd->max_groups; i++) {
-		struct idxd_group *group = idxd->groups[i];
+	क्रम (i = 0; i < idxd->max_groups; i++) अणु
+		काष्ठा idxd_group *group = idxd->groups[i];
 
-		idxd_group_config_write(group);
-	}
+		idxd_group_config_ग_लिखो(group);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int idxd_wq_config_write(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct device *dev = &idxd->pdev->dev;
+अटल पूर्णांक idxd_wq_config_ग_लिखो(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
 	u32 wq_offset;
-	int i;
+	पूर्णांक i;
 
-	if (!wq->group)
-		return 0;
+	अगर (!wq->group)
+		वापस 0;
 
 	/*
-	 * Instead of memset the entire shadow copy of WQCFG, copy from the hardware after
+	 * Instead of स_रखो the entire shaकरोw copy of WQCFG, copy from the hardware after
 	 * wq reset. This will copy back the sticky values that are present on some devices.
 	 */
-	for (i = 0; i < WQCFG_STRIDES(idxd); i++) {
+	क्रम (i = 0; i < WQCFG_STRIDES(idxd); i++) अणु
 		wq_offset = WQCFG_OFFSET(idxd, wq->id, i);
-		wq->wqcfg->bits[i] = ioread32(idxd->reg_base + wq_offset);
-	}
+		wq->wqcfg->bits[i] = ioपढ़ो32(idxd->reg_base + wq_offset);
+	पूर्ण
 
 	/* byte 0-3 */
 	wq->wqcfg->wq_size = wq->size;
 
-	if (wq->size == 0) {
+	अगर (wq->size == 0) अणु
 		dev_warn(dev, "Incorrect work queue size: 0\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* bytes 4-7 */
 	wq->wqcfg->wq_thresh = wq->threshold;
 
 	/* byte 8-11 */
 	wq->wqcfg->priv = !!(wq->type == IDXD_WQT_KERNEL);
-	if (wq_dedicated(wq))
+	अगर (wq_dedicated(wq))
 		wq->wqcfg->mode = 1;
 
-	if (device_pasid_enabled(idxd)) {
+	अगर (device_pasid_enabled(idxd)) अणु
 		wq->wqcfg->pasid_en = 1;
-		if (wq->type == IDXD_WQT_KERNEL && wq_dedicated(wq))
+		अगर (wq->type == IDXD_WQT_KERNEL && wq_dedicated(wq))
 			wq->wqcfg->pasid = idxd->pasid;
-	}
+	पूर्ण
 
 	wq->wqcfg->priority = wq->priority;
 
-	if (idxd->hw.gen_cap.block_on_fault &&
+	अगर (idxd->hw.gen_cap.block_on_fault &&
 	    test_bit(WQ_FLAG_BLOCK_ON_FAULT, &wq->flags))
 		wq->wqcfg->bof = 1;
 
-	if (idxd->hw.wq_cap.wq_ats_support)
+	अगर (idxd->hw.wq_cap.wq_ats_support)
 		wq->wqcfg->wq_ats_disable = wq->ats_dis;
 
 	/* bytes 12-15 */
-	wq->wqcfg->max_xfer_shift = ilog2(wq->max_xfer_bytes);
-	wq->wqcfg->max_batch_shift = ilog2(wq->max_batch_size);
+	wq->wqcfg->max_xfer_shअगरt = ilog2(wq->max_xfer_bytes);
+	wq->wqcfg->max_batch_shअगरt = ilog2(wq->max_batch_size);
 
 	dev_dbg(dev, "WQ %d CFGs\n", wq->id);
-	for (i = 0; i < WQCFG_STRIDES(idxd); i++) {
+	क्रम (i = 0; i < WQCFG_STRIDES(idxd); i++) अणु
 		wq_offset = WQCFG_OFFSET(idxd, wq->id, i);
-		iowrite32(wq->wqcfg->bits[i], idxd->reg_base + wq_offset);
+		ioग_लिखो32(wq->wqcfg->bits[i], idxd->reg_base + wq_offset);
 		dev_dbg(dev, "WQ[%d][%d][%#x]: %#x\n",
 			wq->id, i, wq_offset,
-			ioread32(idxd->reg_base + wq_offset));
-	}
+			ioपढ़ो32(idxd->reg_base + wq_offset));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int idxd_wqs_config_write(struct idxd_device *idxd)
-{
-	int i, rc;
+अटल पूर्णांक idxd_wqs_config_ग_लिखो(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i, rc;
 
-	for (i = 0; i < idxd->max_wqs; i++) {
-		struct idxd_wq *wq = idxd->wqs[i];
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+		काष्ठा idxd_wq *wq = idxd->wqs[i];
 
-		rc = idxd_wq_config_write(wq);
-		if (rc < 0)
-			return rc;
-	}
+		rc = idxd_wq_config_ग_लिखो(wq);
+		अगर (rc < 0)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void idxd_group_flags_setup(struct idxd_device *idxd)
-{
-	int i;
+अटल व्योम idxd_group_flags_setup(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i;
 
-	/* TC-A 0 and TC-B 1 should be defaults */
-	for (i = 0; i < idxd->max_groups; i++) {
-		struct idxd_group *group = idxd->groups[i];
+	/* TC-A 0 and TC-B 1 should be शेषs */
+	क्रम (i = 0; i < idxd->max_groups; i++) अणु
+		काष्ठा idxd_group *group = idxd->groups[i];
 
-		if (group->tc_a == -1)
+		अगर (group->tc_a == -1)
 			group->tc_a = group->grpcfg.flags.tc_a = 0;
-		else
+		अन्यथा
 			group->grpcfg.flags.tc_a = group->tc_a;
-		if (group->tc_b == -1)
+		अगर (group->tc_b == -1)
 			group->tc_b = group->grpcfg.flags.tc_b = 1;
-		else
+		अन्यथा
 			group->grpcfg.flags.tc_b = group->tc_b;
 		group->grpcfg.flags.use_token_limit = group->use_token_limit;
 		group->grpcfg.flags.tokens_reserved = group->tokens_reserved;
-		if (group->tokens_allowed)
+		अगर (group->tokens_allowed)
 			group->grpcfg.flags.tokens_allowed =
 				group->tokens_allowed;
-		else
+		अन्यथा
 			group->grpcfg.flags.tokens_allowed = idxd->max_tokens;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int idxd_engines_setup(struct idxd_device *idxd)
-{
-	int i, engines = 0;
-	struct idxd_engine *eng;
-	struct idxd_group *group;
+अटल पूर्णांक idxd_engines_setup(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक i, engines = 0;
+	काष्ठा idxd_engine *eng;
+	काष्ठा idxd_group *group;
 
-	for (i = 0; i < idxd->max_groups; i++) {
+	क्रम (i = 0; i < idxd->max_groups; i++) अणु
 		group = idxd->groups[i];
 		group->grpcfg.engines = 0;
-	}
+	पूर्ण
 
-	for (i = 0; i < idxd->max_engines; i++) {
+	क्रम (i = 0; i < idxd->max_engines; i++) अणु
 		eng = idxd->engines[i];
 		group = eng->group;
 
-		if (!group)
-			continue;
+		अगर (!group)
+			जारी;
 
 		group->grpcfg.engines |= BIT(eng->id);
 		engines++;
-	}
+	पूर्ण
 
-	if (!engines)
-		return -EINVAL;
+	अगर (!engines)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int idxd_wqs_setup(struct idxd_device *idxd)
-{
-	struct idxd_wq *wq;
-	struct idxd_group *group;
-	int i, j, configured = 0;
-	struct device *dev = &idxd->pdev->dev;
+अटल पूर्णांक idxd_wqs_setup(काष्ठा idxd_device *idxd)
+अणु
+	काष्ठा idxd_wq *wq;
+	काष्ठा idxd_group *group;
+	पूर्णांक i, j, configured = 0;
+	काष्ठा device *dev = &idxd->pdev->dev;
 
-	for (i = 0; i < idxd->max_groups; i++) {
+	क्रम (i = 0; i < idxd->max_groups; i++) अणु
 		group = idxd->groups[i];
-		for (j = 0; j < 4; j++)
+		क्रम (j = 0; j < 4; j++)
 			group->grpcfg.wqs[j] = 0;
-	}
+	पूर्ण
 
-	for (i = 0; i < idxd->max_wqs; i++) {
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
 		wq = idxd->wqs[i];
 		group = wq->group;
 
-		if (!wq->group)
-			continue;
-		if (!wq->size)
-			continue;
+		अगर (!wq->group)
+			जारी;
+		अगर (!wq->size)
+			जारी;
 
-		if (wq_shared(wq) && !device_swq_supported(idxd)) {
+		अगर (wq_shared(wq) && !device_swq_supported(idxd)) अणु
 			dev_warn(dev, "No shared wq support but configured.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		group->grpcfg.wqs[wq->id / 64] |= BIT(wq->id % 64);
 		configured++;
-	}
+	पूर्ण
 
-	if (configured == 0)
-		return -EINVAL;
+	अगर (configured == 0)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int idxd_device_config(struct idxd_device *idxd)
-{
-	int rc;
+पूर्णांक idxd_device_config(काष्ठा idxd_device *idxd)
+अणु
+	पूर्णांक rc;
 
-	lockdep_assert_held(&idxd->dev_lock);
+	lockdep_निश्चित_held(&idxd->dev_lock);
 	rc = idxd_wqs_setup(idxd);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = idxd_engines_setup(idxd);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	idxd_group_flags_setup(idxd);
 
-	rc = idxd_wqs_config_write(idxd);
-	if (rc < 0)
-		return rc;
+	rc = idxd_wqs_config_ग_लिखो(idxd);
+	अगर (rc < 0)
+		वापस rc;
 
-	rc = idxd_groups_config_write(idxd);
-	if (rc < 0)
-		return rc;
+	rc = idxd_groups_config_ग_लिखो(idxd);
+	अगर (rc < 0)
+		वापस rc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int idxd_wq_load_config(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct device *dev = &idxd->pdev->dev;
-	int wqcfg_offset;
-	int i;
+अटल पूर्णांक idxd_wq_load_config(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
+	पूर्णांक wqcfg_offset;
+	पूर्णांक i;
 
 	wqcfg_offset = WQCFG_OFFSET(idxd, wq->id, 0);
-	memcpy_fromio(wq->wqcfg, idxd->reg_base + wqcfg_offset, idxd->wqcfg_size);
+	स_नकल_fromio(wq->wqcfg, idxd->reg_base + wqcfg_offset, idxd->wqcfg_size);
 
 	wq->size = wq->wqcfg->wq_size;
 	wq->threshold = wq->wqcfg->wq_thresh;
-	if (wq->wqcfg->priv)
+	अगर (wq->wqcfg->priv)
 		wq->type = IDXD_WQT_KERNEL;
 
-	/* The driver does not support shared WQ mode in read-only config yet */
-	if (wq->wqcfg->mode == 0 || wq->wqcfg->pasid_en)
-		return -EOPNOTSUPP;
+	/* The driver करोes not support shared WQ mode in पढ़ो-only config yet */
+	अगर (wq->wqcfg->mode == 0 || wq->wqcfg->pasid_en)
+		वापस -EOPNOTSUPP;
 
 	set_bit(WQ_FLAG_DEDICATED, &wq->flags);
 
 	wq->priority = wq->wqcfg->priority;
 
-	for (i = 0; i < WQCFG_STRIDES(idxd); i++) {
+	क्रम (i = 0; i < WQCFG_STRIDES(idxd); i++) अणु
 		wqcfg_offset = WQCFG_OFFSET(idxd, wq->id, i);
 		dev_dbg(dev, "WQ[%d][%d][%#x]: %#x\n", wq->id, i, wqcfg_offset, wq->wqcfg->bits[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void idxd_group_load_config(struct idxd_group *group)
-{
-	struct idxd_device *idxd = group->idxd;
-	struct device *dev = &idxd->pdev->dev;
-	int i, j, grpcfg_offset;
+अटल व्योम idxd_group_load_config(काष्ठा idxd_group *group)
+अणु
+	काष्ठा idxd_device *idxd = group->idxd;
+	काष्ठा device *dev = &idxd->pdev->dev;
+	पूर्णांक i, j, grpcfg_offset;
 
 	/*
 	 * Load WQS bit fields
-	 * Iterate through all 256 bits 64 bits at a time
+	 * Iterate through all 256 bits 64 bits at a समय
 	 */
-	for (i = 0; i < GRPWQCFG_STRIDES; i++) {
-		struct idxd_wq *wq;
+	क्रम (i = 0; i < GRPWQCFG_STRIDES; i++) अणु
+		काष्ठा idxd_wq *wq;
 
 		grpcfg_offset = GRPWQCFG_OFFSET(idxd, group->id, i);
-		group->grpcfg.wqs[i] = ioread64(idxd->reg_base + grpcfg_offset);
+		group->grpcfg.wqs[i] = ioपढ़ो64(idxd->reg_base + grpcfg_offset);
 		dev_dbg(dev, "GRPCFG wq[%d:%d: %#x]: %#llx\n",
 			group->id, i, grpcfg_offset, group->grpcfg.wqs[i]);
 
-		if (i * 64 >= idxd->max_wqs)
-			break;
+		अगर (i * 64 >= idxd->max_wqs)
+			अवरोध;
 
-		/* Iterate through all 64 bits and check for wq set */
-		for (j = 0; j < 64; j++) {
-			int id = i * 64 + j;
+		/* Iterate through all 64 bits and check क्रम wq set */
+		क्रम (j = 0; j < 64; j++) अणु
+			पूर्णांक id = i * 64 + j;
 
 			/* No need to check beyond max wqs */
-			if (id >= idxd->max_wqs)
-				break;
+			अगर (id >= idxd->max_wqs)
+				अवरोध;
 
-			/* Set group assignment for wq if wq bit is set */
-			if (group->grpcfg.wqs[i] & BIT(j)) {
+			/* Set group assignment क्रम wq अगर wq bit is set */
+			अगर (group->grpcfg.wqs[i] & BIT(j)) अणु
 				wq = idxd->wqs[id];
 				wq->group = group;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	grpcfg_offset = GRPENGCFG_OFFSET(idxd, group->id);
-	group->grpcfg.engines = ioread64(idxd->reg_base + grpcfg_offset);
+	group->grpcfg.engines = ioपढ़ो64(idxd->reg_base + grpcfg_offset);
 	dev_dbg(dev, "GRPCFG engs[%d: %#x]: %#llx\n", group->id,
 		grpcfg_offset, group->grpcfg.engines);
 
 	/* Iterate through all 64 bits to check engines set */
-	for (i = 0; i < 64; i++) {
-		if (i >= idxd->max_engines)
-			break;
+	क्रम (i = 0; i < 64; i++) अणु
+		अगर (i >= idxd->max_engines)
+			अवरोध;
 
-		if (group->grpcfg.engines & BIT(i)) {
-			struct idxd_engine *engine = idxd->engines[i];
+		अगर (group->grpcfg.engines & BIT(i)) अणु
+			काष्ठा idxd_engine *engine = idxd->engines[i];
 
 			engine->group = group;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	grpcfg_offset = GRPFLGCFG_OFFSET(idxd, group->id);
-	group->grpcfg.flags.bits = ioread32(idxd->reg_base + grpcfg_offset);
+	group->grpcfg.flags.bits = ioपढ़ो32(idxd->reg_base + grpcfg_offset);
 	dev_dbg(dev, "GRPFLAGS flags[%d: %#x]: %#x\n",
 		group->id, grpcfg_offset, group->grpcfg.flags.bits);
-}
+पूर्ण
 
-int idxd_device_load_config(struct idxd_device *idxd)
-{
-	union gencfg_reg reg;
-	int i, rc;
+पूर्णांक idxd_device_load_config(काष्ठा idxd_device *idxd)
+अणु
+	जोड़ gencfg_reg reg;
+	पूर्णांक i, rc;
 
-	reg.bits = ioread32(idxd->reg_base + IDXD_GENCFG_OFFSET);
+	reg.bits = ioपढ़ो32(idxd->reg_base + IDXD_GENCFG_OFFSET);
 	idxd->token_limit = reg.token_limit;
 
-	for (i = 0; i < idxd->max_groups; i++) {
-		struct idxd_group *group = idxd->groups[i];
+	क्रम (i = 0; i < idxd->max_groups; i++) अणु
+		काष्ठा idxd_group *group = idxd->groups[i];
 
 		idxd_group_load_config(group);
-	}
+	पूर्ण
 
-	for (i = 0; i < idxd->max_wqs; i++) {
-		struct idxd_wq *wq = idxd->wqs[i];
+	क्रम (i = 0; i < idxd->max_wqs; i++) अणु
+		काष्ठा idxd_wq *wq = idxd->wqs[i];
 
 		rc = idxd_wq_load_config(wq);
-		if (rc < 0)
-			return rc;
-	}
+		अगर (rc < 0)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

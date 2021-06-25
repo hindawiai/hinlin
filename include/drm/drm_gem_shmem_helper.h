@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __DRM_GEM_SHMEM_HELPER_H__
-#define __DRM_GEM_SHMEM_HELPER_H__
+#अगर_अघोषित __DRM_GEM_SHMEM_HELPER_H__
+#घोषणा __DRM_GEM_SHMEM_HELPER_H__
 
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/mutex.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mutex.h>
 
-#include <drm/drm_file.h>
-#include <drm/drm_gem.h>
-#include <drm/drm_ioctl.h>
-#include <drm/drm_prime.h>
+#समावेश <drm/drm_file.h>
+#समावेश <drm/drm_gem.h>
+#समावेश <drm/drm_ioctl.h>
+#समावेश <drm/drm_prime.h>
 
-struct dma_buf_attachment;
-struct drm_mode_create_dumb;
-struct drm_printer;
-struct sg_table;
+काष्ठा dma_buf_attachment;
+काष्ठा drm_mode_create_dumb;
+काष्ठा drm_prपूर्णांकer;
+काष्ठा sg_table;
 
 /**
- * struct drm_gem_shmem_object - GEM object backed by shmem
+ * काष्ठा drm_gem_shmem_object - GEM object backed by shmem
  */
-struct drm_gem_shmem_object {
+काष्ठा drm_gem_shmem_object अणु
 	/**
 	 * @base: Base GEM object
 	 */
-	struct drm_gem_object base;
+	काष्ठा drm_gem_object base;
 
 	/**
 	 * @pages_lock: Protects the page table and use count
 	 */
-	struct mutex pages_lock;
+	काष्ठा mutex pages_lock;
 
 	/**
 	 * @pages: Page table
 	 */
-	struct page **pages;
+	काष्ठा page **pages;
 
 	/**
 	 * @pages_use_count:
@@ -42,124 +43,124 @@ struct drm_gem_shmem_object {
 	 * Reference count on the pages table.
 	 * The pages are put when the count reaches zero.
 	 */
-	unsigned int pages_use_count;
+	अचिन्हित पूर्णांक pages_use_count;
 
 	/**
-	 * @madv: State for madvise
+	 * @madv: State क्रम madvise
 	 *
 	 * 0 is active/inuse.
 	 * A negative value is the object is purged.
-	 * Positive values are driver specific and not used by the helpers.
+	 * Positive values are driver specअगरic and not used by the helpers.
 	 */
-	int madv;
+	पूर्णांक madv;
 
 	/**
-	 * @madv_list: List entry for madvise tracking
+	 * @madv_list: List entry क्रम madvise tracking
 	 *
 	 * Typically used by drivers to track purgeable objects
 	 */
-	struct list_head madv_list;
+	काष्ठा list_head madv_list;
 
 	/**
 	 * @pages_mark_dirty_on_put:
 	 *
 	 * Mark pages as dirty when they are put.
 	 */
-	unsigned int pages_mark_dirty_on_put    : 1;
+	अचिन्हित पूर्णांक pages_mark_dirty_on_put    : 1;
 
 	/**
 	 * @pages_mark_accessed_on_put:
 	 *
 	 * Mark pages as accessed when they are put.
 	 */
-	unsigned int pages_mark_accessed_on_put : 1;
+	अचिन्हित पूर्णांक pages_mark_accessed_on_put : 1;
 
 	/**
-	 * @sgt: Scatter/gather table for imported PRIME buffers
+	 * @sgt: Scatter/gather table क्रम imported PRIME buffers
 	 */
-	struct sg_table *sgt;
+	काष्ठा sg_table *sgt;
 
 	/**
 	 * @vmap_lock: Protects the vmap address and use count
 	 */
-	struct mutex vmap_lock;
+	काष्ठा mutex vmap_lock;
 
 	/**
-	 * @vaddr: Kernel virtual address of the backing memory
+	 * @vaddr: Kernel भव address of the backing memory
 	 */
-	void *vaddr;
+	व्योम *vaddr;
 
 	/**
 	 * @vmap_use_count:
 	 *
-	 * Reference count on the virtual address.
+	 * Reference count on the भव address.
 	 * The address are un-mapped when the count reaches zero.
 	 */
-	unsigned int vmap_use_count;
+	अचिन्हित पूर्णांक vmap_use_count;
 
 	/**
-	 * @map_wc: map object write-combined (instead of using shmem defaults).
+	 * @map_wc: map object ग_लिखो-combined (instead of using shmem शेषs).
 	 */
 	bool map_wc;
-};
+पूर्ण;
 
-#define to_drm_gem_shmem_obj(obj) \
-	container_of(obj, struct drm_gem_shmem_object, base)
+#घोषणा to_drm_gem_shmem_obj(obj) \
+	container_of(obj, काष्ठा drm_gem_shmem_object, base)
 
-struct drm_gem_shmem_object *drm_gem_shmem_create(struct drm_device *dev, size_t size);
-void drm_gem_shmem_free_object(struct drm_gem_object *obj);
+काष्ठा drm_gem_shmem_object *drm_gem_shmem_create(काष्ठा drm_device *dev, माप_प्रकार size);
+व्योम drm_gem_shmem_मुक्त_object(काष्ठा drm_gem_object *obj);
 
-int drm_gem_shmem_get_pages(struct drm_gem_shmem_object *shmem);
-void drm_gem_shmem_put_pages(struct drm_gem_shmem_object *shmem);
-int drm_gem_shmem_pin(struct drm_gem_object *obj);
-void drm_gem_shmem_unpin(struct drm_gem_object *obj);
-int drm_gem_shmem_vmap(struct drm_gem_object *obj, struct dma_buf_map *map);
-void drm_gem_shmem_vunmap(struct drm_gem_object *obj, struct dma_buf_map *map);
+पूर्णांक drm_gem_shmem_get_pages(काष्ठा drm_gem_shmem_object *shmem);
+व्योम drm_gem_shmem_put_pages(काष्ठा drm_gem_shmem_object *shmem);
+पूर्णांक drm_gem_shmem_pin(काष्ठा drm_gem_object *obj);
+व्योम drm_gem_shmem_unpin(काष्ठा drm_gem_object *obj);
+पूर्णांक drm_gem_shmem_vmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map);
+व्योम drm_gem_shmem_vunmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map);
 
-int drm_gem_shmem_madvise(struct drm_gem_object *obj, int madv);
+पूर्णांक drm_gem_shmem_madvise(काष्ठा drm_gem_object *obj, पूर्णांक madv);
 
-static inline bool drm_gem_shmem_is_purgeable(struct drm_gem_shmem_object *shmem)
-{
-	return (shmem->madv > 0) &&
+अटल अंतरभूत bool drm_gem_shmem_is_purgeable(काष्ठा drm_gem_shmem_object *shmem)
+अणु
+	वापस (shmem->madv > 0) &&
 		!shmem->vmap_use_count && shmem->sgt &&
 		!shmem->base.dma_buf && !shmem->base.import_attach;
-}
+पूर्ण
 
-void drm_gem_shmem_purge_locked(struct drm_gem_object *obj);
-bool drm_gem_shmem_purge(struct drm_gem_object *obj);
+व्योम drm_gem_shmem_purge_locked(काष्ठा drm_gem_object *obj);
+bool drm_gem_shmem_purge(काष्ठा drm_gem_object *obj);
 
-struct drm_gem_shmem_object *
-drm_gem_shmem_create_with_handle(struct drm_file *file_priv,
-				 struct drm_device *dev, size_t size,
-				 uint32_t *handle);
+काष्ठा drm_gem_shmem_object *
+drm_gem_shmem_create_with_handle(काष्ठा drm_file *file_priv,
+				 काष्ठा drm_device *dev, माप_प्रकार size,
+				 uपूर्णांक32_t *handle);
 
-int drm_gem_shmem_dumb_create(struct drm_file *file, struct drm_device *dev,
-			      struct drm_mode_create_dumb *args);
+पूर्णांक drm_gem_shmem_dumb_create(काष्ठा drm_file *file, काष्ठा drm_device *dev,
+			      काष्ठा drm_mode_create_dumb *args);
 
-int drm_gem_shmem_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma);
+पूर्णांक drm_gem_shmem_mmap(काष्ठा drm_gem_object *obj, काष्ठा vm_area_काष्ठा *vma);
 
-void drm_gem_shmem_print_info(struct drm_printer *p, unsigned int indent,
-			      const struct drm_gem_object *obj);
+व्योम drm_gem_shmem_prपूर्णांक_info(काष्ठा drm_prपूर्णांकer *p, अचिन्हित पूर्णांक indent,
+			      स्थिर काष्ठा drm_gem_object *obj);
 
-struct sg_table *drm_gem_shmem_get_sg_table(struct drm_gem_object *obj);
-struct drm_gem_object *
-drm_gem_shmem_prime_import_sg_table(struct drm_device *dev,
-				    struct dma_buf_attachment *attach,
-				    struct sg_table *sgt);
+काष्ठा sg_table *drm_gem_shmem_get_sg_table(काष्ठा drm_gem_object *obj);
+काष्ठा drm_gem_object *
+drm_gem_shmem_prime_import_sg_table(काष्ठा drm_device *dev,
+				    काष्ठा dma_buf_attachment *attach,
+				    काष्ठा sg_table *sgt);
 
-struct sg_table *drm_gem_shmem_get_pages_sgt(struct drm_gem_object *obj);
+काष्ठा sg_table *drm_gem_shmem_get_pages_sgt(काष्ठा drm_gem_object *obj);
 
 /**
  * DRM_GEM_SHMEM_DRIVER_OPS - Default shmem GEM operations
  *
- * This macro provides a shortcut for setting the shmem GEM operations in
- * the &drm_driver structure.
+ * This macro provides a लघुcut क्रम setting the shmem GEM operations in
+ * the &drm_driver काष्ठाure.
  */
-#define DRM_GEM_SHMEM_DRIVER_OPS \
+#घोषणा DRM_GEM_SHMEM_DRIVER_OPS \
 	.prime_handle_to_fd	= drm_gem_prime_handle_to_fd, \
 	.prime_fd_to_handle	= drm_gem_prime_fd_to_handle, \
 	.gem_prime_import_sg_table = drm_gem_shmem_prime_import_sg_table, \
 	.gem_prime_mmap		= drm_gem_prime_mmap, \
 	.dumb_create		= drm_gem_shmem_dumb_create
 
-#endif /* __DRM_GEM_SHMEM_HELPER_H__ */
+#पूर्ण_अगर /* __DRM_GEM_SHMEM_HELPER_H__ */

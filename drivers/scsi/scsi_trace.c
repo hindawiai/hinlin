@@ -1,391 +1,392 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2010 FUJITSU LIMITED
  * Copyright (C) 2010 Tomohiro Kusumi <kusumi.tomohiro@jp.fujitsu.com>
  */
-#include <linux/kernel.h>
-#include <linux/trace_seq.h>
-#include <asm/unaligned.h>
-#include <trace/events/scsi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/trace_seq.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <trace/events/scsi.h>
 
-#define SERVICE_ACTION16(cdb) (cdb[1] & 0x1f)
-#define SERVICE_ACTION32(cdb) (get_unaligned_be16(&cdb[8]))
+#घोषणा SERVICE_ACTION16(cdb) (cdb[1] & 0x1f)
+#घोषणा SERVICE_ACTION32(cdb) (get_unaligned_be16(&cdb[8]))
 
-static const char *
-scsi_trace_misc(struct trace_seq *, unsigned char *, int);
+अटल स्थिर अक्षर *
+scsi_trace_misc(काष्ठा trace_seq *, अचिन्हित अक्षर *, पूर्णांक);
 
-static const char *
-scsi_trace_rw6(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
+अटल स्थिर अक्षर *
+scsi_trace_rw6(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
 	u32 lba, txlen;
 
 	lba = get_unaligned_be24(&cdb[1]) & 0x1fffff;
 	/*
-	 * From SBC-2: a TRANSFER LENGTH field set to zero specifies that 256
-	 * logical blocks shall be read (READ(6)) or written (WRITE(6)).
+	 * From SBC-2: a TRANSFER LENGTH field set to zero specअगरies that 256
+	 * logical blocks shall be पढ़ो (READ(6)) or written (WRITE(6)).
 	 */
 	txlen = cdb[4] ? cdb[4] : 256;
 
-	trace_seq_printf(p, "lba=%u txlen=%u", lba, txlen);
-	trace_seq_putc(p, 0);
+	trace_seq_म_लिखो(p, "lba=%u txlen=%u", lba, txlen);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_rw10(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
+अटल स्थिर अक्षर *
+scsi_trace_rw10(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
 	u32 lba, txlen;
 
 	lba = get_unaligned_be32(&cdb[2]);
 	txlen = get_unaligned_be16(&cdb[7]);
 
-	trace_seq_printf(p, "lba=%u txlen=%u protect=%u", lba, txlen,
+	trace_seq_म_लिखो(p, "lba=%u txlen=%u protect=%u", lba, txlen,
 			 cdb[1] >> 5);
 
-	if (cdb[0] == WRITE_SAME)
-		trace_seq_printf(p, " unmap=%u", cdb[1] >> 3 & 1);
+	अगर (cdb[0] == WRITE_SAME)
+		trace_seq_म_लिखो(p, " unmap=%u", cdb[1] >> 3 & 1);
 
-	trace_seq_putc(p, 0);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_rw12(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
+अटल स्थिर अक्षर *
+scsi_trace_rw12(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
 	u32 lba, txlen;
 
 	lba = get_unaligned_be32(&cdb[2]);
 	txlen = get_unaligned_be32(&cdb[6]);
 
-	trace_seq_printf(p, "lba=%u txlen=%u protect=%u", lba, txlen,
+	trace_seq_म_लिखो(p, "lba=%u txlen=%u protect=%u", lba, txlen,
 			 cdb[1] >> 5);
-	trace_seq_putc(p, 0);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_rw16(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
+अटल स्थिर अक्षर *
+scsi_trace_rw16(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
 	u64 lba;
 	u32 txlen;
 
 	lba = get_unaligned_be64(&cdb[2]);
 	txlen = get_unaligned_be32(&cdb[10]);
 
-	trace_seq_printf(p, "lba=%llu txlen=%u protect=%u", lba, txlen,
+	trace_seq_म_लिखो(p, "lba=%llu txlen=%u protect=%u", lba, txlen,
 			 cdb[1] >> 5);
 
-	if (cdb[0] == WRITE_SAME_16)
-		trace_seq_printf(p, " unmap=%u", cdb[1] >> 3 & 1);
+	अगर (cdb[0] == WRITE_SAME_16)
+		trace_seq_म_लिखो(p, " unmap=%u", cdb[1] >> 3 & 1);
 
-	trace_seq_putc(p, 0);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_rw32(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p), *cmd;
+अटल स्थिर अक्षर *
+scsi_trace_rw32(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p), *cmd;
 	u64 lba;
 	u32 ei_lbrt, txlen;
 
-	switch (SERVICE_ACTION32(cdb)) {
-	case READ_32:
+	चयन (SERVICE_ACTION32(cdb)) अणु
+	हाल READ_32:
 		cmd = "READ";
-		break;
-	case VERIFY_32:
+		अवरोध;
+	हाल VERIFY_32:
 		cmd = "VERIFY";
-		break;
-	case WRITE_32:
+		अवरोध;
+	हाल WRITE_32:
 		cmd = "WRITE";
-		break;
-	case WRITE_SAME_32:
+		अवरोध;
+	हाल WRITE_SAME_32:
 		cmd = "WRITE_SAME";
-		break;
-	default:
-		trace_seq_puts(p, "UNKNOWN");
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		trace_seq_माला_दो(p, "UNKNOWN");
+		जाओ out;
+	पूर्ण
 
 	lba = get_unaligned_be64(&cdb[12]);
 	ei_lbrt = get_unaligned_be32(&cdb[20]);
 	txlen = get_unaligned_be32(&cdb[28]);
 
-	trace_seq_printf(p, "%s_32 lba=%llu txlen=%u protect=%u ei_lbrt=%u",
+	trace_seq_म_लिखो(p, "%s_32 lba=%llu txlen=%u protect=%u ei_lbrt=%u",
 			 cmd, lba, txlen, cdb[10] >> 5, ei_lbrt);
 
-	if (SERVICE_ACTION32(cdb) == WRITE_SAME_32)
-		trace_seq_printf(p, " unmap=%u", cdb[10] >> 3 & 1);
+	अगर (SERVICE_ACTION32(cdb) == WRITE_SAME_32)
+		trace_seq_म_लिखो(p, " unmap=%u", cdb[10] >> 3 & 1);
 
 out:
-	trace_seq_putc(p, 0);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_unmap(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
-	unsigned int regions = get_unaligned_be16(&cdb[7]);
+अटल स्थिर अक्षर *
+scsi_trace_unmap(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
+	अचिन्हित पूर्णांक regions = get_unaligned_be16(&cdb[7]);
 
-	trace_seq_printf(p, "regions=%u", (regions - 8) / 16);
-	trace_seq_putc(p, 0);
+	trace_seq_म_लिखो(p, "regions=%u", (regions - 8) / 16);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_service_action_in(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p), *cmd;
+अटल स्थिर अक्षर *
+scsi_trace_service_action_in(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p), *cmd;
 	u64 lba;
 	u32 alloc_len;
 
-	switch (SERVICE_ACTION16(cdb)) {
-	case SAI_READ_CAPACITY_16:
+	चयन (SERVICE_ACTION16(cdb)) अणु
+	हाल SAI_READ_CAPACITY_16:
 		cmd = "READ_CAPACITY_16";
-		break;
-	case SAI_GET_LBA_STATUS:
+		अवरोध;
+	हाल SAI_GET_LBA_STATUS:
 		cmd = "GET_LBA_STATUS";
-		break;
-	default:
-		trace_seq_puts(p, "UNKNOWN");
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		trace_seq_माला_दो(p, "UNKNOWN");
+		जाओ out;
+	पूर्ण
 
 	lba = get_unaligned_be64(&cdb[2]);
 	alloc_len = get_unaligned_be32(&cdb[10]);
 
-	trace_seq_printf(p, "%s lba=%llu alloc_len=%u", cmd, lba, alloc_len);
+	trace_seq_म_लिखो(p, "%s lba=%llu alloc_len=%u", cmd, lba, alloc_len);
 
 out:
-	trace_seq_putc(p, 0);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_maintenance_in(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p), *cmd;
+अटल स्थिर अक्षर *
+scsi_trace_मुख्यtenance_in(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p), *cmd;
 	u32 alloc_len;
 
-	switch (SERVICE_ACTION16(cdb)) {
-	case MI_REPORT_IDENTIFYING_INFORMATION:
+	चयन (SERVICE_ACTION16(cdb)) अणु
+	हाल MI_REPORT_IDENTIFYING_INFORMATION:
 		cmd = "REPORT_IDENTIFYING_INFORMATION";
-		break;
-	case MI_REPORT_TARGET_PGS:
+		अवरोध;
+	हाल MI_REPORT_TARGET_PGS:
 		cmd = "REPORT_TARGET_PORT_GROUPS";
-		break;
-	case MI_REPORT_ALIASES:
+		अवरोध;
+	हाल MI_REPORT_ALIASES:
 		cmd = "REPORT_ALIASES";
-		break;
-	case MI_REPORT_SUPPORTED_OPERATION_CODES:
+		अवरोध;
+	हाल MI_REPORT_SUPPORTED_OPERATION_CODES:
 		cmd = "REPORT_SUPPORTED_OPERATION_CODES";
-		break;
-	case MI_REPORT_SUPPORTED_TASK_MANAGEMENT_FUNCTIONS:
+		अवरोध;
+	हाल MI_REPORT_SUPPORTED_TASK_MANAGEMENT_FUNCTIONS:
 		cmd = "REPORT_SUPPORTED_TASK_MANAGEMENT_FUNCTIONS";
-		break;
-	case MI_REPORT_PRIORITY:
+		अवरोध;
+	हाल MI_REPORT_PRIORITY:
 		cmd = "REPORT_PRIORITY";
-		break;
-	case MI_REPORT_TIMESTAMP:
+		अवरोध;
+	हाल MI_REPORT_TIMESTAMP:
 		cmd = "REPORT_TIMESTAMP";
-		break;
-	case MI_MANAGEMENT_PROTOCOL_IN:
+		अवरोध;
+	हाल MI_MANAGEMENT_PROTOCOL_IN:
 		cmd = "MANAGEMENT_PROTOCOL_IN";
-		break;
-	default:
-		trace_seq_puts(p, "UNKNOWN");
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		trace_seq_माला_दो(p, "UNKNOWN");
+		जाओ out;
+	पूर्ण
 
 	alloc_len = get_unaligned_be32(&cdb[6]);
 
-	trace_seq_printf(p, "%s alloc_len=%u", cmd, alloc_len);
+	trace_seq_म_लिखो(p, "%s alloc_len=%u", cmd, alloc_len);
 
 out:
-	trace_seq_putc(p, 0);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_maintenance_out(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p), *cmd;
+अटल स्थिर अक्षर *
+scsi_trace_मुख्यtenance_out(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p), *cmd;
 	u32 alloc_len;
 
-	switch (SERVICE_ACTION16(cdb)) {
-	case MO_SET_IDENTIFYING_INFORMATION:
+	चयन (SERVICE_ACTION16(cdb)) अणु
+	हाल MO_SET_IDENTIFYING_INFORMATION:
 		cmd = "SET_IDENTIFYING_INFORMATION";
-		break;
-	case MO_SET_TARGET_PGS:
+		अवरोध;
+	हाल MO_SET_TARGET_PGS:
 		cmd = "SET_TARGET_PORT_GROUPS";
-		break;
-	case MO_CHANGE_ALIASES:
+		अवरोध;
+	हाल MO_CHANGE_ALIASES:
 		cmd = "CHANGE_ALIASES";
-		break;
-	case MO_SET_PRIORITY:
+		अवरोध;
+	हाल MO_SET_PRIORITY:
 		cmd = "SET_PRIORITY";
-		break;
-	case MO_SET_TIMESTAMP:
+		अवरोध;
+	हाल MO_SET_TIMESTAMP:
 		cmd = "SET_TIMESTAMP";
-		break;
-	case MO_MANAGEMENT_PROTOCOL_OUT:
+		अवरोध;
+	हाल MO_MANAGEMENT_PROTOCOL_OUT:
 		cmd = "MANAGEMENT_PROTOCOL_OUT";
-		break;
-	default:
-		trace_seq_puts(p, "UNKNOWN");
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		trace_seq_माला_दो(p, "UNKNOWN");
+		जाओ out;
+	पूर्ण
 
 	alloc_len = get_unaligned_be32(&cdb[6]);
 
-	trace_seq_printf(p, "%s alloc_len=%u", cmd, alloc_len);
+	trace_seq_म_लिखो(p, "%s alloc_len=%u", cmd, alloc_len);
 
 out:
-	trace_seq_putc(p, 0);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_zbc_in(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p), *cmd;
+अटल स्थिर अक्षर *
+scsi_trace_zbc_in(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p), *cmd;
 	u64 zone_id;
 	u32 alloc_len;
 	u8 options;
 
-	switch (SERVICE_ACTION16(cdb)) {
-	case ZI_REPORT_ZONES:
+	चयन (SERVICE_ACTION16(cdb)) अणु
+	हाल ZI_REPORT_ZONES:
 		cmd = "REPORT_ZONES";
-		break;
-	default:
-		trace_seq_puts(p, "UNKNOWN");
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		trace_seq_माला_दो(p, "UNKNOWN");
+		जाओ out;
+	पूर्ण
 
 	zone_id = get_unaligned_be64(&cdb[2]);
 	alloc_len = get_unaligned_be32(&cdb[10]);
 	options = cdb[14] & 0x3f;
 
-	trace_seq_printf(p, "%s zone=%llu alloc_len=%u options=%u partial=%u",
-			 cmd, (unsigned long long)zone_id, alloc_len,
+	trace_seq_म_लिखो(p, "%s zone=%llu alloc_len=%u options=%u partial=%u",
+			 cmd, (अचिन्हित दीर्घ दीर्घ)zone_id, alloc_len,
 			 options, (cdb[14] >> 7) & 1);
 
 out:
-	trace_seq_putc(p, 0);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_zbc_out(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p), *cmd;
+अटल स्थिर अक्षर *
+scsi_trace_zbc_out(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p), *cmd;
 	u64 zone_id;
 
-	switch (SERVICE_ACTION16(cdb)) {
-	case ZO_CLOSE_ZONE:
+	चयन (SERVICE_ACTION16(cdb)) अणु
+	हाल ZO_CLOSE_ZONE:
 		cmd = "CLOSE_ZONE";
-		break;
-	case ZO_FINISH_ZONE:
+		अवरोध;
+	हाल ZO_FINISH_ZONE:
 		cmd = "FINISH_ZONE";
-		break;
-	case ZO_OPEN_ZONE:
+		अवरोध;
+	हाल ZO_OPEN_ZONE:
 		cmd = "OPEN_ZONE";
-		break;
-	case ZO_RESET_WRITE_POINTER:
+		अवरोध;
+	हाल ZO_RESET_WRITE_POINTER:
 		cmd = "RESET_WRITE_POINTER";
-		break;
-	default:
-		trace_seq_puts(p, "UNKNOWN");
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		trace_seq_माला_दो(p, "UNKNOWN");
+		जाओ out;
+	पूर्ण
 
 	zone_id = get_unaligned_be64(&cdb[2]);
 
-	trace_seq_printf(p, "%s zone=%llu all=%u", cmd,
-			 (unsigned long long)zone_id, cdb[14] & 1);
+	trace_seq_म_लिखो(p, "%s zone=%llu all=%u", cmd,
+			 (अचिन्हित दीर्घ दीर्घ)zone_id, cdb[14] & 1);
 
 out:
-	trace_seq_putc(p, 0);
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *
-scsi_trace_varlen(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	switch (SERVICE_ACTION32(cdb)) {
-	case READ_32:
-	case VERIFY_32:
-	case WRITE_32:
-	case WRITE_SAME_32:
-		return scsi_trace_rw32(p, cdb, len);
-	default:
-		return scsi_trace_misc(p, cdb, len);
-	}
-}
+अटल स्थिर अक्षर *
+scsi_trace_varlen(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	चयन (SERVICE_ACTION32(cdb)) अणु
+	हाल READ_32:
+	हाल VERIFY_32:
+	हाल WRITE_32:
+	हाल WRITE_SAME_32:
+		वापस scsi_trace_rw32(p, cdb, len);
+	शेष:
+		वापस scsi_trace_misc(p, cdb, len);
+	पूर्ण
+पूर्ण
 
-static const char *
-scsi_trace_misc(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	const char *ret = trace_seq_buffer_ptr(p);
+अटल स्थिर अक्षर *
+scsi_trace_misc(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	स्थिर अक्षर *ret = trace_seq_buffer_ptr(p);
 
-	trace_seq_putc(p, '-');
-	trace_seq_putc(p, 0);
+	trace_seq_अ_दो(p, '-');
+	trace_seq_अ_दो(p, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const char *
-scsi_trace_parse_cdb(struct trace_seq *p, unsigned char *cdb, int len)
-{
-	switch (cdb[0]) {
-	case READ_6:
-	case WRITE_6:
-		return scsi_trace_rw6(p, cdb, len);
-	case READ_10:
-	case VERIFY:
-	case WRITE_10:
-	case WRITE_SAME:
-		return scsi_trace_rw10(p, cdb, len);
-	case READ_12:
-	case VERIFY_12:
-	case WRITE_12:
-		return scsi_trace_rw12(p, cdb, len);
-	case READ_16:
-	case VERIFY_16:
-	case WRITE_16:
-	case WRITE_SAME_16:
-		return scsi_trace_rw16(p, cdb, len);
-	case UNMAP:
-		return scsi_trace_unmap(p, cdb, len);
-	case SERVICE_ACTION_IN_16:
-		return scsi_trace_service_action_in(p, cdb, len);
-	case VARIABLE_LENGTH_CMD:
-		return scsi_trace_varlen(p, cdb, len);
-	case MAINTENANCE_IN:
-		return scsi_trace_maintenance_in(p, cdb, len);
-	case MAINTENANCE_OUT:
-		return scsi_trace_maintenance_out(p, cdb, len);
-	case ZBC_IN:
-		return scsi_trace_zbc_in(p, cdb, len);
-	case ZBC_OUT:
-		return scsi_trace_zbc_out(p, cdb, len);
-	default:
-		return scsi_trace_misc(p, cdb, len);
-	}
-}
+स्थिर अक्षर *
+scsi_trace_parse_cdb(काष्ठा trace_seq *p, अचिन्हित अक्षर *cdb, पूर्णांक len)
+अणु
+	चयन (cdb[0]) अणु
+	हाल READ_6:
+	हाल WRITE_6:
+		वापस scsi_trace_rw6(p, cdb, len);
+	हाल READ_10:
+	हाल VERIFY:
+	हाल WRITE_10:
+	हाल WRITE_SAME:
+		वापस scsi_trace_rw10(p, cdb, len);
+	हाल READ_12:
+	हाल VERIFY_12:
+	हाल WRITE_12:
+		वापस scsi_trace_rw12(p, cdb, len);
+	हाल READ_16:
+	हाल VERIFY_16:
+	हाल WRITE_16:
+	हाल WRITE_SAME_16:
+		वापस scsi_trace_rw16(p, cdb, len);
+	हाल UNMAP:
+		वापस scsi_trace_unmap(p, cdb, len);
+	हाल SERVICE_ACTION_IN_16:
+		वापस scsi_trace_service_action_in(p, cdb, len);
+	हाल VARIABLE_LENGTH_CMD:
+		वापस scsi_trace_varlen(p, cdb, len);
+	हाल MAINTEन_अंकCE_IN:
+		वापस scsi_trace_मुख्यtenance_in(p, cdb, len);
+	हाल MAINTEन_अंकCE_OUT:
+		वापस scsi_trace_मुख्यtenance_out(p, cdb, len);
+	हाल ZBC_IN:
+		वापस scsi_trace_zbc_in(p, cdb, len);
+	हाल ZBC_OUT:
+		वापस scsi_trace_zbc_out(p, cdb, len);
+	शेष:
+		वापस scsi_trace_misc(p, cdb, len);
+	पूर्ण
+पूर्ण

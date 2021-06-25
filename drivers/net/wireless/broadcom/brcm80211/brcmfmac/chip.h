@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
-#ifndef BRCMF_CHIP_H
-#define BRCMF_CHIP_H
+#अगर_अघोषित BRCMF_CHIP_H
+#घोषणा BRCMF_CHIP_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define CORE_CC_REG(base, field) \
-		(base + offsetof(struct chipcregs, field))
+#घोषणा CORE_CC_REG(base, field) \
+		(base + दुरत्व(काष्ठा chipcregs, field))
 
 /**
- * struct brcmf_chip - chip level information.
+ * काष्ठा brcmf_chip - chip level inक्रमmation.
  *
- * @chip: chip identifier.
+ * @chip: chip identअगरier.
  * @chiprev: chip revision.
  * @cc_caps: chipcommon core capabilities.
  * @cc_caps_ext: chipcommon core extended capabilities.
  * @pmucaps: PMU capabilities.
  * @pmurev: PMU revision.
- * @rambase: RAM base address (only applicable for ARM CR4 chips).
+ * @rambase: RAM base address (only applicable क्रम ARM CR4 chips).
  * @ramsize: amount of RAM on chip including retention.
  * @srsize: amount of retention RAM on chip.
- * @name: string representation of the chip identifier.
+ * @name: string representation of the chip identअगरier.
  */
-struct brcmf_chip {
+काष्ठा brcmf_chip अणु
 	u32 chip;
 	u32 chiprev;
 	u32 cc_caps;
@@ -34,56 +35,56 @@ struct brcmf_chip {
 	u32 rambase;
 	u32 ramsize;
 	u32 srsize;
-	char name[12];
-};
+	अक्षर name[12];
+पूर्ण;
 
 /**
- * struct brcmf_core - core related information.
+ * काष्ठा brcmf_core - core related inक्रमmation.
  *
- * @id: core identifier.
+ * @id: core identअगरier.
  * @rev: core revision.
- * @base: base address of core register space.
+ * @base: base address of core रेजिस्टर space.
  */
-struct brcmf_core {
+काष्ठा brcmf_core अणु
 	u16 id;
 	u16 rev;
 	u32 base;
-};
+पूर्ण;
 
 /**
- * struct brcmf_buscore_ops - buscore specific callbacks.
+ * काष्ठा brcmf_buscore_ops - buscore specअगरic callbacks.
  *
- * @read32: read 32-bit value over bus.
- * @write32: write 32-bit value over bus.
- * @prepare: prepare bus for core configuration.
- * @setup: bus-specific core setup.
+ * @पढ़ो32: पढ़ो 32-bit value over bus.
+ * @ग_लिखो32: ग_लिखो 32-bit value over bus.
+ * @prepare: prepare bus क्रम core configuration.
+ * @setup: bus-specअगरic core setup.
  * @active: chip becomes active.
  *	The callback should use the provided @rstvec when non-zero.
  */
-struct brcmf_buscore_ops {
-	u32 (*read32)(void *ctx, u32 addr);
-	void (*write32)(void *ctx, u32 addr, u32 value);
-	int (*prepare)(void *ctx);
-	int (*reset)(void *ctx, struct brcmf_chip *chip);
-	int (*setup)(void *ctx, struct brcmf_chip *chip);
-	void (*activate)(void *ctx, struct brcmf_chip *chip, u32 rstvec);
-};
+काष्ठा brcmf_buscore_ops अणु
+	u32 (*पढ़ो32)(व्योम *ctx, u32 addr);
+	व्योम (*ग_लिखो32)(व्योम *ctx, u32 addr, u32 value);
+	पूर्णांक (*prepare)(व्योम *ctx);
+	पूर्णांक (*reset)(व्योम *ctx, काष्ठा brcmf_chip *chip);
+	पूर्णांक (*setup)(व्योम *ctx, काष्ठा brcmf_chip *chip);
+	व्योम (*activate)(व्योम *ctx, काष्ठा brcmf_chip *chip, u32 rstvec);
+पूर्ण;
 
-int brcmf_chip_get_raminfo(struct brcmf_chip *pub);
-struct brcmf_chip *brcmf_chip_attach(void *ctx,
-				     const struct brcmf_buscore_ops *ops);
-void brcmf_chip_detach(struct brcmf_chip *chip);
-struct brcmf_core *brcmf_chip_get_core(struct brcmf_chip *chip, u16 coreid);
-struct brcmf_core *brcmf_chip_get_d11core(struct brcmf_chip *pub, u8 unit);
-struct brcmf_core *brcmf_chip_get_chipcommon(struct brcmf_chip *chip);
-struct brcmf_core *brcmf_chip_get_pmu(struct brcmf_chip *pub);
-bool brcmf_chip_iscoreup(struct brcmf_core *core);
-void brcmf_chip_coredisable(struct brcmf_core *core, u32 prereset, u32 reset);
-void brcmf_chip_resetcore(struct brcmf_core *core, u32 prereset, u32 reset,
+पूर्णांक brcmf_chip_get_raminfo(काष्ठा brcmf_chip *pub);
+काष्ठा brcmf_chip *brcmf_chip_attach(व्योम *ctx,
+				     स्थिर काष्ठा brcmf_buscore_ops *ops);
+व्योम brcmf_chip_detach(काष्ठा brcmf_chip *chip);
+काष्ठा brcmf_core *brcmf_chip_get_core(काष्ठा brcmf_chip *chip, u16 coreid);
+काष्ठा brcmf_core *brcmf_chip_get_d11core(काष्ठा brcmf_chip *pub, u8 unit);
+काष्ठा brcmf_core *brcmf_chip_get_chipcommon(काष्ठा brcmf_chip *chip);
+काष्ठा brcmf_core *brcmf_chip_get_pmu(काष्ठा brcmf_chip *pub);
+bool brcmf_chip_iscoreup(काष्ठा brcmf_core *core);
+व्योम brcmf_chip_coredisable(काष्ठा brcmf_core *core, u32 prereset, u32 reset);
+व्योम brcmf_chip_resetcore(काष्ठा brcmf_core *core, u32 prereset, u32 reset,
 			  u32 postreset);
-void brcmf_chip_set_passive(struct brcmf_chip *ci);
-bool brcmf_chip_set_active(struct brcmf_chip *ci, u32 rstvec);
-bool brcmf_chip_sr_capable(struct brcmf_chip *pub);
-char *brcmf_chip_name(u32 chipid, u32 chiprev, char *buf, uint len);
+व्योम brcmf_chip_set_passive(काष्ठा brcmf_chip *ci);
+bool brcmf_chip_set_active(काष्ठा brcmf_chip *ci, u32 rstvec);
+bool brcmf_chip_sr_capable(काष्ठा brcmf_chip *pub);
+अक्षर *brcmf_chip_name(u32 chipid, u32 chiprev, अक्षर *buf, uपूर्णांक len);
 
-#endif /* BRCMF_AXIDMP_H */
+#पूर्ण_अगर /* BRCMF_AXIDMP_H */

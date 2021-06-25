@@ -1,302 +1,303 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/regset.h>
-#include <linux/hw_breakpoint.h>
+#समावेश <linux/regset.h>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
 
-#include <asm/debug.h>
+#समावेश <यंत्र/debug.h>
 
-#include "ptrace-decl.h"
+#समावेश "ptrace-decl.h"
 
-void user_enable_single_step(struct task_struct *task)
-{
-	struct pt_regs *regs = task->thread.regs;
+व्योम user_enable_single_step(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा pt_regs *regs = task->thपढ़ो.regs;
 
-	if (regs != NULL) {
+	अगर (regs != शून्य) अणु
 		regs->msr &= ~MSR_BE;
 		regs->msr |= MSR_SE;
-	}
-	set_tsk_thread_flag(task, TIF_SINGLESTEP);
-}
+	पूर्ण
+	set_tsk_thपढ़ो_flag(task, TIF_SINGLESTEP);
+पूर्ण
 
-void user_enable_block_step(struct task_struct *task)
-{
-	struct pt_regs *regs = task->thread.regs;
+व्योम user_enable_block_step(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा pt_regs *regs = task->thपढ़ो.regs;
 
-	if (regs != NULL) {
+	अगर (regs != शून्य) अणु
 		regs->msr &= ~MSR_SE;
 		regs->msr |= MSR_BE;
-	}
-	set_tsk_thread_flag(task, TIF_SINGLESTEP);
-}
+	पूर्ण
+	set_tsk_thपढ़ो_flag(task, TIF_SINGLESTEP);
+पूर्ण
 
-void user_disable_single_step(struct task_struct *task)
-{
-	struct pt_regs *regs = task->thread.regs;
+व्योम user_disable_single_step(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा pt_regs *regs = task->thपढ़ो.regs;
 
-	if (regs != NULL)
+	अगर (regs != शून्य)
 		regs->msr &= ~(MSR_SE | MSR_BE);
 
-	clear_tsk_thread_flag(task, TIF_SINGLESTEP);
-}
+	clear_tsk_thपढ़ो_flag(task, TIF_SINGLESTEP);
+पूर्ण
 
-void ppc_gethwdinfo(struct ppc_debug_info *dbginfo)
-{
+व्योम ppc_gethwdinfo(काष्ठा ppc_debug_info *dbginfo)
+अणु
 	dbginfo->version = 1;
-	dbginfo->num_instruction_bps = 0;
-	if (ppc_breakpoint_available())
+	dbginfo->num_inकाष्ठाion_bps = 0;
+	अगर (ppc_अवरोधpoपूर्णांक_available())
 		dbginfo->num_data_bps = nr_wp_slots();
-	else
+	अन्यथा
 		dbginfo->num_data_bps = 0;
 	dbginfo->num_condition_regs = 0;
-	dbginfo->data_bp_alignment = sizeof(long);
-	dbginfo->sizeof_condition = 0;
-	if (IS_ENABLED(CONFIG_HAVE_HW_BREAKPOINT)) {
+	dbginfo->data_bp_alignment = माप(दीर्घ);
+	dbginfo->माप_condition = 0;
+	अगर (IS_ENABLED(CONFIG_HAVE_HW_BREAKPOINT)) अणु
 		dbginfo->features = PPC_DEBUG_FEATURE_DATA_BP_RANGE;
-		if (dawr_enabled())
+		अगर (dawr_enabled())
 			dbginfo->features |= PPC_DEBUG_FEATURE_DATA_BP_DAWR;
-	} else {
+	पूर्ण अन्यथा अणु
 		dbginfo->features = 0;
-	}
-	if (cpu_has_feature(CPU_FTR_ARCH_31))
+	पूर्ण
+	अगर (cpu_has_feature(CPU_FTR_ARCH_31))
 		dbginfo->features |= PPC_DEBUG_FEATURE_DATA_BP_ARCH_31;
-}
+पूर्ण
 
-int ptrace_get_debugreg(struct task_struct *child, unsigned long addr,
-			unsigned long __user *datalp)
-{
-	unsigned long dabr_fake;
+पूर्णांक ptrace_get_debugreg(काष्ठा task_काष्ठा *child, अचिन्हित दीर्घ addr,
+			अचिन्हित दीर्घ __user *datalp)
+अणु
+	अचिन्हित दीर्घ dabr_fake;
 
 	/* We only support one DABR and no IABRS at the moment */
-	if (addr > 0)
-		return -EINVAL;
-	dabr_fake = ((child->thread.hw_brk[0].address & (~HW_BRK_TYPE_DABR)) |
-		     (child->thread.hw_brk[0].type & HW_BRK_TYPE_DABR));
-	return put_user(dabr_fake, datalp);
-}
+	अगर (addr > 0)
+		वापस -EINVAL;
+	dabr_fake = ((child->thपढ़ो.hw_brk[0].address & (~HW_BRK_TYPE_DABR)) |
+		     (child->thपढ़ो.hw_brk[0].type & HW_BRK_TYPE_DABR));
+	वापस put_user(dabr_fake, datalp);
+पूर्ण
 
 /*
- * ptrace_set_debugreg() fakes DABR and DABR is only one. So even if
- * internal hw supports more than one watchpoint, we support only one
- * watchpoint with this interface.
+ * ptrace_set_debugreg() fakes DABR and DABR is only one. So even अगर
+ * पूर्णांकernal hw supports more than one watchpoपूर्णांक, we support only one
+ * watchpoपूर्णांक with this पूर्णांकerface.
  */
-int ptrace_set_debugreg(struct task_struct *task, unsigned long addr, unsigned long data)
-{
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-	int ret;
-	struct thread_struct *thread = &task->thread;
-	struct perf_event *bp;
-	struct perf_event_attr attr;
-#endif /* CONFIG_HAVE_HW_BREAKPOINT */
+पूर्णांक ptrace_set_debugreg(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
+अणु
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+	पूर्णांक ret;
+	काष्ठा thपढ़ो_काष्ठा *thपढ़ो = &task->thपढ़ो;
+	काष्ठा perf_event *bp;
+	काष्ठा perf_event_attr attr;
+#पूर्ण_अगर /* CONFIG_HAVE_HW_BREAKPOINT */
 	bool set_bp = true;
-	struct arch_hw_breakpoint hw_brk;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक hw_brk;
 
 	/* For ppc64 we support one DABR and no IABR's at the moment (ppc64).
 	 *  For embedded processors we support one DAC and no IAC's at the
 	 *  moment.
 	 */
-	if (addr > 0)
-		return -EINVAL;
+	अगर (addr > 0)
+		वापस -EINVAL;
 
 	/* The bottom 3 bits in dabr are flags */
-	if ((data & ~0x7UL) >= TASK_SIZE)
-		return -EIO;
+	अगर ((data & ~0x7UL) >= TASK_SIZE)
+		वापस -EIO;
 
 	/* For processors using DABR (i.e. 970), the bottom 3 bits are flags.
 	 *  It was assumed, on previous implementations, that 3 bits were
 	 *  passed together with the data address, fitting the design of the
-	 *  DABR register, as follows:
+	 *  DABR रेजिस्टर, as follows:
 	 *
 	 *  bit 0: Read flag
 	 *  bit 1: Write flag
-	 *  bit 2: Breakpoint translation
+	 *  bit 2: Breakpoपूर्णांक translation
 	 *
 	 *  Thus, we use them here as so.
 	 */
 
-	/* Ensure breakpoint translation bit is set */
-	if (data && !(data & HW_BRK_TYPE_TRANSLATE))
-		return -EIO;
+	/* Ensure अवरोधpoपूर्णांक translation bit is set */
+	अगर (data && !(data & HW_BRK_TYPE_TRANSLATE))
+		वापस -EIO;
 	hw_brk.address = data & (~HW_BRK_TYPE_DABR);
 	hw_brk.type = (data & HW_BRK_TYPE_DABR) | HW_BRK_TYPE_PRIV_ALL;
 	hw_brk.len = DABR_MAX_LEN;
 	hw_brk.hw_len = DABR_MAX_LEN;
 	set_bp = (data) && (hw_brk.type & HW_BRK_TYPE_RDWR);
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-	bp = thread->ptrace_bps[0];
-	if (!set_bp) {
-		if (bp) {
-			unregister_hw_breakpoint(bp);
-			thread->ptrace_bps[0] = NULL;
-		}
-		return 0;
-	}
-	if (bp) {
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+	bp = thपढ़ो->ptrace_bps[0];
+	अगर (!set_bp) अणु
+		अगर (bp) अणु
+			unरेजिस्टर_hw_अवरोधpoपूर्णांक(bp);
+			thपढ़ो->ptrace_bps[0] = शून्य;
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	अगर (bp) अणु
 		attr = bp->attr;
 		attr.bp_addr = hw_brk.address;
 		attr.bp_len = DABR_MAX_LEN;
 		arch_bp_generic_fields(hw_brk.type, &attr.bp_type);
 
-		/* Enable breakpoint */
+		/* Enable अवरोधpoपूर्णांक */
 		attr.disabled = false;
 
-		ret =  modify_user_hw_breakpoint(bp, &attr);
-		if (ret)
-			return ret;
+		ret =  modअगरy_user_hw_अवरोधpoपूर्णांक(bp, &attr);
+		अगर (ret)
+			वापस ret;
 
-		thread->ptrace_bps[0] = bp;
-		thread->hw_brk[0] = hw_brk;
-		return 0;
-	}
+		thपढ़ो->ptrace_bps[0] = bp;
+		thपढ़ो->hw_brk[0] = hw_brk;
+		वापस 0;
+	पूर्ण
 
-	/* Create a new breakpoint request if one doesn't exist already */
-	hw_breakpoint_init(&attr);
+	/* Create a new अवरोधpoपूर्णांक request अगर one करोesn't exist alपढ़ोy */
+	hw_अवरोधpoपूर्णांक_init(&attr);
 	attr.bp_addr = hw_brk.address;
 	attr.bp_len = DABR_MAX_LEN;
 	arch_bp_generic_fields(hw_brk.type,
 			       &attr.bp_type);
 
-	thread->ptrace_bps[0] = bp = register_user_hw_breakpoint(&attr,
-					       ptrace_triggered, NULL, task);
-	if (IS_ERR(bp)) {
-		thread->ptrace_bps[0] = NULL;
-		return PTR_ERR(bp);
-	}
+	thपढ़ो->ptrace_bps[0] = bp = रेजिस्टर_user_hw_अवरोधpoपूर्णांक(&attr,
+					       ptrace_triggered, शून्य, task);
+	अगर (IS_ERR(bp)) अणु
+		thपढ़ो->ptrace_bps[0] = शून्य;
+		वापस PTR_ERR(bp);
+	पूर्ण
 
-#else /* !CONFIG_HAVE_HW_BREAKPOINT */
-	if (set_bp && (!ppc_breakpoint_available()))
-		return -ENODEV;
-#endif /* CONFIG_HAVE_HW_BREAKPOINT */
-	task->thread.hw_brk[0] = hw_brk;
-	return 0;
-}
+#अन्यथा /* !CONFIG_HAVE_HW_BREAKPOINT */
+	अगर (set_bp && (!ppc_अवरोधpoपूर्णांक_available()))
+		वापस -ENODEV;
+#पूर्ण_अगर /* CONFIG_HAVE_HW_BREAKPOINT */
+	task->thपढ़ो.hw_brk[0] = hw_brk;
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-static int find_empty_ptrace_bp(struct thread_struct *thread)
-{
-	int i;
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+अटल पूर्णांक find_empty_ptrace_bp(काष्ठा thपढ़ो_काष्ठा *thपढ़ो)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (!thread->ptrace_bps[i])
-			return i;
-	}
-	return -1;
-}
-#endif
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (!thपढ़ो->ptrace_bps[i])
+			वापस i;
+	पूर्ण
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
 
-static int find_empty_hw_brk(struct thread_struct *thread)
-{
-	int i;
+अटल पूर्णांक find_empty_hw_brk(काष्ठा thपढ़ो_काष्ठा *thपढ़ो)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < nr_wp_slots(); i++) {
-		if (!thread->hw_brk[i].address)
-			return i;
-	}
-	return -1;
-}
+	क्रम (i = 0; i < nr_wp_slots(); i++) अणु
+		अगर (!thपढ़ो->hw_brk[i].address)
+			वापस i;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-long ppc_set_hwdebug(struct task_struct *child, struct ppc_hw_breakpoint *bp_info)
-{
-	int i;
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-	int len = 0;
-	struct thread_struct *thread = &child->thread;
-	struct perf_event *bp;
-	struct perf_event_attr attr;
-#endif /* CONFIG_HAVE_HW_BREAKPOINT */
-	struct arch_hw_breakpoint brk;
+दीर्घ ppc_set_hwdebug(काष्ठा task_काष्ठा *child, काष्ठा ppc_hw_अवरोधpoपूर्णांक *bp_info)
+अणु
+	पूर्णांक i;
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+	पूर्णांक len = 0;
+	काष्ठा thपढ़ो_काष्ठा *thपढ़ो = &child->thपढ़ो;
+	काष्ठा perf_event *bp;
+	काष्ठा perf_event_attr attr;
+#पूर्ण_अगर /* CONFIG_HAVE_HW_BREAKPOINT */
+	काष्ठा arch_hw_अवरोधpoपूर्णांक brk;
 
-	if (bp_info->version != 1)
-		return -ENOTSUPP;
+	अगर (bp_info->version != 1)
+		वापस -ENOTSUPP;
 	/*
-	 * We only support one data breakpoint
+	 * We only support one data अवरोधpoपूर्णांक
 	 */
-	if ((bp_info->trigger_type & PPC_BREAKPOINT_TRIGGER_RW) == 0 ||
+	अगर ((bp_info->trigger_type & PPC_BREAKPOINT_TRIGGER_RW) == 0 ||
 	    (bp_info->trigger_type & ~PPC_BREAKPOINT_TRIGGER_RW) != 0 ||
 	    bp_info->condition_mode != PPC_BREAKPOINT_CONDITION_NONE)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if ((unsigned long)bp_info->addr >= TASK_SIZE)
-		return -EIO;
+	अगर ((अचिन्हित दीर्घ)bp_info->addr >= TASK_SIZE)
+		वापस -EIO;
 
 	brk.address = ALIGN_DOWN(bp_info->addr, HW_BREAKPOINT_SIZE);
 	brk.type = HW_BRK_TYPE_TRANSLATE | HW_BRK_TYPE_PRIV_ALL;
 	brk.len = DABR_MAX_LEN;
 	brk.hw_len = DABR_MAX_LEN;
-	if (bp_info->trigger_type & PPC_BREAKPOINT_TRIGGER_READ)
+	अगर (bp_info->trigger_type & PPC_BREAKPOINT_TRIGGER_READ)
 		brk.type |= HW_BRK_TYPE_READ;
-	if (bp_info->trigger_type & PPC_BREAKPOINT_TRIGGER_WRITE)
+	अगर (bp_info->trigger_type & PPC_BREAKPOINT_TRIGGER_WRITE)
 		brk.type |= HW_BRK_TYPE_WRITE;
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-	if (bp_info->addr_mode == PPC_BREAKPOINT_MODE_RANGE_INCLUSIVE)
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+	अगर (bp_info->addr_mode == PPC_BREAKPOINT_MODE_RANGE_INCLUSIVE)
 		len = bp_info->addr2 - bp_info->addr;
-	else if (bp_info->addr_mode == PPC_BREAKPOINT_MODE_EXACT)
+	अन्यथा अगर (bp_info->addr_mode == PPC_BREAKPOINT_MODE_EXACT)
 		len = 1;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	i = find_empty_ptrace_bp(thread);
-	if (i < 0)
-		return -ENOSPC;
+	i = find_empty_ptrace_bp(thपढ़ो);
+	अगर (i < 0)
+		वापस -ENOSPC;
 
-	/* Create a new breakpoint request if one doesn't exist already */
-	hw_breakpoint_init(&attr);
-	attr.bp_addr = (unsigned long)bp_info->addr;
+	/* Create a new अवरोधpoपूर्णांक request अगर one करोesn't exist alपढ़ोy */
+	hw_अवरोधpoपूर्णांक_init(&attr);
+	attr.bp_addr = (अचिन्हित दीर्घ)bp_info->addr;
 	attr.bp_len = len;
 	arch_bp_generic_fields(brk.type, &attr.bp_type);
 
-	bp = register_user_hw_breakpoint(&attr, ptrace_triggered, NULL, child);
-	thread->ptrace_bps[i] = bp;
-	if (IS_ERR(bp)) {
-		thread->ptrace_bps[i] = NULL;
-		return PTR_ERR(bp);
-	}
+	bp = रेजिस्टर_user_hw_अवरोधpoपूर्णांक(&attr, ptrace_triggered, शून्य, child);
+	thपढ़ो->ptrace_bps[i] = bp;
+	अगर (IS_ERR(bp)) अणु
+		thपढ़ो->ptrace_bps[i] = शून्य;
+		वापस PTR_ERR(bp);
+	पूर्ण
 
-	return i + 1;
-#endif /* CONFIG_HAVE_HW_BREAKPOINT */
+	वापस i + 1;
+#पूर्ण_अगर /* CONFIG_HAVE_HW_BREAKPOINT */
 
-	if (bp_info->addr_mode != PPC_BREAKPOINT_MODE_EXACT)
-		return -EINVAL;
+	अगर (bp_info->addr_mode != PPC_BREAKPOINT_MODE_EXACT)
+		वापस -EINVAL;
 
-	i = find_empty_hw_brk(&child->thread);
-	if (i < 0)
-		return -ENOSPC;
+	i = find_empty_hw_brk(&child->thपढ़ो);
+	अगर (i < 0)
+		वापस -ENOSPC;
 
-	if (!ppc_breakpoint_available())
-		return -ENODEV;
+	अगर (!ppc_अवरोधpoपूर्णांक_available())
+		वापस -ENODEV;
 
-	child->thread.hw_brk[i] = brk;
+	child->thपढ़ो.hw_brk[i] = brk;
 
-	return i + 1;
-}
+	वापस i + 1;
+पूर्ण
 
-long ppc_del_hwdebug(struct task_struct *child, long data)
-{
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-	int ret = 0;
-	struct thread_struct *thread = &child->thread;
-	struct perf_event *bp;
-#endif /* CONFIG_HAVE_HW_BREAKPOINT */
-	if (data < 1 || data > nr_wp_slots())
-		return -EINVAL;
+दीर्घ ppc_del_hwdebug(काष्ठा task_काष्ठा *child, दीर्घ data)
+अणु
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+	पूर्णांक ret = 0;
+	काष्ठा thपढ़ो_काष्ठा *thपढ़ो = &child->thपढ़ो;
+	काष्ठा perf_event *bp;
+#पूर्ण_अगर /* CONFIG_HAVE_HW_BREAKPOINT */
+	अगर (data < 1 || data > nr_wp_slots())
+		वापस -EINVAL;
 
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-	bp = thread->ptrace_bps[data - 1];
-	if (bp) {
-		unregister_hw_breakpoint(bp);
-		thread->ptrace_bps[data - 1] = NULL;
-	} else {
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+	bp = thपढ़ो->ptrace_bps[data - 1];
+	अगर (bp) अणु
+		unरेजिस्टर_hw_अवरोधpoपूर्णांक(bp);
+		thपढ़ो->ptrace_bps[data - 1] = शून्य;
+	पूर्ण अन्यथा अणु
 		ret = -ENOENT;
-	}
-	return ret;
-#else /* CONFIG_HAVE_HW_BREAKPOINT */
-	if (!(child->thread.hw_brk[data - 1].flags & HW_BRK_FLAG_DISABLED) &&
-	    child->thread.hw_brk[data - 1].address == 0)
-		return -ENOENT;
+	पूर्ण
+	वापस ret;
+#अन्यथा /* CONFIG_HAVE_HW_BREAKPOINT */
+	अगर (!(child->thपढ़ो.hw_brk[data - 1].flags & HW_BRK_FLAG_DISABLED) &&
+	    child->thपढ़ो.hw_brk[data - 1].address == 0)
+		वापस -ENOENT;
 
-	child->thread.hw_brk[data - 1].address = 0;
-	child->thread.hw_brk[data - 1].type = 0;
-	child->thread.hw_brk[data - 1].flags = 0;
-#endif /* CONFIG_HAVE_HW_BREAKPOINT */
+	child->thपढ़ो.hw_brk[data - 1].address = 0;
+	child->thपढ़ो.hw_brk[data - 1].type = 0;
+	child->thपढ़ो.hw_brk[data - 1].flags = 0;
+#पूर्ण_अगर /* CONFIG_HAVE_HW_BREAKPOINT */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

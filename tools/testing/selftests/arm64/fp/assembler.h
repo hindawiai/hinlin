@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 // Copyright (C) 2015-2019 ARM Limited.
 // Original author: Dave Martin <Dave.Martin@arm.com>
 
-#ifndef ASSEMBLER_H
-#define ASSEMBLER_H
+#अगर_अघोषित ASSEMBLER_H
+#घोषणा ASSEMBLER_H
 
-.macro __for from:req, to:req
-	.if (\from) == (\to)
-		_for__body %\from
-	.else
-		__for \from, %(\from) + ((\to) - (\from)) / 2
-		__for %(\from) + ((\to) - (\from)) / 2 + 1, \to
-	.endif
+.macro __क्रम from:req, to:req
+	.अगर (\पrom) == (\टo)
+		_क्रम__body %\पrom
+	.अन्यथा
+		__क्रम \पrom, %(\पrom) + ((\टo) - (\पrom)) / 2
+		__क्रम %(\पrom) + ((\टo) - (\पrom)) / 2 + 1, \टo
+	.endअगर
 .endm
 
-.macro _for var:req, from:req, to:req, insn:vararg
-	.macro _for__body \var:req
-		.noaltmacro
+.macro _क्रम var:req, from:req, to:req, insn:vararg
+	.macro _क्रम__body \खar:req
+		.noalपंचांगacro
 		\insn
-		.altmacro
+		.alपंचांगacro
 	.endm
 
-	.altmacro
-	__for \from, \to
-	.noaltmacro
+	.alपंचांगacro
+	__क्रम \पrom, \टo
+	.noalपंचांगacro
 
-	.purgem _for__body
+	.purgem _क्रम__body
 .endm
 
 .macro function name
 	.macro endfunction
-		.type \name, @function
+		.type \नame, @function
 		.purgem endfunction
 	.endm
-\name:
+\नame:
 .endm
 
 .macro define_accessor name, num, insn
-	.macro \name\()_entry n
-		\insn \n, 1
+	.macro \नame\()_entry n
+		\insn \न, 1
 		ret
 	.endm
 
-function \name
+function \नame
 	adr	x2, .L__accessor_tbl\@
 	add	x2, x2, x0, lsl #3
 	br	x2
 
 .L__accessor_tbl\@:
-	_for x, 0, (\num) - 1, \name\()_entry \x
+	_क्रम x, 0, (\नum) - 1, \नame\()_entry \ष
 endfunction
 
-	.purgem \name\()_entry
+	.purgem \नame\()_entry
 .endm
 
-#endif /* ! ASSEMBLER_H */
+#पूर्ण_अगर /* ! ASSEMBLER_H */

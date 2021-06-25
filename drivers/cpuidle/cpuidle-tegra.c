@@ -1,388 +1,389 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * CPU idle driver for Tegra CPUs
+ * CPU idle driver क्रम Tegra CPUs
  *
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  * Copyright (c) 2011 Google, Inc.
  * Author: Colin Cross <ccross@android.com>
  *         Gary King <gking@nvidia.com>
  *
- * Rework for 3.3 by Peter De Schrijver <pdeschrijver@nvidia.com>
+ * Rework क्रम 3.3 by Peter De Schrijver <pdeschrijver@nvidia.com>
  *
- * Tegra20/124 driver unification by Dmitry Osipenko <digetx@gmail.com>
+ * Tegra20/124 driver unअगरication by Dmitry Osipenko <digetx@gmail.com>
  */
 
-#define pr_fmt(fmt)	"tegra-cpuidle: " fmt
+#घोषणा pr_fmt(fmt)	"tegra-cpuidle: " fmt
 
-#include <linux/atomic.h>
-#include <linux/cpuidle.h>
-#include <linux/cpumask.h>
-#include <linux/cpu_pm.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/platform_device.h>
-#include <linux/types.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/types.h>
 
-#include <linux/clk/tegra.h>
-#include <linux/firmware/trusted_foundations.h>
+#समावेश <linux/clk/tegra.h>
+#समावेश <linux/firmware/trusted_foundations.h>
 
-#include <soc/tegra/cpuidle.h>
-#include <soc/tegra/flowctrl.h>
-#include <soc/tegra/fuse.h>
-#include <soc/tegra/irq.h>
-#include <soc/tegra/pm.h>
-#include <soc/tegra/pmc.h>
+#समावेश <soc/tegra/cpuidle.h>
+#समावेश <soc/tegra/flowctrl.h>
+#समावेश <soc/tegra/fuse.h>
+#समावेश <soc/tegra/irq.h>
+#समावेश <soc/tegra/pm.h>
+#समावेश <soc/tegra/pmc.h>
 
-#include <asm/cpuidle.h>
-#include <asm/firmware.h>
-#include <asm/smp_plat.h>
-#include <asm/suspend.h>
+#समावेश <यंत्र/cpuidle.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/smp_plat.h>
+#समावेश <यंत्र/suspend.h>
 
-enum tegra_state {
+क्रमागत tegra_state अणु
 	TEGRA_C1,
 	TEGRA_C7,
 	TEGRA_CC6,
 	TEGRA_STATE_COUNT,
-};
+पूर्ण;
 
-static atomic_t tegra_idle_barrier;
-static atomic_t tegra_abort_flag;
+अटल atomic_t tegra_idle_barrier;
+अटल atomic_t tegra_पात_flag;
 
-static void tegra_cpuidle_report_cpus_state(void)
-{
-	unsigned long cpu, lcpu, csr;
+अटल व्योम tegra_cpuidle_report_cpus_state(व्योम)
+अणु
+	अचिन्हित दीर्घ cpu, lcpu, csr;
 
-	for_each_cpu(lcpu, cpu_possible_mask) {
+	क्रम_each_cpu(lcpu, cpu_possible_mask) अणु
 		cpu = cpu_logical_map(lcpu);
-		csr = flowctrl_read_cpu_csr(cpu);
+		csr = flowctrl_पढ़ो_cpu_csr(cpu);
 
 		pr_err("cpu%lu: online=%d flowctrl_csr=0x%08lx\n",
 		       cpu, cpu_online(lcpu), csr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int tegra_cpuidle_wait_for_secondary_cpus_parking(void)
-{
-	unsigned int retries = 3;
+अटल पूर्णांक tegra_cpuidle_रुको_क्रम_secondary_cpus_parking(व्योम)
+अणु
+	अचिन्हित पूर्णांक retries = 3;
 
-	while (retries--) {
-		unsigned int delay_us = 10;
-		unsigned int timeout_us = 500 * 1000 / delay_us;
+	जबतक (retries--) अणु
+		अचिन्हित पूर्णांक delay_us = 10;
+		अचिन्हित पूर्णांक समयout_us = 500 * 1000 / delay_us;
 
 		/*
-		 * The primary CPU0 core shall wait for the secondaries
-		 * shutdown in order to power-off CPU's cluster safely.
-		 * The timeout value depends on the current CPU frequency,
+		 * The primary CPU0 core shall रुको क्रम the secondaries
+		 * shutकरोwn in order to घातer-off CPU's cluster safely.
+		 * The समयout value depends on the current CPU frequency,
 		 * it takes about 40-150us in average and over 1000us in
-		 * a worst case scenario.
+		 * a worst हाल scenario.
 		 */
-		do {
-			if (tegra_cpu_rail_off_ready())
-				return 0;
+		करो अणु
+			अगर (tegra_cpu_rail_off_पढ़ोy())
+				वापस 0;
 
 			udelay(delay_us);
 
-		} while (timeout_us--);
+		पूर्ण जबतक (समयout_us--);
 
 		pr_err("secondary CPU taking too long to park\n");
 
 		tegra_cpuidle_report_cpus_state();
-	}
+	पूर्ण
 
 	pr_err("timed out waiting secondaries to park\n");
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static void tegra_cpuidle_unpark_secondary_cpus(void)
-{
-	unsigned int cpu, lcpu;
+अटल व्योम tegra_cpuidle_unpark_secondary_cpus(व्योम)
+अणु
+	अचिन्हित पूर्णांक cpu, lcpu;
 
-	for_each_cpu(lcpu, cpu_online_mask) {
+	क्रम_each_cpu(lcpu, cpu_online_mask) अणु
 		cpu = cpu_logical_map(lcpu);
 
-		if (cpu > 0) {
-			tegra_enable_cpu_clock(cpu);
+		अगर (cpu > 0) अणु
+			tegra_enable_cpu_घड़ी(cpu);
 			tegra_cpu_out_of_reset(cpu);
-			flowctrl_write_cpu_halt(cpu, 0);
-		}
-	}
-}
+			flowctrl_ग_लिखो_cpu_halt(cpu, 0);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int tegra_cpuidle_cc6_enter(unsigned int cpu)
-{
-	int ret;
+अटल पूर्णांक tegra_cpuidle_cc6_enter(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक ret;
 
-	if (cpu > 0) {
+	अगर (cpu > 0) अणु
 		ret = cpu_suspend(cpu, tegra_pm_park_secondary_cpu);
-	} else {
-		ret = tegra_cpuidle_wait_for_secondary_cpus_parking();
-		if (!ret)
+	पूर्ण अन्यथा अणु
+		ret = tegra_cpuidle_रुको_क्रम_secondary_cpus_parking();
+		अगर (!ret)
 			ret = tegra_pm_enter_lp2();
 
 		tegra_cpuidle_unpark_secondary_cpus();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tegra_cpuidle_c7_enter(void)
-{
-	int err;
+अटल पूर्णांक tegra_cpuidle_c7_enter(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = call_firmware_op(prepare_idle, TF_PM_MODE_LP2_NOFLUSH_L2);
-	if (err && err != -ENOSYS)
-		return err;
+	अगर (err && err != -ENOSYS)
+		वापस err;
 
-	return cpu_suspend(0, tegra30_pm_secondary_cpu_suspend);
-}
+	वापस cpu_suspend(0, tegra30_pm_secondary_cpu_suspend);
+पूर्ण
 
-static int tegra_cpuidle_coupled_barrier(struct cpuidle_device *dev)
-{
-	if (tegra_pending_sgi()) {
+अटल पूर्णांक tegra_cpuidle_coupled_barrier(काष्ठा cpuidle_device *dev)
+अणु
+	अगर (tegra_pending_sgi()) अणु
 		/*
-		 * CPU got local interrupt that will be lost after GIC's
-		 * shutdown because GIC driver doesn't save/restore the
+		 * CPU got local पूर्णांकerrupt that will be lost after GIC's
+		 * shutकरोwn because GIC driver करोesn't save/restore the
 		 * pending SGI state across CPU cluster PM.  Abort and retry
-		 * next time.
+		 * next समय.
 		 */
-		atomic_set(&tegra_abort_flag, 1);
-	}
+		atomic_set(&tegra_पात_flag, 1);
+	पूर्ण
 
 	cpuidle_coupled_parallel_barrier(dev, &tegra_idle_barrier);
 
-	if (atomic_read(&tegra_abort_flag)) {
+	अगर (atomic_पढ़ो(&tegra_पात_flag)) अणु
 		cpuidle_coupled_parallel_barrier(dev, &tegra_idle_barrier);
-		atomic_set(&tegra_abort_flag, 0);
-		return -EINTR;
-	}
+		atomic_set(&tegra_पात_flag, 0);
+		वापस -EINTR;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_cpuidle_state_enter(struct cpuidle_device *dev,
-				     int index, unsigned int cpu)
-{
-	int err;
+अटल पूर्णांक tegra_cpuidle_state_enter(काष्ठा cpuidle_device *dev,
+				     पूर्णांक index, अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक err;
 
 	/*
 	 * CC6 state is the "CPU cluster power-off" state.  In order to
 	 * enter this state, at first the secondary CPU cores need to be
-	 * parked into offline mode, then the last CPU should clean out
-	 * remaining dirty cache lines into DRAM and trigger Flow Controller
-	 * logic that turns off the cluster's power domain (which includes
+	 * parked पूर्णांकo offline mode, then the last CPU should clean out
+	 * reमुख्यing dirty cache lines पूर्णांकo DRAM and trigger Flow Controller
+	 * logic that turns off the cluster's घातer करोमुख्य (which includes
 	 * CPU cores, GIC and L2 cache).
 	 */
-	if (index == TEGRA_CC6) {
+	अगर (index == TEGRA_CC6) अणु
 		err = tegra_cpuidle_coupled_barrier(dev);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	local_fiq_disable();
 	RCU_NONIDLE(tegra_pm_set_cpu_in_lp2());
 	cpu_pm_enter();
 
-	switch (index) {
-	case TEGRA_C7:
+	चयन (index) अणु
+	हाल TEGRA_C7:
 		err = tegra_cpuidle_c7_enter();
-		break;
+		अवरोध;
 
-	case TEGRA_CC6:
+	हाल TEGRA_CC6:
 		err = tegra_cpuidle_cc6_enter(cpu);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	cpu_pm_exit();
+	cpu_pm_निकास();
 	RCU_NONIDLE(tegra_pm_clear_cpu_in_lp2());
 	local_fiq_enable();
 
-	return err ?: index;
-}
+	वापस err ?: index;
+पूर्ण
 
-static int tegra_cpuidle_adjust_state_index(int index, unsigned int cpu)
-{
+अटल पूर्णांक tegra_cpuidle_adjust_state_index(पूर्णांक index, अचिन्हित पूर्णांक cpu)
+अणु
 	/*
-	 * On Tegra30 CPU0 can't be power-gated separately from secondary
+	 * On Tegra30 CPU0 can't be घातer-gated separately from secondary
 	 * cores because it gates the whole CPU cluster.
 	 */
-	if (cpu > 0 || index != TEGRA_C7 || tegra_get_chip_id() != TEGRA30)
-		return index;
+	अगर (cpu > 0 || index != TEGRA_C7 || tegra_get_chip_id() != TEGRA30)
+		वापस index;
 
-	/* put CPU0 into C1 if C7 is requested and secondaries are online */
-	if (!IS_ENABLED(CONFIG_PM_SLEEP) || num_online_cpus() > 1)
+	/* put CPU0 पूर्णांकo C1 अगर C7 is requested and secondaries are online */
+	अगर (!IS_ENABLED(CONFIG_PM_SLEEP) || num_online_cpus() > 1)
 		index = TEGRA_C1;
-	else
+	अन्यथा
 		index = TEGRA_CC6;
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static int tegra_cpuidle_enter(struct cpuidle_device *dev,
-			       struct cpuidle_driver *drv,
-			       int index)
-{
-	unsigned int cpu = cpu_logical_map(dev->cpu);
-	int ret;
+अटल पूर्णांक tegra_cpuidle_enter(काष्ठा cpuidle_device *dev,
+			       काष्ठा cpuidle_driver *drv,
+			       पूर्णांक index)
+अणु
+	अचिन्हित पूर्णांक cpu = cpu_logical_map(dev->cpu);
+	पूर्णांक ret;
 
 	index = tegra_cpuidle_adjust_state_index(index, cpu);
-	if (dev->states_usage[index].disable)
-		return -1;
+	अगर (dev->states_usage[index].disable)
+		वापस -1;
 
-	if (index == TEGRA_C1)
+	अगर (index == TEGRA_C1)
 		ret = arm_cpuidle_simple_enter(dev, drv, index);
-	else
+	अन्यथा
 		ret = tegra_cpuidle_state_enter(dev, index, cpu);
 
-	if (ret < 0) {
-		if (ret != -EINTR || index != TEGRA_CC6)
+	अगर (ret < 0) अणु
+		अगर (ret != -EINTR || index != TEGRA_CC6)
 			pr_err_once("failed to enter state %d err: %d\n",
 				    index, ret);
 		index = -1;
-	} else {
+	पूर्ण अन्यथा अणु
 		index = ret;
-	}
+	पूर्ण
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static int tegra114_enter_s2idle(struct cpuidle_device *dev,
-				 struct cpuidle_driver *drv,
-				 int index)
-{
+अटल पूर्णांक tegra114_enter_s2idle(काष्ठा cpuidle_device *dev,
+				 काष्ठा cpuidle_driver *drv,
+				 पूर्णांक index)
+अणु
 	tegra_cpuidle_enter(dev, drv, index);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The previous versions of Tegra CPUIDLE driver used a different "legacy"
- * terminology for naming of the idling states, while this driver uses the
+ * The previous versions of Tegra CPUIDLE driver used a dअगरferent "legacy"
+ * terminology क्रम naming of the idling states, जबतक this driver uses the
  * new terminology.
  *
- * Mapping of the old terms into the new ones:
+ * Mapping of the old terms पूर्णांकo the new ones:
  *
  * Old | New
  * ---------
- * LP3 | C1	(CPU core clock gating)
- * LP2 | C7	(CPU core power gating)
- * LP2 | CC6	(CPU cluster power gating)
+ * LP3 | C1	(CPU core घड़ी gating)
+ * LP2 | C7	(CPU core घातer gating)
+ * LP2 | CC6	(CPU cluster घातer gating)
  *
  * Note that that the older CPUIDLE driver versions didn't explicitly
- * differentiate the LP2 states because these states either used the same
+ * dअगरferentiate the LP2 states because these states either used the same
  * code path or because CC6 wasn't supported.
  */
-static struct cpuidle_driver tegra_idle_driver = {
+अटल काष्ठा cpuidle_driver tegra_idle_driver = अणु
 	.name = "tegra_idle",
-	.states = {
+	.states = अणु
 		[TEGRA_C1] = ARM_CPUIDLE_WFI_STATE_PWR(600),
-		[TEGRA_C7] = {
+		[TEGRA_C7] = अणु
 			.enter			= tegra_cpuidle_enter,
-			.exit_latency		= 2000,
+			.निकास_latency		= 2000,
 			.target_residency	= 2200,
-			.power_usage		= 100,
+			.घातer_usage		= 100,
 			.flags			= CPUIDLE_FLAG_TIMER_STOP,
 			.name			= "C7",
 			.desc			= "CPU core powered off",
-		},
-		[TEGRA_CC6] = {
+		पूर्ण,
+		[TEGRA_CC6] = अणु
 			.enter			= tegra_cpuidle_enter,
-			.exit_latency		= 5000,
+			.निकास_latency		= 5000,
 			.target_residency	= 10000,
-			.power_usage		= 0,
+			.घातer_usage		= 0,
 			.flags			= CPUIDLE_FLAG_TIMER_STOP |
 						  CPUIDLE_FLAG_COUPLED,
 			.name			= "CC6",
 			.desc			= "CPU cluster powered off",
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.state_count = TEGRA_STATE_COUNT,
 	.safe_state_index = TEGRA_C1,
-};
+पूर्ण;
 
-static inline void tegra_cpuidle_disable_state(enum tegra_state state)
-{
+अटल अंतरभूत व्योम tegra_cpuidle_disable_state(क्रमागत tegra_state state)
+अणु
 	cpuidle_driver_state_disabled(&tegra_idle_driver, state, true);
-}
+पूर्ण
 
 /*
- * Tegra20 HW appears to have a bug such that PCIe device interrupts, whether
+ * Tegra20 HW appears to have a bug such that PCIe device पूर्णांकerrupts, whether
  * they are legacy IRQs or MSI, are lost when CC6 is enabled.  To work around
- * this, simply disable CC6 if the PCI driver and DT node are both enabled.
+ * this, simply disable CC6 अगर the PCI driver and DT node are both enabled.
  */
-void tegra_cpuidle_pcie_irqs_in_use(void)
-{
-	struct cpuidle_state *state_cc6 = &tegra_idle_driver.states[TEGRA_CC6];
+व्योम tegra_cpuidle_pcie_irqs_in_use(व्योम)
+अणु
+	काष्ठा cpuidle_state *state_cc6 = &tegra_idle_driver.states[TEGRA_CC6];
 
-	if ((state_cc6->flags & CPUIDLE_FLAG_UNUSABLE) ||
+	अगर ((state_cc6->flags & CPUIDLE_FLAG_UNUSABLE) ||
 	    tegra_get_chip_id() != TEGRA20)
-		return;
+		वापस;
 
 	pr_info("disabling CC6 state, since PCIe IRQs are in use\n");
 	tegra_cpuidle_disable_state(TEGRA_CC6);
-}
+पूर्ण
 
-static void tegra_cpuidle_setup_tegra114_c7_state(void)
-{
-	struct cpuidle_state *s = &tegra_idle_driver.states[TEGRA_C7];
+अटल व्योम tegra_cpuidle_setup_tegra114_c7_state(व्योम)
+अणु
+	काष्ठा cpuidle_state *s = &tegra_idle_driver.states[TEGRA_C7];
 
 	s->enter_s2idle = tegra114_enter_s2idle;
 	s->target_residency = 1000;
-	s->exit_latency = 500;
-}
+	s->निकास_latency = 500;
+पूर्ण
 
-static int tegra_cpuidle_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक tegra_cpuidle_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	/* LP2 could be disabled in device-tree */
-	if (tegra_pmc_get_suspend_mode() < TEGRA_SUSPEND_LP2)
+	अगर (tegra_pmc_get_suspend_mode() < TEGRA_SUSPEND_LP2)
 		tegra_cpuidle_disable_state(TEGRA_CC6);
 
 	/*
 	 * Required suspend-resume functionality, which is provided by the
-	 * Tegra-arch core and PMC driver, is unavailable if PM-sleep option
+	 * Tegra-arch core and PMC driver, is unavailable अगर PM-sleep option
 	 * is disabled.
 	 */
-	if (!IS_ENABLED(CONFIG_PM_SLEEP)) {
+	अगर (!IS_ENABLED(CONFIG_PM_SLEEP)) अणु
 		tegra_cpuidle_disable_state(TEGRA_C7);
 		tegra_cpuidle_disable_state(TEGRA_CC6);
-	}
+	पूर्ण
 
 	/*
 	 * Generic WFI state (also known as C1 or LP3) and the coupled CPU
-	 * cluster power-off (CC6 or LP2) states are common for all Tegra SoCs.
+	 * cluster घातer-off (CC6 or LP2) states are common क्रम all Tegra SoCs.
 	 */
-	switch (tegra_get_chip_id()) {
-	case TEGRA20:
-		/* Tegra20 isn't capable to power-off individual CPU cores */
+	चयन (tegra_get_chip_id()) अणु
+	हाल TEGRA20:
+		/* Tegra20 isn't capable to घातer-off inभागidual CPU cores */
 		tegra_cpuidle_disable_state(TEGRA_C7);
-		break;
+		अवरोध;
 
-	case TEGRA30:
-		break;
+	हाल TEGRA30:
+		अवरोध;
 
-	case TEGRA114:
-	case TEGRA124:
+	हाल TEGRA114:
+	हाल TEGRA124:
 		tegra_cpuidle_setup_tegra114_c7_state();
 
 		/* coupled CC6 (LP2) state isn't implemented yet */
 		tegra_cpuidle_disable_state(TEGRA_CC6);
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return cpuidle_register(&tegra_idle_driver, cpu_possible_mask);
-}
+	वापस cpuidle_रेजिस्टर(&tegra_idle_driver, cpu_possible_mask);
+पूर्ण
 
-static struct platform_driver tegra_cpuidle_driver = {
+अटल काष्ठा platक्रमm_driver tegra_cpuidle_driver = अणु
 	.probe = tegra_cpuidle_probe,
-	.driver = {
+	.driver = अणु
 		.name = "tegra-cpuidle",
-	},
-};
-builtin_platform_driver(tegra_cpuidle_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(tegra_cpuidle_driver);

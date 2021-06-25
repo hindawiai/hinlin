@@ -1,150 +1,151 @@
+<शैली गुरु>
 /* Copyright (c) 2016 Facebook
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  */
-#define KBUILD_MODNAME "foo"
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/in.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <uapi/linux/bpf.h>
-#include <net/ip.h>
-#include <bpf/bpf_helpers.h>
+#घोषणा KBUILD_MODNAME "foo"
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/in.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <net/ip.h>
+#समावेश <bpf/bpf_helpers.h>
 
-#define DEFAULT_PKTGEN_UDP_PORT 9
-#define DEBUG 0
+#घोषणा DEFAULT_PKTGEN_UDP_PORT 9
+#घोषणा DEBUG 0
 
-static int tcp(void *data, uint64_t tp_off, void *data_end)
-{
-	struct tcphdr *tcp = data + tp_off;
+अटल पूर्णांक tcp(व्योम *data, uपूर्णांक64_t tp_off, व्योम *data_end)
+अणु
+	काष्ठा tcphdr *tcp = data + tp_off;
 
-	if (tcp + 1 > data_end)
-		return 0;
-	if (tcp->dest == htons(80) || tcp->source == htons(80))
-		return TC_ACT_SHOT;
-	return 0;
-}
+	अगर (tcp + 1 > data_end)
+		वापस 0;
+	अगर (tcp->dest == htons(80) || tcp->source == htons(80))
+		वापस TC_ACT_SHOT;
+	वापस 0;
+पूर्ण
 
-static int udp(void *data, uint64_t tp_off, void *data_end)
-{
-	struct udphdr *udp = data + tp_off;
+अटल पूर्णांक udp(व्योम *data, uपूर्णांक64_t tp_off, व्योम *data_end)
+अणु
+	काष्ठा udphdr *udp = data + tp_off;
 
-	if (udp + 1 > data_end)
-		return 0;
-	if (udp->dest == htons(DEFAULT_PKTGEN_UDP_PORT) ||
-	    udp->source == htons(DEFAULT_PKTGEN_UDP_PORT)) {
-		if (DEBUG) {
-			char fmt[] = "udp port 9 indeed\n";
+	अगर (udp + 1 > data_end)
+		वापस 0;
+	अगर (udp->dest == htons(DEFAULT_PKTGEN_UDP_PORT) ||
+	    udp->source == htons(DEFAULT_PKTGEN_UDP_PORT)) अणु
+		अगर (DEBUG) अणु
+			अक्षर fmt[] = "udp port 9 indeed\n";
 
-			bpf_trace_printk(fmt, sizeof(fmt));
-		}
-		return TC_ACT_SHOT;
-	}
-	return 0;
-}
+			bpf_trace_prपूर्णांकk(fmt, माप(fmt));
+		पूर्ण
+		वापस TC_ACT_SHOT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int parse_ipv4(void *data, uint64_t nh_off, void *data_end)
-{
-	struct iphdr *iph;
-	uint64_t ihl_len;
+अटल पूर्णांक parse_ipv4(व्योम *data, uपूर्णांक64_t nh_off, व्योम *data_end)
+अणु
+	काष्ठा iphdr *iph;
+	uपूर्णांक64_t ihl_len;
 
 	iph = data + nh_off;
-	if (iph + 1 > data_end)
-		return 0;
+	अगर (iph + 1 > data_end)
+		वापस 0;
 
-	if (ip_is_fragment(iph))
-		return 0;
+	अगर (ip_is_fragment(iph))
+		वापस 0;
 	ihl_len = iph->ihl * 4;
 
-	if (iph->protocol == IPPROTO_IPIP) {
+	अगर (iph->protocol == IPPROTO_IPIP) अणु
 		iph = data + nh_off + ihl_len;
-		if (iph + 1 > data_end)
-			return 0;
+		अगर (iph + 1 > data_end)
+			वापस 0;
 		ihl_len += iph->ihl * 4;
-	}
+	पूर्ण
 
-	if (iph->protocol == IPPROTO_TCP)
-		return tcp(data, nh_off + ihl_len, data_end);
-	else if (iph->protocol == IPPROTO_UDP)
-		return udp(data, nh_off + ihl_len, data_end);
-	return 0;
-}
+	अगर (iph->protocol == IPPROTO_TCP)
+		वापस tcp(data, nh_off + ihl_len, data_end);
+	अन्यथा अगर (iph->protocol == IPPROTO_UDP)
+		वापस udp(data, nh_off + ihl_len, data_end);
+	वापस 0;
+पूर्ण
 
-static int parse_ipv6(void *data, uint64_t nh_off, void *data_end)
-{
-	struct ipv6hdr *ip6h;
-	struct iphdr *iph;
-	uint64_t ihl_len = sizeof(struct ipv6hdr);
-	uint64_t nexthdr;
+अटल पूर्णांक parse_ipv6(व्योम *data, uपूर्णांक64_t nh_off, व्योम *data_end)
+अणु
+	काष्ठा ipv6hdr *ip6h;
+	काष्ठा iphdr *iph;
+	uपूर्णांक64_t ihl_len = माप(काष्ठा ipv6hdr);
+	uपूर्णांक64_t nexthdr;
 
 	ip6h = data + nh_off;
-	if (ip6h + 1 > data_end)
-		return 0;
+	अगर (ip6h + 1 > data_end)
+		वापस 0;
 
 	nexthdr = ip6h->nexthdr;
 
-	if (nexthdr == IPPROTO_IPIP) {
+	अगर (nexthdr == IPPROTO_IPIP) अणु
 		iph = data + nh_off + ihl_len;
-		if (iph + 1 > data_end)
-			return 0;
+		अगर (iph + 1 > data_end)
+			वापस 0;
 		ihl_len += iph->ihl * 4;
 		nexthdr = iph->protocol;
-	} else if (nexthdr == IPPROTO_IPV6) {
+	पूर्ण अन्यथा अगर (nexthdr == IPPROTO_IPV6) अणु
 		ip6h = data + nh_off + ihl_len;
-		if (ip6h + 1 > data_end)
-			return 0;
-		ihl_len += sizeof(struct ipv6hdr);
+		अगर (ip6h + 1 > data_end)
+			वापस 0;
+		ihl_len += माप(काष्ठा ipv6hdr);
 		nexthdr = ip6h->nexthdr;
-	}
+	पूर्ण
 
-	if (nexthdr == IPPROTO_TCP)
-		return tcp(data, nh_off + ihl_len, data_end);
-	else if (nexthdr == IPPROTO_UDP)
-		return udp(data, nh_off + ihl_len, data_end);
-	return 0;
-}
+	अगर (nexthdr == IPPROTO_TCP)
+		वापस tcp(data, nh_off + ihl_len, data_end);
+	अन्यथा अगर (nexthdr == IPPROTO_UDP)
+		वापस udp(data, nh_off + ihl_len, data_end);
+	वापस 0;
+पूर्ण
 
 SEC("varlen")
-int handle_ingress(struct __sk_buff *skb)
-{
-	void *data = (void *)(long)skb->data;
-	struct ethhdr *eth = data;
-	void *data_end = (void *)(long)skb->data_end;
-	uint64_t h_proto, nh_off;
+पूर्णांक handle_ingress(काष्ठा __sk_buff *skb)
+अणु
+	व्योम *data = (व्योम *)(दीर्घ)skb->data;
+	काष्ठा ethhdr *eth = data;
+	व्योम *data_end = (व्योम *)(दीर्घ)skb->data_end;
+	uपूर्णांक64_t h_proto, nh_off;
 
-	nh_off = sizeof(*eth);
-	if (data + nh_off > data_end)
-		return 0;
+	nh_off = माप(*eth);
+	अगर (data + nh_off > data_end)
+		वापस 0;
 
 	h_proto = eth->h_proto;
 
-	if (h_proto == ETH_P_8021Q || h_proto == ETH_P_8021AD) {
-		struct vlan_hdr *vhdr;
+	अगर (h_proto == ETH_P_8021Q || h_proto == ETH_P_8021AD) अणु
+		काष्ठा vlan_hdr *vhdr;
 
 		vhdr = data + nh_off;
-		nh_off += sizeof(struct vlan_hdr);
-		if (data + nh_off > data_end)
-			return 0;
+		nh_off += माप(काष्ठा vlan_hdr);
+		अगर (data + nh_off > data_end)
+			वापस 0;
 		h_proto = vhdr->h_vlan_encapsulated_proto;
-	}
-	if (h_proto == ETH_P_8021Q || h_proto == ETH_P_8021AD) {
-		struct vlan_hdr *vhdr;
+	पूर्ण
+	अगर (h_proto == ETH_P_8021Q || h_proto == ETH_P_8021AD) अणु
+		काष्ठा vlan_hdr *vhdr;
 
 		vhdr = data + nh_off;
-		nh_off += sizeof(struct vlan_hdr);
-		if (data + nh_off > data_end)
-			return 0;
+		nh_off += माप(काष्ठा vlan_hdr);
+		अगर (data + nh_off > data_end)
+			वापस 0;
 		h_proto = vhdr->h_vlan_encapsulated_proto;
-	}
-	if (h_proto == htons(ETH_P_IP))
-		return parse_ipv4(data, nh_off, data_end);
-	else if (h_proto == htons(ETH_P_IPV6))
-		return parse_ipv6(data, nh_off, data_end);
-	return 0;
-}
-char _license[] SEC("license") = "GPL";
+	पूर्ण
+	अगर (h_proto == htons(ETH_P_IP))
+		वापस parse_ipv4(data, nh_off, data_end);
+	अन्यथा अगर (h_proto == htons(ETH_P_IPV6))
+		वापस parse_ipv6(data, nh_off, data_end);
+	वापस 0;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";

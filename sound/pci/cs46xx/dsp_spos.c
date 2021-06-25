@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  */
 
 /*
- * 2002-07 Benny Sjostrand benny@hostmobility.com
+ * 2002-07 Benny Sjostअक्रम benny@hosपंचांगobility.com
  */
 
 
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/mutex.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mutex.h>
 
-#include <sound/core.h>
-#include <sound/control.h>
-#include <sound/info.h>
-#include <sound/asoundef.h>
-#include "cs46xx.h"
+#समावेश <sound/core.h>
+#समावेश <sound/control.h>
+#समावेश <sound/info.h>
+#समावेश <sound/asoundef.h>
+#समावेश "cs46xx.h"
 
-#include "cs46xx_lib.h"
-#include "dsp_spos.h"
+#समावेश "cs46xx_lib.h"
+#समावेश "dsp_spos.h"
 
-static int cs46xx_dsp_async_init (struct snd_cs46xx *chip,
-				  struct dsp_scb_descriptor * fg_entry);
+अटल पूर्णांक cs46xx_dsp_async_init (काष्ठा snd_cs46xx *chip,
+				  काष्ठा dsp_scb_descriptor * fg_entry);
 
-static const enum wide_opcode wide_opcodes[] = {
+अटल स्थिर क्रमागत wide_opcode wide_opcodes[] = अणु
 	WIDE_FOR_BEGIN_LOOP,
 	WIDE_FOR_BEGIN_LOOP2,
 	WIDE_COND_GOTO_ADDR,
@@ -40,35 +41,35 @@ static const enum wide_opcode wide_opcodes[] = {
 	WIDE_TBEQ_COND_CALL1_ADDR,
 	WIDE_TBEQ_NCOND_GOTOI_ADDR,
 	WIDE_TBEQ_NCOND_CALL1_ADDR
-};
+पूर्ण;
 
-static int shadow_and_reallocate_code (struct snd_cs46xx * chip, u32 * data, u32 size,
+अटल पूर्णांक shaकरोw_and_पुनः_स्मृतिate_code (काष्ठा snd_cs46xx * chip, u32 * data, u32 size,
 				       u32 overlay_begin_address)
-{
-	unsigned int i = 0, j, nreallocated = 0;
+अणु
+	अचिन्हित पूर्णांक i = 0, j, nपुनः_स्मृतिated = 0;
 	u32 hival,loval,address;
-	u32 mop_operands,mop_type,wide_op;
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+	u32 mop_opeअक्रमs,mop_type,wide_op;
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	if (snd_BUG_ON(size %2))
-		return -EINVAL;
+	अगर (snd_BUG_ON(size %2))
+		वापस -EINVAL;
   
-	while (i < size) {
+	जबतक (i < size) अणु
 		loval = data[i++];
 		hival = data[i++];
 
-		if (ins->code.offset > 0) {
-			mop_operands = (hival >> 6) & 0x03fff;
-			mop_type = mop_operands >> 10;
+		अगर (ins->code.offset > 0) अणु
+			mop_opeअक्रमs = (hival >> 6) & 0x03fff;
+			mop_type = mop_opeअक्रमs >> 10;
       
-			/* check for wide type instruction */
-			if (mop_type == 0 &&
-			    (mop_operands & WIDE_LADD_INSTR_MASK) == 0 &&
-			    (mop_operands & WIDE_INSTR_MASK) != 0) {
+			/* check क्रम wide type inकाष्ठाion */
+			अगर (mop_type == 0 &&
+			    (mop_opeअक्रमs & WIDE_LADD_INSTR_MASK) == 0 &&
+			    (mop_opeअक्रमs & WIDE_INSTR_MASK) != 0) अणु
 				wide_op = loval & 0x7f;
-				for (j = 0;j < ARRAY_SIZE(wide_opcodes); ++j) {
-					if (wide_opcodes[j] == wide_op) {
-						/* need to reallocate instruction */
+				क्रम (j = 0;j < ARRAY_SIZE(wide_opcodes); ++j) अणु
+					अगर (wide_opcodes[j] == wide_op) अणु
+						/* need to पुनः_स्मृतिate inकाष्ठाion */
 						address  = (hival & 0x00FFF) << 5;
 						address |=  loval >> 15;
             
@@ -76,12 +77,12 @@ static int shadow_and_reallocate_code (struct snd_cs46xx * chip, u32 * data, u32
 							"handle_wideop[1]: %05x:%05x addr %04x\n",
 							hival, loval, address);
             
-						if ( !(address & 0x8000) ) {
+						अगर ( !(address & 0x8000) ) अणु
 							address += (ins->code.offset / 2) - overlay_begin_address;
-						} else {
+						पूर्ण अन्यथा अणु
 							dev_dbg(chip->card->dev,
 								"handle_wideop[1]: ROM symbol not reallocated\n");
-						}
+						पूर्ण
             
 						hival &= 0xFF000;
 						loval &= 0x07FFF;
@@ -95,149 +96,149 @@ static int shadow_and_reallocate_code (struct snd_cs46xx * chip, u32 * data, u32
 						dev_dbg(chip->card->dev,
 							"handle_wideop:[2] %05x:%05x addr %04x\n",
 							hival, loval, address);
-						nreallocated++;
-					} /* wide_opcodes[j] == wide_op */
-				} /* for */
-			} /* mod_type == 0 ... */
-		} /* ins->code.offset > 0 */
+						nपुनः_स्मृतिated++;
+					पूर्ण /* wide_opcodes[j] == wide_op */
+				पूर्ण /* क्रम */
+			पूर्ण /* mod_type == 0 ... */
+		पूर्ण /* ins->code.offset > 0 */
 
 		ins->code.data[ins->code.size++] = loval;
 		ins->code.data[ins->code.size++] = hival;
-	}
+	पूर्ण
 
 	dev_dbg(chip->card->dev,
-		"dsp_spos: %d instructions reallocated\n", nreallocated);
-	return nreallocated;
-}
+		"dsp_spos: %d instructions reallocated\n", nपुनः_स्मृतिated);
+	वापस nपुनः_स्मृतिated;
+पूर्ण
 
-static struct dsp_segment_desc * get_segment_desc (struct dsp_module_desc * module, int seg_type)
-{
-	int i;
-	for (i = 0;i < module->nsegments; ++i) {
-		if (module->segments[i].segment_type == seg_type) {
-			return (module->segments + i);
-		}
-	}
+अटल काष्ठा dsp_segment_desc * get_segment_desc (काष्ठा dsp_module_desc * module, पूर्णांक seg_type)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0;i < module->nsegments; ++i) अणु
+		अगर (module->segments[i].segment_type == seg_type) अणु
+			वापस (module->segments + i);
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-};
+	वापस शून्य;
+पूर्ण;
 
-static int find_free_symbol_index (struct dsp_spos_instance * ins)
-{
-	int index = ins->symbol_table.nsymbols,i;
+अटल पूर्णांक find_मुक्त_symbol_index (काष्ठा dsp_spos_instance * ins)
+अणु
+	पूर्णांक index = ins->symbol_table.nsymbols,i;
 
-	for (i = ins->symbol_table.highest_frag_index; i < ins->symbol_table.nsymbols; ++i) {
-		if (ins->symbol_table.symbols[i].deleted) {
+	क्रम (i = ins->symbol_table.highest_frag_index; i < ins->symbol_table.nsymbols; ++i) अणु
+		अगर (ins->symbol_table.symbols[i].deleted) अणु
 			index = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static int add_symbols (struct snd_cs46xx * chip, struct dsp_module_desc * module)
-{
-	int i;
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+अटल पूर्णांक add_symbols (काष्ठा snd_cs46xx * chip, काष्ठा dsp_module_desc * module)
+अणु
+	पूर्णांक i;
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	if (module->symbol_table.nsymbols > 0) {
-		if (!strcmp(module->symbol_table.symbols[0].symbol_name, "OVERLAYBEGINADDRESS") &&
-		    module->symbol_table.symbols[0].symbol_type == SYMBOL_CONSTANT ) {
+	अगर (module->symbol_table.nsymbols > 0) अणु
+		अगर (!म_भेद(module->symbol_table.symbols[0].symbol_name, "OVERLAYBEGINADDRESS") &&
+		    module->symbol_table.symbols[0].symbol_type == SYMBOL_CONSTANT ) अणु
 			module->overlay_begin_address = module->symbol_table.symbols[0].address;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0;i < module->symbol_table.nsymbols; ++i) {
-		if (ins->symbol_table.nsymbols == (DSP_MAX_SYMBOLS - 1)) {
+	क्रम (i = 0;i < module->symbol_table.nsymbols; ++i) अणु
+		अगर (ins->symbol_table.nsymbols == (DSP_MAX_SYMBOLS - 1)) अणु
 			dev_err(chip->card->dev,
 				"dsp_spos: symbol table is full\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 
-		if (cs46xx_dsp_lookup_symbol(chip,
+		अगर (cs46xx_dsp_lookup_symbol(chip,
 					     module->symbol_table.symbols[i].symbol_name,
-					     module->symbol_table.symbols[i].symbol_type) == NULL) {
+					     module->symbol_table.symbols[i].symbol_type) == शून्य) अणु
 
 			ins->symbol_table.symbols[ins->symbol_table.nsymbols] = module->symbol_table.symbols[i];
 			ins->symbol_table.symbols[ins->symbol_table.nsymbols].address += ((ins->code.offset / 2) - module->overlay_begin_address);
 			ins->symbol_table.symbols[ins->symbol_table.nsymbols].module = module;
 			ins->symbol_table.symbols[ins->symbol_table.nsymbols].deleted = 0;
 
-			if (ins->symbol_table.nsymbols > ins->symbol_table.highest_frag_index) 
+			अगर (ins->symbol_table.nsymbols > ins->symbol_table.highest_frag_index) 
 				ins->symbol_table.highest_frag_index = ins->symbol_table.nsymbols;
 
 			ins->symbol_table.nsymbols++;
-		} else {
-#if 0
+		पूर्ण अन्यथा अणु
+#अगर 0
 			dev_dbg(chip->card->dev,
 				"dsp_spos: symbol <%s> duplicated, probably nothing wrong with that (Cirrus?)\n",
 				module->symbol_table.symbols[i].symbol_name); */
-#endif
-		}
-	}
+#पूर्ण_अगर
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dsp_symbol_entry *
-add_symbol (struct snd_cs46xx * chip, char * symbol_name, u32 address, int type)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	struct dsp_symbol_entry * symbol = NULL;
-	int index;
+अटल काष्ठा dsp_symbol_entry *
+add_symbol (काष्ठा snd_cs46xx * chip, अक्षर * symbol_name, u32 address, पूर्णांक type)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	काष्ठा dsp_symbol_entry * symbol = शून्य;
+	पूर्णांक index;
 
-	if (ins->symbol_table.nsymbols == (DSP_MAX_SYMBOLS - 1)) {
+	अगर (ins->symbol_table.nsymbols == (DSP_MAX_SYMBOLS - 1)) अणु
 		dev_err(chip->card->dev, "dsp_spos: symbol table is full\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
   
-	if (cs46xx_dsp_lookup_symbol(chip,
+	अगर (cs46xx_dsp_lookup_symbol(chip,
 				     symbol_name,
-				     type) != NULL) {
+				     type) != शून्य) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol <%s> duplicated\n", symbol_name);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	index = find_free_symbol_index (ins);
+	index = find_मुक्त_symbol_index (ins);
 
-	strcpy (ins->symbol_table.symbols[index].symbol_name, symbol_name);
+	म_नकल (ins->symbol_table.symbols[index].symbol_name, symbol_name);
 	ins->symbol_table.symbols[index].address = address;
 	ins->symbol_table.symbols[index].symbol_type = type;
-	ins->symbol_table.symbols[index].module = NULL;
+	ins->symbol_table.symbols[index].module = शून्य;
 	ins->symbol_table.symbols[index].deleted = 0;
 	symbol = (ins->symbol_table.symbols + index);
 
-	if (index > ins->symbol_table.highest_frag_index) 
+	अगर (index > ins->symbol_table.highest_frag_index) 
 		ins->symbol_table.highest_frag_index = index;
 
-	if (index == ins->symbol_table.nsymbols)
+	अगर (index == ins->symbol_table.nsymbols)
 		ins->symbol_table.nsymbols++; /* no frag. in list */
 
-	return symbol;
-}
+	वापस symbol;
+पूर्ण
 
-struct dsp_spos_instance *cs46xx_dsp_spos_create (struct snd_cs46xx * chip)
-{
-	struct dsp_spos_instance * ins = kzalloc(sizeof(struct dsp_spos_instance), GFP_KERNEL);
+काष्ठा dsp_spos_instance *cs46xx_dsp_spos_create (काष्ठा snd_cs46xx * chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = kzalloc(माप(काष्ठा dsp_spos_instance), GFP_KERNEL);
 
-	if (ins == NULL)
-		return NULL;
+	अगर (ins == शून्य)
+		वापस शून्य;
 
-	/* better to use vmalloc for this big table */
+	/* better to use vदो_स्मृति क्रम this big table */
 	ins->symbol_table.symbols =
-		vmalloc(array_size(DSP_MAX_SYMBOLS,
-				   sizeof(struct dsp_symbol_entry)));
-	ins->code.data = kmalloc(DSP_CODE_BYTE_SIZE, GFP_KERNEL);
-	ins->modules = kmalloc_array(DSP_MAX_MODULES,
-				     sizeof(struct dsp_module_desc),
+		vदो_स्मृति(array_size(DSP_MAX_SYMBOLS,
+				   माप(काष्ठा dsp_symbol_entry)));
+	ins->code.data = kदो_स्मृति(DSP_CODE_BYTE_SIZE, GFP_KERNEL);
+	ins->modules = kदो_स्मृति_array(DSP_MAX_MODULES,
+				     माप(काष्ठा dsp_module_desc),
 				     GFP_KERNEL);
-	if (!ins->symbol_table.symbols || !ins->code.data || !ins->modules) {
+	अगर (!ins->symbol_table.symbols || !ins->code.data || !ins->modules) अणु
 		cs46xx_dsp_spos_destroy(chip);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	ins->symbol_table.nsymbols = 0;
 	ins->symbol_table.highest_frag_index = 0;
 	ins->code.offset = 0;
@@ -246,683 +247,683 @@ struct dsp_spos_instance *cs46xx_dsp_spos_create (struct snd_cs46xx * chip)
 	ins->ntask = 0;
 	ins->nmodules = 0;
 
-	/* default SPDIF input sample rate
+	/* शेष SPDIF input sample rate
 	   to 48000 khz */
-	ins->spdif_in_sample_rate = 48000;
+	ins->spdअगर_in_sample_rate = 48000;
 
 	/* maximize volume */
 	ins->dac_volume_right = 0x8000;
 	ins->dac_volume_left = 0x8000;
-	ins->spdif_input_volume_right = 0x8000;
-	ins->spdif_input_volume_left = 0x8000;
+	ins->spdअगर_input_volume_right = 0x8000;
+	ins->spdअगर_input_volume_left = 0x8000;
 
 	/* set left and right validity bits and
-	   default channel status */
-	ins->spdif_csuv_default =
-		ins->spdif_csuv_stream =
-	 /* byte 0 */  ((unsigned int)_wrap_all_bits(  (SNDRV_PCM_DEFAULT_CON_SPDIF        & 0xff)) << 24) |
-	 /* byte 1 */  ((unsigned int)_wrap_all_bits( ((SNDRV_PCM_DEFAULT_CON_SPDIF >> 8) & 0xff)) << 16) |
-	 /* byte 3 */   (unsigned int)_wrap_all_bits(  (SNDRV_PCM_DEFAULT_CON_SPDIF >> 24) & 0xff) |
+	   शेष channel status */
+	ins->spdअगर_csuv_शेष =
+		ins->spdअगर_csuv_stream =
+	 /* byte 0 */  ((अचिन्हित पूर्णांक)_wrap_all_bits(  (SNDRV_PCM_DEFAULT_CON_SPDIF        & 0xff)) << 24) |
+	 /* byte 1 */  ((अचिन्हित पूर्णांक)_wrap_all_bits( ((SNDRV_PCM_DEFAULT_CON_SPDIF >> 8) & 0xff)) << 16) |
+	 /* byte 3 */   (अचिन्हित पूर्णांक)_wrap_all_bits(  (SNDRV_PCM_DEFAULT_CON_SPDIF >> 24) & 0xff) |
 	 /* left and right validity bits */ (1 << 13) | (1 << 12);
 
-	return ins;
+	वापस ins;
 
 error:
-	kfree(ins->modules);
-	kfree(ins->code.data);
-	vfree(ins->symbol_table.symbols);
-	kfree(ins);
-	return NULL;
-}
+	kमुक्त(ins->modules);
+	kमुक्त(ins->code.data);
+	vमुक्त(ins->symbol_table.symbols);
+	kमुक्त(ins);
+	वापस शून्य;
+पूर्ण
 
-void  cs46xx_dsp_spos_destroy (struct snd_cs46xx * chip)
-{
-	int i;
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+व्योम  cs46xx_dsp_spos_destroy (काष्ठा snd_cs46xx * chip)
+अणु
+	पूर्णांक i;
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	if (snd_BUG_ON(!ins))
-		return;
+	अगर (snd_BUG_ON(!ins))
+		वापस;
 
 	mutex_lock(&chip->spos_mutex);
-	for (i = 0; i < ins->nscb; ++i) {
-		if (ins->scbs[i].deleted) continue;
+	क्रम (i = 0; i < ins->nscb; ++i) अणु
+		अगर (ins->scbs[i].deleted) जारी;
 
-		cs46xx_dsp_proc_free_scb_desc ( (ins->scbs + i) );
-#ifdef CONFIG_PM_SLEEP
-		kfree(ins->scbs[i].data);
-#endif
-	}
+		cs46xx_dsp_proc_मुक्त_scb_desc ( (ins->scbs + i) );
+#अगर_घोषित CONFIG_PM_SLEEP
+		kमुक्त(ins->scbs[i].data);
+#पूर्ण_अगर
+	पूर्ण
 
-	kfree(ins->code.data);
-	vfree(ins->symbol_table.symbols);
-	kfree(ins->modules);
-	kfree(ins);
+	kमुक्त(ins->code.data);
+	vमुक्त(ins->symbol_table.symbols);
+	kमुक्त(ins->modules);
+	kमुक्त(ins);
 	mutex_unlock(&chip->spos_mutex);
-}
+पूर्ण
 
-static int dsp_load_parameter(struct snd_cs46xx *chip,
-			      struct dsp_segment_desc *parameter)
-{
-	u32 doffset, dsize;
+अटल पूर्णांक dsp_load_parameter(काष्ठा snd_cs46xx *chip,
+			      काष्ठा dsp_segment_desc *parameter)
+अणु
+	u32 करोffset, dsize;
 
-	if (!parameter) {
+	अगर (!parameter) अणु
 		dev_dbg(chip->card->dev,
 			"dsp_spos: module got no parameter segment\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	doffset = (parameter->offset * 4 + DSP_PARAMETER_BYTE_OFFSET);
+	करोffset = (parameter->offset * 4 + DSP_PARAMETER_BYTE_OFFSET);
 	dsize   = parameter->size * 4;
 
 	dev_dbg(chip->card->dev,
 		"dsp_spos: downloading parameter data to chip (%08x-%08x)\n",
-		    doffset,doffset + dsize);
-	if (snd_cs46xx_download (chip, parameter->data, doffset, dsize)) {
+		    करोffset,करोffset + dsize);
+	अगर (snd_cs46xx_करोwnload (chip, parameter->data, करोffset, dsize)) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: failed to download parameter data to DSP\n");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dsp_load_sample(struct snd_cs46xx *chip,
-			   struct dsp_segment_desc *sample)
-{
-	u32 doffset, dsize;
+अटल पूर्णांक dsp_load_sample(काष्ठा snd_cs46xx *chip,
+			   काष्ठा dsp_segment_desc *sample)
+अणु
+	u32 करोffset, dsize;
 
-	if (!sample) {
+	अगर (!sample) अणु
 		dev_dbg(chip->card->dev,
 			"dsp_spos: module got no sample segment\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	doffset = (sample->offset * 4  + DSP_SAMPLE_BYTE_OFFSET);
+	करोffset = (sample->offset * 4  + DSP_SAMPLE_BYTE_OFFSET);
 	dsize   =  sample->size * 4;
 
 	dev_dbg(chip->card->dev,
 		"dsp_spos: downloading sample data to chip (%08x-%08x)\n",
-		    doffset,doffset + dsize);
+		    करोffset,करोffset + dsize);
 
-	if (snd_cs46xx_download (chip,sample->data,doffset,dsize)) {
+	अगर (snd_cs46xx_करोwnload (chip,sample->data,करोffset,dsize)) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: failed to sample data to DSP\n");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int cs46xx_dsp_load_module (struct snd_cs46xx * chip, struct dsp_module_desc * module)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	struct dsp_segment_desc * code = get_segment_desc (module,SEGTYPE_SP_PROGRAM);
-	u32 doffset, dsize;
-	int err;
+पूर्णांक cs46xx_dsp_load_module (काष्ठा snd_cs46xx * chip, काष्ठा dsp_module_desc * module)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	काष्ठा dsp_segment_desc * code = get_segment_desc (module,SEGTYPE_SP_PROGRAM);
+	u32 करोffset, dsize;
+	पूर्णांक err;
 
-	if (ins->nmodules == DSP_MAX_MODULES - 1) {
+	अगर (ins->nmodules == DSP_MAX_MODULES - 1) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: to many modules loaded into DSP\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dev_dbg(chip->card->dev,
 		"dsp_spos: loading module %s into DSP\n", module->module_name);
   
-	if (ins->nmodules == 0) {
+	अगर (ins->nmodules == 0) अणु
 		dev_dbg(chip->card->dev, "dsp_spos: clearing parameter area\n");
 		snd_cs46xx_clear_BA1(chip, DSP_PARAMETER_BYTE_OFFSET, DSP_PARAMETER_BYTE_SIZE);
-	}
+	पूर्ण
   
 	err = dsp_load_parameter(chip, get_segment_desc(module,
 							SEGTYPE_SP_PARAMETER));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (ins->nmodules == 0) {
+	अगर (ins->nmodules == 0) अणु
 		dev_dbg(chip->card->dev, "dsp_spos: clearing sample area\n");
 		snd_cs46xx_clear_BA1(chip, DSP_SAMPLE_BYTE_OFFSET, DSP_SAMPLE_BYTE_SIZE);
-	}
+	पूर्ण
 
 	err = dsp_load_sample(chip, get_segment_desc(module,
 						     SEGTYPE_SP_SAMPLE));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (ins->nmodules == 0) {
+	अगर (ins->nmodules == 0) अणु
 		dev_dbg(chip->card->dev, "dsp_spos: clearing code area\n");
 		snd_cs46xx_clear_BA1(chip, DSP_CODE_BYTE_OFFSET, DSP_CODE_BYTE_SIZE);
-	}
+	पूर्ण
 
-	if (code == NULL) {
+	अगर (code == शून्य) अणु
 		dev_dbg(chip->card->dev,
 			"dsp_spos: module got no code segment\n");
-	} else {
-		if (ins->code.offset + code->size > DSP_CODE_BYTE_SIZE) {
+	पूर्ण अन्यथा अणु
+		अगर (ins->code.offset + code->size > DSP_CODE_BYTE_SIZE) अणु
 			dev_err(chip->card->dev,
 				"dsp_spos: no space available in DSP\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		module->load_address = ins->code.offset;
 		module->overlay_begin_address = 0x000;
 
-		/* if module has a code segment it must have
+		/* अगर module has a code segment it must have
 		   symbol table */
-		if (snd_BUG_ON(!module->symbol_table.symbols))
-			return -ENOMEM;
-		if (add_symbols(chip,module)) {
+		अगर (snd_BUG_ON(!module->symbol_table.symbols))
+			वापस -ENOMEM;
+		अगर (add_symbols(chip,module)) अणु
 			dev_err(chip->card->dev,
 				"dsp_spos: failed to load symbol table\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
     
-		doffset = (code->offset * 4 + ins->code.offset * 4 + DSP_CODE_BYTE_OFFSET);
+		करोffset = (code->offset * 4 + ins->code.offset * 4 + DSP_CODE_BYTE_OFFSET);
 		dsize   = code->size * 4;
 		dev_dbg(chip->card->dev,
 			"dsp_spos: downloading code to chip (%08x-%08x)\n",
-			    doffset,doffset + dsize);   
+			    करोffset,करोffset + dsize);   
 
-		module->nfixups = shadow_and_reallocate_code(chip,code->data,code->size,module->overlay_begin_address);
+		module->nfixups = shaकरोw_and_पुनः_स्मृतिate_code(chip,code->data,code->size,module->overlay_begin_address);
 
-		if (snd_cs46xx_download (chip,(ins->code.data + ins->code.offset),doffset,dsize)) {
+		अगर (snd_cs46xx_करोwnload (chip,(ins->code.data + ins->code.offset),करोffset,dsize)) अणु
 			dev_err(chip->card->dev,
 				"dsp_spos: failed to download code to DSP\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		ins->code.offset += code->size;
-	}
+	पूर्ण
 
 	/* NOTE: module segments and symbol table must be
-	   statically allocated. Case that module data is
+	   अटलally allocated. Case that module data is
 	   not generated by the ospparser */
 	ins->modules[ins->nmodules] = *module;
 	ins->nmodules++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct dsp_symbol_entry *
-cs46xx_dsp_lookup_symbol (struct snd_cs46xx * chip, char * symbol_name, int symbol_type)
-{
-	int i;
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+काष्ठा dsp_symbol_entry *
+cs46xx_dsp_lookup_symbol (काष्ठा snd_cs46xx * chip, अक्षर * symbol_name, पूर्णांक symbol_type)
+अणु
+	पूर्णांक i;
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	for ( i = 0; i < ins->symbol_table.nsymbols; ++i ) {
+	क्रम ( i = 0; i < ins->symbol_table.nsymbols; ++i ) अणु
 
-		if (ins->symbol_table.symbols[i].deleted)
-			continue;
+		अगर (ins->symbol_table.symbols[i].deleted)
+			जारी;
 
-		if (!strcmp(ins->symbol_table.symbols[i].symbol_name,symbol_name) &&
-		    ins->symbol_table.symbols[i].symbol_type == symbol_type) {
-			return (ins->symbol_table.symbols + i);
-		}
-	}
+		अगर (!म_भेद(ins->symbol_table.symbols[i].symbol_name,symbol_name) &&
+		    ins->symbol_table.symbols[i].symbol_type == symbol_type) अणु
+			वापस (ins->symbol_table.symbols + i);
+		पूर्ण
+	पूर्ण
 
-#if 0
+#अगर 0
 	dev_err(chip->card->dev, "dsp_spos: symbol <%s> type %02x not found\n",
 		symbol_name,symbol_type);
-#endif
+#पूर्ण_अगर
 
-	return NULL;
-}
-
-
-#ifdef CONFIG_SND_PROC_FS
-static struct dsp_symbol_entry *
-cs46xx_dsp_lookup_symbol_addr (struct snd_cs46xx * chip, u32 address, int symbol_type)
-{
-	int i;
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-
-	for ( i = 0; i < ins->symbol_table.nsymbols; ++i ) {
-
-		if (ins->symbol_table.symbols[i].deleted)
-			continue;
-
-		if (ins->symbol_table.symbols[i].address == address &&
-		    ins->symbol_table.symbols[i].symbol_type == symbol_type) {
-			return (ins->symbol_table.symbols + i);
-		}
-	}
+	वापस शून्य;
+पूर्ण
 
 
-	return NULL;
-}
+#अगर_घोषित CONFIG_SND_PROC_FS
+अटल काष्ठा dsp_symbol_entry *
+cs46xx_dsp_lookup_symbol_addr (काष्ठा snd_cs46xx * chip, u32 address, पूर्णांक symbol_type)
+अणु
+	पूर्णांक i;
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+
+	क्रम ( i = 0; i < ins->symbol_table.nsymbols; ++i ) अणु
+
+		अगर (ins->symbol_table.symbols[i].deleted)
+			जारी;
+
+		अगर (ins->symbol_table.symbols[i].address == address &&
+		    ins->symbol_table.symbols[i].symbol_type == symbol_type) अणु
+			वापस (ins->symbol_table.symbols + i);
+		पूर्ण
+	पूर्ण
 
 
-static void cs46xx_dsp_proc_symbol_table_read (struct snd_info_entry *entry,
-					       struct snd_info_buffer *buffer)
-{
-	struct snd_cs46xx *chip = entry->private_data;
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	int i;
+	वापस शून्य;
+पूर्ण
 
-	snd_iprintf(buffer, "SYMBOLS:\n");
-	for ( i = 0; i < ins->symbol_table.nsymbols; ++i ) {
-		char *module_str = "system";
 
-		if (ins->symbol_table.symbols[i].deleted)
-			continue;
+अटल व्योम cs46xx_dsp_proc_symbol_table_पढ़ो (काष्ठा snd_info_entry *entry,
+					       काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_cs46xx *chip = entry->निजी_data;
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	पूर्णांक i;
 
-		if (ins->symbol_table.symbols[i].module != NULL) {
+	snd_iम_लिखो(buffer, "SYMBOLS:\n");
+	क्रम ( i = 0; i < ins->symbol_table.nsymbols; ++i ) अणु
+		अक्षर *module_str = "system";
+
+		अगर (ins->symbol_table.symbols[i].deleted)
+			जारी;
+
+		अगर (ins->symbol_table.symbols[i].module != शून्य) अणु
 			module_str = ins->symbol_table.symbols[i].module->module_name;
-		}
+		पूर्ण
 
     
-		snd_iprintf(buffer, "%04X <%02X> %s [%s]\n",
+		snd_iम_लिखो(buffer, "%04X <%02X> %s [%s]\n",
 			    ins->symbol_table.symbols[i].address,
 			    ins->symbol_table.symbols[i].symbol_type,
 			    ins->symbol_table.symbols[i].symbol_name,
 			    module_str);    
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void cs46xx_dsp_proc_modules_read (struct snd_info_entry *entry,
-					  struct snd_info_buffer *buffer)
-{
-	struct snd_cs46xx *chip = entry->private_data;
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	int i,j;
+अटल व्योम cs46xx_dsp_proc_modules_पढ़ो (काष्ठा snd_info_entry *entry,
+					  काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_cs46xx *chip = entry->निजी_data;
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	पूर्णांक i,j;
 
 	mutex_lock(&chip->spos_mutex);
-	snd_iprintf(buffer, "MODULES:\n");
-	for ( i = 0; i < ins->nmodules; ++i ) {
-		snd_iprintf(buffer, "\n%s:\n", ins->modules[i].module_name);
-		snd_iprintf(buffer, "   %d symbols\n", ins->modules[i].symbol_table.nsymbols);
-		snd_iprintf(buffer, "   %d fixups\n", ins->modules[i].nfixups);
+	snd_iम_लिखो(buffer, "MODULES:\n");
+	क्रम ( i = 0; i < ins->nmodules; ++i ) अणु
+		snd_iम_लिखो(buffer, "\n%s:\n", ins->modules[i].module_name);
+		snd_iम_लिखो(buffer, "   %d symbols\n", ins->modules[i].symbol_table.nsymbols);
+		snd_iम_लिखो(buffer, "   %d fixups\n", ins->modules[i].nfixups);
 
-		for (j = 0; j < ins->modules[i].nsegments; ++ j) {
-			struct dsp_segment_desc * desc = (ins->modules[i].segments + j);
-			snd_iprintf(buffer, "   segment %02x offset %08x size %08x\n",
+		क्रम (j = 0; j < ins->modules[i].nsegments; ++ j) अणु
+			काष्ठा dsp_segment_desc * desc = (ins->modules[i].segments + j);
+			snd_iम_लिखो(buffer, "   segment %02x offset %08x size %08x\n",
 				    desc->segment_type,desc->offset, desc->size);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&chip->spos_mutex);
-}
+पूर्ण
 
-static void cs46xx_dsp_proc_task_tree_read (struct snd_info_entry *entry,
-					    struct snd_info_buffer *buffer)
-{
-	struct snd_cs46xx *chip = entry->private_data;
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	int i, j, col;
-	void __iomem *dst = chip->region.idx[1].remap_addr + DSP_PARAMETER_BYTE_OFFSET;
+अटल व्योम cs46xx_dsp_proc_task_tree_पढ़ो (काष्ठा snd_info_entry *entry,
+					    काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_cs46xx *chip = entry->निजी_data;
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	पूर्णांक i, j, col;
+	व्योम __iomem *dst = chip->region.idx[1].remap_addr + DSP_PARAMETER_BYTE_OFFSET;
 
 	mutex_lock(&chip->spos_mutex);
-	snd_iprintf(buffer, "TASK TREES:\n");
-	for ( i = 0; i < ins->ntask; ++i) {
-		snd_iprintf(buffer,"\n%04x %s:\n",ins->tasks[i].address,ins->tasks[i].task_name);
+	snd_iम_लिखो(buffer, "TASK TREES:\n");
+	क्रम ( i = 0; i < ins->ntask; ++i) अणु
+		snd_iम_लिखो(buffer,"\n%04x %s:\n",ins->tasks[i].address,ins->tasks[i].task_name);
 
-		for (col = 0,j = 0;j < ins->tasks[i].size; j++,col++) {
+		क्रम (col = 0,j = 0;j < ins->tasks[i].size; j++,col++) अणु
 			u32 val;
-			if (col == 4) {
-				snd_iprintf(buffer,"\n");
+			अगर (col == 4) अणु
+				snd_iम_लिखो(buffer,"\n");
 				col = 0;
-			}
-			val = readl(dst + (ins->tasks[i].address + j) * sizeof(u32));
-			snd_iprintf(buffer,"%08x ",val);
-		}
-	}
+			पूर्ण
+			val = पढ़ोl(dst + (ins->tasks[i].address + j) * माप(u32));
+			snd_iम_लिखो(buffer,"%08x ",val);
+		पूर्ण
+	पूर्ण
 
-	snd_iprintf(buffer,"\n");  
+	snd_iम_लिखो(buffer,"\n");  
 	mutex_unlock(&chip->spos_mutex);
-}
+पूर्ण
 
-static void cs46xx_dsp_proc_scb_read (struct snd_info_entry *entry,
-				      struct snd_info_buffer *buffer)
-{
-	struct snd_cs46xx *chip = entry->private_data;
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	int i;
+अटल व्योम cs46xx_dsp_proc_scb_पढ़ो (काष्ठा snd_info_entry *entry,
+				      काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_cs46xx *chip = entry->निजी_data;
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	पूर्णांक i;
 
 	mutex_lock(&chip->spos_mutex);
-	snd_iprintf(buffer, "SCB's:\n");
-	for ( i = 0; i < ins->nscb; ++i) {
-		if (ins->scbs[i].deleted)
-			continue;
-		snd_iprintf(buffer,"\n%04x %s:\n\n",ins->scbs[i].address,ins->scbs[i].scb_name);
+	snd_iम_लिखो(buffer, "SCB's:\n");
+	क्रम ( i = 0; i < ins->nscb; ++i) अणु
+		अगर (ins->scbs[i].deleted)
+			जारी;
+		snd_iम_लिखो(buffer,"\n%04x %s:\n\n",ins->scbs[i].address,ins->scbs[i].scb_name);
 
-		if (ins->scbs[i].parent_scb_ptr != NULL) {
-			snd_iprintf(buffer,"parent [%s:%04x] ", 
+		अगर (ins->scbs[i].parent_scb_ptr != शून्य) अणु
+			snd_iम_लिखो(buffer,"parent [%s:%04x] ", 
 				    ins->scbs[i].parent_scb_ptr->scb_name,
 				    ins->scbs[i].parent_scb_ptr->address);
-		} else snd_iprintf(buffer,"parent [none] ");
+		पूर्ण अन्यथा snd_iम_लिखो(buffer,"parent [none] ");
 
-		snd_iprintf(buffer,"sub_list_ptr [%s:%04x]\nnext_scb_ptr [%s:%04x]  task_entry [%s:%04x]\n",
+		snd_iम_लिखो(buffer,"sub_list_ptr [%s:%04x]\nnext_scb_ptr [%s:%04x]  task_entry [%s:%04x]\n",
 			    ins->scbs[i].sub_list_ptr->scb_name,
 			    ins->scbs[i].sub_list_ptr->address,
 			    ins->scbs[i].next_scb_ptr->scb_name,
 			    ins->scbs[i].next_scb_ptr->address,
 			    ins->scbs[i].task_entry->symbol_name,
 			    ins->scbs[i].task_entry->address);
-	}
+	पूर्ण
 
-	snd_iprintf(buffer,"\n");
+	snd_iम_लिखो(buffer,"\n");
 	mutex_unlock(&chip->spos_mutex);
-}
+पूर्ण
 
-static void cs46xx_dsp_proc_parameter_dump_read (struct snd_info_entry *entry,
-						 struct snd_info_buffer *buffer)
-{
-	struct snd_cs46xx *chip = entry->private_data;
-	/*struct dsp_spos_instance * ins = chip->dsp_spos_instance; */
-	unsigned int i, col = 0;
-	void __iomem *dst = chip->region.idx[1].remap_addr + DSP_PARAMETER_BYTE_OFFSET;
-	struct dsp_symbol_entry * symbol; 
+अटल व्योम cs46xx_dsp_proc_parameter_dump_पढ़ो (काष्ठा snd_info_entry *entry,
+						 काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_cs46xx *chip = entry->निजी_data;
+	/*काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance; */
+	अचिन्हित पूर्णांक i, col = 0;
+	व्योम __iomem *dst = chip->region.idx[1].remap_addr + DSP_PARAMETER_BYTE_OFFSET;
+	काष्ठा dsp_symbol_entry * symbol; 
 
-	for (i = 0;i < DSP_PARAMETER_BYTE_SIZE; i += sizeof(u32),col ++) {
-		if (col == 4) {
-			snd_iprintf(buffer,"\n");
+	क्रम (i = 0;i < DSP_PARAMETER_BYTE_SIZE; i += माप(u32),col ++) अणु
+		अगर (col == 4) अणु
+			snd_iम_लिखो(buffer,"\n");
 			col = 0;
-		}
+		पूर्ण
 
-		if ( (symbol = cs46xx_dsp_lookup_symbol_addr (chip,i / sizeof(u32), SYMBOL_PARAMETER)) != NULL) {
+		अगर ( (symbol = cs46xx_dsp_lookup_symbol_addr (chip,i / माप(u32), SYMBOL_PARAMETER)) != शून्य) अणु
 			col = 0;
-			snd_iprintf (buffer,"\n%s:\n",symbol->symbol_name);
-		}
+			snd_iम_लिखो (buffer,"\n%s:\n",symbol->symbol_name);
+		पूर्ण
 
-		if (col == 0) {
-			snd_iprintf(buffer, "%04X ", i / (unsigned int)sizeof(u32));
-		}
+		अगर (col == 0) अणु
+			snd_iम_लिखो(buffer, "%04X ", i / (अचिन्हित पूर्णांक)माप(u32));
+		पूर्ण
 
-		snd_iprintf(buffer,"%08X ",readl(dst + i));
-	}
-}
+		snd_iम_लिखो(buffer,"%08X ",पढ़ोl(dst + i));
+	पूर्ण
+पूर्ण
 
-static void cs46xx_dsp_proc_sample_dump_read (struct snd_info_entry *entry,
-					      struct snd_info_buffer *buffer)
-{
-	struct snd_cs46xx *chip = entry->private_data;
-	int i,col = 0;
-	void __iomem *dst = chip->region.idx[2].remap_addr;
+अटल व्योम cs46xx_dsp_proc_sample_dump_पढ़ो (काष्ठा snd_info_entry *entry,
+					      काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_cs46xx *chip = entry->निजी_data;
+	पूर्णांक i,col = 0;
+	व्योम __iomem *dst = chip->region.idx[2].remap_addr;
 
-	snd_iprintf(buffer,"PCMREADER:\n");
-	for (i = PCM_READER_BUF1;i < PCM_READER_BUF1 + 0x30; i += sizeof(u32),col ++) {
-		if (col == 4) {
-			snd_iprintf(buffer,"\n");
+	snd_iम_लिखो(buffer,"PCMREADER:\n");
+	क्रम (i = PCM_READER_BUF1;i < PCM_READER_BUF1 + 0x30; i += माप(u32),col ++) अणु
+		अगर (col == 4) अणु
+			snd_iम_लिखो(buffer,"\n");
 			col = 0;
-		}
+		पूर्ण
 
-		if (col == 0) {
-			snd_iprintf(buffer, "%04X ",i);
-		}
+		अगर (col == 0) अणु
+			snd_iम_लिखो(buffer, "%04X ",i);
+		पूर्ण
 
-		snd_iprintf(buffer,"%08X ",readl(dst + i));
-	}
+		snd_iम_लिखो(buffer,"%08X ",पढ़ोl(dst + i));
+	पूर्ण
 
-	snd_iprintf(buffer,"\nMIX_SAMPLE_BUF1:\n");
+	snd_iम_लिखो(buffer,"\nMIX_SAMPLE_BUF1:\n");
 
 	col = 0;
-	for (i = MIX_SAMPLE_BUF1;i < MIX_SAMPLE_BUF1 + 0x40; i += sizeof(u32),col ++) {
-		if (col == 4) {
-			snd_iprintf(buffer,"\n");
+	क्रम (i = MIX_SAMPLE_BUF1;i < MIX_SAMPLE_BUF1 + 0x40; i += माप(u32),col ++) अणु
+		अगर (col == 4) अणु
+			snd_iम_लिखो(buffer,"\n");
 			col = 0;
-		}
+		पूर्ण
 
-		if (col == 0) {
-			snd_iprintf(buffer, "%04X ",i);
-		}
+		अगर (col == 0) अणु
+			snd_iम_लिखो(buffer, "%04X ",i);
+		पूर्ण
 
-		snd_iprintf(buffer,"%08X ",readl(dst + i));
-	}
+		snd_iम_लिखो(buffer,"%08X ",पढ़ोl(dst + i));
+	पूर्ण
 
-	snd_iprintf(buffer,"\nSRC_TASK_SCB1:\n");
+	snd_iम_लिखो(buffer,"\nSRC_TASK_SCB1:\n");
 	col = 0;
-	for (i = 0x2480 ; i < 0x2480 + 0x40 ; i += sizeof(u32),col ++) {
-		if (col == 4) {
-			snd_iprintf(buffer,"\n");
+	क्रम (i = 0x2480 ; i < 0x2480 + 0x40 ; i += माप(u32),col ++) अणु
+		अगर (col == 4) अणु
+			snd_iम_लिखो(buffer,"\n");
 			col = 0;
-		}
+		पूर्ण
 		
-		if (col == 0) {
-			snd_iprintf(buffer, "%04X ",i);
-		}
+		अगर (col == 0) अणु
+			snd_iम_लिखो(buffer, "%04X ",i);
+		पूर्ण
 
-		snd_iprintf(buffer,"%08X ",readl(dst + i));
-	}
+		snd_iम_लिखो(buffer,"%08X ",पढ़ोl(dst + i));
+	पूर्ण
 
 
-	snd_iprintf(buffer,"\nSPDIFO_BUFFER:\n");
+	snd_iम_लिखो(buffer,"\nSPDIFO_BUFFER:\n");
 	col = 0;
-	for (i = SPDIFO_IP_OUTPUT_BUFFER1;i < SPDIFO_IP_OUTPUT_BUFFER1 + 0x30; i += sizeof(u32),col ++) {
-		if (col == 4) {
-			snd_iprintf(buffer,"\n");
+	क्रम (i = SPDIFO_IP_OUTPUT_BUFFER1;i < SPDIFO_IP_OUTPUT_BUFFER1 + 0x30; i += माप(u32),col ++) अणु
+		अगर (col == 4) अणु
+			snd_iम_लिखो(buffer,"\n");
 			col = 0;
-		}
+		पूर्ण
 
-		if (col == 0) {
-			snd_iprintf(buffer, "%04X ",i);
-		}
+		अगर (col == 0) अणु
+			snd_iम_लिखो(buffer, "%04X ",i);
+		पूर्ण
 
-		snd_iprintf(buffer,"%08X ",readl(dst + i));
-	}
+		snd_iम_लिखो(buffer,"%08X ",पढ़ोl(dst + i));
+	पूर्ण
 
-	snd_iprintf(buffer,"\n...\n");
+	snd_iम_लिखो(buffer,"\n...\n");
 	col = 0;
 
-	for (i = SPDIFO_IP_OUTPUT_BUFFER1+0xD0;i < SPDIFO_IP_OUTPUT_BUFFER1 + 0x110; i += sizeof(u32),col ++) {
-		if (col == 4) {
-			snd_iprintf(buffer,"\n");
+	क्रम (i = SPDIFO_IP_OUTPUT_BUFFER1+0xD0;i < SPDIFO_IP_OUTPUT_BUFFER1 + 0x110; i += माप(u32),col ++) अणु
+		अगर (col == 4) अणु
+			snd_iम_लिखो(buffer,"\n");
 			col = 0;
-		}
+		पूर्ण
 
-		if (col == 0) {
-			snd_iprintf(buffer, "%04X ",i);
-		}
+		अगर (col == 0) अणु
+			snd_iम_लिखो(buffer, "%04X ",i);
+		पूर्ण
 
-		snd_iprintf(buffer,"%08X ",readl(dst + i));
-	}
+		snd_iम_लिखो(buffer,"%08X ",पढ़ोl(dst + i));
+	पूर्ण
 
 
-	snd_iprintf(buffer,"\nOUTPUT_SNOOP:\n");
+	snd_iम_लिखो(buffer,"\nOUTPUT_SNOOP:\n");
 	col = 0;
-	for (i = OUTPUT_SNOOP_BUFFER;i < OUTPUT_SNOOP_BUFFER + 0x40; i += sizeof(u32),col ++) {
-		if (col == 4) {
-			snd_iprintf(buffer,"\n");
+	क्रम (i = OUTPUT_SNOOP_BUFFER;i < OUTPUT_SNOOP_BUFFER + 0x40; i += माप(u32),col ++) अणु
+		अगर (col == 4) अणु
+			snd_iम_लिखो(buffer,"\n");
 			col = 0;
-		}
+		पूर्ण
 
-		if (col == 0) {
-			snd_iprintf(buffer, "%04X ",i);
-		}
+		अगर (col == 0) अणु
+			snd_iम_लिखो(buffer, "%04X ",i);
+		पूर्ण
 
-		snd_iprintf(buffer,"%08X ",readl(dst + i));
-	}
+		snd_iम_लिखो(buffer,"%08X ",पढ़ोl(dst + i));
+	पूर्ण
 
-	snd_iprintf(buffer,"\nCODEC_INPUT_BUF1: \n");
+	snd_iम_लिखो(buffer,"\nCODEC_INPUT_BUF1: \n");
 	col = 0;
-	for (i = CODEC_INPUT_BUF1;i < CODEC_INPUT_BUF1 + 0x40; i += sizeof(u32),col ++) {
-		if (col == 4) {
-			snd_iprintf(buffer,"\n");
+	क्रम (i = CODEC_INPUT_BUF1;i < CODEC_INPUT_BUF1 + 0x40; i += माप(u32),col ++) अणु
+		अगर (col == 4) अणु
+			snd_iम_लिखो(buffer,"\n");
 			col = 0;
-		}
+		पूर्ण
 
-		if (col == 0) {
-			snd_iprintf(buffer, "%04X ",i);
-		}
+		अगर (col == 0) अणु
+			snd_iम_लिखो(buffer, "%04X ",i);
+		पूर्ण
 
-		snd_iprintf(buffer,"%08X ",readl(dst + i));
-	}
-#if 0
-	snd_iprintf(buffer,"\nWRITE_BACK_BUF1: \n");
+		snd_iम_लिखो(buffer,"%08X ",पढ़ोl(dst + i));
+	पूर्ण
+#अगर 0
+	snd_iम_लिखो(buffer,"\nWRITE_BACK_BUF1: \n");
 	col = 0;
-	for (i = WRITE_BACK_BUF1;i < WRITE_BACK_BUF1 + 0x40; i += sizeof(u32),col ++) {
-		if (col == 4) {
-			snd_iprintf(buffer,"\n");
+	क्रम (i = WRITE_BACK_BUF1;i < WRITE_BACK_BUF1 + 0x40; i += माप(u32),col ++) अणु
+		अगर (col == 4) अणु
+			snd_iम_लिखो(buffer,"\n");
 			col = 0;
-		}
+		पूर्ण
 
-		if (col == 0) {
-			snd_iprintf(buffer, "%04X ",i);
-		}
+		अगर (col == 0) अणु
+			snd_iम_लिखो(buffer, "%04X ",i);
+		पूर्ण
 
-		snd_iprintf(buffer,"%08X ",readl(dst + i));
-	}
-#endif
+		snd_iम_लिखो(buffer,"%08X ",पढ़ोl(dst + i));
+	पूर्ण
+#पूर्ण_अगर
 
-	snd_iprintf(buffer,"\nSPDIFI_IP_OUTPUT_BUFFER1: \n");
+	snd_iम_लिखो(buffer,"\nSPDIFI_IP_OUTPUT_BUFFER1: \n");
 	col = 0;
-	for (i = SPDIFI_IP_OUTPUT_BUFFER1;i < SPDIFI_IP_OUTPUT_BUFFER1 + 0x80; i += sizeof(u32),col ++) {
-		if (col == 4) {
-			snd_iprintf(buffer,"\n");
+	क्रम (i = SPDIFI_IP_OUTPUT_BUFFER1;i < SPDIFI_IP_OUTPUT_BUFFER1 + 0x80; i += माप(u32),col ++) अणु
+		अगर (col == 4) अणु
+			snd_iम_लिखो(buffer,"\n");
 			col = 0;
-		}
+		पूर्ण
 
-		if (col == 0) {
-			snd_iprintf(buffer, "%04X ",i);
-		}
+		अगर (col == 0) अणु
+			snd_iम_लिखो(buffer, "%04X ",i);
+		पूर्ण
 		
-		snd_iprintf(buffer,"%08X ",readl(dst + i));
-	}
-	snd_iprintf(buffer,"\n");
-}
+		snd_iम_लिखो(buffer,"%08X ",पढ़ोl(dst + i));
+	पूर्ण
+	snd_iम_लिखो(buffer,"\n");
+पूर्ण
 
-int cs46xx_dsp_proc_init (struct snd_card *card, struct snd_cs46xx *chip)
-{
-	struct snd_info_entry *entry;
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	int i;
+पूर्णांक cs46xx_dsp_proc_init (काष्ठा snd_card *card, काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा snd_info_entry *entry;
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	पूर्णांक i;
 
 	ins->snd_card = card;
 
 	entry = snd_info_create_card_entry(card, "dsp", card->proc_root);
-	if (entry)
-		entry->mode = S_IFDIR | 0555;
+	अगर (entry)
+		entry->mode = S_IFसूची | 0555;
 	ins->proc_dsp_dir = entry;
 
-	if (!ins->proc_dsp_dir)
-		return -ENOMEM;
+	अगर (!ins->proc_dsp_dir)
+		वापस -ENOMEM;
 
 	entry = snd_info_create_card_entry(card, "spos_symbols",
 					   ins->proc_dsp_dir);
-	if (entry)
+	अगर (entry)
 		snd_info_set_text_ops(entry, chip,
-				      cs46xx_dsp_proc_symbol_table_read);
+				      cs46xx_dsp_proc_symbol_table_पढ़ो);
     
 	entry = snd_info_create_card_entry(card, "spos_modules",
 					   ins->proc_dsp_dir);
-	if (entry)
+	अगर (entry)
 		snd_info_set_text_ops(entry, chip,
-				      cs46xx_dsp_proc_modules_read);
+				      cs46xx_dsp_proc_modules_पढ़ो);
 
 	entry = snd_info_create_card_entry(card, "parameter",
 					   ins->proc_dsp_dir);
-	if (entry)
+	अगर (entry)
 		snd_info_set_text_ops(entry, chip,
-				      cs46xx_dsp_proc_parameter_dump_read);
+				      cs46xx_dsp_proc_parameter_dump_पढ़ो);
 
 	entry = snd_info_create_card_entry(card, "sample",
 					   ins->proc_dsp_dir);
-	if (entry)
+	अगर (entry)
 		snd_info_set_text_ops(entry, chip,
-				      cs46xx_dsp_proc_sample_dump_read);
+				      cs46xx_dsp_proc_sample_dump_पढ़ो);
 
 	entry = snd_info_create_card_entry(card, "task_tree",
 					   ins->proc_dsp_dir);
-	if (entry)
+	अगर (entry)
 		snd_info_set_text_ops(entry, chip,
-				      cs46xx_dsp_proc_task_tree_read);
+				      cs46xx_dsp_proc_task_tree_पढ़ो);
 
 	entry = snd_info_create_card_entry(card, "scb_info",
 					   ins->proc_dsp_dir);
-	if (entry)
+	अगर (entry)
 		snd_info_set_text_ops(entry, chip,
-				      cs46xx_dsp_proc_scb_read);
+				      cs46xx_dsp_proc_scb_पढ़ो);
 
 	mutex_lock(&chip->spos_mutex);
-	/* register/update SCB's entries on proc */
-	for (i = 0; i < ins->nscb; ++i) {
-		if (ins->scbs[i].deleted) continue;
+	/* रेजिस्टर/update SCB's entries on proc */
+	क्रम (i = 0; i < ins->nscb; ++i) अणु
+		अगर (ins->scbs[i].deleted) जारी;
 
-		cs46xx_dsp_proc_register_scb_desc (chip, (ins->scbs + i));
-	}
+		cs46xx_dsp_proc_रेजिस्टर_scb_desc (chip, (ins->scbs + i));
+	पूर्ण
 	mutex_unlock(&chip->spos_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cs46xx_dsp_proc_done (struct snd_cs46xx *chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	int i;
+पूर्णांक cs46xx_dsp_proc_करोne (काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	पूर्णांक i;
 
-	if (!ins)
-		return 0;
+	अगर (!ins)
+		वापस 0;
 
 	mutex_lock(&chip->spos_mutex);
-	for (i = 0; i < ins->nscb; ++i) {
-		if (ins->scbs[i].deleted) continue;
-		cs46xx_dsp_proc_free_scb_desc ( (ins->scbs + i) );
-	}
+	क्रम (i = 0; i < ins->nscb; ++i) अणु
+		अगर (ins->scbs[i].deleted) जारी;
+		cs46xx_dsp_proc_मुक्त_scb_desc ( (ins->scbs + i) );
+	पूर्ण
 	mutex_unlock(&chip->spos_mutex);
 
-	snd_info_free_entry(ins->proc_dsp_dir);
-	ins->proc_dsp_dir = NULL;
+	snd_info_मुक्त_entry(ins->proc_dsp_dir);
+	ins->proc_dsp_dir = शून्य;
 
-	return 0;
-}
-#endif /* CONFIG_SND_PROC_FS */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SND_PROC_FS */
 
-static void _dsp_create_task_tree (struct snd_cs46xx *chip, u32 * task_data,
-				   u32  dest, int size)
-{
-	void __iomem *spdst = chip->region.idx[1].remap_addr + 
-		DSP_PARAMETER_BYTE_OFFSET + dest * sizeof(u32);
-	int i;
+अटल व्योम _dsp_create_task_tree (काष्ठा snd_cs46xx *chip, u32 * task_data,
+				   u32  dest, पूर्णांक size)
+अणु
+	व्योम __iomem *spdst = chip->region.idx[1].remap_addr + 
+		DSP_PARAMETER_BYTE_OFFSET + dest * माप(u32);
+	पूर्णांक i;
 
-	for (i = 0; i < size; ++i) {
+	क्रम (i = 0; i < size; ++i) अणु
 		dev_dbg(chip->card->dev, "addr %p, val %08x\n",
 			spdst, task_data[i]);
-		writel(task_data[i],spdst);
-		spdst += sizeof(u32);
-	}
-}
+		ग_लिखोl(task_data[i],spdst);
+		spdst += माप(u32);
+	पूर्ण
+पूर्ण
 
-static void _dsp_create_scb (struct snd_cs46xx *chip, u32 * scb_data, u32 dest)
-{
-	void __iomem *spdst = chip->region.idx[1].remap_addr + 
-		DSP_PARAMETER_BYTE_OFFSET + dest * sizeof(u32);
-	int i;
+अटल व्योम _dsp_create_scb (काष्ठा snd_cs46xx *chip, u32 * scb_data, u32 dest)
+अणु
+	व्योम __iomem *spdst = chip->region.idx[1].remap_addr + 
+		DSP_PARAMETER_BYTE_OFFSET + dest * माप(u32);
+	पूर्णांक i;
 
-	for (i = 0; i < 0x10; ++i) {
+	क्रम (i = 0; i < 0x10; ++i) अणु
 		dev_dbg(chip->card->dev, "addr %p, val %08x\n",
 			spdst, scb_data[i]);
-		writel(scb_data[i],spdst);
-		spdst += sizeof(u32);
-	}
-}
+		ग_लिखोl(scb_data[i],spdst);
+		spdst += माप(u32);
+	पूर्ण
+पूर्ण
 
-static int find_free_scb_index (struct dsp_spos_instance * ins)
-{
-	int index = ins->nscb, i;
+अटल पूर्णांक find_मुक्त_scb_index (काष्ठा dsp_spos_instance * ins)
+अणु
+	पूर्णांक index = ins->nscb, i;
 
-	for (i = ins->scb_highest_frag_index; i < ins->nscb; ++i) {
-		if (ins->scbs[i].deleted) {
+	क्रम (i = ins->scb_highest_frag_index; i < ins->nscb; ++i) अणु
+		अगर (ins->scbs[i].deleted) अणु
 			index = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static struct dsp_scb_descriptor * _map_scb (struct snd_cs46xx *chip, char * name, u32 dest)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	struct dsp_scb_descriptor * desc = NULL;
-	int index;
+अटल काष्ठा dsp_scb_descriptor * _map_scb (काष्ठा snd_cs46xx *chip, अक्षर * name, u32 dest)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	काष्ठा dsp_scb_descriptor * desc = शून्य;
+	पूर्णांक index;
 
-	if (ins->nscb == DSP_MAX_SCB_DESC - 1) {
+	अगर (ins->nscb == DSP_MAX_SCB_DESC - 1) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: got no place for other SCB\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	index = find_free_scb_index (ins);
+	index = find_मुक्त_scb_index (ins);
 
-	memset(&ins->scbs[index], 0, sizeof(ins->scbs[index]));
-	strcpy(ins->scbs[index].scb_name, name);
+	स_रखो(&ins->scbs[index], 0, माप(ins->scbs[index]));
+	म_नकल(ins->scbs[index].scb_name, name);
 	ins->scbs[index].address = dest;
 	ins->scbs[index].index = index;
 	ins->scbs[index].ref_count = 1;
@@ -930,31 +931,31 @@ static struct dsp_scb_descriptor * _map_scb (struct snd_cs46xx *chip, char * nam
 	desc = (ins->scbs + index);
 	ins->scbs[index].scb_symbol = add_symbol (chip, name, dest, SYMBOL_PARAMETER);
 
-	if (index > ins->scb_highest_frag_index)
+	अगर (index > ins->scb_highest_frag_index)
 		ins->scb_highest_frag_index = index;
 
-	if (index == ins->nscb)
+	अगर (index == ins->nscb)
 		ins->nscb++;
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-static struct dsp_task_descriptor *
-_map_task_tree (struct snd_cs46xx *chip, char * name, u32 dest, u32 size)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	struct dsp_task_descriptor * desc = NULL;
+अटल काष्ठा dsp_task_descriptor *
+_map_task_tree (काष्ठा snd_cs46xx *chip, अक्षर * name, u32 dest, u32 size)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	काष्ठा dsp_task_descriptor * desc = शून्य;
 
-	if (ins->ntask == DSP_MAX_TASK_DESC - 1) {
+	अगर (ins->ntask == DSP_MAX_TASK_DESC - 1) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: got no place for other TASK\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (name)
-		strcpy(ins->tasks[ins->ntask].task_name, name);
-	else
-		strcpy(ins->tasks[ins->ntask].task_name, "(NULL)");
+	अगर (name)
+		म_नकल(ins->tasks[ins->ntask].task_name, name);
+	अन्यथा
+		म_नकल(ins->tasks[ins->ntask].task_name, "(NULL)");
 	ins->tasks[ins->ntask].address = dest;
 	ins->tasks[ins->ntask].size = size;
 
@@ -963,82 +964,82 @@ _map_task_tree (struct snd_cs46xx *chip, char * name, u32 dest, u32 size)
 	desc = (ins->tasks + ins->ntask);
 	ins->ntask++;
 
-	if (name)
+	अगर (name)
 		add_symbol (chip,name,dest,SYMBOL_PARAMETER);
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-#define SCB_BYTES	(0x10 * 4)
+#घोषणा SCB_BYTES	(0x10 * 4)
 
-struct dsp_scb_descriptor *
-cs46xx_dsp_create_scb (struct snd_cs46xx *chip, char * name, u32 * scb_data, u32 dest)
-{
-	struct dsp_scb_descriptor * desc;
+काष्ठा dsp_scb_descriptor *
+cs46xx_dsp_create_scb (काष्ठा snd_cs46xx *chip, अक्षर * name, u32 * scb_data, u32 dest)
+अणु
+	काष्ठा dsp_scb_descriptor * desc;
 
-#ifdef CONFIG_PM_SLEEP
-	/* copy the data for resume */
+#अगर_घोषित CONFIG_PM_SLEEP
+	/* copy the data क्रम resume */
 	scb_data = kmemdup(scb_data, SCB_BYTES, GFP_KERNEL);
-	if (!scb_data)
-		return NULL;
-#endif
+	अगर (!scb_data)
+		वापस शून्य;
+#पूर्ण_अगर
 
 	desc = _map_scb (chip,name,dest);
-	if (desc) {
+	अगर (desc) अणु
 		desc->data = scb_data;
 		_dsp_create_scb(chip,scb_data,dest);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(chip->card->dev, "dsp_spos: failed to map SCB\n");
-#ifdef CONFIG_PM_SLEEP
-		kfree(scb_data);
-#endif
-	}
+#अगर_घोषित CONFIG_PM_SLEEP
+		kमुक्त(scb_data);
+#पूर्ण_अगर
+	पूर्ण
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
 
-static struct dsp_task_descriptor *
-cs46xx_dsp_create_task_tree (struct snd_cs46xx *chip, char * name, u32 * task_data,
-			     u32 dest, int size)
-{
-	struct dsp_task_descriptor * desc;
+अटल काष्ठा dsp_task_descriptor *
+cs46xx_dsp_create_task_tree (काष्ठा snd_cs46xx *chip, अक्षर * name, u32 * task_data,
+			     u32 dest, पूर्णांक size)
+अणु
+	काष्ठा dsp_task_descriptor * desc;
 
 	desc = _map_task_tree (chip,name,dest,size);
-	if (desc) {
+	अगर (desc) अणु
 		desc->data = task_data;
 		_dsp_create_task_tree(chip,task_data,dest,size);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(chip->card->dev, "dsp_spos: failed to map TASK\n");
-	}
+	पूर्ण
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	struct dsp_symbol_entry * fg_task_tree_header_code;
-	struct dsp_symbol_entry * task_tree_header_code;
-	struct dsp_symbol_entry * task_tree_thread;
-	struct dsp_symbol_entry * null_algorithm;
-	struct dsp_symbol_entry * magic_snoop_task;
+पूर्णांक cs46xx_dsp_scb_and_task_init (काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	काष्ठा dsp_symbol_entry * fg_task_tree_header_code;
+	काष्ठा dsp_symbol_entry * task_tree_header_code;
+	काष्ठा dsp_symbol_entry * task_tree_thपढ़ो;
+	काष्ठा dsp_symbol_entry * null_algorithm;
+	काष्ठा dsp_symbol_entry * magic_snoop_task;
 
-	struct dsp_scb_descriptor * timing_master_scb;
-	struct dsp_scb_descriptor * codec_out_scb;
-	struct dsp_scb_descriptor * codec_in_scb;
-	struct dsp_scb_descriptor * src_task_scb;
-	struct dsp_scb_descriptor * master_mix_scb;
-	struct dsp_scb_descriptor * rear_mix_scb;
-	struct dsp_scb_descriptor * record_mix_scb;
-	struct dsp_scb_descriptor * write_back_scb;
-	struct dsp_scb_descriptor * vari_decimate_scb;
-	struct dsp_scb_descriptor * rear_codec_out_scb;
-	struct dsp_scb_descriptor * clfe_codec_out_scb;
-	struct dsp_scb_descriptor * magic_snoop_scb;
+	काष्ठा dsp_scb_descriptor * timing_master_scb;
+	काष्ठा dsp_scb_descriptor * codec_out_scb;
+	काष्ठा dsp_scb_descriptor * codec_in_scb;
+	काष्ठा dsp_scb_descriptor * src_task_scb;
+	काष्ठा dsp_scb_descriptor * master_mix_scb;
+	काष्ठा dsp_scb_descriptor * rear_mix_scb;
+	काष्ठा dsp_scb_descriptor * record_mix_scb;
+	काष्ठा dsp_scb_descriptor * ग_लिखो_back_scb;
+	काष्ठा dsp_scb_descriptor * vari_decimate_scb;
+	काष्ठा dsp_scb_descriptor * rear_codec_out_scb;
+	काष्ठा dsp_scb_descriptor * clfe_codec_out_scb;
+	काष्ठा dsp_scb_descriptor * magic_snoop_scb;
 	
-	int fifo_addr, fifo_span, valid_slots;
+	पूर्णांक fअगरo_addr, fअगरo_span, valid_slots;
 
-	static const struct dsp_spos_control_block sposcb = {
+	अटल स्थिर काष्ठा dsp_spos_control_block sposcb = अणु
 		/* 0 */ HFG_TREE_SCB,HFG_STACK,
 		/* 1 */ SPOSCB_ADDR,BG_TREE_SCB_ADDR,
 		/* 2 */ DSP_SPOS_DC,0,
@@ -1055,71 +1056,71 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 		/* D */ DSP_SPOS_DC_DC,
 		/* E */ DSP_SPOS_DC_DC,
 		/* F */ DSP_SPOS_DC_DC
-	};
+	पूर्ण;
 
 	cs46xx_dsp_create_task_tree(chip, "sposCB", (u32 *)&sposcb, SPOSCB_ADDR, 0x10);
 
 	null_algorithm  = cs46xx_dsp_lookup_symbol(chip, "NULLALGORITHM", SYMBOL_CODE);
-	if (null_algorithm == NULL) {
+	अगर (null_algorithm == शून्य) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol NULLALGORITHM not found\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	fg_task_tree_header_code = cs46xx_dsp_lookup_symbol(chip, "FGTASKTREEHEADERCODE", SYMBOL_CODE);  
-	if (fg_task_tree_header_code == NULL) {
+	अगर (fg_task_tree_header_code == शून्य) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol FGTASKTREEHEADERCODE not found\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	task_tree_header_code = cs46xx_dsp_lookup_symbol(chip, "TASKTREEHEADERCODE", SYMBOL_CODE);  
-	if (task_tree_header_code == NULL) {
+	अगर (task_tree_header_code == शून्य) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol TASKTREEHEADERCODE not found\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
   
-	task_tree_thread = cs46xx_dsp_lookup_symbol(chip, "TASKTREETHREAD", SYMBOL_CODE);
-	if (task_tree_thread == NULL) {
+	task_tree_thपढ़ो = cs46xx_dsp_lookup_symbol(chip, "TASKTREETHREAD", SYMBOL_CODE);
+	अगर (task_tree_thपढ़ो == शून्य) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol TASKTREETHREAD not found\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	magic_snoop_task = cs46xx_dsp_lookup_symbol(chip, "MAGICSNOOPTASK", SYMBOL_CODE);
-	if (magic_snoop_task == NULL) {
+	अगर (magic_snoop_task == शून्य) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol MAGICSNOOPTASK not found\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
   
-	{
+	अणु
 		/* create the null SCB */
-		static struct dsp_generic_scb null_scb = {
-			{ 0, 0, 0, 0 },
-			{ 0, 0, 0, 0, 0 },
-			NULL_SCB_ADDR, NULL_SCB_ADDR,
+		अटल काष्ठा dsp_generic_scb null_scb = अणु
+			अणु 0, 0, 0, 0 पूर्ण,
+			अणु 0, 0, 0, 0, 0 पूर्ण,
+			शून्य_SCB_ADDR, शून्य_SCB_ADDR,
 			0, 0, 0, 0, 0,
-			{
+			अणु
 				0,0,
 				0,0,
-			}
-		};
+			पूर्ण
+		पूर्ण;
 
-		null_scb.entry_point = null_algorithm->address;
-		ins->the_null_scb = cs46xx_dsp_create_scb(chip, "nullSCB", (u32 *)&null_scb, NULL_SCB_ADDR);
+		null_scb.entry_poपूर्णांक = null_algorithm->address;
+		ins->the_null_scb = cs46xx_dsp_create_scb(chip, "nullSCB", (u32 *)&null_scb, शून्य_SCB_ADDR);
 		ins->the_null_scb->task_entry = null_algorithm;
 		ins->the_null_scb->sub_list_ptr = ins->the_null_scb;
 		ins->the_null_scb->next_scb_ptr = ins->the_null_scb;
-		ins->the_null_scb->parent_scb_ptr = NULL;
-		cs46xx_dsp_proc_register_scb_desc (chip,ins->the_null_scb);
-	}
+		ins->the_null_scb->parent_scb_ptr = शून्य;
+		cs46xx_dsp_proc_रेजिस्टर_scb_desc (chip,ins->the_null_scb);
+	पूर्ण
 
-	{
-		/* setup foreground task tree */
-		static struct dsp_task_tree_control_block fg_task_tree_hdr =  {
-			{ FG_TASK_HEADER_ADDR | (DSP_SPOS_DC << 0x10),
+	अणु
+		/* setup क्रमeground task tree */
+		अटल काष्ठा dsp_task_tree_control_block fg_task_tree_hdr =  अणु
+			अणु FG_TASK_HEADER_ADDR | (DSP_SPOS_DC << 0x10),
 			  DSP_SPOS_DC_DC,
 			  DSP_SPOS_DC_DC,
 			  0x0000,DSP_SPOS_DC,
@@ -1127,23 +1128,23 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 			  DSP_SPOS_DC_DC,
 			  DSP_SPOS_DC_DC,
 			  DSP_SPOS_DC_DC,
-			  DSP_SPOS_DC,DSP_SPOS_DC },
+			  DSP_SPOS_DC,DSP_SPOS_DC पूर्ण,
     
-			{
+			अणु
 				BG_TREE_SCB_ADDR,TIMINGMASTER_SCB_ADDR, 
 				0,
 				FG_TASK_HEADER_ADDR + TCBData,                  
-			},
+			पूर्ण,
 
-			{    
+			अणु    
 				4,0,
 				1,0,
 				2,SPOSCB_ADDR + HFGFlags,
 				0,0,
 				FG_TASK_HEADER_ADDR + TCBContextBlk,FG_STACK
-			},
+			पूर्ण,
 
-			{
+			अणु
 				DSP_SPOS_DC,0,
 				DSP_SPOS_DC,DSP_SPOS_DC,
 				DSP_SPOS_DC,DSP_SPOS_DC,
@@ -1179,23 +1180,23 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 				DSP_SPOS_DCDC,
 				DSP_SPOS_DCDC,
 				DSP_SPOS_DCDC 
-			},                                               
-			{ 
+			पूर्ण,                                               
+			अणु 
 				FG_INTERVAL_TIMER_PERIOD,DSP_SPOS_UU,
 				0,0
-			}
-		};
+			पूर्ण
+		पूर्ण;
 
-		fg_task_tree_hdr.links.entry_point = fg_task_tree_header_code->address;
-		fg_task_tree_hdr.context_blk.stack0 = task_tree_thread->address;
+		fg_task_tree_hdr.links.entry_poपूर्णांक = fg_task_tree_header_code->address;
+		fg_task_tree_hdr.context_blk.stack0 = task_tree_thपढ़ो->address;
 		cs46xx_dsp_create_task_tree(chip,"FGtaskTreeHdr",(u32 *)&fg_task_tree_hdr,FG_TASK_HEADER_ADDR,0x35);
-	}
+	पूर्ण
 
 
-	{
-		/* setup foreground task tree */
-		static struct dsp_task_tree_control_block bg_task_tree_hdr =  {
-			{ DSP_SPOS_DC_DC,
+	अणु
+		/* setup क्रमeground task tree */
+		अटल काष्ठा dsp_task_tree_control_block bg_task_tree_hdr =  अणु
+			अणु DSP_SPOS_DC_DC,
 			  DSP_SPOS_DC_DC,
 			  DSP_SPOS_DC_DC,
 			  DSP_SPOS_DC, DSP_SPOS_DC,
@@ -1203,23 +1204,23 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 			  DSP_SPOS_DC_DC,
 			  DSP_SPOS_DC_DC,
 			  DSP_SPOS_DC_DC,
-			  DSP_SPOS_DC,DSP_SPOS_DC },
+			  DSP_SPOS_DC,DSP_SPOS_DC पूर्ण,
     
-			{
-				NULL_SCB_ADDR,NULL_SCB_ADDR,  /* Set up the background to do nothing */
+			अणु
+				शून्य_SCB_ADDR,शून्य_SCB_ADDR,  /* Set up the background to करो nothing */
 				0,
 				BG_TREE_SCB_ADDR + TCBData,
-			},
+			पूर्ण,
 
-			{    
+			अणु    
 				9999,0,
 				0,1,
 				0,SPOSCB_ADDR + HFGFlags,
 				0,0,
 				BG_TREE_SCB_ADDR + TCBContextBlk,BG_STACK
-			},
+			पूर्ण,
 
-			{
+			अणु
 				DSP_SPOS_DC,0,
 				DSP_SPOS_DC,DSP_SPOS_DC,
 				DSP_SPOS_DC,DSP_SPOS_DC,
@@ -1255,17 +1256,17 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 				DSP_SPOS_DCDC,
 				DSP_SPOS_DCDC,
 				DSP_SPOS_DCDC 
-			},                                               
-			{ 
+			पूर्ण,                                               
+			अणु 
 				BG_INTERVAL_TIMER_PERIOD,DSP_SPOS_UU,
 				0,0
-			}
-		};
+			पूर्ण
+		पूर्ण;
 
-		bg_task_tree_hdr.links.entry_point = task_tree_header_code->address;
-		bg_task_tree_hdr.context_blk.stack0 = task_tree_thread->address;
+		bg_task_tree_hdr.links.entry_poपूर्णांक = task_tree_header_code->address;
+		bg_task_tree_hdr.context_blk.stack0 = task_tree_thपढ़ो->address;
 		cs46xx_dsp_create_task_tree(chip,"BGtaskTreeHdr",(u32 *)&bg_task_tree_hdr,BG_TREE_SCB_ADDR,0x35);
-	}
+	पूर्ण
 
 	/* create timing master SCB */
 	timing_master_scb = cs46xx_dsp_create_timing_master_scb(chip);
@@ -1276,7 +1277,7 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 							CODECOUT_SCB_ADDR,timing_master_scb,
 							SCB_ON_PARENT_SUBLIST_SCB);
 
-	if (!codec_out_scb) goto _fail_end;
+	अगर (!codec_out_scb) जाओ _fail_end;
 	/* create the master mix SCB */
 	master_mix_scb = cs46xx_dsp_create_mix_only_scb(chip,"MasterMixSCB",
 							MIX_SAMPLE_BUF1,MASTERMIX_SCB_ADDR,
@@ -1284,44 +1285,44 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 							SCB_ON_PARENT_SUBLIST_SCB);
 	ins->master_mix_scb = master_mix_scb;
 
-	if (!master_mix_scb) goto _fail_end;
+	अगर (!master_mix_scb) जाओ _fail_end;
 
 	/* create codec in */
 	codec_in_scb = cs46xx_dsp_create_codec_in_scb(chip,"CodecInSCB",0x0010,0x00A0,
 						      CODEC_INPUT_BUF1,
 						      CODECIN_SCB_ADDR,codec_out_scb,
 						      SCB_ON_PARENT_NEXT_SCB);
-	if (!codec_in_scb) goto _fail_end;
+	अगर (!codec_in_scb) जाओ _fail_end;
 	ins->codec_in_scb = codec_in_scb;
 
-	/* create write back scb */
-	write_back_scb = cs46xx_dsp_create_mix_to_ostream_scb(chip,"WriteBackSCB",
+	/* create ग_लिखो back scb */
+	ग_लिखो_back_scb = cs46xx_dsp_create_mix_to_ostream_scb(chip,"WriteBackSCB",
 							      WRITE_BACK_BUF1,WRITE_BACK_SPB,
 							      WRITEBACK_SCB_ADDR,
 							      timing_master_scb,
 							      SCB_ON_PARENT_NEXT_SCB);
-	if (!write_back_scb) goto _fail_end;
+	अगर (!ग_लिखो_back_scb) जाओ _fail_end;
 
-	{
-		static struct dsp_mix2_ostream_spb mix2_ostream_spb = {
+	अणु
+		अटल काष्ठा dsp_mix2_ostream_spb mix2_ostream_spb = अणु
 			0x00020000,
 			0x0000ffff
-		};
+		पूर्ण;
     
-		if (!cs46xx_dsp_create_task_tree(chip, NULL,
+		अगर (!cs46xx_dsp_create_task_tree(chip, शून्य,
 						 (u32 *)&mix2_ostream_spb,
 						 WRITE_BACK_SPB, 2))
-			goto _fail_end;
-	}
+			जाओ _fail_end;
+	पूर्ण
 
 	/* input sample converter */
 	vari_decimate_scb = cs46xx_dsp_create_vari_decimate_scb(chip,"VariDecimateSCB",
 								VARI_DECIMATE_BUF0,
 								VARI_DECIMATE_BUF1,
 								VARIDECIMATE_SCB_ADDR,
-								write_back_scb,
+								ग_लिखो_back_scb,
 								SCB_ON_PARENT_SUBLIST_SCB);
-	if (!vari_decimate_scb) goto _fail_end;
+	अगर (!vari_decimate_scb) जाओ _fail_end;
 
 	/* create the record mixer SCB */
 	record_mix_scb = cs46xx_dsp_create_mix_only_scb(chip,"RecordMixerSCB",
@@ -1331,36 +1332,36 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 							SCB_ON_PARENT_SUBLIST_SCB);
 	ins->record_mixer_scb = record_mix_scb;
 
-	if (!record_mix_scb) goto _fail_end;
+	अगर (!record_mix_scb) जाओ _fail_end;
 
 	valid_slots = snd_cs46xx_peekBA0(chip, BA0_ACOSV);
 
-	if (snd_BUG_ON(chip->nr_ac97_codecs != 1 && chip->nr_ac97_codecs != 2))
-		goto _fail_end;
+	अगर (snd_BUG_ON(chip->nr_ac97_codecs != 1 && chip->nr_ac97_codecs != 2))
+		जाओ _fail_end;
 
-	if (chip->nr_ac97_codecs == 1) {
+	अगर (chip->nr_ac97_codecs == 1) अणु
 		/* output on slot 5 and 11 
 		   on primary CODEC */
-		fifo_addr = 0x20;
-		fifo_span = 0x60;
+		fअगरo_addr = 0x20;
+		fअगरo_span = 0x60;
 
 		/* enable slot 5 and 11 */
 		valid_slots |= ACOSV_SLV5 | ACOSV_SLV11;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* output on slot 7 and 8 
 		   on secondary CODEC */
-		fifo_addr = 0x40;
-		fifo_span = 0x10;
+		fअगरo_addr = 0x40;
+		fअगरo_span = 0x10;
 
 		/* enable slot 7 and 8 */
 		valid_slots |= ACOSV_SLV7 | ACOSV_SLV8;
-	}
-	/* create CODEC tasklet for rear speakers output*/
-	rear_codec_out_scb = cs46xx_dsp_create_codec_out_scb(chip,"CodecOutSCB_Rear",fifo_span,fifo_addr,
+	पूर्ण
+	/* create CODEC tasklet क्रम rear speakers output*/
+	rear_codec_out_scb = cs46xx_dsp_create_codec_out_scb(chip,"CodecOutSCB_Rear",fअगरo_span,fअगरo_addr,
 							     REAR_MIXER_SCB_ADDR,
 							     REAR_CODECOUT_SCB_ADDR,codec_in_scb,
 							     SCB_ON_PARENT_NEXT_SCB);
-	if (!rear_codec_out_scb) goto _fail_end;
+	अगर (!rear_codec_out_scb) जाओ _fail_end;
 	
 	
 	/* create the rear PCM channel  mixer SCB */
@@ -1370,17 +1371,17 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 						      rear_codec_out_scb,
 						      SCB_ON_PARENT_SUBLIST_SCB);
 	ins->rear_mix_scb = rear_mix_scb;
-	if (!rear_mix_scb) goto _fail_end;
+	अगर (!rear_mix_scb) जाओ _fail_end;
 	
-	if (chip->nr_ac97_codecs == 2) {
-		/* create CODEC tasklet for rear Center/LFE output 
+	अगर (chip->nr_ac97_codecs == 2) अणु
+		/* create CODEC tasklet क्रम rear Center/LFE output 
 		   slot 6 and 9 on secondary CODEC */
 		clfe_codec_out_scb = cs46xx_dsp_create_codec_out_scb(chip,"CodecOutSCB_CLFE",0x0030,0x0030,
 								     CLFE_MIXER_SCB_ADDR,
 								     CLFE_CODEC_SCB_ADDR,
 								     rear_codec_out_scb,
 								     SCB_ON_PARENT_NEXT_SCB);
-		if (!clfe_codec_out_scb) goto _fail_end;
+		अगर (!clfe_codec_out_scb) जाओ _fail_end;
 		
 		
 		/* create the rear PCM channel  mixer SCB */
@@ -1389,14 +1390,14 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 									 CLFE_MIXER_SCB_ADDR,
 									 clfe_codec_out_scb,
 									 SCB_ON_PARENT_SUBLIST_SCB);
-		if (!ins->center_lfe_mix_scb) goto _fail_end;
+		अगर (!ins->center_lfe_mix_scb) जाओ _fail_end;
 
 		/* enable slot 6 and 9 */
 		valid_slots |= ACOSV_SLV6 | ACOSV_SLV9;
-	} else {
+	पूर्ण अन्यथा अणु
 		clfe_codec_out_scb = rear_codec_out_scb;
 		ins->center_lfe_mix_scb = rear_mix_scb;
-	}
+	पूर्ण
 
 	/* enable slots depending on CODEC configuration */
 	snd_cs46xx_pokeBA0(chip, BA0_ACOSV, valid_slots);
@@ -1409,99 +1410,99 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 							     SCB_ON_PARENT_NEXT_SCB);
 
     
-	if (!magic_snoop_scb) goto _fail_end;
+	अगर (!magic_snoop_scb) जाओ _fail_end;
 	ins->ref_snoop_scb = magic_snoop_scb;
 
 	/* SP IO access */
-	if (!cs46xx_dsp_create_spio_write_scb(chip,"SPIOWriteSCB",SPIOWRITE_SCB_ADDR,
+	अगर (!cs46xx_dsp_create_spio_ग_लिखो_scb(chip,"SPIOWriteSCB",SPIOWRITE_SCB_ADDR,
 					      magic_snoop_scb,
 					      SCB_ON_PARENT_NEXT_SCB))
-		goto _fail_end;
+		जाओ _fail_end;
 
 	/* SPDIF input sampel rate converter */
 	src_task_scb = cs46xx_dsp_create_src_task_scb(chip,"SrcTaskSCB_SPDIFI",
-						      ins->spdif_in_sample_rate,
+						      ins->spdअगर_in_sample_rate,
 						      SRC_OUTPUT_BUF1,
 						      SRC_DELAY_BUF1,SRCTASK_SCB_ADDR,
 						      master_mix_scb,
 						      SCB_ON_PARENT_SUBLIST_SCB,1);
 
-	if (!src_task_scb) goto _fail_end;
+	अगर (!src_task_scb) जाओ _fail_end;
 	cs46xx_src_unlink(chip,src_task_scb);
 
 	/* NOTE: when we now how to detect the SPDIF input
 	   sample rate we will use this SRC to adjust it */
-	ins->spdif_in_src = src_task_scb;
+	ins->spdअगर_in_src = src_task_scb;
 
 	cs46xx_dsp_async_init(chip,timing_master_scb);
-	return 0;
+	वापस 0;
 
  _fail_end:
 	dev_err(chip->card->dev, "dsp_spos: failed to setup SCB's in DSP\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int cs46xx_dsp_async_init (struct snd_cs46xx *chip,
-				  struct dsp_scb_descriptor * fg_entry)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	struct dsp_symbol_entry * s16_async_codec_input_task;
-	struct dsp_symbol_entry * spdifo_task;
-	struct dsp_symbol_entry * spdifi_task;
-	struct dsp_scb_descriptor * spdifi_scb_desc, * spdifo_scb_desc, * async_codec_scb_desc;
+अटल पूर्णांक cs46xx_dsp_async_init (काष्ठा snd_cs46xx *chip,
+				  काष्ठा dsp_scb_descriptor * fg_entry)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	काष्ठा dsp_symbol_entry * s16_async_codec_input_task;
+	काष्ठा dsp_symbol_entry * spdअगरo_task;
+	काष्ठा dsp_symbol_entry * spdअगरi_task;
+	काष्ठा dsp_scb_descriptor * spdअगरi_scb_desc, * spdअगरo_scb_desc, * async_codec_scb_desc;
 
 	s16_async_codec_input_task = cs46xx_dsp_lookup_symbol(chip, "S16_ASYNCCODECINPUTTASK", SYMBOL_CODE);
-	if (s16_async_codec_input_task == NULL) {
+	अगर (s16_async_codec_input_task == शून्य) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol S16_ASYNCCODECINPUTTASK not found\n");
-		return -EIO;
-	}
-	spdifo_task = cs46xx_dsp_lookup_symbol(chip, "SPDIFOTASK", SYMBOL_CODE);
-	if (spdifo_task == NULL) {
+		वापस -EIO;
+	पूर्ण
+	spdअगरo_task = cs46xx_dsp_lookup_symbol(chip, "SPDIFOTASK", SYMBOL_CODE);
+	अगर (spdअगरo_task == शून्य) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol SPDIFOTASK not found\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	spdifi_task = cs46xx_dsp_lookup_symbol(chip, "SPDIFITASK", SYMBOL_CODE);
-	if (spdifi_task == NULL) {
+	spdअगरi_task = cs46xx_dsp_lookup_symbol(chip, "SPDIFITASK", SYMBOL_CODE);
+	अगर (spdअगरi_task == शून्य) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol SPDIFITASK not found\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	{
+	अणु
 		/* 0xBC0 */
-		struct dsp_spdifoscb spdifo_scb = {
+		काष्ठा dsp_spdअगरoscb spdअगरo_scb = अणु
 			/* 0 */ DSP_SPOS_UUUU,
-			{
+			अणु
 				/* 1 */ 0xb0, 
 				/* 2 */ 0, 
 				/* 3 */ 0, 
 				/* 4 */ 0, 
-			},
-			/* NOTE: the SPDIF output task read samples in mono
-			   format, the AsynchFGTxSCB task writes to buffer
-			   in stereo format
+			पूर्ण,
+			/* NOTE: the SPDIF output task पढ़ो samples in mono
+			   क्रमmat, the AsynchFGTxSCB task ग_लिखोs to buffer
+			   in stereo क्रमmat
 			*/
 			/* 5 */ RSCONFIG_SAMPLE_16MONO + RSCONFIG_MODULO_256,
 			/* 6 */ ( SPDIFO_IP_OUTPUT_BUFFER1 << 0x10 )  |  0xFFFC,
 			/* 7 */ 0,0, 
 			/* 8 */ 0, 
-			/* 9 */ FG_TASK_HEADER_ADDR, NULL_SCB_ADDR, 
-			/* A */ spdifo_task->address,
-			SPDIFO_SCB_INST + SPDIFOFIFOPointer,
-			{
+			/* 9 */ FG_TASK_HEADER_ADDR, शून्य_SCB_ADDR, 
+			/* A */ spdअगरo_task->address,
+			SPDIFO_SCB_INST + SPDIFOFIFOPoपूर्णांकer,
+			अणु
 				/* B */ 0x0040, /*DSP_SPOS_UUUU,*/
 				/* C */ 0x20ff, /*DSP_SPOS_UUUU,*/
-			},
-			/* D */ 0x804c,0,							  /* SPDIFOFIFOPointer:SPDIFOStatRegAddr; */
+			पूर्ण,
+			/* D */ 0x804c,0,							  /* SPDIFOFIFOPoपूर्णांकer:SPDIFOStatRegAddr; */
 			/* E */ 0x0108,0x0001,					  /* SPDIFOStMoFormat:SPDIFOFIFOBaseAddr; */
 			/* F */ DSP_SPOS_UUUU	  			          /* SPDIFOFree; */
-		};
+		पूर्ण;
 
 		/* 0xBB0 */
-		struct dsp_spdifiscb spdifi_scb = {
+		काष्ठा dsp_spdअगरiscb spdअगरi_scb = अणु
 			/* 0 */ DSP_SPOS_UULO,DSP_SPOS_UUHI,
 			/* 1 */ 0,
 			/* 2 */ 0,
@@ -1511,11 +1512,11 @@ static int cs46xx_dsp_async_init (struct snd_cs46xx *chip,
 			/* 6 */ DSP_SPOS_UUUU,  /* Free3 */
 			/* 7 */ DSP_SPOS_UU,DSP_SPOS_DC,  /* Free2 BitCount*/
 			/* 8 */ DSP_SPOS_UUUU,	/* TempStatus */
-			/* 9 */ SPDIFO_SCB_INST, NULL_SCB_ADDR,
-			/* A */ spdifi_task->address,
-			SPDIFI_SCB_INST + SPDIFIFIFOPointer,
-			/* NOTE: The SPDIF input task write the sample in mono
-			   format from the HW FIFO, the AsynchFGRxSCB task  reads 
+			/* 9 */ SPDIFO_SCB_INST, शून्य_SCB_ADDR,
+			/* A */ spdअगरi_task->address,
+			SPDIFI_SCB_INST + SPDIFIFIFOPoपूर्णांकer,
+			/* NOTE: The SPDIF input task ग_लिखो the sample in mono
+			   क्रमmat from the HW FIFO, the AsynchFGRxSCB task  पढ़ोs 
 			   them in stereo 
 			*/
 			/* B */ RSCONFIG_SAMPLE_16MONO + RSCONFIG_MODULO_128,
@@ -1523,10 +1524,10 @@ static int cs46xx_dsp_async_init (struct snd_cs46xx *chip,
 			/* D */ 0x8048,0,
 			/* E */ 0x01f0,0x0001,
 			/* F */ DSP_SPOS_UUUU /* SPDIN_STATUS monitor */
-		};
+		पूर्ण;
 
 		/* 0xBA0 */
-		struct dsp_async_codec_input_scb async_codec_input_scb = {
+		काष्ठा dsp_async_codec_input_scb async_codec_input_scb = अणु
 			/* 0 */ DSP_SPOS_UUUU,
 			/* 1 */ 0,
 			/* 2 */ 0,
@@ -1536,92 +1537,92 @@ static int cs46xx_dsp_async_init (struct snd_cs46xx *chip,
 			/* 6 */ (ASYNC_IP_OUTPUT_BUFFER1 << 0x10) | 0xFFFC,
 			/* 7 */ DSP_SPOS_UU,0x3,
 			/* 8 */ DSP_SPOS_UUUU,
-			/* 9 */ SPDIFI_SCB_INST,NULL_SCB_ADDR,
+			/* 9 */ SPDIFI_SCB_INST,शून्य_SCB_ADDR,
 			/* A */ s16_async_codec_input_task->address,
-			HFG_TREE_SCB + AsyncCIOFIFOPointer,
+			HFG_TREE_SCB + AsyncCIOFIFOPoपूर्णांकer,
               
 			/* B */ RSCONFIG_SAMPLE_16STEREO + RSCONFIG_MODULO_64,
 			/* C */ (ASYNC_IP_OUTPUT_BUFFER1 << 0x10),  /*(ASYNC_IP_OUTPUT_BUFFER1 << 0x10) | 0xFFFC,*/
       
-#ifdef UseASER1Input
-			/* short AsyncCIFIFOPointer:AsyncCIStatRegAddr;	       
-			   Init. 0000:8042: for ASER1
-			   0000:8044: for ASER2 */
+#अगर_घोषित UseASER1Input
+			/* लघु AsyncCIFIFOPoपूर्णांकer:AsyncCIStatRegAddr;	       
+			   Init. 0000:8042: क्रम ASER1
+			   0000:8044: क्रम ASER2 */
 			/* D */ 0x8042,0,
       
-			/* short AsyncCIStMoFormat:AsyncCIFIFOBaseAddr;
+			/* लघु AsyncCIStMoFormat:AsyncCIFIFOBaseAddr;
 			   Init 1 stero:8050 ASER1
 			   Init 0  mono:8070 ASER2
 			   Init 1 Stereo : 0100 ASER1 (Set by script) */
 			/* E */ 0x0100,0x0001,
       
-#endif
+#पूर्ण_अगर
       
-#ifdef UseASER2Input
-			/* short AsyncCIFIFOPointer:AsyncCIStatRegAddr;
-			   Init. 0000:8042: for ASER1
-			   0000:8044: for ASER2 */
+#अगर_घोषित UseASER2Input
+			/* लघु AsyncCIFIFOPoपूर्णांकer:AsyncCIStatRegAddr;
+			   Init. 0000:8042: क्रम ASER1
+			   0000:8044: क्रम ASER2 */
 			/* D */ 0x8044,0,
       
-			/* short AsyncCIStMoFormat:AsyncCIFIFOBaseAddr;
+			/* लघु AsyncCIStMoFormat:AsyncCIFIFOBaseAddr;
 			   Init 1 stero:8050 ASER1
 			   Init 0  mono:8070 ASER2
 			   Init 1 Stereo : 0100 ASER1 (Set by script) */
 			/* E */ 0x0110,0x0001,
       
-#endif
+#पूर्ण_अगर
       
-			/* short AsyncCIOutputBufModulo:AsyncCIFree;
-			   AsyncCIOutputBufModulo: The modulo size for   
+			/* लघु AsyncCIOutputBufModulo:AsyncCIFree;
+			   AsyncCIOutputBufModulo: The modulo size क्रम   
 			   the output buffer of this task */
 			/* F */ 0, /* DSP_SPOS_UUUU */
-		};
+		पूर्ण;
 
-		spdifo_scb_desc = cs46xx_dsp_create_scb(chip,"SPDIFOSCB",(u32 *)&spdifo_scb,SPDIFO_SCB_INST);
+		spdअगरo_scb_desc = cs46xx_dsp_create_scb(chip,"SPDIFOSCB",(u32 *)&spdअगरo_scb,SPDIFO_SCB_INST);
 
-		if (snd_BUG_ON(!spdifo_scb_desc))
-			return -EIO;
-		spdifi_scb_desc = cs46xx_dsp_create_scb(chip,"SPDIFISCB",(u32 *)&spdifi_scb,SPDIFI_SCB_INST);
-		if (snd_BUG_ON(!spdifi_scb_desc))
-			return -EIO;
+		अगर (snd_BUG_ON(!spdअगरo_scb_desc))
+			वापस -EIO;
+		spdअगरi_scb_desc = cs46xx_dsp_create_scb(chip,"SPDIFISCB",(u32 *)&spdअगरi_scb,SPDIFI_SCB_INST);
+		अगर (snd_BUG_ON(!spdअगरi_scb_desc))
+			वापस -EIO;
 		async_codec_scb_desc = cs46xx_dsp_create_scb(chip,"AsynCodecInputSCB",(u32 *)&async_codec_input_scb, HFG_TREE_SCB);
-		if (snd_BUG_ON(!async_codec_scb_desc))
-			return -EIO;
+		अगर (snd_BUG_ON(!async_codec_scb_desc))
+			वापस -EIO;
 
-		async_codec_scb_desc->parent_scb_ptr = NULL;
-		async_codec_scb_desc->next_scb_ptr = spdifi_scb_desc;
+		async_codec_scb_desc->parent_scb_ptr = शून्य;
+		async_codec_scb_desc->next_scb_ptr = spdअगरi_scb_desc;
 		async_codec_scb_desc->sub_list_ptr = ins->the_null_scb;
 		async_codec_scb_desc->task_entry = s16_async_codec_input_task;
 
-		spdifi_scb_desc->parent_scb_ptr = async_codec_scb_desc;
-		spdifi_scb_desc->next_scb_ptr = spdifo_scb_desc;
-		spdifi_scb_desc->sub_list_ptr = ins->the_null_scb;
-		spdifi_scb_desc->task_entry = spdifi_task;
+		spdअगरi_scb_desc->parent_scb_ptr = async_codec_scb_desc;
+		spdअगरi_scb_desc->next_scb_ptr = spdअगरo_scb_desc;
+		spdअगरi_scb_desc->sub_list_ptr = ins->the_null_scb;
+		spdअगरi_scb_desc->task_entry = spdअगरi_task;
 
-		spdifo_scb_desc->parent_scb_ptr = spdifi_scb_desc;
-		spdifo_scb_desc->next_scb_ptr = fg_entry;
-		spdifo_scb_desc->sub_list_ptr = ins->the_null_scb;
-		spdifo_scb_desc->task_entry = spdifo_task;
+		spdअगरo_scb_desc->parent_scb_ptr = spdअगरi_scb_desc;
+		spdअगरo_scb_desc->next_scb_ptr = fg_entry;
+		spdअगरo_scb_desc->sub_list_ptr = ins->the_null_scb;
+		spdअगरo_scb_desc->task_entry = spdअगरo_task;
 
 		/* this one is faked, as the parnet of SPDIFO task
 		   is the FG task tree */
-		fg_entry->parent_scb_ptr = spdifo_scb_desc;
+		fg_entry->parent_scb_ptr = spdअगरo_scb_desc;
 
-		/* for proc fs */
-		cs46xx_dsp_proc_register_scb_desc (chip,spdifo_scb_desc);
-		cs46xx_dsp_proc_register_scb_desc (chip,spdifi_scb_desc);
-		cs46xx_dsp_proc_register_scb_desc (chip,async_codec_scb_desc);
+		/* क्रम proc fs */
+		cs46xx_dsp_proc_रेजिस्टर_scb_desc (chip,spdअगरo_scb_desc);
+		cs46xx_dsp_proc_रेजिस्टर_scb_desc (chip,spdअगरi_scb_desc);
+		cs46xx_dsp_proc_रेजिस्टर_scb_desc (chip,async_codec_scb_desc);
 
 		/* Async MASTER ENABLE, affects both SPDIF input and output */
 		snd_cs46xx_pokeBA0(chip, BA0_ASER_MASTER, 0x1 );
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cs46xx_dsp_disable_spdif_hw (struct snd_cs46xx *chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+अटल व्योम cs46xx_dsp_disable_spdअगर_hw (काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
 	/* set SPDIF output FIFO slot */
 	snd_cs46xx_pokeBA0(chip, BA0_ASER_FADDR, 0);
@@ -1630,22 +1631,22 @@ static void cs46xx_dsp_disable_spdif_hw (struct snd_cs46xx *chip)
 	cs46xx_poke_via_dsp (chip,SP_SPDOUT_CONTROL, 0);
 
 	/* right and left validate bit */
-	/*cs46xx_poke_via_dsp (chip,SP_SPDOUT_CSUV, ins->spdif_csuv_default);*/
+	/*cs46xx_poke_via_dsp (chip,SP_SPDOUT_CSUV, ins->spdअगर_csuv_शेष);*/
 	cs46xx_poke_via_dsp (chip,SP_SPDOUT_CSUV, 0x0);
 
-	/* clear fifo pointer */
+	/* clear fअगरo poपूर्णांकer */
 	cs46xx_poke_via_dsp (chip,SP_SPDIN_FIFOPTR, 0x0);
 
 	/* monitor state */
-	ins->spdif_status_out &= ~DSP_SPDIF_STATUS_HW_ENABLED;
-}
+	ins->spdअगर_status_out &= ~DSP_SPDIF_STATUS_HW_ENABLED;
+पूर्ण
 
-int cs46xx_dsp_enable_spdif_hw (struct snd_cs46xx *chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+पूर्णांक cs46xx_dsp_enable_spdअगर_hw (काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	/* if hw-ctrl already enabled, turn off to reset logic ... */
-	cs46xx_dsp_disable_spdif_hw (chip);
+	/* अगर hw-ctrl alपढ़ोy enabled, turn off to reset logic ... */
+	cs46xx_dsp_disable_spdअगर_hw (chip);
 	udelay(50);
 
 	/* set SPDIF output FIFO slot */
@@ -1655,31 +1656,31 @@ int cs46xx_dsp_enable_spdif_hw (struct snd_cs46xx *chip)
 	cs46xx_poke_via_dsp (chip,SP_SPDOUT_CONTROL, 0x80000000);
 
 	/* right and left validate bit */
-	cs46xx_poke_via_dsp (chip,SP_SPDOUT_CSUV, ins->spdif_csuv_default);
+	cs46xx_poke_via_dsp (chip,SP_SPDOUT_CSUV, ins->spdअगर_csuv_शेष);
 
 	/* monitor state */
-	ins->spdif_status_out |= DSP_SPDIF_STATUS_HW_ENABLED;
+	ins->spdअगर_status_out |= DSP_SPDIF_STATUS_HW_ENABLED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cs46xx_dsp_enable_spdif_in (struct snd_cs46xx *chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+पूर्णांक cs46xx_dsp_enable_spdअगर_in (काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	/* turn on amplifier */
+	/* turn on amplअगरier */
 	chip->active_ctrl(chip, 1);
-	chip->amplifier_ctrl(chip, 1);
+	chip->amplअगरier_ctrl(chip, 1);
 
-	if (snd_BUG_ON(ins->asynch_rx_scb))
-		return -EINVAL;
-	if (snd_BUG_ON(!ins->spdif_in_src))
-		return -EINVAL;
+	अगर (snd_BUG_ON(ins->asynch_rx_scb))
+		वापस -EINVAL;
+	अगर (snd_BUG_ON(!ins->spdअगर_in_src))
+		वापस -EINVAL;
 
 	mutex_lock(&chip->spos_mutex);
 
-	if ( ! (ins->spdif_status_out & DSP_SPDIF_STATUS_INPUT_CTRL_ENABLED) ) {
-		/* time countdown enable */
+	अगर ( ! (ins->spdअगर_status_out & DSP_SPDIF_STATUS_INPUT_CTRL_ENABLED) ) अणु
+		/* समय countकरोwn enable */
 		cs46xx_poke_via_dsp (chip,SP_ASER_COUNTDOWN, 0x80000005);
 		/* NOTE: 80000005 value is just magic. With all values
 		   that I've tested this one seem to give the best result.
@@ -1688,144 +1689,144 @@ int cs46xx_dsp_enable_spdif_in (struct snd_cs46xx *chip)
 		/* SPDIF input MASTER ENABLE */
 		cs46xx_poke_via_dsp (chip,SP_SPDIN_CONTROL, 0x800003ff);
 
-		ins->spdif_status_out |= DSP_SPDIF_STATUS_INPUT_CTRL_ENABLED;
-	}
+		ins->spdअगर_status_out |= DSP_SPDIF_STATUS_INPUT_CTRL_ENABLED;
+	पूर्ण
 
 	/* create and start the asynchronous receiver SCB */
 	ins->asynch_rx_scb = cs46xx_dsp_create_asynch_fg_rx_scb(chip,"AsynchFGRxSCB",
 								ASYNCRX_SCB_ADDR,
 								SPDIFI_SCB_INST,
 								SPDIFI_IP_OUTPUT_BUFFER1,
-								ins->spdif_in_src,
+								ins->spdअगर_in_src,
 								SCB_ON_PARENT_SUBLIST_SCB);
 
 	spin_lock_irq(&chip->reg_lock);
 
-	/* reset SPDIF input sample buffer pointer */
+	/* reset SPDIF input sample buffer poपूर्णांकer */
 	/*snd_cs46xx_poke (chip, (SPDIFI_SCB_INST + 0x0c) << 2,
 	  (SPDIFI_IP_OUTPUT_BUFFER1 << 0x10) | 0xFFFC);*/
 
 	/* reset FIFO ptr */
 	/*cs46xx_poke_via_dsp (chip,SP_SPDIN_FIFOPTR, 0x0);*/
-	cs46xx_src_link(chip,ins->spdif_in_src);
+	cs46xx_src_link(chip,ins->spdअगर_in_src);
 
 	/* unmute SRC volume */
-	cs46xx_dsp_scb_set_volume (chip,ins->spdif_in_src,0x7fff,0x7fff);
+	cs46xx_dsp_scb_set_volume (chip,ins->spdअगर_in_src,0x7fff,0x7fff);
 
 	spin_unlock_irq(&chip->reg_lock);
 
 	/* set SPDIF input sample rate and unmute
-	   NOTE: only 48khz support for SPDIF input this time */
-	/* cs46xx_dsp_set_src_sample_rate(chip,ins->spdif_in_src,48000); */
+	   NOTE: only 48khz support क्रम SPDIF input this समय */
+	/* cs46xx_dsp_set_src_sample_rate(chip,ins->spdअगर_in_src,48000); */
 
 	/* monitor state */
-	ins->spdif_status_in = 1;
+	ins->spdअगर_status_in = 1;
 	mutex_unlock(&chip->spos_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cs46xx_dsp_disable_spdif_in (struct snd_cs46xx *chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+पूर्णांक cs46xx_dsp_disable_spdअगर_in (काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	if (snd_BUG_ON(!ins->asynch_rx_scb))
-		return -EINVAL;
-	if (snd_BUG_ON(!ins->spdif_in_src))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!ins->asynch_rx_scb))
+		वापस -EINVAL;
+	अगर (snd_BUG_ON(!ins->spdअगर_in_src))
+		वापस -EINVAL;
 
 	mutex_lock(&chip->spos_mutex);
 
 	/* Remove the asynchronous receiver SCB */
-	cs46xx_dsp_remove_scb (chip,ins->asynch_rx_scb);
-	ins->asynch_rx_scb = NULL;
+	cs46xx_dsp_हटाओ_scb (chip,ins->asynch_rx_scb);
+	ins->asynch_rx_scb = शून्य;
 
-	cs46xx_src_unlink(chip,ins->spdif_in_src);
+	cs46xx_src_unlink(chip,ins->spdअगर_in_src);
 
 	/* monitor state */
-	ins->spdif_status_in = 0;
+	ins->spdअगर_status_in = 0;
 	mutex_unlock(&chip->spos_mutex);
 
-	/* restore amplifier */
+	/* restore amplअगरier */
 	chip->active_ctrl(chip, -1);
-	chip->amplifier_ctrl(chip, -1);
+	chip->amplअगरier_ctrl(chip, -1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cs46xx_dsp_enable_pcm_capture (struct snd_cs46xx *chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+पूर्णांक cs46xx_dsp_enable_pcm_capture (काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	if (snd_BUG_ON(ins->pcm_input))
-		return -EINVAL;
-	if (snd_BUG_ON(!ins->ref_snoop_scb))
-		return -EINVAL;
+	अगर (snd_BUG_ON(ins->pcm_input))
+		वापस -EINVAL;
+	अगर (snd_BUG_ON(!ins->ref_snoop_scb))
+		वापस -EINVAL;
 
 	mutex_lock(&chip->spos_mutex);
 	ins->pcm_input = cs46xx_add_record_source(chip,ins->ref_snoop_scb,PCMSERIALIN_PCM_SCB_ADDR,
                                                   "PCMSerialInput_Wave");
 	mutex_unlock(&chip->spos_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cs46xx_dsp_disable_pcm_capture (struct snd_cs46xx *chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+पूर्णांक cs46xx_dsp_disable_pcm_capture (काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	if (snd_BUG_ON(!ins->pcm_input))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!ins->pcm_input))
+		वापस -EINVAL;
 
 	mutex_lock(&chip->spos_mutex);
-	cs46xx_dsp_remove_scb (chip,ins->pcm_input);
-	ins->pcm_input = NULL;
+	cs46xx_dsp_हटाओ_scb (chip,ins->pcm_input);
+	ins->pcm_input = शून्य;
 	mutex_unlock(&chip->spos_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cs46xx_dsp_enable_adc_capture (struct snd_cs46xx *chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+पूर्णांक cs46xx_dsp_enable_adc_capture (काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	if (snd_BUG_ON(ins->adc_input))
-		return -EINVAL;
-	if (snd_BUG_ON(!ins->codec_in_scb))
-		return -EINVAL;
+	अगर (snd_BUG_ON(ins->adc_input))
+		वापस -EINVAL;
+	अगर (snd_BUG_ON(!ins->codec_in_scb))
+		वापस -EINVAL;
 
 	mutex_lock(&chip->spos_mutex);
 	ins->adc_input = cs46xx_add_record_source(chip,ins->codec_in_scb,PCMSERIALIN_SCB_ADDR,
 						  "PCMSerialInput_ADC");
 	mutex_unlock(&chip->spos_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cs46xx_dsp_disable_adc_capture (struct snd_cs46xx *chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+पूर्णांक cs46xx_dsp_disable_adc_capture (काष्ठा snd_cs46xx *chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
-	if (snd_BUG_ON(!ins->adc_input))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!ins->adc_input))
+		वापस -EINVAL;
 
 	mutex_lock(&chip->spos_mutex);
-	cs46xx_dsp_remove_scb (chip,ins->adc_input);
-	ins->adc_input = NULL;
+	cs46xx_dsp_हटाओ_scb (chip,ins->adc_input);
+	ins->adc_input = शून्य;
 	mutex_unlock(&chip->spos_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cs46xx_poke_via_dsp (struct snd_cs46xx *chip, u32 address, u32 data)
-{
+पूर्णांक cs46xx_poke_via_dsp (काष्ठा snd_cs46xx *chip, u32 address, u32 data)
+अणु
 	u32 temp;
-	int  i;
+	पूर्णांक  i;
 
 	/* santiy check the parameters.  (These numbers are not 100% correct.  They are
 	   a rough guess from looking at the controller spec.) */
-	if (address < 0x8000 || address >= 0x9000)
-		return -EINVAL;
+	अगर (address < 0x8000 || address >= 0x9000)
+		वापस -EINVAL;
         
 	/* initialize the SP_IO_WRITE SCB with the data. */
 	temp = ( address << 16 ) | ( address & 0x0000FFFF);   /* offset 0 <-- address2 : address1 */
@@ -1837,76 +1838,76 @@ int cs46xx_poke_via_dsp (struct snd_cs46xx *chip, u32 address, u32 data)
 	/* Poke this location to tell the task to start */
 	snd_cs46xx_poke(chip,((SPIOWRITE_SCB_ADDR + 6) << 2), SPIOWRITE_SCB_ADDR << 0x10);
 
-	/* Verify that the task ran */
-	for (i=0; i<25; i++) {
+	/* Verअगरy that the task ran */
+	क्रम (i=0; i<25; i++) अणु
 		udelay(125);
 
 		temp =  snd_cs46xx_peek(chip,((SPIOWRITE_SCB_ADDR + 6) << 2));
-		if (temp == 0x00000000)
-			break;
-	}
+		अगर (temp == 0x00000000)
+			अवरोध;
+	पूर्ण
 
-	if (i == 25) {
+	अगर (i == 25) अणु
 		dev_err(chip->card->dev,
 			"dsp_spos: SPIOWriteTask not responding\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cs46xx_dsp_set_dac_volume (struct snd_cs46xx * chip, u16 left, u16 right)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	struct dsp_scb_descriptor * scb; 
+पूर्णांक cs46xx_dsp_set_dac_volume (काष्ठा snd_cs46xx * chip, u16 left, u16 right)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	काष्ठा dsp_scb_descriptor * scb; 
 
 	mutex_lock(&chip->spos_mutex);
 	
-	/* main output */
+	/* मुख्य output */
 	scb = ins->master_mix_scb->sub_list_ptr;
-	while (scb != ins->the_null_scb) {
+	जबतक (scb != ins->the_null_scb) अणु
 		cs46xx_dsp_scb_set_volume (chip,scb,left,right);
 		scb = scb->next_scb_ptr;
-	}
+	पूर्ण
 
 	/* rear output */
 	scb = ins->rear_mix_scb->sub_list_ptr;
-	while (scb != ins->the_null_scb) {
+	जबतक (scb != ins->the_null_scb) अणु
 		cs46xx_dsp_scb_set_volume (chip,scb,left,right);
 		scb = scb->next_scb_ptr;
-	}
+	पूर्ण
 
 	ins->dac_volume_left = left;
 	ins->dac_volume_right = right;
 
 	mutex_unlock(&chip->spos_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cs46xx_dsp_set_iec958_volume (struct snd_cs46xx * chip, u16 left, u16 right)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
+पूर्णांक cs46xx_dsp_set_iec958_volume (काष्ठा snd_cs46xx * chip, u16 left, u16 right)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
 
 	mutex_lock(&chip->spos_mutex);
 
-	if (ins->asynch_rx_scb != NULL)
+	अगर (ins->asynch_rx_scb != शून्य)
 		cs46xx_dsp_scb_set_volume (chip,ins->asynch_rx_scb,
 					   left,right);
 
-	ins->spdif_input_volume_left = left;
-	ins->spdif_input_volume_right = right;
+	ins->spdअगर_input_volume_left = left;
+	ins->spdअगर_input_volume_right = right;
 
 	mutex_unlock(&chip->spos_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-int cs46xx_dsp_resume(struct snd_cs46xx * chip)
-{
-	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
-	int i, err;
+#अगर_घोषित CONFIG_PM_SLEEP
+पूर्णांक cs46xx_dsp_resume(काष्ठा snd_cs46xx * chip)
+अणु
+	काष्ठा dsp_spos_instance * ins = chip->dsp_spos_instance;
+	पूर्णांक i, err;
 
 	/* clear parameter, sample and code areas */
 	snd_cs46xx_clear_BA1(chip, DSP_PARAMETER_BYTE_OFFSET,
@@ -1915,68 +1916,68 @@ int cs46xx_dsp_resume(struct snd_cs46xx * chip)
 			     DSP_SAMPLE_BYTE_SIZE);
 	snd_cs46xx_clear_BA1(chip, DSP_CODE_BYTE_OFFSET, DSP_CODE_BYTE_SIZE);
 
-	for (i = 0; i < ins->nmodules; i++) {
-		struct dsp_module_desc *module = &ins->modules[i];
-		struct dsp_segment_desc *seg;
-		u32 doffset, dsize;
+	क्रम (i = 0; i < ins->nmodules; i++) अणु
+		काष्ठा dsp_module_desc *module = &ins->modules[i];
+		काष्ठा dsp_segment_desc *seg;
+		u32 करोffset, dsize;
 
 		seg = get_segment_desc(module, SEGTYPE_SP_PARAMETER);
 		err = dsp_load_parameter(chip, seg);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		seg = get_segment_desc(module, SEGTYPE_SP_SAMPLE);
 		err = dsp_load_sample(chip, seg);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		seg = get_segment_desc(module, SEGTYPE_SP_PROGRAM);
-		if (!seg)
-			continue;
+		अगर (!seg)
+			जारी;
 
-		doffset = seg->offset * 4 + module->load_address * 4
+		करोffset = seg->offset * 4 + module->load_address * 4
 			+ DSP_CODE_BYTE_OFFSET;
 		dsize   = seg->size * 4;
-		err = snd_cs46xx_download(chip,
+		err = snd_cs46xx_करोwnload(chip,
 					  ins->code.data + module->load_address,
-					  doffset, dsize);
-		if (err < 0)
-			return err;
-	}
+					  करोffset, dsize);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	for (i = 0; i < ins->ntask; i++) {
-		struct dsp_task_descriptor *t = &ins->tasks[i];
+	क्रम (i = 0; i < ins->ntask; i++) अणु
+		काष्ठा dsp_task_descriptor *t = &ins->tasks[i];
 		_dsp_create_task_tree(chip, t->data, t->address, t->size);
-	}
+	पूर्ण
 
-	for (i = 0; i < ins->nscb; i++) {
-		struct dsp_scb_descriptor *s = &ins->scbs[i];
-		if (s->deleted)
-			continue;
+	क्रम (i = 0; i < ins->nscb; i++) अणु
+		काष्ठा dsp_scb_descriptor *s = &ins->scbs[i];
+		अगर (s->deleted)
+			जारी;
 		_dsp_create_scb(chip, s->data, s->address);
-	}
-	for (i = 0; i < ins->nscb; i++) {
-		struct dsp_scb_descriptor *s = &ins->scbs[i];
-		if (s->deleted)
-			continue;
-		if (s->updated)
+	पूर्ण
+	क्रम (i = 0; i < ins->nscb; i++) अणु
+		काष्ठा dsp_scb_descriptor *s = &ins->scbs[i];
+		अगर (s->deleted)
+			जारी;
+		अगर (s->updated)
 			cs46xx_dsp_spos_update_scb(chip, s);
-		if (s->volume_set)
+		अगर (s->volume_set)
 			cs46xx_dsp_scb_set_volume(chip, s,
 						  s->volume[0], s->volume[1]);
-	}
-	if (ins->spdif_status_out & DSP_SPDIF_STATUS_HW_ENABLED) {
-		cs46xx_dsp_enable_spdif_hw(chip);
+	पूर्ण
+	अगर (ins->spdअगर_status_out & DSP_SPDIF_STATUS_HW_ENABLED) अणु
+		cs46xx_dsp_enable_spdअगर_hw(chip);
 		snd_cs46xx_poke(chip, (ins->ref_snoop_scb->address + 2) << 2,
 				(OUTPUT_SNOOP_BUFFER + 0x10) << 0x10);
-		if (ins->spdif_status_out & DSP_SPDIF_STATUS_PLAYBACK_OPEN)
+		अगर (ins->spdअगर_status_out & DSP_SPDIF_STATUS_PLAYBACK_OPEN)
 			cs46xx_poke_via_dsp(chip, SP_SPDOUT_CSUV,
-					    ins->spdif_csuv_stream);
-	}
-	if (chip->dsp_spos_instance->spdif_status_in) {
+					    ins->spdअगर_csuv_stream);
+	पूर्ण
+	अगर (chip->dsp_spos_instance->spdअगर_status_in) अणु
 		cs46xx_poke_via_dsp(chip, SP_ASER_COUNTDOWN, 0x80000005);
 		cs46xx_poke_via_dsp(chip, SP_SPDIN_CONTROL, 0x800003ff);
-	}
-	return 0;
-}
-#endif
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर

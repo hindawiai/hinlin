@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Watchdog driver for DA9063 PMICs.
+ * Watchकरोg driver क्रम DA9063 PMICs.
  *
  * Copyright(c) 2012 Dialog Semiconductor Ltd.
  *
@@ -8,241 +9,241 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/watchdog.h>
-#include <linux/platform_device.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/mfd/da9063/registers.h>
-#include <linux/mfd/da9063/core.h>
-#include <linux/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mfd/da9063/रेजिस्टरs.h>
+#समावेश <linux/mfd/da9063/core.h>
+#समावेश <linux/regmap.h>
 
 /*
- * Watchdog selector to timeout in seconds.
+ * Watchकरोg selector to समयout in seconds.
  *   0: WDT disabled;
- *   others: timeout = 2048 ms * 2^(TWDSCALE-1).
+ *   others: समयout = 2048 ms * 2^(TWDSCALE-1).
  */
-static const unsigned int wdt_timeout[] = { 0, 2, 4, 8, 16, 32, 65, 131 };
-#define DA9063_TWDSCALE_DISABLE		0
-#define DA9063_TWDSCALE_MIN		1
-#define DA9063_TWDSCALE_MAX		(ARRAY_SIZE(wdt_timeout) - 1)
-#define DA9063_WDT_MIN_TIMEOUT		wdt_timeout[DA9063_TWDSCALE_MIN]
-#define DA9063_WDT_MAX_TIMEOUT		wdt_timeout[DA9063_TWDSCALE_MAX]
-#define DA9063_WDG_TIMEOUT		wdt_timeout[3]
-#define DA9063_RESET_PROTECTION_MS	256
+अटल स्थिर अचिन्हित पूर्णांक wdt_समयout[] = अणु 0, 2, 4, 8, 16, 32, 65, 131 पूर्ण;
+#घोषणा DA9063_TWDSCALE_DISABLE		0
+#घोषणा DA9063_TWDSCALE_MIN		1
+#घोषणा DA9063_TWDSCALE_MAX		(ARRAY_SIZE(wdt_समयout) - 1)
+#घोषणा DA9063_WDT_MIN_TIMEOUT		wdt_समयout[DA9063_TWDSCALE_MIN]
+#घोषणा DA9063_WDT_MAX_TIMEOUT		wdt_समयout[DA9063_TWDSCALE_MAX]
+#घोषणा DA9063_WDG_TIMEOUT		wdt_समयout[3]
+#घोषणा DA9063_RESET_PROTECTION_MS	256
 
-static unsigned int da9063_wdt_timeout_to_sel(unsigned int secs)
-{
-	unsigned int i;
+अटल अचिन्हित पूर्णांक da9063_wdt_समयout_to_sel(अचिन्हित पूर्णांक secs)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = DA9063_TWDSCALE_MIN; i <= DA9063_TWDSCALE_MAX; i++) {
-		if (wdt_timeout[i] >= secs)
-			return i;
-	}
+	क्रम (i = DA9063_TWDSCALE_MIN; i <= DA9063_TWDSCALE_MAX; i++) अणु
+		अगर (wdt_समयout[i] >= secs)
+			वापस i;
+	पूर्ण
 
-	return DA9063_TWDSCALE_MAX;
-}
+	वापस DA9063_TWDSCALE_MAX;
+पूर्ण
 
 /*
- * Read the currently active timeout.
- * Zero means the watchdog is disabled.
+ * Read the currently active समयout.
+ * Zero means the watchकरोg is disabled.
  */
-static unsigned int da9063_wdt_read_timeout(struct da9063 *da9063)
-{
-	unsigned int val;
+अटल अचिन्हित पूर्णांक da9063_wdt_पढ़ो_समयout(काष्ठा da9063 *da9063)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	regmap_read(da9063->regmap, DA9063_REG_CONTROL_D, &val);
+	regmap_पढ़ो(da9063->regmap, DA9063_REG_CONTROL_D, &val);
 
-	return wdt_timeout[val & DA9063_TWDSCALE_MASK];
-}
+	वापस wdt_समयout[val & DA9063_TWDSCALE_MASK];
+पूर्ण
 
-static int da9063_wdt_disable_timer(struct da9063 *da9063)
-{
-	return regmap_update_bits(da9063->regmap, DA9063_REG_CONTROL_D,
+अटल पूर्णांक da9063_wdt_disable_समयr(काष्ठा da9063 *da9063)
+अणु
+	वापस regmap_update_bits(da9063->regmap, DA9063_REG_CONTROL_D,
 				  DA9063_TWDSCALE_MASK,
 				  DA9063_TWDSCALE_DISABLE);
-}
+पूर्ण
 
-static int
-da9063_wdt_update_timeout(struct da9063 *da9063, unsigned int timeout)
-{
-	unsigned int regval;
-	int ret;
+अटल पूर्णांक
+da9063_wdt_update_समयout(काष्ठा da9063 *da9063, अचिन्हित पूर्णांक समयout)
+अणु
+	अचिन्हित पूर्णांक regval;
+	पूर्णांक ret;
 
 	/*
-	 * The watchdog triggers a reboot if a timeout value is already
-	 * programmed because the timeout value combines two functions
-	 * in one: indicating the counter limit and starting the watchdog.
-	 * The watchdog must be disabled to be able to change the timeout
-	 * value if the watchdog is already running. Then we can set the
-	 * new timeout value which enables the watchdog again.
+	 * The watchकरोg triggers a reboot अगर a समयout value is alपढ़ोy
+	 * programmed because the समयout value combines two functions
+	 * in one: indicating the counter limit and starting the watchकरोg.
+	 * The watchकरोg must be disabled to be able to change the समयout
+	 * value अगर the watchकरोg is alपढ़ोy running. Then we can set the
+	 * new समयout value which enables the watchकरोg again.
 	 */
-	ret = da9063_wdt_disable_timer(da9063);
-	if (ret)
-		return ret;
+	ret = da9063_wdt_disable_समयr(da9063);
+	अगर (ret)
+		वापस ret;
 
 	usleep_range(150, 300);
-	regval = da9063_wdt_timeout_to_sel(timeout);
+	regval = da9063_wdt_समयout_to_sel(समयout);
 
-	return regmap_update_bits(da9063->regmap, DA9063_REG_CONTROL_D,
+	वापस regmap_update_bits(da9063->regmap, DA9063_REG_CONTROL_D,
 				  DA9063_TWDSCALE_MASK, regval);
-}
+पूर्ण
 
-static int da9063_wdt_start(struct watchdog_device *wdd)
-{
-	struct da9063 *da9063 = watchdog_get_drvdata(wdd);
-	int ret;
+अटल पूर्णांक da9063_wdt_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा da9063 *da9063 = watchकरोg_get_drvdata(wdd);
+	पूर्णांक ret;
 
-	ret = da9063_wdt_update_timeout(da9063, wdd->timeout);
-	if (ret)
+	ret = da9063_wdt_update_समयout(da9063, wdd->समयout);
+	अगर (ret)
 		dev_err(da9063->dev, "Watchdog failed to start (err = %d)\n",
 			ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9063_wdt_stop(struct watchdog_device *wdd)
-{
-	struct da9063 *da9063 = watchdog_get_drvdata(wdd);
-	int ret;
+अटल पूर्णांक da9063_wdt_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा da9063 *da9063 = watchकरोg_get_drvdata(wdd);
+	पूर्णांक ret;
 
-	ret = da9063_wdt_disable_timer(da9063);
-	if (ret)
+	ret = da9063_wdt_disable_समयr(da9063);
+	अगर (ret)
 		dev_alert(da9063->dev, "Watchdog failed to stop (err = %d)\n",
 			  ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9063_wdt_ping(struct watchdog_device *wdd)
-{
-	struct da9063 *da9063 = watchdog_get_drvdata(wdd);
-	int ret;
+अटल पूर्णांक da9063_wdt_ping(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा da9063 *da9063 = watchकरोg_get_drvdata(wdd);
+	पूर्णांक ret;
 
-	ret = regmap_write(da9063->regmap, DA9063_REG_CONTROL_F,
+	ret = regmap_ग_लिखो(da9063->regmap, DA9063_REG_CONTROL_F,
 			   DA9063_WATCHDOG);
-	if (ret)
+	अगर (ret)
 		dev_alert(da9063->dev, "Failed to ping the watchdog (err = %d)\n",
 			  ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9063_wdt_set_timeout(struct watchdog_device *wdd,
-				  unsigned int timeout)
-{
-	struct da9063 *da9063 = watchdog_get_drvdata(wdd);
-	int ret = 0;
+अटल पूर्णांक da9063_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
+				  अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा da9063 *da9063 = watchकरोg_get_drvdata(wdd);
+	पूर्णांक ret = 0;
 
 	/*
-	 * There are two cases when a set_timeout() will be called:
-	 * 1. The watchdog is off and someone wants to set the timeout for the
+	 * There are two हालs when a set_समयout() will be called:
+	 * 1. The watchकरोg is off and someone wants to set the समयout क्रम the
 	 *    further use.
-	 * 2. The watchdog is already running and a new timeout value should be
+	 * 2. The watchकरोg is alपढ़ोy running and a new समयout value should be
 	 *    set.
 	 *
-	 * The watchdog can't store a timeout value not equal zero without
-	 * enabling the watchdog, so the timeout must be buffered by the driver.
+	 * The watchकरोg can't store a समयout value not equal zero without
+	 * enabling the watchकरोg, so the समयout must be buffered by the driver.
 	 */
-	if (watchdog_active(wdd))
-		ret = da9063_wdt_update_timeout(da9063, timeout);
+	अगर (watchकरोg_active(wdd))
+		ret = da9063_wdt_update_समयout(da9063, समयout);
 
-	if (ret)
+	अगर (ret)
 		dev_err(da9063->dev, "Failed to set watchdog timeout (err = %d)\n",
 			ret);
-	else
-		wdd->timeout = wdt_timeout[da9063_wdt_timeout_to_sel(timeout)];
+	अन्यथा
+		wdd->समयout = wdt_समयout[da9063_wdt_समयout_to_sel(समयout)];
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9063_wdt_restart(struct watchdog_device *wdd, unsigned long action,
-			      void *data)
-{
-	struct da9063 *da9063 = watchdog_get_drvdata(wdd);
-	int ret;
+अटल पूर्णांक da9063_wdt_restart(काष्ठा watchकरोg_device *wdd, अचिन्हित दीर्घ action,
+			      व्योम *data)
+अणु
+	काष्ठा da9063 *da9063 = watchकरोg_get_drvdata(wdd);
+	पूर्णांक ret;
 
-	ret = regmap_write(da9063->regmap, DA9063_REG_CONTROL_F,
+	ret = regmap_ग_लिखो(da9063->regmap, DA9063_REG_CONTROL_F,
 			   DA9063_SHUTDOWN);
-	if (ret)
+	अगर (ret)
 		dev_alert(da9063->dev, "Failed to shutdown (err = %d)\n",
 			  ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct watchdog_info da9063_watchdog_info = {
+अटल स्थिर काष्ठा watchकरोg_info da9063_watchकरोg_info = अणु
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING,
 	.identity = "DA9063 Watchdog",
-};
+पूर्ण;
 
-static const struct watchdog_ops da9063_watchdog_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops da9063_watchकरोg_ops = अणु
 	.owner = THIS_MODULE,
 	.start = da9063_wdt_start,
 	.stop = da9063_wdt_stop,
 	.ping = da9063_wdt_ping,
-	.set_timeout = da9063_wdt_set_timeout,
+	.set_समयout = da9063_wdt_set_समयout,
 	.restart = da9063_wdt_restart,
-};
+पूर्ण;
 
-static int da9063_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct da9063 *da9063;
-	struct watchdog_device *wdd;
-	unsigned int timeout;
+अटल पूर्णांक da9063_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा da9063 *da9063;
+	काष्ठा watchकरोg_device *wdd;
+	अचिन्हित पूर्णांक समयout;
 
-	if (!dev->parent)
-		return -EINVAL;
+	अगर (!dev->parent)
+		वापस -EINVAL;
 
 	da9063 = dev_get_drvdata(dev->parent);
-	if (!da9063)
-		return -EINVAL;
+	अगर (!da9063)
+		वापस -EINVAL;
 
-	wdd = devm_kzalloc(dev, sizeof(*wdd), GFP_KERNEL);
-	if (!wdd)
-		return -ENOMEM;
+	wdd = devm_kzalloc(dev, माप(*wdd), GFP_KERNEL);
+	अगर (!wdd)
+		वापस -ENOMEM;
 
-	wdd->info = &da9063_watchdog_info;
-	wdd->ops = &da9063_watchdog_ops;
-	wdd->min_timeout = DA9063_WDT_MIN_TIMEOUT;
-	wdd->max_timeout = DA9063_WDT_MAX_TIMEOUT;
+	wdd->info = &da9063_watchकरोg_info;
+	wdd->ops = &da9063_watchकरोg_ops;
+	wdd->min_समयout = DA9063_WDT_MIN_TIMEOUT;
+	wdd->max_समयout = DA9063_WDT_MAX_TIMEOUT;
 	wdd->min_hw_heartbeat_ms = DA9063_RESET_PROTECTION_MS;
 	wdd->parent = dev;
 	wdd->status = WATCHDOG_NOWAYOUT_INIT_STATUS;
 
-	watchdog_set_restart_priority(wdd, 128);
-	watchdog_set_drvdata(wdd, da9063);
+	watchकरोg_set_restart_priority(wdd, 128);
+	watchकरोg_set_drvdata(wdd, da9063);
 
-	wdd->timeout = DA9063_WDG_TIMEOUT;
+	wdd->समयout = DA9063_WDG_TIMEOUT;
 
-	/* Use pre-configured timeout if watchdog is already running. */
-	timeout = da9063_wdt_read_timeout(da9063);
-	if (timeout)
-		wdd->timeout = timeout;
+	/* Use pre-configured समयout अगर watchकरोg is alपढ़ोy running. */
+	समयout = da9063_wdt_पढ़ो_समयout(da9063);
+	अगर (समयout)
+		wdd->समयout = समयout;
 
-	/* Set timeout, maybe override it with DT value, scale it */
-	watchdog_init_timeout(wdd, 0, dev);
-	da9063_wdt_set_timeout(wdd, wdd->timeout);
+	/* Set समयout, maybe override it with DT value, scale it */
+	watchकरोg_init_समयout(wdd, 0, dev);
+	da9063_wdt_set_समयout(wdd, wdd->समयout);
 
-	/* Update timeout if the watchdog is already running. */
-	if (timeout) {
-		da9063_wdt_update_timeout(da9063, wdd->timeout);
+	/* Update समयout अगर the watchकरोg is alपढ़ोy running. */
+	अगर (समयout) अणु
+		da9063_wdt_update_समयout(da9063, wdd->समयout);
 		set_bit(WDOG_HW_RUNNING, &wdd->status);
-	}
+	पूर्ण
 
-	return devm_watchdog_register_device(dev, wdd);
-}
+	वापस devm_watchकरोg_रेजिस्टर_device(dev, wdd);
+पूर्ण
 
-static struct platform_driver da9063_wdt_driver = {
+अटल काष्ठा platक्रमm_driver da9063_wdt_driver = अणु
 	.probe = da9063_wdt_probe,
-	.driver = {
+	.driver = अणु
 		.name = DA9063_DRVNAME_WATCHDOG,
-	},
-};
-module_platform_driver(da9063_wdt_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(da9063_wdt_driver);
 
 MODULE_AUTHOR("Mariusz Wojtasik <mariusz.wojtasik@diasemi.com>");
 MODULE_DESCRIPTION("Watchdog driver for Dialog DA9063");

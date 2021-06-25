@@ -1,191 +1,192 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Cavium, Inc.
  */
 
-#include "cptvf.h"
+#समावेश "cptvf.h"
 
-static void cptvf_send_msg_to_pf(struct cpt_vf *cptvf, struct cpt_mbox *mbx)
-{
-	/* Writing mbox(1) causes interrupt */
-	cpt_write_csr64(cptvf->reg_base, CPTX_VFX_PF_MBOXX(0, 0, 0),
+अटल व्योम cptvf_send_msg_to_pf(काष्ठा cpt_vf *cptvf, काष्ठा cpt_mbox *mbx)
+अणु
+	/* Writing mbox(1) causes पूर्णांकerrupt */
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VFX_PF_MBOXX(0, 0, 0),
 			mbx->msg);
-	cpt_write_csr64(cptvf->reg_base, CPTX_VFX_PF_MBOXX(0, 0, 1),
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VFX_PF_MBOXX(0, 0, 1),
 			mbx->data);
-}
+पूर्ण
 
 /* Interrupt handler to handle mailbox messages from VFs */
-void cptvf_handle_mbox_intr(struct cpt_vf *cptvf)
-{
-	struct cpt_mbox mbx = {};
+व्योम cptvf_handle_mbox_पूर्णांकr(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा cpt_mbox mbx = अणुपूर्ण;
 
 	/*
 	 * MBOX[0] contains msg
 	 * MBOX[1] contains data
 	 */
-	mbx.msg  = cpt_read_csr64(cptvf->reg_base, CPTX_VFX_PF_MBOXX(0, 0, 0));
-	mbx.data = cpt_read_csr64(cptvf->reg_base, CPTX_VFX_PF_MBOXX(0, 0, 1));
+	mbx.msg  = cpt_पढ़ो_csr64(cptvf->reg_base, CPTX_VFX_PF_MBOXX(0, 0, 0));
+	mbx.data = cpt_पढ़ो_csr64(cptvf->reg_base, CPTX_VFX_PF_MBOXX(0, 0, 1));
 	dev_dbg(&cptvf->pdev->dev, "%s: Mailbox msg 0x%llx from PF\n",
 		__func__, mbx.msg);
-	switch (mbx.msg) {
-	case CPT_MSG_READY:
-	{
+	चयन (mbx.msg) अणु
+	हाल CPT_MSG_READY:
+	अणु
 		cptvf->pf_acked = true;
 		cptvf->vfid = mbx.data;
 		dev_dbg(&cptvf->pdev->dev, "Received VFID %d\n", cptvf->vfid);
-		break;
-	}
-	case CPT_MSG_QBIND_GRP:
+		अवरोध;
+	पूर्ण
+	हाल CPT_MSG_QBIND_GRP:
 		cptvf->pf_acked = true;
 		cptvf->vftype = mbx.data;
 		dev_dbg(&cptvf->pdev->dev, "VF %d type %s group %d\n",
 			cptvf->vfid, ((mbx.data == SE_TYPES) ? "SE" : "AE"),
 			cptvf->vfgrp);
-		break;
-	case CPT_MBOX_MSG_TYPE_ACK:
+		अवरोध;
+	हाल CPT_MBOX_MSG_TYPE_ACK:
 		cptvf->pf_acked = true;
-		break;
-	case CPT_MBOX_MSG_TYPE_NACK:
+		अवरोध;
+	हाल CPT_MBOX_MSG_TYPE_NACK:
 		cptvf->pf_nacked = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&cptvf->pdev->dev, "Invalid msg from PF, msg 0x%llx\n",
 			mbx.msg);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int cptvf_send_msg_to_pf_timeout(struct cpt_vf *cptvf,
-					struct cpt_mbox *mbx)
-{
-	int timeout = CPT_MBOX_MSG_TIMEOUT;
-	int sleep = 10;
+अटल पूर्णांक cptvf_send_msg_to_pf_समयout(काष्ठा cpt_vf *cptvf,
+					काष्ठा cpt_mbox *mbx)
+अणु
+	पूर्णांक समयout = CPT_MBOX_MSG_TIMEOUT;
+	पूर्णांक sleep = 10;
 
 	cptvf->pf_acked = false;
 	cptvf->pf_nacked = false;
 	cptvf_send_msg_to_pf(cptvf, mbx);
-	/* Wait for previous message to be acked, timeout 2sec */
-	while (!cptvf->pf_acked) {
-		if (cptvf->pf_nacked)
-			return -EINVAL;
+	/* Wait क्रम previous message to be acked, समयout 2sec */
+	जबतक (!cptvf->pf_acked) अणु
+		अगर (cptvf->pf_nacked)
+			वापस -EINVAL;
 		msleep(sleep);
-		if (cptvf->pf_acked)
-			break;
-		timeout -= sleep;
-		if (!timeout) {
+		अगर (cptvf->pf_acked)
+			अवरोध;
+		समयout -= sleep;
+		अगर (!समयout) अणु
 			dev_err(&cptvf->pdev->dev, "PF didn't ack to mbox msg %llx from VF%u\n",
 				(mbx->msg & 0xFF), cptvf->vfid);
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Checks if VF is able to comminicate with PF
- * and also gets the CPT number this VF is associated to.
+ * Checks अगर VF is able to comminicate with PF
+ * and also माला_लो the CPT number this VF is associated to.
  */
-int cptvf_check_pf_ready(struct cpt_vf *cptvf)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	struct cpt_mbox mbx = {};
+पूर्णांक cptvf_check_pf_पढ़ोy(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	काष्ठा cpt_mbox mbx = अणुपूर्ण;
 
 	mbx.msg = CPT_MSG_READY;
-	if (cptvf_send_msg_to_pf_timeout(cptvf, &mbx)) {
+	अगर (cptvf_send_msg_to_pf_समयout(cptvf, &mbx)) अणु
 		dev_err(&pdev->dev, "PF didn't respond to READY msg\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Communicate VQs size to PF to program CPT(0)_PF_Q(0-15)_CTL of the VF.
  * Must be ACKed.
  */
-int cptvf_send_vq_size_msg(struct cpt_vf *cptvf)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	struct cpt_mbox mbx = {};
+पूर्णांक cptvf_send_vq_size_msg(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	काष्ठा cpt_mbox mbx = अणुपूर्ण;
 
 	mbx.msg = CPT_MSG_QLEN;
 	mbx.data = cptvf->qsize;
-	if (cptvf_send_msg_to_pf_timeout(cptvf, &mbx)) {
+	अगर (cptvf_send_msg_to_pf_समयout(cptvf, &mbx)) अणु
 		dev_err(&pdev->dev, "PF didn't respond to vq_size msg\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Communicate VF group required to PF and get the VQ binded to that group
  */
-int cptvf_send_vf_to_grp_msg(struct cpt_vf *cptvf)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	struct cpt_mbox mbx = {};
+पूर्णांक cptvf_send_vf_to_grp_msg(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	काष्ठा cpt_mbox mbx = अणुपूर्ण;
 
 	mbx.msg = CPT_MSG_QBIND_GRP;
 	/* Convey group of the VF */
 	mbx.data = cptvf->vfgrp;
-	if (cptvf_send_msg_to_pf_timeout(cptvf, &mbx)) {
+	अगर (cptvf_send_msg_to_pf_समयout(cptvf, &mbx)) अणु
 		dev_err(&pdev->dev, "PF didn't respond to vf_type msg\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Communicate VF group required to PF and get the VQ binded to that group
  */
-int cptvf_send_vf_priority_msg(struct cpt_vf *cptvf)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	struct cpt_mbox mbx = {};
+पूर्णांक cptvf_send_vf_priority_msg(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	काष्ठा cpt_mbox mbx = अणुपूर्ण;
 
 	mbx.msg = CPT_MSG_VQ_PRIORITY;
 	/* Convey group of the VF */
 	mbx.data = cptvf->priority;
-	if (cptvf_send_msg_to_pf_timeout(cptvf, &mbx)) {
+	अगर (cptvf_send_msg_to_pf_समयout(cptvf, &mbx)) अणु
 		dev_err(&pdev->dev, "PF didn't respond to vf_type msg\n");
-		return -EBUSY;
-	}
-	return 0;
-}
+		वापस -EBUSY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Communicate to PF that VF is UP and running
  */
-int cptvf_send_vf_up(struct cpt_vf *cptvf)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	struct cpt_mbox mbx = {};
+पूर्णांक cptvf_send_vf_up(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	काष्ठा cpt_mbox mbx = अणुपूर्ण;
 
 	mbx.msg = CPT_MSG_VF_UP;
-	if (cptvf_send_msg_to_pf_timeout(cptvf, &mbx)) {
+	अगर (cptvf_send_msg_to_pf_समयout(cptvf, &mbx)) अणु
 		dev_err(&pdev->dev, "PF didn't respond to UP msg\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Communicate to PF that VF is DOWN and running
  */
-int cptvf_send_vf_down(struct cpt_vf *cptvf)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	struct cpt_mbox mbx = {};
+पूर्णांक cptvf_send_vf_करोwn(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	काष्ठा cpt_mbox mbx = अणुपूर्ण;
 
 	mbx.msg = CPT_MSG_VF_DOWN;
-	if (cptvf_send_msg_to_pf_timeout(cptvf, &mbx)) {
+	अगर (cptvf_send_msg_to_pf_समयout(cptvf, &mbx)) अणु
 		dev_err(&pdev->dev, "PF didn't respond to DOWN msg\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

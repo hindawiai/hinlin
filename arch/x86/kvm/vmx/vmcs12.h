@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __KVM_X86_VMX_VMCS12_H
-#define __KVM_X86_VMX_VMCS12_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __KVM_X86_VMX_VMCS12_H
+#घोषणा __KVM_X86_VMX_VMCS12_H
 
-#include <linux/build_bug.h>
+#समावेश <linux/build_bug.h>
 
-#include "vmcs.h"
+#समावेश "vmcs.h"
 
 /*
- * struct vmcs12 describes the state that our guest hypervisor (L1) keeps for a
+ * काष्ठा vmcs12 describes the state that our guest hypervisor (L1) keeps क्रम a
  * single nested guest (L2), hence the name vmcs12. Any VMX implementation has
- * a VMCS structure, and vmcs12 is our emulated VMX's VMCS. This structure is
- * stored in guest memory specified by VMPTRLD, but is opaque to the guest,
- * which must access it using VMREAD/VMWRITE/VMCLEAR instructions.
- * More than one of these structures may exist, if L1 runs multiple L2 guests.
- * nested_vmx_run() will use the data here to build the vmcs02: a VMCS for the
+ * a VMCS काष्ठाure, and vmcs12 is our emulated VMX's VMCS. This काष्ठाure is
+ * stored in guest memory specअगरied by VMPTRLD, but is opaque to the guest,
+ * which must access it using VMREAD/VMWRITE/VMCLEAR inकाष्ठाions.
+ * More than one of these काष्ठाures may exist, अगर L1 runs multiple L2 guests.
+ * nested_vmx_run() will use the data here to build the vmcs02: a VMCS क्रम the
  * underlying hardware which will be used to run L2.
- * This structure is packed to ensure that its layout is identical across
- * machines (necessary for live migration).
+ * This काष्ठाure is packed to ensure that its layout is identical across
+ * machines (necessary क्रम live migration).
  *
- * IMPORTANT: Changing the layout of existing fields in this structure
- * will break save/restore compatibility with older kvm releases. When
+ * IMPORTANT: Changing the layout of existing fields in this काष्ठाure
+ * will अवरोध save/restore compatibility with older kvm releases. When
  * adding new fields, either use space in the reserved padding* arrays
- * or add the new fields to the end of the structure.
+ * or add the new fields to the end of the काष्ठाure.
  */
-typedef u64 natural_width;
-struct __packed vmcs12 {
+प्रकार u64 natural_width;
+काष्ठा __packed vmcs12 अणु
 	/* According to the Intel spec, a VMCS region must start with the
-	 * following two fields. Then follow implementation-specific data.
+	 * following two fields. Then follow implementation-specअगरic data.
 	 */
-	struct vmcs_hdr hdr;
-	u32 abort;
+	काष्ठा vmcs_hdr hdr;
+	u32 पात;
 
 	u32 launch_state; /* set to 0 by VMCLEAR, to 1 by VMLAUNCH */
-	u32 padding[7]; /* room for future expansion */
+	u32 padding[7]; /* room क्रम future expansion */
 
-	u64 io_bitmap_a;
-	u64 io_bitmap_b;
-	u64 msr_bitmap;
-	u64 vm_exit_msr_store_addr;
-	u64 vm_exit_msr_load_addr;
+	u64 io_biपंचांगap_a;
+	u64 io_biपंचांगap_b;
+	u64 msr_biपंचांगap;
+	u64 vm_निकास_msr_store_addr;
+	u64 vm_निकास_msr_load_addr;
 	u64 vm_entry_msr_load_addr;
 	u64 tsc_offset;
-	u64 virtual_apic_page_addr;
+	u64 भव_apic_page_addr;
 	u64 apic_access_addr;
-	u64 posted_intr_desc_addr;
-	u64 ept_pointer;
-	u64 eoi_exit_bitmap0;
-	u64 eoi_exit_bitmap1;
-	u64 eoi_exit_bitmap2;
-	u64 eoi_exit_bitmap3;
-	u64 xss_exit_bitmap;
+	u64 posted_पूर्णांकr_desc_addr;
+	u64 ept_poपूर्णांकer;
+	u64 eoi_निकास_biपंचांगap0;
+	u64 eoi_निकास_biपंचांगap1;
+	u64 eoi_निकास_biपंचांगap2;
+	u64 eoi_निकास_biपंचांगap3;
+	u64 xss_निकास_biपंचांगap;
 	u64 guest_physical_address;
-	u64 vmcs_link_pointer;
+	u64 vmcs_link_poपूर्णांकer;
 	u64 guest_ia32_debugctl;
 	u64 guest_ia32_pat;
 	u64 guest_ia32_efer;
@@ -64,25 +65,25 @@ struct __packed vmcs12 {
 	u64 host_ia32_pat;
 	u64 host_ia32_efer;
 	u64 host_ia32_perf_global_ctrl;
-	u64 vmread_bitmap;
-	u64 vmwrite_bitmap;
+	u64 vmपढ़ो_biपंचांगap;
+	u64 vmग_लिखो_biपंचांगap;
 	u64 vm_function_control;
 	u64 eptp_list_address;
 	u64 pml_address;
-	u64 encls_exiting_bitmap;
-	u64 padding64[2]; /* room for future expansion */
+	u64 encls_निकासing_biपंचांगap;
+	u64 padding64[2]; /* room क्रम future expansion */
 	/*
 	 * To allow migration of L1 (complete with its L2 guests) between
-	 * machines of different natural widths (32 or 64 bit), we cannot have
-	 * unsigned long fields with no explicit size. We use u64 (aliased
+	 * machines of dअगरferent natural widths (32 or 64 bit), we cannot have
+	 * अचिन्हित दीर्घ fields with no explicit size. We use u64 (aliased
 	 * natural_width) instead. Luckily, x86 is little-endian.
 	 */
 	natural_width cr0_guest_host_mask;
 	natural_width cr4_guest_host_mask;
-	natural_width cr0_read_shadow;
-	natural_width cr4_read_shadow;
+	natural_width cr0_पढ़ो_shaकरोw;
+	natural_width cr4_पढ़ो_shaकरोw;
 	natural_width dead_space[4]; /* Last remnants of cr3_target_value[0-3]. */
-	natural_width exit_qualification;
+	natural_width निकास_qualअगरication;
 	natural_width guest_linear_address;
 	natural_width guest_cr0;
 	natural_width guest_cr3;
@@ -116,31 +117,31 @@ struct __packed vmcs12 {
 	natural_width host_ia32_sysenter_eip;
 	natural_width host_rsp;
 	natural_width host_rip;
-	natural_width paddingl[8]; /* room for future expansion */
+	natural_width paddingl[8]; /* room क्रम future expansion */
 	u32 pin_based_vm_exec_control;
 	u32 cpu_based_vm_exec_control;
-	u32 exception_bitmap;
+	u32 exception_biपंचांगap;
 	u32 page_fault_error_code_mask;
 	u32 page_fault_error_code_match;
 	u32 cr3_target_count;
-	u32 vm_exit_controls;
-	u32 vm_exit_msr_store_count;
-	u32 vm_exit_msr_load_count;
+	u32 vm_निकास_controls;
+	u32 vm_निकास_msr_store_count;
+	u32 vm_निकास_msr_load_count;
 	u32 vm_entry_controls;
 	u32 vm_entry_msr_load_count;
-	u32 vm_entry_intr_info_field;
+	u32 vm_entry_पूर्णांकr_info_field;
 	u32 vm_entry_exception_error_code;
-	u32 vm_entry_instruction_len;
+	u32 vm_entry_inकाष्ठाion_len;
 	u32 tpr_threshold;
 	u32 secondary_vm_exec_control;
-	u32 vm_instruction_error;
-	u32 vm_exit_reason;
-	u32 vm_exit_intr_info;
-	u32 vm_exit_intr_error_code;
+	u32 vm_inकाष्ठाion_error;
+	u32 vm_निकास_reason;
+	u32 vm_निकास_पूर्णांकr_info;
+	u32 vm_निकास_पूर्णांकr_error_code;
 	u32 idt_vectoring_info_field;
 	u32 idt_vectoring_error_code;
-	u32 vm_exit_instruction_len;
-	u32 vmx_instruction_info;
+	u32 vm_निकास_inकाष्ठाion_len;
+	u32 vmx_inकाष्ठाion_info;
 	u32 guest_es_limit;
 	u32 guest_cs_limit;
 	u32 guest_ss_limit;
@@ -159,14 +160,14 @@ struct __packed vmcs12 {
 	u32 guest_gs_ar_bytes;
 	u32 guest_ldtr_ar_bytes;
 	u32 guest_tr_ar_bytes;
-	u32 guest_interruptibility_info;
+	u32 guest_पूर्णांकerruptibility_info;
 	u32 guest_activity_state;
 	u32 guest_sysenter_cs;
 	u32 host_ia32_sysenter_cs;
-	u32 vmx_preemption_timer_value;
-	u32 padding32[7]; /* room for future expansion */
-	u16 virtual_processor_id;
-	u16 posted_intr_nv;
+	u32 vmx_preemption_समयr_value;
+	u32 padding32[7]; /* room क्रम future expansion */
+	u16 भव_processor_id;
+	u16 posted_पूर्णांकr_nv;
 	u16 guest_es_selector;
 	u16 guest_cs_selector;
 	u16 guest_ss_selector;
@@ -175,7 +176,7 @@ struct __packed vmcs12 {
 	u16 guest_gs_selector;
 	u16 guest_ldtr_selector;
 	u16 guest_tr_selector;
-	u16 guest_intr_status;
+	u16 guest_पूर्णांकr_status;
 	u16 host_es_selector;
 	u16 host_cs_selector;
 	u16 host_ss_selector;
@@ -184,62 +185,62 @@ struct __packed vmcs12 {
 	u16 host_gs_selector;
 	u16 host_tr_selector;
 	u16 guest_pml_index;
-};
+पूर्ण;
 
 /*
- * VMCS12_REVISION is an arbitrary id that should be changed if the content or
- * layout of struct vmcs12 is changed. MSR_IA32_VMX_BASIC returns this id, and
- * VMPTRLD verifies that the VMCS region that L1 is loading contains this id.
+ * VMCS12_REVISION is an arbitrary id that should be changed अगर the content or
+ * layout of काष्ठा vmcs12 is changed. MSR_IA32_VMX_BASIC वापसs this id, and
+ * VMPTRLD verअगरies that the VMCS region that L1 is loading contains this id.
  *
- * IMPORTANT: Changing this value will break save/restore compatibility with
+ * IMPORTANT: Changing this value will अवरोध save/restore compatibility with
  * older kvm releases.
  */
-#define VMCS12_REVISION 0x11e57ed0
+#घोषणा VMCS12_REVISION 0x11e57ed0
 
 /*
- * VMCS12_SIZE is the number of bytes L1 should allocate for the VMXON region
- * and any VMCS region. Although only sizeof(struct vmcs12) are used by the
- * current implementation, 4K are reserved to avoid future complications and
+ * VMCS12_SIZE is the number of bytes L1 should allocate क्रम the VMXON region
+ * and any VMCS region. Although only माप(काष्ठा vmcs12) are used by the
+ * current implementation, 4K are reserved to aव्योम future complications and
  * to preserve userspace ABI.
  */
-#define VMCS12_SIZE		KVM_STATE_NESTED_VMX_VMCS_SIZE
+#घोषणा VMCS12_SIZE		KVM_STATE_NESTED_VMX_VMCS_SIZE
 
 /*
  * VMCS12_MAX_FIELD_INDEX is the highest index value used in any
  * supported VMCS12 field encoding.
  */
-#define VMCS12_MAX_FIELD_INDEX 0x17
+#घोषणा VMCS12_MAX_FIELD_INDEX 0x17
 
 /*
  * For save/restore compatibility, the vmcs12 field offsets must not change.
  */
-#define CHECK_OFFSET(field, loc)				\
-	BUILD_BUG_ON_MSG(offsetof(struct vmcs12, field) != (loc),	\
+#घोषणा CHECK_OFFSET(field, loc)				\
+	BUILD_BUG_ON_MSG(दुरत्व(काष्ठा vmcs12, field) != (loc),	\
 		"Offset of " #field " in struct vmcs12 has changed.")
 
-static inline void vmx_check_vmcs12_offsets(void)
-{
+अटल अंतरभूत व्योम vmx_check_vmcs12_offsets(व्योम)
+अणु
 	CHECK_OFFSET(hdr, 0);
-	CHECK_OFFSET(abort, 4);
+	CHECK_OFFSET(पात, 4);
 	CHECK_OFFSET(launch_state, 8);
-	CHECK_OFFSET(io_bitmap_a, 40);
-	CHECK_OFFSET(io_bitmap_b, 48);
-	CHECK_OFFSET(msr_bitmap, 56);
-	CHECK_OFFSET(vm_exit_msr_store_addr, 64);
-	CHECK_OFFSET(vm_exit_msr_load_addr, 72);
+	CHECK_OFFSET(io_biपंचांगap_a, 40);
+	CHECK_OFFSET(io_biपंचांगap_b, 48);
+	CHECK_OFFSET(msr_biपंचांगap, 56);
+	CHECK_OFFSET(vm_निकास_msr_store_addr, 64);
+	CHECK_OFFSET(vm_निकास_msr_load_addr, 72);
 	CHECK_OFFSET(vm_entry_msr_load_addr, 80);
 	CHECK_OFFSET(tsc_offset, 88);
-	CHECK_OFFSET(virtual_apic_page_addr, 96);
+	CHECK_OFFSET(भव_apic_page_addr, 96);
 	CHECK_OFFSET(apic_access_addr, 104);
-	CHECK_OFFSET(posted_intr_desc_addr, 112);
-	CHECK_OFFSET(ept_pointer, 120);
-	CHECK_OFFSET(eoi_exit_bitmap0, 128);
-	CHECK_OFFSET(eoi_exit_bitmap1, 136);
-	CHECK_OFFSET(eoi_exit_bitmap2, 144);
-	CHECK_OFFSET(eoi_exit_bitmap3, 152);
-	CHECK_OFFSET(xss_exit_bitmap, 160);
+	CHECK_OFFSET(posted_पूर्णांकr_desc_addr, 112);
+	CHECK_OFFSET(ept_poपूर्णांकer, 120);
+	CHECK_OFFSET(eoi_निकास_biपंचांगap0, 128);
+	CHECK_OFFSET(eoi_निकास_biपंचांगap1, 136);
+	CHECK_OFFSET(eoi_निकास_biपंचांगap2, 144);
+	CHECK_OFFSET(eoi_निकास_biपंचांगap3, 152);
+	CHECK_OFFSET(xss_निकास_biपंचांगap, 160);
 	CHECK_OFFSET(guest_physical_address, 168);
-	CHECK_OFFSET(vmcs_link_pointer, 176);
+	CHECK_OFFSET(vmcs_link_poपूर्णांकer, 176);
 	CHECK_OFFSET(guest_ia32_debugctl, 184);
 	CHECK_OFFSET(guest_ia32_pat, 192);
 	CHECK_OFFSET(guest_ia32_efer, 200);
@@ -252,18 +253,18 @@ static inline void vmx_check_vmcs12_offsets(void)
 	CHECK_OFFSET(host_ia32_pat, 256);
 	CHECK_OFFSET(host_ia32_efer, 264);
 	CHECK_OFFSET(host_ia32_perf_global_ctrl, 272);
-	CHECK_OFFSET(vmread_bitmap, 280);
-	CHECK_OFFSET(vmwrite_bitmap, 288);
+	CHECK_OFFSET(vmपढ़ो_biपंचांगap, 280);
+	CHECK_OFFSET(vmग_लिखो_biपंचांगap, 288);
 	CHECK_OFFSET(vm_function_control, 296);
 	CHECK_OFFSET(eptp_list_address, 304);
 	CHECK_OFFSET(pml_address, 312);
-	CHECK_OFFSET(encls_exiting_bitmap, 320);
+	CHECK_OFFSET(encls_निकासing_biपंचांगap, 320);
 	CHECK_OFFSET(cr0_guest_host_mask, 344);
 	CHECK_OFFSET(cr4_guest_host_mask, 352);
-	CHECK_OFFSET(cr0_read_shadow, 360);
-	CHECK_OFFSET(cr4_read_shadow, 368);
+	CHECK_OFFSET(cr0_पढ़ो_shaकरोw, 360);
+	CHECK_OFFSET(cr4_पढ़ो_shaकरोw, 368);
 	CHECK_OFFSET(dead_space, 376);
-	CHECK_OFFSET(exit_qualification, 408);
+	CHECK_OFFSET(निकास_qualअगरication, 408);
 	CHECK_OFFSET(guest_linear_address, 416);
 	CHECK_OFFSET(guest_cr0, 424);
 	CHECK_OFFSET(guest_cr3, 432);
@@ -299,28 +300,28 @@ static inline void vmx_check_vmcs12_offsets(void)
 	CHECK_OFFSET(host_rip, 672);
 	CHECK_OFFSET(pin_based_vm_exec_control, 744);
 	CHECK_OFFSET(cpu_based_vm_exec_control, 748);
-	CHECK_OFFSET(exception_bitmap, 752);
+	CHECK_OFFSET(exception_biपंचांगap, 752);
 	CHECK_OFFSET(page_fault_error_code_mask, 756);
 	CHECK_OFFSET(page_fault_error_code_match, 760);
 	CHECK_OFFSET(cr3_target_count, 764);
-	CHECK_OFFSET(vm_exit_controls, 768);
-	CHECK_OFFSET(vm_exit_msr_store_count, 772);
-	CHECK_OFFSET(vm_exit_msr_load_count, 776);
+	CHECK_OFFSET(vm_निकास_controls, 768);
+	CHECK_OFFSET(vm_निकास_msr_store_count, 772);
+	CHECK_OFFSET(vm_निकास_msr_load_count, 776);
 	CHECK_OFFSET(vm_entry_controls, 780);
 	CHECK_OFFSET(vm_entry_msr_load_count, 784);
-	CHECK_OFFSET(vm_entry_intr_info_field, 788);
+	CHECK_OFFSET(vm_entry_पूर्णांकr_info_field, 788);
 	CHECK_OFFSET(vm_entry_exception_error_code, 792);
-	CHECK_OFFSET(vm_entry_instruction_len, 796);
+	CHECK_OFFSET(vm_entry_inकाष्ठाion_len, 796);
 	CHECK_OFFSET(tpr_threshold, 800);
 	CHECK_OFFSET(secondary_vm_exec_control, 804);
-	CHECK_OFFSET(vm_instruction_error, 808);
-	CHECK_OFFSET(vm_exit_reason, 812);
-	CHECK_OFFSET(vm_exit_intr_info, 816);
-	CHECK_OFFSET(vm_exit_intr_error_code, 820);
+	CHECK_OFFSET(vm_inकाष्ठाion_error, 808);
+	CHECK_OFFSET(vm_निकास_reason, 812);
+	CHECK_OFFSET(vm_निकास_पूर्णांकr_info, 816);
+	CHECK_OFFSET(vm_निकास_पूर्णांकr_error_code, 820);
 	CHECK_OFFSET(idt_vectoring_info_field, 824);
 	CHECK_OFFSET(idt_vectoring_error_code, 828);
-	CHECK_OFFSET(vm_exit_instruction_len, 832);
-	CHECK_OFFSET(vmx_instruction_info, 836);
+	CHECK_OFFSET(vm_निकास_inकाष्ठाion_len, 832);
+	CHECK_OFFSET(vmx_inकाष्ठाion_info, 836);
 	CHECK_OFFSET(guest_es_limit, 840);
 	CHECK_OFFSET(guest_cs_limit, 844);
 	CHECK_OFFSET(guest_ss_limit, 848);
@@ -339,13 +340,13 @@ static inline void vmx_check_vmcs12_offsets(void)
 	CHECK_OFFSET(guest_gs_ar_bytes, 900);
 	CHECK_OFFSET(guest_ldtr_ar_bytes, 904);
 	CHECK_OFFSET(guest_tr_ar_bytes, 908);
-	CHECK_OFFSET(guest_interruptibility_info, 912);
+	CHECK_OFFSET(guest_पूर्णांकerruptibility_info, 912);
 	CHECK_OFFSET(guest_activity_state, 916);
 	CHECK_OFFSET(guest_sysenter_cs, 920);
 	CHECK_OFFSET(host_ia32_sysenter_cs, 924);
-	CHECK_OFFSET(vmx_preemption_timer_value, 928);
-	CHECK_OFFSET(virtual_processor_id, 960);
-	CHECK_OFFSET(posted_intr_nv, 962);
+	CHECK_OFFSET(vmx_preemption_समयr_value, 928);
+	CHECK_OFFSET(भव_processor_id, 960);
+	CHECK_OFFSET(posted_पूर्णांकr_nv, 962);
 	CHECK_OFFSET(guest_es_selector, 964);
 	CHECK_OFFSET(guest_cs_selector, 966);
 	CHECK_OFFSET(guest_ss_selector, 968);
@@ -354,7 +355,7 @@ static inline void vmx_check_vmcs12_offsets(void)
 	CHECK_OFFSET(guest_gs_selector, 974);
 	CHECK_OFFSET(guest_ldtr_selector, 976);
 	CHECK_OFFSET(guest_tr_selector, 978);
-	CHECK_OFFSET(guest_intr_status, 980);
+	CHECK_OFFSET(guest_पूर्णांकr_status, 980);
 	CHECK_OFFSET(host_es_selector, 982);
 	CHECK_OFFSET(host_cs_selector, 984);
 	CHECK_OFFSET(host_ss_selector, 986);
@@ -363,76 +364,76 @@ static inline void vmx_check_vmcs12_offsets(void)
 	CHECK_OFFSET(host_gs_selector, 992);
 	CHECK_OFFSET(host_tr_selector, 994);
 	CHECK_OFFSET(guest_pml_index, 996);
-}
+पूर्ण
 
-extern const unsigned short vmcs_field_to_offset_table[];
-extern const unsigned int nr_vmcs12_fields;
+बाह्य स्थिर अचिन्हित लघु vmcs_field_to_offset_table[];
+बाह्य स्थिर अचिन्हित पूर्णांक nr_vmcs12_fields;
 
-#define ROL16(val, n) ((u16)(((u16)(val) << (n)) | ((u16)(val) >> (16 - (n)))))
+#घोषणा ROL16(val, n) ((u16)(((u16)(val) << (n)) | ((u16)(val) >> (16 - (n)))))
 
-static inline short vmcs_field_to_offset(unsigned long field)
-{
-	unsigned short offset;
-	unsigned int index;
+अटल अंतरभूत लघु vmcs_field_to_offset(अचिन्हित दीर्घ field)
+अणु
+	अचिन्हित लघु offset;
+	अचिन्हित पूर्णांक index;
 
-	if (field >> 15)
-		return -ENOENT;
+	अगर (field >> 15)
+		वापस -ENOENT;
 
 	index = ROL16(field, 6);
-	if (index >= nr_vmcs12_fields)
-		return -ENOENT;
+	अगर (index >= nr_vmcs12_fields)
+		वापस -ENOENT;
 
 	index = array_index_nospec(index, nr_vmcs12_fields);
 	offset = vmcs_field_to_offset_table[index];
-	if (offset == 0)
-		return -ENOENT;
-	return offset;
-}
+	अगर (offset == 0)
+		वापस -ENOENT;
+	वापस offset;
+पूर्ण
 
-#undef ROL16
+#अघोषित ROL16
 
-static inline u64 vmcs12_read_any(struct vmcs12 *vmcs12, unsigned long field,
+अटल अंतरभूत u64 vmcs12_पढ़ो_any(काष्ठा vmcs12 *vmcs12, अचिन्हित दीर्घ field,
 				  u16 offset)
-{
-	char *p = (char *)vmcs12 + offset;
+अणु
+	अक्षर *p = (अक्षर *)vmcs12 + offset;
 
-	switch (vmcs_field_width(field)) {
-	case VMCS_FIELD_WIDTH_NATURAL_WIDTH:
-		return *((natural_width *)p);
-	case VMCS_FIELD_WIDTH_U16:
-		return *((u16 *)p);
-	case VMCS_FIELD_WIDTH_U32:
-		return *((u32 *)p);
-	case VMCS_FIELD_WIDTH_U64:
-		return *((u64 *)p);
-	default:
+	चयन (vmcs_field_width(field)) अणु
+	हाल VMCS_FIELD_WIDTH_NATURAL_WIDTH:
+		वापस *((natural_width *)p);
+	हाल VMCS_FIELD_WIDTH_U16:
+		वापस *((u16 *)p);
+	हाल VMCS_FIELD_WIDTH_U32:
+		वापस *((u32 *)p);
+	हाल VMCS_FIELD_WIDTH_U64:
+		वापस *((u64 *)p);
+	शेष:
 		WARN_ON_ONCE(1);
-		return -1;
-	}
-}
+		वापस -1;
+	पूर्ण
+पूर्ण
 
-static inline void vmcs12_write_any(struct vmcs12 *vmcs12, unsigned long field,
+अटल अंतरभूत व्योम vmcs12_ग_लिखो_any(काष्ठा vmcs12 *vmcs12, अचिन्हित दीर्घ field,
 				    u16 offset, u64 field_value)
-{
-	char *p = (char *)vmcs12 + offset;
+अणु
+	अक्षर *p = (अक्षर *)vmcs12 + offset;
 
-	switch (vmcs_field_width(field)) {
-	case VMCS_FIELD_WIDTH_U16:
+	चयन (vmcs_field_width(field)) अणु
+	हाल VMCS_FIELD_WIDTH_U16:
 		*(u16 *)p = field_value;
-		break;
-	case VMCS_FIELD_WIDTH_U32:
+		अवरोध;
+	हाल VMCS_FIELD_WIDTH_U32:
 		*(u32 *)p = field_value;
-		break;
-	case VMCS_FIELD_WIDTH_U64:
+		अवरोध;
+	हाल VMCS_FIELD_WIDTH_U64:
 		*(u64 *)p = field_value;
-		break;
-	case VMCS_FIELD_WIDTH_NATURAL_WIDTH:
+		अवरोध;
+	हाल VMCS_FIELD_WIDTH_NATURAL_WIDTH:
 		*(natural_width *)p = field_value;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#endif /* __KVM_X86_VMX_VMCS12_H */
+#पूर्ण_अगर /* __KVM_X86_VMX_VMCS12_H */

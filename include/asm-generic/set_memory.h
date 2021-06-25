@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SET_MEMORY_H
-#define __ASM_SET_MEMORY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SET_MEMORY_H
+#घोषणा __ASM_SET_MEMORY_H
 
 /*
  * Functions to change memory attributes.
  */
-int set_memory_ro(unsigned long addr, int numpages);
-int set_memory_rw(unsigned long addr, int numpages);
-int set_memory_x(unsigned long addr, int numpages);
-int set_memory_nx(unsigned long addr, int numpages);
+पूर्णांक set_memory_ro(अचिन्हित दीर्घ addr, पूर्णांक numpages);
+पूर्णांक set_memory_rw(अचिन्हित दीर्घ addr, पूर्णांक numpages);
+पूर्णांक set_memory_x(अचिन्हित दीर्घ addr, पूर्णांक numpages);
+पूर्णांक set_memory_nx(अचिन्हित दीर्घ addr, पूर्णांक numpages);
 
-#endif
+#पूर्ण_अगर

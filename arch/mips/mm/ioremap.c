@@ -1,76 +1,77 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * (C) Copyright 1995 1996 Linus Torvalds
  * (C) Copyright 2001, 2002 Ralf Baechle
  */
-#include <linux/export.h>
-#include <asm/addrspace.h>
-#include <asm/byteorder.h>
-#include <linux/ioport.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/mm_types.h>
-#include <linux/io.h>
-#include <asm/cacheflush.h>
-#include <asm/tlbflush.h>
-#include <ioremap.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <ioremap.h>
 
-#define IS_LOW512(addr) (!((phys_addr_t)(addr) & (phys_addr_t) ~0x1fffffffULL))
-#define IS_KSEG1(addr) (((unsigned long)(addr) & ~0x1fffffffUL) == CKSEG1)
+#घोषणा IS_LOW512(addr) (!((phys_addr_t)(addr) & (phys_addr_t) ~0x1fffffffULL))
+#घोषणा IS_KSEG1(addr) (((अचिन्हित दीर्घ)(addr) & ~0x1fffffffUL) == CKSEG1)
 
-static int __ioremap_check_ram(unsigned long start_pfn, unsigned long nr_pages,
-			       void *arg)
-{
-	unsigned long i;
+अटल पूर्णांक __ioremap_check_ram(अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ nr_pages,
+			       व्योम *arg)
+अणु
+	अचिन्हित दीर्घ i;
 
-	for (i = 0; i < nr_pages; i++) {
-		if (pfn_valid(start_pfn + i) &&
+	क्रम (i = 0; i < nr_pages; i++) अणु
+		अगर (pfn_valid(start_pfn + i) &&
 		    !PageReserved(pfn_to_page(start_pfn + i)))
-			return 1;
-	}
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * ioremap_prot     -   map bus memory into CPU space
+ * ioremap_prot     -   map bus memory पूर्णांकo CPU space
  * @phys_addr:    bus address of the memory
  * @size:      size of the resource to map
  *
  * ioremap_prot gives the caller control over cache coherency attributes (CCA)
  */
-void __iomem *ioremap_prot(phys_addr_t phys_addr, unsigned long size,
-		unsigned long prot_val)
-{
-	unsigned long flags = prot_val & _CACHE_MASK;
-	unsigned long offset, pfn, last_pfn;
-	struct vm_struct *area;
+व्योम __iomem *ioremap_prot(phys_addr_t phys_addr, अचिन्हित दीर्घ size,
+		अचिन्हित दीर्घ prot_val)
+अणु
+	अचिन्हित दीर्घ flags = prot_val & _CACHE_MASK;
+	अचिन्हित दीर्घ offset, pfn, last_pfn;
+	काष्ठा vm_काष्ठा *area;
 	phys_addr_t last_addr;
-	unsigned long vaddr;
-	void __iomem *cpu_addr;
+	अचिन्हित दीर्घ vaddr;
+	व्योम __iomem *cpu_addr;
 
 	cpu_addr = plat_ioremap(phys_addr, size, flags);
-	if (cpu_addr)
-		return cpu_addr;
+	अगर (cpu_addr)
+		वापस cpu_addr;
 
 	phys_addr = fixup_bigphys_addr(phys_addr, size);
 
 	/* Don't allow wraparound or zero size */
 	last_addr = phys_addr + size - 1;
-	if (!size || last_addr < phys_addr)
-		return NULL;
+	अगर (!size || last_addr < phys_addr)
+		वापस शून्य;
 
 	/*
 	 * Map uncached objects in the low 512mb of address space using KSEG1,
 	 * otherwise map using page tables.
 	 */
-	if (IS_LOW512(phys_addr) && IS_LOW512(last_addr) &&
+	अगर (IS_LOW512(phys_addr) && IS_LOW512(last_addr) &&
 	    flags == _CACHE_UNCACHED)
-		return (void __iomem *) CKSEG1ADDR(phys_addr);
+		वापस (व्योम __iomem *) CKSEG1ADDR(phys_addr);
 
 	/*
 	 * Don't allow anybody to remap RAM that may be allocated by the page
@@ -78,12 +79,12 @@ void __iomem *ioremap_prot(phys_addr_t phys_addr, unsigned long size,
 	 */
 	pfn = PFN_DOWN(phys_addr);
 	last_pfn = PFN_DOWN(last_addr);
-	if (walk_system_ram_range(pfn, last_pfn - pfn + 1, NULL,
-				  __ioremap_check_ram) == 1) {
+	अगर (walk_प्रणाली_ram_range(pfn, last_pfn - pfn + 1, शून्य,
+				  __ioremap_check_ram) == 1) अणु
 		WARN_ONCE(1, "ioremap on RAM at %pa - %pa\n",
 			  &phys_addr, &last_addr);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
 	 * Mappings have to be page-aligned
@@ -93,27 +94,27 @@ void __iomem *ioremap_prot(phys_addr_t phys_addr, unsigned long size,
 	size = PAGE_ALIGN(last_addr + 1) - phys_addr;
 
 	/*
-	 * Ok, go for it..
+	 * Ok, go क्रम it..
 	 */
 	area = get_vm_area(size, VM_IOREMAP);
-	if (!area)
-		return NULL;
-	vaddr = (unsigned long)area->addr;
+	अगर (!area)
+		वापस शून्य;
+	vaddr = (अचिन्हित दीर्घ)area->addr;
 
 	flags |= _PAGE_GLOBAL | _PAGE_PRESENT | __READABLE | __WRITEABLE;
-	if (ioremap_page_range(vaddr, vaddr + size, phys_addr,
-			__pgprot(flags))) {
-		free_vm_area(area);
-		return NULL;
-	}
+	अगर (ioremap_page_range(vaddr, vaddr + size, phys_addr,
+			__pgprot(flags))) अणु
+		मुक्त_vm_area(area);
+		वापस शून्य;
+	पूर्ण
 
-	return (void __iomem *)(vaddr + offset);
-}
+	वापस (व्योम __iomem *)(vaddr + offset);
+पूर्ण
 EXPORT_SYMBOL(ioremap_prot);
 
-void iounmap(const volatile void __iomem *addr)
-{
-	if (!plat_iounmap(addr) && !IS_KSEG1(addr))
-		vunmap((void *)((unsigned long)addr & PAGE_MASK));
-}
+व्योम iounmap(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	अगर (!plat_iounmap(addr) && !IS_KSEG1(addr))
+		vunmap((व्योम *)((अचिन्हित दीर्घ)addr & PAGE_MASK));
+पूर्ण
 EXPORT_SYMBOL(iounmap);

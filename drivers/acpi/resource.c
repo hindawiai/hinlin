@@ -1,222 +1,223 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * drivers/acpi/resource.c - ACPI device resources interpretation.
+ * drivers/acpi/resource.c - ACPI device resources पूर्णांकerpretation.
  *
  * Copyright (C) 2012, Intel Corp.
- * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+ * Author: Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include <linux/acpi.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/irq.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/irq.h>
 
-#ifdef CONFIG_X86
-#define valid_IRQ(i) (((i) != 0) && ((i) != 2))
-static inline bool acpi_iospace_resource_valid(struct resource *res)
-{
+#अगर_घोषित CONFIG_X86
+#घोषणा valid_IRQ(i) (((i) != 0) && ((i) != 2))
+अटल अंतरभूत bool acpi_iospace_resource_valid(काष्ठा resource *res)
+अणु
 	/* On X86 IO space is limited to the [0 - 64K] IO port range */
-	return res->end < 0x10003;
-}
-#else
-#define valid_IRQ(i) (true)
+	वापस res->end < 0x10003;
+पूर्ण
+#अन्यथा
+#घोषणा valid_IRQ(i) (true)
 /*
  * ACPI IO descriptors on arches other than X86 contain MMIO CPU physical
  * addresses mapping IO space in CPU physical address space, IO space
  * resources can be placed anywhere in the 64-bit physical address space.
  */
-static inline bool
-acpi_iospace_resource_valid(struct resource *res) { return true; }
-#endif
+अटल अंतरभूत bool
+acpi_iospace_resource_valid(काष्ठा resource *res) अणु वापस true; पूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_ACPI_GENERIC_GSI)
-static inline bool is_gsi(struct acpi_resource_extended_irq *ext_irq)
-{
-	return ext_irq->resource_source.string_length == 0 &&
+#अगर IS_ENABLED(CONFIG_ACPI_GENERIC_GSI)
+अटल अंतरभूत bool is_gsi(काष्ठा acpi_resource_extended_irq *ext_irq)
+अणु
+	वापस ext_irq->resource_source.string_length == 0 &&
 	       ext_irq->producer_consumer == ACPI_CONSUMER;
-}
-#else
-static inline bool is_gsi(struct acpi_resource_extended_irq *ext_irq)
-{
-	return true;
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool is_gsi(काष्ठा acpi_resource_extended_irq *ext_irq)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-static bool acpi_dev_resource_len_valid(u64 start, u64 end, u64 len, bool io)
-{
+अटल bool acpi_dev_resource_len_valid(u64 start, u64 end, u64 len, bool io)
+अणु
 	u64 reslen = end - start + 1;
 
 	/*
 	 * CHECKME: len might be required to check versus a minimum
-	 * length as well. 1 for io is fine, but for memory it does
+	 * length as well. 1 क्रम io is fine, but क्रम memory it करोes
 	 * not make any sense at all.
-	 * Note: some BIOSes report incorrect length for ACPI address space
-	 * descriptor, so remove check of 'reslen == len' to avoid regression.
+	 * Note: some BIOSes report incorrect length क्रम ACPI address space
+	 * descriptor, so हटाओ check of 'reslen == len' to aव्योम regression.
 	 */
-	if (len && reslen && start <= end)
-		return true;
+	अगर (len && reslen && start <= end)
+		वापस true;
 
 	pr_debug("ACPI: invalid or unassigned resource %s [%016llx - %016llx] length [%016llx]\n",
 		io ? "io" : "mem", start, end, len);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void acpi_dev_memresource_flags(struct resource *res, u64 len,
-				       u8 write_protect)
-{
+अटल व्योम acpi_dev_memresource_flags(काष्ठा resource *res, u64 len,
+				       u8 ग_लिखो_protect)
+अणु
 	res->flags = IORESOURCE_MEM;
 
-	if (!acpi_dev_resource_len_valid(res->start, res->end, len, false))
+	अगर (!acpi_dev_resource_len_valid(res->start, res->end, len, false))
 		res->flags |= IORESOURCE_DISABLED | IORESOURCE_UNSET;
 
-	if (write_protect == ACPI_READ_WRITE_MEMORY)
+	अगर (ग_लिखो_protect == ACPI_READ_WRITE_MEMORY)
 		res->flags |= IORESOURCE_MEM_WRITEABLE;
-}
+पूर्ण
 
-static void acpi_dev_get_memresource(struct resource *res, u64 start, u64 len,
-				     u8 write_protect)
-{
+अटल व्योम acpi_dev_get_memresource(काष्ठा resource *res, u64 start, u64 len,
+				     u8 ग_लिखो_protect)
+अणु
 	res->start = start;
 	res->end = start + len - 1;
-	acpi_dev_memresource_flags(res, len, write_protect);
-}
+	acpi_dev_memresource_flags(res, len, ग_लिखो_protect);
+पूर्ण
 
 /**
- * acpi_dev_resource_memory - Extract ACPI memory resource information.
+ * acpi_dev_resource_memory - Extract ACPI memory resource inक्रमmation.
  * @ares: Input ACPI resource object.
  * @res: Output generic resource object.
  *
- * Check if the given ACPI resource object represents a memory resource and
- * if that's the case, use the information in it to populate the generic
- * resource object pointed to by @res.
+ * Check अगर the given ACPI resource object represents a memory resource and
+ * अगर that's the हाल, use the inक्रमmation in it to populate the generic
+ * resource object poपूर्णांकed to by @res.
  *
  * Return:
  * 1) false with res->flags setting to zero: not the expected resource type
- * 2) false with IORESOURCE_DISABLED in res->flags: valid unassigned resource
- * 3) true: valid assigned resource
+ * 2) false with IORESOURCE_DISABLED in res->flags: valid unasचिन्हित resource
+ * 3) true: valid asचिन्हित resource
  */
-bool acpi_dev_resource_memory(struct acpi_resource *ares, struct resource *res)
-{
-	struct acpi_resource_memory24 *memory24;
-	struct acpi_resource_memory32 *memory32;
-	struct acpi_resource_fixed_memory32 *fixed_memory32;
+bool acpi_dev_resource_memory(काष्ठा acpi_resource *ares, काष्ठा resource *res)
+अणु
+	काष्ठा acpi_resource_memory24 *memory24;
+	काष्ठा acpi_resource_memory32 *memory32;
+	काष्ठा acpi_resource_fixed_memory32 *fixed_memory32;
 
-	switch (ares->type) {
-	case ACPI_RESOURCE_TYPE_MEMORY24:
+	चयन (ares->type) अणु
+	हाल ACPI_RESOURCE_TYPE_MEMORY24:
 		memory24 = &ares->data.memory24;
 		acpi_dev_get_memresource(res, memory24->minimum << 8,
 					 memory24->address_length << 8,
-					 memory24->write_protect);
-		break;
-	case ACPI_RESOURCE_TYPE_MEMORY32:
+					 memory24->ग_लिखो_protect);
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_MEMORY32:
 		memory32 = &ares->data.memory32;
 		acpi_dev_get_memresource(res, memory32->minimum,
 					 memory32->address_length,
-					 memory32->write_protect);
-		break;
-	case ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
+					 memory32->ग_लिखो_protect);
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
 		fixed_memory32 = &ares->data.fixed_memory32;
 		acpi_dev_get_memresource(res, fixed_memory32->address,
 					 fixed_memory32->address_length,
-					 fixed_memory32->write_protect);
-		break;
-	default:
+					 fixed_memory32->ग_लिखो_protect);
+		अवरोध;
+	शेष:
 		res->flags = 0;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return !(res->flags & IORESOURCE_DISABLED);
-}
+	वापस !(res->flags & IORESOURCE_DISABLED);
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_dev_resource_memory);
 
-static void acpi_dev_ioresource_flags(struct resource *res, u64 len,
+अटल व्योम acpi_dev_ioresource_flags(काष्ठा resource *res, u64 len,
 				      u8 io_decode, u8 translation_type)
-{
+अणु
 	res->flags = IORESOURCE_IO;
 
-	if (!acpi_dev_resource_len_valid(res->start, res->end, len, true))
+	अगर (!acpi_dev_resource_len_valid(res->start, res->end, len, true))
 		res->flags |= IORESOURCE_DISABLED | IORESOURCE_UNSET;
 
-	if (!acpi_iospace_resource_valid(res))
+	अगर (!acpi_iospace_resource_valid(res))
 		res->flags |= IORESOURCE_DISABLED | IORESOURCE_UNSET;
 
-	if (io_decode == ACPI_DECODE_16)
+	अगर (io_decode == ACPI_DECODE_16)
 		res->flags |= IORESOURCE_IO_16BIT_ADDR;
-	if (translation_type == ACPI_SPARSE_TRANSLATION)
+	अगर (translation_type == ACPI_SPARSE_TRANSLATION)
 		res->flags |= IORESOURCE_IO_SPARSE;
-}
+पूर्ण
 
-static void acpi_dev_get_ioresource(struct resource *res, u64 start, u64 len,
+अटल व्योम acpi_dev_get_ioresource(काष्ठा resource *res, u64 start, u64 len,
 				    u8 io_decode)
-{
+अणु
 	res->start = start;
 	res->end = start + len - 1;
 	acpi_dev_ioresource_flags(res, len, io_decode, 0);
-}
+पूर्ण
 
 /**
- * acpi_dev_resource_io - Extract ACPI I/O resource information.
+ * acpi_dev_resource_io - Extract ACPI I/O resource inक्रमmation.
  * @ares: Input ACPI resource object.
  * @res: Output generic resource object.
  *
- * Check if the given ACPI resource object represents an I/O resource and
- * if that's the case, use the information in it to populate the generic
- * resource object pointed to by @res.
+ * Check अगर the given ACPI resource object represents an I/O resource and
+ * अगर that's the हाल, use the inक्रमmation in it to populate the generic
+ * resource object poपूर्णांकed to by @res.
  *
  * Return:
  * 1) false with res->flags setting to zero: not the expected resource type
- * 2) false with IORESOURCE_DISABLED in res->flags: valid unassigned resource
- * 3) true: valid assigned resource
+ * 2) false with IORESOURCE_DISABLED in res->flags: valid unasचिन्हित resource
+ * 3) true: valid asचिन्हित resource
  */
-bool acpi_dev_resource_io(struct acpi_resource *ares, struct resource *res)
-{
-	struct acpi_resource_io *io;
-	struct acpi_resource_fixed_io *fixed_io;
+bool acpi_dev_resource_io(काष्ठा acpi_resource *ares, काष्ठा resource *res)
+अणु
+	काष्ठा acpi_resource_io *io;
+	काष्ठा acpi_resource_fixed_io *fixed_io;
 
-	switch (ares->type) {
-	case ACPI_RESOURCE_TYPE_IO:
+	चयन (ares->type) अणु
+	हाल ACPI_RESOURCE_TYPE_IO:
 		io = &ares->data.io;
 		acpi_dev_get_ioresource(res, io->minimum,
 					io->address_length,
 					io->io_decode);
-		break;
-	case ACPI_RESOURCE_TYPE_FIXED_IO:
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_FIXED_IO:
 		fixed_io = &ares->data.fixed_io;
 		acpi_dev_get_ioresource(res, fixed_io->address,
 					fixed_io->address_length,
 					ACPI_DECODE_10);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		res->flags = 0;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return !(res->flags & IORESOURCE_DISABLED);
-}
+	वापस !(res->flags & IORESOURCE_DISABLED);
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_dev_resource_io);
 
-static bool acpi_decode_space(struct resource_win *win,
-			      struct acpi_resource_address *addr,
-			      struct acpi_address64_attribute *attr)
-{
+अटल bool acpi_decode_space(काष्ठा resource_win *win,
+			      काष्ठा acpi_resource_address *addr,
+			      काष्ठा acpi_address64_attribute *attr)
+अणु
 	u8 iodec = attr->granularity == 0xfff ? ACPI_DECODE_10 : ACPI_DECODE_16;
-	bool wp = addr->info.mem.write_protect;
+	bool wp = addr->info.mem.ग_लिखो_protect;
 	u64 len = attr->address_length;
 	u64 start, end, offset = 0;
-	struct resource *res = &win->res;
+	काष्ठा resource *res = &win->res;
 
 	/*
 	 * Filter out invalid descriptor according to ACPI Spec 5.0, section
 	 * 6.4.3.5 Address Space Resource Descriptors.
 	 */
-	if ((addr->min_address_fixed != addr->max_address_fixed && len) ||
+	अगर ((addr->min_address_fixed != addr->max_address_fixed && len) ||
 	    (addr->min_address_fixed && addr->max_address_fixed && !len))
 		pr_debug("ACPI: Invalid address space min_addr_fix %d, max_addr_fix %d, len %llx\n",
 			 addr->min_address_fixed, addr->max_address_fixed, len);
@@ -225,12 +226,12 @@ static bool acpi_decode_space(struct resource_win *win,
 	 * For bridges that translate addresses across the bridge,
 	 * translation_offset is the offset that must be added to the
 	 * address on the secondary side to obtain the address on the
-	 * primary side. Non-bridge devices must list 0 for all Address
+	 * primary side. Non-bridge devices must list 0 क्रम all Address
 	 * Translation offset bits.
 	 */
-	if (addr->producer_consumer == ACPI_PRODUCER)
+	अगर (addr->producer_consumer == ACPI_PRODUCER)
 		offset = attr->translation_offset;
-	else if (attr->translation_offset)
+	अन्यथा अगर (attr->translation_offset)
 		pr_debug("ACPI: translation_offset(%lld) is invalid for non-bridge device.\n",
 			 attr->translation_offset);
 	start = attr->minimum + offset;
@@ -239,119 +240,119 @@ static bool acpi_decode_space(struct resource_win *win,
 	win->offset = offset;
 	res->start = start;
 	res->end = end;
-	if (sizeof(resource_size_t) < sizeof(u64) &&
-	    (offset != win->offset || start != res->start || end != res->end)) {
+	अगर (माप(resource_माप_प्रकार) < माप(u64) &&
+	    (offset != win->offset || start != res->start || end != res->end)) अणु
 		pr_warn("acpi resource window ([%#llx-%#llx] ignored, not CPU addressable)\n",
 			attr->minimum, attr->maximum);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	switch (addr->resource_type) {
-	case ACPI_MEMORY_RANGE:
+	चयन (addr->resource_type) अणु
+	हाल ACPI_MEMORY_RANGE:
 		acpi_dev_memresource_flags(res, len, wp);
-		break;
-	case ACPI_IO_RANGE:
+		अवरोध;
+	हाल ACPI_IO_RANGE:
 		acpi_dev_ioresource_flags(res, len, iodec,
 					  addr->info.io.translation_type);
-		break;
-	case ACPI_BUS_NUMBER_RANGE:
+		अवरोध;
+	हाल ACPI_BUS_NUMBER_RANGE:
 		res->flags = IORESOURCE_BUS;
-		break;
-	default:
-		return false;
-	}
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	if (addr->producer_consumer == ACPI_PRODUCER)
+	अगर (addr->producer_consumer == ACPI_PRODUCER)
 		res->flags |= IORESOURCE_WINDOW;
 
-	if (addr->info.mem.caching == ACPI_PREFETCHABLE_MEMORY)
+	अगर (addr->info.mem.caching == ACPI_PREFETCHABLE_MEMORY)
 		res->flags |= IORESOURCE_PREFETCH;
 
-	return !(res->flags & IORESOURCE_DISABLED);
-}
+	वापस !(res->flags & IORESOURCE_DISABLED);
+पूर्ण
 
 /**
- * acpi_dev_resource_address_space - Extract ACPI address space information.
+ * acpi_dev_resource_address_space - Extract ACPI address space inक्रमmation.
  * @ares: Input ACPI resource object.
  * @win: Output generic resource object.
  *
- * Check if the given ACPI resource object represents an address space resource
- * and if that's the case, use the information in it to populate the generic
- * resource object pointed to by @win.
+ * Check अगर the given ACPI resource object represents an address space resource
+ * and अगर that's the हाल, use the inक्रमmation in it to populate the generic
+ * resource object poपूर्णांकed to by @win.
  *
  * Return:
  * 1) false with win->res.flags setting to zero: not the expected resource type
- * 2) false with IORESOURCE_DISABLED in win->res.flags: valid unassigned
+ * 2) false with IORESOURCE_DISABLED in win->res.flags: valid unasचिन्हित
  *    resource
- * 3) true: valid assigned resource
+ * 3) true: valid asचिन्हित resource
  */
-bool acpi_dev_resource_address_space(struct acpi_resource *ares,
-				     struct resource_win *win)
-{
-	struct acpi_resource_address64 addr;
+bool acpi_dev_resource_address_space(काष्ठा acpi_resource *ares,
+				     काष्ठा resource_win *win)
+अणु
+	काष्ठा acpi_resource_address64 addr;
 
 	win->res.flags = 0;
-	if (ACPI_FAILURE(acpi_resource_to_address64(ares, &addr)))
-		return false;
+	अगर (ACPI_FAILURE(acpi_resource_to_address64(ares, &addr)))
+		वापस false;
 
-	return acpi_decode_space(win, (struct acpi_resource_address *)&addr,
+	वापस acpi_decode_space(win, (काष्ठा acpi_resource_address *)&addr,
 				 &addr.address);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_dev_resource_address_space);
 
 /**
- * acpi_dev_resource_ext_address_space - Extract ACPI address space information.
+ * acpi_dev_resource_ext_address_space - Extract ACPI address space inक्रमmation.
  * @ares: Input ACPI resource object.
  * @win: Output generic resource object.
  *
- * Check if the given ACPI resource object represents an extended address space
- * resource and if that's the case, use the information in it to populate the
- * generic resource object pointed to by @win.
+ * Check अगर the given ACPI resource object represents an extended address space
+ * resource and अगर that's the हाल, use the inक्रमmation in it to populate the
+ * generic resource object poपूर्णांकed to by @win.
  *
  * Return:
  * 1) false with win->res.flags setting to zero: not the expected resource type
- * 2) false with IORESOURCE_DISABLED in win->res.flags: valid unassigned
+ * 2) false with IORESOURCE_DISABLED in win->res.flags: valid unasचिन्हित
  *    resource
- * 3) true: valid assigned resource
+ * 3) true: valid asचिन्हित resource
  */
-bool acpi_dev_resource_ext_address_space(struct acpi_resource *ares,
-					 struct resource_win *win)
-{
-	struct acpi_resource_extended_address64 *ext_addr;
+bool acpi_dev_resource_ext_address_space(काष्ठा acpi_resource *ares,
+					 काष्ठा resource_win *win)
+अणु
+	काष्ठा acpi_resource_extended_address64 *ext_addr;
 
 	win->res.flags = 0;
-	if (ares->type != ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64)
-		return false;
+	अगर (ares->type != ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64)
+		वापस false;
 
 	ext_addr = &ares->data.ext_address64;
 
-	return acpi_decode_space(win, (struct acpi_resource_address *)ext_addr,
+	वापस acpi_decode_space(win, (काष्ठा acpi_resource_address *)ext_addr,
 				 &ext_addr->address);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_dev_resource_ext_address_space);
 
 /**
  * acpi_dev_irq_flags - Determine IRQ resource flags.
  * @triggering: Triggering type as provided by ACPI.
  * @polarity: Interrupt polarity as provided by ACPI.
- * @shareable: Whether or not the interrupt is shareable.
+ * @shareable: Whether or not the पूर्णांकerrupt is shareable.
  */
-unsigned long acpi_dev_irq_flags(u8 triggering, u8 polarity, u8 shareable)
-{
-	unsigned long flags;
+अचिन्हित दीर्घ acpi_dev_irq_flags(u8 triggering, u8 polarity, u8 shareable)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (triggering == ACPI_LEVEL_SENSITIVE)
+	अगर (triggering == ACPI_LEVEL_SENSITIVE)
 		flags = polarity == ACPI_ACTIVE_LOW ?
 			IORESOURCE_IRQ_LOWLEVEL : IORESOURCE_IRQ_HIGHLEVEL;
-	else
+	अन्यथा
 		flags = polarity == ACPI_ACTIVE_LOW ?
 			IORESOURCE_IRQ_LOWEDGE : IORESOURCE_IRQ_HIGHEDGE;
 
-	if (shareable == ACPI_SHARED)
+	अगर (shareable == ACPI_SHARED)
 		flags |= IORESOURCE_IRQ_SHAREABLE;
 
-	return flags | IORESOURCE_IRQ;
-}
+	वापस flags | IORESOURCE_IRQ;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_dev_irq_flags);
 
 /**
@@ -359,219 +360,219 @@ EXPORT_SYMBOL_GPL(acpi_dev_irq_flags);
  * @triggering: Triggering type as provided by ACPI.
  * @polarity: Interrupt polarity as provided by ACPI.
  */
-unsigned int acpi_dev_get_irq_type(int triggering, int polarity)
-{
-	switch (polarity) {
-	case ACPI_ACTIVE_LOW:
-		return triggering == ACPI_EDGE_SENSITIVE ?
+अचिन्हित पूर्णांक acpi_dev_get_irq_type(पूर्णांक triggering, पूर्णांक polarity)
+अणु
+	चयन (polarity) अणु
+	हाल ACPI_ACTIVE_LOW:
+		वापस triggering == ACPI_EDGE_SENSITIVE ?
 		       IRQ_TYPE_EDGE_FALLING :
 		       IRQ_TYPE_LEVEL_LOW;
-	case ACPI_ACTIVE_HIGH:
-		return triggering == ACPI_EDGE_SENSITIVE ?
+	हाल ACPI_ACTIVE_HIGH:
+		वापस triggering == ACPI_EDGE_SENSITIVE ?
 		       IRQ_TYPE_EDGE_RISING :
 		       IRQ_TYPE_LEVEL_HIGH;
-	case ACPI_ACTIVE_BOTH:
-		if (triggering == ACPI_EDGE_SENSITIVE)
-			return IRQ_TYPE_EDGE_BOTH;
+	हाल ACPI_ACTIVE_BOTH:
+		अगर (triggering == ACPI_EDGE_SENSITIVE)
+			वापस IRQ_TYPE_EDGE_BOTH;
 		fallthrough;
-	default:
-		return IRQ_TYPE_NONE;
-	}
-}
+	शेष:
+		वापस IRQ_TYPE_NONE;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_dev_get_irq_type);
 
-static void acpi_dev_get_irqresource(struct resource *res, u32 gsi,
+अटल व्योम acpi_dev_get_irqresource(काष्ठा resource *res, u32 gsi,
 				     u8 triggering, u8 polarity, u8 shareable,
 				     bool legacy)
-{
-	int irq, p, t;
+अणु
+	पूर्णांक irq, p, t;
 
-	if (!valid_IRQ(gsi)) {
+	अगर (!valid_IRQ(gsi)) अणु
 		irqresource_disabled(res, gsi);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * In IO-APIC mode, use overridden attribute. Two reasons:
 	 * 1. BIOS bug in DSDT
 	 * 2. BIOS uses IO-APIC mode Interrupt Source Override
 	 *
-	 * We do this only if we are dealing with IRQ() or IRQNoFlags()
+	 * We करो this only अगर we are dealing with IRQ() or IRQNoFlags()
 	 * resource (the legacy ISA resources). With modern ACPI 5 devices
 	 * using extended IRQ descriptors we take the IRQ configuration
 	 * from _CRS directly.
 	 */
-	if (legacy && !acpi_get_override_irq(gsi, &t, &p)) {
+	अगर (legacy && !acpi_get_override_irq(gsi, &t, &p)) अणु
 		u8 trig = t ? ACPI_LEVEL_SENSITIVE : ACPI_EDGE_SENSITIVE;
 		u8 pol = p ? ACPI_ACTIVE_LOW : ACPI_ACTIVE_HIGH;
 
-		if (triggering != trig || polarity != pol) {
+		अगर (triggering != trig || polarity != pol) अणु
 			pr_warn("ACPI: IRQ %d override to %s, %s\n", gsi,
 				t ? "level" : "edge", p ? "low" : "high");
 			triggering = trig;
 			polarity = pol;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	res->flags = acpi_dev_irq_flags(triggering, polarity, shareable);
-	irq = acpi_register_gsi(NULL, gsi, triggering, polarity);
-	if (irq >= 0) {
+	irq = acpi_रेजिस्टर_gsi(शून्य, gsi, triggering, polarity);
+	अगर (irq >= 0) अणु
 		res->start = irq;
 		res->end = irq;
-	} else {
+	पूर्ण अन्यथा अणु
 		irqresource_disabled(res, gsi);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * acpi_dev_resource_interrupt - Extract ACPI interrupt resource information.
+ * acpi_dev_resource_पूर्णांकerrupt - Extract ACPI पूर्णांकerrupt resource inक्रमmation.
  * @ares: Input ACPI resource object.
- * @index: Index into the array of GSIs represented by the resource.
+ * @index: Index पूर्णांकo the array of GSIs represented by the resource.
  * @res: Output generic resource object.
  *
- * Check if the given ACPI resource object represents an interrupt resource
- * and @index does not exceed the resource's interrupt count (true is returned
- * in that case regardless of the results of the other checks)).  If that's the
- * case, register the GSI corresponding to @index from the array of interrupts
- * represented by the resource and populate the generic resource object pointed
+ * Check अगर the given ACPI resource object represents an पूर्णांकerrupt resource
+ * and @index करोes not exceed the resource's पूर्णांकerrupt count (true is वापसed
+ * in that हाल regardless of the results of the other checks)).  If that's the
+ * हाल, रेजिस्टर the GSI corresponding to @index from the array of पूर्णांकerrupts
+ * represented by the resource and populate the generic resource object poपूर्णांकed
  * to by @res accordingly.  If the registration of the GSI is not successful,
  * IORESOURCE_DISABLED will be set it that object's flags.
  *
  * Return:
  * 1) false with res->flags setting to zero: not the expected resource type
- * 2) false with IORESOURCE_DISABLED in res->flags: valid unassigned resource
- * 3) true: valid assigned resource
+ * 2) false with IORESOURCE_DISABLED in res->flags: valid unasचिन्हित resource
+ * 3) true: valid asचिन्हित resource
  */
-bool acpi_dev_resource_interrupt(struct acpi_resource *ares, int index,
-				 struct resource *res)
-{
-	struct acpi_resource_irq *irq;
-	struct acpi_resource_extended_irq *ext_irq;
+bool acpi_dev_resource_पूर्णांकerrupt(काष्ठा acpi_resource *ares, पूर्णांक index,
+				 काष्ठा resource *res)
+अणु
+	काष्ठा acpi_resource_irq *irq;
+	काष्ठा acpi_resource_extended_irq *ext_irq;
 
-	switch (ares->type) {
-	case ACPI_RESOURCE_TYPE_IRQ:
+	चयन (ares->type) अणु
+	हाल ACPI_RESOURCE_TYPE_IRQ:
 		/*
-		 * Per spec, only one interrupt per descriptor is allowed in
+		 * Per spec, only one पूर्णांकerrupt per descriptor is allowed in
 		 * _CRS, but some firmware violates this, so parse them all.
 		 */
 		irq = &ares->data.irq;
-		if (index >= irq->interrupt_count) {
+		अगर (index >= irq->पूर्णांकerrupt_count) अणु
 			irqresource_disabled(res, 0);
-			return false;
-		}
-		acpi_dev_get_irqresource(res, irq->interrupts[index],
+			वापस false;
+		पूर्ण
+		acpi_dev_get_irqresource(res, irq->पूर्णांकerrupts[index],
 					 irq->triggering, irq->polarity,
 					 irq->shareable, true);
-		break;
-	case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
 		ext_irq = &ares->data.extended_irq;
-		if (index >= ext_irq->interrupt_count) {
+		अगर (index >= ext_irq->पूर्णांकerrupt_count) अणु
 			irqresource_disabled(res, 0);
-			return false;
-		}
-		if (is_gsi(ext_irq))
-			acpi_dev_get_irqresource(res, ext_irq->interrupts[index],
+			वापस false;
+		पूर्ण
+		अगर (is_gsi(ext_irq))
+			acpi_dev_get_irqresource(res, ext_irq->पूर्णांकerrupts[index],
 					 ext_irq->triggering, ext_irq->polarity,
 					 ext_irq->shareable, false);
-		else
+		अन्यथा
 			irqresource_disabled(res, 0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		res->flags = 0;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
-EXPORT_SYMBOL_GPL(acpi_dev_resource_interrupt);
+	वापस true;
+पूर्ण
+EXPORT_SYMBOL_GPL(acpi_dev_resource_पूर्णांकerrupt);
 
 /**
- * acpi_dev_free_resource_list - Free resource from %acpi_dev_get_resources().
- * @list: The head of the resource list to free.
+ * acpi_dev_मुक्त_resource_list - Free resource from %acpi_dev_get_resources().
+ * @list: The head of the resource list to मुक्त.
  */
-void acpi_dev_free_resource_list(struct list_head *list)
-{
-	resource_list_free(list);
-}
-EXPORT_SYMBOL_GPL(acpi_dev_free_resource_list);
+व्योम acpi_dev_मुक्त_resource_list(काष्ठा list_head *list)
+अणु
+	resource_list_मुक्त(list);
+पूर्ण
+EXPORT_SYMBOL_GPL(acpi_dev_मुक्त_resource_list);
 
-struct res_proc_context {
-	struct list_head *list;
-	int (*preproc)(struct acpi_resource *, void *);
-	void *preproc_data;
-	int count;
-	int error;
-};
+काष्ठा res_proc_context अणु
+	काष्ठा list_head *list;
+	पूर्णांक (*preproc)(काष्ठा acpi_resource *, व्योम *);
+	व्योम *preproc_data;
+	पूर्णांक count;
+	पूर्णांक error;
+पूर्ण;
 
-static acpi_status acpi_dev_new_resource_entry(struct resource_win *win,
-					       struct res_proc_context *c)
-{
-	struct resource_entry *rentry;
+अटल acpi_status acpi_dev_new_resource_entry(काष्ठा resource_win *win,
+					       काष्ठा res_proc_context *c)
+अणु
+	काष्ठा resource_entry *rentry;
 
-	rentry = resource_list_create_entry(NULL, 0);
-	if (!rentry) {
+	rentry = resource_list_create_entry(शून्य, 0);
+	अगर (!rentry) अणु
 		c->error = -ENOMEM;
-		return AE_NO_MEMORY;
-	}
+		वापस AE_NO_MEMORY;
+	पूर्ण
 	*rentry->res = win->res;
 	rentry->offset = win->offset;
 	resource_list_add_tail(rentry, c->list);
 	c->count++;
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static acpi_status acpi_dev_process_resource(struct acpi_resource *ares,
-					     void *context)
-{
-	struct res_proc_context *c = context;
-	struct resource_win win;
-	struct resource *res = &win.res;
-	int i;
+अटल acpi_status acpi_dev_process_resource(काष्ठा acpi_resource *ares,
+					     व्योम *context)
+अणु
+	काष्ठा res_proc_context *c = context;
+	काष्ठा resource_win win;
+	काष्ठा resource *res = &win.res;
+	पूर्णांक i;
 
-	if (c->preproc) {
-		int ret;
+	अगर (c->preproc) अणु
+		पूर्णांक ret;
 
 		ret = c->preproc(ares, c->preproc_data);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			c->error = ret;
-			return AE_ABORT_METHOD;
-		} else if (ret > 0) {
-			return AE_OK;
-		}
-	}
+			वापस AE_ABORT_METHOD;
+		पूर्ण अन्यथा अगर (ret > 0) अणु
+			वापस AE_OK;
+		पूर्ण
+	पूर्ण
 
-	memset(&win, 0, sizeof(win));
+	स_रखो(&win, 0, माप(win));
 
-	if (acpi_dev_resource_memory(ares, res)
+	अगर (acpi_dev_resource_memory(ares, res)
 	    || acpi_dev_resource_io(ares, res)
 	    || acpi_dev_resource_address_space(ares, &win)
 	    || acpi_dev_resource_ext_address_space(ares, &win))
-		return acpi_dev_new_resource_entry(&win, c);
+		वापस acpi_dev_new_resource_entry(&win, c);
 
-	for (i = 0; acpi_dev_resource_interrupt(ares, i, res); i++) {
+	क्रम (i = 0; acpi_dev_resource_पूर्णांकerrupt(ares, i, res); i++) अणु
 		acpi_status status;
 
 		status = acpi_dev_new_resource_entry(&win, c);
-		if (ACPI_FAILURE(status))
-			return status;
-	}
+		अगर (ACPI_FAILURE(status))
+			वापस status;
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static int __acpi_dev_get_resources(struct acpi_device *adev,
-				    struct list_head *list,
-				    int (*preproc)(struct acpi_resource *, void *),
-				    void *preproc_data, char *method)
-{
-	struct res_proc_context c;
+अटल पूर्णांक __acpi_dev_get_resources(काष्ठा acpi_device *adev,
+				    काष्ठा list_head *list,
+				    पूर्णांक (*preproc)(काष्ठा acpi_resource *, व्योम *),
+				    व्योम *preproc_data, अक्षर *method)
+अणु
+	काष्ठा res_proc_context c;
 	acpi_status status;
 
-	if (!adev || !adev->handle || !list_empty(list))
-		return -EINVAL;
+	अगर (!adev || !adev->handle || !list_empty(list))
+		वापस -EINVAL;
 
-	if (!acpi_has_method(adev->handle, method))
-		return 0;
+	अगर (!acpi_has_method(adev->handle, method))
+		वापस 0;
 
 	c.list = list;
 	c.preproc = preproc;
@@ -580,80 +581,80 @@ static int __acpi_dev_get_resources(struct acpi_device *adev,
 	c.error = 0;
 	status = acpi_walk_resources(adev->handle, method,
 				     acpi_dev_process_resource, &c);
-	if (ACPI_FAILURE(status)) {
-		acpi_dev_free_resource_list(list);
-		return c.error ? c.error : -EIO;
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		acpi_dev_मुक्त_resource_list(list);
+		वापस c.error ? c.error : -EIO;
+	पूर्ण
 
-	return c.count;
-}
+	वापस c.count;
+पूर्ण
 
 /**
  * acpi_dev_get_resources - Get current resources of a device.
- * @adev: ACPI device node to get the resources for.
+ * @adev: ACPI device node to get the resources क्रम.
  * @list: Head of the resultant list of resources (must be empty).
  * @preproc: The caller's preprocessing routine.
- * @preproc_data: Pointer passed to the caller's preprocessing routine.
+ * @preproc_data: Poपूर्णांकer passed to the caller's preprocessing routine.
  *
- * Evaluate the _CRS method for the given device node and process its output by
+ * Evaluate the _CRS method क्रम the given device node and process its output by
  * (1) executing the @preproc() routine provided by the caller, passing the
- * resource pointer and @preproc_data to it as arguments, for each ACPI resource
- * returned and (2) converting all of the returned ACPI resources into struct
- * resource objects if possible.  If the return value of @preproc() in step (1)
- * is different from 0, step (2) is not applied to the given ACPI resource and
- * if that value is negative, the whole processing is aborted and that value is
- * returned as the final error code.
+ * resource poपूर्णांकer and @preproc_data to it as arguments, क्रम each ACPI resource
+ * वापसed and (2) converting all of the वापसed ACPI resources पूर्णांकo काष्ठा
+ * resource objects अगर possible.  If the वापस value of @preproc() in step (1)
+ * is dअगरferent from 0, step (2) is not applied to the given ACPI resource and
+ * अगर that value is negative, the whole processing is पातed and that value is
+ * वापसed as the final error code.
  *
- * The resultant struct resource objects are put on the list pointed to by
- * @list, that must be empty initially, as members of struct resource_entry
- * objects.  Callers of this routine should use %acpi_dev_free_resource_list() to
- * free that list.
+ * The resultant काष्ठा resource objects are put on the list poपूर्णांकed to by
+ * @list, that must be empty initially, as members of काष्ठा resource_entry
+ * objects.  Callers of this routine should use %acpi_dev_मुक्त_resource_list() to
+ * मुक्त that list.
  *
- * The number of resources in the output list is returned on success, an error
- * code reflecting the error condition is returned otherwise.
+ * The number of resources in the output list is वापसed on success, an error
+ * code reflecting the error condition is वापसed otherwise.
  */
-int acpi_dev_get_resources(struct acpi_device *adev, struct list_head *list,
-			   int (*preproc)(struct acpi_resource *, void *),
-			   void *preproc_data)
-{
-	return __acpi_dev_get_resources(adev, list, preproc, preproc_data,
+पूर्णांक acpi_dev_get_resources(काष्ठा acpi_device *adev, काष्ठा list_head *list,
+			   पूर्णांक (*preproc)(काष्ठा acpi_resource *, व्योम *),
+			   व्योम *preproc_data)
+अणु
+	वापस __acpi_dev_get_resources(adev, list, preproc, preproc_data,
 					METHOD_NAME__CRS);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_dev_get_resources);
 
-static int is_memory(struct acpi_resource *ares, void *not_used)
-{
-	struct resource_win win;
-	struct resource *res = &win.res;
+अटल पूर्णांक is_memory(काष्ठा acpi_resource *ares, व्योम *not_used)
+अणु
+	काष्ठा resource_win win;
+	काष्ठा resource *res = &win.res;
 
-	memset(&win, 0, sizeof(win));
+	स_रखो(&win, 0, माप(win));
 
-	return !(acpi_dev_resource_memory(ares, res)
+	वापस !(acpi_dev_resource_memory(ares, res)
 	       || acpi_dev_resource_address_space(ares, &win)
 	       || acpi_dev_resource_ext_address_space(ares, &win));
-}
+पूर्ण
 
 /**
  * acpi_dev_get_dma_resources - Get current DMA resources of a device.
- * @adev: ACPI device node to get the resources for.
+ * @adev: ACPI device node to get the resources क्रम.
  * @list: Head of the resultant list of resources (must be empty).
  *
- * Evaluate the _DMA method for the given device node and process its
+ * Evaluate the _DMA method क्रम the given device node and process its
  * output.
  *
- * The resultant struct resource objects are put on the list pointed to
- * by @list, that must be empty initially, as members of struct
+ * The resultant काष्ठा resource objects are put on the list poपूर्णांकed to
+ * by @list, that must be empty initially, as members of काष्ठा
  * resource_entry objects.  Callers of this routine should use
- * %acpi_dev_free_resource_list() to free that list.
+ * %acpi_dev_मुक्त_resource_list() to मुक्त that list.
  *
- * The number of resources in the output list is returned on success,
- * an error code reflecting the error condition is returned otherwise.
+ * The number of resources in the output list is वापसed on success,
+ * an error code reflecting the error condition is वापसed otherwise.
  */
-int acpi_dev_get_dma_resources(struct acpi_device *adev, struct list_head *list)
-{
-	return __acpi_dev_get_resources(adev, list, is_memory, NULL,
+पूर्णांक acpi_dev_get_dma_resources(काष्ठा acpi_device *adev, काष्ठा list_head *list)
+अणु
+	वापस __acpi_dev_get_resources(adev, list, is_memory, शून्य,
 					METHOD_NAME__DMA);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_dev_get_dma_resources);
 
 /**
@@ -665,105 +666,105 @@ EXPORT_SYMBOL_GPL(acpi_dev_get_dma_resources);
  * This is a helper function to support acpi_dev_get_resources(), which filters
  * ACPI resource objects according to resource types.
  */
-int acpi_dev_filter_resource_type(struct acpi_resource *ares,
-				  unsigned long types)
-{
-	unsigned long type = 0;
+पूर्णांक acpi_dev_filter_resource_type(काष्ठा acpi_resource *ares,
+				  अचिन्हित दीर्घ types)
+अणु
+	अचिन्हित दीर्घ type = 0;
 
-	switch (ares->type) {
-	case ACPI_RESOURCE_TYPE_MEMORY24:
-	case ACPI_RESOURCE_TYPE_MEMORY32:
-	case ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
+	चयन (ares->type) अणु
+	हाल ACPI_RESOURCE_TYPE_MEMORY24:
+	हाल ACPI_RESOURCE_TYPE_MEMORY32:
+	हाल ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
 		type = IORESOURCE_MEM;
-		break;
-	case ACPI_RESOURCE_TYPE_IO:
-	case ACPI_RESOURCE_TYPE_FIXED_IO:
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_IO:
+	हाल ACPI_RESOURCE_TYPE_FIXED_IO:
 		type = IORESOURCE_IO;
-		break;
-	case ACPI_RESOURCE_TYPE_IRQ:
-	case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_IRQ:
+	हाल ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
 		type = IORESOURCE_IRQ;
-		break;
-	case ACPI_RESOURCE_TYPE_DMA:
-	case ACPI_RESOURCE_TYPE_FIXED_DMA:
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_DMA:
+	हाल ACPI_RESOURCE_TYPE_FIXED_DMA:
 		type = IORESOURCE_DMA;
-		break;
-	case ACPI_RESOURCE_TYPE_GENERIC_REGISTER:
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_GENERIC_REGISTER:
 		type = IORESOURCE_REG;
-		break;
-	case ACPI_RESOURCE_TYPE_ADDRESS16:
-	case ACPI_RESOURCE_TYPE_ADDRESS32:
-	case ACPI_RESOURCE_TYPE_ADDRESS64:
-	case ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64:
-		if (ares->data.address.resource_type == ACPI_MEMORY_RANGE)
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_ADDRESS16:
+	हाल ACPI_RESOURCE_TYPE_ADDRESS32:
+	हाल ACPI_RESOURCE_TYPE_ADDRESS64:
+	हाल ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64:
+		अगर (ares->data.address.resource_type == ACPI_MEMORY_RANGE)
 			type = IORESOURCE_MEM;
-		else if (ares->data.address.resource_type == ACPI_IO_RANGE)
+		अन्यथा अगर (ares->data.address.resource_type == ACPI_IO_RANGE)
 			type = IORESOURCE_IO;
-		else if (ares->data.address.resource_type ==
+		अन्यथा अगर (ares->data.address.resource_type ==
 			 ACPI_BUS_NUMBER_RANGE)
 			type = IORESOURCE_BUS;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return (type & types) ? 0 : 1;
-}
+	वापस (type & types) ? 0 : 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_dev_filter_resource_type);
 
-static int acpi_dev_consumes_res(struct acpi_device *adev, struct resource *res)
-{
-	struct list_head resource_list;
-	struct resource_entry *rentry;
-	int ret, found = 0;
+अटल पूर्णांक acpi_dev_consumes_res(काष्ठा acpi_device *adev, काष्ठा resource *res)
+अणु
+	काष्ठा list_head resource_list;
+	काष्ठा resource_entry *rentry;
+	पूर्णांक ret, found = 0;
 
 	INIT_LIST_HEAD(&resource_list);
-	ret = acpi_dev_get_resources(adev, &resource_list, NULL, NULL);
-	if (ret < 0)
-		return 0;
+	ret = acpi_dev_get_resources(adev, &resource_list, शून्य, शून्य);
+	अगर (ret < 0)
+		वापस 0;
 
-	list_for_each_entry(rentry, &resource_list, node) {
-		if (resource_contains(rentry->res, res)) {
+	list_क्रम_each_entry(rentry, &resource_list, node) अणु
+		अगर (resource_contains(rentry->res, res)) अणु
 			found = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	}
+	पूर्ण
 
-	acpi_dev_free_resource_list(&resource_list);
-	return found;
-}
+	acpi_dev_मुक्त_resource_list(&resource_list);
+	वापस found;
+पूर्ण
 
-static acpi_status acpi_res_consumer_cb(acpi_handle handle, u32 depth,
-					 void *context, void **ret)
-{
-	struct resource *res = context;
-	struct acpi_device **consumer = (struct acpi_device **) ret;
-	struct acpi_device *adev;
+अटल acpi_status acpi_res_consumer_cb(acpi_handle handle, u32 depth,
+					 व्योम *context, व्योम **ret)
+अणु
+	काष्ठा resource *res = context;
+	काष्ठा acpi_device **consumer = (काष्ठा acpi_device **) ret;
+	काष्ठा acpi_device *adev;
 
-	if (acpi_bus_get_device(handle, &adev))
-		return AE_OK;
+	अगर (acpi_bus_get_device(handle, &adev))
+		वापस AE_OK;
 
-	if (acpi_dev_consumes_res(adev, res)) {
+	अगर (acpi_dev_consumes_res(adev, res)) अणु
 		*consumer = adev;
-		return AE_CTRL_TERMINATE;
-	}
+		वापस AE_CTRL_TERMINATE;
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
 /**
  * acpi_resource_consumer - Find the ACPI device that consumes @res.
- * @res: Resource to search for.
+ * @res: Resource to search क्रम.
  *
  * Search the current resource settings (_CRS) of every ACPI device node
- * for @res.  If we find an ACPI device whose _CRS includes @res, return
- * it.  Otherwise, return NULL.
+ * क्रम @res.  If we find an ACPI device whose _CRS includes @res, वापस
+ * it.  Otherwise, वापस शून्य.
  */
-struct acpi_device *acpi_resource_consumer(struct resource *res)
-{
-	struct acpi_device *consumer = NULL;
+काष्ठा acpi_device *acpi_resource_consumer(काष्ठा resource *res)
+अणु
+	काष्ठा acpi_device *consumer = शून्य;
 
-	acpi_get_devices(NULL, acpi_res_consumer_cb, res, (void **) &consumer);
-	return consumer;
-}
+	acpi_get_devices(शून्य, acpi_res_consumer_cb, res, (व्योम **) &consumer);
+	वापस consumer;
+पूर्ण

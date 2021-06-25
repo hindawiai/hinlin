@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2011 Red Hat, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * on the rights to use, copy, modअगरy, merge, publish, distribute, sub
  * license, and/or sell copies of the Software, and to permit persons to whom
- * the Software is furnished to do so, subject to the following conditions:
+ * the Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -20,80 +21,80 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <linux/delay.h>
+#समावेश <linux/delay.h>
 
-#include <trace/events/dma_fence.h>
+#समावेश <trace/events/dma_fence.h>
 
-#include "qxl_drv.h"
-#include "qxl_object.h"
+#समावेश "qxl_drv.h"
+#समावेश "qxl_object.h"
 
 /*
  * drawable cmd cache - allocate a bunch of VRAM pages, suballocate
- * into 256 byte chunks for now - gives 16 cmds per page.
+ * पूर्णांकo 256 byte chunks क्रम now - gives 16 cmds per page.
  *
- * use an ida to index into the chunks?
+ * use an ida to index पूर्णांकo the chunks?
  */
 /* manage releaseables */
-/* stack them 16 high for now -drawable object is 191 */
-#define RELEASE_SIZE 256
-#define RELEASES_PER_BO (4096 / RELEASE_SIZE)
-/* put an alloc/dealloc surface cmd into one bo and round up to 128 */
-#define SURFACE_RELEASE_SIZE 128
-#define SURFACE_RELEASES_PER_BO (4096 / SURFACE_RELEASE_SIZE)
+/* stack them 16 high क्रम now -drawable object is 191 */
+#घोषणा RELEASE_SIZE 256
+#घोषणा RELEASES_PER_BO (4096 / RELEASE_SIZE)
+/* put an alloc/dealloc surface cmd पूर्णांकo one bo and round up to 128 */
+#घोषणा SURFACE_RELEASE_SIZE 128
+#घोषणा SURFACE_RELEASES_PER_BO (4096 / SURFACE_RELEASE_SIZE)
 
-static const int release_size_per_bo[] = { RELEASE_SIZE, SURFACE_RELEASE_SIZE, RELEASE_SIZE };
-static const int releases_per_bo[] = { RELEASES_PER_BO, SURFACE_RELEASES_PER_BO, RELEASES_PER_BO };
+अटल स्थिर पूर्णांक release_size_per_bo[] = अणु RELEASE_SIZE, SURFACE_RELEASE_SIZE, RELEASE_SIZE पूर्ण;
+अटल स्थिर पूर्णांक releases_per_bo[] = अणु RELEASES_PER_BO, SURFACE_RELEASES_PER_BO, RELEASES_PER_BO पूर्ण;
 
-static const char *qxl_get_driver_name(struct dma_fence *fence)
-{
-	return "qxl";
-}
+अटल स्थिर अक्षर *qxl_get_driver_name(काष्ठा dma_fence *fence)
+अणु
+	वापस "qxl";
+पूर्ण
 
-static const char *qxl_get_timeline_name(struct dma_fence *fence)
-{
-	return "release";
-}
+अटल स्थिर अक्षर *qxl_get_समयline_name(काष्ठा dma_fence *fence)
+अणु
+	वापस "release";
+पूर्ण
 
-static long qxl_fence_wait(struct dma_fence *fence, bool intr,
-			   signed long timeout)
-{
-	struct qxl_device *qdev;
-	unsigned long cur, end = jiffies + timeout;
+अटल दीर्घ qxl_fence_रुको(काष्ठा dma_fence *fence, bool पूर्णांकr,
+			   चिन्हित दीर्घ समयout)
+अणु
+	काष्ठा qxl_device *qdev;
+	अचिन्हित दीर्घ cur, end = jअगरfies + समयout;
 
-	qdev = container_of(fence->lock, struct qxl_device, release_lock);
+	qdev = container_of(fence->lock, काष्ठा qxl_device, release_lock);
 
-	if (!wait_event_timeout(qdev->release_event,
-				(dma_fence_is_signaled(fence) ||
-				 (qxl_io_notify_oom(qdev), 0)),
-				timeout))
-		return 0;
+	अगर (!रुको_event_समयout(qdev->release_event,
+				(dma_fence_is_संकेतed(fence) ||
+				 (qxl_io_notअगरy_oom(qdev), 0)),
+				समयout))
+		वापस 0;
 
-	cur = jiffies;
-	if (time_after(cur, end))
-		return 0;
-	return end - cur;
-}
+	cur = jअगरfies;
+	अगर (समय_after(cur, end))
+		वापस 0;
+	वापस end - cur;
+पूर्ण
 
-static const struct dma_fence_ops qxl_fence_ops = {
+अटल स्थिर काष्ठा dma_fence_ops qxl_fence_ops = अणु
 	.get_driver_name = qxl_get_driver_name,
-	.get_timeline_name = qxl_get_timeline_name,
-	.wait = qxl_fence_wait,
-};
+	.get_समयline_name = qxl_get_समयline_name,
+	.रुको = qxl_fence_रुको,
+पूर्ण;
 
-static int
-qxl_release_alloc(struct qxl_device *qdev, int type,
-		  struct qxl_release **ret)
-{
-	struct qxl_release *release;
-	int handle;
-	size_t size = sizeof(*release);
+अटल पूर्णांक
+qxl_release_alloc(काष्ठा qxl_device *qdev, पूर्णांक type,
+		  काष्ठा qxl_release **ret)
+अणु
+	काष्ठा qxl_release *release;
+	पूर्णांक handle;
+	माप_प्रकार size = माप(*release);
 
-	release = kmalloc(size, GFP_KERNEL);
-	if (!release) {
+	release = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!release) अणु
 		DRM_ERROR("Out of memory\n");
-		return -ENOMEM;
-	}
-	release->base.ops = NULL;
+		वापस -ENOMEM;
+	पूर्ण
+	release->base.ops = शून्य;
 	release->type = type;
 	release->release_offset = 0;
 	release->surface_release_id = 0;
@@ -105,163 +106,163 @@ qxl_release_alloc(struct qxl_device *qdev, int type,
 	release->base.seqno = ++qdev->release_seqno;
 	spin_unlock(&qdev->release_idr_lock);
 	idr_preload_end();
-	if (handle < 0) {
-		kfree(release);
-		*ret = NULL;
-		return handle;
-	}
+	अगर (handle < 0) अणु
+		kमुक्त(release);
+		*ret = शून्य;
+		वापस handle;
+	पूर्ण
 	*ret = release;
 	DRM_DEBUG_DRIVER("allocated release %d\n", handle);
 	release->id = handle;
-	return handle;
-}
+	वापस handle;
+पूर्ण
 
-static void
-qxl_release_free_list(struct qxl_release *release)
-{
-	while (!list_empty(&release->bos)) {
-		struct qxl_bo_list *entry;
-		struct qxl_bo *bo;
+अटल व्योम
+qxl_release_मुक्त_list(काष्ठा qxl_release *release)
+अणु
+	जबतक (!list_empty(&release->bos)) अणु
+		काष्ठा qxl_bo_list *entry;
+		काष्ठा qxl_bo *bo;
 
 		entry = container_of(release->bos.next,
-				     struct qxl_bo_list, tv.head);
+				     काष्ठा qxl_bo_list, tv.head);
 		bo = to_qxl_bo(entry->tv.bo);
 		qxl_bo_unref(&bo);
 		list_del(&entry->tv.head);
-		kfree(entry);
-	}
-	release->release_bo = NULL;
-}
+		kमुक्त(entry);
+	पूर्ण
+	release->release_bo = शून्य;
+पूर्ण
 
-void
-qxl_release_free(struct qxl_device *qdev,
-		 struct qxl_release *release)
-{
+व्योम
+qxl_release_मुक्त(काष्ठा qxl_device *qdev,
+		 काष्ठा qxl_release *release)
+अणु
 	DRM_DEBUG_DRIVER("release %d, type %d\n", release->id, release->type);
 
-	if (release->surface_release_id)
+	अगर (release->surface_release_id)
 		qxl_surface_id_dealloc(qdev, release->surface_release_id);
 
 	spin_lock(&qdev->release_idr_lock);
-	idr_remove(&qdev->release_idr, release->id);
+	idr_हटाओ(&qdev->release_idr, release->id);
 	spin_unlock(&qdev->release_idr_lock);
 
-	if (release->base.ops) {
+	अगर (release->base.ops) अणु
 		WARN_ON(list_empty(&release->bos));
-		qxl_release_free_list(release);
+		qxl_release_मुक्त_list(release);
 
-		dma_fence_signal(&release->base);
+		dma_fence_संकेत(&release->base);
 		dma_fence_put(&release->base);
-	} else {
-		qxl_release_free_list(release);
-		kfree(release);
-	}
+	पूर्ण अन्यथा अणु
+		qxl_release_मुक्त_list(release);
+		kमुक्त(release);
+	पूर्ण
 	atomic_dec(&qdev->release_count);
-}
+पूर्ण
 
-static int qxl_release_bo_alloc(struct qxl_device *qdev,
-				struct qxl_bo **bo,
+अटल पूर्णांक qxl_release_bo_alloc(काष्ठा qxl_device *qdev,
+				काष्ठा qxl_bo **bo,
 				u32 priority)
-{
+अणु
 	/* pin releases bo's they are too messy to evict */
-	return qxl_bo_create(qdev, PAGE_SIZE, false, true,
-			     QXL_GEM_DOMAIN_VRAM, priority, NULL, bo);
-}
+	वापस qxl_bo_create(qdev, PAGE_SIZE, false, true,
+			     QXL_GEM_DOMAIN_VRAM, priority, शून्य, bo);
+पूर्ण
 
-int qxl_release_list_add(struct qxl_release *release, struct qxl_bo *bo)
-{
-	struct qxl_bo_list *entry;
+पूर्णांक qxl_release_list_add(काष्ठा qxl_release *release, काष्ठा qxl_bo *bo)
+अणु
+	काष्ठा qxl_bo_list *entry;
 
-	list_for_each_entry(entry, &release->bos, tv.head) {
-		if (entry->tv.bo == &bo->tbo)
-			return 0;
-	}
+	list_क्रम_each_entry(entry, &release->bos, tv.head) अणु
+		अगर (entry->tv.bo == &bo->tbo)
+			वापस 0;
+	पूर्ण
 
-	entry = kmalloc(sizeof(struct qxl_bo_list), GFP_KERNEL);
-	if (!entry)
-		return -ENOMEM;
+	entry = kदो_स्मृति(माप(काष्ठा qxl_bo_list), GFP_KERNEL);
+	अगर (!entry)
+		वापस -ENOMEM;
 
 	qxl_bo_ref(bo);
 	entry->tv.bo = &bo->tbo;
 	entry->tv.num_shared = 0;
 	list_add_tail(&entry->tv.head, &release->bos);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qxl_release_validate_bo(struct qxl_bo *bo)
-{
-	struct ttm_operation_ctx ctx = { true, false };
-	int ret;
+अटल पूर्णांक qxl_release_validate_bo(काष्ठा qxl_bo *bo)
+अणु
+	काष्ठा tपंचांग_operation_ctx ctx = अणु true, false पूर्ण;
+	पूर्णांक ret;
 
-	if (!bo->tbo.pin_count) {
-		qxl_ttm_placement_from_domain(bo, bo->type);
-		ret = ttm_bo_validate(&bo->tbo, &bo->placement, &ctx);
-		if (ret)
-			return ret;
-	}
+	अगर (!bo->tbo.pin_count) अणु
+		qxl_tपंचांग_placement_from_करोमुख्य(bo, bo->type);
+		ret = tपंचांग_bo_validate(&bo->tbo, &bo->placement, &ctx);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = dma_resv_reserve_shared(bo->tbo.base.resv, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* allocate a surface for reserved + validated buffers */
+	/* allocate a surface क्रम reserved + validated buffers */
 	ret = qxl_bo_check_id(to_qxl(bo->tbo.base.dev), bo);
-	if (ret)
-		return ret;
-	return 0;
-}
+	अगर (ret)
+		वापस ret;
+	वापस 0;
+पूर्ण
 
-int qxl_release_reserve_list(struct qxl_release *release, bool no_intr)
-{
-	int ret;
-	struct qxl_bo_list *entry;
+पूर्णांक qxl_release_reserve_list(काष्ठा qxl_release *release, bool no_पूर्णांकr)
+अणु
+	पूर्णांक ret;
+	काष्ठा qxl_bo_list *entry;
 
-	/* if only one object on the release its the release itself
+	/* अगर only one object on the release its the release itself
 	   since these objects are pinned no need to reserve */
-	if (list_is_singular(&release->bos))
-		return 0;
+	अगर (list_is_singular(&release->bos))
+		वापस 0;
 
-	ret = ttm_eu_reserve_buffers(&release->ticket, &release->bos,
-				     !no_intr, NULL);
-	if (ret)
-		return ret;
+	ret = tपंचांग_eu_reserve_buffers(&release->ticket, &release->bos,
+				     !no_पूर्णांकr, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	list_for_each_entry(entry, &release->bos, tv.head) {
-		struct qxl_bo *bo = to_qxl_bo(entry->tv.bo);
+	list_क्रम_each_entry(entry, &release->bos, tv.head) अणु
+		काष्ठा qxl_bo *bo = to_qxl_bo(entry->tv.bo);
 
 		ret = qxl_release_validate_bo(bo);
-		if (ret) {
-			ttm_eu_backoff_reservation(&release->ticket, &release->bos);
-			return ret;
-		}
-	}
-	return 0;
-}
+		अगर (ret) अणु
+			tपंचांग_eu_backoff_reservation(&release->ticket, &release->bos);
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void qxl_release_backoff_reserve_list(struct qxl_release *release)
-{
-	/* if only one object on the release its the release itself
+व्योम qxl_release_backoff_reserve_list(काष्ठा qxl_release *release)
+अणु
+	/* अगर only one object on the release its the release itself
 	   since these objects are pinned no need to reserve */
-	if (list_is_singular(&release->bos))
-		return;
+	अगर (list_is_singular(&release->bos))
+		वापस;
 
-	ttm_eu_backoff_reservation(&release->ticket, &release->bos);
-}
+	tपंचांग_eu_backoff_reservation(&release->ticket, &release->bos);
+पूर्ण
 
-int qxl_alloc_surface_release_reserved(struct qxl_device *qdev,
-				       enum qxl_surface_cmd_type surface_cmd_type,
-				       struct qxl_release *create_rel,
-				       struct qxl_release **release)
-{
-	if (surface_cmd_type == QXL_SURFACE_CMD_DESTROY && create_rel) {
-		int idr_ret;
-		struct qxl_bo *bo;
-		union qxl_release_info *info;
+पूर्णांक qxl_alloc_surface_release_reserved(काष्ठा qxl_device *qdev,
+				       क्रमागत qxl_surface_cmd_type surface_cmd_type,
+				       काष्ठा qxl_release *create_rel,
+				       काष्ठा qxl_release **release)
+अणु
+	अगर (surface_cmd_type == QXL_SURFACE_CMD_DESTROY && create_rel) अणु
+		पूर्णांक idr_ret;
+		काष्ठा qxl_bo *bo;
+		जोड़ qxl_release_info *info;
 
 		/* stash the release after the create command */
 		idr_ret = qxl_release_alloc(qdev, QXL_RELEASE_SURFACE_CMD, release);
-		if (idr_ret < 0)
-			return idr_ret;
+		अगर (idr_ret < 0)
+			वापस idr_ret;
 		bo = create_rel->release_bo;
 
 		(*release)->release_bo = bo;
@@ -272,65 +273,65 @@ int qxl_alloc_surface_release_reserved(struct qxl_device *qdev,
 		info = qxl_release_map(qdev, *release);
 		info->id = idr_ret;
 		qxl_release_unmap(qdev, *release, info);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return qxl_alloc_release_reserved(qdev, sizeof(struct qxl_surface_cmd),
-					 QXL_RELEASE_SURFACE_CMD, release, NULL);
-}
+	वापस qxl_alloc_release_reserved(qdev, माप(काष्ठा qxl_surface_cmd),
+					 QXL_RELEASE_SURFACE_CMD, release, शून्य);
+पूर्ण
 
-int qxl_alloc_release_reserved(struct qxl_device *qdev, unsigned long size,
-				       int type, struct qxl_release **release,
-				       struct qxl_bo **rbo)
-{
-	struct qxl_bo *bo, *free_bo = NULL;
-	int idr_ret;
-	int ret = 0;
-	union qxl_release_info *info;
-	int cur_idx;
+पूर्णांक qxl_alloc_release_reserved(काष्ठा qxl_device *qdev, अचिन्हित दीर्घ size,
+				       पूर्णांक type, काष्ठा qxl_release **release,
+				       काष्ठा qxl_bo **rbo)
+अणु
+	काष्ठा qxl_bo *bo, *मुक्त_bo = शून्य;
+	पूर्णांक idr_ret;
+	पूर्णांक ret = 0;
+	जोड़ qxl_release_info *info;
+	पूर्णांक cur_idx;
 	u32 priority;
 
-	if (type == QXL_RELEASE_DRAWABLE) {
+	अगर (type == QXL_RELEASE_DRAWABLE) अणु
 		cur_idx = 0;
 		priority = 0;
-	} else if (type == QXL_RELEASE_SURFACE_CMD) {
+	पूर्ण अन्यथा अगर (type == QXL_RELEASE_SURFACE_CMD) अणु
 		cur_idx = 1;
 		priority = 1;
-	} else if (type == QXL_RELEASE_CURSOR_CMD) {
+	पूर्ण अन्यथा अगर (type == QXL_RELEASE_CURSOR_CMD) अणु
 		cur_idx = 2;
 		priority = 1;
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 		DRM_ERROR("got illegal type: %d\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	idr_ret = qxl_release_alloc(qdev, type, release);
-	if (idr_ret < 0) {
-		if (rbo)
-			*rbo = NULL;
-		return idr_ret;
-	}
+	अगर (idr_ret < 0) अणु
+		अगर (rbo)
+			*rbo = शून्य;
+		वापस idr_ret;
+	पूर्ण
 	atomic_inc(&qdev->release_count);
 
 	mutex_lock(&qdev->release_mutex);
-	if (qdev->current_release_bo_offset[cur_idx] + 1 >= releases_per_bo[cur_idx]) {
-		free_bo = qdev->current_release_bo[cur_idx];
+	अगर (qdev->current_release_bo_offset[cur_idx] + 1 >= releases_per_bo[cur_idx]) अणु
+		मुक्त_bo = qdev->current_release_bo[cur_idx];
 		qdev->current_release_bo_offset[cur_idx] = 0;
-		qdev->current_release_bo[cur_idx] = NULL;
-	}
-	if (!qdev->current_release_bo[cur_idx]) {
+		qdev->current_release_bo[cur_idx] = शून्य;
+	पूर्ण
+	अगर (!qdev->current_release_bo[cur_idx]) अणु
 		ret = qxl_release_bo_alloc(qdev, &qdev->current_release_bo[cur_idx], priority);
-		if (ret) {
+		अगर (ret) अणु
 			mutex_unlock(&qdev->release_mutex);
-			if (free_bo) {
-				qxl_bo_unpin(free_bo);
-				qxl_bo_unref(&free_bo);
-			}
-			qxl_release_free(qdev, *release);
-			return ret;
-		}
-	}
+			अगर (मुक्त_bo) अणु
+				qxl_bo_unpin(मुक्त_bo);
+				qxl_bo_unref(&मुक्त_bo);
+			पूर्ण
+			qxl_release_मुक्त(qdev, *release);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	bo = qxl_bo_ref(qdev->current_release_bo[cur_idx]);
 
@@ -338,101 +339,101 @@ int qxl_alloc_release_reserved(struct qxl_device *qdev, unsigned long size,
 	(*release)->release_offset = qdev->current_release_bo_offset[cur_idx] * release_size_per_bo[cur_idx];
 	qdev->current_release_bo_offset[cur_idx]++;
 
-	if (rbo)
+	अगर (rbo)
 		*rbo = bo;
 
 	mutex_unlock(&qdev->release_mutex);
-	if (free_bo) {
-		qxl_bo_unpin(free_bo);
-		qxl_bo_unref(&free_bo);
-	}
+	अगर (मुक्त_bo) अणु
+		qxl_bo_unpin(मुक्त_bo);
+		qxl_bo_unref(&मुक्त_bo);
+	पूर्ण
 
 	ret = qxl_release_list_add(*release, bo);
 	qxl_bo_unref(&bo);
-	if (ret) {
-		qxl_release_free(qdev, *release);
-		return ret;
-	}
+	अगर (ret) अणु
+		qxl_release_मुक्त(qdev, *release);
+		वापस ret;
+	पूर्ण
 
 	info = qxl_release_map(qdev, *release);
 	info->id = idr_ret;
 	qxl_release_unmap(qdev, *release, info);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct qxl_release *qxl_release_from_id_locked(struct qxl_device *qdev,
-						   uint64_t id)
-{
-	struct qxl_release *release;
+काष्ठा qxl_release *qxl_release_from_id_locked(काष्ठा qxl_device *qdev,
+						   uपूर्णांक64_t id)
+अणु
+	काष्ठा qxl_release *release;
 
 	spin_lock(&qdev->release_idr_lock);
 	release = idr_find(&qdev->release_idr, id);
 	spin_unlock(&qdev->release_idr_lock);
-	if (!release) {
+	अगर (!release) अणु
 		DRM_ERROR("failed to find id in release_idr\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return release;
-}
+	वापस release;
+पूर्ण
 
-union qxl_release_info *qxl_release_map(struct qxl_device *qdev,
-					struct qxl_release *release)
-{
-	void *ptr;
-	union qxl_release_info *info;
-	struct qxl_bo *bo = release->release_bo;
+जोड़ qxl_release_info *qxl_release_map(काष्ठा qxl_device *qdev,
+					काष्ठा qxl_release *release)
+अणु
+	व्योम *ptr;
+	जोड़ qxl_release_info *info;
+	काष्ठा qxl_bo *bo = release->release_bo;
 
 	ptr = qxl_bo_kmap_atomic_page(qdev, bo, release->release_offset & PAGE_MASK);
-	if (!ptr)
-		return NULL;
+	अगर (!ptr)
+		वापस शून्य;
 	info = ptr + (release->release_offset & ~PAGE_MASK);
-	return info;
-}
+	वापस info;
+पूर्ण
 
-void qxl_release_unmap(struct qxl_device *qdev,
-		       struct qxl_release *release,
-		       union qxl_release_info *info)
-{
-	struct qxl_bo *bo = release->release_bo;
-	void *ptr;
+व्योम qxl_release_unmap(काष्ठा qxl_device *qdev,
+		       काष्ठा qxl_release *release,
+		       जोड़ qxl_release_info *info)
+अणु
+	काष्ठा qxl_bo *bo = release->release_bo;
+	व्योम *ptr;
 
-	ptr = ((void *)info) - (release->release_offset & ~PAGE_MASK);
+	ptr = ((व्योम *)info) - (release->release_offset & ~PAGE_MASK);
 	qxl_bo_kunmap_atomic_page(qdev, bo, ptr);
-}
+पूर्ण
 
-void qxl_release_fence_buffer_objects(struct qxl_release *release)
-{
-	struct ttm_buffer_object *bo;
-	struct ttm_device *bdev;
-	struct ttm_validate_buffer *entry;
-	struct qxl_device *qdev;
+व्योम qxl_release_fence_buffer_objects(काष्ठा qxl_release *release)
+अणु
+	काष्ठा tपंचांग_buffer_object *bo;
+	काष्ठा tपंचांग_device *bdev;
+	काष्ठा tपंचांग_validate_buffer *entry;
+	काष्ठा qxl_device *qdev;
 
-	/* if only one object on the release its the release itself
+	/* अगर only one object on the release its the release itself
 	   since these objects are pinned no need to reserve */
-	if (list_is_singular(&release->bos) || list_empty(&release->bos))
-		return;
+	अगर (list_is_singular(&release->bos) || list_empty(&release->bos))
+		वापस;
 
-	bo = list_first_entry(&release->bos, struct ttm_validate_buffer, head)->bo;
+	bo = list_first_entry(&release->bos, काष्ठा tपंचांग_validate_buffer, head)->bo;
 	bdev = bo->bdev;
-	qdev = container_of(bdev, struct qxl_device, mman.bdev);
+	qdev = container_of(bdev, काष्ठा qxl_device, mman.bdev);
 
 	/*
-	 * Since we never really allocated a context and we don't want to conflict,
-	 * set the highest bits. This will break if we really allow exporting of dma-bufs.
+	 * Since we never really allocated a context and we करोn't want to conflict,
+	 * set the highest bits. This will अवरोध अगर we really allow exporting of dma-bufs.
 	 */
 	dma_fence_init(&release->base, &qxl_fence_ops, &qdev->release_lock,
 		       release->id | 0xf0000000, release->base.seqno);
 	trace_dma_fence_emit(&release->base);
 
-	list_for_each_entry(entry, &release->bos, head) {
+	list_क्रम_each_entry(entry, &release->bos, head) अणु
 		bo = entry->bo;
 
 		dma_resv_add_shared_fence(bo->base.resv, &release->base);
-		ttm_bo_move_to_lru_tail_unlocked(bo);
+		tपंचांग_bo_move_to_lru_tail_unlocked(bo);
 		dma_resv_unlock(bo->base.resv);
-	}
+	पूर्ण
 	ww_acquire_fini(&release->ticket);
-}
+पूर्ण
 

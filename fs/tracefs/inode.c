@@ -1,219 +1,220 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  inode.c - part of tracefs, a pseudo file system for activating tracing
+ *  inode.c - part of tracefs, a pseuकरो file प्रणाली क्रम activating tracing
  *
- * Based on debugfs by: Greg Kroah-Hartman <greg@kroah.com>
+ * Based on debugfs by: Greg Kroah-Harपंचांगan <greg@kroah.com>
  *
  *  Copyright (C) 2014 Red Hat Inc, author: Steven Rostedt <srostedt@redhat.com>
  *
- * tracefs is the file system that is used by the tracing infrastructure.
+ * tracefs is the file प्रणाली that is used by the tracing infraकाष्ठाure.
  */
 
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/mount.h>
-#include <linux/kobject.h>
-#include <linux/namei.h>
-#include <linux/tracefs.h>
-#include <linux/fsnotify.h>
-#include <linux/security.h>
-#include <linux/seq_file.h>
-#include <linux/parser.h>
-#include <linux/magic.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/tracefs.h>
+#समावेश <linux/fsnotअगरy.h>
+#समावेश <linux/security.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/parser.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/slab.h>
 
-#define TRACEFS_DEFAULT_MODE	0700
+#घोषणा TRACEFS_DEFAULT_MODE	0700
 
-static struct vfsmount *tracefs_mount;
-static int tracefs_mount_count;
-static bool tracefs_registered;
+अटल काष्ठा vfsmount *tracefs_mount;
+अटल पूर्णांक tracefs_mount_count;
+अटल bool tracefs_रेजिस्टरed;
 
-static ssize_t default_read_file(struct file *file, char __user *buf,
-				 size_t count, loff_t *ppos)
-{
-	return 0;
-}
+अटल sमाप_प्रकार शेष_पढ़ो_file(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस 0;
+पूर्ण
 
-static ssize_t default_write_file(struct file *file, const char __user *buf,
-				   size_t count, loff_t *ppos)
-{
-	return count;
-}
+अटल sमाप_प्रकार शेष_ग_लिखो_file(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस count;
+पूर्ण
 
-static const struct file_operations tracefs_file_operations = {
-	.read =		default_read_file,
-	.write =	default_write_file,
-	.open =		simple_open,
+अटल स्थिर काष्ठा file_operations tracefs_file_operations = अणु
+	.पढ़ो =		शेष_पढ़ो_file,
+	.ग_लिखो =	शेष_ग_लिखो_file,
+	.खोलो =		simple_खोलो,
 	.llseek =	noop_llseek,
-};
+पूर्ण;
 
-static struct tracefs_dir_ops {
-	int (*mkdir)(const char *name);
-	int (*rmdir)(const char *name);
-} tracefs_ops __ro_after_init;
+अटल काष्ठा tracefs_dir_ops अणु
+	पूर्णांक (*सूची_गढ़ो)(स्थिर अक्षर *name);
+	पूर्णांक (*सूची_हटाओ)(स्थिर अक्षर *name);
+पूर्ण tracefs_ops __ro_after_init;
 
-static char *get_dname(struct dentry *dentry)
-{
-	const char *dname;
-	char *name;
-	int len = dentry->d_name.len;
+अटल अक्षर *get_dname(काष्ठा dentry *dentry)
+अणु
+	स्थिर अक्षर *dname;
+	अक्षर *name;
+	पूर्णांक len = dentry->d_name.len;
 
 	dname = dentry->d_name.name;
-	name = kmalloc(len + 1, GFP_KERNEL);
-	if (!name)
-		return NULL;
-	memcpy(name, dname, len);
+	name = kदो_स्मृति(len + 1, GFP_KERNEL);
+	अगर (!name)
+		वापस शून्य;
+	स_नकल(name, dname, len);
 	name[len] = 0;
-	return name;
-}
+	वापस name;
+पूर्ण
 
-static int tracefs_syscall_mkdir(struct user_namespace *mnt_userns,
-				 struct inode *inode, struct dentry *dentry,
+अटल पूर्णांक tracefs_syscall_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns,
+				 काष्ठा inode *inode, काष्ठा dentry *dentry,
 				 umode_t mode)
-{
-	char *name;
-	int ret;
+अणु
+	अक्षर *name;
+	पूर्णांक ret;
 
 	name = get_dname(dentry);
-	if (!name)
-		return -ENOMEM;
+	अगर (!name)
+		वापस -ENOMEM;
 
 	/*
-	 * The mkdir call can call the generic functions that create
-	 * the files within the tracefs system. It is up to the individual
-	 * mkdir routine to handle races.
+	 * The सूची_गढ़ो call can call the generic functions that create
+	 * the files within the tracefs प्रणाली. It is up to the inभागidual
+	 * सूची_गढ़ो routine to handle races.
 	 */
 	inode_unlock(inode);
-	ret = tracefs_ops.mkdir(name);
+	ret = tracefs_ops.सूची_गढ़ो(name);
 	inode_lock(inode);
 
-	kfree(name);
+	kमुक्त(name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tracefs_syscall_rmdir(struct inode *inode, struct dentry *dentry)
-{
-	char *name;
-	int ret;
+अटल पूर्णांक tracefs_syscall_सूची_हटाओ(काष्ठा inode *inode, काष्ठा dentry *dentry)
+अणु
+	अक्षर *name;
+	पूर्णांक ret;
 
 	name = get_dname(dentry);
-	if (!name)
-		return -ENOMEM;
+	अगर (!name)
+		वापस -ENOMEM;
 
 	/*
-	 * The rmdir call can call the generic functions that create
-	 * the files within the tracefs system. It is up to the individual
-	 * rmdir routine to handle races.
-	 * This time we need to unlock not only the parent (inode) but
+	 * The सूची_हटाओ call can call the generic functions that create
+	 * the files within the tracefs प्रणाली. It is up to the inभागidual
+	 * सूची_हटाओ routine to handle races.
+	 * This समय we need to unlock not only the parent (inode) but
 	 * also the directory that is being deleted.
 	 */
 	inode_unlock(inode);
 	inode_unlock(dentry->d_inode);
 
-	ret = tracefs_ops.rmdir(name);
+	ret = tracefs_ops.सूची_हटाओ(name);
 
 	inode_lock_nested(inode, I_MUTEX_PARENT);
 	inode_lock(dentry->d_inode);
 
-	kfree(name);
+	kमुक्त(name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct inode_operations tracefs_dir_inode_operations = {
+अटल स्थिर काष्ठा inode_operations tracefs_dir_inode_operations = अणु
 	.lookup		= simple_lookup,
-	.mkdir		= tracefs_syscall_mkdir,
-	.rmdir		= tracefs_syscall_rmdir,
-};
+	.सूची_गढ़ो		= tracefs_syscall_सूची_गढ़ो,
+	.सूची_हटाओ		= tracefs_syscall_सूची_हटाओ,
+पूर्ण;
 
-static struct inode *tracefs_get_inode(struct super_block *sb)
-{
-	struct inode *inode = new_inode(sb);
-	if (inode) {
+अटल काष्ठा inode *tracefs_get_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा inode *inode = new_inode(sb);
+	अगर (inode) अणु
 		inode->i_ino = get_next_ino();
-		inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
-	}
-	return inode;
-}
+		inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	पूर्ण
+	वापस inode;
+पूर्ण
 
-struct tracefs_mount_opts {
+काष्ठा tracefs_mount_opts अणु
 	kuid_t uid;
 	kgid_t gid;
 	umode_t mode;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	Opt_uid,
 	Opt_gid,
 	Opt_mode,
 	Opt_err
-};
+पूर्ण;
 
-static const match_table_t tokens = {
-	{Opt_uid, "uid=%u"},
-	{Opt_gid, "gid=%u"},
-	{Opt_mode, "mode=%o"},
-	{Opt_err, NULL}
-};
+अटल स्थिर match_table_t tokens = अणु
+	अणुOpt_uid, "uid=%u"पूर्ण,
+	अणुOpt_gid, "gid=%u"पूर्ण,
+	अणुOpt_mode, "mode=%o"पूर्ण,
+	अणुOpt_err, शून्यपूर्ण
+पूर्ण;
 
-struct tracefs_fs_info {
-	struct tracefs_mount_opts mount_opts;
-};
+काष्ठा tracefs_fs_info अणु
+	काष्ठा tracefs_mount_opts mount_opts;
+पूर्ण;
 
-static int tracefs_parse_options(char *data, struct tracefs_mount_opts *opts)
-{
+अटल पूर्णांक tracefs_parse_options(अक्षर *data, काष्ठा tracefs_mount_opts *opts)
+अणु
 	substring_t args[MAX_OPT_ARGS];
-	int option;
-	int token;
+	पूर्णांक option;
+	पूर्णांक token;
 	kuid_t uid;
 	kgid_t gid;
-	char *p;
+	अक्षर *p;
 
 	opts->mode = TRACEFS_DEFAULT_MODE;
 
-	while ((p = strsep(&data, ",")) != NULL) {
-		if (!*p)
-			continue;
+	जबतक ((p = strsep(&data, ",")) != शून्य) अणु
+		अगर (!*p)
+			जारी;
 
 		token = match_token(p, tokens, args);
-		switch (token) {
-		case Opt_uid:
-			if (match_int(&args[0], &option))
-				return -EINVAL;
+		चयन (token) अणु
+		हाल Opt_uid:
+			अगर (match_पूर्णांक(&args[0], &option))
+				वापस -EINVAL;
 			uid = make_kuid(current_user_ns(), option);
-			if (!uid_valid(uid))
-				return -EINVAL;
+			अगर (!uid_valid(uid))
+				वापस -EINVAL;
 			opts->uid = uid;
-			break;
-		case Opt_gid:
-			if (match_int(&args[0], &option))
-				return -EINVAL;
+			अवरोध;
+		हाल Opt_gid:
+			अगर (match_पूर्णांक(&args[0], &option))
+				वापस -EINVAL;
 			gid = make_kgid(current_user_ns(), option);
-			if (!gid_valid(gid))
-				return -EINVAL;
+			अगर (!gid_valid(gid))
+				वापस -EINVAL;
 			opts->gid = gid;
-			break;
-		case Opt_mode:
-			if (match_octal(&args[0], &option))
-				return -EINVAL;
+			अवरोध;
+		हाल Opt_mode:
+			अगर (match_octal(&args[0], &option))
+				वापस -EINVAL;
 			opts->mode = option & S_IALLUGO;
-			break;
+			अवरोध;
 		/*
 		 * We might like to report bad mount options here;
 		 * but traditionally tracefs has ignored all mount options
 		 */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tracefs_apply_options(struct super_block *sb)
-{
-	struct tracefs_fs_info *fsi = sb->s_fs_info;
-	struct inode *inode = sb->s_root->d_inode;
-	struct tracefs_mount_opts *opts = &fsi->mount_opts;
+अटल पूर्णांक tracefs_apply_options(काष्ठा super_block *sb)
+अणु
+	काष्ठा tracefs_fs_info *fsi = sb->s_fs_info;
+	काष्ठा inode *inode = sb->s_root->d_inode;
+	काष्ठा tracefs_mount_opts *opts = &fsi->mount_opts;
 
 	inode->i_mode &= ~S_IALLUGO;
 	inode->i_mode |= opts->mode;
@@ -221,332 +222,332 @@ static int tracefs_apply_options(struct super_block *sb)
 	inode->i_uid = opts->uid;
 	inode->i_gid = opts->gid;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tracefs_remount(struct super_block *sb, int *flags, char *data)
-{
-	int err;
-	struct tracefs_fs_info *fsi = sb->s_fs_info;
+अटल पूर्णांक tracefs_remount(काष्ठा super_block *sb, पूर्णांक *flags, अक्षर *data)
+अणु
+	पूर्णांक err;
+	काष्ठा tracefs_fs_info *fsi = sb->s_fs_info;
 
-	sync_filesystem(sb);
+	sync_fileप्रणाली(sb);
 	err = tracefs_parse_options(data, &fsi->mount_opts);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
 	tracefs_apply_options(sb);
 
 fail:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tracefs_show_options(struct seq_file *m, struct dentry *root)
-{
-	struct tracefs_fs_info *fsi = root->d_sb->s_fs_info;
-	struct tracefs_mount_opts *opts = &fsi->mount_opts;
+अटल पूर्णांक tracefs_show_options(काष्ठा seq_file *m, काष्ठा dentry *root)
+अणु
+	काष्ठा tracefs_fs_info *fsi = root->d_sb->s_fs_info;
+	काष्ठा tracefs_mount_opts *opts = &fsi->mount_opts;
 
-	if (!uid_eq(opts->uid, GLOBAL_ROOT_UID))
-		seq_printf(m, ",uid=%u",
+	अगर (!uid_eq(opts->uid, GLOBAL_ROOT_UID))
+		seq_म_लिखो(m, ",uid=%u",
 			   from_kuid_munged(&init_user_ns, opts->uid));
-	if (!gid_eq(opts->gid, GLOBAL_ROOT_GID))
-		seq_printf(m, ",gid=%u",
+	अगर (!gid_eq(opts->gid, GLOBAL_ROOT_GID))
+		seq_म_लिखो(m, ",gid=%u",
 			   from_kgid_munged(&init_user_ns, opts->gid));
-	if (opts->mode != TRACEFS_DEFAULT_MODE)
-		seq_printf(m, ",mode=%o", opts->mode);
+	अगर (opts->mode != TRACEFS_DEFAULT_MODE)
+		seq_म_लिखो(m, ",mode=%o", opts->mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct super_operations tracefs_super_operations = {
+अटल स्थिर काष्ठा super_operations tracefs_super_operations = अणु
 	.statfs		= simple_statfs,
 	.remount_fs	= tracefs_remount,
 	.show_options	= tracefs_show_options,
-};
+पूर्ण;
 
-static int trace_fill_super(struct super_block *sb, void *data, int silent)
-{
-	static const struct tree_descr trace_files[] = {{""}};
-	struct tracefs_fs_info *fsi;
-	int err;
+अटल पूर्णांक trace_fill_super(काष्ठा super_block *sb, व्योम *data, पूर्णांक silent)
+अणु
+	अटल स्थिर काष्ठा tree_descr trace_files[] = अणुअणु""पूर्णपूर्ण;
+	काष्ठा tracefs_fs_info *fsi;
+	पूर्णांक err;
 
-	fsi = kzalloc(sizeof(struct tracefs_fs_info), GFP_KERNEL);
+	fsi = kzalloc(माप(काष्ठा tracefs_fs_info), GFP_KERNEL);
 	sb->s_fs_info = fsi;
-	if (!fsi) {
+	अगर (!fsi) अणु
 		err = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	err = tracefs_parse_options(data, &fsi->mount_opts);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
 	err  =  simple_fill_super(sb, TRACEFS_MAGIC, trace_files);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
 	sb->s_op = &tracefs_super_operations;
 
 	tracefs_apply_options(sb);
 
-	return 0;
+	वापस 0;
 
 fail:
-	kfree(fsi);
-	sb->s_fs_info = NULL;
-	return err;
-}
+	kमुक्त(fsi);
+	sb->s_fs_info = शून्य;
+	वापस err;
+पूर्ण
 
-static struct dentry *trace_mount(struct file_system_type *fs_type,
-			int flags, const char *dev_name,
-			void *data)
-{
-	return mount_single(fs_type, flags, data, trace_fill_super);
-}
+अटल काष्ठा dentry *trace_mount(काष्ठा file_प्रणाली_type *fs_type,
+			पूर्णांक flags, स्थिर अक्षर *dev_name,
+			व्योम *data)
+अणु
+	वापस mount_single(fs_type, flags, data, trace_fill_super);
+पूर्ण
 
-static struct file_system_type trace_fs_type = {
+अटल काष्ठा file_प्रणाली_type trace_fs_type = अणु
 	.owner =	THIS_MODULE,
 	.name =		"tracefs",
 	.mount =	trace_mount,
-	.kill_sb =	kill_litter_super,
-};
+	.समाप्त_sb =	समाप्त_litter_super,
+पूर्ण;
 MODULE_ALIAS_FS("tracefs");
 
-static struct dentry *start_creating(const char *name, struct dentry *parent)
-{
-	struct dentry *dentry;
-	int error;
+अटल काष्ठा dentry *start_creating(स्थिर अक्षर *name, काष्ठा dentry *parent)
+अणु
+	काष्ठा dentry *dentry;
+	पूर्णांक error;
 
 	pr_debug("tracefs: creating file '%s'\n",name);
 
 	error = simple_pin_fs(&trace_fs_type, &tracefs_mount,
 			      &tracefs_mount_count);
-	if (error)
-		return ERR_PTR(error);
+	अगर (error)
+		वापस ERR_PTR(error);
 
-	/* If the parent is not specified, we create it in the root.
-	 * We need the root dentry to do this, which is in the super
-	 * block. A pointer to that is in the struct vfsmount that we
+	/* If the parent is not specअगरied, we create it in the root.
+	 * We need the root dentry to करो this, which is in the super
+	 * block. A poपूर्णांकer to that is in the काष्ठा vfsmount that we
 	 * have around.
 	 */
-	if (!parent)
+	अगर (!parent)
 		parent = tracefs_mount->mnt_root;
 
 	inode_lock(parent->d_inode);
-	if (unlikely(IS_DEADDIR(parent->d_inode)))
+	अगर (unlikely(IS_DEADसूची(parent->d_inode)))
 		dentry = ERR_PTR(-ENOENT);
-	else
-		dentry = lookup_one_len(name, parent, strlen(name));
-	if (!IS_ERR(dentry) && dentry->d_inode) {
+	अन्यथा
+		dentry = lookup_one_len(name, parent, म_माप(name));
+	अगर (!IS_ERR(dentry) && dentry->d_inode) अणु
 		dput(dentry);
 		dentry = ERR_PTR(-EEXIST);
-	}
+	पूर्ण
 
-	if (IS_ERR(dentry)) {
+	अगर (IS_ERR(dentry)) अणु
 		inode_unlock(parent->d_inode);
 		simple_release_fs(&tracefs_mount, &tracefs_mount_count);
-	}
+	पूर्ण
 
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
-static struct dentry *failed_creating(struct dentry *dentry)
-{
+अटल काष्ठा dentry *failed_creating(काष्ठा dentry *dentry)
+अणु
 	inode_unlock(dentry->d_parent->d_inode);
 	dput(dentry);
 	simple_release_fs(&tracefs_mount, &tracefs_mount_count);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct dentry *end_creating(struct dentry *dentry)
-{
+अटल काष्ठा dentry *end_creating(काष्ठा dentry *dentry)
+अणु
 	inode_unlock(dentry->d_parent->d_inode);
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
 /**
- * tracefs_create_file - create a file in the tracefs filesystem
- * @name: a pointer to a string containing the name of the file to create.
+ * tracefs_create_file - create a file in the tracefs fileप्रणाली
+ * @name: a poपूर्णांकer to a string containing the name of the file to create.
  * @mode: the permission that the file should have.
- * @parent: a pointer to the parent dentry for this file.  This should be a
- *          directory dentry if set.  If this parameter is NULL, then the
- *          file will be created in the root of the tracefs filesystem.
- * @data: a pointer to something that the caller will want to get to later
- *        on.  The inode.i_private pointer will point to this value on
- *        the open() call.
- * @fops: a pointer to a struct file_operations that should be used for
+ * @parent: a poपूर्णांकer to the parent dentry क्रम this file.  This should be a
+ *          directory dentry अगर set.  If this parameter is शून्य, then the
+ *          file will be created in the root of the tracefs fileप्रणाली.
+ * @data: a poपूर्णांकer to something that the caller will want to get to later
+ *        on.  The inode.i_निजी poपूर्णांकer will poपूर्णांक to this value on
+ *        the खोलो() call.
+ * @fops: a poपूर्णांकer to a काष्ठा file_operations that should be used क्रम
  *        this file.
  *
- * This is the basic "create a file" function for tracefs.  It allows for a
- * wide range of flexibility in creating a file, or a directory (if you want
+ * This is the basic "create a file" function क्रम tracefs.  It allows क्रम a
+ * wide range of flexibility in creating a file, or a directory (अगर you want
  * to create a directory, the tracefs_create_dir() function is
  * recommended to be used instead.)
  *
- * This function will return a pointer to a dentry if it succeeds.  This
- * pointer must be passed to the tracefs_remove() function when the file is
- * to be removed (no automatic cleanup happens if your module is unloaded,
- * you are responsible here.)  If an error occurs, %NULL will be returned.
+ * This function will वापस a poपूर्णांकer to a dentry अगर it succeeds.  This
+ * poपूर्णांकer must be passed to the tracefs_हटाओ() function when the file is
+ * to be हटाओd (no स्वतःmatic cleanup happens अगर your module is unloaded,
+ * you are responsible here.)  If an error occurs, %शून्य will be वापसed.
  *
  * If tracefs is not enabled in the kernel, the value -%ENODEV will be
- * returned.
+ * वापसed.
  */
-struct dentry *tracefs_create_file(const char *name, umode_t mode,
-				   struct dentry *parent, void *data,
-				   const struct file_operations *fops)
-{
-	struct dentry *dentry;
-	struct inode *inode;
+काष्ठा dentry *tracefs_create_file(स्थिर अक्षर *name, umode_t mode,
+				   काष्ठा dentry *parent, व्योम *data,
+				   स्थिर काष्ठा file_operations *fops)
+अणु
+	काष्ठा dentry *dentry;
+	काष्ठा inode *inode;
 
-	if (security_locked_down(LOCKDOWN_TRACEFS))
-		return NULL;
+	अगर (security_locked_करोwn(LOCKDOWN_TRACEFS))
+		वापस शून्य;
 
-	if (!(mode & S_IFMT))
+	अगर (!(mode & S_IFMT))
 		mode |= S_IFREG;
 	BUG_ON(!S_ISREG(mode));
 	dentry = start_creating(name, parent);
 
-	if (IS_ERR(dentry))
-		return NULL;
+	अगर (IS_ERR(dentry))
+		वापस शून्य;
 
 	inode = tracefs_get_inode(dentry->d_sb);
-	if (unlikely(!inode))
-		return failed_creating(dentry);
+	अगर (unlikely(!inode))
+		वापस failed_creating(dentry);
 
 	inode->i_mode = mode;
 	inode->i_fop = fops ? fops : &tracefs_file_operations;
-	inode->i_private = data;
+	inode->i_निजी = data;
 	d_instantiate(dentry, inode);
-	fsnotify_create(dentry->d_parent->d_inode, dentry);
-	return end_creating(dentry);
-}
+	fsnotअगरy_create(dentry->d_parent->d_inode, dentry);
+	वापस end_creating(dentry);
+पूर्ण
 
-static struct dentry *__create_dir(const char *name, struct dentry *parent,
-				   const struct inode_operations *ops)
-{
-	struct dentry *dentry = start_creating(name, parent);
-	struct inode *inode;
+अटल काष्ठा dentry *__create_dir(स्थिर अक्षर *name, काष्ठा dentry *parent,
+				   स्थिर काष्ठा inode_operations *ops)
+अणु
+	काष्ठा dentry *dentry = start_creating(name, parent);
+	काष्ठा inode *inode;
 
-	if (IS_ERR(dentry))
-		return NULL;
+	अगर (IS_ERR(dentry))
+		वापस शून्य;
 
 	inode = tracefs_get_inode(dentry->d_sb);
-	if (unlikely(!inode))
-		return failed_creating(dentry);
+	अगर (unlikely(!inode))
+		वापस failed_creating(dentry);
 
-	inode->i_mode = S_IFDIR | S_IRWXU | S_IRUGO | S_IXUGO;
+	inode->i_mode = S_IFसूची | S_IRWXU | S_IRUGO | S_IXUGO;
 	inode->i_op = ops;
 	inode->i_fop = &simple_dir_operations;
 
-	/* directory inodes start off with i_nlink == 2 (for "." entry) */
+	/* directory inodes start off with i_nlink == 2 (क्रम "." entry) */
 	inc_nlink(inode);
 	d_instantiate(dentry, inode);
 	inc_nlink(dentry->d_parent->d_inode);
-	fsnotify_mkdir(dentry->d_parent->d_inode, dentry);
-	return end_creating(dentry);
-}
+	fsnotअगरy_सूची_गढ़ो(dentry->d_parent->d_inode, dentry);
+	वापस end_creating(dentry);
+पूर्ण
 
 /**
- * tracefs_create_dir - create a directory in the tracefs filesystem
- * @name: a pointer to a string containing the name of the directory to
+ * tracefs_create_dir - create a directory in the tracefs fileप्रणाली
+ * @name: a poपूर्णांकer to a string containing the name of the directory to
  *        create.
- * @parent: a pointer to the parent dentry for this file.  This should be a
- *          directory dentry if set.  If this parameter is NULL, then the
- *          directory will be created in the root of the tracefs filesystem.
+ * @parent: a poपूर्णांकer to the parent dentry क्रम this file.  This should be a
+ *          directory dentry अगर set.  If this parameter is शून्य, then the
+ *          directory will be created in the root of the tracefs fileप्रणाली.
  *
  * This function creates a directory in tracefs with the given name.
  *
- * This function will return a pointer to a dentry if it succeeds.  This
- * pointer must be passed to the tracefs_remove() function when the file is
- * to be removed. If an error occurs, %NULL will be returned.
+ * This function will वापस a poपूर्णांकer to a dentry अगर it succeeds.  This
+ * poपूर्णांकer must be passed to the tracefs_हटाओ() function when the file is
+ * to be हटाओd. If an error occurs, %शून्य will be वापसed.
  *
  * If tracing is not enabled in the kernel, the value -%ENODEV will be
- * returned.
+ * वापसed.
  */
-struct dentry *tracefs_create_dir(const char *name, struct dentry *parent)
-{
-	return __create_dir(name, parent, &simple_dir_inode_operations);
-}
+काष्ठा dentry *tracefs_create_dir(स्थिर अक्षर *name, काष्ठा dentry *parent)
+अणु
+	वापस __create_dir(name, parent, &simple_dir_inode_operations);
+पूर्ण
 
 /**
  * tracefs_create_instance_dir - create the tracing instances directory
  * @name: The name of the instances directory to create
  * @parent: The parent directory that the instances directory will exist
- * @mkdir: The function to call when a mkdir is performed.
- * @rmdir: The function to call when a rmdir is performed.
+ * @सूची_गढ़ो: The function to call when a सूची_गढ़ो is perक्रमmed.
+ * @सूची_हटाओ: The function to call when a सूची_हटाओ is perक्रमmed.
  *
  * Only one instances directory is allowed.
  *
- * The instances directory is special as it allows for mkdir and rmdir to
- * to be done by userspace. When a mkdir or rmdir is performed, the inode
- * locks are released and the methods passed in (@mkdir and @rmdir) are
+ * The instances directory is special as it allows क्रम सूची_गढ़ो and सूची_हटाओ to
+ * to be करोne by userspace. When a सूची_गढ़ो or सूची_हटाओ is perक्रमmed, the inode
+ * locks are released and the methods passed in (@सूची_गढ़ो and @सूची_हटाओ) are
  * called without locks and with the name of the directory being created
  * within the instances directory.
  *
  * Returns the dentry of the instances directory.
  */
-__init struct dentry *tracefs_create_instance_dir(const char *name,
-					  struct dentry *parent,
-					  int (*mkdir)(const char *name),
-					  int (*rmdir)(const char *name))
-{
-	struct dentry *dentry;
+__init काष्ठा dentry *tracefs_create_instance_dir(स्थिर अक्षर *name,
+					  काष्ठा dentry *parent,
+					  पूर्णांक (*सूची_गढ़ो)(स्थिर अक्षर *name),
+					  पूर्णांक (*सूची_हटाओ)(स्थिर अक्षर *name))
+अणु
+	काष्ठा dentry *dentry;
 
 	/* Only allow one instance of the instances directory. */
-	if (WARN_ON(tracefs_ops.mkdir || tracefs_ops.rmdir))
-		return NULL;
+	अगर (WARN_ON(tracefs_ops.सूची_गढ़ो || tracefs_ops.सूची_हटाओ))
+		वापस शून्य;
 
 	dentry = __create_dir(name, parent, &tracefs_dir_inode_operations);
-	if (!dentry)
-		return NULL;
+	अगर (!dentry)
+		वापस शून्य;
 
-	tracefs_ops.mkdir = mkdir;
-	tracefs_ops.rmdir = rmdir;
+	tracefs_ops.सूची_गढ़ो = सूची_गढ़ो;
+	tracefs_ops.सूची_हटाओ = सूची_हटाओ;
 
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
-static void remove_one(struct dentry *victim)
-{
+अटल व्योम हटाओ_one(काष्ठा dentry *victim)
+अणु
 	simple_release_fs(&tracefs_mount, &tracefs_mount_count);
-}
+पूर्ण
 
 /**
- * tracefs_remove - recursively removes a directory
- * @dentry: a pointer to a the dentry of the directory to be removed.
+ * tracefs_हटाओ - recursively हटाओs a directory
+ * @dentry: a poपूर्णांकer to a the dentry of the directory to be हटाओd.
  *
- * This function recursively removes a directory tree in tracefs that
+ * This function recursively हटाओs a directory tree in tracefs that
  * was previously created with a call to another tracefs function
  * (like tracefs_create_file() or variants thereof.)
  */
-void tracefs_remove(struct dentry *dentry)
-{
-	if (IS_ERR_OR_NULL(dentry))
-		return;
+व्योम tracefs_हटाओ(काष्ठा dentry *dentry)
+अणु
+	अगर (IS_ERR_OR_शून्य(dentry))
+		वापस;
 
 	simple_pin_fs(&trace_fs_type, &tracefs_mount, &tracefs_mount_count);
-	simple_recursive_removal(dentry, remove_one);
+	simple_recursive_removal(dentry, हटाओ_one);
 	simple_release_fs(&tracefs_mount, &tracefs_mount_count);
-}
+पूर्ण
 
 /**
- * tracefs_initialized - Tells whether tracefs has been registered
+ * tracefs_initialized - Tells whether tracefs has been रेजिस्टरed
  */
-bool tracefs_initialized(void)
-{
-	return tracefs_registered;
-}
+bool tracefs_initialized(व्योम)
+अणु
+	वापस tracefs_रेजिस्टरed;
+पूर्ण
 
-static int __init tracefs_init(void)
-{
-	int retval;
+अटल पूर्णांक __init tracefs_init(व्योम)
+अणु
+	पूर्णांक retval;
 
-	retval = sysfs_create_mount_point(kernel_kobj, "tracing");
-	if (retval)
-		return -EINVAL;
+	retval = sysfs_create_mount_poपूर्णांक(kernel_kobj, "tracing");
+	अगर (retval)
+		वापस -EINVAL;
 
-	retval = register_filesystem(&trace_fs_type);
-	if (!retval)
-		tracefs_registered = true;
+	retval = रेजिस्टर_fileप्रणाली(&trace_fs_type);
+	अगर (!retval)
+		tracefs_रेजिस्टरed = true;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 core_initcall(tracefs_init);

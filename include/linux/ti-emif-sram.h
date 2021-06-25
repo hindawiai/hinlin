@@ -1,147 +1,148 @@
+<शैली गुरु>
 /*
  * TI AM33XX EMIF Routines
  *
  * Copyright (C) 2016-2017 Texas Instruments Inc.
  *	Dave Gerlach
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
-#ifndef __LINUX_TI_EMIF_H
-#define __LINUX_TI_EMIF_H
+#अगर_अघोषित __LINUX_TI_EMIF_H
+#घोषणा __LINUX_TI_EMIF_H
 
-#include <linux/kbuild.h>
-#include <linux/types.h>
-#ifndef __ASSEMBLY__
+#समावेश <linux/kbuild.h>
+#समावेश <linux/types.h>
+#अगर_अघोषित __ASSEMBLY__
 
-struct emif_regs_amx3 {
-	u32 emif_sdcfg_val;
-	u32 emif_timing1_val;
-	u32 emif_timing2_val;
-	u32 emif_timing3_val;
-	u32 emif_ref_ctrl_val;
-	u32 emif_zqcfg_val;
-	u32 emif_pmcr_val;
-	u32 emif_pmcr_shdw_val;
-	u32 emif_rd_wr_level_ramp_ctrl;
-	u32 emif_rd_wr_exec_thresh;
-	u32 emif_cos_config;
-	u32 emif_priority_to_cos_mapping;
-	u32 emif_connect_id_serv_1_map;
-	u32 emif_connect_id_serv_2_map;
-	u32 emif_ocp_config_val;
-	u32 emif_lpddr2_nvm_tim;
-	u32 emif_lpddr2_nvm_tim_shdw;
-	u32 emif_dll_calib_ctrl_val;
-	u32 emif_dll_calib_ctrl_val_shdw;
-	u32 emif_ddr_phy_ctlr_1;
-	u32 emif_ext_phy_ctrl_vals[120];
-};
+काष्ठा emअगर_regs_amx3 अणु
+	u32 emअगर_sdcfg_val;
+	u32 emअगर_timing1_val;
+	u32 emअगर_timing2_val;
+	u32 emअगर_timing3_val;
+	u32 emअगर_ref_ctrl_val;
+	u32 emअगर_zqcfg_val;
+	u32 emअगर_pmcr_val;
+	u32 emअगर_pmcr_shdw_val;
+	u32 emअगर_rd_wr_level_ramp_ctrl;
+	u32 emअगर_rd_wr_exec_thresh;
+	u32 emअगर_cos_config;
+	u32 emअगर_priority_to_cos_mapping;
+	u32 emअगर_connect_id_serv_1_map;
+	u32 emअगर_connect_id_serv_2_map;
+	u32 emअगर_ocp_config_val;
+	u32 emअगर_lpddr2_nvm_tim;
+	u32 emअगर_lpddr2_nvm_tim_shdw;
+	u32 emअगर_dll_calib_ctrl_val;
+	u32 emअगर_dll_calib_ctrl_val_shdw;
+	u32 emअगर_ddr_phy_ctlr_1;
+	u32 emअगर_ext_phy_ctrl_vals[120];
+पूर्ण;
 
-struct ti_emif_pm_data {
-	void __iomem *ti_emif_base_addr_virt;
-	phys_addr_t ti_emif_base_addr_phys;
-	unsigned long ti_emif_sram_config;
-	struct emif_regs_amx3 *regs_virt;
+काष्ठा ti_emअगर_pm_data अणु
+	व्योम __iomem *ti_emअगर_base_addr_virt;
+	phys_addr_t ti_emअगर_base_addr_phys;
+	अचिन्हित दीर्घ ti_emअगर_sram_config;
+	काष्ठा emअगर_regs_amx3 *regs_virt;
 	phys_addr_t regs_phys;
-} __packed __aligned(8);
+पूर्ण __packed __aligned(8);
 
-struct ti_emif_pm_functions {
+काष्ठा ti_emअगर_pm_functions अणु
 	u32 save_context;
 	u32 restore_context;
 	u32 run_hw_leveling;
 	u32 enter_sr;
-	u32 exit_sr;
-	u32 abort_sr;
-} __packed __aligned(8);
+	u32 निकास_sr;
+	u32 पात_sr;
+पूर्ण __packed __aligned(8);
 
-static inline void ti_emif_asm_offsets(void)
-{
+अटल अंतरभूत व्योम ti_emअगर_यंत्र_offsets(व्योम)
+अणु
 	DEFINE(EMIF_SDCFG_VAL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_sdcfg_val));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_sdcfg_val));
 	DEFINE(EMIF_TIMING1_VAL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_timing1_val));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_timing1_val));
 	DEFINE(EMIF_TIMING2_VAL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_timing2_val));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_timing2_val));
 	DEFINE(EMIF_TIMING3_VAL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_timing3_val));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_timing3_val));
 	DEFINE(EMIF_REF_CTRL_VAL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_ref_ctrl_val));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_ref_ctrl_val));
 	DEFINE(EMIF_ZQCFG_VAL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_zqcfg_val));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_zqcfg_val));
 	DEFINE(EMIF_PMCR_VAL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_pmcr_val));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_pmcr_val));
 	DEFINE(EMIF_PMCR_SHDW_VAL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_pmcr_shdw_val));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_pmcr_shdw_val));
 	DEFINE(EMIF_RD_WR_LEVEL_RAMP_CTRL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_rd_wr_level_ramp_ctrl));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_rd_wr_level_ramp_ctrl));
 	DEFINE(EMIF_RD_WR_EXEC_THRESH_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_rd_wr_exec_thresh));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_rd_wr_exec_thresh));
 	DEFINE(EMIF_COS_CONFIG_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_cos_config));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_cos_config));
 	DEFINE(EMIF_PRIORITY_TO_COS_MAPPING_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_priority_to_cos_mapping));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_priority_to_cos_mapping));
 	DEFINE(EMIF_CONNECT_ID_SERV_1_MAP_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_connect_id_serv_1_map));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_connect_id_serv_1_map));
 	DEFINE(EMIF_CONNECT_ID_SERV_2_MAP_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_connect_id_serv_2_map));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_connect_id_serv_2_map));
 	DEFINE(EMIF_OCP_CONFIG_VAL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_ocp_config_val));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_ocp_config_val));
 	DEFINE(EMIF_LPDDR2_NVM_TIM_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_lpddr2_nvm_tim));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_lpddr2_nvm_tim));
 	DEFINE(EMIF_LPDDR2_NVM_TIM_SHDW_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_lpddr2_nvm_tim_shdw));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_lpddr2_nvm_tim_shdw));
 	DEFINE(EMIF_DLL_CALIB_CTRL_VAL_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_dll_calib_ctrl_val));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_dll_calib_ctrl_val));
 	DEFINE(EMIF_DLL_CALIB_CTRL_VAL_SHDW_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_dll_calib_ctrl_val_shdw));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_dll_calib_ctrl_val_shdw));
 	DEFINE(EMIF_DDR_PHY_CTLR_1_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_ddr_phy_ctlr_1));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_ddr_phy_ctlr_1));
 	DEFINE(EMIF_EXT_PHY_CTRL_VALS_OFFSET,
-	       offsetof(struct emif_regs_amx3, emif_ext_phy_ctrl_vals));
-	DEFINE(EMIF_REGS_AMX3_SIZE, sizeof(struct emif_regs_amx3));
+	       दुरत्व(काष्ठा emअगर_regs_amx3, emअगर_ext_phy_ctrl_vals));
+	DEFINE(EMIF_REGS_AMX3_SIZE, माप(काष्ठा emअगर_regs_amx3));
 
 	BLANK();
 
 	DEFINE(EMIF_PM_BASE_ADDR_VIRT_OFFSET,
-	       offsetof(struct ti_emif_pm_data, ti_emif_base_addr_virt));
+	       दुरत्व(काष्ठा ti_emअगर_pm_data, ti_emअगर_base_addr_virt));
 	DEFINE(EMIF_PM_BASE_ADDR_PHYS_OFFSET,
-	       offsetof(struct ti_emif_pm_data, ti_emif_base_addr_phys));
+	       दुरत्व(काष्ठा ti_emअगर_pm_data, ti_emअगर_base_addr_phys));
 	DEFINE(EMIF_PM_CONFIG_OFFSET,
-	       offsetof(struct ti_emif_pm_data, ti_emif_sram_config));
+	       दुरत्व(काष्ठा ti_emअगर_pm_data, ti_emअगर_sram_config));
 	DEFINE(EMIF_PM_REGS_VIRT_OFFSET,
-	       offsetof(struct ti_emif_pm_data, regs_virt));
+	       दुरत्व(काष्ठा ti_emअगर_pm_data, regs_virt));
 	DEFINE(EMIF_PM_REGS_PHYS_OFFSET,
-	       offsetof(struct ti_emif_pm_data, regs_phys));
-	DEFINE(EMIF_PM_DATA_SIZE, sizeof(struct ti_emif_pm_data));
+	       दुरत्व(काष्ठा ti_emअगर_pm_data, regs_phys));
+	DEFINE(EMIF_PM_DATA_SIZE, माप(काष्ठा ti_emअगर_pm_data));
 
 	BLANK();
 
 	DEFINE(EMIF_PM_SAVE_CONTEXT_OFFSET,
-	       offsetof(struct ti_emif_pm_functions, save_context));
+	       दुरत्व(काष्ठा ti_emअगर_pm_functions, save_context));
 	DEFINE(EMIF_PM_RESTORE_CONTEXT_OFFSET,
-	       offsetof(struct ti_emif_pm_functions, restore_context));
+	       दुरत्व(काष्ठा ti_emअगर_pm_functions, restore_context));
 	DEFINE(EMIF_PM_RUN_HW_LEVELING,
-	       offsetof(struct ti_emif_pm_functions, run_hw_leveling));
+	       दुरत्व(काष्ठा ti_emअगर_pm_functions, run_hw_leveling));
 	DEFINE(EMIF_PM_ENTER_SR_OFFSET,
-	       offsetof(struct ti_emif_pm_functions, enter_sr));
+	       दुरत्व(काष्ठा ti_emअगर_pm_functions, enter_sr));
 	DEFINE(EMIF_PM_EXIT_SR_OFFSET,
-	       offsetof(struct ti_emif_pm_functions, exit_sr));
+	       दुरत्व(काष्ठा ti_emअगर_pm_functions, निकास_sr));
 	DEFINE(EMIF_PM_ABORT_SR_OFFSET,
-	       offsetof(struct ti_emif_pm_functions, abort_sr));
-	DEFINE(EMIF_PM_FUNCTIONS_SIZE, sizeof(struct ti_emif_pm_functions));
-}
+	       दुरत्व(काष्ठा ti_emअगर_pm_functions, पात_sr));
+	DEFINE(EMIF_PM_FUNCTIONS_SIZE, माप(काष्ठा ti_emअगर_pm_functions));
+पूर्ण
 
-struct gen_pool;
+काष्ठा gen_pool;
 
-int ti_emif_copy_pm_function_table(struct gen_pool *sram_pool, void *dst);
-int ti_emif_get_mem_type(void);
+पूर्णांक ti_emअगर_copy_pm_function_table(काष्ठा gen_pool *sram_pool, व्योम *dst);
+पूर्णांक ti_emअगर_get_mem_type(व्योम);
 
-#endif
-#endif /* __LINUX_TI_EMIF_H */
+#पूर्ण_अगर
+#पूर्ण_अगर /* __LINUX_TI_EMIF_H */

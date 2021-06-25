@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_MODULE_H
-#define _ASM_X86_MODULE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_MODULE_H
+#घोषणा _ASM_X86_MODULE_H
 
-#include <asm-generic/module.h>
-#include <asm/orc_types.h>
+#समावेश <यंत्र-generic/module.h>
+#समावेश <यंत्र/orc_types.h>
 
-struct mod_arch_specific {
-#ifdef CONFIG_UNWINDER_ORC
-	unsigned int num_orcs;
-	int *orc_unwind_ip;
-	struct orc_entry *orc_unwind;
-#endif
-};
+काष्ठा mod_arch_specअगरic अणु
+#अगर_घोषित CONFIG_UNWINDER_ORC
+	अचिन्हित पूर्णांक num_orcs;
+	पूर्णांक *orc_unwind_ip;
+	काष्ठा orc_entry *orc_unwind;
+#पूर्ण_अगर
+पूर्ण;
 
-#endif /* _ASM_X86_MODULE_H */
+#पूर्ण_अगर /* _ASM_X86_MODULE_H */

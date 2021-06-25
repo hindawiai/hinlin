@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Greybus driver for the Raw protocol
+ * Greybus driver क्रम the Raw protocol
  *
  * Copyright 2015 Google Inc.
  * Copyright 2015 Linaro Ltd.
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/sizes.h>
-#include <linux/cdev.h>
-#include <linux/fs.h>
-#include <linux/idr.h>
-#include <linux/uaccess.h>
-#include <linux/greybus.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/greybus.h>
 
-struct gb_raw {
-	struct gb_connection *connection;
+काष्ठा gb_raw अणु
+	काष्ठा gb_connection *connection;
 
-	struct list_head list;
-	int list_data;
-	struct mutex list_lock;
+	काष्ठा list_head list;
+	पूर्णांक list_data;
+	काष्ठा mutex list_lock;
 	dev_t dev;
-	struct cdev cdev;
-	struct device *device;
-};
+	काष्ठा cdev cdev;
+	काष्ठा device *device;
+पूर्ण;
 
-struct raw_data {
-	struct list_head entry;
+काष्ठा raw_data अणु
+	काष्ठा list_head entry;
 	u32 len;
 	u8 data[];
-};
+पूर्ण;
 
-static struct class *raw_class;
-static int raw_major;
-static const struct file_operations raw_fops;
-static DEFINE_IDA(minors);
+अटल काष्ठा class *raw_class;
+अटल पूर्णांक raw_major;
+अटल स्थिर काष्ठा file_operations raw_fops;
+अटल DEFINE_IDA(minors);
 
 /* Number of minor devices this driver supports */
-#define NUM_MINORS	256
+#घोषणा NUM_MINORS	256
 
 /* Maximum size of any one send data buffer we support */
-#define MAX_PACKET_SIZE	(PAGE_SIZE * 2)
+#घोषणा MAX_PACKET_SIZE	(PAGE_SIZE * 2)
 
 /*
- * Maximum size of the data in the receive buffer we allow before we start to
- * drop messages on the floor
+ * Maximum size of the data in the receive buffer we allow beक्रमe we start to
+ * drop messages on the न्यूनमान
  */
-#define MAX_DATA_SIZE	(MAX_PACKET_SIZE * 8)
+#घोषणा MAX_DATA_SIZE	(MAX_PACKET_SIZE * 8)
 
 /*
  * Add the raw data message to the list of received messages.
  */
-static int receive_data(struct gb_raw *raw, u32 len, u8 *data)
-{
-	struct raw_data *raw_data;
-	struct device *dev = &raw->connection->bundle->dev;
-	int retval = 0;
+अटल पूर्णांक receive_data(काष्ठा gb_raw *raw, u32 len, u8 *data)
+अणु
+	काष्ठा raw_data *raw_data;
+	काष्ठा device *dev = &raw->connection->bundle->dev;
+	पूर्णांक retval = 0;
 
-	if (len > MAX_PACKET_SIZE) {
+	अगर (len > MAX_PACKET_SIZE) अणु
 		dev_err(dev, "Too big of a data packet, rejected\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&raw->list_lock);
-	if ((raw->list_data + len) > MAX_DATA_SIZE) {
+	अगर ((raw->list_data + len) > MAX_DATA_SIZE) अणु
 		dev_err(dev, "Too much data in receive buffer, now dropping packets\n");
 		retval = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	raw_data = kmalloc(sizeof(*raw_data) + len, GFP_KERNEL);
-	if (!raw_data) {
+	raw_data = kदो_स्मृति(माप(*raw_data) + len, GFP_KERNEL);
+	अगर (!raw_data) अणु
 		retval = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	raw->list_data += len;
 	raw_data->len = len;
-	memcpy(&raw_data->data[0], data, len);
+	स_नकल(&raw_data->data[0], data, len);
 
 	list_add_tail(&raw_data->entry, &raw->list);
-exit:
+निकास:
 	mutex_unlock(&raw->list_lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int gb_raw_request_handler(struct gb_operation *op)
-{
-	struct gb_connection *connection = op->connection;
-	struct device *dev = &connection->bundle->dev;
-	struct gb_raw *raw = greybus_get_drvdata(connection->bundle);
-	struct gb_raw_send_request *receive;
+अटल पूर्णांक gb_raw_request_handler(काष्ठा gb_operation *op)
+अणु
+	काष्ठा gb_connection *connection = op->connection;
+	काष्ठा device *dev = &connection->bundle->dev;
+	काष्ठा gb_raw *raw = greybus_get_drvdata(connection->bundle);
+	काष्ठा gb_raw_send_request *receive;
 	u32 len;
 
-	if (op->type != GB_RAW_TYPE_SEND) {
+	अगर (op->type != GB_RAW_TYPE_SEND) अणु
 		dev_err(dev, "unknown request type 0x%02x\n", op->type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Verify size of payload */
-	if (op->request->payload_size < sizeof(*receive)) {
+	/* Verअगरy size of payload */
+	अगर (op->request->payload_size < माप(*receive)) अणु
 		dev_err(dev, "raw receive request too small (%zu < %zu)\n",
-			op->request->payload_size, sizeof(*receive));
-		return -EINVAL;
-	}
+			op->request->payload_size, माप(*receive));
+		वापस -EINVAL;
+	पूर्ण
 	receive = op->request->payload;
 	len = le32_to_cpu(receive->len);
-	if (len != (int)(op->request->payload_size - sizeof(__le32))) {
+	अगर (len != (पूर्णांक)(op->request->payload_size - माप(__le32))) अणु
 		dev_err(dev, "raw receive request wrong size %d vs %d\n", len,
-			(int)(op->request->payload_size - sizeof(__le32)));
-		return -EINVAL;
-	}
-	if (len == 0) {
+			(पूर्णांक)(op->request->payload_size - माप(__le32)));
+		वापस -EINVAL;
+	पूर्ण
+	अगर (len == 0) अणु
 		dev_err(dev, "raw receive request of 0 bytes?\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return receive_data(raw, len, receive->data);
-}
+	वापस receive_data(raw, len, receive->data);
+पूर्ण
 
-static int gb_raw_send(struct gb_raw *raw, u32 len, const char __user *data)
-{
-	struct gb_connection *connection = raw->connection;
-	struct gb_raw_send_request *request;
-	int retval;
+अटल पूर्णांक gb_raw_send(काष्ठा gb_raw *raw, u32 len, स्थिर अक्षर __user *data)
+अणु
+	काष्ठा gb_connection *connection = raw->connection;
+	काष्ठा gb_raw_send_request *request;
+	पूर्णांक retval;
 
-	request = kmalloc(len + sizeof(*request), GFP_KERNEL);
-	if (!request)
-		return -ENOMEM;
+	request = kदो_स्मृति(len + माप(*request), GFP_KERNEL);
+	अगर (!request)
+		वापस -ENOMEM;
 
-	if (copy_from_user(&request->data[0], data, len)) {
-		kfree(request);
-		return -EFAULT;
-	}
+	अगर (copy_from_user(&request->data[0], data, len)) अणु
+		kमुक्त(request);
+		वापस -EFAULT;
+	पूर्ण
 
 	request->len = cpu_to_le32(len);
 
 	retval = gb_operation_sync(connection, GB_RAW_TYPE_SEND,
-				   request, len + sizeof(*request),
-				   NULL, 0);
+				   request, len + माप(*request),
+				   शून्य, 0);
 
-	kfree(request);
-	return retval;
-}
+	kमुक्त(request);
+	वापस retval;
+पूर्ण
 
-static int gb_raw_probe(struct gb_bundle *bundle,
-			const struct greybus_bundle_id *id)
-{
-	struct greybus_descriptor_cport *cport_desc;
-	struct gb_connection *connection;
-	struct gb_raw *raw;
-	int retval;
-	int minor;
+अटल पूर्णांक gb_raw_probe(काष्ठा gb_bundle *bundle,
+			स्थिर काष्ठा greybus_bundle_id *id)
+अणु
+	काष्ठा greybus_descriptor_cport *cport_desc;
+	काष्ठा gb_connection *connection;
+	काष्ठा gb_raw *raw;
+	पूर्णांक retval;
+	पूर्णांक minor;
 
-	if (bundle->num_cports != 1)
-		return -ENODEV;
+	अगर (bundle->num_cports != 1)
+		वापस -ENODEV;
 
 	cport_desc = &bundle->cport_desc[0];
-	if (cport_desc->protocol_id != GREYBUS_PROTOCOL_RAW)
-		return -ENODEV;
+	अगर (cport_desc->protocol_id != GREYBUS_PROTOCOL_RAW)
+		वापस -ENODEV;
 
-	raw = kzalloc(sizeof(*raw), GFP_KERNEL);
-	if (!raw)
-		return -ENOMEM;
+	raw = kzalloc(माप(*raw), GFP_KERNEL);
+	अगर (!raw)
+		वापस -ENOMEM;
 
 	connection = gb_connection_create(bundle, le16_to_cpu(cport_desc->id),
 					  gb_raw_request_handler);
-	if (IS_ERR(connection)) {
+	अगर (IS_ERR(connection)) अणु
 		retval = PTR_ERR(connection);
-		goto error_free;
-	}
+		जाओ error_मुक्त;
+	पूर्ण
 
 	INIT_LIST_HEAD(&raw->list);
 	mutex_init(&raw->list_lock);
@@ -179,30 +180,30 @@ static int gb_raw_probe(struct gb_bundle *bundle,
 	greybus_set_drvdata(bundle, raw);
 
 	minor = ida_simple_get(&minors, 0, 0, GFP_KERNEL);
-	if (minor < 0) {
+	अगर (minor < 0) अणु
 		retval = minor;
-		goto error_connection_destroy;
-	}
+		जाओ error_connection_destroy;
+	पूर्ण
 
 	raw->dev = MKDEV(raw_major, minor);
 	cdev_init(&raw->cdev, &raw_fops);
 
 	retval = gb_connection_enable(connection);
-	if (retval)
-		goto error_remove_ida;
+	अगर (retval)
+		जाओ error_हटाओ_ida;
 
 	retval = cdev_add(&raw->cdev, raw->dev, 1);
-	if (retval)
-		goto error_connection_disable;
+	अगर (retval)
+		जाओ error_connection_disable;
 
 	raw->device = device_create(raw_class, &connection->bundle->dev,
 				    raw->dev, raw, "gb!raw%d", minor);
-	if (IS_ERR(raw->device)) {
+	अगर (IS_ERR(raw->device)) अणु
 		retval = PTR_ERR(raw->device);
-		goto error_del_cdev;
-	}
+		जाओ error_del_cdev;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_del_cdev:
 	cdev_del(&raw->cdev);
@@ -210,170 +211,170 @@ error_del_cdev:
 error_connection_disable:
 	gb_connection_disable(connection);
 
-error_remove_ida:
-	ida_simple_remove(&minors, minor);
+error_हटाओ_ida:
+	ida_simple_हटाओ(&minors, minor);
 
 error_connection_destroy:
 	gb_connection_destroy(connection);
 
-error_free:
-	kfree(raw);
-	return retval;
-}
+error_मुक्त:
+	kमुक्त(raw);
+	वापस retval;
+पूर्ण
 
-static void gb_raw_disconnect(struct gb_bundle *bundle)
-{
-	struct gb_raw *raw = greybus_get_drvdata(bundle);
-	struct gb_connection *connection = raw->connection;
-	struct raw_data *raw_data;
-	struct raw_data *temp;
+अटल व्योम gb_raw_disconnect(काष्ठा gb_bundle *bundle)
+अणु
+	काष्ठा gb_raw *raw = greybus_get_drvdata(bundle);
+	काष्ठा gb_connection *connection = raw->connection;
+	काष्ठा raw_data *raw_data;
+	काष्ठा raw_data *temp;
 
-	// FIXME - handle removing a connection when the char device node is open.
+	// FIXME - handle removing a connection when the अक्षर device node is खोलो.
 	device_destroy(raw_class, raw->dev);
 	cdev_del(&raw->cdev);
 	gb_connection_disable(connection);
-	ida_simple_remove(&minors, MINOR(raw->dev));
+	ida_simple_हटाओ(&minors, MINOR(raw->dev));
 	gb_connection_destroy(connection);
 
 	mutex_lock(&raw->list_lock);
-	list_for_each_entry_safe(raw_data, temp, &raw->list, entry) {
+	list_क्रम_each_entry_safe(raw_data, temp, &raw->list, entry) अणु
 		list_del(&raw_data->entry);
-		kfree(raw_data);
-	}
+		kमुक्त(raw_data);
+	पूर्ण
 	mutex_unlock(&raw->list_lock);
 
-	kfree(raw);
-}
+	kमुक्त(raw);
+पूर्ण
 
 /*
- * Character device node interfaces.
+ * Character device node पूर्णांकerfaces.
  *
- * Note, we are using read/write to only allow a single read/write per message.
- * This means for read(), you have to provide a big enough buffer for the full
- * message to be copied into.  If the buffer isn't big enough, the read() will
+ * Note, we are using पढ़ो/ग_लिखो to only allow a single पढ़ो/ग_लिखो per message.
+ * This means क्रम पढ़ो(), you have to provide a big enough buffer क्रम the full
+ * message to be copied पूर्णांकo.  If the buffer isn't big enough, the पढ़ो() will
  * fail with -ENOSPC.
  */
 
-static int raw_open(struct inode *inode, struct file *file)
-{
-	struct cdev *cdev = inode->i_cdev;
-	struct gb_raw *raw = container_of(cdev, struct gb_raw, cdev);
+अटल पूर्णांक raw_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा cdev *cdev = inode->i_cdev;
+	काष्ठा gb_raw *raw = container_of(cdev, काष्ठा gb_raw, cdev);
 
-	file->private_data = raw;
-	return 0;
-}
+	file->निजी_data = raw;
+	वापस 0;
+पूर्ण
 
-static ssize_t raw_write(struct file *file, const char __user *buf,
-			 size_t count, loff_t *ppos)
-{
-	struct gb_raw *raw = file->private_data;
-	int retval;
+अटल sमाप_प्रकार raw_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा gb_raw *raw = file->निजी_data;
+	पूर्णांक retval;
 
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
-	if (count > MAX_PACKET_SIZE)
-		return -E2BIG;
+	अगर (count > MAX_PACKET_SIZE)
+		वापस -E2BIG;
 
 	retval = gb_raw_send(raw, count, buf);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t raw_read(struct file *file, char __user *buf, size_t count,
+अटल sमाप_प्रकार raw_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
 			loff_t *ppos)
-{
-	struct gb_raw *raw = file->private_data;
-	int retval = 0;
-	struct raw_data *raw_data;
+अणु
+	काष्ठा gb_raw *raw = file->निजी_data;
+	पूर्णांक retval = 0;
+	काष्ठा raw_data *raw_data;
 
 	mutex_lock(&raw->list_lock);
-	if (list_empty(&raw->list))
-		goto exit;
+	अगर (list_empty(&raw->list))
+		जाओ निकास;
 
-	raw_data = list_first_entry(&raw->list, struct raw_data, entry);
-	if (raw_data->len > count) {
+	raw_data = list_first_entry(&raw->list, काष्ठा raw_data, entry);
+	अगर (raw_data->len > count) अणु
 		retval = -ENOSPC;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (copy_to_user(buf, &raw_data->data[0], raw_data->len)) {
+	अगर (copy_to_user(buf, &raw_data->data[0], raw_data->len)) अणु
 		retval = -EFAULT;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	list_del(&raw_data->entry);
 	raw->list_data -= raw_data->len;
 	retval = raw_data->len;
-	kfree(raw_data);
+	kमुक्त(raw_data);
 
-exit:
+निकास:
 	mutex_unlock(&raw->list_lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static const struct file_operations raw_fops = {
+अटल स्थिर काष्ठा file_operations raw_fops = अणु
 	.owner		= THIS_MODULE,
-	.write		= raw_write,
-	.read		= raw_read,
-	.open		= raw_open,
+	.ग_लिखो		= raw_ग_लिखो,
+	.पढ़ो		= raw_पढ़ो,
+	.खोलो		= raw_खोलो,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static const struct greybus_bundle_id gb_raw_id_table[] = {
-	{ GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_RAW) },
-	{ }
-};
+अटल स्थिर काष्ठा greybus_bundle_id gb_raw_id_table[] = अणु
+	अणु GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_RAW) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(greybus, gb_raw_id_table);
 
-static struct greybus_driver gb_raw_driver = {
+अटल काष्ठा greybus_driver gb_raw_driver = अणु
 	.name		= "raw",
 	.probe		= gb_raw_probe,
 	.disconnect	= gb_raw_disconnect,
 	.id_table	= gb_raw_id_table,
-};
+पूर्ण;
 
-static int raw_init(void)
-{
+अटल पूर्णांक raw_init(व्योम)
+अणु
 	dev_t dev;
-	int retval;
+	पूर्णांक retval;
 
 	raw_class = class_create(THIS_MODULE, "gb_raw");
-	if (IS_ERR(raw_class)) {
+	अगर (IS_ERR(raw_class)) अणु
 		retval = PTR_ERR(raw_class);
-		goto error_class;
-	}
+		जाओ error_class;
+	पूर्ण
 
 	retval = alloc_chrdev_region(&dev, 0, NUM_MINORS, "gb_raw");
-	if (retval < 0)
-		goto error_chrdev;
+	अगर (retval < 0)
+		जाओ error_chrdev;
 
 	raw_major = MAJOR(dev);
 
-	retval = greybus_register(&gb_raw_driver);
-	if (retval)
-		goto error_gb;
+	retval = greybus_रेजिस्टर(&gb_raw_driver);
+	अगर (retval)
+		जाओ error_gb;
 
-	return 0;
+	वापस 0;
 
 error_gb:
-	unregister_chrdev_region(dev, NUM_MINORS);
+	unरेजिस्टर_chrdev_region(dev, NUM_MINORS);
 error_chrdev:
 	class_destroy(raw_class);
 error_class:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 module_init(raw_init);
 
-static void __exit raw_exit(void)
-{
-	greybus_deregister(&gb_raw_driver);
-	unregister_chrdev_region(MKDEV(raw_major, 0), NUM_MINORS);
+अटल व्योम __निकास raw_निकास(व्योम)
+अणु
+	greybus_deरेजिस्टर(&gb_raw_driver);
+	unरेजिस्टर_chrdev_region(MKDEV(raw_major, 0), NUM_MINORS);
 	class_destroy(raw_class);
 	ida_destroy(&minors);
-}
-module_exit(raw_exit);
+पूर्ण
+module_निकास(raw_निकास);
 
 MODULE_LICENSE("GPL v2");

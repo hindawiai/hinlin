@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 
   Broadcom B43legacy wireless driver
@@ -16,99 +17,99 @@
 
 */
 
-#ifndef B43legacy_MAIN_H_
-#define B43legacy_MAIN_H_
+#अगर_अघोषित B43legacy_MAIN_H_
+#घोषणा B43legacy_MAIN_H_
 
-#include "b43legacy.h"
+#समावेश "b43legacy.h"
 
 
-#define P4D_BYT3S(magic, nr_bytes)	u8 __p4dding##magic[nr_bytes]
-#define P4D_BYTES(line, nr_bytes)	P4D_BYT3S(line, nr_bytes)
-/* Magic helper macro to pad structures. Ignore those above. It's magic. */
-#define PAD_BYTES(nr_bytes)		P4D_BYTES(__LINE__ , (nr_bytes))
+#घोषणा P4D_BYT3S(magic, nr_bytes)	u8 __p4dding##magic[nr_bytes]
+#घोषणा P4D_BYTES(line, nr_bytes)	P4D_BYT3S(line, nr_bytes)
+/* Magic helper macro to pad काष्ठाures. Ignore those above. It's magic. */
+#घोषणा PAD_BYTES(nr_bytes)		P4D_BYTES(__LINE__ , (nr_bytes))
 
 
 /* Lightweight function to convert a frequency (in Mhz) to a channel number. */
-static inline
-u8 b43legacy_freq_to_channel_bg(int freq)
-{
+अटल अंतरभूत
+u8 b43legacy_freq_to_channel_bg(पूर्णांक freq)
+अणु
 	u8 channel;
 
-	if (freq == 2484)
+	अगर (freq == 2484)
 		channel = 14;
-	else
+	अन्यथा
 		channel = (freq - 2407) / 5;
 
-	return channel;
-}
-static inline
-u8 b43legacy_freq_to_channel(struct b43legacy_wldev *dev,
-			     int freq)
-{
-	return b43legacy_freq_to_channel_bg(freq);
-}
+	वापस channel;
+पूर्ण
+अटल अंतरभूत
+u8 b43legacy_freq_to_channel(काष्ठा b43legacy_wldev *dev,
+			     पूर्णांक freq)
+अणु
+	वापस b43legacy_freq_to_channel_bg(freq);
+पूर्ण
 
 /* Lightweight function to convert a channel number to a frequency (in Mhz). */
-static inline
-int b43legacy_channel_to_freq_bg(u8 channel)
-{
-	int freq;
+अटल अंतरभूत
+पूर्णांक b43legacy_channel_to_freq_bg(u8 channel)
+अणु
+	पूर्णांक freq;
 
-	if (channel == 14)
+	अगर (channel == 14)
 		freq = 2484;
-	else
+	अन्यथा
 		freq = 2407 + (5 * channel);
 
-	return freq;
-}
+	वापस freq;
+पूर्ण
 
-static inline
-int b43legacy_channel_to_freq(struct b43legacy_wldev *dev,
+अटल अंतरभूत
+पूर्णांक b43legacy_channel_to_freq(काष्ठा b43legacy_wldev *dev,
 			      u8 channel)
-{
-	return b43legacy_channel_to_freq_bg(channel);
-}
+अणु
+	वापस b43legacy_channel_to_freq_bg(channel);
+पूर्ण
 
-static inline
-int b43legacy_is_cck_rate(int rate)
-{
-	return (rate == B43legacy_CCK_RATE_1MB ||
+अटल अंतरभूत
+पूर्णांक b43legacy_is_cck_rate(पूर्णांक rate)
+अणु
+	वापस (rate == B43legacy_CCK_RATE_1MB ||
 		rate == B43legacy_CCK_RATE_2MB ||
 		rate == B43legacy_CCK_RATE_5MB ||
 		rate == B43legacy_CCK_RATE_11MB);
-}
+पूर्ण
 
-static inline
-int b43legacy_is_ofdm_rate(int rate)
-{
-	return !b43legacy_is_cck_rate(rate);
-}
+अटल अंतरभूत
+पूर्णांक b43legacy_is_ofdm_rate(पूर्णांक rate)
+अणु
+	वापस !b43legacy_is_cck_rate(rate);
+पूर्ण
 
-void b43legacy_tsf_read(struct b43legacy_wldev *dev, u64 *tsf);
-void b43legacy_tsf_write(struct b43legacy_wldev *dev, u64 tsf);
+व्योम b43legacy_tsf_पढ़ो(काष्ठा b43legacy_wldev *dev, u64 *tsf);
+व्योम b43legacy_tsf_ग_लिखो(काष्ठा b43legacy_wldev *dev, u64 tsf);
 
-u32 b43legacy_shm_read32(struct b43legacy_wldev *dev,
+u32 b43legacy_shm_पढ़ो32(काष्ठा b43legacy_wldev *dev,
 			 u16 routing, u16 offset);
-u16 b43legacy_shm_read16(struct b43legacy_wldev *dev,
+u16 b43legacy_shm_पढ़ो16(काष्ठा b43legacy_wldev *dev,
 			 u16 routing, u16 offset);
-void b43legacy_shm_write32(struct b43legacy_wldev *dev,
+व्योम b43legacy_shm_ग_लिखो32(काष्ठा b43legacy_wldev *dev,
 			 u16 routing, u16 offset,
 			 u32 value);
-void b43legacy_shm_write16(struct b43legacy_wldev *dev,
+व्योम b43legacy_shm_ग_लिखो16(काष्ठा b43legacy_wldev *dev,
 			 u16 routing, u16 offset,
 			 u16 value);
 
-u32 b43legacy_hf_read(struct b43legacy_wldev *dev);
-void b43legacy_hf_write(struct b43legacy_wldev *dev, u32 value);
+u32 b43legacy_hf_पढ़ो(काष्ठा b43legacy_wldev *dev);
+व्योम b43legacy_hf_ग_लिखो(काष्ठा b43legacy_wldev *dev, u32 value);
 
-void b43legacy_dummy_transmission(struct b43legacy_wldev *dev);
+व्योम b43legacy_dummy_transmission(काष्ठा b43legacy_wldev *dev);
 
-void b43legacy_wireless_core_reset(struct b43legacy_wldev *dev, u32 flags);
+व्योम b43legacy_wireless_core_reset(काष्ठा b43legacy_wldev *dev, u32 flags);
 
-void b43legacy_mac_suspend(struct b43legacy_wldev *dev);
-void b43legacy_mac_enable(struct b43legacy_wldev *dev);
+व्योम b43legacy_mac_suspend(काष्ठा b43legacy_wldev *dev);
+व्योम b43legacy_mac_enable(काष्ठा b43legacy_wldev *dev);
 
-void b43legacy_controller_restart(struct b43legacy_wldev *dev,
-				  const char *reason);
+व्योम b43legacy_controller_restart(काष्ठा b43legacy_wldev *dev,
+				  स्थिर अक्षर *reason);
 
-#endif /* B43legacy_MAIN_H_ */
+#पूर्ण_अगर /* B43legacy_MAIN_H_ */

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,103 +22,103 @@
  *
  * Authors: Ben Skeggs
  */
-#include "nv40.h"
+#समावेश "nv40.h"
 
-static void
-nv40_perfctr_init(struct nvkm_pm *pm, struct nvkm_perfdom *dom,
-		  struct nvkm_perfctr *ctr)
-{
-	struct nvkm_device *device = pm->engine.subdev.device;
+अटल व्योम
+nv40_perfctr_init(काष्ठा nvkm_pm *pm, काष्ठा nvkm_perfकरोm *करोm,
+		  काष्ठा nvkm_perfctr *ctr)
+अणु
+	काष्ठा nvkm_device *device = pm->engine.subdev.device;
 	u32 log = ctr->logic_op;
 	u32 src = 0x00000000;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++)
-		src |= ctr->signal[i] << (i * 8);
+	क्रम (i = 0; i < 4; i++)
+		src |= ctr->संकेत[i] << (i * 8);
 
-	nvkm_wr32(device, 0x00a7c0 + dom->addr, 0x00000001 | (dom->mode << 4));
-	nvkm_wr32(device, 0x00a400 + dom->addr + (ctr->slot * 0x40), src);
-	nvkm_wr32(device, 0x00a420 + dom->addr + (ctr->slot * 0x40), log);
-}
+	nvkm_wr32(device, 0x00a7c0 + करोm->addr, 0x00000001 | (करोm->mode << 4));
+	nvkm_wr32(device, 0x00a400 + करोm->addr + (ctr->slot * 0x40), src);
+	nvkm_wr32(device, 0x00a420 + करोm->addr + (ctr->slot * 0x40), log);
+पूर्ण
 
-static void
-nv40_perfctr_read(struct nvkm_pm *pm, struct nvkm_perfdom *dom,
-		  struct nvkm_perfctr *ctr)
-{
-	struct nvkm_device *device = pm->engine.subdev.device;
+अटल व्योम
+nv40_perfctr_पढ़ो(काष्ठा nvkm_pm *pm, काष्ठा nvkm_perfकरोm *करोm,
+		  काष्ठा nvkm_perfctr *ctr)
+अणु
+	काष्ठा nvkm_device *device = pm->engine.subdev.device;
 
-	switch (ctr->slot) {
-	case 0: ctr->ctr = nvkm_rd32(device, 0x00a700 + dom->addr); break;
-	case 1: ctr->ctr = nvkm_rd32(device, 0x00a6c0 + dom->addr); break;
-	case 2: ctr->ctr = nvkm_rd32(device, 0x00a680 + dom->addr); break;
-	case 3: ctr->ctr = nvkm_rd32(device, 0x00a740 + dom->addr); break;
-	}
-	dom->clk = nvkm_rd32(device, 0x00a600 + dom->addr);
-}
+	चयन (ctr->slot) अणु
+	हाल 0: ctr->ctr = nvkm_rd32(device, 0x00a700 + करोm->addr); अवरोध;
+	हाल 1: ctr->ctr = nvkm_rd32(device, 0x00a6c0 + करोm->addr); अवरोध;
+	हाल 2: ctr->ctr = nvkm_rd32(device, 0x00a680 + करोm->addr); अवरोध;
+	हाल 3: ctr->ctr = nvkm_rd32(device, 0x00a740 + करोm->addr); अवरोध;
+	पूर्ण
+	करोm->clk = nvkm_rd32(device, 0x00a600 + करोm->addr);
+पूर्ण
 
-static void
-nv40_perfctr_next(struct nvkm_pm *pm, struct nvkm_perfdom *dom)
-{
-	struct nvkm_device *device = pm->engine.subdev.device;
-	struct nv40_pm *nv40pm = container_of(pm, struct nv40_pm, base);
+अटल व्योम
+nv40_perfctr_next(काष्ठा nvkm_pm *pm, काष्ठा nvkm_perfकरोm *करोm)
+अणु
+	काष्ठा nvkm_device *device = pm->engine.subdev.device;
+	काष्ठा nv40_pm *nv40pm = container_of(pm, काष्ठा nv40_pm, base);
 
-	if (nv40pm->sequence != pm->sequence) {
+	अगर (nv40pm->sequence != pm->sequence) अणु
 		nvkm_wr32(device, 0x400084, 0x00000020);
 		nv40pm->sequence = pm->sequence;
-	}
-}
+	पूर्ण
+पूर्ण
 
-const struct nvkm_funcdom
-nv40_perfctr_func = {
+स्थिर काष्ठा nvkm_funcकरोm
+nv40_perfctr_func = अणु
 	.init = nv40_perfctr_init,
-	.read = nv40_perfctr_read,
+	.पढ़ो = nv40_perfctr_पढ़ो,
 	.next = nv40_perfctr_next,
-};
+पूर्ण;
 
-static const struct nvkm_pm_func
-nv40_pm_ = {
-};
+अटल स्थिर काष्ठा nvkm_pm_func
+nv40_pm_ = अणु
+पूर्ण;
 
-int
-nv40_pm_new_(const struct nvkm_specdom *doms, struct nvkm_device *device,
-	     enum nvkm_subdev_type type, int inst, struct nvkm_pm **ppm)
-{
-	struct nv40_pm *pm;
-	int ret;
+पूर्णांक
+nv40_pm_new_(स्थिर काष्ठा nvkm_specकरोm *करोms, काष्ठा nvkm_device *device,
+	     क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_pm **ppm)
+अणु
+	काष्ठा nv40_pm *pm;
+	पूर्णांक ret;
 
-	if (!(pm = kzalloc(sizeof(*pm), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(pm = kzalloc(माप(*pm), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*ppm = &pm->base;
 
 	ret = nvkm_pm_ctor(&nv40_pm_, device, type, inst, &pm->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return nvkm_perfdom_new(&pm->base, "pc", 0, 0, 0, 4, doms);
-}
+	वापस nvkm_perfकरोm_new(&pm->base, "pc", 0, 0, 0, 4, करोms);
+पूर्ण
 
-static const struct nvkm_specdom
-nv40_pm[] = {
-	{ 0x20, (const struct nvkm_specsig[]) {
-			{}
-		}, &nv40_perfctr_func },
-	{ 0x20, (const struct nvkm_specsig[]) {
-			{}
-		}, &nv40_perfctr_func },
-	{ 0x20, (const struct nvkm_specsig[]) {
-			{}
-		}, &nv40_perfctr_func },
-	{ 0x20, (const struct nvkm_specsig[]) {
-			{}
-		}, &nv40_perfctr_func },
-	{ 0x20, (const struct nvkm_specsig[]) {
-			{}
-		}, &nv40_perfctr_func },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_specकरोm
+nv40_pm[] = अणु
+	अणु 0x20, (स्थिर काष्ठा nvkm_specsig[]) अणु
+			अणुपूर्ण
+		पूर्ण, &nv40_perfctr_func पूर्ण,
+	अणु 0x20, (स्थिर काष्ठा nvkm_specsig[]) अणु
+			अणुपूर्ण
+		पूर्ण, &nv40_perfctr_func पूर्ण,
+	अणु 0x20, (स्थिर काष्ठा nvkm_specsig[]) अणु
+			अणुपूर्ण
+		पूर्ण, &nv40_perfctr_func पूर्ण,
+	अणु 0x20, (स्थिर काष्ठा nvkm_specsig[]) अणु
+			अणुपूर्ण
+		पूर्ण, &nv40_perfctr_func पूर्ण,
+	अणु 0x20, (स्थिर काष्ठा nvkm_specsig[]) अणु
+			अणुपूर्ण
+		पूर्ण, &nv40_perfctr_func पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-nv40_pm_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_pm **ppm)
-{
-	return nv40_pm_new_(nv40_pm, device, type, inst, ppm);
-}
+पूर्णांक
+nv40_pm_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_pm **ppm)
+अणु
+	वापस nv40_pm_new_(nv40_pm, device, type, inst, ppm);
+पूर्ण

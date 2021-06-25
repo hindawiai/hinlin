@@ -1,213 +1,214 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (C) 2019 Linaro Ltd.
 // Copyright (C) 2019 Socionext Inc.
 
-#include <linux/bits.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/interrupt.h>
-#include <linux/iopoll.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/of_dma.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/bitfield.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/bitfield.h>
 
-#include "virt-dma.h"
+#समावेश "virt-dma.h"
 
-/* global register */
-#define M10V_XDACS 0x00
+/* global रेजिस्टर */
+#घोषणा M10V_XDACS 0x00
 
-/* channel local register */
-#define M10V_XDTBC 0x10
-#define M10V_XDSSA 0x14
-#define M10V_XDDSA 0x18
-#define M10V_XDSAC 0x1C
-#define M10V_XDDAC 0x20
-#define M10V_XDDCC 0x24
-#define M10V_XDDES 0x28
-#define M10V_XDDPC 0x2C
-#define M10V_XDDSD 0x30
+/* channel local रेजिस्टर */
+#घोषणा M10V_XDTBC 0x10
+#घोषणा M10V_XDSSA 0x14
+#घोषणा M10V_XDDSA 0x18
+#घोषणा M10V_XDSAC 0x1C
+#घोषणा M10V_XDDAC 0x20
+#घोषणा M10V_XDDCC 0x24
+#घोषणा M10V_XDDES 0x28
+#घोषणा M10V_XDDPC 0x2C
+#घोषणा M10V_XDDSD 0x30
 
-#define M10V_XDACS_XE BIT(28)
+#घोषणा M10V_XDACS_XE BIT(28)
 
-#define M10V_DEFBS	0x3
-#define M10V_DEFBL	0xf
+#घोषणा M10V_DEFBS	0x3
+#घोषणा M10V_DEFBL	0xf
 
-#define M10V_XDSAC_SBS	GENMASK(17, 16)
-#define M10V_XDSAC_SBL	GENMASK(11, 8)
+#घोषणा M10V_XDSAC_SBS	GENMASK(17, 16)
+#घोषणा M10V_XDSAC_SBL	GENMASK(11, 8)
 
-#define M10V_XDDAC_DBS	GENMASK(17, 16)
-#define M10V_XDDAC_DBL	GENMASK(11, 8)
+#घोषणा M10V_XDDAC_DBS	GENMASK(17, 16)
+#घोषणा M10V_XDDAC_DBL	GENMASK(11, 8)
 
-#define M10V_XDDES_CE	BIT(28)
-#define M10V_XDDES_SE	BIT(24)
-#define M10V_XDDES_SA	BIT(15)
-#define M10V_XDDES_TF	GENMASK(23, 20)
-#define M10V_XDDES_EI	BIT(1)
-#define M10V_XDDES_TI	BIT(0)
+#घोषणा M10V_XDDES_CE	BIT(28)
+#घोषणा M10V_XDDES_SE	BIT(24)
+#घोषणा M10V_XDDES_SA	BIT(15)
+#घोषणा M10V_XDDES_TF	GENMASK(23, 20)
+#घोषणा M10V_XDDES_EI	BIT(1)
+#घोषणा M10V_XDDES_TI	BIT(0)
 
-#define M10V_XDDSD_IS_MASK	GENMASK(3, 0)
-#define M10V_XDDSD_IS_NORMAL	0x8
+#घोषणा M10V_XDDSD_IS_MASK	GENMASK(3, 0)
+#घोषणा M10V_XDDSD_IS_NORMAL	0x8
 
-#define MLB_XDMAC_BUSWIDTHS	(BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
+#घोषणा MLB_XDMAC_BUSWIDTHS	(BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_4_BYTES) | \
 				 BIT(DMA_SLAVE_BUSWIDTH_8_BYTES))
 
-struct milbeaut_xdmac_desc {
-	struct virt_dma_desc vd;
-	size_t len;
+काष्ठा milbeaut_xdmac_desc अणु
+	काष्ठा virt_dma_desc vd;
+	माप_प्रकार len;
 	dma_addr_t src;
 	dma_addr_t dst;
-};
+पूर्ण;
 
-struct milbeaut_xdmac_chan {
-	struct virt_dma_chan vc;
-	struct milbeaut_xdmac_desc *md;
-	void __iomem *reg_ch_base;
-};
+काष्ठा milbeaut_xdmac_chan अणु
+	काष्ठा virt_dma_chan vc;
+	काष्ठा milbeaut_xdmac_desc *md;
+	व्योम __iomem *reg_ch_base;
+पूर्ण;
 
-struct milbeaut_xdmac_device {
-	struct dma_device ddev;
-	void __iomem *reg_base;
-	struct milbeaut_xdmac_chan channels[];
-};
+काष्ठा milbeaut_xdmac_device अणु
+	काष्ठा dma_device ddev;
+	व्योम __iomem *reg_base;
+	काष्ठा milbeaut_xdmac_chan channels[];
+पूर्ण;
 
-static struct milbeaut_xdmac_chan *
-to_milbeaut_xdmac_chan(struct virt_dma_chan *vc)
-{
-	return container_of(vc, struct milbeaut_xdmac_chan, vc);
-}
+अटल काष्ठा milbeaut_xdmac_chan *
+to_milbeaut_xdmac_chan(काष्ठा virt_dma_chan *vc)
+अणु
+	वापस container_of(vc, काष्ठा milbeaut_xdmac_chan, vc);
+पूर्ण
 
-static struct milbeaut_xdmac_desc *
-to_milbeaut_xdmac_desc(struct virt_dma_desc *vd)
-{
-	return container_of(vd, struct milbeaut_xdmac_desc, vd);
-}
+अटल काष्ठा milbeaut_xdmac_desc *
+to_milbeaut_xdmac_desc(काष्ठा virt_dma_desc *vd)
+अणु
+	वापस container_of(vd, काष्ठा milbeaut_xdmac_desc, vd);
+पूर्ण
 
 /* mc->vc.lock must be held by caller */
-static struct milbeaut_xdmac_desc *
-milbeaut_xdmac_next_desc(struct milbeaut_xdmac_chan *mc)
-{
-	struct virt_dma_desc *vd;
+अटल काष्ठा milbeaut_xdmac_desc *
+milbeaut_xdmac_next_desc(काष्ठा milbeaut_xdmac_chan *mc)
+अणु
+	काष्ठा virt_dma_desc *vd;
 
 	vd = vchan_next_desc(&mc->vc);
-	if (!vd) {
-		mc->md = NULL;
-		return NULL;
-	}
+	अगर (!vd) अणु
+		mc->md = शून्य;
+		वापस शून्य;
+	पूर्ण
 
 	list_del(&vd->node);
 
 	mc->md = to_milbeaut_xdmac_desc(vd);
 
-	return mc->md;
-}
+	वापस mc->md;
+पूर्ण
 
 /* mc->vc.lock must be held by caller */
-static void milbeaut_chan_start(struct milbeaut_xdmac_chan *mc,
-				struct milbeaut_xdmac_desc *md)
-{
+अटल व्योम milbeaut_chan_start(काष्ठा milbeaut_xdmac_chan *mc,
+				काष्ठा milbeaut_xdmac_desc *md)
+अणु
 	u32 val;
 
 	/* Setup the channel */
 	val = md->len - 1;
-	writel_relaxed(val, mc->reg_ch_base + M10V_XDTBC);
+	ग_लिखोl_relaxed(val, mc->reg_ch_base + M10V_XDTBC);
 
 	val = md->src;
-	writel_relaxed(val, mc->reg_ch_base + M10V_XDSSA);
+	ग_लिखोl_relaxed(val, mc->reg_ch_base + M10V_XDSSA);
 
 	val = md->dst;
-	writel_relaxed(val, mc->reg_ch_base + M10V_XDDSA);
+	ग_लिखोl_relaxed(val, mc->reg_ch_base + M10V_XDDSA);
 
-	val = readl_relaxed(mc->reg_ch_base + M10V_XDSAC);
+	val = पढ़ोl_relaxed(mc->reg_ch_base + M10V_XDSAC);
 	val &= ~(M10V_XDSAC_SBS | M10V_XDSAC_SBL);
 	val |= FIELD_PREP(M10V_XDSAC_SBS, M10V_DEFBS) |
 		FIELD_PREP(M10V_XDSAC_SBL, M10V_DEFBL);
-	writel_relaxed(val, mc->reg_ch_base + M10V_XDSAC);
+	ग_लिखोl_relaxed(val, mc->reg_ch_base + M10V_XDSAC);
 
-	val = readl_relaxed(mc->reg_ch_base + M10V_XDDAC);
+	val = पढ़ोl_relaxed(mc->reg_ch_base + M10V_XDDAC);
 	val &= ~(M10V_XDDAC_DBS | M10V_XDDAC_DBL);
 	val |= FIELD_PREP(M10V_XDDAC_DBS, M10V_DEFBS) |
 		FIELD_PREP(M10V_XDDAC_DBL, M10V_DEFBL);
-	writel_relaxed(val, mc->reg_ch_base + M10V_XDDAC);
+	ग_लिखोl_relaxed(val, mc->reg_ch_base + M10V_XDDAC);
 
 	/* Start the channel */
-	val = readl_relaxed(mc->reg_ch_base + M10V_XDDES);
+	val = पढ़ोl_relaxed(mc->reg_ch_base + M10V_XDDES);
 	val &= ~(M10V_XDDES_CE | M10V_XDDES_SE | M10V_XDDES_TF |
 		 M10V_XDDES_EI | M10V_XDDES_TI);
 	val |= FIELD_PREP(M10V_XDDES_CE, 1) | FIELD_PREP(M10V_XDDES_SE, 1) |
 		FIELD_PREP(M10V_XDDES_TF, 1) | FIELD_PREP(M10V_XDDES_EI, 1) |
 		FIELD_PREP(M10V_XDDES_TI, 1);
-	writel_relaxed(val, mc->reg_ch_base + M10V_XDDES);
-}
+	ग_लिखोl_relaxed(val, mc->reg_ch_base + M10V_XDDES);
+पूर्ण
 
 /* mc->vc.lock must be held by caller */
-static void milbeaut_xdmac_start(struct milbeaut_xdmac_chan *mc)
-{
-	struct milbeaut_xdmac_desc *md;
+अटल व्योम milbeaut_xdmac_start(काष्ठा milbeaut_xdmac_chan *mc)
+अणु
+	काष्ठा milbeaut_xdmac_desc *md;
 
 	md = milbeaut_xdmac_next_desc(mc);
-	if (md)
+	अगर (md)
 		milbeaut_chan_start(mc, md);
-}
+पूर्ण
 
-static irqreturn_t milbeaut_xdmac_interrupt(int irq, void *dev_id)
-{
-	struct milbeaut_xdmac_chan *mc = dev_id;
-	struct milbeaut_xdmac_desc *md;
+अटल irqवापस_t milbeaut_xdmac_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा milbeaut_xdmac_chan *mc = dev_id;
+	काष्ठा milbeaut_xdmac_desc *md;
 	u32 val;
 
 	spin_lock(&mc->vc.lock);
 
 	/* Ack and Stop */
 	val = FIELD_PREP(M10V_XDDSD_IS_MASK, 0x0);
-	writel_relaxed(val, mc->reg_ch_base + M10V_XDDSD);
+	ग_लिखोl_relaxed(val, mc->reg_ch_base + M10V_XDDSD);
 
 	md = mc->md;
-	if (!md)
-		goto out;
+	अगर (!md)
+		जाओ out;
 
 	vchan_cookie_complete(&md->vd);
 
 	milbeaut_xdmac_start(mc);
 out:
 	spin_unlock(&mc->vc.lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void milbeaut_xdmac_free_chan_resources(struct dma_chan *chan)
-{
-	vchan_free_chan_resources(to_virt_chan(chan));
-}
+अटल व्योम milbeaut_xdmac_मुक्त_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	vchan_मुक्त_chan_resources(to_virt_chan(chan));
+पूर्ण
 
-static struct dma_async_tx_descriptor *
-milbeaut_xdmac_prep_memcpy(struct dma_chan *chan, dma_addr_t dst,
-			   dma_addr_t src, size_t len, unsigned long flags)
-{
-	struct virt_dma_chan *vc = to_virt_chan(chan);
-	struct milbeaut_xdmac_desc *md;
+अटल काष्ठा dma_async_tx_descriptor *
+milbeaut_xdmac_prep_स_नकल(काष्ठा dma_chan *chan, dma_addr_t dst,
+			   dma_addr_t src, माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा virt_dma_chan *vc = to_virt_chan(chan);
+	काष्ठा milbeaut_xdmac_desc *md;
 
-	md = kzalloc(sizeof(*md), GFP_NOWAIT);
-	if (!md)
-		return NULL;
+	md = kzalloc(माप(*md), GFP_NOWAIT);
+	अगर (!md)
+		वापस शून्य;
 
 	md->len = len;
 	md->src = src;
 	md->dst = dst;
 
-	return vchan_tx_prep(vc, &md->vd, flags);
-}
+	वापस vchan_tx_prep(vc, &md->vd, flags);
+पूर्ण
 
-static int milbeaut_xdmac_terminate_all(struct dma_chan *chan)
-{
-	struct virt_dma_chan *vc = to_virt_chan(chan);
-	struct milbeaut_xdmac_chan *mc = to_milbeaut_xdmac_chan(vc);
-	unsigned long flags;
+अटल पूर्णांक milbeaut_xdmac_terminate_all(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा virt_dma_chan *vc = to_virt_chan(chan);
+	काष्ठा milbeaut_xdmac_chan *mc = to_milbeaut_xdmac_chan(vc);
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	LIST_HEAD(head);
@@ -215,202 +216,202 @@ static int milbeaut_xdmac_terminate_all(struct dma_chan *chan)
 	spin_lock_irqsave(&vc->lock, flags);
 
 	/* Halt the channel */
-	val = readl(mc->reg_ch_base + M10V_XDDES);
+	val = पढ़ोl(mc->reg_ch_base + M10V_XDDES);
 	val &= ~M10V_XDDES_CE;
 	val |= FIELD_PREP(M10V_XDDES_CE, 0);
-	writel(val, mc->reg_ch_base + M10V_XDDES);
+	ग_लिखोl(val, mc->reg_ch_base + M10V_XDDES);
 
-	if (mc->md) {
+	अगर (mc->md) अणु
 		vchan_terminate_vdesc(&mc->md->vd);
-		mc->md = NULL;
-	}
+		mc->md = शून्य;
+	पूर्ण
 
 	vchan_get_all_descriptors(vc, &head);
 
 	spin_unlock_irqrestore(&vc->lock, flags);
 
-	vchan_dma_desc_free_list(vc, &head);
+	vchan_dma_desc_मुक्त_list(vc, &head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void milbeaut_xdmac_synchronize(struct dma_chan *chan)
-{
+अटल व्योम milbeaut_xdmac_synchronize(काष्ठा dma_chan *chan)
+अणु
 	vchan_synchronize(to_virt_chan(chan));
-}
+पूर्ण
 
-static void milbeaut_xdmac_issue_pending(struct dma_chan *chan)
-{
-	struct virt_dma_chan *vc = to_virt_chan(chan);
-	struct milbeaut_xdmac_chan *mc = to_milbeaut_xdmac_chan(vc);
-	unsigned long flags;
+अटल व्योम milbeaut_xdmac_issue_pending(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा virt_dma_chan *vc = to_virt_chan(chan);
+	काष्ठा milbeaut_xdmac_chan *mc = to_milbeaut_xdmac_chan(vc);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vc->lock, flags);
 
-	if (vchan_issue_pending(vc) && !mc->md)
+	अगर (vchan_issue_pending(vc) && !mc->md)
 		milbeaut_xdmac_start(mc);
 
 	spin_unlock_irqrestore(&vc->lock, flags);
-}
+पूर्ण
 
-static void milbeaut_xdmac_desc_free(struct virt_dma_desc *vd)
-{
-	kfree(to_milbeaut_xdmac_desc(vd));
-}
+अटल व्योम milbeaut_xdmac_desc_मुक्त(काष्ठा virt_dma_desc *vd)
+अणु
+	kमुक्त(to_milbeaut_xdmac_desc(vd));
+पूर्ण
 
-static int milbeaut_xdmac_chan_init(struct platform_device *pdev,
-				    struct milbeaut_xdmac_device *mdev,
-				    int chan_id)
-{
-	struct device *dev = &pdev->dev;
-	struct milbeaut_xdmac_chan *mc = &mdev->channels[chan_id];
-	char *irq_name;
-	int irq, ret;
+अटल पूर्णांक milbeaut_xdmac_chan_init(काष्ठा platक्रमm_device *pdev,
+				    काष्ठा milbeaut_xdmac_device *mdev,
+				    पूर्णांक chan_id)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा milbeaut_xdmac_chan *mc = &mdev->channels[chan_id];
+	अक्षर *irq_name;
+	पूर्णांक irq, ret;
 
-	irq = platform_get_irq(pdev, chan_id);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, chan_id);
+	अगर (irq < 0)
+		वापस irq;
 
-	irq_name = devm_kasprintf(dev, GFP_KERNEL, "milbeaut-xdmac-%d",
+	irq_name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "milbeaut-xdmac-%d",
 				  chan_id);
-	if (!irq_name)
-		return -ENOMEM;
+	अगर (!irq_name)
+		वापस -ENOMEM;
 
-	ret = devm_request_irq(dev, irq, milbeaut_xdmac_interrupt,
+	ret = devm_request_irq(dev, irq, milbeaut_xdmac_पूर्णांकerrupt,
 			       IRQF_SHARED, irq_name, mc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mc->reg_ch_base = mdev->reg_base + chan_id * 0x30;
 
-	mc->vc.desc_free = milbeaut_xdmac_desc_free;
+	mc->vc.desc_मुक्त = milbeaut_xdmac_desc_मुक्त;
 	vchan_init(&mc->vc, &mdev->ddev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enable_xdmac(struct milbeaut_xdmac_device *mdev)
-{
-	unsigned int val;
+अटल व्योम enable_xdmac(काष्ठा milbeaut_xdmac_device *mdev)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	val = readl(mdev->reg_base + M10V_XDACS);
+	val = पढ़ोl(mdev->reg_base + M10V_XDACS);
 	val |= M10V_XDACS_XE;
-	writel(val, mdev->reg_base + M10V_XDACS);
-}
+	ग_लिखोl(val, mdev->reg_base + M10V_XDACS);
+पूर्ण
 
-static void disable_xdmac(struct milbeaut_xdmac_device *mdev)
-{
-	unsigned int val;
+अटल व्योम disable_xdmac(काष्ठा milbeaut_xdmac_device *mdev)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	val = readl(mdev->reg_base + M10V_XDACS);
+	val = पढ़ोl(mdev->reg_base + M10V_XDACS);
 	val &= ~M10V_XDACS_XE;
-	writel(val, mdev->reg_base + M10V_XDACS);
-}
+	ग_लिखोl(val, mdev->reg_base + M10V_XDACS);
+पूर्ण
 
-static int milbeaut_xdmac_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct milbeaut_xdmac_device *mdev;
-	struct dma_device *ddev;
-	int nr_chans, ret, i;
+अटल पूर्णांक milbeaut_xdmac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा milbeaut_xdmac_device *mdev;
+	काष्ठा dma_device *ddev;
+	पूर्णांक nr_chans, ret, i;
 
-	nr_chans = platform_irq_count(pdev);
-	if (nr_chans < 0)
-		return nr_chans;
+	nr_chans = platक्रमm_irq_count(pdev);
+	अगर (nr_chans < 0)
+		वापस nr_chans;
 
-	mdev = devm_kzalloc(dev, struct_size(mdev, channels, nr_chans),
+	mdev = devm_kzalloc(dev, काष्ठा_size(mdev, channels, nr_chans),
 			    GFP_KERNEL);
-	if (!mdev)
-		return -ENOMEM;
+	अगर (!mdev)
+		वापस -ENOMEM;
 
-	mdev->reg_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(mdev->reg_base))
-		return PTR_ERR(mdev->reg_base);
+	mdev->reg_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(mdev->reg_base))
+		वापस PTR_ERR(mdev->reg_base);
 
 	ddev = &mdev->ddev;
 	ddev->dev = dev;
 	dma_cap_set(DMA_MEMCPY, ddev->cap_mask);
 	ddev->src_addr_widths = MLB_XDMAC_BUSWIDTHS;
 	ddev->dst_addr_widths = MLB_XDMAC_BUSWIDTHS;
-	ddev->device_free_chan_resources = milbeaut_xdmac_free_chan_resources;
-	ddev->device_prep_dma_memcpy = milbeaut_xdmac_prep_memcpy;
+	ddev->device_मुक्त_chan_resources = milbeaut_xdmac_मुक्त_chan_resources;
+	ddev->device_prep_dma_स_नकल = milbeaut_xdmac_prep_स_नकल;
 	ddev->device_terminate_all = milbeaut_xdmac_terminate_all;
 	ddev->device_synchronize = milbeaut_xdmac_synchronize;
 	ddev->device_tx_status = dma_cookie_status;
 	ddev->device_issue_pending = milbeaut_xdmac_issue_pending;
 	INIT_LIST_HEAD(&ddev->channels);
 
-	for (i = 0; i < nr_chans; i++) {
+	क्रम (i = 0; i < nr_chans; i++) अणु
 		ret = milbeaut_xdmac_chan_init(pdev, mdev, i);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	enable_xdmac(mdev);
 
-	ret = dma_async_device_register(ddev);
-	if (ret)
-		goto disable_xdmac;
+	ret = dma_async_device_रेजिस्टर(ddev);
+	अगर (ret)
+		जाओ disable_xdmac;
 
-	ret = of_dma_controller_register(dev->of_node,
+	ret = of_dma_controller_रेजिस्टर(dev->of_node,
 					 of_dma_simple_xlate, mdev);
-	if (ret)
-		goto unregister_dmac;
+	अगर (ret)
+		जाओ unरेजिस्टर_dmac;
 
-	platform_set_drvdata(pdev, mdev);
+	platक्रमm_set_drvdata(pdev, mdev);
 
-	return 0;
+	वापस 0;
 
-unregister_dmac:
-	dma_async_device_unregister(ddev);
+unरेजिस्टर_dmac:
+	dma_async_device_unरेजिस्टर(ddev);
 disable_xdmac:
 	disable_xdmac(mdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int milbeaut_xdmac_remove(struct platform_device *pdev)
-{
-	struct milbeaut_xdmac_device *mdev = platform_get_drvdata(pdev);
-	struct dma_chan *chan;
-	int ret;
+अटल पूर्णांक milbeaut_xdmac_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा milbeaut_xdmac_device *mdev = platक्रमm_get_drvdata(pdev);
+	काष्ठा dma_chan *chan;
+	पूर्णांक ret;
 
 	/*
-	 * Before reaching here, almost all descriptors have been freed by the
-	 * ->device_free_chan_resources() hook. However, each channel might
+	 * Beक्रमe reaching here, almost all descriptors have been मुक्तd by the
+	 * ->device_मुक्त_chan_resources() hook. However, each channel might
 	 * be still holding one descriptor that was on-flight at that moment.
-	 * Terminate it to make sure this hardware is no longer running. Then,
-	 * free the channel resources once again to avoid memory leak.
+	 * Terminate it to make sure this hardware is no दीर्घer running. Then,
+	 * मुक्त the channel resources once again to aव्योम memory leak.
 	 */
-	list_for_each_entry(chan, &mdev->ddev.channels, device_node) {
+	list_क्रम_each_entry(chan, &mdev->ddev.channels, device_node) अणु
 		ret = dmaengine_terminate_sync(chan);
-		if (ret)
-			return ret;
-		milbeaut_xdmac_free_chan_resources(chan);
-	}
+		अगर (ret)
+			वापस ret;
+		milbeaut_xdmac_मुक्त_chan_resources(chan);
+	पूर्ण
 
-	of_dma_controller_free(pdev->dev.of_node);
-	dma_async_device_unregister(&mdev->ddev);
+	of_dma_controller_मुक्त(pdev->dev.of_node);
+	dma_async_device_unरेजिस्टर(&mdev->ddev);
 
 	disable_xdmac(mdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id milbeaut_xdmac_match[] = {
-	{ .compatible = "socionext,milbeaut-m10v-xdmac" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id milbeaut_xdmac_match[] = अणु
+	अणु .compatible = "socionext,milbeaut-m10v-xdmac" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, milbeaut_xdmac_match);
 
-static struct platform_driver milbeaut_xdmac_driver = {
+अटल काष्ठा platक्रमm_driver milbeaut_xdmac_driver = अणु
 	.probe = milbeaut_xdmac_probe,
-	.remove = milbeaut_xdmac_remove,
-	.driver = {
+	.हटाओ = milbeaut_xdmac_हटाओ,
+	.driver = अणु
 		.name = "milbeaut-m10v-xdmac",
 		.of_match_table = milbeaut_xdmac_match,
-	},
-};
-module_platform_driver(milbeaut_xdmac_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(milbeaut_xdmac_driver);
 
 MODULE_DESCRIPTION("Milbeaut XDMAC DmaEngine driver");
 MODULE_LICENSE("GPL v2");

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) 1998-2001 Vojtech Pavlik
  *
@@ -7,416 +8,416 @@
  */
 
 /*
- * ThrustMaster DirectConnect (BSP) joystick family driver for Linux
+ * ThrustMaster DirectConnect (BSP) joystick family driver क्रम Linux
  */
 
 /*
  */
 
-#include <linux/delay.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/gameport.h>
-#include <linux/input.h>
-#include <linux/jiffies.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gameport.h>
+#समावेश <linux/input.h>
+#समावेश <linux/jअगरfies.h>
 
-#define DRIVER_DESC	"ThrustMaster DirectConnect joystick driver"
+#घोषणा DRIVER_DESC	"ThrustMaster DirectConnect joystick driver"
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-#define TMDC_MAX_START		600	/* 600 us */
-#define TMDC_MAX_STROBE		60	/* 60 us */
-#define TMDC_MAX_LENGTH		13
+#घोषणा TMDC_MAX_START		600	/* 600 us */
+#घोषणा TMDC_MAX_STROBE		60	/* 60 us */
+#घोषणा TMDC_MAX_LENGTH		13
 
-#define TMDC_MODE_M3DI		1
-#define TMDC_MODE_3DRP		3
-#define TMDC_MODE_AT		4
-#define TMDC_MODE_FM		8
-#define TMDC_MODE_FGP		163
+#घोषणा TMDC_MODE_M3DI		1
+#घोषणा TMDC_MODE_3DRP		3
+#घोषणा TMDC_MODE_AT		4
+#घोषणा TMDC_MODE_FM		8
+#घोषणा TMDC_MODE_FGP		163
 
-#define TMDC_BYTE_ID		10
-#define TMDC_BYTE_REV		11
-#define TMDC_BYTE_DEF		12
+#घोषणा TMDC_BYTE_ID		10
+#घोषणा TMDC_BYTE_REV		11
+#घोषणा TMDC_BYTE_DEF		12
 
-#define TMDC_ABS		7
-#define TMDC_ABS_HAT		4
-#define TMDC_BTN		16
+#घोषणा TMDC_ABS		7
+#घोषणा TMDC_ABS_HAT		4
+#घोषणा TMDC_BTN		16
 
-static const unsigned char tmdc_byte_a[16] = { 0, 1, 3, 4, 6, 7 };
-static const unsigned char tmdc_byte_d[16] = { 2, 5, 8, 9 };
+अटल स्थिर अचिन्हित अक्षर पंचांगdc_byte_a[16] = अणु 0, 1, 3, 4, 6, 7 पूर्ण;
+अटल स्थिर अचिन्हित अक्षर पंचांगdc_byte_d[16] = अणु 2, 5, 8, 9 पूर्ण;
 
-static const signed char tmdc_abs[TMDC_ABS] =
-	{ ABS_X, ABS_Y, ABS_RUDDER, ABS_THROTTLE, ABS_RX, ABS_RY, ABS_RZ };
-static const signed char tmdc_abs_hat[TMDC_ABS_HAT] =
-	{ ABS_HAT0X, ABS_HAT0Y, ABS_HAT1X, ABS_HAT1Y };
-static const signed char tmdc_abs_at[TMDC_ABS] =
-	{ ABS_X, ABS_Y, ABS_RUDDER, -1, ABS_THROTTLE };
-static const signed char tmdc_abs_fm[TMDC_ABS] =
-	{ ABS_RX, ABS_RY, ABS_X, ABS_Y };
+अटल स्थिर चिन्हित अक्षर पंचांगdc_असल[TMDC_ABS] =
+	अणु ABS_X, ABS_Y, ABS_RUDDER, ABS_THROTTLE, ABS_RX, ABS_RY, ABS_RZ पूर्ण;
+अटल स्थिर चिन्हित अक्षर पंचांगdc_असल_hat[TMDC_ABS_HAT] =
+	अणु ABS_HAT0X, ABS_HAT0Y, ABS_HAT1X, ABS_HAT1Y पूर्ण;
+अटल स्थिर चिन्हित अक्षर पंचांगdc_असल_at[TMDC_ABS] =
+	अणु ABS_X, ABS_Y, ABS_RUDDER, -1, ABS_THROTTLE पूर्ण;
+अटल स्थिर चिन्हित अक्षर पंचांगdc_असल_fm[TMDC_ABS] =
+	अणु ABS_RX, ABS_RY, ABS_X, ABS_Y पूर्ण;
 
-static const short tmdc_btn_pad[TMDC_BTN] =
-	{ BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z, BTN_START, BTN_SELECT, BTN_TL, BTN_TR };
-static const short tmdc_btn_joy[TMDC_BTN] =
-	{ BTN_TRIGGER, BTN_THUMB, BTN_TOP, BTN_TOP2, BTN_BASE, BTN_BASE2, BTN_THUMB2, BTN_PINKIE,
-	  BTN_BASE3, BTN_BASE4, BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z };
-static const short tmdc_btn_fm[TMDC_BTN] =
-        { BTN_TRIGGER, BTN_C, BTN_B, BTN_A, BTN_THUMB, BTN_X, BTN_Y, BTN_Z, BTN_TOP, BTN_TOP2 };
-static const short tmdc_btn_at[TMDC_BTN] =
-        { BTN_TRIGGER, BTN_THUMB2, BTN_PINKIE, BTN_THUMB, BTN_BASE6, BTN_BASE5, BTN_BASE4,
-          BTN_BASE3, BTN_BASE2, BTN_BASE };
+अटल स्थिर लघु पंचांगdc_btn_pad[TMDC_BTN] =
+	अणु BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z, BTN_START, BTN_SELECT, BTN_TL, BTN_TR पूर्ण;
+अटल स्थिर लघु पंचांगdc_btn_joy[TMDC_BTN] =
+	अणु BTN_TRIGGER, BTN_THUMB, BTN_TOP, BTN_TOP2, BTN_BASE, BTN_BASE2, BTN_THUMB2, BTN_PINKIE,
+	  BTN_BASE3, BTN_BASE4, BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z पूर्ण;
+अटल स्थिर लघु पंचांगdc_btn_fm[TMDC_BTN] =
+        अणु BTN_TRIGGER, BTN_C, BTN_B, BTN_A, BTN_THUMB, BTN_X, BTN_Y, BTN_Z, BTN_TOP, BTN_TOP2 पूर्ण;
+अटल स्थिर लघु पंचांगdc_btn_at[TMDC_BTN] =
+        अणु BTN_TRIGGER, BTN_THUMB2, BTN_PINKIE, BTN_THUMB, BTN_BASE6, BTN_BASE5, BTN_BASE4,
+          BTN_BASE3, BTN_BASE2, BTN_BASE पूर्ण;
 
-static const struct {
-        int x;
-        int y;
-} tmdc_hat_to_axis[] = {{ 0, 0}, { 1, 0}, { 0,-1}, {-1, 0}, { 0, 1}};
+अटल स्थिर काष्ठा अणु
+        पूर्णांक x;
+        पूर्णांक y;
+पूर्ण पंचांगdc_hat_to_axis[] = अणुअणु 0, 0पूर्ण, अणु 1, 0पूर्ण, अणु 0,-1पूर्ण, अणु-1, 0पूर्ण, अणु 0, 1पूर्णपूर्ण;
 
-static const struct tmdc_model {
-	unsigned char id;
-	const char *name;
-	char abs;
-	char hats;
-	char btnc[4];
-	char btno[4];
-	const signed char *axes;
-	const short *buttons;
-} tmdc_models[] = {
-	{   1, "ThrustMaster Millenium 3D Inceptor",	  6, 2, { 4, 2 }, { 4, 6 }, tmdc_abs, tmdc_btn_joy },
-	{   3, "ThrustMaster Rage 3D Gamepad",		  2, 0, { 8, 2 }, { 0, 0 }, tmdc_abs, tmdc_btn_pad },
-	{   4, "ThrustMaster Attack Throttle",		  5, 2, { 4, 6 }, { 4, 2 }, tmdc_abs_at, tmdc_btn_at },
-	{   8, "ThrustMaster FragMaster",		  4, 0, { 8, 2 }, { 0, 0 }, tmdc_abs_fm, tmdc_btn_fm },
-	{ 163, "Thrustmaster Fusion GamePad",		  2, 0, { 8, 2 }, { 0, 0 }, tmdc_abs, tmdc_btn_pad },
-	{   0, "Unknown %d-axis, %d-button TM device %d", 0, 0, { 0, 0 }, { 0, 0 }, tmdc_abs, tmdc_btn_joy }
-};
+अटल स्थिर काष्ठा पंचांगdc_model अणु
+	अचिन्हित अक्षर id;
+	स्थिर अक्षर *name;
+	अक्षर असल;
+	अक्षर hats;
+	अक्षर btnc[4];
+	अक्षर btno[4];
+	स्थिर चिन्हित अक्षर *axes;
+	स्थिर लघु *buttons;
+पूर्ण पंचांगdc_models[] = अणु
+	अणु   1, "ThrustMaster Millenium 3D Inceptor",	  6, 2, अणु 4, 2 पूर्ण, अणु 4, 6 पूर्ण, पंचांगdc_असल, पंचांगdc_btn_joy पूर्ण,
+	अणु   3, "ThrustMaster Rage 3D Gamepad",		  2, 0, अणु 8, 2 पूर्ण, अणु 0, 0 पूर्ण, पंचांगdc_असल, पंचांगdc_btn_pad पूर्ण,
+	अणु   4, "ThrustMaster Attack Throttle",		  5, 2, अणु 4, 6 पूर्ण, अणु 4, 2 पूर्ण, पंचांगdc_असल_at, पंचांगdc_btn_at पूर्ण,
+	अणु   8, "ThrustMaster FragMaster",		  4, 0, अणु 8, 2 पूर्ण, अणु 0, 0 पूर्ण, पंचांगdc_असल_fm, पंचांगdc_btn_fm पूर्ण,
+	अणु 163, "Thrustmaster Fusion GamePad",		  2, 0, अणु 8, 2 पूर्ण, अणु 0, 0 पूर्ण, पंचांगdc_असल, पंचांगdc_btn_pad पूर्ण,
+	अणु   0, "Unknown %d-axis, %d-button TM device %d", 0, 0, अणु 0, 0 पूर्ण, अणु 0, 0 पूर्ण, पंचांगdc_असल, पंचांगdc_btn_joy पूर्ण
+पूर्ण;
 
 
-struct tmdc_port {
-	struct input_dev *dev;
-	char name[64];
-	char phys[32];
-	int mode;
-	const signed char *abs;
-	const short *btn;
-	unsigned char absc;
-	unsigned char btnc[4];
-	unsigned char btno[4];
-};
+काष्ठा पंचांगdc_port अणु
+	काष्ठा input_dev *dev;
+	अक्षर name[64];
+	अक्षर phys[32];
+	पूर्णांक mode;
+	स्थिर चिन्हित अक्षर *असल;
+	स्थिर लघु *btn;
+	अचिन्हित अक्षर असलc;
+	अचिन्हित अक्षर btnc[4];
+	अचिन्हित अक्षर btno[4];
+पूर्ण;
 
-struct tmdc {
-	struct gameport *gameport;
-	struct tmdc_port *port[2];
-#if 0
-	struct input_dev *dev[2];
-	char name[2][64];
-	char phys[2][32];
-	int mode[2];
-	signed char *abs[2];
-	short *btn[2];
-	unsigned char absc[2];
-	unsigned char btnc[2][4];
-	unsigned char btno[2][4];
-#endif
-	int reads;
-	int bads;
-	unsigned char exists;
-};
+काष्ठा पंचांगdc अणु
+	काष्ठा gameport *gameport;
+	काष्ठा पंचांगdc_port *port[2];
+#अगर 0
+	काष्ठा input_dev *dev[2];
+	अक्षर name[2][64];
+	अक्षर phys[2][32];
+	पूर्णांक mode[2];
+	चिन्हित अक्षर *असल[2];
+	लघु *btn[2];
+	अचिन्हित अक्षर असलc[2];
+	अचिन्हित अक्षर btnc[2][4];
+	अचिन्हित अक्षर btno[2][4];
+#पूर्ण_अगर
+	पूर्णांक पढ़ोs;
+	पूर्णांक bads;
+	अचिन्हित अक्षर exists;
+पूर्ण;
 
 /*
- * tmdc_read_packet() reads a ThrustMaster packet.
+ * पंचांगdc_पढ़ो_packet() पढ़ोs a ThrustMaster packet.
  */
 
-static int tmdc_read_packet(struct gameport *gameport, unsigned char data[2][TMDC_MAX_LENGTH])
-{
-	unsigned char u, v, w, x;
-	unsigned long flags;
-	int i[2], j[2], t[2], p, k;
+अटल पूर्णांक पंचांगdc_पढ़ो_packet(काष्ठा gameport *gameport, अचिन्हित अक्षर data[2][TMDC_MAX_LENGTH])
+अणु
+	अचिन्हित अक्षर u, v, w, x;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i[2], j[2], t[2], p, k;
 
-	p = gameport_time(gameport, TMDC_MAX_STROBE);
+	p = gameport_समय(gameport, TMDC_MAX_STROBE);
 
-	for (k = 0; k < 2; k++) {
-		t[k] = gameport_time(gameport, TMDC_MAX_START);
+	क्रम (k = 0; k < 2; k++) अणु
+		t[k] = gameport_समय(gameport, TMDC_MAX_START);
 		i[k] = j[k] = 0;
-	}
+	पूर्ण
 
 	local_irq_save(flags);
 	gameport_trigger(gameport);
 
-	w = gameport_read(gameport) >> 4;
+	w = gameport_पढ़ो(gameport) >> 4;
 
-	do {
+	करो अणु
 		x = w;
-		w = gameport_read(gameport) >> 4;
+		w = gameport_पढ़ो(gameport) >> 4;
 
-		for (k = 0, v = w, u = x; k < 2; k++, v >>= 2, u >>= 2) {
-			if (~v & u & 2) {
-				if (t[k] <= 0 || i[k] >= TMDC_MAX_LENGTH) continue;
+		क्रम (k = 0, v = w, u = x; k < 2; k++, v >>= 2, u >>= 2) अणु
+			अगर (~v & u & 2) अणु
+				अगर (t[k] <= 0 || i[k] >= TMDC_MAX_LENGTH) जारी;
 				t[k] = p;
-				if (j[k] == 0) {				 /* Start bit */
-					if (~v & 1) t[k] = 0;
-					data[k][i[k]] = 0; j[k]++; continue;
-				}
-				if (j[k] == 9) {				/* Stop bit */
-					if (v & 1) t[k] = 0;
-					j[k] = 0; i[k]++; continue;
-				}
+				अगर (j[k] == 0) अणु				 /* Start bit */
+					अगर (~v & 1) t[k] = 0;
+					data[k][i[k]] = 0; j[k]++; जारी;
+				पूर्ण
+				अगर (j[k] == 9) अणु				/* Stop bit */
+					अगर (v & 1) t[k] = 0;
+					j[k] = 0; i[k]++; जारी;
+				पूर्ण
 				data[k][i[k]] |= (~v & 1) << (j[k]++ - 1);	/* Data bit */
-			}
+			पूर्ण
 			t[k]--;
-		}
-	} while (t[0] > 0 || t[1] > 0);
+		पूर्ण
+	पूर्ण जबतक (t[0] > 0 || t[1] > 0);
 
 	local_irq_restore(flags);
 
-	return (i[0] == TMDC_MAX_LENGTH) | ((i[1] == TMDC_MAX_LENGTH) << 1);
-}
+	वापस (i[0] == TMDC_MAX_LENGTH) | ((i[1] == TMDC_MAX_LENGTH) << 1);
+पूर्ण
 
-static int tmdc_parse_packet(struct tmdc_port *port, unsigned char *data)
-{
-	int i, k, l;
+अटल पूर्णांक पंचांगdc_parse_packet(काष्ठा पंचांगdc_port *port, अचिन्हित अक्षर *data)
+अणु
+	पूर्णांक i, k, l;
 
-	if (data[TMDC_BYTE_ID] != port->mode)
-		return -1;
+	अगर (data[TMDC_BYTE_ID] != port->mode)
+		वापस -1;
 
-	for (i = 0; i < port->absc; i++) {
-		if (port->abs[i] < 0)
-			return 0;
+	क्रम (i = 0; i < port->असलc; i++) अणु
+		अगर (port->असल[i] < 0)
+			वापस 0;
 
-		input_report_abs(port->dev, port->abs[i], data[tmdc_byte_a[i]]);
-	}
+		input_report_असल(port->dev, port->असल[i], data[पंचांगdc_byte_a[i]]);
+	पूर्ण
 
-	switch (port->mode) {
+	चयन (port->mode) अणु
 
-		case TMDC_MODE_M3DI:
+		हाल TMDC_MODE_M3DI:
 
-			i = tmdc_byte_d[0];
-			input_report_abs(port->dev, ABS_HAT0X, ((data[i] >> 3) & 1) - ((data[i] >> 1) & 1));
-			input_report_abs(port->dev, ABS_HAT0Y, ((data[i] >> 2) & 1) - ( data[i]       & 1));
-			break;
+			i = पंचांगdc_byte_d[0];
+			input_report_असल(port->dev, ABS_HAT0X, ((data[i] >> 3) & 1) - ((data[i] >> 1) & 1));
+			input_report_असल(port->dev, ABS_HAT0Y, ((data[i] >> 2) & 1) - ( data[i]       & 1));
+			अवरोध;
 
-		case TMDC_MODE_AT:
+		हाल TMDC_MODE_AT:
 
-			i = tmdc_byte_a[3];
-			input_report_abs(port->dev, ABS_HAT0X, tmdc_hat_to_axis[(data[i] - 141) / 25].x);
-			input_report_abs(port->dev, ABS_HAT0Y, tmdc_hat_to_axis[(data[i] - 141) / 25].y);
-			break;
+			i = पंचांगdc_byte_a[3];
+			input_report_असल(port->dev, ABS_HAT0X, पंचांगdc_hat_to_axis[(data[i] - 141) / 25].x);
+			input_report_असल(port->dev, ABS_HAT0Y, पंचांगdc_hat_to_axis[(data[i] - 141) / 25].y);
+			अवरोध;
 
-	}
+	पूर्ण
 
-	for (k = l = 0; k < 4; k++) {
-		for (i = 0; i < port->btnc[k]; i++)
+	क्रम (k = l = 0; k < 4; k++) अणु
+		क्रम (i = 0; i < port->btnc[k]; i++)
 			input_report_key(port->dev, port->btn[i + l],
-				((data[tmdc_byte_d[k]] >> (i + port->btno[k])) & 1));
+				((data[पंचांगdc_byte_d[k]] >> (i + port->btno[k])) & 1));
 		l += port->btnc[k];
-	}
+	पूर्ण
 
 	input_sync(port->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * tmdc_poll() reads and analyzes ThrustMaster joystick data.
+ * पंचांगdc_poll() पढ़ोs and analyzes ThrustMaster joystick data.
  */
 
-static void tmdc_poll(struct gameport *gameport)
-{
-	unsigned char data[2][TMDC_MAX_LENGTH];
-	struct tmdc *tmdc = gameport_get_drvdata(gameport);
-	unsigned char r, bad = 0;
-	int i;
+अटल व्योम पंचांगdc_poll(काष्ठा gameport *gameport)
+अणु
+	अचिन्हित अक्षर data[2][TMDC_MAX_LENGTH];
+	काष्ठा पंचांगdc *पंचांगdc = gameport_get_drvdata(gameport);
+	अचिन्हित अक्षर r, bad = 0;
+	पूर्णांक i;
 
-	tmdc->reads++;
+	पंचांगdc->पढ़ोs++;
 
-	if ((r = tmdc_read_packet(tmdc->gameport, data)) != tmdc->exists)
+	अगर ((r = पंचांगdc_पढ़ो_packet(पंचांगdc->gameport, data)) != पंचांगdc->exists)
 		bad = 1;
-	else {
-		for (i = 0; i < 2; i++) {
-			if (r & (1 << i) & tmdc->exists) {
+	अन्यथा अणु
+		क्रम (i = 0; i < 2; i++) अणु
+			अगर (r & (1 << i) & पंचांगdc->exists) अणु
 
-				if (tmdc_parse_packet(tmdc->port[i], data[i]))
+				अगर (पंचांगdc_parse_packet(पंचांगdc->port[i], data[i]))
 					bad = 1;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	tmdc->bads += bad;
-}
+	पंचांगdc->bads += bad;
+पूर्ण
 
-static int tmdc_open(struct input_dev *dev)
-{
-	struct tmdc *tmdc = input_get_drvdata(dev);
+अटल पूर्णांक पंचांगdc_खोलो(काष्ठा input_dev *dev)
+अणु
+	काष्ठा पंचांगdc *पंचांगdc = input_get_drvdata(dev);
 
-	gameport_start_polling(tmdc->gameport);
-	return 0;
-}
+	gameport_start_polling(पंचांगdc->gameport);
+	वापस 0;
+पूर्ण
 
-static void tmdc_close(struct input_dev *dev)
-{
-	struct tmdc *tmdc = input_get_drvdata(dev);
+अटल व्योम पंचांगdc_बंद(काष्ठा input_dev *dev)
+अणु
+	काष्ठा पंचांगdc *पंचांगdc = input_get_drvdata(dev);
 
-	gameport_stop_polling(tmdc->gameport);
-}
+	gameport_stop_polling(पंचांगdc->gameport);
+पूर्ण
 
-static int tmdc_setup_port(struct tmdc *tmdc, int idx, unsigned char *data)
-{
-	const struct tmdc_model *model;
-	struct tmdc_port *port;
-	struct input_dev *input_dev;
-	int i, j, b = 0;
-	int err;
+अटल पूर्णांक पंचांगdc_setup_port(काष्ठा पंचांगdc *पंचांगdc, पूर्णांक idx, अचिन्हित अक्षर *data)
+अणु
+	स्थिर काष्ठा पंचांगdc_model *model;
+	काष्ठा पंचांगdc_port *port;
+	काष्ठा input_dev *input_dev;
+	पूर्णांक i, j, b = 0;
+	पूर्णांक err;
 
-	tmdc->port[idx] = port = kzalloc(sizeof (struct tmdc_port), GFP_KERNEL);
+	पंचांगdc->port[idx] = port = kzalloc(माप (काष्ठा पंचांगdc_port), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	if (!port || !input_dev) {
+	अगर (!port || !input_dev) अणु
 		err = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	port->mode = data[TMDC_BYTE_ID];
 
-	for (model = tmdc_models; model->id && model->id != port->mode; model++)
+	क्रम (model = पंचांगdc_models; model->id && model->id != port->mode; model++)
 		/* empty */;
 
-	port->abs = model->axes;
+	port->असल = model->axes;
 	port->btn = model->buttons;
 
-	if (!model->id) {
-		port->absc = data[TMDC_BYTE_DEF] >> 4;
-		for (i = 0; i < 4; i++)
+	अगर (!model->id) अणु
+		port->असलc = data[TMDC_BYTE_DEF] >> 4;
+		क्रम (i = 0; i < 4; i++)
 			port->btnc[i] = i < (data[TMDC_BYTE_DEF] & 0xf) ? 8 : 0;
-	} else {
-		port->absc = model->abs;
-		for (i = 0; i < 4; i++)
+	पूर्ण अन्यथा अणु
+		port->असलc = model->असल;
+		क्रम (i = 0; i < 4; i++)
 			port->btnc[i] = model->btnc[i];
-	}
+	पूर्ण
 
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		port->btno[i] = model->btno[i];
 
-	snprintf(port->name, sizeof(port->name), model->name,
-		 port->absc, (data[TMDC_BYTE_DEF] & 0xf) << 3, port->mode);
-	snprintf(port->phys, sizeof(port->phys), "%s/input%d", tmdc->gameport->phys, i);
+	snम_लिखो(port->name, माप(port->name), model->name,
+		 port->असलc, (data[TMDC_BYTE_DEF] & 0xf) << 3, port->mode);
+	snम_लिखो(port->phys, माप(port->phys), "%s/input%d", पंचांगdc->gameport->phys, i);
 
 	port->dev = input_dev;
 
 	input_dev->name = port->name;
 	input_dev->phys = port->phys;
 	input_dev->id.bustype = BUS_GAMEPORT;
-	input_dev->id.vendor = GAMEPORT_ID_VENDOR_THRUSTMASTER;
+	input_dev->id.venकरोr = GAMEPORT_ID_VENDOR_THRUSTMASTER;
 	input_dev->id.product = model->id;
 	input_dev->id.version = 0x0100;
-	input_dev->dev.parent = &tmdc->gameport->dev;
+	input_dev->dev.parent = &पंचांगdc->gameport->dev;
 
-	input_set_drvdata(input_dev, tmdc);
+	input_set_drvdata(input_dev, पंचांगdc);
 
-	input_dev->open = tmdc_open;
-	input_dev->close = tmdc_close;
+	input_dev->खोलो = पंचांगdc_खोलो;
+	input_dev->बंद = पंचांगdc_बंद;
 
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 
-	for (i = 0; i < port->absc && i < TMDC_ABS; i++)
-		if (port->abs[i] >= 0)
-			input_set_abs_params(input_dev, port->abs[i], 8, 248, 2, 4);
+	क्रम (i = 0; i < port->असलc && i < TMDC_ABS; i++)
+		अगर (port->असल[i] >= 0)
+			input_set_असल_params(input_dev, port->असल[i], 8, 248, 2, 4);
 
-	for (i = 0; i < model->hats && i < TMDC_ABS_HAT; i++)
-		input_set_abs_params(input_dev, tmdc_abs_hat[i], -1, 1, 0, 0);
+	क्रम (i = 0; i < model->hats && i < TMDC_ABS_HAT; i++)
+		input_set_असल_params(input_dev, पंचांगdc_असल_hat[i], -1, 1, 0, 0);
 
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < port->btnc[i] && j < TMDC_BTN; j++)
+	क्रम (i = 0; i < 4; i++) अणु
+		क्रम (j = 0; j < port->btnc[i] && j < TMDC_BTN; j++)
 			set_bit(port->btn[j + b], input_dev->keybit);
 		b += port->btnc[i];
-	}
+	पूर्ण
 
-	err = input_register_device(port->dev);
-	if (err)
-		goto fail;
+	err = input_रेजिस्टर_device(port->dev);
+	अगर (err)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 
- fail:	input_free_device(input_dev);
-	kfree(port);
-	return err;
-}
+ fail:	input_मुक्त_device(input_dev);
+	kमुक्त(port);
+	वापस err;
+पूर्ण
 
 /*
- * tmdc_probe() probes for ThrustMaster type joysticks.
+ * पंचांगdc_probe() probes क्रम ThrustMaster type joysticks.
  */
 
-static int tmdc_connect(struct gameport *gameport, struct gameport_driver *drv)
-{
-	unsigned char data[2][TMDC_MAX_LENGTH];
-	struct tmdc *tmdc;
-	int i;
-	int err;
+अटल पूर्णांक पंचांगdc_connect(काष्ठा gameport *gameport, काष्ठा gameport_driver *drv)
+अणु
+	अचिन्हित अक्षर data[2][TMDC_MAX_LENGTH];
+	काष्ठा पंचांगdc *पंचांगdc;
+	पूर्णांक i;
+	पूर्णांक err;
 
-	if (!(tmdc = kzalloc(sizeof(struct tmdc), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(पंचांगdc = kzalloc(माप(काष्ठा पंचांगdc), GFP_KERNEL)))
+		वापस -ENOMEM;
 
-	tmdc->gameport = gameport;
+	पंचांगdc->gameport = gameport;
 
-	gameport_set_drvdata(gameport, tmdc);
+	gameport_set_drvdata(gameport, पंचांगdc);
 
-	err = gameport_open(gameport, drv, GAMEPORT_MODE_RAW);
-	if (err)
-		goto fail1;
+	err = gameport_खोलो(gameport, drv, GAMEPORT_MODE_RAW);
+	अगर (err)
+		जाओ fail1;
 
-	if (!(tmdc->exists = tmdc_read_packet(gameport, data))) {
+	अगर (!(पंचांगdc->exists = पंचांगdc_पढ़ो_packet(gameport, data))) अणु
 		err = -ENODEV;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 
-	gameport_set_poll_handler(gameport, tmdc_poll);
-	gameport_set_poll_interval(gameport, 20);
+	gameport_set_poll_handler(gameport, पंचांगdc_poll);
+	gameport_set_poll_पूर्णांकerval(gameport, 20);
 
-	for (i = 0; i < 2; i++) {
-		if (tmdc->exists & (1 << i)) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (पंचांगdc->exists & (1 << i)) अणु
 
-			err = tmdc_setup_port(tmdc, i, data[i]);
-			if (err)
-				goto fail3;
-		}
-	}
+			err = पंचांगdc_setup_port(पंचांगdc, i, data[i]);
+			अगर (err)
+				जाओ fail3;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- fail3: while (--i >= 0) {
-		if (tmdc->port[i]) {
-			input_unregister_device(tmdc->port[i]->dev);
-			kfree(tmdc->port[i]);
-		}
-	}
- fail2:	gameport_close(gameport);
- fail1:	gameport_set_drvdata(gameport, NULL);
-	kfree(tmdc);
-	return err;
-}
+ fail3: जबतक (--i >= 0) अणु
+		अगर (पंचांगdc->port[i]) अणु
+			input_unरेजिस्टर_device(पंचांगdc->port[i]->dev);
+			kमुक्त(पंचांगdc->port[i]);
+		पूर्ण
+	पूर्ण
+ fail2:	gameport_बंद(gameport);
+ fail1:	gameport_set_drvdata(gameport, शून्य);
+	kमुक्त(पंचांगdc);
+	वापस err;
+पूर्ण
 
-static void tmdc_disconnect(struct gameport *gameport)
-{
-	struct tmdc *tmdc = gameport_get_drvdata(gameport);
-	int i;
+अटल व्योम पंचांगdc_disconnect(काष्ठा gameport *gameport)
+अणु
+	काष्ठा पंचांगdc *पंचांगdc = gameport_get_drvdata(gameport);
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
-		if (tmdc->port[i]) {
-			input_unregister_device(tmdc->port[i]->dev);
-			kfree(tmdc->port[i]);
-		}
-	}
-	gameport_close(gameport);
-	gameport_set_drvdata(gameport, NULL);
-	kfree(tmdc);
-}
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (पंचांगdc->port[i]) अणु
+			input_unरेजिस्टर_device(पंचांगdc->port[i]->dev);
+			kमुक्त(पंचांगdc->port[i]);
+		पूर्ण
+	पूर्ण
+	gameport_बंद(gameport);
+	gameport_set_drvdata(gameport, शून्य);
+	kमुक्त(पंचांगdc);
+पूर्ण
 
-static struct gameport_driver tmdc_drv = {
-	.driver		= {
+अटल काष्ठा gameport_driver पंचांगdc_drv = अणु
+	.driver		= अणु
 		.name	= "tmdc",
 		.owner	= THIS_MODULE,
-	},
+	पूर्ण,
 	.description	= DRIVER_DESC,
-	.connect	= tmdc_connect,
-	.disconnect	= tmdc_disconnect,
-};
+	.connect	= पंचांगdc_connect,
+	.disconnect	= पंचांगdc_disconnect,
+पूर्ण;
 
-module_gameport_driver(tmdc_drv);
+module_gameport_driver(पंचांगdc_drv);

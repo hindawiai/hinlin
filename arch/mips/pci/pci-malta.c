@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 1999, 2000, 2004, 2005	 MIPS Technologies, Inc.
  *	All rights reserved.
@@ -7,85 +8,85 @@
  *
  * Copyright (C) 2004 by Ralf Baechle (ralf@linux-mips.org)
  *
- * MIPS boards specific PCI support.
+ * MIPS boards specअगरic PCI support.
  */
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
 
-#include <asm/gt64120.h>
-#include <asm/mips-cps.h>
-#include <asm/mips-boards/generic.h>
-#include <asm/mips-boards/bonito64.h>
-#include <asm/mips-boards/msc01_pci.h>
+#समावेश <यंत्र/gt64120.h>
+#समावेश <यंत्र/mips-cps.h>
+#समावेश <यंत्र/mips-boards/generic.h>
+#समावेश <यंत्र/mips-boards/bonito64.h>
+#समावेश <यंत्र/mips-boards/msc01_pci.h>
 
-static struct resource bonito64_mem_resource = {
+अटल काष्ठा resource bonito64_mem_resource = अणु
 	.name	= "Bonito PCI MEM",
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct resource bonito64_io_resource = {
+अटल काष्ठा resource bonito64_io_resource = अणु
 	.name	= "Bonito PCI I/O",
 	.start	= 0x00000000UL,
 	.end	= 0x000fffffUL,
 	.flags	= IORESOURCE_IO,
-};
+पूर्ण;
 
-static struct resource gt64120_mem_resource = {
+अटल काष्ठा resource gt64120_mem_resource = अणु
 	.name	= "GT-64120 PCI MEM",
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct resource gt64120_io_resource = {
+अटल काष्ठा resource gt64120_io_resource = अणु
 	.name	= "GT-64120 PCI I/O",
 	.flags	= IORESOURCE_IO,
-};
+पूर्ण;
 
-static struct resource msc_mem_resource = {
+अटल काष्ठा resource msc_mem_resource = अणु
 	.name	= "MSC PCI MEM",
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct resource msc_io_resource = {
+अटल काष्ठा resource msc_io_resource = अणु
 	.name	= "MSC PCI I/O",
 	.flags	= IORESOURCE_IO,
-};
+पूर्ण;
 
-extern struct pci_ops bonito64_pci_ops;
-extern struct pci_ops gt64xxx_pci0_ops;
-extern struct pci_ops msc_pci_ops;
+बाह्य काष्ठा pci_ops bonito64_pci_ops;
+बाह्य काष्ठा pci_ops gt64xxx_pci0_ops;
+बाह्य काष्ठा pci_ops msc_pci_ops;
 
-static struct pci_controller bonito64_controller = {
+अटल काष्ठा pci_controller bonito64_controller = अणु
 	.pci_ops	= &bonito64_pci_ops,
 	.io_resource	= &bonito64_io_resource,
 	.mem_resource	= &bonito64_mem_resource,
 	.io_offset	= 0x00000000UL,
-};
+पूर्ण;
 
-static struct pci_controller gt64120_controller = {
+अटल काष्ठा pci_controller gt64120_controller = अणु
 	.pci_ops	= &gt64xxx_pci0_ops,
 	.io_resource	= &gt64120_io_resource,
 	.mem_resource	= &gt64120_mem_resource,
-};
+पूर्ण;
 
-static struct pci_controller msc_controller = {
+अटल काष्ठा pci_controller msc_controller = अणु
 	.pci_ops	= &msc_pci_ops,
 	.io_resource	= &msc_io_resource,
 	.mem_resource	= &msc_mem_resource,
-};
+पूर्ण;
 
-void __init mips_pcibios_init(void)
-{
-	struct pci_controller *controller;
-	resource_size_t start, end, map, start1, end1, map1, map2, map3, mask;
+व्योम __init mips_pcibios_init(व्योम)
+अणु
+	काष्ठा pci_controller *controller;
+	resource_माप_प्रकार start, end, map, start1, end1, map1, map2, map3, mask;
 
-	switch (mips_revision_sconid) {
-	case MIPS_REVISION_SCON_GT64120:
+	चयन (mips_revision_sconid) अणु
+	हाल MIPS_REVISION_SCON_GT64120:
 		/*
-		 * Due to a bug in the Galileo system controller, we need
-		 * to setup the PCI BAR for the Galileo internal registers.
-		 * This should be done in the bios/bootprom and will be
+		 * Due to a bug in the Galileo प्रणाली controller, we need
+		 * to setup the PCI BAR क्रम the Galileo पूर्णांकernal रेजिस्टरs.
+		 * This should be करोne in the bios/bootprom and will be
 		 * fixed in a later revision of YAMON (the MIPS boards
 		 * boot prom).
 		 */
@@ -96,10 +97,10 @@ void __init mips_pcibios_init(void)
 			 ((0x20/4) << GT_PCI0_CFGADDR_REGNUM_SHF) | /* BAR 4*/
 			 GT_PCI0_CFGADDR_CONFIGEN_BIT);
 
-		/* Perform the write */
+		/* Perक्रमm the ग_लिखो */
 		GT_WRITE(GT_PCI0_CFGDATA_OFS, CPHYSADDR(MIPS_GT_BASE));
 
-		/* Set up resource ranges from the controller's registers.  */
+		/* Set up resource ranges from the controller's रेजिस्टरs.  */
 		start = GT_READ(GT_PCI0M0LD_OFS);
 		end = GT_READ(GT_PCI0M0HD_OFS);
 		map = GT_READ(GT_PCI0M0REMAP_OFS);
@@ -108,20 +109,20 @@ void __init mips_pcibios_init(void)
 		end1 = GT_READ(GT_PCI0M1HD_OFS);
 		map1 = GT_READ(GT_PCI0M1REMAP_OFS);
 		end1 = (end1 & GT_PCI_HD_MSK) | (start1 & ~GT_PCI_HD_MSK);
-		/* Cannot support multiple windows, use the wider.  */
-		if (end1 - start1 > end - start) {
+		/* Cannot support multiple winकरोws, use the wider.  */
+		अगर (end1 - start1 > end - start) अणु
 			start = start1;
 			end = end1;
 			map = map1;
-		}
+		पूर्ण
 		mask = ~(start ^ end);
-		/* We don't support remapping with a discontiguous mask.  */
+		/* We करोn't support remapping with a discontiguous mask.  */
 		BUG_ON((start & GT_PCI_HD_MSK) != (map & GT_PCI_HD_MSK) &&
 		       mask != ~((mask & -mask) - 1));
 		gt64120_mem_resource.start = start;
 		gt64120_mem_resource.end = end;
 		gt64120_controller.mem_offset = (start & mask) - (map & mask);
-		/* Addresses are 36-bit, so do shifts in the destinations.  */
+		/* Addresses are 36-bit, so करो shअगरts in the destinations.  */
 		gt64120_mem_resource.start <<= GT_PCI_DCRM_SHF;
 		gt64120_mem_resource.end <<= GT_PCI_DCRM_SHF;
 		gt64120_mem_resource.end |= (1 << GT_PCI_DCRM_SHF) - 1;
@@ -132,22 +133,22 @@ void __init mips_pcibios_init(void)
 		map = GT_READ(GT_PCI0IOREMAP_OFS);
 		end = (end & GT_PCI_HD_MSK) | (start & ~GT_PCI_HD_MSK);
 		mask = ~(start ^ end);
-		/* We don't support remapping with a discontiguous mask.  */
+		/* We करोn't support remapping with a discontiguous mask.  */
 		BUG_ON((start & GT_PCI_HD_MSK) != (map & GT_PCI_HD_MSK) &&
 		       mask != ~((mask & -mask) - 1));
 		gt64120_io_resource.start = map & mask;
 		gt64120_io_resource.end = (map & mask) | ~mask;
 		gt64120_controller.io_offset = 0;
-		/* Addresses are 36-bit, so do shifts in the destinations.  */
+		/* Addresses are 36-bit, so करो shअगरts in the destinations.  */
 		gt64120_io_resource.start <<= GT_PCI_DCRM_SHF;
 		gt64120_io_resource.end <<= GT_PCI_DCRM_SHF;
 		gt64120_io_resource.end |= (1 << GT_PCI_DCRM_SHF) - 1;
 
 		controller = &gt64120_controller;
-		break;
+		अवरोध;
 
-	case MIPS_REVISION_SCON_BONITO:
-		/* Set up resource ranges from the controller's registers.  */
+	हाल MIPS_REVISION_SCON_BONITO:
+		/* Set up resource ranges from the controller's रेजिस्टरs.  */
 		map = BONITO_PCIMAP;
 		map1 = (BONITO_PCIMAP & BONITO_PCIMAP_PCIMAP_LO0) >>
 		       BONITO_PCIMAP_PCIMAP_LO0_SHIFT;
@@ -155,20 +156,20 @@ void __init mips_pcibios_init(void)
 		       BONITO_PCIMAP_PCIMAP_LO1_SHIFT;
 		map3 = (BONITO_PCIMAP & BONITO_PCIMAP_PCIMAP_LO2) >>
 		       BONITO_PCIMAP_PCIMAP_LO2_SHIFT;
-		/* Combine as many adjacent windows as possible.  */
+		/* Combine as many adjacent winकरोws as possible.  */
 		map = map1;
 		start = BONITO_PCILO0_BASE;
 		end = 1;
-		if (map3 == map2 + 1) {
+		अगर (map3 == map2 + 1) अणु
 			map = map2;
 			start = BONITO_PCILO1_BASE;
 			end++;
-		}
-		if (map2 == map1 + 1) {
+		पूर्ण
+		अगर (map2 == map1 + 1) अणु
 			map = map1;
 			start = BONITO_PCILO0_BASE;
 			end++;
-		}
+		पूर्ण
 		bonito64_mem_resource.start = start;
 		bonito64_mem_resource.end = start +
 					    BONITO_PCIMAP_WINBASE(end) - 1;
@@ -176,24 +177,24 @@ void __init mips_pcibios_init(void)
 						 BONITO_PCIMAP_WINBASE(map);
 
 		controller = &bonito64_controller;
-		break;
+		अवरोध;
 
-	case MIPS_REVISION_SCON_SOCIT:
-	case MIPS_REVISION_SCON_ROCIT:
-	case MIPS_REVISION_SCON_SOCITSC:
-	case MIPS_REVISION_SCON_SOCITSCP:
-		/* Set up resource ranges from the controller's registers.  */
+	हाल MIPS_REVISION_SCON_SOCIT:
+	हाल MIPS_REVISION_SCON_ROCIT:
+	हाल MIPS_REVISION_SCON_SOCITSC:
+	हाल MIPS_REVISION_SCON_SOCITSCP:
+		/* Set up resource ranges from the controller's रेजिस्टरs.  */
 		MSC_READ(MSC01_PCI_SC2PMBASL, start);
 		MSC_READ(MSC01_PCI_SC2PMMSKL, mask);
 		MSC_READ(MSC01_PCI_SC2PMMAPL, map);
 		msc_mem_resource.start = start & mask;
 		msc_mem_resource.end = (start & mask) | ~mask;
 		msc_controller.mem_offset = (start & mask) - (map & mask);
-		if (mips_cps_numiocu(0)) {
-			write_gcr_reg0_base(start);
-			write_gcr_reg0_mask(mask |
+		अगर (mips_cps_numiocu(0)) अणु
+			ग_लिखो_gcr_reg0_base(start);
+			ग_लिखो_gcr_reg0_mask(mask |
 					    CM_GCR_REGn_MASK_CMTGT_IOCU0);
-		}
+		पूर्ण
 		MSC_READ(MSC01_PCI_SC2PIOBASL, start);
 		MSC_READ(MSC01_PCI_SC2PIOMSKL, mask);
 		MSC_READ(MSC01_PCI_SC2PIOMAPL, map);
@@ -201,36 +202,36 @@ void __init mips_pcibios_init(void)
 		msc_io_resource.end = (map & mask) | ~mask;
 		msc_controller.io_offset = 0;
 		ioport_resource.end = ~mask;
-		if (mips_cps_numiocu(0)) {
-			write_gcr_reg1_base(start);
-			write_gcr_reg1_mask(mask |
+		अगर (mips_cps_numiocu(0)) अणु
+			ग_लिखो_gcr_reg1_base(start);
+			ग_लिखो_gcr_reg1_mask(mask |
 					    CM_GCR_REGn_MASK_CMTGT_IOCU0);
-		}
+		पूर्ण
 		/* If ranges overlap I/O takes precedence.  */
 		start = start & mask;
 		end = start | ~mask;
-		if ((start >= msc_mem_resource.start &&
+		अगर ((start >= msc_mem_resource.start &&
 		     start <= msc_mem_resource.end) ||
 		    (end >= msc_mem_resource.start &&
-		     end <= msc_mem_resource.end)) {
+		     end <= msc_mem_resource.end)) अणु
 			/* Use the larger space.  */
 			start = max(start, msc_mem_resource.start);
 			end = min(end, msc_mem_resource.end);
-			if (start - msc_mem_resource.start >=
+			अगर (start - msc_mem_resource.start >=
 			    msc_mem_resource.end - end)
 				msc_mem_resource.end = start - 1;
-			else
+			अन्यथा
 				msc_mem_resource.start = end + 1;
-		}
+		पूर्ण
 
 		controller = &msc_controller;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	/* PIIX4 ACPI starts at 0x1000 */
-	if (controller->io_resource->start < 0x00001000UL)
+	अगर (controller->io_resource->start < 0x00001000UL)
 		controller->io_resource->start = 0x00001000UL;
 
 	iomem_resource.end &= 0xfffffffffULL;			/* 64 GB */
@@ -238,5 +239,5 @@ void __init mips_pcibios_init(void)
 
 	controller->io_map_base = mips_io_port_base;
 
-	register_pci_controller(controller);
-}
+	रेजिस्टर_pci_controller(controller);
+पूर्ण

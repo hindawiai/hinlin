@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: evevent - Fixed Event handling and dispatch
@@ -7,17 +8,17 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acevents.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acevents.h"
 
-#define _COMPONENT          ACPI_EVENTS
+#घोषणा _COMPONENT          ACPI_EVENTS
 ACPI_MODULE_NAME("evevent")
-#if (!ACPI_REDUCED_HARDWARE)	/* Entire module */
+#अगर (!ACPI_REDUCED_HARDWARE)	/* Entire module */
 /* Local prototypes */
-static acpi_status acpi_ev_fixed_event_initialize(void);
+अटल acpi_status acpi_ev_fixed_event_initialize(व्योम);
 
-static u32 acpi_ev_fixed_event_dispatch(u32 event);
+अटल u32 acpi_ev_fixed_event_dispatch(u32 event);
 
 /*******************************************************************************
  *
@@ -27,43 +28,43 @@ static u32 acpi_ev_fixed_event_dispatch(u32 event);
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Initialize global data structures for ACPI events (Fixed, GPE)
+ * DESCRIPTION: Initialize global data काष्ठाures क्रम ACPI events (Fixed, GPE)
  *
  ******************************************************************************/
 
-acpi_status acpi_ev_initialize_events(void)
-{
+acpi_status acpi_ev_initialize_events(व्योम)
+अणु
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(ev_initialize_events);
 
 	/* If Hardware Reduced flag is set, there are no fixed events */
 
-	if (acpi_gbl_reduced_hardware) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (acpi_gbl_reduced_hardware) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/*
-	 * Initialize the Fixed and General Purpose Events. This is done prior to
-	 * enabling SCIs to prevent interrupts from occurring before the handlers
+	 * Initialize the Fixed and General Purpose Events. This is करोne prior to
+	 * enabling SCIs to prevent पूर्णांकerrupts from occurring beक्रमe the handlers
 	 * are installed.
 	 */
 	status = acpi_ev_fixed_event_initialize();
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_EXCEPTION((AE_INFO, status,
 				"Unable to initialize fixed events"));
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	status = acpi_ev_gpe_initialize();
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_EXCEPTION((AE_INFO, status,
 				"Unable to initialize general purpose events"));
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -73,43 +74,43 @@ acpi_status acpi_ev_initialize_events(void)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install interrupt handlers for the SCI and Global Lock
+ * DESCRIPTION: Install पूर्णांकerrupt handlers क्रम the SCI and Global Lock
  *
  ******************************************************************************/
 
-acpi_status acpi_ev_install_xrupt_handlers(void)
-{
+acpi_status acpi_ev_install_xrupt_handlers(व्योम)
+अणु
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(ev_install_xrupt_handlers);
 
 	/* If Hardware Reduced flag is set, there is no ACPI h/w */
 
-	if (acpi_gbl_reduced_hardware) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (acpi_gbl_reduced_hardware) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* Install the SCI handler */
 
 	status = acpi_ev_install_sci_handler();
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_EXCEPTION((AE_INFO, status,
 				"Unable to install System Control Interrupt handler"));
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	/* Install the handler for the Global Lock */
+	/* Install the handler क्रम the Global Lock */
 
 	status = acpi_ev_init_global_lock_handler();
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_EXCEPTION((AE_INFO, status,
 				"Unable to initialize Global Lock handler"));
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	acpi_gbl_events_initialized = TRUE;
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -123,34 +124,34 @@ acpi_status acpi_ev_install_xrupt_handlers(void)
  *
  ******************************************************************************/
 
-static acpi_status acpi_ev_fixed_event_initialize(void)
-{
+अटल acpi_status acpi_ev_fixed_event_initialize(व्योम)
+अणु
 	u32 i;
 	acpi_status status;
 
 	/*
-	 * Initialize the structure that keeps track of fixed event handlers and
+	 * Initialize the काष्ठाure that keeps track of fixed event handlers and
 	 * disable all of the fixed events.
 	 */
-	for (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++) {
-		acpi_gbl_fixed_event_handlers[i].handler = NULL;
-		acpi_gbl_fixed_event_handlers[i].context = NULL;
+	क्रम (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++) अणु
+		acpi_gbl_fixed_event_handlers[i].handler = शून्य;
+		acpi_gbl_fixed_event_handlers[i].context = शून्य;
 
 		/* Disable the fixed event */
 
-		if (acpi_gbl_fixed_event_info[i].enable_register_id != 0xFF) {
+		अगर (acpi_gbl_fixed_event_info[i].enable_रेजिस्टर_id != 0xFF) अणु
 			status =
-			    acpi_write_bit_register(acpi_gbl_fixed_event_info
-						    [i].enable_register_id,
+			    acpi_ग_लिखो_bit_रेजिस्टर(acpi_gbl_fixed_event_info
+						    [i].enable_रेजिस्टर_id,
 						    ACPI_DISABLE_EVENT);
-			if (ACPI_FAILURE(status)) {
-				return (status);
-			}
-		}
-	}
+			अगर (ACPI_FAILURE(status)) अणु
+				वापस (status);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -160,13 +161,13 @@ static acpi_status acpi_ev_fixed_event_initialize(void)
  *
  * RETURN:      INTERRUPT_HANDLED or INTERRUPT_NOT_HANDLED
  *
- * DESCRIPTION: Checks the PM status register for active fixed events
+ * DESCRIPTION: Checks the PM status रेजिस्टर क्रम active fixed events
  *
  ******************************************************************************/
 
-u32 acpi_ev_fixed_event_detect(void)
-{
-	u32 int_status = ACPI_INTERRUPT_NOT_HANDLED;
+u32 acpi_ev_fixed_event_detect(व्योम)
+अणु
+	u32 पूर्णांक_status = ACPI_INTERRUPT_NOT_HANDLED;
 	u32 fixed_status;
 	u32 fixed_enable;
 	u32 i;
@@ -175,48 +176,48 @@ u32 acpi_ev_fixed_event_detect(void)
 	ACPI_FUNCTION_NAME(ev_fixed_event_detect);
 
 	/*
-	 * Read the fixed feature status and enable registers, as all the cases
+	 * Read the fixed feature status and enable रेजिस्टरs, as all the हालs
 	 * depend on their values. Ignore errors here.
 	 */
-	status = acpi_hw_register_read(ACPI_REGISTER_PM1_STATUS, &fixed_status);
+	status = acpi_hw_रेजिस्टर_पढ़ो(ACPI_REGISTER_PM1_STATUS, &fixed_status);
 	status |=
-	    acpi_hw_register_read(ACPI_REGISTER_PM1_ENABLE, &fixed_enable);
-	if (ACPI_FAILURE(status)) {
-		return (int_status);
-	}
+	    acpi_hw_रेजिस्टर_पढ़ो(ACPI_REGISTER_PM1_ENABLE, &fixed_enable);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (पूर्णांक_status);
+	पूर्ण
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INTERRUPTS,
 			  "Fixed Event Block: Enable %08X Status %08X\n",
 			  fixed_enable, fixed_status));
 
 	/*
-	 * Check for all possible Fixed Events and dispatch those that are active
+	 * Check क्रम all possible Fixed Events and dispatch those that are active
 	 */
-	for (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++) {
+	क्रम (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++) अणु
 
-		/* Both the status and enable bits must be on for this event */
+		/* Both the status and enable bits must be on क्रम this event */
 
-		if ((fixed_status & acpi_gbl_fixed_event_info[i].
+		अगर ((fixed_status & acpi_gbl_fixed_event_info[i].
 		     status_bit_mask)
 		    && (fixed_enable & acpi_gbl_fixed_event_info[i].
-			enable_bit_mask)) {
+			enable_bit_mask)) अणु
 			/*
-			 * Found an active (signalled) event. Invoke global event
-			 * handler if present.
+			 * Found an active (संकेतled) event. Invoke global event
+			 * handler अगर present.
 			 */
 			acpi_fixed_event_count[i]++;
-			if (acpi_gbl_global_event_handler) {
+			अगर (acpi_gbl_global_event_handler) अणु
 				acpi_gbl_global_event_handler
-				    (ACPI_EVENT_TYPE_FIXED, NULL, i,
+				    (ACPI_EVENT_TYPE_FIXED, शून्य, i,
 				     acpi_gbl_global_event_handler_context);
-			}
+			पूर्ण
 
-			int_status |= acpi_ev_fixed_event_dispatch(i);
-		}
-	}
+			पूर्णांक_status |= acpi_ev_fixed_event_dispatch(i);
+		पूर्ण
+	पूर्ण
 
-	return (int_status);
-}
+	वापस (पूर्णांक_status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -226,44 +227,44 @@ u32 acpi_ev_fixed_event_detect(void)
  *
  * RETURN:      INTERRUPT_HANDLED or INTERRUPT_NOT_HANDLED
  *
- * DESCRIPTION: Clears the status bit for the requested event, calls the
- *              handler that previously registered for the event.
- *              NOTE: If there is no handler for the event, the event is
- *              disabled to prevent further interrupts.
+ * DESCRIPTION: Clears the status bit क्रम the requested event, calls the
+ *              handler that previously रेजिस्टरed क्रम the event.
+ *              NOTE: If there is no handler क्रम the event, the event is
+ *              disabled to prevent further पूर्णांकerrupts.
  *
  ******************************************************************************/
 
-static u32 acpi_ev_fixed_event_dispatch(u32 event)
-{
+अटल u32 acpi_ev_fixed_event_dispatch(u32 event)
+अणु
 
 	ACPI_FUNCTION_ENTRY();
 
 	/* Clear the status bit */
 
-	(void)acpi_write_bit_register(acpi_gbl_fixed_event_info[event].
-				      status_register_id, ACPI_CLEAR_STATUS);
+	(व्योम)acpi_ग_लिखो_bit_रेजिस्टर(acpi_gbl_fixed_event_info[event].
+				      status_रेजिस्टर_id, ACPI_CLEAR_STATUS);
 
 	/*
 	 * Make sure that a handler exists. If not, report an error
-	 * and disable the event to prevent further interrupts.
+	 * and disable the event to prevent further पूर्णांकerrupts.
 	 */
-	if (!acpi_gbl_fixed_event_handlers[event].handler) {
-		(void)acpi_write_bit_register(acpi_gbl_fixed_event_info[event].
-					      enable_register_id,
+	अगर (!acpi_gbl_fixed_event_handlers[event].handler) अणु
+		(व्योम)acpi_ग_लिखो_bit_रेजिस्टर(acpi_gbl_fixed_event_info[event].
+					      enable_रेजिस्टर_id,
 					      ACPI_DISABLE_EVENT);
 
 		ACPI_ERROR((AE_INFO,
 			    "No installed handler for fixed event - %s (%u), disabling",
 			    acpi_ut_get_event_name(event), event));
 
-		return (ACPI_INTERRUPT_NOT_HANDLED);
-	}
+		वापस (ACPI_INTERRUPT_NOT_HANDLED);
+	पूर्ण
 
 	/* Invoke the Fixed Event handler */
 
-	return ((acpi_gbl_fixed_event_handlers[event].
+	वापस ((acpi_gbl_fixed_event_handlers[event].
 		 handler) (acpi_gbl_fixed_event_handlers[event].context));
-}
+पूर्ण
 
 /*******************************************************************************
  *
@@ -273,41 +274,41 @@ static u32 acpi_ev_fixed_event_dispatch(u32 event)
  *
  * RETURN:      TRUE or FALSE
  *
- * DESCRIPTION: Checks the PM status register for active fixed events
+ * DESCRIPTION: Checks the PM status रेजिस्टर क्रम active fixed events
  *
  ******************************************************************************/
 
-u32 acpi_any_fixed_event_status_set(void)
-{
+u32 acpi_any_fixed_event_status_set(व्योम)
+अणु
 	acpi_status status;
 	u32 in_status;
 	u32 in_enable;
 	u32 i;
 
-	status = acpi_hw_register_read(ACPI_REGISTER_PM1_ENABLE, &in_enable);
-	if (ACPI_FAILURE(status)) {
-		return (FALSE);
-	}
+	status = acpi_hw_रेजिस्टर_पढ़ो(ACPI_REGISTER_PM1_ENABLE, &in_enable);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (FALSE);
+	पूर्ण
 
-	status = acpi_hw_register_read(ACPI_REGISTER_PM1_STATUS, &in_status);
-	if (ACPI_FAILURE(status)) {
-		return (FALSE);
-	}
+	status = acpi_hw_रेजिस्टर_पढ़ो(ACPI_REGISTER_PM1_STATUS, &in_status);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (FALSE);
+	पूर्ण
 
 	/*
-	 * Check for all possible Fixed Events and dispatch those that are active
+	 * Check क्रम all possible Fixed Events and dispatch those that are active
 	 */
-	for (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++) {
+	क्रम (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++) अणु
 
-		/* Both the status and enable bits must be on for this event */
+		/* Both the status and enable bits must be on क्रम this event */
 
-		if ((in_status & acpi_gbl_fixed_event_info[i].status_bit_mask) &&
-		    (in_enable & acpi_gbl_fixed_event_info[i].enable_bit_mask)) {
-			return (TRUE);
-		}
-	}
+		अगर ((in_status & acpi_gbl_fixed_event_info[i].status_bit_mask) &&
+		    (in_enable & acpi_gbl_fixed_event_info[i].enable_bit_mask)) अणु
+			वापस (TRUE);
+		पूर्ण
+	पूर्ण
 
-	return (FALSE);
-}
+	वापस (FALSE);
+पूर्ण
 
-#endif				/* !ACPI_REDUCED_HARDWARE */
+#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Silicon Motion SM7XX frame buffer device
  *
@@ -12,68 +13,68 @@
  * Author:   Javier M. Mellid <jmunhoz@igalia.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file COPYING in the main directory of this archive for
+ * License. See the file COPYING in the मुख्य directory of this archive क्रम
  * more details.
  *
- * Framebuffer driver for Silicon Motion SM710, SM712, SM721 and SM722 chips
+ * Framebuffer driver क्रम Silicon Motion SM710, SM712, SM721 and SM722 chips
  */
 
-#include <linux/io.h>
-#include <linux/fb.h>
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/module.h>
-#include <linux/console.h>
-#include <linux/screen_info.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/fb.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/console.h>
+#समावेश <linux/screen_info.h>
 
-#include <linux/pm.h>
+#समावेश <linux/pm.h>
 
-#include "sm712.h"
+#समावेश "sm712.h"
 
 /*
- * Private structure
+ * Private काष्ठाure
  */
-struct smtcfb_info {
-	struct pci_dev *pdev;
-	struct fb_info *fb;
+काष्ठा smtcfb_info अणु
+	काष्ठा pci_dev *pdev;
+	काष्ठा fb_info *fb;
 	u16 chip_id;
 	u8  chip_rev_id;
 
-	void __iomem *lfb;	/* linear frame buffer */
-	void __iomem *dp_regs;	/* drawing processor control regs */
-	void __iomem *vp_regs;	/* video processor control regs */
-	void __iomem *cp_regs;	/* capture processor control regs */
-	void __iomem *mmio;	/* memory map IO port */
+	व्योम __iomem *lfb;	/* linear frame buffer */
+	व्योम __iomem *dp_regs;	/* drawing processor control regs */
+	व्योम __iomem *vp_regs;	/* video processor control regs */
+	व्योम __iomem *cp_regs;	/* capture processor control regs */
+	व्योम __iomem *mmio;	/* memory map IO port */
 
-	u_int width;
-	u_int height;
-	u_int hz;
+	u_पूर्णांक width;
+	u_पूर्णांक height;
+	u_पूर्णांक hz;
 
 	u32 colreg[17];
-};
+पूर्ण;
 
-void __iomem *smtc_regbaseaddress;	/* Memory Map IO starting address */
+व्योम __iomem *smtc_regbaseaddress;	/* Memory Map IO starting address */
 
-static const struct fb_var_screeninfo smtcfb_var = {
+अटल स्थिर काष्ठा fb_var_screeninfo smtcfb_var = अणु
 	.xres           = 1024,
 	.yres           = 600,
-	.xres_virtual   = 1024,
-	.yres_virtual   = 600,
+	.xres_भव   = 1024,
+	.yres_भव   = 600,
 	.bits_per_pixel = 16,
-	.red            = {16, 8, 0},
-	.green          = {8, 8, 0},
-	.blue           = {0, 8, 0},
+	.red            = अणु16, 8, 0पूर्ण,
+	.green          = अणु8, 8, 0पूर्ण,
+	.blue           = अणु0, 8, 0पूर्ण,
 	.activate       = FB_ACTIVATE_NOW,
 	.height         = -1,
 	.width          = -1,
 	.vmode          = FB_VMODE_NONINTERLACED,
 	.nonstd         = 0,
 	.accel_flags    = FB_ACCELF_TEXT,
-};
+पूर्ण;
 
-static struct fb_fix_screeninfo smtcfb_fix = {
+अटल काष्ठा fb_fix_screeninfo smtcfb_fix = अणु
 	.id             = "smXXXfb",
 	.type           = FB_TYPE_PACKED_PIXELS,
 	.visual         = FB_VISUAL_TRUECOLOR,
@@ -83,50 +84,50 @@ static struct fb_fix_screeninfo smtcfb_fix = {
 	.xpanstep       = 0,
 	.ypanstep       = 0,
 	.ywrapstep      = 0,
-};
+पूर्ण;
 
-struct vesa_mode {
-	char index[6];
+काष्ठा vesa_mode अणु
+	अक्षर index[6];
 	u16  lfb_width;
 	u16  lfb_height;
 	u16  lfb_depth;
-};
+पूर्ण;
 
-static const struct vesa_mode vesa_mode_table[] = {
-	{"0x301", 640,  480,  8},
-	{"0x303", 800,  600,  8},
-	{"0x305", 1024, 768,  8},
-	{"0x307", 1280, 1024, 8},
+अटल स्थिर काष्ठा vesa_mode vesa_mode_table[] = अणु
+	अणु"0x301", 640,  480,  8पूर्ण,
+	अणु"0x303", 800,  600,  8पूर्ण,
+	अणु"0x305", 1024, 768,  8पूर्ण,
+	अणु"0x307", 1280, 1024, 8पूर्ण,
 
-	{"0x311", 640,  480,  16},
-	{"0x314", 800,  600,  16},
-	{"0x317", 1024, 768,  16},
-	{"0x31A", 1280, 1024, 16},
+	अणु"0x311", 640,  480,  16पूर्ण,
+	अणु"0x314", 800,  600,  16पूर्ण,
+	अणु"0x317", 1024, 768,  16पूर्ण,
+	अणु"0x31A", 1280, 1024, 16पूर्ण,
 
-	{"0x312", 640,  480,  24},
-	{"0x315", 800,  600,  24},
-	{"0x318", 1024, 768,  24},
-	{"0x31B", 1280, 1024, 24},
-};
+	अणु"0x312", 640,  480,  24पूर्ण,
+	अणु"0x315", 800,  600,  24पूर्ण,
+	अणु"0x318", 1024, 768,  24पूर्ण,
+	अणु"0x31B", 1280, 1024, 24पूर्ण,
+पूर्ण;
 
 /**********************************************************************
 			 SM712 Mode table.
  **********************************************************************/
-static const struct modeinit vgamode[] = {
-	{
+अटल स्थिर काष्ठा modeinit vgamode[] = अणु
+	अणु
 		/*  mode#0: 640 x 480  16Bpp  60Hz */
 		640, 480, 16, 60,
 		/*  Init_MISC */
 		0xE3,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x00, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xFF, 0xBE, 0xEF, 0xFF, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x30, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x32, 0x03, 0xA0, 0x09, 0xC0, 0x32, 0x32, 0x32,
 			0x32, 0x32, 0x32, 0x32, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x18, 0x00, 0xFC,
@@ -136,57 +137,57 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7E, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x07, 0x82, 0x07, 0x04,
 			0x00, 0x45, 0x30, 0x30, 0x40, 0x30,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0xFF, 0x07, 0x00, 0x6F, 0x7F, 0x7F, 0xFF, 0x32,
 			0xF7, 0x00, 0x00, 0x00, 0xEF, 0xFF, 0x32, 0x32,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFF, 0xBF, 0xFF, 0xFF, 0xED, 0xED, 0xED,
 			0x7B, 0xFF, 0xFF, 0xFF, 0xBF, 0xEF, 0xFF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0x5F, 0x4F, 0x4F, 0x00, 0x53, 0x1F, 0x0B, 0x3E,
 			0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xEA, 0x0C, 0xDF, 0x50, 0x40, 0xDF, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0x03, 0x20,
 			0x00, 0x00, 0x00, 0x40, 0x00, 0xE7, 0xFF, 0xFD,
 			0x5F, 0x4F, 0x00, 0x54, 0x00, 0x0B, 0xDF, 0x00,
 			0xEA, 0x0C, 0x2E, 0x00, 0x4F, 0xDF,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x56, 0xDD, 0x5E, 0xEA, 0x87, 0x44, 0x8F, 0x55,
 			0x0A, 0x8F, 0x55, 0x0A, 0x00, 0x00, 0x18, 0x00,
 			0x11, 0x10, 0x0B, 0x0A, 0x0A, 0x0A, 0x0A, 0x00,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		/*  mode#1: 640 x 480  24Bpp  60Hz */
 		640, 480, 24, 60,
 		/*  Init_MISC */
 		0xE3,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x00, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xFF, 0xBE, 0xEF, 0xFF, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x30, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x32, 0x03, 0xA0, 0x09, 0xC0, 0x32, 0x32, 0x32,
 			0x32, 0x32, 0x32, 0x32, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x18, 0x00, 0xFC,
@@ -196,57 +197,57 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7E, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x07, 0x82, 0x07, 0x04,
 			0x00, 0x45, 0x30, 0x30, 0x40, 0x30,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0xFF, 0x07, 0x00, 0x6F, 0x7F, 0x7F, 0xFF, 0x32,
 			0xF7, 0x00, 0x00, 0x00, 0xEF, 0xFF, 0x32, 0x32,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFF, 0xBF, 0xFF, 0xFF, 0xED, 0xED, 0xED,
 			0x7B, 0xFF, 0xFF, 0xFF, 0xBF, 0xEF, 0xFF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0x5F, 0x4F, 0x4F, 0x00, 0x53, 0x1F, 0x0B, 0x3E,
 			0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xEA, 0x0C, 0xDF, 0x50, 0x40, 0xDF, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0x03, 0x20,
 			0x00, 0x00, 0x00, 0x40, 0x00, 0xE7, 0xFF, 0xFD,
 			0x5F, 0x4F, 0x00, 0x54, 0x00, 0x0B, 0xDF, 0x00,
 			0xEA, 0x0C, 0x2E, 0x00, 0x4F, 0xDF,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x56, 0xDD, 0x5E, 0xEA, 0x87, 0x44, 0x8F, 0x55,
 			0x0A, 0x8F, 0x55, 0x0A, 0x00, 0x00, 0x18, 0x00,
 			0x11, 0x10, 0x0B, 0x0A, 0x0A, 0x0A, 0x0A, 0x00,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		/*  mode#0: 640 x 480  32Bpp  60Hz */
 		640, 480, 32, 60,
 		/*  Init_MISC */
 		0xE3,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x00, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xFF, 0xBE, 0xEF, 0xFF, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x30, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x32, 0x03, 0xA0, 0x09, 0xC0, 0x32, 0x32, 0x32,
 			0x32, 0x32, 0x32, 0x32, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x18, 0x00, 0xFC,
@@ -256,57 +257,57 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7E, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x07, 0x82, 0x07, 0x04,
 			0x00, 0x45, 0x30, 0x30, 0x40, 0x30,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0xFF, 0x07, 0x00, 0x6F, 0x7F, 0x7F, 0xFF, 0x32,
 			0xF7, 0x00, 0x00, 0x00, 0xEF, 0xFF, 0x32, 0x32,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFF, 0xBF, 0xFF, 0xFF, 0xED, 0xED, 0xED,
 			0x7B, 0xFF, 0xFF, 0xFF, 0xBF, 0xEF, 0xFF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0x5F, 0x4F, 0x4F, 0x00, 0x53, 0x1F, 0x0B, 0x3E,
 			0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xEA, 0x0C, 0xDF, 0x50, 0x40, 0xDF, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0x03, 0x20,
 			0x00, 0x00, 0x00, 0x40, 0x00, 0xE7, 0xFF, 0xFD,
 			0x5F, 0x4F, 0x00, 0x54, 0x00, 0x0B, 0xDF, 0x00,
 			0xEA, 0x0C, 0x2E, 0x00, 0x4F, 0xDF,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x56, 0xDD, 0x5E, 0xEA, 0x87, 0x44, 0x8F, 0x55,
 			0x0A, 0x8F, 0x55, 0x0A, 0x00, 0x00, 0x18, 0x00,
 			0x11, 0x10, 0x0B, 0x0A, 0x0A, 0x0A, 0x0A, 0x00,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 
-	{	/*  mode#2: 800 x 600  16Bpp  60Hz */
+	अणु	/*  mode#2: 800 x 600  16Bpp  60Hz */
 		800, 600, 16, 60,
 		/*  Init_MISC */
 		0x2B,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x03, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xFF, 0xBE, 0xEE, 0xFF, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x30, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x34, 0x03, 0x20, 0x09, 0xC0, 0x24, 0x24, 0x24,
 			0x24, 0x24, 0x24, 0x24, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x38, 0x00, 0xFC,
@@ -316,55 +317,55 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7A, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x1C, 0x85, 0x35, 0x13,
 			0x02, 0x45, 0x30, 0x35, 0x40, 0x20,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0x00, 0x00, 0x00, 0x6F, 0x7F, 0x7F, 0xFF, 0x24,
 			0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x24, 0x24,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFF, 0xBF, 0xFF, 0xFF, 0xED, 0xED, 0xED,
 			0x7B, 0xFF, 0xFF, 0xFF, 0xBF, 0xEF, 0xBF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0x7F, 0x63, 0x63, 0x00, 0x68, 0x18, 0x72, 0xF0,
 			0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x58, 0x0C, 0x57, 0x64, 0x40, 0x57, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x33, 0x03, 0x20,
 			0x00, 0x00, 0x00, 0x40, 0x00, 0xE7, 0xBF, 0xFD,
 			0x7F, 0x63, 0x00, 0x69, 0x18, 0x72, 0x57, 0x00,
 			0x58, 0x0C, 0xE0, 0x20, 0x63, 0x57,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x56, 0x4B, 0x5E, 0x55, 0x86, 0x9D, 0x8E, 0xAA,
 			0xDB, 0x2A, 0xDF, 0x33, 0x00, 0x00, 0x18, 0x00,
 			0x20, 0x1F, 0x1A, 0x19, 0x0F, 0x0F, 0x0F, 0x00,
-		},
-	},
-	{	/*  mode#3: 800 x 600  24Bpp  60Hz */
+		पूर्ण,
+	पूर्ण,
+	अणु	/*  mode#3: 800 x 600  24Bpp  60Hz */
 		800, 600, 24, 60,
 		0x2B,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x03, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xFF, 0xBE, 0xEE, 0xFF, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x30, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x36, 0x03, 0x20, 0x09, 0xC0, 0x36, 0x36, 0x36,
 			0x36, 0x36, 0x36, 0x36, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x18, 0x00, 0xFC,
@@ -374,56 +375,56 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7E, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x1C, 0x85, 0x35, 0x13,
 			0x02, 0x45, 0x30, 0x30, 0x40, 0x20,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0xFF, 0x07, 0x00, 0x6F, 0x7F, 0x7F, 0xFF, 0x36,
 			0xF7, 0x00, 0x00, 0x00, 0xEF, 0xFF, 0x36, 0x36,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFF, 0xBF, 0xFF, 0xFF, 0xED, 0xED, 0xED,
 			0x7B, 0xFF, 0xFF, 0xFF, 0xBF, 0xEF, 0xBF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0x7F, 0x63, 0x63, 0x00, 0x68, 0x18, 0x72, 0xF0,
 			0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x58, 0x0C, 0x57, 0x64, 0x40, 0x57, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x33, 0x03, 0x20,
 			0x00, 0x00, 0x00, 0x40, 0x00, 0xE7, 0xBF, 0xFD,
 			0x7F, 0x63, 0x00, 0x69, 0x18, 0x72, 0x57, 0x00,
 			0x58, 0x0C, 0xE0, 0x20, 0x63, 0x57,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x56, 0x4B, 0x5E, 0x55, 0x86, 0x9D, 0x8E, 0xAA,
 			0xDB, 0x2A, 0xDF, 0x33, 0x00, 0x00, 0x18, 0x00,
 			0x20, 0x1F, 0x1A, 0x19, 0x0F, 0x0F, 0x0F, 0x00,
-		},
-	},
-	{	/*  mode#7: 800 x 600  32Bpp  60Hz */
+		पूर्ण,
+	पूर्ण,
+	अणु	/*  mode#7: 800 x 600  32Bpp  60Hz */
 		800, 600, 32, 60,
 		/*  Init_MISC */
 		0x2B,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x03, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xFF, 0xBE, 0xEE, 0xFF, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x30, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x34, 0x03, 0x20, 0x09, 0xC0, 0x24, 0x24, 0x24,
 			0x24, 0x24, 0x24, 0x24, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x38, 0x00, 0xFC,
@@ -433,57 +434,57 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7A, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x1C, 0x85, 0x35, 0x13,
 			0x02, 0x45, 0x30, 0x35, 0x40, 0x20,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0x00, 0x00, 0x00, 0x6F, 0x7F, 0x7F, 0xFF, 0x24,
 			0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x24, 0x24,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFF, 0xBF, 0xFF, 0xFF, 0xED, 0xED, 0xED,
 			0x7B, 0xFF, 0xFF, 0xFF, 0xBF, 0xEF, 0xBF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0x7F, 0x63, 0x63, 0x00, 0x68, 0x18, 0x72, 0xF0,
 			0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x58, 0x0C, 0x57, 0x64, 0x40, 0x57, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x33, 0x03, 0x20,
 			0x00, 0x00, 0x00, 0x40, 0x00, 0xE7, 0xBF, 0xFD,
 			0x7F, 0x63, 0x00, 0x69, 0x18, 0x72, 0x57, 0x00,
 			0x58, 0x0C, 0xE0, 0x20, 0x63, 0x57,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x56, 0x4B, 0x5E, 0x55, 0x86, 0x9D, 0x8E, 0xAA,
 			0xDB, 0x2A, 0xDF, 0x33, 0x00, 0x00, 0x18, 0x00,
 			0x20, 0x1F, 0x1A, 0x19, 0x0F, 0x0F, 0x0F, 0x00,
-		},
-	},
-	/* We use 1024x768 table to light 1024x600 panel for lemote */
-	{	/*  mode#4: 1024 x 600  16Bpp  60Hz  */
+		पूर्ण,
+	पूर्ण,
+	/* We use 1024x768 table to light 1024x600 panel क्रम lemote */
+	अणु	/*  mode#4: 1024 x 600  16Bpp  60Hz  */
 		1024, 600, 16, 60,
 		/*  Init_MISC */
 		0xEB,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x00, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xC8, 0x40, 0x14, 0x60, 0x00, 0x0A, 0x17, 0x20,
 			0x51, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x30, 0x02, 0x00, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x22, 0x03, 0x24, 0x09, 0xC0, 0x22, 0x22, 0x22,
 			0x22, 0x22, 0x22, 0x22, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x18, 0x00, 0xFC,
@@ -493,56 +494,56 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7A, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x16, 0x02, 0x0D, 0x82, 0x09, 0x02,
 			0x04, 0x45, 0x3F, 0x30, 0x40, 0x20,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0xFF, 0x07, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x3A,
 			0xF7, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x3A, 0x3A,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFB, 0x9F, 0x01, 0x00, 0xED, 0xED, 0xED,
 			0x7B, 0xFB, 0xFF, 0xFF, 0x97, 0xEF, 0xBF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0xA3, 0x7F, 0x7F, 0x00, 0x85, 0x16, 0x24, 0xF5,
 			0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x03, 0x09, 0xFF, 0x80, 0x40, 0xFF, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x02, 0x20,
 			0x00, 0x00, 0x00, 0x40, 0x00, 0xFF, 0xBF, 0xFF,
 			0xA3, 0x7F, 0x00, 0x82, 0x0b, 0x6f, 0x57, 0x00,
 			0x5c, 0x0f, 0xE0, 0xe0, 0x7F, 0x57,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x55, 0xD9, 0x5D, 0xE1, 0x86, 0x1B, 0x8E, 0x26,
 			0xDA, 0x8D, 0xDE, 0x94, 0x00, 0x00, 0x18, 0x00,
 			0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x15, 0x03,
-		},
-	},
-	{	/*  1024 x 768  16Bpp  60Hz */
+		पूर्ण,
+	पूर्ण,
+	अणु	/*  1024 x 768  16Bpp  60Hz */
 		1024, 768, 16, 60,
 		/*  Init_MISC */
 		0xEB,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x03, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xF3, 0xB6, 0xC0, 0xDD, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x30, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x38, 0x03, 0x20, 0x09, 0xC0, 0x3A, 0x3A, 0x3A,
 			0x3A, 0x3A, 0x3A, 0x3A, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x18, 0x00, 0xFC,
@@ -552,56 +553,56 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7E, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x3B, 0x0D, 0x09, 0x02,
 			0x04, 0x45, 0x30, 0x30, 0x40, 0x20,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0xFF, 0x07, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x3A,
 			0xF7, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x3A, 0x3A,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFB, 0x9F, 0x01, 0x00, 0xED, 0xED, 0xED,
 			0x7B, 0xFB, 0xFF, 0xFF, 0x97, 0xEF, 0xBF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0xA3, 0x7F, 0x7F, 0x00, 0x85, 0x16, 0x24, 0xF5,
 			0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x03, 0x09, 0xFF, 0x80, 0x40, 0xFF, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x02, 0x20,
 			0x00, 0x00, 0x00, 0x40, 0x00, 0xFF, 0xBF, 0xFF,
 			0xA3, 0x7F, 0x00, 0x86, 0x15, 0x24, 0xFF, 0x00,
 			0x01, 0x07, 0xE5, 0x20, 0x7F, 0xFF,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x55, 0xD9, 0x5D, 0xE1, 0x86, 0x1B, 0x8E, 0x26,
 			0xDA, 0x8D, 0xDE, 0x94, 0x00, 0x00, 0x18, 0x00,
 			0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x15, 0x03,
-		},
-	},
-	{	/*  mode#5: 1024 x 768  24Bpp  60Hz */
+		पूर्ण,
+	पूर्ण,
+	अणु	/*  mode#5: 1024 x 768  24Bpp  60Hz */
 		1024, 768, 24, 60,
 		/*  Init_MISC */
 		0xEB,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x03, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xF3, 0xB6, 0xC0, 0xDD, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x30, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x38, 0x03, 0x20, 0x09, 0xC0, 0x3A, 0x3A, 0x3A,
 			0x3A, 0x3A, 0x3A, 0x3A, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x18, 0x00, 0xFC,
@@ -611,56 +612,56 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7E, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x3B, 0x0D, 0x09, 0x02,
 			0x04, 0x45, 0x30, 0x30, 0x40, 0x20,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0xFF, 0x07, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x3A,
 			0xF7, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x3A, 0x3A,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFB, 0x9F, 0x01, 0x00, 0xED, 0xED, 0xED,
 			0x7B, 0xFB, 0xFF, 0xFF, 0x97, 0xEF, 0xBF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0xA3, 0x7F, 0x7F, 0x00, 0x85, 0x16, 0x24, 0xF5,
 			0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x03, 0x09, 0xFF, 0x80, 0x40, 0xFF, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x02, 0x20,
 			0x00, 0x00, 0x00, 0x40, 0x00, 0xFF, 0xBF, 0xFF,
 			0xA3, 0x7F, 0x00, 0x86, 0x15, 0x24, 0xFF, 0x00,
 			0x01, 0x07, 0xE5, 0x20, 0x7F, 0xFF,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x55, 0xD9, 0x5D, 0xE1, 0x86, 0x1B, 0x8E, 0x26,
 			0xDA, 0x8D, 0xDE, 0x94, 0x00, 0x00, 0x18, 0x00,
 			0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x15, 0x03,
-		},
-	},
-	{	/*  mode#4: 1024 x 768  32Bpp  60Hz */
+		पूर्ण,
+	पूर्ण,
+	अणु	/*  mode#4: 1024 x 768  32Bpp  60Hz */
 		1024, 768, 32, 60,
 		/*  Init_MISC */
 		0xEB,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x03, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xF3, 0xB6, 0xC0, 0xDD, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x32, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x38, 0x03, 0x20, 0x09, 0xC0, 0x3A, 0x3A, 0x3A,
 			0x3A, 0x3A, 0x3A, 0x3A, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x18, 0x00, 0xFC,
@@ -670,56 +671,56 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7E, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x3B, 0x0D, 0x09, 0x02,
 			0x04, 0x45, 0x30, 0x30, 0x40, 0x20,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0xFF, 0x07, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x3A,
 			0xF7, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x3A, 0x3A,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFB, 0x9F, 0x01, 0x00, 0xED, 0xED, 0xED,
 			0x7B, 0xFB, 0xFF, 0xFF, 0x97, 0xEF, 0xBF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0xA3, 0x7F, 0x7F, 0x00, 0x85, 0x16, 0x24, 0xF5,
 			0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x03, 0x09, 0xFF, 0x80, 0x40, 0xFF, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x02, 0x20,
 			0x00, 0x00, 0x00, 0x40, 0x00, 0xFF, 0xBF, 0xFF,
 			0xA3, 0x7F, 0x00, 0x86, 0x15, 0x24, 0xFF, 0x00,
 			0x01, 0x07, 0xE5, 0x20, 0x7F, 0xFF,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x55, 0xD9, 0x5D, 0xE1, 0x86, 0x1B, 0x8E, 0x26,
 			0xDA, 0x8D, 0xDE, 0x94, 0x00, 0x00, 0x18, 0x00,
 			0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x15, 0x03,
-		},
-	},
-	{	/*  mode#6: 320 x 240  16Bpp  60Hz */
+		पूर्ण,
+	पूर्ण,
+	अणु	/*  mode#6: 320 x 240  16Bpp  60Hz */
 		320, 240, 16, 60,
 		/*  Init_MISC */
 		0xEB,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x03, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xF3, 0xB6, 0xC0, 0xDD, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x32, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x38, 0x03, 0x20, 0x09, 0xC0, 0x3A, 0x3A, 0x3A,
 			0x3A, 0x3A, 0x3A, 0x3A, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x18, 0x00, 0xFC,
@@ -729,57 +730,57 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7E, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x08, 0x43, 0x08, 0x43,
 			0x04, 0x45, 0x30, 0x30, 0x40, 0x20,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0xFF, 0x07, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x3A,
 			0xF7, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x3A, 0x3A,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFB, 0x9F, 0x01, 0x00, 0xED, 0xED, 0xED,
 			0x7B, 0xFB, 0xFF, 0xFF, 0x97, 0xEF, 0xBF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0xA3, 0x7F, 0x7F, 0x00, 0x85, 0x16, 0x24, 0xF5,
 			0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x03, 0x09, 0xFF, 0x80, 0x40, 0xFF, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x02, 0x20,
 			0x00, 0x00, 0x30, 0x40, 0x00, 0xFF, 0xBF, 0xFF,
 			0x2E, 0x27, 0x00, 0x2b, 0x0c, 0x0F, 0xEF, 0x00,
 			0xFe, 0x0f, 0x01, 0xC0, 0x27, 0xEF,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x55, 0xD9, 0x5D, 0xE1, 0x86, 0x1B, 0x8E, 0x26,
 			0xDA, 0x8D, 0xDE, 0x94, 0x00, 0x00, 0x18, 0x00,
 			0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x15, 0x03,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 
-	{	/*  mode#8: 320 x 240  32Bpp  60Hz */
+	अणु	/*  mode#8: 320 x 240  32Bpp  60Hz */
 		320, 240, 32, 60,
 		/*  Init_MISC */
 		0xEB,
-		{	/*  Init_SR0_SR4 */
+		अणु	/*  Init_SR0_SR4 */
 			0x03, 0x01, 0x0F, 0x03, 0x0E,
-		},
-		{	/*  Init_SR10_SR24 */
+		पूर्ण,
+		अणु	/*  Init_SR10_SR24 */
 			0xF3, 0xB6, 0xC0, 0xDD, 0x00, 0x0E, 0x17, 0x2C,
 			0x99, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0xC4, 0x32, 0x02, 0x01, 0x01,
-		},
-		{	/*  Init_SR30_SR75 */
+		पूर्ण,
+		अणु	/*  Init_SR30_SR75 */
 			0x38, 0x03, 0x20, 0x09, 0xC0, 0x3A, 0x3A, 0x3A,
 			0x3A, 0x3A, 0x3A, 0x3A, 0x00, 0x00, 0x03, 0xFF,
 			0x00, 0xFC, 0x00, 0x00, 0x20, 0x18, 0x00, 0xFC,
@@ -789,56 +790,56 @@ static const struct modeinit vgamode[] = {
 			0x01, 0x80, 0x7E, 0x1A, 0x1A, 0x00, 0x00, 0x00,
 			0x50, 0x03, 0x74, 0x14, 0x08, 0x43, 0x08, 0x43,
 			0x04, 0x45, 0x30, 0x30, 0x40, 0x20,
-		},
-		{	/*  Init_SR80_SR93 */
+		पूर्ण,
+		अणु	/*  Init_SR80_SR93 */
 			0xFF, 0x07, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x3A,
 			0xF7, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x3A, 0x3A,
 			0x00, 0x00, 0x00, 0x00,
-		},
-		{	/*  Init_SRA0_SRAF */
+		पूर्ण,
+		अणु	/*  Init_SRA0_SRAF */
 			0x00, 0xFB, 0x9F, 0x01, 0x00, 0xED, 0xED, 0xED,
 			0x7B, 0xFB, 0xFF, 0xFF, 0x97, 0xEF, 0xBF, 0xDF,
-		},
-		{	/*  Init_GR00_GR08 */
+		पूर्ण,
+		अणु	/*  Init_GR00_GR08 */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x05, 0x0F,
 			0xFF,
-		},
-		{	/*  Init_AR00_AR14 */
+		पूर्ण,
+		अणु	/*  Init_AR00_AR14 */
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 			0x41, 0x00, 0x0F, 0x00, 0x00,
-		},
-		{	/*  Init_CR00_CR18 */
+		पूर्ण,
+		अणु	/*  Init_CR00_CR18 */
 			0xA3, 0x7F, 0x7F, 0x00, 0x85, 0x16, 0x24, 0xF5,
 			0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x03, 0x09, 0xFF, 0x80, 0x40, 0xFF, 0x00, 0xE3,
 			0xFF,
-		},
-		{	/*  Init_CR30_CR4D */
+		पूर्ण,
+		अणु	/*  Init_CR30_CR4D */
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x02, 0x20,
 			0x00, 0x00, 0x30, 0x40, 0x00, 0xFF, 0xBF, 0xFF,
 			0x2E, 0x27, 0x00, 0x2b, 0x0c, 0x0F, 0xEF, 0x00,
 			0xFe, 0x0f, 0x01, 0xC0, 0x27, 0xEF,
-		},
-		{	/*  Init_CR90_CRA7 */
+		पूर्ण,
+		अणु	/*  Init_CR90_CRA7 */
 			0x55, 0xD9, 0x5D, 0xE1, 0x86, 0x1B, 0x8E, 0x26,
 			0xDA, 0x8D, 0xDE, 0x94, 0x00, 0x00, 0x18, 0x00,
 			0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x15, 0x03,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct screen_info smtc_scr_info;
+अटल काष्ठा screen_info smtc_scr_info;
 
-static char *mode_option;
+अटल अक्षर *mode_option;
 
 /* process command line options, get vga parameter */
-static void __init sm7xx_vga_setup(char *options)
-{
-	int i;
+अटल व्योम __init sm7xx_vga_setup(अक्षर *options)
+अणु
+	पूर्णांक i;
 
-	if (!options || !*options)
-		return;
+	अगर (!options || !*options)
+		वापस;
 
 	smtc_scr_info.lfb_width = 0;
 	smtc_scr_info.lfb_height = 0;
@@ -846,64 +847,64 @@ static void __init sm7xx_vga_setup(char *options)
 
 	pr_debug("%s = %s\n", __func__, options);
 
-	for (i = 0; i < ARRAY_SIZE(vesa_mode_table); i++) {
-		if (strstr(options, vesa_mode_table[i].index)) {
+	क्रम (i = 0; i < ARRAY_SIZE(vesa_mode_table); i++) अणु
+		अगर (म_माला(options, vesa_mode_table[i].index)) अणु
 			smtc_scr_info.lfb_width  = vesa_mode_table[i].lfb_width;
 			smtc_scr_info.lfb_height =
 						vesa_mode_table[i].lfb_height;
 			smtc_scr_info.lfb_depth  = vesa_mode_table[i].lfb_depth;
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void sm712_setpalette(int regno, unsigned int red, unsigned int green,
-			     unsigned int blue, struct fb_info *info)
-{
-	/* set bit 5:4 = 01 (write LCD RAM only) */
+अटल व्योम sm712_setpalette(पूर्णांक regno, अचिन्हित पूर्णांक red, अचिन्हित पूर्णांक green,
+			     अचिन्हित पूर्णांक blue, काष्ठा fb_info *info)
+अणु
+	/* set bit 5:4 = 01 (ग_लिखो LCD RAM only) */
 	smtc_seqw(0x66, (smtc_seqr(0x66) & 0xC3) | 0x10);
 
 	smtc_mmiowb(regno, dac_reg);
 	smtc_mmiowb(red >> 10, dac_val);
 	smtc_mmiowb(green >> 10, dac_val);
 	smtc_mmiowb(blue >> 10, dac_val);
-}
+पूर्ण
 
 /* chan_to_field
  *
- * convert a colour value into a field position
+ * convert a colour value पूर्णांकo a field position
  *
  * from pxafb.c
  */
 
-static inline unsigned int chan_to_field(unsigned int chan,
-					 struct fb_bitfield *bf)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक chan_to_field(अचिन्हित पूर्णांक chan,
+					 काष्ठा fb_bitfield *bf)
+अणु
 	chan &= 0xffff;
 	chan >>= 16 - bf->length;
-	return chan << bf->offset;
-}
+	वापस chan << bf->offset;
+पूर्ण
 
-static int smtc_blank(int blank_mode, struct fb_info *info)
-{
-	struct smtcfb_info *sfb = info->par;
+अटल पूर्णांक smtc_blank(पूर्णांक blank_mode, काष्ठा fb_info *info)
+अणु
+	काष्ठा smtcfb_info *sfb = info->par;
 
 	/* clear DPMS setting */
-	switch (blank_mode) {
-	case FB_BLANK_UNBLANK:
+	चयन (blank_mode) अणु
+	हाल FB_BLANK_UNBLANK:
 		/* Screen On: HSync: On, VSync : On */
 
-		switch (sfb->chip_id) {
-		case 0x710:
-		case 0x712:
+		चयन (sfb->chip_id) अणु
+		हाल 0x710:
+		हाल 0x712:
 			smtc_seqw(0x6a, 0x16);
 			smtc_seqw(0x6b, 0x02);
-			break;
-		case 0x720:
+			अवरोध;
+		हाल 0x720:
 			smtc_seqw(0x6a, 0x0d);
 			smtc_seqw(0x6b, 0x02);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		smtc_seqw(0x23, (smtc_seqr(0x23) & (~0xc0)));
 		smtc_seqw(0x01, (smtc_seqr(0x01) & (~0x20)));
@@ -911,8 +912,8 @@ static int smtc_blank(int blank_mode, struct fb_info *info)
 		smtc_seqw(0x22, (smtc_seqr(0x22) & (~0x30)));
 		smtc_seqw(0x31, (smtc_seqr(0x31) | 0x03));
 		smtc_seqw(0x24, (smtc_seqr(0x24) | 0x01));
-		break;
-	case FB_BLANK_NORMAL:
+		अवरोध;
+	हाल FB_BLANK_NORMAL:
 		/* Screen Off: HSync: On, VSync : On   Soft blank */
 		smtc_seqw(0x24, (smtc_seqr(0x24) | 0x01));
 		smtc_seqw(0x31, ((smtc_seqr(0x31) & (~0x07)) | 0x00));
@@ -921,8 +922,8 @@ static int smtc_blank(int blank_mode, struct fb_info *info)
 		smtc_seqw(0x22, (smtc_seqr(0x22) & (~0x30)));
 		smtc_seqw(0x6a, 0x16);
 		smtc_seqw(0x6b, 0x02);
-		break;
-	case FB_BLANK_VSYNC_SUSPEND:
+		अवरोध;
+	हाल FB_BLANK_VSYNC_SUSPEND:
 		/* Screen On: HSync: On, VSync : Off */
 		smtc_seqw(0x24, (smtc_seqr(0x24) & (~0x01)));
 		smtc_seqw(0x31, ((smtc_seqr(0x31) & (~0x07)) | 0x00));
@@ -934,8 +935,8 @@ static int smtc_blank(int blank_mode, struct fb_info *info)
 		smtc_seqw(0x34, (smtc_seqr(0x34) | 0x80));
 		smtc_seqw(0x6a, 0x0c);
 		smtc_seqw(0x6b, 0x02);
-		break;
-	case FB_BLANK_HSYNC_SUSPEND:
+		अवरोध;
+	हाल FB_BLANK_HSYNC_SUSPEND:
 		/* Screen On: HSync: Off, VSync : On */
 		smtc_seqw(0x24, (smtc_seqr(0x24) & (~0x01)));
 		smtc_seqw(0x31, ((smtc_seqr(0x31) & (~0x07)) | 0x00));
@@ -947,8 +948,8 @@ static int smtc_blank(int blank_mode, struct fb_info *info)
 		smtc_seqw(0x34, (smtc_seqr(0x34) | 0x80));
 		smtc_seqw(0x6a, 0x0c);
 		smtc_seqw(0x6b, 0x02);
-		break;
-	case FB_BLANK_POWERDOWN:
+		अवरोध;
+	हाल FB_BLANK_POWERDOWN:
 		/* Screen On: HSync: Off, VSync : Off */
 		smtc_seqw(0x24, (smtc_seqr(0x24) & (~0x01)));
 		smtc_seqw(0x31, ((smtc_seqr(0x31) & (~0x07)) | 0x00));
@@ -960,239 +961,239 @@ static int smtc_blank(int blank_mode, struct fb_info *info)
 		smtc_seqw(0x34, (smtc_seqr(0x34) | 0x80));
 		smtc_seqw(0x6a, 0x0c);
 		smtc_seqw(0x6b, 0x02);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smtc_setcolreg(unsigned int regno, unsigned int red,
-			  unsigned int green, unsigned int blue,
-			  unsigned int trans, struct fb_info *info)
-{
-	struct smtcfb_info *sfb;
+अटल पूर्णांक smtc_setcolreg(अचिन्हित पूर्णांक regno, अचिन्हित पूर्णांक red,
+			  अचिन्हित पूर्णांक green, अचिन्हित पूर्णांक blue,
+			  अचिन्हित पूर्णांक trans, काष्ठा fb_info *info)
+अणु
+	काष्ठा smtcfb_info *sfb;
 	u32 val;
 
 	sfb = info->par;
 
-	if (regno > 255)
-		return 1;
+	अगर (regno > 255)
+		वापस 1;
 
-	switch (sfb->fb->fix.visual) {
-	case FB_VISUAL_DIRECTCOLOR:
-	case FB_VISUAL_TRUECOLOR:
+	चयन (sfb->fb->fix.visual) अणु
+	हाल FB_VISUAL_सूचीECTCOLOR:
+	हाल FB_VISUAL_TRUECOLOR:
 		/*
-		 * 16/32 bit true-colour, use pseudo-palette for 16 base color
+		 * 16/32 bit true-colour, use pseuकरो-palette क्रम 16 base color
 		 */
-		if (regno >= 16)
-			break;
-		if (sfb->fb->var.bits_per_pixel == 16) {
-			u32 *pal = sfb->fb->pseudo_palette;
+		अगर (regno >= 16)
+			अवरोध;
+		अगर (sfb->fb->var.bits_per_pixel == 16) अणु
+			u32 *pal = sfb->fb->pseuकरो_palette;
 
 			val = chan_to_field(red, &sfb->fb->var.red);
 			val |= chan_to_field(green, &sfb->fb->var.green);
 			val |= chan_to_field(blue, &sfb->fb->var.blue);
 			pal[regno] = pal_rgb(red, green, blue, val);
-		} else {
-			u32 *pal = sfb->fb->pseudo_palette;
+		पूर्ण अन्यथा अणु
+			u32 *pal = sfb->fb->pseuकरो_palette;
 
 			val = chan_to_field(red, &sfb->fb->var.red);
 			val |= chan_to_field(green, &sfb->fb->var.green);
 			val |= chan_to_field(blue, &sfb->fb->var.blue);
 			pal[regno] = big_swap(val);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FB_VISUAL_PSEUDOCOLOR:
+	हाल FB_VISUAL_PSEUDOCOLOR:
 		/* color depth 8 bit */
 		sm712_setpalette(regno, red, green, blue, info);
-		break;
+		अवरोध;
 
-	default:
-		return 1;	/* unknown type */
-	}
+	शेष:
+		वापस 1;	/* unknown type */
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t smtcfb_read(struct fb_info *info, char __user *buf,
-			   size_t count, loff_t *ppos)
-{
-	unsigned long p = *ppos;
+अटल sमाप_प्रकार smtcfb_पढ़ो(काष्ठा fb_info *info, अक्षर __user *buf,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
+	अचिन्हित दीर्घ p = *ppos;
 
 	u32 *buffer, *dst;
 	u32 __iomem *src;
-	int c, i, cnt = 0, err = 0;
-	unsigned long total_size;
+	पूर्णांक c, i, cnt = 0, err = 0;
+	अचिन्हित दीर्घ total_size;
 
-	if (!info || !info->screen_base)
-		return -ENODEV;
+	अगर (!info || !info->screen_base)
+		वापस -ENODEV;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return -EPERM;
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस -EPERM;
 
 	total_size = info->screen_size;
 
-	if (total_size == 0)
+	अगर (total_size == 0)
 		total_size = info->fix.smem_len;
 
-	if (p >= total_size)
-		return 0;
+	अगर (p >= total_size)
+		वापस 0;
 
-	if (count >= total_size)
+	अगर (count >= total_size)
 		count = total_size;
 
-	if (count + p > total_size)
+	अगर (count + p > total_size)
 		count = total_size - p;
 
-	buffer = kmalloc((count > PAGE_SIZE) ? PAGE_SIZE : count, GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+	buffer = kदो_स्मृति((count > PAGE_SIZE) ? PAGE_SIZE : count, GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	src = (u32 __iomem *)(info->screen_base + p);
 
-	if (info->fbops->fb_sync)
+	अगर (info->fbops->fb_sync)
 		info->fbops->fb_sync(info);
 
-	while (count) {
+	जबतक (count) अणु
 		c = (count > PAGE_SIZE) ? PAGE_SIZE : count;
 		dst = buffer;
-		for (i = c >> 2; i--;) {
-			*dst = fb_readl(src++);
+		क्रम (i = c >> 2; i--;) अणु
+			*dst = fb_पढ़ोl(src++);
 			*dst = big_swap(*dst);
 			dst++;
-		}
-		if (c & 3) {
+		पूर्ण
+		अगर (c & 3) अणु
 			u8 *dst8 = (u8 *)dst;
 			u8 __iomem *src8 = (u8 __iomem *)src;
 
-			for (i = c & 3; i--;) {
-				if (i & 1) {
-					*dst8++ = fb_readb(++src8);
-				} else {
-					*dst8++ = fb_readb(--src8);
+			क्रम (i = c & 3; i--;) अणु
+				अगर (i & 1) अणु
+					*dst8++ = fb_पढ़ोb(++src8);
+				पूर्ण अन्यथा अणु
+					*dst8++ = fb_पढ़ोb(--src8);
 					src8 += 2;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			src = (u32 __iomem *)src8;
-		}
+		पूर्ण
 
-		if (copy_to_user(buf, buffer, c)) {
+		अगर (copy_to_user(buf, buffer, c)) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		*ppos += c;
 		buf += c;
 		cnt += c;
 		count -= c;
-	}
+	पूर्ण
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return (err) ? err : cnt;
-}
+	वापस (err) ? err : cnt;
+पूर्ण
 
-static ssize_t smtcfb_write(struct fb_info *info, const char __user *buf,
-			    size_t count, loff_t *ppos)
-{
-	unsigned long p = *ppos;
+अटल sमाप_प्रकार smtcfb_ग_लिखो(काष्ठा fb_info *info, स्थिर अक्षर __user *buf,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	अचिन्हित दीर्घ p = *ppos;
 
 	u32 *buffer, *src;
 	u32 __iomem *dst;
-	int c, i, cnt = 0, err = 0;
-	unsigned long total_size;
+	पूर्णांक c, i, cnt = 0, err = 0;
+	अचिन्हित दीर्घ total_size;
 
-	if (!info || !info->screen_base)
-		return -ENODEV;
+	अगर (!info || !info->screen_base)
+		वापस -ENODEV;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return -EPERM;
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस -EPERM;
 
 	total_size = info->screen_size;
 
-	if (total_size == 0)
+	अगर (total_size == 0)
 		total_size = info->fix.smem_len;
 
-	if (p > total_size)
-		return -EFBIG;
+	अगर (p > total_size)
+		वापस -EFBIG;
 
-	if (count > total_size) {
+	अगर (count > total_size) अणु
 		err = -EFBIG;
 		count = total_size;
-	}
+	पूर्ण
 
-	if (count + p > total_size) {
-		if (!err)
+	अगर (count + p > total_size) अणु
+		अगर (!err)
 			err = -ENOSPC;
 
 		count = total_size - p;
-	}
+	पूर्ण
 
-	buffer = kmalloc((count > PAGE_SIZE) ? PAGE_SIZE : count, GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+	buffer = kदो_स्मृति((count > PAGE_SIZE) ? PAGE_SIZE : count, GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	dst = (u32 __iomem *)(info->screen_base + p);
 
-	if (info->fbops->fb_sync)
+	अगर (info->fbops->fb_sync)
 		info->fbops->fb_sync(info);
 
-	while (count) {
+	जबतक (count) अणु
 		c = (count > PAGE_SIZE) ? PAGE_SIZE : count;
 		src = buffer;
 
-		if (copy_from_user(src, buf, c)) {
+		अगर (copy_from_user(src, buf, c)) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		for (i = c >> 2; i--;) {
-			fb_writel(big_swap(*src), dst++);
+		क्रम (i = c >> 2; i--;) अणु
+			fb_ग_लिखोl(big_swap(*src), dst++);
 			src++;
-		}
-		if (c & 3) {
+		पूर्ण
+		अगर (c & 3) अणु
 			u8 *src8 = (u8 *)src;
 			u8 __iomem *dst8 = (u8 __iomem *)dst;
 
-			for (i = c & 3; i--;) {
-				if (i & 1) {
-					fb_writeb(*src8++, ++dst8);
-				} else {
-					fb_writeb(*src8++, --dst8);
+			क्रम (i = c & 3; i--;) अणु
+				अगर (i & 1) अणु
+					fb_ग_लिखोb(*src8++, ++dst8);
+				पूर्ण अन्यथा अणु
+					fb_ग_लिखोb(*src8++, --dst8);
 					dst8 += 2;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			dst = (u32 __iomem *)dst8;
-		}
+		पूर्ण
 
 		*ppos += c;
 		buf += c;
 		cnt += c;
 		count -= c;
-	}
+	पूर्ण
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return (cnt) ? cnt : err;
-}
+	वापस (cnt) ? cnt : err;
+पूर्ण
 
-static void sm7xx_set_timing(struct smtcfb_info *sfb)
-{
-	int i = 0, j = 0;
+अटल व्योम sm7xx_set_timing(काष्ठा smtcfb_info *sfb)
+अणु
+	पूर्णांक i = 0, j = 0;
 	u32 m_nscreenstride;
 
 	dev_dbg(&sfb->pdev->dev,
 		"sfb->width=%d sfb->height=%d sfb->fb->var.bits_per_pixel=%d sfb->hz=%d\n",
 		sfb->width, sfb->height, sfb->fb->var.bits_per_pixel, sfb->hz);
 
-	for (j = 0; j < ARRAY_SIZE(vgamode); j++) {
-		if (vgamode[j].mmsizex != sfb->width ||
+	क्रम (j = 0; j < ARRAY_SIZE(vgamode); j++) अणु
+		अगर (vgamode[j].mmsizex != sfb->width ||
 		    vgamode[j].mmsizey != sfb->height ||
 		    vgamode[j].bpp != sfb->fb->var.bits_per_pixel ||
 		    vgamode[j].hz != sfb->hz)
-			continue;
+			जारी;
 
 		dev_dbg(&sfb->pdev->dev,
 			"vgamode[j].mmsizex=%d vgamode[j].mmSizeY=%d vgamode[j].bpp=%d vgamode[j].hz=%d\n",
@@ -1207,96 +1208,96 @@ static void sm7xx_set_timing(struct smtcfb_info *sfb)
 
 		smtc_mmiowb(vgamode[j].init_misc, 0x3c2);
 
-		/* init SEQ register SR00 - SR04 */
-		for (i = 0; i < SIZE_SR00_SR04; i++)
+		/* init SEQ रेजिस्टर SR00 - SR04 */
+		क्रम (i = 0; i < SIZE_SR00_SR04; i++)
 			smtc_seqw(i, vgamode[j].init_sr00_sr04[i]);
 
-		/* init SEQ register SR10 - SR24 */
-		for (i = 0; i < SIZE_SR10_SR24; i++)
+		/* init SEQ रेजिस्टर SR10 - SR24 */
+		क्रम (i = 0; i < SIZE_SR10_SR24; i++)
 			smtc_seqw(i + 0x10, vgamode[j].init_sr10_sr24[i]);
 
-		/* init SEQ register SR30 - SR75 */
-		for (i = 0; i < SIZE_SR30_SR75; i++)
-			if ((i + 0x30) != 0x30 && (i + 0x30) != 0x62 &&
+		/* init SEQ रेजिस्टर SR30 - SR75 */
+		क्रम (i = 0; i < SIZE_SR30_SR75; i++)
+			अगर ((i + 0x30) != 0x30 && (i + 0x30) != 0x62 &&
 			    (i + 0x30) != 0x6a && (i + 0x30) != 0x6b &&
 			    (i + 0x30) != 0x70 && (i + 0x30) != 0x71 &&
 			    (i + 0x30) != 0x74 && (i + 0x30) != 0x75)
 				smtc_seqw(i + 0x30,
 					  vgamode[j].init_sr30_sr75[i]);
 
-		/* init SEQ register SR80 - SR93 */
-		for (i = 0; i < SIZE_SR80_SR93; i++)
+		/* init SEQ रेजिस्टर SR80 - SR93 */
+		क्रम (i = 0; i < SIZE_SR80_SR93; i++)
 			smtc_seqw(i + 0x80, vgamode[j].init_sr80_sr93[i]);
 
-		/* init SEQ register SRA0 - SRAF */
-		for (i = 0; i < SIZE_SRA0_SRAF; i++)
+		/* init SEQ रेजिस्टर SRA0 - SRAF */
+		क्रम (i = 0; i < SIZE_SRA0_SRAF; i++)
 			smtc_seqw(i + 0xa0, vgamode[j].init_sra0_sraf[i]);
 
-		/* init Graphic register GR00 - GR08 */
-		for (i = 0; i < SIZE_GR00_GR08; i++)
+		/* init Graphic रेजिस्टर GR00 - GR08 */
+		क्रम (i = 0; i < SIZE_GR00_GR08; i++)
 			smtc_grphw(i, vgamode[j].init_gr00_gr08[i]);
 
-		/* init Attribute register AR00 - AR14 */
-		for (i = 0; i < SIZE_AR00_AR14; i++)
+		/* init Attribute रेजिस्टर AR00 - AR14 */
+		क्रम (i = 0; i < SIZE_AR00_AR14; i++)
 			smtc_attrw(i, vgamode[j].init_ar00_ar14[i]);
 
-		/* init CRTC register CR00 - CR18 */
-		for (i = 0; i < SIZE_CR00_CR18; i++)
+		/* init CRTC रेजिस्टर CR00 - CR18 */
+		क्रम (i = 0; i < SIZE_CR00_CR18; i++)
 			smtc_crtcw(i, vgamode[j].init_cr00_cr18[i]);
 
-		/* init CRTC register CR30 - CR4D */
-		for (i = 0; i < SIZE_CR30_CR4D; i++) {
-			if ((i + 0x30) >= 0x3B && (i + 0x30) <= 0x3F)
-				/* side-effect, don't write to CR3B-CR3F */
-				continue;
+		/* init CRTC रेजिस्टर CR30 - CR4D */
+		क्रम (i = 0; i < SIZE_CR30_CR4D; i++) अणु
+			अगर ((i + 0x30) >= 0x3B && (i + 0x30) <= 0x3F)
+				/* side-effect, करोn't ग_लिखो to CR3B-CR3F */
+				जारी;
 			smtc_crtcw(i + 0x30, vgamode[j].init_cr30_cr4d[i]);
-		}
+		पूर्ण
 
-		/* init CRTC register CR90 - CRA7 */
-		for (i = 0; i < SIZE_CR90_CRA7; i++)
+		/* init CRTC रेजिस्टर CR90 - CRA7 */
+		क्रम (i = 0; i < SIZE_CR90_CRA7; i++)
 			smtc_crtcw(i + 0x90, vgamode[j].init_cr90_cra7[i]);
-	}
+	पूर्ण
 	smtc_mmiowb(0x67, 0x3c2);
 
-	/* set VPR registers */
-	writel(0x0, sfb->vp_regs + 0x0C);
-	writel(0x0, sfb->vp_regs + 0x40);
+	/* set VPR रेजिस्टरs */
+	ग_लिखोl(0x0, sfb->vp_regs + 0x0C);
+	ग_लिखोl(0x0, sfb->vp_regs + 0x40);
 
 	/* set data width */
 	m_nscreenstride = (sfb->width * sfb->fb->var.bits_per_pixel) / 64;
-	switch (sfb->fb->var.bits_per_pixel) {
-	case 8:
-		writel(0x0, sfb->vp_regs + 0x0);
-		break;
-	case 16:
-		writel(0x00020000, sfb->vp_regs + 0x0);
-		break;
-	case 24:
-		writel(0x00040000, sfb->vp_regs + 0x0);
-		break;
-	case 32:
-		writel(0x00030000, sfb->vp_regs + 0x0);
-		break;
-	}
-	writel((u32)(((m_nscreenstride + 2) << 16) | m_nscreenstride),
+	चयन (sfb->fb->var.bits_per_pixel) अणु
+	हाल 8:
+		ग_लिखोl(0x0, sfb->vp_regs + 0x0);
+		अवरोध;
+	हाल 16:
+		ग_लिखोl(0x00020000, sfb->vp_regs + 0x0);
+		अवरोध;
+	हाल 24:
+		ग_लिखोl(0x00040000, sfb->vp_regs + 0x0);
+		अवरोध;
+	हाल 32:
+		ग_लिखोl(0x00030000, sfb->vp_regs + 0x0);
+		अवरोध;
+	पूर्ण
+	ग_लिखोl((u32)(((m_nscreenstride + 2) << 16) | m_nscreenstride),
 	       sfb->vp_regs + 0x10);
-}
+पूर्ण
 
-static void smtc_set_timing(struct smtcfb_info *sfb)
-{
-	switch (sfb->chip_id) {
-	case 0x710:
-	case 0x712:
-	case 0x720:
+अटल व्योम smtc_set_timing(काष्ठा smtcfb_info *sfb)
+अणु
+	चयन (sfb->chip_id) अणु
+	हाल 0x710:
+	हाल 0x712:
+	हाल 0x720:
 		sm7xx_set_timing(sfb);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void smtcfb_setmode(struct smtcfb_info *sfb)
-{
-	switch (sfb->fb->var.bits_per_pixel) {
-	case 32:
+अटल व्योम smtcfb_seपंचांगode(काष्ठा smtcfb_info *sfb)
+अणु
+	चयन (sfb->fb->var.bits_per_pixel) अणु
+	हाल 32:
 		sfb->fb->fix.visual       = FB_VISUAL_TRUECOLOR;
 		sfb->fb->fix.line_length  = sfb->fb->var.xres * 4;
 		sfb->fb->var.red.length   = 8;
@@ -1305,8 +1306,8 @@ static void smtcfb_setmode(struct smtcfb_info *sfb)
 		sfb->fb->var.red.offset   = 16;
 		sfb->fb->var.green.offset = 8;
 		sfb->fb->var.blue.offset  = 0;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		sfb->fb->fix.visual       = FB_VISUAL_TRUECOLOR;
 		sfb->fb->fix.line_length  = sfb->fb->var.xres * 3;
 		sfb->fb->var.red.length   = 8;
@@ -1315,8 +1316,8 @@ static void smtcfb_setmode(struct smtcfb_info *sfb)
 		sfb->fb->var.red.offset   = 16;
 		sfb->fb->var.green.offset = 8;
 		sfb->fb->var.blue.offset  = 0;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		sfb->fb->fix.visual       = FB_VISUAL_PSEUDOCOLOR;
 		sfb->fb->fix.line_length  = sfb->fb->var.xres;
 		sfb->fb->var.red.length   = 3;
@@ -1325,9 +1326,9 @@ static void smtcfb_setmode(struct smtcfb_info *sfb)
 		sfb->fb->var.red.offset   = 5;
 		sfb->fb->var.green.offset = 2;
 		sfb->fb->var.blue.offset  = 0;
-		break;
-	case 16:
-	default:
+		अवरोध;
+	हाल 16:
+	शेष:
 		sfb->fb->fix.visual       = FB_VISUAL_TRUECOLOR;
 		sfb->fb->fix.line_length  = sfb->fb->var.xres * 2;
 		sfb->fb->var.red.length   = 5;
@@ -1336,40 +1337,40 @@ static void smtcfb_setmode(struct smtcfb_info *sfb)
 		sfb->fb->var.red.offset   = 11;
 		sfb->fb->var.green.offset = 5;
 		sfb->fb->var.blue.offset  = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	sfb->width  = sfb->fb->var.xres;
 	sfb->height = sfb->fb->var.yres;
 	sfb->hz = 60;
 	smtc_set_timing(sfb);
-}
+पूर्ण
 
-static int smtc_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
-{
+अटल पूर्णांक smtc_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
 	/* sanity checks */
-	if (var->xres_virtual < var->xres)
-		var->xres_virtual = var->xres;
+	अगर (var->xres_भव < var->xres)
+		var->xres_भव = var->xres;
 
-	if (var->yres_virtual < var->yres)
-		var->yres_virtual = var->yres;
+	अगर (var->yres_भव < var->yres)
+		var->yres_भव = var->yres;
 
-	/* set valid default bpp */
-	if ((var->bits_per_pixel != 8)  && (var->bits_per_pixel != 16) &&
+	/* set valid शेष bpp */
+	अगर ((var->bits_per_pixel != 8)  && (var->bits_per_pixel != 16) &&
 	    (var->bits_per_pixel != 24) && (var->bits_per_pixel != 32))
 		var->bits_per_pixel = 16;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smtc_set_par(struct fb_info *info)
-{
-	smtcfb_setmode(info->par);
+अटल पूर्णांक smtc_set_par(काष्ठा fb_info *info)
+अणु
+	smtcfb_seपंचांगode(info->par);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct fb_ops smtcfb_ops = {
+अटल स्थिर काष्ठा fb_ops smtcfb_ops = अणु
 	.owner        = THIS_MODULE,
 	.fb_check_var = smtc_check_var,
 	.fb_set_par   = smtc_set_par,
@@ -1378,118 +1379,118 @@ static const struct fb_ops smtcfb_ops = {
 	.fb_fillrect  = cfb_fillrect,
 	.fb_imageblit = cfb_imageblit,
 	.fb_copyarea  = cfb_copyarea,
-	.fb_read      = smtcfb_read,
-	.fb_write     = smtcfb_write,
-};
+	.fb_पढ़ो      = smtcfb_पढ़ो,
+	.fb_ग_लिखो     = smtcfb_ग_लिखो,
+पूर्ण;
 
 /*
- * Unmap in the memory mapped IO registers
+ * Unmap in the memory mapped IO रेजिस्टरs
  */
 
-static void smtc_unmap_mmio(struct smtcfb_info *sfb)
-{
-	if (sfb && smtc_regbaseaddress)
-		smtc_regbaseaddress = NULL;
-}
+अटल व्योम smtc_unmap_mmio(काष्ठा smtcfb_info *sfb)
+अणु
+	अगर (sfb && smtc_regbaseaddress)
+		smtc_regbaseaddress = शून्य;
+पूर्ण
 
 /*
  * Map in the screen memory
  */
 
-static int smtc_map_smem(struct smtcfb_info *sfb,
-			 struct pci_dev *pdev, u_long smem_len)
-{
+अटल पूर्णांक smtc_map_smem(काष्ठा smtcfb_info *sfb,
+			 काष्ठा pci_dev *pdev, u_दीर्घ smem_len)
+अणु
 	sfb->fb->fix.smem_start = pci_resource_start(pdev, 0);
 
-	if (sfb->chip_id == 0x720)
+	अगर (sfb->chip_id == 0x720)
 		/* on SM720, the framebuffer starts at the 1 MB offset */
 		sfb->fb->fix.smem_start += 0x00200000;
 
-	/* XXX: is it safe for SM720 on Big-Endian? */
-	if (sfb->fb->var.bits_per_pixel == 32)
+	/* XXX: is it safe क्रम SM720 on Big-Endian? */
+	अगर (sfb->fb->var.bits_per_pixel == 32)
 		sfb->fb->fix.smem_start += big_addr;
 
 	sfb->fb->fix.smem_len = smem_len;
 
 	sfb->fb->screen_base = sfb->lfb;
 
-	if (!sfb->fb->screen_base) {
+	अगर (!sfb->fb->screen_base) अणु
 		dev_err(&pdev->dev,
 			"%s: unable to map screen memory\n", sfb->fb->fix.id);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Unmap in the screen memory
  *
  */
-static void smtc_unmap_smem(struct smtcfb_info *sfb)
-{
-	if (sfb && sfb->fb->screen_base) {
-		if (sfb->chip_id == 0x720)
+अटल व्योम smtc_unmap_smem(काष्ठा smtcfb_info *sfb)
+अणु
+	अगर (sfb && sfb->fb->screen_base) अणु
+		अगर (sfb->chip_id == 0x720)
 			sfb->fb->screen_base -= 0x00200000;
 		iounmap(sfb->fb->screen_base);
-		sfb->fb->screen_base = NULL;
-	}
-}
+		sfb->fb->screen_base = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * We need to wake up the device and make sure its in linear memory mode.
  */
-static inline void sm7xx_init_hw(void)
-{
+अटल अंतरभूत व्योम sm7xx_init_hw(व्योम)
+अणु
 	outb_p(0x18, 0x3c4);
 	outb_p(0x11, 0x3c5);
-}
+पूर्ण
 
-static u_long sm7xx_vram_probe(struct smtcfb_info *sfb)
-{
+अटल u_दीर्घ sm7xx_vram_probe(काष्ठा smtcfb_info *sfb)
+अणु
 	u8 vram;
 
-	switch (sfb->chip_id) {
-	case 0x710:
-	case 0x712:
+	चयन (sfb->chip_id) अणु
+	हाल 0x710:
+	हाल 0x712:
 		/*
 		 * Assume SM712 graphics chip has 4MB VRAM.
 		 *
 		 * FIXME: SM712 can have 2MB VRAM, which is used on earlier
 		 * laptops, such as IBM Thinkpad 240X. This driver would
-		 * probably crash on those machines. If anyone gets one of
+		 * probably crash on those machines. If anyone माला_लो one of
 		 * those and is willing to help, run "git blame" and send me
 		 * an E-mail.
 		 */
-		return 0x00400000;
-	case 0x720:
+		वापस 0x00400000;
+	हाल 0x720:
 		outb_p(0x76, 0x3c4);
 		vram = inb_p(0x3c5) >> 6;
 
-		if (vram == 0x00)
-			return 0x00800000;  /* 8 MB */
-		else if (vram == 0x01)
-			return 0x01000000;  /* 16 MB */
-		else if (vram == 0x02)
-			return 0x00400000;  /* illegal, fallback to 4 MB */
-		else if (vram == 0x03)
-			return 0x00400000;  /* 4 MB */
-	}
-	return 0;  /* unknown hardware */
-}
+		अगर (vram == 0x00)
+			वापस 0x00800000;  /* 8 MB */
+		अन्यथा अगर (vram == 0x01)
+			वापस 0x01000000;  /* 16 MB */
+		अन्यथा अगर (vram == 0x02)
+			वापस 0x00400000;  /* illegal, fallback to 4 MB */
+		अन्यथा अगर (vram == 0x03)
+			वापस 0x00400000;  /* 4 MB */
+	पूर्ण
+	वापस 0;  /* unknown hardware */
+पूर्ण
 
-static void sm7xx_resolution_probe(struct smtcfb_info *sfb)
-{
+अटल व्योम sm7xx_resolution_probe(काष्ठा smtcfb_info *sfb)
+अणु
 	/* get mode parameter from smtc_scr_info */
-	if (smtc_scr_info.lfb_width != 0) {
+	अगर (smtc_scr_info.lfb_width != 0) अणु
 		sfb->fb->var.xres = smtc_scr_info.lfb_width;
 		sfb->fb->var.yres = smtc_scr_info.lfb_height;
 		sfb->fb->var.bits_per_pixel = smtc_scr_info.lfb_depth;
-		goto final;
-	}
+		जाओ final;
+	पूर्ण
 
 	/*
-	 * No parameter, default resolution is 1024x768-16.
+	 * No parameter, शेष resolution is 1024x768-16.
 	 *
 	 * FIXME: earlier laptops, such as IBM Thinkpad 240X, has a 800x600
 	 * panel, also see the comments about Thinkpad 240X above.
@@ -1498,51 +1499,51 @@ static void sm7xx_resolution_probe(struct smtcfb_info *sfb)
 	sfb->fb->var.yres = SCREEN_Y_RES_PC;
 	sfb->fb->var.bits_per_pixel = SCREEN_BPP;
 
-#ifdef CONFIG_MIPS
+#अगर_घोषित CONFIG_MIPS
 	/*
 	 * Loongson MIPS netbooks use 1024x600 LCD panels, which is the original
-	 * target platform of this driver, but nearly all old x86 laptops have
+	 * target platक्रमm of this driver, but nearly all old x86 laptops have
 	 * 1024x768. Lighting 768 panels using 600's timings would partially
-	 * garble the display, so we don't want that. But it's not possible to
+	 * garble the display, so we करोn't want that. But it's not possible to
 	 * distinguish them reliably.
 	 *
-	 * So we change the default to 768, but keep 600 as-is on MIPS.
+	 * So we change the शेष to 768, but keep 600 as-is on MIPS.
 	 */
 	sfb->fb->var.yres = SCREEN_Y_RES_NETBOOK;
-#endif
+#पूर्ण_अगर
 
 final:
 	big_pixel_depth(sfb->fb->var.bits_per_pixel, smtc_scr_info.lfb_depth);
-}
+पूर्ण
 
-static int smtcfb_pci_probe(struct pci_dev *pdev,
-			    const struct pci_device_id *ent)
-{
-	struct smtcfb_info *sfb;
-	struct fb_info *info;
-	u_long smem_size;
-	int err;
-	unsigned long mmio_base;
+अटल पूर्णांक smtcfb_pci_probe(काष्ठा pci_dev *pdev,
+			    स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा smtcfb_info *sfb;
+	काष्ठा fb_info *info;
+	u_दीर्घ smem_size;
+	पूर्णांक err;
+	अचिन्हित दीर्घ mmio_base;
 
 	dev_info(&pdev->dev, "Silicon Motion display driver.\n");
 
 	err = pci_enable_device(pdev);	/* enable SMTC chip */
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = pci_request_region(pdev, 0, "sm7xxfb");
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "cannot reserve framebuffer region\n");
-		goto failed_regions;
-	}
+		जाओ failed_regions;
+	पूर्ण
 
-	sprintf(smtcfb_fix.id, "sm%Xfb", ent->device);
+	प्र_लिखो(smtcfb_fix.id, "sm%Xfb", ent->device);
 
-	info = framebuffer_alloc(sizeof(*sfb), &pdev->dev);
-	if (!info) {
+	info = framebuffer_alloc(माप(*sfb), &pdev->dev);
+	अगर (!info) अणु
 		err = -ENOMEM;
-		goto failed_free;
-	}
+		जाओ failed_मुक्त;
+	पूर्ण
 
 	sfb = info->par;
 	sfb->fb = info;
@@ -1552,7 +1553,7 @@ static int smtcfb_pci_probe(struct pci_dev *pdev,
 	info->fbops = &smtcfb_ops;
 	info->fix = smtcfb_fix;
 	info->var = smtcfb_var;
-	info->pseudo_palette = sfb->colreg;
+	info->pseuकरो_palette = sfb->colreg;
 	info->par = sfb;
 
 	pci_set_drvdata(pdev, sfb);
@@ -1561,34 +1562,34 @@ static int smtcfb_pci_probe(struct pci_dev *pdev,
 
 	/* Map address and memory detection */
 	mmio_base = pci_resource_start(pdev, 0);
-	pci_read_config_byte(pdev, PCI_REVISION_ID, &sfb->chip_rev_id);
+	pci_पढ़ो_config_byte(pdev, PCI_REVISION_ID, &sfb->chip_rev_id);
 
 	smem_size = sm7xx_vram_probe(sfb);
 	dev_info(&pdev->dev, "%lu MiB of VRAM detected.\n",
 					smem_size / 1048576);
 
-	switch (sfb->chip_id) {
-	case 0x710:
-	case 0x712:
+	चयन (sfb->chip_id) अणु
+	हाल 0x710:
+	हाल 0x712:
 		sfb->fb->fix.mmio_start = mmio_base + 0x00400000;
 		sfb->fb->fix.mmio_len = 0x00400000;
 		sfb->lfb = ioremap(mmio_base, mmio_addr);
-		if (!sfb->lfb) {
+		अगर (!sfb->lfb) अणु
 			dev_err(&pdev->dev,
 				"%s: unable to map memory mapped IO!\n",
 				sfb->fb->fix.id);
 			err = -ENOMEM;
-			goto failed_fb;
-		}
+			जाओ failed_fb;
+		पूर्ण
 
 		sfb->mmio = (smtc_regbaseaddress =
 		    sfb->lfb + 0x00700000);
 		sfb->dp_regs = sfb->lfb + 0x00408000;
 		sfb->vp_regs = sfb->lfb + 0x0040c000;
-		if (sfb->fb->var.bits_per_pixel == 32) {
+		अगर (sfb->fb->var.bits_per_pixel == 32) अणु
 			sfb->lfb += big_addr;
 			dev_info(&pdev->dev, "sfb->lfb=%p\n", sfb->lfb);
-		}
+		पूर्ण
 
 		/* set MCLK = 14.31818 * (0x16 / 0x2) */
 		smtc_seqw(0x6a, 0x16);
@@ -1597,20 +1598,20 @@ static int smtcfb_pci_probe(struct pci_dev *pdev,
 		/* enable PCI burst */
 		smtc_seqw(0x17, 0x20);
 		/* enable word swap */
-		if (sfb->fb->var.bits_per_pixel == 32)
+		अगर (sfb->fb->var.bits_per_pixel == 32)
 			seqw17();
-		break;
-	case 0x720:
+		अवरोध;
+	हाल 0x720:
 		sfb->fb->fix.mmio_start = mmio_base;
 		sfb->fb->fix.mmio_len = 0x00200000;
 		sfb->dp_regs = ioremap(mmio_base, 0x00200000 + smem_size);
-		if (!sfb->dp_regs) {
+		अगर (!sfb->dp_regs) अणु
 			dev_err(&pdev->dev,
 				"%s: unable to map memory mapped IO!\n",
 				sfb->fb->fix.id);
 			err = -ENOMEM;
-			goto failed_fb;
-		}
+			जाओ failed_fb;
+		पूर्ण
 
 		sfb->lfb = sfb->dp_regs + 0x00200000;
 		sfb->mmio = (smtc_regbaseaddress =
@@ -1620,43 +1621,43 @@ static int smtcfb_pci_probe(struct pci_dev *pdev,
 		smtc_seqw(0x62, 0xff);
 		smtc_seqw(0x6a, 0x0d);
 		smtc_seqw(0x6b, 0x02);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&pdev->dev,
 			"No valid Silicon Motion display chip was detected!\n");
 		err = -ENODEV;
-		goto failed_fb;
-	}
+		जाओ failed_fb;
+	पूर्ण
 
 	/* probe and decide resolution */
 	sm7xx_resolution_probe(sfb);
 
 	/* can support 32 bpp */
-	if (sfb->fb->var.bits_per_pixel == 15)
+	अगर (sfb->fb->var.bits_per_pixel == 15)
 		sfb->fb->var.bits_per_pixel = 16;
 
-	sfb->fb->var.xres_virtual = sfb->fb->var.xres;
-	sfb->fb->var.yres_virtual = sfb->fb->var.yres;
+	sfb->fb->var.xres_भव = sfb->fb->var.xres;
+	sfb->fb->var.yres_भव = sfb->fb->var.yres;
 	err = smtc_map_smem(sfb, pdev, smem_size);
-	if (err)
-		goto failed;
+	अगर (err)
+		जाओ failed;
 
 	/*
 	 * The screen would be temporarily garbled when sm712fb takes over
 	 * vesafb or VGA text mode. Zero the framebuffer.
 	 */
-	memset_io(sfb->lfb, 0, sfb->fb->fix.smem_len);
+	स_रखो_io(sfb->lfb, 0, sfb->fb->fix.smem_len);
 
-	err = register_framebuffer(info);
-	if (err < 0)
-		goto failed;
+	err = रेजिस्टर_framebuffer(info);
+	अगर (err < 0)
+		जाओ failed;
 
 	dev_info(&pdev->dev,
 		 "Silicon Motion SM%X Rev%X primary display mode %dx%d-%d Init Complete.\n",
 		 sfb->chip_id, sfb->chip_rev_id, sfb->fb->var.xres,
 		 sfb->fb->var.yres, sfb->fb->var.bits_per_pixel);
 
-	return 0;
+	वापस 0;
 
 failed:
 	dev_err(&pdev->dev, "Silicon Motion, Inc. primary display init fail.\n");
@@ -1666,49 +1667,49 @@ failed:
 failed_fb:
 	framebuffer_release(info);
 
-failed_free:
+failed_मुक्त:
 	pci_release_region(pdev, 0);
 
 failed_regions:
 	pci_disable_device(pdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * 0x710 (LynxEM)
  * 0x712 (LynxEM+)
  * 0x720 (Lynx3DM, Lynx3DM+)
  */
-static const struct pci_device_id smtcfb_pci_table[] = {
-	{ PCI_DEVICE(0x126f, 0x710), },
-	{ PCI_DEVICE(0x126f, 0x712), },
-	{ PCI_DEVICE(0x126f, 0x720), },
-	{0,}
-};
+अटल स्थिर काष्ठा pci_device_id smtcfb_pci_table[] = अणु
+	अणु PCI_DEVICE(0x126f, 0x710), पूर्ण,
+	अणु PCI_DEVICE(0x126f, 0x712), पूर्ण,
+	अणु PCI_DEVICE(0x126f, 0x720), पूर्ण,
+	अणु0,पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, smtcfb_pci_table);
 
-static void smtcfb_pci_remove(struct pci_dev *pdev)
-{
-	struct smtcfb_info *sfb;
+अटल व्योम smtcfb_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा smtcfb_info *sfb;
 
 	sfb = pci_get_drvdata(pdev);
 	smtc_unmap_smem(sfb);
 	smtc_unmap_mmio(sfb);
-	unregister_framebuffer(sfb->fb);
+	unरेजिस्टर_framebuffer(sfb->fb);
 	framebuffer_release(sfb->fb);
 	pci_release_region(pdev, 0);
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static int __maybe_unused smtcfb_pci_suspend(struct device *device)
-{
-	struct smtcfb_info *sfb = dev_get_drvdata(device);
+अटल पूर्णांक __maybe_unused smtcfb_pci_suspend(काष्ठा device *device)
+अणु
+	काष्ठा smtcfb_info *sfb = dev_get_drvdata(device);
 
 
-	/* set the hw in sleep mode use external clock and self memory refresh
-	 * so that we can turn off internal PLLs later on
+	/* set the hw in sleep mode use बाह्यal घड़ी and self memory refresh
+	 * so that we can turn off पूर्णांकernal PLLs later on
 	 */
 	smtc_seqw(0x20, (smtc_seqr(0x20) | 0xc0));
 	smtc_seqw(0x69, (smtc_seqr(0x69) & 0xf7));
@@ -1717,81 +1718,81 @@ static int __maybe_unused smtcfb_pci_suspend(struct device *device)
 	fb_set_suspend(sfb->fb, 1);
 	console_unlock();
 
-	/* additionally turn off all function blocks including internal PLLs */
+	/* additionally turn off all function blocks including पूर्णांकernal PLLs */
 	smtc_seqw(0x21, 0xff);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused smtcfb_pci_resume(struct device *device)
-{
-	struct smtcfb_info *sfb = dev_get_drvdata(device);
+अटल पूर्णांक __maybe_unused smtcfb_pci_resume(काष्ठा device *device)
+अणु
+	काष्ठा smtcfb_info *sfb = dev_get_drvdata(device);
 
 
 	/* reinit hardware */
 	sm7xx_init_hw();
-	switch (sfb->chip_id) {
-	case 0x710:
-	case 0x712:
+	चयन (sfb->chip_id) अणु
+	हाल 0x710:
+	हाल 0x712:
 		/* set MCLK = 14.31818 *  (0x16 / 0x2) */
 		smtc_seqw(0x6a, 0x16);
 		smtc_seqw(0x6b, 0x02);
 		smtc_seqw(0x62, 0x3e);
 		/* enable PCI burst */
 		smtc_seqw(0x17, 0x20);
-		if (sfb->fb->var.bits_per_pixel == 32)
+		अगर (sfb->fb->var.bits_per_pixel == 32)
 			seqw17();
-		break;
-	case 0x720:
+		अवरोध;
+	हाल 0x720:
 		smtc_seqw(0x62, 0xff);
 		smtc_seqw(0x6a, 0x0d);
 		smtc_seqw(0x6b, 0x02);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	smtc_seqw(0x34, (smtc_seqr(0x34) | 0xc0));
 	smtc_seqw(0x33, ((smtc_seqr(0x33) | 0x08) & 0xfb));
 
-	smtcfb_setmode(sfb);
+	smtcfb_seपंचांगode(sfb);
 
 	console_lock();
 	fb_set_suspend(sfb->fb, 0);
 	console_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(sm7xx_pm_ops, smtcfb_pci_suspend, smtcfb_pci_resume);
+अटल SIMPLE_DEV_PM_OPS(sm7xx_pm_ops, smtcfb_pci_suspend, smtcfb_pci_resume);
 
-static struct pci_driver smtcfb_driver = {
+अटल काष्ठा pci_driver smtcfb_driver = अणु
 	.name = "smtcfb",
 	.id_table = smtcfb_pci_table,
 	.probe = smtcfb_pci_probe,
-	.remove = smtcfb_pci_remove,
+	.हटाओ = smtcfb_pci_हटाओ,
 	.driver.pm  = &sm7xx_pm_ops,
-};
+पूर्ण;
 
-static int __init sm712fb_init(void)
-{
-	char *option = NULL;
+अटल पूर्णांक __init sm712fb_init(व्योम)
+अणु
+	अक्षर *option = शून्य;
 
-	if (fb_get_options("sm712fb", &option))
-		return -ENODEV;
-	if (option && *option)
+	अगर (fb_get_options("sm712fb", &option))
+		वापस -ENODEV;
+	अगर (option && *option)
 		mode_option = option;
 	sm7xx_vga_setup(mode_option);
 
-	return pci_register_driver(&smtcfb_driver);
-}
+	वापस pci_रेजिस्टर_driver(&smtcfb_driver);
+पूर्ण
 
 module_init(sm712fb_init);
 
-static void __exit sm712fb_exit(void)
-{
-	pci_unregister_driver(&smtcfb_driver);
-}
+अटल व्योम __निकास sm712fb_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&smtcfb_driver);
+पूर्ण
 
-module_exit(sm712fb_exit);
+module_निकास(sm712fb_निकास);
 
 MODULE_AUTHOR("Siliconmotion ");
 MODULE_DESCRIPTION("Framebuffer driver for SMI Graphic Cards");

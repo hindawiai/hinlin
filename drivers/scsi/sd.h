@@ -1,96 +1,97 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SCSI_DISK_H
-#define _SCSI_DISK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SCSI_DISK_H
+#घोषणा _SCSI_DISK_H
 
 /*
- * More than enough for everybody ;)  The huge number of majors
- * is a leftover from 16bit dev_t days, we don't really need that
+ * More than enough क्रम everybody ;)  The huge number of majors
+ * is a leftover from 16bit dev_t days, we करोn't really need that
  * much numberspace.
  */
-#define SD_MAJORS	16
+#घोषणा SD_MAJORS	16
 
 /*
- * Time out in seconds for disks and Magneto-opticals (which are slower).
+ * Time out in seconds क्रम disks and Magneto-opticals (which are slower).
  */
-#define SD_TIMEOUT		(30 * HZ)
-#define SD_MOD_TIMEOUT		(75 * HZ)
+#घोषणा SD_TIMEOUT		(30 * HZ)
+#घोषणा SD_MOD_TIMEOUT		(75 * HZ)
 /*
- * Flush timeout is a multiplier over the standard device timeout which is
- * user modifiable via sysfs but initially set to SD_TIMEOUT
+ * Flush समयout is a multiplier over the standard device समयout which is
+ * user modअगरiable via sysfs but initially set to SD_TIMEOUT
  */
-#define SD_FLUSH_TIMEOUT_MULTIPLIER	2
-#define SD_WRITE_SAME_TIMEOUT	(120 * HZ)
+#घोषणा SD_FLUSH_TIMEOUT_MULTIPLIER	2
+#घोषणा SD_WRITE_SAME_TIMEOUT	(120 * HZ)
 
 /*
  * Number of allowed retries
  */
-#define SD_MAX_RETRIES		5
-#define SD_PASSTHROUGH_RETRIES	1
-#define SD_MAX_MEDIUM_TIMEOUTS	2
+#घोषणा SD_MAX_RETRIES		5
+#घोषणा SD_PASSTHROUGH_RETRIES	1
+#घोषणा SD_MAX_MEDIUM_TIMEOUTS	2
 
 /*
- * Size of the initial data buffer for mode and read capacity data
+ * Size of the initial data buffer क्रम mode and पढ़ो capacity data
  */
-#define SD_BUF_SIZE		512
+#घोषणा SD_BUF_SIZE		512
 
 /*
- * Number of sectors at the end of the device to avoid multi-sector
- * accesses to in the case of last_sector_bug
+ * Number of sectors at the end of the device to aव्योम multi-sector
+ * accesses to in the हाल of last_sector_bug
  */
-#define SD_LAST_BUGGY_SECTORS	8
+#घोषणा SD_LAST_BUGGY_SECTORS	8
 
-enum {
+क्रमागत अणु
 	SD_EXT_CDB_SIZE = 32,	/* Extended CDB size */
 	SD_MEMPOOL_SIZE = 2,	/* CDB pool size */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SD_DEF_XFER_BLOCKS = 0xffff,
 	SD_MAX_XFER_BLOCKS = 0xffffffff,
 	SD_MAX_WS10_BLOCKS = 0xffff,
 	SD_MAX_WS16_BLOCKS = 0x7fffff,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SD_LBP_FULL = 0,	/* Full logical block provisioning */
 	SD_LBP_UNMAP,		/* Use UNMAP command */
 	SD_LBP_WS16,		/* Use WRITE SAME(16) with UNMAP bit */
 	SD_LBP_WS10,		/* Use WRITE SAME(10) with UNMAP bit */
 	SD_LBP_ZERO,		/* Use WRITE SAME(10) with zero payload */
 	SD_LBP_DISABLE,		/* Discard disabled due to failed cmd */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SD_ZERO_WRITE = 0,	/* Use WRITE(10/16) command */
 	SD_ZERO_WS,		/* Use WRITE SAME(10/16) command */
 	SD_ZERO_WS16_UNMAP,	/* Use WRITE SAME(16) with UNMAP */
 	SD_ZERO_WS10_UNMAP,	/* Use WRITE SAME(10) with UNMAP */
-};
+पूर्ण;
 
-struct scsi_disk {
-	struct scsi_driver *driver;	/* always &sd_template */
-	struct scsi_device *device;
-	struct device	dev;
-	struct gendisk	*disk;
-	struct opal_dev *opal_dev;
-#ifdef CONFIG_BLK_DEV_ZONED
+काष्ठा scsi_disk अणु
+	काष्ठा scsi_driver *driver;	/* always &sd_ढाँचा */
+	काष्ठा scsi_device *device;
+	काष्ठा device	dev;
+	काष्ठा gendisk	*disk;
+	काष्ठा opal_dev *opal_dev;
+#अगर_घोषित CONFIG_BLK_DEV_ZONED
 	u32		nr_zones;
 	u32		rev_nr_zones;
 	u32		zone_blocks;
 	u32		rev_zone_blocks;
-	u32		zones_optimal_open;
+	u32		zones_optimal_खोलो;
 	u32		zones_optimal_nonseq;
-	u32		zones_max_open;
+	u32		zones_max_खोलो;
 	u32		*zones_wp_offset;
 	spinlock_t	zones_wp_offset_lock;
 	u32		*rev_wp_offset;
-	struct mutex	rev_mutex;
-	struct work_struct zone_wp_offset_work;
-	char		*zone_wp_update_buf;
-#endif
-	atomic_t	openers;
+	काष्ठा mutex	rev_mutex;
+	काष्ठा work_काष्ठा zone_wp_offset_work;
+	अक्षर		*zone_wp_update_buf;
+#पूर्ण_अगर
+	atomic_t	खोलोers;
 	sector_t	capacity;	/* size in logical blocks */
-	int		max_retries;
+	पूर्णांक		max_retries;
 	u32		max_xfer_blocks;
 	u32		opt_xfer_blocks;
 	u32		max_ws_blocks;
@@ -98,177 +99,177 @@ struct scsi_disk {
 	u32		unmap_granularity;
 	u32		unmap_alignment;
 	u32		index;
-	unsigned int	physical_block_size;
-	unsigned int	max_medium_access_timeouts;
-	unsigned int	medium_access_timed_out;
+	अचिन्हित पूर्णांक	physical_block_size;
+	अचिन्हित पूर्णांक	max_medium_access_समयouts;
+	अचिन्हित पूर्णांक	medium_access_समयd_out;
 	u8		media_present;
-	u8		write_prot;
+	u8		ग_लिखो_prot;
 	u8		protection_type;/* Data Integrity Field */
 	u8		provisioning_mode;
 	u8		zeroing_mode;
-	unsigned	ATO : 1;	/* state of disk ATO bit */
-	unsigned	cache_override : 1; /* temp override of WCE,RCD */
-	unsigned	WCE : 1;	/* state of disk WCE bit */
-	unsigned	RCD : 1;	/* state of disk RCD bit, unused */
-	unsigned	DPOFUA : 1;	/* state of disk DPOFUA bit */
-	unsigned	first_scan : 1;
-	unsigned	lbpme : 1;
-	unsigned	lbprz : 1;
-	unsigned	lbpu : 1;
-	unsigned	lbpws : 1;
-	unsigned	lbpws10 : 1;
-	unsigned	lbpvpd : 1;
-	unsigned	ws10 : 1;
-	unsigned	ws16 : 1;
-	unsigned	rc_basis: 2;
-	unsigned	zoned: 2;
-	unsigned	urswrz : 1;
-	unsigned	security : 1;
-	unsigned	ignore_medium_access_errors : 1;
-};
-#define to_scsi_disk(obj) container_of(obj,struct scsi_disk,dev)
+	अचिन्हित	ATO : 1;	/* state of disk ATO bit */
+	अचिन्हित	cache_override : 1; /* temp override of WCE,RCD */
+	अचिन्हित	WCE : 1;	/* state of disk WCE bit */
+	अचिन्हित	RCD : 1;	/* state of disk RCD bit, unused */
+	अचिन्हित	DPOFUA : 1;	/* state of disk DPOFUA bit */
+	अचिन्हित	first_scan : 1;
+	अचिन्हित	lbpme : 1;
+	अचिन्हित	lbprz : 1;
+	अचिन्हित	lbpu : 1;
+	अचिन्हित	lbpws : 1;
+	अचिन्हित	lbpws10 : 1;
+	अचिन्हित	lbpvpd : 1;
+	अचिन्हित	ws10 : 1;
+	अचिन्हित	ws16 : 1;
+	अचिन्हित	rc_basis: 2;
+	अचिन्हित	zoned: 2;
+	अचिन्हित	urswrz : 1;
+	अचिन्हित	security : 1;
+	अचिन्हित	ignore_medium_access_errors : 1;
+पूर्ण;
+#घोषणा to_scsi_disk(obj) container_of(obj,काष्ठा scsi_disk,dev)
 
-static inline struct scsi_disk *scsi_disk(struct gendisk *disk)
-{
-	return container_of(disk->private_data, struct scsi_disk, driver);
-}
+अटल अंतरभूत काष्ठा scsi_disk *scsi_disk(काष्ठा gendisk *disk)
+अणु
+	वापस container_of(disk->निजी_data, काष्ठा scsi_disk, driver);
+पूर्ण
 
-#define sd_printk(prefix, sdsk, fmt, a...)				\
+#घोषणा sd_prपूर्णांकk(prefix, sdsk, fmt, a...)				\
         (sdsk)->disk ?							\
-	      sdev_prefix_printk(prefix, (sdsk)->device,		\
+	      sdev_prefix_prपूर्णांकk(prefix, (sdsk)->device,		\
 				 (sdsk)->disk->disk_name, fmt, ##a) :	\
-	      sdev_printk(prefix, (sdsk)->device, fmt, ##a)
+	      sdev_prपूर्णांकk(prefix, (sdsk)->device, fmt, ##a)
 
-#define sd_first_printk(prefix, sdsk, fmt, a...)			\
-	do {								\
-		if ((sdsk)->first_scan)					\
-			sd_printk(prefix, sdsk, fmt, ##a);		\
-	} while (0)
+#घोषणा sd_first_prपूर्णांकk(prefix, sdsk, fmt, a...)			\
+	करो अणु								\
+		अगर ((sdsk)->first_scan)					\
+			sd_prपूर्णांकk(prefix, sdsk, fmt, ##a);		\
+	पूर्ण जबतक (0)
 
-static inline int scsi_medium_access_command(struct scsi_cmnd *scmd)
-{
-	switch (scmd->cmnd[0]) {
-	case READ_6:
-	case READ_10:
-	case READ_12:
-	case READ_16:
-	case SYNCHRONIZE_CACHE:
-	case VERIFY:
-	case VERIFY_12:
-	case VERIFY_16:
-	case WRITE_6:
-	case WRITE_10:
-	case WRITE_12:
-	case WRITE_16:
-	case WRITE_SAME:
-	case WRITE_SAME_16:
-	case UNMAP:
-		return 1;
-	case VARIABLE_LENGTH_CMD:
-		switch (scmd->cmnd[9]) {
-		case READ_32:
-		case VERIFY_32:
-		case WRITE_32:
-		case WRITE_SAME_32:
-			return 1;
-		}
-	}
+अटल अंतरभूत पूर्णांक scsi_medium_access_command(काष्ठा scsi_cmnd *scmd)
+अणु
+	चयन (scmd->cmnd[0]) अणु
+	हाल READ_6:
+	हाल READ_10:
+	हाल READ_12:
+	हाल READ_16:
+	हाल SYNCHRONIZE_CACHE:
+	हाल VERIFY:
+	हाल VERIFY_12:
+	हाल VERIFY_16:
+	हाल WRITE_6:
+	हाल WRITE_10:
+	हाल WRITE_12:
+	हाल WRITE_16:
+	हाल WRITE_SAME:
+	हाल WRITE_SAME_16:
+	हाल UNMAP:
+		वापस 1;
+	हाल VARIABLE_LENGTH_CMD:
+		चयन (scmd->cmnd[9]) अणु
+		हाल READ_32:
+		हाल VERIFY_32:
+		हाल WRITE_32:
+		हाल WRITE_SAME_32:
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline sector_t logical_to_sectors(struct scsi_device *sdev, sector_t blocks)
-{
-	return blocks << (ilog2(sdev->sector_size) - 9);
-}
+अटल अंतरभूत sector_t logical_to_sectors(काष्ठा scsi_device *sdev, sector_t blocks)
+अणु
+	वापस blocks << (ilog2(sdev->sector_size) - 9);
+पूर्ण
 
-static inline unsigned int logical_to_bytes(struct scsi_device *sdev, sector_t blocks)
-{
-	return blocks * sdev->sector_size;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक logical_to_bytes(काष्ठा scsi_device *sdev, sector_t blocks)
+अणु
+	वापस blocks * sdev->sector_size;
+पूर्ण
 
-static inline sector_t bytes_to_logical(struct scsi_device *sdev, unsigned int bytes)
-{
-	return bytes >> ilog2(sdev->sector_size);
-}
+अटल अंतरभूत sector_t bytes_to_logical(काष्ठा scsi_device *sdev, अचिन्हित पूर्णांक bytes)
+अणु
+	वापस bytes >> ilog2(sdev->sector_size);
+पूर्ण
 
-static inline sector_t sectors_to_logical(struct scsi_device *sdev, sector_t sector)
-{
-	return sector >> (ilog2(sdev->sector_size) - 9);
-}
+अटल अंतरभूत sector_t sectors_to_logical(काष्ठा scsi_device *sdev, sector_t sector)
+अणु
+	वापस sector >> (ilog2(sdev->sector_size) - 9);
+पूर्ण
 
-#ifdef CONFIG_BLK_DEV_INTEGRITY
+#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
 
-extern void sd_dif_config_host(struct scsi_disk *);
+बाह्य व्योम sd_dअगर_config_host(काष्ठा scsi_disk *);
 
-#else /* CONFIG_BLK_DEV_INTEGRITY */
+#अन्यथा /* CONFIG_BLK_DEV_INTEGRITY */
 
-static inline void sd_dif_config_host(struct scsi_disk *disk)
-{
-}
+अटल अंतरभूत व्योम sd_dअगर_config_host(काष्ठा scsi_disk *disk)
+अणु
+पूर्ण
 
-#endif /* CONFIG_BLK_DEV_INTEGRITY */
+#पूर्ण_अगर /* CONFIG_BLK_DEV_INTEGRITY */
 
-static inline int sd_is_zoned(struct scsi_disk *sdkp)
-{
-	return sdkp->zoned == 1 || sdkp->device->type == TYPE_ZBC;
-}
+अटल अंतरभूत पूर्णांक sd_is_zoned(काष्ठा scsi_disk *sdkp)
+अणु
+	वापस sdkp->zoned == 1 || sdkp->device->type == TYPE_ZBC;
+पूर्ण
 
-#ifdef CONFIG_BLK_DEV_ZONED
+#अगर_घोषित CONFIG_BLK_DEV_ZONED
 
-void sd_zbc_release_disk(struct scsi_disk *sdkp);
-int sd_zbc_read_zones(struct scsi_disk *sdkp, unsigned char *buffer);
-int sd_zbc_revalidate_zones(struct scsi_disk *sdkp);
-blk_status_t sd_zbc_setup_zone_mgmt_cmnd(struct scsi_cmnd *cmd,
-					 unsigned char op, bool all);
-unsigned int sd_zbc_complete(struct scsi_cmnd *cmd, unsigned int good_bytes,
-			     struct scsi_sense_hdr *sshdr);
-int sd_zbc_report_zones(struct gendisk *disk, sector_t sector,
-		unsigned int nr_zones, report_zones_cb cb, void *data);
+व्योम sd_zbc_release_disk(काष्ठा scsi_disk *sdkp);
+पूर्णांक sd_zbc_पढ़ो_zones(काष्ठा scsi_disk *sdkp, अचिन्हित अक्षर *buffer);
+पूर्णांक sd_zbc_revalidate_zones(काष्ठा scsi_disk *sdkp);
+blk_status_t sd_zbc_setup_zone_mgmt_cmnd(काष्ठा scsi_cmnd *cmd,
+					 अचिन्हित अक्षर op, bool all);
+अचिन्हित पूर्णांक sd_zbc_complete(काष्ठा scsi_cmnd *cmd, अचिन्हित पूर्णांक good_bytes,
+			     काष्ठा scsi_sense_hdr *sshdr);
+पूर्णांक sd_zbc_report_zones(काष्ठा gendisk *disk, sector_t sector,
+		अचिन्हित पूर्णांक nr_zones, report_zones_cb cb, व्योम *data);
 
-blk_status_t sd_zbc_prepare_zone_append(struct scsi_cmnd *cmd, sector_t *lba,
-				        unsigned int nr_blocks);
+blk_status_t sd_zbc_prepare_zone_append(काष्ठा scsi_cmnd *cmd, sector_t *lba,
+				        अचिन्हित पूर्णांक nr_blocks);
 
-#else /* CONFIG_BLK_DEV_ZONED */
+#अन्यथा /* CONFIG_BLK_DEV_ZONED */
 
-static inline void sd_zbc_release_disk(struct scsi_disk *sdkp) {}
+अटल अंतरभूत व्योम sd_zbc_release_disk(काष्ठा scsi_disk *sdkp) अणुपूर्ण
 
-static inline int sd_zbc_read_zones(struct scsi_disk *sdkp,
-				    unsigned char *buf)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sd_zbc_पढ़ो_zones(काष्ठा scsi_disk *sdkp,
+				    अचिन्हित अक्षर *buf)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sd_zbc_revalidate_zones(struct scsi_disk *sdkp)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sd_zbc_revalidate_zones(काष्ठा scsi_disk *sdkp)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline blk_status_t sd_zbc_setup_zone_mgmt_cmnd(struct scsi_cmnd *cmd,
-						       unsigned char op,
+अटल अंतरभूत blk_status_t sd_zbc_setup_zone_mgmt_cmnd(काष्ठा scsi_cmnd *cmd,
+						       अचिन्हित अक्षर op,
 						       bool all)
-{
-	return BLK_STS_TARGET;
-}
+अणु
+	वापस BLK_STS_TARGET;
+पूर्ण
 
-static inline unsigned int sd_zbc_complete(struct scsi_cmnd *cmd,
-			unsigned int good_bytes, struct scsi_sense_hdr *sshdr)
-{
-	return good_bytes;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक sd_zbc_complete(काष्ठा scsi_cmnd *cmd,
+			अचिन्हित पूर्णांक good_bytes, काष्ठा scsi_sense_hdr *sshdr)
+अणु
+	वापस good_bytes;
+पूर्ण
 
-static inline blk_status_t sd_zbc_prepare_zone_append(struct scsi_cmnd *cmd,
+अटल अंतरभूत blk_status_t sd_zbc_prepare_zone_append(काष्ठा scsi_cmnd *cmd,
 						      sector_t *lba,
-						      unsigned int nr_blocks)
-{
-	return BLK_STS_TARGET;
-}
+						      अचिन्हित पूर्णांक nr_blocks)
+अणु
+	वापस BLK_STS_TARGET;
+पूर्ण
 
-#define sd_zbc_report_zones NULL
+#घोषणा sd_zbc_report_zones शून्य
 
-#endif /* CONFIG_BLK_DEV_ZONED */
+#पूर्ण_अगर /* CONFIG_BLK_DEV_ZONED */
 
-void sd_print_sense_hdr(struct scsi_disk *sdkp, struct scsi_sense_hdr *sshdr);
-void sd_print_result(const struct scsi_disk *sdkp, const char *msg, int result);
+व्योम sd_prपूर्णांक_sense_hdr(काष्ठा scsi_disk *sdkp, काष्ठा scsi_sense_hdr *sshdr);
+व्योम sd_prपूर्णांक_result(स्थिर काष्ठा scsi_disk *sdkp, स्थिर अक्षर *msg, पूर्णांक result);
 
-#endif /* _SCSI_DISK_H */
+#पूर्ण_अगर /* _SCSI_DISK_H */

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2021 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,78 +22,78 @@
  *
  */
 
-#include "amdgpu_reset.h"
-#include "aldebaran.h"
+#समावेश "amdgpu_reset.h"
+#समावेश "aldebaran.h"
 
-int amdgpu_reset_add_handler(struct amdgpu_reset_control *reset_ctl,
-			     struct amdgpu_reset_handler *handler)
-{
-	/* TODO: Check if handler exists? */
+पूर्णांक amdgpu_reset_add_handler(काष्ठा amdgpu_reset_control *reset_ctl,
+			     काष्ठा amdgpu_reset_handler *handler)
+अणु
+	/* TODO: Check अगर handler exists? */
 	list_add_tail(&handler->handler_list, &reset_ctl->reset_handlers);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int amdgpu_reset_init(struct amdgpu_device *adev)
-{
-	int ret = 0;
+पूर्णांक amdgpu_reset_init(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (adev->asic_type) {
-	case CHIP_ALDEBARAN:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_ALDEBARAN:
 		ret = aldebaran_reset_init(adev);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int amdgpu_reset_fini(struct amdgpu_device *adev)
-{
-	int ret = 0;
+पूर्णांक amdgpu_reset_fini(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (adev->asic_type) {
-	case CHIP_ALDEBARAN:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_ALDEBARAN:
 		ret = aldebaran_reset_fini(adev);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int amdgpu_reset_prepare_hwcontext(struct amdgpu_device *adev,
-				   struct amdgpu_reset_context *reset_context)
-{
-	struct amdgpu_reset_handler *reset_handler = NULL;
+पूर्णांक amdgpu_reset_prepare_hwcontext(काष्ठा amdgpu_device *adev,
+				   काष्ठा amdgpu_reset_context *reset_context)
+अणु
+	काष्ठा amdgpu_reset_handler *reset_handler = शून्य;
 
-	if (adev->reset_cntl && adev->reset_cntl->get_reset_handler)
+	अगर (adev->reset_cntl && adev->reset_cntl->get_reset_handler)
 		reset_handler = adev->reset_cntl->get_reset_handler(
 			adev->reset_cntl, reset_context);
-	if (!reset_handler)
-		return -ENOSYS;
+	अगर (!reset_handler)
+		वापस -ENOSYS;
 
-	return reset_handler->prepare_hwcontext(adev->reset_cntl,
+	वापस reset_handler->prepare_hwcontext(adev->reset_cntl,
 						reset_context);
-}
+पूर्ण
 
-int amdgpu_reset_perform_reset(struct amdgpu_device *adev,
-			       struct amdgpu_reset_context *reset_context)
-{
-	int ret;
-	struct amdgpu_reset_handler *reset_handler = NULL;
+पूर्णांक amdgpu_reset_perक्रमm_reset(काष्ठा amdgpu_device *adev,
+			       काष्ठा amdgpu_reset_context *reset_context)
+अणु
+	पूर्णांक ret;
+	काष्ठा amdgpu_reset_handler *reset_handler = शून्य;
 
-	if (adev->reset_cntl)
+	अगर (adev->reset_cntl)
 		reset_handler = adev->reset_cntl->get_reset_handler(
 			adev->reset_cntl, reset_context);
-	if (!reset_handler)
-		return -ENOSYS;
+	अगर (!reset_handler)
+		वापस -ENOSYS;
 
-	ret = reset_handler->perform_reset(adev->reset_cntl, reset_context);
-	if (ret)
-		return ret;
+	ret = reset_handler->perक्रमm_reset(adev->reset_cntl, reset_context);
+	अगर (ret)
+		वापस ret;
 
-	return reset_handler->restore_hwcontext(adev->reset_cntl,
+	वापस reset_handler->restore_hwcontext(adev->reset_cntl,
 						reset_context);
-}
+पूर्ण

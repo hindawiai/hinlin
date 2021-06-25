@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
 * Copyright (c) 2016 MediaTek Inc.
-* Author: Tiffany Lin <tiffany.lin@mediatek.com>
+* Author: Tअगरfany Lin <tअगरfany.lin@mediatek.com>
 */
 
-#ifndef _MTK_VCODEC_ENC_PM_H_
-#define _MTK_VCODEC_ENC_PM_H_
+#अगर_अघोषित _MTK_VCODEC_ENC_PM_H_
+#घोषणा _MTK_VCODEC_ENC_PM_H_
 
-#include "mtk_vcodec_drv.h"
+#समावेश "mtk_vcodec_drv.h"
 
-int mtk_vcodec_init_enc_pm(struct mtk_vcodec_dev *dev);
-void mtk_vcodec_release_enc_pm(struct mtk_vcodec_dev *dev);
+पूर्णांक mtk_vcodec_init_enc_pm(काष्ठा mtk_vcodec_dev *dev);
+व्योम mtk_vcodec_release_enc_pm(काष्ठा mtk_vcodec_dev *dev);
 
-void mtk_vcodec_enc_clock_on(struct mtk_vcodec_pm *pm);
-void mtk_vcodec_enc_clock_off(struct mtk_vcodec_pm *pm);
+व्योम mtk_vcodec_enc_घड़ी_on(काष्ठा mtk_vcodec_pm *pm);
+व्योम mtk_vcodec_enc_घड़ी_off(काष्ठा mtk_vcodec_pm *pm);
 
-#endif /* _MTK_VCODEC_ENC_PM_H_ */
+#पूर्ण_अगर /* _MTK_VCODEC_ENC_PM_H_ */

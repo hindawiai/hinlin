@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013-2015, Mellanox Technologies, Ltd.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,126 +31,126 @@
  * SOFTWARE.
  */
 
-#include <linux/export.h>
-#include <linux/etherdevice.h>
-#include <linux/mlx5/driver.h>
-#include <linux/mlx5/vport.h>
-#include <linux/mlx5/eswitch.h>
-#include "mlx5_core.h"
-#include "sf/sf.h"
+#समावेश <linux/export.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/mlx5/driver.h>
+#समावेश <linux/mlx5/vport.h>
+#समावेश <linux/mlx5/eचयन.h>
+#समावेश "mlx5_core.h"
+#समावेश "sf/sf.h"
 
-/* Mutex to hold while enabling or disabling RoCE */
-static DEFINE_MUTEX(mlx5_roce_en_lock);
+/* Mutex to hold जबतक enabling or disabling RoCE */
+अटल DEFINE_MUTEX(mlx5_roce_en_lock);
 
-u8 mlx5_query_vport_state(struct mlx5_core_dev *mdev, u8 opmod, u16 vport)
-{
-	u32 out[MLX5_ST_SZ_DW(query_vport_state_out)] = {};
-	u32 in[MLX5_ST_SZ_DW(query_vport_state_in)] = {};
-	int err;
+u8 mlx5_query_vport_state(काष्ठा mlx5_core_dev *mdev, u8 opmod, u16 vport)
+अणु
+	u32 out[MLX5_ST_SZ_DW(query_vport_state_out)] = अणुपूर्ण;
+	u32 in[MLX5_ST_SZ_DW(query_vport_state_in)] = अणुपूर्ण;
+	पूर्णांक err;
 
 	MLX5_SET(query_vport_state_in, in, opcode,
 		 MLX5_CMD_OP_QUERY_VPORT_STATE);
 	MLX5_SET(query_vport_state_in, in, op_mod, opmod);
 	MLX5_SET(query_vport_state_in, in, vport_number, vport);
-	if (vport)
+	अगर (vport)
 		MLX5_SET(query_vport_state_in, in, other_vport, 1);
 
 	err = mlx5_cmd_exec_inout(mdev, query_vport_state, in, out);
-	if (err)
-		return 0;
+	अगर (err)
+		वापस 0;
 
-	return MLX5_GET(query_vport_state_out, out, state);
-}
+	वापस MLX5_GET(query_vport_state_out, out, state);
+पूर्ण
 
-int mlx5_modify_vport_admin_state(struct mlx5_core_dev *mdev, u8 opmod,
+पूर्णांक mlx5_modअगरy_vport_admin_state(काष्ठा mlx5_core_dev *mdev, u8 opmod,
 				  u16 vport, u8 other_vport, u8 state)
-{
-	u32 in[MLX5_ST_SZ_DW(modify_vport_state_in)] = {};
+अणु
+	u32 in[MLX5_ST_SZ_DW(modअगरy_vport_state_in)] = अणुपूर्ण;
 
-	MLX5_SET(modify_vport_state_in, in, opcode,
+	MLX5_SET(modअगरy_vport_state_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_VPORT_STATE);
-	MLX5_SET(modify_vport_state_in, in, op_mod, opmod);
-	MLX5_SET(modify_vport_state_in, in, vport_number, vport);
-	MLX5_SET(modify_vport_state_in, in, other_vport, other_vport);
-	MLX5_SET(modify_vport_state_in, in, admin_state, state);
+	MLX5_SET(modअगरy_vport_state_in, in, op_mod, opmod);
+	MLX5_SET(modअगरy_vport_state_in, in, vport_number, vport);
+	MLX5_SET(modअगरy_vport_state_in, in, other_vport, other_vport);
+	MLX5_SET(modअगरy_vport_state_in, in, admin_state, state);
 
-	return mlx5_cmd_exec_in(mdev, modify_vport_state, in);
-}
+	वापस mlx5_cmd_exec_in(mdev, modअगरy_vport_state, in);
+पूर्ण
 
-static int mlx5_query_nic_vport_context(struct mlx5_core_dev *mdev, u16 vport,
+अटल पूर्णांक mlx5_query_nic_vport_context(काष्ठा mlx5_core_dev *mdev, u16 vport,
 					u32 *out)
-{
-	u32 in[MLX5_ST_SZ_DW(query_nic_vport_context_in)] = {};
+अणु
+	u32 in[MLX5_ST_SZ_DW(query_nic_vport_context_in)] = अणुपूर्ण;
 
 	MLX5_SET(query_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_QUERY_NIC_VPORT_CONTEXT);
 	MLX5_SET(query_nic_vport_context_in, in, vport_number, vport);
-	if (vport)
+	अगर (vport)
 		MLX5_SET(query_nic_vport_context_in, in, other_vport, 1);
 
-	return mlx5_cmd_exec_inout(mdev, query_nic_vport_context, in, out);
-}
+	वापस mlx5_cmd_exec_inout(mdev, query_nic_vport_context, in, out);
+पूर्ण
 
-int mlx5_query_nic_vport_min_inline(struct mlx5_core_dev *mdev,
-				    u16 vport, u8 *min_inline)
-{
-	u32 out[MLX5_ST_SZ_DW(query_nic_vport_context_out)] = {};
-	int err;
+पूर्णांक mlx5_query_nic_vport_min_अंतरभूत(काष्ठा mlx5_core_dev *mdev,
+				    u16 vport, u8 *min_अंतरभूत)
+अणु
+	u32 out[MLX5_ST_SZ_DW(query_nic_vport_context_out)] = अणुपूर्ण;
+	पूर्णांक err;
 
 	err = mlx5_query_nic_vport_context(mdev, vport, out);
-	if (!err)
-		*min_inline = MLX5_GET(query_nic_vport_context_out, out,
-				       nic_vport_context.min_wqe_inline_mode);
-	return err;
-}
-EXPORT_SYMBOL_GPL(mlx5_query_nic_vport_min_inline);
+	अगर (!err)
+		*min_अंतरभूत = MLX5_GET(query_nic_vport_context_out, out,
+				       nic_vport_context.min_wqe_अंतरभूत_mode);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_query_nic_vport_min_अंतरभूत);
 
-void mlx5_query_min_inline(struct mlx5_core_dev *mdev,
-			   u8 *min_inline_mode)
-{
-	switch (MLX5_CAP_ETH(mdev, wqe_inline_mode)) {
-	case MLX5_CAP_INLINE_MODE_VPORT_CONTEXT:
-		if (!mlx5_query_nic_vport_min_inline(mdev, 0, min_inline_mode))
-			break;
+व्योम mlx5_query_min_अंतरभूत(काष्ठा mlx5_core_dev *mdev,
+			   u8 *min_अंतरभूत_mode)
+अणु
+	चयन (MLX5_CAP_ETH(mdev, wqe_अंतरभूत_mode)) अणु
+	हाल MLX5_CAP_INLINE_MODE_VPORT_CONTEXT:
+		अगर (!mlx5_query_nic_vport_min_अंतरभूत(mdev, 0, min_अंतरभूत_mode))
+			अवरोध;
 		fallthrough;
-	case MLX5_CAP_INLINE_MODE_L2:
-		*min_inline_mode = MLX5_INLINE_MODE_L2;
-		break;
-	case MLX5_CAP_INLINE_MODE_NOT_REQUIRED:
-		*min_inline_mode = MLX5_INLINE_MODE_NONE;
-		break;
-	}
-}
-EXPORT_SYMBOL_GPL(mlx5_query_min_inline);
+	हाल MLX5_CAP_INLINE_MODE_L2:
+		*min_अंतरभूत_mode = MLX5_INLINE_MODE_L2;
+		अवरोध;
+	हाल MLX5_CAP_INLINE_MODE_NOT_REQUIRED:
+		*min_अंतरभूत_mode = MLX5_INLINE_MODE_NONE;
+		अवरोध;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_query_min_अंतरभूत);
 
-int mlx5_modify_nic_vport_min_inline(struct mlx5_core_dev *mdev,
-				     u16 vport, u8 min_inline)
-{
-	u32 in[MLX5_ST_SZ_DW(modify_nic_vport_context_in)] = {};
-	void *nic_vport_ctx;
+पूर्णांक mlx5_modअगरy_nic_vport_min_अंतरभूत(काष्ठा mlx5_core_dev *mdev,
+				     u16 vport, u8 min_अंतरभूत)
+अणु
+	u32 in[MLX5_ST_SZ_DW(modअगरy_nic_vport_context_in)] = अणुपूर्ण;
+	व्योम *nic_vport_ctx;
 
-	MLX5_SET(modify_nic_vport_context_in, in,
-		 field_select.min_inline, 1);
-	MLX5_SET(modify_nic_vport_context_in, in, vport_number, vport);
-	MLX5_SET(modify_nic_vport_context_in, in, other_vport, 1);
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
+		 field_select.min_अंतरभूत, 1);
+	MLX5_SET(modअगरy_nic_vport_context_in, in, vport_number, vport);
+	MLX5_SET(modअगरy_nic_vport_context_in, in, other_vport, 1);
 
-	nic_vport_ctx = MLX5_ADDR_OF(modify_nic_vport_context_in,
+	nic_vport_ctx = MLX5_ADDR_OF(modअगरy_nic_vport_context_in,
 				     in, nic_vport_context);
 	MLX5_SET(nic_vport_context, nic_vport_ctx,
-		 min_wqe_inline_mode, min_inline);
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+		 min_wqe_अंतरभूत_mode, min_अंतरभूत);
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
 
-	return mlx5_cmd_exec_in(mdev, modify_nic_vport_context, in);
-}
+	वापस mlx5_cmd_exec_in(mdev, modअगरy_nic_vport_context, in);
+पूर्ण
 
-int mlx5_query_nic_vport_mac_address(struct mlx5_core_dev *mdev,
+पूर्णांक mlx5_query_nic_vport_mac_address(काष्ठा mlx5_core_dev *mdev,
 				     u16 vport, bool other, u8 *addr)
-{
-	u32 out[MLX5_ST_SZ_DW(query_nic_vport_context_out)] = {};
-	u32 in[MLX5_ST_SZ_DW(query_nic_vport_context_in)] = {};
+अणु
+	u32 out[MLX5_ST_SZ_DW(query_nic_vport_context_out)] = अणुपूर्ण;
+	u32 in[MLX5_ST_SZ_DW(query_nic_vport_context_in)] = अणुपूर्ण;
 	u8 *out_addr;
-	int err;
+	पूर्णांक err;
 
 	out_addr = MLX5_ADDR_OF(query_nic_vport_context_out, out,
 				nic_vport_context.permanent_address);
@@ -160,110 +161,110 @@ int mlx5_query_nic_vport_mac_address(struct mlx5_core_dev *mdev,
 	MLX5_SET(query_nic_vport_context_in, in, other_vport, other);
 
 	err = mlx5_cmd_exec_inout(mdev, query_nic_vport_context, in, out);
-	if (!err)
+	अगर (!err)
 		ether_addr_copy(addr, &out_addr[2]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_nic_vport_mac_address);
 
-int mlx5_query_mac_address(struct mlx5_core_dev *mdev, u8 *addr)
-{
-	return mlx5_query_nic_vport_mac_address(mdev, 0, false, addr);
-}
+पूर्णांक mlx5_query_mac_address(काष्ठा mlx5_core_dev *mdev, u8 *addr)
+अणु
+	वापस mlx5_query_nic_vport_mac_address(mdev, 0, false, addr);
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_mac_address);
 
-int mlx5_modify_nic_vport_mac_address(struct mlx5_core_dev *mdev,
-				      u16 vport, const u8 *addr)
-{
-	void *in;
-	int inlen = MLX5_ST_SZ_BYTES(modify_nic_vport_context_in);
-	int err;
-	void *nic_vport_ctx;
+पूर्णांक mlx5_modअगरy_nic_vport_mac_address(काष्ठा mlx5_core_dev *mdev,
+				      u16 vport, स्थिर u8 *addr)
+अणु
+	व्योम *in;
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(modअगरy_nic_vport_context_in);
+	पूर्णांक err;
+	व्योम *nic_vport_ctx;
 	u8 *perm_mac;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 field_select.permanent_address, 1);
-	MLX5_SET(modify_nic_vport_context_in, in, vport_number, vport);
-	MLX5_SET(modify_nic_vport_context_in, in, other_vport, 1);
+	MLX5_SET(modअगरy_nic_vport_context_in, in, vport_number, vport);
+	MLX5_SET(modअगरy_nic_vport_context_in, in, other_vport, 1);
 
-	nic_vport_ctx = MLX5_ADDR_OF(modify_nic_vport_context_in,
+	nic_vport_ctx = MLX5_ADDR_OF(modअगरy_nic_vport_context_in,
 				     in, nic_vport_context);
 	perm_mac = MLX5_ADDR_OF(nic_vport_context, nic_vport_ctx,
 				permanent_address);
 
 	ether_addr_copy(&perm_mac[2], addr);
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
 
-	err = mlx5_cmd_exec_in(mdev, modify_nic_vport_context, in);
+	err = mlx5_cmd_exec_in(mdev, modअगरy_nic_vport_context, in);
 
-	kvfree(in);
+	kvमुक्त(in);
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(mlx5_modify_nic_vport_mac_address);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_modअगरy_nic_vport_mac_address);
 
-int mlx5_query_nic_vport_mtu(struct mlx5_core_dev *mdev, u16 *mtu)
-{
-	int outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
+पूर्णांक mlx5_query_nic_vport_mtu(काष्ठा mlx5_core_dev *mdev, u16 *mtu)
+अणु
+	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
 	u32 *out;
-	int err;
+	पूर्णांक err;
 
 	out = kvzalloc(outlen, GFP_KERNEL);
-	if (!out)
-		return -ENOMEM;
+	अगर (!out)
+		वापस -ENOMEM;
 
 	err = mlx5_query_nic_vport_context(mdev, 0, out);
-	if (!err)
+	अगर (!err)
 		*mtu = MLX5_GET(query_nic_vport_context_out, out,
 				nic_vport_context.mtu);
 
-	kvfree(out);
-	return err;
-}
+	kvमुक्त(out);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_nic_vport_mtu);
 
-int mlx5_modify_nic_vport_mtu(struct mlx5_core_dev *mdev, u16 mtu)
-{
-	int inlen = MLX5_ST_SZ_BYTES(modify_nic_vport_context_in);
-	void *in;
-	int err;
+पूर्णांक mlx5_modअगरy_nic_vport_mtu(काष्ठा mlx5_core_dev *mdev, u16 mtu)
+अणु
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(modअगरy_nic_vport_context_in);
+	व्योम *in;
+	पूर्णांक err;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
-	MLX5_SET(modify_nic_vport_context_in, in, field_select.mtu, 1);
-	MLX5_SET(modify_nic_vport_context_in, in, nic_vport_context.mtu, mtu);
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, field_select.mtu, 1);
+	MLX5_SET(modअगरy_nic_vport_context_in, in, nic_vport_context.mtu, mtu);
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
 
-	err = mlx5_cmd_exec_in(mdev, modify_nic_vport_context, in);
+	err = mlx5_cmd_exec_in(mdev, modअगरy_nic_vport_context, in);
 
-	kvfree(in);
-	return err;
-}
-EXPORT_SYMBOL_GPL(mlx5_modify_nic_vport_mtu);
+	kvमुक्त(in);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_modअगरy_nic_vport_mtu);
 
-int mlx5_query_nic_vport_mac_list(struct mlx5_core_dev *dev,
+पूर्णांक mlx5_query_nic_vport_mac_list(काष्ठा mlx5_core_dev *dev,
 				  u16 vport,
-				  enum mlx5_list_type list_type,
+				  क्रमागत mlx5_list_type list_type,
 				  u8 addr_list[][ETH_ALEN],
-				  int *list_size)
-{
-	u32 in[MLX5_ST_SZ_DW(query_nic_vport_context_in)] = {0};
-	void *nic_vport_ctx;
-	int max_list_size;
-	int req_list_size;
-	int out_sz;
-	void *out;
-	int err;
-	int i;
+				  पूर्णांक *list_size)
+अणु
+	u32 in[MLX5_ST_SZ_DW(query_nic_vport_context_in)] = अणु0पूर्ण;
+	व्योम *nic_vport_ctx;
+	पूर्णांक max_list_size;
+	पूर्णांक req_list_size;
+	पूर्णांक out_sz;
+	व्योम *out;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	req_list_size = *list_size;
 
@@ -271,18 +272,18 @@ int mlx5_query_nic_vport_mac_list(struct mlx5_core_dev *dev,
 		1 << MLX5_CAP_GEN(dev, log_max_current_uc_list) :
 		1 << MLX5_CAP_GEN(dev, log_max_current_mc_list);
 
-	if (req_list_size > max_list_size) {
+	अगर (req_list_size > max_list_size) अणु
 		mlx5_core_warn(dev, "Requested list size (%d) > (%d) max_list_size\n",
 			       req_list_size, max_list_size);
 		req_list_size = max_list_size;
-	}
+	पूर्ण
 
 	out_sz = MLX5_ST_SZ_BYTES(query_nic_vport_context_in) +
 			req_list_size * MLX5_ST_SZ_BYTES(mac_address_layout);
 
 	out = kzalloc(out_sz, GFP_KERNEL);
-	if (!out)
-		return -ENOMEM;
+	अगर (!out)
+		वापस -ENOMEM;
 
 	MLX5_SET(query_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_QUERY_NIC_VPORT_CONTEXT);
@@ -290,9 +291,9 @@ int mlx5_query_nic_vport_mac_list(struct mlx5_core_dev *dev,
 	MLX5_SET(query_nic_vport_context_in, in, vport_number, vport);
 	MLX5_SET(query_nic_vport_context_in, in, other_vport, 1);
 
-	err = mlx5_cmd_exec(dev, in, sizeof(in), out, out_sz);
-	if (err)
-		goto out;
+	err = mlx5_cmd_exec(dev, in, माप(in), out, out_sz);
+	अगर (err)
+		जाओ out;
 
 	nic_vport_ctx = MLX5_ADDR_OF(query_nic_vport_context_out, out,
 				     nic_vport_context);
@@ -300,51 +301,51 @@ int mlx5_query_nic_vport_mac_list(struct mlx5_core_dev *dev,
 				 allowed_list_size);
 
 	*list_size = req_list_size;
-	for (i = 0; i < req_list_size; i++) {
+	क्रम (i = 0; i < req_list_size; i++) अणु
 		u8 *mac_addr = MLX5_ADDR_OF(nic_vport_context,
 					nic_vport_ctx,
 					current_uc_mac_address[i]) + 2;
 		ether_addr_copy(addr_list[i], mac_addr);
-	}
+	पूर्ण
 out:
-	kfree(out);
-	return err;
-}
+	kमुक्त(out);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_nic_vport_mac_list);
 
-int mlx5_modify_nic_vport_mac_list(struct mlx5_core_dev *dev,
-				   enum mlx5_list_type list_type,
+पूर्णांक mlx5_modअगरy_nic_vport_mac_list(काष्ठा mlx5_core_dev *dev,
+				   क्रमागत mlx5_list_type list_type,
 				   u8 addr_list[][ETH_ALEN],
-				   int list_size)
-{
-	u32 out[MLX5_ST_SZ_DW(modify_nic_vport_context_out)] = {};
-	void *nic_vport_ctx;
-	int max_list_size;
-	int in_sz;
-	void *in;
-	int err;
-	int i;
+				   पूर्णांक list_size)
+अणु
+	u32 out[MLX5_ST_SZ_DW(modअगरy_nic_vport_context_out)] = अणुपूर्ण;
+	व्योम *nic_vport_ctx;
+	पूर्णांक max_list_size;
+	पूर्णांक in_sz;
+	व्योम *in;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	max_list_size = list_type == MLX5_NVPRT_LIST_TYPE_UC ?
 		 1 << MLX5_CAP_GEN(dev, log_max_current_uc_list) :
 		 1 << MLX5_CAP_GEN(dev, log_max_current_mc_list);
 
-	if (list_size > max_list_size)
-		return -ENOSPC;
+	अगर (list_size > max_list_size)
+		वापस -ENOSPC;
 
-	in_sz = MLX5_ST_SZ_BYTES(modify_nic_vport_context_in) +
+	in_sz = MLX5_ST_SZ_BYTES(modअगरy_nic_vport_context_in) +
 		list_size * MLX5_ST_SZ_BYTES(mac_address_layout);
 
 	in = kzalloc(in_sz, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 field_select.addresses_list, 1);
 
-	nic_vport_ctx = MLX5_ADDR_OF(modify_nic_vport_context_in, in,
+	nic_vport_ctx = MLX5_ADDR_OF(modअगरy_nic_vport_context_in, in,
 				     nic_vport_context);
 
 	MLX5_SET(nic_vport_context, nic_vport_ctx,
@@ -352,50 +353,50 @@ int mlx5_modify_nic_vport_mac_list(struct mlx5_core_dev *dev,
 	MLX5_SET(nic_vport_context, nic_vport_ctx,
 		 allowed_list_size, list_size);
 
-	for (i = 0; i < list_size; i++) {
+	क्रम (i = 0; i < list_size; i++) अणु
 		u8 *curr_mac = MLX5_ADDR_OF(nic_vport_context,
 					    nic_vport_ctx,
 					    current_uc_mac_address[i]) + 2;
 		ether_addr_copy(curr_mac, addr_list[i]);
-	}
+	पूर्ण
 
-	err = mlx5_cmd_exec(dev, in, in_sz, out, sizeof(out));
-	kfree(in);
-	return err;
-}
-EXPORT_SYMBOL_GPL(mlx5_modify_nic_vport_mac_list);
+	err = mlx5_cmd_exec(dev, in, in_sz, out, माप(out));
+	kमुक्त(in);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_modअगरy_nic_vport_mac_list);
 
-int mlx5_modify_nic_vport_vlans(struct mlx5_core_dev *dev,
+पूर्णांक mlx5_modअगरy_nic_vport_vlans(काष्ठा mlx5_core_dev *dev,
 				u16 vlans[],
-				int list_size)
-{
-	u32 out[MLX5_ST_SZ_DW(modify_nic_vport_context_out)];
-	void *nic_vport_ctx;
-	int max_list_size;
-	int in_sz;
-	void *in;
-	int err;
-	int i;
+				पूर्णांक list_size)
+अणु
+	u32 out[MLX5_ST_SZ_DW(modअगरy_nic_vport_context_out)];
+	व्योम *nic_vport_ctx;
+	पूर्णांक max_list_size;
+	पूर्णांक in_sz;
+	व्योम *in;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	max_list_size = 1 << MLX5_CAP_GEN(dev, log_max_vlan_list);
 
-	if (list_size > max_list_size)
-		return -ENOSPC;
+	अगर (list_size > max_list_size)
+		वापस -ENOSPC;
 
-	in_sz = MLX5_ST_SZ_BYTES(modify_nic_vport_context_in) +
+	in_sz = MLX5_ST_SZ_BYTES(modअगरy_nic_vport_context_in) +
 		list_size * MLX5_ST_SZ_BYTES(vlan_layout);
 
-	memset(out, 0, sizeof(out));
+	स_रखो(out, 0, माप(out));
 	in = kzalloc(in_sz, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 field_select.addresses_list, 1);
 
-	nic_vport_ctx = MLX5_ADDR_OF(modify_nic_vport_context_in, in,
+	nic_vport_ctx = MLX5_ADDR_OF(modअगरy_nic_vport_context_in, in,
 				     nic_vport_context);
 
 	MLX5_SET(nic_vport_context, nic_vport_ctx,
@@ -403,281 +404,281 @@ int mlx5_modify_nic_vport_vlans(struct mlx5_core_dev *dev,
 	MLX5_SET(nic_vport_context, nic_vport_ctx,
 		 allowed_list_size, list_size);
 
-	for (i = 0; i < list_size; i++) {
-		void *vlan_addr = MLX5_ADDR_OF(nic_vport_context,
+	क्रम (i = 0; i < list_size; i++) अणु
+		व्योम *vlan_addr = MLX5_ADDR_OF(nic_vport_context,
 					       nic_vport_ctx,
 					       current_uc_mac_address[i]);
 		MLX5_SET(vlan_layout, vlan_addr, vlan, vlans[i]);
-	}
+	पूर्ण
 
-	err = mlx5_cmd_exec(dev, in, in_sz, out, sizeof(out));
-	kfree(in);
-	return err;
-}
-EXPORT_SYMBOL_GPL(mlx5_modify_nic_vport_vlans);
+	err = mlx5_cmd_exec(dev, in, in_sz, out, माप(out));
+	kमुक्त(in);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_modअगरy_nic_vport_vlans);
 
-int mlx5_query_nic_vport_system_image_guid(struct mlx5_core_dev *mdev,
-					   u64 *system_image_guid)
-{
+पूर्णांक mlx5_query_nic_vport_प्रणाली_image_guid(काष्ठा mlx5_core_dev *mdev,
+					   u64 *प्रणाली_image_guid)
+अणु
 	u32 *out;
-	int outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
+	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
 
 	out = kvzalloc(outlen, GFP_KERNEL);
-	if (!out)
-		return -ENOMEM;
+	अगर (!out)
+		वापस -ENOMEM;
 
 	mlx5_query_nic_vport_context(mdev, 0, out);
 
-	*system_image_guid = MLX5_GET64(query_nic_vport_context_out, out,
-					nic_vport_context.system_image_guid);
+	*प्रणाली_image_guid = MLX5_GET64(query_nic_vport_context_out, out,
+					nic_vport_context.प्रणाली_image_guid);
 
-	kvfree(out);
+	kvमुक्त(out);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mlx5_query_nic_vport_system_image_guid);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_query_nic_vport_प्रणाली_image_guid);
 
-int mlx5_query_nic_vport_node_guid(struct mlx5_core_dev *mdev, u64 *node_guid)
-{
+पूर्णांक mlx5_query_nic_vport_node_guid(काष्ठा mlx5_core_dev *mdev, u64 *node_guid)
+अणु
 	u32 *out;
-	int outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
+	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
 
 	out = kvzalloc(outlen, GFP_KERNEL);
-	if (!out)
-		return -ENOMEM;
+	अगर (!out)
+		वापस -ENOMEM;
 
 	mlx5_query_nic_vport_context(mdev, 0, out);
 
 	*node_guid = MLX5_GET64(query_nic_vport_context_out, out,
 				nic_vport_context.node_guid);
 
-	kvfree(out);
+	kvमुक्त(out);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_nic_vport_node_guid);
 
-int mlx5_modify_nic_vport_node_guid(struct mlx5_core_dev *mdev,
+पूर्णांक mlx5_modअगरy_nic_vport_node_guid(काष्ठा mlx5_core_dev *mdev,
 				    u16 vport, u64 node_guid)
-{
-	int inlen = MLX5_ST_SZ_BYTES(modify_nic_vport_context_in);
-	void *nic_vport_context;
-	void *in;
-	int err;
+अणु
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(modअगरy_nic_vport_context_in);
+	व्योम *nic_vport_context;
+	व्योम *in;
+	पूर्णांक err;
 
-	if (!MLX5_CAP_GEN(mdev, vport_group_manager))
-		return -EACCES;
+	अगर (!MLX5_CAP_GEN(mdev, vport_group_manager))
+		वापस -EACCES;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 field_select.node_guid, 1);
-	MLX5_SET(modify_nic_vport_context_in, in, vport_number, vport);
-	MLX5_SET(modify_nic_vport_context_in, in, other_vport, 1);
+	MLX5_SET(modअगरy_nic_vport_context_in, in, vport_number, vport);
+	MLX5_SET(modअगरy_nic_vport_context_in, in, other_vport, 1);
 
-	nic_vport_context = MLX5_ADDR_OF(modify_nic_vport_context_in,
+	nic_vport_context = MLX5_ADDR_OF(modअगरy_nic_vport_context_in,
 					 in, nic_vport_context);
 	MLX5_SET64(nic_vport_context, nic_vport_context, node_guid, node_guid);
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
 
-	err = mlx5_cmd_exec_in(mdev, modify_nic_vport_context, in);
+	err = mlx5_cmd_exec_in(mdev, modअगरy_nic_vport_context, in);
 
-	kvfree(in);
+	kvमुक्त(in);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mlx5_query_nic_vport_qkey_viol_cntr(struct mlx5_core_dev *mdev,
+पूर्णांक mlx5_query_nic_vport_qkey_viol_cntr(काष्ठा mlx5_core_dev *mdev,
 					u16 *qkey_viol_cntr)
-{
+अणु
 	u32 *out;
-	int outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
+	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
 
 	out = kvzalloc(outlen, GFP_KERNEL);
-	if (!out)
-		return -ENOMEM;
+	अगर (!out)
+		वापस -ENOMEM;
 
 	mlx5_query_nic_vport_context(mdev, 0, out);
 
 	*qkey_viol_cntr = MLX5_GET(query_nic_vport_context_out, out,
 				   nic_vport_context.qkey_violation_counter);
 
-	kvfree(out);
+	kvमुक्त(out);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_nic_vport_qkey_viol_cntr);
 
-int mlx5_query_hca_vport_gid(struct mlx5_core_dev *dev, u8 other_vport,
+पूर्णांक mlx5_query_hca_vport_gid(काष्ठा mlx5_core_dev *dev, u8 other_vport,
 			     u8 port_num, u16  vf_num, u16 gid_index,
-			     union ib_gid *gid)
-{
-	int in_sz = MLX5_ST_SZ_BYTES(query_hca_vport_gid_in);
-	int out_sz = MLX5_ST_SZ_BYTES(query_hca_vport_gid_out);
-	int is_group_manager;
-	void *out = NULL;
-	void *in = NULL;
-	union ib_gid *tmp;
-	int tbsz;
-	int nout;
-	int err;
+			     जोड़ ib_gid *gid)
+अणु
+	पूर्णांक in_sz = MLX5_ST_SZ_BYTES(query_hca_vport_gid_in);
+	पूर्णांक out_sz = MLX5_ST_SZ_BYTES(query_hca_vport_gid_out);
+	पूर्णांक is_group_manager;
+	व्योम *out = शून्य;
+	व्योम *in = शून्य;
+	जोड़ ib_gid *पंचांगp;
+	पूर्णांक tbsz;
+	पूर्णांक nout;
+	पूर्णांक err;
 
 	is_group_manager = MLX5_CAP_GEN(dev, vport_group_manager);
 	tbsz = mlx5_get_gid_table_len(MLX5_CAP_GEN(dev, gid_table_size));
 	mlx5_core_dbg(dev, "vf_num %d, index %d, gid_table_size %d\n",
 		      vf_num, gid_index, tbsz);
 
-	if (gid_index > tbsz && gid_index != 0xffff)
-		return -EINVAL;
+	अगर (gid_index > tbsz && gid_index != 0xffff)
+		वापस -EINVAL;
 
-	if (gid_index == 0xffff)
+	अगर (gid_index == 0xffff)
 		nout = tbsz;
-	else
+	अन्यथा
 		nout = 1;
 
-	out_sz += nout * sizeof(*gid);
+	out_sz += nout * माप(*gid);
 
 	in = kzalloc(in_sz, GFP_KERNEL);
 	out = kzalloc(out_sz, GFP_KERNEL);
-	if (!in || !out) {
+	अगर (!in || !out) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	MLX5_SET(query_hca_vport_gid_in, in, opcode, MLX5_CMD_OP_QUERY_HCA_VPORT_GID);
-	if (other_vport) {
-		if (is_group_manager) {
+	अगर (other_vport) अणु
+		अगर (is_group_manager) अणु
 			MLX5_SET(query_hca_vport_gid_in, in, vport_number, vf_num);
 			MLX5_SET(query_hca_vport_gid_in, in, other_vport, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -EPERM;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	MLX5_SET(query_hca_vport_gid_in, in, gid_index, gid_index);
 
-	if (MLX5_CAP_GEN(dev, num_ports) == 2)
+	अगर (MLX5_CAP_GEN(dev, num_ports) == 2)
 		MLX5_SET(query_hca_vport_gid_in, in, port_num, port_num);
 
 	err = mlx5_cmd_exec(dev, in, in_sz, out, out_sz);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	tmp = out + MLX5_ST_SZ_BYTES(query_hca_vport_gid_out);
-	gid->global.subnet_prefix = tmp->global.subnet_prefix;
-	gid->global.interface_id = tmp->global.interface_id;
+	पंचांगp = out + MLX5_ST_SZ_BYTES(query_hca_vport_gid_out);
+	gid->global.subnet_prefix = पंचांगp->global.subnet_prefix;
+	gid->global.पूर्णांकerface_id = पंचांगp->global.पूर्णांकerface_id;
 
 out:
-	kfree(in);
-	kfree(out);
-	return err;
-}
+	kमुक्त(in);
+	kमुक्त(out);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_hca_vport_gid);
 
-int mlx5_query_hca_vport_pkey(struct mlx5_core_dev *dev, u8 other_vport,
+पूर्णांक mlx5_query_hca_vport_pkey(काष्ठा mlx5_core_dev *dev, u8 other_vport,
 			      u8 port_num, u16 vf_num, u16 pkey_index,
 			      u16 *pkey)
-{
-	int in_sz = MLX5_ST_SZ_BYTES(query_hca_vport_pkey_in);
-	int out_sz = MLX5_ST_SZ_BYTES(query_hca_vport_pkey_out);
-	int is_group_manager;
-	void *out = NULL;
-	void *in = NULL;
-	void *pkarr;
-	int nout;
-	int tbsz;
-	int err;
-	int i;
+अणु
+	पूर्णांक in_sz = MLX5_ST_SZ_BYTES(query_hca_vport_pkey_in);
+	पूर्णांक out_sz = MLX5_ST_SZ_BYTES(query_hca_vport_pkey_out);
+	पूर्णांक is_group_manager;
+	व्योम *out = शून्य;
+	व्योम *in = शून्य;
+	व्योम *pkarr;
+	पूर्णांक nout;
+	पूर्णांक tbsz;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	is_group_manager = MLX5_CAP_GEN(dev, vport_group_manager);
 
 	tbsz = mlx5_to_sw_pkey_sz(MLX5_CAP_GEN(dev, pkey_table_size));
-	if (pkey_index > tbsz && pkey_index != 0xffff)
-		return -EINVAL;
+	अगर (pkey_index > tbsz && pkey_index != 0xffff)
+		वापस -EINVAL;
 
-	if (pkey_index == 0xffff)
+	अगर (pkey_index == 0xffff)
 		nout = tbsz;
-	else
+	अन्यथा
 		nout = 1;
 
 	out_sz += nout * MLX5_ST_SZ_BYTES(pkey);
 
 	in = kzalloc(in_sz, GFP_KERNEL);
 	out = kzalloc(out_sz, GFP_KERNEL);
-	if (!in || !out) {
+	अगर (!in || !out) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	MLX5_SET(query_hca_vport_pkey_in, in, opcode, MLX5_CMD_OP_QUERY_HCA_VPORT_PKEY);
-	if (other_vport) {
-		if (is_group_manager) {
+	अगर (other_vport) अणु
+		अगर (is_group_manager) अणु
 			MLX5_SET(query_hca_vport_pkey_in, in, vport_number, vf_num);
 			MLX5_SET(query_hca_vport_pkey_in, in, other_vport, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -EPERM;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	MLX5_SET(query_hca_vport_pkey_in, in, pkey_index, pkey_index);
 
-	if (MLX5_CAP_GEN(dev, num_ports) == 2)
+	अगर (MLX5_CAP_GEN(dev, num_ports) == 2)
 		MLX5_SET(query_hca_vport_pkey_in, in, port_num, port_num);
 
 	err = mlx5_cmd_exec(dev, in, in_sz, out, out_sz);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	pkarr = MLX5_ADDR_OF(query_hca_vport_pkey_out, out, pkey);
-	for (i = 0; i < nout; i++, pkey++, pkarr += MLX5_ST_SZ_BYTES(pkey))
+	क्रम (i = 0; i < nout; i++, pkey++, pkarr += MLX5_ST_SZ_BYTES(pkey))
 		*pkey = MLX5_GET_PR(pkey, pkarr, pkey);
 
 out:
-	kfree(in);
-	kfree(out);
-	return err;
-}
+	kमुक्त(in);
+	kमुक्त(out);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_hca_vport_pkey);
 
-int mlx5_query_hca_vport_context(struct mlx5_core_dev *dev,
+पूर्णांक mlx5_query_hca_vport_context(काष्ठा mlx5_core_dev *dev,
 				 u8 other_vport, u8 port_num,
 				 u16 vf_num,
-				 struct mlx5_hca_vport_context *rep)
-{
-	int out_sz = MLX5_ST_SZ_BYTES(query_hca_vport_context_out);
-	int in[MLX5_ST_SZ_DW(query_hca_vport_context_in)] = {};
-	int is_group_manager;
-	void *out;
-	void *ctx;
-	int err;
+				 काष्ठा mlx5_hca_vport_context *rep)
+अणु
+	पूर्णांक out_sz = MLX5_ST_SZ_BYTES(query_hca_vport_context_out);
+	पूर्णांक in[MLX5_ST_SZ_DW(query_hca_vport_context_in)] = अणुपूर्ण;
+	पूर्णांक is_group_manager;
+	व्योम *out;
+	व्योम *ctx;
+	पूर्णांक err;
 
 	is_group_manager = MLX5_CAP_GEN(dev, vport_group_manager);
 
 	out = kzalloc(out_sz, GFP_KERNEL);
-	if (!out)
-		return -ENOMEM;
+	अगर (!out)
+		वापस -ENOMEM;
 
 	MLX5_SET(query_hca_vport_context_in, in, opcode, MLX5_CMD_OP_QUERY_HCA_VPORT_CONTEXT);
 
-	if (other_vport) {
-		if (is_group_manager) {
+	अगर (other_vport) अणु
+		अगर (is_group_manager) अणु
 			MLX5_SET(query_hca_vport_context_in, in, other_vport, 1);
 			MLX5_SET(query_hca_vport_context_in, in, vport_number, vf_num);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -EPERM;
-			goto ex;
-		}
-	}
+			जाओ ex;
+		पूर्ण
+	पूर्ण
 
-	if (MLX5_CAP_GEN(dev, num_ports) == 2)
+	अगर (MLX5_CAP_GEN(dev, num_ports) == 2)
 		MLX5_SET(query_hca_vport_context_in, in, port_num, port_num);
 
 	err = mlx5_cmd_exec_inout(dev, query_hca_vport_context, in, out);
-	if (err)
-		goto ex;
+	अगर (err)
+		जाओ ex;
 
 	ctx = MLX5_ADDR_OF(query_hca_vport_context_out, out, hca_vport_context);
 	rep->field_select = MLX5_GET_PR(hca_vport_context, ctx, field_select);
@@ -702,8 +703,8 @@ int mlx5_query_hca_vport_context(struct mlx5_core_dev *dev,
 	rep->init_type_reply = MLX5_GET_PR(hca_vport_context, ctx,
 					   init_type_reply);
 	rep->lmc = MLX5_GET_PR(hca_vport_context, ctx, lmc);
-	rep->subnet_timeout = MLX5_GET_PR(hca_vport_context, ctx,
-					  subnet_timeout);
+	rep->subnet_समयout = MLX5_GET_PR(hca_vport_context, ctx,
+					  subnet_समयout);
 	rep->sm_lid = MLX5_GET_PR(hca_vport_context, ctx, sm_lid);
 	rep->sm_sl = MLX5_GET_PR(hca_vport_context, ctx, sm_sl);
 	rep->qkey_violation_counter = MLX5_GET_PR(hca_vport_context, ctx,
@@ -712,69 +713,69 @@ int mlx5_query_hca_vport_context(struct mlx5_core_dev *dev,
 						  pkey_violation_counter);
 	rep->grh_required = MLX5_GET_PR(hca_vport_context, ctx, grh_required);
 	rep->sys_image_guid = MLX5_GET64_PR(hca_vport_context, ctx,
-					    system_image_guid);
+					    प्रणाली_image_guid);
 
 ex:
-	kfree(out);
-	return err;
-}
+	kमुक्त(out);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_hca_vport_context);
 
-int mlx5_query_hca_vport_system_image_guid(struct mlx5_core_dev *dev,
+पूर्णांक mlx5_query_hca_vport_प्रणाली_image_guid(काष्ठा mlx5_core_dev *dev,
 					   u64 *sys_image_guid)
-{
-	struct mlx5_hca_vport_context *rep;
-	int err;
+अणु
+	काष्ठा mlx5_hca_vport_context *rep;
+	पूर्णांक err;
 
-	rep = kzalloc(sizeof(*rep), GFP_KERNEL);
-	if (!rep)
-		return -ENOMEM;
+	rep = kzalloc(माप(*rep), GFP_KERNEL);
+	अगर (!rep)
+		वापस -ENOMEM;
 
 	err = mlx5_query_hca_vport_context(dev, 0, 1, 0, rep);
-	if (!err)
+	अगर (!err)
 		*sys_image_guid = rep->sys_image_guid;
 
-	kfree(rep);
-	return err;
-}
-EXPORT_SYMBOL_GPL(mlx5_query_hca_vport_system_image_guid);
+	kमुक्त(rep);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_query_hca_vport_प्रणाली_image_guid);
 
-int mlx5_query_hca_vport_node_guid(struct mlx5_core_dev *dev,
+पूर्णांक mlx5_query_hca_vport_node_guid(काष्ठा mlx5_core_dev *dev,
 				   u64 *node_guid)
-{
-	struct mlx5_hca_vport_context *rep;
-	int err;
+अणु
+	काष्ठा mlx5_hca_vport_context *rep;
+	पूर्णांक err;
 
-	rep = kzalloc(sizeof(*rep), GFP_KERNEL);
-	if (!rep)
-		return -ENOMEM;
+	rep = kzalloc(माप(*rep), GFP_KERNEL);
+	अगर (!rep)
+		वापस -ENOMEM;
 
 	err = mlx5_query_hca_vport_context(dev, 0, 1, 0, rep);
-	if (!err)
+	अगर (!err)
 		*node_guid = rep->node_guid;
 
-	kfree(rep);
-	return err;
-}
+	kमुक्त(rep);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_hca_vport_node_guid);
 
-int mlx5_query_nic_vport_promisc(struct mlx5_core_dev *mdev,
+पूर्णांक mlx5_query_nic_vport_promisc(काष्ठा mlx5_core_dev *mdev,
 				 u16 vport,
-				 int *promisc_uc,
-				 int *promisc_mc,
-				 int *promisc_all)
-{
+				 पूर्णांक *promisc_uc,
+				 पूर्णांक *promisc_mc,
+				 पूर्णांक *promisc_all)
+अणु
 	u32 *out;
-	int outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
-	int err;
+	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
+	पूर्णांक err;
 
 	out = kzalloc(outlen, GFP_KERNEL);
-	if (!out)
-		return -ENOMEM;
+	अगर (!out)
+		वापस -ENOMEM;
 
 	err = mlx5_query_nic_vport_context(mdev, vport, out);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	*promisc_uc = MLX5_GET(query_nic_vport_context_out, out,
 			       nic_vport_context.promisc_uc);
@@ -784,101 +785,101 @@ int mlx5_query_nic_vport_promisc(struct mlx5_core_dev *mdev,
 				nic_vport_context.promisc_all);
 
 out:
-	kfree(out);
-	return err;
-}
+	kमुक्त(out);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_query_nic_vport_promisc);
 
-int mlx5_modify_nic_vport_promisc(struct mlx5_core_dev *mdev,
-				  int promisc_uc,
-				  int promisc_mc,
-				  int promisc_all)
-{
-	void *in;
-	int inlen = MLX5_ST_SZ_BYTES(modify_nic_vport_context_in);
-	int err;
+पूर्णांक mlx5_modअगरy_nic_vport_promisc(काष्ठा mlx5_core_dev *mdev,
+				  पूर्णांक promisc_uc,
+				  पूर्णांक promisc_mc,
+				  पूर्णांक promisc_all)
+अणु
+	व्योम *in;
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(modअगरy_nic_vport_context_in);
+	पूर्णांक err;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
-	MLX5_SET(modify_nic_vport_context_in, in, field_select.promisc, 1);
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, field_select.promisc, 1);
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 nic_vport_context.promisc_uc, promisc_uc);
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 nic_vport_context.promisc_mc, promisc_mc);
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 nic_vport_context.promisc_all, promisc_all);
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
 
-	err = mlx5_cmd_exec_in(mdev, modify_nic_vport_context, in);
+	err = mlx5_cmd_exec_in(mdev, modअगरy_nic_vport_context, in);
 
-	kvfree(in);
+	kvमुक्त(in);
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(mlx5_modify_nic_vport_promisc);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_modअगरy_nic_vport_promisc);
 
-enum {
+क्रमागत अणु
 	UC_LOCAL_LB,
 	MC_LOCAL_LB
-};
+पूर्ण;
 
-int mlx5_nic_vport_update_local_lb(struct mlx5_core_dev *mdev, bool enable)
-{
-	int inlen = MLX5_ST_SZ_BYTES(modify_nic_vport_context_in);
-	void *in;
-	int err;
+पूर्णांक mlx5_nic_vport_update_local_lb(काष्ठा mlx5_core_dev *mdev, bool enable)
+अणु
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(modअगरy_nic_vport_context_in);
+	व्योम *in;
+	पूर्णांक err;
 
-	if (!MLX5_CAP_GEN(mdev, disable_local_lb_mc) &&
+	अगर (!MLX5_CAP_GEN(mdev, disable_local_lb_mc) &&
 	    !MLX5_CAP_GEN(mdev, disable_local_lb_uc))
-		return 0;
+		वापस 0;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 nic_vport_context.disable_mc_local_lb, !enable);
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 nic_vport_context.disable_uc_local_lb, !enable);
 
-	if (MLX5_CAP_GEN(mdev, disable_local_lb_mc))
-		MLX5_SET(modify_nic_vport_context_in, in,
+	अगर (MLX5_CAP_GEN(mdev, disable_local_lb_mc))
+		MLX5_SET(modअगरy_nic_vport_context_in, in,
 			 field_select.disable_mc_local_lb, 1);
 
-	if (MLX5_CAP_GEN(mdev, disable_local_lb_uc))
-		MLX5_SET(modify_nic_vport_context_in, in,
+	अगर (MLX5_CAP_GEN(mdev, disable_local_lb_uc))
+		MLX5_SET(modअगरy_nic_vport_context_in, in,
 			 field_select.disable_uc_local_lb, 1);
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
 
-	err = mlx5_cmd_exec_in(mdev, modify_nic_vport_context, in);
+	err = mlx5_cmd_exec_in(mdev, modअगरy_nic_vport_context, in);
 
-	if (!err)
+	अगर (!err)
 		mlx5_core_dbg(mdev, "%s local_lb\n",
 			      enable ? "enable" : "disable");
 
-	kvfree(in);
-	return err;
-}
+	kvमुक्त(in);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_nic_vport_update_local_lb);
 
-int mlx5_nic_vport_query_local_lb(struct mlx5_core_dev *mdev, bool *status)
-{
-	int outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
+पूर्णांक mlx5_nic_vport_query_local_lb(काष्ठा mlx5_core_dev *mdev, bool *status)
+अणु
+	पूर्णांक outlen = MLX5_ST_SZ_BYTES(query_nic_vport_context_out);
 	u32 *out;
-	int value;
-	int err;
+	पूर्णांक value;
+	पूर्णांक err;
 
 	out = kzalloc(outlen, GFP_KERNEL);
-	if (!out)
-		return -ENOMEM;
+	अगर (!out)
+		वापस -ENOMEM;
 
 	err = mlx5_query_nic_vport_context(mdev, 0, out);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	value = MLX5_GET(query_nic_vport_context_out, out,
 			 nic_vport_context.disable_mc_local_lb) << MC_LOCAL_LB;
@@ -889,117 +890,117 @@ int mlx5_nic_vport_query_local_lb(struct mlx5_core_dev *mdev, bool *status)
 	*status = !value;
 
 out:
-	kfree(out);
-	return err;
-}
+	kमुक्त(out);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_nic_vport_query_local_lb);
 
-enum mlx5_vport_roce_state {
+क्रमागत mlx5_vport_roce_state अणु
 	MLX5_VPORT_ROCE_DISABLED = 0,
 	MLX5_VPORT_ROCE_ENABLED  = 1,
-};
+पूर्ण;
 
-static int mlx5_nic_vport_update_roce_state(struct mlx5_core_dev *mdev,
-					    enum mlx5_vport_roce_state state)
-{
-	void *in;
-	int inlen = MLX5_ST_SZ_BYTES(modify_nic_vport_context_in);
-	int err;
+अटल पूर्णांक mlx5_nic_vport_update_roce_state(काष्ठा mlx5_core_dev *mdev,
+					    क्रमागत mlx5_vport_roce_state state)
+अणु
+	व्योम *in;
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(modअगरy_nic_vport_context_in);
+	पूर्णांक err;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
-	MLX5_SET(modify_nic_vport_context_in, in, field_select.roce_en, 1);
-	MLX5_SET(modify_nic_vport_context_in, in, nic_vport_context.roce_en,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, field_select.roce_en, 1);
+	MLX5_SET(modअगरy_nic_vport_context_in, in, nic_vport_context.roce_en,
 		 state);
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
 
-	err = mlx5_cmd_exec_in(mdev, modify_nic_vport_context, in);
+	err = mlx5_cmd_exec_in(mdev, modअगरy_nic_vport_context, in);
 
-	kvfree(in);
+	kvमुक्त(in);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mlx5_nic_vport_enable_roce(struct mlx5_core_dev *mdev)
-{
-	int err = 0;
+पूर्णांक mlx5_nic_vport_enable_roce(काष्ठा mlx5_core_dev *mdev)
+अणु
+	पूर्णांक err = 0;
 
 	mutex_lock(&mlx5_roce_en_lock);
-	if (!mdev->roce.roce_en)
+	अगर (!mdev->roce.roce_en)
 		err = mlx5_nic_vport_update_roce_state(mdev, MLX5_VPORT_ROCE_ENABLED);
 
-	if (!err)
+	अगर (!err)
 		mdev->roce.roce_en++;
 	mutex_unlock(&mlx5_roce_en_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_nic_vport_enable_roce);
 
-int mlx5_nic_vport_disable_roce(struct mlx5_core_dev *mdev)
-{
-	int err = 0;
+पूर्णांक mlx5_nic_vport_disable_roce(काष्ठा mlx5_core_dev *mdev)
+अणु
+	पूर्णांक err = 0;
 
 	mutex_lock(&mlx5_roce_en_lock);
-	if (mdev->roce.roce_en) {
+	अगर (mdev->roce.roce_en) अणु
 		mdev->roce.roce_en--;
-		if (mdev->roce.roce_en == 0)
+		अगर (mdev->roce.roce_en == 0)
 			err = mlx5_nic_vport_update_roce_state(mdev, MLX5_VPORT_ROCE_DISABLED);
 
-		if (err)
+		अगर (err)
 			mdev->roce.roce_en++;
-	}
+	पूर्ण
 	mutex_unlock(&mlx5_roce_en_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(mlx5_nic_vport_disable_roce);
 
-int mlx5_core_query_vport_counter(struct mlx5_core_dev *dev, u8 other_vport,
-				  int vf, u8 port_num, void *out)
-{
-	int in_sz = MLX5_ST_SZ_BYTES(query_vport_counter_in);
-	int is_group_manager;
-	void *in;
-	int err;
+पूर्णांक mlx5_core_query_vport_counter(काष्ठा mlx5_core_dev *dev, u8 other_vport,
+				  पूर्णांक vf, u8 port_num, व्योम *out)
+अणु
+	पूर्णांक in_sz = MLX5_ST_SZ_BYTES(query_vport_counter_in);
+	पूर्णांक is_group_manager;
+	व्योम *in;
+	पूर्णांक err;
 
 	is_group_manager = MLX5_CAP_GEN(dev, vport_group_manager);
 	in = kvzalloc(in_sz, GFP_KERNEL);
-	if (!in) {
+	अगर (!in) अणु
 		err = -ENOMEM;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	MLX5_SET(query_vport_counter_in, in, opcode,
 		 MLX5_CMD_OP_QUERY_VPORT_COUNTER);
-	if (other_vport) {
-		if (is_group_manager) {
+	अगर (other_vport) अणु
+		अगर (is_group_manager) अणु
 			MLX5_SET(query_vport_counter_in, in, other_vport, 1);
 			MLX5_SET(query_vport_counter_in, in, vport_number, vf + 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -EPERM;
-			goto free;
-		}
-	}
-	if (MLX5_CAP_GEN(dev, num_ports) == 2)
+			जाओ मुक्त;
+		पूर्ण
+	पूर्ण
+	अगर (MLX5_CAP_GEN(dev, num_ports) == 2)
 		MLX5_SET(query_vport_counter_in, in, port_num, port_num);
 
 	err = mlx5_cmd_exec_inout(dev, query_vport_counter, in, out);
-free:
-	kvfree(in);
-	return err;
-}
+मुक्त:
+	kvमुक्त(in);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_core_query_vport_counter);
 
-int mlx5_query_vport_down_stats(struct mlx5_core_dev *mdev, u16 vport,
-				u8 other_vport, u64 *rx_discard_vport_down,
-				u64 *tx_discard_vport_down)
-{
-	u32 out[MLX5_ST_SZ_DW(query_vnic_env_out)] = {};
-	u32 in[MLX5_ST_SZ_DW(query_vnic_env_in)] = {};
-	int err;
+पूर्णांक mlx5_query_vport_करोwn_stats(काष्ठा mlx5_core_dev *mdev, u16 vport,
+				u8 other_vport, u64 *rx_discard_vport_करोwn,
+				u64 *tx_discard_vport_करोwn)
+अणु
+	u32 out[MLX5_ST_SZ_DW(query_vnic_env_out)] = अणुपूर्ण;
+	u32 in[MLX5_ST_SZ_DW(query_vnic_env_in)] = अणुपूर्ण;
+	पूर्णांक err;
 
 	MLX5_SET(query_vnic_env_in, in, opcode,
 		 MLX5_CMD_OP_QUERY_VNIC_ENV);
@@ -1008,155 +1009,155 @@ int mlx5_query_vport_down_stats(struct mlx5_core_dev *mdev, u16 vport,
 	MLX5_SET(query_vnic_env_in, in, other_vport, other_vport);
 
 	err = mlx5_cmd_exec_inout(mdev, query_vnic_env, in, out);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	*rx_discard_vport_down = MLX5_GET64(query_vnic_env_out, out,
-					    vport_env.receive_discard_vport_down);
-	*tx_discard_vport_down = MLX5_GET64(query_vnic_env_out, out,
-					    vport_env.transmit_discard_vport_down);
-	return 0;
-}
+	*rx_discard_vport_करोwn = MLX5_GET64(query_vnic_env_out, out,
+					    vport_env.receive_discard_vport_करोwn);
+	*tx_discard_vport_करोwn = MLX5_GET64(query_vnic_env_out, out,
+					    vport_env.transmit_discard_vport_करोwn);
+	वापस 0;
+पूर्ण
 
-int mlx5_core_modify_hca_vport_context(struct mlx5_core_dev *dev,
+पूर्णांक mlx5_core_modअगरy_hca_vport_context(काष्ठा mlx5_core_dev *dev,
 				       u8 other_vport, u8 port_num,
-				       int vf,
-				       struct mlx5_hca_vport_context *req)
-{
-	int in_sz = MLX5_ST_SZ_BYTES(modify_hca_vport_context_in);
-	int is_group_manager;
-	void *ctx;
-	void *in;
-	int err;
+				       पूर्णांक vf,
+				       काष्ठा mlx5_hca_vport_context *req)
+अणु
+	पूर्णांक in_sz = MLX5_ST_SZ_BYTES(modअगरy_hca_vport_context_in);
+	पूर्णांक is_group_manager;
+	व्योम *ctx;
+	व्योम *in;
+	पूर्णांक err;
 
 	mlx5_core_dbg(dev, "vf %d\n", vf);
 	is_group_manager = MLX5_CAP_GEN(dev, vport_group_manager);
 	in = kzalloc(in_sz, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
-	MLX5_SET(modify_hca_vport_context_in, in, opcode, MLX5_CMD_OP_MODIFY_HCA_VPORT_CONTEXT);
-	if (other_vport) {
-		if (is_group_manager) {
-			MLX5_SET(modify_hca_vport_context_in, in, other_vport, 1);
-			MLX5_SET(modify_hca_vport_context_in, in, vport_number, vf);
-		} else {
+	MLX5_SET(modअगरy_hca_vport_context_in, in, opcode, MLX5_CMD_OP_MODIFY_HCA_VPORT_CONTEXT);
+	अगर (other_vport) अणु
+		अगर (is_group_manager) अणु
+			MLX5_SET(modअगरy_hca_vport_context_in, in, other_vport, 1);
+			MLX5_SET(modअगरy_hca_vport_context_in, in, vport_number, vf);
+		पूर्ण अन्यथा अणु
 			err = -EPERM;
-			goto ex;
-		}
-	}
+			जाओ ex;
+		पूर्ण
+	पूर्ण
 
-	if (MLX5_CAP_GEN(dev, num_ports) > 1)
-		MLX5_SET(modify_hca_vport_context_in, in, port_num, port_num);
+	अगर (MLX5_CAP_GEN(dev, num_ports) > 1)
+		MLX5_SET(modअगरy_hca_vport_context_in, in, port_num, port_num);
 
-	ctx = MLX5_ADDR_OF(modify_hca_vport_context_in, in, hca_vport_context);
+	ctx = MLX5_ADDR_OF(modअगरy_hca_vport_context_in, in, hca_vport_context);
 	MLX5_SET(hca_vport_context, ctx, field_select, req->field_select);
-	if (req->field_select & MLX5_HCA_VPORT_SEL_STATE_POLICY)
+	अगर (req->field_select & MLX5_HCA_VPORT_SEL_STATE_POLICY)
 		MLX5_SET(hca_vport_context, ctx, vport_state_policy,
 			 req->policy);
-	if (req->field_select & MLX5_HCA_VPORT_SEL_PORT_GUID)
+	अगर (req->field_select & MLX5_HCA_VPORT_SEL_PORT_GUID)
 		MLX5_SET64(hca_vport_context, ctx, port_guid, req->port_guid);
-	if (req->field_select & MLX5_HCA_VPORT_SEL_NODE_GUID)
+	अगर (req->field_select & MLX5_HCA_VPORT_SEL_NODE_GUID)
 		MLX5_SET64(hca_vport_context, ctx, node_guid, req->node_guid);
 	MLX5_SET(hca_vport_context, ctx, cap_mask1, req->cap_mask1);
 	MLX5_SET(hca_vport_context, ctx, cap_mask1_field_select,
 		 req->cap_mask1_perm);
-	err = mlx5_cmd_exec_in(dev, modify_hca_vport_context, in);
+	err = mlx5_cmd_exec_in(dev, modअगरy_hca_vport_context, in);
 ex:
-	kfree(in);
-	return err;
-}
-EXPORT_SYMBOL_GPL(mlx5_core_modify_hca_vport_context);
+	kमुक्त(in);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_core_modअगरy_hca_vport_context);
 
-int mlx5_nic_vport_affiliate_multiport(struct mlx5_core_dev *master_mdev,
-				       struct mlx5_core_dev *port_mdev)
-{
-	int inlen = MLX5_ST_SZ_BYTES(modify_nic_vport_context_in);
-	void *in;
-	int err;
+पूर्णांक mlx5_nic_vport_affiliate_multiport(काष्ठा mlx5_core_dev *master_mdev,
+				       काष्ठा mlx5_core_dev *port_mdev)
+अणु
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(modअगरy_nic_vport_context_in);
+	व्योम *in;
+	पूर्णांक err;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
 	err = mlx5_nic_vport_enable_roce(port_mdev);
-	if (err)
-		goto free;
+	अगर (err)
+		जाओ मुक्त;
 
-	MLX5_SET(modify_nic_vport_context_in, in, field_select.affiliation, 1);
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, field_select.affiliation, 1);
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 nic_vport_context.affiliated_vhca_id,
 		 MLX5_CAP_GEN(master_mdev, vhca_id));
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 nic_vport_context.affiliation_criteria,
 		 MLX5_CAP_GEN(port_mdev, affiliate_nic_vport_criteria));
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
 
-	err = mlx5_cmd_exec_in(port_mdev, modify_nic_vport_context, in);
-	if (err)
+	err = mlx5_cmd_exec_in(port_mdev, modअगरy_nic_vport_context, in);
+	अगर (err)
 		mlx5_nic_vport_disable_roce(port_mdev);
 
-free:
-	kvfree(in);
-	return err;
-}
+मुक्त:
+	kvमुक्त(in);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_nic_vport_affiliate_multiport);
 
-int mlx5_nic_vport_unaffiliate_multiport(struct mlx5_core_dev *port_mdev)
-{
-	int inlen = MLX5_ST_SZ_BYTES(modify_nic_vport_context_in);
-	void *in;
-	int err;
+पूर्णांक mlx5_nic_vport_unaffiliate_multiport(काष्ठा mlx5_core_dev *port_mdev)
+अणु
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(modअगरy_nic_vport_context_in);
+	व्योम *in;
+	पूर्णांक err;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
-	MLX5_SET(modify_nic_vport_context_in, in, field_select.affiliation, 1);
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, field_select.affiliation, 1);
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 nic_vport_context.affiliated_vhca_id, 0);
-	MLX5_SET(modify_nic_vport_context_in, in,
+	MLX5_SET(modअगरy_nic_vport_context_in, in,
 		 nic_vport_context.affiliation_criteria, 0);
-	MLX5_SET(modify_nic_vport_context_in, in, opcode,
+	MLX5_SET(modअगरy_nic_vport_context_in, in, opcode,
 		 MLX5_CMD_OP_MODIFY_NIC_VPORT_CONTEXT);
 
-	err = mlx5_cmd_exec_in(port_mdev, modify_nic_vport_context, in);
-	if (!err)
+	err = mlx5_cmd_exec_in(port_mdev, modअगरy_nic_vport_context, in);
+	अगर (!err)
 		mlx5_nic_vport_disable_roce(port_mdev);
 
-	kvfree(in);
-	return err;
-}
+	kvमुक्त(in);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(mlx5_nic_vport_unaffiliate_multiport);
 
-u64 mlx5_query_nic_system_image_guid(struct mlx5_core_dev *mdev)
-{
-	int port_type_cap = MLX5_CAP_GEN(mdev, port_type);
-	u64 tmp = 0;
+u64 mlx5_query_nic_प्रणाली_image_guid(काष्ठा mlx5_core_dev *mdev)
+अणु
+	पूर्णांक port_type_cap = MLX5_CAP_GEN(mdev, port_type);
+	u64 पंचांगp = 0;
 
-	if (mdev->sys_image_guid)
-		return mdev->sys_image_guid;
+	अगर (mdev->sys_image_guid)
+		वापस mdev->sys_image_guid;
 
-	if (port_type_cap == MLX5_CAP_PORT_TYPE_ETH)
-		mlx5_query_nic_vport_system_image_guid(mdev, &tmp);
-	else
-		mlx5_query_hca_vport_system_image_guid(mdev, &tmp);
+	अगर (port_type_cap == MLX5_CAP_PORT_TYPE_ETH)
+		mlx5_query_nic_vport_प्रणाली_image_guid(mdev, &पंचांगp);
+	अन्यथा
+		mlx5_query_hca_vport_प्रणाली_image_guid(mdev, &पंचांगp);
 
-	mdev->sys_image_guid = tmp;
+	mdev->sys_image_guid = पंचांगp;
 
-	return tmp;
-}
-EXPORT_SYMBOL_GPL(mlx5_query_nic_system_image_guid);
+	वापस पंचांगp;
+पूर्ण
+EXPORT_SYMBOL_GPL(mlx5_query_nic_प्रणाली_image_guid);
 
-int mlx5_vport_get_other_func_cap(struct mlx5_core_dev *dev, u16 function_id, void *out)
-{
+पूर्णांक mlx5_vport_get_other_func_cap(काष्ठा mlx5_core_dev *dev, u16 function_id, व्योम *out)
+अणु
 	u16 opmod = (MLX5_CAP_GENERAL << 1) | (HCA_CAP_OPMOD_GET_MAX & 0x01);
-	u8 in[MLX5_ST_SZ_BYTES(query_hca_cap_in)] = {};
+	u8 in[MLX5_ST_SZ_BYTES(query_hca_cap_in)] = अणुपूर्ण;
 
 	MLX5_SET(query_hca_cap_in, in, opcode, MLX5_CMD_OP_QUERY_HCA_CAP);
 	MLX5_SET(query_hca_cap_in, in, op_mod, opmod);
 	MLX5_SET(query_hca_cap_in, in, function_id, function_id);
 	MLX5_SET(query_hca_cap_in, in, other_function, true);
-	return mlx5_cmd_exec_inout(dev, query_hca_cap, in, out);
-}
+	वापस mlx5_cmd_exec_inout(dev, query_hca_cap, in, out);
+पूर्ण

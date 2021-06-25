@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef DRM_ATI_PCIGART_H
-#define DRM_ATI_PCIGART_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित DRM_ATI_PCIGART_H
+#घोषणा DRM_ATI_PCIGART_H
 
-#include <drm/drm_legacy.h>
+#समावेश <drm/drm_legacy.h>
 
 /* location of GART table */
-#define DRM_ATI_GART_MAIN 1
-#define DRM_ATI_GART_FB   2
+#घोषणा DRM_ATI_GART_MAIN 1
+#घोषणा DRM_ATI_GART_FB   2
 
-#define DRM_ATI_GART_PCI 1
-#define DRM_ATI_GART_PCIE 2
-#define DRM_ATI_GART_IGP 3
+#घोषणा DRM_ATI_GART_PCI 1
+#घोषणा DRM_ATI_GART_PCIE 2
+#घोषणा DRM_ATI_GART_IGP 3
 
-struct drm_ati_pcigart_info {
-	int gart_table_location;
-	int gart_reg_if;
-	void *addr;
+काष्ठा drm_ati_pcigart_info अणु
+	पूर्णांक gart_table_location;
+	पूर्णांक gart_reg_अगर;
+	व्योम *addr;
 	dma_addr_t bus_addr;
 	dma_addr_t table_mask;
-	struct drm_dma_handle *table_handle;
-	struct drm_local_map mapping;
-	int table_size;
-};
+	काष्ठा drm_dma_handle *table_handle;
+	काष्ठा drm_local_map mapping;
+	पूर्णांक table_size;
+पूर्ण;
 
-extern int drm_ati_pcigart_init(struct drm_device *dev,
-				struct drm_ati_pcigart_info * gart_info);
-extern int drm_ati_pcigart_cleanup(struct drm_device *dev,
-				   struct drm_ati_pcigart_info * gart_info);
+बाह्य पूर्णांक drm_ati_pcigart_init(काष्ठा drm_device *dev,
+				काष्ठा drm_ati_pcigart_info * gart_info);
+बाह्य पूर्णांक drm_ati_pcigart_cleanup(काष्ठा drm_device *dev,
+				   काष्ठा drm_ati_pcigart_info * gart_info);
 
-#endif
+#पूर्ण_अगर

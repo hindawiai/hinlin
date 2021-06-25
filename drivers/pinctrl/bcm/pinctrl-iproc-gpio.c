@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014-2017 Broadcom
  */
@@ -7,278 +8,278 @@
  * This file contains the Broadcom Iproc GPIO driver that supports 3
  * GPIO controllers on Iproc including the ASIU GPIO controller, the
  * chipCommonG GPIO controller, and the always-on GPIO controller. Basic
- * PINCONF such as bias pull up/down, and drive strength are also supported
+ * PINCONF such as bias pull up/करोwn, and drive strength are also supported
  * in this driver.
  *
  * It provides the functionality where pins from the GPIO can be
- * individually muxed to GPIO function, if individual pad
- * configuration is supported, through the interaction with respective
+ * inभागidually muxed to GPIO function, अगर inभागidual pad
+ * configuration is supported, through the पूर्णांकeraction with respective
  * SoCs IOMUX controller.
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/gpio/driver.h>
-#include <linux/ioport.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
 
-#include "../pinctrl-utils.h"
+#समावेश "../pinctrl-utils.h"
 
-#define IPROC_GPIO_DATA_IN_OFFSET   0x00
-#define IPROC_GPIO_DATA_OUT_OFFSET  0x04
-#define IPROC_GPIO_OUT_EN_OFFSET    0x08
-#define IPROC_GPIO_INT_TYPE_OFFSET  0x0c
-#define IPROC_GPIO_INT_DE_OFFSET    0x10
-#define IPROC_GPIO_INT_EDGE_OFFSET  0x14
-#define IPROC_GPIO_INT_MSK_OFFSET   0x18
-#define IPROC_GPIO_INT_STAT_OFFSET  0x1c
-#define IPROC_GPIO_INT_MSTAT_OFFSET 0x20
-#define IPROC_GPIO_INT_CLR_OFFSET   0x24
-#define IPROC_GPIO_PAD_RES_OFFSET   0x34
-#define IPROC_GPIO_RES_EN_OFFSET    0x38
+#घोषणा IPROC_GPIO_DATA_IN_OFFSET   0x00
+#घोषणा IPROC_GPIO_DATA_OUT_OFFSET  0x04
+#घोषणा IPROC_GPIO_OUT_EN_OFFSET    0x08
+#घोषणा IPROC_GPIO_INT_TYPE_OFFSET  0x0c
+#घोषणा IPROC_GPIO_INT_DE_OFFSET    0x10
+#घोषणा IPROC_GPIO_INT_EDGE_OFFSET  0x14
+#घोषणा IPROC_GPIO_INT_MSK_OFFSET   0x18
+#घोषणा IPROC_GPIO_INT_STAT_OFFSET  0x1c
+#घोषणा IPROC_GPIO_INT_MSTAT_OFFSET 0x20
+#घोषणा IPROC_GPIO_INT_CLR_OFFSET   0x24
+#घोषणा IPROC_GPIO_PAD_RES_OFFSET   0x34
+#घोषणा IPROC_GPIO_RES_EN_OFFSET    0x38
 
-/* drive strength control for ASIU GPIO */
-#define IPROC_GPIO_ASIU_DRV0_CTRL_OFFSET 0x58
+/* drive strength control क्रम ASIU GPIO */
+#घोषणा IPROC_GPIO_ASIU_DRV0_CTRL_OFFSET 0x58
 
-/* pinconf for CCM GPIO */
-#define IPROC_GPIO_PULL_DN_OFFSET   0x10
-#define IPROC_GPIO_PULL_UP_OFFSET   0x14
+/* pinconf क्रम CCM GPIO */
+#घोषणा IPROC_GPIO_PULL_DN_OFFSET   0x10
+#घोषणा IPROC_GPIO_PULL_UP_OFFSET   0x14
 
-/* pinconf for CRMU(aon) GPIO and CCM GPIO*/
-#define IPROC_GPIO_DRV_CTRL_OFFSET  0x00
+/* pinconf क्रम CRMU(aon) GPIO and CCM GPIO*/
+#घोषणा IPROC_GPIO_DRV_CTRL_OFFSET  0x00
 
-#define GPIO_BANK_SIZE 0x200
-#define NGPIOS_PER_BANK 32
-#define GPIO_BANK(pin) ((pin) / NGPIOS_PER_BANK)
+#घोषणा GPIO_BANK_SIZE 0x200
+#घोषणा NGPIOS_PER_BANK 32
+#घोषणा GPIO_BANK(pin) ((pin) / NGPIOS_PER_BANK)
 
-#define IPROC_GPIO_REG(pin, reg) (GPIO_BANK(pin) * GPIO_BANK_SIZE + (reg))
-#define IPROC_GPIO_SHIFT(pin) ((pin) % NGPIOS_PER_BANK)
+#घोषणा IPROC_GPIO_REG(pin, reg) (GPIO_BANK(pin) * GPIO_BANK_SIZE + (reg))
+#घोषणा IPROC_GPIO_SHIFT(pin) ((pin) % NGPIOS_PER_BANK)
 
-#define GPIO_DRV_STRENGTH_BIT_SHIFT  20
-#define GPIO_DRV_STRENGTH_BITS       3
-#define GPIO_DRV_STRENGTH_BIT_MASK   ((1 << GPIO_DRV_STRENGTH_BITS) - 1)
+#घोषणा GPIO_DRV_STRENGTH_BIT_SHIFT  20
+#घोषणा GPIO_DRV_STRENGTH_BITS       3
+#घोषणा GPIO_DRV_STRENGTH_BIT_MASK   ((1 << GPIO_DRV_STRENGTH_BITS) - 1)
 
-enum iproc_pinconf_param {
+क्रमागत iproc_pinconf_param अणु
 	IPROC_PINCONF_DRIVE_STRENGTH = 0,
 	IPROC_PINCONF_BIAS_DISABLE,
 	IPROC_PINCONF_BIAS_PULL_UP,
 	IPROC_PINCONF_BIAS_PULL_DOWN,
 	IPROC_PINCON_MAX,
-};
+पूर्ण;
 
-enum iproc_pinconf_ctrl_type {
+क्रमागत iproc_pinconf_ctrl_type अणु
 	IOCTRL_TYPE_AON = 1,
 	IOCTRL_TYPE_CDRU,
 	IOCTRL_TYPE_INVALID,
-};
+पूर्ण;
 
 /*
  * Iproc GPIO core
  *
- * @dev: pointer to device
- * @base: I/O register base for Iproc GPIO controller
- * @io_ctrl: I/O register base for certain type of Iproc GPIO controller that
+ * @dev: poपूर्णांकer to device
+ * @base: I/O रेजिस्टर base क्रम Iproc GPIO controller
+ * @io_ctrl: I/O रेजिस्टर base क्रम certain type of Iproc GPIO controller that
  * has the PINCONF support implemented outside of the GPIO block
- * @lock: lock to protect access to I/O registers
+ * @lock: lock to protect access to I/O रेजिस्टरs
  * @gc: GPIO chip
  * @num_banks: number of GPIO banks, each bank supports up to 32 GPIOs
  * @pinmux_is_supported: flag to indicate this GPIO controller contains pins
- * that can be individually muxed to GPIO
+ * that can be inभागidually muxed to GPIO
  * @pinconf_disable: contains a list of PINCONF parameters that need to be
  * disabled
  * @nr_pinconf_disable: total number of PINCONF parameters that need to be
  * disabled
- * @pctl: pointer to pinctrl_dev
+ * @pctl: poपूर्णांकer to pinctrl_dev
  * @pctldesc: pinctrl descriptor
  */
-struct iproc_gpio {
-	struct device *dev;
+काष्ठा iproc_gpio अणु
+	काष्ठा device *dev;
 
-	void __iomem *base;
-	void __iomem *io_ctrl;
-	enum iproc_pinconf_ctrl_type io_ctrl_type;
+	व्योम __iomem *base;
+	व्योम __iomem *io_ctrl;
+	क्रमागत iproc_pinconf_ctrl_type io_ctrl_type;
 
 	raw_spinlock_t lock;
 
-	struct irq_chip irqchip;
-	struct gpio_chip gc;
-	unsigned num_banks;
+	काष्ठा irq_chip irqchip;
+	काष्ठा gpio_chip gc;
+	अचिन्हित num_banks;
 
 	bool pinmux_is_supported;
 
-	enum pin_config_param *pinconf_disable;
-	unsigned int nr_pinconf_disable;
+	क्रमागत pin_config_param *pinconf_disable;
+	अचिन्हित पूर्णांक nr_pinconf_disable;
 
-	struct pinctrl_dev *pctl;
-	struct pinctrl_desc pctldesc;
-};
+	काष्ठा pinctrl_dev *pctl;
+	काष्ठा pinctrl_desc pctldesc;
+पूर्ण;
 
 /*
  * Mapping from PINCONF pins to GPIO pins is 1-to-1
  */
-static inline unsigned iproc_pin_to_gpio(unsigned pin)
-{
-	return pin;
-}
+अटल अंतरभूत अचिन्हित iproc_pin_to_gpio(अचिन्हित pin)
+अणु
+	वापस pin;
+पूर्ण
 
 /**
  *  iproc_set_bit - set or clear one bit (corresponding to the GPIO pin) in a
- *  Iproc GPIO register
+ *  Iproc GPIO रेजिस्टर
  *
  *  @chip: Iproc GPIO device
- *  @reg: register offset
+ *  @reg: रेजिस्टर offset
  *  @gpio: GPIO pin
  *  @set: set or clear
  */
-static inline void iproc_set_bit(struct iproc_gpio *chip, unsigned int reg,
-				  unsigned gpio, bool set)
-{
-	unsigned int offset = IPROC_GPIO_REG(gpio, reg);
-	unsigned int shift = IPROC_GPIO_SHIFT(gpio);
+अटल अंतरभूत व्योम iproc_set_bit(काष्ठा iproc_gpio *chip, अचिन्हित पूर्णांक reg,
+				  अचिन्हित gpio, bool set)
+अणु
+	अचिन्हित पूर्णांक offset = IPROC_GPIO_REG(gpio, reg);
+	अचिन्हित पूर्णांक shअगरt = IPROC_GPIO_SHIFT(gpio);
 	u32 val;
 
-	val = readl(chip->base + offset);
-	if (set)
-		val |= BIT(shift);
-	else
-		val &= ~BIT(shift);
-	writel(val, chip->base + offset);
-}
+	val = पढ़ोl(chip->base + offset);
+	अगर (set)
+		val |= BIT(shअगरt);
+	अन्यथा
+		val &= ~BIT(shअगरt);
+	ग_लिखोl(val, chip->base + offset);
+पूर्ण
 
-static inline bool iproc_get_bit(struct iproc_gpio *chip, unsigned int reg,
-				  unsigned gpio)
-{
-	unsigned int offset = IPROC_GPIO_REG(gpio, reg);
-	unsigned int shift = IPROC_GPIO_SHIFT(gpio);
+अटल अंतरभूत bool iproc_get_bit(काष्ठा iproc_gpio *chip, अचिन्हित पूर्णांक reg,
+				  अचिन्हित gpio)
+अणु
+	अचिन्हित पूर्णांक offset = IPROC_GPIO_REG(gpio, reg);
+	अचिन्हित पूर्णांक shअगरt = IPROC_GPIO_SHIFT(gpio);
 
-	return !!(readl(chip->base + offset) & BIT(shift));
-}
+	वापस !!(पढ़ोl(chip->base + offset) & BIT(shअगरt));
+पूर्ण
 
-static void iproc_gpio_irq_handler(struct irq_desc *desc)
-{
-	struct gpio_chip *gc = irq_desc_get_handler_data(desc);
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	struct irq_chip *irq_chip = irq_desc_get_chip(desc);
-	int i, bit;
+अटल व्योम iproc_gpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा gpio_chip *gc = irq_desc_get_handler_data(desc);
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	काष्ठा irq_chip *irq_chip = irq_desc_get_chip(desc);
+	पूर्णांक i, bit;
 
 	chained_irq_enter(irq_chip, desc);
 
-	/* go through the entire GPIO banks and handle all interrupts */
-	for (i = 0; i < chip->num_banks; i++) {
-		unsigned long val = readl(chip->base + (i * GPIO_BANK_SIZE) +
+	/* go through the entire GPIO banks and handle all पूर्णांकerrupts */
+	क्रम (i = 0; i < chip->num_banks; i++) अणु
+		अचिन्हित दीर्घ val = पढ़ोl(chip->base + (i * GPIO_BANK_SIZE) +
 					  IPROC_GPIO_INT_MSTAT_OFFSET);
 
-		for_each_set_bit(bit, &val, NGPIOS_PER_BANK) {
-			unsigned pin = NGPIOS_PER_BANK * i + bit;
-			int child_irq = irq_find_mapping(gc->irq.domain, pin);
+		क्रम_each_set_bit(bit, &val, NGPIOS_PER_BANK) अणु
+			अचिन्हित pin = NGPIOS_PER_BANK * i + bit;
+			पूर्णांक child_irq = irq_find_mapping(gc->irq.करोमुख्य, pin);
 
 			/*
-			 * Clear the interrupt before invoking the
-			 * handler, so we do not leave any window
+			 * Clear the पूर्णांकerrupt beक्रमe invoking the
+			 * handler, so we करो not leave any winकरोw
 			 */
-			writel(BIT(bit), chip->base + (i * GPIO_BANK_SIZE) +
+			ग_लिखोl(BIT(bit), chip->base + (i * GPIO_BANK_SIZE) +
 			       IPROC_GPIO_INT_CLR_OFFSET);
 
 			generic_handle_irq(child_irq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	chained_irq_exit(irq_chip, desc);
-}
+	chained_irq_निकास(irq_chip, desc);
+पूर्ण
 
 
-static void iproc_gpio_irq_ack(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned gpio = d->hwirq;
-	unsigned int offset = IPROC_GPIO_REG(gpio,
+अटल व्योम iproc_gpio_irq_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित gpio = d->hwirq;
+	अचिन्हित पूर्णांक offset = IPROC_GPIO_REG(gpio,
 			IPROC_GPIO_INT_CLR_OFFSET);
-	unsigned int shift = IPROC_GPIO_SHIFT(gpio);
-	u32 val = BIT(shift);
+	अचिन्हित पूर्णांक shअगरt = IPROC_GPIO_SHIFT(gpio);
+	u32 val = BIT(shअगरt);
 
-	writel(val, chip->base + offset);
-}
+	ग_लिखोl(val, chip->base + offset);
+पूर्ण
 
 /**
- *  iproc_gpio_irq_set_mask - mask/unmask a GPIO interrupt
+ *  iproc_gpio_irq_set_mask - mask/unmask a GPIO पूर्णांकerrupt
  *
  *  @d: IRQ chip data
- *  @unmask: mask/unmask GPIO interrupt
+ *  @unmask: mask/unmask GPIO पूर्णांकerrupt
  */
-static void iproc_gpio_irq_set_mask(struct irq_data *d, bool unmask)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned gpio = d->hwirq;
+अटल व्योम iproc_gpio_irq_set_mask(काष्ठा irq_data *d, bool unmask)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित gpio = d->hwirq;
 
 	iproc_set_bit(chip, IPROC_GPIO_INT_MSK_OFFSET, gpio, unmask);
-}
+पूर्ण
 
-static void iproc_gpio_irq_mask(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned long flags;
+अटल व्योम iproc_gpio_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&chip->lock, flags);
 	iproc_gpio_irq_set_mask(d, false);
 	raw_spin_unlock_irqrestore(&chip->lock, flags);
-}
+पूर्ण
 
-static void iproc_gpio_irq_unmask(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned long flags;
+अटल व्योम iproc_gpio_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&chip->lock, flags);
 	iproc_gpio_irq_set_mask(d, true);
 	raw_spin_unlock_irqrestore(&chip->lock, flags);
-}
+पूर्ण
 
-static int iproc_gpio_irq_set_type(struct irq_data *d, unsigned int type)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned gpio = d->hwirq;
+अटल पूर्णांक iproc_gpio_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित gpio = d->hwirq;
 	bool level_triggered = false;
 	bool dual_edge = false;
 	bool rising_or_high = false;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	switch (type & IRQ_TYPE_SENSE_MASK) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type & IRQ_TYPE_SENSE_MASK) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		rising_or_high = true;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_FALLING:
-		break;
+	हाल IRQ_TYPE_EDGE_FALLING:
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_BOTH:
+	हाल IRQ_TYPE_EDGE_BOTH:
 		dual_edge = true;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_HIGH:
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		level_triggered = true;
 		rising_or_high = true;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_LOW:
+	हाल IRQ_TYPE_LEVEL_LOW:
 		level_triggered = true;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(chip->dev, "invalid GPIO IRQ type 0x%x\n",
 			type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&chip->lock, flags);
 	iproc_set_bit(chip, IPROC_GPIO_INT_TYPE_OFFSET, gpio,
@@ -287,9 +288,9 @@ static int iproc_gpio_irq_set_type(struct irq_data *d, unsigned int type)
 	iproc_set_bit(chip, IPROC_GPIO_INT_EDGE_OFFSET, gpio,
 		       rising_or_high);
 
-	if (type & IRQ_TYPE_EDGE_BOTH)
+	अगर (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(d, handle_edge_irq);
-	else
+	अन्यथा
 		irq_set_handler_locked(d, handle_level_irq);
 
 	raw_spin_unlock_irqrestore(&chip->lock, flags);
@@ -298,39 +299,39 @@ static int iproc_gpio_irq_set_type(struct irq_data *d, unsigned int type)
 		"gpio:%u level_triggered:%d dual_edge:%d rising_or_high:%d\n",
 		gpio, level_triggered, dual_edge, rising_or_high);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Request the Iproc IOMUX pinmux controller to mux individual pins to GPIO
+ * Request the Iproc IOMUX pinmux controller to mux inभागidual pins to GPIO
  */
-static int iproc_gpio_request(struct gpio_chip *gc, unsigned offset)
-{
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned gpio = gc->base + offset;
+अटल पूर्णांक iproc_gpio_request(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित gpio = gc->base + offset;
 
-	/* not all Iproc GPIO pins can be muxed individually */
-	if (!chip->pinmux_is_supported)
-		return 0;
+	/* not all Iproc GPIO pins can be muxed inभागidually */
+	अगर (!chip->pinmux_is_supported)
+		वापस 0;
 
-	return pinctrl_gpio_request(gpio);
-}
+	वापस pinctrl_gpio_request(gpio);
+पूर्ण
 
-static void iproc_gpio_free(struct gpio_chip *gc, unsigned offset)
-{
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned gpio = gc->base + offset;
+अटल व्योम iproc_gpio_मुक्त(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित gpio = gc->base + offset;
 
-	if (!chip->pinmux_is_supported)
-		return;
+	अगर (!chip->pinmux_is_supported)
+		वापस;
 
-	pinctrl_gpio_free(gpio);
-}
+	pinctrl_gpio_मुक्त(gpio);
+पूर्ण
 
-static int iproc_gpio_direction_input(struct gpio_chip *gc, unsigned gpio)
-{
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned long flags;
+अटल पूर्णांक iproc_gpio_direction_input(काष्ठा gpio_chip *gc, अचिन्हित gpio)
+अणु
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&chip->lock, flags);
 	iproc_set_bit(chip, IPROC_GPIO_OUT_EN_OFFSET, gpio, false);
@@ -338,14 +339,14 @@ static int iproc_gpio_direction_input(struct gpio_chip *gc, unsigned gpio)
 
 	dev_dbg(chip->dev, "gpio:%u set input\n", gpio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iproc_gpio_direction_output(struct gpio_chip *gc, unsigned gpio,
-					int val)
-{
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned long flags;
+अटल पूर्णांक iproc_gpio_direction_output(काष्ठा gpio_chip *gc, अचिन्हित gpio,
+					पूर्णांक val)
+अणु
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&chip->lock, flags);
 	iproc_set_bit(chip, IPROC_GPIO_OUT_EN_OFFSET, gpio, true);
@@ -354,404 +355,404 @@ static int iproc_gpio_direction_output(struct gpio_chip *gc, unsigned gpio,
 
 	dev_dbg(chip->dev, "gpio:%u set output, value:%d\n", gpio, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iproc_gpio_get_direction(struct gpio_chip *gc, unsigned int gpio)
-{
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned int offset = IPROC_GPIO_REG(gpio, IPROC_GPIO_OUT_EN_OFFSET);
-	unsigned int shift = IPROC_GPIO_SHIFT(gpio);
+अटल पूर्णांक iproc_gpio_get_direction(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
+अणु
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक offset = IPROC_GPIO_REG(gpio, IPROC_GPIO_OUT_EN_OFFSET);
+	अचिन्हित पूर्णांक shअगरt = IPROC_GPIO_SHIFT(gpio);
 
-	if (readl(chip->base + offset) & BIT(shift))
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (पढ़ोl(chip->base + offset) & BIT(shअगरt))
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static void iproc_gpio_set(struct gpio_chip *gc, unsigned gpio, int val)
-{
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned long flags;
+अटल व्योम iproc_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित gpio, पूर्णांक val)
+अणु
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&chip->lock, flags);
 	iproc_set_bit(chip, IPROC_GPIO_DATA_OUT_OFFSET, gpio, !!(val));
 	raw_spin_unlock_irqrestore(&chip->lock, flags);
 
 	dev_dbg(chip->dev, "gpio:%u set, value:%d\n", gpio, val);
-}
+पूर्ण
 
-static int iproc_gpio_get(struct gpio_chip *gc, unsigned gpio)
-{
-	struct iproc_gpio *chip = gpiochip_get_data(gc);
-	unsigned int offset = IPROC_GPIO_REG(gpio,
+अटल पूर्णांक iproc_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित gpio)
+अणु
+	काष्ठा iproc_gpio *chip = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक offset = IPROC_GPIO_REG(gpio,
 					      IPROC_GPIO_DATA_IN_OFFSET);
-	unsigned int shift = IPROC_GPIO_SHIFT(gpio);
+	अचिन्हित पूर्णांक shअगरt = IPROC_GPIO_SHIFT(gpio);
 
-	return !!(readl(chip->base + offset) & BIT(shift));
-}
+	वापस !!(पढ़ोl(chip->base + offset) & BIT(shअगरt));
+पूर्ण
 
 /*
  * Mapping of the iProc PINCONF parameters to the generic pin configuration
  * parameters
  */
-static const enum pin_config_param iproc_pinconf_disable_map[] = {
+अटल स्थिर क्रमागत pin_config_param iproc_pinconf_disable_map[] = अणु
 	[IPROC_PINCONF_DRIVE_STRENGTH] = PIN_CONFIG_DRIVE_STRENGTH,
 	[IPROC_PINCONF_BIAS_DISABLE] = PIN_CONFIG_BIAS_DISABLE,
 	[IPROC_PINCONF_BIAS_PULL_UP] = PIN_CONFIG_BIAS_PULL_UP,
 	[IPROC_PINCONF_BIAS_PULL_DOWN] = PIN_CONFIG_BIAS_PULL_DOWN,
-};
+पूर्ण;
 
-static bool iproc_pinconf_param_is_disabled(struct iproc_gpio *chip,
-					    enum pin_config_param param)
-{
-	unsigned int i;
+अटल bool iproc_pinconf_param_is_disabled(काष्ठा iproc_gpio *chip,
+					    क्रमागत pin_config_param param)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!chip->nr_pinconf_disable)
-		return false;
+	अगर (!chip->nr_pinconf_disable)
+		वापस false;
 
-	for (i = 0; i < chip->nr_pinconf_disable; i++)
-		if (chip->pinconf_disable[i] == param)
-			return true;
+	क्रम (i = 0; i < chip->nr_pinconf_disable; i++)
+		अगर (chip->pinconf_disable[i] == param)
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int iproc_pinconf_disable_map_create(struct iproc_gpio *chip,
-					    unsigned long disable_mask)
-{
-	unsigned int map_size = ARRAY_SIZE(iproc_pinconf_disable_map);
-	unsigned int bit, nbits = 0;
+अटल पूर्णांक iproc_pinconf_disable_map_create(काष्ठा iproc_gpio *chip,
+					    अचिन्हित दीर्घ disable_mask)
+अणु
+	अचिन्हित पूर्णांक map_size = ARRAY_SIZE(iproc_pinconf_disable_map);
+	अचिन्हित पूर्णांक bit, nbits = 0;
 
 	/* figure out total number of PINCONF parameters to disable */
-	for_each_set_bit(bit, &disable_mask, map_size)
+	क्रम_each_set_bit(bit, &disable_mask, map_size)
 		nbits++;
 
-	if (!nbits)
-		return 0;
+	अगर (!nbits)
+		वापस 0;
 
 	/*
 	 * Allocate an array to store PINCONF parameters that need to be
 	 * disabled
 	 */
-	chip->pinconf_disable = devm_kcalloc(chip->dev, nbits,
-					     sizeof(*chip->pinconf_disable),
+	chip->pinconf_disable = devm_kसुस्मृति(chip->dev, nbits,
+					     माप(*chip->pinconf_disable),
 					     GFP_KERNEL);
-	if (!chip->pinconf_disable)
-		return -ENOMEM;
+	अगर (!chip->pinconf_disable)
+		वापस -ENOMEM;
 
 	chip->nr_pinconf_disable = nbits;
 
 	/* now store these parameters */
 	nbits = 0;
-	for_each_set_bit(bit, &disable_mask, map_size)
+	क्रम_each_set_bit(bit, &disable_mask, map_size)
 		chip->pinconf_disable[nbits++] = iproc_pinconf_disable_map[bit];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iproc_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	return 1;
-}
+अटल पूर्णांक iproc_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस 1;
+पूर्ण
 
 /*
- * Only one group: "gpio_grp", since this local pinctrl device only performs
- * GPIO specific PINCONF configurations
+ * Only one group: "gpio_grp", since this local pinctrl device only perक्रमms
+ * GPIO specअगरic PINCONF configurations
  */
-static const char *iproc_get_group_name(struct pinctrl_dev *pctldev,
-					 unsigned selector)
-{
-	return "gpio_grp";
-}
+अटल स्थिर अक्षर *iproc_get_group_name(काष्ठा pinctrl_dev *pctldev,
+					 अचिन्हित selector)
+अणु
+	वापस "gpio_grp";
+पूर्ण
 
-static const struct pinctrl_ops iproc_pctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops iproc_pctrl_ops = अणु
 	.get_groups_count = iproc_get_groups_count,
 	.get_group_name = iproc_get_group_name,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_pin,
-	.dt_free_map = pinctrl_utils_free_map,
-};
+	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
+पूर्ण;
 
-static int iproc_gpio_set_pull(struct iproc_gpio *chip, unsigned gpio,
+अटल पूर्णांक iproc_gpio_set_pull(काष्ठा iproc_gpio *chip, अचिन्हित gpio,
 				bool disable, bool pull_up)
-{
-	void __iomem *base;
-	unsigned long flags;
-	unsigned int shift;
+अणु
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक shअगरt;
 	u32 val_1, val_2;
 
 	raw_spin_lock_irqsave(&chip->lock, flags);
-	if (chip->io_ctrl_type == IOCTRL_TYPE_CDRU) {
+	अगर (chip->io_ctrl_type == IOCTRL_TYPE_CDRU) अणु
 		base = chip->io_ctrl;
-		shift = IPROC_GPIO_SHIFT(gpio);
+		shअगरt = IPROC_GPIO_SHIFT(gpio);
 
-		val_1 = readl(base + IPROC_GPIO_PULL_UP_OFFSET);
-		val_2 = readl(base + IPROC_GPIO_PULL_DN_OFFSET);
-		if (disable) {
-			/* no pull-up or pull-down */
-			val_1 &= ~BIT(shift);
-			val_2 &= ~BIT(shift);
-		} else if (pull_up) {
-			val_1 |= BIT(shift);
-			val_2 &= ~BIT(shift);
-		} else {
-			val_1 &= ~BIT(shift);
-			val_2 |= BIT(shift);
-		}
-		writel(val_1, base + IPROC_GPIO_PULL_UP_OFFSET);
-		writel(val_2, base + IPROC_GPIO_PULL_DN_OFFSET);
-	} else {
-		if (disable) {
+		val_1 = पढ़ोl(base + IPROC_GPIO_PULL_UP_OFFSET);
+		val_2 = पढ़ोl(base + IPROC_GPIO_PULL_DN_OFFSET);
+		अगर (disable) अणु
+			/* no pull-up or pull-करोwn */
+			val_1 &= ~BIT(shअगरt);
+			val_2 &= ~BIT(shअगरt);
+		पूर्ण अन्यथा अगर (pull_up) अणु
+			val_1 |= BIT(shअगरt);
+			val_2 &= ~BIT(shअगरt);
+		पूर्ण अन्यथा अणु
+			val_1 &= ~BIT(shअगरt);
+			val_2 |= BIT(shअगरt);
+		पूर्ण
+		ग_लिखोl(val_1, base + IPROC_GPIO_PULL_UP_OFFSET);
+		ग_लिखोl(val_2, base + IPROC_GPIO_PULL_DN_OFFSET);
+	पूर्ण अन्यथा अणु
+		अगर (disable) अणु
 			iproc_set_bit(chip, IPROC_GPIO_RES_EN_OFFSET, gpio,
 				      false);
-		} else {
+		पूर्ण अन्यथा अणु
 			iproc_set_bit(chip, IPROC_GPIO_PAD_RES_OFFSET, gpio,
 				      pull_up);
 			iproc_set_bit(chip, IPROC_GPIO_RES_EN_OFFSET, gpio,
 				      true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&chip->lock, flags);
 	dev_dbg(chip->dev, "gpio:%u set pullup:%d\n", gpio, pull_up);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void iproc_gpio_get_pull(struct iproc_gpio *chip, unsigned gpio,
+अटल व्योम iproc_gpio_get_pull(काष्ठा iproc_gpio *chip, अचिन्हित gpio,
 				 bool *disable, bool *pull_up)
-{
-	void __iomem *base;
-	unsigned long flags;
-	unsigned int shift;
+अणु
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक shअगरt;
 	u32 val_1, val_2;
 
 	raw_spin_lock_irqsave(&chip->lock, flags);
-	if (chip->io_ctrl_type == IOCTRL_TYPE_CDRU) {
+	अगर (chip->io_ctrl_type == IOCTRL_TYPE_CDRU) अणु
 		base = chip->io_ctrl;
-		shift = IPROC_GPIO_SHIFT(gpio);
+		shअगरt = IPROC_GPIO_SHIFT(gpio);
 
-		val_1 = readl(base + IPROC_GPIO_PULL_UP_OFFSET) & BIT(shift);
-		val_2 = readl(base + IPROC_GPIO_PULL_DN_OFFSET) & BIT(shift);
+		val_1 = पढ़ोl(base + IPROC_GPIO_PULL_UP_OFFSET) & BIT(shअगरt);
+		val_2 = पढ़ोl(base + IPROC_GPIO_PULL_DN_OFFSET) & BIT(shअगरt);
 
 		*pull_up = val_1 ? true : false;
 		*disable = (val_1 | val_2) ? false : true;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		*disable = !iproc_get_bit(chip, IPROC_GPIO_RES_EN_OFFSET, gpio);
 		*pull_up = iproc_get_bit(chip, IPROC_GPIO_PAD_RES_OFFSET, gpio);
-	}
+	पूर्ण
 	raw_spin_unlock_irqrestore(&chip->lock, flags);
-}
+पूर्ण
 
-#define DRV_STRENGTH_OFFSET(gpio, bit, type)  ((type) == IOCTRL_TYPE_AON ? \
+#घोषणा DRV_STRENGTH_OFFSET(gpio, bit, type)  ((type) == IOCTRL_TYPE_AON ? \
 	((2 - (bit)) * 4 + IPROC_GPIO_DRV_CTRL_OFFSET) : \
 	((type) == IOCTRL_TYPE_CDRU) ? \
 	((bit) * 4 + IPROC_GPIO_DRV_CTRL_OFFSET) : \
 	((bit) * 4 + IPROC_GPIO_REG(gpio, IPROC_GPIO_ASIU_DRV0_CTRL_OFFSET)))
 
-static int iproc_gpio_set_strength(struct iproc_gpio *chip, unsigned gpio,
-				    unsigned strength)
-{
-	void __iomem *base;
-	unsigned int i, offset, shift;
+अटल पूर्णांक iproc_gpio_set_strength(काष्ठा iproc_gpio *chip, अचिन्हित gpio,
+				    अचिन्हित strength)
+अणु
+	व्योम __iomem *base;
+	अचिन्हित पूर्णांक i, offset, shअगरt;
 	u32 val;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	/* make sure drive strength is supported */
-	if (strength < 2 ||  strength > 16 || (strength % 2))
-		return -ENOTSUPP;
+	अगर (strength < 2 ||  strength > 16 || (strength % 2))
+		वापस -ENOTSUPP;
 
-	if (chip->io_ctrl) {
+	अगर (chip->io_ctrl) अणु
 		base = chip->io_ctrl;
-	} else {
+	पूर्ण अन्यथा अणु
 		base = chip->base;
-	}
+	पूर्ण
 
-	shift = IPROC_GPIO_SHIFT(gpio);
+	shअगरt = IPROC_GPIO_SHIFT(gpio);
 
 	dev_dbg(chip->dev, "gpio:%u set drive strength:%d mA\n", gpio,
 		strength);
 
 	raw_spin_lock_irqsave(&chip->lock, flags);
 	strength = (strength / 2) - 1;
-	for (i = 0; i < GPIO_DRV_STRENGTH_BITS; i++) {
+	क्रम (i = 0; i < GPIO_DRV_STRENGTH_BITS; i++) अणु
 		offset = DRV_STRENGTH_OFFSET(gpio, i, chip->io_ctrl_type);
-		val = readl(base + offset);
-		val &= ~BIT(shift);
-		val |= ((strength >> i) & 0x1) << shift;
-		writel(val, base + offset);
-	}
+		val = पढ़ोl(base + offset);
+		val &= ~BIT(shअगरt);
+		val |= ((strength >> i) & 0x1) << shअगरt;
+		ग_लिखोl(val, base + offset);
+	पूर्ण
 	raw_spin_unlock_irqrestore(&chip->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iproc_gpio_get_strength(struct iproc_gpio *chip, unsigned gpio,
+अटल पूर्णांक iproc_gpio_get_strength(काष्ठा iproc_gpio *chip, अचिन्हित gpio,
 				    u16 *strength)
-{
-	void __iomem *base;
-	unsigned int i, offset, shift;
+अणु
+	व्योम __iomem *base;
+	अचिन्हित पूर्णांक i, offset, shअगरt;
 	u32 val;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (chip->io_ctrl) {
+	अगर (chip->io_ctrl) अणु
 		base = chip->io_ctrl;
-	} else {
+	पूर्ण अन्यथा अणु
 		base = chip->base;
-	}
+	पूर्ण
 
-	shift = IPROC_GPIO_SHIFT(gpio);
+	shअगरt = IPROC_GPIO_SHIFT(gpio);
 
 	raw_spin_lock_irqsave(&chip->lock, flags);
 	*strength = 0;
-	for (i = 0; i < GPIO_DRV_STRENGTH_BITS; i++) {
+	क्रम (i = 0; i < GPIO_DRV_STRENGTH_BITS; i++) अणु
 		offset = DRV_STRENGTH_OFFSET(gpio, i, chip->io_ctrl_type);
-		val = readl(base + offset) & BIT(shift);
-		val >>= shift;
+		val = पढ़ोl(base + offset) & BIT(shअगरt);
+		val >>= shअगरt;
 		*strength += (val << i);
-	}
+	पूर्ण
 
 	/* convert to mA */
 	*strength = (*strength + 1) * 2;
 	raw_spin_unlock_irqrestore(&chip->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iproc_pin_config_get(struct pinctrl_dev *pctldev, unsigned pin,
-				 unsigned long *config)
-{
-	struct iproc_gpio *chip = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param = pinconf_to_config_param(*config);
-	unsigned gpio = iproc_pin_to_gpio(pin);
+अटल पूर्णांक iproc_pin_config_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+				 अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा iproc_gpio *chip = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+	अचिन्हित gpio = iproc_pin_to_gpio(pin);
 	u16 arg;
 	bool disable, pull_up;
-	int ret;
+	पूर्णांक ret;
 
-	if (iproc_pinconf_param_is_disabled(chip, param))
-		return -ENOTSUPP;
+	अगर (iproc_pinconf_param_is_disabled(chip, param))
+		वापस -ENOTSUPP;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
 		iproc_gpio_get_pull(chip, gpio, &disable, &pull_up);
-		if (disable)
-			return 0;
-		else
-			return -EINVAL;
+		अगर (disable)
+			वापस 0;
+		अन्यथा
+			वापस -EINVAL;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
+	हाल PIN_CONFIG_BIAS_PULL_UP:
 		iproc_gpio_get_pull(chip, gpio, &disable, &pull_up);
-		if (!disable && pull_up)
-			return 0;
-		else
-			return -EINVAL;
+		अगर (!disable && pull_up)
+			वापस 0;
+		अन्यथा
+			वापस -EINVAL;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		iproc_gpio_get_pull(chip, gpio, &disable, &pull_up);
-		if (!disable && !pull_up)
-			return 0;
-		else
-			return -EINVAL;
+		अगर (!disable && !pull_up)
+			वापस 0;
+		अन्यथा
+			वापस -EINVAL;
 
-	case PIN_CONFIG_DRIVE_STRENGTH:
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
 		ret = iproc_gpio_get_strength(chip, gpio, &arg);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		*config = pinconf_to_config_packed(param, arg);
 
-		return 0;
+		वापस 0;
 
-	default:
-		return -ENOTSUPP;
-	}
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return -ENOTSUPP;
-}
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int iproc_pin_config_set(struct pinctrl_dev *pctldev, unsigned pin,
-				 unsigned long *configs, unsigned num_configs)
-{
-	struct iproc_gpio *chip = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param;
+अटल पूर्णांक iproc_pin_config_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+				 अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
+अणु
+	काष्ठा iproc_gpio *chip = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param;
 	u32 arg;
-	unsigned i, gpio = iproc_pin_to_gpio(pin);
-	int ret = -ENOTSUPP;
+	अचिन्हित i, gpio = iproc_pin_to_gpio(pin);
+	पूर्णांक ret = -ENOTSUPP;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 
-		if (iproc_pinconf_param_is_disabled(chip, param))
-			return -ENOTSUPP;
+		अगर (iproc_pinconf_param_is_disabled(chip, param))
+			वापस -ENOTSUPP;
 
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_DISABLE:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_DISABLE:
 			ret = iproc_gpio_set_pull(chip, gpio, true, false);
-			if (ret < 0)
-				goto out;
-			break;
+			अगर (ret < 0)
+				जाओ out;
+			अवरोध;
 
-		case PIN_CONFIG_BIAS_PULL_UP:
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			ret = iproc_gpio_set_pull(chip, gpio, false, true);
-			if (ret < 0)
-				goto out;
-			break;
+			अगर (ret < 0)
+				जाओ out;
+			अवरोध;
 
-		case PIN_CONFIG_BIAS_PULL_DOWN:
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
 			ret = iproc_gpio_set_pull(chip, gpio, false, false);
-			if (ret < 0)
-				goto out;
-			break;
+			अगर (ret < 0)
+				जाओ out;
+			अवरोध;
 
-		case PIN_CONFIG_DRIVE_STRENGTH:
+		हाल PIN_CONFIG_DRIVE_STRENGTH:
 			ret = iproc_gpio_set_strength(chip, gpio, arg);
-			if (ret < 0)
-				goto out;
-			break;
+			अगर (ret < 0)
+				जाओ out;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(chip->dev, "invalid configuration\n");
-			return -ENOTSUPP;
-		}
-	} /* for each config */
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण /* क्रम each config */
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct pinconf_ops iproc_pconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops iproc_pconf_ops = अणु
 	.is_generic = true,
 	.pin_config_get = iproc_pin_config_get,
 	.pin_config_set = iproc_pin_config_set,
-};
+पूर्ण;
 
 /*
  * Iproc GPIO controller supports some PINCONF related configurations such as
- * pull up, pull down, and drive strength, when the pin is configured to GPIO
+ * pull up, pull करोwn, and drive strength, when the pin is configured to GPIO
  *
  * Here a local pinctrl device is created with simple 1-to-1 pin mapping to the
  * local GPIO pins
  */
-static int iproc_gpio_register_pinconf(struct iproc_gpio *chip)
-{
-	struct pinctrl_desc *pctldesc = &chip->pctldesc;
-	struct pinctrl_pin_desc *pins;
-	struct gpio_chip *gc = &chip->gc;
-	int i;
+अटल पूर्णांक iproc_gpio_रेजिस्टर_pinconf(काष्ठा iproc_gpio *chip)
+अणु
+	काष्ठा pinctrl_desc *pctldesc = &chip->pctldesc;
+	काष्ठा pinctrl_pin_desc *pins;
+	काष्ठा gpio_chip *gc = &chip->gc;
+	पूर्णांक i;
 
-	pins = devm_kcalloc(chip->dev, gc->ngpio, sizeof(*pins), GFP_KERNEL);
-	if (!pins)
-		return -ENOMEM;
+	pins = devm_kसुस्मृति(chip->dev, gc->ngpio, माप(*pins), GFP_KERNEL);
+	अगर (!pins)
+		वापस -ENOMEM;
 
-	for (i = 0; i < gc->ngpio; i++) {
+	क्रम (i = 0; i < gc->ngpio; i++) अणु
 		pins[i].number = i;
-		pins[i].name = devm_kasprintf(chip->dev, GFP_KERNEL,
+		pins[i].name = devm_kaप्र_लिखो(chip->dev, GFP_KERNEL,
 					      "gpio-%d", i);
-		if (!pins[i].name)
-			return -ENOMEM;
-	}
+		अगर (!pins[i].name)
+			वापस -ENOMEM;
+	पूर्ण
 
 	pctldesc->name = dev_name(chip->dev);
 	pctldesc->pctlops = &iproc_pctrl_ops;
@@ -759,77 +760,77 @@ static int iproc_gpio_register_pinconf(struct iproc_gpio *chip)
 	pctldesc->npins = gc->ngpio;
 	pctldesc->confops = &iproc_pconf_ops;
 
-	chip->pctl = devm_pinctrl_register(chip->dev, pctldesc, chip);
-	if (IS_ERR(chip->pctl)) {
+	chip->pctl = devm_pinctrl_रेजिस्टर(chip->dev, pctldesc, chip);
+	अगर (IS_ERR(chip->pctl)) अणु
 		dev_err(chip->dev, "unable to register pinctrl device\n");
-		return PTR_ERR(chip->pctl);
-	}
+		वापस PTR_ERR(chip->pctl);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id iproc_gpio_of_match[] = {
-	{ .compatible = "brcm,iproc-gpio" },
-	{ .compatible = "brcm,cygnus-ccm-gpio" },
-	{ .compatible = "brcm,cygnus-asiu-gpio" },
-	{ .compatible = "brcm,cygnus-crmu-gpio" },
-	{ .compatible = "brcm,iproc-nsp-gpio" },
-	{ .compatible = "brcm,iproc-stingray-gpio" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id iproc_gpio_of_match[] = अणु
+	अणु .compatible = "brcm,iproc-gpio" पूर्ण,
+	अणु .compatible = "brcm,cygnus-ccm-gpio" पूर्ण,
+	अणु .compatible = "brcm,cygnus-asiu-gpio" पूर्ण,
+	अणु .compatible = "brcm,cygnus-crmu-gpio" पूर्ण,
+	अणु .compatible = "brcm,iproc-nsp-gpio" पूर्ण,
+	अणु .compatible = "brcm,iproc-stingray-gpio" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int iproc_gpio_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	struct iproc_gpio *chip;
-	struct gpio_chip *gc;
+अटल पूर्णांक iproc_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	काष्ठा iproc_gpio *chip;
+	काष्ठा gpio_chip *gc;
 	u32 ngpios, pinconf_disable_mask = 0;
-	int irq, ret;
+	पूर्णांक irq, ret;
 	bool no_pinconf = false;
-	enum iproc_pinconf_ctrl_type io_ctrl_type = IOCTRL_TYPE_INVALID;
+	क्रमागत iproc_pinconf_ctrl_type io_ctrl_type = IOCTRL_TYPE_INVALID;
 
-	/* NSP does not support drive strength config */
-	if (of_device_is_compatible(dev->of_node, "brcm,iproc-nsp-gpio"))
+	/* NSP करोes not support drive strength config */
+	अगर (of_device_is_compatible(dev->of_node, "brcm,iproc-nsp-gpio"))
 		pinconf_disable_mask = BIT(IPROC_PINCONF_DRIVE_STRENGTH);
-	/* Stingray does not support pinconf in this controller */
-	else if (of_device_is_compatible(dev->of_node,
+	/* Stingray करोes not support pinconf in this controller */
+	अन्यथा अगर (of_device_is_compatible(dev->of_node,
 					 "brcm,iproc-stingray-gpio"))
 		no_pinconf = true;
 
-	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(dev, माप(*chip), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
 	chip->dev = dev;
-	platform_set_drvdata(pdev, chip);
+	platक्रमm_set_drvdata(pdev, chip);
 
-	chip->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(chip->base)) {
+	chip->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(chip->base)) अणु
 		dev_err(dev, "unable to map I/O memory\n");
-		return PTR_ERR(chip->base);
-	}
+		वापस PTR_ERR(chip->base);
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-	if (res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	अगर (res) अणु
 		chip->io_ctrl = devm_ioremap_resource(dev, res);
-		if (IS_ERR(chip->io_ctrl)) {
+		अगर (IS_ERR(chip->io_ctrl)) अणु
 			dev_err(dev, "unable to map I/O memory\n");
-			return PTR_ERR(chip->io_ctrl);
-		}
-		if (of_device_is_compatible(dev->of_node,
+			वापस PTR_ERR(chip->io_ctrl);
+		पूर्ण
+		अगर (of_device_is_compatible(dev->of_node,
 					    "brcm,cygnus-ccm-gpio"))
 			io_ctrl_type = IOCTRL_TYPE_CDRU;
-		else
+		अन्यथा
 			io_ctrl_type = IOCTRL_TYPE_AON;
-	}
+	पूर्ण
 
 	chip->io_ctrl_type = io_ctrl_type;
 
-	if (of_property_read_u32(dev->of_node, "ngpios", &ngpios)) {
+	अगर (of_property_पढ़ो_u32(dev->of_node, "ngpios", &ngpios)) अणु
 		dev_err(&pdev->dev, "missing ngpios DT property\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	raw_spin_lock_init(&chip->lock);
 
@@ -841,21 +842,21 @@ static int iproc_gpio_probe(struct platform_device *pdev)
 	gc->parent = dev;
 	gc->of_node = dev->of_node;
 	gc->request = iproc_gpio_request;
-	gc->free = iproc_gpio_free;
+	gc->मुक्त = iproc_gpio_मुक्त;
 	gc->direction_input = iproc_gpio_direction_input;
 	gc->direction_output = iproc_gpio_direction_output;
 	gc->get_direction = iproc_gpio_get_direction;
 	gc->set = iproc_gpio_set;
 	gc->get = iproc_gpio_get;
 
-	chip->pinmux_is_supported = of_property_read_bool(dev->of_node,
+	chip->pinmux_is_supported = of_property_पढ़ो_bool(dev->of_node,
 							"gpio-ranges");
 
-	/* optional GPIO interrupt support */
-	irq = platform_get_irq_optional(pdev, 0);
-	if (irq > 0) {
-		struct irq_chip *irqc;
-		struct gpio_irq_chip *girq;
+	/* optional GPIO पूर्णांकerrupt support */
+	irq = platक्रमm_get_irq_optional(pdev, 0);
+	अगर (irq > 0) अणु
+		काष्ठा irq_chip *irqc;
+		काष्ठा gpio_irq_chip *girq;
 
 		irqc = &chip->irqchip;
 		irqc->name = dev_name(dev);
@@ -870,58 +871,58 @@ static int iproc_gpio_probe(struct platform_device *pdev)
 		girq->chip = irqc;
 		girq->parent_handler = iproc_gpio_irq_handler;
 		girq->num_parents = 1;
-		girq->parents = devm_kcalloc(dev, 1,
-					     sizeof(*girq->parents),
+		girq->parents = devm_kसुस्मृति(dev, 1,
+					     माप(*girq->parents),
 					     GFP_KERNEL);
-		if (!girq->parents)
-			return -ENOMEM;
+		अगर (!girq->parents)
+			वापस -ENOMEM;
 		girq->parents[0] = irq;
-		girq->default_type = IRQ_TYPE_NONE;
+		girq->शेष_type = IRQ_TYPE_NONE;
 		girq->handler = handle_bad_irq;
-	}
+	पूर्ण
 
 	ret = gpiochip_add_data(gc, chip);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "unable to add GPIO chip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!no_pinconf) {
-		ret = iproc_gpio_register_pinconf(chip);
-		if (ret) {
+	अगर (!no_pinconf) अणु
+		ret = iproc_gpio_रेजिस्टर_pinconf(chip);
+		अगर (ret) अणु
 			dev_err(dev, "unable to register pinconf\n");
-			goto err_rm_gpiochip;
-		}
+			जाओ err_rm_gpiochip;
+		पूर्ण
 
-		if (pinconf_disable_mask) {
+		अगर (pinconf_disable_mask) अणु
 			ret = iproc_pinconf_disable_map_create(chip,
 							 pinconf_disable_mask);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(dev,
 					"unable to create pinconf disable map\n");
-				goto err_rm_gpiochip;
-			}
-		}
-	}
+				जाओ err_rm_gpiochip;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_rm_gpiochip:
-	gpiochip_remove(gc);
+	gpiochip_हटाओ(gc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver iproc_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver iproc_gpio_driver = अणु
+	.driver = अणु
 		.name = "iproc-gpio",
 		.of_match_table = iproc_gpio_of_match,
-	},
+	पूर्ण,
 	.probe = iproc_gpio_probe,
-};
+पूर्ण;
 
-static int __init iproc_gpio_init(void)
-{
-	return platform_driver_register(&iproc_gpio_driver);
-}
+अटल पूर्णांक __init iproc_gpio_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&iproc_gpio_driver);
+पूर्ण
 arch_initcall_sync(iproc_gpio_init);

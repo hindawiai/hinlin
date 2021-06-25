@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * ON pin driver for Dialog DA9055 PMICs
+ * ON pin driver क्रम Dialog DA9055 PMICs
  *
  * Copyright(c) 2012 Dialog Semiconductor Ltd.
  *
  * Author: David Dajun Chen <dchen@diasemi.com>
  */
 
-#include <linux/input.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/mfd/da9055/core.h>
-#include <linux/mfd/da9055/reg.h>
+#समावेश <linux/mfd/da9055/core.h>
+#समावेश <linux/mfd/da9055/reg.h>
 
-struct da9055_onkey {
-	struct da9055 *da9055;
-	struct input_dev *input;
-	struct delayed_work work;
-};
+काष्ठा da9055_onkey अणु
+	काष्ठा da9055 *da9055;
+	काष्ठा input_dev *input;
+	काष्ठा delayed_work work;
+पूर्ण;
 
-static void da9055_onkey_query(struct da9055_onkey *onkey)
-{
-	int key_stat;
+अटल व्योम da9055_onkey_query(काष्ठा da9055_onkey *onkey)
+अणु
+	पूर्णांक key_stat;
 
-	key_stat = da9055_reg_read(onkey->da9055, DA9055_REG_STATUS_A);
-	if (key_stat < 0) {
+	key_stat = da9055_reg_पढ़ो(onkey->da9055, DA9055_REG_STATUS_A);
+	अगर (key_stat < 0) अणु
 		dev_err(onkey->da9055->dev,
 			"Failed to read onkey event %d\n", key_stat);
-	} else {
+	पूर्ण अन्यथा अणु
 		key_stat &= DA9055_NOKEY_STS;
 		/*
 		 * Onkey status bit is cleared when onkey button is released.
 		 */
-		if (!key_stat) {
+		अगर (!key_stat) अणु
 			input_report_key(onkey->input, KEY_POWER, 0);
 			input_sync(onkey->input);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Interrupt is generated only when the ONKEY pin is asserted.
-	 * Hence the deassertion of the pin is simulated through work queue.
+	 * Interrupt is generated only when the ONKEY pin is निश्चितed.
+	 * Hence the deनिश्चितion of the pin is simulated through work queue.
 	 */
-	if (key_stat)
-		schedule_delayed_work(&onkey->work, msecs_to_jiffies(10));
+	अगर (key_stat)
+		schedule_delayed_work(&onkey->work, msecs_to_jअगरfies(10));
 
-}
+पूर्ण
 
-static void da9055_onkey_work(struct work_struct *work)
-{
-	struct da9055_onkey *onkey = container_of(work, struct da9055_onkey,
+अटल व्योम da9055_onkey_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा da9055_onkey *onkey = container_of(work, काष्ठा da9055_onkey,
 						  work.work);
 
 	da9055_onkey_query(onkey);
-}
+पूर्ण
 
-static irqreturn_t da9055_onkey_irq(int irq, void *data)
-{
-	struct da9055_onkey *onkey = data;
+अटल irqवापस_t da9055_onkey_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा da9055_onkey *onkey = data;
 
 	input_report_key(onkey->input, KEY_POWER, 1);
 	input_sync(onkey->input);
 
 	da9055_onkey_query(onkey);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int da9055_onkey_probe(struct platform_device *pdev)
-{
-	struct da9055 *da9055 = dev_get_drvdata(pdev->dev.parent);
-	struct da9055_onkey *onkey;
-	struct input_dev *input_dev;
-	int irq, err;
+अटल पूर्णांक da9055_onkey_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा da9055 *da9055 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा da9055_onkey *onkey;
+	काष्ठा input_dev *input_dev;
+	पूर्णांक irq, err;
 
-	irq = platform_get_irq_byname(pdev, "ONKEY");
-	if (irq < 0)
-		return -EINVAL;
+	irq = platक्रमm_get_irq_byname(pdev, "ONKEY");
+	अगर (irq < 0)
+		वापस -EINVAL;
 
-	onkey = devm_kzalloc(&pdev->dev, sizeof(*onkey), GFP_KERNEL);
-	if (!onkey) {
+	onkey = devm_kzalloc(&pdev->dev, माप(*onkey), GFP_KERNEL);
+	अगर (!onkey) अणु
 		dev_err(&pdev->dev, "Failed to allocate memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	input_dev = input_allocate_device();
-	if (!input_dev) {
+	अगर (!input_dev) अणु
 		dev_err(&pdev->dev, "Failed to allocate memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	onkey->input = input_dev;
 	onkey->da9055 = da9055;
@@ -102,58 +103,58 @@ static int da9055_onkey_probe(struct platform_device *pdev)
 
 	INIT_DELAYED_WORK(&onkey->work, da9055_onkey_work);
 
-	err = request_threaded_irq(irq, NULL, da9055_onkey_irq,
+	err = request_thपढ़ोed_irq(irq, शून्य, da9055_onkey_irq,
 				   IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 				   "ONKEY", onkey);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev,
 			"Failed to register ONKEY IRQ %d, error = %d\n",
 			irq, err);
-		goto err_free_input;
-	}
+		जाओ err_मुक्त_input;
+	पूर्ण
 
-	err = input_register_device(input_dev);
-	if (err) {
+	err = input_रेजिस्टर_device(input_dev);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Unable to register input device, %d\n",
 			err);
-		goto err_free_irq;
-	}
+		जाओ err_मुक्त_irq;
+	पूर्ण
 
-	platform_set_drvdata(pdev, onkey);
+	platक्रमm_set_drvdata(pdev, onkey);
 
-	return 0;
+	वापस 0;
 
-err_free_irq:
-	free_irq(irq, onkey);
+err_मुक्त_irq:
+	मुक्त_irq(irq, onkey);
 	cancel_delayed_work_sync(&onkey->work);
-err_free_input:
-	input_free_device(input_dev);
+err_मुक्त_input:
+	input_मुक्त_device(input_dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int da9055_onkey_remove(struct platform_device *pdev)
-{
-	struct da9055_onkey *onkey = platform_get_drvdata(pdev);
-	int irq = platform_get_irq_byname(pdev, "ONKEY");
+अटल पूर्णांक da9055_onkey_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा da9055_onkey *onkey = platक्रमm_get_drvdata(pdev);
+	पूर्णांक irq = platक्रमm_get_irq_byname(pdev, "ONKEY");
 
 	irq = regmap_irq_get_virq(onkey->da9055->irq_data, irq);
-	free_irq(irq, onkey);
+	मुक्त_irq(irq, onkey);
 	cancel_delayed_work_sync(&onkey->work);
-	input_unregister_device(onkey->input);
+	input_unरेजिस्टर_device(onkey->input);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver da9055_onkey_driver = {
+अटल काष्ठा platक्रमm_driver da9055_onkey_driver = अणु
 	.probe	= da9055_onkey_probe,
-	.remove	= da9055_onkey_remove,
-	.driver = {
+	.हटाओ	= da9055_onkey_हटाओ,
+	.driver = अणु
 		.name	= "da9055-onkey",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(da9055_onkey_driver);
+module_platक्रमm_driver(da9055_onkey_driver);
 
 MODULE_AUTHOR("David Dajun Chen <dchen@diasemi.com>");
 MODULE_DESCRIPTION("Onkey driver for DA9055");

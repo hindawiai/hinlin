@@ -1,42 +1,43 @@
-#ifndef __NVIF_VMM_H__
-#define __NVIF_VMM_H__
-#include <nvif/object.h>
-struct nvif_mem;
-struct nvif_mmu;
+<शैली गुरु>
+#अगर_अघोषित __NVIF_VMM_H__
+#घोषणा __NVIF_VMM_H__
+#समावेश <nvअगर/object.h>
+काष्ठा nvअगर_mem;
+काष्ठा nvअगर_mmu;
 
-enum nvif_vmm_get {
+क्रमागत nvअगर_vmm_get अणु
 	ADDR,
 	PTES,
 	LAZY
-};
+पूर्ण;
 
-struct nvif_vma {
+काष्ठा nvअगर_vma अणु
 	u64 addr;
 	u64 size;
-};
+पूर्ण;
 
-struct nvif_vmm {
-	struct nvif_object object;
+काष्ठा nvअगर_vmm अणु
+	काष्ठा nvअगर_object object;
 	u64 start;
 	u64 limit;
 
-	struct {
-		u8 shift;
+	काष्ठा अणु
+		u8 shअगरt;
 		bool sparse:1;
 		bool vram:1;
 		bool host:1;
 		bool comp:1;
-	} *page;
-	int page_nr;
-};
+	पूर्ण *page;
+	पूर्णांक page_nr;
+पूर्ण;
 
-int nvif_vmm_ctor(struct nvif_mmu *, const char *name, s32 oclass, bool managed,
-		  u64 addr, u64 size, void *argv, u32 argc, struct nvif_vmm *);
-void nvif_vmm_dtor(struct nvif_vmm *);
-int nvif_vmm_get(struct nvif_vmm *, enum nvif_vmm_get, bool sparse,
-		 u8 page, u8 align, u64 size, struct nvif_vma *);
-void nvif_vmm_put(struct nvif_vmm *, struct nvif_vma *);
-int nvif_vmm_map(struct nvif_vmm *, u64 addr, u64 size, void *argv, u32 argc,
-		 struct nvif_mem *, u64 offset);
-int nvif_vmm_unmap(struct nvif_vmm *, u64);
-#endif
+पूर्णांक nvअगर_vmm_ctor(काष्ठा nvअगर_mmu *, स्थिर अक्षर *name, s32 oclass, bool managed,
+		  u64 addr, u64 size, व्योम *argv, u32 argc, काष्ठा nvअगर_vmm *);
+व्योम nvअगर_vmm_dtor(काष्ठा nvअगर_vmm *);
+पूर्णांक nvअगर_vmm_get(काष्ठा nvअगर_vmm *, क्रमागत nvअगर_vmm_get, bool sparse,
+		 u8 page, u8 align, u64 size, काष्ठा nvअगर_vma *);
+व्योम nvअगर_vmm_put(काष्ठा nvअगर_vmm *, काष्ठा nvअगर_vma *);
+पूर्णांक nvअगर_vmm_map(काष्ठा nvअगर_vmm *, u64 addr, u64 size, व्योम *argv, u32 argc,
+		 काष्ठा nvअगर_mem *, u64 offset);
+पूर्णांक nvअगर_vmm_unmap(काष्ठा nvअगर_vmm *, u64);
+#पूर्ण_अगर

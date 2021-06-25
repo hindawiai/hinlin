@@ -1,346 +1,347 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* NXP PCF50633 Main Battery Charger Driver
  *
  * (C) 2006-2008 by Openmoko, Inc.
- * Author: Balaji Rao <balajirrao@openmoko.org>
+ * Author: Balaji Rao <balajirrao@खोलोmoko.org>
  * All rights reserved.
  *
- * Broken down from monstrous PCF50633 driver mainly by
+ * Broken करोwn from monstrous PCF50633 driver मुख्यly by
  * Harald Welte, Andy Green and Werner Almesberger
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/sysfs.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
 
-#include <linux/mfd/pcf50633/core.h>
-#include <linux/mfd/pcf50633/mbc.h>
+#समावेश <linux/mfd/pcf50633/core.h>
+#समावेश <linux/mfd/pcf50633/mbc.h>
 
-struct pcf50633_mbc {
-	struct pcf50633 *pcf;
+काष्ठा pcf50633_mbc अणु
+	काष्ठा pcf50633 *pcf;
 
-	int adapter_online;
-	int usb_online;
+	पूर्णांक adapter_online;
+	पूर्णांक usb_online;
 
-	struct power_supply *usb;
-	struct power_supply *adapter;
-	struct power_supply *ac;
-};
+	काष्ठा घातer_supply *usb;
+	काष्ठा घातer_supply *adapter;
+	काष्ठा घातer_supply *ac;
+पूर्ण;
 
-int pcf50633_mbc_usb_curlim_set(struct pcf50633 *pcf, int ma)
-{
-	struct pcf50633_mbc *mbc = platform_get_drvdata(pcf->mbc_pdev);
-	int ret = 0;
+पूर्णांक pcf50633_mbc_usb_curlim_set(काष्ठा pcf50633 *pcf, पूर्णांक ma)
+अणु
+	काष्ठा pcf50633_mbc *mbc = platक्रमm_get_drvdata(pcf->mbc_pdev);
+	पूर्णांक ret = 0;
 	u8 bits;
 	u8 mbcs2, chgmod;
-	unsigned int mbcc5;
+	अचिन्हित पूर्णांक mbcc5;
 
-	if (ma >= 1000) {
+	अगर (ma >= 1000) अणु
 		bits = PCF50633_MBCC7_USB_1000mA;
 		ma = 1000;
-	} else if (ma >= 500) {
+	पूर्ण अन्यथा अगर (ma >= 500) अणु
 		bits = PCF50633_MBCC7_USB_500mA;
 		ma = 500;
-	} else if (ma >= 100) {
+	पूर्ण अन्यथा अगर (ma >= 100) अणु
 		bits = PCF50633_MBCC7_USB_100mA;
 		ma = 100;
-	} else {
+	पूर्ण अन्यथा अणु
 		bits = PCF50633_MBCC7_USB_SUSPEND;
 		ma = 0;
-	}
+	पूर्ण
 
 	ret = pcf50633_reg_set_bit_mask(pcf, PCF50633_REG_MBCC7,
 					PCF50633_MBCC7_USB_MASK, bits);
-	if (ret)
+	अगर (ret)
 		dev_err(pcf->dev, "error setting usb curlim to %d mA\n", ma);
-	else
+	अन्यथा
 		dev_info(pcf->dev, "usb curlim to %d mA\n", ma);
 
 	/*
-	 * We limit the charging current to be the USB current limit.
+	 * We limit the अक्षरging current to be the USB current limit.
 	 * The reason is that on pcf50633, when it enters PMU Standby mode,
-	 * which it does when the device goes "off", the USB current limit
-	 * reverts to the variant default.  In at least one common case, that
-	 * default is 500mA.  By setting the charging current to be the same
-	 * as the USB limit we set here before PMU standby, we enforce it only
+	 * which it करोes when the device goes "off", the USB current limit
+	 * reverts to the variant शेष.  In at least one common हाल, that
+	 * शेष is 500mA.  By setting the अक्षरging current to be the same
+	 * as the USB limit we set here beक्रमe PMU standby, we enक्रमce it only
 	 * using the correct amount of current even when the USB current limit
-	 * gets reset to the wrong thing
+	 * माला_लो reset to the wrong thing
 	 */
 
-	if (mbc->pcf->pdata->charger_reference_current_ma) {
-		mbcc5 = (ma << 8) / mbc->pcf->pdata->charger_reference_current_ma;
-		if (mbcc5 > 255)
+	अगर (mbc->pcf->pdata->अक्षरger_reference_current_ma) अणु
+		mbcc5 = (ma << 8) / mbc->pcf->pdata->अक्षरger_reference_current_ma;
+		अगर (mbcc5 > 255)
 			mbcc5 = 255;
-		pcf50633_reg_write(mbc->pcf, PCF50633_REG_MBCC5, mbcc5);
-	}
+		pcf50633_reg_ग_लिखो(mbc->pcf, PCF50633_REG_MBCC5, mbcc5);
+	पूर्ण
 
-	mbcs2 = pcf50633_reg_read(mbc->pcf, PCF50633_REG_MBCS2);
+	mbcs2 = pcf50633_reg_पढ़ो(mbc->pcf, PCF50633_REG_MBCS2);
 	chgmod = (mbcs2 & PCF50633_MBCS2_MBC_MASK);
 
 	/* If chgmod == BATFULL, setting chgena has no effect.
-	 * Datasheet says we need to set resume instead but when autoresume is
-	 * used resume doesn't work. Clear and set chgena instead.
+	 * Datasheet says we need to set resume instead but when स्वतःresume is
+	 * used resume करोesn't work. Clear and set chgena instead.
 	 */
-	if (chgmod != PCF50633_MBCS2_MBC_BAT_FULL)
+	अगर (chgmod != PCF50633_MBCS2_MBC_BAT_FULL)
 		pcf50633_reg_set_bit_mask(pcf, PCF50633_REG_MBCC1,
 				PCF50633_MBCC1_CHGENA, PCF50633_MBCC1_CHGENA);
-	else {
+	अन्यथा अणु
 		pcf50633_reg_clear_bits(pcf, PCF50633_REG_MBCC1,
 				PCF50633_MBCC1_CHGENA);
 		pcf50633_reg_set_bit_mask(pcf, PCF50633_REG_MBCC1,
 				PCF50633_MBCC1_CHGENA, PCF50633_MBCC1_CHGENA);
-	}
+	पूर्ण
 
-	power_supply_changed(mbc->usb);
+	घातer_supply_changed(mbc->usb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(pcf50633_mbc_usb_curlim_set);
 
-int pcf50633_mbc_get_status(struct pcf50633 *pcf)
-{
-	struct pcf50633_mbc *mbc  = platform_get_drvdata(pcf->mbc_pdev);
-	int status = 0;
+पूर्णांक pcf50633_mbc_get_status(काष्ठा pcf50633 *pcf)
+अणु
+	काष्ठा pcf50633_mbc *mbc  = platक्रमm_get_drvdata(pcf->mbc_pdev);
+	पूर्णांक status = 0;
 	u8 chgmod;
 
-	if (!mbc)
-		return 0;
+	अगर (!mbc)
+		वापस 0;
 
-	chgmod = pcf50633_reg_read(mbc->pcf, PCF50633_REG_MBCS2)
+	chgmod = pcf50633_reg_पढ़ो(mbc->pcf, PCF50633_REG_MBCS2)
 		& PCF50633_MBCS2_MBC_MASK;
 
-	if (mbc->usb_online)
+	अगर (mbc->usb_online)
 		status |= PCF50633_MBC_USB_ONLINE;
-	if (chgmod == PCF50633_MBCS2_MBC_USB_PRE ||
+	अगर (chgmod == PCF50633_MBCS2_MBC_USB_PRE ||
 	    chgmod == PCF50633_MBCS2_MBC_USB_PRE_WAIT ||
 	    chgmod == PCF50633_MBCS2_MBC_USB_FAST ||
 	    chgmod == PCF50633_MBCS2_MBC_USB_FAST_WAIT)
 		status |= PCF50633_MBC_USB_ACTIVE;
-	if (mbc->adapter_online)
+	अगर (mbc->adapter_online)
 		status |= PCF50633_MBC_ADAPTER_ONLINE;
-	if (chgmod == PCF50633_MBCS2_MBC_ADP_PRE ||
+	अगर (chgmod == PCF50633_MBCS2_MBC_ADP_PRE ||
 	    chgmod == PCF50633_MBCS2_MBC_ADP_PRE_WAIT ||
 	    chgmod == PCF50633_MBCS2_MBC_ADP_FAST ||
 	    chgmod == PCF50633_MBCS2_MBC_ADP_FAST_WAIT)
 		status |= PCF50633_MBC_ADAPTER_ACTIVE;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL_GPL(pcf50633_mbc_get_status);
 
-int pcf50633_mbc_get_usb_online_status(struct pcf50633 *pcf)
-{
-	struct pcf50633_mbc *mbc  = platform_get_drvdata(pcf->mbc_pdev);
+पूर्णांक pcf50633_mbc_get_usb_online_status(काष्ठा pcf50633 *pcf)
+अणु
+	काष्ठा pcf50633_mbc *mbc  = platक्रमm_get_drvdata(pcf->mbc_pdev);
 
-	if (!mbc)
-		return 0;
+	अगर (!mbc)
+		वापस 0;
 
-	return mbc->usb_online;
-}
+	वापस mbc->usb_online;
+पूर्ण
 EXPORT_SYMBOL_GPL(pcf50633_mbc_get_usb_online_status);
 
-static ssize_t
-show_chgmode(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct pcf50633_mbc *mbc = dev_get_drvdata(dev);
+अटल sमाप_प्रकार
+show_chgmode(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pcf50633_mbc *mbc = dev_get_drvdata(dev);
 
-	u8 mbcs2 = pcf50633_reg_read(mbc->pcf, PCF50633_REG_MBCS2);
+	u8 mbcs2 = pcf50633_reg_पढ़ो(mbc->pcf, PCF50633_REG_MBCS2);
 	u8 chgmod = (mbcs2 & PCF50633_MBCS2_MBC_MASK);
 
-	return sprintf(buf, "%d\n", chgmod);
-}
-static DEVICE_ATTR(chgmode, S_IRUGO, show_chgmode, NULL);
+	वापस प्र_लिखो(buf, "%d\n", chgmod);
+पूर्ण
+अटल DEVICE_ATTR(chgmode, S_IRUGO, show_chgmode, शून्य);
 
-static ssize_t
-show_usblim(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct pcf50633_mbc *mbc = dev_get_drvdata(dev);
-	u8 usblim = pcf50633_reg_read(mbc->pcf, PCF50633_REG_MBCC7) &
+अटल sमाप_प्रकार
+show_usblim(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pcf50633_mbc *mbc = dev_get_drvdata(dev);
+	u8 usblim = pcf50633_reg_पढ़ो(mbc->pcf, PCF50633_REG_MBCC7) &
 						PCF50633_MBCC7_USB_MASK;
-	unsigned int ma;
+	अचिन्हित पूर्णांक ma;
 
-	if (usblim == PCF50633_MBCC7_USB_1000mA)
+	अगर (usblim == PCF50633_MBCC7_USB_1000mA)
 		ma = 1000;
-	else if (usblim == PCF50633_MBCC7_USB_500mA)
+	अन्यथा अगर (usblim == PCF50633_MBCC7_USB_500mA)
 		ma = 500;
-	else if (usblim == PCF50633_MBCC7_USB_100mA)
+	अन्यथा अगर (usblim == PCF50633_MBCC7_USB_100mA)
 		ma = 100;
-	else
+	अन्यथा
 		ma = 0;
 
-	return sprintf(buf, "%u\n", ma);
-}
+	वापस प्र_लिखो(buf, "%u\n", ma);
+पूर्ण
 
-static ssize_t set_usblim(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct pcf50633_mbc *mbc = dev_get_drvdata(dev);
-	unsigned long ma;
-	int ret;
+अटल sमाप_प्रकार set_usblim(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pcf50633_mbc *mbc = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ ma;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &ma);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &ma);
+	अगर (ret)
+		वापस ret;
 
 	pcf50633_mbc_usb_curlim_set(mbc->pcf, ma);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(usb_curlim, S_IRUGO | S_IWUSR, show_usblim, set_usblim);
+अटल DEVICE_ATTR(usb_curlim, S_IRUGO | S_IWUSR, show_usblim, set_usblim);
 
-static ssize_t
-show_chglim(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct pcf50633_mbc *mbc = dev_get_drvdata(dev);
-	u8 mbcc5 = pcf50633_reg_read(mbc->pcf, PCF50633_REG_MBCC5);
-	unsigned int ma;
+अटल sमाप_प्रकार
+show_chglim(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pcf50633_mbc *mbc = dev_get_drvdata(dev);
+	u8 mbcc5 = pcf50633_reg_पढ़ो(mbc->pcf, PCF50633_REG_MBCC5);
+	अचिन्हित पूर्णांक ma;
 
-	if (!mbc->pcf->pdata->charger_reference_current_ma)
-		return -ENODEV;
+	अगर (!mbc->pcf->pdata->अक्षरger_reference_current_ma)
+		वापस -ENODEV;
 
-	ma = (mbc->pcf->pdata->charger_reference_current_ma *  mbcc5) >> 8;
+	ma = (mbc->pcf->pdata->अक्षरger_reference_current_ma *  mbcc5) >> 8;
 
-	return sprintf(buf, "%u\n", ma);
-}
+	वापस प्र_लिखो(buf, "%u\n", ma);
+पूर्ण
 
-static ssize_t set_chglim(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct pcf50633_mbc *mbc = dev_get_drvdata(dev);
-	unsigned long ma;
-	unsigned int mbcc5;
-	int ret;
+अटल sमाप_प्रकार set_chglim(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pcf50633_mbc *mbc = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ ma;
+	अचिन्हित पूर्णांक mbcc5;
+	पूर्णांक ret;
 
-	if (!mbc->pcf->pdata->charger_reference_current_ma)
-		return -ENODEV;
+	अगर (!mbc->pcf->pdata->अक्षरger_reference_current_ma)
+		वापस -ENODEV;
 
-	ret = kstrtoul(buf, 10, &ma);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &ma);
+	अगर (ret)
+		वापस ret;
 
-	mbcc5 = (ma << 8) / mbc->pcf->pdata->charger_reference_current_ma;
-	if (mbcc5 > 255)
+	mbcc5 = (ma << 8) / mbc->pcf->pdata->अक्षरger_reference_current_ma;
+	अगर (mbcc5 > 255)
 		mbcc5 = 255;
-	pcf50633_reg_write(mbc->pcf, PCF50633_REG_MBCC5, mbcc5);
+	pcf50633_reg_ग_लिखो(mbc->pcf, PCF50633_REG_MBCC5, mbcc5);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * This attribute allows to change MBC charging limit on the fly
- * independently of usb current limit. It also gets set automatically every
- * time usb current limit is changed.
+ * This attribute allows to change MBC अक्षरging limit on the fly
+ * independently of usb current limit. It also माला_लो set स्वतःmatically every
+ * समय usb current limit is changed.
  */
-static DEVICE_ATTR(chg_curlim, S_IRUGO | S_IWUSR, show_chglim, set_chglim);
+अटल DEVICE_ATTR(chg_curlim, S_IRUGO | S_IWUSR, show_chglim, set_chglim);
 
-static struct attribute *pcf50633_mbc_sysfs_attrs[] = {
+अटल काष्ठा attribute *pcf50633_mbc_sysfs_attrs[] = अणु
 	&dev_attr_chgmode.attr,
 	&dev_attr_usb_curlim.attr,
 	&dev_attr_chg_curlim.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 ATTRIBUTE_GROUPS(pcf50633_mbc_sysfs);
 
-static void
-pcf50633_mbc_irq_handler(int irq, void *data)
-{
-	struct pcf50633_mbc *mbc = data;
+अटल व्योम
+pcf50633_mbc_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा pcf50633_mbc *mbc = data;
 
 	/* USB */
-	if (irq == PCF50633_IRQ_USBINS) {
+	अगर (irq == PCF50633_IRQ_USBINS) अणु
 		mbc->usb_online = 1;
-	} else if (irq == PCF50633_IRQ_USBREM) {
+	पूर्ण अन्यथा अगर (irq == PCF50633_IRQ_USBREM) अणु
 		mbc->usb_online = 0;
 		pcf50633_mbc_usb_curlim_set(mbc->pcf, 0);
-	}
+	पूर्ण
 
 	/* Adapter */
-	if (irq == PCF50633_IRQ_ADPINS)
+	अगर (irq == PCF50633_IRQ_ADPINS)
 		mbc->adapter_online = 1;
-	else if (irq == PCF50633_IRQ_ADPREM)
+	अन्यथा अगर (irq == PCF50633_IRQ_ADPREM)
 		mbc->adapter_online = 0;
 
-	power_supply_changed(mbc->ac);
-	power_supply_changed(mbc->usb);
-	power_supply_changed(mbc->adapter);
+	घातer_supply_changed(mbc->ac);
+	घातer_supply_changed(mbc->usb);
+	घातer_supply_changed(mbc->adapter);
 
-	if (mbc->pcf->pdata->mbc_event_callback)
+	अगर (mbc->pcf->pdata->mbc_event_callback)
 		mbc->pcf->pdata->mbc_event_callback(mbc->pcf, irq);
-}
+पूर्ण
 
-static int adapter_get_property(struct power_supply *psy,
-			enum power_supply_property psp,
-			union power_supply_propval *val)
-{
-	struct pcf50633_mbc *mbc = power_supply_get_drvdata(psy);
-	int ret = 0;
+अटल पूर्णांक adapter_get_property(काष्ठा घातer_supply *psy,
+			क्रमागत घातer_supply_property psp,
+			जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा pcf50633_mbc *mbc = घातer_supply_get_drvdata(psy);
+	पूर्णांक ret = 0;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval =  mbc->adapter_online;
-		break;
-	default:
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval =  mbc->adapter_online;
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int usb_get_property(struct power_supply *psy,
-			enum power_supply_property psp,
-			union power_supply_propval *val)
-{
-	struct pcf50633_mbc *mbc = power_supply_get_drvdata(psy);
-	int ret = 0;
-	u8 usblim = pcf50633_reg_read(mbc->pcf, PCF50633_REG_MBCC7) &
+अटल पूर्णांक usb_get_property(काष्ठा घातer_supply *psy,
+			क्रमागत घातer_supply_property psp,
+			जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा pcf50633_mbc *mbc = घातer_supply_get_drvdata(psy);
+	पूर्णांक ret = 0;
+	u8 usblim = pcf50633_reg_पढ़ो(mbc->pcf, PCF50633_REG_MBCC7) &
 						PCF50633_MBCC7_USB_MASK;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = mbc->usb_online &&
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = mbc->usb_online &&
 				(usblim <= PCF50633_MBCC7_USB_500mA);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ac_get_property(struct power_supply *psy,
-			enum power_supply_property psp,
-			union power_supply_propval *val)
-{
-	struct pcf50633_mbc *mbc = power_supply_get_drvdata(psy);
-	int ret = 0;
-	u8 usblim = pcf50633_reg_read(mbc->pcf, PCF50633_REG_MBCC7) &
+अटल पूर्णांक ac_get_property(काष्ठा घातer_supply *psy,
+			क्रमागत घातer_supply_property psp,
+			जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा pcf50633_mbc *mbc = घातer_supply_get_drvdata(psy);
+	पूर्णांक ret = 0;
+	u8 usblim = pcf50633_reg_पढ़ो(mbc->pcf, PCF50633_REG_MBCC7) &
 						PCF50633_MBCC7_USB_MASK;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = mbc->usb_online &&
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = mbc->usb_online &&
 				(usblim == PCF50633_MBCC7_USB_1000mA);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static enum power_supply_property power_props[] = {
+अटल क्रमागत घातer_supply_property घातer_props[] = अणु
 	POWER_SUPPLY_PROP_ONLINE,
-};
+पूर्ण;
 
-static const u8 mbc_irq_handlers[] = {
+अटल स्थिर u8 mbc_irq_handlers[] = अणु
 	PCF50633_IRQ_ADPINS,
 	PCF50633_IRQ_ADPREM,
 	PCF50633_IRQ_USBINS,
@@ -353,119 +354,119 @@ static const u8 mbc_irq_handlers[] = {
 	PCF50633_IRQ_USBLIMOFF,
 	PCF50633_IRQ_LOWSYS,
 	PCF50633_IRQ_LOWBAT,
-};
+पूर्ण;
 
-static const struct power_supply_desc pcf50633_mbc_adapter_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc pcf50633_mbc_adapter_desc = अणु
 	.name		= "adapter",
 	.type		= POWER_SUPPLY_TYPE_MAINS,
-	.properties	= power_props,
-	.num_properties	= ARRAY_SIZE(power_props),
+	.properties	= घातer_props,
+	.num_properties	= ARRAY_SIZE(घातer_props),
 	.get_property	= &adapter_get_property,
-};
+पूर्ण;
 
-static const struct power_supply_desc pcf50633_mbc_usb_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc pcf50633_mbc_usb_desc = अणु
 	.name		= "usb",
 	.type		= POWER_SUPPLY_TYPE_USB,
-	.properties	= power_props,
-	.num_properties	= ARRAY_SIZE(power_props),
+	.properties	= घातer_props,
+	.num_properties	= ARRAY_SIZE(घातer_props),
 	.get_property	= usb_get_property,
-};
+पूर्ण;
 
-static const struct power_supply_desc pcf50633_mbc_ac_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc pcf50633_mbc_ac_desc = अणु
 	.name		= "ac",
 	.type		= POWER_SUPPLY_TYPE_MAINS,
-	.properties	= power_props,
-	.num_properties	= ARRAY_SIZE(power_props),
+	.properties	= घातer_props,
+	.num_properties	= ARRAY_SIZE(घातer_props),
 	.get_property	= ac_get_property,
-};
+पूर्ण;
 
-static int pcf50633_mbc_probe(struct platform_device *pdev)
-{
-	struct power_supply_config psy_cfg = {};
-	struct power_supply_config usb_psy_cfg;
-	struct pcf50633_mbc *mbc;
-	int i;
+अटल पूर्णांक pcf50633_mbc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+	काष्ठा घातer_supply_config usb_psy_cfg;
+	काष्ठा pcf50633_mbc *mbc;
+	पूर्णांक i;
 	u8 mbcs1;
 
-	mbc = devm_kzalloc(&pdev->dev, sizeof(*mbc), GFP_KERNEL);
-	if (!mbc)
-		return -ENOMEM;
+	mbc = devm_kzalloc(&pdev->dev, माप(*mbc), GFP_KERNEL);
+	अगर (!mbc)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, mbc);
+	platक्रमm_set_drvdata(pdev, mbc);
 	mbc->pcf = dev_to_pcf50633(pdev->dev.parent);
 
 	/* Set up IRQ handlers */
-	for (i = 0; i < ARRAY_SIZE(mbc_irq_handlers); i++)
-		pcf50633_register_irq(mbc->pcf, mbc_irq_handlers[i],
+	क्रम (i = 0; i < ARRAY_SIZE(mbc_irq_handlers); i++)
+		pcf50633_रेजिस्टर_irq(mbc->pcf, mbc_irq_handlers[i],
 					pcf50633_mbc_irq_handler, mbc);
 
 	psy_cfg.supplied_to		= mbc->pcf->pdata->batteries;
 	psy_cfg.num_supplicants		= mbc->pcf->pdata->num_batteries;
 	psy_cfg.drv_data		= mbc;
 
-	/* Create power supplies */
-	mbc->adapter = power_supply_register(&pdev->dev,
+	/* Create घातer supplies */
+	mbc->adapter = घातer_supply_रेजिस्टर(&pdev->dev,
 					     &pcf50633_mbc_adapter_desc,
 					     &psy_cfg);
-	if (IS_ERR(mbc->adapter)) {
+	अगर (IS_ERR(mbc->adapter)) अणु
 		dev_err(mbc->pcf->dev, "failed to register adapter\n");
-		return PTR_ERR(mbc->adapter);
-	}
+		वापस PTR_ERR(mbc->adapter);
+	पूर्ण
 
 	usb_psy_cfg = psy_cfg;
 	usb_psy_cfg.attr_grp = pcf50633_mbc_sysfs_groups;
 
-	mbc->usb = power_supply_register(&pdev->dev, &pcf50633_mbc_usb_desc,
+	mbc->usb = घातer_supply_रेजिस्टर(&pdev->dev, &pcf50633_mbc_usb_desc,
 					 &usb_psy_cfg);
-	if (IS_ERR(mbc->usb)) {
+	अगर (IS_ERR(mbc->usb)) अणु
 		dev_err(mbc->pcf->dev, "failed to register usb\n");
-		power_supply_unregister(mbc->adapter);
-		return PTR_ERR(mbc->usb);
-	}
+		घातer_supply_unरेजिस्टर(mbc->adapter);
+		वापस PTR_ERR(mbc->usb);
+	पूर्ण
 
-	mbc->ac = power_supply_register(&pdev->dev, &pcf50633_mbc_ac_desc,
+	mbc->ac = घातer_supply_रेजिस्टर(&pdev->dev, &pcf50633_mbc_ac_desc,
 					&psy_cfg);
-	if (IS_ERR(mbc->ac)) {
+	अगर (IS_ERR(mbc->ac)) अणु
 		dev_err(mbc->pcf->dev, "failed to register ac\n");
-		power_supply_unregister(mbc->adapter);
-		power_supply_unregister(mbc->usb);
-		return PTR_ERR(mbc->ac);
-	}
+		घातer_supply_unरेजिस्टर(mbc->adapter);
+		घातer_supply_unरेजिस्टर(mbc->usb);
+		वापस PTR_ERR(mbc->ac);
+	पूर्ण
 
-	mbcs1 = pcf50633_reg_read(mbc->pcf, PCF50633_REG_MBCS1);
-	if (mbcs1 & PCF50633_MBCS1_USBPRES)
+	mbcs1 = pcf50633_reg_पढ़ो(mbc->pcf, PCF50633_REG_MBCS1);
+	अगर (mbcs1 & PCF50633_MBCS1_USBPRES)
 		pcf50633_mbc_irq_handler(PCF50633_IRQ_USBINS, mbc);
-	if (mbcs1 & PCF50633_MBCS1_ADAPTPRES)
+	अगर (mbcs1 & PCF50633_MBCS1_ADAPTPRES)
 		pcf50633_mbc_irq_handler(PCF50633_IRQ_ADPINS, mbc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcf50633_mbc_remove(struct platform_device *pdev)
-{
-	struct pcf50633_mbc *mbc = platform_get_drvdata(pdev);
-	int i;
+अटल पूर्णांक pcf50633_mbc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pcf50633_mbc *mbc = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
 
 	/* Remove IRQ handlers */
-	for (i = 0; i < ARRAY_SIZE(mbc_irq_handlers); i++)
-		pcf50633_free_irq(mbc->pcf, mbc_irq_handlers[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(mbc_irq_handlers); i++)
+		pcf50633_मुक्त_irq(mbc->pcf, mbc_irq_handlers[i]);
 
-	power_supply_unregister(mbc->usb);
-	power_supply_unregister(mbc->adapter);
-	power_supply_unregister(mbc->ac);
+	घातer_supply_unरेजिस्टर(mbc->usb);
+	घातer_supply_unरेजिस्टर(mbc->adapter);
+	घातer_supply_unरेजिस्टर(mbc->ac);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver pcf50633_mbc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver pcf50633_mbc_driver = अणु
+	.driver = अणु
 		.name = "pcf50633-mbc",
-	},
+	पूर्ण,
 	.probe = pcf50633_mbc_probe,
-	.remove = pcf50633_mbc_remove,
-};
+	.हटाओ = pcf50633_mbc_हटाओ,
+पूर्ण;
 
-module_platform_driver(pcf50633_mbc_driver);
+module_platक्रमm_driver(pcf50633_mbc_driver);
 
 MODULE_AUTHOR("Balaji Rao <balajirrao@openmoko.org>");
 MODULE_DESCRIPTION("PCF50633 mbc driver");

@@ -1,66 +1,67 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2011 Atheros Communications Inc.
  * Copyright (c) 2011-2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ATH6KL_CFG80211_H
-#define ATH6KL_CFG80211_H
+#अगर_अघोषित ATH6KL_CFG80211_H
+#घोषणा ATH6KL_CFG80211_H
 
-enum ath6kl_cfg_suspend_mode {
+क्रमागत ath6kl_cfg_suspend_mode अणु
 	ATH6KL_CFG_SUSPEND_DEEPSLEEP,
 	ATH6KL_CFG_SUSPEND_CUTPOWER,
 	ATH6KL_CFG_SUSPEND_WOW,
-};
+पूर्ण;
 
-struct wireless_dev *ath6kl_interface_add(struct ath6kl *ar, const char *name,
-					  unsigned char name_assign_type,
-					  enum nl80211_iftype type,
-					  u8 fw_vif_idx, u8 nw_type);
-void ath6kl_cfg80211_ch_switch_notify(struct ath6kl_vif *vif, int freq,
-				      enum wmi_phy_mode mode);
-void ath6kl_cfg80211_scan_complete_event(struct ath6kl_vif *vif, bool aborted);
+काष्ठा wireless_dev *ath6kl_पूर्णांकerface_add(काष्ठा ath6kl *ar, स्थिर अक्षर *name,
+					  अचिन्हित अक्षर name_assign_type,
+					  क्रमागत nl80211_अगरtype type,
+					  u8 fw_vअगर_idx, u8 nw_type);
+व्योम ath6kl_cfg80211_ch_चयन_notअगरy(काष्ठा ath6kl_vअगर *vअगर, पूर्णांक freq,
+				      क्रमागत wmi_phy_mode mode);
+व्योम ath6kl_cfg80211_scan_complete_event(काष्ठा ath6kl_vअगर *vअगर, bool पातed);
 
-void ath6kl_cfg80211_connect_event(struct ath6kl_vif *vif, u16 channel,
-				   u8 *bssid, u16 listen_intvl,
-				   u16 beacon_intvl,
-				   enum network_type nw_type,
+व्योम ath6kl_cfg80211_connect_event(काष्ठा ath6kl_vअगर *vअगर, u16 channel,
+				   u8 *bssid, u16 listen_पूर्णांकvl,
+				   u16 beacon_पूर्णांकvl,
+				   क्रमागत network_type nw_type,
 				   u8 beacon_ie_len, u8 assoc_req_len,
 				   u8 assoc_resp_len, u8 *assoc_info);
 
-void ath6kl_cfg80211_disconnect_event(struct ath6kl_vif *vif, u8 reason,
+व्योम ath6kl_cfg80211_disconnect_event(काष्ठा ath6kl_vअगर *vअगर, u8 reason,
 				      u8 *bssid, u8 assoc_resp_len,
 				      u8 *assoc_info, u16 proto_reason);
 
-void ath6kl_cfg80211_tkip_micerr_event(struct ath6kl_vif *vif, u8 keyid,
+व्योम ath6kl_cfg80211_tkip_micerr_event(काष्ठा ath6kl_vअगर *vअगर, u8 keyid,
 				     bool ismcast);
 
-int ath6kl_cfg80211_suspend(struct ath6kl *ar,
-			    enum ath6kl_cfg_suspend_mode mode,
-			    struct cfg80211_wowlan *wow);
+पूर्णांक ath6kl_cfg80211_suspend(काष्ठा ath6kl *ar,
+			    क्रमागत ath6kl_cfg_suspend_mode mode,
+			    काष्ठा cfg80211_wowlan *wow);
 
-int ath6kl_cfg80211_resume(struct ath6kl *ar);
+पूर्णांक ath6kl_cfg80211_resume(काष्ठा ath6kl *ar);
 
-void ath6kl_cfg80211_vif_cleanup(struct ath6kl_vif *vif);
+व्योम ath6kl_cfg80211_vअगर_cleanup(काष्ठा ath6kl_vअगर *vअगर);
 
-void ath6kl_cfg80211_stop(struct ath6kl_vif *vif);
-void ath6kl_cfg80211_stop_all(struct ath6kl *ar);
+व्योम ath6kl_cfg80211_stop(काष्ठा ath6kl_vअगर *vअगर);
+व्योम ath6kl_cfg80211_stop_all(काष्ठा ath6kl *ar);
 
-int ath6kl_cfg80211_init(struct ath6kl *ar);
-void ath6kl_cfg80211_cleanup(struct ath6kl *ar);
+पूर्णांक ath6kl_cfg80211_init(काष्ठा ath6kl *ar);
+व्योम ath6kl_cfg80211_cleanup(काष्ठा ath6kl *ar);
 
-struct ath6kl *ath6kl_cfg80211_create(void);
-void ath6kl_cfg80211_destroy(struct ath6kl *ar);
+काष्ठा ath6kl *ath6kl_cfg80211_create(व्योम);
+व्योम ath6kl_cfg80211_destroy(काष्ठा ath6kl *ar);
 
-#endif /* ATH6KL_CFG80211_H */
+#पूर्ण_अगर /* ATH6KL_CFG80211_H */

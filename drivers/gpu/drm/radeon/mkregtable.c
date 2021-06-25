@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT
-/* utility to create the register check tables
- * this includes inlined list.h safe for userspace.
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
+/* utility to create the रेजिस्टर check tables
+ * this includes अंतरभूतd list.h safe क्रम userspace.
  *
  * Copyright 2009 Jerome Glisse
  * Copyright 2009 Red Hat Inc.
@@ -10,271 +11,271 @@
  * 	Dave Airlie
  */
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <regex.h>
-#include <libgen.h>
+#समावेश <sys/types.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <मानकपन.स>
+#समावेश <regex.h>
+#समावेश <libgen.h>
 
-#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#घोषणा दुरत्व(TYPE, MEMBER) ((माप_प्रकार) &((TYPE *)0)->MEMBER)
 /**
- * container_of - cast a member of a structure out to the containing structure
- * @ptr:    the pointer to the member.
- * @type:   the type of the container struct this is embedded in.
- * @member: the name of the member within the struct.
+ * container_of - cast a member of a काष्ठाure out to the containing काष्ठाure
+ * @ptr:    the poपूर्णांकer to the member.
+ * @type:   the type of the container काष्ठा this is embedded in.
+ * @member: the name of the member within the काष्ठा.
  *
  */
-#define container_of(ptr, type, member) ({          \
-	const typeof(((type *)0)->member)*__mptr = (ptr);    \
-		     (type *)((char *)__mptr - offsetof(type, member)); })
+#घोषणा container_of(ptr, type, member) (अणु          \
+	स्थिर typeof(((type *)0)->member)*__mptr = (ptr);    \
+		     (type *)((अक्षर *)__mptr - दुरत्व(type, member)); पूर्ण)
 
 /*
- * Simple doubly linked list implementation.
+ * Simple करोubly linked list implementation.
  *
- * Some of the internal functions ("__xxx") are useful when
+ * Some of the पूर्णांकernal functions ("__xxx") are useful when
  * manipulating whole lists rather than single entries, as
- * sometimes we already know the next/prev entries and we can
+ * someबार we alपढ़ोy know the next/prev entries and we can
  * generate better code by using them directly rather than
  * using the generic single-entry routines.
  */
 
-struct list_head {
-	struct list_head *next, *prev;
-};
+काष्ठा list_head अणु
+	काष्ठा list_head *next, *prev;
+पूर्ण;
 
 
-static inline void INIT_LIST_HEAD(struct list_head *list)
-{
+अटल अंतरभूत व्योम INIT_LIST_HEAD(काष्ठा list_head *list)
+अणु
 	list->next = list;
 	list->prev = list;
-}
+पूर्ण
 
 /*
  * Insert a new entry between two known consecutive entries.
  *
- * This is only for internal list manipulation where we know
- * the prev/next entries already!
+ * This is only क्रम पूर्णांकernal list manipulation where we know
+ * the prev/next entries alपढ़ोy!
  */
-#ifndef CONFIG_DEBUG_LIST
-static inline void __list_add(struct list_head *new,
-			      struct list_head *prev, struct list_head *next)
-{
+#अगर_अघोषित CONFIG_DEBUG_LIST
+अटल अंतरभूत व्योम __list_add(काष्ठा list_head *new,
+			      काष्ठा list_head *prev, काष्ठा list_head *next)
+अणु
 	next->prev = new;
 	new->next = next;
 	new->prev = prev;
 	prev->next = new;
-}
-#else
-extern void __list_add(struct list_head *new,
-		       struct list_head *prev, struct list_head *next);
-#endif
+पूर्ण
+#अन्यथा
+बाह्य व्योम __list_add(काष्ठा list_head *new,
+		       काष्ठा list_head *prev, काष्ठा list_head *next);
+#पूर्ण_अगर
 
 /**
  * list_add_tail - add a new entry
  * @new: new entry to be added
- * @head: list head to add it before
+ * @head: list head to add it beक्रमe
  *
- * Insert a new entry before the specified head.
- * This is useful for implementing queues.
+ * Insert a new entry beक्रमe the specअगरied head.
+ * This is useful क्रम implementing queues.
  */
-static inline void list_add_tail(struct list_head *new, struct list_head *head)
-{
+अटल अंतरभूत व्योम list_add_tail(काष्ठा list_head *new, काष्ठा list_head *head)
+अणु
 	__list_add(new, head->prev, head);
-}
+पूर्ण
 
 /**
- * list_entry - get the struct for this entry
- * @ptr:	the &struct list_head pointer.
- * @type:	the type of the struct this is embedded in.
- * @member:	the name of the list_head within the struct.
+ * list_entry - get the काष्ठा क्रम this entry
+ * @ptr:	the &काष्ठा list_head poपूर्णांकer.
+ * @type:	the type of the काष्ठा this is embedded in.
+ * @member:	the name of the list_head within the काष्ठा.
  */
-#define list_entry(ptr, type, member) \
+#घोषणा list_entry(ptr, type, member) \
 	container_of(ptr, type, member)
 
 /**
- * list_for_each_entry	-	iterate over list of given type
+ * list_क्रम_each_entry	-	iterate over list of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the list_head within the काष्ठा.
  */
-#define list_for_each_entry(pos, head, member)				\
-	for (pos = list_entry((head)->next, typeof(*pos), member);	\
+#घोषणा list_क्रम_each_entry(pos, head, member)				\
+	क्रम (pos = list_entry((head)->next, typeof(*pos), member);	\
 	     &pos->member != (head); 	\
 	     pos = list_entry(pos->member.next, typeof(*pos), member))
 
-struct offset {
-	struct list_head list;
-	unsigned offset;
-};
+काष्ठा offset अणु
+	काष्ठा list_head list;
+	अचिन्हित offset;
+पूर्ण;
 
-struct table {
-	struct list_head offsets;
-	unsigned offset_max;
-	unsigned nentry;
-	unsigned *table;
-	char *gpu_prefix;
-};
+काष्ठा table अणु
+	काष्ठा list_head offsets;
+	अचिन्हित offset_max;
+	अचिन्हित nentry;
+	अचिन्हित *table;
+	अक्षर *gpu_prefix;
+पूर्ण;
 
-static struct offset *offset_new(unsigned o)
-{
-	struct offset *offset;
+अटल काष्ठा offset *offset_new(अचिन्हित o)
+अणु
+	काष्ठा offset *offset;
 
-	offset = (struct offset *)malloc(sizeof(struct offset));
-	if (offset) {
+	offset = (काष्ठा offset *)दो_स्मृति(माप(काष्ठा offset));
+	अगर (offset) अणु
 		INIT_LIST_HEAD(&offset->list);
 		offset->offset = o;
-	}
-	return offset;
-}
+	पूर्ण
+	वापस offset;
+पूर्ण
 
-static void table_offset_add(struct table *t, struct offset *offset)
-{
+अटल व्योम table_offset_add(काष्ठा table *t, काष्ठा offset *offset)
+अणु
 	list_add_tail(&offset->list, &t->offsets);
-}
+पूर्ण
 
-static void table_init(struct table *t)
-{
+अटल व्योम table_init(काष्ठा table *t)
+अणु
 	INIT_LIST_HEAD(&t->offsets);
 	t->offset_max = 0;
 	t->nentry = 0;
-	t->table = NULL;
-}
+	t->table = शून्य;
+पूर्ण
 
-static void table_print(struct table *t)
-{
-	unsigned nlloop, i, j, n, c, id;
+अटल व्योम table_prपूर्णांक(काष्ठा table *t)
+अणु
+	अचिन्हित nlloop, i, j, n, c, id;
 
 	nlloop = (t->nentry + 3) / 4;
 	c = t->nentry;
-	printf("static const unsigned %s_reg_safe_bm[%d] = {\n", t->gpu_prefix,
+	म_लिखो("static const unsigned %s_reg_safe_bm[%d] = {\n", t->gpu_prefix,
 	       t->nentry);
-	for (i = 0, id = 0; i < nlloop; i++) {
+	क्रम (i = 0, id = 0; i < nlloop; i++) अणु
 		n = 4;
-		if (n > c)
+		अगर (n > c)
 			n = c;
 		c -= n;
-		for (j = 0; j < n; j++) {
-			if (j == 0)
-				printf("\t");
-			else
-				printf(" ");
-			printf("0x%08X,", t->table[id++]);
-		}
-		printf("\n");
-	}
-	printf("};\n");
-}
+		क्रम (j = 0; j < n; j++) अणु
+			अगर (j == 0)
+				म_लिखो("\t");
+			अन्यथा
+				म_लिखो(" ");
+			म_लिखो("0x%08X,", t->table[id++]);
+		पूर्ण
+		म_लिखो("\n");
+	पूर्ण
+	म_लिखो("};\n");
+पूर्ण
 
-static int table_build(struct table *t)
-{
-	struct offset *offset;
-	unsigned i, m;
+अटल पूर्णांक table_build(काष्ठा table *t)
+अणु
+	काष्ठा offset *offset;
+	अचिन्हित i, m;
 
 	t->nentry = ((t->offset_max >> 2) + 31) / 32;
-	t->table = (unsigned *)malloc(sizeof(unsigned) * t->nentry);
-	if (t->table == NULL)
-		return -1;
-	memset(t->table, 0xff, sizeof(unsigned) * t->nentry);
-	list_for_each_entry(offset, &t->offsets, list) {
+	t->table = (अचिन्हित *)दो_स्मृति(माप(अचिन्हित) * t->nentry);
+	अगर (t->table == शून्य)
+		वापस -1;
+	स_रखो(t->table, 0xff, माप(अचिन्हित) * t->nentry);
+	list_क्रम_each_entry(offset, &t->offsets, list) अणु
 		i = (offset->offset >> 2) / 32;
 		m = (offset->offset >> 2) & 31;
 		m = 1 << m;
 		t->table[i] ^= m;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static char gpu_name[10];
-static int parser_auth(struct table *t, const char *filename)
-{
-	FILE *file;
+अटल अक्षर gpu_name[10];
+अटल पूर्णांक parser_auth(काष्ठा table *t, स्थिर अक्षर *filename)
+अणु
+	खाता *file;
 	regex_t mask_rex;
 	regmatch_t match[4];
-	char buf[1024];
-	size_t end;
-	int len;
-	int done = 0;
-	int r;
-	unsigned o;
-	struct offset *offset;
-	char last_reg_s[10];
-	int last_reg;
+	अक्षर buf[1024];
+	माप_प्रकार end;
+	पूर्णांक len;
+	पूर्णांक करोne = 0;
+	पूर्णांक r;
+	अचिन्हित o;
+	काष्ठा offset *offset;
+	अक्षर last_reg_s[10];
+	पूर्णांक last_reg;
 
-	if (regcomp
-	    (&mask_rex, "(0x[0-9a-fA-F]*) *([_a-zA-Z0-9]*)", REG_EXTENDED)) {
-		fprintf(stderr, "Failed to compile regular expression\n");
-		return -1;
-	}
-	file = fopen(filename, "r");
-	if (file == NULL) {
-		fprintf(stderr, "Failed to open: %s\n", filename);
-		return -1;
-	}
-	fseek(file, 0, SEEK_END);
-	end = ftell(file);
-	fseek(file, 0, SEEK_SET);
+	अगर (regcomp
+	    (&mask_rex, "(0x[0-9a-fA-F]*) *([_a-zA-Z0-9]*)", REG_EXTENDED)) अणु
+		ख_लिखो(मानक_त्रुटि, "Failed to compile regular expression\n");
+		वापस -1;
+	पूर्ण
+	file = ख_खोलो(filename, "r");
+	अगर (file == शून्य) अणु
+		ख_लिखो(मानक_त्रुटि, "Failed to open: %s\n", filename);
+		वापस -1;
+	पूर्ण
+	ख_जाओ(file, 0, अंत_से);
+	end = ख_बताओ(file);
+	ख_जाओ(file, 0, शुरू_से);
 
 	/* get header */
-	if (fgets(buf, 1024, file) == NULL) {
-		fclose(file);
-		return -1;
-	}
+	अगर (ख_माला_लो(buf, 1024, file) == शून्य) अणु
+		ख_बंद(file);
+		वापस -1;
+	पूर्ण
 
-	/* first line will contain the last register
+	/* first line will contain the last रेजिस्टर
 	 * and gpu name */
-	sscanf(buf, "%9s %9s", gpu_name, last_reg_s);
+	माला_पूछो(buf, "%9s %9s", gpu_name, last_reg_s);
 	t->gpu_prefix = gpu_name;
-	last_reg = strtol(last_reg_s, NULL, 16);
+	last_reg = म_से_दीर्घ(last_reg_s, शून्य, 16);
 
-	do {
-		if (fgets(buf, 1024, file) == NULL) {
-			fclose(file);
-			return -1;
-		}
-		len = strlen(buf);
-		if (ftell(file) == end)
-			done = 1;
-		if (len) {
+	करो अणु
+		अगर (ख_माला_लो(buf, 1024, file) == शून्य) अणु
+			ख_बंद(file);
+			वापस -1;
+		पूर्ण
+		len = म_माप(buf);
+		अगर (ख_बताओ(file) == end)
+			करोne = 1;
+		अगर (len) अणु
 			r = regexec(&mask_rex, buf, 4, match, 0);
-			if (r == REG_NOMATCH) {
-			} else if (r) {
-				fprintf(stderr,
+			अगर (r == REG_NOMATCH) अणु
+			पूर्ण अन्यथा अगर (r) अणु
+				ख_लिखो(मानक_त्रुटि,
 					"Error matching regular expression %d in %s\n",
 					r, filename);
-				fclose(file);
-				return -1;
-			} else {
+				ख_बंद(file);
+				वापस -1;
+			पूर्ण अन्यथा अणु
 				buf[match[0].rm_eo] = 0;
 				buf[match[1].rm_eo] = 0;
 				buf[match[2].rm_eo] = 0;
-				o = strtol(&buf[match[1].rm_so], NULL, 16);
+				o = म_से_दीर्घ(&buf[match[1].rm_so], शून्य, 16);
 				offset = offset_new(o);
 				table_offset_add(t, offset);
-				if (o > t->offset_max)
+				अगर (o > t->offset_max)
 					t->offset_max = o;
-			}
-		}
-	} while (!done);
-	fclose(file);
-	if (t->offset_max < last_reg)
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (!करोne);
+	ख_बंद(file);
+	अगर (t->offset_max < last_reg)
 		t->offset_max = last_reg;
-	return table_build(t);
-}
+	वापस table_build(t);
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	struct table t;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	काष्ठा table t;
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <authfile>\n", argv[0]);
-		exit(1);
-	}
+	अगर (argc != 2) अणु
+		ख_लिखो(मानक_त्रुटि, "Usage: %s <authfile>\n", argv[0]);
+		निकास(1);
+	पूर्ण
 	table_init(&t);
-	if (parser_auth(&t, argv[1])) {
-		fprintf(stderr, "Failed to parse file %s\n", argv[1]);
-		return -1;
-	}
-	table_print(&t);
-	return 0;
-}
+	अगर (parser_auth(&t, argv[1])) अणु
+		ख_लिखो(मानक_त्रुटि, "Failed to parse file %s\n", argv[1]);
+		वापस -1;
+	पूर्ण
+	table_prपूर्णांक(&t);
+	वापस 0;
+पूर्ण

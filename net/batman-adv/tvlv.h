@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
  * Marek Lindner, Simon Wunderlich
  */
 
-#ifndef _NET_BATMAN_ADV_TVLV_H_
-#define _NET_BATMAN_ADV_TVLV_H_
+#अगर_अघोषित _NET_BATMAN_ADV_TVLV_H_
+#घोषणा _NET_BATMAN_ADV_TVLV_H_
 
-#include "main.h"
+#समावेश "main.h"
 
-#include <linux/types.h>
-#include <uapi/linux/batadv_packet.h>
+#समावेश <linux/types.h>
+#समावेश <uapi/linux/batadv_packet.h>
 
-void batadv_tvlv_container_register(struct batadv_priv *bat_priv,
+व्योम batadv_tvlv_container_रेजिस्टर(काष्ठा batadv_priv *bat_priv,
 				    u8 type, u8 version,
-				    void *tvlv_value, u16 tvlv_value_len);
-u16 batadv_tvlv_container_ogm_append(struct batadv_priv *bat_priv,
-				     unsigned char **packet_buff,
-				     int *packet_buff_len, int packet_min_len);
-void batadv_tvlv_ogm_receive(struct batadv_priv *bat_priv,
-			     struct batadv_ogm_packet *batadv_ogm_packet,
-			     struct batadv_orig_node *orig_node);
-void batadv_tvlv_container_unregister(struct batadv_priv *bat_priv,
+				    व्योम *tvlv_value, u16 tvlv_value_len);
+u16 batadv_tvlv_container_ogm_append(काष्ठा batadv_priv *bat_priv,
+				     अचिन्हित अक्षर **packet_buff,
+				     पूर्णांक *packet_buff_len, पूर्णांक packet_min_len);
+व्योम batadv_tvlv_ogm_receive(काष्ठा batadv_priv *bat_priv,
+			     काष्ठा batadv_ogm_packet *batadv_ogm_packet,
+			     काष्ठा batadv_orig_node *orig_node);
+व्योम batadv_tvlv_container_unरेजिस्टर(काष्ठा batadv_priv *bat_priv,
 				      u8 type, u8 version);
 
-void batadv_tvlv_handler_register(struct batadv_priv *bat_priv,
-				  void (*optr)(struct batadv_priv *bat_priv,
-					       struct batadv_orig_node *orig,
+व्योम batadv_tvlv_handler_रेजिस्टर(काष्ठा batadv_priv *bat_priv,
+				  व्योम (*optr)(काष्ठा batadv_priv *bat_priv,
+					       काष्ठा batadv_orig_node *orig,
 					       u8 flags,
-					       void *tvlv_value,
+					       व्योम *tvlv_value,
 					       u16 tvlv_value_len),
-				  int (*uptr)(struct batadv_priv *bat_priv,
+				  पूर्णांक (*uptr)(काष्ठा batadv_priv *bat_priv,
 					      u8 *src, u8 *dst,
-					      void *tvlv_value,
+					      व्योम *tvlv_value,
 					      u16 tvlv_value_len),
 				  u8 type, u8 version, u8 flags);
-void batadv_tvlv_handler_unregister(struct batadv_priv *bat_priv,
+व्योम batadv_tvlv_handler_unरेजिस्टर(काष्ठा batadv_priv *bat_priv,
 				    u8 type, u8 version);
-int batadv_tvlv_containers_process(struct batadv_priv *bat_priv,
+पूर्णांक batadv_tvlv_containers_process(काष्ठा batadv_priv *bat_priv,
 				   bool ogm_source,
-				   struct batadv_orig_node *orig_node,
+				   काष्ठा batadv_orig_node *orig_node,
 				   u8 *src, u8 *dst,
-				   void *tvlv_buff, u16 tvlv_buff_len);
-void batadv_tvlv_unicast_send(struct batadv_priv *bat_priv, u8 *src,
+				   व्योम *tvlv_buff, u16 tvlv_buff_len);
+व्योम batadv_tvlv_unicast_send(काष्ठा batadv_priv *bat_priv, u8 *src,
 			      u8 *dst, u8 type, u8 version,
-			      void *tvlv_value, u16 tvlv_value_len);
+			      व्योम *tvlv_value, u16 tvlv_value_len);
 
-#endif /* _NET_BATMAN_ADV_TVLV_H_ */
+#पूर्ण_अगर /* _NET_BATMAN_ADV_TVLV_H_ */

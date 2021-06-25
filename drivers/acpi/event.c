@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * event.c - exporting ACPI events via procfs
  *
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
  *
  */
 
-#include <linux/spinlock.h>
-#include <linux/export.h>
-#include <linux/proc_fs.h>
-#include <linux/init.h>
-#include <linux/poll.h>
-#include <linux/gfp.h>
-#include <linux/acpi.h>
-#include <net/netlink.h>
-#include <net/genetlink.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/export.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/acpi.h>
+#समावेश <net/netlink.h>
+#समावेश <net/genetlink.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-/* ACPI notifier chain */
-static BLOCKING_NOTIFIER_HEAD(acpi_chain_head);
+/* ACPI notअगरier chain */
+अटल BLOCKING_NOTIFIER_HEAD(acpi_chain_head);
 
-int acpi_notifier_call_chain(struct acpi_device *dev, u32 type, u32 data)
-{
-	struct acpi_bus_event event;
+पूर्णांक acpi_notअगरier_call_chain(काष्ठा acpi_device *dev, u32 type, u32 data)
+अणु
+	काष्ठा acpi_bus_event event;
 
-	strcpy(event.device_class, dev->pnp.device_class);
-	strcpy(event.bus_id, dev->pnp.bus_id);
+	म_नकल(event.device_class, dev->pnp.device_class);
+	म_नकल(event.bus_id, dev->pnp.bus_id);
 	event.type = type;
 	event.data = data;
-	return (blocking_notifier_call_chain(&acpi_chain_head, 0, (void *)&event)
+	वापस (blocking_notअगरier_call_chain(&acpi_chain_head, 0, (व्योम *)&event)
 			== NOTIFY_BAD) ? -EINVAL : 0;
-}
-EXPORT_SYMBOL(acpi_notifier_call_chain);
+पूर्ण
+EXPORT_SYMBOL(acpi_notअगरier_call_chain);
 
-int register_acpi_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&acpi_chain_head, nb);
-}
-EXPORT_SYMBOL(register_acpi_notifier);
+पूर्णांक रेजिस्टर_acpi_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&acpi_chain_head, nb);
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_acpi_notअगरier);
 
-int unregister_acpi_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&acpi_chain_head, nb);
-}
-EXPORT_SYMBOL(unregister_acpi_notifier);
+पूर्णांक unरेजिस्टर_acpi_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&acpi_chain_head, nb);
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_acpi_notअगरier);
 
-#ifdef CONFIG_NET
-static unsigned int acpi_event_seqnum;
-struct acpi_genl_event {
+#अगर_घोषित CONFIG_NET
+अटल अचिन्हित पूर्णांक acpi_event_seqnum;
+काष्ठा acpi_genl_event अणु
 	acpi_device_class device_class;
-	char bus_id[15];
+	अक्षर bus_id[15];
 	u32 type;
 	u32 data;
-};
+पूर्ण;
 
 /* attributes of acpi_genl_family */
-enum {
+क्रमागत अणु
 	ACPI_GENL_ATTR_UNSPEC,
 	ACPI_GENL_ATTR_EVENT,	/* ACPI event info needed by user space */
 	__ACPI_GENL_ATTR_MAX,
-};
-#define ACPI_GENL_ATTR_MAX (__ACPI_GENL_ATTR_MAX - 1)
+पूर्ण;
+#घोषणा ACPI_GENL_ATTR_MAX (__ACPI_GENL_ATTR_MAX - 1)
 
 /* commands supported by the acpi_genl_family */
-enum {
+क्रमागत अणु
 	ACPI_GENL_CMD_UNSPEC,
-	ACPI_GENL_CMD_EVENT,	/* kernel->user notifications for ACPI events */
+	ACPI_GENL_CMD_EVENT,	/* kernel->user notअगरications क्रम ACPI events */
 	__ACPI_GENL_CMD_MAX,
-};
-#define ACPI_GENL_CMD_MAX (__ACPI_GENL_CMD_MAX - 1)
+पूर्ण;
+#घोषणा ACPI_GENL_CMD_MAX (__ACPI_GENL_CMD_MAX - 1)
 
-#define ACPI_GENL_FAMILY_NAME		"acpi_event"
-#define ACPI_GENL_VERSION		0x01
-#define ACPI_GENL_MCAST_GROUP_NAME 	"acpi_mc_group"
+#घोषणा ACPI_GENL_FAMILY_NAME		"acpi_event"
+#घोषणा ACPI_GENL_VERSION		0x01
+#घोषणा ACPI_GENL_MCAST_GROUP_NAME 	"acpi_mc_group"
 
-static const struct genl_multicast_group acpi_event_mcgrps[] = {
-	{ .name = ACPI_GENL_MCAST_GROUP_NAME, },
-};
+अटल स्थिर काष्ठा genl_multicast_group acpi_event_mcgrps[] = अणु
+	अणु .name = ACPI_GENL_MCAST_GROUP_NAME, पूर्ण,
+पूर्ण;
 
-static struct genl_family acpi_event_genl_family __ro_after_init = {
+अटल काष्ठा genl_family acpi_event_genl_family __ro_after_init = अणु
 	.module = THIS_MODULE,
 	.name = ACPI_GENL_FAMILY_NAME,
 	.version = ACPI_GENL_VERSION,
 	.maxattr = ACPI_GENL_ATTR_MAX,
 	.mcgrps = acpi_event_mcgrps,
 	.n_mcgrps = ARRAY_SIZE(acpi_event_mcgrps),
-};
+पूर्ण;
 
-int acpi_bus_generate_netlink_event(const char *device_class,
-				      const char *bus_id,
-				      u8 type, int data)
-{
-	struct sk_buff *skb;
-	struct nlattr *attr;
-	struct acpi_genl_event *event;
-	void *msg_header;
-	int size;
+पूर्णांक acpi_bus_generate_netlink_event(स्थिर अक्षर *device_class,
+				      स्थिर अक्षर *bus_id,
+				      u8 type, पूर्णांक data)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा nlattr *attr;
+	काष्ठा acpi_genl_event *event;
+	व्योम *msg_header;
+	पूर्णांक size;
 
 	/* allocate memory */
-	size = nla_total_size(sizeof(struct acpi_genl_event)) +
+	size = nla_total_size(माप(काष्ठा acpi_genl_event)) +
 	    nla_total_size(0);
 
 	skb = genlmsg_new(size, GFP_ATOMIC);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	/* add the genetlink message header */
 	msg_header = genlmsg_put(skb, 0, acpi_event_seqnum++,
 				 &acpi_event_genl_family, 0,
 				 ACPI_GENL_CMD_EVENT);
-	if (!msg_header) {
-		nlmsg_free(skb);
-		return -ENOMEM;
-	}
+	अगर (!msg_header) अणु
+		nlmsg_मुक्त(skb);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* fill the data */
 	attr =
 	    nla_reserve(skb, ACPI_GENL_ATTR_EVENT,
-			sizeof(struct acpi_genl_event));
-	if (!attr) {
-		nlmsg_free(skb);
-		return -EINVAL;
-	}
+			माप(काष्ठा acpi_genl_event));
+	अगर (!attr) अणु
+		nlmsg_मुक्त(skb);
+		वापस -EINVAL;
+	पूर्ण
 
 	event = nla_data(attr);
-	memset(event, 0, sizeof(struct acpi_genl_event));
+	स_रखो(event, 0, माप(काष्ठा acpi_genl_event));
 
-	strscpy(event->device_class, device_class, sizeof(event->device_class));
-	strscpy(event->bus_id, bus_id, sizeof(event->bus_id));
+	strscpy(event->device_class, device_class, माप(event->device_class));
+	strscpy(event->bus_id, bus_id, माप(event->bus_id));
 	event->type = type;
 	event->data = data;
 
@@ -137,45 +138,45 @@ int acpi_bus_generate_netlink_event(const char *device_class,
 	genlmsg_end(skb, msg_header);
 
 	genlmsg_multicast(&acpi_event_genl_family, skb, 0, 0, GFP_ATOMIC);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(acpi_bus_generate_netlink_event);
 
-static int __init acpi_event_genetlink_init(void)
-{
-	return genl_register_family(&acpi_event_genl_family);
-}
+अटल पूर्णांक __init acpi_event_genetlink_init(व्योम)
+अणु
+	वापस genl_रेजिस्टर_family(&acpi_event_genl_family);
+पूर्ण
 
-#else
-int acpi_bus_generate_netlink_event(const char *device_class,
-				      const char *bus_id,
-				      u8 type, int data)
-{
-	return 0;
-}
+#अन्यथा
+पूर्णांक acpi_bus_generate_netlink_event(स्थिर अक्षर *device_class,
+				      स्थिर अक्षर *bus_id,
+				      u8 type, पूर्णांक data)
+अणु
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(acpi_bus_generate_netlink_event);
 
-static int acpi_event_genetlink_init(void)
-{
-	return -ENODEV;
-}
-#endif
+अटल पूर्णांक acpi_event_genetlink_init(व्योम)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-static int __init acpi_event_init(void)
-{
-	int error = 0;
+अटल पूर्णांक __init acpi_event_init(व्योम)
+अणु
+	पूर्णांक error = 0;
 
-	if (acpi_disabled)
-		return 0;
+	अगर (acpi_disabled)
+		वापस 0;
 
-	/* create genetlink for acpi event */
+	/* create genetlink क्रम acpi event */
 	error = acpi_event_genetlink_init();
-	if (error)
-		printk(KERN_WARNING PREFIX
+	अगर (error)
+		prपूर्णांकk(KERN_WARNING PREFIX
 		       "Failed to create genetlink family for ACPI event\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 fs_initcall(acpi_event_init);

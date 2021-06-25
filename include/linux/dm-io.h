@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2003 Sistina Software
  * Copyright (C) 2004 - 2008 Red Hat, Inc. All rights reserved.
@@ -7,79 +8,79 @@
  * This file is released under the GPL.
  */
 
-#ifndef _LINUX_DM_IO_H
-#define _LINUX_DM_IO_H
+#अगर_अघोषित _LINUX_DM_IO_H
+#घोषणा _LINUX_DM_IO_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct dm_io_region {
-	struct block_device *bdev;
+काष्ठा dm_io_region अणु
+	काष्ठा block_device *bdev;
 	sector_t sector;
 	sector_t count;		/* If this is zero the region is ignored. */
-};
+पूर्ण;
 
-struct page_list {
-	struct page_list *next;
-	struct page *page;
-};
+काष्ठा page_list अणु
+	काष्ठा page_list *next;
+	काष्ठा page *page;
+पूर्ण;
 
-typedef void (*io_notify_fn)(unsigned long error, void *context);
+प्रकार व्योम (*io_notअगरy_fn)(अचिन्हित दीर्घ error, व्योम *context);
 
-enum dm_io_mem_type {
+क्रमागत dm_io_mem_type अणु
 	DM_IO_PAGE_LIST,/* Page list */
 	DM_IO_BIO,	/* Bio vector */
 	DM_IO_VMA,	/* Virtual memory area */
 	DM_IO_KMEM,	/* Kernel memory */
-};
+पूर्ण;
 
-struct dm_io_memory {
-	enum dm_io_mem_type type;
+काष्ठा dm_io_memory अणु
+	क्रमागत dm_io_mem_type type;
 
-	unsigned offset;
+	अचिन्हित offset;
 
-	union {
-		struct page_list *pl;
-		struct bio *bio;
-		void *vma;
-		void *addr;
-	} ptr;
-};
+	जोड़ अणु
+		काष्ठा page_list *pl;
+		काष्ठा bio *bio;
+		व्योम *vma;
+		व्योम *addr;
+	पूर्ण ptr;
+पूर्ण;
 
-struct dm_io_notify {
-	io_notify_fn fn;	/* Callback for asynchronous requests */
-	void *context;		/* Passed to callback */
-};
+काष्ठा dm_io_notअगरy अणु
+	io_notअगरy_fn fn;	/* Callback क्रम asynchronous requests */
+	व्योम *context;		/* Passed to callback */
+पूर्ण;
 
 /*
- * IO request structure
+ * IO request काष्ठाure
  */
-struct dm_io_client;
-struct dm_io_request {
-	int bi_op;			/* REQ_OP */
-	int bi_op_flags;		/* req_flag_bits */
-	struct dm_io_memory mem;	/* Memory to use for io */
-	struct dm_io_notify notify;	/* Synchronous if notify.fn is NULL */
-	struct dm_io_client *client;	/* Client memory handler */
-};
+काष्ठा dm_io_client;
+काष्ठा dm_io_request अणु
+	पूर्णांक bi_op;			/* REQ_OP */
+	पूर्णांक bi_op_flags;		/* req_flag_bits */
+	काष्ठा dm_io_memory mem;	/* Memory to use क्रम io */
+	काष्ठा dm_io_notअगरy notअगरy;	/* Synchronous अगर notअगरy.fn is शून्य */
+	काष्ठा dm_io_client *client;	/* Client memory handler */
+पूर्ण;
 
 /*
  * For async io calls, users can alternatively use the dm_io() function below
- * and dm_io_client_create() to create private mempools for the client.
+ * and dm_io_client_create() to create निजी mempools क्रम the client.
  *
  * Create/destroy may block.
  */
-struct dm_io_client *dm_io_client_create(void);
-void dm_io_client_destroy(struct dm_io_client *client);
+काष्ठा dm_io_client *dm_io_client_create(व्योम);
+व्योम dm_io_client_destroy(काष्ठा dm_io_client *client);
 
 /*
- * IO interface using private per-client pools.
+ * IO पूर्णांकerface using निजी per-client pools.
  * Each bit in the optional 'sync_error_bits' bitset indicates whether an
- * error occurred doing io to the corresponding region.
+ * error occurred करोing io to the corresponding region.
  */
-int dm_io(struct dm_io_request *io_req, unsigned num_regions,
-	  struct dm_io_region *region, unsigned long *sync_error_bits);
+पूर्णांक dm_io(काष्ठा dm_io_request *io_req, अचिन्हित num_regions,
+	  काष्ठा dm_io_region *region, अचिन्हित दीर्घ *sync_error_bits);
 
-#endif	/* __KERNEL__ */
-#endif	/* _LINUX_DM_IO_H */
+#पूर्ण_अगर	/* __KERNEL__ */
+#पूर्ण_अगर	/* _LINUX_DM_IO_H */

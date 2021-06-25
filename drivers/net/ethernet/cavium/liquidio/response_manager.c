@@ -1,3 +1,4 @@
+<शैली गुरु>
 /**********************************************************************
  * Author: Cavium, Inc.
  *
@@ -6,117 +7,117 @@
  *
  * Copyright (c) 2003-2016 Cavium, Inc.
  *
- * This file is free software; you can redistribute it and/or modify
+ * This file is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License for more
+ * NONINFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  **********************************************************************/
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include "liquidio_common.h"
-#include "octeon_droq.h"
-#include "octeon_iq.h"
-#include "response_manager.h"
-#include "octeon_device.h"
-#include "octeon_main.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश "liquidio_common.h"
+#समावेश "octeon_droq.h"
+#समावेश "octeon_iq.h"
+#समावेश "response_manager.h"
+#समावेश "octeon_device.h"
+#समावेश "octeon_main.h"
 
-static void oct_poll_req_completion(struct work_struct *work);
+अटल व्योम oct_poll_req_completion(काष्ठा work_काष्ठा *work);
 
-int octeon_setup_response_list(struct octeon_device *oct)
-{
-	int i, ret = 0;
-	struct cavium_wq *cwq;
+पूर्णांक octeon_setup_response_list(काष्ठा octeon_device *oct)
+अणु
+	पूर्णांक i, ret = 0;
+	काष्ठा cavium_wq *cwq;
 
-	for (i = 0; i < MAX_RESPONSE_LISTS; i++) {
+	क्रम (i = 0; i < MAX_RESPONSE_LISTS; i++) अणु
 		INIT_LIST_HEAD(&oct->response_list[i].head);
 		spin_lock_init(&oct->response_list[i].lock);
 		atomic_set(&oct->response_list[i].pending_req_count, 0);
-	}
+	पूर्ण
 	spin_lock_init(&oct->cmd_resp_wqlock);
 
 	oct->dma_comp_wq.wq = alloc_workqueue("dma-comp", WQ_MEM_RECLAIM, 0);
-	if (!oct->dma_comp_wq.wq) {
+	अगर (!oct->dma_comp_wq.wq) अणु
 		dev_err(&oct->pci_dev->dev, "failed to create wq thread\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	cwq = &oct->dma_comp_wq;
 	INIT_DELAYED_WORK(&cwq->wk.work, oct_poll_req_completion);
 	cwq->wk.ctxptr = oct;
 	oct->cmd_resp_state = OCT_DRV_ONLINE;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void octeon_delete_response_list(struct octeon_device *oct)
-{
+व्योम octeon_delete_response_list(काष्ठा octeon_device *oct)
+अणु
 	cancel_delayed_work_sync(&oct->dma_comp_wq.wk.work);
 	destroy_workqueue(oct->dma_comp_wq.wq);
-}
+पूर्ण
 
-int lio_process_ordered_list(struct octeon_device *octeon_dev,
-			     u32 force_quit)
-{
-	struct octeon_response_list *ordered_sc_list;
-	struct octeon_soft_command *sc;
-	int request_complete = 0;
-	int resp_to_process = MAX_ORD_REQS_TO_PROCESS;
+पूर्णांक lio_process_ordered_list(काष्ठा octeon_device *octeon_dev,
+			     u32 क्रमce_quit)
+अणु
+	काष्ठा octeon_response_list *ordered_sc_list;
+	काष्ठा octeon_soft_command *sc;
+	पूर्णांक request_complete = 0;
+	पूर्णांक resp_to_process = MAX_ORD_REQS_TO_PROCESS;
 	u32 status;
 	u64 status64;
 
-	octeon_free_sc_done_list(octeon_dev);
+	octeon_मुक्त_sc_करोne_list(octeon_dev);
 
 	ordered_sc_list = &octeon_dev->response_list[OCTEON_ORDERED_SC_LIST];
 
-	do {
+	करो अणु
 		spin_lock_bh(&ordered_sc_list->lock);
 
-		if (list_empty(&ordered_sc_list->head)) {
+		अगर (list_empty(&ordered_sc_list->head)) अणु
 			spin_unlock_bh(&ordered_sc_list->lock);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		sc = list_first_entry(&ordered_sc_list->head,
-				      struct octeon_soft_command, node);
+				      काष्ठा octeon_soft_command, node);
 
 		status = OCTEON_REQUEST_PENDING;
 
-		/* check if octeon has finished DMA'ing a response
-		 * to where rptr is pointing to
+		/* check अगर octeon has finished DMA'ing a response
+		 * to where rptr is poपूर्णांकing to
 		 */
 		status64 = *sc->status_word;
 
-		if (status64 != COMPLETION_WORD_INIT) {
+		अगर (status64 != COMPLETION_WORD_INIT) अणु
 			/* This logic ensures that all 64b have been written.
-			 * 1. check byte 0 for non-FF
-			 * 2. if non-FF, then swap result from BE to host order
-			 * 3. check byte 7 (swapped to 0) for non-FF
-			 * 4. if non-FF, use the low 32-bit status code
-			 * 5. if either byte 0 or byte 7 is FF, don't use status
+			 * 1. check byte 0 क्रम non-FF
+			 * 2. अगर non-FF, then swap result from BE to host order
+			 * 3. check byte 7 (swapped to 0) क्रम non-FF
+			 * 4. अगर non-FF, use the low 32-bit status code
+			 * 5. अगर either byte 0 or byte 7 is FF, करोn't use status
 			 */
-			if ((status64 & 0xff) != 0xff) {
+			अगर ((status64 & 0xff) != 0xff) अणु
 				octeon_swap_8B_data(&status64, 1);
-				if (((status64 & 0xff) != 0xff)) {
+				अगर (((status64 & 0xff) != 0xff)) अणु
 					/* retrieve 16-bit firmware status */
 					status = (u32)(status64 & 0xffffULL);
-					if (status) {
+					अगर (status) अणु
 						status =
 						  FIRMWARE_STATUS_CODE(status);
-					} else {
+					पूर्ण अन्यथा अणु
 						/* i.e. no error */
 						status = OCTEON_REQUEST_DONE;
-					}
-				}
-			}
-		} else if (unlikely(force_quit) || (sc->expiry_time &&
-			time_after(jiffies, (unsigned long)sc->expiry_time))) {
-			struct octeon_instr_irh *irh =
-				(struct octeon_instr_irh *)&sc->cmd.cmd3.irh;
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अगर (unlikely(क्रमce_quit) || (sc->expiry_समय &&
+			समय_after(jअगरfies, (अचिन्हित दीर्घ)sc->expiry_समय))) अणु
+			काष्ठा octeon_instr_irh *irh =
+				(काष्ठा octeon_instr_irh *)&sc->cmd.cmd3.irh;
 
 			dev_err(&octeon_dev->pci_dev->dev, "%s: ", __func__);
 			dev_err(&octeon_dev->pci_dev->dev,
@@ -125,21 +126,21 @@ int lio_process_ordered_list(struct octeon_device *octeon_dev,
 				sc->cmd.cmd3.ossp[0], sc->cmd.cmd3.ossp[1]);
 			dev_err(&octeon_dev->pci_dev->dev,
 				"timeout (%ld, %ld)\n",
-				(long)jiffies, (long)sc->expiry_time);
+				(दीर्घ)jअगरfies, (दीर्घ)sc->expiry_समय);
 			status = OCTEON_REQUEST_TIMEOUT;
-		}
+		पूर्ण
 
-		if (status != OCTEON_REQUEST_PENDING) {
+		अगर (status != OCTEON_REQUEST_PENDING) अणु
 			sc->sc_status = status;
 
-			/* we have received a response or we have timed out */
-			/* remove node from linked list */
+			/* we have received a response or we have समयd out */
+			/* हटाओ node from linked list */
 			list_del(&sc->node);
 			atomic_dec(&octeon_dev->response_list
 				   [OCTEON_ORDERED_SC_LIST].
 				   pending_req_count);
 
-			if (!sc->callback) {
+			अगर (!sc->callback) अणु
 				atomic_inc(&octeon_dev->response_list
 					   [OCTEON_DONE_SC_LIST].
 					   pending_req_count);
@@ -147,15 +148,15 @@ int lio_process_ordered_list(struct octeon_device *octeon_dev,
 					      &octeon_dev->response_list
 					      [OCTEON_DONE_SC_LIST].head);
 
-				if (unlikely(READ_ONCE(sc->caller_is_done))) {
-					/* caller does not wait for response
+				अगर (unlikely(READ_ONCE(sc->caller_is_करोne))) अणु
+					/* caller करोes not रुको क्रम response
 					 * from firmware
 					 */
-					if (status != OCTEON_REQUEST_DONE) {
-						struct octeon_instr_irh *irh;
+					अगर (status != OCTEON_REQUEST_DONE) अणु
+						काष्ठा octeon_instr_irh *irh;
 
 						irh =
-						    (struct octeon_instr_irh *)
+						    (काष्ठा octeon_instr_irh *)
 						    &sc->cmd.cmd3.irh;
 						dev_dbg
 						    (&octeon_dev->pci_dev->dev,
@@ -171,15 +172,15 @@ int lio_process_ordered_list(struct octeon_device *octeon_dev,
 						    "ossp[1]=%llx, status=%d\n",
 						    sc->cmd.cmd3.ossp[1],
 						    status);
-					}
-				} else {
+					पूर्ण
+				पूर्ण अन्यथा अणु
 					complete(&sc->complete);
-				}
+				पूर्ण
 
 				spin_unlock_bh(&ordered_sc_list->lock);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* sc with callback function */
-				if (status == OCTEON_REQUEST_TIMEOUT) {
+				अगर (status == OCTEON_REQUEST_TIMEOUT) अणु
 					atomic_inc(&octeon_dev->response_list
 						   [OCTEON_ZOMBIE_SC_LIST].
 						   pending_req_count);
@@ -187,48 +188,48 @@ int lio_process_ordered_list(struct octeon_device *octeon_dev,
 						      &octeon_dev->response_list
 						      [OCTEON_ZOMBIE_SC_LIST].
 						      head);
-				}
+				पूर्ण
 
 				spin_unlock_bh(&ordered_sc_list->lock);
 
 				sc->callback(octeon_dev, status,
 					     sc->callback_arg);
-				/* sc is freed by caller */
-			}
+				/* sc is मुक्तd by caller */
+			पूर्ण
 
 			request_complete++;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* no response yet */
 			request_complete = 0;
 			spin_unlock_bh
 			    (&ordered_sc_list->lock);
-		}
+		पूर्ण
 
 		/* If we hit the Max Ordered requests to process every loop,
 		 * we quit
-		 * and let this function be invoked the next time the poll
-		 * thread runs
-		 * to process the remaining requests. This function can take up
-		 * the entire CPU if there is no upper limit to the requests
+		 * and let this function be invoked the next समय the poll
+		 * thपढ़ो runs
+		 * to process the reमुख्यing requests. This function can take up
+		 * the entire CPU अगर there is no upper limit to the requests
 		 * processed.
 		 */
-		if (request_complete >= resp_to_process)
-			break;
-	} while (request_complete);
+		अगर (request_complete >= resp_to_process)
+			अवरोध;
+	पूर्ण जबतक (request_complete);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void oct_poll_req_completion(struct work_struct *work)
-{
-	struct cavium_wk *wk = (struct cavium_wk *)work;
-	struct octeon_device *oct = (struct octeon_device *)wk->ctxptr;
-	struct cavium_wq *cwq = &oct->dma_comp_wq;
+अटल व्योम oct_poll_req_completion(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cavium_wk *wk = (काष्ठा cavium_wk *)work;
+	काष्ठा octeon_device *oct = (काष्ठा octeon_device *)wk->ctxptr;
+	काष्ठा cavium_wq *cwq = &oct->dma_comp_wq;
 
 	lio_process_ordered_list(oct, 0);
 
-	if (atomic_read(&oct->response_list
+	अगर (atomic_पढ़ो(&oct->response_list
 			[OCTEON_ORDERED_SC_LIST].pending_req_count))
-		queue_delayed_work(cwq->wq, &cwq->wk.work, msecs_to_jiffies(1));
-}
+		queue_delayed_work(cwq->wq, &cwq->wk.work, msecs_to_jअगरfies(1));
+पूर्ण

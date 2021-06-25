@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * This file is part of wl18xx
  *
  * Copyright (C) 2011 Texas Instruments
  */
 
-#include "../wlcore/wlcore.h"
-#include "../wlcore/io.h"
+#समावेश "../wlcore/wlcore.h"
+#समावेश "../wlcore/io.h"
 
-#include "io.h"
+#समावेश "io.h"
 
-int wl18xx_top_reg_write(struct wl1271 *wl, int addr, u16 val)
-{
-	u32 tmp;
-	int ret;
+पूर्णांक wl18xx_top_reg_ग_लिखो(काष्ठा wl1271 *wl, पूर्णांक addr, u16 val)
+अणु
+	u32 पंचांगp;
+	पूर्णांक ret;
 
-	if (WARN_ON(addr % 2))
-		return -EINVAL;
+	अगर (WARN_ON(addr % 2))
+		वापस -EINVAL;
 
-	if ((addr % 4) == 0) {
-		ret = wlcore_read32(wl, addr, &tmp);
-		if (ret < 0)
-			goto out;
+	अगर ((addr % 4) == 0) अणु
+		ret = wlcore_पढ़ो32(wl, addr, &पंचांगp);
+		अगर (ret < 0)
+			जाओ out;
 
-		tmp = (tmp & 0xffff0000) | val;
-		ret = wlcore_write32(wl, addr, tmp);
-	} else {
-		ret = wlcore_read32(wl, addr - 2, &tmp);
-		if (ret < 0)
-			goto out;
+		पंचांगp = (पंचांगp & 0xffff0000) | val;
+		ret = wlcore_ग_लिखो32(wl, addr, पंचांगp);
+	पूर्ण अन्यथा अणु
+		ret = wlcore_पढ़ो32(wl, addr - 2, &पंचांगp);
+		अगर (ret < 0)
+			जाओ out;
 
-		tmp = (tmp & 0xffff) | (val << 16);
-		ret = wlcore_write32(wl, addr - 2, tmp);
-	}
+		पंचांगp = (पंचांगp & 0xffff) | (val << 16);
+		ret = wlcore_ग_लिखो32(wl, addr - 2, पंचांगp);
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int wl18xx_top_reg_read(struct wl1271 *wl, int addr, u16 *out)
-{
+पूर्णांक wl18xx_top_reg_पढ़ो(काष्ठा wl1271 *wl, पूर्णांक addr, u16 *out)
+अणु
 	u32 val = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (WARN_ON(addr % 2))
-		return -EINVAL;
+	अगर (WARN_ON(addr % 2))
+		वापस -EINVAL;
 
-	if ((addr % 4) == 0) {
+	अगर ((addr % 4) == 0) अणु
 		/* address is 4-bytes aligned */
-		ret = wlcore_read32(wl, addr, &val);
-		if (ret >= 0 && out)
+		ret = wlcore_पढ़ो32(wl, addr, &val);
+		अगर (ret >= 0 && out)
 			*out = val & 0xffff;
-	} else {
-		ret = wlcore_read32(wl, addr - 2, &val);
-		if (ret >= 0 && out)
+	पूर्ण अन्यथा अणु
+		ret = wlcore_पढ़ो32(wl, addr - 2, &val);
+		अगर (ret >= 0 && out)
 			*out = (val & 0xffff0000) >> 16;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCIe host controller driver for Mobiveil PCIe Host controller
+ * PCIe host controller driver क्रम Mobiveil PCIe Host controller
  *
  * Copyright (c) 2018 Mobiveil Inc.
  * Copyright 2019 NXP
@@ -9,52 +10,52 @@
  *	   Hou Zhiqiang <Zhiqiang.Hou@nxp.com>
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_pci.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "pcie-mobiveil.h"
+#समावेश "pcie-mobiveil.h"
 
-static int mobiveil_pcie_probe(struct platform_device *pdev)
-{
-	struct mobiveil_pcie *pcie;
-	struct pci_host_bridge *bridge;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक mobiveil_pcie_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mobiveil_pcie *pcie;
+	काष्ठा pci_host_bridge *bridge;
+	काष्ठा device *dev = &pdev->dev;
 
 	/* allocate the PCIe port */
-	bridge = devm_pci_alloc_host_bridge(dev, sizeof(*pcie));
-	if (!bridge)
-		return -ENOMEM;
+	bridge = devm_pci_alloc_host_bridge(dev, माप(*pcie));
+	अगर (!bridge)
+		वापस -ENOMEM;
 
 	pcie = pci_host_bridge_priv(bridge);
 	pcie->rp.bridge = bridge;
 
 	pcie->pdev = pdev;
 
-	return mobiveil_pcie_host_probe(pcie);
-}
+	वापस mobiveil_pcie_host_probe(pcie);
+पूर्ण
 
-static const struct of_device_id mobiveil_pcie_of_match[] = {
-	{.compatible = "mbvl,gpex40-pcie",},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id mobiveil_pcie_of_match[] = अणु
+	अणु.compatible = "mbvl,gpex40-pcie",पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, mobiveil_pcie_of_match);
 
-static struct platform_driver mobiveil_pcie_driver = {
+अटल काष्ठा platक्रमm_driver mobiveil_pcie_driver = अणु
 	.probe = mobiveil_pcie_probe,
-	.driver = {
+	.driver = अणु
 		.name = "mobiveil-pcie",
 		.of_match_table = mobiveil_pcie_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-builtin_platform_driver(mobiveil_pcie_driver);
+builtin_platक्रमm_driver(mobiveil_pcie_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Mobiveil PCIe host controller driver");

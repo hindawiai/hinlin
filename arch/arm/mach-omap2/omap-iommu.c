@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * OMAP IOMMU quirks for various TI SoCs
+ * OMAP IOMMU quirks क्रम various TI SoCs
  *
  * Copyright (C) 2015-2019 Texas Instruments Incorporated - https://www.ti.com/
  *      Suman Anna <s-anna@ti.com>
  */
 
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/list.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/list.h>
 
-#include "clockdomain.h"
-#include "powerdomain.h"
+#समावेश "clockdomain.h"
+#समावेश "powerdomain.h"
 
-struct pwrdm_link {
-	struct device *dev;
-	struct powerdomain *pwrdm;
-	struct list_head node;
-};
+काष्ठा pwrdm_link अणु
+	काष्ठा device *dev;
+	काष्ठा घातerकरोमुख्य *pwrdm;
+	काष्ठा list_head node;
+पूर्ण;
 
-static DEFINE_SPINLOCK(iommu_lock);
-static struct clockdomain *emu_clkdm;
-static atomic_t emu_count;
+अटल DEFINE_SPINLOCK(iommu_lock);
+अटल काष्ठा घड़ीकरोमुख्य *emu_clkdm;
+अटल atomic_t emu_count;
 
-static void omap_iommu_dra7_emu_swsup_config(struct platform_device *pdev,
+अटल व्योम omap_iommu_dra7_emu_swsup_config(काष्ठा platक्रमm_device *pdev,
 					     bool enable)
-{
-	struct device_node *np = pdev->dev.of_node;
-	unsigned long flags;
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	अचिन्हित दीर्घ flags;
 
-	if (!of_device_is_compatible(np, "ti,dra7-dsp-iommu"))
-		return;
+	अगर (!of_device_is_compatible(np, "ti,dra7-dsp-iommu"))
+		वापस;
 
-	if (!emu_clkdm) {
+	अगर (!emu_clkdm) अणु
 		emu_clkdm = clkdm_lookup("emu_clkdm");
-		if (WARN_ON_ONCE(!emu_clkdm))
-			return;
-	}
+		अगर (WARN_ON_ONCE(!emu_clkdm))
+			वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&iommu_lock, flags);
 
-	if (enable && (atomic_inc_return(&emu_count) == 1))
+	अगर (enable && (atomic_inc_वापस(&emu_count) == 1))
 		clkdm_deny_idle(emu_clkdm);
-	else if (!enable && (atomic_dec_return(&emu_count) == 0))
+	अन्यथा अगर (!enable && (atomic_dec_वापस(&emu_count) == 0))
 		clkdm_allow_idle(emu_clkdm);
 
 	spin_unlock_irqrestore(&iommu_lock, flags);
-}
+पूर्ण
 
-static struct powerdomain *_get_pwrdm(struct device *dev)
-{
-	struct clk *clk;
-	struct clk_hw_omap *hwclk;
-	struct clockdomain *clkdm;
-	struct powerdomain *pwrdm = NULL;
-	struct pwrdm_link *entry;
-	unsigned long flags;
-	static LIST_HEAD(cache);
+अटल काष्ठा घातerकरोमुख्य *_get_pwrdm(काष्ठा device *dev)
+अणु
+	काष्ठा clk *clk;
+	काष्ठा clk_hw_omap *hwclk;
+	काष्ठा घड़ीकरोमुख्य *clkdm;
+	काष्ठा घातerकरोमुख्य *pwrdm = शून्य;
+	काष्ठा pwrdm_link *entry;
+	अचिन्हित दीर्घ flags;
+	अटल LIST_HEAD(cache);
 
 	spin_lock_irqsave(&iommu_lock, flags);
 
-	list_for_each_entry(entry, &cache, node) {
-		if (entry->dev == dev) {
+	list_क्रम_each_entry(entry, &cache, node) अणु
+		अगर (entry->dev == dev) अणु
 			pwrdm = entry->pwrdm;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&iommu_lock, flags);
 
-	if (pwrdm)
-		return pwrdm;
+	अगर (pwrdm)
+		वापस pwrdm;
 
 	clk = of_clk_get(dev->of_node->parent, 0);
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		dev_err(dev, "no fck found\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	hwclk = to_clk_hw_omap(__clk_get_hw(clk));
 	clk_put(clk);
-	if (!hwclk || !hwclk->clkdm_name) {
+	अगर (!hwclk || !hwclk->clkdm_name) अणु
 		dev_err(dev, "no hwclk data\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	clkdm = clkdm_lookup(hwclk->clkdm_name);
-	if (!clkdm) {
+	अगर (!clkdm) अणु
 		dev_err(dev, "clkdm not found: %s\n", hwclk->clkdm_name);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	pwrdm = clkdm_get_pwrdm(clkdm);
-	if (!pwrdm) {
+	अगर (!pwrdm) अणु
 		dev_err(dev, "pwrdm not found: %s\n", clkdm->name);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
-	if (entry) {
+	entry = kदो_स्मृति(माप(*entry), GFP_KERNEL);
+	अगर (entry) अणु
 		entry->dev = dev;
 		entry->pwrdm = pwrdm;
 		spin_lock_irqsave(&iommu_lock, flags);
 		list_add(&entry->node, &cache);
 		spin_unlock_irqrestore(&iommu_lock, flags);
-	}
+	पूर्ण
 
-	return pwrdm;
-}
+	वापस pwrdm;
+पूर्ण
 
-int omap_iommu_set_pwrdm_constraint(struct platform_device *pdev, bool request,
+पूर्णांक omap_iommu_set_pwrdm_स्थिरraपूर्णांक(काष्ठा platक्रमm_device *pdev, bool request,
 				    u8 *pwrst)
-{
-	struct powerdomain *pwrdm;
+अणु
+	काष्ठा घातerकरोमुख्य *pwrdm;
 	u8 next_pwrst;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	pwrdm = _get_pwrdm(&pdev->dev);
-	if (!pwrdm)
-		return -ENODEV;
+	अगर (!pwrdm)
+		वापस -ENODEV;
 
-	if (request) {
-		*pwrst = pwrdm_read_next_pwrst(pwrdm);
+	अगर (request) अणु
+		*pwrst = pwrdm_पढ़ो_next_pwrst(pwrdm);
 		omap_iommu_dra7_emu_swsup_config(pdev, true);
-	}
+	पूर्ण
 
-	if (*pwrst > PWRDM_POWER_RET)
-		goto out;
+	अगर (*pwrst > PWRDM_POWER_RET)
+		जाओ out;
 
 	next_pwrst = request ? PWRDM_POWER_ON : *pwrst;
 
 	ret = pwrdm_set_next_pwrst(pwrdm, next_pwrst);
 
 out:
-	if (!request)
+	अगर (!request)
 		omap_iommu_dra7_emu_swsup_config(pdev, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

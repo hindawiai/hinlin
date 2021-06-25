@@ -1,14 +1,15 @@
+<शैली गुरु>
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,194 +26,194 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
  */
 
-/** @file ttm_lock.h
- * This file implements a simple replacement for the buffer manager use
+/** @file tपंचांग_lock.h
+ * This file implements a simple replacement क्रम the buffer manager use
  * of the DRM heavyweight hardware lock.
- * The lock is a read-write lock. Taking it in read mode and write mode
- * is relatively fast, and intended for in-kernel use only.
+ * The lock is a पढ़ो-ग_लिखो lock. Taking it in पढ़ो mode and ग_लिखो mode
+ * is relatively fast, and पूर्णांकended क्रम in-kernel use only.
  *
  * The vt mode is used only when there is a need to block all
  * user-space processes from validating buffers.
  * It's allowed to leave kernel space with the vt lock held.
- * If a user-space process dies while having the vt-lock,
+ * If a user-space process dies जबतक having the vt-lock,
  * it will be released during the file descriptor release. The vt lock
- * excludes write lock and read lock.
+ * excludes ग_लिखो lock and पढ़ो lock.
  *
- * The suspend mode is used to lock out all TTM users when preparing for
+ * The suspend mode is used to lock out all TTM users when preparing क्रम
  * and executing suspend operations.
  *
  */
 
-#ifndef _TTM_LOCK_H_
-#define _TTM_LOCK_H_
+#अगर_अघोषित _TTM_LOCK_H_
+#घोषणा _TTM_LOCK_H_
 
-#include <linux/atomic.h>
-#include <linux/wait.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/रुको.h>
 
-#include "ttm_object.h"
+#समावेश "ttm_object.h"
 
 /**
- * struct ttm_lock
+ * काष्ठा tपंचांग_lock
  *
- * @base: ttm base object used solely to release the lock if the client
+ * @base: tपंचांग base object used solely to release the lock अगर the client
  * holding the lock dies.
- * @queue: Queue for processes waiting for lock change-of-status.
+ * @queue: Queue क्रम processes रुकोing क्रम lock change-of-status.
  * @lock: Spinlock protecting some lock members.
- * @rw: Read-write lock counter. Protected by @lock.
+ * @rw: Read-ग_लिखो lock counter. Protected by @lock.
  * @flags: Lock state. Protected by @lock.
  */
 
-struct ttm_lock {
-	struct ttm_base_object base;
-	wait_queue_head_t queue;
+काष्ठा tपंचांग_lock अणु
+	काष्ठा tपंचांग_base_object base;
+	रुको_queue_head_t queue;
 	spinlock_t lock;
-	int32_t rw;
-	uint32_t flags;
-};
+	पूर्णांक32_t rw;
+	uपूर्णांक32_t flags;
+पूर्ण;
 
 
 /**
- * ttm_lock_init
+ * tपंचांग_lock_init
  *
- * @lock: Pointer to a struct ttm_lock
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
  * Initializes the lock.
  */
-extern void ttm_lock_init(struct ttm_lock *lock);
+बाह्य व्योम tपंचांग_lock_init(काष्ठा tपंचांग_lock *lock);
 
 /**
- * ttm_read_unlock
+ * tपंचांग_पढ़ो_unlock
  *
- * @lock: Pointer to a struct ttm_lock
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
  *
- * Releases a read lock.
+ * Releases a पढ़ो lock.
  */
-extern void ttm_read_unlock(struct ttm_lock *lock);
+बाह्य व्योम tपंचांग_पढ़ो_unlock(काष्ठा tपंचांग_lock *lock);
 
 /**
- * ttm_read_lock
+ * tपंचांग_पढ़ो_lock
  *
- * @lock: Pointer to a struct ttm_lock
- * @interruptible: Interruptible sleeping while waiting for a lock.
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
+ * @पूर्णांकerruptible: Interruptible sleeping जबतक रुकोing क्रम a lock.
  *
- * Takes the lock in read mode.
+ * Takes the lock in पढ़ो mode.
  * Returns:
- * -ERESTARTSYS If interrupted by a signal and interruptible is true.
+ * -ERESTARTSYS If पूर्णांकerrupted by a संकेत and पूर्णांकerruptible is true.
  */
-extern int ttm_read_lock(struct ttm_lock *lock, bool interruptible);
+बाह्य पूर्णांक tपंचांग_पढ़ो_lock(काष्ठा tपंचांग_lock *lock, bool पूर्णांकerruptible);
 
 /**
- * ttm_read_trylock
+ * tपंचांग_पढ़ो_trylock
  *
- * @lock: Pointer to a struct ttm_lock
- * @interruptible: Interruptible sleeping while waiting for a lock.
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
+ * @पूर्णांकerruptible: Interruptible sleeping जबतक रुकोing क्रम a lock.
  *
- * Tries to take the lock in read mode. If the lock is already held
- * in write mode, the function will return -EBUSY. If the lock is held
+ * Tries to take the lock in पढ़ो mode. If the lock is alपढ़ोy held
+ * in ग_लिखो mode, the function will वापस -EBUSY. If the lock is held
  * in vt or suspend mode, the function will sleep until these modes
  * are unlocked.
  *
  * Returns:
- * -EBUSY The lock was already held in write mode.
- * -ERESTARTSYS If interrupted by a signal and interruptible is true.
+ * -EBUSY The lock was alपढ़ोy held in ग_लिखो mode.
+ * -ERESTARTSYS If पूर्णांकerrupted by a संकेत and पूर्णांकerruptible is true.
  */
-extern int ttm_read_trylock(struct ttm_lock *lock, bool interruptible);
+बाह्य पूर्णांक tपंचांग_पढ़ो_trylock(काष्ठा tपंचांग_lock *lock, bool पूर्णांकerruptible);
 
 /**
- * ttm_write_unlock
+ * tपंचांग_ग_लिखो_unlock
  *
- * @lock: Pointer to a struct ttm_lock
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
  *
- * Releases a write lock.
+ * Releases a ग_लिखो lock.
  */
-extern void ttm_write_unlock(struct ttm_lock *lock);
+बाह्य व्योम tपंचांग_ग_लिखो_unlock(काष्ठा tपंचांग_lock *lock);
 
 /**
- * ttm_write_lock
+ * tपंचांग_ग_लिखो_lock
  *
- * @lock: Pointer to a struct ttm_lock
- * @interruptible: Interruptible sleeping while waiting for a lock.
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
+ * @पूर्णांकerruptible: Interruptible sleeping जबतक रुकोing क्रम a lock.
  *
- * Takes the lock in write mode.
+ * Takes the lock in ग_लिखो mode.
  * Returns:
- * -ERESTARTSYS If interrupted by a signal and interruptible is true.
+ * -ERESTARTSYS If पूर्णांकerrupted by a संकेत and पूर्णांकerruptible is true.
  */
-extern int ttm_write_lock(struct ttm_lock *lock, bool interruptible);
+बाह्य पूर्णांक tपंचांग_ग_लिखो_lock(काष्ठा tपंचांग_lock *lock, bool पूर्णांकerruptible);
 
 /**
- * ttm_lock_downgrade
+ * tपंचांग_lock_करोwngrade
  *
- * @lock: Pointer to a struct ttm_lock
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
  *
- * Downgrades a write lock to a read lock.
+ * Downgrades a ग_लिखो lock to a पढ़ो lock.
  */
-extern void ttm_lock_downgrade(struct ttm_lock *lock);
+बाह्य व्योम tपंचांग_lock_करोwngrade(काष्ठा tपंचांग_lock *lock);
 
 /**
- * ttm_suspend_lock
+ * tपंचांग_suspend_lock
  *
- * @lock: Pointer to a struct ttm_lock
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
  *
- * Takes the lock in suspend mode. Excludes read and write mode.
+ * Takes the lock in suspend mode. Excludes पढ़ो and ग_लिखो mode.
  */
-extern void ttm_suspend_lock(struct ttm_lock *lock);
+बाह्य व्योम tपंचांग_suspend_lock(काष्ठा tपंचांग_lock *lock);
 
 /**
- * ttm_suspend_unlock
+ * tपंचांग_suspend_unlock
  *
- * @lock: Pointer to a struct ttm_lock
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
  *
  * Releases a suspend lock
  */
-extern void ttm_suspend_unlock(struct ttm_lock *lock);
+बाह्य व्योम tपंचांग_suspend_unlock(काष्ठा tपंचांग_lock *lock);
 
 /**
- * ttm_vt_lock
+ * tपंचांग_vt_lock
  *
- * @lock: Pointer to a struct ttm_lock
- * @interruptible: Interruptible sleeping while waiting for a lock.
- * @tfile: Pointer to a struct ttm_object_file to register the lock with.
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
+ * @पूर्णांकerruptible: Interruptible sleeping जबतक रुकोing क्रम a lock.
+ * @tfile: Poपूर्णांकer to a काष्ठा tपंचांग_object_file to रेजिस्टर the lock with.
  *
  * Takes the lock in vt mode.
  * Returns:
- * -ERESTARTSYS If interrupted by a signal and interruptible is true.
+ * -ERESTARTSYS If पूर्णांकerrupted by a संकेत and पूर्णांकerruptible is true.
  * -ENOMEM: Out of memory when locking.
  */
-extern int ttm_vt_lock(struct ttm_lock *lock, bool interruptible,
-		       struct ttm_object_file *tfile);
+बाह्य पूर्णांक tपंचांग_vt_lock(काष्ठा tपंचांग_lock *lock, bool पूर्णांकerruptible,
+		       काष्ठा tपंचांग_object_file *tfile);
 
 /**
- * ttm_vt_unlock
+ * tपंचांग_vt_unlock
  *
- * @lock: Pointer to a struct ttm_lock
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
  *
  * Releases a vt lock.
  * Returns:
  * -EINVAL If the lock was not held.
  */
-extern int ttm_vt_unlock(struct ttm_lock *lock);
+बाह्य पूर्णांक tपंचांग_vt_unlock(काष्ठा tपंचांग_lock *lock);
 
 /**
- * ttm_write_unlock
+ * tपंचांग_ग_लिखो_unlock
  *
- * @lock: Pointer to a struct ttm_lock
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
  *
- * Releases a write lock.
+ * Releases a ग_लिखो lock.
  */
-extern void ttm_write_unlock(struct ttm_lock *lock);
+बाह्य व्योम tपंचांग_ग_लिखो_unlock(काष्ठा tपंचांग_lock *lock);
 
 /**
- * ttm_write_lock
+ * tपंचांग_ग_लिखो_lock
  *
- * @lock: Pointer to a struct ttm_lock
- * @interruptible: Interruptible sleeping while waiting for a lock.
+ * @lock: Poपूर्णांकer to a काष्ठा tपंचांग_lock
+ * @पूर्णांकerruptible: Interruptible sleeping जबतक रुकोing क्रम a lock.
  *
- * Takes the lock in write mode.
+ * Takes the lock in ग_लिखो mode.
  * Returns:
- * -ERESTARTSYS If interrupted by a signal and interruptible is true.
+ * -ERESTARTSYS If पूर्णांकerrupted by a संकेत and पूर्णांकerruptible is true.
  */
-extern int ttm_write_lock(struct ttm_lock *lock, bool interruptible);
+बाह्य पूर्णांक tपंचांग_ग_लिखो_lock(काष्ठा tपंचांग_lock *lock, bool पूर्णांकerruptible);
 
-#endif
+#पूर्ण_अगर

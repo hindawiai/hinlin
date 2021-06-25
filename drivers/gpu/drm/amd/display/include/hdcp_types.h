@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
 * Copyright 2019 Advanced Micro Devices, Inc.
 *
-* Permission is hereby granted, free of charge, to any person obtaining a
-* copy of this software and associated documentation files (the "Software"),
+* Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+* copy of this software and associated करोcumentation files (the "Software"),
 * to deal in the Software without restriction, including without limitation
-* the rights to use, copy, modify, merge, publish, distribute, sublicense,
+* the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
 * and/or sell copies of the Software, and to permit persons to whom the
-* Software is furnished to do so, subject to the following conditions:
+* Software is furnished to करो so, subject to the following conditions:
 *
 * The above copyright notice and this permission notice shall be included in
 * all copies or substantial portions of the Software.
@@ -23,10 +24,10 @@
 *
 */
 
-#ifndef __DC_HDCP_TYPES_H__
-#define __DC_HDCP_TYPES_H__
+#अगर_अघोषित __DC_HDCP_TYPES_H__
+#घोषणा __DC_HDCP_TYPES_H__
 
-enum hdcp_message_id {
+क्रमागत hdcp_message_id अणु
 	HDCP_MESSAGE_ID_INVALID = -1,
 
 	/* HDCP 1.4 */
@@ -70,34 +71,34 @@ enum hdcp_message_id {
 	HDCP_MESSAGE_ID_WRITE_CONTENT_STREAM_TYPE,
 
 	HDCP_MESSAGE_ID_MAX
-};
+पूर्ण;
 
-enum hdcp_version {
+क्रमागत hdcp_version अणु
 	HDCP_Unknown = 0,
 	HDCP_VERSION_14,
 	HDCP_VERSION_22,
-};
+पूर्ण;
 
-enum hdcp_link {
+क्रमागत hdcp_link अणु
 	HDCP_LINK_PRIMARY,
 	HDCP_LINK_SECONDARY
-};
+पूर्ण;
 
-enum hdcp_message_status {
+क्रमागत hdcp_message_status अणु
 	HDCP_MESSAGE_SUCCESS,
 	HDCP_MESSAGE_FAILURE,
 	HDCP_MESSAGE_UNSUPPORTED
-};
+पूर्ण;
 
-struct hdcp_protection_message {
-	enum hdcp_version version;
-	/* relevant only for DVI */
-	enum hdcp_link link;
-	enum hdcp_message_id msg_id;
-	uint32_t length;
-	uint8_t max_retries;
-	uint8_t *data;
-	enum hdcp_message_status status;
-};
+काष्ठा hdcp_protection_message अणु
+	क्रमागत hdcp_version version;
+	/* relevant only क्रम DVI */
+	क्रमागत hdcp_link link;
+	क्रमागत hdcp_message_id msg_id;
+	uपूर्णांक32_t length;
+	uपूर्णांक8_t max_retries;
+	uपूर्णांक8_t *data;
+	क्रमागत hdcp_message_status status;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

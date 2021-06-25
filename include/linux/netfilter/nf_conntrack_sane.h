@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_CONNTRACK_SANE_H
-#define _NF_CONNTRACK_SANE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_CONNTRACK_SANE_H
+#घोषणा _NF_CONNTRACK_SANE_H
 /* SANE tracking. */
 
-#define SANE_PORT	6566
+#घोषणा SANE_PORT	6566
 
-enum sane_state {
+क्रमागत sane_state अणु
 	SANE_STATE_NORMAL,
 	SANE_STATE_START_REQUESTED,
-};
+पूर्ण;
 
-/* This structure exists only once per master */
-struct nf_ct_sane_master {
-	enum sane_state state;
-};
+/* This काष्ठाure exists only once per master */
+काष्ठा nf_ct_sane_master अणु
+	क्रमागत sane_state state;
+पूर्ण;
 
-#endif /* _NF_CONNTRACK_SANE_H */
+#पूर्ण_अगर /* _NF_CONNTRACK_SANE_H */

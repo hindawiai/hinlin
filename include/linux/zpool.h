@@ -1,119 +1,120 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * zpool memory storage api
  *
- * Copyright (C) 2014 Dan Streetman
+ * Copyright (C) 2014 Dan Streeपंचांगan
  *
- * This is a common frontend for the zbud and zsmalloc memory
+ * This is a common frontend क्रम the zbud and zsदो_स्मृति memory
  * storage pool implementations.  Typically, this is used to
  * store compressed memory.
  */
 
-#ifndef _ZPOOL_H_
-#define _ZPOOL_H_
+#अगर_अघोषित _ZPOOL_H_
+#घोषणा _ZPOOL_H_
 
-struct zpool;
+काष्ठा zpool;
 
-struct zpool_ops {
-	int (*evict)(struct zpool *pool, unsigned long handle);
-};
+काष्ठा zpool_ops अणु
+	पूर्णांक (*evict)(काष्ठा zpool *pool, अचिन्हित दीर्घ handle);
+पूर्ण;
 
 /*
- * Control how a handle is mapped.  It will be ignored if the
- * implementation does not support it.  Its use is optional.
- * Note that this does not refer to memory protection, it
- * refers to how the memory will be copied in/out if copying
- * is necessary during mapping; read-write is the safest as
+ * Control how a handle is mapped.  It will be ignored अगर the
+ * implementation करोes not support it.  Its use is optional.
+ * Note that this करोes not refer to memory protection, it
+ * refers to how the memory will be copied in/out अगर copying
+ * is necessary during mapping; पढ़ो-ग_लिखो is the safest as
  * it copies the existing memory in on map, and copies the
- * changed memory back out on unmap.  Write-only does not copy
- * in the memory and should only be used for initialization.
- * If in doubt, use ZPOOL_MM_DEFAULT which is read-write.
+ * changed memory back out on unmap.  Write-only करोes not copy
+ * in the memory and should only be used क्रम initialization.
+ * If in करोubt, use ZPOOL_MM_DEFAULT which is पढ़ो-ग_लिखो.
  */
-enum zpool_mapmode {
-	ZPOOL_MM_RW, /* normal read-write mapping */
-	ZPOOL_MM_RO, /* read-only (no copy-out at unmap time) */
-	ZPOOL_MM_WO, /* write-only (no copy-in at map time) */
+क्रमागत zpool_mapmode अणु
+	ZPOOL_MM_RW, /* normal पढ़ो-ग_लिखो mapping */
+	ZPOOL_MM_RO, /* पढ़ो-only (no copy-out at unmap समय) */
+	ZPOOL_MM_WO, /* ग_लिखो-only (no copy-in at map समय) */
 
 	ZPOOL_MM_DEFAULT = ZPOOL_MM_RW
-};
+पूर्ण;
 
-bool zpool_has_pool(char *type);
+bool zpool_has_pool(अक्षर *type);
 
-struct zpool *zpool_create_pool(const char *type, const char *name,
-			gfp_t gfp, const struct zpool_ops *ops);
+काष्ठा zpool *zpool_create_pool(स्थिर अक्षर *type, स्थिर अक्षर *name,
+			gfp_t gfp, स्थिर काष्ठा zpool_ops *ops);
 
-const char *zpool_get_type(struct zpool *pool);
+स्थिर अक्षर *zpool_get_type(काष्ठा zpool *pool);
 
-void zpool_destroy_pool(struct zpool *pool);
+व्योम zpool_destroy_pool(काष्ठा zpool *pool);
 
-bool zpool_malloc_support_movable(struct zpool *pool);
+bool zpool_दो_स्मृति_support_movable(काष्ठा zpool *pool);
 
-int zpool_malloc(struct zpool *pool, size_t size, gfp_t gfp,
-			unsigned long *handle);
+पूर्णांक zpool_दो_स्मृति(काष्ठा zpool *pool, माप_प्रकार size, gfp_t gfp,
+			अचिन्हित दीर्घ *handle);
 
-void zpool_free(struct zpool *pool, unsigned long handle);
+व्योम zpool_मुक्त(काष्ठा zpool *pool, अचिन्हित दीर्घ handle);
 
-int zpool_shrink(struct zpool *pool, unsigned int pages,
-			unsigned int *reclaimed);
+पूर्णांक zpool_shrink(काष्ठा zpool *pool, अचिन्हित पूर्णांक pages,
+			अचिन्हित पूर्णांक *reclaimed);
 
-void *zpool_map_handle(struct zpool *pool, unsigned long handle,
-			enum zpool_mapmode mm);
+व्योम *zpool_map_handle(काष्ठा zpool *pool, अचिन्हित दीर्घ handle,
+			क्रमागत zpool_mapmode mm);
 
-void zpool_unmap_handle(struct zpool *pool, unsigned long handle);
+व्योम zpool_unmap_handle(काष्ठा zpool *pool, अचिन्हित दीर्घ handle);
 
-u64 zpool_get_total_size(struct zpool *pool);
+u64 zpool_get_total_size(काष्ठा zpool *pool);
 
 
 /**
- * struct zpool_driver - driver implementation for zpool
+ * काष्ठा zpool_driver - driver implementation क्रम zpool
  * @type:	name of the driver.
  * @list:	entry in the list of zpool drivers.
  * @create:	create a new pool.
  * @destroy:	destroy a pool.
- * @malloc:	allocate mem from a pool.
- * @free:	free mem from a pool.
+ * @दो_स्मृति:	allocate mem from a pool.
+ * @मुक्त:	मुक्त mem from a pool.
  * @shrink:	shrink the pool.
  * @sleep_mapped: whether zpool driver can sleep during map.
  * @map:	map a handle.
  * @unmap:	unmap a handle.
  * @total_size:	get total size of a pool.
  *
- * This is created by a zpool implementation and registered
+ * This is created by a zpool implementation and रेजिस्टरed
  * with zpool.
  */
-struct zpool_driver {
-	char *type;
-	struct module *owner;
+काष्ठा zpool_driver अणु
+	अक्षर *type;
+	काष्ठा module *owner;
 	atomic_t refcount;
-	struct list_head list;
+	काष्ठा list_head list;
 
-	void *(*create)(const char *name,
+	व्योम *(*create)(स्थिर अक्षर *name,
 			gfp_t gfp,
-			const struct zpool_ops *ops,
-			struct zpool *zpool);
-	void (*destroy)(void *pool);
+			स्थिर काष्ठा zpool_ops *ops,
+			काष्ठा zpool *zpool);
+	व्योम (*destroy)(व्योम *pool);
 
-	bool malloc_support_movable;
-	int (*malloc)(void *pool, size_t size, gfp_t gfp,
-				unsigned long *handle);
-	void (*free)(void *pool, unsigned long handle);
+	bool दो_स्मृति_support_movable;
+	पूर्णांक (*दो_स्मृति)(व्योम *pool, माप_प्रकार size, gfp_t gfp,
+				अचिन्हित दीर्घ *handle);
+	व्योम (*मुक्त)(व्योम *pool, अचिन्हित दीर्घ handle);
 
-	int (*shrink)(void *pool, unsigned int pages,
-				unsigned int *reclaimed);
+	पूर्णांक (*shrink)(व्योम *pool, अचिन्हित पूर्णांक pages,
+				अचिन्हित पूर्णांक *reclaimed);
 
 	bool sleep_mapped;
-	void *(*map)(void *pool, unsigned long handle,
-				enum zpool_mapmode mm);
-	void (*unmap)(void *pool, unsigned long handle);
+	व्योम *(*map)(व्योम *pool, अचिन्हित दीर्घ handle,
+				क्रमागत zpool_mapmode mm);
+	व्योम (*unmap)(व्योम *pool, अचिन्हित दीर्घ handle);
 
-	u64 (*total_size)(void *pool);
-};
+	u64 (*total_size)(व्योम *pool);
+पूर्ण;
 
-void zpool_register_driver(struct zpool_driver *driver);
+व्योम zpool_रेजिस्टर_driver(काष्ठा zpool_driver *driver);
 
-int zpool_unregister_driver(struct zpool_driver *driver);
+पूर्णांक zpool_unरेजिस्टर_driver(काष्ठा zpool_driver *driver);
 
-bool zpool_evictable(struct zpool *pool);
-bool zpool_can_sleep_mapped(struct zpool *pool);
+bool zpool_evictable(काष्ठा zpool *pool);
+bool zpool_can_sleep_mapped(काष्ठा zpool *pool);
 
-#endif
+#पूर्ण_अगर

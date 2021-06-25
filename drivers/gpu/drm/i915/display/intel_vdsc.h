@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_VDSC_H__
-#define __INTEL_VDSC_H__
+#अगर_अघोषित __INTEL_VDSC_H__
+#घोषणा __INTEL_VDSC_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct intel_encoder;
-struct intel_crtc_state;
+काष्ठा पूर्णांकel_encoder;
+काष्ठा पूर्णांकel_crtc_state;
 
-bool intel_dsc_source_support(const struct intel_crtc_state *crtc_state);
-void intel_dsc_enable(struct intel_encoder *encoder,
-		      const struct intel_crtc_state *crtc_state);
-void intel_dsc_disable(const struct intel_crtc_state *crtc_state);
-int intel_dsc_compute_params(struct intel_encoder *encoder,
-			     struct intel_crtc_state *pipe_config);
-void intel_dsc_get_config(struct intel_crtc_state *crtc_state);
-enum intel_display_power_domain
-intel_dsc_power_domain(const struct intel_crtc_state *crtc_state);
+bool पूर्णांकel_dsc_source_support(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_dsc_enable(काष्ठा पूर्णांकel_encoder *encoder,
+		      स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_dsc_disable(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+पूर्णांक पूर्णांकel_dsc_compute_params(काष्ठा पूर्णांकel_encoder *encoder,
+			     काष्ठा पूर्णांकel_crtc_state *pipe_config);
+व्योम पूर्णांकel_dsc_get_config(काष्ठा पूर्णांकel_crtc_state *crtc_state);
+क्रमागत पूर्णांकel_display_घातer_करोमुख्य
+पूर्णांकel_dsc_घातer_करोमुख्य(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
 
-#endif /* __INTEL_VDSC_H__ */
+#पूर्ण_अगर /* __INTEL_VDSC_H__ */

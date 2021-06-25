@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	SUCS NET3:
  *
- *	Generic datagram handling routines. These are generic for all
+ *	Generic datagram handling routines. These are generic क्रम all
  *	protocols. Possibly a generic IP version on top of these would
  *	make sense. Not tonight however 8-).
  *	This is used because UDP, RAW, PACKET, DDP, IPX, AX.25 and
  *	NetROM layer all have identical poll code and mostly
  *	identical recvmsg() code. So we share it here. The poll was
- *	shared before but buried in udp.c so I moved it.
+ *	shared beक्रमe but buried in udp.c so I moved it.
  *
  *	Authors:	Alan Cox <alan@lxorguk.ukuu.org.uk>. (datagram_poll() from old
  *						     udp.c code)
  *
  *	Fixes:
- *		Alan Cox	:	NULL return from skb_peek_copy()
+ *		Alan Cox	:	शून्य वापस from skb_peek_copy()
  *					understood
- *		Alan Cox	:	Rewrote skb_read_datagram to avoid the
+ *		Alan Cox	:	Rewrote skb_पढ़ो_datagram to aव्योम the
  *					skb_peek_copy stuff.
- *		Alan Cox	:	Added support for SOCK_SEQPACKET.
- *					IPX can no longer use the SO_TYPE hack
+ *		Alan Cox	:	Added support क्रम SOCK_SEQPACKET.
+ *					IPX can no दीर्घer use the SO_TYPE hack
  *					but AX.25 now works right, and SPX is
  *					feasible.
- *		Alan Cox	:	Fixed write poll of non IP protocol
+ *		Alan Cox	:	Fixed ग_लिखो poll of non IP protocol
  *					crash.
- *		Florian  La Roche:	Changed for my new skbuff handling.
+ *		Florian  La Roche:	Changed क्रम my new skbuff handling.
  *		Darryl Miles	:	Fixed non-blocking SOCK_SEQPACKET.
  *		Linus Torvalds	:	BSD semantic fixes.
  *		Alan Cox	:	Datagram iovec handling
@@ -34,121 +35,121 @@
  *
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/uaccess.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/poll.h>
-#include <linux/highmem.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/pagemap.h>
-#include <linux/uio.h>
-#include <linux/indirect_call_wrapper.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/indirect_call_wrapper.h>
 
-#include <net/protocol.h>
-#include <linux/skbuff.h>
+#समावेश <net/protocol.h>
+#समावेश <linux/skbuff.h>
 
-#include <net/checksum.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <trace/events/skb.h>
-#include <net/busy_poll.h>
+#समावेश <net/checksum.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <trace/events/skb.h>
+#समावेश <net/busy_poll.h>
 
-#include "datagram.h"
+#समावेश "datagram.h"
 
 /*
  *	Is a socket 'connection oriented' ?
  */
-static inline int connection_based(struct sock *sk)
-{
-	return sk->sk_type == SOCK_SEQPACKET || sk->sk_type == SOCK_STREAM;
-}
+अटल अंतरभूत पूर्णांक connection_based(काष्ठा sock *sk)
+अणु
+	वापस sk->sk_type == SOCK_SEQPACKET || sk->sk_type == SOCK_STREAM;
+पूर्ण
 
-static int receiver_wake_function(wait_queue_entry_t *wait, unsigned int mode, int sync,
-				  void *key)
-{
+अटल पूर्णांक receiver_wake_function(रुको_queue_entry_t *रुको, अचिन्हित पूर्णांक mode, पूर्णांक sync,
+				  व्योम *key)
+अणु
 	/*
-	 * Avoid a wakeup if event not interesting for us
+	 * Aव्योम a wakeup अगर event not पूर्णांकeresting क्रम us
 	 */
-	if (key && !(key_to_poll(key) & (EPOLLIN | EPOLLERR)))
-		return 0;
-	return autoremove_wake_function(wait, mode, sync, key);
-}
+	अगर (key && !(key_to_poll(key) & (EPOLLIN | EPOLLERR)))
+		वापस 0;
+	वापस स्वतःहटाओ_wake_function(रुको, mode, sync, key);
+पूर्ण
 /*
- * Wait for the last received packet to be different from skb
+ * Wait क्रम the last received packet to be dअगरferent from skb
  */
-int __skb_wait_for_more_packets(struct sock *sk, struct sk_buff_head *queue,
-				int *err, long *timeo_p,
-				const struct sk_buff *skb)
-{
-	int error;
-	DEFINE_WAIT_FUNC(wait, receiver_wake_function);
+पूर्णांक __skb_रुको_क्रम_more_packets(काष्ठा sock *sk, काष्ठा sk_buff_head *queue,
+				पूर्णांक *err, दीर्घ *समयo_p,
+				स्थिर काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक error;
+	DEFINE_WAIT_FUNC(रुको, receiver_wake_function);
 
-	prepare_to_wait_exclusive(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+	prepare_to_रुको_exclusive(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
 
 	/* Socket errors? */
 	error = sock_error(sk);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
-	if (READ_ONCE(queue->prev) != skb)
-		goto out;
+	अगर (READ_ONCE(queue->prev) != skb)
+		जाओ out;
 
-	/* Socket shut down? */
-	if (sk->sk_shutdown & RCV_SHUTDOWN)
-		goto out_noerr;
+	/* Socket shut करोwn? */
+	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+		जाओ out_noerr;
 
 	/* Sequenced packets can come disconnected.
 	 * If so we report the problem
 	 */
 	error = -ENOTCONN;
-	if (connection_based(sk) &&
+	अगर (connection_based(sk) &&
 	    !(sk->sk_state == TCP_ESTABLISHED || sk->sk_state == TCP_LISTEN))
-		goto out_err;
+		जाओ out_err;
 
-	/* handle signals */
-	if (signal_pending(current))
-		goto interrupted;
+	/* handle संकेतs */
+	अगर (संकेत_pending(current))
+		जाओ पूर्णांकerrupted;
 
 	error = 0;
-	*timeo_p = schedule_timeout(*timeo_p);
+	*समयo_p = schedule_समयout(*समयo_p);
 out:
-	finish_wait(sk_sleep(sk), &wait);
-	return error;
-interrupted:
-	error = sock_intr_errno(*timeo_p);
+	finish_रुको(sk_sleep(sk), &रुको);
+	वापस error;
+पूर्णांकerrupted:
+	error = sock_पूर्णांकr_त्रुटि_सं(*समयo_p);
 out_err:
 	*err = error;
-	goto out;
+	जाओ out;
 out_noerr:
 	*err = 0;
 	error = 1;
-	goto out;
-}
-EXPORT_SYMBOL(__skb_wait_for_more_packets);
+	जाओ out;
+पूर्ण
+EXPORT_SYMBOL(__skb_रुको_क्रम_more_packets);
 
-static struct sk_buff *skb_set_peeked(struct sk_buff *skb)
-{
-	struct sk_buff *nskb;
+अटल काष्ठा sk_buff *skb_set_peeked(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *nskb;
 
-	if (skb->peeked)
-		return skb;
+	अगर (skb->peeked)
+		वापस skb;
 
-	/* We have to unshare an skb before modifying it. */
-	if (!skb_shared(skb))
-		goto done;
+	/* We have to unshare an skb beक्रमe modअगरying it. */
+	अगर (!skb_shared(skb))
+		जाओ करोne;
 
 	nskb = skb_clone(skb, GFP_ATOMIC);
-	if (!nskb)
-		return ERR_PTR(-ENOMEM);
+	अगर (!nskb)
+		वापस ERR_PTR(-ENOMEM);
 
 	skb->prev->next = nskb;
 	skb->next->prev = nskb;
@@ -158,51 +159,51 @@ static struct sk_buff *skb_set_peeked(struct sk_buff *skb)
 	consume_skb(skb);
 	skb = nskb;
 
-done:
+करोne:
 	skb->peeked = 1;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-struct sk_buff *__skb_try_recv_from_queue(struct sock *sk,
-					  struct sk_buff_head *queue,
-					  unsigned int flags,
-					  int *off, int *err,
-					  struct sk_buff **last)
-{
+काष्ठा sk_buff *__skb_try_recv_from_queue(काष्ठा sock *sk,
+					  काष्ठा sk_buff_head *queue,
+					  अचिन्हित पूर्णांक flags,
+					  पूर्णांक *off, पूर्णांक *err,
+					  काष्ठा sk_buff **last)
+अणु
 	bool peek_at_off = false;
-	struct sk_buff *skb;
-	int _off = 0;
+	काष्ठा sk_buff *skb;
+	पूर्णांक _off = 0;
 
-	if (unlikely(flags & MSG_PEEK && *off >= 0)) {
+	अगर (unlikely(flags & MSG_PEEK && *off >= 0)) अणु
 		peek_at_off = true;
 		_off = *off;
-	}
+	पूर्ण
 
 	*last = queue->prev;
-	skb_queue_walk(queue, skb) {
-		if (flags & MSG_PEEK) {
-			if (peek_at_off && _off >= skb->len &&
-			    (_off || skb->peeked)) {
+	skb_queue_walk(queue, skb) अणु
+		अगर (flags & MSG_PEEK) अणु
+			अगर (peek_at_off && _off >= skb->len &&
+			    (_off || skb->peeked)) अणु
 				_off -= skb->len;
-				continue;
-			}
-			if (!skb->len) {
+				जारी;
+			पूर्ण
+			अगर (!skb->len) अणु
 				skb = skb_set_peeked(skb);
-				if (IS_ERR(skb)) {
+				अगर (IS_ERR(skb)) अणु
 					*err = PTR_ERR(skb);
-					return NULL;
-				}
-			}
+					वापस शून्य;
+				पूर्ण
+			पूर्ण
 			refcount_inc(&skb->users);
-		} else {
+		पूर्ण अन्यथा अणु
 			__skb_unlink(skb, queue);
-		}
+		पूर्ण
 		*off = _off;
-		return skb;
-	}
-	return NULL;
-}
+		वापस skb;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  *	__skb_try_recv_datagram - Receive a datagram skbuff
@@ -211,130 +212,130 @@ struct sk_buff *__skb_try_recv_from_queue(struct sock *sk,
  *	@flags: MSG\_ flags
  *	@off: an offset in bytes to peek skb from. Returns an offset
  *	      within an skb where data actually starts
- *	@err: error code returned
- *	@last: set to last peeked message to inform the wait function
- *	       what to look for when peeking
+ *	@err: error code वापसed
+ *	@last: set to last peeked message to inक्रमm the रुको function
+ *	       what to look क्रम when peeking
  *
  *	Get a datagram skbuff, understands the peeking, nonblocking wakeups
  *	and possible races. This replaces identical code in packet, raw and
  *	udp, as well as the IPX AX.25 and Appletalk. It also finally fixes
- *	the long standing peek and read race for datagram sockets. If you
+ *	the दीर्घ standing peek and पढ़ो race क्रम datagram sockets. If you
  *	alter this routine remember it must be re-entrant.
  *
- *	This function will lock the socket if a skb is returned, so
- *	the caller needs to unlock the socket in that case (usually by
- *	calling skb_free_datagram). Returns NULL with @err set to
- *	-EAGAIN if no data was available or to some other value if an
+ *	This function will lock the socket अगर a skb is वापसed, so
+ *	the caller needs to unlock the socket in that हाल (usually by
+ *	calling skb_मुक्त_datagram). Returns शून्य with @err set to
+ *	-EAGAIN अगर no data was available or to some other value अगर an
  *	error was detected.
  *
- *	* It does not lock socket since today. This function is
- *	* free of race conditions. This measure should/can improve
- *	* significantly datagram socket latencies at high loads,
- *	* when data copying to user space takes lots of time.
- *	* (BTW I've just killed the last cli() in IP/IPv6/core/netlink/packet
+ *	* It करोes not lock socket since today. This function is
+ *	* मुक्त of race conditions. This measure should/can improve
+ *	* signअगरicantly datagram socket latencies at high loads,
+ *	* when data copying to user space takes lots of समय.
+ *	* (BTW I've just समाप्तed the last cli() in IP/IPv6/core/netlink/packet
  *	*  8) Great win.)
  *	*			                    --ANK (980729)
  *
- *	The order of the tests when we find no data waiting are specified
- *	quite explicitly by POSIX 1003.1g, don't change them without having
+ *	The order of the tests when we find no data रुकोing are specअगरied
+ *	quite explicitly by POSIX 1003.1g, करोn't change them without having
  *	the standard around please.
  */
-struct sk_buff *__skb_try_recv_datagram(struct sock *sk,
-					struct sk_buff_head *queue,
-					unsigned int flags, int *off, int *err,
-					struct sk_buff **last)
-{
-	struct sk_buff *skb;
-	unsigned long cpu_flags;
+काष्ठा sk_buff *__skb_try_recv_datagram(काष्ठा sock *sk,
+					काष्ठा sk_buff_head *queue,
+					अचिन्हित पूर्णांक flags, पूर्णांक *off, पूर्णांक *err,
+					काष्ठा sk_buff **last)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ cpu_flags;
 	/*
-	 * Caller is allowed not to check sk->sk_err before skb_recv_datagram()
+	 * Caller is allowed not to check sk->sk_err beक्रमe skb_recv_datagram()
 	 */
-	int error = sock_error(sk);
+	पूर्णांक error = sock_error(sk);
 
-	if (error)
-		goto no_packet;
+	अगर (error)
+		जाओ no_packet;
 
-	do {
+	करो अणु
 		/* Again only user level code calls this function, so nothing
-		 * interrupt level will suddenly eat the receive_queue.
+		 * पूर्णांकerrupt level will suddenly eat the receive_queue.
 		 *
 		 * Look at current nfs client by the way...
-		 * However, this function was correct in any case. 8)
+		 * However, this function was correct in any हाल. 8)
 		 */
 		spin_lock_irqsave(&queue->lock, cpu_flags);
 		skb = __skb_try_recv_from_queue(sk, queue, flags, off, &error,
 						last);
 		spin_unlock_irqrestore(&queue->lock, cpu_flags);
-		if (error)
-			goto no_packet;
-		if (skb)
-			return skb;
+		अगर (error)
+			जाओ no_packet;
+		अगर (skb)
+			वापस skb;
 
-		if (!sk_can_busy_loop(sk))
-			break;
+		अगर (!sk_can_busy_loop(sk))
+			अवरोध;
 
 		sk_busy_loop(sk, flags & MSG_DONTWAIT);
-	} while (READ_ONCE(queue->prev) != *last);
+	पूर्ण जबतक (READ_ONCE(queue->prev) != *last);
 
 	error = -EAGAIN;
 
 no_packet:
 	*err = error;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(__skb_try_recv_datagram);
 
-struct sk_buff *__skb_recv_datagram(struct sock *sk,
-				    struct sk_buff_head *sk_queue,
-				    unsigned int flags, int *off, int *err)
-{
-	struct sk_buff *skb, *last;
-	long timeo;
+काष्ठा sk_buff *__skb_recv_datagram(काष्ठा sock *sk,
+				    काष्ठा sk_buff_head *sk_queue,
+				    अचिन्हित पूर्णांक flags, पूर्णांक *off, पूर्णांक *err)
+अणु
+	काष्ठा sk_buff *skb, *last;
+	दीर्घ समयo;
 
-	timeo = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
+	समयo = sock_rcvसमयo(sk, flags & MSG_DONTWAIT);
 
-	do {
+	करो अणु
 		skb = __skb_try_recv_datagram(sk, sk_queue, flags, off, err,
 					      &last);
-		if (skb)
-			return skb;
+		अगर (skb)
+			वापस skb;
 
-		if (*err != -EAGAIN)
-			break;
-	} while (timeo &&
-		 !__skb_wait_for_more_packets(sk, sk_queue, err,
-					      &timeo, last));
+		अगर (*err != -EAGAIN)
+			अवरोध;
+	पूर्ण जबतक (समयo &&
+		 !__skb_रुको_क्रम_more_packets(sk, sk_queue, err,
+					      &समयo, last));
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(__skb_recv_datagram);
 
-struct sk_buff *skb_recv_datagram(struct sock *sk, unsigned int flags,
-				  int noblock, int *err)
-{
-	int off = 0;
+काष्ठा sk_buff *skb_recv_datagram(काष्ठा sock *sk, अचिन्हित पूर्णांक flags,
+				  पूर्णांक noblock, पूर्णांक *err)
+अणु
+	पूर्णांक off = 0;
 
-	return __skb_recv_datagram(sk, &sk->sk_receive_queue,
+	वापस __skb_recv_datagram(sk, &sk->sk_receive_queue,
 				   flags | (noblock ? MSG_DONTWAIT : 0),
 				   &off, err);
-}
+पूर्ण
 EXPORT_SYMBOL(skb_recv_datagram);
 
-void skb_free_datagram(struct sock *sk, struct sk_buff *skb)
-{
+व्योम skb_मुक्त_datagram(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	consume_skb(skb);
 	sk_mem_reclaim_partial(sk);
-}
-EXPORT_SYMBOL(skb_free_datagram);
+पूर्ण
+EXPORT_SYMBOL(skb_मुक्त_datagram);
 
-void __skb_free_datagram_locked(struct sock *sk, struct sk_buff *skb, int len)
-{
+व्योम __skb_मुक्त_datagram_locked(काष्ठा sock *sk, काष्ठा sk_buff *skb, पूर्णांक len)
+अणु
 	bool slow;
 
-	if (!skb_unref(skb)) {
+	अगर (!skb_unref(skb)) अणु
 		sk_peek_offset_bwd(sk, len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	slow = lock_sock_fast(sk);
 	sk_peek_offset_bwd(sk, len);
@@ -342,158 +343,158 @@ void __skb_free_datagram_locked(struct sock *sk, struct sk_buff *skb, int len)
 	sk_mem_reclaim_partial(sk);
 	unlock_sock_fast(sk, slow);
 
-	/* skb is now orphaned, can be freed outside of locked section */
-	__kfree_skb(skb);
-}
-EXPORT_SYMBOL(__skb_free_datagram_locked);
+	/* skb is now orphaned, can be मुक्तd outside of locked section */
+	__kमुक्त_skb(skb);
+पूर्ण
+EXPORT_SYMBOL(__skb_मुक्त_datagram_locked);
 
-int __sk_queue_drop_skb(struct sock *sk, struct sk_buff_head *sk_queue,
-			struct sk_buff *skb, unsigned int flags,
-			void (*destructor)(struct sock *sk,
-					   struct sk_buff *skb))
-{
-	int err = 0;
+पूर्णांक __sk_queue_drop_skb(काष्ठा sock *sk, काष्ठा sk_buff_head *sk_queue,
+			काष्ठा sk_buff *skb, अचिन्हित पूर्णांक flags,
+			व्योम (*deकाष्ठाor)(काष्ठा sock *sk,
+					   काष्ठा sk_buff *skb))
+अणु
+	पूर्णांक err = 0;
 
-	if (flags & MSG_PEEK) {
+	अगर (flags & MSG_PEEK) अणु
 		err = -ENOENT;
 		spin_lock_bh(&sk_queue->lock);
-		if (skb->next) {
+		अगर (skb->next) अणु
 			__skb_unlink(skb, sk_queue);
 			refcount_dec(&skb->users);
-			if (destructor)
-				destructor(sk, skb);
+			अगर (deकाष्ठाor)
+				deकाष्ठाor(sk, skb);
 			err = 0;
-		}
+		पूर्ण
 		spin_unlock_bh(&sk_queue->lock);
-	}
+	पूर्ण
 
 	atomic_inc(&sk->sk_drops);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(__sk_queue_drop_skb);
 
 /**
- *	skb_kill_datagram - Free a datagram skbuff forcibly
+ *	skb_समाप्त_datagram - Free a datagram skbuff क्रमcibly
  *	@sk: socket
  *	@skb: datagram skbuff
  *	@flags: MSG\_ flags
  *
- *	This function frees a datagram skbuff that was received by
+ *	This function मुक्तs a datagram skbuff that was received by
  *	skb_recv_datagram.  The flags argument must match the one
- *	used for skb_recv_datagram.
+ *	used क्रम skb_recv_datagram.
  *
  *	If the MSG_PEEK flag is set, and the packet is still on the
  *	receive queue of the socket, it will be taken off the queue
- *	before it is freed.
+ *	beक्रमe it is मुक्तd.
  *
  *	This function currently only disables BH when acquiring the
- *	sk_receive_queue lock.  Therefore it must not be used in a
+ *	sk_receive_queue lock.  Thereक्रमe it must not be used in a
  *	context where that lock is acquired in an IRQ context.
  *
- *	It returns 0 if the packet was removed by us.
+ *	It वापसs 0 अगर the packet was हटाओd by us.
  */
 
-int skb_kill_datagram(struct sock *sk, struct sk_buff *skb, unsigned int flags)
-{
-	int err = __sk_queue_drop_skb(sk, &sk->sk_receive_queue, skb, flags,
-				      NULL);
+पूर्णांक skb_समाप्त_datagram(काष्ठा sock *sk, काष्ठा sk_buff *skb, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक err = __sk_queue_drop_skb(sk, &sk->sk_receive_queue, skb, flags,
+				      शून्य);
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 	sk_mem_reclaim_partial(sk);
-	return err;
-}
-EXPORT_SYMBOL(skb_kill_datagram);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(skb_समाप्त_datagram);
 
-INDIRECT_CALLABLE_DECLARE(static size_t simple_copy_to_iter(const void *addr,
-						size_t bytes,
-						void *data __always_unused,
-						struct iov_iter *i));
+INसूचीECT_CALLABLE_DECLARE(अटल माप_प्रकार simple_copy_to_iter(स्थिर व्योम *addr,
+						माप_प्रकार bytes,
+						व्योम *data __always_unused,
+						काष्ठा iov_iter *i));
 
-static int __skb_datagram_iter(const struct sk_buff *skb, int offset,
-			       struct iov_iter *to, int len, bool fault_short,
-			       size_t (*cb)(const void *, size_t, void *,
-					    struct iov_iter *), void *data)
-{
-	int start = skb_headlen(skb);
-	int i, copy = start - offset, start_off = offset, n;
-	struct sk_buff *frag_iter;
+अटल पूर्णांक __skb_datagram_iter(स्थिर काष्ठा sk_buff *skb, पूर्णांक offset,
+			       काष्ठा iov_iter *to, पूर्णांक len, bool fault_लघु,
+			       माप_प्रकार (*cb)(स्थिर व्योम *, माप_प्रकार, व्योम *,
+					    काष्ठा iov_iter *), व्योम *data)
+अणु
+	पूर्णांक start = skb_headlen(skb);
+	पूर्णांक i, copy = start - offset, start_off = offset, n;
+	काष्ठा sk_buff *frag_iter;
 
 	/* Copy header. */
-	if (copy > 0) {
-		if (copy > len)
+	अगर (copy > 0) अणु
+		अगर (copy > len)
 			copy = len;
-		n = INDIRECT_CALL_1(cb, simple_copy_to_iter,
+		n = INसूचीECT_CALL_1(cb, simple_copy_to_iter,
 				    skb->data + offset, copy, data, to);
 		offset += n;
-		if (n != copy)
-			goto short_copy;
-		if ((len -= copy) == 0)
-			return 0;
-	}
+		अगर (n != copy)
+			जाओ लघु_copy;
+		अगर ((len -= copy) == 0)
+			वापस 0;
+	पूर्ण
 
-	/* Copy paged appendix. Hmm... why does this look so complicated? */
-	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
-		int end;
-		const skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
+	/* Copy paged appendix. Hmm... why करोes this look so complicated? */
+	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
+		पूर्णांक end;
+		स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 		WARN_ON(start > offset + len);
 
 		end = start + skb_frag_size(frag);
-		if ((copy = end - offset) > 0) {
-			struct page *page = skb_frag_page(frag);
+		अगर ((copy = end - offset) > 0) अणु
+			काष्ठा page *page = skb_frag_page(frag);
 			u8 *vaddr = kmap(page);
 
-			if (copy > len)
+			अगर (copy > len)
 				copy = len;
-			n = INDIRECT_CALL_1(cb, simple_copy_to_iter,
+			n = INसूचीECT_CALL_1(cb, simple_copy_to_iter,
 					vaddr + skb_frag_off(frag) + offset - start,
 					copy, data, to);
 			kunmap(page);
 			offset += n;
-			if (n != copy)
-				goto short_copy;
-			if (!(len -= copy))
-				return 0;
-		}
+			अगर (n != copy)
+				जाओ लघु_copy;
+			अगर (!(len -= copy))
+				वापस 0;
+		पूर्ण
 		start = end;
-	}
+	पूर्ण
 
-	skb_walk_frags(skb, frag_iter) {
-		int end;
+	skb_walk_frags(skb, frag_iter) अणु
+		पूर्णांक end;
 
 		WARN_ON(start > offset + len);
 
 		end = start + frag_iter->len;
-		if ((copy = end - offset) > 0) {
-			if (copy > len)
+		अगर ((copy = end - offset) > 0) अणु
+			अगर (copy > len)
 				copy = len;
-			if (__skb_datagram_iter(frag_iter, offset - start,
-						to, copy, fault_short, cb, data))
-				goto fault;
-			if ((len -= copy) == 0)
-				return 0;
+			अगर (__skb_datagram_iter(frag_iter, offset - start,
+						to, copy, fault_लघु, cb, data))
+				जाओ fault;
+			अगर ((len -= copy) == 0)
+				वापस 0;
 			offset += copy;
-		}
+		पूर्ण
 		start = end;
-	}
-	if (!len)
-		return 0;
+	पूर्ण
+	अगर (!len)
+		वापस 0;
 
 	/* This is not really a user copy fault, but rather someone
 	 * gave us a bogus length on the skb.  We should probably
-	 * print a warning here as it may indicate a kernel bug.
+	 * prपूर्णांक a warning here as it may indicate a kernel bug.
 	 */
 
 fault:
 	iov_iter_revert(to, offset - start_off);
-	return -EFAULT;
+	वापस -EFAULT;
 
-short_copy:
-	if (fault_short || iov_iter_count(to))
-		goto fault;
+लघु_copy:
+	अगर (fault_लघु || iov_iter_count(to))
+		जाओ fault;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	skb_copy_and_hash_datagram_iter - Copy datagram to an iovec iterator
@@ -504,20 +505,20 @@ short_copy:
  *	@len: amount of data to copy from buffer to iovec
  *      @hash: hash request to update
  */
-int skb_copy_and_hash_datagram_iter(const struct sk_buff *skb, int offset,
-			   struct iov_iter *to, int len,
-			   struct ahash_request *hash)
-{
-	return __skb_datagram_iter(skb, offset, to, len, true,
+पूर्णांक skb_copy_and_hash_datagram_iter(स्थिर काष्ठा sk_buff *skb, पूर्णांक offset,
+			   काष्ठा iov_iter *to, पूर्णांक len,
+			   काष्ठा ahash_request *hash)
+अणु
+	वापस __skb_datagram_iter(skb, offset, to, len, true,
 			hash_and_copy_to_iter, hash);
-}
+पूर्ण
 EXPORT_SYMBOL(skb_copy_and_hash_datagram_iter);
 
-static size_t simple_copy_to_iter(const void *addr, size_t bytes,
-		void *data __always_unused, struct iov_iter *i)
-{
-	return copy_to_iter(addr, bytes, i);
-}
+अटल माप_प्रकार simple_copy_to_iter(स्थिर व्योम *addr, माप_प्रकार bytes,
+		व्योम *data __always_unused, काष्ठा iov_iter *i)
+अणु
+	वापस copy_to_iter(addr, bytes, i);
+पूर्ण
 
 /**
  *	skb_copy_datagram_iter - Copy a datagram to an iovec iterator.
@@ -526,13 +527,13 @@ static size_t simple_copy_to_iter(const void *addr, size_t bytes,
  *	@to: iovec iterator to copy to
  *	@len: amount of data to copy from buffer to iovec
  */
-int skb_copy_datagram_iter(const struct sk_buff *skb, int offset,
-			   struct iov_iter *to, int len)
-{
+पूर्णांक skb_copy_datagram_iter(स्थिर काष्ठा sk_buff *skb, पूर्णांक offset,
+			   काष्ठा iov_iter *to, पूर्णांक len)
+अणु
 	trace_skb_copy_datagram_iovec(skb, len);
-	return __skb_datagram_iter(skb, offset, to, len, false,
-			simple_copy_to_iter, NULL);
-}
+	वापस __skb_datagram_iter(skb, offset, to, len, false,
+			simple_copy_to_iter, शून्य);
+पूर्ण
 EXPORT_SYMBOL(skb_copy_datagram_iter);
 
 /**
@@ -544,98 +545,98 @@ EXPORT_SYMBOL(skb_copy_datagram_iter);
  *
  *	Returns 0 or -EFAULT.
  */
-int skb_copy_datagram_from_iter(struct sk_buff *skb, int offset,
-				 struct iov_iter *from,
-				 int len)
-{
-	int start = skb_headlen(skb);
-	int i, copy = start - offset;
-	struct sk_buff *frag_iter;
+पूर्णांक skb_copy_datagram_from_iter(काष्ठा sk_buff *skb, पूर्णांक offset,
+				 काष्ठा iov_iter *from,
+				 पूर्णांक len)
+अणु
+	पूर्णांक start = skb_headlen(skb);
+	पूर्णांक i, copy = start - offset;
+	काष्ठा sk_buff *frag_iter;
 
 	/* Copy header. */
-	if (copy > 0) {
-		if (copy > len)
+	अगर (copy > 0) अणु
+		अगर (copy > len)
 			copy = len;
-		if (copy_from_iter(skb->data + offset, copy, from) != copy)
-			goto fault;
-		if ((len -= copy) == 0)
-			return 0;
+		अगर (copy_from_iter(skb->data + offset, copy, from) != copy)
+			जाओ fault;
+		अगर ((len -= copy) == 0)
+			वापस 0;
 		offset += copy;
-	}
+	पूर्ण
 
-	/* Copy paged appendix. Hmm... why does this look so complicated? */
-	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
-		int end;
-		const skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
+	/* Copy paged appendix. Hmm... why करोes this look so complicated? */
+	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
+		पूर्णांक end;
+		स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 		WARN_ON(start > offset + len);
 
 		end = start + skb_frag_size(frag);
-		if ((copy = end - offset) > 0) {
-			size_t copied;
+		अगर ((copy = end - offset) > 0) अणु
+			माप_प्रकार copied;
 
-			if (copy > len)
+			अगर (copy > len)
 				copy = len;
 			copied = copy_page_from_iter(skb_frag_page(frag),
 					  skb_frag_off(frag) + offset - start,
 					  copy, from);
-			if (copied != copy)
-				goto fault;
+			अगर (copied != copy)
+				जाओ fault;
 
-			if (!(len -= copy))
-				return 0;
+			अगर (!(len -= copy))
+				वापस 0;
 			offset += copy;
-		}
+		पूर्ण
 		start = end;
-	}
+	पूर्ण
 
-	skb_walk_frags(skb, frag_iter) {
-		int end;
+	skb_walk_frags(skb, frag_iter) अणु
+		पूर्णांक end;
 
 		WARN_ON(start > offset + len);
 
 		end = start + frag_iter->len;
-		if ((copy = end - offset) > 0) {
-			if (copy > len)
+		अगर ((copy = end - offset) > 0) अणु
+			अगर (copy > len)
 				copy = len;
-			if (skb_copy_datagram_from_iter(frag_iter,
+			अगर (skb_copy_datagram_from_iter(frag_iter,
 							offset - start,
 							from, copy))
-				goto fault;
-			if ((len -= copy) == 0)
-				return 0;
+				जाओ fault;
+			अगर ((len -= copy) == 0)
+				वापस 0;
 			offset += copy;
-		}
+		पूर्ण
 		start = end;
-	}
-	if (!len)
-		return 0;
+	पूर्ण
+	अगर (!len)
+		वापस 0;
 
 fault:
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 EXPORT_SYMBOL(skb_copy_datagram_from_iter);
 
-int __zerocopy_sg_from_iter(struct sock *sk, struct sk_buff *skb,
-			    struct iov_iter *from, size_t length)
-{
-	int frag = skb_shinfo(skb)->nr_frags;
+पूर्णांक __zerocopy_sg_from_iter(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+			    काष्ठा iov_iter *from, माप_प्रकार length)
+अणु
+	पूर्णांक frag = skb_shinfo(skb)->nr_frags;
 
-	while (length && iov_iter_count(from)) {
-		struct page *pages[MAX_SKB_FRAGS];
-		struct page *last_head = NULL;
-		size_t start;
-		ssize_t copied;
-		unsigned long truesize;
-		int refs, n = 0;
+	जबतक (length && iov_iter_count(from)) अणु
+		काष्ठा page *pages[MAX_SKB_FRAGS];
+		काष्ठा page *last_head = शून्य;
+		माप_प्रकार start;
+		sमाप_प्रकार copied;
+		अचिन्हित दीर्घ truesize;
+		पूर्णांक refs, n = 0;
 
-		if (frag == MAX_SKB_FRAGS)
-			return -EMSGSIZE;
+		अगर (frag == MAX_SKB_FRAGS)
+			वापस -EMSGSIZE;
 
 		copied = iov_iter_get_pages(from, pages, length,
 					    MAX_SKB_FRAGS - frag, &start);
-		if (copied < 0)
-			return -EFAULT;
+		अगर (copied < 0)
+			वापस -EFAULT;
 
 		iov_iter_advance(from, copied);
 		length -= copied;
@@ -644,46 +645,46 @@ int __zerocopy_sg_from_iter(struct sock *sk, struct sk_buff *skb,
 		skb->data_len += copied;
 		skb->len += copied;
 		skb->truesize += truesize;
-		if (sk && sk->sk_type == SOCK_STREAM) {
+		अगर (sk && sk->sk_type == SOCK_STREAM) अणु
 			sk_wmem_queued_add(sk, truesize);
-			sk_mem_charge(sk, truesize);
-		} else {
+			sk_mem_अक्षरge(sk, truesize);
+		पूर्ण अन्यथा अणु
 			refcount_add(truesize, &skb->sk->sk_wmem_alloc);
-		}
-		for (refs = 0; copied != 0; start = 0) {
-			int size = min_t(int, copied, PAGE_SIZE - start);
-			struct page *head = compound_head(pages[n]);
+		पूर्ण
+		क्रम (refs = 0; copied != 0; start = 0) अणु
+			पूर्णांक size = min_t(पूर्णांक, copied, PAGE_SIZE - start);
+			काष्ठा page *head = compound_head(pages[n]);
 
 			start += (pages[n] - head) << PAGE_SHIFT;
 			copied -= size;
 			n++;
-			if (frag) {
+			अगर (frag) अणु
 				skb_frag_t *last = &skb_shinfo(skb)->frags[frag - 1];
 
-				if (head == skb_frag_page(last) &&
-				    start == skb_frag_off(last) + skb_frag_size(last)) {
+				अगर (head == skb_frag_page(last) &&
+				    start == skb_frag_off(last) + skb_frag_size(last)) अणु
 					skb_frag_size_add(last, size);
 					/* We combined this page, we need to release
 					 * a reference. Since compound pages refcount
 					 * is shared among many pages, batch the refcount
-					 * adjustments to limit false sharing.
+					 * adjusपंचांगents to limit false sharing.
 					 */
 					last_head = head;
 					refs++;
-					continue;
-				}
-			}
-			if (refs) {
+					जारी;
+				पूर्ण
+			पूर्ण
+			अगर (refs) अणु
 				page_ref_sub(last_head, refs);
 				refs = 0;
-			}
+			पूर्ण
 			skb_fill_page_desc(skb, frag++, head, start, size);
-		}
-		if (refs)
+		पूर्ण
+		अगर (refs)
 			page_ref_sub(last_head, refs);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(__zerocopy_sg_from_iter);
 
 /**
@@ -696,16 +697,16 @@ EXPORT_SYMBOL(__zerocopy_sg_from_iter);
  *
  *	Returns 0, -EFAULT or -EMSGSIZE.
  */
-int zerocopy_sg_from_iter(struct sk_buff *skb, struct iov_iter *from)
-{
-	int copy = min_t(int, skb_headlen(skb), iov_iter_count(from));
+पूर्णांक zerocopy_sg_from_iter(काष्ठा sk_buff *skb, काष्ठा iov_iter *from)
+अणु
+	पूर्णांक copy = min_t(पूर्णांक, skb_headlen(skb), iov_iter_count(from));
 
 	/* copy up to skb headlen */
-	if (skb_copy_datagram_from_iter(skb, 0, from, copy))
-		return -EFAULT;
+	अगर (skb_copy_datagram_from_iter(skb, 0, from, copy))
+		वापस -EFAULT;
 
-	return __zerocopy_sg_from_iter(NULL, skb, from, ~0U);
-}
+	वापस __zerocopy_sg_from_iter(शून्य, skb, from, ~0U);
+पूर्ण
 EXPORT_SYMBOL(zerocopy_sg_from_iter);
 
 /**
@@ -715,23 +716,23 @@ EXPORT_SYMBOL(zerocopy_sg_from_iter);
  *	@offset: offset in the buffer to start copying from
  *	@to: iovec iterator to copy to
  *	@len: amount of data to copy from buffer to iovec
- *      @csump: checksum pointer
+ *      @csump: checksum poपूर्णांकer
  */
-static int skb_copy_and_csum_datagram(const struct sk_buff *skb, int offset,
-				      struct iov_iter *to, int len,
+अटल पूर्णांक skb_copy_and_csum_datagram(स्थिर काष्ठा sk_buff *skb, पूर्णांक offset,
+				      काष्ठा iov_iter *to, पूर्णांक len,
 				      __wsum *csump)
-{
-	struct csum_state csdata = { .csum = *csump };
-	int ret;
+अणु
+	काष्ठा csum_state csdata = अणु .csum = *csump पूर्ण;
+	पूर्णांक ret;
 
 	ret = __skb_datagram_iter(skb, offset, to, len, true,
 				  csum_and_copy_to_iter, &csdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	*csump = csdata.csum;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	skb_copy_and_csum_datagram_msg - Copy and checksum skb to user iovec.
@@ -745,93 +746,93 @@ static int skb_copy_and_csum_datagram(const struct sk_buff *skb, int offset,
  *		 -EINVAL - checksum failure.
  *		 -EFAULT - fault during copy.
  */
-int skb_copy_and_csum_datagram_msg(struct sk_buff *skb,
-				   int hlen, struct msghdr *msg)
-{
+पूर्णांक skb_copy_and_csum_datagram_msg(काष्ठा sk_buff *skb,
+				   पूर्णांक hlen, काष्ठा msghdr *msg)
+अणु
 	__wsum csum;
-	int chunk = skb->len - hlen;
+	पूर्णांक chunk = skb->len - hlen;
 
-	if (!chunk)
-		return 0;
+	अगर (!chunk)
+		वापस 0;
 
-	if (msg_data_left(msg) < chunk) {
-		if (__skb_checksum_complete(skb))
-			return -EINVAL;
-		if (skb_copy_datagram_msg(skb, hlen, msg, chunk))
-			goto fault;
-	} else {
+	अगर (msg_data_left(msg) < chunk) अणु
+		अगर (__skb_checksum_complete(skb))
+			वापस -EINVAL;
+		अगर (skb_copy_datagram_msg(skb, hlen, msg, chunk))
+			जाओ fault;
+	पूर्ण अन्यथा अणु
 		csum = csum_partial(skb->data, hlen, skb->csum);
-		if (skb_copy_and_csum_datagram(skb, hlen, &msg->msg_iter,
+		अगर (skb_copy_and_csum_datagram(skb, hlen, &msg->msg_iter,
 					       chunk, &csum))
-			goto fault;
+			जाओ fault;
 
-		if (csum_fold(csum)) {
+		अगर (csum_fold(csum)) अणु
 			iov_iter_revert(&msg->msg_iter, chunk);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (unlikely(skb->ip_summed == CHECKSUM_COMPLETE) &&
+		अगर (unlikely(skb->ip_summed == CHECKSUM_COMPLETE) &&
 		    !skb->csum_complete_sw)
-			netdev_rx_csum_fault(NULL, skb);
-	}
-	return 0;
+			netdev_rx_csum_fault(शून्य, skb);
+	पूर्ण
+	वापस 0;
 fault:
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 EXPORT_SYMBOL(skb_copy_and_csum_datagram_msg);
 
 /**
  * 	datagram_poll - generic datagram poll
- *	@file: file struct
+ *	@file: file काष्ठा
  *	@sock: socket
- *	@wait: poll table
+ *	@रुको: poll table
  *
  *	Datagram poll: Again totally generic. This also handles
  *	sequenced packet sockets providing the socket receive queue
- *	is only ever holding data ready to receive.
+ *	is only ever holding data पढ़ोy to receive.
  *
- *	Note: when you *don't* use this routine for this protocol,
- *	and you use a different write policy from sock_writeable()
- *	then please supply your own write_space callback.
+ *	Note: when you *करोn't* use this routine क्रम this protocol,
+ *	and you use a dअगरferent ग_लिखो policy from sock_ग_लिखोable()
+ *	then please supply your own ग_लिखो_space callback.
  */
-__poll_t datagram_poll(struct file *file, struct socket *sock,
-			   poll_table *wait)
-{
-	struct sock *sk = sock->sk;
+__poll_t datagram_poll(काष्ठा file *file, काष्ठा socket *sock,
+			   poll_table *रुको)
+अणु
+	काष्ठा sock *sk = sock->sk;
 	__poll_t mask;
 
-	sock_poll_wait(file, sock, wait);
+	sock_poll_रुको(file, sock, रुको);
 	mask = 0;
 
 	/* exceptional events? */
-	if (sk->sk_err || !skb_queue_empty_lockless(&sk->sk_error_queue))
+	अगर (sk->sk_err || !skb_queue_empty_lockless(&sk->sk_error_queue))
 		mask |= EPOLLERR |
 			(sock_flag(sk, SOCK_SELECT_ERR_QUEUE) ? EPOLLPRI : 0);
 
-	if (sk->sk_shutdown & RCV_SHUTDOWN)
+	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
 		mask |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
-	if (sk->sk_shutdown == SHUTDOWN_MASK)
+	अगर (sk->sk_shutकरोwn == SHUTDOWN_MASK)
 		mask |= EPOLLHUP;
 
-	/* readable? */
-	if (!skb_queue_empty_lockless(&sk->sk_receive_queue))
+	/* पढ़ोable? */
+	अगर (!skb_queue_empty_lockless(&sk->sk_receive_queue))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	/* Connection-based need to check for termination and startup */
-	if (connection_based(sk)) {
-		if (sk->sk_state == TCP_CLOSE)
+	/* Connection-based need to check क्रम termination and startup */
+	अगर (connection_based(sk)) अणु
+		अगर (sk->sk_state == TCP_CLOSE)
 			mask |= EPOLLHUP;
 		/* connection hasn't started yet? */
-		if (sk->sk_state == TCP_SYN_SENT)
-			return mask;
-	}
+		अगर (sk->sk_state == TCP_SYN_SENT)
+			वापस mask;
+	पूर्ण
 
 	/* writable? */
-	if (sock_writeable(sk))
+	अगर (sock_ग_लिखोable(sk))
 		mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
-	else
+	अन्यथा
 		sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 EXPORT_SYMBOL(datagram_poll);

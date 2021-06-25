@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,114 +20,114 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "nouveau_svm.h"
-#include "nouveau_drv.h"
-#include "nouveau_chan.h"
-#include "nouveau_dmem.h"
+#समावेश "nouveau_svm.h"
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_chan.h"
+#समावेश "nouveau_dmem.h"
 
-#include <nvif/notify.h>
-#include <nvif/object.h>
-#include <nvif/vmm.h>
+#समावेश <nvअगर/notअगरy.h>
+#समावेश <nvअगर/object.h>
+#समावेश <nvअगर/vmm.h>
 
-#include <nvif/class.h>
-#include <nvif/clb069.h>
-#include <nvif/ifc00d.h>
+#समावेश <nvअगर/class.h>
+#समावेश <nvअगर/clb069.h>
+#समावेश <nvअगर/अगरc00d.h>
 
-#include <linux/sched/mm.h>
-#include <linux/sort.h>
-#include <linux/hmm.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/hmm.h>
 
-struct nouveau_svm {
-	struct nouveau_drm *drm;
-	struct mutex mutex;
-	struct list_head inst;
+काष्ठा nouveau_svm अणु
+	काष्ठा nouveau_drm *drm;
+	काष्ठा mutex mutex;
+	काष्ठा list_head inst;
 
-	struct nouveau_svm_fault_buffer {
-		int id;
-		struct nvif_object object;
+	काष्ठा nouveau_svm_fault_buffer अणु
+		पूर्णांक id;
+		काष्ठा nvअगर_object object;
 		u32 entries;
 		u32 getaddr;
 		u32 putaddr;
 		u32 get;
 		u32 put;
-		struct nvif_notify notify;
+		काष्ठा nvअगर_notअगरy notअगरy;
 
-		struct nouveau_svm_fault {
+		काष्ठा nouveau_svm_fault अणु
 			u64 inst;
 			u64 addr;
-			u64 time;
+			u64 समय;
 			u32 engine;
 			u8  gpc;
 			u8  hub;
 			u8  access;
 			u8  client;
 			u8  fault;
-			struct nouveau_svmm *svmm;
-		} **fault;
-		int fault_nr;
-	} buffer[1];
-};
+			काष्ठा nouveau_svmm *svmm;
+		पूर्ण **fault;
+		पूर्णांक fault_nr;
+	पूर्ण buffer[1];
+पूर्ण;
 
-#define SVM_DBG(s,f,a...) NV_DEBUG((s)->drm, "svm: "f"\n", ##a)
-#define SVM_ERR(s,f,a...) NV_WARN((s)->drm, "svm: "f"\n", ##a)
+#घोषणा SVM_DBG(s,f,a...) NV_DEBUG((s)->drm, "svm: "f"\n", ##a)
+#घोषणा SVM_ERR(s,f,a...) NV_WARN((s)->drm, "svm: "f"\n", ##a)
 
-struct nouveau_pfnmap_args {
-	struct nvif_ioctl_v0 i;
-	struct nvif_ioctl_mthd_v0 m;
-	struct nvif_vmm_pfnmap_v0 p;
-};
+काष्ठा nouveau_pfnmap_args अणु
+	काष्ठा nvअगर_ioctl_v0 i;
+	काष्ठा nvअगर_ioctl_mthd_v0 m;
+	काष्ठा nvअगर_vmm_pfnmap_v0 p;
+पूर्ण;
 
-struct nouveau_ivmm {
-	struct nouveau_svmm *svmm;
+काष्ठा nouveau_ivmm अणु
+	काष्ठा nouveau_svmm *svmm;
 	u64 inst;
-	struct list_head head;
-};
+	काष्ठा list_head head;
+पूर्ण;
 
-static struct nouveau_ivmm *
-nouveau_ivmm_find(struct nouveau_svm *svm, u64 inst)
-{
-	struct nouveau_ivmm *ivmm;
-	list_for_each_entry(ivmm, &svm->inst, head) {
-		if (ivmm->inst == inst)
-			return ivmm;
-	}
-	return NULL;
-}
+अटल काष्ठा nouveau_ivmm *
+nouveau_ivmm_find(काष्ठा nouveau_svm *svm, u64 inst)
+अणु
+	काष्ठा nouveau_ivmm *ivmm;
+	list_क्रम_each_entry(ivmm, &svm->inst, head) अणु
+		अगर (ivmm->inst == inst)
+			वापस ivmm;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-#define SVMM_DBG(s,f,a...)                                                     \
+#घोषणा SVMM_DBG(s,f,a...)                                                     \
 	NV_DEBUG((s)->vmm->cli->drm, "svm-%p: "f"\n", (s), ##a)
-#define SVMM_ERR(s,f,a...)                                                     \
+#घोषणा SVMM_ERR(s,f,a...)                                                     \
 	NV_WARN((s)->vmm->cli->drm, "svm-%p: "f"\n", (s), ##a)
 
-int
-nouveau_svmm_bind(struct drm_device *dev, void *data,
-		  struct drm_file *file_priv)
-{
-	struct nouveau_cli *cli = nouveau_cli(file_priv);
-	struct drm_nouveau_svm_bind *args = data;
-	unsigned target, cmd, priority;
-	unsigned long addr, end;
-	struct mm_struct *mm;
+पूर्णांक
+nouveau_svmm_bind(काष्ठा drm_device *dev, व्योम *data,
+		  काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(file_priv);
+	काष्ठा drm_nouveau_svm_bind *args = data;
+	अचिन्हित target, cmd, priority;
+	अचिन्हित दीर्घ addr, end;
+	काष्ठा mm_काष्ठा *mm;
 
-	args->va_start &= PAGE_MASK;
-	args->va_end = ALIGN(args->va_end, PAGE_SIZE);
+	args->बहु_शुरू &= PAGE_MASK;
+	args->बहु_पूर्ण = ALIGN(args->बहु_पूर्ण, PAGE_SIZE);
 
 	/* Sanity check arguments */
-	if (args->reserved0 || args->reserved1)
-		return -EINVAL;
-	if (args->header & (~NOUVEAU_SVM_BIND_VALID_MASK))
-		return -EINVAL;
-	if (args->va_start >= args->va_end)
-		return -EINVAL;
+	अगर (args->reserved0 || args->reserved1)
+		वापस -EINVAL;
+	अगर (args->header & (~NOUVEAU_SVM_BIND_VALID_MASK))
+		वापस -EINVAL;
+	अगर (args->बहु_शुरू >= args->बहु_पूर्ण)
+		वापस -EINVAL;
 
 	cmd = args->header >> NOUVEAU_SVM_BIND_COMMAND_SHIFT;
 	cmd &= NOUVEAU_SVM_BIND_COMMAND_MASK;
-	switch (cmd) {
-	case NOUVEAU_SVM_BIND_COMMAND__MIGRATE:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (cmd) अणु
+	हाल NOUVEAU_SVM_BIND_COMMAND__MIGRATE:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	priority = args->header >> NOUVEAU_SVM_BIND_PRIORITY_SHIFT;
 	priority &= NOUVEAU_SVM_BIND_PRIORITY_MASK;
@@ -134,205 +135,205 @@ nouveau_svmm_bind(struct drm_device *dev, void *data,
 	/* FIXME support CPU target ie all target value < GPU_VRAM */
 	target = args->header >> NOUVEAU_SVM_BIND_TARGET_SHIFT;
 	target &= NOUVEAU_SVM_BIND_TARGET_MASK;
-	switch (target) {
-	case NOUVEAU_SVM_BIND_TARGET__GPU_VRAM:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (target) अणु
+	हाल NOUVEAU_SVM_BIND_TARGET__GPU_VRAM:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * FIXME: For now refuse non 0 stride, we need to change the migrate
-	 * kernel function to handle stride to avoid to create a mess within
+	 * kernel function to handle stride to aव्योम to create a mess within
 	 * each device driver.
 	 */
-	if (args->stride)
-		return -EINVAL;
+	अगर (args->stride)
+		वापस -EINVAL;
 
 	/*
-	 * Ok we are ask to do something sane, for now we only support migrate
-	 * commands but we will add things like memory policy (what to do on
+	 * Ok we are ask to करो something sane, क्रम now we only support migrate
+	 * commands but we will add things like memory policy (what to करो on
 	 * page fault) and maybe some other commands.
 	 */
 
 	mm = get_task_mm(current);
-	mmap_read_lock(mm);
+	mmap_पढ़ो_lock(mm);
 
-	if (!cli->svm.svmm) {
-		mmap_read_unlock(mm);
-		return -EINVAL;
-	}
+	अगर (!cli->svm.svmm) अणु
+		mmap_पढ़ो_unlock(mm);
+		वापस -EINVAL;
+	पूर्ण
 
-	for (addr = args->va_start, end = args->va_end; addr < end;) {
-		struct vm_area_struct *vma;
-		unsigned long next;
+	क्रम (addr = args->बहु_शुरू, end = args->बहु_पूर्ण; addr < end;) अणु
+		काष्ठा vm_area_काष्ठा *vma;
+		अचिन्हित दीर्घ next;
 
-		vma = find_vma_intersection(mm, addr, end);
-		if (!vma)
-			break;
+		vma = find_vma_पूर्णांकersection(mm, addr, end);
+		अगर (!vma)
+			अवरोध;
 
 		addr = max(addr, vma->vm_start);
 		next = min(vma->vm_end, end);
-		/* This is a best effort so we ignore errors */
+		/* This is a best efक्रमt so we ignore errors */
 		nouveau_dmem_migrate_vma(cli->drm, cli->svm.svmm, vma, addr,
 					 next);
 		addr = next;
-	}
+	पूर्ण
 
 	/*
 	 * FIXME Return the number of page we have migrated, again we need to
-	 * update the migrate API to return that information so that we can
+	 * update the migrate API to वापस that inक्रमmation so that we can
 	 * report it to user space.
 	 */
 	args->result = 0;
 
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 	mmput(mm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Unlink channel instance from SVMM. */
-void
-nouveau_svmm_part(struct nouveau_svmm *svmm, u64 inst)
-{
-	struct nouveau_ivmm *ivmm;
-	if (svmm) {
+व्योम
+nouveau_svmm_part(काष्ठा nouveau_svmm *svmm, u64 inst)
+अणु
+	काष्ठा nouveau_ivmm *ivmm;
+	अगर (svmm) अणु
 		mutex_lock(&svmm->vmm->cli->drm->svm->mutex);
 		ivmm = nouveau_ivmm_find(svmm->vmm->cli->drm->svm, inst);
-		if (ivmm) {
+		अगर (ivmm) अणु
 			list_del(&ivmm->head);
-			kfree(ivmm);
-		}
+			kमुक्त(ivmm);
+		पूर्ण
 		mutex_unlock(&svmm->vmm->cli->drm->svm->mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Link channel instance to SVMM. */
-int
-nouveau_svmm_join(struct nouveau_svmm *svmm, u64 inst)
-{
-	struct nouveau_ivmm *ivmm;
-	if (svmm) {
-		if (!(ivmm = kmalloc(sizeof(*ivmm), GFP_KERNEL)))
-			return -ENOMEM;
+पूर्णांक
+nouveau_svmm_join(काष्ठा nouveau_svmm *svmm, u64 inst)
+अणु
+	काष्ठा nouveau_ivmm *ivmm;
+	अगर (svmm) अणु
+		अगर (!(ivmm = kदो_स्मृति(माप(*ivmm), GFP_KERNEL)))
+			वापस -ENOMEM;
 		ivmm->svmm = svmm;
 		ivmm->inst = inst;
 
 		mutex_lock(&svmm->vmm->cli->drm->svm->mutex);
 		list_add(&ivmm->head, &svmm->vmm->cli->drm->svm->inst);
 		mutex_unlock(&svmm->vmm->cli->drm->svm->mutex);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Invalidate SVMM address-range on GPU. */
-void
-nouveau_svmm_invalidate(struct nouveau_svmm *svmm, u64 start, u64 limit)
-{
-	if (limit > start) {
+व्योम
+nouveau_svmm_invalidate(काष्ठा nouveau_svmm *svmm, u64 start, u64 limit)
+अणु
+	अगर (limit > start) अणु
 		bool super = svmm->vmm->vmm.object.client->super;
 		svmm->vmm->vmm.object.client->super = true;
-		nvif_object_mthd(&svmm->vmm->vmm.object, NVIF_VMM_V0_PFNCLR,
-				 &(struct nvif_vmm_pfnclr_v0) {
+		nvअगर_object_mthd(&svmm->vmm->vmm.object, NVIF_VMM_V0_PFNCLR,
+				 &(काष्ठा nvअगर_vmm_pfnclr_v0) अणु
 					.addr = start,
 					.size = limit - start,
-				 }, sizeof(struct nvif_vmm_pfnclr_v0));
+				 पूर्ण, माप(काष्ठा nvअगर_vmm_pfnclr_v0));
 		svmm->vmm->vmm.object.client->super = super;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-nouveau_svmm_invalidate_range_start(struct mmu_notifier *mn,
-				    const struct mmu_notifier_range *update)
-{
-	struct nouveau_svmm *svmm =
-		container_of(mn, struct nouveau_svmm, notifier);
-	unsigned long start = update->start;
-	unsigned long limit = update->end;
+अटल पूर्णांक
+nouveau_svmm_invalidate_range_start(काष्ठा mmu_notअगरier *mn,
+				    स्थिर काष्ठा mmu_notअगरier_range *update)
+अणु
+	काष्ठा nouveau_svmm *svmm =
+		container_of(mn, काष्ठा nouveau_svmm, notअगरier);
+	अचिन्हित दीर्घ start = update->start;
+	अचिन्हित दीर्घ limit = update->end;
 
-	if (!mmu_notifier_range_blockable(update))
-		return -EAGAIN;
+	अगर (!mmu_notअगरier_range_blockable(update))
+		वापस -EAGAIN;
 
 	SVMM_DBG(svmm, "invalidate %016lx-%016lx", start, limit);
 
 	mutex_lock(&svmm->mutex);
-	if (unlikely(!svmm->vmm))
-		goto out;
+	अगर (unlikely(!svmm->vmm))
+		जाओ out;
 
 	/*
-	 * Ignore invalidation callbacks for device private pages since
+	 * Ignore invalidation callbacks क्रम device निजी pages since
 	 * the invalidation is handled as part of the migration process.
 	 */
-	if (update->event == MMU_NOTIFY_MIGRATE &&
+	अगर (update->event == MMU_NOTIFY_MIGRATE &&
 	    update->migrate_pgmap_owner == svmm->vmm->cli->drm->dev)
-		goto out;
+		जाओ out;
 
-	if (limit > svmm->unmanaged.start && start < svmm->unmanaged.limit) {
-		if (start < svmm->unmanaged.start) {
+	अगर (limit > svmm->unmanaged.start && start < svmm->unmanaged.limit) अणु
+		अगर (start < svmm->unmanaged.start) अणु
 			nouveau_svmm_invalidate(svmm, start,
 						svmm->unmanaged.limit);
-		}
+		पूर्ण
 		start = svmm->unmanaged.limit;
-	}
+	पूर्ण
 
 	nouveau_svmm_invalidate(svmm, start, limit);
 
 out:
 	mutex_unlock(&svmm->mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nouveau_svmm_free_notifier(struct mmu_notifier *mn)
-{
-	kfree(container_of(mn, struct nouveau_svmm, notifier));
-}
+अटल व्योम nouveau_svmm_मुक्त_notअगरier(काष्ठा mmu_notअगरier *mn)
+अणु
+	kमुक्त(container_of(mn, काष्ठा nouveau_svmm, notअगरier));
+पूर्ण
 
-static const struct mmu_notifier_ops nouveau_mn_ops = {
+अटल स्थिर काष्ठा mmu_notअगरier_ops nouveau_mn_ops = अणु
 	.invalidate_range_start = nouveau_svmm_invalidate_range_start,
-	.free_notifier = nouveau_svmm_free_notifier,
-};
+	.मुक्त_notअगरier = nouveau_svmm_मुक्त_notअगरier,
+पूर्ण;
 
-void
-nouveau_svmm_fini(struct nouveau_svmm **psvmm)
-{
-	struct nouveau_svmm *svmm = *psvmm;
-	if (svmm) {
+व्योम
+nouveau_svmm_fini(काष्ठा nouveau_svmm **psvmm)
+अणु
+	काष्ठा nouveau_svmm *svmm = *psvmm;
+	अगर (svmm) अणु
 		mutex_lock(&svmm->mutex);
-		svmm->vmm = NULL;
+		svmm->vmm = शून्य;
 		mutex_unlock(&svmm->mutex);
-		mmu_notifier_put(&svmm->notifier);
-		*psvmm = NULL;
-	}
-}
+		mmu_notअगरier_put(&svmm->notअगरier);
+		*psvmm = शून्य;
+	पूर्ण
+पूर्ण
 
-int
-nouveau_svmm_init(struct drm_device *dev, void *data,
-		  struct drm_file *file_priv)
-{
-	struct nouveau_cli *cli = nouveau_cli(file_priv);
-	struct nouveau_svmm *svmm;
-	struct drm_nouveau_svm_init *args = data;
-	int ret;
+पूर्णांक
+nouveau_svmm_init(काष्ठा drm_device *dev, व्योम *data,
+		  काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा nouveau_cli *cli = nouveau_cli(file_priv);
+	काष्ठा nouveau_svmm *svmm;
+	काष्ठा drm_nouveau_svm_init *args = data;
+	पूर्णांक ret;
 
-	/* We need to fail if svm is disabled */
-	if (!cli->drm->svm)
-		return -ENOSYS;
+	/* We need to fail अगर svm is disabled */
+	अगर (!cli->drm->svm)
+		वापस -ENOSYS;
 
-	/* Allocate tracking for SVM-enabled VMM. */
-	if (!(svmm = kzalloc(sizeof(*svmm), GFP_KERNEL)))
-		return -ENOMEM;
+	/* Allocate tracking क्रम SVM-enabled VMM. */
+	अगर (!(svmm = kzalloc(माप(*svmm), GFP_KERNEL)))
+		वापस -ENOMEM;
 	svmm->vmm = &cli->svm;
 	svmm->unmanaged.start = args->unmanaged_addr;
 	svmm->unmanaged.limit = args->unmanaged_addr + args->unmanaged_size;
 	mutex_init(&svmm->mutex);
 
-	/* Check that SVM isn't already enabled for the client. */
+	/* Check that SVM isn't alपढ़ोy enabled क्रम the client. */
 	mutex_lock(&cli->mutex);
-	if (cli->svm.cli) {
+	अगर (cli->svm.cli) अणु
 		ret = -EBUSY;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	/* Allocate a new GPU VMM that can support SVM (managed by the
 	 * client, with replayable faults enabled).
@@ -340,130 +341,130 @@ nouveau_svmm_init(struct drm_device *dev, void *data,
 	 * All future channel/memory allocations will make use of this
 	 * VMM instead of the standard one.
 	 */
-	ret = nvif_vmm_ctor(&cli->mmu, "svmVmm",
+	ret = nvअगर_vmm_ctor(&cli->mmu, "svmVmm",
 			    cli->vmm.vmm.object.oclass, true,
 			    args->unmanaged_addr, args->unmanaged_size,
-			    &(struct gp100_vmm_v0) {
+			    &(काष्ठा gp100_vmm_v0) अणु
 				.fault_replay = true,
-			    }, sizeof(struct gp100_vmm_v0), &cli->svm.vmm);
-	if (ret)
-		goto out_free;
+			    पूर्ण, माप(काष्ठा gp100_vmm_v0), &cli->svm.vmm);
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	mmap_write_lock(current->mm);
-	svmm->notifier.ops = &nouveau_mn_ops;
-	ret = __mmu_notifier_register(&svmm->notifier, current->mm);
-	if (ret)
-		goto out_mm_unlock;
-	/* Note, ownership of svmm transfers to mmu_notifier */
+	mmap_ग_लिखो_lock(current->mm);
+	svmm->notअगरier.ops = &nouveau_mn_ops;
+	ret = __mmu_notअगरier_रेजिस्टर(&svmm->notअगरier, current->mm);
+	अगर (ret)
+		जाओ out_mm_unlock;
+	/* Note, ownership of svmm transfers to mmu_notअगरier */
 
 	cli->svm.svmm = svmm;
 	cli->svm.cli = cli;
-	mmap_write_unlock(current->mm);
+	mmap_ग_लिखो_unlock(current->mm);
 	mutex_unlock(&cli->mutex);
-	return 0;
+	वापस 0;
 
 out_mm_unlock:
-	mmap_write_unlock(current->mm);
-out_free:
+	mmap_ग_लिखो_unlock(current->mm);
+out_मुक्त:
 	mutex_unlock(&cli->mutex);
-	kfree(svmm);
-	return ret;
-}
+	kमुक्त(svmm);
+	वापस ret;
+पूर्ण
 
-/* Issue fault replay for GPU to retry accesses that faulted previously. */
-static void
-nouveau_svm_fault_replay(struct nouveau_svm *svm)
-{
+/* Issue fault replay क्रम GPU to retry accesses that faulted previously. */
+अटल व्योम
+nouveau_svm_fault_replay(काष्ठा nouveau_svm *svm)
+अणु
 	SVM_DBG(svm, "replay");
-	WARN_ON(nvif_object_mthd(&svm->drm->client.vmm.vmm.object,
+	WARN_ON(nvअगर_object_mthd(&svm->drm->client.vmm.vmm.object,
 				 GP100_VMM_VN_FAULT_REPLAY,
-				 &(struct gp100_vmm_fault_replay_vn) {},
-				 sizeof(struct gp100_vmm_fault_replay_vn)));
-}
+				 &(काष्ठा gp100_vmm_fault_replay_vn) अणुपूर्ण,
+				 माप(काष्ठा gp100_vmm_fault_replay_vn)));
+पूर्ण
 
 /* Cancel a replayable fault that could not be handled.
  *
  * Cancelling the fault will trigger recovery to reset the engine
- * and kill the offending channel (ie. GPU SIGSEGV).
+ * and समाप्त the offending channel (ie. GPU संक_अंश).
  */
-static void
-nouveau_svm_fault_cancel(struct nouveau_svm *svm,
+अटल व्योम
+nouveau_svm_fault_cancel(काष्ठा nouveau_svm *svm,
 			 u64 inst, u8 hub, u8 gpc, u8 client)
-{
+अणु
 	SVM_DBG(svm, "cancel %016llx %d %02x %02x", inst, hub, gpc, client);
-	WARN_ON(nvif_object_mthd(&svm->drm->client.vmm.vmm.object,
+	WARN_ON(nvअगर_object_mthd(&svm->drm->client.vmm.vmm.object,
 				 GP100_VMM_VN_FAULT_CANCEL,
-				 &(struct gp100_vmm_fault_cancel_v0) {
+				 &(काष्ठा gp100_vmm_fault_cancel_v0) अणु
 					.hub = hub,
 					.gpc = gpc,
 					.client = client,
 					.inst = inst,
-				 }, sizeof(struct gp100_vmm_fault_cancel_v0)));
-}
+				 पूर्ण, माप(काष्ठा gp100_vmm_fault_cancel_v0)));
+पूर्ण
 
-static void
-nouveau_svm_fault_cancel_fault(struct nouveau_svm *svm,
-			       struct nouveau_svm_fault *fault)
-{
+अटल व्योम
+nouveau_svm_fault_cancel_fault(काष्ठा nouveau_svm *svm,
+			       काष्ठा nouveau_svm_fault *fault)
+अणु
 	nouveau_svm_fault_cancel(svm, fault->inst,
 				      fault->hub,
 				      fault->gpc,
 				      fault->client);
-}
+पूर्ण
 
-static int
-nouveau_svm_fault_cmp(const void *a, const void *b)
-{
-	const struct nouveau_svm_fault *fa = *(struct nouveau_svm_fault **)a;
-	const struct nouveau_svm_fault *fb = *(struct nouveau_svm_fault **)b;
-	int ret;
-	if ((ret = (s64)fa->inst - fb->inst))
-		return ret;
-	if ((ret = (s64)fa->addr - fb->addr))
-		return ret;
+अटल पूर्णांक
+nouveau_svm_fault_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	स्थिर काष्ठा nouveau_svm_fault *fa = *(काष्ठा nouveau_svm_fault **)a;
+	स्थिर काष्ठा nouveau_svm_fault *fb = *(काष्ठा nouveau_svm_fault **)b;
+	पूर्णांक ret;
+	अगर ((ret = (s64)fa->inst - fb->inst))
+		वापस ret;
+	अगर ((ret = (s64)fa->addr - fb->addr))
+		वापस ret;
 	/*XXX: atomic? */
-	return (fa->access == 0 || fa->access == 3) -
+	वापस (fa->access == 0 || fa->access == 3) -
 	       (fb->access == 0 || fb->access == 3);
-}
+पूर्ण
 
-static void
-nouveau_svm_fault_cache(struct nouveau_svm *svm,
-			struct nouveau_svm_fault_buffer *buffer, u32 offset)
-{
-	struct nvif_object *memory = &buffer->object;
-	const u32 instlo = nvif_rd32(memory, offset + 0x00);
-	const u32 insthi = nvif_rd32(memory, offset + 0x04);
-	const u32 addrlo = nvif_rd32(memory, offset + 0x08);
-	const u32 addrhi = nvif_rd32(memory, offset + 0x0c);
-	const u32 timelo = nvif_rd32(memory, offset + 0x10);
-	const u32 timehi = nvif_rd32(memory, offset + 0x14);
-	const u32 engine = nvif_rd32(memory, offset + 0x18);
-	const u32   info = nvif_rd32(memory, offset + 0x1c);
-	const u64   inst = (u64)insthi << 32 | instlo;
-	const u8     gpc = (info & 0x1f000000) >> 24;
-	const u8     hub = (info & 0x00100000) >> 20;
-	const u8  client = (info & 0x00007f00) >> 8;
-	struct nouveau_svm_fault *fault;
+अटल व्योम
+nouveau_svm_fault_cache(काष्ठा nouveau_svm *svm,
+			काष्ठा nouveau_svm_fault_buffer *buffer, u32 offset)
+अणु
+	काष्ठा nvअगर_object *memory = &buffer->object;
+	स्थिर u32 instlo = nvअगर_rd32(memory, offset + 0x00);
+	स्थिर u32 insthi = nvअगर_rd32(memory, offset + 0x04);
+	स्थिर u32 addrlo = nvअगर_rd32(memory, offset + 0x08);
+	स्थिर u32 addrhi = nvअगर_rd32(memory, offset + 0x0c);
+	स्थिर u32 समयlo = nvअगर_rd32(memory, offset + 0x10);
+	स्थिर u32 समयhi = nvअगर_rd32(memory, offset + 0x14);
+	स्थिर u32 engine = nvअगर_rd32(memory, offset + 0x18);
+	स्थिर u32   info = nvअगर_rd32(memory, offset + 0x1c);
+	स्थिर u64   inst = (u64)insthi << 32 | instlo;
+	स्थिर u8     gpc = (info & 0x1f000000) >> 24;
+	स्थिर u8     hub = (info & 0x00100000) >> 20;
+	स्थिर u8  client = (info & 0x00007f00) >> 8;
+	काष्ठा nouveau_svm_fault *fault;
 
-	//XXX: i think we're supposed to spin waiting */
-	if (WARN_ON(!(info & 0x80000000)))
-		return;
+	//XXX: i think we're supposed to spin रुकोing */
+	अगर (WARN_ON(!(info & 0x80000000)))
+		वापस;
 
-	nvif_mask(memory, offset + 0x1c, 0x80000000, 0x00000000);
+	nvअगर_mask(memory, offset + 0x1c, 0x80000000, 0x00000000);
 
-	if (!buffer->fault[buffer->fault_nr]) {
-		fault = kmalloc(sizeof(*fault), GFP_KERNEL);
-		if (WARN_ON(!fault)) {
+	अगर (!buffer->fault[buffer->fault_nr]) अणु
+		fault = kदो_स्मृति(माप(*fault), GFP_KERNEL);
+		अगर (WARN_ON(!fault)) अणु
 			nouveau_svm_fault_cancel(svm, inst, hub, gpc, client);
-			return;
-		}
+			वापस;
+		पूर्ण
 		buffer->fault[buffer->fault_nr] = fault;
-	}
+	पूर्ण
 
 	fault = buffer->fault[buffer->fault_nr++];
 	fault->inst   = inst;
 	fault->addr   = (u64)addrhi << 32 | addrlo;
-	fault->time   = (u64)timehi << 32 | timelo;
+	fault->समय   = (u64)समयhi << 32 | समयlo;
 	fault->engine = engine;
 	fault->gpc    = gpc;
 	fault->hub    = hub;
@@ -473,200 +474,200 @@ nouveau_svm_fault_cache(struct nouveau_svm *svm,
 
 	SVM_DBG(svm, "fault %016llx %016llx %02x",
 		fault->inst, fault->addr, fault->access);
-}
+पूर्ण
 
-struct svm_notifier {
-	struct mmu_interval_notifier notifier;
-	struct nouveau_svmm *svmm;
-};
+काष्ठा svm_notअगरier अणु
+	काष्ठा mmu_पूर्णांकerval_notअगरier notअगरier;
+	काष्ठा nouveau_svmm *svmm;
+पूर्ण;
 
-static bool nouveau_svm_range_invalidate(struct mmu_interval_notifier *mni,
-					 const struct mmu_notifier_range *range,
-					 unsigned long cur_seq)
-{
-	struct svm_notifier *sn =
-		container_of(mni, struct svm_notifier, notifier);
+अटल bool nouveau_svm_range_invalidate(काष्ठा mmu_पूर्णांकerval_notअगरier *mni,
+					 स्थिर काष्ठा mmu_notअगरier_range *range,
+					 अचिन्हित दीर्घ cur_seq)
+अणु
+	काष्ठा svm_notअगरier *sn =
+		container_of(mni, काष्ठा svm_notअगरier, notअगरier);
 
 	/*
-	 * serializes the update to mni->invalidate_seq done by caller and
-	 * prevents invalidation of the PTE from progressing while HW is being
+	 * serializes the update to mni->invalidate_seq करोne by caller and
+	 * prevents invalidation of the PTE from progressing जबतक HW is being
 	 * programmed. This is very hacky and only works because the normal
-	 * notifier that does invalidation is always called after the range
-	 * notifier.
+	 * notअगरier that करोes invalidation is always called after the range
+	 * notअगरier.
 	 */
-	if (mmu_notifier_range_blockable(range))
+	अगर (mmu_notअगरier_range_blockable(range))
 		mutex_lock(&sn->svmm->mutex);
-	else if (!mutex_trylock(&sn->svmm->mutex))
-		return false;
-	mmu_interval_set_seq(mni, cur_seq);
+	अन्यथा अगर (!mutex_trylock(&sn->svmm->mutex))
+		वापस false;
+	mmu_पूर्णांकerval_set_seq(mni, cur_seq);
 	mutex_unlock(&sn->svmm->mutex);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static const struct mmu_interval_notifier_ops nouveau_svm_mni_ops = {
+अटल स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops nouveau_svm_mni_ops = अणु
 	.invalidate = nouveau_svm_range_invalidate,
-};
+पूर्ण;
 
-static void nouveau_hmm_convert_pfn(struct nouveau_drm *drm,
-				    struct hmm_range *range,
-				    struct nouveau_pfnmap_args *args)
-{
-	struct page *page;
+अटल व्योम nouveau_hmm_convert_pfn(काष्ठा nouveau_drm *drm,
+				    काष्ठा hmm_range *range,
+				    काष्ठा nouveau_pfnmap_args *args)
+अणु
+	काष्ठा page *page;
 
 	/*
-	 * The address prepared here is passed through nvif_object_ioctl()
+	 * The address prepared here is passed through nvअगर_object_ioctl()
 	 * to an eventual DMA map in something like gp100_vmm_pgt_pfn()
 	 *
-	 * This is all just encoding the internal hmm representation into a
-	 * different nouveau internal representation.
+	 * This is all just encoding the पूर्णांकernal hmm representation पूर्णांकo a
+	 * dअगरferent nouveau पूर्णांकernal representation.
 	 */
-	if (!(range->hmm_pfns[0] & HMM_PFN_VALID)) {
+	अगर (!(range->hmm_pfns[0] & HMM_PFN_VALID)) अणु
 		args->p.phys[0] = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	page = hmm_pfn_to_page(range->hmm_pfns[0]);
 	/*
-	 * Only map compound pages to the GPU if the CPU is also mapping the
+	 * Only map compound pages to the GPU अगर the CPU is also mapping the
 	 * page as a compound page. Otherwise, the PTE protections might not be
 	 * consistent (e.g., CPU only maps part of a compound page).
 	 * Note that the underlying page might still be larger than the
 	 * CPU mapping (e.g., a PUD sized compound page partially mapped with
 	 * a PMD sized page table entry).
 	 */
-	if (hmm_pfn_to_map_order(range->hmm_pfns[0])) {
-		unsigned long addr = args->p.addr;
+	अगर (hmm_pfn_to_map_order(range->hmm_pfns[0])) अणु
+		अचिन्हित दीर्घ addr = args->p.addr;
 
 		args->p.page = hmm_pfn_to_map_order(range->hmm_pfns[0]) +
 				PAGE_SHIFT;
 		args->p.size = 1UL << args->p.page;
 		args->p.addr &= ~(args->p.size - 1);
 		page -= (addr - args->p.addr) >> PAGE_SHIFT;
-	}
-	if (is_device_private_page(page))
+	पूर्ण
+	अगर (is_device_निजी_page(page))
 		args->p.phys[0] = nouveau_dmem_page_addr(page) |
 				NVIF_VMM_PFNMAP_V0_V |
 				NVIF_VMM_PFNMAP_V0_VRAM;
-	else
+	अन्यथा
 		args->p.phys[0] = page_to_phys(page) |
 				NVIF_VMM_PFNMAP_V0_V |
 				NVIF_VMM_PFNMAP_V0_HOST;
-	if (range->hmm_pfns[0] & HMM_PFN_WRITE)
+	अगर (range->hmm_pfns[0] & HMM_PFN_WRITE)
 		args->p.phys[0] |= NVIF_VMM_PFNMAP_V0_W;
-}
+पूर्ण
 
-static int nouveau_range_fault(struct nouveau_svmm *svmm,
-			       struct nouveau_drm *drm,
-			       struct nouveau_pfnmap_args *args, u32 size,
-			       unsigned long hmm_flags,
-			       struct svm_notifier *notifier)
-{
-	unsigned long timeout =
-		jiffies + msecs_to_jiffies(HMM_RANGE_DEFAULT_TIMEOUT);
-	/* Have HMM fault pages within the fault window to the GPU. */
-	unsigned long hmm_pfns[1];
-	struct hmm_range range = {
-		.notifier = &notifier->notifier,
-		.start = notifier->notifier.interval_tree.start,
-		.end = notifier->notifier.interval_tree.last + 1,
-		.default_flags = hmm_flags,
+अटल पूर्णांक nouveau_range_fault(काष्ठा nouveau_svmm *svmm,
+			       काष्ठा nouveau_drm *drm,
+			       काष्ठा nouveau_pfnmap_args *args, u32 size,
+			       अचिन्हित दीर्घ hmm_flags,
+			       काष्ठा svm_notअगरier *notअगरier)
+अणु
+	अचिन्हित दीर्घ समयout =
+		jअगरfies + msecs_to_jअगरfies(HMM_RANGE_DEFAULT_TIMEOUT);
+	/* Have HMM fault pages within the fault winकरोw to the GPU. */
+	अचिन्हित दीर्घ hmm_pfns[1];
+	काष्ठा hmm_range range = अणु
+		.notअगरier = &notअगरier->notअगरier,
+		.start = notअगरier->notअगरier.पूर्णांकerval_tree.start,
+		.end = notअगरier->notअगरier.पूर्णांकerval_tree.last + 1,
+		.शेष_flags = hmm_flags,
 		.hmm_pfns = hmm_pfns,
-		.dev_private_owner = drm->dev,
-	};
-	struct mm_struct *mm = notifier->notifier.mm;
-	int ret;
+		.dev_निजी_owner = drm->dev,
+	पूर्ण;
+	काष्ठा mm_काष्ठा *mm = notअगरier->notअगरier.mm;
+	पूर्णांक ret;
 
-	while (true) {
-		if (time_after(jiffies, timeout))
-			return -EBUSY;
+	जबतक (true) अणु
+		अगर (समय_after(jअगरfies, समयout))
+			वापस -EBUSY;
 
-		range.notifier_seq = mmu_interval_read_begin(range.notifier);
-		mmap_read_lock(mm);
+		range.notअगरier_seq = mmu_पूर्णांकerval_पढ़ो_begin(range.notअगरier);
+		mmap_पढ़ो_lock(mm);
 		ret = hmm_range_fault(&range);
-		mmap_read_unlock(mm);
-		if (ret) {
-			if (ret == -EBUSY)
-				continue;
-			return ret;
-		}
+		mmap_पढ़ो_unlock(mm);
+		अगर (ret) अणु
+			अगर (ret == -EBUSY)
+				जारी;
+			वापस ret;
+		पूर्ण
 
 		mutex_lock(&svmm->mutex);
-		if (mmu_interval_read_retry(range.notifier,
-					    range.notifier_seq)) {
+		अगर (mmu_पूर्णांकerval_पढ़ो_retry(range.notअगरier,
+					    range.notअगरier_seq)) अणु
 			mutex_unlock(&svmm->mutex);
-			continue;
-		}
-		break;
-	}
+			जारी;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	nouveau_hmm_convert_pfn(drm, &range, args);
 
 	svmm->vmm->vmm.object.client->super = true;
-	ret = nvif_object_ioctl(&svmm->vmm->vmm.object, args, size, NULL);
+	ret = nvअगर_object_ioctl(&svmm->vmm->vmm.object, args, size, शून्य);
 	svmm->vmm->vmm.object.client->super = false;
 	mutex_unlock(&svmm->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-nouveau_svm_fault(struct nvif_notify *notify)
-{
-	struct nouveau_svm_fault_buffer *buffer =
-		container_of(notify, typeof(*buffer), notify);
-	struct nouveau_svm *svm =
+अटल पूर्णांक
+nouveau_svm_fault(काष्ठा nvअगर_notअगरy *notअगरy)
+अणु
+	काष्ठा nouveau_svm_fault_buffer *buffer =
+		container_of(notअगरy, typeof(*buffer), notअगरy);
+	काष्ठा nouveau_svm *svm =
 		container_of(buffer, typeof(*svm), buffer[buffer->id]);
-	struct nvif_object *device = &svm->drm->client.device.object;
-	struct nouveau_svmm *svmm;
-	struct {
-		struct nouveau_pfnmap_args i;
+	काष्ठा nvअगर_object *device = &svm->drm->client.device.object;
+	काष्ठा nouveau_svmm *svmm;
+	काष्ठा अणु
+		काष्ठा nouveau_pfnmap_args i;
 		u64 phys[1];
-	} args;
-	unsigned long hmm_flags;
+	पूर्ण args;
+	अचिन्हित दीर्घ hmm_flags;
 	u64 inst, start, limit;
-	int fi, fn;
-	int replay = 0, ret;
+	पूर्णांक fi, fn;
+	पूर्णांक replay = 0, ret;
 
-	/* Parse available fault buffer entries into a cache, and update
-	 * the GET pointer so HW can reuse the entries.
+	/* Parse available fault buffer entries पूर्णांकo a cache, and update
+	 * the GET poपूर्णांकer so HW can reuse the entries.
 	 */
 	SVM_DBG(svm, "fault handler");
-	if (buffer->get == buffer->put) {
-		buffer->put = nvif_rd32(device, buffer->putaddr);
-		buffer->get = nvif_rd32(device, buffer->getaddr);
-		if (buffer->get == buffer->put)
-			return NVIF_NOTIFY_KEEP;
-	}
+	अगर (buffer->get == buffer->put) अणु
+		buffer->put = nvअगर_rd32(device, buffer->putaddr);
+		buffer->get = nvअगर_rd32(device, buffer->getaddr);
+		अगर (buffer->get == buffer->put)
+			वापस NVIF_NOTIFY_KEEP;
+	पूर्ण
 	buffer->fault_nr = 0;
 
 	SVM_DBG(svm, "get %08x put %08x", buffer->get, buffer->put);
-	while (buffer->get != buffer->put) {
+	जबतक (buffer->get != buffer->put) अणु
 		nouveau_svm_fault_cache(svm, buffer, buffer->get * 0x20);
-		if (++buffer->get == buffer->entries)
+		अगर (++buffer->get == buffer->entries)
 			buffer->get = 0;
-	}
-	nvif_wr32(device, buffer->getaddr, buffer->get);
+	पूर्ण
+	nvअगर_wr32(device, buffer->getaddr, buffer->get);
 	SVM_DBG(svm, "%d fault(s) pending", buffer->fault_nr);
 
-	/* Sort parsed faults by instance pointer to prevent unnecessary
+	/* Sort parsed faults by instance poपूर्णांकer to prevent unnecessary
 	 * instance to SVMM translations, followed by address and access
 	 * type to reduce the amount of work when handling the faults.
 	 */
-	sort(buffer->fault, buffer->fault_nr, sizeof(*buffer->fault),
-	     nouveau_svm_fault_cmp, NULL);
+	sort(buffer->fault, buffer->fault_nr, माप(*buffer->fault),
+	     nouveau_svm_fault_cmp, शून्य);
 
-	/* Lookup SVMM structure for each unique instance pointer. */
+	/* Lookup SVMM काष्ठाure क्रम each unique instance poपूर्णांकer. */
 	mutex_lock(&svm->mutex);
-	for (fi = 0, svmm = NULL; fi < buffer->fault_nr; fi++) {
-		if (!svmm || buffer->fault[fi]->inst != inst) {
-			struct nouveau_ivmm *ivmm =
+	क्रम (fi = 0, svmm = शून्य; fi < buffer->fault_nr; fi++) अणु
+		अगर (!svmm || buffer->fault[fi]->inst != inst) अणु
+			काष्ठा nouveau_ivmm *ivmm =
 				nouveau_ivmm_find(svm, buffer->fault[fi]->inst);
-			svmm = ivmm ? ivmm->svmm : NULL;
+			svmm = ivmm ? ivmm->svmm : शून्य;
 			inst = buffer->fault[fi]->inst;
 			SVM_DBG(svm, "inst %016llx -> svm-%p", inst, svmm);
-		}
+		पूर्ण
 		buffer->fault[fi]->svmm = svmm;
-	}
+	पूर्ण
 	mutex_unlock(&svm->mutex);
 
 	/* Process list of faults. */
@@ -676,28 +677,28 @@ nouveau_svm_fault(struct nvif_notify *notify)
 	args.i.m.method = NVIF_VMM_V0_PFNMAP;
 	args.i.p.version = 0;
 
-	for (fi = 0; fn = fi + 1, fi < buffer->fault_nr; fi = fn) {
-		struct svm_notifier notifier;
-		struct mm_struct *mm;
+	क्रम (fi = 0; fn = fi + 1, fi < buffer->fault_nr; fi = fn) अणु
+		काष्ठा svm_notअगरier notअगरier;
+		काष्ठा mm_काष्ठा *mm;
 
 		/* Cancel any faults from non-SVM channels. */
-		if (!(svmm = buffer->fault[fi]->svmm)) {
+		अगर (!(svmm = buffer->fault[fi]->svmm)) अणु
 			nouveau_svm_fault_cancel_fault(svm, buffer->fault[fi]);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		SVMM_DBG(svmm, "addr %016llx", buffer->fault[fi]->addr);
 
 		/* We try and group handling of faults within a small
-		 * window into a single update.
+		 * winकरोw पूर्णांकo a single update.
 		 */
 		start = buffer->fault[fi]->addr;
 		limit = start + PAGE_SIZE;
-		if (start < svmm->unmanaged.limit)
+		अगर (start < svmm->unmanaged.limit)
 			limit = min_t(u64, limit, svmm->unmanaged.start);
 
 		/*
 		 * Prepare the GPU-side update of all pages within the
-		 * fault window, determining required pages and access
+		 * fault winकरोw, determining required pages and access
 		 * permissions based on pending faults.
 		 */
 		args.i.p.addr = start;
@@ -708,110 +709,110 @@ nouveau_svm_fault(struct nvif_notify *notify)
 		 * access flags.
 		 * XXX: atomic?
 		 */
-		switch (buffer->fault[fi]->access) {
-		case 0: /* READ. */
+		चयन (buffer->fault[fi]->access) अणु
+		हाल 0: /* READ. */
 			hmm_flags = HMM_PFN_REQ_FAULT;
-			break;
-		case 3: /* PREFETCH. */
+			अवरोध;
+		हाल 3: /* PREFETCH. */
 			hmm_flags = 0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			hmm_flags = HMM_PFN_REQ_FAULT | HMM_PFN_REQ_WRITE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		mm = svmm->notifier.mm;
-		if (!mmget_not_zero(mm)) {
+		mm = svmm->notअगरier.mm;
+		अगर (!mmget_not_zero(mm)) अणु
 			nouveau_svm_fault_cancel_fault(svm, buffer->fault[fi]);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		notifier.svmm = svmm;
-		ret = mmu_interval_notifier_insert(&notifier.notifier, mm,
+		notअगरier.svmm = svmm;
+		ret = mmu_पूर्णांकerval_notअगरier_insert(&notअगरier.notअगरier, mm,
 						   args.i.p.addr, args.i.p.size,
 						   &nouveau_svm_mni_ops);
-		if (!ret) {
+		अगर (!ret) अणु
 			ret = nouveau_range_fault(svmm, svm->drm, &args.i,
-				sizeof(args), hmm_flags, &notifier);
-			mmu_interval_notifier_remove(&notifier.notifier);
-		}
+				माप(args), hmm_flags, &notअगरier);
+			mmu_पूर्णांकerval_notअगरier_हटाओ(&notअगरier.notअगरier);
+		पूर्ण
 		mmput(mm);
 
 		limit = args.i.p.addr + args.i.p.size;
-		for (fn = fi; ++fn < buffer->fault_nr; ) {
+		क्रम (fn = fi; ++fn < buffer->fault_nr; ) अणु
 			/* It's okay to skip over duplicate addresses from the
 			 * same SVMM as faults are ordered by access type such
 			 * that only the first one needs to be handled.
 			 *
 			 * ie. WRITE faults appear first, thus any handling of
-			 * pending READ faults will already be satisfied.
-			 * But if a large page is mapped, make sure subsequent
+			 * pending READ faults will alपढ़ोy be satisfied.
+			 * But अगर a large page is mapped, make sure subsequent
 			 * fault addresses have sufficient access permission.
 			 */
-			if (buffer->fault[fn]->svmm != svmm ||
+			अगर (buffer->fault[fn]->svmm != svmm ||
 			    buffer->fault[fn]->addr >= limit ||
 			    (buffer->fault[fi]->access == 0 /* READ. */ &&
 			     !(args.phys[0] & NVIF_VMM_PFNMAP_V0_V)) ||
 			    (buffer->fault[fi]->access != 0 /* READ. */ &&
 			     buffer->fault[fi]->access != 3 /* PREFETCH. */ &&
 			     !(args.phys[0] & NVIF_VMM_PFNMAP_V0_W)))
-				break;
-		}
+				अवरोध;
+		पूर्ण
 
 		/* If handling failed completely, cancel all faults. */
-		if (ret) {
-			while (fi < fn) {
-				struct nouveau_svm_fault *fault =
+		अगर (ret) अणु
+			जबतक (fi < fn) अणु
+				काष्ठा nouveau_svm_fault *fault =
 					buffer->fault[fi++];
 
 				nouveau_svm_fault_cancel_fault(svm, fault);
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			replay++;
-	}
+	पूर्ण
 
 	/* Issue fault replay to the GPU. */
-	if (replay)
+	अगर (replay)
 		nouveau_svm_fault_replay(svm);
-	return NVIF_NOTIFY_KEEP;
-}
+	वापस NVIF_NOTIFY_KEEP;
+पूर्ण
 
-static struct nouveau_pfnmap_args *
-nouveau_pfns_to_args(void *pfns)
-{
-	return container_of(pfns, struct nouveau_pfnmap_args, p.phys);
-}
+अटल काष्ठा nouveau_pfnmap_args *
+nouveau_pfns_to_args(व्योम *pfns)
+अणु
+	वापस container_of(pfns, काष्ठा nouveau_pfnmap_args, p.phys);
+पूर्ण
 
 u64 *
-nouveau_pfns_alloc(unsigned long npages)
-{
-	struct nouveau_pfnmap_args *args;
+nouveau_pfns_alloc(अचिन्हित दीर्घ npages)
+अणु
+	काष्ठा nouveau_pfnmap_args *args;
 
-	args = kzalloc(struct_size(args, p.phys, npages), GFP_KERNEL);
-	if (!args)
-		return NULL;
+	args = kzalloc(काष्ठा_size(args, p.phys, npages), GFP_KERNEL);
+	अगर (!args)
+		वापस शून्य;
 
 	args->i.type = NVIF_IOCTL_V0_MTHD;
 	args->m.method = NVIF_VMM_V0_PFNMAP;
 	args->p.page = PAGE_SHIFT;
 
-	return args->p.phys;
-}
+	वापस args->p.phys;
+पूर्ण
 
-void
-nouveau_pfns_free(u64 *pfns)
-{
-	struct nouveau_pfnmap_args *args = nouveau_pfns_to_args(pfns);
+व्योम
+nouveau_pfns_मुक्त(u64 *pfns)
+अणु
+	काष्ठा nouveau_pfnmap_args *args = nouveau_pfns_to_args(pfns);
 
-	kfree(args);
-}
+	kमुक्त(args);
+पूर्ण
 
-void
-nouveau_pfns_map(struct nouveau_svmm *svmm, struct mm_struct *mm,
-		 unsigned long addr, u64 *pfns, unsigned long npages)
-{
-	struct nouveau_pfnmap_args *args = nouveau_pfns_to_args(pfns);
-	int ret;
+व्योम
+nouveau_pfns_map(काष्ठा nouveau_svmm *svmm, काष्ठा mm_काष्ठा *mm,
+		 अचिन्हित दीर्घ addr, u64 *pfns, अचिन्हित दीर्घ npages)
+अणु
+	काष्ठा nouveau_pfnmap_args *args = nouveau_pfns_to_args(pfns);
+	पूर्णांक ret;
 
 	args->p.addr = addr;
 	args->p.size = npages << PAGE_SHIFT;
@@ -819,149 +820,149 @@ nouveau_pfns_map(struct nouveau_svmm *svmm, struct mm_struct *mm,
 	mutex_lock(&svmm->mutex);
 
 	svmm->vmm->vmm.object.client->super = true;
-	ret = nvif_object_ioctl(&svmm->vmm->vmm.object, args, sizeof(*args) +
-				npages * sizeof(args->p.phys[0]), NULL);
+	ret = nvअगर_object_ioctl(&svmm->vmm->vmm.object, args, माप(*args) +
+				npages * माप(args->p.phys[0]), शून्य);
 	svmm->vmm->vmm.object.client->super = false;
 
 	mutex_unlock(&svmm->mutex);
-}
+पूर्ण
 
-static void
-nouveau_svm_fault_buffer_fini(struct nouveau_svm *svm, int id)
-{
-	struct nouveau_svm_fault_buffer *buffer = &svm->buffer[id];
-	nvif_notify_put(&buffer->notify);
-}
+अटल व्योम
+nouveau_svm_fault_buffer_fini(काष्ठा nouveau_svm *svm, पूर्णांक id)
+अणु
+	काष्ठा nouveau_svm_fault_buffer *buffer = &svm->buffer[id];
+	nvअगर_notअगरy_put(&buffer->notअगरy);
+पूर्ण
 
-static int
-nouveau_svm_fault_buffer_init(struct nouveau_svm *svm, int id)
-{
-	struct nouveau_svm_fault_buffer *buffer = &svm->buffer[id];
-	struct nvif_object *device = &svm->drm->client.device.object;
-	buffer->get = nvif_rd32(device, buffer->getaddr);
-	buffer->put = nvif_rd32(device, buffer->putaddr);
+अटल पूर्णांक
+nouveau_svm_fault_buffer_init(काष्ठा nouveau_svm *svm, पूर्णांक id)
+अणु
+	काष्ठा nouveau_svm_fault_buffer *buffer = &svm->buffer[id];
+	काष्ठा nvअगर_object *device = &svm->drm->client.device.object;
+	buffer->get = nvअगर_rd32(device, buffer->getaddr);
+	buffer->put = nvअगर_rd32(device, buffer->putaddr);
 	SVM_DBG(svm, "get %08x put %08x (init)", buffer->get, buffer->put);
-	return nvif_notify_get(&buffer->notify);
-}
+	वापस nvअगर_notअगरy_get(&buffer->notअगरy);
+पूर्ण
 
-static void
-nouveau_svm_fault_buffer_dtor(struct nouveau_svm *svm, int id)
-{
-	struct nouveau_svm_fault_buffer *buffer = &svm->buffer[id];
-	int i;
+अटल व्योम
+nouveau_svm_fault_buffer_dtor(काष्ठा nouveau_svm *svm, पूर्णांक id)
+अणु
+	काष्ठा nouveau_svm_fault_buffer *buffer = &svm->buffer[id];
+	पूर्णांक i;
 
-	if (buffer->fault) {
-		for (i = 0; buffer->fault[i] && i < buffer->entries; i++)
-			kfree(buffer->fault[i]);
-		kvfree(buffer->fault);
-	}
+	अगर (buffer->fault) अणु
+		क्रम (i = 0; buffer->fault[i] && i < buffer->entries; i++)
+			kमुक्त(buffer->fault[i]);
+		kvमुक्त(buffer->fault);
+	पूर्ण
 
 	nouveau_svm_fault_buffer_fini(svm, id);
 
-	nvif_notify_dtor(&buffer->notify);
-	nvif_object_dtor(&buffer->object);
-}
+	nvअगर_notअगरy_dtor(&buffer->notअगरy);
+	nvअगर_object_dtor(&buffer->object);
+पूर्ण
 
-static int
-nouveau_svm_fault_buffer_ctor(struct nouveau_svm *svm, s32 oclass, int id)
-{
-	struct nouveau_svm_fault_buffer *buffer = &svm->buffer[id];
-	struct nouveau_drm *drm = svm->drm;
-	struct nvif_object *device = &drm->client.device.object;
-	struct nvif_clb069_v0 args = {};
-	int ret;
+अटल पूर्णांक
+nouveau_svm_fault_buffer_ctor(काष्ठा nouveau_svm *svm, s32 oclass, पूर्णांक id)
+अणु
+	काष्ठा nouveau_svm_fault_buffer *buffer = &svm->buffer[id];
+	काष्ठा nouveau_drm *drm = svm->drm;
+	काष्ठा nvअगर_object *device = &drm->client.device.object;
+	काष्ठा nvअगर_clb069_v0 args = अणुपूर्ण;
+	पूर्णांक ret;
 
 	buffer->id = id;
 
-	ret = nvif_object_ctor(device, "svmFaultBuffer", 0, oclass, &args,
-			       sizeof(args), &buffer->object);
-	if (ret < 0) {
+	ret = nvअगर_object_ctor(device, "svmFaultBuffer", 0, oclass, &args,
+			       माप(args), &buffer->object);
+	अगर (ret < 0) अणु
 		SVM_ERR(svm, "Fault buffer allocation failed: %d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	nvif_object_map(&buffer->object, NULL, 0);
+	nvअगर_object_map(&buffer->object, शून्य, 0);
 	buffer->entries = args.entries;
 	buffer->getaddr = args.get;
 	buffer->putaddr = args.put;
 
-	ret = nvif_notify_ctor(&buffer->object, "svmFault", nouveau_svm_fault,
-			       true, NVB069_V0_NTFY_FAULT, NULL, 0, 0,
-			       &buffer->notify);
-	if (ret)
-		return ret;
+	ret = nvअगर_notअगरy_ctor(&buffer->object, "svmFault", nouveau_svm_fault,
+			       true, NVB069_V0_NTFY_FAULT, शून्य, 0, 0,
+			       &buffer->notअगरy);
+	अगर (ret)
+		वापस ret;
 
-	buffer->fault = kvzalloc(sizeof(*buffer->fault) * buffer->entries, GFP_KERNEL);
-	if (!buffer->fault)
-		return -ENOMEM;
+	buffer->fault = kvzalloc(माप(*buffer->fault) * buffer->entries, GFP_KERNEL);
+	अगर (!buffer->fault)
+		वापस -ENOMEM;
 
-	return nouveau_svm_fault_buffer_init(svm, id);
-}
+	वापस nouveau_svm_fault_buffer_init(svm, id);
+पूर्ण
 
-void
-nouveau_svm_resume(struct nouveau_drm *drm)
-{
-	struct nouveau_svm *svm = drm->svm;
-	if (svm)
+व्योम
+nouveau_svm_resume(काष्ठा nouveau_drm *drm)
+अणु
+	काष्ठा nouveau_svm *svm = drm->svm;
+	अगर (svm)
 		nouveau_svm_fault_buffer_init(svm, 0);
-}
+पूर्ण
 
-void
-nouveau_svm_suspend(struct nouveau_drm *drm)
-{
-	struct nouveau_svm *svm = drm->svm;
-	if (svm)
+व्योम
+nouveau_svm_suspend(काष्ठा nouveau_drm *drm)
+अणु
+	काष्ठा nouveau_svm *svm = drm->svm;
+	अगर (svm)
 		nouveau_svm_fault_buffer_fini(svm, 0);
-}
+पूर्ण
 
-void
-nouveau_svm_fini(struct nouveau_drm *drm)
-{
-	struct nouveau_svm *svm = drm->svm;
-	if (svm) {
+व्योम
+nouveau_svm_fini(काष्ठा nouveau_drm *drm)
+अणु
+	काष्ठा nouveau_svm *svm = drm->svm;
+	अगर (svm) अणु
 		nouveau_svm_fault_buffer_dtor(svm, 0);
-		kfree(drm->svm);
-		drm->svm = NULL;
-	}
-}
+		kमुक्त(drm->svm);
+		drm->svm = शून्य;
+	पूर्ण
+पूर्ण
 
-void
-nouveau_svm_init(struct nouveau_drm *drm)
-{
-	static const struct nvif_mclass buffers[] = {
-		{   VOLTA_FAULT_BUFFER_A, 0 },
-		{ MAXWELL_FAULT_BUFFER_A, 0 },
-		{}
-	};
-	struct nouveau_svm *svm;
-	int ret;
+व्योम
+nouveau_svm_init(काष्ठा nouveau_drm *drm)
+अणु
+	अटल स्थिर काष्ठा nvअगर_mclass buffers[] = अणु
+		अणु   VOLTA_FAULT_BUFFER_A, 0 पूर्ण,
+		अणु MAXWELL_FAULT_BUFFER_A, 0 पूर्ण,
+		अणुपूर्ण
+	पूर्ण;
+	काष्ठा nouveau_svm *svm;
+	पूर्णांक ret;
 
 	/* Disable on Volta and newer until channel recovery is fixed,
 	 * otherwise clients will have a trivial way to trash the GPU
-	 * for everyone.
+	 * क्रम everyone.
 	 */
-	if (drm->client.device.info.family > NV_DEVICE_INFO_V0_PASCAL)
-		return;
+	अगर (drm->client.device.info.family > NV_DEVICE_INFO_V0_PASCAL)
+		वापस;
 
-	if (!(drm->svm = svm = kzalloc(sizeof(*drm->svm), GFP_KERNEL)))
-		return;
+	अगर (!(drm->svm = svm = kzalloc(माप(*drm->svm), GFP_KERNEL)))
+		वापस;
 
 	drm->svm->drm = drm;
 	mutex_init(&drm->svm->mutex);
 	INIT_LIST_HEAD(&drm->svm->inst);
 
-	ret = nvif_mclass(&drm->client.device.object, buffers);
-	if (ret < 0) {
+	ret = nvअगर_mclass(&drm->client.device.object, buffers);
+	अगर (ret < 0) अणु
 		SVM_DBG(svm, "No supported fault buffer class");
 		nouveau_svm_fini(drm);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ret = nouveau_svm_fault_buffer_ctor(svm, buffers[ret].oclass, 0);
-	if (ret) {
+	अगर (ret) अणु
 		nouveau_svm_fini(drm);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	SVM_DBG(svm, "Initialised");
-}
+पूर्ण

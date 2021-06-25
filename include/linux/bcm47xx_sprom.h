@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  */
 
-#ifndef __BCM47XX_SPROM_H
-#define __BCM47XX_SPROM_H
+#अगर_अघोषित __BCM47XX_SPROM_H
+#घोषणा __BCM47XX_SPROM_H
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-struct ssb_sprom;
+काष्ठा ssb_sprom;
 
-#ifdef CONFIG_BCM47XX_SPROM
-void bcm47xx_fill_sprom(struct ssb_sprom *sprom, const char *prefix,
+#अगर_घोषित CONFIG_BCM47XX_SPROM
+व्योम bcm47xx_fill_sprom(काष्ठा ssb_sprom *sprom, स्थिर अक्षर *prefix,
 			bool fallback);
-int bcm47xx_sprom_register_fallbacks(void);
-#else
-static inline void bcm47xx_fill_sprom(struct ssb_sprom *sprom,
-				      const char *prefix,
+पूर्णांक bcm47xx_sprom_रेजिस्टर_fallbacks(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम bcm47xx_fill_sprom(काष्ठा ssb_sprom *sprom,
+				      स्थिर अक्षर *prefix,
 				      bool fallback)
-{
-}
+अणु
+पूर्ण
 
-static inline int bcm47xx_sprom_register_fallbacks(void)
-{
-	return -ENOTSUPP;
-};
-#endif
+अटल अंतरभूत पूर्णांक bcm47xx_sprom_रेजिस्टर_fallbacks(व्योम)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण;
+#पूर्ण_अगर
 
-#endif /* __BCM47XX_SPROM_H */
+#पूर्ण_अगर /* __BCM47XX_SPROM_H */

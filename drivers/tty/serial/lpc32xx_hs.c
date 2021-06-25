@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * High Speed Serial Ports on NXP LPC32xx SoC
  *
@@ -9,497 +10,497 @@
  * Copyright (C) 2012 Roland Stigge
  */
 
-#include <linux/module.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/console.h>
-#include <linux/sysrq.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/serial_core.h>
-#include <linux/serial.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/nmi.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/of.h>
-#include <linux/sizes.h>
-#include <linux/soc/nxp/lpc32xx-misc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/console.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/of.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/soc/nxp/lpc32xx-misc.h>
 
 /*
- * High Speed UART register offsets
+ * High Speed UART रेजिस्टर offsets
  */
-#define LPC32XX_HSUART_FIFO(x)			((x) + 0x00)
-#define LPC32XX_HSUART_LEVEL(x)			((x) + 0x04)
-#define LPC32XX_HSUART_IIR(x)			((x) + 0x08)
-#define LPC32XX_HSUART_CTRL(x)			((x) + 0x0C)
-#define LPC32XX_HSUART_RATE(x)			((x) + 0x10)
+#घोषणा LPC32XX_HSUART_FIFO(x)			((x) + 0x00)
+#घोषणा LPC32XX_HSUART_LEVEL(x)			((x) + 0x04)
+#घोषणा LPC32XX_HSUART_IIR(x)			((x) + 0x08)
+#घोषणा LPC32XX_HSUART_CTRL(x)			((x) + 0x0C)
+#घोषणा LPC32XX_HSUART_RATE(x)			((x) + 0x10)
 
-#define LPC32XX_HSU_BREAK_DATA			(1 << 10)
-#define LPC32XX_HSU_ERROR_DATA			(1 << 9)
-#define LPC32XX_HSU_RX_EMPTY			(1 << 8)
+#घोषणा LPC32XX_HSU_BREAK_DATA			(1 << 10)
+#घोषणा LPC32XX_HSU_ERROR_DATA			(1 << 9)
+#घोषणा LPC32XX_HSU_RX_EMPTY			(1 << 8)
 
-#define LPC32XX_HSU_TX_LEV(n)			(((n) >> 8) & 0xFF)
-#define LPC32XX_HSU_RX_LEV(n)			((n) & 0xFF)
+#घोषणा LPC32XX_HSU_TX_LEV(n)			(((n) >> 8) & 0xFF)
+#घोषणा LPC32XX_HSU_RX_LEV(n)			((n) & 0xFF)
 
-#define LPC32XX_HSU_TX_INT_SET			(1 << 6)
-#define LPC32XX_HSU_RX_OE_INT			(1 << 5)
-#define LPC32XX_HSU_BRK_INT			(1 << 4)
-#define LPC32XX_HSU_FE_INT			(1 << 3)
-#define LPC32XX_HSU_RX_TIMEOUT_INT		(1 << 2)
-#define LPC32XX_HSU_RX_TRIG_INT			(1 << 1)
-#define LPC32XX_HSU_TX_INT			(1 << 0)
+#घोषणा LPC32XX_HSU_TX_INT_SET			(1 << 6)
+#घोषणा LPC32XX_HSU_RX_OE_INT			(1 << 5)
+#घोषणा LPC32XX_HSU_BRK_INT			(1 << 4)
+#घोषणा LPC32XX_HSU_FE_INT			(1 << 3)
+#घोषणा LPC32XX_HSU_RX_TIMEOUT_INT		(1 << 2)
+#घोषणा LPC32XX_HSU_RX_TRIG_INT			(1 << 1)
+#घोषणा LPC32XX_HSU_TX_INT			(1 << 0)
 
-#define LPC32XX_HSU_HRTS_INV			(1 << 21)
-#define LPC32XX_HSU_HRTS_TRIG_8B		(0x0 << 19)
-#define LPC32XX_HSU_HRTS_TRIG_16B		(0x1 << 19)
-#define LPC32XX_HSU_HRTS_TRIG_32B		(0x2 << 19)
-#define LPC32XX_HSU_HRTS_TRIG_48B		(0x3 << 19)
-#define LPC32XX_HSU_HRTS_EN			(1 << 18)
-#define LPC32XX_HSU_TMO_DISABLED		(0x0 << 16)
-#define LPC32XX_HSU_TMO_INACT_4B		(0x1 << 16)
-#define LPC32XX_HSU_TMO_INACT_8B		(0x2 << 16)
-#define LPC32XX_HSU_TMO_INACT_16B		(0x3 << 16)
-#define LPC32XX_HSU_HCTS_INV			(1 << 15)
-#define LPC32XX_HSU_HCTS_EN			(1 << 14)
-#define LPC32XX_HSU_OFFSET(n)			((n) << 9)
-#define LPC32XX_HSU_BREAK			(1 << 8)
-#define LPC32XX_HSU_ERR_INT_EN			(1 << 7)
-#define LPC32XX_HSU_RX_INT_EN			(1 << 6)
-#define LPC32XX_HSU_TX_INT_EN			(1 << 5)
-#define LPC32XX_HSU_RX_TL1B			(0x0 << 2)
-#define LPC32XX_HSU_RX_TL4B			(0x1 << 2)
-#define LPC32XX_HSU_RX_TL8B			(0x2 << 2)
-#define LPC32XX_HSU_RX_TL16B			(0x3 << 2)
-#define LPC32XX_HSU_RX_TL32B			(0x4 << 2)
-#define LPC32XX_HSU_RX_TL48B			(0x5 << 2)
-#define LPC32XX_HSU_TX_TLEMPTY			(0x0 << 0)
-#define LPC32XX_HSU_TX_TL0B			(0x0 << 0)
-#define LPC32XX_HSU_TX_TL4B			(0x1 << 0)
-#define LPC32XX_HSU_TX_TL8B			(0x2 << 0)
-#define LPC32XX_HSU_TX_TL16B			(0x3 << 0)
+#घोषणा LPC32XX_HSU_HRTS_INV			(1 << 21)
+#घोषणा LPC32XX_HSU_HRTS_TRIG_8B		(0x0 << 19)
+#घोषणा LPC32XX_HSU_HRTS_TRIG_16B		(0x1 << 19)
+#घोषणा LPC32XX_HSU_HRTS_TRIG_32B		(0x2 << 19)
+#घोषणा LPC32XX_HSU_HRTS_TRIG_48B		(0x3 << 19)
+#घोषणा LPC32XX_HSU_HRTS_EN			(1 << 18)
+#घोषणा LPC32XX_HSU_TMO_DISABLED		(0x0 << 16)
+#घोषणा LPC32XX_HSU_TMO_INACT_4B		(0x1 << 16)
+#घोषणा LPC32XX_HSU_TMO_INACT_8B		(0x2 << 16)
+#घोषणा LPC32XX_HSU_TMO_INACT_16B		(0x3 << 16)
+#घोषणा LPC32XX_HSU_HCTS_INV			(1 << 15)
+#घोषणा LPC32XX_HSU_HCTS_EN			(1 << 14)
+#घोषणा LPC32XX_HSU_OFFSET(n)			((n) << 9)
+#घोषणा LPC32XX_HSU_BREAK			(1 << 8)
+#घोषणा LPC32XX_HSU_ERR_INT_EN			(1 << 7)
+#घोषणा LPC32XX_HSU_RX_INT_EN			(1 << 6)
+#घोषणा LPC32XX_HSU_TX_INT_EN			(1 << 5)
+#घोषणा LPC32XX_HSU_RX_TL1B			(0x0 << 2)
+#घोषणा LPC32XX_HSU_RX_TL4B			(0x1 << 2)
+#घोषणा LPC32XX_HSU_RX_TL8B			(0x2 << 2)
+#घोषणा LPC32XX_HSU_RX_TL16B			(0x3 << 2)
+#घोषणा LPC32XX_HSU_RX_TL32B			(0x4 << 2)
+#घोषणा LPC32XX_HSU_RX_TL48B			(0x5 << 2)
+#घोषणा LPC32XX_HSU_TX_TLEMPTY			(0x0 << 0)
+#घोषणा LPC32XX_HSU_TX_TL0B			(0x0 << 0)
+#घोषणा LPC32XX_HSU_TX_TL4B			(0x1 << 0)
+#घोषणा LPC32XX_HSU_TX_TL8B			(0x2 << 0)
+#घोषणा LPC32XX_HSU_TX_TL16B			(0x3 << 0)
 
-#define LPC32XX_MAIN_OSC_FREQ			13000000
+#घोषणा LPC32XX_MAIN_OSC_FREQ			13000000
 
-#define MODNAME "lpc32xx_hsuart"
+#घोषणा MODNAME "lpc32xx_hsuart"
 
-struct lpc32xx_hsuart_port {
-	struct uart_port port;
-};
+काष्ठा lpc32xx_hsuart_port अणु
+	काष्ठा uart_port port;
+पूर्ण;
 
-#define FIFO_READ_LIMIT 128
-#define MAX_PORTS 3
-#define LPC32XX_TTY_NAME "ttyTX"
-static struct lpc32xx_hsuart_port lpc32xx_hs_ports[MAX_PORTS];
+#घोषणा FIFO_READ_LIMIT 128
+#घोषणा MAX_PORTS 3
+#घोषणा LPC32XX_TTY_NAME "ttyTX"
+अटल काष्ठा lpc32xx_hsuart_port lpc32xx_hs_ports[MAX_PORTS];
 
-#ifdef CONFIG_SERIAL_HS_LPC32XX_CONSOLE
-static void wait_for_xmit_empty(struct uart_port *port)
-{
-	unsigned int timeout = 10000;
+#अगर_घोषित CONFIG_SERIAL_HS_LPC32XX_CONSOLE
+अटल व्योम रुको_क्रम_xmit_empty(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक समयout = 10000;
 
-	do {
-		if (LPC32XX_HSU_TX_LEV(readl(LPC32XX_HSUART_LEVEL(
+	करो अणु
+		अगर (LPC32XX_HSU_TX_LEV(पढ़ोl(LPC32XX_HSUART_LEVEL(
 							port->membase))) == 0)
-			break;
-		if (--timeout == 0)
-			break;
+			अवरोध;
+		अगर (--समयout == 0)
+			अवरोध;
 		udelay(1);
-	} while (1);
-}
+	पूर्ण जबतक (1);
+पूर्ण
 
-static void wait_for_xmit_ready(struct uart_port *port)
-{
-	unsigned int timeout = 10000;
+अटल व्योम रुको_क्रम_xmit_पढ़ोy(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक समयout = 10000;
 
-	while (1) {
-		if (LPC32XX_HSU_TX_LEV(readl(LPC32XX_HSUART_LEVEL(
+	जबतक (1) अणु
+		अगर (LPC32XX_HSU_TX_LEV(पढ़ोl(LPC32XX_HSUART_LEVEL(
 							port->membase))) < 32)
-			break;
-		if (--timeout == 0)
-			break;
+			अवरोध;
+		अगर (--समयout == 0)
+			अवरोध;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void lpc32xx_hsuart_console_putchar(struct uart_port *port, int ch)
-{
-	wait_for_xmit_ready(port);
-	writel((u32)ch, LPC32XX_HSUART_FIFO(port->membase));
-}
+अटल व्योम lpc32xx_hsuart_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	रुको_क्रम_xmit_पढ़ोy(port);
+	ग_लिखोl((u32)ch, LPC32XX_HSUART_FIFO(port->membase));
+पूर्ण
 
-static void lpc32xx_hsuart_console_write(struct console *co, const char *s,
-					 unsigned int count)
-{
-	struct lpc32xx_hsuart_port *up = &lpc32xx_hs_ports[co->index];
-	unsigned long flags;
-	int locked = 1;
+अटल व्योम lpc32xx_hsuart_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+					 अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा lpc32xx_hsuart_port *up = &lpc32xx_hs_ports[co->index];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक locked = 1;
 
-	touch_nmi_watchdog();
+	touch_nmi_watchकरोg();
 	local_irq_save(flags);
-	if (up->port.sysrq)
+	अगर (up->port.sysrq)
 		locked = 0;
-	else if (oops_in_progress)
+	अन्यथा अगर (oops_in_progress)
 		locked = spin_trylock(&up->port.lock);
-	else
+	अन्यथा
 		spin_lock(&up->port.lock);
 
-	uart_console_write(&up->port, s, count, lpc32xx_hsuart_console_putchar);
-	wait_for_xmit_empty(&up->port);
+	uart_console_ग_लिखो(&up->port, s, count, lpc32xx_hsuart_console_अक्षर_दो);
+	रुको_क्रम_xmit_empty(&up->port);
 
-	if (locked)
+	अगर (locked)
 		spin_unlock(&up->port.lock);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static int __init lpc32xx_hsuart_console_setup(struct console *co,
-					       char *options)
-{
-	struct uart_port *port;
-	int baud = 115200;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक __init lpc32xx_hsuart_console_setup(काष्ठा console *co,
+					       अक्षर *options)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक baud = 115200;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
-	if (co->index >= MAX_PORTS)
+	अगर (co->index >= MAX_PORTS)
 		co->index = 0;
 
 	port = &lpc32xx_hs_ports[co->index].port;
-	if (!port->membase)
-		return -ENODEV;
+	अगर (!port->membase)
+		वापस -ENODEV;
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
 	lpc32xx_loopback_set(port->mapbase, 0); /* get out of loopback mode */
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver lpc32xx_hsuart_reg;
-static struct console lpc32xx_hsuart_console = {
+अटल काष्ठा uart_driver lpc32xx_hsuart_reg;
+अटल काष्ठा console lpc32xx_hsuart_console = अणु
 	.name		= LPC32XX_TTY_NAME,
-	.write		= lpc32xx_hsuart_console_write,
+	.ग_लिखो		= lpc32xx_hsuart_console_ग_लिखो,
 	.device		= uart_console_device,
 	.setup		= lpc32xx_hsuart_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &lpc32xx_hsuart_reg,
-};
+पूर्ण;
 
-static int __init lpc32xx_hsuart_console_init(void)
-{
-	register_console(&lpc32xx_hsuart_console);
-	return 0;
-}
+अटल पूर्णांक __init lpc32xx_hsuart_console_init(व्योम)
+अणु
+	रेजिस्टर_console(&lpc32xx_hsuart_console);
+	वापस 0;
+पूर्ण
 console_initcall(lpc32xx_hsuart_console_init);
 
-#define LPC32XX_HSUART_CONSOLE (&lpc32xx_hsuart_console)
-#else
-#define LPC32XX_HSUART_CONSOLE NULL
-#endif
+#घोषणा LPC32XX_HSUART_CONSOLE (&lpc32xx_hsuart_console)
+#अन्यथा
+#घोषणा LPC32XX_HSUART_CONSOLE शून्य
+#पूर्ण_अगर
 
-static struct uart_driver lpc32xx_hs_reg = {
+अटल काष्ठा uart_driver lpc32xx_hs_reg = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= MODNAME,
 	.dev_name	= LPC32XX_TTY_NAME,
 	.nr		= MAX_PORTS,
 	.cons		= LPC32XX_HSUART_CONSOLE,
-};
-static int uarts_registered;
+पूर्ण;
+अटल पूर्णांक uarts_रेजिस्टरed;
 
-static unsigned int __serial_get_clock_div(unsigned long uartclk,
-					   unsigned long rate)
-{
-	u32 div, goodrate, hsu_rate, l_hsu_rate, comprate;
-	u32 rate_diff;
+अटल अचिन्हित पूर्णांक __serial_get_घड़ी_भाग(अचिन्हित दीर्घ uartclk,
+					   अचिन्हित दीर्घ rate)
+अणु
+	u32 भाग, goodrate, hsu_rate, l_hsu_rate, comprate;
+	u32 rate_dअगरf;
 
-	/* Find the closest divider to get the desired clock rate */
-	div = uartclk / rate;
-	goodrate = hsu_rate = (div / 14) - 1;
-	if (hsu_rate != 0)
+	/* Find the बंदst भागider to get the desired घड़ी rate */
+	भाग = uartclk / rate;
+	goodrate = hsu_rate = (भाग / 14) - 1;
+	अगर (hsu_rate != 0)
 		hsu_rate--;
 
-	/* Tweak divider */
+	/* Tweak भागider */
 	l_hsu_rate = hsu_rate + 3;
-	rate_diff = 0xFFFFFFFF;
+	rate_dअगरf = 0xFFFFFFFF;
 
-	while (hsu_rate < l_hsu_rate) {
+	जबतक (hsu_rate < l_hsu_rate) अणु
 		comprate = uartclk / ((hsu_rate + 1) * 14);
-		if (abs(comprate - rate) < rate_diff) {
+		अगर (असल(comprate - rate) < rate_dअगरf) अणु
 			goodrate = hsu_rate;
-			rate_diff = abs(comprate - rate);
-		}
+			rate_dअगरf = असल(comprate - rate);
+		पूर्ण
 
 		hsu_rate++;
-	}
-	if (hsu_rate > 0xFF)
+	पूर्ण
+	अगर (hsu_rate > 0xFF)
 		hsu_rate = 0xFF;
 
-	return goodrate;
-}
+	वापस goodrate;
+पूर्ण
 
-static void __serial_uart_flush(struct uart_port *port)
-{
-	int cnt = 0;
+अटल व्योम __serial_uart_flush(काष्ठा uart_port *port)
+अणु
+	पूर्णांक cnt = 0;
 
-	while ((readl(LPC32XX_HSUART_LEVEL(port->membase)) > 0) &&
+	जबतक ((पढ़ोl(LPC32XX_HSUART_LEVEL(port->membase)) > 0) &&
 	       (cnt++ < FIFO_READ_LIMIT))
-		readl(LPC32XX_HSUART_FIFO(port->membase));
-}
+		पढ़ोl(LPC32XX_HSUART_FIFO(port->membase));
+पूर्ण
 
-static void __serial_lpc32xx_rx(struct uart_port *port)
-{
-	struct tty_port *tport = &port->state->port;
-	unsigned int tmp, flag;
+अटल व्योम __serial_lpc32xx_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा tty_port *tport = &port->state->port;
+	अचिन्हित पूर्णांक पंचांगp, flag;
 
-	/* Read data from FIFO and push into terminal */
-	tmp = readl(LPC32XX_HSUART_FIFO(port->membase));
-	while (!(tmp & LPC32XX_HSU_RX_EMPTY)) {
+	/* Read data from FIFO and push पूर्णांकo terminal */
+	पंचांगp = पढ़ोl(LPC32XX_HSUART_FIFO(port->membase));
+	जबतक (!(पंचांगp & LPC32XX_HSU_RX_EMPTY)) अणु
 		flag = TTY_NORMAL;
 		port->icount.rx++;
 
-		if (tmp & LPC32XX_HSU_ERROR_DATA) {
+		अगर (पंचांगp & LPC32XX_HSU_ERROR_DATA) अणु
 			/* Framing error */
-			writel(LPC32XX_HSU_FE_INT,
+			ग_लिखोl(LPC32XX_HSU_FE_INT,
 			       LPC32XX_HSUART_IIR(port->membase));
 			port->icount.frame++;
 			flag = TTY_FRAME;
-			tty_insert_flip_char(tport, 0, TTY_FRAME);
-		}
+			tty_insert_flip_अक्षर(tport, 0, TTY_FRAME);
+		पूर्ण
 
-		tty_insert_flip_char(tport, (tmp & 0xFF), flag);
+		tty_insert_flip_अक्षर(tport, (पंचांगp & 0xFF), flag);
 
-		tmp = readl(LPC32XX_HSUART_FIFO(port->membase));
-	}
+		पंचांगp = पढ़ोl(LPC32XX_HSUART_FIFO(port->membase));
+	पूर्ण
 
 	tty_flip_buffer_push(tport);
-}
+पूर्ण
 
-static void __serial_lpc32xx_tx(struct uart_port *port)
-{
-	struct circ_buf *xmit = &port->state->xmit;
-	unsigned int tmp;
+अटल व्योम __serial_lpc32xx_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	अचिन्हित पूर्णांक पंचांगp;
 
-	if (port->x_char) {
-		writel((u32)port->x_char, LPC32XX_HSUART_FIFO(port->membase));
+	अगर (port->x_अक्षर) अणु
+		ग_लिखोl((u32)port->x_अक्षर, LPC32XX_HSUART_FIFO(port->membase));
 		port->icount.tx++;
-		port->x_char = 0;
-		return;
-	}
+		port->x_अक्षर = 0;
+		वापस;
+	पूर्ण
 
-	if (uart_circ_empty(xmit) || uart_tx_stopped(port))
-		goto exit_tx;
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port))
+		जाओ निकास_tx;
 
 	/* Transfer data */
-	while (LPC32XX_HSU_TX_LEV(readl(
-		LPC32XX_HSUART_LEVEL(port->membase))) < 64) {
-		writel((u32) xmit->buf[xmit->tail],
+	जबतक (LPC32XX_HSU_TX_LEV(पढ़ोl(
+		LPC32XX_HSUART_LEVEL(port->membase))) < 64) अणु
+		ग_लिखोl((u32) xmit->buf[xmit->tail],
 		       LPC32XX_HSUART_FIFO(port->membase));
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-		if (uart_circ_empty(xmit))
-			break;
-	}
+		अगर (uart_circ_empty(xmit))
+			अवरोध;
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
-exit_tx:
-	if (uart_circ_empty(xmit)) {
-		tmp = readl(LPC32XX_HSUART_CTRL(port->membase));
-		tmp &= ~LPC32XX_HSU_TX_INT_EN;
-		writel(tmp, LPC32XX_HSUART_CTRL(port->membase));
-	}
-}
+निकास_tx:
+	अगर (uart_circ_empty(xmit)) अणु
+		पंचांगp = पढ़ोl(LPC32XX_HSUART_CTRL(port->membase));
+		पंचांगp &= ~LPC32XX_HSU_TX_INT_EN;
+		ग_लिखोl(पंचांगp, LPC32XX_HSUART_CTRL(port->membase));
+	पूर्ण
+पूर्ण
 
-static irqreturn_t serial_lpc32xx_interrupt(int irq, void *dev_id)
-{
-	struct uart_port *port = dev_id;
-	struct tty_port *tport = &port->state->port;
+अटल irqवापस_t serial_lpc32xx_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा uart_port *port = dev_id;
+	काष्ठा tty_port *tport = &port->state->port;
 	u32 status;
 
 	spin_lock(&port->lock);
 
-	/* Read UART status and clear latched interrupts */
-	status = readl(LPC32XX_HSUART_IIR(port->membase));
+	/* Read UART status and clear latched पूर्णांकerrupts */
+	status = पढ़ोl(LPC32XX_HSUART_IIR(port->membase));
 
-	if (status & LPC32XX_HSU_BRK_INT) {
+	अगर (status & LPC32XX_HSU_BRK_INT) अणु
 		/* Break received */
-		writel(LPC32XX_HSU_BRK_INT, LPC32XX_HSUART_IIR(port->membase));
+		ग_लिखोl(LPC32XX_HSU_BRK_INT, LPC32XX_HSUART_IIR(port->membase));
 		port->icount.brk++;
-		uart_handle_break(port);
-	}
+		uart_handle_अवरोध(port);
+	पूर्ण
 
 	/* Framing error */
-	if (status & LPC32XX_HSU_FE_INT)
-		writel(LPC32XX_HSU_FE_INT, LPC32XX_HSUART_IIR(port->membase));
+	अगर (status & LPC32XX_HSU_FE_INT)
+		ग_लिखोl(LPC32XX_HSU_FE_INT, LPC32XX_HSUART_IIR(port->membase));
 
-	if (status & LPC32XX_HSU_RX_OE_INT) {
+	अगर (status & LPC32XX_HSU_RX_OE_INT) अणु
 		/* Receive FIFO overrun */
-		writel(LPC32XX_HSU_RX_OE_INT,
+		ग_लिखोl(LPC32XX_HSU_RX_OE_INT,
 		       LPC32XX_HSUART_IIR(port->membase));
 		port->icount.overrun++;
-		tty_insert_flip_char(tport, 0, TTY_OVERRUN);
+		tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN);
 		tty_schedule_flip(tport);
-	}
+	पूर्ण
 
 	/* Data received? */
-	if (status & (LPC32XX_HSU_RX_TIMEOUT_INT | LPC32XX_HSU_RX_TRIG_INT))
+	अगर (status & (LPC32XX_HSU_RX_TIMEOUT_INT | LPC32XX_HSU_RX_TRIG_INT))
 		__serial_lpc32xx_rx(port);
 
 	/* Transmit data request? */
-	if ((status & LPC32XX_HSU_TX_INT) && (!uart_tx_stopped(port))) {
-		writel(LPC32XX_HSU_TX_INT, LPC32XX_HSUART_IIR(port->membase));
+	अगर ((status & LPC32XX_HSU_TX_INT) && (!uart_tx_stopped(port))) अणु
+		ग_लिखोl(LPC32XX_HSU_TX_INT, LPC32XX_HSUART_IIR(port->membase));
 		__serial_lpc32xx_tx(port);
-	}
+	पूर्ण
 
 	spin_unlock(&port->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* port->lock is not held.  */
-static unsigned int serial_lpc32xx_tx_empty(struct uart_port *port)
-{
-	unsigned int ret = 0;
+अटल अचिन्हित पूर्णांक serial_lpc32xx_tx_empty(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक ret = 0;
 
-	if (LPC32XX_HSU_TX_LEV(readl(LPC32XX_HSUART_LEVEL(port->membase))) == 0)
+	अगर (LPC32XX_HSU_TX_LEV(पढ़ोl(LPC32XX_HSUART_LEVEL(port->membase))) == 0)
 		ret = TIOCSER_TEMT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* port->lock held by caller.  */
-static void serial_lpc32xx_set_mctrl(struct uart_port *port,
-				     unsigned int mctrl)
-{
-	/* No signals are supported on HS UARTs */
-}
+अटल व्योम serial_lpc32xx_set_mctrl(काष्ठा uart_port *port,
+				     अचिन्हित पूर्णांक mctrl)
+अणु
+	/* No संकेतs are supported on HS UARTs */
+पूर्ण
 
-/* port->lock is held by caller and interrupts are disabled.  */
-static unsigned int serial_lpc32xx_get_mctrl(struct uart_port *port)
-{
-	/* No signals are supported on HS UARTs */
-	return TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
-}
-
-/* port->lock held by caller.  */
-static void serial_lpc32xx_stop_tx(struct uart_port *port)
-{
-	u32 tmp;
-
-	tmp = readl(LPC32XX_HSUART_CTRL(port->membase));
-	tmp &= ~LPC32XX_HSU_TX_INT_EN;
-	writel(tmp, LPC32XX_HSUART_CTRL(port->membase));
-}
+/* port->lock is held by caller and पूर्णांकerrupts are disabled.  */
+अटल अचिन्हित पूर्णांक serial_lpc32xx_get_mctrl(काष्ठा uart_port *port)
+अणु
+	/* No संकेतs are supported on HS UARTs */
+	वापस TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
+पूर्ण
 
 /* port->lock held by caller.  */
-static void serial_lpc32xx_start_tx(struct uart_port *port)
-{
-	u32 tmp;
+अटल व्योम serial_lpc32xx_stop_tx(काष्ठा uart_port *port)
+अणु
+	u32 पंचांगp;
+
+	पंचांगp = पढ़ोl(LPC32XX_HSUART_CTRL(port->membase));
+	पंचांगp &= ~LPC32XX_HSU_TX_INT_EN;
+	ग_लिखोl(पंचांगp, LPC32XX_HSUART_CTRL(port->membase));
+पूर्ण
+
+/* port->lock held by caller.  */
+अटल व्योम serial_lpc32xx_start_tx(काष्ठा uart_port *port)
+अणु
+	u32 पंचांगp;
 
 	__serial_lpc32xx_tx(port);
-	tmp = readl(LPC32XX_HSUART_CTRL(port->membase));
-	tmp |= LPC32XX_HSU_TX_INT_EN;
-	writel(tmp, LPC32XX_HSUART_CTRL(port->membase));
-}
+	पंचांगp = पढ़ोl(LPC32XX_HSUART_CTRL(port->membase));
+	पंचांगp |= LPC32XX_HSU_TX_INT_EN;
+	ग_लिखोl(पंचांगp, LPC32XX_HSUART_CTRL(port->membase));
+पूर्ण
 
 /* port->lock held by caller.  */
-static void serial_lpc32xx_stop_rx(struct uart_port *port)
-{
-	u32 tmp;
+अटल व्योम serial_lpc32xx_stop_rx(काष्ठा uart_port *port)
+अणु
+	u32 पंचांगp;
 
-	tmp = readl(LPC32XX_HSUART_CTRL(port->membase));
-	tmp &= ~(LPC32XX_HSU_RX_INT_EN | LPC32XX_HSU_ERR_INT_EN);
-	writel(tmp, LPC32XX_HSUART_CTRL(port->membase));
+	पंचांगp = पढ़ोl(LPC32XX_HSUART_CTRL(port->membase));
+	पंचांगp &= ~(LPC32XX_HSU_RX_INT_EN | LPC32XX_HSU_ERR_INT_EN);
+	ग_लिखोl(पंचांगp, LPC32XX_HSUART_CTRL(port->membase));
 
-	writel((LPC32XX_HSU_BRK_INT | LPC32XX_HSU_RX_OE_INT |
+	ग_लिखोl((LPC32XX_HSU_BRK_INT | LPC32XX_HSU_RX_OE_INT |
 		LPC32XX_HSU_FE_INT), LPC32XX_HSUART_IIR(port->membase));
-}
+पूर्ण
 
 /* port->lock is not held.  */
-static void serial_lpc32xx_break_ctl(struct uart_port *port,
-				     int break_state)
-{
-	unsigned long flags;
-	u32 tmp;
+अटल व्योम serial_lpc32xx_अवरोध_ctl(काष्ठा uart_port *port,
+				     पूर्णांक अवरोध_state)
+अणु
+	अचिन्हित दीर्घ flags;
+	u32 पंचांगp;
 
 	spin_lock_irqsave(&port->lock, flags);
-	tmp = readl(LPC32XX_HSUART_CTRL(port->membase));
-	if (break_state != 0)
-		tmp |= LPC32XX_HSU_BREAK;
-	else
-		tmp &= ~LPC32XX_HSU_BREAK;
-	writel(tmp, LPC32XX_HSUART_CTRL(port->membase));
+	पंचांगp = पढ़ोl(LPC32XX_HSUART_CTRL(port->membase));
+	अगर (अवरोध_state != 0)
+		पंचांगp |= LPC32XX_HSU_BREAK;
+	अन्यथा
+		पंचांगp &= ~LPC32XX_HSU_BREAK;
+	ग_लिखोl(पंचांगp, LPC32XX_HSUART_CTRL(port->membase));
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
 /* port->lock is not held.  */
-static int serial_lpc32xx_startup(struct uart_port *port)
-{
-	int retval;
-	unsigned long flags;
-	u32 tmp;
+अटल पूर्णांक serial_lpc32xx_startup(काष्ठा uart_port *port)
+अणु
+	पूर्णांक retval;
+	अचिन्हित दीर्घ flags;
+	u32 पंचांगp;
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	__serial_uart_flush(port);
 
-	writel((LPC32XX_HSU_TX_INT | LPC32XX_HSU_FE_INT |
+	ग_लिखोl((LPC32XX_HSU_TX_INT | LPC32XX_HSU_FE_INT |
 		LPC32XX_HSU_BRK_INT | LPC32XX_HSU_RX_OE_INT),
 	       LPC32XX_HSUART_IIR(port->membase));
 
-	writel(0xFF, LPC32XX_HSUART_RATE(port->membase));
+	ग_लिखोl(0xFF, LPC32XX_HSUART_RATE(port->membase));
 
 	/*
-	 * Set receiver timeout, HSU offset of 20, no break, no interrupts,
-	 * and default FIFO trigger levels
+	 * Set receiver समयout, HSU offset of 20, no अवरोध, no पूर्णांकerrupts,
+	 * and शेष FIFO trigger levels
 	 */
-	tmp = LPC32XX_HSU_TX_TL8B | LPC32XX_HSU_RX_TL32B |
+	पंचांगp = LPC32XX_HSU_TX_TL8B | LPC32XX_HSU_RX_TL32B |
 		LPC32XX_HSU_OFFSET(20) | LPC32XX_HSU_TMO_INACT_4B;
-	writel(tmp, LPC32XX_HSUART_CTRL(port->membase));
+	ग_लिखोl(पंचांगp, LPC32XX_HSUART_CTRL(port->membase));
 
 	lpc32xx_loopback_set(port->mapbase, 0); /* get out of loopback mode */
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	retval = request_irq(port->irq, serial_lpc32xx_interrupt,
+	retval = request_irq(port->irq, serial_lpc32xx_पूर्णांकerrupt,
 			     0, MODNAME, port);
-	if (!retval)
-		writel((tmp | LPC32XX_HSU_RX_INT_EN | LPC32XX_HSU_ERR_INT_EN),
+	अगर (!retval)
+		ग_लिखोl((पंचांगp | LPC32XX_HSU_RX_INT_EN | LPC32XX_HSU_ERR_INT_EN),
 		       LPC32XX_HSUART_CTRL(port->membase));
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* port->lock is not held.  */
-static void serial_lpc32xx_shutdown(struct uart_port *port)
-{
-	u32 tmp;
-	unsigned long flags;
+अटल व्योम serial_lpc32xx_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	u32 पंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	tmp = LPC32XX_HSU_TX_TL8B | LPC32XX_HSU_RX_TL32B |
+	पंचांगp = LPC32XX_HSU_TX_TL8B | LPC32XX_HSU_RX_TL32B |
 		LPC32XX_HSU_OFFSET(20) | LPC32XX_HSU_TMO_INACT_4B;
-	writel(tmp, LPC32XX_HSUART_CTRL(port->membase));
+	ग_लिखोl(पंचांगp, LPC32XX_HSUART_CTRL(port->membase));
 
 	lpc32xx_loopback_set(port->mapbase, 1); /* go to loopback mode */
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	free_irq(port->irq, port);
-}
+	मुक्त_irq(port->irq, port);
+पूर्ण
 
 /* port->lock is not held.  */
-static void serial_lpc32xx_set_termios(struct uart_port *port,
-				       struct ktermios *termios,
-				       struct ktermios *old)
-{
-	unsigned long flags;
-	unsigned int baud, quot;
-	u32 tmp;
+अटल व्योम serial_lpc32xx_set_termios(काष्ठा uart_port *port,
+				       काष्ठा ktermios *termios,
+				       काष्ठा ktermios *old)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक baud, quot;
+	u32 पंचांगp;
 
 	/* Always 8-bit, no parity, 1 stop bit */
 	termios->c_cflag &= ~(CSIZE | CSTOPB | PARENB | PARODD);
@@ -510,251 +511,251 @@ static void serial_lpc32xx_set_termios(struct uart_port *port,
 	baud = uart_get_baud_rate(port, termios, old, 0,
 				  port->uartclk / 14);
 
-	quot = __serial_get_clock_div(port->uartclk, baud);
+	quot = __serial_get_घड़ी_भाग(port->uartclk, baud);
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Ignore characters? */
-	tmp = readl(LPC32XX_HSUART_CTRL(port->membase));
-	if ((termios->c_cflag & CREAD) == 0)
-		tmp &= ~(LPC32XX_HSU_RX_INT_EN | LPC32XX_HSU_ERR_INT_EN);
-	else
-		tmp |= LPC32XX_HSU_RX_INT_EN | LPC32XX_HSU_ERR_INT_EN;
-	writel(tmp, LPC32XX_HSUART_CTRL(port->membase));
+	/* Ignore अक्षरacters? */
+	पंचांगp = पढ़ोl(LPC32XX_HSUART_CTRL(port->membase));
+	अगर ((termios->c_cflag & CREAD) == 0)
+		पंचांगp &= ~(LPC32XX_HSU_RX_INT_EN | LPC32XX_HSU_ERR_INT_EN);
+	अन्यथा
+		पंचांगp |= LPC32XX_HSU_RX_INT_EN | LPC32XX_HSU_ERR_INT_EN;
+	ग_लिखोl(पंचांगp, LPC32XX_HSUART_CTRL(port->membase));
 
-	writel(quot, LPC32XX_HSUART_RATE(port->membase));
+	ग_लिखोl(quot, LPC32XX_HSUART_RATE(port->membase));
 
-	uart_update_timeout(port, termios->c_cflag, baud);
+	uart_update_समयout(port, termios->c_cflag, baud);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	/* Don't rewrite B0 */
-	if (tty_termios_baud_rate(termios))
+	/* Don't reग_लिखो B0 */
+	अगर (tty_termios_baud_rate(termios))
 		tty_termios_encode_baud_rate(termios, baud, baud);
-}
+पूर्ण
 
-static const char *serial_lpc32xx_type(struct uart_port *port)
-{
-	return MODNAME;
-}
+अटल स्थिर अक्षर *serial_lpc32xx_type(काष्ठा uart_port *port)
+अणु
+	वापस MODNAME;
+पूर्ण
 
-static void serial_lpc32xx_release_port(struct uart_port *port)
-{
-	if ((port->iotype == UPIO_MEM32) && (port->mapbase)) {
-		if (port->flags & UPF_IOREMAP) {
+अटल व्योम serial_lpc32xx_release_port(काष्ठा uart_port *port)
+अणु
+	अगर ((port->iotype == UPIO_MEM32) && (port->mapbase)) अणु
+		अगर (port->flags & UPF_IOREMAP) अणु
 			iounmap(port->membase);
-			port->membase = NULL;
-		}
+			port->membase = शून्य;
+		पूर्ण
 
 		release_mem_region(port->mapbase, SZ_4K);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int serial_lpc32xx_request_port(struct uart_port *port)
-{
-	int ret = -ENODEV;
+अटल पूर्णांक serial_lpc32xx_request_port(काष्ठा uart_port *port)
+अणु
+	पूर्णांक ret = -ENODEV;
 
-	if ((port->iotype == UPIO_MEM32) && (port->mapbase)) {
+	अगर ((port->iotype == UPIO_MEM32) && (port->mapbase)) अणु
 		ret = 0;
 
-		if (!request_mem_region(port->mapbase, SZ_4K, MODNAME))
+		अगर (!request_mem_region(port->mapbase, SZ_4K, MODNAME))
 			ret = -EBUSY;
-		else if (port->flags & UPF_IOREMAP) {
+		अन्यथा अगर (port->flags & UPF_IOREMAP) अणु
 			port->membase = ioremap(port->mapbase, SZ_4K);
-			if (!port->membase) {
+			अगर (!port->membase) अणु
 				release_mem_region(port->mapbase, SZ_4K);
 				ret = -ENOMEM;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void serial_lpc32xx_config_port(struct uart_port *port, int uflags)
-{
-	int ret;
+अटल व्योम serial_lpc32xx_config_port(काष्ठा uart_port *port, पूर्णांक uflags)
+अणु
+	पूर्णांक ret;
 
 	ret = serial_lpc32xx_request_port(port);
-	if (ret < 0)
-		return;
+	अगर (ret < 0)
+		वापस;
 	port->type = PORT_UART00;
-	port->fifosize = 64;
+	port->fअगरosize = 64;
 
 	__serial_uart_flush(port);
 
-	writel((LPC32XX_HSU_TX_INT | LPC32XX_HSU_FE_INT |
+	ग_लिखोl((LPC32XX_HSU_TX_INT | LPC32XX_HSU_FE_INT |
 		LPC32XX_HSU_BRK_INT | LPC32XX_HSU_RX_OE_INT),
 	       LPC32XX_HSUART_IIR(port->membase));
 
-	writel(0xFF, LPC32XX_HSUART_RATE(port->membase));
+	ग_लिखोl(0xFF, LPC32XX_HSUART_RATE(port->membase));
 
-	/* Set receiver timeout, HSU offset of 20, no break, no interrupts,
-	   and default FIFO trigger levels */
-	writel(LPC32XX_HSU_TX_TL8B | LPC32XX_HSU_RX_TL32B |
+	/* Set receiver समयout, HSU offset of 20, no अवरोध, no पूर्णांकerrupts,
+	   and शेष FIFO trigger levels */
+	ग_लिखोl(LPC32XX_HSU_TX_TL8B | LPC32XX_HSU_RX_TL32B |
 	       LPC32XX_HSU_OFFSET(20) | LPC32XX_HSU_TMO_INACT_4B,
 	       LPC32XX_HSUART_CTRL(port->membase));
-}
+पूर्ण
 
-static int serial_lpc32xx_verify_port(struct uart_port *port,
-				      struct serial_struct *ser)
-{
-	int ret = 0;
+अटल पूर्णांक serial_lpc32xx_verअगरy_port(काष्ठा uart_port *port,
+				      काष्ठा serial_काष्ठा *ser)
+अणु
+	पूर्णांक ret = 0;
 
-	if (ser->type != PORT_UART00)
+	अगर (ser->type != PORT_UART00)
 		ret = -EINVAL;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct uart_ops serial_lpc32xx_pops = {
+अटल स्थिर काष्ठा uart_ops serial_lpc32xx_pops = अणु
 	.tx_empty	= serial_lpc32xx_tx_empty,
 	.set_mctrl	= serial_lpc32xx_set_mctrl,
 	.get_mctrl	= serial_lpc32xx_get_mctrl,
 	.stop_tx	= serial_lpc32xx_stop_tx,
 	.start_tx	= serial_lpc32xx_start_tx,
 	.stop_rx	= serial_lpc32xx_stop_rx,
-	.break_ctl	= serial_lpc32xx_break_ctl,
+	.अवरोध_ctl	= serial_lpc32xx_अवरोध_ctl,
 	.startup	= serial_lpc32xx_startup,
-	.shutdown	= serial_lpc32xx_shutdown,
+	.shutकरोwn	= serial_lpc32xx_shutकरोwn,
 	.set_termios	= serial_lpc32xx_set_termios,
 	.type		= serial_lpc32xx_type,
 	.release_port	= serial_lpc32xx_release_port,
 	.request_port	= serial_lpc32xx_request_port,
 	.config_port	= serial_lpc32xx_config_port,
-	.verify_port	= serial_lpc32xx_verify_port,
-};
+	.verअगरy_port	= serial_lpc32xx_verअगरy_port,
+पूर्ण;
 
 /*
- * Register a set of serial devices attached to a platform device
+ * Register a set of serial devices attached to a platक्रमm device
  */
-static int serial_hs_lpc32xx_probe(struct platform_device *pdev)
-{
-	struct lpc32xx_hsuart_port *p = &lpc32xx_hs_ports[uarts_registered];
-	int ret = 0;
-	struct resource *res;
+अटल पूर्णांक serial_hs_lpc32xx_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpc32xx_hsuart_port *p = &lpc32xx_hs_ports[uarts_रेजिस्टरed];
+	पूर्णांक ret = 0;
+	काष्ठा resource *res;
 
-	if (uarts_registered >= MAX_PORTS) {
+	अगर (uarts_रेजिस्टरed >= MAX_PORTS) अणु
 		dev_err(&pdev->dev,
 			"Error: Number of possible ports exceeded (%d)!\n",
-			uarts_registered + 1);
-		return -ENXIO;
-	}
+			uarts_रेजिस्टरed + 1);
+		वापस -ENXIO;
+	पूर्ण
 
-	memset(p, 0, sizeof(*p));
+	स_रखो(p, 0, माप(*p));
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev,
 			"Error getting mem resource for HS UART port %d\n",
-			uarts_registered);
-		return -ENXIO;
-	}
+			uarts_रेजिस्टरed);
+		वापस -ENXIO;
+	पूर्ण
 	p->port.mapbase = res->start;
-	p->port.membase = NULL;
+	p->port.membase = शून्य;
 
-	ret = platform_get_irq(pdev, 0);
-	if (ret < 0)
-		return ret;
+	ret = platक्रमm_get_irq(pdev, 0);
+	अगर (ret < 0)
+		वापस ret;
 	p->port.irq = ret;
 
 	p->port.iotype = UPIO_MEM32;
 	p->port.uartclk = LPC32XX_MAIN_OSC_FREQ;
-	p->port.regshift = 2;
+	p->port.regshअगरt = 2;
 	p->port.flags = UPF_BOOT_AUTOCONF | UPF_FIXED_PORT | UPF_IOREMAP;
 	p->port.dev = &pdev->dev;
 	p->port.ops = &serial_lpc32xx_pops;
-	p->port.line = uarts_registered++;
+	p->port.line = uarts_रेजिस्टरed++;
 	spin_lock_init(&p->port.lock);
 
-	/* send port to loopback mode by default */
+	/* send port to loopback mode by शेष */
 	lpc32xx_loopback_set(p->port.mapbase, 1);
 
 	ret = uart_add_one_port(&lpc32xx_hs_reg, &p->port);
 
-	platform_set_drvdata(pdev, p);
+	platक्रमm_set_drvdata(pdev, p);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Remove serial ports registered against a platform device.
+ * Remove serial ports रेजिस्टरed against a platक्रमm device.
  */
-static int serial_hs_lpc32xx_remove(struct platform_device *pdev)
-{
-	struct lpc32xx_hsuart_port *p = platform_get_drvdata(pdev);
+अटल पूर्णांक serial_hs_lpc32xx_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpc32xx_hsuart_port *p = platक्रमm_get_drvdata(pdev);
 
-	uart_remove_one_port(&lpc32xx_hs_reg, &p->port);
+	uart_हटाओ_one_port(&lpc32xx_hs_reg, &p->port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-#ifdef CONFIG_PM
-static int serial_hs_lpc32xx_suspend(struct platform_device *pdev,
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक serial_hs_lpc32xx_suspend(काष्ठा platक्रमm_device *pdev,
 				     pm_message_t state)
-{
-	struct lpc32xx_hsuart_port *p = platform_get_drvdata(pdev);
+अणु
+	काष्ठा lpc32xx_hsuart_port *p = platक्रमm_get_drvdata(pdev);
 
 	uart_suspend_port(&lpc32xx_hs_reg, &p->port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int serial_hs_lpc32xx_resume(struct platform_device *pdev)
-{
-	struct lpc32xx_hsuart_port *p = platform_get_drvdata(pdev);
+अटल पूर्णांक serial_hs_lpc32xx_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpc32xx_hsuart_port *p = platक्रमm_get_drvdata(pdev);
 
 	uart_resume_port(&lpc32xx_hs_reg, &p->port);
 
-	return 0;
-}
-#else
-#define serial_hs_lpc32xx_suspend	NULL
-#define serial_hs_lpc32xx_resume	NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा serial_hs_lpc32xx_suspend	शून्य
+#घोषणा serial_hs_lpc32xx_resume	शून्य
+#पूर्ण_अगर
 
-static const struct of_device_id serial_hs_lpc32xx_dt_ids[] = {
-	{ .compatible = "nxp,lpc3220-hsuart" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id serial_hs_lpc32xx_dt_ids[] = अणु
+	अणु .compatible = "nxp,lpc3220-hsuart" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, serial_hs_lpc32xx_dt_ids);
 
-static struct platform_driver serial_hs_lpc32xx_driver = {
+अटल काष्ठा platक्रमm_driver serial_hs_lpc32xx_driver = अणु
 	.probe		= serial_hs_lpc32xx_probe,
-	.remove		= serial_hs_lpc32xx_remove,
+	.हटाओ		= serial_hs_lpc32xx_हटाओ,
 	.suspend	= serial_hs_lpc32xx_suspend,
 	.resume		= serial_hs_lpc32xx_resume,
-	.driver		= {
+	.driver		= अणु
 		.name	= MODNAME,
 		.of_match_table	= serial_hs_lpc32xx_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init lpc32xx_hsuart_init(void)
-{
-	int ret;
+अटल पूर्णांक __init lpc32xx_hsuart_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = uart_register_driver(&lpc32xx_hs_reg);
-	if (ret)
-		return ret;
+	ret = uart_रेजिस्टर_driver(&lpc32xx_hs_reg);
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&serial_hs_lpc32xx_driver);
-	if (ret)
-		uart_unregister_driver(&lpc32xx_hs_reg);
+	ret = platक्रमm_driver_रेजिस्टर(&serial_hs_lpc32xx_driver);
+	अगर (ret)
+		uart_unरेजिस्टर_driver(&lpc32xx_hs_reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit lpc32xx_hsuart_exit(void)
-{
-	platform_driver_unregister(&serial_hs_lpc32xx_driver);
-	uart_unregister_driver(&lpc32xx_hs_reg);
-}
+अटल व्योम __निकास lpc32xx_hsuart_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&serial_hs_lpc32xx_driver);
+	uart_unरेजिस्टर_driver(&lpc32xx_hs_reg);
+पूर्ण
 
 module_init(lpc32xx_hsuart_init);
-module_exit(lpc32xx_hsuart_exit);
+module_निकास(lpc32xx_hsuart_निकास);
 
 MODULE_AUTHOR("Kevin Wells <kevin.wells@nxp.com>");
 MODULE_AUTHOR("Roland Stigge <stigge@antcom.de>");

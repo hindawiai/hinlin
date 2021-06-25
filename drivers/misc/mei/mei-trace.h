@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2015-2016, Intel Corporation. All rights reserved.
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
-#if !defined(_MEI_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
-#define _MEI_TRACE_H_
+#अगर !defined(_MEI_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _MEI_TRACE_H_
 
-#include <linux/stringify.h>
-#include <linux/types.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/types.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#include <linux/device.h>
+#समावेश <linux/device.h>
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM mei
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM mei
 
-TRACE_EVENT(mei_reg_read,
-	TP_PROTO(const struct device *dev, const char *reg, u32 offs, u32 val),
+TRACE_EVENT(mei_reg_पढ़ो,
+	TP_PROTO(स्थिर काष्ठा device *dev, स्थिर अक्षर *reg, u32 offs, u32 val),
 	TP_ARGS(dev, reg, offs, val),
 	TP_STRUCT__entry(
 		__string(dev, dev_name(dev))
-		__field(const char *, reg)
+		__field(स्थिर अक्षर *, reg)
 		__field(u32, offs)
 		__field(u32, val)
 	),
@@ -31,16 +32,16 @@ TRACE_EVENT(mei_reg_read,
 		__entry->offs = offs;
 		__entry->val = val;
 	),
-	TP_printk("[%s] read %s:[%#x] = %#x",
+	TP_prपूर्णांकk("[%s] read %s:[%#x] = %#x",
 		  __get_str(dev), __entry->reg, __entry->offs, __entry->val)
 );
 
-TRACE_EVENT(mei_reg_write,
-	TP_PROTO(const struct device *dev, const char *reg, u32 offs, u32 val),
+TRACE_EVENT(mei_reg_ग_लिखो,
+	TP_PROTO(स्थिर काष्ठा device *dev, स्थिर अक्षर *reg, u32 offs, u32 val),
 	TP_ARGS(dev, reg, offs, val),
 	TP_STRUCT__entry(
 		__string(dev, dev_name(dev))
-		__field(const char *, reg)
+		__field(स्थिर अक्षर *, reg)
 		__field(u32, offs)
 		__field(u32, val)
 	),
@@ -50,16 +51,16 @@ TRACE_EVENT(mei_reg_write,
 		__entry->offs = offs;
 		__entry->val = val;
 	),
-	TP_printk("[%s] write %s[%#x] = %#x",
+	TP_prपूर्णांकk("[%s] write %s[%#x] = %#x",
 		  __get_str(dev), __entry->reg,  __entry->offs, __entry->val)
 );
 
-TRACE_EVENT(mei_pci_cfg_read,
-	TP_PROTO(const struct device *dev, const char *reg, u32 offs, u32 val),
+TRACE_EVENT(mei_pci_cfg_पढ़ो,
+	TP_PROTO(स्थिर काष्ठा device *dev, स्थिर अक्षर *reg, u32 offs, u32 val),
 	TP_ARGS(dev, reg, offs, val),
 	TP_STRUCT__entry(
 		__string(dev, dev_name(dev))
-		__field(const char *, reg)
+		__field(स्थिर अक्षर *, reg)
 		__field(u32, offs)
 		__field(u32, val)
 	),
@@ -69,15 +70,15 @@ TRACE_EVENT(mei_pci_cfg_read,
 		__entry->offs = offs;
 		__entry->val = val;
 	),
-	TP_printk("[%s] pci cfg read %s:[%#x] = %#x",
+	TP_prपूर्णांकk("[%s] pci cfg read %s:[%#x] = %#x",
 		  __get_str(dev), __entry->reg, __entry->offs, __entry->val)
 );
 
-#endif /* _MEI_TRACE_H_ */
+#पूर्ण_अगर /* _MEI_TRACE_H_ */
 
 /* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_PATH .
-#define TRACE_INCLUDE_FILE mei-trace
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_PATH .
+#घोषणा TRACE_INCLUDE_खाता mei-trace
+#समावेश <trace/define_trace.h>

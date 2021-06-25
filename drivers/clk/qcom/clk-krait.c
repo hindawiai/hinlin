@@ -1,126 +1,127 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2018, The Linux Foundation. All rights reserved.
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/clk-provider.h>
-#include <linux/spinlock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/spinlock.h>
 
-#include <asm/krait-l2-accessors.h>
+#समावेश <यंत्र/krait-l2-accessors.h>
 
-#include "clk-krait.h"
+#समावेश "clk-krait.h"
 
-/* Secondary and primary muxes share the same cp15 register */
-static DEFINE_SPINLOCK(krait_clock_reg_lock);
+/* Secondary and primary muxes share the same cp15 रेजिस्टर */
+अटल DEFINE_SPINLOCK(krait_घड़ी_reg_lock);
 
-#define LPL_SHIFT	8
-static void __krait_mux_set_sel(struct krait_mux_clk *mux, int sel)
-{
-	unsigned long flags;
+#घोषणा LPL_SHIFT	8
+अटल व्योम __krait_mux_set_sel(काष्ठा krait_mux_clk *mux, पूर्णांक sel)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 regval;
 
-	spin_lock_irqsave(&krait_clock_reg_lock, flags);
+	spin_lock_irqsave(&krait_घड़ी_reg_lock, flags);
 	regval = krait_get_l2_indirect_reg(mux->offset);
-	regval &= ~(mux->mask << mux->shift);
-	regval |= (sel & mux->mask) << mux->shift;
-	if (mux->lpl) {
-		regval &= ~(mux->mask << (mux->shift + LPL_SHIFT));
-		regval |= (sel & mux->mask) << (mux->shift + LPL_SHIFT);
-	}
+	regval &= ~(mux->mask << mux->shअगरt);
+	regval |= (sel & mux->mask) << mux->shअगरt;
+	अगर (mux->lpl) अणु
+		regval &= ~(mux->mask << (mux->shअगरt + LPL_SHIFT));
+		regval |= (sel & mux->mask) << (mux->shअगरt + LPL_SHIFT);
+	पूर्ण
 	krait_set_l2_indirect_reg(mux->offset, regval);
-	spin_unlock_irqrestore(&krait_clock_reg_lock, flags);
+	spin_unlock_irqrestore(&krait_घड़ी_reg_lock, flags);
 
-	/* Wait for switch to complete. */
+	/* Wait क्रम चयन to complete. */
 	mb();
 	udelay(1);
-}
+पूर्ण
 
-static int krait_mux_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct krait_mux_clk *mux = to_krait_mux_clk(hw);
+अटल पूर्णांक krait_mux_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा krait_mux_clk *mux = to_krait_mux_clk(hw);
 	u32 sel;
 
 	sel = clk_mux_index_to_val(mux->parent_map, 0, index);
 	mux->en_mask = sel;
 	/* Don't touch mux if CPU is off as it won't work */
-	if (__clk_is_enabled(hw->clk))
+	अगर (__clk_is_enabled(hw->clk))
 		__krait_mux_set_sel(mux, sel);
 
 	mux->reparent = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 krait_mux_get_parent(struct clk_hw *hw)
-{
-	struct krait_mux_clk *mux = to_krait_mux_clk(hw);
+अटल u8 krait_mux_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा krait_mux_clk *mux = to_krait_mux_clk(hw);
 	u32 sel;
 
 	sel = krait_get_l2_indirect_reg(mux->offset);
-	sel >>= mux->shift;
+	sel >>= mux->shअगरt;
 	sel &= mux->mask;
 	mux->en_mask = sel;
 
-	return clk_mux_val_to_index(hw, mux->parent_map, 0, sel);
-}
+	वापस clk_mux_val_to_index(hw, mux->parent_map, 0, sel);
+पूर्ण
 
-const struct clk_ops krait_mux_clk_ops = {
+स्थिर काष्ठा clk_ops krait_mux_clk_ops = अणु
 	.set_parent = krait_mux_set_parent,
 	.get_parent = krait_mux_get_parent,
-	.determine_rate = __clk_mux_determine_rate_closest,
-};
+	.determine_rate = __clk_mux_determine_rate_बंदst,
+पूर्ण;
 EXPORT_SYMBOL_GPL(krait_mux_clk_ops);
 
-/* The divider can divide by 2, 4, 6 and 8. But we only really need div-2. */
-static long krait_div2_round_rate(struct clk_hw *hw, unsigned long rate,
-				  unsigned long *parent_rate)
-{
+/* The भागider can भागide by 2, 4, 6 and 8. But we only really need भाग-2. */
+अटल दीर्घ krait_भाग2_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				  अचिन्हित दीर्घ *parent_rate)
+अणु
 	*parent_rate = clk_hw_round_rate(clk_hw_get_parent(hw), rate * 2);
-	return DIV_ROUND_UP(*parent_rate, 2);
-}
+	वापस DIV_ROUND_UP(*parent_rate, 2);
+पूर्ण
 
-static int krait_div2_set_rate(struct clk_hw *hw, unsigned long rate,
-			       unsigned long parent_rate)
-{
-	struct krait_div2_clk *d = to_krait_div2_clk(hw);
-	unsigned long flags;
+अटल पूर्णांक krait_भाग2_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा krait_भाग2_clk *d = to_krait_भाग2_clk(hw);
+	अचिन्हित दीर्घ flags;
 	u32 val;
 	u32 mask = BIT(d->width) - 1;
 
-	if (d->lpl)
-		mask = mask << (d->shift + LPL_SHIFT) | mask << d->shift;
+	अगर (d->lpl)
+		mask = mask << (d->shअगरt + LPL_SHIFT) | mask << d->shअगरt;
 
-	spin_lock_irqsave(&krait_clock_reg_lock, flags);
+	spin_lock_irqsave(&krait_घड़ी_reg_lock, flags);
 	val = krait_get_l2_indirect_reg(d->offset);
 	val &= ~mask;
 	krait_set_l2_indirect_reg(d->offset, val);
-	spin_unlock_irqrestore(&krait_clock_reg_lock, flags);
+	spin_unlock_irqrestore(&krait_घड़ी_reg_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long
-krait_div2_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
-{
-	struct krait_div2_clk *d = to_krait_div2_clk(hw);
+अटल अचिन्हित दीर्घ
+krait_भाग2_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा krait_भाग2_clk *d = to_krait_भाग2_clk(hw);
 	u32 mask = BIT(d->width) - 1;
-	u32 div;
+	u32 भाग;
 
-	div = krait_get_l2_indirect_reg(d->offset);
-	div >>= d->shift;
-	div &= mask;
-	div = (div + 1) * 2;
+	भाग = krait_get_l2_indirect_reg(d->offset);
+	भाग >>= d->shअगरt;
+	भाग &= mask;
+	भाग = (भाग + 1) * 2;
 
-	return DIV_ROUND_UP(parent_rate, div);
-}
+	वापस DIV_ROUND_UP(parent_rate, भाग);
+पूर्ण
 
-const struct clk_ops krait_div2_clk_ops = {
-	.round_rate = krait_div2_round_rate,
-	.set_rate = krait_div2_set_rate,
-	.recalc_rate = krait_div2_recalc_rate,
-};
-EXPORT_SYMBOL_GPL(krait_div2_clk_ops);
+स्थिर काष्ठा clk_ops krait_भाग2_clk_ops = अणु
+	.round_rate = krait_भाग2_round_rate,
+	.set_rate = krait_भाग2_set_rate,
+	.recalc_rate = krait_भाग2_recalc_rate,
+पूर्ण;
+EXPORT_SYMBOL_GPL(krait_भाग2_clk_ops);

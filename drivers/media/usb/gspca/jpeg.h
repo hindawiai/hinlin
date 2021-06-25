@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef JPEG_H
-#define JPEG_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित JPEG_H
+#घोषणा JPEG_H 1
 /*
  * Insert a JPEG header at start of frame
  *
  * This module is used by the gspca subdrivers.
- * A special case is done for Conexant webcams.
+ * A special हाल is करोne क्रम Conexant webcams.
  *
- * Copyright (C) Jean-Francois Moine (http://moinejf.free.fr)
+ * Copyright (C) Jean-Francois Moine (http://moinejf.मुक्त.fr)
  */
 
 /*
  * generation options
- *	CONEX_CAM	Conexant if present
+ *	CONEX_CAM	Conexant अगर present
  */
 
 /* JPEG header */
-static const u8 jpeg_head[] = {
+अटल स्थिर u8 jpeg_head[] = अणु
 	0xff, 0xd8,			/* jpeg */
 
 /* quantization table quality 50% */
 	0xff, 0xdb, 0x00, 0x84,		/* DQT */
 0,
-#define JPEG_QT0_OFFSET 7
+#घोषणा JPEG_QT0_OFFSET 7
 	0x10, 0x0b, 0x0c, 0x0e, 0x0c, 0x0a, 0x10, 0x0e,
 	0x0d, 0x0e, 0x12, 0x11, 0x10, 0x13, 0x18, 0x28,
 	0x1a, 0x18, 0x16, 0x16, 0x18, 0x31, 0x23, 0x25,
@@ -32,7 +33,7 @@ static const u8 jpeg_head[] = {
 	0x5f, 0x62, 0x67, 0x68, 0x67, 0x3e, 0x4d, 0x71,
 	0x79, 0x70, 0x64, 0x78, 0x5c, 0x65, 0x67, 0x63,
 1,
-#define JPEG_QT1_OFFSET 72
+#घोषणा JPEG_QT1_OFFSET 72
 	0x11, 0x12, 0x12, 0x18, 0x15, 0x18, 0x2f, 0x1a,
 	0x1a, 0x2f, 0x63, 0x42, 0x38, 0x42, 0x63, 0x63,
 	0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
@@ -96,13 +97,13 @@ static const u8 jpeg_head[] = {
 	0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xe2, 0xe3,
 	0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xf2,
 	0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa,
-#ifdef CONEX_CAM
+#अगर_घोषित CONEX_CAM
 /* the Conexant frames start with SOF0 */
-#define JPEG_HDR_SZ 556
-#else
+#घोषणा JPEG_HDR_SZ 556
+#अन्यथा
 	0xff, 0xc0, 0x00, 0x11,		/* SOF0 (start of frame 0 */
 	0x08,				/* data precision */
-#define JPEG_HEIGHT_OFFSET 561
+#घोषणा JPEG_HEIGHT_OFFSET 561
 	0x01, 0xe0,			/* height */
 	0x02, 0x80,			/* width */
 	0x03,				/* component number */
@@ -114,43 +115,43 @@ static const u8 jpeg_head[] = {
 
 	0xff, 0xda, 0x00, 0x0c,		/* SOS (start of scan) */
 	0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3f, 0x00
-#define JPEG_HDR_SZ 589
-#endif
-};
+#घोषणा JPEG_HDR_SZ 589
+#पूर्ण_अगर
+पूर्ण;
 
 /* define the JPEG header */
-static void jpeg_define(u8 *jpeg_hdr,
-			int height,
-			int width,
-			int samplesY)
-{
-	memcpy(jpeg_hdr, jpeg_head, sizeof jpeg_head);
-#ifndef CONEX_CAM
+अटल व्योम jpeg_define(u8 *jpeg_hdr,
+			पूर्णांक height,
+			पूर्णांक width,
+			पूर्णांक samplesY)
+अणु
+	स_नकल(jpeg_hdr, jpeg_head, माप jpeg_head);
+#अगर_अघोषित CONEX_CAM
 	jpeg_hdr[JPEG_HEIGHT_OFFSET + 0] = height >> 8;
 	jpeg_hdr[JPEG_HEIGHT_OFFSET + 1] = height;
 	jpeg_hdr[JPEG_HEIGHT_OFFSET + 2] = width >> 8;
 	jpeg_hdr[JPEG_HEIGHT_OFFSET + 3] = width;
 	jpeg_hdr[JPEG_HEIGHT_OFFSET + 6] = samplesY;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /* set the JPEG quality */
-static void jpeg_set_qual(u8 *jpeg_hdr,
-			  int quality)
-{
-	int i, sc;
+अटल व्योम jpeg_set_qual(u8 *jpeg_hdr,
+			  पूर्णांक quality)
+अणु
+	पूर्णांक i, sc;
 
-	if (quality <= 0)
+	अगर (quality <= 0)
 		sc = 5000;
-	else if (quality < 50)
+	अन्यथा अगर (quality < 50)
 		sc = 5000 / quality;
-	else
+	अन्यथा
 		sc = 200 - quality * 2;
-	for (i = 0; i < 64; i++) {
+	क्रम (i = 0; i < 64; i++) अणु
 		jpeg_hdr[JPEG_QT0_OFFSET + i] =
 			(jpeg_head[JPEG_QT0_OFFSET + i] * sc + 50) / 100;
 		jpeg_hdr[JPEG_QT1_OFFSET + i] =
 			(jpeg_head[JPEG_QT1_OFFSET + i] * sc + 50) / 100;
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर

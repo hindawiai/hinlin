@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Null security operations.
  *
  * Copyright (C) 2016 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <net/af_rxrpc.h>
-#include "ar-internal.h"
+#समावेश <net/af_rxrpc.h>
+#समावेश "ar-internal.h"
 
-static int none_init_connection_security(struct rxrpc_connection *conn,
-					 struct rxrpc_key_token *token)
-{
-	return 0;
-}
+अटल पूर्णांक none_init_connection_security(काष्ठा rxrpc_connection *conn,
+					 काष्ठा rxrpc_key_token *token)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
  * Work out how much data we can put in an unsecured packet.
  */
-static int none_how_much_data(struct rxrpc_call *call, size_t remain,
-			       size_t *_buf_size, size_t *_data_size, size_t *_offset)
-{
-	*_buf_size = *_data_size = min_t(size_t, remain, RXRPC_JUMBO_DATALEN);
+अटल पूर्णांक none_how_much_data(काष्ठा rxrpc_call *call, माप_प्रकार reमुख्य,
+			       माप_प्रकार *_buf_size, माप_प्रकार *_data_size, माप_प्रकार *_offset)
+अणु
+	*_buf_size = *_data_size = min_t(माप_प्रकार, reमुख्य, RXRPC_JUMBO_DATALEN);
 	*_offset = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int none_secure_packet(struct rxrpc_call *call, struct sk_buff *skb,
-			      size_t data_size)
-{
-	return 0;
-}
+अटल पूर्णांक none_secure_packet(काष्ठा rxrpc_call *call, काष्ठा sk_buff *skb,
+			      माप_प्रकार data_size)
+अणु
+	वापस 0;
+पूर्ण
 
-static int none_verify_packet(struct rxrpc_call *call, struct sk_buff *skb,
-			      unsigned int offset, unsigned int len,
+अटल पूर्णांक none_verअगरy_packet(काष्ठा rxrpc_call *call, काष्ठा sk_buff *skb,
+			      अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक len,
 			      rxrpc_seq_t seq, u16 expected_cksum)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static void none_free_call_crypto(struct rxrpc_call *call)
-{
-}
+अटल व्योम none_मुक्त_call_crypto(काष्ठा rxrpc_call *call)
+अणु
+पूर्ण
 
-static void none_locate_data(struct rxrpc_call *call, struct sk_buff *skb,
-			     unsigned int *_offset, unsigned int *_len)
-{
-}
+अटल व्योम none_locate_data(काष्ठा rxrpc_call *call, काष्ठा sk_buff *skb,
+			     अचिन्हित पूर्णांक *_offset, अचिन्हित पूर्णांक *_len)
+अणु
+पूर्ण
 
-static int none_respond_to_challenge(struct rxrpc_connection *conn,
-				     struct sk_buff *skb,
-				     u32 *_abort_code)
-{
-	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+अटल पूर्णांक none_respond_to_challenge(काष्ठा rxrpc_connection *conn,
+				     काष्ठा sk_buff *skb,
+				     u32 *_पात_code)
+अणु
+	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
 
-	trace_rxrpc_rx_eproto(NULL, sp->hdr.serial,
-			      tracepoint_string("chall_none"));
-	return -EPROTO;
-}
+	trace_rxrpc_rx_eproto(शून्य, sp->hdr.serial,
+			      tracepoपूर्णांक_string("chall_none"));
+	वापस -EPROTO;
+पूर्ण
 
-static int none_verify_response(struct rxrpc_connection *conn,
-				struct sk_buff *skb,
-				u32 *_abort_code)
-{
-	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+अटल पूर्णांक none_verअगरy_response(काष्ठा rxrpc_connection *conn,
+				काष्ठा sk_buff *skb,
+				u32 *_पात_code)
+अणु
+	काष्ठा rxrpc_skb_priv *sp = rxrpc_skb(skb);
 
-	trace_rxrpc_rx_eproto(NULL, sp->hdr.serial,
-			      tracepoint_string("resp_none"));
-	return -EPROTO;
-}
+	trace_rxrpc_rx_eproto(शून्य, sp->hdr.serial,
+			      tracepoपूर्णांक_string("resp_none"));
+	वापस -EPROTO;
+पूर्ण
 
-static void none_clear(struct rxrpc_connection *conn)
-{
-}
+अटल व्योम none_clear(काष्ठा rxrpc_connection *conn)
+अणु
+पूर्ण
 
-static int none_init(void)
-{
-	return 0;
-}
+अटल पूर्णांक none_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void none_exit(void)
-{
-}
+अटल व्योम none_निकास(व्योम)
+अणु
+पूर्ण
 
 /*
  * RxRPC Kerberos-based security
  */
-const struct rxrpc_security rxrpc_no_security = {
+स्थिर काष्ठा rxrpc_security rxrpc_no_security = अणु
 	.name				= "none",
 	.security_index			= RXRPC_SECURITY_NONE,
 	.init				= none_init,
-	.exit				= none_exit,
+	.निकास				= none_निकास,
 	.init_connection_security	= none_init_connection_security,
-	.free_call_crypto		= none_free_call_crypto,
+	.मुक्त_call_crypto		= none_मुक्त_call_crypto,
 	.how_much_data			= none_how_much_data,
 	.secure_packet			= none_secure_packet,
-	.verify_packet			= none_verify_packet,
+	.verअगरy_packet			= none_verअगरy_packet,
 	.locate_data			= none_locate_data,
 	.respond_to_challenge		= none_respond_to_challenge,
-	.verify_response		= none_verify_response,
+	.verअगरy_response		= none_verअगरy_response,
 	.clear				= none_clear,
-};
+पूर्ण;

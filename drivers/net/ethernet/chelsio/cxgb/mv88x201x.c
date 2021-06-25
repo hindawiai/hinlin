@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*****************************************************************************
  *                                                                           *
  * File: mv88x201x.c                                                         *
@@ -7,12 +8,12 @@
  *  Marvell PHY (mv88x201x) functionality.                                   *
  *  part of the Chelsio 10Gb Ethernet Driver.                                *
  *                                                                           *
- * This program is free software; you can redistribute it and/or modify      *
+ * This program is मुक्त software; you can redistribute it and/or modअगरy      *
  * it under the terms of the GNU General Public License, version 2, as       *
  * published by the Free Software Foundation.                                *
  *                                                                           *
- * You should have received a copy of the GNU General Public License along   *
- * with this program; if not, see <http://www.gnu.org/licenses/>.            *
+ * You should have received a copy of the GNU General Public License aदीर्घ   *
+ * with this program; अगर not, see <http://www.gnu.org/licenses/>.            *
  *                                                                           *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED    *
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF      *
@@ -23,12 +24,12 @@
  * Copyright (c) 2003 - 2005 Chelsio Communications, Inc.                    *
  * All rights reserved.                                                      *
  *                                                                           *
- * Maintainers: maintainers@chelsio.com                                      *
+ * Maपूर्णांकainers: मुख्यtainers@chelsio.com                                      *
  *                                                                           *
  * Authors: Dimitrios Michailidis   <dm@chelsio.com>                         *
  *          Tina Yang               <tainay@chelsio.com>                     *
  *          Felix Marti             <felix@chelsio.com>                      *
- *          Scott Bardone           <sbardone@chelsio.com>                   *
+ *          Scott Barकरोne           <sbarकरोne@chelsio.com>                   *
  *          Kurt Ottaway            <kottaway@chelsio.com>                   *
  *          Frank DiMambro          <frank@chelsio.com>                      *
  *                                                                           *
@@ -36,224 +37,224 @@
  *                                                                           *
  ****************************************************************************/
 
-#include "cphy.h"
-#include "elmer0.h"
+#समावेश "cphy.h"
+#समावेश "elmer0.h"
 
 /*
- * The 88x2010 Rev C. requires some link status registers * to be read
+ * The 88x2010 Rev C. requires some link status रेजिस्टरs * to be पढ़ो
  * twice in order to get the right values. Future * revisions will fix
  * this problem and then this macro * can disappear.
  */
-#define MV88x2010_LINK_STATUS_BUGS    1
+#घोषणा MV88x2010_LINK_STATUS_BUGS    1
 
-static int led_init(struct cphy *cphy)
-{
-	/* Setup the LED registers so we can turn on/off.
+अटल पूर्णांक led_init(काष्ठा cphy *cphy)
+अणु
+	/* Setup the LED रेजिस्टरs so we can turn on/off.
 	 * Writing these bits maps control to another
-	 * register. mmd(0x1) addr(0x7)
+	 * रेजिस्टर. mmd(0x1) addr(0x7)
 	 */
-	cphy_mdio_write(cphy, MDIO_MMD_PCS, 0x8304, 0xdddd);
-	return 0;
-}
+	cphy_mdio_ग_लिखो(cphy, MDIO_MMD_PCS, 0x8304, 0xdddd);
+	वापस 0;
+पूर्ण
 
-static int led_link(struct cphy *cphy, u32 do_enable)
-{
+अटल पूर्णांक led_link(काष्ठा cphy *cphy, u32 करो_enable)
+अणु
 	u32 led = 0;
-#define LINK_ENABLE_BIT 0x1
+#घोषणा LINK_ENABLE_BIT 0x1
 
-	cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_CTRL2, &led);
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_CTRL2, &led);
 
-	if (do_enable & LINK_ENABLE_BIT) {
+	अगर (करो_enable & LINK_ENABLE_BIT) अणु
 		led |= LINK_ENABLE_BIT;
-		cphy_mdio_write(cphy, MDIO_MMD_PMAPMD, MDIO_CTRL2, led);
-	} else {
+		cphy_mdio_ग_लिखो(cphy, MDIO_MMD_PMAPMD, MDIO_CTRL2, led);
+	पूर्ण अन्यथा अणु
 		led &= ~LINK_ENABLE_BIT;
-		cphy_mdio_write(cphy, MDIO_MMD_PMAPMD, MDIO_CTRL2, led);
-	}
-	return 0;
-}
+		cphy_mdio_ग_लिखो(cphy, MDIO_MMD_PMAPMD, MDIO_CTRL2, led);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Port Reset */
-static int mv88x201x_reset(struct cphy *cphy, int wait)
-{
-	/* This can be done through registers.  It is not required since
+अटल पूर्णांक mv88x201x_reset(काष्ठा cphy *cphy, पूर्णांक रुको)
+अणु
+	/* This can be करोne through रेजिस्टरs.  It is not required since
 	 * a full chip reset is used.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv88x201x_interrupt_enable(struct cphy *cphy)
-{
-	/* Enable PHY LASI interrupts. */
-	cphy_mdio_write(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_CTRL,
+अटल पूर्णांक mv88x201x_पूर्णांकerrupt_enable(काष्ठा cphy *cphy)
+अणु
+	/* Enable PHY LASI पूर्णांकerrupts. */
+	cphy_mdio_ग_लिखो(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_CTRL,
 			MDIO_PMA_LASI_LSALARM);
 
-	/* Enable Marvell interrupts through Elmer0. */
-	if (t1_is_asic(cphy->adapter)) {
+	/* Enable Marvell पूर्णांकerrupts through Elmer0. */
+	अगर (t1_is_asic(cphy->adapter)) अणु
 		u32 elmer;
 
-		t1_tpi_read(cphy->adapter, A_ELMER0_INT_ENABLE, &elmer);
+		t1_tpi_पढ़ो(cphy->adapter, A_ELMER0_INT_ENABLE, &elmer);
 		elmer |= ELMER0_GP_BIT6;
-		t1_tpi_write(cphy->adapter, A_ELMER0_INT_ENABLE, elmer);
-	}
-	return 0;
-}
+		t1_tpi_ग_लिखो(cphy->adapter, A_ELMER0_INT_ENABLE, elmer);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mv88x201x_interrupt_disable(struct cphy *cphy)
-{
-	/* Disable PHY LASI interrupts. */
-	cphy_mdio_write(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_CTRL, 0x0);
+अटल पूर्णांक mv88x201x_पूर्णांकerrupt_disable(काष्ठा cphy *cphy)
+अणु
+	/* Disable PHY LASI पूर्णांकerrupts. */
+	cphy_mdio_ग_लिखो(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_CTRL, 0x0);
 
-	/* Disable Marvell interrupts through Elmer0. */
-	if (t1_is_asic(cphy->adapter)) {
+	/* Disable Marvell पूर्णांकerrupts through Elmer0. */
+	अगर (t1_is_asic(cphy->adapter)) अणु
 		u32 elmer;
 
-		t1_tpi_read(cphy->adapter, A_ELMER0_INT_ENABLE, &elmer);
+		t1_tpi_पढ़ो(cphy->adapter, A_ELMER0_INT_ENABLE, &elmer);
 		elmer &= ~ELMER0_GP_BIT6;
-		t1_tpi_write(cphy->adapter, A_ELMER0_INT_ENABLE, elmer);
-	}
-	return 0;
-}
+		t1_tpi_ग_लिखो(cphy->adapter, A_ELMER0_INT_ENABLE, elmer);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mv88x201x_interrupt_clear(struct cphy *cphy)
-{
+अटल पूर्णांक mv88x201x_पूर्णांकerrupt_clear(काष्ठा cphy *cphy)
+अणु
 	u32 elmer;
 	u32 val;
 
-#ifdef MV88x2010_LINK_STATUS_BUGS
-	/* Required to read twice before clear takes affect. */
-	cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_RXSTAT, &val);
-	cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_TXSTAT, &val);
-	cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_STAT, &val);
+#अगर_घोषित MV88x2010_LINK_STATUS_BUGS
+	/* Required to पढ़ो twice beक्रमe clear takes affect. */
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_RXSTAT, &val);
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_TXSTAT, &val);
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_STAT, &val);
 
-	/* Read this register after the others above it else
-	 * the register doesn't clear correctly.
+	/* Read this रेजिस्टर after the others above it अन्यथा
+	 * the रेजिस्टर करोesn't clear correctly.
 	 */
-	cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_STAT1, &val);
-#endif
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_STAT1, &val);
+#पूर्ण_अगर
 
 	/* Clear link status. */
-	cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_STAT1, &val);
-	/* Clear PHY LASI interrupts. */
-	cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_STAT, &val);
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_STAT1, &val);
+	/* Clear PHY LASI पूर्णांकerrupts. */
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_STAT, &val);
 
-#ifdef MV88x2010_LINK_STATUS_BUGS
+#अगर_घोषित MV88x2010_LINK_STATUS_BUGS
 	/* Do it again. */
-	cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_RXSTAT, &val);
-	cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_TXSTAT, &val);
-#endif
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_RXSTAT, &val);
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_PMA_LASI_TXSTAT, &val);
+#पूर्ण_अगर
 
-	/* Clear Marvell interrupts through Elmer0. */
-	if (t1_is_asic(cphy->adapter)) {
-		t1_tpi_read(cphy->adapter, A_ELMER0_INT_CAUSE, &elmer);
+	/* Clear Marvell पूर्णांकerrupts through Elmer0. */
+	अगर (t1_is_asic(cphy->adapter)) अणु
+		t1_tpi_पढ़ो(cphy->adapter, A_ELMER0_INT_CAUSE, &elmer);
 		elmer |= ELMER0_GP_BIT6;
-		t1_tpi_write(cphy->adapter, A_ELMER0_INT_CAUSE, elmer);
-	}
-	return 0;
-}
+		t1_tpi_ग_लिखो(cphy->adapter, A_ELMER0_INT_CAUSE, elmer);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mv88x201x_interrupt_handler(struct cphy *cphy)
-{
-	/* Clear interrupts */
-	mv88x201x_interrupt_clear(cphy);
+अटल पूर्णांक mv88x201x_पूर्णांकerrupt_handler(काष्ठा cphy *cphy)
+अणु
+	/* Clear पूर्णांकerrupts */
+	mv88x201x_पूर्णांकerrupt_clear(cphy);
 
-	/* We have only enabled link change interrupts and so
-	 * cphy_cause must be a link change interrupt.
+	/* We have only enabled link change पूर्णांकerrupts and so
+	 * cphy_cause must be a link change पूर्णांकerrupt.
 	 */
-	return cphy_cause_link_change;
-}
+	वापस cphy_cause_link_change;
+पूर्ण
 
-static int mv88x201x_set_loopback(struct cphy *cphy, int on)
-{
-	return 0;
-}
+अटल पूर्णांक mv88x201x_set_loopback(काष्ठा cphy *cphy, पूर्णांक on)
+अणु
+	वापस 0;
+पूर्ण
 
-static int mv88x201x_get_link_status(struct cphy *cphy, int *link_ok,
-				     int *speed, int *duplex, int *fc)
-{
+अटल पूर्णांक mv88x201x_get_link_status(काष्ठा cphy *cphy, पूर्णांक *link_ok,
+				     पूर्णांक *speed, पूर्णांक *duplex, पूर्णांक *fc)
+अणु
 	u32 val = 0;
 
-	if (link_ok) {
+	अगर (link_ok) अणु
 		/* Read link status. */
-		cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_STAT1, &val);
+		cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_STAT1, &val);
 		val &= MDIO_STAT1_LSTATUS;
 		*link_ok = (val == MDIO_STAT1_LSTATUS);
 		/* Turn on/off Link LED */
 		led_link(cphy, *link_ok);
-	}
-	if (speed)
+	पूर्ण
+	अगर (speed)
 		*speed = SPEED_10000;
-	if (duplex)
+	अगर (duplex)
 		*duplex = DUPLEX_FULL;
-	if (fc)
+	अगर (fc)
 		*fc = PAUSE_RX | PAUSE_TX;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mv88x201x_destroy(struct cphy *cphy)
-{
-	kfree(cphy);
-}
+अटल व्योम mv88x201x_destroy(काष्ठा cphy *cphy)
+अणु
+	kमुक्त(cphy);
+पूर्ण
 
-static const struct cphy_ops mv88x201x_ops = {
+अटल स्थिर काष्ठा cphy_ops mv88x201x_ops = अणु
 	.destroy           = mv88x201x_destroy,
 	.reset             = mv88x201x_reset,
-	.interrupt_enable  = mv88x201x_interrupt_enable,
-	.interrupt_disable = mv88x201x_interrupt_disable,
-	.interrupt_clear   = mv88x201x_interrupt_clear,
-	.interrupt_handler = mv88x201x_interrupt_handler,
+	.पूर्णांकerrupt_enable  = mv88x201x_पूर्णांकerrupt_enable,
+	.पूर्णांकerrupt_disable = mv88x201x_पूर्णांकerrupt_disable,
+	.पूर्णांकerrupt_clear   = mv88x201x_पूर्णांकerrupt_clear,
+	.पूर्णांकerrupt_handler = mv88x201x_पूर्णांकerrupt_handler,
 	.get_link_status   = mv88x201x_get_link_status,
 	.set_loopback      = mv88x201x_set_loopback,
 	.mmds              = (MDIO_DEVS_PMAPMD | MDIO_DEVS_PCS |
 			      MDIO_DEVS_PHYXS | MDIO_DEVS_WIS),
-};
+पूर्ण;
 
-static struct cphy *mv88x201x_phy_create(struct net_device *dev, int phy_addr,
-					 const struct mdio_ops *mdio_ops)
-{
+अटल काष्ठा cphy *mv88x201x_phy_create(काष्ठा net_device *dev, पूर्णांक phy_addr,
+					 स्थिर काष्ठा mdio_ops *mdio_ops)
+अणु
 	u32 val;
-	struct cphy *cphy = kzalloc(sizeof(*cphy), GFP_KERNEL);
+	काष्ठा cphy *cphy = kzalloc(माप(*cphy), GFP_KERNEL);
 
-	if (!cphy)
-		return NULL;
+	अगर (!cphy)
+		वापस शून्य;
 
 	cphy_init(cphy, dev, phy_addr, &mv88x201x_ops, mdio_ops);
 
-	/* Commands the PHY to enable XFP's clock. */
-	cphy_mdio_read(cphy, MDIO_MMD_PCS, 0x8300, &val);
-	cphy_mdio_write(cphy, MDIO_MMD_PCS, 0x8300, val | 1);
+	/* Commands the PHY to enable XFP's घड़ी. */
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PCS, 0x8300, &val);
+	cphy_mdio_ग_लिखो(cphy, MDIO_MMD_PCS, 0x8300, val | 1);
 
 	/* Clear link status. Required because of a bug in the PHY.  */
-	cphy_mdio_read(cphy, MDIO_MMD_PMAPMD, MDIO_STAT2, &val);
-	cphy_mdio_read(cphy, MDIO_MMD_PCS, MDIO_STAT2, &val);
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PMAPMD, MDIO_STAT2, &val);
+	cphy_mdio_पढ़ो(cphy, MDIO_MMD_PCS, MDIO_STAT2, &val);
 
-	/* Allows for Link,Ack LED turn on/off */
+	/* Allows क्रम Link,Ack LED turn on/off */
 	led_init(cphy);
-	return cphy;
-}
+	वापस cphy;
+पूर्ण
 
 /* Chip Reset */
-static int mv88x201x_phy_reset(adapter_t *adapter)
-{
+अटल पूर्णांक mv88x201x_phy_reset(adapter_t *adapter)
+अणु
 	u32 val;
 
-	t1_tpi_read(adapter, A_ELMER0_GPO, &val);
+	t1_tpi_पढ़ो(adapter, A_ELMER0_GPO, &val);
 	val &= ~4;
-	t1_tpi_write(adapter, A_ELMER0_GPO, val);
+	t1_tpi_ग_लिखो(adapter, A_ELMER0_GPO, val);
 	msleep(100);
 
-	t1_tpi_write(adapter, A_ELMER0_GPO, val | 4);
+	t1_tpi_ग_लिखो(adapter, A_ELMER0_GPO, val | 4);
 	msleep(1000);
 
 	/* Now lets enable the Laser. Delay 100us */
-	t1_tpi_read(adapter, A_ELMER0_GPO, &val);
+	t1_tpi_पढ़ो(adapter, A_ELMER0_GPO, &val);
 	val |= 0x8000;
-	t1_tpi_write(adapter, A_ELMER0_GPO, val);
+	t1_tpi_ग_लिखो(adapter, A_ELMER0_GPO, val);
 	udelay(100);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct gphy t1_mv88x201x_ops = {
+स्थिर काष्ठा gphy t1_mv88x201x_ops = अणु
 	.create = mv88x201x_phy_create,
 	.reset = mv88x201x_phy_reset
-};
+पूर्ण;

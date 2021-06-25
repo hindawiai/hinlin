@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * IIO driver for the 3-axis accelerometer Domintech ARD10.
+ * IIO driver क्रम the 3-axis accelerometer Domपूर्णांकech ARD10.
  *
  * Copyright (c) 2016 Hans de Goede <hdegoede@redhat.com>
- * Copyright (c) 2012 Domintech Technology Co., Ltd
+ * Copyright (c) 2012 Domपूर्णांकech Technology Co., Ltd
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/byteorder/generic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/byteorder/generic.h>
 
-#define DMARD10_REG_ACTR			0x00
-#define DMARD10_REG_AFEM			0x0c
-#define DMARD10_REG_STADR			0x12
-#define DMARD10_REG_STAINT			0x1c
-#define DMARD10_REG_MISC2			0x1f
-#define DMARD10_REG_PD				0x21
+#घोषणा DMARD10_REG_ACTR			0x00
+#घोषणा DMARD10_REG_AFEM			0x0c
+#घोषणा DMARD10_REG_STADR			0x12
+#घोषणा DMARD10_REG_STAINT			0x1c
+#घोषणा DMARD10_REG_MISC2			0x1f
+#घोषणा DMARD10_REG_PD				0x21
 
-#define DMARD10_MODE_OFF			0x00
-#define DMARD10_MODE_STANDBY			0x02
-#define DMARD10_MODE_ACTIVE			0x06
-#define DMARD10_MODE_READ_OTP			0x12
-#define DMARD10_MODE_RESET_DATA_PATH		0x82
+#घोषणा DMARD10_MODE_OFF			0x00
+#घोषणा DMARD10_MODE_STANDBY			0x02
+#घोषणा DMARD10_MODE_ACTIVE			0x06
+#घोषणा DMARD10_MODE_READ_OTP			0x12
+#घोषणा DMARD10_MODE_RESET_DATA_PATH		0x82
 
 /* AFEN set 1, ATM[2:0]=b'000 (normal), EN_Z/Y/X/T=1 */
-#define DMARD10_VALUE_AFEM_AFEN_NORMAL		0x8f
+#घोषणा DMARD10_VALUE_AFEM_AFEN_NORMAL		0x8f
 /* ODR[3:0]=b'0111 (100Hz), CCK[3:0]=b'0100 (204.8kHZ) */
-#define DMARD10_VALUE_CKSEL_ODR_100_204		0x74
+#घोषणा DMARD10_VALUE_CKSEL_ODR_100_204		0x74
 /* INTC[6:5]=b'00 */
-#define DMARD10_VALUE_INTC			0x00
+#घोषणा DMARD10_VALUE_INTC			0x00
 /* TAP1/TAP2 Average 2 */
-#define DMARD10_VALUE_TAPNS_AVE_2		0x11
+#घोषणा DMARD10_VALUE_TAPNS_AVE_2		0x11
 
-#define DMARD10_VALUE_STADR			0x55
-#define DMARD10_VALUE_STAINT			0xaa
-#define DMARD10_VALUE_MISC2_OSCA_EN		0x08
-#define DMARD10_VALUE_PD_RST			0x52
+#घोषणा DMARD10_VALUE_STADR			0x55
+#घोषणा DMARD10_VALUE_STAINT			0xaa
+#घोषणा DMARD10_VALUE_MISC2_OSCA_EN		0x08
+#घोषणा DMARD10_VALUE_PD_RST			0x52
 
-/* Offsets into the buffer read in dmard10_read_raw() */
-#define DMARD10_X_OFFSET			1
-#define DMARD10_Y_OFFSET			2
-#define DMARD10_Z_OFFSET			3
+/* Offsets पूर्णांकo the buffer पढ़ो in dmard10_पढ़ो_raw() */
+#घोषणा DMARD10_X_OFFSET			1
+#घोषणा DMARD10_Y_OFFSET			2
+#घोषणा DMARD10_Z_OFFSET			3
 
 /*
  * a value of + or -128 corresponds to + or - 1G
  * scale = 9.81 / 128 = 0.076640625
  */
 
-static const int dmard10_nscale = 76640625;
+अटल स्थिर पूर्णांक dmard10_nscale = 76640625;
 
-#define DMARD10_CHANNEL(reg, axis) {	\
+#घोषणा DMARD10_CHANNEL(reg, axis) अणु	\
 	.type = IIO_ACCEL,	\
 	.address = reg,	\
-	.modified = 1,	\
+	.modअगरied = 1,	\
 	.channel2 = IIO_MOD_##axis,	\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),	\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
-}
+पूर्ण
 
-static const struct iio_chan_spec dmard10_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec dmard10_channels[] = अणु
 	DMARD10_CHANNEL(DMARD10_X_OFFSET, X),
 	DMARD10_CHANNEL(DMARD10_Y_OFFSET, Y),
 	DMARD10_CHANNEL(DMARD10_Z_OFFSET, Z),
-};
+पूर्ण;
 
-struct dmard10_data {
-	struct i2c_client *client;
-};
+काष्ठा dmard10_data अणु
+	काष्ठा i2c_client *client;
+पूर्ण;
 
 /* Init sequence taken from the android driver */
-static int dmard10_reset(struct i2c_client *client)
-{
-	unsigned char buffer[7];
-	int ret;
+अटल पूर्णांक dmard10_reset(काष्ठा i2c_client *client)
+अणु
+	अचिन्हित अक्षर buffer[7];
+	पूर्णांक ret;
 
-	/* 1. Powerdown reset */
-	ret = i2c_smbus_write_byte_data(client, DMARD10_REG_PD,
+	/* 1. Powerकरोwn reset */
+	ret = i2c_smbus_ग_लिखो_byte_data(client, DMARD10_REG_PD,
 						DMARD10_VALUE_PD_RST);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
 	 * 2. ACTR => Standby mode => Download OTP to parameter reg =>
@@ -93,16 +94,16 @@ static int dmard10_reset(struct i2c_client *client)
 	buffer[4] = DMARD10_MODE_RESET_DATA_PATH;
 	buffer[5] = DMARD10_MODE_STANDBY;
 	ret = i2c_master_send(client, buffer, 6);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* 3. OSCA_EN = 1, TSTO = b'000 (INT1 = normal, TEST0 = normal) */
-	ret = i2c_smbus_write_byte_data(client, DMARD10_REG_MISC2,
+	ret = i2c_smbus_ग_लिखो_byte_data(client, DMARD10_REG_MISC2,
 						DMARD10_VALUE_MISC2_OSCA_EN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* 4. AFEN = 1 (AFE will powerdown after ADC) */
+	/* 4. AFEN = 1 (AFE will घातerकरोwn after ADC) */
 	buffer[0] = DMARD10_REG_AFEM;
 	buffer[1] = DMARD10_VALUE_AFEM_AFEN_NORMAL;
 	buffer[2] = DMARD10_VALUE_CKSEL_ODR_100_204;
@@ -111,86 +112,86 @@ static int dmard10_reset(struct i2c_client *client)
 	buffer[5] = 0x00; /* DLYC, no delay timing */
 	buffer[6] = 0x07; /* INTD=1 push-pull, INTA=1 active high, AUTOT=1 */
 	ret = i2c_master_send(client, buffer, 7);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* 5. Activation mode */
-	ret = i2c_smbus_write_byte_data(client, DMARD10_REG_ACTR,
+	ret = i2c_smbus_ग_लिखो_byte_data(client, DMARD10_REG_ACTR,
 						DMARD10_MODE_ACTIVE);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Shutdown sequence taken from the android driver */
-static int dmard10_shutdown(struct i2c_client *client)
-{
-	unsigned char buffer[3];
+/* Shutकरोwn sequence taken from the android driver */
+अटल पूर्णांक dmard10_shutकरोwn(काष्ठा i2c_client *client)
+अणु
+	अचिन्हित अक्षर buffer[3];
 
 	buffer[0] = DMARD10_REG_ACTR;
 	buffer[1] = DMARD10_MODE_STANDBY;
 	buffer[2] = DMARD10_MODE_OFF;
 
-	return i2c_master_send(client, buffer, 3);
-}
+	वापस i2c_master_send(client, buffer, 3);
+पूर्ण
 
-static int dmard10_read_raw(struct iio_dev *indio_dev,
-				struct iio_chan_spec const *chan,
-				int *val, int *val2, long mask)
-{
-	struct dmard10_data *data = iio_priv(indio_dev);
+अटल पूर्णांक dmard10_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+				काष्ठा iio_chan_spec स्थिर *chan,
+				पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा dmard10_data *data = iio_priv(indio_dev);
 	__le16 buf[4];
-	int ret;
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		/*
-		 * Read 8 bytes starting at the REG_STADR register, trying to
-		 * read the individual X, Y, Z registers will always read 0.
+		 * Read 8 bytes starting at the REG_STADR रेजिस्टर, trying to
+		 * पढ़ो the inभागidual X, Y, Z रेजिस्टरs will always पढ़ो 0.
 		 */
-		ret = i2c_smbus_read_i2c_block_data(data->client,
+		ret = i2c_smbus_पढ़ो_i2c_block_data(data->client,
 						    DMARD10_REG_STADR,
-						    sizeof(buf), (u8 *)buf);
-		if (ret < 0)
-			return ret;
+						    माप(buf), (u8 *)buf);
+		अगर (ret < 0)
+			वापस ret;
 		ret = le16_to_cpu(buf[chan->address]);
 		*val = sign_extend32(ret, 12);
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = dmard10_nscale;
-		return IIO_VAL_INT_PLUS_NANO;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_INT_PLUS_न_अंकO;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info dmard10_info = {
-	.read_raw	= dmard10_read_raw,
-};
+अटल स्थिर काष्ठा iio_info dmard10_info = अणु
+	.पढ़ो_raw	= dmard10_पढ़ो_raw,
+पूर्ण;
 
-static int dmard10_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	int ret;
-	struct iio_dev *indio_dev;
-	struct dmard10_data *data;
+अटल पूर्णांक dmard10_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा dmard10_data *data;
 
-	/* These 2 registers have special POR reset values used for id */
-	ret = i2c_smbus_read_byte_data(client, DMARD10_REG_STADR);
-	if (ret != DMARD10_VALUE_STADR)
-		return (ret < 0) ? ret : -ENODEV;
+	/* These 2 रेजिस्टरs have special POR reset values used क्रम id */
+	ret = i2c_smbus_पढ़ो_byte_data(client, DMARD10_REG_STADR);
+	अगर (ret != DMARD10_VALUE_STADR)
+		वापस (ret < 0) ? ret : -ENODEV;
 
-	ret = i2c_smbus_read_byte_data(client, DMARD10_REG_STAINT);
-	if (ret != DMARD10_VALUE_STAINT)
-		return (ret < 0) ? ret : -ENODEV;
+	ret = i2c_smbus_पढ़ो_byte_data(client, DMARD10_REG_STAINT);
+	अगर (ret != DMARD10_VALUE_STAINT)
+		वापस (ret < 0) ? ret : -ENODEV;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (!indio_dev) {
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (!indio_dev) अणु
 		dev_err(&client->dev, "iio allocation failed!\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	data = iio_priv(indio_dev);
 	data->client = client;
@@ -198,61 +199,61 @@ static int dmard10_probe(struct i2c_client *client,
 
 	indio_dev->info = &dmard10_info;
 	indio_dev->name = "dmard10";
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = dmard10_channels;
 	indio_dev->num_channels = ARRAY_SIZE(dmard10_channels);
 
 	ret = dmard10_reset(client);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = iio_device_register(indio_dev);
-	if (ret < 0) {
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "device_register failed\n");
-		dmard10_shutdown(client);
-	}
+		dmard10_shutकरोwn(client);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dmard10_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
+अटल पूर्णांक dmard10_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 
-	return dmard10_shutdown(client);
-}
+	वापस dmard10_shutकरोwn(client);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int dmard10_suspend(struct device *dev)
-{
-	return dmard10_shutdown(to_i2c_client(dev));
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक dmard10_suspend(काष्ठा device *dev)
+अणु
+	वापस dmard10_shutकरोwn(to_i2c_client(dev));
+पूर्ण
 
-static int dmard10_resume(struct device *dev)
-{
-	return dmard10_reset(to_i2c_client(dev));
-}
-#endif
+अटल पूर्णांक dmard10_resume(काष्ठा device *dev)
+अणु
+	वापस dmard10_reset(to_i2c_client(dev));
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(dmard10_pm_ops, dmard10_suspend, dmard10_resume);
+अटल SIMPLE_DEV_PM_OPS(dmard10_pm_ops, dmard10_suspend, dmard10_resume);
 
-static const struct i2c_device_id dmard10_i2c_id[] = {
-	{"dmard10", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id dmard10_i2c_id[] = अणु
+	अणु"dmard10", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, dmard10_i2c_id);
 
-static struct i2c_driver dmard10_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver dmard10_driver = अणु
+	.driver = अणु
 		.name = "dmard10",
 		.pm = &dmard10_pm_ops,
-	},
+	पूर्ण,
 	.probe		= dmard10_probe,
-	.remove		= dmard10_remove,
+	.हटाओ		= dmard10_हटाओ,
 	.id_table	= dmard10_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(dmard10_driver);
 

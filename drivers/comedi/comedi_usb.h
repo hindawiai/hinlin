@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /* comedi_usb.h
- * header file for USB Comedi drivers
+ * header file क्रम USB Comedi drivers
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1997-2000 David A. Schleef <ds@schleef.org>
  */
 
-#ifndef _COMEDI_USB_H
-#define _COMEDI_USB_H
+#अगर_अघोषित _COMEDI_USB_H
+#घोषणा _COMEDI_USB_H
 
-#include <linux/usb.h>
+#समावेश <linux/usb.h>
 
-#include "comedidev.h"
+#समावेश "comedidev.h"
 
-struct usb_interface *comedi_to_usb_interface(struct comedi_device *dev);
-struct usb_device *comedi_to_usb_dev(struct comedi_device *dev);
+काष्ठा usb_पूर्णांकerface *comedi_to_usb_पूर्णांकerface(काष्ठा comedi_device *dev);
+काष्ठा usb_device *comedi_to_usb_dev(काष्ठा comedi_device *dev);
 
-int comedi_usb_auto_config(struct usb_interface *intf,
-			   struct comedi_driver *driver, unsigned long context);
-void comedi_usb_auto_unconfig(struct usb_interface *intf);
+पूर्णांक comedi_usb_स्वतः_config(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			   काष्ठा comedi_driver *driver, अचिन्हित दीर्घ context);
+व्योम comedi_usb_स्वतः_unconfig(काष्ठा usb_पूर्णांकerface *पूर्णांकf);
 
-int comedi_usb_driver_register(struct comedi_driver *comedi_driver,
-			       struct usb_driver *usb_driver);
-void comedi_usb_driver_unregister(struct comedi_driver *comedi_driver,
-				  struct usb_driver *usb_driver);
+पूर्णांक comedi_usb_driver_रेजिस्टर(काष्ठा comedi_driver *comedi_driver,
+			       काष्ठा usb_driver *usb_driver);
+व्योम comedi_usb_driver_unरेजिस्टर(काष्ठा comedi_driver *comedi_driver,
+				  काष्ठा usb_driver *usb_driver);
 
 /**
- * module_comedi_usb_driver() - Helper macro for registering a comedi USB driver
- * @__comedi_driver: comedi_driver struct
- * @__usb_driver: usb_driver struct
+ * module_comedi_usb_driver() - Helper macro क्रम रेजिस्टरing a comedi USB driver
+ * @__comedi_driver: comedi_driver काष्ठा
+ * @__usb_driver: usb_driver काष्ठा
  *
- * Helper macro for comedi USB drivers which do not do anything special
- * in module init/exit. This eliminates a lot of boilerplate. Each
+ * Helper macro क्रम comedi USB drivers which करो not करो anything special
+ * in module init/निकास. This eliminates a lot of boilerplate. Each
  * module may only use this macro once, and calling it replaces
- * module_init() and module_exit()
+ * module_init() and module_निकास()
  */
-#define module_comedi_usb_driver(__comedi_driver, __usb_driver) \
-	module_driver(__comedi_driver, comedi_usb_driver_register, \
-			comedi_usb_driver_unregister, &(__usb_driver))
+#घोषणा module_comedi_usb_driver(__comedi_driver, __usb_driver) \
+	module_driver(__comedi_driver, comedi_usb_driver_रेजिस्टर, \
+			comedi_usb_driver_unरेजिस्टर, &(__usb_driver))
 
-#endif /* _COMEDI_USB_H */
+#पूर्ण_अगर /* _COMEDI_USB_H */

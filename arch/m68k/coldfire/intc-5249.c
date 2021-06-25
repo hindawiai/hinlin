@@ -1,61 +1,62 @@
+<शैली गुरु>
 /*
- * intc2.c  -- support for the 2nd INTC controller of the 5249
+ * पूर्णांकc2.c  -- support क्रम the 2nd INTC controller of the 5249
  *
  * (C) Copyright 2009, Greg Ungerer <gerg@snapgear.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/io.h>
-#include <asm/coldfire.h>
-#include <asm/mcfsim.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/coldfire.h>
+#समावेश <यंत्र/mcfsim.h>
 
-static void intc2_irq_gpio_mask(struct irq_data *d)
-{
+अटल व्योम पूर्णांकc2_irq_gpio_mask(काष्ठा irq_data *d)
+अणु
 	u32 imr;
-	imr = readl(MCFSIM2_GPIOINTENABLE);
+	imr = पढ़ोl(MCFSIM2_GPIOINTENABLE);
 	imr &= ~(0x1 << (d->irq - MCF_IRQ_GPIO0));
-	writel(imr, MCFSIM2_GPIOINTENABLE);
-}
+	ग_लिखोl(imr, MCFSIM2_GPIOINTENABLE);
+पूर्ण
 
-static void intc2_irq_gpio_unmask(struct irq_data *d)
-{
+अटल व्योम पूर्णांकc2_irq_gpio_unmask(काष्ठा irq_data *d)
+अणु
 	u32 imr;
-	imr = readl(MCFSIM2_GPIOINTENABLE);
+	imr = पढ़ोl(MCFSIM2_GPIOINTENABLE);
 	imr |= (0x1 << (d->irq - MCF_IRQ_GPIO0));
-	writel(imr, MCFSIM2_GPIOINTENABLE);
-}
+	ग_लिखोl(imr, MCFSIM2_GPIOINTENABLE);
+पूर्ण
 
-static void intc2_irq_gpio_ack(struct irq_data *d)
-{
-	writel(0x1 << (d->irq - MCF_IRQ_GPIO0), MCFSIM2_GPIOINTCLEAR);
-}
+अटल व्योम पूर्णांकc2_irq_gpio_ack(काष्ठा irq_data *d)
+अणु
+	ग_लिखोl(0x1 << (d->irq - MCF_IRQ_GPIO0), MCFSIM2_GPIOINTCLEAR);
+पूर्ण
 
-static struct irq_chip intc2_irq_gpio_chip = {
+अटल काष्ठा irq_chip पूर्णांकc2_irq_gpio_chip = अणु
 	.name		= "CF-INTC2",
-	.irq_mask	= intc2_irq_gpio_mask,
-	.irq_unmask	= intc2_irq_gpio_unmask,
-	.irq_ack	= intc2_irq_gpio_ack,
-};
+	.irq_mask	= पूर्णांकc2_irq_gpio_mask,
+	.irq_unmask	= पूर्णांकc2_irq_gpio_unmask,
+	.irq_ack	= पूर्णांकc2_irq_gpio_ack,
+पूर्ण;
 
-static int __init mcf_intc2_init(void)
-{
-	int irq;
+अटल पूर्णांक __init mcf_पूर्णांकc2_init(व्योम)
+अणु
+	पूर्णांक irq;
 
-	/* GPIO interrupt sources */
-	for (irq = MCF_IRQ_GPIO0; (irq <= MCF_IRQ_GPIO7); irq++) {
-		irq_set_chip(irq, &intc2_irq_gpio_chip);
+	/* GPIO पूर्णांकerrupt sources */
+	क्रम (irq = MCF_IRQ_GPIO0; (irq <= MCF_IRQ_GPIO7); irq++) अणु
+		irq_set_chip(irq, &पूर्णांकc2_irq_gpio_chip);
 		irq_set_handler(irq, handle_edge_irq);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-arch_initcall(mcf_intc2_init);
+arch_initcall(mcf_पूर्णांकc2_init);

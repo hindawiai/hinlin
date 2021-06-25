@@ -1,120 +1,121 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPEAKUP_H
-#define _SPEAKUP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPEAKUP_H
+#घोषणा _SPEAKUP_H
 
-#include "spk_types.h"
-#include "i18n.h"
+#समावेश "spk_types.h"
+#समावेश "i18n.h"
 
-#define SPEAKUP_VERSION "3.1.6"
-#define KEY_MAP_VER 119
-#define SHIFT_TBL_SIZE 64
-#define MAX_DESC_LEN 72
+#घोषणा SPEAKUP_VERSION "3.1.6"
+#घोषणा KEY_MAP_VER 119
+#घोषणा SHIFT_TBL_SIZE 64
+#घोषणा MAX_DESC_LEN 72
 
-#define TOGGLE_0 .u.n = {NULL, 0, 0, 1, 0, 0, NULL }
-#define TOGGLE_1 .u.n = {NULL, 1, 0, 1, 0, 0, NULL }
-#define MAXVARLEN 15
+#घोषणा TOGGLE_0 .u.n = अणुशून्य, 0, 0, 1, 0, 0, शून्य पूर्ण
+#घोषणा TOGGLE_1 .u.n = अणुशून्य, 1, 0, 1, 0, 0, शून्य पूर्ण
+#घोषणा MAXVARLEN 15
 
-#define SYNTH_OK 0x0001
-#define B_ALPHA 0x0002
-#define ALPHA 0x0003
-#define B_CAP 0x0004
-#define A_CAP 0x0007
-#define B_NUM 0x0008
-#define NUM 0x0009
-#define ALPHANUM (B_ALPHA | B_NUM)
-#define SOME 0x0010
-#define MOST 0x0020
-#define PUNC 0x0040
-#define A_PUNC 0x0041
-#define B_WDLM 0x0080
-#define WDLM 0x0081
-#define B_EXNUM 0x0100
-#define CH_RPT 0x0200
-#define B_CTL 0x0400
-#define A_CTL (B_CTL + SYNTH_OK)
-#define B_SYM 0x0800
-#define B_CAPSYM (B_CAP | B_SYM)
+#घोषणा SYNTH_OK 0x0001
+#घोषणा B_ALPHA 0x0002
+#घोषणा ALPHA 0x0003
+#घोषणा B_CAP 0x0004
+#घोषणा A_CAP 0x0007
+#घोषणा B_NUM 0x0008
+#घोषणा NUM 0x0009
+#घोषणा ALPHANUM (B_ALPHA | B_NUM)
+#घोषणा SOME 0x0010
+#घोषणा MOST 0x0020
+#घोषणा PUNC 0x0040
+#घोषणा A_PUNC 0x0041
+#घोषणा B_WDLM 0x0080
+#घोषणा WDLM 0x0081
+#घोषणा B_EXNUM 0x0100
+#घोषणा CH_RPT 0x0200
+#घोषणा B_CTL 0x0400
+#घोषणा A_CTL (B_CTL + SYNTH_OK)
+#घोषणा B_SYM 0x0800
+#घोषणा B_CAPSYM (B_CAP | B_SYM)
 
 /* FIXME: u16 */
-#define IS_WDLM(x) (spk_chartab[((u_char)x)] & B_WDLM)
-#define IS_CHAR(x, type) (spk_chartab[((u_char)x)] & type)
-#define IS_TYPE(x, type) ((spk_chartab[((u_char)x)] & type) == type)
+#घोषणा IS_WDLM(x) (spk_अक्षरtab[((u_अक्षर)x)] & B_WDLM)
+#घोषणा IS_CHAR(x, type) (spk_अक्षरtab[((u_अक्षर)x)] & type)
+#घोषणा IS_TYPE(x, type) ((spk_अक्षरtab[((u_अक्षर)x)] & type) == type)
 
-int speakup_thread(void *data);
-void spk_reset_default_chars(void);
-void spk_reset_default_chartab(void);
-void synth_start(void);
-void synth_insert_next_index(int sent_num);
-void spk_reset_index_count(int sc);
-void spk_get_index_count(int *linecount, int *sentcount);
-int spk_set_key_info(const u_char *key_info, u_char *k_buffer);
-char *spk_strlwr(char *s);
-char *spk_s2uchar(char *start, char *dest);
-int speakup_kobj_init(void);
-void speakup_kobj_exit(void);
-int spk_chartab_get_value(char *keyword);
-void speakup_register_var(struct var_t *var);
-void speakup_unregister_var(enum var_id_t var_id);
-struct st_var_header *spk_get_var_header(enum var_id_t var_id);
-struct st_var_header *spk_var_header_by_name(const char *name);
-struct punc_var_t *spk_get_punc_var(enum var_id_t var_id);
-int spk_set_num_var(int val, struct st_var_header *var, int how);
-int spk_set_string_var(const char *page, struct st_var_header *var, int len);
-int spk_set_mask_bits(const char *input, const int which, const int how);
-extern special_func spk_special_handler;
-int spk_handle_help(struct vc_data *vc, u_char type, u_char ch, u_short key);
-int synth_init(char *name);
-void synth_release(void);
+पूर्णांक speakup_thपढ़ो(व्योम *data);
+व्योम spk_reset_शेष_अक्षरs(व्योम);
+व्योम spk_reset_शेष_अक्षरtab(व्योम);
+व्योम synth_start(व्योम);
+व्योम synth_insert_next_index(पूर्णांक sent_num);
+व्योम spk_reset_index_count(पूर्णांक sc);
+व्योम spk_get_index_count(पूर्णांक *linecount, पूर्णांक *sentcount);
+पूर्णांक spk_set_key_info(स्थिर u_अक्षर *key_info, u_अक्षर *k_buffer);
+अक्षर *spk_strlwr(अक्षर *s);
+अक्षर *spk_s2uअक्षर(अक्षर *start, अक्षर *dest);
+पूर्णांक speakup_kobj_init(व्योम);
+व्योम speakup_kobj_निकास(व्योम);
+पूर्णांक spk_अक्षरtab_get_value(अक्षर *keyword);
+व्योम speakup_रेजिस्टर_var(काष्ठा var_t *var);
+व्योम speakup_unरेजिस्टर_var(क्रमागत var_id_t var_id);
+काष्ठा st_var_header *spk_get_var_header(क्रमागत var_id_t var_id);
+काष्ठा st_var_header *spk_var_header_by_name(स्थिर अक्षर *name);
+काष्ठा punc_var_t *spk_get_punc_var(क्रमागत var_id_t var_id);
+पूर्णांक spk_set_num_var(पूर्णांक val, काष्ठा st_var_header *var, पूर्णांक how);
+पूर्णांक spk_set_string_var(स्थिर अक्षर *page, काष्ठा st_var_header *var, पूर्णांक len);
+पूर्णांक spk_set_mask_bits(स्थिर अक्षर *input, स्थिर पूर्णांक which, स्थिर पूर्णांक how);
+बाह्य special_func spk_special_handler;
+पूर्णांक spk_handle_help(काष्ठा vc_data *vc, u_अक्षर type, u_अक्षर ch, u_लघु key);
+पूर्णांक synth_init(अक्षर *name);
+व्योम synth_release(व्योम);
 
-void spk_do_flush(void);
-void speakup_start_ttys(void);
-void synth_buffer_add(u16 ch);
-void synth_buffer_clear(void);
-int speakup_set_selection(struct tty_struct *tty);
-void speakup_cancel_selection(void);
-int speakup_paste_selection(struct tty_struct *tty);
-void speakup_cancel_paste(void);
-void speakup_register_devsynth(void);
-void speakup_unregister_devsynth(void);
-void synth_write(const char *buf, size_t count);
-int synth_supports_indexing(void);
+व्योम spk_करो_flush(व्योम);
+व्योम speakup_start_ttys(व्योम);
+व्योम synth_buffer_add(u16 ch);
+व्योम synth_buffer_clear(व्योम);
+पूर्णांक speakup_set_selection(काष्ठा tty_काष्ठा *tty);
+व्योम speakup_cancel_selection(व्योम);
+पूर्णांक speakup_paste_selection(काष्ठा tty_काष्ठा *tty);
+व्योम speakup_cancel_paste(व्योम);
+व्योम speakup_रेजिस्टर_devsynth(व्योम);
+व्योम speakup_unरेजिस्टर_devsynth(व्योम);
+व्योम synth_ग_लिखो(स्थिर अक्षर *buf, माप_प्रकार count);
+पूर्णांक synth_supports_indexing(व्योम);
 
-extern struct vc_data *spk_sel_cons;
-extern unsigned short spk_xs, spk_ys, spk_xe, spk_ye; /* our region points */
+बाह्य काष्ठा vc_data *spk_sel_cons;
+बाह्य अचिन्हित लघु spk_xs, spk_ys, spk_xe, spk_ye; /* our region poपूर्णांकs */
 
-extern wait_queue_head_t speakup_event;
-extern struct kobject *speakup_kobj;
-extern struct task_struct *speakup_task;
-extern const u_char spk_key_defaults[];
+बाह्य रुको_queue_head_t speakup_event;
+बाह्य काष्ठा kobject *speakup_kobj;
+बाह्य काष्ठा task_काष्ठा *speakup_task;
+बाह्य स्थिर u_अक्षर spk_key_शेषs[];
 
 /* Protect speakup synthesizer list */
-extern struct mutex spk_mutex;
-extern struct st_spk_t *speakup_console[];
-extern struct spk_synth *synth;
-extern char spk_pitch_buff[];
-extern u_char *spk_our_keys[];
-extern short spk_punc_masks[];
-extern char spk_str_caps_start[], spk_str_caps_stop[], spk_str_pause[];
-extern bool spk_paused;
-extern const struct st_bits_data spk_punc_info[];
-extern u_char spk_key_buf[600];
-extern char *spk_characters[];
-extern char *spk_default_chars[];
-extern u_short spk_chartab[];
-extern int spk_no_intr, spk_say_ctrl, spk_say_word_ctl, spk_punc_level;
-extern int spk_reading_punc, spk_attrib_bleep, spk_bleeps;
-extern int spk_bleep_time, spk_bell_pos;
-extern int spk_spell_delay, spk_key_echo;
-extern short spk_punc_mask;
-extern short spk_pitch_shift, synth_flags;
-extern bool spk_quiet_boot;
-extern char *synth_name;
-extern struct bleep spk_unprocessed_sound;
+बाह्य काष्ठा mutex spk_mutex;
+बाह्य काष्ठा st_spk_t *speakup_console[];
+बाह्य काष्ठा spk_synth *synth;
+बाह्य अक्षर spk_pitch_buff[];
+बाह्य u_अक्षर *spk_our_keys[];
+बाह्य लघु spk_punc_masks[];
+बाह्य अक्षर spk_str_caps_start[], spk_str_caps_stop[], spk_str_छोड़ो[];
+बाह्य bool spk_छोड़ोd;
+बाह्य स्थिर काष्ठा st_bits_data spk_punc_info[];
+बाह्य u_अक्षर spk_key_buf[600];
+बाह्य अक्षर *spk_अक्षरacters[];
+बाह्य अक्षर *spk_शेष_अक्षरs[];
+बाह्य u_लघु spk_अक्षरtab[];
+बाह्य पूर्णांक spk_no_पूर्णांकr, spk_say_ctrl, spk_say_word_ctl, spk_punc_level;
+बाह्य पूर्णांक spk_पढ़ोing_punc, spk_attrib_bleep, spk_bleeps;
+बाह्य पूर्णांक spk_bleep_समय, spk_bell_pos;
+बाह्य पूर्णांक spk_spell_delay, spk_key_echo;
+बाह्य लघु spk_punc_mask;
+बाह्य लघु spk_pitch_shअगरt, synth_flags;
+बाह्य bool spk_quiet_boot;
+बाह्य अक्षर *synth_name;
+बाह्य काष्ठा bleep spk_unprocessed_sound;
 
 /* Prototypes from fakekey.c. */
-int speakup_add_virtual_keyboard(void);
-void speakup_remove_virtual_keyboard(void);
-void speakup_fake_down_arrow(void);
-bool speakup_fake_key_pressed(void);
+पूर्णांक speakup_add_भव_keyboard(व्योम);
+व्योम speakup_हटाओ_भव_keyboard(व्योम);
+व्योम speakup_fake_करोwn_arrow(व्योम);
+bool speakup_fake_key_pressed(व्योम);
 
-#endif
+#पूर्ण_अगर

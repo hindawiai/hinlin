@@ -1,89 +1,90 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ceph/ceph_debug.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/ceph/ceph_debug.h>
 
-#include <linux/inet.h>
+#समावेश <linux/inet.h>
 
-#include <linux/ceph/decode.h>
-#include <linux/ceph/messenger.h>  /* for ceph_pr_addr() */
+#समावेश <linux/ceph/decode.h>
+#समावेश <linux/ceph/messenger.h>  /* क्रम ceph_pr_addr() */
 
-static int
-ceph_decode_entity_addr_versioned(void **p, void *end,
-				  struct ceph_entity_addr *addr)
-{
-	int ret;
-	u8 struct_v;
-	u32 struct_len, addr_len;
-	void *struct_end;
+अटल पूर्णांक
+ceph_decode_entity_addr_versioned(व्योम **p, व्योम *end,
+				  काष्ठा ceph_entity_addr *addr)
+अणु
+	पूर्णांक ret;
+	u8 काष्ठा_v;
+	u32 काष्ठा_len, addr_len;
+	व्योम *काष्ठा_end;
 
-	ret = ceph_start_decoding(p, end, 1, "entity_addr_t", &struct_v,
-				  &struct_len);
-	if (ret)
-		goto bad;
+	ret = ceph_start_decoding(p, end, 1, "entity_addr_t", &काष्ठा_v,
+				  &काष्ठा_len);
+	अगर (ret)
+		जाओ bad;
 
 	ret = -EINVAL;
-	struct_end = *p + struct_len;
+	काष्ठा_end = *p + काष्ठा_len;
 
-	ceph_decode_copy_safe(p, end, &addr->type, sizeof(addr->type), bad);
+	ceph_decode_copy_safe(p, end, &addr->type, माप(addr->type), bad);
 
-	ceph_decode_copy_safe(p, end, &addr->nonce, sizeof(addr->nonce), bad);
+	ceph_decode_copy_safe(p, end, &addr->nonce, माप(addr->nonce), bad);
 
 	ceph_decode_32_safe(p, end, addr_len, bad);
-	if (addr_len > sizeof(addr->in_addr))
-		goto bad;
+	अगर (addr_len > माप(addr->in_addr))
+		जाओ bad;
 
-	memset(&addr->in_addr, 0, sizeof(addr->in_addr));
-	if (addr_len) {
+	स_रखो(&addr->in_addr, 0, माप(addr->in_addr));
+	अगर (addr_len) अणु
 		ceph_decode_copy_safe(p, end, &addr->in_addr, addr_len, bad);
 
 		addr->in_addr.ss_family =
-			le16_to_cpu((__force __le16)addr->in_addr.ss_family);
-	}
+			le16_to_cpu((__क्रमce __le16)addr->in_addr.ss_family);
+	पूर्ण
 
-	/* Advance past anything the client doesn't yet understand */
-	*p = struct_end;
+	/* Advance past anything the client करोesn't yet understand */
+	*p = काष्ठा_end;
 	ret = 0;
 bad:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-ceph_decode_entity_addr_legacy(void **p, void *end,
-			       struct ceph_entity_addr *addr)
-{
-	int ret = -EINVAL;
+अटल पूर्णांक
+ceph_decode_entity_addr_legacy(व्योम **p, व्योम *end,
+			       काष्ठा ceph_entity_addr *addr)
+अणु
+	पूर्णांक ret = -EINVAL;
 
 	/* Skip rest of type field */
 	ceph_decode_skip_n(p, end, 3, bad);
 
 	/*
-	 * Clients that don't support ADDR2 always send TYPE_NONE, change it
-	 * to TYPE_LEGACY for forward compatibility.
+	 * Clients that करोn't support ADDR2 always send TYPE_NONE, change it
+	 * to TYPE_LEGACY क्रम क्रमward compatibility.
 	 */
 	addr->type = CEPH_ENTITY_ADDR_TYPE_LEGACY;
-	ceph_decode_copy_safe(p, end, &addr->nonce, sizeof(addr->nonce), bad);
-	memset(&addr->in_addr, 0, sizeof(addr->in_addr));
+	ceph_decode_copy_safe(p, end, &addr->nonce, माप(addr->nonce), bad);
+	स_रखो(&addr->in_addr, 0, माप(addr->in_addr));
 	ceph_decode_copy_safe(p, end, &addr->in_addr,
-			      sizeof(addr->in_addr), bad);
+			      माप(addr->in_addr), bad);
 	addr->in_addr.ss_family =
-			be16_to_cpu((__force __be16)addr->in_addr.ss_family);
+			be16_to_cpu((__क्रमce __be16)addr->in_addr.ss_family);
 	ret = 0;
 bad:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-ceph_decode_entity_addr(void **p, void *end, struct ceph_entity_addr *addr)
-{
+पूर्णांक
+ceph_decode_entity_addr(व्योम **p, व्योम *end, काष्ठा ceph_entity_addr *addr)
+अणु
 	u8 marker;
 
 	ceph_decode_8_safe(p, end, marker, bad);
-	if (marker == 1)
-		return ceph_decode_entity_addr_versioned(p, end, addr);
-	else if (marker == 0)
-		return ceph_decode_entity_addr_legacy(p, end, addr);
+	अगर (marker == 1)
+		वापस ceph_decode_entity_addr_versioned(p, end, addr);
+	अन्यथा अगर (marker == 0)
+		वापस ceph_decode_entity_addr_legacy(p, end, addr);
 bad:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL(ceph_decode_entity_addr);
 
 /*
@@ -92,102 +93,102 @@ EXPORT_SYMBOL(ceph_decode_entity_addr);
  *
  * Assume encoding with MSG_ADDR2.
  */
-int ceph_decode_entity_addrvec(void **p, void *end, bool msgr2,
-			       struct ceph_entity_addr *addr)
-{
+पूर्णांक ceph_decode_entity_addrvec(व्योम **p, व्योम *end, bool msgr2,
+			       काष्ठा ceph_entity_addr *addr)
+अणु
 	__le32 my_type = msgr2 ? CEPH_ENTITY_ADDR_TYPE_MSGR2 :
 				 CEPH_ENTITY_ADDR_TYPE_LEGACY;
-	struct ceph_entity_addr tmp_addr;
-	int addr_cnt;
+	काष्ठा ceph_entity_addr पंचांगp_addr;
+	पूर्णांक addr_cnt;
 	bool found;
 	u8 marker;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	ceph_decode_8_safe(p, end, marker, e_inval);
-	if (marker != 2) {
+	अगर (marker != 2) अणु
 		pr_err("bad addrvec marker %d\n", marker);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ceph_decode_32_safe(p, end, addr_cnt, e_inval);
-	dout("%s addr_cnt %d\n", __func__, addr_cnt);
+	करोut("%s addr_cnt %d\n", __func__, addr_cnt);
 
 	found = false;
-	for (i = 0; i < addr_cnt; i++) {
-		ret = ceph_decode_entity_addr(p, end, &tmp_addr);
-		if (ret)
-			return ret;
+	क्रम (i = 0; i < addr_cnt; i++) अणु
+		ret = ceph_decode_entity_addr(p, end, &पंचांगp_addr);
+		अगर (ret)
+			वापस ret;
 
-		dout("%s i %d addr %s\n", __func__, i, ceph_pr_addr(&tmp_addr));
-		if (tmp_addr.type == my_type) {
-			if (found) {
+		करोut("%s i %d addr %s\n", __func__, i, ceph_pr_addr(&पंचांगp_addr));
+		अगर (पंचांगp_addr.type == my_type) अणु
+			अगर (found) अणु
 				pr_err("another match of type %d in addrvec\n",
 				       le32_to_cpu(my_type));
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			memcpy(addr, &tmp_addr, sizeof(*addr));
+			स_नकल(addr, &पंचांगp_addr, माप(*addr));
 			found = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (found)
-		return 0;
+	अगर (found)
+		वापस 0;
 
-	if (!addr_cnt)
-		return 0;  /* normal -- e.g. unused OSD id/slot */
+	अगर (!addr_cnt)
+		वापस 0;  /* normal -- e.g. unused OSD id/slot */
 
-	if (addr_cnt == 1 && !memchr_inv(&tmp_addr, 0, sizeof(tmp_addr)))
-		return 0;  /* weird but effectively the same as !addr_cnt */
+	अगर (addr_cnt == 1 && !स_प्रथम_inv(&पंचांगp_addr, 0, माप(पंचांगp_addr)))
+		वापस 0;  /* weird but effectively the same as !addr_cnt */
 
 	pr_err("no match of type %d in addrvec\n", le32_to_cpu(my_type));
-	return -ENOENT;
+	वापस -ENOENT;
 
 e_inval:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL(ceph_decode_entity_addrvec);
 
-static int get_sockaddr_encoding_len(sa_family_t family)
-{
-	union {
-		struct sockaddr sa;
-		struct sockaddr_in sin;
-		struct sockaddr_in6 sin6;
-	} u;
+अटल पूर्णांक get_sockaddr_encoding_len(sa_family_t family)
+अणु
+	जोड़ अणु
+		काष्ठा sockaddr sa;
+		काष्ठा sockaddr_in sin;
+		काष्ठा sockaddr_in6 sin6;
+	पूर्ण u;
 
-	switch (family) {
-	case AF_INET:
-		return sizeof(u.sin);
-	case AF_INET6:
-		return sizeof(u.sin6);
-	default:
-		return sizeof(u);
-	}
-}
+	चयन (family) अणु
+	हाल AF_INET:
+		वापस माप(u.sin);
+	हाल AF_INET6:
+		वापस माप(u.sin6);
+	शेष:
+		वापस माप(u);
+	पूर्ण
+पूर्ण
 
-int ceph_entity_addr_encoding_len(const struct ceph_entity_addr *addr)
-{
+पूर्णांक ceph_entity_addr_encoding_len(स्थिर काष्ठा ceph_entity_addr *addr)
+अणु
 	sa_family_t family = get_unaligned(&addr->in_addr.ss_family);
-	int addr_len = get_sockaddr_encoding_len(family);
+	पूर्णांक addr_len = get_sockaddr_encoding_len(family);
 
-	return 1 + CEPH_ENCODING_START_BLK_LEN + 4 + 4 + 4 + addr_len;
-}
+	वापस 1 + CEPH_ENCODING_START_BLK_LEN + 4 + 4 + 4 + addr_len;
+पूर्ण
 
-void ceph_encode_entity_addr(void **p, const struct ceph_entity_addr *addr)
-{
+व्योम ceph_encode_entity_addr(व्योम **p, स्थिर काष्ठा ceph_entity_addr *addr)
+अणु
 	sa_family_t family = get_unaligned(&addr->in_addr.ss_family);
-	int addr_len = get_sockaddr_encoding_len(family);
+	पूर्णांक addr_len = get_sockaddr_encoding_len(family);
 
 	ceph_encode_8(p, 1);  /* marker */
-	ceph_start_encoding(p, 1, 1, sizeof(addr->type) +
-				     sizeof(addr->nonce) +
-				     sizeof(u32) + addr_len);
-	ceph_encode_copy(p, &addr->type, sizeof(addr->type));
-	ceph_encode_copy(p, &addr->nonce, sizeof(addr->nonce));
+	ceph_start_encoding(p, 1, 1, माप(addr->type) +
+				     माप(addr->nonce) +
+				     माप(u32) + addr_len);
+	ceph_encode_copy(p, &addr->type, माप(addr->type));
+	ceph_encode_copy(p, &addr->nonce, माप(addr->nonce));
 
 	ceph_encode_32(p, addr_len);
 	ceph_encode_16(p, family);
-	ceph_encode_copy(p, addr->in_addr.__data, addr_len - sizeof(family));
-}
+	ceph_encode_copy(p, addr->in_addr.__data, addr_len - माप(family));
+पूर्ण

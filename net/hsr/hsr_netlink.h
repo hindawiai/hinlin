@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright 2011-2014 Autronica Fire and Security AS
  *
  * Author(s):
  *	2011-2014 Arvid Brodin, arvid.brodin@alten.se
  *
- * include file for HSR and PRP.
+ * include file क्रम HSR and PRP.
  */
 
-#ifndef __HSR_NETLINK_H
-#define __HSR_NETLINK_H
+#अगर_अघोषित __HSR_NETLINK_H
+#घोषणा __HSR_NETLINK_H
 
-#include <linux/if_ether.h>
-#include <linux/module.h>
-#include <uapi/linux/hsr_netlink.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/module.h>
+#समावेश <uapi/linux/hsr_netlink.h>
 
-struct hsr_priv;
-struct hsr_port;
+काष्ठा hsr_priv;
+काष्ठा hsr_port;
 
-int __init hsr_netlink_init(void);
-void __exit hsr_netlink_exit(void);
+पूर्णांक __init hsr_netlink_init(व्योम);
+व्योम __निकास hsr_netlink_निकास(व्योम);
 
-void hsr_nl_ringerror(struct hsr_priv *hsr, unsigned char addr[ETH_ALEN],
-		      struct hsr_port *port);
-void hsr_nl_nodedown(struct hsr_priv *hsr, unsigned char addr[ETH_ALEN]);
-void hsr_nl_framedrop(int dropcount, int dev_idx);
-void hsr_nl_linkdown(int dev_idx);
+व्योम hsr_nl_ringerror(काष्ठा hsr_priv *hsr, अचिन्हित अक्षर addr[ETH_ALEN],
+		      काष्ठा hsr_port *port);
+व्योम hsr_nl_nodeकरोwn(काष्ठा hsr_priv *hsr, अचिन्हित अक्षर addr[ETH_ALEN]);
+व्योम hsr_nl_framedrop(पूर्णांक dropcount, पूर्णांक dev_idx);
+व्योम hsr_nl_linkकरोwn(पूर्णांक dev_idx);
 
-#endif /* __HSR_NETLINK_H */
+#पूर्ण_अगर /* __HSR_NETLINK_H */

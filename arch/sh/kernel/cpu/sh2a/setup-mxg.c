@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Renesas MX-G (R8A03022BG) Setup
  *
  *  Copyright (C) 2008, 2009  Paul Mundt
  */
-#include <linux/platform_device.h>
-#include <linux/init.h>
-#include <linux/serial.h>
-#include <linux/serial_sci.h>
-#include <linux/sh_timer.h>
-#include <asm/platform_early.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_sci.h>
+#समावेश <linux/sh_समयr.h>
+#समावेश <यंत्र/platक्रमm_early.h>
 
-enum {
+क्रमागत अणु
 	UNUSED = 0,
 
-	/* interrupt sources */
+	/* पूर्णांकerrupt sources */
 	IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7,
 	IRQ8, IRQ9, IRQ10, IRQ11, IRQ12, IRQ13, IRQ14, IRQ15,
 
@@ -26,11 +27,11 @@ enum {
 	MTU2_GROUP1, MTU2_GROUP2, MTU2_GROUP3, MTU2_GROUP4, MTU2_GROUP5,
 	MTU2_TGI3B, MTU2_TGI3C,
 
-	/* interrupt groups */
+	/* पूर्णांकerrupt groups */
 	PINT,
-};
+पूर्ण;
 
-static struct intc_vect vectors[] __initdata = {
+अटल काष्ठा पूर्णांकc_vect vectors[] __initdata = अणु
 	INTC_IRQ(IRQ0, 64), INTC_IRQ(IRQ1, 65),
 	INTC_IRQ(IRQ2, 66), INTC_IRQ(IRQ3, 67),
 	INTC_IRQ(IRQ4, 68), INTC_IRQ(IRQ5, 69),
@@ -75,101 +76,101 @@ static struct intc_vect vectors[] __initdata = {
 
 	INTC_IRQ(MTU2_GROUP5, 252), INTC_IRQ(MTU2_GROUP5, 253),
 	INTC_IRQ(MTU2_GROUP5, 254), INTC_IRQ(MTU2_GROUP5, 255),
-};
+पूर्ण;
 
-static struct intc_group groups[] __initdata = {
+अटल काष्ठा पूर्णांकc_group groups[] __initdata = अणु
 	INTC_GROUP(PINT, PINT0, PINT1, PINT2, PINT3,
 		   PINT4, PINT5, PINT6, PINT7),
-};
+पूर्ण;
 
-static struct intc_prio_reg prio_registers[] __initdata = {
-	{ 0xfffd9418, 0, 16, 4, /* IPR01 */ { IRQ0, IRQ1, IRQ2, IRQ3 } },
-	{ 0xfffd941a, 0, 16, 4, /* IPR02 */ { IRQ4, IRQ5, IRQ6, IRQ7 } },
-	{ 0xfffd941c, 0, 16, 4, /* IPR03 */ { IRQ8, IRQ9, IRQ10, IRQ11 } },
-	{ 0xfffd941e, 0, 16, 4, /* IPR04 */ { IRQ12, IRQ13, IRQ14, IRQ15 } },
-	{ 0xfffd9420, 0, 16, 4, /* IPR05 */ { PINT, 0, 0, 0 } },
-	{ 0xfffd9800, 0, 16, 4, /* IPR06 */ { } },
-	{ 0xfffd9802, 0, 16, 4, /* IPR07 */ { } },
-	{ 0xfffd9804, 0, 16, 4, /* IPR08 */ { } },
-	{ 0xfffd9806, 0, 16, 4, /* IPR09 */ { } },
-	{ 0xfffd9808, 0, 16, 4, /* IPR10 */ { } },
-	{ 0xfffd980a, 0, 16, 4, /* IPR11 */ { } },
-	{ 0xfffd980c, 0, 16, 4, /* IPR12 */ { } },
-	{ 0xfffd980e, 0, 16, 4, /* IPR13 */ { } },
-	{ 0xfffd9810, 0, 16, 4, /* IPR14 */ { 0, 0, 0, SCIF0 } },
-	{ 0xfffd9812, 0, 16, 4, /* IPR15 */
-		{ SCIF1, MTU2_GROUP1, MTU2_GROUP2, MTU2_GROUP3 } },
-	{ 0xfffd9814, 0, 16, 4, /* IPR16 */
-		{ MTU2_TGI3B, MTU2_TGI3C, MTU2_GROUP4, MTU2_GROUP5 } },
-};
+अटल काष्ठा पूर्णांकc_prio_reg prio_रेजिस्टरs[] __initdata = अणु
+	अणु 0xfffd9418, 0, 16, 4, /* IPR01 */ अणु IRQ0, IRQ1, IRQ2, IRQ3 पूर्ण पूर्ण,
+	अणु 0xfffd941a, 0, 16, 4, /* IPR02 */ अणु IRQ4, IRQ5, IRQ6, IRQ7 पूर्ण पूर्ण,
+	अणु 0xfffd941c, 0, 16, 4, /* IPR03 */ अणु IRQ8, IRQ9, IRQ10, IRQ11 पूर्ण पूर्ण,
+	अणु 0xfffd941e, 0, 16, 4, /* IPR04 */ अणु IRQ12, IRQ13, IRQ14, IRQ15 पूर्ण पूर्ण,
+	अणु 0xfffd9420, 0, 16, 4, /* IPR05 */ अणु PINT, 0, 0, 0 पूर्ण पूर्ण,
+	अणु 0xfffd9800, 0, 16, 4, /* IPR06 */ अणु पूर्ण पूर्ण,
+	अणु 0xfffd9802, 0, 16, 4, /* IPR07 */ अणु पूर्ण पूर्ण,
+	अणु 0xfffd9804, 0, 16, 4, /* IPR08 */ अणु पूर्ण पूर्ण,
+	अणु 0xfffd9806, 0, 16, 4, /* IPR09 */ अणु पूर्ण पूर्ण,
+	अणु 0xfffd9808, 0, 16, 4, /* IPR10 */ अणु पूर्ण पूर्ण,
+	अणु 0xfffd980a, 0, 16, 4, /* IPR11 */ अणु पूर्ण पूर्ण,
+	अणु 0xfffd980c, 0, 16, 4, /* IPR12 */ अणु पूर्ण पूर्ण,
+	अणु 0xfffd980e, 0, 16, 4, /* IPR13 */ अणु पूर्ण पूर्ण,
+	अणु 0xfffd9810, 0, 16, 4, /* IPR14 */ अणु 0, 0, 0, SCIF0 पूर्ण पूर्ण,
+	अणु 0xfffd9812, 0, 16, 4, /* IPR15 */
+		अणु SCIF1, MTU2_GROUP1, MTU2_GROUP2, MTU2_GROUP3 पूर्ण पूर्ण,
+	अणु 0xfffd9814, 0, 16, 4, /* IPR16 */
+		अणु MTU2_TGI3B, MTU2_TGI3C, MTU2_GROUP4, MTU2_GROUP5 पूर्ण पूर्ण,
+पूर्ण;
 
-static struct intc_mask_reg mask_registers[] __initdata = {
-	{ 0xfffd9408, 0, 16, /* PINTER */
-	  { 0, 0, 0, 0, 0, 0, 0, 0,
-	    PINT7, PINT6, PINT5, PINT4, PINT3, PINT2, PINT1, PINT0 } },
-};
+अटल काष्ठा पूर्णांकc_mask_reg mask_रेजिस्टरs[] __initdata = अणु
+	अणु 0xfffd9408, 0, 16, /* PINTER */
+	  अणु 0, 0, 0, 0, 0, 0, 0, 0,
+	    PINT7, PINT6, PINT5, PINT4, PINT3, PINT2, PINT1, PINT0 पूर्ण पूर्ण,
+पूर्ण;
 
-static DECLARE_INTC_DESC(intc_desc, "mxg", vectors, groups,
-			 mask_registers, prio_registers, NULL);
+अटल DECLARE_INTC_DESC(पूर्णांकc_desc, "mxg", vectors, groups,
+			 mask_रेजिस्टरs, prio_रेजिस्टरs, शून्य);
 
-static struct resource mtu2_resources[] = {
+अटल काष्ठा resource mtu2_resources[] = अणु
 	DEFINE_RES_MEM(0xff801000, 0x400),
 	DEFINE_RES_IRQ_NAMED(228, "tgi0a"),
 	DEFINE_RES_IRQ_NAMED(234, "tgi1a"),
 	DEFINE_RES_IRQ_NAMED(240, "tgi2a"),
-};
+पूर्ण;
 
-static struct platform_device mtu2_device = {
+अटल काष्ठा platक्रमm_device mtu2_device = अणु
 	.name		= "sh-mtu2",
 	.id		= -1,
 	.resource	= mtu2_resources,
 	.num_resources	= ARRAY_SIZE(mtu2_resources),
-};
+पूर्ण;
 
-static struct plat_sci_port scif0_platform_data = {
+अटल काष्ठा plat_sci_port scअगर0_platक्रमm_data = अणु
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
-};
+पूर्ण;
 
-static struct resource scif0_resources[] = {
+अटल काष्ठा resource scअगर0_resources[] = अणु
 	DEFINE_RES_MEM(0xff804000, 0x100),
 	DEFINE_RES_IRQ(220),
-};
+पूर्ण;
 
-static struct platform_device scif0_device = {
+अटल काष्ठा platक्रमm_device scअगर0_device = अणु
 	.name		= "sh-sci",
 	.id		= 0,
-	.resource	= scif0_resources,
-	.num_resources	= ARRAY_SIZE(scif0_resources),
-	.dev		= {
-		.platform_data	= &scif0_platform_data,
-	},
-};
+	.resource	= scअगर0_resources,
+	.num_resources	= ARRAY_SIZE(scअगर0_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर0_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device *mxg_devices[] __initdata = {
-	&scif0_device,
+अटल काष्ठा platक्रमm_device *mxg_devices[] __initdata = अणु
+	&scअगर0_device,
 	&mtu2_device,
-};
+पूर्ण;
 
-static int __init mxg_devices_setup(void)
-{
-	return platform_add_devices(mxg_devices,
+अटल पूर्णांक __init mxg_devices_setup(व्योम)
+अणु
+	वापस platक्रमm_add_devices(mxg_devices,
 				    ARRAY_SIZE(mxg_devices));
-}
+पूर्ण
 arch_initcall(mxg_devices_setup);
 
-void __init plat_irq_setup(void)
-{
-	register_intc_controller(&intc_desc);
-}
+व्योम __init plat_irq_setup(व्योम)
+अणु
+	रेजिस्टर_पूर्णांकc_controller(&पूर्णांकc_desc);
+पूर्ण
 
-static struct platform_device *mxg_early_devices[] __initdata = {
-	&scif0_device,
+अटल काष्ठा platक्रमm_device *mxg_early_devices[] __initdata = अणु
+	&scअगर0_device,
 	&mtu2_device,
-};
+पूर्ण;
 
-void __init plat_early_device_setup(void)
-{
-	sh_early_platform_add_devices(mxg_early_devices,
+व्योम __init plat_early_device_setup(व्योम)
+अणु
+	sh_early_platक्रमm_add_devices(mxg_early_devices,
 				   ARRAY_SIZE(mxg_early_devices));
-}
+पूर्ण

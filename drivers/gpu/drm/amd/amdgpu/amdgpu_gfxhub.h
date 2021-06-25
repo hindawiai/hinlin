@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,24 +21,24 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __AMDGPU_GFXHUB_H__
-#define __AMDGPU_GFXHUB_H__
+#अगर_अघोषित __AMDGPU_GFXHUB_H__
+#घोषणा __AMDGPU_GFXHUB_H__
 
-struct amdgpu_gfxhub_funcs {
-	u64 (*get_fb_location)(struct amdgpu_device *adev);
-	u64 (*get_mc_fb_offset)(struct amdgpu_device *adev);
-	void (*setup_vm_pt_regs)(struct amdgpu_device *adev, uint32_t vmid,
-			uint64_t page_table_base);
-	int (*gart_enable)(struct amdgpu_device *adev);
+काष्ठा amdgpu_gfxhub_funcs अणु
+	u64 (*get_fb_location)(काष्ठा amdgpu_device *adev);
+	u64 (*get_mc_fb_offset)(काष्ठा amdgpu_device *adev);
+	व्योम (*setup_vm_pt_regs)(काष्ठा amdgpu_device *adev, uपूर्णांक32_t vmid,
+			uपूर्णांक64_t page_table_base);
+	पूर्णांक (*gart_enable)(काष्ठा amdgpu_device *adev);
 
-	void (*gart_disable)(struct amdgpu_device *adev);
-	void (*set_fault_enable_default)(struct amdgpu_device *adev, bool value);
-	void (*init)(struct amdgpu_device *adev);
-	int (*get_xgmi_info)(struct amdgpu_device *adev);
-};
+	व्योम (*gart_disable)(काष्ठा amdgpu_device *adev);
+	व्योम (*set_fault_enable_शेष)(काष्ठा amdgpu_device *adev, bool value);
+	व्योम (*init)(काष्ठा amdgpu_device *adev);
+	पूर्णांक (*get_xgmi_info)(काष्ठा amdgpu_device *adev);
+पूर्ण;
 
-struct amdgpu_gfxhub {
-	const struct amdgpu_gfxhub_funcs *funcs;
-};
+काष्ठा amdgpu_gfxhub अणु
+	स्थिर काष्ठा amdgpu_gfxhub_funcs *funcs;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Driver for the MaxLinear MxL5xx family of tuners/demods
+ * Driver क्रम the MaxLinear MxL5xx family of tuners/demods
  *
  * Copyright (C) 2014-2015 Ralph Metzler <rjkm@metzlerbros.de>
  *                         Marcus Metzler <mocm@metzlerbros.de>
- *                         developed for Digital Devices GmbH
+ *                         developed क्रम Digital Devices GmbH
  *
  * based on code:
  * Copyright (c) 2011-2013 MaxLinear, Inc. All rights reserved
  * which was released under GPL V2
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#ifndef _MXL5XX_H_
-#define _MXL5XX_H_
+#अगर_अघोषित _MXL5XX_H_
+#घोषणा _MXL5XX_H_
 
-#include <linux/types.h>
-#include <linux/i2c.h>
+#समावेश <linux/types.h>
+#समावेश <linux/i2c.h>
 
-#include <media/dvb_frontend.h>
+#समावेश <media/dvb_frontend.h>
 
-struct mxl5xx_cfg {
+काष्ठा mxl5xx_cfg अणु
 	u8   adr;
 	u8   type;
 	u32  cap;
@@ -38,26 +39,26 @@ struct mxl5xx_cfg {
 	u8  *fw;
 	u32  fw_len;
 
-	int (*fw_read)(void *priv, u8 *buf, u32 len);
-	void *fw_priv;
-};
+	पूर्णांक (*fw_पढ़ो)(व्योम *priv, u8 *buf, u32 len);
+	व्योम *fw_priv;
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_MXL5XX)
+#अगर IS_REACHABLE(CONFIG_DVB_MXL5XX)
 
-extern struct dvb_frontend *mxl5xx_attach(struct i2c_adapter *i2c,
-	struct mxl5xx_cfg *cfg, u32 demod, u32 tuner,
-	int (**fn_set_input)(struct dvb_frontend *, int));
+बाह्य काष्ठा dvb_frontend *mxl5xx_attach(काष्ठा i2c_adapter *i2c,
+	काष्ठा mxl5xx_cfg *cfg, u32 demod, u32 tuner,
+	पूर्णांक (**fn_set_input)(काष्ठा dvb_frontend *, पूर्णांक));
 
-#else
+#अन्यथा
 
-static inline struct dvb_frontend *mxl5xx_attach(struct i2c_adapter *i2c,
-	struct mxl5xx_cfg *cfg, u32 demod, u32 tuner,
-	int (**fn_set_input)(struct dvb_frontend *, int))
-{
+अटल अंतरभूत काष्ठा dvb_frontend *mxl5xx_attach(काष्ठा i2c_adapter *i2c,
+	काष्ठा mxl5xx_cfg *cfg, u32 demod, u32 tuner,
+	पूर्णांक (**fn_set_input)(काष्ठा dvb_frontend *, पूर्णांक))
+अणु
 	pr_warn("%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#endif /* CONFIG_DVB_MXL5XX */
+#पूर्ण_अगर /* CONFIG_DVB_MXL5XX */
 
-#endif /* _MXL5XX_H_ */
+#पूर्ण_अगर /* _MXL5XX_H_ */

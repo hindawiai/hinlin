@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Buffalo Terastation Pro II/Live Board Setup
  *
- * Maintainer: Sylver Bruneau <sylver.bruneau@googlemail.com>
+ * Maपूर्णांकainer: Sylver Bruneau <sylver.bruneau@googlemail.com>
  */
-#include <linux/gpio.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/pci.h>
-#include <linux/irq.h>
-#include <linux/delay.h>
-#include <linux/mtd/physmap.h>
-#include <linux/mv643xx_eth.h>
-#include <linux/i2c.h>
-#include <linux/serial_reg.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/pci.h>
-#include "common.h"
-#include "mpp.h"
-#include "orion5x.h"
+#समावेश <linux/gpपन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/mv643xx_eth.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/pci.h>
+#समावेश "common.h"
+#समावेश "mpp.h"
+#समावेश "orion5x.h"
 
 /*****************************************************************************
  * Terastation Pro 2/Live Info
@@ -40,96 +41,96 @@
  * 256K NOR flash Device bus boot chip select
  */
 
-#define TSP2_NOR_BOOT_BASE	0xf4000000
-#define TSP2_NOR_BOOT_SIZE	SZ_256K
+#घोषणा TSP2_NOR_BOOT_BASE	0xf4000000
+#घोषणा TSP2_NOR_BOOT_SIZE	SZ_256K
 
 /*****************************************************************************
  * 256KB NOR Flash on BOOT Device
  ****************************************************************************/
 
-static struct physmap_flash_data tsp2_nor_flash_data = {
+अटल काष्ठा physmap_flash_data tsp2_nor_flash_data = अणु
 	.width    = 1,
-};
+पूर्ण;
 
-static struct resource tsp2_nor_flash_resource = {
+अटल काष्ठा resource tsp2_nor_flash_resource = अणु
 	.flags = IORESOURCE_MEM,
 	.start = TSP2_NOR_BOOT_BASE,
 	.end   = TSP2_NOR_BOOT_BASE + TSP2_NOR_BOOT_SIZE - 1,
-};
+पूर्ण;
 
-static struct platform_device tsp2_nor_flash = {
+अटल काष्ठा platक्रमm_device tsp2_nor_flash = अणु
 	.name          = "physmap-flash",
 	.id            = 0,
-	.dev           = {
-		.platform_data	= &tsp2_nor_flash_data,
-	},
+	.dev           = अणु
+		.platक्रमm_data	= &tsp2_nor_flash_data,
+	पूर्ण,
 	.num_resources = 1,
 	.resource      = &tsp2_nor_flash_resource,
-};
+पूर्ण;
 
 /*****************************************************************************
  * PCI
  ****************************************************************************/
-#define TSP2_PCI_SLOT0_OFFS		7
-#define TSP2_PCI_SLOT0_IRQ_PIN		11
+#घोषणा TSP2_PCI_SLOT0_OFFS		7
+#घोषणा TSP2_PCI_SLOT0_IRQ_PIN		11
 
-static void __init tsp2_pci_preinit(void)
-{
-	int pin;
+अटल व्योम __init tsp2_pci_preinit(व्योम)
+अणु
+	पूर्णांक pin;
 
 	/*
 	 * Configure PCI GPIO IRQ pins
 	 */
 	pin = TSP2_PCI_SLOT0_IRQ_PIN;
-	if (gpio_request(pin, "PCI Int1") == 0) {
-		if (gpio_direction_input(pin) == 0) {
+	अगर (gpio_request(pin, "PCI Int1") == 0) अणु
+		अगर (gpio_direction_input(pin) == 0) अणु
 			irq_set_irq_type(gpio_to_irq(pin), IRQ_TYPE_LEVEL_LOW);
-		} else {
-			printk(KERN_ERR "tsp2_pci_preinit failed "
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_ERR "tsp2_pci_preinit failed "
 					"to set_irq_type pin %d\n", pin);
-			gpio_free(pin);
-		}
-	} else {
-		printk(KERN_ERR "tsp2_pci_preinit failed to "
+			gpio_मुक्त(pin);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "tsp2_pci_preinit failed to "
 				"gpio_request %d\n", pin);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init tsp2_pci_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	int irq;
+अटल पूर्णांक __init tsp2_pci_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	पूर्णांक irq;
 
 	/*
-	 * Check for devices with hard-wired IRQs.
+	 * Check क्रम devices with hard-wired IRQs.
 	 */
 	irq = orion5x_pci_map_irq(dev, slot, pin);
-	if (irq != -1)
-		return irq;
+	अगर (irq != -1)
+		वापस irq;
 
 	/*
 	 * PCI IRQs are connected via GPIOs.
 	 */
-	if (slot == TSP2_PCI_SLOT0_OFFS)
-		return gpio_to_irq(TSP2_PCI_SLOT0_IRQ_PIN);
+	अगर (slot == TSP2_PCI_SLOT0_OFFS)
+		वापस gpio_to_irq(TSP2_PCI_SLOT0_IRQ_PIN);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static struct hw_pci tsp2_pci __initdata = {
+अटल काष्ठा hw_pci tsp2_pci __initdata = अणु
 	.nr_controllers = 2,
 	.preinit        = tsp2_pci_preinit,
 	.setup          = orion5x_pci_sys_setup,
 	.scan           = orion5x_pci_sys_scan_bus,
 	.map_irq        = tsp2_pci_map_irq,
-};
+पूर्ण;
 
-static int __init tsp2_pci_init(void)
-{
-	if (machine_is_terastation_pro2())
+अटल पूर्णांक __init tsp2_pci_init(व्योम)
+अणु
+	अगर (machine_is_terastation_pro2())
 		pci_common_init(&tsp2_pci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(tsp2_pci_init);
 
@@ -137,169 +138,169 @@ subsys_initcall(tsp2_pci_init);
  * Ethernet
  ****************************************************************************/
 
-static struct mv643xx_eth_platform_data tsp2_eth_data = {
+अटल काष्ठा mv643xx_eth_platक्रमm_data tsp2_eth_data = अणु
 	.phy_addr	= 0,
-};
+पूर्ण;
 
 /*****************************************************************************
  * RTC 5C372a on I2C bus
  ****************************************************************************/
 
-#define TSP2_RTC_GPIO	9
+#घोषणा TSP2_RTC_GPIO	9
 
-static struct i2c_board_info __initdata tsp2_i2c_rtc = {
+अटल काष्ठा i2c_board_info __initdata tsp2_i2c_rtc = अणु
 	I2C_BOARD_INFO("rs5c372a", 0x32),
-};
+पूर्ण;
 
 /*****************************************************************************
- * Terastation Pro II specific power off method via UART1-attached
+ * Terastation Pro II specअगरic घातer off method via UART1-attached
  * microcontroller
  ****************************************************************************/
 
-#define UART1_REG(x)	(UART1_VIRT_BASE + ((UART_##x) << 2))
+#घोषणा UART1_REG(x)	(UART1_VIRT_BASE + ((UART_##x) << 2))
 
-static int tsp2_miconread(unsigned char *buf, int count)
-{
-	int i;
-	int timeout;
+अटल पूर्णांक tsp2_miconपढ़ो(अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	पूर्णांक i;
+	पूर्णांक समयout;
 
-	for (i = 0; i < count; i++) {
-		timeout = 10;
+	क्रम (i = 0; i < count; i++) अणु
+		समयout = 10;
 
-		while (!(readl(UART1_REG(LSR)) & UART_LSR_DR)) {
-			if (--timeout == 0)
-				break;
+		जबतक (!(पढ़ोl(UART1_REG(LSR)) & UART_LSR_DR)) अणु
+			अगर (--समयout == 0)
+				अवरोध;
 			udelay(1000);
-		}
+		पूर्ण
 
-		if (timeout == 0)
-			break;
-		buf[i] = readl(UART1_REG(RX));
-	}
+		अगर (समयout == 0)
+			अवरोध;
+		buf[i] = पढ़ोl(UART1_REG(RX));
+	पूर्ण
 
-	/* return read bytes */
-	return i;
-}
+	/* वापस पढ़ो bytes */
+	वापस i;
+पूर्ण
 
-static int tsp2_miconwrite(const unsigned char *buf, int count)
-{
-	int i = 0;
+अटल पूर्णांक tsp2_miconग_लिखो(स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	पूर्णांक i = 0;
 
-	while (count--) {
-		while (!(readl(UART1_REG(LSR)) & UART_LSR_THRE))
+	जबतक (count--) अणु
+		जबतक (!(पढ़ोl(UART1_REG(LSR)) & UART_LSR_THRE))
 			barrier();
-		writel(buf[i++], UART1_REG(TX));
-	}
+		ग_लिखोl(buf[i++], UART1_REG(TX));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tsp2_miconsend(const unsigned char *data, int count)
-{
-	int i;
-	unsigned char checksum = 0;
-	unsigned char recv_buf[40];
-	unsigned char send_buf[40];
-	unsigned char correct_ack[3];
-	int retry = 2;
+अटल पूर्णांक tsp2_miconsend(स्थिर अचिन्हित अक्षर *data, पूर्णांक count)
+अणु
+	पूर्णांक i;
+	अचिन्हित अक्षर checksum = 0;
+	अचिन्हित अक्षर recv_buf[40];
+	अचिन्हित अक्षर send_buf[40];
+	अचिन्हित अक्षर correct_ack[3];
+	पूर्णांक retry = 2;
 
 	/* Generate checksum */
-	for (i = 0; i < count; i++)
+	क्रम (i = 0; i < count; i++)
 		checksum -=  data[i];
 
-	do {
+	करो अणु
 		/* Send data */
-		tsp2_miconwrite(data, count);
+		tsp2_miconग_लिखो(data, count);
 
 		/* send checksum */
-		tsp2_miconwrite(&checksum, 1);
+		tsp2_miconग_लिखो(&checksum, 1);
 
-		if (tsp2_miconread(recv_buf, sizeof(recv_buf)) <= 3) {
-			printk(KERN_ERR ">%s: receive failed.\n", __func__);
+		अगर (tsp2_miconपढ़ो(recv_buf, माप(recv_buf)) <= 3) अणु
+			prपूर्णांकk(KERN_ERR ">%s: receive failed.\n", __func__);
 
 			/* send preamble to clear the receive buffer */
-			memset(&send_buf, 0xff, sizeof(send_buf));
-			tsp2_miconwrite(send_buf, sizeof(send_buf));
+			स_रखो(&send_buf, 0xff, माप(send_buf));
+			tsp2_miconग_लिखो(send_buf, माप(send_buf));
 
-			/* make dummy reads */
+			/* make dummy पढ़ोs */
 			mdelay(100);
-			tsp2_miconread(recv_buf, sizeof(recv_buf));
-		} else {
+			tsp2_miconपढ़ो(recv_buf, माप(recv_buf));
+		पूर्ण अन्यथा अणु
 			/* Generate expected ack */
 			correct_ack[0] = 0x01;
 			correct_ack[1] = data[1];
 			correct_ack[2] = 0x00;
 
 			/* checksum Check */
-			if ((recv_buf[0] + recv_buf[1] + recv_buf[2] +
-			     recv_buf[3]) & 0xFF) {
-				printk(KERN_ERR ">%s: Checksum Error : "
+			अगर ((recv_buf[0] + recv_buf[1] + recv_buf[2] +
+			     recv_buf[3]) & 0xFF) अणु
+				prपूर्णांकk(KERN_ERR ">%s: Checksum Error : "
 					"Received data[%02x, %02x, %02x, %02x]"
 					"\n", __func__, recv_buf[0],
 					recv_buf[1], recv_buf[2], recv_buf[3]);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* Check Received Data */
-				if (correct_ack[0] == recv_buf[0] &&
+				अगर (correct_ack[0] == recv_buf[0] &&
 				    correct_ack[1] == recv_buf[1] &&
-				    correct_ack[2] == recv_buf[2]) {
-					/* Interval for next command */
+				    correct_ack[2] == recv_buf[2]) अणु
+					/* Interval क्रम next command */
 					mdelay(10);
 
 					/* Receive ACK */
-					return 0;
-				}
-			}
+					वापस 0;
+				पूर्ण
+			पूर्ण
 			/* Received NAK or illegal Data */
-			printk(KERN_ERR ">%s: Error : NAK or Illegal Data "
+			prपूर्णांकk(KERN_ERR ">%s: Error : NAK or Illegal Data "
 					"Received\n", __func__);
-		}
-	} while (retry--);
+		पूर्ण
+	पूर्ण जबतक (retry--);
 
-	/* Interval for next command */
+	/* Interval क्रम next command */
 	mdelay(10);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void tsp2_power_off(void)
-{
-	const unsigned char watchdogkill[]	= {0x01, 0x35, 0x00};
-	const unsigned char shutdownwait[]	= {0x00, 0x0c};
-	const unsigned char poweroff[]		= {0x00, 0x06};
-	/* 38400 baud divisor */
-	const unsigned divisor = ((orion5x_tclk + (8 * 38400)) / (16 * 38400));
+अटल व्योम tsp2_घातer_off(व्योम)
+अणु
+	स्थिर अचिन्हित अक्षर watchकरोgसमाप्त[]	= अणु0x01, 0x35, 0x00पूर्ण;
+	स्थिर अचिन्हित अक्षर shutकरोwnरुको[]	= अणु0x00, 0x0cपूर्ण;
+	स्थिर अचिन्हित अक्षर घातeroff[]		= अणु0x00, 0x06पूर्ण;
+	/* 38400 baud भागisor */
+	स्थिर अचिन्हित भागisor = ((orion5x_tclk + (8 * 38400)) / (16 * 38400));
 
 	pr_info("%s: triggering power-off...\n", __func__);
 
-	/* hijack uart1 and reset into sane state (38400,8n1,even parity) */
-	writel(0x83, UART1_REG(LCR));
-	writel(divisor & 0xff, UART1_REG(DLL));
-	writel((divisor >> 8) & 0xff, UART1_REG(DLM));
-	writel(0x1b, UART1_REG(LCR));
-	writel(0x00, UART1_REG(IER));
-	writel(0x07, UART1_REG(FCR));
-	writel(0x00, UART1_REG(MCR));
+	/* hijack uart1 and reset पूर्णांकo sane state (38400,8n1,even parity) */
+	ग_लिखोl(0x83, UART1_REG(LCR));
+	ग_लिखोl(भागisor & 0xff, UART1_REG(DLL));
+	ग_लिखोl((भागisor >> 8) & 0xff, UART1_REG(DLM));
+	ग_लिखोl(0x1b, UART1_REG(LCR));
+	ग_लिखोl(0x00, UART1_REG(IER));
+	ग_लिखोl(0x07, UART1_REG(FCR));
+	ग_लिखोl(0x00, UART1_REG(MCR));
 
-	/* Send the commands to shutdown the Terastation Pro II */
-	tsp2_miconsend(watchdogkill, sizeof(watchdogkill)) ;
-	tsp2_miconsend(shutdownwait, sizeof(shutdownwait)) ;
-	tsp2_miconsend(poweroff, sizeof(poweroff));
-}
+	/* Send the commands to shutकरोwn the Terastation Pro II */
+	tsp2_miconsend(watchकरोgसमाप्त, माप(watchकरोgसमाप्त)) ;
+	tsp2_miconsend(shutकरोwnरुको, माप(shutकरोwnरुको)) ;
+	tsp2_miconsend(घातeroff, माप(घातeroff));
+पूर्ण
 
 /*****************************************************************************
  * General Setup
  ****************************************************************************/
-static unsigned int tsp2_mpp_modes[] __initdata = {
+अटल अचिन्हित पूर्णांक tsp2_mpp_modes[] __initdata = अणु
 	MPP0_PCIE_RST_OUTn,
 	MPP1_UNUSED,
 	MPP2_UNUSED,
 	MPP3_UNUSED,
-	MPP4_NAND,		/* BOOT NAND Flash REn */
-	MPP5_NAND,		/* BOOT NAND Flash WEn */
-	MPP6_NAND,		/* BOOT NAND Flash HREn[0] */
-	MPP7_NAND,		/* BOOT NAND Flash WEn[0] */
-	MPP8_GPIO,		/* MICON int */
-	MPP9_GPIO,		/* RTC int */
+	MPP4_न_अंकD,		/* BOOT न_अंकD Flash REn */
+	MPP5_न_अंकD,		/* BOOT न_अंकD Flash WEn */
+	MPP6_न_अंकD,		/* BOOT न_अंकD Flash HREn[0] */
+	MPP7_न_अंकD,		/* BOOT न_अंकD Flash WEn[0] */
+	MPP8_GPIO,		/* MICON पूर्णांक */
+	MPP9_GPIO,		/* RTC पूर्णांक */
 	MPP10_UNUSED,
 	MPP11_GPIO,		/* PCI Int A */
 	MPP12_UNUSED,
@@ -311,10 +312,10 @@ static unsigned int tsp2_mpp_modes[] __initdata = {
 	MPP18_UART,		/* UART1 CTSn */
 	MPP19_UART,		/* UART1 RTSn */
 	0,
-};
+पूर्ण;
 
-static void __init tsp2_init(void)
-{
+अटल व्योम __init tsp2_init(व्योम)
+अणु
 	/*
 	 * Setup basic Orion functions. Need to be called early.
 	 */
@@ -325,11 +326,11 @@ static void __init tsp2_init(void)
 	/*
 	 * Configure peripherals.
 	 */
-	mvebu_mbus_add_window_by_id(ORION_MBUS_DEVBUS_BOOT_TARGET,
+	mvebu_mbus_add_winकरोw_by_id(ORION_MBUS_DEVBUS_BOOT_TARGET,
 				    ORION_MBUS_DEVBUS_BOOT_ATTR,
 				    TSP2_NOR_BOOT_BASE,
 				    TSP2_NOR_BOOT_SIZE);
-	platform_device_register(&tsp2_nor_flash);
+	platक्रमm_device_रेजिस्टर(&tsp2_nor_flash);
 
 	orion5x_ehci0_init();
 	orion5x_eth_init(&tsp2_eth_data);
@@ -337,30 +338,30 @@ static void __init tsp2_init(void)
 	orion5x_uart0_init();
 	orion5x_uart1_init();
 
-	/* Get RTC IRQ and register the chip */
-	if (gpio_request(TSP2_RTC_GPIO, "rtc") == 0) {
-		if (gpio_direction_input(TSP2_RTC_GPIO) == 0)
+	/* Get RTC IRQ and रेजिस्टर the chip */
+	अगर (gpio_request(TSP2_RTC_GPIO, "rtc") == 0) अणु
+		अगर (gpio_direction_input(TSP2_RTC_GPIO) == 0)
 			tsp2_i2c_rtc.irq = gpio_to_irq(TSP2_RTC_GPIO);
-		else
-			gpio_free(TSP2_RTC_GPIO);
-	}
-	if (tsp2_i2c_rtc.irq == 0)
+		अन्यथा
+			gpio_मुक्त(TSP2_RTC_GPIO);
+	पूर्ण
+	अगर (tsp2_i2c_rtc.irq == 0)
 		pr_warn("tsp2_init: failed to get RTC IRQ\n");
-	i2c_register_board_info(0, &tsp2_i2c_rtc, 1);
+	i2c_रेजिस्टर_board_info(0, &tsp2_i2c_rtc, 1);
 
-	/* register Terastation Pro II specific power-off method */
-	pm_power_off = tsp2_power_off;
-}
+	/* रेजिस्टर Terastation Pro II specअगरic घातer-off method */
+	pm_घातer_off = tsp2_घातer_off;
+पूर्ण
 
 MACHINE_START(TERASTATION_PRO2, "Buffalo Terastation Pro II/Live")
-	/* Maintainer:  Sylver Bruneau <sylver.bruneau@googlemail.com> */
+	/* Maपूर्णांकainer:  Sylver Bruneau <sylver.bruneau@googlemail.com> */
 	.atag_offset	= 0x100,
 	.nr_irqs	= ORION5X_NR_IRQS,
 	.init_machine	= tsp2_init,
 	.map_io		= orion5x_map_io,
 	.init_early	= orion5x_init_early,
 	.init_irq	= orion5x_init_irq,
-	.init_time	= orion5x_timer_init,
+	.init_समय	= orion5x_समयr_init,
 	.fixup		= tag_fixup_mem32,
 	.restart	= orion5x_restart,
 MACHINE_END

@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2009-2011, Frederic Weisbecker <fweisbec@gmail.com>
  *
  * Handle the callchains from the stream in an ad-hoc radix tree and then
  * sort them in an rbtree.
  *
- * Using a radix for code path provides a fast retrieval and factorizes
+ * Using a radix क्रम code path provides a fast retrieval and factorizes
  * memory use. Also that lets us use the paths in a hierarchical graph view.
  *
  */
 
-#include <inttypes.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <math.h>
-#include <linux/string.h>
-#include <linux/zalloc.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <गणित.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/zभाग.स>
 
-#include "asm/bug.h"
+#समावेश "asm/bug.h"
 
-#include "debug.h"
-#include "dso.h"
-#include "event.h"
-#include "hist.h"
-#include "sort.h"
-#include "machine.h"
-#include "map.h"
-#include "callchain.h"
-#include "branch.h"
-#include "symbol.h"
-#include "../perf.h"
+#समावेश "debug.h"
+#समावेश "dso.h"
+#समावेश "event.h"
+#समावेश "hist.h"
+#समावेश "sort.h"
+#समावेश "machine.h"
+#समावेश "map.h"
+#समावेश "callchain.h"
+#समावेश "branch.h"
+#समावेश "symbol.h"
+#समावेश "../perf.h"
 
-#define CALLCHAIN_PARAM_DEFAULT			\
+#घोषणा CALLCHAIN_PARAM_DEFAULT			\
 	.mode		= CHAIN_GRAPH_ABS,	\
 	.min_percent	= 0.5,			\
 	.order		= ORDER_CALLEE,		\
 	.key		= CCKEY_FUNCTION,	\
 	.value		= CCVAL_PERCENT,	\
 
-struct callchain_param callchain_param = {
+काष्ठा callchain_param callchain_param = अणु
 	CALLCHAIN_PARAM_DEFAULT
-};
+पूर्ण;
 
 /*
  * Are there any events usind DWARF callchains?
@@ -53,122 +54,122 @@ struct callchain_param callchain_param = {
  */
 bool dwarf_callchain_users;
 
-struct callchain_param callchain_param_default = {
+काष्ठा callchain_param callchain_param_शेष = अणु
 	CALLCHAIN_PARAM_DEFAULT
-};
+पूर्ण;
 
-__thread struct callchain_cursor callchain_cursor;
+__thपढ़ो काष्ठा callchain_cursor callchain_cursor;
 
-int parse_callchain_record_opt(const char *arg, struct callchain_param *param)
-{
-	return parse_callchain_record(arg, param);
-}
+पूर्णांक parse_callchain_record_opt(स्थिर अक्षर *arg, काष्ठा callchain_param *param)
+अणु
+	वापस parse_callchain_record(arg, param);
+पूर्ण
 
-static int parse_callchain_mode(const char *value)
-{
-	if (!strncmp(value, "graph", strlen(value))) {
+अटल पूर्णांक parse_callchain_mode(स्थिर अक्षर *value)
+अणु
+	अगर (!म_भेदन(value, "graph", म_माप(value))) अणु
 		callchain_param.mode = CHAIN_GRAPH_ABS;
-		return 0;
-	}
-	if (!strncmp(value, "flat", strlen(value))) {
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेदन(value, "flat", म_माप(value))) अणु
 		callchain_param.mode = CHAIN_FLAT;
-		return 0;
-	}
-	if (!strncmp(value, "fractal", strlen(value))) {
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेदन(value, "fractal", म_माप(value))) अणु
 		callchain_param.mode = CHAIN_GRAPH_REL;
-		return 0;
-	}
-	if (!strncmp(value, "folded", strlen(value))) {
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेदन(value, "folded", म_माप(value))) अणु
 		callchain_param.mode = CHAIN_FOLDED;
-		return 0;
-	}
-	return -1;
-}
+		वापस 0;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int parse_callchain_order(const char *value)
-{
-	if (!strncmp(value, "caller", strlen(value))) {
+अटल पूर्णांक parse_callchain_order(स्थिर अक्षर *value)
+अणु
+	अगर (!म_भेदन(value, "caller", म_माप(value))) अणु
 		callchain_param.order = ORDER_CALLER;
 		callchain_param.order_set = true;
-		return 0;
-	}
-	if (!strncmp(value, "callee", strlen(value))) {
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेदन(value, "callee", म_माप(value))) अणु
 		callchain_param.order = ORDER_CALLEE;
 		callchain_param.order_set = true;
-		return 0;
-	}
-	return -1;
-}
+		वापस 0;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int parse_callchain_sort_key(const char *value)
-{
-	if (!strncmp(value, "function", strlen(value))) {
+अटल पूर्णांक parse_callchain_sort_key(स्थिर अक्षर *value)
+अणु
+	अगर (!म_भेदन(value, "function", म_माप(value))) अणु
 		callchain_param.key = CCKEY_FUNCTION;
-		return 0;
-	}
-	if (!strncmp(value, "address", strlen(value))) {
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेदन(value, "address", म_माप(value))) अणु
 		callchain_param.key = CCKEY_ADDRESS;
-		return 0;
-	}
-	if (!strncmp(value, "srcline", strlen(value))) {
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेदन(value, "srcline", म_माप(value))) अणु
 		callchain_param.key = CCKEY_SRCLINE;
-		return 0;
-	}
-	if (!strncmp(value, "branch", strlen(value))) {
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेदन(value, "branch", म_माप(value))) अणु
 		callchain_param.branch_callstack = 1;
-		return 0;
-	}
-	return -1;
-}
+		वापस 0;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int parse_callchain_value(const char *value)
-{
-	if (!strncmp(value, "percent", strlen(value))) {
+अटल पूर्णांक parse_callchain_value(स्थिर अक्षर *value)
+अणु
+	अगर (!म_भेदन(value, "percent", म_माप(value))) अणु
 		callchain_param.value = CCVAL_PERCENT;
-		return 0;
-	}
-	if (!strncmp(value, "period", strlen(value))) {
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेदन(value, "period", म_माप(value))) अणु
 		callchain_param.value = CCVAL_PERIOD;
-		return 0;
-	}
-	if (!strncmp(value, "count", strlen(value))) {
+		वापस 0;
+	पूर्ण
+	अगर (!म_भेदन(value, "count", म_माप(value))) अणु
 		callchain_param.value = CCVAL_COUNT;
-		return 0;
-	}
-	return -1;
-}
+		वापस 0;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int get_stack_size(const char *str, unsigned long *_size)
-{
-	char *endptr;
-	unsigned long size;
-	unsigned long max_size = round_down(USHRT_MAX, sizeof(u64));
+अटल पूर्णांक get_stack_size(स्थिर अक्षर *str, अचिन्हित दीर्घ *_size)
+अणु
+	अक्षर *endptr;
+	अचिन्हित दीर्घ size;
+	अचिन्हित दीर्घ max_size = round_करोwn(अच_लघु_उच्च, माप(u64));
 
-	size = strtoul(str, &endptr, 0);
+	size = म_से_अदीर्घ(str, &endptr, 0);
 
-	do {
-		if (*endptr)
-			break;
+	करो अणु
+		अगर (*endptr)
+			अवरोध;
 
-		size = round_up(size, sizeof(u64));
-		if (!size || size > max_size)
-			break;
+		size = round_up(size, माप(u64));
+		अगर (!size || size > max_size)
+			अवरोध;
 
 		*_size = size;
-		return 0;
+		वापस 0;
 
-	} while (0);
+	पूर्ण जबतक (0);
 
 	pr_err("callchain: Incorrect stack dump size (max %ld): %s\n",
 	       max_size, str);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int
-__parse_callchain_report_opt(const char *arg, bool allow_record_opt)
-{
-	char *tok;
-	char *endptr, *saveptr = NULL;
+अटल पूर्णांक
+__parse_callchain_report_opt(स्थिर अक्षर *arg, bool allow_record_opt)
+अणु
+	अक्षर *tok;
+	अक्षर *endptr, *saveptr = शून्य;
 	bool minpcnt_set = false;
 	bool record_opt_set = false;
 	bool try_stack_size = false;
@@ -176,437 +177,437 @@ __parse_callchain_report_opt(const char *arg, bool allow_record_opt)
 	callchain_param.enabled = true;
 	symbol_conf.use_callchain = true;
 
-	if (!arg)
-		return 0;
+	अगर (!arg)
+		वापस 0;
 
-	while ((tok = strtok_r((char *)arg, ",", &saveptr)) != NULL) {
-		if (!strncmp(tok, "none", strlen(tok))) {
+	जबतक ((tok = म_मोहर_r((अक्षर *)arg, ",", &saveptr)) != शून्य) अणु
+		अगर (!म_भेदन(tok, "none", म_माप(tok))) अणु
 			callchain_param.mode = CHAIN_NONE;
 			callchain_param.enabled = false;
 			symbol_conf.use_callchain = false;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		if (!parse_callchain_mode(tok) ||
+		अगर (!parse_callchain_mode(tok) ||
 		    !parse_callchain_order(tok) ||
 		    !parse_callchain_sort_key(tok) ||
-		    !parse_callchain_value(tok)) {
+		    !parse_callchain_value(tok)) अणु
 			/* parsing ok - move on to the next */
 			try_stack_size = false;
-			goto next;
-		} else if (allow_record_opt && !record_opt_set) {
-			if (parse_callchain_record(tok, &callchain_param))
-				goto try_numbers;
+			जाओ next;
+		पूर्ण अन्यथा अगर (allow_record_opt && !record_opt_set) अणु
+			अगर (parse_callchain_record(tok, &callchain_param))
+				जाओ try_numbers;
 
 			/* assume that number followed by 'dwarf' is stack size */
-			if (callchain_param.record_mode == CALLCHAIN_DWARF)
+			अगर (callchain_param.record_mode == CALLCHAIN_DWARF)
 				try_stack_size = true;
 
 			record_opt_set = true;
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
 try_numbers:
-		if (try_stack_size) {
-			unsigned long size = 0;
+		अगर (try_stack_size) अणु
+			अचिन्हित दीर्घ size = 0;
 
-			if (get_stack_size(tok, &size) < 0)
-				return -1;
+			अगर (get_stack_size(tok, &size) < 0)
+				वापस -1;
 			callchain_param.dump_size = size;
 			try_stack_size = false;
-		} else if (!minpcnt_set) {
+		पूर्ण अन्यथा अगर (!minpcnt_set) अणु
 			/* try to get the min percent */
-			callchain_param.min_percent = strtod(tok, &endptr);
-			if (tok == endptr)
-				return -1;
+			callchain_param.min_percent = म_से_भग्न(tok, &endptr);
+			अगर (tok == endptr)
+				वापस -1;
 			minpcnt_set = true;
-		} else {
-			/* try print limit at last */
-			callchain_param.print_limit = strtoul(tok, &endptr, 0);
-			if (tok == endptr)
-				return -1;
-		}
+		पूर्ण अन्यथा अणु
+			/* try prपूर्णांक limit at last */
+			callchain_param.prपूर्णांक_limit = म_से_अदीर्घ(tok, &endptr, 0);
+			अगर (tok == endptr)
+				वापस -1;
+		पूर्ण
 next:
-		arg = NULL;
-	}
+		arg = शून्य;
+	पूर्ण
 
-	if (callchain_register_param(&callchain_param) < 0) {
+	अगर (callchain_रेजिस्टर_param(&callchain_param) < 0) अणु
 		pr_err("Can't register callchain params\n");
-		return -1;
-	}
-	return 0;
-}
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int parse_callchain_report_opt(const char *arg)
-{
-	return __parse_callchain_report_opt(arg, false);
-}
+पूर्णांक parse_callchain_report_opt(स्थिर अक्षर *arg)
+अणु
+	वापस __parse_callchain_report_opt(arg, false);
+पूर्ण
 
-int parse_callchain_top_opt(const char *arg)
-{
-	return __parse_callchain_report_opt(arg, true);
-}
+पूर्णांक parse_callchain_top_opt(स्थिर अक्षर *arg)
+अणु
+	वापस __parse_callchain_report_opt(arg, true);
+पूर्ण
 
-int parse_callchain_record(const char *arg, struct callchain_param *param)
-{
-	char *tok, *name, *saveptr = NULL;
-	char *buf;
-	int ret = -1;
+पूर्णांक parse_callchain_record(स्थिर अक्षर *arg, काष्ठा callchain_param *param)
+अणु
+	अक्षर *tok, *name, *saveptr = शून्य;
+	अक्षर *buf;
+	पूर्णांक ret = -1;
 
-	/* We need buffer that we know we can write to. */
-	buf = malloc(strlen(arg) + 1);
-	if (!buf)
-		return -ENOMEM;
+	/* We need buffer that we know we can ग_लिखो to. */
+	buf = दो_स्मृति(म_माप(arg) + 1);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	strcpy(buf, arg);
+	म_नकल(buf, arg);
 
-	tok = strtok_r((char *)buf, ",", &saveptr);
-	name = tok ? : (char *)buf;
+	tok = म_मोहर_r((अक्षर *)buf, ",", &saveptr);
+	name = tok ? : (अक्षर *)buf;
 
-	do {
-		/* Framepointer style */
-		if (!strncmp(name, "fp", sizeof("fp"))) {
-			if (!strtok_r(NULL, ",", &saveptr)) {
+	करो अणु
+		/* Framepoपूर्णांकer style */
+		अगर (!म_भेदन(name, "fp", माप("fp"))) अणु
+			अगर (!म_मोहर_r(शून्य, ",", &saveptr)) अणु
 				param->record_mode = CALLCHAIN_FP;
 				ret = 0;
-			} else
+			पूर्ण अन्यथा
 				pr_err("callchain: No more arguments "
 				       "needed for --call-graph fp\n");
-			break;
+			अवरोध;
 
 		/* Dwarf style */
-		} else if (!strncmp(name, "dwarf", sizeof("dwarf"))) {
-			const unsigned long default_stack_dump_size = 8192;
+		पूर्ण अन्यथा अगर (!म_भेदन(name, "dwarf", माप("dwarf"))) अणु
+			स्थिर अचिन्हित दीर्घ शेष_stack_dump_size = 8192;
 
 			ret = 0;
 			param->record_mode = CALLCHAIN_DWARF;
-			param->dump_size = default_stack_dump_size;
+			param->dump_size = शेष_stack_dump_size;
 			dwarf_callchain_users = true;
 
-			tok = strtok_r(NULL, ",", &saveptr);
-			if (tok) {
-				unsigned long size = 0;
+			tok = म_मोहर_r(शून्य, ",", &saveptr);
+			अगर (tok) अणु
+				अचिन्हित दीर्घ size = 0;
 
 				ret = get_stack_size(tok, &size);
 				param->dump_size = size;
-			}
-		} else if (!strncmp(name, "lbr", sizeof("lbr"))) {
-			if (!strtok_r(NULL, ",", &saveptr)) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेदन(name, "lbr", माप("lbr"))) अणु
+			अगर (!म_मोहर_r(शून्य, ",", &saveptr)) अणु
 				param->record_mode = CALLCHAIN_LBR;
 				ret = 0;
-			} else
+			पूर्ण अन्यथा
 				pr_err("callchain: No more arguments "
 					"needed for --call-graph lbr\n");
-			break;
-		} else {
+			अवरोध;
+		पूर्ण अन्यथा अणु
 			pr_err("callchain: Unknown --call-graph option "
 			       "value: %s\n", arg);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	} while (0);
+	पूर्ण जबतक (0);
 
-	free(buf);
-	return ret;
-}
+	मुक्त(buf);
+	वापस ret;
+पूर्ण
 
-int perf_callchain_config(const char *var, const char *value)
-{
-	char *endptr;
+पूर्णांक perf_callchain_config(स्थिर अक्षर *var, स्थिर अक्षर *value)
+अणु
+	अक्षर *endptr;
 
-	if (!strstarts(var, "call-graph."))
-		return 0;
-	var += sizeof("call-graph.") - 1;
+	अगर (!strstarts(var, "call-graph."))
+		वापस 0;
+	var += माप("call-graph.") - 1;
 
-	if (!strcmp(var, "record-mode"))
-		return parse_callchain_record_opt(value, &callchain_param);
-	if (!strcmp(var, "dump-size")) {
-		unsigned long size = 0;
-		int ret;
+	अगर (!म_भेद(var, "record-mode"))
+		वापस parse_callchain_record_opt(value, &callchain_param);
+	अगर (!म_भेद(var, "dump-size")) अणु
+		अचिन्हित दीर्घ size = 0;
+		पूर्णांक ret;
 
 		ret = get_stack_size(value, &size);
 		callchain_param.dump_size = size;
 
-		return ret;
-	}
-	if (!strcmp(var, "print-type")){
-		int ret;
+		वापस ret;
+	पूर्ण
+	अगर (!म_भेद(var, "print-type"))अणु
+		पूर्णांक ret;
 		ret = parse_callchain_mode(value);
-		if (ret == -1)
+		अगर (ret == -1)
 			pr_err("Invalid callchain mode: %s\n", value);
-		return ret;
-	}
-	if (!strcmp(var, "order")){
-		int ret;
+		वापस ret;
+	पूर्ण
+	अगर (!म_भेद(var, "order"))अणु
+		पूर्णांक ret;
 		ret = parse_callchain_order(value);
-		if (ret == -1)
+		अगर (ret == -1)
 			pr_err("Invalid callchain order: %s\n", value);
-		return ret;
-	}
-	if (!strcmp(var, "sort-key")){
-		int ret;
+		वापस ret;
+	पूर्ण
+	अगर (!म_भेद(var, "sort-key"))अणु
+		पूर्णांक ret;
 		ret = parse_callchain_sort_key(value);
-		if (ret == -1)
+		अगर (ret == -1)
 			pr_err("Invalid callchain sort key: %s\n", value);
-		return ret;
-	}
-	if (!strcmp(var, "threshold")) {
-		callchain_param.min_percent = strtod(value, &endptr);
-		if (value == endptr) {
+		वापस ret;
+	पूर्ण
+	अगर (!म_भेद(var, "threshold")) अणु
+		callchain_param.min_percent = म_से_भग्न(value, &endptr);
+		अगर (value == endptr) अणु
 			pr_err("Invalid callchain threshold: %s\n", value);
-			return -1;
-		}
-	}
-	if (!strcmp(var, "print-limit")) {
-		callchain_param.print_limit = strtod(value, &endptr);
-		if (value == endptr) {
+			वापस -1;
+		पूर्ण
+	पूर्ण
+	अगर (!म_भेद(var, "print-limit")) अणु
+		callchain_param.prपूर्णांक_limit = म_से_भग्न(value, &endptr);
+		अगर (value == endptr) अणु
 			pr_err("Invalid callchain print limit: %s\n", value);
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-rb_insert_callchain(struct rb_root *root, struct callchain_node *chain,
-		    enum chain_mode mode)
-{
-	struct rb_node **p = &root->rb_node;
-	struct rb_node *parent = NULL;
-	struct callchain_node *rnode;
+अटल व्योम
+rb_insert_callchain(काष्ठा rb_root *root, काष्ठा callchain_node *chain,
+		    क्रमागत chain_mode mode)
+अणु
+	काष्ठा rb_node **p = &root->rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा callchain_node *rnode;
 	u64 chain_cumul = callchain_cumul_hits(chain);
 
-	while (*p) {
+	जबतक (*p) अणु
 		u64 rnode_cumul;
 
 		parent = *p;
-		rnode = rb_entry(parent, struct callchain_node, rb_node);
+		rnode = rb_entry(parent, काष्ठा callchain_node, rb_node);
 		rnode_cumul = callchain_cumul_hits(rnode);
 
-		switch (mode) {
-		case CHAIN_FLAT:
-		case CHAIN_FOLDED:
-			if (rnode->hit < chain->hit)
+		चयन (mode) अणु
+		हाल CHAIN_FLAT:
+		हाल CHAIN_FOLDED:
+			अगर (rnode->hit < chain->hit)
 				p = &(*p)->rb_left;
-			else
+			अन्यथा
 				p = &(*p)->rb_right;
-			break;
-		case CHAIN_GRAPH_ABS: /* Falldown */
-		case CHAIN_GRAPH_REL:
-			if (rnode_cumul < chain_cumul)
+			अवरोध;
+		हाल CHAIN_GRAPH_ABS: /* Fallकरोwn */
+		हाल CHAIN_GRAPH_REL:
+			अगर (rnode_cumul < chain_cumul)
 				p = &(*p)->rb_left;
-			else
+			अन्यथा
 				p = &(*p)->rb_right;
-			break;
-		case CHAIN_NONE:
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		हाल CHAIN_NONE:
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	rb_link_node(&chain->rb_node, parent, p);
 	rb_insert_color(&chain->rb_node, root);
-}
+पूर्ण
 
-static void
-__sort_chain_flat(struct rb_root *rb_root, struct callchain_node *node,
+अटल व्योम
+__sort_chain_flat(काष्ठा rb_root *rb_root, काष्ठा callchain_node *node,
 		  u64 min_hit)
-{
-	struct rb_node *n;
-	struct callchain_node *child;
+अणु
+	काष्ठा rb_node *n;
+	काष्ठा callchain_node *child;
 
 	n = rb_first(&node->rb_root_in);
-	while (n) {
-		child = rb_entry(n, struct callchain_node, rb_node_in);
+	जबतक (n) अणु
+		child = rb_entry(n, काष्ठा callchain_node, rb_node_in);
 		n = rb_next(n);
 
 		__sort_chain_flat(rb_root, child, min_hit);
-	}
+	पूर्ण
 
-	if (node->hit && node->hit >= min_hit)
+	अगर (node->hit && node->hit >= min_hit)
 		rb_insert_callchain(rb_root, node, CHAIN_FLAT);
-}
+पूर्ण
 
 /*
  * Once we get every callchains from the stream, we can now
  * sort them by hit
  */
-static void
-sort_chain_flat(struct rb_root *rb_root, struct callchain_root *root,
-		u64 min_hit, struct callchain_param *param __maybe_unused)
-{
+अटल व्योम
+sort_chain_flat(काष्ठा rb_root *rb_root, काष्ठा callchain_root *root,
+		u64 min_hit, काष्ठा callchain_param *param __maybe_unused)
+अणु
 	*rb_root = RB_ROOT;
 	__sort_chain_flat(rb_root, &root->node, min_hit);
-}
+पूर्ण
 
-static void __sort_chain_graph_abs(struct callchain_node *node,
+अटल व्योम __sort_chain_graph_असल(काष्ठा callchain_node *node,
 				   u64 min_hit)
-{
-	struct rb_node *n;
-	struct callchain_node *child;
+अणु
+	काष्ठा rb_node *n;
+	काष्ठा callchain_node *child;
 
 	node->rb_root = RB_ROOT;
 	n = rb_first(&node->rb_root_in);
 
-	while (n) {
-		child = rb_entry(n, struct callchain_node, rb_node_in);
+	जबतक (n) अणु
+		child = rb_entry(n, काष्ठा callchain_node, rb_node_in);
 		n = rb_next(n);
 
-		__sort_chain_graph_abs(child, min_hit);
-		if (callchain_cumul_hits(child) >= min_hit)
+		__sort_chain_graph_असल(child, min_hit);
+		अगर (callchain_cumul_hits(child) >= min_hit)
 			rb_insert_callchain(&node->rb_root, child,
 					    CHAIN_GRAPH_ABS);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-sort_chain_graph_abs(struct rb_root *rb_root, struct callchain_root *chain_root,
-		     u64 min_hit, struct callchain_param *param __maybe_unused)
-{
-	__sort_chain_graph_abs(&chain_root->node, min_hit);
+अटल व्योम
+sort_chain_graph_असल(काष्ठा rb_root *rb_root, काष्ठा callchain_root *chain_root,
+		     u64 min_hit, काष्ठा callchain_param *param __maybe_unused)
+अणु
+	__sort_chain_graph_असल(&chain_root->node, min_hit);
 	rb_root->rb_node = chain_root->node.rb_root.rb_node;
-}
+पूर्ण
 
-static void __sort_chain_graph_rel(struct callchain_node *node,
-				   double min_percent)
-{
-	struct rb_node *n;
-	struct callchain_node *child;
+अटल व्योम __sort_chain_graph_rel(काष्ठा callchain_node *node,
+				   द्विगुन min_percent)
+अणु
+	काष्ठा rb_node *n;
+	काष्ठा callchain_node *child;
 	u64 min_hit;
 
 	node->rb_root = RB_ROOT;
-	min_hit = ceil(node->children_hit * min_percent);
+	min_hit = उच्चमान(node->children_hit * min_percent);
 
 	n = rb_first(&node->rb_root_in);
-	while (n) {
-		child = rb_entry(n, struct callchain_node, rb_node_in);
+	जबतक (n) अणु
+		child = rb_entry(n, काष्ठा callchain_node, rb_node_in);
 		n = rb_next(n);
 
 		__sort_chain_graph_rel(child, min_percent);
-		if (callchain_cumul_hits(child) >= min_hit)
+		अगर (callchain_cumul_hits(child) >= min_hit)
 			rb_insert_callchain(&node->rb_root, child,
 					    CHAIN_GRAPH_REL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-sort_chain_graph_rel(struct rb_root *rb_root, struct callchain_root *chain_root,
-		     u64 min_hit __maybe_unused, struct callchain_param *param)
-{
+अटल व्योम
+sort_chain_graph_rel(काष्ठा rb_root *rb_root, काष्ठा callchain_root *chain_root,
+		     u64 min_hit __maybe_unused, काष्ठा callchain_param *param)
+अणु
 	__sort_chain_graph_rel(&chain_root->node, param->min_percent / 100.0);
 	rb_root->rb_node = chain_root->node.rb_root.rb_node;
-}
+पूर्ण
 
-int callchain_register_param(struct callchain_param *param)
-{
-	switch (param->mode) {
-	case CHAIN_GRAPH_ABS:
-		param->sort = sort_chain_graph_abs;
-		break;
-	case CHAIN_GRAPH_REL:
+पूर्णांक callchain_रेजिस्टर_param(काष्ठा callchain_param *param)
+अणु
+	चयन (param->mode) अणु
+	हाल CHAIN_GRAPH_ABS:
+		param->sort = sort_chain_graph_असल;
+		अवरोध;
+	हाल CHAIN_GRAPH_REL:
 		param->sort = sort_chain_graph_rel;
-		break;
-	case CHAIN_FLAT:
-	case CHAIN_FOLDED:
+		अवरोध;
+	हाल CHAIN_FLAT:
+	हाल CHAIN_FOLDED:
 		param->sort = sort_chain_flat;
-		break;
-	case CHAIN_NONE:
-	default:
-		return -1;
-	}
-	return 0;
-}
+		अवरोध;
+	हाल CHAIN_NONE:
+	शेष:
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Create a child for a parent. If inherit_children, then the new child
+ * Create a child क्रम a parent. If inherit_children, then the new child
  * will become the new parent of it's parent children
  */
-static struct callchain_node *
-create_child(struct callchain_node *parent, bool inherit_children)
-{
-	struct callchain_node *new;
+अटल काष्ठा callchain_node *
+create_child(काष्ठा callchain_node *parent, bool inherit_children)
+अणु
+	काष्ठा callchain_node *new;
 
-	new = zalloc(sizeof(*new));
-	if (!new) {
-		perror("not enough memory to create child for code path tree");
-		return NULL;
-	}
+	new = zalloc(माप(*new));
+	अगर (!new) अणु
+		लिखो_त्रुटि("not enough memory to create child for code path tree");
+		वापस शून्य;
+	पूर्ण
 	new->parent = parent;
 	INIT_LIST_HEAD(&new->val);
 	INIT_LIST_HEAD(&new->parent_val);
 
-	if (inherit_children) {
-		struct rb_node *n;
-		struct callchain_node *child;
+	अगर (inherit_children) अणु
+		काष्ठा rb_node *n;
+		काष्ठा callchain_node *child;
 
 		new->rb_root_in = parent->rb_root_in;
 		parent->rb_root_in = RB_ROOT;
 
 		n = rb_first(&new->rb_root_in);
-		while (n) {
-			child = rb_entry(n, struct callchain_node, rb_node_in);
+		जबतक (n) अणु
+			child = rb_entry(n, काष्ठा callchain_node, rb_node_in);
 			child->parent = new;
 			n = rb_next(n);
-		}
+		पूर्ण
 
 		/* make it the first child */
-		rb_link_node(&new->rb_node_in, NULL, &parent->rb_root_in.rb_node);
+		rb_link_node(&new->rb_node_in, शून्य, &parent->rb_root_in.rb_node);
 		rb_insert_color(&new->rb_node_in, &parent->rb_root_in);
-	}
+	पूर्ण
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
 
 /*
  * Fill the node with callchain values
  */
-static int
-fill_node(struct callchain_node *node, struct callchain_cursor *cursor)
-{
-	struct callchain_cursor_node *cursor_node;
+अटल पूर्णांक
+fill_node(काष्ठा callchain_node *node, काष्ठा callchain_cursor *cursor)
+अणु
+	काष्ठा callchain_cursor_node *cursor_node;
 
 	node->val_nr = cursor->nr - cursor->pos;
-	if (!node->val_nr)
+	अगर (!node->val_nr)
 		pr_warning("Warning: empty node in callchain tree\n");
 
 	cursor_node = callchain_cursor_current(cursor);
 
-	while (cursor_node) {
-		struct callchain_list *call;
+	जबतक (cursor_node) अणु
+		काष्ठा callchain_list *call;
 
-		call = zalloc(sizeof(*call));
-		if (!call) {
-			perror("not enough memory for the code path tree");
-			return -1;
-		}
+		call = zalloc(माप(*call));
+		अगर (!call) अणु
+			लिखो_त्रुटि("not enough memory for the code path tree");
+			वापस -1;
+		पूर्ण
 		call->ip = cursor_node->ip;
 		call->ms = cursor_node->ms;
 		map__get(call->ms.map);
 		call->srcline = cursor_node->srcline;
 
-		if (cursor_node->branch) {
+		अगर (cursor_node->branch) अणु
 			call->branch_count = 1;
 
-			if (cursor_node->branch_from) {
+			अगर (cursor_node->branch_from) अणु
 				/*
-				 * branch_from is set with value somewhere else
+				 * branch_from is set with value somewhere अन्यथा
 				 * to imply it's "to" of a branch.
 				 */
 				call->brtype_stat.branch_to = true;
 
-				if (cursor_node->branch_flags.predicted)
+				अगर (cursor_node->branch_flags.predicted)
 					call->predicted_count = 1;
 
-				if (cursor_node->branch_flags.abort)
-					call->abort_count = 1;
+				अगर (cursor_node->branch_flags.पात)
+					call->पात_count = 1;
 
 				branch_type_count(&call->brtype_stat,
 						  &cursor_node->branch_flags,
 						  cursor_node->branch_from,
 						  cursor_node->ip);
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
 				 * It's "from" of a branch
 				 */
@@ -615,157 +616,157 @@ fill_node(struct callchain_node *node, struct callchain_cursor *cursor)
 					cursor_node->branch_flags.cycles;
 				call->iter_count = cursor_node->nr_loop_iter;
 				call->iter_cycles = cursor_node->iter_cycles;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		list_add_tail(&call->list, &node->val);
 
 		callchain_cursor_advance(cursor);
 		cursor_node = callchain_cursor_current(cursor);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct callchain_node *
-add_child(struct callchain_node *parent,
-	  struct callchain_cursor *cursor,
+अटल काष्ठा callchain_node *
+add_child(काष्ठा callchain_node *parent,
+	  काष्ठा callchain_cursor *cursor,
 	  u64 period)
-{
-	struct callchain_node *new;
+अणु
+	काष्ठा callchain_node *new;
 
 	new = create_child(parent, false);
-	if (new == NULL)
-		return NULL;
+	अगर (new == शून्य)
+		वापस शून्य;
 
-	if (fill_node(new, cursor) < 0) {
-		struct callchain_list *call, *tmp;
+	अगर (fill_node(new, cursor) < 0) अणु
+		काष्ठा callchain_list *call, *पंचांगp;
 
-		list_for_each_entry_safe(call, tmp, &new->val, list) {
+		list_क्रम_each_entry_safe(call, पंचांगp, &new->val, list) अणु
 			list_del_init(&call->list);
 			map__zput(call->ms.map);
-			free(call);
-		}
-		free(new);
-		return NULL;
-	}
+			मुक्त(call);
+		पूर्ण
+		मुक्त(new);
+		वापस शून्य;
+	पूर्ण
 
 	new->children_hit = 0;
 	new->hit = period;
 	new->children_count = 0;
 	new->count = 1;
-	return new;
-}
+	वापस new;
+पूर्ण
 
-enum match_result {
+क्रमागत match_result अणु
 	MATCH_ERROR  = -1,
 	MATCH_EQ,
 	MATCH_LT,
 	MATCH_GT,
-};
+पूर्ण;
 
-static enum match_result match_chain_strings(const char *left,
-					     const char *right)
-{
-	enum match_result ret = MATCH_EQ;
-	int cmp;
+अटल क्रमागत match_result match_chain_strings(स्थिर अक्षर *left,
+					     स्थिर अक्षर *right)
+अणु
+	क्रमागत match_result ret = MATCH_EQ;
+	पूर्णांक cmp;
 
-	if (left && right)
-		cmp = strcmp(left, right);
-	else if (!left && right)
+	अगर (left && right)
+		cmp = म_भेद(left, right);
+	अन्यथा अगर (!left && right)
 		cmp = 1;
-	else if (left && !right)
+	अन्यथा अगर (left && !right)
 		cmp = -1;
-	else
-		return MATCH_ERROR;
+	अन्यथा
+		वापस MATCH_ERROR;
 
-	if (cmp != 0)
+	अगर (cmp != 0)
 		ret = cmp < 0 ? MATCH_LT : MATCH_GT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * We need to always use relative addresses because we're aggregating
- * callchains from multiple threads, i.e. different address spaces, so
- * comparing absolute addresses make no sense as a symbol in a DSO may end up
- * in a different address when used in a different binary or even the same
- * binary but with some sort of address randomization technique, thus we need
+ * callchains from multiple thपढ़ोs, i.e. dअगरferent address spaces, so
+ * comparing असलolute addresses make no sense as a symbol in a DSO may end up
+ * in a dअगरferent address when used in a dअगरferent binary or even the same
+ * binary but with some sort of address अक्रमomization technique, thus we need
  * to compare just relative addresses. -acme
  */
-static enum match_result match_chain_dso_addresses(struct map *left_map, u64 left_ip,
-						   struct map *right_map, u64 right_ip)
-{
-	struct dso *left_dso = left_map ? left_map->dso : NULL;
-	struct dso *right_dso = right_map ? right_map->dso : NULL;
+अटल क्रमागत match_result match_chain_dso_addresses(काष्ठा map *left_map, u64 left_ip,
+						   काष्ठा map *right_map, u64 right_ip)
+अणु
+	काष्ठा dso *left_dso = left_map ? left_map->dso : शून्य;
+	काष्ठा dso *right_dso = right_map ? right_map->dso : शून्य;
 
-	if (left_dso != right_dso)
-		return left_dso < right_dso ? MATCH_LT : MATCH_GT;
+	अगर (left_dso != right_dso)
+		वापस left_dso < right_dso ? MATCH_LT : MATCH_GT;
 
-	if (left_ip != right_ip)
- 		return left_ip < right_ip ? MATCH_LT : MATCH_GT;
+	अगर (left_ip != right_ip)
+ 		वापस left_ip < right_ip ? MATCH_LT : MATCH_GT;
 
-	return MATCH_EQ;
-}
+	वापस MATCH_EQ;
+पूर्ण
 
-static enum match_result match_chain(struct callchain_cursor_node *node,
-				     struct callchain_list *cnode)
-{
-	enum match_result match = MATCH_ERROR;
+अटल क्रमागत match_result match_chain(काष्ठा callchain_cursor_node *node,
+				     काष्ठा callchain_list *cnode)
+अणु
+	क्रमागत match_result match = MATCH_ERROR;
 
-	switch (callchain_param.key) {
-	case CCKEY_SRCLINE:
+	चयन (callchain_param.key) अणु
+	हाल CCKEY_SRCLINE:
 		match = match_chain_strings(cnode->srcline, node->srcline);
-		if (match != MATCH_ERROR)
-			break;
+		अगर (match != MATCH_ERROR)
+			अवरोध;
 		/* otherwise fall-back to symbol-based comparison below */
 		__fallthrough;
-	case CCKEY_FUNCTION:
-		if (node->ms.sym && cnode->ms.sym) {
+	हाल CCKEY_FUNCTION:
+		अगर (node->ms.sym && cnode->ms.sym) अणु
 			/*
-			 * Compare inlined frames based on their symbol name
-			 * because different inlined frames will have the same
-			 * symbol start. Otherwise do a faster comparison based
+			 * Compare अंतरभूतd frames based on their symbol name
+			 * because dअगरferent अंतरभूतd frames will have the same
+			 * symbol start. Otherwise करो a faster comparison based
 			 * on the symbol start address.
 			 */
-			if (cnode->ms.sym->inlined || node->ms.sym->inlined) {
+			अगर (cnode->ms.sym->अंतरभूतd || node->ms.sym->अंतरभूतd) अणु
 				match = match_chain_strings(cnode->ms.sym->name,
 							    node->ms.sym->name);
-				if (match != MATCH_ERROR)
-					break;
-			} else {
+				अगर (match != MATCH_ERROR)
+					अवरोध;
+			पूर्ण अन्यथा अणु
 				match = match_chain_dso_addresses(cnode->ms.map, cnode->ms.sym->start,
 								  node->ms.map, node->ms.sym->start);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		/* otherwise fall-back to IP-based comparison below */
 		__fallthrough;
-	case CCKEY_ADDRESS:
-	default:
+	हाल CCKEY_ADDRESS:
+	शेष:
 		match = match_chain_dso_addresses(cnode->ms.map, cnode->ip, node->ms.map, node->ip);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (match == MATCH_EQ && node->branch) {
+	अगर (match == MATCH_EQ && node->branch) अणु
 		cnode->branch_count++;
 
-		if (node->branch_from) {
+		अगर (node->branch_from) अणु
 			/*
 			 * It's "to" of a branch
 			 */
 			cnode->brtype_stat.branch_to = true;
 
-			if (node->branch_flags.predicted)
+			अगर (node->branch_flags.predicted)
 				cnode->predicted_count++;
 
-			if (node->branch_flags.abort)
-				cnode->abort_count++;
+			अगर (node->branch_flags.पात)
+				cnode->पात_count++;
 
 			branch_type_count(&cnode->brtype_stat,
 					  &node->branch_flags,
 					  node->branch_from,
 					  node->ip);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * It's "from" of a branch
 			 */
@@ -774,31 +775,31 @@ static enum match_result match_chain(struct callchain_cursor_node *node,
 			cnode->iter_count += node->nr_loop_iter;
 			cnode->iter_cycles += node->iter_cycles;
 			cnode->from_count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return match;
-}
+	वापस match;
+पूर्ण
 
 /*
  * Split the parent in two parts (a new child is created) and
  * give a part of its callchain to the created child.
  * Then create another child to host the given callchain of new branch
  */
-static int
-split_add_child(struct callchain_node *parent,
-		struct callchain_cursor *cursor,
-		struct callchain_list *to_split,
+अटल पूर्णांक
+split_add_child(काष्ठा callchain_node *parent,
+		काष्ठा callchain_cursor *cursor,
+		काष्ठा callchain_list *to_split,
 		u64 idx_parents, u64 idx_local, u64 period)
-{
-	struct callchain_node *new;
-	struct list_head *old_tail;
-	unsigned int idx_total = idx_parents + idx_local;
+अणु
+	काष्ठा callchain_node *new;
+	काष्ठा list_head *old_tail;
+	अचिन्हित पूर्णांक idx_total = idx_parents + idx_local;
 
 	/* split */
 	new = create_child(parent, true);
-	if (new == NULL)
-		return -1;
+	अगर (new == शून्य)
+		वापस -1;
 
 	/* split the callchain and move a part to the new child */
 	old_tail = parent->val.prev;
@@ -818,12 +819,12 @@ split_add_child(struct callchain_node *parent,
 	new->children_count = parent->children_count;
 	parent->children_count = callchain_cumul_counts(new);
 
-	/* create a new child for the new branch if any */
-	if (idx_total < cursor->nr) {
-		struct callchain_node *first;
-		struct callchain_list *cnode;
-		struct callchain_cursor_node *node;
-		struct rb_node *p, **pp;
+	/* create a new child क्रम the new branch अगर any */
+	अगर (idx_total < cursor->nr) अणु
+		काष्ठा callchain_node *first;
+		काष्ठा callchain_list *cnode;
+		काष्ठा callchain_cursor_node *node;
+		काष्ठा rb_node *p, **pp;
 
 		parent->hit = 0;
 		parent->children_hit += period;
@@ -832,74 +833,74 @@ split_add_child(struct callchain_node *parent,
 
 		node = callchain_cursor_current(cursor);
 		new = add_child(parent, cursor, period);
-		if (new == NULL)
-			return -1;
+		अगर (new == शून्य)
+			वापस -1;
 
 		/*
 		 * This is second child since we moved parent's children
 		 * to new (first) child above.
 		 */
 		p = parent->rb_root_in.rb_node;
-		first = rb_entry(p, struct callchain_node, rb_node_in);
-		cnode = list_first_entry(&first->val, struct callchain_list,
+		first = rb_entry(p, काष्ठा callchain_node, rb_node_in);
+		cnode = list_first_entry(&first->val, काष्ठा callchain_list,
 					 list);
 
-		if (match_chain(node, cnode) == MATCH_LT)
+		अगर (match_chain(node, cnode) == MATCH_LT)
 			pp = &p->rb_left;
-		else
+		अन्यथा
 			pp = &p->rb_right;
 
 		rb_link_node(&new->rb_node_in, p, pp);
 		rb_insert_color(&new->rb_node_in, &parent->rb_root_in);
-	} else {
+	पूर्ण अन्यथा अणु
 		parent->hit = period;
 		parent->count = 1;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static enum match_result
-append_chain(struct callchain_node *root,
-	     struct callchain_cursor *cursor,
+अटल क्रमागत match_result
+append_chain(काष्ठा callchain_node *root,
+	     काष्ठा callchain_cursor *cursor,
 	     u64 period);
 
-static int
-append_chain_children(struct callchain_node *root,
-		      struct callchain_cursor *cursor,
+अटल पूर्णांक
+append_chain_children(काष्ठा callchain_node *root,
+		      काष्ठा callchain_cursor *cursor,
 		      u64 period)
-{
-	struct callchain_node *rnode;
-	struct callchain_cursor_node *node;
-	struct rb_node **p = &root->rb_root_in.rb_node;
-	struct rb_node *parent = NULL;
+अणु
+	काष्ठा callchain_node *rnode;
+	काष्ठा callchain_cursor_node *node;
+	काष्ठा rb_node **p = &root->rb_root_in.rb_node;
+	काष्ठा rb_node *parent = शून्य;
 
 	node = callchain_cursor_current(cursor);
-	if (!node)
-		return -1;
+	अगर (!node)
+		वापस -1;
 
 	/* lookup in children */
-	while (*p) {
-		enum match_result ret;
+	जबतक (*p) अणु
+		क्रमागत match_result ret;
 
 		parent = *p;
-		rnode = rb_entry(parent, struct callchain_node, rb_node_in);
+		rnode = rb_entry(parent, काष्ठा callchain_node, rb_node_in);
 
 		/* If at least first entry matches, rely to children */
 		ret = append_chain(rnode, cursor, period);
-		if (ret == MATCH_EQ)
-			goto inc_children_hit;
-		if (ret == MATCH_ERROR)
-			return -1;
+		अगर (ret == MATCH_EQ)
+			जाओ inc_children_hit;
+		अगर (ret == MATCH_ERROR)
+			वापस -1;
 
-		if (ret == MATCH_LT)
+		अगर (ret == MATCH_LT)
 			p = &parent->rb_left;
-		else
+		अन्यथा
 			p = &parent->rb_right;
-	}
+	पूर्ण
 	/* nothing in children, add to the current node */
 	rnode = add_child(root, cursor, period);
-	if (rnode == NULL)
-		return -1;
+	अगर (rnode == शून्य)
+		वापस -1;
 
 	rb_link_node(&rnode->rb_node_in, parent, p);
 	rb_insert_color(&rnode->rb_node_in, &root->rb_root_in);
@@ -907,19 +908,19 @@ append_chain_children(struct callchain_node *root,
 inc_children_hit:
 	root->children_hit += period;
 	root->children_count++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum match_result
-append_chain(struct callchain_node *root,
-	     struct callchain_cursor *cursor,
+अटल क्रमागत match_result
+append_chain(काष्ठा callchain_node *root,
+	     काष्ठा callchain_cursor *cursor,
 	     u64 period)
-{
-	struct callchain_list *cnode;
+अणु
+	काष्ठा callchain_list *cnode;
 	u64 start = cursor->pos;
 	bool found = false;
 	u64 matches;
-	enum match_result cmp = MATCH_ERROR;
+	क्रमागत match_result cmp = MATCH_ERROR;
 
 	/*
 	 * Lookup in the current node
@@ -927,136 +928,136 @@ append_chain(struct callchain_node *root,
 	 * anywhere inside a function, unless function
 	 * mode is disabled.
 	 */
-	list_for_each_entry(cnode, &root->val, list) {
-		struct callchain_cursor_node *node;
+	list_क्रम_each_entry(cnode, &root->val, list) अणु
+		काष्ठा callchain_cursor_node *node;
 
 		node = callchain_cursor_current(cursor);
-		if (!node)
-			break;
+		अगर (!node)
+			अवरोध;
 
 		cmp = match_chain(node, cnode);
-		if (cmp != MATCH_EQ)
-			break;
+		अगर (cmp != MATCH_EQ)
+			अवरोध;
 
 		found = true;
 
 		callchain_cursor_advance(cursor);
-	}
+	पूर्ण
 
 	/* matches not, relay no the parent */
-	if (!found) {
+	अगर (!found) अणु
 		WARN_ONCE(cmp == MATCH_ERROR, "Chain comparison error\n");
-		return cmp;
-	}
+		वापस cmp;
+	पूर्ण
 
 	matches = cursor->pos - start;
 
 	/* we match only a part of the node. Split it and add the new chain */
-	if (matches < root->val_nr) {
-		if (split_add_child(root, cursor, cnode, start, matches,
+	अगर (matches < root->val_nr) अणु
+		अगर (split_add_child(root, cursor, cnode, start, matches,
 				    period) < 0)
-			return MATCH_ERROR;
+			वापस MATCH_ERROR;
 
-		return MATCH_EQ;
-	}
+		वापस MATCH_EQ;
+	पूर्ण
 
 	/* we match 100% of the path, increment the hit */
-	if (matches == root->val_nr && cursor->pos == cursor->nr) {
+	अगर (matches == root->val_nr && cursor->pos == cursor->nr) अणु
 		root->hit += period;
 		root->count++;
-		return MATCH_EQ;
-	}
+		वापस MATCH_EQ;
+	पूर्ण
 
-	/* We match the node and still have a part remaining */
-	if (append_chain_children(root, cursor, period) < 0)
-		return MATCH_ERROR;
+	/* We match the node and still have a part reमुख्यing */
+	अगर (append_chain_children(root, cursor, period) < 0)
+		वापस MATCH_ERROR;
 
-	return MATCH_EQ;
-}
+	वापस MATCH_EQ;
+पूर्ण
 
-int callchain_append(struct callchain_root *root,
-		     struct callchain_cursor *cursor,
+पूर्णांक callchain_append(काष्ठा callchain_root *root,
+		     काष्ठा callchain_cursor *cursor,
 		     u64 period)
-{
-	if (!cursor->nr)
-		return 0;
+अणु
+	अगर (!cursor->nr)
+		वापस 0;
 
 	callchain_cursor_commit(cursor);
 
-	if (append_chain_children(&root->node, cursor, period) < 0)
-		return -1;
+	अगर (append_chain_children(&root->node, cursor, period) < 0)
+		वापस -1;
 
-	if (cursor->nr > root->max_depth)
+	अगर (cursor->nr > root->max_depth)
 		root->max_depth = cursor->nr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-merge_chain_branch(struct callchain_cursor *cursor,
-		   struct callchain_node *dst, struct callchain_node *src)
-{
-	struct callchain_cursor_node **old_last = cursor->last;
-	struct callchain_node *child;
-	struct callchain_list *list, *next_list;
-	struct rb_node *n;
-	int old_pos = cursor->nr;
-	int err = 0;
+अटल पूर्णांक
+merge_chain_branch(काष्ठा callchain_cursor *cursor,
+		   काष्ठा callchain_node *dst, काष्ठा callchain_node *src)
+अणु
+	काष्ठा callchain_cursor_node **old_last = cursor->last;
+	काष्ठा callchain_node *child;
+	काष्ठा callchain_list *list, *next_list;
+	काष्ठा rb_node *n;
+	पूर्णांक old_pos = cursor->nr;
+	पूर्णांक err = 0;
 
-	list_for_each_entry_safe(list, next_list, &src->val, list) {
+	list_क्रम_each_entry_safe(list, next_list, &src->val, list) अणु
 		callchain_cursor_append(cursor, list->ip, &list->ms,
-					false, NULL, 0, 0, 0, list->srcline);
+					false, शून्य, 0, 0, 0, list->srcline);
 		list_del_init(&list->list);
 		map__zput(list->ms.map);
-		free(list);
-	}
+		मुक्त(list);
+	पूर्ण
 
-	if (src->hit) {
+	अगर (src->hit) अणु
 		callchain_cursor_commit(cursor);
-		if (append_chain_children(dst, cursor, src->hit) < 0)
-			return -1;
-	}
+		अगर (append_chain_children(dst, cursor, src->hit) < 0)
+			वापस -1;
+	पूर्ण
 
 	n = rb_first(&src->rb_root_in);
-	while (n) {
-		child = container_of(n, struct callchain_node, rb_node_in);
+	जबतक (n) अणु
+		child = container_of(n, काष्ठा callchain_node, rb_node_in);
 		n = rb_next(n);
 		rb_erase(&child->rb_node_in, &src->rb_root_in);
 
 		err = merge_chain_branch(cursor, dst, child);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
-		free(child);
-	}
+		मुक्त(child);
+	पूर्ण
 
 	cursor->nr = old_pos;
 	cursor->last = old_last;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int callchain_merge(struct callchain_cursor *cursor,
-		    struct callchain_root *dst, struct callchain_root *src)
-{
-	return merge_chain_branch(cursor, &dst->node, &src->node);
-}
+पूर्णांक callchain_merge(काष्ठा callchain_cursor *cursor,
+		    काष्ठा callchain_root *dst, काष्ठा callchain_root *src)
+अणु
+	वापस merge_chain_branch(cursor, &dst->node, &src->node);
+पूर्ण
 
-int callchain_cursor_append(struct callchain_cursor *cursor,
-			    u64 ip, struct map_symbol *ms,
-			    bool branch, struct branch_flags *flags,
-			    int nr_loop_iter, u64 iter_cycles, u64 branch_from,
-			    const char *srcline)
-{
-	struct callchain_cursor_node *node = *cursor->last;
+पूर्णांक callchain_cursor_append(काष्ठा callchain_cursor *cursor,
+			    u64 ip, काष्ठा map_symbol *ms,
+			    bool branch, काष्ठा branch_flags *flags,
+			    पूर्णांक nr_loop_iter, u64 iter_cycles, u64 branch_from,
+			    स्थिर अक्षर *srcline)
+अणु
+	काष्ठा callchain_cursor_node *node = *cursor->last;
 
-	if (!node) {
-		node = calloc(1, sizeof(*node));
-		if (!node)
-			return -ENOMEM;
+	अगर (!node) अणु
+		node = सुस्मृति(1, माप(*node));
+		अगर (!node)
+			वापस -ENOMEM;
 
 		*cursor->last = node;
-	}
+	पूर्ण
 
 	node->ip = ip;
 	map__zput(node->ms.map);
@@ -1067,648 +1068,648 @@ int callchain_cursor_append(struct callchain_cursor *cursor,
 	node->iter_cycles = iter_cycles;
 	node->srcline = srcline;
 
-	if (flags)
-		memcpy(&node->branch_flags, flags,
-			sizeof(struct branch_flags));
+	अगर (flags)
+		स_नकल(&node->branch_flags, flags,
+			माप(काष्ठा branch_flags));
 
 	node->branch_from = branch_from;
 	cursor->nr++;
 
 	cursor->last = &node->next;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sample__resolve_callchain(struct perf_sample *sample,
-			      struct callchain_cursor *cursor, struct symbol **parent,
-			      struct evsel *evsel, struct addr_location *al,
-			      int max_stack)
-{
-	if (sample->callchain == NULL && !symbol_conf.show_branchflag_count)
-		return 0;
+पूर्णांक sample__resolve_callchain(काष्ठा perf_sample *sample,
+			      काष्ठा callchain_cursor *cursor, काष्ठा symbol **parent,
+			      काष्ठा evsel *evsel, काष्ठा addr_location *al,
+			      पूर्णांक max_stack)
+अणु
+	अगर (sample->callchain == शून्य && !symbol_conf.show_branchflag_count)
+		वापस 0;
 
-	if (symbol_conf.use_callchain || symbol_conf.cumulate_callchain ||
-	    perf_hpp_list.parent || symbol_conf.show_branchflag_count) {
-		return thread__resolve_callchain(al->thread, cursor, evsel, sample,
+	अगर (symbol_conf.use_callchain || symbol_conf.cumulate_callchain ||
+	    perf_hpp_list.parent || symbol_conf.show_branchflag_count) अणु
+		वापस thपढ़ो__resolve_callchain(al->thपढ़ो, cursor, evsel, sample,
 						 parent, al, max_stack);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int hist_entry__append_callchain(struct hist_entry *he, struct perf_sample *sample)
-{
-	if ((!symbol_conf.use_callchain || sample->callchain == NULL) &&
+पूर्णांक hist_entry__append_callchain(काष्ठा hist_entry *he, काष्ठा perf_sample *sample)
+अणु
+	अगर ((!symbol_conf.use_callchain || sample->callchain == शून्य) &&
 		!symbol_conf.show_branchflag_count)
-		return 0;
-	return callchain_append(he->callchain, &callchain_cursor, sample->period);
-}
+		वापस 0;
+	वापस callchain_append(he->callchain, &callchain_cursor, sample->period);
+पूर्ण
 
-int fill_callchain_info(struct addr_location *al, struct callchain_cursor_node *node,
+पूर्णांक fill_callchain_info(काष्ठा addr_location *al, काष्ठा callchain_cursor_node *node,
 			bool hide_unresolved)
-{
+अणु
 	al->maps = node->ms.maps;
 	al->map = node->ms.map;
 	al->sym = node->ms.sym;
 	al->srcline = node->srcline;
 	al->addr = node->ip;
 
-	if (al->sym == NULL) {
-		if (hide_unresolved)
-			return 0;
-		if (al->map == NULL)
-			goto out;
-	}
+	अगर (al->sym == शून्य) अणु
+		अगर (hide_unresolved)
+			वापस 0;
+		अगर (al->map == शून्य)
+			जाओ out;
+	पूर्ण
 
-	if (al->maps == &al->maps->machine->kmaps) {
-		if (machine__is_host(al->maps->machine)) {
+	अगर (al->maps == &al->maps->machine->kmaps) अणु
+		अगर (machine__is_host(al->maps->machine)) अणु
 			al->cpumode = PERF_RECORD_MISC_KERNEL;
 			al->level = 'k';
-		} else {
+		पूर्ण अन्यथा अणु
 			al->cpumode = PERF_RECORD_MISC_GUEST_KERNEL;
 			al->level = 'g';
-		}
-	} else {
-		if (machine__is_host(al->maps->machine)) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (machine__is_host(al->maps->machine)) अणु
 			al->cpumode = PERF_RECORD_MISC_USER;
 			al->level = '.';
-		} else if (perf_guest) {
+		पूर्ण अन्यथा अगर (perf_guest) अणु
 			al->cpumode = PERF_RECORD_MISC_GUEST_USER;
 			al->level = 'u';
-		} else {
+		पूर्ण अन्यथा अणु
 			al->cpumode = PERF_RECORD_MISC_HYPERVISOR;
 			al->level = 'H';
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-char *callchain_list__sym_name(struct callchain_list *cl,
-			       char *bf, size_t bfsize, bool show_dso)
-{
+अक्षर *callchain_list__sym_name(काष्ठा callchain_list *cl,
+			       अक्षर *bf, माप_प्रकार bfsize, bool show_dso)
+अणु
 	bool show_addr = callchain_param.key == CCKEY_ADDRESS;
 	bool show_srcline = show_addr || callchain_param.key == CCKEY_SRCLINE;
-	int printed;
+	पूर्णांक prपूर्णांकed;
 
-	if (cl->ms.sym) {
-		const char *inlined = cl->ms.sym->inlined ? " (inlined)" : "";
+	अगर (cl->ms.sym) अणु
+		स्थिर अक्षर *अंतरभूतd = cl->ms.sym->अंतरभूतd ? " (inlined)" : "";
 
-		if (show_srcline && cl->srcline)
-			printed = scnprintf(bf, bfsize, "%s %s%s",
+		अगर (show_srcline && cl->srcline)
+			prपूर्णांकed = scnम_लिखो(bf, bfsize, "%s %s%s",
 					    cl->ms.sym->name, cl->srcline,
-					    inlined);
-		else
-			printed = scnprintf(bf, bfsize, "%s%s",
-					    cl->ms.sym->name, inlined);
-	} else
-		printed = scnprintf(bf, bfsize, "%#" PRIx64, cl->ip);
+					    अंतरभूतd);
+		अन्यथा
+			prपूर्णांकed = scnम_लिखो(bf, bfsize, "%s%s",
+					    cl->ms.sym->name, अंतरभूतd);
+	पूर्ण अन्यथा
+		prपूर्णांकed = scnम_लिखो(bf, bfsize, "%#" PRIx64, cl->ip);
 
-	if (show_dso)
-		scnprintf(bf + printed, bfsize - printed, " %s",
+	अगर (show_dso)
+		scnम_लिखो(bf + prपूर्णांकed, bfsize - prपूर्णांकed, " %s",
 			  cl->ms.map ?
-			  cl->ms.map->dso->short_name :
+			  cl->ms.map->dso->लघु_name :
 			  "unknown");
 
-	return bf;
-}
+	वापस bf;
+पूर्ण
 
-char *callchain_node__scnprintf_value(struct callchain_node *node,
-				      char *bf, size_t bfsize, u64 total)
-{
-	double percent = 0.0;
+अक्षर *callchain_node__scnम_लिखो_value(काष्ठा callchain_node *node,
+				      अक्षर *bf, माप_प्रकार bfsize, u64 total)
+अणु
+	द्विगुन percent = 0.0;
 	u64 period = callchain_cumul_hits(node);
-	unsigned count = callchain_cumul_counts(node);
+	अचिन्हित count = callchain_cumul_counts(node);
 
-	if (callchain_param.mode == CHAIN_FOLDED) {
+	अगर (callchain_param.mode == CHAIN_FOLDED) अणु
 		period = node->hit;
 		count = node->count;
-	}
+	पूर्ण
 
-	switch (callchain_param.value) {
-	case CCVAL_PERIOD:
-		scnprintf(bf, bfsize, "%"PRIu64, period);
-		break;
-	case CCVAL_COUNT:
-		scnprintf(bf, bfsize, "%u", count);
-		break;
-	case CCVAL_PERCENT:
-	default:
-		if (total)
+	चयन (callchain_param.value) अणु
+	हाल CCVAL_PERIOD:
+		scnम_लिखो(bf, bfsize, "%"PRIu64, period);
+		अवरोध;
+	हाल CCVAL_COUNT:
+		scnम_लिखो(bf, bfsize, "%u", count);
+		अवरोध;
+	हाल CCVAL_PERCENT:
+	शेष:
+		अगर (total)
 			percent = period * 100.0 / total;
-		scnprintf(bf, bfsize, "%.2f%%", percent);
-		break;
-	}
-	return bf;
-}
+		scnम_लिखो(bf, bfsize, "%.2f%%", percent);
+		अवरोध;
+	पूर्ण
+	वापस bf;
+पूर्ण
 
-int callchain_node__fprintf_value(struct callchain_node *node,
-				 FILE *fp, u64 total)
-{
-	double percent = 0.0;
+पूर्णांक callchain_node__ख_लिखो_value(काष्ठा callchain_node *node,
+				 खाता *fp, u64 total)
+अणु
+	द्विगुन percent = 0.0;
 	u64 period = callchain_cumul_hits(node);
-	unsigned count = callchain_cumul_counts(node);
+	अचिन्हित count = callchain_cumul_counts(node);
 
-	if (callchain_param.mode == CHAIN_FOLDED) {
+	अगर (callchain_param.mode == CHAIN_FOLDED) अणु
 		period = node->hit;
 		count = node->count;
-	}
+	पूर्ण
 
-	switch (callchain_param.value) {
-	case CCVAL_PERIOD:
-		return fprintf(fp, "%"PRIu64, period);
-	case CCVAL_COUNT:
-		return fprintf(fp, "%u", count);
-	case CCVAL_PERCENT:
-	default:
-		if (total)
+	चयन (callchain_param.value) अणु
+	हाल CCVAL_PERIOD:
+		वापस ख_लिखो(fp, "%"PRIu64, period);
+	हाल CCVAL_COUNT:
+		वापस ख_लिखो(fp, "%u", count);
+	हाल CCVAL_PERCENT:
+	शेष:
+		अगर (total)
 			percent = period * 100.0 / total;
-		return percent_color_fprintf(fp, "%.2f%%", percent);
-	}
-	return 0;
-}
+		वापस percent_color_ख_लिखो(fp, "%.2f%%", percent);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void callchain_counts_value(struct callchain_node *node,
+अटल व्योम callchain_counts_value(काष्ठा callchain_node *node,
 				   u64 *branch_count, u64 *predicted_count,
-				   u64 *abort_count, u64 *cycles_count)
-{
-	struct callchain_list *clist;
+				   u64 *पात_count, u64 *cycles_count)
+अणु
+	काष्ठा callchain_list *clist;
 
-	list_for_each_entry(clist, &node->val, list) {
-		if (branch_count)
+	list_क्रम_each_entry(clist, &node->val, list) अणु
+		अगर (branch_count)
 			*branch_count += clist->branch_count;
 
-		if (predicted_count)
+		अगर (predicted_count)
 			*predicted_count += clist->predicted_count;
 
-		if (abort_count)
-			*abort_count += clist->abort_count;
+		अगर (पात_count)
+			*पात_count += clist->पात_count;
 
-		if (cycles_count)
+		अगर (cycles_count)
 			*cycles_count += clist->cycles_count;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int callchain_node_branch_counts_cumul(struct callchain_node *node,
+अटल पूर्णांक callchain_node_branch_counts_cumul(काष्ठा callchain_node *node,
 					      u64 *branch_count,
 					      u64 *predicted_count,
-					      u64 *abort_count,
+					      u64 *पात_count,
 					      u64 *cycles_count)
-{
-	struct callchain_node *child;
-	struct rb_node *n;
+अणु
+	काष्ठा callchain_node *child;
+	काष्ठा rb_node *n;
 
 	n = rb_first(&node->rb_root_in);
-	while (n) {
-		child = rb_entry(n, struct callchain_node, rb_node_in);
+	जबतक (n) अणु
+		child = rb_entry(n, काष्ठा callchain_node, rb_node_in);
 		n = rb_next(n);
 
 		callchain_node_branch_counts_cumul(child, branch_count,
 						   predicted_count,
-						   abort_count,
+						   पात_count,
 						   cycles_count);
 
 		callchain_counts_value(child, branch_count,
-				       predicted_count, abort_count,
+				       predicted_count, पात_count,
 				       cycles_count);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int callchain_branch_counts(struct callchain_root *root,
+पूर्णांक callchain_branch_counts(काष्ठा callchain_root *root,
 			    u64 *branch_count, u64 *predicted_count,
-			    u64 *abort_count, u64 *cycles_count)
-{
-	if (branch_count)
+			    u64 *पात_count, u64 *cycles_count)
+अणु
+	अगर (branch_count)
 		*branch_count = 0;
 
-	if (predicted_count)
+	अगर (predicted_count)
 		*predicted_count = 0;
 
-	if (abort_count)
-		*abort_count = 0;
+	अगर (पात_count)
+		*पात_count = 0;
 
-	if (cycles_count)
+	अगर (cycles_count)
 		*cycles_count = 0;
 
-	return callchain_node_branch_counts_cumul(&root->node,
+	वापस callchain_node_branch_counts_cumul(&root->node,
 						  branch_count,
 						  predicted_count,
-						  abort_count,
+						  पात_count,
 						  cycles_count);
-}
+पूर्ण
 
-static int count_pri64_printf(int idx, const char *str, u64 value, char *bf, int bfsize)
-{
-	int printed;
+अटल पूर्णांक count_pri64_म_लिखो(पूर्णांक idx, स्थिर अक्षर *str, u64 value, अक्षर *bf, पूर्णांक bfsize)
+अणु
+	पूर्णांक prपूर्णांकed;
 
-	printed = scnprintf(bf, bfsize, "%s%s:%" PRId64 "", (idx) ? " " : " (", str, value);
+	prपूर्णांकed = scnम_लिखो(bf, bfsize, "%s%s:%" PRId64 "", (idx) ? " " : " (", str, value);
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-static int count_float_printf(int idx, const char *str, float value,
-			      char *bf, int bfsize, float threshold)
-{
-	int printed;
+अटल पूर्णांक count_भग्न_म_लिखो(पूर्णांक idx, स्थिर अक्षर *str, भग्न value,
+			      अक्षर *bf, पूर्णांक bfsize, भग्न threshold)
+अणु
+	पूर्णांक prपूर्णांकed;
 
-	if (threshold != 0.0 && value < threshold)
-		return 0;
+	अगर (threshold != 0.0 && value < threshold)
+		वापस 0;
 
-	printed = scnprintf(bf, bfsize, "%s%s:%.1f%%", (idx) ? " " : " (", str, value);
+	prपूर्णांकed = scnम_लिखो(bf, bfsize, "%s%s:%.1f%%", (idx) ? " " : " (", str, value);
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-static int branch_to_str(char *bf, int bfsize,
+अटल पूर्णांक branch_to_str(अक्षर *bf, पूर्णांक bfsize,
 			 u64 branch_count, u64 predicted_count,
-			 u64 abort_count,
-			 struct branch_type_stat *brtype_stat)
-{
-	int printed, i = 0;
+			 u64 पात_count,
+			 काष्ठा branch_type_stat *brtype_stat)
+अणु
+	पूर्णांक prपूर्णांकed, i = 0;
 
-	printed = branch_type_str(brtype_stat, bf, bfsize);
-	if (printed)
+	prपूर्णांकed = branch_type_str(brtype_stat, bf, bfsize);
+	अगर (prपूर्णांकed)
 		i++;
 
-	if (predicted_count < branch_count) {
-		printed += count_float_printf(i++, "predicted",
+	अगर (predicted_count < branch_count) अणु
+		prपूर्णांकed += count_भग्न_म_लिखो(i++, "predicted",
 				predicted_count * 100.0 / branch_count,
-				bf + printed, bfsize - printed, 0.0);
-	}
+				bf + prपूर्णांकed, bfsize - prपूर्णांकed, 0.0);
+	पूर्ण
 
-	if (abort_count) {
-		printed += count_float_printf(i++, "abort",
-				abort_count * 100.0 / branch_count,
-				bf + printed, bfsize - printed, 0.1);
-	}
+	अगर (पात_count) अणु
+		prपूर्णांकed += count_भग्न_म_लिखो(i++, "abort",
+				पात_count * 100.0 / branch_count,
+				bf + prपूर्णांकed, bfsize - prपूर्णांकed, 0.1);
+	पूर्ण
 
-	if (i)
-		printed += scnprintf(bf + printed, bfsize - printed, ")");
+	अगर (i)
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, bfsize - prपूर्णांकed, ")");
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-static int branch_from_str(char *bf, int bfsize,
+अटल पूर्णांक branch_from_str(अक्षर *bf, पूर्णांक bfsize,
 			   u64 branch_count,
 			   u64 cycles_count, u64 iter_count,
 			   u64 iter_cycles, u64 from_count)
-{
-	int printed = 0, i = 0;
+अणु
+	पूर्णांक prपूर्णांकed = 0, i = 0;
 	u64 cycles, v = 0;
 
 	cycles = cycles_count / branch_count;
-	if (cycles) {
-		printed += count_pri64_printf(i++, "cycles",
+	अगर (cycles) अणु
+		prपूर्णांकed += count_pri64_म_लिखो(i++, "cycles",
 				cycles,
-				bf + printed, bfsize - printed);
-	}
+				bf + prपूर्णांकed, bfsize - prपूर्णांकed);
+	पूर्ण
 
-	if (iter_count && from_count) {
+	अगर (iter_count && from_count) अणु
 		v = iter_count / from_count;
-		if (v) {
-			printed += count_pri64_printf(i++, "iter",
-					v, bf + printed, bfsize - printed);
+		अगर (v) अणु
+			prपूर्णांकed += count_pri64_म_लिखो(i++, "iter",
+					v, bf + prपूर्णांकed, bfsize - prपूर्णांकed);
 
-			printed += count_pri64_printf(i++, "avg_cycles",
+			prपूर्णांकed += count_pri64_म_लिखो(i++, "avg_cycles",
 					iter_cycles / iter_count,
-					bf + printed, bfsize - printed);
-		}
-	}
+					bf + prपूर्णांकed, bfsize - prपूर्णांकed);
+		पूर्ण
+	पूर्ण
 
-	if (i)
-		printed += scnprintf(bf + printed, bfsize - printed, ")");
+	अगर (i)
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, bfsize - prपूर्णांकed, ")");
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-static int counts_str_build(char *bf, int bfsize,
+अटल पूर्णांक counts_str_build(अक्षर *bf, पूर्णांक bfsize,
 			     u64 branch_count, u64 predicted_count,
-			     u64 abort_count, u64 cycles_count,
+			     u64 पात_count, u64 cycles_count,
 			     u64 iter_count, u64 iter_cycles,
 			     u64 from_count,
-			     struct branch_type_stat *brtype_stat)
-{
-	int printed;
+			     काष्ठा branch_type_stat *brtype_stat)
+अणु
+	पूर्णांक prपूर्णांकed;
 
-	if (branch_count == 0)
-		return scnprintf(bf, bfsize, " (calltrace)");
+	अगर (branch_count == 0)
+		वापस scnम_लिखो(bf, bfsize, " (calltrace)");
 
-	if (brtype_stat->branch_to) {
-		printed = branch_to_str(bf, bfsize, branch_count,
-				predicted_count, abort_count, brtype_stat);
-	} else {
-		printed = branch_from_str(bf, bfsize, branch_count,
+	अगर (brtype_stat->branch_to) अणु
+		prपूर्णांकed = branch_to_str(bf, bfsize, branch_count,
+				predicted_count, पात_count, brtype_stat);
+	पूर्ण अन्यथा अणु
+		prपूर्णांकed = branch_from_str(bf, bfsize, branch_count,
 				cycles_count, iter_count, iter_cycles,
 				from_count);
-	}
+	पूर्ण
 
-	if (!printed)
+	अगर (!prपूर्णांकed)
 		bf[0] = 0;
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-static int callchain_counts_printf(FILE *fp, char *bf, int bfsize,
+अटल पूर्णांक callchain_counts_म_लिखो(खाता *fp, अक्षर *bf, पूर्णांक bfsize,
 				   u64 branch_count, u64 predicted_count,
-				   u64 abort_count, u64 cycles_count,
+				   u64 पात_count, u64 cycles_count,
 				   u64 iter_count, u64 iter_cycles,
 				   u64 from_count,
-				   struct branch_type_stat *brtype_stat)
-{
-	char str[256];
+				   काष्ठा branch_type_stat *brtype_stat)
+अणु
+	अक्षर str[256];
 
-	counts_str_build(str, sizeof(str), branch_count,
-			 predicted_count, abort_count, cycles_count,
+	counts_str_build(str, माप(str), branch_count,
+			 predicted_count, पात_count, cycles_count,
 			 iter_count, iter_cycles, from_count, brtype_stat);
 
-	if (fp)
-		return fprintf(fp, "%s", str);
+	अगर (fp)
+		वापस ख_लिखो(fp, "%s", str);
 
-	return scnprintf(bf, bfsize, "%s", str);
-}
+	वापस scnम_लिखो(bf, bfsize, "%s", str);
+पूर्ण
 
-int callchain_list_counts__printf_value(struct callchain_list *clist,
-					FILE *fp, char *bf, int bfsize)
-{
+पूर्णांक callchain_list_counts__म_लिखो_value(काष्ठा callchain_list *clist,
+					खाता *fp, अक्षर *bf, पूर्णांक bfsize)
+अणु
 	u64 branch_count, predicted_count;
-	u64 abort_count, cycles_count;
+	u64 पात_count, cycles_count;
 	u64 iter_count, iter_cycles;
 	u64 from_count;
 
 	branch_count = clist->branch_count;
 	predicted_count = clist->predicted_count;
-	abort_count = clist->abort_count;
+	पात_count = clist->पात_count;
 	cycles_count = clist->cycles_count;
 	iter_count = clist->iter_count;
 	iter_cycles = clist->iter_cycles;
 	from_count = clist->from_count;
 
-	return callchain_counts_printf(fp, bf, bfsize, branch_count,
-				       predicted_count, abort_count,
+	वापस callchain_counts_म_लिखो(fp, bf, bfsize, branch_count,
+				       predicted_count, पात_count,
 				       cycles_count, iter_count, iter_cycles,
 				       from_count, &clist->brtype_stat);
-}
+पूर्ण
 
-static void free_callchain_node(struct callchain_node *node)
-{
-	struct callchain_list *list, *tmp;
-	struct callchain_node *child;
-	struct rb_node *n;
+अटल व्योम मुक्त_callchain_node(काष्ठा callchain_node *node)
+अणु
+	काष्ठा callchain_list *list, *पंचांगp;
+	काष्ठा callchain_node *child;
+	काष्ठा rb_node *n;
 
-	list_for_each_entry_safe(list, tmp, &node->parent_val, list) {
+	list_क्रम_each_entry_safe(list, पंचांगp, &node->parent_val, list) अणु
 		list_del_init(&list->list);
 		map__zput(list->ms.map);
-		free(list);
-	}
+		मुक्त(list);
+	पूर्ण
 
-	list_for_each_entry_safe(list, tmp, &node->val, list) {
+	list_क्रम_each_entry_safe(list, पंचांगp, &node->val, list) अणु
 		list_del_init(&list->list);
 		map__zput(list->ms.map);
-		free(list);
-	}
+		मुक्त(list);
+	पूर्ण
 
 	n = rb_first(&node->rb_root_in);
-	while (n) {
-		child = container_of(n, struct callchain_node, rb_node_in);
+	जबतक (n) अणु
+		child = container_of(n, काष्ठा callchain_node, rb_node_in);
 		n = rb_next(n);
 		rb_erase(&child->rb_node_in, &node->rb_root_in);
 
-		free_callchain_node(child);
-		free(child);
-	}
-}
+		मुक्त_callchain_node(child);
+		मुक्त(child);
+	पूर्ण
+पूर्ण
 
-void free_callchain(struct callchain_root *root)
-{
-	if (!symbol_conf.use_callchain)
-		return;
+व्योम मुक्त_callchain(काष्ठा callchain_root *root)
+अणु
+	अगर (!symbol_conf.use_callchain)
+		वापस;
 
-	free_callchain_node(&root->node);
-}
+	मुक्त_callchain_node(&root->node);
+पूर्ण
 
-static u64 decay_callchain_node(struct callchain_node *node)
-{
-	struct callchain_node *child;
-	struct rb_node *n;
+अटल u64 decay_callchain_node(काष्ठा callchain_node *node)
+अणु
+	काष्ठा callchain_node *child;
+	काष्ठा rb_node *n;
 	u64 child_hits = 0;
 
 	n = rb_first(&node->rb_root_in);
-	while (n) {
-		child = container_of(n, struct callchain_node, rb_node_in);
+	जबतक (n) अणु
+		child = container_of(n, काष्ठा callchain_node, rb_node_in);
 
 		child_hits += decay_callchain_node(child);
 		n = rb_next(n);
-	}
+	पूर्ण
 
 	node->hit = (node->hit * 7) / 8;
 	node->children_hit = child_hits;
 
-	return node->hit;
-}
+	वापस node->hit;
+पूर्ण
 
-void decay_callchain(struct callchain_root *root)
-{
-	if (!symbol_conf.use_callchain)
-		return;
+व्योम decay_callchain(काष्ठा callchain_root *root)
+अणु
+	अगर (!symbol_conf.use_callchain)
+		वापस;
 
 	decay_callchain_node(&root->node);
-}
+पूर्ण
 
-int callchain_node__make_parent_list(struct callchain_node *node)
-{
-	struct callchain_node *parent = node->parent;
-	struct callchain_list *chain, *new;
+पूर्णांक callchain_node__make_parent_list(काष्ठा callchain_node *node)
+अणु
+	काष्ठा callchain_node *parent = node->parent;
+	काष्ठा callchain_list *chain, *new;
 	LIST_HEAD(head);
 
-	while (parent) {
-		list_for_each_entry_reverse(chain, &parent->val, list) {
-			new = malloc(sizeof(*new));
-			if (new == NULL)
-				goto out;
+	जबतक (parent) अणु
+		list_क्रम_each_entry_reverse(chain, &parent->val, list) अणु
+			new = दो_स्मृति(माप(*new));
+			अगर (new == शून्य)
+				जाओ out;
 			*new = *chain;
 			new->has_children = false;
 			map__get(new->ms.map);
 			list_add_tail(&new->list, &head);
-		}
+		पूर्ण
 		parent = parent->parent;
-	}
+	पूर्ण
 
-	list_for_each_entry_safe_reverse(chain, new, &head, list)
+	list_क्रम_each_entry_safe_reverse(chain, new, &head, list)
 		list_move_tail(&chain->list, &node->parent_val);
 
-	if (!list_empty(&node->parent_val)) {
-		chain = list_first_entry(&node->parent_val, struct callchain_list, list);
+	अगर (!list_empty(&node->parent_val)) अणु
+		chain = list_first_entry(&node->parent_val, काष्ठा callchain_list, list);
 		chain->has_children = rb_prev(&node->rb_node) || rb_next(&node->rb_node);
 
-		chain = list_first_entry(&node->val, struct callchain_list, list);
+		chain = list_first_entry(&node->val, काष्ठा callchain_list, list);
 		chain->has_children = false;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 out:
-	list_for_each_entry_safe(chain, new, &head, list) {
+	list_क्रम_each_entry_safe(chain, new, &head, list) अणु
 		list_del_init(&chain->list);
 		map__zput(chain->ms.map);
-		free(chain);
-	}
-	return -ENOMEM;
-}
+		मुक्त(chain);
+	पूर्ण
+	वापस -ENOMEM;
+पूर्ण
 
-int callchain_cursor__copy(struct callchain_cursor *dst,
-			   struct callchain_cursor *src)
-{
-	int rc = 0;
+पूर्णांक callchain_cursor__copy(काष्ठा callchain_cursor *dst,
+			   काष्ठा callchain_cursor *src)
+अणु
+	पूर्णांक rc = 0;
 
 	callchain_cursor_reset(dst);
 	callchain_cursor_commit(src);
 
-	while (true) {
-		struct callchain_cursor_node *node;
+	जबतक (true) अणु
+		काष्ठा callchain_cursor_node *node;
 
 		node = callchain_cursor_current(src);
-		if (node == NULL)
-			break;
+		अगर (node == शून्य)
+			अवरोध;
 
 		rc = callchain_cursor_append(dst, node->ip, &node->ms,
 					     node->branch, &node->branch_flags,
 					     node->nr_loop_iter,
 					     node->iter_cycles,
 					     node->branch_from, node->srcline);
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 
 		callchain_cursor_advance(src);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Initialize a cursor before adding entries inside, but keep
+ * Initialize a cursor beक्रमe adding entries inside, but keep
  * the previously allocated entries as a cache.
  */
-void callchain_cursor_reset(struct callchain_cursor *cursor)
-{
-	struct callchain_cursor_node *node;
+व्योम callchain_cursor_reset(काष्ठा callchain_cursor *cursor)
+अणु
+	काष्ठा callchain_cursor_node *node;
 
 	cursor->nr = 0;
 	cursor->last = &cursor->first;
 
-	for (node = cursor->first; node != NULL; node = node->next)
+	क्रम (node = cursor->first; node != शून्य; node = node->next)
 		map__zput(node->ms.map);
-}
+पूर्ण
 
-void callchain_param_setup(u64 sample_type)
-{
-	if (symbol_conf.use_callchain || symbol_conf.cumulate_callchain) {
-		if ((sample_type & PERF_SAMPLE_REGS_USER) &&
-		    (sample_type & PERF_SAMPLE_STACK_USER)) {
+व्योम callchain_param_setup(u64 sample_type)
+अणु
+	अगर (symbol_conf.use_callchain || symbol_conf.cumulate_callchain) अणु
+		अगर ((sample_type & PERF_SAMPLE_REGS_USER) &&
+		    (sample_type & PERF_SAMPLE_STACK_USER)) अणु
 			callchain_param.record_mode = CALLCHAIN_DWARF;
 			dwarf_callchain_users = true;
-		} else if (sample_type & PERF_SAMPLE_BRANCH_STACK)
+		पूर्ण अन्यथा अगर (sample_type & PERF_SAMPLE_BRANCH_STACK)
 			callchain_param.record_mode = CALLCHAIN_LBR;
-		else
+		अन्यथा
 			callchain_param.record_mode = CALLCHAIN_FP;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool chain_match(struct callchain_list *base_chain,
-			struct callchain_list *pair_chain)
-{
-	enum match_result match;
+अटल bool chain_match(काष्ठा callchain_list *base_chain,
+			काष्ठा callchain_list *pair_chain)
+अणु
+	क्रमागत match_result match;
 
 	match = match_chain_strings(base_chain->srcline,
 				    pair_chain->srcline);
-	if (match != MATCH_ERROR)
-		return match == MATCH_EQ;
+	अगर (match != MATCH_ERROR)
+		वापस match == MATCH_EQ;
 
 	match = match_chain_dso_addresses(base_chain->ms.map,
 					  base_chain->ip,
 					  pair_chain->ms.map,
 					  pair_chain->ip);
 
-	return match == MATCH_EQ;
-}
+	वापस match == MATCH_EQ;
+पूर्ण
 
-bool callchain_cnode_matched(struct callchain_node *base_cnode,
-			     struct callchain_node *pair_cnode)
-{
-	struct callchain_list *base_chain, *pair_chain;
+bool callchain_cnode_matched(काष्ठा callchain_node *base_cnode,
+			     काष्ठा callchain_node *pair_cnode)
+अणु
+	काष्ठा callchain_list *base_chain, *pair_chain;
 	bool match = false;
 
 	pair_chain = list_first_entry(&pair_cnode->val,
-				      struct callchain_list,
+				      काष्ठा callchain_list,
 				      list);
 
-	list_for_each_entry(base_chain, &base_cnode->val, list) {
-		if (&pair_chain->list == &pair_cnode->val)
-			return false;
+	list_क्रम_each_entry(base_chain, &base_cnode->val, list) अणु
+		अगर (&pair_chain->list == &pair_cnode->val)
+			वापस false;
 
-		if (!base_chain->srcline || !pair_chain->srcline) {
+		अगर (!base_chain->srcline || !pair_chain->srcline) अणु
 			pair_chain = list_next_entry(pair_chain, list);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		match = chain_match(base_chain, pair_chain);
-		if (!match)
-			return false;
+		अगर (!match)
+			वापस false;
 
 		pair_chain = list_next_entry(pair_chain, list);
-	}
+	पूर्ण
 
 	/*
 	 * Say chain1 is ABC, chain2 is ABCD, we consider they are
 	 * not fully matched.
 	 */
-	if (pair_chain && (&pair_chain->list != &pair_cnode->val))
-		return false;
+	अगर (pair_chain && (&pair_chain->list != &pair_cnode->val))
+		वापस false;
 
-	return match;
-}
+	वापस match;
+पूर्ण
 
-static u64 count_callchain_hits(struct hist_entry *he)
-{
-	struct rb_root *root = &he->sorted_chain;
-	struct rb_node *rb_node = rb_first(root);
-	struct callchain_node *node;
+अटल u64 count_callchain_hits(काष्ठा hist_entry *he)
+अणु
+	काष्ठा rb_root *root = &he->sorted_chain;
+	काष्ठा rb_node *rb_node = rb_first(root);
+	काष्ठा callchain_node *node;
 	u64 chain_hits = 0;
 
-	while (rb_node) {
-		node = rb_entry(rb_node, struct callchain_node, rb_node);
+	जबतक (rb_node) अणु
+		node = rb_entry(rb_node, काष्ठा callchain_node, rb_node);
 		chain_hits += node->hit;
 		rb_node = rb_next(rb_node);
-	}
+	पूर्ण
 
-	return chain_hits;
-}
+	वापस chain_hits;
+पूर्ण
 
-u64 callchain_total_hits(struct hists *hists)
-{
-	struct rb_node *next = rb_first_cached(&hists->entries);
+u64 callchain_total_hits(काष्ठा hists *hists)
+अणु
+	काष्ठा rb_node *next = rb_first_cached(&hists->entries);
 	u64 chain_hits = 0;
 
-	while (next) {
-		struct hist_entry *he = rb_entry(next, struct hist_entry,
+	जबतक (next) अणु
+		काष्ठा hist_entry *he = rb_entry(next, काष्ठा hist_entry,
 						 rb_node);
 
 		chain_hits += count_callchain_hits(he);
 		next = rb_next(&he->rb_node);
-	}
+	पूर्ण
 
-	return chain_hits;
-}
+	वापस chain_hits;
+पूर्ण
 
-s64 callchain_avg_cycles(struct callchain_node *cnode)
-{
-	struct callchain_list *chain;
+s64 callchain_avg_cycles(काष्ठा callchain_node *cnode)
+अणु
+	काष्ठा callchain_list *chain;
 	s64 cycles = 0;
 
-	list_for_each_entry(chain, &cnode->val, list) {
-		if (chain->srcline && chain->branch_count)
+	list_क्रम_each_entry(chain, &cnode->val, list) अणु
+		अगर (chain->srcline && chain->branch_count)
 			cycles += chain->cycles_count / chain->branch_count;
-	}
+	पूर्ण
 
-	return cycles;
-}
+	वापस cycles;
+पूर्ण

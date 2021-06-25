@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only
  * Copyright (C) 2020 Marvell.
  */
 
-#ifndef __SOC_OTX2_ASM_H
-#define __SOC_OTX2_ASM_H
+#अगर_अघोषित __SOC_OTX2_ASM_H
+#घोषणा __SOC_OTX2_ASM_H
 
-#if defined(CONFIG_ARM64)
+#अगर defined(CONFIG_ARM64)
 /*
- * otx2_lmt_flush is used for LMT store operation.
- * On octeontx2 platform CPT instruction enqueue and
+ * otx2_lmt_flush is used क्रम LMT store operation.
+ * On octeontx2 platक्रमm CPT inकाष्ठाion enqueue and
  * NIX packet send are only possible via LMTST
- * operations and it uses LDEOR instruction targeting
+ * operations and it uses LDEOR inकाष्ठाion targeting
  * the coprocessor address.
  */
-#define otx2_lmt_flush(ioaddr)                          \
-({                                                      \
+#घोषणा otx2_lmt_flush(ioaddr)                          \
+(अणु                                                      \
 	u64 result = 0;                                 \
-	__asm__ volatile(".cpu  generic+lse\n"          \
+	__यंत्र__ अस्थिर(".cpu  generic+lse\n"          \
 			 "ldeor xzr, %x[rf], [%[rs]]"   \
 			 : [rf]"=r" (result)            \
 			 : [rs]"r" (ioaddr));           \
 	(result);                                       \
-})
-#define cn10k_lmt_flush(val, addr)			\
-({							\
-	__asm__ volatile(".cpu  generic+lse\n"		\
+पूर्ण)
+#घोषणा cn10k_lmt_flush(val, addr)			\
+(अणु							\
+	__यंत्र__ अस्थिर(".cpu  generic+lse\n"		\
 			 "steor %x[rf],[%[rs]]"		\
 			 : [rf]"+r"(val)		\
 			 : [rs]"r"(addr));		\
-})
-#else
-#define otx2_lmt_flush(ioaddr)          ({ 0; })
-#define cn10k_lmt_flush(val, addr)	({ addr = val; })
-#endif
+पूर्ण)
+#अन्यथा
+#घोषणा otx2_lmt_flush(ioaddr)          (अणु 0; पूर्ण)
+#घोषणा cn10k_lmt_flush(val, addr)	(अणु addr = val; पूर्ण)
+#पूर्ण_अगर
 
-#endif /* __SOC_OTX2_ASM_H */
+#पूर्ण_अगर /* __SOC_OTX2_ASM_H */

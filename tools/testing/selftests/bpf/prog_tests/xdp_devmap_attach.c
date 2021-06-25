@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <uapi/linux/bpf.h>
-#include <linux/if_link.h>
-#include <test_progs.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <uapi/linux/bpf.h>
+#समावेश <linux/अगर_link.h>
+#समावेश <test_progs.h>
 
-#include "test_xdp_devmap_helpers.skel.h"
-#include "test_xdp_with_devmap_helpers.skel.h"
+#समावेश "test_xdp_devmap_helpers.skel.h"
+#समावेश "test_xdp_with_devmap_helpers.skel.h"
 
-#define IFINDEX_LO 1
+#घोषणा IFINDEX_LO 1
 
-void test_xdp_with_devmap_helpers(void)
-{
-	struct test_xdp_with_devmap_helpers *skel;
-	struct bpf_prog_info info = {};
-	struct bpf_devmap_val val = {
-		.ifindex = IFINDEX_LO,
-	};
-	__u32 len = sizeof(info);
+व्योम test_xdp_with_devmap_helpers(व्योम)
+अणु
+	काष्ठा test_xdp_with_devmap_helpers *skel;
+	काष्ठा bpf_prog_info info = अणुपूर्ण;
+	काष्ठा bpf_devmap_val val = अणु
+		.अगरindex = IFINDEX_LO,
+	पूर्ण;
+	__u32 len = माप(info);
 	__u32 duration = 0, idx = 0;
-	int err, dm_fd, map_fd;
+	पूर्णांक err, dm_fd, map_fd;
 
 
-	skel = test_xdp_with_devmap_helpers__open_and_load();
-	if (CHECK_FAIL(!skel)) {
-		perror("test_xdp_with_devmap_helpers__open_and_load");
-		return;
-	}
+	skel = test_xdp_with_devmap_helpers__खोलो_and_load();
+	अगर (CHECK_FAIL(!skel)) अणु
+		लिखो_त्रुटि("test_xdp_with_devmap_helpers__open_and_load");
+		वापस;
+	पूर्ण
 
 	/* can not attach program with DEVMAPs that allow programs
 	 * as xdp generic
@@ -37,16 +38,16 @@ void test_xdp_with_devmap_helpers(void)
 	dm_fd = bpf_program__fd(skel->progs.xdp_dummy_dm);
 	map_fd = bpf_map__fd(skel->maps.dm_ports);
 	err = bpf_obj_get_info_by_fd(dm_fd, &info, &len);
-	if (CHECK_FAIL(err))
-		goto out_close;
+	अगर (CHECK_FAIL(err))
+		जाओ out_बंद;
 
 	val.bpf_prog.fd = dm_fd;
 	err = bpf_map_update_elem(map_fd, &idx, &val, 0);
 	CHECK(err, "Add program to devmap entry",
-	      "err %d errno %d\n", err, errno);
+	      "err %d errno %d\n", err, त्रुटि_सं);
 
 	err = bpf_map_lookup_elem(map_fd, &idx, &val);
-	CHECK(err, "Read devmap entry", "err %d errno %d\n", err, errno);
+	CHECK(err, "Read devmap entry", "err %d errno %d\n", err, त्रुटि_सं);
 	CHECK(info.id != val.bpf_prog.id, "Expected program id in devmap entry",
 	      "expected %u read %u\n", info.id, val.bpf_prog.id);
 
@@ -55,35 +56,35 @@ void test_xdp_with_devmap_helpers(void)
 	CHECK(err == 0, "Attach of BPF_XDP_DEVMAP program",
 	      "should have failed\n");
 
-	val.ifindex = 1;
+	val.अगरindex = 1;
 	val.bpf_prog.fd = bpf_program__fd(skel->progs.xdp_dummy_prog);
 	err = bpf_map_update_elem(map_fd, &idx, &val, 0);
 	CHECK(err == 0, "Add non-BPF_XDP_DEVMAP program to devmap entry",
 	      "should have failed\n");
 
-out_close:
+out_बंद:
 	test_xdp_with_devmap_helpers__destroy(skel);
-}
+पूर्ण
 
-void test_neg_xdp_devmap_helpers(void)
-{
-	struct test_xdp_devmap_helpers *skel;
+व्योम test_neg_xdp_devmap_helpers(व्योम)
+अणु
+	काष्ठा test_xdp_devmap_helpers *skel;
 	__u32 duration = 0;
 
-	skel = test_xdp_devmap_helpers__open_and_load();
-	if (CHECK(skel,
+	skel = test_xdp_devmap_helpers__खोलो_and_load();
+	अगर (CHECK(skel,
 		  "Load of XDP program accessing egress ifindex without attach type",
-		  "should have failed\n")) {
+		  "should have failed\n")) अणु
 		test_xdp_devmap_helpers__destroy(skel);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-void test_xdp_devmap_attach(void)
-{
-	if (test__start_subtest("DEVMAP with programs in entries"))
+व्योम test_xdp_devmap_attach(व्योम)
+अणु
+	अगर (test__start_subtest("DEVMAP with programs in entries"))
 		test_xdp_with_devmap_helpers();
 
-	if (test__start_subtest("Verifier check of DEVMAP programs"))
+	अगर (test__start_subtest("Verifier check of DEVMAP programs"))
 		test_neg_xdp_devmap_helpers();
-}
+पूर्ण

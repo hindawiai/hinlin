@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
-#ifndef __SYS_DOT_H__
-#define __SYS_DOT_H__
+#अगर_अघोषित __SYS_DOT_H__
+#घोषणा __SYS_DOT_H__
 
-#include <linux/spinlock.h>
-struct gfs2_sbd;
+#समावेश <linux/spinlock.h>
+काष्ठा gfs2_sbd;
 
-int gfs2_sys_fs_add(struct gfs2_sbd *sdp);
-void gfs2_sys_fs_del(struct gfs2_sbd *sdp);
+पूर्णांक gfs2_sys_fs_add(काष्ठा gfs2_sbd *sdp);
+व्योम gfs2_sys_fs_del(काष्ठा gfs2_sbd *sdp);
 
-int gfs2_sys_init(void);
-void gfs2_sys_uninit(void);
+पूर्णांक gfs2_sys_init(व्योम);
+व्योम gfs2_sys_uninit(व्योम);
 
-int gfs2_recover_set(struct gfs2_sbd *sdp, unsigned jid);
+पूर्णांक gfs2_recover_set(काष्ठा gfs2_sbd *sdp, अचिन्हित jid);
 
-#endif /* __SYS_DOT_H__ */
+#पूर्ण_अगर /* __SYS_DOT_H__ */
 

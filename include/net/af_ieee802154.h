@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * IEEE 802.15.4 interface for userspace
+ * IEEE 802.15.4 पूर्णांकerface क्रम userspace
  *
  * Copyright 2007, 2008 Siemens AG
  *
@@ -9,51 +10,51 @@
  * Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  */
 
-#ifndef _AF_IEEE802154_H
-#define _AF_IEEE802154_H
+#अगर_अघोषित _AF_IEEE802154_H
+#घोषणा _AF_IEEE802154_H
 
-#include <linux/socket.h> /* for sa_family_t */
+#समावेश <linux/socket.h> /* क्रम sa_family_t */
 
-enum {
+क्रमागत अणु
 	IEEE802154_ADDR_NONE = 0x0,
 	/* RESERVED = 0x01, */
 	IEEE802154_ADDR_SHORT = 0x2, /* 16-bit address + PANid */
 	IEEE802154_ADDR_LONG = 0x3, /* 64-bit address + PANid */
-};
+पूर्ण;
 
 /* address length, octets */
-#define IEEE802154_ADDR_LEN	8
+#घोषणा IEEE802154_ADDR_LEN	8
 
-struct ieee802154_addr_sa {
-	int addr_type;
+काष्ठा ieee802154_addr_sa अणु
+	पूर्णांक addr_type;
 	u16 pan_id;
-	union {
+	जोड़ अणु
 		u8 hwaddr[IEEE802154_ADDR_LEN];
-		u16 short_addr;
-	};
-};
+		u16 लघु_addr;
+	पूर्ण;
+पूर्ण;
 
-#define IEEE802154_PANID_BROADCAST	0xffff
-#define IEEE802154_ADDR_BROADCAST	0xffff
-#define IEEE802154_ADDR_UNDEF		0xfffe
+#घोषणा IEEE802154_PANID_BROADCAST	0xffff
+#घोषणा IEEE802154_ADDR_BROADCAST	0xffff
+#घोषणा IEEE802154_ADDR_UNDEF		0xfffe
 
-struct sockaddr_ieee802154 {
+काष्ठा sockaddr_ieee802154 अणु
 	sa_family_t family; /* AF_IEEE802154 */
-	struct ieee802154_addr_sa addr;
-};
+	काष्ठा ieee802154_addr_sa addr;
+पूर्ण;
 
 /* get/setsockopt */
-#define SOL_IEEE802154	0
+#घोषणा SOL_IEEE802154	0
 
-#define WPAN_WANTACK		0
-#define WPAN_SECURITY		1
-#define WPAN_SECURITY_LEVEL	2
-#define WPAN_WANTLQI		3
+#घोषणा WPAN_WANTACK		0
+#घोषणा WPAN_SECURITY		1
+#घोषणा WPAN_SECURITY_LEVEL	2
+#घोषणा WPAN_WANTLQI		3
 
-#define WPAN_SECURITY_DEFAULT	0
-#define WPAN_SECURITY_OFF	1
-#define WPAN_SECURITY_ON	2
+#घोषणा WPAN_SECURITY_DEFAULT	0
+#घोषणा WPAN_SECURITY_OFF	1
+#घोषणा WPAN_SECURITY_ON	2
 
-#define WPAN_SECURITY_LEVEL_DEFAULT	(-1)
+#घोषणा WPAN_SECURITY_LEVEL_DEFAULT	(-1)
 
-#endif
+#पूर्ण_अगर

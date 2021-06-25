@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API
  *
@@ -7,41 +8,41 @@
  * Jon Oberheide <jon@oberheide.org>
  */
 
-#include <crypto/arc4.h>
-#include <linux/module.h>
+#समावेश <crypto/arc4.h>
+#समावेश <linux/module.h>
 
-int arc4_setkey(struct arc4_ctx *ctx, const u8 *in_key, unsigned int key_len)
-{
-	int i, j = 0, k = 0;
+पूर्णांक arc4_setkey(काष्ठा arc4_ctx *ctx, स्थिर u8 *in_key, अचिन्हित पूर्णांक key_len)
+अणु
+	पूर्णांक i, j = 0, k = 0;
 
 	ctx->x = 1;
 	ctx->y = 0;
 
-	for (i = 0; i < 256; i++)
+	क्रम (i = 0; i < 256; i++)
 		ctx->S[i] = i;
 
-	for (i = 0; i < 256; i++) {
+	क्रम (i = 0; i < 256; i++) अणु
 		u32 a = ctx->S[i];
 
 		j = (j + in_key[k] + a) & 0xff;
 		ctx->S[i] = ctx->S[j];
 		ctx->S[j] = a;
-		if (++k >= key_len)
+		अगर (++k >= key_len)
 			k = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(arc4_setkey);
 
-void arc4_crypt(struct arc4_ctx *ctx, u8 *out, const u8 *in, unsigned int len)
-{
-	u32 *const S = ctx->S;
+व्योम arc4_crypt(काष्ठा arc4_ctx *ctx, u8 *out, स्थिर u8 *in, अचिन्हित पूर्णांक len)
+अणु
+	u32 *स्थिर S = ctx->S;
 	u32 x, y, a, b;
 	u32 ty, ta, tb;
 
-	if (len == 0)
-		return;
+	अगर (len == 0)
+		वापस;
 
 	x = ctx->x;
 	y = ctx->y;
@@ -50,7 +51,7 @@ void arc4_crypt(struct arc4_ctx *ctx, u8 *out, const u8 *in, unsigned int len)
 	y = (y + a) & 0xff;
 	b = S[y];
 
-	do {
+	करो अणु
 		S[y] = a;
 		a = (a + b) & 0xff;
 		S[x] = b;
@@ -59,16 +60,16 @@ void arc4_crypt(struct arc4_ctx *ctx, u8 *out, const u8 *in, unsigned int len)
 		ty = (y + ta) & 0xff;
 		tb = S[ty];
 		*out++ = *in++ ^ S[a];
-		if (--len == 0)
-			break;
+		अगर (--len == 0)
+			अवरोध;
 		y = ty;
 		a = ta;
 		b = tb;
-	} while (true);
+	पूर्ण जबतक (true);
 
 	ctx->x = x;
 	ctx->y = y;
-}
+पूर्ण
 EXPORT_SYMBOL(arc4_crypt);
 
 MODULE_LICENSE("GPL");

@@ -1,34 +1,35 @@
+<शैली गुरु>
 /*
- * Header file for using the wbflush routine
+ * Header file क्रम using the wbflush routine
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (c) 1998 Harald Koerfgen
  * Copyright (C) 2002 Maciej W. Rozycki
  */
-#ifndef _ASM_WBFLUSH_H
-#define _ASM_WBFLUSH_H
+#अगर_अघोषित _ASM_WBFLUSH_H
+#घोषणा _ASM_WBFLUSH_H
 
 
-#ifdef CONFIG_CPU_HAS_WB
+#अगर_घोषित CONFIG_CPU_HAS_WB
 
-extern void (*__wbflush)(void);
-extern void wbflush_setup(void);
+बाह्य व्योम (*__wbflush)(व्योम);
+बाह्य व्योम wbflush_setup(व्योम);
 
-#define wbflush()			\
-	do {				\
+#घोषणा wbflush()			\
+	करो अणु				\
 		__sync();		\
 		__wbflush();		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#else /* !CONFIG_CPU_HAS_WB */
+#अन्यथा /* !CONFIG_CPU_HAS_WB */
 
-#define wbflush_setup() do { } while (0)
+#घोषणा wbflush_setup() करो अणु पूर्ण जबतक (0)
 
-#define wbflush() fast_iob()
+#घोषणा wbflush() fast_iob()
 
-#endif /* !CONFIG_CPU_HAS_WB */
+#पूर्ण_अगर /* !CONFIG_CPU_HAS_WB */
 
-#endif /* _ASM_WBFLUSH_H */
+#पूर्ण_अगर /* _ASM_WBFLUSH_H */

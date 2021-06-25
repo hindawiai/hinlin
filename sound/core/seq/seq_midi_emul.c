@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  GM/GS/XG midi module.
  *
- *  Copyright (C) 1999 Steve Ratcliffe
+ *  Copyright (C) 1999 Steve Ratclअगरfe
  *
  *  Based on awe_wave.c by Takashi Iwai
  */
 /*
  * This module is used to keep track of the current midi state.
- * It can be used for drivers that are required to emulate midi when
- * the hardware doesn't.
+ * It can be used क्रम drivers that are required to emulate midi when
+ * the hardware करोesn't.
  *
- * It was written for a AWE64 driver, but there should be no AWE specific
+ * It was written क्रम a AWE64 driver, but there should be no AWE specअगरic
  * code in here.  If there is it should be reported as a bug.
  */
 
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/seq_kernel.h>
-#include <sound/seq_midi_emul.h>
-#include <sound/initval.h>
-#include <sound/asoundef.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/seq_kernel.h>
+#समावेश <sound/seq_midi_emul.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/asoundef.h>
 
 MODULE_AUTHOR("Takashi Iwai / Steve Ratcliffe");
 MODULE_DESCRIPTION("Advanced Linux Sound Architecture sequencer MIDI emulation.");
 MODULE_LICENSE("GPL");
 
-/* Prototypes for static functions */
-static void note_off(const struct snd_midi_op *ops, void *drv,
-		     struct snd_midi_channel *chan,
-		     int note, int vel);
-static void do_control(const struct snd_midi_op *ops, void *private,
-		       struct snd_midi_channel_set *chset,
-		       struct snd_midi_channel *chan,
-		       int control, int value);
-static void rpn(const struct snd_midi_op *ops, void *drv,
-		struct snd_midi_channel *chan,
-		struct snd_midi_channel_set *chset);
-static void nrpn(const struct snd_midi_op *ops, void *drv,
-		 struct snd_midi_channel *chan,
-		 struct snd_midi_channel_set *chset);
-static void sysex(const struct snd_midi_op *ops, void *private,
-		  unsigned char *sysex,
-		  int len, struct snd_midi_channel_set *chset);
-static void all_sounds_off(const struct snd_midi_op *ops, void *private,
-			   struct snd_midi_channel *chan);
-static void all_notes_off(const struct snd_midi_op *ops, void *private,
-			  struct snd_midi_channel *chan);
-static void snd_midi_reset_controllers(struct snd_midi_channel *chan);
-static void reset_all_channels(struct snd_midi_channel_set *chset);
+/* Prototypes क्रम अटल functions */
+अटल व्योम note_off(स्थिर काष्ठा snd_midi_op *ops, व्योम *drv,
+		     काष्ठा snd_midi_channel *chan,
+		     पूर्णांक note, पूर्णांक vel);
+अटल व्योम करो_control(स्थिर काष्ठा snd_midi_op *ops, व्योम *निजी,
+		       काष्ठा snd_midi_channel_set *chset,
+		       काष्ठा snd_midi_channel *chan,
+		       पूर्णांक control, पूर्णांक value);
+अटल व्योम rpn(स्थिर काष्ठा snd_midi_op *ops, व्योम *drv,
+		काष्ठा snd_midi_channel *chan,
+		काष्ठा snd_midi_channel_set *chset);
+अटल व्योम nrpn(स्थिर काष्ठा snd_midi_op *ops, व्योम *drv,
+		 काष्ठा snd_midi_channel *chan,
+		 काष्ठा snd_midi_channel_set *chset);
+अटल व्योम sysex(स्थिर काष्ठा snd_midi_op *ops, व्योम *निजी,
+		  अचिन्हित अक्षर *sysex,
+		  पूर्णांक len, काष्ठा snd_midi_channel_set *chset);
+अटल व्योम all_sounds_off(स्थिर काष्ठा snd_midi_op *ops, व्योम *निजी,
+			   काष्ठा snd_midi_channel *chan);
+अटल व्योम all_notes_off(स्थिर काष्ठा snd_midi_op *ops, व्योम *निजी,
+			  काष्ठा snd_midi_channel *chan);
+अटल व्योम snd_midi_reset_controllers(काष्ठा snd_midi_channel *chan);
+अटल व्योम reset_all_channels(काष्ठा snd_midi_channel_set *chset);
 
 
 /*
  * Process an event in a driver independent way.  This means dealing
- * with RPN, NRPN, SysEx etc that are defined for common midi applications
+ * with RPN, NRPN, SysEx etc that are defined क्रम common midi applications
  * such as GM, GS and XG.
  * There modes that this module will run in are:
- *   Generic MIDI - no interpretation at all, it will just save current values
+ *   Generic MIDI - no पूर्णांकerpretation at all, it will just save current values
  *                  of controllers etc.
  *   GM - You can use all gm_ prefixed elements of chan.  Controls, RPN, NRPN,
- *        SysEx will be interpreded as defined in General Midi.
- *   GS - You can use all gs_ prefixed elements of chan. Codes for GS will be
- *        interpreted.
- *   XG - You can use all xg_ prefixed elements of chan.  Codes for XG will
- *        be interpreted.
+ *        SysEx will be पूर्णांकerpreded as defined in General Midi.
+ *   GS - You can use all gs_ prefixed elements of chan. Codes क्रम GS will be
+ *        पूर्णांकerpreted.
+ *   XG - You can use all xg_ prefixed elements of chan.  Codes क्रम XG will
+ *        be पूर्णांकerpreted.
  */
-void
-snd_midi_process_event(const struct snd_midi_op *ops,
-		       struct snd_seq_event *ev,
-		       struct snd_midi_channel_set *chanset)
-{
-	struct snd_midi_channel *chan;
-	void *drv;
-	int dest_channel = 0;
+व्योम
+snd_midi_process_event(स्थिर काष्ठा snd_midi_op *ops,
+		       काष्ठा snd_seq_event *ev,
+		       काष्ठा snd_midi_channel_set *chanset)
+अणु
+	काष्ठा snd_midi_channel *chan;
+	व्योम *drv;
+	पूर्णांक dest_channel = 0;
 
-	if (ev == NULL || chanset == NULL) {
+	अगर (ev == शून्य || chanset == शून्य) अणु
 		pr_debug("ALSA: seq_midi_emul: ev or chanbase NULL (snd_midi_process_event)\n");
-		return;
-	}
-	if (chanset->channels == NULL)
-		return;
+		वापस;
+	पूर्ण
+	अगर (chanset->channels == शून्य)
+		वापस;
 
-	if (snd_seq_ev_is_channel_type(ev)) {
+	अगर (snd_seq_ev_is_channel_type(ev)) अणु
 		dest_channel = ev->data.note.channel;
-		if (dest_channel >= chanset->max_channels) {
+		अगर (dest_channel >= chanset->max_channels) अणु
 			pr_debug("ALSA: seq_midi_emul: dest channel is %d, max is %d\n",
 				   dest_channel, chanset->max_channels);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	chan = chanset->channels + dest_channel;
-	drv  = chanset->private_data;
+	drv  = chanset->निजी_data;
 
-	/* EVENT_NOTE should be processed before queued */
-	if (ev->type == SNDRV_SEQ_EVENT_NOTE)
-		return;
+	/* EVENT_NOTE should be processed beक्रमe queued */
+	अगर (ev->type == SNDRV_SEQ_EVENT_NOTE)
+		वापस;
 
-	/* Make sure that we don't have a note on that should really be
+	/* Make sure that we करोn't have a note on that should really be
 	 * a note off */
-	if (ev->type == SNDRV_SEQ_EVENT_NOTEON && ev->data.note.velocity == 0)
-		ev->type = SNDRV_SEQ_EVENT_NOTEOFF;
+	अगर (ev->type == SNDRV_SEQ_EVENT_NOTEON && ev->data.note.velocity == 0)
+		ev->type = SNDRV_SEQ_EVENT_NOTखातापूर्णF;
 
 	/* Make sure the note is within array range */
-	if (ev->type == SNDRV_SEQ_EVENT_NOTEON ||
-	    ev->type == SNDRV_SEQ_EVENT_NOTEOFF ||
-	    ev->type == SNDRV_SEQ_EVENT_KEYPRESS) {
-		if (ev->data.note.note >= 128)
-			return;
-	}
+	अगर (ev->type == SNDRV_SEQ_EVENT_NOTEON ||
+	    ev->type == SNDRV_SEQ_EVENT_NOTखातापूर्णF ||
+	    ev->type == SNDRV_SEQ_EVENT_KEYPRESS) अणु
+		अगर (ev->data.note.note >= 128)
+			वापस;
+	पूर्ण
 
-	switch (ev->type) {
-	case SNDRV_SEQ_EVENT_NOTEON:
-		if (chan->note[ev->data.note.note] & SNDRV_MIDI_NOTE_ON) {
-			if (ops->note_off)
+	चयन (ev->type) अणु
+	हाल SNDRV_SEQ_EVENT_NOTEON:
+		अगर (chan->note[ev->data.note.note] & SNDRV_MIDI_NOTE_ON) अणु
+			अगर (ops->note_off)
 				ops->note_off(drv, ev->data.note.note, 0, chan);
-		}
+		पूर्ण
 		chan->note[ev->data.note.note] = SNDRV_MIDI_NOTE_ON;
-		if (ops->note_on)
+		अगर (ops->note_on)
 			ops->note_on(drv, ev->data.note.note, ev->data.note.velocity, chan);
-		break;
-	case SNDRV_SEQ_EVENT_NOTEOFF:
-		if (! (chan->note[ev->data.note.note] & SNDRV_MIDI_NOTE_ON))
-			break;
-		if (ops->note_off)
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_NOTखातापूर्णF:
+		अगर (! (chan->note[ev->data.note.note] & SNDRV_MIDI_NOTE_ON))
+			अवरोध;
+		अगर (ops->note_off)
 			note_off(ops, drv, chan, ev->data.note.note, ev->data.note.velocity);
-		break;
-	case SNDRV_SEQ_EVENT_KEYPRESS:
-		if (ops->key_press)
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_KEYPRESS:
+		अगर (ops->key_press)
 			ops->key_press(drv, ev->data.note.note, ev->data.note.velocity, chan);
-		break;
-	case SNDRV_SEQ_EVENT_CONTROLLER:
-		do_control(ops, drv, chanset, chan,
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_CONTROLLER:
+		करो_control(ops, drv, chanset, chan,
 			   ev->data.control.param, ev->data.control.value);
-		break;
-	case SNDRV_SEQ_EVENT_PGMCHANGE:
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_PGMCHANGE:
 		chan->midi_program = ev->data.control.value;
-		break;
-	case SNDRV_SEQ_EVENT_PITCHBEND:
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_PITCHBEND:
 		chan->midi_pitchbend = ev->data.control.value;
-		if (ops->control)
+		अगर (ops->control)
 			ops->control(drv, MIDI_CTL_PITCHBEND, chan);
-		break;
-	case SNDRV_SEQ_EVENT_CHANPRESS:
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_CHANPRESS:
 		chan->midi_pressure = ev->data.control.value;
-		if (ops->control)
+		अगर (ops->control)
 			ops->control(drv, MIDI_CTL_CHAN_PRESSURE, chan);
-		break;
-	case SNDRV_SEQ_EVENT_CONTROL14:
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_CONTROL14:
 		/* Best guess is that this is any of the 14 bit controller values */
-		if (ev->data.control.param < 32) {
+		अगर (ev->data.control.param < 32) अणु
 			/* set low part first */
 			chan->control[ev->data.control.param + 32] =
 				ev->data.control.value & 0x7f;
-			do_control(ops, drv, chanset, chan,
+			करो_control(ops, drv, chanset, chan,
 				   ev->data.control.param,
 				   ((ev->data.control.value>>7) & 0x7f));
-		} else
-			do_control(ops, drv, chanset, chan,
+		पूर्ण अन्यथा
+			करो_control(ops, drv, chanset, chan,
 				   ev->data.control.param,
 				   ev->data.control.value);
-		break;
-	case SNDRV_SEQ_EVENT_NONREGPARAM:
-		/* Break it back into its controller values */
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_NONREGPARAM:
+		/* Break it back पूर्णांकo its controller values */
 		chan->param_type = SNDRV_MIDI_PARAM_TYPE_NONREGISTERED;
 		chan->control[MIDI_CTL_MSB_DATA_ENTRY]
 			= (ev->data.control.value >> 7) & 0x7f;
@@ -176,9 +177,9 @@ snd_midi_process_event(const struct snd_midi_op *ops,
 		chan->control[MIDI_CTL_NONREG_PARM_NUM_LSB]
 			= ev->data.control.param & 0x7f;
 		nrpn(ops, drv, chan, chanset);
-		break;
-	case SNDRV_SEQ_EVENT_REGPARAM:
-		/* Break it back into its controller values */
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_REGPARAM:
+		/* Break it back पूर्णांकo its controller values */
 		chan->param_type = SNDRV_MIDI_PARAM_TYPE_REGISTERED;
 		chan->control[MIDI_CTL_MSB_DATA_ENTRY]
 			= (ev->data.control.value >> 7) & 0x7f;
@@ -189,202 +190,202 @@ snd_midi_process_event(const struct snd_midi_op *ops,
 		chan->control[MIDI_CTL_REGIST_PARM_NUM_LSB]
 			= ev->data.control.param & 0x7f;
 		rpn(ops, drv, chan, chanset);
-		break;
-	case SNDRV_SEQ_EVENT_SYSEX:
-		if ((ev->flags & SNDRV_SEQ_EVENT_LENGTH_MASK) == SNDRV_SEQ_EVENT_LENGTH_VARIABLE) {
-			unsigned char sysexbuf[64];
-			int len;
-			len = snd_seq_expand_var_event(ev, sizeof(sysexbuf), sysexbuf, 1, 0);
-			if (len > 0)
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_SYSEX:
+		अगर ((ev->flags & SNDRV_SEQ_EVENT_LENGTH_MASK) == SNDRV_SEQ_EVENT_LENGTH_VARIABLE) अणु
+			अचिन्हित अक्षर sysexbuf[64];
+			पूर्णांक len;
+			len = snd_seq_expand_var_event(ev, माप(sysexbuf), sysexbuf, 1, 0);
+			अगर (len > 0)
 				sysex(ops, drv, sysexbuf, len, chanset);
-		}
-		break;
-	case SNDRV_SEQ_EVENT_SONGPOS:
-	case SNDRV_SEQ_EVENT_SONGSEL:
-	case SNDRV_SEQ_EVENT_CLOCK:
-	case SNDRV_SEQ_EVENT_START:
-	case SNDRV_SEQ_EVENT_CONTINUE:
-	case SNDRV_SEQ_EVENT_STOP:
-	case SNDRV_SEQ_EVENT_QFRAME:
-	case SNDRV_SEQ_EVENT_TEMPO:
-	case SNDRV_SEQ_EVENT_TIMESIGN:
-	case SNDRV_SEQ_EVENT_KEYSIGN:
-		goto not_yet;
-	case SNDRV_SEQ_EVENT_SENSING:
-		break;
-	case SNDRV_SEQ_EVENT_CLIENT_START:
-	case SNDRV_SEQ_EVENT_CLIENT_EXIT:
-	case SNDRV_SEQ_EVENT_CLIENT_CHANGE:
-	case SNDRV_SEQ_EVENT_PORT_START:
-	case SNDRV_SEQ_EVENT_PORT_EXIT:
-	case SNDRV_SEQ_EVENT_PORT_CHANGE:
-	case SNDRV_SEQ_EVENT_ECHO:
+		पूर्ण
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_SONGPOS:
+	हाल SNDRV_SEQ_EVENT_SONGSEL:
+	हाल SNDRV_SEQ_EVENT_CLOCK:
+	हाल SNDRV_SEQ_EVENT_START:
+	हाल SNDRV_SEQ_EVENT_CONTINUE:
+	हाल SNDRV_SEQ_EVENT_STOP:
+	हाल SNDRV_SEQ_EVENT_QFRAME:
+	हाल SNDRV_SEQ_EVENT_TEMPO:
+	हाल SNDRV_SEQ_EVENT_TIMESIGN:
+	हाल SNDRV_SEQ_EVENT_KEYSIGN:
+		जाओ not_yet;
+	हाल SNDRV_SEQ_EVENT_SENSING:
+		अवरोध;
+	हाल SNDRV_SEQ_EVENT_CLIENT_START:
+	हाल SNDRV_SEQ_EVENT_CLIENT_EXIT:
+	हाल SNDRV_SEQ_EVENT_CLIENT_CHANGE:
+	हाल SNDRV_SEQ_EVENT_PORT_START:
+	हाल SNDRV_SEQ_EVENT_PORT_EXIT:
+	हाल SNDRV_SEQ_EVENT_PORT_CHANGE:
+	हाल SNDRV_SEQ_EVENT_ECHO:
 	not_yet:
-	default:
+	शेष:
 		/*pr_debug("ALSA: seq_midi_emul: Unimplemented event %d\n", ev->type);*/
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(snd_midi_process_event);
 
 
 /*
  * release note
  */
-static void
-note_off(const struct snd_midi_op *ops, void *drv,
-	 struct snd_midi_channel *chan,
-	 int note, int vel)
-{
-	if (chan->gm_hold) {
+अटल व्योम
+note_off(स्थिर काष्ठा snd_midi_op *ops, व्योम *drv,
+	 काष्ठा snd_midi_channel *chan,
+	 पूर्णांक note, पूर्णांक vel)
+अणु
+	अगर (chan->gm_hold) अणु
 		/* Hold this note until pedal is turned off */
 		chan->note[note] |= SNDRV_MIDI_NOTE_RELEASED;
-	} else if (chan->note[note] & SNDRV_MIDI_NOTE_SOSTENUTO) {
+	पूर्ण अन्यथा अगर (chan->note[note] & SNDRV_MIDI_NOTE_SOSTENUTO) अणु
 		/* Mark this note as release; it will be turned off when sostenuto
 		 * is turned off */
 		chan->note[note] |= SNDRV_MIDI_NOTE_RELEASED;
-	} else {
+	पूर्ण अन्यथा अणु
 		chan->note[note] = 0;
-		if (ops->note_off)
+		अगर (ops->note_off)
 			ops->note_off(drv, note, vel, chan);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Do all driver independent operations for this controller and pass
+ * Do all driver independent operations क्रम this controller and pass
  * events that need to take place immediately to the driver.
  */
-static void
-do_control(const struct snd_midi_op *ops, void *drv,
-	   struct snd_midi_channel_set *chset,
-	   struct snd_midi_channel *chan, int control, int value)
-{
-	int  i;
+अटल व्योम
+करो_control(स्थिर काष्ठा snd_midi_op *ops, व्योम *drv,
+	   काष्ठा snd_midi_channel_set *chset,
+	   काष्ठा snd_midi_channel *chan, पूर्णांक control, पूर्णांक value)
+अणु
+	पूर्णांक  i;
 
-	if (control >= ARRAY_SIZE(chan->control))
-		return;
+	अगर (control >= ARRAY_SIZE(chan->control))
+		वापस;
 
 	/* Switches */
-	if ((control >=64 && control <=69) || (control >= 80 && control <= 83)) {
-		/* These are all switches; either off or on so set to 0 or 127 */
+	अगर ((control >=64 && control <=69) || (control >= 80 && control <= 83)) अणु
+		/* These are all चयनes; either off or on so set to 0 or 127 */
 		value = (value >= 64)? 127: 0;
-	}
+	पूर्ण
 	chan->control[control] = value;
 
-	switch (control) {
-	case MIDI_CTL_SUSTAIN:
-		if (value == 0) {
+	चयन (control) अणु
+	हाल MIDI_CTL_SUSTAIN:
+		अगर (value == 0) अणु
 			/* Sustain has been released, turn off held notes */
-			for (i = 0; i < 128; i++) {
-				if (chan->note[i] & SNDRV_MIDI_NOTE_RELEASED) {
+			क्रम (i = 0; i < 128; i++) अणु
+				अगर (chan->note[i] & SNDRV_MIDI_NOTE_RELEASED) अणु
 					chan->note[i] = SNDRV_MIDI_NOTE_OFF;
-					if (ops->note_off)
+					अगर (ops->note_off)
 						ops->note_off(drv, i, 0, chan);
-				}
-			}
-		}
-		break;
-	case MIDI_CTL_PORTAMENTO:
-		break;
-	case MIDI_CTL_SOSTENUTO:
-		if (value) {
-			/* Mark each note that is currently held down */
-			for (i = 0; i < 128; i++) {
-				if (chan->note[i] & SNDRV_MIDI_NOTE_ON)
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल MIDI_CTL_PORTAMENTO:
+		अवरोध;
+	हाल MIDI_CTL_SOSTENUTO:
+		अगर (value) अणु
+			/* Mark each note that is currently held करोwn */
+			क्रम (i = 0; i < 128; i++) अणु
+				अगर (chan->note[i] & SNDRV_MIDI_NOTE_ON)
 					chan->note[i] |= SNDRV_MIDI_NOTE_SOSTENUTO;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* release all notes that were held */
-			for (i = 0; i < 128; i++) {
-				if (chan->note[i] & SNDRV_MIDI_NOTE_SOSTENUTO) {
+			क्रम (i = 0; i < 128; i++) अणु
+				अगर (chan->note[i] & SNDRV_MIDI_NOTE_SOSTENUTO) अणु
 					chan->note[i] &= ~SNDRV_MIDI_NOTE_SOSTENUTO;
-					if (chan->note[i] & SNDRV_MIDI_NOTE_RELEASED) {
+					अगर (chan->note[i] & SNDRV_MIDI_NOTE_RELEASED) अणु
 						chan->note[i] = SNDRV_MIDI_NOTE_OFF;
-						if (ops->note_off)
+						अगर (ops->note_off)
 							ops->note_off(drv, i, 0, chan);
-					}
-				}
-			}
-		}
-		break;
-	case MIDI_CTL_MSB_DATA_ENTRY:
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल MIDI_CTL_MSB_DATA_ENTRY:
 		chan->control[MIDI_CTL_LSB_DATA_ENTRY] = 0;
 		fallthrough;
-	case MIDI_CTL_LSB_DATA_ENTRY:
-		if (chan->param_type == SNDRV_MIDI_PARAM_TYPE_REGISTERED)
+	हाल MIDI_CTL_LSB_DATA_ENTRY:
+		अगर (chan->param_type == SNDRV_MIDI_PARAM_TYPE_REGISTERED)
 			rpn(ops, drv, chan, chset);
-		else
+		अन्यथा
 			nrpn(ops, drv, chan, chset);
-		break;
-	case MIDI_CTL_REGIST_PARM_NUM_LSB:
-	case MIDI_CTL_REGIST_PARM_NUM_MSB:
+		अवरोध;
+	हाल MIDI_CTL_REGIST_PARM_NUM_LSB:
+	हाल MIDI_CTL_REGIST_PARM_NUM_MSB:
 		chan->param_type = SNDRV_MIDI_PARAM_TYPE_REGISTERED;
-		break;
-	case MIDI_CTL_NONREG_PARM_NUM_LSB:
-	case MIDI_CTL_NONREG_PARM_NUM_MSB:
+		अवरोध;
+	हाल MIDI_CTL_NONREG_PARM_NUM_LSB:
+	हाल MIDI_CTL_NONREG_PARM_NUM_MSB:
 		chan->param_type = SNDRV_MIDI_PARAM_TYPE_NONREGISTERED;
-		break;
+		अवरोध;
 
-	case MIDI_CTL_ALL_SOUNDS_OFF:
+	हाल MIDI_CTL_ALL_SOUNDS_OFF:
 		all_sounds_off(ops, drv, chan);
-		break;
+		अवरोध;
 
-	case MIDI_CTL_ALL_NOTES_OFF:
+	हाल MIDI_CTL_ALL_NOTES_OFF:
 		all_notes_off(ops, drv, chan);
-		break;
+		अवरोध;
 
-	case MIDI_CTL_MSB_BANK:
-		if (chset->midi_mode == SNDRV_MIDI_MODE_XG) {
-			if (value == 127)
+	हाल MIDI_CTL_MSB_BANK:
+		अगर (chset->midi_mode == SNDRV_MIDI_MODE_XG) अणु
+			अगर (value == 127)
 				chan->drum_channel = 1;
-			else
+			अन्यथा
 				chan->drum_channel = 0;
-		}
-		break;
-	case MIDI_CTL_LSB_BANK:
-		break;
+		पूर्ण
+		अवरोध;
+	हाल MIDI_CTL_LSB_BANK:
+		अवरोध;
 
-	case MIDI_CTL_RESET_CONTROLLERS:
+	हाल MIDI_CTL_RESET_CONTROLLERS:
 		snd_midi_reset_controllers(chan);
-		break;
+		अवरोध;
 
-	case MIDI_CTL_SOFT_PEDAL:
-	case MIDI_CTL_LEGATO_FOOTSWITCH:
-	case MIDI_CTL_HOLD2:
-	case MIDI_CTL_SC1_SOUND_VARIATION:
-	case MIDI_CTL_SC2_TIMBRE:
-	case MIDI_CTL_SC3_RELEASE_TIME:
-	case MIDI_CTL_SC4_ATTACK_TIME:
-	case MIDI_CTL_SC5_BRIGHTNESS:
-	case MIDI_CTL_E1_REVERB_DEPTH:
-	case MIDI_CTL_E2_TREMOLO_DEPTH:
-	case MIDI_CTL_E3_CHORUS_DEPTH:
-	case MIDI_CTL_E4_DETUNE_DEPTH:
-	case MIDI_CTL_E5_PHASER_DEPTH:
-		goto notyet;
+	हाल MIDI_CTL_SOFT_PEDAL:
+	हाल MIDI_CTL_LEGATO_FOOTSWITCH:
+	हाल MIDI_CTL_HOLD2:
+	हाल MIDI_CTL_SC1_SOUND_VARIATION:
+	हाल MIDI_CTL_SC2_TIMBRE:
+	हाल MIDI_CTL_SC3_RELEASE_TIME:
+	हाल MIDI_CTL_SC4_ATTACK_TIME:
+	हाल MIDI_CTL_SC5_BRIGHTNESS:
+	हाल MIDI_CTL_E1_REVERB_DEPTH:
+	हाल MIDI_CTL_E2_TREMOLO_DEPTH:
+	हाल MIDI_CTL_E3_CHORUS_DEPTH:
+	हाल MIDI_CTL_E4_DETUNE_DEPTH:
+	हाल MIDI_CTL_E5_PHASER_DEPTH:
+		जाओ notyet;
 	notyet:
-	default:
-		if (ops->control)
+	शेष:
+		अगर (ops->control)
 			ops->control(drv, control, chan);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 
 /*
  * initialize the MIDI status
  */
-void
-snd_midi_channel_set_clear(struct snd_midi_channel_set *chset)
-{
-	int i;
+व्योम
+snd_midi_channel_set_clear(काष्ठा snd_midi_channel_set *chset)
+अणु
+	पूर्णांक i;
 
 	chset->midi_mode = SNDRV_MIDI_MODE_GM;
 	chset->gs_master_volume = 127;
 
-	for (i = 0; i < chset->max_channels; i++) {
-		struct snd_midi_channel *chan = chset->channels + i;
-		memset(chan->note, 0, sizeof(chan->note));
+	क्रम (i = 0; i < chset->max_channels; i++) अणु
+		काष्ठा snd_midi_channel *chan = chset->channels + i;
+		स_रखो(chan->note, 0, माप(chan->note));
 
 		chan->midi_aftertouch = 0;
 		chan->midi_pressure = 0;
@@ -395,242 +396,242 @@ snd_midi_channel_set_clear(struct snd_midi_channel_set *chset)
 		chan->gm_rpn_fine_tuning = 0;
 		chan->gm_rpn_coarse_tuning = 0;
 
-		if (i == 9)
+		अगर (i == 9)
 			chan->drum_channel = 1;
-		else
+		अन्यथा
 			chan->drum_channel = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(snd_midi_channel_set_clear);
 
 /*
  * Process a rpn message.
  */
-static void
-rpn(const struct snd_midi_op *ops, void *drv, struct snd_midi_channel *chan,
-    struct snd_midi_channel_set *chset)
-{
-	int type;
-	int val;
+अटल व्योम
+rpn(स्थिर काष्ठा snd_midi_op *ops, व्योम *drv, काष्ठा snd_midi_channel *chan,
+    काष्ठा snd_midi_channel_set *chset)
+अणु
+	पूर्णांक type;
+	पूर्णांक val;
 
-	if (chset->midi_mode != SNDRV_MIDI_MODE_NONE) {
+	अगर (chset->midi_mode != SNDRV_MIDI_MODE_NONE) अणु
 		type = (chan->control[MIDI_CTL_REGIST_PARM_NUM_MSB] << 8) |
 			chan->control[MIDI_CTL_REGIST_PARM_NUM_LSB];
 		val = (chan->control[MIDI_CTL_MSB_DATA_ENTRY] << 7) |
 			chan->control[MIDI_CTL_LSB_DATA_ENTRY];
 
-		switch (type) {
-		case 0x0000: /* Pitch bend sensitivity */
+		चयन (type) अणु
+		हाल 0x0000: /* Pitch bend sensitivity */
 			/* MSB only / 1 semitone per 128 */
 			chan->gm_rpn_pitch_bend_range = val;
-			break;
+			अवरोध;
 					
-		case 0x0001: /* fine tuning: */
+		हाल 0x0001: /* fine tuning: */
 			/* MSB/LSB, 8192=center, 100/8192 cent step */
 			chan->gm_rpn_fine_tuning = val - 8192;
-			break;
+			अवरोध;
 
-		case 0x0002: /* coarse tuning */
+		हाल 0x0002: /* coarse tuning */
 			/* MSB only / 8192=center, 1 semitone per 128 */
 			chan->gm_rpn_coarse_tuning = val - 8192;
-			break;
+			अवरोध;
 
-		case 0x7F7F: /* "lock-in" RPN */
+		हाल 0x7F7F: /* "lock-in" RPN */
 			/* ignored */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/* should call nrpn or rpn callback here.. */
-}
+पूर्ण
 
 /*
  * Process an nrpn message.
  */
-static void
-nrpn(const struct snd_midi_op *ops, void *drv, struct snd_midi_channel *chan,
-     struct snd_midi_channel_set *chset)
-{
-	/* parse XG NRPNs here if possible */
-	if (ops->nrpn)
+अटल व्योम
+nrpn(स्थिर काष्ठा snd_midi_op *ops, व्योम *drv, काष्ठा snd_midi_channel *chan,
+     काष्ठा snd_midi_channel_set *chset)
+अणु
+	/* parse XG NRPNs here अगर possible */
+	अगर (ops->nrpn)
 		ops->nrpn(drv, chan, chset);
-}
+पूर्ण
 
 
 /*
  * convert channel parameter in GS sysex
  */
-static int
-get_channel(unsigned char cmd)
-{
-	int p = cmd & 0x0f;
-	if (p == 0)
+अटल पूर्णांक
+get_channel(अचिन्हित अक्षर cmd)
+अणु
+	पूर्णांक p = cmd & 0x0f;
+	अगर (p == 0)
 		p = 9;
-	else if (p < 10)
+	अन्यथा अगर (p < 10)
 		p--;
-	return p;
-}
+	वापस p;
+पूर्ण
 
 
 /*
  * Process a sysex message.
  */
-static void
-sysex(const struct snd_midi_op *ops, void *private, unsigned char *buf, int len,
-      struct snd_midi_channel_set *chset)
-{
+अटल व्योम
+sysex(स्थिर काष्ठा snd_midi_op *ops, व्योम *निजी, अचिन्हित अक्षर *buf, पूर्णांक len,
+      काष्ठा snd_midi_channel_set *chset)
+अणु
 	/* GM on */
-	static const unsigned char gm_on_macro[] = {
+	अटल स्थिर अचिन्हित अक्षर gm_on_macro[] = अणु
 		0x7e,0x7f,0x09,0x01,
-	};
+	पूर्ण;
 	/* XG on */
-	static const unsigned char xg_on_macro[] = {
+	अटल स्थिर अचिन्हित अक्षर xg_on_macro[] = अणु
 		0x43,0x10,0x4c,0x00,0x00,0x7e,0x00,
-	};
+	पूर्ण;
 	/* GS prefix
 	 * drum channel: XX=0x1?(channel), YY=0x15, ZZ=on/off
 	 * reverb mode: XX=0x01, YY=0x30, ZZ=0-7
 	 * chorus mode: XX=0x01, YY=0x38, ZZ=0-7
 	 * master vol:  XX=0x00, YY=0x04, ZZ=0-127
 	 */
-	static const unsigned char gs_pfx_macro[] = {
+	अटल स्थिर अचिन्हित अक्षर gs_pfx_macro[] = अणु
 		0x41,0x10,0x42,0x12,0x40,/*XX,YY,ZZ*/
-	};
+	पूर्ण;
 
-	int parsed = SNDRV_MIDI_SYSEX_NOT_PARSED;
+	पूर्णांक parsed = SNDRV_MIDI_SYSEX_NOT_PARSED;
 
-	if (len <= 0 || buf[0] != 0xf0)
-		return;
+	अगर (len <= 0 || buf[0] != 0xf0)
+		वापस;
 	/* skip first byte */
 	buf++;
 	len--;
 
 	/* GM on */
-	if (len >= (int)sizeof(gm_on_macro) &&
-	    memcmp(buf, gm_on_macro, sizeof(gm_on_macro)) == 0) {
-		if (chset->midi_mode != SNDRV_MIDI_MODE_GS &&
-		    chset->midi_mode != SNDRV_MIDI_MODE_XG) {
+	अगर (len >= (पूर्णांक)माप(gm_on_macro) &&
+	    स_भेद(buf, gm_on_macro, माप(gm_on_macro)) == 0) अणु
+		अगर (chset->midi_mode != SNDRV_MIDI_MODE_GS &&
+		    chset->midi_mode != SNDRV_MIDI_MODE_XG) अणु
 			chset->midi_mode = SNDRV_MIDI_MODE_GM;
 			reset_all_channels(chset);
 			parsed = SNDRV_MIDI_SYSEX_GM_ON;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* GS macros */
-	else if (len >= 8 &&
-		 memcmp(buf, gs_pfx_macro, sizeof(gs_pfx_macro)) == 0) {
-		if (chset->midi_mode != SNDRV_MIDI_MODE_GS &&
+	अन्यथा अगर (len >= 8 &&
+		 स_भेद(buf, gs_pfx_macro, माप(gs_pfx_macro)) == 0) अणु
+		अगर (chset->midi_mode != SNDRV_MIDI_MODE_GS &&
 		    chset->midi_mode != SNDRV_MIDI_MODE_XG)
 			chset->midi_mode = SNDRV_MIDI_MODE_GS;
 
-		if (buf[5] == 0x00 && buf[6] == 0x7f && buf[7] == 0x00) {
+		अगर (buf[5] == 0x00 && buf[6] == 0x7f && buf[7] == 0x00) अणु
 			/* GS reset */
 			parsed = SNDRV_MIDI_SYSEX_GS_RESET;
 			reset_all_channels(chset);
-		}
+		पूर्ण
 
-		else if ((buf[5] & 0xf0) == 0x10 && buf[6] == 0x15) {
+		अन्यथा अगर ((buf[5] & 0xf0) == 0x10 && buf[6] == 0x15) अणु
 			/* drum pattern */
-			int p = get_channel(buf[5]);
-			if (p < chset->max_channels) {
+			पूर्णांक p = get_channel(buf[5]);
+			अगर (p < chset->max_channels) अणु
 				parsed = SNDRV_MIDI_SYSEX_GS_DRUM_CHANNEL;
-				if (buf[7])
+				अगर (buf[7])
 					chset->channels[p].drum_channel = 1;
-				else
+				अन्यथा
 					chset->channels[p].drum_channel = 0;
-			}
+			पूर्ण
 
-		} else if ((buf[5] & 0xf0) == 0x10 && buf[6] == 0x21) {
+		पूर्ण अन्यथा अगर ((buf[5] & 0xf0) == 0x10 && buf[6] == 0x21) अणु
 			/* program */
-			int p = get_channel(buf[5]);
-			if (p < chset->max_channels &&
-			    ! chset->channels[p].drum_channel) {
+			पूर्णांक p = get_channel(buf[5]);
+			अगर (p < chset->max_channels &&
+			    ! chset->channels[p].drum_channel) अणु
 				parsed = SNDRV_MIDI_SYSEX_GS_DRUM_CHANNEL;
 				chset->channels[p].midi_program = buf[7];
-			}
+			पूर्ण
 
-		} else if (buf[5] == 0x01 && buf[6] == 0x30) {
+		पूर्ण अन्यथा अगर (buf[5] == 0x01 && buf[6] == 0x30) अणु
 			/* reverb mode */
 			parsed = SNDRV_MIDI_SYSEX_GS_REVERB_MODE;
 			chset->gs_reverb_mode = buf[7];
 
-		} else if (buf[5] == 0x01 && buf[6] == 0x38) {
+		पूर्ण अन्यथा अगर (buf[5] == 0x01 && buf[6] == 0x38) अणु
 			/* chorus mode */
 			parsed = SNDRV_MIDI_SYSEX_GS_CHORUS_MODE;
 			chset->gs_chorus_mode = buf[7];
 
-		} else if (buf[5] == 0x00 && buf[6] == 0x04) {
+		पूर्ण अन्यथा अगर (buf[5] == 0x00 && buf[6] == 0x04) अणु
 			/* master volume */
 			parsed = SNDRV_MIDI_SYSEX_GS_MASTER_VOLUME;
 			chset->gs_master_volume = buf[7];
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* XG on */
-	else if (len >= (int)sizeof(xg_on_macro) &&
-		 memcmp(buf, xg_on_macro, sizeof(xg_on_macro)) == 0) {
-		int i;
+	अन्यथा अगर (len >= (पूर्णांक)माप(xg_on_macro) &&
+		 स_भेद(buf, xg_on_macro, माप(xg_on_macro)) == 0) अणु
+		पूर्णांक i;
 		chset->midi_mode = SNDRV_MIDI_MODE_XG;
 		parsed = SNDRV_MIDI_SYSEX_XG_ON;
-		/* reset CC#0 for drums */
-		for (i = 0; i < chset->max_channels; i++) {
-			if (chset->channels[i].drum_channel)
+		/* reset CC#0 क्रम drums */
+		क्रम (i = 0; i < chset->max_channels; i++) अणु
+			अगर (chset->channels[i].drum_channel)
 				chset->channels[i].control[MIDI_CTL_MSB_BANK] = 127;
-			else
+			अन्यथा
 				chset->channels[i].control[MIDI_CTL_MSB_BANK] = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ops->sysex)
-		ops->sysex(private, buf - 1, len + 1, parsed, chset);
-}
+	अगर (ops->sysex)
+		ops->sysex(निजी, buf - 1, len + 1, parsed, chset);
+पूर्ण
 
 /*
  * all sound off
  */
-static void
-all_sounds_off(const struct snd_midi_op *ops, void *drv,
-	       struct snd_midi_channel *chan)
-{
-	int n;
+अटल व्योम
+all_sounds_off(स्थिर काष्ठा snd_midi_op *ops, व्योम *drv,
+	       काष्ठा snd_midi_channel *chan)
+अणु
+	पूर्णांक n;
 
-	if (! ops->note_terminate)
-		return;
-	for (n = 0; n < 128; n++) {
-		if (chan->note[n]) {
+	अगर (! ops->note_terminate)
+		वापस;
+	क्रम (n = 0; n < 128; n++) अणु
+		अगर (chan->note[n]) अणु
 			ops->note_terminate(drv, n, chan);
 			chan->note[n] = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * all notes off
  */
-static void
-all_notes_off(const struct snd_midi_op *ops, void *drv,
-	      struct snd_midi_channel *chan)
-{
-	int n;
+अटल व्योम
+all_notes_off(स्थिर काष्ठा snd_midi_op *ops, व्योम *drv,
+	      काष्ठा snd_midi_channel *chan)
+अणु
+	पूर्णांक n;
 
-	if (! ops->note_off)
-		return;
-	for (n = 0; n < 128; n++) {
-		if (chan->note[n] == SNDRV_MIDI_NOTE_ON)
+	अगर (! ops->note_off)
+		वापस;
+	क्रम (n = 0; n < 128; n++) अणु
+		अगर (chan->note[n] == SNDRV_MIDI_NOTE_ON)
 			note_off(ops, drv, chan, n, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Initialise a single midi channel control block.
  */
-static void snd_midi_channel_init(struct snd_midi_channel *p, int n)
-{
-	if (p == NULL)
-		return;
+अटल व्योम snd_midi_channel_init(काष्ठा snd_midi_channel *p, पूर्णांक n)
+अणु
+	अगर (p == शून्य)
+		वापस;
 
-	memset(p, 0, sizeof(struct snd_midi_channel));
-	p->private = NULL;
+	स_रखो(p, 0, माप(काष्ठा snd_midi_channel));
+	p->निजी = शून्य;
 	p->number = n;
 
 	snd_midi_reset_controllers(p);
@@ -638,86 +639,86 @@ static void snd_midi_channel_init(struct snd_midi_channel *p, int n)
 	p->gm_rpn_fine_tuning = 0;
 	p->gm_rpn_coarse_tuning = 0;
 
-	if (n == 9)
+	अगर (n == 9)
 		p->drum_channel = 1;	/* Default ch 10 as drums */
-}
+पूर्ण
 
 /*
  * Allocate and initialise a set of midi channel control blocks.
  */
-static struct snd_midi_channel *snd_midi_channel_init_set(int n)
-{
-	struct snd_midi_channel *chan;
-	int  i;
+अटल काष्ठा snd_midi_channel *snd_midi_channel_init_set(पूर्णांक n)
+अणु
+	काष्ठा snd_midi_channel *chan;
+	पूर्णांक  i;
 
-	chan = kmalloc_array(n, sizeof(struct snd_midi_channel), GFP_KERNEL);
-	if (chan) {
-		for (i = 0; i < n; i++)
+	chan = kदो_स्मृति_array(n, माप(काष्ठा snd_midi_channel), GFP_KERNEL);
+	अगर (chan) अणु
+		क्रम (i = 0; i < n; i++)
 			snd_midi_channel_init(chan+i, i);
-	}
+	पूर्ण
 
-	return chan;
-}
+	वापस chan;
+पूर्ण
 
 /*
  * reset all midi channels
  */
-static void
-reset_all_channels(struct snd_midi_channel_set *chset)
-{
-	int ch;
-	for (ch = 0; ch < chset->max_channels; ch++) {
-		struct snd_midi_channel *chan = chset->channels + ch;
+अटल व्योम
+reset_all_channels(काष्ठा snd_midi_channel_set *chset)
+अणु
+	पूर्णांक ch;
+	क्रम (ch = 0; ch < chset->max_channels; ch++) अणु
+		काष्ठा snd_midi_channel *chan = chset->channels + ch;
 		snd_midi_reset_controllers(chan);
 		chan->gm_rpn_pitch_bend_range = 256; /* 2 semitones */
 		chan->gm_rpn_fine_tuning = 0;
 		chan->gm_rpn_coarse_tuning = 0;
 
-		if (ch == 9)
+		अगर (ch == 9)
 			chan->drum_channel = 1;
-		else
+		अन्यथा
 			chan->drum_channel = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /*
  * Allocate and initialise a midi channel set.
  */
-struct snd_midi_channel_set *snd_midi_channel_alloc_set(int n)
-{
-	struct snd_midi_channel_set *chset;
+काष्ठा snd_midi_channel_set *snd_midi_channel_alloc_set(पूर्णांक n)
+अणु
+	काष्ठा snd_midi_channel_set *chset;
 
-	chset = kmalloc(sizeof(*chset), GFP_KERNEL);
-	if (chset) {
+	chset = kदो_स्मृति(माप(*chset), GFP_KERNEL);
+	अगर (chset) अणु
 		chset->channels = snd_midi_channel_init_set(n);
-		chset->private_data = NULL;
+		chset->निजी_data = शून्य;
 		chset->max_channels = n;
-	}
-	return chset;
-}
+	पूर्ण
+	वापस chset;
+पूर्ण
 EXPORT_SYMBOL(snd_midi_channel_alloc_set);
 
 /*
- * Reset the midi controllers on a particular channel to default values.
+ * Reset the midi controllers on a particular channel to शेष values.
  */
-static void snd_midi_reset_controllers(struct snd_midi_channel *chan)
-{
-	memset(chan->control, 0, sizeof(chan->control));
+अटल व्योम snd_midi_reset_controllers(काष्ठा snd_midi_channel *chan)
+अणु
+	स_रखो(chan->control, 0, माप(chan->control));
 	chan->gm_volume = 127;
 	chan->gm_expression = 127;
 	chan->gm_pan = 64;
-}
+पूर्ण
 
 
 /*
  * Free a midi channel set.
  */
-void snd_midi_channel_free_set(struct snd_midi_channel_set *chset)
-{
-	if (chset == NULL)
-		return;
-	kfree(chset->channels);
-	kfree(chset);
-}
-EXPORT_SYMBOL(snd_midi_channel_free_set);
+व्योम snd_midi_channel_मुक्त_set(काष्ठा snd_midi_channel_set *chset)
+अणु
+	अगर (chset == शून्य)
+		वापस;
+	kमुक्त(chset->channels);
+	kमुक्त(chset);
+पूर्ण
+EXPORT_SYMBOL(snd_midi_channel_मुक्त_set);

@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_STREAM_H
-#define __PERF_STREAM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_STREAM_H
+#घोषणा __PERF_STREAM_H
 
-#include "callchain.h"
+#समावेश "callchain.h"
 
-struct stream {
-	struct callchain_node	*cnode;
-	struct callchain_node	*pair_cnode;
-};
+काष्ठा stream अणु
+	काष्ठा callchain_node	*cnode;
+	काष्ठा callchain_node	*pair_cnode;
+पूर्ण;
 
-struct evsel_streams {
-	struct stream		*streams;
-	int			nr_streams_max;
-	int			nr_streams;
-	int			evsel_idx;
+काष्ठा evsel_streams अणु
+	काष्ठा stream		*streams;
+	पूर्णांक			nr_streams_max;
+	पूर्णांक			nr_streams;
+	पूर्णांक			evsel_idx;
 	u64			streams_hits;
-};
+पूर्ण;
 
-struct evlist_streams {
-	struct evsel_streams	*ev_streams;
-	int			nr_evsel;
-};
+काष्ठा evlist_streams अणु
+	काष्ठा evsel_streams	*ev_streams;
+	पूर्णांक			nr_evsel;
+पूर्ण;
 
-struct evlist;
+काष्ठा evlist;
 
-void evlist_streams__delete(struct evlist_streams *els);
+व्योम evlist_streams__delete(काष्ठा evlist_streams *els);
 
-struct evlist_streams *evlist__create_streams(struct evlist *evlist,
-					      int nr_streams_max);
+काष्ठा evlist_streams *evlist__create_streams(काष्ठा evlist *evlist,
+					      पूर्णांक nr_streams_max);
 
-struct evsel_streams *evsel_streams__entry(struct evlist_streams *els,
-					   int evsel_idx);
+काष्ठा evsel_streams *evsel_streams__entry(काष्ठा evlist_streams *els,
+					   पूर्णांक evsel_idx);
 
-void evsel_streams__match(struct evsel_streams *es_base,
-			  struct evsel_streams *es_pair);
+व्योम evsel_streams__match(काष्ठा evsel_streams *es_base,
+			  काष्ठा evsel_streams *es_pair);
 
-void evsel_streams__report(struct evsel_streams *es_base,
-			   struct evsel_streams *es_pair);
+व्योम evsel_streams__report(काष्ठा evsel_streams *es_base,
+			   काष्ठा evsel_streams *es_pair);
 
-#endif /* __PERF_STREAM_H */
+#पूर्ण_अगर /* __PERF_STREAM_H */

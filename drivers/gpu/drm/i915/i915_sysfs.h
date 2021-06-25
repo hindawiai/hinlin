@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __I915_SYSFS_H__
-#define __I915_SYSFS_H__
+#अगर_अघोषित __I915_SYSFS_H__
+#घोषणा __I915_SYSFS_H__
 
-struct drm_i915_private;
+काष्ठा drm_i915_निजी;
 
-void i915_setup_sysfs(struct drm_i915_private *i915);
-void i915_teardown_sysfs(struct drm_i915_private *i915);
+व्योम i915_setup_sysfs(काष्ठा drm_i915_निजी *i915);
+व्योम i915_tearकरोwn_sysfs(काष्ठा drm_i915_निजी *i915);
 
-#endif /* __I915_SYSFS_H__ */
+#पूर्ण_अगर /* __I915_SYSFS_H__ */

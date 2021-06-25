@@ -1,116 +1,117 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
-#include <linux/dma-mapping.h>
-#include "mt76.h"
-#include "dma.h"
+#समावेश <linux/dma-mapping.h>
+#समावेश "mt76.h"
+#समावेश "dma.h"
 
-static struct mt76_txwi_cache *
-mt76_alloc_txwi(struct mt76_dev *dev)
-{
-	struct mt76_txwi_cache *t;
+अटल काष्ठा mt76_txwi_cache *
+mt76_alloc_txwi(काष्ठा mt76_dev *dev)
+अणु
+	काष्ठा mt76_txwi_cache *t;
 	dma_addr_t addr;
 	u8 *txwi;
-	int size;
+	पूर्णांक size;
 
-	size = L1_CACHE_ALIGN(dev->drv->txwi_size + sizeof(*t));
+	size = L1_CACHE_ALIGN(dev->drv->txwi_size + माप(*t));
 	txwi = devm_kzalloc(dev->dev, size, GFP_ATOMIC);
-	if (!txwi)
-		return NULL;
+	अगर (!txwi)
+		वापस शून्य;
 
 	addr = dma_map_single(dev->dev, txwi, dev->drv->txwi_size,
 			      DMA_TO_DEVICE);
-	t = (struct mt76_txwi_cache *)(txwi + dev->drv->txwi_size);
+	t = (काष्ठा mt76_txwi_cache *)(txwi + dev->drv->txwi_size);
 	t->dma_addr = addr;
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-static struct mt76_txwi_cache *
-__mt76_get_txwi(struct mt76_dev *dev)
-{
-	struct mt76_txwi_cache *t = NULL;
+अटल काष्ठा mt76_txwi_cache *
+__mt76_get_txwi(काष्ठा mt76_dev *dev)
+अणु
+	काष्ठा mt76_txwi_cache *t = शून्य;
 
 	spin_lock(&dev->lock);
-	if (!list_empty(&dev->txwi_cache)) {
-		t = list_first_entry(&dev->txwi_cache, struct mt76_txwi_cache,
+	अगर (!list_empty(&dev->txwi_cache)) अणु
+		t = list_first_entry(&dev->txwi_cache, काष्ठा mt76_txwi_cache,
 				     list);
 		list_del(&t->list);
-	}
+	पूर्ण
 	spin_unlock(&dev->lock);
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-static struct mt76_txwi_cache *
-mt76_get_txwi(struct mt76_dev *dev)
-{
-	struct mt76_txwi_cache *t = __mt76_get_txwi(dev);
+अटल काष्ठा mt76_txwi_cache *
+mt76_get_txwi(काष्ठा mt76_dev *dev)
+अणु
+	काष्ठा mt76_txwi_cache *t = __mt76_get_txwi(dev);
 
-	if (t)
-		return t;
+	अगर (t)
+		वापस t;
 
-	return mt76_alloc_txwi(dev);
-}
+	वापस mt76_alloc_txwi(dev);
+पूर्ण
 
-void
-mt76_put_txwi(struct mt76_dev *dev, struct mt76_txwi_cache *t)
-{
-	if (!t)
-		return;
+व्योम
+mt76_put_txwi(काष्ठा mt76_dev *dev, काष्ठा mt76_txwi_cache *t)
+अणु
+	अगर (!t)
+		वापस;
 
 	spin_lock(&dev->lock);
 	list_add(&t->list, &dev->txwi_cache);
 	spin_unlock(&dev->lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_put_txwi);
 
-static void
-mt76_free_pending_txwi(struct mt76_dev *dev)
-{
-	struct mt76_txwi_cache *t;
+अटल व्योम
+mt76_मुक्त_pending_txwi(काष्ठा mt76_dev *dev)
+अणु
+	काष्ठा mt76_txwi_cache *t;
 
 	local_bh_disable();
-	while ((t = __mt76_get_txwi(dev)) != NULL)
+	जबतक ((t = __mt76_get_txwi(dev)) != शून्य)
 		dma_unmap_single(dev->dev, t->dma_addr, dev->drv->txwi_size,
 				 DMA_TO_DEVICE);
 	local_bh_enable();
-}
+पूर्ण
 
-static void
-mt76_dma_sync_idx(struct mt76_dev *dev, struct mt76_queue *q)
-{
-	writel(q->desc_dma, &q->regs->desc_base);
-	writel(q->ndesc, &q->regs->ring_size);
-	q->head = readl(&q->regs->dma_idx);
+अटल व्योम
+mt76_dma_sync_idx(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q)
+अणु
+	ग_लिखोl(q->desc_dma, &q->regs->desc_base);
+	ग_लिखोl(q->ndesc, &q->regs->ring_size);
+	q->head = पढ़ोl(&q->regs->dma_idx);
 	q->tail = q->head;
-}
+पूर्ण
 
-static void
-mt76_dma_queue_reset(struct mt76_dev *dev, struct mt76_queue *q)
-{
-	int i;
+अटल व्योम
+mt76_dma_queue_reset(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q)
+अणु
+	पूर्णांक i;
 
-	if (!q)
-		return;
+	अगर (!q)
+		वापस;
 
 	/* clear descriptors */
-	for (i = 0; i < q->ndesc; i++)
+	क्रम (i = 0; i < q->ndesc; i++)
 		q->desc[i].ctrl = cpu_to_le32(MT_DMA_CTL_DMA_DONE);
 
-	writel(0, &q->regs->cpu_idx);
-	writel(0, &q->regs->dma_idx);
+	ग_लिखोl(0, &q->regs->cpu_idx);
+	ग_लिखोl(0, &q->regs->dma_idx);
 	mt76_dma_sync_idx(dev, q);
-}
+पूर्ण
 
-static int
-mt76_dma_alloc_queue(struct mt76_dev *dev, struct mt76_queue *q,
-		     int idx, int n_desc, int bufsize,
+अटल पूर्णांक
+mt76_dma_alloc_queue(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q,
+		     पूर्णांक idx, पूर्णांक n_desc, पूर्णांक bufsize,
 		     u32 ring_base)
-{
-	int size;
+अणु
+	पूर्णांक size;
 
 	spin_lock_init(&q->lock);
 	spin_lock_init(&q->cleanup_lock);
@@ -120,37 +121,37 @@ mt76_dma_alloc_queue(struct mt76_dev *dev, struct mt76_queue *q,
 	q->buf_size = bufsize;
 	q->hw_idx = idx;
 
-	size = q->ndesc * sizeof(struct mt76_desc);
+	size = q->ndesc * माप(काष्ठा mt76_desc);
 	q->desc = dmam_alloc_coherent(dev->dev, size, &q->desc_dma, GFP_KERNEL);
-	if (!q->desc)
-		return -ENOMEM;
+	अगर (!q->desc)
+		वापस -ENOMEM;
 
-	size = q->ndesc * sizeof(*q->entry);
+	size = q->ndesc * माप(*q->entry);
 	q->entry = devm_kzalloc(dev->dev, size, GFP_KERNEL);
-	if (!q->entry)
-		return -ENOMEM;
+	अगर (!q->entry)
+		वापस -ENOMEM;
 
 	mt76_dma_queue_reset(dev, q);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mt76_dma_add_buf(struct mt76_dev *dev, struct mt76_queue *q,
-		 struct mt76_queue_buf *buf, int nbufs, u32 info,
-		 struct sk_buff *skb, void *txwi)
-{
-	struct mt76_queue_entry *entry;
-	struct mt76_desc *desc;
+अटल पूर्णांक
+mt76_dma_add_buf(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q,
+		 काष्ठा mt76_queue_buf *buf, पूर्णांक nbufs, u32 info,
+		 काष्ठा sk_buff *skb, व्योम *txwi)
+अणु
+	काष्ठा mt76_queue_entry *entry;
+	काष्ठा mt76_desc *desc;
 	u32 ctrl;
-	int i, idx = -1;
+	पूर्णांक i, idx = -1;
 
-	if (txwi) {
+	अगर (txwi) अणु
 		q->entry[q->head].txwi = DMA_DUMMY_DATA;
 		q->entry[q->head].skip_buf0 = true;
-	}
+	पूर्ण
 
-	for (i = 0; i < nbufs; i += 2, buf += 2) {
+	क्रम (i = 0; i < nbufs; i += 2, buf += 2) अणु
 		u32 buf0 = buf[0].addr, buf1 = 0;
 
 		idx = q->head;
@@ -159,7 +160,7 @@ mt76_dma_add_buf(struct mt76_dev *dev, struct mt76_queue *q,
 		desc = &q->desc[idx];
 		entry = &q->entry[idx];
 
-		if (buf[0].skip_unmap)
+		अगर (buf[0].skip_unmap)
 			entry->skip_buf0 = true;
 		entry->skip_buf1 = i == nbufs - 1;
 
@@ -167,18 +168,18 @@ mt76_dma_add_buf(struct mt76_dev *dev, struct mt76_queue *q,
 		entry->dma_len[0] = buf[0].len;
 
 		ctrl = FIELD_PREP(MT_DMA_CTL_SD_LEN0, buf[0].len);
-		if (i < nbufs - 1) {
+		अगर (i < nbufs - 1) अणु
 			entry->dma_addr[1] = buf[1].addr;
 			entry->dma_len[1] = buf[1].len;
 			buf1 = buf[1].addr;
 			ctrl |= FIELD_PREP(MT_DMA_CTL_SD_LEN1, buf[1].len);
-			if (buf[1].skip_unmap)
+			अगर (buf[1].skip_unmap)
 				entry->skip_buf1 = true;
-		}
+		पूर्ण
 
-		if (i == nbufs - 1)
+		अगर (i == nbufs - 1)
 			ctrl |= MT_DMA_CTL_LAST_SEC0;
-		else if (i == nbufs - 2)
+		अन्यथा अगर (i == nbufs - 2)
 			ctrl |= MT_DMA_CTL_LAST_SEC1;
 
 		WRITE_ONCE(desc->buf0, cpu_to_le32(buf0));
@@ -187,468 +188,468 @@ mt76_dma_add_buf(struct mt76_dev *dev, struct mt76_queue *q,
 		WRITE_ONCE(desc->ctrl, cpu_to_le32(ctrl));
 
 		q->queued++;
-	}
+	पूर्ण
 
 	q->entry[idx].txwi = txwi;
 	q->entry[idx].skb = skb;
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static void
-mt76_dma_tx_cleanup_idx(struct mt76_dev *dev, struct mt76_queue *q, int idx,
-			struct mt76_queue_entry *prev_e)
-{
-	struct mt76_queue_entry *e = &q->entry[idx];
+अटल व्योम
+mt76_dma_tx_cleanup_idx(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q, पूर्णांक idx,
+			काष्ठा mt76_queue_entry *prev_e)
+अणु
+	काष्ठा mt76_queue_entry *e = &q->entry[idx];
 
-	if (!e->skip_buf0)
+	अगर (!e->skip_buf0)
 		dma_unmap_single(dev->dev, e->dma_addr[0], e->dma_len[0],
 				 DMA_TO_DEVICE);
 
-	if (!e->skip_buf1)
+	अगर (!e->skip_buf1)
 		dma_unmap_single(dev->dev, e->dma_addr[1], e->dma_len[1],
 				 DMA_TO_DEVICE);
 
-	if (e->txwi == DMA_DUMMY_DATA)
-		e->txwi = NULL;
+	अगर (e->txwi == DMA_DUMMY_DATA)
+		e->txwi = शून्य;
 
-	if (e->skb == DMA_DUMMY_DATA)
-		e->skb = NULL;
+	अगर (e->skb == DMA_DUMMY_DATA)
+		e->skb = शून्य;
 
 	*prev_e = *e;
-	memset(e, 0, sizeof(*e));
-}
+	स_रखो(e, 0, माप(*e));
+पूर्ण
 
-static void
-mt76_dma_kick_queue(struct mt76_dev *dev, struct mt76_queue *q)
-{
+अटल व्योम
+mt76_dma_kick_queue(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q)
+अणु
 	wmb();
-	writel(q->head, &q->regs->cpu_idx);
-}
+	ग_लिखोl(q->head, &q->regs->cpu_idx);
+पूर्ण
 
-static void
-mt76_dma_tx_cleanup(struct mt76_dev *dev, struct mt76_queue *q, bool flush)
-{
-	struct mt76_queue_entry entry;
-	int last;
+अटल व्योम
+mt76_dma_tx_cleanup(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q, bool flush)
+अणु
+	काष्ठा mt76_queue_entry entry;
+	पूर्णांक last;
 
-	if (!q)
-		return;
+	अगर (!q)
+		वापस;
 
 	spin_lock_bh(&q->cleanup_lock);
-	if (flush)
+	अगर (flush)
 		last = -1;
-	else
-		last = readl(&q->regs->dma_idx);
+	अन्यथा
+		last = पढ़ोl(&q->regs->dma_idx);
 
-	while (q->queued > 0 && q->tail != last) {
+	जबतक (q->queued > 0 && q->tail != last) अणु
 		mt76_dma_tx_cleanup_idx(dev, q, q->tail, &entry);
 		mt76_queue_tx_complete(dev, q, &entry);
 
-		if (entry.txwi) {
-			if (!(dev->drv->drv_flags & MT_DRV_TXWI_NO_FREE))
+		अगर (entry.txwi) अणु
+			अगर (!(dev->drv->drv_flags & MT_DRV_TXWI_NO_FREE))
 				mt76_put_txwi(dev, entry.txwi);
-		}
+		पूर्ण
 
-		if (!flush && q->tail == last)
-			last = readl(&q->regs->dma_idx);
+		अगर (!flush && q->tail == last)
+			last = पढ़ोl(&q->regs->dma_idx);
 
-	}
+	पूर्ण
 	spin_unlock_bh(&q->cleanup_lock);
 
-	if (flush) {
+	अगर (flush) अणु
 		spin_lock_bh(&q->lock);
 		mt76_dma_sync_idx(dev, q);
 		mt76_dma_kick_queue(dev, q);
 		spin_unlock_bh(&q->lock);
-	}
+	पूर्ण
 
-	if (!q->queued)
-		wake_up(&dev->tx_wait);
-}
+	अगर (!q->queued)
+		wake_up(&dev->tx_रुको);
+पूर्ण
 
-static void *
-mt76_dma_get_buf(struct mt76_dev *dev, struct mt76_queue *q, int idx,
-		 int *len, u32 *info, bool *more)
-{
-	struct mt76_queue_entry *e = &q->entry[idx];
-	struct mt76_desc *desc = &q->desc[idx];
+अटल व्योम *
+mt76_dma_get_buf(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q, पूर्णांक idx,
+		 पूर्णांक *len, u32 *info, bool *more)
+अणु
+	काष्ठा mt76_queue_entry *e = &q->entry[idx];
+	काष्ठा mt76_desc *desc = &q->desc[idx];
 	dma_addr_t buf_addr;
-	void *buf = e->buf;
-	int buf_len = SKB_WITH_OVERHEAD(q->buf_size);
+	व्योम *buf = e->buf;
+	पूर्णांक buf_len = SKB_WITH_OVERHEAD(q->buf_size);
 
 	buf_addr = e->dma_addr[0];
-	if (len) {
+	अगर (len) अणु
 		u32 ctl = le32_to_cpu(READ_ONCE(desc->ctrl));
 		*len = FIELD_GET(MT_DMA_CTL_SD_LEN0, ctl);
 		*more = !(ctl & MT_DMA_CTL_LAST_SEC0);
-	}
+	पूर्ण
 
-	if (info)
+	अगर (info)
 		*info = le32_to_cpu(desc->info);
 
 	dma_unmap_single(dev->dev, buf_addr, buf_len, DMA_FROM_DEVICE);
-	e->buf = NULL;
+	e->buf = शून्य;
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static void *
-mt76_dma_dequeue(struct mt76_dev *dev, struct mt76_queue *q, bool flush,
-		 int *len, u32 *info, bool *more)
-{
-	int idx = q->tail;
+अटल व्योम *
+mt76_dma_dequeue(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q, bool flush,
+		 पूर्णांक *len, u32 *info, bool *more)
+अणु
+	पूर्णांक idx = q->tail;
 
 	*more = false;
-	if (!q->queued)
-		return NULL;
+	अगर (!q->queued)
+		वापस शून्य;
 
-	if (flush)
+	अगर (flush)
 		q->desc[idx].ctrl |= cpu_to_le32(MT_DMA_CTL_DMA_DONE);
-	else if (!(q->desc[idx].ctrl & cpu_to_le32(MT_DMA_CTL_DMA_DONE)))
-		return NULL;
+	अन्यथा अगर (!(q->desc[idx].ctrl & cpu_to_le32(MT_DMA_CTL_DMA_DONE)))
+		वापस शून्य;
 
 	q->tail = (q->tail + 1) % q->ndesc;
 	q->queued--;
 
-	return mt76_dma_get_buf(dev, q, idx, len, info, more);
-}
+	वापस mt76_dma_get_buf(dev, q, idx, len, info, more);
+पूर्ण
 
-static int
-mt76_dma_tx_queue_skb_raw(struct mt76_dev *dev, struct mt76_queue *q,
-			  struct sk_buff *skb, u32 tx_info)
-{
-	struct mt76_queue_buf buf = {};
+अटल पूर्णांक
+mt76_dma_tx_queue_skb_raw(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q,
+			  काष्ठा sk_buff *skb, u32 tx_info)
+अणु
+	काष्ठा mt76_queue_buf buf = अणुपूर्ण;
 	dma_addr_t addr;
 
-	if (q->queued + 1 >= q->ndesc - 1)
-		goto error;
+	अगर (q->queued + 1 >= q->ndesc - 1)
+		जाओ error;
 
 	addr = dma_map_single(dev->dev, skb->data, skb->len,
 			      DMA_TO_DEVICE);
-	if (unlikely(dma_mapping_error(dev->dev, addr)))
-		goto error;
+	अगर (unlikely(dma_mapping_error(dev->dev, addr)))
+		जाओ error;
 
 	buf.addr = addr;
 	buf.len = skb->len;
 
 	spin_lock_bh(&q->lock);
-	mt76_dma_add_buf(dev, q, &buf, 1, tx_info, skb, NULL);
+	mt76_dma_add_buf(dev, q, &buf, 1, tx_info, skb, शून्य);
 	mt76_dma_kick_queue(dev, q);
 	spin_unlock_bh(&q->lock);
 
-	return 0;
+	वापस 0;
 
 error:
-	dev_kfree_skb(skb);
-	return -ENOMEM;
-}
+	dev_kमुक्त_skb(skb);
+	वापस -ENOMEM;
+पूर्ण
 
-static int
-mt76_dma_tx_queue_skb(struct mt76_dev *dev, struct mt76_queue *q,
-		      struct sk_buff *skb, struct mt76_wcid *wcid,
-		      struct ieee80211_sta *sta)
-{
-	struct mt76_tx_info tx_info = {
+अटल पूर्णांक
+mt76_dma_tx_queue_skb(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q,
+		      काष्ठा sk_buff *skb, काष्ठा mt76_wcid *wcid,
+		      काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा mt76_tx_info tx_info = अणु
 		.skb = skb,
-	};
-	struct ieee80211_hw *hw;
-	int len, n = 0, ret = -ENOMEM;
-	struct mt76_txwi_cache *t;
-	struct sk_buff *iter;
+	पूर्ण;
+	काष्ठा ieee80211_hw *hw;
+	पूर्णांक len, n = 0, ret = -ENOMEM;
+	काष्ठा mt76_txwi_cache *t;
+	काष्ठा sk_buff *iter;
 	dma_addr_t addr;
 	u8 *txwi;
 
 	t = mt76_get_txwi(dev);
-	if (!t) {
+	अगर (!t) अणु
 		hw = mt76_tx_status_get_hw(dev, skb);
-		ieee80211_free_txskb(hw, skb);
-		return -ENOMEM;
-	}
+		ieee80211_मुक्त_txskb(hw, skb);
+		वापस -ENOMEM;
+	पूर्ण
 	txwi = mt76_get_txwi_ptr(dev, t);
 
-	skb->prev = skb->next = NULL;
-	if (dev->drv->drv_flags & MT_DRV_TX_ALIGNED4_SKBS)
+	skb->prev = skb->next = शून्य;
+	अगर (dev->drv->drv_flags & MT_DRV_TX_ALIGNED4_SKBS)
 		mt76_insert_hdr_pad(skb);
 
 	len = skb_headlen(skb);
 	addr = dma_map_single(dev->dev, skb->data, len, DMA_TO_DEVICE);
-	if (unlikely(dma_mapping_error(dev->dev, addr)))
-		goto free;
+	अगर (unlikely(dma_mapping_error(dev->dev, addr)))
+		जाओ मुक्त;
 
 	tx_info.buf[n].addr = t->dma_addr;
 	tx_info.buf[n++].len = dev->drv->txwi_size;
 	tx_info.buf[n].addr = addr;
 	tx_info.buf[n++].len = len;
 
-	skb_walk_frags(skb, iter) {
-		if (n == ARRAY_SIZE(tx_info.buf))
-			goto unmap;
+	skb_walk_frags(skb, iter) अणु
+		अगर (n == ARRAY_SIZE(tx_info.buf))
+			जाओ unmap;
 
 		addr = dma_map_single(dev->dev, iter->data, iter->len,
 				      DMA_TO_DEVICE);
-		if (unlikely(dma_mapping_error(dev->dev, addr)))
-			goto unmap;
+		अगर (unlikely(dma_mapping_error(dev->dev, addr)))
+			जाओ unmap;
 
 		tx_info.buf[n].addr = addr;
 		tx_info.buf[n++].len = iter->len;
-	}
+	पूर्ण
 	tx_info.nbuf = n;
 
-	if (q->queued + (tx_info.nbuf + 1) / 2 >= q->ndesc - 1) {
+	अगर (q->queued + (tx_info.nbuf + 1) / 2 >= q->ndesc - 1) अणु
 		ret = -ENOMEM;
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 
-	dma_sync_single_for_cpu(dev->dev, t->dma_addr, dev->drv->txwi_size,
+	dma_sync_single_क्रम_cpu(dev->dev, t->dma_addr, dev->drv->txwi_size,
 				DMA_TO_DEVICE);
 	ret = dev->drv->tx_prepare_skb(dev, txwi, q->qid, wcid, sta, &tx_info);
-	dma_sync_single_for_device(dev->dev, t->dma_addr, dev->drv->txwi_size,
+	dma_sync_single_क्रम_device(dev->dev, t->dma_addr, dev->drv->txwi_size,
 				   DMA_TO_DEVICE);
-	if (ret < 0)
-		goto unmap;
+	अगर (ret < 0)
+		जाओ unmap;
 
-	return mt76_dma_add_buf(dev, q, tx_info.buf, tx_info.nbuf,
+	वापस mt76_dma_add_buf(dev, q, tx_info.buf, tx_info.nbuf,
 				tx_info.info, tx_info.skb, t);
 
 unmap:
-	for (n--; n > 0; n--)
+	क्रम (n--; n > 0; n--)
 		dma_unmap_single(dev->dev, tx_info.buf[n].addr,
 				 tx_info.buf[n].len, DMA_TO_DEVICE);
 
-free:
-#ifdef CONFIG_NL80211_TESTMODE
-	/* fix tx_done accounting on queue overflow */
-	if (mt76_is_testmode_skb(dev, skb, &hw)) {
-		struct mt76_phy *phy = hw->priv;
+मुक्त:
+#अगर_घोषित CONFIG_NL80211_TESTMODE
+	/* fix tx_करोne accounting on queue overflow */
+	अगर (mt76_is_tesपंचांगode_skb(dev, skb, &hw)) अणु
+		काष्ठा mt76_phy *phy = hw->priv;
 
-		if (tx_info.skb == phy->test.tx_skb)
-			phy->test.tx_done--;
-	}
-#endif
+		अगर (tx_info.skb == phy->test.tx_skb)
+			phy->test.tx_करोne--;
+	पूर्ण
+#पूर्ण_अगर
 
-	dev_kfree_skb(tx_info.skb);
+	dev_kमुक्त_skb(tx_info.skb);
 	mt76_put_txwi(dev, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-mt76_dma_rx_fill(struct mt76_dev *dev, struct mt76_queue *q)
-{
+अटल पूर्णांक
+mt76_dma_rx_fill(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q)
+अणु
 	dma_addr_t addr;
-	void *buf;
-	int frames = 0;
-	int len = SKB_WITH_OVERHEAD(q->buf_size);
-	int offset = q->buf_offset;
+	व्योम *buf;
+	पूर्णांक frames = 0;
+	पूर्णांक len = SKB_WITH_OVERHEAD(q->buf_size);
+	पूर्णांक offset = q->buf_offset;
 
 	spin_lock_bh(&q->lock);
 
-	while (q->queued < q->ndesc - 1) {
-		struct mt76_queue_buf qbuf;
+	जबतक (q->queued < q->ndesc - 1) अणु
+		काष्ठा mt76_queue_buf qbuf;
 
 		buf = page_frag_alloc(&q->rx_page, q->buf_size, GFP_ATOMIC);
-		if (!buf)
-			break;
+		अगर (!buf)
+			अवरोध;
 
 		addr = dma_map_single(dev->dev, buf, len, DMA_FROM_DEVICE);
-		if (unlikely(dma_mapping_error(dev->dev, addr))) {
-			skb_free_frag(buf);
-			break;
-		}
+		अगर (unlikely(dma_mapping_error(dev->dev, addr))) अणु
+			skb_मुक्त_frag(buf);
+			अवरोध;
+		पूर्ण
 
 		qbuf.addr = addr + offset;
 		qbuf.len = len - offset;
-		mt76_dma_add_buf(dev, q, &qbuf, 1, 0, buf, NULL);
+		mt76_dma_add_buf(dev, q, &qbuf, 1, 0, buf, शून्य);
 		frames++;
-	}
+	पूर्ण
 
-	if (frames)
+	अगर (frames)
 		mt76_dma_kick_queue(dev, q);
 
 	spin_unlock_bh(&q->lock);
 
-	return frames;
-}
+	वापस frames;
+पूर्ण
 
-static void
-mt76_dma_rx_cleanup(struct mt76_dev *dev, struct mt76_queue *q)
-{
-	struct page *page;
-	void *buf;
+अटल व्योम
+mt76_dma_rx_cleanup(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q)
+अणु
+	काष्ठा page *page;
+	व्योम *buf;
 	bool more;
 
 	spin_lock_bh(&q->lock);
-	do {
-		buf = mt76_dma_dequeue(dev, q, true, NULL, NULL, &more);
-		if (!buf)
-			break;
+	करो अणु
+		buf = mt76_dma_dequeue(dev, q, true, शून्य, शून्य, &more);
+		अगर (!buf)
+			अवरोध;
 
-		skb_free_frag(buf);
-	} while (1);
+		skb_मुक्त_frag(buf);
+	पूर्ण जबतक (1);
 	spin_unlock_bh(&q->lock);
 
-	if (!q->rx_page.va)
-		return;
+	अगर (!q->rx_page.va)
+		वापस;
 
 	page = virt_to_page(q->rx_page.va);
 	__page_frag_cache_drain(page, q->rx_page.pagecnt_bias);
-	memset(&q->rx_page, 0, sizeof(q->rx_page));
-}
+	स_रखो(&q->rx_page, 0, माप(q->rx_page));
+पूर्ण
 
-static void
-mt76_dma_rx_reset(struct mt76_dev *dev, enum mt76_rxq_id qid)
-{
-	struct mt76_queue *q = &dev->q_rx[qid];
-	int i;
+अटल व्योम
+mt76_dma_rx_reset(काष्ठा mt76_dev *dev, क्रमागत mt76_rxq_id qid)
+अणु
+	काष्ठा mt76_queue *q = &dev->q_rx[qid];
+	पूर्णांक i;
 
-	for (i = 0; i < q->ndesc; i++)
+	क्रम (i = 0; i < q->ndesc; i++)
 		q->desc[i].ctrl = cpu_to_le32(MT_DMA_CTL_DMA_DONE);
 
 	mt76_dma_rx_cleanup(dev, q);
 	mt76_dma_sync_idx(dev, q);
 	mt76_dma_rx_fill(dev, q);
 
-	if (!q->rx_head)
-		return;
+	अगर (!q->rx_head)
+		वापस;
 
-	dev_kfree_skb(q->rx_head);
-	q->rx_head = NULL;
-}
+	dev_kमुक्त_skb(q->rx_head);
+	q->rx_head = शून्य;
+पूर्ण
 
-static void
-mt76_add_fragment(struct mt76_dev *dev, struct mt76_queue *q, void *data,
-		  int len, bool more)
-{
-	struct sk_buff *skb = q->rx_head;
-	struct skb_shared_info *shinfo = skb_shinfo(skb);
-	int nr_frags = shinfo->nr_frags;
+अटल व्योम
+mt76_add_fragment(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q, व्योम *data,
+		  पूर्णांक len, bool more)
+अणु
+	काष्ठा sk_buff *skb = q->rx_head;
+	काष्ठा skb_shared_info *shinfo = skb_shinfo(skb);
+	पूर्णांक nr_frags = shinfo->nr_frags;
 
-	if (nr_frags < ARRAY_SIZE(shinfo->frags)) {
-		struct page *page = virt_to_head_page(data);
-		int offset = data - page_address(page) + q->buf_offset;
+	अगर (nr_frags < ARRAY_SIZE(shinfo->frags)) अणु
+		काष्ठा page *page = virt_to_head_page(data);
+		पूर्णांक offset = data - page_address(page) + q->buf_offset;
 
 		skb_add_rx_frag(skb, nr_frags, page, offset, len, q->buf_size);
-	} else {
-		skb_free_frag(data);
-	}
+	पूर्ण अन्यथा अणु
+		skb_मुक्त_frag(data);
+	पूर्ण
 
-	if (more)
-		return;
+	अगर (more)
+		वापस;
 
-	q->rx_head = NULL;
-	if (nr_frags < ARRAY_SIZE(shinfo->frags))
+	q->rx_head = शून्य;
+	अगर (nr_frags < ARRAY_SIZE(shinfo->frags))
 		dev->drv->rx_skb(dev, q - dev->q_rx, skb);
-	else
-		dev_kfree_skb(skb);
-}
+	अन्यथा
+		dev_kमुक्त_skb(skb);
+पूर्ण
 
-static int
-mt76_dma_rx_process(struct mt76_dev *dev, struct mt76_queue *q, int budget)
-{
-	int len, data_len, done = 0;
-	struct sk_buff *skb;
-	unsigned char *data;
+अटल पूर्णांक
+mt76_dma_rx_process(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q, पूर्णांक budget)
+अणु
+	पूर्णांक len, data_len, करोne = 0;
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *data;
 	bool more;
 
-	while (done < budget) {
+	जबतक (करोne < budget) अणु
 		u32 info;
 
 		data = mt76_dma_dequeue(dev, q, false, &len, &info, &more);
-		if (!data)
-			break;
+		अगर (!data)
+			अवरोध;
 
-		if (q->rx_head)
+		अगर (q->rx_head)
 			data_len = q->buf_size;
-		else
+		अन्यथा
 			data_len = SKB_WITH_OVERHEAD(q->buf_size);
 
-		if (data_len < len + q->buf_offset) {
-			dev_kfree_skb(q->rx_head);
-			q->rx_head = NULL;
+		अगर (data_len < len + q->buf_offset) अणु
+			dev_kमुक्त_skb(q->rx_head);
+			q->rx_head = शून्य;
 
-			skb_free_frag(data);
-			continue;
-		}
+			skb_मुक्त_frag(data);
+			जारी;
+		पूर्ण
 
-		if (q->rx_head) {
+		अगर (q->rx_head) अणु
 			mt76_add_fragment(dev, q, data, len, more);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		skb = build_skb(data, q->buf_size);
-		if (!skb) {
-			skb_free_frag(data);
-			continue;
-		}
+		अगर (!skb) अणु
+			skb_मुक्त_frag(data);
+			जारी;
+		पूर्ण
 		skb_reserve(skb, q->buf_offset);
 
-		if (q == &dev->q_rx[MT_RXQ_MCU]) {
+		अगर (q == &dev->q_rx[MT_RXQ_MCU]) अणु
 			u32 *rxfce = (u32 *)skb->cb;
 			*rxfce = info;
-		}
+		पूर्ण
 
 		__skb_put(skb, len);
-		done++;
+		करोne++;
 
-		if (more) {
+		अगर (more) अणु
 			q->rx_head = skb;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		dev->drv->rx_skb(dev, q - dev->q_rx, skb);
-	}
+	पूर्ण
 
 	mt76_dma_rx_fill(dev, q);
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-int mt76_dma_rx_poll(struct napi_struct *napi, int budget)
-{
-	struct mt76_dev *dev;
-	int qid, done = 0, cur;
+पूर्णांक mt76_dma_rx_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा mt76_dev *dev;
+	पूर्णांक qid, करोne = 0, cur;
 
-	dev = container_of(napi->dev, struct mt76_dev, napi_dev);
+	dev = container_of(napi->dev, काष्ठा mt76_dev, napi_dev);
 	qid = napi - dev->napi;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	do {
-		cur = mt76_dma_rx_process(dev, &dev->q_rx[qid], budget - done);
+	करो अणु
+		cur = mt76_dma_rx_process(dev, &dev->q_rx[qid], budget - करोne);
 		mt76_rx_poll_complete(dev, qid, napi);
-		done += cur;
-	} while (cur && done < budget);
+		करोne += cur;
+	पूर्ण जबतक (cur && करोne < budget);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (done < budget && napi_complete(napi))
+	अगर (करोne < budget && napi_complete(napi))
 		dev->drv->rx_poll_complete(dev, qid);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_dma_rx_poll);
 
-static int
-mt76_dma_init(struct mt76_dev *dev,
-	      int (*poll)(struct napi_struct *napi, int budget))
-{
-	int i;
+अटल पूर्णांक
+mt76_dma_init(काष्ठा mt76_dev *dev,
+	      पूर्णांक (*poll)(काष्ठा napi_काष्ठा *napi, पूर्णांक budget))
+अणु
+	पूर्णांक i;
 
 	init_dummy_netdev(&dev->napi_dev);
 	init_dummy_netdev(&dev->tx_napi_dev);
-	snprintf(dev->napi_dev.name, sizeof(dev->napi_dev.name), "%s",
+	snम_लिखो(dev->napi_dev.name, माप(dev->napi_dev.name), "%s",
 		 wiphy_name(dev->hw->wiphy));
-	dev->napi_dev.threaded = 1;
+	dev->napi_dev.thपढ़ोed = 1;
 
-	mt76_for_each_q_rx(dev, i) {
-		netif_napi_add(&dev->napi_dev, &dev->napi[i], poll, 64);
+	mt76_क्रम_each_q_rx(dev, i) अणु
+		netअगर_napi_add(&dev->napi_dev, &dev->napi[i], poll, 64);
 		mt76_dma_rx_fill(dev, &dev->q_rx[i]);
 		napi_enable(&dev->napi[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mt76_queue_ops mt76_dma_ops = {
+अटल स्थिर काष्ठा mt76_queue_ops mt76_dma_ops = अणु
 	.init = mt76_dma_init,
 	.alloc = mt76_dma_alloc_queue,
 	.reset_q = mt76_dma_queue_reset,
@@ -658,35 +659,35 @@ static const struct mt76_queue_ops mt76_dma_ops = {
 	.rx_cleanup = mt76_dma_rx_cleanup,
 	.rx_reset = mt76_dma_rx_reset,
 	.kick = mt76_dma_kick_queue,
-};
+पूर्ण;
 
-void mt76_dma_attach(struct mt76_dev *dev)
-{
+व्योम mt76_dma_attach(काष्ठा mt76_dev *dev)
+अणु
 	dev->queue_ops = &mt76_dma_ops;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_dma_attach);
 
-void mt76_dma_cleanup(struct mt76_dev *dev)
-{
-	int i;
+व्योम mt76_dma_cleanup(काष्ठा mt76_dev *dev)
+अणु
+	पूर्णांक i;
 
 	mt76_worker_disable(&dev->tx_worker);
-	netif_napi_del(&dev->tx_napi);
+	netअगर_napi_del(&dev->tx_napi);
 
-	for (i = 0; i < ARRAY_SIZE(dev->phy.q_tx); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(dev->phy.q_tx); i++) अणु
 		mt76_dma_tx_cleanup(dev, dev->phy.q_tx[i], true);
-		if (dev->phy2)
+		अगर (dev->phy2)
 			mt76_dma_tx_cleanup(dev, dev->phy2->q_tx[i], true);
-	}
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(dev->q_mcu); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(dev->q_mcu); i++)
 		mt76_dma_tx_cleanup(dev, dev->q_mcu[i], true);
 
-	mt76_for_each_q_rx(dev, i) {
-		netif_napi_del(&dev->napi[i]);
+	mt76_क्रम_each_q_rx(dev, i) अणु
+		netअगर_napi_del(&dev->napi[i]);
 		mt76_dma_rx_cleanup(dev, &dev->q_rx[i]);
-	}
+	पूर्ण
 
-	mt76_free_pending_txwi(dev);
-}
+	mt76_मुक्त_pending_txwi(dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_dma_cleanup);

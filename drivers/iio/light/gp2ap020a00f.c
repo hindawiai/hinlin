@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  * Author: Jacek Anaszewski <j.anaszewski@samsung.com>
@@ -18,174 +19,174 @@
  * Events:
  *   - illuminance_clear (rising and falling)
  *   - proximity (rising and falling)
- *     - both falling and rising thresholds for the proximity events
+ *     - both falling and rising thresholds क्रम the proximity events
  *       must be set to the values greater than 0.
  *
- * The driver supports triggered buffers for all the three
- * channels as well as high and low threshold events for the
+ * The driver supports triggered buffers क्रम all the three
+ * channels as well as high and low threshold events क्रम the
  * illuminance_clear and proxmimity channels. Triggers
  * can be enabled simultaneously with both illuminance_clear
  * events. Proximity events cannot be enabled simultaneously
  * with any triggers or illuminance events. Enabling/disabling
- * one of the proximity events automatically enables/disables
+ * one of the proximity events स्वतःmatically enables/disables
  * the other one.
  */
 
-#include <linux/debugfs.h>
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irq_work.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/mutex.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <asm/unaligned.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/events.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irq_work.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/events.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
 
-#define GP2A_I2C_NAME "gp2ap020a00f"
+#घोषणा GP2A_I2C_NAME "gp2ap020a00f"
 
 /* Registers */
-#define GP2AP020A00F_OP_REG	0x00 /* Basic operations */
-#define GP2AP020A00F_ALS_REG	0x01 /* ALS related settings */
-#define GP2AP020A00F_PS_REG	0x02 /* PS related settings */
-#define GP2AP020A00F_LED_REG	0x03 /* LED reg */
-#define GP2AP020A00F_TL_L_REG	0x04 /* ALS: Threshold low LSB */
-#define GP2AP020A00F_TL_H_REG	0x05 /* ALS: Threshold low MSB */
-#define GP2AP020A00F_TH_L_REG	0x06 /* ALS: Threshold high LSB */
-#define GP2AP020A00F_TH_H_REG	0x07 /* ALS: Threshold high MSB */
-#define GP2AP020A00F_PL_L_REG	0x08 /* PS: Threshold low LSB */
-#define GP2AP020A00F_PL_H_REG	0x09 /* PS: Threshold low MSB */
-#define GP2AP020A00F_PH_L_REG	0x0a /* PS: Threshold high LSB */
-#define GP2AP020A00F_PH_H_REG	0x0b /* PS: Threshold high MSB */
-#define GP2AP020A00F_D0_L_REG	0x0c /* ALS result: Clear/Illuminance LSB */
-#define GP2AP020A00F_D0_H_REG	0x0d /* ALS result: Clear/Illuminance MSB */
-#define GP2AP020A00F_D1_L_REG	0x0e /* ALS result: IR LSB */
-#define GP2AP020A00F_D1_H_REG	0x0f /* ALS result: IR LSB */
-#define GP2AP020A00F_D2_L_REG	0x10 /* PS result LSB */
-#define GP2AP020A00F_D2_H_REG	0x11 /* PS result MSB */
-#define GP2AP020A00F_NUM_REGS	0x12 /* Number of registers */
+#घोषणा GP2AP020A00F_OP_REG	0x00 /* Basic operations */
+#घोषणा GP2AP020A00F_ALS_REG	0x01 /* ALS related settings */
+#घोषणा GP2AP020A00F_PS_REG	0x02 /* PS related settings */
+#घोषणा GP2AP020A00F_LED_REG	0x03 /* LED reg */
+#घोषणा GP2AP020A00F_TL_L_REG	0x04 /* ALS: Threshold low LSB */
+#घोषणा GP2AP020A00F_TL_H_REG	0x05 /* ALS: Threshold low MSB */
+#घोषणा GP2AP020A00F_TH_L_REG	0x06 /* ALS: Threshold high LSB */
+#घोषणा GP2AP020A00F_TH_H_REG	0x07 /* ALS: Threshold high MSB */
+#घोषणा GP2AP020A00F_PL_L_REG	0x08 /* PS: Threshold low LSB */
+#घोषणा GP2AP020A00F_PL_H_REG	0x09 /* PS: Threshold low MSB */
+#घोषणा GP2AP020A00F_PH_L_REG	0x0a /* PS: Threshold high LSB */
+#घोषणा GP2AP020A00F_PH_H_REG	0x0b /* PS: Threshold high MSB */
+#घोषणा GP2AP020A00F_D0_L_REG	0x0c /* ALS result: Clear/Illuminance LSB */
+#घोषणा GP2AP020A00F_D0_H_REG	0x0d /* ALS result: Clear/Illuminance MSB */
+#घोषणा GP2AP020A00F_D1_L_REG	0x0e /* ALS result: IR LSB */
+#घोषणा GP2AP020A00F_D1_H_REG	0x0f /* ALS result: IR LSB */
+#घोषणा GP2AP020A00F_D2_L_REG	0x10 /* PS result LSB */
+#घोषणा GP2AP020A00F_D2_H_REG	0x11 /* PS result MSB */
+#घोषणा GP2AP020A00F_NUM_REGS	0x12 /* Number of रेजिस्टरs */
 
 /* OP_REG bits */
-#define GP2AP020A00F_OP3_MASK		0x80 /* Software shutdown */
-#define GP2AP020A00F_OP3_SHUTDOWN	0x00
-#define GP2AP020A00F_OP3_OPERATION	0x80
-#define GP2AP020A00F_OP2_MASK		0x40 /* Auto shutdown/Continuous mode */
-#define GP2AP020A00F_OP2_AUTO_SHUTDOWN	0x00
-#define GP2AP020A00F_OP2_CONT_OPERATION	0x40
-#define GP2AP020A00F_OP_MASK		0x30 /* Operating mode selection  */
-#define GP2AP020A00F_OP_ALS_AND_PS	0x00
-#define GP2AP020A00F_OP_ALS		0x10
-#define GP2AP020A00F_OP_PS		0x20
-#define GP2AP020A00F_OP_DEBUG		0x30
-#define GP2AP020A00F_PROX_MASK		0x08 /* PS: detection/non-detection */
-#define GP2AP020A00F_PROX_NON_DETECT	0x00
-#define GP2AP020A00F_PROX_DETECT	0x08
-#define GP2AP020A00F_FLAG_P		0x04 /* PS: interrupt result  */
-#define GP2AP020A00F_FLAG_A		0x02 /* ALS: interrupt result  */
-#define GP2AP020A00F_TYPE_MASK		0x01 /* Output data type selection */
-#define GP2AP020A00F_TYPE_MANUAL_CALC	0x00
-#define GP2AP020A00F_TYPE_AUTO_CALC	0x01
+#घोषणा GP2AP020A00F_OP3_MASK		0x80 /* Software shutकरोwn */
+#घोषणा GP2AP020A00F_OP3_SHUTDOWN	0x00
+#घोषणा GP2AP020A00F_OP3_OPERATION	0x80
+#घोषणा GP2AP020A00F_OP2_MASK		0x40 /* Auto shutकरोwn/Continuous mode */
+#घोषणा GP2AP020A00F_OP2_AUTO_SHUTDOWN	0x00
+#घोषणा GP2AP020A00F_OP2_CONT_OPERATION	0x40
+#घोषणा GP2AP020A00F_OP_MASK		0x30 /* Operating mode selection  */
+#घोषणा GP2AP020A00F_OP_ALS_AND_PS	0x00
+#घोषणा GP2AP020A00F_OP_ALS		0x10
+#घोषणा GP2AP020A00F_OP_PS		0x20
+#घोषणा GP2AP020A00F_OP_DEBUG		0x30
+#घोषणा GP2AP020A00F_PROX_MASK		0x08 /* PS: detection/non-detection */
+#घोषणा GP2AP020A00F_PROX_NON_DETECT	0x00
+#घोषणा GP2AP020A00F_PROX_DETECT	0x08
+#घोषणा GP2AP020A00F_FLAG_P		0x04 /* PS: पूर्णांकerrupt result  */
+#घोषणा GP2AP020A00F_FLAG_A		0x02 /* ALS: पूर्णांकerrupt result  */
+#घोषणा GP2AP020A00F_TYPE_MASK		0x01 /* Output data type selection */
+#घोषणा GP2AP020A00F_TYPE_MANUAL_CALC	0x00
+#घोषणा GP2AP020A00F_TYPE_AUTO_CALC	0x01
 
 /* ALS_REG bits */
-#define GP2AP020A00F_PRST_MASK		0xc0 /* Number of measurement cycles */
-#define GP2AP020A00F_PRST_ONCE		0x00
-#define GP2AP020A00F_PRST_4_CYCLES	0x40
-#define GP2AP020A00F_PRST_8_CYCLES	0x80
-#define GP2AP020A00F_PRST_16_CYCLES	0xc0
-#define GP2AP020A00F_RES_A_MASK		0x38 /* ALS: Resolution */
-#define GP2AP020A00F_RES_A_800ms	0x00
-#define GP2AP020A00F_RES_A_400ms	0x08
-#define GP2AP020A00F_RES_A_200ms	0x10
-#define GP2AP020A00F_RES_A_100ms	0x18
-#define GP2AP020A00F_RES_A_25ms		0x20
-#define GP2AP020A00F_RES_A_6_25ms	0x28
-#define GP2AP020A00F_RES_A_1_56ms	0x30
-#define GP2AP020A00F_RES_A_0_39ms	0x38
-#define GP2AP020A00F_RANGE_A_MASK	0x07 /* ALS: Max measurable range */
-#define GP2AP020A00F_RANGE_A_x1		0x00
-#define GP2AP020A00F_RANGE_A_x2		0x01
-#define GP2AP020A00F_RANGE_A_x4		0x02
-#define GP2AP020A00F_RANGE_A_x8		0x03
-#define GP2AP020A00F_RANGE_A_x16	0x04
-#define GP2AP020A00F_RANGE_A_x32	0x05
-#define GP2AP020A00F_RANGE_A_x64	0x06
-#define GP2AP020A00F_RANGE_A_x128	0x07
+#घोषणा GP2AP020A00F_PRST_MASK		0xc0 /* Number of measurement cycles */
+#घोषणा GP2AP020A00F_PRST_ONCE		0x00
+#घोषणा GP2AP020A00F_PRST_4_CYCLES	0x40
+#घोषणा GP2AP020A00F_PRST_8_CYCLES	0x80
+#घोषणा GP2AP020A00F_PRST_16_CYCLES	0xc0
+#घोषणा GP2AP020A00F_RES_A_MASK		0x38 /* ALS: Resolution */
+#घोषणा GP2AP020A00F_RES_A_800ms	0x00
+#घोषणा GP2AP020A00F_RES_A_400ms	0x08
+#घोषणा GP2AP020A00F_RES_A_200ms	0x10
+#घोषणा GP2AP020A00F_RES_A_100ms	0x18
+#घोषणा GP2AP020A00F_RES_A_25ms		0x20
+#घोषणा GP2AP020A00F_RES_A_6_25ms	0x28
+#घोषणा GP2AP020A00F_RES_A_1_56ms	0x30
+#घोषणा GP2AP020A00F_RES_A_0_39ms	0x38
+#घोषणा GP2AP020A00F_RANGE_A_MASK	0x07 /* ALS: Max measurable range */
+#घोषणा GP2AP020A00F_RANGE_A_x1		0x00
+#घोषणा GP2AP020A00F_RANGE_A_x2		0x01
+#घोषणा GP2AP020A00F_RANGE_A_x4		0x02
+#घोषणा GP2AP020A00F_RANGE_A_x8		0x03
+#घोषणा GP2AP020A00F_RANGE_A_x16	0x04
+#घोषणा GP2AP020A00F_RANGE_A_x32	0x05
+#घोषणा GP2AP020A00F_RANGE_A_x64	0x06
+#घोषणा GP2AP020A00F_RANGE_A_x128	0x07
 
 /* PS_REG bits */
-#define GP2AP020A00F_ALC_MASK		0x80 /* Auto light cancel */
-#define GP2AP020A00F_ALC_ON		0x80
-#define GP2AP020A00F_ALC_OFF		0x00
-#define GP2AP020A00F_INTTYPE_MASK	0x40 /* Interrupt type setting */
-#define GP2AP020A00F_INTTYPE_LEVEL	0x00
-#define GP2AP020A00F_INTTYPE_PULSE	0x40
-#define GP2AP020A00F_RES_P_MASK		0x38 /* PS: Resolution */
-#define GP2AP020A00F_RES_P_800ms_x2	0x00
-#define GP2AP020A00F_RES_P_400ms_x2	0x08
-#define GP2AP020A00F_RES_P_200ms_x2	0x10
-#define GP2AP020A00F_RES_P_100ms_x2	0x18
-#define GP2AP020A00F_RES_P_25ms_x2	0x20
-#define GP2AP020A00F_RES_P_6_25ms_x2	0x28
-#define GP2AP020A00F_RES_P_1_56ms_x2	0x30
-#define GP2AP020A00F_RES_P_0_39ms_x2	0x38
-#define GP2AP020A00F_RANGE_P_MASK	0x07 /* PS: Max measurable range */
-#define GP2AP020A00F_RANGE_P_x1		0x00
-#define GP2AP020A00F_RANGE_P_x2		0x01
-#define GP2AP020A00F_RANGE_P_x4		0x02
-#define GP2AP020A00F_RANGE_P_x8		0x03
-#define GP2AP020A00F_RANGE_P_x16	0x04
-#define GP2AP020A00F_RANGE_P_x32	0x05
-#define GP2AP020A00F_RANGE_P_x64	0x06
-#define GP2AP020A00F_RANGE_P_x128	0x07
+#घोषणा GP2AP020A00F_ALC_MASK		0x80 /* Auto light cancel */
+#घोषणा GP2AP020A00F_ALC_ON		0x80
+#घोषणा GP2AP020A00F_ALC_OFF		0x00
+#घोषणा GP2AP020A00F_INTTYPE_MASK	0x40 /* Interrupt type setting */
+#घोषणा GP2AP020A00F_INTTYPE_LEVEL	0x00
+#घोषणा GP2AP020A00F_INTTYPE_PULSE	0x40
+#घोषणा GP2AP020A00F_RES_P_MASK		0x38 /* PS: Resolution */
+#घोषणा GP2AP020A00F_RES_P_800ms_x2	0x00
+#घोषणा GP2AP020A00F_RES_P_400ms_x2	0x08
+#घोषणा GP2AP020A00F_RES_P_200ms_x2	0x10
+#घोषणा GP2AP020A00F_RES_P_100ms_x2	0x18
+#घोषणा GP2AP020A00F_RES_P_25ms_x2	0x20
+#घोषणा GP2AP020A00F_RES_P_6_25ms_x2	0x28
+#घोषणा GP2AP020A00F_RES_P_1_56ms_x2	0x30
+#घोषणा GP2AP020A00F_RES_P_0_39ms_x2	0x38
+#घोषणा GP2AP020A00F_RANGE_P_MASK	0x07 /* PS: Max measurable range */
+#घोषणा GP2AP020A00F_RANGE_P_x1		0x00
+#घोषणा GP2AP020A00F_RANGE_P_x2		0x01
+#घोषणा GP2AP020A00F_RANGE_P_x4		0x02
+#घोषणा GP2AP020A00F_RANGE_P_x8		0x03
+#घोषणा GP2AP020A00F_RANGE_P_x16	0x04
+#घोषणा GP2AP020A00F_RANGE_P_x32	0x05
+#घोषणा GP2AP020A00F_RANGE_P_x64	0x06
+#घोषणा GP2AP020A00F_RANGE_P_x128	0x07
 
 /* LED reg bits */
-#define GP2AP020A00F_INTVAL_MASK	0xc0 /* Intermittent operating */
-#define GP2AP020A00F_INTVAL_0		0x00
-#define GP2AP020A00F_INTVAL_4		0x40
-#define GP2AP020A00F_INTVAL_8		0x80
-#define GP2AP020A00F_INTVAL_16		0xc0
-#define GP2AP020A00F_IS_MASK		0x30 /* ILED drive peak current */
-#define GP2AP020A00F_IS_13_8mA		0x00
-#define GP2AP020A00F_IS_27_5mA		0x10
-#define GP2AP020A00F_IS_55mA		0x20
-#define GP2AP020A00F_IS_110mA		0x30
-#define GP2AP020A00F_PIN_MASK		0x0c /* INT terminal setting */
-#define GP2AP020A00F_PIN_ALS_OR_PS	0x00
-#define GP2AP020A00F_PIN_ALS		0x04
-#define GP2AP020A00F_PIN_PS		0x08
-#define GP2AP020A00F_PIN_PS_DETECT	0x0c
-#define GP2AP020A00F_FREQ_MASK		0x02 /* LED modulation frequency */
-#define GP2AP020A00F_FREQ_327_5kHz	0x00
-#define GP2AP020A00F_FREQ_81_8kHz	0x02
-#define GP2AP020A00F_RST		0x01 /* Software reset */
+#घोषणा GP2AP020A00F_INTVAL_MASK	0xc0 /* Intermittent operating */
+#घोषणा GP2AP020A00F_INTVAL_0		0x00
+#घोषणा GP2AP020A00F_INTVAL_4		0x40
+#घोषणा GP2AP020A00F_INTVAL_8		0x80
+#घोषणा GP2AP020A00F_INTVAL_16		0xc0
+#घोषणा GP2AP020A00F_IS_MASK		0x30 /* ILED drive peak current */
+#घोषणा GP2AP020A00F_IS_13_8mA		0x00
+#घोषणा GP2AP020A00F_IS_27_5mA		0x10
+#घोषणा GP2AP020A00F_IS_55mA		0x20
+#घोषणा GP2AP020A00F_IS_110mA		0x30
+#घोषणा GP2AP020A00F_PIN_MASK		0x0c /* INT terminal setting */
+#घोषणा GP2AP020A00F_PIN_ALS_OR_PS	0x00
+#घोषणा GP2AP020A00F_PIN_ALS		0x04
+#घोषणा GP2AP020A00F_PIN_PS		0x08
+#घोषणा GP2AP020A00F_PIN_PS_DETECT	0x0c
+#घोषणा GP2AP020A00F_FREQ_MASK		0x02 /* LED modulation frequency */
+#घोषणा GP2AP020A00F_FREQ_327_5kHz	0x00
+#घोषणा GP2AP020A00F_FREQ_81_8kHz	0x02
+#घोषणा GP2AP020A00F_RST		0x01 /* Software reset */
 
-#define GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR	0
-#define GP2AP020A00F_SCAN_MODE_LIGHT_IR		1
-#define GP2AP020A00F_SCAN_MODE_PROXIMITY	2
-#define GP2AP020A00F_CHAN_TIMESTAMP		3
+#घोषणा GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR	0
+#घोषणा GP2AP020A00F_SCAN_MODE_LIGHT_IR		1
+#घोषणा GP2AP020A00F_SCAN_MODE_PROXIMITY	2
+#घोषणा GP2AP020A00F_CHAN_TIMESTAMP		3
 
-#define GP2AP020A00F_DATA_READY_TIMEOUT		msecs_to_jiffies(1000)
-#define GP2AP020A00F_DATA_REG(chan)		(GP2AP020A00F_D0_L_REG + \
+#घोषणा GP2AP020A00F_DATA_READY_TIMEOUT		msecs_to_jअगरfies(1000)
+#घोषणा GP2AP020A00F_DATA_REG(chan)		(GP2AP020A00F_D0_L_REG + \
 							(chan) * 2)
-#define GP2AP020A00F_THRESH_REG(th_val_id)	(GP2AP020A00F_TL_L_REG + \
+#घोषणा GP2AP020A00F_THRESH_REG(th_val_id)	(GP2AP020A00F_TL_L_REG + \
 							(th_val_id) * 2)
-#define GP2AP020A00F_THRESH_VAL_ID(reg_addr)	((reg_addr - 4) / 2)
+#घोषणा GP2AP020A00F_THRESH_VAL_ID(reg_addr)	((reg_addr - 4) / 2)
 
-#define GP2AP020A00F_SUBTRACT_MODE	0
-#define GP2AP020A00F_ADD_MODE		1
+#घोषणा GP2AP020A00F_SUBTRACT_MODE	0
+#घोषणा GP2AP020A00F_ADD_MODE		1
 
-#define GP2AP020A00F_MAX_CHANNELS	3
+#घोषणा GP2AP020A00F_MAX_CHANNELS	3
 
-enum gp2ap020a00f_opmode {
+क्रमागत gp2ap020a00f_opmode अणु
 	GP2AP020A00F_OPMODE_READ_RAW_CLEAR,
 	GP2AP020A00F_OPMODE_READ_RAW_IR,
 	GP2AP020A00F_OPMODE_READ_RAW_PROXIMITY,
@@ -195,9 +196,9 @@ enum gp2ap020a00f_opmode {
 	GP2AP020A00F_OPMODE_PROX_DETECT,
 	GP2AP020A00F_OPMODE_SHUTDOWN,
 	GP2AP020A00F_NUM_OPMODES,
-};
+पूर्ण;
 
-enum gp2ap020a00f_cmd {
+क्रमागत gp2ap020a00f_cmd अणु
 	GP2AP020A00F_CMD_READ_RAW_CLEAR,
 	GP2AP020A00F_CMD_READ_RAW_IR,
 	GP2AP020A00F_CMD_READ_RAW_PROXIMITY,
@@ -215,9 +216,9 @@ enum gp2ap020a00f_cmd {
 	GP2AP020A00F_CMD_PROX_HIGH_EV_DIS,
 	GP2AP020A00F_CMD_PROX_LOW_EV_EN,
 	GP2AP020A00F_CMD_PROX_LOW_EV_DIS,
-};
+पूर्ण;
 
-enum gp2ap020a00f_flags {
+क्रमागत gp2ap020a00f_flags अणु
 	GP2AP020A00F_FLAG_ALS_CLEAR_TRIGGER,
 	GP2AP020A00F_FLAG_ALS_IR_TRIGGER,
 	GP2AP020A00F_FLAG_PROX_TRIGGER,
@@ -227,32 +228,32 @@ enum gp2ap020a00f_flags {
 	GP2AP020A00F_FLAG_ALS_FALLING_EV,
 	GP2AP020A00F_FLAG_LUX_MODE_HI,
 	GP2AP020A00F_FLAG_DATA_READY,
-};
+पूर्ण;
 
-enum gp2ap020a00f_thresh_val_id {
+क्रमागत gp2ap020a00f_thresh_val_id अणु
 	GP2AP020A00F_THRESH_TL,
 	GP2AP020A00F_THRESH_TH,
 	GP2AP020A00F_THRESH_PL,
 	GP2AP020A00F_THRESH_PH,
-};
+पूर्ण;
 
-struct gp2ap020a00f_data {
-	const struct gp2ap020a00f_platform_data *pdata;
-	struct i2c_client *client;
-	struct mutex lock;
-	char *buffer;
-	struct regulator *vled_reg;
-	unsigned long flags;
-	enum gp2ap020a00f_opmode cur_opmode;
-	struct iio_trigger *trig;
-	struct regmap *regmap;
-	unsigned int thresh_val[4];
+काष्ठा gp2ap020a00f_data अणु
+	स्थिर काष्ठा gp2ap020a00f_platक्रमm_data *pdata;
+	काष्ठा i2c_client *client;
+	काष्ठा mutex lock;
+	अक्षर *buffer;
+	काष्ठा regulator *vled_reg;
+	अचिन्हित दीर्घ flags;
+	क्रमागत gp2ap020a00f_opmode cur_opmode;
+	काष्ठा iio_trigger *trig;
+	काष्ठा regmap *regmap;
+	अचिन्हित पूर्णांक thresh_val[4];
 	u8 debug_reg_addr;
-	struct irq_work work;
-	wait_queue_head_t data_ready_queue;
-};
+	काष्ठा irq_work work;
+	रुको_queue_head_t data_पढ़ोy_queue;
+पूर्ण;
 
-static const u8 gp2ap020a00f_reg_init_tab[] = {
+अटल स्थिर u8 gp2ap020a00f_reg_init_tab[] = अणु
 	[GP2AP020A00F_OP_REG] = GP2AP020A00F_OP3_SHUTDOWN,
 	[GP2AP020A00F_ALS_REG] = GP2AP020A00F_RES_A_25ms |
 				 GP2AP020A00F_RANGE_A_x8,
@@ -270,89 +271,89 @@ static const u8 gp2ap020a00f_reg_init_tab[] = {
 	[GP2AP020A00F_PL_H_REG] = 0,
 	[GP2AP020A00F_PH_L_REG] = 0,
 	[GP2AP020A00F_PH_H_REG] = 0,
-};
+पूर्ण;
 
-static bool gp2ap020a00f_is_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case GP2AP020A00F_OP_REG:
-	case GP2AP020A00F_D0_L_REG:
-	case GP2AP020A00F_D0_H_REG:
-	case GP2AP020A00F_D1_L_REG:
-	case GP2AP020A00F_D1_H_REG:
-	case GP2AP020A00F_D2_L_REG:
-	case GP2AP020A00F_D2_H_REG:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool gp2ap020a00f_is_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल GP2AP020A00F_OP_REG:
+	हाल GP2AP020A00F_D0_L_REG:
+	हाल GP2AP020A00F_D0_H_REG:
+	हाल GP2AP020A00F_D1_L_REG:
+	हाल GP2AP020A00F_D1_H_REG:
+	हाल GP2AP020A00F_D2_L_REG:
+	हाल GP2AP020A00F_D2_H_REG:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const struct regmap_config gp2ap020a00f_regmap_config = {
+अटल स्थिर काष्ठा regmap_config gp2ap020a00f_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = GP2AP020A00F_D2_H_REG,
+	.max_रेजिस्टर = GP2AP020A00F_D2_H_REG,
 	.cache_type = REGCACHE_RBTREE,
 
-	.volatile_reg = gp2ap020a00f_is_volatile_reg,
-};
+	.अस्थिर_reg = gp2ap020a00f_is_अस्थिर_reg,
+पूर्ण;
 
-static const struct gp2ap020a00f_mutable_config_regs {
+अटल स्थिर काष्ठा gp2ap020a00f_mutable_config_regs अणु
 	u8 op_reg;
 	u8 als_reg;
 	u8 ps_reg;
 	u8 led_reg;
-} opmode_regs_settings[GP2AP020A00F_NUM_OPMODES] = {
-	[GP2AP020A00F_OPMODE_READ_RAW_CLEAR] = {
+पूर्ण opmode_regs_settings[GP2AP020A00F_NUM_OPMODES] = अणु
+	[GP2AP020A00F_OPMODE_READ_RAW_CLEAR] = अणु
 		GP2AP020A00F_OP_ALS | GP2AP020A00F_OP2_CONT_OPERATION
 		| GP2AP020A00F_OP3_OPERATION
 		| GP2AP020A00F_TYPE_AUTO_CALC,
 		GP2AP020A00F_PRST_ONCE,
 		GP2AP020A00F_INTTYPE_LEVEL,
 		GP2AP020A00F_PIN_ALS
-	},
-	[GP2AP020A00F_OPMODE_READ_RAW_IR] = {
+	पूर्ण,
+	[GP2AP020A00F_OPMODE_READ_RAW_IR] = अणु
 		GP2AP020A00F_OP_ALS | GP2AP020A00F_OP2_CONT_OPERATION
 		| GP2AP020A00F_OP3_OPERATION
 		| GP2AP020A00F_TYPE_MANUAL_CALC,
 		GP2AP020A00F_PRST_ONCE,
 		GP2AP020A00F_INTTYPE_LEVEL,
 		GP2AP020A00F_PIN_ALS
-	},
-	[GP2AP020A00F_OPMODE_READ_RAW_PROXIMITY] = {
+	पूर्ण,
+	[GP2AP020A00F_OPMODE_READ_RAW_PROXIMITY] = अणु
 		GP2AP020A00F_OP_PS | GP2AP020A00F_OP2_CONT_OPERATION
 		| GP2AP020A00F_OP3_OPERATION
 		| GP2AP020A00F_TYPE_MANUAL_CALC,
 		GP2AP020A00F_PRST_ONCE,
 		GP2AP020A00F_INTTYPE_LEVEL,
 		GP2AP020A00F_PIN_PS
-	},
-	[GP2AP020A00F_OPMODE_PROX_DETECT] = {
+	पूर्ण,
+	[GP2AP020A00F_OPMODE_PROX_DETECT] = अणु
 		GP2AP020A00F_OP_PS | GP2AP020A00F_OP2_CONT_OPERATION
 		| GP2AP020A00F_OP3_OPERATION
 		| GP2AP020A00F_TYPE_MANUAL_CALC,
 		GP2AP020A00F_PRST_4_CYCLES,
 		GP2AP020A00F_INTTYPE_PULSE,
 		GP2AP020A00F_PIN_PS_DETECT
-	},
-	[GP2AP020A00F_OPMODE_ALS] = {
+	पूर्ण,
+	[GP2AP020A00F_OPMODE_ALS] = अणु
 		GP2AP020A00F_OP_ALS | GP2AP020A00F_OP2_CONT_OPERATION
 		| GP2AP020A00F_OP3_OPERATION
 		| GP2AP020A00F_TYPE_AUTO_CALC,
 		GP2AP020A00F_PRST_ONCE,
 		GP2AP020A00F_INTTYPE_LEVEL,
 		GP2AP020A00F_PIN_ALS
-	},
-	[GP2AP020A00F_OPMODE_PS] = {
+	पूर्ण,
+	[GP2AP020A00F_OPMODE_PS] = अणु
 		GP2AP020A00F_OP_PS | GP2AP020A00F_OP2_CONT_OPERATION
 		| GP2AP020A00F_OP3_OPERATION
 		| GP2AP020A00F_TYPE_MANUAL_CALC,
 		GP2AP020A00F_PRST_4_CYCLES,
 		GP2AP020A00F_INTTYPE_LEVEL,
 		GP2AP020A00F_PIN_PS
-	},
-	[GP2AP020A00F_OPMODE_ALS_AND_PS] = {
+	पूर्ण,
+	[GP2AP020A00F_OPMODE_ALS_AND_PS] = अणु
 		GP2AP020A00F_OP_ALS_AND_PS
 		| GP2AP020A00F_OP2_CONT_OPERATION
 		| GP2AP020A00F_OP3_OPERATION
@@ -360,397 +361,397 @@ static const struct gp2ap020a00f_mutable_config_regs {
 		GP2AP020A00F_PRST_4_CYCLES,
 		GP2AP020A00F_INTTYPE_LEVEL,
 		GP2AP020A00F_PIN_ALS_OR_PS
-	},
-	[GP2AP020A00F_OPMODE_SHUTDOWN] = { GP2AP020A00F_OP3_SHUTDOWN, },
-};
+	पूर्ण,
+	[GP2AP020A00F_OPMODE_SHUTDOWN] = अणु GP2AP020A00F_OP3_SHUTDOWN, पूर्ण,
+पूर्ण;
 
-static int gp2ap020a00f_set_operation_mode(struct gp2ap020a00f_data *data,
-					enum gp2ap020a00f_opmode op)
-{
-	unsigned int op_reg_val;
-	int err;
+अटल पूर्णांक gp2ap020a00f_set_operation_mode(काष्ठा gp2ap020a00f_data *data,
+					क्रमागत gp2ap020a00f_opmode op)
+अणु
+	अचिन्हित पूर्णांक op_reg_val;
+	पूर्णांक err;
 
-	if (op != GP2AP020A00F_OPMODE_SHUTDOWN) {
-		err = regmap_read(data->regmap, GP2AP020A00F_OP_REG,
+	अगर (op != GP2AP020A00F_OPMODE_SHUTDOWN) अणु
+		err = regmap_पढ़ो(data->regmap, GP2AP020A00F_OP_REG,
 					&op_reg_val);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 		/*
-		 * Shutdown the device if the operation being executed entails
+		 * Shutकरोwn the device अगर the operation being executed entails
 		 * mode transition.
 		 */
-		if ((opmode_regs_settings[op].op_reg & GP2AP020A00F_OP_MASK) !=
-		    (op_reg_val & GP2AP020A00F_OP_MASK)) {
-			/* set shutdown mode */
+		अगर ((opmode_regs_settings[op].op_reg & GP2AP020A00F_OP_MASK) !=
+		    (op_reg_val & GP2AP020A00F_OP_MASK)) अणु
+			/* set shutकरोwn mode */
 			err = regmap_update_bits(data->regmap,
 				GP2AP020A00F_OP_REG, GP2AP020A00F_OP3_MASK,
 				GP2AP020A00F_OP3_SHUTDOWN);
-			if (err < 0)
-				return err;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 
 		err = regmap_update_bits(data->regmap, GP2AP020A00F_ALS_REG,
 			GP2AP020A00F_PRST_MASK, opmode_regs_settings[op]
 								.als_reg);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = regmap_update_bits(data->regmap, GP2AP020A00F_PS_REG,
 			GP2AP020A00F_INTTYPE_MASK, opmode_regs_settings[op]
 								.ps_reg);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = regmap_update_bits(data->regmap, GP2AP020A00F_LED_REG,
 			GP2AP020A00F_PIN_MASK, opmode_regs_settings[op]
 								.led_reg);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	/* Set OP_REG and apply operation mode (power on / off) */
+	/* Set OP_REG and apply operation mode (घातer on / off) */
 	err = regmap_update_bits(data->regmap,
 				 GP2AP020A00F_OP_REG,
 				 GP2AP020A00F_OP_MASK | GP2AP020A00F_OP2_MASK |
 				 GP2AP020A00F_OP3_MASK | GP2AP020A00F_TYPE_MASK,
 				 opmode_regs_settings[op].op_reg);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	data->cur_opmode = op;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool gp2ap020a00f_als_enabled(struct gp2ap020a00f_data *data)
-{
-	return test_bit(GP2AP020A00F_FLAG_ALS_CLEAR_TRIGGER, &data->flags) ||
+अटल bool gp2ap020a00f_als_enabled(काष्ठा gp2ap020a00f_data *data)
+अणु
+	वापस test_bit(GP2AP020A00F_FLAG_ALS_CLEAR_TRIGGER, &data->flags) ||
 	       test_bit(GP2AP020A00F_FLAG_ALS_IR_TRIGGER, &data->flags) ||
 	       test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &data->flags) ||
 	       test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &data->flags);
-}
+पूर्ण
 
-static bool gp2ap020a00f_prox_detect_enabled(struct gp2ap020a00f_data *data)
-{
-	return test_bit(GP2AP020A00F_FLAG_PROX_RISING_EV, &data->flags) ||
+अटल bool gp2ap020a00f_prox_detect_enabled(काष्ठा gp2ap020a00f_data *data)
+अणु
+	वापस test_bit(GP2AP020A00F_FLAG_PROX_RISING_EV, &data->flags) ||
 	       test_bit(GP2AP020A00F_FLAG_PROX_FALLING_EV, &data->flags);
-}
+पूर्ण
 
-static int gp2ap020a00f_write_event_threshold(struct gp2ap020a00f_data *data,
-				enum gp2ap020a00f_thresh_val_id th_val_id,
+अटल पूर्णांक gp2ap020a00f_ग_लिखो_event_threshold(काष्ठा gp2ap020a00f_data *data,
+				क्रमागत gp2ap020a00f_thresh_val_id th_val_id,
 				bool enable)
-{
+अणु
 	__le16 thresh_buf = 0;
-	unsigned int thresh_reg_val;
+	अचिन्हित पूर्णांक thresh_reg_val;
 
-	if (!enable)
+	अगर (!enable)
 		thresh_reg_val = 0;
-	else if (test_bit(GP2AP020A00F_FLAG_LUX_MODE_HI, &data->flags) &&
+	अन्यथा अगर (test_bit(GP2AP020A00F_FLAG_LUX_MODE_HI, &data->flags) &&
 		 th_val_id != GP2AP020A00F_THRESH_PL &&
 		 th_val_id != GP2AP020A00F_THRESH_PH)
 		/*
-		 * For the high lux mode ALS threshold has to be scaled down
-		 * to allow for proper comparison with the output value.
+		 * For the high lux mode ALS threshold has to be scaled करोwn
+		 * to allow क्रम proper comparison with the output value.
 		 */
 		thresh_reg_val = data->thresh_val[th_val_id] / 16;
-	else
+	अन्यथा
 		thresh_reg_val = data->thresh_val[th_val_id] > 16000 ?
 					16000 :
 					data->thresh_val[th_val_id];
 
 	thresh_buf = cpu_to_le16(thresh_reg_val);
 
-	return regmap_bulk_write(data->regmap,
+	वापस regmap_bulk_ग_लिखो(data->regmap,
 				 GP2AP020A00F_THRESH_REG(th_val_id),
 				 (u8 *)&thresh_buf, 2);
-}
+पूर्ण
 
-static int gp2ap020a00f_alter_opmode(struct gp2ap020a00f_data *data,
-			enum gp2ap020a00f_opmode diff_mode, int add_sub)
-{
-	enum gp2ap020a00f_opmode new_mode;
+अटल पूर्णांक gp2ap020a00f_alter_opmode(काष्ठा gp2ap020a00f_data *data,
+			क्रमागत gp2ap020a00f_opmode dअगरf_mode, पूर्णांक add_sub)
+अणु
+	क्रमागत gp2ap020a00f_opmode new_mode;
 
-	if (diff_mode != GP2AP020A00F_OPMODE_ALS &&
-	    diff_mode != GP2AP020A00F_OPMODE_PS)
-		return -EINVAL;
+	अगर (dअगरf_mode != GP2AP020A00F_OPMODE_ALS &&
+	    dअगरf_mode != GP2AP020A00F_OPMODE_PS)
+		वापस -EINVAL;
 
-	if (add_sub == GP2AP020A00F_ADD_MODE) {
-		if (data->cur_opmode == GP2AP020A00F_OPMODE_SHUTDOWN)
-			new_mode =  diff_mode;
-		else
+	अगर (add_sub == GP2AP020A00F_ADD_MODE) अणु
+		अगर (data->cur_opmode == GP2AP020A00F_OPMODE_SHUTDOWN)
+			new_mode =  dअगरf_mode;
+		अन्यथा
 			new_mode = GP2AP020A00F_OPMODE_ALS_AND_PS;
-	} else {
-		if (data->cur_opmode == GP2AP020A00F_OPMODE_ALS_AND_PS)
-			new_mode = (diff_mode == GP2AP020A00F_OPMODE_ALS) ?
+	पूर्ण अन्यथा अणु
+		अगर (data->cur_opmode == GP2AP020A00F_OPMODE_ALS_AND_PS)
+			new_mode = (dअगरf_mode == GP2AP020A00F_OPMODE_ALS) ?
 					GP2AP020A00F_OPMODE_PS :
 					GP2AP020A00F_OPMODE_ALS;
-		else
+		अन्यथा
 			new_mode = GP2AP020A00F_OPMODE_SHUTDOWN;
-	}
+	पूर्ण
 
-	return gp2ap020a00f_set_operation_mode(data, new_mode);
-}
+	वापस gp2ap020a00f_set_operation_mode(data, new_mode);
+पूर्ण
 
-static int gp2ap020a00f_exec_cmd(struct gp2ap020a00f_data *data,
-					enum gp2ap020a00f_cmd cmd)
-{
-	int err = 0;
+अटल पूर्णांक gp2ap020a00f_exec_cmd(काष्ठा gp2ap020a00f_data *data,
+					क्रमागत gp2ap020a00f_cmd cmd)
+अणु
+	पूर्णांक err = 0;
 
-	switch (cmd) {
-	case GP2AP020A00F_CMD_READ_RAW_CLEAR:
-		if (data->cur_opmode != GP2AP020A00F_OPMODE_SHUTDOWN)
-			return -EBUSY;
+	चयन (cmd) अणु
+	हाल GP2AP020A00F_CMD_READ_RAW_CLEAR:
+		अगर (data->cur_opmode != GP2AP020A00F_OPMODE_SHUTDOWN)
+			वापस -EBUSY;
 		err = gp2ap020a00f_set_operation_mode(data,
 					GP2AP020A00F_OPMODE_READ_RAW_CLEAR);
-		break;
-	case GP2AP020A00F_CMD_READ_RAW_IR:
-		if (data->cur_opmode != GP2AP020A00F_OPMODE_SHUTDOWN)
-			return -EBUSY;
+		अवरोध;
+	हाल GP2AP020A00F_CMD_READ_RAW_IR:
+		अगर (data->cur_opmode != GP2AP020A00F_OPMODE_SHUTDOWN)
+			वापस -EBUSY;
 		err = gp2ap020a00f_set_operation_mode(data,
 					GP2AP020A00F_OPMODE_READ_RAW_IR);
-		break;
-	case GP2AP020A00F_CMD_READ_RAW_PROXIMITY:
-		if (data->cur_opmode != GP2AP020A00F_OPMODE_SHUTDOWN)
-			return -EBUSY;
+		अवरोध;
+	हाल GP2AP020A00F_CMD_READ_RAW_PROXIMITY:
+		अगर (data->cur_opmode != GP2AP020A00F_OPMODE_SHUTDOWN)
+			वापस -EBUSY;
 		err = gp2ap020a00f_set_operation_mode(data,
 					GP2AP020A00F_OPMODE_READ_RAW_PROXIMITY);
-		break;
-	case GP2AP020A00F_CMD_TRIGGER_CLEAR_EN:
-		if (data->cur_opmode == GP2AP020A00F_OPMODE_PROX_DETECT)
-			return -EBUSY;
-		if (!gp2ap020a00f_als_enabled(data))
+		अवरोध;
+	हाल GP2AP020A00F_CMD_TRIGGER_CLEAR_EN:
+		अगर (data->cur_opmode == GP2AP020A00F_OPMODE_PROX_DETECT)
+			वापस -EBUSY;
+		अगर (!gp2ap020a00f_als_enabled(data))
 			err = gp2ap020a00f_alter_opmode(data,
 						GP2AP020A00F_OPMODE_ALS,
 						GP2AP020A00F_ADD_MODE);
 		set_bit(GP2AP020A00F_FLAG_ALS_CLEAR_TRIGGER, &data->flags);
-		break;
-	case GP2AP020A00F_CMD_TRIGGER_CLEAR_DIS:
+		अवरोध;
+	हाल GP2AP020A00F_CMD_TRIGGER_CLEAR_DIS:
 		clear_bit(GP2AP020A00F_FLAG_ALS_CLEAR_TRIGGER, &data->flags);
-		if (gp2ap020a00f_als_enabled(data))
-			break;
+		अगर (gp2ap020a00f_als_enabled(data))
+			अवरोध;
 		err = gp2ap020a00f_alter_opmode(data,
 						GP2AP020A00F_OPMODE_ALS,
 						GP2AP020A00F_SUBTRACT_MODE);
-		break;
-	case GP2AP020A00F_CMD_TRIGGER_IR_EN:
-		if (data->cur_opmode == GP2AP020A00F_OPMODE_PROX_DETECT)
-			return -EBUSY;
-		if (!gp2ap020a00f_als_enabled(data))
+		अवरोध;
+	हाल GP2AP020A00F_CMD_TRIGGER_IR_EN:
+		अगर (data->cur_opmode == GP2AP020A00F_OPMODE_PROX_DETECT)
+			वापस -EBUSY;
+		अगर (!gp2ap020a00f_als_enabled(data))
 			err = gp2ap020a00f_alter_opmode(data,
 						GP2AP020A00F_OPMODE_ALS,
 						GP2AP020A00F_ADD_MODE);
 		set_bit(GP2AP020A00F_FLAG_ALS_IR_TRIGGER, &data->flags);
-		break;
-	case GP2AP020A00F_CMD_TRIGGER_IR_DIS:
+		अवरोध;
+	हाल GP2AP020A00F_CMD_TRIGGER_IR_DIS:
 		clear_bit(GP2AP020A00F_FLAG_ALS_IR_TRIGGER, &data->flags);
-		if (gp2ap020a00f_als_enabled(data))
-			break;
+		अगर (gp2ap020a00f_als_enabled(data))
+			अवरोध;
 		err = gp2ap020a00f_alter_opmode(data,
 						GP2AP020A00F_OPMODE_ALS,
 						GP2AP020A00F_SUBTRACT_MODE);
-		break;
-	case GP2AP020A00F_CMD_TRIGGER_PROX_EN:
-		if (data->cur_opmode == GP2AP020A00F_OPMODE_PROX_DETECT)
-			return -EBUSY;
+		अवरोध;
+	हाल GP2AP020A00F_CMD_TRIGGER_PROX_EN:
+		अगर (data->cur_opmode == GP2AP020A00F_OPMODE_PROX_DETECT)
+			वापस -EBUSY;
 		err = gp2ap020a00f_alter_opmode(data,
 						GP2AP020A00F_OPMODE_PS,
 						GP2AP020A00F_ADD_MODE);
 		set_bit(GP2AP020A00F_FLAG_PROX_TRIGGER, &data->flags);
-		break;
-	case GP2AP020A00F_CMD_TRIGGER_PROX_DIS:
+		अवरोध;
+	हाल GP2AP020A00F_CMD_TRIGGER_PROX_DIS:
 		clear_bit(GP2AP020A00F_FLAG_PROX_TRIGGER, &data->flags);
 		err = gp2ap020a00f_alter_opmode(data,
 						GP2AP020A00F_OPMODE_PS,
 						GP2AP020A00F_SUBTRACT_MODE);
-		break;
-	case GP2AP020A00F_CMD_ALS_HIGH_EV_EN:
-		if (test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &data->flags))
-			return 0;
-		if (data->cur_opmode == GP2AP020A00F_OPMODE_PROX_DETECT)
-			return -EBUSY;
-		if (!gp2ap020a00f_als_enabled(data)) {
+		अवरोध;
+	हाल GP2AP020A00F_CMD_ALS_HIGH_EV_EN:
+		अगर (test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &data->flags))
+			वापस 0;
+		अगर (data->cur_opmode == GP2AP020A00F_OPMODE_PROX_DETECT)
+			वापस -EBUSY;
+		अगर (!gp2ap020a00f_als_enabled(data)) अणु
 			err = gp2ap020a00f_alter_opmode(data,
 						GP2AP020A00F_OPMODE_ALS,
 						GP2AP020A00F_ADD_MODE);
-			if (err < 0)
-				return err;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 		set_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &data->flags);
-		err =  gp2ap020a00f_write_event_threshold(data,
+		err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_TH, true);
-		break;
-	case GP2AP020A00F_CMD_ALS_HIGH_EV_DIS:
-		if (!test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &data->flags))
-			return 0;
+		अवरोध;
+	हाल GP2AP020A00F_CMD_ALS_HIGH_EV_DIS:
+		अगर (!test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &data->flags))
+			वापस 0;
 		clear_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &data->flags);
-		if (!gp2ap020a00f_als_enabled(data)) {
+		अगर (!gp2ap020a00f_als_enabled(data)) अणु
 			err = gp2ap020a00f_alter_opmode(data,
 						GP2AP020A00F_OPMODE_ALS,
 						GP2AP020A00F_SUBTRACT_MODE);
-			if (err < 0)
-				return err;
-		}
-		err =  gp2ap020a00f_write_event_threshold(data,
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+		err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_TH, false);
-		break;
-	case GP2AP020A00F_CMD_ALS_LOW_EV_EN:
-		if (test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &data->flags))
-			return 0;
-		if (data->cur_opmode == GP2AP020A00F_OPMODE_PROX_DETECT)
-			return -EBUSY;
-		if (!gp2ap020a00f_als_enabled(data)) {
+		अवरोध;
+	हाल GP2AP020A00F_CMD_ALS_LOW_EV_EN:
+		अगर (test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &data->flags))
+			वापस 0;
+		अगर (data->cur_opmode == GP2AP020A00F_OPMODE_PROX_DETECT)
+			वापस -EBUSY;
+		अगर (!gp2ap020a00f_als_enabled(data)) अणु
 			err = gp2ap020a00f_alter_opmode(data,
 						GP2AP020A00F_OPMODE_ALS,
 						GP2AP020A00F_ADD_MODE);
-			if (err < 0)
-				return err;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 		set_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &data->flags);
-		err =  gp2ap020a00f_write_event_threshold(data,
+		err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_TL, true);
-		break;
-	case GP2AP020A00F_CMD_ALS_LOW_EV_DIS:
-		if (!test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &data->flags))
-			return 0;
+		अवरोध;
+	हाल GP2AP020A00F_CMD_ALS_LOW_EV_DIS:
+		अगर (!test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &data->flags))
+			वापस 0;
 		clear_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &data->flags);
-		if (!gp2ap020a00f_als_enabled(data)) {
+		अगर (!gp2ap020a00f_als_enabled(data)) अणु
 			err = gp2ap020a00f_alter_opmode(data,
 						GP2AP020A00F_OPMODE_ALS,
 						GP2AP020A00F_SUBTRACT_MODE);
-			if (err < 0)
-				return err;
-		}
-		err =  gp2ap020a00f_write_event_threshold(data,
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+		err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_TL, false);
-		break;
-	case GP2AP020A00F_CMD_PROX_HIGH_EV_EN:
-		if (test_bit(GP2AP020A00F_FLAG_PROX_RISING_EV, &data->flags))
-			return 0;
-		if (gp2ap020a00f_als_enabled(data) ||
+		अवरोध;
+	हाल GP2AP020A00F_CMD_PROX_HIGH_EV_EN:
+		अगर (test_bit(GP2AP020A00F_FLAG_PROX_RISING_EV, &data->flags))
+			वापस 0;
+		अगर (gp2ap020a00f_als_enabled(data) ||
 		    data->cur_opmode == GP2AP020A00F_OPMODE_PS)
-			return -EBUSY;
-		if (!gp2ap020a00f_prox_detect_enabled(data)) {
+			वापस -EBUSY;
+		अगर (!gp2ap020a00f_prox_detect_enabled(data)) अणु
 			err = gp2ap020a00f_set_operation_mode(data,
 					GP2AP020A00F_OPMODE_PROX_DETECT);
-			if (err < 0)
-				return err;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 		set_bit(GP2AP020A00F_FLAG_PROX_RISING_EV, &data->flags);
-		err =  gp2ap020a00f_write_event_threshold(data,
+		err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_PH, true);
-		break;
-	case GP2AP020A00F_CMD_PROX_HIGH_EV_DIS:
-		if (!test_bit(GP2AP020A00F_FLAG_PROX_RISING_EV, &data->flags))
-			return 0;
+		अवरोध;
+	हाल GP2AP020A00F_CMD_PROX_HIGH_EV_DIS:
+		अगर (!test_bit(GP2AP020A00F_FLAG_PROX_RISING_EV, &data->flags))
+			वापस 0;
 		clear_bit(GP2AP020A00F_FLAG_PROX_RISING_EV, &data->flags);
 		err = gp2ap020a00f_set_operation_mode(data,
 					GP2AP020A00F_OPMODE_SHUTDOWN);
-		if (err < 0)
-			return err;
-		err =  gp2ap020a00f_write_event_threshold(data,
+		अगर (err < 0)
+			वापस err;
+		err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_PH, false);
-		break;
-	case GP2AP020A00F_CMD_PROX_LOW_EV_EN:
-		if (test_bit(GP2AP020A00F_FLAG_PROX_FALLING_EV, &data->flags))
-			return 0;
-		if (gp2ap020a00f_als_enabled(data) ||
+		अवरोध;
+	हाल GP2AP020A00F_CMD_PROX_LOW_EV_EN:
+		अगर (test_bit(GP2AP020A00F_FLAG_PROX_FALLING_EV, &data->flags))
+			वापस 0;
+		अगर (gp2ap020a00f_als_enabled(data) ||
 		    data->cur_opmode == GP2AP020A00F_OPMODE_PS)
-			return -EBUSY;
-		if (!gp2ap020a00f_prox_detect_enabled(data)) {
+			वापस -EBUSY;
+		अगर (!gp2ap020a00f_prox_detect_enabled(data)) अणु
 			err = gp2ap020a00f_set_operation_mode(data,
 					GP2AP020A00F_OPMODE_PROX_DETECT);
-			if (err < 0)
-				return err;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 		set_bit(GP2AP020A00F_FLAG_PROX_FALLING_EV, &data->flags);
-		err =  gp2ap020a00f_write_event_threshold(data,
+		err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_PL, true);
-		break;
-	case GP2AP020A00F_CMD_PROX_LOW_EV_DIS:
-		if (!test_bit(GP2AP020A00F_FLAG_PROX_FALLING_EV, &data->flags))
-			return 0;
+		अवरोध;
+	हाल GP2AP020A00F_CMD_PROX_LOW_EV_DIS:
+		अगर (!test_bit(GP2AP020A00F_FLAG_PROX_FALLING_EV, &data->flags))
+			वापस 0;
 		clear_bit(GP2AP020A00F_FLAG_PROX_FALLING_EV, &data->flags);
 		err = gp2ap020a00f_set_operation_mode(data,
 					GP2AP020A00F_OPMODE_SHUTDOWN);
-		if (err < 0)
-			return err;
-		err =  gp2ap020a00f_write_event_threshold(data,
+		अगर (err < 0)
+			वापस err;
+		err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_PL, false);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int wait_conversion_complete_irq(struct gp2ap020a00f_data *data)
-{
-	int ret;
+अटल पूर्णांक रुको_conversion_complete_irq(काष्ठा gp2ap020a00f_data *data)
+अणु
+	पूर्णांक ret;
 
-	ret = wait_event_timeout(data->data_ready_queue,
+	ret = रुको_event_समयout(data->data_पढ़ोy_queue,
 				 test_bit(GP2AP020A00F_FLAG_DATA_READY,
 					  &data->flags),
 				 GP2AP020A00F_DATA_READY_TIMEOUT);
 	clear_bit(GP2AP020A00F_FLAG_DATA_READY, &data->flags);
 
-	return ret > 0 ? 0 : -ETIME;
-}
+	वापस ret > 0 ? 0 : -ETIME;
+पूर्ण
 
-static int gp2ap020a00f_read_output(struct gp2ap020a00f_data *data,
-					unsigned int output_reg, int *val)
-{
+अटल पूर्णांक gp2ap020a00f_पढ़ो_output(काष्ठा gp2ap020a00f_data *data,
+					अचिन्हित पूर्णांक output_reg, पूर्णांक *val)
+अणु
 	u8 reg_buf[2];
-	int err;
+	पूर्णांक err;
 
-	err = wait_conversion_complete_irq(data);
-	if (err < 0)
+	err = रुको_conversion_complete_irq(data);
+	अगर (err < 0)
 		dev_dbg(&data->client->dev, "data ready timeout\n");
 
-	err = regmap_bulk_read(data->regmap, output_reg, reg_buf, 2);
-	if (err < 0)
-		return err;
+	err = regmap_bulk_पढ़ो(data->regmap, output_reg, reg_buf, 2);
+	अगर (err < 0)
+		वापस err;
 
 	*val = le16_to_cpup((__le16 *)reg_buf);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool gp2ap020a00f_adjust_lux_mode(struct gp2ap020a00f_data *data,
-				 int output_val)
-{
+अटल bool gp2ap020a00f_adjust_lux_mode(काष्ठा gp2ap020a00f_data *data,
+				 पूर्णांक output_val)
+अणु
 	u8 new_range = 0xff;
-	int err;
+	पूर्णांक err;
 
-	if (!test_bit(GP2AP020A00F_FLAG_LUX_MODE_HI, &data->flags)) {
-		if (output_val > 16000) {
+	अगर (!test_bit(GP2AP020A00F_FLAG_LUX_MODE_HI, &data->flags)) अणु
+		अगर (output_val > 16000) अणु
 			set_bit(GP2AP020A00F_FLAG_LUX_MODE_HI, &data->flags);
 			new_range = GP2AP020A00F_RANGE_A_x128;
-		}
-	} else {
-		if (output_val < 1000) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (output_val < 1000) अणु
 			clear_bit(GP2AP020A00F_FLAG_LUX_MODE_HI, &data->flags);
 			new_range = GP2AP020A00F_RANGE_A_x8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (new_range != 0xff) {
-		/* Clear als threshold registers to avoid spurious
+	अगर (new_range != 0xff) अणु
+		/* Clear als threshold रेजिस्टरs to aव्योम spurious
 		 * events caused by lux mode transition.
 		 */
-		err =  gp2ap020a00f_write_event_threshold(data,
+		err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_TH, false);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&data->client->dev,
 				"Clearing als threshold register failed.\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		err =  gp2ap020a00f_write_event_threshold(data,
+		err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_TL, false);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&data->client->dev,
 				"Clearing als threshold register failed.\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		/* Change lux mode */
 		err = regmap_update_bits(data->regmap,
@@ -758,124 +759,124 @@ static bool gp2ap020a00f_adjust_lux_mode(struct gp2ap020a00f_data *data,
 			GP2AP020A00F_OP3_MASK,
 			GP2AP020A00F_OP3_SHUTDOWN);
 
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&data->client->dev,
 				"Shutting down the device failed.\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		err = regmap_update_bits(data->regmap,
 			GP2AP020A00F_ALS_REG,
 			GP2AP020A00F_RANGE_A_MASK,
 			new_range);
 
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&data->client->dev,
 				"Adjusting device lux mode failed.\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		err = regmap_update_bits(data->regmap,
 			GP2AP020A00F_OP_REG,
 			GP2AP020A00F_OP3_MASK,
 			GP2AP020A00F_OP3_OPERATION);
 
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&data->client->dev,
 				"Powering up the device failed.\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		/* Adjust als threshold register values to the new lux mode */
-		if (test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &data->flags)) {
-			err =  gp2ap020a00f_write_event_threshold(data,
+		/* Adjust als threshold रेजिस्टर values to the new lux mode */
+		अगर (test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &data->flags)) अणु
+			err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_TH, true);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				dev_err(&data->client->dev,
 				"Adjusting als threshold value failed.\n");
-				return false;
-			}
-		}
+				वापस false;
+			पूर्ण
+		पूर्ण
 
-		if (test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &data->flags)) {
-			err =  gp2ap020a00f_write_event_threshold(data,
+		अगर (test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &data->flags)) अणु
+			err =  gp2ap020a00f_ग_लिखो_event_threshold(data,
 					GP2AP020A00F_THRESH_TL, true);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				dev_err(&data->client->dev,
 				"Adjusting als threshold value failed.\n");
-				return false;
-			}
-		}
+				वापस false;
+			पूर्ण
+		पूर्ण
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void gp2ap020a00f_output_to_lux(struct gp2ap020a00f_data *data,
-						int *output_val)
-{
-	if (test_bit(GP2AP020A00F_FLAG_LUX_MODE_HI, &data->flags))
+अटल व्योम gp2ap020a00f_output_to_lux(काष्ठा gp2ap020a00f_data *data,
+						पूर्णांक *output_val)
+अणु
+	अगर (test_bit(GP2AP020A00F_FLAG_LUX_MODE_HI, &data->flags))
 		*output_val *= 16;
-}
+पूर्ण
 
-static void gp2ap020a00f_iio_trigger_work(struct irq_work *work)
-{
-	struct gp2ap020a00f_data *data =
-		container_of(work, struct gp2ap020a00f_data, work);
+अटल व्योम gp2ap020a00f_iio_trigger_work(काष्ठा irq_work *work)
+अणु
+	काष्ठा gp2ap020a00f_data *data =
+		container_of(work, काष्ठा gp2ap020a00f_data, work);
 
 	iio_trigger_poll(data->trig);
-}
+पूर्ण
 
-static irqreturn_t gp2ap020a00f_prox_sensing_handler(int irq, void *data)
-{
-	struct iio_dev *indio_dev = data;
-	struct gp2ap020a00f_data *priv = iio_priv(indio_dev);
-	unsigned int op_reg_val;
-	int ret;
+अटल irqवापस_t gp2ap020a00f_prox_sensing_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा iio_dev *indio_dev = data;
+	काष्ठा gp2ap020a00f_data *priv = iio_priv(indio_dev);
+	अचिन्हित पूर्णांक op_reg_val;
+	पूर्णांक ret;
 
-	/* Read interrupt flags */
-	ret = regmap_read(priv->regmap, GP2AP020A00F_OP_REG, &op_reg_val);
-	if (ret < 0)
-		return IRQ_HANDLED;
+	/* Read पूर्णांकerrupt flags */
+	ret = regmap_पढ़ो(priv->regmap, GP2AP020A00F_OP_REG, &op_reg_val);
+	अगर (ret < 0)
+		वापस IRQ_HANDLED;
 
-	if (gp2ap020a00f_prox_detect_enabled(priv)) {
-		if (op_reg_val & GP2AP020A00F_PROX_DETECT) {
+	अगर (gp2ap020a00f_prox_detect_enabled(priv)) अणु
+		अगर (op_reg_val & GP2AP020A00F_PROX_DETECT) अणु
 			iio_push_event(indio_dev,
 			       IIO_UNMOD_EVENT_CODE(
 				    IIO_PROXIMITY,
 				    GP2AP020A00F_SCAN_MODE_PROXIMITY,
 				    IIO_EV_TYPE_ROC,
-				    IIO_EV_DIR_RISING),
-			       iio_get_time_ns(indio_dev));
-		} else {
+				    IIO_EV_सूची_RISING),
+			       iio_get_समय_ns(indio_dev));
+		पूर्ण अन्यथा अणु
 			iio_push_event(indio_dev,
 			       IIO_UNMOD_EVENT_CODE(
 				    IIO_PROXIMITY,
 				    GP2AP020A00F_SCAN_MODE_PROXIMITY,
 				    IIO_EV_TYPE_ROC,
-				    IIO_EV_DIR_FALLING),
-			       iio_get_time_ns(indio_dev));
-		}
-	}
+				    IIO_EV_सूची_FALLING),
+			       iio_get_समय_ns(indio_dev));
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t gp2ap020a00f_thresh_event_handler(int irq, void *data)
-{
-	struct iio_dev *indio_dev = data;
-	struct gp2ap020a00f_data *priv = iio_priv(indio_dev);
+अटल irqवापस_t gp2ap020a00f_thresh_event_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा iio_dev *indio_dev = data;
+	काष्ठा gp2ap020a00f_data *priv = iio_priv(indio_dev);
 	u8 op_reg_flags, d0_reg_buf[2];
-	unsigned int output_val, op_reg_val;
-	int thresh_val_id, ret;
+	अचिन्हित पूर्णांक output_val, op_reg_val;
+	पूर्णांक thresh_val_id, ret;
 
-	/* Read interrupt flags */
-	ret = regmap_read(priv->regmap, GP2AP020A00F_OP_REG,
+	/* Read पूर्णांकerrupt flags */
+	ret = regmap_पढ़ो(priv->regmap, GP2AP020A00F_OP_REG,
 							&op_reg_val);
-	if (ret < 0)
-		goto done;
+	अगर (ret < 0)
+		जाओ करोne;
 
 	op_reg_flags = op_reg_val & (GP2AP020A00F_FLAG_A | GP2AP020A00F_FLAG_P
 					| GP2AP020A00F_PROX_DETECT);
@@ -883,27 +884,27 @@ static irqreturn_t gp2ap020a00f_thresh_event_handler(int irq, void *data)
 	op_reg_val &= (~GP2AP020A00F_FLAG_A & ~GP2AP020A00F_FLAG_P
 					& ~GP2AP020A00F_PROX_DETECT);
 
-	/* Clear interrupt flags (if not in INTTYPE_PULSE mode) */
-	if (priv->cur_opmode != GP2AP020A00F_OPMODE_PROX_DETECT) {
-		ret = regmap_write(priv->regmap, GP2AP020A00F_OP_REG,
+	/* Clear पूर्णांकerrupt flags (अगर not in INTTYPE_PULSE mode) */
+	अगर (priv->cur_opmode != GP2AP020A00F_OPMODE_PROX_DETECT) अणु
+		ret = regmap_ग_लिखो(priv->regmap, GP2AP020A00F_OP_REG,
 								op_reg_val);
-		if (ret < 0)
-			goto done;
-	}
+		अगर (ret < 0)
+			जाओ करोne;
+	पूर्ण
 
-	if (op_reg_flags & GP2AP020A00F_FLAG_A) {
-		/* Check D0 register to assess if the lux mode
+	अगर (op_reg_flags & GP2AP020A00F_FLAG_A) अणु
+		/* Check D0 रेजिस्टर to assess अगर the lux mode
 		 * transition is required.
 		 */
-		ret = regmap_bulk_read(priv->regmap, GP2AP020A00F_D0_L_REG,
+		ret = regmap_bulk_पढ़ो(priv->regmap, GP2AP020A00F_D0_L_REG,
 							d0_reg_buf, 2);
-		if (ret < 0)
-			goto done;
+		अगर (ret < 0)
+			जाओ करोne;
 
 		output_val = le16_to_cpup((__le16 *)d0_reg_buf);
 
-		if (gp2ap020a00f_adjust_lux_mode(priv, output_val))
-			goto done;
+		अगर (gp2ap020a00f_adjust_lux_mode(priv, output_val))
+			जाओ करोne;
 
 		gp2ap020a00f_output_to_lux(priv, &output_val);
 
@@ -911,203 +912,203 @@ static irqreturn_t gp2ap020a00f_thresh_event_handler(int irq, void *data)
 		 * We need to check output value to distinguish
 		 * between high and low ambient light threshold event.
 		 */
-		if (test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &priv->flags)) {
+		अगर (test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV, &priv->flags)) अणु
 			thresh_val_id =
 			    GP2AP020A00F_THRESH_VAL_ID(GP2AP020A00F_TH_L_REG);
-			if (output_val > priv->thresh_val[thresh_val_id])
+			अगर (output_val > priv->thresh_val[thresh_val_id])
 				iio_push_event(indio_dev,
 				       IIO_MOD_EVENT_CODE(
 					    IIO_LIGHT,
 					    GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR,
 					    IIO_MOD_LIGHT_CLEAR,
 					    IIO_EV_TYPE_THRESH,
-					    IIO_EV_DIR_RISING),
-				       iio_get_time_ns(indio_dev));
-		}
+					    IIO_EV_सूची_RISING),
+				       iio_get_समय_ns(indio_dev));
+		पूर्ण
 
-		if (test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &priv->flags)) {
+		अगर (test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV, &priv->flags)) अणु
 			thresh_val_id =
 			    GP2AP020A00F_THRESH_VAL_ID(GP2AP020A00F_TL_L_REG);
-			if (output_val < priv->thresh_val[thresh_val_id])
+			अगर (output_val < priv->thresh_val[thresh_val_id])
 				iio_push_event(indio_dev,
 				       IIO_MOD_EVENT_CODE(
 					    IIO_LIGHT,
 					    GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR,
 					    IIO_MOD_LIGHT_CLEAR,
 					    IIO_EV_TYPE_THRESH,
-					    IIO_EV_DIR_FALLING),
-				       iio_get_time_ns(indio_dev));
-		}
-	}
+					    IIO_EV_सूची_FALLING),
+				       iio_get_समय_ns(indio_dev));
+		पूर्ण
+	पूर्ण
 
-	if (priv->cur_opmode == GP2AP020A00F_OPMODE_READ_RAW_CLEAR ||
+	अगर (priv->cur_opmode == GP2AP020A00F_OPMODE_READ_RAW_CLEAR ||
 	    priv->cur_opmode == GP2AP020A00F_OPMODE_READ_RAW_IR ||
-	    priv->cur_opmode == GP2AP020A00F_OPMODE_READ_RAW_PROXIMITY) {
+	    priv->cur_opmode == GP2AP020A00F_OPMODE_READ_RAW_PROXIMITY) अणु
 		set_bit(GP2AP020A00F_FLAG_DATA_READY, &priv->flags);
-		wake_up(&priv->data_ready_queue);
-		goto done;
-	}
+		wake_up(&priv->data_पढ़ोy_queue);
+		जाओ करोne;
+	पूर्ण
 
-	if (test_bit(GP2AP020A00F_FLAG_ALS_CLEAR_TRIGGER, &priv->flags) ||
+	अगर (test_bit(GP2AP020A00F_FLAG_ALS_CLEAR_TRIGGER, &priv->flags) ||
 	    test_bit(GP2AP020A00F_FLAG_ALS_IR_TRIGGER, &priv->flags) ||
 	    test_bit(GP2AP020A00F_FLAG_PROX_TRIGGER, &priv->flags))
 		/* This fires off the trigger. */
 		irq_work_queue(&priv->work);
 
-done:
-	return IRQ_HANDLED;
-}
+करोne:
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t gp2ap020a00f_trigger_handler(int irq, void *data)
-{
-	struct iio_poll_func *pf = data;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct gp2ap020a00f_data *priv = iio_priv(indio_dev);
-	size_t d_size = 0;
-	int i, out_val, ret;
+अटल irqवापस_t gp2ap020a00f_trigger_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा iio_poll_func *pf = data;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा gp2ap020a00f_data *priv = iio_priv(indio_dev);
+	माप_प्रकार d_size = 0;
+	पूर्णांक i, out_val, ret;
 
-	for_each_set_bit(i, indio_dev->active_scan_mask,
-		indio_dev->masklength) {
-		ret = regmap_bulk_read(priv->regmap,
+	क्रम_each_set_bit(i, indio_dev->active_scan_mask,
+		indio_dev->masklength) अणु
+		ret = regmap_bulk_पढ़ो(priv->regmap,
 				GP2AP020A00F_DATA_REG(i),
 				&priv->buffer[d_size], 2);
-		if (ret < 0)
-			goto done;
+		अगर (ret < 0)
+			जाओ करोne;
 
-		if (i == GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR ||
-		    i == GP2AP020A00F_SCAN_MODE_LIGHT_IR) {
+		अगर (i == GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR ||
+		    i == GP2AP020A00F_SCAN_MODE_LIGHT_IR) अणु
 			out_val = le16_to_cpup((__le16 *)&priv->buffer[d_size]);
 			gp2ap020a00f_output_to_lux(priv, &out_val);
 
 			put_unaligned_le32(out_val, &priv->buffer[d_size]);
 			d_size += 4;
-		} else {
+		पूर्ण अन्यथा अणु
 			d_size += 2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	iio_push_to_buffers_with_timestamp(indio_dev, priv->buffer,
-		pf->timestamp);
-done:
-	iio_trigger_notify_done(indio_dev->trig);
+	iio_push_to_buffers_with_बारtamp(indio_dev, priv->buffer,
+		pf->बारtamp);
+करोne:
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static u8 gp2ap020a00f_get_thresh_reg(const struct iio_chan_spec *chan,
-					     enum iio_event_direction event_dir)
-{
-	switch (chan->type) {
-	case IIO_PROXIMITY:
-		if (event_dir == IIO_EV_DIR_RISING)
-			return GP2AP020A00F_PH_L_REG;
-		else
-			return GP2AP020A00F_PL_L_REG;
-	case IIO_LIGHT:
-		if (event_dir == IIO_EV_DIR_RISING)
-			return GP2AP020A00F_TH_L_REG;
-		else
-			return GP2AP020A00F_TL_L_REG;
-	default:
-		break;
-	}
+अटल u8 gp2ap020a00f_get_thresh_reg(स्थिर काष्ठा iio_chan_spec *chan,
+					     क्रमागत iio_event_direction event_dir)
+अणु
+	चयन (chan->type) अणु
+	हाल IIO_PROXIMITY:
+		अगर (event_dir == IIO_EV_सूची_RISING)
+			वापस GP2AP020A00F_PH_L_REG;
+		अन्यथा
+			वापस GP2AP020A00F_PL_L_REG;
+	हाल IIO_LIGHT:
+		अगर (event_dir == IIO_EV_सूची_RISING)
+			वापस GP2AP020A00F_TH_L_REG;
+		अन्यथा
+			वापस GP2AP020A00F_TL_L_REG;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int gp2ap020a00f_write_event_val(struct iio_dev *indio_dev,
-					const struct iio_chan_spec *chan,
-					enum iio_event_type type,
-					enum iio_event_direction dir,
-					enum iio_event_info info,
-					int val, int val2)
-{
-	struct gp2ap020a00f_data *data = iio_priv(indio_dev);
+अटल पूर्णांक gp2ap020a00f_ग_लिखो_event_val(काष्ठा iio_dev *indio_dev,
+					स्थिर काष्ठा iio_chan_spec *chan,
+					क्रमागत iio_event_type type,
+					क्रमागत iio_event_direction dir,
+					क्रमागत iio_event_info info,
+					पूर्णांक val, पूर्णांक val2)
+अणु
+	काष्ठा gp2ap020a00f_data *data = iio_priv(indio_dev);
 	bool event_en = false;
 	u8 thresh_val_id;
 	u8 thresh_reg_l;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	mutex_lock(&data->lock);
 
 	thresh_reg_l = gp2ap020a00f_get_thresh_reg(chan, dir);
 	thresh_val_id = GP2AP020A00F_THRESH_VAL_ID(thresh_reg_l);
 
-	if (thresh_val_id > GP2AP020A00F_THRESH_PH) {
+	अगर (thresh_val_id > GP2AP020A00F_THRESH_PH) अणु
 		err = -EINVAL;
-		goto error_unlock;
-	}
+		जाओ error_unlock;
+	पूर्ण
 
-	switch (thresh_reg_l) {
-	case GP2AP020A00F_TH_L_REG:
+	चयन (thresh_reg_l) अणु
+	हाल GP2AP020A00F_TH_L_REG:
 		event_en = test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV,
 							&data->flags);
-		break;
-	case GP2AP020A00F_TL_L_REG:
+		अवरोध;
+	हाल GP2AP020A00F_TL_L_REG:
 		event_en = test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV,
 							&data->flags);
-		break;
-	case GP2AP020A00F_PH_L_REG:
-		if (val == 0) {
+		अवरोध;
+	हाल GP2AP020A00F_PH_L_REG:
+		अगर (val == 0) अणु
 			err = -EINVAL;
-			goto error_unlock;
-		}
+			जाओ error_unlock;
+		पूर्ण
 		event_en = test_bit(GP2AP020A00F_FLAG_PROX_RISING_EV,
 							&data->flags);
-		break;
-	case GP2AP020A00F_PL_L_REG:
-		if (val == 0) {
+		अवरोध;
+	हाल GP2AP020A00F_PL_L_REG:
+		अगर (val == 0) अणु
 			err = -EINVAL;
-			goto error_unlock;
-		}
+			जाओ error_unlock;
+		पूर्ण
 		event_en = test_bit(GP2AP020A00F_FLAG_PROX_FALLING_EV,
 							&data->flags);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	data->thresh_val[thresh_val_id] = val;
-	err =  gp2ap020a00f_write_event_threshold(data, thresh_val_id,
+	err =  gp2ap020a00f_ग_लिखो_event_threshold(data, thresh_val_id,
 							event_en);
 error_unlock:
 	mutex_unlock(&data->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gp2ap020a00f_read_event_val(struct iio_dev *indio_dev,
-				       const struct iio_chan_spec *chan,
-				       enum iio_event_type type,
-				       enum iio_event_direction dir,
-				       enum iio_event_info info,
-				       int *val, int *val2)
-{
-	struct gp2ap020a00f_data *data = iio_priv(indio_dev);
+अटल पूर्णांक gp2ap020a00f_पढ़ो_event_val(काष्ठा iio_dev *indio_dev,
+				       स्थिर काष्ठा iio_chan_spec *chan,
+				       क्रमागत iio_event_type type,
+				       क्रमागत iio_event_direction dir,
+				       क्रमागत iio_event_info info,
+				       पूर्णांक *val, पूर्णांक *val2)
+अणु
+	काष्ठा gp2ap020a00f_data *data = iio_priv(indio_dev);
 	u8 thresh_reg_l;
-	int err = IIO_VAL_INT;
+	पूर्णांक err = IIO_VAL_INT;
 
 	mutex_lock(&data->lock);
 
 	thresh_reg_l = gp2ap020a00f_get_thresh_reg(chan, dir);
 
-	if (thresh_reg_l > GP2AP020A00F_PH_L_REG) {
+	अगर (thresh_reg_l > GP2AP020A00F_PH_L_REG) अणु
 		err = -EINVAL;
-		goto error_unlock;
-	}
+		जाओ error_unlock;
+	पूर्ण
 
 	*val = data->thresh_val[GP2AP020A00F_THRESH_VAL_ID(thresh_reg_l)];
 
 error_unlock:
 	mutex_unlock(&data->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gp2ap020a00f_write_prox_event_config(struct iio_dev *indio_dev,
-						int state)
-{
-	struct gp2ap020a00f_data *data = iio_priv(indio_dev);
-	enum gp2ap020a00f_cmd cmd_high_ev, cmd_low_ev;
-	int err;
+अटल पूर्णांक gp2ap020a00f_ग_लिखो_prox_event_config(काष्ठा iio_dev *indio_dev,
+						पूर्णांक state)
+अणु
+	काष्ठा gp2ap020a00f_data *data = iio_priv(indio_dev);
+	क्रमागत gp2ap020a00f_cmd cmd_high_ev, cmd_low_ev;
+	पूर्णांक err;
 
 	cmd_high_ev = state ? GP2AP020A00F_CMD_PROX_HIGH_EV_EN :
 			      GP2AP020A00F_CMD_PROX_HIGH_EV_DIS;
@@ -1116,277 +1117,277 @@ static int gp2ap020a00f_write_prox_event_config(struct iio_dev *indio_dev,
 
 	/*
 	 * In order to enable proximity detection feature in the device
-	 * both high and low threshold registers have to be written
-	 * with different values, greater than zero.
+	 * both high and low threshold रेजिस्टरs have to be written
+	 * with dअगरferent values, greater than zero.
 	 */
-	if (state) {
-		if (data->thresh_val[GP2AP020A00F_THRESH_PL] == 0)
-			return -EINVAL;
+	अगर (state) अणु
+		अगर (data->thresh_val[GP2AP020A00F_THRESH_PL] == 0)
+			वापस -EINVAL;
 
-		if (data->thresh_val[GP2AP020A00F_THRESH_PH] == 0)
-			return -EINVAL;
-	}
+		अगर (data->thresh_val[GP2AP020A00F_THRESH_PH] == 0)
+			वापस -EINVAL;
+	पूर्ण
 
 	err = gp2ap020a00f_exec_cmd(data, cmd_high_ev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = gp2ap020a00f_exec_cmd(data, cmd_low_ev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	free_irq(data->client->irq, indio_dev);
+	मुक्त_irq(data->client->irq, indio_dev);
 
-	if (state)
-		err = request_threaded_irq(data->client->irq, NULL,
+	अगर (state)
+		err = request_thपढ़ोed_irq(data->client->irq, शून्य,
 					   &gp2ap020a00f_prox_sensing_handler,
 					   IRQF_TRIGGER_RISING |
 					   IRQF_TRIGGER_FALLING |
 					   IRQF_ONESHOT,
 					   "gp2ap020a00f_prox_sensing",
 					   indio_dev);
-	else {
-		err = request_threaded_irq(data->client->irq, NULL,
+	अन्यथा अणु
+		err = request_thपढ़ोed_irq(data->client->irq, शून्य,
 					   &gp2ap020a00f_thresh_event_handler,
 					   IRQF_TRIGGER_FALLING |
 					   IRQF_ONESHOT,
 					   "gp2ap020a00f_thresh_event",
 					   indio_dev);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gp2ap020a00f_write_event_config(struct iio_dev *indio_dev,
-					   const struct iio_chan_spec *chan,
-					   enum iio_event_type type,
-					   enum iio_event_direction dir,
-					   int state)
-{
-	struct gp2ap020a00f_data *data = iio_priv(indio_dev);
-	enum gp2ap020a00f_cmd cmd;
-	int err;
+अटल पूर्णांक gp2ap020a00f_ग_लिखो_event_config(काष्ठा iio_dev *indio_dev,
+					   स्थिर काष्ठा iio_chan_spec *chan,
+					   क्रमागत iio_event_type type,
+					   क्रमागत iio_event_direction dir,
+					   पूर्णांक state)
+अणु
+	काष्ठा gp2ap020a00f_data *data = iio_priv(indio_dev);
+	क्रमागत gp2ap020a00f_cmd cmd;
+	पूर्णांक err;
 
 	mutex_lock(&data->lock);
 
-	switch (chan->type) {
-	case IIO_PROXIMITY:
-		err = gp2ap020a00f_write_prox_event_config(indio_dev, state);
-		break;
-	case IIO_LIGHT:
-		if (dir == IIO_EV_DIR_RISING) {
+	चयन (chan->type) अणु
+	हाल IIO_PROXIMITY:
+		err = gp2ap020a00f_ग_लिखो_prox_event_config(indio_dev, state);
+		अवरोध;
+	हाल IIO_LIGHT:
+		अगर (dir == IIO_EV_सूची_RISING) अणु
 			cmd = state ? GP2AP020A00F_CMD_ALS_HIGH_EV_EN :
 				      GP2AP020A00F_CMD_ALS_HIGH_EV_DIS;
 			err = gp2ap020a00f_exec_cmd(data, cmd);
-		} else {
+		पूर्ण अन्यथा अणु
 			cmd = state ? GP2AP020A00F_CMD_ALS_LOW_EV_EN :
 				      GP2AP020A00F_CMD_ALS_LOW_EV_DIS;
 			err = gp2ap020a00f_exec_cmd(data, cmd);
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		err = -EINVAL;
-	}
+	पूर्ण
 
 	mutex_unlock(&data->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gp2ap020a00f_read_event_config(struct iio_dev *indio_dev,
-					   const struct iio_chan_spec *chan,
-					   enum iio_event_type type,
-					   enum iio_event_direction dir)
-{
-	struct gp2ap020a00f_data *data = iio_priv(indio_dev);
-	int event_en = 0;
+अटल पूर्णांक gp2ap020a00f_पढ़ो_event_config(काष्ठा iio_dev *indio_dev,
+					   स्थिर काष्ठा iio_chan_spec *chan,
+					   क्रमागत iio_event_type type,
+					   क्रमागत iio_event_direction dir)
+अणु
+	काष्ठा gp2ap020a00f_data *data = iio_priv(indio_dev);
+	पूर्णांक event_en = 0;
 
 	mutex_lock(&data->lock);
 
-	switch (chan->type) {
-	case IIO_PROXIMITY:
-		if (dir == IIO_EV_DIR_RISING)
+	चयन (chan->type) अणु
+	हाल IIO_PROXIMITY:
+		अगर (dir == IIO_EV_सूची_RISING)
 			event_en = test_bit(GP2AP020A00F_FLAG_PROX_RISING_EV,
 								&data->flags);
-		else
+		अन्यथा
 			event_en = test_bit(GP2AP020A00F_FLAG_PROX_FALLING_EV,
 								&data->flags);
-		break;
-	case IIO_LIGHT:
-		if (dir == IIO_EV_DIR_RISING)
+		अवरोध;
+	हाल IIO_LIGHT:
+		अगर (dir == IIO_EV_सूची_RISING)
 			event_en = test_bit(GP2AP020A00F_FLAG_ALS_RISING_EV,
 								&data->flags);
-		else
+		अन्यथा
 			event_en = test_bit(GP2AP020A00F_FLAG_ALS_FALLING_EV,
 								&data->flags);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		event_en = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&data->lock);
 
-	return event_en;
-}
+	वापस event_en;
+पूर्ण
 
-static int gp2ap020a00f_read_channel(struct gp2ap020a00f_data *data,
-				struct iio_chan_spec const *chan, int *val)
-{
-	enum gp2ap020a00f_cmd cmd;
-	int err;
+अटल पूर्णांक gp2ap020a00f_पढ़ो_channel(काष्ठा gp2ap020a00f_data *data,
+				काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val)
+अणु
+	क्रमागत gp2ap020a00f_cmd cmd;
+	पूर्णांक err;
 
-	switch (chan->scan_index) {
-	case GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR:
+	चयन (chan->scan_index) अणु
+	हाल GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR:
 		cmd = GP2AP020A00F_CMD_READ_RAW_CLEAR;
-		break;
-	case GP2AP020A00F_SCAN_MODE_LIGHT_IR:
+		अवरोध;
+	हाल GP2AP020A00F_SCAN_MODE_LIGHT_IR:
 		cmd = GP2AP020A00F_CMD_READ_RAW_IR;
-		break;
-	case GP2AP020A00F_SCAN_MODE_PROXIMITY:
+		अवरोध;
+	हाल GP2AP020A00F_SCAN_MODE_PROXIMITY:
 		cmd = GP2AP020A00F_CMD_READ_RAW_PROXIMITY;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	err = gp2ap020a00f_exec_cmd(data, cmd);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&data->client->dev,
 			"gp2ap020a00f_exec_cmd failed\n");
-		goto error_ret;
-	}
+		जाओ error_ret;
+	पूर्ण
 
-	err = gp2ap020a00f_read_output(data, chan->address, val);
-	if (err < 0)
+	err = gp2ap020a00f_पढ़ो_output(data, chan->address, val);
+	अगर (err < 0)
 		dev_err(&data->client->dev,
 			"gp2ap020a00f_read_output failed\n");
 
 	err = gp2ap020a00f_set_operation_mode(data,
 					GP2AP020A00F_OPMODE_SHUTDOWN);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&data->client->dev,
 			"Failed to shut down the device.\n");
 
-	if (cmd == GP2AP020A00F_CMD_READ_RAW_CLEAR ||
+	अगर (cmd == GP2AP020A00F_CMD_READ_RAW_CLEAR ||
 	    cmd == GP2AP020A00F_CMD_READ_RAW_IR)
 		gp2ap020a00f_output_to_lux(data, val);
 
 error_ret:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gp2ap020a00f_read_raw(struct iio_dev *indio_dev,
-			   struct iio_chan_spec const *chan,
-			   int *val, int *val2,
-			   long mask)
-{
-	struct gp2ap020a00f_data *data = iio_priv(indio_dev);
-	int err = -EINVAL;
+अटल पूर्णांक gp2ap020a00f_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			   काष्ठा iio_chan_spec स्थिर *chan,
+			   पूर्णांक *val, पूर्णांक *val2,
+			   दीर्घ mask)
+अणु
+	काष्ठा gp2ap020a00f_data *data = iio_priv(indio_dev);
+	पूर्णांक err = -EINVAL;
 
-	if (mask == IIO_CHAN_INFO_RAW) {
+	अगर (mask == IIO_CHAN_INFO_RAW) अणु
 		err = iio_device_claim_direct_mode(indio_dev);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		err = gp2ap020a00f_read_channel(data, chan, val);
+		err = gp2ap020a00f_पढ़ो_channel(data, chan, val);
 		iio_device_release_direct_mode(indio_dev);
-	}
-	return err < 0 ? err : IIO_VAL_INT;
-}
+	पूर्ण
+	वापस err < 0 ? err : IIO_VAL_INT;
+पूर्ण
 
-static const struct iio_event_spec gp2ap020a00f_event_spec_light[] = {
-	{
+अटल स्थिर काष्ठा iio_event_spec gp2ap020a00f_event_spec_light[] = अणु
+	अणु
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_DIR_RISING,
+		.dir = IIO_EV_सूची_RISING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 			BIT(IIO_EV_INFO_ENABLE),
-	}, {
+	पूर्ण, अणु
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_DIR_FALLING,
+		.dir = IIO_EV_सूची_FALLING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 			BIT(IIO_EV_INFO_ENABLE),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_event_spec gp2ap020a00f_event_spec_prox[] = {
-	{
+अटल स्थिर काष्ठा iio_event_spec gp2ap020a00f_event_spec_prox[] = अणु
+	अणु
 		.type = IIO_EV_TYPE_ROC,
-		.dir = IIO_EV_DIR_RISING,
+		.dir = IIO_EV_सूची_RISING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 			BIT(IIO_EV_INFO_ENABLE),
-	}, {
+	पूर्ण, अणु
 		.type = IIO_EV_TYPE_ROC,
-		.dir = IIO_EV_DIR_FALLING,
+		.dir = IIO_EV_सूची_FALLING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 			BIT(IIO_EV_INFO_ENABLE),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec gp2ap020a00f_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec gp2ap020a00f_channels[] = अणु
+	अणु
 		.type = IIO_LIGHT,
 		.channel2 = IIO_MOD_LIGHT_CLEAR,
-		.modified = 1,
+		.modअगरied = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 'u',
 			.realbits = 24,
-			.shift = 0,
+			.shअगरt = 0,
 			.storagebits = 32,
 			.endianness = IIO_LE,
-		},
+		पूर्ण,
 		.scan_index = GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR,
 		.address = GP2AP020A00F_D0_L_REG,
 		.event_spec = gp2ap020a00f_event_spec_light,
 		.num_event_specs = ARRAY_SIZE(gp2ap020a00f_event_spec_light),
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_LIGHT,
 		.channel2 = IIO_MOD_LIGHT_IR,
-		.modified = 1,
+		.modअगरied = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 'u',
 			.realbits = 24,
-			.shift = 0,
+			.shअगरt = 0,
 			.storagebits = 32,
 			.endianness = IIO_LE,
-		},
+		पूर्ण,
 		.scan_index = GP2AP020A00F_SCAN_MODE_LIGHT_IR,
 		.address = GP2AP020A00F_D1_L_REG,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_PROXIMITY,
-		.modified = 0,
+		.modअगरied = 0,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 'u',
 			.realbits = 16,
-			.shift = 0,
+			.shअगरt = 0,
 			.storagebits = 16,
 			.endianness = IIO_LE,
-		},
+		पूर्ण,
 		.scan_index = GP2AP020A00F_SCAN_MODE_PROXIMITY,
 		.address = GP2AP020A00F_D2_L_REG,
 		.event_spec = gp2ap020a00f_event_spec_prox,
 		.num_event_specs = ARRAY_SIZE(gp2ap020a00f_event_spec_prox),
-	},
+	पूर्ण,
 	IIO_CHAN_SOFT_TIMESTAMP(GP2AP020A00F_CHAN_TIMESTAMP),
-};
+पूर्ण;
 
-static const struct iio_info gp2ap020a00f_info = {
-	.read_raw = &gp2ap020a00f_read_raw,
-	.read_event_value = &gp2ap020a00f_read_event_val,
-	.read_event_config = &gp2ap020a00f_read_event_config,
-	.write_event_value = &gp2ap020a00f_write_event_val,
-	.write_event_config = &gp2ap020a00f_write_event_config,
-};
+अटल स्थिर काष्ठा iio_info gp2ap020a00f_info = अणु
+	.पढ़ो_raw = &gp2ap020a00f_पढ़ो_raw,
+	.पढ़ो_event_value = &gp2ap020a00f_पढ़ो_event_val,
+	.पढ़ो_event_config = &gp2ap020a00f_पढ़ो_event_config,
+	.ग_लिखो_event_value = &gp2ap020a00f_ग_लिखो_event_val,
+	.ग_लिखो_event_config = &gp2ap020a00f_ग_लिखो_event_config,
+पूर्ण;
 
-static int gp2ap020a00f_buffer_postenable(struct iio_dev *indio_dev)
-{
-	struct gp2ap020a00f_data *data = iio_priv(indio_dev);
-	int i, err = 0;
+अटल पूर्णांक gp2ap020a00f_buffer_postenable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा gp2ap020a00f_data *data = iio_priv(indio_dev);
+	पूर्णांक i, err = 0;
 
 	mutex_lock(&data->lock);
 
@@ -1394,232 +1395,232 @@ static int gp2ap020a00f_buffer_postenable(struct iio_dev *indio_dev)
 	 * Enable triggers according to the scan_mask. Enabling either
 	 * LIGHT_CLEAR or LIGHT_IR scan mode results in enabling ALS
 	 * module in the device, which generates samples in both D0 (clear)
-	 * and D1 (ir) registers. As the two registers are bound to the
+	 * and D1 (ir) रेजिस्टरs. As the two रेजिस्टरs are bound to the
 	 * two separate IIO channels they are treated in the driver logic
-	 * as if they were controlled independently.
+	 * as अगर they were controlled independently.
 	 */
-	for_each_set_bit(i, indio_dev->active_scan_mask,
-		indio_dev->masklength) {
-		switch (i) {
-		case GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR:
+	क्रम_each_set_bit(i, indio_dev->active_scan_mask,
+		indio_dev->masklength) अणु
+		चयन (i) अणु
+		हाल GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR:
 			err = gp2ap020a00f_exec_cmd(data,
 					GP2AP020A00F_CMD_TRIGGER_CLEAR_EN);
-			break;
-		case GP2AP020A00F_SCAN_MODE_LIGHT_IR:
+			अवरोध;
+		हाल GP2AP020A00F_SCAN_MODE_LIGHT_IR:
 			err = gp2ap020a00f_exec_cmd(data,
 					GP2AP020A00F_CMD_TRIGGER_IR_EN);
-			break;
-		case GP2AP020A00F_SCAN_MODE_PROXIMITY:
+			अवरोध;
+		हाल GP2AP020A00F_SCAN_MODE_PROXIMITY:
 			err = gp2ap020a00f_exec_cmd(data,
 					GP2AP020A00F_CMD_TRIGGER_PROX_EN);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (err < 0)
-		goto error_unlock;
+	अगर (err < 0)
+		जाओ error_unlock;
 
-	data->buffer = kmalloc(indio_dev->scan_bytes, GFP_KERNEL);
-	if (!data->buffer)
+	data->buffer = kदो_स्मृति(indio_dev->scan_bytes, GFP_KERNEL);
+	अगर (!data->buffer)
 		err = -ENOMEM;
 
 error_unlock:
 	mutex_unlock(&data->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gp2ap020a00f_buffer_predisable(struct iio_dev *indio_dev)
-{
-	struct gp2ap020a00f_data *data = iio_priv(indio_dev);
-	int i, err = 0;
+अटल पूर्णांक gp2ap020a00f_buffer_predisable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा gp2ap020a00f_data *data = iio_priv(indio_dev);
+	पूर्णांक i, err = 0;
 
 	mutex_lock(&data->lock);
 
-	for_each_set_bit(i, indio_dev->active_scan_mask,
-		indio_dev->masklength) {
-		switch (i) {
-		case GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR:
+	क्रम_each_set_bit(i, indio_dev->active_scan_mask,
+		indio_dev->masklength) अणु
+		चयन (i) अणु
+		हाल GP2AP020A00F_SCAN_MODE_LIGHT_CLEAR:
 			err = gp2ap020a00f_exec_cmd(data,
 					GP2AP020A00F_CMD_TRIGGER_CLEAR_DIS);
-			break;
-		case GP2AP020A00F_SCAN_MODE_LIGHT_IR:
+			अवरोध;
+		हाल GP2AP020A00F_SCAN_MODE_LIGHT_IR:
 			err = gp2ap020a00f_exec_cmd(data,
 					GP2AP020A00F_CMD_TRIGGER_IR_DIS);
-			break;
-		case GP2AP020A00F_SCAN_MODE_PROXIMITY:
+			अवरोध;
+		हाल GP2AP020A00F_SCAN_MODE_PROXIMITY:
 			err = gp2ap020a00f_exec_cmd(data,
 					GP2AP020A00F_CMD_TRIGGER_PROX_DIS);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (err == 0)
-		kfree(data->buffer);
+	अगर (err == 0)
+		kमुक्त(data->buffer);
 
 	mutex_unlock(&data->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct iio_buffer_setup_ops gp2ap020a00f_buffer_setup_ops = {
+अटल स्थिर काष्ठा iio_buffer_setup_ops gp2ap020a00f_buffer_setup_ops = अणु
 	.postenable = &gp2ap020a00f_buffer_postenable,
 	.predisable = &gp2ap020a00f_buffer_predisable,
-};
+पूर्ण;
 
-static const struct iio_trigger_ops gp2ap020a00f_trigger_ops = {
-};
+अटल स्थिर काष्ठा iio_trigger_ops gp2ap020a00f_trigger_ops = अणु
+पूर्ण;
 
-static int gp2ap020a00f_probe(struct i2c_client *client,
-				const struct i2c_device_id *id)
-{
-	struct gp2ap020a00f_data *data;
-	struct iio_dev *indio_dev;
-	struct regmap *regmap;
-	int err;
+अटल पूर्णांक gp2ap020a00f_probe(काष्ठा i2c_client *client,
+				स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा gp2ap020a00f_data *data;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा regmap *regmap;
+	पूर्णांक err;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	data = iio_priv(indio_dev);
 
 	data->vled_reg = devm_regulator_get(&client->dev, "vled");
-	if (IS_ERR(data->vled_reg))
-		return PTR_ERR(data->vled_reg);
+	अगर (IS_ERR(data->vled_reg))
+		वापस PTR_ERR(data->vled_reg);
 
 	err = regulator_enable(data->vled_reg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	regmap = devm_regmap_init_i2c(client, &gp2ap020a00f_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&client->dev, "Regmap initialization failed.\n");
 		err = PTR_ERR(regmap);
-		goto error_regulator_disable;
-	}
+		जाओ error_regulator_disable;
+	पूर्ण
 
-	/* Initialize device registers */
-	err = regmap_bulk_write(regmap, GP2AP020A00F_OP_REG,
+	/* Initialize device रेजिस्टरs */
+	err = regmap_bulk_ग_लिखो(regmap, GP2AP020A00F_OP_REG,
 			gp2ap020a00f_reg_init_tab,
 			ARRAY_SIZE(gp2ap020a00f_reg_init_tab));
 
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&client->dev, "Device initialization failed.\n");
-		goto error_regulator_disable;
-	}
+		जाओ error_regulator_disable;
+	पूर्ण
 
 	i2c_set_clientdata(client, indio_dev);
 
 	data->client = client;
 	data->cur_opmode = GP2AP020A00F_OPMODE_SHUTDOWN;
 	data->regmap = regmap;
-	init_waitqueue_head(&data->data_ready_queue);
+	init_रुकोqueue_head(&data->data_पढ़ोy_queue);
 
 	mutex_init(&data->lock);
 	indio_dev->channels = gp2ap020a00f_channels;
 	indio_dev->num_channels = ARRAY_SIZE(gp2ap020a00f_channels);
 	indio_dev->info = &gp2ap020a00f_info;
 	indio_dev->name = id->name;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
 	/* Allocate buffer */
-	err = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_time,
+	err = iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_समय,
 		&gp2ap020a00f_trigger_handler, &gp2ap020a00f_buffer_setup_ops);
-	if (err < 0)
-		goto error_regulator_disable;
+	अगर (err < 0)
+		जाओ error_regulator_disable;
 
 	/* Allocate trigger */
 	data->trig = devm_iio_trigger_alloc(&client->dev, "%s-trigger",
 							indio_dev->name);
-	if (data->trig == NULL) {
+	अगर (data->trig == शून्य) अणु
 		err = -ENOMEM;
 		dev_err(&indio_dev->dev, "Failed to allocate iio trigger.\n");
-		goto error_uninit_buffer;
-	}
+		जाओ error_uninit_buffer;
+	पूर्ण
 
-	/* This needs to be requested here for read_raw calls to work. */
-	err = request_threaded_irq(client->irq, NULL,
+	/* This needs to be requested here क्रम पढ़ो_raw calls to work. */
+	err = request_thपढ़ोed_irq(client->irq, शून्य,
 				   &gp2ap020a00f_thresh_event_handler,
 				   IRQF_TRIGGER_FALLING |
 				   IRQF_ONESHOT,
 				   "gp2ap020a00f_als_event",
 				   indio_dev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&client->dev, "Irq request failed.\n");
-		goto error_uninit_buffer;
-	}
+		जाओ error_uninit_buffer;
+	पूर्ण
 
 	data->trig->ops = &gp2ap020a00f_trigger_ops;
 
 	init_irq_work(&data->work, gp2ap020a00f_iio_trigger_work);
 
-	err = iio_trigger_register(data->trig);
-	if (err < 0) {
+	err = iio_trigger_रेजिस्टर(data->trig);
+	अगर (err < 0) अणु
 		dev_err(&client->dev, "Failed to register iio trigger.\n");
-		goto error_free_irq;
-	}
+		जाओ error_मुक्त_irq;
+	पूर्ण
 
-	err = iio_device_register(indio_dev);
-	if (err < 0)
-		goto error_trigger_unregister;
+	err = iio_device_रेजिस्टर(indio_dev);
+	अगर (err < 0)
+		जाओ error_trigger_unरेजिस्टर;
 
-	return 0;
+	वापस 0;
 
-error_trigger_unregister:
-	iio_trigger_unregister(data->trig);
-error_free_irq:
-	free_irq(client->irq, indio_dev);
+error_trigger_unरेजिस्टर:
+	iio_trigger_unरेजिस्टर(data->trig);
+error_मुक्त_irq:
+	मुक्त_irq(client->irq, indio_dev);
 error_uninit_buffer:
 	iio_triggered_buffer_cleanup(indio_dev);
 error_regulator_disable:
 	regulator_disable(data->vled_reg);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int gp2ap020a00f_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct gp2ap020a00f_data *data = iio_priv(indio_dev);
-	int err;
+अटल पूर्णांक gp2ap020a00f_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा gp2ap020a00f_data *data = iio_priv(indio_dev);
+	पूर्णांक err;
 
 	err = gp2ap020a00f_set_operation_mode(data,
 					GP2AP020A00F_OPMODE_SHUTDOWN);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&indio_dev->dev, "Failed to power off the device.\n");
 
-	iio_device_unregister(indio_dev);
-	iio_trigger_unregister(data->trig);
-	free_irq(client->irq, indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
+	iio_trigger_unरेजिस्टर(data->trig);
+	मुक्त_irq(client->irq, indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
 	regulator_disable(data->vled_reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id gp2ap020a00f_id[] = {
-	{ GP2A_I2C_NAME, 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id gp2ap020a00f_id[] = अणु
+	अणु GP2A_I2C_NAME, 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, gp2ap020a00f_id);
 
-static const struct of_device_id gp2ap020a00f_of_match[] = {
-	{ .compatible = "sharp,gp2ap020a00f" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id gp2ap020a00f_of_match[] = अणु
+	अणु .compatible = "sharp,gp2ap020a00f" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, gp2ap020a00f_of_match);
 
-static struct i2c_driver gp2ap020a00f_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver gp2ap020a00f_driver = अणु
+	.driver = अणु
 		.name	= GP2A_I2C_NAME,
 		.of_match_table = gp2ap020a00f_of_match,
-	},
+	पूर्ण,
 	.probe		= gp2ap020a00f_probe,
-	.remove		= gp2ap020a00f_remove,
+	.हटाओ		= gp2ap020a00f_हटाओ,
 	.id_table	= gp2ap020a00f_id,
-};
+पूर्ण;
 
 module_i2c_driver(gp2ap020a00f_driver);
 

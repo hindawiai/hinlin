@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_MACH_BMIPS_IOREMAP_H
-#define __ASM_MACH_BMIPS_IOREMAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_MACH_BMIPS_IOREMAP_H
+#घोषणा __ASM_MACH_BMIPS_IOREMAP_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-static inline int is_bmips_internal_registers(phys_addr_t offset)
-{
-	if (offset >= 0xfff80000)
-		return 1;
+अटल अंतरभूत पूर्णांक is_bmips_पूर्णांकernal_रेजिस्टरs(phys_addr_t offset)
+अणु
+	अगर (offset >= 0xfff80000)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void __iomem *plat_ioremap(phys_addr_t offset, unsigned long size,
-					 unsigned long flags)
-{
-	if (is_bmips_internal_registers(offset))
-		return (void __iomem *)offset;
+अटल अंतरभूत व्योम __iomem *plat_ioremap(phys_addr_t offset, अचिन्हित दीर्घ size,
+					 अचिन्हित दीर्घ flags)
+अणु
+	अगर (is_bmips_पूर्णांकernal_रेजिस्टरs(offset))
+		वापस (व्योम __iomem *)offset;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline int plat_iounmap(const volatile void __iomem *addr)
-{
-	return is_bmips_internal_registers((unsigned long)addr);
-}
+अटल अंतरभूत पूर्णांक plat_iounmap(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस is_bmips_पूर्णांकernal_रेजिस्टरs((अचिन्हित दीर्घ)addr);
+पूर्ण
 
-#endif /* __ASM_MACH_BMIPS_IOREMAP_H */
+#पूर्ण_अगर /* __ASM_MACH_BMIPS_IOREMAP_H */

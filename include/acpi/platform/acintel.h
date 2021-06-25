@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /******************************************************************************
  *
- * Name: acintel.h - VC specific defines, etc.
+ * Name: acपूर्णांकel.h - VC specअगरic defines, etc.
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#ifndef __ACINTEL_H__
-#define __ACINTEL_H__
+#अगर_अघोषित __ACINTEL_H__
+#घोषणा __ACINTEL_H__
 
 /*
- * Use compiler specific <stdarg.h> is a good practice for even when
- * -nostdinc is specified (i.e., ACPI_USE_STANDARD_HEADERS undefined.
+ * Use compiler specअगरic <मानकतर्क.स> is a good practice क्रम even when
+ * -noमानक_निवेशc is specअगरied (i.e., ACPI_USE_STANDARD_HEADERS undefined.
  */
-#ifndef va_arg
-#include <stdarg.h>
-#endif
+#अगर_अघोषित बहु_तर्क
+#समावेश <मानकतर्क.स>
+#पूर्ण_अगर
 
-/* Configuration specific to Intel 64-bit C compiler */
+/* Configuration specअगरic to Intel 64-bit C compiler */
 
-#define COMPILER_DEPENDENT_INT64    __int64
-#define COMPILER_DEPENDENT_UINT64   unsigned __int64
-#define ACPI_INLINE                 __inline
+#घोषणा COMPILER_DEPENDENT_INT64    __पूर्णांक64
+#घोषणा COMPILER_DEPENDENT_UINT64   अचिन्हित __पूर्णांक64
+#घोषणा ACPI_INLINE                 __अंतरभूत
 
 /*
  * Calling conventions:
  *
- * ACPI_SYSTEM_XFACE        - Interfaces to host OS (handlers, threads)
- * ACPI_EXTERNAL_XFACE      - External ACPI interfaces
- * ACPI_INTERNAL_XFACE      - Internal ACPI interfaces
- * ACPI_INTERNAL_VAR_XFACE  - Internal variable-parameter list interfaces
+ * ACPI_SYSTEM_XFACE        - Interfaces to host OS (handlers, thपढ़ोs)
+ * ACPI_EXTERNAL_XFACE      - External ACPI पूर्णांकerfaces
+ * ACPI_INTERNAL_XFACE      - Internal ACPI पूर्णांकerfaces
+ * ACPI_INTERNAL_VAR_XFACE  - Internal variable-parameter list पूर्णांकerfaces
  */
-#define ACPI_SYSTEM_XFACE
-#define ACPI_EXTERNAL_XFACE
-#define ACPI_INTERNAL_XFACE
-#define ACPI_INTERNAL_VAR_XFACE
+#घोषणा ACPI_SYSTEM_XFACE
+#घोषणा ACPI_EXTERNAL_XFACE
+#घोषणा ACPI_INTERNAL_XFACE
+#घोषणा ACPI_INTERNAL_VAR_XFACE
 
-/* remark 981 - operands evaluated in no particular order */
-#pragma warning(disable:981)
+/* remark 981 - opeअक्रमs evaluated in no particular order */
+#आशय warning(disable:981)
 
-/* warn C4100: unreferenced formal parameter */
-#pragma warning(disable:4100)
+/* warn C4100: unreferenced क्रमmal parameter */
+#आशय warning(disable:4100)
 
-/* warn C4127: conditional expression is constant */
-#pragma warning(disable:4127)
+/* warn C4127: conditional expression is स्थिरant */
+#आशय warning(disable:4127)
 
 /* warn C4706: assignment within conditional expression */
-#pragma warning(disable:4706)
+#आशय warning(disable:4706)
 
-/* warn C4214: bit field types other than int */
-#pragma warning(disable:4214)
+/* warn C4214: bit field types other than पूर्णांक */
+#आशय warning(disable:4214)
 
-#endif				/* __ACINTEL_H__ */
+#पूर्ण_अगर				/* __ACINTEL_H__ */

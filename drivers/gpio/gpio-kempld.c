@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Kontron PLD GPIO driver
  *
@@ -6,161 +7,161 @@
  * Author: Michael Brunner <michael.brunner@kontron.com>
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/bitops.h>
-#include <linux/errno.h>
-#include <linux/platform_device.h>
-#include <linux/gpio/driver.h>
-#include <linux/mfd/kempld.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/mfd/kempld.h>
 
-#define KEMPLD_GPIO_MAX_NUM		16
-#define KEMPLD_GPIO_MASK(x)		(BIT((x) % 8))
-#define KEMPLD_GPIO_DIR_NUM(x)		(0x40 + (x) / 8)
-#define KEMPLD_GPIO_LVL_NUM(x)		(0x42 + (x) / 8)
-#define KEMPLD_GPIO_EVT_LVL_EDGE	0x46
-#define KEMPLD_GPIO_IEN			0x4A
+#घोषणा KEMPLD_GPIO_MAX_NUM		16
+#घोषणा KEMPLD_GPIO_MASK(x)		(BIT((x) % 8))
+#घोषणा KEMPLD_GPIO_सूची_NUM(x)		(0x40 + (x) / 8)
+#घोषणा KEMPLD_GPIO_LVL_NUM(x)		(0x42 + (x) / 8)
+#घोषणा KEMPLD_GPIO_EVT_LVL_EDGE	0x46
+#घोषणा KEMPLD_GPIO_IEN			0x4A
 
-struct kempld_gpio_data {
-	struct gpio_chip		chip;
-	struct kempld_device_data	*pld;
-};
+काष्ठा kempld_gpio_data अणु
+	काष्ठा gpio_chip		chip;
+	काष्ठा kempld_device_data	*pld;
+पूर्ण;
 
 /*
  * Set or clear GPIO bit
  * kempld_get_mutex must be called prior to calling this function.
  */
-static void kempld_gpio_bitop(struct kempld_device_data *pld,
+अटल व्योम kempld_gpio_bitop(काष्ठा kempld_device_data *pld,
 			      u8 reg, u8 bit, u8 val)
-{
+अणु
 	u8 status;
 
-	status = kempld_read8(pld, reg);
-	if (val)
+	status = kempld_पढ़ो8(pld, reg);
+	अगर (val)
 		status |= KEMPLD_GPIO_MASK(bit);
-	else
+	अन्यथा
 		status &= ~KEMPLD_GPIO_MASK(bit);
-	kempld_write8(pld, reg, status);
-}
+	kempld_ग_लिखो8(pld, reg, status);
+पूर्ण
 
-static int kempld_gpio_get_bit(struct kempld_device_data *pld, u8 reg, u8 bit)
-{
+अटल पूर्णांक kempld_gpio_get_bit(काष्ठा kempld_device_data *pld, u8 reg, u8 bit)
+अणु
 	u8 status;
 
 	kempld_get_mutex(pld);
-	status = kempld_read8(pld, reg);
+	status = kempld_पढ़ो8(pld, reg);
 	kempld_release_mutex(pld);
 
-	return !!(status & KEMPLD_GPIO_MASK(bit));
-}
+	वापस !!(status & KEMPLD_GPIO_MASK(bit));
+पूर्ण
 
-static int kempld_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct kempld_gpio_data *gpio = gpiochip_get_data(chip);
-	struct kempld_device_data *pld = gpio->pld;
+अटल पूर्णांक kempld_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा kempld_gpio_data *gpio = gpiochip_get_data(chip);
+	काष्ठा kempld_device_data *pld = gpio->pld;
 
-	return !!kempld_gpio_get_bit(pld, KEMPLD_GPIO_LVL_NUM(offset), offset);
-}
+	वापस !!kempld_gpio_get_bit(pld, KEMPLD_GPIO_LVL_NUM(offset), offset);
+पूर्ण
 
-static void kempld_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	struct kempld_gpio_data *gpio = gpiochip_get_data(chip);
-	struct kempld_device_data *pld = gpio->pld;
+अटल व्योम kempld_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा kempld_gpio_data *gpio = gpiochip_get_data(chip);
+	काष्ठा kempld_device_data *pld = gpio->pld;
 
 	kempld_get_mutex(pld);
 	kempld_gpio_bitop(pld, KEMPLD_GPIO_LVL_NUM(offset), offset, value);
 	kempld_release_mutex(pld);
-}
+पूर्ण
 
-static int kempld_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
-{
-	struct kempld_gpio_data *gpio = gpiochip_get_data(chip);
-	struct kempld_device_data *pld = gpio->pld;
+अटल पूर्णांक kempld_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा kempld_gpio_data *gpio = gpiochip_get_data(chip);
+	काष्ठा kempld_device_data *pld = gpio->pld;
 
 	kempld_get_mutex(pld);
-	kempld_gpio_bitop(pld, KEMPLD_GPIO_DIR_NUM(offset), offset, 0);
+	kempld_gpio_bitop(pld, KEMPLD_GPIO_सूची_NUM(offset), offset, 0);
 	kempld_release_mutex(pld);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kempld_gpio_direction_output(struct gpio_chip *chip, unsigned offset,
-					int value)
-{
-	struct kempld_gpio_data *gpio = gpiochip_get_data(chip);
-	struct kempld_device_data *pld = gpio->pld;
+अटल पूर्णांक kempld_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित offset,
+					पूर्णांक value)
+अणु
+	काष्ठा kempld_gpio_data *gpio = gpiochip_get_data(chip);
+	काष्ठा kempld_device_data *pld = gpio->pld;
 
 	kempld_get_mutex(pld);
 	kempld_gpio_bitop(pld, KEMPLD_GPIO_LVL_NUM(offset), offset, value);
-	kempld_gpio_bitop(pld, KEMPLD_GPIO_DIR_NUM(offset), offset, 1);
+	kempld_gpio_bitop(pld, KEMPLD_GPIO_सूची_NUM(offset), offset, 1);
 	kempld_release_mutex(pld);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kempld_gpio_get_direction(struct gpio_chip *chip, unsigned offset)
-{
-	struct kempld_gpio_data *gpio = gpiochip_get_data(chip);
-	struct kempld_device_data *pld = gpio->pld;
+अटल पूर्णांक kempld_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा kempld_gpio_data *gpio = gpiochip_get_data(chip);
+	काष्ठा kempld_device_data *pld = gpio->pld;
 
-	if (kempld_gpio_get_bit(pld, KEMPLD_GPIO_DIR_NUM(offset), offset))
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (kempld_gpio_get_bit(pld, KEMPLD_GPIO_सूची_NUM(offset), offset))
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int kempld_gpio_pincount(struct kempld_device_data *pld)
-{
+अटल पूर्णांक kempld_gpio_pincount(काष्ठा kempld_device_data *pld)
+अणु
 	u16 evt, evt_back;
 
 	kempld_get_mutex(pld);
 
-	/* Backup event register as it might be already initialized */
-	evt_back = kempld_read16(pld, KEMPLD_GPIO_EVT_LVL_EDGE);
-	/* Clear event register */
-	kempld_write16(pld, KEMPLD_GPIO_EVT_LVL_EDGE, 0x0000);
-	/* Read back event register */
-	evt = kempld_read16(pld, KEMPLD_GPIO_EVT_LVL_EDGE);
-	/* Restore event register */
-	kempld_write16(pld, KEMPLD_GPIO_EVT_LVL_EDGE, evt_back);
+	/* Backup event रेजिस्टर as it might be alपढ़ोy initialized */
+	evt_back = kempld_पढ़ो16(pld, KEMPLD_GPIO_EVT_LVL_EDGE);
+	/* Clear event रेजिस्टर */
+	kempld_ग_लिखो16(pld, KEMPLD_GPIO_EVT_LVL_EDGE, 0x0000);
+	/* Read back event रेजिस्टर */
+	evt = kempld_पढ़ो16(pld, KEMPLD_GPIO_EVT_LVL_EDGE);
+	/* Restore event रेजिस्टर */
+	kempld_ग_लिखो16(pld, KEMPLD_GPIO_EVT_LVL_EDGE, evt_back);
 
 	kempld_release_mutex(pld);
 
-	return evt ? __ffs(evt) : 16;
-}
+	वापस evt ? __ffs(evt) : 16;
+पूर्ण
 
-static int kempld_gpio_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct kempld_device_data *pld = dev_get_drvdata(dev->parent);
-	struct kempld_platform_data *pdata = dev_get_platdata(pld->dev);
-	struct kempld_gpio_data *gpio;
-	struct gpio_chip *chip;
-	int ret;
+अटल पूर्णांक kempld_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा kempld_device_data *pld = dev_get_drvdata(dev->parent);
+	काष्ठा kempld_platक्रमm_data *pdata = dev_get_platdata(pld->dev);
+	काष्ठा kempld_gpio_data *gpio;
+	काष्ठा gpio_chip *chip;
+	पूर्णांक ret;
 
-	if (pld->info.spec_major < 2) {
+	अगर (pld->info.spec_major < 2) अणु
 		dev_err(dev,
 			"Driver only supports GPIO devices compatible to PLD spec. rev. 2.0 or higher\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	gpio = devm_kzalloc(dev, sizeof(*gpio), GFP_KERNEL);
-	if (!gpio)
-		return -ENOMEM;
+	gpio = devm_kzalloc(dev, माप(*gpio), GFP_KERNEL);
+	अगर (!gpio)
+		वापस -ENOMEM;
 
 	gpio->pld = pld;
 
-	platform_set_drvdata(pdev, gpio);
+	platक्रमm_set_drvdata(pdev, gpio);
 
 	chip = &gpio->chip;
 	chip->label = "gpio-kempld";
 	chip->owner = THIS_MODULE;
 	chip->parent = dev;
 	chip->can_sleep = true;
-	if (pdata && pdata->gpio_base)
+	अगर (pdata && pdata->gpio_base)
 		chip->base = pdata->gpio_base;
-	else
+	अन्यथा
 		chip->base = -1;
 	chip->direction_input = kempld_gpio_direction_input;
 	chip->direction_output = kempld_gpio_direction_output;
@@ -168,31 +169,31 @@ static int kempld_gpio_probe(struct platform_device *pdev)
 	chip->get = kempld_gpio_get;
 	chip->set = kempld_gpio_set;
 	chip->ngpio = kempld_gpio_pincount(pld);
-	if (chip->ngpio == 0) {
+	अगर (chip->ngpio == 0) अणु
 		dev_err(dev, "No GPIO pins detected\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = devm_gpiochip_add_data(dev, chip, gpio);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Could not register GPIO chip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_info(dev, "GPIO functionality initialized with %d pins\n",
 		 chip->ngpio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver kempld_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver kempld_gpio_driver = अणु
+	.driver = अणु
 		.name = "kempld-gpio",
-	},
+	पूर्ण,
 	.probe		= kempld_gpio_probe,
-};
+पूर्ण;
 
-module_platform_driver(kempld_gpio_driver);
+module_platक्रमm_driver(kempld_gpio_driver);
 
 MODULE_DESCRIPTION("KEM PLD GPIO Driver");
 MODULE_AUTHOR("Michael Brunner <michael.brunner@kontron.com>");

@@ -1,59 +1,60 @@
-#ifndef __NVKM_ACR_PRIV_H__
-#define __NVKM_ACR_PRIV_H__
-#include <subdev/acr.h>
-struct lsb_header_tail;
+<शैली गुरु>
+#अगर_अघोषित __NVKM_ACR_PRIV_H__
+#घोषणा __NVKM_ACR_PRIV_H__
+#समावेश <subdev/acr.h>
+काष्ठा lsb_header_tail;
 
-struct nvkm_acr_fwif {
-	int version;
-	int (*load)(struct nvkm_acr *, int version,
-		    const struct nvkm_acr_fwif *);
-	const struct nvkm_acr_func *func;
-};
+काष्ठा nvkm_acr_fwअगर अणु
+	पूर्णांक version;
+	पूर्णांक (*load)(काष्ठा nvkm_acr *, पूर्णांक version,
+		    स्थिर काष्ठा nvkm_acr_fwअगर *);
+	स्थिर काष्ठा nvkm_acr_func *func;
+पूर्ण;
 
-int gm200_acr_nofw(struct nvkm_acr *, int, const struct nvkm_acr_fwif *);
-int gm20b_acr_load(struct nvkm_acr *, int, const struct nvkm_acr_fwif *);
-int gp102_acr_load(struct nvkm_acr *, int, const struct nvkm_acr_fwif *);
+पूर्णांक gm200_acr_nofw(काष्ठा nvkm_acr *, पूर्णांक, स्थिर काष्ठा nvkm_acr_fwअगर *);
+पूर्णांक gm20b_acr_load(काष्ठा nvkm_acr *, पूर्णांक, स्थिर काष्ठा nvkm_acr_fwअगर *);
+पूर्णांक gp102_acr_load(काष्ठा nvkm_acr *, पूर्णांक, स्थिर काष्ठा nvkm_acr_fwअगर *);
 
-struct nvkm_acr_lsf;
-struct nvkm_acr_func {
-	const struct nvkm_acr_hsf_fwif *load;
-	const struct nvkm_acr_hsf_fwif *ahesasc;
-	const struct nvkm_acr_hsf_fwif *asb;
-	const struct nvkm_acr_hsf_fwif *unload;
-	int (*wpr_parse)(struct nvkm_acr *);
-	u32 (*wpr_layout)(struct nvkm_acr *);
-	int (*wpr_alloc)(struct nvkm_acr *, u32 wpr_size);
-	int (*wpr_build)(struct nvkm_acr *, struct nvkm_acr_lsf *rtos);
-	void (*wpr_patch)(struct nvkm_acr *, s64 adjust);
-	void (*wpr_check)(struct nvkm_acr *, u64 *start, u64 *limit);
-	int (*init)(struct nvkm_acr *);
-	void (*fini)(struct nvkm_acr *);
+काष्ठा nvkm_acr_lsf;
+काष्ठा nvkm_acr_func अणु
+	स्थिर काष्ठा nvkm_acr_hsf_fwअगर *load;
+	स्थिर काष्ठा nvkm_acr_hsf_fwअगर *ahesasc;
+	स्थिर काष्ठा nvkm_acr_hsf_fwअगर *asb;
+	स्थिर काष्ठा nvkm_acr_hsf_fwअगर *unload;
+	पूर्णांक (*wpr_parse)(काष्ठा nvkm_acr *);
+	u32 (*wpr_layout)(काष्ठा nvkm_acr *);
+	पूर्णांक (*wpr_alloc)(काष्ठा nvkm_acr *, u32 wpr_size);
+	पूर्णांक (*wpr_build)(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_lsf *rtos);
+	व्योम (*wpr_patch)(काष्ठा nvkm_acr *, s64 adjust);
+	व्योम (*wpr_check)(काष्ठा nvkm_acr *, u64 *start, u64 *limit);
+	पूर्णांक (*init)(काष्ठा nvkm_acr *);
+	व्योम (*fini)(काष्ठा nvkm_acr *);
 	u64 bootstrap_falcons;
-};
+पूर्ण;
 
-extern const struct nvkm_acr_func gm200_acr;
-int gm200_acr_wpr_parse(struct nvkm_acr *);
-u32 gm200_acr_wpr_layout(struct nvkm_acr *);
-int gm200_acr_wpr_build(struct nvkm_acr *, struct nvkm_acr_lsf *);
-void gm200_acr_wpr_patch(struct nvkm_acr *, s64);
-void gm200_acr_wpr_check(struct nvkm_acr *, u64 *, u64 *);
-void gm200_acr_wpr_build_lsb_tail(struct nvkm_acr_lsfw *,
-				  struct lsb_header_tail *);
-int gm200_acr_init(struct nvkm_acr *);
+बाह्य स्थिर काष्ठा nvkm_acr_func gm200_acr;
+पूर्णांक gm200_acr_wpr_parse(काष्ठा nvkm_acr *);
+u32 gm200_acr_wpr_layout(काष्ठा nvkm_acr *);
+पूर्णांक gm200_acr_wpr_build(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_lsf *);
+व्योम gm200_acr_wpr_patch(काष्ठा nvkm_acr *, s64);
+व्योम gm200_acr_wpr_check(काष्ठा nvkm_acr *, u64 *, u64 *);
+व्योम gm200_acr_wpr_build_lsb_tail(काष्ठा nvkm_acr_lsfw *,
+				  काष्ठा lsb_header_tail *);
+पूर्णांक gm200_acr_init(काष्ठा nvkm_acr *);
 
-int gm20b_acr_wpr_alloc(struct nvkm_acr *, u32 wpr_size);
+पूर्णांक gm20b_acr_wpr_alloc(काष्ठा nvkm_acr *, u32 wpr_size);
 
-int gp102_acr_wpr_parse(struct nvkm_acr *);
-u32 gp102_acr_wpr_layout(struct nvkm_acr *);
-int gp102_acr_wpr_alloc(struct nvkm_acr *, u32 wpr_size);
-int gp102_acr_wpr_build(struct nvkm_acr *, struct nvkm_acr_lsf *);
-int gp102_acr_wpr_build_lsb(struct nvkm_acr *, struct nvkm_acr_lsfw *);
-void gp102_acr_wpr_patch(struct nvkm_acr *, s64);
+पूर्णांक gp102_acr_wpr_parse(काष्ठा nvkm_acr *);
+u32 gp102_acr_wpr_layout(काष्ठा nvkm_acr *);
+पूर्णांक gp102_acr_wpr_alloc(काष्ठा nvkm_acr *, u32 wpr_size);
+पूर्णांक gp102_acr_wpr_build(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_lsf *);
+पूर्णांक gp102_acr_wpr_build_lsb(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_lsfw *);
+व्योम gp102_acr_wpr_patch(काष्ठा nvkm_acr *, s64);
 
-struct nvkm_acr_hsfw {
-	const struct nvkm_acr_hsf_func *func;
-	const char *name;
-	struct list_head head;
+काष्ठा nvkm_acr_hsfw अणु
+	स्थिर काष्ठा nvkm_acr_hsf_func *func;
+	स्थिर अक्षर *name;
+	काष्ठा list_head head;
 
 	u32 imem_size;
 	u32 imem_tag;
@@ -68,31 +69,31 @@ struct nvkm_acr_hsfw {
 	u32 data_addr;
 	u32 data_size;
 
-	struct {
-		struct {
-			void *data;
+	काष्ठा अणु
+		काष्ठा अणु
+			व्योम *data;
 			u32 size;
-		} prod, dbg;
+		पूर्ण prod, dbg;
 		u32 patch_loc;
-	} sig;
-};
+	पूर्ण sig;
+पूर्ण;
 
-struct nvkm_acr_hsf_fwif {
-	int version;
-	int (*load)(struct nvkm_acr *, const char *bl, const char *fw,
-		    const char *name, int version,
-		    const struct nvkm_acr_hsf_fwif *);
-	const struct nvkm_acr_hsf_func *func;
-};
+काष्ठा nvkm_acr_hsf_fwअगर अणु
+	पूर्णांक version;
+	पूर्णांक (*load)(काष्ठा nvkm_acr *, स्थिर अक्षर *bl, स्थिर अक्षर *fw,
+		    स्थिर अक्षर *name, पूर्णांक version,
+		    स्थिर काष्ठा nvkm_acr_hsf_fwअगर *);
+	स्थिर काष्ठा nvkm_acr_hsf_func *func;
+पूर्ण;
 
-int nvkm_acr_hsfw_load(struct nvkm_acr *, const char *, const char *,
-		       const char *, int, const struct nvkm_acr_hsf_fwif *);
-void nvkm_acr_hsfw_del_all(struct nvkm_acr *);
+पूर्णांक nvkm_acr_hsfw_load(काष्ठा nvkm_acr *, स्थिर अक्षर *, स्थिर अक्षर *,
+		       स्थिर अक्षर *, पूर्णांक, स्थिर काष्ठा nvkm_acr_hsf_fwअगर *);
+व्योम nvkm_acr_hsfw_del_all(काष्ठा nvkm_acr *);
 
-struct nvkm_acr_hsf {
-	const struct nvkm_acr_hsf_func *func;
-	const char *name;
-	struct list_head head;
+काष्ठा nvkm_acr_hsf अणु
+	स्थिर काष्ठा nvkm_acr_hsf_func *func;
+	स्थिर अक्षर *name;
+	काष्ठा list_head head;
 
 	u32 imem_size;
 	u32 imem_tag;
@@ -105,50 +106,50 @@ struct nvkm_acr_hsf {
 	u32 data_addr;
 	u32 data_size;
 
-	struct nvkm_memory *ucode;
-	struct nvkm_vma *vma;
-	struct nvkm_falcon *falcon;
-};
+	काष्ठा nvkm_memory *ucode;
+	काष्ठा nvkm_vma *vma;
+	काष्ठा nvkm_falcon *falcon;
+पूर्ण;
 
-struct nvkm_acr_hsf_func {
-	int (*load)(struct nvkm_acr *, struct nvkm_acr_hsfw *);
-	int (*boot)(struct nvkm_acr *, struct nvkm_acr_hsf *);
-	void (*bld)(struct nvkm_acr *, struct nvkm_acr_hsf *);
-};
+काष्ठा nvkm_acr_hsf_func अणु
+	पूर्णांक (*load)(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsfw *);
+	पूर्णांक (*boot)(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsf *);
+	व्योम (*bld)(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsf *);
+पूर्ण;
 
-int gm200_acr_hsfw_load(struct nvkm_acr *, struct nvkm_acr_hsfw *,
-			struct nvkm_falcon *);
-int gm200_acr_hsfw_boot(struct nvkm_acr *, struct nvkm_acr_hsf *,
-			u32 clear_intr, u32 mbox0_ok);
+पूर्णांक gm200_acr_hsfw_load(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsfw *,
+			काष्ठा nvkm_falcon *);
+पूर्णांक gm200_acr_hsfw_boot(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsf *,
+			u32 clear_पूर्णांकr, u32 mbox0_ok);
 
-int gm200_acr_load_boot(struct nvkm_acr *, struct nvkm_acr_hsf *);
+पूर्णांक gm200_acr_load_boot(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsf *);
 
-extern const struct nvkm_acr_hsf_func gm200_acr_unload_0;
-int gm200_acr_unload_load(struct nvkm_acr *, struct nvkm_acr_hsfw *);
-int gm200_acr_unload_boot(struct nvkm_acr *, struct nvkm_acr_hsf *);
-void gm200_acr_hsfw_bld(struct nvkm_acr *, struct nvkm_acr_hsf *);
+बाह्य स्थिर काष्ठा nvkm_acr_hsf_func gm200_acr_unload_0;
+पूर्णांक gm200_acr_unload_load(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsfw *);
+पूर्णांक gm200_acr_unload_boot(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsf *);
+व्योम gm200_acr_hsfw_bld(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsf *);
 
-extern const struct nvkm_acr_hsf_func gm20b_acr_load_0;
+बाह्य स्थिर काष्ठा nvkm_acr_hsf_func gm20b_acr_load_0;
 
-int gp102_acr_load_load(struct nvkm_acr *, struct nvkm_acr_hsfw *);
+पूर्णांक gp102_acr_load_load(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsfw *);
 
-extern const struct nvkm_acr_hsf_func gp108_acr_unload_0;
-void gp108_acr_hsfw_bld(struct nvkm_acr *, struct nvkm_acr_hsf *);
+बाह्य स्थिर काष्ठा nvkm_acr_hsf_func gp108_acr_unload_0;
+व्योम gp108_acr_hsfw_bld(काष्ठा nvkm_acr *, काष्ठा nvkm_acr_hsf *);
 
-int nvkm_acr_new_(const struct nvkm_acr_fwif *, struct nvkm_device *, enum nvkm_subdev_type,
-		  int inst, struct nvkm_acr **);
-int nvkm_acr_hsf_boot(struct nvkm_acr *, const char *name);
+पूर्णांक nvkm_acr_new_(स्थिर काष्ठा nvkm_acr_fwअगर *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type,
+		  पूर्णांक inst, काष्ठा nvkm_acr **);
+पूर्णांक nvkm_acr_hsf_boot(काष्ठा nvkm_acr *, स्थिर अक्षर *name);
 
-struct nvkm_acr_lsf {
-	const struct nvkm_acr_lsf_func *func;
-	struct nvkm_falcon *falcon;
-	enum nvkm_acr_lsf_id id;
-	struct list_head head;
-};
+काष्ठा nvkm_acr_lsf अणु
+	स्थिर काष्ठा nvkm_acr_lsf_func *func;
+	काष्ठा nvkm_falcon *falcon;
+	क्रमागत nvkm_acr_lsf_id id;
+	काष्ठा list_head head;
+पूर्ण;
 
-struct nvkm_acr_lsfw *nvkm_acr_lsfw_add(const struct nvkm_acr_lsf_func *,
-					struct nvkm_acr *, struct nvkm_falcon *,
-					enum nvkm_acr_lsf_id);
-void nvkm_acr_lsfw_del(struct nvkm_acr_lsfw *);
-void nvkm_acr_lsfw_del_all(struct nvkm_acr *);
-#endif
+काष्ठा nvkm_acr_lsfw *nvkm_acr_lsfw_add(स्थिर काष्ठा nvkm_acr_lsf_func *,
+					काष्ठा nvkm_acr *, काष्ठा nvkm_falcon *,
+					क्रमागत nvkm_acr_lsf_id);
+व्योम nvkm_acr_lsfw_del(काष्ठा nvkm_acr_lsfw *);
+व्योम nvkm_acr_lsfw_del_all(काष्ठा nvkm_acr *);
+#पूर्ण_अगर

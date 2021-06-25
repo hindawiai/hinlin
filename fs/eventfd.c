@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  fs/eventfd.c
  *
@@ -6,423 +7,423 @@
  *
  */
 
-#include <linux/file.h>
-#include <linux/poll.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/sched/signal.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/anon_inodes.h>
-#include <linux/syscalls.h>
-#include <linux/export.h>
-#include <linux/kref.h>
-#include <linux/eventfd.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/idr.h>
-#include <linux/uio.h>
+#समावेश <linux/file.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/anon_inodes.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/eventfd.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/uपन.स>
 
-DEFINE_PER_CPU(int, eventfd_wake_count);
+DEFINE_PER_CPU(पूर्णांक, eventfd_wake_count);
 
-static DEFINE_IDA(eventfd_ida);
+अटल DEFINE_IDA(eventfd_ida);
 
-struct eventfd_ctx {
-	struct kref kref;
-	wait_queue_head_t wqh;
+काष्ठा eventfd_ctx अणु
+	काष्ठा kref kref;
+	रुको_queue_head_t wqh;
 	/*
-	 * Every time that a write(2) is performed on an eventfd, the
+	 * Every समय that a ग_लिखो(2) is perक्रमmed on an eventfd, the
 	 * value of the __u64 being written is added to "count" and a
-	 * wakeup is performed on "wqh". A read(2) will return the "count"
+	 * wakeup is perक्रमmed on "wqh". A पढ़ो(2) will वापस the "count"
 	 * value to userspace, and will reset "count" to zero. The kernel
-	 * side eventfd_signal() also, adds to the "count" counter and
+	 * side eventfd_संकेत() also, adds to the "count" counter and
 	 * issue a wakeup.
 	 */
 	__u64 count;
-	unsigned int flags;
-	int id;
-};
+	अचिन्हित पूर्णांक flags;
+	पूर्णांक id;
+पूर्ण;
 
 /**
- * eventfd_signal - Adds @n to the eventfd counter.
- * @ctx: [in] Pointer to the eventfd context.
- * @n: [in] Value of the counter to be added to the eventfd internal counter.
+ * eventfd_संकेत - Adds @n to the eventfd counter.
+ * @ctx: [in] Poपूर्णांकer to the eventfd context.
+ * @n: [in] Value of the counter to be added to the eventfd पूर्णांकernal counter.
  *          The value cannot be negative.
  *
- * This function is supposed to be called by the kernel in paths that do not
- * allow sleeping. In this function we allow the counter to reach the ULLONG_MAX
- * value, and we signal this as overflow condition by returning a EPOLLERR
+ * This function is supposed to be called by the kernel in paths that करो not
+ * allow sleeping. In this function we allow the counter to reach the ULदीर्घ_उच्च
+ * value, and we संकेत this as overflow condition by वापसing a EPOLLERR
  * to poll(2).
  *
  * Returns the amount by which the counter was incremented.  This will be less
- * than @n if the counter has overflowed.
+ * than @n अगर the counter has overflowed.
  */
-__u64 eventfd_signal(struct eventfd_ctx *ctx, __u64 n)
-{
-	unsigned long flags;
+__u64 eventfd_संकेत(काष्ठा eventfd_ctx *ctx, __u64 n)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * Deadlock or stack overflow issues can happen if we recurse here
-	 * through waitqueue wakeup handlers. If the caller users potentially
-	 * nested waitqueues with custom wakeup handlers, then it should
-	 * check eventfd_signal_count() before calling this function. If
-	 * it returns true, the eventfd_signal() call should be deferred to a
+	 * Deadlock or stack overflow issues can happen अगर we recurse here
+	 * through रुकोqueue wakeup handlers. If the caller users potentially
+	 * nested रुकोqueues with custom wakeup handlers, then it should
+	 * check eventfd_संकेत_count() beक्रमe calling this function. If
+	 * it वापसs true, the eventfd_संकेत() call should be deferred to a
 	 * safe context.
 	 */
-	if (WARN_ON_ONCE(this_cpu_read(eventfd_wake_count)))
-		return 0;
+	अगर (WARN_ON_ONCE(this_cpu_पढ़ो(eventfd_wake_count)))
+		वापस 0;
 
 	spin_lock_irqsave(&ctx->wqh.lock, flags);
 	this_cpu_inc(eventfd_wake_count);
-	if (ULLONG_MAX - ctx->count < n)
-		n = ULLONG_MAX - ctx->count;
+	अगर (ULदीर्घ_उच्च - ctx->count < n)
+		n = ULदीर्घ_उच्च - ctx->count;
 	ctx->count += n;
-	if (waitqueue_active(&ctx->wqh))
+	अगर (रुकोqueue_active(&ctx->wqh))
 		wake_up_locked_poll(&ctx->wqh, EPOLLIN);
 	this_cpu_dec(eventfd_wake_count);
 	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
 
-	return n;
-}
-EXPORT_SYMBOL_GPL(eventfd_signal);
+	वापस n;
+पूर्ण
+EXPORT_SYMBOL_GPL(eventfd_संकेत);
 
-static void eventfd_free_ctx(struct eventfd_ctx *ctx)
-{
-	if (ctx->id >= 0)
-		ida_simple_remove(&eventfd_ida, ctx->id);
-	kfree(ctx);
-}
+अटल व्योम eventfd_मुक्त_ctx(काष्ठा eventfd_ctx *ctx)
+अणु
+	अगर (ctx->id >= 0)
+		ida_simple_हटाओ(&eventfd_ida, ctx->id);
+	kमुक्त(ctx);
+पूर्ण
 
-static void eventfd_free(struct kref *kref)
-{
-	struct eventfd_ctx *ctx = container_of(kref, struct eventfd_ctx, kref);
+अटल व्योम eventfd_मुक्त(काष्ठा kref *kref)
+अणु
+	काष्ठा eventfd_ctx *ctx = container_of(kref, काष्ठा eventfd_ctx, kref);
 
-	eventfd_free_ctx(ctx);
-}
+	eventfd_मुक्त_ctx(ctx);
+पूर्ण
 
 /**
- * eventfd_ctx_put - Releases a reference to the internal eventfd context.
- * @ctx: [in] Pointer to eventfd context.
+ * eventfd_ctx_put - Releases a reference to the पूर्णांकernal eventfd context.
+ * @ctx: [in] Poपूर्णांकer to eventfd context.
  *
  * The eventfd context reference must have been previously acquired either
  * with eventfd_ctx_fdget() or eventfd_ctx_fileget().
  */
-void eventfd_ctx_put(struct eventfd_ctx *ctx)
-{
-	kref_put(&ctx->kref, eventfd_free);
-}
+व्योम eventfd_ctx_put(काष्ठा eventfd_ctx *ctx)
+अणु
+	kref_put(&ctx->kref, eventfd_मुक्त);
+पूर्ण
 EXPORT_SYMBOL_GPL(eventfd_ctx_put);
 
-static int eventfd_release(struct inode *inode, struct file *file)
-{
-	struct eventfd_ctx *ctx = file->private_data;
+अटल पूर्णांक eventfd_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा eventfd_ctx *ctx = file->निजी_data;
 
 	wake_up_poll(&ctx->wqh, EPOLLHUP);
 	eventfd_ctx_put(ctx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __poll_t eventfd_poll(struct file *file, poll_table *wait)
-{
-	struct eventfd_ctx *ctx = file->private_data;
+अटल __poll_t eventfd_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा eventfd_ctx *ctx = file->निजी_data;
 	__poll_t events = 0;
 	u64 count;
 
-	poll_wait(file, &ctx->wqh, wait);
+	poll_रुको(file, &ctx->wqh, रुको);
 
 	/*
-	 * All writes to ctx->count occur within ctx->wqh.lock.  This read
-	 * can be done outside ctx->wqh.lock because we know that poll_wait
-	 * takes that lock (through add_wait_queue) if our caller will sleep.
+	 * All ग_लिखोs to ctx->count occur within ctx->wqh.lock.  This पढ़ो
+	 * can be करोne outside ctx->wqh.lock because we know that poll_रुको
+	 * takes that lock (through add_रुको_queue) अगर our caller will sleep.
 	 *
-	 * The read _can_ therefore seep into add_wait_queue's critical
-	 * section, but cannot move above it!  add_wait_queue's spin_lock acts
-	 * as an acquire barrier and ensures that the read be ordered properly
-	 * against the writes.  The following CAN happen and is safe:
+	 * The पढ़ो _can_ thereक्रमe seep पूर्णांकo add_रुको_queue's critical
+	 * section, but cannot move above it!  add_रुको_queue's spin_lock acts
+	 * as an acquire barrier and ensures that the पढ़ो be ordered properly
+	 * against the ग_लिखोs.  The following CAN happen and is safe:
 	 *
-	 *     poll                               write
+	 *     poll                               ग_लिखो
 	 *     -----------------                  ------------
-	 *     lock ctx->wqh.lock (in poll_wait)
+	 *     lock ctx->wqh.lock (in poll_रुको)
 	 *     count = ctx->count
-	 *     __add_wait_queue
+	 *     __add_रुको_queue
 	 *     unlock ctx->wqh.lock
 	 *                                        lock ctx->qwh.lock
 	 *                                        ctx->count += n
-	 *                                        if (waitqueue_active)
+	 *                                        अगर (रुकोqueue_active)
 	 *                                          wake_up_locked_poll
 	 *                                        unlock ctx->qwh.lock
-	 *     eventfd_poll returns 0
+	 *     eventfd_poll वापसs 0
 	 *
 	 * but the following, which would miss a wakeup, cannot happen:
 	 *
-	 *     poll                               write
+	 *     poll                               ग_लिखो
 	 *     -----------------                  ------------
 	 *     count = ctx->count (INVALID!)
 	 *                                        lock ctx->qwh.lock
 	 *                                        ctx->count += n
-	 *                                        **waitqueue_active is false**
+	 *                                        **रुकोqueue_active is false**
 	 *                                        **no wake_up_locked_poll!**
 	 *                                        unlock ctx->qwh.lock
-	 *     lock ctx->wqh.lock (in poll_wait)
-	 *     __add_wait_queue
+	 *     lock ctx->wqh.lock (in poll_रुको)
+	 *     __add_रुको_queue
 	 *     unlock ctx->wqh.lock
-	 *     eventfd_poll returns 0
+	 *     eventfd_poll वापसs 0
 	 */
 	count = READ_ONCE(ctx->count);
 
-	if (count > 0)
+	अगर (count > 0)
 		events |= EPOLLIN;
-	if (count == ULLONG_MAX)
+	अगर (count == ULदीर्घ_उच्च)
 		events |= EPOLLERR;
-	if (ULLONG_MAX - 1 > count)
+	अगर (ULदीर्घ_उच्च - 1 > count)
 		events |= EPOLLOUT;
 
-	return events;
-}
+	वापस events;
+पूर्ण
 
-void eventfd_ctx_do_read(struct eventfd_ctx *ctx, __u64 *cnt)
-{
-	lockdep_assert_held(&ctx->wqh.lock);
+व्योम eventfd_ctx_करो_पढ़ो(काष्ठा eventfd_ctx *ctx, __u64 *cnt)
+अणु
+	lockdep_निश्चित_held(&ctx->wqh.lock);
 
 	*cnt = (ctx->flags & EFD_SEMAPHORE) ? 1 : ctx->count;
 	ctx->count -= *cnt;
-}
-EXPORT_SYMBOL_GPL(eventfd_ctx_do_read);
+पूर्ण
+EXPORT_SYMBOL_GPL(eventfd_ctx_करो_पढ़ो);
 
 /**
- * eventfd_ctx_remove_wait_queue - Read the current counter and removes wait queue.
- * @ctx: [in] Pointer to eventfd context.
- * @wait: [in] Wait queue to be removed.
- * @cnt: [out] Pointer to the 64-bit counter value.
+ * eventfd_ctx_हटाओ_रुको_queue - Read the current counter and हटाओs रुको queue.
+ * @ctx: [in] Poपूर्णांकer to eventfd context.
+ * @रुको: [in] Wait queue to be हटाओd.
+ * @cnt: [out] Poपूर्णांकer to the 64-bit counter value.
  *
- * Returns %0 if successful, or the following error codes:
+ * Returns %0 अगर successful, or the following error codes:
  *
  * -EAGAIN      : The operation would have blocked.
  *
- * This is used to atomically remove a wait queue entry from the eventfd wait
- * queue head, and read/reset the counter value.
+ * This is used to atomically हटाओ a रुको queue entry from the eventfd रुको
+ * queue head, and पढ़ो/reset the counter value.
  */
-int eventfd_ctx_remove_wait_queue(struct eventfd_ctx *ctx, wait_queue_entry_t *wait,
+पूर्णांक eventfd_ctx_हटाओ_रुको_queue(काष्ठा eventfd_ctx *ctx, रुको_queue_entry_t *रुको,
 				  __u64 *cnt)
-{
-	unsigned long flags;
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ctx->wqh.lock, flags);
-	eventfd_ctx_do_read(ctx, cnt);
-	__remove_wait_queue(&ctx->wqh, wait);
-	if (*cnt != 0 && waitqueue_active(&ctx->wqh))
+	eventfd_ctx_करो_पढ़ो(ctx, cnt);
+	__हटाओ_रुको_queue(&ctx->wqh, रुको);
+	अगर (*cnt != 0 && रुकोqueue_active(&ctx->wqh))
 		wake_up_locked_poll(&ctx->wqh, EPOLLOUT);
 	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
 
-	return *cnt != 0 ? 0 : -EAGAIN;
-}
-EXPORT_SYMBOL_GPL(eventfd_ctx_remove_wait_queue);
+	वापस *cnt != 0 ? 0 : -EAGAIN;
+पूर्ण
+EXPORT_SYMBOL_GPL(eventfd_ctx_हटाओ_रुको_queue);
 
-static ssize_t eventfd_read(struct kiocb *iocb, struct iov_iter *to)
-{
-	struct file *file = iocb->ki_filp;
-	struct eventfd_ctx *ctx = file->private_data;
+अटल sमाप_प्रकार eventfd_पढ़ो(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा eventfd_ctx *ctx = file->निजी_data;
 	__u64 ucnt = 0;
-	DECLARE_WAITQUEUE(wait, current);
+	DECLARE_WAITQUEUE(रुको, current);
 
-	if (iov_iter_count(to) < sizeof(ucnt))
-		return -EINVAL;
+	अगर (iov_iter_count(to) < माप(ucnt))
+		वापस -EINVAL;
 	spin_lock_irq(&ctx->wqh.lock);
-	if (!ctx->count) {
-		if ((file->f_flags & O_NONBLOCK) ||
-		    (iocb->ki_flags & IOCB_NOWAIT)) {
+	अगर (!ctx->count) अणु
+		अगर ((file->f_flags & O_NONBLOCK) ||
+		    (iocb->ki_flags & IOCB_NOWAIT)) अणु
 			spin_unlock_irq(&ctx->wqh.lock);
-			return -EAGAIN;
-		}
-		__add_wait_queue(&ctx->wqh, &wait);
-		for (;;) {
+			वापस -EAGAIN;
+		पूर्ण
+		__add_रुको_queue(&ctx->wqh, &रुको);
+		क्रम (;;) अणु
 			set_current_state(TASK_INTERRUPTIBLE);
-			if (ctx->count)
-				break;
-			if (signal_pending(current)) {
-				__remove_wait_queue(&ctx->wqh, &wait);
+			अगर (ctx->count)
+				अवरोध;
+			अगर (संकेत_pending(current)) अणु
+				__हटाओ_रुको_queue(&ctx->wqh, &रुको);
 				__set_current_state(TASK_RUNNING);
 				spin_unlock_irq(&ctx->wqh.lock);
-				return -ERESTARTSYS;
-			}
+				वापस -ERESTARTSYS;
+			पूर्ण
 			spin_unlock_irq(&ctx->wqh.lock);
 			schedule();
 			spin_lock_irq(&ctx->wqh.lock);
-		}
-		__remove_wait_queue(&ctx->wqh, &wait);
+		पूर्ण
+		__हटाओ_रुको_queue(&ctx->wqh, &रुको);
 		__set_current_state(TASK_RUNNING);
-	}
-	eventfd_ctx_do_read(ctx, &ucnt);
-	if (waitqueue_active(&ctx->wqh))
+	पूर्ण
+	eventfd_ctx_करो_पढ़ो(ctx, &ucnt);
+	अगर (रुकोqueue_active(&ctx->wqh))
 		wake_up_locked_poll(&ctx->wqh, EPOLLOUT);
 	spin_unlock_irq(&ctx->wqh.lock);
-	if (unlikely(copy_to_iter(&ucnt, sizeof(ucnt), to) != sizeof(ucnt)))
-		return -EFAULT;
+	अगर (unlikely(copy_to_iter(&ucnt, माप(ucnt), to) != माप(ucnt)))
+		वापस -EFAULT;
 
-	return sizeof(ucnt);
-}
+	वापस माप(ucnt);
+पूर्ण
 
-static ssize_t eventfd_write(struct file *file, const char __user *buf, size_t count,
+अटल sमाप_प्रकार eventfd_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count,
 			     loff_t *ppos)
-{
-	struct eventfd_ctx *ctx = file->private_data;
-	ssize_t res;
+अणु
+	काष्ठा eventfd_ctx *ctx = file->निजी_data;
+	sमाप_प्रकार res;
 	__u64 ucnt;
-	DECLARE_WAITQUEUE(wait, current);
+	DECLARE_WAITQUEUE(रुको, current);
 
-	if (count < sizeof(ucnt))
-		return -EINVAL;
-	if (copy_from_user(&ucnt, buf, sizeof(ucnt)))
-		return -EFAULT;
-	if (ucnt == ULLONG_MAX)
-		return -EINVAL;
+	अगर (count < माप(ucnt))
+		वापस -EINVAL;
+	अगर (copy_from_user(&ucnt, buf, माप(ucnt)))
+		वापस -EFAULT;
+	अगर (ucnt == ULदीर्घ_उच्च)
+		वापस -EINVAL;
 	spin_lock_irq(&ctx->wqh.lock);
 	res = -EAGAIN;
-	if (ULLONG_MAX - ctx->count > ucnt)
-		res = sizeof(ucnt);
-	else if (!(file->f_flags & O_NONBLOCK)) {
-		__add_wait_queue(&ctx->wqh, &wait);
-		for (res = 0;;) {
+	अगर (ULदीर्घ_उच्च - ctx->count > ucnt)
+		res = माप(ucnt);
+	अन्यथा अगर (!(file->f_flags & O_NONBLOCK)) अणु
+		__add_रुको_queue(&ctx->wqh, &रुको);
+		क्रम (res = 0;;) अणु
 			set_current_state(TASK_INTERRUPTIBLE);
-			if (ULLONG_MAX - ctx->count > ucnt) {
-				res = sizeof(ucnt);
-				break;
-			}
-			if (signal_pending(current)) {
+			अगर (ULदीर्घ_उच्च - ctx->count > ucnt) अणु
+				res = माप(ucnt);
+				अवरोध;
+			पूर्ण
+			अगर (संकेत_pending(current)) अणु
 				res = -ERESTARTSYS;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			spin_unlock_irq(&ctx->wqh.lock);
 			schedule();
 			spin_lock_irq(&ctx->wqh.lock);
-		}
-		__remove_wait_queue(&ctx->wqh, &wait);
+		पूर्ण
+		__हटाओ_रुको_queue(&ctx->wqh, &रुको);
 		__set_current_state(TASK_RUNNING);
-	}
-	if (likely(res > 0)) {
+	पूर्ण
+	अगर (likely(res > 0)) अणु
 		ctx->count += ucnt;
-		if (waitqueue_active(&ctx->wqh))
+		अगर (रुकोqueue_active(&ctx->wqh))
 			wake_up_locked_poll(&ctx->wqh, EPOLLIN);
-	}
+	पूर्ण
 	spin_unlock_irq(&ctx->wqh.lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-static void eventfd_show_fdinfo(struct seq_file *m, struct file *f)
-{
-	struct eventfd_ctx *ctx = f->private_data;
+#अगर_घोषित CONFIG_PROC_FS
+अटल व्योम eventfd_show_fdinfo(काष्ठा seq_file *m, काष्ठा file *f)
+अणु
+	काष्ठा eventfd_ctx *ctx = f->निजी_data;
 
 	spin_lock_irq(&ctx->wqh.lock);
-	seq_printf(m, "eventfd-count: %16llx\n",
-		   (unsigned long long)ctx->count);
+	seq_म_लिखो(m, "eventfd-count: %16llx\n",
+		   (अचिन्हित दीर्घ दीर्घ)ctx->count);
 	spin_unlock_irq(&ctx->wqh.lock);
-	seq_printf(m, "eventfd-id: %d\n", ctx->id);
-}
-#endif
+	seq_म_लिखो(m, "eventfd-id: %d\n", ctx->id);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct file_operations eventfd_fops = {
-#ifdef CONFIG_PROC_FS
+अटल स्थिर काष्ठा file_operations eventfd_fops = अणु
+#अगर_घोषित CONFIG_PROC_FS
 	.show_fdinfo	= eventfd_show_fdinfo,
-#endif
+#पूर्ण_अगर
 	.release	= eventfd_release,
 	.poll		= eventfd_poll,
-	.read_iter	= eventfd_read,
-	.write		= eventfd_write,
+	.पढ़ो_iter	= eventfd_पढ़ो,
+	.ग_लिखो		= eventfd_ग_लिखो,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
 /**
  * eventfd_fget - Acquire a reference of an eventfd file descriptor.
  * @fd: [in] Eventfd file descriptor.
  *
- * Returns a pointer to the eventfd file structure in case of success, or the
- * following error pointer:
+ * Returns a poपूर्णांकer to the eventfd file काष्ठाure in हाल of success, or the
+ * following error poपूर्णांकer:
  *
  * -EBADF    : Invalid @fd file descriptor.
  * -EINVAL   : The @fd file descriptor is not an eventfd file.
  */
-struct file *eventfd_fget(int fd)
-{
-	struct file *file;
+काष्ठा file *eventfd_fget(पूर्णांक fd)
+अणु
+	काष्ठा file *file;
 
 	file = fget(fd);
-	if (!file)
-		return ERR_PTR(-EBADF);
-	if (file->f_op != &eventfd_fops) {
+	अगर (!file)
+		वापस ERR_PTR(-EBADF);
+	अगर (file->f_op != &eventfd_fops) अणु
 		fput(file);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return file;
-}
+	वापस file;
+पूर्ण
 EXPORT_SYMBOL_GPL(eventfd_fget);
 
 /**
- * eventfd_ctx_fdget - Acquires a reference to the internal eventfd context.
+ * eventfd_ctx_fdget - Acquires a reference to the पूर्णांकernal eventfd context.
  * @fd: [in] Eventfd file descriptor.
  *
- * Returns a pointer to the internal eventfd context, otherwise the error
- * pointers returned by the following functions:
+ * Returns a poपूर्णांकer to the पूर्णांकernal eventfd context, otherwise the error
+ * poपूर्णांकers वापसed by the following functions:
  *
  * eventfd_fget
  */
-struct eventfd_ctx *eventfd_ctx_fdget(int fd)
-{
-	struct eventfd_ctx *ctx;
-	struct fd f = fdget(fd);
-	if (!f.file)
-		return ERR_PTR(-EBADF);
+काष्ठा eventfd_ctx *eventfd_ctx_fdget(पूर्णांक fd)
+अणु
+	काष्ठा eventfd_ctx *ctx;
+	काष्ठा fd f = fdget(fd);
+	अगर (!f.file)
+		वापस ERR_PTR(-EBADF);
 	ctx = eventfd_ctx_fileget(f.file);
 	fdput(f);
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 EXPORT_SYMBOL_GPL(eventfd_ctx_fdget);
 
 /**
- * eventfd_ctx_fileget - Acquires a reference to the internal eventfd context.
- * @file: [in] Eventfd file pointer.
+ * eventfd_ctx_fileget - Acquires a reference to the पूर्णांकernal eventfd context.
+ * @file: [in] Eventfd file poपूर्णांकer.
  *
- * Returns a pointer to the internal eventfd context, otherwise the error
- * pointer:
+ * Returns a poपूर्णांकer to the पूर्णांकernal eventfd context, otherwise the error
+ * poपूर्णांकer:
  *
  * -EINVAL   : The @fd file descriptor is not an eventfd file.
  */
-struct eventfd_ctx *eventfd_ctx_fileget(struct file *file)
-{
-	struct eventfd_ctx *ctx;
+काष्ठा eventfd_ctx *eventfd_ctx_fileget(काष्ठा file *file)
+अणु
+	काष्ठा eventfd_ctx *ctx;
 
-	if (file->f_op != &eventfd_fops)
-		return ERR_PTR(-EINVAL);
+	अगर (file->f_op != &eventfd_fops)
+		वापस ERR_PTR(-EINVAL);
 
-	ctx = file->private_data;
+	ctx = file->निजी_data;
 	kref_get(&ctx->kref);
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 EXPORT_SYMBOL_GPL(eventfd_ctx_fileget);
 
-static int do_eventfd(unsigned int count, int flags)
-{
-	struct eventfd_ctx *ctx;
-	struct file *file;
-	int fd;
+अटल पूर्णांक करो_eventfd(अचिन्हित पूर्णांक count, पूर्णांक flags)
+अणु
+	काष्ठा eventfd_ctx *ctx;
+	काष्ठा file *file;
+	पूर्णांक fd;
 
-	/* Check the EFD_* constants for consistency.  */
+	/* Check the EFD_* स्थिरants क्रम consistency.  */
 	BUILD_BUG_ON(EFD_CLOEXEC != O_CLOEXEC);
 	BUILD_BUG_ON(EFD_NONBLOCK != O_NONBLOCK);
 
-	if (flags & ~EFD_FLAGS_SET)
-		return -EINVAL;
+	अगर (flags & ~EFD_FLAGS_SET)
+		वापस -EINVAL;
 
-	ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kदो_स्मृति(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	kref_init(&ctx->kref);
-	init_waitqueue_head(&ctx->wqh);
+	init_रुकोqueue_head(&ctx->wqh);
 	ctx->count = count;
 	ctx->flags = flags;
 	ctx->id = ida_simple_get(&eventfd_ida, 0, 0, GFP_KERNEL);
@@ -430,31 +431,31 @@ static int do_eventfd(unsigned int count, int flags)
 	flags &= EFD_SHARED_FCNTL_FLAGS;
 	flags |= O_RDWR;
 	fd = get_unused_fd_flags(flags);
-	if (fd < 0)
-		goto err;
+	अगर (fd < 0)
+		जाओ err;
 
 	file = anon_inode_getfile("[eventfd]", &eventfd_fops, ctx, flags);
-	if (IS_ERR(file)) {
+	अगर (IS_ERR(file)) अणु
 		put_unused_fd(fd);
 		fd = PTR_ERR(file);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	file->f_mode |= FMODE_NOWAIT;
 	fd_install(fd, file);
-	return fd;
+	वापस fd;
 err:
-	eventfd_free_ctx(ctx);
-	return fd;
-}
+	eventfd_मुक्त_ctx(ctx);
+	वापस fd;
+पूर्ण
 
-SYSCALL_DEFINE2(eventfd2, unsigned int, count, int, flags)
-{
-	return do_eventfd(count, flags);
-}
+SYSCALL_DEFINE2(eventfd2, अचिन्हित पूर्णांक, count, पूर्णांक, flags)
+अणु
+	वापस करो_eventfd(count, flags);
+पूर्ण
 
-SYSCALL_DEFINE1(eventfd, unsigned int, count)
-{
-	return do_eventfd(count, 0);
-}
+SYSCALL_DEFINE1(eventfd, अचिन्हित पूर्णांक, count)
+अणु
+	वापस करो_eventfd(count, 0);
+पूर्ण
 

@@ -1,178 +1,179 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * lnbh25.c
  *
- * Driver for LNB supply and control IC LNBH25
+ * Driver क्रम LNB supply and control IC LNBH25
  *
  * Copyright (C) 2014 NetUP Inc.
  * Copyright (C) 2014 Sergey Kozlov <serjk@netup.ru>
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
 
-#include <media/dvb_frontend.h>
-#include "lnbh25.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "lnbh25.h"
 
 /**
- * struct lnbh25_priv - LNBH25 driver private data
- * @i2c:		pointer to the I2C adapter structure
+ * काष्ठा lnbh25_priv - LNBH25 driver निजी data
+ * @i2c:		poपूर्णांकer to the I2C adapter काष्ठाure
  * @i2c_address:	I2C address of LNBH25 SEC chip
  * @config:		Registers configuration:
- *			offset 0: 1st register address, always 0x02 (DATA1)
- *			offset 1: DATA1 register value
- *			offset 2: DATA2 register value
+ *			offset 0: 1st रेजिस्टर address, always 0x02 (DATA1)
+ *			offset 1: DATA1 रेजिस्टर value
+ *			offset 2: DATA2 रेजिस्टर value
  */
-struct lnbh25_priv {
-	struct i2c_adapter	*i2c;
+काष्ठा lnbh25_priv अणु
+	काष्ठा i2c_adapter	*i2c;
 	u8			i2c_address;
 	u8			config[3];
-};
+पूर्ण;
 
-#define LNBH25_STATUS_OFL	0x1
-#define LNBH25_STATUS_VMON	0x4
-#define LNBH25_VSEL_13		0x03
-#define LNBH25_VSEL_18		0x0a
+#घोषणा LNBH25_STATUS_OFL	0x1
+#घोषणा LNBH25_STATUS_VMON	0x4
+#घोषणा LNBH25_VSEL_13		0x03
+#घोषणा LNBH25_VSEL_18		0x0a
 
-static int lnbh25_read_vmon(struct lnbh25_priv *priv)
-{
-	int i, ret;
+अटल पूर्णांक lnbh25_पढ़ो_vmon(काष्ठा lnbh25_priv *priv)
+अणु
+	पूर्णांक i, ret;
 	u8 addr = 0x00;
 	u8 status[6];
-	struct i2c_msg msg[2] = {
-		{
+	काष्ठा i2c_msg msg[2] = अणु
+		अणु
 			.addr = priv->i2c_address,
 			.flags = 0,
 			.len = 1,
 			.buf = &addr
-		}, {
+		पूर्ण, अणु
 			.addr = priv->i2c_address,
 			.flags = I2C_M_RD,
-			.len = sizeof(status),
+			.len = माप(status),
 			.buf = status
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		ret = i2c_transfer(priv->i2c, &msg[i], 1);
-		if (ret >= 0 && ret != 1)
+		अगर (ret >= 0 && ret != 1)
 			ret = -EIO;
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_dbg(&priv->i2c->dev,
 				"%s(): I2C transfer %d failed (%d)\n",
 				__func__, i, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	dev_dbg(&priv->i2c->dev, "%s(): %*ph\n",
-		__func__, (int) sizeof(status), status);
-	if ((status[0] & (LNBH25_STATUS_OFL | LNBH25_STATUS_VMON)) != 0) {
+		__func__, (पूर्णांक) माप(status), status);
+	अगर ((status[0] & (LNBH25_STATUS_OFL | LNBH25_STATUS_VMON)) != 0) अणु
 		dev_err(&priv->i2c->dev,
 			"%s(): voltage in failure state, status reg 0x%x\n",
 			__func__, status[0]);
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int lnbh25_set_voltage(struct dvb_frontend *fe,
-			      enum fe_sec_voltage voltage)
-{
-	int ret;
+अटल पूर्णांक lnbh25_set_voltage(काष्ठा dvb_frontend *fe,
+			      क्रमागत fe_sec_voltage voltage)
+अणु
+	पूर्णांक ret;
 	u8 data1_reg;
-	const char *vsel;
-	struct lnbh25_priv *priv = fe->sec_priv;
-	struct i2c_msg msg = {
+	स्थिर अक्षर *vsel;
+	काष्ठा lnbh25_priv *priv = fe->sec_priv;
+	काष्ठा i2c_msg msg = अणु
 		.addr = priv->i2c_address,
 		.flags = 0,
-		.len = sizeof(priv->config),
+		.len = माप(priv->config),
 		.buf = priv->config
-	};
+	पूर्ण;
 
-	switch (voltage) {
-	case SEC_VOLTAGE_OFF:
+	चयन (voltage) अणु
+	हाल SEC_VOLTAGE_OFF:
 		data1_reg = 0x00;
 		vsel = "Off";
-		break;
-	case SEC_VOLTAGE_13:
+		अवरोध;
+	हाल SEC_VOLTAGE_13:
 		data1_reg = LNBH25_VSEL_13;
 		vsel = "13V";
-		break;
-	case SEC_VOLTAGE_18:
+		अवरोध;
+	हाल SEC_VOLTAGE_18:
 		data1_reg = LNBH25_VSEL_18;
 		vsel = "18V";
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	priv->config[1] = data1_reg;
 	dev_dbg(&priv->i2c->dev,
 		"%s(): %s, I2C 0x%x write [ %02x %02x %02x ]\n",
 		__func__, vsel, priv->i2c_address,
 		priv->config[0], priv->config[1], priv->config[2]);
 	ret = i2c_transfer(priv->i2c, &msg, 1);
-	if (ret >= 0 && ret != 1)
+	अगर (ret >= 0 && ret != 1)
 		ret = -EIO;
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&priv->i2c->dev, "%s(): I2C transfer error (%d)\n",
 			__func__, ret);
-		return ret;
-	}
-	if (voltage != SEC_VOLTAGE_OFF) {
+		वापस ret;
+	पूर्ण
+	अगर (voltage != SEC_VOLTAGE_OFF) अणु
 		msleep(120);
-		ret = lnbh25_read_vmon(priv);
-	} else {
+		ret = lnbh25_पढ़ो_vmon(priv);
+	पूर्ण अन्यथा अणु
 		msleep(20);
 		ret = 0;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void lnbh25_release(struct dvb_frontend *fe)
-{
-	struct lnbh25_priv *priv = fe->sec_priv;
+अटल व्योम lnbh25_release(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा lnbh25_priv *priv = fe->sec_priv;
 
 	dev_dbg(&priv->i2c->dev, "%s()\n", __func__);
 	lnbh25_set_voltage(fe, SEC_VOLTAGE_OFF);
-	kfree(fe->sec_priv);
-	fe->sec_priv = NULL;
-}
+	kमुक्त(fe->sec_priv);
+	fe->sec_priv = शून्य;
+पूर्ण
 
-struct dvb_frontend *lnbh25_attach(struct dvb_frontend *fe,
-				   struct lnbh25_config *cfg,
-				   struct i2c_adapter *i2c)
-{
-	struct lnbh25_priv *priv;
+काष्ठा dvb_frontend *lnbh25_attach(काष्ठा dvb_frontend *fe,
+				   काष्ठा lnbh25_config *cfg,
+				   काष्ठा i2c_adapter *i2c)
+अणु
+	काष्ठा lnbh25_priv *priv;
 
 	dev_dbg(&i2c->dev, "%s()\n", __func__);
-	priv = kzalloc(sizeof(struct lnbh25_priv), GFP_KERNEL);
-	if (!priv)
-		return NULL;
+	priv = kzalloc(माप(काष्ठा lnbh25_priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस शून्य;
 	priv->i2c_address = (cfg->i2c_address >> 1);
 	priv->i2c = i2c;
 	priv->config[0] = 0x02;
 	priv->config[1] = 0x00;
 	priv->config[2] = cfg->data2_config;
 	fe->sec_priv = priv;
-	if (lnbh25_set_voltage(fe, SEC_VOLTAGE_OFF)) {
+	अगर (lnbh25_set_voltage(fe, SEC_VOLTAGE_OFF)) अणु
 		dev_err(&i2c->dev,
 			"%s(): no LNBH25 found at I2C addr 0x%02x\n",
 			__func__, priv->i2c_address);
-		kfree(priv);
-		fe->sec_priv = NULL;
-		return NULL;
-	}
+		kमुक्त(priv);
+		fe->sec_priv = शून्य;
+		वापस शून्य;
+	पूर्ण
 
 	fe->ops.release_sec = lnbh25_release;
 	fe->ops.set_voltage = lnbh25_set_voltage;
 
 	dev_info(&i2c->dev, "%s(): attached at I2C addr 0x%02x\n",
 		__func__, priv->i2c_address);
-	return fe;
-}
+	वापस fe;
+पूर्ण
 EXPORT_SYMBOL(lnbh25_attach);
 
 MODULE_DESCRIPTION("ST LNBH25 driver");

@@ -1,4 +1,5 @@
-#ifndef _ASM_CSKY_VMALLOC_H
-#define _ASM_CSKY_VMALLOC_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_CSKY_VMALLOC_H
+#घोषणा _ASM_CSKY_VMALLOC_H
 
-#endif /* _ASM_CSKY_VMALLOC_H */
+#पूर्ण_अगर /* _ASM_CSKY_VMALLOC_H */

@@ -1,184 +1,185 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * FB driver for the SSD1305 OLED Controller
+ * FB driver क्रम the SSD1305 OLED Controller
  *
  * based on SSD1306 driver by Noralf Tronnes
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/gpio/consumer.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/delay.h>
 
-#include "fbtft.h"
+#समावेश "fbtft.h"
 
-#define DRVNAME		"fb_ssd1305"
+#घोषणा DRVNAME		"fb_ssd1305"
 
-#define WIDTH 128
-#define HEIGHT 64
+#घोषणा WIDTH 128
+#घोषणा HEIGHT 64
 
 /*
- * write_reg() caveat:
+ * ग_लिखो_reg() caveat:
  *
- *    This doesn't work because D/C has to be LOW for both values:
- *      write_reg(par, val1, val2);
+ *    This करोesn't work because D/C has to be LOW क्रम both values:
+ *      ग_लिखो_reg(par, val1, val2);
  *
  *    Do it like this:
- *      write_reg(par, val1);
- *      write_reg(par, val2);
+ *      ग_लिखो_reg(par, val1);
+ *      ग_लिखो_reg(par, val2);
  */
 
 /* Init sequence taken from the Adafruit SSD1306 Arduino library */
-static int init_display(struct fbtft_par *par)
-{
+अटल पूर्णांक init_display(काष्ठा fbtft_par *par)
+अणु
 	par->fbtftops.reset(par);
 
-	if (par->gamma.curves[0] == 0) {
+	अगर (par->gamma.curves[0] == 0) अणु
 		mutex_lock(&par->gamma.lock);
-		if (par->info->var.yres == 64)
+		अगर (par->info->var.yres == 64)
 			par->gamma.curves[0] = 0xCF;
-		else
+		अन्यथा
 			par->gamma.curves[0] = 0x8F;
 		mutex_unlock(&par->gamma.lock);
-	}
+	पूर्ण
 
 	/* Set Display OFF */
-	write_reg(par, 0xAE);
+	ग_लिखो_reg(par, 0xAE);
 
 	/* Set Display Clock Divide Ratio/ Oscillator Frequency */
-	write_reg(par, 0xD5);
-	write_reg(par, 0x80);
+	ग_लिखो_reg(par, 0xD5);
+	ग_लिखो_reg(par, 0x80);
 
 	/* Set Multiplex Ratio */
-	write_reg(par, 0xA8);
-	if (par->info->var.yres == 64)
-		write_reg(par, 0x3F);
-	else
-		write_reg(par, 0x1F);
+	ग_लिखो_reg(par, 0xA8);
+	अगर (par->info->var.yres == 64)
+		ग_लिखो_reg(par, 0x3F);
+	अन्यथा
+		ग_लिखो_reg(par, 0x1F);
 
 	/* Set Display Offset */
-	write_reg(par, 0xD3);
-	write_reg(par, 0x0);
+	ग_लिखो_reg(par, 0xD3);
+	ग_लिखो_reg(par, 0x0);
 
 	/* Set Display Start Line */
-	write_reg(par, 0x40 | 0x0);
+	ग_लिखो_reg(par, 0x40 | 0x0);
 
 	/* Charge Pump Setting */
-	write_reg(par, 0x8D);
-	/* A[2] = 1b, Enable charge pump during display on */
-	write_reg(par, 0x14);
+	ग_लिखो_reg(par, 0x8D);
+	/* A[2] = 1b, Enable अक्षरge pump during display on */
+	ग_लिखो_reg(par, 0x14);
 
 	/* Set Memory Addressing Mode */
-	write_reg(par, 0x20);
+	ग_लिखो_reg(par, 0x20);
 	/* Vertical addressing mode  */
-	write_reg(par, 0x01);
+	ग_लिखो_reg(par, 0x01);
 
 	/*
 	 * Set Segment Re-map
 	 * column address 127 is mapped to SEG0
 	 */
-	write_reg(par, 0xA0 | ((par->info->var.rotate == 180) ? 0x0 : 0x1));
+	ग_लिखो_reg(par, 0xA0 | ((par->info->var.rotate == 180) ? 0x0 : 0x1));
 
 	/*
 	 * Set COM Output Scan Direction
 	 * remapped mode. Scan from COM[N-1] to COM0
 	 */
-	write_reg(par, ((par->info->var.rotate == 180) ? 0xC8 : 0xC0));
+	ग_लिखो_reg(par, ((par->info->var.rotate == 180) ? 0xC8 : 0xC0));
 
 	/* Set COM Pins Hardware Configuration */
-	write_reg(par, 0xDA);
-	if (par->info->var.yres == 64) {
+	ग_लिखो_reg(par, 0xDA);
+	अगर (par->info->var.yres == 64) अणु
 		/* A[4]=1b, Alternative COM pin configuration */
-		write_reg(par, 0x12);
-	} else {
+		ग_लिखो_reg(par, 0x12);
+	पूर्ण अन्यथा अणु
 		/* A[4]=0b, Sequential COM pin configuration */
-		write_reg(par, 0x02);
-	}
+		ग_लिखो_reg(par, 0x02);
+	पूर्ण
 
-	/* Set Pre-charge Period */
-	write_reg(par, 0xD9);
-	write_reg(par, 0xF1);
+	/* Set Pre-अक्षरge Period */
+	ग_लिखो_reg(par, 0xD9);
+	ग_लिखो_reg(par, 0xF1);
 
 	/*
 	 * Entire Display ON
 	 * Resume to RAM content display. Output follows RAM content
 	 */
-	write_reg(par, 0xA4);
+	ग_लिखो_reg(par, 0xA4);
 
 	/*
 	 * Set Normal Display
 	 *  0 in RAM: OFF in display panel
 	 *  1 in RAM: ON in display panel
 	 */
-	write_reg(par, 0xA6);
+	ग_लिखो_reg(par, 0xA6);
 
 	/* Set Display ON */
-	write_reg(par, 0xAF);
+	ग_लिखो_reg(par, 0xAF);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
-{
-	/* Set Lower Column Start Address for Page Addressing Mode */
-	write_reg(par, 0x00 | ((par->info->var.rotate == 180) ? 0x0 : 0x4));
-	/* Set Higher Column Start Address for Page Addressing Mode */
-	write_reg(par, 0x10 | 0x0);
+अटल व्योम set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe, पूर्णांक ye)
+अणु
+	/* Set Lower Column Start Address क्रम Page Addressing Mode */
+	ग_लिखो_reg(par, 0x00 | ((par->info->var.rotate == 180) ? 0x0 : 0x4));
+	/* Set Higher Column Start Address क्रम Page Addressing Mode */
+	ग_लिखो_reg(par, 0x10 | 0x0);
 	/* Set Display Start Line */
-	write_reg(par, 0x40 | 0x0);
-}
+	ग_लिखो_reg(par, 0x40 | 0x0);
+पूर्ण
 
-static int blank(struct fbtft_par *par, bool on)
-{
-	if (on)
-		write_reg(par, 0xAE);
-	else
-		write_reg(par, 0xAF);
-	return 0;
-}
+अटल पूर्णांक blank(काष्ठा fbtft_par *par, bool on)
+अणु
+	अगर (on)
+		ग_लिखो_reg(par, 0xAE);
+	अन्यथा
+		ग_लिखो_reg(par, 0xAF);
+	वापस 0;
+पूर्ण
 
 /* Gamma is used to control Contrast */
-static int set_gamma(struct fbtft_par *par, u32 *curves)
-{
+अटल पूर्णांक set_gamma(काष्ठा fbtft_par *par, u32 *curves)
+अणु
 	curves[0] &= 0xFF;
-	/* Set Contrast Control for BANK0 */
-	write_reg(par, 0x81);
-	write_reg(par, curves[0]);
+	/* Set Contrast Control क्रम BANK0 */
+	ग_लिखो_reg(par, 0x81);
+	ग_लिखो_reg(par, curves[0]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int write_vmem(struct fbtft_par *par, size_t offset, size_t len)
-{
+अटल पूर्णांक ग_लिखो_vmem(काष्ठा fbtft_par *par, माप_प्रकार offset, माप_प्रकार len)
+अणु
 	u16 *vmem16 = (u16 *)par->info->screen_buffer;
 	u8 *buf = par->txbuf.buf;
-	int x, y, i;
-	int ret;
+	पूर्णांक x, y, i;
+	पूर्णांक ret;
 
-	for (x = 0; x < par->info->var.xres; x++) {
-		for (y = 0; y < par->info->var.yres / 8; y++) {
+	क्रम (x = 0; x < par->info->var.xres; x++) अणु
+		क्रम (y = 0; y < par->info->var.yres / 8; y++) अणु
 			*buf = 0x00;
-			for (i = 0; i < 8; i++)
+			क्रम (i = 0; i < 8; i++)
 				*buf |= (vmem16[(y * 8 + i) *
 						par->info->var.xres + x] ?
 					 1 : 0) << i;
 			buf++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Write data */
 	gpiod_set_value(par->gpio.dc, 1);
-	ret = par->fbtftops.write(par, par->txbuf.buf,
+	ret = par->fbtftops.ग_लिखो(par, par->txbuf.buf,
 				  par->info->var.xres * par->info->var.yres /
 				  8);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(par->info->device, "write failed and returned: %d\n",
 			ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct fbtft_display display = {
+अटल काष्ठा fbtft_display display = अणु
 	.regwidth = 8,
 	.width = WIDTH,
 	.height = HEIGHT,
@@ -186,14 +187,14 @@ static struct fbtft_display display = {
 	.gamma_num = 1,
 	.gamma_len = 1,
 	.gamma = "00",
-	.fbtftops = {
-		.write_vmem = write_vmem,
+	.fbtftops = अणु
+		.ग_लिखो_vmem = ग_लिखो_vmem,
 		.init_display = init_display,
 		.set_addr_win = set_addr_win,
 		.blank = blank,
 		.set_gamma = set_gamma,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 FBTFT_REGISTER_DRIVER(DRVNAME, "solomon,ssd1305", &display);
 

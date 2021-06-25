@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * fs/f2fs/recovery.c
  *
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
-#include <asm/unaligned.h>
-#include <linux/fs.h>
-#include <linux/f2fs_fs.h>
-#include "f2fs.h"
-#include "node.h"
-#include "segment.h"
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/f2fs_fs.h>
+#समावेश "f2fs.h"
+#समावेश "node.h"
+#समावेश "segment.h"
 
 /*
- * Roll forward recovery scenarios.
+ * Roll क्रमward recovery scenarios.
  *
  * [Term] F: fsync_mark, D: dentry_mark
  *
@@ -36,286 +37,286 @@
  * -> No problem.
  *
  * 7. CP | dnode(F) | inode(DF)
- * -> If f2fs_iget fails, then goto next to find inode(DF).
+ * -> If f2fs_iget fails, then जाओ next to find inode(DF).
  *
  * 8. CP | dnode(F) | inode(x)
- * -> If f2fs_iget fails, then goto next to find inode(DF).
+ * -> If f2fs_iget fails, then जाओ next to find inode(DF).
  *    But it will fail due to no inode(DF).
  */
 
-static struct kmem_cache *fsync_entry_slab;
+अटल काष्ठा kmem_cache *fsync_entry_slab;
 
-bool f2fs_space_for_roll_forward(struct f2fs_sb_info *sbi)
-{
+bool f2fs_space_क्रम_roll_क्रमward(काष्ठा f2fs_sb_info *sbi)
+अणु
 	s64 nalloc = percpu_counter_sum_positive(&sbi->alloc_valid_block_count);
 
-	if (sbi->last_valid_block_count + nalloc > sbi->user_block_count)
-		return false;
-	return true;
-}
+	अगर (sbi->last_valid_block_count + nalloc > sbi->user_block_count)
+		वापस false;
+	वापस true;
+पूर्ण
 
-static struct fsync_inode_entry *get_fsync_inode(struct list_head *head,
+अटल काष्ठा fsync_inode_entry *get_fsync_inode(काष्ठा list_head *head,
 								nid_t ino)
-{
-	struct fsync_inode_entry *entry;
+अणु
+	काष्ठा fsync_inode_entry *entry;
 
-	list_for_each_entry(entry, head, list)
-		if (entry->inode->i_ino == ino)
-			return entry;
+	list_क्रम_each_entry(entry, head, list)
+		अगर (entry->inode->i_ino == ino)
+			वापस entry;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct fsync_inode_entry *add_fsync_inode(struct f2fs_sb_info *sbi,
-			struct list_head *head, nid_t ino, bool quota_inode)
-{
-	struct inode *inode;
-	struct fsync_inode_entry *entry;
-	int err;
+अटल काष्ठा fsync_inode_entry *add_fsync_inode(काष्ठा f2fs_sb_info *sbi,
+			काष्ठा list_head *head, nid_t ino, bool quota_inode)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा fsync_inode_entry *entry;
+	पूर्णांक err;
 
 	inode = f2fs_iget_retry(sbi->sb, ino);
-	if (IS_ERR(inode))
-		return ERR_CAST(inode);
+	अगर (IS_ERR(inode))
+		वापस ERR_CAST(inode);
 
 	err = dquot_initialize(inode);
-	if (err)
-		goto err_out;
+	अगर (err)
+		जाओ err_out;
 
-	if (quota_inode) {
+	अगर (quota_inode) अणु
 		err = dquot_alloc_inode(inode);
-		if (err)
-			goto err_out;
-	}
+		अगर (err)
+			जाओ err_out;
+	पूर्ण
 
 	entry = f2fs_kmem_cache_alloc(fsync_entry_slab, GFP_F2FS_ZERO);
 	entry->inode = inode;
 	list_add_tail(&entry->list, head);
 
-	return entry;
+	वापस entry;
 err_out:
 	iput(inode);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void del_fsync_inode(struct fsync_inode_entry *entry, int drop)
-{
-	if (drop) {
+अटल व्योम del_fsync_inode(काष्ठा fsync_inode_entry *entry, पूर्णांक drop)
+अणु
+	अगर (drop) अणु
 		/* inode should not be recovered, drop it */
 		f2fs_inode_synced(entry->inode);
-	}
+	पूर्ण
 	iput(entry->inode);
 	list_del(&entry->list);
-	kmem_cache_free(fsync_entry_slab, entry);
-}
+	kmem_cache_मुक्त(fsync_entry_slab, entry);
+पूर्ण
 
-static int init_recovered_filename(const struct inode *dir,
-				   struct f2fs_inode *raw_inode,
-				   struct f2fs_filename *fname,
-				   struct qstr *usr_fname)
-{
-	int err;
+अटल पूर्णांक init_recovered_filename(स्थिर काष्ठा inode *dir,
+				   काष्ठा f2fs_inode *raw_inode,
+				   काष्ठा f2fs_filename *fname,
+				   काष्ठा qstr *usr_fname)
+अणु
+	पूर्णांक err;
 
-	memset(fname, 0, sizeof(*fname));
+	स_रखो(fname, 0, माप(*fname));
 	fname->disk_name.len = le32_to_cpu(raw_inode->i_namelen);
 	fname->disk_name.name = raw_inode->i_name;
 
-	if (WARN_ON(fname->disk_name.len > F2FS_NAME_LEN))
-		return -ENAMETOOLONG;
+	अगर (WARN_ON(fname->disk_name.len > F2FS_NAME_LEN))
+		वापस -ENAMETOOLONG;
 
-	if (!IS_ENCRYPTED(dir)) {
+	अगर (!IS_ENCRYPTED(dir)) अणु
 		usr_fname->name = fname->disk_name.name;
 		usr_fname->len = fname->disk_name.len;
 		fname->usr_fname = usr_fname;
-	}
+	पूर्ण
 
 	/* Compute the hash of the filename */
-	if (IS_ENCRYPTED(dir) && IS_CASEFOLDED(dir)) {
+	अगर (IS_ENCRYPTED(dir) && IS_CASEFOLDED(dir)) अणु
 		/*
-		 * In this case the hash isn't computable without the key, so it
+		 * In this हाल the hash isn't computable without the key, so it
 		 * was saved on-disk.
 		 */
-		if (fname->disk_name.len + sizeof(f2fs_hash_t) > F2FS_NAME_LEN)
-			return -EINVAL;
+		अगर (fname->disk_name.len + माप(f2fs_hash_t) > F2FS_NAME_LEN)
+			वापस -EINVAL;
 		fname->hash = get_unaligned((f2fs_hash_t *)
 				&raw_inode->i_name[fname->disk_name.len]);
-	} else if (IS_CASEFOLDED(dir)) {
-		err = f2fs_init_casefolded_name(dir, fname);
-		if (err)
-			return err;
+	पूर्ण अन्यथा अगर (IS_CASEFOLDED(dir)) अणु
+		err = f2fs_init_हालfolded_name(dir, fname);
+		अगर (err)
+			वापस err;
 		f2fs_hash_filename(dir, fname);
-#ifdef CONFIG_UNICODE
-		/* Case-sensitive match is fine for recovery */
-		kfree(fname->cf_name.name);
-		fname->cf_name.name = NULL;
-#endif
-	} else {
+#अगर_घोषित CONFIG_UNICODE
+		/* Case-sensitive match is fine क्रम recovery */
+		kमुक्त(fname->cf_name.name);
+		fname->cf_name.name = शून्य;
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 		f2fs_hash_filename(dir, fname);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int recover_dentry(struct inode *inode, struct page *ipage,
-						struct list_head *dir_list)
-{
-	struct f2fs_inode *raw_inode = F2FS_INODE(ipage);
+अटल पूर्णांक recover_dentry(काष्ठा inode *inode, काष्ठा page *ipage,
+						काष्ठा list_head *dir_list)
+अणु
+	काष्ठा f2fs_inode *raw_inode = F2FS_INODE(ipage);
 	nid_t pino = le32_to_cpu(raw_inode->i_pino);
-	struct f2fs_dir_entry *de;
-	struct f2fs_filename fname;
-	struct qstr usr_fname;
-	struct page *page;
-	struct inode *dir, *einode;
-	struct fsync_inode_entry *entry;
-	int err = 0;
-	char *name;
+	काष्ठा f2fs_dir_entry *de;
+	काष्ठा f2fs_filename fname;
+	काष्ठा qstr usr_fname;
+	काष्ठा page *page;
+	काष्ठा inode *dir, *einode;
+	काष्ठा fsync_inode_entry *entry;
+	पूर्णांक err = 0;
+	अक्षर *name;
 
 	entry = get_fsync_inode(dir_list, pino);
-	if (!entry) {
+	अगर (!entry) अणु
 		entry = add_fsync_inode(F2FS_I_SB(inode), dir_list,
 							pino, false);
-		if (IS_ERR(entry)) {
+		अगर (IS_ERR(entry)) अणु
 			dir = ERR_CAST(entry);
 			err = PTR_ERR(entry);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	dir = entry->inode;
 	err = init_recovered_filename(dir, raw_inode, &fname, &usr_fname);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 retry:
 	de = __f2fs_find_entry(dir, &fname, &page);
-	if (de && inode->i_ino == le32_to_cpu(de->ino))
-		goto out_put;
+	अगर (de && inode->i_ino == le32_to_cpu(de->ino))
+		जाओ out_put;
 
-	if (de) {
+	अगर (de) अणु
 		einode = f2fs_iget_retry(inode->i_sb, le32_to_cpu(de->ino));
-		if (IS_ERR(einode)) {
+		अगर (IS_ERR(einode)) अणु
 			WARN_ON(1);
 			err = PTR_ERR(einode);
-			if (err == -ENOENT)
+			अगर (err == -ENOENT)
 				err = -EEXIST;
-			goto out_put;
-		}
+			जाओ out_put;
+		पूर्ण
 
 		err = dquot_initialize(einode);
-		if (err) {
+		अगर (err) अणु
 			iput(einode);
-			goto out_put;
-		}
+			जाओ out_put;
+		पूर्ण
 
 		err = f2fs_acquire_orphan_inode(F2FS_I_SB(inode));
-		if (err) {
+		अगर (err) अणु
 			iput(einode);
-			goto out_put;
-		}
+			जाओ out_put;
+		पूर्ण
 		f2fs_delete_entry(de, page, dir, einode);
 		iput(einode);
-		goto retry;
-	} else if (IS_ERR(page)) {
+		जाओ retry;
+	पूर्ण अन्यथा अगर (IS_ERR(page)) अणु
 		err = PTR_ERR(page);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = f2fs_add_dentry(dir, &fname, inode,
 					inode->i_ino, inode->i_mode);
-	}
-	if (err == -ENOMEM)
-		goto retry;
-	goto out;
+	पूर्ण
+	अगर (err == -ENOMEM)
+		जाओ retry;
+	जाओ out;
 
 out_put:
 	f2fs_put_page(page, 0);
 out:
-	if (file_enc_name(inode))
+	अगर (file_enc_name(inode))
 		name = "<encrypted>";
-	else
+	अन्यथा
 		name = raw_inode->i_name;
 	f2fs_notice(F2FS_I_SB(inode), "%s: ino = %x, name = %s, dir = %lx, err = %d",
 		    __func__, ino_of_node(ipage), name,
 		    IS_ERR(dir) ? 0 : dir->i_ino, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int recover_quota_data(struct inode *inode, struct page *page)
-{
-	struct f2fs_inode *raw = F2FS_INODE(page);
-	struct iattr attr;
+अटल पूर्णांक recover_quota_data(काष्ठा inode *inode, काष्ठा page *page)
+अणु
+	काष्ठा f2fs_inode *raw = F2FS_INODE(page);
+	काष्ठा iattr attr;
 	uid_t i_uid = le32_to_cpu(raw->i_uid);
 	gid_t i_gid = le32_to_cpu(raw->i_gid);
-	int err;
+	पूर्णांक err;
 
-	memset(&attr, 0, sizeof(attr));
+	स_रखो(&attr, 0, माप(attr));
 
 	attr.ia_uid = make_kuid(inode->i_sb->s_user_ns, i_uid);
 	attr.ia_gid = make_kgid(inode->i_sb->s_user_ns, i_gid);
 
-	if (!uid_eq(attr.ia_uid, inode->i_uid))
+	अगर (!uid_eq(attr.ia_uid, inode->i_uid))
 		attr.ia_valid |= ATTR_UID;
-	if (!gid_eq(attr.ia_gid, inode->i_gid))
+	अगर (!gid_eq(attr.ia_gid, inode->i_gid))
 		attr.ia_valid |= ATTR_GID;
 
-	if (!attr.ia_valid)
-		return 0;
+	अगर (!attr.ia_valid)
+		वापस 0;
 
 	err = dquot_transfer(inode, &attr);
-	if (err)
+	अगर (err)
 		set_sbi_flag(F2FS_I_SB(inode), SBI_QUOTA_NEED_REPAIR);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void recover_inline_flags(struct inode *inode, struct f2fs_inode *ri)
-{
-	if (ri->i_inline & F2FS_PIN_FILE)
-		set_inode_flag(inode, FI_PIN_FILE);
-	else
-		clear_inode_flag(inode, FI_PIN_FILE);
-	if (ri->i_inline & F2FS_DATA_EXIST)
+अटल व्योम recover_अंतरभूत_flags(काष्ठा inode *inode, काष्ठा f2fs_inode *ri)
+अणु
+	अगर (ri->i_अंतरभूत & F2FS_PIN_खाता)
+		set_inode_flag(inode, FI_PIN_खाता);
+	अन्यथा
+		clear_inode_flag(inode, FI_PIN_खाता);
+	अगर (ri->i_अंतरभूत & F2FS_DATA_EXIST)
 		set_inode_flag(inode, FI_DATA_EXIST);
-	else
+	अन्यथा
 		clear_inode_flag(inode, FI_DATA_EXIST);
-}
+पूर्ण
 
-static int recover_inode(struct inode *inode, struct page *page)
-{
-	struct f2fs_inode *raw = F2FS_INODE(page);
-	char *name;
-	int err;
+अटल पूर्णांक recover_inode(काष्ठा inode *inode, काष्ठा page *page)
+अणु
+	काष्ठा f2fs_inode *raw = F2FS_INODE(page);
+	अक्षर *name;
+	पूर्णांक err;
 
 	inode->i_mode = le16_to_cpu(raw->i_mode);
 
 	err = recover_quota_data(inode, page);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	i_uid_write(inode, le32_to_cpu(raw->i_uid));
-	i_gid_write(inode, le32_to_cpu(raw->i_gid));
+	i_uid_ग_लिखो(inode, le32_to_cpu(raw->i_uid));
+	i_gid_ग_लिखो(inode, le32_to_cpu(raw->i_gid));
 
-	if (raw->i_inline & F2FS_EXTRA_ATTR) {
-		if (f2fs_sb_has_project_quota(F2FS_I_SB(inode)) &&
+	अगर (raw->i_अंतरभूत & F2FS_EXTRA_ATTR) अणु
+		अगर (f2fs_sb_has_project_quota(F2FS_I_SB(inode)) &&
 			F2FS_FITS_IN_INODE(raw, le16_to_cpu(raw->i_extra_isize),
-								i_projid)) {
+								i_projid)) अणु
 			projid_t i_projid;
 			kprojid_t kprojid;
 
 			i_projid = (projid_t)le32_to_cpu(raw->i_projid);
 			kprojid = make_kprojid(&init_user_ns, i_projid);
 
-			if (!projid_eq(kprojid, F2FS_I(inode)->i_projid)) {
+			अगर (!projid_eq(kprojid, F2FS_I(inode)->i_projid)) अणु
 				err = f2fs_transfer_project_quota(inode,
 								kprojid);
-				if (err)
-					return err;
+				अगर (err)
+					वापस err;
 				F2FS_I(inode)->i_projid = kprojid;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	f2fs_i_size_write(inode, le64_to_cpu(raw->i_size));
-	inode->i_atime.tv_sec = le64_to_cpu(raw->i_atime);
-	inode->i_ctime.tv_sec = le64_to_cpu(raw->i_ctime);
-	inode->i_mtime.tv_sec = le64_to_cpu(raw->i_mtime);
-	inode->i_atime.tv_nsec = le32_to_cpu(raw->i_atime_nsec);
-	inode->i_ctime.tv_nsec = le32_to_cpu(raw->i_ctime_nsec);
-	inode->i_mtime.tv_nsec = le32_to_cpu(raw->i_mtime_nsec);
+	f2fs_i_size_ग_लिखो(inode, le64_to_cpu(raw->i_size));
+	inode->i_aसमय.tv_sec = le64_to_cpu(raw->i_aसमय);
+	inode->i_स_समय.tv_sec = le64_to_cpu(raw->i_स_समय);
+	inode->i_mसमय.tv_sec = le64_to_cpu(raw->i_mसमय);
+	inode->i_aसमय.tv_nsec = le32_to_cpu(raw->i_aसमय_nsec);
+	inode->i_स_समय.tv_nsec = le32_to_cpu(raw->i_स_समय_nsec);
+	inode->i_mसमय.tv_nsec = le32_to_cpu(raw->i_mसमय_nsec);
 
 	F2FS_I(inode)->i_advise = raw->i_advise;
 	F2FS_I(inode)->i_flags = le32_to_cpu(raw->i_flags);
@@ -323,361 +324,361 @@ static int recover_inode(struct inode *inode, struct page *page)
 	F2FS_I(inode)->i_gc_failures[GC_FAILURE_PIN] =
 				le16_to_cpu(raw->i_gc_failures);
 
-	recover_inline_flags(inode, raw);
+	recover_अंतरभूत_flags(inode, raw);
 
 	f2fs_mark_inode_dirty_sync(inode, true);
 
-	if (file_enc_name(inode))
+	अगर (file_enc_name(inode))
 		name = "<encrypted>";
-	else
+	अन्यथा
 		name = F2FS_INODE(page)->i_name;
 
 	f2fs_notice(F2FS_I_SB(inode), "recover_inode: ino = %x, name = %s, inline = %x",
-		    ino_of_node(page), name, raw->i_inline);
-	return 0;
-}
+		    ino_of_node(page), name, raw->i_अंतरभूत);
+	वापस 0;
+पूर्ण
 
-static int find_fsync_dnodes(struct f2fs_sb_info *sbi, struct list_head *head,
+अटल पूर्णांक find_fsync_dnodes(काष्ठा f2fs_sb_info *sbi, काष्ठा list_head *head,
 				bool check_only)
-{
-	struct curseg_info *curseg;
-	struct page *page = NULL;
+अणु
+	काष्ठा curseg_info *curseg;
+	काष्ठा page *page = शून्य;
 	block_t blkaddr;
-	unsigned int loop_cnt = 0;
-	unsigned int free_blocks = MAIN_SEGS(sbi) * sbi->blocks_per_seg -
+	अचिन्हित पूर्णांक loop_cnt = 0;
+	अचिन्हित पूर्णांक मुक्त_blocks = MAIN_SEGS(sbi) * sbi->blocks_per_seg -
 						valid_user_blocks(sbi);
-	int err = 0;
+	पूर्णांक err = 0;
 
 	/* get node pages in the current segment */
 	curseg = CURSEG_I(sbi, CURSEG_WARM_NODE);
 	blkaddr = NEXT_FREE_BLKADDR(sbi, curseg);
 
-	while (1) {
-		struct fsync_inode_entry *entry;
+	जबतक (1) अणु
+		काष्ठा fsync_inode_entry *entry;
 
-		if (!f2fs_is_valid_blkaddr(sbi, blkaddr, META_POR))
-			return 0;
+		अगर (!f2fs_is_valid_blkaddr(sbi, blkaddr, META_POR))
+			वापस 0;
 
-		page = f2fs_get_tmp_page(sbi, blkaddr);
-		if (IS_ERR(page)) {
+		page = f2fs_get_पंचांगp_page(sbi, blkaddr);
+		अगर (IS_ERR(page)) अणु
 			err = PTR_ERR(page);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!is_recoverable_dnode(page)) {
+		अगर (!is_recoverable_dnode(page)) अणु
 			f2fs_put_page(page, 1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!is_fsync_dnode(page))
-			goto next;
+		अगर (!is_fsync_dnode(page))
+			जाओ next;
 
 		entry = get_fsync_inode(head, ino_of_node(page));
-		if (!entry) {
+		अगर (!entry) अणु
 			bool quota_inode = false;
 
-			if (!check_only &&
-					IS_INODE(page) && is_dent_dnode(page)) {
+			अगर (!check_only &&
+					IS_INODE(page) && is_dent_dnode(page)) अणु
 				err = f2fs_recover_inode_page(sbi, page);
-				if (err) {
+				अगर (err) अणु
 					f2fs_put_page(page, 1);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				quota_inode = true;
-			}
+			पूर्ण
 
 			/*
 			 * CP | dnode(F) | inode(DF)
-			 * For this case, we should not give up now.
+			 * For this हाल, we should not give up now.
 			 */
 			entry = add_fsync_inode(sbi, head, ino_of_node(page),
 								quota_inode);
-			if (IS_ERR(entry)) {
+			अगर (IS_ERR(entry)) अणु
 				err = PTR_ERR(entry);
-				if (err == -ENOENT) {
+				अगर (err == -ENOENT) अणु
 					err = 0;
-					goto next;
-				}
+					जाओ next;
+				पूर्ण
 				f2fs_put_page(page, 1);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		entry->blkaddr = blkaddr;
 
-		if (IS_INODE(page) && is_dent_dnode(page))
+		अगर (IS_INODE(page) && is_dent_dnode(page))
 			entry->last_dentry = blkaddr;
 next:
 		/* sanity check in order to detect looped node chain */
-		if (++loop_cnt >= free_blocks ||
-			blkaddr == next_blkaddr_of_node(page)) {
+		अगर (++loop_cnt >= मुक्त_blocks ||
+			blkaddr == next_blkaddr_of_node(page)) अणु
 			f2fs_notice(sbi, "%s: detect looped node chain, blkaddr:%u, next:%u",
 				    __func__, blkaddr,
 				    next_blkaddr_of_node(page));
 			f2fs_put_page(page, 1);
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* check next segment */
 		blkaddr = next_blkaddr_of_node(page);
 		f2fs_put_page(page, 1);
 
 		f2fs_ra_meta_pages_cond(sbi, blkaddr);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void destroy_fsync_dnodes(struct list_head *head, int drop)
-{
-	struct fsync_inode_entry *entry, *tmp;
+अटल व्योम destroy_fsync_dnodes(काष्ठा list_head *head, पूर्णांक drop)
+अणु
+	काष्ठा fsync_inode_entry *entry, *पंचांगp;
 
-	list_for_each_entry_safe(entry, tmp, head, list)
+	list_क्रम_each_entry_safe(entry, पंचांगp, head, list)
 		del_fsync_inode(entry, drop);
-}
+पूर्ण
 
-static int check_index_in_prev_nodes(struct f2fs_sb_info *sbi,
-			block_t blkaddr, struct dnode_of_data *dn)
-{
-	struct seg_entry *sentry;
-	unsigned int segno = GET_SEGNO(sbi, blkaddr);
-	unsigned short blkoff = GET_BLKOFF_FROM_SEG0(sbi, blkaddr);
-	struct f2fs_summary_block *sum_node;
-	struct f2fs_summary sum;
-	struct page *sum_page, *node_page;
-	struct dnode_of_data tdn = *dn;
+अटल पूर्णांक check_index_in_prev_nodes(काष्ठा f2fs_sb_info *sbi,
+			block_t blkaddr, काष्ठा dnode_of_data *dn)
+अणु
+	काष्ठा seg_entry *sentry;
+	अचिन्हित पूर्णांक segno = GET_SEGNO(sbi, blkaddr);
+	अचिन्हित लघु blkoff = GET_BLKOFF_FROM_SEG0(sbi, blkaddr);
+	काष्ठा f2fs_summary_block *sum_node;
+	काष्ठा f2fs_summary sum;
+	काष्ठा page *sum_page, *node_page;
+	काष्ठा dnode_of_data tdn = *dn;
 	nid_t ino, nid;
-	struct inode *inode;
-	unsigned int offset;
+	काष्ठा inode *inode;
+	अचिन्हित पूर्णांक offset;
 	block_t bidx;
-	int i;
+	पूर्णांक i;
 
 	sentry = get_seg_entry(sbi, segno);
-	if (!f2fs_test_bit(blkoff, sentry->cur_valid_map))
-		return 0;
+	अगर (!f2fs_test_bit(blkoff, sentry->cur_valid_map))
+		वापस 0;
 
 	/* Get the previous summary */
-	for (i = CURSEG_HOT_DATA; i <= CURSEG_COLD_DATA; i++) {
-		struct curseg_info *curseg = CURSEG_I(sbi, i);
+	क्रम (i = CURSEG_HOT_DATA; i <= CURSEG_COLD_DATA; i++) अणु
+		काष्ठा curseg_info *curseg = CURSEG_I(sbi, i);
 
-		if (curseg->segno == segno) {
+		अगर (curseg->segno == segno) अणु
 			sum = curseg->sum_blk->entries[blkoff];
-			goto got_it;
-		}
-	}
+			जाओ got_it;
+		पूर्ण
+	पूर्ण
 
 	sum_page = f2fs_get_sum_page(sbi, segno);
-	if (IS_ERR(sum_page))
-		return PTR_ERR(sum_page);
-	sum_node = (struct f2fs_summary_block *)page_address(sum_page);
+	अगर (IS_ERR(sum_page))
+		वापस PTR_ERR(sum_page);
+	sum_node = (काष्ठा f2fs_summary_block *)page_address(sum_page);
 	sum = sum_node->entries[blkoff];
 	f2fs_put_page(sum_page, 1);
 got_it:
 	/* Use the locked dnode page and inode */
 	nid = le32_to_cpu(sum.nid);
-	if (dn->inode->i_ino == nid) {
+	अगर (dn->inode->i_ino == nid) अणु
 		tdn.nid = nid;
-		if (!dn->inode_page_locked)
+		अगर (!dn->inode_page_locked)
 			lock_page(dn->inode_page);
 		tdn.node_page = dn->inode_page;
 		tdn.ofs_in_node = le16_to_cpu(sum.ofs_in_node);
-		goto truncate_out;
-	} else if (dn->nid == nid) {
+		जाओ truncate_out;
+	पूर्ण अन्यथा अगर (dn->nid == nid) अणु
 		tdn.ofs_in_node = le16_to_cpu(sum.ofs_in_node);
-		goto truncate_out;
-	}
+		जाओ truncate_out;
+	पूर्ण
 
 	/* Get the node page */
 	node_page = f2fs_get_node_page(sbi, nid);
-	if (IS_ERR(node_page))
-		return PTR_ERR(node_page);
+	अगर (IS_ERR(node_page))
+		वापस PTR_ERR(node_page);
 
 	offset = ofs_of_node(node_page);
 	ino = ino_of_node(node_page);
 	f2fs_put_page(node_page, 1);
 
-	if (ino != dn->inode->i_ino) {
-		int ret;
+	अगर (ino != dn->inode->i_ino) अणु
+		पूर्णांक ret;
 
 		/* Deallocate previous index in the node page */
 		inode = f2fs_iget_retry(sbi->sb, ino);
-		if (IS_ERR(inode))
-			return PTR_ERR(inode);
+		अगर (IS_ERR(inode))
+			वापस PTR_ERR(inode);
 
 		ret = dquot_initialize(inode);
-		if (ret) {
+		अगर (ret) अणु
 			iput(inode);
-			return ret;
-		}
-	} else {
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		inode = dn->inode;
-	}
+	पूर्ण
 
 	bidx = f2fs_start_bidx_of_node(offset, inode) +
 				le16_to_cpu(sum.ofs_in_node);
 
 	/*
-	 * if inode page is locked, unlock temporarily, but its reference
+	 * अगर inode page is locked, unlock temporarily, but its reference
 	 * count keeps alive.
 	 */
-	if (ino == dn->inode->i_ino && dn->inode_page_locked)
+	अगर (ino == dn->inode->i_ino && dn->inode_page_locked)
 		unlock_page(dn->inode_page);
 
-	set_new_dnode(&tdn, inode, NULL, NULL, 0);
-	if (f2fs_get_dnode_of_data(&tdn, bidx, LOOKUP_NODE))
-		goto out;
+	set_new_dnode(&tdn, inode, शून्य, शून्य, 0);
+	अगर (f2fs_get_dnode_of_data(&tdn, bidx, LOOKUP_NODE))
+		जाओ out;
 
-	if (tdn.data_blkaddr == blkaddr)
+	अगर (tdn.data_blkaddr == blkaddr)
 		f2fs_truncate_data_blocks_range(&tdn, 1);
 
 	f2fs_put_dnode(&tdn);
 out:
-	if (ino != dn->inode->i_ino)
+	अगर (ino != dn->inode->i_ino)
 		iput(inode);
-	else if (dn->inode_page_locked)
+	अन्यथा अगर (dn->inode_page_locked)
 		lock_page(dn->inode_page);
-	return 0;
+	वापस 0;
 
 truncate_out:
-	if (f2fs_data_blkaddr(&tdn) == blkaddr)
+	अगर (f2fs_data_blkaddr(&tdn) == blkaddr)
 		f2fs_truncate_data_blocks_range(&tdn, 1);
-	if (dn->inode->i_ino == nid && !dn->inode_page_locked)
+	अगर (dn->inode->i_ino == nid && !dn->inode_page_locked)
 		unlock_page(dn->inode_page);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_recover_data(struct f2fs_sb_info *sbi, struct inode *inode,
-					struct page *page)
-{
-	struct dnode_of_data dn;
-	struct node_info ni;
-	unsigned int start, end;
-	int err = 0, recovered = 0;
+अटल पूर्णांक करो_recover_data(काष्ठा f2fs_sb_info *sbi, काष्ठा inode *inode,
+					काष्ठा page *page)
+अणु
+	काष्ठा dnode_of_data dn;
+	काष्ठा node_info ni;
+	अचिन्हित पूर्णांक start, end;
+	पूर्णांक err = 0, recovered = 0;
 
 	/* step 1: recover xattr */
-	if (IS_INODE(page)) {
-		err = f2fs_recover_inline_xattr(inode, page);
-		if (err)
-			goto out;
-	} else if (f2fs_has_xattr_block(ofs_of_node(page))) {
+	अगर (IS_INODE(page)) अणु
+		err = f2fs_recover_अंतरभूत_xattr(inode, page);
+		अगर (err)
+			जाओ out;
+	पूर्ण अन्यथा अगर (f2fs_has_xattr_block(ofs_of_node(page))) अणु
 		err = f2fs_recover_xattr_data(inode, page);
-		if (!err)
+		अगर (!err)
 			recovered++;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* step 2: recover inline data */
-	err = f2fs_recover_inline_data(inode, page);
-	if (err) {
-		if (err == 1)
+	/* step 2: recover अंतरभूत data */
+	err = f2fs_recover_अंतरभूत_data(inode, page);
+	अगर (err) अणु
+		अगर (err == 1)
 			err = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* step 3: recover data indices */
 	start = f2fs_start_bidx_of_node(ofs_of_node(page), inode);
 	end = start + ADDRS_PER_PAGE(page, inode);
 
-	set_new_dnode(&dn, inode, NULL, NULL, 0);
+	set_new_dnode(&dn, inode, शून्य, शून्य, 0);
 retry_dn:
 	err = f2fs_get_dnode_of_data(&dn, start, ALLOC_NODE);
-	if (err) {
-		if (err == -ENOMEM) {
-			congestion_wait(BLK_RW_ASYNC, DEFAULT_IO_TIMEOUT);
-			goto retry_dn;
-		}
-		goto out;
-	}
+	अगर (err) अणु
+		अगर (err == -ENOMEM) अणु
+			congestion_रुको(BLK_RW_ASYNC, DEFAULT_IO_TIMEOUT);
+			जाओ retry_dn;
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
-	f2fs_wait_on_page_writeback(dn.node_page, NODE, true, true);
+	f2fs_रुको_on_page_ग_लिखोback(dn.node_page, NODE, true, true);
 
 	err = f2fs_get_node_info(sbi, dn.nid, &ni);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
 	f2fs_bug_on(sbi, ni.ino != ino_of_node(page));
 
-	if (ofs_of_node(dn.node_page) != ofs_of_node(page)) {
+	अगर (ofs_of_node(dn.node_page) != ofs_of_node(page)) अणु
 		f2fs_warn(sbi, "Inconsistent ofs_of_node, ino:%lu, ofs:%u, %u",
 			  inode->i_ino, ofs_of_node(dn.node_page),
 			  ofs_of_node(page));
 		err = -EFSCORRUPTED;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	for (; start < end; start++, dn.ofs_in_node++) {
+	क्रम (; start < end; start++, dn.ofs_in_node++) अणु
 		block_t src, dest;
 
 		src = f2fs_data_blkaddr(&dn);
 		dest = data_blkaddr(dn.inode, page, dn.ofs_in_node);
 
-		if (__is_valid_data_blkaddr(src) &&
-			!f2fs_is_valid_blkaddr(sbi, src, META_POR)) {
+		अगर (__is_valid_data_blkaddr(src) &&
+			!f2fs_is_valid_blkaddr(sbi, src, META_POR)) अणु
 			err = -EFSCORRUPTED;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		if (__is_valid_data_blkaddr(dest) &&
-			!f2fs_is_valid_blkaddr(sbi, dest, META_POR)) {
+		अगर (__is_valid_data_blkaddr(dest) &&
+			!f2fs_is_valid_blkaddr(sbi, dest, META_POR)) अणु
 			err = -EFSCORRUPTED;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		/* skip recovering if dest is the same as src */
-		if (src == dest)
-			continue;
+		/* skip recovering अगर dest is the same as src */
+		अगर (src == dest)
+			जारी;
 
 		/* dest is invalid, just invalidate src block */
-		if (dest == NULL_ADDR) {
+		अगर (dest == शून्य_ADDR) अणु
 			f2fs_truncate_data_blocks_range(&dn, 1);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!file_keep_isize(inode) &&
-			(i_size_read(inode) <= ((loff_t)start << PAGE_SHIFT)))
-			f2fs_i_size_write(inode,
+		अगर (!file_keep_isize(inode) &&
+			(i_size_पढ़ो(inode) <= ((loff_t)start << PAGE_SHIFT)))
+			f2fs_i_size_ग_लिखो(inode,
 				(loff_t)(start + 1) << PAGE_SHIFT);
 
 		/*
 		 * dest is reserved block, invalidate src block
 		 * and then reserve one new block in dnode page.
 		 */
-		if (dest == NEW_ADDR) {
+		अगर (dest == NEW_ADDR) अणु
 			f2fs_truncate_data_blocks_range(&dn, 1);
 			f2fs_reserve_new_block(&dn);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* dest is valid block, try to recover from src to dest */
-		if (f2fs_is_valid_blkaddr(sbi, dest, META_POR)) {
+		अगर (f2fs_is_valid_blkaddr(sbi, dest, META_POR)) अणु
 
-			if (src == NULL_ADDR) {
+			अगर (src == शून्य_ADDR) अणु
 				err = f2fs_reserve_new_block(&dn);
-				while (err &&
+				जबतक (err &&
 				       IS_ENABLED(CONFIG_F2FS_FAULT_INJECTION))
 					err = f2fs_reserve_new_block(&dn);
 				/* We should not get -ENOSPC */
 				f2fs_bug_on(sbi, err);
-				if (err)
-					goto err;
-			}
+				अगर (err)
+					जाओ err;
+			पूर्ण
 retry_prev:
 			/* Check the previous node page having this index */
 			err = check_index_in_prev_nodes(sbi, dest, &dn);
-			if (err) {
-				if (err == -ENOMEM) {
-					congestion_wait(BLK_RW_ASYNC,
+			अगर (err) अणु
+				अगर (err == -ENOMEM) अणु
+					congestion_रुको(BLK_RW_ASYNC,
 							DEFAULT_IO_TIMEOUT);
-					goto retry_prev;
-				}
-				goto err;
-			}
+					जाओ retry_prev;
+				पूर्ण
+				जाओ err;
+			पूर्ण
 
-			/* write dummy data page */
+			/* ग_लिखो dummy data page */
 			f2fs_replace_block(sbi, &dn, src, dest,
 						ni.version, false, false);
 			recovered++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	copy_node_footer(dn.node_page, page);
 	fill_node_footer(dn.node_page, dn.nid, ni.ino,
@@ -689,192 +690,192 @@ out:
 	f2fs_notice(sbi, "recover_data: ino = %lx (i_size: %s) recovered = %d, err = %d",
 		    inode->i_ino, file_keep_isize(inode) ? "keep" : "recover",
 		    recovered, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int recover_data(struct f2fs_sb_info *sbi, struct list_head *inode_list,
-		struct list_head *tmp_inode_list, struct list_head *dir_list)
-{
-	struct curseg_info *curseg;
-	struct page *page = NULL;
-	int err = 0;
+अटल पूर्णांक recover_data(काष्ठा f2fs_sb_info *sbi, काष्ठा list_head *inode_list,
+		काष्ठा list_head *पंचांगp_inode_list, काष्ठा list_head *dir_list)
+अणु
+	काष्ठा curseg_info *curseg;
+	काष्ठा page *page = शून्य;
+	पूर्णांक err = 0;
 	block_t blkaddr;
 
 	/* get node pages in the current segment */
 	curseg = CURSEG_I(sbi, CURSEG_WARM_NODE);
 	blkaddr = NEXT_FREE_BLKADDR(sbi, curseg);
 
-	while (1) {
-		struct fsync_inode_entry *entry;
+	जबतक (1) अणु
+		काष्ठा fsync_inode_entry *entry;
 
-		if (!f2fs_is_valid_blkaddr(sbi, blkaddr, META_POR))
-			break;
+		अगर (!f2fs_is_valid_blkaddr(sbi, blkaddr, META_POR))
+			अवरोध;
 
 		f2fs_ra_meta_pages_cond(sbi, blkaddr);
 
-		page = f2fs_get_tmp_page(sbi, blkaddr);
-		if (IS_ERR(page)) {
+		page = f2fs_get_पंचांगp_page(sbi, blkaddr);
+		अगर (IS_ERR(page)) अणु
 			err = PTR_ERR(page);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!is_recoverable_dnode(page)) {
+		अगर (!is_recoverable_dnode(page)) अणु
 			f2fs_put_page(page, 1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		entry = get_fsync_inode(inode_list, ino_of_node(page));
-		if (!entry)
-			goto next;
+		अगर (!entry)
+			जाओ next;
 		/*
 		 * inode(x) | CP | inode(x) | dnode(F)
-		 * In this case, we can lose the latest inode(x).
-		 * So, call recover_inode for the inode update.
+		 * In this हाल, we can lose the latest inode(x).
+		 * So, call recover_inode क्रम the inode update.
 		 */
-		if (IS_INODE(page)) {
+		अगर (IS_INODE(page)) अणु
 			err = recover_inode(entry->inode, page);
-			if (err) {
+			अगर (err) अणु
 				f2fs_put_page(page, 1);
-				break;
-			}
-		}
-		if (entry->last_dentry == blkaddr) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (entry->last_dentry == blkaddr) अणु
 			err = recover_dentry(entry->inode, page, dir_list);
-			if (err) {
+			अगर (err) अणु
 				f2fs_put_page(page, 1);
-				break;
-			}
-		}
-		err = do_recover_data(sbi, entry->inode, page);
-		if (err) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		err = करो_recover_data(sbi, entry->inode, page);
+		अगर (err) अणु
 			f2fs_put_page(page, 1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (entry->blkaddr == blkaddr)
-			list_move_tail(&entry->list, tmp_inode_list);
+		अगर (entry->blkaddr == blkaddr)
+			list_move_tail(&entry->list, पंचांगp_inode_list);
 next:
 		/* check next segment */
 		blkaddr = next_blkaddr_of_node(page);
 		f2fs_put_page(page, 1);
-	}
-	if (!err)
+	पूर्ण
+	अगर (!err)
 		f2fs_allocate_new_segments(sbi);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int f2fs_recover_fsync_data(struct f2fs_sb_info *sbi, bool check_only)
-{
-	struct list_head inode_list, tmp_inode_list;
-	struct list_head dir_list;
-	int err;
-	int ret = 0;
-	unsigned long s_flags = sbi->sb->s_flags;
-	bool need_writecp = false;
-	bool fix_curseg_write_pointer = false;
-#ifdef CONFIG_QUOTA
-	int quota_enabled;
-#endif
+पूर्णांक f2fs_recover_fsync_data(काष्ठा f2fs_sb_info *sbi, bool check_only)
+अणु
+	काष्ठा list_head inode_list, पंचांगp_inode_list;
+	काष्ठा list_head dir_list;
+	पूर्णांक err;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ s_flags = sbi->sb->s_flags;
+	bool need_ग_लिखोcp = false;
+	bool fix_curseg_ग_लिखो_poपूर्णांकer = false;
+#अगर_घोषित CONFIG_QUOTA
+	पूर्णांक quota_enabled;
+#पूर्ण_अगर
 
-	if (s_flags & SB_RDONLY) {
+	अगर (s_flags & SB_RDONLY) अणु
 		f2fs_info(sbi, "recover fsync data on readonly fs");
 		sbi->sb->s_flags &= ~SB_RDONLY;
-	}
+	पूर्ण
 
-#ifdef CONFIG_QUOTA
-	/* Needed for iput() to work correctly and not trash data */
+#अगर_घोषित CONFIG_QUOTA
+	/* Needed क्रम iput() to work correctly and not trash data */
 	sbi->sb->s_flags |= SB_ACTIVE;
 	/* Turn on quotas so that they are updated correctly */
 	quota_enabled = f2fs_enable_quota_files(sbi, s_flags & SB_RDONLY);
-#endif
+#पूर्ण_अगर
 
 	fsync_entry_slab = f2fs_kmem_cache_create("f2fs_fsync_inode_entry",
-			sizeof(struct fsync_inode_entry));
-	if (!fsync_entry_slab) {
+			माप(काष्ठा fsync_inode_entry));
+	अगर (!fsync_entry_slab) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	INIT_LIST_HEAD(&inode_list);
-	INIT_LIST_HEAD(&tmp_inode_list);
+	INIT_LIST_HEAD(&पंचांगp_inode_list);
 	INIT_LIST_HEAD(&dir_list);
 
-	/* prevent checkpoint */
-	down_write(&sbi->cp_global_sem);
+	/* prevent checkpoपूर्णांक */
+	करोwn_ग_लिखो(&sbi->cp_global_sem);
 
 	/* step #1: find fsynced inode numbers */
 	err = find_fsync_dnodes(sbi, &inode_list, check_only);
-	if (err || list_empty(&inode_list))
-		goto skip;
+	अगर (err || list_empty(&inode_list))
+		जाओ skip;
 
-	if (check_only) {
+	अगर (check_only) अणु
 		ret = 1;
-		goto skip;
-	}
+		जाओ skip;
+	पूर्ण
 
-	need_writecp = true;
+	need_ग_लिखोcp = true;
 
 	/* step #2: recover data */
-	err = recover_data(sbi, &inode_list, &tmp_inode_list, &dir_list);
-	if (!err)
+	err = recover_data(sbi, &inode_list, &पंचांगp_inode_list, &dir_list);
+	अगर (!err)
 		f2fs_bug_on(sbi, !list_empty(&inode_list));
-	else {
+	अन्यथा अणु
 		/* restore s_flags to let iput() trash data */
 		sbi->sb->s_flags = s_flags;
-	}
+	पूर्ण
 skip:
-	fix_curseg_write_pointer = !check_only || list_empty(&inode_list);
+	fix_curseg_ग_लिखो_poपूर्णांकer = !check_only || list_empty(&inode_list);
 
 	destroy_fsync_dnodes(&inode_list, err);
-	destroy_fsync_dnodes(&tmp_inode_list, err);
+	destroy_fsync_dnodes(&पंचांगp_inode_list, err);
 
 	/* truncate meta pages to be used by the recovery */
 	truncate_inode_pages_range(META_MAPPING(sbi),
 			(loff_t)MAIN_BLKADDR(sbi) << PAGE_SHIFT, -1);
 
-	if (err) {
+	अगर (err) अणु
 		truncate_inode_pages_final(NODE_MAPPING(sbi));
 		truncate_inode_pages_final(META_MAPPING(sbi));
-	}
+	पूर्ण
 
 	/*
 	 * If fsync data succeeds or there is no fsync data to recover,
-	 * and the f2fs is not read only, check and fix zoned block devices'
-	 * write pointer consistency.
+	 * and the f2fs is not पढ़ो only, check and fix zoned block devices'
+	 * ग_लिखो poपूर्णांकer consistency.
 	 */
-	if (!err && fix_curseg_write_pointer && !f2fs_readonly(sbi->sb) &&
-			f2fs_sb_has_blkzoned(sbi)) {
-		err = f2fs_fix_curseg_write_pointer(sbi);
+	अगर (!err && fix_curseg_ग_लिखो_poपूर्णांकer && !f2fs_पढ़ोonly(sbi->sb) &&
+			f2fs_sb_has_blkzoned(sbi)) अणु
+		err = f2fs_fix_curseg_ग_लिखो_poपूर्णांकer(sbi);
 		ret = err;
-	}
+	पूर्ण
 
-	if (!err)
+	अगर (!err)
 		clear_sbi_flag(sbi, SBI_POR_DOING);
 
-	up_write(&sbi->cp_global_sem);
+	up_ग_लिखो(&sbi->cp_global_sem);
 
-	/* let's drop all the directory inodes for clean checkpoint */
+	/* let's drop all the directory inodes क्रम clean checkpoपूर्णांक */
 	destroy_fsync_dnodes(&dir_list, err);
 
-	if (need_writecp) {
+	अगर (need_ग_लिखोcp) अणु
 		set_sbi_flag(sbi, SBI_IS_RECOVERED);
 
-		if (!err) {
-			struct cp_control cpc = {
+		अगर (!err) अणु
+			काष्ठा cp_control cpc = अणु
 				.reason = CP_RECOVERY,
-			};
-			err = f2fs_write_checkpoint(sbi, &cpc);
-		}
-	}
+			पूर्ण;
+			err = f2fs_ग_लिखो_checkpoपूर्णांक(sbi, &cpc);
+		पूर्ण
+	पूर्ण
 
 	kmem_cache_destroy(fsync_entry_slab);
 out:
-#ifdef CONFIG_QUOTA
+#अगर_घोषित CONFIG_QUOTA
 	/* Turn quotas off */
-	if (quota_enabled)
+	अगर (quota_enabled)
 		f2fs_quota_off_umount(sbi->sb);
-#endif
+#पूर्ण_अगर
 	sbi->sb->s_flags = s_flags; /* Restore SB_RDONLY status */
 
-	return ret ? ret : err;
-}
+	वापस ret ? ret : err;
+पूर्ण

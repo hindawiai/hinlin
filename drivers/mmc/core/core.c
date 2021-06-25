@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/drivers/mmc/core/core.c
  *
@@ -7,142 +8,142 @@
  *  Copyright (C) 2005-2008 Pierre Ossman, All Rights Reserved.
  *  MMCv4 support Copyright (C) 2006 Philip Langdale, All Rights Reserved.
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/completion.h>
-#include <linux/device.h>
-#include <linux/delay.h>
-#include <linux/pagemap.h>
-#include <linux/err.h>
-#include <linux/leds.h>
-#include <linux/scatterlist.h>
-#include <linux/log2.h>
-#include <linux/pm_runtime.h>
-#include <linux/pm_wakeup.h>
-#include <linux/suspend.h>
-#include <linux/fault-inject.h>
-#include <linux/random.h>
-#include <linux/slab.h>
-#include <linux/of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/err.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/pm_wakeup.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/fault-inject.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
 
-#include <linux/mmc/card.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/mmc.h>
-#include <linux/mmc/sd.h>
-#include <linux/mmc/slot-gpio.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/mmc.h>
+#समावेश <linux/mmc/sd.h>
+#समावेश <linux/mmc/slot-gpपन.स>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/mmc.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/mmc.h>
 
-#include "core.h"
-#include "card.h"
-#include "crypto.h"
-#include "bus.h"
-#include "host.h"
-#include "sdio_bus.h"
-#include "pwrseq.h"
+#समावेश "core.h"
+#समावेश "card.h"
+#समावेश "crypto.h"
+#समावेश "bus.h"
+#समावेश "host.h"
+#समावेश "sdio_bus.h"
+#समावेश "pwrseq.h"
 
-#include "mmc_ops.h"
-#include "sd_ops.h"
-#include "sdio_ops.h"
+#समावेश "mmc_ops.h"
+#समावेश "sd_ops.h"
+#समावेश "sdio_ops.h"
 
-/* The max erase timeout, used when host->max_busy_timeout isn't specified */
-#define MMC_ERASE_TIMEOUT_MS	(60 * 1000) /* 60 s */
-#define SD_DISCARD_TIMEOUT_MS	(250)
+/* The max erase समयout, used when host->max_busy_समयout isn't specअगरied */
+#घोषणा MMC_ERASE_TIMEOUT_MS	(60 * 1000) /* 60 s */
+#घोषणा SD_DISCARD_TIMEOUT_MS	(250)
 
-static const unsigned freqs[] = { 400000, 300000, 200000, 100000 };
+अटल स्थिर अचिन्हित freqs[] = अणु 400000, 300000, 200000, 100000 पूर्ण;
 
 /*
- * Enabling software CRCs on the data blocks can be a significant (30%)
- * performance cost, and for other reasons may not always be desired.
+ * Enabling software CRCs on the data blocks can be a signअगरicant (30%)
+ * perक्रमmance cost, and क्रम other reasons may not always be desired.
  * So we allow it it to be disabled.
  */
 bool use_spi_crc = 1;
 module_param(use_spi_crc, bool, 0);
 
-static int mmc_schedule_delayed_work(struct delayed_work *work,
-				     unsigned long delay)
-{
+अटल पूर्णांक mmc_schedule_delayed_work(काष्ठा delayed_work *work,
+				     अचिन्हित दीर्घ delay)
+अणु
 	/*
-	 * We use the system_freezable_wq, because of two reasons.
+	 * We use the प्रणाली_मुक्तzable_wq, because of two reasons.
 	 * First, it allows several works (not the same work item) to be
 	 * executed simultaneously. Second, the queue becomes frozen when
-	 * userspace becomes frozen during system PM.
+	 * userspace becomes frozen during प्रणाली PM.
 	 */
-	return queue_delayed_work(system_freezable_wq, work, delay);
-}
+	वापस queue_delayed_work(प्रणाली_मुक्तzable_wq, work, delay);
+पूर्ण
 
-#ifdef CONFIG_FAIL_MMC_REQUEST
+#अगर_घोषित CONFIG_FAIL_MMC_REQUEST
 
 /*
- * Internal function. Inject random data errors.
- * If mmc_data is NULL no errors are injected.
+ * Internal function. Inject अक्रमom data errors.
+ * If mmc_data is शून्य no errors are injected.
  */
-static void mmc_should_fail_request(struct mmc_host *host,
-				    struct mmc_request *mrq)
-{
-	struct mmc_command *cmd = mrq->cmd;
-	struct mmc_data *data = mrq->data;
-	static const int data_errors[] = {
+अटल व्योम mmc_should_fail_request(काष्ठा mmc_host *host,
+				    काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा mmc_command *cmd = mrq->cmd;
+	काष्ठा mmc_data *data = mrq->data;
+	अटल स्थिर पूर्णांक data_errors[] = अणु
 		-ETIMEDOUT,
 		-EILSEQ,
 		-EIO,
-	};
+	पूर्ण;
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
-	if ((cmd && cmd->error) || data->error ||
+	अगर ((cmd && cmd->error) || data->error ||
 	    !should_fail(&host->fail_mmc_request, data->blksz * data->blocks))
-		return;
+		वापस;
 
-	data->error = data_errors[prandom_u32() % ARRAY_SIZE(data_errors)];
-	data->bytes_xfered = (prandom_u32() % (data->bytes_xfered >> 9)) << 9;
-}
+	data->error = data_errors[pअक्रमom_u32() % ARRAY_SIZE(data_errors)];
+	data->bytes_xfered = (pअक्रमom_u32() % (data->bytes_xfered >> 9)) << 9;
+पूर्ण
 
-#else /* CONFIG_FAIL_MMC_REQUEST */
+#अन्यथा /* CONFIG_FAIL_MMC_REQUEST */
 
-static inline void mmc_should_fail_request(struct mmc_host *host,
-					   struct mmc_request *mrq)
-{
-}
+अटल अंतरभूत व्योम mmc_should_fail_request(काष्ठा mmc_host *host,
+					   काष्ठा mmc_request *mrq)
+अणु
+पूर्ण
 
-#endif /* CONFIG_FAIL_MMC_REQUEST */
+#पूर्ण_अगर /* CONFIG_FAIL_MMC_REQUEST */
 
-static inline void mmc_complete_cmd(struct mmc_request *mrq)
-{
-	if (mrq->cap_cmd_during_tfr && !completion_done(&mrq->cmd_completion))
+अटल अंतरभूत व्योम mmc_complete_cmd(काष्ठा mmc_request *mrq)
+अणु
+	अगर (mrq->cap_cmd_during_tfr && !completion_करोne(&mrq->cmd_completion))
 		complete_all(&mrq->cmd_completion);
-}
+पूर्ण
 
-void mmc_command_done(struct mmc_host *host, struct mmc_request *mrq)
-{
-	if (!mrq->cap_cmd_during_tfr)
-		return;
+व्योम mmc_command_करोne(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	अगर (!mrq->cap_cmd_during_tfr)
+		वापस;
 
 	mmc_complete_cmd(mrq);
 
 	pr_debug("%s: cmd done, tfr ongoing (CMD%u)\n",
 		 mmc_hostname(host), mrq->cmd->opcode);
-}
-EXPORT_SYMBOL(mmc_command_done);
+पूर्ण
+EXPORT_SYMBOL(mmc_command_करोne);
 
 /**
- *	mmc_request_done - finish processing an MMC request
+ *	mmc_request_करोne - finish processing an MMC request
  *	@host: MMC host which completed request
  *	@mrq: MMC request which request
  *
  *	MMC drivers should call this function when they have completed
  *	their processing of a request.
  */
-void mmc_request_done(struct mmc_host *host, struct mmc_request *mrq)
-{
-	struct mmc_command *cmd = mrq->cmd;
-	int err = cmd->error;
+व्योम mmc_request_करोne(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा mmc_command *cmd = mrq->cmd;
+	पूर्णांक err = cmd->error;
 
 	/* Flag re-tuning needed on CRC errors */
-	if (cmd->opcode != MMC_SEND_TUNING_BLOCK &&
+	अगर (cmd->opcode != MMC_SEND_TUNING_BLOCK &&
 	    cmd->opcode != MMC_SEND_TUNING_BLOCK_HS200 &&
 	    !host->retune_crc_disable &&
 	    (err == -EILSEQ || (mrq->sbc && mrq->sbc->error == -EILSEQ) ||
@@ -150,263 +151,263 @@ void mmc_request_done(struct mmc_host *host, struct mmc_request *mrq)
 	    (mrq->stop && mrq->stop->error == -EILSEQ)))
 		mmc_retune_needed(host);
 
-	if (err && cmd->retries && mmc_host_is_spi(host)) {
-		if (cmd->resp[0] & R1_SPI_ILLEGAL_COMMAND)
+	अगर (err && cmd->retries && mmc_host_is_spi(host)) अणु
+		अगर (cmd->resp[0] & R1_SPI_ILLEGAL_COMMAND)
 			cmd->retries = 0;
-	}
+	पूर्ण
 
-	if (host->ongoing_mrq == mrq)
-		host->ongoing_mrq = NULL;
+	अगर (host->ongoing_mrq == mrq)
+		host->ongoing_mrq = शून्य;
 
 	mmc_complete_cmd(mrq);
 
-	trace_mmc_request_done(host, mrq);
+	trace_mmc_request_करोne(host, mrq);
 
 	/*
-	 * We list various conditions for the command to be considered
-	 * properly done:
+	 * We list various conditions क्रम the command to be considered
+	 * properly करोne:
 	 *
 	 * - There was no error, OK fine then
-	 * - We are not doing some kind of retry
-	 * - The card was removed (...so just complete everything no matter
-	 *   if there are errors or retries)
+	 * - We are not करोing some kind of retry
+	 * - The card was हटाओd (...so just complete everything no matter
+	 *   अगर there are errors or retries)
 	 */
-	if (!err || !cmd->retries || mmc_card_removed(host->card)) {
+	अगर (!err || !cmd->retries || mmc_card_हटाओd(host->card)) अणु
 		mmc_should_fail_request(host, mrq);
 
-		if (!host->ongoing_mrq)
+		अगर (!host->ongoing_mrq)
 			led_trigger_event(host->led, LED_OFF);
 
-		if (mrq->sbc) {
+		अगर (mrq->sbc) अणु
 			pr_debug("%s: req done <CMD%u>: %d: %08x %08x %08x %08x\n",
 				mmc_hostname(host), mrq->sbc->opcode,
 				mrq->sbc->error,
 				mrq->sbc->resp[0], mrq->sbc->resp[1],
 				mrq->sbc->resp[2], mrq->sbc->resp[3]);
-		}
+		पूर्ण
 
 		pr_debug("%s: req done (CMD%u): %d: %08x %08x %08x %08x\n",
 			mmc_hostname(host), cmd->opcode, err,
 			cmd->resp[0], cmd->resp[1],
 			cmd->resp[2], cmd->resp[3]);
 
-		if (mrq->data) {
+		अगर (mrq->data) अणु
 			pr_debug("%s:     %d bytes transferred: %d\n",
 				mmc_hostname(host),
 				mrq->data->bytes_xfered, mrq->data->error);
-		}
+		पूर्ण
 
-		if (mrq->stop) {
+		अगर (mrq->stop) अणु
 			pr_debug("%s:     (CMD%u): %d: %08x %08x %08x %08x\n",
 				mmc_hostname(host), mrq->stop->opcode,
 				mrq->stop->error,
 				mrq->stop->resp[0], mrq->stop->resp[1],
 				mrq->stop->resp[2], mrq->stop->resp[3]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * Request starter must handle retries - see
-	 * mmc_wait_for_req_done().
+	 * mmc_रुको_क्रम_req_करोne().
 	 */
-	if (mrq->done)
-		mrq->done(mrq);
-}
+	अगर (mrq->करोne)
+		mrq->करोne(mrq);
+पूर्ण
 
-EXPORT_SYMBOL(mmc_request_done);
+EXPORT_SYMBOL(mmc_request_करोne);
 
-static void __mmc_start_request(struct mmc_host *host, struct mmc_request *mrq)
-{
-	int err;
+अटल व्योम __mmc_start_request(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	पूर्णांक err;
 
-	/* Assumes host controller has been runtime resumed by mmc_claim_host */
+	/* Assumes host controller has been runसमय resumed by mmc_claim_host */
 	err = mmc_retune(host);
-	if (err) {
+	अगर (err) अणु
 		mrq->cmd->error = err;
-		mmc_request_done(host, mrq);
-		return;
-	}
+		mmc_request_करोne(host, mrq);
+		वापस;
+	पूर्ण
 
 	/*
-	 * For sdio rw commands we must wait for card busy otherwise some
+	 * For sdio rw commands we must रुको क्रम card busy otherwise some
 	 * sdio devices won't work properly.
-	 * And bypass I/O abort, reset and bus suspend operations.
+	 * And bypass I/O पात, reset and bus suspend operations.
 	 */
-	if (sdio_is_io_busy(mrq->cmd->opcode, mrq->cmd->arg) &&
-	    host->ops->card_busy) {
-		int tries = 500; /* Wait aprox 500ms at maximum */
+	अगर (sdio_is_io_busy(mrq->cmd->opcode, mrq->cmd->arg) &&
+	    host->ops->card_busy) अणु
+		पूर्णांक tries = 500; /* Wait aprox 500ms at maximum */
 
-		while (host->ops->card_busy(host) && --tries)
+		जबतक (host->ops->card_busy(host) && --tries)
 			mmc_delay(1);
 
-		if (tries == 0) {
+		अगर (tries == 0) अणु
 			mrq->cmd->error = -EBUSY;
-			mmc_request_done(host, mrq);
-			return;
-		}
-	}
+			mmc_request_करोne(host, mrq);
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (mrq->cap_cmd_during_tfr) {
+	अगर (mrq->cap_cmd_during_tfr) अणु
 		host->ongoing_mrq = mrq;
 		/*
-		 * Retry path could come through here without having waiting on
+		 * Retry path could come through here without having रुकोing on
 		 * cmd_completion, so ensure it is reinitialised.
 		 */
 		reinit_completion(&mrq->cmd_completion);
-	}
+	पूर्ण
 
 	trace_mmc_request_start(host, mrq);
 
-	if (host->cqe_on)
+	अगर (host->cqe_on)
 		host->cqe_ops->cqe_off(host);
 
 	host->ops->request(host, mrq);
-}
+पूर्ण
 
-static void mmc_mrq_pr_debug(struct mmc_host *host, struct mmc_request *mrq,
+अटल व्योम mmc_mrq_pr_debug(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq,
 			     bool cqe)
-{
-	if (mrq->sbc) {
+अणु
+	अगर (mrq->sbc) अणु
 		pr_debug("<%s: starting CMD%u arg %08x flags %08x>\n",
 			 mmc_hostname(host), mrq->sbc->opcode,
 			 mrq->sbc->arg, mrq->sbc->flags);
-	}
+	पूर्ण
 
-	if (mrq->cmd) {
+	अगर (mrq->cmd) अणु
 		pr_debug("%s: starting %sCMD%u arg %08x flags %08x\n",
 			 mmc_hostname(host), cqe ? "CQE direct " : "",
 			 mrq->cmd->opcode, mrq->cmd->arg, mrq->cmd->flags);
-	} else if (cqe) {
+	पूर्ण अन्यथा अगर (cqe) अणु
 		pr_debug("%s: starting CQE transfer for tag %d blkaddr %u\n",
 			 mmc_hostname(host), mrq->tag, mrq->data->blk_addr);
-	}
+	पूर्ण
 
-	if (mrq->data) {
+	अगर (mrq->data) अणु
 		pr_debug("%s:     blksz %d blocks %d flags %08x "
 			"tsac %d ms nsac %d\n",
 			mmc_hostname(host), mrq->data->blksz,
 			mrq->data->blocks, mrq->data->flags,
-			mrq->data->timeout_ns / 1000000,
-			mrq->data->timeout_clks);
-	}
+			mrq->data->समयout_ns / 1000000,
+			mrq->data->समयout_clks);
+	पूर्ण
 
-	if (mrq->stop) {
+	अगर (mrq->stop) अणु
 		pr_debug("%s:     CMD%u arg %08x flags %08x\n",
 			 mmc_hostname(host), mrq->stop->opcode,
 			 mrq->stop->arg, mrq->stop->flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int mmc_mrq_prep(struct mmc_host *host, struct mmc_request *mrq)
-{
-	unsigned int i, sz = 0;
-	struct scatterlist *sg;
+अटल पूर्णांक mmc_mrq_prep(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	अचिन्हित पूर्णांक i, sz = 0;
+	काष्ठा scatterlist *sg;
 
-	if (mrq->cmd) {
+	अगर (mrq->cmd) अणु
 		mrq->cmd->error = 0;
 		mrq->cmd->mrq = mrq;
 		mrq->cmd->data = mrq->data;
-	}
-	if (mrq->sbc) {
+	पूर्ण
+	अगर (mrq->sbc) अणु
 		mrq->sbc->error = 0;
 		mrq->sbc->mrq = mrq;
-	}
-	if (mrq->data) {
-		if (mrq->data->blksz > host->max_blk_size ||
+	पूर्ण
+	अगर (mrq->data) अणु
+		अगर (mrq->data->blksz > host->max_blk_size ||
 		    mrq->data->blocks > host->max_blk_count ||
 		    mrq->data->blocks * mrq->data->blksz > host->max_req_size)
-			return -EINVAL;
+			वापस -EINVAL;
 
-		for_each_sg(mrq->data->sg, sg, mrq->data->sg_len, i)
+		क्रम_each_sg(mrq->data->sg, sg, mrq->data->sg_len, i)
 			sz += sg->length;
-		if (sz != mrq->data->blocks * mrq->data->blksz)
-			return -EINVAL;
+		अगर (sz != mrq->data->blocks * mrq->data->blksz)
+			वापस -EINVAL;
 
 		mrq->data->error = 0;
 		mrq->data->mrq = mrq;
-		if (mrq->stop) {
+		अगर (mrq->stop) अणु
 			mrq->data->stop = mrq->stop;
 			mrq->stop->error = 0;
 			mrq->stop->mrq = mrq;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mmc_start_request(struct mmc_host *host, struct mmc_request *mrq)
-{
-	int err;
+पूर्णांक mmc_start_request(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	पूर्णांक err;
 
 	init_completion(&mrq->cmd_completion);
 
 	mmc_retune_hold(host);
 
-	if (mmc_card_removed(host->card))
-		return -ENOMEDIUM;
+	अगर (mmc_card_हटाओd(host->card))
+		वापस -ENOMEDIUM;
 
 	mmc_mrq_pr_debug(host, mrq, false);
 
 	WARN_ON(!host->claimed);
 
 	err = mmc_mrq_prep(host, mrq);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	led_trigger_event(host->led, LED_FULL);
 	__mmc_start_request(host, mrq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mmc_start_request);
 
-static void mmc_wait_done(struct mmc_request *mrq)
-{
+अटल व्योम mmc_रुको_करोne(काष्ठा mmc_request *mrq)
+अणु
 	complete(&mrq->completion);
-}
+पूर्ण
 
-static inline void mmc_wait_ongoing_tfr_cmd(struct mmc_host *host)
-{
-	struct mmc_request *ongoing_mrq = READ_ONCE(host->ongoing_mrq);
+अटल अंतरभूत व्योम mmc_रुको_ongoing_tfr_cmd(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_request *ongoing_mrq = READ_ONCE(host->ongoing_mrq);
 
 	/*
-	 * If there is an ongoing transfer, wait for the command line to become
+	 * If there is an ongoing transfer, रुको क्रम the command line to become
 	 * available.
 	 */
-	if (ongoing_mrq && !completion_done(&ongoing_mrq->cmd_completion))
-		wait_for_completion(&ongoing_mrq->cmd_completion);
-}
+	अगर (ongoing_mrq && !completion_करोne(&ongoing_mrq->cmd_completion))
+		रुको_क्रम_completion(&ongoing_mrq->cmd_completion);
+पूर्ण
 
-static int __mmc_start_req(struct mmc_host *host, struct mmc_request *mrq)
-{
-	int err;
+अटल पूर्णांक __mmc_start_req(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	पूर्णांक err;
 
-	mmc_wait_ongoing_tfr_cmd(host);
+	mmc_रुको_ongoing_tfr_cmd(host);
 
 	init_completion(&mrq->completion);
-	mrq->done = mmc_wait_done;
+	mrq->करोne = mmc_रुको_करोne;
 
 	err = mmc_start_request(host, mrq);
-	if (err) {
+	अगर (err) अणु
 		mrq->cmd->error = err;
 		mmc_complete_cmd(mrq);
 		complete(&mrq->completion);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mmc_wait_for_req_done(struct mmc_host *host, struct mmc_request *mrq)
-{
-	struct mmc_command *cmd;
+व्योम mmc_रुको_क्रम_req_करोne(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा mmc_command *cmd;
 
-	while (1) {
-		wait_for_completion(&mrq->completion);
+	जबतक (1) अणु
+		रुको_क्रम_completion(&mrq->completion);
 
 		cmd = mrq->cmd;
 
-		if (!cmd->error || !cmd->retries ||
-		    mmc_card_removed(host->card))
-			break;
+		अगर (!cmd->error || !cmd->retries ||
+		    mmc_card_हटाओd(host->card))
+			अवरोध;
 
 		mmc_retune_recheck(host);
 
@@ -415,113 +416,113 @@ void mmc_wait_for_req_done(struct mmc_host *host, struct mmc_request *mrq)
 		cmd->retries--;
 		cmd->error = 0;
 		__mmc_start_request(host, mrq);
-	}
+	पूर्ण
 
 	mmc_retune_release(host);
-}
-EXPORT_SYMBOL(mmc_wait_for_req_done);
+पूर्ण
+EXPORT_SYMBOL(mmc_रुको_क्रम_req_करोne);
 
 /*
  * mmc_cqe_start_req - Start a CQE request.
  * @host: MMC host to start the request
  * @mrq: request to start
  *
- * Start the request, re-tuning if needed and it is possible. Returns an error
- * code if the request fails to start or -EBUSY if CQE is busy.
+ * Start the request, re-tuning अगर needed and it is possible. Returns an error
+ * code अगर the request fails to start or -EBUSY अगर CQE is busy.
  */
-int mmc_cqe_start_req(struct mmc_host *host, struct mmc_request *mrq)
-{
-	int err;
+पूर्णांक mmc_cqe_start_req(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	पूर्णांक err;
 
 	/*
 	 * CQE cannot process re-tuning commands. Caller must hold retuning
-	 * while CQE is in use.  Re-tuning can happen here only when CQE has no
+	 * जबतक CQE is in use.  Re-tuning can happen here only when CQE has no
 	 * active requests i.e. this is the first.  Note, re-tuning will call
 	 * ->cqe_off().
 	 */
 	err = mmc_retune(host);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
 	mrq->host = host;
 
 	mmc_mrq_pr_debug(host, mrq, true);
 
 	err = mmc_mrq_prep(host, mrq);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
 	err = host->cqe_ops->cqe_request(host, mrq);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
 	trace_mmc_request_start(host, mrq);
 
-	return 0;
+	वापस 0;
 
 out_err:
-	if (mrq->cmd) {
+	अगर (mrq->cmd) अणु
 		pr_debug("%s: failed to start CQE direct CMD%u, error %d\n",
 			 mmc_hostname(host), mrq->cmd->opcode, err);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_debug("%s: failed to start CQE transfer for tag %d, error %d\n",
 			 mmc_hostname(host), mrq->tag, err);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(mmc_cqe_start_req);
 
 /**
- *	mmc_cqe_request_done - CQE has finished processing an MMC request
+ *	mmc_cqe_request_करोne - CQE has finished processing an MMC request
  *	@host: MMC host which completed request
  *	@mrq: MMC request which completed
  *
  *	CQE drivers should call this function when they have completed
  *	their processing of a request.
  */
-void mmc_cqe_request_done(struct mmc_host *host, struct mmc_request *mrq)
-{
+व्योम mmc_cqe_request_करोne(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
 	mmc_should_fail_request(host, mrq);
 
 	/* Flag re-tuning needed on CRC errors */
-	if ((mrq->cmd && mrq->cmd->error == -EILSEQ) ||
+	अगर ((mrq->cmd && mrq->cmd->error == -EILSEQ) ||
 	    (mrq->data && mrq->data->error == -EILSEQ))
 		mmc_retune_needed(host);
 
-	trace_mmc_request_done(host, mrq);
+	trace_mmc_request_करोne(host, mrq);
 
-	if (mrq->cmd) {
+	अगर (mrq->cmd) अणु
 		pr_debug("%s: CQE req done (direct CMD%u): %d\n",
 			 mmc_hostname(host), mrq->cmd->opcode, mrq->cmd->error);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_debug("%s: CQE transfer done tag %d\n",
 			 mmc_hostname(host), mrq->tag);
-	}
+	पूर्ण
 
-	if (mrq->data) {
+	अगर (mrq->data) अणु
 		pr_debug("%s:     %d bytes transferred: %d\n",
 			 mmc_hostname(host),
 			 mrq->data->bytes_xfered, mrq->data->error);
-	}
+	पूर्ण
 
-	mrq->done(mrq);
-}
-EXPORT_SYMBOL(mmc_cqe_request_done);
+	mrq->करोne(mrq);
+पूर्ण
+EXPORT_SYMBOL(mmc_cqe_request_करोne);
 
 /**
  *	mmc_cqe_post_req - CQE post process of a completed MMC request
  *	@host: MMC host
  *	@mrq: MMC request to be processed
  */
-void mmc_cqe_post_req(struct mmc_host *host, struct mmc_request *mrq)
-{
-	if (host->cqe_ops->cqe_post_req)
+व्योम mmc_cqe_post_req(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	अगर (host->cqe_ops->cqe_post_req)
 		host->cqe_ops->cqe_post_req(host, mrq);
-}
+पूर्ण
 EXPORT_SYMBOL(mmc_cqe_post_req);
 
-/* Arbitrary 1 second timeout */
-#define MMC_CQE_RECOVERY_TIMEOUT	1000
+/* Arbitrary 1 second समयout */
+#घोषणा MMC_CQE_RECOVERY_TIMEOUT	1000
 
 /*
  * mmc_cqe_recovery - Recover from CQE errors.
@@ -529,135 +530,135 @@ EXPORT_SYMBOL(mmc_cqe_post_req);
  *
  * Recovery consists of stopping CQE, stopping eMMC, discarding the queue in
  * in eMMC, and discarding the queue in CQE. CQE must call
- * mmc_cqe_request_done() on all requests. An error is returned if the eMMC
+ * mmc_cqe_request_करोne() on all requests. An error is वापसed अगर the eMMC
  * fails to discard its queue.
  */
-int mmc_cqe_recovery(struct mmc_host *host)
-{
-	struct mmc_command cmd;
-	int err;
+पूर्णांक mmc_cqe_recovery(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_command cmd;
+	पूर्णांक err;
 
 	mmc_retune_hold_now(host);
 
 	/*
-	 * Recovery is expected seldom, if at all, but it reduces performance,
+	 * Recovery is expected selकरोm, अगर at all, but it reduces perक्रमmance,
 	 * so make sure it is not completely silent.
 	 */
 	pr_warn("%s: running CQE recovery\n", mmc_hostname(host));
 
 	host->cqe_ops->cqe_recovery_start(host);
 
-	memset(&cmd, 0, sizeof(cmd));
+	स_रखो(&cmd, 0, माप(cmd));
 	cmd.opcode       = MMC_STOP_TRANSMISSION;
 	cmd.flags        = MMC_RSP_R1B | MMC_CMD_AC;
 	cmd.flags       &= ~MMC_RSP_CRC; /* Ignore CRC */
-	cmd.busy_timeout = MMC_CQE_RECOVERY_TIMEOUT;
-	mmc_wait_for_cmd(host, &cmd, 0);
+	cmd.busy_समयout = MMC_CQE_RECOVERY_TIMEOUT;
+	mmc_रुको_क्रम_cmd(host, &cmd, 0);
 
-	memset(&cmd, 0, sizeof(cmd));
+	स_रखो(&cmd, 0, माप(cmd));
 	cmd.opcode       = MMC_CMDQ_TASK_MGMT;
 	cmd.arg          = 1; /* Discard entire queue */
 	cmd.flags        = MMC_RSP_R1B | MMC_CMD_AC;
 	cmd.flags       &= ~MMC_RSP_CRC; /* Ignore CRC */
-	cmd.busy_timeout = MMC_CQE_RECOVERY_TIMEOUT;
-	err = mmc_wait_for_cmd(host, &cmd, 0);
+	cmd.busy_समयout = MMC_CQE_RECOVERY_TIMEOUT;
+	err = mmc_रुको_क्रम_cmd(host, &cmd, 0);
 
 	host->cqe_ops->cqe_recovery_finish(host);
 
 	mmc_retune_release(host);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(mmc_cqe_recovery);
 
 /**
- *	mmc_is_req_done - Determine if a 'cap_cmd_during_tfr' request is done
+ *	mmc_is_req_करोne - Determine अगर a 'cap_cmd_during_tfr' request is करोne
  *	@host: MMC host
  *	@mrq: MMC request
  *
- *	mmc_is_req_done() is used with requests that have
- *	mrq->cap_cmd_during_tfr = true. mmc_is_req_done() must be called after
- *	starting a request and before waiting for it to complete. That is,
- *	either in between calls to mmc_start_req(), or after mmc_wait_for_req()
- *	and before mmc_wait_for_req_done(). If it is called at other times the
+ *	mmc_is_req_करोne() is used with requests that have
+ *	mrq->cap_cmd_during_tfr = true. mmc_is_req_करोne() must be called after
+ *	starting a request and beक्रमe रुकोing क्रम it to complete. That is,
+ *	either in between calls to mmc_start_req(), or after mmc_रुको_क्रम_req()
+ *	and beक्रमe mmc_रुको_क्रम_req_करोne(). If it is called at other बार the
  *	result is not meaningful.
  */
-bool mmc_is_req_done(struct mmc_host *host, struct mmc_request *mrq)
-{
-	return completion_done(&mrq->completion);
-}
-EXPORT_SYMBOL(mmc_is_req_done);
+bool mmc_is_req_करोne(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	वापस completion_करोne(&mrq->completion);
+पूर्ण
+EXPORT_SYMBOL(mmc_is_req_करोne);
 
 /**
- *	mmc_wait_for_req - start a request and wait for completion
+ *	mmc_रुको_क्रम_req - start a request and रुको क्रम completion
  *	@host: MMC host to start command
  *	@mrq: MMC request to start
  *
- *	Start a new MMC custom command request for a host, and wait
- *	for the command to complete. In the case of 'cap_cmd_during_tfr'
+ *	Start a new MMC custom command request क्रम a host, and रुको
+ *	क्रम the command to complete. In the हाल of 'cap_cmd_during_tfr'
  *	requests, the transfer is ongoing and the caller can issue further
- *	commands that do not use the data lines, and then wait by calling
- *	mmc_wait_for_req_done().
+ *	commands that करो not use the data lines, and then रुको by calling
+ *	mmc_रुको_क्रम_req_करोne().
  *	Does not attempt to parse the response.
  */
-void mmc_wait_for_req(struct mmc_host *host, struct mmc_request *mrq)
-{
+व्योम mmc_रुको_क्रम_req(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
 	__mmc_start_req(host, mrq);
 
-	if (!mrq->cap_cmd_during_tfr)
-		mmc_wait_for_req_done(host, mrq);
-}
-EXPORT_SYMBOL(mmc_wait_for_req);
+	अगर (!mrq->cap_cmd_during_tfr)
+		mmc_रुको_क्रम_req_करोne(host, mrq);
+पूर्ण
+EXPORT_SYMBOL(mmc_रुको_क्रम_req);
 
 /**
- *	mmc_wait_for_cmd - start a command and wait for completion
+ *	mmc_रुको_क्रम_cmd - start a command and रुको क्रम completion
  *	@host: MMC host to start command
  *	@cmd: MMC command to start
  *	@retries: maximum number of retries
  *
- *	Start a new MMC command for a host, and wait for the command
- *	to complete.  Return any error that occurred while the command
+ *	Start a new MMC command क्रम a host, and रुको क्रम the command
+ *	to complete.  Return any error that occurred जबतक the command
  *	was executing.  Do not attempt to parse the response.
  */
-int mmc_wait_for_cmd(struct mmc_host *host, struct mmc_command *cmd, int retries)
-{
-	struct mmc_request mrq = {};
+पूर्णांक mmc_रुको_क्रम_cmd(काष्ठा mmc_host *host, काष्ठा mmc_command *cmd, पूर्णांक retries)
+अणु
+	काष्ठा mmc_request mrq = अणुपूर्ण;
 
 	WARN_ON(!host->claimed);
 
-	memset(cmd->resp, 0, sizeof(cmd->resp));
+	स_रखो(cmd->resp, 0, माप(cmd->resp));
 	cmd->retries = retries;
 
 	mrq.cmd = cmd;
-	cmd->data = NULL;
+	cmd->data = शून्य;
 
-	mmc_wait_for_req(host, &mrq);
+	mmc_रुको_क्रम_req(host, &mrq);
 
-	return cmd->error;
-}
+	वापस cmd->error;
+पूर्ण
 
-EXPORT_SYMBOL(mmc_wait_for_cmd);
+EXPORT_SYMBOL(mmc_रुको_क्रम_cmd);
 
 /**
- *	mmc_set_data_timeout - set the timeout for a data command
- *	@data: data phase for command
+ *	mmc_set_data_समयout - set the समयout क्रम a data command
+ *	@data: data phase क्रम command
  *	@card: the MMC card associated with the data transfer
  *
- *	Computes the data timeout parameters according to the
+ *	Computes the data समयout parameters according to the
  *	correct algorithm given the card type.
  */
-void mmc_set_data_timeout(struct mmc_data *data, const struct mmc_card *card)
-{
-	unsigned int mult;
+व्योम mmc_set_data_समयout(काष्ठा mmc_data *data, स्थिर काष्ठा mmc_card *card)
+अणु
+	अचिन्हित पूर्णांक mult;
 
 	/*
 	 * SDIO cards only define an upper 1 s limit on access.
 	 */
-	if (mmc_card_sdio(card)) {
-		data->timeout_ns = 1000000000;
-		data->timeout_clks = 0;
-		return;
-	}
+	अगर (mmc_card_sdio(card)) अणु
+		data->समयout_ns = 1000000000;
+		data->समयout_clks = 0;
+		वापस;
+	पूर्ण
 
 	/*
 	 * SD cards use a 100 multiplier rather than 10
@@ -665,157 +666,157 @@ void mmc_set_data_timeout(struct mmc_data *data, const struct mmc_card *card)
 	mult = mmc_card_sd(card) ? 100 : 10;
 
 	/*
-	 * Scale up the multiplier (and therefore the timeout) by
-	 * the r2w factor for writes.
+	 * Scale up the multiplier (and thereक्रमe the समयout) by
+	 * the r2w factor क्रम ग_लिखोs.
 	 */
-	if (data->flags & MMC_DATA_WRITE)
+	अगर (data->flags & MMC_DATA_WRITE)
 		mult <<= card->csd.r2w_factor;
 
-	data->timeout_ns = card->csd.taac_ns * mult;
-	data->timeout_clks = card->csd.taac_clks * mult;
+	data->समयout_ns = card->csd.taac_ns * mult;
+	data->समयout_clks = card->csd.taac_clks * mult;
 
 	/*
-	 * SD cards also have an upper limit on the timeout.
+	 * SD cards also have an upper limit on the समयout.
 	 */
-	if (mmc_card_sd(card)) {
-		unsigned int timeout_us, limit_us;
+	अगर (mmc_card_sd(card)) अणु
+		अचिन्हित पूर्णांक समयout_us, limit_us;
 
-		timeout_us = data->timeout_ns / 1000;
-		if (card->host->ios.clock)
-			timeout_us += data->timeout_clks * 1000 /
-				(card->host->ios.clock / 1000);
+		समयout_us = data->समयout_ns / 1000;
+		अगर (card->host->ios.घड़ी)
+			समयout_us += data->समयout_clks * 1000 /
+				(card->host->ios.घड़ी / 1000);
 
-		if (data->flags & MMC_DATA_WRITE)
+		अगर (data->flags & MMC_DATA_WRITE)
 			/*
 			 * The MMC spec "It is strongly recommended
-			 * for hosts to implement more than 500ms
-			 * timeout value even if the card indicates
+			 * क्रम hosts to implement more than 500ms
+			 * समयout value even अगर the card indicates
 			 * the 250ms maximum busy length."  Even the
 			 * previous value of 300ms is known to be
-			 * insufficient for some cards.
+			 * insufficient क्रम some cards.
 			 */
 			limit_us = 3000000;
-		else
+		अन्यथा
 			limit_us = 100000;
 
 		/*
 		 * SDHC cards always use these fixed values.
 		 */
-		if (timeout_us > limit_us) {
-			data->timeout_ns = limit_us * 1000;
-			data->timeout_clks = 0;
-		}
+		अगर (समयout_us > limit_us) अणु
+			data->समयout_ns = limit_us * 1000;
+			data->समयout_clks = 0;
+		पूर्ण
 
-		/* assign limit value if invalid */
-		if (timeout_us == 0)
-			data->timeout_ns = limit_us * 1000;
-	}
+		/* assign limit value अगर invalid */
+		अगर (समयout_us == 0)
+			data->समयout_ns = limit_us * 1000;
+	पूर्ण
 
 	/*
-	 * Some cards require longer data read timeout than indicated in CSD.
-	 * Address this by setting the read timeout to a "reasonably high"
+	 * Some cards require दीर्घer data पढ़ो समयout than indicated in CSD.
+	 * Address this by setting the पढ़ो समयout to a "reasonably high"
 	 * value. For the cards tested, 600ms has proven enough. If necessary,
-	 * this value can be increased if other problematic cards require this.
+	 * this value can be increased अगर other problematic cards require this.
 	 */
-	if (mmc_card_long_read_time(card) && data->flags & MMC_DATA_READ) {
-		data->timeout_ns = 600000000;
-		data->timeout_clks = 0;
-	}
+	अगर (mmc_card_दीर्घ_पढ़ो_समय(card) && data->flags & MMC_DATA_READ) अणु
+		data->समयout_ns = 600000000;
+		data->समयout_clks = 0;
+	पूर्ण
 
 	/*
-	 * Some cards need very high timeouts if driven in SPI mode.
-	 * The worst observed timeout was 900ms after writing a
-	 * continuous stream of data until the internal logic
+	 * Some cards need very high समयouts अगर driven in SPI mode.
+	 * The worst observed समयout was 900ms after writing a
+	 * continuous stream of data until the पूर्णांकernal logic
 	 * overflowed.
 	 */
-	if (mmc_host_is_spi(card->host)) {
-		if (data->flags & MMC_DATA_WRITE) {
-			if (data->timeout_ns < 1000000000)
-				data->timeout_ns = 1000000000;	/* 1s */
-		} else {
-			if (data->timeout_ns < 100000000)
-				data->timeout_ns =  100000000;	/* 100ms */
-		}
-	}
-}
-EXPORT_SYMBOL(mmc_set_data_timeout);
+	अगर (mmc_host_is_spi(card->host)) अणु
+		अगर (data->flags & MMC_DATA_WRITE) अणु
+			अगर (data->समयout_ns < 1000000000)
+				data->समयout_ns = 1000000000;	/* 1s */
+		पूर्ण अन्यथा अणु
+			अगर (data->समयout_ns < 100000000)
+				data->समयout_ns =  100000000;	/* 100ms */
+		पूर्ण
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(mmc_set_data_समयout);
 
 /*
- * Allow claiming an already claimed host if the context is the same or there is
+ * Allow claiming an alपढ़ोy claimed host अगर the context is the same or there is
  * no context but the task is the same.
  */
-static inline bool mmc_ctx_matches(struct mmc_host *host, struct mmc_ctx *ctx,
-				   struct task_struct *task)
-{
-	return host->claimer == ctx ||
+अटल अंतरभूत bool mmc_ctx_matches(काष्ठा mmc_host *host, काष्ठा mmc_ctx *ctx,
+				   काष्ठा task_काष्ठा *task)
+अणु
+	वापस host->claimer == ctx ||
 	       (!ctx && task && host->claimer->task == task);
-}
+पूर्ण
 
-static inline void mmc_ctx_set_claimer(struct mmc_host *host,
-				       struct mmc_ctx *ctx,
-				       struct task_struct *task)
-{
-	if (!host->claimer) {
-		if (ctx)
+अटल अंतरभूत व्योम mmc_ctx_set_claimer(काष्ठा mmc_host *host,
+				       काष्ठा mmc_ctx *ctx,
+				       काष्ठा task_काष्ठा *task)
+अणु
+	अगर (!host->claimer) अणु
+		अगर (ctx)
 			host->claimer = ctx;
-		else
-			host->claimer = &host->default_ctx;
-	}
-	if (task)
+		अन्यथा
+			host->claimer = &host->शेष_ctx;
+	पूर्ण
+	अगर (task)
 		host->claimer->task = task;
-}
+पूर्ण
 
 /**
  *	__mmc_claim_host - exclusively claim a host
  *	@host: mmc host to claim
- *	@ctx: context that claims the host or NULL in which case the default
+ *	@ctx: context that claims the host or शून्य in which हाल the शेष
  *	context will be used
- *	@abort: whether or not the operation should be aborted
+ *	@पात: whether or not the operation should be पातed
  *
- *	Claim a host for a set of operations.  If @abort is non null and
- *	dereference a non-zero value then this will return prematurely with
+ *	Claim a host क्रम a set of operations.  If @पात is non null and
+ *	dereference a non-zero value then this will वापस prematurely with
  *	that non-zero value without acquiring the lock.  Returns zero
  *	with the lock held otherwise.
  */
-int __mmc_claim_host(struct mmc_host *host, struct mmc_ctx *ctx,
-		     atomic_t *abort)
-{
-	struct task_struct *task = ctx ? NULL : current;
-	DECLARE_WAITQUEUE(wait, current);
-	unsigned long flags;
-	int stop;
+पूर्णांक __mmc_claim_host(काष्ठा mmc_host *host, काष्ठा mmc_ctx *ctx,
+		     atomic_t *पात)
+अणु
+	काष्ठा task_काष्ठा *task = ctx ? शून्य : current;
+	DECLARE_WAITQUEUE(रुको, current);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक stop;
 	bool pm = false;
 
 	might_sleep();
 
-	add_wait_queue(&host->wq, &wait);
+	add_रुको_queue(&host->wq, &रुको);
 	spin_lock_irqsave(&host->lock, flags);
-	while (1) {
+	जबतक (1) अणु
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		stop = abort ? atomic_read(abort) : 0;
-		if (stop || !host->claimed || mmc_ctx_matches(host, ctx, task))
-			break;
+		stop = पात ? atomic_पढ़ो(पात) : 0;
+		अगर (stop || !host->claimed || mmc_ctx_matches(host, ctx, task))
+			अवरोध;
 		spin_unlock_irqrestore(&host->lock, flags);
 		schedule();
 		spin_lock_irqsave(&host->lock, flags);
-	}
+	पूर्ण
 	set_current_state(TASK_RUNNING);
-	if (!stop) {
+	अगर (!stop) अणु
 		host->claimed = 1;
 		mmc_ctx_set_claimer(host, ctx, task);
 		host->claim_cnt += 1;
-		if (host->claim_cnt == 1)
+		अगर (host->claim_cnt == 1)
 			pm = true;
-	} else
+	पूर्ण अन्यथा
 		wake_up(&host->wq);
 	spin_unlock_irqrestore(&host->lock, flags);
-	remove_wait_queue(&host->wq, &wait);
+	हटाओ_रुको_queue(&host->wq, &रुको);
 
-	if (pm)
-		pm_runtime_get_sync(mmc_dev(host));
+	अगर (pm)
+		pm_runसमय_get_sync(mmc_dev(host));
 
-	return stop;
-}
+	वापस stop;
+पूर्ण
 EXPORT_SYMBOL(__mmc_claim_host);
 
 /**
@@ -823,160 +824,160 @@ EXPORT_SYMBOL(__mmc_claim_host);
  *	@host: mmc host to release
  *
  *	Release a MMC host, allowing others to claim the host
- *	for their operations.
+ *	क्रम their operations.
  */
-void mmc_release_host(struct mmc_host *host)
-{
-	unsigned long flags;
+व्योम mmc_release_host(काष्ठा mmc_host *host)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	WARN_ON(!host->claimed);
 
 	spin_lock_irqsave(&host->lock, flags);
-	if (--host->claim_cnt) {
-		/* Release for nested claim */
+	अगर (--host->claim_cnt) अणु
+		/* Release क्रम nested claim */
 		spin_unlock_irqrestore(&host->lock, flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		host->claimed = 0;
-		host->claimer->task = NULL;
-		host->claimer = NULL;
+		host->claimer->task = शून्य;
+		host->claimer = शून्य;
 		spin_unlock_irqrestore(&host->lock, flags);
 		wake_up(&host->wq);
-		pm_runtime_mark_last_busy(mmc_dev(host));
-		if (host->caps & MMC_CAP_SYNC_RUNTIME_PM)
-			pm_runtime_put_sync_suspend(mmc_dev(host));
-		else
-			pm_runtime_put_autosuspend(mmc_dev(host));
-	}
-}
+		pm_runसमय_mark_last_busy(mmc_dev(host));
+		अगर (host->caps & MMC_CAP_SYNC_RUNTIME_PM)
+			pm_runसमय_put_sync_suspend(mmc_dev(host));
+		अन्यथा
+			pm_runसमय_put_स्वतःsuspend(mmc_dev(host));
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(mmc_release_host);
 
 /*
- * This is a helper function, which fetches a runtime pm reference for the
+ * This is a helper function, which fetches a runसमय pm reference क्रम the
  * card device and also claims the host.
  */
-void mmc_get_card(struct mmc_card *card, struct mmc_ctx *ctx)
-{
-	pm_runtime_get_sync(&card->dev);
-	__mmc_claim_host(card->host, ctx, NULL);
-}
+व्योम mmc_get_card(काष्ठा mmc_card *card, काष्ठा mmc_ctx *ctx)
+अणु
+	pm_runसमय_get_sync(&card->dev);
+	__mmc_claim_host(card->host, ctx, शून्य);
+पूर्ण
 EXPORT_SYMBOL(mmc_get_card);
 
 /*
- * This is a helper function, which releases the host and drops the runtime
- * pm reference for the card device.
+ * This is a helper function, which releases the host and drops the runसमय
+ * pm reference क्रम the card device.
  */
-void mmc_put_card(struct mmc_card *card, struct mmc_ctx *ctx)
-{
-	struct mmc_host *host = card->host;
+व्योम mmc_put_card(काष्ठा mmc_card *card, काष्ठा mmc_ctx *ctx)
+अणु
+	काष्ठा mmc_host *host = card->host;
 
 	WARN_ON(ctx && host->claimer != ctx);
 
 	mmc_release_host(host);
-	pm_runtime_mark_last_busy(&card->dev);
-	pm_runtime_put_autosuspend(&card->dev);
-}
+	pm_runसमय_mark_last_busy(&card->dev);
+	pm_runसमय_put_स्वतःsuspend(&card->dev);
+पूर्ण
 EXPORT_SYMBOL(mmc_put_card);
 
 /*
- * Internal function that does the actual ios call to the host driver,
- * optionally printing some debug output.
+ * Internal function that करोes the actual ios call to the host driver,
+ * optionally prपूर्णांकing some debug output.
  */
-static inline void mmc_set_ios(struct mmc_host *host)
-{
-	struct mmc_ios *ios = &host->ios;
+अटल अंतरभूत व्योम mmc_set_ios(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_ios *ios = &host->ios;
 
 	pr_debug("%s: clock %uHz busmode %u powermode %u cs %u Vdd %u "
 		"width %u timing %u\n",
-		 mmc_hostname(host), ios->clock, ios->bus_mode,
-		 ios->power_mode, ios->chip_select, ios->vdd,
+		 mmc_hostname(host), ios->घड़ी, ios->bus_mode,
+		 ios->घातer_mode, ios->chip_select, ios->vdd,
 		 1 << ios->bus_width, ios->timing);
 
 	host->ops->set_ios(host, ios);
-}
+पूर्ण
 
 /*
  * Control chip select pin on a host.
  */
-void mmc_set_chip_select(struct mmc_host *host, int mode)
-{
+व्योम mmc_set_chip_select(काष्ठा mmc_host *host, पूर्णांक mode)
+अणु
 	host->ios.chip_select = mode;
 	mmc_set_ios(host);
-}
+पूर्ण
 
 /*
- * Sets the host clock to the highest possible frequency that
+ * Sets the host घड़ी to the highest possible frequency that
  * is below "hz".
  */
-void mmc_set_clock(struct mmc_host *host, unsigned int hz)
-{
+व्योम mmc_set_घड़ी(काष्ठा mmc_host *host, अचिन्हित पूर्णांक hz)
+अणु
 	WARN_ON(hz && hz < host->f_min);
 
-	if (hz > host->f_max)
+	अगर (hz > host->f_max)
 		hz = host->f_max;
 
-	host->ios.clock = hz;
+	host->ios.घड़ी = hz;
 	mmc_set_ios(host);
-}
+पूर्ण
 
-int mmc_execute_tuning(struct mmc_card *card)
-{
-	struct mmc_host *host = card->host;
+पूर्णांक mmc_execute_tuning(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host *host = card->host;
 	u32 opcode;
-	int err;
+	पूर्णांक err;
 
-	if (!host->ops->execute_tuning)
-		return 0;
+	अगर (!host->ops->execute_tuning)
+		वापस 0;
 
-	if (host->cqe_on)
+	अगर (host->cqe_on)
 		host->cqe_ops->cqe_off(host);
 
-	if (mmc_card_mmc(card))
+	अगर (mmc_card_mmc(card))
 		opcode = MMC_SEND_TUNING_BLOCK_HS200;
-	else
+	अन्यथा
 		opcode = MMC_SEND_TUNING_BLOCK;
 
 	err = host->ops->execute_tuning(host, opcode);
 
-	if (err)
+	अगर (err)
 		pr_err("%s: tuning execution failed: %d\n",
 			mmc_hostname(host), err);
-	else
+	अन्यथा
 		mmc_retune_enable(host);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Change the bus mode (open drain/push-pull) of a host.
+ * Change the bus mode (खोलो drain/push-pull) of a host.
  */
-void mmc_set_bus_mode(struct mmc_host *host, unsigned int mode)
-{
+व्योम mmc_set_bus_mode(काष्ठा mmc_host *host, अचिन्हित पूर्णांक mode)
+अणु
 	host->ios.bus_mode = mode;
 	mmc_set_ios(host);
-}
+पूर्ण
 
 /*
  * Change data bus width of a host.
  */
-void mmc_set_bus_width(struct mmc_host *host, unsigned int width)
-{
+व्योम mmc_set_bus_width(काष्ठा mmc_host *host, अचिन्हित पूर्णांक width)
+अणु
 	host->ios.bus_width = width;
 	mmc_set_ios(host);
-}
+पूर्ण
 
 /*
- * Set initial state after a power cycle or a hw_reset.
+ * Set initial state after a घातer cycle or a hw_reset.
  */
-void mmc_set_initial_state(struct mmc_host *host)
-{
-	if (host->cqe_on)
+व्योम mmc_set_initial_state(काष्ठा mmc_host *host)
+अणु
+	अगर (host->cqe_on)
 		host->cqe_ops->cqe_off(host);
 
 	mmc_retune_disable(host);
 
-	if (mmc_host_is_spi(host))
+	अगर (mmc_host_is_spi(host))
 		host->ios.chip_select = MMC_CS_HIGH;
-	else
+	अन्यथा
 		host->ios.chip_select = MMC_CS_DONTCARE;
 	host->ios.bus_mode = MMC_BUSMODE_PUSHPULL;
 	host->ios.bus_width = MMC_BUS_WIDTH_1;
@@ -985,25 +986,25 @@ void mmc_set_initial_state(struct mmc_host *host)
 	host->ios.enhanced_strobe = false;
 
 	/*
-	 * Make sure we are in non-enhanced strobe mode before we
+	 * Make sure we are in non-enhanced strobe mode beक्रमe we
 	 * actually enable it in ext_csd.
 	 */
-	if ((host->caps2 & MMC_CAP2_HS400_ES) &&
+	अगर ((host->caps2 & MMC_CAP2_HS400_ES) &&
 	     host->ops->hs400_enhanced_strobe)
 		host->ops->hs400_enhanced_strobe(host, &host->ios);
 
 	mmc_set_ios(host);
 
 	mmc_crypto_set_initial_state(host);
-}
+पूर्ण
 
 /**
  * mmc_vdd_to_ocrbitnum - Convert a voltage to the OCR bit number
  * @vdd:	voltage (mV)
- * @low_bits:	prefer low bits in boundary cases
+ * @low_bits:	prefer low bits in boundary हालs
  *
- * This function returns the OCR bit number according to the provided @vdd
- * value. If conversion is not possible a negative errno value returned.
+ * This function वापसs the OCR bit number according to the provided @vdd
+ * value. If conversion is not possible a negative त्रुटि_सं value वापसed.
  *
  * Depending on the @low_bits flag the function prefers low or high OCR bits
  * on boundary voltages. For example,
@@ -1012,192 +1013,192 @@ void mmc_set_initial_state(struct mmc_host *host)
  *
  * Any value in the [1951:1999] range translates to the ilog2(MMC_VDD_20_21).
  */
-static int mmc_vdd_to_ocrbitnum(int vdd, bool low_bits)
-{
-	const int max_bit = ilog2(MMC_VDD_35_36);
-	int bit;
+अटल पूर्णांक mmc_vdd_to_ocrbitnum(पूर्णांक vdd, bool low_bits)
+अणु
+	स्थिर पूर्णांक max_bit = ilog2(MMC_VDD_35_36);
+	पूर्णांक bit;
 
-	if (vdd < 1650 || vdd > 3600)
-		return -EINVAL;
+	अगर (vdd < 1650 || vdd > 3600)
+		वापस -EINVAL;
 
-	if (vdd >= 1650 && vdd <= 1950)
-		return ilog2(MMC_VDD_165_195);
+	अगर (vdd >= 1650 && vdd <= 1950)
+		वापस ilog2(MMC_VDD_165_195);
 
-	if (low_bits)
+	अगर (low_bits)
 		vdd -= 1;
 
 	/* Base 2000 mV, step 100 mV, bit's base 8. */
 	bit = (vdd - 2000) / 100 + 8;
-	if (bit > max_bit)
-		return max_bit;
-	return bit;
-}
+	अगर (bit > max_bit)
+		वापस max_bit;
+	वापस bit;
+पूर्ण
 
 /**
  * mmc_vddrange_to_ocrmask - Convert a voltage range to the OCR mask
  * @vdd_min:	minimum voltage value (mV)
  * @vdd_max:	maximum voltage value (mV)
  *
- * This function returns the OCR mask bits according to the provided @vdd_min
- * and @vdd_max values. If conversion is not possible the function returns 0.
+ * This function वापसs the OCR mask bits according to the provided @vdd_min
+ * and @vdd_max values. If conversion is not possible the function वापसs 0.
  *
- * Notes wrt boundary cases:
- * This function sets the OCR bits for all boundary voltages, for example
+ * Notes wrt boundary हालs:
+ * This function sets the OCR bits क्रम all boundary voltages, क्रम example
  * [3300:3400] range is translated to MMC_VDD_32_33 | MMC_VDD_33_34 |
  * MMC_VDD_34_35 mask.
  */
-u32 mmc_vddrange_to_ocrmask(int vdd_min, int vdd_max)
-{
+u32 mmc_vddrange_to_ocrmask(पूर्णांक vdd_min, पूर्णांक vdd_max)
+अणु
 	u32 mask = 0;
 
-	if (vdd_max < vdd_min)
-		return 0;
+	अगर (vdd_max < vdd_min)
+		वापस 0;
 
-	/* Prefer high bits for the boundary vdd_max values. */
+	/* Prefer high bits क्रम the boundary vdd_max values. */
 	vdd_max = mmc_vdd_to_ocrbitnum(vdd_max, false);
-	if (vdd_max < 0)
-		return 0;
+	अगर (vdd_max < 0)
+		वापस 0;
 
-	/* Prefer low bits for the boundary vdd_min values. */
+	/* Prefer low bits क्रम the boundary vdd_min values. */
 	vdd_min = mmc_vdd_to_ocrbitnum(vdd_min, true);
-	if (vdd_min < 0)
-		return 0;
+	अगर (vdd_min < 0)
+		वापस 0;
 
 	/* Fill the mask, from max bit to min bit. */
-	while (vdd_max >= vdd_min)
+	जबतक (vdd_max >= vdd_min)
 		mask |= 1 << vdd_max--;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int mmc_of_get_func_num(struct device_node *node)
-{
+अटल पूर्णांक mmc_of_get_func_num(काष्ठा device_node *node)
+अणु
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
-	ret = of_property_read_u32(node, "reg", &reg);
-	if (ret < 0)
-		return ret;
+	ret = of_property_पढ़ो_u32(node, "reg", &reg);
+	अगर (ret < 0)
+		वापस ret;
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-struct device_node *mmc_of_find_child_device(struct mmc_host *host,
-		unsigned func_num)
-{
-	struct device_node *node;
+काष्ठा device_node *mmc_of_find_child_device(काष्ठा mmc_host *host,
+		अचिन्हित func_num)
+अणु
+	काष्ठा device_node *node;
 
-	if (!host->parent || !host->parent->of_node)
-		return NULL;
+	अगर (!host->parent || !host->parent->of_node)
+		वापस शून्य;
 
-	for_each_child_of_node(host->parent->of_node, node) {
-		if (mmc_of_get_func_num(node) == func_num)
-			return node;
-	}
+	क्रम_each_child_of_node(host->parent->of_node, node) अणु
+		अगर (mmc_of_get_func_num(node) == func_num)
+			वापस node;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Mask off any voltages we don't support and select
+ * Mask off any voltages we करोn't support and select
  * the lowest voltage
  */
-u32 mmc_select_voltage(struct mmc_host *host, u32 ocr)
-{
-	int bit;
+u32 mmc_select_voltage(काष्ठा mmc_host *host, u32 ocr)
+अणु
+	पूर्णांक bit;
 
 	/*
 	 * Sanity check the voltages that the card claims to
 	 * support.
 	 */
-	if (ocr & 0x7F) {
+	अगर (ocr & 0x7F) अणु
 		dev_warn(mmc_dev(host),
 		"card claims to support voltages below defined range\n");
 		ocr &= ~0x7F;
-	}
+	पूर्ण
 
 	ocr &= host->ocr_avail;
-	if (!ocr) {
+	अगर (!ocr) अणु
 		dev_warn(mmc_dev(host), "no support for card's volts\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (host->caps2 & MMC_CAP2_FULL_PWR_CYCLE) {
+	अगर (host->caps2 & MMC_CAP2_FULL_PWR_CYCLE) अणु
 		bit = ffs(ocr) - 1;
 		ocr &= 3 << bit;
-		mmc_power_cycle(host, ocr);
-	} else {
+		mmc_घातer_cycle(host, ocr);
+	पूर्ण अन्यथा अणु
 		bit = fls(ocr) - 1;
 		ocr &= 3 << bit;
-		if (bit != host->ios.vdd)
+		अगर (bit != host->ios.vdd)
 			dev_warn(mmc_dev(host), "exceeding card's volts\n");
-	}
+	पूर्ण
 
-	return ocr;
-}
+	वापस ocr;
+पूर्ण
 
-int mmc_set_signal_voltage(struct mmc_host *host, int signal_voltage)
-{
-	int err = 0;
-	int old_signal_voltage = host->ios.signal_voltage;
+पूर्णांक mmc_set_संकेत_voltage(काष्ठा mmc_host *host, पूर्णांक संकेत_voltage)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक old_संकेत_voltage = host->ios.संकेत_voltage;
 
-	host->ios.signal_voltage = signal_voltage;
-	if (host->ops->start_signal_voltage_switch)
-		err = host->ops->start_signal_voltage_switch(host, &host->ios);
+	host->ios.संकेत_voltage = संकेत_voltage;
+	अगर (host->ops->start_संकेत_voltage_चयन)
+		err = host->ops->start_संकेत_voltage_चयन(host, &host->ios);
 
-	if (err)
-		host->ios.signal_voltage = old_signal_voltage;
+	अगर (err)
+		host->ios.संकेत_voltage = old_संकेत_voltage;
 
-	return err;
+	वापस err;
 
-}
+पूर्ण
 
-void mmc_set_initial_signal_voltage(struct mmc_host *host)
-{
-	/* Try to set signal voltage to 3.3V but fall back to 1.8v or 1.2v */
-	if (!mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_330))
+व्योम mmc_set_initial_संकेत_voltage(काष्ठा mmc_host *host)
+अणु
+	/* Try to set संकेत voltage to 3.3V but fall back to 1.8v or 1.2v */
+	अगर (!mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_330))
 		dev_dbg(mmc_dev(host), "Initial signal voltage of 3.3v\n");
-	else if (!mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_180))
+	अन्यथा अगर (!mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_180))
 		dev_dbg(mmc_dev(host), "Initial signal voltage of 1.8v\n");
-	else if (!mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_120))
+	अन्यथा अगर (!mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_120))
 		dev_dbg(mmc_dev(host), "Initial signal voltage of 1.2v\n");
-}
+पूर्ण
 
-int mmc_host_set_uhs_voltage(struct mmc_host *host)
-{
-	u32 clock;
+पूर्णांक mmc_host_set_uhs_voltage(काष्ठा mmc_host *host)
+अणु
+	u32 घड़ी;
 
 	/*
-	 * During a signal voltage level switch, the clock must be gated
-	 * for 5 ms according to the SD spec
+	 * During a संकेत voltage level चयन, the घड़ी must be gated
+	 * क्रम 5 ms according to the SD spec
 	 */
-	clock = host->ios.clock;
-	host->ios.clock = 0;
+	घड़ी = host->ios.घड़ी;
+	host->ios.घड़ी = 0;
 	mmc_set_ios(host);
 
-	if (mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_180))
-		return -EAGAIN;
+	अगर (mmc_set_संकेत_voltage(host, MMC_SIGNAL_VOLTAGE_180))
+		वापस -EAGAIN;
 
-	/* Keep clock gated for at least 10 ms, though spec only says 5 ms */
+	/* Keep घड़ी gated क्रम at least 10 ms, though spec only says 5 ms */
 	mmc_delay(10);
-	host->ios.clock = clock;
+	host->ios.घड़ी = घड़ी;
 	mmc_set_ios(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mmc_set_uhs_voltage(struct mmc_host *host, u32 ocr)
-{
-	struct mmc_command cmd = {};
-	int err = 0;
+पूर्णांक mmc_set_uhs_voltage(काष्ठा mmc_host *host, u32 ocr)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	पूर्णांक err = 0;
 
 	/*
-	 * If we cannot switch voltages, return failure so the caller
-	 * can continue without UHS mode
+	 * If we cannot चयन voltages, वापस failure so the caller
+	 * can जारी without UHS mode
 	 */
-	if (!host->ops->start_signal_voltage_switch)
-		return -EPERM;
-	if (!host->ops->card_busy)
+	अगर (!host->ops->start_संकेत_voltage_चयन)
+		वापस -EPERM;
+	अगर (!host->ops->card_busy)
 		pr_warn("%s: cannot verify signal voltage switch\n",
 			mmc_hostname(host));
 
@@ -1205,542 +1206,542 @@ int mmc_set_uhs_voltage(struct mmc_host *host, u32 ocr)
 	cmd.arg = 0;
 	cmd.flags = MMC_RSP_R1 | MMC_CMD_AC;
 
-	err = mmc_wait_for_cmd(host, &cmd, 0);
-	if (err)
-		goto power_cycle;
+	err = mmc_रुको_क्रम_cmd(host, &cmd, 0);
+	अगर (err)
+		जाओ घातer_cycle;
 
-	if (!mmc_host_is_spi(host) && (cmd.resp[0] & R1_ERROR))
-		return -EIO;
+	अगर (!mmc_host_is_spi(host) && (cmd.resp[0] & R1_ERROR))
+		वापस -EIO;
 
 	/*
 	 * The card should drive cmd and dat[0:3] low immediately
-	 * after the response of cmd11, but wait 1 ms to be sure
+	 * after the response of cmd11, but रुको 1 ms to be sure
 	 */
 	mmc_delay(1);
-	if (host->ops->card_busy && !host->ops->card_busy(host)) {
+	अगर (host->ops->card_busy && !host->ops->card_busy(host)) अणु
 		err = -EAGAIN;
-		goto power_cycle;
-	}
+		जाओ घातer_cycle;
+	पूर्ण
 
-	if (mmc_host_set_uhs_voltage(host)) {
+	अगर (mmc_host_set_uhs_voltage(host)) अणु
 		/*
-		 * Voltages may not have been switched, but we've already
-		 * sent CMD11, so a power cycle is required anyway
+		 * Voltages may not have been चयनed, but we've alपढ़ोy
+		 * sent CMD11, so a घातer cycle is required anyway
 		 */
 		err = -EAGAIN;
-		goto power_cycle;
-	}
+		जाओ घातer_cycle;
+	पूर्ण
 
-	/* Wait for at least 1 ms according to spec */
+	/* Wait क्रम at least 1 ms according to spec */
 	mmc_delay(1);
 
 	/*
-	 * Failure to switch is indicated by the card holding
+	 * Failure to चयन is indicated by the card holding
 	 * dat[0:3] low
 	 */
-	if (host->ops->card_busy && host->ops->card_busy(host))
+	अगर (host->ops->card_busy && host->ops->card_busy(host))
 		err = -EAGAIN;
 
-power_cycle:
-	if (err) {
+घातer_cycle:
+	अगर (err) अणु
 		pr_debug("%s: Signal voltage switch failed, "
 			"power cycling card\n", mmc_hostname(host));
-		mmc_power_cycle(host, ocr);
-	}
+		mmc_घातer_cycle(host, ocr);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Select timing parameters for host.
+ * Select timing parameters क्रम host.
  */
-void mmc_set_timing(struct mmc_host *host, unsigned int timing)
-{
+व्योम mmc_set_timing(काष्ठा mmc_host *host, अचिन्हित पूर्णांक timing)
+अणु
 	host->ios.timing = timing;
 	mmc_set_ios(host);
-}
+पूर्ण
 
 /*
- * Select appropriate driver type for host.
+ * Select appropriate driver type क्रम host.
  */
-void mmc_set_driver_type(struct mmc_host *host, unsigned int drv_type)
-{
+व्योम mmc_set_driver_type(काष्ठा mmc_host *host, अचिन्हित पूर्णांक drv_type)
+अणु
 	host->ios.drv_type = drv_type;
 	mmc_set_ios(host);
-}
+पूर्ण
 
-int mmc_select_drive_strength(struct mmc_card *card, unsigned int max_dtr,
-			      int card_drv_type, int *drv_type)
-{
-	struct mmc_host *host = card->host;
-	int host_drv_type = SD_DRIVER_TYPE_B;
+पूर्णांक mmc_select_drive_strength(काष्ठा mmc_card *card, अचिन्हित पूर्णांक max_dtr,
+			      पूर्णांक card_drv_type, पूर्णांक *drv_type)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	पूर्णांक host_drv_type = SD_DRIVER_TYPE_B;
 
 	*drv_type = 0;
 
-	if (!host->ops->select_drive_strength)
-		return 0;
+	अगर (!host->ops->select_drive_strength)
+		वापस 0;
 
-	/* Use SD definition of driver strength for hosts */
-	if (host->caps & MMC_CAP_DRIVER_TYPE_A)
+	/* Use SD definition of driver strength क्रम hosts */
+	अगर (host->caps & MMC_CAP_DRIVER_TYPE_A)
 		host_drv_type |= SD_DRIVER_TYPE_A;
 
-	if (host->caps & MMC_CAP_DRIVER_TYPE_C)
+	अगर (host->caps & MMC_CAP_DRIVER_TYPE_C)
 		host_drv_type |= SD_DRIVER_TYPE_C;
 
-	if (host->caps & MMC_CAP_DRIVER_TYPE_D)
+	अगर (host->caps & MMC_CAP_DRIVER_TYPE_D)
 		host_drv_type |= SD_DRIVER_TYPE_D;
 
 	/*
 	 * The drive strength that the hardware can support
 	 * depends on the board design.  Pass the appropriate
-	 * information and let the hardware specific code
-	 * return what is possible given the options
+	 * inक्रमmation and let the hardware specअगरic code
+	 * वापस what is possible given the options
 	 */
-	return host->ops->select_drive_strength(card, max_dtr,
+	वापस host->ops->select_drive_strength(card, max_dtr,
 						host_drv_type,
 						card_drv_type,
 						drv_type);
-}
+पूर्ण
 
 /*
- * Apply power to the MMC stack.  This is a two-stage process.
- * First, we enable power to the card without the clock running.
- * We then wait a bit for the power to stabilise.  Finally,
- * enable the bus drivers and clock to the card.
+ * Apply घातer to the MMC stack.  This is a two-stage process.
+ * First, we enable घातer to the card without the घड़ी running.
+ * We then रुको a bit क्रम the घातer to stabilise.  Finally,
+ * enable the bus drivers and घड़ी to the card.
  *
- * We must _NOT_ enable the clock prior to power stablising.
+ * We must _NOT_ enable the घड़ी prior to घातer stablising.
  *
- * If a host does all the power sequencing itself, ignore the
+ * If a host करोes all the घातer sequencing itself, ignore the
  * initial MMC_POWER_UP stage.
  */
-void mmc_power_up(struct mmc_host *host, u32 ocr)
-{
-	if (host->ios.power_mode == MMC_POWER_ON)
-		return;
+व्योम mmc_घातer_up(काष्ठा mmc_host *host, u32 ocr)
+अणु
+	अगर (host->ios.घातer_mode == MMC_POWER_ON)
+		वापस;
 
-	mmc_pwrseq_pre_power_on(host);
+	mmc_pwrseq_pre_घातer_on(host);
 
 	host->ios.vdd = fls(ocr) - 1;
-	host->ios.power_mode = MMC_POWER_UP;
+	host->ios.घातer_mode = MMC_POWER_UP;
 	/* Set initial state and call mmc_set_ios */
 	mmc_set_initial_state(host);
 
-	mmc_set_initial_signal_voltage(host);
+	mmc_set_initial_संकेत_voltage(host);
 
 	/*
-	 * This delay should be sufficient to allow the power supply
+	 * This delay should be sufficient to allow the घातer supply
 	 * to reach the minimum voltage.
 	 */
-	mmc_delay(host->ios.power_delay_ms);
+	mmc_delay(host->ios.घातer_delay_ms);
 
-	mmc_pwrseq_post_power_on(host);
+	mmc_pwrseq_post_घातer_on(host);
 
-	host->ios.clock = host->f_init;
+	host->ios.घड़ी = host->f_init;
 
-	host->ios.power_mode = MMC_POWER_ON;
+	host->ios.घातer_mode = MMC_POWER_ON;
 	mmc_set_ios(host);
 
 	/*
-	 * This delay must be at least 74 clock sizes, or 1 ms, or the
-	 * time required to reach a stable voltage.
+	 * This delay must be at least 74 घड़ी sizes, or 1 ms, or the
+	 * समय required to reach a stable voltage.
 	 */
-	mmc_delay(host->ios.power_delay_ms);
-}
+	mmc_delay(host->ios.घातer_delay_ms);
+पूर्ण
 
-void mmc_power_off(struct mmc_host *host)
-{
-	if (host->ios.power_mode == MMC_POWER_OFF)
-		return;
+व्योम mmc_घातer_off(काष्ठा mmc_host *host)
+अणु
+	अगर (host->ios.घातer_mode == MMC_POWER_OFF)
+		वापस;
 
-	mmc_pwrseq_power_off(host);
+	mmc_pwrseq_घातer_off(host);
 
-	host->ios.clock = 0;
+	host->ios.घड़ी = 0;
 	host->ios.vdd = 0;
 
-	host->ios.power_mode = MMC_POWER_OFF;
+	host->ios.घातer_mode = MMC_POWER_OFF;
 	/* Set initial state and call mmc_set_ios */
 	mmc_set_initial_state(host);
 
 	/*
 	 * Some configurations, such as the 802.11 SDIO card in the OLPC
-	 * XO-1.5, require a short delay after poweroff before the card
+	 * XO-1.5, require a लघु delay after घातeroff beक्रमe the card
 	 * can be successfully turned on again.
 	 */
 	mmc_delay(1);
-}
+पूर्ण
 
-void mmc_power_cycle(struct mmc_host *host, u32 ocr)
-{
-	mmc_power_off(host);
+व्योम mmc_घातer_cycle(काष्ठा mmc_host *host, u32 ocr)
+अणु
+	mmc_घातer_off(host);
 	/* Wait at least 1 ms according to SD spec */
 	mmc_delay(1);
-	mmc_power_up(host, ocr);
-}
+	mmc_घातer_up(host, ocr);
+पूर्ण
 
 /*
  * Assign a mmc bus handler to a host. Only one bus handler may control a
- * host at any given time.
+ * host at any given समय.
  */
-void mmc_attach_bus(struct mmc_host *host, const struct mmc_bus_ops *ops)
-{
+व्योम mmc_attach_bus(काष्ठा mmc_host *host, स्थिर काष्ठा mmc_bus_ops *ops)
+अणु
 	host->bus_ops = ops;
-}
+पूर्ण
 
 /*
  * Remove the current bus handler from a host.
  */
-void mmc_detach_bus(struct mmc_host *host)
-{
-	host->bus_ops = NULL;
-}
+व्योम mmc_detach_bus(काष्ठा mmc_host *host)
+अणु
+	host->bus_ops = शून्य;
+पूर्ण
 
-void _mmc_detect_change(struct mmc_host *host, unsigned long delay, bool cd_irq)
-{
+व्योम _mmc_detect_change(काष्ठा mmc_host *host, अचिन्हित दीर्घ delay, bool cd_irq)
+अणु
 	/*
-	 * Prevent system sleep for 5s to allow user space to consume the
+	 * Prevent प्रणाली sleep क्रम 5s to allow user space to consume the
 	 * corresponding uevent. This is especially useful, when CD irq is used
-	 * as a system wakeup, but doesn't hurt in other cases.
+	 * as a प्रणाली wakeup, but करोesn't hurt in other हालs.
 	 */
-	if (cd_irq && !(host->caps & MMC_CAP_NEEDS_POLL))
+	अगर (cd_irq && !(host->caps & MMC_CAP_NEEDS_POLL))
 		__pm_wakeup_event(host->ws, 5000);
 
 	host->detect_change = 1;
 	mmc_schedule_delayed_work(&host->detect, delay);
-}
+पूर्ण
 
 /**
  *	mmc_detect_change - process change of state on a MMC socket
  *	@host: host which changed state.
- *	@delay: optional delay to wait before detection (jiffies)
+ *	@delay: optional delay to रुको beक्रमe detection (jअगरfies)
  *
  *	MMC drivers should call this when they detect a card has been
- *	inserted or removed. The MMC layer will confirm that any
+ *	inserted or हटाओd. The MMC layer will confirm that any
  *	present card is still functional, and initialize any newly
  *	inserted.
  */
-void mmc_detect_change(struct mmc_host *host, unsigned long delay)
-{
+व्योम mmc_detect_change(काष्ठा mmc_host *host, अचिन्हित दीर्घ delay)
+अणु
 	_mmc_detect_change(host, delay, true);
-}
+पूर्ण
 EXPORT_SYMBOL(mmc_detect_change);
 
-void mmc_init_erase(struct mmc_card *card)
-{
-	unsigned int sz;
+व्योम mmc_init_erase(काष्ठा mmc_card *card)
+अणु
+	अचिन्हित पूर्णांक sz;
 
-	if (is_power_of_2(card->erase_size))
-		card->erase_shift = ffs(card->erase_size) - 1;
-	else
-		card->erase_shift = 0;
+	अगर (is_घातer_of_2(card->erase_size))
+		card->erase_shअगरt = ffs(card->erase_size) - 1;
+	अन्यथा
+		card->erase_shअगरt = 0;
 
 	/*
 	 * It is possible to erase an arbitrarily large area of an SD or MMC
-	 * card.  That is not desirable because it can take a long time
+	 * card.  That is not desirable because it can take a दीर्घ समय
 	 * (minutes) potentially delaying more important I/O, and also the
-	 * timeout calculations become increasingly hugely over-estimated.
+	 * समयout calculations become increasingly hugely over-estimated.
 	 * Consequently, 'pref_erase' is defined as a guide to limit erases
 	 * to that size and alignment.
 	 *
 	 * For SD cards that define Allocation Unit size, limit erases to one
-	 * Allocation Unit at a time.
-	 * For MMC, have a stab at ai good value and for modern cards it will
-	 * end up being 4MiB. Note that if the value is too small, it can end
-	 * up taking longer to erase. Also note, erase_size is already set to
-	 * High Capacity Erase Size if available when this function is called.
+	 * Allocation Unit at a समय.
+	 * For MMC, have a stab at ai good value and क्रम modern cards it will
+	 * end up being 4MiB. Note that अगर the value is too small, it can end
+	 * up taking दीर्घer to erase. Also note, erase_size is alपढ़ोy set to
+	 * High Capacity Erase Size अगर available when this function is called.
 	 */
-	if (mmc_card_sd(card) && card->ssr.au) {
+	अगर (mmc_card_sd(card) && card->ssr.au) अणु
 		card->pref_erase = card->ssr.au;
-		card->erase_shift = ffs(card->ssr.au) - 1;
-	} else if (card->erase_size) {
-		sz = (card->csd.capacity << (card->csd.read_blkbits - 9)) >> 11;
-		if (sz < 128)
+		card->erase_shअगरt = ffs(card->ssr.au) - 1;
+	पूर्ण अन्यथा अगर (card->erase_size) अणु
+		sz = (card->csd.capacity << (card->csd.पढ़ो_blkbits - 9)) >> 11;
+		अगर (sz < 128)
 			card->pref_erase = 512 * 1024 / 512;
-		else if (sz < 512)
+		अन्यथा अगर (sz < 512)
 			card->pref_erase = 1024 * 1024 / 512;
-		else if (sz < 1024)
+		अन्यथा अगर (sz < 1024)
 			card->pref_erase = 2 * 1024 * 1024 / 512;
-		else
+		अन्यथा
 			card->pref_erase = 4 * 1024 * 1024 / 512;
-		if (card->pref_erase < card->erase_size)
+		अगर (card->pref_erase < card->erase_size)
 			card->pref_erase = card->erase_size;
-		else {
+		अन्यथा अणु
 			sz = card->pref_erase % card->erase_size;
-			if (sz)
+			अगर (sz)
 				card->pref_erase += card->erase_size - sz;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		card->pref_erase = 0;
-}
+पूर्ण
 
-static unsigned int mmc_mmc_erase_timeout(struct mmc_card *card,
-				          unsigned int arg, unsigned int qty)
-{
-	unsigned int erase_timeout;
+अटल अचिन्हित पूर्णांक mmc_mmc_erase_समयout(काष्ठा mmc_card *card,
+				          अचिन्हित पूर्णांक arg, अचिन्हित पूर्णांक qty)
+अणु
+	अचिन्हित पूर्णांक erase_समयout;
 
-	if (arg == MMC_DISCARD_ARG ||
-	    (arg == MMC_TRIM_ARG && card->ext_csd.rev >= 6)) {
-		erase_timeout = card->ext_csd.trim_timeout;
-	} else if (card->ext_csd.erase_group_def & 1) {
-		/* High Capacity Erase Group Size uses HC timeouts */
-		if (arg == MMC_TRIM_ARG)
-			erase_timeout = card->ext_csd.trim_timeout;
-		else
-			erase_timeout = card->ext_csd.hc_erase_timeout;
-	} else {
-		/* CSD Erase Group Size uses write timeout */
-		unsigned int mult = (10 << card->csd.r2w_factor);
-		unsigned int timeout_clks = card->csd.taac_clks * mult;
-		unsigned int timeout_us;
+	अगर (arg == MMC_DISCARD_ARG ||
+	    (arg == MMC_TRIM_ARG && card->ext_csd.rev >= 6)) अणु
+		erase_समयout = card->ext_csd.trim_समयout;
+	पूर्ण अन्यथा अगर (card->ext_csd.erase_group_def & 1) अणु
+		/* High Capacity Erase Group Size uses HC समयouts */
+		अगर (arg == MMC_TRIM_ARG)
+			erase_समयout = card->ext_csd.trim_समयout;
+		अन्यथा
+			erase_समयout = card->ext_csd.hc_erase_समयout;
+	पूर्ण अन्यथा अणु
+		/* CSD Erase Group Size uses ग_लिखो समयout */
+		अचिन्हित पूर्णांक mult = (10 << card->csd.r2w_factor);
+		अचिन्हित पूर्णांक समयout_clks = card->csd.taac_clks * mult;
+		अचिन्हित पूर्णांक समयout_us;
 
-		/* Avoid overflow: e.g. taac_ns=80000000 mult=1280 */
-		if (card->csd.taac_ns < 1000000)
-			timeout_us = (card->csd.taac_ns * mult) / 1000;
-		else
-			timeout_us = (card->csd.taac_ns / 1000) * mult;
+		/* Aव्योम overflow: e.g. taac_ns=80000000 mult=1280 */
+		अगर (card->csd.taac_ns < 1000000)
+			समयout_us = (card->csd.taac_ns * mult) / 1000;
+		अन्यथा
+			समयout_us = (card->csd.taac_ns / 1000) * mult;
 
 		/*
-		 * ios.clock is only a target.  The real clock rate might be
+		 * ios.घड़ी is only a target.  The real घड़ी rate might be
 		 * less but not that much less, so fudge it by multiplying by 2.
 		 */
-		timeout_clks <<= 1;
-		timeout_us += (timeout_clks * 1000) /
-			      (card->host->ios.clock / 1000);
+		समयout_clks <<= 1;
+		समयout_us += (समयout_clks * 1000) /
+			      (card->host->ios.घड़ी / 1000);
 
-		erase_timeout = timeout_us / 1000;
+		erase_समयout = समयout_us / 1000;
 
 		/*
 		 * Theoretically, the calculation could underflow so round up
-		 * to 1ms in that case.
+		 * to 1ms in that हाल.
 		 */
-		if (!erase_timeout)
-			erase_timeout = 1;
-	}
+		अगर (!erase_समयout)
+			erase_समयout = 1;
+	पूर्ण
 
-	/* Multiplier for secure operations */
-	if (arg & MMC_SECURE_ARGS) {
-		if (arg == MMC_SECURE_ERASE_ARG)
-			erase_timeout *= card->ext_csd.sec_erase_mult;
-		else
-			erase_timeout *= card->ext_csd.sec_trim_mult;
-	}
+	/* Multiplier क्रम secure operations */
+	अगर (arg & MMC_SECURE_ARGS) अणु
+		अगर (arg == MMC_SECURE_ERASE_ARG)
+			erase_समयout *= card->ext_csd.sec_erase_mult;
+		अन्यथा
+			erase_समयout *= card->ext_csd.sec_trim_mult;
+	पूर्ण
 
-	erase_timeout *= qty;
+	erase_समयout *= qty;
 
 	/*
-	 * Ensure at least a 1 second timeout for SPI as per
+	 * Ensure at least a 1 second समयout क्रम SPI as per
 	 * 'mmc_set_data_timeout()'
 	 */
-	if (mmc_host_is_spi(card->host) && erase_timeout < 1000)
-		erase_timeout = 1000;
+	अगर (mmc_host_is_spi(card->host) && erase_समयout < 1000)
+		erase_समयout = 1000;
 
-	return erase_timeout;
-}
+	वापस erase_समयout;
+पूर्ण
 
-static unsigned int mmc_sd_erase_timeout(struct mmc_card *card,
-					 unsigned int arg,
-					 unsigned int qty)
-{
-	unsigned int erase_timeout;
+अटल अचिन्हित पूर्णांक mmc_sd_erase_समयout(काष्ठा mmc_card *card,
+					 अचिन्हित पूर्णांक arg,
+					 अचिन्हित पूर्णांक qty)
+अणु
+	अचिन्हित पूर्णांक erase_समयout;
 
-	/* for DISCARD none of the below calculation applies.
-	 * the busy timeout is 250msec per discard command.
+	/* क्रम DISCARD none of the below calculation applies.
+	 * the busy समयout is 250msec per discard command.
 	 */
-	if (arg == SD_DISCARD_ARG)
-		return SD_DISCARD_TIMEOUT_MS;
+	अगर (arg == SD_DISCARD_ARG)
+		वापस SD_DISCARD_TIMEOUT_MS;
 
-	if (card->ssr.erase_timeout) {
-		/* Erase timeout specified in SD Status Register (SSR) */
-		erase_timeout = card->ssr.erase_timeout * qty +
+	अगर (card->ssr.erase_समयout) अणु
+		/* Erase समयout specअगरied in SD Status Register (SSR) */
+		erase_समयout = card->ssr.erase_समयout * qty +
 				card->ssr.erase_offset;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Erase timeout not specified in SD Status Register (SSR) so
-		 * use 250ms per write block.
+		 * Erase समयout not specअगरied in SD Status Register (SSR) so
+		 * use 250ms per ग_लिखो block.
 		 */
-		erase_timeout = 250 * qty;
-	}
+		erase_समयout = 250 * qty;
+	पूर्ण
 
 	/* Must not be less than 1 second */
-	if (erase_timeout < 1000)
-		erase_timeout = 1000;
+	अगर (erase_समयout < 1000)
+		erase_समयout = 1000;
 
-	return erase_timeout;
-}
+	वापस erase_समयout;
+पूर्ण
 
-static unsigned int mmc_erase_timeout(struct mmc_card *card,
-				      unsigned int arg,
-				      unsigned int qty)
-{
-	if (mmc_card_sd(card))
-		return mmc_sd_erase_timeout(card, arg, qty);
-	else
-		return mmc_mmc_erase_timeout(card, arg, qty);
-}
+अटल अचिन्हित पूर्णांक mmc_erase_समयout(काष्ठा mmc_card *card,
+				      अचिन्हित पूर्णांक arg,
+				      अचिन्हित पूर्णांक qty)
+अणु
+	अगर (mmc_card_sd(card))
+		वापस mmc_sd_erase_समयout(card, arg, qty);
+	अन्यथा
+		वापस mmc_mmc_erase_समयout(card, arg, qty);
+पूर्ण
 
-static int mmc_do_erase(struct mmc_card *card, unsigned int from,
-			unsigned int to, unsigned int arg)
-{
-	struct mmc_command cmd = {};
-	unsigned int qty = 0, busy_timeout = 0;
+अटल पूर्णांक mmc_करो_erase(काष्ठा mmc_card *card, अचिन्हित पूर्णांक from,
+			अचिन्हित पूर्णांक to, अचिन्हित पूर्णांक arg)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	अचिन्हित पूर्णांक qty = 0, busy_समयout = 0;
 	bool use_r1b_resp = false;
-	int err;
+	पूर्णांक err;
 
 	mmc_retune_hold(card->host);
 
 	/*
-	 * qty is used to calculate the erase timeout which depends on how many
+	 * qty is used to calculate the erase समयout which depends on how many
 	 * erase groups (or allocation units in SD terminology) are affected.
 	 * We count erasing part of an erase group as one erase group.
-	 * For SD, the allocation units are always a power of 2.  For MMC, the
-	 * erase group size is almost certainly also power of 2, but it does not
+	 * For SD, the allocation units are always a घातer of 2.  For MMC, the
+	 * erase group size is almost certainly also घातer of 2, but it करोes not
 	 * seem to insist on that in the JEDEC standard, so we fall back to
-	 * division in that case.  SD may not specify an allocation unit size,
-	 * in which case the timeout is based on the number of write blocks.
+	 * भागision in that हाल.  SD may not specअगरy an allocation unit size,
+	 * in which हाल the समयout is based on the number of ग_लिखो blocks.
 	 *
-	 * Note that the timeout for secure trim 2 will only be correct if the
-	 * number of erase groups specified is the same as the total of all
-	 * preceding secure trim 1 commands.  Since the power may have been
+	 * Note that the समयout क्रम secure trim 2 will only be correct अगर the
+	 * number of erase groups specअगरied is the same as the total of all
+	 * preceding secure trim 1 commands.  Since the घातer may have been
 	 * lost since the secure trim 1 commands occurred, it is generally
-	 * impossible to calculate the secure trim 2 timeout correctly.
+	 * impossible to calculate the secure trim 2 समयout correctly.
 	 */
-	if (card->erase_shift)
-		qty += ((to >> card->erase_shift) -
-			(from >> card->erase_shift)) + 1;
-	else if (mmc_card_sd(card))
+	अगर (card->erase_shअगरt)
+		qty += ((to >> card->erase_shअगरt) -
+			(from >> card->erase_shअगरt)) + 1;
+	अन्यथा अगर (mmc_card_sd(card))
 		qty += to - from + 1;
-	else
+	अन्यथा
 		qty += ((to / card->erase_size) -
 			(from / card->erase_size)) + 1;
 
-	if (!mmc_card_blockaddr(card)) {
+	अगर (!mmc_card_blockaddr(card)) अणु
 		from <<= 9;
 		to <<= 9;
-	}
+	पूर्ण
 
-	if (mmc_card_sd(card))
+	अगर (mmc_card_sd(card))
 		cmd.opcode = SD_ERASE_WR_BLK_START;
-	else
+	अन्यथा
 		cmd.opcode = MMC_ERASE_GROUP_START;
 	cmd.arg = from;
 	cmd.flags = MMC_RSP_SPI_R1 | MMC_RSP_R1 | MMC_CMD_AC;
-	err = mmc_wait_for_cmd(card->host, &cmd, 0);
-	if (err) {
+	err = mmc_रुको_क्रम_cmd(card->host, &cmd, 0);
+	अगर (err) अणु
 		pr_err("mmc_erase: group start error %d, "
 		       "status %#x\n", err, cmd.resp[0]);
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memset(&cmd, 0, sizeof(struct mmc_command));
-	if (mmc_card_sd(card))
+	स_रखो(&cmd, 0, माप(काष्ठा mmc_command));
+	अगर (mmc_card_sd(card))
 		cmd.opcode = SD_ERASE_WR_BLK_END;
-	else
+	अन्यथा
 		cmd.opcode = MMC_ERASE_GROUP_END;
 	cmd.arg = to;
 	cmd.flags = MMC_RSP_SPI_R1 | MMC_RSP_R1 | MMC_CMD_AC;
-	err = mmc_wait_for_cmd(card->host, &cmd, 0);
-	if (err) {
+	err = mmc_रुको_क्रम_cmd(card->host, &cmd, 0);
+	अगर (err) अणु
 		pr_err("mmc_erase: group end error %d, status %#x\n",
 		       err, cmd.resp[0]);
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memset(&cmd, 0, sizeof(struct mmc_command));
+	स_रखो(&cmd, 0, माप(काष्ठा mmc_command));
 	cmd.opcode = MMC_ERASE;
 	cmd.arg = arg;
-	busy_timeout = mmc_erase_timeout(card, arg, qty);
+	busy_समयout = mmc_erase_समयout(card, arg, qty);
 	/*
-	 * If the host controller supports busy signalling and the timeout for
-	 * the erase operation does not exceed the max_busy_timeout, we should
-	 * use R1B response. Or we need to prevent the host from doing hw busy
-	 * detection, which is done by converting to a R1 response instead.
+	 * If the host controller supports busy संकेतling and the समयout क्रम
+	 * the erase operation करोes not exceed the max_busy_समयout, we should
+	 * use R1B response. Or we need to prevent the host from करोing hw busy
+	 * detection, which is करोne by converting to a R1 response instead.
 	 * Note, some hosts requires R1B, which also means they are on their own
-	 * when it comes to deal with the busy timeout.
+	 * when it comes to deal with the busy समयout.
 	 */
-	if (!(card->host->caps & MMC_CAP_NEED_RSP_BUSY) &&
-	    card->host->max_busy_timeout &&
-	    busy_timeout > card->host->max_busy_timeout) {
+	अगर (!(card->host->caps & MMC_CAP_NEED_RSP_BUSY) &&
+	    card->host->max_busy_समयout &&
+	    busy_समयout > card->host->max_busy_समयout) अणु
 		cmd.flags = MMC_RSP_SPI_R1 | MMC_RSP_R1 | MMC_CMD_AC;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd.flags = MMC_RSP_SPI_R1B | MMC_RSP_R1B | MMC_CMD_AC;
-		cmd.busy_timeout = busy_timeout;
+		cmd.busy_समयout = busy_समयout;
 		use_r1b_resp = true;
-	}
+	पूर्ण
 
-	err = mmc_wait_for_cmd(card->host, &cmd, 0);
-	if (err) {
+	err = mmc_रुको_क्रम_cmd(card->host, &cmd, 0);
+	अगर (err) अणु
 		pr_err("mmc_erase: erase error %d, status %#x\n",
 		       err, cmd.resp[0]);
 		err = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (mmc_host_is_spi(card->host))
-		goto out;
+	अगर (mmc_host_is_spi(card->host))
+		जाओ out;
 
 	/*
-	 * In case of when R1B + MMC_CAP_WAIT_WHILE_BUSY is used, the polling
-	 * shall be avoided.
+	 * In हाल of when R1B + MMC_CAP_WAIT_WHILE_BUSY is used, the polling
+	 * shall be aव्योमed.
 	 */
-	if ((card->host->caps & MMC_CAP_WAIT_WHILE_BUSY) && use_r1b_resp)
-		goto out;
+	अगर ((card->host->caps & MMC_CAP_WAIT_WHILE_BUSY) && use_r1b_resp)
+		जाओ out;
 
 	/* Let's poll to find out when the erase operation completes. */
-	err = mmc_poll_for_busy(card, busy_timeout, MMC_BUSY_ERASE);
+	err = mmc_poll_क्रम_busy(card, busy_समयout, MMC_BUSY_ERASE);
 
 out:
 	mmc_retune_release(card->host);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static unsigned int mmc_align_erase_size(struct mmc_card *card,
-					 unsigned int *from,
-					 unsigned int *to,
-					 unsigned int nr)
-{
-	unsigned int from_new = *from, nr_new = nr, rem;
+अटल अचिन्हित पूर्णांक mmc_align_erase_size(काष्ठा mmc_card *card,
+					 अचिन्हित पूर्णांक *from,
+					 अचिन्हित पूर्णांक *to,
+					 अचिन्हित पूर्णांक nr)
+अणु
+	अचिन्हित पूर्णांक from_new = *from, nr_new = nr, rem;
 
 	/*
-	 * When the 'card->erase_size' is power of 2, we can use round_up/down()
+	 * When the 'card->erase_size' is घातer of 2, we can use round_up/करोwn()
 	 * to align the erase size efficiently.
 	 */
-	if (is_power_of_2(card->erase_size)) {
-		unsigned int temp = from_new;
+	अगर (is_घातer_of_2(card->erase_size)) अणु
+		अचिन्हित पूर्णांक temp = from_new;
 
 		from_new = round_up(temp, card->erase_size);
 		rem = from_new - temp;
 
-		if (nr_new > rem)
+		अगर (nr_new > rem)
 			nr_new -= rem;
-		else
-			return 0;
+		अन्यथा
+			वापस 0;
 
-		nr_new = round_down(nr_new, card->erase_size);
-	} else {
+		nr_new = round_करोwn(nr_new, card->erase_size);
+	पूर्ण अन्यथा अणु
 		rem = from_new % card->erase_size;
-		if (rem) {
+		अगर (rem) अणु
 			rem = card->erase_size - rem;
 			from_new += rem;
-			if (nr_new > rem)
+			अगर (nr_new > rem)
 				nr_new -= rem;
-			else
-				return 0;
-		}
+			अन्यथा
+				वापस 0;
+		पूर्ण
 
 		rem = nr_new % card->erase_size;
-		if (rem)
+		अगर (rem)
 			nr_new -= rem;
-	}
+	पूर्ण
 
-	if (nr_new == 0)
-		return 0;
+	अगर (nr_new == 0)
+		वापस 0;
 
 	*to = from_new + nr_new;
 	*from = from_new;
 
-	return nr_new;
-}
+	वापस nr_new;
+पूर्ण
 
 /**
  * mmc_erase - erase sectors.
@@ -1749,504 +1750,504 @@ static unsigned int mmc_align_erase_size(struct mmc_card *card,
  * @nr: number of sectors to erase
  * @arg: erase command argument
  *
- * Caller must claim host before calling this function.
+ * Caller must claim host beक्रमe calling this function.
  */
-int mmc_erase(struct mmc_card *card, unsigned int from, unsigned int nr,
-	      unsigned int arg)
-{
-	unsigned int rem, to = from + nr;
-	int err;
+पूर्णांक mmc_erase(काष्ठा mmc_card *card, अचिन्हित पूर्णांक from, अचिन्हित पूर्णांक nr,
+	      अचिन्हित पूर्णांक arg)
+अणु
+	अचिन्हित पूर्णांक rem, to = from + nr;
+	पूर्णांक err;
 
-	if (!(card->csd.cmdclass & CCC_ERASE))
-		return -EOPNOTSUPP;
+	अगर (!(card->csd.cmdclass & CCC_ERASE))
+		वापस -EOPNOTSUPP;
 
-	if (!card->erase_size)
-		return -EOPNOTSUPP;
+	अगर (!card->erase_size)
+		वापस -EOPNOTSUPP;
 
-	if (mmc_card_sd(card) && arg != SD_ERASE_ARG && arg != SD_DISCARD_ARG)
-		return -EOPNOTSUPP;
+	अगर (mmc_card_sd(card) && arg != SD_ERASE_ARG && arg != SD_DISCARD_ARG)
+		वापस -EOPNOTSUPP;
 
-	if (mmc_card_mmc(card) && (arg & MMC_SECURE_ARGS) &&
+	अगर (mmc_card_mmc(card) && (arg & MMC_SECURE_ARGS) &&
 	    !(card->ext_csd.sec_feature_support & EXT_CSD_SEC_ER_EN))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (mmc_card_mmc(card) && (arg & MMC_TRIM_ARGS) &&
+	अगर (mmc_card_mmc(card) && (arg & MMC_TRIM_ARGS) &&
 	    !(card->ext_csd.sec_feature_support & EXT_CSD_SEC_GB_CL_EN))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (arg == MMC_SECURE_ERASE_ARG) {
-		if (from % card->erase_size || nr % card->erase_size)
-			return -EINVAL;
-	}
+	अगर (arg == MMC_SECURE_ERASE_ARG) अणु
+		अगर (from % card->erase_size || nr % card->erase_size)
+			वापस -EINVAL;
+	पूर्ण
 
-	if (arg == MMC_ERASE_ARG)
+	अगर (arg == MMC_ERASE_ARG)
 		nr = mmc_align_erase_size(card, &from, &to, nr);
 
-	if (nr == 0)
-		return 0;
+	अगर (nr == 0)
+		वापस 0;
 
-	if (to <= from)
-		return -EINVAL;
+	अगर (to <= from)
+		वापस -EINVAL;
 
 	/* 'from' and 'to' are inclusive */
 	to -= 1;
 
 	/*
-	 * Special case where only one erase-group fits in the timeout budget:
+	 * Special हाल where only one erase-group fits in the समयout budget:
 	 * If the region crosses an erase-group boundary on this particular
-	 * case, we will be trimming more than one erase-group which, does not
-	 * fit in the timeout budget of the controller, so we need to split it
-	 * and call mmc_do_erase() twice if necessary. This special case is
-	 * identified by the card->eg_boundary flag.
+	 * हाल, we will be trimming more than one erase-group which, करोes not
+	 * fit in the समयout budget of the controller, so we need to split it
+	 * and call mmc_करो_erase() twice अगर necessary. This special हाल is
+	 * identअगरied by the card->eg_boundary flag.
 	 */
 	rem = card->erase_size - (from % card->erase_size);
-	if ((arg & MMC_TRIM_ARGS) && (card->eg_boundary) && (nr > rem)) {
-		err = mmc_do_erase(card, from, from + rem - 1, arg);
+	अगर ((arg & MMC_TRIM_ARGS) && (card->eg_boundary) && (nr > rem)) अणु
+		err = mmc_करो_erase(card, from, from + rem - 1, arg);
 		from += rem;
-		if ((err) || (to <= from))
-			return err;
-	}
+		अगर ((err) || (to <= from))
+			वापस err;
+	पूर्ण
 
-	return mmc_do_erase(card, from, to, arg);
-}
+	वापस mmc_करो_erase(card, from, to, arg);
+पूर्ण
 EXPORT_SYMBOL(mmc_erase);
 
-int mmc_can_erase(struct mmc_card *card)
-{
-	if (card->csd.cmdclass & CCC_ERASE && card->erase_size)
-		return 1;
-	return 0;
-}
+पूर्णांक mmc_can_erase(काष्ठा mmc_card *card)
+अणु
+	अगर (card->csd.cmdclass & CCC_ERASE && card->erase_size)
+		वापस 1;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mmc_can_erase);
 
-int mmc_can_trim(struct mmc_card *card)
-{
-	if ((card->ext_csd.sec_feature_support & EXT_CSD_SEC_GB_CL_EN) &&
+पूर्णांक mmc_can_trim(काष्ठा mmc_card *card)
+अणु
+	अगर ((card->ext_csd.sec_feature_support & EXT_CSD_SEC_GB_CL_EN) &&
 	    (!(card->quirks & MMC_QUIRK_TRIM_BROKEN)))
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mmc_can_trim);
 
-int mmc_can_discard(struct mmc_card *card)
-{
+पूर्णांक mmc_can_discard(काष्ठा mmc_card *card)
+अणु
 	/*
 	 * As there's no way to detect the discard support bit at v4.5
 	 * use the s/w feature support filed.
 	 */
-	if (card->ext_csd.feature_support & MMC_DISCARD_FEATURE)
-		return 1;
-	return 0;
-}
+	अगर (card->ext_csd.feature_support & MMC_DISCARD_FEATURE)
+		वापस 1;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mmc_can_discard);
 
-int mmc_can_sanitize(struct mmc_card *card)
-{
-	if (!mmc_can_trim(card) && !mmc_can_erase(card))
-		return 0;
-	if (card->ext_csd.sec_feature_support & EXT_CSD_SEC_SANITIZE)
-		return 1;
-	return 0;
-}
+पूर्णांक mmc_can_sanitize(काष्ठा mmc_card *card)
+अणु
+	अगर (!mmc_can_trim(card) && !mmc_can_erase(card))
+		वापस 0;
+	अगर (card->ext_csd.sec_feature_support & EXT_CSD_SEC_SANITIZE)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-int mmc_can_secure_erase_trim(struct mmc_card *card)
-{
-	if ((card->ext_csd.sec_feature_support & EXT_CSD_SEC_ER_EN) &&
+पूर्णांक mmc_can_secure_erase_trim(काष्ठा mmc_card *card)
+अणु
+	अगर ((card->ext_csd.sec_feature_support & EXT_CSD_SEC_ER_EN) &&
 	    !(card->quirks & MMC_QUIRK_SEC_ERASE_TRIM_BROKEN))
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mmc_can_secure_erase_trim);
 
-int mmc_erase_group_aligned(struct mmc_card *card, unsigned int from,
-			    unsigned int nr)
-{
-	if (!card->erase_size)
-		return 0;
-	if (from % card->erase_size || nr % card->erase_size)
-		return 0;
-	return 1;
-}
+पूर्णांक mmc_erase_group_aligned(काष्ठा mmc_card *card, अचिन्हित पूर्णांक from,
+			    अचिन्हित पूर्णांक nr)
+अणु
+	अगर (!card->erase_size)
+		वापस 0;
+	अगर (from % card->erase_size || nr % card->erase_size)
+		वापस 0;
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(mmc_erase_group_aligned);
 
-static unsigned int mmc_do_calc_max_discard(struct mmc_card *card,
-					    unsigned int arg)
-{
-	struct mmc_host *host = card->host;
-	unsigned int max_discard, x, y, qty = 0, max_qty, min_qty, timeout;
-	unsigned int last_timeout = 0;
-	unsigned int max_busy_timeout = host->max_busy_timeout ?
-			host->max_busy_timeout : MMC_ERASE_TIMEOUT_MS;
+अटल अचिन्हित पूर्णांक mmc_करो_calc_max_discard(काष्ठा mmc_card *card,
+					    अचिन्हित पूर्णांक arg)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	अचिन्हित पूर्णांक max_discard, x, y, qty = 0, max_qty, min_qty, समयout;
+	अचिन्हित पूर्णांक last_समयout = 0;
+	अचिन्हित पूर्णांक max_busy_समयout = host->max_busy_समयout ?
+			host->max_busy_समयout : MMC_ERASE_TIMEOUT_MS;
 
-	if (card->erase_shift) {
-		max_qty = UINT_MAX >> card->erase_shift;
-		min_qty = card->pref_erase >> card->erase_shift;
-	} else if (mmc_card_sd(card)) {
-		max_qty = UINT_MAX;
+	अगर (card->erase_shअगरt) अणु
+		max_qty = अच_पूर्णांक_उच्च >> card->erase_shअगरt;
+		min_qty = card->pref_erase >> card->erase_shअगरt;
+	पूर्ण अन्यथा अगर (mmc_card_sd(card)) अणु
+		max_qty = अच_पूर्णांक_उच्च;
 		min_qty = card->pref_erase;
-	} else {
-		max_qty = UINT_MAX / card->erase_size;
+	पूर्ण अन्यथा अणु
+		max_qty = अच_पूर्णांक_उच्च / card->erase_size;
 		min_qty = card->pref_erase / card->erase_size;
-	}
+	पूर्ण
 
 	/*
 	 * We should not only use 'host->max_busy_timeout' as the limitation
 	 * when deciding the max discard sectors. We should set a balance value
-	 * to improve the erase speed, and it can not get too long timeout at
-	 * the same time.
+	 * to improve the erase speed, and it can not get too दीर्घ समयout at
+	 * the same समय.
 	 *
 	 * Here we set 'card->pref_erase' as the minimal discard sectors no
-	 * matter what size of 'host->max_busy_timeout', but if the
-	 * 'host->max_busy_timeout' is large enough for more discard sectors,
-	 * then we can continue to increase the max discard sectors until we
-	 * get a balance value. In cases when the 'host->max_busy_timeout'
-	 * isn't specified, use the default max erase timeout.
+	 * matter what size of 'host->max_busy_timeout', but अगर the
+	 * 'host->max_busy_timeout' is large enough क्रम more discard sectors,
+	 * then we can जारी to increase the max discard sectors until we
+	 * get a balance value. In हालs when the 'host->max_busy_timeout'
+	 * isn't specअगरied, use the शेष max erase समयout.
 	 */
-	do {
+	करो अणु
 		y = 0;
-		for (x = 1; x && x <= max_qty && max_qty - x >= qty; x <<= 1) {
-			timeout = mmc_erase_timeout(card, arg, qty + x);
+		क्रम (x = 1; x && x <= max_qty && max_qty - x >= qty; x <<= 1) अणु
+			समयout = mmc_erase_समयout(card, arg, qty + x);
 
-			if (qty + x > min_qty && timeout > max_busy_timeout)
-				break;
+			अगर (qty + x > min_qty && समयout > max_busy_समयout)
+				अवरोध;
 
-			if (timeout < last_timeout)
-				break;
-			last_timeout = timeout;
+			अगर (समयout < last_समयout)
+				अवरोध;
+			last_समयout = समयout;
 			y = x;
-		}
+		पूर्ण
 		qty += y;
-	} while (y);
+	पूर्ण जबतक (y);
 
-	if (!qty)
-		return 0;
+	अगर (!qty)
+		वापस 0;
 
 	/*
-	 * When specifying a sector range to trim, chances are we might cross
-	 * an erase-group boundary even if the amount of sectors is less than
+	 * When specअगरying a sector range to trim, chances are we might cross
+	 * an erase-group boundary even अगर the amount of sectors is less than
 	 * one erase-group.
-	 * If we can only fit one erase-group in the controller timeout budget,
+	 * If we can only fit one erase-group in the controller समयout budget,
 	 * we have to care that erase-group boundaries are not crossed by a
-	 * single trim operation. We flag that special case with "eg_boundary".
-	 * In all other cases we can just decrement qty and pretend that we
+	 * single trim operation. We flag that special हाल with "eg_boundary".
+	 * In all other हालs we can just decrement qty and pretend that we
 	 * always touch (qty + 1) erase-groups as a simple optimization.
 	 */
-	if (qty == 1)
+	अगर (qty == 1)
 		card->eg_boundary = 1;
-	else
+	अन्यथा
 		qty--;
 
 	/* Convert qty to sectors */
-	if (card->erase_shift)
-		max_discard = qty << card->erase_shift;
-	else if (mmc_card_sd(card))
+	अगर (card->erase_shअगरt)
+		max_discard = qty << card->erase_shअगरt;
+	अन्यथा अगर (mmc_card_sd(card))
 		max_discard = qty + 1;
-	else
+	अन्यथा
 		max_discard = qty * card->erase_size;
 
-	return max_discard;
-}
+	वापस max_discard;
+पूर्ण
 
-unsigned int mmc_calc_max_discard(struct mmc_card *card)
-{
-	struct mmc_host *host = card->host;
-	unsigned int max_discard, max_trim;
+अचिन्हित पूर्णांक mmc_calc_max_discard(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host *host = card->host;
+	अचिन्हित पूर्णांक max_discard, max_trim;
 
 	/*
-	 * Without erase_group_def set, MMC erase timeout depends on clock
-	 * frequence which can change.  In that case, the best choice is
+	 * Without erase_group_def set, MMC erase समयout depends on घड़ी
+	 * frequence which can change.  In that हाल, the best choice is
 	 * just the preferred erase size.
 	 */
-	if (mmc_card_mmc(card) && !(card->ext_csd.erase_group_def & 1))
-		return card->pref_erase;
+	अगर (mmc_card_mmc(card) && !(card->ext_csd.erase_group_def & 1))
+		वापस card->pref_erase;
 
-	max_discard = mmc_do_calc_max_discard(card, MMC_ERASE_ARG);
-	if (mmc_can_trim(card)) {
-		max_trim = mmc_do_calc_max_discard(card, MMC_TRIM_ARG);
-		if (max_trim < max_discard || max_discard == 0)
+	max_discard = mmc_करो_calc_max_discard(card, MMC_ERASE_ARG);
+	अगर (mmc_can_trim(card)) अणु
+		max_trim = mmc_करो_calc_max_discard(card, MMC_TRIM_ARG);
+		अगर (max_trim < max_discard || max_discard == 0)
 			max_discard = max_trim;
-	} else if (max_discard < card->erase_size) {
+	पूर्ण अन्यथा अगर (max_discard < card->erase_size) अणु
 		max_discard = 0;
-	}
+	पूर्ण
 	pr_debug("%s: calculated max. discard sectors %u for timeout %u ms\n",
-		mmc_hostname(host), max_discard, host->max_busy_timeout ?
-		host->max_busy_timeout : MMC_ERASE_TIMEOUT_MS);
-	return max_discard;
-}
+		mmc_hostname(host), max_discard, host->max_busy_समयout ?
+		host->max_busy_समयout : MMC_ERASE_TIMEOUT_MS);
+	वापस max_discard;
+पूर्ण
 EXPORT_SYMBOL(mmc_calc_max_discard);
 
-bool mmc_card_is_blockaddr(struct mmc_card *card)
-{
-	return card ? mmc_card_blockaddr(card) : false;
-}
+bool mmc_card_is_blockaddr(काष्ठा mmc_card *card)
+अणु
+	वापस card ? mmc_card_blockaddr(card) : false;
+पूर्ण
 EXPORT_SYMBOL(mmc_card_is_blockaddr);
 
-int mmc_set_blocklen(struct mmc_card *card, unsigned int blocklen)
-{
-	struct mmc_command cmd = {};
+पूर्णांक mmc_set_blocklen(काष्ठा mmc_card *card, अचिन्हित पूर्णांक blocklen)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण;
 
-	if (mmc_card_blockaddr(card) || mmc_card_ddr52(card) ||
+	अगर (mmc_card_blockaddr(card) || mmc_card_ddr52(card) ||
 	    mmc_card_hs400(card) || mmc_card_hs400es(card))
-		return 0;
+		वापस 0;
 
 	cmd.opcode = MMC_SET_BLOCKLEN;
 	cmd.arg = blocklen;
 	cmd.flags = MMC_RSP_SPI_R1 | MMC_RSP_R1 | MMC_CMD_AC;
-	return mmc_wait_for_cmd(card->host, &cmd, 5);
-}
+	वापस mmc_रुको_क्रम_cmd(card->host, &cmd, 5);
+पूर्ण
 EXPORT_SYMBOL(mmc_set_blocklen);
 
-static void mmc_hw_reset_for_init(struct mmc_host *host)
-{
+अटल व्योम mmc_hw_reset_क्रम_init(काष्ठा mmc_host *host)
+अणु
 	mmc_pwrseq_reset(host);
 
-	if (!(host->caps & MMC_CAP_HW_RESET) || !host->ops->hw_reset)
-		return;
+	अगर (!(host->caps & MMC_CAP_HW_RESET) || !host->ops->hw_reset)
+		वापस;
 	host->ops->hw_reset(host);
-}
+पूर्ण
 
 /**
  * mmc_hw_reset - reset the card in hardware
  * @host: MMC host to which the card is attached
  *
- * Hard reset the card. This function is only for upper layers, like the
- * block layer or card drivers. You cannot use it in host drivers (struct
+ * Hard reset the card. This function is only क्रम upper layers, like the
+ * block layer or card drivers. You cannot use it in host drivers (काष्ठा
  * mmc_card might be gone then).
  *
- * Return: 0 on success, -errno on failure
+ * Return: 0 on success, -त्रुटि_सं on failure
  */
-int mmc_hw_reset(struct mmc_host *host)
-{
-	int ret;
+पूर्णांक mmc_hw_reset(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक ret;
 
 	ret = host->bus_ops->hw_reset(host);
-	if (ret < 0)
+	अगर (ret < 0)
 		pr_warn("%s: tried to HW reset card, got error %d\n",
 			mmc_hostname(host), ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(mmc_hw_reset);
 
-int mmc_sw_reset(struct mmc_host *host)
-{
-	int ret;
+पूर्णांक mmc_sw_reset(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक ret;
 
-	if (!host->bus_ops->sw_reset)
-		return -EOPNOTSUPP;
+	अगर (!host->bus_ops->sw_reset)
+		वापस -EOPNOTSUPP;
 
 	ret = host->bus_ops->sw_reset(host);
-	if (ret)
+	अगर (ret)
 		pr_warn("%s: tried to SW reset card, got error %d\n",
 			mmc_hostname(host), ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(mmc_sw_reset);
 
-static int mmc_rescan_try_freq(struct mmc_host *host, unsigned freq)
-{
+अटल पूर्णांक mmc_rescan_try_freq(काष्ठा mmc_host *host, अचिन्हित freq)
+अणु
 	host->f_init = freq;
 
 	pr_debug("%s: %s: trying to init card at %u Hz\n",
 		mmc_hostname(host), __func__, host->f_init);
 
-	mmc_power_up(host, host->ocr_avail);
+	mmc_घातer_up(host, host->ocr_avail);
 
 	/*
-	 * Some eMMCs (with VCCQ always on) may not be reset after power up, so
-	 * do a hardware reset if possible.
+	 * Some eMMCs (with VCCQ always on) may not be reset after घातer up, so
+	 * करो a hardware reset अगर possible.
 	 */
-	mmc_hw_reset_for_init(host);
+	mmc_hw_reset_क्रम_init(host);
 
 	/*
-	 * sdio_reset sends CMD52 to reset card.  Since we do not know
-	 * if the card is being re-initialized, just send it.  CMD52
+	 * sdio_reset sends CMD52 to reset card.  Since we करो not know
+	 * अगर the card is being re-initialized, just send it.  CMD52
 	 * should be ignored by SD/eMMC cards.
-	 * Skip it if we already know that we do not support SDIO commands
+	 * Skip it अगर we alपढ़ोy know that we करो not support SDIO commands
 	 */
-	if (!(host->caps2 & MMC_CAP2_NO_SDIO))
+	अगर (!(host->caps2 & MMC_CAP2_NO_SDIO))
 		sdio_reset(host);
 
 	mmc_go_idle(host);
 
-	if (!(host->caps2 & MMC_CAP2_NO_SD)) {
-		if (mmc_send_if_cond_pcie(host, host->ocr_avail))
-			goto out;
-		if (mmc_card_sd_express(host))
-			return 0;
-	}
+	अगर (!(host->caps2 & MMC_CAP2_NO_SD)) अणु
+		अगर (mmc_send_अगर_cond_pcie(host, host->ocr_avail))
+			जाओ out;
+		अगर (mmc_card_sd_express(host))
+			वापस 0;
+	पूर्ण
 
 	/* Order's important: probe SDIO, then SD, then MMC */
-	if (!(host->caps2 & MMC_CAP2_NO_SDIO))
-		if (!mmc_attach_sdio(host))
-			return 0;
+	अगर (!(host->caps2 & MMC_CAP2_NO_SDIO))
+		अगर (!mmc_attach_sdio(host))
+			वापस 0;
 
-	if (!(host->caps2 & MMC_CAP2_NO_SD))
-		if (!mmc_attach_sd(host))
-			return 0;
+	अगर (!(host->caps2 & MMC_CAP2_NO_SD))
+		अगर (!mmc_attach_sd(host))
+			वापस 0;
 
-	if (!(host->caps2 & MMC_CAP2_NO_MMC))
-		if (!mmc_attach_mmc(host))
-			return 0;
+	अगर (!(host->caps2 & MMC_CAP2_NO_MMC))
+		अगर (!mmc_attach_mmc(host))
+			वापस 0;
 
 out:
-	mmc_power_off(host);
-	return -EIO;
-}
+	mmc_घातer_off(host);
+	वापस -EIO;
+पूर्ण
 
-int _mmc_detect_card_removed(struct mmc_host *host)
-{
-	int ret;
+पूर्णांक _mmc_detect_card_हटाओd(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक ret;
 
-	if (!host->card || mmc_card_removed(host->card))
-		return 1;
+	अगर (!host->card || mmc_card_हटाओd(host->card))
+		वापस 1;
 
 	ret = host->bus_ops->alive(host);
 
 	/*
-	 * Card detect status and alive check may be out of sync if card is
-	 * removed slowly, when card detect switch changes while card/slot
+	 * Card detect status and alive check may be out of sync अगर card is
+	 * हटाओd slowly, when card detect चयन changes जबतक card/slot
 	 * pads are still contacted in hardware (refer to "SD Card Mechanical
 	 * Addendum, Appendix C: Card Detection Switch"). So reschedule a
-	 * detect work 200ms later for this case.
+	 * detect work 200ms later क्रम this हाल.
 	 */
-	if (!ret && host->ops->get_cd && !host->ops->get_cd(host)) {
-		mmc_detect_change(host, msecs_to_jiffies(200));
+	अगर (!ret && host->ops->get_cd && !host->ops->get_cd(host)) अणु
+		mmc_detect_change(host, msecs_to_jअगरfies(200));
 		pr_debug("%s: card removed too slowly\n", mmc_hostname(host));
-	}
+	पूर्ण
 
-	if (ret) {
-		mmc_card_set_removed(host->card);
+	अगर (ret) अणु
+		mmc_card_set_हटाओd(host->card);
 		pr_debug("%s: card remove detected\n", mmc_hostname(host));
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int mmc_detect_card_removed(struct mmc_host *host)
-{
-	struct mmc_card *card = host->card;
-	int ret;
+पूर्णांक mmc_detect_card_हटाओd(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_card *card = host->card;
+	पूर्णांक ret;
 
 	WARN_ON(!host->claimed);
 
-	if (!card)
-		return 1;
+	अगर (!card)
+		वापस 1;
 
-	if (!mmc_card_is_removable(host))
-		return 0;
+	अगर (!mmc_card_is_removable(host))
+		वापस 0;
 
-	ret = mmc_card_removed(card);
+	ret = mmc_card_हटाओd(card);
 	/*
 	 * The card will be considered unchanged unless we have been asked to
 	 * detect a change or host requires polling to provide card detection.
 	 */
-	if (!host->detect_change && !(host->caps & MMC_CAP_NEEDS_POLL))
-		return ret;
+	अगर (!host->detect_change && !(host->caps & MMC_CAP_NEEDS_POLL))
+		वापस ret;
 
 	host->detect_change = 0;
-	if (!ret) {
-		ret = _mmc_detect_card_removed(host);
-		if (ret && (host->caps & MMC_CAP_NEEDS_POLL)) {
+	अगर (!ret) अणु
+		ret = _mmc_detect_card_हटाओd(host);
+		अगर (ret && (host->caps & MMC_CAP_NEEDS_POLL)) अणु
 			/*
 			 * Schedule a detect work as soon as possible to let a
 			 * rescan handle the card removal.
 			 */
 			cancel_delayed_work(&host->detect);
 			_mmc_detect_change(host, 0, false);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(mmc_detect_card_removed);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(mmc_detect_card_हटाओd);
 
-void mmc_rescan(struct work_struct *work)
-{
-	struct mmc_host *host =
-		container_of(work, struct mmc_host, detect.work);
-	int i;
+व्योम mmc_rescan(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mmc_host *host =
+		container_of(work, काष्ठा mmc_host, detect.work);
+	पूर्णांक i;
 
-	if (host->rescan_disable)
-		return;
+	अगर (host->rescan_disable)
+		वापस;
 
-	/* If there is a non-removable card registered, only scan once */
-	if (!mmc_card_is_removable(host) && host->rescan_entered)
-		return;
+	/* If there is a non-removable card रेजिस्टरed, only scan once */
+	अगर (!mmc_card_is_removable(host) && host->rescan_entered)
+		वापस;
 	host->rescan_entered = 1;
 
-	if (host->trigger_card_event && host->ops->card_event) {
+	अगर (host->trigger_card_event && host->ops->card_event) अणु
 		mmc_claim_host(host);
 		host->ops->card_event(host);
 		mmc_release_host(host);
 		host->trigger_card_event = false;
-	}
+	पूर्ण
 
-	/* Verify a registered card to be functional, else remove it. */
-	if (host->bus_ops)
+	/* Verअगरy a रेजिस्टरed card to be functional, अन्यथा हटाओ it. */
+	अगर (host->bus_ops)
 		host->bus_ops->detect(host);
 
 	host->detect_change = 0;
 
-	/* if there still is a card present, stop here */
-	if (host->bus_ops != NULL)
-		goto out;
+	/* अगर there still is a card present, stop here */
+	अगर (host->bus_ops != शून्य)
+		जाओ out;
 
 	mmc_claim_host(host);
-	if (mmc_card_is_removable(host) && host->ops->get_cd &&
-			host->ops->get_cd(host) == 0) {
-		mmc_power_off(host);
+	अगर (mmc_card_is_removable(host) && host->ops->get_cd &&
+			host->ops->get_cd(host) == 0) अणु
+		mmc_घातer_off(host);
 		mmc_release_host(host);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* If an SD express card is present, then leave it as is. */
-	if (mmc_card_sd_express(host)) {
+	अगर (mmc_card_sd_express(host)) अणु
 		mmc_release_host(host);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(freqs); i++) {
-		unsigned int freq = freqs[i];
-		if (freq > host->f_max) {
-			if (i + 1 < ARRAY_SIZE(freqs))
-				continue;
+	क्रम (i = 0; i < ARRAY_SIZE(freqs); i++) अणु
+		अचिन्हित पूर्णांक freq = freqs[i];
+		अगर (freq > host->f_max) अणु
+			अगर (i + 1 < ARRAY_SIZE(freqs))
+				जारी;
 			freq = host->f_max;
-		}
-		if (!mmc_rescan_try_freq(host, max(freq, host->f_min)))
-			break;
-		if (freqs[i] <= host->f_min)
-			break;
-	}
+		पूर्ण
+		अगर (!mmc_rescan_try_freq(host, max(freq, host->f_min)))
+			अवरोध;
+		अगर (freqs[i] <= host->f_min)
+			अवरोध;
+	पूर्ण
 	mmc_release_host(host);
 
  out:
-	if (host->caps & MMC_CAP_NEEDS_POLL)
+	अगर (host->caps & MMC_CAP_NEEDS_POLL)
 		mmc_schedule_delayed_work(&host->detect, HZ);
-}
+पूर्ण
 
-void mmc_start_host(struct mmc_host *host)
-{
+व्योम mmc_start_host(काष्ठा mmc_host *host)
+अणु
 	host->f_init = max(min(freqs[0], host->f_max), host->f_min);
 	host->rescan_disable = 0;
 
-	if (!(host->caps2 & MMC_CAP2_NO_PRESCAN_POWERUP)) {
+	अगर (!(host->caps2 & MMC_CAP2_NO_PRESCAN_POWERUP)) अणु
 		mmc_claim_host(host);
-		mmc_power_up(host, host->ocr_avail);
+		mmc_घातer_up(host, host->ocr_avail);
 		mmc_release_host(host);
-	}
+	पूर्ण
 
 	mmc_gpiod_request_cd_irq(host);
 	_mmc_detect_change(host, 0, false);
-}
+पूर्ण
 
-void mmc_stop_host(struct mmc_host *host)
-{
-	if (host->slot.cd_irq >= 0) {
+व्योम mmc_stop_host(काष्ठा mmc_host *host)
+अणु
+	अगर (host->slot.cd_irq >= 0) अणु
 		mmc_gpio_set_cd_wake(host, false);
 		disable_irq(host->slot.cd_irq);
-	}
+	पूर्ण
 
 	host->rescan_disable = 1;
 	cancel_delayed_work_sync(&host->detect);
@@ -2254,54 +2255,54 @@ void mmc_stop_host(struct mmc_host *host)
 	/* clear pm flags now and let card drivers set them as needed */
 	host->pm_flags = 0;
 
-	if (host->bus_ops) {
-		/* Calling bus_ops->remove() with a claimed host can deadlock */
-		host->bus_ops->remove(host);
+	अगर (host->bus_ops) अणु
+		/* Calling bus_ops->हटाओ() with a claimed host can deadlock */
+		host->bus_ops->हटाओ(host);
 		mmc_claim_host(host);
 		mmc_detach_bus(host);
-		mmc_power_off(host);
+		mmc_घातer_off(host);
 		mmc_release_host(host);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mmc_claim_host(host);
-	mmc_power_off(host);
+	mmc_घातer_off(host);
 	mmc_release_host(host);
-}
+पूर्ण
 
-static int __init mmc_init(void)
-{
-	int ret;
+अटल पूर्णांक __init mmc_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = mmc_register_bus();
-	if (ret)
-		return ret;
+	ret = mmc_रेजिस्टर_bus();
+	अगर (ret)
+		वापस ret;
 
-	ret = mmc_register_host_class();
-	if (ret)
-		goto unregister_bus;
+	ret = mmc_रेजिस्टर_host_class();
+	अगर (ret)
+		जाओ unरेजिस्टर_bus;
 
-	ret = sdio_register_bus();
-	if (ret)
-		goto unregister_host_class;
+	ret = sdio_रेजिस्टर_bus();
+	अगर (ret)
+		जाओ unरेजिस्टर_host_class;
 
-	return 0;
+	वापस 0;
 
-unregister_host_class:
-	mmc_unregister_host_class();
-unregister_bus:
-	mmc_unregister_bus();
-	return ret;
-}
+unरेजिस्टर_host_class:
+	mmc_unरेजिस्टर_host_class();
+unरेजिस्टर_bus:
+	mmc_unरेजिस्टर_bus();
+	वापस ret;
+पूर्ण
 
-static void __exit mmc_exit(void)
-{
-	sdio_unregister_bus();
-	mmc_unregister_host_class();
-	mmc_unregister_bus();
-}
+अटल व्योम __निकास mmc_निकास(व्योम)
+अणु
+	sdio_unरेजिस्टर_bus();
+	mmc_unरेजिस्टर_host_class();
+	mmc_unरेजिस्टर_bus();
+पूर्ण
 
 subsys_initcall(mmc_init);
-module_exit(mmc_exit);
+module_निकास(mmc_निकास);
 
 MODULE_LICENSE("GPL");

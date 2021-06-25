@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  Machine specific NMI handling for generic.
+ *  Machine specअगरic NMI handling क्रम generic.
  *  Split out from traps.c by Osamu Tomita <tomita@cinet.co.jp>
  */
-#ifndef _ASM_X86_MACH_DEFAULT_MACH_TRAPS_H
-#define _ASM_X86_MACH_DEFAULT_MACH_TRAPS_H
+#अगर_अघोषित _ASM_X86_MACH_DEFAULT_MACH_TRAPS_H
+#घोषणा _ASM_X86_MACH_DEFAULT_MACH_TRAPS_H
 
-#include <asm/mc146818rtc.h>
+#समावेश <यंत्र/mc146818rtc.h>
 
-#define NMI_REASON_PORT		0x61
+#घोषणा NMI_REASON_PORT		0x61
 
-#define NMI_REASON_SERR		0x80
-#define NMI_REASON_IOCHK	0x40
-#define NMI_REASON_MASK		(NMI_REASON_SERR | NMI_REASON_IOCHK)
+#घोषणा NMI_REASON_SERR		0x80
+#घोषणा NMI_REASON_IOCHK	0x40
+#घोषणा NMI_REASON_MASK		(NMI_REASON_SERR | NMI_REASON_IOCHK)
 
-#define NMI_REASON_CLEAR_SERR	0x04
-#define NMI_REASON_CLEAR_IOCHK	0x08
-#define NMI_REASON_CLEAR_MASK	0x0f
+#घोषणा NMI_REASON_CLEAR_SERR	0x04
+#घोषणा NMI_REASON_CLEAR_IOCHK	0x08
+#घोषणा NMI_REASON_CLEAR_MASK	0x0f
 
-static inline unsigned char default_get_nmi_reason(void)
-{
-	return inb(NMI_REASON_PORT);
-}
+अटल अंतरभूत अचिन्हित अक्षर शेष_get_nmi_reason(व्योम)
+अणु
+	वापस inb(NMI_REASON_PORT);
+पूर्ण
 
-static inline void reassert_nmi(void)
-{
-	int old_reg = -1;
+अटल अंतरभूत व्योम reनिश्चित_nmi(व्योम)
+अणु
+	पूर्णांक old_reg = -1;
 
-	if (do_i_have_lock_cmos())
+	अगर (करो_i_have_lock_cmos())
 		old_reg = current_lock_cmos_reg();
-	else
-		lock_cmos(0); /* register doesn't matter here */
+	अन्यथा
+		lock_cmos(0); /* रेजिस्टर करोesn't matter here */
 	outb(0x8f, 0x70);
 	inb(0x71);		/* dummy */
 	outb(0x0f, 0x70);
 	inb(0x71);		/* dummy */
-	if (old_reg >= 0)
+	अगर (old_reg >= 0)
 		outb(old_reg, 0x70);
-	else
+	अन्यथा
 		unlock_cmos();
-}
+पूर्ण
 
-#endif /* _ASM_X86_MACH_DEFAULT_MACH_TRAPS_H */
+#पूर्ण_अगर /* _ASM_X86_MACH_DEFAULT_MACH_TRAPS_H */

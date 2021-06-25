@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Framebuffer driver for mdpy (mediated virtual pci display device).
+ * Framebuffer driver क्रम mdpy (mediated भव pci display device).
  *
- * See mdpy-defs.h for device specs
+ * See mdpy-defs.h क्रम device specs
  *
  *   (c) Gerd Hoffmann <kraxel@redhat.com>
  *
  * Using some code snippets from simplefb and cirrusfb.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
-#include <linux/errno.h>
-#include <linux/fb.h>
-#include <linux/io.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <drm/drm_fourcc.h>
-#include "mdpy-defs.h"
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fb.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश "mdpy-defs.h"
 
-static const struct fb_fix_screeninfo mdpy_fb_fix = {
+अटल स्थिर काष्ठा fb_fix_screeninfo mdpy_fb_fix = अणु
 	.id		= "mdpy-fb",
 	.type		= FB_TYPE_PACKED_PIXELS,
 	.visual		= FB_VISUAL_TRUECOLOR,
 	.accel		= FB_ACCEL_NONE,
-};
+पूर्ण;
 
-static const struct fb_var_screeninfo mdpy_fb_var = {
+अटल स्थिर काष्ठा fb_var_screeninfo mdpy_fb_var = अणु
 	.height		= -1,
 	.width		= -1,
 	.activate	= FB_ACTIVATE_NOW,
@@ -47,97 +48,97 @@ static const struct fb_var_screeninfo mdpy_fb_var = {
 	.red.length	= 8,
 	.green.length	= 8,
 	.blue.length	= 8,
-};
+पूर्ण;
 
-#define PSEUDO_PALETTE_SIZE 16
+#घोषणा PSEUDO_PALETTE_SIZE 16
 
-struct mdpy_fb_par {
+काष्ठा mdpy_fb_par अणु
 	u32 palette[PSEUDO_PALETTE_SIZE];
-};
+पूर्ण;
 
-static int mdpy_fb_setcolreg(u_int regno, u_int red, u_int green, u_int blue,
-			      u_int transp, struct fb_info *info)
-{
-	u32 *pal = info->pseudo_palette;
+अटल पूर्णांक mdpy_fb_setcolreg(u_पूर्णांक regno, u_पूर्णांक red, u_पूर्णांक green, u_पूर्णांक blue,
+			      u_पूर्णांक transp, काष्ठा fb_info *info)
+अणु
+	u32 *pal = info->pseuकरो_palette;
 	u32 cr = red >> (16 - info->var.red.length);
 	u32 cg = green >> (16 - info->var.green.length);
 	u32 cb = blue >> (16 - info->var.blue.length);
 	u32 value, mask;
 
-	if (regno >= PSEUDO_PALETTE_SIZE)
-		return -EINVAL;
+	अगर (regno >= PSEUDO_PALETTE_SIZE)
+		वापस -EINVAL;
 
 	value = (cr << info->var.red.offset) |
 		(cg << info->var.green.offset) |
 		(cb << info->var.blue.offset);
-	if (info->var.transp.length > 0) {
+	अगर (info->var.transp.length > 0) अणु
 		mask = (1 << info->var.transp.length) - 1;
 		mask <<= info->var.transp.offset;
 		value |= mask;
-	}
+	पूर्ण
 	pal[regno] = value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mdpy_fb_destroy(struct fb_info *info)
-{
-	if (info->screen_base)
+अटल व्योम mdpy_fb_destroy(काष्ठा fb_info *info)
+अणु
+	अगर (info->screen_base)
 		iounmap(info->screen_base);
-}
+पूर्ण
 
-static const struct fb_ops mdpy_fb_ops = {
+अटल स्थिर काष्ठा fb_ops mdpy_fb_ops = अणु
 	.owner		= THIS_MODULE,
 	.fb_destroy	= mdpy_fb_destroy,
 	.fb_setcolreg	= mdpy_fb_setcolreg,
 	.fb_fillrect	= cfb_fillrect,
 	.fb_copyarea	= cfb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
-};
+पूर्ण;
 
-static int mdpy_fb_probe(struct pci_dev *pdev,
-			 const struct pci_device_id *ent)
-{
-	struct fb_info *info;
-	struct mdpy_fb_par *par;
-	u32 format, width, height;
-	int ret;
+अटल पूर्णांक mdpy_fb_probe(काष्ठा pci_dev *pdev,
+			 स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा fb_info *info;
+	काष्ठा mdpy_fb_par *par;
+	u32 क्रमmat, width, height;
+	पूर्णांक ret;
 
 	ret = pci_enable_device(pdev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = pci_request_regions(pdev, "mdpy-fb");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	pci_read_config_dword(pdev, MDPY_FORMAT_OFFSET, &format);
-	pci_read_config_dword(pdev, MDPY_WIDTH_OFFSET,	&width);
-	pci_read_config_dword(pdev, MDPY_HEIGHT_OFFSET, &height);
-	if (format != DRM_FORMAT_XRGB8888) {
+	pci_पढ़ो_config_dword(pdev, MDPY_FORMAT_OFFSET, &क्रमmat);
+	pci_पढ़ो_config_dword(pdev, MDPY_WIDTH_OFFSET,	&width);
+	pci_पढ़ो_config_dword(pdev, MDPY_HEIGHT_OFFSET, &height);
+	अगर (क्रमmat != DRM_FORMAT_XRGB8888) अणु
 		pci_err(pdev, "format mismatch (0x%x != 0x%x)\n",
-			format, DRM_FORMAT_XRGB8888);
+			क्रमmat, DRM_FORMAT_XRGB8888);
 		ret = -EINVAL;
-		goto err_release_regions;
-	}
-	if (width < 100	 || width > 10000) {
+		जाओ err_release_regions;
+	पूर्ण
+	अगर (width < 100	 || width > 10000) अणु
 		pci_err(pdev, "width (%d) out of range\n", width);
 		ret = -EINVAL;
-		goto err_release_regions;
-	}
-	if (height < 100 || height > 10000) {
+		जाओ err_release_regions;
+	पूर्ण
+	अगर (height < 100 || height > 10000) अणु
 		pci_err(pdev, "height (%d) out of range\n", height);
 		ret = -EINVAL;
-		goto err_release_regions;
-	}
+		जाओ err_release_regions;
+	पूर्ण
 	pci_info(pdev, "mdpy found: %dx%d framebuffer\n",
 		 width, height);
 
-	info = framebuffer_alloc(sizeof(struct mdpy_fb_par), &pdev->dev);
-	if (!info) {
+	info = framebuffer_alloc(माप(काष्ठा mdpy_fb_par), &pdev->dev);
+	अगर (!info) अणु
 		ret = -ENOMEM;
-		goto err_release_regions;
-	}
+		जाओ err_release_regions;
+	पूर्ण
 	pci_set_drvdata(pdev, info);
 	par = info->par;
 
@@ -149,38 +150,38 @@ static int mdpy_fb_probe(struct pci_dev *pdev,
 	info->var = mdpy_fb_var;
 	info->var.xres = width;
 	info->var.yres = height;
-	info->var.xres_virtual = width;
-	info->var.yres_virtual = height;
+	info->var.xres_भव = width;
+	info->var.yres_भव = height;
 
 	info->screen_size = info->fix.smem_len;
 	info->screen_base = ioremap(info->fix.smem_start,
 				    info->screen_size);
-	if (!info->screen_base) {
+	अगर (!info->screen_base) अणु
 		pci_err(pdev, "ioremap(pcibar) failed\n");
 		ret = -EIO;
-		goto err_release_fb;
-	}
+		जाओ err_release_fb;
+	पूर्ण
 
 	info->apertures = alloc_apertures(1);
-	if (!info->apertures) {
+	अगर (!info->apertures) अणु
 		ret = -ENOMEM;
-		goto err_unmap;
-	}
+		जाओ err_unmap;
+	पूर्ण
 	info->apertures->ranges[0].base = info->fix.smem_start;
 	info->apertures->ranges[0].size = info->fix.smem_len;
 
 	info->fbops = &mdpy_fb_ops;
 	info->flags = FBINFO_DEFAULT;
-	info->pseudo_palette = par->palette;
+	info->pseuकरो_palette = par->palette;
 
-	ret = register_framebuffer(info);
-	if (ret < 0) {
+	ret = रेजिस्टर_framebuffer(info);
+	अगर (ret < 0) अणु
 		pci_err(pdev, "mdpy-fb device register failed: %d\n", ret);
-		goto err_unmap;
-	}
+		जाओ err_unmap;
+	पूर्ण
 
 	pci_info(pdev, "fb%d registered\n", info->node);
-	return 0;
+	वापस 0;
 
 err_unmap:
 	iounmap(info->screen_base);
@@ -191,45 +192,45 @@ err_release_fb:
 err_release_regions:
 	pci_release_regions(pdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mdpy_fb_remove(struct pci_dev *pdev)
-{
-	struct fb_info *info = pci_get_drvdata(pdev);
+अटल व्योम mdpy_fb_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा fb_info *info = pci_get_drvdata(pdev);
 
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 	framebuffer_release(info);
-}
+पूर्ण
 
-static struct pci_device_id mdpy_fb_pci_table[] = {
-	{
-		.vendor	   = MDPY_PCI_VENDOR_ID,
+अटल काष्ठा pci_device_id mdpy_fb_pci_table[] = अणु
+	अणु
+		.venकरोr	   = MDPY_PCI_VENDOR_ID,
 		.device	   = MDPY_PCI_DEVICE_ID,
-		.subvendor = MDPY_PCI_SUBVENDOR_ID,
+		.subvenकरोr = MDPY_PCI_SUBVENDOR_ID,
 		.subdevice = MDPY_PCI_SUBDEVICE_ID,
-	}, {
+	पूर्ण, अणु
 		/* end of list */
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct pci_driver mdpy_fb_pci_driver = {
+अटल काष्ठा pci_driver mdpy_fb_pci_driver = अणु
 	.name		= "mdpy-fb",
 	.id_table	= mdpy_fb_pci_table,
 	.probe		= mdpy_fb_probe,
-	.remove		= mdpy_fb_remove,
-};
+	.हटाओ		= mdpy_fb_हटाओ,
+पूर्ण;
 
-static int __init mdpy_fb_init(void)
-{
-	int ret;
+अटल पूर्णांक __init mdpy_fb_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = pci_register_driver(&mdpy_fb_pci_driver);
-	if (ret)
-		return ret;
+	ret = pci_रेजिस्टर_driver(&mdpy_fb_pci_driver);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(mdpy_fb_init);
 

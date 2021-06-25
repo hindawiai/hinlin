@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef TRACEPOINT_DEFS_H
-#define TRACEPOINT_DEFS_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित TRACEPOINT_DEFS_H
+#घोषणा TRACEPOINT_DEFS_H 1
 
 /*
  * File can be included directly by headers who only want to access
- * tracepoint->key to guard out of line trace calls, or the definition of
- * trace_print_flags{_u64}. Otherwise linux/tracepoint.h should be used.
+ * tracepoपूर्णांक->key to guard out of line trace calls, or the definition of
+ * trace_prपूर्णांक_flagsअणु_u64पूर्ण. Otherwise linux/tracepoपूर्णांक.h should be used.
  */
 
-#include <linux/atomic.h>
-#include <linux/static_key.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/अटल_key.h>
 
-struct static_call_key;
+काष्ठा अटल_call_key;
 
-struct trace_print_flags {
-	unsigned long		mask;
-	const char		*name;
-};
+काष्ठा trace_prपूर्णांक_flags अणु
+	अचिन्हित दीर्घ		mask;
+	स्थिर अक्षर		*name;
+पूर्ण;
 
-struct trace_print_flags_u64 {
-	unsigned long long	mask;
-	const char		*name;
-};
+काष्ठा trace_prपूर्णांक_flags_u64 अणु
+	अचिन्हित दीर्घ दीर्घ	mask;
+	स्थिर अक्षर		*name;
+पूर्ण;
 
-struct tracepoint_func {
-	void *func;
-	void *data;
-	int prio;
-};
+काष्ठा tracepoपूर्णांक_func अणु
+	व्योम *func;
+	व्योम *data;
+	पूर्णांक prio;
+पूर्ण;
 
-struct tracepoint {
-	const char *name;		/* Tracepoint name */
-	struct static_key key;
-	struct static_call_key *static_call_key;
-	void *static_call_tramp;
-	void *iterator;
-	int (*regfunc)(void);
-	void (*unregfunc)(void);
-	struct tracepoint_func __rcu *funcs;
-};
+काष्ठा tracepoपूर्णांक अणु
+	स्थिर अक्षर *name;		/* Tracepoपूर्णांक name */
+	काष्ठा अटल_key key;
+	काष्ठा अटल_call_key *अटल_call_key;
+	व्योम *अटल_call_tramp;
+	व्योम *iterator;
+	पूर्णांक (*regfunc)(व्योम);
+	व्योम (*unregfunc)(व्योम);
+	काष्ठा tracepoपूर्णांक_func __rcu *funcs;
+पूर्ण;
 
-#ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
-typedef const int tracepoint_ptr_t;
-#else
-typedef struct tracepoint * const tracepoint_ptr_t;
-#endif
+#अगर_घोषित CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
+प्रकार स्थिर पूर्णांक tracepoपूर्णांक_ptr_t;
+#अन्यथा
+प्रकार काष्ठा tracepoपूर्णांक * स्थिर tracepoपूर्णांक_ptr_t;
+#पूर्ण_अगर
 
-struct bpf_raw_event_map {
-	struct tracepoint	*tp;
-	void			*bpf_func;
+काष्ठा bpf_raw_event_map अणु
+	काष्ठा tracepoपूर्णांक	*tp;
+	व्योम			*bpf_func;
 	u32			num_args;
 	u32			writable_size;
-} __aligned(32);
+पूर्ण __aligned(32);
 
 /*
- * If a tracepoint needs to be called from a header file, it is not
- * recommended to call it directly, as tracepoints in header files
+ * If a tracepoपूर्णांक needs to be called from a header file, it is not
+ * recommended to call it directly, as tracepoपूर्णांकs in header files
  * may cause side-effects and bloat the kernel. Instead, use
- * tracepoint_enabled() to test if the tracepoint is enabled, then if
+ * tracepoपूर्णांक_enabled() to test अगर the tracepoपूर्णांक is enabled, then अगर
  * it is, call a wrapper function defined in a C file that will then
- * call the tracepoint.
+ * call the tracepoपूर्णांक.
  *
  * For "trace_foo_bar()", you would need to create a wrapper function
  * in a C file to call trace_foo_bar():
- *   void do_trace_foo_bar(args) { trace_foo_bar(args); }
- * Then in the header file, declare the tracepoint:
+ *   व्योम करो_trace_foo_bar(args) अणु trace_foo_bar(args); पूर्ण
+ * Then in the header file, declare the tracepoपूर्णांक:
  *   DECLARE_TRACEPOINT(foo_bar);
  * And call your wrapper:
- *   static inline void some_inlined_function() {
+ *   अटल अंतरभूत व्योम some_अंतरभूतd_function() अणु
  *            [..]
- *            if (tracepoint_enabled(foo_bar))
- *                    do_trace_foo_bar(args);
+ *            अगर (tracepoपूर्णांक_enabled(foo_bar))
+ *                    करो_trace_foo_bar(args);
  *            [..]
- *   }
+ *   पूर्ण
  *
- * Note: tracepoint_enabled(foo_bar) is equivalent to trace_foo_bar_enabled()
+ * Note: tracepoपूर्णांक_enabled(foo_bar) is equivalent to trace_foo_bar_enabled()
  *   but is safe to have in headers, where trace_foo_bar_enabled() is not.
  */
-#define DECLARE_TRACEPOINT(tp) \
-	extern struct tracepoint __tracepoint_##tp
+#घोषणा DECLARE_TRACEPOINT(tp) \
+	बाह्य काष्ठा tracepoपूर्णांक __tracepoपूर्णांक_##tp
 
-#ifdef CONFIG_TRACEPOINTS
-# define tracepoint_enabled(tp) \
-	static_key_false(&(__tracepoint_##tp).key)
-#else
-# define tracepoint_enabled(tracepoint) false
-#endif
+#अगर_घोषित CONFIG_TRACEPOINTS
+# define tracepoपूर्णांक_enabled(tp) \
+	अटल_key_false(&(__tracepoपूर्णांक_##tp).key)
+#अन्यथा
+# define tracepoपूर्णांक_enabled(tracepoपूर्णांक) false
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVBIOS_IMAGE_H__
-#define __NVBIOS_IMAGE_H__
-struct nvbios_image {
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVBIOS_IMAGE_H__
+#घोषणा __NVBIOS_IMAGE_H__
+काष्ठा nvbios_image अणु
 	u32  base;
 	u32  size;
 	u8   type;
 	bool last;
-};
+पूर्ण;
 
-bool nvbios_image(struct nvkm_bios *, int, struct nvbios_image *);
-#endif
+bool nvbios_image(काष्ठा nvkm_bios *, पूर्णांक, काष्ठा nvbios_image *);
+#पूर्ण_अगर

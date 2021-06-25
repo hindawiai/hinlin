@@ -1,244 +1,245 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * phy-da8xx-usb - TI DaVinci DA8xx USB PHY driver
  *
  * Copyright (C) 2016 David Lechner <david@lechnology.com>
  */
 
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/mfd/da8xx-cfgchip.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/phy/phy.h>
-#include <linux/platform_data/phy-da8xx-usb.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/mfd/da8xx-cfgchip.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/platक्रमm_data/phy-da8xx-usb.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#define PHY_INIT_BITS	(CFGCHIP2_SESENDEN | CFGCHIP2_VBDTCTEN)
+#घोषणा PHY_INIT_BITS	(CFGCHIP2_SESENDEN | CFGCHIP2_VBDTCTEN)
 
-struct da8xx_usb_phy {
-	struct phy_provider	*phy_provider;
-	struct phy		*usb11_phy;
-	struct phy		*usb20_phy;
-	struct clk		*usb11_clk;
-	struct clk		*usb20_clk;
-	struct regmap		*regmap;
-};
+काष्ठा da8xx_usb_phy अणु
+	काष्ठा phy_provider	*phy_provider;
+	काष्ठा phy		*usb11_phy;
+	काष्ठा phy		*usb20_phy;
+	काष्ठा clk		*usb11_clk;
+	काष्ठा clk		*usb20_clk;
+	काष्ठा regmap		*regmap;
+पूर्ण;
 
-static int da8xx_usb11_phy_power_on(struct phy *phy)
-{
-	struct da8xx_usb_phy *d_phy = phy_get_drvdata(phy);
-	int ret;
+अटल पूर्णांक da8xx_usb11_phy_घातer_on(काष्ठा phy *phy)
+अणु
+	काष्ठा da8xx_usb_phy *d_phy = phy_get_drvdata(phy);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(d_phy->usb11_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	regmap_write_bits(d_phy->regmap, CFGCHIP(2), CFGCHIP2_USB1SUSPENDM,
+	regmap_ग_लिखो_bits(d_phy->regmap, CFGCHIP(2), CFGCHIP2_USB1SUSPENDM,
 			  CFGCHIP2_USB1SUSPENDM);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da8xx_usb11_phy_power_off(struct phy *phy)
-{
-	struct da8xx_usb_phy *d_phy = phy_get_drvdata(phy);
+अटल पूर्णांक da8xx_usb11_phy_घातer_off(काष्ठा phy *phy)
+अणु
+	काष्ठा da8xx_usb_phy *d_phy = phy_get_drvdata(phy);
 
-	regmap_write_bits(d_phy->regmap, CFGCHIP(2), CFGCHIP2_USB1SUSPENDM, 0);
+	regmap_ग_लिखो_bits(d_phy->regmap, CFGCHIP(2), CFGCHIP2_USB1SUSPENDM, 0);
 
 	clk_disable_unprepare(d_phy->usb11_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct phy_ops da8xx_usb11_phy_ops = {
-	.power_on	= da8xx_usb11_phy_power_on,
-	.power_off	= da8xx_usb11_phy_power_off,
+अटल स्थिर काष्ठा phy_ops da8xx_usb11_phy_ops = अणु
+	.घातer_on	= da8xx_usb11_phy_घातer_on,
+	.घातer_off	= da8xx_usb11_phy_घातer_off,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int da8xx_usb20_phy_power_on(struct phy *phy)
-{
-	struct da8xx_usb_phy *d_phy = phy_get_drvdata(phy);
-	int ret;
+अटल पूर्णांक da8xx_usb20_phy_घातer_on(काष्ठा phy *phy)
+अणु
+	काष्ठा da8xx_usb_phy *d_phy = phy_get_drvdata(phy);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(d_phy->usb20_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	regmap_write_bits(d_phy->regmap, CFGCHIP(2), CFGCHIP2_OTGPWRDN, 0);
+	regmap_ग_लिखो_bits(d_phy->regmap, CFGCHIP(2), CFGCHIP2_OTGPWRDN, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da8xx_usb20_phy_power_off(struct phy *phy)
-{
-	struct da8xx_usb_phy *d_phy = phy_get_drvdata(phy);
+अटल पूर्णांक da8xx_usb20_phy_घातer_off(काष्ठा phy *phy)
+अणु
+	काष्ठा da8xx_usb_phy *d_phy = phy_get_drvdata(phy);
 
-	regmap_write_bits(d_phy->regmap, CFGCHIP(2), CFGCHIP2_OTGPWRDN,
+	regmap_ग_लिखो_bits(d_phy->regmap, CFGCHIP(2), CFGCHIP2_OTGPWRDN,
 			  CFGCHIP2_OTGPWRDN);
 
 	clk_disable_unprepare(d_phy->usb20_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da8xx_usb20_phy_set_mode(struct phy *phy,
-				    enum phy_mode mode, int submode)
-{
-	struct da8xx_usb_phy *d_phy = phy_get_drvdata(phy);
+अटल पूर्णांक da8xx_usb20_phy_set_mode(काष्ठा phy *phy,
+				    क्रमागत phy_mode mode, पूर्णांक submode)
+अणु
+	काष्ठा da8xx_usb_phy *d_phy = phy_get_drvdata(phy);
 	u32 val;
 
-	switch (mode) {
-	case PHY_MODE_USB_HOST:		/* Force VBUS valid, ID = 0 */
+	चयन (mode) अणु
+	हाल PHY_MODE_USB_HOST:		/* Force VBUS valid, ID = 0 */
 		val = CFGCHIP2_OTGMODE_FORCE_HOST;
-		break;
-	case PHY_MODE_USB_DEVICE:	/* Force VBUS valid, ID = 1 */
+		अवरोध;
+	हाल PHY_MODE_USB_DEVICE:	/* Force VBUS valid, ID = 1 */
 		val = CFGCHIP2_OTGMODE_FORCE_DEVICE;
-		break;
-	case PHY_MODE_USB_OTG:	/* Don't override the VBUS/ID comparators */
+		अवरोध;
+	हाल PHY_MODE_USB_OTG:	/* Don't override the VBUS/ID comparators */
 		val = CFGCHIP2_OTGMODE_NO_OVERRIDE;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	regmap_write_bits(d_phy->regmap, CFGCHIP(2), CFGCHIP2_OTGMODE_MASK,
+	regmap_ग_लिखो_bits(d_phy->regmap, CFGCHIP(2), CFGCHIP2_OTGMODE_MASK,
 			  val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct phy_ops da8xx_usb20_phy_ops = {
-	.power_on	= da8xx_usb20_phy_power_on,
-	.power_off	= da8xx_usb20_phy_power_off,
+अटल स्थिर काष्ठा phy_ops da8xx_usb20_phy_ops = अणु
+	.घातer_on	= da8xx_usb20_phy_घातer_on,
+	.घातer_off	= da8xx_usb20_phy_घातer_off,
 	.set_mode	= da8xx_usb20_phy_set_mode,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct phy *da8xx_usb_phy_of_xlate(struct device *dev,
-					 struct of_phandle_args *args)
-{
-	struct da8xx_usb_phy *d_phy = dev_get_drvdata(dev);
+अटल काष्ठा phy *da8xx_usb_phy_of_xlate(काष्ठा device *dev,
+					 काष्ठा of_phandle_args *args)
+अणु
+	काष्ठा da8xx_usb_phy *d_phy = dev_get_drvdata(dev);
 
-	if (!d_phy)
-		return ERR_PTR(-ENODEV);
+	अगर (!d_phy)
+		वापस ERR_PTR(-ENODEV);
 
-	switch (args->args[0]) {
-	case 0:
-		return d_phy->usb20_phy;
-	case 1:
-		return d_phy->usb11_phy;
-	default:
-		return ERR_PTR(-EINVAL);
-	}
-}
+	चयन (args->args[0]) अणु
+	हाल 0:
+		वापस d_phy->usb20_phy;
+	हाल 1:
+		वापस d_phy->usb11_phy;
+	शेष:
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
+पूर्ण
 
-static int da8xx_usb_phy_probe(struct platform_device *pdev)
-{
-	struct device		*dev = &pdev->dev;
-	struct da8xx_usb_phy_platform_data *pdata = dev->platform_data;
-	struct device_node	*node = dev->of_node;
-	struct da8xx_usb_phy	*d_phy;
+अटल पूर्णांक da8xx_usb_phy_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device		*dev = &pdev->dev;
+	काष्ठा da8xx_usb_phy_platक्रमm_data *pdata = dev->platक्रमm_data;
+	काष्ठा device_node	*node = dev->of_node;
+	काष्ठा da8xx_usb_phy	*d_phy;
 
-	d_phy = devm_kzalloc(dev, sizeof(*d_phy), GFP_KERNEL);
-	if (!d_phy)
-		return -ENOMEM;
+	d_phy = devm_kzalloc(dev, माप(*d_phy), GFP_KERNEL);
+	अगर (!d_phy)
+		वापस -ENOMEM;
 
-	if (pdata)
+	अगर (pdata)
 		d_phy->regmap = pdata->cfgchip;
-	else
+	अन्यथा
 		d_phy->regmap = syscon_regmap_lookup_by_compatible(
 							"ti,da830-cfgchip");
-	if (IS_ERR(d_phy->regmap)) {
+	अगर (IS_ERR(d_phy->regmap)) अणु
 		dev_err(dev, "Failed to get syscon\n");
-		return PTR_ERR(d_phy->regmap);
-	}
+		वापस PTR_ERR(d_phy->regmap);
+	पूर्ण
 
 	d_phy->usb11_clk = devm_clk_get(dev, "usb1_clk48");
-	if (IS_ERR(d_phy->usb11_clk)) {
+	अगर (IS_ERR(d_phy->usb11_clk)) अणु
 		dev_err(dev, "Failed to get usb1_clk48\n");
-		return PTR_ERR(d_phy->usb11_clk);
-	}
+		वापस PTR_ERR(d_phy->usb11_clk);
+	पूर्ण
 
 	d_phy->usb20_clk = devm_clk_get(dev, "usb0_clk48");
-	if (IS_ERR(d_phy->usb20_clk)) {
+	अगर (IS_ERR(d_phy->usb20_clk)) अणु
 		dev_err(dev, "Failed to get usb0_clk48\n");
-		return PTR_ERR(d_phy->usb20_clk);
-	}
+		वापस PTR_ERR(d_phy->usb20_clk);
+	पूर्ण
 
 	d_phy->usb11_phy = devm_phy_create(dev, node, &da8xx_usb11_phy_ops);
-	if (IS_ERR(d_phy->usb11_phy)) {
+	अगर (IS_ERR(d_phy->usb11_phy)) अणु
 		dev_err(dev, "Failed to create usb11 phy\n");
-		return PTR_ERR(d_phy->usb11_phy);
-	}
+		वापस PTR_ERR(d_phy->usb11_phy);
+	पूर्ण
 
 	d_phy->usb20_phy = devm_phy_create(dev, node, &da8xx_usb20_phy_ops);
-	if (IS_ERR(d_phy->usb20_phy)) {
+	अगर (IS_ERR(d_phy->usb20_phy)) अणु
 		dev_err(dev, "Failed to create usb20 phy\n");
-		return PTR_ERR(d_phy->usb20_phy);
-	}
+		वापस PTR_ERR(d_phy->usb20_phy);
+	पूर्ण
 
-	platform_set_drvdata(pdev, d_phy);
+	platक्रमm_set_drvdata(pdev, d_phy);
 	phy_set_drvdata(d_phy->usb11_phy, d_phy);
 	phy_set_drvdata(d_phy->usb20_phy, d_phy);
 
-	if (node) {
-		d_phy->phy_provider = devm_of_phy_provider_register(dev,
+	अगर (node) अणु
+		d_phy->phy_provider = devm_of_phy_provider_रेजिस्टर(dev,
 							da8xx_usb_phy_of_xlate);
-		if (IS_ERR(d_phy->phy_provider)) {
+		अगर (IS_ERR(d_phy->phy_provider)) अणु
 			dev_err(dev, "Failed to create phy provider\n");
-			return PTR_ERR(d_phy->phy_provider);
-		}
-	} else {
-		int ret;
+			वापस PTR_ERR(d_phy->phy_provider);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		पूर्णांक ret;
 
 		ret = phy_create_lookup(d_phy->usb11_phy, "usb-phy",
 					"ohci-da8xx");
-		if (ret)
+		अगर (ret)
 			dev_warn(dev, "Failed to create usb11 phy lookup\n");
 		ret = phy_create_lookup(d_phy->usb20_phy, "usb-phy",
 					"musb-da8xx");
-		if (ret)
+		अगर (ret)
 			dev_warn(dev, "Failed to create usb20 phy lookup\n");
-	}
+	पूर्ण
 
-	regmap_write_bits(d_phy->regmap, CFGCHIP(2),
+	regmap_ग_लिखो_bits(d_phy->regmap, CFGCHIP(2),
 			  PHY_INIT_BITS, PHY_INIT_BITS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da8xx_usb_phy_remove(struct platform_device *pdev)
-{
-	struct da8xx_usb_phy *d_phy = platform_get_drvdata(pdev);
+अटल पूर्णांक da8xx_usb_phy_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा da8xx_usb_phy *d_phy = platक्रमm_get_drvdata(pdev);
 
-	if (!pdev->dev.of_node) {
-		phy_remove_lookup(d_phy->usb20_phy, "usb-phy", "musb-da8xx");
-		phy_remove_lookup(d_phy->usb11_phy, "usb-phy", "ohci-da8xx");
-	}
+	अगर (!pdev->dev.of_node) अणु
+		phy_हटाओ_lookup(d_phy->usb20_phy, "usb-phy", "musb-da8xx");
+		phy_हटाओ_lookup(d_phy->usb11_phy, "usb-phy", "ohci-da8xx");
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id da8xx_usb_phy_ids[] = {
-	{ .compatible = "ti,da830-usb-phy" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id da8xx_usb_phy_ids[] = अणु
+	अणु .compatible = "ti,da830-usb-phy" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, da8xx_usb_phy_ids);
 
-static struct platform_driver da8xx_usb_phy_driver = {
+अटल काष्ठा platक्रमm_driver da8xx_usb_phy_driver = अणु
 	.probe	= da8xx_usb_phy_probe,
-	.remove	= da8xx_usb_phy_remove,
-	.driver	= {
+	.हटाओ	= da8xx_usb_phy_हटाओ,
+	.driver	= अणु
 		.name	= "da8xx-usb-phy",
 		.of_match_table = da8xx_usb_phy_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(da8xx_usb_phy_driver);
+module_platक्रमm_driver(da8xx_usb_phy_driver);
 
 MODULE_ALIAS("platform:da8xx-usb-phy");
 MODULE_AUTHOR("David Lechner <david@lechnology.com>");

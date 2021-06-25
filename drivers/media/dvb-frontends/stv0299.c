@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-    Driver for ST STV0299 demodulator
+    Driver क्रम ST STV0299 demodulator
 
     Copyright (C) 2001-2002 Convergence Integrated Media GmbH
 	<ralph@convergence.de>,
@@ -15,231 +16,231 @@
 
     LG TDQF-S001F
 
-    Copyright (C) 2002 Felix Domke <tmbinc@elitedvb.net>
+    Copyright (C) 2002 Felix Domke <पंचांगbinc@elitedvb.net>
 		     & Andreas Oberritter <obi@linuxtv.org>
 
 
-    Support for Samsung TBMU24112IMB used on Technisat SkyStar2 rev. 2.6B
+    Support क्रम Samsung TBMU24112IMB used on Technisat SkyStar2 rev. 2.6B
 
-    Copyright (C) 2003 Vadim Catana <skystar@moldova.cc>:
+    Copyright (C) 2003 Vadim Catana <skystar@molकरोva.cc>:
 
-    Support for Philips SU1278 on Technotrend hardware
+    Support क्रम Philips SU1278 on Technotrend hardware
 
     Copyright (C) 2004 Andrew de Quincey <adq_dvb@lidskialf.net>
 
 
 */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/ktime.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <asm/div64.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <यंत्र/भाग64.h>
 
-#include <media/dvb_frontend.h>
-#include "stv0299.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "stv0299.h"
 
-struct stv0299_state {
-	struct i2c_adapter* i2c;
-	const struct stv0299_config* config;
-	struct dvb_frontend frontend;
+काष्ठा stv0299_state अणु
+	काष्ठा i2c_adapter* i2c;
+	स्थिर काष्ठा stv0299_config* config;
+	काष्ठा dvb_frontend frontend;
 
 	u8 initialised:1;
 	u32 tuner_frequency;
 	u32 symbol_rate;
-	enum fe_code_rate fec_inner;
-	int errmode;
+	क्रमागत fe_code_rate fec_inner;
+	पूर्णांक errmode;
 	u32 ucblocks;
 	u8 mcr_reg;
-};
+पूर्ण;
 
-#define STATUS_BER 0
-#define STATUS_UCBLOCKS 1
+#घोषणा STATUS_BER 0
+#घोषणा STATUS_UCBLOCKS 1
 
-static int debug;
-static int debug_legacy_dish_switch;
-#define dprintk(args...) \
-	do { \
-		if (debug) printk(KERN_DEBUG "stv0299: " args); \
-	} while (0)
+अटल पूर्णांक debug;
+अटल पूर्णांक debug_legacy_dish_चयन;
+#घोषणा dprपूर्णांकk(args...) \
+	करो अणु \
+		अगर (debug) prपूर्णांकk(KERN_DEBUG "stv0299: " args); \
+	पूर्ण जबतक (0)
 
 
-static int stv0299_writeregI (struct stv0299_state* state, u8 reg, u8 data)
-{
-	int ret;
-	u8 buf [] = { reg, data };
-	struct i2c_msg msg = { .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = 2 };
+अटल पूर्णांक stv0299_ग_लिखोregI (काष्ठा stv0299_state* state, u8 reg, u8 data)
+अणु
+	पूर्णांक ret;
+	u8 buf [] = अणु reg, data पूर्ण;
+	काष्ठा i2c_msg msg = अणु .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = 2 पूर्ण;
 
 	ret = i2c_transfer (state->i2c, &msg, 1);
 
-	if (ret != 1)
-		dprintk("%s: writereg error (reg == 0x%02x, val == 0x%02x, ret == %i)\n",
+	अगर (ret != 1)
+		dprपूर्णांकk("%s: writereg error (reg == 0x%02x, val == 0x%02x, ret == %i)\n",
 			__func__, reg, data, ret);
 
-	return (ret != 1) ? -EREMOTEIO : 0;
-}
+	वापस (ret != 1) ? -EREMOTEIO : 0;
+पूर्ण
 
-static int stv0299_write(struct dvb_frontend* fe, const u8 buf[], int len)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_ग_लिखो(काष्ठा dvb_frontend* fe, स्थिर u8 buf[], पूर्णांक len)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 
-	if (len != 2)
-		return -EINVAL;
+	अगर (len != 2)
+		वापस -EINVAL;
 
-	return stv0299_writeregI(state, buf[0], buf[1]);
-}
+	वापस stv0299_ग_लिखोregI(state, buf[0], buf[1]);
+पूर्ण
 
-static u8 stv0299_readreg (struct stv0299_state* state, u8 reg)
-{
-	int ret;
-	u8 b0 [] = { reg };
-	u8 b1 [] = { 0 };
-	struct i2c_msg msg [] = { { .addr = state->config->demod_address, .flags = 0, .buf = b0, .len = 1 },
-			   { .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b1, .len = 1 } };
+अटल u8 stv0299_पढ़ोreg (काष्ठा stv0299_state* state, u8 reg)
+अणु
+	पूर्णांक ret;
+	u8 b0 [] = अणु reg पूर्ण;
+	u8 b1 [] = अणु 0 पूर्ण;
+	काष्ठा i2c_msg msg [] = अणु अणु .addr = state->config->demod_address, .flags = 0, .buf = b0, .len = 1 पूर्ण,
+			   अणु .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b1, .len = 1 पूर्ण पूर्ण;
 
 	ret = i2c_transfer (state->i2c, msg, 2);
 
-	if (ret != 2)
-		dprintk("%s: readreg error (reg == 0x%02x, ret == %i)\n",
+	अगर (ret != 2)
+		dprपूर्णांकk("%s: readreg error (reg == 0x%02x, ret == %i)\n",
 				__func__, reg, ret);
 
-	return b1[0];
-}
+	वापस b1[0];
+पूर्ण
 
-static int stv0299_readregs (struct stv0299_state* state, u8 reg1, u8 *b, u8 len)
-{
-	int ret;
-	struct i2c_msg msg [] = { { .addr = state->config->demod_address, .flags = 0, .buf = &reg1, .len = 1 },
-			   { .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b, .len = len } };
+अटल पूर्णांक stv0299_पढ़ोregs (काष्ठा stv0299_state* state, u8 reg1, u8 *b, u8 len)
+अणु
+	पूर्णांक ret;
+	काष्ठा i2c_msg msg [] = अणु अणु .addr = state->config->demod_address, .flags = 0, .buf = &reg1, .len = 1 पूर्ण,
+			   अणु .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b, .len = len पूर्ण पूर्ण;
 
 	ret = i2c_transfer (state->i2c, msg, 2);
 
-	if (ret != 2)
-		dprintk("%s: readreg error (ret == %i)\n", __func__, ret);
+	अगर (ret != 2)
+		dprपूर्णांकk("%s: readreg error (ret == %i)\n", __func__, ret);
 
-	return ret == 2 ? 0 : ret;
-}
+	वापस ret == 2 ? 0 : ret;
+पूर्ण
 
-static int stv0299_set_FEC(struct stv0299_state *state, enum fe_code_rate fec)
-{
-	dprintk ("%s\n", __func__);
+अटल पूर्णांक stv0299_set_FEC(काष्ठा stv0299_state *state, क्रमागत fe_code_rate fec)
+अणु
+	dprपूर्णांकk ("%s\n", __func__);
 
-	switch (fec) {
-	case FEC_AUTO:
-	{
-		return stv0299_writeregI (state, 0x31, 0x1f);
-	}
-	case FEC_1_2:
-	{
-		return stv0299_writeregI (state, 0x31, 0x01);
-	}
-	case FEC_2_3:
-	{
-		return stv0299_writeregI (state, 0x31, 0x02);
-	}
-	case FEC_3_4:
-	{
-		return stv0299_writeregI (state, 0x31, 0x04);
-	}
-	case FEC_5_6:
-	{
-		return stv0299_writeregI (state, 0x31, 0x08);
-	}
-	case FEC_7_8:
-	{
-		return stv0299_writeregI (state, 0x31, 0x10);
-	}
-	default:
-	{
-		return -EINVAL;
-	}
-    }
-}
+	चयन (fec) अणु
+	हाल FEC_AUTO:
+	अणु
+		वापस stv0299_ग_लिखोregI (state, 0x31, 0x1f);
+	पूर्ण
+	हाल FEC_1_2:
+	अणु
+		वापस stv0299_ग_लिखोregI (state, 0x31, 0x01);
+	पूर्ण
+	हाल FEC_2_3:
+	अणु
+		वापस stv0299_ग_लिखोregI (state, 0x31, 0x02);
+	पूर्ण
+	हाल FEC_3_4:
+	अणु
+		वापस stv0299_ग_लिखोregI (state, 0x31, 0x04);
+	पूर्ण
+	हाल FEC_5_6:
+	अणु
+		वापस stv0299_ग_लिखोregI (state, 0x31, 0x08);
+	पूर्ण
+	हाल FEC_7_8:
+	अणु
+		वापस stv0299_ग_लिखोregI (state, 0x31, 0x10);
+	पूर्ण
+	शेष:
+	अणु
+		वापस -EINVAL;
+	पूर्ण
+    पूर्ण
+पूर्ण
 
-static enum fe_code_rate stv0299_get_fec(struct stv0299_state *state)
-{
-	static enum fe_code_rate fec_tab[] = { FEC_2_3, FEC_3_4, FEC_5_6,
-					       FEC_7_8, FEC_1_2 };
+अटल क्रमागत fe_code_rate stv0299_get_fec(काष्ठा stv0299_state *state)
+अणु
+	अटल क्रमागत fe_code_rate fec_tab[] = अणु FEC_2_3, FEC_3_4, FEC_5_6,
+					       FEC_7_8, FEC_1_2 पूर्ण;
 	u8 index;
 
-	dprintk ("%s\n", __func__);
+	dprपूर्णांकk ("%s\n", __func__);
 
-	index = stv0299_readreg (state, 0x1b);
+	index = stv0299_पढ़ोreg (state, 0x1b);
 	index &= 0x7;
 
-	if (index > 4)
-		return FEC_AUTO;
+	अगर (index > 4)
+		वापस FEC_AUTO;
 
-	return fec_tab [index];
-}
+	वापस fec_tab [index];
+पूर्ण
 
-static int stv0299_wait_diseqc_fifo (struct stv0299_state* state, int timeout)
-{
-	unsigned long start = jiffies;
+अटल पूर्णांक stv0299_रुको_diseqc_fअगरo (काष्ठा stv0299_state* state, पूर्णांक समयout)
+अणु
+	अचिन्हित दीर्घ start = jअगरfies;
 
-	dprintk ("%s\n", __func__);
+	dprपूर्णांकk ("%s\n", __func__);
 
-	while (stv0299_readreg(state, 0x0a) & 1) {
-		if (jiffies - start > timeout) {
-			dprintk ("%s: timeout!!\n", __func__);
-			return -ETIMEDOUT;
-		}
+	जबतक (stv0299_पढ़ोreg(state, 0x0a) & 1) अणु
+		अगर (jअगरfies - start > समयout) अणु
+			dprपूर्णांकk ("%s: timeout!!\n", __func__);
+			वापस -ETIMEDOUT;
+		पूर्ण
 		msleep(10);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_wait_diseqc_idle (struct stv0299_state* state, int timeout)
-{
-	unsigned long start = jiffies;
+अटल पूर्णांक stv0299_रुको_diseqc_idle (काष्ठा stv0299_state* state, पूर्णांक समयout)
+अणु
+	अचिन्हित दीर्घ start = jअगरfies;
 
-	dprintk ("%s\n", __func__);
+	dprपूर्णांकk ("%s\n", __func__);
 
-	while ((stv0299_readreg(state, 0x0a) & 3) != 2 ) {
-		if (jiffies - start > timeout) {
-			dprintk ("%s: timeout!!\n", __func__);
-			return -ETIMEDOUT;
-		}
+	जबतक ((stv0299_पढ़ोreg(state, 0x0a) & 3) != 2 ) अणु
+		अगर (jअगरfies - start > समयout) अणु
+			dprपूर्णांकk ("%s: timeout!!\n", __func__);
+			वापस -ETIMEDOUT;
+		पूर्ण
 		msleep(10);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_set_symbolrate (struct dvb_frontend* fe, u32 srate)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_set_symbolrate (काष्ठा dvb_frontend* fe, u32 srate)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 	u64 big = srate;
 	u32 ratio;
 
 	// check rate is within limits
-	if ((srate < 1000000) || (srate > 45000000)) return -EINVAL;
+	अगर ((srate < 1000000) || (srate > 45000000)) वापस -EINVAL;
 
 	// calculate value to program
 	big = big << 20;
 	big += (state->config->mclk-1); // round correctly
-	do_div(big, state->config->mclk);
+	करो_भाग(big, state->config->mclk);
 	ratio = big << 4;
 
-	return state->config->set_symbol_rate(fe, srate, ratio);
-}
+	वापस state->config->set_symbol_rate(fe, srate, ratio);
+पूर्ण
 
-static int stv0299_get_symbolrate (struct stv0299_state* state)
-{
+अटल पूर्णांक stv0299_get_symbolrate (काष्ठा stv0299_state* state)
+अणु
 	u32 Mclk = state->config->mclk / 4096L;
 	u32 srate;
 	s32 offset;
 	u8 sfr[3];
 	s8 rtf;
 
-	dprintk ("%s\n", __func__);
+	dprपूर्णांकk ("%s\n", __func__);
 
-	stv0299_readregs (state, 0x1f, sfr, 3);
-	stv0299_readregs (state, 0x1a, (u8 *)&rtf, 1);
+	stv0299_पढ़ोregs (state, 0x1f, sfr, 3);
+	stv0299_पढ़ोregs (state, 0x1a, (u8 *)&rtf, 1);
 
 	srate = (sfr[0] << 8) | sfr[1];
 	srate *= Mclk;
@@ -248,8 +249,8 @@ static int stv0299_get_symbolrate (struct stv0299_state* state)
 	offset = (s32) rtf * (srate / 4096L);
 	offset /= 128;
 
-	dprintk ("%s : srate = %i\n", __func__, srate);
-	dprintk ("%s : ofset = %i\n", __func__, offset);
+	dprपूर्णांकk ("%s : srate = %i\n", __func__, srate);
+	dprपूर्णांकk ("%s : ofset = %i\n", __func__, offset);
 
 	srate += offset;
 
@@ -257,348 +258,348 @@ static int stv0299_get_symbolrate (struct stv0299_state* state)
 	srate /= 2000;
 	srate *= 2000;
 
-	return srate;
-}
+	वापस srate;
+पूर्ण
 
-static int stv0299_send_diseqc_msg (struct dvb_frontend* fe,
-				    struct dvb_diseqc_master_cmd *m)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_send_diseqc_msg (काष्ठा dvb_frontend* fe,
+				    काष्ठा dvb_diseqc_master_cmd *m)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 	u8 val;
-	int i;
+	पूर्णांक i;
 
-	dprintk ("%s\n", __func__);
+	dprपूर्णांकk ("%s\n", __func__);
 
-	if (stv0299_wait_diseqc_idle (state, 100) < 0)
-		return -ETIMEDOUT;
+	अगर (stv0299_रुको_diseqc_idle (state, 100) < 0)
+		वापस -ETIMEDOUT;
 
-	val = stv0299_readreg (state, 0x08);
+	val = stv0299_पढ़ोreg (state, 0x08);
 
-	if (stv0299_writeregI (state, 0x08, (val & ~0x7) | 0x6))  /* DiSEqC mode */
-		return -EREMOTEIO;
+	अगर (stv0299_ग_लिखोregI (state, 0x08, (val & ~0x7) | 0x6))  /* DiSEqC mode */
+		वापस -EREMOTEIO;
 
-	for (i=0; i<m->msg_len; i++) {
-		if (stv0299_wait_diseqc_fifo (state, 100) < 0)
-			return -ETIMEDOUT;
+	क्रम (i=0; i<m->msg_len; i++) अणु
+		अगर (stv0299_रुको_diseqc_fअगरo (state, 100) < 0)
+			वापस -ETIMEDOUT;
 
-		if (stv0299_writeregI (state, 0x09, m->msg[i]))
-			return -EREMOTEIO;
-	}
+		अगर (stv0299_ग_लिखोregI (state, 0x09, m->msg[i]))
+			वापस -EREMOTEIO;
+	पूर्ण
 
-	if (stv0299_wait_diseqc_idle (state, 100) < 0)
-		return -ETIMEDOUT;
+	अगर (stv0299_रुको_diseqc_idle (state, 100) < 0)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_send_diseqc_burst(struct dvb_frontend *fe,
-				     enum fe_sec_mini_cmd burst)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
-	u8 val;
-
-	dprintk ("%s\n", __func__);
-
-	if (stv0299_wait_diseqc_idle (state, 100) < 0)
-		return -ETIMEDOUT;
-
-	val = stv0299_readreg (state, 0x08);
-
-	if (stv0299_writeregI (state, 0x08, (val & ~0x7) | 0x2))	/* burst mode */
-		return -EREMOTEIO;
-
-	if (stv0299_writeregI (state, 0x09, burst == SEC_MINI_A ? 0x00 : 0xff))
-		return -EREMOTEIO;
-
-	if (stv0299_wait_diseqc_idle (state, 100) < 0)
-		return -ETIMEDOUT;
-
-	if (stv0299_writeregI (state, 0x08, val))
-		return -EREMOTEIO;
-
-	return 0;
-}
-
-static int stv0299_set_tone(struct dvb_frontend *fe,
-			    enum fe_sec_tone_mode tone)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_send_diseqc_burst(काष्ठा dvb_frontend *fe,
+				     क्रमागत fe_sec_mini_cmd burst)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 	u8 val;
 
-	if (stv0299_wait_diseqc_idle (state, 100) < 0)
-		return -ETIMEDOUT;
+	dprपूर्णांकk ("%s\n", __func__);
 
-	val = stv0299_readreg (state, 0x08);
+	अगर (stv0299_रुको_diseqc_idle (state, 100) < 0)
+		वापस -ETIMEDOUT;
 
-	switch (tone) {
-	case SEC_TONE_ON:
-		return stv0299_writeregI (state, 0x08, val | 0x3);
+	val = stv0299_पढ़ोreg (state, 0x08);
 
-	case SEC_TONE_OFF:
-		return stv0299_writeregI (state, 0x08, (val & ~0x3) | 0x02);
+	अगर (stv0299_ग_लिखोregI (state, 0x08, (val & ~0x7) | 0x2))	/* burst mode */
+		वापस -EREMOTEIO;
 
-	default:
-		return -EINVAL;
-	}
-}
+	अगर (stv0299_ग_लिखोregI (state, 0x09, burst == SEC_MINI_A ? 0x00 : 0xff))
+		वापस -EREMOTEIO;
 
-static int stv0299_set_voltage(struct dvb_frontend *fe,
-			       enum fe_sec_voltage voltage)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+	अगर (stv0299_रुको_diseqc_idle (state, 100) < 0)
+		वापस -ETIMEDOUT;
+
+	अगर (stv0299_ग_लिखोregI (state, 0x08, val))
+		वापस -EREMOTEIO;
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक stv0299_set_tone(काष्ठा dvb_frontend *fe,
+			    क्रमागत fe_sec_tone_mode tone)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
+	u8 val;
+
+	अगर (stv0299_रुको_diseqc_idle (state, 100) < 0)
+		वापस -ETIMEDOUT;
+
+	val = stv0299_पढ़ोreg (state, 0x08);
+
+	चयन (tone) अणु
+	हाल SEC_TONE_ON:
+		वापस stv0299_ग_लिखोregI (state, 0x08, val | 0x3);
+
+	हाल SEC_TONE_OFF:
+		वापस stv0299_ग_लिखोregI (state, 0x08, (val & ~0x3) | 0x02);
+
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
+
+अटल पूर्णांक stv0299_set_voltage(काष्ठा dvb_frontend *fe,
+			       क्रमागत fe_sec_voltage voltage)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 	u8 reg0x08;
 	u8 reg0x0c;
 
-	dprintk("%s: %s\n", __func__,
+	dprपूर्णांकk("%s: %s\n", __func__,
 		voltage == SEC_VOLTAGE_13 ? "SEC_VOLTAGE_13" :
 		voltage == SEC_VOLTAGE_18 ? "SEC_VOLTAGE_18" : "??");
 
-	reg0x08 = stv0299_readreg (state, 0x08);
-	reg0x0c = stv0299_readreg (state, 0x0c);
+	reg0x08 = stv0299_पढ़ोreg (state, 0x08);
+	reg0x0c = stv0299_पढ़ोreg (state, 0x0c);
 
 	/*
-	 *  H/V switching over OP0, OP1 and OP2 are LNB power enable bits
+	 *  H/V चयनing over OP0, OP1 and OP2 are LNB घातer enable bits
 	 */
 	reg0x0c &= 0x0f;
 	reg0x08 = (reg0x08 & 0x3f) | (state->config->lock_output << 6);
 
-	switch (voltage) {
-	case SEC_VOLTAGE_13:
-		if (state->config->volt13_op0_op1 == STV0299_VOLT13_OP0)
+	चयन (voltage) अणु
+	हाल SEC_VOLTAGE_13:
+		अगर (state->config->volt13_op0_op1 == STV0299_VOLT13_OP0)
 			reg0x0c |= 0x10; /* OP1 off, OP0 on */
-		else
+		अन्यथा
 			reg0x0c |= 0x40; /* OP1 on, OP0 off */
-		break;
-	case SEC_VOLTAGE_18:
+		अवरोध;
+	हाल SEC_VOLTAGE_18:
 		reg0x0c |= 0x50; /* OP1 on, OP0 on */
-		break;
-	case SEC_VOLTAGE_OFF:
-		/* LNB power off! */
+		अवरोध;
+	हाल SEC_VOLTAGE_OFF:
+		/* LNB घातer off! */
 		reg0x08 = 0x00;
 		reg0x0c = 0x00;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (state->config->op0_off)
+	अगर (state->config->op0_off)
 		reg0x0c &= ~0x10;
 
-	stv0299_writeregI(state, 0x08, reg0x08);
-	return stv0299_writeregI(state, 0x0c, reg0x0c);
-}
+	stv0299_ग_लिखोregI(state, 0x08, reg0x08);
+	वापस stv0299_ग_लिखोregI(state, 0x0c, reg0x0c);
+पूर्ण
 
-static int stv0299_send_legacy_dish_cmd (struct dvb_frontend* fe, unsigned long cmd)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_send_legacy_dish_cmd (काष्ठा dvb_frontend* fe, अचिन्हित दीर्घ cmd)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 	u8 reg0x08;
 	u8 reg0x0c;
 	u8 lv_mask = 0x40;
 	u8 last = 1;
-	int i;
-	ktime_t nexttime;
-	ktime_t tv[10];
+	पूर्णांक i;
+	kसमय_प्रकार nextसमय;
+	kसमय_प्रकार tv[10];
 
-	reg0x08 = stv0299_readreg (state, 0x08);
-	reg0x0c = stv0299_readreg (state, 0x0c);
+	reg0x08 = stv0299_पढ़ोreg (state, 0x08);
+	reg0x0c = stv0299_पढ़ोreg (state, 0x0c);
 	reg0x0c &= 0x0f;
-	stv0299_writeregI (state, 0x08, (reg0x08 & 0x3f) | (state->config->lock_output << 6));
-	if (state->config->volt13_op0_op1 == STV0299_VOLT13_OP0)
+	stv0299_ग_लिखोregI (state, 0x08, (reg0x08 & 0x3f) | (state->config->lock_output << 6));
+	अगर (state->config->volt13_op0_op1 == STV0299_VOLT13_OP0)
 		lv_mask = 0x10;
 
 	cmd = cmd << 1;
-	if (debug_legacy_dish_switch)
-		printk ("%s switch command: 0x%04lx\n",__func__, cmd);
+	अगर (debug_legacy_dish_चयन)
+		prपूर्णांकk ("%s switch command: 0x%04lx\n",__func__, cmd);
 
-	nexttime = ktime_get_boottime();
-	if (debug_legacy_dish_switch)
-		tv[0] = nexttime;
-	stv0299_writeregI (state, 0x0c, reg0x0c | 0x50); /* set LNB to 18V */
+	nextसमय = kसमय_get_bootसमय();
+	अगर (debug_legacy_dish_चयन)
+		tv[0] = nextसमय;
+	stv0299_ग_लिखोregI (state, 0x0c, reg0x0c | 0x50); /* set LNB to 18V */
 
-	dvb_frontend_sleep_until(&nexttime, 32000);
+	dvb_frontend_sleep_until(&nextसमय, 32000);
 
-	for (i=0; i<9; i++) {
-		if (debug_legacy_dish_switch)
-			tv[i+1] = ktime_get_boottime();
-		if((cmd & 0x01) != last) {
+	क्रम (i=0; i<9; i++) अणु
+		अगर (debug_legacy_dish_चयन)
+			tv[i+1] = kसमय_get_bootसमय();
+		अगर((cmd & 0x01) != last) अणु
 			/* set voltage to (last ? 13V : 18V) */
-			stv0299_writeregI (state, 0x0c, reg0x0c | (last ? lv_mask : 0x50));
+			stv0299_ग_लिखोregI (state, 0x0c, reg0x0c | (last ? lv_mask : 0x50));
 			last = (last) ? 0 : 1;
-		}
+		पूर्ण
 
 		cmd = cmd >> 1;
 
-		if (i != 8)
-			dvb_frontend_sleep_until(&nexttime, 8000);
-	}
-	if (debug_legacy_dish_switch) {
-		printk ("%s(%d): switch delay (should be 32k followed by all 8k\n",
+		अगर (i != 8)
+			dvb_frontend_sleep_until(&nextसमय, 8000);
+	पूर्ण
+	अगर (debug_legacy_dish_चयन) अणु
+		prपूर्णांकk ("%s(%d): switch delay (should be 32k followed by all 8k\n",
 			__func__, fe->dvb->num);
-		for (i = 1; i < 10; i++)
-			printk("%d: %d\n", i,
-			       (int) ktime_us_delta(tv[i], tv[i-1]));
-	}
+		क्रम (i = 1; i < 10; i++)
+			prपूर्णांकk("%d: %d\n", i,
+			       (पूर्णांक) kसमय_us_delta(tv[i], tv[i-1]));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_init (struct dvb_frontend* fe)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
-	int i;
+अटल पूर्णांक stv0299_init (काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
+	पूर्णांक i;
 	u8 reg;
 	u8 val;
 
-	dprintk("stv0299: init chip\n");
+	dprपूर्णांकk("stv0299: init chip\n");
 
-	stv0299_writeregI(state, 0x02, 0x30 | state->mcr_reg);
+	stv0299_ग_लिखोregI(state, 0x02, 0x30 | state->mcr_reg);
 	msleep(50);
 
-	for (i = 0; ; i += 2)  {
+	क्रम (i = 0; ; i += 2)  अणु
 		reg = state->config->inittab[i];
 		val = state->config->inittab[i+1];
-		if (reg == 0xff && val == 0xff)
-			break;
-		if (reg == 0x0c && state->config->op0_off)
+		अगर (reg == 0xff && val == 0xff)
+			अवरोध;
+		अगर (reg == 0x0c && state->config->op0_off)
 			val &= ~0x10;
-		if (reg == 0x2)
+		अगर (reg == 0x2)
 			state->mcr_reg = val & 0xf;
-		stv0299_writeregI(state, reg, val);
-	}
+		stv0299_ग_लिखोregI(state, reg, val);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_read_status(struct dvb_frontend *fe,
-			       enum fe_status *status)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_पढ़ो_status(काष्ठा dvb_frontend *fe,
+			       क्रमागत fe_status *status)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 
-	u8 signal = 0xff - stv0299_readreg (state, 0x18);
-	u8 sync = stv0299_readreg (state, 0x1b);
+	u8 संकेत = 0xff - stv0299_पढ़ोreg (state, 0x18);
+	u8 sync = stv0299_पढ़ोreg (state, 0x1b);
 
-	dprintk ("%s : FE_READ_STATUS : VSTATUS: 0x%02x\n", __func__, sync);
+	dprपूर्णांकk ("%s : FE_READ_STATUS : VSTATUS: 0x%02x\n", __func__, sync);
 	*status = 0;
 
-	if (signal > 10)
+	अगर (संकेत > 10)
 		*status |= FE_HAS_SIGNAL;
 
-	if (sync & 0x80)
+	अगर (sync & 0x80)
 		*status |= FE_HAS_CARRIER;
 
-	if (sync & 0x10)
+	अगर (sync & 0x10)
 		*status |= FE_HAS_VITERBI;
 
-	if (sync & 0x08)
+	अगर (sync & 0x08)
 		*status |= FE_HAS_SYNC;
 
-	if ((sync & 0x98) == 0x98)
+	अगर ((sync & 0x98) == 0x98)
 		*status |= FE_HAS_LOCK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_read_ber(struct dvb_frontend* fe, u32* ber)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_पढ़ो_ber(काष्ठा dvb_frontend* fe, u32* ber)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 
-	if (state->errmode != STATUS_BER)
-		return -ENOSYS;
+	अगर (state->errmode != STATUS_BER)
+		वापस -ENOSYS;
 
-	*ber = stv0299_readreg(state, 0x1e) | (stv0299_readreg(state, 0x1d) << 8);
+	*ber = stv0299_पढ़ोreg(state, 0x1e) | (stv0299_पढ़ोreg(state, 0x1d) << 8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_read_signal_strength(struct dvb_frontend* fe, u16* strength)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_पढ़ो_संकेत_strength(काष्ठा dvb_frontend* fe, u16* strength)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 
-	s32 signal =  0xffff - ((stv0299_readreg (state, 0x18) << 8)
-			       | stv0299_readreg (state, 0x19));
+	s32 संकेत =  0xffff - ((stv0299_पढ़ोreg (state, 0x18) << 8)
+			       | stv0299_पढ़ोreg (state, 0x19));
 
-	dprintk ("%s : FE_READ_SIGNAL_STRENGTH : AGC2I: 0x%02x%02x, signal=0x%04x\n", __func__,
-		 stv0299_readreg (state, 0x18),
-		 stv0299_readreg (state, 0x19), (int) signal);
+	dprपूर्णांकk ("%s : FE_READ_SIGNAL_STRENGTH : AGC2I: 0x%02x%02x, signal=0x%04x\n", __func__,
+		 stv0299_पढ़ोreg (state, 0x18),
+		 stv0299_पढ़ोreg (state, 0x19), (पूर्णांक) संकेत);
 
-	signal = signal * 5 / 4;
-	*strength = (signal > 0xffff) ? 0xffff : (signal < 0) ? 0 : signal;
+	संकेत = संकेत * 5 / 4;
+	*strength = (संकेत > 0xffff) ? 0xffff : (संकेत < 0) ? 0 : संकेत;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_read_snr(struct dvb_frontend* fe, u16* snr)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_पढ़ो_snr(काष्ठा dvb_frontend* fe, u16* snr)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 
-	s32 xsnr = 0xffff - ((stv0299_readreg (state, 0x24) << 8)
-			   | stv0299_readreg (state, 0x25));
+	s32 xsnr = 0xffff - ((stv0299_पढ़ोreg (state, 0x24) << 8)
+			   | stv0299_पढ़ोreg (state, 0x25));
 	xsnr = 3 * (xsnr - 0xa100);
 	*snr = (xsnr > 0xffff) ? 0xffff : (xsnr < 0) ? 0 : xsnr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_read_ucblocks(struct dvb_frontend* fe, u32* ucblocks)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_पढ़ो_ucblocks(काष्ठा dvb_frontend* fe, u32* ucblocks)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 
-	if (state->errmode != STATUS_UCBLOCKS)
-		return -ENOSYS;
+	अगर (state->errmode != STATUS_UCBLOCKS)
+		वापस -ENOSYS;
 
-	state->ucblocks += stv0299_readreg(state, 0x1e);
-	state->ucblocks += (stv0299_readreg(state, 0x1d) << 8);
+	state->ucblocks += stv0299_पढ़ोreg(state, 0x1e);
+	state->ucblocks += (stv0299_पढ़ोreg(state, 0x1d) << 8);
 	*ucblocks = state->ucblocks;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_set_frontend(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct stv0299_state* state = fe->demodulator_priv;
-	int invval = 0;
+अटल पूर्णांक stv0299_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
+	पूर्णांक invval = 0;
 
-	dprintk ("%s : FE_SET_FRONTEND\n", __func__);
-	if (state->config->set_ts_params)
+	dprपूर्णांकk ("%s : FE_SET_FRONTEND\n", __func__);
+	अगर (state->config->set_ts_params)
 		state->config->set_ts_params(fe, 0);
 
 	// set the inversion
-	if (p->inversion == INVERSION_OFF) invval = 0;
-	else if (p->inversion == INVERSION_ON) invval = 1;
-	else {
-		printk("stv0299 does not support auto-inversion\n");
-		return -EINVAL;
-	}
-	if (state->config->invert) invval = (~invval) & 1;
-	stv0299_writeregI(state, 0x0c, (stv0299_readreg(state, 0x0c) & 0xfe) | invval);
+	अगर (p->inversion == INVERSION_OFF) invval = 0;
+	अन्यथा अगर (p->inversion == INVERSION_ON) invval = 1;
+	अन्यथा अणु
+		prपूर्णांकk("stv0299 does not support auto-inversion\n");
+		वापस -EINVAL;
+	पूर्ण
+	अगर (state->config->invert) invval = (~invval) & 1;
+	stv0299_ग_लिखोregI(state, 0x0c, (stv0299_पढ़ोreg(state, 0x0c) & 0xfe) | invval);
 
-	if (fe->ops.tuner_ops.set_params) {
+	अगर (fe->ops.tuner_ops.set_params) अणु
 		fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
-	}
+		अगर (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
+	पूर्ण
 
 	stv0299_set_FEC(state, p->fec_inner);
 	stv0299_set_symbolrate(fe, p->symbol_rate);
-	stv0299_writeregI(state, 0x22, 0x00);
-	stv0299_writeregI(state, 0x23, 0x00);
+	stv0299_ग_लिखोregI(state, 0x22, 0x00);
+	stv0299_ग_लिखोregI(state, 0x23, 0x00);
 
 	state->tuner_frequency = p->frequency;
 	state->fec_inner = p->fec_inner;
 	state->symbol_rate = p->symbol_rate;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_get_frontend(struct dvb_frontend *fe,
-				struct dtv_frontend_properties *p)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_get_frontend(काष्ठा dvb_frontend *fe,
+				काष्ठा dtv_frontend_properties *p)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 	s32 derot_freq;
-	int invval;
+	पूर्णांक invval;
 
-	derot_freq = (s32)(s16) ((stv0299_readreg (state, 0x22) << 8)
-				| stv0299_readreg (state, 0x23));
+	derot_freq = (s32)(s16) ((stv0299_पढ़ोreg (state, 0x22) << 8)
+				| stv0299_पढ़ोreg (state, 0x23));
 
 	derot_freq *= (state->config->mclk >> 16);
 	derot_freq += 500;
@@ -606,72 +607,72 @@ static int stv0299_get_frontend(struct dvb_frontend *fe,
 
 	p->frequency += derot_freq;
 
-	invval = stv0299_readreg (state, 0x0c) & 1;
-	if (state->config->invert) invval = (~invval) & 1;
+	invval = stv0299_पढ़ोreg (state, 0x0c) & 1;
+	अगर (state->config->invert) invval = (~invval) & 1;
 	p->inversion = invval ? INVERSION_ON : INVERSION_OFF;
 
 	p->fec_inner = stv0299_get_fec(state);
 	p->symbol_rate = stv0299_get_symbolrate(state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_sleep(struct dvb_frontend* fe)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_sleep(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 
-	stv0299_writeregI(state, 0x02, 0xb0 | state->mcr_reg);
+	stv0299_ग_लिखोregI(state, 0x02, 0xb0 | state->mcr_reg);
 	state->initialised = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_i2c_gate_ctrl(struct dvb_frontend* fe, int enable)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
+अटल पूर्णांक stv0299_i2c_gate_ctrl(काष्ठा dvb_frontend* fe, पूर्णांक enable)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
 
-	if (enable) {
-		stv0299_writeregI(state, 0x05, 0xb5);
-	} else {
-		stv0299_writeregI(state, 0x05, 0x35);
-	}
+	अगर (enable) अणु
+		stv0299_ग_लिखोregI(state, 0x05, 0xb5);
+	पूर्ण अन्यथा अणु
+		stv0299_ग_लिखोregI(state, 0x05, 0x35);
+	पूर्ण
 	udelay(1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stv0299_get_tune_settings(struct dvb_frontend* fe, struct dvb_frontend_tune_settings* fesettings)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
+अटल पूर्णांक stv0299_get_tune_settings(काष्ठा dvb_frontend* fe, काष्ठा dvb_frontend_tune_settings* fesettings)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
 
 	fesettings->min_delay_ms = state->config->min_delay_ms;
-	if (p->symbol_rate < 10000000) {
+	अगर (p->symbol_rate < 10000000) अणु
 		fesettings->step_size = p->symbol_rate / 32000;
-		fesettings->max_drift = 5000;
-	} else {
+		fesettings->max_drअगरt = 5000;
+	पूर्ण अन्यथा अणु
 		fesettings->step_size = p->symbol_rate / 16000;
-		fesettings->max_drift = p->symbol_rate / 2000;
-	}
-	return 0;
-}
+		fesettings->max_drअगरt = p->symbol_rate / 2000;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void stv0299_release(struct dvb_frontend* fe)
-{
-	struct stv0299_state* state = fe->demodulator_priv;
-	kfree(state);
-}
+अटल व्योम stv0299_release(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा stv0299_state* state = fe->demodulator_priv;
+	kमुक्त(state);
+पूर्ण
 
-static const struct dvb_frontend_ops stv0299_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops stv0299_ops;
 
-struct dvb_frontend* stv0299_attach(const struct stv0299_config* config,
-				    struct i2c_adapter* i2c)
-{
-	struct stv0299_state* state = NULL;
-	int id;
+काष्ठा dvb_frontend* stv0299_attach(स्थिर काष्ठा stv0299_config* config,
+				    काष्ठा i2c_adapter* i2c)
+अणु
+	काष्ठा stv0299_state* state = शून्य;
+	पूर्णांक id;
 
-	/* allocate memory for the internal state */
-	state = kzalloc(sizeof(struct stv0299_state), GFP_KERNEL);
-	if (state == NULL) goto error;
+	/* allocate memory क्रम the पूर्णांकernal state */
+	state = kzalloc(माप(काष्ठा stv0299_state), GFP_KERNEL);
+	अगर (state == शून्य) जाओ error;
 
 	/* setup the state */
 	state->config = config;
@@ -682,28 +683,28 @@ struct dvb_frontend* stv0299_attach(const struct stv0299_config* config,
 	state->fec_inner = 0;
 	state->errmode = STATUS_BER;
 
-	/* check if the demod is there */
-	stv0299_writeregI(state, 0x02, 0x30); /* standby off */
+	/* check अगर the demod is there */
+	stv0299_ग_लिखोregI(state, 0x02, 0x30); /* standby off */
 	msleep(200);
-	id = stv0299_readreg(state, 0x00);
+	id = stv0299_पढ़ोreg(state, 0x00);
 
-	/* register 0x00 contains 0xa1 for STV0299 and STV0299B */
-	/* register 0x00 might contain 0x80 when returning from standby */
-	if (id != 0xa1 && id != 0x80) goto error;
+	/* रेजिस्टर 0x00 contains 0xa1 क्रम STV0299 and STV0299B */
+	/* रेजिस्टर 0x00 might contain 0x80 when वापसing from standby */
+	अगर (id != 0xa1 && id != 0x80) जाओ error;
 
 	/* create dvb_frontend */
-	memcpy(&state->frontend.ops, &stv0299_ops, sizeof(struct dvb_frontend_ops));
+	स_नकल(&state->frontend.ops, &stv0299_ops, माप(काष्ठा dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
-	return &state->frontend;
+	वापस &state->frontend;
 
 error:
-	kfree(state);
-	return NULL;
-}
+	kमुक्त(state);
+	वापस शून्य;
+पूर्ण
 
-static const struct dvb_frontend_ops stv0299_ops = {
-	.delsys = { SYS_DVBS },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops stv0299_ops = अणु
+	.delsys = अणु SYS_DVBS पूर्ण,
+	.info = अणु
 		.name			= "ST STV0299 DVB-S",
 		.frequency_min_hz	=  950 * MHz,
 		.frequency_max_hz	= 2150 * MHz,
@@ -715,36 +716,36 @@ static const struct dvb_frontend_ops stv0299_ops = {
 		      FE_CAN_FEC_5_6 | FE_CAN_FEC_7_8 |
 		      FE_CAN_QPSK |
 		      FE_CAN_FEC_AUTO
-	},
+	पूर्ण,
 
 	.release = stv0299_release,
 
 	.init = stv0299_init,
 	.sleep = stv0299_sleep,
-	.write = stv0299_write,
+	.ग_लिखो = stv0299_ग_लिखो,
 	.i2c_gate_ctrl = stv0299_i2c_gate_ctrl,
 
 	.set_frontend = stv0299_set_frontend,
 	.get_frontend = stv0299_get_frontend,
 	.get_tune_settings = stv0299_get_tune_settings,
 
-	.read_status = stv0299_read_status,
-	.read_ber = stv0299_read_ber,
-	.read_signal_strength = stv0299_read_signal_strength,
-	.read_snr = stv0299_read_snr,
-	.read_ucblocks = stv0299_read_ucblocks,
+	.पढ़ो_status = stv0299_पढ़ो_status,
+	.पढ़ो_ber = stv0299_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = stv0299_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = stv0299_पढ़ो_snr,
+	.पढ़ो_ucblocks = stv0299_पढ़ो_ucblocks,
 
 	.diseqc_send_master_cmd = stv0299_send_diseqc_msg,
 	.diseqc_send_burst = stv0299_send_diseqc_burst,
 	.set_tone = stv0299_set_tone,
 	.set_voltage = stv0299_set_voltage,
 	.dishnetwork_send_legacy_command = stv0299_send_legacy_dish_cmd,
-};
+पूर्ण;
 
-module_param(debug_legacy_dish_switch, int, 0444);
-MODULE_PARM_DESC(debug_legacy_dish_switch, "Enable timing analysis for Dish Network legacy switches");
+module_param(debug_legacy_dish_चयन, पूर्णांक, 0444);
+MODULE_PARM_DESC(debug_legacy_dish_चयन, "Enable timing analysis for Dish Network legacy switches");
 
-module_param(debug, int, 0644);
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off frontend debugging (default:off).");
 
 MODULE_DESCRIPTION("ST STV0299 DVB Demodulator driver");

@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_SPARC_TOPOLOGY_H
-#define _ASM_SPARC_TOPOLOGY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_SPARC_TOPOLOGY_H
+#घोषणा _ASM_SPARC_TOPOLOGY_H
 
-#include <asm-generic/topology.h>
+#समावेश <यंत्र-generic/topology.h>
 
-#endif /* _ASM_SPARC_TOPOLOGY_H */
+#पूर्ण_अगर /* _ASM_SPARC_TOPOLOGY_H */

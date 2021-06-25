@@ -1,202 +1,203 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * ST Thermal Sensor Driver for memory mapped sensors.
+ * ST Thermal Sensor Driver क्रम memory mapped sensors.
  * Author: Ajit Pal Singh <ajitpal.singh@st.com>
  *
  * Copyright (C) 2003-2014 STMicroelectronics (R&D) Limited
  */
 
-#include <linux/of.h>
-#include <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/module.h>
 
-#include "st_thermal.h"
+#समावेश "st_thermal.h"
 
-#define STIH416_MPE_CONF			0x0
-#define STIH416_MPE_STATUS			0x4
-#define STIH416_MPE_INT_THRESH			0x8
-#define STIH416_MPE_INT_EN			0xC
+#घोषणा STIH416_MPE_CONF			0x0
+#घोषणा STIH416_MPE_STATUS			0x4
+#घोषणा STIH416_MPE_INT_THRESH			0x8
+#घोषणा STIH416_MPE_INT_EN			0xC
 
-/* Power control bits for the memory mapped thermal sensor */
-#define THERMAL_PDN				BIT(4)
-#define THERMAL_SRSTN				BIT(10)
+/* Power control bits क्रम the memory mapped thermal sensor */
+#घोषणा THERMAL_PDN				BIT(4)
+#घोषणा THERMAL_SRSTN				BIT(10)
 
-static const struct reg_field st_mmap_thermal_regfields[MAX_REGFIELDS] = {
+अटल स्थिर काष्ठा reg_field st_mmap_thermal_regfields[MAX_REGFIELDS] = अणु
 	/*
 	 * According to the STIH416 MPE temp sensor data sheet -
 	 * the PDN (Power Down Bit) and SRSTN (Soft Reset Bit) need to be
-	 * written simultaneously for powering on and off the temperature
-	 * sensor. regmap_update_bits() will be used to update the register.
+	 * written simultaneously क्रम घातering on and off the temperature
+	 * sensor. regmap_update_bits() will be used to update the रेजिस्टर.
 	 */
 	[INT_THRESH_HI]	= REG_FIELD(STIH416_MPE_INT_THRESH, 	0,  7),
 	[DCORRECT]	= REG_FIELD(STIH416_MPE_CONF,		5,  9),
 	[OVERFLOW]	= REG_FIELD(STIH416_MPE_STATUS,		9,  9),
 	[DATA]		= REG_FIELD(STIH416_MPE_STATUS,		11, 18),
 	[INT_ENABLE]	= REG_FIELD(STIH416_MPE_INT_EN,		0,  0),
-};
+पूर्ण;
 
-static irqreturn_t st_mmap_thermal_trip_handler(int irq, void *sdata)
-{
-	struct st_thermal_sensor *sensor = sdata;
+अटल irqवापस_t st_mmap_thermal_trip_handler(पूर्णांक irq, व्योम *sdata)
+अणु
+	काष्ठा st_thermal_sensor *sensor = sdata;
 
 	thermal_zone_device_update(sensor->thermal_dev,
 				   THERMAL_EVENT_UNSPECIFIED);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* Private ops for the Memory Mapped based thermal sensors */
-static int st_mmap_power_ctrl(struct st_thermal_sensor *sensor,
-			      enum st_thermal_power_state power_state)
-{
-	const unsigned int mask = (THERMAL_PDN | THERMAL_SRSTN);
-	const unsigned int val = power_state ? mask : 0;
+/* Private ops क्रम the Memory Mapped based thermal sensors */
+अटल पूर्णांक st_mmap_घातer_ctrl(काष्ठा st_thermal_sensor *sensor,
+			      क्रमागत st_thermal_घातer_state घातer_state)
+अणु
+	स्थिर अचिन्हित पूर्णांक mask = (THERMAL_PDN | THERMAL_SRSTN);
+	स्थिर अचिन्हित पूर्णांक val = घातer_state ? mask : 0;
 
-	return regmap_update_bits(sensor->regmap, STIH416_MPE_CONF, mask, val);
-}
+	वापस regmap_update_bits(sensor->regmap, STIH416_MPE_CONF, mask, val);
+पूर्ण
 
-static int st_mmap_alloc_regfields(struct st_thermal_sensor *sensor)
-{
-	struct device *dev = sensor->dev;
-	struct regmap *regmap = sensor->regmap;
-	const struct reg_field *reg_fields = sensor->cdata->reg_fields;
+अटल पूर्णांक st_mmap_alloc_regfields(काष्ठा st_thermal_sensor *sensor)
+अणु
+	काष्ठा device *dev = sensor->dev;
+	काष्ठा regmap *regmap = sensor->regmap;
+	स्थिर काष्ठा reg_field *reg_fields = sensor->cdata->reg_fields;
 
-	sensor->int_thresh_hi = devm_regmap_field_alloc(dev, regmap,
+	sensor->पूर्णांक_thresh_hi = devm_regmap_field_alloc(dev, regmap,
 						reg_fields[INT_THRESH_HI]);
-	sensor->int_enable = devm_regmap_field_alloc(dev, regmap,
+	sensor->पूर्णांक_enable = devm_regmap_field_alloc(dev, regmap,
 						reg_fields[INT_ENABLE]);
 
-	if (IS_ERR(sensor->int_thresh_hi) || IS_ERR(sensor->int_enable)) {
+	अगर (IS_ERR(sensor->पूर्णांक_thresh_hi) || IS_ERR(sensor->पूर्णांक_enable)) अणु
 		dev_err(dev, "failed to alloc mmap regfields\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_mmap_enable_irq(struct st_thermal_sensor *sensor)
-{
-	int ret;
+अटल पूर्णांक st_mmap_enable_irq(काष्ठा st_thermal_sensor *sensor)
+अणु
+	पूर्णांक ret;
 
 	/* Set upper critical threshold */
-	ret = regmap_field_write(sensor->int_thresh_hi,
+	ret = regmap_field_ग_लिखो(sensor->पूर्णांक_thresh_hi,
 				 sensor->cdata->crit_temp -
 				 sensor->cdata->temp_adjust_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return regmap_field_write(sensor->int_enable, 1);
-}
+	वापस regmap_field_ग_लिखो(sensor->पूर्णांक_enable, 1);
+पूर्ण
 
-static int st_mmap_register_enable_irq(struct st_thermal_sensor *sensor)
-{
-	struct device *dev = sensor->dev;
-	struct platform_device *pdev = to_platform_device(dev);
-	int ret;
+अटल पूर्णांक st_mmap_रेजिस्टर_enable_irq(काष्ठा st_thermal_sensor *sensor)
+अणु
+	काष्ठा device *dev = sensor->dev;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	पूर्णांक ret;
 
-	sensor->irq = platform_get_irq(pdev, 0);
-	if (sensor->irq < 0)
-		return sensor->irq;
+	sensor->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (sensor->irq < 0)
+		वापस sensor->irq;
 
-	ret = devm_request_threaded_irq(dev, sensor->irq,
-					NULL, st_mmap_thermal_trip_handler,
+	ret = devm_request_thपढ़ोed_irq(dev, sensor->irq,
+					शून्य, st_mmap_thermal_trip_handler,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					dev->driver->name, sensor);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to register IRQ %d\n", sensor->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return st_mmap_enable_irq(sensor);
-}
+	वापस st_mmap_enable_irq(sensor);
+पूर्ण
 
-static const struct regmap_config st_416mpe_regmap_config = {
+अटल स्थिर काष्ठा regmap_config st_416mpe_regmap_config = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-};
+पूर्ण;
 
-static int st_mmap_regmap_init(struct st_thermal_sensor *sensor)
-{
-	struct device *dev = sensor->dev;
-	struct platform_device *pdev = to_platform_device(dev);
-	struct resource *res;
+अटल पूर्णांक st_mmap_regmap_init(काष्ठा st_thermal_sensor *sensor)
+अणु
+	काष्ठा device *dev = sensor->dev;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा resource *res;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(dev, "no memory resources defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	sensor->mmio_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(sensor->mmio_base)) {
+	अगर (IS_ERR(sensor->mmio_base)) अणु
 		dev_err(dev, "failed to remap IO\n");
-		return PTR_ERR(sensor->mmio_base);
-	}
+		वापस PTR_ERR(sensor->mmio_base);
+	पूर्ण
 
 	sensor->regmap = devm_regmap_init_mmio(dev, sensor->mmio_base,
 				&st_416mpe_regmap_config);
-	if (IS_ERR(sensor->regmap)) {
+	अगर (IS_ERR(sensor->regmap)) अणु
 		dev_err(dev, "failed to initialise regmap\n");
-		return PTR_ERR(sensor->regmap);
-	}
+		वापस PTR_ERR(sensor->regmap);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct st_thermal_sensor_ops st_mmap_sensor_ops = {
-	.power_ctrl		= st_mmap_power_ctrl,
+अटल स्थिर काष्ठा st_thermal_sensor_ops st_mmap_sensor_ops = अणु
+	.घातer_ctrl		= st_mmap_घातer_ctrl,
 	.alloc_regfields	= st_mmap_alloc_regfields,
 	.regmap_init		= st_mmap_regmap_init,
-	.register_enable_irq	= st_mmap_register_enable_irq,
+	.रेजिस्टर_enable_irq	= st_mmap_रेजिस्टर_enable_irq,
 	.enable_irq		= st_mmap_enable_irq,
-};
+पूर्ण;
 
 /* Compatible device data stih416 mpe thermal sensor */
-static const struct st_thermal_compat_data st_416mpe_cdata = {
+अटल स्थिर काष्ठा st_thermal_compat_data st_416mpe_cdata = अणु
 	.reg_fields		= st_mmap_thermal_regfields,
 	.ops			= &st_mmap_sensor_ops,
 	.calibration_val	= 14,
 	.temp_adjust_val	= -95,
 	.crit_temp		= 120,
-};
+पूर्ण;
 
 /* Compatible device data stih407 thermal sensor */
-static const struct st_thermal_compat_data st_407_cdata = {
+अटल स्थिर काष्ठा st_thermal_compat_data st_407_cdata = अणु
 	.reg_fields		= st_mmap_thermal_regfields,
 	.ops			= &st_mmap_sensor_ops,
 	.calibration_val	= 16,
 	.temp_adjust_val	= -95,
 	.crit_temp		= 120,
-};
+पूर्ण;
 
-static const struct of_device_id st_mmap_thermal_of_match[] = {
-	{ .compatible = "st,stih416-mpe-thermal", .data = &st_416mpe_cdata },
-	{ .compatible = "st,stih407-thermal",     .data = &st_407_cdata },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id st_mmap_thermal_of_match[] = अणु
+	अणु .compatible = "st,stih416-mpe-thermal", .data = &st_416mpe_cdata पूर्ण,
+	अणु .compatible = "st,stih407-thermal",     .data = &st_407_cdata पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, st_mmap_thermal_of_match);
 
-static int st_mmap_probe(struct platform_device *pdev)
-{
-	return st_thermal_register(pdev,  st_mmap_thermal_of_match);
-}
+अटल पूर्णांक st_mmap_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस st_thermal_रेजिस्टर(pdev,  st_mmap_thermal_of_match);
+पूर्ण
 
-static int st_mmap_remove(struct platform_device *pdev)
-{
-	return st_thermal_unregister(pdev);
-}
+अटल पूर्णांक st_mmap_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस st_thermal_unरेजिस्टर(pdev);
+पूर्ण
 
-static struct platform_driver st_mmap_thermal_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver st_mmap_thermal_driver = अणु
+	.driver = अणु
 		.name	= "st_thermal_mmap",
 		.pm     = &st_thermal_pm_ops,
 		.of_match_table = st_mmap_thermal_of_match,
-	},
+	पूर्ण,
 	.probe		= st_mmap_probe,
-	.remove		= st_mmap_remove,
-};
+	.हटाओ		= st_mmap_हटाओ,
+पूर्ण;
 
-module_platform_driver(st_mmap_thermal_driver);
+module_platक्रमm_driver(st_mmap_thermal_driver);
 
 MODULE_AUTHOR("STMicroelectronics (R&D) Limited <ajitpal.singh@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics STi SoC Thermal Sensor Driver");

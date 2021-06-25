@@ -1,137 +1,138 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <test_progs.h>
-#include "cgroup_helpers.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <test_progs.h>
+#समावेश "cgroup_helpers.h"
 
-static int prog_attach(struct bpf_object *obj, int cgroup_fd, const char *title)
-{
-	enum bpf_attach_type attach_type;
-	enum bpf_prog_type prog_type;
-	struct bpf_program *prog;
-	int err;
+अटल पूर्णांक prog_attach(काष्ठा bpf_object *obj, पूर्णांक cgroup_fd, स्थिर अक्षर *title)
+अणु
+	क्रमागत bpf_attach_type attach_type;
+	क्रमागत bpf_prog_type prog_type;
+	काष्ठा bpf_program *prog;
+	पूर्णांक err;
 
 	err = libbpf_prog_type_by_name(title, &prog_type, &attach_type);
-	if (err) {
+	अगर (err) अणु
 		log_err("Failed to deduct types for %s BPF program", title);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	prog = bpf_object__find_program_by_title(obj, title);
-	if (!prog) {
+	अगर (!prog) अणु
 		log_err("Failed to find %s BPF program", title);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	err = bpf_prog_attach(bpf_program__fd(prog), cgroup_fd,
 			      attach_type, BPF_F_ALLOW_MULTI);
-	if (err) {
+	अगर (err) अणु
 		log_err("Failed to attach %s BPF program", title);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prog_detach(struct bpf_object *obj, int cgroup_fd, const char *title)
-{
-	enum bpf_attach_type attach_type;
-	enum bpf_prog_type prog_type;
-	struct bpf_program *prog;
-	int err;
+अटल पूर्णांक prog_detach(काष्ठा bpf_object *obj, पूर्णांक cgroup_fd, स्थिर अक्षर *title)
+अणु
+	क्रमागत bpf_attach_type attach_type;
+	क्रमागत bpf_prog_type prog_type;
+	काष्ठा bpf_program *prog;
+	पूर्णांक err;
 
 	err = libbpf_prog_type_by_name(title, &prog_type, &attach_type);
-	if (err)
-		return -1;
+	अगर (err)
+		वापस -1;
 
 	prog = bpf_object__find_program_by_title(obj, title);
-	if (!prog)
-		return -1;
+	अगर (!prog)
+		वापस -1;
 
 	err = bpf_prog_detach2(bpf_program__fd(prog), cgroup_fd,
 			       attach_type);
-	if (err)
-		return -1;
+	अगर (err)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int run_getsockopt_test(struct bpf_object *obj, int cg_parent,
-			       int cg_child, int sock_fd)
-{
+अटल पूर्णांक run_माला_लोockopt_test(काष्ठा bpf_object *obj, पूर्णांक cg_parent,
+			       पूर्णांक cg_child, पूर्णांक sock_fd)
+अणु
 	socklen_t optlen;
 	__u8 buf;
-	int err;
+	पूर्णांक err;
 
 	/* Set IP_TOS to the expected value (0x80). */
 
 	buf = 0x80;
 	err = setsockopt(sock_fd, SOL_IP, IP_TOS, &buf, 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		log_err("Failed to call setsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	buf = 0x00;
 	optlen = 1;
-	err = getsockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
-	if (err) {
+	err = माला_लोockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
+	अगर (err) अणु
 		log_err("Failed to call getsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	if (buf != 0x80) {
+	अगर (buf != 0x80) अणु
 		log_err("Unexpected getsockopt 0x%x != 0x80 without BPF", buf);
 		err = -1;
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	/* Attach child program and make sure it returns new value:
+	/* Attach child program and make sure it वापसs new value:
 	 * - kernel:      -> 0x80
 	 * - child:  0x80 -> 0x90
 	 */
 
 	err = prog_attach(obj, cg_child, "cgroup/getsockopt/child");
-	if (err)
-		goto detach;
+	अगर (err)
+		जाओ detach;
 
 	buf = 0x00;
 	optlen = 1;
-	err = getsockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
-	if (err) {
+	err = माला_लोockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
+	अगर (err) अणु
 		log_err("Failed to call getsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	if (buf != 0x90) {
+	अगर (buf != 0x90) अणु
 		log_err("Unexpected getsockopt 0x%x != 0x90", buf);
 		err = -1;
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	/* Attach parent program and make sure it returns new value:
+	/* Attach parent program and make sure it वापसs new value:
 	 * - kernel:      -> 0x80
 	 * - child:  0x80 -> 0x90
 	 * - parent: 0x90 -> 0xA0
 	 */
 
 	err = prog_attach(obj, cg_parent, "cgroup/getsockopt/parent");
-	if (err)
-		goto detach;
+	अगर (err)
+		जाओ detach;
 
 	buf = 0x00;
 	optlen = 1;
-	err = getsockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
-	if (err) {
+	err = माला_लोockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
+	अगर (err) अणु
 		log_err("Failed to call getsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	if (buf != 0xA0) {
+	अगर (buf != 0xA0) अणु
 		log_err("Unexpected getsockopt 0x%x != 0xA0", buf);
 		err = -1;
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	/* Setting unexpected initial sockopt should return EPERM:
+	/* Setting unexpected initial sockopt should वापस EPERM:
 	 * - kernel: -> 0x40
 	 * - child:  unexpected 0x40, EPERM
 	 * - parent: unexpected 0x40, EPERM
@@ -139,18 +140,18 @@ static int run_getsockopt_test(struct bpf_object *obj, int cg_parent,
 
 	buf = 0x40;
 	err = setsockopt(sock_fd, SOL_IP, IP_TOS, &buf, 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		log_err("Failed to call setsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	buf = 0x00;
 	optlen = 1;
-	err = getsockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
-	if (!err) {
+	err = माला_लोockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
+	अगर (!err) अणु
 		log_err("Unexpected success from getsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	/* Detach child program and make sure we still get EPERM:
 	 * - kernel: -> 0x40
@@ -158,18 +159,18 @@ static int run_getsockopt_test(struct bpf_object *obj, int cg_parent,
 	 */
 
 	err = prog_detach(obj, cg_child, "cgroup/getsockopt/child");
-	if (err) {
+	अगर (err) अणु
 		log_err("Failed to detach child program");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	buf = 0x00;
 	optlen = 1;
-	err = getsockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
-	if (!err) {
+	err = माला_लोockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
+	अगर (!err) अणु
 		log_err("Unexpected success from getsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	/* Set initial value to the one the parent program expects:
 	 * - kernel:      -> 0x90
@@ -178,156 +179,156 @@ static int run_getsockopt_test(struct bpf_object *obj, int cg_parent,
 
 	buf = 0x90;
 	err = setsockopt(sock_fd, SOL_IP, IP_TOS, &buf, 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		log_err("Failed to call setsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	buf = 0x00;
 	optlen = 1;
-	err = getsockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
-	if (err) {
+	err = माला_लोockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
+	अगर (err) अणु
 		log_err("Failed to call getsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	if (buf != 0xA0) {
+	अगर (buf != 0xA0) अणु
 		log_err("Unexpected getsockopt 0x%x != 0xA0", buf);
 		err = -1;
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 detach:
 	prog_detach(obj, cg_child, "cgroup/getsockopt/child");
 	prog_detach(obj, cg_parent, "cgroup/getsockopt/parent");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int run_setsockopt_test(struct bpf_object *obj, int cg_parent,
-			       int cg_child, int sock_fd)
-{
+अटल पूर्णांक run_setsockopt_test(काष्ठा bpf_object *obj, पूर्णांक cg_parent,
+			       पूर्णांक cg_child, पूर्णांक sock_fd)
+अणु
 	socklen_t optlen;
 	__u8 buf;
-	int err;
+	पूर्णांक err;
 
 	/* Set IP_TOS to the expected value (0x80). */
 
 	buf = 0x80;
 	err = setsockopt(sock_fd, SOL_IP, IP_TOS, &buf, 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		log_err("Failed to call setsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	buf = 0x00;
 	optlen = 1;
-	err = getsockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
-	if (err) {
+	err = माला_लोockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
+	अगर (err) अणु
 		log_err("Failed to call getsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	if (buf != 0x80) {
+	अगर (buf != 0x80) अणु
 		log_err("Unexpected getsockopt 0x%x != 0x80 without BPF", buf);
 		err = -1;
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	/* Attach child program and make sure it adds 0x10. */
 
 	err = prog_attach(obj, cg_child, "cgroup/setsockopt");
-	if (err)
-		goto detach;
+	अगर (err)
+		जाओ detach;
 
 	buf = 0x80;
 	err = setsockopt(sock_fd, SOL_IP, IP_TOS, &buf, 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		log_err("Failed to call setsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	buf = 0x00;
 	optlen = 1;
-	err = getsockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
-	if (err) {
+	err = माला_लोockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
+	अगर (err) अणु
 		log_err("Failed to call getsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	if (buf != 0x80 + 0x10) {
+	अगर (buf != 0x80 + 0x10) अणु
 		log_err("Unexpected getsockopt 0x%x != 0x80 + 0x10", buf);
 		err = -1;
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	/* Attach parent program and make sure it adds another 0x10. */
 
 	err = prog_attach(obj, cg_parent, "cgroup/setsockopt");
-	if (err)
-		goto detach;
+	अगर (err)
+		जाओ detach;
 
 	buf = 0x80;
 	err = setsockopt(sock_fd, SOL_IP, IP_TOS, &buf, 1);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		log_err("Failed to call setsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 	buf = 0x00;
 	optlen = 1;
-	err = getsockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
-	if (err) {
+	err = माला_लोockopt(sock_fd, SOL_IP, IP_TOS, &buf, &optlen);
+	अगर (err) अणु
 		log_err("Failed to call getsockopt(IP_TOS)");
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
-	if (buf != 0x80 + 2 * 0x10) {
+	अगर (buf != 0x80 + 2 * 0x10) अणु
 		log_err("Unexpected getsockopt 0x%x != 0x80 + 2 * 0x10", buf);
 		err = -1;
-		goto detach;
-	}
+		जाओ detach;
+	पूर्ण
 
 detach:
 	prog_detach(obj, cg_child, "cgroup/setsockopt");
 	prog_detach(obj, cg_parent, "cgroup/setsockopt");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void test_sockopt_multi(void)
-{
-	struct bpf_prog_load_attr attr = {
+व्योम test_sockopt_multi(व्योम)
+अणु
+	काष्ठा bpf_prog_load_attr attr = अणु
 		.file = "./sockopt_multi.o",
-	};
-	int cg_parent = -1, cg_child = -1;
-	struct bpf_object *obj = NULL;
-	int sock_fd = -1;
-	int err = -1;
-	int ignored;
+	पूर्ण;
+	पूर्णांक cg_parent = -1, cg_child = -1;
+	काष्ठा bpf_object *obj = शून्य;
+	पूर्णांक sock_fd = -1;
+	पूर्णांक err = -1;
+	पूर्णांक ignored;
 
 	cg_parent = test__join_cgroup("/parent");
-	if (CHECK_FAIL(cg_parent < 0))
-		goto out;
+	अगर (CHECK_FAIL(cg_parent < 0))
+		जाओ out;
 
 	cg_child = test__join_cgroup("/parent/child");
-	if (CHECK_FAIL(cg_child < 0))
-		goto out;
+	अगर (CHECK_FAIL(cg_child < 0))
+		जाओ out;
 
 	err = bpf_prog_load_xattr(&attr, &obj, &ignored);
-	if (CHECK_FAIL(err))
-		goto out;
+	अगर (CHECK_FAIL(err))
+		जाओ out;
 
 	sock_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (CHECK_FAIL(sock_fd < 0))
-		goto out;
+	अगर (CHECK_FAIL(sock_fd < 0))
+		जाओ out;
 
-	CHECK_FAIL(run_getsockopt_test(obj, cg_parent, cg_child, sock_fd));
+	CHECK_FAIL(run_माला_लोockopt_test(obj, cg_parent, cg_child, sock_fd));
 	CHECK_FAIL(run_setsockopt_test(obj, cg_parent, cg_child, sock_fd));
 
 out:
-	close(sock_fd);
-	bpf_object__close(obj);
-	close(cg_child);
-	close(cg_parent);
-}
+	बंद(sock_fd);
+	bpf_object__बंद(obj);
+	बंद(cg_child);
+	बंद(cg_parent);
+पूर्ण

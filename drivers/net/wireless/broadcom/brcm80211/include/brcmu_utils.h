@@ -1,216 +1,217 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
 
-#ifndef	_BRCMU_UTILS_H_
-#define	_BRCMU_UTILS_H_
+#अगर_अघोषित	_BRCMU_UTILS_H_
+#घोषणा	_BRCMU_UTILS_H_
 
-#include <linux/skbuff.h>
+#समावेश <linux/skbuff.h>
 
 /*
  * Spin at most 'us' microseconds while 'exp' is true.
  * Caller should explicitly test 'exp' when this completes
- * and take appropriate error action if 'exp' is still true.
+ * and take appropriate error action अगर 'exp' is still true.
  */
-#define SPINWAIT(exp, us) { \
-	uint countdown = (us) + 9; \
-	while ((exp) && (countdown >= 10)) {\
+#घोषणा SPINWAIT(exp, us) अणु \
+	uपूर्णांक countकरोwn = (us) + 9; \
+	जबतक ((exp) && (countकरोwn >= 10)) अणु\
 		udelay(10); \
-		countdown -= 10; \
-	} \
-}
+		countकरोwn -= 10; \
+	पूर्ण \
+पूर्ण
 
 /* osl multi-precedence packet queue */
-#define PKTQ_LEN_DEFAULT        128	/* Max 128 packets */
-#define PKTQ_MAX_PREC           16	/* Maximum precedence levels */
+#घोषणा PKTQ_LEN_DEFAULT        128	/* Max 128 packets */
+#घोषणा PKTQ_MAX_PREC           16	/* Maximum precedence levels */
 
-#define BCME_STRLEN		64	/* Max string length for BCM errors */
+#घोषणा BCME_STRLEN		64	/* Max string length क्रम BCM errors */
 
-/* the largest reasonable packet buffer driver uses for ethernet MTU in bytes */
-#define	PKTBUFSZ	2048
+/* the largest reasonable packet buffer driver uses क्रम ethernet MTU in bytes */
+#घोषणा	PKTBUFSZ	2048
 
-#ifndef setbit
-#ifndef NBBY			/* the BSD family defines NBBY */
-#define	NBBY	8		/* 8 bits per byte */
-#endif				/* #ifndef NBBY */
-#define	setbit(a, i)	(((u8 *)a)[(i)/NBBY] |= 1<<((i)%NBBY))
-#define	clrbit(a, i)	(((u8 *)a)[(i)/NBBY] &= ~(1<<((i)%NBBY)))
-#define	isset(a, i)	(((const u8 *)a)[(i)/NBBY] & (1<<((i)%NBBY)))
-#define	isclr(a, i)	((((const u8 *)a)[(i)/NBBY] & (1<<((i)%NBBY))) == 0)
-#endif				/* setbit */
+#अगर_अघोषित setbit
+#अगर_अघोषित NBBY			/* the BSD family defines NBBY */
+#घोषणा	NBBY	8		/* 8 bits per byte */
+#पूर्ण_अगर				/* #अगर_अघोषित NBBY */
+#घोषणा	setbit(a, i)	(((u8 *)a)[(i)/NBBY] |= 1<<((i)%NBBY))
+#घोषणा	clrbit(a, i)	(((u8 *)a)[(i)/NBBY] &= ~(1<<((i)%NBBY)))
+#घोषणा	isset(a, i)	(((स्थिर u8 *)a)[(i)/NBBY] & (1<<((i)%NBBY)))
+#घोषणा	isclr(a, i)	((((स्थिर u8 *)a)[(i)/NBBY] & (1<<((i)%NBBY))) == 0)
+#पूर्ण_अगर				/* setbit */
 
-#define	NBITS(type)	(sizeof(type) * 8)
-#define NBITVAL(nbits)	(1 << (nbits))
-#define MAXBITVAL(nbits)	((1 << (nbits)) - 1)
-#define	NBITMASK(nbits)	MAXBITVAL(nbits)
-#define MAXNBVAL(nbyte)	MAXBITVAL((nbyte) * 8)
+#घोषणा	NBITS(type)	(माप(type) * 8)
+#घोषणा NBITVAL(nbits)	(1 << (nbits))
+#घोषणा MAXBITVAL(nbits)	((1 << (nbits)) - 1)
+#घोषणा	NBITMASK(nbits)	MAXBITVAL(nbits)
+#घोषणा MAXNBVAL(nbyte)	MAXBITVAL((nbyte) * 8)
 
 /* crc defines */
-#define CRC16_INIT_VALUE 0xffff	/* Initial CRC16 checksum value */
-#define CRC16_GOOD_VALUE 0xf0b8	/* Good final CRC16 checksum value */
+#घोषणा CRC16_INIT_VALUE 0xffff	/* Initial CRC16 checksum value */
+#घोषणा CRC16_GOOD_VALUE 0xf0b8	/* Good final CRC16 checksum value */
 
 /* 18-bytes of Ethernet address buffer length */
-#define ETHER_ADDR_STR_LEN	18
+#घोषणा ETHER_ADDR_STR_LEN	18
 
-struct pktq_prec {
-	struct sk_buff_head skblist;
+काष्ठा pktq_prec अणु
+	काष्ठा sk_buff_head skblist;
 	u16 max;		/* maximum number of queued packets */
-};
+पूर्ण;
 
 /* multi-priority pkt queue */
-struct pktq {
+काष्ठा pktq अणु
 	u16 num_prec;	/* number of precedences in use */
-	u16 hi_prec;	/* rapid dequeue hint (>= highest non-empty prec) */
+	u16 hi_prec;	/* rapid dequeue hपूर्णांक (>= highest non-empty prec) */
 	u16 max;	/* total max packets */
 	u16 len;	/* total number of packets */
 	/*
 	 * q array must be last since # of elements can be either
 	 * PKTQ_MAX_PREC or 1
 	 */
-	struct pktq_prec q[PKTQ_MAX_PREC];
-};
+	काष्ठा pktq_prec q[PKTQ_MAX_PREC];
+पूर्ण;
 
-/* operations on a specific precedence in packet queue */
+/* operations on a specअगरic precedence in packet queue */
 
-static inline int pktq_plen(struct pktq *pq, int prec)
-{
-	return pq->q[prec].skblist.qlen;
-}
+अटल अंतरभूत पूर्णांक pktq_plen(काष्ठा pktq *pq, पूर्णांक prec)
+अणु
+	वापस pq->q[prec].skblist.qlen;
+पूर्ण
 
-static inline int pktq_pavail(struct pktq *pq, int prec)
-{
-	return pq->q[prec].max - pq->q[prec].skblist.qlen;
-}
+अटल अंतरभूत पूर्णांक pktq_pavail(काष्ठा pktq *pq, पूर्णांक prec)
+अणु
+	वापस pq->q[prec].max - pq->q[prec].skblist.qlen;
+पूर्ण
 
-static inline bool pktq_pfull(struct pktq *pq, int prec)
-{
-	return pq->q[prec].skblist.qlen >= pq->q[prec].max;
-}
+अटल अंतरभूत bool pktq_pfull(काष्ठा pktq *pq, पूर्णांक prec)
+अणु
+	वापस pq->q[prec].skblist.qlen >= pq->q[prec].max;
+पूर्ण
 
-static inline bool pktq_pempty(struct pktq *pq, int prec)
-{
-	return skb_queue_empty(&pq->q[prec].skblist);
-}
+अटल अंतरभूत bool pktq_pempty(काष्ठा pktq *pq, पूर्णांक prec)
+अणु
+	वापस skb_queue_empty(&pq->q[prec].skblist);
+पूर्ण
 
-static inline struct sk_buff *pktq_ppeek(struct pktq *pq, int prec)
-{
-	return skb_peek(&pq->q[prec].skblist);
-}
+अटल अंतरभूत काष्ठा sk_buff *pktq_ppeek(काष्ठा pktq *pq, पूर्णांक prec)
+अणु
+	वापस skb_peek(&pq->q[prec].skblist);
+पूर्ण
 
-static inline struct sk_buff *pktq_ppeek_tail(struct pktq *pq, int prec)
-{
-	return skb_peek_tail(&pq->q[prec].skblist);
-}
+अटल अंतरभूत काष्ठा sk_buff *pktq_ppeek_tail(काष्ठा pktq *pq, पूर्णांक prec)
+अणु
+	वापस skb_peek_tail(&pq->q[prec].skblist);
+पूर्ण
 
-struct sk_buff *brcmu_pktq_penq(struct pktq *pq, int prec, struct sk_buff *p);
-struct sk_buff *brcmu_pktq_penq_head(struct pktq *pq, int prec,
-				     struct sk_buff *p);
-struct sk_buff *brcmu_pktq_pdeq(struct pktq *pq, int prec);
-struct sk_buff *brcmu_pktq_pdeq_tail(struct pktq *pq, int prec);
-struct sk_buff *brcmu_pktq_pdeq_match(struct pktq *pq, int prec,
-				      bool (*match_fn)(struct sk_buff *p,
-						       void *arg),
-				      void *arg);
+काष्ठा sk_buff *brcmu_pktq_penq(काष्ठा pktq *pq, पूर्णांक prec, काष्ठा sk_buff *p);
+काष्ठा sk_buff *brcmu_pktq_penq_head(काष्ठा pktq *pq, पूर्णांक prec,
+				     काष्ठा sk_buff *p);
+काष्ठा sk_buff *brcmu_pktq_pdeq(काष्ठा pktq *pq, पूर्णांक prec);
+काष्ठा sk_buff *brcmu_pktq_pdeq_tail(काष्ठा pktq *pq, पूर्णांक prec);
+काष्ठा sk_buff *brcmu_pktq_pdeq_match(काष्ठा pktq *pq, पूर्णांक prec,
+				      bool (*match_fn)(काष्ठा sk_buff *p,
+						       व्योम *arg),
+				      व्योम *arg);
 
 /* packet primitives */
-struct sk_buff *brcmu_pkt_buf_get_skb(uint len);
-void brcmu_pkt_buf_free_skb(struct sk_buff *skb);
+काष्ठा sk_buff *brcmu_pkt_buf_get_skb(uपूर्णांक len);
+व्योम brcmu_pkt_buf_मुक्त_skb(काष्ठा sk_buff *skb);
 
 /* Empty the queue at particular precedence level */
-/* callback function fn(pkt, arg) returns true if pkt belongs to if */
-void brcmu_pktq_pflush(struct pktq *pq, int prec, bool dir,
-		       bool (*fn)(struct sk_buff *, void *), void *arg);
+/* callback function fn(pkt, arg) वापसs true अगर pkt beदीर्घs to अगर */
+व्योम brcmu_pktq_pflush(काष्ठा pktq *pq, पूर्णांक prec, bool dir,
+		       bool (*fn)(काष्ठा sk_buff *, व्योम *), व्योम *arg);
 
 /* operations on a set of precedences in packet queue */
 
-int brcmu_pktq_mlen(struct pktq *pq, uint prec_bmp);
-struct sk_buff *brcmu_pktq_mdeq(struct pktq *pq, uint prec_bmp, int *prec_out);
+पूर्णांक brcmu_pktq_mlen(काष्ठा pktq *pq, uपूर्णांक prec_bmp);
+काष्ठा sk_buff *brcmu_pktq_mdeq(काष्ठा pktq *pq, uपूर्णांक prec_bmp, पूर्णांक *prec_out);
 
 /* operations on packet queue as a whole */
 
-static inline int pktq_len(struct pktq *pq)
-{
-	return (int)pq->len;
-}
+अटल अंतरभूत पूर्णांक pktq_len(काष्ठा pktq *pq)
+अणु
+	वापस (पूर्णांक)pq->len;
+पूर्ण
 
-static inline int pktq_max(struct pktq *pq)
-{
-	return (int)pq->max;
-}
+अटल अंतरभूत पूर्णांक pktq_max(काष्ठा pktq *pq)
+अणु
+	वापस (पूर्णांक)pq->max;
+पूर्ण
 
-static inline int pktq_avail(struct pktq *pq)
-{
-	return (int)(pq->max - pq->len);
-}
+अटल अंतरभूत पूर्णांक pktq_avail(काष्ठा pktq *pq)
+अणु
+	वापस (पूर्णांक)(pq->max - pq->len);
+पूर्ण
 
-static inline bool pktq_full(struct pktq *pq)
-{
-	return pq->len >= pq->max;
-}
+अटल अंतरभूत bool pktq_full(काष्ठा pktq *pq)
+अणु
+	वापस pq->len >= pq->max;
+पूर्ण
 
-static inline bool pktq_empty(struct pktq *pq)
-{
-	return pq->len == 0;
-}
+अटल अंतरभूत bool pktq_empty(काष्ठा pktq *pq)
+अणु
+	वापस pq->len == 0;
+पूर्ण
 
-void brcmu_pktq_init(struct pktq *pq, int num_prec, int max_len);
-/* prec_out may be NULL if caller is not interested in return value */
-struct sk_buff *brcmu_pktq_peek_tail(struct pktq *pq, int *prec_out);
-void brcmu_pktq_flush(struct pktq *pq, bool dir,
-		      bool (*fn)(struct sk_buff *, void *), void *arg);
+व्योम brcmu_pktq_init(काष्ठा pktq *pq, पूर्णांक num_prec, पूर्णांक max_len);
+/* prec_out may be शून्य अगर caller is not पूर्णांकerested in वापस value */
+काष्ठा sk_buff *brcmu_pktq_peek_tail(काष्ठा pktq *pq, पूर्णांक *prec_out);
+व्योम brcmu_pktq_flush(काष्ठा pktq *pq, bool dir,
+		      bool (*fn)(काष्ठा sk_buff *, व्योम *), व्योम *arg);
 
-/* externs */
+/* बाह्यs */
 /* ip address */
-struct ipv4_addr;
+काष्ठा ipv4_addr;
 
 /*
- * bitfield macros using masking and shift
+ * bitfield macros using masking and shअगरt
  *
- * remark: the mask parameter should be a shifted mask.
+ * remark: the mask parameter should be a shअगरted mask.
  */
-static inline void brcmu_maskset32(u32 *var, u32 mask, u8 shift, u32 value)
-{
-	value = (value << shift) & mask;
+अटल अंतरभूत व्योम brcmu_maskset32(u32 *var, u32 mask, u8 shअगरt, u32 value)
+अणु
+	value = (value << shअगरt) & mask;
 	*var = (*var & ~mask) | value;
-}
-static inline u32 brcmu_maskget32(u32 var, u32 mask, u8 shift)
-{
-	return (var & mask) >> shift;
-}
-static inline void brcmu_maskset16(u16 *var, u16 mask, u8 shift, u16 value)
-{
-	value = (value << shift) & mask;
+पूर्ण
+अटल अंतरभूत u32 brcmu_maskget32(u32 var, u32 mask, u8 shअगरt)
+अणु
+	वापस (var & mask) >> shअगरt;
+पूर्ण
+अटल अंतरभूत व्योम brcmu_maskset16(u16 *var, u16 mask, u8 shअगरt, u16 value)
+अणु
+	value = (value << shअगरt) & mask;
 	*var = (*var & ~mask) | value;
-}
-static inline u16 brcmu_maskget16(u16 var, u16 mask, u8 shift)
-{
-	return (var & mask) >> shift;
-}
+पूर्ण
+अटल अंतरभूत u16 brcmu_maskget16(u16 var, u16 mask, u8 shअगरt)
+अणु
+	वापस (var & mask) >> shअगरt;
+पूर्ण
 
-/* externs */
-/* format/print */
-#ifdef DEBUG
-void brcmu_prpkt(const char *msg, struct sk_buff *p0);
-#else
-#define brcmu_prpkt(a, b)
-#endif				/* DEBUG */
+/* बाह्यs */
+/* क्रमmat/prपूर्णांक */
+#अगर_घोषित DEBUG
+व्योम brcmu_prpkt(स्थिर अक्षर *msg, काष्ठा sk_buff *p0);
+#अन्यथा
+#घोषणा brcmu_prpkt(a, b)
+#पूर्ण_अगर				/* DEBUG */
 
-#ifdef DEBUG
-__printf(3, 4)
-void brcmu_dbg_hex_dump(const void *data, size_t size, const char *fmt, ...);
-#else
-__printf(3, 4)
-static inline
-void brcmu_dbg_hex_dump(const void *data, size_t size, const char *fmt, ...)
-{
-}
-#endif
+#अगर_घोषित DEBUG
+__म_लिखो(3, 4)
+व्योम brcmu_dbg_hex_dump(स्थिर व्योम *data, माप_प्रकार size, स्थिर अक्षर *fmt, ...);
+#अन्यथा
+__म_लिखो(3, 4)
+अटल अंतरभूत
+व्योम brcmu_dbg_hex_dump(स्थिर व्योम *data, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#define BRCMU_BOARDREV_LEN	8
-#define BRCMU_DOTREV_LEN	16
+#घोषणा BRCMU_BOARDREV_LEN	8
+#घोषणा BRCMU_DOTREV_LEN	16
 
-char *brcmu_boardrev_str(u32 brev, char *buf);
-char *brcmu_dotrev_str(u32 dotrev, char *buf);
+अक्षर *brcmu_boardrev_str(u32 brev, अक्षर *buf);
+अक्षर *brcmu_करोtrev_str(u32 करोtrev, अक्षर *buf);
 
-#endif				/* _BRCMU_UTILS_H_ */
+#पूर्ण_अगर				/* _BRCMU_UTILS_H_ */

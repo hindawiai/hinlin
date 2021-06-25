@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2009 Francisco Jerez.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,159 +25,159 @@
  *
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <drm/drm_encoder_slave.h>
+#समावेश <drm/drm_encoder_slave.h>
 
 /**
  * drm_i2c_encoder_init - Initialize an I2C slave encoder
  * @dev:	DRM device.
  * @encoder:    Encoder to be attached to the I2C device. You aren't
- *		required to have called drm_encoder_init() before.
+ *		required to have called drm_encoder_init() beक्रमe.
  * @adap:	I2C adapter that will be used to communicate with
  *		the device.
- * @info:	Information that will be used to create the I2C device.
+ * @info:	Inक्रमmation that will be used to create the I2C device.
  *		Required fields are @addr and @type.
  *
- * Create an I2C device on the specified bus (the module containing its
- * driver is transparently loaded) and attach it to the specified
+ * Create an I2C device on the specअगरied bus (the module containing its
+ * driver is transparently loaded) and attach it to the specअगरied
  * &drm_encoder_slave. The @slave_funcs field will be initialized with
  * the hooks provided by the slave driver.
  *
- * If @info.platform_data is non-NULL it will be used as the initial
+ * If @info.platक्रमm_data is non-शून्य it will be used as the initial
  * slave config.
  *
- * Returns 0 on success or a negative errno on failure, in particular,
- * -ENODEV is returned when no matching driver is found.
+ * Returns 0 on success or a negative त्रुटि_सं on failure, in particular,
+ * -ENODEV is वापसed when no matching driver is found.
  */
-int drm_i2c_encoder_init(struct drm_device *dev,
-			 struct drm_encoder_slave *encoder,
-			 struct i2c_adapter *adap,
-			 const struct i2c_board_info *info)
-{
-	struct module *module = NULL;
-	struct i2c_client *client;
-	struct drm_i2c_encoder_driver *encoder_drv;
-	int err = 0;
+पूर्णांक drm_i2c_encoder_init(काष्ठा drm_device *dev,
+			 काष्ठा drm_encoder_slave *encoder,
+			 काष्ठा i2c_adapter *adap,
+			 स्थिर काष्ठा i2c_board_info *info)
+अणु
+	काष्ठा module *module = शून्य;
+	काष्ठा i2c_client *client;
+	काष्ठा drm_i2c_encoder_driver *encoder_drv;
+	पूर्णांक err = 0;
 
 	request_module("%s%s", I2C_MODULE_PREFIX, info->type);
 
 	client = i2c_new_client_device(adap, info);
-	if (!i2c_client_has_driver(client)) {
+	अगर (!i2c_client_has_driver(client)) अणु
 		err = -ENODEV;
-		goto fail_unregister;
-	}
+		जाओ fail_unरेजिस्टर;
+	पूर्ण
 
 	module = client->dev.driver->owner;
-	if (!try_module_get(module)) {
+	अगर (!try_module_get(module)) अणु
 		err = -ENODEV;
-		goto fail_unregister;
-	}
+		जाओ fail_unरेजिस्टर;
+	पूर्ण
 
 	encoder->bus_priv = client;
 
 	encoder_drv = to_drm_i2c_encoder_driver(to_i2c_driver(client->dev.driver));
 
 	err = encoder_drv->encoder_init(client, dev, encoder);
-	if (err)
-		goto fail_module_put;
+	अगर (err)
+		जाओ fail_module_put;
 
-	if (info->platform_data)
+	अगर (info->platक्रमm_data)
 		encoder->slave_funcs->set_config(&encoder->base,
-						 info->platform_data);
+						 info->platक्रमm_data);
 
-	return 0;
+	वापस 0;
 
 fail_module_put:
 	module_put(module);
-fail_unregister:
-	i2c_unregister_device(client);
-	return err;
-}
+fail_unरेजिस्टर:
+	i2c_unरेजिस्टर_device(client);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(drm_i2c_encoder_init);
 
 /**
- * drm_i2c_encoder_destroy - Unregister the I2C device backing an encoder
- * @drm_encoder:	Encoder to be unregistered.
+ * drm_i2c_encoder_destroy - Unरेजिस्टर the I2C device backing an encoder
+ * @drm_encoder:	Encoder to be unरेजिस्टरed.
  *
  * This should be called from the @destroy method of an I2C slave
- * encoder driver once I2C access is no longer needed.
+ * encoder driver once I2C access is no दीर्घer needed.
  */
-void drm_i2c_encoder_destroy(struct drm_encoder *drm_encoder)
-{
-	struct drm_encoder_slave *encoder = to_encoder_slave(drm_encoder);
-	struct i2c_client *client = drm_i2c_encoder_get_client(drm_encoder);
-	struct module *module = client->dev.driver->owner;
+व्योम drm_i2c_encoder_destroy(काष्ठा drm_encoder *drm_encoder)
+अणु
+	काष्ठा drm_encoder_slave *encoder = to_encoder_slave(drm_encoder);
+	काष्ठा i2c_client *client = drm_i2c_encoder_get_client(drm_encoder);
+	काष्ठा module *module = client->dev.driver->owner;
 
-	i2c_unregister_device(client);
-	encoder->bus_priv = NULL;
+	i2c_unरेजिस्टर_device(client);
+	encoder->bus_priv = शून्य;
 
 	module_put(module);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_i2c_encoder_destroy);
 
 /*
  * Wrapper fxns which can be plugged in to drm_encoder_helper_funcs:
  */
 
-static inline const struct drm_encoder_slave_funcs *
-get_slave_funcs(struct drm_encoder *enc)
-{
-	return to_encoder_slave(enc)->slave_funcs;
-}
+अटल अंतरभूत स्थिर काष्ठा drm_encoder_slave_funcs *
+get_slave_funcs(काष्ठा drm_encoder *enc)
+अणु
+	वापस to_encoder_slave(enc)->slave_funcs;
+पूर्ण
 
-void drm_i2c_encoder_dpms(struct drm_encoder *encoder, int mode)
-{
+व्योम drm_i2c_encoder_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
+अणु
 	get_slave_funcs(encoder)->dpms(encoder, mode);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_i2c_encoder_dpms);
 
-bool drm_i2c_encoder_mode_fixup(struct drm_encoder *encoder,
-		const struct drm_display_mode *mode,
-		struct drm_display_mode *adjusted_mode)
-{
-	if (!get_slave_funcs(encoder)->mode_fixup)
-		return true;
+bool drm_i2c_encoder_mode_fixup(काष्ठा drm_encoder *encoder,
+		स्थिर काष्ठा drm_display_mode *mode,
+		काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	अगर (!get_slave_funcs(encoder)->mode_fixup)
+		वापस true;
 
-	return get_slave_funcs(encoder)->mode_fixup(encoder, mode, adjusted_mode);
-}
+	वापस get_slave_funcs(encoder)->mode_fixup(encoder, mode, adjusted_mode);
+पूर्ण
 EXPORT_SYMBOL(drm_i2c_encoder_mode_fixup);
 
-void drm_i2c_encoder_prepare(struct drm_encoder *encoder)
-{
+व्योम drm_i2c_encoder_prepare(काष्ठा drm_encoder *encoder)
+अणु
 	drm_i2c_encoder_dpms(encoder, DRM_MODE_DPMS_OFF);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_i2c_encoder_prepare);
 
-void drm_i2c_encoder_commit(struct drm_encoder *encoder)
-{
+व्योम drm_i2c_encoder_commit(काष्ठा drm_encoder *encoder)
+अणु
 	drm_i2c_encoder_dpms(encoder, DRM_MODE_DPMS_ON);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_i2c_encoder_commit);
 
-void drm_i2c_encoder_mode_set(struct drm_encoder *encoder,
-		struct drm_display_mode *mode,
-		struct drm_display_mode *adjusted_mode)
-{
+व्योम drm_i2c_encoder_mode_set(काष्ठा drm_encoder *encoder,
+		काष्ठा drm_display_mode *mode,
+		काष्ठा drm_display_mode *adjusted_mode)
+अणु
 	get_slave_funcs(encoder)->mode_set(encoder, mode, adjusted_mode);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_i2c_encoder_mode_set);
 
-enum drm_connector_status drm_i2c_encoder_detect(struct drm_encoder *encoder,
-	    struct drm_connector *connector)
-{
-	return get_slave_funcs(encoder)->detect(encoder, connector);
-}
+क्रमागत drm_connector_status drm_i2c_encoder_detect(काष्ठा drm_encoder *encoder,
+	    काष्ठा drm_connector *connector)
+अणु
+	वापस get_slave_funcs(encoder)->detect(encoder, connector);
+पूर्ण
 EXPORT_SYMBOL(drm_i2c_encoder_detect);
 
-void drm_i2c_encoder_save(struct drm_encoder *encoder)
-{
+व्योम drm_i2c_encoder_save(काष्ठा drm_encoder *encoder)
+अणु
 	get_slave_funcs(encoder)->save(encoder);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_i2c_encoder_save);
 
-void drm_i2c_encoder_restore(struct drm_encoder *encoder)
-{
+व्योम drm_i2c_encoder_restore(काष्ठा drm_encoder *encoder)
+अणु
 	get_slave_funcs(encoder)->restore(encoder);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_i2c_encoder_restore);

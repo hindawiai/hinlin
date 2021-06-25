@@ -1,526 +1,527 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * HD-audio core stuff
  */
 
-#ifndef __SOUND_HDAUDIO_H
-#define __SOUND_HDAUDIO_H
+#अगर_अघोषित __SOUND_HDAUDIO_H
+#घोषणा __SOUND_HDAUDIO_H
 
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/pm_runtime.h>
-#include <linux/timecounter.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/memalloc.h>
-#include <sound/hda_verbs.h>
-#include <drm/i915_component.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/समयcounter.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/meदो_स्मृति.h>
+#समावेश <sound/hda_verbs.h>
+#समावेश <drm/i915_component.h>
 
 /* codec node id */
-typedef u16 hda_nid_t;
+प्रकार u16 hda_nid_t;
 
-struct hdac_bus;
-struct hdac_stream;
-struct hdac_device;
-struct hdac_driver;
-struct hdac_widget_tree;
-struct hda_device_id;
+काष्ठा hdac_bus;
+काष्ठा hdac_stream;
+काष्ठा hdac_device;
+काष्ठा hdac_driver;
+काष्ठा hdac_widget_tree;
+काष्ठा hda_device_id;
 
 /*
  * exported bus type
  */
-extern struct bus_type snd_hda_bus_type;
+बाह्य काष्ठा bus_type snd_hda_bus_type;
 
 /*
  * generic arrays
  */
-struct snd_array {
-	unsigned int used;
-	unsigned int alloced;
-	unsigned int elem_size;
-	unsigned int alloc_align;
-	void *list;
-};
+काष्ठा snd_array अणु
+	अचिन्हित पूर्णांक used;
+	अचिन्हित पूर्णांक alloced;
+	अचिन्हित पूर्णांक elem_size;
+	अचिन्हित पूर्णांक alloc_align;
+	व्योम *list;
+पूर्ण;
 
 /*
  * HD-audio codec base device
  */
-struct hdac_device {
-	struct device dev;
-	int type;
-	struct hdac_bus *bus;
-	unsigned int addr;		/* codec address */
-	struct list_head list;		/* list point for bus codec_list */
+काष्ठा hdac_device अणु
+	काष्ठा device dev;
+	पूर्णांक type;
+	काष्ठा hdac_bus *bus;
+	अचिन्हित पूर्णांक addr;		/* codec address */
+	काष्ठा list_head list;		/* list poपूर्णांक क्रम bus codec_list */
 
 	hda_nid_t afg;			/* AFG node id */
 	hda_nid_t mfg;			/* MFG node id */
 
 	/* ids */
-	unsigned int vendor_id;
-	unsigned int subsystem_id;
-	unsigned int revision_id;
-	unsigned int afg_function_id;
-	unsigned int mfg_function_id;
-	unsigned int afg_unsol:1;
-	unsigned int mfg_unsol:1;
+	अचिन्हित पूर्णांक venकरोr_id;
+	अचिन्हित पूर्णांक subप्रणाली_id;
+	अचिन्हित पूर्णांक revision_id;
+	अचिन्हित पूर्णांक afg_function_id;
+	अचिन्हित पूर्णांक mfg_function_id;
+	अचिन्हित पूर्णांक afg_unsol:1;
+	अचिन्हित पूर्णांक mfg_unsol:1;
 
-	unsigned int power_caps;	/* FG power caps */
+	अचिन्हित पूर्णांक घातer_caps;	/* FG घातer caps */
 
-	const char *vendor_name;	/* codec vendor name */
-	const char *chip_name;		/* codec chip name */
+	स्थिर अक्षर *venकरोr_name;	/* codec venकरोr name */
+	स्थिर अक्षर *chip_name;		/* codec chip name */
 
 	/* verb exec op override */
-	int (*exec_verb)(struct hdac_device *dev, unsigned int cmd,
-			 unsigned int flags, unsigned int *res);
+	पूर्णांक (*exec_verb)(काष्ठा hdac_device *dev, अचिन्हित पूर्णांक cmd,
+			 अचिन्हित पूर्णांक flags, अचिन्हित पूर्णांक *res);
 
-	/* widgets */
-	unsigned int num_nodes;
+	/* widमाला_लो */
+	अचिन्हित पूर्णांक num_nodes;
 	hda_nid_t start_nid, end_nid;
 
 	/* misc flags */
-	atomic_t in_pm;		/* suspend/resume being performed */
+	atomic_t in_pm;		/* suspend/resume being perक्रमmed */
 
 	/* sysfs */
-	struct mutex widget_lock;
-	struct hdac_widget_tree *widgets;
+	काष्ठा mutex widget_lock;
+	काष्ठा hdac_widget_tree *widमाला_लो;
 
 	/* regmap */
-	struct regmap *regmap;
-	struct mutex regmap_lock;
-	struct snd_array vendor_verbs;
-	bool lazy_cache:1;	/* don't wake up for writes */
-	bool caps_overwriting:1; /* caps overwrite being in process */
-	bool cache_coef:1;	/* cache COEF read/write too */
-};
+	काष्ठा regmap *regmap;
+	काष्ठा mutex regmap_lock;
+	काष्ठा snd_array venकरोr_verbs;
+	bool lazy_cache:1;	/* करोn't wake up क्रम ग_लिखोs */
+	bool caps_overwriting:1; /* caps overग_लिखो being in process */
+	bool cache_coef:1;	/* cache COEF पढ़ो/ग_लिखो too */
+पूर्ण;
 
-/* device/driver type used for matching */
-enum {
+/* device/driver type used क्रम matching */
+क्रमागत अणु
 	HDA_DEV_CORE,
 	HDA_DEV_LEGACY,
 	HDA_DEV_ASOC,
-};
+पूर्ण;
 
-enum {
-	SND_SKL_PCI_BIND_AUTO,	/* automatic selection based on pci class */
+क्रमागत अणु
+	SND_SKL_PCI_BIND_AUTO,	/* स्वतःmatic selection based on pci class */
 	SND_SKL_PCI_BIND_LEGACY,/* bind only with legacy driver */
 	SND_SKL_PCI_BIND_ASOC	/* bind only with ASoC driver */
-};
+पूर्ण;
 
 /* direction */
-enum {
+क्रमागत अणु
 	HDA_INPUT, HDA_OUTPUT
-};
+पूर्ण;
 
-#define dev_to_hdac_dev(_dev)	container_of(_dev, struct hdac_device, dev)
+#घोषणा dev_to_hdac_dev(_dev)	container_of(_dev, काष्ठा hdac_device, dev)
 
-int snd_hdac_device_init(struct hdac_device *dev, struct hdac_bus *bus,
-			 const char *name, unsigned int addr);
-void snd_hdac_device_exit(struct hdac_device *dev);
-int snd_hdac_device_register(struct hdac_device *codec);
-void snd_hdac_device_unregister(struct hdac_device *codec);
-int snd_hdac_device_set_chip_name(struct hdac_device *codec, const char *name);
-int snd_hdac_codec_modalias(struct hdac_device *hdac, char *buf, size_t size);
+पूर्णांक snd_hdac_device_init(काष्ठा hdac_device *dev, काष्ठा hdac_bus *bus,
+			 स्थिर अक्षर *name, अचिन्हित पूर्णांक addr);
+व्योम snd_hdac_device_निकास(काष्ठा hdac_device *dev);
+पूर्णांक snd_hdac_device_रेजिस्टर(काष्ठा hdac_device *codec);
+व्योम snd_hdac_device_unरेजिस्टर(काष्ठा hdac_device *codec);
+पूर्णांक snd_hdac_device_set_chip_name(काष्ठा hdac_device *codec, स्थिर अक्षर *name);
+पूर्णांक snd_hdac_codec_modalias(काष्ठा hdac_device *hdac, अक्षर *buf, माप_प्रकार size);
 
-int snd_hdac_refresh_widgets(struct hdac_device *codec);
+पूर्णांक snd_hdac_refresh_widमाला_लो(काष्ठा hdac_device *codec);
 
-int snd_hdac_read(struct hdac_device *codec, hda_nid_t nid,
-		  unsigned int verb, unsigned int parm, unsigned int *res);
-int _snd_hdac_read_parm(struct hdac_device *codec, hda_nid_t nid, int parm,
-			unsigned int *res);
-int snd_hdac_read_parm_uncached(struct hdac_device *codec, hda_nid_t nid,
-				int parm);
-int snd_hdac_override_parm(struct hdac_device *codec, hda_nid_t nid,
-			   unsigned int parm, unsigned int val);
-int snd_hdac_get_connections(struct hdac_device *codec, hda_nid_t nid,
-			     hda_nid_t *conn_list, int max_conns);
-int snd_hdac_get_sub_nodes(struct hdac_device *codec, hda_nid_t nid,
+पूर्णांक snd_hdac_पढ़ो(काष्ठा hdac_device *codec, hda_nid_t nid,
+		  अचिन्हित पूर्णांक verb, अचिन्हित पूर्णांक parm, अचिन्हित पूर्णांक *res);
+पूर्णांक _snd_hdac_पढ़ो_parm(काष्ठा hdac_device *codec, hda_nid_t nid, पूर्णांक parm,
+			अचिन्हित पूर्णांक *res);
+पूर्णांक snd_hdac_पढ़ो_parm_uncached(काष्ठा hdac_device *codec, hda_nid_t nid,
+				पूर्णांक parm);
+पूर्णांक snd_hdac_override_parm(काष्ठा hdac_device *codec, hda_nid_t nid,
+			   अचिन्हित पूर्णांक parm, अचिन्हित पूर्णांक val);
+पूर्णांक snd_hdac_get_connections(काष्ठा hdac_device *codec, hda_nid_t nid,
+			     hda_nid_t *conn_list, पूर्णांक max_conns);
+पूर्णांक snd_hdac_get_sub_nodes(काष्ठा hdac_device *codec, hda_nid_t nid,
 			   hda_nid_t *start_id);
-unsigned int snd_hdac_calc_stream_format(unsigned int rate,
-					 unsigned int channels,
-					 snd_pcm_format_t format,
-					 unsigned int maxbps,
-					 unsigned short spdif_ctls);
-int snd_hdac_query_supported_pcm(struct hdac_device *codec, hda_nid_t nid,
-				u32 *ratesp, u64 *formatsp, unsigned int *bpsp);
-bool snd_hdac_is_supported_format(struct hdac_device *codec, hda_nid_t nid,
-				  unsigned int format);
+अचिन्हित पूर्णांक snd_hdac_calc_stream_क्रमmat(अचिन्हित पूर्णांक rate,
+					 अचिन्हित पूर्णांक channels,
+					 snd_pcm_क्रमmat_t क्रमmat,
+					 अचिन्हित पूर्णांक maxbps,
+					 अचिन्हित लघु spdअगर_ctls);
+पूर्णांक snd_hdac_query_supported_pcm(काष्ठा hdac_device *codec, hda_nid_t nid,
+				u32 *ratesp, u64 *क्रमmatsp, अचिन्हित पूर्णांक *bpsp);
+bool snd_hdac_is_supported_क्रमmat(काष्ठा hdac_device *codec, hda_nid_t nid,
+				  अचिन्हित पूर्णांक क्रमmat);
 
-int snd_hdac_codec_read(struct hdac_device *hdac, hda_nid_t nid,
-			int flags, unsigned int verb, unsigned int parm);
-int snd_hdac_codec_write(struct hdac_device *hdac, hda_nid_t nid,
-			int flags, unsigned int verb, unsigned int parm);
-bool snd_hdac_check_power_state(struct hdac_device *hdac,
-		hda_nid_t nid, unsigned int target_state);
-unsigned int snd_hdac_sync_power_state(struct hdac_device *hdac,
-		      hda_nid_t nid, unsigned int target_state);
+पूर्णांक snd_hdac_codec_पढ़ो(काष्ठा hdac_device *hdac, hda_nid_t nid,
+			पूर्णांक flags, अचिन्हित पूर्णांक verb, अचिन्हित पूर्णांक parm);
+पूर्णांक snd_hdac_codec_ग_लिखो(काष्ठा hdac_device *hdac, hda_nid_t nid,
+			पूर्णांक flags, अचिन्हित पूर्णांक verb, अचिन्हित पूर्णांक parm);
+bool snd_hdac_check_घातer_state(काष्ठा hdac_device *hdac,
+		hda_nid_t nid, अचिन्हित पूर्णांक target_state);
+अचिन्हित पूर्णांक snd_hdac_sync_घातer_state(काष्ठा hdac_device *hdac,
+		      hda_nid_t nid, अचिन्हित पूर्णांक target_state);
 /**
- * snd_hdac_read_parm - read a codec parameter
+ * snd_hdac_पढ़ो_parm - पढ़ो a codec parameter
  * @codec: the codec object
- * @nid: NID to read a parameter
- * @parm: parameter to read
+ * @nid: NID to पढ़ो a parameter
+ * @parm: parameter to पढ़ो
  *
- * Returns -1 for error.  If you need to distinguish the error more
- * strictly, use _snd_hdac_read_parm() directly.
+ * Returns -1 क्रम error.  If you need to distinguish the error more
+ * strictly, use _snd_hdac_पढ़ो_parm() directly.
  */
-static inline int snd_hdac_read_parm(struct hdac_device *codec, hda_nid_t nid,
-				     int parm)
-{
-	unsigned int val;
+अटल अंतरभूत पूर्णांक snd_hdac_पढ़ो_parm(काष्ठा hdac_device *codec, hda_nid_t nid,
+				     पूर्णांक parm)
+अणु
+	अचिन्हित पूर्णांक val;
 
-	return _snd_hdac_read_parm(codec, nid, parm, &val) < 0 ? -1 : val;
-}
+	वापस _snd_hdac_पढ़ो_parm(codec, nid, parm, &val) < 0 ? -1 : val;
+पूर्ण
 
-#ifdef CONFIG_PM
-int snd_hdac_power_up(struct hdac_device *codec);
-int snd_hdac_power_down(struct hdac_device *codec);
-int snd_hdac_power_up_pm(struct hdac_device *codec);
-int snd_hdac_power_down_pm(struct hdac_device *codec);
-int snd_hdac_keep_power_up(struct hdac_device *codec);
+#अगर_घोषित CONFIG_PM
+पूर्णांक snd_hdac_घातer_up(काष्ठा hdac_device *codec);
+पूर्णांक snd_hdac_घातer_करोwn(काष्ठा hdac_device *codec);
+पूर्णांक snd_hdac_घातer_up_pm(काष्ठा hdac_device *codec);
+पूर्णांक snd_hdac_घातer_करोwn_pm(काष्ठा hdac_device *codec);
+पूर्णांक snd_hdac_keep_घातer_up(काष्ठा hdac_device *codec);
 
-/* call this at entering into suspend/resume callbacks in codec driver */
-static inline void snd_hdac_enter_pm(struct hdac_device *codec)
-{
+/* call this at entering पूर्णांकo suspend/resume callbacks in codec driver */
+अटल अंतरभूत व्योम snd_hdac_enter_pm(काष्ठा hdac_device *codec)
+अणु
 	atomic_inc(&codec->in_pm);
-}
+पूर्ण
 
 /* call this at leaving from suspend/resume callbacks in codec driver */
-static inline void snd_hdac_leave_pm(struct hdac_device *codec)
-{
+अटल अंतरभूत व्योम snd_hdac_leave_pm(काष्ठा hdac_device *codec)
+अणु
 	atomic_dec(&codec->in_pm);
-}
+पूर्ण
 
-static inline bool snd_hdac_is_in_pm(struct hdac_device *codec)
-{
-	return atomic_read(&codec->in_pm);
-}
+अटल अंतरभूत bool snd_hdac_is_in_pm(काष्ठा hdac_device *codec)
+अणु
+	वापस atomic_पढ़ो(&codec->in_pm);
+पूर्ण
 
-static inline bool snd_hdac_is_power_on(struct hdac_device *codec)
-{
-	return !pm_runtime_suspended(&codec->dev);
-}
-#else
-static inline int snd_hdac_power_up(struct hdac_device *codec) { return 0; }
-static inline int snd_hdac_power_down(struct hdac_device *codec) { return 0; }
-static inline int snd_hdac_power_up_pm(struct hdac_device *codec) { return 0; }
-static inline int snd_hdac_power_down_pm(struct hdac_device *codec) { return 0; }
-static inline int snd_hdac_keep_power_up(struct hdac_device *codec) { return 0; }
-static inline void snd_hdac_enter_pm(struct hdac_device *codec) {}
-static inline void snd_hdac_leave_pm(struct hdac_device *codec) {}
-static inline bool snd_hdac_is_in_pm(struct hdac_device *codec) { return false; }
-static inline bool snd_hdac_is_power_on(struct hdac_device *codec) { return true; }
-#endif
+अटल अंतरभूत bool snd_hdac_is_घातer_on(काष्ठा hdac_device *codec)
+अणु
+	वापस !pm_runसमय_suspended(&codec->dev);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक snd_hdac_घातer_up(काष्ठा hdac_device *codec) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक snd_hdac_घातer_करोwn(काष्ठा hdac_device *codec) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक snd_hdac_घातer_up_pm(काष्ठा hdac_device *codec) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक snd_hdac_घातer_करोwn_pm(काष्ठा hdac_device *codec) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक snd_hdac_keep_घातer_up(काष्ठा hdac_device *codec) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम snd_hdac_enter_pm(काष्ठा hdac_device *codec) अणुपूर्ण
+अटल अंतरभूत व्योम snd_hdac_leave_pm(काष्ठा hdac_device *codec) अणुपूर्ण
+अटल अंतरभूत bool snd_hdac_is_in_pm(काष्ठा hdac_device *codec) अणु वापस false; पूर्ण
+अटल अंतरभूत bool snd_hdac_is_घातer_on(काष्ठा hdac_device *codec) अणु वापस true; पूर्ण
+#पूर्ण_अगर
 
 /*
  * HD-audio codec base driver
  */
-struct hdac_driver {
-	struct device_driver driver;
-	int type;
-	const struct hda_device_id *id_table;
-	int (*match)(struct hdac_device *dev, struct hdac_driver *drv);
-	void (*unsol_event)(struct hdac_device *dev, unsigned int event);
+काष्ठा hdac_driver अणु
+	काष्ठा device_driver driver;
+	पूर्णांक type;
+	स्थिर काष्ठा hda_device_id *id_table;
+	पूर्णांक (*match)(काष्ठा hdac_device *dev, काष्ठा hdac_driver *drv);
+	व्योम (*unsol_event)(काष्ठा hdac_device *dev, अचिन्हित पूर्णांक event);
 
 	/* fields used by ext bus APIs */
-	int (*probe)(struct hdac_device *dev);
-	int (*remove)(struct hdac_device *dev);
-	void (*shutdown)(struct hdac_device *dev);
-};
+	पूर्णांक (*probe)(काष्ठा hdac_device *dev);
+	पूर्णांक (*हटाओ)(काष्ठा hdac_device *dev);
+	व्योम (*shutकरोwn)(काष्ठा hdac_device *dev);
+पूर्ण;
 
-#define drv_to_hdac_driver(_drv) container_of(_drv, struct hdac_driver, driver)
+#घोषणा drv_to_hdac_driver(_drv) container_of(_drv, काष्ठा hdac_driver, driver)
 
-const struct hda_device_id *
-hdac_get_device_id(struct hdac_device *hdev, struct hdac_driver *drv);
+स्थिर काष्ठा hda_device_id *
+hdac_get_device_id(काष्ठा hdac_device *hdev, काष्ठा hdac_driver *drv);
 
 /*
- * Bus verb operators
+ * Bus verb चालकs
  */
-struct hdac_bus_ops {
+काष्ठा hdac_bus_ops अणु
 	/* send a single command */
-	int (*command)(struct hdac_bus *bus, unsigned int cmd);
+	पूर्णांक (*command)(काष्ठा hdac_bus *bus, अचिन्हित पूर्णांक cmd);
 	/* get a response from the last command */
-	int (*get_response)(struct hdac_bus *bus, unsigned int addr,
-			    unsigned int *res);
-	/* notify of codec link power-up/down */
-	void (*link_power)(struct hdac_device *hdev, bool enable);
-};
+	पूर्णांक (*get_response)(काष्ठा hdac_bus *bus, अचिन्हित पूर्णांक addr,
+			    अचिन्हित पूर्णांक *res);
+	/* notअगरy of codec link घातer-up/करोwn */
+	व्योम (*link_घातer)(काष्ठा hdac_device *hdev, bool enable);
+पूर्ण;
 
 /*
- * ops used for ASoC HDA codec drivers
+ * ops used क्रम ASoC HDA codec drivers
  */
-struct hdac_ext_bus_ops {
-	int (*hdev_attach)(struct hdac_device *hdev);
-	int (*hdev_detach)(struct hdac_device *hdev);
-};
+काष्ठा hdac_ext_bus_ops अणु
+	पूर्णांक (*hdev_attach)(काष्ठा hdac_device *hdev);
+	पूर्णांक (*hdev_detach)(काष्ठा hdac_device *hdev);
+पूर्ण;
 
-#define HDA_UNSOL_QUEUE_SIZE	64
-#define HDA_MAX_CODECS		8	/* limit by controller side */
+#घोषणा HDA_UNSOL_QUEUE_SIZE	64
+#घोषणा HDA_MAX_CODECS		8	/* limit by controller side */
 
 /*
  * CORB/RIRB
  *
  * Each CORB entry is 4byte, RIRB is 8byte
  */
-struct hdac_rb {
-	__le32 *buf;		/* virtual address of CORB/RIRB buffer */
+काष्ठा hdac_rb अणु
+	__le32 *buf;		/* भव address of CORB/RIRB buffer */
 	dma_addr_t addr;	/* physical address of CORB/RIRB buffer */
-	unsigned short rp, wp;	/* RIRB read/write pointers */
-	int cmds[HDA_MAX_CODECS];	/* number of pending requests */
-	u32 res[HDA_MAX_CODECS];	/* last read value */
-};
+	अचिन्हित लघु rp, wp;	/* RIRB पढ़ो/ग_लिखो poपूर्णांकers */
+	पूर्णांक cmds[HDA_MAX_CODECS];	/* number of pending requests */
+	u32 res[HDA_MAX_CODECS];	/* last पढ़ो value */
+पूर्ण;
 
 /*
  * HD-audio bus base driver
  *
- * @ppcap: pp capabilities pointer
- * @spbcap: SPIB capabilities pointer
- * @mlcap: MultiLink capabilities pointer
- * @gtscap: gts capabilities pointer
- * @drsmcap: dma resume capabilities pointer
+ * @ppcap: pp capabilities poपूर्णांकer
+ * @spbcap: SPIB capabilities poपूर्णांकer
+ * @mlcap: MultiLink capabilities poपूर्णांकer
+ * @gtscap: gts capabilities poपूर्णांकer
+ * @drsmcap: dma resume capabilities poपूर्णांकer
  * @num_streams: streams supported
  * @idx: HDA link index
  * @hlink_list: link list of HDA links
- * @lock: lock for link and display power mgmt
+ * @lock: lock क्रम link and display घातer mgmt
  * @cmd_dma_state: state of cmd DMAs: CORB and RIRB
  */
-struct hdac_bus {
-	struct device *dev;
-	const struct hdac_bus_ops *ops;
-	const struct hdac_ext_bus_ops *ext_ops;
+काष्ठा hdac_bus अणु
+	काष्ठा device *dev;
+	स्थिर काष्ठा hdac_bus_ops *ops;
+	स्थिर काष्ठा hdac_ext_bus_ops *ext_ops;
 
 	/* h/w resources */
-	unsigned long addr;
-	void __iomem *remap_addr;
-	int irq;
+	अचिन्हित दीर्घ addr;
+	व्योम __iomem *remap_addr;
+	पूर्णांक irq;
 
-	void __iomem *ppcap;
-	void __iomem *spbcap;
-	void __iomem *mlcap;
-	void __iomem *gtscap;
-	void __iomem *drsmcap;
+	व्योम __iomem *ppcap;
+	व्योम __iomem *spbcap;
+	व्योम __iomem *mlcap;
+	व्योम __iomem *gtscap;
+	व्योम __iomem *drsmcap;
 
 	/* codec linked list */
-	struct list_head codec_list;
-	unsigned int num_codecs;
+	काष्ठा list_head codec_list;
+	अचिन्हित पूर्णांक num_codecs;
 
 	/* link caddr -> codec */
-	struct hdac_device *caddr_tbl[HDA_MAX_CODEC_ADDRESS + 1];
+	काष्ठा hdac_device *caddr_tbl[HDA_MAX_CODEC_ADDRESS + 1];
 
 	/* unsolicited event queue */
 	u32 unsol_queue[HDA_UNSOL_QUEUE_SIZE * 2]; /* ring buffer */
-	unsigned int unsol_rp, unsol_wp;
-	struct work_struct unsol_work;
+	अचिन्हित पूर्णांक unsol_rp, unsol_wp;
+	काष्ठा work_काष्ठा unsol_work;
 
 	/* bit flags of detected codecs */
-	unsigned long codec_mask;
+	अचिन्हित दीर्घ codec_mask;
 
-	/* bit flags of powered codecs */
-	unsigned long codec_powered;
+	/* bit flags of घातered codecs */
+	अचिन्हित दीर्घ codec_घातered;
 
 	/* CORB/RIRB */
-	struct hdac_rb corb;
-	struct hdac_rb rirb;
-	unsigned int last_cmd[HDA_MAX_CODECS];	/* last sent command */
-	wait_queue_head_t rirb_wq;
+	काष्ठा hdac_rb corb;
+	काष्ठा hdac_rb rirb;
+	अचिन्हित पूर्णांक last_cmd[HDA_MAX_CODECS];	/* last sent command */
+	रुको_queue_head_t rirb_wq;
 
 	/* CORB/RIRB and position buffers */
-	struct snd_dma_buffer rb;
-	struct snd_dma_buffer posbuf;
-	int dma_type;			/* SNDRV_DMA_TYPE_XXX for CORB/RIRB */
+	काष्ठा snd_dma_buffer rb;
+	काष्ठा snd_dma_buffer posbuf;
+	पूर्णांक dma_type;			/* SNDRV_DMA_TYPE_XXX क्रम CORB/RIRB */
 
 	/* hdac_stream linked list */
-	struct list_head stream_list;
+	काष्ठा list_head stream_list;
 
 	/* operation state */
 	bool chip_init:1;		/* h/w initialized */
 
 	/* behavior flags */
 	bool aligned_mmio:1;		/* aligned MMIO access */
-	bool sync_write:1;		/* sync after verb write */
+	bool sync_ग_लिखो:1;		/* sync after verb ग_लिखो */
 	bool use_posbuf:1;		/* use position buffer */
 	bool snoop:1;			/* enable snooping */
 	bool align_bdle_4k:1;		/* BDLE align 4K boundary */
 	bool reverse_assign:1;		/* assign devices in reverse order */
 	bool corbrp_self_clear:1;	/* CORBRP clears itself after reset */
 	bool polling_mode:1;
-	bool needs_damn_long_delay:1;
+	bool needs_damn_दीर्घ_delay:1;
 
-	int poll_count;
+	पूर्णांक poll_count;
 
-	int bdl_pos_adj;		/* BDL position adjustment */
+	पूर्णांक bdl_pos_adj;		/* BDL position adjusपंचांगent */
 
-	/* delay time in us for dma stop */
-	unsigned int dma_stop_delay;
+	/* delay समय in us क्रम dma stop */
+	अचिन्हित पूर्णांक dma_stop_delay;
 
 	/* locks */
 	spinlock_t reg_lock;
-	struct mutex cmd_mutex;
-	struct mutex lock;
+	काष्ठा mutex cmd_mutex;
+	काष्ठा mutex lock;
 
-	/* DRM component interface */
-	struct drm_audio_component *audio_component;
-	long display_power_status;
-	unsigned long display_power_active;
+	/* DRM component पूर्णांकerface */
+	काष्ठा drm_audio_component *audio_component;
+	दीर्घ display_घातer_status;
+	अचिन्हित दीर्घ display_घातer_active;
 
-	/* parameters required for enhanced capabilities */
-	int num_streams;
-	int idx;
+	/* parameters required क्रम enhanced capabilities */
+	पूर्णांक num_streams;
+	पूर्णांक idx;
 
 	/* link management */
-	struct list_head hlink_list;
+	काष्ठा list_head hlink_list;
 	bool cmd_dma_state;
 
 	/* factor used to derive STRIPE control value */
-	unsigned int sdo_limit;
-};
+	अचिन्हित पूर्णांक sकरो_limit;
+पूर्ण;
 
-int snd_hdac_bus_init(struct hdac_bus *bus, struct device *dev,
-		      const struct hdac_bus_ops *ops);
-void snd_hdac_bus_exit(struct hdac_bus *bus);
-int snd_hdac_bus_exec_verb_unlocked(struct hdac_bus *bus, unsigned int addr,
-				    unsigned int cmd, unsigned int *res);
+पूर्णांक snd_hdac_bus_init(काष्ठा hdac_bus *bus, काष्ठा device *dev,
+		      स्थिर काष्ठा hdac_bus_ops *ops);
+व्योम snd_hdac_bus_निकास(काष्ठा hdac_bus *bus);
+पूर्णांक snd_hdac_bus_exec_verb_unlocked(काष्ठा hdac_bus *bus, अचिन्हित पूर्णांक addr,
+				    अचिन्हित पूर्णांक cmd, अचिन्हित पूर्णांक *res);
 
-void snd_hdac_codec_link_up(struct hdac_device *codec);
-void snd_hdac_codec_link_down(struct hdac_device *codec);
+व्योम snd_hdac_codec_link_up(काष्ठा hdac_device *codec);
+व्योम snd_hdac_codec_link_करोwn(काष्ठा hdac_device *codec);
 
-int snd_hdac_bus_send_cmd(struct hdac_bus *bus, unsigned int val);
-int snd_hdac_bus_get_response(struct hdac_bus *bus, unsigned int addr,
-			      unsigned int *res);
-int snd_hdac_bus_parse_capabilities(struct hdac_bus *bus);
+पूर्णांक snd_hdac_bus_send_cmd(काष्ठा hdac_bus *bus, अचिन्हित पूर्णांक val);
+पूर्णांक snd_hdac_bus_get_response(काष्ठा hdac_bus *bus, अचिन्हित पूर्णांक addr,
+			      अचिन्हित पूर्णांक *res);
+पूर्णांक snd_hdac_bus_parse_capabilities(काष्ठा hdac_bus *bus);
 
-bool snd_hdac_bus_init_chip(struct hdac_bus *bus, bool full_reset);
-void snd_hdac_bus_stop_chip(struct hdac_bus *bus);
-void snd_hdac_bus_init_cmd_io(struct hdac_bus *bus);
-void snd_hdac_bus_stop_cmd_io(struct hdac_bus *bus);
-void snd_hdac_bus_enter_link_reset(struct hdac_bus *bus);
-void snd_hdac_bus_exit_link_reset(struct hdac_bus *bus);
-int snd_hdac_bus_reset_link(struct hdac_bus *bus, bool full_reset);
-void snd_hdac_bus_link_power(struct hdac_device *hdev, bool enable);
+bool snd_hdac_bus_init_chip(काष्ठा hdac_bus *bus, bool full_reset);
+व्योम snd_hdac_bus_stop_chip(काष्ठा hdac_bus *bus);
+व्योम snd_hdac_bus_init_cmd_io(काष्ठा hdac_bus *bus);
+व्योम snd_hdac_bus_stop_cmd_io(काष्ठा hdac_bus *bus);
+व्योम snd_hdac_bus_enter_link_reset(काष्ठा hdac_bus *bus);
+व्योम snd_hdac_bus_निकास_link_reset(काष्ठा hdac_bus *bus);
+पूर्णांक snd_hdac_bus_reset_link(काष्ठा hdac_bus *bus, bool full_reset);
+व्योम snd_hdac_bus_link_घातer(काष्ठा hdac_device *hdev, bool enable);
 
-void snd_hdac_bus_update_rirb(struct hdac_bus *bus);
-int snd_hdac_bus_handle_stream_irq(struct hdac_bus *bus, unsigned int status,
-				    void (*ack)(struct hdac_bus *,
-						struct hdac_stream *));
+व्योम snd_hdac_bus_update_rirb(काष्ठा hdac_bus *bus);
+पूर्णांक snd_hdac_bus_handle_stream_irq(काष्ठा hdac_bus *bus, अचिन्हित पूर्णांक status,
+				    व्योम (*ack)(काष्ठा hdac_bus *,
+						काष्ठा hdac_stream *));
 
-int snd_hdac_bus_alloc_stream_pages(struct hdac_bus *bus);
-void snd_hdac_bus_free_stream_pages(struct hdac_bus *bus);
+पूर्णांक snd_hdac_bus_alloc_stream_pages(काष्ठा hdac_bus *bus);
+व्योम snd_hdac_bus_मुक्त_stream_pages(काष्ठा hdac_bus *bus);
 
-#ifdef CONFIG_SND_HDA_ALIGNED_MMIO
-unsigned int snd_hdac_aligned_read(void __iomem *addr, unsigned int mask);
-void snd_hdac_aligned_write(unsigned int val, void __iomem *addr,
-			    unsigned int mask);
-#define snd_hdac_aligned_mmio(bus)	(bus)->aligned_mmio
-#else
-#define snd_hdac_aligned_mmio(bus)	false
-#define snd_hdac_aligned_read(addr, mask)	0
-#define snd_hdac_aligned_write(val, addr, mask) do {} while (0)
-#endif
+#अगर_घोषित CONFIG_SND_HDA_ALIGNED_MMIO
+अचिन्हित पूर्णांक snd_hdac_aligned_पढ़ो(व्योम __iomem *addr, अचिन्हित पूर्णांक mask);
+व्योम snd_hdac_aligned_ग_लिखो(अचिन्हित पूर्णांक val, व्योम __iomem *addr,
+			    अचिन्हित पूर्णांक mask);
+#घोषणा snd_hdac_aligned_mmio(bus)	(bus)->aligned_mmio
+#अन्यथा
+#घोषणा snd_hdac_aligned_mmio(bus)	false
+#घोषणा snd_hdac_aligned_पढ़ो(addr, mask)	0
+#घोषणा snd_hdac_aligned_ग_लिखो(val, addr, mask) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-static inline void snd_hdac_reg_writeb(struct hdac_bus *bus, void __iomem *addr,
+अटल अंतरभूत व्योम snd_hdac_reg_ग_लिखोb(काष्ठा hdac_bus *bus, व्योम __iomem *addr,
 				       u8 val)
-{
-	if (snd_hdac_aligned_mmio(bus))
-		snd_hdac_aligned_write(val, addr, 0xff);
-	else
-		writeb(val, addr);
-}
+अणु
+	अगर (snd_hdac_aligned_mmio(bus))
+		snd_hdac_aligned_ग_लिखो(val, addr, 0xff);
+	अन्यथा
+		ग_लिखोb(val, addr);
+पूर्ण
 
-static inline void snd_hdac_reg_writew(struct hdac_bus *bus, void __iomem *addr,
+अटल अंतरभूत व्योम snd_hdac_reg_ग_लिखोw(काष्ठा hdac_bus *bus, व्योम __iomem *addr,
 				       u16 val)
-{
-	if (snd_hdac_aligned_mmio(bus))
-		snd_hdac_aligned_write(val, addr, 0xffff);
-	else
-		writew(val, addr);
-}
+अणु
+	अगर (snd_hdac_aligned_mmio(bus))
+		snd_hdac_aligned_ग_लिखो(val, addr, 0xffff);
+	अन्यथा
+		ग_लिखोw(val, addr);
+पूर्ण
 
-static inline u8 snd_hdac_reg_readb(struct hdac_bus *bus, void __iomem *addr)
-{
-	return snd_hdac_aligned_mmio(bus) ?
-		snd_hdac_aligned_read(addr, 0xff) : readb(addr);
-}
+अटल अंतरभूत u8 snd_hdac_reg_पढ़ोb(काष्ठा hdac_bus *bus, व्योम __iomem *addr)
+अणु
+	वापस snd_hdac_aligned_mmio(bus) ?
+		snd_hdac_aligned_पढ़ो(addr, 0xff) : पढ़ोb(addr);
+पूर्ण
 
-static inline u16 snd_hdac_reg_readw(struct hdac_bus *bus, void __iomem *addr)
-{
-	return snd_hdac_aligned_mmio(bus) ?
-		snd_hdac_aligned_read(addr, 0xffff) : readw(addr);
-}
+अटल अंतरभूत u16 snd_hdac_reg_पढ़ोw(काष्ठा hdac_bus *bus, व्योम __iomem *addr)
+अणु
+	वापस snd_hdac_aligned_mmio(bus) ?
+		snd_hdac_aligned_पढ़ो(addr, 0xffff) : पढ़ोw(addr);
+पूर्ण
 
-#define snd_hdac_reg_writel(bus, addr, val)	writel(val, addr)
-#define snd_hdac_reg_readl(bus, addr)	readl(addr)
+#घोषणा snd_hdac_reg_ग_लिखोl(bus, addr, val)	ग_लिखोl(val, addr)
+#घोषणा snd_hdac_reg_पढ़ोl(bus, addr)	पढ़ोl(addr)
 
 /*
- * macros for easy use
+ * macros क्रम easy use
  */
-#define _snd_hdac_chip_writeb(chip, reg, value) \
-	snd_hdac_reg_writeb(chip, (chip)->remap_addr + (reg), value)
-#define _snd_hdac_chip_readb(chip, reg) \
-	snd_hdac_reg_readb(chip, (chip)->remap_addr + (reg))
-#define _snd_hdac_chip_writew(chip, reg, value) \
-	snd_hdac_reg_writew(chip, (chip)->remap_addr + (reg), value)
-#define _snd_hdac_chip_readw(chip, reg) \
-	snd_hdac_reg_readw(chip, (chip)->remap_addr + (reg))
-#define _snd_hdac_chip_writel(chip, reg, value) \
-	snd_hdac_reg_writel(chip, (chip)->remap_addr + (reg), value)
-#define _snd_hdac_chip_readl(chip, reg) \
-	snd_hdac_reg_readl(chip, (chip)->remap_addr + (reg))
+#घोषणा _snd_hdac_chip_ग_लिखोb(chip, reg, value) \
+	snd_hdac_reg_ग_लिखोb(chip, (chip)->remap_addr + (reg), value)
+#घोषणा _snd_hdac_chip_पढ़ोb(chip, reg) \
+	snd_hdac_reg_पढ़ोb(chip, (chip)->remap_addr + (reg))
+#घोषणा _snd_hdac_chip_ग_लिखोw(chip, reg, value) \
+	snd_hdac_reg_ग_लिखोw(chip, (chip)->remap_addr + (reg), value)
+#घोषणा _snd_hdac_chip_पढ़ोw(chip, reg) \
+	snd_hdac_reg_पढ़ोw(chip, (chip)->remap_addr + (reg))
+#घोषणा _snd_hdac_chip_ग_लिखोl(chip, reg, value) \
+	snd_hdac_reg_ग_लिखोl(chip, (chip)->remap_addr + (reg), value)
+#घोषणा _snd_hdac_chip_पढ़ोl(chip, reg) \
+	snd_hdac_reg_पढ़ोl(chip, (chip)->remap_addr + (reg))
 
-/* read/write a register, pass without AZX_REG_ prefix */
-#define snd_hdac_chip_writel(chip, reg, value) \
-	_snd_hdac_chip_writel(chip, AZX_REG_ ## reg, value)
-#define snd_hdac_chip_writew(chip, reg, value) \
-	_snd_hdac_chip_writew(chip, AZX_REG_ ## reg, value)
-#define snd_hdac_chip_writeb(chip, reg, value) \
-	_snd_hdac_chip_writeb(chip, AZX_REG_ ## reg, value)
-#define snd_hdac_chip_readl(chip, reg) \
-	_snd_hdac_chip_readl(chip, AZX_REG_ ## reg)
-#define snd_hdac_chip_readw(chip, reg) \
-	_snd_hdac_chip_readw(chip, AZX_REG_ ## reg)
-#define snd_hdac_chip_readb(chip, reg) \
-	_snd_hdac_chip_readb(chip, AZX_REG_ ## reg)
+/* पढ़ो/ग_लिखो a रेजिस्टर, pass without AZX_REG_ prefix */
+#घोषणा snd_hdac_chip_ग_लिखोl(chip, reg, value) \
+	_snd_hdac_chip_ग_लिखोl(chip, AZX_REG_ ## reg, value)
+#घोषणा snd_hdac_chip_ग_लिखोw(chip, reg, value) \
+	_snd_hdac_chip_ग_लिखोw(chip, AZX_REG_ ## reg, value)
+#घोषणा snd_hdac_chip_ग_लिखोb(chip, reg, value) \
+	_snd_hdac_chip_ग_लिखोb(chip, AZX_REG_ ## reg, value)
+#घोषणा snd_hdac_chip_पढ़ोl(chip, reg) \
+	_snd_hdac_chip_पढ़ोl(chip, AZX_REG_ ## reg)
+#घोषणा snd_hdac_chip_पढ़ोw(chip, reg) \
+	_snd_hdac_chip_पढ़ोw(chip, AZX_REG_ ## reg)
+#घोषणा snd_hdac_chip_पढ़ोb(chip, reg) \
+	_snd_hdac_chip_पढ़ोb(chip, AZX_REG_ ## reg)
 
-/* update a register, pass without AZX_REG_ prefix */
-#define snd_hdac_chip_updatel(chip, reg, mask, val) \
-	snd_hdac_chip_writel(chip, reg, \
-			     (snd_hdac_chip_readl(chip, reg) & ~(mask)) | (val))
-#define snd_hdac_chip_updatew(chip, reg, mask, val) \
-	snd_hdac_chip_writew(chip, reg, \
-			     (snd_hdac_chip_readw(chip, reg) & ~(mask)) | (val))
-#define snd_hdac_chip_updateb(chip, reg, mask, val) \
-	snd_hdac_chip_writeb(chip, reg, \
-			     (snd_hdac_chip_readb(chip, reg) & ~(mask)) | (val))
+/* update a रेजिस्टर, pass without AZX_REG_ prefix */
+#घोषणा snd_hdac_chip_updatel(chip, reg, mask, val) \
+	snd_hdac_chip_ग_लिखोl(chip, reg, \
+			     (snd_hdac_chip_पढ़ोl(chip, reg) & ~(mask)) | (val))
+#घोषणा snd_hdac_chip_updatew(chip, reg, mask, val) \
+	snd_hdac_chip_ग_लिखोw(chip, reg, \
+			     (snd_hdac_chip_पढ़ोw(chip, reg) & ~(mask)) | (val))
+#घोषणा snd_hdac_chip_updateb(chip, reg, mask, val) \
+	snd_hdac_chip_ग_लिखोb(chip, reg, \
+			     (snd_hdac_chip_पढ़ोb(chip, reg) & ~(mask)) | (val))
 
 /*
  * HD-audio stream
  */
-struct hdac_stream {
-	struct hdac_bus *bus;
-	struct snd_dma_buffer bdl; /* BDL buffer */
-	__le32 *posbuf;		/* position buffer pointer */
-	int direction;		/* playback / capture (SNDRV_PCM_STREAM_*) */
+काष्ठा hdac_stream अणु
+	काष्ठा hdac_bus *bus;
+	काष्ठा snd_dma_buffer bdl; /* BDL buffer */
+	__le32 *posbuf;		/* position buffer poपूर्णांकer */
+	पूर्णांक direction;		/* playback / capture (SNDRV_PCM_STREAM_*) */
 
-	unsigned int bufsize;	/* size of the play buffer in bytes */
-	unsigned int period_bytes; /* size of the period in bytes */
-	unsigned int frags;	/* number for period in the play buffer */
-	unsigned int fifo_size;	/* FIFO size */
+	अचिन्हित पूर्णांक bufsize;	/* size of the play buffer in bytes */
+	अचिन्हित पूर्णांक period_bytes; /* size of the period in bytes */
+	अचिन्हित पूर्णांक frags;	/* number क्रम period in the play buffer */
+	अचिन्हित पूर्णांक fअगरo_size;	/* FIFO size */
 
-	void __iomem *sd_addr;	/* stream descriptor pointer */
+	व्योम __iomem *sd_addr;	/* stream descriptor poपूर्णांकer */
 
-	u32 sd_int_sta_mask;	/* stream int status mask */
+	u32 sd_पूर्णांक_sta_mask;	/* stream पूर्णांक status mask */
 
 	/* pcm support */
-	struct snd_pcm_substream *substream;	/* assigned substream,
-						 * set in PCM open
+	काष्ठा snd_pcm_substream *substream;	/* asचिन्हित substream,
+						 * set in PCM खोलो
 						 */
-	struct snd_compr_stream *cstream;
-	unsigned int format_val;	/* format value to be set in the
+	काष्ठा snd_compr_stream *cstream;
+	अचिन्हित पूर्णांक क्रमmat_val;	/* क्रमmat value to be set in the
 					 * controller and the codec
 					 */
-	unsigned char stream_tag;	/* assigned stream */
-	unsigned char index;		/* stream index */
-	int assigned_key;		/* last device# key assigned to */
+	अचिन्हित अक्षर stream_tag;	/* asचिन्हित stream */
+	अचिन्हित अक्षर index;		/* stream index */
+	पूर्णांक asचिन्हित_key;		/* last device# key asचिन्हित to */
 
-	bool opened:1;
+	bool खोलोed:1;
 	bool running:1;
 	bool prepared:1;
 	bool no_period_wakeup:1;
@@ -528,138 +529,138 @@ struct hdac_stream {
 	bool stripe:1;			/* apply stripe control */
 
 	u64 curr_pos;
-	/* timestamp */
-	unsigned long start_wallclk;	/* start + minimum wallclk */
-	unsigned long period_wallclk;	/* wallclk for period */
-	struct timecounter  tc;
-	struct cyclecounter cc;
-	int delay_negative_threshold;
+	/* बारtamp */
+	अचिन्हित दीर्घ start_wallclk;	/* start + minimum wallclk */
+	अचिन्हित दीर्घ period_wallclk;	/* wallclk क्रम period */
+	काष्ठा समयcounter  tc;
+	काष्ठा cyclecounter cc;
+	पूर्णांक delay_negative_threshold;
 
-	struct list_head list;
-#ifdef CONFIG_SND_HDA_DSP_LOADER
+	काष्ठा list_head list;
+#अगर_घोषित CONFIG_SND_HDA_DSP_LOADER
 	/* DSP access mutex */
-	struct mutex dsp_mutex;
-#endif
-};
+	काष्ठा mutex dsp_mutex;
+#पूर्ण_अगर
+पूर्ण;
 
-void snd_hdac_stream_init(struct hdac_bus *bus, struct hdac_stream *azx_dev,
-			  int idx, int direction, int tag);
-struct hdac_stream *snd_hdac_stream_assign(struct hdac_bus *bus,
-					   struct snd_pcm_substream *substream);
-void snd_hdac_stream_release(struct hdac_stream *azx_dev);
-struct hdac_stream *snd_hdac_get_stream(struct hdac_bus *bus,
-					int dir, int stream_tag);
+व्योम snd_hdac_stream_init(काष्ठा hdac_bus *bus, काष्ठा hdac_stream *azx_dev,
+			  पूर्णांक idx, पूर्णांक direction, पूर्णांक tag);
+काष्ठा hdac_stream *snd_hdac_stream_assign(काष्ठा hdac_bus *bus,
+					   काष्ठा snd_pcm_substream *substream);
+व्योम snd_hdac_stream_release(काष्ठा hdac_stream *azx_dev);
+काष्ठा hdac_stream *snd_hdac_get_stream(काष्ठा hdac_bus *bus,
+					पूर्णांक dir, पूर्णांक stream_tag);
 
-int snd_hdac_stream_setup(struct hdac_stream *azx_dev);
-void snd_hdac_stream_cleanup(struct hdac_stream *azx_dev);
-int snd_hdac_stream_setup_periods(struct hdac_stream *azx_dev);
-int snd_hdac_stream_set_params(struct hdac_stream *azx_dev,
-				unsigned int format_val);
-void snd_hdac_stream_start(struct hdac_stream *azx_dev, bool fresh_start);
-void snd_hdac_stream_clear(struct hdac_stream *azx_dev);
-void snd_hdac_stream_stop(struct hdac_stream *azx_dev);
-void snd_hdac_stream_reset(struct hdac_stream *azx_dev);
-void snd_hdac_stream_sync_trigger(struct hdac_stream *azx_dev, bool set,
-				  unsigned int streams, unsigned int reg);
-void snd_hdac_stream_sync(struct hdac_stream *azx_dev, bool start,
-			  unsigned int streams);
-void snd_hdac_stream_timecounter_init(struct hdac_stream *azx_dev,
-				      unsigned int streams);
-int snd_hdac_get_stream_stripe_ctl(struct hdac_bus *bus,
-				struct snd_pcm_substream *substream);
+पूर्णांक snd_hdac_stream_setup(काष्ठा hdac_stream *azx_dev);
+व्योम snd_hdac_stream_cleanup(काष्ठा hdac_stream *azx_dev);
+पूर्णांक snd_hdac_stream_setup_periods(काष्ठा hdac_stream *azx_dev);
+पूर्णांक snd_hdac_stream_set_params(काष्ठा hdac_stream *azx_dev,
+				अचिन्हित पूर्णांक क्रमmat_val);
+व्योम snd_hdac_stream_start(काष्ठा hdac_stream *azx_dev, bool fresh_start);
+व्योम snd_hdac_stream_clear(काष्ठा hdac_stream *azx_dev);
+व्योम snd_hdac_stream_stop(काष्ठा hdac_stream *azx_dev);
+व्योम snd_hdac_stream_reset(काष्ठा hdac_stream *azx_dev);
+व्योम snd_hdac_stream_sync_trigger(काष्ठा hdac_stream *azx_dev, bool set,
+				  अचिन्हित पूर्णांक streams, अचिन्हित पूर्णांक reg);
+व्योम snd_hdac_stream_sync(काष्ठा hdac_stream *azx_dev, bool start,
+			  अचिन्हित पूर्णांक streams);
+व्योम snd_hdac_stream_समयcounter_init(काष्ठा hdac_stream *azx_dev,
+				      अचिन्हित पूर्णांक streams);
+पूर्णांक snd_hdac_get_stream_stripe_ctl(काष्ठा hdac_bus *bus,
+				काष्ठा snd_pcm_substream *substream);
 
 /*
- * macros for easy use
+ * macros क्रम easy use
  */
-/* read/write a register, pass without AZX_REG_ prefix */
-#define snd_hdac_stream_writel(dev, reg, value) \
-	snd_hdac_reg_writel((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg, value)
-#define snd_hdac_stream_writew(dev, reg, value) \
-	snd_hdac_reg_writew((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg, value)
-#define snd_hdac_stream_writeb(dev, reg, value) \
-	snd_hdac_reg_writeb((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg, value)
-#define snd_hdac_stream_readl(dev, reg) \
-	snd_hdac_reg_readl((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg)
-#define snd_hdac_stream_readw(dev, reg) \
-	snd_hdac_reg_readw((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg)
-#define snd_hdac_stream_readb(dev, reg) \
-	snd_hdac_reg_readb((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg)
+/* पढ़ो/ग_लिखो a रेजिस्टर, pass without AZX_REG_ prefix */
+#घोषणा snd_hdac_stream_ग_लिखोl(dev, reg, value) \
+	snd_hdac_reg_ग_लिखोl((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg, value)
+#घोषणा snd_hdac_stream_ग_लिखोw(dev, reg, value) \
+	snd_hdac_reg_ग_लिखोw((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg, value)
+#घोषणा snd_hdac_stream_ग_लिखोb(dev, reg, value) \
+	snd_hdac_reg_ग_लिखोb((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg, value)
+#घोषणा snd_hdac_stream_पढ़ोl(dev, reg) \
+	snd_hdac_reg_पढ़ोl((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg)
+#घोषणा snd_hdac_stream_पढ़ोw(dev, reg) \
+	snd_hdac_reg_पढ़ोw((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg)
+#घोषणा snd_hdac_stream_पढ़ोb(dev, reg) \
+	snd_hdac_reg_पढ़ोb((dev)->bus, (dev)->sd_addr + AZX_REG_ ## reg)
 
-/* update a register, pass without AZX_REG_ prefix */
-#define snd_hdac_stream_updatel(dev, reg, mask, val) \
-	snd_hdac_stream_writel(dev, reg, \
-			       (snd_hdac_stream_readl(dev, reg) & \
+/* update a रेजिस्टर, pass without AZX_REG_ prefix */
+#घोषणा snd_hdac_stream_updatel(dev, reg, mask, val) \
+	snd_hdac_stream_ग_लिखोl(dev, reg, \
+			       (snd_hdac_stream_पढ़ोl(dev, reg) & \
 				~(mask)) | (val))
-#define snd_hdac_stream_updatew(dev, reg, mask, val) \
-	snd_hdac_stream_writew(dev, reg, \
-			       (snd_hdac_stream_readw(dev, reg) & \
+#घोषणा snd_hdac_stream_updatew(dev, reg, mask, val) \
+	snd_hdac_stream_ग_लिखोw(dev, reg, \
+			       (snd_hdac_stream_पढ़ोw(dev, reg) & \
 				~(mask)) | (val))
-#define snd_hdac_stream_updateb(dev, reg, mask, val) \
-	snd_hdac_stream_writeb(dev, reg, \
-			       (snd_hdac_stream_readb(dev, reg) & \
+#घोषणा snd_hdac_stream_updateb(dev, reg, mask, val) \
+	snd_hdac_stream_ग_लिखोb(dev, reg, \
+			       (snd_hdac_stream_पढ़ोb(dev, reg) & \
 				~(mask)) | (val))
 
-#ifdef CONFIG_SND_HDA_DSP_LOADER
+#अगर_घोषित CONFIG_SND_HDA_DSP_LOADER
 /* DSP lock helpers */
-#define snd_hdac_dsp_lock_init(dev)	mutex_init(&(dev)->dsp_mutex)
-#define snd_hdac_dsp_lock(dev)		mutex_lock(&(dev)->dsp_mutex)
-#define snd_hdac_dsp_unlock(dev)	mutex_unlock(&(dev)->dsp_mutex)
-#define snd_hdac_stream_is_locked(dev)	((dev)->locked)
+#घोषणा snd_hdac_dsp_lock_init(dev)	mutex_init(&(dev)->dsp_mutex)
+#घोषणा snd_hdac_dsp_lock(dev)		mutex_lock(&(dev)->dsp_mutex)
+#घोषणा snd_hdac_dsp_unlock(dev)	mutex_unlock(&(dev)->dsp_mutex)
+#घोषणा snd_hdac_stream_is_locked(dev)	((dev)->locked)
 /* DSP loader helpers */
-int snd_hdac_dsp_prepare(struct hdac_stream *azx_dev, unsigned int format,
-			 unsigned int byte_size, struct snd_dma_buffer *bufp);
-void snd_hdac_dsp_trigger(struct hdac_stream *azx_dev, bool start);
-void snd_hdac_dsp_cleanup(struct hdac_stream *azx_dev,
-			  struct snd_dma_buffer *dmab);
-#else /* CONFIG_SND_HDA_DSP_LOADER */
-#define snd_hdac_dsp_lock_init(dev)	do {} while (0)
-#define snd_hdac_dsp_lock(dev)		do {} while (0)
-#define snd_hdac_dsp_unlock(dev)	do {} while (0)
-#define snd_hdac_stream_is_locked(dev)	0
+पूर्णांक snd_hdac_dsp_prepare(काष्ठा hdac_stream *azx_dev, अचिन्हित पूर्णांक क्रमmat,
+			 अचिन्हित पूर्णांक byte_size, काष्ठा snd_dma_buffer *bufp);
+व्योम snd_hdac_dsp_trigger(काष्ठा hdac_stream *azx_dev, bool start);
+व्योम snd_hdac_dsp_cleanup(काष्ठा hdac_stream *azx_dev,
+			  काष्ठा snd_dma_buffer *dmab);
+#अन्यथा /* CONFIG_SND_HDA_DSP_LOADER */
+#घोषणा snd_hdac_dsp_lock_init(dev)	करो अणुपूर्ण जबतक (0)
+#घोषणा snd_hdac_dsp_lock(dev)		करो अणुपूर्ण जबतक (0)
+#घोषणा snd_hdac_dsp_unlock(dev)	करो अणुपूर्ण जबतक (0)
+#घोषणा snd_hdac_stream_is_locked(dev)	0
 
-static inline int
-snd_hdac_dsp_prepare(struct hdac_stream *azx_dev, unsigned int format,
-		     unsigned int byte_size, struct snd_dma_buffer *bufp)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक
+snd_hdac_dsp_prepare(काष्ठा hdac_stream *azx_dev, अचिन्हित पूर्णांक क्रमmat,
+		     अचिन्हित पूर्णांक byte_size, काष्ठा snd_dma_buffer *bufp)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void snd_hdac_dsp_trigger(struct hdac_stream *azx_dev, bool start)
-{
-}
+अटल अंतरभूत व्योम snd_hdac_dsp_trigger(काष्ठा hdac_stream *azx_dev, bool start)
+अणु
+पूर्ण
 
-static inline void snd_hdac_dsp_cleanup(struct hdac_stream *azx_dev,
-					struct snd_dma_buffer *dmab)
-{
-}
-#endif /* CONFIG_SND_HDA_DSP_LOADER */
+अटल अंतरभूत व्योम snd_hdac_dsp_cleanup(काष्ठा hdac_stream *azx_dev,
+					काष्ठा snd_dma_buffer *dmab)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SND_HDA_DSP_LOADER */
 
 
 /*
  * generic array helpers
  */
-void *snd_array_new(struct snd_array *array);
-void snd_array_free(struct snd_array *array);
-static inline void snd_array_init(struct snd_array *array, unsigned int size,
-				  unsigned int align)
-{
+व्योम *snd_array_new(काष्ठा snd_array *array);
+व्योम snd_array_मुक्त(काष्ठा snd_array *array);
+अटल अंतरभूत व्योम snd_array_init(काष्ठा snd_array *array, अचिन्हित पूर्णांक size,
+				  अचिन्हित पूर्णांक align)
+अणु
 	array->elem_size = size;
 	array->alloc_align = align;
-}
+पूर्ण
 
-static inline void *snd_array_elem(struct snd_array *array, unsigned int idx)
-{
-	return array->list + idx * array->elem_size;
-}
+अटल अंतरभूत व्योम *snd_array_elem(काष्ठा snd_array *array, अचिन्हित पूर्णांक idx)
+अणु
+	वापस array->list + idx * array->elem_size;
+पूर्ण
 
-static inline unsigned int snd_array_index(struct snd_array *array, void *ptr)
-{
-	return (unsigned long)(ptr - array->list) / array->elem_size;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक snd_array_index(काष्ठा snd_array *array, व्योम *ptr)
+अणु
+	वापस (अचिन्हित दीर्घ)(ptr - array->list) / array->elem_size;
+पूर्ण
 
-/* a helper macro to iterate for each snd_array element */
-#define snd_array_for_each(array, idx, ptr) \
-	for ((idx) = 0, (ptr) = (array)->list; (idx) < (array)->used; \
+/* a helper macro to iterate क्रम each snd_array element */
+#घोषणा snd_array_क्रम_each(array, idx, ptr) \
+	क्रम ((idx) = 0, (ptr) = (array)->list; (idx) < (array)->used; \
 	     (ptr) = snd_array_elem(array, ++(idx)))
 
-#endif /* __SOUND_HDAUDIO_H */
+#पूर्ण_अगर /* __SOUND_HDAUDIO_H */

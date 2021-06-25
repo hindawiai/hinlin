@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Freescale Semiconductor, Inc.
  */
 
-#include <linux/clk/imx.h>
-#include <linux/cpuidle.h>
-#include <linux/module.h>
-#include <asm/cpuidle.h>
+#समावेश <linux/clk/imx.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/cpuidle.h>
 
-#include "common.h"
-#include "cpuidle.h"
+#समावेश "common.h"
+#समावेश "cpuidle.h"
 
-static int imx6sl_enter_wait(struct cpuidle_device *dev,
-			    struct cpuidle_driver *drv, int index)
-{
+अटल पूर्णांक imx6sl_enter_रुको(काष्ठा cpuidle_device *dev,
+			    काष्ठा cpuidle_driver *drv, पूर्णांक index)
+अणु
 	imx6_set_lpm(WAIT_UNCLOCKED);
 	/*
-	 * Software workaround for ERR005311, see function
-	 * description for details.
+	 * Software workaround क्रम ERR005311, see function
+	 * description क्रम details.
 	 */
-	imx6sl_set_wait_clk(true);
-	cpu_do_idle();
-	imx6sl_set_wait_clk(false);
+	imx6sl_set_रुको_clk(true);
+	cpu_करो_idle();
+	imx6sl_set_रुको_clk(false);
 	imx6_set_lpm(WAIT_CLOCKED);
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static struct cpuidle_driver imx6sl_cpuidle_driver = {
+अटल काष्ठा cpuidle_driver imx6sl_cpuidle_driver = अणु
 	.name = "imx6sl_cpuidle",
 	.owner = THIS_MODULE,
-	.states = {
+	.states = अणु
 		/* WFI */
 		ARM_CPUIDLE_WFI_STATE,
 		/* WAIT */
-		{
-			.exit_latency = 50,
+		अणु
+			.निकास_latency = 50,
 			.target_residency = 75,
 			.flags = CPUIDLE_FLAG_TIMER_STOP,
-			.enter = imx6sl_enter_wait,
+			.enter = imx6sl_enter_रुको,
 			.name = "WAIT",
 			.desc = "Clock off",
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.state_count = 2,
 	.safe_state_index = 0,
-};
+पूर्ण;
 
-int __init imx6sl_cpuidle_init(void)
-{
-	return cpuidle_register(&imx6sl_cpuidle_driver, NULL);
-}
+पूर्णांक __init imx6sl_cpuidle_init(व्योम)
+अणु
+	वापस cpuidle_रेजिस्टर(&imx6sl_cpuidle_driver, शून्य);
+पूर्ण

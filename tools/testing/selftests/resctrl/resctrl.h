@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#define _GNU_SOURCE
-#ifndef RESCTRL_H
-#define RESCTRL_H
-#include <stdio.h>
-#include <stdarg.h>
-#include <math.h>
-#include <errno.h>
-#include <sched.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <signal.h>
-#include <dirent.h>
-#include <stdbool.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/mount.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/select.h>
-#include <sys/time.h>
-#include <sys/eventfd.h>
-#include <asm/unistd.h>
-#include <linux/perf_event.h>
-#include "../kselftest.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#घोषणा _GNU_SOURCE
+#अगर_अघोषित RESCTRL_H
+#घोषणा RESCTRL_H
+#समावेश <मानकपन.स>
+#समावेश <मानकतर्क.स>
+#समावेश <गणित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <sched.h>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश <dirent.h>
+#समावेश <stdbool.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/mount.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <sys/select.h>
+#समावेश <sys/समय.स>
+#समावेश <sys/eventfd.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <linux/perf_event.h>
+#समावेश "../kselftest.h"
 
-#define MB			(1024 * 1024)
-#define RESCTRL_PATH		"/sys/fs/resctrl"
-#define PHYS_ID_PATH		"/sys/devices/system/cpu/cpu"
-#define CBM_MASK_PATH		"/sys/fs/resctrl/info"
-#define L3_PATH			"/sys/fs/resctrl/info/L3"
-#define MB_PATH			"/sys/fs/resctrl/info/MB"
-#define L3_MON_PATH		"/sys/fs/resctrl/info/L3_MON"
-#define L3_MON_FEATURES_PATH	"/sys/fs/resctrl/info/L3_MON/mon_features"
+#घोषणा MB			(1024 * 1024)
+#घोषणा RESCTRL_PATH		"/sys/fs/resctrl"
+#घोषणा PHYS_ID_PATH		"/sys/devices/system/cpu/cpu"
+#घोषणा CBM_MASK_PATH		"/sys/fs/resctrl/info"
+#घोषणा L3_PATH			"/sys/fs/resctrl/info/L3"
+#घोषणा MB_PATH			"/sys/fs/resctrl/info/MB"
+#घोषणा L3_MON_PATH		"/sys/fs/resctrl/info/L3_MON"
+#घोषणा L3_MON_FEATURES_PATH	"/sys/fs/resctrl/info/L3_MON/mon_features"
 
-#define PARENT_EXIT(err_msg)			\
-	do {					\
-		perror(err_msg);		\
-		kill(ppid, SIGKILL);		\
-		exit(EXIT_FAILURE);		\
-	} while (0)
+#घोषणा PARENT_EXIT(err_msg)			\
+	करो अणु					\
+		लिखो_त्रुटि(err_msg);		\
+		समाप्त(ppid, SIGKILL);		\
+		निकास(निकास_त्रुटि);		\
+	पूर्ण जबतक (0)
 
 /*
  * resctrl_val_param:	resctrl test parameters
@@ -50,71 +51,71 @@
  * @span:		Memory bytes accessed in each benchmark iteration
  * @mum_resctrlfs:	Should the resctrl FS be remounted?
  * @filename:		Name of file to which the o/p should be written
- * @bw_report:		Bandwidth report type (reads vs writes)
+ * @bw_report:		Bandwidth report type (पढ़ोs vs ग_लिखोs)
  * @setup:		Call back function to setup test environment
  */
-struct resctrl_val_param {
-	char		*resctrl_val;
-	char		ctrlgrp[64];
-	char		mongrp[64];
-	int		cpu_no;
-	unsigned long	span;
-	int		mum_resctrlfs;
-	char		filename[64];
-	char		*bw_report;
-	unsigned long	mask;
-	int		num_of_runs;
-	int		(*setup)(int num, ...);
-};
+काष्ठा resctrl_val_param अणु
+	अक्षर		*resctrl_val;
+	अक्षर		ctrlgrp[64];
+	अक्षर		mongrp[64];
+	पूर्णांक		cpu_no;
+	अचिन्हित दीर्घ	span;
+	पूर्णांक		mum_resctrlfs;
+	अक्षर		filename[64];
+	अक्षर		*bw_report;
+	अचिन्हित दीर्घ	mask;
+	पूर्णांक		num_of_runs;
+	पूर्णांक		(*setup)(पूर्णांक num, ...);
+पूर्ण;
 
-#define MBM_STR			"mbm"
-#define MBA_STR			"mba"
-#define CMT_STR			"cmt"
-#define CAT_STR			"cat"
+#घोषणा MBM_STR			"mbm"
+#घोषणा MBA_STR			"mba"
+#घोषणा CMT_STR			"cmt"
+#घोषणा CAT_STR			"cat"
 
-extern pid_t bm_pid, ppid;
+बाह्य pid_t bm_pid, ppid;
 
-extern char llc_occup_path[1024];
-extern bool is_amd;
+बाह्य अक्षर llc_occup_path[1024];
+बाह्य bool is_amd;
 
-bool check_resctrlfs_support(void);
-int filter_dmesg(void);
-int remount_resctrlfs(bool mum_resctrlfs);
-int get_resource_id(int cpu_no, int *resource_id);
-int umount_resctrlfs(void);
-int validate_bw_report_request(char *bw_report);
-bool validate_resctrl_feature_request(const char *resctrl_val);
-char *fgrep(FILE *inf, const char *str);
-int taskset_benchmark(pid_t bm_pid, int cpu_no);
-void run_benchmark(int signum, siginfo_t *info, void *ucontext);
-int write_schemata(char *ctrlgrp, char *schemata, int cpu_no,
-		   char *resctrl_val);
-int write_bm_pid_to_resctrl(pid_t bm_pid, char *ctrlgrp, char *mongrp,
-			    char *resctrl_val);
-int perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu,
-		    int group_fd, unsigned long flags);
-int run_fill_buf(unsigned long span, int malloc_and_init_memory, int memflush,
-		 int op, char *resctrl_va);
-int resctrl_val(char **benchmark_cmd, struct resctrl_val_param *param);
-int mbm_bw_change(int span, int cpu_no, char *bw_report, char **benchmark_cmd);
-void tests_cleanup(void);
-void mbm_test_cleanup(void);
-int mba_schemata_change(int cpu_no, char *bw_report, char **benchmark_cmd);
-void mba_test_cleanup(void);
-int get_cbm_mask(char *cache_type, char *cbm_mask);
-int get_cache_size(int cpu_no, char *cache_type, unsigned long *cache_size);
-void ctrlc_handler(int signum, siginfo_t *info, void *ptr);
-int cat_val(struct resctrl_val_param *param);
-void cat_test_cleanup(void);
-int cat_perf_miss_val(int cpu_no, int no_of_bits, char *cache_type);
-int cmt_resctrl_val(int cpu_no, int n, char **benchmark_cmd);
-unsigned int count_bits(unsigned long n);
-void cmt_test_cleanup(void);
-int get_core_sibling(int cpu_no);
-int measure_cache_vals(struct resctrl_val_param *param, int bm_pid);
-int show_cache_info(unsigned long sum_llc_val, int no_of_bits,
-		    unsigned long cache_span, unsigned long max_diff,
-		    unsigned long max_diff_percent, unsigned long num_of_runs,
-		    bool platform, bool cmt);
+bool check_resctrlfs_support(व्योम);
+पूर्णांक filter_dmesg(व्योम);
+पूर्णांक remount_resctrlfs(bool mum_resctrlfs);
+पूर्णांक get_resource_id(पूर्णांक cpu_no, पूर्णांक *resource_id);
+पूर्णांक umount_resctrlfs(व्योम);
+पूर्णांक validate_bw_report_request(अक्षर *bw_report);
+bool validate_resctrl_feature_request(स्थिर अक्षर *resctrl_val);
+अक्षर *fgrep(खाता *inf, स्थिर अक्षर *str);
+पूर्णांक taskset_benchmark(pid_t bm_pid, पूर्णांक cpu_no);
+व्योम run_benchmark(पूर्णांक signum, siginfo_t *info, व्योम *ucontext);
+पूर्णांक ग_लिखो_schemata(अक्षर *ctrlgrp, अक्षर *schemata, पूर्णांक cpu_no,
+		   अक्षर *resctrl_val);
+पूर्णांक ग_लिखो_bm_pid_to_resctrl(pid_t bm_pid, अक्षर *ctrlgrp, अक्षर *mongrp,
+			    अक्षर *resctrl_val);
+पूर्णांक perf_event_खोलो(काष्ठा perf_event_attr *hw_event, pid_t pid, पूर्णांक cpu,
+		    पूर्णांक group_fd, अचिन्हित दीर्घ flags);
+पूर्णांक run_fill_buf(अचिन्हित दीर्घ span, पूर्णांक दो_स्मृति_and_init_memory, पूर्णांक memflush,
+		 पूर्णांक op, अक्षर *resctrl_va);
+पूर्णांक resctrl_val(अक्षर **benchmark_cmd, काष्ठा resctrl_val_param *param);
+पूर्णांक mbm_bw_change(पूर्णांक span, पूर्णांक cpu_no, अक्षर *bw_report, अक्षर **benchmark_cmd);
+व्योम tests_cleanup(व्योम);
+व्योम mbm_test_cleanup(व्योम);
+पूर्णांक mba_schemata_change(पूर्णांक cpu_no, अक्षर *bw_report, अक्षर **benchmark_cmd);
+व्योम mba_test_cleanup(व्योम);
+पूर्णांक get_cbm_mask(अक्षर *cache_type, अक्षर *cbm_mask);
+पूर्णांक get_cache_size(पूर्णांक cpu_no, अक्षर *cache_type, अचिन्हित दीर्घ *cache_size);
+व्योम ctrlc_handler(पूर्णांक signum, siginfo_t *info, व्योम *ptr);
+पूर्णांक cat_val(काष्ठा resctrl_val_param *param);
+व्योम cat_test_cleanup(व्योम);
+पूर्णांक cat_perf_miss_val(पूर्णांक cpu_no, पूर्णांक no_of_bits, अक्षर *cache_type);
+पूर्णांक cmt_resctrl_val(पूर्णांक cpu_no, पूर्णांक n, अक्षर **benchmark_cmd);
+अचिन्हित पूर्णांक count_bits(अचिन्हित दीर्घ n);
+व्योम cmt_test_cleanup(व्योम);
+पूर्णांक get_core_sibling(पूर्णांक cpu_no);
+पूर्णांक measure_cache_vals(काष्ठा resctrl_val_param *param, पूर्णांक bm_pid);
+पूर्णांक show_cache_info(अचिन्हित दीर्घ sum_llc_val, पूर्णांक no_of_bits,
+		    अचिन्हित दीर्घ cache_span, अचिन्हित दीर्घ max_dअगरf,
+		    अचिन्हित दीर्घ max_dअगरf_percent, अचिन्हित दीर्घ num_of_runs,
+		    bool platक्रमm, bool cmt);
 
-#endif /* RESCTRL_H */
+#पूर्ण_अगर /* RESCTRL_H */

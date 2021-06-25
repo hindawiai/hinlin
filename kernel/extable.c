@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Rewritten by Rusty Russell, on the backs of many others...
    Copyright (C) 2001 Rusty Russell, 2002 Rusty Russell IBM.
 
 */
-#include <linux/ftrace.h>
-#include <linux/memory.h>
-#include <linux/extable.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/init.h>
-#include <linux/kprobes.h>
-#include <linux/filter.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/memory.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/filter.h>
 
-#include <asm/sections.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <linux/uaccess.h>
 
 /*
- * mutex protecting text section modification (dynamic code patching).
- * some users need to sleep (allocating memory...) while they hold this lock.
+ * mutex protecting text section modअगरication (dynamic code patching).
+ * some users need to sleep (allocating memory...) जबतक they hold this lock.
  *
- * Note: Also protects SMP-alternatives modification on x86.
+ * Note: Also protects SMP-alternatives modअगरication on x86.
  *
  * NOT exported to modules - patching kernel text is a really delicate matter.
  */
 DEFINE_MUTEX(text_mutex);
 
-extern struct exception_table_entry __start___ex_table[];
-extern struct exception_table_entry __stop___ex_table[];
+बाह्य काष्ठा exception_table_entry __start___ex_table[];
+बाह्य काष्ठा exception_table_entry __stop___ex_table[];
 
-/* Cleared by build time tools if the table is already sorted. */
-u32 __initdata __visible main_extable_sort_needed = 1;
+/* Cleared by build समय tools अगर the table is alपढ़ोy sorted. */
+u32 __initdata __visible मुख्य_extable_sort_needed = 1;
 
 /* Sort the kernel's built-in exception table */
-void __init sort_main_extable(void)
-{
-	if (main_extable_sort_needed &&
-	    &__stop___ex_table > &__start___ex_table) {
+व्योम __init sort_मुख्य_extable(व्योम)
+अणु
+	अगर (मुख्य_extable_sort_needed &&
+	    &__stop___ex_table > &__start___ex_table) अणु
 		pr_notice("Sorting __ex_table...\n");
 		sort_extable(__start___ex_table, __stop___ex_table);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Given an address, look for it in the kernel exception table */
-const
-struct exception_table_entry *search_kernel_exception_table(unsigned long addr)
-{
-	return search_extable(__start___ex_table,
+/* Given an address, look क्रम it in the kernel exception table */
+स्थिर
+काष्ठा exception_table_entry *search_kernel_exception_table(अचिन्हित दीर्घ addr)
+अणु
+	वापस search_extable(__start___ex_table,
 			      __stop___ex_table - __start___ex_table, addr);
-}
+पूर्ण
 
-/* Given an address, look for it in the exception tables. */
-const struct exception_table_entry *search_exception_tables(unsigned long addr)
-{
-	const struct exception_table_entry *e;
+/* Given an address, look क्रम it in the exception tables. */
+स्थिर काष्ठा exception_table_entry *search_exception_tables(अचिन्हित दीर्घ addr)
+अणु
+	स्थिर काष्ठा exception_table_entry *e;
 
 	e = search_kernel_exception_table(addr);
-	if (!e)
+	अगर (!e)
 		e = search_module_extables(addr);
-	if (!e)
+	अगर (!e)
 		e = search_bpf_extables(addr);
-	return e;
-}
+	वापस e;
+पूर्ण
 
-int init_kernel_text(unsigned long addr)
-{
-	if (addr >= (unsigned long)_sinittext &&
-	    addr < (unsigned long)_einittext)
-		return 1;
-	return 0;
-}
+पूर्णांक init_kernel_text(अचिन्हित दीर्घ addr)
+अणु
+	अगर (addr >= (अचिन्हित दीर्घ)_sinittext &&
+	    addr < (अचिन्हित दीर्घ)_einittext)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-int notrace core_kernel_text(unsigned long addr)
-{
-	if (addr >= (unsigned long)_stext &&
-	    addr < (unsigned long)_etext)
-		return 1;
+पूर्णांक notrace core_kernel_text(अचिन्हित दीर्घ addr)
+अणु
+	अगर (addr >= (अचिन्हित दीर्घ)_stext &&
+	    addr < (अचिन्हित दीर्घ)_etext)
+		वापस 1;
 
-	if (system_state < SYSTEM_RUNNING &&
+	अगर (प्रणाली_state < SYSTEM_RUNNING &&
 	    init_kernel_text(addr))
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /**
- * core_kernel_data - tell if addr points to kernel data
+ * core_kernel_data - tell अगर addr poपूर्णांकs to kernel data
  * @addr: address to test
  *
- * Returns true if @addr passed in is from the core kernel data
+ * Returns true अगर @addr passed in is from the core kernel data
  * section.
  *
- * Note: On some archs it may return true for core RODATA, and false
- *  for others. But will always be true for core RW data.
+ * Note: On some archs it may वापस true क्रम core RODATA, and false
+ *  क्रम others. But will always be true क्रम core RW data.
  */
-int core_kernel_data(unsigned long addr)
-{
-	if (addr >= (unsigned long)_sdata &&
-	    addr < (unsigned long)_edata)
-		return 1;
-	return 0;
-}
+पूर्णांक core_kernel_data(अचिन्हित दीर्घ addr)
+अणु
+	अगर (addr >= (अचिन्हित दीर्घ)_sdata &&
+	    addr < (अचिन्हित दीर्घ)_edata)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-int __kernel_text_address(unsigned long addr)
-{
-	if (kernel_text_address(addr))
-		return 1;
+पूर्णांक __kernel_text_address(अचिन्हित दीर्घ addr)
+अणु
+	अगर (kernel_text_address(addr))
+		वापस 1;
 	/*
 	 * There might be init symbols in saved stacktraces.
-	 * Give those symbols a chance to be printed in
+	 * Give those symbols a chance to be prपूर्णांकed in
 	 * backtraces (such as lockdep traces).
 	 *
 	 * Since we are after the module-symbols check, there's
 	 * no danger of address overlap:
 	 */
-	if (init_kernel_text(addr))
-		return 1;
-	return 0;
-}
+	अगर (init_kernel_text(addr))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-int kernel_text_address(unsigned long addr)
-{
+पूर्णांक kernel_text_address(अचिन्हित दीर्घ addr)
+अणु
 	bool no_rcu;
-	int ret = 1;
+	पूर्णांक ret = 1;
 
-	if (core_kernel_text(addr))
-		return 1;
+	अगर (core_kernel_text(addr))
+		वापस 1;
 
 	/*
-	 * If a stack dump happens while RCU is not watching, then
-	 * RCU needs to be notified that it requires to start
+	 * If a stack dump happens जबतक RCU is not watching, then
+	 * RCU needs to be notअगरied that it requires to start
 	 * watching again. This can happen either by tracing that
 	 * triggers a stack trace, or a WARN() that happens during
 	 * coming back from idle, or cpu on or offlining.
@@ -139,37 +140,37 @@ int kernel_text_address(unsigned long addr)
 	no_rcu = !rcu_is_watching();
 
 	/* Treat this like an NMI as it can happen anywhere */
-	if (no_rcu)
+	अगर (no_rcu)
 		rcu_nmi_enter();
 
-	if (is_module_text_address(addr))
-		goto out;
-	if (is_ftrace_trampoline(addr))
-		goto out;
-	if (is_kprobe_optinsn_slot(addr) || is_kprobe_insn_slot(addr))
-		goto out;
-	if (is_bpf_text_address(addr))
-		goto out;
+	अगर (is_module_text_address(addr))
+		जाओ out;
+	अगर (is_ftrace_trampoline(addr))
+		जाओ out;
+	अगर (is_kprobe_optinsn_slot(addr) || is_kprobe_insn_slot(addr))
+		जाओ out;
+	अगर (is_bpf_text_address(addr))
+		जाओ out;
 	ret = 0;
 out:
-	if (no_rcu)
-		rcu_nmi_exit();
+	अगर (no_rcu)
+		rcu_nmi_निकास();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * On some architectures (PPC64, IA64) function pointers
+ * On some architectures (PPC64, IA64) function poपूर्णांकers
  * are actually only tokens to some data that then holds the
- * real function address. As a result, to find if a function
- * pointer is part of the kernel text, we need to do some
+ * real function address. As a result, to find अगर a function
+ * poपूर्णांकer is part of the kernel text, we need to करो some
  * special dereferencing first.
  */
-int func_ptr_is_kernel_text(void *ptr)
-{
-	unsigned long addr;
-	addr = (unsigned long) dereference_function_descriptor(ptr);
-	if (core_kernel_text(addr))
-		return 1;
-	return is_module_text_address(addr);
-}
+पूर्णांक func_ptr_is_kernel_text(व्योम *ptr)
+अणु
+	अचिन्हित दीर्घ addr;
+	addr = (अचिन्हित दीर्घ) dereference_function_descriptor(ptr);
+	अगर (core_kernel_text(addr))
+		वापस 1;
+	वापस is_module_text_address(addr);
+पूर्ण

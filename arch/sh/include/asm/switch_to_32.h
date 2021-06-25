@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_SWITCH_TO_32_H
-#define __ASM_SH_SWITCH_TO_32_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_SWITCH_TO_32_H
+#घोषणा __ASM_SH_SWITCH_TO_32_H
 
-#ifdef CONFIG_SH_DSP
+#अगर_घोषित CONFIG_SH_DSP
 
-#define is_dsp_enabled(tsk)						\
-	(!!(tsk->thread.dsp_status.status & SR_DSP))
+#घोषणा is_dsp_enabled(tsk)						\
+	(!!(tsk->thपढ़ो.dsp_status.status & SR_DSP))
 
-#define __restore_dsp(tsk)						\
-do {									\
-	register u32 *__ts2 __asm__ ("r2") =				\
-			(u32 *)&tsk->thread.dsp_status;			\
-	__asm__ __volatile__ (						\
+#घोषणा __restore_dsp(tsk)						\
+करो अणु									\
+	रेजिस्टर u32 *__ts2 __यंत्र__ ("r2") =				\
+			(u32 *)&tsk->thपढ़ो.dsp_status;			\
+	__यंत्र__ __अस्थिर__ (						\
 		".balign 4\n\t"						\
 		"movs.l	@r2+, a0\n\t"					\
 		"movs.l	@r2+, a1\n\t"					\
@@ -28,14 +29,14 @@ do {									\
 		"ldc.l	@r2+, re\n\t"					\
 		"ldc.l	@r2+, mod\n\t"					\
 		: : "r" (__ts2));					\
-} while (0)
+पूर्ण जबतक (0)
 
-#define __save_dsp(tsk)							\
-do {									\
-	register u32 *__ts2 __asm__ ("r2") =				\
-			(u32 *)&tsk->thread.dsp_status + 14;		\
+#घोषणा __save_dsp(tsk)							\
+करो अणु									\
+	रेजिस्टर u32 *__ts2 __यंत्र__ ("r2") =				\
+			(u32 *)&tsk->thपढ़ो.dsp_status + 14;		\
 									\
-	__asm__ __volatile__ (						\
+	__यंत्र__ __अस्थिर__ (						\
 		".balign 4\n\t"						\
 		"stc.l	mod, @-r2\n\t"					\
 		"stc.l	re, @-r2\n\t"					\
@@ -52,44 +53,44 @@ do {									\
 		"movs.l	a1, @-r2\n\t"					\
 		"movs.l	a0, @-r2\n\t"					\
 		: : "r" (__ts2));					\
-} while (0)
+पूर्ण जबतक (0)
 
-#else
+#अन्यथा
 
-#define is_dsp_enabled(tsk)	(0)
-#define __save_dsp(tsk)		do { } while (0)
-#define __restore_dsp(tsk)	do { } while (0)
-#endif
+#घोषणा is_dsp_enabled(tsk)	(0)
+#घोषणा __save_dsp(tsk)		करो अणु पूर्ण जबतक (0)
+#घोषणा __restore_dsp(tsk)	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-struct task_struct *__switch_to(struct task_struct *prev,
-				struct task_struct *next);
+काष्ठा task_काष्ठा *__चयन_to(काष्ठा task_काष्ठा *prev,
+				काष्ठा task_काष्ठा *next);
 
 /*
- *	switch_to() should switch tasks to task nr n, first
+ *	चयन_to() should चयन tasks to task nr n, first
  */
-#define switch_to(prev, next, last)				\
-do {								\
-	register u32 *__ts1 __asm__ ("r1");			\
-	register u32 *__ts2 __asm__ ("r2");			\
-	register u32 *__ts4 __asm__ ("r4");			\
-	register u32 *__ts5 __asm__ ("r5");			\
-	register u32 *__ts6 __asm__ ("r6");			\
-	register u32 __ts7 __asm__ ("r7");			\
-	struct task_struct *__last;				\
+#घोषणा चयन_to(prev, next, last)				\
+करो अणु								\
+	रेजिस्टर u32 *__ts1 __यंत्र__ ("r1");			\
+	रेजिस्टर u32 *__ts2 __यंत्र__ ("r2");			\
+	रेजिस्टर u32 *__ts4 __यंत्र__ ("r4");			\
+	रेजिस्टर u32 *__ts5 __यंत्र__ ("r5");			\
+	रेजिस्टर u32 *__ts6 __यंत्र__ ("r6");			\
+	रेजिस्टर u32 __ts7 __यंत्र__ ("r7");			\
+	काष्ठा task_काष्ठा *__last;				\
 								\
-	if (is_dsp_enabled(prev))				\
+	अगर (is_dsp_enabled(prev))				\
 		__save_dsp(prev);				\
-	if (is_dsp_enabled(next))				\
+	अगर (is_dsp_enabled(next))				\
 		__restore_dsp(next);				\
 								\
-	__ts1 = (u32 *)&prev->thread.sp;			\
-	__ts2 = (u32 *)&prev->thread.pc;			\
+	__ts1 = (u32 *)&prev->thपढ़ो.sp;			\
+	__ts2 = (u32 *)&prev->thपढ़ो.pc;			\
 	__ts4 = (u32 *)prev;					\
 	__ts5 = (u32 *)next;					\
-	__ts6 = (u32 *)&next->thread.sp;			\
-	__ts7 = next->thread.pc;				\
+	__ts6 = (u32 *)&next->thपढ़ो.sp;			\
+	__ts7 = next->thपढ़ो.pc;				\
 								\
-	__asm__ __volatile__ (					\
+	__यंत्र__ __अस्थिर__ (					\
 		".balign 4\n\t"					\
 		"stc.l	gbr, @-r15\n\t"				\
 		"sts.l	pr, @-r15\n\t"				\
@@ -126,6 +127,6 @@ do {								\
 		: "r3", "t");					\
 								\
 	last = __last;						\
-} while (0)
+पूर्ण जबतक (0)
 
-#endif /* __ASM_SH_SWITCH_TO_32_H */
+#पूर्ण_अगर /* __ASM_SH_SWITCH_TO_32_H */

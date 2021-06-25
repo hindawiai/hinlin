@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_MICROBLAZE_ATOMIC_H
-#define _ASM_MICROBLAZE_ATOMIC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_MICROBLAZE_ATOMIC_H
+#घोषणा _ASM_MICROBLAZE_ATOMIC_H
 
-#include <asm/cmpxchg.h>
-#include <asm-generic/atomic.h>
-#include <asm-generic/atomic64.h>
+#समावेश <यंत्र/cmpxchg.h>
+#समावेश <यंत्र-generic/atomic.h>
+#समावेश <यंत्र-generic/atomic64.h>
 
 /*
- * Atomically test *v and decrement if it is greater than 0.
- * The function returns the old value of *v minus 1.
+ * Atomically test *v and decrement अगर it is greater than 0.
+ * The function वापसs the old value of *v minus 1.
  */
-static inline int atomic_dec_if_positive(atomic_t *v)
-{
-	unsigned long flags;
-	int res;
+अटल अंतरभूत पूर्णांक atomic_dec_अगर_positive(atomic_t *v)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक res;
 
 	local_irq_save(flags);
 	res = v->counter - 1;
-	if (res >= 0)
+	अगर (res >= 0)
 		v->counter = res;
 	local_irq_restore(flags);
 
-	return res;
-}
-#define atomic_dec_if_positive atomic_dec_if_positive
+	वापस res;
+पूर्ण
+#घोषणा atomic_dec_अगर_positive atomic_dec_अगर_positive
 
-#endif /* _ASM_MICROBLAZE_ATOMIC_H */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_ATOMIC_H */

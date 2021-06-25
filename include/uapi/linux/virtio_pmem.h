@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: (GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause */
 /*
- * Definitions for virtio-pmem devices.
+ * Definitions क्रम virtio-pmem devices.
  *
  * Copyright (C) 2019 Red Hat, Inc.
  *
  * Author(s): Pankaj Gupta <pagupta@redhat.com>
  */
 
-#ifndef _UAPI_LINUX_VIRTIO_PMEM_H
-#define _UAPI_LINUX_VIRTIO_PMEM_H
+#अगर_अघोषित _UAPI_LINUX_VIRTIO_PMEM_H
+#घोषणा _UAPI_LINUX_VIRTIO_PMEM_H
 
-#include <linux/types.h>
-#include <linux/virtio_ids.h>
-#include <linux/virtio_config.h>
+#समावेश <linux/types.h>
+#समावेश <linux/virtio_ids.h>
+#समावेश <linux/virtio_config.h>
 
-struct virtio_pmem_config {
+काष्ठा virtio_pmem_config अणु
 	__le64 start;
 	__le64 size;
-};
+पूर्ण;
 
-#define VIRTIO_PMEM_REQ_TYPE_FLUSH      0
+#घोषणा VIRTIO_PMEM_REQ_TYPE_FLUSH      0
 
-struct virtio_pmem_resp {
-	/* Host return status corresponding to flush request */
+काष्ठा virtio_pmem_resp अणु
+	/* Host वापस status corresponding to flush request */
 	__le32 ret;
-};
+पूर्ण;
 
-struct virtio_pmem_req {
+काष्ठा virtio_pmem_req अणु
 	/* command type */
 	__le32 type;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

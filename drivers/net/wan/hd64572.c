@@ -1,152 +1,153 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Hitachi (now Renesas) SCA-II HD64572 driver for Linux
+ * Hitachi (now Renesas) SCA-II HD64572 driver क्रम Linux
  *
  * Copyright (C) 1998-2008 Krzysztof Halasa <khc@pm.waw.pl>
  *
- * Source of information: HD64572 SCA-II User's Manual
+ * Source of inक्रमmation: HD64572 SCA-II User's Manual
  *
  * We use the following SCA memory map:
  *
  * Packet buffer descriptor rings - starting from card->rambase:
- * rx_ring_buffers * sizeof(pkt_desc) = logical channel #0 RX ring
- * tx_ring_buffers * sizeof(pkt_desc) = logical channel #0 TX ring
- * rx_ring_buffers * sizeof(pkt_desc) = logical channel #1 RX ring (if used)
- * tx_ring_buffers * sizeof(pkt_desc) = logical channel #1 TX ring (if used)
+ * rx_ring_buffers * माप(pkt_desc) = logical channel #0 RX ring
+ * tx_ring_buffers * माप(pkt_desc) = logical channel #0 TX ring
+ * rx_ring_buffers * माप(pkt_desc) = logical channel #1 RX ring (अगर used)
+ * tx_ring_buffers * माप(pkt_desc) = logical channel #1 TX ring (अगर used)
  *
  * Packet data buffers - starting from card->rambase + buff_offset:
  * rx_ring_buffers * HDLC_MAX_MRU     = logical channel #0 RX buffers
  * tx_ring_buffers * HDLC_MAX_MRU     = logical channel #0 TX buffers
- * rx_ring_buffers * HDLC_MAX_MRU     = logical channel #0 RX buffers (if used)
- * tx_ring_buffers * HDLC_MAX_MRU     = logical channel #0 TX buffers (if used)
+ * rx_ring_buffers * HDLC_MAX_MRU     = logical channel #0 RX buffers (अगर used)
+ * tx_ring_buffers * HDLC_MAX_MRU     = logical channel #0 TX buffers (अगर used)
  */
 
-#include <linux/bitops.h>
-#include <linux/errno.h>
-#include <linux/fcntl.h>
-#include <linux/hdlc.h>
-#include <linux/in.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
-#include "hd64572.h"
+#समावेश <linux/bitops.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/hdlc.h>
+#समावेश <linux/in.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश "hd64572.h"
 
-#define NAPI_WEIGHT		16
+#घोषणा NAPI_WEIGHT		16
 
-#define get_msci(port)	  (port->chan ?   MSCI1_OFFSET :   MSCI0_OFFSET)
-#define get_dmac_rx(port) (port->chan ? DMAC1RX_OFFSET : DMAC0RX_OFFSET)
-#define get_dmac_tx(port) (port->chan ? DMAC1TX_OFFSET : DMAC0TX_OFFSET)
+#घोषणा get_msci(port)	  (port->chan ?   MSCI1_OFFSET :   MSCI0_OFFSET)
+#घोषणा get_dmac_rx(port) (port->chan ? DMAC1RX_OFFSET : DMAC0RX_OFFSET)
+#घोषणा get_dmac_tx(port) (port->chan ? DMAC1TX_OFFSET : DMAC0TX_OFFSET)
 
-#define sca_in(reg, card)	     readb(card->scabase + (reg))
-#define sca_out(value, reg, card)    writeb(value, card->scabase + (reg))
-#define sca_inw(reg, card)	     readw(card->scabase + (reg))
-#define sca_outw(value, reg, card)   writew(value, card->scabase + (reg))
-#define sca_inl(reg, card)	     readl(card->scabase + (reg))
-#define sca_outl(value, reg, card)   writel(value, card->scabase + (reg))
+#घोषणा sca_in(reg, card)	     पढ़ोb(card->scabase + (reg))
+#घोषणा sca_out(value, reg, card)    ग_लिखोb(value, card->scabase + (reg))
+#घोषणा sca_inw(reg, card)	     पढ़ोw(card->scabase + (reg))
+#घोषणा sca_outw(value, reg, card)   ग_लिखोw(value, card->scabase + (reg))
+#घोषणा sca_inl(reg, card)	     पढ़ोl(card->scabase + (reg))
+#घोषणा sca_outl(value, reg, card)   ग_लिखोl(value, card->scabase + (reg))
 
-static int sca_poll(struct napi_struct *napi, int budget);
+अटल पूर्णांक sca_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget);
 
-static inline port_t* dev_to_port(struct net_device *dev)
-{
-	return dev_to_hdlc(dev)->priv;
-}
+अटल अंतरभूत port_t* dev_to_port(काष्ठा net_device *dev)
+अणु
+	वापस dev_to_hdlc(dev)->priv;
+पूर्ण
 
-static inline void enable_intr(port_t *port)
-{
-	/* enable DMIB and MSCI RXINTA interrupts */
+अटल अंतरभूत व्योम enable_पूर्णांकr(port_t *port)
+अणु
+	/* enable DMIB and MSCI RXINTA पूर्णांकerrupts */
 	sca_outl(sca_inl(IER0, port->card) |
 		 (port->chan ? 0x08002200 : 0x00080022), IER0, port->card);
-}
+पूर्ण
 
-static inline void disable_intr(port_t *port)
-{
+अटल अंतरभूत व्योम disable_पूर्णांकr(port_t *port)
+अणु
 	sca_outl(sca_inl(IER0, port->card) &
 		 (port->chan ? 0x00FF00FF : 0xFF00FF00), IER0, port->card);
-}
+पूर्ण
 
-static inline u16 desc_abs_number(port_t *port, u16 desc, int transmit)
-{
+अटल अंतरभूत u16 desc_असल_number(port_t *port, u16 desc, पूर्णांक transmit)
+अणु
 	u16 rx_buffs = port->card->rx_ring_buffers;
 	u16 tx_buffs = port->card->tx_ring_buffers;
 
 	desc %= (transmit ? tx_buffs : rx_buffs); // called with "X + 1" etc.
-	return port->chan * (rx_buffs + tx_buffs) + transmit * rx_buffs + desc;
-}
+	वापस port->chan * (rx_buffs + tx_buffs) + transmit * rx_buffs + desc;
+पूर्ण
 
 
-static inline u16 desc_offset(port_t *port, u16 desc, int transmit)
-{
+अटल अंतरभूत u16 desc_offset(port_t *port, u16 desc, पूर्णांक transmit)
+अणु
 	/* Descriptor offset always fits in 16 bits */
-	return desc_abs_number(port, desc, transmit) * sizeof(pkt_desc);
-}
+	वापस desc_असल_number(port, desc, transmit) * माप(pkt_desc);
+पूर्ण
 
 
-static inline pkt_desc __iomem *desc_address(port_t *port, u16 desc,
-					     int transmit)
-{
-	return (pkt_desc __iomem *)(port->card->rambase +
+अटल अंतरभूत pkt_desc __iomem *desc_address(port_t *port, u16 desc,
+					     पूर्णांक transmit)
+अणु
+	वापस (pkt_desc __iomem *)(port->card->rambase +
 				    desc_offset(port, desc, transmit));
-}
+पूर्ण
 
 
-static inline u32 buffer_offset(port_t *port, u16 desc, int transmit)
-{
-	return port->card->buff_offset +
-		desc_abs_number(port, desc, transmit) * (u32)HDLC_MAX_MRU;
-}
+अटल अंतरभूत u32 buffer_offset(port_t *port, u16 desc, पूर्णांक transmit)
+अणु
+	वापस port->card->buff_offset +
+		desc_असल_number(port, desc, transmit) * (u32)HDLC_MAX_MRU;
+पूर्ण
 
 
-static inline void sca_set_carrier(port_t *port)
-{
-	if (!(sca_in(get_msci(port) + ST3, port->card) & ST3_DCD)) {
-#ifdef DEBUG_LINK
-		printk(KERN_DEBUG "%s: sca_set_carrier on\n",
+अटल अंतरभूत व्योम sca_set_carrier(port_t *port)
+अणु
+	अगर (!(sca_in(get_msci(port) + ST3, port->card) & ST3_DCD)) अणु
+#अगर_घोषित DEBUG_LINK
+		prपूर्णांकk(KERN_DEBUG "%s: sca_set_carrier on\n",
 		       port->netdev.name);
-#endif
-		netif_carrier_on(port->netdev);
-	} else {
-#ifdef DEBUG_LINK
-		printk(KERN_DEBUG "%s: sca_set_carrier off\n",
+#पूर्ण_अगर
+		netअगर_carrier_on(port->netdev);
+	पूर्ण अन्यथा अणु
+#अगर_घोषित DEBUG_LINK
+		prपूर्णांकk(KERN_DEBUG "%s: sca_set_carrier off\n",
 		       port->netdev.name);
-#endif
-		netif_carrier_off(port->netdev);
-	}
-}
+#पूर्ण_अगर
+		netअगर_carrier_off(port->netdev);
+	पूर्ण
+पूर्ण
 
 
-static void sca_init_port(port_t *port)
-{
+अटल व्योम sca_init_port(port_t *port)
+अणु
 	card_t *card = port->card;
 	u16 dmac_rx = get_dmac_rx(port), dmac_tx = get_dmac_tx(port);
-	int transmit, i;
+	पूर्णांक transmit, i;
 
 	port->rxin = 0;
 	port->txin = 0;
 	port->txlast = 0;
 
-	for (transmit = 0; transmit < 2; transmit++) {
+	क्रम (transmit = 0; transmit < 2; transmit++) अणु
 		u16 buffs = transmit ? card->tx_ring_buffers
 			: card->rx_ring_buffers;
 
-		for (i = 0; i < buffs; i++) {
+		क्रम (i = 0; i < buffs; i++) अणु
 			pkt_desc __iomem *desc = desc_address(port, i, transmit);
 			u16 chain_off = desc_offset(port, i + 1, transmit);
 			u32 buff_off = buffer_offset(port, i, transmit);
 
-			writel(chain_off, &desc->cp);
-			writel(buff_off, &desc->bp);
-			writew(0, &desc->len);
-			writeb(0, &desc->stat);
-		}
-	}
+			ग_लिखोl(chain_off, &desc->cp);
+			ग_लिखोl(buff_off, &desc->bp);
+			ग_लिखोw(0, &desc->len);
+			ग_लिखोb(0, &desc->stat);
+		पूर्ण
+	पूर्ण
 
 	/* DMA disable - to halt state */
 	sca_out(0, DSR_RX(port->chan), card);
@@ -163,292 +164,292 @@ static void sca_init_port(port_t *port)
 	sca_outl(desc_offset(port, 0, 1), dmac_tx + CDAL, card);
 	sca_outl(desc_offset(port, 0, 1), dmac_tx + EDAL, card);
 
-	/* clear frame end interrupt counter */
-	sca_out(DCR_CLEAR_EOF, DCR_RX(port->chan), card);
-	sca_out(DCR_CLEAR_EOF, DCR_TX(port->chan), card);
+	/* clear frame end पूर्णांकerrupt counter */
+	sca_out(DCR_CLEAR_खातापूर्ण, DCR_RX(port->chan), card);
+	sca_out(DCR_CLEAR_खातापूर्ण, DCR_TX(port->chan), card);
 
 	/* Receive */
 	sca_outw(HDLC_MAX_MRU, dmac_rx + BFLL, card); /* set buffer length */
 	sca_out(0x14, DMR_RX(port->chan), card); /* Chain mode, Multi-frame */
-	sca_out(DIR_EOME, DIR_RX(port->chan), card); /* enable interrupts */
+	sca_out(सूची_EOME, सूची_RX(port->chan), card); /* enable पूर्णांकerrupts */
 	sca_out(DSR_DE, DSR_RX(port->chan), card); /* DMA enable */
 
 	/* Transmit */
 	sca_out(0x14, DMR_TX(port->chan), card); /* Chain mode, Multi-frame */
-	sca_out(DIR_EOME, DIR_TX(port->chan), card); /* enable interrupts */
+	sca_out(सूची_EOME, सूची_TX(port->chan), card); /* enable पूर्णांकerrupts */
 
 	sca_set_carrier(port);
-	netif_napi_add(port->netdev, &port->napi, sca_poll, NAPI_WEIGHT);
-}
+	netअगर_napi_add(port->netdev, &port->napi, sca_poll, NAPI_WEIGHT);
+पूर्ण
 
 
-/* MSCI interrupt service */
-static inline void sca_msci_intr(port_t *port)
-{
+/* MSCI पूर्णांकerrupt service */
+अटल अंतरभूत व्योम sca_msci_पूर्णांकr(port_t *port)
+अणु
 	u16 msci = get_msci(port);
 	card_t* card = port->card;
 
-	if (sca_in(msci + ST1, card) & ST1_CDCD) {
+	अगर (sca_in(msci + ST1, card) & ST1_CDCD) अणु
 		/* Reset MSCI CDCD status bit */
 		sca_out(ST1_CDCD, msci + ST1, card);
 		sca_set_carrier(port);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static inline void sca_rx(card_t *card, port_t *port, pkt_desc __iomem *desc,
+अटल अंतरभूत व्योम sca_rx(card_t *card, port_t *port, pkt_desc __iomem *desc,
 			  u16 rxin)
-{
-	struct net_device *dev = port->netdev;
-	struct sk_buff *skb;
+अणु
+	काष्ठा net_device *dev = port->netdev;
+	काष्ठा sk_buff *skb;
 	u16 len;
 	u32 buff;
 
-	len = readw(&desc->len);
+	len = पढ़ोw(&desc->len);
 	skb = dev_alloc_skb(len);
-	if (!skb) {
+	अगर (!skb) अणु
 		dev->stats.rx_dropped++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	buff = buffer_offset(port, rxin, 0);
-	memcpy_fromio(skb->data, card->rambase + buff, len);
+	स_नकल_fromio(skb->data, card->rambase + buff, len);
 
 	skb_put(skb, len);
-#ifdef DEBUG_PKT
-	printk(KERN_DEBUG "%s RX(%i):", dev->name, skb->len);
+#अगर_घोषित DEBUG_PKT
+	prपूर्णांकk(KERN_DEBUG "%s RX(%i):", dev->name, skb->len);
 	debug_frame(skb);
-#endif
+#पूर्ण_अगर
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += skb->len;
 	skb->protocol = hdlc_type_trans(skb, dev);
-	netif_receive_skb(skb);
-}
+	netअगर_receive_skb(skb);
+पूर्ण
 
 
 /* Receive DMA service */
-static inline int sca_rx_done(port_t *port, int budget)
-{
-	struct net_device *dev = port->netdev;
+अटल अंतरभूत पूर्णांक sca_rx_करोne(port_t *port, पूर्णांक budget)
+अणु
+	काष्ठा net_device *dev = port->netdev;
 	u16 dmac = get_dmac_rx(port);
 	card_t *card = port->card;
-	u8 stat = sca_in(DSR_RX(port->chan), card); /* read DMA Status */
-	int received = 0;
+	u8 stat = sca_in(DSR_RX(port->chan), card); /* पढ़ो DMA Status */
+	पूर्णांक received = 0;
 
 	/* Reset DSR status bits */
 	sca_out((stat & (DSR_EOT | DSR_EOM | DSR_BOF | DSR_COF)) | DSR_DWE,
 		DSR_RX(port->chan), card);
 
-	if (stat & DSR_BOF)
+	अगर (stat & DSR_BOF)
 		/* Dropped one or more frames */
 		dev->stats.rx_over_errors++;
 
-	while (received < budget) {
+	जबतक (received < budget) अणु
 		u32 desc_off = desc_offset(port, port->rxin, 0);
 		pkt_desc __iomem *desc;
 		u32 cda = sca_inl(dmac + CDAL, card);
 
-		if ((cda >= desc_off) && (cda < desc_off + sizeof(pkt_desc)))
-			break;	/* No frame received */
+		अगर ((cda >= desc_off) && (cda < desc_off + माप(pkt_desc)))
+			अवरोध;	/* No frame received */
 
 		desc = desc_address(port, port->rxin, 0);
-		stat = readb(&desc->stat);
-		if (!(stat & ST_RX_EOM))
+		stat = पढ़ोb(&desc->stat);
+		अगर (!(stat & ST_RX_EOM))
 			port->rxpart = 1; /* partial frame received */
-		else if ((stat & ST_ERROR_MASK) || port->rxpart) {
+		अन्यथा अगर ((stat & ST_ERROR_MASK) || port->rxpart) अणु
 			dev->stats.rx_errors++;
-			if (stat & ST_RX_OVERRUN)
-				dev->stats.rx_fifo_errors++;
-			else if ((stat & (ST_RX_SHORT | ST_RX_ABORT |
+			अगर (stat & ST_RX_OVERRUN)
+				dev->stats.rx_fअगरo_errors++;
+			अन्यथा अगर ((stat & (ST_RX_SHORT | ST_RX_ABORT |
 					  ST_RX_RESBIT)) || port->rxpart)
 				dev->stats.rx_frame_errors++;
-			else if (stat & ST_RX_CRC)
+			अन्यथा अगर (stat & ST_RX_CRC)
 				dev->stats.rx_crc_errors++;
-			if (stat & ST_RX_EOM)
+			अगर (stat & ST_RX_EOM)
 				port->rxpart = 0; /* received last fragment */
-		} else {
+		पूर्ण अन्यथा अणु
 			sca_rx(card, port, desc, port->rxin);
 			received++;
-		}
+		पूर्ण
 
 		/* Set new error descriptor address */
 		sca_outl(desc_off, dmac + EDAL, card);
 		port->rxin = (port->rxin + 1) % card->rx_ring_buffers;
-	}
+	पूर्ण
 
 	/* make sure RX DMA is enabled */
 	sca_out(DSR_DE, DSR_RX(port->chan), card);
-	return received;
-}
+	वापस received;
+पूर्ण
 
 
 /* Transmit DMA service */
-static inline void sca_tx_done(port_t *port)
-{
-	struct net_device *dev = port->netdev;
+अटल अंतरभूत व्योम sca_tx_करोne(port_t *port)
+अणु
+	काष्ठा net_device *dev = port->netdev;
 	card_t* card = port->card;
 	u8 stat;
-	unsigned count = 0;
+	अचिन्हित count = 0;
 
 	spin_lock(&port->lock);
 
-	stat = sca_in(DSR_TX(port->chan), card); /* read DMA Status */
+	stat = sca_in(DSR_TX(port->chan), card); /* पढ़ो DMA Status */
 
 	/* Reset DSR status bits */
 	sca_out((stat & (DSR_EOT | DSR_EOM | DSR_BOF | DSR_COF)) | DSR_DWE,
 		DSR_TX(port->chan), card);
 
-	while (1) {
+	जबतक (1) अणु
 		pkt_desc __iomem *desc = desc_address(port, port->txlast, 1);
-		u8 stat = readb(&desc->stat);
+		u8 stat = पढ़ोb(&desc->stat);
 
-		if (!(stat & ST_TX_OWNRSHP))
-			break; /* not yet transmitted */
-		if (stat & ST_TX_UNDRRUN) {
+		अगर (!(stat & ST_TX_OWNRSHP))
+			अवरोध; /* not yet transmitted */
+		अगर (stat & ST_TX_UNDRRUN) अणु
 			dev->stats.tx_errors++;
-			dev->stats.tx_fifo_errors++;
-		} else {
+			dev->stats.tx_fअगरo_errors++;
+		पूर्ण अन्यथा अणु
 			dev->stats.tx_packets++;
-			dev->stats.tx_bytes += readw(&desc->len);
-		}
-		writeb(0, &desc->stat);	/* Free descriptor */
+			dev->stats.tx_bytes += पढ़ोw(&desc->len);
+		पूर्ण
+		ग_लिखोb(0, &desc->stat);	/* Free descriptor */
 		count++;
 		port->txlast = (port->txlast + 1) % card->tx_ring_buffers;
-	}
+	पूर्ण
 
-	if (count)
-		netif_wake_queue(dev);
+	अगर (count)
+		netअगर_wake_queue(dev);
 	spin_unlock(&port->lock);
-}
+पूर्ण
 
 
-static int sca_poll(struct napi_struct *napi, int budget)
-{
+अटल पूर्णांक sca_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
 	port_t *port = container_of(napi, port_t, napi);
 	u32 isr0 = sca_inl(ISR0, port->card);
-	int received = 0;
+	पूर्णांक received = 0;
 
-	if (isr0 & (port->chan ? 0x08000000 : 0x00080000))
-		sca_msci_intr(port);
+	अगर (isr0 & (port->chan ? 0x08000000 : 0x00080000))
+		sca_msci_पूर्णांकr(port);
 
-	if (isr0 & (port->chan ? 0x00002000 : 0x00000020))
-		sca_tx_done(port);
+	अगर (isr0 & (port->chan ? 0x00002000 : 0x00000020))
+		sca_tx_करोne(port);
 
-	if (isr0 & (port->chan ? 0x00000200 : 0x00000002))
-		received = sca_rx_done(port, budget);
+	अगर (isr0 & (port->chan ? 0x00000200 : 0x00000002))
+		received = sca_rx_करोne(port, budget);
 
-	if (received < budget) {
-		napi_complete_done(napi, received);
-		enable_intr(port);
-	}
+	अगर (received < budget) अणु
+		napi_complete_करोne(napi, received);
+		enable_पूर्णांकr(port);
+	पूर्ण
 
-	return received;
-}
+	वापस received;
+पूर्ण
 
-static irqreturn_t sca_intr(int irq, void *dev_id)
-{
+अटल irqवापस_t sca_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
+अणु
 	card_t *card = dev_id;
 	u32 isr0 = sca_inl(ISR0, card);
-	int i, handled = 0;
+	पूर्णांक i, handled = 0;
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		port_t *port = get_port(card, i);
-		if (port && (isr0 & (i ? 0x08002200 : 0x00080022))) {
+		अगर (port && (isr0 & (i ? 0x08002200 : 0x00080022))) अणु
 			handled = 1;
-			disable_intr(port);
+			disable_पूर्णांकr(port);
 			napi_schedule(&port->napi);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
 
-static void sca_set_port(port_t *port)
-{
+अटल व्योम sca_set_port(port_t *port)
+अणु
 	card_t* card = port->card;
 	u16 msci = get_msci(port);
 	u8 md2 = sca_in(msci + MD2, card);
-	unsigned int tmc, br = 10, brv = 1024;
+	अचिन्हित पूर्णांक पंचांगc, br = 10, brv = 1024;
 
 
-	if (port->settings.clock_rate > 0) {
-		/* Try lower br for better accuracy*/
-		do {
+	अगर (port->settings.घड़ी_rate > 0) अणु
+		/* Try lower br क्रम better accuracy*/
+		करो अणु
 			br--;
 			brv >>= 1; /* brv = 2^9 = 512 max in specs */
 
 			/* Baud Rate = CLOCK_BASE / TMC / 2^BR */
-			tmc = CLOCK_BASE / brv / port->settings.clock_rate;
-		}while (br > 1 && tmc <= 128);
+			पंचांगc = CLOCK_BASE / brv / port->settings.घड़ी_rate;
+		पूर्णजबतक (br > 1 && पंचांगc <= 128);
 
-		if (tmc < 1) {
-			tmc = 1;
-			br = 0;	/* For baud=CLOCK_BASE we use tmc=1 br=0 */
+		अगर (पंचांगc < 1) अणु
+			पंचांगc = 1;
+			br = 0;	/* For baud=CLOCK_BASE we use पंचांगc=1 br=0 */
 			brv = 1;
-		} else if (tmc > 255)
-			tmc = 256; /* tmc=0 means 256 - low baud rates */
+		पूर्ण अन्यथा अगर (पंचांगc > 255)
+			पंचांगc = 256; /* पंचांगc=0 means 256 - low baud rates */
 
-		port->settings.clock_rate = CLOCK_BASE / brv / tmc;
-	} else {
-		br = 9; /* Minimum clock rate */
-		tmc = 256;	/* 8bit = 0 */
-		port->settings.clock_rate = CLOCK_BASE / (256 * 512);
-	}
+		port->settings.घड़ी_rate = CLOCK_BASE / brv / पंचांगc;
+	पूर्ण अन्यथा अणु
+		br = 9; /* Minimum घड़ी rate */
+		पंचांगc = 256;	/* 8bit = 0 */
+		port->settings.घड़ी_rate = CLOCK_BASE / (256 * 512);
+	पूर्ण
 
 	port->rxs = (port->rxs & ~CLK_BRG_MASK) | br;
 	port->txs = (port->txs & ~CLK_BRG_MASK) | br;
-	port->tmc = tmc;
+	port->पंचांगc = पंचांगc;
 
-	/* baud divisor - time constant*/
-	sca_out(port->tmc, msci + TMCR, card);
-	sca_out(port->tmc, msci + TMCT, card);
+	/* baud भागisor - समय स्थिरant*/
+	sca_out(port->पंचांगc, msci + TMCR, card);
+	sca_out(port->पंचांगc, msci + TMCT, card);
 
 	/* Set BRG bits */
 	sca_out(port->rxs, msci + RXS, card);
 	sca_out(port->txs, msci + TXS, card);
 
-	if (port->settings.loopback)
+	अगर (port->settings.loopback)
 		md2 |= MD2_LOOPBACK;
-	else
+	अन्यथा
 		md2 &= ~MD2_LOOPBACK;
 
 	sca_out(md2, msci + MD2, card);
 
-}
+पूर्ण
 
 
-static void sca_open(struct net_device *dev)
-{
+अटल व्योम sca_खोलो(काष्ठा net_device *dev)
+अणु
 	port_t *port = dev_to_port(dev);
 	card_t* card = port->card;
 	u16 msci = get_msci(port);
 	u8 md0, md2;
 
-	switch(port->encoding) {
-	case ENCODING_NRZ:	md2 = MD2_NRZ;		break;
-	case ENCODING_NRZI:	md2 = MD2_NRZI;		break;
-	case ENCODING_FM_MARK:	md2 = MD2_FM_MARK;	break;
-	case ENCODING_FM_SPACE:	md2 = MD2_FM_SPACE;	break;
-	default:		md2 = MD2_MANCHESTER;
-	}
+	चयन(port->encoding) अणु
+	हाल ENCODING_NRZ:	md2 = MD2_NRZ;		अवरोध;
+	हाल ENCODING_NRZI:	md2 = MD2_NRZI;		अवरोध;
+	हाल ENCODING_FM_MARK:	md2 = MD2_FM_MARK;	अवरोध;
+	हाल ENCODING_FM_SPACE:	md2 = MD2_FM_SPACE;	अवरोध;
+	शेष:		md2 = MD2_MANCHESTER;
+	पूर्ण
 
-	if (port->settings.loopback)
+	अगर (port->settings.loopback)
 		md2 |= MD2_LOOPBACK;
 
-	switch(port->parity) {
-	case PARITY_CRC16_PR0:	     md0 = MD0_HDLC | MD0_CRC_16_0;  break;
-	case PARITY_CRC16_PR1:	     md0 = MD0_HDLC | MD0_CRC_16;    break;
-	case PARITY_CRC32_PR1_CCITT: md0 = MD0_HDLC | MD0_CRC_ITU32; break;
-	case PARITY_CRC16_PR1_CCITT: md0 = MD0_HDLC | MD0_CRC_ITU;   break;
-	default:		     md0 = MD0_HDLC | MD0_CRC_NONE;
-	}
+	चयन(port->parity) अणु
+	हाल PARITY_CRC16_PR0:	     md0 = MD0_HDLC | MD0_CRC_16_0;  अवरोध;
+	हाल PARITY_CRC16_PR1:	     md0 = MD0_HDLC | MD0_CRC_16;    अवरोध;
+	हाल PARITY_CRC32_PR1_CCITT: md0 = MD0_HDLC | MD0_CRC_ITU32; अवरोध;
+	हाल PARITY_CRC16_PR1_CCITT: md0 = MD0_HDLC | MD0_CRC_ITU;   अवरोध;
+	शेष:		     md0 = MD0_HDLC | MD0_CRC_NONE;
+	पूर्ण
 
 	sca_out(CMD_RESET, msci + CMD, card);
 	sca_out(md0, msci + MD0, card);
 	sca_out(0x00, msci + MD1, card); /* no address field check */
 	sca_out(md2, msci + MD2, card);
-	sca_out(0x7E, msci + IDL, card); /* flag character 0x7E */
+	sca_out(0x7E, msci + IDL, card); /* flag अक्षरacter 0x7E */
 	/* Skip the rest of underrun frame */
 	sca_out(CTL_IDLE | CTL_URCT | CTL_URSKP, msci + CTL, card);
 	sca_out(0x0F, msci + RNR, card); /* +1=RX DMA activation condition */
@@ -457,89 +458,89 @@ static void sca_open(struct net_device *dev)
 	sca_out(0x38, msci + TNR0, card); /* =TX DMA activation condition */
 	sca_out(0x3F, msci + TNR1, card); /* +1=TX DMA deactivation condition*/
 
-/* We're using the following interrupts:
+/* We're using the following पूर्णांकerrupts:
    - RXINTA (DCD changes only)
    - DMIB (EOM - single frame transfer complete)
 */
 	sca_outl(IE0_RXINTA | IE0_CDCD, msci + IE0, card);
 
-	sca_out(port->tmc, msci + TMCR, card);
-	sca_out(port->tmc, msci + TMCT, card);
+	sca_out(port->पंचांगc, msci + TMCR, card);
+	sca_out(port->पंचांगc, msci + TMCT, card);
 	sca_out(port->rxs, msci + RXS, card);
 	sca_out(port->txs, msci + TXS, card);
 	sca_out(CMD_TX_ENABLE, msci + CMD, card);
 	sca_out(CMD_RX_ENABLE, msci + CMD, card);
 
 	sca_set_carrier(port);
-	enable_intr(port);
+	enable_पूर्णांकr(port);
 	napi_enable(&port->napi);
-	netif_start_queue(dev);
-}
+	netअगर_start_queue(dev);
+पूर्ण
 
 
-static void sca_close(struct net_device *dev)
-{
+अटल व्योम sca_बंद(काष्ठा net_device *dev)
+अणु
 	port_t *port = dev_to_port(dev);
 
 	/* reset channel */
 	sca_out(CMD_RESET, get_msci(port) + CMD, port->card);
-	disable_intr(port);
+	disable_पूर्णांकr(port);
 	napi_disable(&port->napi);
-	netif_stop_queue(dev);
-}
+	netअगर_stop_queue(dev);
+पूर्ण
 
 
-static int sca_attach(struct net_device *dev, unsigned short encoding,
-		      unsigned short parity)
-{
-	if (encoding != ENCODING_NRZ &&
+अटल पूर्णांक sca_attach(काष्ठा net_device *dev, अचिन्हित लघु encoding,
+		      अचिन्हित लघु parity)
+अणु
+	अगर (encoding != ENCODING_NRZ &&
 	    encoding != ENCODING_NRZI &&
 	    encoding != ENCODING_FM_MARK &&
 	    encoding != ENCODING_FM_SPACE &&
 	    encoding != ENCODING_MANCHESTER)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (parity != PARITY_NONE &&
+	अगर (parity != PARITY_NONE &&
 	    parity != PARITY_CRC16_PR0 &&
 	    parity != PARITY_CRC16_PR1 &&
 	    parity != PARITY_CRC32_PR1_CCITT &&
 	    parity != PARITY_CRC16_PR1_CCITT)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	dev_to_port(dev)->encoding = encoding;
 	dev_to_port(dev)->parity = parity;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-#ifdef DEBUG_RINGS
-static void sca_dump_rings(struct net_device *dev)
-{
+#अगर_घोषित DEBUG_RINGS
+अटल व्योम sca_dump_rings(काष्ठा net_device *dev)
+अणु
 	port_t *port = dev_to_port(dev);
 	card_t *card = port->card;
 	u16 cnt;
 
-	printk(KERN_DEBUG "RX ring: CDA=%u EDA=%u DSR=%02X in=%u %sactive",
+	prपूर्णांकk(KERN_DEBUG "RX ring: CDA=%u EDA=%u DSR=%02X in=%u %sactive",
 	       sca_inl(get_dmac_rx(port) + CDAL, card),
 	       sca_inl(get_dmac_rx(port) + EDAL, card),
 	       sca_in(DSR_RX(port->chan), card), port->rxin,
 	       sca_in(DSR_RX(port->chan), card) & DSR_DE ? "" : "in");
-	for (cnt = 0; cnt < port->card->rx_ring_buffers; cnt++)
-		pr_cont(" %02X", readb(&(desc_address(port, cnt, 0)->stat)));
+	क्रम (cnt = 0; cnt < port->card->rx_ring_buffers; cnt++)
+		pr_cont(" %02X", पढ़ोb(&(desc_address(port, cnt, 0)->stat)));
 	pr_cont("\n");
 
-	printk(KERN_DEBUG "TX ring: CDA=%u EDA=%u DSR=%02X in=%u "
+	prपूर्णांकk(KERN_DEBUG "TX ring: CDA=%u EDA=%u DSR=%02X in=%u "
 	       "last=%u %sactive",
 	       sca_inl(get_dmac_tx(port) + CDAL, card),
 	       sca_inl(get_dmac_tx(port) + EDAL, card),
 	       sca_in(DSR_TX(port->chan), card), port->txin, port->txlast,
 	       sca_in(DSR_TX(port->chan), card) & DSR_DE ? "" : "in");
 
-	for (cnt = 0; cnt < port->card->tx_ring_buffers; cnt++)
-		pr_cont(" %02X", readb(&(desc_address(port, cnt, 1)->stat)));
+	क्रम (cnt = 0; cnt < port->card->tx_ring_buffers; cnt++)
+		pr_cont(" %02X", पढ़ोb(&(desc_address(port, cnt, 1)->stat)));
 	pr_cont("\n");
 
-	printk(KERN_DEBUG "MSCI: MD: %02x %02x %02x,"
+	prपूर्णांकk(KERN_DEBUG "MSCI: MD: %02x %02x %02x,"
 	       " ST: %02x %02x %02x %02x %02x, FST: %02x CST: %02x %02x\n",
 	       sca_in(get_msci(port) + MD0, card),
 	       sca_in(get_msci(port) + MD1, card),
@@ -553,14 +554,14 @@ static void sca_dump_rings(struct net_device *dev)
 	       sca_in(get_msci(port) + CST0, card),
 	       sca_in(get_msci(port) + CST1, card));
 
-	printk(KERN_DEBUG "ILAR: %02x ISR: %08x %08x\n", sca_in(ILAR, card),
+	prपूर्णांकk(KERN_DEBUG "ILAR: %02x ISR: %08x %08x\n", sca_in(ILAR, card),
 	       sca_inl(ISR0, card), sca_inl(ISR1, card));
-}
-#endif /* DEBUG_RINGS */
+पूर्ण
+#पूर्ण_अगर /* DEBUG_RINGS */
 
 
-static netdev_tx_t sca_xmit(struct sk_buff *skb, struct net_device *dev)
-{
+अटल netdev_tx_t sca_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
 	port_t *port = dev_to_port(dev);
 	card_t *card = port->card;
 	pkt_desc __iomem *desc;
@@ -569,20 +570,20 @@ static netdev_tx_t sca_xmit(struct sk_buff *skb, struct net_device *dev)
 	spin_lock_irq(&port->lock);
 
 	desc = desc_address(port, port->txin + 1, 1);
-	BUG_ON(readb(&desc->stat)); /* previous xmit should stop queue */
+	BUG_ON(पढ़ोb(&desc->stat)); /* previous xmit should stop queue */
 
-#ifdef DEBUG_PKT
-	printk(KERN_DEBUG "%s TX(%i):", dev->name, skb->len);
+#अगर_घोषित DEBUG_PKT
+	prपूर्णांकk(KERN_DEBUG "%s TX(%i):", dev->name, skb->len);
 	debug_frame(skb);
-#endif
+#पूर्ण_अगर
 
 	desc = desc_address(port, port->txin, 1);
 	buff = buffer_offset(port, port->txin, 1);
 	len = skb->len;
-	memcpy_toio(card->rambase + buff, skb->data, len);
+	स_नकल_toio(card->rambase + buff, skb->data, len);
 
-	writew(len, &desc->len);
-	writeb(ST_TX_EOM, &desc->stat);
+	ग_लिखोw(len, &desc->len);
+	ग_लिखोb(ST_TX_EOM, &desc->stat);
 
 	port->txin = (port->txin + 1) % card->tx_ring_buffers;
 	sca_outl(desc_offset(port, port->txin, 1),
@@ -591,40 +592,40 @@ static netdev_tx_t sca_xmit(struct sk_buff *skb, struct net_device *dev)
 	sca_out(DSR_DE, DSR_TX(port->chan), card); /* Enable TX DMA */
 
 	desc = desc_address(port, port->txin + 1, 1);
-	if (readb(&desc->stat)) /* allow 1 packet gap */
-		netif_stop_queue(dev);
+	अगर (पढ़ोb(&desc->stat)) /* allow 1 packet gap */
+		netअगर_stop_queue(dev);
 
 	spin_unlock_irq(&port->lock);
 
-	dev_kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 
-static u32 sca_detect_ram(card_t *card, u8 __iomem *rambase, u32 ramsize)
-{
+अटल u32 sca_detect_ram(card_t *card, u8 __iomem *rambase, u32 ramsize)
+अणु
 	/* Round RAM size to 32 bits, fill from end to start */
 	u32 i = ramsize &= ~3;
 
-	do {
+	करो अणु
 		i -= 4;
-		writel(i ^ 0x12345678, rambase + i);
-	} while (i > 0);
+		ग_लिखोl(i ^ 0x12345678, rambase + i);
+	पूर्ण जबतक (i > 0);
 
-	for (i = 0; i < ramsize ; i += 4) {
-		if (readl(rambase + i) != (i ^ 0x12345678))
-			break;
-	}
+	क्रम (i = 0; i < ramsize ; i += 4) अणु
+		अगर (पढ़ोl(rambase + i) != (i ^ 0x12345678))
+			अवरोध;
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 
-static void sca_init(card_t *card, int wait_states)
-{
-	sca_out(wait_states, WCRL, card); /* Wait Control */
-	sca_out(wait_states, WCRM, card);
-	sca_out(wait_states, WCRH, card);
+अटल व्योम sca_init(card_t *card, पूर्णांक रुको_states)
+अणु
+	sca_out(रुको_states, WCRL, card); /* Wait Control */
+	sca_out(रुको_states, WCRM, card);
+	sca_out(रुको_states, WCRH, card);
 
 	sca_out(0, DMER, card);	/* DMA Master disable */
 	sca_out(0x03, PCR, card); /* DMA priority */
@@ -633,4 +634,4 @@ static void sca_init(card_t *card, int wait_states)
 	sca_out(0, DSR_RX(1), card);
 	sca_out(0, DSR_TX(1), card);
 	sca_out(DMER_DME, DMER, card); /* DMA Master enable */
-}
+पूर्ण

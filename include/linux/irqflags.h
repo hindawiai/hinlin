@@ -1,263 +1,264 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * include/linux/irqflags.h
  *
  * IRQ flags tracing: follow the state of the hardirq and softirq flags and
- * provide callbacks for transitions between ON and OFF states.
+ * provide callbacks क्रम transitions between ON and OFF states.
  *
- * This file gets included from lowlevel asm headers too, to provide
+ * This file माला_लो included from lowlevel यंत्र headers too, to provide
  * wrapped versions of the local_irq_*() APIs, based on the
  * raw_local_irq_*() macros from the lowlevel headers.
  */
-#ifndef _LINUX_TRACE_IRQFLAGS_H
-#define _LINUX_TRACE_IRQFLAGS_H
+#अगर_अघोषित _LINUX_TRACE_IRQFLAGS_H
+#घोषणा _LINUX_TRACE_IRQFLAGS_H
 
-#include <linux/typecheck.h>
-#include <asm/irqflags.h>
-#include <asm/percpu.h>
+#समावेश <linux/typecheck.h>
+#समावेश <यंत्र/irqflags.h>
+#समावेश <यंत्र/percpu.h>
 
 /* Currently lockdep_softirqs_on/off is used only by lockdep */
-#ifdef CONFIG_PROVE_LOCKING
-  extern void lockdep_softirqs_on(unsigned long ip);
-  extern void lockdep_softirqs_off(unsigned long ip);
-  extern void lockdep_hardirqs_on_prepare(unsigned long ip);
-  extern void lockdep_hardirqs_on(unsigned long ip);
-  extern void lockdep_hardirqs_off(unsigned long ip);
-#else
-  static inline void lockdep_softirqs_on(unsigned long ip) { }
-  static inline void lockdep_softirqs_off(unsigned long ip) { }
-  static inline void lockdep_hardirqs_on_prepare(unsigned long ip) { }
-  static inline void lockdep_hardirqs_on(unsigned long ip) { }
-  static inline void lockdep_hardirqs_off(unsigned long ip) { }
-#endif
+#अगर_घोषित CONFIG_PROVE_LOCKING
+  बाह्य व्योम lockdep_softirqs_on(अचिन्हित दीर्घ ip);
+  बाह्य व्योम lockdep_softirqs_off(अचिन्हित दीर्घ ip);
+  बाह्य व्योम lockdep_hardirqs_on_prepare(अचिन्हित दीर्घ ip);
+  बाह्य व्योम lockdep_hardirqs_on(अचिन्हित दीर्घ ip);
+  बाह्य व्योम lockdep_hardirqs_off(अचिन्हित दीर्घ ip);
+#अन्यथा
+  अटल अंतरभूत व्योम lockdep_softirqs_on(अचिन्हित दीर्घ ip) अणु पूर्ण
+  अटल अंतरभूत व्योम lockdep_softirqs_off(अचिन्हित दीर्घ ip) अणु पूर्ण
+  अटल अंतरभूत व्योम lockdep_hardirqs_on_prepare(अचिन्हित दीर्घ ip) अणु पूर्ण
+  अटल अंतरभूत व्योम lockdep_hardirqs_on(अचिन्हित दीर्घ ip) अणु पूर्ण
+  अटल अंतरभूत व्योम lockdep_hardirqs_off(अचिन्हित दीर्घ ip) अणु पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_TRACE_IRQFLAGS
+#अगर_घोषित CONFIG_TRACE_IRQFLAGS
 
-/* Per-task IRQ trace events information. */
-struct irqtrace_events {
-	unsigned int	irq_events;
-	unsigned long	hardirq_enable_ip;
-	unsigned long	hardirq_disable_ip;
-	unsigned int	hardirq_enable_event;
-	unsigned int	hardirq_disable_event;
-	unsigned long	softirq_disable_ip;
-	unsigned long	softirq_enable_ip;
-	unsigned int	softirq_disable_event;
-	unsigned int	softirq_enable_event;
-};
+/* Per-task IRQ trace events inक्रमmation. */
+काष्ठा irqtrace_events अणु
+	अचिन्हित पूर्णांक	irq_events;
+	अचिन्हित दीर्घ	hardirq_enable_ip;
+	अचिन्हित दीर्घ	hardirq_disable_ip;
+	अचिन्हित पूर्णांक	hardirq_enable_event;
+	अचिन्हित पूर्णांक	hardirq_disable_event;
+	अचिन्हित दीर्घ	softirq_disable_ip;
+	अचिन्हित दीर्घ	softirq_enable_ip;
+	अचिन्हित पूर्णांक	softirq_disable_event;
+	अचिन्हित पूर्णांक	softirq_enable_event;
+पूर्ण;
 
-DECLARE_PER_CPU(int, hardirqs_enabled);
-DECLARE_PER_CPU(int, hardirq_context);
+DECLARE_PER_CPU(पूर्णांक, hardirqs_enabled);
+DECLARE_PER_CPU(पूर्णांक, hardirq_context);
 
-extern void trace_hardirqs_on_prepare(void);
-extern void trace_hardirqs_off_finish(void);
-extern void trace_hardirqs_on(void);
-extern void trace_hardirqs_off(void);
+बाह्य व्योम trace_hardirqs_on_prepare(व्योम);
+बाह्य व्योम trace_hardirqs_off_finish(व्योम);
+बाह्य व्योम trace_hardirqs_on(व्योम);
+बाह्य व्योम trace_hardirqs_off(व्योम);
 
-# define lockdep_hardirq_context()	(raw_cpu_read(hardirq_context))
+# define lockdep_hardirq_context()	(raw_cpu_पढ़ो(hardirq_context))
 # define lockdep_softirq_context(p)	((p)->softirq_context)
-# define lockdep_hardirqs_enabled()	(this_cpu_read(hardirqs_enabled))
+# define lockdep_hardirqs_enabled()	(this_cpu_पढ़ो(hardirqs_enabled))
 # define lockdep_softirqs_enabled(p)	((p)->softirqs_enabled)
 # define lockdep_hardirq_enter()			\
-do {							\
-	if (__this_cpu_inc_return(hardirq_context) == 1)\
-		current->hardirq_threaded = 0;		\
-} while (0)
-# define lockdep_hardirq_threaded()		\
-do {						\
-	current->hardirq_threaded = 1;		\
-} while (0)
-# define lockdep_hardirq_exit()			\
-do {						\
+करो अणु							\
+	अगर (__this_cpu_inc_वापस(hardirq_context) == 1)\
+		current->hardirq_thपढ़ोed = 0;		\
+पूर्ण जबतक (0)
+# define lockdep_hardirq_thपढ़ोed()		\
+करो अणु						\
+	current->hardirq_thपढ़ोed = 1;		\
+पूर्ण जबतक (0)
+# define lockdep_hardirq_निकास()			\
+करो अणु						\
 	__this_cpu_dec(hardirq_context);	\
-} while (0)
+पूर्ण जबतक (0)
 # define lockdep_softirq_enter()		\
-do {						\
+करो अणु						\
 	current->softirq_context++;		\
-} while (0)
-# define lockdep_softirq_exit()			\
-do {						\
+पूर्ण जबतक (0)
+# define lockdep_softirq_निकास()			\
+करो अणु						\
 	current->softirq_context--;		\
-} while (0)
+पूर्ण जबतक (0)
 
-# define lockdep_hrtimer_enter(__hrtimer)		\
-({							\
+# define lockdep_hrसमयr_enter(__hrसमयr)		\
+(अणु							\
 	bool __expires_hardirq = true;			\
 							\
-	if (!__hrtimer->is_hard) {			\
+	अगर (!__hrसमयr->is_hard) अणु			\
 		current->irq_config = 1;		\
 		__expires_hardirq = false;		\
-	}						\
+	पूर्ण						\
 	__expires_hardirq;				\
-})
+पूर्ण)
 
-# define lockdep_hrtimer_exit(__expires_hardirq)	\
-	do {						\
-		if (!__expires_hardirq)			\
+# define lockdep_hrसमयr_निकास(__expires_hardirq)	\
+	करो अणु						\
+		अगर (!__expires_hardirq)			\
 			current->irq_config = 0;	\
-	} while (0)
+	पूर्ण जबतक (0)
 
-# define lockdep_posixtimer_enter()				\
-	  do {							\
+# define lockdep_posixसमयr_enter()				\
+	  करो अणु							\
 		  current->irq_config = 1;			\
-	  } while (0)
+	  पूर्ण जबतक (0)
 
-# define lockdep_posixtimer_exit()				\
-	  do {							\
+# define lockdep_posixसमयr_निकास()				\
+	  करो अणु							\
 		  current->irq_config = 0;			\
-	  } while (0)
+	  पूर्ण जबतक (0)
 
 # define lockdep_irq_work_enter(_flags)					\
-	  do {								\
-		  if (!((_flags) & IRQ_WORK_HARD_IRQ))			\
+	  करो अणु								\
+		  अगर (!((_flags) & IRQ_WORK_HARD_IRQ))			\
 			current->irq_config = 1;			\
-	  } while (0)
-# define lockdep_irq_work_exit(_flags)					\
-	  do {								\
-		  if (!((_flags) & IRQ_WORK_HARD_IRQ))			\
+	  पूर्ण जबतक (0)
+# define lockdep_irq_work_निकास(_flags)					\
+	  करो अणु								\
+		  अगर (!((_flags) & IRQ_WORK_HARD_IRQ))			\
 			current->irq_config = 0;			\
-	  } while (0)
+	  पूर्ण जबतक (0)
 
-#else
-# define trace_hardirqs_on_prepare()		do { } while (0)
-# define trace_hardirqs_off_finish()		do { } while (0)
-# define trace_hardirqs_on()			do { } while (0)
-# define trace_hardirqs_off()			do { } while (0)
+#अन्यथा
+# define trace_hardirqs_on_prepare()		करो अणु पूर्ण जबतक (0)
+# define trace_hardirqs_off_finish()		करो अणु पूर्ण जबतक (0)
+# define trace_hardirqs_on()			करो अणु पूर्ण जबतक (0)
+# define trace_hardirqs_off()			करो अणु पूर्ण जबतक (0)
 # define lockdep_hardirq_context()		0
 # define lockdep_softirq_context(p)		0
 # define lockdep_hardirqs_enabled()		0
 # define lockdep_softirqs_enabled(p)		0
-# define lockdep_hardirq_enter()		do { } while (0)
-# define lockdep_hardirq_threaded()		do { } while (0)
-# define lockdep_hardirq_exit()			do { } while (0)
-# define lockdep_softirq_enter()		do { } while (0)
-# define lockdep_softirq_exit()			do { } while (0)
-# define lockdep_hrtimer_enter(__hrtimer)	false
-# define lockdep_hrtimer_exit(__context)	do { } while (0)
-# define lockdep_posixtimer_enter()		do { } while (0)
-# define lockdep_posixtimer_exit()		do { } while (0)
-# define lockdep_irq_work_enter(__work)		do { } while (0)
-# define lockdep_irq_work_exit(__work)		do { } while (0)
-#endif
+# define lockdep_hardirq_enter()		करो अणु पूर्ण जबतक (0)
+# define lockdep_hardirq_thपढ़ोed()		करो अणु पूर्ण जबतक (0)
+# define lockdep_hardirq_निकास()			करो अणु पूर्ण जबतक (0)
+# define lockdep_softirq_enter()		करो अणु पूर्ण जबतक (0)
+# define lockdep_softirq_निकास()			करो अणु पूर्ण जबतक (0)
+# define lockdep_hrसमयr_enter(__hrसमयr)	false
+# define lockdep_hrसमयr_निकास(__context)	करो अणु पूर्ण जबतक (0)
+# define lockdep_posixसमयr_enter()		करो अणु पूर्ण जबतक (0)
+# define lockdep_posixसमयr_निकास()		करो अणु पूर्ण जबतक (0)
+# define lockdep_irq_work_enter(__work)		करो अणु पूर्ण जबतक (0)
+# define lockdep_irq_work_निकास(__work)		करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#if defined(CONFIG_IRQSOFF_TRACER) || \
+#अगर defined(CONFIG_IRQSOFF_TRACER) || \
 	defined(CONFIG_PREEMPT_TRACER)
- extern void stop_critical_timings(void);
- extern void start_critical_timings(void);
-#else
-# define stop_critical_timings() do { } while (0)
-# define start_critical_timings() do { } while (0)
-#endif
+ बाह्य व्योम stop_critical_timings(व्योम);
+ बाह्य व्योम start_critical_timings(व्योम);
+#अन्यथा
+# define stop_critical_timings() करो अणु पूर्ण जबतक (0)
+# define start_critical_timings() करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifdef CONFIG_DEBUG_IRQFLAGS
-extern void warn_bogus_irq_restore(void);
-#define raw_check_bogus_irq_restore()			\
-	do {						\
-		if (unlikely(!arch_irqs_disabled()))	\
+#अगर_घोषित CONFIG_DEBUG_IRQFLAGS
+बाह्य व्योम warn_bogus_irq_restore(व्योम);
+#घोषणा raw_check_bogus_irq_restore()			\
+	करो अणु						\
+		अगर (unlikely(!arch_irqs_disabled()))	\
 			warn_bogus_irq_restore();	\
-	} while (0)
-#else
-#define raw_check_bogus_irq_restore() do { } while (0)
-#endif
+	पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा raw_check_bogus_irq_restore() करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /*
  * Wrap the arch provided IRQ routines to provide appropriate checks.
  */
-#define raw_local_irq_disable()		arch_local_irq_disable()
-#define raw_local_irq_enable()		arch_local_irq_enable()
-#define raw_local_irq_save(flags)			\
-	do {						\
-		typecheck(unsigned long, flags);	\
+#घोषणा raw_local_irq_disable()		arch_local_irq_disable()
+#घोषणा raw_local_irq_enable()		arch_local_irq_enable()
+#घोषणा raw_local_irq_save(flags)			\
+	करो अणु						\
+		typecheck(अचिन्हित दीर्घ, flags);	\
 		flags = arch_local_irq_save();		\
-	} while (0)
-#define raw_local_irq_restore(flags)			\
-	do {						\
-		typecheck(unsigned long, flags);	\
+	पूर्ण जबतक (0)
+#घोषणा raw_local_irq_restore(flags)			\
+	करो अणु						\
+		typecheck(अचिन्हित दीर्घ, flags);	\
 		raw_check_bogus_irq_restore();		\
 		arch_local_irq_restore(flags);		\
-	} while (0)
-#define raw_local_save_flags(flags)			\
-	do {						\
-		typecheck(unsigned long, flags);	\
+	पूर्ण जबतक (0)
+#घोषणा raw_local_save_flags(flags)			\
+	करो अणु						\
+		typecheck(अचिन्हित दीर्घ, flags);	\
 		flags = arch_local_save_flags();	\
-	} while (0)
-#define raw_irqs_disabled_flags(flags)			\
-	({						\
-		typecheck(unsigned long, flags);	\
+	पूर्ण जबतक (0)
+#घोषणा raw_irqs_disabled_flags(flags)			\
+	(अणु						\
+		typecheck(अचिन्हित दीर्घ, flags);	\
 		arch_irqs_disabled_flags(flags);	\
-	})
-#define raw_irqs_disabled()		(arch_irqs_disabled())
-#define raw_safe_halt()			arch_safe_halt()
+	पूर्ण)
+#घोषणा raw_irqs_disabled()		(arch_irqs_disabled())
+#घोषणा raw_safe_halt()			arch_safe_halt()
 
 /*
  * The local_irq_*() APIs are equal to the raw_local_irq*()
- * if !TRACE_IRQFLAGS.
+ * अगर !TRACE_IRQFLAGS.
  */
-#ifdef CONFIG_TRACE_IRQFLAGS
+#अगर_घोषित CONFIG_TRACE_IRQFLAGS
 
-#define local_irq_enable()				\
-	do {						\
+#घोषणा local_irq_enable()				\
+	करो अणु						\
 		trace_hardirqs_on();			\
 		raw_local_irq_enable();			\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define local_irq_disable()				\
-	do {						\
+#घोषणा local_irq_disable()				\
+	करो अणु						\
 		bool was_disabled = raw_irqs_disabled();\
 		raw_local_irq_disable();		\
-		if (!was_disabled)			\
+		अगर (!was_disabled)			\
 			trace_hardirqs_off();		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define local_irq_save(flags)				\
-	do {						\
+#घोषणा local_irq_save(flags)				\
+	करो अणु						\
 		raw_local_irq_save(flags);		\
-		if (!raw_irqs_disabled_flags(flags))	\
+		अगर (!raw_irqs_disabled_flags(flags))	\
 			trace_hardirqs_off();		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define local_irq_restore(flags)			\
-	do {						\
-		if (!raw_irqs_disabled_flags(flags))	\
+#घोषणा local_irq_restore(flags)			\
+	करो अणु						\
+		अगर (!raw_irqs_disabled_flags(flags))	\
 			trace_hardirqs_on();		\
 		raw_local_irq_restore(flags);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define safe_halt()				\
-	do {					\
+#घोषणा safe_halt()				\
+	करो अणु					\
 		trace_hardirqs_on();		\
 		raw_safe_halt();		\
-	} while (0)
+	पूर्ण जबतक (0)
 
 
-#else /* !CONFIG_TRACE_IRQFLAGS */
+#अन्यथा /* !CONFIG_TRACE_IRQFLAGS */
 
-#define local_irq_enable()	do { raw_local_irq_enable(); } while (0)
-#define local_irq_disable()	do { raw_local_irq_disable(); } while (0)
-#define local_irq_save(flags)	do { raw_local_irq_save(flags); } while (0)
-#define local_irq_restore(flags) do { raw_local_irq_restore(flags); } while (0)
-#define safe_halt()		do { raw_safe_halt(); } while (0)
+#घोषणा local_irq_enable()	करो अणु raw_local_irq_enable(); पूर्ण जबतक (0)
+#घोषणा local_irq_disable()	करो अणु raw_local_irq_disable(); पूर्ण जबतक (0)
+#घोषणा local_irq_save(flags)	करो अणु raw_local_irq_save(flags); पूर्ण जबतक (0)
+#घोषणा local_irq_restore(flags) करो अणु raw_local_irq_restore(flags); पूर्ण जबतक (0)
+#घोषणा safe_halt()		करो अणु raw_safe_halt(); पूर्ण जबतक (0)
 
-#endif /* CONFIG_TRACE_IRQFLAGS */
+#पूर्ण_अगर /* CONFIG_TRACE_IRQFLAGS */
 
-#define local_save_flags(flags)	raw_local_save_flags(flags)
+#घोषणा local_save_flags(flags)	raw_local_save_flags(flags)
 
 /*
- * Some architectures don't define arch_irqs_disabled(), so even if either
- * definition would be fine we need to use different ones for the time being
- * to avoid build issues.
+ * Some architectures करोn't define arch_irqs_disabled(), so even अगर either
+ * definition would be fine we need to use dअगरferent ones क्रम the समय being
+ * to aव्योम build issues.
  */
-#ifdef CONFIG_TRACE_IRQFLAGS_SUPPORT
-#define irqs_disabled()					\
-	({						\
-		unsigned long _flags;			\
+#अगर_घोषित CONFIG_TRACE_IRQFLAGS_SUPPORT
+#घोषणा irqs_disabled()					\
+	(अणु						\
+		अचिन्हित दीर्घ _flags;			\
 		raw_local_save_flags(_flags);		\
 		raw_irqs_disabled_flags(_flags);	\
-	})
-#else /* !CONFIG_TRACE_IRQFLAGS_SUPPORT */
-#define irqs_disabled()	raw_irqs_disabled()
-#endif /* CONFIG_TRACE_IRQFLAGS_SUPPORT */
+	पूर्ण)
+#अन्यथा /* !CONFIG_TRACE_IRQFLAGS_SUPPORT */
+#घोषणा irqs_disabled()	raw_irqs_disabled()
+#पूर्ण_अगर /* CONFIG_TRACE_IRQFLAGS_SUPPORT */
 
-#define irqs_disabled_flags(flags) raw_irqs_disabled_flags(flags)
+#घोषणा irqs_disabled_flags(flags) raw_irqs_disabled_flags(flags)
 
-#endif
+#पूर्ण_अगर

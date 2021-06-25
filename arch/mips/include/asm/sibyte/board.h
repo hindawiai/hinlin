@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2000,2001,2002,2003,2004 Broadcom Corporation
  */
 
-#ifndef _SIBYTE_BOARD_H
-#define _SIBYTE_BOARD_H
+#अगर_अघोषित _SIBYTE_BOARD_H
+#घोषणा _SIBYTE_BOARD_H
 
-#if defined(CONFIG_SIBYTE_SWARM) || defined(CONFIG_SIBYTE_CRHONE) || \
+#अगर defined(CONFIG_SIBYTE_SWARM) || defined(CONFIG_SIBYTE_CRHONE) || \
     defined(CONFIG_SIBYTE_CRHINE) || defined(CONFIG_SIBYTE_LITTLESUR)
-#include <asm/sibyte/swarm.h>
-#endif
+#समावेश <यंत्र/sibyte/swarm.h>
+#पूर्ण_अगर
 
-#if defined(CONFIG_SIBYTE_SENTOSA) || defined(CONFIG_SIBYTE_RHONE)
-#include <asm/sibyte/sentosa.h>
-#endif
+#अगर defined(CONFIG_SIBYTE_SENTOSA) || defined(CONFIG_SIBYTE_RHONE)
+#समावेश <यंत्र/sibyte/sentosa.h>
+#पूर्ण_अगर
 
-#ifdef CONFIG_SIBYTE_CARMEL
-#include <asm/sibyte/carmel.h>
-#endif
+#अगर_घोषित CONFIG_SIBYTE_CARMEL
+#समावेश <यंत्र/sibyte/carmel.h>
+#पूर्ण_अगर
 
-#ifdef CONFIG_SIBYTE_BIGSUR
-#include <asm/sibyte/bigsur.h>
-#endif
+#अगर_घोषित CONFIG_SIBYTE_BIGSUR
+#समावेश <यंत्र/sibyte/bigsur.h>
+#पूर्ण_अगर
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
-#ifdef LEDS_PHYS
-#define setleds(t0, t1, c0, c1, c2, c3) \
+#अगर_घोषित LEDS_PHYS
+#घोषणा setleds(t0, t1, c0, c1, c2, c3) \
 	li	t0, (LEDS_PHYS|0xa0000000); \
 	li	t1, c0; \
 	sb	t1, 0x18(t0); \
@@ -36,20 +37,20 @@
 	sb	t1, 0x08(t0); \
 	li	t1, c3; \
 	sb	t1, 0x00(t0)
-#else
-#define setleds(t0, t1, c0, c1, c2, c3)
-#endif /* LEDS_PHYS */
+#अन्यथा
+#घोषणा setleds(t0, t1, c0, c1, c2, c3)
+#पूर्ण_अगर /* LEDS_PHYS */
 
-#else
+#अन्यथा
 
-void swarm_setup(void);
+व्योम swarm_setup(व्योम);
 
-#ifdef LEDS_PHYS
-extern void setleds(char *str);
-#else
-#define setleds(s) do { } while (0)
-#endif /* LEDS_PHYS */
+#अगर_घोषित LEDS_PHYS
+बाह्य व्योम setleds(अक्षर *str);
+#अन्यथा
+#घोषणा setleds(s) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर /* LEDS_PHYS */
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* _SIBYTE_BOARD_H */
+#पूर्ण_अगर /* _SIBYTE_BOARD_H */

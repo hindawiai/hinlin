@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Interface for Dynamic Logical Partitioning of I/O Slots on
- * RPA-compliant PPC64 platform.
+ * Interface क्रम Dynamic Logical Partitioning of I/O Slots on
+ * RPA-compliant PPC64 platक्रमm.
  *
  * John Rose <johnrose@austin.ibm.com>
  * Linda Xie <lxie@us.ibm.com>
@@ -11,167 +12,167 @@
  * Copyright (C) 2003 IBM.
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/string.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <asm/pci-bridge.h>
-#include <linux/mutex.h>
-#include <asm/rtas.h>
-#include <asm/vio.h>
-#include <linux/firmware.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <linux/mutex.h>
+#समावेश <यंत्र/rtas.h>
+#समावेश <यंत्र/vपन.स>
+#समावेश <linux/firmware.h>
 
-#include "../pci.h"
-#include "rpaphp.h"
-#include "rpadlpar.h"
+#समावेश "../pci.h"
+#समावेश "rpaphp.h"
+#समावेश "rpadlpar.h"
 
-static DEFINE_MUTEX(rpadlpar_mutex);
+अटल DEFINE_MUTEX(rpadlpar_mutex);
 
-#define DLPAR_MODULE_NAME "rpadlpar_io"
+#घोषणा DLPAR_MODULE_NAME "rpadlpar_io"
 
-#define NODE_TYPE_VIO  1
-#define NODE_TYPE_SLOT 2
-#define NODE_TYPE_PHB  3
+#घोषणा NODE_TYPE_VIO  1
+#घोषणा NODE_TYPE_SLOT 2
+#घोषणा NODE_TYPE_PHB  3
 
-static struct device_node *find_vio_slot_node(char *drc_name)
-{
-	struct device_node *parent = of_find_node_by_name(NULL, "vdevice");
-	struct device_node *dn;
-	int rc;
+अटल काष्ठा device_node *find_vio_slot_node(अक्षर *drc_name)
+अणु
+	काष्ठा device_node *parent = of_find_node_by_name(शून्य, "vdevice");
+	काष्ठा device_node *dn;
+	पूर्णांक rc;
 
-	if (!parent)
-		return NULL;
+	अगर (!parent)
+		वापस शून्य;
 
-	for_each_child_of_node(parent, dn) {
-		rc = rpaphp_check_drc_props(dn, drc_name, NULL);
-		if (rc == 0)
-			break;
-	}
+	क्रम_each_child_of_node(parent, dn) अणु
+		rc = rpaphp_check_drc_props(dn, drc_name, शून्य);
+		अगर (rc == 0)
+			अवरोध;
+	पूर्ण
 	of_node_put(parent);
 
-	return dn;
-}
+	वापस dn;
+पूर्ण
 
-/* Find dlpar-capable pci node that contains the specified name and type */
-static struct device_node *find_php_slot_pci_node(char *drc_name,
-						  char *drc_type)
-{
-	struct device_node *np;
-	int rc;
+/* Find dlpar-capable pci node that contains the specअगरied name and type */
+अटल काष्ठा device_node *find_php_slot_pci_node(अक्षर *drc_name,
+						  अक्षर *drc_type)
+अणु
+	काष्ठा device_node *np;
+	पूर्णांक rc;
 
-	for_each_node_by_name(np, "pci") {
+	क्रम_each_node_by_name(np, "pci") अणु
 		rc = rpaphp_check_drc_props(np, drc_name, drc_type);
-		if (rc == 0)
-			break;
-	}
+		अगर (rc == 0)
+			अवरोध;
+	पूर्ण
 
-	return np;
-}
+	वापस np;
+पूर्ण
 
 /* Returns a device_node with its reference count incremented */
-static struct device_node *find_dlpar_node(char *drc_name, int *node_type)
-{
-	struct device_node *dn;
+अटल काष्ठा device_node *find_dlpar_node(अक्षर *drc_name, पूर्णांक *node_type)
+अणु
+	काष्ठा device_node *dn;
 
 	dn = find_php_slot_pci_node(drc_name, "SLOT");
-	if (dn) {
+	अगर (dn) अणु
 		*node_type = NODE_TYPE_SLOT;
-		return dn;
-	}
+		वापस dn;
+	पूर्ण
 
 	dn = find_php_slot_pci_node(drc_name, "PHB");
-	if (dn) {
+	अगर (dn) अणु
 		*node_type = NODE_TYPE_PHB;
-		return dn;
-	}
+		वापस dn;
+	पूर्ण
 
 	dn = find_vio_slot_node(drc_name);
-	if (dn) {
+	अगर (dn) अणु
 		*node_type = NODE_TYPE_VIO;
-		return dn;
-	}
+		वापस dn;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * find_php_slot - return hotplug slot structure for device node
+ * find_php_slot - वापस hotplug slot काष्ठाure क्रम device node
  * @dn: target &device_node
  *
- * This routine will return the hotplug slot structure
- * for a given device node. Note that built-in PCI slots
+ * This routine will वापस the hotplug slot काष्ठाure
+ * क्रम a given device node. Note that built-in PCI slots
  * may be dlpar-able, but not hot-pluggable, so this routine
- * will return NULL for built-in PCI slots.
+ * will वापस शून्य क्रम built-in PCI slots.
  */
-static struct slot *find_php_slot(struct device_node *dn)
-{
-	struct slot *slot, *next;
+अटल काष्ठा slot *find_php_slot(काष्ठा device_node *dn)
+अणु
+	काष्ठा slot *slot, *next;
 
-	list_for_each_entry_safe(slot, next, &rpaphp_slot_head,
-				 rpaphp_slot_list) {
-		if (slot->dn == dn)
-			return slot;
-	}
+	list_क्रम_each_entry_safe(slot, next, &rpaphp_slot_head,
+				 rpaphp_slot_list) अणु
+		अगर (slot->dn == dn)
+			वापस slot;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct pci_dev *dlpar_find_new_dev(struct pci_bus *parent,
-					struct device_node *dev_dn)
-{
-	struct pci_dev *tmp = NULL;
-	struct device_node *child_dn;
+अटल काष्ठा pci_dev *dlpar_find_new_dev(काष्ठा pci_bus *parent,
+					काष्ठा device_node *dev_dn)
+अणु
+	काष्ठा pci_dev *पंचांगp = शून्य;
+	काष्ठा device_node *child_dn;
 
-	list_for_each_entry(tmp, &parent->devices, bus_list) {
-		child_dn = pci_device_to_OF_node(tmp);
-		if (child_dn == dev_dn)
-			return tmp;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(पंचांगp, &parent->devices, bus_list) अणु
+		child_dn = pci_device_to_OF_node(पंचांगp);
+		अगर (child_dn == dev_dn)
+			वापस पंचांगp;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void dlpar_pci_add_bus(struct device_node *dn)
-{
-	struct pci_dn *pdn = PCI_DN(dn);
-	struct pci_controller *phb = pdn->phb;
-	struct pci_dev *dev = NULL;
+अटल व्योम dlpar_pci_add_bus(काष्ठा device_node *dn)
+अणु
+	काष्ठा pci_dn *pdn = PCI_DN(dn);
+	काष्ठा pci_controller *phb = pdn->phb;
+	काष्ठा pci_dev *dev = शून्य;
 
 	pseries_eeh_init_edev_recursive(pdn);
 
 	/* Add EADS device to PHB bus, adding new entry to bus->devices */
 	dev = of_create_pci_dev(dn, phb->bus, pdn->devfn);
-	if (!dev) {
-		printk(KERN_ERR "%s: failed to create pci dev for %pOF\n",
+	अगर (!dev) अणु
+		prपूर्णांकk(KERN_ERR "%s: failed to create pci dev for %pOF\n",
 				__func__, dn);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Scan below the new bridge */
-	if (pci_is_bridge(dev))
+	अगर (pci_is_bridge(dev))
 		of_scan_pci_bridge(dev);
 
-	/* Map IO space for child bus, which may or may not succeed */
+	/* Map IO space क्रम child bus, which may or may not succeed */
 	pcibios_map_io_space(dev->subordinate);
 
 	/* Finish adding it : resource allocation, adding devices, etc...
-	 * Note that we need to perform the finish pass on the -parent-
-	 * bus of the EADS bridge so the bridge device itself gets
+	 * Note that we need to perक्रमm the finish pass on the -parent-
+	 * bus of the EADS bridge so the bridge device itself माला_लो
 	 * properly added
 	 */
 	pcibios_finish_adding_to_bus(phb->bus);
-}
+पूर्ण
 
-static int dlpar_add_pci_slot(char *drc_name, struct device_node *dn)
-{
-	struct pci_dev *dev;
-	struct pci_controller *phb;
+अटल पूर्णांक dlpar_add_pci_slot(अक्षर *drc_name, काष्ठा device_node *dn)
+अणु
+	काष्ठा pci_dev *dev;
+	काष्ठा pci_controller *phb;
 
-	if (pci_find_bus_by_node(dn))
-		return -EINVAL;
+	अगर (pci_find_bus_by_node(dn))
+		वापस -EINVAL;
 
 	/* Add pci bus */
 	dlpar_pci_add_bus(dn);
@@ -180,94 +181,94 @@ static int dlpar_add_pci_slot(char *drc_name, struct device_node *dn)
 	phb = PCI_DN(dn)->phb;
 	dev = dlpar_find_new_dev(phb->bus, dn);
 
-	if (!dev) {
-		printk(KERN_ERR "%s: unable to add bus %s\n", __func__,
+	अगर (!dev) अणु
+		prपूर्णांकk(KERN_ERR "%s: unable to add bus %s\n", __func__,
 			drc_name);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (dev->hdr_type != PCI_HEADER_TYPE_BRIDGE) {
-		printk(KERN_ERR "%s: unexpected header type %d, unable to add bus %s\n",
+	अगर (dev->hdr_type != PCI_HEADER_TYPE_BRIDGE) अणु
+		prपूर्णांकk(KERN_ERR "%s: unexpected header type %d, unable to add bus %s\n",
 			__func__, dev->hdr_type, drc_name);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* Add hotplug slot */
-	if (rpaphp_add_slot(dn)) {
-		printk(KERN_ERR "%s: unable to add hotplug slot %s\n",
+	अगर (rpaphp_add_slot(dn)) अणु
+		prपूर्णांकk(KERN_ERR "%s: unable to add hotplug slot %s\n",
 			__func__, drc_name);
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dlpar_remove_phb(char *drc_name, struct device_node *dn)
-{
-	struct slot *slot;
-	struct pci_dn *pdn;
-	int rc = 0;
+अटल पूर्णांक dlpar_हटाओ_phb(अक्षर *drc_name, काष्ठा device_node *dn)
+अणु
+	काष्ठा slot *slot;
+	काष्ठा pci_dn *pdn;
+	पूर्णांक rc = 0;
 
-	if (!pci_find_bus_by_node(dn))
-		return -EINVAL;
+	अगर (!pci_find_bus_by_node(dn))
+		वापस -EINVAL;
 
-	/* If pci slot is hotpluggable, use hotplug to remove it */
+	/* If pci slot is hotpluggable, use hotplug to हटाओ it */
 	slot = find_php_slot(dn);
-	if (slot && rpaphp_deregister_slot(slot)) {
-		printk(KERN_ERR "%s: unable to remove hotplug slot %s\n",
+	अगर (slot && rpaphp_deरेजिस्टर_slot(slot)) अणु
+		prपूर्णांकk(KERN_ERR "%s: unable to remove hotplug slot %s\n",
 		       __func__, drc_name);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	pdn = dn->data;
 	BUG_ON(!pdn || !pdn->phb);
-	rc = remove_phb_dynamic(pdn->phb);
-	if (rc < 0)
-		return rc;
+	rc = हटाओ_phb_dynamic(pdn->phb);
+	अगर (rc < 0)
+		वापस rc;
 
-	pdn->phb = NULL;
+	pdn->phb = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dlpar_add_phb(char *drc_name, struct device_node *dn)
-{
-	struct pci_controller *phb;
+अटल पूर्णांक dlpar_add_phb(अक्षर *drc_name, काष्ठा device_node *dn)
+अणु
+	काष्ठा pci_controller *phb;
 
-	if (PCI_DN(dn) && PCI_DN(dn)->phb) {
-		/* PHB already exists */
-		return -EINVAL;
-	}
+	अगर (PCI_DN(dn) && PCI_DN(dn)->phb) अणु
+		/* PHB alपढ़ोy exists */
+		वापस -EINVAL;
+	पूर्ण
 
 	phb = init_phb_dynamic(dn);
-	if (!phb)
-		return -EIO;
+	अगर (!phb)
+		वापस -EIO;
 
-	if (rpaphp_add_slot(dn)) {
-		printk(KERN_ERR "%s: unable to add hotplug slot %s\n",
+	अगर (rpaphp_add_slot(dn)) अणु
+		prपूर्णांकk(KERN_ERR "%s: unable to add hotplug slot %s\n",
 			__func__, drc_name);
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dlpar_add_vio_slot(char *drc_name, struct device_node *dn)
-{
-	struct vio_dev *vio_dev;
+अटल पूर्णांक dlpar_add_vio_slot(अक्षर *drc_name, काष्ठा device_node *dn)
+अणु
+	काष्ठा vio_dev *vio_dev;
 
 	vio_dev = vio_find_node(dn);
-	if (vio_dev) {
+	अगर (vio_dev) अणु
 		put_device(&vio_dev->dev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!vio_register_device_node(dn)) {
-		printk(KERN_ERR
+	अगर (!vio_रेजिस्टर_device_node(dn)) अणु
+		prपूर्णांकk(KERN_ERR
 			"%s: failed to register vio node %s\n",
 			__func__, drc_name);
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * dlpar_add_slot - DLPAR add an I/O Slot
@@ -277,72 +278,72 @@ static int dlpar_add_vio_slot(char *drc_name, struct device_node *dn)
  * Return Codes:
  * 0			Success
  * -ENODEV		Not a valid drc_name
- * -EINVAL		Slot already added
- * -ERESTARTSYS		Signalled before obtaining lock
+ * -EINVAL		Slot alपढ़ोy added
+ * -ERESTARTSYS		Signalled beक्रमe obtaining lock
  * -EIO			Internal PCI Error
  */
-int dlpar_add_slot(char *drc_name)
-{
-	struct device_node *dn = NULL;
-	int node_type;
-	int rc = -EIO;
+पूर्णांक dlpar_add_slot(अक्षर *drc_name)
+अणु
+	काष्ठा device_node *dn = शून्य;
+	पूर्णांक node_type;
+	पूर्णांक rc = -EIO;
 
-	if (mutex_lock_interruptible(&rpadlpar_mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&rpadlpar_mutex))
+		वापस -ERESTARTSYS;
 
 	/* Find newly added node */
 	dn = find_dlpar_node(drc_name, &node_type);
-	if (!dn) {
+	अगर (!dn) अणु
 		rc = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	switch (node_type) {
-		case NODE_TYPE_VIO:
+	चयन (node_type) अणु
+		हाल NODE_TYPE_VIO:
 			rc = dlpar_add_vio_slot(drc_name, dn);
-			break;
-		case NODE_TYPE_SLOT:
+			अवरोध;
+		हाल NODE_TYPE_SLOT:
 			rc = dlpar_add_pci_slot(drc_name, dn);
-			break;
-		case NODE_TYPE_PHB:
+			अवरोध;
+		हाल NODE_TYPE_PHB:
 			rc = dlpar_add_phb(drc_name, dn);
-			break;
-	}
+			अवरोध;
+	पूर्ण
 	of_node_put(dn);
 
-	printk(KERN_INFO "%s: slot %s added\n", DLPAR_MODULE_NAME, drc_name);
-exit:
+	prपूर्णांकk(KERN_INFO "%s: slot %s added\n", DLPAR_MODULE_NAME, drc_name);
+निकास:
 	mutex_unlock(&rpadlpar_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * dlpar_remove_vio_slot - DLPAR remove a virtual I/O Slot
+ * dlpar_हटाओ_vio_slot - DLPAR हटाओ a भव I/O Slot
  * @drc_name: drc-name of newly added slot
  * @dn: &device_node
  *
  * Remove the kernel and hotplug representations of an I/O Slot.
  * Return Codes:
  * 0			Success
- * -EINVAL		Vio dev doesn't exist
+ * -EINVAL		Vio dev करोesn't exist
  */
-static int dlpar_remove_vio_slot(char *drc_name, struct device_node *dn)
-{
-	struct vio_dev *vio_dev;
+अटल पूर्णांक dlpar_हटाओ_vio_slot(अक्षर *drc_name, काष्ठा device_node *dn)
+अणु
+	काष्ठा vio_dev *vio_dev;
 
 	vio_dev = vio_find_node(dn);
-	if (!vio_dev)
-		return -EINVAL;
+	अगर (!vio_dev)
+		वापस -EINVAL;
 
-	vio_unregister_device(vio_dev);
+	vio_unरेजिस्टर_device(vio_dev);
 
 	put_device(&vio_dev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * dlpar_remove_pci_slot - DLPAR remove a PCI I/O Slot
+ * dlpar_हटाओ_pci_slot - DLPAR हटाओ a PCI I/O Slot
  * @drc_name: drc-name of newly added slot
  * @dn: &device_node
  *
@@ -352,129 +353,129 @@ static int dlpar_remove_vio_slot(char *drc_name, struct device_node *dn)
  * -ENODEV		Not a valid drc_name
  * -EIO			Internal PCI Error
  */
-static int dlpar_remove_pci_slot(char *drc_name, struct device_node *dn)
-{
-	struct pci_bus *bus;
-	struct slot *slot;
-	int ret = 0;
+अटल पूर्णांक dlpar_हटाओ_pci_slot(अक्षर *drc_name, काष्ठा device_node *dn)
+अणु
+	काष्ठा pci_bus *bus;
+	काष्ठा slot *slot;
+	पूर्णांक ret = 0;
 
-	pci_lock_rescan_remove();
+	pci_lock_rescan_हटाओ();
 
 	bus = pci_find_bus_by_node(dn);
-	if (!bus) {
+	अगर (!bus) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pr_debug("PCI: Removing PCI slot below EADS bridge %s\n",
 		 bus->self ? pci_name(bus->self) : "<!PHB!>");
 
 	slot = find_php_slot(dn);
-	if (slot) {
+	अगर (slot) अणु
 		pr_debug("PCI: Removing hotplug slot for %04x:%02x...\n",
-			 pci_domain_nr(bus), bus->number);
+			 pci_करोमुख्य_nr(bus), bus->number);
 
-		if (rpaphp_deregister_slot(slot)) {
-			printk(KERN_ERR
+		अगर (rpaphp_deरेजिस्टर_slot(slot)) अणु
+			prपूर्णांकk(KERN_ERR
 				"%s: unable to remove hotplug slot %s\n",
 				__func__, drc_name);
 			ret = -EIO;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Remove all devices below slot */
-	pci_hp_remove_devices(bus);
+	pci_hp_हटाओ_devices(bus);
 
 	/* Unmap PCI IO space */
-	if (pcibios_unmap_io_space(bus)) {
-		printk(KERN_ERR "%s: failed to unmap bus range\n",
+	अगर (pcibios_unmap_io_space(bus)) अणु
+		prपूर्णांकk(KERN_ERR "%s: failed to unmap bus range\n",
 			__func__);
-		ret = -ERANGE;
-		goto out;
-	}
+		ret = -दुस्फल;
+		जाओ out;
+	पूर्ण
 
 	/* Remove the EADS bridge device itself */
 	BUG_ON(!bus->self);
 	pr_debug("PCI: Now removing bridge device %s\n", pci_name(bus->self));
-	pci_stop_and_remove_bus_device(bus->self);
+	pci_stop_and_हटाओ_bus_device(bus->self);
 
  out:
-	pci_unlock_rescan_remove();
-	return ret;
-}
+	pci_unlock_rescan_हटाओ();
+	वापस ret;
+पूर्ण
 
 /**
- * dlpar_remove_slot - DLPAR remove an I/O Slot
+ * dlpar_हटाओ_slot - DLPAR हटाओ an I/O Slot
  * @drc_name: drc-name of newly added slot
  *
  * Remove the kernel and hotplug representations of an I/O Slot.
  * Return Codes:
  * 0			Success
  * -ENODEV		Not a valid drc_name
- * -EINVAL		Slot already removed
- * -ERESTARTSYS		Signalled before obtaining lock
+ * -EINVAL		Slot alपढ़ोy हटाओd
+ * -ERESTARTSYS		Signalled beक्रमe obtaining lock
  * -EIO			Internal Error
  */
-int dlpar_remove_slot(char *drc_name)
-{
-	struct device_node *dn;
-	int node_type;
-	int rc = 0;
+पूर्णांक dlpar_हटाओ_slot(अक्षर *drc_name)
+अणु
+	काष्ठा device_node *dn;
+	पूर्णांक node_type;
+	पूर्णांक rc = 0;
 
-	if (mutex_lock_interruptible(&rpadlpar_mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&rpadlpar_mutex))
+		वापस -ERESTARTSYS;
 
 	dn = find_dlpar_node(drc_name, &node_type);
-	if (!dn) {
+	अगर (!dn) अणु
 		rc = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	switch (node_type) {
-		case NODE_TYPE_VIO:
-			rc = dlpar_remove_vio_slot(drc_name, dn);
-			break;
-		case NODE_TYPE_PHB:
-			rc = dlpar_remove_phb(drc_name, dn);
-			break;
-		case NODE_TYPE_SLOT:
-			rc = dlpar_remove_pci_slot(drc_name, dn);
-			break;
-	}
+	चयन (node_type) अणु
+		हाल NODE_TYPE_VIO:
+			rc = dlpar_हटाओ_vio_slot(drc_name, dn);
+			अवरोध;
+		हाल NODE_TYPE_PHB:
+			rc = dlpar_हटाओ_phb(drc_name, dn);
+			अवरोध;
+		हाल NODE_TYPE_SLOT:
+			rc = dlpar_हटाओ_pci_slot(drc_name, dn);
+			अवरोध;
+	पूर्ण
 	of_node_put(dn);
 	vm_unmap_aliases();
 
-	printk(KERN_INFO "%s: slot %s removed\n", DLPAR_MODULE_NAME, drc_name);
-exit:
+	prपूर्णांकk(KERN_INFO "%s: slot %s removed\n", DLPAR_MODULE_NAME, drc_name);
+निकास:
 	mutex_unlock(&rpadlpar_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline int is_dlpar_capable(void)
-{
-	int rc = rtas_token("ibm,configure-connector");
+अटल अंतरभूत पूर्णांक is_dlpar_capable(व्योम)
+अणु
+	पूर्णांक rc = rtas_token("ibm,configure-connector");
 
-	return (int) (rc != RTAS_UNKNOWN_SERVICE);
-}
+	वापस (पूर्णांक) (rc != RTAS_UNKNOWN_SERVICE);
+पूर्ण
 
-static int __init rpadlpar_io_init(void)
-{
+अटल पूर्णांक __init rpadlpar_io_init(व्योम)
+अणु
 
-	if (!is_dlpar_capable()) {
-		printk(KERN_WARNING "%s: partition not DLPAR capable\n",
+	अगर (!is_dlpar_capable()) अणु
+		prपूर्णांकk(KERN_WARNING "%s: partition not DLPAR capable\n",
 			__func__);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	return dlpar_sysfs_init();
-}
+	वापस dlpar_sysfs_init();
+पूर्ण
 
-static void __exit rpadlpar_io_exit(void)
-{
-	dlpar_sysfs_exit();
-}
+अटल व्योम __निकास rpadlpar_io_निकास(व्योम)
+अणु
+	dlpar_sysfs_निकास();
+पूर्ण
 
 module_init(rpadlpar_io_init);
-module_exit(rpadlpar_io_exit);
+module_निकास(rpadlpar_io_निकास);
 MODULE_LICENSE("GPL");

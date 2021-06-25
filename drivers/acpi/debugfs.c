@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * debugfs.c - ACPI debugfs interface to userspace.
+ * debugfs.c - ACPI debugfs पूर्णांकerface to userspace.
  */
 
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/debugfs.h>
-#include <linux/acpi.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/acpi.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-struct dentry *acpi_debugfs_dir;
+काष्ठा dentry *acpi_debugfs_dir;
 EXPORT_SYMBOL_GPL(acpi_debugfs_dir);
 
-void __init acpi_debugfs_init(void)
-{
-	acpi_debugfs_dir = debugfs_create_dir("acpi", NULL);
-}
+व्योम __init acpi_debugfs_init(व्योम)
+अणु
+	acpi_debugfs_dir = debugfs_create_dir("acpi", शून्य);
+पूर्ण

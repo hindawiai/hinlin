@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_SPINLOCK_TYPES_H
-#define _ASM_SPINLOCK_TYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_SPINLOCK_TYPES_H
+#घोषणा _ASM_SPINLOCK_TYPES_H
 
-#include <asm-generic/qspinlock_types.h>
-#include <asm-generic/qrwlock_types.h>
+#समावेश <यंत्र-generic/qspinlock_types.h>
+#समावेश <यंत्र-generic/qrwlock_types.h>
 
-#endif
+#पूर्ण_अगर

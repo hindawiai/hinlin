@@ -1,199 +1,200 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
-#include <errno.h>
-#include <fcntl.h>
-#include <math.h>
-#include <sched.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <गणित.स>
+#समावेश <sched.h>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <मानककोष.स>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/syscall.h>
+#समावेश <sys/types.h>
+#समावेश <समय.स>
+#समावेश <unistd.h>
 
-#include "log.h"
-#include "timens.h"
+#समावेश "log.h"
+#समावेश "timens.h"
 
 /*
- * Test shouldn't be run for a day, so add 10 days to child
- * time and check parent's time to be in the same day.
+ * Test shouldn't be run क्रम a day, so add 10 days to child
+ * समय and check parent's समय to be in the same day.
  */
-#define MAX_TEST_TIME_SEC		(60*5)
-#define DAY_IN_SEC			(60*60*24)
-#define TEN_DAYS_IN_SEC			(10*DAY_IN_SEC)
+#घोषणा MAX_TEST_TIME_SEC		(60*5)
+#घोषणा DAY_IN_SEC			(60*60*24)
+#घोषणा TEN_DAYS_IN_SEC			(10*DAY_IN_SEC)
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#घोषणा ARRAY_SIZE(arr) (माप(arr) / माप((arr)[0]))
 
-static int child_ns, parent_ns;
+अटल पूर्णांक child_ns, parent_ns;
 
-static int switch_ns(int fd)
-{
-	if (setns(fd, CLONE_NEWTIME))
-		return pr_perror("setns()");
+अटल पूर्णांक चयन_ns(पूर्णांक fd)
+अणु
+	अगर (setns(fd, CLONE_NEWTIME))
+		वापस pr_लिखो_त्रुटि("setns()");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int init_namespaces(void)
-{
-	char path[] = "/proc/self/ns/time_for_children";
-	struct stat st1, st2;
+अटल पूर्णांक init_namespaces(व्योम)
+अणु
+	अक्षर path[] = "/proc/self/ns/time_for_children";
+	काष्ठा stat st1, st2;
 
-	parent_ns = open(path, O_RDONLY);
-	if (parent_ns <= 0)
-		return pr_perror("Unable to open %s", path);
+	parent_ns = खोलो(path, O_RDONLY);
+	अगर (parent_ns <= 0)
+		वापस pr_लिखो_त्रुटि("Unable to open %s", path);
 
-	if (fstat(parent_ns, &st1))
-		return pr_perror("Unable to stat the parent timens");
+	अगर (ख_स्थिति(parent_ns, &st1))
+		वापस pr_लिखो_त्रुटि("Unable to stat the parent timens");
 
-	if (unshare_timens())
-		return -1;
+	अगर (unshare_समयns())
+		वापस -1;
 
-	child_ns = open(path, O_RDONLY);
-	if (child_ns <= 0)
-		return pr_perror("Unable to open %s", path);
+	child_ns = खोलो(path, O_RDONLY);
+	अगर (child_ns <= 0)
+		वापस pr_लिखो_त्रुटि("Unable to open %s", path);
 
-	if (fstat(child_ns, &st2))
-		return pr_perror("Unable to stat the timens");
+	अगर (ख_स्थिति(child_ns, &st2))
+		वापस pr_लिखो_त्रुटि("Unable to stat the timens");
 
-	if (st1.st_ino == st2.st_ino)
-		return pr_err("The same child_ns after CLONE_NEWTIME");
+	अगर (st1.st_ino == st2.st_ino)
+		वापस pr_err("The same child_ns after CLONE_NEWTIME");
 
-	if (_settime(CLOCK_BOOTTIME, TEN_DAYS_IN_SEC))
-		return -1;
+	अगर (_समय_रखो(CLOCK_BOOTTIME, TEN_DAYS_IN_SEC))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int read_proc_uptime(struct timespec *uptime)
-{
-	unsigned long up_sec, up_nsec;
-	FILE *proc;
+अटल पूर्णांक पढ़ो_proc_upसमय(काष्ठा बारpec *upसमय)
+अणु
+	अचिन्हित दीर्घ up_sec, up_nsec;
+	खाता *proc;
 
-	proc = fopen("/proc/uptime", "r");
-	if (proc == NULL) {
-		pr_perror("Unable to open /proc/uptime");
-		return -1;
-	}
+	proc = ख_खोलो("/proc/uptime", "r");
+	अगर (proc == शून्य) अणु
+		pr_लिखो_त्रुटि("Unable to open /proc/uptime");
+		वापस -1;
+	पूर्ण
 
-	if (fscanf(proc, "%lu.%02lu", &up_sec, &up_nsec) != 2) {
-		if (errno) {
-			pr_perror("fscanf");
-			return -errno;
-		}
+	अगर (ख_पूछो(proc, "%lu.%02lu", &up_sec, &up_nsec) != 2) अणु
+		अगर (त्रुटि_सं) अणु
+			pr_लिखो_त्रुटि("fscanf");
+			वापस -त्रुटि_सं;
+		पूर्ण
 		pr_err("failed to parse /proc/uptime");
-		return -1;
-	}
-	fclose(proc);
+		वापस -1;
+	पूर्ण
+	ख_बंद(proc);
 
-	uptime->tv_sec = up_sec;
-	uptime->tv_nsec = up_nsec;
-	return 0;
-}
+	upसमय->tv_sec = up_sec;
+	upसमय->tv_nsec = up_nsec;
+	वापस 0;
+पूर्ण
 
-static int read_proc_stat_btime(unsigned long long *boottime_sec)
-{
-	FILE *proc;
-	char line_buf[2048];
+अटल पूर्णांक पढ़ो_proc_stat_bसमय(अचिन्हित दीर्घ दीर्घ *bootसमय_sec)
+अणु
+	खाता *proc;
+	अक्षर line_buf[2048];
 
-	proc = fopen("/proc/stat", "r");
-	if (proc == NULL) {
-		pr_perror("Unable to open /proc/stat");
-		return -1;
-	}
+	proc = ख_खोलो("/proc/stat", "r");
+	अगर (proc == शून्य) अणु
+		pr_लिखो_त्रुटि("Unable to open /proc/stat");
+		वापस -1;
+	पूर्ण
 
-	while (fgets(line_buf, 2048, proc)) {
-		if (sscanf(line_buf, "btime %llu", boottime_sec) != 1)
-			continue;
-		fclose(proc);
-		return 0;
-	}
-	if (errno) {
-		pr_perror("fscanf");
-		fclose(proc);
-		return -errno;
-	}
+	जबतक (ख_माला_लो(line_buf, 2048, proc)) अणु
+		अगर (माला_पूछो(line_buf, "btime %llu", bootसमय_sec) != 1)
+			जारी;
+		ख_बंद(proc);
+		वापस 0;
+	पूर्ण
+	अगर (त्रुटि_सं) अणु
+		pr_लिखो_त्रुटि("fscanf");
+		ख_बंद(proc);
+		वापस -त्रुटि_सं;
+	पूर्ण
 	pr_err("failed to parse /proc/stat");
-	fclose(proc);
-	return -1;
-}
+	ख_बंद(proc);
+	वापस -1;
+पूर्ण
 
-static int check_uptime(void)
-{
-	struct timespec uptime_new, uptime_old;
-	time_t uptime_expected;
-	double prec = MAX_TEST_TIME_SEC;
+अटल पूर्णांक check_upसमय(व्योम)
+अणु
+	काष्ठा बारpec upसमय_new, upसमय_old;
+	समय_प्रकार upसमय_expected;
+	द्विगुन prec = MAX_TEST_TIME_SEC;
 
-	if (switch_ns(parent_ns))
-		return pr_err("switch_ns(%d)", parent_ns);
+	अगर (चयन_ns(parent_ns))
+		वापस pr_err("switch_ns(%d)", parent_ns);
 
-	if (read_proc_uptime(&uptime_old))
-		return 1;
+	अगर (पढ़ो_proc_upसमय(&upसमय_old))
+		वापस 1;
 
-	if (switch_ns(child_ns))
-		return pr_err("switch_ns(%d)", child_ns);
+	अगर (चयन_ns(child_ns))
+		वापस pr_err("switch_ns(%d)", child_ns);
 
-	if (read_proc_uptime(&uptime_new))
-		return 1;
+	अगर (पढ़ो_proc_upसमय(&upसमय_new))
+		वापस 1;
 
-	uptime_expected = uptime_old.tv_sec + TEN_DAYS_IN_SEC;
-	if (fabs(difftime(uptime_new.tv_sec, uptime_expected)) > prec) {
+	upसमय_expected = upसमय_old.tv_sec + TEN_DAYS_IN_SEC;
+	अगर (भ_असल(स_अंतर(upसमय_new.tv_sec, upसमय_expected)) > prec) अणु
 		pr_fail("uptime in /proc/uptime: old %ld, new %ld [%ld]",
-			uptime_old.tv_sec, uptime_new.tv_sec,
-			uptime_old.tv_sec + TEN_DAYS_IN_SEC);
-		return 1;
-	}
+			upसमय_old.tv_sec, upसमय_new.tv_sec,
+			upसमय_old.tv_sec + TEN_DAYS_IN_SEC);
+		वापस 1;
+	पूर्ण
 
 	ksft_test_result_pass("Passed for /proc/uptime\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_stat_btime(void)
-{
-	unsigned long long btime_new, btime_old;
-	unsigned long long btime_expected;
+अटल पूर्णांक check_stat_bसमय(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ bसमय_new, bसमय_old;
+	अचिन्हित दीर्घ दीर्घ bसमय_expected;
 
-	if (switch_ns(parent_ns))
-		return pr_err("switch_ns(%d)", parent_ns);
+	अगर (चयन_ns(parent_ns))
+		वापस pr_err("switch_ns(%d)", parent_ns);
 
-	if (read_proc_stat_btime(&btime_old))
-		return 1;
+	अगर (पढ़ो_proc_stat_bसमय(&bसमय_old))
+		वापस 1;
 
-	if (switch_ns(child_ns))
-		return pr_err("switch_ns(%d)", child_ns);
+	अगर (चयन_ns(child_ns))
+		वापस pr_err("switch_ns(%d)", child_ns);
 
-	if (read_proc_stat_btime(&btime_new))
-		return 1;
+	अगर (पढ़ो_proc_stat_bसमय(&bसमय_new))
+		वापस 1;
 
-	btime_expected = btime_old - TEN_DAYS_IN_SEC;
-	if (btime_new != btime_expected) {
+	bसमय_expected = bसमय_old - TEN_DAYS_IN_SEC;
+	अगर (bसमय_new != bसमय_expected) अणु
 		pr_fail("btime in /proc/stat: old %llu, new %llu [%llu]",
-			btime_old, btime_new, btime_expected);
-		return 1;
-	}
+			bसमय_old, bसमय_new, bसमय_expected);
+		वापस 1;
+	पूर्ण
 
 	ksft_test_result_pass("Passed for /proc/stat btime\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	int ret = 0;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक ret = 0;
 
 	nscheck();
 
 	ksft_set_plan(2);
 
-	if (init_namespaces())
-		return 1;
+	अगर (init_namespaces())
+		वापस 1;
 
-	ret |= check_uptime();
-	ret |= check_stat_btime();
+	ret |= check_upसमय();
+	ret |= check_stat_bसमय();
 
-	if (ret)
-		ksft_exit_fail();
-	ksft_exit_pass();
-	return ret;
-}
+	अगर (ret)
+		ksft_निकास_fail();
+	ksft_निकास_pass();
+	वापस ret;
+पूर्ण

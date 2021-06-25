@@ -1,83 +1,84 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_GEN_STATS_H
-#define __NET_GEN_STATS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_GEN_STATS_H
+#घोषणा __NET_GEN_STATS_H
 
-#include <linux/gen_stats.h>
-#include <linux/socket.h>
-#include <linux/rtnetlink.h>
-#include <linux/pkt_sched.h>
+#समावेश <linux/gen_stats.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/pkt_sched.h>
 
 /* Note: this used to be in include/uapi/linux/gen_stats.h */
-struct gnet_stats_basic_packed {
+काष्ठा gnet_stats_basic_packed अणु
 	__u64	bytes;
 	__u64	packets;
-};
+पूर्ण;
 
-struct gnet_stats_basic_cpu {
-	struct gnet_stats_basic_packed bstats;
-	struct u64_stats_sync syncp;
-} __aligned(2 * sizeof(u64));
+काष्ठा gnet_stats_basic_cpu अणु
+	काष्ठा gnet_stats_basic_packed bstats;
+	काष्ठा u64_stats_sync syncp;
+पूर्ण __aligned(2 * माप(u64));
 
-struct net_rate_estimator;
+काष्ठा net_rate_estimator;
 
-struct gnet_dump {
+काष्ठा gnet_dump अणु
 	spinlock_t *      lock;
-	struct sk_buff *  skb;
-	struct nlattr *   tail;
+	काष्ठा sk_buff *  skb;
+	काष्ठा nlattr *   tail;
 
 	/* Backward compatibility */
-	int               compat_tc_stats;
-	int               compat_xstats;
-	int               padattr;
-	void *            xstats;
-	int               xstats_len;
-	struct tc_stats   tc_stats;
-};
+	पूर्णांक               compat_tc_stats;
+	पूर्णांक               compat_xstats;
+	पूर्णांक               padattr;
+	व्योम *            xstats;
+	पूर्णांक               xstats_len;
+	काष्ठा tc_stats   tc_stats;
+पूर्ण;
 
-int gnet_stats_start_copy(struct sk_buff *skb, int type, spinlock_t *lock,
-			  struct gnet_dump *d, int padattr);
+पूर्णांक gnet_stats_start_copy(काष्ठा sk_buff *skb, पूर्णांक type, spinlock_t *lock,
+			  काष्ठा gnet_dump *d, पूर्णांक padattr);
 
-int gnet_stats_start_copy_compat(struct sk_buff *skb, int type,
-				 int tc_stats_type, int xstats_type,
-				 spinlock_t *lock, struct gnet_dump *d,
-				 int padattr);
+पूर्णांक gnet_stats_start_copy_compat(काष्ठा sk_buff *skb, पूर्णांक type,
+				 पूर्णांक tc_stats_type, पूर्णांक xstats_type,
+				 spinlock_t *lock, काष्ठा gnet_dump *d,
+				 पूर्णांक padattr);
 
-int gnet_stats_copy_basic(const seqcount_t *running,
-			  struct gnet_dump *d,
-			  struct gnet_stats_basic_cpu __percpu *cpu,
-			  struct gnet_stats_basic_packed *b);
-void __gnet_stats_copy_basic(const seqcount_t *running,
-			     struct gnet_stats_basic_packed *bstats,
-			     struct gnet_stats_basic_cpu __percpu *cpu,
-			     struct gnet_stats_basic_packed *b);
-int gnet_stats_copy_basic_hw(const seqcount_t *running,
-			     struct gnet_dump *d,
-			     struct gnet_stats_basic_cpu __percpu *cpu,
-			     struct gnet_stats_basic_packed *b);
-int gnet_stats_copy_rate_est(struct gnet_dump *d,
-			     struct net_rate_estimator __rcu **ptr);
-int gnet_stats_copy_queue(struct gnet_dump *d,
-			  struct gnet_stats_queue __percpu *cpu_q,
-			  struct gnet_stats_queue *q, __u32 qlen);
-void __gnet_stats_copy_queue(struct gnet_stats_queue *qstats,
-			     const struct gnet_stats_queue __percpu *cpu_q,
-			     const struct gnet_stats_queue *q, __u32 qlen);
-int gnet_stats_copy_app(struct gnet_dump *d, void *st, int len);
+पूर्णांक gnet_stats_copy_basic(स्थिर seqcount_t *running,
+			  काष्ठा gnet_dump *d,
+			  काष्ठा gnet_stats_basic_cpu __percpu *cpu,
+			  काष्ठा gnet_stats_basic_packed *b);
+व्योम __gnet_stats_copy_basic(स्थिर seqcount_t *running,
+			     काष्ठा gnet_stats_basic_packed *bstats,
+			     काष्ठा gnet_stats_basic_cpu __percpu *cpu,
+			     काष्ठा gnet_stats_basic_packed *b);
+पूर्णांक gnet_stats_copy_basic_hw(स्थिर seqcount_t *running,
+			     काष्ठा gnet_dump *d,
+			     काष्ठा gnet_stats_basic_cpu __percpu *cpu,
+			     काष्ठा gnet_stats_basic_packed *b);
+पूर्णांक gnet_stats_copy_rate_est(काष्ठा gnet_dump *d,
+			     काष्ठा net_rate_estimator __rcu **ptr);
+पूर्णांक gnet_stats_copy_queue(काष्ठा gnet_dump *d,
+			  काष्ठा gnet_stats_queue __percpu *cpu_q,
+			  काष्ठा gnet_stats_queue *q, __u32 qlen);
+व्योम __gnet_stats_copy_queue(काष्ठा gnet_stats_queue *qstats,
+			     स्थिर काष्ठा gnet_stats_queue __percpu *cpu_q,
+			     स्थिर काष्ठा gnet_stats_queue *q, __u32 qlen);
+पूर्णांक gnet_stats_copy_app(काष्ठा gnet_dump *d, व्योम *st, पूर्णांक len);
 
-int gnet_stats_finish_copy(struct gnet_dump *d);
+पूर्णांक gnet_stats_finish_copy(काष्ठा gnet_dump *d);
 
-int gen_new_estimator(struct gnet_stats_basic_packed *bstats,
-		      struct gnet_stats_basic_cpu __percpu *cpu_bstats,
-		      struct net_rate_estimator __rcu **rate_est,
+पूर्णांक gen_new_estimator(काष्ठा gnet_stats_basic_packed *bstats,
+		      काष्ठा gnet_stats_basic_cpu __percpu *cpu_bstats,
+		      काष्ठा net_rate_estimator __rcu **rate_est,
 		      spinlock_t *lock,
-		      seqcount_t *running, struct nlattr *opt);
-void gen_kill_estimator(struct net_rate_estimator __rcu **ptr);
-int gen_replace_estimator(struct gnet_stats_basic_packed *bstats,
-			  struct gnet_stats_basic_cpu __percpu *cpu_bstats,
-			  struct net_rate_estimator __rcu **ptr,
+		      seqcount_t *running, काष्ठा nlattr *opt);
+व्योम gen_समाप्त_estimator(काष्ठा net_rate_estimator __rcu **ptr);
+पूर्णांक gen_replace_estimator(काष्ठा gnet_stats_basic_packed *bstats,
+			  काष्ठा gnet_stats_basic_cpu __percpu *cpu_bstats,
+			  काष्ठा net_rate_estimator __rcu **ptr,
 			  spinlock_t *lock,
-			  seqcount_t *running, struct nlattr *opt);
-bool gen_estimator_active(struct net_rate_estimator __rcu **ptr);
-bool gen_estimator_read(struct net_rate_estimator __rcu **ptr,
-			struct gnet_stats_rate_est64 *sample);
-#endif
+			  seqcount_t *running, काष्ठा nlattr *opt);
+bool gen_estimator_active(काष्ठा net_rate_estimator __rcu **ptr);
+bool gen_estimator_पढ़ो(काष्ठा net_rate_estimator __rcu **ptr,
+			काष्ठा gnet_stats_rate_est64 *sample);
+#पूर्ण_अगर

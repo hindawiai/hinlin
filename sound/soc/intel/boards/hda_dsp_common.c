@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 //
 // Copyright(c) 2019 Intel Corporation. All rights reserved.
 
-#include <sound/pcm.h>
-#include <sound/soc.h>
-#include <sound/hda_codec.h>
-#include <sound/hda_i915.h>
-#include "../../codecs/hdac_hda.h"
+#समावेश <sound/pcm.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/hda_codec.h>
+#समावेश <sound/hda_i915.h>
+#समावेश "../../codecs/hdac_hda.h"
 
-#include "hda_dsp_common.h"
+#समावेश "hda_dsp_common.h"
 
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_HDA_AUDIO_CODEC)
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_HDA_AUDIO_CODEC)
 
 /*
- * Search card topology and return PCM device number
+ * Search card topology and वापस PCM device number
  * matching Nth HDMI device (zero-based index).
  */
-static struct snd_pcm *hda_dsp_hdmi_pcm_handle(struct snd_soc_card *card,
-					       int hdmi_idx)
-{
-	struct snd_soc_pcm_runtime *rtd;
-	struct snd_pcm *spcm;
-	int i = 0;
+अटल काष्ठा snd_pcm *hda_dsp_hdmi_pcm_handle(काष्ठा snd_soc_card *card,
+					       पूर्णांक hdmi_idx)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	काष्ठा snd_pcm *spcm;
+	पूर्णांक i = 0;
 
-	for_each_card_rtds(card, rtd) {
+	क्रम_each_card_rtds(card, rtd) अणु
 		spcm = rtd->pcm ?
-			rtd->pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].pcm : NULL;
-		if (spcm && strstr(spcm->id, "HDMI")) {
-			if (i == hdmi_idx)
-				return rtd->pcm;
+			rtd->pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].pcm : शून्य;
+		अगर (spcm && म_माला(spcm->id, "HDMI")) अणु
+			अगर (i == hdmi_idx)
+				वापस rtd->pcm;
 			++i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Search card topology and register HDMI PCM related controls
+ * Search card topology and रेजिस्टर HDMI PCM related controls
  * to codec driver.
  */
-int hda_dsp_hdmi_build_controls(struct snd_soc_card *card,
-				struct snd_soc_component *comp)
-{
-	struct hdac_hda_priv *hda_pvt;
-	struct hda_codec *hcodec;
-	struct snd_pcm *spcm;
-	struct hda_pcm *hpcm;
-	int err = 0, i = 0;
+पूर्णांक hda_dsp_hdmi_build_controls(काष्ठा snd_soc_card *card,
+				काष्ठा snd_soc_component *comp)
+अणु
+	काष्ठा hdac_hda_priv *hda_pvt;
+	काष्ठा hda_codec *hcodec;
+	काष्ठा snd_pcm *spcm;
+	काष्ठा hda_pcm *hpcm;
+	पूर्णांक err = 0, i = 0;
 
-	if (!comp)
-		return -EINVAL;
+	अगर (!comp)
+		वापस -EINVAL;
 
 	hda_pvt = snd_soc_component_get_drvdata(comp);
 	hcodec = &hda_pvt->codec;
 
-	list_for_each_entry(hpcm, &hcodec->pcm_list_head, list) {
+	list_क्रम_each_entry(hpcm, &hcodec->pcm_list_head, list) अणु
 		spcm = hda_dsp_hdmi_pcm_handle(card, i);
-		if (spcm) {
+		अगर (spcm) अणु
 			hpcm->pcm = spcm;
 			hpcm->device = spcm->device;
 			dev_dbg(card->dev,
 				"%s: mapping HDMI converter %d to PCM %d (%p)\n",
 				__func__, i, hpcm->device, spcm);
-		} else {
-			hpcm->pcm = NULL;
+		पूर्ण अन्यथा अणु
+			hpcm->pcm = शून्य;
 			hpcm->device = SNDRV_PCM_INVALID_DEVICE;
 			dev_warn(card->dev,
 				 "%s: no PCM in topology for HDMI converter %d\n\n",
 				 __func__, i);
-		}
+		पूर्ण
 		i++;
-	}
-	snd_hdac_display_power(hcodec->core.bus,
+	पूर्ण
+	snd_hdac_display_घातer(hcodec->core.bus,
 			       HDA_CODEC_IDX_CONTROLLER, true);
 	err = snd_hda_codec_build_controls(hcodec);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(card->dev, "unable to create controls %d\n", err);
-	snd_hdac_display_power(hcodec->core.bus,
+	snd_hdac_display_घातer(hcodec->core.bus,
 			       HDA_CODEC_IDX_CONTROLLER, false);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

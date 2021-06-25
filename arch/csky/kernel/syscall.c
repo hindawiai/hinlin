@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/syscalls.h>
+#समावेश <linux/syscalls.h>
 
-SYSCALL_DEFINE1(set_thread_area, unsigned long, addr)
-{
-	struct thread_info *ti = task_thread_info(current);
-	struct pt_regs *reg = current_pt_regs();
+SYSCALL_DEFINE1(set_thपढ़ो_area, अचिन्हित दीर्घ, addr)
+अणु
+	काष्ठा thपढ़ो_info *ti = task_thपढ़ो_info(current);
+	काष्ठा pt_regs *reg = current_pt_regs();
 
 	reg->tls = addr;
 	ti->tp_value = addr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SYSCALL_DEFINE6(mmap2,
-	unsigned long, addr,
-	unsigned long, len,
-	unsigned long, prot,
-	unsigned long, flags,
-	unsigned long, fd,
+	अचिन्हित दीर्घ, addr,
+	अचिन्हित दीर्घ, len,
+	अचिन्हित दीर्घ, prot,
+	अचिन्हित दीर्घ, flags,
+	अचिन्हित दीर्घ, fd,
 	off_t, offset)
-{
-	if (unlikely(offset & (~PAGE_MASK >> 12)))
-		return -EINVAL;
+अणु
+	अगर (unlikely(offset & (~PAGE_MASK >> 12)))
+		वापस -EINVAL;
 
-	return ksys_mmap_pgoff(addr, len, prot, flags, fd,
+	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd,
 			       offset >> (PAGE_SHIFT - 12));
-}
+पूर्ण
 
 /*
- * for abiv1 the 64bits args should be even th, So we need mov the advice
- * forward.
+ * क्रम abiv1 the 64bits args should be even th, So we need mov the advice
+ * क्रमward.
  */
 SYSCALL_DEFINE4(csky_fadvise64_64,
-	int, fd,
-	int, advice,
+	पूर्णांक, fd,
+	पूर्णांक, advice,
 	loff_t, offset,
 	loff_t, len)
-{
-	return ksys_fadvise64_64(fd, offset, len, advice);
-}
+अणु
+	वापस ksys_fadvise64_64(fd, offset, len, advice);
+पूर्ण

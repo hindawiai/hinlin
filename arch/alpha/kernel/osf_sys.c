@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/arch/alpha/kernel/osf_sys.c
  *
@@ -6,833 +7,833 @@
  */
 
 /*
- * This file handles some of the stranger OSF/1 system call interfaces.
- * Some of the system calls expect a non-C calling standard, others have
+ * This file handles some of the stranger OSF/1 प्रणाली call पूर्णांकerfaces.
+ * Some of the प्रणाली calls expect a non-C calling standard, others have
  * special parameter blocks..
  */
 
-#include <linux/errno.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/task_stack.h>
-#include <linux/sched/cputime.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/smp.h>
-#include <linux/stddef.h>
-#include <linux/syscalls.h>
-#include <linux/unistd.h>
-#include <linux/ptrace.h>
-#include <linux/user.h>
-#include <linux/utsname.h>
-#include <linux/time.h>
-#include <linux/timex.h>
-#include <linux/major.h>
-#include <linux/stat.h>
-#include <linux/mman.h>
-#include <linux/shm.h>
-#include <linux/poll.h>
-#include <linux/file.h>
-#include <linux/types.h>
-#include <linux/ipc.h>
-#include <linux/namei.h>
-#include <linux/uio.h>
-#include <linux/vfs.h>
-#include <linux/rcupdate.h>
-#include <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/sched/cpuसमय.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/user.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/समयx.h>
+#समावेश <linux/major.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/mman.h>
+#समावेश <linux/shm.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/file.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ipc.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/vfs.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/slab.h>
 
-#include <asm/fpu.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
-#include <asm/sysinfo.h>
-#include <asm/thread_info.h>
-#include <asm/hwrpb.h>
-#include <asm/processor.h>
+#समावेश <यंत्र/fpu.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/sysinfo.h>
+#समावेश <यंत्र/thपढ़ो_info.h>
+#समावेश <यंत्र/hwrpb.h>
+#समावेश <यंत्र/processor.h>
 
 /*
- * Brk needs to return an error.  Still support Linux's brk(0) query idiom,
+ * Brk needs to वापस an error.  Still support Linux's brk(0) query idiom,
  * which OSF programs just shouldn't be doing.  We're still not quite
- * identical to OSF as we don't return 0 on success, but doing otherwise
+ * identical to OSF as we करोn't वापस 0 on success, but करोing otherwise
  * would require changes to libc.  Hopefully this is good enough.
  */
-SYSCALL_DEFINE1(osf_brk, unsigned long, brk)
-{
-	unsigned long retval = sys_brk(brk);
-	if (brk && brk != retval)
+SYSCALL_DEFINE1(osf_brk, अचिन्हित दीर्घ, brk)
+अणु
+	अचिन्हित दीर्घ retval = sys_brk(brk);
+	अगर (brk && brk != retval)
 		retval = -ENOMEM;
-	return retval;
-}
+	वापस retval;
+पूर्ण
  
 /*
  * This is pure guess-work..
  */
-SYSCALL_DEFINE4(osf_set_program_attributes, unsigned long, text_start,
-		unsigned long, text_len, unsigned long, bss_start,
-		unsigned long, bss_len)
-{
-	struct mm_struct *mm;
+SYSCALL_DEFINE4(osf_set_program_attributes, अचिन्हित दीर्घ, text_start,
+		अचिन्हित दीर्घ, text_len, अचिन्हित दीर्घ, bss_start,
+		अचिन्हित दीर्घ, bss_len)
+अणु
+	काष्ठा mm_काष्ठा *mm;
 
 	mm = current->mm;
 	mm->end_code = bss_start + bss_len;
 	mm->start_brk = bss_start + bss_len;
 	mm->brk = bss_start + bss_len;
-#if 0
-	printk("set_program_attributes(%lx %lx %lx %lx)\n",
+#अगर 0
+	prपूर्णांकk("set_program_attributes(%lx %lx %lx %lx)\n",
 		text_start, text_len, bss_start, bss_len);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
  * OSF/1 directory handling functions...
  *
- * The "getdents()" interface is much more sane: the "basep" stuff is
- * braindamage (it can't really handle filesystems where the directory
- * offset differences aren't the same as "d_reclen").
+ * The "getdents()" पूर्णांकerface is much more sane: the "basep" stuff is
+ * braindamage (it can't really handle fileप्रणालीs where the directory
+ * offset dअगरferences aren't the same as "d_reclen").
  */
-#define NAME_OFFSET	offsetof (struct osf_dirent, d_name)
+#घोषणा NAME_OFFSET	दुरत्व (काष्ठा osf_dirent, d_name)
 
-struct osf_dirent {
-	unsigned int d_ino;
-	unsigned short d_reclen;
-	unsigned short d_namlen;
-	char d_name[1];
-};
+काष्ठा osf_dirent अणु
+	अचिन्हित पूर्णांक d_ino;
+	अचिन्हित लघु d_reclen;
+	अचिन्हित लघु d_namlen;
+	अक्षर d_name[1];
+पूर्ण;
 
-struct osf_dirent_callback {
-	struct dir_context ctx;
-	struct osf_dirent __user *dirent;
-	long __user *basep;
-	unsigned int count;
-	int error;
-};
+काष्ठा osf_dirent_callback अणु
+	काष्ठा dir_context ctx;
+	काष्ठा osf_dirent __user *dirent;
+	दीर्घ __user *basep;
+	अचिन्हित पूर्णांक count;
+	पूर्णांक error;
+पूर्ण;
 
-static int
-osf_filldir(struct dir_context *ctx, const char *name, int namlen,
-	    loff_t offset, u64 ino, unsigned int d_type)
-{
-	struct osf_dirent __user *dirent;
-	struct osf_dirent_callback *buf =
-		container_of(ctx, struct osf_dirent_callback, ctx);
-	unsigned int reclen = ALIGN(NAME_OFFSET + namlen + 1, sizeof(u32));
-	unsigned int d_ino;
+अटल पूर्णांक
+osf_filldir(काष्ठा dir_context *ctx, स्थिर अक्षर *name, पूर्णांक namlen,
+	    loff_t offset, u64 ino, अचिन्हित पूर्णांक d_type)
+अणु
+	काष्ठा osf_dirent __user *dirent;
+	काष्ठा osf_dirent_callback *buf =
+		container_of(ctx, काष्ठा osf_dirent_callback, ctx);
+	अचिन्हित पूर्णांक reclen = ALIGN(NAME_OFFSET + namlen + 1, माप(u32));
+	अचिन्हित पूर्णांक d_ino;
 
-	buf->error = -EINVAL;	/* only used if we fail */
-	if (reclen > buf->count)
-		return -EINVAL;
+	buf->error = -EINVAL;	/* only used अगर we fail */
+	अगर (reclen > buf->count)
+		वापस -EINVAL;
 	d_ino = ino;
-	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino) {
+	अगर (माप(d_ino) < माप(ino) && d_ino != ino) अणु
 		buf->error = -EOVERFLOW;
-		return -EOVERFLOW;
-	}
-	if (buf->basep) {
-		if (put_user(offset, buf->basep))
-			goto Efault;
-		buf->basep = NULL;
-	}
+		वापस -EOVERFLOW;
+	पूर्ण
+	अगर (buf->basep) अणु
+		अगर (put_user(offset, buf->basep))
+			जाओ Efault;
+		buf->basep = शून्य;
+	पूर्ण
 	dirent = buf->dirent;
-	if (put_user(d_ino, &dirent->d_ino) ||
+	अगर (put_user(d_ino, &dirent->d_ino) ||
 	    put_user(namlen, &dirent->d_namlen) ||
 	    put_user(reclen, &dirent->d_reclen) ||
 	    copy_to_user(dirent->d_name, name, namlen) ||
 	    put_user(0, dirent->d_name + namlen))
-		goto Efault;
-	dirent = (void __user *)dirent + reclen;
+		जाओ Efault;
+	dirent = (व्योम __user *)dirent + reclen;
 	buf->dirent = dirent;
 	buf->count -= reclen;
-	return 0;
+	वापस 0;
 Efault:
 	buf->error = -EFAULT;
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-SYSCALL_DEFINE4(osf_getdirentries, unsigned int, fd,
-		struct osf_dirent __user *, dirent, unsigned int, count,
-		long __user *, basep)
-{
-	int error;
-	struct fd arg = fdget_pos(fd);
-	struct osf_dirent_callback buf = {
+SYSCALL_DEFINE4(osf_getdirentries, अचिन्हित पूर्णांक, fd,
+		काष्ठा osf_dirent __user *, dirent, अचिन्हित पूर्णांक, count,
+		दीर्घ __user *, basep)
+अणु
+	पूर्णांक error;
+	काष्ठा fd arg = fdget_pos(fd);
+	काष्ठा osf_dirent_callback buf = अणु
 		.ctx.actor = osf_filldir,
 		.dirent = dirent,
 		.basep = basep,
 		.count = count
-	};
+	पूर्ण;
 
-	if (!arg.file)
-		return -EBADF;
+	अगर (!arg.file)
+		वापस -EBADF;
 
 	error = iterate_dir(arg.file, &buf.ctx);
-	if (error >= 0)
+	अगर (error >= 0)
 		error = buf.error;
-	if (count != buf.count)
+	अगर (count != buf.count)
 		error = count - buf.count;
 
 	fdput_pos(arg);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-#undef NAME_OFFSET
+#अघोषित NAME_OFFSET
 
-SYSCALL_DEFINE6(osf_mmap, unsigned long, addr, unsigned long, len,
-		unsigned long, prot, unsigned long, flags, unsigned long, fd,
-		unsigned long, off)
-{
-	unsigned long ret = -EINVAL;
+SYSCALL_DEFINE6(osf_mmap, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, len,
+		अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, flags, अचिन्हित दीर्घ, fd,
+		अचिन्हित दीर्घ, off)
+अणु
+	अचिन्हित दीर्घ ret = -EINVAL;
 
-#if 0
-	if (flags & (_MAP_HASSEMAPHORE | _MAP_INHERIT | _MAP_UNALIGNED))
-		printk("%s: unimplemented OSF mmap flags %04lx\n", 
+#अगर 0
+	अगर (flags & (_MAP_HASSEMAPHORE | _MAP_INHERIT | _MAP_UNALIGNED))
+		prपूर्णांकk("%s: unimplemented OSF mmap flags %04lx\n", 
 			current->comm, flags);
-#endif
-	if ((off + PAGE_ALIGN(len)) < off)
-		goto out;
-	if (off & ~PAGE_MASK)
-		goto out;
+#पूर्ण_अगर
+	अगर ((off + PAGE_ALIGN(len)) < off)
+		जाओ out;
+	अगर (off & ~PAGE_MASK)
+		जाओ out;
 	ret = ksys_mmap_pgoff(addr, len, prot, flags, fd, off >> PAGE_SHIFT);
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct osf_stat {
-	int		st_dev;
-	int		st_pad1;
-	unsigned	st_mode;
-	unsigned short	st_nlink;
-	short		st_nlink_reserved;
-	unsigned	st_uid;
-	unsigned	st_gid;
-	int		st_rdev;
-	int		st_ldev;
-	long		st_size;
-	int		st_pad2;
-	int		st_uatime;
-	int		st_pad3;
-	int		st_umtime;
-	int		st_pad4;
-	int		st_uctime;
-	int		st_pad5;
-	int		st_pad6;
-	unsigned	st_flags;
-	unsigned	st_gen;
-	long		st_spare[4];
-	unsigned	st_ino;
-	int		st_ino_reserved;
-	int		st_atime;
-	int		st_atime_reserved;
-	int		st_mtime;
-	int		st_mtime_reserved;
-	int		st_ctime;
-	int		st_ctime_reserved;
-	long		st_blksize;
-	long		st_blocks;
-};
+काष्ठा osf_stat अणु
+	पूर्णांक		st_dev;
+	पूर्णांक		st_pad1;
+	अचिन्हित	st_mode;
+	अचिन्हित लघु	st_nlink;
+	लघु		st_nlink_reserved;
+	अचिन्हित	st_uid;
+	अचिन्हित	st_gid;
+	पूर्णांक		st_rdev;
+	पूर्णांक		st_ldev;
+	दीर्घ		st_size;
+	पूर्णांक		st_pad2;
+	पूर्णांक		st_uaसमय;
+	पूर्णांक		st_pad3;
+	पूर्णांक		st_umसमय;
+	पूर्णांक		st_pad4;
+	पूर्णांक		st_uस_समय;
+	पूर्णांक		st_pad5;
+	पूर्णांक		st_pad6;
+	अचिन्हित	st_flags;
+	अचिन्हित	st_gen;
+	दीर्घ		st_spare[4];
+	अचिन्हित	st_ino;
+	पूर्णांक		st_ino_reserved;
+	पूर्णांक		st_aसमय;
+	पूर्णांक		st_aसमय_reserved;
+	पूर्णांक		st_mसमय;
+	पूर्णांक		st_mसमय_reserved;
+	पूर्णांक		st_स_समय;
+	पूर्णांक		st_स_समय_reserved;
+	दीर्घ		st_blksize;
+	दीर्घ		st_blocks;
+पूर्ण;
 
 /*
- * The OSF/1 statfs structure is much larger, but this should
+ * The OSF/1 statfs काष्ठाure is much larger, but this should
  * match the beginning, at least.
  */
-struct osf_statfs {
-	short f_type;
-	short f_flags;
-	int f_fsize;
-	int f_bsize;
-	int f_blocks;
-	int f_bfree;
-	int f_bavail;
-	int f_files;
-	int f_ffree;
+काष्ठा osf_statfs अणु
+	लघु f_type;
+	लघु f_flags;
+	पूर्णांक f_fsize;
+	पूर्णांक f_bsize;
+	पूर्णांक f_blocks;
+	पूर्णांक f_bमुक्त;
+	पूर्णांक f_bavail;
+	पूर्णांक f_files;
+	पूर्णांक f_fमुक्त;
 	__kernel_fsid_t f_fsid;
-};
+पूर्ण;
 
-struct osf_statfs64 {
-	short f_type;
-	short f_flags;
-	int f_pad1;
-	int f_pad2;
-	int f_pad3;
-	int f_pad4;
-	int f_pad5;
-	int f_pad6;
-	int f_pad7;
+काष्ठा osf_statfs64 अणु
+	लघु f_type;
+	लघु f_flags;
+	पूर्णांक f_pad1;
+	पूर्णांक f_pad2;
+	पूर्णांक f_pad3;
+	पूर्णांक f_pad4;
+	पूर्णांक f_pad5;
+	पूर्णांक f_pad6;
+	पूर्णांक f_pad7;
 	__kernel_fsid_t f_fsid;
-	u_short f_namemax;
-	short f_reserved1;
-	int f_spare[8];
-	char f_pad8[90];
-	char f_pad9[90];
-	long mount_info[10];
-	u_long f_flags2;
-	long f_spare2[14];
-	long f_fsize;
-	long f_bsize;
-	long f_blocks;
-	long f_bfree;
-	long f_bavail;
-	long f_files;
-	long f_ffree;
-};
+	u_लघु f_namemax;
+	लघु f_reserved1;
+	पूर्णांक f_spare[8];
+	अक्षर f_pad8[90];
+	अक्षर f_pad9[90];
+	दीर्घ mount_info[10];
+	u_दीर्घ f_flags2;
+	दीर्घ f_spare2[14];
+	दीर्घ f_fsize;
+	दीर्घ f_bsize;
+	दीर्घ f_blocks;
+	दीर्घ f_bमुक्त;
+	दीर्घ f_bavail;
+	दीर्घ f_files;
+	दीर्घ f_fमुक्त;
+पूर्ण;
 
-static int
-linux_to_osf_stat(struct kstat *lstat, struct osf_stat __user *osf_stat)
-{
-	struct osf_stat tmp = { 0 };
+अटल पूर्णांक
+linux_to_osf_stat(काष्ठा kstat *lstat, काष्ठा osf_stat __user *osf_stat)
+अणु
+	काष्ठा osf_stat पंचांगp = अणु 0 पूर्ण;
 
-	tmp.st_dev	= lstat->dev;
-	tmp.st_mode	= lstat->mode;
-	tmp.st_nlink	= lstat->nlink;
-	tmp.st_uid	= from_kuid_munged(current_user_ns(), lstat->uid);
-	tmp.st_gid	= from_kgid_munged(current_user_ns(), lstat->gid);
-	tmp.st_rdev	= lstat->rdev;
-	tmp.st_ldev	= lstat->rdev;
-	tmp.st_size	= lstat->size;
-	tmp.st_uatime	= lstat->atime.tv_nsec / 1000;
-	tmp.st_umtime	= lstat->mtime.tv_nsec / 1000;
-	tmp.st_uctime	= lstat->ctime.tv_nsec / 1000;
-	tmp.st_ino	= lstat->ino;
-	tmp.st_atime	= lstat->atime.tv_sec;
-	tmp.st_mtime	= lstat->mtime.tv_sec;
-	tmp.st_ctime	= lstat->ctime.tv_sec;
-	tmp.st_blksize	= lstat->blksize;
-	tmp.st_blocks	= lstat->blocks;
+	पंचांगp.st_dev	= lstat->dev;
+	पंचांगp.st_mode	= lstat->mode;
+	पंचांगp.st_nlink	= lstat->nlink;
+	पंचांगp.st_uid	= from_kuid_munged(current_user_ns(), lstat->uid);
+	पंचांगp.st_gid	= from_kgid_munged(current_user_ns(), lstat->gid);
+	पंचांगp.st_rdev	= lstat->rdev;
+	पंचांगp.st_ldev	= lstat->rdev;
+	पंचांगp.st_size	= lstat->size;
+	पंचांगp.st_uaसमय	= lstat->aसमय.tv_nsec / 1000;
+	पंचांगp.st_umसमय	= lstat->mसमय.tv_nsec / 1000;
+	पंचांगp.st_uस_समय	= lstat->स_समय.tv_nsec / 1000;
+	पंचांगp.st_ino	= lstat->ino;
+	पंचांगp.st_aसमय	= lstat->aसमय.tv_sec;
+	पंचांगp.st_mसमय	= lstat->mसमय.tv_sec;
+	पंचांगp.st_स_समय	= lstat->स_समय.tv_sec;
+	पंचांगp.st_blksize	= lstat->blksize;
+	पंचांगp.st_blocks	= lstat->blocks;
 
-	return copy_to_user(osf_stat, &tmp, sizeof(tmp)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(osf_stat, &पंचांगp, माप(पंचांगp)) ? -EFAULT : 0;
+पूर्ण
 
-static int
-linux_to_osf_statfs(struct kstatfs *linux_stat, struct osf_statfs __user *osf_stat,
-		    unsigned long bufsiz)
-{
-	struct osf_statfs tmp_stat;
+अटल पूर्णांक
+linux_to_osf_statfs(काष्ठा kstatfs *linux_stat, काष्ठा osf_statfs __user *osf_stat,
+		    अचिन्हित दीर्घ bufsiz)
+अणु
+	काष्ठा osf_statfs पंचांगp_stat;
 
-	tmp_stat.f_type = linux_stat->f_type;
-	tmp_stat.f_flags = 0;	/* mount flags */
-	tmp_stat.f_fsize = linux_stat->f_frsize;
-	tmp_stat.f_bsize = linux_stat->f_bsize;
-	tmp_stat.f_blocks = linux_stat->f_blocks;
-	tmp_stat.f_bfree = linux_stat->f_bfree;
-	tmp_stat.f_bavail = linux_stat->f_bavail;
-	tmp_stat.f_files = linux_stat->f_files;
-	tmp_stat.f_ffree = linux_stat->f_ffree;
-	tmp_stat.f_fsid = linux_stat->f_fsid;
-	if (bufsiz > sizeof(tmp_stat))
-		bufsiz = sizeof(tmp_stat);
-	return copy_to_user(osf_stat, &tmp_stat, bufsiz) ? -EFAULT : 0;
-}
+	पंचांगp_stat.f_type = linux_stat->f_type;
+	पंचांगp_stat.f_flags = 0;	/* mount flags */
+	पंचांगp_stat.f_fsize = linux_stat->f_frsize;
+	पंचांगp_stat.f_bsize = linux_stat->f_bsize;
+	पंचांगp_stat.f_blocks = linux_stat->f_blocks;
+	पंचांगp_stat.f_bमुक्त = linux_stat->f_bमुक्त;
+	पंचांगp_stat.f_bavail = linux_stat->f_bavail;
+	पंचांगp_stat.f_files = linux_stat->f_files;
+	पंचांगp_stat.f_fमुक्त = linux_stat->f_fमुक्त;
+	पंचांगp_stat.f_fsid = linux_stat->f_fsid;
+	अगर (bufsiz > माप(पंचांगp_stat))
+		bufsiz = माप(पंचांगp_stat);
+	वापस copy_to_user(osf_stat, &पंचांगp_stat, bufsiz) ? -EFAULT : 0;
+पूर्ण
 
-static int
-linux_to_osf_statfs64(struct kstatfs *linux_stat, struct osf_statfs64 __user *osf_stat,
-		      unsigned long bufsiz)
-{
-	struct osf_statfs64 tmp_stat = { 0 };
+अटल पूर्णांक
+linux_to_osf_statfs64(काष्ठा kstatfs *linux_stat, काष्ठा osf_statfs64 __user *osf_stat,
+		      अचिन्हित दीर्घ bufsiz)
+अणु
+	काष्ठा osf_statfs64 पंचांगp_stat = अणु 0 पूर्ण;
 
-	tmp_stat.f_type = linux_stat->f_type;
-	tmp_stat.f_fsize = linux_stat->f_frsize;
-	tmp_stat.f_bsize = linux_stat->f_bsize;
-	tmp_stat.f_blocks = linux_stat->f_blocks;
-	tmp_stat.f_bfree = linux_stat->f_bfree;
-	tmp_stat.f_bavail = linux_stat->f_bavail;
-	tmp_stat.f_files = linux_stat->f_files;
-	tmp_stat.f_ffree = linux_stat->f_ffree;
-	tmp_stat.f_fsid = linux_stat->f_fsid;
-	if (bufsiz > sizeof(tmp_stat))
-		bufsiz = sizeof(tmp_stat);
-	return copy_to_user(osf_stat, &tmp_stat, bufsiz) ? -EFAULT : 0;
-}
+	पंचांगp_stat.f_type = linux_stat->f_type;
+	पंचांगp_stat.f_fsize = linux_stat->f_frsize;
+	पंचांगp_stat.f_bsize = linux_stat->f_bsize;
+	पंचांगp_stat.f_blocks = linux_stat->f_blocks;
+	पंचांगp_stat.f_bमुक्त = linux_stat->f_bमुक्त;
+	पंचांगp_stat.f_bavail = linux_stat->f_bavail;
+	पंचांगp_stat.f_files = linux_stat->f_files;
+	पंचांगp_stat.f_fमुक्त = linux_stat->f_fमुक्त;
+	पंचांगp_stat.f_fsid = linux_stat->f_fsid;
+	अगर (bufsiz > माप(पंचांगp_stat))
+		bufsiz = माप(पंचांगp_stat);
+	वापस copy_to_user(osf_stat, &पंचांगp_stat, bufsiz) ? -EFAULT : 0;
+पूर्ण
 
-SYSCALL_DEFINE3(osf_statfs, const char __user *, pathname,
-		struct osf_statfs __user *, buffer, unsigned long, bufsiz)
-{
-	struct kstatfs linux_stat;
-	int error = user_statfs(pathname, &linux_stat);
-	if (!error)
+SYSCALL_DEFINE3(osf_statfs, स्थिर अक्षर __user *, pathname,
+		काष्ठा osf_statfs __user *, buffer, अचिन्हित दीर्घ, bufsiz)
+अणु
+	काष्ठा kstatfs linux_stat;
+	पूर्णांक error = user_statfs(pathname, &linux_stat);
+	अगर (!error)
 		error = linux_to_osf_statfs(&linux_stat, buffer, bufsiz);
-	return error;	
-}
+	वापस error;	
+पूर्ण
 
-SYSCALL_DEFINE2(osf_stat, char __user *, name, struct osf_stat __user *, buf)
-{
-	struct kstat stat;
-	int error;
+SYSCALL_DEFINE2(osf_stat, अक्षर __user *, name, काष्ठा osf_stat __user *, buf)
+अणु
+	काष्ठा kstat stat;
+	पूर्णांक error;
 
 	error = vfs_stat(name, &stat);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return linux_to_osf_stat(&stat, buf);
-}
+	वापस linux_to_osf_stat(&stat, buf);
+पूर्ण
 
-SYSCALL_DEFINE2(osf_lstat, char __user *, name, struct osf_stat __user *, buf)
-{
-	struct kstat stat;
-	int error;
+SYSCALL_DEFINE2(osf_lstat, अक्षर __user *, name, काष्ठा osf_stat __user *, buf)
+अणु
+	काष्ठा kstat stat;
+	पूर्णांक error;
 
 	error = vfs_lstat(name, &stat);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return linux_to_osf_stat(&stat, buf);
-}
+	वापस linux_to_osf_stat(&stat, buf);
+पूर्ण
 
-SYSCALL_DEFINE2(osf_fstat, int, fd, struct osf_stat __user *, buf)
-{
-	struct kstat stat;
-	int error;
+SYSCALL_DEFINE2(osf_ख_स्थिति, पूर्णांक, fd, काष्ठा osf_stat __user *, buf)
+अणु
+	काष्ठा kstat stat;
+	पूर्णांक error;
 
-	error = vfs_fstat(fd, &stat);
-	if (error)
-		return error;
+	error = vfs_ख_स्थिति(fd, &stat);
+	अगर (error)
+		वापस error;
 
-	return linux_to_osf_stat(&stat, buf);
-}
+	वापस linux_to_osf_stat(&stat, buf);
+पूर्ण
 
-SYSCALL_DEFINE3(osf_fstatfs, unsigned long, fd,
-		struct osf_statfs __user *, buffer, unsigned long, bufsiz)
-{
-	struct kstatfs linux_stat;
-	int error = fd_statfs(fd, &linux_stat);
-	if (!error)
+SYSCALL_DEFINE3(osf_ख_स्थितिfs, अचिन्हित दीर्घ, fd,
+		काष्ठा osf_statfs __user *, buffer, अचिन्हित दीर्घ, bufsiz)
+अणु
+	काष्ठा kstatfs linux_stat;
+	पूर्णांक error = fd_statfs(fd, &linux_stat);
+	अगर (!error)
 		error = linux_to_osf_statfs(&linux_stat, buffer, bufsiz);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE3(osf_statfs64, char __user *, pathname,
-		struct osf_statfs64 __user *, buffer, unsigned long, bufsiz)
-{
-	struct kstatfs linux_stat;
-	int error = user_statfs(pathname, &linux_stat);
-	if (!error)
+SYSCALL_DEFINE3(osf_statfs64, अक्षर __user *, pathname,
+		काष्ठा osf_statfs64 __user *, buffer, अचिन्हित दीर्घ, bufsiz)
+अणु
+	काष्ठा kstatfs linux_stat;
+	पूर्णांक error = user_statfs(pathname, &linux_stat);
+	अगर (!error)
 		error = linux_to_osf_statfs64(&linux_stat, buffer, bufsiz);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE3(osf_fstatfs64, unsigned long, fd,
-		struct osf_statfs64 __user *, buffer, unsigned long, bufsiz)
-{
-	struct kstatfs linux_stat;
-	int error = fd_statfs(fd, &linux_stat);
-	if (!error)
+SYSCALL_DEFINE3(osf_ख_स्थितिfs64, अचिन्हित दीर्घ, fd,
+		काष्ठा osf_statfs64 __user *, buffer, अचिन्हित दीर्घ, bufsiz)
+अणु
+	काष्ठा kstatfs linux_stat;
+	पूर्णांक error = fd_statfs(fd, &linux_stat);
+	अगर (!error)
 		error = linux_to_osf_statfs64(&linux_stat, buffer, bufsiz);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * Uhh.. OSF/1 mount parameters aren't exactly obvious..
  *
  * Although to be frank, neither are the native Linux/i386 ones..
  */
-struct ufs_args {
-	char __user *devname;
-	int flags;
+काष्ठा ufs_args अणु
+	अक्षर __user *devname;
+	पूर्णांक flags;
 	uid_t exroot;
-};
+पूर्ण;
 
-struct cdfs_args {
-	char __user *devname;
-	int flags;
+काष्ठा cdfs_args अणु
+	अक्षर __user *devname;
+	पूर्णांक flags;
 	uid_t exroot;
 
 	/* This has lots more here, which Linux handles with the option block
-	   but I'm too lazy to do the translation into ASCII.  */
-};
+	   but I'm too lazy to करो the translation पूर्णांकo ASCII.  */
+पूर्ण;
 
-struct procfs_args {
-	char __user *devname;
-	int flags;
+काष्ठा procfs_args अणु
+	अक्षर __user *devname;
+	पूर्णांक flags;
 	uid_t exroot;
-};
+पूर्ण;
 
 /*
  * We can't actually handle ufs yet, so we translate UFS mounts to
- * ext2fs mounts. I wouldn't mind a UFS filesystem, but the UFS
- * layout is so braindead it's a major headache doing it.
+ * ext2fs mounts. I wouldn't mind a UFS fileप्रणाली, but the UFS
+ * layout is so braindead it's a major headache करोing it.
  *
- * Just how long ago was it written? OTOH our UFS driver may be still
+ * Just how दीर्घ ago was it written? OTOH our UFS driver may be still
  * unhappy with OSF UFS. [CHECKME]
  */
-static int
-osf_ufs_mount(const char __user *dirname,
-	      struct ufs_args __user *args, int flags)
-{
-	int retval;
-	struct cdfs_args tmp;
-	struct filename *devname;
+अटल पूर्णांक
+osf_ufs_mount(स्थिर अक्षर __user *स_नाम,
+	      काष्ठा ufs_args __user *args, पूर्णांक flags)
+अणु
+	पूर्णांक retval;
+	काष्ठा cdfs_args पंचांगp;
+	काष्ठा filename *devname;
 
 	retval = -EFAULT;
-	if (copy_from_user(&tmp, args, sizeof(tmp)))
-		goto out;
-	devname = getname(tmp.devname);
+	अगर (copy_from_user(&पंचांगp, args, माप(पंचांगp)))
+		जाओ out;
+	devname = getname(पंचांगp.devname);
 	retval = PTR_ERR(devname);
-	if (IS_ERR(devname))
-		goto out;
-	retval = do_mount(devname->name, dirname, "ext2", flags, NULL);
+	अगर (IS_ERR(devname))
+		जाओ out;
+	retval = करो_mount(devname->name, स_नाम, "ext2", flags, शून्य);
 	putname(devname);
  out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int
-osf_cdfs_mount(const char __user *dirname,
-	       struct cdfs_args __user *args, int flags)
-{
-	int retval;
-	struct cdfs_args tmp;
-	struct filename *devname;
+अटल पूर्णांक
+osf_cdfs_mount(स्थिर अक्षर __user *स_नाम,
+	       काष्ठा cdfs_args __user *args, पूर्णांक flags)
+अणु
+	पूर्णांक retval;
+	काष्ठा cdfs_args पंचांगp;
+	काष्ठा filename *devname;
 
 	retval = -EFAULT;
-	if (copy_from_user(&tmp, args, sizeof(tmp)))
-		goto out;
-	devname = getname(tmp.devname);
+	अगर (copy_from_user(&पंचांगp, args, माप(पंचांगp)))
+		जाओ out;
+	devname = getname(पंचांगp.devname);
 	retval = PTR_ERR(devname);
-	if (IS_ERR(devname))
-		goto out;
-	retval = do_mount(devname->name, dirname, "iso9660", flags, NULL);
+	अगर (IS_ERR(devname))
+		जाओ out;
+	retval = करो_mount(devname->name, स_नाम, "iso9660", flags, शून्य);
 	putname(devname);
  out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int
-osf_procfs_mount(const char __user *dirname,
-		 struct procfs_args __user *args, int flags)
-{
-	struct procfs_args tmp;
+अटल पूर्णांक
+osf_procfs_mount(स्थिर अक्षर __user *स_नाम,
+		 काष्ठा procfs_args __user *args, पूर्णांक flags)
+अणु
+	काष्ठा procfs_args पंचांगp;
 
-	if (copy_from_user(&tmp, args, sizeof(tmp)))
-		return -EFAULT;
+	अगर (copy_from_user(&पंचांगp, args, माप(पंचांगp)))
+		वापस -EFAULT;
 
-	return do_mount("", dirname, "proc", flags, NULL);
-}
+	वापस करो_mount("", स_नाम, "proc", flags, शून्य);
+पूर्ण
 
-SYSCALL_DEFINE4(osf_mount, unsigned long, typenr, const char __user *, path,
-		int, flag, void __user *, data)
-{
-	int retval;
+SYSCALL_DEFINE4(osf_mount, अचिन्हित दीर्घ, typenr, स्थिर अक्षर __user *, path,
+		पूर्णांक, flag, व्योम __user *, data)
+अणु
+	पूर्णांक retval;
 
-	switch (typenr) {
-	case 1:
+	चयन (typenr) अणु
+	हाल 1:
 		retval = osf_ufs_mount(path, data, flag);
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		retval = osf_cdfs_mount(path, data, flag);
-		break;
-	case 9:
+		अवरोध;
+	हाल 9:
 		retval = osf_procfs_mount(path, data, flag);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		retval = -EINVAL;
-		printk("osf_mount(%ld, %x)\n", typenr, flag);
-	}
+		prपूर्णांकk("osf_mount(%ld, %x)\n", typenr, flag);
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-SYSCALL_DEFINE1(osf_utsname, char __user *, name)
-{
-	char tmp[5 * 32];
+SYSCALL_DEFINE1(osf_utsname, अक्षर __user *, name)
+अणु
+	अक्षर पंचांगp[5 * 32];
 
-	down_read(&uts_sem);
-	memcpy(tmp + 0 * 32, utsname()->sysname, 32);
-	memcpy(tmp + 1 * 32, utsname()->nodename, 32);
-	memcpy(tmp + 2 * 32, utsname()->release, 32);
-	memcpy(tmp + 3 * 32, utsname()->version, 32);
-	memcpy(tmp + 4 * 32, utsname()->machine, 32);
-	up_read(&uts_sem);
+	करोwn_पढ़ो(&uts_sem);
+	स_नकल(पंचांगp + 0 * 32, utsname()->sysname, 32);
+	स_नकल(पंचांगp + 1 * 32, utsname()->nodename, 32);
+	स_नकल(पंचांगp + 2 * 32, utsname()->release, 32);
+	स_नकल(पंचांगp + 3 * 32, utsname()->version, 32);
+	स_नकल(पंचांगp + 4 * 32, utsname()->machine, 32);
+	up_पढ़ो(&uts_sem);
 
-	if (copy_to_user(name, tmp, sizeof(tmp)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(name, पंचांगp, माप(पंचांगp)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 SYSCALL_DEFINE0(getpagesize)
-{
-	return PAGE_SIZE;
-}
+अणु
+	वापस PAGE_SIZE;
+पूर्ण
 
 SYSCALL_DEFINE0(getdtablesize)
-{
-	return sysctl_nr_open;
-}
+अणु
+	वापस sysctl_nr_खोलो;
+पूर्ण
 
 /*
  * For compatibility with OSF/1 only.  Use utsname(2) instead.
  */
-SYSCALL_DEFINE2(osf_getdomainname, char __user *, name, int, namelen)
-{
-	int len;
-	char *kname;
-	char tmp[32];
+SYSCALL_DEFINE2(osf_getकरोमुख्यname, अक्षर __user *, name, पूर्णांक, namelen)
+अणु
+	पूर्णांक len;
+	अक्षर *kname;
+	अक्षर पंचांगp[32];
 
-	if (namelen < 0 || namelen > 32)
+	अगर (namelen < 0 || namelen > 32)
 		namelen = 32;
 
-	down_read(&uts_sem);
-	kname = utsname()->domainname;
+	करोwn_पढ़ो(&uts_sem);
+	kname = utsname()->करोमुख्यname;
 	len = strnlen(kname, namelen);
 	len = min(len + 1, namelen);
-	memcpy(tmp, kname, len);
-	up_read(&uts_sem);
+	स_नकल(पंचांगp, kname, len);
+	up_पढ़ो(&uts_sem);
 
-	if (copy_to_user(name, tmp, len))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(name, पंचांगp, len))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 /*
- * The following stuff should move into a header file should it ever
+ * The following stuff should move पूर्णांकo a header file should it ever
  * be labeled "officially supported."  Right now, there is just enough
- * support to avoid applications (such as tar) printing error
+ * support to aव्योम applications (such as tar) prपूर्णांकing error
  * messages.  The attributes are not really implemented.
  */
 
 /*
- * Values for Property list entry flag
+ * Values क्रम Property list entry flag
  */
-#define PLE_PROPAGATE_ON_COPY		0x1	/* cp(1) will copy entry
-						   by default */
-#define PLE_FLAG_MASK			0x1	/* Valid flag values */
-#define PLE_FLAG_ALL			-1	/* All flag value */
+#घोषणा PLE_PROPAGATE_ON_COPY		0x1	/* cp(1) will copy entry
+						   by शेष */
+#घोषणा PLE_FLAG_MASK			0x1	/* Valid flag values */
+#घोषणा PLE_FLAG_ALL			-1	/* All flag value */
 
-struct proplistname_args {
-	unsigned int pl_mask;
-	unsigned int pl_numnames;
-	char **pl_names;
-};
+काष्ठा proplistname_args अणु
+	अचिन्हित पूर्णांक pl_mask;
+	अचिन्हित पूर्णांक pl_numnames;
+	अक्षर **pl_names;
+पूर्ण;
 
-union pl_args {
-	struct setargs {
-		char __user *path;
-		long follow;
-		long nbytes;
-		char __user *buf;
-	} set;
-	struct fsetargs {
-		long fd;
-		long nbytes;
-		char __user *buf;
-	} fset;
-	struct getargs {
-		char __user *path;
-		long follow;
-		struct proplistname_args __user *name_args;
-		long nbytes;
-		char __user *buf;
-		int __user *min_buf_size;
-	} get;
-	struct fgetargs {
-		long fd;
-		struct proplistname_args __user *name_args;
-		long nbytes;
-		char __user *buf;
-		int __user *min_buf_size;
-	} fget;
-	struct delargs {
-		char __user *path;
-		long follow;
-		struct proplistname_args __user *name_args;
-	} del;
-	struct fdelargs {
-		long fd;
-		struct proplistname_args __user *name_args;
-	} fdel;
-};
+जोड़ pl_args अणु
+	काष्ठा setargs अणु
+		अक्षर __user *path;
+		दीर्घ follow;
+		दीर्घ nbytes;
+		अक्षर __user *buf;
+	पूर्ण set;
+	काष्ठा fsetargs अणु
+		दीर्घ fd;
+		दीर्घ nbytes;
+		अक्षर __user *buf;
+	पूर्ण fset;
+	काष्ठा getargs अणु
+		अक्षर __user *path;
+		दीर्घ follow;
+		काष्ठा proplistname_args __user *name_args;
+		दीर्घ nbytes;
+		अक्षर __user *buf;
+		पूर्णांक __user *min_buf_size;
+	पूर्ण get;
+	काष्ठा fgetargs अणु
+		दीर्घ fd;
+		काष्ठा proplistname_args __user *name_args;
+		दीर्घ nbytes;
+		अक्षर __user *buf;
+		पूर्णांक __user *min_buf_size;
+	पूर्ण fget;
+	काष्ठा delargs अणु
+		अक्षर __user *path;
+		दीर्घ follow;
+		काष्ठा proplistname_args __user *name_args;
+	पूर्ण del;
+	काष्ठा fdelargs अणु
+		दीर्घ fd;
+		काष्ठा proplistname_args __user *name_args;
+	पूर्ण fdel;
+पूर्ण;
 
-enum pl_code {
+क्रमागत pl_code अणु
 	PL_SET = 1, PL_FSET = 2,
 	PL_GET = 3, PL_FGET = 4,
 	PL_DEL = 5, PL_FDEL = 6
-};
+पूर्ण;
 
-SYSCALL_DEFINE2(osf_proplist_syscall, enum pl_code, code,
-		union pl_args __user *, args)
-{
-	long error;
-	int __user *min_buf_size_ptr;
+SYSCALL_DEFINE2(osf_proplist_syscall, क्रमागत pl_code, code,
+		जोड़ pl_args __user *, args)
+अणु
+	दीर्घ error;
+	पूर्णांक __user *min_buf_size_ptr;
 
-	switch (code) {
-	case PL_SET:
-		if (get_user(error, &args->set.nbytes))
+	चयन (code) अणु
+	हाल PL_SET:
+		अगर (get_user(error, &args->set.nbytes))
 			error = -EFAULT;
-		break;
-	case PL_FSET:
-		if (get_user(error, &args->fset.nbytes))
+		अवरोध;
+	हाल PL_FSET:
+		अगर (get_user(error, &args->fset.nbytes))
 			error = -EFAULT;
-		break;
-	case PL_GET:
+		अवरोध;
+	हाल PL_GET:
 		error = get_user(min_buf_size_ptr, &args->get.min_buf_size);
-		if (error)
-			break;
+		अगर (error)
+			अवरोध;
 		error = put_user(0, min_buf_size_ptr);
-		break;
-	case PL_FGET:
+		अवरोध;
+	हाल PL_FGET:
 		error = get_user(min_buf_size_ptr, &args->fget.min_buf_size);
-		if (error)
-			break;
+		अगर (error)
+			अवरोध;
 		error = put_user(0, min_buf_size_ptr);
-		break;
-	case PL_DEL:
-	case PL_FDEL:
+		अवरोध;
+	हाल PL_DEL:
+	हाल PL_FDEL:
 		error = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		error = -EOPNOTSUPP;
-		break;
-	}
-	return error;
-}
+		अवरोध;
+	पूर्ण
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE2(osf_sigstack, struct sigstack __user *, uss,
-		struct sigstack __user *, uoss)
-{
-	unsigned long usp = rdusp();
-	unsigned long oss_sp = current->sas_ss_sp + current->sas_ss_size;
-	unsigned long oss_os = on_sig_stack(usp);
-	int error;
+SYSCALL_DEFINE2(osf_sigstack, काष्ठा sigstack __user *, uss,
+		काष्ठा sigstack __user *, uoss)
+अणु
+	अचिन्हित दीर्घ usp = rdusp();
+	अचिन्हित दीर्घ oss_sp = current->sas_ss_sp + current->sas_ss_size;
+	अचिन्हित दीर्घ oss_os = on_sig_stack(usp);
+	पूर्णांक error;
 
-	if (uss) {
-		void __user *ss_sp;
+	अगर (uss) अणु
+		व्योम __user *ss_sp;
 
 		error = -EFAULT;
-		if (get_user(ss_sp, &uss->ss_sp))
-			goto out;
+		अगर (get_user(ss_sp, &uss->ss_sp))
+			जाओ out;
 
-		/* If the current stack was set with sigaltstack, don't
-		   swap stacks while we are on it.  */
+		/* If the current stack was set with sigaltstack, करोn't
+		   swap stacks जबतक we are on it.  */
 		error = -EPERM;
-		if (current->sas_ss_sp && on_sig_stack(usp))
-			goto out;
+		अगर (current->sas_ss_sp && on_sig_stack(usp))
+			जाओ out;
 
-		/* Since we don't know the extent of the stack, and we don't
+		/* Since we करोn't know the extent of the stack, and we don't
 		   track onstack-ness, but rather calculate it, we must 
-		   presume a size.  Ho hum this interface is lossy.  */
-		current->sas_ss_sp = (unsigned long)ss_sp - SIGSTKSZ;
+		   presume a size.  Ho hum this पूर्णांकerface is lossy.  */
+		current->sas_ss_sp = (अचिन्हित दीर्घ)ss_sp - SIGSTKSZ;
 		current->sas_ss_size = SIGSTKSZ;
-	}
+	पूर्ण
 
-	if (uoss) {
+	अगर (uoss) अणु
 		error = -EFAULT;
-		if (put_user(oss_sp, &uoss->ss_sp) ||
+		अगर (put_user(oss_sp, &uoss->ss_sp) ||
 		    put_user(oss_os, &uoss->ss_onstack))
-			goto out;
-	}
+			जाओ out;
+	पूर्ण
 
 	error = 0;
  out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE3(osf_sysinfo, int, command, char __user *, buf, long, count)
-{
-	const char *sysinfo_table[] = {
+SYSCALL_DEFINE3(osf_sysinfo, पूर्णांक, command, अक्षर __user *, buf, दीर्घ, count)
+अणु
+	स्थिर अक्षर *sysinfo_table[] = अणु
 		utsname()->sysname,
 		utsname()->nodename,
 		utsname()->release,
 		utsname()->version,
 		utsname()->machine,
-		"alpha",	/* instruction set architecture */
+		"alpha",	/* inकाष्ठाion set architecture */
 		"dummy",	/* hardware serial number */
 		"dummy",	/* hardware manufacturer */
-		"dummy",	/* secure RPC domain */
-	};
-	unsigned long offset;
-	const char *res;
-	long len;
-	char tmp[__NEW_UTS_LEN + 1];
+		"dummy",	/* secure RPC करोमुख्य */
+	पूर्ण;
+	अचिन्हित दीर्घ offset;
+	स्थिर अक्षर *res;
+	दीर्घ len;
+	अक्षर पंचांगp[__NEW_UTS_LEN + 1];
 
 	offset = command-1;
-	if (offset >= ARRAY_SIZE(sysinfo_table)) {
-		/* Digital UNIX has a few unpublished interfaces here */
-		printk("sysinfo(%d)", command);
-		return -EINVAL;
-	}
+	अगर (offset >= ARRAY_SIZE(sysinfo_table)) अणु
+		/* Digital UNIX has a few unpublished पूर्णांकerfaces here */
+		prपूर्णांकk("sysinfo(%d)", command);
+		वापस -EINVAL;
+	पूर्ण
 
-	down_read(&uts_sem);
+	करोwn_पढ़ो(&uts_sem);
 	res = sysinfo_table[offset];
-	len = strlen(res)+1;
-	if ((unsigned long)len > (unsigned long)count)
+	len = म_माप(res)+1;
+	अगर ((अचिन्हित दीर्घ)len > (अचिन्हित दीर्घ)count)
 		len = count;
-	memcpy(tmp, res, len);
-	up_read(&uts_sem);
-	if (copy_to_user(buf, tmp, len))
-		return -EFAULT;
-	return 0;
-}
+	स_नकल(पंचांगp, res, len);
+	up_पढ़ो(&uts_sem);
+	अगर (copy_to_user(buf, पंचांगp, len))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-SYSCALL_DEFINE5(osf_getsysinfo, unsigned long, op, void __user *, buffer,
-		unsigned long, nbytes, int __user *, start, void __user *, arg)
-{
-	unsigned long w;
-	struct percpu_struct *cpu;
+SYSCALL_DEFINE5(osf_माला_लोysinfo, अचिन्हित दीर्घ, op, व्योम __user *, buffer,
+		अचिन्हित दीर्घ, nbytes, पूर्णांक __user *, start, व्योम __user *, arg)
+अणु
+	अचिन्हित दीर्घ w;
+	काष्ठा percpu_काष्ठा *cpu;
 
-	switch (op) {
-	case GSI_IEEE_FP_CONTROL:
+	चयन (op) अणु
+	हाल GSI_IEEE_FP_CONTROL:
 		/* Return current software fp control & status bits.  */
-		/* Note that DU doesn't verify available space here.  */
+		/* Note that DU करोesn't verअगरy available space here.  */
 
- 		w = current_thread_info()->ieee_state & IEEE_SW_MASK;
+ 		w = current_thपढ़ो_info()->ieee_state & IEEE_SW_MASK;
  		w = swcr_update_status(w, rdfpcr());
-		if (put_user(w, (unsigned long __user *) buffer))
-			return -EFAULT;
-		return 0;
+		अगर (put_user(w, (अचिन्हित दीर्घ __user *) buffer))
+			वापस -EFAULT;
+		वापस 0;
 
-	case GSI_IEEE_STATE_AT_SIGNAL:
+	हाल GSI_IEEE_STATE_AT_SIGNAL:
 		/*
 		 * Not sure anybody will ever use this weird stuff.  These
 		 * ops can be used (under OSF/1) to set the fpcr that should
-		 * be used when a signal handler starts executing.
+		 * be used when a संकेत handler starts executing.
 		 */
-		break;
+		अवरोध;
 
- 	case GSI_UACPROC:
-		if (nbytes < sizeof(unsigned int))
-			return -EINVAL;
-		w = current_thread_info()->status & UAC_BITMASK;
-		if (put_user(w, (unsigned int __user *)buffer))
-			return -EFAULT;
- 		return 1;
+ 	हाल GSI_UACPROC:
+		अगर (nbytes < माप(अचिन्हित पूर्णांक))
+			वापस -EINVAL;
+		w = current_thपढ़ो_info()->status & UAC_BITMASK;
+		अगर (put_user(w, (अचिन्हित पूर्णांक __user *)buffer))
+			वापस -EFAULT;
+ 		वापस 1;
 
-	case GSI_PROC_TYPE:
-		if (nbytes < sizeof(unsigned long))
-			return -EINVAL;
-		cpu = (struct percpu_struct*)
-		  ((char*)hwrpb + hwrpb->processor_offset);
+	हाल GSI_PROC_TYPE:
+		अगर (nbytes < माप(अचिन्हित दीर्घ))
+			वापस -EINVAL;
+		cpu = (काष्ठा percpu_काष्ठा*)
+		  ((अक्षर*)hwrpb + hwrpb->processor_offset);
 		w = cpu->type;
-		if (put_user(w, (unsigned long  __user*)buffer))
-			return -EFAULT;
-		return 1;
+		अगर (put_user(w, (अचिन्हित दीर्घ  __user*)buffer))
+			वापस -EFAULT;
+		वापस 1;
 
-	case GSI_GET_HWRPB:
-		if (nbytes > sizeof(*hwrpb))
-			return -EINVAL;
-		if (copy_to_user(buffer, hwrpb, nbytes) != 0)
-			return -EFAULT;
-		return 1;
+	हाल GSI_GET_HWRPB:
+		अगर (nbytes > माप(*hwrpb))
+			वापस -EINVAL;
+		अगर (copy_to_user(buffer, hwrpb, nbytes) != 0)
+			वापस -EFAULT;
+		वापस 1;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-SYSCALL_DEFINE5(osf_setsysinfo, unsigned long, op, void __user *, buffer,
-		unsigned long, nbytes, int __user *, start, void __user *, arg)
-{
-	switch (op) {
-	case SSI_IEEE_FP_CONTROL: {
-		unsigned long swcr, fpcr;
-		unsigned int *state;
+SYSCALL_DEFINE5(osf_setsysinfo, अचिन्हित दीर्घ, op, व्योम __user *, buffer,
+		अचिन्हित दीर्घ, nbytes, पूर्णांक __user *, start, व्योम __user *, arg)
+अणु
+	चयन (op) अणु
+	हाल SSI_IEEE_FP_CONTROL: अणु
+		अचिन्हित दीर्घ swcr, fpcr;
+		अचिन्हित पूर्णांक *state;
 
 		/* 
 		 * Alpha Architecture Handbook 4.7.7.3:
 		 * To be fully IEEE compiant, we must track the current IEEE
 		 * exception state in software, because spurious bits can be
-		 * set in the trap shadow of a software-complete insn.
+		 * set in the trap shaकरोw of a software-complete insn.
 		 */
 
-		if (get_user(swcr, (unsigned long __user *)buffer))
-			return -EFAULT;
-		state = &current_thread_info()->ieee_state;
+		अगर (get_user(swcr, (अचिन्हित दीर्घ __user *)buffer))
+			वापस -EFAULT;
+		state = &current_thपढ़ो_info()->ieee_state;
 
 		/* Update softare trap enable bits.  */
 		*state = (*state & ~IEEE_SW_MASK) | (swcr & IEEE_SW_MASK);
@@ -842,16 +843,16 @@ SYSCALL_DEFINE5(osf_setsysinfo, unsigned long, op, void __user *, buffer,
 		fpcr |= ieee_swcr_to_fpcr(swcr);
 		wrfpcr(fpcr);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	case SSI_IEEE_RAISE_EXCEPTION: {
-		unsigned long exc, swcr, fpcr, fex;
-		unsigned int *state;
+	हाल SSI_IEEE_RAISE_EXCEPTION: अणु
+		अचिन्हित दीर्घ exc, swcr, fpcr, fex;
+		अचिन्हित पूर्णांक *state;
 
-		if (get_user(exc, (unsigned long __user *)buffer))
-			return -EFAULT;
-		state = &current_thread_info()->ieee_state;
+		अगर (get_user(exc, (अचिन्हित दीर्घ __user *)buffer))
+			वापस -EFAULT;
+		state = &current_thपढ़ो_info()->ieee_state;
 		exc &= IEEE_STATUS_MASK;
 
 		/* Update softare trap enable bits.  */
@@ -864,362 +865,362 @@ SYSCALL_DEFINE5(osf_setsysinfo, unsigned long, op, void __user *, buffer,
 		wrfpcr(fpcr);
 
  		/* If any exceptions set by this call, and are unmasked,
-		   send a signal.  Old exceptions are not signaled.  */
+		   send a संकेत.  Old exceptions are not संकेतed.  */
 		fex = (exc >> IEEE_STATUS_TO_EXCSUM_SHIFT) & swcr;
- 		if (fex) {
-			int si_code = FPE_FLTUNK;
+ 		अगर (fex) अणु
+			पूर्णांक si_code = FPE_FLTUNK;
 
-			if (fex & IEEE_TRAP_ENABLE_DNO) si_code = FPE_FLTUND;
-			if (fex & IEEE_TRAP_ENABLE_INE) si_code = FPE_FLTRES;
-			if (fex & IEEE_TRAP_ENABLE_UNF) si_code = FPE_FLTUND;
-			if (fex & IEEE_TRAP_ENABLE_OVF) si_code = FPE_FLTOVF;
-			if (fex & IEEE_TRAP_ENABLE_DZE) si_code = FPE_FLTDIV;
-			if (fex & IEEE_TRAP_ENABLE_INV) si_code = FPE_FLTINV;
+			अगर (fex & IEEE_TRAP_ENABLE_DNO) si_code = FPE_FLTUND;
+			अगर (fex & IEEE_TRAP_ENABLE_INE) si_code = FPE_FLTRES;
+			अगर (fex & IEEE_TRAP_ENABLE_UNF) si_code = FPE_FLTUND;
+			अगर (fex & IEEE_TRAP_ENABLE_OVF) si_code = FPE_FLTOVF;
+			अगर (fex & IEEE_TRAP_ENABLE_DZE) si_code = FPE_FLTDIV;
+			अगर (fex & IEEE_TRAP_ENABLE_INV) si_code = FPE_FLTINV;
 
-			send_sig_fault(SIGFPE, si_code,
-				       (void __user *)NULL,  /* FIXME */
+			send_sig_fault(संक_भ_त्रुटि, si_code,
+				       (व्योम __user *)शून्य,  /* FIXME */
 				       0, current);
- 		}
-		return 0;
-	}
+ 		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	case SSI_IEEE_STATE_AT_SIGNAL:
-	case SSI_IEEE_IGNORE_STATE_AT_SIGNAL:
+	हाल SSI_IEEE_STATE_AT_SIGNAL:
+	हाल SSI_IEEE_IGNORE_STATE_AT_SIGNAL:
 		/*
 		 * Not sure anybody will ever use this weird stuff.  These
 		 * ops can be used (under OSF/1) to set the fpcr that should
-		 * be used when a signal handler starts executing.
+		 * be used when a संकेत handler starts executing.
 		 */
-		break;
+		अवरोध;
 
- 	case SSI_NVPAIRS: {
-		unsigned __user *p = buffer;
-		unsigned i;
+ 	हाल SSI_NVPAIRS: अणु
+		अचिन्हित __user *p = buffer;
+		अचिन्हित i;
 		
-		for (i = 0, p = buffer; i < nbytes; ++i, p += 2) {
-			unsigned v, w, status;
+		क्रम (i = 0, p = buffer; i < nbytes; ++i, p += 2) अणु
+			अचिन्हित v, w, status;
 
-			if (get_user(v, p) || get_user(w, p + 1))
- 				return -EFAULT;
- 			switch (v) {
- 			case SSIN_UACPROC:
+			अगर (get_user(v, p) || get_user(w, p + 1))
+ 				वापस -EFAULT;
+ 			चयन (v) अणु
+ 			हाल SSIN_UACPROC:
 				w &= UAC_BITMASK;
-				status = current_thread_info()->status;
+				status = current_thपढ़ो_info()->status;
 				status = (status & ~UAC_BITMASK) | w;
-				current_thread_info()->status = status;
- 				break;
+				current_thपढ़ो_info()->status = status;
+ 				अवरोध;
  
- 			default:
- 				return -EOPNOTSUPP;
- 			}
- 		}
- 		return 0;
-	}
+ 			शेष:
+ 				वापस -EOPNOTSUPP;
+ 			पूर्ण
+ 		पूर्ण
+ 		वापस 0;
+	पूर्ण
  
-	case SSI_LMF:
-		return 0;
+	हाल SSI_LMF:
+		वापस 0;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-/* Translations due to the fact that OSF's time_t is an int.  Which
-   affects all sorts of things, like timeval and itimerval.  */
+/* Translations due to the fact that OSF's समय_प्रकार is an पूर्णांक.  Which
+   affects all sorts of things, like समयval and iसमयrval.  */
 
-extern struct timezone sys_tz;
+बाह्य काष्ठा समयzone sys_tz;
 
-struct timeval32
-{
-    int tv_sec, tv_usec;
-};
+काष्ठा समयval32
+अणु
+    पूर्णांक tv_sec, tv_usec;
+पूर्ण;
 
-struct itimerval32
-{
-    struct timeval32 it_interval;
-    struct timeval32 it_value;
-};
+काष्ठा iसमयrval32
+अणु
+    काष्ठा समयval32 it_पूर्णांकerval;
+    काष्ठा समयval32 it_value;
+पूर्ण;
 
-static inline long
-get_tv32(struct timespec64 *o, struct timeval32 __user *i)
-{
-	struct timeval32 tv;
-	if (copy_from_user(&tv, i, sizeof(struct timeval32)))
-		return -EFAULT;
+अटल अंतरभूत दीर्घ
+get_tv32(काष्ठा बारpec64 *o, काष्ठा समयval32 __user *i)
+अणु
+	काष्ठा समयval32 tv;
+	अगर (copy_from_user(&tv, i, माप(काष्ठा समयval32)))
+		वापस -EFAULT;
 	o->tv_sec = tv.tv_sec;
 	o->tv_nsec = tv.tv_usec * NSEC_PER_USEC;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline long
-put_tv32(struct timeval32 __user *o, struct timespec64 *i)
-{
-	return copy_to_user(o, &(struct timeval32){
+अटल अंतरभूत दीर्घ
+put_tv32(काष्ठा समयval32 __user *o, काष्ठा बारpec64 *i)
+अणु
+	वापस copy_to_user(o, &(काष्ठा समयval32)अणु
 				.tv_sec = i->tv_sec,
-				.tv_usec = i->tv_nsec / NSEC_PER_USEC},
-			    sizeof(struct timeval32));
-}
+				.tv_usec = i->tv_nsec / NSEC_PER_USECपूर्ण,
+			    माप(काष्ठा समयval32));
+पूर्ण
 
-static inline long
-put_tv_to_tv32(struct timeval32 __user *o, struct __kernel_old_timeval *i)
-{
-	return copy_to_user(o, &(struct timeval32){
+अटल अंतरभूत दीर्घ
+put_tv_to_tv32(काष्ठा समयval32 __user *o, काष्ठा __kernel_old_समयval *i)
+अणु
+	वापस copy_to_user(o, &(काष्ठा समयval32)अणु
 				.tv_sec = i->tv_sec,
-				.tv_usec = i->tv_usec},
-			    sizeof(struct timeval32));
-}
+				.tv_usec = i->tv_usecपूर्ण,
+			    माप(काष्ठा समयval32));
+पूर्ण
 
-static inline void
-jiffies_to_timeval32(unsigned long jiffies, struct timeval32 *value)
-{
-	value->tv_usec = (jiffies % HZ) * (1000000L / HZ);
-	value->tv_sec = jiffies / HZ;
-}
+अटल अंतरभूत व्योम
+jअगरfies_to_समयval32(अचिन्हित दीर्घ jअगरfies, काष्ठा समयval32 *value)
+अणु
+	value->tv_usec = (jअगरfies % HZ) * (1000000L / HZ);
+	value->tv_sec = jअगरfies / HZ;
+पूर्ण
 
-SYSCALL_DEFINE2(osf_gettimeofday, struct timeval32 __user *, tv,
-		struct timezone __user *, tz)
-{
-	if (tv) {
-		struct timespec64 kts;
+SYSCALL_DEFINE2(osf_समय_लोofday, काष्ठा समयval32 __user *, tv,
+		काष्ठा समयzone __user *, tz)
+अणु
+	अगर (tv) अणु
+		काष्ठा बारpec64 kts;
 
-		ktime_get_real_ts64(&kts);
-		if (put_tv32(tv, &kts))
-			return -EFAULT;
-	}
-	if (tz) {
-		if (copy_to_user(tz, &sys_tz, sizeof(sys_tz)))
-			return -EFAULT;
-	}
-	return 0;
-}
+		kसमय_get_real_ts64(&kts);
+		अगर (put_tv32(tv, &kts))
+			वापस -EFAULT;
+	पूर्ण
+	अगर (tz) अणु
+		अगर (copy_to_user(tz, &sys_tz, माप(sys_tz)))
+			वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-SYSCALL_DEFINE2(osf_settimeofday, struct timeval32 __user *, tv,
-		struct timezone __user *, tz)
-{
-	struct timespec64 kts;
-	struct timezone ktz;
+SYSCALL_DEFINE2(osf_समय_रखोofday, काष्ठा समयval32 __user *, tv,
+		काष्ठा समयzone __user *, tz)
+अणु
+	काष्ठा बारpec64 kts;
+	काष्ठा समयzone ktz;
 
- 	if (tv) {
-		if (get_tv32(&kts, tv))
-			return -EFAULT;
-	}
-	if (tz) {
-		if (copy_from_user(&ktz, tz, sizeof(*tz)))
-			return -EFAULT;
-	}
+ 	अगर (tv) अणु
+		अगर (get_tv32(&kts, tv))
+			वापस -EFAULT;
+	पूर्ण
+	अगर (tz) अणु
+		अगर (copy_from_user(&ktz, tz, माप(*tz)))
+			वापस -EFAULT;
+	पूर्ण
 
-	return do_sys_settimeofday64(tv ? &kts : NULL, tz ? &ktz : NULL);
-}
+	वापस करो_sys_समय_रखोofday64(tv ? &kts : शून्य, tz ? &ktz : शून्य);
+पूर्ण
 
-asmlinkage long sys_ni_posix_timers(void);
+यंत्रlinkage दीर्घ sys_ni_posix_समयrs(व्योम);
 
-SYSCALL_DEFINE2(osf_utimes, const char __user *, filename,
-		struct timeval32 __user *, tvs)
-{
-	struct timespec64 tv[2];
+SYSCALL_DEFINE2(osf_uबार, स्थिर अक्षर __user *, filename,
+		काष्ठा समयval32 __user *, tvs)
+अणु
+	काष्ठा बारpec64 tv[2];
 
-	if (tvs) {
-		if (get_tv32(&tv[0], &tvs[0]) ||
+	अगर (tvs) अणु
+		अगर (get_tv32(&tv[0], &tvs[0]) ||
 		    get_tv32(&tv[1], &tvs[1]))
-			return -EFAULT;
+			वापस -EFAULT;
 
-		if (tv[0].tv_nsec < 0 || tv[0].tv_nsec >= 1000000000 ||
+		अगर (tv[0].tv_nsec < 0 || tv[0].tv_nsec >= 1000000000 ||
 		    tv[1].tv_nsec < 0 || tv[1].tv_nsec >= 1000000000)
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	return do_utimes(AT_FDCWD, filename, tvs ? tv : NULL, 0);
-}
+	वापस करो_uबार(AT_FDCWD, filename, tvs ? tv : शून्य, 0);
+पूर्ण
 
-SYSCALL_DEFINE5(osf_select, int, n, fd_set __user *, inp, fd_set __user *, outp,
-		fd_set __user *, exp, struct timeval32 __user *, tvp)
-{
-	struct timespec64 end_time, *to = NULL;
-	if (tvp) {
-		struct timespec64 tv;
-		to = &end_time;
+SYSCALL_DEFINE5(osf_select, पूर्णांक, n, fd_set __user *, inp, fd_set __user *, outp,
+		fd_set __user *, exp, काष्ठा समयval32 __user *, tvp)
+अणु
+	काष्ठा बारpec64 end_समय, *to = शून्य;
+	अगर (tvp) अणु
+		काष्ठा बारpec64 tv;
+		to = &end_समय;
 
-		if (get_tv32(&tv, tvp))
-		    	return -EFAULT;
+		अगर (get_tv32(&tv, tvp))
+		    	वापस -EFAULT;
 
-		if (tv.tv_sec < 0 || tv.tv_nsec < 0)
-			return -EINVAL;
+		अगर (tv.tv_sec < 0 || tv.tv_nsec < 0)
+			वापस -EINVAL;
 
-		if (poll_select_set_timeout(to, tv.tv_sec, tv.tv_nsec))
-			return -EINVAL;		
+		अगर (poll_select_set_समयout(to, tv.tv_sec, tv.tv_nsec))
+			वापस -EINVAL;		
 
-	}
+	पूर्ण
 
-	/* OSF does not copy back the remaining time.  */
-	return core_sys_select(n, inp, outp, exp, to);
-}
+	/* OSF करोes not copy back the reमुख्यing समय.  */
+	वापस core_sys_select(n, inp, outp, exp, to);
+पूर्ण
 
-struct rusage32 {
-	struct timeval32 ru_utime;	/* user time used */
-	struct timeval32 ru_stime;	/* system time used */
-	long	ru_maxrss;		/* maximum resident set size */
-	long	ru_ixrss;		/* integral shared memory size */
-	long	ru_idrss;		/* integral unshared data size */
-	long	ru_isrss;		/* integral unshared stack size */
-	long	ru_minflt;		/* page reclaims */
-	long	ru_majflt;		/* page faults */
-	long	ru_nswap;		/* swaps */
-	long	ru_inblock;		/* block input operations */
-	long	ru_oublock;		/* block output operations */
-	long	ru_msgsnd;		/* messages sent */
-	long	ru_msgrcv;		/* messages received */
-	long	ru_nsignals;		/* signals received */
-	long	ru_nvcsw;		/* voluntary context switches */
-	long	ru_nivcsw;		/* involuntary " */
-};
+काष्ठा rusage32 अणु
+	काष्ठा समयval32 ru_uसमय;	/* user समय used */
+	काष्ठा समयval32 ru_sसमय;	/* प्रणाली समय used */
+	दीर्घ	ru_maxrss;		/* maximum resident set size */
+	दीर्घ	ru_ixrss;		/* पूर्णांकegral shared memory size */
+	दीर्घ	ru_idrss;		/* पूर्णांकegral unshared data size */
+	दीर्घ	ru_isrss;		/* पूर्णांकegral unshared stack size */
+	दीर्घ	ru_minflt;		/* page reclaims */
+	दीर्घ	ru_majflt;		/* page faults */
+	दीर्घ	ru_nswap;		/* swaps */
+	दीर्घ	ru_inblock;		/* block input operations */
+	दीर्घ	ru_oublock;		/* block output operations */
+	दीर्घ	ru_msgsnd;		/* messages sent */
+	दीर्घ	ru_msgrcv;		/* messages received */
+	दीर्घ	ru_nसंकेतs;		/* संकेतs received */
+	दीर्घ	ru_nvcsw;		/* voluntary context चयनes */
+	दीर्घ	ru_nivcsw;		/* involuntary " */
+पूर्ण;
 
-SYSCALL_DEFINE2(osf_getrusage, int, who, struct rusage32 __user *, ru)
-{
-	struct rusage32 r;
-	u64 utime, stime;
-	unsigned long utime_jiffies, stime_jiffies;
+SYSCALL_DEFINE2(osf_getrusage, पूर्णांक, who, काष्ठा rusage32 __user *, ru)
+अणु
+	काष्ठा rusage32 r;
+	u64 uसमय, sसमय;
+	अचिन्हित दीर्घ uसमय_jअगरfies, sसमय_jअगरfies;
 
-	if (who != RUSAGE_SELF && who != RUSAGE_CHILDREN)
-		return -EINVAL;
+	अगर (who != RUSAGE_SELF && who != RUSAGE_CHILDREN)
+		वापस -EINVAL;
 
-	memset(&r, 0, sizeof(r));
-	switch (who) {
-	case RUSAGE_SELF:
-		task_cputime(current, &utime, &stime);
-		utime_jiffies = nsecs_to_jiffies(utime);
-		stime_jiffies = nsecs_to_jiffies(stime);
-		jiffies_to_timeval32(utime_jiffies, &r.ru_utime);
-		jiffies_to_timeval32(stime_jiffies, &r.ru_stime);
+	स_रखो(&r, 0, माप(r));
+	चयन (who) अणु
+	हाल RUSAGE_SELF:
+		task_cpuसमय(current, &uसमय, &sसमय);
+		uसमय_jअगरfies = nsecs_to_jअगरfies(uसमय);
+		sसमय_jअगरfies = nsecs_to_jअगरfies(sसमय);
+		jअगरfies_to_समयval32(uसमय_jअगरfies, &r.ru_uसमय);
+		jअगरfies_to_समयval32(sसमय_jअगरfies, &r.ru_sसमय);
 		r.ru_minflt = current->min_flt;
 		r.ru_majflt = current->maj_flt;
-		break;
-	case RUSAGE_CHILDREN:
-		utime_jiffies = nsecs_to_jiffies(current->signal->cutime);
-		stime_jiffies = nsecs_to_jiffies(current->signal->cstime);
-		jiffies_to_timeval32(utime_jiffies, &r.ru_utime);
-		jiffies_to_timeval32(stime_jiffies, &r.ru_stime);
-		r.ru_minflt = current->signal->cmin_flt;
-		r.ru_majflt = current->signal->cmaj_flt;
-		break;
-	}
+		अवरोध;
+	हाल RUSAGE_CHILDREN:
+		uसमय_jअगरfies = nsecs_to_jअगरfies(current->संकेत->cuसमय);
+		sसमय_jअगरfies = nsecs_to_jअगरfies(current->संकेत->csसमय);
+		jअगरfies_to_समयval32(uसमय_jअगरfies, &r.ru_uसमय);
+		jअगरfies_to_समयval32(sसमय_jअगरfies, &r.ru_sसमय);
+		r.ru_minflt = current->संकेत->cmin_flt;
+		r.ru_majflt = current->संकेत->cmaj_flt;
+		अवरोध;
+	पूर्ण
 
-	return copy_to_user(ru, &r, sizeof(r)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(ru, &r, माप(r)) ? -EFAULT : 0;
+पूर्ण
 
-SYSCALL_DEFINE4(osf_wait4, pid_t, pid, int __user *, ustatus, int, options,
-		struct rusage32 __user *, ur)
-{
-	struct rusage r;
-	long err = kernel_wait4(pid, ustatus, options, &r);
-	if (err <= 0)
-		return err;
-	if (!ur)
-		return err;
-	if (put_tv_to_tv32(&ur->ru_utime, &r.ru_utime))
-		return -EFAULT;
-	if (put_tv_to_tv32(&ur->ru_stime, &r.ru_stime))
-		return -EFAULT;
-	if (copy_to_user(&ur->ru_maxrss, &r.ru_maxrss,
-	      sizeof(struct rusage32) - offsetof(struct rusage32, ru_maxrss)))
-		return -EFAULT;
-	return err;
-}
+SYSCALL_DEFINE4(osf_रुको4, pid_t, pid, पूर्णांक __user *, ustatus, पूर्णांक, options,
+		काष्ठा rusage32 __user *, ur)
+अणु
+	काष्ठा rusage r;
+	दीर्घ err = kernel_रुको4(pid, ustatus, options, &r);
+	अगर (err <= 0)
+		वापस err;
+	अगर (!ur)
+		वापस err;
+	अगर (put_tv_to_tv32(&ur->ru_uसमय, &r.ru_uसमय))
+		वापस -EFAULT;
+	अगर (put_tv_to_tv32(&ur->ru_sसमय, &r.ru_sसमय))
+		वापस -EFAULT;
+	अगर (copy_to_user(&ur->ru_maxrss, &r.ru_maxrss,
+	      माप(काष्ठा rusage32) - दुरत्व(काष्ठा rusage32, ru_maxrss)))
+		वापस -EFAULT;
+	वापस err;
+पूर्ण
 
 /*
- * I don't know what the parameters are: the first one
- * seems to be a timeval pointer, and I suspect the second
- * one is the time remaining.. Ho humm.. No documentation.
+ * I करोn't know what the parameters are: the first one
+ * seems to be a समयval poपूर्णांकer, and I suspect the second
+ * one is the समय reमुख्यing.. Ho humm.. No करोcumentation.
  */
-SYSCALL_DEFINE2(osf_usleep_thread, struct timeval32 __user *, sleep,
-		struct timeval32 __user *, remain)
-{
-	struct timespec64 tmp;
-	unsigned long ticks;
+SYSCALL_DEFINE2(osf_usleep_thपढ़ो, काष्ठा समयval32 __user *, sleep,
+		काष्ठा समयval32 __user *, reमुख्य)
+अणु
+	काष्ठा बारpec64 पंचांगp;
+	अचिन्हित दीर्घ ticks;
 
-	if (get_tv32(&tmp, sleep))
-		goto fault;
+	अगर (get_tv32(&पंचांगp, sleep))
+		जाओ fault;
 
-	ticks = timespec64_to_jiffies(&tmp);
+	ticks = बारpec64_to_jअगरfies(&पंचांगp);
 
-	ticks = schedule_timeout_interruptible(ticks);
+	ticks = schedule_समयout_पूर्णांकerruptible(ticks);
 
-	if (remain) {
-		jiffies_to_timespec64(ticks, &tmp);
-		if (put_tv32(remain, &tmp))
-			goto fault;
-	}
+	अगर (reमुख्य) अणु
+		jअगरfies_to_बारpec64(ticks, &पंचांगp);
+		अगर (put_tv32(reमुख्य, &पंचांगp))
+			जाओ fault;
+	पूर्ण
 	
-	return 0;
+	वापस 0;
  fault:
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
 
-struct timex32 {
-	unsigned int modes;	/* mode selector */
-	long offset;		/* time offset (usec) */
-	long freq;		/* frequency offset (scaled ppm) */
-	long maxerror;		/* maximum error (usec) */
-	long esterror;		/* estimated error (usec) */
-	int status;		/* clock command/status */
-	long constant;		/* pll time constant */
-	long precision;		/* clock precision (usec) (read only) */
-	long tolerance;		/* clock frequency tolerance (ppm)
-				 * (read only)
+काष्ठा समयx32 अणु
+	अचिन्हित पूर्णांक modes;	/* mode selector */
+	दीर्घ offset;		/* समय offset (usec) */
+	दीर्घ freq;		/* frequency offset (scaled ppm) */
+	दीर्घ maxerror;		/* maximum error (usec) */
+	दीर्घ esterror;		/* estimated error (usec) */
+	पूर्णांक status;		/* घड़ी command/status */
+	दीर्घ स्थिरant;		/* pll समय स्थिरant */
+	दीर्घ precision;		/* घड़ी precision (usec) (पढ़ो only) */
+	दीर्घ tolerance;		/* घड़ी frequency tolerance (ppm)
+				 * (पढ़ो only)
 				 */
-	struct timeval32 time;	/* (read only) */
-	long tick;		/* (modified) usecs between clock ticks */
+	काष्ठा समयval32 समय;	/* (पढ़ो only) */
+	दीर्घ tick;		/* (modअगरied) usecs between घड़ी ticks */
 
-	long ppsfreq;           /* pps frequency (scaled ppm) (ro) */
-	long jitter;            /* pps jitter (us) (ro) */
-	int shift;              /* interval duration (s) (shift) (ro) */
-	long stabil;            /* pps stability (scaled ppm) (ro) */
-	long jitcnt;            /* jitter limit exceeded (ro) */
-	long calcnt;            /* calibration intervals (ro) */
-	long errcnt;            /* calibration errors (ro) */
-	long stbcnt;            /* stability limit exceeded (ro) */
+	दीर्घ ppsfreq;           /* pps frequency (scaled ppm) (ro) */
+	दीर्घ jitter;            /* pps jitter (us) (ro) */
+	पूर्णांक shअगरt;              /* पूर्णांकerval duration (s) (shअगरt) (ro) */
+	दीर्घ stabil;            /* pps stability (scaled ppm) (ro) */
+	दीर्घ jitcnt;            /* jitter limit exceeded (ro) */
+	दीर्घ calcnt;            /* calibration पूर्णांकervals (ro) */
+	दीर्घ errcnt;            /* calibration errors (ro) */
+	दीर्घ stbcnt;            /* stability limit exceeded (ro) */
 
-	int  :32; int  :32; int  :32; int  :32;
-	int  :32; int  :32; int  :32; int  :32;
-	int  :32; int  :32; int  :32; int  :32;
-};
+	पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32;
+	पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32;
+	पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32; पूर्णांक  :32;
+पूर्ण;
 
-SYSCALL_DEFINE1(old_adjtimex, struct timex32 __user *, txc_p)
-{
-	struct __kernel_timex txc;
-	int ret;
+SYSCALL_DEFINE1(old_adjसमयx, काष्ठा समयx32 __user *, txc_p)
+अणु
+	काष्ठा __kernel_समयx txc;
+	पूर्णांक ret;
 
-	/* copy relevant bits of struct timex. */
-	if (copy_from_user(&txc, txc_p, offsetof(struct timex32, time)) ||
-	    copy_from_user(&txc.tick, &txc_p->tick, sizeof(struct timex32) - 
-			   offsetof(struct timex32, tick)))
-	  return -EFAULT;
+	/* copy relevant bits of काष्ठा समयx. */
+	अगर (copy_from_user(&txc, txc_p, दुरत्व(काष्ठा समयx32, समय)) ||
+	    copy_from_user(&txc.tick, &txc_p->tick, माप(काष्ठा समयx32) - 
+			   दुरत्व(काष्ठा समयx32, tick)))
+	  वापस -EFAULT;
 
-	ret = do_adjtimex(&txc);	
-	if (ret < 0)
-	  return ret;
+	ret = करो_adjसमयx(&txc);	
+	अगर (ret < 0)
+	  वापस ret;
 	
-	/* copy back to timex32 */
-	if (copy_to_user(txc_p, &txc, offsetof(struct timex32, time)) ||
-	    (copy_to_user(&txc_p->tick, &txc.tick, sizeof(struct timex32) - 
-			  offsetof(struct timex32, tick))) ||
-	    (put_user(txc.time.tv_sec, &txc_p->time.tv_sec)) ||
-	    (put_user(txc.time.tv_usec, &txc_p->time.tv_usec)))
-	  return -EFAULT;
+	/* copy back to समयx32 */
+	अगर (copy_to_user(txc_p, &txc, दुरत्व(काष्ठा समयx32, समय)) ||
+	    (copy_to_user(&txc_p->tick, &txc.tick, माप(काष्ठा समयx32) - 
+			  दुरत्व(काष्ठा समयx32, tick))) ||
+	    (put_user(txc.समय.tv_sec, &txc_p->समय.tv_sec)) ||
+	    (put_user(txc.समय.tv_usec, &txc_p->समय.tv_usec)))
+	  वापस -EFAULT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Get an address range which is currently unmapped.  Similar to the
    generic version except that we know how to honor ADDR_LIMIT_32BIT.  */
 
-static unsigned long
-arch_get_unmapped_area_1(unsigned long addr, unsigned long len,
-		         unsigned long limit)
-{
-	struct vm_unmapped_area_info info;
+अटल अचिन्हित दीर्घ
+arch_get_unmapped_area_1(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+		         अचिन्हित दीर्घ limit)
+अणु
+	काष्ठा vm_unmapped_area_info info;
 
 	info.flags = 0;
 	info.length = len;
@@ -1227,143 +1228,143 @@ arch_get_unmapped_area_1(unsigned long addr, unsigned long len,
 	info.high_limit = limit;
 	info.align_mask = 0;
 	info.align_offset = 0;
-	return vm_unmapped_area(&info);
-}
+	वापस vm_unmapped_area(&info);
+पूर्ण
 
-unsigned long
-arch_get_unmapped_area(struct file *filp, unsigned long addr,
-		       unsigned long len, unsigned long pgoff,
-		       unsigned long flags)
-{
-	unsigned long limit;
+अचिन्हित दीर्घ
+arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr,
+		       अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff,
+		       अचिन्हित दीर्घ flags)
+अणु
+	अचिन्हित दीर्घ limit;
 
-	/* "32 bit" actually means 31 bit, since pointers sign extend.  */
-	if (current->personality & ADDR_LIMIT_32BIT)
+	/* "32 bit" actually means 31 bit, since poपूर्णांकers sign extend.  */
+	अगर (current->personality & ADDR_LIMIT_32BIT)
 		limit = 0x80000000;
-	else
+	अन्यथा
 		limit = TASK_SIZE;
 
-	if (len > limit)
-		return -ENOMEM;
+	अगर (len > limit)
+		वापस -ENOMEM;
 
-	if (flags & MAP_FIXED)
-		return addr;
+	अगर (flags & MAP_FIXED)
+		वापस addr;
 
-	/* First, see if the given suggestion fits.
+	/* First, see अगर the given suggestion fits.
 
-	   The OSF/1 loader (/sbin/loader) relies on us returning an
-	   address larger than the requested if one exists, which is
+	   The OSF/1 loader (/sbin/loader) relies on us वापसing an
+	   address larger than the requested अगर one exists, which is
 	   a terribly broken way to program.
 
 	   That said, I can see the use in being able to suggest not
-	   merely specific addresses, but regions of memory -- perhaps
-	   this feature should be incorporated into all ports?  */
+	   merely specअगरic addresses, but regions of memory -- perhaps
+	   this feature should be incorporated पूर्णांकo all ports?  */
 
-	if (addr) {
+	अगर (addr) अणु
 		addr = arch_get_unmapped_area_1 (PAGE_ALIGN(addr), len, limit);
-		if (addr != (unsigned long) -ENOMEM)
-			return addr;
-	}
+		अगर (addr != (अचिन्हित दीर्घ) -ENOMEM)
+			वापस addr;
+	पूर्ण
 
 	/* Next, try allocating at TASK_UNMAPPED_BASE.  */
 	addr = arch_get_unmapped_area_1 (PAGE_ALIGN(TASK_UNMAPPED_BASE),
 					 len, limit);
-	if (addr != (unsigned long) -ENOMEM)
-		return addr;
+	अगर (addr != (अचिन्हित दीर्घ) -ENOMEM)
+		वापस addr;
 
 	/* Finally, try allocating in low memory.  */
 	addr = arch_get_unmapped_area_1 (PAGE_SIZE, len, limit);
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-#ifdef CONFIG_OSF4_COMPAT
-/* Clear top 32 bits of iov_len in the user's buffer for
+#अगर_घोषित CONFIG_OSF4_COMPAT
+/* Clear top 32 bits of iov_len in the user's buffer क्रम
    compatibility with old versions of OSF/1 where iov_len
-   was defined as int. */
-static int
-osf_fix_iov_len(const struct iovec __user *iov, unsigned long count)
-{
-	unsigned long i;
+   was defined as पूर्णांक. */
+अटल पूर्णांक
+osf_fix_iov_len(स्थिर काष्ठा iovec __user *iov, अचिन्हित दीर्घ count)
+अणु
+	अचिन्हित दीर्घ i;
 
-	for (i = 0 ; i < count ; i++) {
-		int __user *iov_len_high = (int __user *)&iov[i].iov_len + 1;
+	क्रम (i = 0 ; i < count ; i++) अणु
+		पूर्णांक __user *iov_len_high = (पूर्णांक __user *)&iov[i].iov_len + 1;
 
-		if (put_user(0, iov_len_high))
-			return -EFAULT;
-	}
-	return 0;
-}
-#endif
+		अगर (put_user(0, iov_len_high))
+			वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-SYSCALL_DEFINE3(osf_readv, unsigned long, fd,
-		const struct iovec __user *, vector, unsigned long, count)
-{
-#ifdef CONFIG_OSF4_COMPAT
-	if (unlikely(personality(current->personality) == PER_OSF4))
-		if (osf_fix_iov_len(vector, count))
-			return -EFAULT;
-#endif
+SYSCALL_DEFINE3(osf_पढ़ोv, अचिन्हित दीर्घ, fd,
+		स्थिर काष्ठा iovec __user *, vector, अचिन्हित दीर्घ, count)
+अणु
+#अगर_घोषित CONFIG_OSF4_COMPAT
+	अगर (unlikely(personality(current->personality) == PER_OSF4))
+		अगर (osf_fix_iov_len(vector, count))
+			वापस -EFAULT;
+#पूर्ण_अगर
 
-	return sys_readv(fd, vector, count);
-}
+	वापस sys_पढ़ोv(fd, vector, count);
+पूर्ण
 
-SYSCALL_DEFINE3(osf_writev, unsigned long, fd,
-		const struct iovec __user *, vector, unsigned long, count)
-{
-#ifdef CONFIG_OSF4_COMPAT
-	if (unlikely(personality(current->personality) == PER_OSF4))
-		if (osf_fix_iov_len(vector, count))
-			return -EFAULT;
-#endif
-	return sys_writev(fd, vector, count);
-}
+SYSCALL_DEFINE3(osf_ग_लिखोv, अचिन्हित दीर्घ, fd,
+		स्थिर काष्ठा iovec __user *, vector, अचिन्हित दीर्घ, count)
+अणु
+#अगर_घोषित CONFIG_OSF4_COMPAT
+	अगर (unlikely(personality(current->personality) == PER_OSF4))
+		अगर (osf_fix_iov_len(vector, count))
+			वापस -EFAULT;
+#पूर्ण_अगर
+	वापस sys_ग_लिखोv(fd, vector, count);
+पूर्ण
 
-SYSCALL_DEFINE2(osf_getpriority, int, which, int, who)
-{
-	int prio = sys_getpriority(which, who);
-	if (prio >= 0) {
+SYSCALL_DEFINE2(osf_getpriority, पूर्णांक, which, पूर्णांक, who)
+अणु
+	पूर्णांक prio = sys_getpriority(which, who);
+	अगर (prio >= 0) अणु
 		/* Return value is the unbiased priority, i.e. 20 - prio.
-		   This does result in negative return values, so signal
+		   This करोes result in negative वापस values, so संकेत
 		   no error */
-		force_successful_syscall_return();
+		क्रमce_successful_syscall_वापस();
 		prio = 20 - prio;
-	}
-	return prio;
-}
+	पूर्ण
+	वापस prio;
+पूर्ण
 
 SYSCALL_DEFINE0(getxuid)
-{
+अणु
 	current_pt_regs()->r20 = sys_geteuid();
-	return sys_getuid();
-}
+	वापस sys_getuid();
+पूर्ण
 
 SYSCALL_DEFINE0(getxgid)
-{
+अणु
 	current_pt_regs()->r20 = sys_getegid();
-	return sys_getgid();
-}
+	वापस sys_getgid();
+पूर्ण
 
 SYSCALL_DEFINE0(getxpid)
-{
+अणु
 	current_pt_regs()->r20 = sys_getppid();
-	return sys_getpid();
-}
+	वापस sys_getpid();
+पूर्ण
 
 SYSCALL_DEFINE0(alpha_pipe)
-{
-	int fd[2];
-	int res = do_pipe_flags(fd, 0);
-	if (!res) {
-		/* The return values are in $0 and $20.  */
+अणु
+	पूर्णांक fd[2];
+	पूर्णांक res = करो_pipe_flags(fd, 0);
+	अगर (!res) अणु
+		/* The वापस values are in $0 and $20.  */
 		current_pt_regs()->r20 = fd[1];
 		res = fd[0];
-	}
-	return res;
-}
+	पूर्ण
+	वापस res;
+पूर्ण
 
-SYSCALL_DEFINE1(sethae, unsigned long, val)
-{
+SYSCALL_DEFINE1(sethae, अचिन्हित दीर्घ, val)
+अणु
 	current_pt_regs()->hae = val;
-	return 0;
-}
+	वापस 0;
+पूर्ण

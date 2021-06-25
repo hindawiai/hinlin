@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * addi_apci_3501.c
- * Copyright (C) 2004,2005  ADDI-DATA GmbH for the source code of this module.
+ * Copyright (C) 2004,2005  ADDI-DATA GmbH क्रम the source code of this module.
  * Project manager: Eric Stolz
  *
  *	ADDI-DATA GmbH
@@ -21,98 +22,98 @@
  * Updated: Mon, 20 Jun 2016 10:57:01 -0700
  * Status: untested
  *
- * Configuration Options: not applicable, uses comedi PCI auto config
+ * Configuration Options: not applicable, uses comedi PCI स्वतः config
  *
  * This board has the following features:
  *   - 4 or 8 analog output channels
- *   - 2 optically isolated digital inputs
- *   - 2 optically isolated digital outputs
- *   - 1 12-bit watchdog/timer
+ *   - 2 optically isolated digital inमाला_दो
+ *   - 2 optically isolated digital outमाला_दो
+ *   - 1 12-bit watchकरोg/समयr
  *
  * There are 2 versions of the APCI-3501:
  *   - APCI-3501-4  4 analog output channels
  *   - APCI-3501-8  8 analog output channels
  *
- * These boards use the same PCI Vendor/Device IDs. The number of output
- * channels used by this driver is determined by reading the EEPROM on
+ * These boards use the same PCI Venकरोr/Device IDs. The number of output
+ * channels used by this driver is determined by पढ़ोing the EEPROM on
  * the board.
  *
- * The watchdog/timer subdevice is not currently supported.
+ * The watchकरोg/समयr subdevice is not currently supported.
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include "../comedi_pci.h"
-#include "amcc_s5933.h"
+#समावेश "../comedi_pci.h"
+#समावेश "amcc_s5933.h"
 
 /*
- * PCI bar 1 register I/O map
+ * PCI bar 1 रेजिस्टर I/O map
  */
-#define APCI3501_AO_CTRL_STATUS_REG		0x00
-#define APCI3501_AO_CTRL_BIPOLAR		BIT(0)
-#define APCI3501_AO_STATUS_READY		BIT(8)
-#define APCI3501_AO_DATA_REG			0x04
-#define APCI3501_AO_DATA_CHAN(x)		((x) << 0)
-#define APCI3501_AO_DATA_VAL(x)			((x) << 8)
-#define APCI3501_AO_DATA_BIPOLAR		BIT(31)
-#define APCI3501_AO_TRIG_SCS_REG		0x08
-#define APCI3501_TIMER_BASE			0x20
-#define APCI3501_DO_REG				0x40
-#define APCI3501_DI_REG				0x50
+#घोषणा APCI3501_AO_CTRL_STATUS_REG		0x00
+#घोषणा APCI3501_AO_CTRL_BIPOLAR		BIT(0)
+#घोषणा APCI3501_AO_STATUS_READY		BIT(8)
+#घोषणा APCI3501_AO_DATA_REG			0x04
+#घोषणा APCI3501_AO_DATA_CHAN(x)		((x) << 0)
+#घोषणा APCI3501_AO_DATA_VAL(x)			((x) << 8)
+#घोषणा APCI3501_AO_DATA_BIPOLAR		BIT(31)
+#घोषणा APCI3501_AO_TRIG_SCS_REG		0x08
+#घोषणा APCI3501_TIMER_BASE			0x20
+#घोषणा APCI3501_DO_REG				0x40
+#घोषणा APCI3501_DI_REG				0x50
 
 /*
  * AMCC S5933 NVRAM
  */
-#define NVRAM_USER_DATA_START	0x100
+#घोषणा NVRAM_USER_DATA_START	0x100
 
-#define NVCMD_BEGIN_READ	(0x7 << 5)
-#define NVCMD_LOAD_LOW		(0x4 << 5)
-#define NVCMD_LOAD_HIGH		(0x5 << 5)
+#घोषणा NVCMD_BEGIN_READ	(0x7 << 5)
+#घोषणा NVCMD_LOAD_LOW		(0x4 << 5)
+#घोषणा NVCMD_LOAD_HIGH		(0x5 << 5)
 
 /*
  * Function types stored in the eeprom
  */
-#define EEPROM_DIGITALINPUT		0
-#define EEPROM_DIGITALOUTPUT		1
-#define EEPROM_ANALOGINPUT		2
-#define EEPROM_ANALOGOUTPUT		3
-#define EEPROM_TIMER			4
-#define EEPROM_WATCHDOG			5
-#define EEPROM_TIMER_WATCHDOG_COUNTER	10
+#घोषणा EEPROM_DIGITALINPUT		0
+#घोषणा EEPROM_DIGITALOUTPUT		1
+#घोषणा EEPROM_ANALOGINPUT		2
+#घोषणा EEPROM_ANALOGOUTPUT		3
+#घोषणा EEPROM_TIMER			4
+#घोषणा EEPROM_WATCHDOG			5
+#घोषणा EEPROM_TIMER_WATCHDOG_COUNTER	10
 
-struct apci3501_private {
-	unsigned long amcc;
-	unsigned char timer_mode;
-};
+काष्ठा apci3501_निजी अणु
+	अचिन्हित दीर्घ amcc;
+	अचिन्हित अक्षर समयr_mode;
+पूर्ण;
 
-static const struct comedi_lrange apci3501_ao_range = {
-	2, {
+अटल स्थिर काष्ठा comedi_lrange apci3501_ao_range = अणु
+	2, अणु
 		BIP_RANGE(10),
 		UNI_RANGE(10)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int apci3501_wait_for_dac(struct comedi_device *dev)
-{
-	unsigned int status;
+अटल पूर्णांक apci3501_रुको_क्रम_dac(काष्ठा comedi_device *dev)
+अणु
+	अचिन्हित पूर्णांक status;
 
-	do {
+	करो अणु
 		status = inl(dev->iobase + APCI3501_AO_CTRL_STATUS_REG);
-	} while (!(status & APCI3501_AO_STATUS_READY));
+	पूर्ण जबतक (!(status & APCI3501_AO_STATUS_READY));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apci3501_ao_insn_write(struct comedi_device *dev,
-				  struct comedi_subdevice *s,
-				  struct comedi_insn *insn,
-				  unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int range = CR_RANGE(insn->chanspec);
-	unsigned int cfg = APCI3501_AO_DATA_CHAN(chan);
-	int ret;
-	int i;
+अटल पूर्णांक apci3501_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s,
+				  काष्ठा comedi_insn *insn,
+				  अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
+	अचिन्हित पूर्णांक cfg = APCI3501_AO_DATA_CHAN(chan);
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	/*
 	 * All analog output channels have the same output range.
@@ -120,203 +121,203 @@ static int apci3501_ao_insn_write(struct comedi_device *dev,
 	 *	13-bit unipolar: +/-10V
 	 * Changing the range of one channel changes all of them!
 	 */
-	if (range) {
+	अगर (range) अणु
 		outl(0, dev->iobase + APCI3501_AO_CTRL_STATUS_REG);
-	} else {
+	पूर्ण अन्यथा अणु
 		cfg |= APCI3501_AO_DATA_BIPOLAR;
 		outl(APCI3501_AO_CTRL_BIPOLAR,
 		     dev->iobase + APCI3501_AO_CTRL_STATUS_REG);
-	}
+	पूर्ण
 
-	for (i = 0; i < insn->n; i++) {
-		unsigned int val = data[i];
+	क्रम (i = 0; i < insn->n; i++) अणु
+		अचिन्हित पूर्णांक val = data[i];
 
-		if (range == 1) {
-			if (data[i] > 0x1fff) {
+		अगर (range == 1) अणु
+			अगर (data[i] > 0x1fff) अणु
 				dev_err(dev->class_dev,
 					"Unipolar resolution is only 13-bits\n");
-				return -EINVAL;
-			}
-		}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 
-		ret = apci3501_wait_for_dac(dev);
-		if (ret)
-			return ret;
+		ret = apci3501_रुको_क्रम_dac(dev);
+		अगर (ret)
+			वापस ret;
 
 		outl(cfg | APCI3501_AO_DATA_VAL(val),
 		     dev->iobase + APCI3501_AO_DATA_REG);
 
-		s->readback[chan] = val;
-	}
+		s->पढ़ोback[chan] = val;
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int apci3501_di_insn_bits(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn,
-				 unsigned int *data)
-{
+अटल पूर्णांक apci3501_di_insn_bits(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn,
+				 अचिन्हित पूर्णांक *data)
+अणु
 	data[1] = inl(dev->iobase + APCI3501_DI_REG) & 0x3;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int apci3501_do_insn_bits(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn,
-				 unsigned int *data)
-{
+अटल पूर्णांक apci3501_करो_insn_bits(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn,
+				 अचिन्हित पूर्णांक *data)
+अणु
 	s->state = inl(dev->iobase + APCI3501_DO_REG);
 
-	if (comedi_dio_update_state(s, data))
+	अगर (comedi_dio_update_state(s, data))
 		outl(s->state, dev->iobase + APCI3501_DO_REG);
 
 	data[1] = s->state;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static void apci3501_eeprom_wait(unsigned long iobase)
-{
-	unsigned char val;
+अटल व्योम apci3501_eeprom_रुको(अचिन्हित दीर्घ iobase)
+अणु
+	अचिन्हित अक्षर val;
 
-	do {
+	करो अणु
 		val = inb(iobase + AMCC_OP_REG_MCSR_NVCMD);
-	} while (val & 0x80);
-}
+	पूर्ण जबतक (val & 0x80);
+पूर्ण
 
-static unsigned short apci3501_eeprom_readw(unsigned long iobase,
-					    unsigned short addr)
-{
-	unsigned short val = 0;
-	unsigned char tmp;
-	unsigned char i;
+अटल अचिन्हित लघु apci3501_eeprom_पढ़ोw(अचिन्हित दीर्घ iobase,
+					    अचिन्हित लघु addr)
+अणु
+	अचिन्हित लघु val = 0;
+	अचिन्हित अक्षर पंचांगp;
+	अचिन्हित अक्षर i;
 
 	/* Add the offset to the start of the user data */
 	addr += NVRAM_USER_DATA_START;
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		/* Load the low 8 bit address */
 		outb(NVCMD_LOAD_LOW, iobase + AMCC_OP_REG_MCSR_NVCMD);
-		apci3501_eeprom_wait(iobase);
+		apci3501_eeprom_रुको(iobase);
 		outb((addr + i) & 0xff, iobase + AMCC_OP_REG_MCSR_NVDATA);
-		apci3501_eeprom_wait(iobase);
+		apci3501_eeprom_रुको(iobase);
 
 		/* Load the high 8 bit address */
 		outb(NVCMD_LOAD_HIGH, iobase + AMCC_OP_REG_MCSR_NVCMD);
-		apci3501_eeprom_wait(iobase);
+		apci3501_eeprom_रुको(iobase);
 		outb(((addr + i) >> 8) & 0xff,
 		     iobase + AMCC_OP_REG_MCSR_NVDATA);
-		apci3501_eeprom_wait(iobase);
+		apci3501_eeprom_रुको(iobase);
 
 		/* Read the eeprom data byte */
 		outb(NVCMD_BEGIN_READ, iobase + AMCC_OP_REG_MCSR_NVCMD);
-		apci3501_eeprom_wait(iobase);
-		tmp = inb(iobase + AMCC_OP_REG_MCSR_NVDATA);
-		apci3501_eeprom_wait(iobase);
+		apci3501_eeprom_रुको(iobase);
+		पंचांगp = inb(iobase + AMCC_OP_REG_MCSR_NVDATA);
+		apci3501_eeprom_रुको(iobase);
 
-		if (i == 0)
-			val |= tmp;
-		else
-			val |= (tmp << 8);
-	}
+		अगर (i == 0)
+			val |= पंचांगp;
+		अन्यथा
+			val |= (पंचांगp << 8);
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int apci3501_eeprom_get_ao_n_chan(struct comedi_device *dev)
-{
-	struct apci3501_private *devpriv = dev->private;
-	unsigned char nfuncs;
-	int i;
+अटल पूर्णांक apci3501_eeprom_get_ao_n_chan(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा apci3501_निजी *devpriv = dev->निजी;
+	अचिन्हित अक्षर nfuncs;
+	पूर्णांक i;
 
-	nfuncs = apci3501_eeprom_readw(devpriv->amcc, 10) & 0xff;
+	nfuncs = apci3501_eeprom_पढ़ोw(devpriv->amcc, 10) & 0xff;
 
 	/* Read functionality details */
-	for (i = 0; i < nfuncs; i++) {
-		unsigned short offset = i * 4;
-		unsigned short addr;
-		unsigned char func;
-		unsigned short val;
+	क्रम (i = 0; i < nfuncs; i++) अणु
+		अचिन्हित लघु offset = i * 4;
+		अचिन्हित लघु addr;
+		अचिन्हित अक्षर func;
+		अचिन्हित लघु val;
 
-		func = apci3501_eeprom_readw(devpriv->amcc, 12 + offset) & 0x3f;
-		addr = apci3501_eeprom_readw(devpriv->amcc, 14 + offset);
+		func = apci3501_eeprom_पढ़ोw(devpriv->amcc, 12 + offset) & 0x3f;
+		addr = apci3501_eeprom_पढ़ोw(devpriv->amcc, 14 + offset);
 
-		if (func == EEPROM_ANALOGOUTPUT) {
-			val = apci3501_eeprom_readw(devpriv->amcc, addr + 10);
-			return (val >> 4) & 0x3ff;
-		}
-	}
-	return 0;
-}
+		अगर (func == EEPROM_ANALOGOUTPUT) अणु
+			val = apci3501_eeprom_पढ़ोw(devpriv->amcc, addr + 10);
+			वापस (val >> 4) & 0x3ff;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int apci3501_eeprom_insn_read(struct comedi_device *dev,
-				     struct comedi_subdevice *s,
-				     struct comedi_insn *insn,
-				     unsigned int *data)
-{
-	struct apci3501_private *devpriv = dev->private;
-	unsigned short addr = CR_CHAN(insn->chanspec);
-	unsigned int val;
-	unsigned int i;
+अटल पूर्णांक apci3501_eeprom_insn_पढ़ो(काष्ठा comedi_device *dev,
+				     काष्ठा comedi_subdevice *s,
+				     काष्ठा comedi_insn *insn,
+				     अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा apci3501_निजी *devpriv = dev->निजी;
+	अचिन्हित लघु addr = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक val;
+	अचिन्हित पूर्णांक i;
 
-	if (insn->n) {
-		/* No point reading the same EEPROM location more than once. */
-		val = apci3501_eeprom_readw(devpriv->amcc, 2 * addr);
-		for (i = 0; i < insn->n; i++)
+	अगर (insn->n) अणु
+		/* No poपूर्णांक पढ़ोing the same EEPROM location more than once. */
+		val = apci3501_eeprom_पढ़ोw(devpriv->amcc, 2 * addr);
+		क्रम (i = 0; i < insn->n; i++)
 			data[i] = val;
-	}
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int apci3501_reset(struct comedi_device *dev)
-{
-	unsigned int val;
-	int chan;
-	int ret;
+अटल पूर्णांक apci3501_reset(काष्ठा comedi_device *dev)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक chan;
+	पूर्णांक ret;
 
-	/* Reset all digital outputs to "0" */
+	/* Reset all digital outमाला_दो to "0" */
 	outl(0x0, dev->iobase + APCI3501_DO_REG);
 
-	/* Default all analog outputs to 0V (bipolar) */
+	/* Default all analog outमाला_दो to 0V (bipolar) */
 	outl(APCI3501_AO_CTRL_BIPOLAR,
 	     dev->iobase + APCI3501_AO_CTRL_STATUS_REG);
 	val = APCI3501_AO_DATA_BIPOLAR | APCI3501_AO_DATA_VAL(0);
 
 	/* Set all analog output channels */
-	for (chan = 0; chan < 8; chan++) {
-		ret = apci3501_wait_for_dac(dev);
-		if (ret) {
+	क्रम (chan = 0; chan < 8; chan++) अणु
+		ret = apci3501_रुको_क्रम_dac(dev);
+		अगर (ret) अणु
 			dev_warn(dev->class_dev,
 				 "%s: DAC not-ready for channel %i\n",
 				 __func__, chan);
-		} else {
+		पूर्ण अन्यथा अणु
 			outl(val | APCI3501_AO_DATA_CHAN(chan),
 			     dev->iobase + APCI3501_AO_DATA_REG);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apci3501_auto_attach(struct comedi_device *dev,
-				unsigned long context_unused)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	struct apci3501_private *devpriv;
-	struct comedi_subdevice *s;
-	int ao_n_chan;
-	int ret;
+अटल पूर्णांक apci3501_स्वतः_attach(काष्ठा comedi_device *dev,
+				अचिन्हित दीर्घ context_unused)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	काष्ठा apci3501_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ao_n_chan;
+	पूर्णांक ret;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	ret = comedi_pci_enable(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	devpriv->amcc = pci_resource_start(pcidev, 0);
 	dev->iobase = pci_resource_start(pcidev, 1);
@@ -324,25 +325,25 @@ static int apci3501_auto_attach(struct comedi_device *dev,
 	ao_n_chan = apci3501_eeprom_get_ao_n_chan(dev);
 
 	ret = comedi_alloc_subdevices(dev, 5);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Initialize the analog output subdevice */
 	s = &dev->subdevices[0];
-	if (ao_n_chan) {
+	अगर (ao_n_chan) अणु
 		s->type		= COMEDI_SUBD_AO;
 		s->subdev_flags	= SDF_WRITABLE | SDF_GROUND | SDF_COMMON;
 		s->n_chan	= ao_n_chan;
 		s->maxdata	= 0x3fff;
 		s->range_table	= &apci3501_ao_range;
-		s->insn_write	= apci3501_ao_insn_write;
+		s->insn_ग_लिखो	= apci3501_ao_insn_ग_लिखो;
 
-		ret = comedi_alloc_subdev_readback(s);
-		if (ret)
-			return ret;
-	} else {
+		ret = comedi_alloc_subdev_पढ़ोback(s);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		s->type		= COMEDI_SUBD_UNUSED;
-	}
+	पूर्ण
 
 	/* Initialize the digital input subdevice */
 	s = &dev->subdevices[1];
@@ -360,9 +361,9 @@ static int apci3501_auto_attach(struct comedi_device *dev,
 	s->n_chan	= 2;
 	s->maxdata	= 1;
 	s->range_table	= &range_digital;
-	s->insn_bits	= apci3501_do_insn_bits;
+	s->insn_bits	= apci3501_करो_insn_bits;
 
-	/* Timer/Watchdog subdevice */
+	/* Timer/Watchकरोg subdevice */
 	s = &dev->subdevices[3];
 	s->type		= COMEDI_SUBD_UNUSED;
 
@@ -372,44 +373,44 @@ static int apci3501_auto_attach(struct comedi_device *dev,
 	s->subdev_flags	= SDF_READABLE | SDF_INTERNAL;
 	s->n_chan	= 256;
 	s->maxdata	= 0xffff;
-	s->insn_read	= apci3501_eeprom_insn_read;
+	s->insn_पढ़ो	= apci3501_eeprom_insn_पढ़ो;
 
 	apci3501_reset(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void apci3501_detach(struct comedi_device *dev)
-{
-	if (dev->iobase)
+अटल व्योम apci3501_detach(काष्ठा comedi_device *dev)
+अणु
+	अगर (dev->iobase)
 		apci3501_reset(dev);
 	comedi_pci_detach(dev);
-}
+पूर्ण
 
-static struct comedi_driver apci3501_driver = {
+अटल काष्ठा comedi_driver apci3501_driver = अणु
 	.driver_name	= "addi_apci_3501",
 	.module		= THIS_MODULE,
-	.auto_attach	= apci3501_auto_attach,
+	.स्वतः_attach	= apci3501_स्वतः_attach,
 	.detach		= apci3501_detach,
-};
+पूर्ण;
 
-static int apci3501_pci_probe(struct pci_dev *dev,
-			      const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &apci3501_driver, id->driver_data);
-}
+अटल पूर्णांक apci3501_pci_probe(काष्ठा pci_dev *dev,
+			      स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &apci3501_driver, id->driver_data);
+पूर्ण
 
-static const struct pci_device_id apci3501_pci_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_ADDIDATA, 0x3001) },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id apci3501_pci_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ADDIDATA, 0x3001) पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, apci3501_pci_table);
 
-static struct pci_driver apci3501_pci_driver = {
+अटल काष्ठा pci_driver apci3501_pci_driver = अणु
 	.name		= "addi_apci_3501",
 	.id_table	= apci3501_pci_table,
 	.probe		= apci3501_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(apci3501_driver, apci3501_pci_driver);
 
 MODULE_DESCRIPTION("ADDI-DATA APCI-3501 Analog output board");

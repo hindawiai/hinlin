@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_MMIOWB_H
-#define _ASM_MMIOWB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_MMIOWB_H
+#घोषणा _ASM_MMIOWB_H
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#define mmiowb()	iobarrier_w()
+#घोषणा mmiowb()	iobarrier_w()
 
-#include <asm-generic/mmiowb.h>
+#समावेश <यंत्र-generic/mmiowb.h>
 
-#endif	/* _ASM_MMIOWB_H */
+#पूर्ण_अगर	/* _ASM_MMIOWB_H */

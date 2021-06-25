@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_OWNER_MATCH_H
-#define _XT_OWNER_MATCH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_OWNER_MATCH_H
+#घोषणा _XT_OWNER_MATCH_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum {
+क्रमागत अणु
 	XT_OWNER_UID          = 1 << 0,
 	XT_OWNER_GID          = 1 << 1,
 	XT_OWNER_SOCKET       = 1 << 2,
 	XT_OWNER_SUPPL_GROUPS = 1 << 3,
-};
+पूर्ण;
 
-#define XT_OWNER_MASK	(XT_OWNER_UID | 	\
+#घोषणा XT_OWNER_MASK	(XT_OWNER_UID | 	\
 			 XT_OWNER_GID | 	\
 			 XT_OWNER_SOCKET |	\
 			 XT_OWNER_SUPPL_GROUPS)
 
-struct xt_owner_match_info {
+काष्ठा xt_owner_match_info अणु
 	__u32 uid_min, uid_max;
 	__u32 gid_min, gid_max;
 	__u8 match, invert;
-};
+पूर्ण;
 
-#endif /* _XT_OWNER_MATCH_H */
+#पूर्ण_अगर /* _XT_OWNER_MATCH_H */

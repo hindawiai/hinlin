@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *    ebcdic keycode functions for s390 console drivers
+ *    ebcdic keycode functions क्रम s390 console drivers
  *
  *  S390 version
  *    Copyright IBM Corp. 2003
  *    Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com),
  */
 
-#include <linux/module.h>
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
-#include <linux/sysrq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysrq.h>
 
-#include <linux/consolemap.h>
-#include <linux/kbd_kern.h>
-#include <linux/kbd_diacr.h>
-#include <linux/uaccess.h>
+#समावेश <linux/consolemap.h>
+#समावेश <linux/kbd_kern.h>
+#समावेश <linux/kbd_diacr.h>
+#समावेश <linux/uaccess.h>
 
-#include "keyboard.h"
+#समावेश "keyboard.h"
 
 /*
  * Handler Tables.
  */
-#define K_HANDLERS\
+#घोषणा K_HANDLERS\
 	k_self,		k_fn,		k_spec,		k_ignore,\
 	k_dead,		k_ignore,	k_ignore,	k_ignore,\
 	k_ignore,	k_ignore,	k_ignore,	k_ignore,\
 	k_ignore,	k_ignore,	k_ignore,	k_ignore
 
-typedef void (k_handler_fn)(struct kbd_data *, unsigned char);
-static k_handler_fn K_HANDLERS;
-static k_handler_fn *k_handler[16] = { K_HANDLERS };
+प्रकार व्योम (k_handler_fn)(काष्ठा kbd_data *, अचिन्हित अक्षर);
+अटल k_handler_fn K_HANDLERS;
+अटल k_handler_fn *k_handler[16] = अणु K_HANDLERS पूर्ण;
 
 /* maximum values each key_handler can handle */
-static const int kbd_max_vals[] = {
+अटल स्थिर पूर्णांक kbd_max_vals[] = अणु
 	255, ARRAY_SIZE(func_table) - 1, NR_FN_HANDLER - 1, 0,
 	NR_DEAD - 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
-static const int KBD_NR_TYPES = ARRAY_SIZE(kbd_max_vals);
+पूर्ण;
+अटल स्थिर पूर्णांक KBD_NR_TYPES = ARRAY_SIZE(kbd_max_vals);
 
-static const unsigned char ret_diacr[NR_DEAD] = {
+अटल स्थिर अचिन्हित अक्षर ret_diacr[NR_DEAD] = अणु
 	'`',	/* dead_grave */
 	'\'',	/* dead_acute */
 	'^',	/* dead_circumflex */
@@ -48,532 +49,532 @@ static const unsigned char ret_diacr[NR_DEAD] = {
 	',',	/* dead_cedilla */
 	'_',	/* dead_macron */
 	'U',	/* dead_breve */
-	'.',	/* dead_abovedot */
+	'.',	/* dead_aboveकरोt */
 	'*',	/* dead_abovering */
-	'=',	/* dead_doubleacute */
+	'=',	/* dead_द्विगुनacute */
 	'c',	/* dead_caron */
 	'k',	/* dead_ogonek */
 	'i',	/* dead_iota */
 	'#',	/* dead_voiced_sound */
 	'o',	/* dead_semivoiced_sound */
-	'!',	/* dead_belowdot */
+	'!',	/* dead_belowकरोt */
 	'?',	/* dead_hook */
 	'+',	/* dead_horn */
 	'-',	/* dead_stroke */
 	')',	/* dead_abovecomma */
 	'(',	/* dead_abovereversedcomma */
-	':',	/* dead_doublegrave */
+	':',	/* dead_द्विगुनgrave */
 	'n',	/* dead_invertedbreve */
 	';',	/* dead_belowcomma */
 	'$',	/* dead_currency */
 	'@',	/* dead_greek */
-};
+पूर्ण;
 
 /*
- * Alloc/free of kbd_data structures.
+ * Alloc/मुक्त of kbd_data काष्ठाures.
  */
-struct kbd_data *
-kbd_alloc(void) {
-	struct kbd_data *kbd;
-	int i;
+काष्ठा kbd_data *
+kbd_alloc(व्योम) अणु
+	काष्ठा kbd_data *kbd;
+	पूर्णांक i;
 
-	kbd = kzalloc(sizeof(struct kbd_data), GFP_KERNEL);
-	if (!kbd)
-		goto out;
-	kbd->key_maps = kzalloc(sizeof(ebc_key_maps), GFP_KERNEL);
-	if (!kbd->key_maps)
-		goto out_kbd;
-	for (i = 0; i < ARRAY_SIZE(ebc_key_maps); i++) {
-		if (ebc_key_maps[i]) {
+	kbd = kzalloc(माप(काष्ठा kbd_data), GFP_KERNEL);
+	अगर (!kbd)
+		जाओ out;
+	kbd->key_maps = kzalloc(माप(ebc_key_maps), GFP_KERNEL);
+	अगर (!kbd->key_maps)
+		जाओ out_kbd;
+	क्रम (i = 0; i < ARRAY_SIZE(ebc_key_maps); i++) अणु
+		अगर (ebc_key_maps[i]) अणु
 			kbd->key_maps[i] = kmemdup(ebc_key_maps[i],
-						   sizeof(u_short) * NR_KEYS,
+						   माप(u_लघु) * NR_KEYS,
 						   GFP_KERNEL);
-			if (!kbd->key_maps[i])
-				goto out_maps;
-		}
-	}
-	kbd->func_table = kzalloc(sizeof(ebc_func_table), GFP_KERNEL);
-	if (!kbd->func_table)
-		goto out_maps;
-	for (i = 0; i < ARRAY_SIZE(ebc_func_table); i++) {
-		if (ebc_func_table[i]) {
+			अगर (!kbd->key_maps[i])
+				जाओ out_maps;
+		पूर्ण
+	पूर्ण
+	kbd->func_table = kzalloc(माप(ebc_func_table), GFP_KERNEL);
+	अगर (!kbd->func_table)
+		जाओ out_maps;
+	क्रम (i = 0; i < ARRAY_SIZE(ebc_func_table); i++) अणु
+		अगर (ebc_func_table[i]) अणु
 			kbd->func_table[i] = kstrdup(ebc_func_table[i],
 						     GFP_KERNEL);
-			if (!kbd->func_table[i])
-				goto out_func;
-		}
-	}
+			अगर (!kbd->func_table[i])
+				जाओ out_func;
+		पूर्ण
+	पूर्ण
 	kbd->fn_handler =
-		kcalloc(NR_FN_HANDLER, sizeof(fn_handler_fn *), GFP_KERNEL);
-	if (!kbd->fn_handler)
-		goto out_func;
+		kसुस्मृति(NR_FN_HANDLER, माप(fn_handler_fn *), GFP_KERNEL);
+	अगर (!kbd->fn_handler)
+		जाओ out_func;
 	kbd->accent_table = kmemdup(ebc_accent_table,
-				    sizeof(struct kbdiacruc) * MAX_DIACR,
+				    माप(काष्ठा kbdiacruc) * MAX_DIACR,
 				    GFP_KERNEL);
-	if (!kbd->accent_table)
-		goto out_fn_handler;
+	अगर (!kbd->accent_table)
+		जाओ out_fn_handler;
 	kbd->accent_table_size = ebc_accent_table_size;
-	return kbd;
+	वापस kbd;
 
 out_fn_handler:
-	kfree(kbd->fn_handler);
+	kमुक्त(kbd->fn_handler);
 out_func:
-	for (i = 0; i < ARRAY_SIZE(ebc_func_table); i++)
-		kfree(kbd->func_table[i]);
-	kfree(kbd->func_table);
+	क्रम (i = 0; i < ARRAY_SIZE(ebc_func_table); i++)
+		kमुक्त(kbd->func_table[i]);
+	kमुक्त(kbd->func_table);
 out_maps:
-	for (i = 0; i < ARRAY_SIZE(ebc_key_maps); i++)
-		kfree(kbd->key_maps[i]);
-	kfree(kbd->key_maps);
+	क्रम (i = 0; i < ARRAY_SIZE(ebc_key_maps); i++)
+		kमुक्त(kbd->key_maps[i]);
+	kमुक्त(kbd->key_maps);
 out_kbd:
-	kfree(kbd);
+	kमुक्त(kbd);
 out:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void
-kbd_free(struct kbd_data *kbd)
-{
-	int i;
+व्योम
+kbd_मुक्त(काष्ठा kbd_data *kbd)
+अणु
+	पूर्णांक i;
 
-	kfree(kbd->accent_table);
-	kfree(kbd->fn_handler);
-	for (i = 0; i < ARRAY_SIZE(ebc_func_table); i++)
-		kfree(kbd->func_table[i]);
-	kfree(kbd->func_table);
-	for (i = 0; i < ARRAY_SIZE(ebc_key_maps); i++)
-		kfree(kbd->key_maps[i]);
-	kfree(kbd->key_maps);
-	kfree(kbd);
-}
+	kमुक्त(kbd->accent_table);
+	kमुक्त(kbd->fn_handler);
+	क्रम (i = 0; i < ARRAY_SIZE(ebc_func_table); i++)
+		kमुक्त(kbd->func_table[i]);
+	kमुक्त(kbd->func_table);
+	क्रम (i = 0; i < ARRAY_SIZE(ebc_key_maps); i++)
+		kमुक्त(kbd->key_maps[i]);
+	kमुक्त(kbd->key_maps);
+	kमुक्त(kbd);
+पूर्ण
 
 /*
  * Generate ascii -> ebcdic translation table from kbd_data.
  */
-void
-kbd_ascebc(struct kbd_data *kbd, unsigned char *ascebc)
-{
-	unsigned short *keymap, keysym;
-	int i, j, k;
+व्योम
+kbd_ascebc(काष्ठा kbd_data *kbd, अचिन्हित अक्षर *ascebc)
+अणु
+	अचिन्हित लघु *keymap, keysym;
+	पूर्णांक i, j, k;
 
-	memset(ascebc, 0x40, 256);
-	for (i = 0; i < ARRAY_SIZE(ebc_key_maps); i++) {
+	स_रखो(ascebc, 0x40, 256);
+	क्रम (i = 0; i < ARRAY_SIZE(ebc_key_maps); i++) अणु
 		keymap = kbd->key_maps[i];
-		if (!keymap)
-			continue;
-		for (j = 0; j < NR_KEYS; j++) {
+		अगर (!keymap)
+			जारी;
+		क्रम (j = 0; j < NR_KEYS; j++) अणु
 			k = ((i & 1) << 7) + j;
 			keysym = keymap[j];
-			if (KTYP(keysym) == (KT_LATIN | 0xf0) ||
+			अगर (KTYP(keysym) == (KT_LATIN | 0xf0) ||
 			    KTYP(keysym) == (KT_LETTER | 0xf0))
 				ascebc[KVAL(keysym)] = k;
-			else if (KTYP(keysym) == (KT_DEAD | 0xf0))
+			अन्यथा अगर (KTYP(keysym) == (KT_DEAD | 0xf0))
 				ascebc[ret_diacr[KVAL(keysym)]] = k;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#if 0
+#अगर 0
 /*
  * Generate ebcdic -> ascii translation table from kbd_data.
  */
-void
-kbd_ebcasc(struct kbd_data *kbd, unsigned char *ebcasc)
-{
-	unsigned short *keymap, keysym;
-	int i, j, k;
+व्योम
+kbd_ebcasc(काष्ठा kbd_data *kbd, अचिन्हित अक्षर *ebcasc)
+अणु
+	अचिन्हित लघु *keymap, keysym;
+	पूर्णांक i, j, k;
 
-	memset(ebcasc, ' ', 256);
-	for (i = 0; i < ARRAY_SIZE(ebc_key_maps); i++) {
+	स_रखो(ebcasc, ' ', 256);
+	क्रम (i = 0; i < ARRAY_SIZE(ebc_key_maps); i++) अणु
 		keymap = kbd->key_maps[i];
-		if (!keymap)
-			continue;
-		for (j = 0; j < NR_KEYS; j++) {
+		अगर (!keymap)
+			जारी;
+		क्रम (j = 0; j < NR_KEYS; j++) अणु
 			keysym = keymap[j];
 			k = ((i & 1) << 7) + j;
-			if (KTYP(keysym) == (KT_LATIN | 0xf0) ||
+			अगर (KTYP(keysym) == (KT_LATIN | 0xf0) ||
 			    KTYP(keysym) == (KT_LETTER | 0xf0))
 				ebcasc[k] = KVAL(keysym);
-			else if (KTYP(keysym) == (KT_DEAD | 0xf0))
+			अन्यथा अगर (KTYP(keysym) == (KT_DEAD | 0xf0))
 				ebcasc[k] = ret_diacr[KVAL(keysym)];
-		}
-	}
-}
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * We have a combining character DIACR here, followed by the character CH.
- * If the combination occurs in the table, return the corresponding value.
- * Otherwise, if CH is a space or equals DIACR, return DIACR.
+ * We have a combining अक्षरacter DIACR here, followed by the अक्षरacter CH.
+ * If the combination occurs in the table, वापस the corresponding value.
+ * Otherwise, अगर CH is a space or equals DIACR, वापस DIACR.
  * Otherwise, conclude that DIACR was not combining after all,
- * queue it and return CH.
+ * queue it and वापस CH.
  */
-static unsigned int
-handle_diacr(struct kbd_data *kbd, unsigned int ch)
-{
-	int i, d;
+अटल अचिन्हित पूर्णांक
+handle_diacr(काष्ठा kbd_data *kbd, अचिन्हित पूर्णांक ch)
+अणु
+	पूर्णांक i, d;
 
 	d = kbd->diacr;
 	kbd->diacr = 0;
 
-	for (i = 0; i < kbd->accent_table_size; i++) {
-		if (kbd->accent_table[i].diacr == d &&
+	क्रम (i = 0; i < kbd->accent_table_size; i++) अणु
+		अगर (kbd->accent_table[i].diacr == d &&
 		    kbd->accent_table[i].base == ch)
-			return kbd->accent_table[i].result;
-	}
+			वापस kbd->accent_table[i].result;
+	पूर्ण
 
-	if (ch == ' ' || ch == d)
-		return d;
+	अगर (ch == ' ' || ch == d)
+		वापस d;
 
 	kbd_put_queue(kbd->port, d);
-	return ch;
-}
+	वापस ch;
+पूर्ण
 
 /*
  * Handle dead key.
  */
-static void
-k_dead(struct kbd_data *kbd, unsigned char value)
-{
+अटल व्योम
+k_dead(काष्ठा kbd_data *kbd, अचिन्हित अक्षर value)
+अणु
 	value = ret_diacr[value];
 	kbd->diacr = (kbd->diacr ? handle_diacr(kbd, value) : value);
-}
+पूर्ण
 
 /*
- * Normal character handler.
+ * Normal अक्षरacter handler.
  */
-static void
-k_self(struct kbd_data *kbd, unsigned char value)
-{
-	if (kbd->diacr)
+अटल व्योम
+k_self(काष्ठा kbd_data *kbd, अचिन्हित अक्षर value)
+अणु
+	अगर (kbd->diacr)
 		value = handle_diacr(kbd, value);
 	kbd_put_queue(kbd->port, value);
-}
+पूर्ण
 
 /*
  * Special key handlers
  */
-static void
-k_ignore(struct kbd_data *kbd, unsigned char value)
-{
-}
+अटल व्योम
+k_ignore(काष्ठा kbd_data *kbd, अचिन्हित अक्षर value)
+अणु
+पूर्ण
 
 /*
  * Function key handler.
  */
-static void
-k_fn(struct kbd_data *kbd, unsigned char value)
-{
-	if (kbd->func_table[value])
-		kbd_puts_queue(kbd->port, kbd->func_table[value]);
-}
+अटल व्योम
+k_fn(काष्ठा kbd_data *kbd, अचिन्हित अक्षर value)
+अणु
+	अगर (kbd->func_table[value])
+		kbd_माला_दो_queue(kbd->port, kbd->func_table[value]);
+पूर्ण
 
-static void
-k_spec(struct kbd_data *kbd, unsigned char value)
-{
-	if (value >= NR_FN_HANDLER)
-		return;
-	if (kbd->fn_handler[value])
+अटल व्योम
+k_spec(काष्ठा kbd_data *kbd, अचिन्हित अक्षर value)
+अणु
+	अगर (value >= NR_FN_HANDLER)
+		वापस;
+	अगर (kbd->fn_handler[value])
 		kbd->fn_handler[value](kbd);
-}
+पूर्ण
 
 /*
- * Put utf8 character to tty flip buffer.
- * UTF-8 is defined for words of up to 31 bits,
+ * Put utf8 अक्षरacter to tty flip buffer.
+ * UTF-8 is defined क्रम words of up to 31 bits,
  * but we need only 16 bits here
  */
-static void
-to_utf8(struct tty_port *port, ushort c)
-{
-	if (c < 0x80)
+अटल व्योम
+to_utf8(काष्ठा tty_port *port, uलघु c)
+अणु
+	अगर (c < 0x80)
 		/*  0******* */
 		kbd_put_queue(port, c);
-	else if (c < 0x800) {
+	अन्यथा अगर (c < 0x800) अणु
 		/* 110***** 10****** */
 		kbd_put_queue(port, 0xc0 | (c >> 6));
 		kbd_put_queue(port, 0x80 | (c & 0x3f));
-	} else {
+	पूर्ण अन्यथा अणु
 		/* 1110**** 10****** 10****** */
 		kbd_put_queue(port, 0xe0 | (c >> 12));
 		kbd_put_queue(port, 0x80 | ((c >> 6) & 0x3f));
 		kbd_put_queue(port, 0x80 | (c & 0x3f));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Process keycode.
  */
-void
-kbd_keycode(struct kbd_data *kbd, unsigned int keycode)
-{
-	unsigned short keysym;
-	unsigned char type, value;
+व्योम
+kbd_keycode(काष्ठा kbd_data *kbd, अचिन्हित पूर्णांक keycode)
+अणु
+	अचिन्हित लघु keysym;
+	अचिन्हित अक्षर type, value;
 
-	if (!kbd)
-		return;
+	अगर (!kbd)
+		वापस;
 
-	if (keycode >= 384)
+	अगर (keycode >= 384)
 		keysym = kbd->key_maps[5][keycode - 384];
-	else if (keycode >= 256)
+	अन्यथा अगर (keycode >= 256)
 		keysym = kbd->key_maps[4][keycode - 256];
-	else if (keycode >= 128)
+	अन्यथा अगर (keycode >= 128)
 		keysym = kbd->key_maps[1][keycode - 128];
-	else
+	अन्यथा
 		keysym = kbd->key_maps[0][keycode];
 
 	type = KTYP(keysym);
-	if (type >= 0xf0) {
+	अगर (type >= 0xf0) अणु
 		type -= 0xf0;
-		if (type == KT_LETTER)
+		अगर (type == KT_LETTER)
 			type = KT_LATIN;
 		value = KVAL(keysym);
-#ifdef CONFIG_MAGIC_SYSRQ	       /* Handle the SysRq Hack */
-		if (kbd->sysrq) {
-			if (kbd->sysrq == K(KT_LATIN, '-')) {
+#अगर_घोषित CONFIG_MAGIC_SYSRQ	       /* Handle the SysRq Hack */
+		अगर (kbd->sysrq) अणु
+			अगर (kbd->sysrq == K(KT_LATIN, '-')) अणु
 				kbd->sysrq = 0;
 				handle_sysrq(value);
-				return;
-			}
-			if (value == '-') {
+				वापस;
+			पूर्ण
+			अगर (value == '-') अणु
 				kbd->sysrq = K(KT_LATIN, '-');
-				return;
-			}
+				वापस;
+			पूर्ण
 			/* Incomplete sysrq sequence. */
 			(*k_handler[KTYP(kbd->sysrq)])(kbd, KVAL(kbd->sysrq));
 			kbd->sysrq = 0;
-		} else if ((type == KT_LATIN && value == '^') ||
-			   (type == KT_DEAD && ret_diacr[value] == '^')) {
+		पूर्ण अन्यथा अगर ((type == KT_LATIN && value == '^') ||
+			   (type == KT_DEAD && ret_diacr[value] == '^')) अणु
 			kbd->sysrq = K(type, value);
-			return;
-		}
-#endif
+			वापस;
+		पूर्ण
+#पूर्ण_अगर
 		(*k_handler[type])(kbd, value);
-	} else
+	पूर्ण अन्यथा
 		to_utf8(kbd->port, keysym);
-}
+पूर्ण
 
 /*
  * Ioctl stuff.
  */
-static int
-do_kdsk_ioctl(struct kbd_data *kbd, struct kbentry __user *user_kbe,
-	      int cmd, int perm)
-{
-	struct kbentry tmp;
-	unsigned long kb_index, kb_table;
-	ushort *key_map, val, ov;
+अटल पूर्णांक
+करो_kdsk_ioctl(काष्ठा kbd_data *kbd, काष्ठा kbentry __user *user_kbe,
+	      पूर्णांक cmd, पूर्णांक perm)
+अणु
+	काष्ठा kbentry पंचांगp;
+	अचिन्हित दीर्घ kb_index, kb_table;
+	uलघु *key_map, val, ov;
 
-	if (copy_from_user(&tmp, user_kbe, sizeof(struct kbentry)))
-		return -EFAULT;
-	kb_index = (unsigned long) tmp.kb_index;
-#if NR_KEYS < 256
-	if (kb_index >= NR_KEYS)
-		return -EINVAL;
-#endif
-	kb_table = (unsigned long) tmp.kb_table;
-#if MAX_NR_KEYMAPS < 256
-	if (kb_table >= MAX_NR_KEYMAPS)
-		return -EINVAL;	
+	अगर (copy_from_user(&पंचांगp, user_kbe, माप(काष्ठा kbentry)))
+		वापस -EFAULT;
+	kb_index = (अचिन्हित दीर्घ) पंचांगp.kb_index;
+#अगर NR_KEYS < 256
+	अगर (kb_index >= NR_KEYS)
+		वापस -EINVAL;
+#पूर्ण_अगर
+	kb_table = (अचिन्हित दीर्घ) पंचांगp.kb_table;
+#अगर MAX_NR_KEYMAPS < 256
+	अगर (kb_table >= MAX_NR_KEYMAPS)
+		वापस -EINVAL;	
 	kb_table = array_index_nospec(kb_table , MAX_NR_KEYMAPS);
-#endif
+#पूर्ण_अगर
 
-	switch (cmd) {
-	case KDGKBENT:
+	चयन (cmd) अणु
+	हाल KDGKBENT:
 		key_map = kbd->key_maps[kb_table];
-		if (key_map) {
+		अगर (key_map) अणु
 		    val = U(key_map[kb_index]);
-		    if (KTYP(val) >= KBD_NR_TYPES)
+		    अगर (KTYP(val) >= KBD_NR_TYPES)
 			val = K_HOLE;
-		} else
+		पूर्ण अन्यथा
 		    val = (kb_index ? K_HOLE : K_NOSUCHMAP);
-		return put_user(val, &user_kbe->kb_value);
-	case KDSKBENT:
-		if (!perm)
-			return -EPERM;
-		if (!kb_index && tmp.kb_value == K_NOSUCHMAP) {
+		वापस put_user(val, &user_kbe->kb_value);
+	हाल KDSKBENT:
+		अगर (!perm)
+			वापस -EPERM;
+		अगर (!kb_index && पंचांगp.kb_value == K_NOSUCHMAP) अणु
 			/* disallocate map */
 			key_map = kbd->key_maps[kb_table];
-			if (key_map) {
-			    kbd->key_maps[kb_table] = NULL;
-			    kfree(key_map);
-			}
-			break;
-		}
+			अगर (key_map) अणु
+			    kbd->key_maps[kb_table] = शून्य;
+			    kमुक्त(key_map);
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		if (KTYP(tmp.kb_value) >= KBD_NR_TYPES)
-			return -EINVAL;
-		if (KVAL(tmp.kb_value) > kbd_max_vals[KTYP(tmp.kb_value)])
-			return -EINVAL;
+		अगर (KTYP(पंचांगp.kb_value) >= KBD_NR_TYPES)
+			वापस -EINVAL;
+		अगर (KVAL(पंचांगp.kb_value) > kbd_max_vals[KTYP(पंचांगp.kb_value)])
+			वापस -EINVAL;
 
-		if (!(key_map = kbd->key_maps[kb_table])) {
-			int j;
+		अगर (!(key_map = kbd->key_maps[kb_table])) अणु
+			पूर्णांक j;
 
-			key_map = kmalloc(sizeof(plain_map),
+			key_map = kदो_स्मृति(माप(plain_map),
 						     GFP_KERNEL);
-			if (!key_map)
-				return -ENOMEM;
+			अगर (!key_map)
+				वापस -ENOMEM;
 			kbd->key_maps[kb_table] = key_map;
-			for (j = 0; j < NR_KEYS; j++)
+			क्रम (j = 0; j < NR_KEYS; j++)
 				key_map[j] = U(K_HOLE);
-		}
+		पूर्ण
 		ov = U(key_map[kb_index]);
-		if (tmp.kb_value == ov)
-			break;	/* nothing to do */
+		अगर (पंचांगp.kb_value == ov)
+			अवरोध;	/* nothing to करो */
 		/*
 		 * Attention Key.
 		 */
-		if (((ov == K_SAK) || (tmp.kb_value == K_SAK)) &&
+		अगर (((ov == K_SAK) || (पंचांगp.kb_value == K_SAK)) &&
 		    !capable(CAP_SYS_ADMIN))
-			return -EPERM;
-		key_map[kb_index] = U(tmp.kb_value);
-		break;
-	}
-	return 0;
-}
+			वापस -EPERM;
+		key_map[kb_index] = U(पंचांगp.kb_value);
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-do_kdgkb_ioctl(struct kbd_data *kbd, struct kbsentry __user *u_kbs,
-	       int cmd, int perm)
-{
-	unsigned char kb_func;
-	char *p;
-	int len;
+अटल पूर्णांक
+करो_kdgkb_ioctl(काष्ठा kbd_data *kbd, काष्ठा kbsentry __user *u_kbs,
+	       पूर्णांक cmd, पूर्णांक perm)
+अणु
+	अचिन्हित अक्षर kb_func;
+	अक्षर *p;
+	पूर्णांक len;
 
 	/* Get u_kbs->kb_func. */
-	if (get_user(kb_func, &u_kbs->kb_func))
-		return -EFAULT;
-#if MAX_NR_FUNC < 256
-	if (kb_func >= MAX_NR_FUNC)
-		return -EINVAL;
-#endif
+	अगर (get_user(kb_func, &u_kbs->kb_func))
+		वापस -EFAULT;
+#अगर MAX_NR_FUNC < 256
+	अगर (kb_func >= MAX_NR_FUNC)
+		वापस -EINVAL;
+#पूर्ण_अगर
 
-	switch (cmd) {
-	case KDGKBSENT:
+	चयन (cmd) अणु
+	हाल KDGKBSENT:
 		p = kbd->func_table[kb_func];
-		if (p) {
-			len = strlen(p);
-			if (len >= sizeof(u_kbs->kb_string))
-				len = sizeof(u_kbs->kb_string) - 1;
-			if (copy_to_user(u_kbs->kb_string, p, len))
-				return -EFAULT;
-		} else
+		अगर (p) अणु
+			len = म_माप(p);
+			अगर (len >= माप(u_kbs->kb_string))
+				len = माप(u_kbs->kb_string) - 1;
+			अगर (copy_to_user(u_kbs->kb_string, p, len))
+				वापस -EFAULT;
+		पूर्ण अन्यथा
 			len = 0;
-		if (put_user('\0', u_kbs->kb_string + len))
-			return -EFAULT;
-		break;
-	case KDSKBSENT:
-		if (!perm)
-			return -EPERM;
-		p = strndup_user(u_kbs->kb_string, sizeof(u_kbs->kb_string));
-		if (IS_ERR(p))
-			return PTR_ERR(p);
-		kfree(kbd->func_table[kb_func]);
+		अगर (put_user('\0', u_kbs->kb_string + len))
+			वापस -EFAULT;
+		अवरोध;
+	हाल KDSKBSENT:
+		अगर (!perm)
+			वापस -EPERM;
+		p = strndup_user(u_kbs->kb_string, माप(u_kbs->kb_string));
+		अगर (IS_ERR(p))
+			वापस PTR_ERR(p);
+		kमुक्त(kbd->func_table[kb_func]);
 		kbd->func_table[kb_func] = p;
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int kbd_ioctl(struct kbd_data *kbd, unsigned int cmd, unsigned long arg)
-{
-	struct tty_struct *tty;
-	void __user *argp;
-	unsigned int ct;
-	int perm;
+पूर्णांक kbd_ioctl(काष्ठा kbd_data *kbd, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा tty_काष्ठा *tty;
+	व्योम __user *argp;
+	अचिन्हित पूर्णांक ct;
+	पूर्णांक perm;
 
-	argp = (void __user *)arg;
+	argp = (व्योम __user *)arg;
 
 	/*
-	 * To have permissions to do most of the vt ioctls, we either have
+	 * To have permissions to करो most of the vt ioctls, we either have
 	 * to be the owner of the tty, or have CAP_SYS_TTY_CONFIG.
 	 */
 	tty = tty_port_tty_get(kbd->port);
 	/* FIXME this test is pretty racy */
-	perm = current->signal->tty == tty || capable(CAP_SYS_TTY_CONFIG);
+	perm = current->संकेत->tty == tty || capable(CAP_SYS_TTY_CONFIG);
 	tty_kref_put(tty);
-	switch (cmd) {
-	case KDGKBTYPE:
-		return put_user(KB_101, (char __user *)argp);
-	case KDGKBENT:
-	case KDSKBENT:
-		return do_kdsk_ioctl(kbd, argp, cmd, perm);
-	case KDGKBSENT:
-	case KDSKBSENT:
-		return do_kdgkb_ioctl(kbd, argp, cmd, perm);
-	case KDGKBDIACR:
-	{
-		struct kbdiacrs __user *a = argp;
-		struct kbdiacr diacr;
-		int i;
+	चयन (cmd) अणु
+	हाल KDGKBTYPE:
+		वापस put_user(KB_101, (अक्षर __user *)argp);
+	हाल KDGKBENT:
+	हाल KDSKBENT:
+		वापस करो_kdsk_ioctl(kbd, argp, cmd, perm);
+	हाल KDGKBSENT:
+	हाल KDSKBSENT:
+		वापस करो_kdgkb_ioctl(kbd, argp, cmd, perm);
+	हाल KDGKBDIACR:
+	अणु
+		काष्ठा kbdiacrs __user *a = argp;
+		काष्ठा kbdiacr diacr;
+		पूर्णांक i;
 
-		if (put_user(kbd->accent_table_size, &a->kb_cnt))
-			return -EFAULT;
-		for (i = 0; i < kbd->accent_table_size; i++) {
+		अगर (put_user(kbd->accent_table_size, &a->kb_cnt))
+			वापस -EFAULT;
+		क्रम (i = 0; i < kbd->accent_table_size; i++) अणु
 			diacr.diacr = kbd->accent_table[i].diacr;
 			diacr.base = kbd->accent_table[i].base;
 			diacr.result = kbd->accent_table[i].result;
-			if (copy_to_user(a->kbdiacr + i, &diacr, sizeof(struct kbdiacr)))
-			return -EFAULT;
-		}
-		return 0;
-	}
-	case KDGKBDIACRUC:
-	{
-		struct kbdiacrsuc __user *a = argp;
+			अगर (copy_to_user(a->kbdiacr + i, &diacr, माप(काष्ठा kbdiacr)))
+			वापस -EFAULT;
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	हाल KDGKBDIACRUC:
+	अणु
+		काष्ठा kbdiacrsuc __user *a = argp;
 
 		ct = kbd->accent_table_size;
-		if (put_user(ct, &a->kb_cnt))
-			return -EFAULT;
-		if (copy_to_user(a->kbdiacruc, kbd->accent_table,
-				 ct * sizeof(struct kbdiacruc)))
-			return -EFAULT;
-		return 0;
-	}
-	case KDSKBDIACR:
-	{
-		struct kbdiacrs __user *a = argp;
-		struct kbdiacr diacr;
-		int i;
+		अगर (put_user(ct, &a->kb_cnt))
+			वापस -EFAULT;
+		अगर (copy_to_user(a->kbdiacruc, kbd->accent_table,
+				 ct * माप(काष्ठा kbdiacruc)))
+			वापस -EFAULT;
+		वापस 0;
+	पूर्ण
+	हाल KDSKBDIACR:
+	अणु
+		काष्ठा kbdiacrs __user *a = argp;
+		काष्ठा kbdiacr diacr;
+		पूर्णांक i;
 
-		if (!perm)
-			return -EPERM;
-		if (get_user(ct, &a->kb_cnt))
-			return -EFAULT;
-		if (ct >= MAX_DIACR)
-			return -EINVAL;
+		अगर (!perm)
+			वापस -EPERM;
+		अगर (get_user(ct, &a->kb_cnt))
+			वापस -EFAULT;
+		अगर (ct >= MAX_DIACR)
+			वापस -EINVAL;
 		kbd->accent_table_size = ct;
-		for (i = 0; i < ct; i++) {
-			if (copy_from_user(&diacr, a->kbdiacr + i, sizeof(struct kbdiacr)))
-				return -EFAULT;
+		क्रम (i = 0; i < ct; i++) अणु
+			अगर (copy_from_user(&diacr, a->kbdiacr + i, माप(काष्ठा kbdiacr)))
+				वापस -EFAULT;
 			kbd->accent_table[i].diacr = diacr.diacr;
 			kbd->accent_table[i].base = diacr.base;
 			kbd->accent_table[i].result = diacr.result;
-		}
-		return 0;
-	}
-	case KDSKBDIACRUC:
-	{
-		struct kbdiacrsuc __user *a = argp;
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	हाल KDSKBDIACRUC:
+	अणु
+		काष्ठा kbdiacrsuc __user *a = argp;
 
-		if (!perm)
-			return -EPERM;
-		if (get_user(ct, &a->kb_cnt))
-			return -EFAULT;
-		if (ct >= MAX_DIACR)
-			return -EINVAL;
+		अगर (!perm)
+			वापस -EPERM;
+		अगर (get_user(ct, &a->kb_cnt))
+			वापस -EFAULT;
+		अगर (ct >= MAX_DIACR)
+			वापस -EINVAL;
 		kbd->accent_table_size = ct;
-		if (copy_from_user(kbd->accent_table, a->kbdiacruc,
-				   ct * sizeof(struct kbdiacruc)))
-			return -EFAULT;
-		return 0;
-	}
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
+		अगर (copy_from_user(kbd->accent_table, a->kbdiacruc,
+				   ct * माप(काष्ठा kbdiacruc)))
+			वापस -EFAULT;
+		वापस 0;
+	पूर्ण
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
 EXPORT_SYMBOL(kbd_ioctl);
 EXPORT_SYMBOL(kbd_ascebc);
-EXPORT_SYMBOL(kbd_free);
+EXPORT_SYMBOL(kbd_मुक्त);
 EXPORT_SYMBOL(kbd_alloc);
 EXPORT_SYMBOL(kbd_keycode);

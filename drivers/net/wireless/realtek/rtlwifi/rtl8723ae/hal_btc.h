@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#ifndef __RTL8723E_HAL_BTC_H__
-#define __RTL8723E_HAL_BTC_H__
+#अगर_अघोषित __RTL8723E_HAL_BTC_H__
+#घोषणा __RTL8723E_HAL_BTC_H__
 
-#include "../wifi.h"
-#include "btc.h"
-#include "hal_bt_coexist.h"
+#समावेश "../wifi.h"
+#समावेश "btc.h"
+#समावेश "hal_bt_coexist.h"
 
-#define	BT_TXRX_CNT_THRES_1			1200
-#define	BT_TXRX_CNT_THRES_2			1400
-#define	BT_TXRX_CNT_THRES_3			3000
+#घोषणा	BT_TXRX_CNT_THRES_1			1200
+#घोषणा	BT_TXRX_CNT_THRES_2			1400
+#घोषणा	BT_TXRX_CNT_THRES_3			3000
 /* < 1200 */
-#define	BT_TXRX_CNT_LEVEL_0			0
+#घोषणा	BT_TXRX_CNT_LEVEL_0			0
 /* >= 1200 && < 1400 */
-#define	BT_TXRX_CNT_LEVEL_1			1
+#घोषणा	BT_TXRX_CNT_LEVEL_1			1
 /* >= 1400 */
-#define	BT_TXRX_CNT_LEVEL_2			2
-#define	BT_TXRX_CNT_LEVEL_3			3
+#घोषणा	BT_TXRX_CNT_LEVEL_2			2
+#घोषणा	BT_TXRX_CNT_LEVEL_3			3
 
-#define	BT_COEX_DISABLE			0
-#define	BT_Q_PKT_OFF			0
-#define	BT_Q_PKT_ON			1
+#घोषणा	BT_COEX_DISABLE			0
+#घोषणा	BT_Q_PKT_OFF			0
+#घोषणा	BT_Q_PKT_ON			1
 
-#define	BT_TX_PWR_OFF			0
-#define	BT_TX_PWR_ON			1
+#घोषणा	BT_TX_PWR_OFF			0
+#घोषणा	BT_TX_PWR_ON			1
 
 /* TDMA mode definition */
-#define	TDMA_2ANT			0
-#define	TDMA_1ANT			1
-#define	TDMA_NAV_OFF			0
-#define	TDMA_NAV_ON			1
-#define	TDMA_DAC_SWING_OFF		0
-#define	TDMA_DAC_SWING_ON		1
+#घोषणा	TDMA_2ANT			0
+#घोषणा	TDMA_1ANT			1
+#घोषणा	TDMA_NAV_OFF			0
+#घोषणा	TDMA_NAV_ON			1
+#घोषणा	TDMA_DAC_SWING_OFF		0
+#घोषणा	TDMA_DAC_SWING_ON		1
 
 /* PTA mode related definition */
-#define	BT_PTA_MODE_OFF		0
-#define	BT_PTA_MODE_ON		1
+#घोषणा	BT_PTA_MODE_OFF		0
+#घोषणा	BT_PTA_MODE_ON		1
 
 /* Penalty Tx Rate Adaptive */
-#define	BT_TX_RATE_ADAPTIVE_NORMAL	0
-#define	BT_TX_RATE_ADAPTIVE_LOW_PENALTY	1
+#घोषणा	BT_TX_RATE_ADAPTIVE_NORMAL	0
+#घोषणा	BT_TX_RATE_ADAPTIVE_LOW_PENALTY	1
 
 /* RF Corner */
-#define	BT_RF_RX_LPF_CORNER_RESUME	0
-#define	BT_RF_RX_LPF_CORNER_SHRINK	1
+#घोषणा	BT_RF_RX_LPF_CORNER_RESUME	0
+#घोषणा	BT_RF_RX_LPF_CORNER_SHRINK	1
 
-#define C2H_EVT_HOST_CLOSE		0x00
-#define C2H_EVT_FW_CLOSE		0xFF
+#घोषणा C2H_EVT_HOST_CLOSE		0x00
+#घोषणा C2H_EVT_FW_CLOSE		0xFF
 
-enum bt_traffic_mode {
+क्रमागत bt_traffic_mode अणु
 	BT_MOTOR_EXT_BE = 0x00,
 	BT_MOTOR_EXT_GUL = 0x01,
 	BT_MOTOR_EXT_GUB = 0x02,
 	BT_MOTOR_EXT_GULB = 0x03
-};
+पूर्ण;
 
-enum bt_traffic_mode_profile {
-	BT_PROFILE_NONE,
-	BT_PROFILE_A2DP,
-	BT_PROFILE_PAN,
-	BT_PROFILE_HID,
-	BT_PROFILE_SCO
-};
+क्रमागत bt_traffic_mode_profile अणु
+	BT_PROखाता_NONE,
+	BT_PROखाता_A2DP,
+	BT_PROखाता_PAN,
+	BT_PROखाता_HID,
+	BT_PROखाता_SCO
+पूर्ण;
 
 /*
-enum hci_ext_bt_operation {
+क्रमागत hci_ext_bt_operation अणु
 	HCI_BT_OP_NONE = 0x0,
 	HCI_BT_OP_INQUIRE_START	= 0x1,
 	HCI_BT_OP_INQUIRE_FINISH = 0x2,
@@ -77,10 +78,10 @@ enum hci_ext_bt_operation {
 	HCI_BT_OP_BT_DEV_ENABLE = 0x8,
 	HCI_BT_OP_BT_DEV_DISABLE = 0x9,
 	HCI_BT_OP_MAX,
-};
+पूर्ण;
 */
 
-enum bt_spec {
+क्रमागत bt_spec अणु
 	BT_SPEC_1_0_b = 0x00,
 	BT_SPEC_1_1 = 0x01,
 	BT_SPEC_1_2 = 0x02,
@@ -88,15 +89,15 @@ enum bt_spec {
 	BT_SPEC_2_1_EDR = 0x04,
 	BT_SPEC_3_0_HS = 0x05,
 	BT_SPEC_4_0 = 0x06
-};
+पूर्ण;
 
-struct c2h_evt_hdr {
+काष्ठा c2h_evt_hdr अणु
 	u8 cmd_id;
 	u8 cmd_len;
 	u8 cmd_seq;
-};
+पूर्ण;
 
-enum bt_state {
+क्रमागत bt_state अणु
 	BT_INFO_STATE_DISABLED = 0,
 	BT_INFO_STATE_NO_CONNECTION = 1,
 	BT_INFO_STATE_CONNECT_IDLE = 2,
@@ -107,13 +108,13 @@ enum bt_state {
 	BT_INFO_STATE_HID_BUSY = 7,
 	BT_INFO_STATE_HID_SCO_BUSY = 8,
 	BT_INFO_STATE_MAX = 7
-};
+पूर्ण;
 
-enum rtl8723e_c2h_evt_v0 {
+क्रमागत rtl8723e_c2h_evt_v0 अणु
 	C2H_V0_DBG = 0,
 	C2H_V0_TSF = 1,
 	C2H_V0_AP_RPT_RSP = 2,
-	/* The FW notify the report of the specific tx packet. */
+	/* The FW notअगरy the report of the specअगरic tx packet. */
 	C2H_V0_CCX_TX_RPT = 3,
 	C2H_V0_BT_RSSI = 4,
 	C2H_V0_BT_OP_MODE = 5,
@@ -121,18 +122,18 @@ enum rtl8723e_c2h_evt_v0 {
 	C2H_V0_C2H_H2C_TEST = 11,
 	C2H_V0_BT_INFO = 12,
 	MAX_C2HEVENT
-};
+पूर्ण;
 
-void rtl8723e_dm_bt_fw_coex_all_off_8723a(struct ieee80211_hw *hw);
-void rtl8723e_dm_bt_sw_coex_all_off_8723a(struct ieee80211_hw *hw);
-void rtl8723e_dm_bt_hw_coex_all_off_8723a(struct ieee80211_hw *hw);
-void rtl8723e_dm_bt_coexist_8723(struct ieee80211_hw *hw);
-void rtl8723e_dm_bt_set_bt_dm(struct ieee80211_hw *hw,
-			      struct btdm_8723 *p_btdm);
-void rtl_8723e_c2h_command_handle(struct ieee80211_hw *hw);
-void rtl_8723e_bt_wifi_media_status_notify(struct ieee80211_hw *hw,
+व्योम rtl8723e_dm_bt_fw_coex_all_off_8723a(काष्ठा ieee80211_hw *hw);
+व्योम rtl8723e_dm_bt_sw_coex_all_off_8723a(काष्ठा ieee80211_hw *hw);
+व्योम rtl8723e_dm_bt_hw_coex_all_off_8723a(काष्ठा ieee80211_hw *hw);
+व्योम rtl8723e_dm_bt_coexist_8723(काष्ठा ieee80211_hw *hw);
+व्योम rtl8723e_dm_bt_set_bt_dm(काष्ठा ieee80211_hw *hw,
+			      काष्ठा btdm_8723 *p_btdm);
+व्योम rtl_8723e_c2h_command_handle(काष्ठा ieee80211_hw *hw);
+व्योम rtl_8723e_bt_wअगरi_media_status_notअगरy(काष्ठा ieee80211_hw *hw,
 					bool mstatus);
-void rtl8723e_dm_bt_turn_off_bt_coexist_before_enter_lps(
-				struct ieee80211_hw *hw);
+व्योम rtl8723e_dm_bt_turn_off_bt_coexist_beक्रमe_enter_lps(
+				काष्ठा ieee80211_hw *hw);
 
-#endif
+#पूर्ण_अगर

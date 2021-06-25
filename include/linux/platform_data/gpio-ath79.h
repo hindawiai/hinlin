@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  Atheros AR7XXX/AR9XXX GPIO controller platform data
+ *  Atheros AR7XXX/AR9XXX GPIO controller platक्रमm data
  *
- * Copyright (C) 2015 Alban Bedel <albeu@free.fr>
+ * Copyright (C) 2015 Alban Bedel <albeu@मुक्त.fr>
  */
 
-#ifndef __LINUX_PLATFORM_DATA_GPIO_ATH79_H
-#define __LINUX_PLATFORM_DATA_GPIO_ATH79_H
+#अगर_अघोषित __LINUX_PLATFORM_DATA_GPIO_ATH79_H
+#घोषणा __LINUX_PLATFORM_DATA_GPIO_ATH79_H
 
-struct ath79_gpio_platform_data {
-	unsigned ngpios;
+काष्ठा ath79_gpio_platक्रमm_data अणु
+	अचिन्हित ngpios;
 	bool oe_inverted;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

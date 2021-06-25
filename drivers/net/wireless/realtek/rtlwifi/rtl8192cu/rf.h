@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#ifndef __RTL92CU_RF_H__
-#define __RTL92CU_RF_H__
+#अगर_अघोषित __RTL92CU_RF_H__
+#घोषणा __RTL92CU_RF_H__
 
-#define RF6052_MAX_TX_PWR		0x3F
-#define RF6052_MAX_PATH			2
+#घोषणा RF6052_MAX_TX_PWR		0x3F
+#घोषणा RF6052_MAX_PATH			2
 
-void rtl92cu_phy_rf6052_set_bandwidth(struct ieee80211_hw *hw, u8 bandwidth);
-void rtl92c_phy_rf6052_set_cck_txpower(struct ieee80211_hw *hw,
-				       u8 *ppowerlevel);
-void rtl92c_phy_rf6052_set_ofdm_txpower(struct ieee80211_hw *hw,
-					u8 *ppowerlevel, u8 channel);
-bool rtl92cu_phy_rf6052_config(struct ieee80211_hw *hw);
-bool rtl92cu_phy_config_rf_with_headerfile(struct ieee80211_hw *hw,
-					   enum radio_path rfpath);
-void rtl92cu_phy_rf6052_set_cck_txpower(struct ieee80211_hw *hw,
-					u8 *ppowerlevel);
-void rtl92cu_phy_rf6052_set_ofdm_txpower(struct ieee80211_hw *hw,
-					 u8 *ppowerlevel, u8 channel);
+व्योम rtl92cu_phy_rf6052_set_bandwidth(काष्ठा ieee80211_hw *hw, u8 bandwidth);
+व्योम rtl92c_phy_rf6052_set_cck_txघातer(काष्ठा ieee80211_hw *hw,
+				       u8 *pघातerlevel);
+व्योम rtl92c_phy_rf6052_set_ofdm_txघातer(काष्ठा ieee80211_hw *hw,
+					u8 *pघातerlevel, u8 channel);
+bool rtl92cu_phy_rf6052_config(काष्ठा ieee80211_hw *hw);
+bool rtl92cu_phy_config_rf_with_headerfile(काष्ठा ieee80211_hw *hw,
+					   क्रमागत radio_path rfpath);
+व्योम rtl92cu_phy_rf6052_set_cck_txघातer(काष्ठा ieee80211_hw *hw,
+					u8 *pघातerlevel);
+व्योम rtl92cu_phy_rf6052_set_ofdm_txघातer(काष्ठा ieee80211_hw *hw,
+					 u8 *pघातerlevel, u8 channel);
 
-#endif
+#पूर्ण_अगर

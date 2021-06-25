@@ -1,221 +1,222 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2006-2009 Simtec Electronics
 //	http://armlinux.simtec.co.uk/
 //	Ben Dooks <ben@simtec.co.uk>
 //
-// S3C24XX CPU Frequency scaling - IO timing for S3C2410/S3C2440/S3C2442
+// S3C24XX CPU Frequency scaling - IO timing क्रम S3C2410/S3C2440/S3C2442
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/cpufreq.h>
-#include <linux/seq_file.h>
-#include <linux/io.h>
-#include <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
 
-#include "map.h"
-#include "regs-clock.h"
+#समावेश "map.h"
+#समावेश "regs-clock.h"
 
-#include <linux/soc/samsung/s3c-cpufreq-core.h>
+#समावेश <linux/soc/samsung/s3c-cpufreq-core.h>
 
-#include "regs-mem-s3c24xx.h"
+#समावेश "regs-mem-s3c24xx.h"
 
-#define print_ns(x) ((x) / 10), ((x) % 10)
+#घोषणा prपूर्णांक_ns(x) ((x) / 10), ((x) % 10)
 
 /**
- * s3c2410_print_timing - print bank timing data for debug purposes
+ * s3c2410_prपूर्णांक_timing - prपूर्णांक bank timing data क्रम debug purposes
  * @pfx: The prefix to put on the output
- * @timings: The timing inforamtion to print.
+ * @timings: The timing inक्रमamtion to prपूर्णांक.
 */
-static void s3c2410_print_timing(const char *pfx,
-				 struct s3c_iotimings *timings)
-{
-	struct s3c2410_iobank_timing *bt;
-	int bank;
+अटल व्योम s3c2410_prपूर्णांक_timing(स्थिर अक्षर *pfx,
+				 काष्ठा s3c_iotimings *timings)
+अणु
+	काष्ठा s3c2410_iobank_timing *bt;
+	पूर्णांक bank;
 
-	for (bank = 0; bank < MAX_BANKS; bank++) {
+	क्रम (bank = 0; bank < MAX_BANKS; bank++) अणु
 		bt = timings->bank[bank].io_2410;
-		if (!bt)
-			continue;
+		अगर (!bt)
+			जारी;
 
-		printk(KERN_DEBUG "%s %d: Tacs=%d.%d, Tcos=%d.%d, Tacc=%d.%d, "
+		prपूर्णांकk(KERN_DEBUG "%s %d: Tacs=%d.%d, Tcos=%d.%d, Tacc=%d.%d, "
 		       "Tcoh=%d.%d, Tcah=%d.%d\n", pfx, bank,
-		       print_ns(bt->tacs),
-		       print_ns(bt->tcos),
-		       print_ns(bt->tacc),
-		       print_ns(bt->tcoh),
-		       print_ns(bt->tcah));
-	}
-}
+		       prपूर्णांक_ns(bt->tacs),
+		       prपूर्णांक_ns(bt->tcos),
+		       prपूर्णांक_ns(bt->tacc),
+		       prपूर्णांक_ns(bt->tcoh),
+		       prपूर्णांक_ns(bt->tcah));
+	पूर्ण
+पूर्ण
 
 /**
- * bank_reg - convert bank number to pointer to the control register.
+ * bank_reg - convert bank number to poपूर्णांकer to the control रेजिस्टर.
  * @bank: The IO bank number.
  */
-static inline void __iomem *bank_reg(unsigned int bank)
-{
-	return S3C2410_BANKCON0 + (bank << 2);
-}
+अटल अंतरभूत व्योम __iomem *bank_reg(अचिन्हित पूर्णांक bank)
+अणु
+	वापस S3C2410_BANKCON0 + (bank << 2);
+पूर्ण
 
 /**
- * bank_is_io - test whether bank is used for IO
- * @bankcon: The bank control register.
+ * bank_is_io - test whether bank is used क्रम IO
+ * @bankcon: The bank control रेजिस्टर.
  *
- * This is a simplistic test to see if any BANKCON[x] is not an IO
- * bank. It currently does not take into account whether BWSCON has
- * an illegal width-setting in it, or if the pin connected to nCS[x]
+ * This is a simplistic test to see अगर any BANKCON[x] is not an IO
+ * bank. It currently करोes not take पूर्णांकo account whether BWSCON has
+ * an illegal width-setting in it, or अगर the pin connected to nCS[x]
  * is actually being handled as a chip-select.
  */
-static inline int bank_is_io(unsigned long bankcon)
-{
-	return !(bankcon & S3C2410_BANKCON_SDRAM);
-}
+अटल अंतरभूत पूर्णांक bank_is_io(अचिन्हित दीर्घ bankcon)
+अणु
+	वापस !(bankcon & S3C2410_BANKCON_SDRAM);
+पूर्ण
 
 /**
- * to_div - convert cycle time to divisor
- * @cyc: The cycle time, in 10ths of nanoseconds.
- * @hclk_tns: The cycle time for HCLK, in 10ths of nanoseconds.
+ * to_भाग - convert cycle समय to भागisor
+ * @cyc: The cycle समय, in 10ths of nanoseconds.
+ * @hclk_tns: The cycle समय क्रम HCLK, in 10ths of nanoseconds.
  *
- * Convert the given cycle time into the divisor to use to obtain it from
+ * Convert the given cycle समय पूर्णांकo the भागisor to use to obtain it from
  * HCLK.
 */
-static inline unsigned int to_div(unsigned int cyc, unsigned int hclk_tns)
-{
-	if (cyc == 0)
-		return 0;
+अटल अंतरभूत अचिन्हित पूर्णांक to_भाग(अचिन्हित पूर्णांक cyc, अचिन्हित पूर्णांक hclk_tns)
+अणु
+	अगर (cyc == 0)
+		वापस 0;
 
-	return DIV_ROUND_UP(cyc, hclk_tns);
-}
+	वापस DIV_ROUND_UP(cyc, hclk_tns);
+पूर्ण
 
 /**
- * calc_0124 - calculate divisor control for divisors that do /0, /1. /2 and /4
- * @cyc: The cycle time, in 10ths of nanoseconds.
- * @hclk_tns: The cycle time for HCLK, in 10ths of nanoseconds.
- * @v: Pointer to register to alter.
- * @shift: The shift to get to the control bits.
+ * calc_0124 - calculate भागisor control क्रम भागisors that करो /0, /1. /2 and /4
+ * @cyc: The cycle समय, in 10ths of nanoseconds.
+ * @hclk_tns: The cycle समय क्रम HCLK, in 10ths of nanoseconds.
+ * @v: Poपूर्णांकer to रेजिस्टर to alter.
+ * @shअगरt: The shअगरt to get to the control bits.
  *
- * Calculate the divisor, and turn it into the correct control bits to
+ * Calculate the भागisor, and turn it पूर्णांकo the correct control bits to
  * set in the result, @v.
  */
-static unsigned int calc_0124(unsigned int cyc, unsigned long hclk_tns,
-			      unsigned long *v, int shift)
-{
-	unsigned int div = to_div(cyc, hclk_tns);
-	unsigned long val;
+अटल अचिन्हित पूर्णांक calc_0124(अचिन्हित पूर्णांक cyc, अचिन्हित दीर्घ hclk_tns,
+			      अचिन्हित दीर्घ *v, पूर्णांक shअगरt)
+अणु
+	अचिन्हित पूर्णांक भाग = to_भाग(cyc, hclk_tns);
+	अचिन्हित दीर्घ val;
 
 	s3c_freq_iodbg("%s: cyc=%d, hclk=%lu, shift=%d => div %d\n",
-		       __func__, cyc, hclk_tns, shift, div);
+		       __func__, cyc, hclk_tns, shअगरt, भाग);
 
-	switch (div) {
-	case 0:
+	चयन (भाग) अणु
+	हाल 0:
 		val = 0;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		val = 1;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		val = 2;
-		break;
-	case 3:
-	case 4:
+		अवरोध;
+	हाल 3:
+	हाल 4:
 		val = 3;
-		break;
-	default:
-		return -1;
-	}
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	*v |= val << shift;
-	return 0;
-}
+	*v |= val << shअगरt;
+	वापस 0;
+पूर्ण
 
-static int calc_tacp(unsigned int cyc, unsigned long hclk, unsigned long *v)
-{
-	/* Currently no support for Tacp calculations. */
-	return 0;
-}
+अटल पूर्णांक calc_tacp(अचिन्हित पूर्णांक cyc, अचिन्हित दीर्घ hclk, अचिन्हित दीर्घ *v)
+अणु
+	/* Currently no support क्रम Tacp calculations. */
+	वापस 0;
+पूर्ण
 
 /**
- * calc_tacc - calculate divisor control for tacc.
- * @cyc: The cycle time, in 10ths of nanoseconds.
- * @nwait_en: IS nWAIT enabled for this bank.
- * @hclk_tns: The cycle time for HCLK, in 10ths of nanoseconds.
- * @v: Pointer to register to alter.
+ * calc_tacc - calculate भागisor control क्रम tacc.
+ * @cyc: The cycle समय, in 10ths of nanoseconds.
+ * @nरुको_en: IS nWAIT enabled क्रम this bank.
+ * @hclk_tns: The cycle समय क्रम HCLK, in 10ths of nanoseconds.
+ * @v: Poपूर्णांकer to रेजिस्टर to alter.
  *
- * Calculate the divisor control for tACC, taking into account whether
- * the bank has nWAIT enabled. The result is used to modify the value
- * pointed to by @v.
+ * Calculate the भागisor control क्रम tACC, taking पूर्णांकo account whether
+ * the bank has nWAIT enabled. The result is used to modअगरy the value
+ * poपूर्णांकed to by @v.
 */
-static int calc_tacc(unsigned int cyc, int nwait_en,
-		     unsigned long hclk_tns, unsigned long *v)
-{
-	unsigned int div = to_div(cyc, hclk_tns);
-	unsigned long val;
+अटल पूर्णांक calc_tacc(अचिन्हित पूर्णांक cyc, पूर्णांक nरुको_en,
+		     अचिन्हित दीर्घ hclk_tns, अचिन्हित दीर्घ *v)
+अणु
+	अचिन्हित पूर्णांक भाग = to_भाग(cyc, hclk_tns);
+	अचिन्हित दीर्घ val;
 
 	s3c_freq_iodbg("%s: cyc=%u, nwait=%d, hclk=%lu => div=%u\n",
-		       __func__, cyc, nwait_en, hclk_tns, div);
+		       __func__, cyc, nरुको_en, hclk_tns, भाग);
 
-	/* if nWait enabled on an bank, Tacc must be at-least 4 cycles. */
-	if (nwait_en && div < 4)
-		div = 4;
+	/* अगर nWait enabled on an bank, Tacc must be at-least 4 cycles. */
+	अगर (nरुको_en && भाग < 4)
+		भाग = 4;
 
-	switch (div) {
-	case 0:
+	चयन (भाग) अणु
+	हाल 0:
 		val = 0;
-		break;
+		अवरोध;
 
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-		val = div - 1;
-		break;
+	हाल 1:
+	हाल 2:
+	हाल 3:
+	हाल 4:
+		val = भाग - 1;
+		अवरोध;
 
-	case 5:
-	case 6:
+	हाल 5:
+	हाल 6:
 		val = 4;
-		break;
+		अवरोध;
 
-	case 7:
-	case 8:
+	हाल 7:
+	हाल 8:
 		val = 5;
-		break;
+		अवरोध;
 
-	case 9:
-	case 10:
+	हाल 9:
+	हाल 10:
 		val = 6;
-		break;
+		अवरोध;
 
-	case 11:
-	case 12:
-	case 13:
-	case 14:
+	हाल 11:
+	हाल 12:
+	हाल 13:
+	हाल 14:
 		val = 7;
-		break;
+		अवरोध;
 
-	default:
-		return -1;
-	}
+	शेष:
+		वापस -1;
+	पूर्ण
 
 	*v |= val << 8;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * s3c2410_calc_bank - calculate bank timing information
- * @cfg: The configuration we need to calculate for.
- * @bt: The bank timing information.
+ * s3c2410_calc_bank - calculate bank timing inक्रमmation
+ * @cfg: The configuration we need to calculate क्रम.
+ * @bt: The bank timing inक्रमmation.
  *
- * Given the cycle timine for a bank @bt, calculate the new BANKCON
- * setting for the @cfg timing. This updates the timing information
- * ready for the cpu frequency change.
+ * Given the cycle timine क्रम a bank @bt, calculate the new BANKCON
+ * setting क्रम the @cfg timing. This updates the timing inक्रमmation
+ * पढ़ोy क्रम the cpu frequency change.
  */
-static int s3c2410_calc_bank(struct s3c_cpufreq_config *cfg,
-			     struct s3c2410_iobank_timing *bt)
-{
-	unsigned long hclk = cfg->freq.hclk_tns;
-	unsigned long res;
-	int ret;
+अटल पूर्णांक s3c2410_calc_bank(काष्ठा s3c_cpufreq_config *cfg,
+			     काष्ठा s3c2410_iobank_timing *bt)
+अणु
+	अचिन्हित दीर्घ hclk = cfg->freq.hclk_tns;
+	अचिन्हित दीर्घ res;
+	पूर्णांक ret;
 
 	res  = bt->bankcon;
 	res &= (S3C2410_BANKCON_SDRAM | S3C2410_BANKCON_PMC16);
@@ -223,7 +224,7 @@ static int s3c2410_calc_bank(struct s3c_cpufreq_config *cfg,
 	/* tacp: 2,3,4,5 */
 	/* tcah: 0,1,2,4 */
 	/* tcoh: 0,1,2,4 */
-	/* tacc: 1,2,3,4,6,7,10,14 (>4 for nwait) */
+	/* tacc: 1,2,3,4,6,7,10,14 (>4 क्रम nरुको) */
 	/* tcos: 0,1,2,4 */
 	/* tacs: 0,1,2,4 */
 
@@ -232,20 +233,20 @@ static int s3c2410_calc_bank(struct s3c_cpufreq_config *cfg,
 	ret |= calc_0124(bt->tcah, hclk, &res, S3C2410_BANKCON_Tcah_SHIFT);
 	ret |= calc_0124(bt->tcoh, hclk, &res, S3C2410_BANKCON_Tcoh_SHIFT);
 
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	ret |= calc_tacp(bt->tacp, hclk, &res);
-	ret |= calc_tacc(bt->tacc, bt->nwait_en, hclk, &res);
+	ret |= calc_tacc(bt->tacc, bt->nरुको_en, hclk, &res);
 
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	bt->bankcon = res;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const unsigned int tacc_tab[] = {
+अटल स्थिर अचिन्हित पूर्णांक tacc_tab[] = अणु
 	[0]	= 1,
 	[1]	= 2,
 	[2]	= 3,
@@ -254,73 +255,73 @@ static const unsigned int tacc_tab[] = {
 	[5]	= 9,
 	[6]	= 10,
 	[7]	= 14,
-};
+पूर्ण;
 
 /**
- * get_tacc - turn tACC value into cycle time
- * @hclk_tns: The cycle time for HCLK, in 10ths of nanoseconds.
- * @val: The bank timing register value, shifed down.
+ * get_tacc - turn tACC value पूर्णांकo cycle समय
+ * @hclk_tns: The cycle समय क्रम HCLK, in 10ths of nanoseconds.
+ * @val: The bank timing रेजिस्टर value, shअगरed करोwn.
  */
-static unsigned int get_tacc(unsigned long hclk_tns,
-			     unsigned long val)
-{
+अटल अचिन्हित पूर्णांक get_tacc(अचिन्हित दीर्घ hclk_tns,
+			     अचिन्हित दीर्घ val)
+अणु
 	val &= 7;
-	return hclk_tns * tacc_tab[val];
-}
+	वापस hclk_tns * tacc_tab[val];
+पूर्ण
 
 /**
- * get_0124 - turn 0/1/2/4 divider into cycle time
- * @hclk_tns: The cycle time for HCLK, in 10ths of nanoseconds.
- * @val: The bank timing register value, shifed down.
+ * get_0124 - turn 0/1/2/4 भागider पूर्णांकo cycle समय
+ * @hclk_tns: The cycle समय क्रम HCLK, in 10ths of nanoseconds.
+ * @val: The bank timing रेजिस्टर value, shअगरed करोwn.
  */
-static unsigned int get_0124(unsigned long hclk_tns,
-			     unsigned long val)
-{
+अटल अचिन्हित पूर्णांक get_0124(अचिन्हित दीर्घ hclk_tns,
+			     अचिन्हित दीर्घ val)
+अणु
 	val &= 3;
-	return hclk_tns * ((val == 3) ? 4 : val);
-}
+	वापस hclk_tns * ((val == 3) ? 4 : val);
+पूर्ण
 
 /**
- * s3c2410_iotiming_getbank - turn BANKCON into cycle time information
+ * s3c2410_iotiming_getbank - turn BANKCON पूर्णांकo cycle समय inक्रमmation
  * @cfg: The frequency configuration
  * @bt: The bank timing to fill in (uses cached BANKCON)
  *
  * Given the BANKCON setting in @bt and the current frequency settings
- * in @cfg, update the cycle timing information.
+ * in @cfg, update the cycle timing inक्रमmation.
  */
-static void s3c2410_iotiming_getbank(struct s3c_cpufreq_config *cfg,
-				     struct s3c2410_iobank_timing *bt)
-{
-	unsigned long bankcon = bt->bankcon;
-	unsigned long hclk = cfg->freq.hclk_tns;
+अटल व्योम s3c2410_iotiming_getbank(काष्ठा s3c_cpufreq_config *cfg,
+				     काष्ठा s3c2410_iobank_timing *bt)
+अणु
+	अचिन्हित दीर्घ bankcon = bt->bankcon;
+	अचिन्हित दीर्घ hclk = cfg->freq.hclk_tns;
 
 	bt->tcah = get_0124(hclk, bankcon >> S3C2410_BANKCON_Tcah_SHIFT);
 	bt->tcoh = get_0124(hclk, bankcon >> S3C2410_BANKCON_Tcoh_SHIFT);
 	bt->tcos = get_0124(hclk, bankcon >> S3C2410_BANKCON_Tcos_SHIFT);
 	bt->tacs = get_0124(hclk, bankcon >> S3C2410_BANKCON_Tacs_SHIFT);
 	bt->tacc = get_tacc(hclk, bankcon >> S3C2410_BANKCON_Tacc_SHIFT);
-}
+पूर्ण
 
 /**
- * s3c2410_iotiming_debugfs - debugfs show io bank timing information
- * @seq: The seq_file to write output to using seq_printf().
+ * s3c2410_iotiming_debugfs - debugfs show io bank timing inक्रमmation
+ * @seq: The seq_file to ग_लिखो output to using seq_म_लिखो().
  * @cfg: The current configuration.
- * @iob: The IO bank information to decode.
+ * @iob: The IO bank inक्रमmation to decode.
  */
-void s3c2410_iotiming_debugfs(struct seq_file *seq,
-			      struct s3c_cpufreq_config *cfg,
-			      union s3c_iobank *iob)
-{
-	struct s3c2410_iobank_timing *bt = iob->io_2410;
-	unsigned long bankcon = bt->bankcon;
-	unsigned long hclk = cfg->freq.hclk_tns;
-	unsigned int tacs;
-	unsigned int tcos;
-	unsigned int tacc;
-	unsigned int tcoh;
-	unsigned int tcah;
+व्योम s3c2410_iotiming_debugfs(काष्ठा seq_file *seq,
+			      काष्ठा s3c_cpufreq_config *cfg,
+			      जोड़ s3c_iobank *iob)
+अणु
+	काष्ठा s3c2410_iobank_timing *bt = iob->io_2410;
+	अचिन्हित दीर्घ bankcon = bt->bankcon;
+	अचिन्हित दीर्घ hclk = cfg->freq.hclk_tns;
+	अचिन्हित पूर्णांक tacs;
+	अचिन्हित पूर्णांक tcos;
+	अचिन्हित पूर्णांक tacc;
+	अचिन्हित पूर्णांक tcoh;
+	अचिन्हित पूर्णांक tcah;
 
-	seq_printf(seq, "BANKCON=0x%08lx\n", bankcon);
+	seq_म_लिखो(seq, "BANKCON=0x%08lx\n", bankcon);
 
 	tcah = get_0124(hclk, bankcon >> S3C2410_BANKCON_Tcah_SHIFT);
 	tcoh = get_0124(hclk, bankcon >> S3C2410_BANKCON_Tcoh_SHIFT);
@@ -328,145 +329,145 @@ void s3c2410_iotiming_debugfs(struct seq_file *seq,
 	tacs = get_0124(hclk, bankcon >> S3C2410_BANKCON_Tacs_SHIFT);
 	tacc = get_tacc(hclk, bankcon >> S3C2410_BANKCON_Tacc_SHIFT);
 
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "\tRead: Tacs=%d.%d, Tcos=%d.%d, Tacc=%d.%d, Tcoh=%d.%d, Tcah=%d.%d\n",
-		   print_ns(bt->tacs),
-		   print_ns(bt->tcos),
-		   print_ns(bt->tacc),
-		   print_ns(bt->tcoh),
-		   print_ns(bt->tcah));
+		   prपूर्णांक_ns(bt->tacs),
+		   prपूर्णांक_ns(bt->tcos),
+		   prपूर्णांक_ns(bt->tacc),
+		   prपूर्णांक_ns(bt->tcoh),
+		   prपूर्णांक_ns(bt->tcah));
 
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "\t Set: Tacs=%d.%d, Tcos=%d.%d, Tacc=%d.%d, Tcoh=%d.%d, Tcah=%d.%d\n",
-		   print_ns(tacs),
-		   print_ns(tcos),
-		   print_ns(tacc),
-		   print_ns(tcoh),
-		   print_ns(tcah));
-}
+		   prपूर्णांक_ns(tacs),
+		   prपूर्णांक_ns(tcos),
+		   prपूर्णांक_ns(tacc),
+		   prपूर्णांक_ns(tcoh),
+		   prपूर्णांक_ns(tcah));
+पूर्ण
 
 /**
- * s3c2410_iotiming_calc - Calculate bank timing for frequency change.
+ * s3c2410_iotiming_calc - Calculate bank timing क्रम frequency change.
  * @cfg: The frequency configuration
- * @iot: The IO timing information to fill out.
+ * @iot: The IO timing inक्रमmation to fill out.
  *
- * Calculate the new values for the banks in @iot based on the new
- * frequency information in @cfg. This is then used by s3c2410_iotiming_set()
+ * Calculate the new values क्रम the banks in @iot based on the new
+ * frequency inक्रमmation in @cfg. This is then used by s3c2410_iotiming_set()
  * to update the timing when necessary.
  */
-int s3c2410_iotiming_calc(struct s3c_cpufreq_config *cfg,
-			  struct s3c_iotimings *iot)
-{
-	struct s3c2410_iobank_timing *bt;
-	unsigned long bankcon;
-	int bank;
-	int ret;
+पूर्णांक s3c2410_iotiming_calc(काष्ठा s3c_cpufreq_config *cfg,
+			  काष्ठा s3c_iotimings *iot)
+अणु
+	काष्ठा s3c2410_iobank_timing *bt;
+	अचिन्हित दीर्घ bankcon;
+	पूर्णांक bank;
+	पूर्णांक ret;
 
-	for (bank = 0; bank < MAX_BANKS; bank++) {
-		bankcon = __raw_readl(bank_reg(bank));
+	क्रम (bank = 0; bank < MAX_BANKS; bank++) अणु
+		bankcon = __raw_पढ़ोl(bank_reg(bank));
 		bt = iot->bank[bank].io_2410;
 
-		if (!bt)
-			continue;
+		अगर (!bt)
+			जारी;
 
 		bt->bankcon = bankcon;
 
 		ret = s3c2410_calc_bank(cfg, bt);
-		if (ret) {
-			printk(KERN_ERR "%s: cannot calculate bank %d io\n",
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "%s: cannot calculate bank %d io\n",
 			       __func__, bank);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		s3c_freq_iodbg("%s: bank %d: con=%08lx\n",
 			       __func__, bank, bt->bankcon);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
  err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * s3c2410_iotiming_set - set the IO timings from the given setup.
  * @cfg: The frequency configuration
- * @iot: The IO timing information to use.
+ * @iot: The IO timing inक्रमmation to use.
  *
- * Set all the currently used IO bank timing information generated
+ * Set all the currently used IO bank timing inक्रमmation generated
  * by s3c2410_iotiming_calc() once the core has validated that all
  * the new values are within permitted bounds.
  */
-void s3c2410_iotiming_set(struct s3c_cpufreq_config *cfg,
-			  struct s3c_iotimings *iot)
-{
-	struct s3c2410_iobank_timing *bt;
-	int bank;
+व्योम s3c2410_iotiming_set(काष्ठा s3c_cpufreq_config *cfg,
+			  काष्ठा s3c_iotimings *iot)
+अणु
+	काष्ठा s3c2410_iobank_timing *bt;
+	पूर्णांक bank;
 
-	/* set the io timings from the specifier */
+	/* set the io timings from the specअगरier */
 
-	for (bank = 0; bank < MAX_BANKS; bank++) {
+	क्रम (bank = 0; bank < MAX_BANKS; bank++) अणु
 		bt = iot->bank[bank].io_2410;
-		if (!bt)
-			continue;
+		अगर (!bt)
+			जारी;
 
-		__raw_writel(bt->bankcon, bank_reg(bank));
-	}
-}
+		__raw_ग_लिखोl(bt->bankcon, bank_reg(bank));
+	पूर्ण
+पूर्ण
 
 /**
- * s3c2410_iotiming_get - Get the timing information from current registers.
+ * s3c2410_iotiming_get - Get the timing inक्रमmation from current रेजिस्टरs.
  * @cfg: The frequency configuration
- * @timings: The IO timing information to fill out.
+ * @timings: The IO timing inक्रमmation to fill out.
  *
- * Calculate the @timings timing information from the current frequency
- * information in @cfg, and the new frequency configuration
- * through all the IO banks, reading the state and then updating @iot
+ * Calculate the @timings timing inक्रमmation from the current frequency
+ * inक्रमmation in @cfg, and the new frequency configuration
+ * through all the IO banks, पढ़ोing the state and then updating @iot
  * as necessary.
  *
  * This is used at the moment on initialisation to get the current
- * configuration so that boards do not have to carry their own setup
- * if the timings are correct on initialisation.
+ * configuration so that boards करो not have to carry their own setup
+ * अगर the timings are correct on initialisation.
  */
 
-int s3c2410_iotiming_get(struct s3c_cpufreq_config *cfg,
-			 struct s3c_iotimings *timings)
-{
-	struct s3c2410_iobank_timing *bt;
-	unsigned long bankcon;
-	unsigned long bwscon;
-	int bank;
+पूर्णांक s3c2410_iotiming_get(काष्ठा s3c_cpufreq_config *cfg,
+			 काष्ठा s3c_iotimings *timings)
+अणु
+	काष्ठा s3c2410_iobank_timing *bt;
+	अचिन्हित दीर्घ bankcon;
+	अचिन्हित दीर्घ bwscon;
+	पूर्णांक bank;
 
-	bwscon = __raw_readl(S3C2410_BWSCON);
+	bwscon = __raw_पढ़ोl(S3C2410_BWSCON);
 
 	/* look through all banks to see what is currently set. */
 
-	for (bank = 0; bank < MAX_BANKS; bank++) {
-		bankcon = __raw_readl(bank_reg(bank));
+	क्रम (bank = 0; bank < MAX_BANKS; bank++) अणु
+		bankcon = __raw_पढ़ोl(bank_reg(bank));
 
-		if (!bank_is_io(bankcon))
-			continue;
+		अगर (!bank_is_io(bankcon))
+			जारी;
 
 		s3c_freq_iodbg("%s: bank %d: con %08lx\n",
 			       __func__, bank, bankcon);
 
-		bt = kzalloc(sizeof(*bt), GFP_KERNEL);
-		if (!bt)
-			return -ENOMEM;
+		bt = kzalloc(माप(*bt), GFP_KERNEL);
+		अगर (!bt)
+			वापस -ENOMEM;
 
-		/* find out in nWait is enabled for bank. */
+		/* find out in nWait is enabled क्रम bank. */
 
-		if (bank != 0) {
-			unsigned long tmp  = S3C2410_BWSCON_GET(bwscon, bank);
-			if (tmp & S3C2410_BWSCON_WS)
-				bt->nwait_en = 1;
-		}
+		अगर (bank != 0) अणु
+			अचिन्हित दीर्घ पंचांगp  = S3C2410_BWSCON_GET(bwscon, bank);
+			अगर (पंचांगp & S3C2410_BWSCON_WS)
+				bt->nरुको_en = 1;
+		पूर्ण
 
 		timings->bank[bank].io_2410 = bt;
 		bt->bankcon = bankcon;
 
 		s3c2410_iotiming_getbank(cfg, bt);
-	}
+	पूर्ण
 
-	s3c2410_print_timing("get", timings);
-	return 0;
-}
+	s3c2410_prपूर्णांक_timing("get", timings);
+	वापस 0;
+पूर्ण

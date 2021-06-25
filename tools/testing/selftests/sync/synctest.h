@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  sync tests
  *  Copyright 2015-2016 Collabora Ltd.
@@ -6,12 +7,12 @@
  *
  *  Copyright 2012 Google, Inc
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a
- *  copy of this software and associated documentation files (the "Software"),
+ *  Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ *  copy of this software and associated करोcumentation files (the "Software"),
  *  to deal in the Software without restriction, including without limitation
- *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- *  Software is furnished to do so, subject to the following conditions:
+ *  Software is furnished to करो so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
@@ -25,43 +26,43 @@
  *  OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef SELFTESTS_SYNCTEST_H
-#define SELFTESTS_SYNCTEST_H
+#अगर_अघोषित SELFTESTS_SYNCTEST_H
+#घोषणा SELFTESTS_SYNCTEST_H
 
-#include <stdio.h>
-#include "../kselftest.h"
+#समावेश <मानकपन.स>
+#समावेश "../kselftest.h"
 
-#define ASSERT(cond, msg) do { \
-	if (!(cond)) { \
-		ksft_print_msg("[ERROR]\t%s", (msg)); \
-		return 1; \
-	} \
-} while (0)
+#घोषणा ASSERT(cond, msg) करो अणु \
+	अगर (!(cond)) अणु \
+		ksft_prपूर्णांक_msg("[ERROR]\t%s", (msg)); \
+		वापस 1; \
+	पूर्ण \
+पूर्ण जबतक (0)
 
-#define RUN_TEST(x) run_test((x), #x)
+#घोषणा RUN_TEST(x) run_test((x), #x)
 
 /* Allocation tests */
-int test_alloc_timeline(void);
-int test_alloc_fence(void);
-int test_alloc_fence_negative(void);
+पूर्णांक test_alloc_समयline(व्योम);
+पूर्णांक test_alloc_fence(व्योम);
+पूर्णांक test_alloc_fence_negative(व्योम);
 
-/* Fence tests with one timeline */
-int test_fence_one_timeline_wait(void);
-int test_fence_one_timeline_merge(void);
+/* Fence tests with one समयline */
+पूर्णांक test_fence_one_समयline_रुको(व्योम);
+पूर्णांक test_fence_one_समयline_merge(व्योम);
 
 /* Fence merge tests */
-int test_fence_merge_same_fence(void);
+पूर्णांक test_fence_merge_same_fence(व्योम);
 
-/* Fence wait tests */
-int test_fence_multi_timeline_wait(void);
+/* Fence रुको tests */
+पूर्णांक test_fence_multi_समयline_रुको(व्योम);
 
 /* Stress test - parallelism */
-int test_stress_two_threads_shared_timeline(void);
+पूर्णांक test_stress_two_thपढ़ोs_shared_समयline(व्योम);
 
 /* Stress test - consumer */
-int test_consumer_stress_multi_producer_single_consumer(void);
+पूर्णांक test_consumer_stress_multi_producer_single_consumer(व्योम);
 
 /* Stress test - merging */
-int test_merge_stress_random_merge(void);
+पूर्णांक test_merge_stress_अक्रमom_merge(व्योम);
 
-#endif
+#पूर्ण_अगर

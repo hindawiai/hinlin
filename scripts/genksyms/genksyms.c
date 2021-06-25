@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Generate kernel symbol version hashes.
    Copyright 1996, 1997 Linux International.
 
-   New implementation contributed by Richard Henderson <rth@tamu.edu>
+   New implementation contributed by Riअक्षरd Henderson <rth@tamu.edu>
    Based on original work by Bjorn Ekwall <bj0rn@blox.se>
 
-   This file was part of the Linux modutils 2.4.22: moved back into the
+   This file was part of the Linux modutils 2.4.22: moved back पूर्णांकo the
    kernel sources by Rusty Russell/Kai Germaschewski.
 
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-#include <stdarg.h>
-#ifdef __GNU_LIBRARY__
-#include <getopt.h>
-#endif				/* __GNU_LIBRARY__ */
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <निश्चित.स>
+#समावेश <मानकतर्क.स>
+#अगर_घोषित __GNU_LIBRARY__
+#समावेश <getopt.h>
+#पूर्ण_अगर				/* __GNU_LIBRARY__ */
 
-#include "genksyms.h"
+#समावेश "genksyms.h"
 /*----------------------------------------------------------------------*/
 
-#define HASH_BUCKETS  4096
+#घोषणा HASH_BUCKETS  4096
 
-static struct symbol *symtab[HASH_BUCKETS];
-static FILE *debugfile;
+अटल काष्ठा symbol *symtab[HASH_BUCKETS];
+अटल खाता *debugfile;
 
-int cur_line = 1;
-char *cur_filename;
-int in_source_file;
+पूर्णांक cur_line = 1;
+अक्षर *cur_filename;
+पूर्णांक in_source_file;
 
-static int flag_debug, flag_dump_defs, flag_reference, flag_dump_types,
+अटल पूर्णांक flag_debug, flag_dump_defs, flag_reference, flag_dump_types,
 	   flag_preserve, flag_warnings, flag_rel_crcs;
 
-static int errors;
-static int nsyms;
+अटल पूर्णांक errors;
+अटल पूर्णांक nsyms;
 
-static struct symbol *expansion_trail;
-static struct symbol *visited_symbols;
+अटल काष्ठा symbol *expansion_trail;
+अटल काष्ठा symbol *visited_symbols;
 
-static const struct {
-	int n;
-	const char *name;
-} symbol_types[] = {
-	[SYM_NORMAL]     = { 0, NULL},
-	[SYM_TYPEDEF]    = {'t', "typedef"},
-	[SYM_ENUM]       = {'e', "enum"},
-	[SYM_STRUCT]     = {'s', "struct"},
-	[SYM_UNION]      = {'u', "union"},
-	[SYM_ENUM_CONST] = {'E', "enum constant"},
-};
+अटल स्थिर काष्ठा अणु
+	पूर्णांक n;
+	स्थिर अक्षर *name;
+पूर्ण symbol_types[] = अणु
+	[SYM_NORMAL]     = अणु 0, शून्यपूर्ण,
+	[SYM_TYPEDEF]    = अणु't', "typedef"पूर्ण,
+	[SYM_ENUM]       = अणु'e', "enum"पूर्ण,
+	[SYM_STRUCT]     = अणु's', "struct"पूर्ण,
+	[SYM_UNION]      = अणु'u', "union"पूर्ण,
+	[SYM_ENUM_CONST] = अणु'E', "enum constant"पूर्ण,
+पूर्ण;
 
-static int equal_list(struct string_list *a, struct string_list *b);
-static void print_list(FILE * f, struct string_list *list);
-static struct string_list *concat_list(struct string_list *start, ...);
-static struct string_list *mk_node(const char *string);
-static void print_location(void);
-static void print_type_name(enum symbol_type type, const char *name);
+अटल पूर्णांक equal_list(काष्ठा string_list *a, काष्ठा string_list *b);
+अटल व्योम prपूर्णांक_list(खाता * f, काष्ठा string_list *list);
+अटल काष्ठा string_list *concat_list(काष्ठा string_list *start, ...);
+अटल काष्ठा string_list *mk_node(स्थिर अक्षर *string);
+अटल व्योम prपूर्णांक_location(व्योम);
+अटल व्योम prपूर्णांक_type_name(क्रमागत symbol_type type, स्थिर अक्षर *name);
 
 /*----------------------------------------------------------------------*/
 
-static const unsigned int crctab32[] = {
+अटल स्थिर अचिन्हित पूर्णांक crctab32[] = अणु
 	0x00000000U, 0x77073096U, 0xee0e612cU, 0x990951baU, 0x076dc419U,
 	0x706af48fU, 0xe963a535U, 0x9e6495a3U, 0x0edb8832U, 0x79dcb8a4U,
 	0xe0d5e91eU, 0x97d2d988U, 0x09b64c2bU, 0x7eb17cbdU, 0xe7b82d07U,
@@ -115,172 +116,172 @@ static const unsigned int crctab32[] = {
 	0xcdd70693U, 0x54de5729U, 0x23d967bfU, 0xb3667a2eU, 0xc4614ab8U,
 	0x5d681b02U, 0x2a6f2b94U, 0xb40bbe37U, 0xc30c8ea1U, 0x5a05df1bU,
 	0x2d02ef8dU
-};
+पूर्ण;
 
-static unsigned long partial_crc32_one(unsigned char c, unsigned long crc)
-{
-	return crctab32[(crc ^ c) & 0xff] ^ (crc >> 8);
-}
+अटल अचिन्हित दीर्घ partial_crc32_one(अचिन्हित अक्षर c, अचिन्हित दीर्घ crc)
+अणु
+	वापस crctab32[(crc ^ c) & 0xff] ^ (crc >> 8);
+पूर्ण
 
-static unsigned long partial_crc32(const char *s, unsigned long crc)
-{
-	while (*s)
+अटल अचिन्हित दीर्घ partial_crc32(स्थिर अक्षर *s, अचिन्हित दीर्घ crc)
+अणु
+	जबतक (*s)
 		crc = partial_crc32_one(*s++, crc);
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
-static unsigned long crc32(const char *s)
-{
-	return partial_crc32(s, 0xffffffff) ^ 0xffffffff;
-}
+अटल अचिन्हित दीर्घ crc32(स्थिर अक्षर *s)
+अणु
+	वापस partial_crc32(s, 0xffffffff) ^ 0xffffffff;
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
-static enum symbol_type map_to_ns(enum symbol_type t)
-{
-	switch (t) {
-	case SYM_ENUM_CONST:
-	case SYM_NORMAL:
-	case SYM_TYPEDEF:
-		return SYM_NORMAL;
-	case SYM_ENUM:
-	case SYM_STRUCT:
-	case SYM_UNION:
-		return SYM_STRUCT;
-	}
-	return t;
-}
+अटल क्रमागत symbol_type map_to_ns(क्रमागत symbol_type t)
+अणु
+	चयन (t) अणु
+	हाल SYM_ENUM_CONST:
+	हाल SYM_NORMAL:
+	हाल SYM_TYPEDEF:
+		वापस SYM_NORMAL;
+	हाल SYM_ENUM:
+	हाल SYM_STRUCT:
+	हाल SYM_UNION:
+		वापस SYM_STRUCT;
+	पूर्ण
+	वापस t;
+पूर्ण
 
-struct symbol *find_symbol(const char *name, enum symbol_type ns, int exact)
-{
-	unsigned long h = crc32(name) % HASH_BUCKETS;
-	struct symbol *sym;
+काष्ठा symbol *find_symbol(स्थिर अक्षर *name, क्रमागत symbol_type ns, पूर्णांक exact)
+अणु
+	अचिन्हित दीर्घ h = crc32(name) % HASH_BUCKETS;
+	काष्ठा symbol *sym;
 
-	for (sym = symtab[h]; sym; sym = sym->hash_next)
-		if (map_to_ns(sym->type) == map_to_ns(ns) &&
-		    strcmp(name, sym->name) == 0 &&
+	क्रम (sym = symtab[h]; sym; sym = sym->hash_next)
+		अगर (map_to_ns(sym->type) == map_to_ns(ns) &&
+		    म_भेद(name, sym->name) == 0 &&
 		    sym->is_declared)
-			break;
+			अवरोध;
 
-	if (exact && sym && sym->type != ns)
-		return NULL;
-	return sym;
-}
+	अगर (exact && sym && sym->type != ns)
+		वापस शून्य;
+	वापस sym;
+पूर्ण
 
-static int is_unknown_symbol(struct symbol *sym)
-{
-	struct string_list *defn;
+अटल पूर्णांक is_unknown_symbol(काष्ठा symbol *sym)
+अणु
+	काष्ठा string_list *defn;
 
-	return ((sym->type == SYM_STRUCT ||
+	वापस ((sym->type == SYM_STRUCT ||
 		 sym->type == SYM_UNION ||
 		 sym->type == SYM_ENUM) &&
 		(defn = sym->defn)  && defn->tag == SYM_NORMAL &&
-			strcmp(defn->string, "}") == 0 &&
+			म_भेद(defn->string, "}") == 0 &&
 		(defn = defn->next) && defn->tag == SYM_NORMAL &&
-			strcmp(defn->string, "UNKNOWN") == 0 &&
+			म_भेद(defn->string, "UNKNOWN") == 0 &&
 		(defn = defn->next) && defn->tag == SYM_NORMAL &&
-			strcmp(defn->string, "{") == 0);
-}
+			म_भेद(defn->string, "{") == 0);
+पूर्ण
 
-static struct symbol *__add_symbol(const char *name, enum symbol_type type,
-			    struct string_list *defn, int is_extern,
-			    int is_reference)
-{
-	unsigned long h;
-	struct symbol *sym;
-	enum symbol_status status = STATUS_UNCHANGED;
+अटल काष्ठा symbol *__add_symbol(स्थिर अक्षर *name, क्रमागत symbol_type type,
+			    काष्ठा string_list *defn, पूर्णांक is_बाह्य,
+			    पूर्णांक is_reference)
+अणु
+	अचिन्हित दीर्घ h;
+	काष्ठा symbol *sym;
+	क्रमागत symbol_status status = STATUS_UNCHANGED;
 	/* The parser adds symbols in the order their declaration completes,
-	 * so it is safe to store the value of the previous enum constant in
-	 * a static variable.
+	 * so it is safe to store the value of the previous क्रमागत स्थिरant in
+	 * a अटल variable.
 	 */
-	static int enum_counter;
-	static struct string_list *last_enum_expr;
+	अटल पूर्णांक क्रमागत_counter;
+	अटल काष्ठा string_list *last_क्रमागत_expr;
 
-	if (type == SYM_ENUM_CONST) {
-		if (defn) {
-			free_list(last_enum_expr, NULL);
-			last_enum_expr = copy_list_range(defn, NULL);
-			enum_counter = 1;
-		} else {
-			struct string_list *expr;
-			char buf[20];
+	अगर (type == SYM_ENUM_CONST) अणु
+		अगर (defn) अणु
+			मुक्त_list(last_क्रमागत_expr, शून्य);
+			last_क्रमागत_expr = copy_list_range(defn, शून्य);
+			क्रमागत_counter = 1;
+		पूर्ण अन्यथा अणु
+			काष्ठा string_list *expr;
+			अक्षर buf[20];
 
-			snprintf(buf, sizeof(buf), "%d", enum_counter++);
-			if (last_enum_expr) {
-				expr = copy_list_range(last_enum_expr, NULL);
+			snम_लिखो(buf, माप(buf), "%d", क्रमागत_counter++);
+			अगर (last_क्रमागत_expr) अणु
+				expr = copy_list_range(last_क्रमागत_expr, शून्य);
 				defn = concat_list(mk_node("("),
 						   expr,
 						   mk_node(")"),
 						   mk_node("+"),
-						   mk_node(buf), NULL);
-			} else {
+						   mk_node(buf), शून्य);
+			पूर्ण अन्यथा अणु
 				defn = mk_node(buf);
-			}
-		}
-	} else if (type == SYM_ENUM) {
-		free_list(last_enum_expr, NULL);
-		last_enum_expr = NULL;
-		enum_counter = 0;
-		if (!name)
-			/* Anonymous enum definition, nothing more to do */
-			return NULL;
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (type == SYM_ENUM) अणु
+		मुक्त_list(last_क्रमागत_expr, शून्य);
+		last_क्रमागत_expr = शून्य;
+		क्रमागत_counter = 0;
+		अगर (!name)
+			/* Anonymous क्रमागत definition, nothing more to करो */
+			वापस शून्य;
+	पूर्ण
 
 	h = crc32(name) % HASH_BUCKETS;
-	for (sym = symtab[h]; sym; sym = sym->hash_next) {
-		if (map_to_ns(sym->type) == map_to_ns(type) &&
-		    strcmp(name, sym->name) == 0) {
-			if (is_reference)
+	क्रम (sym = symtab[h]; sym; sym = sym->hash_next) अणु
+		अगर (map_to_ns(sym->type) == map_to_ns(type) &&
+		    म_भेद(name, sym->name) == 0) अणु
+			अगर (is_reference)
 				/* fall through */ ;
-			else if (sym->type == type &&
-				 equal_list(sym->defn, defn)) {
-				if (!sym->is_declared && sym->is_override) {
-					print_location();
-					print_type_name(type, name);
-					fprintf(stderr, " modversion is "
+			अन्यथा अगर (sym->type == type &&
+				 equal_list(sym->defn, defn)) अणु
+				अगर (!sym->is_declared && sym->is_override) अणु
+					prपूर्णांक_location();
+					prपूर्णांक_type_name(type, name);
+					ख_लिखो(मानक_त्रुटि, " modversion is "
 						"unchanged\n");
-				}
+				पूर्ण
 				sym->is_declared = 1;
-				return sym;
-			} else if (!sym->is_declared) {
-				if (sym->is_override && flag_preserve) {
-					print_location();
-					fprintf(stderr, "ignoring ");
-					print_type_name(type, name);
-					fprintf(stderr, " modversion change\n");
+				वापस sym;
+			पूर्ण अन्यथा अगर (!sym->is_declared) अणु
+				अगर (sym->is_override && flag_preserve) अणु
+					prपूर्णांक_location();
+					ख_लिखो(मानक_त्रुटि, "ignoring ");
+					prपूर्णांक_type_name(type, name);
+					ख_लिखो(मानक_त्रुटि, " modversion change\n");
 					sym->is_declared = 1;
-					return sym;
-				} else {
+					वापस sym;
+				पूर्ण अन्यथा अणु
 					status = is_unknown_symbol(sym) ?
 						STATUS_DEFINED : STATUS_MODIFIED;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				error_with_pos("redefinition of %s", name);
-				return sym;
-			}
-			break;
-		}
-	}
+				वापस sym;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (sym) {
-		struct symbol **psym;
+	अगर (sym) अणु
+		काष्ठा symbol **psym;
 
-		for (psym = &symtab[h]; *psym; psym = &(*psym)->hash_next) {
-			if (*psym == sym) {
+		क्रम (psym = &symtab[h]; *psym; psym = &(*psym)->hash_next) अणु
+			अगर (*psym == sym) अणु
 				*psym = sym->hash_next;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		--nsyms;
-	}
+	पूर्ण
 
-	sym = xmalloc(sizeof(*sym));
+	sym = xदो_स्मृति(माप(*sym));
 	sym->name = name;
 	sym->type = type;
 	sym->defn = defn;
-	sym->expansion_trail = NULL;
-	sym->visited = NULL;
-	sym->is_extern = is_extern;
+	sym->expansion_trail = शून्य;
+	sym->visited = शून्य;
+	sym->is_बाह्य = is_बाह्य;
 
 	sym->hash_next = symtab[h];
 	symtab[h] = sym;
@@ -289,301 +290,301 @@ static struct symbol *__add_symbol(const char *name, enum symbol_type type,
 	sym->status = status;
 	sym->is_override = 0;
 
-	if (flag_debug) {
-		if (symbol_types[type].name)
-			fprintf(debugfile, "Defn for %s %s == <",
+	अगर (flag_debug) अणु
+		अगर (symbol_types[type].name)
+			ख_लिखो(debugfile, "Defn for %s %s == <",
 				symbol_types[type].name, name);
-		else
-			fprintf(debugfile, "Defn for type%d %s == <",
+		अन्यथा
+			ख_लिखो(debugfile, "Defn for type%d %s == <",
 				type, name);
-		if (is_extern)
-			fputs("extern ", debugfile);
-		print_list(debugfile, defn);
-		fputs(">\n", debugfile);
-	}
+		अगर (is_बाह्य)
+			ख_माला_दो("extern ", debugfile);
+		prपूर्णांक_list(debugfile, defn);
+		ख_माला_दो(">\n", debugfile);
+	पूर्ण
 
 	++nsyms;
-	return sym;
-}
+	वापस sym;
+पूर्ण
 
-struct symbol *add_symbol(const char *name, enum symbol_type type,
-			  struct string_list *defn, int is_extern)
-{
-	return __add_symbol(name, type, defn, is_extern, 0);
-}
+काष्ठा symbol *add_symbol(स्थिर अक्षर *name, क्रमागत symbol_type type,
+			  काष्ठा string_list *defn, पूर्णांक is_बाह्य)
+अणु
+	वापस __add_symbol(name, type, defn, is_बाह्य, 0);
+पूर्ण
 
-static struct symbol *add_reference_symbol(const char *name, enum symbol_type type,
-				    struct string_list *defn, int is_extern)
-{
-	return __add_symbol(name, type, defn, is_extern, 1);
-}
+अटल काष्ठा symbol *add_reference_symbol(स्थिर अक्षर *name, क्रमागत symbol_type type,
+				    काष्ठा string_list *defn, पूर्णांक is_बाह्य)
+अणु
+	वापस __add_symbol(name, type, defn, is_बाह्य, 1);
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
-void free_node(struct string_list *node)
-{
-	free(node->string);
-	free(node);
-}
+व्योम मुक्त_node(काष्ठा string_list *node)
+अणु
+	मुक्त(node->string);
+	मुक्त(node);
+पूर्ण
 
-void free_list(struct string_list *s, struct string_list *e)
-{
-	while (s != e) {
-		struct string_list *next = s->next;
-		free_node(s);
+व्योम मुक्त_list(काष्ठा string_list *s, काष्ठा string_list *e)
+अणु
+	जबतक (s != e) अणु
+		काष्ठा string_list *next = s->next;
+		मुक्त_node(s);
 		s = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct string_list *mk_node(const char *string)
-{
-	struct string_list *newnode;
+अटल काष्ठा string_list *mk_node(स्थिर अक्षर *string)
+अणु
+	काष्ठा string_list *newnode;
 
-	newnode = xmalloc(sizeof(*newnode));
+	newnode = xदो_स्मृति(माप(*newnode));
 	newnode->string = xstrdup(string);
 	newnode->tag = SYM_NORMAL;
-	newnode->next = NULL;
+	newnode->next = शून्य;
 
-	return newnode;
-}
+	वापस newnode;
+पूर्ण
 
-static struct string_list *concat_list(struct string_list *start, ...)
-{
-	va_list ap;
-	struct string_list *n, *n2;
+अटल काष्ठा string_list *concat_list(काष्ठा string_list *start, ...)
+अणु
+	बहु_सूची ap;
+	काष्ठा string_list *n, *n2;
 
-	if (!start)
-		return NULL;
-	for (va_start(ap, start); (n = va_arg(ap, struct string_list *));) {
-		for (n2 = n; n2->next; n2 = n2->next)
+	अगर (!start)
+		वापस शून्य;
+	क्रम (बहु_शुरू(ap, start); (n = बहु_तर्क(ap, काष्ठा string_list *));) अणु
+		क्रम (n2 = n; n2->next; n2 = n2->next)
 			;
 		n2->next = start;
 		start = n;
-	}
-	va_end(ap);
-	return start;
-}
+	पूर्ण
+	बहु_पूर्ण(ap);
+	वापस start;
+पूर्ण
 
-struct string_list *copy_node(struct string_list *node)
-{
-	struct string_list *newnode;
+काष्ठा string_list *copy_node(काष्ठा string_list *node)
+अणु
+	काष्ठा string_list *newnode;
 
-	newnode = xmalloc(sizeof(*newnode));
+	newnode = xदो_स्मृति(माप(*newnode));
 	newnode->string = xstrdup(node->string);
 	newnode->tag = node->tag;
 
-	return newnode;
-}
+	वापस newnode;
+पूर्ण
 
-struct string_list *copy_list_range(struct string_list *start,
-				    struct string_list *end)
-{
-	struct string_list *res, *n;
+काष्ठा string_list *copy_list_range(काष्ठा string_list *start,
+				    काष्ठा string_list *end)
+अणु
+	काष्ठा string_list *res, *n;
 
-	if (start == end)
-		return NULL;
+	अगर (start == end)
+		वापस शून्य;
 	n = res = copy_node(start);
-	for (start = start->next; start != end; start = start->next) {
+	क्रम (start = start->next; start != end; start = start->next) अणु
 		n->next = copy_node(start);
 		n = n->next;
-	}
-	n->next = NULL;
-	return res;
-}
+	पूर्ण
+	n->next = शून्य;
+	वापस res;
+पूर्ण
 
-static int equal_list(struct string_list *a, struct string_list *b)
-{
-	while (a && b) {
-		if (a->tag != b->tag || strcmp(a->string, b->string))
-			return 0;
+अटल पूर्णांक equal_list(काष्ठा string_list *a, काष्ठा string_list *b)
+अणु
+	जबतक (a && b) अणु
+		अगर (a->tag != b->tag || म_भेद(a->string, b->string))
+			वापस 0;
 		a = a->next;
 		b = b->next;
-	}
+	पूर्ण
 
-	return !a && !b;
-}
+	वापस !a && !b;
+पूर्ण
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#घोषणा ARRAY_SIZE(arr) (माप(arr) / माप((arr)[0]))
 
-static struct string_list *read_node(FILE *f)
-{
-	char buffer[256];
-	struct string_list node = {
+अटल काष्ठा string_list *पढ़ो_node(खाता *f)
+अणु
+	अक्षर buffer[256];
+	काष्ठा string_list node = अणु
 		.string = buffer,
-		.tag = SYM_NORMAL };
-	int c, in_string = 0;
+		.tag = SYM_NORMAL पूर्ण;
+	पूर्णांक c, in_string = 0;
 
-	while ((c = fgetc(f)) != EOF) {
-		if (!in_string && c == ' ') {
-			if (node.string == buffer)
-				continue;
-			break;
-		} else if (c == '"') {
+	जबतक ((c = ख_अक्षर_लो(f)) != खातापूर्ण) अणु
+		अगर (!in_string && c == ' ') अणु
+			अगर (node.string == buffer)
+				जारी;
+			अवरोध;
+		पूर्ण अन्यथा अगर (c == '"') अणु
 			in_string = !in_string;
-		} else if (c == '\n') {
-			if (node.string == buffer)
-				return NULL;
-			ungetc(c, f);
-			break;
-		}
-		if (node.string >= buffer + sizeof(buffer) - 1) {
-			fprintf(stderr, "Token too long\n");
-			exit(1);
-		}
+		पूर्ण अन्यथा अगर (c == '\n') अणु
+			अगर (node.string == buffer)
+				वापस शून्य;
+			अक्षर_वापस(c, f);
+			अवरोध;
+		पूर्ण
+		अगर (node.string >= buffer + माप(buffer) - 1) अणु
+			ख_लिखो(मानक_त्रुटि, "Token too long\n");
+			निकास(1);
+		पूर्ण
 		*node.string++ = c;
-	}
-	if (node.string == buffer)
-		return NULL;
+	पूर्ण
+	अगर (node.string == buffer)
+		वापस शून्य;
 	*node.string = 0;
 	node.string = buffer;
 
-	if (node.string[1] == '#') {
-		size_t n;
+	अगर (node.string[1] == '#') अणु
+		माप_प्रकार n;
 
-		for (n = 0; n < ARRAY_SIZE(symbol_types); n++) {
-			if (node.string[0] == symbol_types[n].n) {
+		क्रम (n = 0; n < ARRAY_SIZE(symbol_types); n++) अणु
+			अगर (node.string[0] == symbol_types[n].n) अणु
 				node.tag = n;
 				node.string += 2;
-				return copy_node(&node);
-			}
-		}
-		fprintf(stderr, "Unknown type %c\n", node.string[0]);
-		exit(1);
-	}
-	return copy_node(&node);
-}
+				वापस copy_node(&node);
+			पूर्ण
+		पूर्ण
+		ख_लिखो(मानक_त्रुटि, "Unknown type %c\n", node.string[0]);
+		निकास(1);
+	पूर्ण
+	वापस copy_node(&node);
+पूर्ण
 
-static void read_reference(FILE *f)
-{
-	while (!feof(f)) {
-		struct string_list *defn = NULL;
-		struct string_list *sym, *def;
-		int is_extern = 0, is_override = 0;
-		struct symbol *subsym;
+अटल व्योम पढ़ो_reference(खाता *f)
+अणु
+	जबतक (!ख_पूर्ण(f)) अणु
+		काष्ठा string_list *defn = शून्य;
+		काष्ठा string_list *sym, *def;
+		पूर्णांक is_बाह्य = 0, is_override = 0;
+		काष्ठा symbol *subsym;
 
-		sym = read_node(f);
-		if (sym && sym->tag == SYM_NORMAL &&
-		    !strcmp(sym->string, "override")) {
+		sym = पढ़ो_node(f);
+		अगर (sym && sym->tag == SYM_NORMAL &&
+		    !म_भेद(sym->string, "override")) अणु
 			is_override = 1;
-			free_node(sym);
-			sym = read_node(f);
-		}
-		if (!sym)
-			continue;
-		def = read_node(f);
-		if (def && def->tag == SYM_NORMAL &&
-		    !strcmp(def->string, "extern")) {
-			is_extern = 1;
-			free_node(def);
-			def = read_node(f);
-		}
-		while (def) {
+			मुक्त_node(sym);
+			sym = पढ़ो_node(f);
+		पूर्ण
+		अगर (!sym)
+			जारी;
+		def = पढ़ो_node(f);
+		अगर (def && def->tag == SYM_NORMAL &&
+		    !म_भेद(def->string, "extern")) अणु
+			is_बाह्य = 1;
+			मुक्त_node(def);
+			def = पढ़ो_node(f);
+		पूर्ण
+		जबतक (def) अणु
 			def->next = defn;
 			defn = def;
-			def = read_node(f);
-		}
+			def = पढ़ो_node(f);
+		पूर्ण
 		subsym = add_reference_symbol(xstrdup(sym->string), sym->tag,
-					      defn, is_extern);
+					      defn, is_बाह्य);
 		subsym->is_override = is_override;
-		free_node(sym);
-	}
-}
+		मुक्त_node(sym);
+	पूर्ण
+पूर्ण
 
-static void print_node(FILE * f, struct string_list *list)
-{
-	if (symbol_types[list->tag].n) {
-		putc(symbol_types[list->tag].n, f);
-		putc('#', f);
-	}
-	fputs(list->string, f);
-}
+अटल व्योम prपूर्णांक_node(खाता * f, काष्ठा string_list *list)
+अणु
+	अगर (symbol_types[list->tag].n) अणु
+		अ_दो(symbol_types[list->tag].n, f);
+		अ_दो('#', f);
+	पूर्ण
+	ख_माला_दो(list->string, f);
+पूर्ण
 
-static void print_list(FILE * f, struct string_list *list)
-{
-	struct string_list **e, **b;
-	struct string_list *tmp, **tmp2;
-	int elem = 1;
+अटल व्योम prपूर्णांक_list(खाता * f, काष्ठा string_list *list)
+अणु
+	काष्ठा string_list **e, **b;
+	काष्ठा string_list *पंचांगp, **पंचांगp2;
+	पूर्णांक elem = 1;
 
-	if (list == NULL) {
-		fputs("(nil)", f);
-		return;
-	}
+	अगर (list == शून्य) अणु
+		ख_माला_दो("(nil)", f);
+		वापस;
+	पूर्ण
 
-	tmp = list;
-	while ((tmp = tmp->next) != NULL)
+	पंचांगp = list;
+	जबतक ((पंचांगp = पंचांगp->next) != शून्य)
 		elem++;
 
-	b = alloca(elem * sizeof(*e));
+	b = alloca(elem * माप(*e));
 	e = b + elem;
-	tmp2 = e - 1;
+	पंचांगp2 = e - 1;
 
-	(*tmp2--) = list;
-	while ((list = list->next) != NULL)
-		*(tmp2--) = list;
+	(*पंचांगp2--) = list;
+	जबतक ((list = list->next) != शून्य)
+		*(पंचांगp2--) = list;
 
-	while (b != e) {
-		print_node(f, *b++);
-		putc(' ', f);
-	}
-}
+	जबतक (b != e) अणु
+		prपूर्णांक_node(f, *b++);
+		अ_दो(' ', f);
+	पूर्ण
+पूर्ण
 
-static unsigned long expand_and_crc_sym(struct symbol *sym, unsigned long crc)
-{
-	struct string_list *list = sym->defn;
-	struct string_list **e, **b;
-	struct string_list *tmp, **tmp2;
-	int elem = 1;
+अटल अचिन्हित दीर्घ expand_and_crc_sym(काष्ठा symbol *sym, अचिन्हित दीर्घ crc)
+अणु
+	काष्ठा string_list *list = sym->defn;
+	काष्ठा string_list **e, **b;
+	काष्ठा string_list *पंचांगp, **पंचांगp2;
+	पूर्णांक elem = 1;
 
-	if (!list)
-		return crc;
+	अगर (!list)
+		वापस crc;
 
-	tmp = list;
-	while ((tmp = tmp->next) != NULL)
+	पंचांगp = list;
+	जबतक ((पंचांगp = पंचांगp->next) != शून्य)
 		elem++;
 
-	b = alloca(elem * sizeof(*e));
+	b = alloca(elem * माप(*e));
 	e = b + elem;
-	tmp2 = e - 1;
+	पंचांगp2 = e - 1;
 
-	*(tmp2--) = list;
-	while ((list = list->next) != NULL)
-		*(tmp2--) = list;
+	*(पंचांगp2--) = list;
+	जबतक ((list = list->next) != शून्य)
+		*(पंचांगp2--) = list;
 
-	while (b != e) {
-		struct string_list *cur;
-		struct symbol *subsym;
+	जबतक (b != e) अणु
+		काष्ठा string_list *cur;
+		काष्ठा symbol *subsym;
 
 		cur = *(b++);
-		switch (cur->tag) {
-		case SYM_NORMAL:
-			if (flag_dump_defs)
-				fprintf(debugfile, "%s ", cur->string);
+		चयन (cur->tag) अणु
+		हाल SYM_NORMAL:
+			अगर (flag_dump_defs)
+				ख_लिखो(debugfile, "%s ", cur->string);
 			crc = partial_crc32(cur->string, crc);
 			crc = partial_crc32_one(' ', crc);
-			break;
+			अवरोध;
 
-		case SYM_ENUM_CONST:
-		case SYM_TYPEDEF:
+		हाल SYM_ENUM_CONST:
+		हाल SYM_TYPEDEF:
 			subsym = find_symbol(cur->string, cur->tag, 0);
 			/* FIXME: Bad reference files can segfault here. */
-			if (subsym->expansion_trail) {
-				if (flag_dump_defs)
-					fprintf(debugfile, "%s ", cur->string);
+			अगर (subsym->expansion_trail) अणु
+				अगर (flag_dump_defs)
+					ख_लिखो(debugfile, "%s ", cur->string);
 				crc = partial_crc32(cur->string, crc);
 				crc = partial_crc32_one(' ', crc);
-			} else {
+			पूर्ण अन्यथा अणु
 				subsym->expansion_trail = expansion_trail;
 				expansion_trail = subsym;
 				crc = expand_and_crc_sym(subsym, crc);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case SYM_STRUCT:
-		case SYM_UNION:
-		case SYM_ENUM:
+		हाल SYM_STRUCT:
+		हाल SYM_UNION:
+		हाल SYM_ENUM:
 			subsym = find_symbol(cur->string, cur->tag, 0);
-			if (!subsym) {
-				struct string_list *n;
+			अगर (!subsym) अणु
+				काष्ठा string_list *n;
 
 				error_with_pos("expand undefined %s %s",
 					       symbol_types[cur->tag].name,
@@ -593,136 +594,136 @@ static unsigned long expand_and_crc_sym(struct symbol *sym, unsigned long crc)
 						mk_node(cur->string),
 						mk_node("{"),
 						mk_node("UNKNOWN"),
-						mk_node("}"), NULL);
+						mk_node("}"), शून्य);
 				subsym =
 				    add_symbol(cur->string, cur->tag, n, 0);
-			}
-			if (subsym->expansion_trail) {
-				if (flag_dump_defs) {
-					fprintf(debugfile, "%s %s ",
+			पूर्ण
+			अगर (subsym->expansion_trail) अणु
+				अगर (flag_dump_defs) अणु
+					ख_लिखो(debugfile, "%s %s ",
 						symbol_types[cur->tag].name,
 						cur->string);
-				}
+				पूर्ण
 
 				crc = partial_crc32(symbol_types[cur->tag].name,
 						    crc);
 				crc = partial_crc32_one(' ', crc);
 				crc = partial_crc32(cur->string, crc);
 				crc = partial_crc32_one(' ', crc);
-			} else {
+			पूर्ण अन्यथा अणु
 				subsym->expansion_trail = expansion_trail;
 				expansion_trail = subsym;
 				crc = expand_and_crc_sym(subsym, crc);
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	{
-		static struct symbol **end = &visited_symbols;
+	अणु
+		अटल काष्ठा symbol **end = &visited_symbols;
 
-		if (!sym->visited) {
+		अगर (!sym->visited) अणु
 			*end = sym;
 			end = &sym->visited;
-			sym->visited = (struct symbol *)-1L;
-		}
-	}
+			sym->visited = (काष्ठा symbol *)-1L;
+		पूर्ण
+	पूर्ण
 
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
-void export_symbol(const char *name)
-{
-	struct symbol *sym;
+व्योम export_symbol(स्थिर अक्षर *name)
+अणु
+	काष्ठा symbol *sym;
 
 	sym = find_symbol(name, SYM_NORMAL, 0);
-	if (!sym)
+	अगर (!sym)
 		error_with_pos("export undefined symbol %s", name);
-	else {
-		unsigned long crc;
-		int has_changed = 0;
+	अन्यथा अणु
+		अचिन्हित दीर्घ crc;
+		पूर्णांक has_changed = 0;
 
-		if (flag_dump_defs)
-			fprintf(debugfile, "Export %s == <", name);
+		अगर (flag_dump_defs)
+			ख_लिखो(debugfile, "Export %s == <", name);
 
-		expansion_trail = (struct symbol *)-1L;
+		expansion_trail = (काष्ठा symbol *)-1L;
 
 		sym->expansion_trail = expansion_trail;
 		expansion_trail = sym;
 		crc = expand_and_crc_sym(sym, 0xffffffff) ^ 0xffffffff;
 
 		sym = expansion_trail;
-		while (sym != (struct symbol *)-1L) {
-			struct symbol *n = sym->expansion_trail;
+		जबतक (sym != (काष्ठा symbol *)-1L) अणु
+			काष्ठा symbol *n = sym->expansion_trail;
 
-			if (sym->status != STATUS_UNCHANGED) {
-				if (!has_changed) {
-					print_location();
-					fprintf(stderr, "%s: %s: modversion "
+			अगर (sym->status != STATUS_UNCHANGED) अणु
+				अगर (!has_changed) अणु
+					prपूर्णांक_location();
+					ख_लिखो(मानक_त्रुटि, "%s: %s: modversion "
 						"changed because of changes "
 						"in ", flag_preserve ? "error" :
 						       "warning", name);
-				} else
-					fprintf(stderr, ", ");
-				print_type_name(sym->type, sym->name);
-				if (sym->status == STATUS_DEFINED)
-					fprintf(stderr, " (became defined)");
+				पूर्ण अन्यथा
+					ख_लिखो(मानक_त्रुटि, ", ");
+				prपूर्णांक_type_name(sym->type, sym->name);
+				अगर (sym->status == STATUS_DEFINED)
+					ख_लिखो(मानक_त्रुटि, " (became defined)");
 				has_changed = 1;
-				if (flag_preserve)
+				अगर (flag_preserve)
 					errors++;
-			}
+			पूर्ण
 			sym->expansion_trail = 0;
 			sym = n;
-		}
-		if (has_changed)
-			fprintf(stderr, "\n");
+		पूर्ण
+		अगर (has_changed)
+			ख_लिखो(मानक_त्रुटि, "\n");
 
-		if (flag_dump_defs)
-			fputs(">\n", debugfile);
+		अगर (flag_dump_defs)
+			ख_माला_दो(">\n", debugfile);
 
 		/* Used as a linker script. */
-		printf(!flag_rel_crcs ? "__crc_%s = 0x%08lx;\n" :
+		म_लिखो(!flag_rel_crcs ? "__crc_%s = 0x%08lx;\n" :
 		       "SECTIONS { .rodata : ALIGN(4) { "
 		       "__crc_%s = .; LONG(0x%08lx); } }\n",
 		       name, crc);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
-static void print_location(void)
-{
-	fprintf(stderr, "%s:%d: ", cur_filename ? : "<stdin>", cur_line);
-}
+अटल व्योम prपूर्णांक_location(व्योम)
+अणु
+	ख_लिखो(मानक_त्रुटि, "%s:%d: ", cur_filename ? : "<stdin>", cur_line);
+पूर्ण
 
-static void print_type_name(enum symbol_type type, const char *name)
-{
-	if (symbol_types[type].name)
-		fprintf(stderr, "%s %s", symbol_types[type].name, name);
-	else
-		fprintf(stderr, "%s", name);
-}
+अटल व्योम prपूर्णांक_type_name(क्रमागत symbol_type type, स्थिर अक्षर *name)
+अणु
+	अगर (symbol_types[type].name)
+		ख_लिखो(मानक_त्रुटि, "%s %s", symbol_types[type].name, name);
+	अन्यथा
+		ख_लिखो(मानक_त्रुटि, "%s", name);
+पूर्ण
 
-void error_with_pos(const char *fmt, ...)
-{
-	va_list args;
+व्योम error_with_pos(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
 
-	if (flag_warnings) {
-		print_location();
+	अगर (flag_warnings) अणु
+		prपूर्णांक_location();
 
-		va_start(args, fmt);
-		vfprintf(stderr, fmt, args);
-		va_end(args);
-		putc('\n', stderr);
+		बहु_शुरू(args, fmt);
+		भख_लिखो(मानक_त्रुटि, fmt, args);
+		बहु_पूर्ण(args);
+		अ_दो('\n', मानक_त्रुटि);
 
 		errors++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void genksyms_usage(void)
-{
-	fputs("Usage:\n" "genksyms [-adDTwqhVR] > /path/to/.tmp_obj.ver\n" "\n"
-#ifdef __GNU_LIBRARY__
+अटल व्योम genksyms_usage(व्योम)
+अणु
+	ख_माला_दो("Usage:\n" "genksyms [-adDTwqhVR] > /path/to/.tmp_obj.ver\n" "\n"
+#अगर_घोषित __GNU_LIBRARY__
 	      "  -s, --symbol-prefix   Select symbol prefix\n"
 	      "  -d, --debug           Increment the debug level (repeatable)\n"
 	      "  -D, --dump            Dump expanded symbol defs (for debugging only)\n"
@@ -734,7 +735,7 @@ static void genksyms_usage(void)
 	      "  -h, --help            Print this message\n"
 	      "  -V, --version         Print the release version\n"
 	      "  -R, --relative-crc    Emit section relative symbol CRCs\n"
-#else				/* __GNU_LIBRARY__ */
+#अन्यथा				/* __GNU_LIBRARY__ */
 	      "  -s                    Select symbol prefix\n"
 	      "  -d                    Increment the debug level (repeatable)\n"
 	      "  -D                    Dump expanded symbol defs (for debugging only)\n"
@@ -746,128 +747,128 @@ static void genksyms_usage(void)
 	      "  -h                    Print this message\n"
 	      "  -V                    Print the release version\n"
 	      "  -R                    Emit section relative symbol CRCs\n"
-#endif				/* __GNU_LIBRARY__ */
-	      , stderr);
-}
+#पूर्ण_अगर				/* __GNU_LIBRARY__ */
+	      , मानक_त्रुटि);
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	FILE *dumpfile = NULL, *ref_file = NULL;
-	int o;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	खाता *dumpfile = शून्य, *ref_file = शून्य;
+	पूर्णांक o;
 
-#ifdef __GNU_LIBRARY__
-	struct option long_opts[] = {
-		{"debug", 0, 0, 'd'},
-		{"warnings", 0, 0, 'w'},
-		{"quiet", 0, 0, 'q'},
-		{"dump", 0, 0, 'D'},
-		{"reference", 1, 0, 'r'},
-		{"dump-types", 1, 0, 'T'},
-		{"preserve", 0, 0, 'p'},
-		{"version", 0, 0, 'V'},
-		{"help", 0, 0, 'h'},
-		{"relative-crc", 0, 0, 'R'},
-		{0, 0, 0, 0}
-	};
+#अगर_घोषित __GNU_LIBRARY__
+	काष्ठा option दीर्घ_opts[] = अणु
+		अणु"debug", 0, 0, 'd'पूर्ण,
+		अणु"warnings", 0, 0, 'w'पूर्ण,
+		अणु"quiet", 0, 0, 'q'पूर्ण,
+		अणु"dump", 0, 0, 'D'पूर्ण,
+		अणु"reference", 1, 0, 'r'पूर्ण,
+		अणु"dump-types", 1, 0, 'T'पूर्ण,
+		अणु"preserve", 0, 0, 'p'पूर्ण,
+		अणु"version", 0, 0, 'V'पूर्ण,
+		अणु"help", 0, 0, 'h'पूर्ण,
+		अणु"relative-crc", 0, 0, 'R'पूर्ण,
+		अणु0, 0, 0, 0पूर्ण
+	पूर्ण;
 
-	while ((o = getopt_long(argc, argv, "s:dwqVDr:T:phR",
-				&long_opts[0], NULL)) != EOF)
-#else				/* __GNU_LIBRARY__ */
-	while ((o = getopt(argc, argv, "s:dwqVDr:T:phR")) != EOF)
-#endif				/* __GNU_LIBRARY__ */
-		switch (o) {
-		case 'd':
+	जबतक ((o = getopt_दीर्घ(argc, argv, "s:dwqVDr:T:phR",
+				&दीर्घ_opts[0], शून्य)) != खातापूर्ण)
+#अन्यथा				/* __GNU_LIBRARY__ */
+	जबतक ((o = getopt(argc, argv, "s:dwqVDr:T:phR")) != खातापूर्ण)
+#पूर्ण_अगर				/* __GNU_LIBRARY__ */
+		चयन (o) अणु
+		हाल 'd':
 			flag_debug++;
-			break;
-		case 'w':
+			अवरोध;
+		हाल 'w':
 			flag_warnings = 1;
-			break;
-		case 'q':
+			अवरोध;
+		हाल 'q':
 			flag_warnings = 0;
-			break;
-		case 'V':
-			fputs("genksyms version 2.5.60\n", stderr);
-			break;
-		case 'D':
+			अवरोध;
+		हाल 'V':
+			ख_माला_दो("genksyms version 2.5.60\n", मानक_त्रुटि);
+			अवरोध;
+		हाल 'D':
 			flag_dump_defs = 1;
-			break;
-		case 'r':
+			अवरोध;
+		हाल 'r':
 			flag_reference = 1;
-			ref_file = fopen(optarg, "r");
-			if (!ref_file) {
-				perror(optarg);
-				return 1;
-			}
-			break;
-		case 'T':
+			ref_file = ख_खोलो(optarg, "r");
+			अगर (!ref_file) अणु
+				लिखो_त्रुटि(optarg);
+				वापस 1;
+			पूर्ण
+			अवरोध;
+		हाल 'T':
 			flag_dump_types = 1;
-			dumpfile = fopen(optarg, "w");
-			if (!dumpfile) {
-				perror(optarg);
-				return 1;
-			}
-			break;
-		case 'p':
+			dumpfile = ख_खोलो(optarg, "w");
+			अगर (!dumpfile) अणु
+				लिखो_त्रुटि(optarg);
+				वापस 1;
+			पूर्ण
+			अवरोध;
+		हाल 'p':
 			flag_preserve = 1;
-			break;
-		case 'h':
+			अवरोध;
+		हाल 'h':
 			genksyms_usage();
-			return 0;
-		case 'R':
+			वापस 0;
+		हाल 'R':
 			flag_rel_crcs = 1;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			genksyms_usage();
-			return 1;
-		}
-	{
-		extern int yydebug;
-		extern int yy_flex_debug;
+			वापस 1;
+		पूर्ण
+	अणु
+		बाह्य पूर्णांक yydebug;
+		बाह्य पूर्णांक yy_flex_debug;
 
 		yydebug = (flag_debug > 1);
 		yy_flex_debug = (flag_debug > 2);
 
-		debugfile = stderr;
+		debugfile = मानक_त्रुटि;
 		/* setlinebuf(debugfile); */
-	}
+	पूर्ण
 
-	if (flag_reference) {
-		read_reference(ref_file);
-		fclose(ref_file);
-	}
+	अगर (flag_reference) अणु
+		पढ़ो_reference(ref_file);
+		ख_बंद(ref_file);
+	पूर्ण
 
 	yyparse();
 
-	if (flag_dump_types && visited_symbols) {
-		while (visited_symbols != (struct symbol *)-1L) {
-			struct symbol *sym = visited_symbols;
+	अगर (flag_dump_types && visited_symbols) अणु
+		जबतक (visited_symbols != (काष्ठा symbol *)-1L) अणु
+			काष्ठा symbol *sym = visited_symbols;
 
-			if (sym->is_override)
-				fputs("override ", dumpfile);
-			if (symbol_types[sym->type].n) {
-				putc(symbol_types[sym->type].n, dumpfile);
-				putc('#', dumpfile);
-			}
-			fputs(sym->name, dumpfile);
-			putc(' ', dumpfile);
-			if (sym->is_extern)
-				fputs("extern ", dumpfile);
-			print_list(dumpfile, sym->defn);
-			putc('\n', dumpfile);
+			अगर (sym->is_override)
+				ख_माला_दो("override ", dumpfile);
+			अगर (symbol_types[sym->type].n) अणु
+				अ_दो(symbol_types[sym->type].n, dumpfile);
+				अ_दो('#', dumpfile);
+			पूर्ण
+			ख_माला_दो(sym->name, dumpfile);
+			अ_दो(' ', dumpfile);
+			अगर (sym->is_बाह्य)
+				ख_माला_दो("extern ", dumpfile);
+			prपूर्णांक_list(dumpfile, sym->defn);
+			अ_दो('\n', dumpfile);
 
 			visited_symbols = sym->visited;
-			sym->visited = NULL;
-		}
-	}
+			sym->visited = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (flag_debug) {
-		fprintf(debugfile, "Hash table occupancy %d/%d = %g\n",
+	अगर (flag_debug) अणु
+		ख_लिखो(debugfile, "Hash table occupancy %d/%d = %g\n",
 			nsyms, HASH_BUCKETS,
-			(double)nsyms / (double)HASH_BUCKETS);
-	}
+			(द्विगुन)nsyms / (द्विगुन)HASH_BUCKETS);
+	पूर्ण
 
-	if (dumpfile)
-		fclose(dumpfile);
+	अगर (dumpfile)
+		ख_बंद(dumpfile);
 
-	return errors != 0;
-}
+	वापस errors != 0;
+पूर्ण

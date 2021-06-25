@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _TOOLS_LINUX_ASM_GENERIC_BITOPS_HWEIGHT_H_
-#define _TOOLS_LINUX_ASM_GENERIC_BITOPS_HWEIGHT_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _TOOLS_LINUX_ASM_GENERIC_BITOPS_HWEIGHT_H_
+#घोषणा _TOOLS_LINUX_ASM_GENERIC_BITOPS_HWEIGHT_H_
 
-#include <asm-generic/bitops/arch_hweight.h>
-#include <asm-generic/bitops/const_hweight.h>
+#समावेश <यंत्र-generic/bitops/arch_hweight.h>
+#समावेश <यंत्र-generic/bitops/स्थिर_hweight.h>
 
-#endif /* _TOOLS_LINUX_ASM_GENERIC_BITOPS_HWEIGHT_H_ */
+#पूर्ण_अगर /* _TOOLS_LINUX_ASM_GENERIC_BITOPS_HWEIGHT_H_ */

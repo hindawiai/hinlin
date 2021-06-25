@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright 2015-2020 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
-#ifndef _ENA_ETH_IO_H_
-#define _ENA_ETH_IO_H_
+#अगर_अघोषित _ENA_ETH_IO_H_
+#घोषणा _ENA_ETH_IO_H_
 
-enum ena_eth_io_l3_proto_index {
+क्रमागत ena_eth_io_l3_proto_index अणु
 	ENA_ETH_IO_L3_PROTO_UNKNOWN                 = 0,
 	ENA_ETH_IO_L3_PROTO_IPV4                    = 8,
 	ENA_ETH_IO_L3_PROTO_IPV6                    = 11,
 	ENA_ETH_IO_L3_PROTO_FCOE                    = 21,
 	ENA_ETH_IO_L3_PROTO_ROCE                    = 22,
-};
+पूर्ण;
 
-enum ena_eth_io_l4_proto_index {
+क्रमागत ena_eth_io_l4_proto_index अणु
 	ENA_ETH_IO_L4_PROTO_UNKNOWN                 = 0,
 	ENA_ETH_IO_L4_PROTO_TCP                     = 12,
 	ENA_ETH_IO_L4_PROTO_UDP                     = 13,
 	ENA_ETH_IO_L4_PROTO_ROUTEABLE_ROCE          = 23,
-};
+पूर्ण;
 
-struct ena_eth_io_tx_desc {
+काष्ठा ena_eth_io_tx_desc अणु
 	/* 15:0 : length - Buffer length in bytes, must
 	 *    include any packet trailers that the ENA supposed
 	 *    to update like End-to-End CRC, Authentication GMAC
 	 *    etc. This length must not include the
 	 *    'Push_Buffer' length. This length must not include
-	 *    the 4-byte added in the end for 802.3 Ethernet FCS
+	 *    the 4-byte added in the end क्रम 802.3 Ethernet FCS
 	 * 21:16 : req_id_hi - Request ID[15:10]
 	 * 22 : reserved22 - MBZ
 	 * 23 : meta_desc - MBZ
@@ -38,7 +39,7 @@ struct ena_eth_io_tx_desc {
 	 *    transaction
 	 * 28 : comp_req - Indicates whether completion
 	 *    should be posted, after packet is transmitted.
-	 *    Valid only for first descriptor
+	 *    Valid only क्रम first descriptor
 	 * 30:29 : reserved29 - MBZ
 	 * 31 : reserved31 - MBZ
 	 */
@@ -46,7 +47,7 @@ struct ena_eth_io_tx_desc {
 
 	/* 3:0 : l3_proto_idx - L3 protocol. This field
 	 *    required when l3_csum_en,l3_csum or tso_en are set.
-	 * 4 : DF - IPv4 DF, must be 0 if packet is IPv4 and
+	 * 4 : DF - IPv4 DF, must be 0 अगर packet is IPv4 and
 	 *    DF flags of the IPv4 header is 0. Otherwise must
 	 *    be set to 1
 	 * 6:5 : reserved5
@@ -61,14 +62,14 @@ struct ena_eth_io_tx_desc {
 	 * 16 : reserved16
 	 * 17 : l4_csum_partial - L4 partial checksum. when
 	 *    set to 0, the ENA calculates the L4 checksum,
-	 *    where the Destination Address required for the
-	 *    TCP/UDP pseudo-header is taken from the actual
-	 *    packet L3 header. when set to 1, the ENA doesn't
-	 *    calculate the sum of the pseudo-header, instead,
+	 *    where the Destination Address required क्रम the
+	 *    TCP/UDP pseuकरो-header is taken from the actual
+	 *    packet L3 header. when set to 1, the ENA करोesn't
+	 *    calculate the sum of the pseuकरो-header, instead,
 	 *    the checksum field of the L4 is used instead. When
-	 *    TSO enabled, the checksum of the pseudo-header
+	 *    TSO enabled, the checksum of the pseuकरो-header
 	 *    must not include the tcp length field. L4 partial
-	 *    checksum should be used for IPv6 packet that
+	 *    checksum should be used क्रम IPv6 packet that
 	 *    contains Routing Headers.
 	 * 20:18 : reserved18 - MBZ
 	 * 21 : reserved21 - MBZ
@@ -79,12 +80,12 @@ struct ena_eth_io_tx_desc {
 	u32 buff_addr_lo;
 
 	/* address high and header size
-	 * 15:0 : addr_hi - Buffer Pointer[47:32]
+	 * 15:0 : addr_hi - Buffer Poपूर्णांकer[47:32]
 	 * 23:16 : reserved16_w2
 	 * 31:24 : header_length - Header length. For Low
 	 *    Latency Queues, this fields indicates the number
 	 *    of bytes written to the headers' memory. For
-	 *    normal queues, if packet is TCP or UDP, and longer
+	 *    normal queues, अगर packet is TCP or UDP, and दीर्घer
 	 *    than max_header_size, then this field should be
 	 *    set to the sum of L4 header offset and L4 header
 	 *    size(without options), otherwise, this field
@@ -94,14 +95,14 @@ struct ena_eth_io_tx_desc {
 	 *    Queues Feature descriptor
 	 */
 	u32 buff_addr_hi_hdr_sz;
-};
+पूर्ण;
 
-struct ena_eth_io_tx_meta_desc {
+काष्ठा ena_eth_io_tx_meta_desc अणु
 	/* 9:0 : req_id_lo - Request ID[9:0]
 	 * 11:10 : reserved10 - MBZ
 	 * 12 : reserved12 - MBZ
 	 * 13 : reserved13 - MBZ
-	 * 14 : ext_valid - if set, offset fields in Word2
+	 * 14 : ext_valid - अगर set, offset fields in Word2
 	 *    are valid Also MSS High in Word 0 and bits [31:24]
 	 *    in Word 3
 	 * 15 : reserved15
@@ -120,7 +121,7 @@ struct ena_eth_io_tx_meta_desc {
 	 *    transaction
 	 * 28 : comp_req - Indicates whether completion
 	 *    should be posted, after packet is transmitted.
-	 *    Valid only for first descriptor
+	 *    Valid only क्रम first descriptor
 	 * 30:29 : reserved29 - MBZ
 	 * 31 : reserved31 - MBZ
 	 */
@@ -142,9 +143,9 @@ struct ena_eth_io_tx_meta_desc {
 	u32 word2;
 
 	u32 reserved;
-};
+पूर्ण;
 
-struct ena_eth_io_tx_cdesc {
+काष्ठा ena_eth_io_tx_cdesc अणु
 	/* Request ID[15:0] */
 	u16 req_id;
 
@@ -159,9 +160,9 @@ struct ena_eth_io_tx_cdesc {
 	u16 sub_qid;
 
 	u16 sq_head_idx;
-};
+पूर्ण;
 
-struct ena_eth_io_rx_desc {
+काष्ठा ena_eth_io_rx_desc अणु
 	/* In bytes. 0 means 64KB */
 	u16 length;
 
@@ -190,12 +191,12 @@ struct ena_eth_io_rx_desc {
 
 	/* MBZ */
 	u16 reserved16_w3;
-};
+पूर्ण;
 
-/* 4-word format Note: all ethernet parsing information are valid only when
+/* 4-word क्रमmat Note: all ethernet parsing inक्रमmation are valid only when
  * last=1
  */
-struct ena_eth_io_rx_cdesc_base {
+काष्ठा ena_eth_io_rx_cdesc_base अणु
 	/* 4:0 : l3_proto_idx
 	 * 6:5 : src_vlan_cnt
 	 * 7 : reserved7 - MBZ
@@ -211,7 +212,7 @@ struct ena_eth_io_rx_cdesc_base {
 	 *    ipv4_frag is not set. This bit is valid only when
 	 *    l4_csum_checked below is set.
 	 * 15 : ipv4_frag - Indicates IPv4 fragmented packet
-	 * 16 : l4_csum_checked - L4 checksum was verified
+	 * 16 : l4_csum_checked - L4 checksum was verअगरied
 	 *    (could be OK or error), when cleared the status of
 	 *    checksum is unknown
 	 * 23:17 : reserved17 - MBZ
@@ -240,11 +241,11 @@ struct ena_eth_io_rx_cdesc_base {
 	u8 offset;
 
 	u8 reserved;
-};
+पूर्ण;
 
-/* 8-word format */
-struct ena_eth_io_rx_cdesc_ext {
-	struct ena_eth_io_rx_cdesc_base base;
+/* 8-word क्रमmat */
+काष्ठा ena_eth_io_rx_cdesc_ext अणु
+	काष्ठा ena_eth_io_rx_cdesc_base base;
 
 	u32 buff_addr_lo;
 
@@ -255,136 +256,136 @@ struct ena_eth_io_rx_cdesc_ext {
 	u32 reserved_w6;
 
 	u32 reserved_w7;
-};
+पूर्ण;
 
-struct ena_eth_io_intr_reg {
-	/* 14:0 : rx_intr_delay
-	 * 29:15 : tx_intr_delay
-	 * 30 : intr_unmask
+काष्ठा ena_eth_io_पूर्णांकr_reg अणु
+	/* 14:0 : rx_पूर्णांकr_delay
+	 * 29:15 : tx_पूर्णांकr_delay
+	 * 30 : पूर्णांकr_unmask
 	 * 31 : reserved
 	 */
-	u32 intr_control;
-};
+	u32 पूर्णांकr_control;
+पूर्ण;
 
-struct ena_eth_io_numa_node_cfg_reg {
+काष्ठा ena_eth_io_numa_node_cfg_reg अणु
 	/* 7:0 : numa
 	 * 30:8 : reserved
 	 * 31 : enabled
 	 */
 	u32 numa_cfg;
-};
+पूर्ण;
 
 /* tx_desc */
-#define ENA_ETH_IO_TX_DESC_LENGTH_MASK                      GENMASK(15, 0)
-#define ENA_ETH_IO_TX_DESC_REQ_ID_HI_SHIFT                  16
-#define ENA_ETH_IO_TX_DESC_REQ_ID_HI_MASK                   GENMASK(21, 16)
-#define ENA_ETH_IO_TX_DESC_META_DESC_SHIFT                  23
-#define ENA_ETH_IO_TX_DESC_META_DESC_MASK                   BIT(23)
-#define ENA_ETH_IO_TX_DESC_PHASE_SHIFT                      24
-#define ENA_ETH_IO_TX_DESC_PHASE_MASK                       BIT(24)
-#define ENA_ETH_IO_TX_DESC_FIRST_SHIFT                      26
-#define ENA_ETH_IO_TX_DESC_FIRST_MASK                       BIT(26)
-#define ENA_ETH_IO_TX_DESC_LAST_SHIFT                       27
-#define ENA_ETH_IO_TX_DESC_LAST_MASK                        BIT(27)
-#define ENA_ETH_IO_TX_DESC_COMP_REQ_SHIFT                   28
-#define ENA_ETH_IO_TX_DESC_COMP_REQ_MASK                    BIT(28)
-#define ENA_ETH_IO_TX_DESC_L3_PROTO_IDX_MASK                GENMASK(3, 0)
-#define ENA_ETH_IO_TX_DESC_DF_SHIFT                         4
-#define ENA_ETH_IO_TX_DESC_DF_MASK                          BIT(4)
-#define ENA_ETH_IO_TX_DESC_TSO_EN_SHIFT                     7
-#define ENA_ETH_IO_TX_DESC_TSO_EN_MASK                      BIT(7)
-#define ENA_ETH_IO_TX_DESC_L4_PROTO_IDX_SHIFT               8
-#define ENA_ETH_IO_TX_DESC_L4_PROTO_IDX_MASK                GENMASK(12, 8)
-#define ENA_ETH_IO_TX_DESC_L3_CSUM_EN_SHIFT                 13
-#define ENA_ETH_IO_TX_DESC_L3_CSUM_EN_MASK                  BIT(13)
-#define ENA_ETH_IO_TX_DESC_L4_CSUM_EN_SHIFT                 14
-#define ENA_ETH_IO_TX_DESC_L4_CSUM_EN_MASK                  BIT(14)
-#define ENA_ETH_IO_TX_DESC_ETHERNET_FCS_DIS_SHIFT           15
-#define ENA_ETH_IO_TX_DESC_ETHERNET_FCS_DIS_MASK            BIT(15)
-#define ENA_ETH_IO_TX_DESC_L4_CSUM_PARTIAL_SHIFT            17
-#define ENA_ETH_IO_TX_DESC_L4_CSUM_PARTIAL_MASK             BIT(17)
-#define ENA_ETH_IO_TX_DESC_REQ_ID_LO_SHIFT                  22
-#define ENA_ETH_IO_TX_DESC_REQ_ID_LO_MASK                   GENMASK(31, 22)
-#define ENA_ETH_IO_TX_DESC_ADDR_HI_MASK                     GENMASK(15, 0)
-#define ENA_ETH_IO_TX_DESC_HEADER_LENGTH_SHIFT              24
-#define ENA_ETH_IO_TX_DESC_HEADER_LENGTH_MASK               GENMASK(31, 24)
+#घोषणा ENA_ETH_IO_TX_DESC_LENGTH_MASK                      GENMASK(15, 0)
+#घोषणा ENA_ETH_IO_TX_DESC_REQ_ID_HI_SHIFT                  16
+#घोषणा ENA_ETH_IO_TX_DESC_REQ_ID_HI_MASK                   GENMASK(21, 16)
+#घोषणा ENA_ETH_IO_TX_DESC_META_DESC_SHIFT                  23
+#घोषणा ENA_ETH_IO_TX_DESC_META_DESC_MASK                   BIT(23)
+#घोषणा ENA_ETH_IO_TX_DESC_PHASE_SHIFT                      24
+#घोषणा ENA_ETH_IO_TX_DESC_PHASE_MASK                       BIT(24)
+#घोषणा ENA_ETH_IO_TX_DESC_FIRST_SHIFT                      26
+#घोषणा ENA_ETH_IO_TX_DESC_FIRST_MASK                       BIT(26)
+#घोषणा ENA_ETH_IO_TX_DESC_LAST_SHIFT                       27
+#घोषणा ENA_ETH_IO_TX_DESC_LAST_MASK                        BIT(27)
+#घोषणा ENA_ETH_IO_TX_DESC_COMP_REQ_SHIFT                   28
+#घोषणा ENA_ETH_IO_TX_DESC_COMP_REQ_MASK                    BIT(28)
+#घोषणा ENA_ETH_IO_TX_DESC_L3_PROTO_IDX_MASK                GENMASK(3, 0)
+#घोषणा ENA_ETH_IO_TX_DESC_DF_SHIFT                         4
+#घोषणा ENA_ETH_IO_TX_DESC_DF_MASK                          BIT(4)
+#घोषणा ENA_ETH_IO_TX_DESC_TSO_EN_SHIFT                     7
+#घोषणा ENA_ETH_IO_TX_DESC_TSO_EN_MASK                      BIT(7)
+#घोषणा ENA_ETH_IO_TX_DESC_L4_PROTO_IDX_SHIFT               8
+#घोषणा ENA_ETH_IO_TX_DESC_L4_PROTO_IDX_MASK                GENMASK(12, 8)
+#घोषणा ENA_ETH_IO_TX_DESC_L3_CSUM_EN_SHIFT                 13
+#घोषणा ENA_ETH_IO_TX_DESC_L3_CSUM_EN_MASK                  BIT(13)
+#घोषणा ENA_ETH_IO_TX_DESC_L4_CSUM_EN_SHIFT                 14
+#घोषणा ENA_ETH_IO_TX_DESC_L4_CSUM_EN_MASK                  BIT(14)
+#घोषणा ENA_ETH_IO_TX_DESC_ETHERNET_FCS_DIS_SHIFT           15
+#घोषणा ENA_ETH_IO_TX_DESC_ETHERNET_FCS_DIS_MASK            BIT(15)
+#घोषणा ENA_ETH_IO_TX_DESC_L4_CSUM_PARTIAL_SHIFT            17
+#घोषणा ENA_ETH_IO_TX_DESC_L4_CSUM_PARTIAL_MASK             BIT(17)
+#घोषणा ENA_ETH_IO_TX_DESC_REQ_ID_LO_SHIFT                  22
+#घोषणा ENA_ETH_IO_TX_DESC_REQ_ID_LO_MASK                   GENMASK(31, 22)
+#घोषणा ENA_ETH_IO_TX_DESC_ADDR_HI_MASK                     GENMASK(15, 0)
+#घोषणा ENA_ETH_IO_TX_DESC_HEADER_LENGTH_SHIFT              24
+#घोषणा ENA_ETH_IO_TX_DESC_HEADER_LENGTH_MASK               GENMASK(31, 24)
 
 /* tx_meta_desc */
-#define ENA_ETH_IO_TX_META_DESC_REQ_ID_LO_MASK              GENMASK(9, 0)
-#define ENA_ETH_IO_TX_META_DESC_EXT_VALID_SHIFT             14
-#define ENA_ETH_IO_TX_META_DESC_EXT_VALID_MASK              BIT(14)
-#define ENA_ETH_IO_TX_META_DESC_MSS_HI_SHIFT                16
-#define ENA_ETH_IO_TX_META_DESC_MSS_HI_MASK                 GENMASK(19, 16)
-#define ENA_ETH_IO_TX_META_DESC_ETH_META_TYPE_SHIFT         20
-#define ENA_ETH_IO_TX_META_DESC_ETH_META_TYPE_MASK          BIT(20)
-#define ENA_ETH_IO_TX_META_DESC_META_STORE_SHIFT            21
-#define ENA_ETH_IO_TX_META_DESC_META_STORE_MASK             BIT(21)
-#define ENA_ETH_IO_TX_META_DESC_META_DESC_SHIFT             23
-#define ENA_ETH_IO_TX_META_DESC_META_DESC_MASK              BIT(23)
-#define ENA_ETH_IO_TX_META_DESC_PHASE_SHIFT                 24
-#define ENA_ETH_IO_TX_META_DESC_PHASE_MASK                  BIT(24)
-#define ENA_ETH_IO_TX_META_DESC_FIRST_SHIFT                 26
-#define ENA_ETH_IO_TX_META_DESC_FIRST_MASK                  BIT(26)
-#define ENA_ETH_IO_TX_META_DESC_LAST_SHIFT                  27
-#define ENA_ETH_IO_TX_META_DESC_LAST_MASK                   BIT(27)
-#define ENA_ETH_IO_TX_META_DESC_COMP_REQ_SHIFT              28
-#define ENA_ETH_IO_TX_META_DESC_COMP_REQ_MASK               BIT(28)
-#define ENA_ETH_IO_TX_META_DESC_REQ_ID_HI_MASK              GENMASK(5, 0)
-#define ENA_ETH_IO_TX_META_DESC_L3_HDR_LEN_MASK             GENMASK(7, 0)
-#define ENA_ETH_IO_TX_META_DESC_L3_HDR_OFF_SHIFT            8
-#define ENA_ETH_IO_TX_META_DESC_L3_HDR_OFF_MASK             GENMASK(15, 8)
-#define ENA_ETH_IO_TX_META_DESC_L4_HDR_LEN_IN_WORDS_SHIFT   16
-#define ENA_ETH_IO_TX_META_DESC_L4_HDR_LEN_IN_WORDS_MASK    GENMASK(21, 16)
-#define ENA_ETH_IO_TX_META_DESC_MSS_LO_SHIFT                22
-#define ENA_ETH_IO_TX_META_DESC_MSS_LO_MASK                 GENMASK(31, 22)
+#घोषणा ENA_ETH_IO_TX_META_DESC_REQ_ID_LO_MASK              GENMASK(9, 0)
+#घोषणा ENA_ETH_IO_TX_META_DESC_EXT_VALID_SHIFT             14
+#घोषणा ENA_ETH_IO_TX_META_DESC_EXT_VALID_MASK              BIT(14)
+#घोषणा ENA_ETH_IO_TX_META_DESC_MSS_HI_SHIFT                16
+#घोषणा ENA_ETH_IO_TX_META_DESC_MSS_HI_MASK                 GENMASK(19, 16)
+#घोषणा ENA_ETH_IO_TX_META_DESC_ETH_META_TYPE_SHIFT         20
+#घोषणा ENA_ETH_IO_TX_META_DESC_ETH_META_TYPE_MASK          BIT(20)
+#घोषणा ENA_ETH_IO_TX_META_DESC_META_STORE_SHIFT            21
+#घोषणा ENA_ETH_IO_TX_META_DESC_META_STORE_MASK             BIT(21)
+#घोषणा ENA_ETH_IO_TX_META_DESC_META_DESC_SHIFT             23
+#घोषणा ENA_ETH_IO_TX_META_DESC_META_DESC_MASK              BIT(23)
+#घोषणा ENA_ETH_IO_TX_META_DESC_PHASE_SHIFT                 24
+#घोषणा ENA_ETH_IO_TX_META_DESC_PHASE_MASK                  BIT(24)
+#घोषणा ENA_ETH_IO_TX_META_DESC_FIRST_SHIFT                 26
+#घोषणा ENA_ETH_IO_TX_META_DESC_FIRST_MASK                  BIT(26)
+#घोषणा ENA_ETH_IO_TX_META_DESC_LAST_SHIFT                  27
+#घोषणा ENA_ETH_IO_TX_META_DESC_LAST_MASK                   BIT(27)
+#घोषणा ENA_ETH_IO_TX_META_DESC_COMP_REQ_SHIFT              28
+#घोषणा ENA_ETH_IO_TX_META_DESC_COMP_REQ_MASK               BIT(28)
+#घोषणा ENA_ETH_IO_TX_META_DESC_REQ_ID_HI_MASK              GENMASK(5, 0)
+#घोषणा ENA_ETH_IO_TX_META_DESC_L3_HDR_LEN_MASK             GENMASK(7, 0)
+#घोषणा ENA_ETH_IO_TX_META_DESC_L3_HDR_OFF_SHIFT            8
+#घोषणा ENA_ETH_IO_TX_META_DESC_L3_HDR_OFF_MASK             GENMASK(15, 8)
+#घोषणा ENA_ETH_IO_TX_META_DESC_L4_HDR_LEN_IN_WORDS_SHIFT   16
+#घोषणा ENA_ETH_IO_TX_META_DESC_L4_HDR_LEN_IN_WORDS_MASK    GENMASK(21, 16)
+#घोषणा ENA_ETH_IO_TX_META_DESC_MSS_LO_SHIFT                22
+#घोषणा ENA_ETH_IO_TX_META_DESC_MSS_LO_MASK                 GENMASK(31, 22)
 
 /* tx_cdesc */
-#define ENA_ETH_IO_TX_CDESC_PHASE_MASK                      BIT(0)
+#घोषणा ENA_ETH_IO_TX_CDESC_PHASE_MASK                      BIT(0)
 
 /* rx_desc */
-#define ENA_ETH_IO_RX_DESC_PHASE_MASK                       BIT(0)
-#define ENA_ETH_IO_RX_DESC_FIRST_SHIFT                      2
-#define ENA_ETH_IO_RX_DESC_FIRST_MASK                       BIT(2)
-#define ENA_ETH_IO_RX_DESC_LAST_SHIFT                       3
-#define ENA_ETH_IO_RX_DESC_LAST_MASK                        BIT(3)
-#define ENA_ETH_IO_RX_DESC_COMP_REQ_SHIFT                   4
-#define ENA_ETH_IO_RX_DESC_COMP_REQ_MASK                    BIT(4)
+#घोषणा ENA_ETH_IO_RX_DESC_PHASE_MASK                       BIT(0)
+#घोषणा ENA_ETH_IO_RX_DESC_FIRST_SHIFT                      2
+#घोषणा ENA_ETH_IO_RX_DESC_FIRST_MASK                       BIT(2)
+#घोषणा ENA_ETH_IO_RX_DESC_LAST_SHIFT                       3
+#घोषणा ENA_ETH_IO_RX_DESC_LAST_MASK                        BIT(3)
+#घोषणा ENA_ETH_IO_RX_DESC_COMP_REQ_SHIFT                   4
+#घोषणा ENA_ETH_IO_RX_DESC_COMP_REQ_MASK                    BIT(4)
 
 /* rx_cdesc_base */
-#define ENA_ETH_IO_RX_CDESC_BASE_L3_PROTO_IDX_MASK          GENMASK(4, 0)
-#define ENA_ETH_IO_RX_CDESC_BASE_SRC_VLAN_CNT_SHIFT         5
-#define ENA_ETH_IO_RX_CDESC_BASE_SRC_VLAN_CNT_MASK          GENMASK(6, 5)
-#define ENA_ETH_IO_RX_CDESC_BASE_L4_PROTO_IDX_SHIFT         8
-#define ENA_ETH_IO_RX_CDESC_BASE_L4_PROTO_IDX_MASK          GENMASK(12, 8)
-#define ENA_ETH_IO_RX_CDESC_BASE_L3_CSUM_ERR_SHIFT          13
-#define ENA_ETH_IO_RX_CDESC_BASE_L3_CSUM_ERR_MASK           BIT(13)
-#define ENA_ETH_IO_RX_CDESC_BASE_L4_CSUM_ERR_SHIFT          14
-#define ENA_ETH_IO_RX_CDESC_BASE_L4_CSUM_ERR_MASK           BIT(14)
-#define ENA_ETH_IO_RX_CDESC_BASE_IPV4_FRAG_SHIFT            15
-#define ENA_ETH_IO_RX_CDESC_BASE_IPV4_FRAG_MASK             BIT(15)
-#define ENA_ETH_IO_RX_CDESC_BASE_L4_CSUM_CHECKED_SHIFT      16
-#define ENA_ETH_IO_RX_CDESC_BASE_L4_CSUM_CHECKED_MASK       BIT(16)
-#define ENA_ETH_IO_RX_CDESC_BASE_PHASE_SHIFT                24
-#define ENA_ETH_IO_RX_CDESC_BASE_PHASE_MASK                 BIT(24)
-#define ENA_ETH_IO_RX_CDESC_BASE_L3_CSUM2_SHIFT             25
-#define ENA_ETH_IO_RX_CDESC_BASE_L3_CSUM2_MASK              BIT(25)
-#define ENA_ETH_IO_RX_CDESC_BASE_FIRST_SHIFT                26
-#define ENA_ETH_IO_RX_CDESC_BASE_FIRST_MASK                 BIT(26)
-#define ENA_ETH_IO_RX_CDESC_BASE_LAST_SHIFT                 27
-#define ENA_ETH_IO_RX_CDESC_BASE_LAST_MASK                  BIT(27)
-#define ENA_ETH_IO_RX_CDESC_BASE_BUFFER_SHIFT               30
-#define ENA_ETH_IO_RX_CDESC_BASE_BUFFER_MASK                BIT(30)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L3_PROTO_IDX_MASK          GENMASK(4, 0)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_SRC_VLAN_CNT_SHIFT         5
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_SRC_VLAN_CNT_MASK          GENMASK(6, 5)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L4_PROTO_IDX_SHIFT         8
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L4_PROTO_IDX_MASK          GENMASK(12, 8)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L3_CSUM_ERR_SHIFT          13
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L3_CSUM_ERR_MASK           BIT(13)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L4_CSUM_ERR_SHIFT          14
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L4_CSUM_ERR_MASK           BIT(14)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_IPV4_FRAG_SHIFT            15
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_IPV4_FRAG_MASK             BIT(15)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L4_CSUM_CHECKED_SHIFT      16
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L4_CSUM_CHECKED_MASK       BIT(16)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_PHASE_SHIFT                24
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_PHASE_MASK                 BIT(24)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L3_CSUM2_SHIFT             25
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_L3_CSUM2_MASK              BIT(25)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_FIRST_SHIFT                26
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_FIRST_MASK                 BIT(26)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_LAST_SHIFT                 27
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_LAST_MASK                  BIT(27)
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_BUFFER_SHIFT               30
+#घोषणा ENA_ETH_IO_RX_CDESC_BASE_BUFFER_MASK                BIT(30)
 
-/* intr_reg */
-#define ENA_ETH_IO_INTR_REG_RX_INTR_DELAY_MASK              GENMASK(14, 0)
-#define ENA_ETH_IO_INTR_REG_TX_INTR_DELAY_SHIFT             15
-#define ENA_ETH_IO_INTR_REG_TX_INTR_DELAY_MASK              GENMASK(29, 15)
-#define ENA_ETH_IO_INTR_REG_INTR_UNMASK_SHIFT               30
-#define ENA_ETH_IO_INTR_REG_INTR_UNMASK_MASK                BIT(30)
+/* पूर्णांकr_reg */
+#घोषणा ENA_ETH_IO_INTR_REG_RX_INTR_DELAY_MASK              GENMASK(14, 0)
+#घोषणा ENA_ETH_IO_INTR_REG_TX_INTR_DELAY_SHIFT             15
+#घोषणा ENA_ETH_IO_INTR_REG_TX_INTR_DELAY_MASK              GENMASK(29, 15)
+#घोषणा ENA_ETH_IO_INTR_REG_INTR_UNMASK_SHIFT               30
+#घोषणा ENA_ETH_IO_INTR_REG_INTR_UNMASK_MASK                BIT(30)
 
 /* numa_node_cfg_reg */
-#define ENA_ETH_IO_NUMA_NODE_CFG_REG_NUMA_MASK              GENMASK(7, 0)
-#define ENA_ETH_IO_NUMA_NODE_CFG_REG_ENABLED_SHIFT          31
-#define ENA_ETH_IO_NUMA_NODE_CFG_REG_ENABLED_MASK           BIT(31)
+#घोषणा ENA_ETH_IO_NUMA_NODE_CFG_REG_NUMA_MASK              GENMASK(7, 0)
+#घोषणा ENA_ETH_IO_NUMA_NODE_CFG_REG_ENABLED_SHIFT          31
+#घोषणा ENA_ETH_IO_NUMA_NODE_CFG_REG_ENABLED_MASK           BIT(31)
 
-#endif /* _ENA_ETH_IO_H_ */
+#पूर्ण_अगर /* _ENA_ETH_IO_H_ */

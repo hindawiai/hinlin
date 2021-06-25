@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _TOOLS_LINUX_ASM_X86_BARRIER_H
-#define _TOOLS_LINUX_ASM_X86_BARRIER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _TOOLS_LINUX_ASM_X86_BARRIER_H
+#घोषणा _TOOLS_LINUX_ASM_X86_BARRIER_H
 
 /*
  * Copied from the Linux kernel sources, and also moving code
@@ -12,35 +13,35 @@
  * to devices.
  */
 
-#if defined(__i386__)
+#अगर defined(__i386__)
 /*
  * Some non-Intel clones support out of order store. wmb() ceases to be a
- * nop for these.
+ * nop क्रम these.
  */
-#define mb()	asm volatile("lock; addl $0,0(%%esp)" ::: "memory")
-#define rmb()	asm volatile("lock; addl $0,0(%%esp)" ::: "memory")
-#define wmb()	asm volatile("lock; addl $0,0(%%esp)" ::: "memory")
-#elif defined(__x86_64__)
-#define mb()	asm volatile("mfence" ::: "memory")
-#define rmb()	asm volatile("lfence" ::: "memory")
-#define wmb()	asm volatile("sfence" ::: "memory")
-#define smp_rmb() barrier()
-#define smp_wmb() barrier()
-#define smp_mb()  asm volatile("lock; addl $0,-132(%%rsp)" ::: "memory", "cc")
-#endif
+#घोषणा mb()	यंत्र अस्थिर("lock; addl $0,0(%%esp)" ::: "memory")
+#घोषणा rmb()	यंत्र अस्थिर("lock; addl $0,0(%%esp)" ::: "memory")
+#घोषणा wmb()	यंत्र अस्थिर("lock; addl $0,0(%%esp)" ::: "memory")
+#या_अगर defined(__x86_64__)
+#घोषणा mb()	यंत्र अस्थिर("mfence" ::: "memory")
+#घोषणा rmb()	यंत्र अस्थिर("lfence" ::: "memory")
+#घोषणा wmb()	यंत्र अस्थिर("sfence" ::: "memory")
+#घोषणा smp_rmb() barrier()
+#घोषणा smp_wmb() barrier()
+#घोषणा smp_mb()  यंत्र अस्थिर("lock; addl $0,-132(%%rsp)" ::: "memory", "cc")
+#पूर्ण_अगर
 
-#if defined(__x86_64__)
-#define smp_store_release(p, v)			\
-do {						\
+#अगर defined(__x86_64__)
+#घोषणा smp_store_release(p, v)			\
+करो अणु						\
 	barrier();				\
 	WRITE_ONCE(*p, v);			\
-} while (0)
+पूर्ण जबतक (0)
 
-#define smp_load_acquire(p)			\
-({						\
+#घोषणा smp_load_acquire(p)			\
+(अणु						\
 	typeof(*p) ___p1 = READ_ONCE(*p);	\
 	barrier();				\
 	___p1;					\
-})
-#endif /* defined(__x86_64__) */
-#endif /* _TOOLS_LINUX_ASM_X86_BARRIER_H */
+पूर्ण)
+#पूर्ण_अगर /* defined(__x86_64__) */
+#पूर्ण_अगर /* _TOOLS_LINUX_ASM_X86_BARRIER_H */

@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2019 Intel Corporation. All rights rsvd. */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/device.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <linux/dmaengine.h>
-#include <uapi/linux/idxd.h>
-#include "../dmaengine.h"
-#include "registers.h"
-#include "idxd.h"
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/device.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <uapi/linux/idxd.h>
+#समावेश "../dmaengine.h"
+#समावेश "registers.h"
+#समावेश "idxd.h"
 
-static inline struct idxd_wq *to_idxd_wq(struct dma_chan *c)
-{
-	struct idxd_dma_chan *idxd_chan;
+अटल अंतरभूत काष्ठा idxd_wq *to_idxd_wq(काष्ठा dma_chan *c)
+अणु
+	काष्ठा idxd_dma_chan *idxd_chan;
 
-	idxd_chan = container_of(c, struct idxd_dma_chan, chan);
-	return idxd_chan->wq;
-}
+	idxd_chan = container_of(c, काष्ठा idxd_dma_chan, chan);
+	वापस idxd_chan->wq;
+पूर्ण
 
-void idxd_dma_complete_txd(struct idxd_desc *desc,
-			   enum idxd_complete_type comp_type)
-{
-	struct dma_async_tx_descriptor *tx;
-	struct dmaengine_result res;
-	int complete = 1;
+व्योम idxd_dma_complete_txd(काष्ठा idxd_desc *desc,
+			   क्रमागत idxd_complete_type comp_type)
+अणु
+	काष्ठा dma_async_tx_descriptor *tx;
+	काष्ठा dmaengine_result res;
+	पूर्णांक complete = 1;
 
-	if (desc->completion->status == DSA_COMP_SUCCESS)
+	अगर (desc->completion->status == DSA_COMP_SUCCESS)
 		res.result = DMA_TRANS_NOERROR;
-	else if (desc->completion->status)
+	अन्यथा अगर (desc->completion->status)
 		res.result = DMA_TRANS_WRITE_FAILED;
-	else if (comp_type == IDXD_COMPLETE_ABORT)
+	अन्यथा अगर (comp_type == IDXD_COMPLETE_ABORT)
 		res.result = DMA_TRANS_ABORTED;
-	else
+	अन्यथा
 		complete = 0;
 
 	tx = &desc->txd;
-	if (complete && tx->cookie) {
+	अगर (complete && tx->cookie) अणु
 		dma_cookie_complete(tx);
 		dma_descriptor_unmap(tx);
 		dmaengine_desc_get_callback_invoke(tx, &res);
-		tx->callback = NULL;
-		tx->callback_result = NULL;
-	}
-}
+		tx->callback = शून्य;
+		tx->callback_result = शून्य;
+	पूर्ण
+पूर्ण
 
-static void op_flag_setup(unsigned long flags, u32 *desc_flags)
-{
+अटल व्योम op_flag_setup(अचिन्हित दीर्घ flags, u32 *desc_flags)
+अणु
 	*desc_flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
-	if (flags & DMA_PREP_INTERRUPT)
+	अगर (flags & DMA_PREP_INTERRUPT)
 		*desc_flags |= IDXD_OP_FLAG_RCI;
-}
+पूर्ण
 
-static inline void set_completion_address(struct idxd_desc *desc,
+अटल अंतरभूत व्योम set_completion_address(काष्ठा idxd_desc *desc,
 					  u64 *compl_addr)
-{
+अणु
 		*compl_addr = desc->compl_dma;
-}
+पूर्ण
 
-static inline void idxd_prep_desc_common(struct idxd_wq *wq,
-					 struct dsa_hw_desc *hw, char opcode,
+अटल अंतरभूत व्योम idxd_prep_desc_common(काष्ठा idxd_wq *wq,
+					 काष्ठा dsa_hw_desc *hw, अक्षर opcode,
 					 u64 addr_f1, u64 addr_f2, u64 len,
 					 u64 compl, u32 flags)
-{
+अणु
 	hw->flags = flags;
 	hw->opcode = opcode;
 	hw->src_addr = addr_f1;
@@ -71,27 +72,27 @@ static inline void idxd_prep_desc_common(struct idxd_wq *wq,
 	hw->xfer_size = len;
 	hw->priv = !!(wq->type == IDXD_WQT_KERNEL);
 	hw->completion_addr = compl;
-}
+पूर्ण
 
-static struct dma_async_tx_descriptor *
-idxd_dma_submit_memcpy(struct dma_chan *c, dma_addr_t dma_dest,
-		       dma_addr_t dma_src, size_t len, unsigned long flags)
-{
-	struct idxd_wq *wq = to_idxd_wq(c);
+अटल काष्ठा dma_async_tx_descriptor *
+idxd_dma_submit_स_नकल(काष्ठा dma_chan *c, dma_addr_t dma_dest,
+		       dma_addr_t dma_src, माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा idxd_wq *wq = to_idxd_wq(c);
 	u32 desc_flags;
-	struct idxd_device *idxd = wq->idxd;
-	struct idxd_desc *desc;
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा idxd_desc *desc;
 
-	if (wq->state != IDXD_WQ_ENABLED)
-		return NULL;
+	अगर (wq->state != IDXD_WQ_ENABLED)
+		वापस शून्य;
 
-	if (len > idxd->max_xfer_bytes)
-		return NULL;
+	अगर (len > idxd->max_xfer_bytes)
+		वापस शून्य;
 
 	op_flag_setup(flags, &desc_flags);
 	desc = idxd_alloc_desc(wq, IDXD_OP_BLOCK);
-	if (IS_ERR(desc))
-		return NULL;
+	अगर (IS_ERR(desc))
+		वापस शून्य;
 
 	idxd_prep_desc_common(wq, desc->hw, DSA_OPCODE_MEMMOVE,
 			      dma_src, dma_dest, len, desc->compl_dma,
@@ -99,81 +100,81 @@ idxd_dma_submit_memcpy(struct dma_chan *c, dma_addr_t dma_dest,
 
 	desc->txd.flags = flags;
 
-	return &desc->txd;
-}
+	वापस &desc->txd;
+पूर्ण
 
-static int idxd_dma_alloc_chan_resources(struct dma_chan *chan)
-{
-	struct idxd_wq *wq = to_idxd_wq(chan);
-	struct device *dev = &wq->idxd->pdev->dev;
+अटल पूर्णांक idxd_dma_alloc_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा idxd_wq *wq = to_idxd_wq(chan);
+	काष्ठा device *dev = &wq->idxd->pdev->dev;
 
 	idxd_wq_get(wq);
 	dev_dbg(dev, "%s: client_count: %d\n", __func__,
 		idxd_wq_refcount(wq));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void idxd_dma_free_chan_resources(struct dma_chan *chan)
-{
-	struct idxd_wq *wq = to_idxd_wq(chan);
-	struct device *dev = &wq->idxd->pdev->dev;
+अटल व्योम idxd_dma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा idxd_wq *wq = to_idxd_wq(chan);
+	काष्ठा device *dev = &wq->idxd->pdev->dev;
 
 	idxd_wq_put(wq);
 	dev_dbg(dev, "%s: client_count: %d\n", __func__,
 		idxd_wq_refcount(wq));
-}
+पूर्ण
 
-static enum dma_status idxd_dma_tx_status(struct dma_chan *dma_chan,
+अटल क्रमागत dma_status idxd_dma_tx_status(काष्ठा dma_chan *dma_chan,
 					  dma_cookie_t cookie,
-					  struct dma_tx_state *txstate)
-{
-	return DMA_OUT_OF_ORDER;
-}
+					  काष्ठा dma_tx_state *txstate)
+अणु
+	वापस DMA_OUT_OF_ORDER;
+पूर्ण
 
 /*
- * issue_pending() does not need to do anything since tx_submit() does the job
- * already.
+ * issue_pending() करोes not need to करो anything since tx_submit() करोes the job
+ * alपढ़ोy.
  */
-static void idxd_dma_issue_pending(struct dma_chan *dma_chan)
-{
-}
+अटल व्योम idxd_dma_issue_pending(काष्ठा dma_chan *dma_chan)
+अणु
+पूर्ण
 
-static dma_cookie_t idxd_dma_tx_submit(struct dma_async_tx_descriptor *tx)
-{
-	struct dma_chan *c = tx->chan;
-	struct idxd_wq *wq = to_idxd_wq(c);
+अटल dma_cookie_t idxd_dma_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
+अणु
+	काष्ठा dma_chan *c = tx->chan;
+	काष्ठा idxd_wq *wq = to_idxd_wq(c);
 	dma_cookie_t cookie;
-	int rc;
-	struct idxd_desc *desc = container_of(tx, struct idxd_desc, txd);
+	पूर्णांक rc;
+	काष्ठा idxd_desc *desc = container_of(tx, काष्ठा idxd_desc, txd);
 
 	cookie = dma_cookie_assign(tx);
 
 	rc = idxd_submit_desc(wq, desc);
-	if (rc < 0) {
-		idxd_free_desc(wq, desc);
-		return rc;
-	}
+	अगर (rc < 0) अणु
+		idxd_मुक्त_desc(wq, desc);
+		वापस rc;
+	पूर्ण
 
-	return cookie;
-}
+	वापस cookie;
+पूर्ण
 
-static void idxd_dma_release(struct dma_device *device)
-{
-	struct idxd_dma_dev *idxd_dma = container_of(device, struct idxd_dma_dev, dma);
+अटल व्योम idxd_dma_release(काष्ठा dma_device *device)
+अणु
+	काष्ठा idxd_dma_dev *idxd_dma = container_of(device, काष्ठा idxd_dma_dev, dma);
 
-	kfree(idxd_dma);
-}
+	kमुक्त(idxd_dma);
+पूर्ण
 
-int idxd_register_dma_device(struct idxd_device *idxd)
-{
-	struct idxd_dma_dev *idxd_dma;
-	struct dma_device *dma;
-	struct device *dev = &idxd->pdev->dev;
-	int rc;
+पूर्णांक idxd_रेजिस्टर_dma_device(काष्ठा idxd_device *idxd)
+अणु
+	काष्ठा idxd_dma_dev *idxd_dma;
+	काष्ठा dma_device *dma;
+	काष्ठा device *dev = &idxd->pdev->dev;
+	पूर्णांक rc;
 
-	idxd_dma = kzalloc_node(sizeof(*idxd_dma), GFP_KERNEL, dev_to_node(dev));
-	if (!idxd_dma)
-		return -ENOMEM;
+	idxd_dma = kzalloc_node(माप(*idxd_dma), GFP_KERNEL, dev_to_node(dev));
+	अगर (!idxd_dma)
+		वापस -ENOMEM;
 
 	dma = &idxd_dma->dma;
 	INIT_LIST_HEAD(&dma->channels);
@@ -183,82 +184,82 @@ int idxd_register_dma_device(struct idxd_device *idxd)
 	dma_cap_set(DMA_COMPLETION_NO_ORDER, dma->cap_mask);
 	dma->device_release = idxd_dma_release;
 
-	if (idxd->hw.opcap.bits[0] & IDXD_OPCAP_MEMMOVE) {
+	अगर (idxd->hw.opcap.bits[0] & IDXD_OPCAP_MEMMOVE) अणु
 		dma_cap_set(DMA_MEMCPY, dma->cap_mask);
-		dma->device_prep_dma_memcpy = idxd_dma_submit_memcpy;
-	}
+		dma->device_prep_dma_स_नकल = idxd_dma_submit_स_नकल;
+	पूर्ण
 
 	dma->device_tx_status = idxd_dma_tx_status;
 	dma->device_issue_pending = idxd_dma_issue_pending;
 	dma->device_alloc_chan_resources = idxd_dma_alloc_chan_resources;
-	dma->device_free_chan_resources = idxd_dma_free_chan_resources;
+	dma->device_मुक्त_chan_resources = idxd_dma_मुक्त_chan_resources;
 
-	rc = dma_async_device_register(dma);
-	if (rc < 0) {
-		kfree(idxd_dma);
-		return rc;
-	}
+	rc = dma_async_device_रेजिस्टर(dma);
+	अगर (rc < 0) अणु
+		kमुक्त(idxd_dma);
+		वापस rc;
+	पूर्ण
 
 	idxd_dma->idxd = idxd;
 	/*
-	 * This pointer is protected by the refs taken by the dma_chan. It will remain valid
-	 * as long as there are outstanding channels.
+	 * This poपूर्णांकer is रक्षित by the refs taken by the dma_chan. It will reमुख्य valid
+	 * as दीर्घ as there are outstanding channels.
 	 */
 	idxd->idxd_dma = idxd_dma;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void idxd_unregister_dma_device(struct idxd_device *idxd)
-{
-	dma_async_device_unregister(&idxd->idxd_dma->dma);
-}
+व्योम idxd_unरेजिस्टर_dma_device(काष्ठा idxd_device *idxd)
+अणु
+	dma_async_device_unरेजिस्टर(&idxd->idxd_dma->dma);
+पूर्ण
 
-int idxd_register_dma_channel(struct idxd_wq *wq)
-{
-	struct idxd_device *idxd = wq->idxd;
-	struct dma_device *dma = &idxd->idxd_dma->dma;
-	struct device *dev = &idxd->pdev->dev;
-	struct idxd_dma_chan *idxd_chan;
-	struct dma_chan *chan;
-	int rc, i;
+पूर्णांक idxd_रेजिस्टर_dma_channel(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_device *idxd = wq->idxd;
+	काष्ठा dma_device *dma = &idxd->idxd_dma->dma;
+	काष्ठा device *dev = &idxd->pdev->dev;
+	काष्ठा idxd_dma_chan *idxd_chan;
+	काष्ठा dma_chan *chan;
+	पूर्णांक rc, i;
 
-	idxd_chan = kzalloc_node(sizeof(*idxd_chan), GFP_KERNEL, dev_to_node(dev));
-	if (!idxd_chan)
-		return -ENOMEM;
+	idxd_chan = kzalloc_node(माप(*idxd_chan), GFP_KERNEL, dev_to_node(dev));
+	अगर (!idxd_chan)
+		वापस -ENOMEM;
 
 	chan = &idxd_chan->chan;
 	chan->device = dma;
 	list_add_tail(&chan->device_node, &dma->channels);
 
-	for (i = 0; i < wq->num_descs; i++) {
-		struct idxd_desc *desc = wq->descs[i];
+	क्रम (i = 0; i < wq->num_descs; i++) अणु
+		काष्ठा idxd_desc *desc = wq->descs[i];
 
 		dma_async_tx_descriptor_init(&desc->txd, chan);
 		desc->txd.tx_submit = idxd_dma_tx_submit;
-	}
+	पूर्ण
 
-	rc = dma_async_device_channel_register(dma, chan);
-	if (rc < 0) {
-		kfree(idxd_chan);
-		return rc;
-	}
+	rc = dma_async_device_channel_रेजिस्टर(dma, chan);
+	अगर (rc < 0) अणु
+		kमुक्त(idxd_chan);
+		वापस rc;
+	पूर्ण
 
 	wq->idxd_chan = idxd_chan;
 	idxd_chan->wq = wq;
 	get_device(&wq->conf_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void idxd_unregister_dma_channel(struct idxd_wq *wq)
-{
-	struct idxd_dma_chan *idxd_chan = wq->idxd_chan;
-	struct dma_chan *chan = &idxd_chan->chan;
-	struct idxd_dma_dev *idxd_dma = wq->idxd->idxd_dma;
+व्योम idxd_unरेजिस्टर_dma_channel(काष्ठा idxd_wq *wq)
+अणु
+	काष्ठा idxd_dma_chan *idxd_chan = wq->idxd_chan;
+	काष्ठा dma_chan *chan = &idxd_chan->chan;
+	काष्ठा idxd_dma_dev *idxd_dma = wq->idxd->idxd_dma;
 
-	dma_async_device_channel_unregister(&idxd_dma->dma, chan);
+	dma_async_device_channel_unरेजिस्टर(&idxd_dma->dma, chan);
 	list_del(&chan->device_node);
-	kfree(wq->idxd_chan);
-	wq->idxd_chan = NULL;
+	kमुक्त(wq->idxd_chan);
+	wq->idxd_chan = शून्य;
 	put_device(&wq->conf_dev);
-}
+पूर्ण

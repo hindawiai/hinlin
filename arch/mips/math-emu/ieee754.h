@@ -1,311 +1,312 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * MIPS floating point support
+ * MIPS भग्नing poपूर्णांक support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  *
  *  Nov 7, 2000
- *  Modification to allow integration with Linux kernel
+ *  Modअगरication to allow पूर्णांकegration with Linux kernel
  *
  *  Kevin D. Kissell, kevink@mips.com and Carsten Langgard, carstenl@mips.com
  *  Copyright (C) 2000 MIPS Technologies, Inc. All rights reserved.
  */
-#ifndef __ARCH_MIPS_MATH_EMU_IEEE754_H
-#define __ARCH_MIPS_MATH_EMU_IEEE754_H
+#अगर_अघोषित __ARCH_MIPS_MATH_EMU_IEEE754_H
+#घोषणा __ARCH_MIPS_MATH_EMU_IEEE754_H
 
-#include <linux/compiler.h>
-#include <asm/byteorder.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <asm/bitfield.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/bitfield.h>
 
-union ieee754dp {
-	struct {
-		__BITFIELD_FIELD(unsigned int sign:1,
-		__BITFIELD_FIELD(unsigned int bexp:11,
+जोड़ ieee754dp अणु
+	काष्ठा अणु
+		__BITFIELD_FIELD(अचिन्हित पूर्णांक sign:1,
+		__BITFIELD_FIELD(अचिन्हित पूर्णांक bexp:11,
 		__BITFIELD_FIELD(u64 mant:52,
 		;)))
-	};
+	पूर्ण;
 	u64 bits;
-};
+पूर्ण;
 
-union ieee754sp {
-	struct {
-		__BITFIELD_FIELD(unsigned sign:1,
-		__BITFIELD_FIELD(unsigned bexp:8,
-		__BITFIELD_FIELD(unsigned mant:23,
+जोड़ ieee754sp अणु
+	काष्ठा अणु
+		__BITFIELD_FIELD(अचिन्हित sign:1,
+		__BITFIELD_FIELD(अचिन्हित bexp:8,
+		__BITFIELD_FIELD(अचिन्हित mant:23,
 		;)))
-	};
+	पूर्ण;
 	u32 bits;
-};
+पूर्ण;
 
 /*
- * single precision (often aka float)
+ * single precision (often aka भग्न)
 */
-int ieee754sp_class(union ieee754sp x);
+पूर्णांक ieee754sp_class(जोड़ ieee754sp x);
 
-union ieee754sp ieee754sp_abs(union ieee754sp x);
-union ieee754sp ieee754sp_neg(union ieee754sp x);
+जोड़ ieee754sp ieee754sp_असल(जोड़ ieee754sp x);
+जोड़ ieee754sp ieee754sp_neg(जोड़ ieee754sp x);
 
-union ieee754sp ieee754sp_add(union ieee754sp x, union ieee754sp y);
-union ieee754sp ieee754sp_sub(union ieee754sp x, union ieee754sp y);
-union ieee754sp ieee754sp_mul(union ieee754sp x, union ieee754sp y);
-union ieee754sp ieee754sp_div(union ieee754sp x, union ieee754sp y);
+जोड़ ieee754sp ieee754sp_add(जोड़ ieee754sp x, जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_sub(जोड़ ieee754sp x, जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_mul(जोड़ ieee754sp x, जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_भाग(जोड़ ieee754sp x, जोड़ ieee754sp y);
 
-union ieee754sp ieee754sp_fint(int x);
-union ieee754sp ieee754sp_flong(s64 x);
-union ieee754sp ieee754sp_fdp(union ieee754dp x);
-union ieee754sp ieee754sp_rint(union ieee754sp x);
+जोड़ ieee754sp ieee754sp_fपूर्णांक(पूर्णांक x);
+जोड़ ieee754sp ieee754sp_fदीर्घ(s64 x);
+जोड़ ieee754sp ieee754sp_fdp(जोड़ ieee754dp x);
+जोड़ ieee754sp ieee754sp_rपूर्णांक(जोड़ ieee754sp x);
 
-int ieee754sp_tint(union ieee754sp x);
-s64 ieee754sp_tlong(union ieee754sp x);
+पूर्णांक ieee754sp_tपूर्णांक(जोड़ ieee754sp x);
+s64 ieee754sp_tदीर्घ(जोड़ ieee754sp x);
 
-int ieee754sp_cmp(union ieee754sp x, union ieee754sp y, int cop, int sig);
+पूर्णांक ieee754sp_cmp(जोड़ ieee754sp x, जोड़ ieee754sp y, पूर्णांक cop, पूर्णांक sig);
 
-union ieee754sp ieee754sp_sqrt(union ieee754sp x);
+जोड़ ieee754sp ieee754sp_वर्ग_मूल(जोड़ ieee754sp x);
 
-union ieee754sp ieee754sp_maddf(union ieee754sp z, union ieee754sp x,
-				union ieee754sp y);
-union ieee754sp ieee754sp_msubf(union ieee754sp z, union ieee754sp x,
-				union ieee754sp y);
-union ieee754sp ieee754sp_madd(union ieee754sp z, union ieee754sp x,
-				union ieee754sp y);
-union ieee754sp ieee754sp_msub(union ieee754sp z, union ieee754sp x,
-				union ieee754sp y);
-union ieee754sp ieee754sp_nmadd(union ieee754sp z, union ieee754sp x,
-				union ieee754sp y);
-union ieee754sp ieee754sp_nmsub(union ieee754sp z, union ieee754sp x,
-				union ieee754sp y);
-int ieee754sp_2008class(union ieee754sp x);
-union ieee754sp ieee754sp_fmin(union ieee754sp x, union ieee754sp y);
-union ieee754sp ieee754sp_fmina(union ieee754sp x, union ieee754sp y);
-union ieee754sp ieee754sp_fmax(union ieee754sp x, union ieee754sp y);
-union ieee754sp ieee754sp_fmaxa(union ieee754sp x, union ieee754sp y);
+जोड़ ieee754sp ieee754sp_maddf(जोड़ ieee754sp z, जोड़ ieee754sp x,
+				जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_msubf(जोड़ ieee754sp z, जोड़ ieee754sp x,
+				जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_madd(जोड़ ieee754sp z, जोड़ ieee754sp x,
+				जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_msub(जोड़ ieee754sp z, जोड़ ieee754sp x,
+				जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_nmadd(जोड़ ieee754sp z, जोड़ ieee754sp x,
+				जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_nmsub(जोड़ ieee754sp z, जोड़ ieee754sp x,
+				जोड़ ieee754sp y);
+पूर्णांक ieee754sp_2008class(जोड़ ieee754sp x);
+जोड़ ieee754sp ieee754sp_fmin(जोड़ ieee754sp x, जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_fmina(जोड़ ieee754sp x, जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_fmax(जोड़ ieee754sp x, जोड़ ieee754sp y);
+जोड़ ieee754sp ieee754sp_fmaxa(जोड़ ieee754sp x, जोड़ ieee754sp y);
 
 /*
- * double precision (often aka double)
+ * द्विगुन precision (often aka द्विगुन)
 */
-int ieee754dp_class(union ieee754dp x);
+पूर्णांक ieee754dp_class(जोड़ ieee754dp x);
 
-union ieee754dp ieee754dp_add(union ieee754dp x, union ieee754dp y);
-union ieee754dp ieee754dp_sub(union ieee754dp x, union ieee754dp y);
-union ieee754dp ieee754dp_mul(union ieee754dp x, union ieee754dp y);
-union ieee754dp ieee754dp_div(union ieee754dp x, union ieee754dp y);
+जोड़ ieee754dp ieee754dp_add(जोड़ ieee754dp x, जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_sub(जोड़ ieee754dp x, जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_mul(जोड़ ieee754dp x, जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_भाग(जोड़ ieee754dp x, जोड़ ieee754dp y);
 
-union ieee754dp ieee754dp_abs(union ieee754dp x);
-union ieee754dp ieee754dp_neg(union ieee754dp x);
+जोड़ ieee754dp ieee754dp_असल(जोड़ ieee754dp x);
+जोड़ ieee754dp ieee754dp_neg(जोड़ ieee754dp x);
 
-union ieee754dp ieee754dp_fint(int x);
-union ieee754dp ieee754dp_flong(s64 x);
-union ieee754dp ieee754dp_fsp(union ieee754sp x);
-union ieee754dp ieee754dp_rint(union ieee754dp x);
+जोड़ ieee754dp ieee754dp_fपूर्णांक(पूर्णांक x);
+जोड़ ieee754dp ieee754dp_fदीर्घ(s64 x);
+जोड़ ieee754dp ieee754dp_fsp(जोड़ ieee754sp x);
+जोड़ ieee754dp ieee754dp_rपूर्णांक(जोड़ ieee754dp x);
 
-int ieee754dp_tint(union ieee754dp x);
-s64 ieee754dp_tlong(union ieee754dp x);
+पूर्णांक ieee754dp_tपूर्णांक(जोड़ ieee754dp x);
+s64 ieee754dp_tदीर्घ(जोड़ ieee754dp x);
 
-int ieee754dp_cmp(union ieee754dp x, union ieee754dp y, int cop, int sig);
+पूर्णांक ieee754dp_cmp(जोड़ ieee754dp x, जोड़ ieee754dp y, पूर्णांक cop, पूर्णांक sig);
 
-union ieee754dp ieee754dp_sqrt(union ieee754dp x);
+जोड़ ieee754dp ieee754dp_वर्ग_मूल(जोड़ ieee754dp x);
 
-union ieee754dp ieee754dp_maddf(union ieee754dp z, union ieee754dp x,
-				union ieee754dp y);
-union ieee754dp ieee754dp_msubf(union ieee754dp z, union ieee754dp x,
-				union ieee754dp y);
-union ieee754dp ieee754dp_madd(union ieee754dp z, union ieee754dp x,
-				union ieee754dp y);
-union ieee754dp ieee754dp_msub(union ieee754dp z, union ieee754dp x,
-				union ieee754dp y);
-union ieee754dp ieee754dp_nmadd(union ieee754dp z, union ieee754dp x,
-				union ieee754dp y);
-union ieee754dp ieee754dp_nmsub(union ieee754dp z, union ieee754dp x,
-				union ieee754dp y);
-int ieee754dp_2008class(union ieee754dp x);
-union ieee754dp ieee754dp_fmin(union ieee754dp x, union ieee754dp y);
-union ieee754dp ieee754dp_fmina(union ieee754dp x, union ieee754dp y);
-union ieee754dp ieee754dp_fmax(union ieee754dp x, union ieee754dp y);
-union ieee754dp ieee754dp_fmaxa(union ieee754dp x, union ieee754dp y);
+जोड़ ieee754dp ieee754dp_maddf(जोड़ ieee754dp z, जोड़ ieee754dp x,
+				जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_msubf(जोड़ ieee754dp z, जोड़ ieee754dp x,
+				जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_madd(जोड़ ieee754dp z, जोड़ ieee754dp x,
+				जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_msub(जोड़ ieee754dp z, जोड़ ieee754dp x,
+				जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_nmadd(जोड़ ieee754dp z, जोड़ ieee754dp x,
+				जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_nmsub(जोड़ ieee754dp z, जोड़ ieee754dp x,
+				जोड़ ieee754dp y);
+पूर्णांक ieee754dp_2008class(जोड़ ieee754dp x);
+जोड़ ieee754dp ieee754dp_fmin(जोड़ ieee754dp x, जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_fmina(जोड़ ieee754dp x, जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_fmax(जोड़ ieee754dp x, जोड़ ieee754dp y);
+जोड़ ieee754dp ieee754dp_fmaxa(जोड़ ieee754dp x, जोड़ ieee754dp y);
 
 
-/* 5 types of floating point number
+/* 5 types of भग्नing poपूर्णांक number
 */
-enum {
+क्रमागत अणु
 	IEEE754_CLASS_NORM	= 0x00,
 	IEEE754_CLASS_ZERO	= 0x01,
 	IEEE754_CLASS_DNORM	= 0x02,
 	IEEE754_CLASS_INF	= 0x03,
-	IEEE754_CLASS_SNAN	= 0x04,
-	IEEE754_CLASS_QNAN	= 0x05,
-};
+	IEEE754_CLASS_Sन_अंक	= 0x04,
+	IEEE754_CLASS_Qन_अंक	= 0x05,
+पूर्ण;
 
 /* exception numbers */
-#define IEEE754_INEXACT			0x01
-#define IEEE754_UNDERFLOW		0x02
-#define IEEE754_OVERFLOW		0x04
-#define IEEE754_ZERO_DIVIDE		0x08
-#define IEEE754_INVALID_OPERATION	0x10
+#घोषणा IEEE754_INEXACT			0x01
+#घोषणा IEEE754_UNDERFLOW		0x02
+#घोषणा IEEE754_OVERFLOW		0x04
+#घोषणा IEEE754_ZERO_DIVIDE		0x08
+#घोषणा IEEE754_INVALID_OPERATION	0x10
 
-/* cmp operators
+/* cmp चालकs
 */
-#define IEEE754_CLT	0x01
-#define IEEE754_CEQ	0x02
-#define IEEE754_CGT	0x04
-#define IEEE754_CUN	0x08
+#घोषणा IEEE754_CLT	0x01
+#घोषणा IEEE754_CEQ	0x02
+#घोषणा IEEE754_CGT	0x04
+#घोषणा IEEE754_CUN	0x08
 
 /*
- * The control status register
+ * The control status रेजिस्टर
  */
-struct _ieee754_csr {
-	__BITFIELD_FIELD(unsigned fcc:7,	/* condition[7:1] */
-	__BITFIELD_FIELD(unsigned nod:1,	/* set 1 for no denormals */
-	__BITFIELD_FIELD(unsigned c:1,		/* condition[0] */
-	__BITFIELD_FIELD(unsigned pad0:3,
-	__BITFIELD_FIELD(unsigned abs2008:1,	/* IEEE 754-2008 ABS/NEG.fmt */
-	__BITFIELD_FIELD(unsigned nan2008:1,	/* IEEE 754-2008 NaN mode */
-	__BITFIELD_FIELD(unsigned cx:6,		/* exceptions this operation */
-	__BITFIELD_FIELD(unsigned mx:5,		/* exception enable  mask */
-	__BITFIELD_FIELD(unsigned sx:5,		/* exceptions total */
-	__BITFIELD_FIELD(unsigned rm:2,		/* current rounding mode */
+काष्ठा _ieee754_csr अणु
+	__BITFIELD_FIELD(अचिन्हित fcc:7,	/* condition[7:1] */
+	__BITFIELD_FIELD(अचिन्हित nod:1,	/* set 1 क्रम no denormals */
+	__BITFIELD_FIELD(अचिन्हित c:1,		/* condition[0] */
+	__BITFIELD_FIELD(अचिन्हित pad0:3,
+	__BITFIELD_FIELD(अचिन्हित असल2008:1,	/* IEEE 754-2008 ABS/NEG.fmt */
+	__BITFIELD_FIELD(अचिन्हित nan2008:1,	/* IEEE 754-2008 NaN mode */
+	__BITFIELD_FIELD(अचिन्हित cx:6,		/* exceptions this operation */
+	__BITFIELD_FIELD(अचिन्हित mx:5,		/* exception enable  mask */
+	__BITFIELD_FIELD(अचिन्हित sx:5,		/* exceptions total */
+	__BITFIELD_FIELD(अचिन्हित rm:2,		/* current rounding mode */
 	;))))))))))
-};
-#define ieee754_csr (*(struct _ieee754_csr *)(&current->thread.fpu.fcr31))
+पूर्ण;
+#घोषणा ieee754_csr (*(काष्ठा _ieee754_csr *)(&current->thपढ़ो.fpu.fcr31))
 
-static inline unsigned int ieee754_getrm(void)
-{
-	return (ieee754_csr.rm);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ieee754_getrm(व्योम)
+अणु
+	वापस (ieee754_csr.rm);
+पूर्ण
 
-static inline unsigned int ieee754_setrm(unsigned int rm)
-{
-	return (ieee754_csr.rm = rm);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ieee754_setrm(अचिन्हित पूर्णांक rm)
+अणु
+	वापस (ieee754_csr.rm = rm);
+पूर्ण
 
 /*
  * get current exceptions
  */
-static inline unsigned int ieee754_getcx(void)
-{
-	return (ieee754_csr.cx);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ieee754_अ_लोx(व्योम)
+अणु
+	वापस (ieee754_csr.cx);
+पूर्ण
 
-/* test for current exception condition
+/* test क्रम current exception condition
  */
-static inline int ieee754_cxtest(unsigned int n)
-{
-	return (ieee754_csr.cx & n);
-}
+अटल अंतरभूत पूर्णांक ieee754_cxtest(अचिन्हित पूर्णांक n)
+अणु
+	वापस (ieee754_csr.cx & n);
+पूर्ण
 
 /*
  * get sticky exceptions
  */
-static inline unsigned int ieee754_getsx(void)
-{
-	return (ieee754_csr.sx);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ieee754_माला_लोx(व्योम)
+अणु
+	वापस (ieee754_csr.sx);
+पूर्ण
 
 /* clear sticky conditions
 */
-static inline unsigned int ieee754_clrsx(void)
-{
-	return (ieee754_csr.sx = 0);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ieee754_clrsx(व्योम)
+अणु
+	वापस (ieee754_csr.sx = 0);
+पूर्ण
 
-/* test for sticky exception condition
+/* test क्रम sticky exception condition
  */
-static inline int ieee754_sxtest(unsigned int n)
-{
-	return (ieee754_csr.sx & n);
-}
+अटल अंतरभूत पूर्णांक ieee754_sxtest(अचिन्हित पूर्णांक n)
+अणु
+	वापस (ieee754_csr.sx & n);
+पूर्ण
 
 /* debugging */
-union ieee754sp ieee754sp_dump(char *s, union ieee754sp x);
-union ieee754dp ieee754dp_dump(char *s, union ieee754dp x);
+जोड़ ieee754sp ieee754sp_dump(अक्षर *s, जोड़ ieee754sp x);
+जोड़ ieee754dp ieee754dp_dump(अक्षर *s, जोड़ ieee754dp x);
 
-#define IEEE754_SPCVAL_PZERO		0	/* +0.0 */
-#define IEEE754_SPCVAL_NZERO		1	/* -0.0 */
-#define IEEE754_SPCVAL_PONE		2	/* +1.0 */
-#define IEEE754_SPCVAL_NONE		3	/* -1.0 */
-#define IEEE754_SPCVAL_PTEN		4	/* +10.0 */
-#define IEEE754_SPCVAL_NTEN		5	/* -10.0 */
-#define IEEE754_SPCVAL_PINFINITY	6	/* +inf */
-#define IEEE754_SPCVAL_NINFINITY	7	/* -inf */
-#define IEEE754_SPCVAL_INDEF_LEG	8	/* legacy quiet NaN */
-#define IEEE754_SPCVAL_INDEF_2008	9	/* IEEE 754-2008 quiet NaN */
-#define IEEE754_SPCVAL_PMAX		10	/* +max norm */
-#define IEEE754_SPCVAL_NMAX		11	/* -max norm */
-#define IEEE754_SPCVAL_PMIN		12	/* +min norm */
-#define IEEE754_SPCVAL_NMIN		13	/* -min norm */
-#define IEEE754_SPCVAL_PMIND		14	/* +min denorm */
-#define IEEE754_SPCVAL_NMIND		15	/* -min denorm */
-#define IEEE754_SPCVAL_P1E31		16	/* + 1.0e31 */
-#define IEEE754_SPCVAL_P1E63		17	/* + 1.0e63 */
+#घोषणा IEEE754_SPCVAL_PZERO		0	/* +0.0 */
+#घोषणा IEEE754_SPCVAL_NZERO		1	/* -0.0 */
+#घोषणा IEEE754_SPCVAL_PONE		2	/* +1.0 */
+#घोषणा IEEE754_SPCVAL_NONE		3	/* -1.0 */
+#घोषणा IEEE754_SPCVAL_PTEN		4	/* +10.0 */
+#घोषणा IEEE754_SPCVAL_NTEN		5	/* -10.0 */
+#घोषणा IEEE754_SPCVAL_Pअनन्त	6	/* +inf */
+#घोषणा IEEE754_SPCVAL_Nअनन्त	7	/* -inf */
+#घोषणा IEEE754_SPCVAL_INDEF_LEG	8	/* legacy quiet NaN */
+#घोषणा IEEE754_SPCVAL_INDEF_2008	9	/* IEEE 754-2008 quiet NaN */
+#घोषणा IEEE754_SPCVAL_PMAX		10	/* +max norm */
+#घोषणा IEEE754_SPCVAL_NMAX		11	/* -max norm */
+#घोषणा IEEE754_SPCVAL_PMIN		12	/* +min norm */
+#घोषणा IEEE754_SPCVAL_NMIN		13	/* -min norm */
+#घोषणा IEEE754_SPCVAL_PMIND		14	/* +min denorm */
+#घोषणा IEEE754_SPCVAL_NMIND		15	/* -min denorm */
+#घोषणा IEEE754_SPCVAL_P1E31		16	/* + 1.0e31 */
+#घोषणा IEEE754_SPCVAL_P1E63		17	/* + 1.0e63 */
 
-extern const union ieee754dp __ieee754dp_spcvals[];
-extern const union ieee754sp __ieee754sp_spcvals[];
-#define ieee754dp_spcvals ((const union ieee754dp *)__ieee754dp_spcvals)
-#define ieee754sp_spcvals ((const union ieee754sp *)__ieee754sp_spcvals)
+बाह्य स्थिर जोड़ ieee754dp __ieee754dp_spcvals[];
+बाह्य स्थिर जोड़ ieee754sp __ieee754sp_spcvals[];
+#घोषणा ieee754dp_spcvals ((स्थिर जोड़ ieee754dp *)__ieee754dp_spcvals)
+#घोषणा ieee754sp_spcvals ((स्थिर जोड़ ieee754sp *)__ieee754sp_spcvals)
 
 /*
  * Return infinity with given sign
  */
-#define ieee754dp_inf(sn)     (ieee754dp_spcvals[IEEE754_SPCVAL_PINFINITY+(sn)])
-#define ieee754dp_zero(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PZERO+(sn)])
-#define ieee754dp_one(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PONE+(sn)])
-#define ieee754dp_ten(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PTEN+(sn)])
-#define ieee754dp_indef()	(ieee754dp_spcvals[IEEE754_SPCVAL_INDEF_LEG + \
+#घोषणा ieee754dp_inf(sn)     (ieee754dp_spcvals[IEEE754_SPCVAL_Pअनन्त+(sn)])
+#घोषणा ieee754dp_zero(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PZERO+(sn)])
+#घोषणा ieee754dp_one(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PONE+(sn)])
+#घोषणा ieee754dp_ten(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PTEN+(sn)])
+#घोषणा ieee754dp_indef()	(ieee754dp_spcvals[IEEE754_SPCVAL_INDEF_LEG + \
 						   ieee754_csr.nan2008])
-#define ieee754dp_max(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PMAX+(sn)])
-#define ieee754dp_min(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PMIN+(sn)])
-#define ieee754dp_mind(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PMIND+(sn)])
-#define ieee754dp_1e31()	(ieee754dp_spcvals[IEEE754_SPCVAL_P1E31])
-#define ieee754dp_1e63()	(ieee754dp_spcvals[IEEE754_SPCVAL_P1E63])
+#घोषणा ieee754dp_max(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PMAX+(sn)])
+#घोषणा ieee754dp_min(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PMIN+(sn)])
+#घोषणा ieee754dp_mind(sn)	(ieee754dp_spcvals[IEEE754_SPCVAL_PMIND+(sn)])
+#घोषणा ieee754dp_1e31()	(ieee754dp_spcvals[IEEE754_SPCVAL_P1E31])
+#घोषणा ieee754dp_1e63()	(ieee754dp_spcvals[IEEE754_SPCVAL_P1E63])
 
-#define ieee754sp_inf(sn)     (ieee754sp_spcvals[IEEE754_SPCVAL_PINFINITY+(sn)])
-#define ieee754sp_zero(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PZERO+(sn)])
-#define ieee754sp_one(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PONE+(sn)])
-#define ieee754sp_ten(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PTEN+(sn)])
-#define ieee754sp_indef()	(ieee754sp_spcvals[IEEE754_SPCVAL_INDEF_LEG + \
+#घोषणा ieee754sp_inf(sn)     (ieee754sp_spcvals[IEEE754_SPCVAL_Pअनन्त+(sn)])
+#घोषणा ieee754sp_zero(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PZERO+(sn)])
+#घोषणा ieee754sp_one(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PONE+(sn)])
+#घोषणा ieee754sp_ten(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PTEN+(sn)])
+#घोषणा ieee754sp_indef()	(ieee754sp_spcvals[IEEE754_SPCVAL_INDEF_LEG + \
 						   ieee754_csr.nan2008])
-#define ieee754sp_max(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PMAX+(sn)])
-#define ieee754sp_min(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PMIN+(sn)])
-#define ieee754sp_mind(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PMIND+(sn)])
-#define ieee754sp_1e31()	(ieee754sp_spcvals[IEEE754_SPCVAL_P1E31])
-#define ieee754sp_1e63()	(ieee754sp_spcvals[IEEE754_SPCVAL_P1E63])
+#घोषणा ieee754sp_max(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PMAX+(sn)])
+#घोषणा ieee754sp_min(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PMIN+(sn)])
+#घोषणा ieee754sp_mind(sn)	(ieee754sp_spcvals[IEEE754_SPCVAL_PMIND+(sn)])
+#घोषणा ieee754sp_1e31()	(ieee754sp_spcvals[IEEE754_SPCVAL_P1E31])
+#घोषणा ieee754sp_1e63()	(ieee754sp_spcvals[IEEE754_SPCVAL_P1E63])
 
 /*
- * Indefinite integer value
+ * Indefinite पूर्णांकeger value
  */
-static inline int ieee754si_indef(void)
-{
-	return ieee754_csr.nan2008 ? 0 : INT_MAX;
-}
+अटल अंतरभूत पूर्णांक ieee754si_indef(व्योम)
+अणु
+	वापस ieee754_csr.nan2008 ? 0 : पूर्णांक_उच्च;
+पूर्ण
 
-static inline s64 ieee754di_indef(void)
-{
-	return ieee754_csr.nan2008 ? 0 : S64_MAX;
-}
+अटल अंतरभूत s64 ieee754di_indef(व्योम)
+अणु
+	वापस ieee754_csr.nan2008 ? 0 : S64_MAX;
+पूर्ण
 
 /*
- * Overflow integer value
+ * Overflow पूर्णांकeger value
  */
-static inline int ieee754si_overflow(int xs)
-{
-	return ieee754_csr.nan2008 && xs ? INT_MIN : INT_MAX;
-}
+अटल अंतरभूत पूर्णांक ieee754si_overflow(पूर्णांक xs)
+अणु
+	वापस ieee754_csr.nan2008 && xs ? पूर्णांक_न्यून : पूर्णांक_उच्च;
+पूर्ण
 
-static inline s64 ieee754di_overflow(int xs)
-{
-	return ieee754_csr.nan2008 && xs ? S64_MIN : S64_MAX;
-}
+अटल अंतरभूत s64 ieee754di_overflow(पूर्णांक xs)
+अणु
+	वापस ieee754_csr.nan2008 && xs ? S64_MIN : S64_MAX;
+पूर्ण
 
-/* result types for xctx.rt */
-#define IEEE754_RT_SP	0
-#define IEEE754_RT_DP	1
-#define IEEE754_RT_XP	2
-#define IEEE754_RT_SI	3
-#define IEEE754_RT_DI	4
+/* result types क्रम xctx.rt */
+#घोषणा IEEE754_RT_SP	0
+#घोषणा IEEE754_RT_DP	1
+#घोषणा IEEE754_RT_XP	2
+#घोषणा IEEE754_RT_SI	3
+#घोषणा IEEE754_RT_DI	4
 
 /* compat */
-#define ieee754dp_fix(x)	ieee754dp_tint(x)
-#define ieee754sp_fix(x)	ieee754sp_tint(x)
+#घोषणा ieee754dp_fix(x)	ieee754dp_tपूर्णांक(x)
+#घोषणा ieee754sp_fix(x)	ieee754sp_tपूर्णांक(x)
 
-#endif /* __ARCH_MIPS_MATH_EMU_IEEE754_H */
+#पूर्ण_अगर /* __ARCH_MIPS_MATH_EMU_IEEE754_H */

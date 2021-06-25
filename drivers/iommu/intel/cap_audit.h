@@ -1,130 +1,131 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * cap_audit.h - audit iommu capabilities header
  *
  * Copyright (C) 2021 Intel Corporation
  *
- * Author: Kyung Min Park <kyung.min.park@intel.com>
+ * Author: Kyung Min Park <kyung.min.park@पूर्णांकel.com>
  */
 
 /*
  * Capability Register Mask
  */
-#define CAP_FL5LP_MASK		BIT_ULL(60)
-#define CAP_PI_MASK		BIT_ULL(59)
-#define CAP_FL1GP_MASK		BIT_ULL(56)
-#define CAP_RD_MASK		BIT_ULL(55)
-#define CAP_WD_MASK		BIT_ULL(54)
-#define CAP_MAMV_MASK		GENMASK_ULL(53, 48)
-#define CAP_NFR_MASK		GENMASK_ULL(47, 40)
-#define CAP_PSI_MASK		BIT_ULL(39)
-#define CAP_SLLPS_MASK		GENMASK_ULL(37, 34)
-#define CAP_FRO_MASK		GENMASK_ULL(33, 24)
-#define CAP_ZLR_MASK		BIT_ULL(22)
-#define CAP_MGAW_MASK		GENMASK_ULL(21, 16)
-#define CAP_SAGAW_MASK		GENMASK_ULL(12, 8)
-#define CAP_CM_MASK		BIT_ULL(7)
-#define CAP_PHMR_MASK		BIT_ULL(6)
-#define CAP_PLMR_MASK		BIT_ULL(5)
-#define CAP_RWBF_MASK		BIT_ULL(4)
-#define CAP_AFL_MASK		BIT_ULL(3)
-#define CAP_NDOMS_MASK		GENMASK_ULL(2, 0)
+#घोषणा CAP_FL5LP_MASK		BIT_ULL(60)
+#घोषणा CAP_PI_MASK		BIT_ULL(59)
+#घोषणा CAP_FL1GP_MASK		BIT_ULL(56)
+#घोषणा CAP_RD_MASK		BIT_ULL(55)
+#घोषणा CAP_WD_MASK		BIT_ULL(54)
+#घोषणा CAP_MAMV_MASK		GENMASK_ULL(53, 48)
+#घोषणा CAP_NFR_MASK		GENMASK_ULL(47, 40)
+#घोषणा CAP_PSI_MASK		BIT_ULL(39)
+#घोषणा CAP_SLLPS_MASK		GENMASK_ULL(37, 34)
+#घोषणा CAP_FRO_MASK		GENMASK_ULL(33, 24)
+#घोषणा CAP_ZLR_MASK		BIT_ULL(22)
+#घोषणा CAP_MGAW_MASK		GENMASK_ULL(21, 16)
+#घोषणा CAP_SAGAW_MASK		GENMASK_ULL(12, 8)
+#घोषणा CAP_CM_MASK		BIT_ULL(7)
+#घोषणा CAP_PHMR_MASK		BIT_ULL(6)
+#घोषणा CAP_PLMR_MASK		BIT_ULL(5)
+#घोषणा CAP_RWBF_MASK		BIT_ULL(4)
+#घोषणा CAP_AFL_MASK		BIT_ULL(3)
+#घोषणा CAP_NDOMS_MASK		GENMASK_ULL(2, 0)
 
 /*
  * Extended Capability Register Mask
  */
-#define ECAP_RPS_MASK		BIT_ULL(49)
-#define ECAP_SMPWC_MASK		BIT_ULL(48)
-#define ECAP_FLTS_MASK		BIT_ULL(47)
-#define ECAP_SLTS_MASK		BIT_ULL(46)
-#define ECAP_SLADS_MASK		BIT_ULL(45)
-#define ECAP_VCS_MASK		BIT_ULL(44)
-#define ECAP_SMTS_MASK		BIT_ULL(43)
-#define ECAP_PDS_MASK		BIT_ULL(42)
-#define ECAP_DIT_MASK		BIT_ULL(41)
-#define ECAP_PASID_MASK		BIT_ULL(40)
-#define ECAP_PSS_MASK		GENMASK_ULL(39, 35)
-#define ECAP_EAFS_MASK		BIT_ULL(34)
-#define ECAP_NWFS_MASK		BIT_ULL(33)
-#define ECAP_SRS_MASK		BIT_ULL(31)
-#define ECAP_ERS_MASK		BIT_ULL(30)
-#define ECAP_PRS_MASK		BIT_ULL(29)
-#define ECAP_NEST_MASK		BIT_ULL(26)
-#define ECAP_MTS_MASK		BIT_ULL(25)
-#define ECAP_MHMV_MASK		GENMASK_ULL(23, 20)
-#define ECAP_IRO_MASK		GENMASK_ULL(17, 8)
-#define ECAP_SC_MASK		BIT_ULL(7)
-#define ECAP_PT_MASK		BIT_ULL(6)
-#define ECAP_EIM_MASK		BIT_ULL(4)
-#define ECAP_DT_MASK		BIT_ULL(2)
-#define ECAP_QI_MASK		BIT_ULL(1)
-#define ECAP_C_MASK		BIT_ULL(0)
+#घोषणा ECAP_RPS_MASK		BIT_ULL(49)
+#घोषणा ECAP_SMPWC_MASK		BIT_ULL(48)
+#घोषणा ECAP_FLTS_MASK		BIT_ULL(47)
+#घोषणा ECAP_SLTS_MASK		BIT_ULL(46)
+#घोषणा ECAP_SLADS_MASK		BIT_ULL(45)
+#घोषणा ECAP_VCS_MASK		BIT_ULL(44)
+#घोषणा ECAP_SMTS_MASK		BIT_ULL(43)
+#घोषणा ECAP_PDS_MASK		BIT_ULL(42)
+#घोषणा ECAP_DIT_MASK		BIT_ULL(41)
+#घोषणा ECAP_PASID_MASK		BIT_ULL(40)
+#घोषणा ECAP_PSS_MASK		GENMASK_ULL(39, 35)
+#घोषणा ECAP_EAFS_MASK		BIT_ULL(34)
+#घोषणा ECAP_NWFS_MASK		BIT_ULL(33)
+#घोषणा ECAP_SRS_MASK		BIT_ULL(31)
+#घोषणा ECAP_ERS_MASK		BIT_ULL(30)
+#घोषणा ECAP_PRS_MASK		BIT_ULL(29)
+#घोषणा ECAP_NEST_MASK		BIT_ULL(26)
+#घोषणा ECAP_MTS_MASK		BIT_ULL(25)
+#घोषणा ECAP_MHMV_MASK		GENMASK_ULL(23, 20)
+#घोषणा ECAP_IRO_MASK		GENMASK_ULL(17, 8)
+#घोषणा ECAP_SC_MASK		BIT_ULL(7)
+#घोषणा ECAP_PT_MASK		BIT_ULL(6)
+#घोषणा ECAP_EIM_MASK		BIT_ULL(4)
+#घोषणा ECAP_DT_MASK		BIT_ULL(2)
+#घोषणा ECAP_QI_MASK		BIT_ULL(1)
+#घोषणा ECAP_C_MASK		BIT_ULL(0)
 
 /*
- * u64 intel_iommu_cap_sanity, intel_iommu_ecap_sanity will be adjusted as each
- * IOMMU gets audited.
+ * u64 पूर्णांकel_iommu_cap_sanity, पूर्णांकel_iommu_ecap_sanity will be adjusted as each
+ * IOMMU माला_लो audited.
  */
-#define DO_CHECK_FEATURE_MISMATCH(a, b, cap, feature, MASK) \
-do { \
-	if (cap##_##feature(a) != cap##_##feature(b)) { \
-		intel_iommu_##cap##_sanity &= ~(MASK); \
+#घोषणा DO_CHECK_FEATURE_MISMATCH(a, b, cap, feature, MASK) \
+करो अणु \
+	अगर (cap##_##feature(a) != cap##_##feature(b)) अणु \
+		पूर्णांकel_iommu_##cap##_sanity &= ~(MASK); \
 		pr_info("IOMMU feature %s inconsistent", #feature); \
-	} \
-} while (0)
+	पूर्ण \
+पूर्ण जबतक (0)
 
-#define CHECK_FEATURE_MISMATCH(a, b, cap, feature, MASK) \
+#घोषणा CHECK_FEATURE_MISMATCH(a, b, cap, feature, MASK) \
 	DO_CHECK_FEATURE_MISMATCH((a)->cap, (b)->cap, cap, feature, MASK)
 
-#define CHECK_FEATURE_MISMATCH_HOTPLUG(b, cap, feature, MASK) \
-do { \
-	if (cap##_##feature(intel_iommu_##cap##_sanity)) \
-		DO_CHECK_FEATURE_MISMATCH(intel_iommu_##cap##_sanity, \
+#घोषणा CHECK_FEATURE_MISMATCH_HOTPLUG(b, cap, feature, MASK) \
+करो अणु \
+	अगर (cap##_##feature(पूर्णांकel_iommu_##cap##_sanity)) \
+		DO_CHECK_FEATURE_MISMATCH(पूर्णांकel_iommu_##cap##_sanity, \
 					  (b)->cap, cap, feature, MASK); \
-} while (0)
+पूर्ण जबतक (0)
 
-#define MINIMAL_FEATURE_IOMMU(iommu, cap, MASK) \
-do { \
-	u64 min_feature = intel_iommu_##cap##_sanity & (MASK); \
+#घोषणा MINIMAL_FEATURE_IOMMU(iommu, cap, MASK) \
+करो अणु \
+	u64 min_feature = पूर्णांकel_iommu_##cap##_sanity & (MASK); \
 	min_feature = min_t(u64, min_feature, (iommu)->cap & (MASK)); \
-	intel_iommu_##cap##_sanity = (intel_iommu_##cap##_sanity & ~(MASK)) | \
+	पूर्णांकel_iommu_##cap##_sanity = (पूर्णांकel_iommu_##cap##_sanity & ~(MASK)) | \
 				     min_feature; \
-} while (0)
+पूर्ण जबतक (0)
 
-#define MINIMAL_FEATURE_HOTPLUG(iommu, cap, feature, MASK, mismatch) \
-do { \
-	if ((intel_iommu_##cap##_sanity & (MASK)) > \
+#घोषणा MINIMAL_FEATURE_HOTPLUG(iommu, cap, feature, MASK, mismatch) \
+करो अणु \
+	अगर ((पूर्णांकel_iommu_##cap##_sanity & (MASK)) > \
 	    (cap##_##feature((iommu)->cap))) \
 		mismatch = true; \
-	else \
+	अन्यथा \
 		(iommu)->cap = ((iommu)->cap & ~(MASK)) | \
-		(intel_iommu_##cap##_sanity & (MASK)); \
-} while (0)
+		(पूर्णांकel_iommu_##cap##_sanity & (MASK)); \
+पूर्ण जबतक (0)
 
-enum cap_audit_type {
+क्रमागत cap_audit_type अणु
 	CAP_AUDIT_STATIC_DMAR,
 	CAP_AUDIT_STATIC_IRQR,
 	CAP_AUDIT_HOTPLUG_DMAR,
 	CAP_AUDIT_HOTPLUG_IRQR,
-};
+पूर्ण;
 
-bool intel_cap_smts_sanity(void);
-bool intel_cap_pasid_sanity(void);
-bool intel_cap_nest_sanity(void);
-bool intel_cap_flts_sanity(void);
+bool पूर्णांकel_cap_smts_sanity(व्योम);
+bool पूर्णांकel_cap_pasid_sanity(व्योम);
+bool पूर्णांकel_cap_nest_sanity(व्योम);
+bool पूर्णांकel_cap_flts_sanity(व्योम);
 
-static inline bool scalable_mode_support(void)
-{
-	return (intel_iommu_sm && intel_cap_smts_sanity());
-}
+अटल अंतरभूत bool scalable_mode_support(व्योम)
+अणु
+	वापस (पूर्णांकel_iommu_sm && पूर्णांकel_cap_smts_sanity());
+पूर्ण
 
-static inline bool pasid_mode_support(void)
-{
-	return scalable_mode_support() && intel_cap_pasid_sanity();
-}
+अटल अंतरभूत bool pasid_mode_support(व्योम)
+अणु
+	वापस scalable_mode_support() && पूर्णांकel_cap_pasid_sanity();
+पूर्ण
 
-static inline bool nested_mode_support(void)
-{
-	return scalable_mode_support() && intel_cap_nest_sanity();
-}
+अटल अंतरभूत bool nested_mode_support(व्योम)
+अणु
+	वापस scalable_mode_support() && पूर्णांकel_cap_nest_sanity();
+पूर्ण
 
-int intel_cap_audit(enum cap_audit_type type, struct intel_iommu *iommu);
+पूर्णांक पूर्णांकel_cap_audit(क्रमागत cap_audit_type type, काष्ठा पूर्णांकel_iommu *iommu);

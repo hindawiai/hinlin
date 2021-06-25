@@ -1,83 +1,84 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_GT__
-#define __INTEL_GT__
+#अगर_अघोषित __INTEL_GT__
+#घोषणा __INTEL_GT__
 
-#include "intel_engine_types.h"
-#include "intel_gt_types.h"
-#include "intel_reset.h"
+#समावेश "intel_engine_types.h"
+#समावेश "intel_gt_types.h"
+#समावेश "intel_reset.h"
 
-struct drm_i915_private;
-struct drm_printer;
+काष्ठा drm_i915_निजी;
+काष्ठा drm_prपूर्णांकer;
 
-#define GT_TRACE(gt, fmt, ...) do {					\
-	const struct intel_gt *gt__ __maybe_unused = (gt);		\
+#घोषणा GT_TRACE(gt, fmt, ...) करो अणु					\
+	स्थिर काष्ठा पूर्णांकel_gt *gt__ __maybe_unused = (gt);		\
 	GEM_TRACE("%s " fmt, dev_name(gt__->i915->drm.dev),		\
 		  ##__VA_ARGS__);					\
-} while (0)
+पूर्ण जबतक (0)
 
-static inline struct intel_gt *uc_to_gt(struct intel_uc *uc)
-{
-	return container_of(uc, struct intel_gt, uc);
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_gt *uc_to_gt(काष्ठा पूर्णांकel_uc *uc)
+अणु
+	वापस container_of(uc, काष्ठा पूर्णांकel_gt, uc);
+पूर्ण
 
-static inline struct intel_gt *guc_to_gt(struct intel_guc *guc)
-{
-	return container_of(guc, struct intel_gt, uc.guc);
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_gt *guc_to_gt(काष्ठा पूर्णांकel_guc *guc)
+अणु
+	वापस container_of(guc, काष्ठा पूर्णांकel_gt, uc.guc);
+पूर्ण
 
-static inline struct intel_gt *huc_to_gt(struct intel_huc *huc)
-{
-	return container_of(huc, struct intel_gt, uc.huc);
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_gt *huc_to_gt(काष्ठा पूर्णांकel_huc *huc)
+अणु
+	वापस container_of(huc, काष्ठा पूर्णांकel_gt, uc.huc);
+पूर्ण
 
-void intel_gt_init_early(struct intel_gt *gt, struct drm_i915_private *i915);
-void intel_gt_init_hw_early(struct intel_gt *gt, struct i915_ggtt *ggtt);
-int intel_gt_probe_lmem(struct intel_gt *gt);
-int intel_gt_init_mmio(struct intel_gt *gt);
-int __must_check intel_gt_init_hw(struct intel_gt *gt);
-int intel_gt_init(struct intel_gt *gt);
-void intel_gt_driver_register(struct intel_gt *gt);
+व्योम पूर्णांकel_gt_init_early(काष्ठा पूर्णांकel_gt *gt, काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_gt_init_hw_early(काष्ठा पूर्णांकel_gt *gt, काष्ठा i915_ggtt *ggtt);
+पूर्णांक पूर्णांकel_gt_probe_lmem(काष्ठा पूर्णांकel_gt *gt);
+पूर्णांक पूर्णांकel_gt_init_mmio(काष्ठा पूर्णांकel_gt *gt);
+पूर्णांक __must_check पूर्णांकel_gt_init_hw(काष्ठा पूर्णांकel_gt *gt);
+पूर्णांक पूर्णांकel_gt_init(काष्ठा पूर्णांकel_gt *gt);
+व्योम पूर्णांकel_gt_driver_रेजिस्टर(काष्ठा पूर्णांकel_gt *gt);
 
-void intel_gt_driver_unregister(struct intel_gt *gt);
-void intel_gt_driver_remove(struct intel_gt *gt);
-void intel_gt_driver_release(struct intel_gt *gt);
+व्योम पूर्णांकel_gt_driver_unरेजिस्टर(काष्ठा पूर्णांकel_gt *gt);
+व्योम पूर्णांकel_gt_driver_हटाओ(काष्ठा पूर्णांकel_gt *gt);
+व्योम पूर्णांकel_gt_driver_release(काष्ठा पूर्णांकel_gt *gt);
 
-void intel_gt_driver_late_release(struct intel_gt *gt);
+व्योम पूर्णांकel_gt_driver_late_release(काष्ठा पूर्णांकel_gt *gt);
 
-void intel_gt_check_and_clear_faults(struct intel_gt *gt);
-void intel_gt_clear_error_registers(struct intel_gt *gt,
-				    intel_engine_mask_t engine_mask);
+व्योम पूर्णांकel_gt_check_and_clear_faults(काष्ठा पूर्णांकel_gt *gt);
+व्योम पूर्णांकel_gt_clear_error_रेजिस्टरs(काष्ठा पूर्णांकel_gt *gt,
+				    पूर्णांकel_engine_mask_t engine_mask);
 
-void intel_gt_flush_ggtt_writes(struct intel_gt *gt);
-void intel_gt_chipset_flush(struct intel_gt *gt);
+व्योम पूर्णांकel_gt_flush_ggtt_ग_लिखोs(काष्ठा पूर्णांकel_gt *gt);
+व्योम पूर्णांकel_gt_chipset_flush(काष्ठा पूर्णांकel_gt *gt);
 
-static inline u32 intel_gt_scratch_offset(const struct intel_gt *gt,
-					  enum intel_gt_scratch_field field)
-{
-	return i915_ggtt_offset(gt->scratch) + field;
-}
+अटल अंतरभूत u32 पूर्णांकel_gt_scratch_offset(स्थिर काष्ठा पूर्णांकel_gt *gt,
+					  क्रमागत पूर्णांकel_gt_scratch_field field)
+अणु
+	वापस i915_ggtt_offset(gt->scratch) + field;
+पूर्ण
 
-static inline bool intel_gt_has_unrecoverable_error(const struct intel_gt *gt)
-{
-	return test_bit(I915_WEDGED_ON_INIT, &gt->reset.flags) ||
+अटल अंतरभूत bool पूर्णांकel_gt_has_unrecoverable_error(स्थिर काष्ठा पूर्णांकel_gt *gt)
+अणु
+	वापस test_bit(I915_WEDGED_ON_INIT, &gt->reset.flags) ||
 	       test_bit(I915_WEDGED_ON_FINI, &gt->reset.flags);
-}
+पूर्ण
 
-static inline bool intel_gt_is_wedged(const struct intel_gt *gt)
-{
-	GEM_BUG_ON(intel_gt_has_unrecoverable_error(gt) &&
+अटल अंतरभूत bool पूर्णांकel_gt_is_wedged(स्थिर काष्ठा पूर्णांकel_gt *gt)
+अणु
+	GEM_BUG_ON(पूर्णांकel_gt_has_unrecoverable_error(gt) &&
 		   !test_bit(I915_WEDGED, &gt->reset.flags));
 
-	return unlikely(test_bit(I915_WEDGED, &gt->reset.flags));
-}
+	वापस unlikely(test_bit(I915_WEDGED, &gt->reset.flags));
+पूर्ण
 
-void intel_gt_info_print(const struct intel_gt_info *info,
-			 struct drm_printer *p);
+व्योम पूर्णांकel_gt_info_prपूर्णांक(स्थिर काष्ठा पूर्णांकel_gt_info *info,
+			 काष्ठा drm_prपूर्णांकer *p);
 
-void intel_gt_watchdog_work(struct work_struct *work);
+व्योम पूर्णांकel_gt_watchकरोg_work(काष्ठा work_काष्ठा *work);
 
-#endif /* __INTEL_GT_H__ */
+#पूर्ण_अगर /* __INTEL_GT_H__ */

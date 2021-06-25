@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * debugfs routines supporting the Power 7+ Nest Accelerators driver
  *
@@ -7,34 +8,34 @@
  * Author: Kent Yoder <yoder1@us.ibm.com>
  */
 
-#include <linux/device.h>
-#include <linux/kobject.h>
-#include <linux/string.h>
-#include <linux/debugfs.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/crypto.h>
-#include <crypto/hash.h>
-#include <asm/vio.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/crypto.h>
+#समावेश <crypto/hash.h>
+#समावेश <यंत्र/vपन.स>
 
-#include "nx_csbcpb.h"
-#include "nx.h"
+#समावेश "nx_csbcpb.h"
+#समावेश "nx.h"
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
 /*
  * debugfs
  *
- * For documentation on these attributes, please see:
+ * For करोcumentation on these attributes, please see:
  *
  * Documentation/ABI/testing/debugfs-pfo-nx-crypto
  */
 
-void nx_debugfs_init(struct nx_crypto_driver *drv)
-{
-	struct dentry *root;
+व्योम nx_debugfs_init(काष्ठा nx_crypto_driver *drv)
+अणु
+	काष्ठा dentry *root;
 
-	root = debugfs_create_dir(NX_NAME, NULL);
+	root = debugfs_create_dir(NX_NAME, शून्य);
 	drv->dfs_root = root;
 
 	debugfs_create_u32("aes_ops", S_IRUSR | S_IRGRP | S_IROTH,
@@ -55,12 +56,12 @@ void nx_debugfs_init(struct nx_crypto_driver *drv)
 			   root, &drv->stats.last_error.counter);
 	debugfs_create_u32("last_error_pid", S_IRUSR | S_IRGRP | S_IROTH,
 			   root, &drv->stats.last_error_pid.counter);
-}
+पूर्ण
 
-void
-nx_debugfs_fini(struct nx_crypto_driver *drv)
-{
-	debugfs_remove_recursive(drv->dfs_root);
-}
+व्योम
+nx_debugfs_fini(काष्ठा nx_crypto_driver *drv)
+अणु
+	debugfs_हटाओ_recursive(drv->dfs_root);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

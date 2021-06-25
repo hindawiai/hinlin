@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR MIT) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ((GPL-2.0 WITH Linux-syscall-note) OR MIT) */
 /******************************************************************************
  * evtchn.h
  *
@@ -6,17 +7,17 @@
  *
  * Copyright (c) 2003-2005, K A Fraser
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -31,74 +32,74 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __LINUX_PUBLIC_EVTCHN_H__
-#define __LINUX_PUBLIC_EVTCHN_H__
+#अगर_अघोषित __LINUX_PUBLIC_EVTCHN_H__
+#घोषणा __LINUX_PUBLIC_EVTCHN_H__
 
 /*
  * Bind a fresh port to VIRQ @virq.
  * Return allocated port.
  */
-#define IOCTL_EVTCHN_BIND_VIRQ				\
-	_IOC(_IOC_NONE, 'E', 0, sizeof(struct ioctl_evtchn_bind_virq))
-struct ioctl_evtchn_bind_virq {
-	unsigned int virq;
-};
+#घोषणा IOCTL_EVTCHN_BIND_VIRQ				\
+	_IOC(_IOC_NONE, 'E', 0, माप(काष्ठा ioctl_evtchn_bind_virq))
+काष्ठा ioctl_evtchn_bind_virq अणु
+	अचिन्हित पूर्णांक virq;
+पूर्ण;
 
 /*
- * Bind a fresh port to remote <@remote_domain, @remote_port>.
+ * Bind a fresh port to remote <@remote_करोमुख्य, @remote_port>.
  * Return allocated port.
  */
-#define IOCTL_EVTCHN_BIND_INTERDOMAIN			\
-	_IOC(_IOC_NONE, 'E', 1, sizeof(struct ioctl_evtchn_bind_interdomain))
-struct ioctl_evtchn_bind_interdomain {
-	unsigned int remote_domain, remote_port;
-};
+#घोषणा IOCTL_EVTCHN_BIND_INTERDOMAIN			\
+	_IOC(_IOC_NONE, 'E', 1, माप(काष्ठा ioctl_evtchn_bind_पूर्णांकerकरोमुख्य))
+काष्ठा ioctl_evtchn_bind_पूर्णांकerकरोमुख्य अणु
+	अचिन्हित पूर्णांक remote_करोमुख्य, remote_port;
+पूर्ण;
 
 /*
- * Allocate a fresh port for binding to @remote_domain.
+ * Allocate a fresh port क्रम binding to @remote_करोमुख्य.
  * Return allocated port.
  */
-#define IOCTL_EVTCHN_BIND_UNBOUND_PORT			\
-	_IOC(_IOC_NONE, 'E', 2, sizeof(struct ioctl_evtchn_bind_unbound_port))
-struct ioctl_evtchn_bind_unbound_port {
-	unsigned int remote_domain;
-};
+#घोषणा IOCTL_EVTCHN_BIND_UNBOUND_PORT			\
+	_IOC(_IOC_NONE, 'E', 2, माप(काष्ठा ioctl_evtchn_bind_unbound_port))
+काष्ठा ioctl_evtchn_bind_unbound_port अणु
+	अचिन्हित पूर्णांक remote_करोमुख्य;
+पूर्ण;
 
 /*
  * Unbind previously allocated @port.
  */
-#define IOCTL_EVTCHN_UNBIND				\
-	_IOC(_IOC_NONE, 'E', 3, sizeof(struct ioctl_evtchn_unbind))
-struct ioctl_evtchn_unbind {
-	unsigned int port;
-};
+#घोषणा IOCTL_EVTCHN_UNBIND				\
+	_IOC(_IOC_NONE, 'E', 3, माप(काष्ठा ioctl_evtchn_unbind))
+काष्ठा ioctl_evtchn_unbind अणु
+	अचिन्हित पूर्णांक port;
+पूर्ण;
 
 /*
  * Unbind previously allocated @port.
  */
-#define IOCTL_EVTCHN_NOTIFY				\
-	_IOC(_IOC_NONE, 'E', 4, sizeof(struct ioctl_evtchn_notify))
-struct ioctl_evtchn_notify {
-	unsigned int port;
-};
+#घोषणा IOCTL_EVTCHN_NOTIFY				\
+	_IOC(_IOC_NONE, 'E', 4, माप(काष्ठा ioctl_evtchn_notअगरy))
+काष्ठा ioctl_evtchn_notअगरy अणु
+	अचिन्हित पूर्णांक port;
+पूर्ण;
 
 /* Clear and reinitialise the event buffer. Clear error condition. */
-#define IOCTL_EVTCHN_RESET				\
+#घोषणा IOCTL_EVTCHN_RESET				\
 	_IOC(_IOC_NONE, 'E', 5, 0)
 
 /*
  * Restrict this file descriptor so that it can only be used to bind
- * new interdomain events from one domain.
+ * new पूर्णांकerकरोमुख्य events from one करोमुख्य.
  *
  * Once a file descriptor has been restricted it cannot be
- * de-restricted, and must be closed and re-opened.  Event channels
- * which were bound before restricting remain bound afterwards, and
- * can be notified as usual.
+ * de-restricted, and must be बंदd and re-खोलोed.  Event channels
+ * which were bound beक्रमe restricting reमुख्य bound afterwards, and
+ * can be notअगरied as usual.
  */
-#define IOCTL_EVTCHN_RESTRICT_DOMID			\
-	_IOC(_IOC_NONE, 'E', 6, sizeof(struct ioctl_evtchn_restrict_domid))
-struct ioctl_evtchn_restrict_domid {
-	domid_t domid;
-};
+#घोषणा IOCTL_EVTCHN_RESTRICT_DOMID			\
+	_IOC(_IOC_NONE, 'E', 6, माप(काष्ठा ioctl_evtchn_restrict_करोmid))
+काष्ठा ioctl_evtchn_restrict_करोmid अणु
+	करोmid_t करोmid;
+पूर्ण;
 
-#endif /* __LINUX_PUBLIC_EVTCHN_H__ */
+#पूर्ण_अगर /* __LINUX_PUBLIC_EVTCHN_H__ */

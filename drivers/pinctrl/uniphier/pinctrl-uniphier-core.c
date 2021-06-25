@@ -1,785 +1,786 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // Copyright (C) 2015-2017 Socionext Inc.
 //   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
 
-#include <linux/list.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#include "../core.h"
-#include "../pinctrl-utils.h"
-#include "pinctrl-uniphier.h"
+#समावेश "../core.h"
+#समावेश "../pinctrl-utils.h"
+#समावेश "pinctrl-uniphier.h"
 
-#define UNIPHIER_PINCTRL_PINMUX_BASE	0x1000
-#define UNIPHIER_PINCTRL_LOAD_PINMUX	0x1700
-#define UNIPHIER_PINCTRL_DRVCTRL_BASE	0x1800
-#define UNIPHIER_PINCTRL_DRV2CTRL_BASE	0x1900
-#define UNIPHIER_PINCTRL_DRV3CTRL_BASE	0x1980
-#define UNIPHIER_PINCTRL_PUPDCTRL_BASE	0x1a00
-#define UNIPHIER_PINCTRL_IECTRL_BASE	0x1d00
+#घोषणा UNIPHIER_PINCTRL_PINMUX_BASE	0x1000
+#घोषणा UNIPHIER_PINCTRL_LOAD_PINMUX	0x1700
+#घोषणा UNIPHIER_PINCTRL_DRVCTRL_BASE	0x1800
+#घोषणा UNIPHIER_PINCTRL_DRV2CTRL_BASE	0x1900
+#घोषणा UNIPHIER_PINCTRL_DRV3CTRL_BASE	0x1980
+#घोषणा UNIPHIER_PINCTRL_PUPDCTRL_BASE	0x1a00
+#घोषणा UNIPHIER_PINCTRL_IECTRL_BASE	0x1d00
 
-struct uniphier_pinctrl_reg_region {
-	struct list_head node;
-	unsigned int base;
-	unsigned int nregs;
+काष्ठा uniphier_pinctrl_reg_region अणु
+	काष्ठा list_head node;
+	अचिन्हित पूर्णांक base;
+	अचिन्हित पूर्णांक nregs;
 	u32 vals[];
-};
+पूर्ण;
 
-struct uniphier_pinctrl_priv {
-	struct pinctrl_desc pctldesc;
-	struct pinctrl_dev *pctldev;
-	struct regmap *regmap;
-	const struct uniphier_pinctrl_socdata *socdata;
-	struct list_head reg_regions;
-};
+काष्ठा uniphier_pinctrl_priv अणु
+	काष्ठा pinctrl_desc pctldesc;
+	काष्ठा pinctrl_dev *pctldev;
+	काष्ठा regmap *regmap;
+	स्थिर काष्ठा uniphier_pinctrl_socdata *socdata;
+	काष्ठा list_head reg_regions;
+पूर्ण;
 
-static int uniphier_pctl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक uniphier_pctl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
-	return priv->socdata->groups_count;
-}
+	वापस priv->socdata->groups_count;
+पूर्ण
 
-static const char *uniphier_pctl_get_group_name(struct pinctrl_dev *pctldev,
-						unsigned selector)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *uniphier_pctl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+						अचिन्हित selector)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
-	return priv->socdata->groups[selector].name;
-}
+	वापस priv->socdata->groups[selector].name;
+पूर्ण
 
-static int uniphier_pctl_get_group_pins(struct pinctrl_dev *pctldev,
-					unsigned selector,
-					const unsigned **pins,
-					unsigned *num_pins)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक uniphier_pctl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+					अचिन्हित selector,
+					स्थिर अचिन्हित **pins,
+					अचिन्हित *num_pins)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = priv->socdata->groups[selector].pins;
 	*num_pins = priv->socdata->groups[selector].num_pins;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static void uniphier_pctl_pin_dbg_show(struct pinctrl_dev *pctldev,
-				       struct seq_file *s, unsigned offset)
-{
-	const struct pin_desc *desc = pin_desc_get(pctldev, offset);
-	const char *pull_dir, *drv_type;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल व्योम uniphier_pctl_pin_dbg_show(काष्ठा pinctrl_dev *pctldev,
+				       काष्ठा seq_file *s, अचिन्हित offset)
+अणु
+	स्थिर काष्ठा pin_desc *desc = pin_desc_get(pctldev, offset);
+	स्थिर अक्षर *pull_dir, *drv_type;
 
-	switch (uniphier_pin_get_pull_dir(desc->drv_data)) {
-	case UNIPHIER_PIN_PULL_UP:
+	चयन (uniphier_pin_get_pull_dir(desc->drv_data)) अणु
+	हाल UNIPHIER_PIN_PULL_UP:
 		pull_dir = "UP";
-		break;
-	case UNIPHIER_PIN_PULL_DOWN:
+		अवरोध;
+	हाल UNIPHIER_PIN_PULL_DOWN:
 		pull_dir = "DOWN";
-		break;
-	case UNIPHIER_PIN_PULL_UP_FIXED:
+		अवरोध;
+	हाल UNIPHIER_PIN_PULL_UP_FIXED:
 		pull_dir = "UP(FIXED)";
-		break;
-	case UNIPHIER_PIN_PULL_DOWN_FIXED:
+		अवरोध;
+	हाल UNIPHIER_PIN_PULL_DOWN_FIXED:
 		pull_dir = "DOWN(FIXED)";
-		break;
-	case UNIPHIER_PIN_PULL_NONE:
+		अवरोध;
+	हाल UNIPHIER_PIN_PULL_NONE:
 		pull_dir = "NONE";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	switch (uniphier_pin_get_drv_type(desc->drv_data)) {
-	case UNIPHIER_PIN_DRV_1BIT:
+	चयन (uniphier_pin_get_drv_type(desc->drv_data)) अणु
+	हाल UNIPHIER_PIN_DRV_1BIT:
 		drv_type = "4/8(mA)";
-		break;
-	case UNIPHIER_PIN_DRV_2BIT:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_2BIT:
 		drv_type = "8/12/16/20(mA)";
-		break;
-	case UNIPHIER_PIN_DRV_3BIT:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_3BIT:
 		drv_type = "4/5/7/9/11/12/14/16(mA)";
-		break;
-	case UNIPHIER_PIN_DRV_FIXED4:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_FIXED4:
 		drv_type = "4(mA)";
-		break;
-	case UNIPHIER_PIN_DRV_FIXED5:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_FIXED5:
 		drv_type = "5(mA)";
-		break;
-	case UNIPHIER_PIN_DRV_FIXED8:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_FIXED8:
 		drv_type = "8(mA)";
-		break;
-	case UNIPHIER_PIN_DRV_NONE:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_NONE:
 		drv_type = "NONE";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	seq_printf(s, " PULL_DIR=%s  DRV_TYPE=%s", pull_dir, drv_type);
-}
-#endif
+	seq_म_लिखो(s, " PULL_DIR=%s  DRV_TYPE=%s", pull_dir, drv_type);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct pinctrl_ops uniphier_pctlops = {
+अटल स्थिर काष्ठा pinctrl_ops uniphier_pctlops = अणु
 	.get_groups_count = uniphier_pctl_get_groups_count,
 	.get_group_name = uniphier_pctl_get_group_name,
 	.get_group_pins = uniphier_pctl_get_group_pins,
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 	.pin_dbg_show = uniphier_pctl_pin_dbg_show,
-#endif
+#पूर्ण_अगर
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_all,
-	.dt_free_map = pinctrl_utils_free_map,
-};
+	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
+पूर्ण;
 
-static const unsigned int uniphier_conf_drv_strengths_1bit[] = {4, 8};
-static const unsigned int uniphier_conf_drv_strengths_2bit[] = {8, 12, 16, 20};
-static const unsigned int uniphier_conf_drv_strengths_3bit[] = {4, 5, 7, 9, 11,
-								12, 14, 16};
-static const unsigned int uniphier_conf_drv_strengths_fixed4[] = {4};
-static const unsigned int uniphier_conf_drv_strengths_fixed5[] = {5};
-static const unsigned int uniphier_conf_drv_strengths_fixed8[] = {8};
+अटल स्थिर अचिन्हित पूर्णांक uniphier_conf_drv_strengths_1bit[] = अणु4, 8पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uniphier_conf_drv_strengths_2bit[] = अणु8, 12, 16, 20पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uniphier_conf_drv_strengths_3bit[] = अणु4, 5, 7, 9, 11,
+								12, 14, 16पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uniphier_conf_drv_strengths_fixed4[] = अणु4पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uniphier_conf_drv_strengths_fixed5[] = अणु5पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uniphier_conf_drv_strengths_fixed8[] = अणु8पूर्ण;
 
-static int uniphier_conf_get_drvctrl_data(struct pinctrl_dev *pctldev,
-					  unsigned int pin, unsigned int *reg,
-					  unsigned int *shift,
-					  unsigned int *mask,
-					  const unsigned int **strengths)
-{
-	const struct pin_desc *desc = pin_desc_get(pctldev, pin);
-	enum uniphier_pin_drv_type type =
+अटल पूर्णांक uniphier_conf_get_drvctrl_data(काष्ठा pinctrl_dev *pctldev,
+					  अचिन्हित पूर्णांक pin, अचिन्हित पूर्णांक *reg,
+					  अचिन्हित पूर्णांक *shअगरt,
+					  अचिन्हित पूर्णांक *mask,
+					  स्थिर अचिन्हित पूर्णांक **strengths)
+अणु
+	स्थिर काष्ठा pin_desc *desc = pin_desc_get(pctldev, pin);
+	क्रमागत uniphier_pin_drv_type type =
 				uniphier_pin_get_drv_type(desc->drv_data);
-	unsigned int base = 0;
-	unsigned int stride = 0;
-	unsigned int width = 0;
-	unsigned int drvctrl;
+	अचिन्हित पूर्णांक base = 0;
+	अचिन्हित पूर्णांक stride = 0;
+	अचिन्हित पूर्णांक width = 0;
+	अचिन्हित पूर्णांक drvctrl;
 
-	switch (type) {
-	case UNIPHIER_PIN_DRV_1BIT:
+	चयन (type) अणु
+	हाल UNIPHIER_PIN_DRV_1BIT:
 		*strengths = uniphier_conf_drv_strengths_1bit;
 		base = UNIPHIER_PINCTRL_DRVCTRL_BASE;
 		stride = 1;
 		width = 1;
-		break;
-	case UNIPHIER_PIN_DRV_2BIT:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_2BIT:
 		*strengths = uniphier_conf_drv_strengths_2bit;
 		base = UNIPHIER_PINCTRL_DRV2CTRL_BASE;
 		stride = 2;
 		width = 2;
-		break;
-	case UNIPHIER_PIN_DRV_3BIT:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_3BIT:
 		*strengths = uniphier_conf_drv_strengths_3bit;
 		base = UNIPHIER_PINCTRL_DRV3CTRL_BASE;
 		stride = 4;
 		width = 3;
-		break;
-	case UNIPHIER_PIN_DRV_FIXED4:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_FIXED4:
 		*strengths = uniphier_conf_drv_strengths_fixed4;
-		break;
-	case UNIPHIER_PIN_DRV_FIXED5:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_FIXED5:
 		*strengths = uniphier_conf_drv_strengths_fixed5;
-		break;
-	case UNIPHIER_PIN_DRV_FIXED8:
+		अवरोध;
+	हाल UNIPHIER_PIN_DRV_FIXED8:
 		*strengths = uniphier_conf_drv_strengths_fixed8;
-		break;
-	default:
-		/* drive strength control is not supported for this pin */
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		/* drive strength control is not supported क्रम this pin */
+		वापस -EINVAL;
+	पूर्ण
 
 	drvctrl = uniphier_pin_get_drvctrl(desc->drv_data);
 	drvctrl *= stride;
 
 	*reg = base + drvctrl / 32 * 4;
-	*shift = drvctrl % 32;
+	*shअगरt = drvctrl % 32;
 	*mask = (1U << width) - 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uniphier_conf_pin_bias_get(struct pinctrl_dev *pctldev,
-				      unsigned int pin,
-				      enum pin_config_param param)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	const struct pin_desc *desc = pin_desc_get(pctldev, pin);
-	enum uniphier_pin_pull_dir pull_dir =
+अटल पूर्णांक uniphier_conf_pin_bias_get(काष्ठा pinctrl_dev *pctldev,
+				      अचिन्हित पूर्णांक pin,
+				      क्रमागत pin_config_param param)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा pin_desc *desc = pin_desc_get(pctldev, pin);
+	क्रमागत uniphier_pin_pull_dir pull_dir =
 				uniphier_pin_get_pull_dir(desc->drv_data);
-	unsigned int pupdctrl, reg, shift, val;
-	unsigned int expected = 1;
-	int ret;
+	अचिन्हित पूर्णांक pupdctrl, reg, shअगरt, val;
+	अचिन्हित पूर्णांक expected = 1;
+	पूर्णांक ret;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-		if (pull_dir == UNIPHIER_PIN_PULL_NONE)
-			return 0;
-		if (pull_dir == UNIPHIER_PIN_PULL_UP_FIXED ||
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर (pull_dir == UNIPHIER_PIN_PULL_NONE)
+			वापस 0;
+		अगर (pull_dir == UNIPHIER_PIN_PULL_UP_FIXED ||
 		    pull_dir == UNIPHIER_PIN_PULL_DOWN_FIXED)
-			return -EINVAL;
+			वापस -EINVAL;
 		expected = 0;
-		break;
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if (pull_dir == UNIPHIER_PIN_PULL_UP_FIXED)
-			return 0;
-		if (pull_dir != UNIPHIER_PIN_PULL_UP)
-			return -EINVAL;
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		if (pull_dir == UNIPHIER_PIN_PULL_DOWN_FIXED)
-			return 0;
-		if (pull_dir != UNIPHIER_PIN_PULL_DOWN)
-			return -EINVAL;
-		break;
-	default:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर (pull_dir == UNIPHIER_PIN_PULL_UP_FIXED)
+			वापस 0;
+		अगर (pull_dir != UNIPHIER_PIN_PULL_UP)
+			वापस -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		अगर (pull_dir == UNIPHIER_PIN_PULL_DOWN_FIXED)
+			वापस 0;
+		अगर (pull_dir != UNIPHIER_PIN_PULL_DOWN)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	pupdctrl = uniphier_pin_get_pupdctrl(desc->drv_data);
 
 	reg = UNIPHIER_PINCTRL_PUPDCTRL_BASE + pupdctrl / 32 * 4;
-	shift = pupdctrl % 32;
+	shअगरt = pupdctrl % 32;
 
-	ret = regmap_read(priv->regmap, reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(priv->regmap, reg, &val);
+	अगर (ret)
+		वापस ret;
 
-	val = (val >> shift) & 1;
+	val = (val >> shअगरt) & 1;
 
-	return (val == expected) ? 0 : -EINVAL;
-}
+	वापस (val == expected) ? 0 : -EINVAL;
+पूर्ण
 
-static int uniphier_conf_pin_drive_get(struct pinctrl_dev *pctldev,
-				       unsigned int pin, u32 *strength)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	unsigned int reg, shift, mask, val;
-	const unsigned int *strengths;
-	int ret;
+अटल पूर्णांक uniphier_conf_pin_drive_get(काष्ठा pinctrl_dev *pctldev,
+				       अचिन्हित पूर्णांक pin, u32 *strength)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित पूर्णांक reg, shअगरt, mask, val;
+	स्थिर अचिन्हित पूर्णांक *strengths;
+	पूर्णांक ret;
 
-	ret = uniphier_conf_get_drvctrl_data(pctldev, pin, &reg, &shift,
+	ret = uniphier_conf_get_drvctrl_data(pctldev, pin, &reg, &shअगरt,
 					     &mask, &strengths);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (mask) {
-		ret = regmap_read(priv->regmap, reg, &val);
-		if (ret)
-			return ret;
-	} else {
+	अगर (mask) अणु
+		ret = regmap_पढ़ो(priv->regmap, reg, &val);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		val = 0;
-	}
+	पूर्ण
 
-	*strength = strengths[(val >> shift) & mask];
+	*strength = strengths[(val >> shअगरt) & mask];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uniphier_conf_pin_input_enable_get(struct pinctrl_dev *pctldev,
-					      unsigned int pin)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	const struct pin_desc *desc = pin_desc_get(pctldev, pin);
-	unsigned int iectrl = uniphier_pin_get_iectrl(desc->drv_data);
-	unsigned int reg, mask, val;
-	int ret;
+अटल पूर्णांक uniphier_conf_pin_input_enable_get(काष्ठा pinctrl_dev *pctldev,
+					      अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा pin_desc *desc = pin_desc_get(pctldev, pin);
+	अचिन्हित पूर्णांक iectrl = uniphier_pin_get_iectrl(desc->drv_data);
+	अचिन्हित पूर्णांक reg, mask, val;
+	पूर्णांक ret;
 
-	if (iectrl == UNIPHIER_PIN_IECTRL_NONE)
+	अगर (iectrl == UNIPHIER_PIN_IECTRL_NONE)
 		/* This pin is always input-enabled. */
-		return 0;
+		वापस 0;
 
-	if (priv->socdata->caps & UNIPHIER_PINCTRL_CAPS_PERPIN_IECTRL)
+	अगर (priv->socdata->caps & UNIPHIER_PINCTRL_CAPS_PERPIN_IECTRL)
 		iectrl = pin;
 
 	reg = UNIPHIER_PINCTRL_IECTRL_BASE + iectrl / 32 * 4;
 	mask = BIT(iectrl % 32);
 
-	ret = regmap_read(priv->regmap, reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(priv->regmap, reg, &val);
+	अगर (ret)
+		वापस ret;
 
-	return val & mask ? 0 : -EINVAL;
-}
+	वापस val & mask ? 0 : -EINVAL;
+पूर्ण
 
-static int uniphier_conf_pin_config_get(struct pinctrl_dev *pctldev,
-					unsigned pin,
-					unsigned long *configs)
-{
-	enum pin_config_param param = pinconf_to_config_param(*configs);
+अटल पूर्णांक uniphier_conf_pin_config_get(काष्ठा pinctrl_dev *pctldev,
+					अचिन्हित pin,
+					अचिन्हित दीर्घ *configs)
+अणु
+	क्रमागत pin_config_param param = pinconf_to_config_param(*configs);
 	bool has_arg = false;
 	u32 arg;
-	int ret;
+	पूर्णांक ret;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-	case PIN_CONFIG_BIAS_PULL_UP:
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		ret = uniphier_conf_pin_bias_get(pctldev, pin, param);
-		break;
-	case PIN_CONFIG_DRIVE_STRENGTH:
+		अवरोध;
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
 		ret = uniphier_conf_pin_drive_get(pctldev, pin, &arg);
 		has_arg = true;
-		break;
-	case PIN_CONFIG_INPUT_ENABLE:
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_ENABLE:
 		ret = uniphier_conf_pin_input_enable_get(pctldev, pin);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* unsupported parameter */
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret == 0 && has_arg)
+	अगर (ret == 0 && has_arg)
 		*configs = pinconf_to_config_packed(param, arg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int uniphier_conf_pin_bias_set(struct pinctrl_dev *pctldev,
-				      unsigned int pin,
-				      enum pin_config_param param, u32 arg)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	const struct pin_desc *desc = pin_desc_get(pctldev, pin);
-	enum uniphier_pin_pull_dir pull_dir =
+अटल पूर्णांक uniphier_conf_pin_bias_set(काष्ठा pinctrl_dev *pctldev,
+				      अचिन्हित पूर्णांक pin,
+				      क्रमागत pin_config_param param, u32 arg)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा pin_desc *desc = pin_desc_get(pctldev, pin);
+	क्रमागत uniphier_pin_pull_dir pull_dir =
 				uniphier_pin_get_pull_dir(desc->drv_data);
-	unsigned int pupdctrl, reg, shift;
-	unsigned int val = 1;
+	अचिन्हित पूर्णांक pupdctrl, reg, shअगरt;
+	अचिन्हित पूर्णांक val = 1;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-		if (pull_dir == UNIPHIER_PIN_PULL_NONE)
-			return 0;
-		if (pull_dir == UNIPHIER_PIN_PULL_UP_FIXED ||
-		    pull_dir == UNIPHIER_PIN_PULL_DOWN_FIXED) {
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर (pull_dir == UNIPHIER_PIN_PULL_NONE)
+			वापस 0;
+		अगर (pull_dir == UNIPHIER_PIN_PULL_UP_FIXED ||
+		    pull_dir == UNIPHIER_PIN_PULL_DOWN_FIXED) अणु
 			dev_err(pctldev->dev,
 				"can not disable pull register for pin %s\n",
 				desc->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		val = 0;
-		break;
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if (pull_dir == UNIPHIER_PIN_PULL_UP_FIXED && arg != 0)
-			return 0;
-		if (pull_dir != UNIPHIER_PIN_PULL_UP) {
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर (pull_dir == UNIPHIER_PIN_PULL_UP_FIXED && arg != 0)
+			वापस 0;
+		अगर (pull_dir != UNIPHIER_PIN_PULL_UP) अणु
 			dev_err(pctldev->dev,
 				"pull-up is unsupported for pin %s\n",
 				desc->name);
-			return -EINVAL;
-		}
-		if (arg == 0) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (arg == 0) अणु
 			dev_err(pctldev->dev, "pull-up can not be total\n");
-			return -EINVAL;
-		}
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		if (pull_dir == UNIPHIER_PIN_PULL_DOWN_FIXED && arg != 0)
-			return 0;
-		if (pull_dir != UNIPHIER_PIN_PULL_DOWN) {
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		अगर (pull_dir == UNIPHIER_PIN_PULL_DOWN_FIXED && arg != 0)
+			वापस 0;
+		अगर (pull_dir != UNIPHIER_PIN_PULL_DOWN) अणु
 			dev_err(pctldev->dev,
 				"pull-down is unsupported for pin %s\n",
 				desc->name);
-			return -EINVAL;
-		}
-		if (arg == 0) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (arg == 0) अणु
 			dev_err(pctldev->dev, "pull-down can not be total\n");
-			return -EINVAL;
-		}
-		break;
-	case PIN_CONFIG_BIAS_PULL_PIN_DEFAULT:
-		if (pull_dir == UNIPHIER_PIN_PULL_NONE) {
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_PIN_DEFAULT:
+		अगर (pull_dir == UNIPHIER_PIN_PULL_NONE) अणु
 			dev_err(pctldev->dev,
 				"pull-up/down is unsupported for pin %s\n",
 				desc->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (arg == 0)
-			return 0; /* configuration ingored */
-		break;
-	default:
+		अगर (arg == 0)
+			वापस 0; /* configuration ingored */
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	pupdctrl = uniphier_pin_get_pupdctrl(desc->drv_data);
 
 	reg = UNIPHIER_PINCTRL_PUPDCTRL_BASE + pupdctrl / 32 * 4;
-	shift = pupdctrl % 32;
+	shअगरt = pupdctrl % 32;
 
-	return regmap_update_bits(priv->regmap, reg, 1 << shift, val << shift);
-}
+	वापस regmap_update_bits(priv->regmap, reg, 1 << shअगरt, val << shअगरt);
+पूर्ण
 
-static int uniphier_conf_pin_drive_set(struct pinctrl_dev *pctldev,
-				       unsigned int pin, u32 strength)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	const struct pin_desc *desc = pin_desc_get(pctldev, pin);
-	unsigned int reg, shift, mask, val;
-	const unsigned int *strengths;
-	int ret;
+अटल पूर्णांक uniphier_conf_pin_drive_set(काष्ठा pinctrl_dev *pctldev,
+				       अचिन्हित पूर्णांक pin, u32 strength)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा pin_desc *desc = pin_desc_get(pctldev, pin);
+	अचिन्हित पूर्णांक reg, shअगरt, mask, val;
+	स्थिर अचिन्हित पूर्णांक *strengths;
+	पूर्णांक ret;
 
-	ret = uniphier_conf_get_drvctrl_data(pctldev, pin, &reg, &shift,
+	ret = uniphier_conf_get_drvctrl_data(pctldev, pin, &reg, &shअगरt,
 					     &mask, &strengths);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pctldev->dev, "cannot set drive strength for pin %s\n",
 			desc->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (val = 0; val <= mask; val++) {
-		if (strengths[val] > strength)
-			break;
-	}
+	क्रम (val = 0; val <= mask; val++) अणु
+		अगर (strengths[val] > strength)
+			अवरोध;
+	पूर्ण
 
-	if (val == 0) {
+	अगर (val == 0) अणु
 		dev_err(pctldev->dev,
 			"unsupported drive strength %u mA for pin %s\n",
 			strength, desc->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!mask)
-		return 0;
+	अगर (!mask)
+		वापस 0;
 
 	val--;
 
-	return regmap_update_bits(priv->regmap, reg,
-				  mask << shift, val << shift);
-}
+	वापस regmap_update_bits(priv->regmap, reg,
+				  mask << shअगरt, val << shअगरt);
+पूर्ण
 
-static int uniphier_conf_pin_input_enable(struct pinctrl_dev *pctldev,
-					  unsigned int pin, u32 enable)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	const struct pin_desc *desc = pin_desc_get(pctldev, pin);
-	unsigned int iectrl = uniphier_pin_get_iectrl(desc->drv_data);
-	unsigned int reg, mask;
+अटल पूर्णांक uniphier_conf_pin_input_enable(काष्ठा pinctrl_dev *pctldev,
+					  अचिन्हित पूर्णांक pin, u32 enable)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा pin_desc *desc = pin_desc_get(pctldev, pin);
+	अचिन्हित पूर्णांक iectrl = uniphier_pin_get_iectrl(desc->drv_data);
+	अचिन्हित पूर्णांक reg, mask;
 
 	/*
 	 * Multiple pins share one input enable, per-pin disabling is
 	 * impossible.
 	 */
-	if (!(priv->socdata->caps & UNIPHIER_PINCTRL_CAPS_PERPIN_IECTRL) &&
+	अगर (!(priv->socdata->caps & UNIPHIER_PINCTRL_CAPS_PERPIN_IECTRL) &&
 	    !enable)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* UNIPHIER_PIN_IECTRL_NONE means the pin is always input-enabled */
-	if (iectrl == UNIPHIER_PIN_IECTRL_NONE)
-		return enable ? 0 : -EINVAL;
+	अगर (iectrl == UNIPHIER_PIN_IECTRL_NONE)
+		वापस enable ? 0 : -EINVAL;
 
-	if (priv->socdata->caps & UNIPHIER_PINCTRL_CAPS_PERPIN_IECTRL)
+	अगर (priv->socdata->caps & UNIPHIER_PINCTRL_CAPS_PERPIN_IECTRL)
 		iectrl = pin;
 
 	reg = UNIPHIER_PINCTRL_IECTRL_BASE + iectrl / 32 * 4;
 	mask = BIT(iectrl % 32);
 
-	return regmap_update_bits(priv->regmap, reg, mask, enable ? mask : 0);
-}
+	वापस regmap_update_bits(priv->regmap, reg, mask, enable ? mask : 0);
+पूर्ण
 
-static int uniphier_conf_pin_config_set(struct pinctrl_dev *pctldev,
-					unsigned pin,
-					unsigned long *configs,
-					unsigned num_configs)
-{
-	int i, ret;
+अटल पूर्णांक uniphier_conf_pin_config_set(काष्ठा pinctrl_dev *pctldev,
+					अचिन्हित pin,
+					अचिन्हित दीर्घ *configs,
+					अचिन्हित num_configs)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < num_configs; i++) {
-		enum pin_config_param param =
+	क्रम (i = 0; i < num_configs; i++) अणु
+		क्रमागत pin_config_param param =
 					pinconf_to_config_param(configs[i]);
 		u32 arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_DISABLE:
-		case PIN_CONFIG_BIAS_PULL_UP:
-		case PIN_CONFIG_BIAS_PULL_DOWN:
-		case PIN_CONFIG_BIAS_PULL_PIN_DEFAULT:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_DISABLE:
+		हाल PIN_CONFIG_BIAS_PULL_UP:
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		हाल PIN_CONFIG_BIAS_PULL_PIN_DEFAULT:
 			ret = uniphier_conf_pin_bias_set(pctldev, pin,
 							 param, arg);
-			break;
-		case PIN_CONFIG_DRIVE_STRENGTH:
+			अवरोध;
+		हाल PIN_CONFIG_DRIVE_STRENGTH:
 			ret = uniphier_conf_pin_drive_set(pctldev, pin, arg);
-			break;
-		case PIN_CONFIG_INPUT_ENABLE:
+			अवरोध;
+		हाल PIN_CONFIG_INPUT_ENABLE:
 			ret = uniphier_conf_pin_input_enable(pctldev, pin, arg);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(pctldev->dev,
 				"unsupported configuration parameter %u\n",
 				param);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uniphier_conf_pin_config_group_set(struct pinctrl_dev *pctldev,
-					      unsigned selector,
-					      unsigned long *configs,
-					      unsigned num_configs)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	const unsigned *pins = priv->socdata->groups[selector].pins;
-	unsigned num_pins = priv->socdata->groups[selector].num_pins;
-	int i, ret;
+अटल पूर्णांक uniphier_conf_pin_config_group_set(काष्ठा pinctrl_dev *pctldev,
+					      अचिन्हित selector,
+					      अचिन्हित दीर्घ *configs,
+					      अचिन्हित num_configs)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर अचिन्हित *pins = priv->socdata->groups[selector].pins;
+	अचिन्हित num_pins = priv->socdata->groups[selector].num_pins;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < num_pins; i++) {
+	क्रम (i = 0; i < num_pins; i++) अणु
 		ret = uniphier_conf_pin_config_set(pctldev, pins[i],
 						   configs, num_configs);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops uniphier_confops = {
+अटल स्थिर काष्ठा pinconf_ops uniphier_confops = अणु
 	.is_generic = true,
 	.pin_config_get = uniphier_conf_pin_config_get,
 	.pin_config_set = uniphier_conf_pin_config_set,
 	.pin_config_group_set = uniphier_conf_pin_config_group_set,
-};
+पूर्ण;
 
-static int uniphier_pmx_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक uniphier_pmx_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
-	return priv->socdata->functions_count;
-}
+	वापस priv->socdata->functions_count;
+पूर्ण
 
-static const char *uniphier_pmx_get_function_name(struct pinctrl_dev *pctldev,
-						  unsigned selector)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *uniphier_pmx_get_function_name(काष्ठा pinctrl_dev *pctldev,
+						  अचिन्हित selector)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
-	return priv->socdata->functions[selector].name;
-}
+	वापस priv->socdata->functions[selector].name;
+पूर्ण
 
-static int uniphier_pmx_get_function_groups(struct pinctrl_dev *pctldev,
-					    unsigned selector,
-					    const char * const **groups,
-					    unsigned *num_groups)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक uniphier_pmx_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+					    अचिन्हित selector,
+					    स्थिर अक्षर * स्थिर **groups,
+					    अचिन्हित *num_groups)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = priv->socdata->functions[selector].groups;
 	*num_groups = priv->socdata->functions[selector].num_groups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uniphier_pmx_set_one_mux(struct pinctrl_dev *pctldev, unsigned pin,
-				    int muxval)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	unsigned int mux_bits, reg_stride, reg, reg_end, shift, mask;
+अटल पूर्णांक uniphier_pmx_set_one_mux(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+				    पूर्णांक muxval)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित पूर्णांक mux_bits, reg_stride, reg, reg_end, shअगरt, mask;
 	bool load_pinctrl;
-	int ret;
+	पूर्णांक ret;
 
 	/* some pins need input-enabling */
 	ret = uniphier_conf_pin_input_enable(pctldev, pin, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (muxval < 0)
-		return 0;	/* dedicated pin; nothing to do for pin-mux */
+	अगर (muxval < 0)
+		वापस 0;	/* dedicated pin; nothing to करो क्रम pin-mux */
 
-	if (priv->socdata->caps & UNIPHIER_PINCTRL_CAPS_DBGMUX_SEPARATE) {
+	अगर (priv->socdata->caps & UNIPHIER_PINCTRL_CAPS_DBGMUX_SEPARATE) अणु
 		/*
 		 *  Mode     reg_offset     bit_position
-		 *  Normal    4 * n        shift+3:shift
-		 *  Debug     4 * n        shift+7:shift+4
+		 *  Normal    4 * n        shअगरt+3:shअगरt
+		 *  Debug     4 * n        shअगरt+7:shअगरt+4
 		 */
 		mux_bits = 4;
 		reg_stride = 8;
 		load_pinctrl = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 *  Mode     reg_offset     bit_position
-		 *  Normal    8 * n        shift+3:shift
-		 *  Debug     8 * n + 4    shift+3:shift
+		 *  Normal    8 * n        shअगरt+3:shअगरt
+		 *  Debug     8 * n + 4    shअगरt+3:shअगरt
 		 */
 		mux_bits = 8;
 		reg_stride = 4;
 		load_pinctrl = false;
-	}
+	पूर्ण
 
 	reg = UNIPHIER_PINCTRL_PINMUX_BASE + pin * mux_bits / 32 * reg_stride;
 	reg_end = reg + reg_stride;
-	shift = pin * mux_bits % 32;
+	shअगरt = pin * mux_bits % 32;
 	mask = (1U << mux_bits) - 1;
 
 	/*
 	 * If reg_stride is greater than 4, the MSB of each pinsel shall be
 	 * stored in the offset+4.
 	 */
-	for (; reg < reg_end; reg += 4) {
+	क्रम (; reg < reg_end; reg += 4) अणु
 		ret = regmap_update_bits(priv->regmap, reg,
-					 mask << shift, muxval << shift);
-		if (ret)
-			return ret;
+					 mask << shअगरt, muxval << shअगरt);
+		अगर (ret)
+			वापस ret;
 		muxval >>= mux_bits;
-	}
+	पूर्ण
 
-	if (load_pinctrl) {
-		ret = regmap_write(priv->regmap,
+	अगर (load_pinctrl) अणु
+		ret = regmap_ग_लिखो(priv->regmap,
 				   UNIPHIER_PINCTRL_LOAD_PINMUX, 1);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uniphier_pmx_set_mux(struct pinctrl_dev *pctldev,
-				unsigned func_selector,
-				unsigned group_selector)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	const struct uniphier_pinctrl_group *grp =
+अटल पूर्णांक uniphier_pmx_set_mux(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित func_selector,
+				अचिन्हित group_selector)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा uniphier_pinctrl_group *grp =
 					&priv->socdata->groups[group_selector];
-	int i;
-	int ret;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < grp->num_pins; i++) {
+	क्रम (i = 0; i < grp->num_pins; i++) अणु
 		ret = uniphier_pmx_set_one_mux(pctldev, grp->pins[i],
 					       grp->muxvals[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uniphier_pmx_gpio_request_enable(struct pinctrl_dev *pctldev,
-					    struct pinctrl_gpio_range *range,
-					    unsigned offset)
-{
-	struct uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	unsigned int gpio_offset;
-	int muxval, i;
+अटल पूर्णांक uniphier_pmx_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+					    काष्ठा pinctrl_gpio_range *range,
+					    अचिन्हित offset)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित पूर्णांक gpio_offset;
+	पूर्णांक muxval, i;
 
-	if (range->pins) {
-		for (i = 0; i < range->npins; i++)
-			if (range->pins[i] == offset)
-				break;
+	अगर (range->pins) अणु
+		क्रम (i = 0; i < range->npins; i++)
+			अगर (range->pins[i] == offset)
+				अवरोध;
 
-		if (WARN_ON(i == range->npins))
-			return -EINVAL;
+		अगर (WARN_ON(i == range->npins))
+			वापस -EINVAL;
 
 		gpio_offset = i;
-	} else {
+	पूर्ण अन्यथा अणु
 		gpio_offset = offset - range->pin_base;
-	}
+	पूर्ण
 
 	gpio_offset += range->id;
 
 	muxval = priv->socdata->get_gpio_muxval(offset, gpio_offset);
 
-	return uniphier_pmx_set_one_mux(pctldev, offset, muxval);
-}
+	वापस uniphier_pmx_set_one_mux(pctldev, offset, muxval);
+पूर्ण
 
-static const struct pinmux_ops uniphier_pmxops = {
+अटल स्थिर काष्ठा pinmux_ops uniphier_pmxops = अणु
 	.get_functions_count = uniphier_pmx_get_functions_count,
 	.get_function_name = uniphier_pmx_get_function_name,
 	.get_function_groups = uniphier_pmx_get_function_groups,
 	.set_mux = uniphier_pmx_set_mux,
 	.gpio_request_enable = uniphier_pmx_gpio_request_enable,
 	.strict = true,
-};
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
-static int uniphier_pinctrl_suspend(struct device *dev)
-{
-	struct uniphier_pinctrl_priv *priv = dev_get_drvdata(dev);
-	struct uniphier_pinctrl_reg_region *r;
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक uniphier_pinctrl_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = dev_get_drvdata(dev);
+	काष्ठा uniphier_pinctrl_reg_region *r;
+	पूर्णांक ret;
 
-	list_for_each_entry(r, &priv->reg_regions, node) {
-		ret = regmap_bulk_read(priv->regmap, r->base, r->vals,
+	list_क्रम_each_entry(r, &priv->reg_regions, node) अणु
+		ret = regmap_bulk_पढ़ो(priv->regmap, r->base, r->vals,
 				       r->nregs);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uniphier_pinctrl_resume(struct device *dev)
-{
-	struct uniphier_pinctrl_priv *priv = dev_get_drvdata(dev);
-	struct uniphier_pinctrl_reg_region *r;
-	int ret;
+अटल पूर्णांक uniphier_pinctrl_resume(काष्ठा device *dev)
+अणु
+	काष्ठा uniphier_pinctrl_priv *priv = dev_get_drvdata(dev);
+	काष्ठा uniphier_pinctrl_reg_region *r;
+	पूर्णांक ret;
 
-	list_for_each_entry(r, &priv->reg_regions, node) {
-		ret = regmap_bulk_write(priv->regmap, r->base, r->vals,
+	list_क्रम_each_entry(r, &priv->reg_regions, node) अणु
+		ret = regmap_bulk_ग_लिखो(priv->regmap, r->base, r->vals,
 					r->nregs);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (priv->socdata->caps & UNIPHIER_PINCTRL_CAPS_DBGMUX_SEPARATE) {
-		ret = regmap_write(priv->regmap,
+	अगर (priv->socdata->caps & UNIPHIER_PINCTRL_CAPS_DBGMUX_SEPARATE) अणु
+		ret = regmap_ग_लिखो(priv->regmap,
 				   UNIPHIER_PINCTRL_LOAD_PINMUX, 1);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uniphier_pinctrl_add_reg_region(struct device *dev,
-					   struct uniphier_pinctrl_priv *priv,
-					   unsigned int base,
-					   unsigned int count,
-					   unsigned int width)
-{
-	struct uniphier_pinctrl_reg_region *region;
-	unsigned int nregs;
+अटल पूर्णांक uniphier_pinctrl_add_reg_region(काष्ठा device *dev,
+					   काष्ठा uniphier_pinctrl_priv *priv,
+					   अचिन्हित पूर्णांक base,
+					   अचिन्हित पूर्णांक count,
+					   अचिन्हित पूर्णांक width)
+अणु
+	काष्ठा uniphier_pinctrl_reg_region *region;
+	अचिन्हित पूर्णांक nregs;
 
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
 	nregs = DIV_ROUND_UP(count * width, 32);
 
-	region = devm_kzalloc(dev, struct_size(region, vals, nregs),
+	region = devm_kzalloc(dev, काष्ठा_size(region, vals, nregs),
 			      GFP_KERNEL);
-	if (!region)
-		return -ENOMEM;
+	अगर (!region)
+		वापस -ENOMEM;
 
 	region->base = base;
 	region->nregs = nregs;
 
 	list_add_tail(&region->node, &priv->reg_regions);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int uniphier_pinctrl_pm_init(struct device *dev,
-				    struct uniphier_pinctrl_priv *priv)
-{
-#ifdef CONFIG_PM_SLEEP
-	const struct uniphier_pinctrl_socdata *socdata = priv->socdata;
-	unsigned int num_drvctrl = 0;
-	unsigned int num_drv2ctrl = 0;
-	unsigned int num_drv3ctrl = 0;
-	unsigned int num_pupdctrl = 0;
-	unsigned int num_iectrl = 0;
-	unsigned int iectrl, drvctrl, pupdctrl;
-	enum uniphier_pin_drv_type drv_type;
-	enum uniphier_pin_pull_dir pull_dir;
-	int i, ret;
+अटल पूर्णांक uniphier_pinctrl_pm_init(काष्ठा device *dev,
+				    काष्ठा uniphier_pinctrl_priv *priv)
+अणु
+#अगर_घोषित CONFIG_PM_SLEEP
+	स्थिर काष्ठा uniphier_pinctrl_socdata *socdata = priv->socdata;
+	अचिन्हित पूर्णांक num_drvctrl = 0;
+	अचिन्हित पूर्णांक num_drv2ctrl = 0;
+	अचिन्हित पूर्णांक num_drv3ctrl = 0;
+	अचिन्हित पूर्णांक num_pupdctrl = 0;
+	अचिन्हित पूर्णांक num_iectrl = 0;
+	अचिन्हित पूर्णांक iectrl, drvctrl, pupdctrl;
+	क्रमागत uniphier_pin_drv_type drv_type;
+	क्रमागत uniphier_pin_pull_dir pull_dir;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < socdata->npins; i++) {
-		void *drv_data = socdata->pins[i].drv_data;
+	क्रम (i = 0; i < socdata->npins; i++) अणु
+		व्योम *drv_data = socdata->pins[i].drv_data;
 
 		drvctrl = uniphier_pin_get_drvctrl(drv_data);
 		drv_type = uniphier_pin_get_drv_type(drv_data);
@@ -787,105 +788,105 @@ static int uniphier_pinctrl_pm_init(struct device *dev,
 		pull_dir = uniphier_pin_get_pull_dir(drv_data);
 		iectrl = uniphier_pin_get_iectrl(drv_data);
 
-		switch (drv_type) {
-		case UNIPHIER_PIN_DRV_1BIT:
+		चयन (drv_type) अणु
+		हाल UNIPHIER_PIN_DRV_1BIT:
 			num_drvctrl = max(num_drvctrl, drvctrl + 1);
-			break;
-		case UNIPHIER_PIN_DRV_2BIT:
+			अवरोध;
+		हाल UNIPHIER_PIN_DRV_2BIT:
 			num_drv2ctrl = max(num_drv2ctrl, drvctrl + 1);
-			break;
-		case UNIPHIER_PIN_DRV_3BIT:
+			अवरोध;
+		हाल UNIPHIER_PIN_DRV_3BIT:
 			num_drv3ctrl = max(num_drv3ctrl, drvctrl + 1);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		if (pull_dir == UNIPHIER_PIN_PULL_UP ||
+		अगर (pull_dir == UNIPHIER_PIN_PULL_UP ||
 		    pull_dir == UNIPHIER_PIN_PULL_DOWN)
 			num_pupdctrl = max(num_pupdctrl, pupdctrl + 1);
 
-		if (iectrl != UNIPHIER_PIN_IECTRL_NONE) {
-			if (socdata->caps & UNIPHIER_PINCTRL_CAPS_PERPIN_IECTRL)
+		अगर (iectrl != UNIPHIER_PIN_IECTRL_NONE) अणु
+			अगर (socdata->caps & UNIPHIER_PINCTRL_CAPS_PERPIN_IECTRL)
 				iectrl = i;
 			num_iectrl = max(num_iectrl, iectrl + 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	INIT_LIST_HEAD(&priv->reg_regions);
 
 	ret = uniphier_pinctrl_add_reg_region(dev, priv,
 					      UNIPHIER_PINCTRL_PINMUX_BASE,
 					      socdata->npins, 8);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = uniphier_pinctrl_add_reg_region(dev, priv,
 					      UNIPHIER_PINCTRL_DRVCTRL_BASE,
 					      num_drvctrl, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = uniphier_pinctrl_add_reg_region(dev, priv,
 					      UNIPHIER_PINCTRL_DRV2CTRL_BASE,
 					      num_drv2ctrl, 2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = uniphier_pinctrl_add_reg_region(dev, priv,
 					      UNIPHIER_PINCTRL_DRV3CTRL_BASE,
 					      num_drv3ctrl, 3);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = uniphier_pinctrl_add_reg_region(dev, priv,
 					      UNIPHIER_PINCTRL_PUPDCTRL_BASE,
 					      num_pupdctrl, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = uniphier_pinctrl_add_reg_region(dev, priv,
 					      UNIPHIER_PINCTRL_IECTRL_BASE,
 					      num_iectrl, 1);
-	if (ret)
-		return ret;
-#endif
-	return 0;
-}
+	अगर (ret)
+		वापस ret;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-const struct dev_pm_ops uniphier_pinctrl_pm_ops = {
+स्थिर काष्ठा dev_pm_ops uniphier_pinctrl_pm_ops = अणु
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(uniphier_pinctrl_suspend,
 				     uniphier_pinctrl_resume)
-};
+पूर्ण;
 
-int uniphier_pinctrl_probe(struct platform_device *pdev,
-			   const struct uniphier_pinctrl_socdata *socdata)
-{
-	struct device *dev = &pdev->dev;
-	struct uniphier_pinctrl_priv *priv;
-	struct device_node *parent;
-	int ret;
+पूर्णांक uniphier_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
+			   स्थिर काष्ठा uniphier_pinctrl_socdata *socdata)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा uniphier_pinctrl_priv *priv;
+	काष्ठा device_node *parent;
+	पूर्णांक ret;
 
-	if (!socdata ||
+	अगर (!socdata ||
 	    !socdata->pins || !socdata->npins ||
 	    !socdata->groups || !socdata->groups_count ||
-	    !socdata->functions || !socdata->functions_count) {
+	    !socdata->functions || !socdata->functions_count) अणु
 		dev_err(dev, "pinctrl socdata lacks necessary members\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	parent = of_get_parent(dev->of_node);
 	priv->regmap = syscon_node_to_regmap(parent);
 	of_node_put(parent);
 
-	if (IS_ERR(priv->regmap)) {
+	अगर (IS_ERR(priv->regmap)) अणु
 		dev_err(dev, "failed to get regmap\n");
-		return PTR_ERR(priv->regmap);
-	}
+		वापस PTR_ERR(priv->regmap);
+	पूर्ण
 
 	priv->socdata = socdata;
 	priv->pctldesc.name = dev->driver->name;
@@ -897,16 +898,16 @@ int uniphier_pinctrl_probe(struct platform_device *pdev,
 	priv->pctldesc.owner = dev->driver->owner;
 
 	ret = uniphier_pinctrl_pm_init(dev, priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	priv->pctldev = devm_pinctrl_register(dev, &priv->pctldesc, priv);
-	if (IS_ERR(priv->pctldev)) {
+	priv->pctldev = devm_pinctrl_रेजिस्टर(dev, &priv->pctldesc, priv);
+	अगर (IS_ERR(priv->pctldev)) अणु
 		dev_err(dev, "failed to register UniPhier pinctrl driver\n");
-		return PTR_ERR(priv->pctldev);
-	}
+		वापस PTR_ERR(priv->pctldev);
+	पूर्ण
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

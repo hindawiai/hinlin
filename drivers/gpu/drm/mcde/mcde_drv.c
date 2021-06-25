@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018 Linus Walleij <linus.walleij@linaro.org>
  * Parts of this file were based on the MCDE driver by Marcus Lorentzon
@@ -8,36 +9,36 @@
 /**
  * DOC: ST-Ericsson MCDE Driver
  *
- * The MCDE (short for multi-channel display engine) is a graphics
+ * The MCDE (लघु क्रम multi-channel display engine) is a graphics
  * controller found in the Ux500 chipsets, such as NovaThor U8500.
- * It was initially conceptualized by ST Microelectronics for the
- * successor of the Nomadik line, STn8500 but productified in the
- * ST-Ericsson U8500 where is was used for mass-market deployments
+ * It was initially conceptualized by ST Microelectronics क्रम the
+ * successor of the Nomadik line, STn8500 but productअगरied in the
+ * ST-Ericsson U8500 where is was used क्रम mass-market deployments
  * in Android phones from Samsung and Sony Ericsson.
  *
- * It can do 1080p30 on SDTV CCIR656, DPI-2, DBI-2 or DSI for
+ * It can करो 1080p30 on SDTV CCIR656, DPI-2, DBI-2 or DSI क्रम
  * panels with or without frame buffering and can convert most
- * input formats including most variants of RGB and YUV.
+ * input क्रमmats including most variants of RGB and YUV.
  *
  * The hardware has four display pipes, and the layout is a little
  * bit like this::
  *
- *   Memory     -> Overlay -> Channel -> FIFO -> 8 formatters -> DSI/DPI
+ *   Memory     -> Overlay -> Channel -> FIFO -> 8 क्रमmatters -> DSI/DPI
  *   External      0..5       0..3       A,B,    6 x DSI         bridge
  *   source 0..9                         C0,C1   2 x DPI
  *
- * FIFOs A and B are for LCD and HDMI while FIFO CO/C1 are for
+ * FIFOs A and B are क्रम LCD and HDMI जबतक FIFO CO/C1 are क्रम
  * panels with embedded buffer.
- * 6 of the formatters are for DSI, 3 pairs for VID/CMD respectively.
- * 2 of the formatters are for DPI.
+ * 6 of the क्रमmatters are क्रम DSI, 3 pairs क्रम VID/CMD respectively.
+ * 2 of the क्रमmatters are क्रम DPI.
  *
- * Behind the formatters are the DSI or DPI ports that route to
- * the external pins of the chip. As there are 3 DSI ports and one
+ * Behind the क्रमmatters are the DSI or DPI ports that route to
+ * the बाह्यal pins of the chip. As there are 3 DSI ports and one
  * DPI port, it is possible to configure up to 4 display pipelines
- * (effectively using channels 0..3) for concurrent use.
+ * (effectively using channels 0..3) क्रम concurrent use.
  *
- * In the current DRM/KMS setup, we use one external source, one overlay,
- * one FIFO and one formatter which we connect to the simple CMA framebuffer
+ * In the current DRM/KMS setup, we use one बाह्यal source, one overlay,
+ * one FIFO and one क्रमmatter which we connect to the simple CMA framebuffer
  * helpers. We then provide a bridge to the DSI port, and on the DSI port
  * bridge we connect hang a panel bridge or other bridge. This may be subject
  * to change as we exploit more of the hardware capabilities.
@@ -53,158 +54,158 @@
  *   the DSI bridge.
  */
 
-#include <linux/clk.h>
-#include <linux/component.h>
-#include <linux/dma-buf.h>
-#include <linux/irq.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_bridge.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_gem.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_of.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_gem.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "mcde_drm.h"
+#समावेश "mcde_drm.h"
 
-#define DRIVER_DESC	"DRM module for MCDE"
+#घोषणा DRIVER_DESC	"DRM module for MCDE"
 
-#define MCDE_PID 0x000001FC
-#define MCDE_PID_METALFIX_VERSION_SHIFT 0
-#define MCDE_PID_METALFIX_VERSION_MASK 0x000000FF
-#define MCDE_PID_DEVELOPMENT_VERSION_SHIFT 8
-#define MCDE_PID_DEVELOPMENT_VERSION_MASK 0x0000FF00
-#define MCDE_PID_MINOR_VERSION_SHIFT 16
-#define MCDE_PID_MINOR_VERSION_MASK 0x00FF0000
-#define MCDE_PID_MAJOR_VERSION_SHIFT 24
-#define MCDE_PID_MAJOR_VERSION_MASK 0xFF000000
+#घोषणा MCDE_PID 0x000001FC
+#घोषणा MCDE_PID_METALFIX_VERSION_SHIFT 0
+#घोषणा MCDE_PID_METALFIX_VERSION_MASK 0x000000FF
+#घोषणा MCDE_PID_DEVELOPMENT_VERSION_SHIFT 8
+#घोषणा MCDE_PID_DEVELOPMENT_VERSION_MASK 0x0000FF00
+#घोषणा MCDE_PID_MINOR_VERSION_SHIFT 16
+#घोषणा MCDE_PID_MINOR_VERSION_MASK 0x00FF0000
+#घोषणा MCDE_PID_MAJOR_VERSION_SHIFT 24
+#घोषणा MCDE_PID_MAJOR_VERSION_MASK 0xFF000000
 
-static const struct drm_mode_config_funcs mcde_mode_config_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs mcde_mode_config_funcs = अणु
 	.fb_create = drm_gem_fb_create_with_dirty,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-};
+पूर्ण;
 
-static const struct drm_mode_config_helper_funcs mcde_mode_config_helpers = {
+अटल स्थिर काष्ठा drm_mode_config_helper_funcs mcde_mode_config_helpers = अणु
 	/*
 	 * Using this function is necessary to commit atomic updates
-	 * that need the CRTC to be enabled before a commit, as is
-	 * the case with e.g. DSI displays.
+	 * that need the CRTC to be enabled beक्रमe a commit, as is
+	 * the हाल with e.g. DSI displays.
 	 */
 	.atomic_commit_tail = drm_atomic_helper_commit_tail_rpm,
-};
+पूर्ण;
 
-static irqreturn_t mcde_irq(int irq, void *data)
-{
-	struct mcde *mcde = data;
+अटल irqवापस_t mcde_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा mcde *mcde = data;
 	u32 val;
 
-	val = readl(mcde->regs + MCDE_MISERR);
+	val = पढ़ोl(mcde->regs + MCDE_MISERR);
 
 	mcde_display_irq(mcde);
 
-	if (val)
+	अगर (val)
 		dev_info(mcde->dev, "some error IRQ\n");
-	writel(val, mcde->regs + MCDE_RISERR);
+	ग_लिखोl(val, mcde->regs + MCDE_RISERR);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mcde_modeset_init(struct drm_device *drm)
-{
-	struct drm_mode_config *mode_config;
-	struct mcde *mcde = to_mcde(drm);
-	int ret;
+अटल पूर्णांक mcde_modeset_init(काष्ठा drm_device *drm)
+अणु
+	काष्ठा drm_mode_config *mode_config;
+	काष्ठा mcde *mcde = to_mcde(drm);
+	पूर्णांक ret;
 
 	/*
-	 * If no other bridge was found, check if we have a DPI panel or
+	 * If no other bridge was found, check अगर we have a DPI panel or
 	 * any other bridge connected directly to the MCDE DPI output.
 	 * If a DSI bridge is found, DSI will take precedence.
 	 *
-	 * TODO: more elaborate bridge selection if we have more than one
-	 * thing attached to the system.
+	 * TODO: more elaborate bridge selection अगर we have more than one
+	 * thing attached to the प्रणाली.
 	 */
-	if (!mcde->bridge) {
-		struct drm_panel *panel;
-		struct drm_bridge *bridge;
+	अगर (!mcde->bridge) अणु
+		काष्ठा drm_panel *panel;
+		काष्ठा drm_bridge *bridge;
 
 		ret = drm_of_find_panel_or_bridge(drm->dev->of_node,
 						  0, 0, &panel, &bridge);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(drm->dev,
 				"Could not locate any output bridge or panel\n");
-			return ret;
-		}
-		if (panel) {
+			वापस ret;
+		पूर्ण
+		अगर (panel) अणु
 			bridge = drm_panel_bridge_add_typed(panel,
 					DRM_MODE_CONNECTOR_DPI);
-			if (IS_ERR(bridge)) {
+			अगर (IS_ERR(bridge)) अणु
 				dev_err(drm->dev,
 					"Could not connect panel bridge\n");
-				return PTR_ERR(bridge);
-			}
-		}
+				वापस PTR_ERR(bridge);
+			पूर्ण
+		पूर्ण
 		mcde->dpi_output = true;
 		mcde->bridge = bridge;
 		mcde->flow_mode = MCDE_DPI_FORMATTER_FLOW;
-	}
+	पूर्ण
 
 	mode_config = &drm->mode_config;
 	mode_config->funcs = &mcde_mode_config_funcs;
-	mode_config->helper_private = &mcde_mode_config_helpers;
-	/* This hardware can do 1080p */
+	mode_config->helper_निजी = &mcde_mode_config_helpers;
+	/* This hardware can करो 1080p */
 	mode_config->min_width = 1;
 	mode_config->max_width = 1920;
 	mode_config->min_height = 1;
 	mode_config->max_height = 1080;
 
 	ret = drm_vblank_init(drm, 1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(drm->dev, "failed to init vblank\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = mcde_display_init(drm);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(drm->dev, "failed to init display\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Attach the bridge. */
 	ret = drm_simple_display_pipe_attach_bridge(&mcde->pipe,
 						    mcde->bridge);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(drm->dev, "failed to attach display output bridge\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	drm_mode_config_reset(drm);
 	drm_kms_helper_poll_init(drm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_DRM_GEM_CMA_FOPS(drm_fops);
 
-static const struct drm_driver mcde_drm_driver = {
+अटल स्थिर काष्ठा drm_driver mcde_drm_driver = अणु
 	.driver_features =
 		DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
-	.lastclose = drm_fb_helper_lastclose,
-	.ioctls = NULL,
+	.lastबंद = drm_fb_helper_lastबंद,
+	.ioctls = शून्य,
 	.fops = &drm_fops,
 	.name = "mcde",
 	.desc = DRIVER_DESC,
@@ -213,164 +214,164 @@ static const struct drm_driver mcde_drm_driver = {
 	.minor = 0,
 	.patchlevel = 0,
 	DRM_GEM_CMA_DRIVER_OPS,
-};
+पूर्ण;
 
-static int mcde_drm_bind(struct device *dev)
-{
-	struct drm_device *drm = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक mcde_drm_bind(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = drmm_mode_config_init(drm);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = component_bind_all(drm->dev, drm);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "can't bind component devices\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = mcde_modeset_init(drm);
-	if (ret)
-		goto unbind;
+	अगर (ret)
+		जाओ unbind;
 
-	ret = drm_dev_register(drm, 0);
-	if (ret < 0)
-		goto unbind;
+	ret = drm_dev_रेजिस्टर(drm, 0);
+	अगर (ret < 0)
+		जाओ unbind;
 
 	drm_fbdev_generic_setup(drm, 32);
 
-	return 0;
+	वापस 0;
 
 unbind:
 	component_unbind_all(drm->dev, drm);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mcde_drm_unbind(struct device *dev)
-{
-	struct drm_device *drm = dev_get_drvdata(dev);
+अटल व्योम mcde_drm_unbind(काष्ठा device *dev)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(dev);
 
-	drm_dev_unregister(drm);
-	drm_atomic_helper_shutdown(drm);
+	drm_dev_unरेजिस्टर(drm);
+	drm_atomic_helper_shutकरोwn(drm);
 	component_unbind_all(drm->dev, drm);
-}
+पूर्ण
 
-static const struct component_master_ops mcde_drm_comp_ops = {
+अटल स्थिर काष्ठा component_master_ops mcde_drm_comp_ops = अणु
 	.bind = mcde_drm_bind,
 	.unbind = mcde_drm_unbind,
-};
+पूर्ण;
 
-static struct platform_driver *const mcde_component_drivers[] = {
+अटल काष्ठा platक्रमm_driver *स्थिर mcde_component_drivers[] = अणु
 	&mcde_dsi_driver,
-};
+पूर्ण;
 
-static int mcde_compare_dev(struct device *dev, void *data)
-{
-	return dev == data;
-}
+अटल पूर्णांक mcde_compare_dev(काष्ठा device *dev, व्योम *data)
+अणु
+	वापस dev == data;
+पूर्ण
 
-static int mcde_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct drm_device *drm;
-	struct mcde *mcde;
-	struct component_match *match = NULL;
-	struct resource *res;
+अटल पूर्णांक mcde_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा drm_device *drm;
+	काष्ठा mcde *mcde;
+	काष्ठा component_match *match = शून्य;
+	काष्ठा resource *res;
 	u32 pid;
-	int irq;
-	int ret;
-	int i;
+	पूर्णांक irq;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	mcde = devm_drm_dev_alloc(dev, &mcde_drm_driver, struct mcde, drm);
-	if (IS_ERR(mcde))
-		return PTR_ERR(mcde);
+	mcde = devm_drm_dev_alloc(dev, &mcde_drm_driver, काष्ठा mcde, drm);
+	अगर (IS_ERR(mcde))
+		वापस PTR_ERR(mcde);
 	drm = &mcde->drm;
 	mcde->dev = dev;
-	platform_set_drvdata(pdev, drm);
+	platक्रमm_set_drvdata(pdev, drm);
 
-	/* First obtain and turn on the main power */
+	/* First obtain and turn on the मुख्य घातer */
 	mcde->epod = devm_regulator_get(dev, "epod");
-	if (IS_ERR(mcde->epod)) {
+	अगर (IS_ERR(mcde->epod)) अणु
 		ret = PTR_ERR(mcde->epod);
 		dev_err(dev, "can't get EPOD regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = regulator_enable(mcde->epod);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "can't enable EPOD regulator\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	mcde->vana = devm_regulator_get(dev, "vana");
-	if (IS_ERR(mcde->vana)) {
+	अगर (IS_ERR(mcde->vana)) अणु
 		ret = PTR_ERR(mcde->vana);
 		dev_err(dev, "can't get VANA regulator\n");
-		goto regulator_epod_off;
-	}
+		जाओ regulator_epod_off;
+	पूर्ण
 	ret = regulator_enable(mcde->vana);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "can't enable VANA regulator\n");
-		goto regulator_epod_off;
-	}
+		जाओ regulator_epod_off;
+	पूर्ण
 	/*
-	 * The vendor code uses ESRAM (onchip RAM) and need to activate
-	 * the v-esram34 regulator, but we don't use that yet
+	 * The venकरोr code uses ESRAM (onchip RAM) and need to activate
+	 * the v-esram34 regulator, but we करोn't use that yet
 	 */
 
-	/* Clock the silicon so we can access the registers */
+	/* Clock the silicon so we can access the रेजिस्टरs */
 	mcde->mcde_clk = devm_clk_get(dev, "mcde");
-	if (IS_ERR(mcde->mcde_clk)) {
+	अगर (IS_ERR(mcde->mcde_clk)) अणु
 		dev_err(dev, "unable to get MCDE main clock\n");
 		ret = PTR_ERR(mcde->mcde_clk);
-		goto regulator_off;
-	}
+		जाओ regulator_off;
+	पूर्ण
 	ret = clk_prepare_enable(mcde->mcde_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable MCDE main clock\n");
-		goto regulator_off;
-	}
+		जाओ regulator_off;
+	पूर्ण
 	dev_info(dev, "MCDE clk rate %lu Hz\n", clk_get_rate(mcde->mcde_clk));
 
 	mcde->lcd_clk = devm_clk_get(dev, "lcd");
-	if (IS_ERR(mcde->lcd_clk)) {
+	अगर (IS_ERR(mcde->lcd_clk)) अणु
 		dev_err(dev, "unable to get LCD clock\n");
 		ret = PTR_ERR(mcde->lcd_clk);
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 	mcde->hdmi_clk = devm_clk_get(dev, "hdmi");
-	if (IS_ERR(mcde->hdmi_clk)) {
+	अगर (IS_ERR(mcde->hdmi_clk)) अणु
 		dev_err(dev, "unable to get HDMI clock\n");
 		ret = PTR_ERR(mcde->hdmi_clk);
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	mcde->regs = devm_ioremap_resource(dev, res);
-	if (IS_ERR(mcde->regs)) {
+	अगर (IS_ERR(mcde->regs)) अणु
 		dev_err(dev, "no MCDE regs\n");
 		ret = -EINVAL;
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		ret = irq;
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
 	ret = devm_request_irq(dev, irq, mcde_irq, 0, "mcde", mcde);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to request irq %d\n", ret);
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
 	/*
 	 * Check hardware revision, we only support U8500v2 version
-	 * as this was the only version used for mass market deployment,
-	 * but surely you can add more versions if you have them and
+	 * as this was the only version used क्रम mass market deployment,
+	 * but surely you can add more versions अगर you have them and
 	 * need them.
 	 */
-	pid = readl(mcde->regs + MCDE_PID);
+	pid = पढ़ोl(mcde->regs + MCDE_PID);
 	dev_info(dev, "found MCDE HW revision %d.%d (dev %d, metal fix %d)\n",
 		 (pid & MCDE_PID_MAJOR_VERSION_MASK)
 		 >> MCDE_PID_MAJOR_VERSION_SHIFT,
@@ -380,71 +381,71 @@ static int mcde_probe(struct platform_device *pdev)
 		 >> MCDE_PID_DEVELOPMENT_VERSION_SHIFT,
 		 (pid & MCDE_PID_METALFIX_VERSION_MASK)
 		 >> MCDE_PID_METALFIX_VERSION_SHIFT);
-	if (pid != 0x03000800) {
+	अगर (pid != 0x03000800) अणु
 		dev_err(dev, "unsupported hardware revision\n");
 		ret = -ENODEV;
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
-	/* Disable and clear any pending interrupts */
+	/* Disable and clear any pending पूर्णांकerrupts */
 	mcde_display_disable_irqs(mcde);
-	writel(0, mcde->regs + MCDE_IMSCERR);
-	writel(0xFFFFFFFF, mcde->regs + MCDE_RISERR);
+	ग_लिखोl(0, mcde->regs + MCDE_IMSCERR);
+	ग_लिखोl(0xFFFFFFFF, mcde->regs + MCDE_RISERR);
 
-	/* Spawn child devices for the DSI ports */
-	devm_of_platform_populate(dev);
+	/* Spawn child devices क्रम the DSI ports */
+	devm_of_platक्रमm_populate(dev);
 
 	/* Create something that will match the subdrivers when we bind */
-	for (i = 0; i < ARRAY_SIZE(mcde_component_drivers); i++) {
-		struct device_driver *drv = &mcde_component_drivers[i]->driver;
-		struct device *p = NULL, *d;
+	क्रम (i = 0; i < ARRAY_SIZE(mcde_component_drivers); i++) अणु
+		काष्ठा device_driver *drv = &mcde_component_drivers[i]->driver;
+		काष्ठा device *p = शून्य, *d;
 
-		while ((d = platform_find_device_by_driver(p, drv))) {
+		जबतक ((d = platक्रमm_find_device_by_driver(p, drv))) अणु
 			put_device(p);
 			component_match_add(dev, &match, mcde_compare_dev, d);
 			p = d;
-		}
+		पूर्ण
 		put_device(p);
-	}
-	if (!match) {
+	पूर्ण
+	अगर (!match) अणु
 		dev_err(dev, "no matching components\n");
 		ret = -ENODEV;
-		goto clk_disable;
-	}
-	if (IS_ERR(match)) {
+		जाओ clk_disable;
+	पूर्ण
+	अगर (IS_ERR(match)) अणु
 		dev_err(dev, "could not create component match\n");
 		ret = PTR_ERR(match);
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
 	/*
-	 * Perform an invasive reset of the MCDE and all blocks by
-	 * cutting the power to the subsystem, then bring it back up
+	 * Perक्रमm an invasive reset of the MCDE and all blocks by
+	 * cutting the घातer to the subप्रणाली, then bring it back up
 	 * later when we enable the display as a result of
 	 * component_master_add_with_match().
 	 */
 	ret = regulator_disable(mcde->epod);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "can't disable EPOD regulator\n");
-		return ret;
-	}
-	/* Wait 50 ms so we are sure we cut the power */
+		वापस ret;
+	पूर्ण
+	/* Wait 50 ms so we are sure we cut the घातer */
 	usleep_range(50000, 70000);
 
 	ret = component_master_add_with_match(&pdev->dev, &mcde_drm_comp_ops,
 					      match);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to add component master\n");
 		/*
-		 * The EPOD regulator is already disabled at this point so some
+		 * The EPOD regulator is alपढ़ोy disabled at this poपूर्णांक so some
 		 * special errorpath code is needed
 		 */
 		clk_disable_unprepare(mcde->mcde_clk);
 		regulator_disable(mcde->vana);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 clk_disable:
 	clk_disable_unprepare(mcde->mcde_clk);
@@ -452,64 +453,64 @@ regulator_off:
 	regulator_disable(mcde->vana);
 regulator_epod_off:
 	regulator_disable(mcde->epod);
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static int mcde_remove(struct platform_device *pdev)
-{
-	struct drm_device *drm = platform_get_drvdata(pdev);
-	struct mcde *mcde = to_mcde(drm);
+अटल पूर्णांक mcde_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा drm_device *drm = platक्रमm_get_drvdata(pdev);
+	काष्ठा mcde *mcde = to_mcde(drm);
 
 	component_master_del(&pdev->dev, &mcde_drm_comp_ops);
 	clk_disable_unprepare(mcde->mcde_clk);
 	regulator_disable(mcde->vana);
 	regulator_disable(mcde->epod);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mcde_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mcde_of_match[] = अणु
+	अणु
 		.compatible = "ste,mcde",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver mcde_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mcde_driver = अणु
+	.driver = अणु
 		.name           = "mcde",
 		.of_match_table = of_match_ptr(mcde_of_match),
-	},
+	पूर्ण,
 	.probe = mcde_probe,
-	.remove = mcde_remove,
-};
+	.हटाओ = mcde_हटाओ,
+पूर्ण;
 
-static struct platform_driver *const component_drivers[] = {
+अटल काष्ठा platक्रमm_driver *स्थिर component_drivers[] = अणु
 	&mcde_dsi_driver,
-};
+पूर्ण;
 
-static int __init mcde_drm_register(void)
-{
-	int ret;
+अटल पूर्णांक __init mcde_drm_रेजिस्टर(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_register_drivers(component_drivers,
+	ret = platक्रमm_रेजिस्टर_drivers(component_drivers,
 					ARRAY_SIZE(component_drivers));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return platform_driver_register(&mcde_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&mcde_driver);
+पूर्ण
 
-static void __exit mcde_drm_unregister(void)
-{
-	platform_unregister_drivers(component_drivers,
+अटल व्योम __निकास mcde_drm_unरेजिस्टर(व्योम)
+अणु
+	platक्रमm_unरेजिस्टर_drivers(component_drivers,
 				    ARRAY_SIZE(component_drivers));
-	platform_driver_unregister(&mcde_driver);
-}
+	platक्रमm_driver_unरेजिस्टर(&mcde_driver);
+पूर्ण
 
-module_init(mcde_drm_register);
-module_exit(mcde_drm_unregister);
+module_init(mcde_drm_रेजिस्टर);
+module_निकास(mcde_drm_unरेजिस्टर);
 
 MODULE_ALIAS("platform:mcde-drm");
 MODULE_DESCRIPTION(DRIVER_DESC);

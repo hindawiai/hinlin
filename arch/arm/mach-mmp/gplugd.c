@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-mmp/gplugd.c
  *
- *  Support for the Marvell PXA168-based GuruPlug Display (gplugD) Platform.
+ *  Support क्रम the Marvell PXA168-based GuruPlug Display (gplugD) Platक्रमm.
  */
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/gpio.h>
-#include <linux/gpio-pxa.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio-pxa.h>
 
-#include <asm/mach/arch.h>
-#include <asm/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach-types.h>
 
-#include "irqs.h"
-#include "pxa168.h"
-#include "mfp-pxa168.h"
+#समावेश "irqs.h"
+#समावेश "pxa168.h"
+#समावेश "mfp-pxa168.h"
 
-#include "common.h"
+#समावेश "common.h"
 
-static unsigned long gplugd_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ gplugd_pin_config[] __initdata = अणु
 	/* UART3 */
 	GPIO8_UART3_TXD,
 	GPIO9_UART3_RXD,
@@ -37,7 +38,7 @@ static unsigned long gplugd_pin_config[] __initdata = {
 	GPIO32_MMC2_DAT2,
 	GPIO33_MMC2_DAT3,
 
-	/* LCD & HDMI clock selection GPIO: 0: 74.176MHz, 1: 74.25 MHz */
+	/* LCD & HDMI घड़ी selection GPIO: 0: 74.176MHz, 1: 74.25 MHz */
 	GPIO35_GPIO,
 	GPIO36_GPIO, /* CEC Interrupt */
 
@@ -104,7 +105,7 @@ static unsigned long gplugd_pin_config[] __initdata = {
 	GPIO103_RX_DV,
 	GPIO104_GPIO,     /* Reset PHY */
 
-	/* RTC interrupt */
+	/* RTC पूर्णांकerrupt */
 	GPIO102_GPIO,
 
 	/* I2C */
@@ -124,63 +125,63 @@ static unsigned long gplugd_pin_config[] __initdata = {
 	GPIO114_I2S_FRM,
 	GPIO115_I2S_BCLK,
 	GPIO116_I2S_TXD
-};
+पूर्ण;
 
-static struct pxa_gpio_platform_data pxa168_gpio_pdata = {
+अटल काष्ठा pxa_gpio_platक्रमm_data pxa168_gpio_pdata = अणु
 	.irq_base	= MMP_GPIO_TO_IRQ(0),
-};
+पूर्ण;
 
-static struct i2c_board_info gplugd_i2c_board_info[] = {
-	{
+अटल काष्ठा i2c_board_info gplugd_i2c_board_info[] = अणु
+	अणु
 		.type = "isl1208",
 		.addr = 0x6F,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /* Bring PHY out of reset by setting GPIO 104 */
-static int gplugd_eth_init(void)
-{
-	if (unlikely(gpio_request(104, "ETH_RESET_N"))) {
-		printk(KERN_ERR "Can't get hold of GPIO 104 to bring Ethernet "
+अटल पूर्णांक gplugd_eth_init(व्योम)
+अणु
+	अगर (unlikely(gpio_request(104, "ETH_RESET_N"))) अणु
+		prपूर्णांकk(KERN_ERR "Can't get hold of GPIO 104 to bring Ethernet "
 				"PHY out of reset\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	gpio_direction_output(104, 1);
-	gpio_free(104);
-	return 0;
-}
+	gpio_मुक्त(104);
+	वापस 0;
+पूर्ण
 
-struct pxa168_eth_platform_data gplugd_eth_platform_data = {
+काष्ठा pxa168_eth_platक्रमm_data gplugd_eth_platक्रमm_data = अणु
 	.port_number = 0,
 	.phy_addr    = 0,
 	.speed       = 0, /* Autonagotiation */
-	.intf        = PHY_INTERFACE_MODE_RMII,
+	.पूर्णांकf        = PHY_INTERFACE_MODE_RMII,
 	.init        = gplugd_eth_init,
-};
+पूर्ण;
 
-static void __init select_disp_freq(void)
-{
+अटल व्योम __init select_disp_freq(व्योम)
+अणु
 	/* set GPIO 35 & clear GPIO 85 to set LCD External Clock to 74.25 MHz */
-	if (unlikely(gpio_request(35, "DISP_FREQ_SEL"))) {
-		printk(KERN_ERR "Can't get hold of GPIO 35 to select display "
+	अगर (unlikely(gpio_request(35, "DISP_FREQ_SEL"))) अणु
+		prपूर्णांकk(KERN_ERR "Can't get hold of GPIO 35 to select display "
 				"frequency\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		gpio_direction_output(35, 1);
-		gpio_free(35);
-	}
+		gpio_मुक्त(35);
+	पूर्ण
 
-	if (unlikely(gpio_request(85, "DISP_FREQ_SEL_2"))) {
-		printk(KERN_ERR "Can't get hold of GPIO 85 to select display "
+	अगर (unlikely(gpio_request(85, "DISP_FREQ_SEL_2"))) अणु
+		prपूर्णांकk(KERN_ERR "Can't get hold of GPIO 85 to select display "
 				"frequency\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		gpio_direction_output(85, 0);
-		gpio_free(85);
-	}
-}
+		gpio_मुक्त(85);
+	पूर्ण
+पूर्ण
 
-static void __init gplugd_init(void)
-{
+अटल व्योम __init gplugd_init(व्योम)
+अणु
 	mfp_config(ARRAY_AND_SIZE(gplugd_pin_config));
 
 	select_disp_freq();
@@ -188,19 +189,19 @@ static void __init gplugd_init(void)
 	/* on-chip devices */
 	pxa168_add_uart(3);
 	pxa168_add_ssp(1);
-	pxa168_add_twsi(0, NULL, ARRAY_AND_SIZE(gplugd_i2c_board_info));
-	platform_device_add_data(&pxa168_device_gpio, &pxa168_gpio_pdata,
-				 sizeof(struct pxa_gpio_platform_data));
-	platform_device_register(&pxa168_device_gpio);
+	pxa168_add_twsi(0, शून्य, ARRAY_AND_SIZE(gplugd_i2c_board_info));
+	platक्रमm_device_add_data(&pxa168_device_gpio, &pxa168_gpio_pdata,
+				 माप(काष्ठा pxa_gpio_platक्रमm_data));
+	platक्रमm_device_रेजिस्टर(&pxa168_device_gpio);
 
-	pxa168_add_eth(&gplugd_eth_platform_data);
-}
+	pxa168_add_eth(&gplugd_eth_platक्रमm_data);
+पूर्ण
 
 MACHINE_START(GPLUGD, "PXA168-based GuruPlug Display (gplugD) Platform")
 	.map_io		= mmp_map_io,
 	.nr_irqs	= MMP_NR_IRQS,
 	.init_irq       = pxa168_init_irq,
-	.init_time	= pxa168_timer_init,
+	.init_समय	= pxa168_समयr_init,
 	.init_machine   = gplugd_init,
 	.restart	= pxa168_restart,
 MACHINE_END

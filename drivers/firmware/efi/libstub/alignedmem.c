@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/efi.h>
-#include <asm/efi.h>
+#समावेश <linux/efi.h>
+#समावेश <यंत्र/efi.h>
 
-#include "efistub.h"
+#समावेश "efistub.h"
 
 /**
  * efi_allocate_pages_aligned() - Allocate memory pages
  * @size:	minimum number of bytes to allocate
- * @addr:	On return the address of the first allocated page. The first
+ * @addr:	On वापस the address of the first allocated page. The first
  *		allocated page has alignment EFI_ALLOC_ALIGN which is an
  *		architecture dependent multiple of the page size.
  * @max:	the address that the last allocated memory page shall not
@@ -21,14 +22,14 @@
  *
  * Return:	status code
  */
-efi_status_t efi_allocate_pages_aligned(unsigned long size, unsigned long *addr,
-					unsigned long max, unsigned long align)
-{
+efi_status_t efi_allocate_pages_aligned(अचिन्हित दीर्घ size, अचिन्हित दीर्घ *addr,
+					अचिन्हित दीर्घ max, अचिन्हित दीर्घ align)
+अणु
 	efi_physical_addr_t alloc_addr;
 	efi_status_t status;
-	int slack;
+	पूर्णांक slack;
 
-	if (align < EFI_ALLOC_ALIGN)
+	अगर (align < EFI_ALLOC_ALIGN)
 		align = EFI_ALLOC_ALIGN;
 
 	alloc_addr = ALIGN_DOWN(max + 1, align) - 1;
@@ -38,20 +39,20 @@ efi_status_t efi_allocate_pages_aligned(unsigned long size, unsigned long *addr,
 	status = efi_bs_call(allocate_pages, EFI_ALLOCATE_MAX_ADDRESS,
 			     EFI_LOADER_DATA, size / EFI_PAGE_SIZE + slack,
 			     &alloc_addr);
-	if (status != EFI_SUCCESS)
-		return status;
+	अगर (status != EFI_SUCCESS)
+		वापस status;
 
-	*addr = ALIGN((unsigned long)alloc_addr, align);
+	*addr = ALIGN((अचिन्हित दीर्घ)alloc_addr, align);
 
-	if (slack > 0) {
-		int l = (alloc_addr & (align - 1)) / EFI_PAGE_SIZE;
+	अगर (slack > 0) अणु
+		पूर्णांक l = (alloc_addr & (align - 1)) / EFI_PAGE_SIZE;
 
-		if (l) {
-			efi_bs_call(free_pages, alloc_addr, slack - l + 1);
+		अगर (l) अणु
+			efi_bs_call(मुक्त_pages, alloc_addr, slack - l + 1);
 			slack = l - 1;
-		}
-		if (slack)
-			efi_bs_call(free_pages, *addr + size, slack);
-	}
-	return EFI_SUCCESS;
-}
+		पूर्ण
+		अगर (slack)
+			efi_bs_call(मुक्त_pages, *addr + size, slack);
+	पूर्ण
+	वापस EFI_SUCCESS;
+पूर्ण

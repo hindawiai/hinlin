@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2005-2006 Fen Systems Ltd.
  * Copyright 2006-2013 Solarflare Communications Inc.
  */
 
-#include <linux/netdevice.h>
-#include <linux/ethtool.h>
-#include <linux/rtnetlink.h>
-#include <linux/in.h>
-#include "net_driver.h"
-#include "workarounds.h"
-#include "selftest.h"
-#include "efx.h"
-#include "filter.h"
-#include "nic.h"
+#समावेश <linux/netdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/in.h>
+#समावेश "net_driver.h"
+#समावेश "workarounds.h"
+#समावेश "selftest.h"
+#समावेश "efx.h"
+#समावेश "filter.h"
+#समावेश "nic.h"
 
-struct ef4_sw_stat_desc {
-	const char *name;
-	enum {
+काष्ठा ef4_sw_stat_desc अणु
+	स्थिर अक्षर *name;
+	क्रमागत अणु
 		EF4_ETHTOOL_STAT_SOURCE_nic,
 		EF4_ETHTOOL_STAT_SOURCE_channel,
 		EF4_ETHTOOL_STAT_SOURCE_tx_queue
-	} source;
-	unsigned offset;
-	u64(*get_stat) (void *field); /* Reader function */
-};
+	पूर्ण source;
+	अचिन्हित offset;
+	u64(*get_stat) (व्योम *field); /* Reader function */
+पूर्ण;
 
-/* Initialiser for a struct ef4_sw_stat_desc with type-checking */
-#define EF4_ETHTOOL_STAT(stat_name, source_name, field, field_type, \
-				get_stat_function) {			\
+/* Initialiser क्रम a काष्ठा ef4_sw_stat_desc with type-checking */
+#घोषणा EF4_ETHTOOL_STAT(stat_name, source_name, field, field_type, \
+				get_stat_function) अणु			\
 	.name = #stat_name,						\
 	.source = EF4_ETHTOOL_STAT_SOURCE_##source_name,		\
 	.offset = ((((field_type *) 0) ==				\
-		      &((struct ef4_##source_name *)0)->field) ?	\
-		    offsetof(struct ef4_##source_name, field) :		\
-		    offsetof(struct ef4_##source_name, field)),		\
+		      &((काष्ठा ef4_##source_name *)0)->field) ?	\
+		    दुरत्व(काष्ठा ef4_##source_name, field) :		\
+		    दुरत्व(काष्ठा ef4_##source_name, field)),		\
 	.get_stat = get_stat_function,					\
-}
+पूर्ण
 
-static u64 ef4_get_uint_stat(void *field)
-{
-	return *(unsigned int *)field;
-}
+अटल u64 ef4_get_uपूर्णांक_stat(व्योम *field)
+अणु
+	वापस *(अचिन्हित पूर्णांक *)field;
+पूर्ण
 
-static u64 ef4_get_atomic_stat(void *field)
-{
-	return atomic_read((atomic_t *) field);
-}
+अटल u64 ef4_get_atomic_stat(व्योम *field)
+अणु
+	वापस atomic_पढ़ो((atomic_t *) field);
+पूर्ण
 
-#define EF4_ETHTOOL_ATOMIC_NIC_ERROR_STAT(field)		\
+#घोषणा EF4_ETHTOOL_ATOMIC_NIC_ERROR_STAT(field)		\
 	EF4_ETHTOOL_STAT(field, nic, field,			\
 			 atomic_t, ef4_get_atomic_stat)
 
-#define EF4_ETHTOOL_UINT_CHANNEL_STAT(field)			\
+#घोषणा EF4_ETHTOOL_UINT_CHANNEL_STAT(field)			\
 	EF4_ETHTOOL_STAT(field, channel, n_##field,		\
-			 unsigned int, ef4_get_uint_stat)
+			 अचिन्हित पूर्णांक, ef4_get_uपूर्णांक_stat)
 
-#define EF4_ETHTOOL_UINT_TXQ_STAT(field)			\
+#घोषणा EF4_ETHTOOL_UINT_TXQ_STAT(field)			\
 	EF4_ETHTOOL_STAT(tx_##field, tx_queue, field,		\
-			 unsigned int, ef4_get_uint_stat)
+			 अचिन्हित पूर्णांक, ef4_get_uपूर्णांक_stat)
 
-static const struct ef4_sw_stat_desc ef4_sw_stat_desc[] = {
+अटल स्थिर काष्ठा ef4_sw_stat_desc ef4_sw_stat_desc[] = अणु
 	EF4_ETHTOOL_UINT_TXQ_STAT(merge_events),
 	EF4_ETHTOOL_UINT_TXQ_STAT(pushes),
 	EF4_ETHTOOL_UINT_TXQ_STAT(cb_packets),
@@ -73,11 +74,11 @@ static const struct ef4_sw_stat_desc ef4_sw_stat_desc[] = {
 	EF4_ETHTOOL_UINT_CHANNEL_STAT(rx_frm_trunc),
 	EF4_ETHTOOL_UINT_CHANNEL_STAT(rx_merge_events),
 	EF4_ETHTOOL_UINT_CHANNEL_STAT(rx_merge_packets),
-};
+पूर्ण;
 
-#define EF4_ETHTOOL_SW_STAT_COUNT ARRAY_SIZE(ef4_sw_stat_desc)
+#घोषणा EF4_ETHTOOL_SW_STAT_COUNT ARRAY_SIZE(ef4_sw_stat_desc)
 
-#define EF4_ETHTOOL_EEPROM_MAGIC 0xEFAB
+#घोषणा EF4_ETHTOOL_EEPROM_MAGIC 0xEFAB
 
 /**************************************************************************
  *
@@ -86,188 +87,188 @@ static const struct ef4_sw_stat_desc ef4_sw_stat_desc[] = {
  **************************************************************************
  */
 
-/* Identify device by flashing LEDs */
-static int ef4_ethtool_phys_id(struct net_device *net_dev,
-			       enum ethtool_phys_id_state state)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	enum ef4_led_mode mode = EF4_LED_DEFAULT;
+/* Identअगरy device by flashing LEDs */
+अटल पूर्णांक ef4_ethtool_phys_id(काष्ठा net_device *net_dev,
+			       क्रमागत ethtool_phys_id_state state)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	क्रमागत ef4_led_mode mode = EF4_LED_DEFAULT;
 
-	switch (state) {
-	case ETHTOOL_ID_ON:
+	चयन (state) अणु
+	हाल ETHTOOL_ID_ON:
 		mode = EF4_LED_ON;
-		break;
-	case ETHTOOL_ID_OFF:
+		अवरोध;
+	हाल ETHTOOL_ID_OFF:
 		mode = EF4_LED_OFF;
-		break;
-	case ETHTOOL_ID_INACTIVE:
+		अवरोध;
+	हाल ETHTOOL_ID_INACTIVE:
 		mode = EF4_LED_DEFAULT;
-		break;
-	case ETHTOOL_ID_ACTIVE:
-		return 1;	/* cycle on/off once per second */
-	}
+		अवरोध;
+	हाल ETHTOOL_ID_ACTIVE:
+		वापस 1;	/* cycle on/off once per second */
+	पूर्ण
 
 	efx->type->set_id_led(efx, mode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* This must be called with rtnl_lock held. */
-static int
-ef4_ethtool_get_link_ksettings(struct net_device *net_dev,
-			       struct ethtool_link_ksettings *cmd)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	struct ef4_link_state *link_state = &efx->link_state;
+अटल पूर्णांक
+ef4_ethtool_get_link_ksettings(काष्ठा net_device *net_dev,
+			       काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	काष्ठा ef4_link_state *link_state = &efx->link_state;
 
 	mutex_lock(&efx->mac_lock);
 	efx->phy_op->get_link_ksettings(efx, cmd);
 	mutex_unlock(&efx->mac_lock);
 
-	/* Both MACs support pause frames (bidirectional and respond-only) */
+	/* Both MACs support छोड़ो frames (bidirectional and respond-only) */
 	ethtool_link_ksettings_add_link_mode(cmd, supported, Pause);
 	ethtool_link_ksettings_add_link_mode(cmd, supported, Asym_Pause);
 
-	if (LOOPBACK_INTERNAL(efx)) {
+	अगर (LOOPBACK_INTERNAL(efx)) अणु
 		cmd->base.speed = link_state->speed;
 		cmd->base.duplex = link_state->fd ? DUPLEX_FULL : DUPLEX_HALF;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* This must be called with rtnl_lock held. */
-static int
-ef4_ethtool_set_link_ksettings(struct net_device *net_dev,
-			       const struct ethtool_link_ksettings *cmd)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	int rc;
+अटल पूर्णांक
+ef4_ethtool_set_link_ksettings(काष्ठा net_device *net_dev,
+			       स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	पूर्णांक rc;
 
-	/* GMAC does not support 1000Mbps HD */
-	if ((cmd->base.speed == SPEED_1000) &&
-	    (cmd->base.duplex != DUPLEX_FULL)) {
-		netif_dbg(efx, drv, efx->net_dev,
+	/* GMAC करोes not support 1000Mbps HD */
+	अगर ((cmd->base.speed == SPEED_1000) &&
+	    (cmd->base.duplex != DUPLEX_FULL)) अणु
+		netअगर_dbg(efx, drv, efx->net_dev,
 			  "rejecting unsupported 1000Mbps HD setting\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&efx->mac_lock);
 	rc = efx->phy_op->set_link_ksettings(efx, cmd);
 	mutex_unlock(&efx->mac_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void ef4_ethtool_get_drvinfo(struct net_device *net_dev,
-				    struct ethtool_drvinfo *info)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल व्योम ef4_ethtool_get_drvinfo(काष्ठा net_device *net_dev,
+				    काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
-	strlcpy(info->driver, KBUILD_MODNAME, sizeof(info->driver));
-	strlcpy(info->version, EF4_DRIVER_VERSION, sizeof(info->version));
-	strlcpy(info->bus_info, pci_name(efx->pci_dev), sizeof(info->bus_info));
-}
+	strlcpy(info->driver, KBUILD_MODNAME, माप(info->driver));
+	strlcpy(info->version, EF4_DRIVER_VERSION, माप(info->version));
+	strlcpy(info->bus_info, pci_name(efx->pci_dev), माप(info->bus_info));
+पूर्ण
 
-static int ef4_ethtool_get_regs_len(struct net_device *net_dev)
-{
-	return ef4_nic_get_regs_len(netdev_priv(net_dev));
-}
+अटल पूर्णांक ef4_ethtool_get_regs_len(काष्ठा net_device *net_dev)
+अणु
+	वापस ef4_nic_get_regs_len(netdev_priv(net_dev));
+पूर्ण
 
-static void ef4_ethtool_get_regs(struct net_device *net_dev,
-				 struct ethtool_regs *regs, void *buf)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल व्योम ef4_ethtool_get_regs(काष्ठा net_device *net_dev,
+				 काष्ठा ethtool_regs *regs, व्योम *buf)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
 	regs->version = efx->type->revision;
 	ef4_nic_get_regs(efx, buf);
-}
+पूर्ण
 
-static u32 ef4_ethtool_get_msglevel(struct net_device *net_dev)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	return efx->msg_enable;
-}
+अटल u32 ef4_ethtool_get_msglevel(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	वापस efx->msg_enable;
+पूर्ण
 
-static void ef4_ethtool_set_msglevel(struct net_device *net_dev, u32 msg_enable)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल व्योम ef4_ethtool_set_msglevel(काष्ठा net_device *net_dev, u32 msg_enable)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 	efx->msg_enable = msg_enable;
-}
+पूर्ण
 
 /**
- * ef4_fill_test - fill in an individual self-test entry
+ * ef4_fill_test - fill in an inभागidual self-test entry
  * @test_index:		Index of the test
- * @strings:		Ethtool strings, or %NULL
- * @data:		Ethtool test results, or %NULL
- * @test:		Pointer to test result (used only if data != %NULL)
- * @unit_format:	Unit name format (e.g. "chan\%d")
- * @unit_id:		Unit id (e.g. 0 for "chan0")
- * @test_format:	Test name format (e.g. "loopback.\%s.tx.sent")
- * @test_id:		Test id (e.g. "PHYXS" for "loopback.PHYXS.tx_sent")
+ * @strings:		Ethtool strings, or %शून्य
+ * @data:		Ethtool test results, or %शून्य
+ * @test:		Poपूर्णांकer to test result (used only अगर data != %शून्य)
+ * @unit_क्रमmat:	Unit name क्रमmat (e.g. "chan\%d")
+ * @unit_id:		Unit id (e.g. 0 क्रम "chan0")
+ * @test_क्रमmat:	Test name क्रमmat (e.g. "loopback.\%s.tx.sent")
+ * @test_id:		Test id (e.g. "PHYXS" क्रम "loopback.PHYXS.tx_sent")
  *
- * Fill in an individual self-test entry.
+ * Fill in an inभागidual self-test entry.
  */
-static void ef4_fill_test(unsigned int test_index, u8 *strings, u64 *data,
-			  int *test, const char *unit_format, int unit_id,
-			  const char *test_format, const char *test_id)
-{
-	char unit_str[ETH_GSTRING_LEN], test_str[ETH_GSTRING_LEN];
+अटल व्योम ef4_fill_test(अचिन्हित पूर्णांक test_index, u8 *strings, u64 *data,
+			  पूर्णांक *test, स्थिर अक्षर *unit_क्रमmat, पूर्णांक unit_id,
+			  स्थिर अक्षर *test_क्रमmat, स्थिर अक्षर *test_id)
+अणु
+	अक्षर unit_str[ETH_GSTRING_LEN], test_str[ETH_GSTRING_LEN];
 
-	/* Fill data value, if applicable */
-	if (data)
+	/* Fill data value, अगर applicable */
+	अगर (data)
 		data[test_index] = *test;
 
-	/* Fill string, if applicable */
-	if (strings) {
-		if (strchr(unit_format, '%'))
-			snprintf(unit_str, sizeof(unit_str),
-				 unit_format, unit_id);
-		else
-			strcpy(unit_str, unit_format);
-		snprintf(test_str, sizeof(test_str), test_format, test_id);
-		snprintf(strings + test_index * ETH_GSTRING_LEN,
+	/* Fill string, अगर applicable */
+	अगर (strings) अणु
+		अगर (म_अक्षर(unit_क्रमmat, '%'))
+			snम_लिखो(unit_str, माप(unit_str),
+				 unit_क्रमmat, unit_id);
+		अन्यथा
+			म_नकल(unit_str, unit_क्रमmat);
+		snम_लिखो(test_str, माप(test_str), test_क्रमmat, test_id);
+		snम_लिखो(strings + test_index * ETH_GSTRING_LEN,
 			 ETH_GSTRING_LEN,
 			 "%-6s %-24s", unit_str, test_str);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define EF4_CHANNEL_NAME(_channel) "chan%d", _channel->channel
-#define EF4_TX_QUEUE_NAME(_tx_queue) "txq%d", _tx_queue->queue
-#define EF4_RX_QUEUE_NAME(_rx_queue) "rxq%d", _rx_queue->queue
-#define EF4_LOOPBACK_NAME(_mode, _counter)			\
+#घोषणा EF4_CHANNEL_NAME(_channel) "chan%d", _channel->channel
+#घोषणा EF4_TX_QUEUE_NAME(_tx_queue) "txq%d", _tx_queue->queue
+#घोषणा EF4_RX_QUEUE_NAME(_rx_queue) "rxq%d", _rx_queue->queue
+#घोषणा EF4_LOOPBACK_NAME(_mode, _counter)			\
 	"loopback.%s." _counter, STRING_TABLE_LOOKUP(_mode, ef4_loopback_mode)
 
 /**
  * ef4_fill_loopback_test - fill in a block of loopback self-test entries
  * @efx:		Efx NIC
- * @lb_tests:		Efx loopback self-test results structure
+ * @lb_tests:		Efx loopback self-test results काष्ठाure
  * @mode:		Loopback test mode
  * @test_index:		Starting index of the test
- * @strings:		Ethtool strings, or %NULL
- * @data:		Ethtool test results, or %NULL
+ * @strings:		Ethtool strings, or %शून्य
+ * @data:		Ethtool test results, or %शून्य
  *
  * Fill in a block of loopback self-test entries.  Return new test
  * index.
  */
-static int ef4_fill_loopback_test(struct ef4_nic *efx,
-				  struct ef4_loopback_self_tests *lb_tests,
-				  enum ef4_loopback_mode mode,
-				  unsigned int test_index,
+अटल पूर्णांक ef4_fill_loopback_test(काष्ठा ef4_nic *efx,
+				  काष्ठा ef4_loopback_self_tests *lb_tests,
+				  क्रमागत ef4_loopback_mode mode,
+				  अचिन्हित पूर्णांक test_index,
 				  u8 *strings, u64 *data)
-{
-	struct ef4_channel *channel =
+अणु
+	काष्ठा ef4_channel *channel =
 		ef4_get_channel(efx, efx->tx_channel_offset);
-	struct ef4_tx_queue *tx_queue;
+	काष्ठा ef4_tx_queue *tx_queue;
 
-	ef4_for_each_channel_tx_queue(tx_queue, channel) {
+	ef4_क्रम_each_channel_tx_queue(tx_queue, channel) अणु
 		ef4_fill_test(test_index++, strings, data,
 			      &lb_tests->tx_sent[tx_queue->queue],
 			      EF4_TX_QUEUE_NAME(tx_queue),
 			      EF4_LOOPBACK_NAME(mode, "tx_sent"));
 		ef4_fill_test(test_index++, strings, data,
-			      &lb_tests->tx_done[tx_queue->queue],
+			      &lb_tests->tx_करोne[tx_queue->queue],
 			      EF4_TX_QUEUE_NAME(tx_queue),
 			      EF4_LOOPBACK_NAME(mode, "tx_done"));
-	}
+	पूर्ण
 	ef4_fill_test(test_index++, strings, data,
 		      &lb_tests->rx_good,
 		      "rx", 0,
@@ -277,310 +278,310 @@ static int ef4_fill_loopback_test(struct ef4_nic *efx,
 		      "rx", 0,
 		      EF4_LOOPBACK_NAME(mode, "rx_bad"));
 
-	return test_index;
-}
+	वापस test_index;
+पूर्ण
 
 /**
  * ef4_ethtool_fill_self_tests - get self-test details
  * @efx:		Efx NIC
- * @tests:		Efx self-test results structure, or %NULL
- * @strings:		Ethtool strings, or %NULL
- * @data:		Ethtool test results, or %NULL
+ * @tests:		Efx self-test results काष्ठाure, or %शून्य
+ * @strings:		Ethtool strings, or %शून्य
+ * @data:		Ethtool test results, or %शून्य
  *
  * Get self-test number of strings, strings, and/or test results.
  * Return number of strings (== number of test results).
  *
- * The reason for merging these three functions is to make sure that
+ * The reason क्रम merging these three functions is to make sure that
  * they can never be inconsistent.
  */
-static int ef4_ethtool_fill_self_tests(struct ef4_nic *efx,
-				       struct ef4_self_tests *tests,
+अटल पूर्णांक ef4_ethtool_fill_self_tests(काष्ठा ef4_nic *efx,
+				       काष्ठा ef4_self_tests *tests,
 				       u8 *strings, u64 *data)
-{
-	struct ef4_channel *channel;
-	unsigned int n = 0, i;
-	enum ef4_loopback_mode mode;
+अणु
+	काष्ठा ef4_channel *channel;
+	अचिन्हित पूर्णांक n = 0, i;
+	क्रमागत ef4_loopback_mode mode;
 
 	ef4_fill_test(n++, strings, data, &tests->phy_alive,
-		      "phy", 0, "alive", NULL);
+		      "phy", 0, "alive", शून्य);
 	ef4_fill_test(n++, strings, data, &tests->nvram,
-		      "core", 0, "nvram", NULL);
-	ef4_fill_test(n++, strings, data, &tests->interrupt,
-		      "core", 0, "interrupt", NULL);
+		      "core", 0, "nvram", शून्य);
+	ef4_fill_test(n++, strings, data, &tests->पूर्णांकerrupt,
+		      "core", 0, "interrupt", शून्य);
 
 	/* Event queues */
-	ef4_for_each_channel(channel, efx) {
+	ef4_क्रम_each_channel(channel, efx) अणु
 		ef4_fill_test(n++, strings, data,
 			      &tests->eventq_dma[channel->channel],
 			      EF4_CHANNEL_NAME(channel),
-			      "eventq.dma", NULL);
+			      "eventq.dma", शून्य);
 		ef4_fill_test(n++, strings, data,
-			      &tests->eventq_int[channel->channel],
+			      &tests->eventq_पूर्णांक[channel->channel],
 			      EF4_CHANNEL_NAME(channel),
-			      "eventq.int", NULL);
-	}
+			      "eventq.int", शून्य);
+	पूर्ण
 
 	ef4_fill_test(n++, strings, data, &tests->memory,
-		      "core", 0, "memory", NULL);
-	ef4_fill_test(n++, strings, data, &tests->registers,
-		      "core", 0, "registers", NULL);
+		      "core", 0, "memory", शून्य);
+	ef4_fill_test(n++, strings, data, &tests->रेजिस्टरs,
+		      "core", 0, "registers", शून्य);
 
-	if (efx->phy_op->run_tests != NULL) {
-		EF4_BUG_ON_PARANOID(efx->phy_op->test_name == NULL);
+	अगर (efx->phy_op->run_tests != शून्य) अणु
+		EF4_BUG_ON_PARANOID(efx->phy_op->test_name == शून्य);
 
-		for (i = 0; true; ++i) {
-			const char *name;
+		क्रम (i = 0; true; ++i) अणु
+			स्थिर अक्षर *name;
 
 			EF4_BUG_ON_PARANOID(i >= EF4_MAX_PHY_TESTS);
 			name = efx->phy_op->test_name(efx, i);
-			if (name == NULL)
-				break;
+			अगर (name == शून्य)
+				अवरोध;
 
 			ef4_fill_test(n++, strings, data, &tests->phy_ext[i],
-				      "phy", 0, name, NULL);
-		}
-	}
+				      "phy", 0, name, शून्य);
+		पूर्ण
+	पूर्ण
 
 	/* Loopback tests */
-	for (mode = LOOPBACK_NONE; mode <= LOOPBACK_TEST_MAX; mode++) {
-		if (!(efx->loopback_modes & (1 << mode)))
-			continue;
+	क्रम (mode = LOOPBACK_NONE; mode <= LOOPBACK_TEST_MAX; mode++) अणु
+		अगर (!(efx->loopback_modes & (1 << mode)))
+			जारी;
 		n = ef4_fill_loopback_test(efx,
 					   &tests->loopback[mode], mode, n,
 					   strings, data);
-	}
+	पूर्ण
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static size_t ef4_describe_per_queue_stats(struct ef4_nic *efx, u8 *strings)
-{
-	size_t n_stats = 0;
-	struct ef4_channel *channel;
+अटल माप_प्रकार ef4_describe_per_queue_stats(काष्ठा ef4_nic *efx, u8 *strings)
+अणु
+	माप_प्रकार n_stats = 0;
+	काष्ठा ef4_channel *channel;
 
-	ef4_for_each_channel(channel, efx) {
-		if (ef4_channel_has_tx_queues(channel)) {
+	ef4_क्रम_each_channel(channel, efx) अणु
+		अगर (ef4_channel_has_tx_queues(channel)) अणु
 			n_stats++;
-			if (strings != NULL) {
-				snprintf(strings, ETH_GSTRING_LEN,
+			अगर (strings != शून्य) अणु
+				snम_लिखो(strings, ETH_GSTRING_LEN,
 					 "tx-%u.tx_packets",
 					 channel->tx_queue[0].queue /
 					 EF4_TXQ_TYPES);
 
 				strings += ETH_GSTRING_LEN;
-			}
-		}
-	}
-	ef4_for_each_channel(channel, efx) {
-		if (ef4_channel_has_rx_queue(channel)) {
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	ef4_क्रम_each_channel(channel, efx) अणु
+		अगर (ef4_channel_has_rx_queue(channel)) अणु
 			n_stats++;
-			if (strings != NULL) {
-				snprintf(strings, ETH_GSTRING_LEN,
+			अगर (strings != शून्य) अणु
+				snम_लिखो(strings, ETH_GSTRING_LEN,
 					 "rx-%d.rx_packets", channel->channel);
 				strings += ETH_GSTRING_LEN;
-			}
-		}
-	}
-	return n_stats;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस n_stats;
+पूर्ण
 
-static int ef4_ethtool_get_sset_count(struct net_device *net_dev,
-				      int string_set)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल पूर्णांक ef4_ethtool_get_sset_count(काष्ठा net_device *net_dev,
+				      पूर्णांक string_set)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
-	switch (string_set) {
-	case ETH_SS_STATS:
-		return efx->type->describe_stats(efx, NULL) +
+	चयन (string_set) अणु
+	हाल ETH_SS_STATS:
+		वापस efx->type->describe_stats(efx, शून्य) +
 		       EF4_ETHTOOL_SW_STAT_COUNT +
-		       ef4_describe_per_queue_stats(efx, NULL);
-	case ETH_SS_TEST:
-		return ef4_ethtool_fill_self_tests(efx, NULL, NULL, NULL);
-	default:
-		return -EINVAL;
-	}
-}
+		       ef4_describe_per_queue_stats(efx, शून्य);
+	हाल ETH_SS_TEST:
+		वापस ef4_ethtool_fill_self_tests(efx, शून्य, शून्य, शून्य);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void ef4_ethtool_get_strings(struct net_device *net_dev,
+अटल व्योम ef4_ethtool_get_strings(काष्ठा net_device *net_dev,
 				    u32 string_set, u8 *strings)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	int i;
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	पूर्णांक i;
 
-	switch (string_set) {
-	case ETH_SS_STATS:
+	चयन (string_set) अणु
+	हाल ETH_SS_STATS:
 		strings += (efx->type->describe_stats(efx, strings) *
 			    ETH_GSTRING_LEN);
-		for (i = 0; i < EF4_ETHTOOL_SW_STAT_COUNT; i++)
+		क्रम (i = 0; i < EF4_ETHTOOL_SW_STAT_COUNT; i++)
 			strlcpy(strings + i * ETH_GSTRING_LEN,
 				ef4_sw_stat_desc[i].name, ETH_GSTRING_LEN);
 		strings += EF4_ETHTOOL_SW_STAT_COUNT * ETH_GSTRING_LEN;
 		strings += (ef4_describe_per_queue_stats(efx, strings) *
 			    ETH_GSTRING_LEN);
-		break;
-	case ETH_SS_TEST:
-		ef4_ethtool_fill_self_tests(efx, NULL, strings, NULL);
-		break;
-	default:
+		अवरोध;
+	हाल ETH_SS_TEST:
+		ef4_ethtool_fill_self_tests(efx, शून्य, strings, शून्य);
+		अवरोध;
+	शेष:
 		/* No other string sets */
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void ef4_ethtool_get_stats(struct net_device *net_dev,
-				  struct ethtool_stats *stats,
+अटल व्योम ef4_ethtool_get_stats(काष्ठा net_device *net_dev,
+				  काष्ठा ethtool_stats *stats,
 				  u64 *data)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	const struct ef4_sw_stat_desc *stat;
-	struct ef4_channel *channel;
-	struct ef4_tx_queue *tx_queue;
-	struct ef4_rx_queue *rx_queue;
-	int i;
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	स्थिर काष्ठा ef4_sw_stat_desc *stat;
+	काष्ठा ef4_channel *channel;
+	काष्ठा ef4_tx_queue *tx_queue;
+	काष्ठा ef4_rx_queue *rx_queue;
+	पूर्णांक i;
 
 	spin_lock_bh(&efx->stats_lock);
 
 	/* Get NIC statistics */
-	data += efx->type->update_stats(efx, data, NULL);
+	data += efx->type->update_stats(efx, data, शून्य);
 
 	/* Get software statistics */
-	for (i = 0; i < EF4_ETHTOOL_SW_STAT_COUNT; i++) {
+	क्रम (i = 0; i < EF4_ETHTOOL_SW_STAT_COUNT; i++) अणु
 		stat = &ef4_sw_stat_desc[i];
-		switch (stat->source) {
-		case EF4_ETHTOOL_STAT_SOURCE_nic:
-			data[i] = stat->get_stat((void *)efx + stat->offset);
-			break;
-		case EF4_ETHTOOL_STAT_SOURCE_channel:
+		चयन (stat->source) अणु
+		हाल EF4_ETHTOOL_STAT_SOURCE_nic:
+			data[i] = stat->get_stat((व्योम *)efx + stat->offset);
+			अवरोध;
+		हाल EF4_ETHTOOL_STAT_SOURCE_channel:
 			data[i] = 0;
-			ef4_for_each_channel(channel, efx)
-				data[i] += stat->get_stat((void *)channel +
+			ef4_क्रम_each_channel(channel, efx)
+				data[i] += stat->get_stat((व्योम *)channel +
 							  stat->offset);
-			break;
-		case EF4_ETHTOOL_STAT_SOURCE_tx_queue:
+			अवरोध;
+		हाल EF4_ETHTOOL_STAT_SOURCE_tx_queue:
 			data[i] = 0;
-			ef4_for_each_channel(channel, efx) {
-				ef4_for_each_channel_tx_queue(tx_queue, channel)
+			ef4_क्रम_each_channel(channel, efx) अणु
+				ef4_क्रम_each_channel_tx_queue(tx_queue, channel)
 					data[i] +=
-						stat->get_stat((void *)tx_queue
+						stat->get_stat((व्योम *)tx_queue
 							       + stat->offset);
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	data += EF4_ETHTOOL_SW_STAT_COUNT;
 
 	spin_unlock_bh(&efx->stats_lock);
 
-	ef4_for_each_channel(channel, efx) {
-		if (ef4_channel_has_tx_queues(channel)) {
+	ef4_क्रम_each_channel(channel, efx) अणु
+		अगर (ef4_channel_has_tx_queues(channel)) अणु
 			*data = 0;
-			ef4_for_each_channel_tx_queue(tx_queue, channel) {
+			ef4_क्रम_each_channel_tx_queue(tx_queue, channel) अणु
 				*data += tx_queue->tx_packets;
-			}
+			पूर्ण
 			data++;
-		}
-	}
-	ef4_for_each_channel(channel, efx) {
-		if (ef4_channel_has_rx_queue(channel)) {
+		पूर्ण
+	पूर्ण
+	ef4_क्रम_each_channel(channel, efx) अणु
+		अगर (ef4_channel_has_rx_queue(channel)) अणु
 			*data = 0;
-			ef4_for_each_channel_rx_queue(rx_queue, channel) {
+			ef4_क्रम_each_channel_rx_queue(rx_queue, channel) अणु
 				*data += rx_queue->rx_packets;
-			}
+			पूर्ण
 			data++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ef4_ethtool_self_test(struct net_device *net_dev,
-				  struct ethtool_test *test, u64 *data)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	struct ef4_self_tests *ef4_tests;
-	bool already_up;
-	int rc = -ENOMEM;
+अटल व्योम ef4_ethtool_self_test(काष्ठा net_device *net_dev,
+				  काष्ठा ethtool_test *test, u64 *data)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	काष्ठा ef4_self_tests *ef4_tests;
+	bool alपढ़ोy_up;
+	पूर्णांक rc = -ENOMEM;
 
-	ef4_tests = kzalloc(sizeof(*ef4_tests), GFP_KERNEL);
-	if (!ef4_tests)
-		goto fail;
+	ef4_tests = kzalloc(माप(*ef4_tests), GFP_KERNEL);
+	अगर (!ef4_tests)
+		जाओ fail;
 
-	if (efx->state != STATE_READY) {
+	अगर (efx->state != STATE_READY) अणु
 		rc = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	netif_info(efx, drv, efx->net_dev, "starting %sline testing\n",
+	netअगर_info(efx, drv, efx->net_dev, "starting %sline testing\n",
 		   (test->flags & ETH_TEST_FL_OFFLINE) ? "off" : "on");
 
-	/* We need rx buffers and interrupts. */
-	already_up = (efx->net_dev->flags & IFF_UP);
-	if (!already_up) {
-		rc = dev_open(efx->net_dev, NULL);
-		if (rc) {
-			netif_err(efx, drv, efx->net_dev,
+	/* We need rx buffers and पूर्णांकerrupts. */
+	alपढ़ोy_up = (efx->net_dev->flags & IFF_UP);
+	अगर (!alपढ़ोy_up) अणु
+		rc = dev_खोलो(efx->net_dev, शून्य);
+		अगर (rc) अणु
+			netअगर_err(efx, drv, efx->net_dev,
 				  "failed opening device.\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	rc = ef4_selftest(efx, ef4_tests, test->flags);
 
-	if (!already_up)
-		dev_close(efx->net_dev);
+	अगर (!alपढ़ोy_up)
+		dev_बंद(efx->net_dev);
 
-	netif_info(efx, drv, efx->net_dev, "%s %sline self-tests\n",
+	netअगर_info(efx, drv, efx->net_dev, "%s %sline self-tests\n",
 		   rc == 0 ? "passed" : "failed",
 		   (test->flags & ETH_TEST_FL_OFFLINE) ? "off" : "on");
 
 out:
-	ef4_ethtool_fill_self_tests(efx, ef4_tests, NULL, data);
-	kfree(ef4_tests);
+	ef4_ethtool_fill_self_tests(efx, ef4_tests, शून्य, data);
+	kमुक्त(ef4_tests);
 fail:
-	if (rc)
+	अगर (rc)
 		test->flags |= ETH_TEST_FL_FAILED;
-}
+पूर्ण
 
-/* Restart autonegotiation */
-static int ef4_ethtool_nway_reset(struct net_device *net_dev)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+/* Restart स्वतःnegotiation */
+अटल पूर्णांक ef4_ethtool_nway_reset(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
-	return mdio45_nway_restart(&efx->mdio);
-}
+	वापस mdio45_nway_restart(&efx->mdio);
+पूर्ण
 
 /*
- * Each channel has a single IRQ and moderation timer, started by any
+ * Each channel has a single IRQ and moderation समयr, started by any
  * completion (or other event).  Unless the module parameter
- * separate_tx_channels is set, IRQs and moderation are therefore
- * shared between RX and TX completions.  In this case, when RX IRQ
+ * separate_tx_channels is set, IRQs and moderation are thereक्रमe
+ * shared between RX and TX completions.  In this हाल, when RX IRQ
  * moderation is explicitly changed then TX IRQ moderation is
- * automatically changed too, but otherwise we fail if the two values
- * are requested to be different.
+ * स्वतःmatically changed too, but otherwise we fail अगर the two values
+ * are requested to be dअगरferent.
  *
- * The hardware does not support a limit on the number of completions
- * before an IRQ, so we do not use the max_frames fields.  We should
+ * The hardware करोes not support a limit on the number of completions
+ * beक्रमe an IRQ, so we करो not use the max_frames fields.  We should
  * report and require that max_frames == (usecs != 0), but this would
- * invalidate existing user documentation.
+ * invalidate existing user करोcumentation.
  *
- * The hardware does not have distinct settings for interrupt
- * moderation while the previous IRQ is being handled, so we should
+ * The hardware करोes not have distinct settings क्रम पूर्णांकerrupt
+ * moderation जबतक the previous IRQ is being handled, so we should
  * not use the 'irq' fields.  However, an earlier developer
  * misunderstood the meaning of the 'irq' fields and the driver did
- * not support the standard fields.  To avoid invalidating existing
- * user documentation, we report and accept changes through either the
- * standard or 'irq' fields.  If both are changed at the same time, we
+ * not support the standard fields.  To aव्योम invalidating existing
+ * user करोcumentation, we report and accept changes through either the
+ * standard or 'irq' fields.  If both are changed at the same समय, we
  * prefer the standard field.
  *
- * We implement adaptive IRQ moderation, but use a different algorithm
- * from that assumed in the definition of struct ethtool_coalesce.
- * Therefore we do not use any of the adaptive moderation parameters
+ * We implement adaptive IRQ moderation, but use a dअगरferent algorithm
+ * from that assumed in the definition of काष्ठा ethtool_coalesce.
+ * Thereक्रमe we करो not use any of the adaptive moderation parameters
  * in it.
  */
 
-static int ef4_ethtool_get_coalesce(struct net_device *net_dev,
-				    struct ethtool_coalesce *coalesce)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	unsigned int tx_usecs, rx_usecs;
+अटल पूर्णांक ef4_ethtool_get_coalesce(काष्ठा net_device *net_dev,
+				    काष्ठा ethtool_coalesce *coalesce)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	अचिन्हित पूर्णांक tx_usecs, rx_usecs;
 	bool rx_adaptive;
 
 	ef4_get_irq_moderation(efx, &tx_usecs, &rx_usecs, &rx_adaptive);
@@ -591,23 +592,23 @@ static int ef4_ethtool_get_coalesce(struct net_device *net_dev,
 	coalesce->rx_coalesce_usecs_irq = rx_usecs;
 	coalesce->use_adaptive_rx_coalesce = rx_adaptive;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ef4_ethtool_set_coalesce(struct net_device *net_dev,
-				    struct ethtool_coalesce *coalesce)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	struct ef4_channel *channel;
-	unsigned int tx_usecs, rx_usecs;
+अटल पूर्णांक ef4_ethtool_set_coalesce(काष्ठा net_device *net_dev,
+				    काष्ठा ethtool_coalesce *coalesce)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	काष्ठा ef4_channel *channel;
+	अचिन्हित पूर्णांक tx_usecs, rx_usecs;
 	bool adaptive, rx_may_override_tx;
-	int rc;
+	पूर्णांक rc;
 
 	ef4_get_irq_moderation(efx, &tx_usecs, &rx_usecs, &adaptive);
 
-	if (coalesce->rx_coalesce_usecs != rx_usecs)
+	अगर (coalesce->rx_coalesce_usecs != rx_usecs)
 		rx_usecs = coalesce->rx_coalesce_usecs;
-	else
+	अन्यथा
 		rx_usecs = coalesce->rx_coalesce_usecs_irq;
 
 	adaptive = coalesce->use_adaptive_rx_coalesce;
@@ -617,195 +618,195 @@ static int ef4_ethtool_set_coalesce(struct net_device *net_dev,
 	 */
 	rx_may_override_tx = (coalesce->tx_coalesce_usecs == tx_usecs &&
 			      coalesce->tx_coalesce_usecs_irq == tx_usecs);
-	if (coalesce->tx_coalesce_usecs != tx_usecs)
+	अगर (coalesce->tx_coalesce_usecs != tx_usecs)
 		tx_usecs = coalesce->tx_coalesce_usecs;
-	else
+	अन्यथा
 		tx_usecs = coalesce->tx_coalesce_usecs_irq;
 
 	rc = ef4_init_irq_moderation(efx, tx_usecs, rx_usecs, adaptive,
 				     rx_may_override_tx);
-	if (rc != 0)
-		return rc;
+	अगर (rc != 0)
+		वापस rc;
 
-	ef4_for_each_channel(channel, efx)
+	ef4_क्रम_each_channel(channel, efx)
 		efx->type->push_irq_moderation(channel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ef4_ethtool_get_ringparam(struct net_device *net_dev,
-				      struct ethtool_ringparam *ring)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल व्योम ef4_ethtool_get_ringparam(काष्ठा net_device *net_dev,
+				      काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
 	ring->rx_max_pending = EF4_MAX_DMAQ_SIZE;
 	ring->tx_max_pending = EF4_MAX_DMAQ_SIZE;
 	ring->rx_pending = efx->rxq_entries;
 	ring->tx_pending = efx->txq_entries;
-}
+पूर्ण
 
-static int ef4_ethtool_set_ringparam(struct net_device *net_dev,
-				     struct ethtool_ringparam *ring)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल पूर्णांक ef4_ethtool_set_ringparam(काष्ठा net_device *net_dev,
+				     काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 	u32 txq_entries;
 
-	if (ring->rx_mini_pending || ring->rx_jumbo_pending ||
+	अगर (ring->rx_mini_pending || ring->rx_jumbo_pending ||
 	    ring->rx_pending > EF4_MAX_DMAQ_SIZE ||
 	    ring->tx_pending > EF4_MAX_DMAQ_SIZE)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (ring->rx_pending < EF4_RXQ_MIN_ENT) {
-		netif_err(efx, drv, efx->net_dev,
+	अगर (ring->rx_pending < EF4_RXQ_MIN_ENT) अणु
+		netअगर_err(efx, drv, efx->net_dev,
 			  "RX queues cannot be smaller than %u\n",
 			  EF4_RXQ_MIN_ENT);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	txq_entries = max(ring->tx_pending, EF4_TXQ_MIN_ENT(efx));
-	if (txq_entries != ring->tx_pending)
-		netif_warn(efx, drv, efx->net_dev,
+	अगर (txq_entries != ring->tx_pending)
+		netअगर_warn(efx, drv, efx->net_dev,
 			   "increasing TX queue size to minimum of %u\n",
 			   txq_entries);
 
-	return ef4_realloc_channels(efx, ring->rx_pending, txq_entries);
-}
+	वापस ef4_पुनः_स्मृति_channels(efx, ring->rx_pending, txq_entries);
+पूर्ण
 
-static int ef4_ethtool_set_pauseparam(struct net_device *net_dev,
-				      struct ethtool_pauseparam *pause)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल पूर्णांक ef4_ethtool_set_छोड़ोparam(काष्ठा net_device *net_dev,
+				      काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 	u8 wanted_fc, old_fc;
 	u32 old_adv;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	mutex_lock(&efx->mac_lock);
 
-	wanted_fc = ((pause->rx_pause ? EF4_FC_RX : 0) |
-		     (pause->tx_pause ? EF4_FC_TX : 0) |
-		     (pause->autoneg ? EF4_FC_AUTO : 0));
+	wanted_fc = ((छोड़ो->rx_छोड़ो ? EF4_FC_RX : 0) |
+		     (छोड़ो->tx_छोड़ो ? EF4_FC_TX : 0) |
+		     (छोड़ो->स्वतःneg ? EF4_FC_AUTO : 0));
 
-	if ((wanted_fc & EF4_FC_TX) && !(wanted_fc & EF4_FC_RX)) {
-		netif_dbg(efx, drv, efx->net_dev,
+	अगर ((wanted_fc & EF4_FC_TX) && !(wanted_fc & EF4_FC_RX)) अणु
+		netअगर_dbg(efx, drv, efx->net_dev,
 			  "Flow control unsupported: tx ON rx OFF\n");
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if ((wanted_fc & EF4_FC_AUTO) && !efx->link_advertising) {
-		netif_dbg(efx, drv, efx->net_dev,
+	अगर ((wanted_fc & EF4_FC_AUTO) && !efx->link_advertising) अणु
+		netअगर_dbg(efx, drv, efx->net_dev,
 			  "Autonegotiation is disabled\n");
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Hook for Falcon bug 11482 workaround */
-	if (efx->type->prepare_enable_fc_tx &&
+	/* Hook क्रम Falcon bug 11482 workaround */
+	अगर (efx->type->prepare_enable_fc_tx &&
 	    (wanted_fc & EF4_FC_TX) && !(efx->wanted_fc & EF4_FC_TX))
 		efx->type->prepare_enable_fc_tx(efx);
 
 	old_adv = efx->link_advertising;
 	old_fc = efx->wanted_fc;
 	ef4_link_set_wanted_fc(efx, wanted_fc);
-	if (efx->link_advertising != old_adv ||
-	    (efx->wanted_fc ^ old_fc) & EF4_FC_AUTO) {
+	अगर (efx->link_advertising != old_adv ||
+	    (efx->wanted_fc ^ old_fc) & EF4_FC_AUTO) अणु
 		rc = efx->phy_op->reconfigure(efx);
-		if (rc) {
-			netif_err(efx, drv, efx->net_dev,
+		अगर (rc) अणु
+			netअगर_err(efx, drv, efx->net_dev,
 				  "Unable to advertise requested flow "
 				  "control setting\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Reconfigure the MAC. The PHY *may* generate a link state change event
-	 * if the user just changed the advertised capabilities, but there's no
-	 * harm doing this twice */
+	 * अगर the user just changed the advertised capabilities, but there's no
+	 * harm करोing this twice */
 	ef4_mac_reconfigure(efx);
 
 out:
 	mutex_unlock(&efx->mac_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void ef4_ethtool_get_pauseparam(struct net_device *net_dev,
-				       struct ethtool_pauseparam *pause)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल व्योम ef4_ethtool_get_छोड़ोparam(काष्ठा net_device *net_dev,
+				       काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
-	pause->rx_pause = !!(efx->wanted_fc & EF4_FC_RX);
-	pause->tx_pause = !!(efx->wanted_fc & EF4_FC_TX);
-	pause->autoneg = !!(efx->wanted_fc & EF4_FC_AUTO);
-}
+	छोड़ो->rx_छोड़ो = !!(efx->wanted_fc & EF4_FC_RX);
+	छोड़ो->tx_छोड़ो = !!(efx->wanted_fc & EF4_FC_TX);
+	छोड़ो->स्वतःneg = !!(efx->wanted_fc & EF4_FC_AUTO);
+पूर्ण
 
-static void ef4_ethtool_get_wol(struct net_device *net_dev,
-				struct ethtool_wolinfo *wol)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	return efx->type->get_wol(efx, wol);
-}
+अटल व्योम ef4_ethtool_get_wol(काष्ठा net_device *net_dev,
+				काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	वापस efx->type->get_wol(efx, wol);
+पूर्ण
 
 
-static int ef4_ethtool_set_wol(struct net_device *net_dev,
-			       struct ethtool_wolinfo *wol)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	return efx->type->set_wol(efx, wol->wolopts);
-}
+अटल पूर्णांक ef4_ethtool_set_wol(काष्ठा net_device *net_dev,
+			       काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	वापस efx->type->set_wol(efx, wol->wolopts);
+पूर्ण
 
-static int ef4_ethtool_reset(struct net_device *net_dev, u32 *flags)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	int rc;
+अटल पूर्णांक ef4_ethtool_reset(काष्ठा net_device *net_dev, u32 *flags)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	पूर्णांक rc;
 
 	rc = efx->type->map_reset_flags(flags);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return ef4_reset(efx, rc);
-}
+	वापस ef4_reset(efx, rc);
+पूर्ण
 
 /* MAC address mask including only I/G bit */
-static const u8 mac_addr_ig_mask[ETH_ALEN] __aligned(2) = {0x01, 0, 0, 0, 0, 0};
+अटल स्थिर u8 mac_addr_ig_mask[ETH_ALEN] __aligned(2) = अणु0x01, 0, 0, 0, 0, 0पूर्ण;
 
-#define IP4_ADDR_FULL_MASK	((__force __be32)~0)
-#define IP_PROTO_FULL_MASK	0xFF
-#define PORT_FULL_MASK		((__force __be16)~0)
-#define ETHER_TYPE_FULL_MASK	((__force __be16)~0)
+#घोषणा IP4_ADDR_FULL_MASK	((__क्रमce __be32)~0)
+#घोषणा IP_PROTO_FULL_MASK	0xFF
+#घोषणा PORT_FULL_MASK		((__क्रमce __be16)~0)
+#घोषणा ETHER_TYPE_FULL_MASK	((__क्रमce __be16)~0)
 
-static inline void ip6_fill_mask(__be32 *mask)
-{
+अटल अंतरभूत व्योम ip6_fill_mask(__be32 *mask)
+अणु
 	mask[0] = mask[1] = mask[2] = mask[3] = ~(__be32)0;
-}
+पूर्ण
 
-static int ef4_ethtool_get_class_rule(struct ef4_nic *efx,
-				      struct ethtool_rx_flow_spec *rule)
-{
-	struct ethtool_tcpip4_spec *ip_entry = &rule->h_u.tcp_ip4_spec;
-	struct ethtool_tcpip4_spec *ip_mask = &rule->m_u.tcp_ip4_spec;
-	struct ethtool_usrip4_spec *uip_entry = &rule->h_u.usr_ip4_spec;
-	struct ethtool_usrip4_spec *uip_mask = &rule->m_u.usr_ip4_spec;
-	struct ethtool_tcpip6_spec *ip6_entry = &rule->h_u.tcp_ip6_spec;
-	struct ethtool_tcpip6_spec *ip6_mask = &rule->m_u.tcp_ip6_spec;
-	struct ethtool_usrip6_spec *uip6_entry = &rule->h_u.usr_ip6_spec;
-	struct ethtool_usrip6_spec *uip6_mask = &rule->m_u.usr_ip6_spec;
-	struct ethhdr *mac_entry = &rule->h_u.ether_spec;
-	struct ethhdr *mac_mask = &rule->m_u.ether_spec;
-	struct ef4_filter_spec spec;
-	int rc;
+अटल पूर्णांक ef4_ethtool_get_class_rule(काष्ठा ef4_nic *efx,
+				      काष्ठा ethtool_rx_flow_spec *rule)
+अणु
+	काष्ठा ethtool_tcpip4_spec *ip_entry = &rule->h_u.tcp_ip4_spec;
+	काष्ठा ethtool_tcpip4_spec *ip_mask = &rule->m_u.tcp_ip4_spec;
+	काष्ठा ethtool_usrip4_spec *uip_entry = &rule->h_u.usr_ip4_spec;
+	काष्ठा ethtool_usrip4_spec *uip_mask = &rule->m_u.usr_ip4_spec;
+	काष्ठा ethtool_tcpip6_spec *ip6_entry = &rule->h_u.tcp_ip6_spec;
+	काष्ठा ethtool_tcpip6_spec *ip6_mask = &rule->m_u.tcp_ip6_spec;
+	काष्ठा ethtool_usrip6_spec *uip6_entry = &rule->h_u.usr_ip6_spec;
+	काष्ठा ethtool_usrip6_spec *uip6_mask = &rule->m_u.usr_ip6_spec;
+	काष्ठा ethhdr *mac_entry = &rule->h_u.ether_spec;
+	काष्ठा ethhdr *mac_mask = &rule->m_u.ether_spec;
+	काष्ठा ef4_filter_spec spec;
+	पूर्णांक rc;
 
 	rc = ef4_filter_get_filter_safe(efx, EF4_FILTER_PRI_MANUAL,
 					rule->location, &spec);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (spec.dmaq_id == EF4_FILTER_RX_DMAQ_ID_DROP)
+	अगर (spec.dmaq_id == EF4_FILTER_RX_DMAQ_ID_DROP)
 		rule->ring_cookie = RX_CLS_FLOW_DISC;
-	else
+	अन्यथा
 		rule->ring_cookie = spec.dmaq_id;
 
-	if ((spec.match_flags & EF4_FILTER_MATCH_ETHER_TYPE) &&
+	अगर ((spec.match_flags & EF4_FILTER_MATCH_ETHER_TYPE) &&
 	    spec.ether_type == htons(ETH_P_IP) &&
 	    (spec.match_flags & EF4_FILTER_MATCH_IP_PROTO) &&
 	    (spec.ip_proto == IPPROTO_TCP || spec.ip_proto == IPPROTO_UDP) &&
@@ -813,26 +814,26 @@ static int ef4_ethtool_get_class_rule(struct ef4_nic *efx,
 	      ~(EF4_FILTER_MATCH_ETHER_TYPE | EF4_FILTER_MATCH_OUTER_VID |
 		EF4_FILTER_MATCH_LOC_HOST | EF4_FILTER_MATCH_REM_HOST |
 		EF4_FILTER_MATCH_IP_PROTO |
-		EF4_FILTER_MATCH_LOC_PORT | EF4_FILTER_MATCH_REM_PORT))) {
+		EF4_FILTER_MATCH_LOC_PORT | EF4_FILTER_MATCH_REM_PORT))) अणु
 		rule->flow_type = ((spec.ip_proto == IPPROTO_TCP) ?
 				   TCP_V4_FLOW : UDP_V4_FLOW);
-		if (spec.match_flags & EF4_FILTER_MATCH_LOC_HOST) {
+		अगर (spec.match_flags & EF4_FILTER_MATCH_LOC_HOST) अणु
 			ip_entry->ip4dst = spec.loc_host[0];
 			ip_mask->ip4dst = IP4_ADDR_FULL_MASK;
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_REM_HOST) {
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_REM_HOST) अणु
 			ip_entry->ip4src = spec.rem_host[0];
 			ip_mask->ip4src = IP4_ADDR_FULL_MASK;
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_LOC_PORT) {
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_LOC_PORT) अणु
 			ip_entry->pdst = spec.loc_port;
 			ip_mask->pdst = PORT_FULL_MASK;
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_REM_PORT) {
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_REM_PORT) अणु
 			ip_entry->psrc = spec.rem_port;
 			ip_mask->psrc = PORT_FULL_MASK;
-		}
-	} else if ((spec.match_flags & EF4_FILTER_MATCH_ETHER_TYPE) &&
+		पूर्ण
+	पूर्ण अन्यथा अगर ((spec.match_flags & EF4_FILTER_MATCH_ETHER_TYPE) &&
 	    spec.ether_type == htons(ETH_P_IPV6) &&
 	    (spec.match_flags & EF4_FILTER_MATCH_IP_PROTO) &&
 	    (spec.ip_proto == IPPROTO_TCP || spec.ip_proto == IPPROTO_UDP) &&
@@ -840,474 +841,474 @@ static int ef4_ethtool_get_class_rule(struct ef4_nic *efx,
 	      ~(EF4_FILTER_MATCH_ETHER_TYPE | EF4_FILTER_MATCH_OUTER_VID |
 		EF4_FILTER_MATCH_LOC_HOST | EF4_FILTER_MATCH_REM_HOST |
 		EF4_FILTER_MATCH_IP_PROTO |
-		EF4_FILTER_MATCH_LOC_PORT | EF4_FILTER_MATCH_REM_PORT))) {
+		EF4_FILTER_MATCH_LOC_PORT | EF4_FILTER_MATCH_REM_PORT))) अणु
 		rule->flow_type = ((spec.ip_proto == IPPROTO_TCP) ?
 				   TCP_V6_FLOW : UDP_V6_FLOW);
-		if (spec.match_flags & EF4_FILTER_MATCH_LOC_HOST) {
-			memcpy(ip6_entry->ip6dst, spec.loc_host,
-			       sizeof(ip6_entry->ip6dst));
+		अगर (spec.match_flags & EF4_FILTER_MATCH_LOC_HOST) अणु
+			स_नकल(ip6_entry->ip6dst, spec.loc_host,
+			       माप(ip6_entry->ip6dst));
 			ip6_fill_mask(ip6_mask->ip6dst);
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_REM_HOST) {
-			memcpy(ip6_entry->ip6src, spec.rem_host,
-			       sizeof(ip6_entry->ip6src));
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_REM_HOST) अणु
+			स_नकल(ip6_entry->ip6src, spec.rem_host,
+			       माप(ip6_entry->ip6src));
 			ip6_fill_mask(ip6_mask->ip6src);
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_LOC_PORT) {
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_LOC_PORT) अणु
 			ip6_entry->pdst = spec.loc_port;
 			ip6_mask->pdst = PORT_FULL_MASK;
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_REM_PORT) {
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_REM_PORT) अणु
 			ip6_entry->psrc = spec.rem_port;
 			ip6_mask->psrc = PORT_FULL_MASK;
-		}
-	} else if (!(spec.match_flags &
+		पूर्ण
+	पूर्ण अन्यथा अगर (!(spec.match_flags &
 		     ~(EF4_FILTER_MATCH_LOC_MAC | EF4_FILTER_MATCH_LOC_MAC_IG |
 		       EF4_FILTER_MATCH_REM_MAC | EF4_FILTER_MATCH_ETHER_TYPE |
-		       EF4_FILTER_MATCH_OUTER_VID))) {
+		       EF4_FILTER_MATCH_OUTER_VID))) अणु
 		rule->flow_type = ETHER_FLOW;
-		if (spec.match_flags &
-		    (EF4_FILTER_MATCH_LOC_MAC | EF4_FILTER_MATCH_LOC_MAC_IG)) {
+		अगर (spec.match_flags &
+		    (EF4_FILTER_MATCH_LOC_MAC | EF4_FILTER_MATCH_LOC_MAC_IG)) अणु
 			ether_addr_copy(mac_entry->h_dest, spec.loc_mac);
-			if (spec.match_flags & EF4_FILTER_MATCH_LOC_MAC)
+			अगर (spec.match_flags & EF4_FILTER_MATCH_LOC_MAC)
 				eth_broadcast_addr(mac_mask->h_dest);
-			else
+			अन्यथा
 				ether_addr_copy(mac_mask->h_dest,
 						mac_addr_ig_mask);
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_REM_MAC) {
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_REM_MAC) अणु
 			ether_addr_copy(mac_entry->h_source, spec.rem_mac);
 			eth_broadcast_addr(mac_mask->h_source);
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_ETHER_TYPE) {
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_ETHER_TYPE) अणु
 			mac_entry->h_proto = spec.ether_type;
 			mac_mask->h_proto = ETHER_TYPE_FULL_MASK;
-		}
-	} else if (spec.match_flags & EF4_FILTER_MATCH_ETHER_TYPE &&
+		पूर्ण
+	पूर्ण अन्यथा अगर (spec.match_flags & EF4_FILTER_MATCH_ETHER_TYPE &&
 		   spec.ether_type == htons(ETH_P_IP) &&
 		   !(spec.match_flags &
 		     ~(EF4_FILTER_MATCH_ETHER_TYPE | EF4_FILTER_MATCH_OUTER_VID |
 		       EF4_FILTER_MATCH_LOC_HOST | EF4_FILTER_MATCH_REM_HOST |
-		       EF4_FILTER_MATCH_IP_PROTO))) {
+		       EF4_FILTER_MATCH_IP_PROTO))) अणु
 		rule->flow_type = IPV4_USER_FLOW;
 		uip_entry->ip_ver = ETH_RX_NFC_IP4;
-		if (spec.match_flags & EF4_FILTER_MATCH_IP_PROTO) {
+		अगर (spec.match_flags & EF4_FILTER_MATCH_IP_PROTO) अणु
 			uip_mask->proto = IP_PROTO_FULL_MASK;
 			uip_entry->proto = spec.ip_proto;
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_LOC_HOST) {
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_LOC_HOST) अणु
 			uip_entry->ip4dst = spec.loc_host[0];
 			uip_mask->ip4dst = IP4_ADDR_FULL_MASK;
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_REM_HOST) {
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_REM_HOST) अणु
 			uip_entry->ip4src = spec.rem_host[0];
 			uip_mask->ip4src = IP4_ADDR_FULL_MASK;
-		}
-	} else if (spec.match_flags & EF4_FILTER_MATCH_ETHER_TYPE &&
+		पूर्ण
+	पूर्ण अन्यथा अगर (spec.match_flags & EF4_FILTER_MATCH_ETHER_TYPE &&
 		   spec.ether_type == htons(ETH_P_IPV6) &&
 		   !(spec.match_flags &
 		     ~(EF4_FILTER_MATCH_ETHER_TYPE | EF4_FILTER_MATCH_OUTER_VID |
 		       EF4_FILTER_MATCH_LOC_HOST | EF4_FILTER_MATCH_REM_HOST |
-		       EF4_FILTER_MATCH_IP_PROTO))) {
+		       EF4_FILTER_MATCH_IP_PROTO))) अणु
 		rule->flow_type = IPV6_USER_FLOW;
-		if (spec.match_flags & EF4_FILTER_MATCH_IP_PROTO) {
+		अगर (spec.match_flags & EF4_FILTER_MATCH_IP_PROTO) अणु
 			uip6_mask->l4_proto = IP_PROTO_FULL_MASK;
 			uip6_entry->l4_proto = spec.ip_proto;
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_LOC_HOST) {
-			memcpy(uip6_entry->ip6dst, spec.loc_host,
-			       sizeof(uip6_entry->ip6dst));
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_LOC_HOST) अणु
+			स_नकल(uip6_entry->ip6dst, spec.loc_host,
+			       माप(uip6_entry->ip6dst));
 			ip6_fill_mask(uip6_mask->ip6dst);
-		}
-		if (spec.match_flags & EF4_FILTER_MATCH_REM_HOST) {
-			memcpy(uip6_entry->ip6src, spec.rem_host,
-			       sizeof(uip6_entry->ip6src));
+		पूर्ण
+		अगर (spec.match_flags & EF4_FILTER_MATCH_REM_HOST) अणु
+			स_नकल(uip6_entry->ip6src, spec.rem_host,
+			       माप(uip6_entry->ip6src));
 			ip6_fill_mask(uip6_mask->ip6src);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* The above should handle all filters that we insert */
 		WARN_ON(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (spec.match_flags & EF4_FILTER_MATCH_OUTER_VID) {
+	अगर (spec.match_flags & EF4_FILTER_MATCH_OUTER_VID) अणु
 		rule->flow_type |= FLOW_EXT;
 		rule->h_ext.vlan_tci = spec.outer_vid;
 		rule->m_ext.vlan_tci = htons(0xfff);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-ef4_ethtool_get_rxnfc(struct net_device *net_dev,
-		      struct ethtool_rxnfc *info, u32 *rule_locs)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल पूर्णांक
+ef4_ethtool_get_rxnfc(काष्ठा net_device *net_dev,
+		      काष्ठा ethtool_rxnfc *info, u32 *rule_locs)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
-	switch (info->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (info->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		info->data = efx->n_rx_channels;
-		return 0;
+		वापस 0;
 
-	case ETHTOOL_GRXFH: {
-		unsigned min_revision = 0;
+	हाल ETHTOOL_GRXFH: अणु
+		अचिन्हित min_revision = 0;
 
 		info->data = 0;
-		switch (info->flow_type) {
-		case TCP_V4_FLOW:
+		चयन (info->flow_type) अणु
+		हाल TCP_V4_FLOW:
 			info->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 			fallthrough;
-		case UDP_V4_FLOW:
-		case SCTP_V4_FLOW:
-		case AH_ESP_V4_FLOW:
-		case IPV4_FLOW:
+		हाल UDP_V4_FLOW:
+		हाल SCTP_V4_FLOW:
+		हाल AH_ESP_V4_FLOW:
+		हाल IPV4_FLOW:
 			info->data |= RXH_IP_SRC | RXH_IP_DST;
 			min_revision = EF4_REV_FALCON_B0;
-			break;
-		default:
-			break;
-		}
-		if (ef4_nic_rev(efx) < min_revision)
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अगर (ef4_nic_rev(efx) < min_revision)
 			info->data = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	case ETHTOOL_GRXCLSRLCNT:
+	हाल ETHTOOL_GRXCLSRLCNT:
 		info->data = ef4_filter_get_rx_id_limit(efx);
-		if (info->data == 0)
-			return -EOPNOTSUPP;
+		अगर (info->data == 0)
+			वापस -EOPNOTSUPP;
 		info->data |= RX_CLS_LOC_SPECIAL;
 		info->rule_cnt =
 			ef4_filter_count_rx_used(efx, EF4_FILTER_PRI_MANUAL);
-		return 0;
+		वापस 0;
 
-	case ETHTOOL_GRXCLSRULE:
-		if (ef4_filter_get_rx_id_limit(efx) == 0)
-			return -EOPNOTSUPP;
-		return ef4_ethtool_get_class_rule(efx, &info->fs);
+	हाल ETHTOOL_GRXCLSRULE:
+		अगर (ef4_filter_get_rx_id_limit(efx) == 0)
+			वापस -EOPNOTSUPP;
+		वापस ef4_ethtool_get_class_rule(efx, &info->fs);
 
-	case ETHTOOL_GRXCLSRLALL: {
+	हाल ETHTOOL_GRXCLSRLALL: अणु
 		s32 rc;
 		info->data = ef4_filter_get_rx_id_limit(efx);
-		if (info->data == 0)
-			return -EOPNOTSUPP;
+		अगर (info->data == 0)
+			वापस -EOPNOTSUPP;
 		rc = ef4_filter_get_rx_ids(efx, EF4_FILTER_PRI_MANUAL,
 					   rule_locs, info->rule_cnt);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 		info->rule_cnt = rc;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static inline bool ip6_mask_is_full(__be32 mask[4])
-{
-	return !~(mask[0] & mask[1] & mask[2] & mask[3]);
-}
+अटल अंतरभूत bool ip6_mask_is_full(__be32 mask[4])
+अणु
+	वापस !~(mask[0] & mask[1] & mask[2] & mask[3]);
+पूर्ण
 
-static inline bool ip6_mask_is_empty(__be32 mask[4])
-{
-	return !(mask[0] | mask[1] | mask[2] | mask[3]);
-}
+अटल अंतरभूत bool ip6_mask_is_empty(__be32 mask[4])
+अणु
+	वापस !(mask[0] | mask[1] | mask[2] | mask[3]);
+पूर्ण
 
-static int ef4_ethtool_set_class_rule(struct ef4_nic *efx,
-				      struct ethtool_rx_flow_spec *rule)
-{
-	struct ethtool_tcpip4_spec *ip_entry = &rule->h_u.tcp_ip4_spec;
-	struct ethtool_tcpip4_spec *ip_mask = &rule->m_u.tcp_ip4_spec;
-	struct ethtool_usrip4_spec *uip_entry = &rule->h_u.usr_ip4_spec;
-	struct ethtool_usrip4_spec *uip_mask = &rule->m_u.usr_ip4_spec;
-	struct ethtool_tcpip6_spec *ip6_entry = &rule->h_u.tcp_ip6_spec;
-	struct ethtool_tcpip6_spec *ip6_mask = &rule->m_u.tcp_ip6_spec;
-	struct ethtool_usrip6_spec *uip6_entry = &rule->h_u.usr_ip6_spec;
-	struct ethtool_usrip6_spec *uip6_mask = &rule->m_u.usr_ip6_spec;
-	struct ethhdr *mac_entry = &rule->h_u.ether_spec;
-	struct ethhdr *mac_mask = &rule->m_u.ether_spec;
-	struct ef4_filter_spec spec;
-	int rc;
+अटल पूर्णांक ef4_ethtool_set_class_rule(काष्ठा ef4_nic *efx,
+				      काष्ठा ethtool_rx_flow_spec *rule)
+अणु
+	काष्ठा ethtool_tcpip4_spec *ip_entry = &rule->h_u.tcp_ip4_spec;
+	काष्ठा ethtool_tcpip4_spec *ip_mask = &rule->m_u.tcp_ip4_spec;
+	काष्ठा ethtool_usrip4_spec *uip_entry = &rule->h_u.usr_ip4_spec;
+	काष्ठा ethtool_usrip4_spec *uip_mask = &rule->m_u.usr_ip4_spec;
+	काष्ठा ethtool_tcpip6_spec *ip6_entry = &rule->h_u.tcp_ip6_spec;
+	काष्ठा ethtool_tcpip6_spec *ip6_mask = &rule->m_u.tcp_ip6_spec;
+	काष्ठा ethtool_usrip6_spec *uip6_entry = &rule->h_u.usr_ip6_spec;
+	काष्ठा ethtool_usrip6_spec *uip6_mask = &rule->m_u.usr_ip6_spec;
+	काष्ठा ethhdr *mac_entry = &rule->h_u.ether_spec;
+	काष्ठा ethhdr *mac_mask = &rule->m_u.ether_spec;
+	काष्ठा ef4_filter_spec spec;
+	पूर्णांक rc;
 
 	/* Check that user wants us to choose the location */
-	if (rule->location != RX_CLS_LOC_ANY)
-		return -EINVAL;
+	अगर (rule->location != RX_CLS_LOC_ANY)
+		वापस -EINVAL;
 
 	/* Range-check ring_cookie */
-	if (rule->ring_cookie >= efx->n_rx_channels &&
+	अगर (rule->ring_cookie >= efx->n_rx_channels &&
 	    rule->ring_cookie != RX_CLS_FLOW_DISC)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Check for unsupported extensions */
-	if ((rule->flow_type & FLOW_EXT) &&
+	/* Check क्रम unsupported extensions */
+	अगर ((rule->flow_type & FLOW_EXT) &&
 	    (rule->m_ext.vlan_etype || rule->m_ext.data[0] ||
 	     rule->m_ext.data[1]))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ef4_filter_init_rx(&spec, EF4_FILTER_PRI_MANUAL,
 			   efx->rx_scatter ? EF4_FILTER_FLAG_RX_SCATTER : 0,
 			   (rule->ring_cookie == RX_CLS_FLOW_DISC) ?
 			   EF4_FILTER_RX_DMAQ_ID_DROP : rule->ring_cookie);
 
-	switch (rule->flow_type & ~FLOW_EXT) {
-	case TCP_V4_FLOW:
-	case UDP_V4_FLOW:
+	चयन (rule->flow_type & ~FLOW_EXT) अणु
+	हाल TCP_V4_FLOW:
+	हाल UDP_V4_FLOW:
 		spec.match_flags = (EF4_FILTER_MATCH_ETHER_TYPE |
 				    EF4_FILTER_MATCH_IP_PROTO);
 		spec.ether_type = htons(ETH_P_IP);
 		spec.ip_proto = ((rule->flow_type & ~FLOW_EXT) == TCP_V4_FLOW ?
 				 IPPROTO_TCP : IPPROTO_UDP);
-		if (ip_mask->ip4dst) {
-			if (ip_mask->ip4dst != IP4_ADDR_FULL_MASK)
-				return -EINVAL;
+		अगर (ip_mask->ip4dst) अणु
+			अगर (ip_mask->ip4dst != IP4_ADDR_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_LOC_HOST;
 			spec.loc_host[0] = ip_entry->ip4dst;
-		}
-		if (ip_mask->ip4src) {
-			if (ip_mask->ip4src != IP4_ADDR_FULL_MASK)
-				return -EINVAL;
+		पूर्ण
+		अगर (ip_mask->ip4src) अणु
+			अगर (ip_mask->ip4src != IP4_ADDR_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_REM_HOST;
 			spec.rem_host[0] = ip_entry->ip4src;
-		}
-		if (ip_mask->pdst) {
-			if (ip_mask->pdst != PORT_FULL_MASK)
-				return -EINVAL;
+		पूर्ण
+		अगर (ip_mask->pdst) अणु
+			अगर (ip_mask->pdst != PORT_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_LOC_PORT;
 			spec.loc_port = ip_entry->pdst;
-		}
-		if (ip_mask->psrc) {
-			if (ip_mask->psrc != PORT_FULL_MASK)
-				return -EINVAL;
+		पूर्ण
+		अगर (ip_mask->psrc) अणु
+			अगर (ip_mask->psrc != PORT_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_REM_PORT;
 			spec.rem_port = ip_entry->psrc;
-		}
-		if (ip_mask->tos)
-			return -EINVAL;
-		break;
+		पूर्ण
+		अगर (ip_mask->tos)
+			वापस -EINVAL;
+		अवरोध;
 
-	case TCP_V6_FLOW:
-	case UDP_V6_FLOW:
+	हाल TCP_V6_FLOW:
+	हाल UDP_V6_FLOW:
 		spec.match_flags = (EF4_FILTER_MATCH_ETHER_TYPE |
 				    EF4_FILTER_MATCH_IP_PROTO);
 		spec.ether_type = htons(ETH_P_IPV6);
 		spec.ip_proto = ((rule->flow_type & ~FLOW_EXT) == TCP_V6_FLOW ?
 				 IPPROTO_TCP : IPPROTO_UDP);
-		if (!ip6_mask_is_empty(ip6_mask->ip6dst)) {
-			if (!ip6_mask_is_full(ip6_mask->ip6dst))
-				return -EINVAL;
+		अगर (!ip6_mask_is_empty(ip6_mask->ip6dst)) अणु
+			अगर (!ip6_mask_is_full(ip6_mask->ip6dst))
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_LOC_HOST;
-			memcpy(spec.loc_host, ip6_entry->ip6dst, sizeof(spec.loc_host));
-		}
-		if (!ip6_mask_is_empty(ip6_mask->ip6src)) {
-			if (!ip6_mask_is_full(ip6_mask->ip6src))
-				return -EINVAL;
+			स_नकल(spec.loc_host, ip6_entry->ip6dst, माप(spec.loc_host));
+		पूर्ण
+		अगर (!ip6_mask_is_empty(ip6_mask->ip6src)) अणु
+			अगर (!ip6_mask_is_full(ip6_mask->ip6src))
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_REM_HOST;
-			memcpy(spec.rem_host, ip6_entry->ip6src, sizeof(spec.rem_host));
-		}
-		if (ip6_mask->pdst) {
-			if (ip6_mask->pdst != PORT_FULL_MASK)
-				return -EINVAL;
+			स_नकल(spec.rem_host, ip6_entry->ip6src, माप(spec.rem_host));
+		पूर्ण
+		अगर (ip6_mask->pdst) अणु
+			अगर (ip6_mask->pdst != PORT_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_LOC_PORT;
 			spec.loc_port = ip6_entry->pdst;
-		}
-		if (ip6_mask->psrc) {
-			if (ip6_mask->psrc != PORT_FULL_MASK)
-				return -EINVAL;
+		पूर्ण
+		अगर (ip6_mask->psrc) अणु
+			अगर (ip6_mask->psrc != PORT_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_REM_PORT;
 			spec.rem_port = ip6_entry->psrc;
-		}
-		if (ip6_mask->tclass)
-			return -EINVAL;
-		break;
+		पूर्ण
+		अगर (ip6_mask->tclass)
+			वापस -EINVAL;
+		अवरोध;
 
-	case IPV4_USER_FLOW:
-		if (uip_mask->l4_4_bytes || uip_mask->tos || uip_mask->ip_ver ||
+	हाल IPV4_USER_FLOW:
+		अगर (uip_mask->l4_4_bytes || uip_mask->tos || uip_mask->ip_ver ||
 		    uip_entry->ip_ver != ETH_RX_NFC_IP4)
-			return -EINVAL;
+			वापस -EINVAL;
 		spec.match_flags = EF4_FILTER_MATCH_ETHER_TYPE;
 		spec.ether_type = htons(ETH_P_IP);
-		if (uip_mask->ip4dst) {
-			if (uip_mask->ip4dst != IP4_ADDR_FULL_MASK)
-				return -EINVAL;
+		अगर (uip_mask->ip4dst) अणु
+			अगर (uip_mask->ip4dst != IP4_ADDR_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_LOC_HOST;
 			spec.loc_host[0] = uip_entry->ip4dst;
-		}
-		if (uip_mask->ip4src) {
-			if (uip_mask->ip4src != IP4_ADDR_FULL_MASK)
-				return -EINVAL;
+		पूर्ण
+		अगर (uip_mask->ip4src) अणु
+			अगर (uip_mask->ip4src != IP4_ADDR_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_REM_HOST;
 			spec.rem_host[0] = uip_entry->ip4src;
-		}
-		if (uip_mask->proto) {
-			if (uip_mask->proto != IP_PROTO_FULL_MASK)
-				return -EINVAL;
+		पूर्ण
+		अगर (uip_mask->proto) अणु
+			अगर (uip_mask->proto != IP_PROTO_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_IP_PROTO;
 			spec.ip_proto = uip_entry->proto;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case IPV6_USER_FLOW:
-		if (uip6_mask->l4_4_bytes || uip6_mask->tclass)
-			return -EINVAL;
+	हाल IPV6_USER_FLOW:
+		अगर (uip6_mask->l4_4_bytes || uip6_mask->tclass)
+			वापस -EINVAL;
 		spec.match_flags = EF4_FILTER_MATCH_ETHER_TYPE;
 		spec.ether_type = htons(ETH_P_IPV6);
-		if (!ip6_mask_is_empty(uip6_mask->ip6dst)) {
-			if (!ip6_mask_is_full(uip6_mask->ip6dst))
-				return -EINVAL;
+		अगर (!ip6_mask_is_empty(uip6_mask->ip6dst)) अणु
+			अगर (!ip6_mask_is_full(uip6_mask->ip6dst))
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_LOC_HOST;
-			memcpy(spec.loc_host, uip6_entry->ip6dst, sizeof(spec.loc_host));
-		}
-		if (!ip6_mask_is_empty(uip6_mask->ip6src)) {
-			if (!ip6_mask_is_full(uip6_mask->ip6src))
-				return -EINVAL;
+			स_नकल(spec.loc_host, uip6_entry->ip6dst, माप(spec.loc_host));
+		पूर्ण
+		अगर (!ip6_mask_is_empty(uip6_mask->ip6src)) अणु
+			अगर (!ip6_mask_is_full(uip6_mask->ip6src))
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_REM_HOST;
-			memcpy(spec.rem_host, uip6_entry->ip6src, sizeof(spec.rem_host));
-		}
-		if (uip6_mask->l4_proto) {
-			if (uip6_mask->l4_proto != IP_PROTO_FULL_MASK)
-				return -EINVAL;
+			स_नकल(spec.rem_host, uip6_entry->ip6src, माप(spec.rem_host));
+		पूर्ण
+		अगर (uip6_mask->l4_proto) अणु
+			अगर (uip6_mask->l4_proto != IP_PROTO_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_IP_PROTO;
 			spec.ip_proto = uip6_entry->l4_proto;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case ETHER_FLOW:
-		if (!is_zero_ether_addr(mac_mask->h_dest)) {
-			if (ether_addr_equal(mac_mask->h_dest,
+	हाल ETHER_FLOW:
+		अगर (!is_zero_ether_addr(mac_mask->h_dest)) अणु
+			अगर (ether_addr_equal(mac_mask->h_dest,
 					     mac_addr_ig_mask))
 				spec.match_flags |= EF4_FILTER_MATCH_LOC_MAC_IG;
-			else if (is_broadcast_ether_addr(mac_mask->h_dest))
+			अन्यथा अगर (is_broadcast_ether_addr(mac_mask->h_dest))
 				spec.match_flags |= EF4_FILTER_MATCH_LOC_MAC;
-			else
-				return -EINVAL;
+			अन्यथा
+				वापस -EINVAL;
 			ether_addr_copy(spec.loc_mac, mac_entry->h_dest);
-		}
-		if (!is_zero_ether_addr(mac_mask->h_source)) {
-			if (!is_broadcast_ether_addr(mac_mask->h_source))
-				return -EINVAL;
+		पूर्ण
+		अगर (!is_zero_ether_addr(mac_mask->h_source)) अणु
+			अगर (!is_broadcast_ether_addr(mac_mask->h_source))
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_REM_MAC;
 			ether_addr_copy(spec.rem_mac, mac_entry->h_source);
-		}
-		if (mac_mask->h_proto) {
-			if (mac_mask->h_proto != ETHER_TYPE_FULL_MASK)
-				return -EINVAL;
+		पूर्ण
+		अगर (mac_mask->h_proto) अणु
+			अगर (mac_mask->h_proto != ETHER_TYPE_FULL_MASK)
+				वापस -EINVAL;
 			spec.match_flags |= EF4_FILTER_MATCH_ETHER_TYPE;
 			spec.ether_type = mac_entry->h_proto;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((rule->flow_type & FLOW_EXT) && rule->m_ext.vlan_tci) {
-		if (rule->m_ext.vlan_tci != htons(0xfff))
-			return -EINVAL;
+	अगर ((rule->flow_type & FLOW_EXT) && rule->m_ext.vlan_tci) अणु
+		अगर (rule->m_ext.vlan_tci != htons(0xfff))
+			वापस -EINVAL;
 		spec.match_flags |= EF4_FILTER_MATCH_OUTER_VID;
 		spec.outer_vid = rule->h_ext.vlan_tci;
-	}
+	पूर्ण
 
 	rc = ef4_filter_insert_filter(efx, &spec, true);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rule->location = rc;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ef4_ethtool_set_rxnfc(struct net_device *net_dev,
-				 struct ethtool_rxnfc *info)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल पूर्णांक ef4_ethtool_set_rxnfc(काष्ठा net_device *net_dev,
+				 काष्ठा ethtool_rxnfc *info)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
-	if (ef4_filter_get_rx_id_limit(efx) == 0)
-		return -EOPNOTSUPP;
+	अगर (ef4_filter_get_rx_id_limit(efx) == 0)
+		वापस -EOPNOTSUPP;
 
-	switch (info->cmd) {
-	case ETHTOOL_SRXCLSRLINS:
-		return ef4_ethtool_set_class_rule(efx, &info->fs);
+	चयन (info->cmd) अणु
+	हाल ETHTOOL_SRXCLSRLINS:
+		वापस ef4_ethtool_set_class_rule(efx, &info->fs);
 
-	case ETHTOOL_SRXCLSRLDEL:
-		return ef4_filter_remove_id_safe(efx, EF4_FILTER_PRI_MANUAL,
+	हाल ETHTOOL_SRXCLSRLDEL:
+		वापस ef4_filter_हटाओ_id_safe(efx, EF4_FILTER_PRI_MANUAL,
 						 info->fs.location);
 
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static u32 ef4_ethtool_get_rxfh_indir_size(struct net_device *net_dev)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल u32 ef4_ethtool_get_rxfh_indir_size(काष्ठा net_device *net_dev)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
-	return ((ef4_nic_rev(efx) < EF4_REV_FALCON_B0 ||
+	वापस ((ef4_nic_rev(efx) < EF4_REV_FALCON_B0 ||
 		 efx->n_rx_channels == 1) ?
 		0 : ARRAY_SIZE(efx->rx_indir_table));
-}
+पूर्ण
 
-static int ef4_ethtool_get_rxfh(struct net_device *net_dev, u32 *indir, u8 *key,
+अटल पूर्णांक ef4_ethtool_get_rxfh(काष्ठा net_device *net_dev, u32 *indir, u8 *key,
 				u8 *hfunc)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
-	if (indir)
-		memcpy(indir, efx->rx_indir_table, sizeof(efx->rx_indir_table));
-	return 0;
-}
+	अगर (indir)
+		स_नकल(indir, efx->rx_indir_table, माप(efx->rx_indir_table));
+	वापस 0;
+पूर्ण
 
-static int ef4_ethtool_set_rxfh(struct net_device *net_dev, const u32 *indir,
-				const u8 *key, const u8 hfunc)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
+अटल पूर्णांक ef4_ethtool_set_rxfh(काष्ठा net_device *net_dev, स्थिर u32 *indir,
+				स्थिर u8 *key, स्थिर u8 hfunc)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
 
-	/* We do not allow change in unsupported parameters */
-	if (key ||
+	/* We करो not allow change in unsupported parameters */
+	अगर (key ||
 	    (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP))
-		return -EOPNOTSUPP;
-	if (!indir)
-		return 0;
+		वापस -EOPNOTSUPP;
+	अगर (!indir)
+		वापस 0;
 
-	return efx->type->rx_push_rss_config(efx, true, indir);
-}
+	वापस efx->type->rx_push_rss_config(efx, true, indir);
+पूर्ण
 
-static int ef4_ethtool_get_module_eeprom(struct net_device *net_dev,
-					 struct ethtool_eeprom *ee,
+अटल पूर्णांक ef4_ethtool_get_module_eeprom(काष्ठा net_device *net_dev,
+					 काष्ठा ethtool_eeprom *ee,
 					 u8 *data)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	int ret;
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	पूर्णांक ret;
 
-	if (!efx->phy_op || !efx->phy_op->get_module_eeprom)
-		return -EOPNOTSUPP;
+	अगर (!efx->phy_op || !efx->phy_op->get_module_eeprom)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&efx->mac_lock);
 	ret = efx->phy_op->get_module_eeprom(efx, ee, data);
 	mutex_unlock(&efx->mac_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ef4_ethtool_get_module_info(struct net_device *net_dev,
-				       struct ethtool_modinfo *modinfo)
-{
-	struct ef4_nic *efx = netdev_priv(net_dev);
-	int ret;
+अटल पूर्णांक ef4_ethtool_get_module_info(काष्ठा net_device *net_dev,
+				       काष्ठा ethtool_modinfo *modinfo)
+अणु
+	काष्ठा ef4_nic *efx = netdev_priv(net_dev);
+	पूर्णांक ret;
 
-	if (!efx->phy_op || !efx->phy_op->get_module_info)
-		return -EOPNOTSUPP;
+	अगर (!efx->phy_op || !efx->phy_op->get_module_info)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&efx->mac_lock);
 	ret = efx->phy_op->get_module_info(efx, modinfo);
 	mutex_unlock(&efx->mac_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct ethtool_ops ef4_ethtool_ops = {
+स्थिर काष्ठा ethtool_ops ef4_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_USECS_IRQ |
 				     ETHTOOL_COALESCE_USE_ADAPTIVE_RX,
@@ -1322,8 +1323,8 @@ const struct ethtool_ops ef4_ethtool_ops = {
 	.set_coalesce		= ef4_ethtool_set_coalesce,
 	.get_ringparam		= ef4_ethtool_get_ringparam,
 	.set_ringparam		= ef4_ethtool_set_ringparam,
-	.get_pauseparam         = ef4_ethtool_get_pauseparam,
-	.set_pauseparam         = ef4_ethtool_set_pauseparam,
+	.get_छोड़ोparam         = ef4_ethtool_get_छोड़ोparam,
+	.set_छोड़ोparam         = ef4_ethtool_set_छोड़ोparam,
 	.get_sset_count		= ef4_ethtool_get_sset_count,
 	.self_test		= ef4_ethtool_self_test,
 	.get_strings		= ef4_ethtool_get_strings,
@@ -1341,4 +1342,4 @@ const struct ethtool_ops ef4_ethtool_ops = {
 	.get_module_eeprom	= ef4_ethtool_get_module_eeprom,
 	.get_link_ksettings	= ef4_ethtool_get_link_ksettings,
 	.set_link_ksettings	= ef4_ethtool_set_link_ksettings,
-};
+पूर्ण;

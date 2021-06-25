@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef DDK750_MODE_H__
-#define DDK750_MODE_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित DDK750_MODE_H__
+#घोषणा DDK750_MODE_H__
 
-#include "ddk750_chip.h"
+#समावेश "ddk750_chip.h"
 
-enum spolarity {
+क्रमागत spolarity अणु
 	POS = 0, /* positive */
 	NEG, /* negative */
-};
+पूर्ण;
 
-struct mode_parameter {
+काष्ठा mode_parameter अणु
 	/* Horizontal timing. */
-	unsigned long horizontal_total;
-	unsigned long horizontal_display_end;
-	unsigned long horizontal_sync_start;
-	unsigned long horizontal_sync_width;
-	enum spolarity horizontal_sync_polarity;
+	अचिन्हित दीर्घ horizontal_total;
+	अचिन्हित दीर्घ horizontal_display_end;
+	अचिन्हित दीर्घ horizontal_sync_start;
+	अचिन्हित दीर्घ horizontal_sync_width;
+	क्रमागत spolarity horizontal_sync_polarity;
 
 	/* Vertical timing. */
-	unsigned long vertical_total;
-	unsigned long vertical_display_end;
-	unsigned long vertical_sync_start;
-	unsigned long vertical_sync_height;
-	enum spolarity vertical_sync_polarity;
+	अचिन्हित दीर्घ vertical_total;
+	अचिन्हित दीर्घ vertical_display_end;
+	अचिन्हित दीर्घ vertical_sync_start;
+	अचिन्हित दीर्घ vertical_sync_height;
+	क्रमागत spolarity vertical_sync_polarity;
 
 	/* Refresh timing. */
-	unsigned long pixel_clock;
-	unsigned long horizontal_frequency;
-	unsigned long vertical_frequency;
+	अचिन्हित दीर्घ pixel_घड़ी;
+	अचिन्हित दीर्घ horizontal_frequency;
+	अचिन्हित दीर्घ vertical_frequency;
 
-	/* Clock Phase. This clock phase only applies to Panel. */
-	enum spolarity clock_phase_polarity;
-};
+	/* Clock Phase. This घड़ी phase only applies to Panel. */
+	क्रमागत spolarity घड़ी_phase_polarity;
+पूर्ण;
 
-int ddk750_setModeTiming(struct mode_parameter *parm, enum clock_type clock);
-#endif
+पूर्णांक ddk750_setModeTiming(काष्ठा mode_parameter *parm, क्रमागत घड़ी_प्रकारype घड़ी);
+#पूर्ण_अगर

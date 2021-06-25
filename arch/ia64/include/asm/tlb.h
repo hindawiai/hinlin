@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_TLB_H
-#define _ASM_IA64_TLB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_TLB_H
+#घोषणा _ASM_IA64_TLB_H
 /*
- * Based on <asm-generic/tlb.h>.
+ * Based on <यंत्र-generic/tlb.h>.
  *
  * Copyright (C) 2002-2003 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  */
 /*
- * Removing a translation from a page table (including TLB-shootdown) is a four-step
+ * Removing a translation from a page table (including TLB-shootकरोwn) is a four-step
  * procedure:
  *
- *	(1) Flush (virtual) caches --- ensures virtual memory is coherent with kernel memory
+ *	(1) Flush (भव) caches --- ensures भव memory is coherent with kernel memory
  *	    (this is a no-op on ia64).
  *	(2) Clear the relevant portions of the page-table
  *	(3) Flush the TLBs --- ensures that stale content is gone from CPU TLBs
- *	(4) Release the pages that were freed up in step (2).
+ *	(4) Release the pages that were मुक्तd up in step (2).
  *
- * Note that the ordering of these steps is crucial to avoid races on MP machines.
+ * Note that the ordering of these steps is crucial to aव्योम races on MP machines.
  *
- * The Linux kernel defines several platform-specific hooks for TLB-shootdown.  When
- * unmapping a portion of the virtual address space, these hooks are called according to
- * the following template:
+ * The Linux kernel defines several platक्रमm-specअगरic hooks क्रम TLB-shootकरोwn.  When
+ * unmapping a portion of the भव address space, these hooks are called according to
+ * the following ढाँचा:
  *
- *	tlb <- tlb_gather_mmu(mm);			// start unmap for address space MM
- *	{
- *	  for each vma that needs a shootdown do {
+ *	tlb <- tlb_gather_mmu(mm);			// start unmap क्रम address space MM
+ *	अणु
+ *	  क्रम each vma that needs a shootकरोwn करो अणु
  *	    tlb_start_vma(tlb, vma);
- *	      for each page-table-entry PTE that needs to be removed do {
- *		tlb_remove_tlb_entry(tlb, pte, address);
- *		if (pte refers to a normal page) {
- *		  tlb_remove_page(tlb, page);
- *		}
- *	      }
+ *	      क्रम each page-table-entry PTE that needs to be हटाओd करो अणु
+ *		tlb_हटाओ_tlb_entry(tlb, pte, address);
+ *		अगर (pte refers to a normal page) अणु
+ *		  tlb_हटाओ_page(tlb, page);
+ *		पूर्ण
+ *	      पूर्ण
  *	    tlb_end_vma(tlb, vma);
- *	  }
- *	}
- *	tlb_finish_mmu(tlb);				// finish unmap for address space MM
+ *	  पूर्ण
+ *	पूर्ण
+ *	tlb_finish_mmu(tlb);				// finish unmap क्रम address space MM
  */
-#include <linux/mm.h>
-#include <linux/pagemap.h>
-#include <linux/swap.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/swap.h>
 
-#include <asm/processor.h>
-#include <asm/tlbflush.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#include <asm-generic/tlb.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-#endif /* _ASM_IA64_TLB_H */
+#पूर्ण_अगर /* _ASM_IA64_TLB_H */

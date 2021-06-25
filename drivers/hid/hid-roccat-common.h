@@ -1,94 +1,95 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __HID_ROCCAT_COMMON_H
-#define __HID_ROCCAT_COMMON_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __HID_ROCCAT_COMMON_H
+#घोषणा __HID_ROCCAT_COMMON_H
 
 /*
- * Copyright (c) 2011 Stefan Achatz <erazor_de@users.sourceforge.net>
+ * Copyright (c) 2011 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
  */
 
 /*
  */
 
-#include <linux/usb.h>
-#include <linux/types.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/types.h>
 
-enum roccat_common2_commands {
+क्रमागत roccat_common2_commands अणु
 	ROCCAT_COMMON_COMMAND_CONTROL = 0x4,
-};
+पूर्ण;
 
-struct roccat_common2_control {
-	uint8_t command;
-	uint8_t value;
-	uint8_t request; /* always 0 on requesting write check */
-} __packed;
+काष्ठा roccat_common2_control अणु
+	uपूर्णांक8_t command;
+	uपूर्णांक8_t value;
+	uपूर्णांक8_t request; /* always 0 on requesting ग_लिखो check */
+पूर्ण __packed;
 
-int roccat_common2_receive(struct usb_device *usb_dev, uint report_id,
-		void *data, uint size);
-int roccat_common2_send(struct usb_device *usb_dev, uint report_id,
-		void const *data, uint size);
-int roccat_common2_send_with_status(struct usb_device *usb_dev,
-		uint command, void const *buf, uint size);
+पूर्णांक roccat_common2_receive(काष्ठा usb_device *usb_dev, uपूर्णांक report_id,
+		व्योम *data, uपूर्णांक size);
+पूर्णांक roccat_common2_send(काष्ठा usb_device *usb_dev, uपूर्णांक report_id,
+		व्योम स्थिर *data, uपूर्णांक size);
+पूर्णांक roccat_common2_send_with_status(काष्ठा usb_device *usb_dev,
+		uपूर्णांक command, व्योम स्थिर *buf, uपूर्णांक size);
 
-struct roccat_common2_device {
-	int roccat_claimed;
-	int chrdev_minor;
-	struct mutex lock;
-};
+काष्ठा roccat_common2_device अणु
+	पूर्णांक roccat_claimed;
+	पूर्णांक chrdev_minor;
+	काष्ठा mutex lock;
+पूर्ण;
 
-int roccat_common2_device_init_struct(struct usb_device *usb_dev,
-		struct roccat_common2_device *dev);
-ssize_t roccat_common2_sysfs_read(struct file *fp, struct kobject *kobj,
-		char *buf, loff_t off, size_t count,
-		size_t real_size, uint command);
-ssize_t roccat_common2_sysfs_write(struct file *fp, struct kobject *kobj,
-		void const *buf, loff_t off, size_t count,
-		size_t real_size, uint command);
+पूर्णांक roccat_common2_device_init_काष्ठा(काष्ठा usb_device *usb_dev,
+		काष्ठा roccat_common2_device *dev);
+sमाप_प्रकार roccat_common2_sysfs_पढ़ो(काष्ठा file *fp, काष्ठा kobject *kobj,
+		अक्षर *buf, loff_t off, माप_प्रकार count,
+		माप_प्रकार real_size, uपूर्णांक command);
+sमाप_प्रकार roccat_common2_sysfs_ग_लिखो(काष्ठा file *fp, काष्ठा kobject *kobj,
+		व्योम स्थिर *buf, loff_t off, माप_प्रकार count,
+		माप_प्रकार real_size, uपूर्णांक command);
 
-#define ROCCAT_COMMON2_SYSFS_W(thingy, COMMAND, SIZE) \
-static ssize_t roccat_common2_sysfs_write_ ## thingy(struct file *fp, \
-		struct kobject *kobj, struct bin_attribute *attr, char *buf, \
-		loff_t off, size_t count) \
-{ \
-	return roccat_common2_sysfs_write(fp, kobj, buf, off, count, \
+#घोषणा ROCCAT_COMMON2_SYSFS_W(thingy, COMMAND, SIZE) \
+अटल sमाप_प्रकार roccat_common2_sysfs_ग_लिखो_ ## thingy(काष्ठा file *fp, \
+		काष्ठा kobject *kobj, काष्ठा bin_attribute *attr, अक्षर *buf, \
+		loff_t off, माप_प्रकार count) \
+अणु \
+	वापस roccat_common2_sysfs_ग_लिखो(fp, kobj, buf, off, count, \
 			SIZE, COMMAND); \
-}
+पूर्ण
 
-#define ROCCAT_COMMON2_SYSFS_R(thingy, COMMAND, SIZE) \
-static ssize_t roccat_common2_sysfs_read_ ## thingy(struct file *fp, \
-		struct kobject *kobj, struct bin_attribute *attr, char *buf, \
-		loff_t off, size_t count) \
-{ \
-	return roccat_common2_sysfs_read(fp, kobj, buf, off, count, \
+#घोषणा ROCCAT_COMMON2_SYSFS_R(thingy, COMMAND, SIZE) \
+अटल sमाप_प्रकार roccat_common2_sysfs_पढ़ो_ ## thingy(काष्ठा file *fp, \
+		काष्ठा kobject *kobj, काष्ठा bin_attribute *attr, अक्षर *buf, \
+		loff_t off, माप_प्रकार count) \
+अणु \
+	वापस roccat_common2_sysfs_पढ़ो(fp, kobj, buf, off, count, \
 			SIZE, COMMAND); \
-}
+पूर्ण
 
-#define ROCCAT_COMMON2_SYSFS_RW(thingy, COMMAND, SIZE) \
+#घोषणा ROCCAT_COMMON2_SYSFS_RW(thingy, COMMAND, SIZE) \
 ROCCAT_COMMON2_SYSFS_W(thingy, COMMAND, SIZE) \
 ROCCAT_COMMON2_SYSFS_R(thingy, COMMAND, SIZE)
 
-#define ROCCAT_COMMON2_BIN_ATTRIBUTE_RW(thingy, COMMAND, SIZE) \
+#घोषणा ROCCAT_COMMON2_BIN_ATTRIBUTE_RW(thingy, COMMAND, SIZE) \
 ROCCAT_COMMON2_SYSFS_RW(thingy, COMMAND, SIZE); \
-static struct bin_attribute bin_attr_ ## thingy = { \
-	.attr = { .name = #thingy, .mode = 0660 }, \
+अटल काष्ठा bin_attribute bin_attr_ ## thingy = अणु \
+	.attr = अणु .name = #thingy, .mode = 0660 पूर्ण, \
 	.size = SIZE, \
-	.read = roccat_common2_sysfs_read_ ## thingy, \
-	.write = roccat_common2_sysfs_write_ ## thingy \
-}
+	.पढ़ो = roccat_common2_sysfs_पढ़ो_ ## thingy, \
+	.ग_लिखो = roccat_common2_sysfs_ग_लिखो_ ## thingy \
+पूर्ण
 
-#define ROCCAT_COMMON2_BIN_ATTRIBUTE_R(thingy, COMMAND, SIZE) \
+#घोषणा ROCCAT_COMMON2_BIN_ATTRIBUTE_R(thingy, COMMAND, SIZE) \
 ROCCAT_COMMON2_SYSFS_R(thingy, COMMAND, SIZE); \
-static struct bin_attribute bin_attr_ ## thingy = { \
-	.attr = { .name = #thingy, .mode = 0440 }, \
+अटल काष्ठा bin_attribute bin_attr_ ## thingy = अणु \
+	.attr = अणु .name = #thingy, .mode = 0440 पूर्ण, \
 	.size = SIZE, \
-	.read = roccat_common2_sysfs_read_ ## thingy, \
-}
+	.पढ़ो = roccat_common2_sysfs_पढ़ो_ ## thingy, \
+पूर्ण
 
-#define ROCCAT_COMMON2_BIN_ATTRIBUTE_W(thingy, COMMAND, SIZE) \
+#घोषणा ROCCAT_COMMON2_BIN_ATTRIBUTE_W(thingy, COMMAND, SIZE) \
 ROCCAT_COMMON2_SYSFS_W(thingy, COMMAND, SIZE); \
-static struct bin_attribute bin_attr_ ## thingy = { \
-	.attr = { .name = #thingy, .mode = 0220 }, \
+अटल काष्ठा bin_attribute bin_attr_ ## thingy = अणु \
+	.attr = अणु .name = #thingy, .mode = 0220 पूर्ण, \
 	.size = SIZE, \
-	.write = roccat_common2_sysfs_write_ ## thingy \
-}
+	.ग_लिखो = roccat_common2_sysfs_ग_लिखो_ ## thingy \
+पूर्ण
 
-#endif
+#पूर्ण_अगर

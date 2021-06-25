@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,20 +22,20 @@
  *
  */
 
-#ifndef PP_PSM_H
-#define PP_PSM_H
+#अगर_अघोषित PP_PSM_H
+#घोषणा PP_PSM_H
 
-#include "hwmgr.h"
+#समावेश "hwmgr.h"
 
-int psm_init_power_state_table(struct pp_hwmgr *hwmgr);
-int psm_fini_power_state_table(struct pp_hwmgr *hwmgr);
-int psm_set_boot_states(struct pp_hwmgr *hwmgr);
-int psm_set_performance_states(struct pp_hwmgr *hwmgr);
-int psm_set_user_performance_state(struct pp_hwmgr *hwmgr,
-					enum PP_StateUILabel label_id,
-					struct pp_power_state **state);
-int psm_adjust_power_state_dynamic(struct pp_hwmgr *hwmgr,
+पूर्णांक psm_init_घातer_state_table(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक psm_fini_घातer_state_table(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक psm_set_boot_states(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक psm_set_perक्रमmance_states(काष्ठा pp_hwmgr *hwmgr);
+पूर्णांक psm_set_user_perक्रमmance_state(काष्ठा pp_hwmgr *hwmgr,
+					क्रमागत PP_StateUILabel label_id,
+					काष्ठा pp_घातer_state **state);
+पूर्णांक psm_adjust_घातer_state_dynamic(काष्ठा pp_hwmgr *hwmgr,
 				bool skip_display_settings,
-				struct pp_power_state *new_ps);
+				काष्ठा pp_घातer_state *new_ps);
 
-#endif
+#पूर्ण_अगर

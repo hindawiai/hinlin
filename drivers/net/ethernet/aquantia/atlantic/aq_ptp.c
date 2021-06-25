@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Atlantic Network Driver
  *
  * Copyright (C) 2014-2019 aQuantia Corporation
@@ -6,170 +7,170 @@
  */
 
 /* File aq_ptp.c:
- * Definition of functions for Linux PTP support.
+ * Definition of functions क्रम Linux PTP support.
  */
 
-#include <linux/ptp_clock_kernel.h>
-#include <linux/ptp_classify.h>
-#include <linux/interrupt.h>
-#include <linux/clocksource.h>
+#समावेश <linux/ptp_घड़ी_kernel.h>
+#समावेश <linux/ptp_classअगरy.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/घड़ीsource.h>
 
-#include "aq_nic.h"
-#include "aq_ptp.h"
-#include "aq_ring.h"
-#include "aq_phy.h"
-#include "aq_filters.h"
+#समावेश "aq_nic.h"
+#समावेश "aq_ptp.h"
+#समावेश "aq_ring.h"
+#समावेश "aq_phy.h"
+#समावेश "aq_filters.h"
 
-#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
 
-#define AQ_PTP_TX_TIMEOUT        (HZ *  10)
+#घोषणा AQ_PTP_TX_TIMEOUT        (HZ *  10)
 
-#define POLL_SYNC_TIMER_MS 15
+#घोषणा POLL_SYNC_TIMER_MS 15
 
-enum ptp_speed_offsets {
+क्रमागत ptp_speed_offsets अणु
 	ptp_offset_idx_10 = 0,
 	ptp_offset_idx_100,
 	ptp_offset_idx_1000,
 	ptp_offset_idx_2500,
 	ptp_offset_idx_5000,
 	ptp_offset_idx_10000,
-};
+पूर्ण;
 
-struct ptp_skb_ring {
-	struct sk_buff **buff;
+काष्ठा ptp_skb_ring अणु
+	काष्ठा sk_buff **buff;
 	spinlock_t lock;
-	unsigned int size;
-	unsigned int head;
-	unsigned int tail;
-};
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक head;
+	अचिन्हित पूर्णांक tail;
+पूर्ण;
 
-struct ptp_tx_timeout {
+काष्ठा ptp_tx_समयout अणु
 	spinlock_t lock;
 	bool active;
-	unsigned long tx_start;
-};
+	अचिन्हित दीर्घ tx_start;
+पूर्ण;
 
-struct aq_ptp_s {
-	struct aq_nic_s *aq_nic;
-	struct hwtstamp_config hwtstamp_config;
+काष्ठा aq_ptp_s अणु
+	काष्ठा aq_nic_s *aq_nic;
+	काष्ठा hwtstamp_config hwtstamp_config;
 	spinlock_t ptp_lock;
 	spinlock_t ptp_ring_lock;
-	struct ptp_clock *ptp_clock;
-	struct ptp_clock_info ptp_info;
+	काष्ठा ptp_घड़ी *ptp_घड़ी;
+	काष्ठा ptp_घड़ी_info ptp_info;
 
 	atomic_t offset_egress;
 	atomic_t offset_ingress;
 
-	struct aq_ring_param_s ptp_ring_param;
+	काष्ठा aq_ring_param_s ptp_ring_param;
 
-	struct ptp_tx_timeout ptp_tx_timeout;
+	काष्ठा ptp_tx_समयout ptp_tx_समयout;
 
-	unsigned int idx_vector;
-	struct napi_struct napi;
+	अचिन्हित पूर्णांक idx_vector;
+	काष्ठा napi_काष्ठा napi;
 
-	struct aq_ring_s ptp_tx;
-	struct aq_ring_s ptp_rx;
-	struct aq_ring_s hwts_rx;
+	काष्ठा aq_ring_s ptp_tx;
+	काष्ठा aq_ring_s ptp_rx;
+	काष्ठा aq_ring_s hwts_rx;
 
-	struct ptp_skb_ring skb_ring;
+	काष्ठा ptp_skb_ring skb_ring;
 
-	struct aq_rx_filter_l3l4 udp_filter;
-	struct aq_rx_filter_l2 eth_type_filter;
+	काष्ठा aq_rx_filter_l3l4 udp_filter;
+	काष्ठा aq_rx_filter_l2 eth_type_filter;
 
-	struct delayed_work poll_sync;
-	u32 poll_timeout_ms;
+	काष्ठा delayed_work poll_sync;
+	u32 poll_समयout_ms;
 
 	bool extts_pin_enabled;
 	u64 last_sync1588_ts;
 
 	bool a1_ptp;
-};
+पूर्ण;
 
-struct ptp_tm_offset {
-	unsigned int mbps;
-	int egress;
-	int ingress;
-};
+काष्ठा ptp_पंचांग_offset अणु
+	अचिन्हित पूर्णांक mbps;
+	पूर्णांक egress;
+	पूर्णांक ingress;
+पूर्ण;
 
-static struct ptp_tm_offset ptp_offset[6];
+अटल काष्ठा ptp_पंचांग_offset ptp_offset[6];
 
-void aq_ptp_tm_offset_set(struct aq_nic_s *aq_nic, unsigned int mbps)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	int i, egress, ingress;
+व्योम aq_ptp_पंचांग_offset_set(काष्ठा aq_nic_s *aq_nic, अचिन्हित पूर्णांक mbps)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	पूर्णांक i, egress, ingress;
 
-	if (!aq_ptp)
-		return;
+	अगर (!aq_ptp)
+		वापस;
 
 	egress = 0;
 	ingress = 0;
 
-	for (i = 0; i < ARRAY_SIZE(ptp_offset); i++) {
-		if (mbps == ptp_offset[i].mbps) {
+	क्रम (i = 0; i < ARRAY_SIZE(ptp_offset); i++) अणु
+		अगर (mbps == ptp_offset[i].mbps) अणु
 			egress = ptp_offset[i].egress;
 			ingress = ptp_offset[i].ingress;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	atomic_set(&aq_ptp->offset_egress, egress);
 	atomic_set(&aq_ptp->offset_ingress, ingress);
-}
+पूर्ण
 
-static int __aq_ptp_skb_put(struct ptp_skb_ring *ring, struct sk_buff *skb)
-{
-	unsigned int next_head = (ring->head + 1) % ring->size;
+अटल पूर्णांक __aq_ptp_skb_put(काष्ठा ptp_skb_ring *ring, काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक next_head = (ring->head + 1) % ring->size;
 
-	if (next_head == ring->tail)
-		return -ENOMEM;
+	अगर (next_head == ring->tail)
+		वापस -ENOMEM;
 
 	ring->buff[ring->head] = skb_get(skb);
 	ring->head = next_head;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_ptp_skb_put(struct ptp_skb_ring *ring, struct sk_buff *skb)
-{
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक aq_ptp_skb_put(काष्ठा ptp_skb_ring *ring, काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&ring->lock, flags);
 	ret = __aq_ptp_skb_put(ring, skb);
 	spin_unlock_irqrestore(&ring->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct sk_buff *__aq_ptp_skb_get(struct ptp_skb_ring *ring)
-{
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *__aq_ptp_skb_get(काष्ठा ptp_skb_ring *ring)
+अणु
+	काष्ठा sk_buff *skb;
 
-	if (ring->tail == ring->head)
-		return NULL;
+	अगर (ring->tail == ring->head)
+		वापस शून्य;
 
 	skb = ring->buff[ring->tail];
 	ring->tail = (ring->tail + 1) % ring->size;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *aq_ptp_skb_get(struct ptp_skb_ring *ring)
-{
-	unsigned long flags;
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *aq_ptp_skb_get(काष्ठा ptp_skb_ring *ring)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा sk_buff *skb;
 
 	spin_lock_irqsave(&ring->lock, flags);
 	skb = __aq_ptp_skb_get(ring);
 	spin_unlock_irqrestore(&ring->lock, flags);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static unsigned int aq_ptp_skb_buf_len(struct ptp_skb_ring *ring)
-{
-	unsigned long flags;
-	unsigned int len;
+अटल अचिन्हित पूर्णांक aq_ptp_skb_buf_len(काष्ठा ptp_skb_ring *ring)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक len;
 
 	spin_lock_irqsave(&ring->lock, flags);
 	len = (ring->head >= ring->tail) ?
@@ -177,15 +178,15 @@ static unsigned int aq_ptp_skb_buf_len(struct ptp_skb_ring *ring)
 	ring->size - ring->tail + ring->head;
 	spin_unlock_irqrestore(&ring->lock, flags);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int aq_ptp_skb_ring_init(struct ptp_skb_ring *ring, unsigned int size)
-{
-	struct sk_buff **buff = kmalloc(sizeof(*buff) * size, GFP_KERNEL);
+अटल पूर्णांक aq_ptp_skb_ring_init(काष्ठा ptp_skb_ring *ring, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा sk_buff **buff = kदो_स्मृति(माप(*buff) * size, GFP_KERNEL);
 
-	if (!buff)
-		return -ENOMEM;
+	अगर (!buff)
+		वापस -ENOMEM;
 
 	spin_lock_init(&ring->lock);
 
@@ -194,188 +195,188 @@ static int aq_ptp_skb_ring_init(struct ptp_skb_ring *ring, unsigned int size)
 	ring->head = 0;
 	ring->tail = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aq_ptp_skb_ring_clean(struct ptp_skb_ring *ring)
-{
-	struct sk_buff *skb;
+अटल व्योम aq_ptp_skb_ring_clean(काष्ठा ptp_skb_ring *ring)
+अणु
+	काष्ठा sk_buff *skb;
 
-	while ((skb = aq_ptp_skb_get(ring)) != NULL)
-		dev_kfree_skb_any(skb);
-}
+	जबतक ((skb = aq_ptp_skb_get(ring)) != शून्य)
+		dev_kमुक्त_skb_any(skb);
+पूर्ण
 
-static void aq_ptp_skb_ring_release(struct ptp_skb_ring *ring)
-{
-	if (ring->buff) {
+अटल व्योम aq_ptp_skb_ring_release(काष्ठा ptp_skb_ring *ring)
+अणु
+	अगर (ring->buff) अणु
 		aq_ptp_skb_ring_clean(ring);
-		kfree(ring->buff);
-		ring->buff = NULL;
-	}
-}
+		kमुक्त(ring->buff);
+		ring->buff = शून्य;
+	पूर्ण
+पूर्ण
 
-static void aq_ptp_tx_timeout_init(struct ptp_tx_timeout *timeout)
-{
-	spin_lock_init(&timeout->lock);
-	timeout->active = false;
-}
+अटल व्योम aq_ptp_tx_समयout_init(काष्ठा ptp_tx_समयout *समयout)
+अणु
+	spin_lock_init(&समयout->lock);
+	समयout->active = false;
+पूर्ण
 
-static void aq_ptp_tx_timeout_start(struct aq_ptp_s *aq_ptp)
-{
-	struct ptp_tx_timeout *timeout = &aq_ptp->ptp_tx_timeout;
-	unsigned long flags;
+अटल व्योम aq_ptp_tx_समयout_start(काष्ठा aq_ptp_s *aq_ptp)
+अणु
+	काष्ठा ptp_tx_समयout *समयout = &aq_ptp->ptp_tx_समयout;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&timeout->lock, flags);
-	timeout->active = true;
-	timeout->tx_start = jiffies;
-	spin_unlock_irqrestore(&timeout->lock, flags);
-}
+	spin_lock_irqsave(&समयout->lock, flags);
+	समयout->active = true;
+	समयout->tx_start = jअगरfies;
+	spin_unlock_irqrestore(&समयout->lock, flags);
+पूर्ण
 
-static void aq_ptp_tx_timeout_update(struct aq_ptp_s *aq_ptp)
-{
-	if (!aq_ptp_skb_buf_len(&aq_ptp->skb_ring)) {
-		struct ptp_tx_timeout *timeout = &aq_ptp->ptp_tx_timeout;
-		unsigned long flags;
+अटल व्योम aq_ptp_tx_समयout_update(काष्ठा aq_ptp_s *aq_ptp)
+अणु
+	अगर (!aq_ptp_skb_buf_len(&aq_ptp->skb_ring)) अणु
+		काष्ठा ptp_tx_समयout *समयout = &aq_ptp->ptp_tx_समयout;
+		अचिन्हित दीर्घ flags;
 
-		spin_lock_irqsave(&timeout->lock, flags);
-		timeout->active = false;
-		spin_unlock_irqrestore(&timeout->lock, flags);
-	}
-}
+		spin_lock_irqsave(&समयout->lock, flags);
+		समयout->active = false;
+		spin_unlock_irqrestore(&समयout->lock, flags);
+	पूर्ण
+पूर्ण
 
-static void aq_ptp_tx_timeout_check(struct aq_ptp_s *aq_ptp)
-{
-	struct ptp_tx_timeout *timeout = &aq_ptp->ptp_tx_timeout;
-	unsigned long flags;
-	bool timeout_flag;
+अटल व्योम aq_ptp_tx_समयout_check(काष्ठा aq_ptp_s *aq_ptp)
+अणु
+	काष्ठा ptp_tx_समयout *समयout = &aq_ptp->ptp_tx_समयout;
+	अचिन्हित दीर्घ flags;
+	bool समयout_flag;
 
-	timeout_flag = false;
+	समयout_flag = false;
 
-	spin_lock_irqsave(&timeout->lock, flags);
-	if (timeout->active) {
-		timeout_flag = time_is_before_jiffies(timeout->tx_start +
+	spin_lock_irqsave(&समयout->lock, flags);
+	अगर (समयout->active) अणु
+		समयout_flag = समय_is_beक्रमe_jअगरfies(समयout->tx_start +
 						      AQ_PTP_TX_TIMEOUT);
-		/* reset active flag if timeout detected */
-		if (timeout_flag)
-			timeout->active = false;
-	}
-	spin_unlock_irqrestore(&timeout->lock, flags);
+		/* reset active flag अगर समयout detected */
+		अगर (समयout_flag)
+			समयout->active = false;
+	पूर्ण
+	spin_unlock_irqrestore(&समयout->lock, flags);
 
-	if (timeout_flag) {
+	अगर (समयout_flag) अणु
 		aq_ptp_skb_ring_clean(&aq_ptp->skb_ring);
 		netdev_err(aq_ptp->aq_nic->ndev,
 			   "PTP Timeout. Clearing Tx Timestamp SKBs\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* aq_ptp_adjfine
- * @ptp: the ptp clock structure
- * @ppb: parts per billion adjustment from base
+ * @ptp: the ptp घड़ी काष्ठाure
+ * @ppb: parts per billion adjusपंचांगent from base
  *
  * adjust the frequency of the ptp cycle counter by the
  * indicated ppb from the base frequency.
  */
-static int aq_ptp_adjfine(struct ptp_clock_info *ptp, long scaled_ppm)
-{
-	struct aq_ptp_s *aq_ptp = container_of(ptp, struct aq_ptp_s, ptp_info);
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
+अटल पूर्णांक aq_ptp_adjfine(काष्ठा ptp_घड़ी_info *ptp, दीर्घ scaled_ppm)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = container_of(ptp, काष्ठा aq_ptp_s, ptp_info);
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
 
 	mutex_lock(&aq_nic->fwreq_mutex);
-	aq_nic->aq_hw_ops->hw_adj_clock_freq(aq_nic->aq_hw,
+	aq_nic->aq_hw_ops->hw_adj_घड़ी_freq(aq_nic->aq_hw,
 					     scaled_ppm_to_ppb(scaled_ppm));
 	mutex_unlock(&aq_nic->fwreq_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* aq_ptp_adjtime
- * @ptp: the ptp clock structure
+/* aq_ptp_adjसमय
+ * @ptp: the ptp घड़ी काष्ठाure
  * @delta: offset to adjust the cycle counter by
  *
- * adjust the timer by resetting the timecounter structure.
+ * adjust the समयr by resetting the समयcounter काष्ठाure.
  */
-static int aq_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
-{
-	struct aq_ptp_s *aq_ptp = container_of(ptp, struct aq_ptp_s, ptp_info);
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
-	unsigned long flags;
+अटल पूर्णांक aq_ptp_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = container_of(ptp, काष्ठा aq_ptp_s, ptp_info);
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&aq_ptp->ptp_lock, flags);
-	aq_nic->aq_hw_ops->hw_adj_sys_clock(aq_nic->aq_hw, delta);
+	aq_nic->aq_hw_ops->hw_adj_sys_घड़ी(aq_nic->aq_hw, delta);
 	spin_unlock_irqrestore(&aq_ptp->ptp_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* aq_ptp_gettime
- * @ptp: the ptp clock structure
- * @ts: timespec structure to hold the current time value
+/* aq_ptp_समय_लो
+ * @ptp: the ptp घड़ी काष्ठाure
+ * @ts: बारpec काष्ठाure to hold the current समय value
  *
- * read the timecounter and return the correct value on ns,
- * after converting it into a struct timespec.
+ * पढ़ो the समयcounter and वापस the correct value on ns,
+ * after converting it पूर्णांकo a काष्ठा बारpec.
  */
-static int aq_ptp_gettime(struct ptp_clock_info *ptp, struct timespec64 *ts)
-{
-	struct aq_ptp_s *aq_ptp = container_of(ptp, struct aq_ptp_s, ptp_info);
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
-	unsigned long flags;
+अटल पूर्णांक aq_ptp_समय_लो(काष्ठा ptp_घड़ी_info *ptp, काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = container_of(ptp, काष्ठा aq_ptp_s, ptp_info);
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
+	अचिन्हित दीर्घ flags;
 	u64 ns;
 
 	spin_lock_irqsave(&aq_ptp->ptp_lock, flags);
 	aq_nic->aq_hw_ops->hw_get_ptp_ts(aq_nic->aq_hw, &ns);
 	spin_unlock_irqrestore(&aq_ptp->ptp_lock, flags);
 
-	*ts = ns_to_timespec64(ns);
+	*ts = ns_to_बारpec64(ns);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* aq_ptp_settime
- * @ptp: the ptp clock structure
- * @ts: the timespec containing the new time for the cycle counter
+/* aq_ptp_समय_रखो
+ * @ptp: the ptp घड़ी काष्ठाure
+ * @ts: the बारpec containing the new समय क्रम the cycle counter
  *
- * reset the timecounter to use a new base value instead of the kernel
- * wall timer value.
+ * reset the समयcounter to use a new base value instead of the kernel
+ * wall समयr value.
  */
-static int aq_ptp_settime(struct ptp_clock_info *ptp,
-			  const struct timespec64 *ts)
-{
-	struct aq_ptp_s *aq_ptp = container_of(ptp, struct aq_ptp_s, ptp_info);
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
-	unsigned long flags;
-	u64 ns = timespec64_to_ns(ts);
+अटल पूर्णांक aq_ptp_समय_रखो(काष्ठा ptp_घड़ी_info *ptp,
+			  स्थिर काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = container_of(ptp, काष्ठा aq_ptp_s, ptp_info);
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
+	अचिन्हित दीर्घ flags;
+	u64 ns = बारpec64_to_ns(ts);
 	u64 now;
 
 	spin_lock_irqsave(&aq_ptp->ptp_lock, flags);
 	aq_nic->aq_hw_ops->hw_get_ptp_ts(aq_nic->aq_hw, &now);
-	aq_nic->aq_hw_ops->hw_adj_sys_clock(aq_nic->aq_hw, (s64)ns - (s64)now);
+	aq_nic->aq_hw_ops->hw_adj_sys_घड़ी(aq_nic->aq_hw, (s64)ns - (s64)now);
 
 	spin_unlock_irqrestore(&aq_ptp->ptp_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aq_ptp_convert_to_hwtstamp(struct aq_ptp_s *aq_ptp,
-				       struct skb_shared_hwtstamps *hwtstamp,
-				       u64 timestamp)
-{
-	memset(hwtstamp, 0, sizeof(*hwtstamp));
-	hwtstamp->hwtstamp = ns_to_ktime(timestamp);
-}
+अटल व्योम aq_ptp_convert_to_hwtstamp(काष्ठा aq_ptp_s *aq_ptp,
+				       काष्ठा skb_shared_hwtstamps *hwtstamp,
+				       u64 बारtamp)
+अणु
+	स_रखो(hwtstamp, 0, माप(*hwtstamp));
+	hwtstamp->hwtstamp = ns_to_kसमय(बारtamp);
+पूर्ण
 
-static int aq_ptp_hw_pin_conf(struct aq_nic_s *aq_nic, u32 pin_index, u64 start,
+अटल पूर्णांक aq_ptp_hw_pin_conf(काष्ठा aq_nic_s *aq_nic, u32 pin_index, u64 start,
 			      u64 period)
-{
-	if (period)
+अणु
+	अगर (period)
 		netdev_dbg(aq_nic->ndev,
 			   "Enable GPIO %d pulsing, start time %llu, period %u\n",
 			   pin_index, start, (u32)period);
-	else
+	अन्यथा
 		netdev_dbg(aq_nic->ndev,
 			   "Disable GPIO %d pulsing, start time %llu, period %u\n",
 			   pin_index, start, (u32)period);
 
-	/* Notify hardware of request to being sending pulses.
+	/* Notअगरy hardware of request to being sending pulses.
 	 * If period is ZERO then pulsen is disabled.
 	 */
 	mutex_lock(&aq_nic->fwreq_mutex);
@@ -383,197 +384,197 @@ static int aq_ptp_hw_pin_conf(struct aq_nic_s *aq_nic, u32 pin_index, u64 start,
 					 start, (u32)period);
 	mutex_unlock(&aq_nic->fwreq_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_ptp_perout_pin_configure(struct ptp_clock_info *ptp,
-				       struct ptp_clock_request *rq, int on)
-{
-	struct aq_ptp_s *aq_ptp = container_of(ptp, struct aq_ptp_s, ptp_info);
-	struct ptp_clock_time *t = &rq->perout.period;
-	struct ptp_clock_time *s = &rq->perout.start;
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
+अटल पूर्णांक aq_ptp_perout_pin_configure(काष्ठा ptp_घड़ी_info *ptp,
+				       काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = container_of(ptp, काष्ठा aq_ptp_s, ptp_info);
+	काष्ठा ptp_घड़ी_प्रकारime *t = &rq->perout.period;
+	काष्ठा ptp_घड़ी_प्रकारime *s = &rq->perout.start;
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
 	u64 start, period;
 	u32 pin_index = rq->perout.index;
 
-	/* verify the request channel is there */
-	if (pin_index >= ptp->n_per_out)
-		return -EINVAL;
+	/* verअगरy the request channel is there */
+	अगर (pin_index >= ptp->n_per_out)
+		वापस -EINVAL;
 
 	/* we cannot support periods greater
 	 * than 4 seconds due to reg limit
 	 */
-	if (t->sec > 4 || t->sec < 0)
-		return -ERANGE;
+	अगर (t->sec > 4 || t->sec < 0)
+		वापस -दुस्फल;
 
-	/* convert to unsigned 64b ns,
-	 * verify we can put it in a 32b register
+	/* convert to अचिन्हित 64b ns,
+	 * verअगरy we can put it in a 32b रेजिस्टर
 	 */
 	period = on ? t->sec * NSEC_PER_SEC + t->nsec : 0;
 
-	/* verify the value is in range supported by hardware */
-	if (period > U32_MAX)
-		return -ERANGE;
-	/* convert to unsigned 64b ns */
-	/* TODO convert to AQ time */
+	/* verअगरy the value is in range supported by hardware */
+	अगर (period > U32_MAX)
+		वापस -दुस्फल;
+	/* convert to अचिन्हित 64b ns */
+	/* TODO convert to AQ समय */
 	start = on ? s->sec * NSEC_PER_SEC + s->nsec : 0;
 
 	aq_ptp_hw_pin_conf(aq_nic, pin_index, start, period);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_ptp_pps_pin_configure(struct ptp_clock_info *ptp,
-				    struct ptp_clock_request *rq, int on)
-{
-	struct aq_ptp_s *aq_ptp = container_of(ptp, struct aq_ptp_s, ptp_info);
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
+अटल पूर्णांक aq_ptp_pps_pin_configure(काष्ठा ptp_घड़ी_info *ptp,
+				    काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = container_of(ptp, काष्ठा aq_ptp_s, ptp_info);
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
 	u64 start, period;
 	u32 pin_index = 0;
 	u32 rest = 0;
 
-	/* verify the request channel is there */
-	if (pin_index >= ptp->n_per_out)
-		return -EINVAL;
+	/* verअगरy the request channel is there */
+	अगर (pin_index >= ptp->n_per_out)
+		वापस -EINVAL;
 
 	aq_nic->aq_hw_ops->hw_get_ptp_ts(aq_nic->aq_hw, &start);
-	div_u64_rem(start, NSEC_PER_SEC, &rest);
+	भाग_u64_rem(start, NSEC_PER_SEC, &rest);
 	period = on ? NSEC_PER_SEC : 0; /* PPS - pulse per second */
 	start = on ? start - rest + NSEC_PER_SEC *
 		(rest > 990000000LL ? 2 : 1) : 0;
 
 	aq_ptp_hw_pin_conf(aq_nic, pin_index, start, period);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aq_ptp_extts_pin_ctrl(struct aq_ptp_s *aq_ptp)
-{
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
+अटल व्योम aq_ptp_extts_pin_ctrl(काष्ठा aq_ptp_s *aq_ptp)
+अणु
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
 	u32 enable = aq_ptp->extts_pin_enabled;
 
-	if (aq_nic->aq_hw_ops->hw_extts_gpio_enable)
+	अगर (aq_nic->aq_hw_ops->hw_extts_gpio_enable)
 		aq_nic->aq_hw_ops->hw_extts_gpio_enable(aq_nic->aq_hw, 0,
 							enable);
-}
+पूर्ण
 
-static int aq_ptp_extts_pin_configure(struct ptp_clock_info *ptp,
-				      struct ptp_clock_request *rq, int on)
-{
-	struct aq_ptp_s *aq_ptp = container_of(ptp, struct aq_ptp_s, ptp_info);
+अटल पूर्णांक aq_ptp_extts_pin_configure(काष्ठा ptp_घड़ी_info *ptp,
+				      काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = container_of(ptp, काष्ठा aq_ptp_s, ptp_info);
 
 	u32 pin_index = rq->extts.index;
 
-	if (pin_index >= ptp->n_ext_ts)
-		return -EINVAL;
+	अगर (pin_index >= ptp->n_ext_ts)
+		वापस -EINVAL;
 
 	aq_ptp->extts_pin_enabled = !!on;
-	if (on) {
-		aq_ptp->poll_timeout_ms = POLL_SYNC_TIMER_MS;
+	अगर (on) अणु
+		aq_ptp->poll_समयout_ms = POLL_SYNC_TIMER_MS;
 		cancel_delayed_work_sync(&aq_ptp->poll_sync);
 		schedule_delayed_work(&aq_ptp->poll_sync,
-				      msecs_to_jiffies(aq_ptp->poll_timeout_ms));
-	}
+				      msecs_to_jअगरfies(aq_ptp->poll_समयout_ms));
+	पूर्ण
 
 	aq_ptp_extts_pin_ctrl(aq_ptp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* aq_ptp_gpio_feature_enable
- * @ptp: the ptp clock structure
+ * @ptp: the ptp घड़ी काष्ठाure
  * @rq: the requested feature to change
  * @on: whether to enable or disable the feature
  */
-static int aq_ptp_gpio_feature_enable(struct ptp_clock_info *ptp,
-				      struct ptp_clock_request *rq, int on)
-{
-	switch (rq->type) {
-	case PTP_CLK_REQ_EXTTS:
-		return aq_ptp_extts_pin_configure(ptp, rq, on);
-	case PTP_CLK_REQ_PEROUT:
-		return aq_ptp_perout_pin_configure(ptp, rq, on);
-	case PTP_CLK_REQ_PPS:
-		return aq_ptp_pps_pin_configure(ptp, rq, on);
-	default:
-		return -EOPNOTSUPP;
-	}
+अटल पूर्णांक aq_ptp_gpio_feature_enable(काष्ठा ptp_घड़ी_info *ptp,
+				      काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
+अणु
+	चयन (rq->type) अणु
+	हाल PTP_CLK_REQ_EXTTS:
+		वापस aq_ptp_extts_pin_configure(ptp, rq, on);
+	हाल PTP_CLK_REQ_PEROUT:
+		वापस aq_ptp_perout_pin_configure(ptp, rq, on);
+	हाल PTP_CLK_REQ_PPS:
+		वापस aq_ptp_pps_pin_configure(ptp, rq, on);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* aq_ptp_verify
- * @ptp: the ptp clock structure
+/* aq_ptp_verअगरy
+ * @ptp: the ptp घड़ी काष्ठाure
  * @pin: index of the pin in question
  * @func: the desired function to use
  * @chan: the function channel index to use
  */
-static int aq_ptp_verify(struct ptp_clock_info *ptp, unsigned int pin,
-			 enum ptp_pin_function func, unsigned int chan)
-{
-	/* verify the requested pin is there */
-	if (!ptp->pin_config || pin >= ptp->n_pins)
-		return -EINVAL;
+अटल पूर्णांक aq_ptp_verअगरy(काष्ठा ptp_घड़ी_info *ptp, अचिन्हित पूर्णांक pin,
+			 क्रमागत ptp_pin_function func, अचिन्हित पूर्णांक chan)
+अणु
+	/* verअगरy the requested pin is there */
+	अगर (!ptp->pin_config || pin >= ptp->n_pins)
+		वापस -EINVAL;
 
-	/* enforce locked channels, no changing them */
-	if (chan != ptp->pin_config[pin].chan)
-		return -EINVAL;
+	/* enक्रमce locked channels, no changing them */
+	अगर (chan != ptp->pin_config[pin].chan)
+		वापस -EINVAL;
 
 	/* we want to keep the functions locked as well */
-	if (func != ptp->pin_config[pin].func)
-		return -EINVAL;
+	अगर (func != ptp->pin_config[pin].func)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* aq_ptp_tx_hwtstamp - utility function which checks for TX time stamp
- * @adapter: the private adapter struct
+/* aq_ptp_tx_hwtstamp - utility function which checks क्रम TX समय stamp
+ * @adapter: the निजी adapter काष्ठा
  *
- * if the timestamp is valid, we convert it into the timecounter ns
- * value, then store that result into the hwtstamps structure which
+ * अगर the बारtamp is valid, we convert it पूर्णांकo the समयcounter ns
+ * value, then store that result पूर्णांकo the hwtstamps काष्ठाure which
  * is passed up the network stack
  */
-void aq_ptp_tx_hwtstamp(struct aq_nic_s *aq_nic, u64 timestamp)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	struct sk_buff *skb = aq_ptp_skb_get(&aq_ptp->skb_ring);
-	struct skb_shared_hwtstamps hwtstamp;
+व्योम aq_ptp_tx_hwtstamp(काष्ठा aq_nic_s *aq_nic, u64 बारtamp)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	काष्ठा sk_buff *skb = aq_ptp_skb_get(&aq_ptp->skb_ring);
+	काष्ठा skb_shared_hwtstamps hwtstamp;
 
-	if (!skb) {
+	अगर (!skb) अणु
 		netdev_err(aq_nic->ndev, "have timestamp but tx_queues empty\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	timestamp += atomic_read(&aq_ptp->offset_egress);
-	aq_ptp_convert_to_hwtstamp(aq_ptp, &hwtstamp, timestamp);
+	बारtamp += atomic_पढ़ो(&aq_ptp->offset_egress);
+	aq_ptp_convert_to_hwtstamp(aq_ptp, &hwtstamp, बारtamp);
 	skb_tstamp_tx(skb, &hwtstamp);
-	dev_kfree_skb_any(skb);
+	dev_kमुक्त_skb_any(skb);
 
-	aq_ptp_tx_timeout_update(aq_ptp);
-}
+	aq_ptp_tx_समयout_update(aq_ptp);
+पूर्ण
 
-/* aq_ptp_rx_hwtstamp - utility function which checks for RX time stamp
- * @adapter: pointer to adapter struct
- * @skb: particular skb to send timestamp with
+/* aq_ptp_rx_hwtstamp - utility function which checks क्रम RX समय stamp
+ * @adapter: poपूर्णांकer to adapter काष्ठा
+ * @skb: particular skb to send बारtamp with
  *
- * if the timestamp is valid, we convert it into the timecounter ns
- * value, then store that result into the hwtstamps structure which
+ * अगर the बारtamp is valid, we convert it पूर्णांकo the समयcounter ns
+ * value, then store that result पूर्णांकo the hwtstamps काष्ठाure which
  * is passed up the network stack
  */
-static void aq_ptp_rx_hwtstamp(struct aq_ptp_s *aq_ptp, struct sk_buff *skb,
-			       u64 timestamp)
-{
-	timestamp -= atomic_read(&aq_ptp->offset_ingress);
-	aq_ptp_convert_to_hwtstamp(aq_ptp, skb_hwtstamps(skb), timestamp);
-}
+अटल व्योम aq_ptp_rx_hwtstamp(काष्ठा aq_ptp_s *aq_ptp, काष्ठा sk_buff *skb,
+			       u64 बारtamp)
+अणु
+	बारtamp -= atomic_पढ़ो(&aq_ptp->offset_ingress);
+	aq_ptp_convert_to_hwtstamp(aq_ptp, skb_hwtstamps(skb), बारtamp);
+पूर्ण
 
-void aq_ptp_hwtstamp_config_get(struct aq_ptp_s *aq_ptp,
-				struct hwtstamp_config *config)
-{
+व्योम aq_ptp_hwtstamp_config_get(काष्ठा aq_ptp_s *aq_ptp,
+				काष्ठा hwtstamp_config *config)
+अणु
 	*config = aq_ptp->hwtstamp_config;
-}
+पूर्ण
 
-static void aq_ptp_prepare_filters(struct aq_ptp_s *aq_ptp)
-{
+अटल व्योम aq_ptp_prepare_filters(काष्ठा aq_ptp_s *aq_ptp)
+अणु
 	aq_ptp->udp_filter.cmd = HW_ATL_RX_ENABLE_FLTR_L3L4 |
 			       HW_ATL_RX_ENABLE_CMP_PROT_L4 |
 			       HW_ATL_RX_UDP |
@@ -585,350 +586,350 @@ static void aq_ptp_prepare_filters(struct aq_ptp_s *aq_ptp)
 
 	aq_ptp->eth_type_filter.ethertype = ETH_P_1588;
 	aq_ptp->eth_type_filter.queue = aq_ptp->ptp_rx.idx;
-}
+पूर्ण
 
-int aq_ptp_hwtstamp_config_set(struct aq_ptp_s *aq_ptp,
-			       struct hwtstamp_config *config)
-{
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
-	const struct aq_hw_ops *hw_ops;
-	int err = 0;
+पूर्णांक aq_ptp_hwtstamp_config_set(काष्ठा aq_ptp_s *aq_ptp,
+			       काष्ठा hwtstamp_config *config)
+अणु
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
+	स्थिर काष्ठा aq_hw_ops *hw_ops;
+	पूर्णांक err = 0;
 
 	hw_ops = aq_nic->aq_hw_ops;
-	if (config->tx_type == HWTSTAMP_TX_ON ||
-	    config->rx_filter == HWTSTAMP_FILTER_PTP_V2_EVENT) {
+	अगर (config->tx_type == HWTSTAMP_TX_ON ||
+	    config->rx_filter == HWTSTAMP_FILTER_PTP_V2_EVENT) अणु
 		aq_ptp_prepare_filters(aq_ptp);
-		if (hw_ops->hw_filter_l3l4_set) {
+		अगर (hw_ops->hw_filter_l3l4_set) अणु
 			err = hw_ops->hw_filter_l3l4_set(aq_nic->aq_hw,
 							 &aq_ptp->udp_filter);
-		}
-		if (!err && hw_ops->hw_filter_l2_set) {
+		पूर्ण
+		अगर (!err && hw_ops->hw_filter_l2_set) अणु
 			err = hw_ops->hw_filter_l2_set(aq_nic->aq_hw,
 						       &aq_ptp->eth_type_filter);
-		}
+		पूर्ण
 		aq_utils_obj_set(&aq_nic->flags, AQ_NIC_PTP_DPATH_UP);
-	} else {
+	पूर्ण अन्यथा अणु
 		aq_ptp->udp_filter.cmd &= ~HW_ATL_RX_ENABLE_FLTR_L3L4;
-		if (hw_ops->hw_filter_l3l4_set) {
+		अगर (hw_ops->hw_filter_l3l4_set) अणु
 			err = hw_ops->hw_filter_l3l4_set(aq_nic->aq_hw,
 							 &aq_ptp->udp_filter);
-		}
-		if (!err && hw_ops->hw_filter_l2_clear) {
+		पूर्ण
+		अगर (!err && hw_ops->hw_filter_l2_clear) अणु
 			err = hw_ops->hw_filter_l2_clear(aq_nic->aq_hw,
 							&aq_ptp->eth_type_filter);
-		}
+		पूर्ण
 		aq_utils_obj_clear(&aq_nic->flags, AQ_NIC_PTP_DPATH_UP);
-	}
+	पूर्ण
 
-	if (err)
-		return -EREMOTEIO;
+	अगर (err)
+		वापस -EREMOTEIO;
 
 	aq_ptp->hwtstamp_config = *config;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool aq_ptp_ring(struct aq_nic_s *aq_nic, struct aq_ring_s *ring)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+bool aq_ptp_ring(काष्ठा aq_nic_s *aq_nic, काष्ठा aq_ring_s *ring)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
 
-	if (!aq_ptp)
-		return false;
+	अगर (!aq_ptp)
+		वापस false;
 
-	return &aq_ptp->ptp_tx == ring ||
+	वापस &aq_ptp->ptp_tx == ring ||
 	       &aq_ptp->ptp_rx == ring || &aq_ptp->hwts_rx == ring;
-}
+पूर्ण
 
-u16 aq_ptp_extract_ts(struct aq_nic_s *aq_nic, struct sk_buff *skb, u8 *p,
-		      unsigned int len)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	u64 timestamp = 0;
+u16 aq_ptp_extract_ts(काष्ठा aq_nic_s *aq_nic, काष्ठा sk_buff *skb, u8 *p,
+		      अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	u64 बारtamp = 0;
 	u16 ret = aq_nic->aq_hw_ops->rx_extract_ts(aq_nic->aq_hw,
-						   p, len, &timestamp);
+						   p, len, &बारtamp);
 
-	if (ret > 0)
-		aq_ptp_rx_hwtstamp(aq_ptp, skb, timestamp);
+	अगर (ret > 0)
+		aq_ptp_rx_hwtstamp(aq_ptp, skb, बारtamp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int aq_ptp_poll(struct napi_struct *napi, int budget)
-{
-	struct aq_ptp_s *aq_ptp = container_of(napi, struct aq_ptp_s, napi);
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
+अटल पूर्णांक aq_ptp_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = container_of(napi, काष्ठा aq_ptp_s, napi);
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
 	bool was_cleaned = false;
-	int work_done = 0;
-	int err;
+	पूर्णांक work_करोne = 0;
+	पूर्णांक err;
 
 	/* Processing PTP TX traffic */
 	err = aq_nic->aq_hw_ops->hw_ring_tx_head_update(aq_nic->aq_hw,
 							&aq_ptp->ptp_tx);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
-	if (aq_ptp->ptp_tx.sw_head != aq_ptp->ptp_tx.hw_head) {
+	अगर (aq_ptp->ptp_tx.sw_head != aq_ptp->ptp_tx.hw_head) अणु
 		aq_ring_tx_clean(&aq_ptp->ptp_tx);
 
 		was_cleaned = true;
-	}
+	पूर्ण
 
 	/* Processing HW_TIMESTAMP RX traffic */
 	err = aq_nic->aq_hw_ops->hw_ring_hwts_rx_receive(aq_nic->aq_hw,
 							 &aq_ptp->hwts_rx);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
-	if (aq_ptp->hwts_rx.sw_head != aq_ptp->hwts_rx.hw_head) {
+	अगर (aq_ptp->hwts_rx.sw_head != aq_ptp->hwts_rx.hw_head) अणु
 		aq_ring_hwts_rx_clean(&aq_ptp->hwts_rx, aq_nic);
 
 		err = aq_nic->aq_hw_ops->hw_ring_hwts_rx_fill(aq_nic->aq_hw,
 							      &aq_ptp->hwts_rx);
-		if (err < 0)
-			goto err_exit;
+		अगर (err < 0)
+			जाओ err_निकास;
 
 		was_cleaned = true;
-	}
+	पूर्ण
 
 	/* Processing PTP RX traffic */
 	err = aq_nic->aq_hw_ops->hw_ring_rx_receive(aq_nic->aq_hw,
 						    &aq_ptp->ptp_rx);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
-	if (aq_ptp->ptp_rx.sw_head != aq_ptp->ptp_rx.hw_head) {
-		unsigned int sw_tail_old;
+	अगर (aq_ptp->ptp_rx.sw_head != aq_ptp->ptp_rx.hw_head) अणु
+		अचिन्हित पूर्णांक sw_tail_old;
 
-		err = aq_ring_rx_clean(&aq_ptp->ptp_rx, napi, &work_done, budget);
-		if (err < 0)
-			goto err_exit;
+		err = aq_ring_rx_clean(&aq_ptp->ptp_rx, napi, &work_करोne, budget);
+		अगर (err < 0)
+			जाओ err_निकास;
 
 		sw_tail_old = aq_ptp->ptp_rx.sw_tail;
 		err = aq_ring_rx_fill(&aq_ptp->ptp_rx);
-		if (err < 0)
-			goto err_exit;
+		अगर (err < 0)
+			जाओ err_निकास;
 
 		err = aq_nic->aq_hw_ops->hw_ring_rx_fill(aq_nic->aq_hw,
 							 &aq_ptp->ptp_rx,
 							 sw_tail_old);
-		if (err < 0)
-			goto err_exit;
-	}
+		अगर (err < 0)
+			जाओ err_निकास;
+	पूर्ण
 
-	if (was_cleaned)
-		work_done = budget;
+	अगर (was_cleaned)
+		work_करोne = budget;
 
-	if (work_done < budget) {
-		napi_complete_done(napi, work_done);
+	अगर (work_करोne < budget) अणु
+		napi_complete_करोne(napi, work_करोne);
 		aq_nic->aq_hw_ops->hw_irq_enable(aq_nic->aq_hw,
 					BIT_ULL(aq_ptp->ptp_ring_param.vec_idx));
-	}
+	पूर्ण
 
-err_exit:
-	return work_done;
-}
+err_निकास:
+	वापस work_करोne;
+पूर्ण
 
-static irqreturn_t aq_ptp_isr(int irq, void *private)
-{
-	struct aq_ptp_s *aq_ptp = private;
-	int err = 0;
+अटल irqवापस_t aq_ptp_isr(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = निजी;
+	पूर्णांक err = 0;
 
-	if (!aq_ptp) {
+	अगर (!aq_ptp) अणु
 		err = -EINVAL;
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 	napi_schedule(&aq_ptp->napi);
 
-err_exit:
-	return err >= 0 ? IRQ_HANDLED : IRQ_NONE;
-}
+err_निकास:
+	वापस err >= 0 ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-int aq_ptp_xmit(struct aq_nic_s *aq_nic, struct sk_buff *skb)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	struct aq_ring_s *ring = &aq_ptp->ptp_tx;
-	unsigned long irq_flags;
-	int err = NETDEV_TX_OK;
-	unsigned int frags;
+पूर्णांक aq_ptp_xmit(काष्ठा aq_nic_s *aq_nic, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	काष्ठा aq_ring_s *ring = &aq_ptp->ptp_tx;
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक err = NETDEV_TX_OK;
+	अचिन्हित पूर्णांक frags;
 
-	if (skb->len <= 0) {
-		dev_kfree_skb_any(skb);
-		goto err_exit;
-	}
+	अगर (skb->len <= 0) अणु
+		dev_kमुक्त_skb_any(skb);
+		जाओ err_निकास;
+	पूर्ण
 
 	frags = skb_shinfo(skb)->nr_frags + 1;
 	/* Frags cannot be bigger 16KB
 	 * because PTP usually works
 	 * without Jumbo even in a background
 	 */
-	if (frags > AQ_CFG_SKB_FRAGS_MAX || frags > aq_ring_avail_dx(ring)) {
-		/* Drop packet because it doesn't make sence to delay it */
-		dev_kfree_skb_any(skb);
-		goto err_exit;
-	}
+	अगर (frags > AQ_CFG_SKB_FRAGS_MAX || frags > aq_ring_avail_dx(ring)) अणु
+		/* Drop packet because it करोesn't make sence to delay it */
+		dev_kमुक्त_skb_any(skb);
+		जाओ err_निकास;
+	पूर्ण
 
 	err = aq_ptp_skb_put(&aq_ptp->skb_ring, skb);
-	if (err) {
+	अगर (err) अणु
 		netdev_err(aq_nic->ndev, "SKB Ring is overflow (%u)!\n",
 			   ring->size);
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 	skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
-	aq_ptp_tx_timeout_start(aq_ptp);
-	skb_tx_timestamp(skb);
+	aq_ptp_tx_समयout_start(aq_ptp);
+	skb_tx_बारtamp(skb);
 
 	spin_lock_irqsave(&aq_nic->aq_ptp->ptp_ring_lock, irq_flags);
 	frags = aq_nic_map_skb(aq_nic, skb, ring);
 
-	if (likely(frags)) {
+	अगर (likely(frags)) अणु
 		err = aq_nic->aq_hw_ops->hw_ring_tx_xmit(aq_nic->aq_hw,
 						       ring, frags);
-		if (err >= 0) {
+		अगर (err >= 0) अणु
 			u64_stats_update_begin(&ring->stats.tx.syncp);
 			++ring->stats.tx.packets;
 			ring->stats.tx.bytes += skb->len;
 			u64_stats_update_end(&ring->stats.tx.syncp);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = NETDEV_TX_BUSY;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&aq_nic->aq_ptp->ptp_ring_lock, irq_flags);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-void aq_ptp_service_task(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+व्योम aq_ptp_service_task(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
 
-	if (!aq_ptp)
-		return;
+	अगर (!aq_ptp)
+		वापस;
 
-	aq_ptp_tx_timeout_check(aq_ptp);
-}
+	aq_ptp_tx_समयout_check(aq_ptp);
+पूर्ण
 
-int aq_ptp_irq_alloc(struct aq_nic_s *aq_nic)
-{
-	struct pci_dev *pdev = aq_nic->pdev;
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	int err = 0;
+पूर्णांक aq_ptp_irq_alloc(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा pci_dev *pdev = aq_nic->pdev;
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	पूर्णांक err = 0;
 
-	if (!aq_ptp)
-		return 0;
+	अगर (!aq_ptp)
+		वापस 0;
 
-	if (pdev->msix_enabled || pdev->msi_enabled) {
+	अगर (pdev->msix_enabled || pdev->msi_enabled) अणु
 		err = request_irq(pci_irq_vector(pdev, aq_ptp->idx_vector),
 				  aq_ptp_isr, 0, aq_nic->ndev->name, aq_ptp);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -EINVAL;
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-void aq_ptp_irq_free(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	struct pci_dev *pdev = aq_nic->pdev;
+व्योम aq_ptp_irq_मुक्त(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	काष्ठा pci_dev *pdev = aq_nic->pdev;
 
-	if (!aq_ptp)
-		return;
+	अगर (!aq_ptp)
+		वापस;
 
-	free_irq(pci_irq_vector(pdev, aq_ptp->idx_vector), aq_ptp);
-}
+	मुक्त_irq(pci_irq_vector(pdev, aq_ptp->idx_vector), aq_ptp);
+पूर्ण
 
-int aq_ptp_ring_init(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	int err = 0;
+पूर्णांक aq_ptp_ring_init(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	पूर्णांक err = 0;
 
-	if (!aq_ptp)
-		return 0;
+	अगर (!aq_ptp)
+		वापस 0;
 
 	err = aq_ring_init(&aq_ptp->ptp_tx, ATL_RING_TX);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 	err = aq_nic->aq_hw_ops->hw_ring_tx_init(aq_nic->aq_hw,
 						 &aq_ptp->ptp_tx,
 						 &aq_ptp->ptp_ring_param);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
 	err = aq_ring_init(&aq_ptp->ptp_rx, ATL_RING_RX);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 	err = aq_nic->aq_hw_ops->hw_ring_rx_init(aq_nic->aq_hw,
 						 &aq_ptp->ptp_rx,
 						 &aq_ptp->ptp_ring_param);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
 	err = aq_ring_rx_fill(&aq_ptp->ptp_rx);
-	if (err < 0)
-		goto err_rx_free;
+	अगर (err < 0)
+		जाओ err_rx_मुक्त;
 	err = aq_nic->aq_hw_ops->hw_ring_rx_fill(aq_nic->aq_hw,
 						 &aq_ptp->ptp_rx,
 						 0U);
-	if (err < 0)
-		goto err_rx_free;
+	अगर (err < 0)
+		जाओ err_rx_मुक्त;
 
 	err = aq_ring_init(&aq_ptp->hwts_rx, ATL_RING_RX);
-	if (err < 0)
-		goto err_rx_free;
+	अगर (err < 0)
+		जाओ err_rx_मुक्त;
 	err = aq_nic->aq_hw_ops->hw_ring_rx_init(aq_nic->aq_hw,
 						 &aq_ptp->hwts_rx,
 						 &aq_ptp->ptp_ring_param);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 	err = aq_nic->aq_hw_ops->hw_ring_hwts_rx_fill(aq_nic->aq_hw,
 						      &aq_ptp->hwts_rx);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
-	return err;
+	वापस err;
 
-err_rx_free:
+err_rx_मुक्त:
 	aq_ring_rx_deinit(&aq_ptp->ptp_rx);
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-int aq_ptp_ring_start(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	int err = 0;
+पूर्णांक aq_ptp_ring_start(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	पूर्णांक err = 0;
 
-	if (!aq_ptp)
-		return 0;
+	अगर (!aq_ptp)
+		वापस 0;
 
 	err = aq_nic->aq_hw_ops->hw_ring_tx_start(aq_nic->aq_hw, &aq_ptp->ptp_tx);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
 	err = aq_nic->aq_hw_ops->hw_ring_rx_start(aq_nic->aq_hw, &aq_ptp->ptp_rx);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
 	err = aq_nic->aq_hw_ops->hw_ring_rx_start(aq_nic->aq_hw,
 						  &aq_ptp->hwts_rx);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
 	napi_enable(&aq_ptp->napi);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-void aq_ptp_ring_stop(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+व्योम aq_ptp_ring_stop(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
 
-	if (!aq_ptp)
-		return;
+	अगर (!aq_ptp)
+		वापस;
 
 	aq_nic->aq_hw_ops->hw_ring_tx_stop(aq_nic->aq_hw, &aq_ptp->ptp_tx);
 	aq_nic->aq_hw_ops->hw_ring_rx_stop(aq_nic->aq_hw, &aq_ptp->ptp_rx);
@@ -936,61 +937,61 @@ void aq_ptp_ring_stop(struct aq_nic_s *aq_nic)
 	aq_nic->aq_hw_ops->hw_ring_rx_stop(aq_nic->aq_hw, &aq_ptp->hwts_rx);
 
 	napi_disable(&aq_ptp->napi);
-}
+पूर्ण
 
-void aq_ptp_ring_deinit(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+व्योम aq_ptp_ring_deinit(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
 
-	if (!aq_ptp || !aq_ptp->ptp_tx.aq_nic || !aq_ptp->ptp_rx.aq_nic)
-		return;
+	अगर (!aq_ptp || !aq_ptp->ptp_tx.aq_nic || !aq_ptp->ptp_rx.aq_nic)
+		वापस;
 
 	aq_ring_tx_clean(&aq_ptp->ptp_tx);
 	aq_ring_rx_deinit(&aq_ptp->ptp_rx);
-}
+पूर्ण
 
-int aq_ptp_ring_alloc(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	unsigned int tx_ring_idx, rx_ring_idx;
-	struct aq_ring_s *hwts;
-	struct aq_ring_s *ring;
-	int err;
+पूर्णांक aq_ptp_ring_alloc(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	अचिन्हित पूर्णांक tx_ring_idx, rx_ring_idx;
+	काष्ठा aq_ring_s *hwts;
+	काष्ठा aq_ring_s *ring;
+	पूर्णांक err;
 
-	if (!aq_ptp)
-		return 0;
+	अगर (!aq_ptp)
+		वापस 0;
 
 	tx_ring_idx = aq_ptp_ring_idx(aq_nic->aq_nic_cfg.tc_mode);
 
 	ring = aq_ring_tx_alloc(&aq_ptp->ptp_tx, aq_nic,
 				tx_ring_idx, &aq_nic->aq_nic_cfg);
-	if (!ring) {
+	अगर (!ring) अणु
 		err = -ENOMEM;
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
 	rx_ring_idx = aq_ptp_ring_idx(aq_nic->aq_nic_cfg.tc_mode);
 
 	ring = aq_ring_rx_alloc(&aq_ptp->ptp_rx, aq_nic,
 				rx_ring_idx, &aq_nic->aq_nic_cfg);
-	if (!ring) {
+	अगर (!ring) अणु
 		err = -ENOMEM;
-		goto err_exit_ptp_tx;
-	}
+		जाओ err_निकास_ptp_tx;
+	पूर्ण
 
 	hwts = aq_ring_hwts_rx_alloc(&aq_ptp->hwts_rx, aq_nic, PTP_HWST_RING_IDX,
 				     aq_nic->aq_nic_cfg.rxds,
 				     aq_nic->aq_nic_cfg.aq_hw_caps->rxd_size);
-	if (!hwts) {
+	अगर (!hwts) अणु
 		err = -ENOMEM;
-		goto err_exit_ptp_rx;
-	}
+		जाओ err_निकास_ptp_rx;
+	पूर्ण
 
 	err = aq_ptp_skb_ring_init(&aq_ptp->skb_ring, aq_nic->aq_nic_cfg.rxds);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		err = -ENOMEM;
-		goto err_exit_hwts_rx;
-	}
+		जाओ err_निकास_hwts_rx;
+	पूर्ण
 
 	aq_ptp->ptp_ring_param.vec_idx = aq_ptp->idx_vector;
 	aq_ptp->ptp_ring_param.cpu = aq_ptp->ptp_ring_param.vec_idx +
@@ -998,204 +999,204 @@ int aq_ptp_ring_alloc(struct aq_nic_s *aq_nic)
 	cpumask_set_cpu(aq_ptp->ptp_ring_param.cpu,
 			&aq_ptp->ptp_ring_param.affinity_mask);
 
-	return 0;
+	वापस 0;
 
-err_exit_hwts_rx:
-	aq_ring_free(&aq_ptp->hwts_rx);
-err_exit_ptp_rx:
-	aq_ring_free(&aq_ptp->ptp_rx);
-err_exit_ptp_tx:
-	aq_ring_free(&aq_ptp->ptp_tx);
-err_exit:
-	return err;
-}
+err_निकास_hwts_rx:
+	aq_ring_मुक्त(&aq_ptp->hwts_rx);
+err_निकास_ptp_rx:
+	aq_ring_मुक्त(&aq_ptp->ptp_rx);
+err_निकास_ptp_tx:
+	aq_ring_मुक्त(&aq_ptp->ptp_tx);
+err_निकास:
+	वापस err;
+पूर्ण
 
-void aq_ptp_ring_free(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+व्योम aq_ptp_ring_मुक्त(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
 
-	if (!aq_ptp)
-		return;
+	अगर (!aq_ptp)
+		वापस;
 
-	aq_ring_free(&aq_ptp->ptp_tx);
-	aq_ring_free(&aq_ptp->ptp_rx);
-	aq_ring_free(&aq_ptp->hwts_rx);
+	aq_ring_मुक्त(&aq_ptp->ptp_tx);
+	aq_ring_मुक्त(&aq_ptp->ptp_rx);
+	aq_ring_मुक्त(&aq_ptp->hwts_rx);
 
 	aq_ptp_skb_ring_release(&aq_ptp->skb_ring);
-}
+पूर्ण
 
-#define MAX_PTP_GPIO_COUNT 4
+#घोषणा MAX_PTP_GPIO_COUNT 4
 
-static struct ptp_clock_info aq_ptp_clock = {
+अटल काष्ठा ptp_घड़ी_info aq_ptp_घड़ी = अणु
 	.owner		= THIS_MODULE,
 	.name		= "atlantic ptp",
 	.max_adj	= 999999999,
 	.n_ext_ts	= 0,
 	.pps		= 0,
 	.adjfine	= aq_ptp_adjfine,
-	.adjtime	= aq_ptp_adjtime,
-	.gettime64	= aq_ptp_gettime,
-	.settime64	= aq_ptp_settime,
+	.adjसमय	= aq_ptp_adjसमय,
+	.समय_लो64	= aq_ptp_समय_लो,
+	.समय_रखो64	= aq_ptp_समय_रखो,
 	.n_per_out	= 0,
 	.enable		= aq_ptp_gpio_feature_enable,
 	.n_pins		= 0,
-	.verify		= aq_ptp_verify,
-	.pin_config	= NULL,
-};
+	.verअगरy		= aq_ptp_verअगरy,
+	.pin_config	= शून्य,
+पूर्ण;
 
-#define ptp_offset_init(__idx, __mbps, __egress, __ingress)   do { \
+#घोषणा ptp_offset_init(__idx, __mbps, __egress, __ingress)   करो अणु \
 		ptp_offset[__idx].mbps = (__mbps); \
 		ptp_offset[__idx].egress = (__egress); \
-		ptp_offset[__idx].ingress = (__ingress); } \
-		while (0)
+		ptp_offset[__idx].ingress = (__ingress); पूर्ण \
+		जबतक (0)
 
-static void aq_ptp_offset_init_from_fw(const struct hw_atl_ptp_offset *offsets)
-{
-	int i;
+अटल व्योम aq_ptp_offset_init_from_fw(स्थिर काष्ठा hw_atl_ptp_offset *offsets)
+अणु
+	पूर्णांक i;
 
-	/* Load offsets for PTP */
-	for (i = 0; i < ARRAY_SIZE(ptp_offset); i++) {
-		switch (i) {
+	/* Load offsets क्रम PTP */
+	क्रम (i = 0; i < ARRAY_SIZE(ptp_offset); i++) अणु
+		चयन (i) अणु
 		/* 100M */
-		case ptp_offset_idx_100:
+		हाल ptp_offset_idx_100:
 			ptp_offset_init(i, 100,
 					offsets->egress_100,
 					offsets->ingress_100);
-			break;
+			अवरोध;
 		/* 1G */
-		case ptp_offset_idx_1000:
+		हाल ptp_offset_idx_1000:
 			ptp_offset_init(i, 1000,
 					offsets->egress_1000,
 					offsets->ingress_1000);
-			break;
+			अवरोध;
 		/* 2.5G */
-		case ptp_offset_idx_2500:
+		हाल ptp_offset_idx_2500:
 			ptp_offset_init(i, 2500,
 					offsets->egress_2500,
 					offsets->ingress_2500);
-			break;
+			अवरोध;
 		/* 5G */
-		case ptp_offset_idx_5000:
+		हाल ptp_offset_idx_5000:
 			ptp_offset_init(i, 5000,
 					offsets->egress_5000,
 					offsets->ingress_5000);
-			break;
+			अवरोध;
 		/* 10G */
-		case ptp_offset_idx_10000:
+		हाल ptp_offset_idx_10000:
 			ptp_offset_init(i, 10000,
 					offsets->egress_10000,
 					offsets->ingress_10000);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void aq_ptp_offset_init(const struct hw_atl_ptp_offset *offsets)
-{
-	memset(ptp_offset, 0, sizeof(ptp_offset));
+अटल व्योम aq_ptp_offset_init(स्थिर काष्ठा hw_atl_ptp_offset *offsets)
+अणु
+	स_रखो(ptp_offset, 0, माप(ptp_offset));
 
 	aq_ptp_offset_init_from_fw(offsets);
-}
+पूर्ण
 
-static void aq_ptp_gpio_init(struct ptp_clock_info *info,
-			     struct hw_atl_info *hw_info)
-{
-	struct ptp_pin_desc pin_desc[MAX_PTP_GPIO_COUNT];
+अटल व्योम aq_ptp_gpio_init(काष्ठा ptp_घड़ी_info *info,
+			     काष्ठा hw_atl_info *hw_info)
+अणु
+	काष्ठा ptp_pin_desc pin_desc[MAX_PTP_GPIO_COUNT];
 	u32 extts_pin_cnt = 0;
 	u32 out_pin_cnt = 0;
 	u32 i;
 
-	memset(pin_desc, 0, sizeof(pin_desc));
+	स_रखो(pin_desc, 0, माप(pin_desc));
 
-	for (i = 0; i < MAX_PTP_GPIO_COUNT - 1; i++) {
-		if (hw_info->gpio_pin[i] ==
-		    (GPIO_PIN_FUNCTION_PTP0 + out_pin_cnt)) {
-			snprintf(pin_desc[out_pin_cnt].name,
-				 sizeof(pin_desc[out_pin_cnt].name),
+	क्रम (i = 0; i < MAX_PTP_GPIO_COUNT - 1; i++) अणु
+		अगर (hw_info->gpio_pin[i] ==
+		    (GPIO_PIN_FUNCTION_PTP0 + out_pin_cnt)) अणु
+			snम_लिखो(pin_desc[out_pin_cnt].name,
+				 माप(pin_desc[out_pin_cnt].name),
 				 "AQ_GPIO%d", i);
 			pin_desc[out_pin_cnt].index = out_pin_cnt;
 			pin_desc[out_pin_cnt].chan = out_pin_cnt;
 			pin_desc[out_pin_cnt++].func = PTP_PF_PEROUT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	info->n_per_out = out_pin_cnt;
 
-	if (hw_info->caps_ex & BIT(CAPS_EX_PHY_CTRL_TS_PIN)) {
+	अगर (hw_info->caps_ex & BIT(CAPS_EX_PHY_CTRL_TS_PIN)) अणु
 		extts_pin_cnt += 1;
 
-		snprintf(pin_desc[out_pin_cnt].name,
-			 sizeof(pin_desc[out_pin_cnt].name),
+		snम_लिखो(pin_desc[out_pin_cnt].name,
+			 माप(pin_desc[out_pin_cnt].name),
 			  "AQ_GPIO%d", out_pin_cnt);
 		pin_desc[out_pin_cnt].index = out_pin_cnt;
 		pin_desc[out_pin_cnt].chan = 0;
 		pin_desc[out_pin_cnt].func = PTP_PF_EXTTS;
-	}
+	पूर्ण
 
 	info->n_pins = out_pin_cnt + extts_pin_cnt;
 	info->n_ext_ts = extts_pin_cnt;
 
-	if (!info->n_pins)
-		return;
+	अगर (!info->n_pins)
+		वापस;
 
-	info->pin_config = kcalloc(info->n_pins, sizeof(struct ptp_pin_desc),
+	info->pin_config = kसुस्मृति(info->n_pins, माप(काष्ठा ptp_pin_desc),
 				   GFP_KERNEL);
 
-	if (!info->pin_config)
-		return;
+	अगर (!info->pin_config)
+		वापस;
 
-	memcpy(info->pin_config, &pin_desc,
-	       sizeof(struct ptp_pin_desc) * info->n_pins);
-}
+	स_नकल(info->pin_config, &pin_desc,
+	       माप(काष्ठा ptp_pin_desc) * info->n_pins);
+पूर्ण
 
-void aq_ptp_clock_init(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	struct timespec64 ts;
+व्योम aq_ptp_घड़ी_init(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	काष्ठा बारpec64 ts;
 
-	ktime_get_real_ts64(&ts);
-	aq_ptp_settime(&aq_ptp->ptp_info, &ts);
-}
+	kसमय_get_real_ts64(&ts);
+	aq_ptp_समय_रखो(&aq_ptp->ptp_info, &ts);
+पूर्ण
 
-static void aq_ptp_poll_sync_work_cb(struct work_struct *w);
+अटल व्योम aq_ptp_poll_sync_work_cb(काष्ठा work_काष्ठा *w);
 
-int aq_ptp_init(struct aq_nic_s *aq_nic, unsigned int idx_vec)
-{
+पूर्णांक aq_ptp_init(काष्ठा aq_nic_s *aq_nic, अचिन्हित पूर्णांक idx_vec)
+अणु
 	bool a1_ptp = ATL_HW_IS_CHIP_FEATURE(aq_nic->aq_hw, ATLANTIC);
-	struct hw_atl_utils_mbox mbox;
-	struct ptp_clock *clock;
-	struct aq_ptp_s *aq_ptp;
-	int err = 0;
+	काष्ठा hw_atl_utils_mbox mbox;
+	काष्ठा ptp_घड़ी *घड़ी;
+	काष्ठा aq_ptp_s *aq_ptp;
+	पूर्णांक err = 0;
 
-	if (!a1_ptp) {
-		aq_nic->aq_ptp = NULL;
-		return 0;
-	}
+	अगर (!a1_ptp) अणु
+		aq_nic->aq_ptp = शून्य;
+		वापस 0;
+	पूर्ण
 
-	if (!aq_nic->aq_hw_ops->hw_get_ptp_ts) {
-		aq_nic->aq_ptp = NULL;
-		return 0;
-	}
+	अगर (!aq_nic->aq_hw_ops->hw_get_ptp_ts) अणु
+		aq_nic->aq_ptp = शून्य;
+		वापस 0;
+	पूर्ण
 
-	if (!aq_nic->aq_fw_ops->enable_ptp) {
-		aq_nic->aq_ptp = NULL;
-		return 0;
-	}
+	अगर (!aq_nic->aq_fw_ops->enable_ptp) अणु
+		aq_nic->aq_ptp = शून्य;
+		वापस 0;
+	पूर्ण
 
-	hw_atl_utils_mpi_read_stats(aq_nic->aq_hw, &mbox);
+	hw_atl_utils_mpi_पढ़ो_stats(aq_nic->aq_hw, &mbox);
 
-	if (!(mbox.info.caps_ex & BIT(CAPS_EX_PHY_PTP_EN))) {
-		aq_nic->aq_ptp = NULL;
-		return 0;
-	}
+	अगर (!(mbox.info.caps_ex & BIT(CAPS_EX_PHY_PTP_EN))) अणु
+		aq_nic->aq_ptp = शून्य;
+		वापस 0;
+	पूर्ण
 
 	aq_ptp_offset_init(&mbox.info.ptp_offset);
 
-	aq_ptp = kzalloc(sizeof(*aq_ptp), GFP_KERNEL);
-	if (!aq_ptp) {
+	aq_ptp = kzalloc(माप(*aq_ptp), GFP_KERNEL);
+	अगर (!aq_ptp) अणु
 		err = -ENOMEM;
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
 	aq_ptp->aq_nic = aq_nic;
 	aq_ptp->a1_ptp = a1_ptp;
@@ -1203,21 +1204,21 @@ int aq_ptp_init(struct aq_nic_s *aq_nic, unsigned int idx_vec)
 	spin_lock_init(&aq_ptp->ptp_lock);
 	spin_lock_init(&aq_ptp->ptp_ring_lock);
 
-	aq_ptp->ptp_info = aq_ptp_clock;
+	aq_ptp->ptp_info = aq_ptp_घड़ी;
 	aq_ptp_gpio_init(&aq_ptp->ptp_info, &mbox.info);
-	clock = ptp_clock_register(&aq_ptp->ptp_info, &aq_nic->ndev->dev);
-	if (IS_ERR(clock)) {
+	घड़ी = ptp_घड़ी_रेजिस्टर(&aq_ptp->ptp_info, &aq_nic->ndev->dev);
+	अगर (IS_ERR(घड़ी)) अणु
 		netdev_err(aq_nic->ndev, "ptp_clock_register failed\n");
-		err = PTR_ERR(clock);
-		goto err_exit;
-	}
-	aq_ptp->ptp_clock = clock;
-	aq_ptp_tx_timeout_init(&aq_ptp->ptp_tx_timeout);
+		err = PTR_ERR(घड़ी);
+		जाओ err_निकास;
+	पूर्ण
+	aq_ptp->ptp_घड़ी = घड़ी;
+	aq_ptp_tx_समयout_init(&aq_ptp->ptp_tx_समयout);
 
 	atomic_set(&aq_ptp->offset_egress, 0);
 	atomic_set(&aq_ptp->offset_ingress, 0);
 
-	netif_napi_add(aq_nic_get_ndev(aq_nic), &aq_ptp->napi,
+	netअगर_napi_add(aq_nic_get_ndev(aq_nic), &aq_ptp->napi,
 		       aq_ptp_poll, AQ_CFG_NAPI_WEIGHT);
 
 	aq_ptp->idx_vector = idx_vec;
@@ -1228,7 +1229,7 @@ int aq_ptp_init(struct aq_nic_s *aq_nic, unsigned int idx_vec)
 	aq_utils_obj_set(&aq_nic->aq_hw->flags, AQ_HW_PTP_AVAILABLE);
 	mutex_lock(&aq_nic->fwreq_mutex);
 	aq_nic->aq_fw_ops->enable_ptp(aq_nic->aq_hw, 1);
-	aq_ptp_clock_init(aq_nic);
+	aq_ptp_घड़ी_init(aq_nic);
 	mutex_unlock(&aq_nic->fwreq_mutex);
 
 	INIT_DELAYED_WORK(&aq_ptp->poll_sync, &aq_ptp_poll_sync_work_cb);
@@ -1237,32 +1238,32 @@ int aq_ptp_init(struct aq_nic_s *aq_nic, unsigned int idx_vec)
 	aq_ptp->udp_filter.location =
 			aq_nic_reserve_filter(aq_nic, aq_rx_filter_l3l4);
 
-	return 0;
+	वापस 0;
 
-err_exit:
-	if (aq_ptp)
-		kfree(aq_ptp->ptp_info.pin_config);
-	kfree(aq_ptp);
-	aq_nic->aq_ptp = NULL;
-	return err;
-}
+err_निकास:
+	अगर (aq_ptp)
+		kमुक्त(aq_ptp->ptp_info.pin_config);
+	kमुक्त(aq_ptp);
+	aq_nic->aq_ptp = शून्य;
+	वापस err;
+पूर्ण
 
-void aq_ptp_unregister(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+व्योम aq_ptp_unरेजिस्टर(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
 
-	if (!aq_ptp)
-		return;
+	अगर (!aq_ptp)
+		वापस;
 
-	ptp_clock_unregister(aq_ptp->ptp_clock);
-}
+	ptp_घड़ी_unरेजिस्टर(aq_ptp->ptp_घड़ी);
+पूर्ण
 
-void aq_ptp_free(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+व्योम aq_ptp_मुक्त(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
 
-	if (!aq_ptp)
-		return;
+	अगर (!aq_ptp)
+		वापस;
 
 	aq_nic_release_filter(aq_nic, aq_rx_filter_ethertype,
 			      aq_ptp->eth_type_filter.location);
@@ -1274,151 +1275,151 @@ void aq_ptp_free(struct aq_nic_s *aq_nic)
 	aq_nic->aq_fw_ops->enable_ptp(aq_nic->aq_hw, 0);
 	mutex_unlock(&aq_nic->fwreq_mutex);
 
-	kfree(aq_ptp->ptp_info.pin_config);
+	kमुक्त(aq_ptp->ptp_info.pin_config);
 
-	netif_napi_del(&aq_ptp->napi);
-	kfree(aq_ptp);
-	aq_nic->aq_ptp = NULL;
-}
+	netअगर_napi_del(&aq_ptp->napi);
+	kमुक्त(aq_ptp);
+	aq_nic->aq_ptp = शून्य;
+पूर्ण
 
-struct ptp_clock *aq_ptp_get_ptp_clock(struct aq_ptp_s *aq_ptp)
-{
-	return aq_ptp->ptp_clock;
-}
+काष्ठा ptp_घड़ी *aq_ptp_get_ptp_घड़ी(काष्ठा aq_ptp_s *aq_ptp)
+अणु
+	वापस aq_ptp->ptp_घड़ी;
+पूर्ण
 
-/* PTP external GPIO nanoseconds count */
-static uint64_t aq_ptp_get_sync1588_ts(struct aq_nic_s *aq_nic)
-{
+/* PTP बाह्यal GPIO nanoseconds count */
+अटल uपूर्णांक64_t aq_ptp_get_sync1588_ts(काष्ठा aq_nic_s *aq_nic)
+अणु
 	u64 ts = 0;
 
-	if (aq_nic->aq_hw_ops->hw_get_sync_ts)
+	अगर (aq_nic->aq_hw_ops->hw_get_sync_ts)
 		aq_nic->aq_hw_ops->hw_get_sync_ts(aq_nic->aq_hw, &ts);
 
-	return ts;
-}
+	वापस ts;
+पूर्ण
 
-static void aq_ptp_start_work(struct aq_ptp_s *aq_ptp)
-{
-	if (aq_ptp->extts_pin_enabled) {
-		aq_ptp->poll_timeout_ms = POLL_SYNC_TIMER_MS;
+अटल व्योम aq_ptp_start_work(काष्ठा aq_ptp_s *aq_ptp)
+अणु
+	अगर (aq_ptp->extts_pin_enabled) अणु
+		aq_ptp->poll_समयout_ms = POLL_SYNC_TIMER_MS;
 		aq_ptp->last_sync1588_ts =
 				aq_ptp_get_sync1588_ts(aq_ptp->aq_nic);
 		schedule_delayed_work(&aq_ptp->poll_sync,
-				      msecs_to_jiffies(aq_ptp->poll_timeout_ms));
-	}
-}
+				      msecs_to_jअगरfies(aq_ptp->poll_समयout_ms));
+	पूर्ण
+पूर्ण
 
-int aq_ptp_link_change(struct aq_nic_s *aq_nic)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+पूर्णांक aq_ptp_link_change(काष्ठा aq_nic_s *aq_nic)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
 
-	if (!aq_ptp)
-		return 0;
+	अगर (!aq_ptp)
+		वापस 0;
 
-	if (aq_nic->aq_hw->aq_link_status.mbps)
+	अगर (aq_nic->aq_hw->aq_link_status.mbps)
 		aq_ptp_start_work(aq_ptp);
-	else
+	अन्यथा
 		cancel_delayed_work_sync(&aq_ptp->poll_sync);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool aq_ptp_sync_ts_updated(struct aq_ptp_s *aq_ptp, u64 *new_ts)
-{
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
+अटल bool aq_ptp_sync_ts_updated(काष्ठा aq_ptp_s *aq_ptp, u64 *new_ts)
+अणु
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
 	u64 sync_ts2;
 	u64 sync_ts;
 
 	sync_ts = aq_ptp_get_sync1588_ts(aq_nic);
 
-	if (sync_ts != aq_ptp->last_sync1588_ts) {
+	अगर (sync_ts != aq_ptp->last_sync1588_ts) अणु
 		sync_ts2 = aq_ptp_get_sync1588_ts(aq_nic);
-		if (sync_ts != sync_ts2) {
+		अगर (sync_ts != sync_ts2) अणु
 			sync_ts = sync_ts2;
 			sync_ts2 = aq_ptp_get_sync1588_ts(aq_nic);
-			if (sync_ts != sync_ts2) {
+			अगर (sync_ts != sync_ts2) अणु
 				netdev_err(aq_nic->ndev,
 					   "%s: Unable to get correct GPIO TS",
 					   __func__);
 				sync_ts = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		*new_ts = sync_ts;
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static int aq_ptp_check_sync1588(struct aq_ptp_s *aq_ptp)
-{
-	struct aq_nic_s *aq_nic = aq_ptp->aq_nic;
+अटल पूर्णांक aq_ptp_check_sync1588(काष्ठा aq_ptp_s *aq_ptp)
+अणु
+	काष्ठा aq_nic_s *aq_nic = aq_ptp->aq_nic;
 	u64 sync_ts;
 
 	 /* Sync1588 pin was triggered */
-	if (aq_ptp_sync_ts_updated(aq_ptp, &sync_ts)) {
-		if (aq_ptp->extts_pin_enabled) {
-			struct ptp_clock_event ptp_event;
-			u64 time = 0;
+	अगर (aq_ptp_sync_ts_updated(aq_ptp, &sync_ts)) अणु
+		अगर (aq_ptp->extts_pin_enabled) अणु
+			काष्ठा ptp_घड़ी_event ptp_event;
+			u64 समय = 0;
 
-			aq_nic->aq_hw_ops->hw_ts_to_sys_clock(aq_nic->aq_hw,
-							      sync_ts, &time);
+			aq_nic->aq_hw_ops->hw_ts_to_sys_घड़ी(aq_nic->aq_hw,
+							      sync_ts, &समय);
 			ptp_event.index = aq_ptp->ptp_info.n_pins - 1;
-			ptp_event.timestamp = time;
+			ptp_event.बारtamp = समय;
 
 			ptp_event.type = PTP_CLOCK_EXTTS;
-			ptp_clock_event(aq_ptp->ptp_clock, &ptp_event);
-		}
+			ptp_घड़ी_event(aq_ptp->ptp_घड़ी, &ptp_event);
+		पूर्ण
 
 		aq_ptp->last_sync1588_ts = sync_ts;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aq_ptp_poll_sync_work_cb(struct work_struct *w)
-{
-	struct delayed_work *dw = to_delayed_work(w);
-	struct aq_ptp_s *aq_ptp = container_of(dw, struct aq_ptp_s, poll_sync);
+अटल व्योम aq_ptp_poll_sync_work_cb(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा delayed_work *dw = to_delayed_work(w);
+	काष्ठा aq_ptp_s *aq_ptp = container_of(dw, काष्ठा aq_ptp_s, poll_sync);
 
 	aq_ptp_check_sync1588(aq_ptp);
 
-	if (aq_ptp->extts_pin_enabled) {
-		unsigned long timeout = msecs_to_jiffies(aq_ptp->poll_timeout_ms);
+	अगर (aq_ptp->extts_pin_enabled) अणु
+		अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(aq_ptp->poll_समयout_ms);
 
-		schedule_delayed_work(&aq_ptp->poll_sync, timeout);
-	}
-}
+		schedule_delayed_work(&aq_ptp->poll_sync, समयout);
+	पूर्ण
+पूर्ण
 
-int aq_ptp_get_ring_cnt(struct aq_nic_s *aq_nic, const enum atl_ring_type ring_type)
-{
-	if (!aq_nic->aq_ptp)
-		return 0;
+पूर्णांक aq_ptp_get_ring_cnt(काष्ठा aq_nic_s *aq_nic, स्थिर क्रमागत atl_ring_type ring_type)
+अणु
+	अगर (!aq_nic->aq_ptp)
+		वापस 0;
 
-	/* Additional RX ring is allocated for PTP HWTS on A1 */
-	return (aq_nic->aq_ptp->a1_ptp && ring_type == ATL_RING_RX) ? 2 : 1;
-}
+	/* Additional RX ring is allocated क्रम PTP HWTS on A1 */
+	वापस (aq_nic->aq_ptp->a1_ptp && ring_type == ATL_RING_RX) ? 2 : 1;
+पूर्ण
 
-u64 *aq_ptp_get_stats(struct aq_nic_s *aq_nic, u64 *data)
-{
-	struct aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
-	unsigned int count = 0U;
+u64 *aq_ptp_get_stats(काष्ठा aq_nic_s *aq_nic, u64 *data)
+अणु
+	काष्ठा aq_ptp_s *aq_ptp = aq_nic->aq_ptp;
+	अचिन्हित पूर्णांक count = 0U;
 
-	if (!aq_ptp)
-		return data;
+	अगर (!aq_ptp)
+		वापस data;
 
 	count = aq_ring_fill_stats_data(&aq_ptp->ptp_rx, data);
 	data += count;
 	count = aq_ring_fill_stats_data(&aq_ptp->ptp_tx, data);
 	data += count;
 
-	if (aq_ptp->a1_ptp) {
-		/* Only Receive ring for HWTS */
+	अगर (aq_ptp->a1_ptp) अणु
+		/* Only Receive ring क्रम HWTS */
 		count = aq_ring_fill_stats_data(&aq_ptp->hwts_rx, data);
 		data += count;
-	}
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* SCTP kernel implementation
  * (C) Copyright IBM Corp. 2001, 2004
  * Copyright (c) 1999-2000 Cisco, Inc.
@@ -11,177 +12,177 @@
  * email addresses:
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modified by:
- *    Randall Stewart	    <randall@sctp.chicago.il.us>
+ * Written or modअगरied by:
+ *    Randall Stewart	    <अक्रमall@sctp.chicago.il.us>
  *    Ken Morneau	    <kmorneau@cisco.com>
  *    Qiaobing Xie	    <qxie1@email.mot.com>
  *    La Monte H.P. Yarroll <piggy@acm.org>
  *    Karl Knutson	    <karl@athena.chicago.il.us>
  *    Jon Grimm		    <jgrimm@us.ibm.com>
- *    Xingang Guo	    <xingang.guo@intel.com>
+ *    Xingang Guo	    <xingang.guo@पूर्णांकel.com>
  *    Hui Huang		    <hui.huang@nokia.com>
  *    Sridhar Samudrala	    <sri@us.ibm.com>
  *    Daisy Chang	    <daisyc@us.ibm.com>
  *    Dajiang Zhang	    <dajiang.zhang@nokia.com>
- *    Ardelle Fan	    <ardelle.fan@intel.com>
+ *    Ardelle Fan	    <ardelle.fan@पूर्णांकel.com>
  *    Ryan Layer	    <rmlayer@us.ibm.com>
  *    Anup Pemmaiah	    <pemmaiah@cc.usu.edu>
- *    Kevin Gao             <kevin.gao@intel.com>
+ *    Kevin Gao             <kevin.gao@पूर्णांकel.com>
  */
 
-#ifndef __sctp_structs_h__
-#define __sctp_structs_h__
+#अगर_अघोषित __sctp_काष्ठाs_h__
+#घोषणा __sctp_काष्ठाs_h__
 
-#include <linux/ktime.h>
-#include <linux/generic-radix-tree.h>
-#include <linux/rhashtable-types.h>
-#include <linux/socket.h>	/* linux/in.h needs this!!    */
-#include <linux/in.h>		/* We get struct sockaddr_in. */
-#include <linux/in6.h>		/* We get struct in6_addr     */
-#include <linux/ipv6.h>
-#include <asm/param.h>		/* We get MAXHOSTNAMELEN.     */
-#include <linux/atomic.h>		/* This gets us atomic counters.  */
-#include <linux/skbuff.h>	/* We need sk_buff_head. */
-#include <linux/workqueue.h>	/* We need tq_struct.	 */
-#include <linux/sctp.h>		/* We need sctp* header structs.  */
-#include <net/sctp/auth.h>	/* We need auth specific structs */
-#include <net/ip.h>		/* For inet_skb_parm */
+#समावेश <linux/kसमय.स>
+#समावेश <linux/generic-radix-tree.h>
+#समावेश <linux/rhashtable-types.h>
+#समावेश <linux/socket.h>	/* linux/in.h needs this!!    */
+#समावेश <linux/in.h>		/* We get काष्ठा sockaddr_in. */
+#समावेश <linux/in6.h>		/* We get काष्ठा in6_addr     */
+#समावेश <linux/ipv6.h>
+#समावेश <यंत्र/param.h>		/* We get MAXHOSTNAMELEN.     */
+#समावेश <linux/atomic.h>		/* This माला_लो us atomic counters.  */
+#समावेश <linux/skbuff.h>	/* We need sk_buff_head. */
+#समावेश <linux/workqueue.h>	/* We need tq_काष्ठा.	 */
+#समावेश <linux/sctp.h>		/* We need sctp* header काष्ठाs.  */
+#समावेश <net/sctp/auth.h>	/* We need auth specअगरic काष्ठाs */
+#समावेश <net/ip.h>		/* For inet_skb_parm */
 
-/* A convenience structure for handling sockaddr structures.
+/* A convenience काष्ठाure क्रम handling sockaddr काष्ठाures.
  * We should wean ourselves off this.
  */
-union sctp_addr {
-	struct sockaddr_in v4;
-	struct sockaddr_in6 v6;
-	struct sockaddr sa;
-};
+जोड़ sctp_addr अणु
+	काष्ठा sockaddr_in v4;
+	काष्ठा sockaddr_in6 v6;
+	काष्ठा sockaddr sa;
+पूर्ण;
 
-/* Forward declarations for data structures. */
-struct sctp_globals;
-struct sctp_endpoint;
-struct sctp_association;
-struct sctp_transport;
-struct sctp_packet;
-struct sctp_chunk;
-struct sctp_inq;
-struct sctp_outq;
-struct sctp_bind_addr;
-struct sctp_ulpq;
-struct sctp_ep_common;
-struct crypto_shash;
-struct sctp_stream;
+/* Forward declarations क्रम data काष्ठाures. */
+काष्ठा sctp_globals;
+काष्ठा sctp_endpoपूर्णांक;
+काष्ठा sctp_association;
+काष्ठा sctp_transport;
+काष्ठा sctp_packet;
+काष्ठा sctp_chunk;
+काष्ठा sctp_inq;
+काष्ठा sctp_outq;
+काष्ठा sctp_bind_addr;
+काष्ठा sctp_ulpq;
+काष्ठा sctp_ep_common;
+काष्ठा crypto_shash;
+काष्ठा sctp_stream;
 
 
-#include <net/sctp/tsnmap.h>
-#include <net/sctp/ulpevent.h>
-#include <net/sctp/ulpqueue.h>
-#include <net/sctp/stream_interleave.h>
+#समावेश <net/sctp/tsnmap.h>
+#समावेश <net/sctp/ulpevent.h>
+#समावेश <net/sctp/ulpqueue.h>
+#समावेश <net/sctp/stream_पूर्णांकerleave.h>
 
-/* Structures useful for managing bind/connect. */
+/* Structures useful क्रम managing bind/connect. */
 
-struct sctp_bind_bucket {
-	unsigned short	port;
-	signed char	fastreuse;
-	signed char	fastreuseport;
+काष्ठा sctp_bind_bucket अणु
+	अचिन्हित लघु	port;
+	चिन्हित अक्षर	fastreuse;
+	चिन्हित अक्षर	fastreuseport;
 	kuid_t		fastuid;
-	struct hlist_node	node;
-	struct hlist_head	owner;
-	struct net	*net;
-};
+	काष्ठा hlist_node	node;
+	काष्ठा hlist_head	owner;
+	काष्ठा net	*net;
+पूर्ण;
 
-struct sctp_bind_hashbucket {
+काष्ठा sctp_bind_hashbucket अणु
 	spinlock_t	lock;
-	struct hlist_head	chain;
-};
+	काष्ठा hlist_head	chain;
+पूर्ण;
 
-/* Used for hashing all associations.  */
-struct sctp_hashbucket {
+/* Used क्रम hashing all associations.  */
+काष्ठा sctp_hashbucket अणु
 	rwlock_t	lock;
-	struct hlist_head	chain;
-} __attribute__((__aligned__(8)));
+	काष्ठा hlist_head	chain;
+पूर्ण __attribute__((__aligned__(8)));
 
 
-/* The SCTP globals structure. */
-extern struct sctp_globals {
-	/* This is a list of groups of functions for each address
+/* The SCTP globals काष्ठाure. */
+बाह्य काष्ठा sctp_globals अणु
+	/* This is a list of groups of functions क्रम each address
 	 * family that we support.
 	 */
-	struct list_head address_families;
+	काष्ठा list_head address_families;
 
-	/* This is the hash of all endpoints. */
-	struct sctp_hashbucket *ep_hashtable;
+	/* This is the hash of all endpoपूर्णांकs. */
+	काष्ठा sctp_hashbucket *ep_hashtable;
 	/* This is the sctp port control hash.	*/
-	struct sctp_bind_hashbucket *port_hashtable;
+	काष्ठा sctp_bind_hashbucket *port_hashtable;
 	/* This is the hash of all transports. */
-	struct rhltable transport_hashtable;
+	काष्ठा rhltable transport_hashtable;
 
 	/* Sizes of above hashtables. */
-	int ep_hashsize;
-	int port_hashsize;
+	पूर्णांक ep_hashsize;
+	पूर्णांक port_hashsize;
 
 	/* Default initialization values to be applied to new associations. */
 	__u16 max_instreams;
 	__u16 max_outstreams;
 
-	/* Flag to indicate whether computing and verifying checksum
+	/* Flag to indicate whether computing and verअगरying checksum
 	 * is disabled. */
         bool checksum_disable;
-} sctp_globals;
+पूर्ण sctp_globals;
 
-#define sctp_max_instreams		(sctp_globals.max_instreams)
-#define sctp_max_outstreams		(sctp_globals.max_outstreams)
-#define sctp_address_families		(sctp_globals.address_families)
-#define sctp_ep_hashsize		(sctp_globals.ep_hashsize)
-#define sctp_ep_hashtable		(sctp_globals.ep_hashtable)
-#define sctp_port_hashsize		(sctp_globals.port_hashsize)
-#define sctp_port_hashtable		(sctp_globals.port_hashtable)
-#define sctp_transport_hashtable	(sctp_globals.transport_hashtable)
-#define sctp_checksum_disable		(sctp_globals.checksum_disable)
+#घोषणा sctp_max_instreams		(sctp_globals.max_instreams)
+#घोषणा sctp_max_outstreams		(sctp_globals.max_outstreams)
+#घोषणा sctp_address_families		(sctp_globals.address_families)
+#घोषणा sctp_ep_hashsize		(sctp_globals.ep_hashsize)
+#घोषणा sctp_ep_hashtable		(sctp_globals.ep_hashtable)
+#घोषणा sctp_port_hashsize		(sctp_globals.port_hashsize)
+#घोषणा sctp_port_hashtable		(sctp_globals.port_hashtable)
+#घोषणा sctp_transport_hashtable	(sctp_globals.transport_hashtable)
+#घोषणा sctp_checksum_disable		(sctp_globals.checksum_disable)
 
 /* SCTP Socket type: UDP or TCP style. */
-enum sctp_socket_type {
+क्रमागत sctp_socket_type अणु
 	SCTP_SOCKET_UDP = 0,
 	SCTP_SOCKET_UDP_HIGH_BANDWIDTH,
 	SCTP_SOCKET_TCP
-};
+पूर्ण;
 
-/* Per socket SCTP information. */
-struct sctp_sock {
+/* Per socket SCTP inक्रमmation. */
+काष्ठा sctp_sock अणु
 	/* inet_sock has to be the first member of sctp_sock */
-	struct inet_sock inet;
+	काष्ठा inet_sock inet;
 	/* What kind of a socket is this? */
-	enum sctp_socket_type type;
+	क्रमागत sctp_socket_type type;
 
-	/* PF_ family specific functions.  */
-	struct sctp_pf *pf;
+	/* PF_ family specअगरic functions.  */
+	काष्ठा sctp_pf *pf;
 
-	/* Access to HMAC transform. */
-	struct crypto_shash *hmac;
-	char *sctp_hmac_alg;
+	/* Access to HMAC transक्रमm. */
+	काष्ठा crypto_shash *hmac;
+	अक्षर *sctp_hmac_alg;
 
-	/* What is our base endpointer? */
-	struct sctp_endpoint *ep;
+	/* What is our base endpoपूर्णांकer? */
+	काष्ठा sctp_endpoपूर्णांक *ep;
 
-	struct sctp_bind_bucket *bind_hash;
+	काष्ठा sctp_bind_bucket *bind_hash;
 	/* Various Socket Options.  */
-	__u16 default_stream;
-	__u32 default_ppid;
-	__u16 default_flags;
-	__u32 default_context;
-	__u32 default_timetolive;
-	__u32 default_rcv_context;
-	int max_burst;
+	__u16 शेष_stream;
+	__u32 शेष_ppid;
+	__u16 शेष_flags;
+	__u32 शेष_context;
+	__u32 शेष_समयtolive;
+	__u32 शेष_rcv_context;
+	पूर्णांक max_burst;
 
-	/* Heartbeat interval: The endpoint sends out a Heartbeat chunk to
-	 * the destination address every heartbeat interval. This value
+	/* Heartbeat पूर्णांकerval: The endpoपूर्णांक sends out a Heartbeat chunk to
+	 * the destination address every heartbeat पूर्णांकerval. This value
 	 * will be inherited by all new associations.
 	 */
-	__u32 hbinterval;
+	__u32 hbपूर्णांकerval;
 
 	__be16 udp_port;
 	__be16 encap_port;
 
-	/* This is the max_retrans value for new associations. */
+	/* This is the max_retrans value क्रम new associations. */
 	__u16 pathmaxrxt;
 
 	__u32 flowlabel;
@@ -190,73 +191,73 @@ struct sctp_sock {
 	__u16 pf_retrans;
 	__u16 ps_retrans;
 
-	/* The initial Path MTU to use for new associations. */
+	/* The initial Path MTU to use क्रम new associations. */
 	__u32 pathmtu;
 
-	/* The default SACK delay timeout for new associations. */
+	/* The शेष SACK delay समयout क्रम new associations. */
 	__u32 sackdelay;
 	__u32 sackfreq;
 
 	/* Flags controlling Heartbeat, SACK delay, and Path MTU Discovery. */
 	__u32 param_flags;
 
-	__u32 default_ss;
+	__u32 शेष_ss;
 
-	struct sctp_rtoinfo rtoinfo;
-	struct sctp_paddrparams paddrparam;
-	struct sctp_assocparams assocparams;
+	काष्ठा sctp_rtoinfo rtoinfo;
+	काष्ठा sctp_paddrparams paddrparam;
+	काष्ठा sctp_assocparams assocparams;
 
 	/*
-	 * These two structures must be grouped together for the usercopy
+	 * These two काष्ठाures must be grouped together क्रम the usercopy
 	 * whitelist region.
 	 */
 	__u16 subscribe;
-	struct sctp_initmsg initmsg;
+	काष्ठा sctp_iniपंचांगsg iniपंचांगsg;
 
-	int user_frag;
+	पूर्णांक user_frag;
 
-	__u32 autoclose;
+	__u32 स्वतःबंद;
 	__u32 adaptation_ind;
-	__u32 pd_point;
+	__u32 pd_poपूर्णांक;
 	__u16	nodelay:1,
 		pf_expose:2,
 		reuse:1,
 		disable_fragments:1,
 		v4mapped:1,
-		frag_interleave:1,
+		frag_पूर्णांकerleave:1,
 		recvrcvinfo:1,
 		recvnxtinfo:1,
-		data_ready_signalled:1;
+		data_पढ़ोy_संकेतled:1;
 
 	atomic_t pd_mode;
 
-	/* Fields after this point will be skipped on copies, like on accept
+	/* Fields after this poपूर्णांक will be skipped on copies, like on accept
 	 * and peeloff operations
 	 */
 
-	/* Receive to here while partial delivery is in effect. */
-	struct sk_buff_head pd_lobby;
+	/* Receive to here जबतक partial delivery is in effect. */
+	काष्ठा sk_buff_head pd_lobby;
 
-	struct list_head auto_asconf_list;
-	int do_auto_asconf;
-};
+	काष्ठा list_head स्वतः_asconf_list;
+	पूर्णांक करो_स्वतः_asconf;
+पूर्ण;
 
-static inline struct sctp_sock *sctp_sk(const struct sock *sk)
-{
-       return (struct sctp_sock *)sk;
-}
+अटल अंतरभूत काष्ठा sctp_sock *sctp_sk(स्थिर काष्ठा sock *sk)
+अणु
+       वापस (काष्ठा sctp_sock *)sk;
+पूर्ण
 
-static inline struct sock *sctp_opt2sk(const struct sctp_sock *sp)
-{
-       return (struct sock *)sp;
-}
+अटल अंतरभूत काष्ठा sock *sctp_opt2sk(स्थिर काष्ठा sctp_sock *sp)
+अणु
+       वापस (काष्ठा sock *)sp;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-struct sctp6_sock {
-       struct sctp_sock  sctp;
-       struct ipv6_pinfo inet6;
-};
-#endif /* CONFIG_IPV6 */
+#अगर IS_ENABLED(CONFIG_IPV6)
+काष्ठा sctp6_sock अणु
+       काष्ठा sctp_sock  sctp;
+       काष्ठा ipv6_pinfo inet6;
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_IPV6 */
 
 
 /* This is our APPLICATION-SPECIFIC state cookie.
@@ -268,16 +269,16 @@ struct sctp6_sock {
  *
  */
 
-struct sctp_cookie {
+काष्ठा sctp_cookie अणु
 
 	/* My	       : Tag expected in every inbound packet and sent
-	 * Verification: in the INIT or INIT ACK chunk.
+	 * Verअगरication: in the INIT or INIT ACK chunk.
 	 * Tag	       :
 	 */
 	__u32 my_vtag;
 
 	/* Peer's      : Tag expected in every outbound packet except
-	 * Verification: in the INIT chunk.
+	 * Verअगरication: in the INIT chunk.
 	 * Tag	       :
 	 */
 	__u32 peer_vtag;
@@ -292,8 +293,8 @@ struct sctp_cookie {
 	/* Peer's Tie Tag: Assist in discovering a restarting association. */
 	__u32 peer_ttag;
 
-	/* When does this cookie expire? */
-	ktime_t expiration;
+	/* When करोes this cookie expire? */
+	kसमय_प्रकार expiration;
 
 	/* Number of inbound/outbound streams which are set
 	 * and negotiated during the INIT process.
@@ -305,7 +306,7 @@ struct sctp_cookie {
 	__u32 initial_tsn;
 
 	/* This holds the originating address of the INIT packet.  */
-	union sctp_addr peer_addr;
+	जोड़ sctp_addr peer_addr;
 
 	/* IG Section 2.35.3 
 	 * Include the source port of the INIT-ACK
@@ -314,479 +315,479 @@ struct sctp_cookie {
 
 	__u8 prsctp_capable;
 
-	/* Padding for future use */
+	/* Padding क्रम future use */
 	__u8 padding;  		
 
 	__u32 adaptation_ind;
 
-	__u8 auth_random[sizeof(struct sctp_paramhdr) +
+	__u8 auth_अक्रमom[माप(काष्ठा sctp_paramhdr) +
 			 SCTP_AUTH_RANDOM_LENGTH];
-	__u8 auth_hmacs[SCTP_AUTH_NUM_HMACS * sizeof(__u16) + 2];
-	__u8 auth_chunks[sizeof(struct sctp_paramhdr) + SCTP_AUTH_MAX_CHUNKS];
+	__u8 auth_hmacs[SCTP_AUTH_NUM_HMACS * माप(__u16) + 2];
+	__u8 auth_chunks[माप(काष्ठा sctp_paramhdr) + SCTP_AUTH_MAX_CHUNKS];
 
-	/* This is a shim for my peer's INIT packet, followed by
+	/* This is a shim क्रम my peer's INIT packet, followed by
 	 * a copy of the raw address list of the association.
 	 * The length of the raw address list is saved in the
-	 * raw_addr_list_len field, which will be used at the time when
-	 * the association TCB is re-constructed from the cookie.
+	 * raw_addr_list_len field, which will be used at the समय when
+	 * the association TCB is re-स्थिरructed from the cookie.
 	 */
 	__u32 raw_addr_list_len;
-	struct sctp_init_chunk peer_init[];
-};
+	काष्ठा sctp_init_chunk peer_init[];
+पूर्ण;
 
 
-/* The format of our cookie that we send to our peer. */
-struct sctp_signed_cookie {
+/* The क्रमmat of our cookie that we send to our peer. */
+काष्ठा sctp_चिन्हित_cookie अणु
 	__u8 signature[SCTP_SECRET_SIZE];
-	__u32 __pad;		/* force sctp_cookie alignment to 64 bits */
-	struct sctp_cookie c;
-} __packed;
+	__u32 __pad;		/* क्रमce sctp_cookie alignment to 64 bits */
+	काष्ठा sctp_cookie c;
+पूर्ण __packed;
 
-/* This is another convenience type to allocate memory for address
- * params for the maximum size and pass such structures around
- * internally.
+/* This is another convenience type to allocate memory क्रम address
+ * params क्रम the maximum size and pass such काष्ठाures around
+ * पूर्णांकernally.
  */
-union sctp_addr_param {
-	struct sctp_paramhdr p;
-	struct sctp_ipv4addr_param v4;
-	struct sctp_ipv6addr_param v6;
-};
+जोड़ sctp_addr_param अणु
+	काष्ठा sctp_paramhdr p;
+	काष्ठा sctp_ipv4addr_param v4;
+	काष्ठा sctp_ipv6addr_param v6;
+पूर्ण;
 
 /* A convenience type to allow walking through the various
- * parameters and avoid casting all over the place.
+ * parameters and aव्योम casting all over the place.
  */
-union sctp_params {
-	void *v;
-	struct sctp_paramhdr *p;
-	struct sctp_cookie_preserve_param *life;
-	struct sctp_hostname_param *dns;
-	struct sctp_cookie_param *cookie;
-	struct sctp_supported_addrs_param *sat;
-	struct sctp_ipv4addr_param *v4;
-	struct sctp_ipv6addr_param *v6;
-	union sctp_addr_param *addr;
-	struct sctp_adaptation_ind_param *aind;
-	struct sctp_supported_ext_param *ext;
-	struct sctp_random_param *random;
-	struct sctp_chunks_param *chunks;
-	struct sctp_hmac_algo_param *hmac_algo;
-	struct sctp_addip_param *addip;
-};
+जोड़ sctp_params अणु
+	व्योम *v;
+	काष्ठा sctp_paramhdr *p;
+	काष्ठा sctp_cookie_preserve_param *lअगरe;
+	काष्ठा sctp_hostname_param *dns;
+	काष्ठा sctp_cookie_param *cookie;
+	काष्ठा sctp_supported_addrs_param *sat;
+	काष्ठा sctp_ipv4addr_param *v4;
+	काष्ठा sctp_ipv6addr_param *v6;
+	जोड़ sctp_addr_param *addr;
+	काष्ठा sctp_adaptation_ind_param *aind;
+	काष्ठा sctp_supported_ext_param *ext;
+	काष्ठा sctp_अक्रमom_param *अक्रमom;
+	काष्ठा sctp_chunks_param *chunks;
+	काष्ठा sctp_hmac_algo_param *hmac_algo;
+	काष्ठा sctp_addip_param *addip;
+पूर्ण;
 
 /* RFC 2960.  Section 3.3.5 Heartbeat.
- *    Heartbeat Information: variable length
- *    The Sender-specific Heartbeat Info field should normally include
- *    information about the sender's current time when this HEARTBEAT
+ *    Heartbeat Inक्रमmation: variable length
+ *    The Sender-specअगरic Heartbeat Info field should normally include
+ *    inक्रमmation about the sender's current समय when this HEARTBEAT
  *    chunk is sent and the destination transport address to which this
  *    HEARTBEAT is sent (see Section 8.3).
  */
-struct sctp_sender_hb_info {
-	struct sctp_paramhdr param_hdr;
-	union sctp_addr daddr;
-	unsigned long sent_at;
+काष्ठा sctp_sender_hb_info अणु
+	काष्ठा sctp_paramhdr param_hdr;
+	जोड़ sctp_addr daddr;
+	अचिन्हित दीर्घ sent_at;
 	__u64 hb_nonce;
-};
+पूर्ण;
 
-int sctp_stream_init(struct sctp_stream *stream, __u16 outcnt, __u16 incnt,
+पूर्णांक sctp_stream_init(काष्ठा sctp_stream *stream, __u16 outcnt, __u16 incnt,
 		     gfp_t gfp);
-int sctp_stream_init_ext(struct sctp_stream *stream, __u16 sid);
-void sctp_stream_free(struct sctp_stream *stream);
-void sctp_stream_clear(struct sctp_stream *stream);
-void sctp_stream_update(struct sctp_stream *stream, struct sctp_stream *new);
+पूर्णांक sctp_stream_init_ext(काष्ठा sctp_stream *stream, __u16 sid);
+व्योम sctp_stream_मुक्त(काष्ठा sctp_stream *stream);
+व्योम sctp_stream_clear(काष्ठा sctp_stream *stream);
+व्योम sctp_stream_update(काष्ठा sctp_stream *stream, काष्ठा sctp_stream *new);
 
-/* What is the current SSN number for this stream? */
-#define sctp_ssn_peek(stream, type, sid) \
+/* What is the current SSN number क्रम this stream? */
+#घोषणा sctp_ssn_peek(stream, type, sid) \
 	(sctp_stream_##type((stream), (sid))->ssn)
 
-/* Return the next SSN number for this stream.	*/
-#define sctp_ssn_next(stream, type, sid) \
+/* Return the next SSN number क्रम this stream.	*/
+#घोषणा sctp_ssn_next(stream, type, sid) \
 	(sctp_stream_##type((stream), (sid))->ssn++)
 
 /* Skip over this ssn and all below. */
-#define sctp_ssn_skip(stream, type, sid, ssn) \
+#घोषणा sctp_ssn_skip(stream, type, sid, ssn) \
 	(sctp_stream_##type((stream), (sid))->ssn = ssn + 1)
 
-/* What is the current MID number for this stream? */
-#define sctp_mid_peek(stream, type, sid) \
+/* What is the current MID number क्रम this stream? */
+#घोषणा sctp_mid_peek(stream, type, sid) \
 	(sctp_stream_##type((stream), (sid))->mid)
 
-/* Return the next MID number for this stream.  */
-#define sctp_mid_next(stream, type, sid) \
+/* Return the next MID number क्रम this stream.  */
+#घोषणा sctp_mid_next(stream, type, sid) \
 	(sctp_stream_##type((stream), (sid))->mid++)
 
 /* Skip over this mid and all below. */
-#define sctp_mid_skip(stream, type, sid, mid) \
+#घोषणा sctp_mid_skip(stream, type, sid, mid) \
 	(sctp_stream_##type((stream), (sid))->mid = mid + 1)
 
-/* What is the current MID_uo number for this stream? */
-#define sctp_mid_uo_peek(stream, type, sid) \
+/* What is the current MID_uo number क्रम this stream? */
+#घोषणा sctp_mid_uo_peek(stream, type, sid) \
 	(sctp_stream_##type((stream), (sid))->mid_uo)
 
-/* Return the next MID_uo number for this stream.  */
-#define sctp_mid_uo_next(stream, type, sid) \
+/* Return the next MID_uo number क्रम this stream.  */
+#घोषणा sctp_mid_uo_next(stream, type, sid) \
 	(sctp_stream_##type((stream), (sid))->mid_uo++)
 
 /*
- * Pointers to address related SCTP functions.
+ * Poपूर्णांकers to address related SCTP functions.
  * (i.e. things that depend on the address family.)
  */
-struct sctp_af {
-	int		(*sctp_xmit)	(struct sk_buff *skb,
-					 struct sctp_transport *);
-	int		(*setsockopt)	(struct sock *sk,
-					 int level,
-					 int optname,
+काष्ठा sctp_af अणु
+	पूर्णांक		(*sctp_xmit)	(काष्ठा sk_buff *skb,
+					 काष्ठा sctp_transport *);
+	पूर्णांक		(*setsockopt)	(काष्ठा sock *sk,
+					 पूर्णांक level,
+					 पूर्णांक optname,
 					 sockptr_t optval,
-					 unsigned int optlen);
-	int		(*getsockopt)	(struct sock *sk,
-					 int level,
-					 int optname,
-					 char __user *optval,
-					 int __user *optlen);
-	void		(*get_dst)	(struct sctp_transport *t,
-					 union sctp_addr *saddr,
-					 struct flowi *fl,
-					 struct sock *sk);
-	void		(*get_saddr)	(struct sctp_sock *sk,
-					 struct sctp_transport *t,
-					 struct flowi *fl);
-	void		(*copy_addrlist) (struct list_head *,
-					  struct net_device *);
-	int		(*cmp_addr)	(const union sctp_addr *addr1,
-					 const union sctp_addr *addr2);
-	void		(*addr_copy)	(union sctp_addr *dst,
-					 union sctp_addr *src);
-	void		(*from_skb)	(union sctp_addr *,
-					 struct sk_buff *skb,
-					 int saddr);
-	void		(*from_sk)	(union sctp_addr *,
-					 struct sock *sk);
-	void		(*from_addr_param) (union sctp_addr *,
-					    union sctp_addr_param *,
-					    __be16 port, int iif);
-	int		(*to_addr_param) (const union sctp_addr *,
-					  union sctp_addr_param *); 
-	int		(*addr_valid)	(union sctp_addr *,
-					 struct sctp_sock *,
-					 const struct sk_buff *);
-	enum sctp_scope	(*scope)(union sctp_addr *);
-	void		(*inaddr_any)	(union sctp_addr *, __be16);
-	int		(*is_any)	(const union sctp_addr *);
-	int		(*available)	(union sctp_addr *,
-					 struct sctp_sock *);
-	int		(*skb_iif)	(const struct sk_buff *sk);
-	int		(*is_ce)	(const struct sk_buff *sk);
-	void		(*seq_dump_addr)(struct seq_file *seq,
-					 union sctp_addr *addr);
-	void		(*ecn_capable)(struct sock *sk);
+					 अचिन्हित पूर्णांक optlen);
+	पूर्णांक		(*माला_लोockopt)	(काष्ठा sock *sk,
+					 पूर्णांक level,
+					 पूर्णांक optname,
+					 अक्षर __user *optval,
+					 पूर्णांक __user *optlen);
+	व्योम		(*get_dst)	(काष्ठा sctp_transport *t,
+					 जोड़ sctp_addr *saddr,
+					 काष्ठा flowi *fl,
+					 काष्ठा sock *sk);
+	व्योम		(*get_saddr)	(काष्ठा sctp_sock *sk,
+					 काष्ठा sctp_transport *t,
+					 काष्ठा flowi *fl);
+	व्योम		(*copy_addrlist) (काष्ठा list_head *,
+					  काष्ठा net_device *);
+	पूर्णांक		(*cmp_addr)	(स्थिर जोड़ sctp_addr *addr1,
+					 स्थिर जोड़ sctp_addr *addr2);
+	व्योम		(*addr_copy)	(जोड़ sctp_addr *dst,
+					 जोड़ sctp_addr *src);
+	व्योम		(*from_skb)	(जोड़ sctp_addr *,
+					 काष्ठा sk_buff *skb,
+					 पूर्णांक saddr);
+	व्योम		(*from_sk)	(जोड़ sctp_addr *,
+					 काष्ठा sock *sk);
+	व्योम		(*from_addr_param) (जोड़ sctp_addr *,
+					    जोड़ sctp_addr_param *,
+					    __be16 port, पूर्णांक iअगर);
+	पूर्णांक		(*to_addr_param) (स्थिर जोड़ sctp_addr *,
+					  जोड़ sctp_addr_param *); 
+	पूर्णांक		(*addr_valid)	(जोड़ sctp_addr *,
+					 काष्ठा sctp_sock *,
+					 स्थिर काष्ठा sk_buff *);
+	क्रमागत sctp_scope	(*scope)(जोड़ sctp_addr *);
+	व्योम		(*inaddr_any)	(जोड़ sctp_addr *, __be16);
+	पूर्णांक		(*is_any)	(स्थिर जोड़ sctp_addr *);
+	पूर्णांक		(*available)	(जोड़ sctp_addr *,
+					 काष्ठा sctp_sock *);
+	पूर्णांक		(*skb_iअगर)	(स्थिर काष्ठा sk_buff *sk);
+	पूर्णांक		(*is_ce)	(स्थिर काष्ठा sk_buff *sk);
+	व्योम		(*seq_dump_addr)(काष्ठा seq_file *seq,
+					 जोड़ sctp_addr *addr);
+	व्योम		(*ecn_capable)(काष्ठा sock *sk);
 	__u16		net_header_len;
-	int		sockaddr_len;
-	int		(*ip_options_len)(struct sock *sk);
+	पूर्णांक		sockaddr_len;
+	पूर्णांक		(*ip_options_len)(काष्ठा sock *sk);
 	sa_family_t	sa_family;
-	struct list_head list;
-};
+	काष्ठा list_head list;
+पूर्ण;
 
-struct sctp_af *sctp_get_af_specific(sa_family_t);
-int sctp_register_af(struct sctp_af *);
+काष्ठा sctp_af *sctp_get_af_specअगरic(sa_family_t);
+पूर्णांक sctp_रेजिस्टर_af(काष्ठा sctp_af *);
 
 /* Protocol family functions. */
-struct sctp_pf {
-	void (*event_msgname)(struct sctp_ulpevent *, char *, int *);
-	void (*skb_msgname)  (struct sk_buff *, char *, int *);
-	int  (*af_supported) (sa_family_t, struct sctp_sock *);
-	int  (*cmp_addr) (const union sctp_addr *,
-			  const union sctp_addr *,
-			  struct sctp_sock *);
-	int  (*bind_verify) (struct sctp_sock *, union sctp_addr *);
-	int  (*send_verify) (struct sctp_sock *, union sctp_addr *);
-	int  (*supported_addrs)(const struct sctp_sock *, __be16 *);
-	struct sock *(*create_accept_sk) (struct sock *sk,
-					  struct sctp_association *asoc,
+काष्ठा sctp_pf अणु
+	व्योम (*event_msgname)(काष्ठा sctp_ulpevent *, अक्षर *, पूर्णांक *);
+	व्योम (*skb_msgname)  (काष्ठा sk_buff *, अक्षर *, पूर्णांक *);
+	पूर्णांक  (*af_supported) (sa_family_t, काष्ठा sctp_sock *);
+	पूर्णांक  (*cmp_addr) (स्थिर जोड़ sctp_addr *,
+			  स्थिर जोड़ sctp_addr *,
+			  काष्ठा sctp_sock *);
+	पूर्णांक  (*bind_verअगरy) (काष्ठा sctp_sock *, जोड़ sctp_addr *);
+	पूर्णांक  (*send_verअगरy) (काष्ठा sctp_sock *, जोड़ sctp_addr *);
+	पूर्णांक  (*supported_addrs)(स्थिर काष्ठा sctp_sock *, __be16 *);
+	काष्ठा sock *(*create_accept_sk) (काष्ठा sock *sk,
+					  काष्ठा sctp_association *asoc,
 					  bool kern);
-	int (*addr_to_user)(struct sctp_sock *sk, union sctp_addr *addr);
-	void (*to_sk_saddr)(union sctp_addr *, struct sock *sk);
-	void (*to_sk_daddr)(union sctp_addr *, struct sock *sk);
-	void (*copy_ip_options)(struct sock *sk, struct sock *newsk);
-	struct sctp_af *af;
-};
+	पूर्णांक (*addr_to_user)(काष्ठा sctp_sock *sk, जोड़ sctp_addr *addr);
+	व्योम (*to_sk_saddr)(जोड़ sctp_addr *, काष्ठा sock *sk);
+	व्योम (*to_sk_daddr)(जोड़ sctp_addr *, काष्ठा sock *sk);
+	व्योम (*copy_ip_options)(काष्ठा sock *sk, काष्ठा sock *newsk);
+	काष्ठा sctp_af *af;
+पूर्ण;
 
 
 /* Structure to track chunk fragments that have been acked, but peer
  * fragments of the same message have not.
  */
-struct sctp_datamsg {
-	/* Chunks waiting to be submitted to lower layer. */
-	struct list_head chunks;
+काष्ठा sctp_datamsg अणु
+	/* Chunks रुकोing to be submitted to lower layer. */
+	काष्ठा list_head chunks;
 	/* Reference counting. */
 	refcount_t refcnt;
-	/* When is this message no longer interesting to the peer? */
-	unsigned long expires_at;
+	/* When is this message no दीर्घer पूर्णांकeresting to the peer? */
+	अचिन्हित दीर्घ expires_at;
 	/* Did the messenge fail to send? */
-	int send_error;
+	पूर्णांक send_error;
 	u8 send_failed:1,
 	   can_delay:1,	/* should this message be Nagle delayed */
-	   abandoned:1;	/* should this message be abandoned */
-};
+	   abanकरोned:1;	/* should this message be abanकरोned */
+पूर्ण;
 
-struct sctp_datamsg *sctp_datamsg_from_user(struct sctp_association *,
-					    struct sctp_sndrcvinfo *,
-					    struct iov_iter *);
-void sctp_datamsg_free(struct sctp_datamsg *);
-void sctp_datamsg_put(struct sctp_datamsg *);
-void sctp_chunk_fail(struct sctp_chunk *, int error);
-int sctp_chunk_abandoned(struct sctp_chunk *);
+काष्ठा sctp_datamsg *sctp_datamsg_from_user(काष्ठा sctp_association *,
+					    काष्ठा sctp_sndrcvinfo *,
+					    काष्ठा iov_iter *);
+व्योम sctp_datamsg_मुक्त(काष्ठा sctp_datamsg *);
+व्योम sctp_datamsg_put(काष्ठा sctp_datamsg *);
+व्योम sctp_chunk_fail(काष्ठा sctp_chunk *, पूर्णांक error);
+पूर्णांक sctp_chunk_abanकरोned(काष्ठा sctp_chunk *);
 
 /* RFC2960 1.4 Key Terms
  *
- * o Chunk: A unit of information within an SCTP packet, consisting of
- * a chunk header and chunk-specific content.
+ * o Chunk: A unit of inक्रमmation within an SCTP packet, consisting of
+ * a chunk header and chunk-specअगरic content.
  *
- * As a matter of convenience, we remember the SCTP common header for
- * each chunk as well as a few other header pointers...
+ * As a matter of convenience, we remember the SCTP common header क्रम
+ * each chunk as well as a few other header poपूर्णांकers...
  */
-struct sctp_chunk {
-	struct list_head list;
+काष्ठा sctp_chunk अणु
+	काष्ठा list_head list;
 
 	refcount_t refcnt;
 
-	/* How many times this chunk have been sent, for prsctp RTX policy */
-	int sent_count;
+	/* How many बार this chunk have been sent, क्रम prsctp RTX policy */
+	पूर्णांक sent_count;
 
-	union {
+	जोड़ अणु
 		/* This is our link to the per-transport transmitted list.  */
-		struct list_head transmitted_list;
-		/* List in specific stream outq */
-		struct list_head stream_list;
-	};
+		काष्ठा list_head transmitted_list;
+		/* List in specअगरic stream outq */
+		काष्ठा list_head stream_list;
+	पूर्ण;
 
 	/* This field is used by chunks that hold fragmented data.
 	 * For the first fragment this is the list that holds the rest of
-	 * fragments. For the remaining fragments, this is the link to the
-	 * frag_list maintained in the first fragment.
+	 * fragments. For the reमुख्यing fragments, this is the link to the
+	 * frag_list मुख्यtained in the first fragment.
 	 */
-	struct list_head frag_list;
+	काष्ठा list_head frag_list;
 
-	/* This points to the sk_buff containing the actual data.  */
-	struct sk_buff *skb;
+	/* This poपूर्णांकs to the sk_buff containing the actual data.  */
+	काष्ठा sk_buff *skb;
 
-	union {
-		/* In case of GSO packets, this will store the head one */
-		struct sk_buff *head_skb;
-		/* In case of auth enabled, this will point to the shkey */
-		struct sctp_shared_key *shkey;
-	};
+	जोड़ अणु
+		/* In हाल of GSO packets, this will store the head one */
+		काष्ठा sk_buff *head_skb;
+		/* In हाल of auth enabled, this will poपूर्णांक to the shkey */
+		काष्ठा sctp_shared_key *shkey;
+	पूर्ण;
 
 	/* These are the SCTP headers by reverse order in a packet.
 	 * Note that some of these may happen more than once.  In that
-	 * case, we point at the "current" one, whatever that means
-	 * for that level of header.
+	 * हाल, we poपूर्णांक at the "current" one, whatever that means
+	 * क्रम that level of header.
 	 */
 
-	/* We point this at the FIRST TLV parameter to chunk_hdr.  */
-	union sctp_params param_hdr;
-	union {
+	/* We poपूर्णांक this at the FIRST TLV parameter to chunk_hdr.  */
+	जोड़ sctp_params param_hdr;
+	जोड़ अणु
 		__u8 *v;
-		struct sctp_datahdr *data_hdr;
-		struct sctp_inithdr *init_hdr;
-		struct sctp_sackhdr *sack_hdr;
-		struct sctp_heartbeathdr *hb_hdr;
-		struct sctp_sender_hb_info *hbs_hdr;
-		struct sctp_shutdownhdr *shutdown_hdr;
-		struct sctp_signed_cookie *cookie_hdr;
-		struct sctp_ecnehdr *ecne_hdr;
-		struct sctp_cwrhdr *ecn_cwr_hdr;
-		struct sctp_errhdr *err_hdr;
-		struct sctp_addiphdr *addip_hdr;
-		struct sctp_fwdtsn_hdr *fwdtsn_hdr;
-		struct sctp_authhdr *auth_hdr;
-		struct sctp_idatahdr *idata_hdr;
-		struct sctp_ifwdtsn_hdr *ifwdtsn_hdr;
-	} subh;
+		काष्ठा sctp_datahdr *data_hdr;
+		काष्ठा sctp_inithdr *init_hdr;
+		काष्ठा sctp_sackhdr *sack_hdr;
+		काष्ठा sctp_heartbeathdr *hb_hdr;
+		काष्ठा sctp_sender_hb_info *hbs_hdr;
+		काष्ठा sctp_shutकरोwnhdr *shutकरोwn_hdr;
+		काष्ठा sctp_चिन्हित_cookie *cookie_hdr;
+		काष्ठा sctp_ecnehdr *ecne_hdr;
+		काष्ठा sctp_cwrhdr *ecn_cwr_hdr;
+		काष्ठा sctp_errhdr *err_hdr;
+		काष्ठा sctp_addiphdr *addip_hdr;
+		काष्ठा sctp_fwdtsn_hdr *fwdtsn_hdr;
+		काष्ठा sctp_authhdr *auth_hdr;
+		काष्ठा sctp_idatahdr *idata_hdr;
+		काष्ठा sctp_अगरwdtsn_hdr *अगरwdtsn_hdr;
+	पूर्ण subh;
 
 	__u8 *chunk_end;
 
-	struct sctp_chunkhdr *chunk_hdr;
-	struct sctphdr *sctp_hdr;
+	काष्ठा sctp_chunkhdr *chunk_hdr;
+	काष्ठा sctphdr *sctp_hdr;
 
-	/* This needs to be recoverable for SCTP_SEND_FAILED events. */
-	struct sctp_sndrcvinfo sinfo;
+	/* This needs to be recoverable क्रम SCTP_SEND_FAILED events. */
+	काष्ठा sctp_sndrcvinfo sinfo;
 
-	/* Which association does this belong to?  */
-	struct sctp_association *asoc;
+	/* Which association करोes this beदीर्घ to?  */
+	काष्ठा sctp_association *asoc;
 
-	/* What endpoint received this chunk? */
-	struct sctp_ep_common *rcvr;
+	/* What endpoपूर्णांक received this chunk? */
+	काष्ठा sctp_ep_common *rcvr;
 
-	/* We fill this in if we are calculating RTT. */
-	unsigned long sent_at;
+	/* We fill this in अगर we are calculating RTT. */
+	अचिन्हित दीर्घ sent_at;
 
-	/* What is the origin IP address for this chunk?  */
-	union sctp_addr source;
-	/* Destination address for this chunk. */
-	union sctp_addr dest;
+	/* What is the origin IP address क्रम this chunk?  */
+	जोड़ sctp_addr source;
+	/* Destination address क्रम this chunk. */
+	जोड़ sctp_addr dest;
 
-	/* For outbound message, track all fragments for SEND_FAILED. */
-	struct sctp_datamsg *msg;
+	/* For outbound message, track all fragments क्रम SEND_FAILED. */
+	काष्ठा sctp_datamsg *msg;
 
 	/* For an inbound chunk, this tells us where it came from.
 	 * For an outbound chunk, it tells us where we'd like it to
-	 * go.	It is NULL if we have no preference.
+	 * go.	It is शून्य अगर we have no preference.
 	 */
-	struct sctp_transport *transport;
+	काष्ठा sctp_transport *transport;
 
-	/* SCTP-AUTH:  For the special case inbound processing of COOKIE-ECHO
-	 * we need save a pointer to the AUTH chunk, since the SCTP-AUTH
+	/* SCTP-AUTH:  For the special हाल inbound processing of COOKIE-ECHO
+	 * we need save a poपूर्णांकer to the AUTH chunk, since the SCTP-AUTH
 	 * spec violates the principle premis that all chunks are processed
 	 * in order.
 	 */
-	struct sk_buff *auth_chunk;
+	काष्ठा sk_buff *auth_chunk;
 
-#define SCTP_CAN_FRTX 0x0
-#define SCTP_NEED_FRTX 0x1
-#define SCTP_DONT_FRTX 0x2
-	__u16	rtt_in_progress:1,	/* This chunk used for RTT calc? */
+#घोषणा SCTP_CAN_FRTX 0x0
+#घोषणा SCTP_NEED_FRTX 0x1
+#घोषणा SCTP_DONT_FRTX 0x2
+	__u16	rtt_in_progress:1,	/* This chunk used क्रम RTT calc? */
 		has_tsn:1,		/* Does this chunk have a TSN yet? */
 		has_ssn:1,		/* Does this chunk have a SSN yet? */
-#define has_mid has_ssn
+#घोषणा has_mid has_ssn
 		singleton:1,		/* Only chunk in the packet? */
 		end_of_packet:1,	/* Last chunk in the packet? */
-		ecn_ce_done:1,		/* Have we processed the ECN CE bit? */
+		ecn_ce_करोne:1,		/* Have we processed the ECN CE bit? */
 		pdiscard:1,		/* Discard the whole packet now? */
 		tsn_gap_acked:1,	/* Is this chunk acked by a GAP ACK? */
 		data_accepted:1,	/* At least 1 chunk accepted */
 		auth:1,			/* IN: was auth'ed | OUT: needs auth */
-		has_asconf:1,		/* IN: have seen an asconf before */
+		has_asconf:1,		/* IN: have seen an asconf beक्रमe */
 		tsn_missing_report:2,	/* Data chunk missing counter. */
 		fast_retransmit:2;	/* Is this chunk fast retransmitted? */
-};
+पूर्ण;
 
-#define sctp_chunk_retransmitted(chunk)	(chunk->sent_count > 1)
-void sctp_chunk_hold(struct sctp_chunk *);
-void sctp_chunk_put(struct sctp_chunk *);
-int sctp_user_addto_chunk(struct sctp_chunk *chunk, int len,
-			  struct iov_iter *from);
-void sctp_chunk_free(struct sctp_chunk *);
-void  *sctp_addto_chunk(struct sctp_chunk *, int len, const void *data);
-struct sctp_chunk *sctp_chunkify(struct sk_buff *,
-				 const struct sctp_association *,
-				 struct sock *, gfp_t gfp);
-void sctp_init_addrs(struct sctp_chunk *, union sctp_addr *,
-		     union sctp_addr *);
-const union sctp_addr *sctp_source(const struct sctp_chunk *chunk);
+#घोषणा sctp_chunk_retransmitted(chunk)	(chunk->sent_count > 1)
+व्योम sctp_chunk_hold(काष्ठा sctp_chunk *);
+व्योम sctp_chunk_put(काष्ठा sctp_chunk *);
+पूर्णांक sctp_user_addto_chunk(काष्ठा sctp_chunk *chunk, पूर्णांक len,
+			  काष्ठा iov_iter *from);
+व्योम sctp_chunk_मुक्त(काष्ठा sctp_chunk *);
+व्योम  *sctp_addto_chunk(काष्ठा sctp_chunk *, पूर्णांक len, स्थिर व्योम *data);
+काष्ठा sctp_chunk *sctp_chunkअगरy(काष्ठा sk_buff *,
+				 स्थिर काष्ठा sctp_association *,
+				 काष्ठा sock *, gfp_t gfp);
+व्योम sctp_init_addrs(काष्ठा sctp_chunk *, जोड़ sctp_addr *,
+		     जोड़ sctp_addr *);
+स्थिर जोड़ sctp_addr *sctp_source(स्थिर काष्ठा sctp_chunk *chunk);
 
-static inline __u16 sctp_chunk_stream_no(struct sctp_chunk *ch)
-{
-	return ntohs(ch->subh.data_hdr->stream);
-}
+अटल अंतरभूत __u16 sctp_chunk_stream_no(काष्ठा sctp_chunk *ch)
+अणु
+	वापस ntohs(ch->subh.data_hdr->stream);
+पूर्ण
 
-enum {
+क्रमागत अणु
 	SCTP_ADDR_NEW,		/* new address added to assoc/ep */
 	SCTP_ADDR_SRC,		/* address can be used as source */
 	SCTP_ADDR_DEL,		/* address about to be deleted */
-};
+पूर्ण;
 
-/* This is a structure for holding either an IPv6 or an IPv4 address.  */
-struct sctp_sockaddr_entry {
-	struct list_head list;
-	struct rcu_head	rcu;
-	union sctp_addr a;
+/* This is a काष्ठाure क्रम holding either an IPv6 or an IPv4 address.  */
+काष्ठा sctp_sockaddr_entry अणु
+	काष्ठा list_head list;
+	काष्ठा rcu_head	rcu;
+	जोड़ sctp_addr a;
 	__u8 state;
 	__u8 valid;
-};
+पूर्ण;
 
-#define SCTP_ADDRESS_TICK_DELAY	500
+#घोषणा SCTP_ADDRESS_TICK_DELAY	500
 
-/* This structure holds lists of chunks as we are assembling for
+/* This काष्ठाure holds lists of chunks as we are assembling क्रम
  * transmission.
  */
-struct sctp_packet {
-	/* These are the SCTP header values (host order) for the packet. */
+काष्ठा sctp_packet अणु
+	/* These are the SCTP header values (host order) क्रम the packet. */
 	__u16 source_port;
 	__u16 destination_port;
 	__u32 vtag;
 
 	/* This contains the payload chunks.  */
-	struct list_head chunk_list;
+	काष्ठा list_head chunk_list;
 
 	/* This is the overhead of the sctp and ip headers. */
-	size_t overhead;
+	माप_प्रकार overhead;
 	/* This is the total size of all chunks INCLUDING padding.  */
-	size_t size;
+	माप_प्रकार size;
 	/* This is the maximum size this packet may have */
-	size_t max_size;
+	माप_प्रकार max_size;
 
-	/* The packet is destined for this transport address.
-	 * The function we finally use to pass down to the next lower
-	 * layer lives in the transport structure.
+	/* The packet is destined क्रम this transport address.
+	 * The function we finally use to pass करोwn to the next lower
+	 * layer lives in the transport काष्ठाure.
 	 */
-	struct sctp_transport *transport;
+	काष्ठा sctp_transport *transport;
 
-	/* pointer to the auth chunk for this packet */
-	struct sctp_chunk *auth;
+	/* poपूर्णांकer to the auth chunk क्रम this packet */
+	काष्ठा sctp_chunk *auth;
 
 	u8  has_cookie_echo:1,	/* This packet contains a COOKIE-ECHO chunk. */
 	    has_sack:1,		/* This packet contains a SACK chunk. */
 	    has_auth:1,		/* This packet contains an AUTH chunk */
 	    has_data:1,		/* This packet contains at least 1 DATA chunk */
 	    ipfragok:1;		/* So let ip fragment this packet */
-};
+पूर्ण;
 
-void sctp_packet_init(struct sctp_packet *, struct sctp_transport *,
+व्योम sctp_packet_init(काष्ठा sctp_packet *, काष्ठा sctp_transport *,
 		      __u16 sport, __u16 dport);
-void sctp_packet_config(struct sctp_packet *, __u32 vtag, int);
-enum sctp_xmit sctp_packet_transmit_chunk(struct sctp_packet *packet,
-					  struct sctp_chunk *chunk,
-					  int one_packet, gfp_t gfp);
-enum sctp_xmit sctp_packet_append_chunk(struct sctp_packet *packet,
-					struct sctp_chunk *chunk);
-int sctp_packet_transmit(struct sctp_packet *, gfp_t);
-void sctp_packet_free(struct sctp_packet *);
+व्योम sctp_packet_config(काष्ठा sctp_packet *, __u32 vtag, पूर्णांक);
+क्रमागत sctp_xmit sctp_packet_transmit_chunk(काष्ठा sctp_packet *packet,
+					  काष्ठा sctp_chunk *chunk,
+					  पूर्णांक one_packet, gfp_t gfp);
+क्रमागत sctp_xmit sctp_packet_append_chunk(काष्ठा sctp_packet *packet,
+					काष्ठा sctp_chunk *chunk);
+पूर्णांक sctp_packet_transmit(काष्ठा sctp_packet *, gfp_t);
+व्योम sctp_packet_मुक्त(काष्ठा sctp_packet *);
 
-static inline int sctp_packet_empty(struct sctp_packet *packet)
-{
-	return packet->size == packet->overhead;
-}
+अटल अंतरभूत पूर्णांक sctp_packet_empty(काष्ठा sctp_packet *packet)
+अणु
+	वापस packet->size == packet->overhead;
+पूर्ण
 
 /* This represents a remote transport address.
- * For local transport addresses, we just use union sctp_addr.
+ * For local transport addresses, we just use जोड़ sctp_addr.
  *
  * RFC2960 Section 1.4 Key Terms
  *
  *   o	Transport address:  A Transport Address is traditionally defined
  *	by Network Layer address, Transport Layer protocol and Transport
- *	Layer port number.  In the case of SCTP running over IP, a
+ *	Layer port number.  In the हाल of SCTP running over IP, a
  *	transport address is defined by the combination of an IP address
  *	and an SCTP port number (where SCTP is the Transport protocol).
  *
- * RFC2960 Section 7.1 SCTP Differences from TCP Congestion control
+ * RFC2960 Section 7.1 SCTP Dअगरferences from TCP Congestion control
  *
- *   o	The sender keeps a separate congestion control parameter set for
+ *   o	The sender keeps a separate congestion control parameter set क्रम
  *	each of the destination addresses it can send to (not each
- *	source-destination pair but for each destination).  The parameters
- *	should decay if the address is not used for a long enough time
+ *	source-destination pair but क्रम each destination).  The parameters
+ *	should decay अगर the address is not used क्रम a दीर्घ enough समय
  *	period.
  *
  */
-struct sctp_transport {
+काष्ठा sctp_transport अणु
 	/* A list of transports. */
-	struct list_head transports;
-	struct rhlist_head node;
+	काष्ठा list_head transports;
+	काष्ठा rhlist_head node;
 
 	/* Reference counting. */
 	refcount_t refcnt;
-		/* RTO-Pending : A flag used to track if one of the DATA
+		/* RTO-Pending : A flag used to track अगर one of the DATA
 		 *		chunks sent to this address is currently being
 		 *		used to compute a RTT. If this flag is 0,
 		 *		the next DATA chunk sent to this destination
 		 *		should be used to compute a RTT and this flag
-		 *		should be set. Every time the RTT
+		 *		should be set. Every समय the RTT
 		 *		calculation completes (i.e. the DATA chunk
 		 *		is SACK'd) clear this flag.
 		 */
 	__u32	rto_pending:1,
 
 		/*
-		 * hb_sent : a flag that signals that we have a pending
+		 * hb_sent : a flag that संकेतs that we have a pending
 		 * heartbeat.
 		 */
 		hb_sent:1,
@@ -800,16 +801,16 @@ struct sctp_transport {
 		sack_generation:1;
 	u32 dst_cookie;
 
-	struct flowi fl;
+	काष्ठा flowi fl;
 
 	/* This is the peer's IP address and port. */
-	union sctp_addr ipaddr;
+	जोड़ sctp_addr ipaddr;
 
 	/* These are the functions we call to handle LLP stuff.	 */
-	struct sctp_af *af_specific;
+	काष्ठा sctp_af *af_specअगरic;
 
-	/* Which association do we belong to?  */
-	struct sctp_association *asoc;
+	/* Which association करो we beदीर्घ to?  */
+	काष्ठा sctp_association *asoc;
 
 	/* RFC2960
 	 *
@@ -817,30 +818,30 @@ struct sctp_transport {
 	 *
 	 * For each destination transport address in the peer's
 	 * address list derived from the INIT or INIT ACK chunk, a
-	 * number of data elements needs to be maintained including:
+	 * number of data elements needs to be मुख्यtained including:
 	 */
-	/* RTO	       : The current retransmission timeout value.  */
-	unsigned long rto;
+	/* RTO	       : The current retransmission समयout value.  */
+	अचिन्हित दीर्घ rto;
 
 	__u32 rtt;		/* This is the most recent RTT.	 */
 
 	/* RTTVAR      : The current RTT variation.  */
 	__u32 rttvar;
 
-	/* SRTT	       : The current smoothed round trip time.	*/
+	/* SRTT	       : The current smoothed round trip समय.	*/
 	__u32 srtt;
 
 	/*
 	 * These are the congestion stats.
 	 */
-	/* cwnd	       : The current congestion window.	 */
+	/* cwnd	       : The current congestion winकरोw.	 */
 	__u32 cwnd;		  /* This is the actual cwnd.  */
 
 	/* ssthresh    : The current slow start threshold value.  */
 	__u32 ssthresh;
 
-	/* partial     : The tracking method for increase of cwnd when in
-	 * bytes acked : congestion avoidance mode (see Section 6.2.2)
+	/* partial     : The tracking method क्रम increase of cwnd when in
+	 * bytes acked : congestion aव्योमance mode (see Section 6.2.2)
 	 */
 	__u32 partial_bytes_acked;
 
@@ -850,39 +851,39 @@ struct sctp_transport {
 	__u32 burst_limited;	/* Holds old cwnd when max.burst is applied */
 
 	/* Destination */
-	struct dst_entry *dst;
+	काष्ठा dst_entry *dst;
 	/* Source address. */
-	union sctp_addr saddr;
+	जोड़ sctp_addr saddr;
 
-	/* Heartbeat interval: The endpoint sends out a Heartbeat chunk to
-	 * the destination address every heartbeat interval.
+	/* Heartbeat पूर्णांकerval: The endpoपूर्णांक sends out a Heartbeat chunk to
+	 * the destination address every heartbeat पूर्णांकerval.
 	 */
-	unsigned long hbinterval;
+	अचिन्हित दीर्घ hbपूर्णांकerval;
 
-	/* SACK delay timeout */
-	unsigned long sackdelay;
+	/* SACK delay समयout */
+	अचिन्हित दीर्घ sackdelay;
 	__u32 sackfreq;
 
 	atomic_t mtu_info;
 
-	/* When was the last time that we heard from this transport? We use
+	/* When was the last समय that we heard from this transport? We use
 	 * this to pick new active and retran paths.
 	 */
-	ktime_t last_time_heard;
+	kसमय_प्रकार last_समय_heard;
 
-	/* When was the last time that we sent a chunk using this
-	 * transport? We use this to check for idle transports
+	/* When was the last समय that we sent a chunk using this
+	 * transport? We use this to check क्रम idle transports
 	 */
-	unsigned long last_time_sent;
+	अचिन्हित दीर्घ last_समय_sent;
 
-	/* Last time(in jiffies) when cwnd is reduced due to the congestion
+	/* Last समय(in jअगरfies) when cwnd is reduced due to the congestion
 	 * indication based on ECNE chunk.
 	 */
-	unsigned long last_time_ecne_reduced;
+	अचिन्हित दीर्घ last_समय_ecne_reduced;
 
 	__be16 encap_port;
 
-	/* This is the max_retrans value for the transport and will
+	/* This is the max_retrans value क्रम the transport and will
 	 * be initialized from the assocs value.  This can be changed
 	 * using the SCTP_SET_PEER_ADDR_PARAMS socket option.
 	 */
@@ -891,12 +892,12 @@ struct sctp_transport {
 	__u32 flowlabel;
 	__u8  dscp;
 
-	/* This is the partially failed retrans value for the transport
+	/* This is the partially failed retrans value क्रम the transport
 	 * and will be initialized from the assocs value.  This can be changed
 	 * using the SCTP_PEER_ADDR_THLDS socket option
 	 */
 	__u16 pf_retrans;
-	/* Used for primary path switchover. */
+	/* Used क्रम primary path चयनover. */
 	__u16 ps_retrans;
 	/* PMTU	      : The current known path MTU.  */
 	__u32 pathmtu;
@@ -904,332 +905,332 @@ struct sctp_transport {
 	/* Flags controlling Heartbeat, SACK delay, and Path MTU Discovery. */
 	__u32 param_flags;
 
-	/* The number of times INIT has been sent on this transport. */
-	int init_sent_count;
+	/* The number of बार INIT has been sent on this transport. */
+	पूर्णांक init_sent_count;
 
 	/* state       : The current state of this destination,
 	 *             : i.e. SCTP_ACTIVE, SCTP_INACTIVE, SCTP_UNKNOWN.
 	 */
-	int state;
+	पूर्णांक state;
 
-	/* These are the error stats for this destination.  */
+	/* These are the error stats क्रम this destination.  */
 
-	/* Error count : The current error count for this destination.	*/
-	unsigned short error_count;
+	/* Error count : The current error count क्रम this destination.	*/
+	अचिन्हित लघु error_count;
 
-	/* Per	       : A timer used by each destination.
+	/* Per	       : A समयr used by each destination.
 	 * Destination :
 	 * Timer       :
 	 *
-	 * [Everywhere else in the text this is called T3-rtx. -ed]
+	 * [Everywhere अन्यथा in the text this is called T3-rtx. -ed]
 	 */
-	struct timer_list T3_rtx_timer;
+	काष्ठा समयr_list T3_rtx_समयr;
 
-	/* Heartbeat timer is per destination. */
-	struct timer_list hb_timer;
+	/* Heartbeat समयr is per destination. */
+	काष्ठा समयr_list hb_समयr;
 
 	/* Timer to handle ICMP proto unreachable envets */
-	struct timer_list proto_unreach_timer;
+	काष्ठा समयr_list proto_unreach_समयr;
 
 	/* Timer to handler reconf chunk rtx */
-	struct timer_list reconf_timer;
+	काष्ठा समयr_list reconf_समयr;
 
-	/* Since we're using per-destination retransmission timers
+	/* Since we're using per-destination retransmission समयrs
 	 * (see above), we're also using per-destination "transmitted"
-	 * queues.  This probably ought to be a private struct
+	 * queues.  This probably ought to be a निजी काष्ठा
 	 * accessible only within the outqueue, but it's not, yet.
 	 */
-	struct list_head transmitted;
+	काष्ठा list_head transmitted;
 
-	/* We build bundle-able packets for this transport here.  */
-	struct sctp_packet packet;
+	/* We build bundle-able packets क्रम this transport here.  */
+	काष्ठा sctp_packet packet;
 
 	/* This is the list of transports that have chunks to send.  */
-	struct list_head send_ready;
+	काष्ठा list_head send_पढ़ोy;
 
-	/* State information saved for SFR_CACC algorithm. The key
-	 * idea in SFR_CACC is to maintain state at the sender on a
+	/* State inक्रमmation saved क्रम SFR_CACC algorithm. The key
+	 * idea in SFR_CACC is to मुख्यtain state at the sender on a
 	 * per-destination basis when a changeover happens.
-	 *	char changeover_active;
-	 *	char cycling_changeover;
+	 *	अक्षर changeover_active;
+	 *	अक्षर cycling_changeover;
 	 *	__u32 next_tsn_at_change;
-	 *	char cacc_saw_newack;
+	 *	अक्षर cacc_saw_newack;
 	 */
-	struct {
-		/* An unsigned integer, which stores the next TSN to be
+	काष्ठा अणु
+		/* An अचिन्हित पूर्णांकeger, which stores the next TSN to be
 		 * used by the sender, at the moment of changeover.
 		 */
 		__u32 next_tsn_at_change;
 
 		/* A flag which indicates the occurrence of a changeover */
-		char changeover_active;
+		अक्षर changeover_active;
 
 		/* A flag which indicates whether the change of primary is
-		 * the first switch to this destination address during an
-		 * active switch.
+		 * the first चयन to this destination address during an
+		 * active चयन.
 		 */
-		char cycling_changeover;
+		अक्षर cycling_changeover;
 
 		/* A temporary flag, which is used during the processing of
 		 * a SACK to estimate the causative TSN(s)'s group.
 		 */
-		char cacc_saw_newack;
-	} cacc;
+		अक्षर cacc_saw_newack;
+	पूर्ण cacc;
 
-	/* 64-bit random number sent with heartbeat. */
+	/* 64-bit अक्रमom number sent with heartbeat. */
 	__u64 hb_nonce;
 
-	struct rcu_head rcu;
-};
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-struct sctp_transport *sctp_transport_new(struct net *, const union sctp_addr *,
+काष्ठा sctp_transport *sctp_transport_new(काष्ठा net *, स्थिर जोड़ sctp_addr *,
 					  gfp_t);
-void sctp_transport_set_owner(struct sctp_transport *,
-			      struct sctp_association *);
-void sctp_transport_route(struct sctp_transport *, union sctp_addr *,
-			  struct sctp_sock *);
-void sctp_transport_pmtu(struct sctp_transport *, struct sock *sk);
-void sctp_transport_free(struct sctp_transport *);
-void sctp_transport_reset_t3_rtx(struct sctp_transport *);
-void sctp_transport_reset_hb_timer(struct sctp_transport *);
-void sctp_transport_reset_reconf_timer(struct sctp_transport *transport);
-int sctp_transport_hold(struct sctp_transport *);
-void sctp_transport_put(struct sctp_transport *);
-void sctp_transport_update_rto(struct sctp_transport *, __u32);
-void sctp_transport_raise_cwnd(struct sctp_transport *, __u32, __u32);
-void sctp_transport_lower_cwnd(struct sctp_transport *t,
-			       enum sctp_lower_cwnd reason);
-void sctp_transport_burst_limited(struct sctp_transport *);
-void sctp_transport_burst_reset(struct sctp_transport *);
-unsigned long sctp_transport_timeout(struct sctp_transport *);
-void sctp_transport_reset(struct sctp_transport *t);
-bool sctp_transport_update_pmtu(struct sctp_transport *t, u32 pmtu);
-void sctp_transport_immediate_rtx(struct sctp_transport *);
-void sctp_transport_dst_release(struct sctp_transport *t);
-void sctp_transport_dst_confirm(struct sctp_transport *t);
+व्योम sctp_transport_set_owner(काष्ठा sctp_transport *,
+			      काष्ठा sctp_association *);
+व्योम sctp_transport_route(काष्ठा sctp_transport *, जोड़ sctp_addr *,
+			  काष्ठा sctp_sock *);
+व्योम sctp_transport_pmtu(काष्ठा sctp_transport *, काष्ठा sock *sk);
+व्योम sctp_transport_मुक्त(काष्ठा sctp_transport *);
+व्योम sctp_transport_reset_t3_rtx(काष्ठा sctp_transport *);
+व्योम sctp_transport_reset_hb_समयr(काष्ठा sctp_transport *);
+व्योम sctp_transport_reset_reconf_समयr(काष्ठा sctp_transport *transport);
+पूर्णांक sctp_transport_hold(काष्ठा sctp_transport *);
+व्योम sctp_transport_put(काष्ठा sctp_transport *);
+व्योम sctp_transport_update_rto(काष्ठा sctp_transport *, __u32);
+व्योम sctp_transport_उठाओ_cwnd(काष्ठा sctp_transport *, __u32, __u32);
+व्योम sctp_transport_lower_cwnd(काष्ठा sctp_transport *t,
+			       क्रमागत sctp_lower_cwnd reason);
+व्योम sctp_transport_burst_limited(काष्ठा sctp_transport *);
+व्योम sctp_transport_burst_reset(काष्ठा sctp_transport *);
+अचिन्हित दीर्घ sctp_transport_समयout(काष्ठा sctp_transport *);
+व्योम sctp_transport_reset(काष्ठा sctp_transport *t);
+bool sctp_transport_update_pmtu(काष्ठा sctp_transport *t, u32 pmtu);
+व्योम sctp_transport_immediate_rtx(काष्ठा sctp_transport *);
+व्योम sctp_transport_dst_release(काष्ठा sctp_transport *t);
+व्योम sctp_transport_dst_confirm(काष्ठा sctp_transport *t);
 
 
-/* This is the structure we use to queue packets as they come into
- * SCTP.  We write packets to it and read chunks from it.
+/* This is the काष्ठाure we use to queue packets as they come पूर्णांकo
+ * SCTP.  We ग_लिखो packets to it and पढ़ो chunks from it.
  */
-struct sctp_inq {
+काष्ठा sctp_inq अणु
 	/* This is actually a queue of sctp_chunk each
 	 * containing a partially decoded packet.
 	 */
-	struct list_head in_chunk_list;
+	काष्ठा list_head in_chunk_list;
 	/* This is the packet which is currently off the in queue and is
 	 * being worked on through the inbound chunk processing.
 	 */
-	struct sctp_chunk *in_progress;
+	काष्ठा sctp_chunk *in_progress;
 
 	/* This is the delayed task to finish delivering inbound
 	 * messages.
 	 */
-	struct work_struct immediate;
-};
+	काष्ठा work_काष्ठा immediate;
+पूर्ण;
 
-void sctp_inq_init(struct sctp_inq *);
-void sctp_inq_free(struct sctp_inq *);
-void sctp_inq_push(struct sctp_inq *, struct sctp_chunk *packet);
-struct sctp_chunk *sctp_inq_pop(struct sctp_inq *);
-struct sctp_chunkhdr *sctp_inq_peek(struct sctp_inq *);
-void sctp_inq_set_th_handler(struct sctp_inq *, work_func_t);
+व्योम sctp_inq_init(काष्ठा sctp_inq *);
+व्योम sctp_inq_मुक्त(काष्ठा sctp_inq *);
+व्योम sctp_inq_push(काष्ठा sctp_inq *, काष्ठा sctp_chunk *packet);
+काष्ठा sctp_chunk *sctp_inq_pop(काष्ठा sctp_inq *);
+काष्ठा sctp_chunkhdr *sctp_inq_peek(काष्ठा sctp_inq *);
+व्योम sctp_inq_set_th_handler(काष्ठा sctp_inq *, work_func_t);
 
-/* This is the structure we use to hold outbound chunks.  You push
- * chunks in and they automatically pop out the other end as bundled
+/* This is the काष्ठाure we use to hold outbound chunks.  You push
+ * chunks in and they स्वतःmatically pop out the other end as bundled
  * packets (it calls (*output_handler)()).
  *
- * This structure covers sections 6.3, 6.4, 6.7, 6.8, 6.10, 7., 8.1,
+ * This काष्ठाure covers sections 6.3, 6.4, 6.7, 6.8, 6.10, 7., 8.1,
  * and 8.2 of the v13 draft.
  *
- * It handles retransmissions.	The connection to the timeout portion
- * of the state machine is through sctp_..._timeout() and timeout_handler.
+ * It handles retransmissions.	The connection to the समयout portion
+ * of the state machine is through sctp_..._समयout() and समयout_handler.
  *
  * If you feed it SACKs, it will eat them.
  *
  * If you give it big chunks, it will fragment them.
  *
  * It assigns TSN's to data chunks.  This happens at the last possible
- * instant before transmission.
+ * instant beक्रमe transmission.
  *
- * When free()'d, it empties itself out via output_handler().
+ * When मुक्त()'d, it empties itself out via output_handler().
  */
-struct sctp_outq {
-	struct sctp_association *asoc;
+काष्ठा sctp_outq अणु
+	काष्ठा sctp_association *asoc;
 
 	/* Data pending that has never been transmitted.  */
-	struct list_head out_chunk_list;
+	काष्ठा list_head out_chunk_list;
 
 	/* Stream scheduler being used */
-	struct sctp_sched_ops *sched;
+	काष्ठा sctp_sched_ops *sched;
 
-	unsigned int out_qlen;	/* Total length of queued data chunks. */
+	अचिन्हित पूर्णांक out_qlen;	/* Total length of queued data chunks. */
 
 	/* Error of send failed, may used in SCTP_SEND_FAILED event. */
-	unsigned int error;
+	अचिन्हित पूर्णांक error;
 
 	/* These are control chunks we want to send.  */
-	struct list_head control_chunk_list;
+	काष्ठा list_head control_chunk_list;
 
 	/* These are chunks that have been sacked but are above the
-	 * CTSN, or cumulative tsn ack point.
+	 * CTSN, or cumulative tsn ack poपूर्णांक.
 	 */
-	struct list_head sacked;
+	काष्ठा list_head sacked;
 
-	/* Put chunks on this list to schedule them for
+	/* Put chunks on this list to schedule them क्रम
 	 * retransmission.
 	 */
-	struct list_head retransmit;
+	काष्ठा list_head retransmit;
 
-	/* Put chunks on this list to save them for FWD TSN processing as
-	 * they were abandoned.
+	/* Put chunks on this list to save them क्रम FWD TSN processing as
+	 * they were abanकरोned.
 	 */
-	struct list_head abandoned;
+	काष्ठा list_head abanकरोned;
 
-	/* How many unackd bytes do we have in-flight?	*/
+	/* How many unackd bytes करो we have in-flight?	*/
 	__u32 outstanding_bytes;
 
-	/* Are we doing fast-rtx on this queue */
-	char fast_rtx;
+	/* Are we करोing fast-rtx on this queue */
+	अक्षर fast_rtx;
 
 	/* Corked? */
-	char cork;
-};
+	अक्षर cork;
+पूर्ण;
 
-void sctp_outq_init(struct sctp_association *, struct sctp_outq *);
-void sctp_outq_teardown(struct sctp_outq *);
-void sctp_outq_free(struct sctp_outq*);
-void sctp_outq_tail(struct sctp_outq *, struct sctp_chunk *chunk, gfp_t);
-int sctp_outq_sack(struct sctp_outq *, struct sctp_chunk *);
-int sctp_outq_is_empty(const struct sctp_outq *);
-void sctp_outq_restart(struct sctp_outq *);
+व्योम sctp_outq_init(काष्ठा sctp_association *, काष्ठा sctp_outq *);
+व्योम sctp_outq_tearकरोwn(काष्ठा sctp_outq *);
+व्योम sctp_outq_मुक्त(काष्ठा sctp_outq*);
+व्योम sctp_outq_tail(काष्ठा sctp_outq *, काष्ठा sctp_chunk *chunk, gfp_t);
+पूर्णांक sctp_outq_sack(काष्ठा sctp_outq *, काष्ठा sctp_chunk *);
+पूर्णांक sctp_outq_is_empty(स्थिर काष्ठा sctp_outq *);
+व्योम sctp_outq_restart(काष्ठा sctp_outq *);
 
-void sctp_retransmit(struct sctp_outq *q, struct sctp_transport *transport,
-		     enum sctp_retransmit_reason reason);
-void sctp_retransmit_mark(struct sctp_outq *, struct sctp_transport *, __u8);
-void sctp_outq_uncork(struct sctp_outq *, gfp_t gfp);
-void sctp_prsctp_prune(struct sctp_association *asoc,
-		       struct sctp_sndrcvinfo *sinfo, int msg_len);
-void sctp_generate_fwdtsn(struct sctp_outq *q, __u32 sack_ctsn);
+व्योम sctp_retransmit(काष्ठा sctp_outq *q, काष्ठा sctp_transport *transport,
+		     क्रमागत sctp_retransmit_reason reason);
+व्योम sctp_retransmit_mark(काष्ठा sctp_outq *, काष्ठा sctp_transport *, __u8);
+व्योम sctp_outq_uncork(काष्ठा sctp_outq *, gfp_t gfp);
+व्योम sctp_prsctp_prune(काष्ठा sctp_association *asoc,
+		       काष्ठा sctp_sndrcvinfo *sinfo, पूर्णांक msg_len);
+व्योम sctp_generate_fwdtsn(काष्ठा sctp_outq *q, __u32 sack_ctsn);
 /* Uncork and flush an outqueue.  */
-static inline void sctp_outq_cork(struct sctp_outq *q)
-{
+अटल अंतरभूत व्योम sctp_outq_cork(काष्ठा sctp_outq *q)
+अणु
 	q->cork = 1;
-}
+पूर्ण
 
 /* SCTP skb control block.
  * sctp_input_cb is currently used on rx and sock rx queue
  */
-struct sctp_input_cb {
-	union {
-		struct inet_skb_parm    h4;
-#if IS_ENABLED(CONFIG_IPV6)
-		struct inet6_skb_parm   h6;
-#endif
-	} header;
-	struct sctp_chunk *chunk;
-	struct sctp_af *af;
+काष्ठा sctp_input_cb अणु
+	जोड़ अणु
+		काष्ठा inet_skb_parm    h4;
+#अगर IS_ENABLED(CONFIG_IPV6)
+		काष्ठा inet6_skb_parm   h6;
+#पूर्ण_अगर
+	पूर्ण header;
+	काष्ठा sctp_chunk *chunk;
+	काष्ठा sctp_af *af;
 	__be16 encap_port;
-};
-#define SCTP_INPUT_CB(__skb)	((struct sctp_input_cb *)&((__skb)->cb[0]))
+पूर्ण;
+#घोषणा SCTP_INPUT_CB(__skb)	((काष्ठा sctp_input_cb *)&((__skb)->cb[0]))
 
-struct sctp_output_cb {
-	struct sk_buff *last;
-};
-#define SCTP_OUTPUT_CB(__skb)	((struct sctp_output_cb *)&((__skb)->cb[0]))
+काष्ठा sctp_output_cb अणु
+	काष्ठा sk_buff *last;
+पूर्ण;
+#घोषणा SCTP_OUTPUT_CB(__skb)	((काष्ठा sctp_output_cb *)&((__skb)->cb[0]))
 
-static inline const struct sk_buff *sctp_gso_headskb(const struct sk_buff *skb)
-{
-	const struct sctp_chunk *chunk = SCTP_INPUT_CB(skb)->chunk;
+अटल अंतरभूत स्थिर काष्ठा sk_buff *sctp_gso_headskb(स्थिर काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा sctp_chunk *chunk = SCTP_INPUT_CB(skb)->chunk;
 
-	return chunk->head_skb ? : skb;
-}
+	वापस chunk->head_skb ? : skb;
+पूर्ण
 
-/* These bind address data fields common between endpoints and associations */
-struct sctp_bind_addr {
+/* These bind address data fields common between endpoपूर्णांकs and associations */
+काष्ठा sctp_bind_addr अणु
 
-	/* RFC 2960 12.1 Parameters necessary for the SCTP instance
+	/* RFC 2960 12.1 Parameters necessary क्रम the SCTP instance
 	 *
-	 * SCTP Port:	The local SCTP port number the endpoint is
+	 * SCTP Port:	The local SCTP port number the endpoपूर्णांक is
 	 *		bound to.
 	 */
 	__u16 port;
 
-	/* RFC 2960 12.1 Parameters necessary for the SCTP instance
+	/* RFC 2960 12.1 Parameters necessary क्रम the SCTP instance
 	 *
 	 * Address List: The list of IP addresses that this instance
-	 *	has bound.  This information is passed to one's
+	 *	has bound.  This inक्रमmation is passed to one's
 	 *	peer(s) in INIT and INIT ACK chunks.
 	 */
-	struct list_head address_list;
-};
+	काष्ठा list_head address_list;
+पूर्ण;
 
-void sctp_bind_addr_init(struct sctp_bind_addr *, __u16 port);
-void sctp_bind_addr_free(struct sctp_bind_addr *);
-int sctp_bind_addr_copy(struct net *net, struct sctp_bind_addr *dest,
-			const struct sctp_bind_addr *src,
-			enum sctp_scope scope, gfp_t gfp,
-			int flags);
-int sctp_bind_addr_dup(struct sctp_bind_addr *dest,
-			const struct sctp_bind_addr *src,
+व्योम sctp_bind_addr_init(काष्ठा sctp_bind_addr *, __u16 port);
+व्योम sctp_bind_addr_मुक्त(काष्ठा sctp_bind_addr *);
+पूर्णांक sctp_bind_addr_copy(काष्ठा net *net, काष्ठा sctp_bind_addr *dest,
+			स्थिर काष्ठा sctp_bind_addr *src,
+			क्रमागत sctp_scope scope, gfp_t gfp,
+			पूर्णांक flags);
+पूर्णांक sctp_bind_addr_dup(काष्ठा sctp_bind_addr *dest,
+			स्थिर काष्ठा sctp_bind_addr *src,
 			gfp_t gfp);
-int sctp_add_bind_addr(struct sctp_bind_addr *, union sctp_addr *,
-		       int new_size, __u8 addr_state, gfp_t gfp);
-int sctp_del_bind_addr(struct sctp_bind_addr *, union sctp_addr *);
-int sctp_bind_addr_match(struct sctp_bind_addr *, const union sctp_addr *,
-			 struct sctp_sock *);
-int sctp_bind_addr_conflict(struct sctp_bind_addr *, const union sctp_addr *,
-			 struct sctp_sock *, struct sctp_sock *);
-int sctp_bind_addr_state(const struct sctp_bind_addr *bp,
-			 const union sctp_addr *addr);
-int sctp_bind_addrs_check(struct sctp_sock *sp,
-			  struct sctp_sock *sp2, int cnt2);
-union sctp_addr *sctp_find_unmatch_addr(struct sctp_bind_addr	*bp,
-					const union sctp_addr	*addrs,
-					int			addrcnt,
-					struct sctp_sock	*opt);
-union sctp_params sctp_bind_addrs_to_raw(const struct sctp_bind_addr *bp,
-					 int *addrs_len,
+पूर्णांक sctp_add_bind_addr(काष्ठा sctp_bind_addr *, जोड़ sctp_addr *,
+		       पूर्णांक new_size, __u8 addr_state, gfp_t gfp);
+पूर्णांक sctp_del_bind_addr(काष्ठा sctp_bind_addr *, जोड़ sctp_addr *);
+पूर्णांक sctp_bind_addr_match(काष्ठा sctp_bind_addr *, स्थिर जोड़ sctp_addr *,
+			 काष्ठा sctp_sock *);
+पूर्णांक sctp_bind_addr_conflict(काष्ठा sctp_bind_addr *, स्थिर जोड़ sctp_addr *,
+			 काष्ठा sctp_sock *, काष्ठा sctp_sock *);
+पूर्णांक sctp_bind_addr_state(स्थिर काष्ठा sctp_bind_addr *bp,
+			 स्थिर जोड़ sctp_addr *addr);
+पूर्णांक sctp_bind_addrs_check(काष्ठा sctp_sock *sp,
+			  काष्ठा sctp_sock *sp2, पूर्णांक cnt2);
+जोड़ sctp_addr *sctp_find_unmatch_addr(काष्ठा sctp_bind_addr	*bp,
+					स्थिर जोड़ sctp_addr	*addrs,
+					पूर्णांक			addrcnt,
+					काष्ठा sctp_sock	*opt);
+जोड़ sctp_params sctp_bind_addrs_to_raw(स्थिर काष्ठा sctp_bind_addr *bp,
+					 पूर्णांक *addrs_len,
 					 gfp_t gfp);
-int sctp_raw_to_bind_addrs(struct sctp_bind_addr *bp, __u8 *raw, int len,
+पूर्णांक sctp_raw_to_bind_addrs(काष्ठा sctp_bind_addr *bp, __u8 *raw, पूर्णांक len,
 			   __u16 port, gfp_t gfp);
 
-enum sctp_scope sctp_scope(const union sctp_addr *addr);
-int sctp_in_scope(struct net *net, const union sctp_addr *addr,
-		  const enum sctp_scope scope);
-int sctp_is_any(struct sock *sk, const union sctp_addr *addr);
-int sctp_is_ep_boundall(struct sock *sk);
+क्रमागत sctp_scope sctp_scope(स्थिर जोड़ sctp_addr *addr);
+पूर्णांक sctp_in_scope(काष्ठा net *net, स्थिर जोड़ sctp_addr *addr,
+		  स्थिर क्रमागत sctp_scope scope);
+पूर्णांक sctp_is_any(काष्ठा sock *sk, स्थिर जोड़ sctp_addr *addr);
+पूर्णांक sctp_is_ep_boundall(काष्ठा sock *sk);
 
 
-/* What type of endpoint?  */
-enum sctp_endpoint_type {
+/* What type of endpoपूर्णांक?  */
+क्रमागत sctp_endpoपूर्णांक_type अणु
 	SCTP_EP_TYPE_SOCKET,
 	SCTP_EP_TYPE_ASSOCIATION,
-};
+पूर्ण;
 
 /*
  * A common base class to bridge the implmentation view of a
- * socket (usually listening) endpoint versus an association's
- * local endpoint.
- * This common structure is useful for several purposes:
- *   1) Common interface for lookup routines.
- *	a) Subfunctions work for either endpoint or association
- *	b) Single interface to lookup allows hiding the lookup lock rather
- *	   than acquiring it externally.
- *   2) Common interface for the inbound chunk handling/state machine.
- *   3) Common object handling routines for reference counting, etc.
- *   4) Disentangle association lookup from endpoint lookup, where we
- *	do not have to find our endpoint to find our association.
+ * socket (usually listening) endpoपूर्णांक versus an association's
+ * local endpoपूर्णांक.
+ * This common काष्ठाure is useful क्रम several purposes:
+ *   1) Common पूर्णांकerface क्रम lookup routines.
+ *	a) Subfunctions work क्रम either endpoपूर्णांक or association
+ *	b) Single पूर्णांकerface to lookup allows hiding the lookup lock rather
+ *	   than acquiring it बाह्यally.
+ *   2) Common पूर्णांकerface क्रम the inbound chunk handling/state machine.
+ *   3) Common object handling routines क्रम reference counting, etc.
+ *   4) Disentangle association lookup from endpoपूर्णांक lookup, where we
+ *	करो not have to find our endpoपूर्णांक to find our association.
  *
  */
 
-struct sctp_ep_common {
+काष्ठा sctp_ep_common अणु
 	/* Fields to help us manage our entries in the hash tables. */
-	struct hlist_node node;
-	int hashent;
+	काष्ठा hlist_node node;
+	पूर्णांक hashent;
 
-	/* Runtime type information.  What kind of endpoint is this? */
-	enum sctp_endpoint_type type;
+	/* Runसमय type inक्रमmation.  What kind of endpoपूर्णांक is this? */
+	क्रमागत sctp_endpoपूर्णांक_type type;
 
 	/* Some fields to help us manage this object.
 	 *   refcnt   - Reference count access to this object.
@@ -1238,36 +1239,36 @@ struct sctp_ep_common {
 	refcount_t    refcnt;
 	bool	    dead;
 
-	/* What socket does this endpoint belong to?  */
-	struct sock *sk;
+	/* What socket करोes this endpoपूर्णांक beदीर्घ to?  */
+	काष्ठा sock *sk;
 
 	/* Cache netns and it won't change once set */
-	struct net *net;
+	काष्ठा net *net;
 
 	/* This is where we receive inbound chunks.  */
-	struct sctp_inq	  inqueue;
+	काष्ठा sctp_inq	  inqueue;
 
-	/* This substructure includes the defining parameters of the
-	 * endpoint:
+	/* This subकाष्ठाure includes the defining parameters of the
+	 * endpoपूर्णांक:
 	 * bind_addr.port is our shared port number.
 	 * bind_addr.address_list is our set of local IP addresses.
 	 */
-	struct sctp_bind_addr bind_addr;
-};
+	काष्ठा sctp_bind_addr bind_addr;
+पूर्ण;
 
 
 /* RFC Section 1.4 Key Terms
  *
- * o SCTP endpoint: The logical sender/receiver of SCTP packets. On a
- *   multi-homed host, an SCTP endpoint is represented to its peers as a
+ * o SCTP endpoपूर्णांक: The logical sender/receiver of SCTP packets. On a
+ *   multi-homed host, an SCTP endpoपूर्णांक is represented to its peers as a
  *   combination of a set of eligible destination transport addresses to
  *   which SCTP packets can be sent and a set of eligible source
  *   transport addresses from which SCTP packets can be received.
- *   All transport addresses used by an SCTP endpoint must use the
+ *   All transport addresses used by an SCTP endpoपूर्णांक must use the
  *   same port number, but can use multiple IP addresses. A transport
- *   address used by an SCTP endpoint must not be used by another
- *   SCTP endpoint. In other words, a transport address is unique
- *   to an SCTP endpoint.
+ *   address used by an SCTP endpoपूर्णांक must not be used by another
+ *   SCTP endpoपूर्णांक. In other words, a transport address is unique
+ *   to an SCTP endpoपूर्णांक.
  *
  * From an implementation perspective, each socket has one of these.
  * A TCP-style socket will have exactly one association on one of
@@ -1275,25 +1276,25 @@ struct sctp_ep_common {
  * off one of these.
  */
 
-struct sctp_endpoint {
-	/* Common substructure for endpoint and association. */
-	struct sctp_ep_common base;
+काष्ठा sctp_endpoपूर्णांक अणु
+	/* Common subकाष्ठाure क्रम endpoपूर्णांक and association. */
+	काष्ठा sctp_ep_common base;
 
 	/* Associations: A list of current associations and mappings
-	 *	      to the data consumers for each association. This
-	 *	      may be in the form of a hash table or other
-	 *	      implementation dependent structure. The data
-	 *	      consumers may be process identification
-	 *	      information such as file descriptors, named pipe
-	 *	      pointer, or table pointers dependent on how SCTP
+	 *	      to the data consumers क्रम each association. This
+	 *	      may be in the क्रमm of a hash table or other
+	 *	      implementation dependent काष्ठाure. The data
+	 *	      consumers may be process identअगरication
+	 *	      inक्रमmation such as file descriptors, named pipe
+	 *	      poपूर्णांकer, or table poपूर्णांकers dependent on how SCTP
 	 *	      is implemented.
 	 */
-	/* This is really a list of struct sctp_association entries. */
-	struct list_head asocs;
+	/* This is really a list of काष्ठा sctp_association entries. */
+	काष्ठा list_head asocs;
 
-	/* Secret Key: A secret key used by this endpoint to compute
+	/* Secret Key: A secret key used by this endpoपूर्णांक to compute
 	 *	      the MAC.	This SHOULD be a cryptographic quality
-	 *	      random number with a sufficient length.
+	 *	      अक्रमom number with a sufficient length.
 	 *	      Discussion in [RFC1750] can be helpful in
 	 *	      selection of the key.
 	 */
@@ -1314,205 +1315,205 @@ struct sctp_endpoint {
 	__u32 rcvbuf_policy;
 
 	/* SCTP AUTH: array of the HMACs that will be allocated
-	 * we need this per association so that we don't serialize
+	 * we need this per association so that we करोn't serialize
 	 */
-	struct crypto_shash **auth_hmacs;
+	काष्ठा crypto_shash **auth_hmacs;
 
-	/* SCTP-AUTH: hmacs for the endpoint encoded into parameter */
-	 struct sctp_hmac_algo_param *auth_hmacs_list;
+	/* SCTP-AUTH: hmacs क्रम the endpoपूर्णांक encoded पूर्णांकo parameter */
+	 काष्ठा sctp_hmac_algo_param *auth_hmacs_list;
 
-	/* SCTP-AUTH: chunks to authenticate encoded into parameter */
-	struct sctp_chunks_param *auth_chunk_list;
+	/* SCTP-AUTH: chunks to authenticate encoded पूर्णांकo parameter */
+	काष्ठा sctp_chunks_param *auth_chunk_list;
 
-	/* SCTP-AUTH: endpoint shared keys */
-	struct list_head endpoint_shared_keys;
+	/* SCTP-AUTH: endpoपूर्णांक shared keys */
+	काष्ठा list_head endpoपूर्णांक_shared_keys;
 	__u16 active_key_id;
 	__u8  ecn_enable:1,
 	      auth_enable:1,
-	      intl_enable:1,
+	      पूर्णांकl_enable:1,
 	      prsctp_enable:1,
 	      asconf_enable:1,
 	      reconf_enable:1;
 
 	__u8  strreset_enable;
 
-	/* Security identifiers from incoming (INIT). These are set by
+	/* Security identअगरiers from incoming (INIT). These are set by
 	 * security_sctp_assoc_request(). These will only be used by
 	 * SCTP TCP type sockets and peeled off connections as they
 	 * cause a new socket to be generated. security_sctp_sk_clone()
-	 * will then plug these into the new socket.
+	 * will then plug these पूर्णांकo the new socket.
 	 */
 
 	u32 secid;
 	u32 peer_secid;
-};
+पूर्ण;
 
-/* Recover the outter endpoint structure. */
-static inline struct sctp_endpoint *sctp_ep(struct sctp_ep_common *base)
-{
-	struct sctp_endpoint *ep;
+/* Recover the outter endpoपूर्णांक काष्ठाure. */
+अटल अंतरभूत काष्ठा sctp_endpoपूर्णांक *sctp_ep(काष्ठा sctp_ep_common *base)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep;
 
-	ep = container_of(base, struct sctp_endpoint, base);
-	return ep;
-}
+	ep = container_of(base, काष्ठा sctp_endpoपूर्णांक, base);
+	वापस ep;
+पूर्ण
 
-/* These are function signatures for manipulating endpoints.  */
-struct sctp_endpoint *sctp_endpoint_new(struct sock *, gfp_t);
-void sctp_endpoint_free(struct sctp_endpoint *);
-void sctp_endpoint_put(struct sctp_endpoint *);
-void sctp_endpoint_hold(struct sctp_endpoint *);
-void sctp_endpoint_add_asoc(struct sctp_endpoint *, struct sctp_association *);
-struct sctp_association *sctp_endpoint_lookup_assoc(
-	const struct sctp_endpoint *ep,
-	const union sctp_addr *paddr,
-	struct sctp_transport **);
-bool sctp_endpoint_is_peeled_off(struct sctp_endpoint *ep,
-				 const union sctp_addr *paddr);
-struct sctp_endpoint *sctp_endpoint_is_match(struct sctp_endpoint *,
-					struct net *, const union sctp_addr *);
-bool sctp_has_association(struct net *net, const union sctp_addr *laddr,
-			  const union sctp_addr *paddr);
+/* These are function signatures क्रम manipulating endpoपूर्णांकs.  */
+काष्ठा sctp_endpoपूर्णांक *sctp_endpoपूर्णांक_new(काष्ठा sock *, gfp_t);
+व्योम sctp_endpoपूर्णांक_मुक्त(काष्ठा sctp_endpoपूर्णांक *);
+व्योम sctp_endpoपूर्णांक_put(काष्ठा sctp_endpoपूर्णांक *);
+व्योम sctp_endpoपूर्णांक_hold(काष्ठा sctp_endpoपूर्णांक *);
+व्योम sctp_endpoपूर्णांक_add_asoc(काष्ठा sctp_endpoपूर्णांक *, काष्ठा sctp_association *);
+काष्ठा sctp_association *sctp_endpoपूर्णांक_lookup_assoc(
+	स्थिर काष्ठा sctp_endpoपूर्णांक *ep,
+	स्थिर जोड़ sctp_addr *paddr,
+	काष्ठा sctp_transport **);
+bool sctp_endpoपूर्णांक_is_peeled_off(काष्ठा sctp_endpoपूर्णांक *ep,
+				 स्थिर जोड़ sctp_addr *paddr);
+काष्ठा sctp_endpoपूर्णांक *sctp_endpoपूर्णांक_is_match(काष्ठा sctp_endpoपूर्णांक *,
+					काष्ठा net *, स्थिर जोड़ sctp_addr *);
+bool sctp_has_association(काष्ठा net *net, स्थिर जोड़ sctp_addr *laddr,
+			  स्थिर जोड़ sctp_addr *paddr);
 
-int sctp_verify_init(struct net *net, const struct sctp_endpoint *ep,
-		     const struct sctp_association *asoc,
-		     enum sctp_cid cid, struct sctp_init_chunk *peer_init,
-		     struct sctp_chunk *chunk, struct sctp_chunk **err_chunk);
-int sctp_process_init(struct sctp_association *, struct sctp_chunk *chunk,
-		      const union sctp_addr *peer,
-		      struct sctp_init_chunk *init, gfp_t gfp);
-__u32 sctp_generate_tag(const struct sctp_endpoint *);
-__u32 sctp_generate_tsn(const struct sctp_endpoint *);
+पूर्णांक sctp_verअगरy_init(काष्ठा net *net, स्थिर काष्ठा sctp_endpoपूर्णांक *ep,
+		     स्थिर काष्ठा sctp_association *asoc,
+		     क्रमागत sctp_cid cid, काष्ठा sctp_init_chunk *peer_init,
+		     काष्ठा sctp_chunk *chunk, काष्ठा sctp_chunk **err_chunk);
+पूर्णांक sctp_process_init(काष्ठा sctp_association *, काष्ठा sctp_chunk *chunk,
+		      स्थिर जोड़ sctp_addr *peer,
+		      काष्ठा sctp_init_chunk *init, gfp_t gfp);
+__u32 sctp_generate_tag(स्थिर काष्ठा sctp_endpoपूर्णांक *);
+__u32 sctp_generate_tsn(स्थिर काष्ठा sctp_endpoपूर्णांक *);
 
-struct sctp_inithdr_host {
+काष्ठा sctp_inithdr_host अणु
 	__u32 init_tag;
 	__u32 a_rwnd;
 	__u16 num_outbound_streams;
 	__u16 num_inbound_streams;
 	__u32 initial_tsn;
-};
+पूर्ण;
 
-struct sctp_stream_priorities {
+काष्ठा sctp_stream_priorities अणु
 	/* List of priorities scheduled */
-	struct list_head prio_sched;
+	काष्ठा list_head prio_sched;
 	/* List of streams scheduled */
-	struct list_head active;
+	काष्ठा list_head active;
 	/* The next stream in line */
-	struct sctp_stream_out_ext *next;
+	काष्ठा sctp_stream_out_ext *next;
 	__u16 prio;
-};
+पूर्ण;
 
-struct sctp_stream_out_ext {
-	__u64 abandoned_unsent[SCTP_PR_INDEX(MAX) + 1];
-	__u64 abandoned_sent[SCTP_PR_INDEX(MAX) + 1];
-	struct list_head outq; /* chunks enqueued by this stream */
-	union {
-		struct {
+काष्ठा sctp_stream_out_ext अणु
+	__u64 abanकरोned_unsent[SCTP_PR_INDEX(MAX) + 1];
+	__u64 abanकरोned_sent[SCTP_PR_INDEX(MAX) + 1];
+	काष्ठा list_head outq; /* chunks enqueued by this stream */
+	जोड़ अणु
+		काष्ठा अणु
 			/* Scheduled streams list */
-			struct list_head prio_list;
-			struct sctp_stream_priorities *prio_head;
-		};
+			काष्ठा list_head prio_list;
+			काष्ठा sctp_stream_priorities *prio_head;
+		पूर्ण;
 		/* Fields used by RR scheduler */
-		struct {
-			struct list_head rr_list;
-		};
-	};
-};
+		काष्ठा अणु
+			काष्ठा list_head rr_list;
+		पूर्ण;
+	पूर्ण;
+पूर्ण;
 
-struct sctp_stream_out {
-	union {
+काष्ठा sctp_stream_out अणु
+	जोड़ अणु
 		__u32 mid;
 		__u16 ssn;
-	};
+	पूर्ण;
 	__u32 mid_uo;
-	struct sctp_stream_out_ext *ext;
+	काष्ठा sctp_stream_out_ext *ext;
 	__u8 state;
-};
+पूर्ण;
 
-struct sctp_stream_in {
-	union {
+काष्ठा sctp_stream_in अणु
+	जोड़ अणु
 		__u32 mid;
 		__u16 ssn;
-	};
+	पूर्ण;
 	__u32 mid_uo;
 	__u32 fsn;
 	__u32 fsn_uo;
-	char pd_mode;
-	char pd_mode_uo;
-};
+	अक्षर pd_mode;
+	अक्षर pd_mode_uo;
+पूर्ण;
 
-struct sctp_stream {
-	GENRADIX(struct sctp_stream_out) out;
-	GENRADIX(struct sctp_stream_in)	in;
+काष्ठा sctp_stream अणु
+	GENRADIX(काष्ठा sctp_stream_out) out;
+	GENRADIX(काष्ठा sctp_stream_in)	in;
 
 	__u16 outcnt;
 	__u16 incnt;
-	/* Current stream being sent, if any */
-	struct sctp_stream_out *out_curr;
-	union {
+	/* Current stream being sent, अगर any */
+	काष्ठा sctp_stream_out *out_curr;
+	जोड़ अणु
 		/* Fields used by priority scheduler */
-		struct {
+		काष्ठा अणु
 			/* List of priorities scheduled */
-			struct list_head prio_list;
-		};
+			काष्ठा list_head prio_list;
+		पूर्ण;
 		/* Fields used by RR scheduler */
-		struct {
+		काष्ठा अणु
 			/* List of streams scheduled */
-			struct list_head rr_list;
+			काष्ठा list_head rr_list;
 			/* The next stream in line */
-			struct sctp_stream_out_ext *rr_next;
-		};
-	};
-	struct sctp_stream_interleave *si;
-};
+			काष्ठा sctp_stream_out_ext *rr_next;
+		पूर्ण;
+	पूर्ण;
+	काष्ठा sctp_stream_पूर्णांकerleave *si;
+पूर्ण;
 
-static inline struct sctp_stream_out *sctp_stream_out(
-	struct sctp_stream *stream,
+अटल अंतरभूत काष्ठा sctp_stream_out *sctp_stream_out(
+	काष्ठा sctp_stream *stream,
 	__u16 sid)
-{
-	return genradix_ptr(&stream->out, sid);
-}
+अणु
+	वापस genradix_ptr(&stream->out, sid);
+पूर्ण
 
-static inline struct sctp_stream_in *sctp_stream_in(
-	struct sctp_stream *stream,
+अटल अंतरभूत काष्ठा sctp_stream_in *sctp_stream_in(
+	काष्ठा sctp_stream *stream,
 	__u16 sid)
-{
-	return genradix_ptr(&stream->in, sid);
-}
+अणु
+	वापस genradix_ptr(&stream->in, sid);
+पूर्ण
 
-#define SCTP_SO(s, i) sctp_stream_out((s), (i))
-#define SCTP_SI(s, i) sctp_stream_in((s), (i))
+#घोषणा SCTP_SO(s, i) sctp_stream_out((s), (i))
+#घोषणा SCTP_SI(s, i) sctp_stream_in((s), (i))
 
-#define SCTP_STREAM_CLOSED		0x00
-#define SCTP_STREAM_OPEN		0x01
+#घोषणा SCTP_STREAM_CLOSED		0x00
+#घोषणा SCTP_STREAM_OPEN		0x01
 
-static inline __u16 sctp_datachk_len(const struct sctp_stream *stream)
-{
-	return stream->si->data_chunk_len;
-}
+अटल अंतरभूत __u16 sctp_datachk_len(स्थिर काष्ठा sctp_stream *stream)
+अणु
+	वापस stream->si->data_chunk_len;
+पूर्ण
 
-static inline __u16 sctp_datahdr_len(const struct sctp_stream *stream)
-{
-	return stream->si->data_chunk_len - sizeof(struct sctp_chunkhdr);
-}
+अटल अंतरभूत __u16 sctp_datahdr_len(स्थिर काष्ठा sctp_stream *stream)
+अणु
+	वापस stream->si->data_chunk_len - माप(काष्ठा sctp_chunkhdr);
+पूर्ण
 
-static inline __u16 sctp_ftsnchk_len(const struct sctp_stream *stream)
-{
-	return stream->si->ftsn_chunk_len;
-}
+अटल अंतरभूत __u16 sctp_ftsnchk_len(स्थिर काष्ठा sctp_stream *stream)
+अणु
+	वापस stream->si->ftsn_chunk_len;
+पूर्ण
 
-static inline __u16 sctp_ftsnhdr_len(const struct sctp_stream *stream)
-{
-	return stream->si->ftsn_chunk_len - sizeof(struct sctp_chunkhdr);
-}
+अटल अंतरभूत __u16 sctp_ftsnhdr_len(स्थिर काष्ठा sctp_stream *stream)
+अणु
+	वापस stream->si->ftsn_chunk_len - माप(काष्ठा sctp_chunkhdr);
+पूर्ण
 
 /* SCTP_GET_ASSOC_STATS counters */
-struct sctp_priv_assoc_stats {
+काष्ठा sctp_priv_assoc_stats अणु
 	/* Maximum observed rto in the association during subsequent
-	 * observations. Value is set to 0 if no RTO measurement took place
-	 * The transport where the max_rto was observed is returned in
+	 * observations. Value is set to 0 अगर no RTO measurement took place
+	 * The transport where the max_rto was observed is वापसed in
 	 * obs_rto_ipaddr
 	 */
-	struct sockaddr_storage obs_rto_ipaddr;
+	काष्ठा sockaddr_storage obs_rto_ipaddr;
 	__u64 max_obs_rto;
 	/* Total In and Out SACKs received and sent */
 	__u64 isacks;
@@ -1537,52 +1538,52 @@ struct sctp_priv_assoc_stats {
 	/* Control chunks sent and received */
 	__u64 octrlchunks;
 	__u64 ictrlchunks;
-};
+पूर्ण;
 
 /* RFC2960
  *
  * 12. Recommended Transmission Control Block (TCB) Parameters
  *
  * This section details a recommended set of parameters that should
- * be contained within the TCB for an implementation. This section is
- * for illustrative purposes and should not be deemed as requirements
+ * be contained within the TCB क्रम an implementation. This section is
+ * क्रम illustrative purposes and should not be deemed as requirements
  * on an implementation or as an exhaustive list of all parameters
  * inside an SCTP TCB. Each implementation may need its own additional
- * parameters for optimization.
+ * parameters क्रम optimization.
  */
 
 
-/* Here we have information about each individual association. */
-struct sctp_association {
+/* Here we have inक्रमmation about each inभागidual association. */
+काष्ठा sctp_association अणु
 
-	/* A base structure common to endpoint and association.
+	/* A base काष्ठाure common to endpoपूर्णांक and association.
 	 * In this context, it represents the associations's view
-	 * of the local endpoint of the association.
+	 * of the local endpoपूर्णांक of the association.
 	 */
-	struct sctp_ep_common base;
+	काष्ठा sctp_ep_common base;
 
 	/* Associations on the same socket. */
-	struct list_head asocs;
+	काष्ठा list_head asocs;
 
 	/* association id. */
 	sctp_assoc_t assoc_id;
 
-	/* This is our parent endpoint.	 */
-	struct sctp_endpoint *ep;
+	/* This is our parent endpoपूर्णांक.	 */
+	काष्ठा sctp_endpoपूर्णांक *ep;
 
 	/* These are those association elements needed in the cookie.  */
-	struct sctp_cookie c;
+	काष्ठा sctp_cookie c;
 
-	/* This is all information about our peer.  */
-	struct {
+	/* This is all inक्रमmation about our peer.  */
+	काष्ठा अणु
 		/* transport_addr_list
 		 *
 		 * Peer	       : A list of SCTP transport addresses that the
-		 * Transport   : peer is bound to. This information is derived
+		 * Transport   : peer is bound to. This inक्रमmation is derived
 		 * Address     : from the INIT or INIT ACK and is used to
 		 * List	       : associate an inbound packet with a given
-		 *	       : association. Normally this information is
-		 *	       : hashed or keyed for quick lookup and access
+		 *	       : association. Normally this inक्रमmation is
+		 *	       : hashed or keyed क्रम quick lookup and access
 		 *	       : of the TCB.
 		 *	       : The list is also initialized with the list
 		 *	       : of addresses passed with the sctp_connectx()
@@ -1590,7 +1591,7 @@ struct sctp_association {
 		 *
 		 * It is a list of SCTP_transport's.
 		 */
-		struct list_head transport_addr_list;
+		काष्ठा list_head transport_addr_list;
 
 		/* rwnd
 		 *
@@ -1615,56 +1616,56 @@ struct sctp_association {
 		/* primary_path
 		 *
 		 * Primary     : This is the current primary destination
-		 * Path	       : transport address of the peer endpoint.  It
-		 *	       : may also specify a source transport address
-		 *	       : on this endpoint.
+		 * Path	       : transport address of the peer endpoपूर्णांक.  It
+		 *	       : may also specअगरy a source transport address
+		 *	       : on this endpoपूर्णांक.
 		 *
 		 * All of these paths live on transport_addr_list.
 		 *
-		 * At the bakeoffs, we discovered that the intent of
+		 * At the bakeoffs, we discovered that the पूर्णांकent of
 		 * primaryPath is that it only changes when the ULP
 		 * asks to have it changed.  We add the activePath to
 		 * designate the connection we are currently using to
 		 * transmit new data and most control chunks.
 		 */
-		struct sctp_transport *primary_path;
+		काष्ठा sctp_transport *primary_path;
 
 		/* Cache the primary path address here, when we
-		 * need a an address for msg_name.
+		 * need a an address क्रम msg_name.
 		 */
-		union sctp_addr primary_addr;
+		जोड़ sctp_addr primary_addr;
 
 		/* active_path
 		 *   The path that we are currently using to
 		 *   transmit new data and most control chunks.
 		 */
-		struct sctp_transport *active_path;
+		काष्ठा sctp_transport *active_path;
 
 		/* retran_path
 		 *
-		 * RFC2960 6.4 Multi-homed SCTP Endpoints
+		 * RFC2960 6.4 Multi-homed SCTP Endpoपूर्णांकs
 		 * ...
 		 * Furthermore, when its peer is multi-homed, an
-		 * endpoint SHOULD try to retransmit a chunk to an
+		 * endpoपूर्णांक SHOULD try to retransmit a chunk to an
 		 * active destination transport address that is
-		 * different from the last destination address to
+		 * dअगरferent from the last destination address to
 		 * which the DATA chunk was sent.
 		 */
-		struct sctp_transport *retran_path;
+		काष्ठा sctp_transport *retran_path;
 
-		/* Pointer to last transport I have sent on.  */
-		struct sctp_transport *last_sent_to;
+		/* Poपूर्णांकer to last transport I have sent on.  */
+		काष्ठा sctp_transport *last_sent_to;
 
 		/* This is the last transport I have received DATA on.	*/
-		struct sctp_transport *last_data_from;
+		काष्ठा sctp_transport *last_data_from;
 
 		/*
 		 * Mapping  An array of bits or bytes indicating which out of
 		 * Array    order TSN's have been received (relative to the
 		 *	    Last Rcvd TSN). If no gaps exist, i.e. no out of
 		 *	    order packets have been received, this array
-		 *	    will be set to all zero. This structure may be
-		 *	    in the form of a circular buffer or bit array.
+		 *	    will be set to all zero. This काष्ठाure may be
+		 *	    in the क्रमm of a circular buffer or bit array.
 		 *
 		 * Last Rcvd   : This is the last TSN received in
 		 * TSN	       : sequence. This value is set initially by
@@ -1672,31 +1673,31 @@ struct sctp_association {
 		 *	       : the INIT or INIT ACK chunk, and subtracting
 		 *	       : one from it.
 		 *
-		 * Throughout most of the specification this is called the
-		 * "Cumulative TSN ACK Point".	In this case, we
+		 * Throughout most of the specअगरication this is called the
+		 * "Cumulative TSN ACK Point".	In this हाल, we
 		 * ignore the advice in 12.2 in favour of the term
 		 * used in the bulk of the text.  This value is hidden
 		 * in tsn_map--we get it by calling sctp_tsnmap_get_ctsn().
 		 */
-		struct sctp_tsnmap tsn_map;
+		काष्ठा sctp_tsnmap tsn_map;
 
 		/* This mask is used to disable sending the ASCONF chunk
-		 * with specified parameter to peer.
+		 * with specअगरied parameter to peer.
 		 */
 		__be16 addip_disabled_mask;
 
 		/* These are capabilities which our peer advertised.  */
-		__u16	ecn_capable:1,      /* Can peer do ECN? */
+		__u16	ecn_capable:1,      /* Can peer करो ECN? */
 			ipv4_address:1,     /* Peer understands IPv4 addresses? */
 			ipv6_address:1,     /* Peer understands IPv6 addresses? */
 			hostname_address:1, /* Peer understands DNS addresses? */
 			asconf_capable:1,   /* Does peer support ADDIP? */
-			prsctp_capable:1,   /* Can peer do PR-SCTP? */
-			reconf_capable:1,   /* Can peer do RE-CONFIG? */
-			intl_capable:1,     /* Can peer do INTERLEAVE */
-			auth_capable:1,     /* Is peer doing SCTP-AUTH? */
+			prsctp_capable:1,   /* Can peer करो PR-SCTP? */
+			reconf_capable:1,   /* Can peer करो RE-CONFIG? */
+			पूर्णांकl_capable:1,     /* Can peer करो INTERLEAVE */
+			auth_capable:1,     /* Is peer करोing SCTP-AUTH? */
 			/* sack_needed:
-			 *   This flag indicates if the next received
+			 *   This flag indicates अगर the next received
 			 *   packet is to be responded to with a
 			 *   SACK. This is initialized to 0.  When a packet
 			 *   is received sack_cnt is incremented. If this value
@@ -1708,15 +1709,15 @@ struct sctp_association {
 			 */
 			sack_needed:1,     /* Do we need to sack the peer? */
 			sack_generation:1,
-			zero_window_announced:1;
+			zero_winकरोw_announced:1;
 
 		__u32	sack_cnt;
 
-		__u32   adaptation_ind;	 /* Adaptation Code point. */
+		__u32   adaptation_ind;	 /* Adaptation Code poपूर्णांक. */
 
-		struct sctp_inithdr_host i;
-		void *cookie;
-		int cookie_len;
+		काष्ठा sctp_inithdr_host i;
+		व्योम *cookie;
+		पूर्णांक cookie_len;
 
 		/* ADDIP Section 4.2 Upon reception of an ASCONF Chunk.
 		 * C1) ... "Peer-Serial-Number'. This value MUST be initialized to the
@@ -1724,81 +1725,81 @@ struct sctp_association {
 		 */
 		__u32 addip_serial;
 
-		/* SCTP-AUTH: We need to know pears random number, hmac list
+		/* SCTP-AUTH: We need to know pears अक्रमom number, hmac list
 		 * and authenticated chunk list.  All that is part of the
-		 * cookie and these are just pointers to those locations
+		 * cookie and these are just poपूर्णांकers to those locations
 		 */
-		struct sctp_random_param *peer_random;
-		struct sctp_chunks_param *peer_chunks;
-		struct sctp_hmac_algo_param *peer_hmacs;
-	} peer;
+		काष्ठा sctp_अक्रमom_param *peer_अक्रमom;
+		काष्ठा sctp_chunks_param *peer_chunks;
+		काष्ठा sctp_hmac_algo_param *peer_hmacs;
+	पूर्ण peer;
 
 	/* State       : A state variable indicating what state the
 	 *	       : association is in, i.e. COOKIE-WAIT,
 	 *	       : COOKIE-ECHOED, ESTABLISHED, SHUTDOWN-PENDING,
 	 *	       : SHUTDOWN-SENT, SHUTDOWN-RECEIVED, SHUTDOWN-ACK-SENT.
 	 *
-	 *		Note: No "CLOSED" state is illustrated since if a
-	 *		association is "CLOSED" its TCB SHOULD be removed.
+	 *		Note: No "CLOSED" state is illustrated since अगर a
+	 *		association is "CLOSED" its TCB SHOULD be हटाओd.
 	 *
 	 *		In this implementation we DO have a CLOSED
-	 *		state which is used during initiation and shutdown.
+	 *		state which is used during initiation and shutकरोwn.
 	 *
 	 *		State takes values from SCTP_STATE_*.
 	 */
-	enum sctp_state state;
+	क्रमागत sctp_state state;
 
 	/* Overall     : The overall association error count.
-	 * Error Count : [Clear this any time I get something.]
+	 * Error Count : [Clear this any समय I get something.]
 	 */
-	int overall_error_count;
+	पूर्णांक overall_error_count;
 
-	/* The cookie life I award for any cookie.  */
-	ktime_t cookie_life;
+	/* The cookie lअगरe I award क्रम any cookie.  */
+	kसमय_प्रकार cookie_lअगरe;
 
 	/* These are the association's initial, max, and min RTO values.
-	 * These values will be initialized by system defaults, but can
-	 * be modified via the SCTP_RTOINFO socket option.
+	 * These values will be initialized by प्रणाली शेषs, but can
+	 * be modअगरied via the SCTP_RTOINFO socket option.
 	 */
-	unsigned long rto_initial;
-	unsigned long rto_max;
-	unsigned long rto_min;
+	अचिन्हित दीर्घ rto_initial;
+	अचिन्हित दीर्घ rto_max;
+	अचिन्हित दीर्घ rto_min;
 
 	/* Maximum number of new data packets that can be sent in a burst.  */
-	int max_burst;
+	पूर्णांक max_burst;
 
-	/* This is the max_retrans value for the association.  This value will
-	 * be initialized from system defaults, but can be
-	 * modified by the SCTP_ASSOCINFO socket option.
+	/* This is the max_retrans value क्रम the association.  This value will
+	 * be initialized from प्रणाली शेषs, but can be
+	 * modअगरied by the SCTP_ASSOCINFO socket option.
 	 */
-	int max_retrans;
+	पूर्णांक max_retrans;
 
-	/* This is the partially failed retrans value for the transport
+	/* This is the partially failed retrans value क्रम the transport
 	 * and will be initialized from the assocs value.  This can be
 	 * changed using the SCTP_PEER_ADDR_THLDS socket option
 	 */
 	__u16 pf_retrans;
-	/* Used for primary path switchover. */
+	/* Used क्रम primary path चयनover. */
 	__u16 ps_retrans;
 
-	/* Maximum number of times the endpoint will retransmit INIT  */
+	/* Maximum number of बार the endpoपूर्णांक will retransmit INIT  */
 	__u16 max_init_attempts;
 
-	/* How many times have we resent an INIT? */
+	/* How many बार have we resent an INIT? */
 	__u16 init_retries;
 
-	/* The largest timeout or RTO value to use in attempting an INIT */
-	unsigned long max_init_timeo;
+	/* The largest समयout or RTO value to use in attempting an INIT */
+	अचिन्हित दीर्घ max_init_समयo;
 
-	/* Heartbeat interval: The endpoint sends out a Heartbeat chunk to
-	 * the destination address every heartbeat interval. This value
+	/* Heartbeat पूर्णांकerval: The endpoपूर्णांक sends out a Heartbeat chunk to
+	 * the destination address every heartbeat पूर्णांकerval. This value
 	 * will be inherited by all new transports.
 	 */
-	unsigned long hbinterval;
+	अचिन्हित दीर्घ hbपूर्णांकerval;
 
 	__be16 encap_port;
 
-	/* This is the max_retrans value for new transports in the
+	/* This is the max_retrans value क्रम new transports in the
 	 * association.
 	 */
 	__u16 pathmaxrxt;
@@ -1809,7 +1810,7 @@ struct sctp_association {
 	/* Flag that path mtu update is pending */
 	__u8   pmtu_pending;
 
-	/* Association : The smallest PMTU discovered for all of the
+	/* Association : The smallest PMTU discovered क्रम all of the
 	 * PMTU	       : peer's transport addresses.
 	 */
 	__u32 pathmtu;
@@ -1818,25 +1819,25 @@ struct sctp_association {
 	__u32 param_flags;
 
 	__u32 sackfreq;
-	/* SACK delay timeout */
-	unsigned long sackdelay;
+	/* SACK delay समयout */
+	अचिन्हित दीर्घ sackdelay;
 
-	unsigned long timeouts[SCTP_NUM_TIMEOUT_TYPES];
-	struct timer_list timers[SCTP_NUM_TIMEOUT_TYPES];
+	अचिन्हित दीर्घ समयouts[SCTP_NUM_TIMEOUT_TYPES];
+	काष्ठा समयr_list समयrs[SCTP_NUM_TIMEOUT_TYPES];
 
 	/* Transport to which SHUTDOWN chunk was last sent.  */
-	struct sctp_transport *shutdown_last_sent_to;
+	काष्ठा sctp_transport *shutकरोwn_last_sent_to;
 
 	/* Transport to which INIT chunk was last sent.  */
-	struct sctp_transport *init_last_sent_to;
+	काष्ठा sctp_transport *init_last_sent_to;
 
-	/* How many times have we resent a SHUTDOWN */
-	int shutdown_retries;
+	/* How many बार have we resent a SHUTDOWN */
+	पूर्णांक shutकरोwn_retries;
 
-	/* Next TSN    : The next TSN number to be assigned to a new
+	/* Next TSN    : The next TSN number to be asचिन्हित to a new
 	 *	       : DATA chunk.  This is sent in the INIT or INIT
 	 *	       : ACK chunk to the peer and incremented each
-	 *	       : time a DATA chunk is assigned a TSN
+	 *	       : समय a DATA chunk is asचिन्हित a TSN
 	 *	       : (normally just prior to transmit or during
 	 *	       : fragmentation).
 	 */
@@ -1848,19 +1849,19 @@ struct sctp_association {
 	 *	       : received in the INIT or INIT ACK chunk, and
 	 *	       : subtracting one from it.
 	 *
-	 * Most of RFC 2960 refers to this as the Cumulative TSN Ack Point.
+	 * Most of RFC 2960 refers to this as the Cumulative TSN Ack Poपूर्णांक.
 	 */
 
-	__u32 ctsn_ack_point;
+	__u32 ctsn_ack_poपूर्णांक;
 
-	/* PR-SCTP Advanced.Peer.Ack.Point */
-	__u32 adv_peer_ack_point;
+	/* PR-SCTP Advanced.Peer.Ack.Poपूर्णांक */
+	__u32 adv_peer_ack_poपूर्णांक;
 
 	/* Highest TSN that is acknowledged by incoming SACKs. */
 	__u32 highest_sacked;
 
-	/* TSN marking the fast recovery exit point */
-	__u32 fast_recovery_exit;
+	/* TSN marking the fast recovery निकास poपूर्णांक */
+	__u32 fast_recovery_निकास;
 
 	/* Flag to track the current fast recovery state */
 	__u8 fast_recovery;
@@ -1871,7 +1872,7 @@ struct sctp_association {
 	__u16 unack_data;
 
 	/* The total number of data chunks that we've had to retransmit
-	 * as the result of a T3 timer expiration
+	 * as the result of a T3 समयr expiration
 	 */
 	__u32 rtx_data_chunks;
 
@@ -1884,62 +1885,62 @@ struct sctp_association {
 	__u32 a_rwnd;
 
 	/* Number of bytes by which the rwnd has slopped.  The rwnd is allowed
-	 * to slop over a maximum of the association's frag_point.
+	 * to slop over a maximum of the association's frag_poपूर्णांक.
 	 */
 	__u32 rwnd_over;
 
 	/* Keeps treack of rwnd pressure.  This happens when we have
-	 * a window, but not recevie buffer (i.e small packets).  This one
-	 * is releases slowly (1 PMTU at a time ).
+	 * a winकरोw, but not recevie buffer (i.e small packets).  This one
+	 * is releases slowly (1 PMTU at a समय ).
 	 */
 	__u32 rwnd_press;
 
-	/* This is the sndbuf size in use for the association.
-	 * This corresponds to the sndbuf size for the association,
-	 * as specified in the sk->sndbuf.
+	/* This is the sndbuf size in use क्रम the association.
+	 * This corresponds to the sndbuf size क्रम the association,
+	 * as specअगरied in the sk->sndbuf.
 	 */
-	int sndbuf_used;
+	पूर्णांक sndbuf_used;
 
 	/* This is the amount of memory that this association has allocated
-	 * in the receive path at any given time.
+	 * in the receive path at any given समय.
 	 */
 	atomic_t rmem_alloc;
 
-	/* This is the wait queue head for send requests waiting on
+	/* This is the रुको queue head क्रम send requests रुकोing on
 	 * the association sndbuf space.
 	 */
-	wait_queue_head_t	wait;
+	रुको_queue_head_t	रुको;
 
 	/* The message size at which SCTP fragmentation will occur. */
-	__u32 frag_point;
+	__u32 frag_poपूर्णांक;
 	__u32 user_frag;
 
 	/* Counter used to count INIT errors. */
-	int init_err_counter;
+	पूर्णांक init_err_counter;
 
-	/* Count the number of INIT cycles (for doubling timeout). */
-	int init_cycle;
+	/* Count the number of INIT cycles (क्रम करोubling समयout). */
+	पूर्णांक init_cycle;
 
 	/* Default send parameters. */
-	__u16 default_stream;
-	__u16 default_flags;
-	__u32 default_ppid;
-	__u32 default_context;
-	__u32 default_timetolive;
+	__u16 शेष_stream;
+	__u16 शेष_flags;
+	__u32 शेष_ppid;
+	__u32 शेष_context;
+	__u32 शेष_समयtolive;
 
 	/* Default receive parameters */
-	__u32 default_rcv_context;
+	__u32 शेष_rcv_context;
 
 	/* Stream arrays */
-	struct sctp_stream stream;
+	काष्ठा sctp_stream stream;
 
-	/* All outbound chunks go through this structure.  */
-	struct sctp_outq outqueue;
+	/* All outbound chunks go through this काष्ठाure.  */
+	काष्ठा sctp_outq outqueue;
 
 	/* A smart pipe that will handle reordering and fragmentation,
 	 * as well as handle passing events up to the ULP.
 	 */
-	struct sctp_ulpq ulpq;
+	काष्ठा sctp_ulpq ulpq;
 
 	/* Last TSN that caused an ECNE Chunk to be sent.  */
 	__u32 last_ecne_tsn;
@@ -1948,13 +1949,13 @@ struct sctp_association {
 	__u32 last_cwr_tsn;
 
 	/* How many duplicated TSNs have we seen?  */
-	int numduptsns;
+	पूर्णांक numduptsns;
 
 	/* These are to support
-	 * "SCTP Extensions for Dynamic Reconfiguration of IP Addresses
-	 *  and Enforcement of Flow and Message Limits"
+	 * "SCTP Extensions क्रम Dynamic Reconfiguration of IP Addresses
+	 *  and Enक्रमcement of Flow and Message Limits"
 	 * <draft-ietf-tsvwg-addip-sctp-02.txt>
-	 * or "ADDIP" for short.
+	 * or "ADDIP" क्रम लघु.
 	 */
 
 
@@ -1962,36 +1963,36 @@ struct sctp_association {
 	/* ADDIP Section 4.1.1 Congestion Control of ASCONF Chunks
 	 *
 	 * R1) One and only one ASCONF Chunk MAY be in transit and
-	 * unacknowledged at any one time.  If a sender, after sending
+	 * unacknowledged at any one समय.  If a sender, after sending
 	 * an ASCONF chunk, decides it needs to transfer another
-	 * ASCONF Chunk, it MUST wait until the ASCONF-ACK Chunk
-	 * returns from the previous ASCONF Chunk before sending a
+	 * ASCONF Chunk, it MUST रुको until the ASCONF-ACK Chunk
+	 * वापसs from the previous ASCONF Chunk beक्रमe sending a
 	 * subsequent ASCONF. Note this restriction binds each side,
-	 * so at any time two ASCONF may be in-transit on any given
-	 * association (one sent from each endpoint).
+	 * so at any समय two ASCONF may be in-transit on any given
+	 * association (one sent from each endpoपूर्णांक).
 	 *
-	 * [This is our one-and-only-one ASCONF in flight.  If we do
-	 * not have an ASCONF in flight, this is NULL.]
+	 * [This is our one-and-only-one ASCONF in flight.  If we करो
+	 * not have an ASCONF in flight, this is शून्य.]
 	 */
-	struct sctp_chunk *addip_last_asconf;
+	काष्ठा sctp_chunk *addip_last_asconf;
 
 	/* ADDIP Section 5.2 Upon reception of an ASCONF Chunk.
 	 *
-	 * This is needed to implement itmes E1 - E4 of the updated
-	 * spec.  Here is the justification:
+	 * This is needed to implement iपंचांगes E1 - E4 of the updated
+	 * spec.  Here is the justअगरication:
 	 *
 	 * Since the peer may bundle multiple ASCONF chunks toward us,
 	 * we now need the ability to cache multiple ACKs.  The section
 	 * describes in detail how they are cached and cleaned up.
 	 */
-	struct list_head asconf_ack_list;
+	काष्ठा list_head asconf_ack_list;
 
-	/* These ASCONF chunks are waiting to be sent.
+	/* These ASCONF chunks are रुकोing to be sent.
 	 *
 	 * These chunaks can't be pushed to outqueue until receiving
-	 * ASCONF_ACK for the previous ASCONF indicated by
+	 * ASCONF_ACK क्रम the previous ASCONF indicated by
 	 * addip_last_asconf, so as to guarantee that only one ASCONF
-	 * is in flight at any time.
+	 * is in flight at any समय.
 	 *
 	 * ADDIP Section 4.1.1 Congestion Control of ASCONF Chunks
 	 *
@@ -2001,69 +2002,69 @@ struct sctp_association {
 	 * restrictions on the transfer of ASCONF Chunks:
 	 *
 	 * R1) One and only one ASCONF Chunk MAY be in transit and
-	 * unacknowledged at any one time.  If a sender, after sending
+	 * unacknowledged at any one समय.  If a sender, after sending
 	 * an ASCONF chunk, decides it needs to transfer another
-	 * ASCONF Chunk, it MUST wait until the ASCONF-ACK Chunk
-	 * returns from the previous ASCONF Chunk before sending a
+	 * ASCONF Chunk, it MUST रुको until the ASCONF-ACK Chunk
+	 * वापसs from the previous ASCONF Chunk beक्रमe sending a
 	 * subsequent ASCONF. Note this restriction binds each side,
-	 * so at any time two ASCONF may be in-transit on any given
-	 * association (one sent from each endpoint).
+	 * so at any समय two ASCONF may be in-transit on any given
+	 * association (one sent from each endpoपूर्णांक).
 	 *
 	 *
-	 * [I really think this is EXACTLY the sort of intelligence
-	 *  which already resides in sctp_outq.	 Please move this
-	 *  queue and its supporting logic down there.	--piggy]
+	 * [I really think this is EXACTLY the sort of पूर्णांकelligence
+	 *  which alपढ़ोy resides in sctp_outq.	 Please move this
+	 *  queue and its supporting logic करोwn there.	--piggy]
 	 */
-	struct list_head addip_chunk_list;
+	काष्ठा list_head addip_chunk_list;
 
 	/* ADDIP Section 4.1 ASCONF Chunk Procedures
 	 *
-	 * A2) A serial number should be assigned to the Chunk. The
+	 * A2) A serial number should be asचिन्हित to the Chunk. The
 	 * serial number SHOULD be a monotonically increasing
 	 * number. The serial number SHOULD be initialized at
 	 * the start of the association to the same value as the
-	 * Initial TSN and every time a new ASCONF chunk is created
+	 * Initial TSN and every समय a new ASCONF chunk is created
 	 * it is incremented by one after assigning the serial number
 	 * to the newly created chunk.
 	 *
 	 * ADDIP
 	 * 3.1.1  Address/Stream Configuration Change Chunk (ASCONF)
 	 *
-	 * Serial Number : 32 bits (unsigned integer)
+	 * Serial Number : 32 bits (अचिन्हित पूर्णांकeger)
 	 *
-	 * This value represents a Serial Number for the ASCONF
+	 * This value represents a Serial Number क्रम the ASCONF
 	 * Chunk. The valid range of Serial Number is from 0 to
 	 * 4294967295 (2^32 - 1).  Serial Numbers wrap back to 0
 	 * after reaching 4294967295.
 	 */
 	__u32 addip_serial;
-	int src_out_of_asoc_ok;
-	union sctp_addr *asconf_addr_del_pending;
-	struct sctp_transport *new_transport;
+	पूर्णांक src_out_of_asoc_ok;
+	जोड़ sctp_addr *asconf_addr_del_pending;
+	काष्ठा sctp_transport *new_transport;
 
-	/* SCTP AUTH: list of the endpoint shared keys.  These
+	/* SCTP AUTH: list of the endpoपूर्णांक shared keys.  These
 	 * keys are provided out of band by the user applicaton
-	 * and can't change during the lifetime of the association
+	 * and can't change during the lअगरeसमय of the association
 	 */
-	struct list_head endpoint_shared_keys;
+	काष्ठा list_head endpoपूर्णांक_shared_keys;
 
 	/* SCTP AUTH:
 	 * The current generated assocaition shared key (secret)
 	 */
-	struct sctp_auth_bytes *asoc_shared_key;
-	struct sctp_shared_key *shkey;
+	काष्ठा sctp_auth_bytes *asoc_shared_key;
+	काष्ठा sctp_shared_key *shkey;
 
 	/* SCTP AUTH: hmac id of the first peer requested algorithm
 	 * that we support.
 	 */
-	__u16 default_hmac_id;
+	__u16 शेष_hmac_id;
 
 	__u16 active_key_id;
 
 	__u8 need_ecne:1,	/* Need to send an ECNE Chunk? */
 	     temp:1,		/* Is it a temporary association? */
 	     pf_expose:2,       /* Expose pf state? */
-	     force_delay:1;
+	     क्रमce_delay:1;
 
 	__u8 strreset_enable;
 	__u8 strreset_outstanding; /* request param count on the fly */
@@ -2072,112 +2073,112 @@ struct sctp_association {
 	__u32 strreset_inseq; /* Update after receiving request */
 	__u32 strreset_result[2]; /* save the results of last 2 responses */
 
-	struct sctp_chunk *strreset_chunk; /* save request chunk */
+	काष्ठा sctp_chunk *strreset_chunk; /* save request chunk */
 
-	struct sctp_priv_assoc_stats stats;
+	काष्ठा sctp_priv_assoc_stats stats;
 
-	int sent_cnt_removable;
+	पूर्णांक sent_cnt_removable;
 
 	__u16 subscribe;
 
-	__u64 abandoned_unsent[SCTP_PR_INDEX(MAX) + 1];
-	__u64 abandoned_sent[SCTP_PR_INDEX(MAX) + 1];
+	__u64 abanकरोned_unsent[SCTP_PR_INDEX(MAX) + 1];
+	__u64 abanकरोned_sent[SCTP_PR_INDEX(MAX) + 1];
 
-	struct rcu_head rcu;
-};
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
 
-/* An eyecatcher for determining if we are really looking at an
- * association data structure.
+/* An eyecatcher क्रम determining अगर we are really looking at an
+ * association data काष्ठाure.
  */
-enum {
+क्रमागत अणु
 	SCTP_ASSOC_EYECATCHER = 0xa550c123,
-};
+पूर्ण;
 
-/* Recover the outter association structure. */
-static inline struct sctp_association *sctp_assoc(struct sctp_ep_common *base)
-{
-	struct sctp_association *asoc;
+/* Recover the outter association काष्ठाure. */
+अटल अंतरभूत काष्ठा sctp_association *sctp_assoc(काष्ठा sctp_ep_common *base)
+अणु
+	काष्ठा sctp_association *asoc;
 
-	asoc = container_of(base, struct sctp_association, base);
-	return asoc;
-}
+	asoc = container_of(base, काष्ठा sctp_association, base);
+	वापस asoc;
+पूर्ण
 
-/* These are function signatures for manipulating associations.	 */
+/* These are function signatures क्रम manipulating associations.	 */
 
 
-struct sctp_association *
-sctp_association_new(const struct sctp_endpoint *ep, const struct sock *sk,
-		     enum sctp_scope scope, gfp_t gfp);
-void sctp_association_free(struct sctp_association *);
-void sctp_association_put(struct sctp_association *);
-void sctp_association_hold(struct sctp_association *);
+काष्ठा sctp_association *
+sctp_association_new(स्थिर काष्ठा sctp_endpoपूर्णांक *ep, स्थिर काष्ठा sock *sk,
+		     क्रमागत sctp_scope scope, gfp_t gfp);
+व्योम sctp_association_मुक्त(काष्ठा sctp_association *);
+व्योम sctp_association_put(काष्ठा sctp_association *);
+व्योम sctp_association_hold(काष्ठा sctp_association *);
 
-struct sctp_transport *sctp_assoc_choose_alter_transport(
-	struct sctp_association *, struct sctp_transport *);
-void sctp_assoc_update_retran_path(struct sctp_association *);
-struct sctp_transport *sctp_assoc_lookup_paddr(const struct sctp_association *,
-					  const union sctp_addr *);
-int sctp_assoc_lookup_laddr(struct sctp_association *asoc,
-			    const union sctp_addr *laddr);
-struct sctp_transport *sctp_assoc_add_peer(struct sctp_association *,
-				     const union sctp_addr *address,
-				     const gfp_t gfp,
-				     const int peer_state);
-void sctp_assoc_del_peer(struct sctp_association *asoc,
-			 const union sctp_addr *addr);
-void sctp_assoc_rm_peer(struct sctp_association *asoc,
-			 struct sctp_transport *peer);
-void sctp_assoc_control_transport(struct sctp_association *asoc,
-				  struct sctp_transport *transport,
-				  enum sctp_transport_cmd command,
+काष्ठा sctp_transport *sctp_assoc_choose_alter_transport(
+	काष्ठा sctp_association *, काष्ठा sctp_transport *);
+व्योम sctp_assoc_update_retran_path(काष्ठा sctp_association *);
+काष्ठा sctp_transport *sctp_assoc_lookup_paddr(स्थिर काष्ठा sctp_association *,
+					  स्थिर जोड़ sctp_addr *);
+पूर्णांक sctp_assoc_lookup_laddr(काष्ठा sctp_association *asoc,
+			    स्थिर जोड़ sctp_addr *laddr);
+काष्ठा sctp_transport *sctp_assoc_add_peer(काष्ठा sctp_association *,
+				     स्थिर जोड़ sctp_addr *address,
+				     स्थिर gfp_t gfp,
+				     स्थिर पूर्णांक peer_state);
+व्योम sctp_assoc_del_peer(काष्ठा sctp_association *asoc,
+			 स्थिर जोड़ sctp_addr *addr);
+व्योम sctp_assoc_rm_peer(काष्ठा sctp_association *asoc,
+			 काष्ठा sctp_transport *peer);
+व्योम sctp_assoc_control_transport(काष्ठा sctp_association *asoc,
+				  काष्ठा sctp_transport *transport,
+				  क्रमागत sctp_transport_cmd command,
 				  sctp_sn_error_t error);
-struct sctp_transport *sctp_assoc_lookup_tsn(struct sctp_association *, __u32);
-void sctp_assoc_migrate(struct sctp_association *, struct sock *);
-int sctp_assoc_update(struct sctp_association *old,
-		      struct sctp_association *new);
+काष्ठा sctp_transport *sctp_assoc_lookup_tsn(काष्ठा sctp_association *, __u32);
+व्योम sctp_assoc_migrate(काष्ठा sctp_association *, काष्ठा sock *);
+पूर्णांक sctp_assoc_update(काष्ठा sctp_association *old,
+		      काष्ठा sctp_association *new);
 
-__u32 sctp_association_get_next_tsn(struct sctp_association *);
+__u32 sctp_association_get_next_tsn(काष्ठा sctp_association *);
 
-void sctp_assoc_update_frag_point(struct sctp_association *asoc);
-void sctp_assoc_set_pmtu(struct sctp_association *asoc, __u32 pmtu);
-void sctp_assoc_sync_pmtu(struct sctp_association *asoc);
-void sctp_assoc_rwnd_increase(struct sctp_association *, unsigned int);
-void sctp_assoc_rwnd_decrease(struct sctp_association *, unsigned int);
-void sctp_assoc_set_primary(struct sctp_association *,
-			    struct sctp_transport *);
-void sctp_assoc_del_nonprimary_peers(struct sctp_association *,
-				    struct sctp_transport *);
-int sctp_assoc_set_bind_addr_from_ep(struct sctp_association *asoc,
-				     enum sctp_scope scope, gfp_t gfp);
-int sctp_assoc_set_bind_addr_from_cookie(struct sctp_association *,
-					 struct sctp_cookie*,
+व्योम sctp_assoc_update_frag_poपूर्णांक(काष्ठा sctp_association *asoc);
+व्योम sctp_assoc_set_pmtu(काष्ठा sctp_association *asoc, __u32 pmtu);
+व्योम sctp_assoc_sync_pmtu(काष्ठा sctp_association *asoc);
+व्योम sctp_assoc_rwnd_increase(काष्ठा sctp_association *, अचिन्हित पूर्णांक);
+व्योम sctp_assoc_rwnd_decrease(काष्ठा sctp_association *, अचिन्हित पूर्णांक);
+व्योम sctp_assoc_set_primary(काष्ठा sctp_association *,
+			    काष्ठा sctp_transport *);
+व्योम sctp_assoc_del_nonprimary_peers(काष्ठा sctp_association *,
+				    काष्ठा sctp_transport *);
+पूर्णांक sctp_assoc_set_bind_addr_from_ep(काष्ठा sctp_association *asoc,
+				     क्रमागत sctp_scope scope, gfp_t gfp);
+पूर्णांक sctp_assoc_set_bind_addr_from_cookie(काष्ठा sctp_association *,
+					 काष्ठा sctp_cookie*,
 					 gfp_t gfp);
-int sctp_assoc_set_id(struct sctp_association *, gfp_t);
-void sctp_assoc_clean_asconf_ack_cache(const struct sctp_association *asoc);
-struct sctp_chunk *sctp_assoc_lookup_asconf_ack(
-					const struct sctp_association *asoc,
+पूर्णांक sctp_assoc_set_id(काष्ठा sctp_association *, gfp_t);
+व्योम sctp_assoc_clean_asconf_ack_cache(स्थिर काष्ठा sctp_association *asoc);
+काष्ठा sctp_chunk *sctp_assoc_lookup_asconf_ack(
+					स्थिर काष्ठा sctp_association *asoc,
 					__be32 serial);
-void sctp_asconf_queue_teardown(struct sctp_association *asoc);
+व्योम sctp_asconf_queue_tearकरोwn(काष्ठा sctp_association *asoc);
 
-int sctp_cmp_addr_exact(const union sctp_addr *ss1,
-			const union sctp_addr *ss2);
-struct sctp_chunk *sctp_get_ecne_prepend(struct sctp_association *asoc);
+पूर्णांक sctp_cmp_addr_exact(स्थिर जोड़ sctp_addr *ss1,
+			स्थिर जोड़ sctp_addr *ss2);
+काष्ठा sctp_chunk *sctp_get_ecne_prepend(काष्ठा sctp_association *asoc);
 
-/* A convenience structure to parse out SCTP specific CMSGs. */
-struct sctp_cmsgs {
-	struct sctp_initmsg *init;
-	struct sctp_sndrcvinfo *srinfo;
-	struct sctp_sndinfo *sinfo;
-	struct sctp_prinfo *prinfo;
-	struct sctp_authinfo *authinfo;
-	struct msghdr *addrs_msg;
-};
+/* A convenience काष्ठाure to parse out SCTP specअगरic CMSGs. */
+काष्ठा sctp_cmsgs अणु
+	काष्ठा sctp_iniपंचांगsg *init;
+	काष्ठा sctp_sndrcvinfo *srinfo;
+	काष्ठा sctp_sndinfo *sinfo;
+	काष्ठा sctp_prinfo *prinfo;
+	काष्ठा sctp_authinfo *authinfo;
+	काष्ठा msghdr *addrs_msg;
+पूर्ण;
 
-/* Structure for tracking memory objects */
-struct sctp_dbg_objcnt_entry {
-	char *label;
+/* Structure क्रम tracking memory objects */
+काष्ठा sctp_dbg_objcnt_entry अणु
+	अक्षर *label;
 	atomic_t *counter;
-};
+पूर्ण;
 
-#endif /* __sctp_structs_h__ */
+#पूर्ण_अगर /* __sctp_काष्ठाs_h__ */

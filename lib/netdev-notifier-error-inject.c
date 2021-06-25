@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
 
-#include "notifier-error-inject.h"
+#समावेश "notifier-error-inject.h"
 
-static int priority;
-module_param(priority, int, 0);
+अटल पूर्णांक priority;
+module_param(priority, पूर्णांक, 0);
 MODULE_PARM_DESC(priority, "specify netdevice notifier priority");
 
-static struct notifier_err_inject netdev_notifier_err_inject = {
-	.actions = {
-		{ NOTIFIER_ERR_INJECT_ACTION(NETDEV_REGISTER) },
-		{ NOTIFIER_ERR_INJECT_ACTION(NETDEV_CHANGEMTU) },
-		{ NOTIFIER_ERR_INJECT_ACTION(NETDEV_CHANGENAME) },
-		{ NOTIFIER_ERR_INJECT_ACTION(NETDEV_PRE_UP) },
-		{ NOTIFIER_ERR_INJECT_ACTION(NETDEV_PRE_TYPE_CHANGE) },
-		{ NOTIFIER_ERR_INJECT_ACTION(NETDEV_POST_INIT) },
-		{ NOTIFIER_ERR_INJECT_ACTION(NETDEV_PRECHANGEMTU) },
-		{ NOTIFIER_ERR_INJECT_ACTION(NETDEV_PRECHANGEUPPER) },
-		{ NOTIFIER_ERR_INJECT_ACTION(NETDEV_CHANGEUPPER) },
-		{}
-	}
-};
+अटल काष्ठा notअगरier_err_inject netdev_notअगरier_err_inject = अणु
+	.actions = अणु
+		अणु NOTIFIER_ERR_INJECT_ACTION(NETDEV_REGISTER) पूर्ण,
+		अणु NOTIFIER_ERR_INJECT_ACTION(NETDEV_CHANGEMTU) पूर्ण,
+		अणु NOTIFIER_ERR_INJECT_ACTION(NETDEV_CHANGENAME) पूर्ण,
+		अणु NOTIFIER_ERR_INJECT_ACTION(NETDEV_PRE_UP) पूर्ण,
+		अणु NOTIFIER_ERR_INJECT_ACTION(NETDEV_PRE_TYPE_CHANGE) पूर्ण,
+		अणु NOTIFIER_ERR_INJECT_ACTION(NETDEV_POST_INIT) पूर्ण,
+		अणु NOTIFIER_ERR_INJECT_ACTION(NETDEV_PRECHANGEMTU) पूर्ण,
+		अणु NOTIFIER_ERR_INJECT_ACTION(NETDEV_PRECHANGEUPPER) पूर्ण,
+		अणु NOTIFIER_ERR_INJECT_ACTION(NETDEV_CHANGEUPPER) पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-static struct dentry *dir;
+अटल काष्ठा dentry *dir;
 
-static int netdev_err_inject_init(void)
-{
-	int err;
+अटल पूर्णांक netdev_err_inject_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	dir = notifier_err_inject_init("netdev", notifier_err_inject_dir,
-				       &netdev_notifier_err_inject, priority);
-	if (IS_ERR(dir))
-		return PTR_ERR(dir);
+	dir = notअगरier_err_inject_init("netdev", notअगरier_err_inject_dir,
+				       &netdev_notअगरier_err_inject, priority);
+	अगर (IS_ERR(dir))
+		वापस PTR_ERR(dir);
 
-	err = register_netdevice_notifier(&netdev_notifier_err_inject.nb);
-	if (err)
-		debugfs_remove_recursive(dir);
+	err = रेजिस्टर_netdevice_notअगरier(&netdev_notअगरier_err_inject.nb);
+	अगर (err)
+		debugfs_हटाओ_recursive(dir);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void netdev_err_inject_exit(void)
-{
-	unregister_netdevice_notifier(&netdev_notifier_err_inject.nb);
-	debugfs_remove_recursive(dir);
-}
+अटल व्योम netdev_err_inject_निकास(व्योम)
+अणु
+	unरेजिस्टर_netdevice_notअगरier(&netdev_notअगरier_err_inject.nb);
+	debugfs_हटाओ_recursive(dir);
+पूर्ण
 
 module_init(netdev_err_inject_init);
-module_exit(netdev_err_inject_exit);
+module_निकास(netdev_err_inject_निकास);
 
 MODULE_DESCRIPTION("Netdevice notifier error injection module");
 MODULE_LICENSE("GPL");

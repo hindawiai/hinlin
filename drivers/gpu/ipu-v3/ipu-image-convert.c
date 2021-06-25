@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2012-2016 Mentor Graphics Inc.
  *
  * Queued image conversion support, with tiling and rotation.
  */
 
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <video/imx-ipu-image-convert.h>
-#include "ipu-prv.h"
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <video/imx-ipu-image-convert.h>
+#समावेश "ipu-prv.h"
 
 /*
  * The IC Resizer has a restriction that the output frame from the
@@ -20,14 +21,14 @@
  * IC resizer limit of 1024 in either dimension.
  *
  * If either dimension of the output frame exceeds the limit, the
- * dimension is split into 1, 2, or 4 equal stripes, for a maximum
- * of 4*4 or 16 tiles. A conversion is then carried out for each
+ * dimension is split पूर्णांकo 1, 2, or 4 equal stripes, क्रम a maximum
+ * of 4*4 or 16 tiles. A conversion is then carried out क्रम each
  * tile (but taking care to pass the full frame stride length to
- * the DMA channel's parameter memory!). IDMA double-buffering is used
+ * the DMA channel's parameter memory!). IDMA द्विगुन-buffering is used
  * to convert each tile back-to-back when possible (see note below
- * when double_buffering boolean is set).
+ * when द्विगुन_buffering boolean is set).
  *
- * Note that the input frame must be split up into the same number
+ * Note that the input frame must be split up पूर्णांकo the same number
  * of tiles as the output frame:
  *
  *                       +---------+-----+
@@ -38,7 +39,7 @@
  *   +-----+---+         |         |     |
  *                       +---------+-----+
  *
- * Clockwise 90° rotations are handled by first rescaling into a
+ * Clockwise 90तओ rotations are handled by first rescaling पूर्णांकo a
  * reusable temporary tile buffer and then rotating with the 8x8
  * block rotator, writing to the correct destination:
  *
@@ -53,45 +54,45 @@
  *                                         +-----+-----+
  *
  * If the 8x8 block rotator is used, horizontal or vertical flipping
- * is done during the rotation step, otherwise flipping is done
+ * is करोne during the rotation step, otherwise flipping is करोne
  * during the scaling step.
  * With rotation or flipping, tile order changes between input and
  * output image. Tiles are numbered row major from top left to bottom
- * right for both input and output image.
+ * right क्रम both input and output image.
  */
 
-#define MAX_STRIPES_W    4
-#define MAX_STRIPES_H    4
-#define MAX_TILES (MAX_STRIPES_W * MAX_STRIPES_H)
+#घोषणा MAX_STRIPES_W    4
+#घोषणा MAX_STRIPES_H    4
+#घोषणा MAX_TILES (MAX_STRIPES_W * MAX_STRIPES_H)
 
-#define MIN_W     16
-#define MIN_H     8
-#define MAX_W     4096
-#define MAX_H     4096
+#घोषणा MIN_W     16
+#घोषणा MIN_H     8
+#घोषणा MAX_W     4096
+#घोषणा MAX_H     4096
 
-enum ipu_image_convert_type {
+क्रमागत ipu_image_convert_type अणु
 	IMAGE_CONVERT_IN = 0,
 	IMAGE_CONVERT_OUT,
-};
+पूर्ण;
 
-struct ipu_image_convert_dma_buf {
-	void          *virt;
+काष्ठा ipu_image_convert_dma_buf अणु
+	व्योम          *virt;
 	dma_addr_t    phys;
-	unsigned long len;
-};
+	अचिन्हित दीर्घ len;
+पूर्ण;
 
-struct ipu_image_convert_dma_chan {
-	int in;
-	int out;
-	int rot_in;
-	int rot_out;
-	int vdi_in_p;
-	int vdi_in;
-	int vdi_in_n;
-};
+काष्ठा ipu_image_convert_dma_chan अणु
+	पूर्णांक in;
+	पूर्णांक out;
+	पूर्णांक rot_in;
+	पूर्णांक rot_out;
+	पूर्णांक vdi_in_p;
+	पूर्णांक vdi_in;
+	पूर्णांक vdi_in_n;
+पूर्ण;
 
 /* dimensions of one tile */
-struct ipu_image_tile {
+काष्ठा ipu_image_tile अणु
 	u32 width;
 	u32 height;
 	u32 left;
@@ -102,133 +103,133 @@ struct ipu_image_tile {
 	u32 rot_stride;
 	/* start Y or packed offset of this tile */
 	u32 offset;
-	/* offset from start to tile in U plane, for planar formats */
+	/* offset from start to tile in U plane, क्रम planar क्रमmats */
 	u32 u_off;
-	/* offset from start to tile in V plane, for planar formats */
+	/* offset from start to tile in V plane, क्रम planar क्रमmats */
 	u32 v_off;
-};
+पूर्ण;
 
-struct ipu_image_convert_image {
-	struct ipu_image base;
-	enum ipu_image_convert_type type;
+काष्ठा ipu_image_convert_image अणु
+	काष्ठा ipu_image base;
+	क्रमागत ipu_image_convert_type type;
 
-	const struct ipu_image_pixfmt *fmt;
-	unsigned int stride;
+	स्थिर काष्ठा ipu_image_pixfmt *fmt;
+	अचिन्हित पूर्णांक stride;
 
-	/* # of rows (horizontal stripes) if dest height is > 1024 */
-	unsigned int num_rows;
-	/* # of columns (vertical stripes) if dest width is > 1024 */
-	unsigned int num_cols;
+	/* # of rows (horizontal stripes) अगर dest height is > 1024 */
+	अचिन्हित पूर्णांक num_rows;
+	/* # of columns (vertical stripes) अगर dest width is > 1024 */
+	अचिन्हित पूर्णांक num_cols;
 
-	struct ipu_image_tile tile[MAX_TILES];
-};
+	काष्ठा ipu_image_tile tile[MAX_TILES];
+पूर्ण;
 
-struct ipu_image_pixfmt {
+काष्ठा ipu_image_pixfmt अणु
 	u32	fourcc;        /* V4L2 fourcc */
-	int     bpp;           /* total bpp */
-	int     uv_width_dec;  /* decimation in width for U/V planes */
-	int     uv_height_dec; /* decimation in height for U/V planes */
-	bool    planar;        /* planar format */
+	पूर्णांक     bpp;           /* total bpp */
+	पूर्णांक     uv_width_dec;  /* decimation in width क्रम U/V planes */
+	पूर्णांक     uv_height_dec; /* decimation in height क्रम U/V planes */
+	bool    planar;        /* planar क्रमmat */
 	bool    uv_swapped;    /* U and V planes are swapped */
 	bool    uv_packed;     /* partial planar (U and V in same plane) */
-};
+पूर्ण;
 
-struct ipu_image_convert_ctx;
-struct ipu_image_convert_chan;
-struct ipu_image_convert_priv;
+काष्ठा ipu_image_convert_ctx;
+काष्ठा ipu_image_convert_chan;
+काष्ठा ipu_image_convert_priv;
 
-enum eof_irq_mask {
-	EOF_IRQ_IN      = BIT(0),
-	EOF_IRQ_ROT_IN  = BIT(1),
-	EOF_IRQ_OUT     = BIT(2),
-	EOF_IRQ_ROT_OUT = BIT(3),
-};
+क्रमागत eof_irq_mask अणु
+	खातापूर्ण_IRQ_IN      = BIT(0),
+	खातापूर्ण_IRQ_ROT_IN  = BIT(1),
+	खातापूर्ण_IRQ_OUT     = BIT(2),
+	खातापूर्ण_IRQ_ROT_OUT = BIT(3),
+पूर्ण;
 
-#define EOF_IRQ_COMPLETE (EOF_IRQ_IN | EOF_IRQ_OUT)
-#define EOF_IRQ_ROT_COMPLETE (EOF_IRQ_IN | EOF_IRQ_OUT |	\
-			      EOF_IRQ_ROT_IN | EOF_IRQ_ROT_OUT)
+#घोषणा खातापूर्ण_IRQ_COMPLETE (खातापूर्ण_IRQ_IN | खातापूर्ण_IRQ_OUT)
+#घोषणा खातापूर्ण_IRQ_ROT_COMPLETE (खातापूर्ण_IRQ_IN | खातापूर्ण_IRQ_OUT |	\
+			      खातापूर्ण_IRQ_ROT_IN | खातापूर्ण_IRQ_ROT_OUT)
 
-struct ipu_image_convert_ctx {
-	struct ipu_image_convert_chan *chan;
+काष्ठा ipu_image_convert_ctx अणु
+	काष्ठा ipu_image_convert_chan *chan;
 
 	ipu_image_convert_cb_t complete;
-	void *complete_context;
+	व्योम *complete_context;
 
 	/* Source/destination image data and rotation mode */
-	struct ipu_image_convert_image in;
-	struct ipu_image_convert_image out;
-	struct ipu_ic_csc csc;
-	enum ipu_rotate_mode rot_mode;
-	u32 downsize_coeff_h;
-	u32 downsize_coeff_v;
+	काष्ठा ipu_image_convert_image in;
+	काष्ठा ipu_image_convert_image out;
+	काष्ठा ipu_ic_csc csc;
+	क्रमागत ipu_rotate_mode rot_mode;
+	u32 करोwnsize_coeff_h;
+	u32 करोwnsize_coeff_v;
 	u32 image_resize_coeff_h;
 	u32 image_resize_coeff_v;
 	u32 resize_coeffs_h[MAX_STRIPES_W];
 	u32 resize_coeffs_v[MAX_STRIPES_H];
 
-	/* intermediate buffer for rotation */
-	struct ipu_image_convert_dma_buf rot_intermediate[2];
+	/* पूर्णांकermediate buffer क्रम rotation */
+	काष्ठा ipu_image_convert_dma_buf rot_पूर्णांकermediate[2];
 
-	/* current buffer number for double buffering */
-	int cur_buf_num;
+	/* current buffer number क्रम द्विगुन buffering */
+	पूर्णांक cur_buf_num;
 
-	bool aborting;
-	struct completion aborted;
+	bool पातing;
+	काष्ठा completion पातed;
 
-	/* can we use double-buffering for this conversion operation? */
-	bool double_buffering;
+	/* can we use द्विगुन-buffering क्रम this conversion operation? */
+	bool द्विगुन_buffering;
 	/* num_rows * num_cols */
-	unsigned int num_tiles;
+	अचिन्हित पूर्णांक num_tiles;
 	/* next tile to process */
-	unsigned int next_tile;
+	अचिन्हित पूर्णांक next_tile;
 	/* where to place converted tile in dest image */
-	unsigned int out_tile_map[MAX_TILES];
+	अचिन्हित पूर्णांक out_tile_map[MAX_TILES];
 
-	/* mask of completed EOF irqs at every tile conversion */
-	enum eof_irq_mask eof_mask;
+	/* mask of completed खातापूर्ण irqs at every tile conversion */
+	क्रमागत eof_irq_mask eof_mask;
 
-	struct list_head list;
-};
+	काष्ठा list_head list;
+पूर्ण;
 
-struct ipu_image_convert_chan {
-	struct ipu_image_convert_priv *priv;
+काष्ठा ipu_image_convert_chan अणु
+	काष्ठा ipu_image_convert_priv *priv;
 
-	enum ipu_ic_task ic_task;
-	const struct ipu_image_convert_dma_chan *dma_ch;
+	क्रमागत ipu_ic_task ic_task;
+	स्थिर काष्ठा ipu_image_convert_dma_chan *dma_ch;
 
-	struct ipu_ic *ic;
-	struct ipuv3_channel *in_chan;
-	struct ipuv3_channel *out_chan;
-	struct ipuv3_channel *rotation_in_chan;
-	struct ipuv3_channel *rotation_out_chan;
+	काष्ठा ipu_ic *ic;
+	काष्ठा ipuv3_channel *in_chan;
+	काष्ठा ipuv3_channel *out_chan;
+	काष्ठा ipuv3_channel *rotation_in_chan;
+	काष्ठा ipuv3_channel *rotation_out_chan;
 
 	/* the IPU end-of-frame irqs */
-	int in_eof_irq;
-	int rot_in_eof_irq;
-	int out_eof_irq;
-	int rot_out_eof_irq;
+	पूर्णांक in_eof_irq;
+	पूर्णांक rot_in_eof_irq;
+	पूर्णांक out_eof_irq;
+	पूर्णांक rot_out_eof_irq;
 
 	spinlock_t irqlock;
 
 	/* list of convert contexts */
-	struct list_head ctx_list;
+	काष्ठा list_head ctx_list;
 	/* queue of conversion runs */
-	struct list_head pending_q;
+	काष्ठा list_head pending_q;
 	/* queue of completed runs */
-	struct list_head done_q;
+	काष्ठा list_head करोne_q;
 
 	/* the current conversion run */
-	struct ipu_image_convert_run *current_run;
-};
+	काष्ठा ipu_image_convert_run *current_run;
+पूर्ण;
 
-struct ipu_image_convert_priv {
-	struct ipu_image_convert_chan chan[IC_NUM_TASKS];
-	struct ipu_soc *ipu;
-};
+काष्ठा ipu_image_convert_priv अणु
+	काष्ठा ipu_image_convert_chan chan[IC_NUM_TASKS];
+	काष्ठा ipu_soc *ipu;
+पूर्ण;
 
-static const struct ipu_image_convert_dma_chan
-image_convert_dma_chan[IC_NUM_TASKS] = {
-	[IC_TASK_VIEWFINDER] = {
+अटल स्थिर काष्ठा ipu_image_convert_dma_chan
+image_convert_dma_chan[IC_NUM_TASKS] = अणु
+	[IC_TASK_VIEWFINDER] = अणु
 		.in = IPUV3_CHANNEL_MEM_IC_PRP_VF,
 		.out = IPUV3_CHANNEL_IC_PRP_VF_MEM,
 		.rot_in = IPUV3_CHANNEL_MEM_ROT_VF,
@@ -236,109 +237,109 @@ image_convert_dma_chan[IC_NUM_TASKS] = {
 		.vdi_in_p = IPUV3_CHANNEL_MEM_VDI_PREV,
 		.vdi_in = IPUV3_CHANNEL_MEM_VDI_CUR,
 		.vdi_in_n = IPUV3_CHANNEL_MEM_VDI_NEXT,
-	},
-	[IC_TASK_POST_PROCESSOR] = {
+	पूर्ण,
+	[IC_TASK_POST_PROCESSOR] = अणु
 		.in = IPUV3_CHANNEL_MEM_IC_PP,
 		.out = IPUV3_CHANNEL_IC_PP_MEM,
 		.rot_in = IPUV3_CHANNEL_MEM_ROT_PP,
 		.rot_out = IPUV3_CHANNEL_ROT_PP_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct ipu_image_pixfmt image_convert_formats[] = {
-	{
+अटल स्थिर काष्ठा ipu_image_pixfmt image_convert_क्रमmats[] = अणु
+	अणु
 		.fourcc	= V4L2_PIX_FMT_RGB565,
 		.bpp    = 16,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_RGB24,
 		.bpp    = 24,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_BGR24,
 		.bpp    = 24,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_RGB32,
 		.bpp    = 32,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_BGR32,
 		.bpp    = 32,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_XRGB32,
 		.bpp    = 32,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_XBGR32,
 		.bpp    = 32,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_BGRX32,
 		.bpp    = 32,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_RGBX32,
 		.bpp    = 32,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_YUYV,
 		.bpp    = 16,
 		.uv_width_dec = 2,
 		.uv_height_dec = 1,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_UYVY,
 		.bpp    = 16,
 		.uv_width_dec = 2,
 		.uv_height_dec = 1,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_YUV420,
 		.bpp    = 12,
 		.planar = true,
 		.uv_width_dec = 2,
 		.uv_height_dec = 2,
-	}, {
+	पूर्ण, अणु
 		.fourcc	= V4L2_PIX_FMT_YVU420,
 		.bpp    = 12,
 		.planar = true,
 		.uv_width_dec = 2,
 		.uv_height_dec = 2,
 		.uv_swapped = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_NV12,
 		.bpp    = 12,
 		.planar = true,
 		.uv_width_dec = 2,
 		.uv_height_dec = 2,
 		.uv_packed = true,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_YUV422P,
 		.bpp    = 16,
 		.planar = true,
 		.uv_width_dec = 2,
 		.uv_height_dec = 1,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_NV16,
 		.bpp    = 16,
 		.planar = true,
 		.uv_width_dec = 2,
 		.uv_height_dec = 1,
 		.uv_packed = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct ipu_image_pixfmt *get_format(u32 fourcc)
-{
-	const struct ipu_image_pixfmt *ret = NULL;
-	unsigned int i;
+अटल स्थिर काष्ठा ipu_image_pixfmt *get_क्रमmat(u32 fourcc)
+अणु
+	स्थिर काष्ठा ipu_image_pixfmt *ret = शून्य;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(image_convert_formats); i++) {
-		if (image_convert_formats[i].fourcc == fourcc) {
-			ret = &image_convert_formats[i];
-			break;
-		}
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(image_convert_क्रमmats); i++) अणु
+		अगर (image_convert_क्रमmats[i].fourcc == fourcc) अणु
+			ret = &image_convert_क्रमmats[i];
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dump_format(struct ipu_image_convert_ctx *ctx,
-			struct ipu_image_convert_image *ic_image)
-{
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_priv *priv = chan->priv;
+अटल व्योम dump_क्रमmat(काष्ठा ipu_image_convert_ctx *ctx,
+			काष्ठा ipu_image_convert_image *ic_image)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
 
 	dev_dbg(priv->ipu->dev,
 		"task %u: ctx %p: %s format: %dx%d (%dx%d tiles), %c%c%c%c\n",
@@ -350,68 +351,68 @@ static void dump_format(struct ipu_image_convert_ctx *ctx,
 		(ic_image->fmt->fourcc >> 8) & 0xff,
 		(ic_image->fmt->fourcc >> 16) & 0xff,
 		(ic_image->fmt->fourcc >> 24) & 0xff);
-}
+पूर्ण
 
-int ipu_image_convert_enum_format(int index, u32 *fourcc)
-{
-	const struct ipu_image_pixfmt *fmt;
+पूर्णांक ipu_image_convert_क्रमागत_क्रमmat(पूर्णांक index, u32 *fourcc)
+अणु
+	स्थिर काष्ठा ipu_image_pixfmt *fmt;
 
-	if (index >= (int)ARRAY_SIZE(image_convert_formats))
-		return -EINVAL;
+	अगर (index >= (पूर्णांक)ARRAY_SIZE(image_convert_क्रमmats))
+		वापस -EINVAL;
 
 	/* Format found */
-	fmt = &image_convert_formats[index];
+	fmt = &image_convert_क्रमmats[index];
 	*fourcc = fmt->fourcc;
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ipu_image_convert_enum_format);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ipu_image_convert_क्रमागत_क्रमmat);
 
-static void free_dma_buf(struct ipu_image_convert_priv *priv,
-			 struct ipu_image_convert_dma_buf *buf)
-{
-	if (buf->virt)
-		dma_free_coherent(priv->ipu->dev,
+अटल व्योम मुक्त_dma_buf(काष्ठा ipu_image_convert_priv *priv,
+			 काष्ठा ipu_image_convert_dma_buf *buf)
+अणु
+	अगर (buf->virt)
+		dma_मुक्त_coherent(priv->ipu->dev,
 				  buf->len, buf->virt, buf->phys);
-	buf->virt = NULL;
+	buf->virt = शून्य;
 	buf->phys = 0;
-}
+पूर्ण
 
-static int alloc_dma_buf(struct ipu_image_convert_priv *priv,
-			 struct ipu_image_convert_dma_buf *buf,
-			 int size)
-{
+अटल पूर्णांक alloc_dma_buf(काष्ठा ipu_image_convert_priv *priv,
+			 काष्ठा ipu_image_convert_dma_buf *buf,
+			 पूर्णांक size)
+अणु
 	buf->len = PAGE_ALIGN(size);
 	buf->virt = dma_alloc_coherent(priv->ipu->dev, buf->len, &buf->phys,
 				       GFP_DMA | GFP_KERNEL);
-	if (!buf->virt) {
+	अगर (!buf->virt) अणु
 		dev_err(priv->ipu->dev, "failed to alloc dma buffer\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int num_stripes(int dim)
-{
-	return (dim - 1) / 1024 + 1;
-}
+अटल अंतरभूत पूर्णांक num_stripes(पूर्णांक dim)
+अणु
+	वापस (dim - 1) / 1024 + 1;
+पूर्ण
 
 /*
- * Calculate downsizing coefficients, which are the same for all tiles,
+ * Calculate करोwnsizing coefficients, which are the same क्रम all tiles,
  * and initial bilinear resizing coefficients, which are used to find the
  * best seam positions.
  * Also determine the number of tiles necessary to guarantee that no tile
  * is larger than 1024 pixels in either dimension at the output and between
- * IC downsizing and main processing sections.
+ * IC करोwnsizing and मुख्य processing sections.
  */
-static int calc_image_resize_coefficients(struct ipu_image_convert_ctx *ctx,
-					  struct ipu_image *in,
-					  struct ipu_image *out)
-{
-	u32 downsized_width = in->rect.width;
-	u32 downsized_height = in->rect.height;
-	u32 downsize_coeff_v = 0;
-	u32 downsize_coeff_h = 0;
+अटल पूर्णांक calc_image_resize_coefficients(काष्ठा ipu_image_convert_ctx *ctx,
+					  काष्ठा ipu_image *in,
+					  काष्ठा ipu_image *out)
+अणु
+	u32 करोwnsized_width = in->rect.width;
+	u32 करोwnsized_height = in->rect.height;
+	u32 करोwnsize_coeff_v = 0;
+	u32 करोwnsize_coeff_h = 0;
 	u32 resized_width = out->rect.width;
 	u32 resized_height = out->rect.height;
 	u32 resize_coeff_h;
@@ -419,261 +420,261 @@ static int calc_image_resize_coefficients(struct ipu_image_convert_ctx *ctx,
 	u32 cols;
 	u32 rows;
 
-	if (ipu_rot_mode_is_irt(ctx->rot_mode)) {
+	अगर (ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
 		resized_width = out->rect.height;
 		resized_height = out->rect.width;
-	}
+	पूर्ण
 
 	/* Do not let invalid input lead to an endless loop below */
-	if (WARN_ON(resized_width == 0 || resized_height == 0))
-		return -EINVAL;
+	अगर (WARN_ON(resized_width == 0 || resized_height == 0))
+		वापस -EINVAL;
 
-	while (downsized_width >= resized_width * 2) {
-		downsized_width >>= 1;
-		downsize_coeff_h++;
-	}
+	जबतक (करोwnsized_width >= resized_width * 2) अणु
+		करोwnsized_width >>= 1;
+		करोwnsize_coeff_h++;
+	पूर्ण
 
-	while (downsized_height >= resized_height * 2) {
-		downsized_height >>= 1;
-		downsize_coeff_v++;
-	}
+	जबतक (करोwnsized_height >= resized_height * 2) अणु
+		करोwnsized_height >>= 1;
+		करोwnsize_coeff_v++;
+	पूर्ण
 
 	/*
-	 * Calculate the bilinear resizing coefficients that could be used if
+	 * Calculate the bilinear resizing coefficients that could be used अगर
 	 * we were converting with a single tile. The bottom right output pixel
-	 * should sample as close as possible to the bottom right input pixel
+	 * should sample as बंद as possible to the bottom right input pixel
 	 * out of the decimator, but not overshoot it:
 	 */
-	resize_coeff_h = 8192 * (downsized_width - 1) / (resized_width - 1);
-	resize_coeff_v = 8192 * (downsized_height - 1) / (resized_height - 1);
+	resize_coeff_h = 8192 * (करोwnsized_width - 1) / (resized_width - 1);
+	resize_coeff_v = 8192 * (करोwnsized_height - 1) / (resized_height - 1);
 
 	/*
-	 * Both the output of the IC downsizing section before being passed to
-	 * the IC main processing section and the final output of the IC main
+	 * Both the output of the IC करोwnsizing section beक्रमe being passed to
+	 * the IC मुख्य processing section and the final output of the IC मुख्य
 	 * processing section must be <= 1024 pixels in both dimensions.
 	 */
-	cols = num_stripes(max_t(u32, downsized_width, resized_width));
-	rows = num_stripes(max_t(u32, downsized_height, resized_height));
+	cols = num_stripes(max_t(u32, करोwnsized_width, resized_width));
+	rows = num_stripes(max_t(u32, करोwnsized_height, resized_height));
 
 	dev_dbg(ctx->chan->priv->ipu->dev,
 		"%s: hscale: >>%u, *8192/%u vscale: >>%u, *8192/%u, %ux%u tiles\n",
-		__func__, downsize_coeff_h, resize_coeff_h, downsize_coeff_v,
+		__func__, करोwnsize_coeff_h, resize_coeff_h, करोwnsize_coeff_v,
 		resize_coeff_v, cols, rows);
 
-	if (downsize_coeff_h > 2 || downsize_coeff_v  > 2 ||
+	अगर (करोwnsize_coeff_h > 2 || करोwnsize_coeff_v  > 2 ||
 	    resize_coeff_h > 0x3fff || resize_coeff_v > 0x3fff)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	ctx->downsize_coeff_h = downsize_coeff_h;
-	ctx->downsize_coeff_v = downsize_coeff_v;
+	ctx->करोwnsize_coeff_h = करोwnsize_coeff_h;
+	ctx->करोwnsize_coeff_v = करोwnsize_coeff_v;
 	ctx->image_resize_coeff_h = resize_coeff_h;
 	ctx->image_resize_coeff_v = resize_coeff_v;
 	ctx->in.num_cols = cols;
 	ctx->in.num_rows = rows;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define round_closest(x, y) round_down((x) + (y)/2, (y))
+#घोषणा round_बंदst(x, y) round_करोwn((x) + (y)/2, (y))
 
 /*
- * Find the best aligned seam position for the given column / row index.
+ * Find the best aligned seam position क्रम the given column / row index.
  * Rotation and image offsets are out of scope.
  *
- * @index: column / row index, used to calculate valid interval
+ * @index: column / row index, used to calculate valid पूर्णांकerval
  * @in_edge: input right / bottom edge
  * @out_edge: output right / bottom edge
  * @in_align: input alignment, either horizontal 8-byte line start address
- *            alignment, or pixel alignment due to image format
+ *            alignment, or pixel alignment due to image क्रमmat
  * @out_align: output alignment, either horizontal 8-byte line start address
- *             alignment, or pixel alignment due to image format or rotator
+ *             alignment, or pixel alignment due to image क्रमmat or rotator
  *             block size
- * @in_burst: horizontal input burst size in case of horizontal flip
+ * @in_burst: horizontal input burst size in हाल of horizontal flip
  * @out_burst: horizontal output burst size or rotator block size
- * @downsize_coeff: downsizing section coefficient
- * @resize_coeff: main processing section resizing coefficient
- * @_in_seam: aligned input seam position return value
- * @_out_seam: aligned output seam position return value
+ * @करोwnsize_coeff: करोwnsizing section coefficient
+ * @resize_coeff: मुख्य processing section resizing coefficient
+ * @_in_seam: aligned input seam position वापस value
+ * @_out_seam: aligned output seam position वापस value
  */
-static void find_best_seam(struct ipu_image_convert_ctx *ctx,
-			   unsigned int index,
-			   unsigned int in_edge,
-			   unsigned int out_edge,
-			   unsigned int in_align,
-			   unsigned int out_align,
-			   unsigned int in_burst,
-			   unsigned int out_burst,
-			   unsigned int downsize_coeff,
-			   unsigned int resize_coeff,
+अटल व्योम find_best_seam(काष्ठा ipu_image_convert_ctx *ctx,
+			   अचिन्हित पूर्णांक index,
+			   अचिन्हित पूर्णांक in_edge,
+			   अचिन्हित पूर्णांक out_edge,
+			   अचिन्हित पूर्णांक in_align,
+			   अचिन्हित पूर्णांक out_align,
+			   अचिन्हित पूर्णांक in_burst,
+			   अचिन्हित पूर्णांक out_burst,
+			   अचिन्हित पूर्णांक करोwnsize_coeff,
+			   अचिन्हित पूर्णांक resize_coeff,
 			   u32 *_in_seam,
 			   u32 *_out_seam)
-{
-	struct device *dev = ctx->chan->priv->ipu->dev;
-	unsigned int out_pos;
+अणु
+	काष्ठा device *dev = ctx->chan->priv->ipu->dev;
+	अचिन्हित पूर्णांक out_pos;
 	/* Input / output seam position candidates */
-	unsigned int out_seam = 0;
-	unsigned int in_seam = 0;
-	unsigned int min_diff = UINT_MAX;
-	unsigned int out_start;
-	unsigned int out_end;
-	unsigned int in_start;
-	unsigned int in_end;
+	अचिन्हित पूर्णांक out_seam = 0;
+	अचिन्हित पूर्णांक in_seam = 0;
+	अचिन्हित पूर्णांक min_dअगरf = अच_पूर्णांक_उच्च;
+	अचिन्हित पूर्णांक out_start;
+	अचिन्हित पूर्णांक out_end;
+	अचिन्हित पूर्णांक in_start;
+	अचिन्हित पूर्णांक in_end;
 
 	/* Start within 1024 pixels of the right / bottom edge */
-	out_start = max_t(int, index * out_align, out_edge - 1024);
-	/* End before having to add more columns to the left / rows above */
-	out_end = min_t(unsigned int, out_edge, index * 1024 + 1);
+	out_start = max_t(पूर्णांक, index * out_align, out_edge - 1024);
+	/* End beक्रमe having to add more columns to the left / rows above */
+	out_end = min_t(अचिन्हित पूर्णांक, out_edge, index * 1024 + 1);
 
 	/*
-	 * Limit input seam position to make sure that the downsized input tile
-	 * to the right or bottom does not exceed 1024 pixels.
+	 * Limit input seam position to make sure that the करोwnsized input tile
+	 * to the right or bottom करोes not exceed 1024 pixels.
 	 */
-	in_start = max_t(int, index * in_align,
-			 in_edge - (1024 << downsize_coeff));
-	in_end = min_t(unsigned int, in_edge,
-		       index * (1024 << downsize_coeff) + 1);
+	in_start = max_t(पूर्णांक, index * in_align,
+			 in_edge - (1024 << करोwnsize_coeff));
+	in_end = min_t(अचिन्हित पूर्णांक, in_edge,
+		       index * (1024 << करोwnsize_coeff) + 1);
 
 	/*
 	 * Output tiles must start at a multiple of 8 bytes horizontally and
-	 * possibly at an even line horizontally depending on the pixel format.
-	 * Only consider output aligned positions for the seam.
+	 * possibly at an even line horizontally depending on the pixel क्रमmat.
+	 * Only consider output aligned positions क्रम the seam.
 	 */
 	out_start = round_up(out_start, out_align);
-	for (out_pos = out_start; out_pos < out_end; out_pos += out_align) {
-		unsigned int in_pos;
-		unsigned int in_pos_aligned;
-		unsigned int in_pos_rounded;
-		unsigned int abs_diff;
+	क्रम (out_pos = out_start; out_pos < out_end; out_pos += out_align) अणु
+		अचिन्हित पूर्णांक in_pos;
+		अचिन्हित पूर्णांक in_pos_aligned;
+		अचिन्हित पूर्णांक in_pos_rounded;
+		अचिन्हित पूर्णांक असल_dअगरf;
 
 		/*
 		 * Tiles in the right row / bottom column may not be allowed to
 		 * overshoot horizontally / vertically. out_burst may be the
 		 * actual DMA burst size, or the rotator block size.
 		 */
-		if ((out_burst > 1) && (out_edge - out_pos) % out_burst)
-			continue;
+		अगर ((out_burst > 1) && (out_edge - out_pos) % out_burst)
+			जारी;
 
 		/*
 		 * Input sample position, corresponding to out_pos, 19.13 fixed
-		 * point.
+		 * poपूर्णांक.
 		 */
-		in_pos = (out_pos * resize_coeff) << downsize_coeff;
+		in_pos = (out_pos * resize_coeff) << करोwnsize_coeff;
 		/*
-		 * The closest input sample position that we could actually
-		 * start the input tile at, 19.13 fixed point.
+		 * The बंदst input sample position that we could actually
+		 * start the input tile at, 19.13 fixed poपूर्णांक.
 		 */
-		in_pos_aligned = round_closest(in_pos, 8192U * in_align);
-		/* Convert 19.13 fixed point to integer */
+		in_pos_aligned = round_बंदst(in_pos, 8192U * in_align);
+		/* Convert 19.13 fixed poपूर्णांक to पूर्णांकeger */
 		in_pos_rounded = in_pos_aligned / 8192U;
 
-		if (in_pos_rounded < in_start)
-			continue;
-		if (in_pos_rounded >= in_end)
-			break;
+		अगर (in_pos_rounded < in_start)
+			जारी;
+		अगर (in_pos_rounded >= in_end)
+			अवरोध;
 
-		if ((in_burst > 1) &&
+		अगर ((in_burst > 1) &&
 		    (in_edge - in_pos_rounded) % in_burst)
-			continue;
+			जारी;
 
-		if (in_pos < in_pos_aligned)
-			abs_diff = in_pos_aligned - in_pos;
-		else
-			abs_diff = in_pos - in_pos_aligned;
+		अगर (in_pos < in_pos_aligned)
+			असल_dअगरf = in_pos_aligned - in_pos;
+		अन्यथा
+			असल_dअगरf = in_pos - in_pos_aligned;
 
-		if (abs_diff < min_diff) {
+		अगर (असल_dअगरf < min_dअगरf) अणु
 			in_seam = in_pos_rounded;
 			out_seam = out_pos;
-			min_diff = abs_diff;
-		}
-	}
+			min_dअगरf = असल_dअगरf;
+		पूर्ण
+	पूर्ण
 
 	*_out_seam = out_seam;
 	*_in_seam = in_seam;
 
 	dev_dbg(dev, "%s: out_seam %u(%u) in [%u, %u], in_seam %u(%u) in [%u, %u] diff %u.%03u\n",
 		__func__, out_seam, out_align, out_start, out_end,
-		in_seam, in_align, in_start, in_end, min_diff / 8192,
-		DIV_ROUND_CLOSEST(min_diff % 8192 * 1000, 8192));
-}
+		in_seam, in_align, in_start, in_end, min_dअगरf / 8192,
+		DIV_ROUND_CLOSEST(min_dअगरf % 8192 * 1000, 8192));
+पूर्ण
 
 /*
  * Tile left edges are required to be aligned to multiples of 8 bytes
  * by the IDMAC.
  */
-static inline u32 tile_left_align(const struct ipu_image_pixfmt *fmt)
-{
-	if (fmt->planar)
-		return fmt->uv_packed ? 8 : 8 * fmt->uv_width_dec;
-	else
-		return fmt->bpp == 32 ? 2 : fmt->bpp == 16 ? 4 : 8;
-}
+अटल अंतरभूत u32 tile_left_align(स्थिर काष्ठा ipu_image_pixfmt *fmt)
+अणु
+	अगर (fmt->planar)
+		वापस fmt->uv_packed ? 8 : 8 * fmt->uv_width_dec;
+	अन्यथा
+		वापस fmt->bpp == 32 ? 2 : fmt->bpp == 16 ? 4 : 8;
+पूर्ण
 
 /*
  * Tile top edge alignment is only limited by chroma subsampling.
  */
-static inline u32 tile_top_align(const struct ipu_image_pixfmt *fmt)
-{
-	return fmt->uv_height_dec > 1 ? 2 : 1;
-}
+अटल अंतरभूत u32 tile_top_align(स्थिर काष्ठा ipu_image_pixfmt *fmt)
+अणु
+	वापस fmt->uv_height_dec > 1 ? 2 : 1;
+पूर्ण
 
-static inline u32 tile_width_align(enum ipu_image_convert_type type,
-				   const struct ipu_image_pixfmt *fmt,
-				   enum ipu_rotate_mode rot_mode)
-{
-	if (type == IMAGE_CONVERT_IN) {
+अटल अंतरभूत u32 tile_width_align(क्रमागत ipu_image_convert_type type,
+				   स्थिर काष्ठा ipu_image_pixfmt *fmt,
+				   क्रमागत ipu_rotate_mode rot_mode)
+अणु
+	अगर (type == IMAGE_CONVERT_IN) अणु
 		/*
-		 * The IC burst reads 8 pixels at a time. Reading beyond the
+		 * The IC burst पढ़ोs 8 pixels at a समय. Reading beyond the
 		 * end of the line is usually acceptable. Those pixels are
-		 * ignored, unless the IC has to write the scaled line in
+		 * ignored, unless the IC has to ग_लिखो the scaled line in
 		 * reverse.
 		 */
-		return (!ipu_rot_mode_is_irt(rot_mode) &&
+		वापस (!ipu_rot_mode_is_irt(rot_mode) &&
 			(rot_mode & IPU_ROT_BIT_HFLIP)) ? 8 : 2;
-	}
+	पूर्ण
 
 	/*
-	 * Align to 16x16 pixel blocks for planar 4:2:0 chroma subsampled
-	 * formats to guarantee 8-byte aligned line start addresses in the
+	 * Align to 16x16 pixel blocks क्रम planar 4:2:0 chroma subsampled
+	 * क्रमmats to guarantee 8-byte aligned line start addresses in the
 	 * chroma planes when IRT is used. Align to 8x8 pixel IRT block size
-	 * for all other formats.
+	 * क्रम all other क्रमmats.
 	 */
-	return (ipu_rot_mode_is_irt(rot_mode) &&
+	वापस (ipu_rot_mode_is_irt(rot_mode) &&
 		fmt->planar && !fmt->uv_packed) ?
 		8 * fmt->uv_width_dec : 8;
-}
+पूर्ण
 
-static inline u32 tile_height_align(enum ipu_image_convert_type type,
-				    const struct ipu_image_pixfmt *fmt,
-				    enum ipu_rotate_mode rot_mode)
-{
-	if (type == IMAGE_CONVERT_IN || !ipu_rot_mode_is_irt(rot_mode))
-		return 2;
+अटल अंतरभूत u32 tile_height_align(क्रमागत ipu_image_convert_type type,
+				    स्थिर काष्ठा ipu_image_pixfmt *fmt,
+				    क्रमागत ipu_rotate_mode rot_mode)
+अणु
+	अगर (type == IMAGE_CONVERT_IN || !ipu_rot_mode_is_irt(rot_mode))
+		वापस 2;
 
 	/*
-	 * Align to 16x16 pixel blocks for planar 4:2:0 chroma subsampled
-	 * formats to guarantee 8-byte aligned line start addresses in the
+	 * Align to 16x16 pixel blocks क्रम planar 4:2:0 chroma subsampled
+	 * क्रमmats to guarantee 8-byte aligned line start addresses in the
 	 * chroma planes when IRT is used. Align to 8x8 pixel IRT block size
-	 * for all other formats.
+	 * क्रम all other क्रमmats.
 	 */
-	return (fmt->planar && !fmt->uv_packed) ? 8 * fmt->uv_width_dec : 8;
-}
+	वापस (fmt->planar && !fmt->uv_packed) ? 8 * fmt->uv_width_dec : 8;
+पूर्ण
 
 /*
- * Fill in left position and width and for all tiles in an input column, and
- * for all corresponding output tiles. If the 90° rotator is used, the output
+ * Fill in left position and width and क्रम all tiles in an input column, and
+ * क्रम all corresponding output tiles. If the 90तओ rotator is used, the output
  * tiles are in a row, and output tile top position and height are set.
  */
-static void fill_tile_column(struct ipu_image_convert_ctx *ctx,
-			     unsigned int col,
-			     struct ipu_image_convert_image *in,
-			     unsigned int in_left, unsigned int in_width,
-			     struct ipu_image_convert_image *out,
-			     unsigned int out_left, unsigned int out_width)
-{
-	unsigned int row, tile_idx;
-	struct ipu_image_tile *in_tile, *out_tile;
+अटल व्योम fill_tile_column(काष्ठा ipu_image_convert_ctx *ctx,
+			     अचिन्हित पूर्णांक col,
+			     काष्ठा ipu_image_convert_image *in,
+			     अचिन्हित पूर्णांक in_left, अचिन्हित पूर्णांक in_width,
+			     काष्ठा ipu_image_convert_image *out,
+			     अचिन्हित पूर्णांक out_left, अचिन्हित पूर्णांक out_width)
+अणु
+	अचिन्हित पूर्णांक row, tile_idx;
+	काष्ठा ipu_image_tile *in_tile, *out_tile;
 
-	for (row = 0; row < in->num_rows; row++) {
+	क्रम (row = 0; row < in->num_rows; row++) अणु
 		tile_idx = in->num_cols * row + col;
 		in_tile = &in->tile[tile_idx];
 		out_tile = &out->tile[ctx->out_tile_map[tile_idx]];
@@ -681,31 +682,31 @@ static void fill_tile_column(struct ipu_image_convert_ctx *ctx,
 		in_tile->left = in_left;
 		in_tile->width = in_width;
 
-		if (ipu_rot_mode_is_irt(ctx->rot_mode)) {
+		अगर (ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
 			out_tile->top = out_left;
 			out_tile->height = out_width;
-		} else {
+		पूर्ण अन्यथा अणु
 			out_tile->left = out_left;
 			out_tile->width = out_width;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Fill in top position and height and for all tiles in an input row, and
- * for all corresponding output tiles. If the 90° rotator is used, the output
+ * Fill in top position and height and क्रम all tiles in an input row, and
+ * क्रम all corresponding output tiles. If the 90तओ rotator is used, the output
  * tiles are in a column, and output tile left position and width are set.
  */
-static void fill_tile_row(struct ipu_image_convert_ctx *ctx, unsigned int row,
-			  struct ipu_image_convert_image *in,
-			  unsigned int in_top, unsigned int in_height,
-			  struct ipu_image_convert_image *out,
-			  unsigned int out_top, unsigned int out_height)
-{
-	unsigned int col, tile_idx;
-	struct ipu_image_tile *in_tile, *out_tile;
+अटल व्योम fill_tile_row(काष्ठा ipu_image_convert_ctx *ctx, अचिन्हित पूर्णांक row,
+			  काष्ठा ipu_image_convert_image *in,
+			  अचिन्हित पूर्णांक in_top, अचिन्हित पूर्णांक in_height,
+			  काष्ठा ipu_image_convert_image *out,
+			  अचिन्हित पूर्णांक out_top, अचिन्हित पूर्णांक out_height)
+अणु
+	अचिन्हित पूर्णांक col, tile_idx;
+	काष्ठा ipu_image_tile *in_tile, *out_tile;
 
-	for (col = 0; col < in->num_cols; col++) {
+	क्रम (col = 0; col < in->num_cols; col++) अणु
 		tile_idx = in->num_cols * row + col;
 		in_tile = &in->tile[tile_idx];
 		out_tile = &out->tile[ctx->out_tile_map[tile_idx]];
@@ -713,46 +714,46 @@ static void fill_tile_row(struct ipu_image_convert_ctx *ctx, unsigned int row,
 		in_tile->top = in_top;
 		in_tile->height = in_height;
 
-		if (ipu_rot_mode_is_irt(ctx->rot_mode)) {
+		अगर (ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
 			out_tile->left = out_top;
 			out_tile->width = out_height;
-		} else {
+		पूर्ण अन्यथा अणु
 			out_tile->top = out_top;
 			out_tile->height = out_height;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Find the best horizontal and vertical seam positions to split into tiles.
- * Minimize the fractional part of the input sampling position for the
+ * Find the best horizontal and vertical seam positions to split पूर्णांकo tiles.
+ * Minimize the fractional part of the input sampling position क्रम the
  * top / left pixels of each tile.
  */
-static void find_seams(struct ipu_image_convert_ctx *ctx,
-		       struct ipu_image_convert_image *in,
-		       struct ipu_image_convert_image *out)
-{
-	struct device *dev = ctx->chan->priv->ipu->dev;
-	unsigned int resized_width = out->base.rect.width;
-	unsigned int resized_height = out->base.rect.height;
-	unsigned int col;
-	unsigned int row;
-	unsigned int in_left_align = tile_left_align(in->fmt);
-	unsigned int in_top_align = tile_top_align(in->fmt);
-	unsigned int out_left_align = tile_left_align(out->fmt);
-	unsigned int out_top_align = tile_top_align(out->fmt);
-	unsigned int out_width_align = tile_width_align(out->type, out->fmt,
+अटल व्योम find_seams(काष्ठा ipu_image_convert_ctx *ctx,
+		       काष्ठा ipu_image_convert_image *in,
+		       काष्ठा ipu_image_convert_image *out)
+अणु
+	काष्ठा device *dev = ctx->chan->priv->ipu->dev;
+	अचिन्हित पूर्णांक resized_width = out->base.rect.width;
+	अचिन्हित पूर्णांक resized_height = out->base.rect.height;
+	अचिन्हित पूर्णांक col;
+	अचिन्हित पूर्णांक row;
+	अचिन्हित पूर्णांक in_left_align = tile_left_align(in->fmt);
+	अचिन्हित पूर्णांक in_top_align = tile_top_align(in->fmt);
+	अचिन्हित पूर्णांक out_left_align = tile_left_align(out->fmt);
+	अचिन्हित पूर्णांक out_top_align = tile_top_align(out->fmt);
+	अचिन्हित पूर्णांक out_width_align = tile_width_align(out->type, out->fmt,
 							ctx->rot_mode);
-	unsigned int out_height_align = tile_height_align(out->type, out->fmt,
+	अचिन्हित पूर्णांक out_height_align = tile_height_align(out->type, out->fmt,
 							  ctx->rot_mode);
-	unsigned int in_right = in->base.rect.width;
-	unsigned int in_bottom = in->base.rect.height;
-	unsigned int out_right = out->base.rect.width;
-	unsigned int out_bottom = out->base.rect.height;
-	unsigned int flipped_out_left;
-	unsigned int flipped_out_top;
+	अचिन्हित पूर्णांक in_right = in->base.rect.width;
+	अचिन्हित पूर्णांक in_bottom = in->base.rect.height;
+	अचिन्हित पूर्णांक out_right = out->base.rect.width;
+	अचिन्हित पूर्णांक out_bottom = out->base.rect.height;
+	अचिन्हित पूर्णांक flipped_out_left;
+	अचिन्हित पूर्णांक flipped_out_top;
 
-	if (ipu_rot_mode_is_irt(ctx->rot_mode)) {
+	अगर (ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
 		/* Switch width/height and align top left to IRT block size */
 		resized_width = out->base.rect.height;
 		resized_height = out->base.rect.width;
@@ -762,18 +763,18 @@ static void find_seams(struct ipu_image_convert_ctx *ctx,
 		out_height_align = out_top_align;
 		out_right = out->base.rect.height;
 		out_bottom = out->base.rect.width;
-	}
+	पूर्ण
 
-	for (col = in->num_cols - 1; col > 0; col--) {
+	क्रम (col = in->num_cols - 1; col > 0; col--) अणु
 		bool allow_in_overshoot = ipu_rot_mode_is_irt(ctx->rot_mode) ||
 					  !(ctx->rot_mode & IPU_ROT_BIT_HFLIP);
 		bool allow_out_overshoot = (col < in->num_cols - 1) &&
 					   !(ctx->rot_mode & IPU_ROT_BIT_HFLIP);
-		unsigned int in_left;
-		unsigned int out_left;
+		अचिन्हित पूर्णांक in_left;
+		अचिन्हित पूर्णांक out_left;
 
 		/*
-		 * Align input width to burst length if the scaling step flips
+		 * Align input width to burst length अगर the scaling step flips
 		 * horizontally.
 		 */
 
@@ -782,12 +783,12 @@ static void find_seams(struct ipu_image_convert_ctx *ctx,
 			       in_left_align, out_left_align,
 			       allow_in_overshoot ? 1 : 8 /* burst length */,
 			       allow_out_overshoot ? 1 : out_width_align,
-			       ctx->downsize_coeff_h, ctx->image_resize_coeff_h,
+			       ctx->करोwnsize_coeff_h, ctx->image_resize_coeff_h,
 			       &in_left, &out_left);
 
-		if (ctx->rot_mode & IPU_ROT_BIT_HFLIP)
+		अगर (ctx->rot_mode & IPU_ROT_BIT_HFLIP)
 			flipped_out_left = resized_width - out_right;
-		else
+		अन्यथा
 			flipped_out_left = out_left;
 
 		fill_tile_column(ctx, col, in, in_left, in_right - in_left,
@@ -799,7 +800,7 @@ static void find_seams(struct ipu_image_convert_ctx *ctx,
 
 		in_right = in_left;
 		out_right = out_left;
-	}
+	पूर्ण
 
 	flipped_out_left = (ctx->rot_mode & IPU_ROT_BIT_HFLIP) ?
 			   resized_width - out_right : 0;
@@ -810,22 +811,22 @@ static void find_seams(struct ipu_image_convert_ctx *ctx,
 	dev_dbg(dev, "%s: col 0: 0, %u -> %u, %u\n", __func__,
 		in_right, flipped_out_left, out_right);
 
-	for (row = in->num_rows - 1; row > 0; row--) {
+	क्रम (row = in->num_rows - 1; row > 0; row--) अणु
 		bool allow_overshoot = row < in->num_rows - 1;
-		unsigned int in_top;
-		unsigned int out_top;
+		अचिन्हित पूर्णांक in_top;
+		अचिन्हित पूर्णांक out_top;
 
 		find_best_seam(ctx, row,
 			       in_bottom, out_bottom,
 			       in_top_align, out_top_align,
 			       1, allow_overshoot ? 1 : out_height_align,
-			       ctx->downsize_coeff_v, ctx->image_resize_coeff_v,
+			       ctx->करोwnsize_coeff_v, ctx->image_resize_coeff_v,
 			       &in_top, &out_top);
 
-		if ((ctx->rot_mode & IPU_ROT_BIT_VFLIP) ^
+		अगर ((ctx->rot_mode & IPU_ROT_BIT_VFLIP) ^
 		    ipu_rot_mode_is_irt(ctx->rot_mode))
 			flipped_out_top = resized_height - out_bottom;
-		else
+		अन्यथा
 			flipped_out_top = out_top;
 
 		fill_tile_row(ctx, row, in, in_top, in_bottom - in_top,
@@ -837,12 +838,12 @@ static void find_seams(struct ipu_image_convert_ctx *ctx,
 
 		in_bottom = in_top;
 		out_bottom = out_top;
-	}
+	पूर्ण
 
-	if ((ctx->rot_mode & IPU_ROT_BIT_VFLIP) ^
+	अगर ((ctx->rot_mode & IPU_ROT_BIT_VFLIP) ^
 	    ipu_rot_mode_is_irt(ctx->rot_mode))
 		flipped_out_top = resized_height - out_bottom;
-	else
+	अन्यथा
 		flipped_out_top = 0;
 
 	fill_tile_row(ctx, 0, in, 0, in_bottom,
@@ -850,45 +851,45 @@ static void find_seams(struct ipu_image_convert_ctx *ctx,
 
 	dev_dbg(dev, "%s: row 0: 0, %u -> %u, %u\n", __func__,
 		in_bottom, flipped_out_top, out_bottom);
-}
+पूर्ण
 
-static int calc_tile_dimensions(struct ipu_image_convert_ctx *ctx,
-				struct ipu_image_convert_image *image)
-{
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	unsigned int max_width = 1024;
-	unsigned int max_height = 1024;
-	unsigned int i;
+अटल पूर्णांक calc_tile_dimensions(काष्ठा ipu_image_convert_ctx *ctx,
+				काष्ठा ipu_image_convert_image *image)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	अचिन्हित पूर्णांक max_width = 1024;
+	अचिन्हित पूर्णांक max_height = 1024;
+	अचिन्हित पूर्णांक i;
 
-	if (image->type == IMAGE_CONVERT_IN) {
+	अगर (image->type == IMAGE_CONVERT_IN) अणु
 		/* Up to 4096x4096 input tile size */
-		max_width <<= ctx->downsize_coeff_h;
-		max_height <<= ctx->downsize_coeff_v;
-	}
+		max_width <<= ctx->करोwnsize_coeff_h;
+		max_height <<= ctx->करोwnsize_coeff_v;
+	पूर्ण
 
-	for (i = 0; i < ctx->num_tiles; i++) {
-		struct ipu_image_tile *tile;
-		const unsigned int row = i / image->num_cols;
-		const unsigned int col = i % image->num_cols;
+	क्रम (i = 0; i < ctx->num_tiles; i++) अणु
+		काष्ठा ipu_image_tile *tile;
+		स्थिर अचिन्हित पूर्णांक row = i / image->num_cols;
+		स्थिर अचिन्हित पूर्णांक col = i % image->num_cols;
 
-		if (image->type == IMAGE_CONVERT_OUT)
+		अगर (image->type == IMAGE_CONVERT_OUT)
 			tile = &image->tile[ctx->out_tile_map[i]];
-		else
+		अन्यथा
 			tile = &image->tile[i];
 
 		tile->size = ((tile->height * image->fmt->bpp) >> 3) *
 			tile->width;
 
-		if (image->fmt->planar) {
+		अगर (image->fmt->planar) अणु
 			tile->stride = tile->width;
 			tile->rot_stride = tile->height;
-		} else {
+		पूर्ण अन्यथा अणु
 			tile->stride =
 				(image->fmt->bpp * tile->width) >> 3;
 			tile->rot_stride =
 				(image->fmt->bpp * tile->height) >> 3;
-		}
+		पूर्ण
 
 		dev_dbg(priv->ipu->dev,
 			"task %u: ctx %p: %s@[%u,%u]: %ux%u@%u,%u\n",
@@ -897,57 +898,57 @@ static int calc_tile_dimensions(struct ipu_image_convert_ctx *ctx,
 			row, col,
 			tile->width, tile->height, tile->left, tile->top);
 
-		if (!tile->width || tile->width > max_width ||
-		    !tile->height || tile->height > max_height) {
+		अगर (!tile->width || tile->width > max_width ||
+		    !tile->height || tile->height > max_height) अणु
 			dev_err(priv->ipu->dev, "invalid %s tile size: %ux%u\n",
 				image->type == IMAGE_CONVERT_IN ? "input" :
 				"output", tile->width, tile->height);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Use the rotation transformation to find the tile coordinates
+ * Use the rotation transक्रमmation to find the tile coordinates
  * (row, col) of a tile in the destination frame that corresponds
  * to the given tile coordinates of a source frame. The destination
  * coordinate is then converted to a tile index.
  */
-static int transform_tile_index(struct ipu_image_convert_ctx *ctx,
-				int src_row, int src_col)
-{
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	struct ipu_image_convert_image *s_image = &ctx->in;
-	struct ipu_image_convert_image *d_image = &ctx->out;
-	int dst_row, dst_col;
+अटल पूर्णांक transक्रमm_tile_index(काष्ठा ipu_image_convert_ctx *ctx,
+				पूर्णांक src_row, पूर्णांक src_col)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	काष्ठा ipu_image_convert_image *s_image = &ctx->in;
+	काष्ठा ipu_image_convert_image *d_image = &ctx->out;
+	पूर्णांक dst_row, dst_col;
 
 	/* with no rotation it's a 1:1 mapping */
-	if (ctx->rot_mode == IPU_ROTATE_NONE)
-		return src_row * s_image->num_cols + src_col;
+	अगर (ctx->rot_mode == IPU_ROTATE_NONE)
+		वापस src_row * s_image->num_cols + src_col;
 
 	/*
-	 * before doing the transform, first we have to translate
-	 * source row,col for an origin in the center of s_image
+	 * beक्रमe करोing the transक्रमm, first we have to translate
+	 * source row,col क्रम an origin in the center of s_image
 	 */
 	src_row = src_row * 2 - (s_image->num_rows - 1);
 	src_col = src_col * 2 - (s_image->num_cols - 1);
 
-	/* do the rotation transform */
-	if (ctx->rot_mode & IPU_ROT_BIT_90) {
+	/* करो the rotation transक्रमm */
+	अगर (ctx->rot_mode & IPU_ROT_BIT_90) अणु
 		dst_col = -src_row;
 		dst_row = src_col;
-	} else {
+	पूर्ण अन्यथा अणु
 		dst_col = src_col;
 		dst_row = src_row;
-	}
+	पूर्ण
 
 	/* apply flip */
-	if (ctx->rot_mode & IPU_ROT_BIT_HFLIP)
+	अगर (ctx->rot_mode & IPU_ROT_BIT_HFLIP)
 		dst_col = -dst_col;
-	if (ctx->rot_mode & IPU_ROT_BIT_VFLIP)
+	अगर (ctx->rot_mode & IPU_ROT_BIT_VFLIP)
 		dst_row = -dst_row;
 
 	dev_dbg(priv->ipu->dev, "task %u: ctx %p: [%d,%d] --> [%d,%d]\n",
@@ -962,35 +963,35 @@ static int transform_tile_index(struct ipu_image_convert_ctx *ctx,
 	dst_row /= 2;
 	dst_col /= 2;
 
-	return dst_row * d_image->num_cols + dst_col;
-}
+	वापस dst_row * d_image->num_cols + dst_col;
+पूर्ण
 
 /*
- * Fill the out_tile_map[] with transformed destination tile indeces.
+ * Fill the out_tile_map[] with transक्रमmed destination tile indeces.
  */
-static void calc_out_tile_map(struct ipu_image_convert_ctx *ctx)
-{
-	struct ipu_image_convert_image *s_image = &ctx->in;
-	unsigned int row, col, tile = 0;
+अटल व्योम calc_out_tile_map(काष्ठा ipu_image_convert_ctx *ctx)
+अणु
+	काष्ठा ipu_image_convert_image *s_image = &ctx->in;
+	अचिन्हित पूर्णांक row, col, tile = 0;
 
-	for (row = 0; row < s_image->num_rows; row++) {
-		for (col = 0; col < s_image->num_cols; col++) {
+	क्रम (row = 0; row < s_image->num_rows; row++) अणु
+		क्रम (col = 0; col < s_image->num_cols; col++) अणु
 			ctx->out_tile_map[tile] =
-				transform_tile_index(ctx, row, col);
+				transक्रमm_tile_index(ctx, row, col);
 			tile++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int calc_tile_offsets_planar(struct ipu_image_convert_ctx *ctx,
-				    struct ipu_image_convert_image *image)
-{
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	const struct ipu_image_pixfmt *fmt = image->fmt;
-	unsigned int row, col, tile = 0;
+अटल पूर्णांक calc_tile_offsets_planar(काष्ठा ipu_image_convert_ctx *ctx,
+				    काष्ठा ipu_image_convert_image *image)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	स्थिर काष्ठा ipu_image_pixfmt *fmt = image->fmt;
+	अचिन्हित पूर्णांक row, col, tile = 0;
 	u32 H, top, y_stride, uv_stride;
-	u32 uv_row_off, uv_col_off, uv_off, u_off, v_off, tmp;
+	u32 uv_row_off, uv_col_off, uv_off, u_off, v_off, पंचांगp;
 	u32 y_row_off, y_col_off, y_off;
 	u32 y_size, uv_size;
 
@@ -999,21 +1000,21 @@ static int calc_tile_offsets_planar(struct ipu_image_convert_ctx *ctx,
 
 	y_stride = image->stride;
 	uv_stride = y_stride / fmt->uv_width_dec;
-	if (fmt->uv_packed)
+	अगर (fmt->uv_packed)
 		uv_stride *= 2;
 
 	y_size = H * y_stride;
 	uv_size = y_size / (fmt->uv_width_dec * fmt->uv_height_dec);
 
-	for (row = 0; row < image->num_rows; row++) {
+	क्रम (row = 0; row < image->num_rows; row++) अणु
 		top = image->tile[tile].top;
 		y_row_off = top * y_stride;
 		uv_row_off = (top * uv_stride) / fmt->uv_height_dec;
 
-		for (col = 0; col < image->num_cols; col++) {
+		क्रम (col = 0; col < image->num_cols; col++) अणु
 			y_col_off = image->tile[tile].left;
 			uv_col_off = y_col_off / fmt->uv_width_dec;
-			if (fmt->uv_packed)
+			अगर (fmt->uv_packed)
 				uv_col_off *= 2;
 
 			y_off = y_row_off + y_col_off;
@@ -1021,17 +1022,17 @@ static int calc_tile_offsets_planar(struct ipu_image_convert_ctx *ctx,
 
 			u_off = y_size - y_off + uv_off;
 			v_off = (fmt->uv_packed) ? 0 : u_off + uv_size;
-			if (fmt->uv_swapped) {
-				tmp = u_off;
+			अगर (fmt->uv_swapped) अणु
+				पंचांगp = u_off;
 				u_off = v_off;
-				v_off = tmp;
-			}
+				v_off = पंचांगp;
+			पूर्ण
 
 			image->tile[tile].offset = y_off;
 			image->tile[tile].u_off = u_off;
 			image->tile[tile++].v_off = v_off;
 
-			if ((y_off & 0x7) || (u_off & 0x7) || (v_off & 0x7)) {
+			अगर ((y_off & 0x7) || (u_off & 0x7) || (v_off & 0x7)) अणु
 				dev_err(priv->ipu->dev,
 					"task %u: ctx %p: %s@[%d,%d]: "
 					"y_off %08x, u_off %08x, v_off %08x\n",
@@ -1039,21 +1040,21 @@ static int calc_tile_offsets_planar(struct ipu_image_convert_ctx *ctx,
 					image->type == IMAGE_CONVERT_IN ?
 					"Input" : "Output", row, col,
 					y_off, u_off, v_off);
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int calc_tile_offsets_packed(struct ipu_image_convert_ctx *ctx,
-				    struct ipu_image_convert_image *image)
-{
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	const struct ipu_image_pixfmt *fmt = image->fmt;
-	unsigned int row, col, tile = 0;
+अटल पूर्णांक calc_tile_offsets_packed(काष्ठा ipu_image_convert_ctx *ctx,
+				    काष्ठा ipu_image_convert_image *image)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	स्थिर काष्ठा ipu_image_pixfmt *fmt = image->fmt;
+	अचिन्हित पूर्णांक row, col, tile = 0;
 	u32 bpp, stride, offset;
 	u32 row_off, col_off;
 
@@ -1061,10 +1062,10 @@ static int calc_tile_offsets_packed(struct ipu_image_convert_ctx *ctx,
 	stride = image->stride;
 	bpp = fmt->bpp;
 
-	for (row = 0; row < image->num_rows; row++) {
+	क्रम (row = 0; row < image->num_rows; row++) अणु
 		row_off = image->tile[tile].top * stride;
 
-		for (col = 0; col < image->num_cols; col++) {
+		क्रम (col = 0; col < image->num_cols; col++) अणु
 			col_off = (image->tile[tile].left * bpp) >> 3;
 
 			offset = row_off + col_off;
@@ -1073,7 +1074,7 @@ static int calc_tile_offsets_packed(struct ipu_image_convert_ctx *ctx,
 			image->tile[tile].u_off = 0;
 			image->tile[tile++].v_off = 0;
 
-			if (offset & 0x7) {
+			अगर (offset & 0x7) अणु
 				dev_err(priv->ipu->dev,
 					"task %u: ctx %p: %s@[%d,%d]: "
 					"phys %08x\n",
@@ -1081,59 +1082,59 @@ static int calc_tile_offsets_packed(struct ipu_image_convert_ctx *ctx,
 					image->type == IMAGE_CONVERT_IN ?
 					"Input" : "Output", row, col,
 					row_off + col_off);
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int calc_tile_offsets(struct ipu_image_convert_ctx *ctx,
-			      struct ipu_image_convert_image *image)
-{
-	if (image->fmt->planar)
-		return calc_tile_offsets_planar(ctx, image);
+अटल पूर्णांक calc_tile_offsets(काष्ठा ipu_image_convert_ctx *ctx,
+			      काष्ठा ipu_image_convert_image *image)
+अणु
+	अगर (image->fmt->planar)
+		वापस calc_tile_offsets_planar(ctx, image);
 
-	return calc_tile_offsets_packed(ctx, image);
-}
+	वापस calc_tile_offsets_packed(ctx, image);
+पूर्ण
 
 /*
- * Calculate the resizing ratio for the IC main processing section given input
- * size, fixed downsizing coefficient, and output size.
- * Either round to closest for the next tile's first pixel to minimize seams
- * and distortion (for all but right column / bottom row), or round down to
- * avoid sampling beyond the edges of the input image for this tile's last
+ * Calculate the resizing ratio क्रम the IC मुख्य processing section given input
+ * size, fixed करोwnsizing coefficient, and output size.
+ * Either round to बंदst क्रम the next tile's first pixel to minimize seams
+ * and distortion (क्रम all but right column / bottom row), or round करोwn to
+ * aव्योम sampling beyond the edges of the input image क्रम this tile's last
  * pixel.
  * Returns the resizing coefficient, resizing ratio is 8192.0 / resize_coeff.
  */
-static u32 calc_resize_coeff(u32 input_size, u32 downsize_coeff,
+अटल u32 calc_resize_coeff(u32 input_size, u32 करोwnsize_coeff,
 			     u32 output_size, bool allow_overshoot)
-{
-	u32 downsized = input_size >> downsize_coeff;
+अणु
+	u32 करोwnsized = input_size >> करोwnsize_coeff;
 
-	if (allow_overshoot)
-		return DIV_ROUND_CLOSEST(8192 * downsized, output_size);
-	else
-		return 8192 * (downsized - 1) / (output_size - 1);
-}
+	अगर (allow_overshoot)
+		वापस DIV_ROUND_CLOSEST(8192 * करोwnsized, output_size);
+	अन्यथा
+		वापस 8192 * (करोwnsized - 1) / (output_size - 1);
+पूर्ण
 
 /*
- * Slightly modify resize coefficients per tile to hide the bilinear
- * interpolator reset at tile borders, shifting the right / bottom edge
- * by up to a half input pixel. This removes noticeable seams between
+ * Slightly modअगरy resize coefficients per tile to hide the bilinear
+ * पूर्णांकerpolator reset at tile borders, shअगरting the right / bottom edge
+ * by up to a half input pixel. This हटाओs noticeable seams between
  * tiles at higher upscaling factors.
  */
-static void calc_tile_resize_coefficients(struct ipu_image_convert_ctx *ctx)
-{
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	struct ipu_image_tile *in_tile, *out_tile;
-	unsigned int col, row, tile_idx;
-	unsigned int last_output;
+अटल व्योम calc_tile_resize_coefficients(काष्ठा ipu_image_convert_ctx *ctx)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	काष्ठा ipu_image_tile *in_tile, *out_tile;
+	अचिन्हित पूर्णांक col, row, tile_idx;
+	अचिन्हित पूर्णांक last_output;
 
-	for (col = 0; col < ctx->in.num_cols; col++) {
-		bool closest = (col < ctx->in.num_cols - 1) &&
+	क्रम (col = 0; col < ctx->in.num_cols; col++) अणु
+		bool बंदst = (col < ctx->in.num_cols - 1) &&
 			       !(ctx->rot_mode & IPU_ROT_BIT_HFLIP);
 		u32 resized_width;
 		u32 resize_coeff_h;
@@ -1143,14 +1144,14 @@ static void calc_tile_resize_coefficients(struct ipu_image_convert_ctx *ctx)
 		in_tile = &ctx->in.tile[tile_idx];
 		out_tile = &ctx->out.tile[ctx->out_tile_map[tile_idx]];
 
-		if (ipu_rot_mode_is_irt(ctx->rot_mode))
+		अगर (ipu_rot_mode_is_irt(ctx->rot_mode))
 			resized_width = out_tile->height;
-		else
+		अन्यथा
 			resized_width = out_tile->width;
 
 		resize_coeff_h = calc_resize_coeff(in_tile->width,
-						   ctx->downsize_coeff_h,
-						   resized_width, closest);
+						   ctx->करोwnsize_coeff_h,
+						   resized_width, बंदst);
 
 		dev_dbg(priv->ipu->dev, "%s: column %u hscale: *8192/%u\n",
 			__func__, col, resize_coeff_h);
@@ -1167,30 +1168,30 @@ static void calc_tile_resize_coefficients(struct ipu_image_convert_ctx *ctx)
 		 * burst size.
 		 */
 		last_output = resized_width - 1;
-		if (closest && ((last_output * resize_coeff_h) % 8192))
+		अगर (बंदst && ((last_output * resize_coeff_h) % 8192))
 			last_output++;
 		in_width = round_up(
 			(DIV_ROUND_UP(last_output * resize_coeff_h, 8192) + 1)
-			<< ctx->downsize_coeff_h, 8);
+			<< ctx->करोwnsize_coeff_h, 8);
 
-		for (row = 0; row < ctx->in.num_rows; row++) {
+		क्रम (row = 0; row < ctx->in.num_rows; row++) अणु
 			tile_idx = row * ctx->in.num_cols + col;
 			in_tile = &ctx->in.tile[tile_idx];
 			out_tile = &ctx->out.tile[ctx->out_tile_map[tile_idx]];
 
-			if (ipu_rot_mode_is_irt(ctx->rot_mode))
+			अगर (ipu_rot_mode_is_irt(ctx->rot_mode))
 				out_tile->height = resized_width;
-			else
+			अन्यथा
 				out_tile->width = resized_width;
 
 			in_tile->width = in_width;
-		}
+		पूर्ण
 
 		ctx->resize_coeffs_h[col] = resize_coeff_h;
-	}
+	पूर्ण
 
-	for (row = 0; row < ctx->in.num_rows; row++) {
-		bool closest = (row < ctx->in.num_rows - 1) &&
+	क्रम (row = 0; row < ctx->in.num_rows; row++) अणु
+		bool बंदst = (row < ctx->in.num_rows - 1) &&
 			       !(ctx->rot_mode & IPU_ROT_BIT_VFLIP);
 		u32 resized_height;
 		u32 resize_coeff_v;
@@ -1200,14 +1201,14 @@ static void calc_tile_resize_coefficients(struct ipu_image_convert_ctx *ctx)
 		in_tile = &ctx->in.tile[tile_idx];
 		out_tile = &ctx->out.tile[ctx->out_tile_map[tile_idx]];
 
-		if (ipu_rot_mode_is_irt(ctx->rot_mode))
+		अगर (ipu_rot_mode_is_irt(ctx->rot_mode))
 			resized_height = out_tile->width;
-		else
+		अन्यथा
 			resized_height = out_tile->height;
 
 		resize_coeff_v = calc_resize_coeff(in_tile->height,
-						   ctx->downsize_coeff_v,
-						   resized_height, closest);
+						   ctx->करोwnsize_coeff_v,
+						   resized_height, बंदst);
 
 		dev_dbg(priv->ipu->dev, "%s: row %u vscale: *8192/%u\n",
 			__func__, row, resize_coeff_v);
@@ -1224,54 +1225,54 @@ static void calc_tile_resize_coefficients(struct ipu_image_convert_ctx *ctx)
 		 * IDMAC restrictions.
 		 */
 		last_output = resized_height - 1;
-		if (closest && ((last_output * resize_coeff_v) % 8192))
+		अगर (बंदst && ((last_output * resize_coeff_v) % 8192))
 			last_output++;
 		in_height = round_up(
 			(DIV_ROUND_UP(last_output * resize_coeff_v, 8192) + 1)
-			<< ctx->downsize_coeff_v, 2);
+			<< ctx->करोwnsize_coeff_v, 2);
 
-		for (col = 0; col < ctx->in.num_cols; col++) {
+		क्रम (col = 0; col < ctx->in.num_cols; col++) अणु
 			tile_idx = row * ctx->in.num_cols + col;
 			in_tile = &ctx->in.tile[tile_idx];
 			out_tile = &ctx->out.tile[ctx->out_tile_map[tile_idx]];
 
-			if (ipu_rot_mode_is_irt(ctx->rot_mode))
+			अगर (ipu_rot_mode_is_irt(ctx->rot_mode))
 				out_tile->width = resized_height;
-			else
+			अन्यथा
 				out_tile->height = resized_height;
 
 			in_tile->height = in_height;
-		}
+		पूर्ण
 
 		ctx->resize_coeffs_v[row] = resize_coeff_v;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * return the number of runs in given queue (pending_q or done_q)
- * for this context. hold irqlock when calling.
+ * वापस the number of runs in given queue (pending_q or करोne_q)
+ * क्रम this context. hold irqlock when calling.
  */
-static int get_run_count(struct ipu_image_convert_ctx *ctx,
-			 struct list_head *q)
-{
-	struct ipu_image_convert_run *run;
-	int count = 0;
+अटल पूर्णांक get_run_count(काष्ठा ipu_image_convert_ctx *ctx,
+			 काष्ठा list_head *q)
+अणु
+	काष्ठा ipu_image_convert_run *run;
+	पूर्णांक count = 0;
 
-	lockdep_assert_held(&ctx->chan->irqlock);
+	lockdep_निश्चित_held(&ctx->chan->irqlock);
 
-	list_for_each_entry(run, q, list) {
-		if (run->ctx == ctx)
+	list_क्रम_each_entry(run, q, list) अणु
+		अगर (run->ctx == ctx)
 			count++;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void convert_stop(struct ipu_image_convert_run *run)
-{
-	struct ipu_image_convert_ctx *ctx = run->ctx;
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_priv *priv = chan->priv;
+अटल व्योम convert_stop(काष्ठा ipu_image_convert_run *run)
+अणु
+	काष्ठा ipu_image_convert_ctx *ctx = run->ctx;
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
 
 	dev_dbg(priv->ipu->dev, "%s: task %u: stopping ctx %p run %p\n",
 		__func__, chan->ic_task, ctx, run);
@@ -1281,88 +1282,88 @@ static void convert_stop(struct ipu_image_convert_run *run)
 	ipu_idmac_disable_channel(chan->in_chan);
 	ipu_idmac_disable_channel(chan->out_chan);
 
-	if (ipu_rot_mode_is_irt(ctx->rot_mode)) {
+	अगर (ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
 		ipu_idmac_disable_channel(chan->rotation_in_chan);
 		ipu_idmac_disable_channel(chan->rotation_out_chan);
 		ipu_idmac_unlink(chan->out_chan, chan->rotation_in_chan);
-	}
+	पूर्ण
 
 	ipu_ic_disable(chan->ic);
-}
+पूर्ण
 
-static void init_idmac_channel(struct ipu_image_convert_ctx *ctx,
-			       struct ipuv3_channel *channel,
-			       struct ipu_image_convert_image *image,
-			       enum ipu_rotate_mode rot_mode,
+अटल व्योम init_idmac_channel(काष्ठा ipu_image_convert_ctx *ctx,
+			       काष्ठा ipuv3_channel *channel,
+			       काष्ठा ipu_image_convert_image *image,
+			       क्रमागत ipu_rotate_mode rot_mode,
 			       bool rot_swap_width_height,
-			       unsigned int tile)
-{
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	unsigned int burst_size;
+			       अचिन्हित पूर्णांक tile)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	अचिन्हित पूर्णांक burst_size;
 	u32 width, height, stride;
 	dma_addr_t addr0, addr1 = 0;
-	struct ipu_image tile_image;
-	unsigned int tile_idx[2];
+	काष्ठा ipu_image tile_image;
+	अचिन्हित पूर्णांक tile_idx[2];
 
-	if (image->type == IMAGE_CONVERT_OUT) {
+	अगर (image->type == IMAGE_CONVERT_OUT) अणु
 		tile_idx[0] = ctx->out_tile_map[tile];
 		tile_idx[1] = ctx->out_tile_map[1];
-	} else {
+	पूर्ण अन्यथा अणु
 		tile_idx[0] = tile;
 		tile_idx[1] = 1;
-	}
+	पूर्ण
 
-	if (rot_swap_width_height) {
+	अगर (rot_swap_width_height) अणु
 		width = image->tile[tile_idx[0]].height;
 		height = image->tile[tile_idx[0]].width;
 		stride = image->tile[tile_idx[0]].rot_stride;
-		addr0 = ctx->rot_intermediate[0].phys;
-		if (ctx->double_buffering)
-			addr1 = ctx->rot_intermediate[1].phys;
-	} else {
+		addr0 = ctx->rot_पूर्णांकermediate[0].phys;
+		अगर (ctx->द्विगुन_buffering)
+			addr1 = ctx->rot_पूर्णांकermediate[1].phys;
+	पूर्ण अन्यथा अणु
 		width = image->tile[tile_idx[0]].width;
 		height = image->tile[tile_idx[0]].height;
 		stride = image->stride;
 		addr0 = image->base.phys0 +
 			image->tile[tile_idx[0]].offset;
-		if (ctx->double_buffering)
+		अगर (ctx->द्विगुन_buffering)
 			addr1 = image->base.phys0 +
 				image->tile[tile_idx[1]].offset;
-	}
+	पूर्ण
 
 	ipu_cpmem_zero(channel);
 
-	memset(&tile_image, 0, sizeof(tile_image));
+	स_रखो(&tile_image, 0, माप(tile_image));
 	tile_image.pix.width = tile_image.rect.width = width;
 	tile_image.pix.height = tile_image.rect.height = height;
 	tile_image.pix.bytesperline = stride;
-	tile_image.pix.pixelformat =  image->fmt->fourcc;
+	tile_image.pix.pixelक्रमmat =  image->fmt->fourcc;
 	tile_image.phys0 = addr0;
 	tile_image.phys1 = addr1;
-	if (image->fmt->planar && !rot_swap_width_height) {
+	अगर (image->fmt->planar && !rot_swap_width_height) अणु
 		tile_image.u_offset = image->tile[tile_idx[0]].u_off;
 		tile_image.v_offset = image->tile[tile_idx[0]].v_off;
-	}
+	पूर्ण
 
 	ipu_cpmem_set_image(channel, &tile_image);
 
-	if (rot_mode)
+	अगर (rot_mode)
 		ipu_cpmem_set_rotation(channel, rot_mode);
 
 	/*
 	 * Skip writing U and V components to odd rows in the output
-	 * channels for planar 4:2:0.
+	 * channels क्रम planar 4:2:0.
 	 */
-	if ((channel == chan->out_chan ||
+	अगर ((channel == chan->out_chan ||
 	     channel == chan->rotation_out_chan) &&
 	    image->fmt->planar && image->fmt->uv_height_dec == 2)
 		ipu_cpmem_skip_odd_chroma_rows(channel);
 
-	if (channel == chan->rotation_in_chan ||
-	    channel == chan->rotation_out_chan) {
+	अगर (channel == chan->rotation_in_chan ||
+	    channel == chan->rotation_out_chan) अणु
 		burst_size = 8;
 		ipu_cpmem_set_block_mode(channel);
-	} else
+	पूर्ण अन्यथा
 		burst_size = (width % 16) ? 8 : 16;
 
 	ipu_cpmem_set_burstsize(channel, burst_size);
@@ -1372,48 +1373,48 @@ static void init_idmac_channel(struct ipu_image_convert_ctx *ctx,
 
 	/*
 	 * Setting a non-zero AXI ID collides with the PRG AXI snooping, so
-	 * only do this when there is no PRG present.
+	 * only करो this when there is no PRG present.
 	 */
-	if (!channel->ipu->prg_priv)
+	अगर (!channel->ipu->prg_priv)
 		ipu_cpmem_set_axi_id(channel, 1);
 
-	ipu_idmac_set_double_buffer(channel, ctx->double_buffering);
-}
+	ipu_idmac_set_द्विगुन_buffer(channel, ctx->द्विगुन_buffering);
+पूर्ण
 
-static int convert_start(struct ipu_image_convert_run *run, unsigned int tile)
-{
-	struct ipu_image_convert_ctx *ctx = run->ctx;
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	struct ipu_image_convert_image *s_image = &ctx->in;
-	struct ipu_image_convert_image *d_image = &ctx->out;
-	unsigned int dst_tile = ctx->out_tile_map[tile];
-	unsigned int dest_width, dest_height;
-	unsigned int col, row;
+अटल पूर्णांक convert_start(काष्ठा ipu_image_convert_run *run, अचिन्हित पूर्णांक tile)
+अणु
+	काष्ठा ipu_image_convert_ctx *ctx = run->ctx;
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	काष्ठा ipu_image_convert_image *s_image = &ctx->in;
+	काष्ठा ipu_image_convert_image *d_image = &ctx->out;
+	अचिन्हित पूर्णांक dst_tile = ctx->out_tile_map[tile];
+	अचिन्हित पूर्णांक dest_width, dest_height;
+	अचिन्हित पूर्णांक col, row;
 	u32 rsc;
-	int ret;
+	पूर्णांक ret;
 
 	dev_dbg(priv->ipu->dev, "%s: task %u: starting ctx %p run %p tile %u -> %u\n",
 		__func__, chan->ic_task, ctx, run, tile, dst_tile);
 
-	/* clear EOF irq mask */
+	/* clear खातापूर्ण irq mask */
 	ctx->eof_mask = 0;
 
-	if (ipu_rot_mode_is_irt(ctx->rot_mode)) {
-		/* swap width/height for resizer */
+	अगर (ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
+		/* swap width/height क्रम resizer */
 		dest_width = d_image->tile[dst_tile].height;
 		dest_height = d_image->tile[dst_tile].width;
-	} else {
+	पूर्ण अन्यथा अणु
 		dest_width = d_image->tile[dst_tile].width;
 		dest_height = d_image->tile[dst_tile].height;
-	}
+	पूर्ण
 
 	row = tile / s_image->num_cols;
 	col = tile % s_image->num_cols;
 
-	rsc =  (ctx->downsize_coeff_v << 30) |
+	rsc =  (ctx->करोwnsize_coeff_v << 30) |
 	       (ctx->resize_coeffs_v[row] << 16) |
-	       (ctx->downsize_coeff_h << 14) |
+	       (ctx->करोwnsize_coeff_h << 14) |
 	       (ctx->resize_coeffs_h[col]);
 
 	dev_dbg(priv->ipu->dev, "%s: %ux%u -> %ux%u (rsc = 0x%x)\n",
@@ -1427,16 +1428,16 @@ static int convert_start(struct ipu_image_convert_run *run, unsigned int tile)
 				   dest_width,
 				   dest_height,
 				   rsc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->ipu->dev, "ipu_ic_task_init failed, %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* init the source MEM-->IC PP IDMAC channel */
 	init_idmac_channel(ctx, chan->in_chan, s_image,
 			   IPU_ROTATE_NONE, false, tile);
 
-	if (ipu_rot_mode_is_irt(ctx->rot_mode)) {
+	अगर (ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
 		/* init the IC PP-->MEM IDMAC channel */
 		init_idmac_channel(ctx, chan->out_chan, d_image,
 				   IPU_ROTATE_NONE, true, tile);
@@ -1451,56 +1452,56 @@ static int convert_start(struct ipu_image_convert_run *run, unsigned int tile)
 
 		/* now link IC PP-->MEM to MEM-->IC PP ROT */
 		ipu_idmac_link(chan->out_chan, chan->rotation_in_chan);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* init the destination IC PP-->MEM IDMAC channel */
 		init_idmac_channel(ctx, chan->out_chan, d_image,
 				   ctx->rot_mode, false, tile);
-	}
+	पूर्ण
 
 	/* enable the IC */
 	ipu_ic_enable(chan->ic);
 
-	/* set buffers ready */
+	/* set buffers पढ़ोy */
 	ipu_idmac_select_buffer(chan->in_chan, 0);
 	ipu_idmac_select_buffer(chan->out_chan, 0);
-	if (ipu_rot_mode_is_irt(ctx->rot_mode))
+	अगर (ipu_rot_mode_is_irt(ctx->rot_mode))
 		ipu_idmac_select_buffer(chan->rotation_out_chan, 0);
-	if (ctx->double_buffering) {
+	अगर (ctx->द्विगुन_buffering) अणु
 		ipu_idmac_select_buffer(chan->in_chan, 1);
 		ipu_idmac_select_buffer(chan->out_chan, 1);
-		if (ipu_rot_mode_is_irt(ctx->rot_mode))
+		अगर (ipu_rot_mode_is_irt(ctx->rot_mode))
 			ipu_idmac_select_buffer(chan->rotation_out_chan, 1);
-	}
+	पूर्ण
 
 	/* enable the channels! */
 	ipu_idmac_enable_channel(chan->in_chan);
 	ipu_idmac_enable_channel(chan->out_chan);
-	if (ipu_rot_mode_is_irt(ctx->rot_mode)) {
+	अगर (ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
 		ipu_idmac_enable_channel(chan->rotation_in_chan);
 		ipu_idmac_enable_channel(chan->rotation_out_chan);
-	}
+	पूर्ण
 
 	ipu_ic_task_enable(chan->ic);
 
 	ipu_cpmem_dump(chan->in_chan);
 	ipu_cpmem_dump(chan->out_chan);
-	if (ipu_rot_mode_is_irt(ctx->rot_mode)) {
+	अगर (ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
 		ipu_cpmem_dump(chan->rotation_in_chan);
 		ipu_cpmem_dump(chan->rotation_out_chan);
-	}
+	पूर्ण
 
 	ipu_dump(priv->ipu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* hold irqlock when calling */
-static int do_run(struct ipu_image_convert_run *run)
-{
-	struct ipu_image_convert_ctx *ctx = run->ctx;
-	struct ipu_image_convert_chan *chan = ctx->chan;
+अटल पूर्णांक करो_run(काष्ठा ipu_image_convert_run *run)
+अणु
+	काष्ठा ipu_image_convert_ctx *ctx = run->ctx;
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
 
-	lockdep_assert_held(&chan->irqlock);
+	lockdep_निश्चित_held(&chan->irqlock);
 
 	ctx->in.base.phys0 = run->in_phys;
 	ctx->out.base.phys0 = run->out_phys;
@@ -1508,57 +1509,57 @@ static int do_run(struct ipu_image_convert_run *run)
 	ctx->cur_buf_num = 0;
 	ctx->next_tile = 1;
 
-	/* remove run from pending_q and set as current */
+	/* हटाओ run from pending_q and set as current */
 	list_del(&run->list);
 	chan->current_run = run;
 
-	return convert_start(run, 0);
-}
+	वापस convert_start(run, 0);
+पूर्ण
 
 /* hold irqlock when calling */
-static void run_next(struct ipu_image_convert_chan *chan)
-{
-	struct ipu_image_convert_priv *priv = chan->priv;
-	struct ipu_image_convert_run *run, *tmp;
-	int ret;
+अटल व्योम run_next(काष्ठा ipu_image_convert_chan *chan)
+अणु
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	काष्ठा ipu_image_convert_run *run, *पंचांगp;
+	पूर्णांक ret;
 
-	lockdep_assert_held(&chan->irqlock);
+	lockdep_निश्चित_held(&chan->irqlock);
 
-	list_for_each_entry_safe(run, tmp, &chan->pending_q, list) {
-		/* skip contexts that are aborting */
-		if (run->ctx->aborting) {
+	list_क्रम_each_entry_safe(run, पंचांगp, &chan->pending_q, list) अणु
+		/* skip contexts that are पातing */
+		अगर (run->ctx->पातing) अणु
 			dev_dbg(priv->ipu->dev,
 				"%s: task %u: skipping aborting ctx %p run %p\n",
 				__func__, chan->ic_task, run->ctx, run);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		ret = do_run(run);
-		if (!ret)
-			break;
+		ret = करो_run(run);
+		अगर (!ret)
+			अवरोध;
 
 		/*
 		 * something went wrong with start, add the run
-		 * to done q and continue to the next run in the
+		 * to करोne q and जारी to the next run in the
 		 * pending q.
 		 */
 		run->status = ret;
-		list_add_tail(&run->list, &chan->done_q);
-		chan->current_run = NULL;
-	}
-}
+		list_add_tail(&run->list, &chan->करोne_q);
+		chan->current_run = शून्य;
+	पूर्ण
+पूर्ण
 
-static void empty_done_q(struct ipu_image_convert_chan *chan)
-{
-	struct ipu_image_convert_priv *priv = chan->priv;
-	struct ipu_image_convert_run *run;
-	unsigned long flags;
+अटल व्योम empty_करोne_q(काष्ठा ipu_image_convert_chan *chan)
+अणु
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	काष्ठा ipu_image_convert_run *run;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chan->irqlock, flags);
 
-	while (!list_empty(&chan->done_q)) {
-		run = list_entry(chan->done_q.next,
-				 struct ipu_image_convert_run,
+	जबतक (!list_empty(&chan->करोne_q)) अणु
+		run = list_entry(chan->करोne_q.next,
+				 काष्ठा ipu_image_convert_run,
 				 list);
 
 		list_del(&run->list);
@@ -1567,60 +1568,60 @@ static void empty_done_q(struct ipu_image_convert_chan *chan)
 			"%s: task %u: completing ctx %p run %p with %d\n",
 			__func__, chan->ic_task, run->ctx, run, run->status);
 
-		/* call the completion callback and free the run */
+		/* call the completion callback and मुक्त the run */
 		spin_unlock_irqrestore(&chan->irqlock, flags);
 		run->ctx->complete(run, run->ctx->complete_context);
 		spin_lock_irqsave(&chan->irqlock, flags);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&chan->irqlock, flags);
-}
+पूर्ण
 
 /*
- * the bottom half thread clears out the done_q, calling the
- * completion handler for each.
+ * the bottom half thपढ़ो clears out the करोne_q, calling the
+ * completion handler क्रम each.
  */
-static irqreturn_t do_bh(int irq, void *dev_id)
-{
-	struct ipu_image_convert_chan *chan = dev_id;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	struct ipu_image_convert_ctx *ctx;
-	unsigned long flags;
+अटल irqवापस_t करो_bh(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = dev_id;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	काष्ठा ipu_image_convert_ctx *ctx;
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(priv->ipu->dev, "%s: task %u: enter\n", __func__,
 		chan->ic_task);
 
-	empty_done_q(chan);
+	empty_करोne_q(chan);
 
 	spin_lock_irqsave(&chan->irqlock, flags);
 
 	/*
-	 * the done_q is cleared out, signal any contexts
-	 * that are aborting that abort can complete.
+	 * the करोne_q is cleared out, संकेत any contexts
+	 * that are पातing that पात can complete.
 	 */
-	list_for_each_entry(ctx, &chan->ctx_list, list) {
-		if (ctx->aborting) {
+	list_क्रम_each_entry(ctx, &chan->ctx_list, list) अणु
+		अगर (ctx->पातing) अणु
 			dev_dbg(priv->ipu->dev,
 				"%s: task %u: signaling abort for ctx %p\n",
 				__func__, chan->ic_task, ctx);
-			complete_all(&ctx->aborted);
-		}
-	}
+			complete_all(&ctx->पातed);
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&chan->irqlock, flags);
 
 	dev_dbg(priv->ipu->dev, "%s: task %u: exit\n", __func__,
 		chan->ic_task);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static bool ic_settings_changed(struct ipu_image_convert_ctx *ctx)
-{
-	unsigned int cur_tile = ctx->next_tile - 1;
-	unsigned int next_tile = ctx->next_tile;
+अटल bool ic_settings_changed(काष्ठा ipu_image_convert_ctx *ctx)
+अणु
+	अचिन्हित पूर्णांक cur_tile = ctx->next_tile - 1;
+	अचिन्हित पूर्णांक next_tile = ctx->next_tile;
 
-	if (ctx->resize_coeffs_h[cur_tile % ctx->in.num_cols] !=
+	अगर (ctx->resize_coeffs_h[cur_tile % ctx->in.num_cols] !=
 	    ctx->resize_coeffs_h[next_tile % ctx->in.num_cols] ||
 	    ctx->resize_coeffs_v[cur_tile / ctx->in.num_cols] !=
 	    ctx->resize_coeffs_v[next_tile / ctx->in.num_cols] ||
@@ -1628,58 +1629,58 @@ static bool ic_settings_changed(struct ipu_image_convert_ctx *ctx)
 	    ctx->in.tile[cur_tile].height != ctx->in.tile[next_tile].height ||
 	    ctx->out.tile[cur_tile].width != ctx->out.tile[next_tile].width ||
 	    ctx->out.tile[cur_tile].height != ctx->out.tile[next_tile].height)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* hold irqlock when calling */
-static irqreturn_t do_tile_complete(struct ipu_image_convert_run *run)
-{
-	struct ipu_image_convert_ctx *ctx = run->ctx;
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_tile *src_tile, *dst_tile;
-	struct ipu_image_convert_image *s_image = &ctx->in;
-	struct ipu_image_convert_image *d_image = &ctx->out;
-	struct ipuv3_channel *outch;
-	unsigned int dst_idx;
+अटल irqवापस_t करो_tile_complete(काष्ठा ipu_image_convert_run *run)
+अणु
+	काष्ठा ipu_image_convert_ctx *ctx = run->ctx;
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_tile *src_tile, *dst_tile;
+	काष्ठा ipu_image_convert_image *s_image = &ctx->in;
+	काष्ठा ipu_image_convert_image *d_image = &ctx->out;
+	काष्ठा ipuv3_channel *outch;
+	अचिन्हित पूर्णांक dst_idx;
 
-	lockdep_assert_held(&chan->irqlock);
+	lockdep_निश्चित_held(&chan->irqlock);
 
 	outch = ipu_rot_mode_is_irt(ctx->rot_mode) ?
 		chan->rotation_out_chan : chan->out_chan;
 
 	/*
-	 * It is difficult to stop the channel DMA before the channels
-	 * enter the paused state. Without double-buffering the channels
-	 * are always in a paused state when the EOF irq occurs, so it
-	 * is safe to stop the channels now. For double-buffering we
-	 * just ignore the abort until the operation completes, when it
-	 * is safe to shut down.
+	 * It is dअगरficult to stop the channel DMA beक्रमe the channels
+	 * enter the छोड़ोd state. Without द्विगुन-buffering the channels
+	 * are always in a छोड़ोd state when the खातापूर्ण irq occurs, so it
+	 * is safe to stop the channels now. For द्विगुन-buffering we
+	 * just ignore the पात until the operation completes, when it
+	 * is safe to shut करोwn.
 	 */
-	if (ctx->aborting && !ctx->double_buffering) {
+	अगर (ctx->पातing && !ctx->द्विगुन_buffering) अणु
 		convert_stop(run);
 		run->status = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (ctx->next_tile == ctx->num_tiles) {
+	अगर (ctx->next_tile == ctx->num_tiles) अणु
 		/*
 		 * the conversion is complete
 		 */
 		convert_stop(run);
 		run->status = 0;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/*
-	 * not done, place the next tile buffers.
+	 * not करोne, place the next tile buffers.
 	 */
-	if (!ctx->double_buffering) {
-		if (ic_settings_changed(ctx)) {
+	अगर (!ctx->द्विगुन_buffering) अणु
+		अगर (ic_settings_changed(ctx)) अणु
 			convert_stop(run);
 			convert_start(run, ctx->next_tile);
-		} else {
+		पूर्ण अन्यथा अणु
 			src_tile = &s_image->tile[ctx->next_tile];
 			dst_idx = ctx->out_tile_map[ctx->next_tile];
 			dst_tile = &d_image->tile[dst_idx];
@@ -1690,19 +1691,19 @@ static irqreturn_t do_tile_complete(struct ipu_image_convert_run *run)
 			ipu_cpmem_set_buffer(outch, 0,
 					     d_image->base.phys0 +
 					     dst_tile->offset);
-			if (s_image->fmt->planar)
+			अगर (s_image->fmt->planar)
 				ipu_cpmem_set_uv_offset(chan->in_chan,
 							src_tile->u_off,
 							src_tile->v_off);
-			if (d_image->fmt->planar)
+			अगर (d_image->fmt->planar)
 				ipu_cpmem_set_uv_offset(outch,
 							dst_tile->u_off,
 							dst_tile->v_off);
 
 			ipu_idmac_select_buffer(chan->in_chan, 0);
 			ipu_idmac_select_buffer(outch, 0);
-		}
-	} else if (ctx->next_tile < ctx->num_tiles - 1) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (ctx->next_tile < ctx->num_tiles - 1) अणु
 
 		src_tile = &s_image->tile[ctx->next_tile + 1];
 		dst_idx = ctx->out_tile_map[ctx->next_tile + 1];
@@ -1717,289 +1718,289 @@ static irqreturn_t do_tile_complete(struct ipu_image_convert_run *run)
 		ipu_idmac_select_buffer(outch, ctx->cur_buf_num);
 
 		ctx->cur_buf_num ^= 1;
-	}
+	पूर्ण
 
-	ctx->eof_mask = 0; /* clear EOF irq mask for next tile */
+	ctx->eof_mask = 0; /* clear खातापूर्ण irq mask क्रम next tile */
 	ctx->next_tile++;
-	return IRQ_HANDLED;
-done:
-	list_add_tail(&run->list, &chan->done_q);
-	chan->current_run = NULL;
+	वापस IRQ_HANDLED;
+करोne:
+	list_add_tail(&run->list, &chan->करोne_q);
+	chan->current_run = शून्य;
 	run_next(chan);
-	return IRQ_WAKE_THREAD;
-}
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static irqreturn_t eof_irq(int irq, void *data)
-{
-	struct ipu_image_convert_chan *chan = data;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	struct ipu_image_convert_ctx *ctx;
-	struct ipu_image_convert_run *run;
-	irqreturn_t ret = IRQ_HANDLED;
+अटल irqवापस_t eof_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = data;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	काष्ठा ipu_image_convert_ctx *ctx;
+	काष्ठा ipu_image_convert_run *run;
+	irqवापस_t ret = IRQ_HANDLED;
 	bool tile_complete = false;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chan->irqlock, flags);
 
 	/* get current run and its context */
 	run = chan->current_run;
-	if (!run) {
+	अगर (!run) अणु
 		ret = IRQ_NONE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ctx = run->ctx;
 
-	if (irq == chan->in_eof_irq) {
-		ctx->eof_mask |= EOF_IRQ_IN;
-	} else if (irq == chan->out_eof_irq) {
-		ctx->eof_mask |= EOF_IRQ_OUT;
-	} else if (irq == chan->rot_in_eof_irq ||
-		   irq == chan->rot_out_eof_irq) {
-		if (!ipu_rot_mode_is_irt(ctx->rot_mode)) {
+	अगर (irq == chan->in_eof_irq) अणु
+		ctx->eof_mask |= खातापूर्ण_IRQ_IN;
+	पूर्ण अन्यथा अगर (irq == chan->out_eof_irq) अणु
+		ctx->eof_mask |= खातापूर्ण_IRQ_OUT;
+	पूर्ण अन्यथा अगर (irq == chan->rot_in_eof_irq ||
+		   irq == chan->rot_out_eof_irq) अणु
+		अगर (!ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
 			/* this was NOT a rotation op, shouldn't happen */
 			dev_err(priv->ipu->dev,
 				"Unexpected rotation interrupt\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ctx->eof_mask |= (irq == chan->rot_in_eof_irq) ?
-			EOF_IRQ_ROT_IN : EOF_IRQ_ROT_OUT;
-	} else {
+			खातापूर्ण_IRQ_ROT_IN : खातापूर्ण_IRQ_ROT_OUT;
+	पूर्ण अन्यथा अणु
 		dev_err(priv->ipu->dev, "Received unknown irq %d\n", irq);
 		ret = IRQ_NONE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ipu_rot_mode_is_irt(ctx->rot_mode))
-		tile_complete =	(ctx->eof_mask == EOF_IRQ_ROT_COMPLETE);
-	else
-		tile_complete = (ctx->eof_mask == EOF_IRQ_COMPLETE);
+	अगर (ipu_rot_mode_is_irt(ctx->rot_mode))
+		tile_complete =	(ctx->eof_mask == खातापूर्ण_IRQ_ROT_COMPLETE);
+	अन्यथा
+		tile_complete = (ctx->eof_mask == खातापूर्ण_IRQ_COMPLETE);
 
-	if (tile_complete)
-		ret = do_tile_complete(run);
+	अगर (tile_complete)
+		ret = करो_tile_complete(run);
 out:
 	spin_unlock_irqrestore(&chan->irqlock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * try to force the completion of runs for this ctx. Called when
- * abort wait times out in ipu_image_convert_abort().
+ * try to क्रमce the completion of runs क्रम this ctx. Called when
+ * पात रुको बार out in ipu_image_convert_पात().
  */
-static void force_abort(struct ipu_image_convert_ctx *ctx)
-{
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_run *run;
-	unsigned long flags;
+अटल व्योम क्रमce_पात(काष्ठा ipu_image_convert_ctx *ctx)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_run *run;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chan->irqlock, flags);
 
 	run = chan->current_run;
-	if (run && run->ctx == ctx) {
+	अगर (run && run->ctx == ctx) अणु
 		convert_stop(run);
 		run->status = -EIO;
-		list_add_tail(&run->list, &chan->done_q);
-		chan->current_run = NULL;
+		list_add_tail(&run->list, &chan->करोne_q);
+		chan->current_run = शून्य;
 		run_next(chan);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&chan->irqlock, flags);
 
-	empty_done_q(chan);
-}
+	empty_करोne_q(chan);
+पूर्ण
 
-static void release_ipu_resources(struct ipu_image_convert_chan *chan)
-{
-	if (chan->in_eof_irq >= 0)
-		free_irq(chan->in_eof_irq, chan);
-	if (chan->rot_in_eof_irq >= 0)
-		free_irq(chan->rot_in_eof_irq, chan);
-	if (chan->out_eof_irq >= 0)
-		free_irq(chan->out_eof_irq, chan);
-	if (chan->rot_out_eof_irq >= 0)
-		free_irq(chan->rot_out_eof_irq, chan);
+अटल व्योम release_ipu_resources(काष्ठा ipu_image_convert_chan *chan)
+अणु
+	अगर (chan->in_eof_irq >= 0)
+		मुक्त_irq(chan->in_eof_irq, chan);
+	अगर (chan->rot_in_eof_irq >= 0)
+		मुक्त_irq(chan->rot_in_eof_irq, chan);
+	अगर (chan->out_eof_irq >= 0)
+		मुक्त_irq(chan->out_eof_irq, chan);
+	अगर (chan->rot_out_eof_irq >= 0)
+		मुक्त_irq(chan->rot_out_eof_irq, chan);
 
-	if (!IS_ERR_OR_NULL(chan->in_chan))
+	अगर (!IS_ERR_OR_शून्य(chan->in_chan))
 		ipu_idmac_put(chan->in_chan);
-	if (!IS_ERR_OR_NULL(chan->out_chan))
+	अगर (!IS_ERR_OR_शून्य(chan->out_chan))
 		ipu_idmac_put(chan->out_chan);
-	if (!IS_ERR_OR_NULL(chan->rotation_in_chan))
+	अगर (!IS_ERR_OR_शून्य(chan->rotation_in_chan))
 		ipu_idmac_put(chan->rotation_in_chan);
-	if (!IS_ERR_OR_NULL(chan->rotation_out_chan))
+	अगर (!IS_ERR_OR_शून्य(chan->rotation_out_chan))
 		ipu_idmac_put(chan->rotation_out_chan);
-	if (!IS_ERR_OR_NULL(chan->ic))
+	अगर (!IS_ERR_OR_शून्य(chan->ic))
 		ipu_ic_put(chan->ic);
 
 	chan->in_chan = chan->out_chan = chan->rotation_in_chan =
-		chan->rotation_out_chan = NULL;
+		chan->rotation_out_chan = शून्य;
 	chan->in_eof_irq = -1;
 	chan->rot_in_eof_irq = -1;
 	chan->out_eof_irq = -1;
 	chan->rot_out_eof_irq = -1;
-}
+पूर्ण
 
-static int get_eof_irq(struct ipu_image_convert_chan *chan,
-		       struct ipuv3_channel *channel)
-{
-	struct ipu_image_convert_priv *priv = chan->priv;
-	int ret, irq;
+अटल पूर्णांक get_eof_irq(काष्ठा ipu_image_convert_chan *chan,
+		       काष्ठा ipuv3_channel *channel)
+अणु
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	पूर्णांक ret, irq;
 
-	irq = ipu_idmac_channel_irq(priv->ipu, channel, IPU_IRQ_EOF);
+	irq = ipu_idmac_channel_irq(priv->ipu, channel, IPU_IRQ_खातापूर्ण);
 
-	ret = request_threaded_irq(irq, eof_irq, do_bh, 0, "ipu-ic", chan);
-	if (ret < 0) {
+	ret = request_thपढ़ोed_irq(irq, eof_irq, करो_bh, 0, "ipu-ic", chan);
+	अगर (ret < 0) अणु
 		dev_err(priv->ipu->dev, "could not acquire irq %d\n", irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static int get_ipu_resources(struct ipu_image_convert_chan *chan)
-{
-	const struct ipu_image_convert_dma_chan *dma = chan->dma_ch;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	int ret;
+अटल पूर्णांक get_ipu_resources(काष्ठा ipu_image_convert_chan *chan)
+अणु
+	स्थिर काष्ठा ipu_image_convert_dma_chan *dma = chan->dma_ch;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	पूर्णांक ret;
 
 	/* get IC */
 	chan->ic = ipu_ic_get(priv->ipu, chan->ic_task);
-	if (IS_ERR(chan->ic)) {
+	अगर (IS_ERR(chan->ic)) अणु
 		dev_err(priv->ipu->dev, "could not acquire IC\n");
 		ret = PTR_ERR(chan->ic);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* get IDMAC channels */
 	chan->in_chan = ipu_idmac_get(priv->ipu, dma->in);
 	chan->out_chan = ipu_idmac_get(priv->ipu, dma->out);
-	if (IS_ERR(chan->in_chan) || IS_ERR(chan->out_chan)) {
+	अगर (IS_ERR(chan->in_chan) || IS_ERR(chan->out_chan)) अणु
 		dev_err(priv->ipu->dev, "could not acquire idmac channels\n");
 		ret = -EBUSY;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	chan->rotation_in_chan = ipu_idmac_get(priv->ipu, dma->rot_in);
 	chan->rotation_out_chan = ipu_idmac_get(priv->ipu, dma->rot_out);
-	if (IS_ERR(chan->rotation_in_chan) || IS_ERR(chan->rotation_out_chan)) {
+	अगर (IS_ERR(chan->rotation_in_chan) || IS_ERR(chan->rotation_out_chan)) अणु
 		dev_err(priv->ipu->dev,
 			"could not acquire idmac rotation channels\n");
 		ret = -EBUSY;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* acquire the EOF interrupts */
+	/* acquire the खातापूर्ण पूर्णांकerrupts */
 	ret = get_eof_irq(chan, chan->in_chan);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		chan->in_eof_irq = -1;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	chan->in_eof_irq = ret;
 
 	ret = get_eof_irq(chan, chan->rotation_in_chan);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		chan->rot_in_eof_irq = -1;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	chan->rot_in_eof_irq = ret;
 
 	ret = get_eof_irq(chan, chan->out_chan);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		chan->out_eof_irq = -1;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	chan->out_eof_irq = ret;
 
 	ret = get_eof_irq(chan, chan->rotation_out_chan);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		chan->rot_out_eof_irq = -1;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	chan->rot_out_eof_irq = ret;
 
-	return 0;
+	वापस 0;
 err:
 	release_ipu_resources(chan);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fill_image(struct ipu_image_convert_ctx *ctx,
-		      struct ipu_image_convert_image *ic_image,
-		      struct ipu_image *image,
-		      enum ipu_image_convert_type type)
-{
-	struct ipu_image_convert_priv *priv = ctx->chan->priv;
+अटल पूर्णांक fill_image(काष्ठा ipu_image_convert_ctx *ctx,
+		      काष्ठा ipu_image_convert_image *ic_image,
+		      काष्ठा ipu_image *image,
+		      क्रमागत ipu_image_convert_type type)
+अणु
+	काष्ठा ipu_image_convert_priv *priv = ctx->chan->priv;
 
 	ic_image->base = *image;
 	ic_image->type = type;
 
-	ic_image->fmt = get_format(image->pix.pixelformat);
-	if (!ic_image->fmt) {
+	ic_image->fmt = get_क्रमmat(image->pix.pixelक्रमmat);
+	अगर (!ic_image->fmt) अणु
 		dev_err(priv->ipu->dev, "pixelformat not supported for %s\n",
 			type == IMAGE_CONVERT_OUT ? "Output" : "Input");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ic_image->fmt->planar)
+	अगर (ic_image->fmt->planar)
 		ic_image->stride = ic_image->base.pix.width;
-	else
+	अन्यथा
 		ic_image->stride  = ic_image->base.pix.bytesperline;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* borrowed from drivers/media/v4l2-core/v4l2-common.c */
-static unsigned int clamp_align(unsigned int x, unsigned int min,
-				unsigned int max, unsigned int align)
-{
+अटल अचिन्हित पूर्णांक clamp_align(अचिन्हित पूर्णांक x, अचिन्हित पूर्णांक min,
+				अचिन्हित पूर्णांक max, अचिन्हित पूर्णांक align)
+अणु
 	/* Bits that must be zero to be aligned */
-	unsigned int mask = ~((1 << align) - 1);
+	अचिन्हित पूर्णांक mask = ~((1 << align) - 1);
 
 	/* Clamp to aligned min and max */
 	x = clamp(x, (min + ~mask) & mask, max & mask);
 
 	/* Round to nearest aligned value */
-	if (align)
+	अगर (align)
 		x = (x + (1 << (align - 1))) & mask;
 
-	return x;
-}
+	वापस x;
+पूर्ण
 
 /* Adjusts input/output images to IPU restrictions */
-void ipu_image_convert_adjust(struct ipu_image *in, struct ipu_image *out,
-			      enum ipu_rotate_mode rot_mode)
-{
-	const struct ipu_image_pixfmt *infmt, *outfmt;
+व्योम ipu_image_convert_adjust(काष्ठा ipu_image *in, काष्ठा ipu_image *out,
+			      क्रमागत ipu_rotate_mode rot_mode)
+अणु
+	स्थिर काष्ठा ipu_image_pixfmt *infmt, *outfmt;
 	u32 w_align_out, h_align_out;
 	u32 w_align_in, h_align_in;
 
-	infmt = get_format(in->pix.pixelformat);
-	outfmt = get_format(out->pix.pixelformat);
+	infmt = get_क्रमmat(in->pix.pixelक्रमmat);
+	outfmt = get_क्रमmat(out->pix.pixelक्रमmat);
 
-	/* set some default pixel formats if needed */
-	if (!infmt) {
-		in->pix.pixelformat = V4L2_PIX_FMT_RGB24;
-		infmt = get_format(V4L2_PIX_FMT_RGB24);
-	}
-	if (!outfmt) {
-		out->pix.pixelformat = V4L2_PIX_FMT_RGB24;
-		outfmt = get_format(V4L2_PIX_FMT_RGB24);
-	}
+	/* set some शेष pixel क्रमmats अगर needed */
+	अगर (!infmt) अणु
+		in->pix.pixelक्रमmat = V4L2_PIX_FMT_RGB24;
+		infmt = get_क्रमmat(V4L2_PIX_FMT_RGB24);
+	पूर्ण
+	अगर (!outfmt) अणु
+		out->pix.pixelक्रमmat = V4L2_PIX_FMT_RGB24;
+		outfmt = get_क्रमmat(V4L2_PIX_FMT_RGB24);
+	पूर्ण
 
-	/* image converter does not handle fields */
+	/* image converter करोes not handle fields */
 	in->pix.field = out->pix.field = V4L2_FIELD_NONE;
 
-	/* resizer cannot downsize more than 4:1 */
-	if (ipu_rot_mode_is_irt(rot_mode)) {
+	/* resizer cannot करोwnsize more than 4:1 */
+	अगर (ipu_rot_mode_is_irt(rot_mode)) अणु
 		out->pix.height = max_t(__u32, out->pix.height,
 					in->pix.width / 4);
 		out->pix.width = max_t(__u32, out->pix.width,
 				       in->pix.height / 4);
-	} else {
+	पूर्ण अन्यथा अणु
 		out->pix.width = max_t(__u32, out->pix.width,
 				       in->pix.width / 4);
 		out->pix.height = max_t(__u32, out->pix.height,
 					in->pix.height / 4);
-	}
+	पूर्ण
 
 	/* align input width/height */
 	w_align_in = ilog2(tile_width_align(IMAGE_CONVERT_IN, infmt,
@@ -2037,200 +2038,200 @@ void ipu_image_convert_adjust(struct ipu_image *in, struct ipu_image *out,
 	out->pix.sizeimage = outfmt->planar ?
 		(out->pix.height * out->pix.bytesperline * outfmt->bpp) >> 3 :
 		out->pix.height * out->pix.bytesperline;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_image_convert_adjust);
 
 /*
- * this is used by ipu_image_convert_prepare() to verify set input and
- * output images are valid before starting the conversion. Clients can
- * also call it before calling ipu_image_convert_prepare().
+ * this is used by ipu_image_convert_prepare() to verअगरy set input and
+ * output images are valid beक्रमe starting the conversion. Clients can
+ * also call it beक्रमe calling ipu_image_convert_prepare().
  */
-int ipu_image_convert_verify(struct ipu_image *in, struct ipu_image *out,
-			     enum ipu_rotate_mode rot_mode)
-{
-	struct ipu_image testin, testout;
+पूर्णांक ipu_image_convert_verअगरy(काष्ठा ipu_image *in, काष्ठा ipu_image *out,
+			     क्रमागत ipu_rotate_mode rot_mode)
+अणु
+	काष्ठा ipu_image testin, testout;
 
 	testin = *in;
 	testout = *out;
 
 	ipu_image_convert_adjust(&testin, &testout, rot_mode);
 
-	if (testin.pix.width != in->pix.width ||
+	अगर (testin.pix.width != in->pix.width ||
 	    testin.pix.height != in->pix.height ||
 	    testout.pix.width != out->pix.width ||
 	    testout.pix.height != out->pix.height)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ipu_image_convert_verify);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ipu_image_convert_verअगरy);
 
 /*
- * Call ipu_image_convert_prepare() to prepare for the conversion of
+ * Call ipu_image_convert_prepare() to prepare क्रम the conversion of
  * given images and rotation mode. Returns a new conversion context.
  */
-struct ipu_image_convert_ctx *
-ipu_image_convert_prepare(struct ipu_soc *ipu, enum ipu_ic_task ic_task,
-			  struct ipu_image *in, struct ipu_image *out,
-			  enum ipu_rotate_mode rot_mode,
+काष्ठा ipu_image_convert_ctx *
+ipu_image_convert_prepare(काष्ठा ipu_soc *ipu, क्रमागत ipu_ic_task ic_task,
+			  काष्ठा ipu_image *in, काष्ठा ipu_image *out,
+			  क्रमागत ipu_rotate_mode rot_mode,
 			  ipu_image_convert_cb_t complete,
-			  void *complete_context)
-{
-	struct ipu_image_convert_priv *priv = ipu->image_convert_priv;
-	struct ipu_image_convert_image *s_image, *d_image;
-	struct ipu_image_convert_chan *chan;
-	struct ipu_image_convert_ctx *ctx;
-	unsigned long flags;
-	unsigned int i;
+			  व्योम *complete_context)
+अणु
+	काष्ठा ipu_image_convert_priv *priv = ipu->image_convert_priv;
+	काष्ठा ipu_image_convert_image *s_image, *d_image;
+	काष्ठा ipu_image_convert_chan *chan;
+	काष्ठा ipu_image_convert_ctx *ctx;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक i;
 	bool get_res;
-	int ret;
+	पूर्णांक ret;
 
-	if (!in || !out || !complete ||
+	अगर (!in || !out || !complete ||
 	    (ic_task != IC_TASK_VIEWFINDER &&
 	     ic_task != IC_TASK_POST_PROCESSOR))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	/* verify the in/out images before continuing */
-	ret = ipu_image_convert_verify(in, out, rot_mode);
-	if (ret) {
+	/* verअगरy the in/out images beक्रमe continuing */
+	ret = ipu_image_convert_verअगरy(in, out, rot_mode);
+	अगर (ret) अणु
 		dev_err(priv->ipu->dev, "%s: in/out formats invalid\n",
 			__func__);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	chan = &priv->chan[ic_task];
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return ERR_PTR(-ENOMEM);
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस ERR_PTR(-ENOMEM);
 
 	dev_dbg(priv->ipu->dev, "%s: task %u: ctx %p\n", __func__,
 		chan->ic_task, ctx);
 
 	ctx->chan = chan;
-	init_completion(&ctx->aborted);
+	init_completion(&ctx->पातed);
 
 	ctx->rot_mode = rot_mode;
 
 	/* Sets ctx->in.num_rows/cols as well */
 	ret = calc_image_resize_coefficients(ctx, in, out);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	s_image = &ctx->in;
 	d_image = &ctx->out;
 
 	/* set tiling and rotation */
-	if (ipu_rot_mode_is_irt(rot_mode)) {
+	अगर (ipu_rot_mode_is_irt(rot_mode)) अणु
 		d_image->num_rows = s_image->num_cols;
 		d_image->num_cols = s_image->num_rows;
-	} else {
+	पूर्ण अन्यथा अणु
 		d_image->num_rows = s_image->num_rows;
 		d_image->num_cols = s_image->num_cols;
-	}
+	पूर्ण
 
 	ctx->num_tiles = d_image->num_cols * d_image->num_rows;
 
 	ret = fill_image(ctx, s_image, in, IMAGE_CONVERT_IN);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 	ret = fill_image(ctx, d_image, out, IMAGE_CONVERT_OUT);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	calc_out_tile_map(ctx);
 
 	find_seams(ctx, s_image, d_image);
 
 	ret = calc_tile_dimensions(ctx, s_image);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	ret = calc_tile_offsets(ctx, s_image);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	calc_tile_dimensions(ctx, d_image);
 	ret = calc_tile_offsets(ctx, d_image);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	calc_tile_resize_coefficients(ctx);
 
 	ret = ipu_ic_calc_csc(&ctx->csc,
 			s_image->base.pix.ycbcr_enc,
 			s_image->base.pix.quantization,
-			ipu_pixelformat_to_colorspace(s_image->fmt->fourcc),
+			ipu_pixelक्रमmat_to_colorspace(s_image->fmt->fourcc),
 			d_image->base.pix.ycbcr_enc,
 			d_image->base.pix.quantization,
-			ipu_pixelformat_to_colorspace(d_image->fmt->fourcc));
-	if (ret)
-		goto out_free;
+			ipu_pixelक्रमmat_to_colorspace(d_image->fmt->fourcc));
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	dump_format(ctx, s_image);
-	dump_format(ctx, d_image);
+	dump_क्रमmat(ctx, s_image);
+	dump_क्रमmat(ctx, d_image);
 
 	ctx->complete = complete;
 	ctx->complete_context = complete_context;
 
 	/*
-	 * Can we use double-buffering for this operation? If there is
+	 * Can we use द्विगुन-buffering क्रम this operation? If there is
 	 * only one tile (the whole image can be converted in a single
-	 * operation) there's no point in using double-buffering. Also,
+	 * operation) there's no poपूर्णांक in using द्विगुन-buffering. Also,
 	 * the IPU's IDMAC channels allow only a single U and V plane
 	 * offset shared between both buffers, but these offsets change
-	 * for every tile, and therefore would have to be updated for
-	 * each buffer which is not possible. So double-buffering is
+	 * क्रम every tile, and thereक्रमe would have to be updated क्रम
+	 * each buffer which is not possible. So द्विगुन-buffering is
 	 * impossible when either the source or destination images are
-	 * a planar format (YUV420, YUV422P, etc.). Further, differently
-	 * sized tiles or different resizing coefficients per tile
-	 * prevent double-buffering as well.
+	 * a planar क्रमmat (YUV420, YUV422P, etc.). Further, dअगरferently
+	 * sized tiles or dअगरferent resizing coefficients per tile
+	 * prevent द्विगुन-buffering as well.
 	 */
-	ctx->double_buffering = (ctx->num_tiles > 1 &&
+	ctx->द्विगुन_buffering = (ctx->num_tiles > 1 &&
 				 !s_image->fmt->planar &&
 				 !d_image->fmt->planar);
-	for (i = 1; i < ctx->num_tiles; i++) {
-		if (ctx->in.tile[i].width != ctx->in.tile[0].width ||
+	क्रम (i = 1; i < ctx->num_tiles; i++) अणु
+		अगर (ctx->in.tile[i].width != ctx->in.tile[0].width ||
 		    ctx->in.tile[i].height != ctx->in.tile[0].height ||
 		    ctx->out.tile[i].width != ctx->out.tile[0].width ||
-		    ctx->out.tile[i].height != ctx->out.tile[0].height) {
-			ctx->double_buffering = false;
-			break;
-		}
-	}
-	for (i = 1; i < ctx->in.num_cols; i++) {
-		if (ctx->resize_coeffs_h[i] != ctx->resize_coeffs_h[0]) {
-			ctx->double_buffering = false;
-			break;
-		}
-	}
-	for (i = 1; i < ctx->in.num_rows; i++) {
-		if (ctx->resize_coeffs_v[i] != ctx->resize_coeffs_v[0]) {
-			ctx->double_buffering = false;
-			break;
-		}
-	}
+		    ctx->out.tile[i].height != ctx->out.tile[0].height) अणु
+			ctx->द्विगुन_buffering = false;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	क्रम (i = 1; i < ctx->in.num_cols; i++) अणु
+		अगर (ctx->resize_coeffs_h[i] != ctx->resize_coeffs_h[0]) अणु
+			ctx->द्विगुन_buffering = false;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	क्रम (i = 1; i < ctx->in.num_rows; i++) अणु
+		अगर (ctx->resize_coeffs_v[i] != ctx->resize_coeffs_v[0]) अणु
+			ctx->द्विगुन_buffering = false;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ipu_rot_mode_is_irt(ctx->rot_mode)) {
-		unsigned long intermediate_size = d_image->tile[0].size;
+	अगर (ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
+		अचिन्हित दीर्घ पूर्णांकermediate_size = d_image->tile[0].size;
 
-		for (i = 1; i < ctx->num_tiles; i++) {
-			if (d_image->tile[i].size > intermediate_size)
-				intermediate_size = d_image->tile[i].size;
-		}
+		क्रम (i = 1; i < ctx->num_tiles; i++) अणु
+			अगर (d_image->tile[i].size > पूर्णांकermediate_size)
+				पूर्णांकermediate_size = d_image->tile[i].size;
+		पूर्ण
 
-		ret = alloc_dma_buf(priv, &ctx->rot_intermediate[0],
-				    intermediate_size);
-		if (ret)
-			goto out_free;
-		if (ctx->double_buffering) {
+		ret = alloc_dma_buf(priv, &ctx->rot_पूर्णांकermediate[0],
+				    पूर्णांकermediate_size);
+		अगर (ret)
+			जाओ out_मुक्त;
+		अगर (ctx->द्विगुन_buffering) अणु
 			ret = alloc_dma_buf(priv,
-					    &ctx->rot_intermediate[1],
-					    intermediate_size);
-			if (ret)
-				goto out_free_dmabuf0;
-		}
-	}
+					    &ctx->rot_पूर्णांकermediate[1],
+					    पूर्णांकermediate_size);
+			अगर (ret)
+				जाओ out_मुक्त_dmabuf0;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&chan->irqlock, flags);
 
@@ -2240,25 +2241,25 @@ ipu_image_convert_prepare(struct ipu_soc *ipu, enum ipu_ic_task ic_task,
 
 	spin_unlock_irqrestore(&chan->irqlock, flags);
 
-	if (get_res) {
+	अगर (get_res) अणु
 		ret = get_ipu_resources(chan);
-		if (ret)
-			goto out_free_dmabuf1;
-	}
+		अगर (ret)
+			जाओ out_मुक्त_dmabuf1;
+	पूर्ण
 
-	return ctx;
+	वापस ctx;
 
-out_free_dmabuf1:
-	free_dma_buf(priv, &ctx->rot_intermediate[1]);
+out_मुक्त_dmabuf1:
+	मुक्त_dma_buf(priv, &ctx->rot_पूर्णांकermediate[1]);
 	spin_lock_irqsave(&chan->irqlock, flags);
 	list_del(&ctx->list);
 	spin_unlock_irqrestore(&chan->irqlock, flags);
-out_free_dmabuf0:
-	free_dma_buf(priv, &ctx->rot_intermediate[0]);
-out_free:
-	kfree(ctx);
-	return ERR_PTR(ret);
-}
+out_मुक्त_dmabuf0:
+	मुक्त_dma_buf(priv, &ctx->rot_पूर्णांकermediate[0]);
+out_मुक्त:
+	kमुक्त(ctx);
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_image_convert_prepare);
 
 /*
@@ -2266,16 +2267,16 @@ EXPORT_SYMBOL_GPL(ipu_image_convert_prepare);
  * and output image buffers are needed. The conversion context must have
  * been created previously with ipu_image_convert_prepare().
  */
-int ipu_image_convert_queue(struct ipu_image_convert_run *run)
-{
-	struct ipu_image_convert_chan *chan;
-	struct ipu_image_convert_priv *priv;
-	struct ipu_image_convert_ctx *ctx;
-	unsigned long flags;
-	int ret = 0;
+पूर्णांक ipu_image_convert_queue(काष्ठा ipu_image_convert_run *run)
+अणु
+	काष्ठा ipu_image_convert_chan *chan;
+	काष्ठा ipu_image_convert_priv *priv;
+	काष्ठा ipu_image_convert_ctx *ctx;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	if (!run || !run->ctx || !run->in_phys || !run->out_phys)
-		return -EINVAL;
+	अगर (!run || !run->ctx || !run->in_phys || !run->out_phys)
+		वापस -EINVAL;
 
 	ctx = run->ctx;
 	chan = ctx->chan;
@@ -2288,95 +2289,95 @@ int ipu_image_convert_queue(struct ipu_image_convert_run *run)
 
 	spin_lock_irqsave(&chan->irqlock, flags);
 
-	if (ctx->aborting) {
+	अगर (ctx->पातing) अणु
 		ret = -EIO;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	list_add_tail(&run->list, &chan->pending_q);
 
-	if (!chan->current_run) {
-		ret = do_run(run);
-		if (ret)
-			chan->current_run = NULL;
-	}
+	अगर (!chan->current_run) अणु
+		ret = करो_run(run);
+		अगर (ret)
+			chan->current_run = शून्य;
+	पूर्ण
 unlock:
 	spin_unlock_irqrestore(&chan->irqlock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_image_convert_queue);
 
-/* Abort any active or pending conversions for this context */
-static void __ipu_image_convert_abort(struct ipu_image_convert_ctx *ctx)
-{
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	struct ipu_image_convert_run *run, *active_run, *tmp;
-	unsigned long flags;
-	int run_count, ret;
+/* Abort any active or pending conversions क्रम this context */
+अटल व्योम __ipu_image_convert_पात(काष्ठा ipu_image_convert_ctx *ctx)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	काष्ठा ipu_image_convert_run *run, *active_run, *पंचांगp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक run_count, ret;
 
 	spin_lock_irqsave(&chan->irqlock, flags);
 
-	/* move all remaining pending runs in this context to done_q */
-	list_for_each_entry_safe(run, tmp, &chan->pending_q, list) {
-		if (run->ctx != ctx)
-			continue;
+	/* move all reमुख्यing pending runs in this context to करोne_q */
+	list_क्रम_each_entry_safe(run, पंचांगp, &chan->pending_q, list) अणु
+		अगर (run->ctx != ctx)
+			जारी;
 		run->status = -EIO;
-		list_move_tail(&run->list, &chan->done_q);
-	}
+		list_move_tail(&run->list, &chan->करोne_q);
+	पूर्ण
 
-	run_count = get_run_count(ctx, &chan->done_q);
+	run_count = get_run_count(ctx, &chan->करोne_q);
 	active_run = (chan->current_run && chan->current_run->ctx == ctx) ?
-		chan->current_run : NULL;
+		chan->current_run : शून्य;
 
-	if (active_run)
-		reinit_completion(&ctx->aborted);
+	अगर (active_run)
+		reinit_completion(&ctx->पातed);
 
-	ctx->aborting = true;
+	ctx->पातing = true;
 
 	spin_unlock_irqrestore(&chan->irqlock, flags);
 
-	if (!run_count && !active_run) {
+	अगर (!run_count && !active_run) अणु
 		dev_dbg(priv->ipu->dev,
 			"%s: task %u: no abort needed for ctx %p\n",
 			__func__, chan->ic_task, ctx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!active_run) {
-		empty_done_q(chan);
-		return;
-	}
+	अगर (!active_run) अणु
+		empty_करोne_q(chan);
+		वापस;
+	पूर्ण
 
 	dev_dbg(priv->ipu->dev,
 		"%s: task %u: wait for completion: %d runs\n",
 		__func__, chan->ic_task, run_count);
 
-	ret = wait_for_completion_timeout(&ctx->aborted,
-					  msecs_to_jiffies(10000));
-	if (ret == 0) {
+	ret = रुको_क्रम_completion_समयout(&ctx->पातed,
+					  msecs_to_jअगरfies(10000));
+	अगर (ret == 0) अणु
 		dev_warn(priv->ipu->dev, "%s: timeout\n", __func__);
-		force_abort(ctx);
-	}
-}
+		क्रमce_पात(ctx);
+	पूर्ण
+पूर्ण
 
-void ipu_image_convert_abort(struct ipu_image_convert_ctx *ctx)
-{
-	__ipu_image_convert_abort(ctx);
-	ctx->aborting = false;
-}
-EXPORT_SYMBOL_GPL(ipu_image_convert_abort);
+व्योम ipu_image_convert_पात(काष्ठा ipu_image_convert_ctx *ctx)
+अणु
+	__ipu_image_convert_पात(ctx);
+	ctx->पातing = false;
+पूर्ण
+EXPORT_SYMBOL_GPL(ipu_image_convert_पात);
 
 /* Unprepare image conversion context */
-void ipu_image_convert_unprepare(struct ipu_image_convert_ctx *ctx)
-{
-	struct ipu_image_convert_chan *chan = ctx->chan;
-	struct ipu_image_convert_priv *priv = chan->priv;
-	unsigned long flags;
+व्योम ipu_image_convert_unprepare(काष्ठा ipu_image_convert_ctx *ctx)
+अणु
+	काष्ठा ipu_image_convert_chan *chan = ctx->chan;
+	काष्ठा ipu_image_convert_priv *priv = chan->priv;
+	अचिन्हित दीर्घ flags;
 	bool put_res;
 
 	/* make sure no runs are hanging around */
-	__ipu_image_convert_abort(ctx);
+	__ipu_image_convert_पात(ctx);
 
 	dev_dbg(priv->ipu->dev, "%s: task %u: removing ctx %p\n", __func__,
 		chan->ic_task, ctx);
@@ -2389,106 +2390,106 @@ void ipu_image_convert_unprepare(struct ipu_image_convert_ctx *ctx)
 
 	spin_unlock_irqrestore(&chan->irqlock, flags);
 
-	if (put_res)
+	अगर (put_res)
 		release_ipu_resources(chan);
 
-	free_dma_buf(priv, &ctx->rot_intermediate[1]);
-	free_dma_buf(priv, &ctx->rot_intermediate[0]);
+	मुक्त_dma_buf(priv, &ctx->rot_पूर्णांकermediate[1]);
+	मुक्त_dma_buf(priv, &ctx->rot_पूर्णांकermediate[0]);
 
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_image_convert_unprepare);
 
 /*
- * "Canned" asynchronous single image conversion. Allocates and returns
- * a new conversion run.  On successful return the caller must free the
+ * "Canned" asynchronous single image conversion. Allocates and वापसs
+ * a new conversion run.  On successful वापस the caller must मुक्त the
  * run and call ipu_image_convert_unprepare() after conversion completes.
  */
-struct ipu_image_convert_run *
-ipu_image_convert(struct ipu_soc *ipu, enum ipu_ic_task ic_task,
-		  struct ipu_image *in, struct ipu_image *out,
-		  enum ipu_rotate_mode rot_mode,
+काष्ठा ipu_image_convert_run *
+ipu_image_convert(काष्ठा ipu_soc *ipu, क्रमागत ipu_ic_task ic_task,
+		  काष्ठा ipu_image *in, काष्ठा ipu_image *out,
+		  क्रमागत ipu_rotate_mode rot_mode,
 		  ipu_image_convert_cb_t complete,
-		  void *complete_context)
-{
-	struct ipu_image_convert_ctx *ctx;
-	struct ipu_image_convert_run *run;
-	int ret;
+		  व्योम *complete_context)
+अणु
+	काष्ठा ipu_image_convert_ctx *ctx;
+	काष्ठा ipu_image_convert_run *run;
+	पूर्णांक ret;
 
 	ctx = ipu_image_convert_prepare(ipu, ic_task, in, out, rot_mode,
 					complete, complete_context);
-	if (IS_ERR(ctx))
-		return ERR_CAST(ctx);
+	अगर (IS_ERR(ctx))
+		वापस ERR_CAST(ctx);
 
-	run = kzalloc(sizeof(*run), GFP_KERNEL);
-	if (!run) {
+	run = kzalloc(माप(*run), GFP_KERNEL);
+	अगर (!run) अणु
 		ipu_image_convert_unprepare(ctx);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	run->ctx = ctx;
 	run->in_phys = in->phys0;
 	run->out_phys = out->phys0;
 
 	ret = ipu_image_convert_queue(run);
-	if (ret) {
+	अगर (ret) अणु
 		ipu_image_convert_unprepare(ctx);
-		kfree(run);
-		return ERR_PTR(ret);
-	}
+		kमुक्त(run);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return run;
-}
+	वापस run;
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_image_convert);
 
 /* "Canned" synchronous single image conversion */
-static void image_convert_sync_complete(struct ipu_image_convert_run *run,
-					void *data)
-{
-	struct completion *comp = data;
+अटल व्योम image_convert_sync_complete(काष्ठा ipu_image_convert_run *run,
+					व्योम *data)
+अणु
+	काष्ठा completion *comp = data;
 
 	complete(comp);
-}
+पूर्ण
 
-int ipu_image_convert_sync(struct ipu_soc *ipu, enum ipu_ic_task ic_task,
-			   struct ipu_image *in, struct ipu_image *out,
-			   enum ipu_rotate_mode rot_mode)
-{
-	struct ipu_image_convert_run *run;
-	struct completion comp;
-	int ret;
+पूर्णांक ipu_image_convert_sync(काष्ठा ipu_soc *ipu, क्रमागत ipu_ic_task ic_task,
+			   काष्ठा ipu_image *in, काष्ठा ipu_image *out,
+			   क्रमागत ipu_rotate_mode rot_mode)
+अणु
+	काष्ठा ipu_image_convert_run *run;
+	काष्ठा completion comp;
+	पूर्णांक ret;
 
 	init_completion(&comp);
 
 	run = ipu_image_convert(ipu, ic_task, in, out, rot_mode,
 				image_convert_sync_complete, &comp);
-	if (IS_ERR(run))
-		return PTR_ERR(run);
+	अगर (IS_ERR(run))
+		वापस PTR_ERR(run);
 
-	ret = wait_for_completion_timeout(&comp, msecs_to_jiffies(10000));
+	ret = रुको_क्रम_completion_समयout(&comp, msecs_to_jअगरfies(10000));
 	ret = (ret == 0) ? -ETIMEDOUT : 0;
 
 	ipu_image_convert_unprepare(run->ctx);
-	kfree(run);
+	kमुक्त(run);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ipu_image_convert_sync);
 
-int ipu_image_convert_init(struct ipu_soc *ipu, struct device *dev)
-{
-	struct ipu_image_convert_priv *priv;
-	int i;
+पूर्णांक ipu_image_convert_init(काष्ठा ipu_soc *ipu, काष्ठा device *dev)
+अणु
+	काष्ठा ipu_image_convert_priv *priv;
+	पूर्णांक i;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	ipu->image_convert_priv = priv;
 	priv->ipu = ipu;
 
-	for (i = 0; i < IC_NUM_TASKS; i++) {
-		struct ipu_image_convert_chan *chan = &priv->chan[i];
+	क्रम (i = 0; i < IC_NUM_TASKS; i++) अणु
+		काष्ठा ipu_image_convert_chan *chan = &priv->chan[i];
 
 		chan->ic_task = i;
 		chan->priv = priv;
@@ -2501,12 +2502,12 @@ int ipu_image_convert_init(struct ipu_soc *ipu, struct device *dev)
 		spin_lock_init(&chan->irqlock);
 		INIT_LIST_HEAD(&chan->ctx_list);
 		INIT_LIST_HEAD(&chan->pending_q);
-		INIT_LIST_HEAD(&chan->done_q);
-	}
+		INIT_LIST_HEAD(&chan->करोne_q);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ipu_image_convert_exit(struct ipu_soc *ipu)
-{
-}
+व्योम ipu_image_convert_निकास(काष्ठा ipu_soc *ipu)
+अणु
+पूर्ण

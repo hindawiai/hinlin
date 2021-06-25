@@ -1,198 +1,199 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/init.h>
-#include <linux/async.h>
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/delay.h>
-#include <linux/string.h>
-#include <linux/dirent.h>
-#include <linux/syscalls.h>
-#include <linux/utime.h>
-#include <linux/file.h>
-#include <linux/memblock.h>
-#include <linux/mm.h>
-#include <linux/namei.h>
-#include <linux/init_syscalls.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/init.h>
+#समावेश <linux/async.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/dirent.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/uसमय.स>
+#समावेश <linux/file.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/init_syscalls.h>
 
-static ssize_t __init xwrite(struct file *file, const char *p, size_t count,
+अटल sमाप_प्रकार __init xग_लिखो(काष्ठा file *file, स्थिर अक्षर *p, माप_प्रकार count,
 		loff_t *pos)
-{
-	ssize_t out = 0;
+अणु
+	sमाप_प्रकार out = 0;
 
-	/* sys_write only can write MAX_RW_COUNT aka 2G-4K bytes at most */
-	while (count) {
-		ssize_t rv = kernel_write(file, p, count, pos);
+	/* sys_ग_लिखो only can ग_लिखो MAX_RW_COUNT aka 2G-4K bytes at most */
+	जबतक (count) अणु
+		sमाप_प्रकार rv = kernel_ग_लिखो(file, p, count, pos);
 
-		if (rv < 0) {
-			if (rv == -EINTR || rv == -EAGAIN)
-				continue;
-			return out ? out : rv;
-		} else if (rv == 0)
-			break;
+		अगर (rv < 0) अणु
+			अगर (rv == -EINTR || rv == -EAGAIN)
+				जारी;
+			वापस out ? out : rv;
+		पूर्ण अन्यथा अगर (rv == 0)
+			अवरोध;
 
 		p += rv;
 		out += rv;
 		count -= rv;
-	}
+	पूर्ण
 
-	return out;
-}
+	वापस out;
+पूर्ण
 
-static __initdata char *message;
-static void __init error(char *x)
-{
-	if (!message)
+अटल __initdata अक्षर *message;
+अटल व्योम __init error(अक्षर *x)
+अणु
+	अगर (!message)
 		message = x;
-}
+पूर्ण
 
-static void panic_show_mem(const char *fmt, ...)
-{
-	va_list args;
+अटल व्योम panic_show_mem(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
 
-	show_mem(0, NULL);
-	va_start(args, fmt);
+	show_mem(0, शून्य);
+	बहु_शुरू(args, fmt);
 	panic(fmt, args);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
 /* link hash */
 
-#define N_ALIGN(len) ((((len) + 1) & ~3) + 2)
+#घोषणा N_ALIGN(len) ((((len) + 1) & ~3) + 2)
 
-static __initdata struct hash {
-	int ino, minor, major;
+अटल __initdata काष्ठा hash अणु
+	पूर्णांक ino, minor, major;
 	umode_t mode;
-	struct hash *next;
-	char name[N_ALIGN(PATH_MAX)];
-} *head[32];
+	काष्ठा hash *next;
+	अक्षर name[N_ALIGN(PATH_MAX)];
+पूर्ण *head[32];
 
-static inline int hash(int major, int minor, int ino)
-{
-	unsigned long tmp = ino + minor + (major << 3);
-	tmp += tmp >> 5;
-	return tmp & 31;
-}
+अटल अंतरभूत पूर्णांक hash(पूर्णांक major, पूर्णांक minor, पूर्णांक ino)
+अणु
+	अचिन्हित दीर्घ पंचांगp = ino + minor + (major << 3);
+	पंचांगp += पंचांगp >> 5;
+	वापस पंचांगp & 31;
+पूर्ण
 
-static char __init *find_link(int major, int minor, int ino,
-			      umode_t mode, char *name)
-{
-	struct hash **p, *q;
-	for (p = head + hash(major, minor, ino); *p; p = &(*p)->next) {
-		if ((*p)->ino != ino)
-			continue;
-		if ((*p)->minor != minor)
-			continue;
-		if ((*p)->major != major)
-			continue;
-		if (((*p)->mode ^ mode) & S_IFMT)
-			continue;
-		return (*p)->name;
-	}
-	q = kmalloc(sizeof(struct hash), GFP_KERNEL);
-	if (!q)
+अटल अक्षर __init *find_link(पूर्णांक major, पूर्णांक minor, पूर्णांक ino,
+			      umode_t mode, अक्षर *name)
+अणु
+	काष्ठा hash **p, *q;
+	क्रम (p = head + hash(major, minor, ino); *p; p = &(*p)->next) अणु
+		अगर ((*p)->ino != ino)
+			जारी;
+		अगर ((*p)->minor != minor)
+			जारी;
+		अगर ((*p)->major != major)
+			जारी;
+		अगर (((*p)->mode ^ mode) & S_IFMT)
+			जारी;
+		वापस (*p)->name;
+	पूर्ण
+	q = kदो_स्मृति(माप(काष्ठा hash), GFP_KERNEL);
+	अगर (!q)
 		panic_show_mem("can't allocate link hash entry");
 	q->major = major;
 	q->minor = minor;
 	q->ino = ino;
 	q->mode = mode;
-	strcpy(q->name, name);
-	q->next = NULL;
+	म_नकल(q->name, name);
+	q->next = शून्य;
 	*p = q;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __init free_hash(void)
-{
-	struct hash **p, *q;
-	for (p = head; p < head + 32; p++) {
-		while (*p) {
+अटल व्योम __init मुक्त_hash(व्योम)
+अणु
+	काष्ठा hash **p, *q;
+	क्रम (p = head; p < head + 32; p++) अणु
+		जबतक (*p) अणु
 			q = *p;
 			*p = q->next;
-			kfree(q);
-		}
-	}
-}
+			kमुक्त(q);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static long __init do_utime(char *filename, time64_t mtime)
-{
-	struct timespec64 t[2];
+अटल दीर्घ __init करो_uसमय(अक्षर *filename, समय64_t mसमय)
+अणु
+	काष्ठा बारpec64 t[2];
 
-	t[0].tv_sec = mtime;
+	t[0].tv_sec = mसमय;
 	t[0].tv_nsec = 0;
-	t[1].tv_sec = mtime;
+	t[1].tv_sec = mसमय;
 	t[1].tv_nsec = 0;
-	return init_utimes(filename, t);
-}
+	वापस init_uबार(filename, t);
+पूर्ण
 
-static __initdata LIST_HEAD(dir_list);
-struct dir_entry {
-	struct list_head list;
-	char *name;
-	time64_t mtime;
-};
+अटल __initdata LIST_HEAD(dir_list);
+काष्ठा dir_entry अणु
+	काष्ठा list_head list;
+	अक्षर *name;
+	समय64_t mसमय;
+पूर्ण;
 
-static void __init dir_add(const char *name, time64_t mtime)
-{
-	struct dir_entry *de = kmalloc(sizeof(struct dir_entry), GFP_KERNEL);
-	if (!de)
+अटल व्योम __init dir_add(स्थिर अक्षर *name, समय64_t mसमय)
+अणु
+	काष्ठा dir_entry *de = kदो_स्मृति(माप(काष्ठा dir_entry), GFP_KERNEL);
+	अगर (!de)
 		panic_show_mem("can't allocate dir_entry buffer");
 	INIT_LIST_HEAD(&de->list);
 	de->name = kstrdup(name, GFP_KERNEL);
-	de->mtime = mtime;
+	de->mसमय = mसमय;
 	list_add(&de->list, &dir_list);
-}
+पूर्ण
 
-static void __init dir_utime(void)
-{
-	struct dir_entry *de, *tmp;
-	list_for_each_entry_safe(de, tmp, &dir_list, list) {
+अटल व्योम __init dir_uसमय(व्योम)
+अणु
+	काष्ठा dir_entry *de, *पंचांगp;
+	list_क्रम_each_entry_safe(de, पंचांगp, &dir_list, list) अणु
 		list_del(&de->list);
-		do_utime(de->name, de->mtime);
-		kfree(de->name);
-		kfree(de);
-	}
-}
+		करो_uसमय(de->name, de->mसमय);
+		kमुक्त(de->name);
+		kमुक्त(de);
+	पूर्ण
+पूर्ण
 
-static __initdata time64_t mtime;
+अटल __initdata समय64_t mसमय;
 
 /* cpio header parsing */
 
-static __initdata unsigned long ino, major, minor, nlink;
-static __initdata umode_t mode;
-static __initdata unsigned long body_len, name_len;
-static __initdata uid_t uid;
-static __initdata gid_t gid;
-static __initdata unsigned rdev;
+अटल __initdata अचिन्हित दीर्घ ino, major, minor, nlink;
+अटल __initdata umode_t mode;
+अटल __initdata अचिन्हित दीर्घ body_len, name_len;
+अटल __initdata uid_t uid;
+अटल __initdata gid_t gid;
+अटल __initdata अचिन्हित rdev;
 
-static void __init parse_header(char *s)
-{
-	unsigned long parsed[12];
-	char buf[9];
-	int i;
+अटल व्योम __init parse_header(अक्षर *s)
+अणु
+	अचिन्हित दीर्घ parsed[12];
+	अक्षर buf[9];
+	पूर्णांक i;
 
 	buf[8] = '\0';
-	for (i = 0, s += 6; i < 12; i++, s += 8) {
-		memcpy(buf, s, 8);
-		parsed[i] = simple_strtoul(buf, NULL, 16);
-	}
+	क्रम (i = 0, s += 6; i < 12; i++, s += 8) अणु
+		स_नकल(buf, s, 8);
+		parsed[i] = simple_म_से_अदीर्घ(buf, शून्य, 16);
+	पूर्ण
 	ino = parsed[0];
 	mode = parsed[1];
 	uid = parsed[2];
 	gid = parsed[3];
 	nlink = parsed[4];
-	mtime = parsed[5]; /* breaks in y2106 */
+	mसमय = parsed[5]; /* अवरोधs in y2106 */
 	body_len = parsed[6];
 	major = parsed[7];
 	minor = parsed[8];
 	rdev = new_encode_dev(MKDEV(parsed[9], parsed[10]));
 	name_len = parsed[11];
-}
+पूर्ण
 
 /* FSM */
 
-static __initdata enum state {
+अटल __initdata क्रमागत state अणु
 	Start,
 	Collect,
 	GotHeader,
@@ -201,534 +202,534 @@ static __initdata enum state {
 	CopyFile,
 	GotSymlink,
 	Reset
-} state, next_state;
+पूर्ण state, next_state;
 
-static __initdata char *victim;
-static unsigned long byte_count __initdata;
-static __initdata loff_t this_header, next_header;
+अटल __initdata अक्षर *victim;
+अटल अचिन्हित दीर्घ byte_count __initdata;
+अटल __initdata loff_t this_header, next_header;
 
-static inline void __init eat(unsigned n)
-{
+अटल अंतरभूत व्योम __init eat(अचिन्हित n)
+अणु
 	victim += n;
 	this_header += n;
 	byte_count -= n;
-}
+पूर्ण
 
-static __initdata char *collected;
-static long remains __initdata;
-static __initdata char *collect;
+अटल __initdata अक्षर *collected;
+अटल दीर्घ reमुख्यs __initdata;
+अटल __initdata अक्षर *collect;
 
-static void __init read_into(char *buf, unsigned size, enum state next)
-{
-	if (byte_count >= size) {
+अटल व्योम __init पढ़ो_पूर्णांकo(अक्षर *buf, अचिन्हित size, क्रमागत state next)
+अणु
+	अगर (byte_count >= size) अणु
 		collected = victim;
 		eat(size);
 		state = next;
-	} else {
+	पूर्ण अन्यथा अणु
 		collect = collected = buf;
-		remains = size;
+		reमुख्यs = size;
 		next_state = next;
 		state = Collect;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static __initdata char *header_buf, *symlink_buf, *name_buf;
+अटल __initdata अक्षर *header_buf, *symlink_buf, *name_buf;
 
-static int __init do_start(void)
-{
-	read_into(header_buf, 110, GotHeader);
-	return 0;
-}
+अटल पूर्णांक __init करो_start(व्योम)
+अणु
+	पढ़ो_पूर्णांकo(header_buf, 110, GotHeader);
+	वापस 0;
+पूर्ण
 
-static int __init do_collect(void)
-{
-	unsigned long n = remains;
-	if (byte_count < n)
+अटल पूर्णांक __init करो_collect(व्योम)
+अणु
+	अचिन्हित दीर्घ n = reमुख्यs;
+	अगर (byte_count < n)
 		n = byte_count;
-	memcpy(collect, victim, n);
+	स_नकल(collect, victim, n);
 	eat(n);
 	collect += n;
-	if ((remains -= n) != 0)
-		return 1;
+	अगर ((reमुख्यs -= n) != 0)
+		वापस 1;
 	state = next_state;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init do_header(void)
-{
-	if (memcmp(collected, "070707", 6)==0) {
+अटल पूर्णांक __init करो_header(व्योम)
+अणु
+	अगर (स_भेद(collected, "070707", 6)==0) अणु
 		error("incorrect cpio method used: use -H newc option");
-		return 1;
-	}
-	if (memcmp(collected, "070701", 6)) {
+		वापस 1;
+	पूर्ण
+	अगर (स_भेद(collected, "070701", 6)) अणु
 		error("no cpio magic");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	parse_header(collected);
 	next_header = this_header + N_ALIGN(name_len) + body_len;
 	next_header = (next_header + 3) & ~3;
 	state = SkipIt;
-	if (name_len <= 0 || name_len > PATH_MAX)
-		return 0;
-	if (S_ISLNK(mode)) {
-		if (body_len > PATH_MAX)
-			return 0;
+	अगर (name_len <= 0 || name_len > PATH_MAX)
+		वापस 0;
+	अगर (S_ISLNK(mode)) अणु
+		अगर (body_len > PATH_MAX)
+			वापस 0;
 		collect = collected = symlink_buf;
-		remains = N_ALIGN(name_len) + body_len;
+		reमुख्यs = N_ALIGN(name_len) + body_len;
 		next_state = GotSymlink;
 		state = Collect;
-		return 0;
-	}
-	if (S_ISREG(mode) || !body_len)
-		read_into(name_buf, N_ALIGN(name_len), GotName);
-	return 0;
-}
+		वापस 0;
+	पूर्ण
+	अगर (S_ISREG(mode) || !body_len)
+		पढ़ो_पूर्णांकo(name_buf, N_ALIGN(name_len), GotName);
+	वापस 0;
+पूर्ण
 
-static int __init do_skip(void)
-{
-	if (this_header + byte_count < next_header) {
+अटल पूर्णांक __init करो_skip(व्योम)
+अणु
+	अगर (this_header + byte_count < next_header) अणु
 		eat(byte_count);
-		return 1;
-	} else {
+		वापस 1;
+	पूर्ण अन्यथा अणु
 		eat(next_header - this_header);
 		state = next_state;
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int __init do_reset(void)
-{
-	while (byte_count && *victim == '\0')
+अटल पूर्णांक __init करो_reset(व्योम)
+अणु
+	जबतक (byte_count && *victim == '\0')
 		eat(1);
-	if (byte_count && (this_header & 3))
+	अगर (byte_count && (this_header & 3))
 		error("broken padding");
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void __init clean_path(char *path, umode_t fmode)
-{
-	struct kstat st;
+अटल व्योम __init clean_path(अक्षर *path, umode_t भ_शेषe)
+अणु
+	काष्ठा kstat st;
 
-	if (!init_stat(path, &st, AT_SYMLINK_NOFOLLOW) &&
-	    (st.mode ^ fmode) & S_IFMT) {
-		if (S_ISDIR(st.mode))
-			init_rmdir(path);
-		else
+	अगर (!init_stat(path, &st, AT_SYMLINK_NOFOLLOW) &&
+	    (st.mode ^ भ_शेषe) & S_IFMT) अणु
+		अगर (S_ISसूची(st.mode))
+			init_सूची_हटाओ(path);
+		अन्यथा
 			init_unlink(path);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init maybe_link(void)
-{
-	if (nlink >= 2) {
-		char *old = find_link(major, minor, ino, mode, collected);
-		if (old) {
+अटल पूर्णांक __init maybe_link(व्योम)
+अणु
+	अगर (nlink >= 2) अणु
+		अक्षर *old = find_link(major, minor, ino, mode, collected);
+		अगर (old) अणु
 			clean_path(collected, 0);
-			return (init_link(old, collected) < 0) ? -1 : 1;
-		}
-	}
-	return 0;
-}
+			वापस (init_link(old, collected) < 0) ? -1 : 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static __initdata struct file *wfile;
-static __initdata loff_t wfile_pos;
+अटल __initdata काष्ठा file *wfile;
+अटल __initdata loff_t wfile_pos;
 
-static int __init do_name(void)
-{
+अटल पूर्णांक __init करो_name(व्योम)
+अणु
 	state = SkipIt;
 	next_state = Reset;
-	if (strcmp(collected, "TRAILER!!!") == 0) {
-		free_hash();
-		return 0;
-	}
+	अगर (म_भेद(collected, "TRAILER!!!") == 0) अणु
+		मुक्त_hash();
+		वापस 0;
+	पूर्ण
 	clean_path(collected, mode);
-	if (S_ISREG(mode)) {
-		int ml = maybe_link();
-		if (ml >= 0) {
-			int openflags = O_WRONLY|O_CREAT;
-			if (ml != 1)
-				openflags |= O_TRUNC;
-			wfile = filp_open(collected, openflags, mode);
-			if (IS_ERR(wfile))
-				return 0;
+	अगर (S_ISREG(mode)) अणु
+		पूर्णांक ml = maybe_link();
+		अगर (ml >= 0) अणु
+			पूर्णांक खोलोflags = O_WRONLY|O_CREAT;
+			अगर (ml != 1)
+				खोलोflags |= O_TRUNC;
+			wfile = filp_खोलो(collected, खोलोflags, mode);
+			अगर (IS_ERR(wfile))
+				वापस 0;
 			wfile_pos = 0;
 
 			vfs_fchown(wfile, uid, gid);
 			vfs_fchmod(wfile, mode);
-			if (body_len)
+			अगर (body_len)
 				vfs_truncate(&wfile->f_path, body_len);
 			state = CopyFile;
-		}
-	} else if (S_ISDIR(mode)) {
-		init_mkdir(collected, mode);
+		पूर्ण
+	पूर्ण अन्यथा अगर (S_ISसूची(mode)) अणु
+		init_सूची_गढ़ो(collected, mode);
 		init_chown(collected, uid, gid, 0);
 		init_chmod(collected, mode);
-		dir_add(collected, mtime);
-	} else if (S_ISBLK(mode) || S_ISCHR(mode) ||
-		   S_ISFIFO(mode) || S_ISSOCK(mode)) {
-		if (maybe_link() == 0) {
+		dir_add(collected, mसमय);
+	पूर्ण अन्यथा अगर (S_ISBLK(mode) || S_ISCHR(mode) ||
+		   S_ISFIFO(mode) || S_ISSOCK(mode)) अणु
+		अगर (maybe_link() == 0) अणु
 			init_mknod(collected, mode, rdev);
 			init_chown(collected, uid, gid, 0);
 			init_chmod(collected, mode);
-			do_utime(collected, mtime);
-		}
-	}
-	return 0;
-}
+			करो_uसमय(collected, mसमय);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __init do_copy(void)
-{
-	if (byte_count >= body_len) {
-		struct timespec64 t[2] = { };
-		if (xwrite(wfile, victim, body_len, &wfile_pos) != body_len)
+अटल पूर्णांक __init करो_copy(व्योम)
+अणु
+	अगर (byte_count >= body_len) अणु
+		काष्ठा बारpec64 t[2] = अणु पूर्ण;
+		अगर (xग_लिखो(wfile, victim, body_len, &wfile_pos) != body_len)
 			error("write error");
 
-		t[0].tv_sec = mtime;
-		t[1].tv_sec = mtime;
-		vfs_utimes(&wfile->f_path, t);
+		t[0].tv_sec = mसमय;
+		t[1].tv_sec = mसमय;
+		vfs_uबार(&wfile->f_path, t);
 
 		fput(wfile);
 		eat(body_len);
 		state = SkipIt;
-		return 0;
-	} else {
-		if (xwrite(wfile, victim, byte_count, &wfile_pos) != byte_count)
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		अगर (xग_लिखो(wfile, victim, byte_count, &wfile_pos) != byte_count)
 			error("write error");
 		body_len -= byte_count;
 		eat(byte_count);
-		return 1;
-	}
-}
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-static int __init do_symlink(void)
-{
+अटल पूर्णांक __init करो_symlink(व्योम)
+अणु
 	collected[N_ALIGN(name_len) + body_len] = '\0';
 	clean_path(collected, 0);
 	init_symlink(collected + N_ALIGN(name_len), collected);
 	init_chown(collected, uid, gid, AT_SYMLINK_NOFOLLOW);
-	do_utime(collected, mtime);
+	करो_uसमय(collected, mसमय);
 	state = SkipIt;
 	next_state = Reset;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __initdata int (*actions[])(void) = {
-	[Start]		= do_start,
-	[Collect]	= do_collect,
-	[GotHeader]	= do_header,
-	[SkipIt]	= do_skip,
-	[GotName]	= do_name,
-	[CopyFile]	= do_copy,
-	[GotSymlink]	= do_symlink,
-	[Reset]		= do_reset,
-};
+अटल __initdata पूर्णांक (*actions[])(व्योम) = अणु
+	[Start]		= करो_start,
+	[Collect]	= करो_collect,
+	[GotHeader]	= करो_header,
+	[SkipIt]	= करो_skip,
+	[GotName]	= करो_name,
+	[CopyFile]	= करो_copy,
+	[GotSymlink]	= करो_symlink,
+	[Reset]		= करो_reset,
+पूर्ण;
 
-static long __init write_buffer(char *buf, unsigned long len)
-{
+अटल दीर्घ __init ग_लिखो_buffer(अक्षर *buf, अचिन्हित दीर्घ len)
+अणु
 	byte_count = len;
 	victim = buf;
 
-	while (!actions[state]())
+	जबतक (!actions[state]())
 		;
-	return len - byte_count;
-}
+	वापस len - byte_count;
+पूर्ण
 
-static long __init flush_buffer(void *bufv, unsigned long len)
-{
-	char *buf = (char *) bufv;
-	long written;
-	long origLen = len;
-	if (message)
-		return -1;
-	while ((written = write_buffer(buf, len)) < len && !message) {
-		char c = buf[written];
-		if (c == '0') {
+अटल दीर्घ __init flush_buffer(व्योम *bufv, अचिन्हित दीर्घ len)
+अणु
+	अक्षर *buf = (अक्षर *) bufv;
+	दीर्घ written;
+	दीर्घ origLen = len;
+	अगर (message)
+		वापस -1;
+	जबतक ((written = ग_लिखो_buffer(buf, len)) < len && !message) अणु
+		अक्षर c = buf[written];
+		अगर (c == '0') अणु
 			buf += written;
 			len -= written;
 			state = Start;
-		} else if (c == 0) {
+		पूर्ण अन्यथा अगर (c == 0) अणु
 			buf += written;
 			len -= written;
 			state = Reset;
-		} else
+		पूर्ण अन्यथा
 			error("junk within compressed archive");
-	}
-	return origLen;
-}
+	पूर्ण
+	वापस origLen;
+पूर्ण
 
-static unsigned long my_inptr; /* index of next byte to be processed in inbuf */
+अटल अचिन्हित दीर्घ my_inptr; /* index of next byte to be processed in inbuf */
 
-#include <linux/decompress/generic.h>
+#समावेश <linux/decompress/generic.h>
 
-static char * __init unpack_to_rootfs(char *buf, unsigned long len)
-{
-	long written;
+अटल अक्षर * __init unpack_to_rootfs(अक्षर *buf, अचिन्हित दीर्घ len)
+अणु
+	दीर्घ written;
 	decompress_fn decompress;
-	const char *compress_name;
-	static __initdata char msg_buf[64];
+	स्थिर अक्षर *compress_name;
+	अटल __initdata अक्षर msg_buf[64];
 
-	header_buf = kmalloc(110, GFP_KERNEL);
-	symlink_buf = kmalloc(PATH_MAX + N_ALIGN(PATH_MAX) + 1, GFP_KERNEL);
-	name_buf = kmalloc(N_ALIGN(PATH_MAX), GFP_KERNEL);
+	header_buf = kदो_स्मृति(110, GFP_KERNEL);
+	symlink_buf = kदो_स्मृति(PATH_MAX + N_ALIGN(PATH_MAX) + 1, GFP_KERNEL);
+	name_buf = kदो_स्मृति(N_ALIGN(PATH_MAX), GFP_KERNEL);
 
-	if (!header_buf || !symlink_buf || !name_buf)
+	अगर (!header_buf || !symlink_buf || !name_buf)
 		panic_show_mem("can't allocate buffers");
 
 	state = Start;
 	this_header = 0;
-	message = NULL;
-	while (!message && len) {
+	message = शून्य;
+	जबतक (!message && len) अणु
 		loff_t saved_offset = this_header;
-		if (*buf == '0' && !(this_header & 3)) {
+		अगर (*buf == '0' && !(this_header & 3)) अणु
 			state = Start;
-			written = write_buffer(buf, len);
+			written = ग_लिखो_buffer(buf, len);
 			buf += written;
 			len -= written;
-			continue;
-		}
-		if (!*buf) {
+			जारी;
+		पूर्ण
+		अगर (!*buf) अणु
 			buf++;
 			len--;
 			this_header++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		this_header = 0;
 		decompress = decompress_method(buf, len, &compress_name);
 		pr_debug("Detected %s compressed data\n", compress_name);
-		if (decompress) {
-			int res = decompress(buf, len, NULL, flush_buffer, NULL,
+		अगर (decompress) अणु
+			पूर्णांक res = decompress(buf, len, शून्य, flush_buffer, शून्य,
 				   &my_inptr, error);
-			if (res)
+			अगर (res)
 				error("decompressor failed");
-		} else if (compress_name) {
-			if (!message) {
-				snprintf(msg_buf, sizeof msg_buf,
+		पूर्ण अन्यथा अगर (compress_name) अणु
+			अगर (!message) अणु
+				snम_लिखो(msg_buf, माप msg_buf,
 					 "compression method %s not configured",
 					 compress_name);
 				message = msg_buf;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			error("invalid magic at start of compressed archive");
-		if (state != Reset)
+		अगर (state != Reset)
 			error("junk at the end of compressed archive");
 		this_header = saved_offset + my_inptr;
 		buf += my_inptr;
 		len -= my_inptr;
-	}
-	dir_utime();
-	kfree(name_buf);
-	kfree(symlink_buf);
-	kfree(header_buf);
-	return message;
-}
+	पूर्ण
+	dir_uसमय();
+	kमुक्त(name_buf);
+	kमुक्त(symlink_buf);
+	kमुक्त(header_buf);
+	वापस message;
+पूर्ण
 
-static int __initdata do_retain_initrd;
+अटल पूर्णांक __initdata करो_retain_initrd;
 
-static int __init retain_initrd_param(char *str)
-{
-	if (*str)
-		return 0;
-	do_retain_initrd = 1;
-	return 1;
-}
+अटल पूर्णांक __init retain_initrd_param(अक्षर *str)
+अणु
+	अगर (*str)
+		वापस 0;
+	करो_retain_initrd = 1;
+	वापस 1;
+पूर्ण
 __setup("retain_initrd", retain_initrd_param);
 
-#ifdef CONFIG_ARCH_HAS_KEEPINITRD
-static int __init keepinitrd_setup(char *__unused)
-{
-	do_retain_initrd = 1;
-	return 1;
-}
+#अगर_घोषित CONFIG_ARCH_HAS_KEEPINITRD
+अटल पूर्णांक __init keepinitrd_setup(अक्षर *__unused)
+अणु
+	करो_retain_initrd = 1;
+	वापस 1;
+पूर्ण
 __setup("keepinitrd", keepinitrd_setup);
-#endif
+#पूर्ण_अगर
 
-static bool __initdata initramfs_async = true;
-static int __init initramfs_async_setup(char *str)
-{
+अटल bool __initdata initramfs_async = true;
+अटल पूर्णांक __init initramfs_async_setup(अक्षर *str)
+अणु
 	strtobool(str, &initramfs_async);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("initramfs_async=", initramfs_async_setup);
 
-extern char __initramfs_start[];
-extern unsigned long __initramfs_size;
-#include <linux/initrd.h>
-#include <linux/kexec.h>
+बाह्य अक्षर __initramfs_start[];
+बाह्य अचिन्हित दीर्घ __initramfs_size;
+#समावेश <linux/initrd.h>
+#समावेश <linux/kexec.h>
 
-void __init reserve_initrd_mem(void)
-{
+व्योम __init reserve_initrd_mem(व्योम)
+अणु
 	phys_addr_t start;
-	unsigned long size;
+	अचिन्हित दीर्घ size;
 
 	/* Ignore the virtul address computed during device tree parsing */
 	initrd_start = initrd_end = 0;
 
-	if (!phys_initrd_size)
-		return;
+	अगर (!phys_initrd_size)
+		वापस;
 	/*
-	 * Round the memory region to page boundaries as per free_initrd_mem()
+	 * Round the memory region to page boundaries as per मुक्त_initrd_mem()
 	 * This allows us to detect whether the pages overlapping the initrd
 	 * are in use, but more importantly, reserves the entire set of pages
-	 * as we don't want these pages allocated for other purposes.
+	 * as we करोn't want these pages allocated क्रम other purposes.
 	 */
-	start = round_down(phys_initrd_start, PAGE_SIZE);
+	start = round_करोwn(phys_initrd_start, PAGE_SIZE);
 	size = phys_initrd_size + (phys_initrd_start - start);
 	size = round_up(size, PAGE_SIZE);
 
-	if (!memblock_is_region_memory(start, size)) {
+	अगर (!memblock_is_region_memory(start, size)) अणु
 		pr_err("INITRD: 0x%08llx+0x%08lx is not a memory region",
 		       (u64)start, size);
-		goto disable;
-	}
+		जाओ disable;
+	पूर्ण
 
-	if (memblock_is_region_reserved(start, size)) {
+	अगर (memblock_is_region_reserved(start, size)) अणु
 		pr_err("INITRD: 0x%08llx+0x%08lx overlaps in-use memory region\n",
 		       (u64)start, size);
-		goto disable;
-	}
+		जाओ disable;
+	पूर्ण
 
 	memblock_reserve(start, size);
-	/* Now convert initrd to virtual addresses */
-	initrd_start = (unsigned long)__va(phys_initrd_start);
+	/* Now convert initrd to भव addresses */
+	initrd_start = (अचिन्हित दीर्घ)__va(phys_initrd_start);
 	initrd_end = initrd_start + phys_initrd_size;
 	initrd_below_start_ok = 1;
 
-	return;
+	वापस;
 disable:
 	pr_cont(" - disabling initrd\n");
 	initrd_start = 0;
 	initrd_end = 0;
-}
+पूर्ण
 
-void __weak __init free_initrd_mem(unsigned long start, unsigned long end)
-{
-#ifdef CONFIG_ARCH_KEEP_MEMBLOCK
-	unsigned long aligned_start = ALIGN_DOWN(start, PAGE_SIZE);
-	unsigned long aligned_end = ALIGN(end, PAGE_SIZE);
+व्योम __weak __init मुक्त_initrd_mem(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+#अगर_घोषित CONFIG_ARCH_KEEP_MEMBLOCK
+	अचिन्हित दीर्घ aligned_start = ALIGN_DOWN(start, PAGE_SIZE);
+	अचिन्हित दीर्घ aligned_end = ALIGN(end, PAGE_SIZE);
 
-	memblock_free(__pa(aligned_start), aligned_end - aligned_start);
-#endif
+	memblock_मुक्त(__pa(aligned_start), aligned_end - aligned_start);
+#पूर्ण_अगर
 
-	free_reserved_area((void *)start, (void *)end, POISON_FREE_INITMEM,
+	मुक्त_reserved_area((व्योम *)start, (व्योम *)end, POISON_FREE_INITMEM,
 			"initrd");
-}
+पूर्ण
 
-#ifdef CONFIG_KEXEC_CORE
-static bool __init kexec_free_initrd(void)
-{
-	unsigned long crashk_start = (unsigned long)__va(crashk_res.start);
-	unsigned long crashk_end   = (unsigned long)__va(crashk_res.end);
+#अगर_घोषित CONFIG_KEXEC_CORE
+अटल bool __init kexec_मुक्त_initrd(व्योम)
+अणु
+	अचिन्हित दीर्घ crashk_start = (अचिन्हित दीर्घ)__va(crashk_res.start);
+	अचिन्हित दीर्घ crashk_end   = (अचिन्हित दीर्घ)__va(crashk_res.end);
 
 	/*
 	 * If the initrd region is overlapped with crashkernel reserved region,
-	 * free only memory that is not part of crashkernel region.
+	 * मुक्त only memory that is not part of crashkernel region.
 	 */
-	if (initrd_start >= crashk_end || initrd_end <= crashk_start)
-		return false;
+	अगर (initrd_start >= crashk_end || initrd_end <= crashk_start)
+		वापस false;
 
 	/*
-	 * Initialize initrd memory region since the kexec boot does not do.
+	 * Initialize initrd memory region since the kexec boot करोes not करो.
 	 */
-	memset((void *)initrd_start, 0, initrd_end - initrd_start);
-	if (initrd_start < crashk_start)
-		free_initrd_mem(initrd_start, crashk_start);
-	if (initrd_end > crashk_end)
-		free_initrd_mem(crashk_end, initrd_end);
-	return true;
-}
-#else
-static inline bool kexec_free_initrd(void)
-{
-	return false;
-}
-#endif /* CONFIG_KEXEC_CORE */
+	स_रखो((व्योम *)initrd_start, 0, initrd_end - initrd_start);
+	अगर (initrd_start < crashk_start)
+		मुक्त_initrd_mem(initrd_start, crashk_start);
+	अगर (initrd_end > crashk_end)
+		मुक्त_initrd_mem(crashk_end, initrd_end);
+	वापस true;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool kexec_मुक्त_initrd(व्योम)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_KEXEC_CORE */
 
-#ifdef CONFIG_BLK_DEV_RAM
-static void __init populate_initrd_image(char *err)
-{
-	ssize_t written;
-	struct file *file;
+#अगर_घोषित CONFIG_BLK_DEV_RAM
+अटल व्योम __init populate_initrd_image(अक्षर *err)
+अणु
+	sमाप_प्रकार written;
+	काष्ठा file *file;
 	loff_t pos = 0;
 
 	unpack_to_rootfs(__initramfs_start, __initramfs_size);
 
-	printk(KERN_INFO "rootfs image is not initramfs (%s); looks like an initrd\n",
+	prपूर्णांकk(KERN_INFO "rootfs image is not initramfs (%s); looks like an initrd\n",
 			err);
-	file = filp_open("/initrd.image", O_WRONLY | O_CREAT, 0700);
-	if (IS_ERR(file))
-		return;
+	file = filp_खोलो("/initrd.image", O_WRONLY | O_CREAT, 0700);
+	अगर (IS_ERR(file))
+		वापस;
 
-	written = xwrite(file, (char *)initrd_start, initrd_end - initrd_start,
+	written = xग_लिखो(file, (अक्षर *)initrd_start, initrd_end - initrd_start,
 			&pos);
-	if (written != initrd_end - initrd_start)
+	अगर (written != initrd_end - initrd_start)
 		pr_err("/initrd.image: incomplete write (%zd != %ld)\n",
 		       written, initrd_end - initrd_start);
 	fput(file);
-}
-#endif /* CONFIG_BLK_DEV_RAM */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_BLK_DEV_RAM */
 
-static void __init do_populate_rootfs(void *unused, async_cookie_t cookie)
-{
+अटल व्योम __init करो_populate_rootfs(व्योम *unused, async_cookie_t cookie)
+अणु
 	/* Load the built in initramfs */
-	char *err = unpack_to_rootfs(__initramfs_start, __initramfs_size);
-	if (err)
+	अक्षर *err = unpack_to_rootfs(__initramfs_start, __initramfs_size);
+	अगर (err)
 		panic_show_mem("%s", err); /* Failed to decompress INTERNAL initramfs */
 
-	if (!initrd_start || IS_ENABLED(CONFIG_INITRAMFS_FORCE))
-		goto done;
+	अगर (!initrd_start || IS_ENABLED(CONFIG_INITRAMFS_FORCE))
+		जाओ करोne;
 
-	if (IS_ENABLED(CONFIG_BLK_DEV_RAM))
-		printk(KERN_INFO "Trying to unpack rootfs image as initramfs...\n");
-	else
-		printk(KERN_INFO "Unpacking initramfs...\n");
+	अगर (IS_ENABLED(CONFIG_BLK_DEV_RAM))
+		prपूर्णांकk(KERN_INFO "Trying to unpack rootfs image as initramfs...\n");
+	अन्यथा
+		prपूर्णांकk(KERN_INFO "Unpacking initramfs...\n");
 
-	err = unpack_to_rootfs((char *)initrd_start, initrd_end - initrd_start);
-	if (err) {
-#ifdef CONFIG_BLK_DEV_RAM
+	err = unpack_to_rootfs((अक्षर *)initrd_start, initrd_end - initrd_start);
+	अगर (err) अणु
+#अगर_घोषित CONFIG_BLK_DEV_RAM
 		populate_initrd_image(err);
-#else
-		printk(KERN_EMERG "Initramfs unpacking failed: %s\n", err);
-#endif
-	}
+#अन्यथा
+		prपूर्णांकk(KERN_EMERG "Initramfs unpacking failed: %s\n", err);
+#पूर्ण_अगर
+	पूर्ण
 
-done:
+करोne:
 	/*
 	 * If the initrd region is overlapped with crashkernel reserved region,
-	 * free only memory that is not part of crashkernel region.
+	 * मुक्त only memory that is not part of crashkernel region.
 	 */
-	if (!do_retain_initrd && initrd_start && !kexec_free_initrd())
-		free_initrd_mem(initrd_start, initrd_end);
+	अगर (!करो_retain_initrd && initrd_start && !kexec_मुक्त_initrd())
+		मुक्त_initrd_mem(initrd_start, initrd_end);
 	initrd_start = 0;
 	initrd_end = 0;
 
 	flush_delayed_fput();
-}
+पूर्ण
 
-static ASYNC_DOMAIN_EXCLUSIVE(initramfs_domain);
-static async_cookie_t initramfs_cookie;
+अटल ASYNC_DOMAIN_EXCLUSIVE(initramfs_करोमुख्य);
+अटल async_cookie_t initramfs_cookie;
 
-void wait_for_initramfs(void)
-{
-	if (!initramfs_cookie) {
+व्योम रुको_क्रम_initramfs(व्योम)
+अणु
+	अगर (!initramfs_cookie) अणु
 		/*
-		 * Something before rootfs_initcall wants to access
-		 * the filesystem/initramfs. Probably a bug. Make a
-		 * note, avoid deadlocking the machine, and let the
+		 * Something beक्रमe rootfs_initcall wants to access
+		 * the fileप्रणाली/initramfs. Probably a bug. Make a
+		 * note, aव्योम deadlocking the machine, and let the
 		 * caller's access fail as it used to.
 		 */
 		pr_warn_once("wait_for_initramfs() called before rootfs_initcalls\n");
-		return;
-	}
-	async_synchronize_cookie_domain(initramfs_cookie + 1, &initramfs_domain);
-}
-EXPORT_SYMBOL_GPL(wait_for_initramfs);
+		वापस;
+	पूर्ण
+	async_synchronize_cookie_करोमुख्य(initramfs_cookie + 1, &initramfs_करोमुख्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(रुको_क्रम_initramfs);
 
-static int __init populate_rootfs(void)
-{
-	initramfs_cookie = async_schedule_domain(do_populate_rootfs, NULL,
-						 &initramfs_domain);
-	if (!initramfs_async)
-		wait_for_initramfs();
-	return 0;
-}
+अटल पूर्णांक __init populate_rootfs(व्योम)
+अणु
+	initramfs_cookie = async_schedule_करोमुख्य(करो_populate_rootfs, शून्य,
+						 &initramfs_करोमुख्य);
+	अगर (!initramfs_async)
+		रुको_क्रम_initramfs();
+	वापस 0;
+पूर्ण
 rootfs_initcall(populate_rootfs);

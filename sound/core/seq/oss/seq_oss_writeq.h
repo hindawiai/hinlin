@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OSS compatible sequencer driver
- * write priority queue
+ * ग_लिखो priority queue
  *
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
-#ifndef __SEQ_OSS_WRITEQ_H
-#define __SEQ_OSS_WRITEQ_H
+#अगर_अघोषित __SEQ_OSS_WRITEQ_H
+#घोषणा __SEQ_OSS_WRITEQ_H
 
-#include "seq_oss_device.h"
+#समावेश "seq_oss_device.h"
 
 
-struct seq_oss_writeq {
-	struct seq_oss_devinfo *dp;
-	int maxlen;
-	abstime_t sync_time;
-	int sync_event_put;
-	wait_queue_head_t sync_sleep;
+काष्ठा seq_oss_ग_लिखोq अणु
+	काष्ठा seq_oss_devinfo *dp;
+	पूर्णांक maxlen;
+	असलसमय_प्रकार sync_समय;
+	पूर्णांक sync_event_put;
+	रुको_queue_head_t sync_sleep;
 	spinlock_t sync_lock;
-};
+पूर्ण;
 
 
 /*
- * seq_oss_writeq.c
+ * seq_oss_ग_लिखोq.c
  */
-struct seq_oss_writeq *snd_seq_oss_writeq_new(struct seq_oss_devinfo *dp, int maxlen);
-void snd_seq_oss_writeq_delete(struct seq_oss_writeq *q);
-void snd_seq_oss_writeq_clear(struct seq_oss_writeq *q);
-int snd_seq_oss_writeq_sync(struct seq_oss_writeq *q);
-void snd_seq_oss_writeq_wakeup(struct seq_oss_writeq *q, abstime_t time);
-int snd_seq_oss_writeq_get_free_size(struct seq_oss_writeq *q);
-void snd_seq_oss_writeq_set_output(struct seq_oss_writeq *q, int size);
+काष्ठा seq_oss_ग_लिखोq *snd_seq_oss_ग_लिखोq_new(काष्ठा seq_oss_devinfo *dp, पूर्णांक maxlen);
+व्योम snd_seq_oss_ग_लिखोq_delete(काष्ठा seq_oss_ग_लिखोq *q);
+व्योम snd_seq_oss_ग_लिखोq_clear(काष्ठा seq_oss_ग_लिखोq *q);
+पूर्णांक snd_seq_oss_ग_लिखोq_sync(काष्ठा seq_oss_ग_लिखोq *q);
+व्योम snd_seq_oss_ग_लिखोq_wakeup(काष्ठा seq_oss_ग_लिखोq *q, असलसमय_प्रकार समय);
+पूर्णांक snd_seq_oss_ग_लिखोq_get_मुक्त_size(काष्ठा seq_oss_ग_लिखोq *q);
+व्योम snd_seq_oss_ग_लिखोq_set_output(काष्ठा seq_oss_ग_लिखोq *q, पूर्णांक size);
 
 
-#endif
+#पूर्ण_अगर

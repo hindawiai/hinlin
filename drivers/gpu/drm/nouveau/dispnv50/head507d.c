@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,22 +20,22 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "head.h"
-#include "core.h"
+#समावेश "head.h"
+#समावेश "core.h"
 
-#include <nvif/push507c.h>
+#समावेश <nvअगर/push507c.h>
 
-#include <nvhw/class/cl507d.h>
+#समावेश <nvhw/class/cl507d.h>
 
-int
-head507d_procamp(struct nv50_head *head, struct nv50_head_atom *asyh)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
-	int ret;
+पूर्णांक
+head507d_procamp(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_PROCAMP(i),
 		  NVDEF(NV507D, HEAD_SET_PROCAMP, COLOR_SPACE, RGB) |
@@ -42,113 +43,113 @@ head507d_procamp(struct nv50_head *head, struct nv50_head_atom *asyh)
 		  NVVAL(NV507D, HEAD_SET_PROCAMP, SAT_COS, asyh->procamp.sat.cos) |
 		  NVVAL(NV507D, HEAD_SET_PROCAMP, SAT_SINE, asyh->procamp.sat.sin) |
 		  NVDEF(NV507D, HEAD_SET_PROCAMP, TRANSITION, HARD));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-head507d_dither(struct nv50_head *head, struct nv50_head_atom *asyh)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
-	int ret;
+पूर्णांक
+head507d_dither(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_DITHER_CONTROL(i),
 		  NVVAL(NV507D, HEAD_SET_DITHER_CONTROL, ENABLE, asyh->dither.enable) |
 		  NVVAL(NV507D, HEAD_SET_DITHER_CONTROL, BITS, asyh->dither.bits) |
 		  NVVAL(NV507D, HEAD_SET_DITHER_CONTROL, MODE, asyh->dither.mode) |
 		  NVVAL(NV507D, HEAD_SET_DITHER_CONTROL, PHASE, 0));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-head507d_ovly(struct nv50_head *head, struct nv50_head_atom *asyh)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
+पूर्णांक
+head507d_ovly(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
 	u32 bounds = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (asyh->ovly.cpp) {
-		switch (asyh->ovly.cpp) {
-		case 4: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_32); break;
-		case 2: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_16); break;
-		default:
+	अगर (asyh->ovly.cpp) अणु
+		चयन (asyh->ovly.cpp) अणु
+		हाल 4: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_32); अवरोध;
+		हाल 2: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_16); अवरोध;
+		शेष:
 			WARN_ON(1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, USABLE, TRUE);
-	} else {
+	पूर्ण अन्यथा अणु
 		bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_16);
-	}
+	पूर्ण
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS(i), bounds);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-head507d_base(struct nv50_head *head, struct nv50_head_atom *asyh)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
+पूर्णांक
+head507d_base(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
 	u32 bounds = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (asyh->base.cpp) {
-		switch (asyh->base.cpp) {
-		case 8: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_64); break;
-		case 4: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_32); break;
-		case 2: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_16); break;
-		case 1: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_8); break;
-		default:
+	अगर (asyh->base.cpp) अणु
+		चयन (asyh->base.cpp) अणु
+		हाल 8: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_64); अवरोध;
+		हाल 4: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_32); अवरोध;
+		हाल 2: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_16); अवरोध;
+		हाल 1: bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, PIXEL_DEPTH, BPP_8); अवरोध;
+		शेष:
 			WARN_ON(1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		bounds |= NVDEF(NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS, USABLE, TRUE);
-	}
+	पूर्ण
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_BASE_CHANNEL_USAGE_BOUNDS(i), bounds);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-head507d_curs_clr(struct nv50_head *head)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
-	int ret;
+अटल पूर्णांक
+head507d_curs_clr(काष्ठा nv50_head *head)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_CONTROL_CURSOR(i),
 		  NVDEF(NV507D, HEAD_SET_CONTROL_CURSOR, ENABLE, DISABLE) |
 		  NVDEF(NV507D, HEAD_SET_CONTROL_CURSOR, FORMAT, A8R8G8B8) |
 		  NVDEF(NV507D, HEAD_SET_CONTROL_CURSOR, SIZE, W64_H64));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-head507d_curs_set(struct nv50_head *head, struct nv50_head_atom *asyh)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
-	int ret;
+अटल पूर्णांक
+head507d_curs_set(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 3)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 3)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_CONTROL_CURSOR(i),
 		  NVDEF(NV507D, HEAD_SET_CONTROL_CURSOR, ENABLE, ENABLE) |
-		  NVVAL(NV507D, HEAD_SET_CONTROL_CURSOR, FORMAT, asyh->curs.format) |
+		  NVVAL(NV507D, HEAD_SET_CONTROL_CURSOR, FORMAT, asyh->curs.क्रमmat) |
 		  NVVAL(NV507D, HEAD_SET_CONTROL_CURSOR, SIZE, asyh->curs.layout) |
 		  NVVAL(NV507D, HEAD_SET_CONTROL_CURSOR, HOT_SPOT_X, 0) |
 		  NVVAL(NV507D, HEAD_SET_CONTROL_CURSOR, HOT_SPOT_Y, 0) |
@@ -156,58 +157,58 @@ head507d_curs_set(struct nv50_head *head, struct nv50_head_atom *asyh)
 		  NVDEF(NV507D, HEAD_SET_CONTROL_CURSOR, SUB_OWNER, NONE),
 
 				HEAD_SET_OFFSET_CURSOR(i), asyh->curs.offset >> 8);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-head507d_curs_format(struct nv50_head *head, struct nv50_wndw_atom *asyw,
-		     struct nv50_head_atom *asyh)
-{
-	switch (asyw->image.format) {
-	case 0xcf: asyh->curs.format = NV507D_HEAD_SET_CONTROL_CURSOR_FORMAT_A8R8G8B8; break;
-	default:
+पूर्णांक
+head507d_curs_क्रमmat(काष्ठा nv50_head *head, काष्ठा nv50_wndw_atom *asyw,
+		     काष्ठा nv50_head_atom *asyh)
+अणु
+	चयन (asyw->image.क्रमmat) अणु
+	हाल 0xcf: asyh->curs.क्रमmat = NV507D_HEAD_SET_CONTROL_CURSOR_FORMAT_A8R8G8B8; अवरोध;
+	शेष:
 		WARN_ON(1);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int
-head507d_curs_layout(struct nv50_head *head, struct nv50_wndw_atom *asyw,
-		     struct nv50_head_atom *asyh)
-{
-	switch (asyw->image.w) {
-	case 32: asyh->curs.layout = NV507D_HEAD_SET_CONTROL_CURSOR_SIZE_W32_H32; break;
-	case 64: asyh->curs.layout = NV507D_HEAD_SET_CONTROL_CURSOR_SIZE_W64_H64; break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+पूर्णांक
+head507d_curs_layout(काष्ठा nv50_head *head, काष्ठा nv50_wndw_atom *asyw,
+		     काष्ठा nv50_head_atom *asyh)
+अणु
+	चयन (asyw->image.w) अणु
+	हाल 32: asyh->curs.layout = NV507D_HEAD_SET_CONTROL_CURSOR_SIZE_W32_H32; अवरोध;
+	हाल 64: asyh->curs.layout = NV507D_HEAD_SET_CONTROL_CURSOR_SIZE_W64_H64; अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int
-head507d_core_clr(struct nv50_head *head)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
-	int ret;
+पूर्णांक
+head507d_core_clr(काष्ठा nv50_head *head)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_CONTEXT_DMA_ISO(i), 0x00000000);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-head507d_core_set(struct nv50_head *head, struct nv50_head_atom *asyh)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
-	int ret;
+अटल पूर्णांक
+head507d_core_set(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 9)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 9)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_OFFSET(i, 0),
 		  NVVAL(NV507D, HEAD_SET_OFFSET, ORIGIN, asyh->core.offset >> 8));
@@ -223,7 +224,7 @@ head507d_core_set(struct nv50_head *head, struct nv50_head_atom *asyh)
 		  NVVAL(NV507D, HEAD_SET_STORAGE, MEMORY_LAYOUT, asyh->core.layout),
 
 				HEAD_SET_PARAMS(i),
-		  NVVAL(NV507D, HEAD_SET_PARAMS, FORMAT, asyh->core.format) |
+		  NVVAL(NV507D, HEAD_SET_PARAMS, FORMAT, asyh->core.क्रमmat) |
 		  NVVAL(NV507D, HEAD_SET_PARAMS, KIND, asyh->core.kind) |
 		  NVDEF(NV507D, HEAD_SET_PARAMS, PART_STRIDE, PARTSTRIDE_256),
 
@@ -234,29 +235,29 @@ head507d_core_set(struct nv50_head *head, struct nv50_head_atom *asyh)
 		  NVVAL(NV507D, HEAD_SET_VIEWPORT_POINT_IN, X, asyh->core.x) |
 		  NVVAL(NV507D, HEAD_SET_VIEWPORT_POINT_IN, Y, asyh->core.y));
 
-	/* EVO will complain with INVALID_STATE if we have an
-	 * active cursor and (re)specify HeadSetContextDmaIso
+	/* EVO will complain with INVALID_STATE अगर we have an
+	 * active cursor and (re)specअगरy HeadSetContextDmaIso
 	 * without also updating HeadSetOffsetCursor.
 	 */
 	asyh->set.curs = asyh->curs.visible;
 	asyh->set.olut = asyh->olut.handle != 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-head507d_core_calc(struct nv50_head *head, struct nv50_head_atom *asyh)
-{
-	struct nv50_disp *disp = nv50_disp(head->base.base.dev);
-	if ((asyh->core.visible = (asyh->base.cpp != 0))) {
+व्योम
+head507d_core_calc(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
+अणु
+	काष्ठा nv50_disp *disp = nv50_disp(head->base.base.dev);
+	अगर ((asyh->core.visible = (asyh->base.cpp != 0))) अणु
 		asyh->core.x = asyh->base.x;
 		asyh->core.y = asyh->base.y;
 		asyh->core.w = asyh->base.w;
 		asyh->core.h = asyh->base.h;
-	} else
-	if ((asyh->core.visible = (asyh->ovly.cpp != 0)) ||
-	    (asyh->core.visible = asyh->curs.visible)) {
+	पूर्ण अन्यथा
+	अगर ((asyh->core.visible = (asyh->ovly.cpp != 0)) ||
+	    (asyh->core.visible = asyh->curs.visible)) अणु
 		/*XXX: We need to either find some way of having the
-		 *     primary base layer appear black, while still
+		 *     primary base layer appear black, जबतक still
 		 *     being able to display the other layers, or we
 		 *     need to allocate a dummy black surface here.
 		 */
@@ -264,41 +265,41 @@ head507d_core_calc(struct nv50_head *head, struct nv50_head_atom *asyh)
 		asyh->core.y = 0;
 		asyh->core.w = asyh->state.mode.hdisplay;
 		asyh->core.h = asyh->state.mode.vdisplay;
-	}
+	पूर्ण
 	asyh->core.handle = disp->core->chan.vram.handle;
 	asyh->core.offset = 0;
-	asyh->core.format = NV507D_HEAD_SET_PARAMS_FORMAT_A8R8G8B8;
+	asyh->core.क्रमmat = NV507D_HEAD_SET_PARAMS_FORMAT_A8R8G8B8;
 	asyh->core.kind = NV507D_HEAD_SET_PARAMS_KIND_KIND_PITCH;
 	asyh->core.layout = NV507D_HEAD_SET_STORAGE_MEMORY_LAYOUT_PITCH;
 	asyh->core.blockh = NV507D_HEAD_SET_STORAGE_BLOCK_HEIGHT_ONE_GOB;
 	asyh->core.blocks = 0;
 	asyh->core.pitch = ALIGN(asyh->core.w, 64) * 4;
-}
+पूर्ण
 
-static int
-head507d_olut_clr(struct nv50_head *head)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
-	int ret;
+अटल पूर्णांक
+head507d_olut_clr(काष्ठा nv50_head *head)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_BASE_LUT_LO(i),
 		  NVDEF(NV507D, HEAD_SET_BASE_LUT_LO, ENABLE, DISABLE));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-head507d_olut_set(struct nv50_head *head, struct nv50_head_atom *asyh)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
-	int ret;
+अटल पूर्णांक
+head507d_olut_set(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 3)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 3)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_BASE_LUT_LO(i),
 		  NVDEF(NV507D, HEAD_SET_BASE_LUT_LO, ENABLE, ENABLE) |
@@ -307,60 +308,60 @@ head507d_olut_set(struct nv50_head *head, struct nv50_head_atom *asyh)
 
 				HEAD_SET_BASE_LUT_HI(i),
 		  NVVAL(NV507D, HEAD_SET_BASE_LUT_HI, ORIGIN, asyh->olut.offset >> 8));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-head507d_olut_load(struct drm_color_lut *in, int size, void __iomem *mem)
-{
-	for (; size--; in++, mem += 8) {
-		writew(drm_color_lut_extract(in->  red, 11) << 3, mem + 0);
-		writew(drm_color_lut_extract(in->green, 11) << 3, mem + 2);
-		writew(drm_color_lut_extract(in-> blue, 11) << 3, mem + 4);
-	}
+अटल व्योम
+head507d_olut_load(काष्ठा drm_color_lut *in, पूर्णांक size, व्योम __iomem *mem)
+अणु
+	क्रम (; size--; in++, mem += 8) अणु
+		ग_लिखोw(drm_color_lut_extract(in->  red, 11) << 3, mem + 0);
+		ग_लिखोw(drm_color_lut_extract(in->green, 11) << 3, mem + 2);
+		ग_लिखोw(drm_color_lut_extract(in-> blue, 11) << 3, mem + 4);
+	पूर्ण
 
-	/* INTERPOLATE modes require a "next" entry to interpolate with,
-	 * so we replicate the last entry to deal with this for now.
+	/* INTERPOLATE modes require a "next" entry to पूर्णांकerpolate with,
+	 * so we replicate the last entry to deal with this क्रम now.
 	 */
-	writew(readw(mem - 8), mem + 0);
-	writew(readw(mem - 6), mem + 2);
-	writew(readw(mem - 4), mem + 4);
-}
+	ग_लिखोw(पढ़ोw(mem - 8), mem + 0);
+	ग_लिखोw(पढ़ोw(mem - 6), mem + 2);
+	ग_लिखोw(पढ़ोw(mem - 4), mem + 4);
+पूर्ण
 
 bool
-head507d_olut(struct nv50_head *head, struct nv50_head_atom *asyh, int size)
-{
-	if (size != 256)
-		return false;
+head507d_olut(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh, पूर्णांक size)
+अणु
+	अगर (size != 256)
+		वापस false;
 
-	if (asyh->base.cpp == 1)
+	अगर (asyh->base.cpp == 1)
 		asyh->olut.mode = NV507D_HEAD_SET_BASE_LUT_LO_MODE_LORES;
-	else
+	अन्यथा
 		asyh->olut.mode = NV507D_HEAD_SET_BASE_LUT_LO_MODE_HIRES;
 
 	asyh->olut.load = head507d_olut_load;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int
-head507d_mode(struct nv50_head *head, struct nv50_head_atom *asyh)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	struct nv50_head_mode *m = &asyh->mode;
-	const int i = head->base.index;
-	int ret;
+पूर्णांक
+head507d_mode(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	काष्ठा nv50_head_mode *m = &asyh->mode;
+	स्थिर पूर्णांक i = head->base.index;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 13)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 13)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_PIXEL_CLOCK(i),
-		  NVVAL(NV507D, HEAD_SET_PIXEL_CLOCK, FREQUENCY, m->clock) |
+		  NVVAL(NV507D, HEAD_SET_PIXEL_CLOCK, FREQUENCY, m->घड़ी) |
 		  NVDEF(NV507D, HEAD_SET_PIXEL_CLOCK, MODE, CLK_CUSTOM) |
 		  NVDEF(NV507D, HEAD_SET_PIXEL_CLOCK, ADJ1000DIV1001, FALSE) |
 		  NVDEF(NV507D, HEAD_SET_PIXEL_CLOCK, NOT_DRIVER, FALSE),
 
 				HEAD_SET_CONTROL(i),
-		  NVVAL(NV507D, HEAD_SET_CONTROL, STRUCTURE, m->interlace));
+		  NVVAL(NV507D, HEAD_SET_CONTROL, STRUCTURE, m->पूर्णांकerlace));
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_OVERSCAN_COLOR(i),
 		  NVVAL(NV507D, HEAD_SET_OVERSCAN_COLOR, RED, 0) |
@@ -394,18 +395,18 @@ head507d_mode(struct nv50_head *head, struct nv50_head_atom *asyh)
 		  NVVAL(NV507D, HEAD_SET_DEFAULT_BASE_COLOR, RED, 0) |
 		  NVVAL(NV507D, HEAD_SET_DEFAULT_BASE_COLOR, GREEN, 0) |
 		  NVVAL(NV507D, HEAD_SET_DEFAULT_BASE_COLOR, BLUE, 0));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-head507d_view(struct nv50_head *head, struct nv50_head_atom *asyh)
-{
-	struct nvif_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
-	const int i = head->base.index;
-	int ret;
+पूर्णांक
+head507d_view(काष्ठा nv50_head *head, काष्ठा nv50_head_atom *asyh)
+अणु
+	काष्ठा nvअगर_push *push = nv50_disp(head->base.base.dev)->core->chan.push;
+	स्थिर पूर्णांक i = head->base.index;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 7)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 7)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV507D, HEAD_SET_CONTROL_OUTPUT_SCALER(i),
 		  NVDEF(NV507D, HEAD_SET_CONTROL_OUTPUT_SCALER, VERTICAL_TAPS, TAPS_1) |
@@ -424,11 +425,11 @@ head507d_view(struct nv50_head *head, struct nv50_head_atom *asyh)
 				HEAD_SET_VIEWPORT_SIZE_OUT_MIN(i),
 		  NVVAL(NV507D, HEAD_SET_VIEWPORT_SIZE_OUT_MIN, WIDTH, asyh->view.oW) |
 		  NVVAL(NV507D, HEAD_SET_VIEWPORT_SIZE_OUT_MIN, HEIGHT, asyh->view.oH));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct nv50_head_func
-head507d = {
+स्थिर काष्ठा nv50_head_func
+head507d = अणु
 	.view = head507d_view,
 	.mode = head507d_mode,
 	.olut = head507d_olut,
@@ -439,11 +440,11 @@ head507d = {
 	.core_set = head507d_core_set,
 	.core_clr = head507d_core_clr,
 	.curs_layout = head507d_curs_layout,
-	.curs_format = head507d_curs_format,
+	.curs_क्रमmat = head507d_curs_क्रमmat,
 	.curs_set = head507d_curs_set,
 	.curs_clr = head507d_curs_clr,
 	.base = head507d_base,
 	.ovly = head507d_ovly,
 	.dither = head507d_dither,
 	.procamp = head507d_procamp,
-};
+पूर्ण;

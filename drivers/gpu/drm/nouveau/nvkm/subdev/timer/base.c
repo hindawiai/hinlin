@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,178 +22,178 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
+#समावेश "priv.h"
 
 s64
-nvkm_timer_wait_test(struct nvkm_timer_wait *wait)
-{
-	struct nvkm_subdev *subdev = &wait->tmr->subdev;
-	u64 time = nvkm_timer_read(wait->tmr);
+nvkm_समयr_रुको_test(काष्ठा nvkm_समयr_रुको *रुको)
+अणु
+	काष्ठा nvkm_subdev *subdev = &रुको->पंचांगr->subdev;
+	u64 समय = nvkm_समयr_पढ़ो(रुको->पंचांगr);
 
-	if (wait->reads == 0) {
-		wait->time0 = time;
-		wait->time1 = time;
-	}
+	अगर (रुको->पढ़ोs == 0) अणु
+		रुको->समय0 = समय;
+		रुको->समय1 = समय;
+	पूर्ण
 
-	if (wait->time1 == time) {
-		if (wait->reads++ == 16) {
-			nvkm_fatal(subdev, "stalled at %016llx\n", time);
-			return -ETIMEDOUT;
-		}
-	} else {
-		wait->time1 = time;
-		wait->reads = 1;
-	}
+	अगर (रुको->समय1 == समय) अणु
+		अगर (रुको->पढ़ोs++ == 16) अणु
+			nvkm_fatal(subdev, "stalled at %016llx\n", समय);
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		रुको->समय1 = समय;
+		रुको->पढ़ोs = 1;
+	पूर्ण
 
-	if (wait->time1 - wait->time0 > wait->limit)
-		return -ETIMEDOUT;
+	अगर (रुको->समय1 - रुको->समय0 > रुको->limit)
+		वापस -ETIMEDOUT;
 
-	return wait->time1 - wait->time0;
-}
+	वापस रुको->समय1 - रुको->समय0;
+पूर्ण
 
-void
-nvkm_timer_wait_init(struct nvkm_device *device, u64 nsec,
-		     struct nvkm_timer_wait *wait)
-{
-	wait->tmr = device->timer;
-	wait->limit = nsec;
-	wait->reads = 0;
-}
+व्योम
+nvkm_समयr_रुको_init(काष्ठा nvkm_device *device, u64 nsec,
+		     काष्ठा nvkm_समयr_रुको *रुको)
+अणु
+	रुको->पंचांगr = device->समयr;
+	रुको->limit = nsec;
+	रुको->पढ़ोs = 0;
+पूर्ण
 
 u64
-nvkm_timer_read(struct nvkm_timer *tmr)
-{
-	return tmr->func->read(tmr);
-}
+nvkm_समयr_पढ़ो(काष्ठा nvkm_समयr *पंचांगr)
+अणु
+	वापस पंचांगr->func->पढ़ो(पंचांगr);
+पूर्ण
 
-void
-nvkm_timer_alarm_trigger(struct nvkm_timer *tmr)
-{
-	struct nvkm_alarm *alarm, *atemp;
-	unsigned long flags;
+व्योम
+nvkm_समयr_alarm_trigger(काष्ठा nvkm_समयr *पंचांगr)
+अणु
+	काष्ठा nvkm_alarm *alarm, *atemp;
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(exec);
 
 	/* Process pending alarms. */
-	spin_lock_irqsave(&tmr->lock, flags);
-	list_for_each_entry_safe(alarm, atemp, &tmr->alarms, head) {
+	spin_lock_irqsave(&पंचांगr->lock, flags);
+	list_क्रम_each_entry_safe(alarm, atemp, &पंचांगr->alarms, head) अणु
 		/* Have we hit the earliest alarm that hasn't gone off? */
-		if (alarm->timestamp > nvkm_timer_read(tmr)) {
-			/* Schedule it.  If we didn't race, we're done. */
-			tmr->func->alarm_init(tmr, alarm->timestamp);
-			if (alarm->timestamp > nvkm_timer_read(tmr))
-				break;
-		}
+		अगर (alarm->बारtamp > nvkm_समयr_पढ़ो(पंचांगr)) अणु
+			/* Schedule it.  If we didn't race, we're करोne. */
+			पंचांगr->func->alarm_init(पंचांगr, alarm->बारtamp);
+			अगर (alarm->बारtamp > nvkm_समयr_पढ़ो(पंचांगr))
+				अवरोध;
+		पूर्ण
 
-		/* Move to completed list.  We'll drop the lock before
+		/* Move to completed list.  We'll drop the lock beक्रमe
 		 * executing the callback so it can reschedule itself.
 		 */
 		list_del_init(&alarm->head);
 		list_add(&alarm->exec, &exec);
-	}
+	पूर्ण
 
-	/* Shut down interrupt if no more pending alarms. */
-	if (list_empty(&tmr->alarms))
-		tmr->func->alarm_fini(tmr);
-	spin_unlock_irqrestore(&tmr->lock, flags);
+	/* Shut करोwn पूर्णांकerrupt अगर no more pending alarms. */
+	अगर (list_empty(&पंचांगr->alarms))
+		पंचांगr->func->alarm_fini(पंचांगr);
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
 
 	/* Execute completed callbacks. */
-	list_for_each_entry_safe(alarm, atemp, &exec, exec) {
+	list_क्रम_each_entry_safe(alarm, atemp, &exec, exec) अणु
 		list_del(&alarm->exec);
 		alarm->func(alarm);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-nvkm_timer_alarm(struct nvkm_timer *tmr, u32 nsec, struct nvkm_alarm *alarm)
-{
-	struct nvkm_alarm *list;
-	unsigned long flags;
+व्योम
+nvkm_समयr_alarm(काष्ठा nvkm_समयr *पंचांगr, u32 nsec, काष्ठा nvkm_alarm *alarm)
+अणु
+	काष्ठा nvkm_alarm *list;
+	अचिन्हित दीर्घ flags;
 
 	/* Remove alarm from pending list.
 	 *
 	 * This both protects against the corruption of the list,
 	 * and implements alarm rescheduling/cancellation.
 	 */
-	spin_lock_irqsave(&tmr->lock, flags);
+	spin_lock_irqsave(&पंचांगr->lock, flags);
 	list_del_init(&alarm->head);
 
-	if (nsec) {
-		/* Insert into pending list, ordered earliest to latest. */
-		alarm->timestamp = nvkm_timer_read(tmr) + nsec;
-		list_for_each_entry(list, &tmr->alarms, head) {
-			if (list->timestamp > alarm->timestamp)
-				break;
-		}
+	अगर (nsec) अणु
+		/* Insert पूर्णांकo pending list, ordered earliest to latest. */
+		alarm->बारtamp = nvkm_समयr_पढ़ो(पंचांगr) + nsec;
+		list_क्रम_each_entry(list, &पंचांगr->alarms, head) अणु
+			अगर (list->बारtamp > alarm->बारtamp)
+				अवरोध;
+		पूर्ण
 
 		list_add_tail(&alarm->head, &list->head);
 
-		/* Update HW if this is now the earliest alarm. */
-		list = list_first_entry(&tmr->alarms, typeof(*list), head);
-		if (list == alarm) {
-			tmr->func->alarm_init(tmr, alarm->timestamp);
+		/* Update HW अगर this is now the earliest alarm. */
+		list = list_first_entry(&पंचांगr->alarms, typeof(*list), head);
+		अगर (list == alarm) अणु
+			पंचांगr->func->alarm_init(पंचांगr, alarm->बारtamp);
 			/* This shouldn't happen if callers aren't stupid.
 			 *
-			 * Worst case scenario is that it'll take roughly
-			 * 4 seconds for the next alarm to trigger.
+			 * Worst हाल scenario is that it'll take roughly
+			 * 4 seconds क्रम the next alarm to trigger.
 			 */
-			WARN_ON(alarm->timestamp <= nvkm_timer_read(tmr));
-		}
-	}
-	spin_unlock_irqrestore(&tmr->lock, flags);
-}
+			WARN_ON(alarm->बारtamp <= nvkm_समयr_पढ़ो(पंचांगr));
+		पूर्ण
+	पूर्ण
+	spin_unlock_irqrestore(&पंचांगr->lock, flags);
+पूर्ण
 
-static void
-nvkm_timer_intr(struct nvkm_subdev *subdev)
-{
-	struct nvkm_timer *tmr = nvkm_timer(subdev);
-	tmr->func->intr(tmr);
-}
+अटल व्योम
+nvkm_समयr_पूर्णांकr(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_समयr *पंचांगr = nvkm_समयr(subdev);
+	पंचांगr->func->पूर्णांकr(पंचांगr);
+पूर्ण
 
-static int
-nvkm_timer_fini(struct nvkm_subdev *subdev, bool suspend)
-{
-	struct nvkm_timer *tmr = nvkm_timer(subdev);
-	tmr->func->alarm_fini(tmr);
-	return 0;
-}
+अटल पूर्णांक
+nvkm_समयr_fini(काष्ठा nvkm_subdev *subdev, bool suspend)
+अणु
+	काष्ठा nvkm_समयr *पंचांगr = nvkm_समयr(subdev);
+	पंचांगr->func->alarm_fini(पंचांगr);
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_timer_init(struct nvkm_subdev *subdev)
-{
-	struct nvkm_timer *tmr = nvkm_timer(subdev);
-	if (tmr->func->init)
-		tmr->func->init(tmr);
-	tmr->func->time(tmr, ktime_to_ns(ktime_get()));
-	nvkm_timer_alarm_trigger(tmr);
-	return 0;
-}
+अटल पूर्णांक
+nvkm_समयr_init(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_समयr *पंचांगr = nvkm_समयr(subdev);
+	अगर (पंचांगr->func->init)
+		पंचांगr->func->init(पंचांगr);
+	पंचांगr->func->समय(पंचांगr, kसमय_प्रकारo_ns(kसमय_get()));
+	nvkm_समयr_alarm_trigger(पंचांगr);
+	वापस 0;
+पूर्ण
 
-static void *
-nvkm_timer_dtor(struct nvkm_subdev *subdev)
-{
-	return nvkm_timer(subdev);
-}
+अटल व्योम *
+nvkm_समयr_dtor(काष्ठा nvkm_subdev *subdev)
+अणु
+	वापस nvkm_समयr(subdev);
+पूर्ण
 
-static const struct nvkm_subdev_func
-nvkm_timer = {
-	.dtor = nvkm_timer_dtor,
-	.init = nvkm_timer_init,
-	.fini = nvkm_timer_fini,
-	.intr = nvkm_timer_intr,
-};
+अटल स्थिर काष्ठा nvkm_subdev_func
+nvkm_समयr = अणु
+	.dtor = nvkm_समयr_dtor,
+	.init = nvkm_समयr_init,
+	.fini = nvkm_समयr_fini,
+	.पूर्णांकr = nvkm_समयr_पूर्णांकr,
+पूर्ण;
 
-int
-nvkm_timer_new_(const struct nvkm_timer_func *func, struct nvkm_device *device,
-		enum nvkm_subdev_type type, int inst, struct nvkm_timer **ptmr)
-{
-	struct nvkm_timer *tmr;
+पूर्णांक
+nvkm_समयr_new_(स्थिर काष्ठा nvkm_समयr_func *func, काष्ठा nvkm_device *device,
+		क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_समयr **pपंचांगr)
+अणु
+	काष्ठा nvkm_समयr *पंचांगr;
 
-	if (!(tmr = *ptmr = kzalloc(sizeof(*tmr), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(पंचांगr = *pपंचांगr = kzalloc(माप(*पंचांगr), GFP_KERNEL)))
+		वापस -ENOMEM;
 
-	nvkm_subdev_ctor(&nvkm_timer, device, type, inst, &tmr->subdev);
-	tmr->func = func;
-	INIT_LIST_HEAD(&tmr->alarms);
-	spin_lock_init(&tmr->lock);
-	return 0;
-}
+	nvkm_subdev_ctor(&nvkm_समयr, device, type, inst, &पंचांगr->subdev);
+	पंचांगr->func = func;
+	INIT_LIST_HEAD(&पंचांगr->alarms);
+	spin_lock_init(&पंचांगr->lock);
+	वापस 0;
+पूर्ण

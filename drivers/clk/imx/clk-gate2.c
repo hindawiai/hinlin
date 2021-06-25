@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2010-2011 Canonical Ltd <jeremy.kerr@canonical.com>
  * Copyright (C) 2011-2012 Mike Turquette, Linaro Ltd <mturquette@linaro.org>
  *
- * Gated clock implementation
+ * Gated घड़ी implementation
  */
 
-#include <linux/clk-provider.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/string.h>
-#include "clk.h"
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/माला.स>
+#समावेश "clk.h"
 
 /**
- * DOC: basic gateable clock which can gate and ungate its output
+ * DOC: basic gateable घड़ी which can gate and ungate its output
  *
- * Traits of this clock:
+ * Traits of this घड़ी:
  * prepare - clk_(un)prepare only ensures parent is (un)prepared
  * enable - clk_enable and clk_disable are functional & control gating
  * rate - inherits rate from parent.  No clk_set_rate support
  * parent - fixed parent.  No clk_set_parent support
  */
 
-struct clk_gate2 {
-	struct clk_hw hw;
-	void __iomem	*reg;
+काष्ठा clk_gate2 अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem	*reg;
 	u8		bit_idx;
 	u8		cgr_val;
 	u8		cgr_mask;
 	u8		flags;
 	spinlock_t	*lock;
-	unsigned int	*share_count;
-};
+	अचिन्हित पूर्णांक	*share_count;
+पूर्ण;
 
-#define to_clk_gate2(_hw) container_of(_hw, struct clk_gate2, hw)
+#घोषणा to_clk_gate2(_hw) container_of(_hw, काष्ठा clk_gate2, hw)
 
-static void clk_gate2_do_shared_clks(struct clk_hw *hw, bool enable)
-{
-	struct clk_gate2 *gate = to_clk_gate2(hw);
+अटल व्योम clk_gate2_करो_shared_clks(काष्ठा clk_hw *hw, bool enable)
+अणु
+	काष्ठा clk_gate2 *gate = to_clk_gate2(hw);
 	u32 reg;
 
-	reg = readl(gate->reg);
+	reg = पढ़ोl(gate->reg);
 	reg &= ~(gate->cgr_mask << gate->bit_idx);
-	if (enable)
+	अगर (enable)
 		reg |= (gate->cgr_val & gate->cgr_mask) << gate->bit_idx;
-	writel(reg, gate->reg);
-}
+	ग_लिखोl(reg, gate->reg);
+पूर्ण
 
-static int clk_gate2_enable(struct clk_hw *hw)
-{
-	struct clk_gate2 *gate = to_clk_gate2(hw);
-	unsigned long flags;
-
-	spin_lock_irqsave(gate->lock, flags);
-
-	if (gate->share_count && (*gate->share_count)++ > 0)
-		goto out;
-
-	clk_gate2_do_shared_clks(hw, true);
-out:
-	spin_unlock_irqrestore(gate->lock, flags);
-
-	return 0;
-}
-
-static void clk_gate2_disable(struct clk_hw *hw)
-{
-	struct clk_gate2 *gate = to_clk_gate2(hw);
-	unsigned long flags;
+अटल पूर्णांक clk_gate2_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gate2 *gate = to_clk_gate2(hw);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(gate->lock, flags);
 
-	if (gate->share_count) {
-		if (WARN_ON(*gate->share_count == 0))
-			goto out;
-		else if (--(*gate->share_count) > 0)
-			goto out;
-	}
+	अगर (gate->share_count && (*gate->share_count)++ > 0)
+		जाओ out;
 
-	clk_gate2_do_shared_clks(hw, false);
+	clk_gate2_करो_shared_clks(hw, true);
 out:
 	spin_unlock_irqrestore(gate->lock, flags);
-}
 
-static int clk_gate2_reg_is_enabled(void __iomem *reg, u8 bit_idx,
+	वापस 0;
+पूर्ण
+
+अटल व्योम clk_gate2_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gate2 *gate = to_clk_gate2(hw);
+	अचिन्हित दीर्घ flags;
+
+	spin_lock_irqsave(gate->lock, flags);
+
+	अगर (gate->share_count) अणु
+		अगर (WARN_ON(*gate->share_count == 0))
+			जाओ out;
+		अन्यथा अगर (--(*gate->share_count) > 0)
+			जाओ out;
+	पूर्ण
+
+	clk_gate2_करो_shared_clks(hw, false);
+out:
+	spin_unlock_irqrestore(gate->lock, flags);
+पूर्ण
+
+अटल पूर्णांक clk_gate2_reg_is_enabled(व्योम __iomem *reg, u8 bit_idx,
 					u8 cgr_val, u8 cgr_mask)
-{
-	u32 val = readl(reg);
+अणु
+	u32 val = पढ़ोl(reg);
 
-	if (((val >> bit_idx) & cgr_mask) == cgr_val)
-		return 1;
+	अगर (((val >> bit_idx) & cgr_mask) == cgr_val)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_gate2_is_enabled(struct clk_hw *hw)
-{
-	struct clk_gate2 *gate = to_clk_gate2(hw);
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक clk_gate2_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gate2 *gate = to_clk_gate2(hw);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(gate->lock, flags);
 
@@ -110,45 +111,45 @@ static int clk_gate2_is_enabled(struct clk_hw *hw)
 
 	spin_unlock_irqrestore(gate->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void clk_gate2_disable_unused(struct clk_hw *hw)
-{
-	struct clk_gate2 *gate = to_clk_gate2(hw);
-	unsigned long flags;
+अटल व्योम clk_gate2_disable_unused(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gate2 *gate = to_clk_gate2(hw);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(gate->lock, flags);
 
-	if (!gate->share_count || *gate->share_count == 0)
-		clk_gate2_do_shared_clks(hw, false);
+	अगर (!gate->share_count || *gate->share_count == 0)
+		clk_gate2_करो_shared_clks(hw, false);
 
 	spin_unlock_irqrestore(gate->lock, flags);
-}
+पूर्ण
 
-static const struct clk_ops clk_gate2_ops = {
+अटल स्थिर काष्ठा clk_ops clk_gate2_ops = अणु
 	.enable = clk_gate2_enable,
 	.disable = clk_gate2_disable,
 	.disable_unused = clk_gate2_disable_unused,
 	.is_enabled = clk_gate2_is_enabled,
-};
+पूर्ण;
 
-struct clk_hw *clk_hw_register_gate2(struct device *dev, const char *name,
-		const char *parent_name, unsigned long flags,
-		void __iomem *reg, u8 bit_idx, u8 cgr_val, u8 cgr_mask,
+काष्ठा clk_hw *clk_hw_रेजिस्टर_gate2(काष्ठा device *dev, स्थिर अक्षर *name,
+		स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
+		व्योम __iomem *reg, u8 bit_idx, u8 cgr_val, u8 cgr_mask,
 		u8 clk_gate2_flags, spinlock_t *lock,
-		unsigned int *share_count)
-{
-	struct clk_gate2 *gate;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+		अचिन्हित पूर्णांक *share_count)
+अणु
+	काष्ठा clk_gate2 *gate;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	gate = kzalloc(sizeof(struct clk_gate2), GFP_KERNEL);
-	if (!gate)
-		return ERR_PTR(-ENOMEM);
+	gate = kzalloc(माप(काष्ठा clk_gate2), GFP_KERNEL);
+	अगर (!gate)
+		वापस ERR_PTR(-ENOMEM);
 
-	/* struct clk_gate2 assignments */
+	/* काष्ठा clk_gate2 assignments */
 	gate->reg = reg;
 	gate->bit_idx = bit_idx;
 	gate->cgr_val = cgr_val;
@@ -160,18 +161,18 @@ struct clk_hw *clk_hw_register_gate2(struct device *dev, const char *name,
 	init.name = name;
 	init.ops = &clk_gate2_ops;
 	init.flags = flags;
-	init.parent_names = parent_name ? &parent_name : NULL;
+	init.parent_names = parent_name ? &parent_name : शून्य;
 	init.num_parents = parent_name ? 1 : 0;
 
 	gate->hw.init = &init;
 	hw = &gate->hw;
 
-	ret = clk_hw_register(dev, hw);
-	if (ret) {
-		kfree(gate);
-		return ERR_PTR(ret);
-	}
+	ret = clk_hw_रेजिस्टर(dev, hw);
+	अगर (ret) अणु
+		kमुक्त(gate);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return hw;
-}
-EXPORT_SYMBOL_GPL(clk_hw_register_gate2);
+	वापस hw;
+पूर्ण
+EXPORT_SYMBOL_GPL(clk_hw_रेजिस्टर_gate2);

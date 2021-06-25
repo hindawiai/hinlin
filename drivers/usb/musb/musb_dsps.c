@@ -1,416 +1,417 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Texas Instruments DSPS platforms "glue layer"
+ * Texas Instruments DSPS platक्रमms "glue layer"
  *
  * Copyright (C) 2012, by Texas Instruments
  *
  * Based on the am35x "glue layer" code.
  *
- * This file is part of the Inventra Controller Driver for Linux.
+ * This file is part of the Inventra Controller Driver क्रम Linux.
  *
- * musb_dsps.c will be a common file for all the TI DSPS platforms
+ * musb_dsps.c will be a common file क्रम all the TI DSPS platक्रमms
  * such as dm64x, dm36x, dm35x, da8x, am35x and ti81x.
  * For now only ti81x is using this and in future davinci.c, am35x.c
  * da8xx.c would be merged to this file after testing.
  */
 
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/pm_runtime.h>
-#include <linux/module.h>
-#include <linux/usb/usb_phy_generic.h>
-#include <linux/platform_data/usb-omap.h>
-#include <linux/sizes.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/module.h>
+#समावेश <linux/usb/usb_phy_generic.h>
+#समावेश <linux/platक्रमm_data/usb-omap.h>
+#समावेश <linux/sizes.h>
 
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/usb/of.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/usb/of.h>
 
-#include <linux/debugfs.h>
+#समावेश <linux/debugfs.h>
 
-#include "musb_core.h"
+#समावेश "musb_core.h"
 
-static const struct of_device_id musb_dsps_of_match[];
+अटल स्थिर काष्ठा of_device_id musb_dsps_of_match[];
 
 /*
- * DSPS musb wrapper register offset.
- * FIXME: This should be expanded to have all the wrapper registers from TI DSPS
+ * DSPS musb wrapper रेजिस्टर offset.
+ * FIXME: This should be expanded to have all the wrapper रेजिस्टरs from TI DSPS
  * musb ips.
  */
-struct dsps_musb_wrapper {
+काष्ठा dsps_musb_wrapper अणु
 	u16	revision;
 	u16	control;
 	u16	status;
-	u16	epintr_set;
-	u16	epintr_clear;
-	u16	epintr_status;
-	u16	coreintr_set;
-	u16	coreintr_clear;
-	u16	coreintr_status;
-	u16	phy_utmi;
+	u16	epपूर्णांकr_set;
+	u16	epपूर्णांकr_clear;
+	u16	epपूर्णांकr_status;
+	u16	coreपूर्णांकr_set;
+	u16	coreपूर्णांकr_clear;
+	u16	coreपूर्णांकr_status;
+	u16	phy_uपंचांगi;
 	u16	mode;
 	u16	tx_mode;
 	u16	rx_mode;
 
-	/* bit positions for control */
-	unsigned	reset:5;
+	/* bit positions क्रम control */
+	अचिन्हित	reset:5;
 
-	/* bit positions for interrupt */
-	unsigned	usb_shift:5;
+	/* bit positions क्रम पूर्णांकerrupt */
+	अचिन्हित	usb_shअगरt:5;
 	u32		usb_mask;
-	u32		usb_bitmap;
-	unsigned	drvvbus:5;
+	u32		usb_biपंचांगap;
+	अचिन्हित	drvvbus:5;
 
-	unsigned	txep_shift:5;
+	अचिन्हित	txep_shअगरt:5;
 	u32		txep_mask;
-	u32		txep_bitmap;
+	u32		txep_biपंचांगap;
 
-	unsigned	rxep_shift:5;
+	अचिन्हित	rxep_shअगरt:5;
 	u32		rxep_mask;
-	u32		rxep_bitmap;
+	u32		rxep_biपंचांगap;
 
-	/* bit positions for phy_utmi */
-	unsigned	otg_disable:5;
+	/* bit positions क्रम phy_uपंचांगi */
+	अचिन्हित	otg_disable:5;
 
-	/* bit positions for mode */
-	unsigned	iddig:5;
-	unsigned	iddig_mux:5;
+	/* bit positions क्रम mode */
+	अचिन्हित	iddig:5;
+	अचिन्हित	iddig_mux:5;
 	/* miscellaneous stuff */
-	unsigned	poll_timeout;
-};
+	अचिन्हित	poll_समयout;
+पूर्ण;
 
 /*
- * register shadow for suspend
+ * रेजिस्टर shaकरोw क्रम suspend
  */
-struct dsps_context {
+काष्ठा dsps_context अणु
 	u32 control;
-	u32 epintr;
-	u32 coreintr;
-	u32 phy_utmi;
+	u32 epपूर्णांकr;
+	u32 coreपूर्णांकr;
+	u32 phy_uपंचांगi;
 	u32 mode;
 	u32 tx_mode;
 	u32 rx_mode;
-};
+पूर्ण;
 
 /*
- * DSPS glue structure.
+ * DSPS glue काष्ठाure.
  */
-struct dsps_glue {
-	struct device *dev;
-	struct platform_device *musb;	/* child musb pdev */
-	const struct dsps_musb_wrapper *wrp; /* wrapper register offsets */
-	int vbus_irq;			/* optional vbus irq */
-	unsigned long last_timer;    /* last timer data for each instance */
+काष्ठा dsps_glue अणु
+	काष्ठा device *dev;
+	काष्ठा platक्रमm_device *musb;	/* child musb pdev */
+	स्थिर काष्ठा dsps_musb_wrapper *wrp; /* wrapper रेजिस्टर offsets */
+	पूर्णांक vbus_irq;			/* optional vbus irq */
+	अचिन्हित दीर्घ last_समयr;    /* last समयr data क्रम each instance */
 	bool sw_babble_enabled;
-	void __iomem *usbss_base;
+	व्योम __iomem *usbss_base;
 
-	struct dsps_context context;
-	struct debugfs_regset32 regset;
-	struct dentry *dbgfs_root;
-};
+	काष्ठा dsps_context context;
+	काष्ठा debugfs_regset32 regset;
+	काष्ठा dentry *dbgfs_root;
+पूर्ण;
 
-static const struct debugfs_reg32 dsps_musb_regs[] = {
-	{ "revision",		0x00 },
-	{ "control",		0x14 },
-	{ "status",		0x18 },
-	{ "eoi",		0x24 },
-	{ "intr0_stat",		0x30 },
-	{ "intr1_stat",		0x34 },
-	{ "intr0_set",		0x38 },
-	{ "intr1_set",		0x3c },
-	{ "txmode",		0x70 },
-	{ "rxmode",		0x74 },
-	{ "autoreq",		0xd0 },
-	{ "srpfixtime",		0xd4 },
-	{ "tdown",		0xd8 },
-	{ "phy_utmi",		0xe0 },
-	{ "mode",		0xe8 },
-};
+अटल स्थिर काष्ठा debugfs_reg32 dsps_musb_regs[] = अणु
+	अणु "revision",		0x00 पूर्ण,
+	अणु "control",		0x14 पूर्ण,
+	अणु "status",		0x18 पूर्ण,
+	अणु "eoi",		0x24 पूर्ण,
+	अणु "intr0_stat",		0x30 पूर्ण,
+	अणु "intr1_stat",		0x34 पूर्ण,
+	अणु "intr0_set",		0x38 पूर्ण,
+	अणु "intr1_set",		0x3c पूर्ण,
+	अणु "txmode",		0x70 पूर्ण,
+	अणु "rxmode",		0x74 पूर्ण,
+	अणु "autoreq",		0xd0 पूर्ण,
+	अणु "srpfixtime",		0xd4 पूर्ण,
+	अणु "tdown",		0xd8 पूर्ण,
+	अणु "phy_utmi",		0xe0 पूर्ण,
+	अणु "mode",		0xe8 पूर्ण,
+पूर्ण;
 
-static void dsps_mod_timer(struct dsps_glue *glue, int wait_ms)
-{
-	struct musb *musb = platform_get_drvdata(glue->musb);
-	int wait;
+अटल व्योम dsps_mod_समयr(काष्ठा dsps_glue *glue, पूर्णांक रुको_ms)
+अणु
+	काष्ठा musb *musb = platक्रमm_get_drvdata(glue->musb);
+	पूर्णांक रुको;
 
-	if (wait_ms < 0)
-		wait = msecs_to_jiffies(glue->wrp->poll_timeout);
-	else
-		wait = msecs_to_jiffies(wait_ms);
+	अगर (रुको_ms < 0)
+		रुको = msecs_to_jअगरfies(glue->wrp->poll_समयout);
+	अन्यथा
+		रुको = msecs_to_jअगरfies(रुको_ms);
 
-	mod_timer(&musb->dev_timer, jiffies + wait);
-}
+	mod_समयr(&musb->dev_समयr, jअगरfies + रुको);
+पूर्ण
 
 /*
  * If no vbus irq from the PMIC is configured, we need to poll VBUS status.
  */
-static void dsps_mod_timer_optional(struct dsps_glue *glue)
-{
-	if (glue->vbus_irq)
-		return;
+अटल व्योम dsps_mod_समयr_optional(काष्ठा dsps_glue *glue)
+अणु
+	अगर (glue->vbus_irq)
+		वापस;
 
-	dsps_mod_timer(glue, -1);
-}
+	dsps_mod_समयr(glue, -1);
+पूर्ण
 
 /* USBSS  / USB AM335x */
-#define USBSS_IRQ_STATUS	0x28
-#define USBSS_IRQ_ENABLER	0x2c
-#define USBSS_IRQ_CLEARR	0x30
+#घोषणा USBSS_IRQ_STATUS	0x28
+#घोषणा USBSS_IRQ_ENABLER	0x2c
+#घोषणा USBSS_IRQ_CLEARR	0x30
 
-#define USBSS_IRQ_PD_COMP	(1 << 2)
+#घोषणा USBSS_IRQ_PD_COMP	(1 << 2)
 
 /*
- * dsps_musb_enable - enable interrupts
+ * dsps_musb_enable - enable पूर्णांकerrupts
  */
-static void dsps_musb_enable(struct musb *musb)
-{
-	struct device *dev = musb->controller;
-	struct dsps_glue *glue = dev_get_drvdata(dev->parent);
-	const struct dsps_musb_wrapper *wrp = glue->wrp;
-	void __iomem *reg_base = musb->ctrl_base;
+अटल व्योम dsps_musb_enable(काष्ठा musb *musb)
+अणु
+	काष्ठा device *dev = musb->controller;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(dev->parent);
+	स्थिर काष्ठा dsps_musb_wrapper *wrp = glue->wrp;
+	व्योम __iomem *reg_base = musb->ctrl_base;
 	u32 epmask, coremask;
 
-	/* Workaround: setup IRQs through both register sets. */
-	epmask = ((musb->epmask & wrp->txep_mask) << wrp->txep_shift) |
-	       ((musb->epmask & wrp->rxep_mask) << wrp->rxep_shift);
-	coremask = (wrp->usb_bitmap & ~MUSB_INTR_SOF);
+	/* Workaround: setup IRQs through both रेजिस्टर sets. */
+	epmask = ((musb->epmask & wrp->txep_mask) << wrp->txep_shअगरt) |
+	       ((musb->epmask & wrp->rxep_mask) << wrp->rxep_shअगरt);
+	coremask = (wrp->usb_biपंचांगap & ~MUSB_INTR_SOF);
 
-	musb_writel(reg_base, wrp->epintr_set, epmask);
-	musb_writel(reg_base, wrp->coreintr_set, coremask);
+	musb_ग_लिखोl(reg_base, wrp->epपूर्णांकr_set, epmask);
+	musb_ग_लिखोl(reg_base, wrp->coreपूर्णांकr_set, coremask);
 	/*
-	 * start polling for runtime PM active and idle,
-	 * and for ID change in dual-role idle mode.
+	 * start polling क्रम runसमय PM active and idle,
+	 * and क्रम ID change in dual-role idle mode.
 	 */
-	if (musb->xceiv->otg->state == OTG_STATE_B_IDLE)
-		dsps_mod_timer(glue, -1);
-}
+	अगर (musb->xceiv->otg->state == OTG_STATE_B_IDLE)
+		dsps_mod_समयr(glue, -1);
+पूर्ण
 
 /*
- * dsps_musb_disable - disable HDRC and flush interrupts
+ * dsps_musb_disable - disable HDRC and flush पूर्णांकerrupts
  */
-static void dsps_musb_disable(struct musb *musb)
-{
-	struct device *dev = musb->controller;
-	struct dsps_glue *glue = dev_get_drvdata(dev->parent);
-	const struct dsps_musb_wrapper *wrp = glue->wrp;
-	void __iomem *reg_base = musb->ctrl_base;
+अटल व्योम dsps_musb_disable(काष्ठा musb *musb)
+अणु
+	काष्ठा device *dev = musb->controller;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(dev->parent);
+	स्थिर काष्ठा dsps_musb_wrapper *wrp = glue->wrp;
+	व्योम __iomem *reg_base = musb->ctrl_base;
 
-	musb_writel(reg_base, wrp->coreintr_clear, wrp->usb_bitmap);
-	musb_writel(reg_base, wrp->epintr_clear,
-			 wrp->txep_bitmap | wrp->rxep_bitmap);
-	del_timer_sync(&musb->dev_timer);
-}
+	musb_ग_लिखोl(reg_base, wrp->coreपूर्णांकr_clear, wrp->usb_biपंचांगap);
+	musb_ग_लिखोl(reg_base, wrp->epपूर्णांकr_clear,
+			 wrp->txep_biपंचांगap | wrp->rxep_biपंचांगap);
+	del_समयr_sync(&musb->dev_समयr);
+पूर्ण
 
 /* Caller must take musb->lock */
-static int dsps_check_status(struct musb *musb, void *unused)
-{
-	void __iomem *mregs = musb->mregs;
-	struct device *dev = musb->controller;
-	struct dsps_glue *glue = dev_get_drvdata(dev->parent);
-	const struct dsps_musb_wrapper *wrp = glue->wrp;
+अटल पूर्णांक dsps_check_status(काष्ठा musb *musb, व्योम *unused)
+अणु
+	व्योम __iomem *mregs = musb->mregs;
+	काष्ठा device *dev = musb->controller;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(dev->parent);
+	स्थिर काष्ठा dsps_musb_wrapper *wrp = glue->wrp;
 	u8 devctl;
-	int skip_session = 0;
+	पूर्णांक skip_session = 0;
 
-	if (glue->vbus_irq)
-		del_timer(&musb->dev_timer);
+	अगर (glue->vbus_irq)
+		del_समयr(&musb->dev_समयr);
 
 	/*
 	 * We poll because DSPS IP's won't expose several OTG-critical
 	 * status change events (from the transceiver) otherwise.
 	 */
-	devctl = musb_readb(mregs, MUSB_DEVCTL);
+	devctl = musb_पढ़ोb(mregs, MUSB_DEVCTL);
 	dev_dbg(musb->controller, "Poll devctl %02x (%s)\n", devctl,
 				usb_otg_state_string(musb->xceiv->otg->state));
 
-	switch (musb->xceiv->otg->state) {
-	case OTG_STATE_A_WAIT_VRISE:
-		if (musb->port_mode == MUSB_HOST) {
+	चयन (musb->xceiv->otg->state) अणु
+	हाल OTG_STATE_A_WAIT_VRISE:
+		अगर (musb->port_mode == MUSB_HOST) अणु
 			musb->xceiv->otg->state = OTG_STATE_A_WAIT_BCON;
-			dsps_mod_timer_optional(glue);
-			break;
-		}
+			dsps_mod_समयr_optional(glue);
+			अवरोध;
+		पूर्ण
 		fallthrough;
 
-	case OTG_STATE_A_WAIT_BCON:
-		/* keep VBUS on for host-only mode */
-		if (musb->port_mode == MUSB_HOST) {
-			dsps_mod_timer_optional(glue);
-			break;
-		}
-		musb_writeb(musb->mregs, MUSB_DEVCTL, 0);
+	हाल OTG_STATE_A_WAIT_BCON:
+		/* keep VBUS on क्रम host-only mode */
+		अगर (musb->port_mode == MUSB_HOST) अणु
+			dsps_mod_समयr_optional(glue);
+			अवरोध;
+		पूर्ण
+		musb_ग_लिखोb(musb->mregs, MUSB_DEVCTL, 0);
 		skip_session = 1;
 		fallthrough;
 
-	case OTG_STATE_A_IDLE:
-	case OTG_STATE_B_IDLE:
-		if (!glue->vbus_irq) {
-			if (devctl & MUSB_DEVCTL_BDEVICE) {
+	हाल OTG_STATE_A_IDLE:
+	हाल OTG_STATE_B_IDLE:
+		अगर (!glue->vbus_irq) अणु
+			अगर (devctl & MUSB_DEVCTL_BDEVICE) अणु
 				musb->xceiv->otg->state = OTG_STATE_B_IDLE;
 				MUSB_DEV_MODE(musb);
-			} else {
+			पूर्ण अन्यथा अणु
 				musb->xceiv->otg->state = OTG_STATE_A_IDLE;
 				MUSB_HST_MODE(musb);
-			}
+			पूर्ण
 
-			if (musb->port_mode == MUSB_PERIPHERAL)
+			अगर (musb->port_mode == MUSB_PERIPHERAL)
 				skip_session = 1;
 
-			if (!(devctl & MUSB_DEVCTL_SESSION) && !skip_session)
-				musb_writeb(mregs, MUSB_DEVCTL,
+			अगर (!(devctl & MUSB_DEVCTL_SESSION) && !skip_session)
+				musb_ग_लिखोb(mregs, MUSB_DEVCTL,
 					    MUSB_DEVCTL_SESSION);
-		}
-		dsps_mod_timer_optional(glue);
-		break;
-	case OTG_STATE_A_WAIT_VFALL:
+		पूर्ण
+		dsps_mod_समयr_optional(glue);
+		अवरोध;
+	हाल OTG_STATE_A_WAIT_VFALL:
 		musb->xceiv->otg->state = OTG_STATE_A_WAIT_VRISE;
-		musb_writel(musb->ctrl_base, wrp->coreintr_set,
-			    MUSB_INTR_VBUSERROR << wrp->usb_shift);
-		break;
-	default:
-		break;
-	}
+		musb_ग_लिखोl(musb->ctrl_base, wrp->coreपूर्णांकr_set,
+			    MUSB_INTR_VBUSERROR << wrp->usb_shअगरt);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void otg_timer(struct timer_list *t)
-{
-	struct musb *musb = from_timer(musb, t, dev_timer);
-	struct device *dev = musb->controller;
-	unsigned long flags;
-	int err;
+अटल व्योम otg_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा musb *musb = from_समयr(musb, t, dev_समयr);
+	काष्ठा device *dev = musb->controller;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
-	err = pm_runtime_get(dev);
-	if ((err != -EINPROGRESS) && err < 0) {
+	err = pm_runसमय_get(dev);
+	अगर ((err != -EINPROGRESS) && err < 0) अणु
 		dev_err(dev, "Poll could not pm_runtime_get: %i\n", err);
-		pm_runtime_put_noidle(dev);
+		pm_runसमय_put_noidle(dev);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&musb->lock, flags);
-	err = musb_queue_resume_work(musb, dsps_check_status, NULL);
-	if (err < 0)
+	err = musb_queue_resume_work(musb, dsps_check_status, शून्य);
+	अगर (err < 0)
 		dev_err(dev, "%s resume work: %i\n", __func__, err);
 	spin_unlock_irqrestore(&musb->lock, flags);
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
-}
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
+पूर्ण
 
-static void dsps_musb_clear_ep_rxintr(struct musb *musb, int epnum)
-{
-	u32 epintr;
-	struct dsps_glue *glue = dev_get_drvdata(musb->controller->parent);
-	const struct dsps_musb_wrapper *wrp = glue->wrp;
+अटल व्योम dsps_musb_clear_ep_rxपूर्णांकr(काष्ठा musb *musb, पूर्णांक epnum)
+अणु
+	u32 epपूर्णांकr;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(musb->controller->parent);
+	स्थिर काष्ठा dsps_musb_wrapper *wrp = glue->wrp;
 
-	/* musb->lock might already been held */
-	epintr = (1 << epnum) << wrp->rxep_shift;
-	musb_writel(musb->ctrl_base, wrp->epintr_status, epintr);
-}
+	/* musb->lock might alपढ़ोy been held */
+	epपूर्णांकr = (1 << epnum) << wrp->rxep_shअगरt;
+	musb_ग_लिखोl(musb->ctrl_base, wrp->epपूर्णांकr_status, epपूर्णांकr);
+पूर्ण
 
-static irqreturn_t dsps_interrupt(int irq, void *hci)
-{
-	struct musb  *musb = hci;
-	void __iomem *reg_base = musb->ctrl_base;
-	struct device *dev = musb->controller;
-	struct dsps_glue *glue = dev_get_drvdata(dev->parent);
-	const struct dsps_musb_wrapper *wrp = glue->wrp;
-	unsigned long flags;
-	irqreturn_t ret = IRQ_NONE;
-	u32 epintr, usbintr;
+अटल irqवापस_t dsps_पूर्णांकerrupt(पूर्णांक irq, व्योम *hci)
+अणु
+	काष्ठा musb  *musb = hci;
+	व्योम __iomem *reg_base = musb->ctrl_base;
+	काष्ठा device *dev = musb->controller;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(dev->parent);
+	स्थिर काष्ठा dsps_musb_wrapper *wrp = glue->wrp;
+	अचिन्हित दीर्घ flags;
+	irqवापस_t ret = IRQ_NONE;
+	u32 epपूर्णांकr, usbपूर्णांकr;
 
 	spin_lock_irqsave(&musb->lock, flags);
 
-	/* Get endpoint interrupts */
-	epintr = musb_readl(reg_base, wrp->epintr_status);
-	musb->int_rx = (epintr & wrp->rxep_bitmap) >> wrp->rxep_shift;
-	musb->int_tx = (epintr & wrp->txep_bitmap) >> wrp->txep_shift;
+	/* Get endpoपूर्णांक पूर्णांकerrupts */
+	epपूर्णांकr = musb_पढ़ोl(reg_base, wrp->epपूर्णांकr_status);
+	musb->पूर्णांक_rx = (epपूर्णांकr & wrp->rxep_biपंचांगap) >> wrp->rxep_shअगरt;
+	musb->पूर्णांक_tx = (epपूर्णांकr & wrp->txep_biपंचांगap) >> wrp->txep_shअगरt;
 
-	if (epintr)
-		musb_writel(reg_base, wrp->epintr_status, epintr);
+	अगर (epपूर्णांकr)
+		musb_ग_लिखोl(reg_base, wrp->epपूर्णांकr_status, epपूर्णांकr);
 
-	/* Get usb core interrupts */
-	usbintr = musb_readl(reg_base, wrp->coreintr_status);
-	if (!usbintr && !epintr)
-		goto out;
+	/* Get usb core पूर्णांकerrupts */
+	usbपूर्णांकr = musb_पढ़ोl(reg_base, wrp->coreपूर्णांकr_status);
+	अगर (!usbपूर्णांकr && !epपूर्णांकr)
+		जाओ out;
 
-	musb->int_usb =	(usbintr & wrp->usb_bitmap) >> wrp->usb_shift;
-	if (usbintr)
-		musb_writel(reg_base, wrp->coreintr_status, usbintr);
+	musb->पूर्णांक_usb =	(usbपूर्णांकr & wrp->usb_biपंचांगap) >> wrp->usb_shअगरt;
+	अगर (usbपूर्णांकr)
+		musb_ग_लिखोl(reg_base, wrp->coreपूर्णांकr_status, usbपूर्णांकr);
 
 	dev_dbg(musb->controller, "usbintr (%x) epintr(%x)\n",
-			usbintr, epintr);
+			usbपूर्णांकr, epपूर्णांकr);
 
-	if (usbintr & ((1 << wrp->drvvbus) << wrp->usb_shift)) {
-		int drvvbus = musb_readl(reg_base, wrp->status);
-		void __iomem *mregs = musb->mregs;
-		u8 devctl = musb_readb(mregs, MUSB_DEVCTL);
-		int err;
+	अगर (usbपूर्णांकr & ((1 << wrp->drvvbus) << wrp->usb_shअगरt)) अणु
+		पूर्णांक drvvbus = musb_पढ़ोl(reg_base, wrp->status);
+		व्योम __iomem *mregs = musb->mregs;
+		u8 devctl = musb_पढ़ोb(mregs, MUSB_DEVCTL);
+		पूर्णांक err;
 
-		err = musb->int_usb & MUSB_INTR_VBUSERROR;
-		if (err) {
+		err = musb->पूर्णांक_usb & MUSB_INTR_VBUSERROR;
+		अगर (err) अणु
 			/*
-			 * The Mentor core doesn't debounce VBUS as needed
+			 * The Mentor core करोesn't debounce VBUS as needed
 			 * to cope with device connect current spikes. This
-			 * means it's not uncommon for bus-powered devices
-			 * to get VBUS errors during enumeration.
+			 * means it's not uncommon क्रम bus-घातered devices
+			 * to get VBUS errors during क्रमागतeration.
 			 *
 			 * This is a workaround, but newer RTL from Mentor
 			 * seems to allow a better one: "re"-starting sessions
-			 * without waiting for VBUS to stop registering in
+			 * without रुकोing क्रम VBUS to stop रेजिस्टरing in
 			 * devctl.
 			 */
-			musb->int_usb &= ~MUSB_INTR_VBUSERROR;
+			musb->पूर्णांक_usb &= ~MUSB_INTR_VBUSERROR;
 			musb->xceiv->otg->state = OTG_STATE_A_WAIT_VFALL;
-			dsps_mod_timer_optional(glue);
+			dsps_mod_समयr_optional(glue);
 			WARNING("VBUS error workaround (delay coming)\n");
-		} else if (drvvbus) {
+		पूर्ण अन्यथा अगर (drvvbus) अणु
 			MUSB_HST_MODE(musb);
 			musb->xceiv->otg->state = OTG_STATE_A_WAIT_VRISE;
-			dsps_mod_timer_optional(glue);
-		} else {
+			dsps_mod_समयr_optional(glue);
+		पूर्ण अन्यथा अणु
 			musb->is_active = 0;
 			MUSB_DEV_MODE(musb);
 			musb->xceiv->otg->state = OTG_STATE_B_IDLE;
-		}
+		पूर्ण
 
-		/* NOTE: this must complete power-on within 100 ms. */
+		/* NOTE: this must complete घातer-on within 100 ms. */
 		dev_dbg(musb->controller, "VBUS %s (%s)%s, devctl %02x\n",
 				drvvbus ? "on" : "off",
 				usb_otg_state_string(musb->xceiv->otg->state),
 				err ? " ERROR" : "",
 				devctl);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	if (musb->int_tx || musb->int_rx || musb->int_usb)
-		ret |= musb_interrupt(musb);
+	अगर (musb->पूर्णांक_tx || musb->पूर्णांक_rx || musb->पूर्णांक_usb)
+		ret |= musb_पूर्णांकerrupt(musb);
 
-	/* Poll for ID change and connect */
-	switch (musb->xceiv->otg->state) {
-	case OTG_STATE_B_IDLE:
-	case OTG_STATE_A_WAIT_BCON:
-		dsps_mod_timer_optional(glue);
-		break;
-	default:
-		break;
-	}
+	/* Poll क्रम ID change and connect */
+	चयन (musb->xceiv->otg->state) अणु
+	हाल OTG_STATE_B_IDLE:
+	हाल OTG_STATE_A_WAIT_BCON:
+		dsps_mod_समयr_optional(glue);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&musb->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dsps_musb_dbg_init(struct musb *musb, struct dsps_glue *glue)
-{
-	struct dentry *root;
-	char buf[128];
+अटल पूर्णांक dsps_musb_dbg_init(काष्ठा musb *musb, काष्ठा dsps_glue *glue)
+अणु
+	काष्ठा dentry *root;
+	अक्षर buf[128];
 
-	sprintf(buf, "%s.dsps", dev_name(musb->controller));
+	प्र_लिखो(buf, "%s.dsps", dev_name(musb->controller));
 	root = debugfs_create_dir(buf, usb_debug_root);
 	glue->dbgfs_root = root;
 
@@ -419,147 +420,147 @@ static int dsps_musb_dbg_init(struct musb *musb, struct dsps_glue *glue)
 	glue->regset.base = musb->ctrl_base;
 
 	debugfs_create_regset32("regdump", S_IRUGO, root, &glue->regset);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsps_musb_init(struct musb *musb)
-{
-	struct device *dev = musb->controller;
-	struct dsps_glue *glue = dev_get_drvdata(dev->parent);
-	struct platform_device *parent = to_platform_device(dev->parent);
-	const struct dsps_musb_wrapper *wrp = glue->wrp;
-	void __iomem *reg_base;
-	struct resource *r;
+अटल पूर्णांक dsps_musb_init(काष्ठा musb *musb)
+अणु
+	काष्ठा device *dev = musb->controller;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(dev->parent);
+	काष्ठा platक्रमm_device *parent = to_platक्रमm_device(dev->parent);
+	स्थिर काष्ठा dsps_musb_wrapper *wrp = glue->wrp;
+	व्योम __iomem *reg_base;
+	काष्ठा resource *r;
 	u32 rev, val;
-	int ret;
+	पूर्णांक ret;
 
-	r = platform_get_resource_byname(parent, IORESOURCE_MEM, "control");
+	r = platक्रमm_get_resource_byname(parent, IORESOURCE_MEM, "control");
 	reg_base = devm_ioremap_resource(dev, r);
-	if (IS_ERR(reg_base))
-		return PTR_ERR(reg_base);
+	अगर (IS_ERR(reg_base))
+		वापस PTR_ERR(reg_base);
 	musb->ctrl_base = reg_base;
 
-	/* NOP driver needs change if supporting dual instance */
+	/* NOP driver needs change अगर supporting dual instance */
 	musb->xceiv = devm_usb_get_phy_by_phandle(dev->parent, "phys", 0);
-	if (IS_ERR(musb->xceiv))
-		return PTR_ERR(musb->xceiv);
+	अगर (IS_ERR(musb->xceiv))
+		वापस PTR_ERR(musb->xceiv);
 
 	musb->phy = devm_phy_get(dev->parent, "usb2-phy");
 
-	/* Returns zero if e.g. not clocked */
-	rev = musb_readl(reg_base, wrp->revision);
-	if (!rev)
-		return -ENODEV;
+	/* Returns zero अगर e.g. not घड़ीed */
+	rev = musb_पढ़ोl(reg_base, wrp->revision);
+	अगर (!rev)
+		वापस -ENODEV;
 
-	if (IS_ERR(musb->phy))  {
-		musb->phy = NULL;
-	} else {
+	अगर (IS_ERR(musb->phy))  अणु
+		musb->phy = शून्य;
+	पूर्ण अन्यथा अणु
 		ret = phy_init(musb->phy);
-		if (ret < 0)
-			return ret;
-		ret = phy_power_on(musb->phy);
-		if (ret) {
-			phy_exit(musb->phy);
-			return ret;
-		}
-	}
+		अगर (ret < 0)
+			वापस ret;
+		ret = phy_घातer_on(musb->phy);
+		अगर (ret) अणु
+			phy_निकास(musb->phy);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	timer_setup(&musb->dev_timer, otg_timer, 0);
+	समयr_setup(&musb->dev_समयr, otg_समयr, 0);
 
 	/* Reset the musb */
-	musb_writel(reg_base, wrp->control, (1 << wrp->reset));
+	musb_ग_लिखोl(reg_base, wrp->control, (1 << wrp->reset));
 
-	musb->isr = dsps_interrupt;
+	musb->isr = dsps_पूर्णांकerrupt;
 
-	/* reset the otgdisable bit, needed for host mode to work */
-	val = musb_readl(reg_base, wrp->phy_utmi);
+	/* reset the otgdisable bit, needed क्रम host mode to work */
+	val = musb_पढ़ोl(reg_base, wrp->phy_uपंचांगi);
 	val &= ~(1 << wrp->otg_disable);
-	musb_writel(musb->ctrl_base, wrp->phy_utmi, val);
+	musb_ग_लिखोl(musb->ctrl_base, wrp->phy_uपंचांगi, val);
 
 	/*
 	 *  Check whether the dsps version has babble control enabled.
 	 * In latest silicon revision the babble control logic is enabled.
-	 * If MUSB_BABBLE_CTL returns 0x4 then we have the babble control
+	 * If MUSB_BABBLE_CTL वापसs 0x4 then we have the babble control
 	 * logic enabled.
 	 */
-	val = musb_readb(musb->mregs, MUSB_BABBLE_CTL);
-	if (val & MUSB_BABBLE_RCV_DISABLE) {
+	val = musb_पढ़ोb(musb->mregs, MUSB_BABBLE_CTL);
+	अगर (val & MUSB_BABBLE_RCV_DISABLE) अणु
 		glue->sw_babble_enabled = true;
 		val |= MUSB_BABBLE_SW_SESSION_CTRL;
-		musb_writeb(musb->mregs, MUSB_BABBLE_CTL, val);
-	}
+		musb_ग_लिखोb(musb->mregs, MUSB_BABBLE_CTL, val);
+	पूर्ण
 
-	dsps_mod_timer(glue, -1);
+	dsps_mod_समयr(glue, -1);
 
-	return dsps_musb_dbg_init(musb, glue);
-}
+	वापस dsps_musb_dbg_init(musb, glue);
+पूर्ण
 
-static int dsps_musb_exit(struct musb *musb)
-{
-	struct device *dev = musb->controller;
-	struct dsps_glue *glue = dev_get_drvdata(dev->parent);
+अटल पूर्णांक dsps_musb_निकास(काष्ठा musb *musb)
+अणु
+	काष्ठा device *dev = musb->controller;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(dev->parent);
 
-	del_timer_sync(&musb->dev_timer);
-	phy_power_off(musb->phy);
-	phy_exit(musb->phy);
-	debugfs_remove_recursive(glue->dbgfs_root);
+	del_समयr_sync(&musb->dev_समयr);
+	phy_घातer_off(musb->phy);
+	phy_निकास(musb->phy);
+	debugfs_हटाओ_recursive(glue->dbgfs_root);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsps_musb_set_mode(struct musb *musb, u8 mode)
-{
-	struct device *dev = musb->controller;
-	struct dsps_glue *glue = dev_get_drvdata(dev->parent);
-	const struct dsps_musb_wrapper *wrp = glue->wrp;
-	void __iomem *ctrl_base = musb->ctrl_base;
+अटल पूर्णांक dsps_musb_set_mode(काष्ठा musb *musb, u8 mode)
+अणु
+	काष्ठा device *dev = musb->controller;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(dev->parent);
+	स्थिर काष्ठा dsps_musb_wrapper *wrp = glue->wrp;
+	व्योम __iomem *ctrl_base = musb->ctrl_base;
 	u32 reg;
 
-	reg = musb_readl(ctrl_base, wrp->mode);
+	reg = musb_पढ़ोl(ctrl_base, wrp->mode);
 
-	switch (mode) {
-	case MUSB_HOST:
+	चयन (mode) अणु
+	हाल MUSB_HOST:
 		reg &= ~(1 << wrp->iddig);
 
 		/*
-		 * if we're setting mode to host-only or device-only, we're
-		 * going to ignore whatever the PHY sends us and just force
+		 * अगर we're setting mode to host-only or device-only, we're
+		 * going to ignore whatever the PHY sends us and just क्रमce
 		 * ID pin status by SW
 		 */
 		reg |= (1 << wrp->iddig_mux);
 
-		musb_writel(ctrl_base, wrp->mode, reg);
-		musb_writel(ctrl_base, wrp->phy_utmi, 0x02);
-		break;
-	case MUSB_PERIPHERAL:
+		musb_ग_लिखोl(ctrl_base, wrp->mode, reg);
+		musb_ग_लिखोl(ctrl_base, wrp->phy_uपंचांगi, 0x02);
+		अवरोध;
+	हाल MUSB_PERIPHERAL:
 		reg |= (1 << wrp->iddig);
 
 		/*
-		 * if we're setting mode to host-only or device-only, we're
-		 * going to ignore whatever the PHY sends us and just force
+		 * अगर we're setting mode to host-only or device-only, we're
+		 * going to ignore whatever the PHY sends us and just क्रमce
 		 * ID pin status by SW
 		 */
 		reg |= (1 << wrp->iddig_mux);
 
-		musb_writel(ctrl_base, wrp->mode, reg);
-		break;
-	case MUSB_OTG:
-		musb_writel(ctrl_base, wrp->phy_utmi, 0x02);
-		break;
-	default:
+		musb_ग_लिखोl(ctrl_base, wrp->mode, reg);
+		अवरोध;
+	हाल MUSB_OTG:
+		musb_ग_लिखोl(ctrl_base, wrp->phy_uपंचांगi, 0x02);
+		अवरोध;
+	शेष:
 		dev_err(glue->dev, "unsupported mode %d\n", mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool dsps_sw_babble_control(struct musb *musb)
-{
+अटल bool dsps_sw_babble_control(काष्ठा musb *musb)
+अणु
 	u8 babble_ctl;
 	bool session_restart =  false;
 
-	babble_ctl = musb_readb(musb->mregs, MUSB_BABBLE_CTL);
+	babble_ctl = musb_पढ़ोb(musb->mregs, MUSB_BABBLE_CTL);
 	dev_dbg(musb->controller, "babble: MUSB_BABBLE_CTL value %x\n",
 		babble_ctl);
 	/*
@@ -569,26 +570,26 @@ static bool dsps_sw_babble_control(struct musb *musb)
 	dev_dbg(musb->controller, "STUCK_J is %s\n",
 		babble_ctl & MUSB_BABBLE_STUCK_J ? "set" : "reset");
 
-	if (babble_ctl & MUSB_BABBLE_STUCK_J) {
-		int timeout = 10;
+	अगर (babble_ctl & MUSB_BABBLE_STUCK_J) अणु
+		पूर्णांक समयout = 10;
 
 		/*
 		 * babble is due to noise, then set transmit idle (d7 bit)
 		 * to resume normal operation
 		 */
-		babble_ctl = musb_readb(musb->mregs, MUSB_BABBLE_CTL);
+		babble_ctl = musb_पढ़ोb(musb->mregs, MUSB_BABBLE_CTL);
 		babble_ctl |= MUSB_BABBLE_FORCE_TXIDLE;
-		musb_writeb(musb->mregs, MUSB_BABBLE_CTL, babble_ctl);
+		musb_ग_लिखोb(musb->mregs, MUSB_BABBLE_CTL, babble_ctl);
 
-		/* wait till line monitor flag cleared */
+		/* रुको till line monitor flag cleared */
 		dev_dbg(musb->controller, "Set TXIDLE, wait J to clear\n");
-		do {
-			babble_ctl = musb_readb(musb->mregs, MUSB_BABBLE_CTL);
+		करो अणु
+			babble_ctl = musb_पढ़ोb(musb->mregs, MUSB_BABBLE_CTL);
 			udelay(1);
-		} while ((babble_ctl & MUSB_BABBLE_STUCK_J) && timeout--);
+		पूर्ण जबतक ((babble_ctl & MUSB_BABBLE_STUCK_J) && समयout--);
 
 		/* check whether stuck_at_j bit cleared */
-		if (babble_ctl & MUSB_BABBLE_STUCK_J) {
+		अगर (babble_ctl & MUSB_BABBLE_STUCK_J) अणु
 			/*
 			 * real babble condition has occurred
 			 * restart the controller to start the
@@ -597,162 +598,162 @@ static bool dsps_sw_babble_control(struct musb *musb)
 			dev_dbg(musb->controller, "J not cleared, misc (%x)\n",
 				babble_ctl);
 			session_restart = true;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		session_restart = true;
-	}
+	पूर्ण
 
-	return session_restart;
-}
+	वापस session_restart;
+पूर्ण
 
-static int dsps_musb_recover(struct musb *musb)
-{
-	struct device *dev = musb->controller;
-	struct dsps_glue *glue = dev_get_drvdata(dev->parent);
-	int session_restart = 0;
+अटल पूर्णांक dsps_musb_recover(काष्ठा musb *musb)
+अणु
+	काष्ठा device *dev = musb->controller;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(dev->parent);
+	पूर्णांक session_restart = 0;
 
-	if (glue->sw_babble_enabled)
+	अगर (glue->sw_babble_enabled)
 		session_restart = dsps_sw_babble_control(musb);
-	else
+	अन्यथा
 		session_restart = 1;
 
-	return session_restart ? 0 : -EPIPE;
-}
+	वापस session_restart ? 0 : -EPIPE;
+पूर्ण
 
-/* Similar to am35x, dm81xx support only 32-bit read operation */
-static void dsps_read_fifo32(struct musb_hw_ep *hw_ep, u16 len, u8 *dst)
-{
-	void __iomem *fifo = hw_ep->fifo;
+/* Similar to am35x, dm81xx support only 32-bit पढ़ो operation */
+अटल व्योम dsps_पढ़ो_fअगरo32(काष्ठा musb_hw_ep *hw_ep, u16 len, u8 *dst)
+अणु
+	व्योम __iomem *fअगरo = hw_ep->fअगरo;
 
-	if (len >= 4) {
-		ioread32_rep(fifo, dst, len >> 2);
+	अगर (len >= 4) अणु
+		ioपढ़ो32_rep(fअगरo, dst, len >> 2);
 		dst += len & ~0x03;
 		len &= 0x03;
-	}
+	पूर्ण
 
-	/* Read any remaining 1 to 3 bytes */
-	if (len > 0) {
-		u32 val = musb_readl(fifo, 0);
-		memcpy(dst, &val, len);
-	}
-}
+	/* Read any reमुख्यing 1 to 3 bytes */
+	अगर (len > 0) अणु
+		u32 val = musb_पढ़ोl(fअगरo, 0);
+		स_नकल(dst, &val, len);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_USB_TI_CPPI41_DMA
-static void dsps_dma_controller_callback(struct dma_controller *c)
-{
-	struct musb *musb = c->musb;
-	struct dsps_glue *glue = dev_get_drvdata(musb->controller->parent);
-	void __iomem *usbss_base = glue->usbss_base;
+#अगर_घोषित CONFIG_USB_TI_CPPI41_DMA
+अटल व्योम dsps_dma_controller_callback(काष्ठा dma_controller *c)
+अणु
+	काष्ठा musb *musb = c->musb;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(musb->controller->parent);
+	व्योम __iomem *usbss_base = glue->usbss_base;
 	u32 status;
 
-	status = musb_readl(usbss_base, USBSS_IRQ_STATUS);
-	if (status & USBSS_IRQ_PD_COMP)
-		musb_writel(usbss_base, USBSS_IRQ_STATUS, USBSS_IRQ_PD_COMP);
-}
+	status = musb_पढ़ोl(usbss_base, USBSS_IRQ_STATUS);
+	अगर (status & USBSS_IRQ_PD_COMP)
+		musb_ग_लिखोl(usbss_base, USBSS_IRQ_STATUS, USBSS_IRQ_PD_COMP);
+पूर्ण
 
-static struct dma_controller *
-dsps_dma_controller_create(struct musb *musb, void __iomem *base)
-{
-	struct dma_controller *controller;
-	struct dsps_glue *glue = dev_get_drvdata(musb->controller->parent);
-	void __iomem *usbss_base = glue->usbss_base;
+अटल काष्ठा dma_controller *
+dsps_dma_controller_create(काष्ठा musb *musb, व्योम __iomem *base)
+अणु
+	काष्ठा dma_controller *controller;
+	काष्ठा dsps_glue *glue = dev_get_drvdata(musb->controller->parent);
+	व्योम __iomem *usbss_base = glue->usbss_base;
 
 	controller = cppi41_dma_controller_create(musb, base);
-	if (IS_ERR_OR_NULL(controller))
-		return controller;
+	अगर (IS_ERR_OR_शून्य(controller))
+		वापस controller;
 
-	musb_writel(usbss_base, USBSS_IRQ_ENABLER, USBSS_IRQ_PD_COMP);
+	musb_ग_लिखोl(usbss_base, USBSS_IRQ_ENABLER, USBSS_IRQ_PD_COMP);
 	controller->dma_callback = dsps_dma_controller_callback;
 
-	return controller;
-}
+	वापस controller;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static void dsps_dma_controller_suspend(struct dsps_glue *glue)
-{
-	void __iomem *usbss_base = glue->usbss_base;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल व्योम dsps_dma_controller_suspend(काष्ठा dsps_glue *glue)
+अणु
+	व्योम __iomem *usbss_base = glue->usbss_base;
 
-	musb_writel(usbss_base, USBSS_IRQ_CLEARR, USBSS_IRQ_PD_COMP);
-}
+	musb_ग_लिखोl(usbss_base, USBSS_IRQ_CLEARR, USBSS_IRQ_PD_COMP);
+पूर्ण
 
-static void dsps_dma_controller_resume(struct dsps_glue *glue)
-{
-	void __iomem *usbss_base = glue->usbss_base;
+अटल व्योम dsps_dma_controller_resume(काष्ठा dsps_glue *glue)
+अणु
+	व्योम __iomem *usbss_base = glue->usbss_base;
 
-	musb_writel(usbss_base, USBSS_IRQ_ENABLER, USBSS_IRQ_PD_COMP);
-}
-#endif
-#else /* CONFIG_USB_TI_CPPI41_DMA */
-#ifdef CONFIG_PM_SLEEP
-static void dsps_dma_controller_suspend(struct dsps_glue *glue) {}
-static void dsps_dma_controller_resume(struct dsps_glue *glue) {}
-#endif
-#endif /* CONFIG_USB_TI_CPPI41_DMA */
+	musb_ग_लिखोl(usbss_base, USBSS_IRQ_ENABLER, USBSS_IRQ_PD_COMP);
+पूर्ण
+#पूर्ण_अगर
+#अन्यथा /* CONFIG_USB_TI_CPPI41_DMA */
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल व्योम dsps_dma_controller_suspend(काष्ठा dsps_glue *glue) अणुपूर्ण
+अटल व्योम dsps_dma_controller_resume(काष्ठा dsps_glue *glue) अणुपूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_USB_TI_CPPI41_DMA */
 
-static struct musb_platform_ops dsps_ops = {
+अटल काष्ठा musb_platक्रमm_ops dsps_ops = अणु
 	.quirks		= MUSB_DMA_CPPI41 | MUSB_INDEXED_EP,
 	.init		= dsps_musb_init,
-	.exit		= dsps_musb_exit,
+	.निकास		= dsps_musb_निकास,
 
-#ifdef CONFIG_USB_TI_CPPI41_DMA
+#अगर_घोषित CONFIG_USB_TI_CPPI41_DMA
 	.dma_init	= dsps_dma_controller_create,
-	.dma_exit	= cppi41_dma_controller_destroy,
-#endif
+	.dma_निकास	= cppi41_dma_controller_destroy,
+#पूर्ण_अगर
 	.enable		= dsps_musb_enable,
 	.disable	= dsps_musb_disable,
 
 	.set_mode	= dsps_musb_set_mode,
 	.recover	= dsps_musb_recover,
-	.clear_ep_rxintr = dsps_musb_clear_ep_rxintr,
-};
+	.clear_ep_rxपूर्णांकr = dsps_musb_clear_ep_rxपूर्णांकr,
+पूर्ण;
 
-static u64 musb_dmamask = DMA_BIT_MASK(32);
+अटल u64 musb_dmamask = DMA_BIT_MASK(32);
 
-static int get_int_prop(struct device_node *dn, const char *s)
-{
-	int ret;
+अटल पूर्णांक get_पूर्णांक_prop(काष्ठा device_node *dn, स्थिर अक्षर *s)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	ret = of_property_read_u32(dn, s, &val);
-	if (ret)
-		return 0;
-	return val;
-}
+	ret = of_property_पढ़ो_u32(dn, s, &val);
+	अगर (ret)
+		वापस 0;
+	वापस val;
+पूर्ण
 
-static int dsps_create_musb_pdev(struct dsps_glue *glue,
-		struct platform_device *parent)
-{
-	struct musb_hdrc_platform_data pdata;
-	struct resource	resources[2];
-	struct resource	*res;
-	struct device *dev = &parent->dev;
-	struct musb_hdrc_config	*config;
-	struct platform_device *musb;
-	struct device_node *dn = parent->dev.of_node;
-	int ret, val;
+अटल पूर्णांक dsps_create_musb_pdev(काष्ठा dsps_glue *glue,
+		काष्ठा platक्रमm_device *parent)
+अणु
+	काष्ठा musb_hdrc_platक्रमm_data pdata;
+	काष्ठा resource	resources[2];
+	काष्ठा resource	*res;
+	काष्ठा device *dev = &parent->dev;
+	काष्ठा musb_hdrc_config	*config;
+	काष्ठा platक्रमm_device *musb;
+	काष्ठा device_node *dn = parent->dev.of_node;
+	पूर्णांक ret, val;
 
-	memset(resources, 0, sizeof(resources));
-	res = platform_get_resource_byname(parent, IORESOURCE_MEM, "mc");
-	if (!res) {
+	स_रखो(resources, 0, माप(resources));
+	res = platक्रमm_get_resource_byname(parent, IORESOURCE_MEM, "mc");
+	अगर (!res) अणु
 		dev_err(dev, "failed to get memory.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	resources[0] = *res;
 
-	res = platform_get_resource_byname(parent, IORESOURCE_IRQ, "mc");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(parent, IORESOURCE_IRQ, "mc");
+	अगर (!res) अणु
 		dev_err(dev, "failed to get irq.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	resources[1] = *res;
 
-	/* allocate the child platform device */
-	musb = platform_device_alloc("musb-hdrc",
+	/* allocate the child platक्रमm device */
+	musb = platक्रमm_device_alloc("musb-hdrc",
 			(resources[0].start & 0xFFF) == 0x400 ? 0 : 1);
-	if (!musb) {
+	अगर (!musb) अणु
 		dev_err(dev, "failed to allocate musb device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	musb->dev.parent		= dev;
 	musb->dev.dma_mask		= &musb_dmamask;
@@ -761,179 +762,179 @@ static int dsps_create_musb_pdev(struct dsps_glue *glue,
 
 	glue->musb = musb;
 
-	ret = platform_device_add_resources(musb, resources,
+	ret = platक्रमm_device_add_resources(musb, resources,
 			ARRAY_SIZE(resources));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to add resources\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	config = devm_kzalloc(&parent->dev, sizeof(*config), GFP_KERNEL);
-	if (!config) {
+	config = devm_kzalloc(&parent->dev, माप(*config), GFP_KERNEL);
+	अगर (!config) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	pdata.config = config;
-	pdata.platform_ops = &dsps_ops;
+	pdata.platक्रमm_ops = &dsps_ops;
 
-	config->num_eps = get_int_prop(dn, "mentor,num-eps");
-	config->ram_bits = get_int_prop(dn, "mentor,ram-bits");
-	config->host_port_deassert_reset_at_resume = 1;
+	config->num_eps = get_पूर्णांक_prop(dn, "mentor,num-eps");
+	config->ram_bits = get_पूर्णांक_prop(dn, "mentor,ram-bits");
+	config->host_port_deनिश्चित_reset_at_resume = 1;
 	pdata.mode = musb_get_mode(dev);
 	/* DT keeps this entry in mA, musb expects it as per USB spec */
-	pdata.power = get_int_prop(dn, "mentor,power") / 2;
+	pdata.घातer = get_पूर्णांक_prop(dn, "mentor,power") / 2;
 
-	ret = of_property_read_u32(dn, "mentor,multipoint", &val);
-	if (!ret && val)
-		config->multipoint = true;
+	ret = of_property_पढ़ो_u32(dn, "mentor,multipoint", &val);
+	अगर (!ret && val)
+		config->multipoपूर्णांक = true;
 
 	config->maximum_speed = usb_get_maximum_speed(&parent->dev);
-	switch (config->maximum_speed) {
-	case USB_SPEED_LOW:
-	case USB_SPEED_FULL:
-		break;
-	case USB_SPEED_SUPER:
+	चयन (config->maximum_speed) अणु
+	हाल USB_SPEED_LOW:
+	हाल USB_SPEED_FULL:
+		अवरोध;
+	हाल USB_SPEED_SUPER:
 		dev_warn(dev, "ignore incorrect maximum_speed "
 				"(super-speed) setting in dts");
 		fallthrough;
-	default:
+	शेष:
 		config->maximum_speed = USB_SPEED_HIGH;
-	}
+	पूर्ण
 
-	ret = platform_device_add_data(musb, &pdata, sizeof(pdata));
-	if (ret) {
+	ret = platक्रमm_device_add_data(musb, &pdata, माप(pdata));
+	अगर (ret) अणु
 		dev_err(dev, "failed to add platform_data\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = platform_device_add(musb);
-	if (ret) {
+	ret = platक्रमm_device_add(musb);
+	अगर (ret) अणु
 		dev_err(dev, "failed to register musb device\n");
-		goto err;
-	}
-	return 0;
+		जाओ err;
+	पूर्ण
+	वापस 0;
 
 err:
-	platform_device_put(musb);
-	return ret;
-}
+	platक्रमm_device_put(musb);
+	वापस ret;
+पूर्ण
 
-static irqreturn_t dsps_vbus_threaded_irq(int irq, void *priv)
-{
-	struct dsps_glue *glue = priv;
-	struct musb *musb = platform_get_drvdata(glue->musb);
+अटल irqवापस_t dsps_vbus_thपढ़ोed_irq(पूर्णांक irq, व्योम *priv)
+अणु
+	काष्ठा dsps_glue *glue = priv;
+	काष्ठा musb *musb = platक्रमm_get_drvdata(glue->musb);
 
-	if (!musb)
-		return IRQ_NONE;
+	अगर (!musb)
+		वापस IRQ_NONE;
 
 	dev_dbg(glue->dev, "VBUS interrupt\n");
-	dsps_mod_timer(glue, 0);
+	dsps_mod_समयr(glue, 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int dsps_setup_optional_vbus_irq(struct platform_device *pdev,
-					struct dsps_glue *glue)
-{
-	int error;
+अटल पूर्णांक dsps_setup_optional_vbus_irq(काष्ठा platक्रमm_device *pdev,
+					काष्ठा dsps_glue *glue)
+अणु
+	पूर्णांक error;
 
-	glue->vbus_irq = platform_get_irq_byname(pdev, "vbus");
-	if (glue->vbus_irq == -EPROBE_DEFER)
-		return -EPROBE_DEFER;
+	glue->vbus_irq = platक्रमm_get_irq_byname(pdev, "vbus");
+	अगर (glue->vbus_irq == -EPROBE_DEFER)
+		वापस -EPROBE_DEFER;
 
-	if (glue->vbus_irq <= 0) {
+	अगर (glue->vbus_irq <= 0) अणु
 		glue->vbus_irq = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	error = devm_request_threaded_irq(glue->dev, glue->vbus_irq,
-					  NULL, dsps_vbus_threaded_irq,
+	error = devm_request_thपढ़ोed_irq(glue->dev, glue->vbus_irq,
+					  शून्य, dsps_vbus_thपढ़ोed_irq,
 					  IRQF_ONESHOT,
 					  "vbus", glue);
-	if (error) {
+	अगर (error) अणु
 		glue->vbus_irq = 0;
-		return error;
-	}
+		वापस error;
+	पूर्ण
 	dev_dbg(glue->dev, "VBUS irq %i configured\n", glue->vbus_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsps_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *match;
-	const struct dsps_musb_wrapper *wrp;
-	struct dsps_glue *glue;
-	int ret;
+अटल पूर्णांक dsps_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	स्थिर काष्ठा dsps_musb_wrapper *wrp;
+	काष्ठा dsps_glue *glue;
+	पूर्णांक ret;
 
-	if (!strcmp(pdev->name, "musb-hdrc"))
-		return -ENODEV;
+	अगर (!म_भेद(pdev->name, "musb-hdrc"))
+		वापस -ENODEV;
 
 	match = of_match_node(musb_dsps_of_match, pdev->dev.of_node);
-	if (!match) {
+	अगर (!match) अणु
 		dev_err(&pdev->dev, "fail to get matching of_match struct\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	wrp = match->data;
 
-	if (of_device_is_compatible(pdev->dev.of_node, "ti,musb-dm816"))
-		dsps_ops.read_fifo = dsps_read_fifo32;
+	अगर (of_device_is_compatible(pdev->dev.of_node, "ti,musb-dm816"))
+		dsps_ops.पढ़ो_fअगरo = dsps_पढ़ो_fअगरo32;
 
 	/* allocate glue */
-	glue = devm_kzalloc(&pdev->dev, sizeof(*glue), GFP_KERNEL);
-	if (!glue)
-		return -ENOMEM;
+	glue = devm_kzalloc(&pdev->dev, माप(*glue), GFP_KERNEL);
+	अगर (!glue)
+		वापस -ENOMEM;
 
 	glue->dev = &pdev->dev;
 	glue->wrp = wrp;
 	glue->usbss_base = of_iomap(pdev->dev.parent->of_node, 0);
-	if (!glue->usbss_base)
-		return -ENXIO;
+	अगर (!glue->usbss_base)
+		वापस -ENXIO;
 
-	if (usb_get_dr_mode(&pdev->dev) == USB_DR_MODE_PERIPHERAL) {
+	अगर (usb_get_dr_mode(&pdev->dev) == USB_DR_MODE_PERIPHERAL) अणु
 		ret = dsps_setup_optional_vbus_irq(pdev, glue);
-		if (ret)
-			goto err_iounmap;
-	}
+		अगर (ret)
+			जाओ err_iounmap;
+	पूर्ण
 
-	platform_set_drvdata(pdev, glue);
-	pm_runtime_enable(&pdev->dev);
+	platक्रमm_set_drvdata(pdev, glue);
+	pm_runसमय_enable(&pdev->dev);
 	ret = dsps_create_musb_pdev(glue, pdev);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 err_iounmap:
 	iounmap(glue->usbss_base);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dsps_remove(struct platform_device *pdev)
-{
-	struct dsps_glue *glue = platform_get_drvdata(pdev);
+अटल पूर्णांक dsps_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dsps_glue *glue = platक्रमm_get_drvdata(pdev);
 
-	platform_device_unregister(glue->musb);
+	platक्रमm_device_unरेजिस्टर(glue->musb);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 	iounmap(glue->usbss_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dsps_musb_wrapper am33xx_driver_data = {
+अटल स्थिर काष्ठा dsps_musb_wrapper am33xx_driver_data = अणु
 	.revision		= 0x00,
 	.control		= 0x14,
 	.status			= 0x18,
-	.epintr_set		= 0x38,
-	.epintr_clear		= 0x40,
-	.epintr_status		= 0x30,
-	.coreintr_set		= 0x3c,
-	.coreintr_clear		= 0x44,
-	.coreintr_status	= 0x34,
-	.phy_utmi		= 0xe0,
+	.epपूर्णांकr_set		= 0x38,
+	.epपूर्णांकr_clear		= 0x40,
+	.epपूर्णांकr_status		= 0x30,
+	.coreपूर्णांकr_set		= 0x3c,
+	.coreपूर्णांकr_clear		= 0x44,
+	.coreपूर्णांकr_status	= 0x34,
+	.phy_uपंचांगi		= 0xe0,
 	.mode			= 0xe8,
 	.tx_mode		= 0x70,
 	.rx_mode		= 0x74,
@@ -941,108 +942,108 @@ static const struct dsps_musb_wrapper am33xx_driver_data = {
 	.otg_disable		= 21,
 	.iddig			= 8,
 	.iddig_mux		= 7,
-	.usb_shift		= 0,
+	.usb_shअगरt		= 0,
 	.usb_mask		= 0x1ff,
-	.usb_bitmap		= (0x1ff << 0),
+	.usb_biपंचांगap		= (0x1ff << 0),
 	.drvvbus		= 8,
-	.txep_shift		= 0,
+	.txep_shअगरt		= 0,
 	.txep_mask		= 0xffff,
-	.txep_bitmap		= (0xffff << 0),
-	.rxep_shift		= 16,
+	.txep_biपंचांगap		= (0xffff << 0),
+	.rxep_shअगरt		= 16,
 	.rxep_mask		= 0xfffe,
-	.rxep_bitmap		= (0xfffe << 16),
-	.poll_timeout		= 2000, /* ms */
-};
+	.rxep_biपंचांगap		= (0xfffe << 16),
+	.poll_समयout		= 2000, /* ms */
+पूर्ण;
 
-static const struct of_device_id musb_dsps_of_match[] = {
-	{ .compatible = "ti,musb-am33xx",
-		.data = &am33xx_driver_data, },
-	{ .compatible = "ti,musb-dm816",
-		.data = &am33xx_driver_data, },
-	{  },
-};
+अटल स्थिर काष्ठा of_device_id musb_dsps_of_match[] = अणु
+	अणु .compatible = "ti,musb-am33xx",
+		.data = &am33xx_driver_data, पूर्ण,
+	अणु .compatible = "ti,musb-dm816",
+		.data = &am33xx_driver_data, पूर्ण,
+	अणु  पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, musb_dsps_of_match);
 
-#ifdef CONFIG_PM_SLEEP
-static int dsps_suspend(struct device *dev)
-{
-	struct dsps_glue *glue = dev_get_drvdata(dev);
-	const struct dsps_musb_wrapper *wrp = glue->wrp;
-	struct musb *musb = platform_get_drvdata(glue->musb);
-	void __iomem *mbase;
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक dsps_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा dsps_glue *glue = dev_get_drvdata(dev);
+	स्थिर काष्ठा dsps_musb_wrapper *wrp = glue->wrp;
+	काष्ठा musb *musb = platक्रमm_get_drvdata(glue->musb);
+	व्योम __iomem *mbase;
+	पूर्णांक ret;
 
-	if (!musb)
-		/* This can happen if the musb device is in -EPROBE_DEFER */
-		return 0;
+	अगर (!musb)
+		/* This can happen अगर the musb device is in -EPROBE_DEFER */
+		वापस 0;
 
-	ret = pm_runtime_get_sync(dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(dev);
+		वापस ret;
+	पूर्ण
 
-	del_timer_sync(&musb->dev_timer);
+	del_समयr_sync(&musb->dev_समयr);
 
 	mbase = musb->ctrl_base;
-	glue->context.control = musb_readl(mbase, wrp->control);
-	glue->context.epintr = musb_readl(mbase, wrp->epintr_set);
-	glue->context.coreintr = musb_readl(mbase, wrp->coreintr_set);
-	glue->context.phy_utmi = musb_readl(mbase, wrp->phy_utmi);
-	glue->context.mode = musb_readl(mbase, wrp->mode);
-	glue->context.tx_mode = musb_readl(mbase, wrp->tx_mode);
-	glue->context.rx_mode = musb_readl(mbase, wrp->rx_mode);
+	glue->context.control = musb_पढ़ोl(mbase, wrp->control);
+	glue->context.epपूर्णांकr = musb_पढ़ोl(mbase, wrp->epपूर्णांकr_set);
+	glue->context.coreपूर्णांकr = musb_पढ़ोl(mbase, wrp->coreपूर्णांकr_set);
+	glue->context.phy_uपंचांगi = musb_पढ़ोl(mbase, wrp->phy_uपंचांगi);
+	glue->context.mode = musb_पढ़ोl(mbase, wrp->mode);
+	glue->context.tx_mode = musb_पढ़ोl(mbase, wrp->tx_mode);
+	glue->context.rx_mode = musb_पढ़ोl(mbase, wrp->rx_mode);
 
 	dsps_dma_controller_suspend(glue);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsps_resume(struct device *dev)
-{
-	struct dsps_glue *glue = dev_get_drvdata(dev);
-	const struct dsps_musb_wrapper *wrp = glue->wrp;
-	struct musb *musb = platform_get_drvdata(glue->musb);
-	void __iomem *mbase;
+अटल पूर्णांक dsps_resume(काष्ठा device *dev)
+अणु
+	काष्ठा dsps_glue *glue = dev_get_drvdata(dev);
+	स्थिर काष्ठा dsps_musb_wrapper *wrp = glue->wrp;
+	काष्ठा musb *musb = platक्रमm_get_drvdata(glue->musb);
+	व्योम __iomem *mbase;
 
-	if (!musb)
-		return 0;
+	अगर (!musb)
+		वापस 0;
 
 	dsps_dma_controller_resume(glue);
 
 	mbase = musb->ctrl_base;
-	musb_writel(mbase, wrp->control, glue->context.control);
-	musb_writel(mbase, wrp->epintr_set, glue->context.epintr);
-	musb_writel(mbase, wrp->coreintr_set, glue->context.coreintr);
-	musb_writel(mbase, wrp->phy_utmi, glue->context.phy_utmi);
-	musb_writel(mbase, wrp->mode, glue->context.mode);
-	musb_writel(mbase, wrp->tx_mode, glue->context.tx_mode);
-	musb_writel(mbase, wrp->rx_mode, glue->context.rx_mode);
-	if (musb->xceiv->otg->state == OTG_STATE_B_IDLE &&
+	musb_ग_लिखोl(mbase, wrp->control, glue->context.control);
+	musb_ग_लिखोl(mbase, wrp->epपूर्णांकr_set, glue->context.epपूर्णांकr);
+	musb_ग_लिखोl(mbase, wrp->coreपूर्णांकr_set, glue->context.coreपूर्णांकr);
+	musb_ग_लिखोl(mbase, wrp->phy_uपंचांगi, glue->context.phy_uपंचांगi);
+	musb_ग_लिखोl(mbase, wrp->mode, glue->context.mode);
+	musb_ग_लिखोl(mbase, wrp->tx_mode, glue->context.tx_mode);
+	musb_ग_लिखोl(mbase, wrp->rx_mode, glue->context.rx_mode);
+	अगर (musb->xceiv->otg->state == OTG_STATE_B_IDLE &&
 	    musb->port_mode == MUSB_OTG)
-		dsps_mod_timer(glue, -1);
+		dsps_mod_समयr(glue, -1);
 
-	pm_runtime_put(dev);
+	pm_runसमय_put(dev);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(dsps_pm_ops, dsps_suspend, dsps_resume);
+अटल SIMPLE_DEV_PM_OPS(dsps_pm_ops, dsps_suspend, dsps_resume);
 
-static struct platform_driver dsps_usbss_driver = {
+अटल काष्ठा platक्रमm_driver dsps_usbss_driver = अणु
 	.probe		= dsps_probe,
-	.remove         = dsps_remove,
-	.driver         = {
+	.हटाओ         = dsps_हटाओ,
+	.driver         = अणु
 		.name   = "musb-dsps",
 		.pm	= &dsps_pm_ops,
 		.of_match_table	= musb_dsps_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 MODULE_DESCRIPTION("TI DSPS MUSB Glue Layer");
 MODULE_AUTHOR("Ravi B <ravibabu@ti.com>");
 MODULE_AUTHOR("Ajay Kumar Gupta <ajay.gupta@ti.com>");
 MODULE_LICENSE("GPL v2");
 
-module_platform_driver(dsps_usbss_driver);
+module_platक्रमm_driver(dsps_usbss_driver);

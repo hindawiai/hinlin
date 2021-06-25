@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2020, Mellanox Technologies inc.  All rights reserved.
  */
 
-#include <rdma/uverbs_std_types.h>
-#include "rdma_core.h"
-#include "uverbs.h"
+#समावेश <rdma/uverbs_std_types.h>
+#समावेश "rdma_core.h"
+#समावेश "uverbs.h"
 
-static int uverbs_free_wq(struct ib_uobject *uobject,
-			  enum rdma_remove_reason why,
-			  struct uverbs_attr_bundle *attrs)
-{
-	struct ib_wq *wq = uobject->object;
-	struct ib_uwq_object *uwq =
-		container_of(uobject, struct ib_uwq_object, uevent.uobject);
-	int ret;
+अटल पूर्णांक uverbs_मुक्त_wq(काष्ठा ib_uobject *uobject,
+			  क्रमागत rdma_हटाओ_reason why,
+			  काष्ठा uverbs_attr_bundle *attrs)
+अणु
+	काष्ठा ib_wq *wq = uobject->object;
+	काष्ठा ib_uwq_object *uwq =
+		container_of(uobject, काष्ठा ib_uwq_object, uevent.uobject);
+	पूर्णांक ret;
 
 	ret = ib_destroy_wq_user(wq, &attrs->driver_udata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ib_uverbs_release_uevent(&uwq->uevent);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int UVERBS_HANDLER(UVERBS_METHOD_WQ_CREATE)(
-	struct uverbs_attr_bundle *attrs)
-{
-	struct ib_uwq_object *obj = container_of(
+अटल पूर्णांक UVERBS_HANDLER(UVERBS_METHOD_WQ_CREATE)(
+	काष्ठा uverbs_attr_bundle *attrs)
+अणु
+	काष्ठा ib_uwq_object *obj = container_of(
 		uverbs_attr_get_uobject(attrs, UVERBS_ATTR_CREATE_WQ_HANDLE),
 		typeof(*obj), uevent.uobject);
-	struct ib_pd *pd =
+	काष्ठा ib_pd *pd =
 		uverbs_attr_get_obj(attrs, UVERBS_ATTR_CREATE_WQ_PD_HANDLE);
-	struct ib_cq *cq =
+	काष्ठा ib_cq *cq =
 		uverbs_attr_get_obj(attrs, UVERBS_ATTR_CREATE_WQ_CQ_HANDLE);
-	struct ib_wq_init_attr wq_init_attr = {};
-	struct ib_wq *wq;
+	काष्ठा ib_wq_init_attr wq_init_attr = अणुपूर्ण;
+	काष्ठा ib_wq *wq;
 	u64 user_handle;
-	int ret;
+	पूर्णांक ret;
 
 	ret = uverbs_get_flags32(&wq_init_attr.create_flags, attrs,
 				 UVERBS_ATTR_CREATE_WQ_FLAGS,
@@ -45,23 +46,23 @@ static int UVERBS_HANDLER(UVERBS_METHOD_WQ_CREATE)(
 				 IB_UVERBS_WQ_FLAGS_SCATTER_FCS |
 				 IB_UVERBS_WQ_FLAGS_DELAY_DROP |
 				 IB_UVERBS_WQ_FLAGS_PCI_WRITE_END_PADDING);
-	if (!ret)
+	अगर (!ret)
 		ret = uverbs_copy_from(&wq_init_attr.max_sge, attrs,
 			       UVERBS_ATTR_CREATE_WQ_MAX_SGE);
-	if (!ret)
+	अगर (!ret)
 		ret = uverbs_copy_from(&wq_init_attr.max_wr, attrs,
 				       UVERBS_ATTR_CREATE_WQ_MAX_WR);
-	if (!ret)
+	अगर (!ret)
 		ret = uverbs_copy_from(&user_handle, attrs,
 				       UVERBS_ATTR_CREATE_WQ_USER_HANDLE);
-	if (!ret)
-		ret = uverbs_get_const(&wq_init_attr.wq_type, attrs,
+	अगर (!ret)
+		ret = uverbs_get_स्थिर(&wq_init_attr.wq_type, attrs,
 				       UVERBS_ATTR_CREATE_WQ_TYPE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (wq_init_attr.wq_type != IB_WQT_RQ)
-		return -EINVAL;
+	अगर (wq_init_attr.wq_type != IB_WQT_RQ)
+		वापस -EINVAL;
 
 	obj->uevent.event_file = ib_uverbs_get_async_event(attrs,
 					UVERBS_ATTR_CREATE_WQ_EVENT_FD);
@@ -72,10 +73,10 @@ static int UVERBS_HANDLER(UVERBS_METHOD_WQ_CREATE)(
 	wq_init_attr.cq = cq;
 
 	wq = pd->device->ops.create_wq(pd, &wq_init_attr, &attrs->driver_udata);
-	if (IS_ERR(wq)) {
+	अगर (IS_ERR(wq)) अणु
 		ret = PTR_ERR(wq);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	obj->uevent.uobject.object = wq;
 	wq->wq_type = wq_init_attr.wq_type;
@@ -91,26 +92,26 @@ static int UVERBS_HANDLER(UVERBS_METHOD_WQ_CREATE)(
 
 	ret = uverbs_copy_to(attrs, UVERBS_ATTR_CREATE_WQ_RESP_MAX_WR,
 			     &wq_init_attr.max_wr,
-			     sizeof(wq_init_attr.max_wr));
-	if (ret)
-		return ret;
+			     माप(wq_init_attr.max_wr));
+	अगर (ret)
+		वापस ret;
 
 	ret = uverbs_copy_to(attrs, UVERBS_ATTR_CREATE_WQ_RESP_MAX_SGE,
 			     &wq_init_attr.max_sge,
-			     sizeof(wq_init_attr.max_sge));
-	if (ret)
-		return ret;
+			     माप(wq_init_attr.max_sge));
+	अगर (ret)
+		वापस ret;
 
 	ret = uverbs_copy_to(attrs, UVERBS_ATTR_CREATE_WQ_RESP_WQ_NUM,
 			     &wq->wq_num,
-			     sizeof(wq->wq_num));
-	return ret;
+			     माप(wq->wq_num));
+	वापस ret;
 
 err:
-	if (obj->uevent.event_file)
+	अगर (obj->uevent.event_file)
 		uverbs_uobject_put(&obj->uevent.event_file->uobj);
-	return ret;
-};
+	वापस ret;
+पूर्ण;
 
 DECLARE_UVERBS_NAMED_METHOD(
 	UVERBS_METHOD_WQ_CREATE,
@@ -123,7 +124,7 @@ DECLARE_UVERBS_NAMED_METHOD(
 			UVERBS_ACCESS_READ,
 			UA_MANDATORY),
 	UVERBS_ATTR_CONST_IN(UVERBS_ATTR_CREATE_WQ_TYPE,
-			     enum ib_wq_type,
+			     क्रमागत ib_wq_type,
 			     UA_MANDATORY),
 	UVERBS_ATTR_PTR_IN(UVERBS_ATTR_CREATE_WQ_USER_HANDLE,
 			   UVERBS_ATTR_TYPE(u64),
@@ -135,7 +136,7 @@ DECLARE_UVERBS_NAMED_METHOD(
 			   UVERBS_ATTR_TYPE(u32),
 			   UA_MANDATORY),
 	UVERBS_ATTR_FLAGS_IN(UVERBS_ATTR_CREATE_WQ_FLAGS,
-			     enum ib_uverbs_wq_flags,
+			     क्रमागत ib_uverbs_wq_flags,
 			     UA_MANDATORY),
 	UVERBS_ATTR_IDR(UVERBS_ATTR_CREATE_WQ_CQ_HANDLE,
 			UVERBS_OBJECT_CQ,
@@ -156,18 +157,18 @@ DECLARE_UVERBS_NAMED_METHOD(
 			   UA_OPTIONAL),
 	UVERBS_ATTR_UHW());
 
-static int UVERBS_HANDLER(UVERBS_METHOD_WQ_DESTROY)(
-	struct uverbs_attr_bundle *attrs)
-{
-	struct ib_uobject *uobj =
+अटल पूर्णांक UVERBS_HANDLER(UVERBS_METHOD_WQ_DESTROY)(
+	काष्ठा uverbs_attr_bundle *attrs)
+अणु
+	काष्ठा ib_uobject *uobj =
 		uverbs_attr_get_uobject(attrs, UVERBS_ATTR_DESTROY_WQ_HANDLE);
-	struct ib_uwq_object *obj =
-		container_of(uobj, struct ib_uwq_object, uevent.uobject);
+	काष्ठा ib_uwq_object *obj =
+		container_of(uobj, काष्ठा ib_uwq_object, uevent.uobject);
 
-	return uverbs_copy_to(attrs, UVERBS_ATTR_DESTROY_WQ_RESP,
+	वापस uverbs_copy_to(attrs, UVERBS_ATTR_DESTROY_WQ_RESP,
 			      &obj->uevent.events_reported,
-			      sizeof(obj->uevent.events_reported));
-}
+			      माप(obj->uevent.events_reported));
+पूर्ण
 
 DECLARE_UVERBS_NAMED_METHOD(
 	UVERBS_METHOD_WQ_DESTROY,
@@ -182,13 +183,13 @@ DECLARE_UVERBS_NAMED_METHOD(
 
 DECLARE_UVERBS_NAMED_OBJECT(
 	UVERBS_OBJECT_WQ,
-	UVERBS_TYPE_ALLOC_IDR_SZ(sizeof(struct ib_uwq_object), uverbs_free_wq),
+	UVERBS_TYPE_ALLOC_IDR_SZ(माप(काष्ठा ib_uwq_object), uverbs_मुक्त_wq),
 	&UVERBS_METHOD(UVERBS_METHOD_WQ_CREATE),
 	&UVERBS_METHOD(UVERBS_METHOD_WQ_DESTROY)
 );
 
-const struct uapi_definition uverbs_def_obj_wq[] = {
+स्थिर काष्ठा uapi_definition uverbs_def_obj_wq[] = अणु
 	UAPI_DEF_CHAIN_OBJ_TREE_NAMED(UVERBS_OBJECT_WQ,
 				      UAPI_DEF_OBJ_NEEDS_FN(destroy_wq)),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;

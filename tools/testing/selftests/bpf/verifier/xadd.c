@@ -1,19 +1,20 @@
-{
+<शैली गुरु>
+अणु
 	"xadd/w check unaligned stack",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_0, -8),
 	BPF_ATOMIC_OP(BPF_W, BPF_ADD, BPF_REG_10, BPF_REG_0, -7),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_10, -8),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.errstr = "misaligned stack access off",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-},
-{
+पूर्ण,
+अणु
 	"xadd/w check unaligned map",
-	.insns = {
+	.insns = अणु
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -25,18 +26,18 @@
 	BPF_ATOMIC_OP(BPF_W, BPF_ADD, BPF_REG_0, BPF_REG_1, 3),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_0, 3),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 3 पूर्ण,
 	.result = REJECT,
 	.errstr = "misaligned value access off",
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-},
-{
+पूर्ण,
+अणु
 	"xadd/w check unaligned pkt",
-	.insns = {
-	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1, offsetof(struct xdp_md, data)),
+	.insns = अणु
+	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1, दुरत्व(काष्ठा xdp_md, data)),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_1,
-		    offsetof(struct xdp_md, data_end)),
+		    दुरत्व(काष्ठा xdp_md, data_end)),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_2),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, 8),
 	BPF_JMP_REG(BPF_JLT, BPF_REG_1, BPF_REG_3, 2),
@@ -49,15 +50,15 @@
 	BPF_ATOMIC_OP(BPF_W, BPF_ADD, BPF_REG_2, BPF_REG_0, 2),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_2, 1),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.errstr = "BPF_ATOMIC stores into R2 pkt is not allowed",
 	.prog_type = BPF_PROG_TYPE_XDP,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-},
-{
+पूर्ण,
+अणु
 	"xadd/w check whether src/dst got mangled, 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
 	BPF_MOV64_REG(BPF_REG_7, BPF_REG_10),
@@ -70,14 +71,14 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.retval = 3,
-},
-{
+पूर्ण,
+अणु
 	"xadd/w check whether src/dst got mangled, 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
 	BPF_MOV64_REG(BPF_REG_7, BPF_REG_10),
@@ -90,8 +91,8 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 42),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	.retval = 3,
-},
+पूर्ण,

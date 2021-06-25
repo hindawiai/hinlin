@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * hdmi-codec.h - HDMI Codec driver API
  *
@@ -7,21 +8,21 @@
  * Author: Jyri Sarha <jsarha@ti.com>
  */
 
-#ifndef __HDMI_CODEC_H__
-#define __HDMI_CODEC_H__
+#अगर_अघोषित __HDMI_CODEC_H__
+#घोषणा __HDMI_CODEC_H__
 
-#include <linux/of_graph.h>
-#include <linux/hdmi.h>
-#include <drm/drm_edid.h>
-#include <sound/asoundef.h>
-#include <sound/soc.h>
-#include <uapi/sound/asound.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/hdmi.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/soc.h>
+#समावेश <uapi/sound/asound.h>
 
 /*
  * Protocol between ASoC cpu-dai and HDMI-encoder
  */
-struct hdmi_codec_daifmt {
-	enum {
+काष्ठा hdmi_codec_daअगरmt अणु
+	क्रमागत अणु
 		HDMI_I2S,
 		HDMI_RIGHT_J,
 		HDMI_LEFT_J,
@@ -29,99 +30,99 @@ struct hdmi_codec_daifmt {
 		HDMI_DSP_B,
 		HDMI_AC97,
 		HDMI_SPDIF,
-	} fmt;
-	unsigned int bit_clk_inv:1;
-	unsigned int frame_clk_inv:1;
-	unsigned int bit_clk_master:1;
-	unsigned int frame_clk_master:1;
-	/* bit_fmt could be standard PCM format or
-	 * IEC958 encoded format. ALSA IEC958 plugin will pass
-	 * IEC958_SUBFRAME format to the underneath driver.
+	पूर्ण fmt;
+	अचिन्हित पूर्णांक bit_clk_inv:1;
+	अचिन्हित पूर्णांक frame_clk_inv:1;
+	अचिन्हित पूर्णांक bit_clk_master:1;
+	अचिन्हित पूर्णांक frame_clk_master:1;
+	/* bit_fmt could be standard PCM क्रमmat or
+	 * IEC958 encoded क्रमmat. ALSA IEC958 plugin will pass
+	 * IEC958_SUBFRAME क्रमmat to the underneath driver.
 	 */
-	snd_pcm_format_t bit_fmt;
-};
+	snd_pcm_क्रमmat_t bit_fmt;
+पूर्ण;
 
 /*
  * HDMI audio parameters
  */
-struct hdmi_codec_params {
-	struct hdmi_audio_infoframe cea;
-	struct snd_aes_iec958 iec;
-	int sample_rate;
-	int sample_width;
-	int channels;
-};
+काष्ठा hdmi_codec_params अणु
+	काष्ठा hdmi_audio_infoframe cea;
+	काष्ठा snd_aes_iec958 iec;
+	पूर्णांक sample_rate;
+	पूर्णांक sample_width;
+	पूर्णांक channels;
+पूर्ण;
 
-typedef void (*hdmi_codec_plugged_cb)(struct device *dev,
+प्रकार व्योम (*hdmi_codec_plugged_cb)(काष्ठा device *dev,
 				      bool plugged);
 
-struct hdmi_codec_pdata;
-struct hdmi_codec_ops {
+काष्ठा hdmi_codec_pdata;
+काष्ठा hdmi_codec_ops अणु
 	/*
 	 * Called when ASoC starts an audio stream setup.
 	 * Optional
 	 */
-	int (*audio_startup)(struct device *dev, void *data);
+	पूर्णांक (*audio_startup)(काष्ठा device *dev, व्योम *data);
 
 	/*
-	 * Configures HDMI-encoder for audio stream.
+	 * Configures HDMI-encoder क्रम audio stream.
 	 * Mandatory
 	 */
-	int (*hw_params)(struct device *dev, void *data,
-			 struct hdmi_codec_daifmt *fmt,
-			 struct hdmi_codec_params *hparms);
+	पूर्णांक (*hw_params)(काष्ठा device *dev, व्योम *data,
+			 काष्ठा hdmi_codec_daअगरmt *fmt,
+			 काष्ठा hdmi_codec_params *hparms);
 
 	/*
-	 * Shuts down the audio stream.
+	 * Shuts करोwn the audio stream.
 	 * Mandatory
 	 */
-	void (*audio_shutdown)(struct device *dev, void *data);
+	व्योम (*audio_shutकरोwn)(काष्ठा device *dev, व्योम *data);
 
 	/*
 	 * Mute/unmute HDMI audio stream.
 	 * Optional
 	 */
-	int (*mute_stream)(struct device *dev, void *data,
-			   bool enable, int direction);
+	पूर्णांक (*mute_stream)(काष्ठा device *dev, व्योम *data,
+			   bool enable, पूर्णांक direction);
 
 	/*
 	 * Provides EDID-Like-Data from connected HDMI device.
 	 * Optional
 	 */
-	int (*get_eld)(struct device *dev, void *data,
-		       uint8_t *buf, size_t len);
+	पूर्णांक (*get_eld)(काष्ठा device *dev, व्योम *data,
+		       uपूर्णांक8_t *buf, माप_प्रकार len);
 
 	/*
 	 * Getting DAI ID
 	 * Optional
 	 */
-	int (*get_dai_id)(struct snd_soc_component *comment,
-			  struct device_node *endpoint);
+	पूर्णांक (*get_dai_id)(काष्ठा snd_soc_component *comment,
+			  काष्ठा device_node *endpoपूर्णांक);
 
 	/*
 	 * Hook callback function to handle connector plug event.
 	 * Optional
 	 */
-	int (*hook_plugged_cb)(struct device *dev, void *data,
+	पूर्णांक (*hook_plugged_cb)(काष्ठा device *dev, व्योम *data,
 			       hdmi_codec_plugged_cb fn,
-			       struct device *codec_dev);
+			       काष्ठा device *codec_dev);
 
 	/* bit field */
-	unsigned int no_capture_mute:1;
-};
+	अचिन्हित पूर्णांक no_capture_mute:1;
+पूर्ण;
 
 /* HDMI codec initalization data */
-struct hdmi_codec_pdata {
-	const struct hdmi_codec_ops *ops;
-	uint i2s:1;
-	uint spdif:1;
-	int max_i2s_channels;
-	void *data;
-};
+काष्ठा hdmi_codec_pdata अणु
+	स्थिर काष्ठा hdmi_codec_ops *ops;
+	uपूर्णांक i2s:1;
+	uपूर्णांक spdअगर:1;
+	पूर्णांक max_i2s_channels;
+	व्योम *data;
+पूर्ण;
 
-struct snd_soc_component;
-struct snd_soc_jack;
+काष्ठा snd_soc_component;
+काष्ठा snd_soc_jack;
 
-#define HDMI_CODEC_DRV_NAME "hdmi-audio-codec"
+#घोषणा HDMI_CODEC_DRV_NAME "hdmi-audio-codec"
 
-#endif /* __HDMI_CODEC_H__ */
+#पूर्ण_अगर /* __HDMI_CODEC_H__ */

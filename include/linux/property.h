@@ -1,501 +1,502 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * property.h - Unified device property interface.
+ * property.h - Unअगरied device property पूर्णांकerface.
  *
  * Copyright (C) 2014, Intel Corporation
- * Authors: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
- *          Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Authors: Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
+ *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#ifndef _LINUX_PROPERTY_H_
-#define _LINUX_PROPERTY_H_
+#अगर_अघोषित _LINUX_PROPERTY_H_
+#घोषणा _LINUX_PROPERTY_H_
 
-#include <linux/bits.h>
-#include <linux/fwnode.h>
-#include <linux/types.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/fwnode.h>
+#समावेश <linux/types.h>
 
-struct device;
+काष्ठा device;
 
-enum dev_prop_type {
+क्रमागत dev_prop_type अणु
 	DEV_PROP_U8,
 	DEV_PROP_U16,
 	DEV_PROP_U32,
 	DEV_PROP_U64,
 	DEV_PROP_STRING,
 	DEV_PROP_REF,
-};
+पूर्ण;
 
-enum dev_dma_attr {
+क्रमागत dev_dma_attr अणु
 	DEV_DMA_NOT_SUPPORTED,
 	DEV_DMA_NON_COHERENT,
 	DEV_DMA_COHERENT,
-};
+पूर्ण;
 
-struct fwnode_handle *dev_fwnode(struct device *dev);
+काष्ठा fwnode_handle *dev_fwnode(काष्ठा device *dev);
 
-bool device_property_present(struct device *dev, const char *propname);
-int device_property_read_u8_array(struct device *dev, const char *propname,
-				  u8 *val, size_t nval);
-int device_property_read_u16_array(struct device *dev, const char *propname,
-				   u16 *val, size_t nval);
-int device_property_read_u32_array(struct device *dev, const char *propname,
-				   u32 *val, size_t nval);
-int device_property_read_u64_array(struct device *dev, const char *propname,
-				   u64 *val, size_t nval);
-int device_property_read_string_array(struct device *dev, const char *propname,
-				      const char **val, size_t nval);
-int device_property_read_string(struct device *dev, const char *propname,
-				const char **val);
-int device_property_match_string(struct device *dev,
-				 const char *propname, const char *string);
+bool device_property_present(काष्ठा device *dev, स्थिर अक्षर *propname);
+पूर्णांक device_property_पढ़ो_u8_array(काष्ठा device *dev, स्थिर अक्षर *propname,
+				  u8 *val, माप_प्रकार nval);
+पूर्णांक device_property_पढ़ो_u16_array(काष्ठा device *dev, स्थिर अक्षर *propname,
+				   u16 *val, माप_प्रकार nval);
+पूर्णांक device_property_पढ़ो_u32_array(काष्ठा device *dev, स्थिर अक्षर *propname,
+				   u32 *val, माप_प्रकार nval);
+पूर्णांक device_property_पढ़ो_u64_array(काष्ठा device *dev, स्थिर अक्षर *propname,
+				   u64 *val, माप_प्रकार nval);
+पूर्णांक device_property_पढ़ो_string_array(काष्ठा device *dev, स्थिर अक्षर *propname,
+				      स्थिर अक्षर **val, माप_प्रकार nval);
+पूर्णांक device_property_पढ़ो_string(काष्ठा device *dev, स्थिर अक्षर *propname,
+				स्थिर अक्षर **val);
+पूर्णांक device_property_match_string(काष्ठा device *dev,
+				 स्थिर अक्षर *propname, स्थिर अक्षर *string);
 
-bool fwnode_device_is_available(const struct fwnode_handle *fwnode);
-bool fwnode_property_present(const struct fwnode_handle *fwnode,
-			     const char *propname);
-int fwnode_property_read_u8_array(const struct fwnode_handle *fwnode,
-				  const char *propname, u8 *val,
-				  size_t nval);
-int fwnode_property_read_u16_array(const struct fwnode_handle *fwnode,
-				   const char *propname, u16 *val,
-				   size_t nval);
-int fwnode_property_read_u32_array(const struct fwnode_handle *fwnode,
-				   const char *propname, u32 *val,
-				   size_t nval);
-int fwnode_property_read_u64_array(const struct fwnode_handle *fwnode,
-				   const char *propname, u64 *val,
-				   size_t nval);
-int fwnode_property_read_string_array(const struct fwnode_handle *fwnode,
-				      const char *propname, const char **val,
-				      size_t nval);
-int fwnode_property_read_string(const struct fwnode_handle *fwnode,
-				const char *propname, const char **val);
-int fwnode_property_match_string(const struct fwnode_handle *fwnode,
-				 const char *propname, const char *string);
-int fwnode_property_get_reference_args(const struct fwnode_handle *fwnode,
-				       const char *prop, const char *nargs_prop,
-				       unsigned int nargs, unsigned int index,
-				       struct fwnode_reference_args *args);
+bool fwnode_device_is_available(स्थिर काष्ठा fwnode_handle *fwnode);
+bool fwnode_property_present(स्थिर काष्ठा fwnode_handle *fwnode,
+			     स्थिर अक्षर *propname);
+पूर्णांक fwnode_property_पढ़ो_u8_array(स्थिर काष्ठा fwnode_handle *fwnode,
+				  स्थिर अक्षर *propname, u8 *val,
+				  माप_प्रकार nval);
+पूर्णांक fwnode_property_पढ़ो_u16_array(स्थिर काष्ठा fwnode_handle *fwnode,
+				   स्थिर अक्षर *propname, u16 *val,
+				   माप_प्रकार nval);
+पूर्णांक fwnode_property_पढ़ो_u32_array(स्थिर काष्ठा fwnode_handle *fwnode,
+				   स्थिर अक्षर *propname, u32 *val,
+				   माप_प्रकार nval);
+पूर्णांक fwnode_property_पढ़ो_u64_array(स्थिर काष्ठा fwnode_handle *fwnode,
+				   स्थिर अक्षर *propname, u64 *val,
+				   माप_प्रकार nval);
+पूर्णांक fwnode_property_पढ़ो_string_array(स्थिर काष्ठा fwnode_handle *fwnode,
+				      स्थिर अक्षर *propname, स्थिर अक्षर **val,
+				      माप_प्रकार nval);
+पूर्णांक fwnode_property_पढ़ो_string(स्थिर काष्ठा fwnode_handle *fwnode,
+				स्थिर अक्षर *propname, स्थिर अक्षर **val);
+पूर्णांक fwnode_property_match_string(स्थिर काष्ठा fwnode_handle *fwnode,
+				 स्थिर अक्षर *propname, स्थिर अक्षर *string);
+पूर्णांक fwnode_property_get_reference_args(स्थिर काष्ठा fwnode_handle *fwnode,
+				       स्थिर अक्षर *prop, स्थिर अक्षर *nargs_prop,
+				       अचिन्हित पूर्णांक nargs, अचिन्हित पूर्णांक index,
+				       काष्ठा fwnode_reference_args *args);
 
-struct fwnode_handle *fwnode_find_reference(const struct fwnode_handle *fwnode,
-					    const char *name,
-					    unsigned int index);
+काष्ठा fwnode_handle *fwnode_find_reference(स्थिर काष्ठा fwnode_handle *fwnode,
+					    स्थिर अक्षर *name,
+					    अचिन्हित पूर्णांक index);
 
-const char *fwnode_get_name(const struct fwnode_handle *fwnode);
-const char *fwnode_get_name_prefix(const struct fwnode_handle *fwnode);
-struct fwnode_handle *fwnode_get_parent(const struct fwnode_handle *fwnode);
-struct fwnode_handle *fwnode_get_next_parent(
-	struct fwnode_handle *fwnode);
-struct device *fwnode_get_next_parent_dev(struct fwnode_handle *fwnode);
-unsigned int fwnode_count_parents(const struct fwnode_handle *fwn);
-struct fwnode_handle *fwnode_get_nth_parent(struct fwnode_handle *fwn,
-					    unsigned int depth);
-bool fwnode_is_ancestor_of(struct fwnode_handle *test_ancestor,
-				  struct fwnode_handle *test_child);
-struct fwnode_handle *fwnode_get_next_child_node(
-	const struct fwnode_handle *fwnode, struct fwnode_handle *child);
-struct fwnode_handle *fwnode_get_next_available_child_node(
-	const struct fwnode_handle *fwnode, struct fwnode_handle *child);
+स्थिर अक्षर *fwnode_get_name(स्थिर काष्ठा fwnode_handle *fwnode);
+स्थिर अक्षर *fwnode_get_name_prefix(स्थिर काष्ठा fwnode_handle *fwnode);
+काष्ठा fwnode_handle *fwnode_get_parent(स्थिर काष्ठा fwnode_handle *fwnode);
+काष्ठा fwnode_handle *fwnode_get_next_parent(
+	काष्ठा fwnode_handle *fwnode);
+काष्ठा device *fwnode_get_next_parent_dev(काष्ठा fwnode_handle *fwnode);
+अचिन्हित पूर्णांक fwnode_count_parents(स्थिर काष्ठा fwnode_handle *fwn);
+काष्ठा fwnode_handle *fwnode_get_nth_parent(काष्ठा fwnode_handle *fwn,
+					    अचिन्हित पूर्णांक depth);
+bool fwnode_is_ancestor_of(काष्ठा fwnode_handle *test_ancestor,
+				  काष्ठा fwnode_handle *test_child);
+काष्ठा fwnode_handle *fwnode_get_next_child_node(
+	स्थिर काष्ठा fwnode_handle *fwnode, काष्ठा fwnode_handle *child);
+काष्ठा fwnode_handle *fwnode_get_next_available_child_node(
+	स्थिर काष्ठा fwnode_handle *fwnode, काष्ठा fwnode_handle *child);
 
-#define fwnode_for_each_child_node(fwnode, child)			\
-	for (child = fwnode_get_next_child_node(fwnode, NULL); child;	\
+#घोषणा fwnode_क्रम_each_child_node(fwnode, child)			\
+	क्रम (child = fwnode_get_next_child_node(fwnode, शून्य); child;	\
 	     child = fwnode_get_next_child_node(fwnode, child))
 
-#define fwnode_for_each_available_child_node(fwnode, child)		       \
-	for (child = fwnode_get_next_available_child_node(fwnode, NULL); child;\
+#घोषणा fwnode_क्रम_each_available_child_node(fwnode, child)		       \
+	क्रम (child = fwnode_get_next_available_child_node(fwnode, शून्य); child;\
 	     child = fwnode_get_next_available_child_node(fwnode, child))
 
-struct fwnode_handle *device_get_next_child_node(
-	struct device *dev, struct fwnode_handle *child);
+काष्ठा fwnode_handle *device_get_next_child_node(
+	काष्ठा device *dev, काष्ठा fwnode_handle *child);
 
-#define device_for_each_child_node(dev, child)				\
-	for (child = device_get_next_child_node(dev, NULL); child;	\
+#घोषणा device_क्रम_each_child_node(dev, child)				\
+	क्रम (child = device_get_next_child_node(dev, शून्य); child;	\
 	     child = device_get_next_child_node(dev, child))
 
-struct fwnode_handle *fwnode_get_named_child_node(
-	const struct fwnode_handle *fwnode, const char *childname);
-struct fwnode_handle *device_get_named_child_node(struct device *dev,
-						  const char *childname);
+काष्ठा fwnode_handle *fwnode_get_named_child_node(
+	स्थिर काष्ठा fwnode_handle *fwnode, स्थिर अक्षर *childname);
+काष्ठा fwnode_handle *device_get_named_child_node(काष्ठा device *dev,
+						  स्थिर अक्षर *childname);
 
-struct fwnode_handle *fwnode_handle_get(struct fwnode_handle *fwnode);
-void fwnode_handle_put(struct fwnode_handle *fwnode);
+काष्ठा fwnode_handle *fwnode_handle_get(काष्ठा fwnode_handle *fwnode);
+व्योम fwnode_handle_put(काष्ठा fwnode_handle *fwnode);
 
-int fwnode_irq_get(struct fwnode_handle *fwnode, unsigned int index);
+पूर्णांक fwnode_irq_get(काष्ठा fwnode_handle *fwnode, अचिन्हित पूर्णांक index);
 
-unsigned int device_get_child_node_count(struct device *dev);
+अचिन्हित पूर्णांक device_get_child_node_count(काष्ठा device *dev);
 
-static inline bool device_property_read_bool(struct device *dev,
-					     const char *propname)
-{
-	return device_property_present(dev, propname);
-}
+अटल अंतरभूत bool device_property_पढ़ो_bool(काष्ठा device *dev,
+					     स्थिर अक्षर *propname)
+अणु
+	वापस device_property_present(dev, propname);
+पूर्ण
 
-static inline int device_property_read_u8(struct device *dev,
-					  const char *propname, u8 *val)
-{
-	return device_property_read_u8_array(dev, propname, val, 1);
-}
+अटल अंतरभूत पूर्णांक device_property_पढ़ो_u8(काष्ठा device *dev,
+					  स्थिर अक्षर *propname, u8 *val)
+अणु
+	वापस device_property_पढ़ो_u8_array(dev, propname, val, 1);
+पूर्ण
 
-static inline int device_property_read_u16(struct device *dev,
-					   const char *propname, u16 *val)
-{
-	return device_property_read_u16_array(dev, propname, val, 1);
-}
+अटल अंतरभूत पूर्णांक device_property_पढ़ो_u16(काष्ठा device *dev,
+					   स्थिर अक्षर *propname, u16 *val)
+अणु
+	वापस device_property_पढ़ो_u16_array(dev, propname, val, 1);
+पूर्ण
 
-static inline int device_property_read_u32(struct device *dev,
-					   const char *propname, u32 *val)
-{
-	return device_property_read_u32_array(dev, propname, val, 1);
-}
+अटल अंतरभूत पूर्णांक device_property_पढ़ो_u32(काष्ठा device *dev,
+					   स्थिर अक्षर *propname, u32 *val)
+अणु
+	वापस device_property_पढ़ो_u32_array(dev, propname, val, 1);
+पूर्ण
 
-static inline int device_property_read_u64(struct device *dev,
-					   const char *propname, u64 *val)
-{
-	return device_property_read_u64_array(dev, propname, val, 1);
-}
+अटल अंतरभूत पूर्णांक device_property_पढ़ो_u64(काष्ठा device *dev,
+					   स्थिर अक्षर *propname, u64 *val)
+अणु
+	वापस device_property_पढ़ो_u64_array(dev, propname, val, 1);
+पूर्ण
 
-static inline int device_property_count_u8(struct device *dev, const char *propname)
-{
-	return device_property_read_u8_array(dev, propname, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक device_property_count_u8(काष्ठा device *dev, स्थिर अक्षर *propname)
+अणु
+	वापस device_property_पढ़ो_u8_array(dev, propname, शून्य, 0);
+पूर्ण
 
-static inline int device_property_count_u16(struct device *dev, const char *propname)
-{
-	return device_property_read_u16_array(dev, propname, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक device_property_count_u16(काष्ठा device *dev, स्थिर अक्षर *propname)
+अणु
+	वापस device_property_पढ़ो_u16_array(dev, propname, शून्य, 0);
+पूर्ण
 
-static inline int device_property_count_u32(struct device *dev, const char *propname)
-{
-	return device_property_read_u32_array(dev, propname, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक device_property_count_u32(काष्ठा device *dev, स्थिर अक्षर *propname)
+अणु
+	वापस device_property_पढ़ो_u32_array(dev, propname, शून्य, 0);
+पूर्ण
 
-static inline int device_property_count_u64(struct device *dev, const char *propname)
-{
-	return device_property_read_u64_array(dev, propname, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक device_property_count_u64(काष्ठा device *dev, स्थिर अक्षर *propname)
+अणु
+	वापस device_property_पढ़ो_u64_array(dev, propname, शून्य, 0);
+पूर्ण
 
-static inline int device_property_string_array_count(struct device *dev,
-						     const char *propname)
-{
-	return device_property_read_string_array(dev, propname, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक device_property_string_array_count(काष्ठा device *dev,
+						     स्थिर अक्षर *propname)
+अणु
+	वापस device_property_पढ़ो_string_array(dev, propname, शून्य, 0);
+पूर्ण
 
-static inline bool fwnode_property_read_bool(const struct fwnode_handle *fwnode,
-					     const char *propname)
-{
-	return fwnode_property_present(fwnode, propname);
-}
+अटल अंतरभूत bool fwnode_property_पढ़ो_bool(स्थिर काष्ठा fwnode_handle *fwnode,
+					     स्थिर अक्षर *propname)
+अणु
+	वापस fwnode_property_present(fwnode, propname);
+पूर्ण
 
-static inline int fwnode_property_read_u8(const struct fwnode_handle *fwnode,
-					  const char *propname, u8 *val)
-{
-	return fwnode_property_read_u8_array(fwnode, propname, val, 1);
-}
+अटल अंतरभूत पूर्णांक fwnode_property_पढ़ो_u8(स्थिर काष्ठा fwnode_handle *fwnode,
+					  स्थिर अक्षर *propname, u8 *val)
+अणु
+	वापस fwnode_property_पढ़ो_u8_array(fwnode, propname, val, 1);
+पूर्ण
 
-static inline int fwnode_property_read_u16(const struct fwnode_handle *fwnode,
-					   const char *propname, u16 *val)
-{
-	return fwnode_property_read_u16_array(fwnode, propname, val, 1);
-}
+अटल अंतरभूत पूर्णांक fwnode_property_पढ़ो_u16(स्थिर काष्ठा fwnode_handle *fwnode,
+					   स्थिर अक्षर *propname, u16 *val)
+अणु
+	वापस fwnode_property_पढ़ो_u16_array(fwnode, propname, val, 1);
+पूर्ण
 
-static inline int fwnode_property_read_u32(const struct fwnode_handle *fwnode,
-					   const char *propname, u32 *val)
-{
-	return fwnode_property_read_u32_array(fwnode, propname, val, 1);
-}
+अटल अंतरभूत पूर्णांक fwnode_property_पढ़ो_u32(स्थिर काष्ठा fwnode_handle *fwnode,
+					   स्थिर अक्षर *propname, u32 *val)
+अणु
+	वापस fwnode_property_पढ़ो_u32_array(fwnode, propname, val, 1);
+पूर्ण
 
-static inline int fwnode_property_read_u64(const struct fwnode_handle *fwnode,
-					   const char *propname, u64 *val)
-{
-	return fwnode_property_read_u64_array(fwnode, propname, val, 1);
-}
+अटल अंतरभूत पूर्णांक fwnode_property_पढ़ो_u64(स्थिर काष्ठा fwnode_handle *fwnode,
+					   स्थिर अक्षर *propname, u64 *val)
+अणु
+	वापस fwnode_property_पढ़ो_u64_array(fwnode, propname, val, 1);
+पूर्ण
 
-static inline int fwnode_property_count_u8(const struct fwnode_handle *fwnode,
-					   const char *propname)
-{
-	return fwnode_property_read_u8_array(fwnode, propname, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक fwnode_property_count_u8(स्थिर काष्ठा fwnode_handle *fwnode,
+					   स्थिर अक्षर *propname)
+अणु
+	वापस fwnode_property_पढ़ो_u8_array(fwnode, propname, शून्य, 0);
+पूर्ण
 
-static inline int fwnode_property_count_u16(const struct fwnode_handle *fwnode,
-					    const char *propname)
-{
-	return fwnode_property_read_u16_array(fwnode, propname, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक fwnode_property_count_u16(स्थिर काष्ठा fwnode_handle *fwnode,
+					    स्थिर अक्षर *propname)
+अणु
+	वापस fwnode_property_पढ़ो_u16_array(fwnode, propname, शून्य, 0);
+पूर्ण
 
-static inline int fwnode_property_count_u32(const struct fwnode_handle *fwnode,
-					    const char *propname)
-{
-	return fwnode_property_read_u32_array(fwnode, propname, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक fwnode_property_count_u32(स्थिर काष्ठा fwnode_handle *fwnode,
+					    स्थिर अक्षर *propname)
+अणु
+	वापस fwnode_property_पढ़ो_u32_array(fwnode, propname, शून्य, 0);
+पूर्ण
 
-static inline int fwnode_property_count_u64(const struct fwnode_handle *fwnode,
-					    const char *propname)
-{
-	return fwnode_property_read_u64_array(fwnode, propname, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक fwnode_property_count_u64(स्थिर काष्ठा fwnode_handle *fwnode,
+					    स्थिर अक्षर *propname)
+अणु
+	वापस fwnode_property_पढ़ो_u64_array(fwnode, propname, शून्य, 0);
+पूर्ण
 
-static inline int
-fwnode_property_string_array_count(const struct fwnode_handle *fwnode,
-				   const char *propname)
-{
-	return fwnode_property_read_string_array(fwnode, propname, NULL, 0);
-}
+अटल अंतरभूत पूर्णांक
+fwnode_property_string_array_count(स्थिर काष्ठा fwnode_handle *fwnode,
+				   स्थिर अक्षर *propname)
+अणु
+	वापस fwnode_property_पढ़ो_string_array(fwnode, propname, शून्य, 0);
+पूर्ण
 
-struct software_node;
+काष्ठा software_node;
 
 /**
- * struct software_node_ref_args - Reference property with additional arguments
+ * काष्ठा software_node_ref_args - Reference property with additional arguments
  * @node: Reference to a software node
  * @nargs: Number of elements in @args array
  * @args: Integer arguments
  */
-struct software_node_ref_args {
-	const struct software_node *node;
-	unsigned int nargs;
+काष्ठा software_node_ref_args अणु
+	स्थिर काष्ठा software_node *node;
+	अचिन्हित पूर्णांक nargs;
 	u64 args[NR_FWNODE_REFERENCE_ARGS];
-};
+पूर्ण;
 
-#define SOFTWARE_NODE_REFERENCE(_ref_, ...)			\
-(const struct software_node_ref_args) {				\
+#घोषणा SOFTWARE_NODE_REFERENCE(_ref_, ...)			\
+(स्थिर काष्ठा software_node_ref_args) अणु				\
 	.node = _ref_,						\
-	.nargs = ARRAY_SIZE(((u64[]){ 0, ##__VA_ARGS__ })) - 1,	\
-	.args = { __VA_ARGS__ },				\
-}
+	.nargs = ARRAY_SIZE(((u64[])अणु 0, ##__VA_ARGS__ पूर्ण)) - 1,	\
+	.args = अणु __VA_ARGS__ पूर्ण,				\
+पूर्ण
 
 /**
- * struct property_entry - "Built-in" device property representation.
+ * काष्ठा property_entry - "Built-in" device property representation.
  * @name: Name of the property.
  * @length: Length of data making up the value.
- * @is_inline: True when the property value is stored inline.
- * @type: Type of the data in unions.
- * @pointer: Pointer to the property when it is not stored inline.
- * @value: Value of the property when it is stored inline.
+ * @is_अंतरभूत: True when the property value is stored अंतरभूत.
+ * @type: Type of the data in जोड़s.
+ * @poपूर्णांकer: Poपूर्णांकer to the property when it is not stored अंतरभूत.
+ * @value: Value of the property when it is stored अंतरभूत.
  */
-struct property_entry {
-	const char *name;
-	size_t length;
-	bool is_inline;
-	enum dev_prop_type type;
-	union {
-		const void *pointer;
-		union {
-			u8 u8_data[sizeof(u64) / sizeof(u8)];
-			u16 u16_data[sizeof(u64) / sizeof(u16)];
-			u32 u32_data[sizeof(u64) / sizeof(u32)];
-			u64 u64_data[sizeof(u64) / sizeof(u64)];
-			const char *str[sizeof(u64) / sizeof(char *)];
-		} value;
-	};
-};
+काष्ठा property_entry अणु
+	स्थिर अक्षर *name;
+	माप_प्रकार length;
+	bool is_अंतरभूत;
+	क्रमागत dev_prop_type type;
+	जोड़ अणु
+		स्थिर व्योम *poपूर्णांकer;
+		जोड़ अणु
+			u8 u8_data[माप(u64) / माप(u8)];
+			u16 u16_data[माप(u64) / माप(u16)];
+			u32 u32_data[माप(u64) / माप(u32)];
+			u64 u64_data[माप(u64) / माप(u64)];
+			स्थिर अक्षर *str[माप(u64) / माप(अक्षर *)];
+		पूर्ण value;
+	पूर्ण;
+पूर्ण;
 
 /*
- * Note: the below initializers for the anonymous union are carefully
- * crafted to avoid gcc-4.4.4's problems with initialization of anon unions
- * and structs.
+ * Note: the below initializers क्रम the anonymous जोड़ are carefully
+ * crafted to aव्योम gcc-4.4.4's problems with initialization of anon जोड़s
+ * and काष्ठाs.
  */
 
-#define __PROPERTY_ENTRY_ELEMENT_SIZE(_elem_)				\
-	sizeof(((struct property_entry *)NULL)->value._elem_[0])
+#घोषणा __PROPERTY_ENTRY_ELEMENT_SIZE(_elem_)				\
+	माप(((काष्ठा property_entry *)शून्य)->value._elem_[0])
 
-#define __PROPERTY_ENTRY_ARRAY_ELSIZE_LEN(_name_, _elsize_, _Type_,	\
+#घोषणा __PROPERTY_ENTRY_ARRAY_ELSIZE_LEN(_name_, _elsize_, _Type_,	\
 					  _val_, _len_)			\
-(struct property_entry) {						\
+(काष्ठा property_entry) अणु						\
 	.name = _name_,							\
 	.length = (_len_) * (_elsize_),					\
 	.type = DEV_PROP_##_Type_,					\
-	{ .pointer = _val_ },						\
-}
+	अणु .poपूर्णांकer = _val_ पूर्ण,						\
+पूर्ण
 
-#define __PROPERTY_ENTRY_ARRAY_LEN(_name_, _elem_, _Type_, _val_, _len_)\
+#घोषणा __PROPERTY_ENTRY_ARRAY_LEN(_name_, _elem_, _Type_, _val_, _len_)\
 	__PROPERTY_ENTRY_ARRAY_ELSIZE_LEN(_name_,			\
 				__PROPERTY_ENTRY_ELEMENT_SIZE(_elem_),	\
 				_Type_, _val_, _len_)
 
-#define PROPERTY_ENTRY_U8_ARRAY_LEN(_name_, _val_, _len_)		\
+#घोषणा PROPERTY_ENTRY_U8_ARRAY_LEN(_name_, _val_, _len_)		\
 	__PROPERTY_ENTRY_ARRAY_LEN(_name_, u8_data, U8, _val_, _len_)
-#define PROPERTY_ENTRY_U16_ARRAY_LEN(_name_, _val_, _len_)		\
+#घोषणा PROPERTY_ENTRY_U16_ARRAY_LEN(_name_, _val_, _len_)		\
 	__PROPERTY_ENTRY_ARRAY_LEN(_name_, u16_data, U16, _val_, _len_)
-#define PROPERTY_ENTRY_U32_ARRAY_LEN(_name_, _val_, _len_)		\
+#घोषणा PROPERTY_ENTRY_U32_ARRAY_LEN(_name_, _val_, _len_)		\
 	__PROPERTY_ENTRY_ARRAY_LEN(_name_, u32_data, U32, _val_, _len_)
-#define PROPERTY_ENTRY_U64_ARRAY_LEN(_name_, _val_, _len_)		\
+#घोषणा PROPERTY_ENTRY_U64_ARRAY_LEN(_name_, _val_, _len_)		\
 	__PROPERTY_ENTRY_ARRAY_LEN(_name_, u64_data, U64, _val_, _len_)
-#define PROPERTY_ENTRY_STRING_ARRAY_LEN(_name_, _val_, _len_)		\
+#घोषणा PROPERTY_ENTRY_STRING_ARRAY_LEN(_name_, _val_, _len_)		\
 	__PROPERTY_ENTRY_ARRAY_LEN(_name_, str, STRING, _val_, _len_)
-#define PROPERTY_ENTRY_REF_ARRAY_LEN(_name_, _val_, _len_)		\
+#घोषणा PROPERTY_ENTRY_REF_ARRAY_LEN(_name_, _val_, _len_)		\
 	__PROPERTY_ENTRY_ARRAY_ELSIZE_LEN(_name_,			\
-				sizeof(struct software_node_ref_args),	\
+				माप(काष्ठा software_node_ref_args),	\
 				REF, _val_, _len_)
 
-#define PROPERTY_ENTRY_U8_ARRAY(_name_, _val_)				\
+#घोषणा PROPERTY_ENTRY_U8_ARRAY(_name_, _val_)				\
 	PROPERTY_ENTRY_U8_ARRAY_LEN(_name_, _val_, ARRAY_SIZE(_val_))
-#define PROPERTY_ENTRY_U16_ARRAY(_name_, _val_)				\
+#घोषणा PROPERTY_ENTRY_U16_ARRAY(_name_, _val_)				\
 	PROPERTY_ENTRY_U16_ARRAY_LEN(_name_, _val_, ARRAY_SIZE(_val_))
-#define PROPERTY_ENTRY_U32_ARRAY(_name_, _val_)				\
+#घोषणा PROPERTY_ENTRY_U32_ARRAY(_name_, _val_)				\
 	PROPERTY_ENTRY_U32_ARRAY_LEN(_name_, _val_, ARRAY_SIZE(_val_))
-#define PROPERTY_ENTRY_U64_ARRAY(_name_, _val_)				\
+#घोषणा PROPERTY_ENTRY_U64_ARRAY(_name_, _val_)				\
 	PROPERTY_ENTRY_U64_ARRAY_LEN(_name_, _val_, ARRAY_SIZE(_val_))
-#define PROPERTY_ENTRY_STRING_ARRAY(_name_, _val_)			\
+#घोषणा PROPERTY_ENTRY_STRING_ARRAY(_name_, _val_)			\
 	PROPERTY_ENTRY_STRING_ARRAY_LEN(_name_, _val_, ARRAY_SIZE(_val_))
-#define PROPERTY_ENTRY_REF_ARRAY(_name_, _val_)			\
+#घोषणा PROPERTY_ENTRY_REF_ARRAY(_name_, _val_)			\
 	PROPERTY_ENTRY_REF_ARRAY_LEN(_name_, _val_, ARRAY_SIZE(_val_))
 
-#define __PROPERTY_ENTRY_ELEMENT(_name_, _elem_, _Type_, _val_)		\
-(struct property_entry) {						\
+#घोषणा __PROPERTY_ENTRY_ELEMENT(_name_, _elem_, _Type_, _val_)		\
+(काष्ठा property_entry) अणु						\
 	.name = _name_,							\
 	.length = __PROPERTY_ENTRY_ELEMENT_SIZE(_elem_),		\
-	.is_inline = true,						\
+	.is_अंतरभूत = true,						\
 	.type = DEV_PROP_##_Type_,					\
-	{ .value = { ._elem_[0] = _val_ } },				\
-}
+	अणु .value = अणु ._elem_[0] = _val_ पूर्ण पूर्ण,				\
+पूर्ण
 
-#define PROPERTY_ENTRY_U8(_name_, _val_)				\
+#घोषणा PROPERTY_ENTRY_U8(_name_, _val_)				\
 	__PROPERTY_ENTRY_ELEMENT(_name_, u8_data, U8, _val_)
-#define PROPERTY_ENTRY_U16(_name_, _val_)				\
+#घोषणा PROPERTY_ENTRY_U16(_name_, _val_)				\
 	__PROPERTY_ENTRY_ELEMENT(_name_, u16_data, U16, _val_)
-#define PROPERTY_ENTRY_U32(_name_, _val_)				\
+#घोषणा PROPERTY_ENTRY_U32(_name_, _val_)				\
 	__PROPERTY_ENTRY_ELEMENT(_name_, u32_data, U32, _val_)
-#define PROPERTY_ENTRY_U64(_name_, _val_)				\
+#घोषणा PROPERTY_ENTRY_U64(_name_, _val_)				\
 	__PROPERTY_ENTRY_ELEMENT(_name_, u64_data, U64, _val_)
-#define PROPERTY_ENTRY_STRING(_name_, _val_)				\
+#घोषणा PROPERTY_ENTRY_STRING(_name_, _val_)				\
 	__PROPERTY_ENTRY_ELEMENT(_name_, str, STRING, _val_)
 
-#define PROPERTY_ENTRY_BOOL(_name_)		\
-(struct property_entry) {			\
+#घोषणा PROPERTY_ENTRY_BOOL(_name_)		\
+(काष्ठा property_entry) अणु			\
 	.name = _name_,				\
-	.is_inline = true,			\
-}
+	.is_अंतरभूत = true,			\
+पूर्ण
 
-#define PROPERTY_ENTRY_REF(_name_, _ref_, ...)				\
-(struct property_entry) {						\
+#घोषणा PROPERTY_ENTRY_REF(_name_, _ref_, ...)				\
+(काष्ठा property_entry) अणु						\
 	.name = _name_,							\
-	.length = sizeof(struct software_node_ref_args),		\
+	.length = माप(काष्ठा software_node_ref_args),		\
 	.type = DEV_PROP_REF,						\
-	{ .pointer = &SOFTWARE_NODE_REFERENCE(_ref_, ##__VA_ARGS__), },	\
-}
+	अणु .poपूर्णांकer = &SOFTWARE_NODE_REFERENCE(_ref_, ##__VA_ARGS__), पूर्ण,	\
+पूर्ण
 
-struct property_entry *
-property_entries_dup(const struct property_entry *properties);
+काष्ठा property_entry *
+property_entries_dup(स्थिर काष्ठा property_entry *properties);
 
-void property_entries_free(const struct property_entry *properties);
+व्योम property_entries_मुक्त(स्थिर काष्ठा property_entry *properties);
 
-int device_add_properties(struct device *dev,
-			  const struct property_entry *properties);
-void device_remove_properties(struct device *dev);
+पूर्णांक device_add_properties(काष्ठा device *dev,
+			  स्थिर काष्ठा property_entry *properties);
+व्योम device_हटाओ_properties(काष्ठा device *dev);
 
-bool device_dma_supported(struct device *dev);
+bool device_dma_supported(काष्ठा device *dev);
 
-enum dev_dma_attr device_get_dma_attr(struct device *dev);
+क्रमागत dev_dma_attr device_get_dma_attr(काष्ठा device *dev);
 
-const void *device_get_match_data(struct device *dev);
+स्थिर व्योम *device_get_match_data(काष्ठा device *dev);
 
-int device_get_phy_mode(struct device *dev);
+पूर्णांक device_get_phy_mode(काष्ठा device *dev);
 
-void *device_get_mac_address(struct device *dev, char *addr, int alen);
+व्योम *device_get_mac_address(काष्ठा device *dev, अक्षर *addr, पूर्णांक alen);
 
-int fwnode_get_phy_mode(struct fwnode_handle *fwnode);
-void *fwnode_get_mac_address(struct fwnode_handle *fwnode,
-			     char *addr, int alen);
-struct fwnode_handle *fwnode_graph_get_next_endpoint(
-	const struct fwnode_handle *fwnode, struct fwnode_handle *prev);
-struct fwnode_handle *
-fwnode_graph_get_port_parent(const struct fwnode_handle *fwnode);
-struct fwnode_handle *fwnode_graph_get_remote_port_parent(
-	const struct fwnode_handle *fwnode);
-struct fwnode_handle *fwnode_graph_get_remote_port(
-	const struct fwnode_handle *fwnode);
-struct fwnode_handle *fwnode_graph_get_remote_endpoint(
-	const struct fwnode_handle *fwnode);
-struct fwnode_handle *
-fwnode_graph_get_remote_node(const struct fwnode_handle *fwnode, u32 port,
-			     u32 endpoint);
+पूर्णांक fwnode_get_phy_mode(काष्ठा fwnode_handle *fwnode);
+व्योम *fwnode_get_mac_address(काष्ठा fwnode_handle *fwnode,
+			     अक्षर *addr, पूर्णांक alen);
+काष्ठा fwnode_handle *fwnode_graph_get_next_endpoपूर्णांक(
+	स्थिर काष्ठा fwnode_handle *fwnode, काष्ठा fwnode_handle *prev);
+काष्ठा fwnode_handle *
+fwnode_graph_get_port_parent(स्थिर काष्ठा fwnode_handle *fwnode);
+काष्ठा fwnode_handle *fwnode_graph_get_remote_port_parent(
+	स्थिर काष्ठा fwnode_handle *fwnode);
+काष्ठा fwnode_handle *fwnode_graph_get_remote_port(
+	स्थिर काष्ठा fwnode_handle *fwnode);
+काष्ठा fwnode_handle *fwnode_graph_get_remote_endpoपूर्णांक(
+	स्थिर काष्ठा fwnode_handle *fwnode);
+काष्ठा fwnode_handle *
+fwnode_graph_get_remote_node(स्थिर काष्ठा fwnode_handle *fwnode, u32 port,
+			     u32 endpoपूर्णांक);
 
-static inline bool fwnode_graph_is_endpoint(struct fwnode_handle *fwnode)
-{
-	return fwnode_property_present(fwnode, "remote-endpoint");
-}
+अटल अंतरभूत bool fwnode_graph_is_endpoपूर्णांक(काष्ठा fwnode_handle *fwnode)
+अणु
+	वापस fwnode_property_present(fwnode, "remote-endpoint");
+पूर्ण
 
 /*
  * Fwnode lookup flags
  *
- * @FWNODE_GRAPH_ENDPOINT_NEXT: In the case of no exact match, look for the
- *				closest endpoint ID greater than the specified
+ * @FWNODE_GRAPH_ENDPOINT_NEXT: In the हाल of no exact match, look क्रम the
+ *				बंदst endpoपूर्णांक ID greater than the specअगरied
  *				one.
  * @FWNODE_GRAPH_DEVICE_DISABLED: That the device to which the remote
- *				  endpoint of the given endpoint belongs to,
+ *				  endpoपूर्णांक of the given endpoपूर्णांक beदीर्घs to,
  *				  may be disabled.
  */
-#define FWNODE_GRAPH_ENDPOINT_NEXT	BIT(0)
-#define FWNODE_GRAPH_DEVICE_DISABLED	BIT(1)
+#घोषणा FWNODE_GRAPH_ENDPOINT_NEXT	BIT(0)
+#घोषणा FWNODE_GRAPH_DEVICE_DISABLED	BIT(1)
 
-struct fwnode_handle *
-fwnode_graph_get_endpoint_by_id(const struct fwnode_handle *fwnode,
-				u32 port, u32 endpoint, unsigned long flags);
+काष्ठा fwnode_handle *
+fwnode_graph_get_endpoपूर्णांक_by_id(स्थिर काष्ठा fwnode_handle *fwnode,
+				u32 port, u32 endpoपूर्णांक, अचिन्हित दीर्घ flags);
 
-#define fwnode_graph_for_each_endpoint(fwnode, child)			\
-	for (child = NULL;						\
-	     (child = fwnode_graph_get_next_endpoint(fwnode, child)); )
+#घोषणा fwnode_graph_क्रम_each_endpoपूर्णांक(fwnode, child)			\
+	क्रम (child = शून्य;						\
+	     (child = fwnode_graph_get_next_endpoपूर्णांक(fwnode, child)); )
 
-int fwnode_graph_parse_endpoint(const struct fwnode_handle *fwnode,
-				struct fwnode_endpoint *endpoint);
+पूर्णांक fwnode_graph_parse_endpoपूर्णांक(स्थिर काष्ठा fwnode_handle *fwnode,
+				काष्ठा fwnode_endpoपूर्णांक *endpoपूर्णांक);
 
-typedef void *(*devcon_match_fn_t)(struct fwnode_handle *fwnode, const char *id,
-				   void *data);
+प्रकार व्योम *(*devcon_match_fn_t)(काष्ठा fwnode_handle *fwnode, स्थिर अक्षर *id,
+				   व्योम *data);
 
-void *fwnode_connection_find_match(struct fwnode_handle *fwnode,
-				   const char *con_id, void *data,
+व्योम *fwnode_connection_find_match(काष्ठा fwnode_handle *fwnode,
+				   स्थिर अक्षर *con_id, व्योम *data,
 				   devcon_match_fn_t match);
 
-static inline void *device_connection_find_match(struct device *dev,
-						 const char *con_id, void *data,
+अटल अंतरभूत व्योम *device_connection_find_match(काष्ठा device *dev,
+						 स्थिर अक्षर *con_id, व्योम *data,
 						 devcon_match_fn_t match)
-{
-	return fwnode_connection_find_match(dev_fwnode(dev), con_id, data, match);
-}
+अणु
+	वापस fwnode_connection_find_match(dev_fwnode(dev), con_id, data, match);
+पूर्ण
 
 /* -------------------------------------------------------------------------- */
 /* Software fwnode support - when HW description is incomplete or missing */
 
 /**
- * struct software_node - Software node description
+ * काष्ठा software_node - Software node description
  * @name: Name of the software node
  * @parent: Parent of the software node
  * @properties: Array of device properties
  */
-struct software_node {
-	const char *name;
-	const struct software_node *parent;
-	const struct property_entry *properties;
-};
+काष्ठा software_node अणु
+	स्थिर अक्षर *name;
+	स्थिर काष्ठा software_node *parent;
+	स्थिर काष्ठा property_entry *properties;
+पूर्ण;
 
-bool is_software_node(const struct fwnode_handle *fwnode);
-const struct software_node *
-to_software_node(const struct fwnode_handle *fwnode);
-struct fwnode_handle *software_node_fwnode(const struct software_node *node);
+bool is_software_node(स्थिर काष्ठा fwnode_handle *fwnode);
+स्थिर काष्ठा software_node *
+to_software_node(स्थिर काष्ठा fwnode_handle *fwnode);
+काष्ठा fwnode_handle *software_node_fwnode(स्थिर काष्ठा software_node *node);
 
-const struct software_node *
-software_node_find_by_name(const struct software_node *parent,
-			   const char *name);
+स्थिर काष्ठा software_node *
+software_node_find_by_name(स्थिर काष्ठा software_node *parent,
+			   स्थिर अक्षर *name);
 
-int software_node_register_nodes(const struct software_node *nodes);
-void software_node_unregister_nodes(const struct software_node *nodes);
+पूर्णांक software_node_रेजिस्टर_nodes(स्थिर काष्ठा software_node *nodes);
+व्योम software_node_unरेजिस्टर_nodes(स्थिर काष्ठा software_node *nodes);
 
-int software_node_register_node_group(const struct software_node **node_group);
-void software_node_unregister_node_group(const struct software_node **node_group);
+पूर्णांक software_node_रेजिस्टर_node_group(स्थिर काष्ठा software_node **node_group);
+व्योम software_node_unरेजिस्टर_node_group(स्थिर काष्ठा software_node **node_group);
 
-int software_node_register(const struct software_node *node);
-void software_node_unregister(const struct software_node *node);
+पूर्णांक software_node_रेजिस्टर(स्थिर काष्ठा software_node *node);
+व्योम software_node_unरेजिस्टर(स्थिर काष्ठा software_node *node);
 
-int software_node_notify(struct device *dev, unsigned long action);
+पूर्णांक software_node_notअगरy(काष्ठा device *dev, अचिन्हित दीर्घ action);
 
-struct fwnode_handle *
-fwnode_create_software_node(const struct property_entry *properties,
-			    const struct fwnode_handle *parent);
-void fwnode_remove_software_node(struct fwnode_handle *fwnode);
+काष्ठा fwnode_handle *
+fwnode_create_software_node(स्थिर काष्ठा property_entry *properties,
+			    स्थिर काष्ठा fwnode_handle *parent);
+व्योम fwnode_हटाओ_software_node(काष्ठा fwnode_handle *fwnode);
 
-int device_add_software_node(struct device *dev, const struct software_node *node);
-void device_remove_software_node(struct device *dev);
+पूर्णांक device_add_software_node(काष्ठा device *dev, स्थिर काष्ठा software_node *node);
+व्योम device_हटाओ_software_node(काष्ठा device *dev);
 
-int device_create_managed_software_node(struct device *dev,
-					const struct property_entry *properties,
-					const struct software_node *parent);
+पूर्णांक device_create_managed_software_node(काष्ठा device *dev,
+					स्थिर काष्ठा property_entry *properties,
+					स्थिर काष्ठा software_node *parent);
 
-#endif /* _LINUX_PROPERTY_H_ */
+#पूर्ण_अगर /* _LINUX_PROPERTY_H_ */

@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_ARCHRANDOM_H
-#define _ASM_ARCHRANDOM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_ARCHRANDOM_H
+#घोषणा _ASM_ARCHRANDOM_H
 
-static inline bool __init smccc_probe_trng(void)
-{
-	return false;
-}
+अटल अंतरभूत bool __init smccc_probe_trng(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-#endif /* _ASM_ARCHRANDOM_H */
+#पूर्ण_अगर /* _ASM_ARCHRANDOM_H */

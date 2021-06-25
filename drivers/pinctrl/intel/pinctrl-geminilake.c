@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Gemini Lake SoC pinctrl/GPIO driver
  *
  * Copyright (C) 2017 Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define GLK_PAD_OWN	0x020
-#define GLK_PADCFGLOCK	0x080
-#define GLK_HOSTSW_OWN	0x0b0
-#define GLK_GPI_IS	0x100
-#define GLK_GPI_IE	0x110
+#घोषणा GLK_PAD_OWN	0x020
+#घोषणा GLK_PADCFGLOCK	0x080
+#घोषणा GLK_HOSTSW_OWN	0x0b0
+#घोषणा GLK_GPI_IS	0x100
+#घोषणा GLK_GPI_IE	0x110
 
-#define GLK_COMMUNITY(s, e)				\
-	{						\
-		.padown_offset = GLK_PAD_OWN,		\
+#घोषणा GLK_COMMUNITY(s, e)				\
+	अणु						\
+		.paकरोwn_offset = GLK_PAD_OWN,		\
 		.padcfglock_offset = GLK_PADCFGLOCK,	\
 		.hostown_offset = GLK_HOSTSW_OWN,	\
 		.is_offset = GLK_GPI_IS,		\
@@ -30,10 +31,10 @@
 		.gpp_size = 32,                         \
 		.pin_base = (s),			\
 		.npins = ((e) - (s) + 1),		\
-	}
+	पूर्ण
 
 /* GLK */
-static const struct pinctrl_pin_desc glk_northwest_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc glk_northwest_pins[] = अणु
 	PINCTRL_PIN(0, "TCK"),
 	PINCTRL_PIN(1, "TRST_B"),
 	PINCTRL_PIN(2, "TMS"),
@@ -114,22 +115,22 @@ static const struct pinctrl_pin_desc glk_northwest_pins[] = {
 	PINCTRL_PIN(77, "GPIO_212"),
 	PINCTRL_PIN(78, "GPIO_213"),
 	PINCTRL_PIN(79, "GPIO_214"),
-};
+पूर्ण;
 
-static const unsigned int glk_northwest_uart1_pins[] = { 26, 27, 28, 29 };
-static const unsigned int glk_northwest_pwm0_pins[] = { 42 };
-static const unsigned int glk_northwest_pwm1_pins[] = { 43 };
-static const unsigned int glk_northwest_pwm2_pins[] = { 44 };
-static const unsigned int glk_northwest_pwm3_pins[] = { 45 };
-static const unsigned int glk_northwest_i2c0_pins[] = { 50, 51 };
-static const unsigned int glk_northwest_i2c1_pins[] = { 52, 53 };
-static const unsigned int glk_northwest_i2c2_pins[] = { 54, 55 };
-static const unsigned int glk_northwest_i2c3_pins[] = { 56, 57 };
-static const unsigned int glk_northwest_i2c4_pins[] = { 58, 59 };
-static const unsigned int glk_northwest_uart0_pins[] = { 60, 61, 62, 63 };
-static const unsigned int glk_northwest_uart2_pins[] = { 64, 65, 66, 67 };
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_uart1_pins[] = अणु 26, 27, 28, 29 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_pwm0_pins[] = अणु 42 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_pwm1_pins[] = अणु 43 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_pwm2_pins[] = अणु 44 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_pwm3_pins[] = अणु 45 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_i2c0_pins[] = अणु 50, 51 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_i2c1_pins[] = अणु 52, 53 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_i2c2_pins[] = अणु 54, 55 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_i2c3_pins[] = अणु 56, 57 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_i2c4_pins[] = अणु 58, 59 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_uart0_pins[] = अणु 60, 61, 62, 63 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_northwest_uart2_pins[] = अणु 64, 65, 66, 67 पूर्ण;
 
-static const struct intel_pingroup glk_northwest_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup glk_northwest_groups[] = अणु
 	PIN_GROUP("uart1_grp", glk_northwest_uart1_pins, 2),
 	PIN_GROUP("pwm0_grp", glk_northwest_pwm0_pins, 2),
 	PIN_GROUP("pwm1_grp", glk_northwest_pwm1_pins, 2),
@@ -142,22 +143,22 @@ static const struct intel_pingroup glk_northwest_groups[] = {
 	PIN_GROUP("i2c4_grp", glk_northwest_i2c4_pins, 1),
 	PIN_GROUP("uart0_grp", glk_northwest_uart0_pins, 1),
 	PIN_GROUP("uart2_grp", glk_northwest_uart2_pins, 1),
-};
+पूर्ण;
 
-static const char * const glk_northwest_uart1_groups[] = { "uart1_grp" };
-static const char * const glk_northwest_pwm0_groups[] = { "pwm0_grp" };
-static const char * const glk_northwest_pwm1_groups[] = { "pwm1_grp" };
-static const char * const glk_northwest_pwm2_groups[] = { "pwm2_grp" };
-static const char * const glk_northwest_pwm3_groups[] = { "pwm3_grp" };
-static const char * const glk_northwest_i2c0_groups[] = { "i2c0_grp" };
-static const char * const glk_northwest_i2c1_groups[] = { "i2c1_grp" };
-static const char * const glk_northwest_i2c2_groups[] = { "i2c2_grp" };
-static const char * const glk_northwest_i2c3_groups[] = { "i2c3_grp" };
-static const char * const glk_northwest_i2c4_groups[] = { "i2c4_grp" };
-static const char * const glk_northwest_uart0_groups[] = { "uart0_grp" };
-static const char * const glk_northwest_uart2_groups[] = { "uart2_grp" };
+अटल स्थिर अक्षर * स्थिर glk_northwest_uart1_groups[] = अणु "uart1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_pwm0_groups[] = अणु "pwm0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_pwm1_groups[] = अणु "pwm1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_pwm2_groups[] = अणु "pwm2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_pwm3_groups[] = अणु "pwm3_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_i2c0_groups[] = अणु "i2c0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_i2c1_groups[] = अणु "i2c1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_i2c2_groups[] = अणु "i2c2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_i2c3_groups[] = अणु "i2c3_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_i2c4_groups[] = अणु "i2c4_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_uart0_groups[] = अणु "uart0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_northwest_uart2_groups[] = अणु "uart2_grp" पूर्ण;
 
-static const struct intel_function glk_northwest_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function glk_northwest_functions[] = अणु
 	FUNCTION("uart1", glk_northwest_uart1_groups),
 	FUNCTION("pmw0", glk_northwest_pwm0_groups),
 	FUNCTION("pmw1", glk_northwest_pwm1_groups),
@@ -170,13 +171,13 @@ static const struct intel_function glk_northwest_functions[] = {
 	FUNCTION("i2c4", glk_northwest_i2c4_groups),
 	FUNCTION("uart0", glk_northwest_uart0_groups),
 	FUNCTION("uart2", glk_northwest_uart2_groups),
-};
+पूर्ण;
 
-static const struct intel_community glk_northwest_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community glk_northwest_communities[] = अणु
 	GLK_COMMUNITY(0, 79),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data glk_northwest_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data glk_northwest_soc_data = अणु
 	.uid = "1",
 	.pins = glk_northwest_pins,
 	.npins = ARRAY_SIZE(glk_northwest_pins),
@@ -186,9 +187,9 @@ static const struct intel_pinctrl_soc_data glk_northwest_soc_data = {
 	.nfunctions = ARRAY_SIZE(glk_northwest_functions),
 	.communities = glk_northwest_communities,
 	.ncommunities = ARRAY_SIZE(glk_northwest_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc glk_north_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc glk_north_pins[] = अणु
 	PINCTRL_PIN(0, "SVID0_ALERT_B"),
 	PINCTRL_PIN(1, "SVID0_DATA"),
 	PINCTRL_PIN(2, "SVID0_CLK"),
@@ -269,17 +270,17 @@ static const struct pinctrl_pin_desc glk_north_pins[] = {
 	PINCTRL_PIN(77, "LPC_AD3"),
 	PINCTRL_PIN(78, "LPC_CLKRUNB"),
 	PINCTRL_PIN(79, "LPC_FRAMEB"),
-};
+पूर्ण;
 
-static const unsigned int glk_north_spi0_pins[] = { 3, 4, 5, 6, 7 };
-static const unsigned int glk_north_spi1_pins[] = { 8, 9, 10, 11, 12, 13 };
-static const unsigned int glk_north_i2c5_pins[] = { 34, 35 };
-static const unsigned int glk_north_i2c6_pins[] = { 36, 37 };
-static const unsigned int glk_north_i2c7_pins[] = { 38, 39 };
-static const unsigned int glk_north_uart0_pins[] = { 62, 63, 64, 65 };
-static const unsigned int glk_north_spi0b_pins[] = { 66, 67, 68, 69, 70 };
+अटल स्थिर अचिन्हित पूर्णांक glk_north_spi0_pins[] = अणु 3, 4, 5, 6, 7 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_north_spi1_pins[] = अणु 8, 9, 10, 11, 12, 13 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_north_i2c5_pins[] = अणु 34, 35 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_north_i2c6_pins[] = अणु 36, 37 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_north_i2c7_pins[] = अणु 38, 39 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_north_uart0_pins[] = अणु 62, 63, 64, 65 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_north_spi0b_pins[] = अणु 66, 67, 68, 69, 70 पूर्ण;
 
-static const struct intel_pingroup glk_north_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup glk_north_groups[] = अणु
 	PIN_GROUP("spi0_grp", glk_north_spi0_pins, 1),
 	PIN_GROUP("spi1_grp", glk_north_spi1_pins, 1),
 	PIN_GROUP("i2c5_grp", glk_north_i2c5_pins, 1),
@@ -287,29 +288,29 @@ static const struct intel_pingroup glk_north_groups[] = {
 	PIN_GROUP("i2c7_grp", glk_north_i2c7_pins, 1),
 	PIN_GROUP("uart0_grp", glk_north_uart0_pins, 2),
 	PIN_GROUP("spi0b_grp", glk_north_spi0b_pins, 2),
-};
+पूर्ण;
 
-static const char * const glk_north_spi0_groups[] = { "spi0_grp", "spi0b_grp" };
-static const char * const glk_north_spi1_groups[] = { "spi1_grp" };
-static const char * const glk_north_i2c5_groups[] = { "i2c5_grp" };
-static const char * const glk_north_i2c6_groups[] = { "i2c6_grp" };
-static const char * const glk_north_i2c7_groups[] = { "i2c7_grp" };
-static const char * const glk_north_uart0_groups[] = { "uart0_grp" };
+अटल स्थिर अक्षर * स्थिर glk_north_spi0_groups[] = अणु "spi0_grp", "spi0b_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_north_spi1_groups[] = अणु "spi1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_north_i2c5_groups[] = अणु "i2c5_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_north_i2c6_groups[] = अणु "i2c6_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_north_i2c7_groups[] = अणु "i2c7_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_north_uart0_groups[] = अणु "uart0_grp" पूर्ण;
 
-static const struct intel_function glk_north_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function glk_north_functions[] = अणु
 	FUNCTION("spi0", glk_north_spi0_groups),
 	FUNCTION("spi1", glk_north_spi1_groups),
 	FUNCTION("i2c5", glk_north_i2c5_groups),
 	FUNCTION("i2c6", glk_north_i2c6_groups),
 	FUNCTION("i2c7", glk_north_i2c7_groups),
 	FUNCTION("uart0", glk_north_uart0_groups),
-};
+पूर्ण;
 
-static const struct intel_community glk_north_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community glk_north_communities[] = अणु
 	GLK_COMMUNITY(0, 79),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data glk_north_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data glk_north_soc_data = अणु
 	.uid = "2",
 	.pins = glk_north_pins,
 	.npins = ARRAY_SIZE(glk_north_pins),
@@ -319,9 +320,9 @@ static const struct intel_pinctrl_soc_data glk_north_soc_data = {
 	.nfunctions = ARRAY_SIZE(glk_north_functions),
 	.communities = glk_north_communities,
 	.ncommunities = ARRAY_SIZE(glk_north_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc glk_audio_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc glk_audio_pins[] = अणु
 	PINCTRL_PIN(0, "AVS_I2S0_MCLK"),
 	PINCTRL_PIN(1, "AVS_I2S0_BCLK"),
 	PINCTRL_PIN(2, "AVS_I2S0_WS_SYNC"),
@@ -342,21 +343,21 @@ static const struct pinctrl_pin_desc glk_audio_pins[] = {
 	PINCTRL_PIN(17, "AVS_M_DATA_1"),
 	PINCTRL_PIN(18, "AVS_M_CLK_AB2"),
 	PINCTRL_PIN(19, "AVS_M_DATA_2"),
-};
+पूर्ण;
 
-static const struct intel_community glk_audio_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community glk_audio_communities[] = अणु
 	GLK_COMMUNITY(0, 19),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data glk_audio_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data glk_audio_soc_data = अणु
 	.uid = "3",
 	.pins = glk_audio_pins,
 	.npins = ARRAY_SIZE(glk_audio_pins),
 	.communities = glk_audio_communities,
 	.ncommunities = ARRAY_SIZE(glk_audio_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc glk_scc_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc glk_scc_pins[] = अणु
 	PINCTRL_PIN(0, "SMB_ALERTB"),
 	PINCTRL_PIN(1, "SMB_CLK"),
 	PINCTRL_PIN(2, "SMB_DATA"),
@@ -392,45 +393,45 @@ static const struct pinctrl_pin_desc glk_scc_pins[] = {
 	PINCTRL_PIN(32, "EMMC0_D7"),
 	PINCTRL_PIN(33, "EMMC0_CMD"),
 	PINCTRL_PIN(34, "EMMC0_STROBE"),
-};
+पूर्ण;
 
-static const unsigned int glk_scc_i2c7_pins[] = { 1, 2 };
-static const unsigned int glk_scc_sdcard_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक glk_scc_i2c7_pins[] = अणु 1, 2 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_scc_sdcard_pins[] = अणु
 	3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-};
-static const unsigned int glk_scc_sdio_pins[] = { 16, 17, 18, 19, 20, 21, 22 };
-static const unsigned int glk_scc_uart1_pins[] = { 16, 17, 18, 19 };
-static const unsigned int glk_scc_emmc_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_scc_sdio_pins[] = अणु 16, 17, 18, 19, 20, 21, 22 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_scc_uart1_pins[] = अणु 16, 17, 18, 19 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक glk_scc_emmc_pins[] = अणु
 	23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
-};
+पूर्ण;
 
-static const struct intel_pingroup glk_scc_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup glk_scc_groups[] = अणु
 	PIN_GROUP("i2c7_grp", glk_scc_i2c7_pins, 2),
 	PIN_GROUP("sdcard_grp", glk_scc_sdcard_pins, 1),
 	PIN_GROUP("sdio_grp", glk_scc_sdio_pins, 2),
 	PIN_GROUP("uart1_grp", glk_scc_uart1_pins, 3),
 	PIN_GROUP("emmc_grp", glk_scc_emmc_pins, 1),
-};
+पूर्ण;
 
-static const char * const glk_scc_i2c7_groups[] = { "i2c7_grp" };
-static const char * const glk_scc_sdcard_groups[] = { "sdcard_grp" };
-static const char * const glk_scc_sdio_groups[] = { "sdio_grp" };
-static const char * const glk_scc_uart1_groups[] = { "uart1_grp" };
-static const char * const glk_scc_emmc_groups[] = { "emmc_grp" };
+अटल स्थिर अक्षर * स्थिर glk_scc_i2c7_groups[] = अणु "i2c7_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_scc_sdcard_groups[] = अणु "sdcard_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_scc_sdio_groups[] = अणु "sdio_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_scc_uart1_groups[] = अणु "uart1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर glk_scc_emmc_groups[] = अणु "emmc_grp" पूर्ण;
 
-static const struct intel_function glk_scc_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function glk_scc_functions[] = अणु
 	FUNCTION("i2c7", glk_scc_i2c7_groups),
 	FUNCTION("sdcard", glk_scc_sdcard_groups),
 	FUNCTION("sdio", glk_scc_sdio_groups),
 	FUNCTION("uart1", glk_scc_uart1_groups),
 	FUNCTION("emmc", glk_scc_emmc_groups),
-};
+पूर्ण;
 
-static const struct intel_community glk_scc_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community glk_scc_communities[] = अणु
 	GLK_COMMUNITY(0, 34),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data glk_scc_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data glk_scc_soc_data = अणु
 	.uid = "4",
 	.pins = glk_scc_pins,
 	.npins = ARRAY_SIZE(glk_scc_pins),
@@ -440,44 +441,44 @@ static const struct intel_pinctrl_soc_data glk_scc_soc_data = {
 	.nfunctions = ARRAY_SIZE(glk_scc_functions),
 	.communities = glk_scc_communities,
 	.ncommunities = ARRAY_SIZE(glk_scc_communities),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data *glk_pinctrl_soc_data[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *glk_pinctrl_soc_data[] = अणु
 	&glk_northwest_soc_data,
 	&glk_north_soc_data,
 	&glk_audio_soc_data,
 	&glk_scc_soc_data,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct acpi_device_id glk_pinctrl_acpi_match[] = {
-	{ "INT3453", (kernel_ulong_t)glk_pinctrl_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id glk_pinctrl_acpi_match[] = अणु
+	अणु "INT3453", (kernel_uदीर्घ_t)glk_pinctrl_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, glk_pinctrl_acpi_match);
 
-static INTEL_PINCTRL_PM_OPS(glk_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(glk_pinctrl_pm_ops);
 
-static struct platform_driver glk_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_uid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver glk_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_uid,
+	.driver = अणु
 		.name = "geminilake-pinctrl",
 		.acpi_match_table = glk_pinctrl_acpi_match,
 		.pm = &glk_pinctrl_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init glk_pinctrl_init(void)
-{
-	return platform_driver_register(&glk_pinctrl_driver);
-}
+अटल पूर्णांक __init glk_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&glk_pinctrl_driver);
+पूर्ण
 subsys_initcall(glk_pinctrl_init);
 
-static void __exit glk_pinctrl_exit(void)
-{
-	platform_driver_unregister(&glk_pinctrl_driver);
-}
-module_exit(glk_pinctrl_exit);
+अटल व्योम __निकास glk_pinctrl_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&glk_pinctrl_driver);
+पूर्ण
+module_निकास(glk_pinctrl_निकास);
 
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Gemini Lake SoC pinctrl/GPIO driver");

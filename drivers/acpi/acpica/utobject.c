@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: utobject - ACPI object create/delete/size/cache routines
@@ -7,60 +8,60 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include <linux/kmemleak.h>
-#include "accommon.h"
-#include "acnamesp.h"
+#समावेश <acpi/acpi.h>
+#समावेश <linux/kmemleak.h>
+#समावेश "accommon.h"
+#समावेश "acnamesp.h"
 
-#define _COMPONENT          ACPI_UTILITIES
+#घोषणा _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utobject")
 
 /* Local prototypes */
-static acpi_status
-acpi_ut_get_simple_object_size(union acpi_operand_object *obj,
+अटल acpi_status
+acpi_ut_get_simple_object_size(जोड़ acpi_opeअक्रम_object *obj,
 			       acpi_size *obj_length);
 
-static acpi_status
-acpi_ut_get_package_object_size(union acpi_operand_object *obj,
+अटल acpi_status
+acpi_ut_get_package_object_size(जोड़ acpi_opeअक्रम_object *obj,
 				acpi_size *obj_length);
 
-static acpi_status
+अटल acpi_status
 acpi_ut_get_element_length(u8 object_type,
-			   union acpi_operand_object *source_object,
-			   union acpi_generic_state *state, void *context);
+			   जोड़ acpi_opeअक्रम_object *source_object,
+			   जोड़ acpi_generic_state *state, व्योम *context);
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_create_internal_object_dbg
+ * FUNCTION:    acpi_ut_create_पूर्णांकernal_object_dbg
  *
  * PARAMETERS:  module_name         - Source file name of caller
  *              line_number         - Line number of caller
  *              component_id        - Component type of caller
  *              type                - ACPI Type of the new object
  *
- * RETURN:      A new internal object, null on failure
+ * RETURN:      A new पूर्णांकernal object, null on failure
  *
- * DESCRIPTION: Create and initialize a new internal object.
+ * DESCRIPTION: Create and initialize a new पूर्णांकernal object.
  *
- * NOTE:        We always allocate the worst-case object descriptor because
+ * NOTE:        We always allocate the worst-हाल object descriptor because
  *              these objects are cached, and we want them to be
  *              one-size-satisfies-any-request. This in itself may not be
  *              the most memory efficient, but the efficiency of the object
- *              cache should more than make up for this!
+ *              cache should more than make up क्रम this!
  *
  ******************************************************************************/
 
-union acpi_operand_object *acpi_ut_create_internal_object_dbg(const char
+जोड़ acpi_opeअक्रम_object *acpi_ut_create_पूर्णांकernal_object_dbg(स्थिर अक्षर
 							      *module_name,
 							      u32 line_number,
 							      u32 component_id,
 							      acpi_object_type
 							      type)
-{
-	union acpi_operand_object *object;
-	union acpi_operand_object *second_object;
+अणु
+	जोड़ acpi_opeअक्रम_object *object;
+	जोड़ acpi_opeअक्रम_object *second_object;
 
-	ACPI_FUNCTION_TRACE_STR(ut_create_internal_object_dbg,
+	ACPI_FUNCTION_TRACE_STR(ut_create_पूर्णांकernal_object_dbg,
 				acpi_ut_get_type_name(type));
 
 	/* Allocate the raw object descriptor */
@@ -68,25 +69,25 @@ union acpi_operand_object *acpi_ut_create_internal_object_dbg(const char
 	object =
 	    acpi_ut_allocate_object_desc_dbg(module_name, line_number,
 					     component_id);
-	if (!object) {
-		return_PTR(NULL);
-	}
+	अगर (!object) अणु
+		वापस_PTR(शून्य);
+	पूर्ण
 	kmemleak_not_leak(object);
 
-	switch (type) {
-	case ACPI_TYPE_REGION:
-	case ACPI_TYPE_BUFFER_FIELD:
-	case ACPI_TYPE_LOCAL_BANK_FIELD:
+	चयन (type) अणु
+	हाल ACPI_TYPE_REGION:
+	हाल ACPI_TYPE_BUFFER_FIELD:
+	हाल ACPI_TYPE_LOCAL_BANK_FIELD:
 
 		/* These types require a secondary object */
 
 		second_object =
 		    acpi_ut_allocate_object_desc_dbg(module_name, line_number,
 						     component_id);
-		if (!second_object) {
+		अगर (!second_object) अणु
 			acpi_ut_delete_object_desc(object);
-			return_PTR(NULL);
-		}
+			वापस_PTR(शून्य);
+		पूर्ण
 
 		second_object->common.type = ACPI_TYPE_LOCAL_EXTRA;
 		second_object->common.reference_count = 1;
@@ -94,13 +95,13 @@ union acpi_operand_object *acpi_ut_create_internal_object_dbg(const char
 		/* Link the second object to the first */
 
 		object->common.next_object = second_object;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 
 		/* All others have no secondary object */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Save the object type in the object descriptor */
 
@@ -112,8 +113,8 @@ union acpi_operand_object *acpi_ut_create_internal_object_dbg(const char
 
 	/* Any per-type initialization should go here */
 
-	return_PTR(object);
-}
+	वापस_PTR(object);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -121,70 +122,70 @@ union acpi_operand_object *acpi_ut_create_internal_object_dbg(const char
  *
  * PARAMETERS:  count               - Number of package elements
  *
- * RETURN:      Pointer to a new Package object, null on failure
+ * RETURN:      Poपूर्णांकer to a new Package object, null on failure
  *
  * DESCRIPTION: Create a fully initialized package object
  *
  ******************************************************************************/
 
-union acpi_operand_object *acpi_ut_create_package_object(u32 count)
-{
-	union acpi_operand_object *package_desc;
-	union acpi_operand_object **package_elements;
+जोड़ acpi_opeअक्रम_object *acpi_ut_create_package_object(u32 count)
+अणु
+	जोड़ acpi_opeअक्रम_object *package_desc;
+	जोड़ acpi_opeअक्रम_object **package_elements;
 
 	ACPI_FUNCTION_TRACE_U32(ut_create_package_object, count);
 
 	/* Create a new Package object */
 
-	package_desc = acpi_ut_create_internal_object(ACPI_TYPE_PACKAGE);
-	if (!package_desc) {
-		return_PTR(NULL);
-	}
+	package_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_PACKAGE);
+	अगर (!package_desc) अणु
+		वापस_PTR(शून्य);
+	पूर्ण
 
 	/*
 	 * Create the element array. Count+1 allows the array to be null
 	 * terminated.
 	 */
 	package_elements = ACPI_ALLOCATE_ZEROED(((acpi_size)count +
-						 1) * sizeof(void *));
-	if (!package_elements) {
+						 1) * माप(व्योम *));
+	अगर (!package_elements) अणु
 		ACPI_FREE(package_desc);
-		return_PTR(NULL);
-	}
+		वापस_PTR(शून्य);
+	पूर्ण
 
 	package_desc->package.count = count;
 	package_desc->package.elements = package_elements;
-	return_PTR(package_desc);
-}
+	वापस_PTR(package_desc);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_create_integer_object
+ * FUNCTION:    acpi_ut_create_पूर्णांकeger_object
  *
- * PARAMETERS:  initial_value       - Initial value for the integer
+ * PARAMETERS:  initial_value       - Initial value क्रम the पूर्णांकeger
  *
- * RETURN:      Pointer to a new Integer object, null on failure
+ * RETURN:      Poपूर्णांकer to a new Integer object, null on failure
  *
- * DESCRIPTION: Create an initialized integer object
+ * DESCRIPTION: Create an initialized पूर्णांकeger object
  *
  ******************************************************************************/
 
-union acpi_operand_object *acpi_ut_create_integer_object(u64 initial_value)
-{
-	union acpi_operand_object *integer_desc;
+जोड़ acpi_opeअक्रम_object *acpi_ut_create_पूर्णांकeger_object(u64 initial_value)
+अणु
+	जोड़ acpi_opeअक्रम_object *पूर्णांकeger_desc;
 
-	ACPI_FUNCTION_TRACE(ut_create_integer_object);
+	ACPI_FUNCTION_TRACE(ut_create_पूर्णांकeger_object);
 
-	/* Create and initialize a new integer object */
+	/* Create and initialize a new पूर्णांकeger object */
 
-	integer_desc = acpi_ut_create_internal_object(ACPI_TYPE_INTEGER);
-	if (!integer_desc) {
-		return_PTR(NULL);
-	}
+	पूर्णांकeger_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_INTEGER);
+	अगर (!पूर्णांकeger_desc) अणु
+		वापस_PTR(शून्य);
+	पूर्ण
 
-	integer_desc->integer.value = initial_value;
-	return_PTR(integer_desc);
-}
+	पूर्णांकeger_desc->पूर्णांकeger.value = initial_value;
+	वापस_PTR(पूर्णांकeger_desc);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -192,193 +193,193 @@ union acpi_operand_object *acpi_ut_create_integer_object(u64 initial_value)
  *
  * PARAMETERS:  buffer_size            - Size of buffer to be created
  *
- * RETURN:      Pointer to a new Buffer object, null on failure
+ * RETURN:      Poपूर्णांकer to a new Buffer object, null on failure
  *
  * DESCRIPTION: Create a fully initialized buffer object
  *
  ******************************************************************************/
 
-union acpi_operand_object *acpi_ut_create_buffer_object(acpi_size buffer_size)
-{
-	union acpi_operand_object *buffer_desc;
-	u8 *buffer = NULL;
+जोड़ acpi_opeअक्रम_object *acpi_ut_create_buffer_object(acpi_size buffer_size)
+अणु
+	जोड़ acpi_opeअक्रम_object *buffer_desc;
+	u8 *buffer = शून्य;
 
 	ACPI_FUNCTION_TRACE_U32(ut_create_buffer_object, buffer_size);
 
 	/* Create a new Buffer object */
 
-	buffer_desc = acpi_ut_create_internal_object(ACPI_TYPE_BUFFER);
-	if (!buffer_desc) {
-		return_PTR(NULL);
-	}
+	buffer_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_BUFFER);
+	अगर (!buffer_desc) अणु
+		वापस_PTR(शून्य);
+	पूर्ण
 
-	/* Create an actual buffer only if size > 0 */
+	/* Create an actual buffer only अगर size > 0 */
 
-	if (buffer_size > 0) {
+	अगर (buffer_size > 0) अणु
 
 		/* Allocate the actual buffer */
 
 		buffer = ACPI_ALLOCATE_ZEROED(buffer_size);
-		if (!buffer) {
+		अगर (!buffer) अणु
 			ACPI_ERROR((AE_INFO, "Could not allocate size %u",
 				    (u32)buffer_size));
 
-			acpi_ut_remove_reference(buffer_desc);
-			return_PTR(NULL);
-		}
-	}
+			acpi_ut_हटाओ_reference(buffer_desc);
+			वापस_PTR(शून्य);
+		पूर्ण
+	पूर्ण
 
 	/* Complete buffer object initialization */
 
 	buffer_desc->buffer.flags |= AOPOBJ_DATA_VALID;
-	buffer_desc->buffer.pointer = buffer;
+	buffer_desc->buffer.poपूर्णांकer = buffer;
 	buffer_desc->buffer.length = (u32) buffer_size;
 
 	/* Return the new buffer descriptor */
 
-	return_PTR(buffer_desc);
-}
+	वापस_PTR(buffer_desc);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_create_string_object
  *
  * PARAMETERS:  string_size         - Size of string to be created. Does not
- *                                    include NULL terminator, this is added
- *                                    automatically.
+ *                                    include शून्य terminator, this is added
+ *                                    स्वतःmatically.
  *
- * RETURN:      Pointer to a new String object
+ * RETURN:      Poपूर्णांकer to a new String object
  *
  * DESCRIPTION: Create a fully initialized string object
  *
  ******************************************************************************/
 
-union acpi_operand_object *acpi_ut_create_string_object(acpi_size string_size)
-{
-	union acpi_operand_object *string_desc;
-	char *string;
+जोड़ acpi_opeअक्रम_object *acpi_ut_create_string_object(acpi_size string_size)
+अणु
+	जोड़ acpi_opeअक्रम_object *string_desc;
+	अक्षर *string;
 
 	ACPI_FUNCTION_TRACE_U32(ut_create_string_object, string_size);
 
 	/* Create a new String object */
 
-	string_desc = acpi_ut_create_internal_object(ACPI_TYPE_STRING);
-	if (!string_desc) {
-		return_PTR(NULL);
-	}
+	string_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_STRING);
+	अगर (!string_desc) अणु
+		वापस_PTR(शून्य);
+	पूर्ण
 
 	/*
-	 * Allocate the actual string buffer -- (Size + 1) for NULL terminator.
-	 * NOTE: Zero-length strings are NULL terminated
+	 * Allocate the actual string buffer -- (Size + 1) क्रम शून्य terminator.
+	 * NOTE: Zero-length strings are शून्य terminated
 	 */
 	string = ACPI_ALLOCATE_ZEROED(string_size + 1);
-	if (!string) {
+	अगर (!string) अणु
 		ACPI_ERROR((AE_INFO, "Could not allocate size %u",
 			    (u32)string_size));
 
-		acpi_ut_remove_reference(string_desc);
-		return_PTR(NULL);
-	}
+		acpi_ut_हटाओ_reference(string_desc);
+		वापस_PTR(शून्य);
+	पूर्ण
 
 	/* Complete string object initialization */
 
-	string_desc->string.pointer = string;
+	string_desc->string.poपूर्णांकer = string;
 	string_desc->string.length = (u32) string_size;
 
 	/* Return the new string descriptor */
 
-	return_PTR(string_desc);
-}
+	वापस_PTR(string_desc);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_valid_internal_object
+ * FUNCTION:    acpi_ut_valid_पूर्णांकernal_object
  *
  * PARAMETERS:  object              - Object to be validated
  *
- * RETURN:      TRUE if object is valid, FALSE otherwise
+ * RETURN:      TRUE अगर object is valid, FALSE otherwise
  *
- * DESCRIPTION: Validate a pointer to be of type union acpi_operand_object
+ * DESCRIPTION: Validate a poपूर्णांकer to be of type जोड़ acpi_opeअक्रम_object
  *
  ******************************************************************************/
 
-u8 acpi_ut_valid_internal_object(void *object)
-{
+u8 acpi_ut_valid_पूर्णांकernal_object(व्योम *object)
+अणु
 
-	ACPI_FUNCTION_NAME(ut_valid_internal_object);
+	ACPI_FUNCTION_NAME(ut_valid_पूर्णांकernal_object);
 
-	/* Check for a null pointer */
+	/* Check क्रम a null poपूर्णांकer */
 
-	if (!object) {
+	अगर (!object) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "**** Null Object Ptr\n"));
-		return (FALSE);
-	}
+		वापस (FALSE);
+	पूर्ण
 
 	/* Check the descriptor type field */
 
-	switch (ACPI_GET_DESCRIPTOR_TYPE(object)) {
-	case ACPI_DESC_TYPE_OPERAND:
+	चयन (ACPI_GET_DESCRIPTOR_TYPE(object)) अणु
+	हाल ACPI_DESC_TYPE_OPERAND:
 
-		/* The object appears to be a valid union acpi_operand_object */
+		/* The object appears to be a valid जोड़ acpi_opeअक्रम_object */
 
-		return (TRUE);
+		वापस (TRUE);
 
-	default:
+	शेष:
 
 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 				  "%p is not an ACPI operand obj [%s]\n",
 				  object, acpi_ut_get_descriptor_name(object)));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return (FALSE);
-}
+	वापस (FALSE);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_allocate_object_desc_dbg
  *
- * PARAMETERS:  module_name         - Caller's module name (for error output)
- *              line_number         - Caller's line number (for error output)
- *              component_id        - Caller's component ID (for error output)
+ * PARAMETERS:  module_name         - Caller's module name (क्रम error output)
+ *              line_number         - Caller's line number (क्रम error output)
+ *              component_id        - Caller's component ID (क्रम error output)
  *
- * RETURN:      Pointer to newly allocated object descriptor. Null on error
+ * RETURN:      Poपूर्णांकer to newly allocated object descriptor. Null on error
  *
  * DESCRIPTION: Allocate a new object descriptor. Gracefully handle
  *              error conditions.
  *
  ******************************************************************************/
 
-void *acpi_ut_allocate_object_desc_dbg(const char *module_name,
+व्योम *acpi_ut_allocate_object_desc_dbg(स्थिर अक्षर *module_name,
 				       u32 line_number, u32 component_id)
-{
-	union acpi_operand_object *object;
+अणु
+	जोड़ acpi_opeअक्रम_object *object;
 
 	ACPI_FUNCTION_TRACE(ut_allocate_object_desc_dbg);
 
-	object = acpi_os_acquire_object(acpi_gbl_operand_cache);
-	if (!object) {
+	object = acpi_os_acquire_object(acpi_gbl_opeअक्रम_cache);
+	अगर (!object) अणु
 		ACPI_ERROR((module_name, line_number,
 			    "Could not allocate an object descriptor"));
 
-		return_PTR(NULL);
-	}
+		वापस_PTR(शून्य);
+	पूर्ण
 
 	/* Mark the descriptor type */
 
 	ACPI_SET_DESCRIPTOR_TYPE(object, ACPI_DESC_TYPE_OPERAND);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_ALLOCATIONS, "%p Size %X\n",
-			  object, (u32) sizeof(union acpi_operand_object)));
+			  object, (u32) माप(जोड़ acpi_opeअक्रम_object)));
 
-	return_PTR(object);
-}
+	वापस_PTR(object);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_delete_object_desc
  *
- * PARAMETERS:  object          - An Acpi internal object to be deleted
+ * PARAMETERS:  object          - An Acpi पूर्णांकernal object to be deleted
  *
  * RETURN:      None.
  *
@@ -386,78 +387,78 @@ void *acpi_ut_allocate_object_desc_dbg(const char *module_name,
  *
  ******************************************************************************/
 
-void acpi_ut_delete_object_desc(union acpi_operand_object *object)
-{
+व्योम acpi_ut_delete_object_desc(जोड़ acpi_opeअक्रम_object *object)
+अणु
 	ACPI_FUNCTION_TRACE_PTR(ut_delete_object_desc, object);
 
-	/* Object must be of type union acpi_operand_object */
+	/* Object must be of type जोड़ acpi_opeअक्रम_object */
 
-	if (ACPI_GET_DESCRIPTOR_TYPE(object) != ACPI_DESC_TYPE_OPERAND) {
+	अगर (ACPI_GET_DESCRIPTOR_TYPE(object) != ACPI_DESC_TYPE_OPERAND) अणु
 		ACPI_ERROR((AE_INFO,
 			    "%p is not an ACPI Operand object [%s]", object,
 			    acpi_ut_get_descriptor_name(object)));
-		return_VOID;
-	}
+		वापस_VOID;
+	पूर्ण
 
-	(void)acpi_os_release_object(acpi_gbl_operand_cache, object);
-	return_VOID;
-}
+	(व्योम)acpi_os_release_object(acpi_gbl_opeअक्रम_cache, object);
+	वापस_VOID;
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_get_simple_object_size
  *
- * PARAMETERS:  internal_object    - An ACPI operand object
- *              obj_length         - Where the length is returned
+ * PARAMETERS:  पूर्णांकernal_object    - An ACPI opeअक्रम object
+ *              obj_length         - Where the length is वापसed
  *
  * RETURN:      Status
  *
  * DESCRIPTION: This function is called to determine the space required to
- *              contain a simple object for return to an external user.
+ *              contain a simple object क्रम वापस to an बाह्यal user.
  *
- *              The length includes the object structure plus any additional
+ *              The length includes the object काष्ठाure plus any additional
  *              needed space.
  *
  ******************************************************************************/
 
-static acpi_status
-acpi_ut_get_simple_object_size(union acpi_operand_object *internal_object,
+अटल acpi_status
+acpi_ut_get_simple_object_size(जोड़ acpi_opeअक्रम_object *पूर्णांकernal_object,
 			       acpi_size *obj_length)
-{
+अणु
 	acpi_size length;
 	acpi_size size;
 	acpi_status status = AE_OK;
 
-	ACPI_FUNCTION_TRACE_PTR(ut_get_simple_object_size, internal_object);
+	ACPI_FUNCTION_TRACE_PTR(ut_get_simple_object_size, पूर्णांकernal_object);
 
-	/* Start with the length of the (external) Acpi object */
+	/* Start with the length of the (बाह्यal) Acpi object */
 
-	length = sizeof(union acpi_object);
+	length = माप(जोड़ acpi_object);
 
-	/* A NULL object is allowed, can be a legal uninitialized package element */
+	/* A शून्य object is allowed, can be a legal uninitialized package element */
 
-	if (!internal_object) {
+	अगर (!पूर्णांकernal_object) अणु
 	/*
-		 * Object is NULL, just return the length of union acpi_object
-		 * (A NULL union acpi_object is an object of all zeroes.)
+		 * Object is शून्य, just वापस the length of जोड़ acpi_object
+		 * (A शून्य जोड़ acpi_object is an object of all zeroes.)
 	 */
 		*obj_length = ACPI_ROUND_UP_TO_NATIVE_WORD(length);
-		return_ACPI_STATUS(AE_OK);
-	}
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* A Namespace Node should never appear here */
 
-	if (ACPI_GET_DESCRIPTOR_TYPE(internal_object) == ACPI_DESC_TYPE_NAMED) {
+	अगर (ACPI_GET_DESCRIPTOR_TYPE(पूर्णांकernal_object) == ACPI_DESC_TYPE_NAMED) अणु
 
 		/* A namespace node should never get here */
 
 		ACPI_ERROR((AE_INFO,
 			    "Received a namespace node [%4.4s] "
 			    "where an operand object is required",
-			    ACPI_CAST_PTR(struct acpi_namespace_node,
-					  internal_object)->name.ascii));
-		return_ACPI_STATUS(AE_AML_INTERNAL);
-	}
+			    ACPI_CAST_PTR(काष्ठा acpi_namespace_node,
+					  पूर्णांकernal_object)->name.ascii));
+		वापस_ACPI_STATUS(AE_AML_INTERNAL);
+	पूर्ण
 
 	/*
 	 * The final length depends on the object type
@@ -465,44 +466,44 @@ acpi_ut_get_simple_object_size(union acpi_operand_object *internal_object,
 	 * must be accessed bytewise or there may be alignment problems on
 	 * certain processors
 	 */
-	switch (internal_object->common.type) {
-	case ACPI_TYPE_STRING:
+	चयन (पूर्णांकernal_object->common.type) अणु
+	हाल ACPI_TYPE_STRING:
 
-		length += (acpi_size)internal_object->string.length + 1;
-		break;
+		length += (acpi_size)पूर्णांकernal_object->string.length + 1;
+		अवरोध;
 
-	case ACPI_TYPE_BUFFER:
+	हाल ACPI_TYPE_BUFFER:
 
-		length += (acpi_size)internal_object->buffer.length;
-		break;
+		length += (acpi_size)पूर्णांकernal_object->buffer.length;
+		अवरोध;
 
-	case ACPI_TYPE_INTEGER:
-	case ACPI_TYPE_PROCESSOR:
-	case ACPI_TYPE_POWER:
+	हाल ACPI_TYPE_INTEGER:
+	हाल ACPI_TYPE_PROCESSOR:
+	हाल ACPI_TYPE_POWER:
 
-		/* No extra data for these types */
+		/* No extra data क्रम these types */
 
-		break;
+		अवरोध;
 
-	case ACPI_TYPE_LOCAL_REFERENCE:
+	हाल ACPI_TYPE_LOCAL_REFERENCE:
 
-		switch (internal_object->reference.class) {
-		case ACPI_REFCLASS_NAME:
+		चयन (पूर्णांकernal_object->reference.class) अणु
+		हाल ACPI_REFCLASS_NAME:
 			/*
 			 * Get the actual length of the full pathname to this object.
 			 * The reference will be converted to the pathname to the object
 			 */
 			size =
-			    acpi_ns_get_pathname_length(internal_object->
+			    acpi_ns_get_pathname_length(पूर्णांकernal_object->
 							reference.node);
-			if (!size) {
-				return_ACPI_STATUS(AE_BAD_PARAMETER);
-			}
+			अगर (!size) अणु
+				वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+			पूर्ण
 
 			length += ACPI_ROUND_UP_TO_NATIVE_WORD(size);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			/*
 			 * No other reference opcodes are supported.
 			 * Notably, Locals and Args are not supported, but this may be
@@ -511,33 +512,33 @@ acpi_ut_get_simple_object_size(union acpi_operand_object *internal_object,
 			ACPI_ERROR((AE_INFO,
 				    "Cannot convert to external object - "
 				    "unsupported Reference Class [%s] 0x%X in object %p",
-				    acpi_ut_get_reference_name(internal_object),
-				    internal_object->reference.class,
-				    internal_object));
+				    acpi_ut_get_reference_name(पूर्णांकernal_object),
+				    पूर्णांकernal_object->reference.class,
+				    पूर्णांकernal_object));
 			status = AE_TYPE;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 
 		ACPI_ERROR((AE_INFO, "Cannot convert to external object - "
 			    "unsupported type [%s] 0x%X in object %p",
-			    acpi_ut_get_object_type_name(internal_object),
-			    internal_object->common.type, internal_object));
+			    acpi_ut_get_object_type_name(पूर्णांकernal_object),
+			    पूर्णांकernal_object->common.type, पूर्णांकernal_object));
 		status = AE_TYPE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * Account for the space required by the object rounded up to the next
+	 * Account क्रम the space required by the object rounded up to the next
 	 * multiple of the machine word size. This keeps each object aligned
 	 * on a machine word boundary. (preventing alignment faults on some
 	 * machines.)
 	 */
 	*obj_length = ACPI_ROUND_UP_TO_NATIVE_WORD(length);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -551,85 +552,85 @@ acpi_ut_get_simple_object_size(union acpi_operand_object *internal_object,
  *
  ******************************************************************************/
 
-static acpi_status
+अटल acpi_status
 acpi_ut_get_element_length(u8 object_type,
-			   union acpi_operand_object *source_object,
-			   union acpi_generic_state *state, void *context)
-{
+			   जोड़ acpi_opeअक्रम_object *source_object,
+			   जोड़ acpi_generic_state *state, व्योम *context)
+अणु
 	acpi_status status = AE_OK;
-	struct acpi_pkg_info *info = (struct acpi_pkg_info *)context;
+	काष्ठा acpi_pkg_info *info = (काष्ठा acpi_pkg_info *)context;
 	acpi_size object_space;
 
-	switch (object_type) {
-	case ACPI_COPY_TYPE_SIMPLE:
+	चयन (object_type) अणु
+	हाल ACPI_COPY_TYPE_SIMPLE:
 		/*
 		 * Simple object - just get the size (Null object/entry is handled
-		 * here also) and sum it into the running package length
+		 * here also) and sum it पूर्णांकo the running package length
 		 */
 		status =
 		    acpi_ut_get_simple_object_size(source_object,
 						   &object_space);
-		if (ACPI_FAILURE(status)) {
-			return (status);
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस (status);
+		पूर्ण
 
 		info->length += object_space;
-		break;
+		अवरोध;
 
-	case ACPI_COPY_TYPE_PACKAGE:
+	हाल ACPI_COPY_TYPE_PACKAGE:
 
-		/* Package object - nothing much to do here, let the walk handle it */
+		/* Package object - nothing much to करो here, let the walk handle it */
 
 		info->num_packages++;
-		state->pkg.this_target_obj = NULL;
-		break;
+		state->pkg.this_target_obj = शून्य;
+		अवरोध;
 
-	default:
+	शेष:
 
 		/* No other types allowed */
 
-		return (AE_BAD_PARAMETER);
-	}
+		वापस (AE_BAD_PARAMETER);
+	पूर्ण
 
-	return (status);
-}
+	वापस (status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_get_package_object_size
  *
- * PARAMETERS:  internal_object     - An ACPI internal object
- *              obj_length          - Where the length is returned
+ * PARAMETERS:  पूर्णांकernal_object     - An ACPI पूर्णांकernal object
+ *              obj_length          - Where the length is वापसed
  *
  * RETURN:      Status
  *
  * DESCRIPTION: This function is called to determine the space required to
- *              contain a package object for return to an external user.
+ *              contain a package object क्रम वापस to an बाह्यal user.
  *
  *              This is moderately complex since a package contains other
  *              objects including packages.
  *
  ******************************************************************************/
 
-static acpi_status
-acpi_ut_get_package_object_size(union acpi_operand_object *internal_object,
+अटल acpi_status
+acpi_ut_get_package_object_size(जोड़ acpi_opeअक्रम_object *पूर्णांकernal_object,
 				acpi_size *obj_length)
-{
+अणु
 	acpi_status status;
-	struct acpi_pkg_info info;
+	काष्ठा acpi_pkg_info info;
 
-	ACPI_FUNCTION_TRACE_PTR(ut_get_package_object_size, internal_object);
+	ACPI_FUNCTION_TRACE_PTR(ut_get_package_object_size, पूर्णांकernal_object);
 
 	info.length = 0;
 	info.object_space = 0;
 	info.num_packages = 1;
 
 	status =
-	    acpi_ut_walk_package_tree(internal_object, NULL,
+	    acpi_ut_walk_package_tree(पूर्णांकernal_object, शून्य,
 				      acpi_ut_get_element_length, &info);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/*
 	 * We have handled all of the objects in all levels of the package.
@@ -637,47 +638,47 @@ acpi_ut_get_package_object_size(union acpi_operand_object *internal_object,
 	 * Round up to the next machine word.
 	 */
 	info.length +=
-	    ACPI_ROUND_UP_TO_NATIVE_WORD(sizeof(union acpi_object)) *
+	    ACPI_ROUND_UP_TO_NATIVE_WORD(माप(जोड़ acpi_object)) *
 	    (acpi_size)info.num_packages;
 
 	/* Return the total package length */
 
 	*obj_length = info.length;
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_get_object_size
  *
- * PARAMETERS:  internal_object     - An ACPI internal object
- *              obj_length          - Where the length will be returned
+ * PARAMETERS:  पूर्णांकernal_object     - An ACPI पूर्णांकernal object
+ *              obj_length          - Where the length will be वापसed
  *
  * RETURN:      Status
  *
  * DESCRIPTION: This function is called to determine the space required to
- *              contain an object for return to an API user.
+ *              contain an object क्रम वापस to an API user.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ut_get_object_size(union acpi_operand_object *internal_object,
+acpi_ut_get_object_size(जोड़ acpi_opeअक्रम_object *पूर्णांकernal_object,
 			acpi_size *obj_length)
-{
+अणु
 	acpi_status status;
 
 	ACPI_FUNCTION_ENTRY();
 
-	if ((ACPI_GET_DESCRIPTOR_TYPE(internal_object) ==
+	अगर ((ACPI_GET_DESCRIPTOR_TYPE(पूर्णांकernal_object) ==
 	     ACPI_DESC_TYPE_OPERAND) &&
-	    (internal_object->common.type == ACPI_TYPE_PACKAGE)) {
+	    (पूर्णांकernal_object->common.type == ACPI_TYPE_PACKAGE)) अणु
 		status =
-		    acpi_ut_get_package_object_size(internal_object,
+		    acpi_ut_get_package_object_size(पूर्णांकernal_object,
 						    obj_length);
-	} else {
+	पूर्ण अन्यथा अणु
 		status =
-		    acpi_ut_get_simple_object_size(internal_object, obj_length);
-	}
+		    acpi_ut_get_simple_object_size(पूर्णांकernal_object, obj_length);
+	पूर्ण
 
-	return (status);
-}
+	वापस (status);
+पूर्ण

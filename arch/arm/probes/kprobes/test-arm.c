@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * arch/arm/kernel/kprobes-test-arm.c
  *
  * Copyright (C) 2011 Jon Medhurst <tixy@yxit.co.uk>.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <asm/system_info.h>
-#include <asm/opcodes.h>
-#include <asm/probes.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/प्रणाली_info.h>
+#समावेश <यंत्र/opcodes.h>
+#समावेश <यंत्र/probes.h>
 
-#include "test-core.h"
+#समावेश "test-core.h"
 
 
-#define TEST_ISA "32"
+#घोषणा TEST_ISA "32"
 
-#define TEST_ARM_TO_THUMB_INTERWORK_R(code1, reg, val, code2)	\
+#घोषणा TEST_ARM_TO_THUMB_INTERWORK_R(code1, reg, val, code2)	\
 	TESTCASE_START(code1 #reg code2)			\
 	TEST_ARG_REG(reg, val)					\
 	TEST_ARG_REG(14, 99f)					\
@@ -31,7 +32,7 @@
 	"2:	nop			\n\t"			\
 	TESTCASE_END
 
-#define TEST_ARM_TO_THUMB_INTERWORK_P(code1, reg, val, code2)	\
+#घोषणा TEST_ARM_TO_THUMB_INTERWORK_P(code1, reg, val, code2)	\
 	TESTCASE_START(code1 #reg code2)			\
 	TEST_ARG_PTR(reg, val)					\
 	TEST_ARG_REG(14, 99f)					\
@@ -48,13 +49,13 @@
 	TESTCASE_END
 
 
-void kprobe_arm_test_cases(void)
-{
+व्योम kprobe_arm_test_हालs(व्योम)
+अणु
 	kprobe_test_flags = 0;
 
 	TEST_GROUP("Data-processing (register), (register-shifted register), (immediate)")
 
-#define _DATA_PROCESSING_DNM(op,s,val)						\
+#घोषणा _DATA_PROCESSING_DNM(op,s,val)						\
 	TEST_RR(  op s "eq	r0,  r",1, VAL1,", r",2, val, "")		\
 	TEST_RR(  op s "ne	r1,  r",1, VAL1,", r",2, val, ", lsl #3")	\
 	TEST_RR(  op s "cs	r2,  r",3, VAL1,", r",2, val, ", lsr #4")	\
@@ -77,11 +78,11 @@ void kprobe_arm_test_cases(void)
 	TEST_R(   op s "	r7,  r",8, VAL2,", #0x000af000")		\
 	TEST(     op s "	r4,  pc"        ", #0x00005a00")
 
-#define DATA_PROCESSING_DNM(op,val)		\
+#घोषणा DATA_PROCESSING_DNM(op,val)		\
 	_DATA_PROCESSING_DNM(op,"",val)		\
 	_DATA_PROCESSING_DNM(op,"s",val)
 
-#define DATA_PROCESSING_NM(op,val)						\
+#घोषणा DATA_PROCESSING_NM(op,val)						\
 	TEST_RR(  op "ne	r",1, VAL1,", r",2, val, "")			\
 	TEST_RR(  op "eq	r",1, VAL1,", r",2, val, ", lsl #3")		\
 	TEST_RR(  op "cc	r",3, VAL1,", r",2, val, ", lsr #4")		\
@@ -103,7 +104,7 @@ void kprobe_arm_test_cases(void)
 	TEST_R(   op "ne	r",0, VAL1,", #0xf5000000")			\
 	TEST_R(   op "	r",8, VAL2,", #0x000af000")
 
-#define _DATA_PROCESSING_DM(op,s,val)					\
+#घोषणा _DATA_PROCESSING_DM(op,s,val)					\
 	TEST_R(   op s "eq	r0,  r",1, val, "")			\
 	TEST_R(   op s "ne	r1,  r",1, val, ", lsl #3")		\
 	TEST_R(   op s "cs	r2,  r",3, val, ", lsr #4")		\
@@ -124,7 +125,7 @@ void kprobe_arm_test_cases(void)
 	TEST(     op s "	r7,  #0x000af000")			\
 	TEST(     op s "	r4,  #0x00005a00")
 
-#define DATA_PROCESSING_DM(op,val)		\
+#घोषणा DATA_PROCESSING_DM(op,val)		\
 	_DATA_PROCESSING_DM(op,"",val)		\
 	_DATA_PROCESSING_DM(op,"s",val)
 
@@ -145,14 +146,14 @@ void kprobe_arm_test_cases(void)
 	DATA_PROCESSING_DNM("bic",0xf00f00ff)
 	DATA_PROCESSING_DM("mvn",VAL2)
 
-	TEST("mov	ip, sp") /* This has special case emulation code */
+	TEST("mov	ip, sp") /* This has special हाल emulation code */
 
 	TEST_SUPPORTED("mov	pc, #0x1000");
 	TEST_SUPPORTED("mov	sp, #0x1000");
 	TEST_SUPPORTED("cmp	pc, #0x1000");
 	TEST_SUPPORTED("cmp	sp, #0x1000");
 
-	/* Data-processing with PC and a shift count in a register */
+	/* Data-processing with PC and a shअगरt count in a रेजिस्टर */
 	TEST_UNSUPPORTED(__inst_arm(0xe15c0f1e) "	@ cmp	r12, r14, asl pc")
 	TEST_UNSUPPORTED(__inst_arm(0xe1a0cf1e) "	@ mov	r12, r14, asl pc")
 	TEST_UNSUPPORTED(__inst_arm(0xe08caf1e) "	@ add	r10, r12, r14, asl pc")
@@ -164,7 +165,7 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0xe1cf1312) "	@ bic	r1, pc, r2, lsl r3")
 	TEST_UNSUPPORTED(__inst_arm(0xe081f312) "	@ add	pc, r1, r2, lsl r3")
 
-	/* Data-processing with PC as a target and status registers updated */
+	/* Data-processing with PC as a target and status रेजिस्टरs updated */
 	TEST_UNSUPPORTED("movs	pc, r1")
 	TEST_UNSUPPORTED(__inst_arm(0xe1b0f211) "	@movs	pc, r1, lsl r2")
 	TEST_UNSUPPORTED("movs	pc, #0x10000")
@@ -189,16 +190,16 @@ void kprobe_arm_test_cases(void)
 	TEST_BF_R ("mov	pc, r",0,2f,"")
 	TEST_BF_R ("add	pc, pc, r",14,(2f-1f-8)*2,", asr #1")
 	TEST_BB(   "sub	pc, pc, #1b-2b+8")
-#if __LINUX_ARM_ARCH__ == 6 && !defined(CONFIG_CPU_V7)
-	TEST_BB(   "sub	pc, pc, #1b-2b+8-2") /* UNPREDICTABLE before and after ARMv6 */
-#endif
+#अगर __LINUX_ARM_ARCH__ == 6 && !defined(CONFIG_CPU_V7)
+	TEST_BB(   "sub	pc, pc, #1b-2b+8-2") /* UNPREDICTABLE beक्रमe and after ARMv6 */
+#पूर्ण_अगर
 	TEST_BB_R( "sub	pc, pc, r",14, 1f-2f+8,"")
 	TEST_BB_R( "rsb	pc, r",14,1f-2f+8,", pc")
 	TEST_R(    "add	pc, pc, r",10,-2,", asl #1")
-#ifdef CONFIG_THUMB2_KERNEL
+#अगर_घोषित CONFIG_THUMB2_KERNEL
 	TEST_ARM_TO_THUMB_INTERWORK_R("add	pc, pc, r",0,3f-1f-8+1,"")
 	TEST_ARM_TO_THUMB_INTERWORK_R("sub	pc, r",0,3f+8+1,", #8")
-#endif
+#पूर्ण_अगर
 	TEST_GROUP("Miscellaneous instructions")
 
 	TEST_RMASKED("mrs	r",0,~PSR_IGNORE_BITS,", cpsr")
@@ -212,14 +213,14 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED("msr	cpsr_f, lr")
 	TEST_UNSUPPORTED("msr	spsr, r0")
 
-#if __LINUX_ARM_ARCH__ >= 5 || \
+#अगर __LINUX_ARM_ARCH__ >= 5 || \
     (__LINUX_ARM_ARCH__ == 4 && !defined(CONFIG_CPU_32v4))
 	TEST_BF_R("bx	r",0,2f,"")
 	TEST_BB_R("bx	r",7,2f,"")
 	TEST_BF_R("bxeq	r",14,2f,"")
-#endif
+#पूर्ण_अगर
 
-#if __LINUX_ARM_ARCH__ >= 5
+#अगर __LINUX_ARM_ARCH__ >= 5
 	TEST_R("clz	r0, r",0, 0x0,"")
 	TEST_R("clzeq	r7, r",14,0x1,"")
 	TEST_R("clz	lr, r",7, 0xffffffff,"")
@@ -227,9 +228,9 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0x016fff10) "	@ clz pc, r0")
 	TEST_UNSUPPORTED(__inst_arm(0x016f0f1f) "	@ clz r0, pc")
 
-#if __LINUX_ARM_ARCH__ >= 6
+#अगर __LINUX_ARM_ARCH__ >= 6
 	TEST_UNSUPPORTED("bxj	r0")
-#endif
+#पूर्ण_अगर
 
 	TEST_BF_R("blx	r",0,2f,"")
 	TEST_BB_R("blx	r",7,2f,"")
@@ -341,7 +342,7 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0xe16f02e1) " @ smultt pc, r1, r2")
 	TEST_UNSUPPORTED(__inst_arm(0xe16002ef) " @ smultt r0, pc, r2")
 	TEST_UNSUPPORTED(__inst_arm(0xe1600fe1) " @ smultt r0, r1, pc")
-#endif
+#पूर्ण_अगर
 
 	TEST_GROUP("Multiply and multiply-accumulate")
 
@@ -365,7 +366,7 @@ void kprobe_arm_test_cases(void)
 	TEST_RR(     "mlas	lr, r",1, VAL2,", r",2, VAL3,", r13")
 	TEST_UNSUPPORTED(__inst_arm(0xe03f3291) " @ mlas pc, r1, r2, r3")
 
-#if __LINUX_ARM_ARCH__ >= 6
+#अगर __LINUX_ARM_ARCH__ >= 6
 	TEST_RR(  "umaal	r0, r1, r",2, VAL1,", r",3, VAL2,"")
 	TEST_RR(  "umaalls	r7, r8, r",9, VAL2,", r",10, VAL1,"")
 	TEST_R(   "umaal	lr, r12, r",11,VAL3,", r13")
@@ -373,9 +374,9 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0xe04f0392) " @ umaal r0, pc, r2, r3")
 	TEST_UNSUPPORTED(__inst_arm(0xe0500090) " @ undef")
 	TEST_UNSUPPORTED(__inst_arm(0xe05fff9f) " @ undef")
-#endif
+#पूर्ण_अगर
 
-#if __LINUX_ARM_ARCH__ >= 7
+#अगर __LINUX_ARM_ARCH__ >= 7
 	TEST_RRR(  "mls		r0, r",1, VAL1,", r",2, VAL2,", r",3,  VAL3,"")
 	TEST_RRR(  "mlshi	r7, r",8, VAL3,", r",9, VAL1,", r",10, VAL2,"")
 	TEST_RR(   "mls		lr, r",1, VAL2,", r",2, VAL3,", r13")
@@ -383,7 +384,7 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0xe060329f) " @ mls r0, pc, r2, r3")
 	TEST_UNSUPPORTED(__inst_arm(0xe0603f91) " @ mls r0, r1, pc, r3")
 	TEST_UNSUPPORTED(__inst_arm(0xe060f291) " @ mls r0, r1, r2, pc")
-#endif
+#पूर्ण_अगर
 
 	TEST_UNSUPPORTED(__inst_arm(0xe0700090) " @ undef")
 	TEST_UNSUPPORTED(__inst_arm(0xe07fff9f) " @ undef")
@@ -436,25 +437,25 @@ void kprobe_arm_test_cases(void)
 
 	TEST_GROUP("Synchronization primitives")
 
-#if __LINUX_ARM_ARCH__ < 6
+#अगर __LINUX_ARM_ARCH__ < 6
 	TEST_RP("swp	lr, r",7,VAL2,", [r",8,0,"]")
 	TEST_R( "swpvs	r0, r",1,VAL1,", [sp]")
 	TEST_RP("swp	sp, r",14,VAL2,", [r",12,13*4,"]")
-#else
+#अन्यथा
 	TEST_UNSUPPORTED(__inst_arm(0xe108e097) " @ swp	lr, r7, [r8]")
 	TEST_UNSUPPORTED(__inst_arm(0x610d0091) " @ swpvs	r0, r1, [sp]")
 	TEST_UNSUPPORTED(__inst_arm(0xe10cd09e) " @ swp	sp, r14 [r12]")
-#endif
+#पूर्ण_अगर
 	TEST_UNSUPPORTED(__inst_arm(0xe102f091) " @ swp pc, r1, [r2]")
 	TEST_UNSUPPORTED(__inst_arm(0xe102009f) " @ swp r0, pc, [r2]")
 	TEST_UNSUPPORTED(__inst_arm(0xe10f0091) " @ swp r0, r1, [pc]")
-#if __LINUX_ARM_ARCH__ < 6
+#अगर __LINUX_ARM_ARCH__ < 6
 	TEST_RP("swpb	lr, r",7,VAL2,", [r",8,0,"]")
 	TEST_R( "swpbvs	r0, r",1,VAL1,", [sp]")
-#else
+#अन्यथा
 	TEST_UNSUPPORTED(__inst_arm(0xe148e097) " @ swpb	lr, r7, [r8]")
 	TEST_UNSUPPORTED(__inst_arm(0x614d0091) " @ swpvsb	r0, r1, [sp]")
-#endif
+#पूर्ण_अगर
 	TEST_UNSUPPORTED(__inst_arm(0xe142f091) " @ swpb pc, r1, [r2]")
 
 	TEST_UNSUPPORTED(__inst_arm(0xe1100090)) /* Unallocated space */
@@ -463,17 +464,17 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0xe1500090)) /* Unallocated space */
 	TEST_UNSUPPORTED(__inst_arm(0xe1600090)) /* Unallocated space */
 	TEST_UNSUPPORTED(__inst_arm(0xe1700090)) /* Unallocated space */
-#if __LINUX_ARM_ARCH__ >= 6
+#अगर __LINUX_ARM_ARCH__ >= 6
 	TEST_UNSUPPORTED("ldrex	r2, [sp]")
-#endif
-#if (__LINUX_ARM_ARCH__ >= 7) || defined(CONFIG_CPU_32v6K)
+#पूर्ण_अगर
+#अगर (__LINUX_ARM_ARCH__ >= 7) || defined(CONFIG_CPU_32v6K)
 	TEST_UNSUPPORTED("strexd	r0, r2, r3, [sp]")
 	TEST_UNSUPPORTED("ldrexd	r2, r3, [sp]")
 	TEST_UNSUPPORTED("strexb	r0, r2, [sp]")
 	TEST_UNSUPPORTED("ldrexb	r2, [sp]")
 	TEST_UNSUPPORTED("strexh	r0, r2, [sp]")
 	TEST_UNSUPPORTED("ldrexh	r2, [sp]")
-#endif
+#पूर्ण_अगर
 	TEST_GROUP("Extra load/store instructions")
 
 	TEST_RPR(  "strh	r",0, VAL1,", [r",1, 48,", -r",2, 24,"]")
@@ -504,9 +505,9 @@ void kprobe_arm_test_cases(void)
 	TEST_RP(   "strhpl	r",12,VAL2,", [r",11,24,", #-4]!")
 	TEST_RP(   "strh	r",2, VAL1,", [r",3, 24,"], #48")
 	TEST_RP(   "strh	r",10,VAL2,", [r",9, 64,"], #-48")
-	TEST_RP(   "strh	r",3, VAL1,", [r",13,TEST_MEMORY_SIZE,", #-"__stringify(MAX_STACK_SIZE)"]!")
-	TEST_UNSUPPORTED("strh r3, [r13, #-"__stringify(MAX_STACK_SIZE)"-8]!")
-	TEST_RP(   "strh	r",4, VAL1,", [r",14,TEST_MEMORY_SIZE,", #-"__stringify(MAX_STACK_SIZE)"-8]!")
+	TEST_RP(   "strh	r",3, VAL1,", [r",13,TEST_MEMORY_SIZE,", #-"__stringअगरy(MAX_STACK_SIZE)"]!")
+	TEST_UNSUPPORTED("strh r3, [r13, #-"__stringअगरy(MAX_STACK_SIZE)"-8]!")
+	TEST_RP(   "strh	r",4, VAL1,", [r",14,TEST_MEMORY_SIZE,", #-"__stringअगरy(MAX_STACK_SIZE)"-8]!")
 	TEST_UNSUPPORTED(__inst_arm(0xe1efc3b0) "	@ strh r12, [pc, #48]!")
 	TEST_UNSUPPORTED(__inst_arm(0xe0c9f3b0) "	@ strh pc, [r9], #48")
 
@@ -558,7 +559,7 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0xe1ffc3f0) "	@ ldrsh r12, [pc, #48]!")
 	TEST_UNSUPPORTED(__inst_arm(0xe0d9f3f0) "	@ ldrsh pc, [r9], #48")
 
-#if __LINUX_ARM_ARCH__ >= 7
+#अगर __LINUX_ARM_ARCH__ >= 7
 	TEST_UNSUPPORTED("strht	r1, [r2], r3")
 	TEST_UNSUPPORTED("ldrht	r1, [r2], r3")
 	TEST_UNSUPPORTED("strht	r1, [r2], #48")
@@ -567,9 +568,9 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED("ldrsbt	r1, [r2], #48")
 	TEST_UNSUPPORTED("ldrsht	r1, [r2], r3")
 	TEST_UNSUPPORTED("ldrsht	r1, [r2], #48")
-#endif
+#पूर्ण_अगर
 
-#if __LINUX_ARM_ARCH__ >= 5
+#अगर __LINUX_ARM_ARCH__ >= 5
 	TEST_RPR(  "strd	r",0, VAL1,", [r",1, 48,", -r",2,24,"]")
 	TEST_RPR(  "strdcc	r",8, VAL2,", [r",11,0, ", r",12,48,"]")
 	TEST_UNSUPPORTED(  "strdcc r8, [r13, r12]")
@@ -597,9 +598,9 @@ void kprobe_arm_test_cases(void)
 	TEST_RP(   "strdvc	r",12,VAL2,", r13, [r",11,24,", #-16]!")
 	TEST_RP(   "strd	r",2, VAL1,", [r",4, 24,"], #48")
 	TEST_RP(   "strd	r",10,VAL2,", [r",9, 64,"], #-48")
-	TEST_RP(   "strd	r",6, VAL1,", [r",13,TEST_MEMORY_SIZE,", #-"__stringify(MAX_STACK_SIZE)"]!")
-	TEST_UNSUPPORTED("strd r6, [r13, #-"__stringify(MAX_STACK_SIZE)"-8]!")
-	TEST_RP(   "strd	r",4, VAL1,", [r",12,TEST_MEMORY_SIZE,", #-"__stringify(MAX_STACK_SIZE)"-8]!")
+	TEST_RP(   "strd	r",6, VAL1,", [r",13,TEST_MEMORY_SIZE,", #-"__stringअगरy(MAX_STACK_SIZE)"]!")
+	TEST_UNSUPPORTED("strd r6, [r13, #-"__stringअगरy(MAX_STACK_SIZE)"-8]!")
+	TEST_RP(   "strd	r",4, VAL1,", [r",12,TEST_MEMORY_SIZE,", #-"__stringअगरy(MAX_STACK_SIZE)"-8]!")
 	TEST_UNSUPPORTED(__inst_arm(0xe1efc3f0) "	@ strd r12, [pc, #48]!")
 
 	TEST_P(	   "ldrd	r0, [r",0, 24,", #-8]")
@@ -611,11 +612,11 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0xe1efc3d0) "	@ ldrd r12, [pc, #48]!")
 	TEST_UNSUPPORTED(__inst_arm(0xe0c9f3d0) "	@ ldrd pc, [r9], #48")
 	TEST_UNSUPPORTED(__inst_arm(0xe0c9e3d0) "	@ ldrd lr, [r9], #48")
-#endif
+#पूर्ण_अगर
 
 	TEST_GROUP("Miscellaneous")
 
-#if __LINUX_ARM_ARCH__ >= 7
+#अगर __LINUX_ARM_ARCH__ >= 7
 	TEST("movw	r0, #0")
 	TEST("movw	r0, #0xffff")
 	TEST("movw	lr, #0xffff")
@@ -624,33 +625,33 @@ void kprobe_arm_test_cases(void)
 	TEST_R("movt	r",0, VAL2,", #0xffff")
 	TEST_R("movt	r",14,VAL1,", #0xffff")
 	TEST_UNSUPPORTED(__inst_arm(0xe340f000) "	@ movt pc, #0")
-#endif
+#पूर्ण_अगर
 
 	TEST_UNSUPPORTED("msr	cpsr, 0x13")
 	TEST_UNSUPPORTED("msr	cpsr_f, 0xf0000000")
 	TEST_UNSUPPORTED("msr	spsr, 0x13")
 
-#if __LINUX_ARM_ARCH__ >= 7
+#अगर __LINUX_ARM_ARCH__ >= 7
 	TEST_SUPPORTED("yield")
 	TEST("sev")
 	TEST("nop")
 	TEST("wfi")
 	TEST_SUPPORTED("wfe")
 	TEST_UNSUPPORTED("dbg #0")
-#endif
+#पूर्ण_अगर
 
 	TEST_GROUP("Load/store word and unsigned byte")
 
-#define LOAD_STORE(byte)							\
+#घोषणा LOAD_STORE(byte)							\
 	TEST_RP( "str"byte"	r",0, VAL1,", [r",1, 24,", #-2]")		\
 	TEST_RP( "str"byte"	r",14,VAL2,", [r",13,0, ", #2]")		\
 	TEST_RP( "str"byte"	r",1, VAL1,", [r",2, 24,", #4]!")		\
 	TEST_RP( "str"byte"	r",12,VAL2,", [r",11,24,", #-4]!")		\
 	TEST_RP( "str"byte"	r",2, VAL1,", [r",3, 24,"], #48")		\
 	TEST_RP( "str"byte"	r",10,VAL2,", [r",9, 64,"], #-48")		\
-	TEST_RP( "str"byte"	r",3, VAL1,", [r",13,TEST_MEMORY_SIZE,", #-"__stringify(MAX_STACK_SIZE)"]!") \
-	TEST_UNSUPPORTED("str"byte" r3, [r13, #-"__stringify(MAX_STACK_SIZE)"-8]!")				\
-	TEST_RP( "str"byte"	r",4, VAL1,", [r",10,TEST_MEMORY_SIZE,", #-"__stringify(MAX_STACK_SIZE)"-8]!") \
+	TEST_RP( "str"byte"	r",3, VAL1,", [r",13,TEST_MEMORY_SIZE,", #-"__stringअगरy(MAX_STACK_SIZE)"]!") \
+	TEST_UNSUPPORTED("str"byte" r3, [r13, #-"__stringअगरy(MAX_STACK_SIZE)"-8]!")				\
+	TEST_RP( "str"byte"	r",4, VAL1,", [r",10,TEST_MEMORY_SIZE,", #-"__stringअगरy(MAX_STACK_SIZE)"-8]!") \
 	TEST_RPR("str"byte"	r",0, VAL1,", [r",1, 48,", -r",2, 24,"]")	\
 	TEST_RPR("str"byte"	r",14,VAL2,", [r",11,0, ", r",12, 48,"]")	\
 	TEST_UNSUPPORTED("str"byte" r14, [r13, r12]")				\
@@ -694,9 +695,9 @@ void kprobe_arm_test_cases(void)
 	TEST_BF(  "ldr	sp, [sp, #13*4]")
 	TEST_BF_R("ldr	sp, [sp, r",2,13*4,"]")
 
-#ifdef CONFIG_THUMB2_KERNEL
+#अगर_घोषित CONFIG_THUMB2_KERNEL
 	TEST_ARM_TO_THUMB_INTERWORK_P("ldr	pc, [r",0,0,", #15*4]")
-#endif
+#पूर्ण_अगर
 	TEST_UNSUPPORTED(__inst_arm(0xe5af6008) "	@ str r6, [pc, #8]!")
 	TEST_UNSUPPORTED(__inst_arm(0xe7af6008) "	@ str r6, [pc, r8]!")
 	TEST_UNSUPPORTED(__inst_arm(0xe5bf6008) "	@ ldr r6, [pc, #8]!")
@@ -721,7 +722,7 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED("strbt	r6, [r7], #4")
 	TEST_UNSUPPORTED("strbt	r7, [r8], r9")
 
-#if __LINUX_ARM_ARCH__ >= 7
+#अगर __LINUX_ARM_ARCH__ >= 7
 	TEST_GROUP("Parallel addition and subtraction, signed")
 
 	TEST_UNSUPPORTED(__inst_arm(0xe6000010) "") /* Unallocated space */
@@ -871,9 +872,9 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0xe67cfffa) "	@ uhsub8	pc, r12, r10")
 	TEST_UNSUPPORTED(__inst_arm(0xe67feffa) "	@ uhsub8	r14, pc, r10")
 	TEST_UNSUPPORTED(__inst_arm(0xe67cefff) "	@ uhsub8	r14, r12, pc")
-#endif /* __LINUX_ARM_ARCH__ >= 7 */
+#पूर्ण_अगर /* __LINUX_ARM_ARCH__ >= 7 */
 
-#if __LINUX_ARM_ARCH__ >= 6
+#अगर __LINUX_ARM_ARCH__ >= 6
 	TEST_GROUP("Packing, unpacking, saturation, and reversal")
 
 	TEST_RR(    "pkhbt	r0, r",0,  HH1,", r",1, HH2,"")
@@ -947,11 +948,11 @@ void kprobe_arm_test_cases(void)
 	TEST_R(     "uxtb	r8, r",7,  HH1,"")
 	TEST_UNSUPPORTED(__inst_arm(0xe6ecf47a) "	@ uxtab	pc,r12, r10, ror #8")
 
-#if __LINUX_ARM_ARCH__ >= 7
+#अगर __LINUX_ARM_ARCH__ >= 7
 	TEST_R(     "rbit	r0, r",0,   VAL1,"")
 	TEST_R(     "rbit	r14, r",12, VAL2,"")
 	TEST_UNSUPPORTED(__inst_arm(0xe6ffff3c) "	@ rbit	pc, r12")
-#endif
+#पूर्ण_अगर
 
 	TEST_RR(    "uxtah	r0, r",0,  HH1,", r",1, HH2,"")
 	TEST_RR(    "uxtah	r14,r",12, HH2,", r",10,HH1,", ror #8")
@@ -971,9 +972,9 @@ void kprobe_arm_test_cases(void)
 
 	TEST_UNSUPPORTED(__inst_arm(0xe6d00070) "") /* Unallocated space */
 	TEST_UNSUPPORTED(__inst_arm(0xe6dfff7f) "") /* Unallocated space */
-#endif /* __LINUX_ARM_ARCH__ >= 6 */
+#पूर्ण_अगर /* __LINUX_ARM_ARCH__ >= 6 */
 
-#if __LINUX_ARM_ARCH__ >= 6
+#अगर __LINUX_ARM_ARCH__ >= 6
 	TEST_GROUP("Signed multiplies")
 
 	TEST_RRR(   "smlad	r0, r",0,  HH1,", r",1, HH2,", r",2, VAL1,"")
@@ -1051,9 +1052,9 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0xe78f8a1c) "	@ usada8	pc, r12, r10, r8")
 	TEST_UNSUPPORTED(__inst_arm(0xe78e8a1f) "	@ usada8	r14, pc, r10, r8")
 	TEST_UNSUPPORTED(__inst_arm(0xe78e8f1c) "	@ usada8	r14, r12, pc, r8")
-#endif /* __LINUX_ARM_ARCH__ >= 6 */
+#पूर्ण_अगर /* __LINUX_ARM_ARCH__ >= 6 */
 
-#if __LINUX_ARM_ARCH__ >= 7
+#अगर __LINUX_ARM_ARCH__ >= 7
 	TEST_GROUP("Bit Field")
 
 	TEST_R(     "sbfx	r0, r",0  , VAL1,", #0, #31")
@@ -1079,7 +1080,7 @@ void kprobe_arm_test_cases(void)
 
 	TEST_UNSUPPORTED(__inst_arm(0x07f000f0) "")  /* Permanently UNDEFINED */
 	TEST_UNSUPPORTED(__inst_arm(0x07ffffff) "")  /* Permanently UNDEFINED */
-#endif /* __LINUX_ARM_ARCH__ >= 6 */
+#पूर्ण_अगर /* __LINUX_ARM_ARCH__ >= 6 */
 
 	TEST_GROUP("Branch, branch with link, and block data transfer")
 
@@ -1145,10 +1146,10 @@ void kprobe_arm_test_cases(void)
 	TEST_P(   "ldmia	r",0, 16*4,", {r0-r12}")
 	TEST_P(   "ldmia	r",0, 16*4,", {r0-r12,lr}")
 
-#ifdef CONFIG_THUMB2_KERNEL
+#अगर_घोषित CONFIG_THUMB2_KERNEL
 	TEST_ARM_TO_THUMB_INTERWORK_P("ldmplia	r",0,15*4,", {pc}")
 	TEST_ARM_TO_THUMB_INTERWORK_P("ldmmiia	r",13,0,", {r0-r15}")
-#endif
+#पूर्ण_अगर
 	TEST_BF("b	2f")
 	TEST_BF("bl	2f")
 	TEST_BB("b	2b")
@@ -1168,12 +1169,12 @@ void kprobe_arm_test_cases(void)
 
 	/*
 	 * We can't really test these by executing them, so all
-	 * we can do is check that probes are, or are not allowed.
+	 * we can करो is check that probes are, or are not allowed.
 	 * At the moment none are allowed...
 	 */
-#define TEST_COPROCESSOR(code) TEST_UNSUPPORTED(code)
+#घोषणा TEST_COPROCESSOR(code) TEST_UNSUPPORTED(code)
 
-#define COPROCESSOR_INSTRUCTIONS_ST_LD(two,cc)					\
+#घोषणा COPROCESSOR_INSTRUCTIONS_ST_LD(two,cc)					\
 	TEST_COPROCESSOR("stc"two"	p0, cr0, [r13, #4]")			\
 	TEST_COPROCESSOR("stc"two"	p0, cr0, [r13, #-4]")			\
 	TEST_COPROCESSOR("stc"two"	p0, cr0, [r13, #4]!")			\
@@ -1232,7 +1233,7 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0x##cc##c7f0001) "	@ ldc"two"l	0, cr0, [r15], #-4")	\
 	TEST_COPROCESSOR( "ldc"two"l	p0, cr0, [r15], {1}")
 
-#define COPROCESSOR_INSTRUCTIONS_MC_MR(two,cc)					\
+#घोषणा COPROCESSOR_INSTRUCTIONS_MC_MR(two,cc)					\
 										\
 	TEST_COPROCESSOR( "mcrr"two"	p0, 15, r0, r14, cr0")			\
 	TEST_COPROCESSOR( "mcrr"two"	p15, 0, r14, r0, cr15")			\
@@ -1250,9 +1251,9 @@ void kprobe_arm_test_cases(void)
 	TEST_COPROCESSOR( "mrc"two"	p0, 0, r0, cr0, cr0, 0")
 
 	COPROCESSOR_INSTRUCTIONS_ST_LD("",e)
-#if __LINUX_ARM_ARCH__ >= 5
+#अगर __LINUX_ARM_ARCH__ >= 5
 	COPROCESSOR_INSTRUCTIONS_MC_MR("",e)
-#endif
+#पूर्ण_अगर
 	TEST_UNSUPPORTED("svc	0")
 	TEST_UNSUPPORTED("svc	0xffffff")
 
@@ -1260,7 +1261,7 @@ void kprobe_arm_test_cases(void)
 
 	TEST_GROUP("Unconditional instruction")
 
-#if __LINUX_ARM_ARCH__ >= 6
+#अगर __LINUX_ARM_ARCH__ >= 6
 	TEST_UNSUPPORTED("srsda	sp, 0x13")
 	TEST_UNSUPPORTED("srsdb	sp, 0x13")
 	TEST_UNSUPPORTED("srsia	sp, 0x13")
@@ -1286,9 +1287,9 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED(__inst_arm(0xf93d0a00) "	@ rfedb	pc!")
 	TEST_UNSUPPORTED(__inst_arm(0xf8bd0a00) "	@ rfeia	pc!")
 	TEST_UNSUPPORTED(__inst_arm(0xf9bd0a00) "	@ rfeib	pc!")
-#endif /* __LINUX_ARM_ARCH__ >= 6 */
+#पूर्ण_अगर /* __LINUX_ARM_ARCH__ >= 6 */
 
-#if __LINUX_ARM_ARCH__ >= 6
+#अगर __LINUX_ARM_ARCH__ >= 6
 	TEST_X(	"blx	__dummy_thumb_subroutine_even",
 		".thumb				\n\t"
 		".space 4			\n\t"
@@ -1310,18 +1311,18 @@ void kprobe_arm_test_cases(void)
 		".arm				\n\t"
 	)
 	TEST(	"blx	__dummy_thumb_subroutine_odd")
-#endif /* __LINUX_ARM_ARCH__ >= 6 */
+#पूर्ण_अगर /* __LINUX_ARM_ARCH__ >= 6 */
 
-#if __LINUX_ARM_ARCH__ >= 5
+#अगर __LINUX_ARM_ARCH__ >= 5
 	COPROCESSOR_INSTRUCTIONS_ST_LD("2",f)
-#endif
-#if __LINUX_ARM_ARCH__ >= 6
+#पूर्ण_अगर
+#अगर __LINUX_ARM_ARCH__ >= 6
 	COPROCESSOR_INSTRUCTIONS_MC_MR("2",f)
-#endif
+#पूर्ण_अगर
 
 	TEST_GROUP("Miscellaneous instructions, memory hints, and Advanced SIMD instructions")
 
-#if __LINUX_ARM_ARCH__ >= 6
+#अगर __LINUX_ARM_ARCH__ >= 6
 	TEST_UNSUPPORTED("cps	0x13")
 	TEST_UNSUPPORTED("cpsie	i")
 	TEST_UNSUPPORTED("cpsid	i")
@@ -1329,35 +1330,35 @@ void kprobe_arm_test_cases(void)
 	TEST_UNSUPPORTED("cpsid	i,0x13")
 	TEST_UNSUPPORTED("setend	le")
 	TEST_UNSUPPORTED("setend	be")
-#endif
+#पूर्ण_अगर
 
-#if __LINUX_ARM_ARCH__ >= 7
+#अगर __LINUX_ARM_ARCH__ >= 7
 	TEST_P("pli	[r",0,0b,", #16]")
 	TEST(  "pli	[pc, #0]")
 	TEST_RR("pli	[r",12,0b,", r",0, 16,"]")
 	TEST_RR("pli	[r",0, 0b,", -r",12,16,", lsl #4]")
-#endif
+#पूर्ण_अगर
 
-#if __LINUX_ARM_ARCH__ >= 5
+#अगर __LINUX_ARM_ARCH__ >= 5
 	TEST_P("pld	[r",0,32,", #-16]")
 	TEST(  "pld	[pc, #0]")
 	TEST_PR("pld	[r",7, 24, ", r",0, 16,"]")
 	TEST_PR("pld	[r",8, 24, ", -r",12,16,", lsl #4]")
-#endif
+#पूर्ण_अगर
 
-#if __LINUX_ARM_ARCH__ >= 7
+#अगर __LINUX_ARM_ARCH__ >= 7
 	TEST_SUPPORTED(  __inst_arm(0xf590f000) "	@ pldw [r0, #0]")
 	TEST_SUPPORTED(  __inst_arm(0xf797f000) "	@ pldw	[r7, r0]")
 	TEST_SUPPORTED(  __inst_arm(0xf798f18c) "	@ pldw	[r8, r12, lsl #3]");
-#endif
+#पूर्ण_अगर
 
-#if __LINUX_ARM_ARCH__ >= 7
+#अगर __LINUX_ARM_ARCH__ >= 7
 	TEST_UNSUPPORTED("clrex")
 	TEST_UNSUPPORTED("dsb")
 	TEST_UNSUPPORTED("dmb")
 	TEST_UNSUPPORTED("isb")
-#endif
+#पूर्ण_अगर
 
 	verbose("\n");
-}
+पूर्ण
 

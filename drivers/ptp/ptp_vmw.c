@@ -1,143 +1,144 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-2-Clause
 /*
  * Copyright (C) 2020 VMware, Inc., Palo Alto, CA., USA
  *
- * PTP clock driver for VMware precision clock virtual device.
+ * PTP घड़ी driver क्रम VMware precision घड़ी भव device.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/acpi.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/ptp_clock_kernel.h>
-#include <asm/hypervisor.h>
-#include <asm/vmware.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ptp_घड़ी_kernel.h>
+#समावेश <यंत्र/hypervisor.h>
+#समावेश <यंत्र/vmware.h>
 
-#define VMWARE_MAGIC 0x564D5868
-#define VMWARE_CMD_PCLK(nr) ((nr << 16) | 97)
-#define VMWARE_CMD_PCLK_GETTIME VMWARE_CMD_PCLK(0)
+#घोषणा VMWARE_MAGIC 0x564D5868
+#घोषणा VMWARE_CMD_PCLK(nr) ((nr << 16) | 97)
+#घोषणा VMWARE_CMD_PCLK_GETTIME VMWARE_CMD_PCLK(0)
 
-static struct acpi_device *ptp_vmw_acpi_device;
-static struct ptp_clock *ptp_vmw_clock;
+अटल काष्ठा acpi_device *ptp_vmw_acpi_device;
+अटल काष्ठा ptp_घड़ी *ptp_vmw_घड़ी;
 
 
-static int ptp_vmw_pclk_read(u64 *ns)
-{
+अटल पूर्णांक ptp_vmw_pclk_पढ़ो(u64 *ns)
+अणु
 	u32 ret, nsec_hi, nsec_lo, unused1, unused2, unused3;
 
-	asm volatile (VMWARE_HYPERCALL :
+	यंत्र अस्थिर (VMWARE_HYPERCALL :
 		"=a"(ret), "=b"(nsec_hi), "=c"(nsec_lo), "=d"(unused1),
 		"=S"(unused2), "=D"(unused3) :
 		"a"(VMWARE_MAGIC), "b"(0),
 		"c"(VMWARE_CMD_PCLK_GETTIME), "d"(0) :
 		"memory");
 
-	if (ret == 0)
+	अगर (ret == 0)
 		*ns = ((u64)nsec_hi << 32) | nsec_lo;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * PTP clock ops.
+ * PTP घड़ी ops.
  */
 
-static int ptp_vmw_adjtime(struct ptp_clock_info *info, s64 delta)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक ptp_vmw_adjसमय(काष्ठा ptp_घड़ी_info *info, s64 delta)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int ptp_vmw_adjfreq(struct ptp_clock_info *info, s32 delta)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक ptp_vmw_adjfreq(काष्ठा ptp_घड़ी_info *info, s32 delta)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int ptp_vmw_gettime(struct ptp_clock_info *info, struct timespec64 *ts)
-{
+अटल पूर्णांक ptp_vmw_समय_लो(काष्ठा ptp_घड़ी_info *info, काष्ठा बारpec64 *ts)
+अणु
 	u64 ns;
 
-	if (ptp_vmw_pclk_read(&ns) != 0)
-		return -EIO;
-	*ts = ns_to_timespec64(ns);
-	return 0;
-}
+	अगर (ptp_vmw_pclk_पढ़ो(&ns) != 0)
+		वापस -EIO;
+	*ts = ns_to_बारpec64(ns);
+	वापस 0;
+पूर्ण
 
-static int ptp_vmw_settime(struct ptp_clock_info *info,
-			  const struct timespec64 *ts)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक ptp_vmw_समय_रखो(काष्ठा ptp_घड़ी_info *info,
+			  स्थिर काष्ठा बारpec64 *ts)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int ptp_vmw_enable(struct ptp_clock_info *info,
-			 struct ptp_clock_request *request, int on)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक ptp_vmw_enable(काष्ठा ptp_घड़ी_info *info,
+			 काष्ठा ptp_घड़ी_request *request, पूर्णांक on)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static struct ptp_clock_info ptp_vmw_clock_info = {
+अटल काष्ठा ptp_घड़ी_info ptp_vmw_घड़ी_info = अणु
 	.owner		= THIS_MODULE,
 	.name		= "ptp_vmw",
 	.max_adj	= 0,
-	.adjtime	= ptp_vmw_adjtime,
+	.adjसमय	= ptp_vmw_adjसमय,
 	.adjfreq	= ptp_vmw_adjfreq,
-	.gettime64	= ptp_vmw_gettime,
-	.settime64	= ptp_vmw_settime,
+	.समय_लो64	= ptp_vmw_समय_लो,
+	.समय_रखो64	= ptp_vmw_समय_रखो,
 	.enable		= ptp_vmw_enable,
-};
+पूर्ण;
 
 /*
- * ACPI driver ops for VMware "precision clock" virtual device.
+ * ACPI driver ops क्रम VMware "precision clock" भव device.
  */
 
-static int ptp_vmw_acpi_add(struct acpi_device *device)
-{
-	ptp_vmw_clock = ptp_clock_register(&ptp_vmw_clock_info, NULL);
-	if (IS_ERR(ptp_vmw_clock)) {
+अटल पूर्णांक ptp_vmw_acpi_add(काष्ठा acpi_device *device)
+अणु
+	ptp_vmw_घड़ी = ptp_घड़ी_रेजिस्टर(&ptp_vmw_घड़ी_info, शून्य);
+	अगर (IS_ERR(ptp_vmw_घड़ी)) अणु
 		pr_err("failed to register ptp clock\n");
-		return PTR_ERR(ptp_vmw_clock);
-	}
+		वापस PTR_ERR(ptp_vmw_घड़ी);
+	पूर्ण
 
 	ptp_vmw_acpi_device = device;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ptp_vmw_acpi_remove(struct acpi_device *device)
-{
-	ptp_clock_unregister(ptp_vmw_clock);
-	return 0;
-}
+अटल पूर्णांक ptp_vmw_acpi_हटाओ(काष्ठा acpi_device *device)
+अणु
+	ptp_घड़ी_unरेजिस्टर(ptp_vmw_घड़ी);
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id ptp_vmw_acpi_device_ids[] = {
-	{ "VMW0005", 0 },
-	{ "", 0 },
-};
+अटल स्थिर काष्ठा acpi_device_id ptp_vmw_acpi_device_ids[] = अणु
+	अणु "VMW0005", 0 पूर्ण,
+	अणु "", 0 पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(acpi, ptp_vmw_acpi_device_ids);
 
-static struct acpi_driver ptp_vmw_acpi_driver = {
+अटल काष्ठा acpi_driver ptp_vmw_acpi_driver = अणु
 	.name = "ptp_vmw",
 	.ids = ptp_vmw_acpi_device_ids,
-	.ops = {
+	.ops = अणु
 		.add = ptp_vmw_acpi_add,
-		.remove	= ptp_vmw_acpi_remove
-	},
+		.हटाओ	= ptp_vmw_acpi_हटाओ
+	पूर्ण,
 	.owner	= THIS_MODULE
-};
+पूर्ण;
 
-static int __init ptp_vmw_init(void)
-{
-	if (x86_hyper_type != X86_HYPER_VMWARE)
-		return -1;
-	return acpi_bus_register_driver(&ptp_vmw_acpi_driver);
-}
+अटल पूर्णांक __init ptp_vmw_init(व्योम)
+अणु
+	अगर (x86_hyper_type != X86_HYPER_VMWARE)
+		वापस -1;
+	वापस acpi_bus_रेजिस्टर_driver(&ptp_vmw_acpi_driver);
+पूर्ण
 
-static void __exit ptp_vmw_exit(void)
-{
-	acpi_bus_unregister_driver(&ptp_vmw_acpi_driver);
-}
+अटल व्योम __निकास ptp_vmw_निकास(व्योम)
+अणु
+	acpi_bus_unरेजिस्टर_driver(&ptp_vmw_acpi_driver);
+पूर्ण
 
 module_init(ptp_vmw_init);
-module_exit(ptp_vmw_exit);
+module_निकास(ptp_vmw_निकास);
 
 MODULE_DESCRIPTION("VMware virtual PTP clock driver");
 MODULE_AUTHOR("VMware, Inc.");

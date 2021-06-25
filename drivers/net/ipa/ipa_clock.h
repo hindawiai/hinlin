@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2018-2020 Linaro Ltd.
  */
-#ifndef _IPA_CLOCK_H_
-#define _IPA_CLOCK_H_
+#अगर_अघोषित _IPA_CLOCK_H_
+#घोषणा _IPA_CLOCK_H_
 
-struct device;
+काष्ठा device;
 
-struct ipa;
-struct ipa_clock_data;
+काष्ठा ipa;
+काष्ठा ipa_घड़ी_data;
 
 /**
- * ipa_clock_rate() - Return the current IPA core clock rate
- * @ipa:	IPA structure
+ * ipa_घड़ी_rate() - Return the current IPA core घड़ी rate
+ * @ipa:	IPA काष्ठाure
  *
- * Return: The current clock rate (in Hz), or 0.
+ * Return: The current घड़ी rate (in Hz), or 0.
  */
-u32 ipa_clock_rate(struct ipa *ipa);
+u32 ipa_घड़ी_rate(काष्ठा ipa *ipa);
 
 /**
- * ipa_clock_init() - Initialize IPA clocking
+ * ipa_घड़ी_init() - Initialize IPA घड़ीing
  * @dev:	IPA device
  * @data:	Clock configuration data
  *
- * Return:	A pointer to an ipa_clock structure, or a pointer-coded error
+ * Return:	A poपूर्णांकer to an ipa_घड़ी काष्ठाure, or a poपूर्णांकer-coded error
  */
-struct ipa_clock *ipa_clock_init(struct device *dev,
-				 const struct ipa_clock_data *data);
+काष्ठा ipa_घड़ी *ipa_घड़ी_init(काष्ठा device *dev,
+				 स्थिर काष्ठा ipa_घड़ी_data *data);
 
 /**
- * ipa_clock_exit() - Inverse of ipa_clock_init()
- * @clock:	IPA clock pointer
+ * ipa_घड़ी_निकास() - Inverse of ipa_घड़ी_init()
+ * @घड़ी:	IPA घड़ी poपूर्णांकer
  */
-void ipa_clock_exit(struct ipa_clock *clock);
+व्योम ipa_घड़ी_निकास(काष्ठा ipa_घड़ी *घड़ी);
 
 /**
- * ipa_clock_get() - Get an IPA clock reference
- * @ipa:	IPA pointer
+ * ipa_घड़ी_get() - Get an IPA घड़ी reference
+ * @ipa:	IPA poपूर्णांकer
  *
- * This call blocks if this is the first reference.
+ * This call blocks अगर this is the first reference.
  */
-void ipa_clock_get(struct ipa *ipa);
+व्योम ipa_घड़ी_get(काष्ठा ipa *ipa);
 
 /**
- * ipa_clock_get_additional() - Get an IPA clock reference if not first
- * @ipa:	IPA pointer
+ * ipa_घड़ी_get_additional() - Get an IPA घड़ी reference अगर not first
+ * @ipa:	IPA poपूर्णांकer
  *
- * This returns immediately, and only takes a reference if not the first
+ * This वापसs immediately, and only takes a reference अगर not the first
  */
-bool ipa_clock_get_additional(struct ipa *ipa);
+bool ipa_घड़ी_get_additional(काष्ठा ipa *ipa);
 
 /**
- * ipa_clock_put() - Drop an IPA clock reference
- * @ipa:	IPA pointer
+ * ipa_घड़ी_put() - Drop an IPA घड़ी reference
+ * @ipa:	IPA poपूर्णांकer
  *
- * This drops a clock reference.  If the last reference is being dropped,
- * the clock is stopped and RX endpoints are suspended.  This call will
+ * This drops a घड़ी reference.  If the last reference is being dropped,
+ * the घड़ी is stopped and RX endpoपूर्णांकs are suspended.  This call will
  * not block unless the last reference is dropped.
  */
-void ipa_clock_put(struct ipa *ipa);
+व्योम ipa_घड़ी_put(काष्ठा ipa *ipa);
 
-#endif /* _IPA_CLOCK_H_ */
+#पूर्ण_अगर /* _IPA_CLOCK_H_ */

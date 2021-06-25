@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * OMAP3/OMAP4 Voltage Management Routines
  *
@@ -16,324 +17,324 @@
  * Thara Gopinath <thara@ti.com>
  */
 
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/debugfs.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-#include "prm-regbits-34xx.h"
-#include "prm-regbits-44xx.h"
-#include "prm44xx.h"
-#include "prcm44xx.h"
-#include "prminst44xx.h"
-#include "control.h"
+#समावेश "prm-regbits-34xx.h"
+#समावेश "prm-regbits-44xx.h"
+#समावेश "prm44xx.h"
+#समावेश "prcm44xx.h"
+#समावेश "prminst44xx.h"
+#समावेश "control.h"
 
-#include "voltage.h"
-#include "powerdomain.h"
+#समावेश "voltage.h"
+#समावेश "powerdomain.h"
 
-#include "vc.h"
-#include "vp.h"
+#समावेश "vc.h"
+#समावेश "vp.h"
 
-static LIST_HEAD(voltdm_list);
+अटल LIST_HEAD(voltdm_list);
 
 /* Public functions */
 /**
- * voltdm_get_voltage() - Gets the current non-auto-compensated voltage
- * @voltdm:	pointer to the voltdm for which current voltage info is needed
+ * voltdm_get_voltage() - Gets the current non-स्वतः-compensated voltage
+ * @voltdm:	poपूर्णांकer to the voltdm क्रम which current voltage info is needed
  *
- * API to get the current non-auto-compensated voltage for a voltage domain.
- * Returns 0 in case of error else returns the current voltage.
+ * API to get the current non-स्वतः-compensated voltage क्रम a voltage करोमुख्य.
+ * Returns 0 in हाल of error अन्यथा वापसs the current voltage.
  */
-unsigned long voltdm_get_voltage(struct voltagedomain *voltdm)
-{
-	if (!voltdm || IS_ERR(voltdm)) {
+अचिन्हित दीर्घ voltdm_get_voltage(काष्ठा voltageकरोमुख्य *voltdm)
+अणु
+	अगर (!voltdm || IS_ERR(voltdm)) अणु
 		pr_warn("%s: VDD specified does not exist!\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return voltdm->nominal_volt;
-}
+	वापस voltdm->nominal_volt;
+पूर्ण
 
 /**
- * voltdm_scale() - API to scale voltage of a particular voltage domain.
- * @voltdm: pointer to the voltage domain which is to be scaled.
- * @target_volt: The target voltage of the voltage domain
+ * voltdm_scale() - API to scale voltage of a particular voltage करोमुख्य.
+ * @voltdm: poपूर्णांकer to the voltage करोमुख्य which is to be scaled.
+ * @target_volt: The target voltage of the voltage करोमुख्य
  *
- * This API should be called by the kernel to do the voltage scaling
- * for a particular voltage domain during DVFS.
+ * This API should be called by the kernel to करो the voltage scaling
+ * क्रम a particular voltage करोमुख्य during DVFS.
  */
-int voltdm_scale(struct voltagedomain *voltdm,
-		 unsigned long target_volt)
-{
-	int ret, i;
-	unsigned long volt = 0;
+पूर्णांक voltdm_scale(काष्ठा voltageकरोमुख्य *voltdm,
+		 अचिन्हित दीर्घ target_volt)
+अणु
+	पूर्णांक ret, i;
+	अचिन्हित दीर्घ volt = 0;
 
-	if (!voltdm || IS_ERR(voltdm)) {
+	अगर (!voltdm || IS_ERR(voltdm)) अणु
 		pr_warn("%s: VDD specified does not exist!\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!voltdm->scale) {
+	अगर (!voltdm->scale) अणु
 		pr_err("%s: No voltage scale API registered for vdd_%s\n",
 			__func__, voltdm->name);
-		return -ENODATA;
-	}
+		वापस -ENODATA;
+	पूर्ण
 
-	if (!voltdm->volt_data) {
+	अगर (!voltdm->volt_data) अणु
 		pr_err("%s: No voltage data defined for vdd_%s\n",
 			__func__, voltdm->name);
-		return -ENODATA;
-	}
+		वापस -ENODATA;
+	पूर्ण
 
 	/* Adjust voltage to the exact voltage from the OPP table */
-	for (i = 0; voltdm->volt_data[i].volt_nominal != 0; i++) {
-		if (voltdm->volt_data[i].volt_nominal >= target_volt) {
+	क्रम (i = 0; voltdm->volt_data[i].volt_nominal != 0; i++) अणु
+		अगर (voltdm->volt_data[i].volt_nominal >= target_volt) अणु
 			volt = voltdm->volt_data[i].volt_nominal;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!volt) {
+	अगर (!volt) अणु
 		pr_warn("%s: not scaling. OPP voltage for %lu, not found.\n",
 			__func__, target_volt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = voltdm->scale(voltdm, volt);
-	if (!ret)
+	अगर (!ret)
 		voltdm->nominal_volt = volt;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * voltdm_reset() - Resets the voltage of a particular voltage domain
+ * voltdm_reset() - Resets the voltage of a particular voltage करोमुख्य
  *		    to that of the current OPP.
- * @voltdm: pointer to the voltage domain whose voltage is to be reset.
+ * @voltdm: poपूर्णांकer to the voltage करोमुख्य whose voltage is to be reset.
  *
- * This API finds out the correct voltage the voltage domain is supposed
+ * This API finds out the correct voltage the voltage करोमुख्य is supposed
  * to be at and resets the voltage to that level. Should be used especially
- * while disabling any voltage compensation modules.
+ * जबतक disabling any voltage compensation modules.
  */
-void voltdm_reset(struct voltagedomain *voltdm)
-{
-	unsigned long target_volt;
+व्योम voltdm_reset(काष्ठा voltageकरोमुख्य *voltdm)
+अणु
+	अचिन्हित दीर्घ target_volt;
 
-	if (!voltdm || IS_ERR(voltdm)) {
+	अगर (!voltdm || IS_ERR(voltdm)) अणु
 		pr_warn("%s: VDD specified does not exist!\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	target_volt = voltdm_get_voltage(voltdm);
-	if (!target_volt) {
+	अगर (!target_volt) अणु
 		pr_err("%s: unable to find current voltage for vdd_%s\n",
 			__func__, voltdm->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	voltdm_scale(voltdm, target_volt);
-}
+पूर्ण
 
 /**
  * omap_voltage_get_volttable() - API to get the voltage table associated with a
- *				particular voltage domain.
- * @voltdm:	pointer to the VDD for which the voltage table is required
- * @volt_data:	the voltage table for the particular vdd which is to be
+ *				particular voltage करोमुख्य.
+ * @voltdm:	poपूर्णांकer to the VDD क्रम which the voltage table is required
+ * @volt_data:	the voltage table क्रम the particular vdd which is to be
  *		populated by this API
  *
- * This API populates the voltage table associated with a VDD into the
- * passed parameter pointer. Returns the count of distinct voltages
+ * This API populates the voltage table associated with a VDD पूर्णांकo the
+ * passed parameter poपूर्णांकer. Returns the count of distinct voltages
  * supported by this vdd.
  *
  */
-void omap_voltage_get_volttable(struct voltagedomain *voltdm,
-				struct omap_volt_data **volt_data)
-{
-	if (!voltdm || IS_ERR(voltdm)) {
+व्योम omap_voltage_get_volttable(काष्ठा voltageकरोमुख्य *voltdm,
+				काष्ठा omap_volt_data **volt_data)
+अणु
+	अगर (!voltdm || IS_ERR(voltdm)) अणु
 		pr_warn("%s: VDD specified does not exist!\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	*volt_data = voltdm->volt_data;
-}
+पूर्ण
 
 /**
- * omap_voltage_get_voltdata() - API to get the voltage table entry for a
+ * omap_voltage_get_voltdata() - API to get the voltage table entry क्रम a
  *				particular voltage
- * @voltdm:	pointer to the VDD whose voltage table has to be searched
+ * @voltdm:	poपूर्णांकer to the VDD whose voltage table has to be searched
  * @volt:	the voltage to be searched in the voltage table
  *
- * This API searches through the voltage table for the required voltage
- * domain and tries to find a matching entry for the passed voltage volt.
+ * This API searches through the voltage table क्रम the required voltage
+ * करोमुख्य and tries to find a matching entry क्रम the passed voltage volt.
  * If a matching entry is found volt_data is populated with that entry.
- * This API searches only through the non-compensated voltages int the
+ * This API searches only through the non-compensated voltages पूर्णांक the
  * voltage table.
- * Returns pointer to the voltage table entry corresponding to volt on
- * success. Returns -ENODATA if no voltage table exisits for the passed voltage
- * domain or if there is no matching entry.
+ * Returns poपूर्णांकer to the voltage table entry corresponding to volt on
+ * success. Returns -ENODATA अगर no voltage table exisits क्रम the passed voltage
+ * करोमुख्य or अगर there is no matching entry.
  */
-struct omap_volt_data *omap_voltage_get_voltdata(struct voltagedomain *voltdm,
-						 unsigned long volt)
-{
-	int i;
+काष्ठा omap_volt_data *omap_voltage_get_voltdata(काष्ठा voltageकरोमुख्य *voltdm,
+						 अचिन्हित दीर्घ volt)
+अणु
+	पूर्णांक i;
 
-	if (!voltdm || IS_ERR(voltdm)) {
+	अगर (!voltdm || IS_ERR(voltdm)) अणु
 		pr_warn("%s: VDD specified does not exist!\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (!voltdm->volt_data) {
+	अगर (!voltdm->volt_data) अणु
 		pr_warn("%s: voltage table does not exist for vdd_%s\n",
 			__func__, voltdm->name);
-		return ERR_PTR(-ENODATA);
-	}
+		वापस ERR_PTR(-ENODATA);
+	पूर्ण
 
-	for (i = 0; voltdm->volt_data[i].volt_nominal != 0; i++) {
-		if (voltdm->volt_data[i].volt_nominal == volt)
-			return &voltdm->volt_data[i];
-	}
+	क्रम (i = 0; voltdm->volt_data[i].volt_nominal != 0; i++) अणु
+		अगर (voltdm->volt_data[i].volt_nominal == volt)
+			वापस &voltdm->volt_data[i];
+	पूर्ण
 
 	pr_notice("%s: Unable to match the current voltage with the voltage table for vdd_%s\n",
 		  __func__, voltdm->name);
 
-	return ERR_PTR(-ENODATA);
-}
+	वापस ERR_PTR(-ENODATA);
+पूर्ण
 
 /**
- * omap_voltage_register_pmic() - API to register PMIC specific data
- * @voltdm:	pointer to the VDD for which the PMIC specific data is
- *		to be registered
- * @pmic:	the structure containing pmic info
+ * omap_voltage_रेजिस्टर_pmic() - API to रेजिस्टर PMIC specअगरic data
+ * @voltdm:	poपूर्णांकer to the VDD क्रम which the PMIC specअगरic data is
+ *		to be रेजिस्टरed
+ * @pmic:	the काष्ठाure containing pmic info
  *
- * This API is to be called by the SOC/PMIC file to specify the
- * pmic specific info as present in omap_voltdm_pmic structure.
+ * This API is to be called by the SOC/PMIC file to specअगरy the
+ * pmic specअगरic info as present in omap_voltdm_pmic काष्ठाure.
  */
-int omap_voltage_register_pmic(struct voltagedomain *voltdm,
-			       struct omap_voltdm_pmic *pmic)
-{
-	if (!voltdm || IS_ERR(voltdm)) {
+पूर्णांक omap_voltage_रेजिस्टर_pmic(काष्ठा voltageकरोमुख्य *voltdm,
+			       काष्ठा omap_voltdm_pmic *pmic)
+अणु
+	अगर (!voltdm || IS_ERR(voltdm)) अणु
 		pr_warn("%s: VDD specified does not exist!\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	voltdm->pmic = pmic;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * omap_voltage_late_init() - Init the various voltage parameters
  *
  * This API is to be called in the later stages of the
- * system boot to init the voltage controller and
+ * प्रणाली boot to init the voltage controller and
  * voltage processors.
  */
-int __init omap_voltage_late_init(void)
-{
-	struct voltagedomain *voltdm;
+पूर्णांक __init omap_voltage_late_init(व्योम)
+अणु
+	काष्ठा voltageकरोमुख्य *voltdm;
 
-	if (list_empty(&voltdm_list)) {
+	अगर (list_empty(&voltdm_list)) अणु
 		pr_err("%s: Voltage driver support not added\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	list_for_each_entry(voltdm, &voltdm_list, node) {
-		struct clk *sys_ck;
+	list_क्रम_each_entry(voltdm, &voltdm_list, node) अणु
+		काष्ठा clk *sys_ck;
 
-		if (!voltdm->scalable)
-			continue;
+		अगर (!voltdm->scalable)
+			जारी;
 
-		sys_ck = clk_get(NULL, voltdm->sys_clk.name);
-		if (IS_ERR(sys_ck)) {
+		sys_ck = clk_get(शून्य, voltdm->sys_clk.name);
+		अगर (IS_ERR(sys_ck)) अणु
 			pr_warn("%s: Could not get sys clk.\n", __func__);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		voltdm->sys_clk.rate = clk_get_rate(sys_ck);
 		WARN_ON(!voltdm->sys_clk.rate);
 		clk_put(sys_ck);
 
-		if (voltdm->vc) {
+		अगर (voltdm->vc) अणु
 			voltdm->scale = omap_vc_bypass_scale;
 			omap_vc_init_channel(voltdm);
-		}
+		पूर्ण
 
-		if (voltdm->vp) {
-			voltdm->scale = omap_vp_forceupdate_scale;
+		अगर (voltdm->vp) अणु
+			voltdm->scale = omap_vp_क्रमceupdate_scale;
 			omap_vp_init(voltdm);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct voltagedomain *_voltdm_lookup(const char *name)
-{
-	struct voltagedomain *voltdm, *temp_voltdm;
+अटल काष्ठा voltageकरोमुख्य *_voltdm_lookup(स्थिर अक्षर *name)
+अणु
+	काष्ठा voltageकरोमुख्य *voltdm, *temp_voltdm;
 
-	voltdm = NULL;
+	voltdm = शून्य;
 
-	list_for_each_entry(temp_voltdm, &voltdm_list, node) {
-		if (!strcmp(name, temp_voltdm->name)) {
+	list_क्रम_each_entry(temp_voltdm, &voltdm_list, node) अणु
+		अगर (!म_भेद(name, temp_voltdm->name)) अणु
 			voltdm = temp_voltdm;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return voltdm;
-}
+	वापस voltdm;
+पूर्ण
 
-static int _voltdm_register(struct voltagedomain *voltdm)
-{
-	if (!voltdm || !voltdm->name)
-		return -EINVAL;
+अटल पूर्णांक _voltdm_रेजिस्टर(काष्ठा voltageकरोमुख्य *voltdm)
+अणु
+	अगर (!voltdm || !voltdm->name)
+		वापस -EINVAL;
 
 	list_add(&voltdm->node, &voltdm_list);
 
 	pr_debug("voltagedomain: registered %s\n", voltdm->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * voltdm_lookup - look up a voltagedomain by name, return a pointer
- * @name: name of voltagedomain
+ * voltdm_lookup - look up a voltageकरोमुख्य by name, वापस a poपूर्णांकer
+ * @name: name of voltageकरोमुख्य
  *
- * Find a registered voltagedomain by its name @name.  Returns a pointer
- * to the struct voltagedomain if found, or NULL otherwise.
+ * Find a रेजिस्टरed voltageकरोमुख्य by its name @name.  Returns a poपूर्णांकer
+ * to the काष्ठा voltageकरोमुख्य अगर found, or शून्य otherwise.
  */
-struct voltagedomain *voltdm_lookup(const char *name)
-{
-	struct voltagedomain *voltdm ;
+काष्ठा voltageकरोमुख्य *voltdm_lookup(स्थिर अक्षर *name)
+अणु
+	काष्ठा voltageकरोमुख्य *voltdm ;
 
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
 	voltdm = _voltdm_lookup(name);
 
-	return voltdm;
-}
+	वापस voltdm;
+पूर्ण
 
 /**
- * voltdm_init - set up the voltagedomain layer
- * @voltdm_list: array of struct voltagedomain pointers to register
+ * voltdm_init - set up the voltageकरोमुख्य layer
+ * @voltdm_list: array of काष्ठा voltageकरोमुख्य poपूर्णांकers to रेजिस्टर
  *
- * Loop through the array of voltagedomains @voltdm_list, registering all
+ * Loop through the array of voltageकरोमुख्यs @voltdm_list, रेजिस्टरing all
  * that are available on the current CPU. If voltdm_list is supplied
- * and not null, all of the referenced voltagedomains will be
- * registered.  No return value.
+ * and not null, all of the referenced voltageकरोमुख्यs will be
+ * रेजिस्टरed.  No वापस value.
  */
-void voltdm_init(struct voltagedomain **voltdms)
-{
-	struct voltagedomain **v;
+व्योम voltdm_init(काष्ठा voltageकरोमुख्य **voltdms)
+अणु
+	काष्ठा voltageकरोमुख्य **v;
 
-	if (voltdms) {
-		for (v = voltdms; *v; v++)
-			_voltdm_register(*v);
-	}
-}
+	अगर (voltdms) अणु
+		क्रम (v = voltdms; *v; v++)
+			_voltdm_रेजिस्टर(*v);
+	पूर्ण
+पूर्ण

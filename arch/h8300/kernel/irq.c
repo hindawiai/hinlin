@@ -1,98 +1,99 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/arch/h8300/kernel/irq.c
  *
- * Copyright 2014-2015 Yoshinori Sato <ysato@users.sourceforge.jp>
+ * Copyright 2014-2015 Yoshinori Sato <ysato@users.sourceक्रमge.jp>
  */
 
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irqdomain.h>
-#include <linux/of_irq.h>
-#include <asm/traps.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/of_irq.h>
+#समावेश <यंत्र/traps.h>
 
-#ifdef CONFIG_RAMKERNEL
-typedef void (*h8300_vector)(void);
+#अगर_घोषित CONFIG_RAMKERNEL
+प्रकार व्योम (*h8300_vector)(व्योम);
 
-static const h8300_vector __initconst trap_table[] = {
+अटल स्थिर h8300_vector __initस्थिर trap_table[] = अणु
 	0, 0, 0, 0,
-	_trace_break,
+	_trace_अवरोध,
 	0, 0,
 	_nmi,
-	_system_call,
+	_प्रणाली_call,
 	0, 0,
-	_trace_break,
-};
+	_trace_अवरोध,
+पूर्ण;
 
-static unsigned long __init *get_vector_address(void)
-{
-	unsigned long *rom_vector = CPU_VECTOR;
-	unsigned long base, tmp;
-	int vec_no;
+अटल अचिन्हित दीर्घ __init *get_vector_address(व्योम)
+अणु
+	अचिन्हित दीर्घ *rom_vector = CPU_VECTOR;
+	अचिन्हित दीर्घ base, पंचांगp;
+	पूर्णांक vec_no;
 
 	base = rom_vector[EXT_IRQ0] & ADDR_MASK;
 
-	/* check romvector format */
-	for (vec_no = EXT_IRQ0 + 1; vec_no <= EXT_IRQ0+EXT_IRQS; vec_no++) {
-		if ((base+(vec_no - EXT_IRQ0)*4) !=
+	/* check romvector क्रमmat */
+	क्रम (vec_no = EXT_IRQ0 + 1; vec_no <= EXT_IRQ0+EXT_IRQS; vec_no++) अणु
+		अगर ((base+(vec_no - EXT_IRQ0)*4) !=
 		    (rom_vector[vec_no] & ADDR_MASK))
-			return NULL;
-	}
+			वापस शून्य;
+	पूर्ण
 
 	/* ramvector base address */
 	base -= EXT_IRQ0*4;
 
-	/* writerble? */
-	tmp = ~(*(volatile unsigned long *)base);
-	(*(volatile unsigned long *)base) = tmp;
-	if ((*(volatile unsigned long *)base) != tmp)
-		return NULL;
-	return (unsigned long *)base;
-}
+	/* ग_लिखोrble? */
+	पंचांगp = ~(*(अस्थिर अचिन्हित दीर्घ *)base);
+	(*(अस्थिर अचिन्हित दीर्घ *)base) = पंचांगp;
+	अगर ((*(अस्थिर अचिन्हित दीर्घ *)base) != पंचांगp)
+		वापस शून्य;
+	वापस (अचिन्हित दीर्घ *)base;
+पूर्ण
 
-static void __init setup_vector(void)
-{
-	int i;
-	unsigned long *ramvec, *ramvec_p;
-	const h8300_vector *trap_entry;
+अटल व्योम __init setup_vector(व्योम)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ *ramvec, *ramvec_p;
+	स्थिर h8300_vector *trap_entry;
 
 	ramvec = get_vector_address();
-	if (ramvec == NULL)
+	अगर (ramvec == शून्य)
 		panic("interrupt vector serup failed.");
-	else
+	अन्यथा
 		pr_debug("virtual vector at 0x%p\n", ramvec);
 
 	/* create redirect table */
 	ramvec_p = ramvec;
 	trap_entry = trap_table;
-	for (i = 0; i < NR_IRQS; i++) {
-		if (i < 12) {
-			if (*trap_entry)
+	क्रम (i = 0; i < NR_IRQS; i++) अणु
+		अगर (i < 12) अणु
+			अगर (*trap_entry)
 				*ramvec_p = VECTOR(*trap_entry);
 			ramvec_p++;
 			trap_entry++;
-		} else
-			*ramvec_p++ = REDIRECT(_interrupt_entry);
-	}
-	_interrupt_redirect_table = ramvec;
-}
-#else
-void setup_vector(void)
-{
-	/* noting do */
-}
-#endif
+		पूर्ण अन्यथा
+			*ramvec_p++ = REसूचीECT(_पूर्णांकerrupt_entry);
+	पूर्ण
+	_पूर्णांकerrupt_redirect_table = ramvec;
+पूर्ण
+#अन्यथा
+व्योम setup_vector(व्योम)
+अणु
+	/* noting करो */
+पूर्ण
+#पूर्ण_अगर
 
-void __init init_IRQ(void)
-{
+व्योम __init init_IRQ(व्योम)
+अणु
 	setup_vector();
 	irqchip_init();
-}
+पूर्ण
 
-asmlinkage void do_IRQ(int irq)
-{
+यंत्रlinkage व्योम करो_IRQ(पूर्णांक irq)
+अणु
 	irq_enter();
 	generic_handle_irq(irq);
-	irq_exit();
-}
+	irq_निकास();
+पूर्ण

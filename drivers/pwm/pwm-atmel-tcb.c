@@ -1,345 +1,346 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) Overkiz SAS 2012
  *
  * Author: Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/clocksource.h>
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
 
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/ioport.h>
-#include <linux/io.h>
-#include <linux/mfd/syscon.h>
-#include <linux/platform_device.h>
-#include <linux/pwm.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <soc/at91/atmel_tcb.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <soc/at91/aपंचांगel_tcb.h>
 
-#define NPWM	2
+#घोषणा NPWM	2
 
-#define ATMEL_TC_ACMR_MASK	(ATMEL_TC_ACPA | ATMEL_TC_ACPC |	\
+#घोषणा ATMEL_TC_ACMR_MASK	(ATMEL_TC_ACPA | ATMEL_TC_ACPC |	\
 				 ATMEL_TC_AEEVT | ATMEL_TC_ASWTRG)
 
-#define ATMEL_TC_BCMR_MASK	(ATMEL_TC_BCPB | ATMEL_TC_BCPC |	\
+#घोषणा ATMEL_TC_BCMR_MASK	(ATMEL_TC_BCPB | ATMEL_TC_BCPC |	\
 				 ATMEL_TC_BEEVT | ATMEL_TC_BSWTRG)
 
-struct atmel_tcb_pwm_device {
-	enum pwm_polarity polarity;	/* PWM polarity */
-	unsigned div;			/* PWM clock divider */
-	unsigned duty;			/* PWM duty expressed in clk cycles */
-	unsigned period;		/* PWM period expressed in clk cycles */
-};
+काष्ठा aपंचांगel_tcb_pwm_device अणु
+	क्रमागत pwm_polarity polarity;	/* PWM polarity */
+	अचिन्हित भाग;			/* PWM घड़ी भागider */
+	अचिन्हित duty;			/* PWM duty expressed in clk cycles */
+	अचिन्हित period;		/* PWM period expressed in clk cycles */
+पूर्ण;
 
-struct atmel_tcb_channel {
+काष्ठा aपंचांगel_tcb_channel अणु
 	u32 enabled;
 	u32 cmr;
 	u32 ra;
 	u32 rb;
 	u32 rc;
-};
+पूर्ण;
 
-struct atmel_tcb_pwm_chip {
-	struct pwm_chip chip;
+काष्ठा aपंचांगel_tcb_pwm_chip अणु
+	काष्ठा pwm_chip chip;
 	spinlock_t lock;
 	u8 channel;
 	u8 width;
-	struct regmap *regmap;
-	struct clk *clk;
-	struct clk *gclk;
-	struct clk *slow_clk;
-	struct atmel_tcb_pwm_device *pwms[NPWM];
-	struct atmel_tcb_channel bkup;
-};
+	काष्ठा regmap *regmap;
+	काष्ठा clk *clk;
+	काष्ठा clk *gclk;
+	काष्ठा clk *slow_clk;
+	काष्ठा aपंचांगel_tcb_pwm_device *pwms[NPWM];
+	काष्ठा aपंचांगel_tcb_channel bkup;
+पूर्ण;
 
-const u8 atmel_tcb_divisors[] = { 2, 8, 32, 128, 0, };
+स्थिर u8 aपंचांगel_tcb_भागisors[] = अणु 2, 8, 32, 128, 0, पूर्ण;
 
-static inline struct atmel_tcb_pwm_chip *to_tcb_chip(struct pwm_chip *chip)
-{
-	return container_of(chip, struct atmel_tcb_pwm_chip, chip);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_tcb_pwm_chip *to_tcb_chip(काष्ठा pwm_chip *chip)
+अणु
+	वापस container_of(chip, काष्ठा aपंचांगel_tcb_pwm_chip, chip);
+पूर्ण
 
-static int atmel_tcb_pwm_set_polarity(struct pwm_chip *chip,
-				      struct pwm_device *pwm,
-				      enum pwm_polarity polarity)
-{
-	struct atmel_tcb_pwm_device *tcbpwm = pwm_get_chip_data(pwm);
+अटल पूर्णांक aपंचांगel_tcb_pwm_set_polarity(काष्ठा pwm_chip *chip,
+				      काष्ठा pwm_device *pwm,
+				      क्रमागत pwm_polarity polarity)
+अणु
+	काष्ठा aपंचांगel_tcb_pwm_device *tcbpwm = pwm_get_chip_data(pwm);
 
 	tcbpwm->polarity = polarity;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_tcb_pwm_request(struct pwm_chip *chip,
-				 struct pwm_device *pwm)
-{
-	struct atmel_tcb_pwm_chip *tcbpwmc = to_tcb_chip(chip);
-	struct atmel_tcb_pwm_device *tcbpwm;
-	unsigned cmr;
-	int ret;
+अटल पूर्णांक aपंचांगel_tcb_pwm_request(काष्ठा pwm_chip *chip,
+				 काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा aपंचांगel_tcb_pwm_chip *tcbpwmc = to_tcb_chip(chip);
+	काष्ठा aपंचांगel_tcb_pwm_device *tcbpwm;
+	अचिन्हित cmr;
+	पूर्णांक ret;
 
-	tcbpwm = devm_kzalloc(chip->dev, sizeof(*tcbpwm), GFP_KERNEL);
-	if (!tcbpwm)
-		return -ENOMEM;
+	tcbpwm = devm_kzalloc(chip->dev, माप(*tcbpwm), GFP_KERNEL);
+	अगर (!tcbpwm)
+		वापस -ENOMEM;
 
 	ret = clk_prepare_enable(tcbpwmc->clk);
-	if (ret) {
-		devm_kfree(chip->dev, tcbpwm);
-		return ret;
-	}
+	अगर (ret) अणु
+		devm_kमुक्त(chip->dev, tcbpwm);
+		वापस ret;
+	पूर्ण
 
 	pwm_set_chip_data(pwm, tcbpwm);
 	tcbpwm->polarity = PWM_POLARITY_NORMAL;
 	tcbpwm->duty = 0;
 	tcbpwm->period = 0;
-	tcbpwm->div = 0;
+	tcbpwm->भाग = 0;
 
 	spin_lock(&tcbpwmc->lock);
-	regmap_read(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), &cmr);
+	regmap_पढ़ो(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), &cmr);
 	/*
-	 * Get init config from Timer Counter registers if
-	 * Timer Counter is already configured as a PWM generator.
+	 * Get init config from Timer Counter रेजिस्टरs अगर
+	 * Timer Counter is alपढ़ोy configured as a PWM generator.
 	 */
-	if (cmr & ATMEL_TC_WAVE) {
-		if (pwm->hwpwm == 0)
-			regmap_read(tcbpwmc->regmap,
+	अगर (cmr & ATMEL_TC_WAVE) अणु
+		अगर (pwm->hwpwm == 0)
+			regmap_पढ़ो(tcbpwmc->regmap,
 				    ATMEL_TC_REG(tcbpwmc->channel, RA),
 				    &tcbpwm->duty);
-		else
-			regmap_read(tcbpwmc->regmap,
+		अन्यथा
+			regmap_पढ़ो(tcbpwmc->regmap,
 				    ATMEL_TC_REG(tcbpwmc->channel, RB),
 				    &tcbpwm->duty);
 
-		tcbpwm->div = cmr & ATMEL_TC_TCCLKS;
-		regmap_read(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, RC),
+		tcbpwm->भाग = cmr & ATMEL_TC_TCCLKS;
+		regmap_पढ़ो(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, RC),
 			    &tcbpwm->period);
 		cmr &= (ATMEL_TC_TCCLKS | ATMEL_TC_ACMR_MASK |
 			ATMEL_TC_BCMR_MASK);
-	} else
+	पूर्ण अन्यथा
 		cmr = 0;
 
 	cmr |= ATMEL_TC_WAVE | ATMEL_TC_WAVESEL_UP_AUTO | ATMEL_TC_EEVT_XC0;
-	regmap_write(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), cmr);
+	regmap_ग_लिखो(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), cmr);
 	spin_unlock(&tcbpwmc->lock);
 
 	tcbpwmc->pwms[pwm->hwpwm] = tcbpwm;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atmel_tcb_pwm_free(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct atmel_tcb_pwm_chip *tcbpwmc = to_tcb_chip(chip);
-	struct atmel_tcb_pwm_device *tcbpwm = pwm_get_chip_data(pwm);
+अटल व्योम aपंचांगel_tcb_pwm_मुक्त(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा aपंचांगel_tcb_pwm_chip *tcbpwmc = to_tcb_chip(chip);
+	काष्ठा aपंचांगel_tcb_pwm_device *tcbpwm = pwm_get_chip_data(pwm);
 
 	clk_disable_unprepare(tcbpwmc->clk);
-	tcbpwmc->pwms[pwm->hwpwm] = NULL;
-	devm_kfree(chip->dev, tcbpwm);
-}
+	tcbpwmc->pwms[pwm->hwpwm] = शून्य;
+	devm_kमुक्त(chip->dev, tcbpwm);
+पूर्ण
 
-static void atmel_tcb_pwm_disable(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct atmel_tcb_pwm_chip *tcbpwmc = to_tcb_chip(chip);
-	struct atmel_tcb_pwm_device *tcbpwm = pwm_get_chip_data(pwm);
-	unsigned cmr;
-	enum pwm_polarity polarity = tcbpwm->polarity;
+अटल व्योम aपंचांगel_tcb_pwm_disable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा aपंचांगel_tcb_pwm_chip *tcbpwmc = to_tcb_chip(chip);
+	काष्ठा aपंचांगel_tcb_pwm_device *tcbpwm = pwm_get_chip_data(pwm);
+	अचिन्हित cmr;
+	क्रमागत pwm_polarity polarity = tcbpwm->polarity;
 
 	/*
-	 * If duty is 0 the timer will be stopped and we have to
+	 * If duty is 0 the समयr will be stopped and we have to
 	 * configure the output correctly on software trigger:
-	 *  - set output to high if PWM_POLARITY_INVERSED
-	 *  - set output to low if PWM_POLARITY_NORMAL
+	 *  - set output to high अगर PWM_POLARITY_INVERSED
+	 *  - set output to low अगर PWM_POLARITY_NORMAL
 	 *
-	 * This is why we're reverting polarity in this case.
+	 * This is why we're reverting polarity in this हाल.
 	 */
-	if (tcbpwm->duty == 0)
+	अगर (tcbpwm->duty == 0)
 		polarity = !polarity;
 
 	spin_lock(&tcbpwmc->lock);
-	regmap_read(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), &cmr);
+	regmap_पढ़ो(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), &cmr);
 
 	/* flush old setting and set the new one */
-	if (pwm->hwpwm == 0) {
+	अगर (pwm->hwpwm == 0) अणु
 		cmr &= ~ATMEL_TC_ACMR_MASK;
-		if (polarity == PWM_POLARITY_INVERSED)
+		अगर (polarity == PWM_POLARITY_INVERSED)
 			cmr |= ATMEL_TC_ASWTRG_CLEAR;
-		else
+		अन्यथा
 			cmr |= ATMEL_TC_ASWTRG_SET;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmr &= ~ATMEL_TC_BCMR_MASK;
-		if (polarity == PWM_POLARITY_INVERSED)
+		अगर (polarity == PWM_POLARITY_INVERSED)
 			cmr |= ATMEL_TC_BSWTRG_CLEAR;
-		else
+		अन्यथा
 			cmr |= ATMEL_TC_BSWTRG_SET;
-	}
+	पूर्ण
 
-	regmap_write(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), cmr);
+	regmap_ग_लिखो(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), cmr);
 
 	/*
 	 * Use software trigger to apply the new setting.
-	 * If both PWM devices in this group are disabled we stop the clock.
+	 * If both PWM devices in this group are disabled we stop the घड़ी.
 	 */
-	if (!(cmr & (ATMEL_TC_ACPC | ATMEL_TC_BCPC))) {
-		regmap_write(tcbpwmc->regmap,
+	अगर (!(cmr & (ATMEL_TC_ACPC | ATMEL_TC_BCPC))) अणु
+		regmap_ग_लिखो(tcbpwmc->regmap,
 			     ATMEL_TC_REG(tcbpwmc->channel, CCR),
 			     ATMEL_TC_SWTRG | ATMEL_TC_CLKDIS);
 		tcbpwmc->bkup.enabled = 1;
-	} else {
-		regmap_write(tcbpwmc->regmap,
+	पूर्ण अन्यथा अणु
+		regmap_ग_लिखो(tcbpwmc->regmap,
 			     ATMEL_TC_REG(tcbpwmc->channel, CCR),
 			     ATMEL_TC_SWTRG);
 		tcbpwmc->bkup.enabled = 0;
-	}
+	पूर्ण
 
 	spin_unlock(&tcbpwmc->lock);
-}
+पूर्ण
 
-static int atmel_tcb_pwm_enable(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct atmel_tcb_pwm_chip *tcbpwmc = to_tcb_chip(chip);
-	struct atmel_tcb_pwm_device *tcbpwm = pwm_get_chip_data(pwm);
+अटल पूर्णांक aपंचांगel_tcb_pwm_enable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा aपंचांगel_tcb_pwm_chip *tcbpwmc = to_tcb_chip(chip);
+	काष्ठा aपंचांगel_tcb_pwm_device *tcbpwm = pwm_get_chip_data(pwm);
 	u32 cmr;
-	enum pwm_polarity polarity = tcbpwm->polarity;
+	क्रमागत pwm_polarity polarity = tcbpwm->polarity;
 
 	/*
-	 * If duty is 0 the timer will be stopped and we have to
+	 * If duty is 0 the समयr will be stopped and we have to
 	 * configure the output correctly on software trigger:
-	 *  - set output to high if PWM_POLARITY_INVERSED
-	 *  - set output to low if PWM_POLARITY_NORMAL
+	 *  - set output to high अगर PWM_POLARITY_INVERSED
+	 *  - set output to low अगर PWM_POLARITY_NORMAL
 	 *
-	 * This is why we're reverting polarity in this case.
+	 * This is why we're reverting polarity in this हाल.
 	 */
-	if (tcbpwm->duty == 0)
+	अगर (tcbpwm->duty == 0)
 		polarity = !polarity;
 
 	spin_lock(&tcbpwmc->lock);
-	regmap_read(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), &cmr);
+	regmap_पढ़ो(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), &cmr);
 
 	/* flush old setting and set the new one */
 	cmr &= ~ATMEL_TC_TCCLKS;
 
-	if (pwm->hwpwm == 0) {
+	अगर (pwm->hwpwm == 0) अणु
 		cmr &= ~ATMEL_TC_ACMR_MASK;
 
 		/* Set CMR flags according to given polarity */
-		if (polarity == PWM_POLARITY_INVERSED)
+		अगर (polarity == PWM_POLARITY_INVERSED)
 			cmr |= ATMEL_TC_ASWTRG_CLEAR;
-		else
+		अन्यथा
 			cmr |= ATMEL_TC_ASWTRG_SET;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmr &= ~ATMEL_TC_BCMR_MASK;
-		if (polarity == PWM_POLARITY_INVERSED)
+		अगर (polarity == PWM_POLARITY_INVERSED)
 			cmr |= ATMEL_TC_BSWTRG_CLEAR;
-		else
+		अन्यथा
 			cmr |= ATMEL_TC_BSWTRG_SET;
-	}
+	पूर्ण
 
 	/*
-	 * If duty is 0 or equal to period there's no need to register
-	 * a specific action on RA/RB and RC compare.
+	 * If duty is 0 or equal to period there's no need to रेजिस्टर
+	 * a specअगरic action on RA/RB and RC compare.
 	 * The output will be configured on software trigger and keep
 	 * this config till next config call.
 	 */
-	if (tcbpwm->duty != tcbpwm->period && tcbpwm->duty > 0) {
-		if (pwm->hwpwm == 0) {
-			if (polarity == PWM_POLARITY_INVERSED)
+	अगर (tcbpwm->duty != tcbpwm->period && tcbpwm->duty > 0) अणु
+		अगर (pwm->hwpwm == 0) अणु
+			अगर (polarity == PWM_POLARITY_INVERSED)
 				cmr |= ATMEL_TC_ACPA_SET | ATMEL_TC_ACPC_CLEAR;
-			else
+			अन्यथा
 				cmr |= ATMEL_TC_ACPA_CLEAR | ATMEL_TC_ACPC_SET;
-		} else {
-			if (polarity == PWM_POLARITY_INVERSED)
+		पूर्ण अन्यथा अणु
+			अगर (polarity == PWM_POLARITY_INVERSED)
 				cmr |= ATMEL_TC_BCPB_SET | ATMEL_TC_BCPC_CLEAR;
-			else
+			अन्यथा
 				cmr |= ATMEL_TC_BCPB_CLEAR | ATMEL_TC_BCPC_SET;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	cmr |= (tcbpwm->div & ATMEL_TC_TCCLKS);
+	cmr |= (tcbpwm->भाग & ATMEL_TC_TCCLKS);
 
-	regmap_write(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), cmr);
+	regmap_ग_लिखो(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CMR), cmr);
 
-	if (pwm->hwpwm == 0)
-		regmap_write(tcbpwmc->regmap,
+	अगर (pwm->hwpwm == 0)
+		regmap_ग_लिखो(tcbpwmc->regmap,
 			     ATMEL_TC_REG(tcbpwmc->channel, RA),
 			     tcbpwm->duty);
-	else
-		regmap_write(tcbpwmc->regmap,
+	अन्यथा
+		regmap_ग_लिखो(tcbpwmc->regmap,
 			     ATMEL_TC_REG(tcbpwmc->channel, RB),
 			     tcbpwm->duty);
 
-	regmap_write(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, RC),
+	regmap_ग_लिखो(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, RC),
 		     tcbpwm->period);
 
 	/* Use software trigger to apply the new setting */
-	regmap_write(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CCR),
+	regmap_ग_लिखो(tcbpwmc->regmap, ATMEL_TC_REG(tcbpwmc->channel, CCR),
 		     ATMEL_TC_SWTRG | ATMEL_TC_CLKEN);
 	tcbpwmc->bkup.enabled = 1;
 	spin_unlock(&tcbpwmc->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_tcb_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
-				int duty_ns, int period_ns)
-{
-	struct atmel_tcb_pwm_chip *tcbpwmc = to_tcb_chip(chip);
-	struct atmel_tcb_pwm_device *tcbpwm = pwm_get_chip_data(pwm);
-	struct atmel_tcb_pwm_device *atcbpwm = NULL;
-	int i = 0;
-	int slowclk = 0;
-	unsigned period;
-	unsigned duty;
-	unsigned rate = clk_get_rate(tcbpwmc->clk);
-	unsigned long long min;
-	unsigned long long max;
+अटल पूर्णांक aपंचांगel_tcb_pwm_config(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+				पूर्णांक duty_ns, पूर्णांक period_ns)
+अणु
+	काष्ठा aपंचांगel_tcb_pwm_chip *tcbpwmc = to_tcb_chip(chip);
+	काष्ठा aपंचांगel_tcb_pwm_device *tcbpwm = pwm_get_chip_data(pwm);
+	काष्ठा aपंचांगel_tcb_pwm_device *atcbpwm = शून्य;
+	पूर्णांक i = 0;
+	पूर्णांक slowclk = 0;
+	अचिन्हित period;
+	अचिन्हित duty;
+	अचिन्हित rate = clk_get_rate(tcbpwmc->clk);
+	अचिन्हित दीर्घ दीर्घ min;
+	अचिन्हित दीर्घ दीर्घ max;
 
 	/*
-	 * Find best clk divisor:
-	 * the smallest divisor which can fulfill the period_ns requirements.
-	 * If there is a gclk, the first divisor is actuallly the gclk selector
+	 * Find best clk भागisor:
+	 * the smallest भागisor which can fulfill the period_ns requirements.
+	 * If there is a gclk, the first भागisor is actuallly the gclk selector
 	 */
-	if (tcbpwmc->gclk)
+	अगर (tcbpwmc->gclk)
 		i = 1;
-	for (; i < ARRAY_SIZE(atmel_tcb_divisors); ++i) {
-		if (atmel_tcb_divisors[i] == 0) {
+	क्रम (; i < ARRAY_SIZE(aपंचांगel_tcb_भागisors); ++i) अणु
+		अगर (aपंचांगel_tcb_भागisors[i] == 0) अणु
 			slowclk = i;
-			continue;
-		}
-		min = div_u64((u64)NSEC_PER_SEC * atmel_tcb_divisors[i], rate);
+			जारी;
+		पूर्ण
+		min = भाग_u64((u64)NSEC_PER_SEC * aपंचांगel_tcb_भागisors[i], rate);
 		max = min << tcbpwmc->width;
-		if (max >= period_ns)
-			break;
-	}
+		अगर (max >= period_ns)
+			अवरोध;
+	पूर्ण
 
 	/*
-	 * If none of the divisor are small enough to represent period_ns
-	 * take slow clock (32KHz).
+	 * If none of the भागisor are small enough to represent period_ns
+	 * take slow घड़ी (32KHz).
 	 */
-	if (i == ARRAY_SIZE(atmel_tcb_divisors)) {
+	अगर (i == ARRAY_SIZE(aपंचांगel_tcb_भागisors)) अणु
 		i = slowclk;
 		rate = clk_get_rate(tcbpwmc->slow_clk);
-		min = div_u64(NSEC_PER_SEC, rate);
+		min = भाग_u64(NSEC_PER_SEC, rate);
 		max = min << tcbpwmc->width;
 
-		/* If period is too big return ERANGE error */
-		if (max < period_ns)
-			return -ERANGE;
-	}
+		/* If period is too big वापस दुस्फल error */
+		अगर (max < period_ns)
+			वापस -दुस्फल;
+	पूर्ण
 
-	duty = div_u64(duty_ns, min);
-	period = div_u64(period_ns, min);
+	duty = भाग_u64(duty_ns, min);
+	period = भाग_u64(period_ns, min);
 
-	if (pwm->hwpwm == 0)
+	अगर (pwm->hwpwm == 0)
 		atcbpwm = tcbpwmc->pwms[1];
-	else
+	अन्यथा
 		atcbpwm = tcbpwmc->pwms[0];
 
 	/*
@@ -348,127 +349,127 @@ static int atmel_tcb_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
 	 * same period_ns.
 	 *
 	 * We're checking the period value of the second PWM device
-	 * in this group before applying the new config.
+	 * in this group beक्रमe applying the new config.
 	 */
-	if ((atcbpwm && atcbpwm->duty > 0 &&
+	अगर ((atcbpwm && atcbpwm->duty > 0 &&
 			atcbpwm->duty != atcbpwm->period) &&
-		(atcbpwm->div != i || atcbpwm->period != period)) {
+		(atcbpwm->भाग != i || atcbpwm->period != period)) अणु
 		dev_err(chip->dev,
 			"failed to configure period_ns: PWM group already configured with a different value\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	tcbpwm->period = period;
-	tcbpwm->div = i;
+	tcbpwm->भाग = i;
 	tcbpwm->duty = duty;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_tcb_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
-			       const struct pwm_state *state)
-{
-	int duty_cycle, period;
-	int ret;
+अटल पूर्णांक aपंचांगel_tcb_pwm_apply(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+			       स्थिर काष्ठा pwm_state *state)
+अणु
+	पूर्णांक duty_cycle, period;
+	पूर्णांक ret;
 
 	/* This function only sets a flag in driver data */
-	atmel_tcb_pwm_set_polarity(chip, pwm, state->polarity);
+	aपंचांगel_tcb_pwm_set_polarity(chip, pwm, state->polarity);
 
-	if (!state->enabled) {
-		atmel_tcb_pwm_disable(chip, pwm);
-		return 0;
-	}
+	अगर (!state->enabled) अणु
+		aपंचांगel_tcb_pwm_disable(chip, pwm);
+		वापस 0;
+	पूर्ण
 
-	period = state->period < INT_MAX ? state->period : INT_MAX;
-	duty_cycle = state->duty_cycle < INT_MAX ? state->duty_cycle : INT_MAX;
+	period = state->period < पूर्णांक_उच्च ? state->period : पूर्णांक_उच्च;
+	duty_cycle = state->duty_cycle < पूर्णांक_उच्च ? state->duty_cycle : पूर्णांक_उच्च;
 
-	ret = atmel_tcb_pwm_config(chip, pwm, duty_cycle, period);
-	if (ret)
-		return ret;
+	ret = aपंचांगel_tcb_pwm_config(chip, pwm, duty_cycle, period);
+	अगर (ret)
+		वापस ret;
 
-	return atmel_tcb_pwm_enable(chip, pwm);
-}
+	वापस aपंचांगel_tcb_pwm_enable(chip, pwm);
+पूर्ण
 
-static const struct pwm_ops atmel_tcb_pwm_ops = {
-	.request = atmel_tcb_pwm_request,
-	.free = atmel_tcb_pwm_free,
-	.apply = atmel_tcb_pwm_apply,
+अटल स्थिर काष्ठा pwm_ops aपंचांगel_tcb_pwm_ops = अणु
+	.request = aपंचांगel_tcb_pwm_request,
+	.मुक्त = aपंचांगel_tcb_pwm_मुक्त,
+	.apply = aपंचांगel_tcb_pwm_apply,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static struct atmel_tcb_config tcb_rm9200_config = {
+अटल काष्ठा aपंचांगel_tcb_config tcb_rm9200_config = अणु
 	.counter_width = 16,
-};
+पूर्ण;
 
-static struct atmel_tcb_config tcb_sam9x5_config = {
+अटल काष्ठा aपंचांगel_tcb_config tcb_sam9x5_config = अणु
 	.counter_width = 32,
-};
+पूर्ण;
 
-static struct atmel_tcb_config tcb_sama5d2_config = {
+अटल काष्ठा aपंचांगel_tcb_config tcb_sama5d2_config = अणु
 	.counter_width = 32,
 	.has_gclk = 1,
-};
+पूर्ण;
 
-static const struct of_device_id atmel_tcb_of_match[] = {
-	{ .compatible = "atmel,at91rm9200-tcb", .data = &tcb_rm9200_config, },
-	{ .compatible = "atmel,at91sam9x5-tcb", .data = &tcb_sam9x5_config, },
-	{ .compatible = "atmel,sama5d2-tcb", .data = &tcb_sama5d2_config, },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id aपंचांगel_tcb_of_match[] = अणु
+	अणु .compatible = "atmel,at91rm9200-tcb", .data = &tcb_rm9200_config, पूर्ण,
+	अणु .compatible = "atmel,at91sam9x5-tcb", .data = &tcb_sam9x5_config, पूर्ण,
+	अणु .compatible = "atmel,sama5d2-tcb", .data = &tcb_sama5d2_config, पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int atmel_tcb_pwm_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *match;
-	struct atmel_tcb_pwm_chip *tcbpwm;
-	const struct atmel_tcb_config *config;
-	struct device_node *np = pdev->dev.of_node;
-	struct regmap *regmap;
-	struct clk *clk, *gclk = NULL;
-	struct clk *slow_clk;
-	char clk_name[] = "t0_clk";
-	int err;
-	int channel;
+अटल पूर्णांक aपंचांगel_tcb_pwm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा aपंचांगel_tcb_pwm_chip *tcbpwm;
+	स्थिर काष्ठा aपंचांगel_tcb_config *config;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा regmap *regmap;
+	काष्ठा clk *clk, *gclk = शून्य;
+	काष्ठा clk *slow_clk;
+	अक्षर clk_name[] = "t0_clk";
+	पूर्णांक err;
+	पूर्णांक channel;
 
-	err = of_property_read_u32(np, "reg", &channel);
-	if (err < 0) {
+	err = of_property_पढ़ो_u32(np, "reg", &channel);
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev,
 			"failed to get Timer Counter Block channel from device tree (error: %d)\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	regmap = syscon_node_to_regmap(np->parent);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
 	slow_clk = of_clk_get_by_name(np->parent, "slow_clk");
-	if (IS_ERR(slow_clk))
-		return PTR_ERR(slow_clk);
+	अगर (IS_ERR(slow_clk))
+		वापस PTR_ERR(slow_clk);
 
 	clk_name[1] += channel;
 	clk = of_clk_get_by_name(np->parent, clk_name);
-	if (IS_ERR(clk))
+	अगर (IS_ERR(clk))
 		clk = of_clk_get_by_name(np->parent, "t0_clk");
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
-	match = of_match_node(atmel_tcb_of_match, np->parent);
+	match = of_match_node(aपंचांगel_tcb_of_match, np->parent);
 	config = match->data;
 
-	if (config->has_gclk) {
+	अगर (config->has_gclk) अणु
 		gclk = of_clk_get_by_name(np->parent, "gclk");
-		if (IS_ERR(gclk))
-			return PTR_ERR(gclk);
-	}
+		अगर (IS_ERR(gclk))
+			वापस PTR_ERR(gclk);
+	पूर्ण
 
-	tcbpwm = devm_kzalloc(&pdev->dev, sizeof(*tcbpwm), GFP_KERNEL);
-	if (tcbpwm == NULL) {
+	tcbpwm = devm_kzalloc(&pdev->dev, माप(*tcbpwm), GFP_KERNEL);
+	अगर (tcbpwm == शून्य) अणु
 		err = -ENOMEM;
-		goto err_slow_clk;
-	}
+		जाओ err_slow_clk;
+	पूर्ण
 
 	tcbpwm->chip.dev = &pdev->dev;
-	tcbpwm->chip.ops = &atmel_tcb_pwm_ops;
+	tcbpwm->chip.ops = &aपंचांगel_tcb_pwm_ops;
 	tcbpwm->chip.of_xlate = of_pwm_xlate_with_flags;
 	tcbpwm->chip.of_pwm_n_cells = 3;
 	tcbpwm->chip.npwm = NPWM;
@@ -480,18 +481,18 @@ static int atmel_tcb_pwm_probe(struct platform_device *pdev)
 	tcbpwm->width = config->counter_width;
 
 	err = clk_prepare_enable(slow_clk);
-	if (err)
-		goto err_slow_clk;
+	अगर (err)
+		जाओ err_slow_clk;
 
 	spin_lock_init(&tcbpwm->lock);
 
 	err = pwmchip_add(&tcbpwm->chip);
-	if (err < 0)
-		goto err_disable_clk;
+	अगर (err < 0)
+		जाओ err_disable_clk;
 
-	platform_set_drvdata(pdev, tcbpwm);
+	platक्रमm_set_drvdata(pdev, tcbpwm);
 
-	return 0;
+	वापस 0;
 
 err_disable_clk:
 	clk_disable_unprepare(tcbpwm->slow_clk);
@@ -499,79 +500,79 @@ err_disable_clk:
 err_slow_clk:
 	clk_put(slow_clk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int atmel_tcb_pwm_remove(struct platform_device *pdev)
-{
-	struct atmel_tcb_pwm_chip *tcbpwm = platform_get_drvdata(pdev);
-	int err;
+अटल पूर्णांक aपंचांगel_tcb_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aपंचांगel_tcb_pwm_chip *tcbpwm = platक्रमm_get_drvdata(pdev);
+	पूर्णांक err;
 
-	err = pwmchip_remove(&tcbpwm->chip);
-	if (err < 0)
-		return err;
+	err = pwmchip_हटाओ(&tcbpwm->chip);
+	अगर (err < 0)
+		वापस err;
 
 	clk_disable_unprepare(tcbpwm->slow_clk);
 	clk_put(tcbpwm->slow_clk);
 	clk_put(tcbpwm->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id atmel_tcb_pwm_dt_ids[] = {
-	{ .compatible = "atmel,tcb-pwm", },
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(of, atmel_tcb_pwm_dt_ids);
+अटल स्थिर काष्ठा of_device_id aपंचांगel_tcb_pwm_dt_ids[] = अणु
+	अणु .compatible = "atmel,tcb-pwm", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, aपंचांगel_tcb_pwm_dt_ids);
 
-#ifdef CONFIG_PM_SLEEP
-static int atmel_tcb_pwm_suspend(struct device *dev)
-{
-	struct atmel_tcb_pwm_chip *tcbpwm = dev_get_drvdata(dev);
-	struct atmel_tcb_channel *chan = &tcbpwm->bkup;
-	unsigned int channel = tcbpwm->channel;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक aपंचांगel_tcb_pwm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा aपंचांगel_tcb_pwm_chip *tcbpwm = dev_get_drvdata(dev);
+	काष्ठा aपंचांगel_tcb_channel *chan = &tcbpwm->bkup;
+	अचिन्हित पूर्णांक channel = tcbpwm->channel;
 
-	regmap_read(tcbpwm->regmap, ATMEL_TC_REG(channel, CMR), &chan->cmr);
-	regmap_read(tcbpwm->regmap, ATMEL_TC_REG(channel, RA), &chan->ra);
-	regmap_read(tcbpwm->regmap, ATMEL_TC_REG(channel, RB), &chan->rb);
-	regmap_read(tcbpwm->regmap, ATMEL_TC_REG(channel, RC), &chan->rc);
+	regmap_पढ़ो(tcbpwm->regmap, ATMEL_TC_REG(channel, CMR), &chan->cmr);
+	regmap_पढ़ो(tcbpwm->regmap, ATMEL_TC_REG(channel, RA), &chan->ra);
+	regmap_पढ़ो(tcbpwm->regmap, ATMEL_TC_REG(channel, RB), &chan->rb);
+	regmap_पढ़ो(tcbpwm->regmap, ATMEL_TC_REG(channel, RC), &chan->rc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_tcb_pwm_resume(struct device *dev)
-{
-	struct atmel_tcb_pwm_chip *tcbpwm = dev_get_drvdata(dev);
-	struct atmel_tcb_channel *chan = &tcbpwm->bkup;
-	unsigned int channel = tcbpwm->channel;
+अटल पूर्णांक aपंचांगel_tcb_pwm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा aपंचांगel_tcb_pwm_chip *tcbpwm = dev_get_drvdata(dev);
+	काष्ठा aपंचांगel_tcb_channel *chan = &tcbpwm->bkup;
+	अचिन्हित पूर्णांक channel = tcbpwm->channel;
 
-	regmap_write(tcbpwm->regmap, ATMEL_TC_REG(channel, CMR), chan->cmr);
-	regmap_write(tcbpwm->regmap, ATMEL_TC_REG(channel, RA), chan->ra);
-	regmap_write(tcbpwm->regmap, ATMEL_TC_REG(channel, RB), chan->rb);
-	regmap_write(tcbpwm->regmap, ATMEL_TC_REG(channel, RC), chan->rc);
+	regmap_ग_लिखो(tcbpwm->regmap, ATMEL_TC_REG(channel, CMR), chan->cmr);
+	regmap_ग_लिखो(tcbpwm->regmap, ATMEL_TC_REG(channel, RA), chan->ra);
+	regmap_ग_लिखो(tcbpwm->regmap, ATMEL_TC_REG(channel, RB), chan->rb);
+	regmap_ग_लिखो(tcbpwm->regmap, ATMEL_TC_REG(channel, RC), chan->rc);
 
-	if (chan->enabled)
-		regmap_write(tcbpwm->regmap,
+	अगर (chan->enabled)
+		regmap_ग_लिखो(tcbpwm->regmap,
 			     ATMEL_TC_CLKEN | ATMEL_TC_SWTRG,
 			     ATMEL_TC_REG(channel, CCR));
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(atmel_tcb_pwm_pm_ops, atmel_tcb_pwm_suspend,
-			 atmel_tcb_pwm_resume);
+अटल SIMPLE_DEV_PM_OPS(aपंचांगel_tcb_pwm_pm_ops, aपंचांगel_tcb_pwm_suspend,
+			 aपंचांगel_tcb_pwm_resume);
 
-static struct platform_driver atmel_tcb_pwm_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver aपंचांगel_tcb_pwm_driver = अणु
+	.driver = अणु
 		.name = "atmel-tcb-pwm",
-		.of_match_table = atmel_tcb_pwm_dt_ids,
-		.pm = &atmel_tcb_pwm_pm_ops,
-	},
-	.probe = atmel_tcb_pwm_probe,
-	.remove = atmel_tcb_pwm_remove,
-};
-module_platform_driver(atmel_tcb_pwm_driver);
+		.of_match_table = aपंचांगel_tcb_pwm_dt_ids,
+		.pm = &aपंचांगel_tcb_pwm_pm_ops,
+	पूर्ण,
+	.probe = aपंचांगel_tcb_pwm_probe,
+	.हटाओ = aपंचांगel_tcb_pwm_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(aपंचांगel_tcb_pwm_driver);
 
 MODULE_AUTHOR("Boris BREZILLON <b.brezillon@overkiz.com>");
 MODULE_DESCRIPTION("Atmel Timer Counter Pulse Width Modulation Driver");

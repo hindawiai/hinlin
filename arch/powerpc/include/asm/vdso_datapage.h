@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _VDSO_DATAPAGE_H
-#define _VDSO_DATAPAGE_H
-#ifdef __KERNEL__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _VDSO_DATAPAGE_H
+#घोषणा _VDSO_DATAPAGE_H
+#अगर_घोषित __KERNEL__
 
 /*
  * Copyright (C) 2002 Peter Bergner <bergner@vnet.ibm.com>, IBM
@@ -11,52 +12,52 @@
 
 
 /*
- * Note about this structure:
+ * Note about this काष्ठाure:
  *
- * This structure was historically called systemcfg and exposed to
- * userland via /proc/ppc64/systemcfg. Unfortunately, this became an
+ * This काष्ठाure was historically called प्रणालीcfg and exposed to
+ * userland via /proc/ppc64/प्रणालीcfg. Unक्रमtunately, this became an
  * ABI issue as some proprietary software started relying on being able
- * to mmap() it, thus we have to keep the base layout at least for a
+ * to mmap() it, thus we have to keep the base layout at least क्रम a
  * few kernel versions.
  *
- * However, since ppc32 doesn't suffer from this backward handicap,
- * a simpler version of the data structure is used there with only the
+ * However, since ppc32 करोesn't suffer from this backward handicap,
+ * a simpler version of the data काष्ठाure is used there with only the
  * fields actually used by the vDSO.
  *
  */
 
 /*
  * If the major version changes we are incompatible.
- * Minor version changes are a hint.
+ * Minor version changes are a hपूर्णांक.
  */
-#define SYSTEMCFG_MAJOR 1
-#define SYSTEMCFG_MINOR 1
+#घोषणा SYSTEMCFG_MAJOR 1
+#घोषणा SYSTEMCFG_MINOR 1
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/unistd.h>
-#include <linux/time.h>
-#include <vdso/datapage.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/समय.स>
+#समावेश <vdso/datapage.h>
 
-#define SYSCALL_MAP_SIZE      ((NR_syscalls + 31) / 32)
+#घोषणा SYSCALL_MAP_SIZE      ((NR_syscalls + 31) / 32)
 
 /*
  * So here is the ppc64 backward compatible version
  */
 
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 
-struct vdso_arch_data {
+काष्ठा vdso_arch_data अणु
 	__u8  eye_catcher[16];		/* Eyecatcher: SYSTEMCFG:PPC64	0x00 */
-	struct {			/* Systemcfg version numbers	     */
+	काष्ठा अणु			/* Systemcfg version numbers	     */
 		__u32 major;		/* Major number			0x10 */
 		__u32 minor;		/* Minor number			0x14 */
-	} version;
+	पूर्ण version;
 
-	/* Note about the platform flags: it now only contains the lpar
-	 * bit. The actual platform number is dead and buried
+	/* Note about the platक्रमm flags: it now only contains the lpar
+	 * bit. The actual platक्रमm number is dead and buried
 	 */
-	__u32 platform;			/* Platform flags		0x18 */
+	__u32 platक्रमm;			/* Platक्रमm flags		0x18 */
 	__u32 processor;		/* Processor type		0x1C */
 	__u64 processorCount;		/* # of physical processors	0x20 */
 	__u64 physicalMemorySize;	/* Size of real memory(B)	0x28 */
@@ -66,14 +67,14 @@ struct vdso_arch_data {
 	__u64 stamp_xsec;		/* (NU)				0x48 */
 	__u64 tb_update_count;		/* (NU) Timebase atomicity ctr	0x50 */
 	__u32 tz_minuteswest;		/* (NU) Min. west of Greenwich	0x58 */
-	__u32 tz_dsttime;		/* (NU) Type of dst correction	0x5C */
+	__u32 tz_dstसमय;		/* (NU) Type of dst correction	0x5C */
 	__u32 dcache_size;		/* L1 d-cache size		0x60 */
 	__u32 dcache_line_size;		/* L1 d-cache line size		0x64 */
 	__u32 icache_size;		/* L1 i-cache size		0x68 */
 	__u32 icache_line_size;		/* L1 i-cache line size		0x6C */
 
-	/* those additional ones don't have to be located anywhere
-	 * special as they were not part of the original systemcfg
+	/* those additional ones करोn't have to be located anywhere
+	 * special as they were not part of the original प्रणालीcfg
 	 */
 	__u32 dcache_block_size;		/* L1 d-cache block size     */
 	__u32 icache_block_size;		/* L1 i-cache block size     */
@@ -82,26 +83,26 @@ struct vdso_arch_data {
 	__u32 syscall_map[SYSCALL_MAP_SIZE];	/* Map of syscalls  */
 	__u32 compat_syscall_map[SYSCALL_MAP_SIZE];	/* Map of compat syscalls */
 
-	struct vdso_data data[CS_BASES];
-};
+	काष्ठा vdso_data data[CS_BASES];
+पूर्ण;
 
-#else /* CONFIG_PPC64 */
+#अन्यथा /* CONFIG_PPC64 */
 
 /*
  * And here is the simpler 32 bits version
  */
-struct vdso_arch_data {
+काष्ठा vdso_arch_data अणु
 	__u64 tb_ticks_per_sec;		/* Timebase tics / sec		0x38 */
 	__u32 syscall_map[SYSCALL_MAP_SIZE]; /* Map of syscalls */
 	__u32 compat_syscall_map[0];	/* No compat syscalls on PPC32 */
-	struct vdso_data data[CS_BASES];
-};
+	काष्ठा vdso_data data[CS_BASES];
+पूर्ण;
 
-#endif /* CONFIG_PPC64 */
+#पूर्ण_अगर /* CONFIG_PPC64 */
 
-extern struct vdso_arch_data *vdso_data;
+बाह्य काष्ठा vdso_arch_data *vdso_data;
 
-#else /* __ASSEMBLY__ */
+#अन्यथा /* __ASSEMBLY__ */
 
 .macro get_datapage ptr
 	bcl	20, 31, .+4
@@ -111,7 +112,7 @@ extern struct vdso_arch_data *vdso_data;
 	addi	\ptr, \ptr, (_vdso_datapage - 999b)@l
 .endm
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* __KERNEL__ */
-#endif /* _SYSTEMCFG_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* _SYSTEMCFG_H */

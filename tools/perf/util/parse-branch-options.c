@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "util/debug.h"
-#include "util/event.h"
-#include <subcmd/parse-options.h>
-#include "util/parse-branch-options.h"
-#include <stdlib.h>
-#include <string.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "util/debug.h"
+#समावेश "util/event.h"
+#समावेश <subcmd/parse-options.h>
+#समावेश "util/parse-branch-options.h"
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
 
-#define BRANCH_OPT(n, m) \
-	{ .name = n, .mode = (m) }
+#घोषणा BRANCH_OPT(n, m) \
+	अणु .name = n, .mode = (m) पूर्ण
 
-#define BRANCH_END { .name = NULL }
+#घोषणा BRANCH_END अणु .name = शून्य पूर्ण
 
-struct branch_mode {
-	const char *name;
-	int mode;
-};
+काष्ठा branch_mode अणु
+	स्थिर अक्षर *name;
+	पूर्णांक mode;
+पूर्ण;
 
-static const struct branch_mode branch_modes[] = {
+अटल स्थिर काष्ठा branch_mode branch_modes[] = अणु
 	BRANCH_OPT("u", PERF_SAMPLE_BRANCH_USER),
 	BRANCH_OPT("k", PERF_SAMPLE_BRANCH_KERNEL),
 	BRANCH_OPT("hv", PERF_SAMPLE_BRANCH_HV),
@@ -33,76 +34,76 @@ static const struct branch_mode branch_modes[] = {
 	BRANCH_OPT("save_type", PERF_SAMPLE_BRANCH_TYPE_SAVE),
 	BRANCH_OPT("stack", PERF_SAMPLE_BRANCH_CALL_STACK),
 	BRANCH_END
-};
+पूर्ण;
 
-int parse_branch_str(const char *str, __u64 *mode)
-{
-#define ONLY_PLM \
+पूर्णांक parse_branch_str(स्थिर अक्षर *str, __u64 *mode)
+अणु
+#घोषणा ONLY_PLM \
 	(PERF_SAMPLE_BRANCH_USER	|\
 	 PERF_SAMPLE_BRANCH_KERNEL	|\
 	 PERF_SAMPLE_BRANCH_HV)
 
-	int ret = 0;
-	char *p, *s;
-	char *os = NULL;
-	const struct branch_mode *br;
+	पूर्णांक ret = 0;
+	अक्षर *p, *s;
+	अक्षर *os = शून्य;
+	स्थिर काष्ठा branch_mode *br;
 
-	if (str == NULL) {
+	अगर (str == शून्य) अणु
 		*mode = PERF_SAMPLE_BRANCH_ANY;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* because str is read-only */
+	/* because str is पढ़ो-only */
 	s = os = strdup(str);
-	if (!s)
-		return -1;
+	अगर (!s)
+		वापस -1;
 
-	for (;;) {
-		p = strchr(s, ',');
-		if (p)
+	क्रम (;;) अणु
+		p = म_अक्षर(s, ',');
+		अगर (p)
 			*p = '\0';
 
-		for (br = branch_modes; br->name; br++) {
-			if (!strcasecmp(s, br->name))
-				break;
-		}
-		if (!br->name) {
+		क्रम (br = branch_modes; br->name; br++) अणु
+			अगर (!strहालcmp(s, br->name))
+				अवरोध;
+		पूर्ण
+		अगर (!br->name) अणु
 			ret = -1;
 			pr_warning("unknown branch filter %s,"
 				    " check man page\n", s);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		*mode |= br->mode;
 
-		if (!p)
-			break;
+		अगर (!p)
+			अवरोध;
 
 		s = p + 1;
-	}
+	पूर्ण
 
-	/* default to any branch */
-	if ((*mode & ~ONLY_PLM) == 0) {
+	/* शेष to any branch */
+	अगर ((*mode & ~ONLY_PLM) == 0) अणु
 		*mode = PERF_SAMPLE_BRANCH_ANY;
-	}
+	पूर्ण
 error:
-	free(os);
-	return ret;
-}
+	मुक्त(os);
+	वापस ret;
+पूर्ण
 
-int
-parse_branch_stack(const struct option *opt, const char *str, int unset)
-{
+पूर्णांक
+parse_branch_stack(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset)
+अणु
 	__u64 *mode = (__u64 *)opt->value;
 
-	if (unset)
-		return 0;
+	अगर (unset)
+		वापस 0;
 
 	/*
-	 * cannot set it twice, -b + --branch-filter for instance
+	 * cannot set it twice, -b + --branch-filter क्रम instance
 	 */
-	if (*mode)
-		return -1;
+	अगर (*mode)
+		वापस -1;
 
-	return parse_branch_str(str, mode);
-}
+	वापस parse_branch_str(str, mode);
+पूर्ण

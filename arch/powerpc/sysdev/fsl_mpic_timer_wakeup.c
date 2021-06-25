@@ -1,154 +1,155 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * MPIC timer wakeup driver
+ * MPIC समयr wakeup driver
  *
  * Copyright 2013 Freescale Semiconductor, Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/device.h>
 
-#include <asm/mpic_timer.h>
-#include <asm/mpic.h>
+#समावेश <यंत्र/mpic_समयr.h>
+#समावेश <यंत्र/mpic.h>
 
-struct fsl_mpic_timer_wakeup {
-	struct mpic_timer *timer;
-	struct work_struct free_work;
-};
+काष्ठा fsl_mpic_समयr_wakeup अणु
+	काष्ठा mpic_समयr *समयr;
+	काष्ठा work_काष्ठा मुक्त_work;
+पूर्ण;
 
-static struct fsl_mpic_timer_wakeup *fsl_wakeup;
-static DEFINE_MUTEX(sysfs_lock);
+अटल काष्ठा fsl_mpic_समयr_wakeup *fsl_wakeup;
+अटल DEFINE_MUTEX(sysfs_lock);
 
-static void fsl_free_resource(struct work_struct *ws)
-{
-	struct fsl_mpic_timer_wakeup *wakeup =
-		container_of(ws, struct fsl_mpic_timer_wakeup, free_work);
-
-	mutex_lock(&sysfs_lock);
-
-	if (wakeup->timer) {
-		disable_irq_wake(wakeup->timer->irq);
-		mpic_free_timer(wakeup->timer);
-	}
-
-	wakeup->timer = NULL;
-	mutex_unlock(&sysfs_lock);
-}
-
-static irqreturn_t fsl_mpic_timer_irq(int irq, void *dev_id)
-{
-	struct fsl_mpic_timer_wakeup *wakeup = dev_id;
-
-	schedule_work(&wakeup->free_work);
-
-	return wakeup->timer ? IRQ_HANDLED : IRQ_NONE;
-}
-
-static ssize_t fsl_timer_wakeup_show(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
-	time64_t interval = 0;
-
-	mutex_lock(&sysfs_lock);
-	if (fsl_wakeup->timer) {
-		mpic_get_remain_time(fsl_wakeup->timer, &interval);
-		interval++;
-	}
-	mutex_unlock(&sysfs_lock);
-
-	return sprintf(buf, "%lld\n", interval);
-}
-
-static ssize_t fsl_timer_wakeup_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf,
-				size_t count)
-{
-	time64_t interval;
-	int ret;
-
-	if (kstrtoll(buf, 0, &interval))
-		return -EINVAL;
+अटल व्योम fsl_मुक्त_resource(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा fsl_mpic_समयr_wakeup *wakeup =
+		container_of(ws, काष्ठा fsl_mpic_समयr_wakeup, मुक्त_work);
 
 	mutex_lock(&sysfs_lock);
 
-	if (fsl_wakeup->timer) {
-		disable_irq_wake(fsl_wakeup->timer->irq);
-		mpic_free_timer(fsl_wakeup->timer);
-		fsl_wakeup->timer = NULL;
-	}
+	अगर (wakeup->समयr) अणु
+		disable_irq_wake(wakeup->समयr->irq);
+		mpic_मुक्त_समयr(wakeup->समयr);
+	पूर्ण
 
-	if (!interval) {
+	wakeup->समयr = शून्य;
+	mutex_unlock(&sysfs_lock);
+पूर्ण
+
+अटल irqवापस_t fsl_mpic_समयr_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा fsl_mpic_समयr_wakeup *wakeup = dev_id;
+
+	schedule_work(&wakeup->मुक्त_work);
+
+	वापस wakeup->समयr ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
+
+अटल sमाप_प्रकार fsl_समयr_wakeup_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	समय64_t पूर्णांकerval = 0;
+
+	mutex_lock(&sysfs_lock);
+	अगर (fsl_wakeup->समयr) अणु
+		mpic_get_reमुख्य_समय(fsl_wakeup->समयr, &पूर्णांकerval);
+		पूर्णांकerval++;
+	पूर्ण
+	mutex_unlock(&sysfs_lock);
+
+	वापस प्र_लिखो(buf, "%lld\n", पूर्णांकerval);
+पूर्ण
+
+अटल sमाप_प्रकार fsl_समयr_wakeup_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf,
+				माप_प्रकार count)
+अणु
+	समय64_t पूर्णांकerval;
+	पूर्णांक ret;
+
+	अगर (kम_से_दीर्घl(buf, 0, &पूर्णांकerval))
+		वापस -EINVAL;
+
+	mutex_lock(&sysfs_lock);
+
+	अगर (fsl_wakeup->समयr) अणु
+		disable_irq_wake(fsl_wakeup->समयr->irq);
+		mpic_मुक्त_समयr(fsl_wakeup->समयr);
+		fsl_wakeup->समयr = शून्य;
+	पूर्ण
+
+	अगर (!पूर्णांकerval) अणु
 		mutex_unlock(&sysfs_lock);
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	fsl_wakeup->timer = mpic_request_timer(fsl_mpic_timer_irq,
-						fsl_wakeup, interval);
-	if (!fsl_wakeup->timer) {
+	fsl_wakeup->समयr = mpic_request_समयr(fsl_mpic_समयr_irq,
+						fsl_wakeup, पूर्णांकerval);
+	अगर (!fsl_wakeup->समयr) अणु
 		mutex_unlock(&sysfs_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = enable_irq_wake(fsl_wakeup->timer->irq);
-	if (ret) {
-		mpic_free_timer(fsl_wakeup->timer);
-		fsl_wakeup->timer = NULL;
+	ret = enable_irq_wake(fsl_wakeup->समयr->irq);
+	अगर (ret) अणु
+		mpic_मुक्त_समयr(fsl_wakeup->समयr);
+		fsl_wakeup->समयr = शून्य;
 		mutex_unlock(&sysfs_lock);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	mpic_start_timer(fsl_wakeup->timer);
+	mpic_start_समयr(fsl_wakeup->समयr);
 
 	mutex_unlock(&sysfs_lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static struct device_attribute mpic_attributes = __ATTR(timer_wakeup, 0644,
-			fsl_timer_wakeup_show, fsl_timer_wakeup_store);
+अटल काष्ठा device_attribute mpic_attributes = __ATTR(समयr_wakeup, 0644,
+			fsl_समयr_wakeup_show, fsl_समयr_wakeup_store);
 
-static int __init fsl_wakeup_sys_init(void)
-{
-	int ret;
+अटल पूर्णांक __init fsl_wakeup_sys_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	fsl_wakeup = kzalloc(sizeof(struct fsl_mpic_timer_wakeup), GFP_KERNEL);
-	if (!fsl_wakeup)
-		return -ENOMEM;
+	fsl_wakeup = kzalloc(माप(काष्ठा fsl_mpic_समयr_wakeup), GFP_KERNEL);
+	अगर (!fsl_wakeup)
+		वापस -ENOMEM;
 
-	INIT_WORK(&fsl_wakeup->free_work, fsl_free_resource);
+	INIT_WORK(&fsl_wakeup->मुक्त_work, fsl_मुक्त_resource);
 
 	ret = device_create_file(mpic_subsys.dev_root, &mpic_attributes);
-	if (ret)
-		kfree(fsl_wakeup);
+	अगर (ret)
+		kमुक्त(fsl_wakeup);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit fsl_wakeup_sys_exit(void)
-{
-	device_remove_file(mpic_subsys.dev_root, &mpic_attributes);
+अटल व्योम __निकास fsl_wakeup_sys_निकास(व्योम)
+अणु
+	device_हटाओ_file(mpic_subsys.dev_root, &mpic_attributes);
 
 	mutex_lock(&sysfs_lock);
 
-	if (fsl_wakeup->timer) {
-		disable_irq_wake(fsl_wakeup->timer->irq);
-		mpic_free_timer(fsl_wakeup->timer);
-	}
+	अगर (fsl_wakeup->समयr) अणु
+		disable_irq_wake(fsl_wakeup->समयr->irq);
+		mpic_मुक्त_समयr(fsl_wakeup->समयr);
+	पूर्ण
 
-	kfree(fsl_wakeup);
+	kमुक्त(fsl_wakeup);
 
 	mutex_unlock(&sysfs_lock);
-}
+पूर्ण
 
 module_init(fsl_wakeup_sys_init);
-module_exit(fsl_wakeup_sys_exit);
+module_निकास(fsl_wakeup_sys_निकास);
 
 MODULE_DESCRIPTION("Freescale MPIC global timer wakeup driver");
 MODULE_LICENSE("GPL v2");

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2014-2017 Intel Corporation
+ * Copyright तऊ 2014-2017 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,24 +23,24 @@
  *
  */
 
-#ifndef _INTEL_DEVICE_INFO_H_
-#define _INTEL_DEVICE_INFO_H_
+#अगर_अघोषित _INTEL_DEVICE_INFO_H_
+#घोषणा _INTEL_DEVICE_INFO_H_
 
-#include <uapi/drm/i915_drm.h>
+#समावेश <uapi/drm/i915_drm.h>
 
-#include "intel_step.h"
+#समावेश "intel_step.h"
 
-#include "display/intel_display.h"
+#समावेश "display/intel_display.h"
 
-#include "gt/intel_engine_types.h"
-#include "gt/intel_context_types.h"
-#include "gt/intel_sseu.h"
+#समावेश "gt/intel_engine_types.h"
+#समावेश "gt/intel_context_types.h"
+#समावेश "gt/intel_sseu.h"
 
-struct drm_printer;
-struct drm_i915_private;
+काष्ठा drm_prपूर्णांकer;
+काष्ठा drm_i915_निजी;
 
 /* Keep in gen based order, and chronological order within a gen */
-enum intel_platform {
+क्रमागत पूर्णांकel_platक्रमm अणु
 	INTEL_PLATFORM_UNINITIALIZED = 0,
 	/* gen2 */
 	INTEL_I830,
@@ -88,33 +89,33 @@ enum intel_platform {
 	INTEL_DG1,
 	INTEL_ALDERLAKE_S,
 	INTEL_MAX_PLATFORMS
-};
+पूर्ण;
 
 /*
- * Subplatform bits share the same namespace per parent platform. In other words
- * it is fine for the same bit to be used on multiple parent platforms.
+ * Subplatक्रमm bits share the same namespace per parent platक्रमm. In other words
+ * it is fine क्रम the same bit to be used on multiple parent platक्रमms.
  */
 
-#define INTEL_SUBPLATFORM_BITS (2)
-#define INTEL_SUBPLATFORM_MASK (BIT(INTEL_SUBPLATFORM_BITS) - 1)
+#घोषणा INTEL_SUBPLATFORM_BITS (2)
+#घोषणा INTEL_SUBPLATFORM_MASK (BIT(INTEL_SUBPLATFORM_BITS) - 1)
 
 /* HSW/BDW/SKL/KBL/CFL */
-#define INTEL_SUBPLATFORM_ULT	(0)
-#define INTEL_SUBPLATFORM_ULX	(1)
+#घोषणा INTEL_SUBPLATFORM_ULT	(0)
+#घोषणा INTEL_SUBPLATFORM_ULX	(1)
 
 /* CNL/ICL */
-#define INTEL_SUBPLATFORM_PORTF	(0)
+#घोषणा INTEL_SUBPLATFORM_PORTF	(0)
 
-enum intel_ppgtt_type {
+क्रमागत पूर्णांकel_ppgtt_type अणु
 	INTEL_PPGTT_NONE = I915_GEM_PPGTT_NONE,
 	INTEL_PPGTT_ALIASING = I915_GEM_PPGTT_ALIASING,
 	INTEL_PPGTT_FULL = I915_GEM_PPGTT_FULL,
-};
+पूर्ण;
 
-#define DEV_INFO_FOR_EACH_FLAG(func) \
+#घोषणा DEV_INFO_FOR_EACH_FLAG(func) \
 	func(is_mobile); \
 	func(is_lp); \
-	func(require_force_probe); \
+	func(require_क्रमce_probe); \
 	func(is_dgfx); \
 	/* Keep has_* in alphabetical order */ \
 	func(has_64bit_reloc); \
@@ -131,13 +132,13 @@ enum intel_ppgtt_type {
 	func(has_rc6); \
 	func(has_rc6p); \
 	func(has_rps); \
-	func(has_runtime_pm); \
+	func(has_runसमय_pm); \
 	func(has_snoop); \
 	func(has_coherent_ggtt); \
 	func(unfenced_needs_alignment); \
 	func(hws_needs_physical);
 
-#define DEV_INFO_DISPLAY_FOR_EACH_FLAG(func) \
+#घोषणा DEV_INFO_DISPLAY_FOR_EACH_FLAG(func) \
 	/* Keep in alphabetical order */ \
 	func(cursor_needs_physical); \
 	func(has_csr); \
@@ -159,21 +160,21 @@ enum intel_ppgtt_type {
 	func(overlay_needs_physical); \
 	func(supports_tv);
 
-struct intel_device_info {
+काष्ठा पूर्णांकel_device_info अणु
 	u16 gen_mask;
 
 	u8 gen;
-	u8 gt; /* GT number, 0 if undefined */
-	intel_engine_mask_t platform_engine_mask; /* Engines supported by the HW */
+	u8 gt; /* GT number, 0 अगर undefined */
+	पूर्णांकel_engine_mask_t platक्रमm_engine_mask; /* Engines supported by the HW */
 
-	enum intel_platform platform;
+	क्रमागत पूर्णांकel_platक्रमm platक्रमm;
 
-	unsigned int dma_mask_size; /* available DMA address bits */
+	अचिन्हित पूर्णांक dma_mask_size; /* available DMA address bits */
 
-	enum intel_ppgtt_type ppgtt_type;
-	unsigned int ppgtt_size; /* log2, e.g. 31/32/48 bits */
+	क्रमागत पूर्णांकel_ppgtt_type ppgtt_type;
+	अचिन्हित पूर्णांक ppgtt_size; /* log2, e.g. 31/32/48 bits */
 
-	unsigned int page_sizes; /* page sizes supported by the HW */
+	अचिन्हित पूर्णांक page_sizes; /* page sizes supported by the HW */
 
 	u32 memory_regions; /* regions supported by the HW */
 
@@ -184,44 +185,44 @@ struct intel_device_info {
 
 	u8 abox_mask;
 
-#define DEFINE_FLAG(name) u8 name:1
+#घोषणा DEFINE_FLAG(name) u8 name:1
 	DEV_INFO_FOR_EACH_FLAG(DEFINE_FLAG);
-#undef DEFINE_FLAG
+#अघोषित DEFINE_FLAG
 
-	struct {
+	काष्ठा अणु
 		u8 version;
 
-#define DEFINE_FLAG(name) u8 name:1
+#घोषणा DEFINE_FLAG(name) u8 name:1
 		DEV_INFO_DISPLAY_FOR_EACH_FLAG(DEFINE_FLAG);
-#undef DEFINE_FLAG
-	} display;
+#अघोषित DEFINE_FLAG
+	पूर्ण display;
 
 	u16 ddb_size; /* in blocks */
 	u8 num_supported_dbuf_slices; /* number of DBuf slices */
 
-	/* Register offsets for the various display pipes and transcoders */
-	int pipe_offsets[I915_MAX_TRANSCODERS];
-	int trans_offsets[I915_MAX_TRANSCODERS];
-	int cursor_offsets[I915_MAX_PIPES];
+	/* Register offsets क्रम the various display pipes and transcoders */
+	पूर्णांक pipe_offsets[I915_MAX_TRANSCODERS];
+	पूर्णांक trans_offsets[I915_MAX_TRANSCODERS];
+	पूर्णांक cursor_offsets[I915_MAX_PIPES];
 
-	struct color_luts {
+	काष्ठा color_luts अणु
 		u32 degamma_lut_size;
 		u32 gamma_lut_size;
 		u32 degamma_lut_tests;
 		u32 gamma_lut_tests;
-	} color;
-};
+	पूर्ण color;
+पूर्ण;
 
-struct intel_runtime_info {
+काष्ठा पूर्णांकel_runसमय_info अणु
 	/*
-	 * Platform mask is used for optimizing or-ed IS_PLATFORM calls into
-	 * into single runtime conditionals, and also to provide groundwork
-	 * for future per platform, or per SKU build optimizations.
+	 * Platक्रमm mask is used क्रम optimizing or-ed IS_PLATFORM calls पूर्णांकo
+	 * पूर्णांकo single runसमय conditionals, and also to provide groundwork
+	 * क्रम future per platक्रमm, or per SKU build optimizations.
 	 *
-	 * Array can be extended when necessary if the corresponding
+	 * Array can be extended when necessary अगर the corresponding
 	 * BUILD_BUG_ON is hit.
 	 */
-	u32 platform_mask[2];
+	u32 platक्रमm_mask[2];
 
 	u16 device_id;
 
@@ -230,25 +231,25 @@ struct intel_runtime_info {
 
 	u32 rawclk_freq;
 
-	struct intel_step_info step;
-};
+	काष्ठा पूर्णांकel_step_info step;
+पूर्ण;
 
-struct intel_driver_caps {
-	unsigned int scheduler;
+काष्ठा पूर्णांकel_driver_caps अणु
+	अचिन्हित पूर्णांक scheduler;
 	bool has_logical_contexts:1;
-};
+पूर्ण;
 
-const char *intel_platform_name(enum intel_platform platform);
+स्थिर अक्षर *पूर्णांकel_platक्रमm_name(क्रमागत पूर्णांकel_platक्रमm platक्रमm);
 
-void intel_device_info_subplatform_init(struct drm_i915_private *dev_priv);
-void intel_device_info_runtime_init(struct drm_i915_private *dev_priv);
+व्योम पूर्णांकel_device_info_subplatक्रमm_init(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_device_info_runसमय_init(काष्ठा drm_i915_निजी *dev_priv);
 
-void intel_device_info_print_static(const struct intel_device_info *info,
-				    struct drm_printer *p);
-void intel_device_info_print_runtime(const struct intel_runtime_info *info,
-				     struct drm_printer *p);
+व्योम पूर्णांकel_device_info_prपूर्णांक_अटल(स्थिर काष्ठा पूर्णांकel_device_info *info,
+				    काष्ठा drm_prपूर्णांकer *p);
+व्योम पूर्णांकel_device_info_prपूर्णांक_runसमय(स्थिर काष्ठा पूर्णांकel_runसमय_info *info,
+				     काष्ठा drm_prपूर्णांकer *p);
 
-void intel_driver_caps_print(const struct intel_driver_caps *caps,
-			     struct drm_printer *p);
+व्योम पूर्णांकel_driver_caps_prपूर्णांक(स्थिर काष्ठा पूर्णांकel_driver_caps *caps,
+			     काष्ठा drm_prपूर्णांकer *p);
 
-#endif
+#पूर्ण_अगर

@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2011-2014 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,244 +26,244 @@
  *
  **************************************************************************/
 
-#include <linux/sched/signal.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include "vmwgfx_drv.h"
+#समावेश "vmwgfx_drv.h"
 
-#define VMW_FENCE_WRAP (1 << 31)
+#घोषणा VMW_FENCE_WRAP (1 << 31)
 
-struct vmw_fence_manager {
-	int num_fence_objects;
-	struct vmw_private *dev_priv;
+काष्ठा vmw_fence_manager अणु
+	पूर्णांक num_fence_objects;
+	काष्ठा vmw_निजी *dev_priv;
 	spinlock_t lock;
-	struct list_head fence_list;
-	struct work_struct work;
+	काष्ठा list_head fence_list;
+	काष्ठा work_काष्ठा work;
 	u32 user_fence_size;
 	u32 fence_size;
 	u32 event_fence_action_size;
-	bool fifo_down;
-	struct list_head cleanup_list;
-	uint32_t pending_actions[VMW_ACTION_MAX];
-	struct mutex goal_irq_mutex;
+	bool fअगरo_करोwn;
+	काष्ठा list_head cleanup_list;
+	uपूर्णांक32_t pending_actions[VMW_ACTION_MAX];
+	काष्ठा mutex goal_irq_mutex;
 	bool goal_irq_on; /* Protected by @goal_irq_mutex */
 	bool seqno_valid; /* Protected by @lock, and may not be set to true
 			     without the @goal_irq_mutex held. */
 	u64 ctx;
-};
+पूर्ण;
 
-struct vmw_user_fence {
-	struct ttm_base_object base;
-	struct vmw_fence_obj fence;
-};
+काष्ठा vmw_user_fence अणु
+	काष्ठा tपंचांग_base_object base;
+	काष्ठा vmw_fence_obj fence;
+पूर्ण;
 
 /**
- * struct vmw_event_fence_action - fence action that delivers a drm event.
+ * काष्ठा vmw_event_fence_action - fence action that delivers a drm event.
  *
- * @action: A struct vmw_fence_action to hook up to a fence.
- * @event: A pointer to the pending event.
- * @fence: A referenced pointer to the fence to keep it alive while @action
+ * @action: A काष्ठा vmw_fence_action to hook up to a fence.
+ * @event: A poपूर्णांकer to the pending event.
+ * @fence: A referenced poपूर्णांकer to the fence to keep it alive जबतक @action
  * hangs on it.
- * @dev: Pointer to a struct drm_device so we can access the event stuff.
- * @tv_sec: If non-null, the variable pointed to will be assigned
- * current time tv_sec val when the fence signals.
- * @tv_usec: Must be set if @tv_sec is set, and the variable pointed to will
- * be assigned the current time tv_usec val when the fence signals.
+ * @dev: Poपूर्णांकer to a काष्ठा drm_device so we can access the event stuff.
+ * @tv_sec: If non-null, the variable poपूर्णांकed to will be asचिन्हित
+ * current समय tv_sec val when the fence संकेतs.
+ * @tv_usec: Must be set अगर @tv_sec is set, and the variable poपूर्णांकed to will
+ * be asचिन्हित the current समय tv_usec val when the fence संकेतs.
  */
-struct vmw_event_fence_action {
-	struct vmw_fence_action action;
+काष्ठा vmw_event_fence_action अणु
+	काष्ठा vmw_fence_action action;
 
-	struct drm_pending_event *event;
-	struct vmw_fence_obj *fence;
-	struct drm_device *dev;
+	काष्ठा drm_pending_event *event;
+	काष्ठा vmw_fence_obj *fence;
+	काष्ठा drm_device *dev;
 
-	uint32_t *tv_sec;
-	uint32_t *tv_usec;
-};
+	uपूर्णांक32_t *tv_sec;
+	uपूर्णांक32_t *tv_usec;
+पूर्ण;
 
-static struct vmw_fence_manager *
-fman_from_fence(struct vmw_fence_obj *fence)
-{
-	return container_of(fence->base.lock, struct vmw_fence_manager, lock);
-}
+अटल काष्ठा vmw_fence_manager *
+fman_from_fence(काष्ठा vmw_fence_obj *fence)
+अणु
+	वापस container_of(fence->base.lock, काष्ठा vmw_fence_manager, lock);
+पूर्ण
 
 /*
- * Note on fencing subsystem usage of irqs:
+ * Note on fencing subप्रणाली usage of irqs:
  * Typically the vmw_fences_update function is called
  *
- * a) When a new fence seqno has been submitted by the fifo code.
- * b) On-demand when we have waiters. Sleeping waiters will switch on the
- * ANY_FENCE irq and call vmw_fences_update function each time an ANY_FENCE
- * irq is received. When the last fence waiter is gone, that IRQ is masked
+ * a) When a new fence seqno has been submitted by the fअगरo code.
+ * b) On-demand when we have रुकोers. Sleeping रुकोers will चयन on the
+ * ANY_FENCE irq and call vmw_fences_update function each समय an ANY_FENCE
+ * irq is received. When the last fence रुकोer is gone, that IRQ is masked
  * away.
  *
- * In situations where there are no waiters and we don't submit any new fences,
- * fence objects may not be signaled. This is perfectly OK, since there are
- * no consumers of the signaled data, but that is NOT ok when there are fence
- * actions attached to a fence. The fencing subsystem then makes use of the
+ * In situations where there are no रुकोers and we करोn't submit any new fences,
+ * fence objects may not be संकेतed. This is perfectly OK, since there are
+ * no consumers of the संकेतed data, but that is NOT ok when there are fence
+ * actions attached to a fence. The fencing subप्रणाली then makes use of the
  * FENCE_GOAL irq and sets the fence goal seqno to that of the next fence
- * which has an action attached, and each time vmw_fences_update is called,
- * the subsystem makes sure the fence goal seqno is updated.
+ * which has an action attached, and each समय vmw_fences_update is called,
+ * the subप्रणाली makes sure the fence goal seqno is updated.
  *
- * The fence goal seqno irq is on as long as there are unsignaled fence
+ * The fence goal seqno irq is on as दीर्घ as there are unसंकेतed fence
  * objects with actions attached to them.
  */
 
-static void vmw_fence_obj_destroy(struct dma_fence *f)
-{
-	struct vmw_fence_obj *fence =
-		container_of(f, struct vmw_fence_obj, base);
+अटल व्योम vmw_fence_obj_destroy(काष्ठा dma_fence *f)
+अणु
+	काष्ठा vmw_fence_obj *fence =
+		container_of(f, काष्ठा vmw_fence_obj, base);
 
-	struct vmw_fence_manager *fman = fman_from_fence(fence);
+	काष्ठा vmw_fence_manager *fman = fman_from_fence(fence);
 
 	spin_lock(&fman->lock);
 	list_del_init(&fence->head);
 	--fman->num_fence_objects;
 	spin_unlock(&fman->lock);
 	fence->destroy(fence);
-}
+पूर्ण
 
-static const char *vmw_fence_get_driver_name(struct dma_fence *f)
-{
-	return "vmwgfx";
-}
+अटल स्थिर अक्षर *vmw_fence_get_driver_name(काष्ठा dma_fence *f)
+अणु
+	वापस "vmwgfx";
+पूर्ण
 
-static const char *vmw_fence_get_timeline_name(struct dma_fence *f)
-{
-	return "svga";
-}
+अटल स्थिर अक्षर *vmw_fence_get_समयline_name(काष्ठा dma_fence *f)
+अणु
+	वापस "svga";
+पूर्ण
 
-static bool vmw_fence_enable_signaling(struct dma_fence *f)
-{
-	struct vmw_fence_obj *fence =
-		container_of(f, struct vmw_fence_obj, base);
+अटल bool vmw_fence_enable_संकेतing(काष्ठा dma_fence *f)
+अणु
+	काष्ठा vmw_fence_obj *fence =
+		container_of(f, काष्ठा vmw_fence_obj, base);
 
-	struct vmw_fence_manager *fman = fman_from_fence(fence);
-	struct vmw_private *dev_priv = fman->dev_priv;
+	काष्ठा vmw_fence_manager *fman = fman_from_fence(fence);
+	काष्ठा vmw_निजी *dev_priv = fman->dev_priv;
 
-	u32 seqno = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_FENCE);
-	if (seqno - fence->base.seqno < VMW_FENCE_WRAP)
-		return false;
+	u32 seqno = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_FENCE);
+	अगर (seqno - fence->base.seqno < VMW_FENCE_WRAP)
+		वापस false;
 
-	vmw_fifo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
+	vmw_fअगरo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-struct vmwgfx_wait_cb {
-	struct dma_fence_cb base;
-	struct task_struct *task;
-};
+काष्ठा vmwgfx_रुको_cb अणु
+	काष्ठा dma_fence_cb base;
+	काष्ठा task_काष्ठा *task;
+पूर्ण;
 
-static void
-vmwgfx_wait_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
-{
-	struct vmwgfx_wait_cb *wait =
-		container_of(cb, struct vmwgfx_wait_cb, base);
+अटल व्योम
+vmwgfx_रुको_cb(काष्ठा dma_fence *fence, काष्ठा dma_fence_cb *cb)
+अणु
+	काष्ठा vmwgfx_रुको_cb *रुको =
+		container_of(cb, काष्ठा vmwgfx_रुको_cb, base);
 
-	wake_up_process(wait->task);
-}
+	wake_up_process(रुको->task);
+पूर्ण
 
-static void __vmw_fences_update(struct vmw_fence_manager *fman);
+अटल व्योम __vmw_fences_update(काष्ठा vmw_fence_manager *fman);
 
-static long vmw_fence_wait(struct dma_fence *f, bool intr, signed long timeout)
-{
-	struct vmw_fence_obj *fence =
-		container_of(f, struct vmw_fence_obj, base);
+अटल दीर्घ vmw_fence_रुको(काष्ठा dma_fence *f, bool पूर्णांकr, चिन्हित दीर्घ समयout)
+अणु
+	काष्ठा vmw_fence_obj *fence =
+		container_of(f, काष्ठा vmw_fence_obj, base);
 
-	struct vmw_fence_manager *fman = fman_from_fence(fence);
-	struct vmw_private *dev_priv = fman->dev_priv;
-	struct vmwgfx_wait_cb cb;
-	long ret = timeout;
+	काष्ठा vmw_fence_manager *fman = fman_from_fence(fence);
+	काष्ठा vmw_निजी *dev_priv = fman->dev_priv;
+	काष्ठा vmwgfx_रुको_cb cb;
+	दीर्घ ret = समयout;
 
-	if (likely(vmw_fence_obj_signaled(fence)))
-		return timeout;
+	अगर (likely(vmw_fence_obj_संकेतed(fence)))
+		वापस समयout;
 
-	vmw_fifo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
-	vmw_seqno_waiter_add(dev_priv);
+	vmw_fअगरo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
+	vmw_seqno_रुकोer_add(dev_priv);
 
 	spin_lock(f->lock);
 
-	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &f->flags))
-		goto out;
+	अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &f->flags))
+		जाओ out;
 
-	if (intr && signal_pending(current)) {
+	अगर (पूर्णांकr && संकेत_pending(current)) अणु
 		ret = -ERESTARTSYS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	cb.base.func = vmwgfx_wait_cb;
+	cb.base.func = vmwgfx_रुको_cb;
 	cb.task = current;
 	list_add(&cb.base.node, &f->cb_list);
 
-	for (;;) {
+	क्रम (;;) अणु
 		__vmw_fences_update(fman);
 
 		/*
-		 * We can use the barrier free __set_current_state() since
-		 * DMA_FENCE_FLAG_SIGNALED_BIT + wakeup is protected by the
+		 * We can use the barrier मुक्त __set_current_state() since
+		 * DMA_FENCE_FLAG_SIGNALED_BIT + wakeup is रक्षित by the
 		 * fence spinlock.
 		 */
-		if (intr)
+		अगर (पूर्णांकr)
 			__set_current_state(TASK_INTERRUPTIBLE);
-		else
+		अन्यथा
 			__set_current_state(TASK_UNINTERRUPTIBLE);
 
-		if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &f->flags)) {
-			if (ret == 0 && timeout > 0)
+		अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &f->flags)) अणु
+			अगर (ret == 0 && समयout > 0)
 				ret = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (intr && signal_pending(current)) {
+		अगर (पूर्णांकr && संकेत_pending(current)) अणु
 			ret = -ERESTARTSYS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (ret == 0)
-			break;
+		अगर (ret == 0)
+			अवरोध;
 
 		spin_unlock(f->lock);
 
-		ret = schedule_timeout(ret);
+		ret = schedule_समयout(ret);
 
 		spin_lock(f->lock);
-	}
+	पूर्ण
 	__set_current_state(TASK_RUNNING);
-	if (!list_empty(&cb.base.node))
+	अगर (!list_empty(&cb.base.node))
 		list_del(&cb.base.node);
 
 out:
 	spin_unlock(f->lock);
 
-	vmw_seqno_waiter_remove(dev_priv);
+	vmw_seqno_रुकोer_हटाओ(dev_priv);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dma_fence_ops vmw_fence_ops = {
+अटल स्थिर काष्ठा dma_fence_ops vmw_fence_ops = अणु
 	.get_driver_name = vmw_fence_get_driver_name,
-	.get_timeline_name = vmw_fence_get_timeline_name,
-	.enable_signaling = vmw_fence_enable_signaling,
-	.wait = vmw_fence_wait,
+	.get_समयline_name = vmw_fence_get_समयline_name,
+	.enable_संकेतing = vmw_fence_enable_संकेतing,
+	.रुको = vmw_fence_रुको,
 	.release = vmw_fence_obj_destroy,
-};
+पूर्ण;
 
 
 /*
- * Execute signal actions on fences recently signaled.
- * This is done from a workqueue so we don't have to execute
- * signal actions from atomic context.
+ * Execute संकेत actions on fences recently संकेतed.
+ * This is करोne from a workqueue so we करोn't have to execute
+ * संकेत actions from atomic context.
  */
 
-static void vmw_fence_work_func(struct work_struct *work)
-{
-	struct vmw_fence_manager *fman =
-		container_of(work, struct vmw_fence_manager, work);
-	struct list_head list;
-	struct vmw_fence_action *action, *next_action;
+अटल व्योम vmw_fence_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा vmw_fence_manager *fman =
+		container_of(work, काष्ठा vmw_fence_manager, work);
+	काष्ठा list_head list;
+	काष्ठा vmw_fence_action *action, *next_action;
 	bool seqno_valid;
 
-	do {
+	करो अणु
 		INIT_LIST_HEAD(&list);
 		mutex_lock(&fman->goal_irq_mutex);
 
@@ -271,58 +272,58 @@ static void vmw_fence_work_func(struct work_struct *work)
 		seqno_valid = fman->seqno_valid;
 		spin_unlock(&fman->lock);
 
-		if (!seqno_valid && fman->goal_irq_on) {
+		अगर (!seqno_valid && fman->goal_irq_on) अणु
 			fman->goal_irq_on = false;
-			vmw_goal_waiter_remove(fman->dev_priv);
-		}
+			vmw_goal_रुकोer_हटाओ(fman->dev_priv);
+		पूर्ण
 		mutex_unlock(&fman->goal_irq_mutex);
 
-		if (list_empty(&list))
-			return;
+		अगर (list_empty(&list))
+			वापस;
 
 		/*
-		 * At this point, only we should be able to manipulate the
-		 * list heads of the actions we have on the private list.
+		 * At this poपूर्णांक, only we should be able to manipulate the
+		 * list heads of the actions we have on the निजी list.
 		 * hence fman::lock not held.
 		 */
 
-		list_for_each_entry_safe(action, next_action, &list, head) {
+		list_क्रम_each_entry_safe(action, next_action, &list, head) अणु
 			list_del_init(&action->head);
-			if (action->cleanup)
+			अगर (action->cleanup)
 				action->cleanup(action);
-		}
-	} while (1);
-}
+		पूर्ण
+	पूर्ण जबतक (1);
+पूर्ण
 
-struct vmw_fence_manager *vmw_fence_manager_init(struct vmw_private *dev_priv)
-{
-	struct vmw_fence_manager *fman = kzalloc(sizeof(*fman), GFP_KERNEL);
+काष्ठा vmw_fence_manager *vmw_fence_manager_init(काष्ठा vmw_निजी *dev_priv)
+अणु
+	काष्ठा vmw_fence_manager *fman = kzalloc(माप(*fman), GFP_KERNEL);
 
-	if (unlikely(!fman))
-		return NULL;
+	अगर (unlikely(!fman))
+		वापस शून्य;
 
 	fman->dev_priv = dev_priv;
 	spin_lock_init(&fman->lock);
 	INIT_LIST_HEAD(&fman->fence_list);
 	INIT_LIST_HEAD(&fman->cleanup_list);
 	INIT_WORK(&fman->work, &vmw_fence_work_func);
-	fman->fifo_down = true;
-	fman->user_fence_size = ttm_round_pot(sizeof(struct vmw_user_fence)) +
+	fman->fअगरo_करोwn = true;
+	fman->user_fence_size = tपंचांग_round_pot(माप(काष्ठा vmw_user_fence)) +
 		TTM_OBJ_EXTRA_SIZE;
-	fman->fence_size = ttm_round_pot(sizeof(struct vmw_fence_obj));
+	fman->fence_size = tपंचांग_round_pot(माप(काष्ठा vmw_fence_obj));
 	fman->event_fence_action_size =
-		ttm_round_pot(sizeof(struct vmw_event_fence_action));
+		tपंचांग_round_pot(माप(काष्ठा vmw_event_fence_action));
 	mutex_init(&fman->goal_irq_mutex);
 	fman->ctx = dma_fence_context_alloc(1);
 
-	return fman;
-}
+	वापस fman;
+पूर्ण
 
-void vmw_fence_manager_takedown(struct vmw_fence_manager *fman)
-{
+व्योम vmw_fence_manager_takeकरोwn(काष्ठा vmw_fence_manager *fman)
+अणु
 	bool lists_empty;
 
-	(void) cancel_work_sync(&fman->work);
+	(व्योम) cancel_work_sync(&fman->work);
 
 	spin_lock(&fman->lock);
 	lists_empty = list_empty(&fman->fence_list) &&
@@ -330,14 +331,14 @@ void vmw_fence_manager_takedown(struct vmw_fence_manager *fman)
 	spin_unlock(&fman->lock);
 
 	BUG_ON(!lists_empty);
-	kfree(fman);
-}
+	kमुक्त(fman);
+पूर्ण
 
-static int vmw_fence_obj_init(struct vmw_fence_manager *fman,
-			      struct vmw_fence_obj *fence, u32 seqno,
-			      void (*destroy) (struct vmw_fence_obj *fence))
-{
-	int ret = 0;
+अटल पूर्णांक vmw_fence_obj_init(काष्ठा vmw_fence_manager *fman,
+			      काष्ठा vmw_fence_obj *fence, u32 seqno,
+			      व्योम (*destroy) (काष्ठा vmw_fence_obj *fence))
+अणु
+	पूर्णांक ret = 0;
 
 	dma_fence_init(&fence->base, &vmw_fence_ops, &fman->lock,
 		       fman->ctx, seqno);
@@ -345,602 +346,602 @@ static int vmw_fence_obj_init(struct vmw_fence_manager *fman,
 	fence->destroy = destroy;
 
 	spin_lock(&fman->lock);
-	if (unlikely(fman->fifo_down)) {
+	अगर (unlikely(fman->fअगरo_करोwn)) अणु
 		ret = -EBUSY;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	list_add_tail(&fence->head, &fman->fence_list);
 	++fman->num_fence_objects;
 
 out_unlock:
 	spin_unlock(&fman->lock);
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static void vmw_fences_perform_actions(struct vmw_fence_manager *fman,
-				struct list_head *list)
-{
-	struct vmw_fence_action *action, *next_action;
+अटल व्योम vmw_fences_perक्रमm_actions(काष्ठा vmw_fence_manager *fman,
+				काष्ठा list_head *list)
+अणु
+	काष्ठा vmw_fence_action *action, *next_action;
 
-	list_for_each_entry_safe(action, next_action, list, head) {
+	list_क्रम_each_entry_safe(action, next_action, list, head) अणु
 		list_del_init(&action->head);
 		fman->pending_actions[action->type]--;
-		if (action->seq_passed != NULL)
+		अगर (action->seq_passed != शून्य)
 			action->seq_passed(action);
 
 		/*
 		 * Add the cleanup action to the cleanup list so that
-		 * it will be performed by a worker task.
+		 * it will be perक्रमmed by a worker task.
 		 */
 
 		list_add_tail(&action->head, &fman->cleanup_list);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * vmw_fence_goal_new_locked - Figure out a new device fence goal
- * seqno if needed.
+ * seqno अगर needed.
  *
- * @fman: Pointer to a fence manager.
- * @passed_seqno: The seqno the device currently signals as passed.
+ * @fman: Poपूर्णांकer to a fence manager.
+ * @passed_seqno: The seqno the device currently संकेतs as passed.
  *
  * This function should be called with the fence manager lock held.
  * It is typically called when we have a new passed_seqno, and
  * we might need to update the fence goal. It checks to see whether
- * the current fence goal has already passed, and, in that case,
- * scans through all unsignaled fences to get the next fence object with an
+ * the current fence goal has alपढ़ोy passed, and, in that हाल,
+ * scans through all unसंकेतed fences to get the next fence object with an
  * action attached, and sets the seqno of that fence as a new fence goal.
  *
- * returns true if the device goal seqno was updated. False otherwise.
+ * वापसs true अगर the device goal seqno was updated. False otherwise.
  */
-static bool vmw_fence_goal_new_locked(struct vmw_fence_manager *fman,
+अटल bool vmw_fence_goal_new_locked(काष्ठा vmw_fence_manager *fman,
 				      u32 passed_seqno)
-{
+अणु
 	u32 goal_seqno;
-	struct vmw_fence_obj *fence;
+	काष्ठा vmw_fence_obj *fence;
 
-	if (likely(!fman->seqno_valid))
-		return false;
+	अगर (likely(!fman->seqno_valid))
+		वापस false;
 
-	goal_seqno = vmw_fifo_mem_read(fman->dev_priv, SVGA_FIFO_FENCE_GOAL);
-	if (likely(passed_seqno - goal_seqno >= VMW_FENCE_WRAP))
-		return false;
+	goal_seqno = vmw_fअगरo_mem_पढ़ो(fman->dev_priv, SVGA_FIFO_FENCE_GOAL);
+	अगर (likely(passed_seqno - goal_seqno >= VMW_FENCE_WRAP))
+		वापस false;
 
 	fman->seqno_valid = false;
-	list_for_each_entry(fence, &fman->fence_list, head) {
-		if (!list_empty(&fence->seq_passed_actions)) {
+	list_क्रम_each_entry(fence, &fman->fence_list, head) अणु
+		अगर (!list_empty(&fence->seq_passed_actions)) अणु
 			fman->seqno_valid = true;
-			vmw_fifo_mem_write(fman->dev_priv,
+			vmw_fअगरo_mem_ग_लिखो(fman->dev_priv,
 					   SVGA_FIFO_FENCE_GOAL,
 					   fence->base.seqno);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
 /**
- * vmw_fence_goal_check_locked - Replace the device fence goal seqno if
+ * vmw_fence_goal_check_locked - Replace the device fence goal seqno अगर
  * needed.
  *
- * @fence: Pointer to a struct vmw_fence_obj the seqno of which should be
+ * @fence: Poपूर्णांकer to a काष्ठा vmw_fence_obj the seqno of which should be
  * considered as a device fence goal.
  *
  * This function should be called with the fence manager lock held.
  * It is typically called when an action has been attached to a fence to
- * check whether the seqno of that fence should be used for a fence
- * goal interrupt. This is typically needed if the current fence goal is
+ * check whether the seqno of that fence should be used क्रम a fence
+ * goal पूर्णांकerrupt. This is typically needed अगर the current fence goal is
  * invalid, or has a higher seqno than that of the current fence object.
  *
- * returns true if the device goal seqno was updated. False otherwise.
+ * वापसs true अगर the device goal seqno was updated. False otherwise.
  */
-static bool vmw_fence_goal_check_locked(struct vmw_fence_obj *fence)
-{
-	struct vmw_fence_manager *fman = fman_from_fence(fence);
+अटल bool vmw_fence_goal_check_locked(काष्ठा vmw_fence_obj *fence)
+अणु
+	काष्ठा vmw_fence_manager *fman = fman_from_fence(fence);
 	u32 goal_seqno;
 
-	if (dma_fence_is_signaled_locked(&fence->base))
-		return false;
+	अगर (dma_fence_is_संकेतed_locked(&fence->base))
+		वापस false;
 
-	goal_seqno = vmw_fifo_mem_read(fman->dev_priv, SVGA_FIFO_FENCE_GOAL);
-	if (likely(fman->seqno_valid &&
+	goal_seqno = vmw_fअगरo_mem_पढ़ो(fman->dev_priv, SVGA_FIFO_FENCE_GOAL);
+	अगर (likely(fman->seqno_valid &&
 		   goal_seqno - fence->base.seqno < VMW_FENCE_WRAP))
-		return false;
+		वापस false;
 
-	vmw_fifo_mem_write(fman->dev_priv, SVGA_FIFO_FENCE_GOAL,
+	vmw_fअगरo_mem_ग_लिखो(fman->dev_priv, SVGA_FIFO_FENCE_GOAL,
 			   fence->base.seqno);
 	fman->seqno_valid = true;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void __vmw_fences_update(struct vmw_fence_manager *fman)
-{
-	struct vmw_fence_obj *fence, *next_fence;
-	struct list_head action_list;
+अटल व्योम __vmw_fences_update(काष्ठा vmw_fence_manager *fman)
+अणु
+	काष्ठा vmw_fence_obj *fence, *next_fence;
+	काष्ठा list_head action_list;
 	bool needs_rerun;
-	uint32_t seqno, new_seqno;
+	uपूर्णांक32_t seqno, new_seqno;
 
-	seqno = vmw_fifo_mem_read(fman->dev_priv, SVGA_FIFO_FENCE);
+	seqno = vmw_fअगरo_mem_पढ़ो(fman->dev_priv, SVGA_FIFO_FENCE);
 rerun:
-	list_for_each_entry_safe(fence, next_fence, &fman->fence_list, head) {
-		if (seqno - fence->base.seqno < VMW_FENCE_WRAP) {
+	list_क्रम_each_entry_safe(fence, next_fence, &fman->fence_list, head) अणु
+		अगर (seqno - fence->base.seqno < VMW_FENCE_WRAP) अणु
 			list_del_init(&fence->head);
-			dma_fence_signal_locked(&fence->base);
+			dma_fence_संकेत_locked(&fence->base);
 			INIT_LIST_HEAD(&action_list);
 			list_splice_init(&fence->seq_passed_actions,
 					 &action_list);
-			vmw_fences_perform_actions(fman, &action_list);
-		} else
-			break;
-	}
+			vmw_fences_perक्रमm_actions(fman, &action_list);
+		पूर्ण अन्यथा
+			अवरोध;
+	पूर्ण
 
 	/*
-	 * Rerun if the fence goal seqno was updated, and the
+	 * Rerun अगर the fence goal seqno was updated, and the
 	 * hardware might have raced with that update, so that
 	 * we missed a fence_goal irq.
 	 */
 
 	needs_rerun = vmw_fence_goal_new_locked(fman, seqno);
-	if (unlikely(needs_rerun)) {
-		new_seqno = vmw_fifo_mem_read(fman->dev_priv, SVGA_FIFO_FENCE);
-		if (new_seqno != seqno) {
+	अगर (unlikely(needs_rerun)) अणु
+		new_seqno = vmw_fअगरo_mem_पढ़ो(fman->dev_priv, SVGA_FIFO_FENCE);
+		अगर (new_seqno != seqno) अणु
 			seqno = new_seqno;
-			goto rerun;
-		}
-	}
+			जाओ rerun;
+		पूर्ण
+	पूर्ण
 
-	if (!list_empty(&fman->cleanup_list))
-		(void) schedule_work(&fman->work);
-}
+	अगर (!list_empty(&fman->cleanup_list))
+		(व्योम) schedule_work(&fman->work);
+पूर्ण
 
-void vmw_fences_update(struct vmw_fence_manager *fman)
-{
+व्योम vmw_fences_update(काष्ठा vmw_fence_manager *fman)
+अणु
 	spin_lock(&fman->lock);
 	__vmw_fences_update(fman);
 	spin_unlock(&fman->lock);
-}
+पूर्ण
 
-bool vmw_fence_obj_signaled(struct vmw_fence_obj *fence)
-{
-	struct vmw_fence_manager *fman = fman_from_fence(fence);
+bool vmw_fence_obj_संकेतed(काष्ठा vmw_fence_obj *fence)
+अणु
+	काष्ठा vmw_fence_manager *fman = fman_from_fence(fence);
 
-	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->base.flags))
-		return true;
+	अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->base.flags))
+		वापस true;
 
 	vmw_fences_update(fman);
 
-	return dma_fence_is_signaled(&fence->base);
-}
+	वापस dma_fence_is_संकेतed(&fence->base);
+पूर्ण
 
-int vmw_fence_obj_wait(struct vmw_fence_obj *fence, bool lazy,
-		       bool interruptible, unsigned long timeout)
-{
-	long ret = dma_fence_wait_timeout(&fence->base, interruptible, timeout);
+पूर्णांक vmw_fence_obj_रुको(काष्ठा vmw_fence_obj *fence, bool lazy,
+		       bool पूर्णांकerruptible, अचिन्हित दीर्घ समयout)
+अणु
+	दीर्घ ret = dma_fence_रुको_समयout(&fence->base, पूर्णांकerruptible, समयout);
 
-	if (likely(ret > 0))
-		return 0;
-	else if (ret == 0)
-		return -EBUSY;
-	else
-		return ret;
-}
+	अगर (likely(ret > 0))
+		वापस 0;
+	अन्यथा अगर (ret == 0)
+		वापस -EBUSY;
+	अन्यथा
+		वापस ret;
+पूर्ण
 
-void vmw_fence_obj_flush(struct vmw_fence_obj *fence)
-{
-	struct vmw_private *dev_priv = fman_from_fence(fence)->dev_priv;
+व्योम vmw_fence_obj_flush(काष्ठा vmw_fence_obj *fence)
+अणु
+	काष्ठा vmw_निजी *dev_priv = fman_from_fence(fence)->dev_priv;
 
-	vmw_fifo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
-}
+	vmw_fअगरo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
+पूर्ण
 
-static void vmw_fence_destroy(struct vmw_fence_obj *fence)
-{
-	dma_fence_free(&fence->base);
-}
+अटल व्योम vmw_fence_destroy(काष्ठा vmw_fence_obj *fence)
+अणु
+	dma_fence_मुक्त(&fence->base);
+पूर्ण
 
-int vmw_fence_create(struct vmw_fence_manager *fman,
-		     uint32_t seqno,
-		     struct vmw_fence_obj **p_fence)
-{
-	struct vmw_fence_obj *fence;
- 	int ret;
+पूर्णांक vmw_fence_create(काष्ठा vmw_fence_manager *fman,
+		     uपूर्णांक32_t seqno,
+		     काष्ठा vmw_fence_obj **p_fence)
+अणु
+	काष्ठा vmw_fence_obj *fence;
+ 	पूर्णांक ret;
 
-	fence = kzalloc(sizeof(*fence), GFP_KERNEL);
-	if (unlikely(!fence))
-		return -ENOMEM;
+	fence = kzalloc(माप(*fence), GFP_KERNEL);
+	अगर (unlikely(!fence))
+		वापस -ENOMEM;
 
 	ret = vmw_fence_obj_init(fman, fence, seqno,
 				 vmw_fence_destroy);
-	if (unlikely(ret != 0))
-		goto out_err_init;
+	अगर (unlikely(ret != 0))
+		जाओ out_err_init;
 
 	*p_fence = fence;
-	return 0;
+	वापस 0;
 
 out_err_init:
-	kfree(fence);
-	return ret;
-}
+	kमुक्त(fence);
+	वापस ret;
+पूर्ण
 
 
-static void vmw_user_fence_destroy(struct vmw_fence_obj *fence)
-{
-	struct vmw_user_fence *ufence =
-		container_of(fence, struct vmw_user_fence, fence);
-	struct vmw_fence_manager *fman = fman_from_fence(fence);
+अटल व्योम vmw_user_fence_destroy(काष्ठा vmw_fence_obj *fence)
+अणु
+	काष्ठा vmw_user_fence *ufence =
+		container_of(fence, काष्ठा vmw_user_fence, fence);
+	काष्ठा vmw_fence_manager *fman = fman_from_fence(fence);
 
-	ttm_base_object_kfree(ufence, base);
+	tपंचांग_base_object_kमुक्त(ufence, base);
 	/*
 	 * Free kernel space accounting.
 	 */
-	ttm_mem_global_free(vmw_mem_glob(fman->dev_priv),
+	tपंचांग_mem_global_मुक्त(vmw_mem_glob(fman->dev_priv),
 			    fman->user_fence_size);
-}
+पूर्ण
 
-static void vmw_user_fence_base_release(struct ttm_base_object **p_base)
-{
-	struct ttm_base_object *base = *p_base;
-	struct vmw_user_fence *ufence =
-		container_of(base, struct vmw_user_fence, base);
-	struct vmw_fence_obj *fence = &ufence->fence;
+अटल व्योम vmw_user_fence_base_release(काष्ठा tपंचांग_base_object **p_base)
+अणु
+	काष्ठा tपंचांग_base_object *base = *p_base;
+	काष्ठा vmw_user_fence *ufence =
+		container_of(base, काष्ठा vmw_user_fence, base);
+	काष्ठा vmw_fence_obj *fence = &ufence->fence;
 
-	*p_base = NULL;
+	*p_base = शून्य;
 	vmw_fence_obj_unreference(&fence);
-}
+पूर्ण
 
-int vmw_user_fence_create(struct drm_file *file_priv,
-			  struct vmw_fence_manager *fman,
-			  uint32_t seqno,
-			  struct vmw_fence_obj **p_fence,
-			  uint32_t *p_handle)
-{
-	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	struct vmw_user_fence *ufence;
-	struct vmw_fence_obj *tmp;
-	struct ttm_mem_global *mem_glob = vmw_mem_glob(fman->dev_priv);
-	struct ttm_operation_ctx ctx = {
-		.interruptible = false,
-		.no_wait_gpu = false
-	};
-	int ret;
+पूर्णांक vmw_user_fence_create(काष्ठा drm_file *file_priv,
+			  काष्ठा vmw_fence_manager *fman,
+			  uपूर्णांक32_t seqno,
+			  काष्ठा vmw_fence_obj **p_fence,
+			  uपूर्णांक32_t *p_handle)
+अणु
+	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	काष्ठा vmw_user_fence *ufence;
+	काष्ठा vmw_fence_obj *पंचांगp;
+	काष्ठा tपंचांग_mem_global *mem_glob = vmw_mem_glob(fman->dev_priv);
+	काष्ठा tपंचांग_operation_ctx ctx = अणु
+		.पूर्णांकerruptible = false,
+		.no_रुको_gpu = false
+	पूर्ण;
+	पूर्णांक ret;
 
 	/*
 	 * Kernel memory space accounting, since this object may
 	 * be created by a user-space request.
 	 */
 
-	ret = ttm_mem_global_alloc(mem_glob, fman->user_fence_size,
+	ret = tपंचांग_mem_global_alloc(mem_glob, fman->user_fence_size,
 				   &ctx);
-	if (unlikely(ret != 0))
-		return ret;
+	अगर (unlikely(ret != 0))
+		वापस ret;
 
-	ufence = kzalloc(sizeof(*ufence), GFP_KERNEL);
-	if (unlikely(!ufence)) {
+	ufence = kzalloc(माप(*ufence), GFP_KERNEL);
+	अगर (unlikely(!ufence)) अणु
 		ret = -ENOMEM;
-		goto out_no_object;
-	}
+		जाओ out_no_object;
+	पूर्ण
 
 	ret = vmw_fence_obj_init(fman, &ufence->fence, seqno,
 				 vmw_user_fence_destroy);
-	if (unlikely(ret != 0)) {
-		kfree(ufence);
-		goto out_no_object;
-	}
+	अगर (unlikely(ret != 0)) अणु
+		kमुक्त(ufence);
+		जाओ out_no_object;
+	पूर्ण
 
 	/*
-	 * The base object holds a reference which is freed in
+	 * The base object holds a reference which is मुक्तd in
 	 * vmw_user_fence_base_release.
 	 */
-	tmp = vmw_fence_obj_reference(&ufence->fence);
-	ret = ttm_base_object_init(tfile, &ufence->base, false,
+	पंचांगp = vmw_fence_obj_reference(&ufence->fence);
+	ret = tपंचांग_base_object_init(tfile, &ufence->base, false,
 				   VMW_RES_FENCE,
-				   &vmw_user_fence_base_release, NULL);
+				   &vmw_user_fence_base_release, शून्य);
 
 
-	if (unlikely(ret != 0)) {
+	अगर (unlikely(ret != 0)) अणु
 		/*
 		 * Free the base object's reference
 		 */
-		vmw_fence_obj_unreference(&tmp);
-		goto out_err;
-	}
+		vmw_fence_obj_unreference(&पंचांगp);
+		जाओ out_err;
+	पूर्ण
 
 	*p_fence = &ufence->fence;
 	*p_handle = ufence->base.handle;
 
-	return 0;
+	वापस 0;
 out_err:
-	tmp = &ufence->fence;
-	vmw_fence_obj_unreference(&tmp);
+	पंचांगp = &ufence->fence;
+	vmw_fence_obj_unreference(&पंचांगp);
 out_no_object:
-	ttm_mem_global_free(mem_glob, fman->user_fence_size);
-	return ret;
-}
+	tपंचांग_mem_global_मुक्त(mem_glob, fman->user_fence_size);
+	वापस ret;
+पूर्ण
 
 
 /**
- * vmw_wait_dma_fence - Wait for a dma fence
+ * vmw_रुको_dma_fence - Wait क्रम a dma fence
  *
- * @fman: pointer to a fence manager
- * @fence: DMA fence to wait on
+ * @fman: poपूर्णांकer to a fence manager
+ * @fence: DMA fence to रुको on
  *
- * This function handles the case when the fence is actually a fence
- * array.  If that's the case, it'll wait on each of the child fence
+ * This function handles the हाल when the fence is actually a fence
+ * array.  If that's the case, it'll रुको on each of the child fence
  */
-int vmw_wait_dma_fence(struct vmw_fence_manager *fman,
-		       struct dma_fence *fence)
-{
-	struct dma_fence_array *fence_array;
-	int ret = 0;
-	int i;
+पूर्णांक vmw_रुको_dma_fence(काष्ठा vmw_fence_manager *fman,
+		       काष्ठा dma_fence *fence)
+अणु
+	काष्ठा dma_fence_array *fence_array;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
 
-	if (dma_fence_is_signaled(fence))
-		return 0;
+	अगर (dma_fence_is_संकेतed(fence))
+		वापस 0;
 
-	if (!dma_fence_is_array(fence))
-		return dma_fence_wait(fence, true);
+	अगर (!dma_fence_is_array(fence))
+		वापस dma_fence_रुको(fence, true);
 
-	/* From i915: Note that if the fence-array was created in
-	 * signal-on-any mode, we should *not* decompose it into its individual
-	 * fences. However, we don't currently store which mode the fence-array
-	 * is operating in. Fortunately, the only user of signal-on-any is
-	 * private to amdgpu and we should not see any incoming fence-array
-	 * from sync-file being in signal-on-any mode.
+	/* From i915: Note that अगर the fence-array was created in
+	 * संकेत-on-any mode, we should *not* decompose it पूर्णांकo its inभागidual
+	 * fences. However, we करोn't currently store which mode the fence-array
+	 * is operating in. Fortunately, the only user of संकेत-on-any is
+	 * निजी to amdgpu and we should not see any incoming fence-array
+	 * from sync-file being in संकेत-on-any mode.
 	 */
 
 	fence_array = to_dma_fence_array(fence);
-	for (i = 0; i < fence_array->num_fences; i++) {
-		struct dma_fence *child = fence_array->fences[i];
+	क्रम (i = 0; i < fence_array->num_fences; i++) अणु
+		काष्ठा dma_fence *child = fence_array->fences[i];
 
-		ret = dma_fence_wait(child, true);
+		ret = dma_fence_रुको(child, true);
 
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * vmw_fence_fifo_down - signal all unsignaled fence objects.
+ * vmw_fence_fअगरo_करोwn - संकेत all unसंकेतed fence objects.
  */
 
-void vmw_fence_fifo_down(struct vmw_fence_manager *fman)
-{
-	struct list_head action_list;
-	int ret;
+व्योम vmw_fence_fअगरo_करोwn(काष्ठा vmw_fence_manager *fman)
+अणु
+	काष्ठा list_head action_list;
+	पूर्णांक ret;
 
 	/*
-	 * The list may be altered while we traverse it, so always
+	 * The list may be altered जबतक we traverse it, so always
 	 * restart when we've released the fman->lock.
 	 */
 
 	spin_lock(&fman->lock);
-	fman->fifo_down = true;
-	while (!list_empty(&fman->fence_list)) {
-		struct vmw_fence_obj *fence =
-			list_entry(fman->fence_list.prev, struct vmw_fence_obj,
+	fman->fअगरo_करोwn = true;
+	जबतक (!list_empty(&fman->fence_list)) अणु
+		काष्ठा vmw_fence_obj *fence =
+			list_entry(fman->fence_list.prev, काष्ठा vmw_fence_obj,
 				   head);
 		dma_fence_get(&fence->base);
 		spin_unlock(&fman->lock);
 
-		ret = vmw_fence_obj_wait(fence, false, false,
+		ret = vmw_fence_obj_रुको(fence, false, false,
 					 VMW_FENCE_WAIT_TIMEOUT);
 
-		if (unlikely(ret != 0)) {
+		अगर (unlikely(ret != 0)) अणु
 			list_del_init(&fence->head);
-			dma_fence_signal(&fence->base);
+			dma_fence_संकेत(&fence->base);
 			INIT_LIST_HEAD(&action_list);
 			list_splice_init(&fence->seq_passed_actions,
 					 &action_list);
-			vmw_fences_perform_actions(fman, &action_list);
-		}
+			vmw_fences_perक्रमm_actions(fman, &action_list);
+		पूर्ण
 
 		BUG_ON(!list_empty(&fence->head));
 		dma_fence_put(&fence->base);
 		spin_lock(&fman->lock);
-	}
+	पूर्ण
 	spin_unlock(&fman->lock);
-}
+पूर्ण
 
-void vmw_fence_fifo_up(struct vmw_fence_manager *fman)
-{
+व्योम vmw_fence_fअगरo_up(काष्ठा vmw_fence_manager *fman)
+अणु
 	spin_lock(&fman->lock);
-	fman->fifo_down = false;
+	fman->fअगरo_करोwn = false;
 	spin_unlock(&fman->lock);
-}
+पूर्ण
 
 
 /**
  * vmw_fence_obj_lookup - Look up a user-space fence object
  *
- * @tfile: A struct ttm_object_file identifying the caller.
- * @handle: A handle identifying the fence object.
- * @return: A struct vmw_user_fence base ttm object on success or
- * an error pointer on failure.
+ * @tfile: A काष्ठा tपंचांग_object_file identअगरying the caller.
+ * @handle: A handle identअगरying the fence object.
+ * @वापस: A काष्ठा vmw_user_fence base tपंचांग object on success or
+ * an error poपूर्णांकer on failure.
  *
  * The fence object is looked up and type-checked. The caller needs
- * to have opened the fence object first, but since that happens on
+ * to have खोलोed the fence object first, but since that happens on
  * creation and fence objects aren't shareable, that's not an
  * issue currently.
  */
-static struct ttm_base_object *
-vmw_fence_obj_lookup(struct ttm_object_file *tfile, u32 handle)
-{
-	struct ttm_base_object *base = ttm_base_object_lookup(tfile, handle);
+अटल काष्ठा tपंचांग_base_object *
+vmw_fence_obj_lookup(काष्ठा tपंचांग_object_file *tfile, u32 handle)
+अणु
+	काष्ठा tपंचांग_base_object *base = tपंचांग_base_object_lookup(tfile, handle);
 
-	if (!base) {
+	अगर (!base) अणु
 		pr_err("Invalid fence object handle 0x%08lx.\n",
-		       (unsigned long)handle);
-		return ERR_PTR(-EINVAL);
-	}
+		       (अचिन्हित दीर्घ)handle);
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (base->refcount_release != vmw_user_fence_base_release) {
+	अगर (base->refcount_release != vmw_user_fence_base_release) अणु
 		pr_err("Invalid fence object handle 0x%08lx.\n",
-		       (unsigned long)handle);
-		ttm_base_object_unref(&base);
-		return ERR_PTR(-EINVAL);
-	}
+		       (अचिन्हित दीर्घ)handle);
+		tपंचांग_base_object_unref(&base);
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return base;
-}
+	वापस base;
+पूर्ण
 
 
-int vmw_fence_obj_wait_ioctl(struct drm_device *dev, void *data,
-			     struct drm_file *file_priv)
-{
-	struct drm_vmw_fence_wait_arg *arg =
-	    (struct drm_vmw_fence_wait_arg *)data;
-	unsigned long timeout;
-	struct ttm_base_object *base;
-	struct vmw_fence_obj *fence;
-	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	int ret;
-	uint64_t wait_timeout = ((uint64_t)arg->timeout_us * HZ);
+पूर्णांक vmw_fence_obj_रुको_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			     काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_vmw_fence_रुको_arg *arg =
+	    (काष्ठा drm_vmw_fence_रुको_arg *)data;
+	अचिन्हित दीर्घ समयout;
+	काष्ठा tपंचांग_base_object *base;
+	काष्ठा vmw_fence_obj *fence;
+	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	पूर्णांक ret;
+	uपूर्णांक64_t रुको_समयout = ((uपूर्णांक64_t)arg->समयout_us * HZ);
 
 	/*
-	 * 64-bit division not present on 32-bit systems, so do an
+	 * 64-bit भागision not present on 32-bit प्रणालीs, so करो an
 	 * approximation. (Divide by 1000000).
 	 */
 
-	wait_timeout = (wait_timeout >> 20) + (wait_timeout >> 24) -
-	  (wait_timeout >> 26);
+	रुको_समयout = (रुको_समयout >> 20) + (रुको_समयout >> 24) -
+	  (रुको_समयout >> 26);
 
-	if (!arg->cookie_valid) {
+	अगर (!arg->cookie_valid) अणु
 		arg->cookie_valid = 1;
-		arg->kernel_cookie = jiffies + wait_timeout;
-	}
+		arg->kernel_cookie = jअगरfies + रुको_समयout;
+	पूर्ण
 
 	base = vmw_fence_obj_lookup(tfile, arg->handle);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
-	fence = &(container_of(base, struct vmw_user_fence, base)->fence);
+	fence = &(container_of(base, काष्ठा vmw_user_fence, base)->fence);
 
-	timeout = jiffies;
-	if (time_after_eq(timeout, (unsigned long)arg->kernel_cookie)) {
-		ret = ((vmw_fence_obj_signaled(fence)) ?
+	समयout = jअगरfies;
+	अगर (समय_after_eq(समयout, (अचिन्हित दीर्घ)arg->kernel_cookie)) अणु
+		ret = ((vmw_fence_obj_संकेतed(fence)) ?
 		       0 : -EBUSY);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	timeout = (unsigned long)arg->kernel_cookie - timeout;
+	समयout = (अचिन्हित दीर्घ)arg->kernel_cookie - समयout;
 
-	ret = vmw_fence_obj_wait(fence, arg->lazy, true, timeout);
+	ret = vmw_fence_obj_रुको(fence, arg->lazy, true, समयout);
 
 out:
-	ttm_base_object_unref(&base);
+	tपंचांग_base_object_unref(&base);
 
 	/*
 	 * Optionally unref the fence object.
 	 */
 
-	if (ret == 0 && (arg->wait_options & DRM_VMW_WAIT_OPTION_UNREF))
-		return ttm_ref_object_base_unref(tfile, arg->handle,
+	अगर (ret == 0 && (arg->रुको_options & DRM_VMW_WAIT_OPTION_UNREF))
+		वापस tपंचांग_ref_object_base_unref(tfile, arg->handle,
 						 TTM_REF_USAGE);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int vmw_fence_obj_signaled_ioctl(struct drm_device *dev, void *data,
-				 struct drm_file *file_priv)
-{
-	struct drm_vmw_fence_signaled_arg *arg =
-		(struct drm_vmw_fence_signaled_arg *) data;
-	struct ttm_base_object *base;
-	struct vmw_fence_obj *fence;
-	struct vmw_fence_manager *fman;
-	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	struct vmw_private *dev_priv = vmw_priv(dev);
+पूर्णांक vmw_fence_obj_संकेतed_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				 काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_vmw_fence_संकेतed_arg *arg =
+		(काष्ठा drm_vmw_fence_संकेतed_arg *) data;
+	काष्ठा tपंचांग_base_object *base;
+	काष्ठा vmw_fence_obj *fence;
+	काष्ठा vmw_fence_manager *fman;
+	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
 
 	base = vmw_fence_obj_lookup(tfile, arg->handle);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
-	fence = &(container_of(base, struct vmw_user_fence, base)->fence);
+	fence = &(container_of(base, काष्ठा vmw_user_fence, base)->fence);
 	fman = fman_from_fence(fence);
 
-	arg->signaled = vmw_fence_obj_signaled(fence);
+	arg->संकेतed = vmw_fence_obj_संकेतed(fence);
 
-	arg->signaled_flags = arg->flags;
+	arg->संकेतed_flags = arg->flags;
 	spin_lock(&fman->lock);
-	arg->passed_seqno = dev_priv->last_read_seqno;
+	arg->passed_seqno = dev_priv->last_पढ़ो_seqno;
 	spin_unlock(&fman->lock);
 
-	ttm_base_object_unref(&base);
+	tपंचांग_base_object_unref(&base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int vmw_fence_obj_unref_ioctl(struct drm_device *dev, void *data,
-			      struct drm_file *file_priv)
-{
-	struct drm_vmw_fence_arg *arg =
-		(struct drm_vmw_fence_arg *) data;
+पूर्णांक vmw_fence_obj_unref_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			      काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_vmw_fence_arg *arg =
+		(काष्ठा drm_vmw_fence_arg *) data;
 
-	return ttm_ref_object_base_unref(vmw_fpriv(file_priv)->tfile,
+	वापस tपंचांग_ref_object_base_unref(vmw_fpriv(file_priv)->tfile,
 					 arg->handle,
 					 TTM_REF_USAGE);
-}
+पूर्ण
 
 /**
  * vmw_event_fence_action_seq_passed
  *
- * @action: The struct vmw_fence_action embedded in a struct
+ * @action: The काष्ठा vmw_fence_action embedded in a काष्ठा
  * vmw_event_fence_action.
  *
  * This function is called when the seqno of the fence where @action is
  * attached has passed. It queues the event on the submitter's event list.
  * This function is always called from atomic context.
  */
-static void vmw_event_fence_action_seq_passed(struct vmw_fence_action *action)
-{
-	struct vmw_event_fence_action *eaction =
-		container_of(action, struct vmw_event_fence_action, action);
-	struct drm_device *dev = eaction->dev;
-	struct drm_pending_event *event = eaction->event;
+अटल व्योम vmw_event_fence_action_seq_passed(काष्ठा vmw_fence_action *action)
+अणु
+	काष्ठा vmw_event_fence_action *eaction =
+		container_of(action, काष्ठा vmw_event_fence_action, action);
+	काष्ठा drm_device *dev = eaction->dev;
+	काष्ठा drm_pending_event *event = eaction->event;
 
-	if (unlikely(event == NULL))
-		return;
+	अगर (unlikely(event == शून्य))
+		वापस;
 
 	spin_lock_irq(&dev->event_lock);
 
-	if (likely(eaction->tv_sec != NULL)) {
-		struct timespec64 ts;
+	अगर (likely(eaction->tv_sec != शून्य)) अणु
+		काष्ठा बारpec64 ts;
 
-		ktime_get_ts64(&ts);
-		/* monotonic time, so no y2038 overflow */
+		kसमय_get_ts64(&ts);
+		/* monotonic समय, so no y2038 overflow */
 		*eaction->tv_sec = ts.tv_sec;
 		*eaction->tv_usec = ts.tv_nsec / NSEC_PER_USEC;
-	}
+	पूर्ण
 
 	drm_send_event_locked(dev, eaction->event);
-	eaction->event = NULL;
+	eaction->event = शून्य;
 	spin_unlock_irq(&dev->event_lock);
-}
+पूर्ण
 
 /**
  * vmw_event_fence_action_cleanup
  *
- * @action: The struct vmw_fence_action embedded in a struct
+ * @action: The काष्ठा vmw_fence_action embedded in a काष्ठा
  * vmw_event_fence_action.
  *
- * This function is the struct vmw_fence_action destructor. It's typically
+ * This function is the काष्ठा vmw_fence_action deकाष्ठाor. It's typically
  * called from a workqueue.
  */
-static void vmw_event_fence_action_cleanup(struct vmw_fence_action *action)
-{
-	struct vmw_event_fence_action *eaction =
-		container_of(action, struct vmw_event_fence_action, action);
+अटल व्योम vmw_event_fence_action_cleanup(काष्ठा vmw_fence_action *action)
+अणु
+	काष्ठा vmw_event_fence_action *eaction =
+		container_of(action, काष्ठा vmw_event_fence_action, action);
 
 	vmw_fence_obj_unreference(&eaction->fence);
-	kfree(eaction);
-}
+	kमुक्त(eaction);
+पूर्ण
 
 
 /**
@@ -949,26 +950,26 @@ static void vmw_event_fence_action_cleanup(struct vmw_fence_action *action)
  * @fence: The fence object.
  * @action: The action to add.
  *
- * Note that the action callbacks may be executed before this function
- * returns.
+ * Note that the action callbacks may be executed beक्रमe this function
+ * वापसs.
  */
-static void vmw_fence_obj_add_action(struct vmw_fence_obj *fence,
-			      struct vmw_fence_action *action)
-{
-	struct vmw_fence_manager *fman = fman_from_fence(fence);
+अटल व्योम vmw_fence_obj_add_action(काष्ठा vmw_fence_obj *fence,
+			      काष्ठा vmw_fence_action *action)
+अणु
+	काष्ठा vmw_fence_manager *fman = fman_from_fence(fence);
 	bool run_update = false;
 
 	mutex_lock(&fman->goal_irq_mutex);
 	spin_lock(&fman->lock);
 
 	fman->pending_actions[action->type]++;
-	if (dma_fence_is_signaled_locked(&fence->base)) {
-		struct list_head action_list;
+	अगर (dma_fence_is_संकेतed_locked(&fence->base)) अणु
+		काष्ठा list_head action_list;
 
 		INIT_LIST_HEAD(&action_list);
 		list_add_tail(&action->head, &action_list);
-		vmw_fences_perform_actions(fman, &action_list);
-	} else {
+		vmw_fences_perक्रमm_actions(fman, &action_list);
+	पूर्ण अन्यथा अणु
 		list_add_tail(&action->head, &fence->seq_passed_actions);
 
 		/*
@@ -976,53 +977,53 @@ static void vmw_fence_obj_add_action(struct vmw_fence_obj *fence,
 		 * be run with the goal_irq_mutex held.
 		 */
 		run_update = vmw_fence_goal_check_locked(fence);
-	}
+	पूर्ण
 
 	spin_unlock(&fman->lock);
 
-	if (run_update) {
-		if (!fman->goal_irq_on) {
+	अगर (run_update) अणु
+		अगर (!fman->goal_irq_on) अणु
 			fman->goal_irq_on = true;
-			vmw_goal_waiter_add(fman->dev_priv);
-		}
+			vmw_goal_रुकोer_add(fman->dev_priv);
+		पूर्ण
 		vmw_fences_update(fman);
-	}
+	पूर्ण
 	mutex_unlock(&fman->goal_irq_mutex);
 
-}
+पूर्ण
 
 /**
- * vmw_event_fence_action_create - Post an event for sending when a fence
+ * vmw_event_fence_action_create - Post an event क्रम sending when a fence
  * object seqno has passed.
  *
  * @file_priv: The file connection on which the event should be posted.
  * @fence: The fence object on which to post the event.
  * @event: Event to be posted. This event should've been alloced
  * using k[mz]alloc, and should've been completely initialized.
- * @tv_sec: If non-null, the variable pointed to will be assigned
- * current time tv_sec val when the fence signals.
- * @tv_usec: Must be set if @tv_sec is set, and the variable pointed to will
- * be assigned the current time tv_usec val when the fence signals.
- * @interruptible: Interruptible waits if possible.
+ * @tv_sec: If non-null, the variable poपूर्णांकed to will be asचिन्हित
+ * current समय tv_sec val when the fence संकेतs.
+ * @tv_usec: Must be set अगर @tv_sec is set, and the variable poपूर्णांकed to will
+ * be asचिन्हित the current समय tv_usec val when the fence संकेतs.
+ * @पूर्णांकerruptible: Interruptible रुकोs अगर possible.
  *
- * As a side effect, the object pointed to by @event may have been
- * freed when this function returns. If this function returns with
- * an error code, the caller needs to free that object.
+ * As a side effect, the object poपूर्णांकed to by @event may have been
+ * मुक्तd when this function वापसs. If this function वापसs with
+ * an error code, the caller needs to मुक्त that object.
  */
 
-int vmw_event_fence_action_queue(struct drm_file *file_priv,
-				 struct vmw_fence_obj *fence,
-				 struct drm_pending_event *event,
-				 uint32_t *tv_sec,
-				 uint32_t *tv_usec,
-				 bool interruptible)
-{
-	struct vmw_event_fence_action *eaction;
-	struct vmw_fence_manager *fman = fman_from_fence(fence);
+पूर्णांक vmw_event_fence_action_queue(काष्ठा drm_file *file_priv,
+				 काष्ठा vmw_fence_obj *fence,
+				 काष्ठा drm_pending_event *event,
+				 uपूर्णांक32_t *tv_sec,
+				 uपूर्णांक32_t *tv_usec,
+				 bool पूर्णांकerruptible)
+अणु
+	काष्ठा vmw_event_fence_action *eaction;
+	काष्ठा vmw_fence_manager *fman = fman_from_fence(fence);
 
-	eaction = kzalloc(sizeof(*eaction), GFP_KERNEL);
-	if (unlikely(!eaction))
-		return -ENOMEM;
+	eaction = kzalloc(माप(*eaction), GFP_KERNEL);
+	अगर (unlikely(!eaction))
+		वापस -ENOMEM;
 
 	eaction->event = event;
 
@@ -1037,145 +1038,145 @@ int vmw_event_fence_action_queue(struct drm_file *file_priv,
 
 	vmw_fence_obj_add_action(fence, &eaction->action);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct vmw_event_fence_pending {
-	struct drm_pending_event base;
-	struct drm_vmw_event_fence event;
-};
+काष्ठा vmw_event_fence_pending अणु
+	काष्ठा drm_pending_event base;
+	काष्ठा drm_vmw_event_fence event;
+पूर्ण;
 
-static int vmw_event_fence_action_create(struct drm_file *file_priv,
-				  struct vmw_fence_obj *fence,
-				  uint32_t flags,
-				  uint64_t user_data,
-				  bool interruptible)
-{
-	struct vmw_event_fence_pending *event;
-	struct vmw_fence_manager *fman = fman_from_fence(fence);
-	struct drm_device *dev = &fman->dev_priv->drm;
-	int ret;
+अटल पूर्णांक vmw_event_fence_action_create(काष्ठा drm_file *file_priv,
+				  काष्ठा vmw_fence_obj *fence,
+				  uपूर्णांक32_t flags,
+				  uपूर्णांक64_t user_data,
+				  bool पूर्णांकerruptible)
+अणु
+	काष्ठा vmw_event_fence_pending *event;
+	काष्ठा vmw_fence_manager *fman = fman_from_fence(fence);
+	काष्ठा drm_device *dev = &fman->dev_priv->drm;
+	पूर्णांक ret;
 
-	event = kzalloc(sizeof(*event), GFP_KERNEL);
-	if (unlikely(!event)) {
+	event = kzalloc(माप(*event), GFP_KERNEL);
+	अगर (unlikely(!event)) अणु
 		DRM_ERROR("Failed to allocate an event.\n");
 		ret = -ENOMEM;
-		goto out_no_space;
-	}
+		जाओ out_no_space;
+	पूर्ण
 
 	event->event.base.type = DRM_VMW_EVENT_FENCE_SIGNALED;
-	event->event.base.length = sizeof(*event);
+	event->event.base.length = माप(*event);
 	event->event.user_data = user_data;
 
 	ret = drm_event_reserve_init(dev, file_priv, &event->base, &event->event.base);
 
-	if (unlikely(ret != 0)) {
+	अगर (unlikely(ret != 0)) अणु
 		DRM_ERROR("Failed to allocate event space for this file.\n");
-		kfree(event);
-		goto out_no_space;
-	}
+		kमुक्त(event);
+		जाओ out_no_space;
+	पूर्ण
 
-	if (flags & DRM_VMW_FE_FLAG_REQ_TIME)
+	अगर (flags & DRM_VMW_FE_FLAG_REQ_TIME)
 		ret = vmw_event_fence_action_queue(file_priv, fence,
 						   &event->base,
 						   &event->event.tv_sec,
 						   &event->event.tv_usec,
-						   interruptible);
-	else
+						   पूर्णांकerruptible);
+	अन्यथा
 		ret = vmw_event_fence_action_queue(file_priv, fence,
 						   &event->base,
-						   NULL,
-						   NULL,
-						   interruptible);
-	if (ret != 0)
-		goto out_no_queue;
+						   शून्य,
+						   शून्य,
+						   पूर्णांकerruptible);
+	अगर (ret != 0)
+		जाओ out_no_queue;
 
-	return 0;
+	वापस 0;
 
 out_no_queue:
-	drm_event_cancel_free(dev, &event->base);
+	drm_event_cancel_मुक्त(dev, &event->base);
 out_no_space:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int vmw_fence_event_ioctl(struct drm_device *dev, void *data,
-			  struct drm_file *file_priv)
-{
-	struct vmw_private *dev_priv = vmw_priv(dev);
-	struct drm_vmw_fence_event_arg *arg =
-		(struct drm_vmw_fence_event_arg *) data;
-	struct vmw_fence_obj *fence = NULL;
-	struct vmw_fpriv *vmw_fp = vmw_fpriv(file_priv);
-	struct ttm_object_file *tfile = vmw_fp->tfile;
-	struct drm_vmw_fence_rep __user *user_fence_rep =
-		(struct drm_vmw_fence_rep __user *)(unsigned long)
+पूर्णांक vmw_fence_event_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
+	काष्ठा drm_vmw_fence_event_arg *arg =
+		(काष्ठा drm_vmw_fence_event_arg *) data;
+	काष्ठा vmw_fence_obj *fence = शून्य;
+	काष्ठा vmw_fpriv *vmw_fp = vmw_fpriv(file_priv);
+	काष्ठा tपंचांग_object_file *tfile = vmw_fp->tfile;
+	काष्ठा drm_vmw_fence_rep __user *user_fence_rep =
+		(काष्ठा drm_vmw_fence_rep __user *)(अचिन्हित दीर्घ)
 		arg->fence_rep;
-	uint32_t handle;
-	int ret;
+	uपूर्णांक32_t handle;
+	पूर्णांक ret;
 
 	/*
 	 * Look up an existing fence object,
-	 * and if user-space wants a new reference,
+	 * and अगर user-space wants a new reference,
 	 * add one.
 	 */
-	if (arg->handle) {
-		struct ttm_base_object *base =
+	अगर (arg->handle) अणु
+		काष्ठा tपंचांग_base_object *base =
 			vmw_fence_obj_lookup(tfile, arg->handle);
 
-		if (IS_ERR(base))
-			return PTR_ERR(base);
+		अगर (IS_ERR(base))
+			वापस PTR_ERR(base);
 
-		fence = &(container_of(base, struct vmw_user_fence,
+		fence = &(container_of(base, काष्ठा vmw_user_fence,
 				       base)->fence);
-		(void) vmw_fence_obj_reference(fence);
+		(व्योम) vmw_fence_obj_reference(fence);
 
-		if (user_fence_rep != NULL) {
-			ret = ttm_ref_object_add(vmw_fp->tfile, base,
-						 TTM_REF_USAGE, NULL, false);
-			if (unlikely(ret != 0)) {
+		अगर (user_fence_rep != शून्य) अणु
+			ret = tपंचांग_ref_object_add(vmw_fp->tfile, base,
+						 TTM_REF_USAGE, शून्य, false);
+			अगर (unlikely(ret != 0)) अणु
 				DRM_ERROR("Failed to reference a fence "
 					  "object.\n");
-				goto out_no_ref_obj;
-			}
+				जाओ out_no_ref_obj;
+			पूर्ण
 			handle = base->handle;
-		}
-		ttm_base_object_unref(&base);
-	}
+		पूर्ण
+		tपंचांग_base_object_unref(&base);
+	पूर्ण
 
 	/*
 	 * Create a new fence object.
 	 */
-	if (!fence) {
+	अगर (!fence) अणु
 		ret = vmw_execbuf_fence_commands(file_priv, dev_priv,
 						 &fence,
 						 (user_fence_rep) ?
-						 &handle : NULL);
-		if (unlikely(ret != 0)) {
+						 &handle : शून्य);
+		अगर (unlikely(ret != 0)) अणु
 			DRM_ERROR("Fence event failed to create fence.\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	BUG_ON(fence == NULL);
+	BUG_ON(fence == शून्य);
 
 	ret = vmw_event_fence_action_create(file_priv, fence,
 					    arg->flags,
 					    arg->user_data,
 					    true);
-	if (unlikely(ret != 0)) {
-		if (ret != -ERESTARTSYS)
+	अगर (unlikely(ret != 0)) अणु
+		अगर (ret != -ERESTARTSYS)
 			DRM_ERROR("Failed to attach event to fence.\n");
-		goto out_no_create;
-	}
+		जाओ out_no_create;
+	पूर्ण
 
 	vmw_execbuf_copy_fence_user(dev_priv, vmw_fp, 0, user_fence_rep, fence,
-				    handle, -1, NULL);
+				    handle, -1, शून्य);
 	vmw_fence_obj_unreference(&fence);
-	return 0;
+	वापस 0;
 out_no_create:
-	if (user_fence_rep != NULL)
-		ttm_ref_object_base_unref(tfile, handle, TTM_REF_USAGE);
+	अगर (user_fence_rep != शून्य)
+		tपंचांग_ref_object_base_unref(tfile, handle, TTM_REF_USAGE);
 out_no_ref_obj:
 	vmw_fence_obj_unreference(&fence);
-	return ret;
-}
+	वापस ret;
+पूर्ण

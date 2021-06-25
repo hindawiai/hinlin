@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#ifndef _QED_FCOE_H
-#define _QED_FCOE_H
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/qed/qed_fcoe_if.h>
-#include <linux/qed/qed_chain.h>
-#include "qed.h"
-#include "qed_hsi.h"
-#include "qed_mcp.h"
-#include "qed_sp.h"
+#अगर_अघोषित _QED_FCOE_H
+#घोषणा _QED_FCOE_H
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/qed/qed_fcoe_अगर.h>
+#समावेश <linux/qed/qed_chain.h>
+#समावेश "qed.h"
+#समावेश "qed_hsi.h"
+#समावेश "qed_mcp.h"
+#समावेश "qed_sp.h"
 
-struct qed_fcoe_info {
+काष्ठा qed_fcoe_info अणु
 	spinlock_t lock; /* Connection resources. */
-	struct list_head free_list;
-};
+	काष्ठा list_head मुक्त_list;
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_QED_FCOE)
-int qed_fcoe_alloc(struct qed_hwfn *p_hwfn);
+#अगर IS_ENABLED(CONFIG_QED_FCOE)
+पूर्णांक qed_fcoe_alloc(काष्ठा qed_hwfn *p_hwfn);
 
-void qed_fcoe_setup(struct qed_hwfn *p_hwfn);
+व्योम qed_fcoe_setup(काष्ठा qed_hwfn *p_hwfn);
 
-void qed_fcoe_free(struct qed_hwfn *p_hwfn);
-void qed_get_protocol_stats_fcoe(struct qed_dev *cdev,
-				 struct qed_mcp_fcoe_stats *stats);
-#else /* CONFIG_QED_FCOE */
-static inline int qed_fcoe_alloc(struct qed_hwfn *p_hwfn)
-{
-	return -EINVAL;
-}
+व्योम qed_fcoe_मुक्त(काष्ठा qed_hwfn *p_hwfn);
+व्योम qed_get_protocol_stats_fcoe(काष्ठा qed_dev *cdev,
+				 काष्ठा qed_mcp_fcoe_stats *stats);
+#अन्यथा /* CONFIG_QED_FCOE */
+अटल अंतरभूत पूर्णांक qed_fcoe_alloc(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void qed_fcoe_setup(struct qed_hwfn *p_hwfn) {}
-static inline void qed_fcoe_free(struct qed_hwfn *p_hwfn) {}
+अटल अंतरभूत व्योम qed_fcoe_setup(काष्ठा qed_hwfn *p_hwfn) अणुपूर्ण
+अटल अंतरभूत व्योम qed_fcoe_मुक्त(काष्ठा qed_hwfn *p_hwfn) अणुपूर्ण
 
-static inline void qed_get_protocol_stats_fcoe(struct qed_dev *cdev,
-					       struct qed_mcp_fcoe_stats *stats)
-{
-}
-#endif /* CONFIG_QED_FCOE */
+अटल अंतरभूत व्योम qed_get_protocol_stats_fcoe(काष्ठा qed_dev *cdev,
+					       काष्ठा qed_mcp_fcoe_stats *stats)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_QED_FCOE */
 
-#endif /* _QED_FCOE_H */
+#पूर्ण_अगर /* _QED_FCOE_H */
